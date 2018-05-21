@@ -54,4 +54,6 @@ static inline uint32_t get_itype(void)
 /* Generic CPU core initialization */
 void cpu_init(void);
 
+extern uint32_t ilp;
+
 #endif /* __CROS_EC_CPU_H */

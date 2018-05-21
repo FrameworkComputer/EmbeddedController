@@ -16,6 +16,8 @@
 
 /* Panic data goes at the end of RAM. */
 static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
+/* Enter critical period or not. */
+static int wdt_warning_fired;
 
 /*
  * We use WDT_EXT_TIMER to trigger an interrupt just before the watchdog timer
@@ -25,6 +27,16 @@ static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
 
 /* Magic value to tickle the watchdog register. */
 #define ITE83XX_WATCHDOG_MAGIC_WORD  0x5C
+/* Start to print warning message. */
+#define ITE83XX_WATCHDOG_WARNING_MS  CONFIG_AUX_TIMER_PERIOD_MS
+/* The interval to print warning message at critical period. */
+#define ITE83XX_WATCHDOG_CRITICAL_MS 30
+
+/* set warning timer */
+static void watchdog_set_warning_timer(int32_t ms, int init)
+{
+	ext_timer_ms(WDT_EXT_TIMER, EXT_PSR_32P768K_HZ, 1, 1, ms, init, 0);
+}
 
 void watchdog_warning_irq(void)
 {
@@ -37,7 +49,24 @@ void watchdog_warning_irq(void)
 	/* Reset warning timer. */
 	IT83XX_ETWD_ETXCTRL(WDT_EXT_TIMER) = 0x03;
 
-	panic_printf("Pre-watchdog warning! IPC: %08x\n", get_ipc());
+	/*
+	 * The IPC (Interruption Program Counter) is the shadow stack register
+	 * of the PC (Program Counter). It stores the return address of program
+	 * (PC->IPC) when the ISR was called.
+	 *
+	 * The LP (Link Pointer) stores the program address of the next
+	 * sequential instruction for function call return purposes.
+	 * LP = PC+4 after a jump and link instruction (jal).
+	 */
+	panic_printf("Pre-WDT warning! IPC:%08x LP:%08x TASK_ID:%d\n",
+		get_ipc(), ilp, task_get_current());
+
+	if (!wdt_warning_fired++)
+		/*
+		 * Reduce interval of warning timer, so we can print more
+		 * warning messages during critical period.
+		 */
+		watchdog_set_warning_timer(ITE83XX_WATCHDOG_CRITICAL_MS, 0);
 }
 
 void watchdog_reload(void)
@@ -47,6 +76,12 @@ void watchdog_reload(void)
 
 	/* Restart (tickle) watchdog timer. */
 	IT83XX_ETWD_EWDKEYR = ITE83XX_WATCHDOG_MAGIC_WORD;
+
+	if (wdt_warning_fired) {
+		wdt_warning_fired = 0;
+		/* Reset warning timer to default if watchdog is touched. */
+		watchdog_set_warning_timer(ITE83XX_WATCHDOG_WARNING_MS, 0);
+	}
 }
 DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 
@@ -72,8 +107,7 @@ int watchdog_init(void)
 #endif
 
 	/* Start WDT_EXT_TIMER (CONFIG_AUX_TIMER_PERIOD_MS ms). */
-	ext_timer_ms(WDT_EXT_TIMER, EXT_PSR_32P768K_HZ, 1, 1,
-			CONFIG_AUX_TIMER_PERIOD_MS, 1, 0);
+	watchdog_set_warning_timer(ITE83XX_WATCHDOG_WARNING_MS, 1);
 
 	/* Start timer 1 (must be started for watchdog timer to run). */
 	IT83XX_ETWD_ET1CNTLLR = 0x00;

@@ -20,6 +20,8 @@ __entry_\()\name:
 	smw.adm $r15, [$sp], $r15, 0xb
 	/* r0-r5 are caller saved */
 	smw.adm $r0,  [$sp], $r5, 0
+	/* store link pointer register */
+	swi.gp  $lp, [ + ilp]
 	/* switch to system stack if we are called from process stack */
 	la $r3, stack_end
 	mov55 $fp, $sp

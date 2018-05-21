@@ -174,6 +174,12 @@ static int sw_int_num;
 /* Number of CPU hardware interrupts (HW0 ~ HW15) */
 int cpu_int_entry_number;
 
+/*
+ * This variable is used to save link pointer register,
+ * and it is updated at the beginning of each ISR.
+ */
+uint32_t ilp;
+
 static inline task_ *__task_id_to_ptr(task_id_t id)
 {
 	return tasks + id;
