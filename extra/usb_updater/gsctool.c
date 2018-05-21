@@ -196,7 +196,7 @@ struct upgrade_pkt {
 static int verbose_mode;
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "abcd:fhIikO:oPprstUuVv";
+static char *short_opts = "abcd:F:fhIikO:oPprstUuVv";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"any",		0,   NULL, 'a'},
@@ -208,6 +208,7 @@ static const struct option long_opts[] = {
 	{"ccd_unlock",  0,   NULL, 'U'},
 	{"corrupt",	0,   NULL, 'c'},
 	{"device",	1,   NULL, 'd'},
+	{"factory",	1,   NULL, 'F'},
 	{"fwver",	0,   NULL, 'f'},
 	{"help",	0,   NULL, 'h'},
 	{"openbox_rma", 1,   NULL, 'O'},
@@ -513,6 +514,8 @@ static void usage(int errs)
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
 	       "  -f,--fwver               "
 	       "Report running Cr50 firmware versions\n"
+	       "  -F,--factory [enable|disable]\n"
+	       "                           Control factory mode\n"
 	       "  -h,--help                Show this message\n"
 	       "  -I,--ccd_info            Get information about CCD state\n"
 	       "  -i,--board_id [ID[:FLAGS]]\n"
@@ -529,9 +532,9 @@ static void usage(int errs)
 	       "                           Set or clear CCD password. Use\n"
 	       "                           'clear:<cur password>' to clear it\n"
 	       "  -p,--post_reset          Request post reset after transfer\n"
-	       "  -r,--rma_auth [[auth_code|\"disable\"]\n"
+	       "  -r,--rma_auth [auth_code]\n"
 	       "                           Request RMA challenge, process "
-	       "RMA authentication code or disable RMA state\n"
+	       "RMA authentication code\n"
 	       "  -s,--systemdev           Use /dev/tpm0 (-d is ignored)\n"
 	       "  -t,--trunks_send         Use `trunks_send --raw' "
 	       "(-d is ignored)\n"
@@ -1862,14 +1865,8 @@ static void process_rma(struct transfer_descriptor *td, const char *authcode)
 	}
 
 	if (!strcmp(authcode, "disable")) {
-		printf("Disabling RMA mode\n");
-		send_vendor_command(td, VENDOR_CC_DISABLE_FACTORY, NULL, 0,
-				    rma_response, &response_size);
-		if (response_size) {
-			fprintf(stderr, "Failed disabling RMA, error %d\n",
-				rma_response[0]);
-			exit(update_error);
-		}
+		printf("Invalid arg. Try using 'gsctool -F disable'\n");
+		exit(update_error);
 		return;
 	}
 
@@ -1889,6 +1886,39 @@ static void process_rma(struct transfer_descriptor *td, const char *authcode)
 		exit(update_error);
 	}
 	printf("RMA unlock succeeded.\n");
+}
+
+/*
+ * Enable or disable factory mode. Factory mode will only be enabled if HW
+ * write protect is removed.
+ */
+static void process_factory_mode(struct transfer_descriptor *td,
+				 const char *arg)
+{
+	char *cmd_str;
+	int rv;
+	uint16_t subcommand;
+
+	if (!strcasecmp(arg, "disable")) {
+		subcommand = VENDOR_CC_DISABLE_FACTORY;
+		cmd_str = "dis";
+	} else if (!strcasecmp(arg, "enable")) {
+		subcommand = VENDOR_CC_RESET_FACTORY;
+		cmd_str = "en";
+
+	} else {
+		fprintf(stderr, "Invalid factory mode arg %s", arg);
+		exit(update_error);
+	}
+
+	printf("%sabling factory mode\n", cmd_str);
+	rv = send_vendor_command(td, subcommand, NULL, 0, NULL, NULL);
+	if (rv) {
+		fprintf(stderr, "Failed %sabling factory mode, error "
+			"%d\n", cmd_str, rv);
+		exit(update_error);
+	}
+	printf("Factory %sable succeeded.\n", cmd_str);
 }
 
 static void report_version(void)
@@ -1926,6 +1956,8 @@ int main(int argc, char *argv[])
 	const char *exclusive_opt_error =
 		"Options -a, -s and -t are mutually exclusive\n";
 	const char *openbox_desc_file = NULL;
+	int factory_mode = 0;
+	char *factory_mode_arg;
 
 	progname = strrchr(argv[0], '/');
 	if (progname)
@@ -2002,6 +2034,10 @@ int main(int argc, char *argv[])
 		case 'P':
 			password = 1;
 			break;
+		case 'F':
+			factory_mode = 1;
+			factory_mode_arg = optarg;
+			break;
 		case 'r':
 			rma = 1;
 
@@ -2071,6 +2107,7 @@ int main(int argc, char *argv[])
 	    !ccd_open &&
 	    !ccd_unlock &&
 	    !corrupt_inactive_rw &&
+	    !factory_mode &&
 	    !password &&
 	    !rma &&
 	    !show_fw_ver &&
@@ -2101,9 +2138,9 @@ int main(int argc, char *argv[])
 
 	if (((bid_action != bid_none) + !!rma + !!password +
 	     !!ccd_open + !!ccd_unlock + !!ccd_lock + !!ccd_info +
-	     !!openbox_desc_file) > 2) {
+	     !!openbox_desc_file + !!factory_mode) > 2) {
 		fprintf(stderr, "ERROR: "
-			"options -I -i, -k, -O, -o, -P, -r, and -u "
+			"options -F, -I, -i, -k, -O, -o, -P, -r, and -u "
 			"are mutually exclusive\n");
 		exit(update_error);
 	}
@@ -2136,6 +2173,9 @@ int main(int argc, char *argv[])
 
 	if (rma)
 		process_rma(&td, rma_auth_code);
+
+	if (factory_mode)
+		process_factory_mode(&td, factory_mode_arg);
 
 	if (corrupt_inactive_rw)
 		invalidate_inactive_rw(&td);
