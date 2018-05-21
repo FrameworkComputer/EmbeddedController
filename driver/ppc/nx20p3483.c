@@ -134,24 +134,14 @@ static int nx20p3483_vbus_sink_enable(int port, int enable)
 		NX20P3483_MODE_STANDBY;
 
 	enable = !!enable;
+
 	/*
-	 * IF PPC_CFG_FLAGS_GPIO_CONTROL is set, then the SNK/SRC switch
-	 * control is driven by the EC. Otherwise, it's controlled directly by
-	 * the TCPC and only need to check the status.
+	 * We cannot use an EC GPIO for EN_SNK since an EC reset will float the
+	 * GPIO thus browning out the board (without a battery).
 	 */
-	if (ppc_chips[port].flags & PPC_CFG_FLAGS_GPIO_CONTROL) {
-
-		/* If enable, makes sure that SRC mode is disabled */
-		if (enable)
-			gpio_set_level(ppc_chips[port].src_gpio, 0);
-
-		/* Set SNK mode based on enable */
-		gpio_set_level(ppc_chips[port].snk_gpio, enable);
-	} else {
-		rv = tcpm_set_snk_ctrl(port, enable);
-		if (rv)
-			return rv;
-	}
+	rv = tcpm_set_snk_ctrl(port, enable);
+	if (rv)
+		return rv;
 
 	/* Read device status register to get mode */
 	rv = read_reg(port, NX20P3483_DEVICE_STATUS_REG, &status);
@@ -170,24 +160,14 @@ static int nx20p3483_vbus_source_enable(int port, int enable)
 		NX20P3483_MODE_STANDBY;
 
 	enable = !!enable;
+
 	/*
-	 * IF PPC_CFG_FLAGS_GPIO_CONTROL is set, then the SNK/SRC switch
-	 * control is driven by the EC. Otherwise, it's controlled directly by
-	 * the TCPC and only need to check the status.
+	 * For parity's sake, we should not use an EC GPIO for EN_SRC since we
+	 * cannot use it for EN_SNK (for brown out reason listed above).
 	 */
-	if (ppc_chips[port].flags & PPC_CFG_FLAGS_GPIO_CONTROL) {
-
-		/* If enable, makes sure that SNK mode is disabled */
-		if (enable)
-			gpio_set_level(ppc_chips[port].snk_gpio, 0);
-
-		/* Set SRC mode based on enable */
-		gpio_set_level(ppc_chips[port].src_gpio, enable);
-	} else {
-		rv = tcpm_set_src_ctrl(port, enable);
-		if (rv)
-			return rv;
-	}
+	rv = tcpm_set_src_ctrl(port, enable);
+	if (rv)
+		return rv;
 
 	/* Read device status register to get mode */
 	rv = read_reg(port, NX20P3483_DEVICE_STATUS_REG, &status);
