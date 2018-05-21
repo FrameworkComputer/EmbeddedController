@@ -64,11 +64,10 @@
 #define CONFIG_CHIPSET_HAS_PLATFORM_PMIC_RESET
 #define CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
 #define CONFIG_CHIPSET_RESET_HOOK
-#define CONFIG_ESPI
+#define CONFIG_HOSTCMD_ESPI
 /* Eve and Poppy all have wires from GPIO to PCH but CONFIG_ESPI_VW_SIGNALS
  * is defined. So, those GPIOs are not used by EC. */
 #define CONFIG_ESPI_VW_SIGNALS
-#define CONFIG_LPC
 
 /* Charger */
 #define CONFIG_CHARGE_MANAGER
