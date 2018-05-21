@@ -17,6 +17,12 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
+#if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) || \
+	defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) || \
+	defined(CONFIG_USB_PD_DISCHARGE_TCPC)
+#error "Unsupported config options of IT83xx PD driver"
+#endif
+
 /* Wait time for vconn power switch to turn off. */
 #ifndef PD_IT83XX_VCONN_TURN_OFF_DELAY_US
 #define PD_IT83XX_VCONN_TURN_OFF_DELAY_US 500
@@ -525,9 +531,6 @@ const struct tcpm_drv it83xx_tcpm_drv = {
 	.init			= &it83xx_tcpm_init,
 	.release		= &it83xx_tcpm_release,
 	.get_cc			= &it83xx_tcpm_get_cc,
-#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.get_vbus_level		= NULL,
-#endif
 	.select_rp_value	= &it83xx_tcpm_select_rp_value,
 	.set_cc			= &it83xx_tcpm_set_cc,
 	.set_polarity		= &it83xx_tcpm_set_polarity,
@@ -536,12 +539,5 @@ const struct tcpm_drv it83xx_tcpm_drv = {
 	.set_rx_enable		= &it83xx_tcpm_set_rx_enable,
 	.get_message		= &it83xx_tcpm_get_message,
 	.transmit		= &it83xx_tcpm_transmit,
-	.tcpc_alert		= NULL,
-#ifdef CONFIG_USB_PD_DISCHARGE_TCPC
-	.tcpc_discharge_vbus	= NULL,
-#endif
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= NULL,
-#endif
 	.get_chip_info		= &it83xx_tcpm_get_chip_info,
 };
