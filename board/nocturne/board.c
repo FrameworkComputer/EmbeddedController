@@ -295,12 +295,20 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 void board_chipset_startup(void)
 {
 	gpio_set_level(GPIO_EN_5V, 1);
+	gpio_set_level(GPIO_PP3300_NVME_EN, 1);
+	msleep(2);
+	gpio_set_level(GPIO_PP1800_NVME_EN, 1);
+	gpio_set_level(GPIO_PPVAR_NVME_CORE_EN, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 void board_chipset_shutdown(void)
 {
 	gpio_set_level(GPIO_EN_5V, 0);
+	gpio_set_level(GPIO_PPVAR_NVME_CORE_EN, 0);
+	gpio_set_level(GPIO_PP1800_NVME_EN, 0);
+	msleep(2);
+	gpio_set_level(GPIO_PP3300_NVME_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
