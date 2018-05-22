@@ -209,7 +209,7 @@ static void board_post_init(void)
 	 * AC powered  - DRP SOURCE
 	 * DUT powered - DRP SINK
 	 */
-	pd_set_dual_role(gpio_get_level(GPIO_AC_PRESENT_L) ?
+	pd_set_dual_role(0, gpio_get_level(GPIO_AC_PRESENT_L) ?
 			 PD_DRP_FORCE_SINK : PD_DRP_FORCE_SOURCE);
 }
 DECLARE_DEFERRED(board_post_init);

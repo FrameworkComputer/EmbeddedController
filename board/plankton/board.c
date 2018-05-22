@@ -279,7 +279,7 @@ static void update_usbc_dual_role(int dual_role)
 		hook_call_deferred(&detect_cc_cable_data, 0);
 	}
 	/* Update dual role setting used in USB PD protocol state machine */
-	pd_set_dual_role(dual_role);
+	pd_set_dual_role(0, dual_role);
 	cprintf(CC_USBPD, "DRP = %d, host_mode = %d\n", drp_enable, host_mode);
 }
 

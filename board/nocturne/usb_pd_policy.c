@@ -67,7 +67,7 @@ int pd_check_power_swap(int port)
 	 * otherwise assume our role is fixed (not in S0 or console command
 	 * to fix our role).
 	 */
-	return pd_get_dual_role() == PD_DRP_TOGGLE_ON ? 1 : 0;
+	return pd_get_dual_role(port) == PD_DRP_TOGGLE_ON ? 1 : 0;
 }
 
 void pd_check_pr_role(int port, int pr_role, int flags)
@@ -77,7 +77,7 @@ void pd_check_pr_role(int port, int pr_role, int flags)
 	 * if a power swap is necessary.
 	 */
 	if ((flags & PD_FLAGS_PARTNER_DR_POWER) &&
-	    pd_get_dual_role() == PD_DRP_TOGGLE_ON) {
+	    pd_get_dual_role(port) == PD_DRP_TOGGLE_ON) {
 		/*
 		 * If we are a sink and partner is not externally powered, then
 		 * swap to become a source. If we are source and partner is

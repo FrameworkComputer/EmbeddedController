@@ -152,7 +152,7 @@ static char *is_comms_cap(void)
 
 static char *dr_swap_to_ufp_supported(void)
 {
-	if (src_pdo[0] & PDO_FIXED_DATA_SWAP)
+	if (is_src() && (src_pdo[0] & PDO_FIXED_DATA_SWAP))
 		return yes_no(pd_check_data_swap(0, PD_ROLE_DFP));
 
 	return "NO";
@@ -160,7 +160,7 @@ static char *dr_swap_to_ufp_supported(void)
 
 static char *dr_swap_to_dfp_supported(void)
 {
-	if (src_pdo[0] & PDO_FIXED_DATA_SWAP)
+	if (is_src() && (src_pdo[0] & PDO_FIXED_DATA_SWAP))
 		return yes_no(pd_check_data_swap(0, PD_ROLE_UFP));
 
 	return "NO";

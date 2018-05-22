@@ -819,7 +819,8 @@ void run_test(void)
 {
 	test_reset();
 	init_ports();
-	pd_set_dual_role(PD_DRP_TOGGLE_ON);
+	pd_set_dual_role(PORT0, PD_DRP_TOGGLE_ON);
+	pd_set_dual_role(PORT1, PD_DRP_TOGGLE_ON);
 
 	RUN_TEST(test_request);
 	RUN_TEST(test_sink);

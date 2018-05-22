@@ -106,7 +106,9 @@ enum vdm_states {
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 /* Port dual-role state */
-enum pd_dual_role_states drp_state = CONFIG_USB_PD_INITIAL_DRP_STATE;
+enum pd_dual_role_states drp_state[CONFIG_USB_PD_PORT_COUNT] = {
+	[0 ... (CONFIG_USB_PD_PORT_COUNT - 1)] =
+		CONFIG_USB_PD_INITIAL_DRP_STATE};
 
 /* Enable variable for Try.SRC states */
 static uint8_t pd_try_src_enable;
@@ -1796,7 +1798,6 @@ static void handle_request(int port, uint16_t head,
 	 * is one such legal action.
 	 */
 	if (pd[port].data_role == data_role) {
-		CPRINTF("C%d DR conflict!\n", port);
 		/*
 		 * If the port doesn't support removing the terminations, just
 		 * go to the unattached state.
@@ -1988,15 +1989,16 @@ int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-enum pd_dual_role_states pd_get_dual_role(void)
+enum pd_dual_role_states pd_get_dual_role(int port)
 {
-	return drp_state;
+	return drp_state[port];
 }
 
 #ifdef CONFIG_USB_PD_TRY_SRC
 static void pd_update_try_source(void)
 {
 	int i;
+	int try_src = 0;
 
 #ifndef CONFIG_CHARGER
 	int batt_soc = board_get_battery_soc();
@@ -2004,11 +2006,15 @@ static void pd_update_try_source(void)
 	int batt_soc = charge_get_percent();
 #endif
 
+	try_src = 0;
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+		try_src |= drp_state[i] == PD_DRP_TOGGLE_ON;
+
 	/*
 	 * Enable try source when dual-role toggling AND battery is present
 	 * and at some minimum percentage.
 	 */
-	pd_try_src_enable = drp_state == PD_DRP_TOGGLE_ON &&
+	pd_try_src_enable = try_src &&
 			    batt_soc >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC;
 #if defined(CONFIG_BATTERY_PRESENT_CUSTOM) || \
 	defined(CONFIG_BATTERY_PRESENT_GPIO)
@@ -2032,10 +2038,11 @@ static void pd_update_try_source(void)
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_update_try_source, HOOK_PRIO_DEFAULT);
 #endif
 
-void pd_set_dual_role(enum pd_dual_role_states state)
+void pd_set_dual_role(int port, enum pd_dual_role_states state)
 {
 	int i;
-	drp_state = state;
+
+	drp_state[port] = state;
 
 #ifdef CONFIG_USB_PD_TRY_SRC
 	pd_update_try_source();
@@ -2056,9 +2063,9 @@ void pd_update_dual_role_config(int port)
 	 * disconnected state).
 	 */
 	if (pd[port].power_role == PD_ROLE_SOURCE &&
-	    ((drp_state == PD_DRP_FORCE_SINK && !pd_ts_dts_plugged(port)) ||
-	     (drp_state == PD_DRP_TOGGLE_OFF
-	      && pd[port].task_state == PD_STATE_SRC_DISCONNECTED))) {
+	    ((drp_state[port] == PD_DRP_FORCE_SINK && !pd_ts_dts_plugged(port))
+	     || (drp_state[port] == PD_DRP_TOGGLE_OFF
+		 && pd[port].task_state == PD_STATE_SRC_DISCONNECTED))) {
 		pd_set_power_role(port, PD_ROLE_SINK);
 		set_state(port, PD_STATE_SNK_DISCONNECTED);
 		tcpm_set_cc(port, TYPEC_CC_RD);
@@ -2071,7 +2078,7 @@ void pd_update_dual_role_config(int port)
 	 * new DRP state is force source.
 	 */
 	if (pd[port].power_role == PD_ROLE_SINK &&
-	    drp_state == PD_DRP_FORCE_SOURCE) {
+	    drp_state[port] == PD_DRP_FORCE_SOURCE) {
 		pd_set_power_role(port, PD_ROLE_SOURCE);
 		set_state(port, PD_STATE_SRC_DISCONNECTED);
 		tcpm_set_cc(port, TYPEC_CC_RP);
@@ -2281,11 +2288,14 @@ static void pd_init_tasks(void)
 #if defined(HAS_TASK_CHIPSET) && defined(CONFIG_USB_PD_DUAL_ROLE)
 	/* Set dual-role state based on chipset power state */
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		drp_state = PD_DRP_FORCE_SINK;
+		for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+			drp_state[i] = PD_DRP_FORCE_SINK;
 	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
-		drp_state = PD_DRP_TOGGLE_OFF;
+		for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+			drp_state[i] = PD_DRP_TOGGLE_OFF;
 	else /* CHIPSET_STATE_ON */
-		drp_state = PD_DRP_TOGGLE_ON;
+		for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+			drp_state[i] = PD_DRP_TOGGLE_ON;
 #endif
 
 #if defined(CONFIG_USB_PD_COMM_DISABLED)
@@ -2637,8 +2647,8 @@ void pd_task(void *u)
 			else if ((pd[port].flags & PD_FLAGS_TRY_SRC &&
 				 get_time().val >= pd[port].try_src_marker) ||
 				 (!(pd[port].flags & PD_FLAGS_TRY_SRC) &&
-				  drp_state != PD_DRP_FORCE_SOURCE &&
-				  drp_state != PD_DRP_FREEZE &&
+				  drp_state[port] != PD_DRP_FORCE_SOURCE &&
+				  drp_state[port] != PD_DRP_FREEZE &&
 				 get_time().val >= next_role_swap)) {
 				pd_set_power_role(port, PD_ROLE_SINK);
 				set_state(port, PD_STATE_SNK_DISCONNECTED);
@@ -3074,8 +3084,8 @@ void pd_task(void *u)
 		}
 		case PD_STATE_SNK_DISCONNECTED:
 #ifdef CONFIG_USB_PD_LOW_POWER
-			timeout = drp_state != PD_DRP_TOGGLE_ON ? SECOND
-								: 10*MSEC;
+			timeout = (drp_state[port] !=
+				PD_DRP_TOGGLE_ON ? SECOND : 10*MSEC);
 #else
 			timeout = 10*MSEC;
 #endif
@@ -3124,7 +3134,7 @@ void pd_task(void *u)
 			}
 
 			/* If no source detected, check for role toggle. */
-			if (drp_state == PD_DRP_TOGGLE_ON &&
+			if (drp_state[port] == PD_DRP_TOGGLE_ON &&
 			    get_time().val >= next_role_swap) {
 				/* Swap roles to source */
 				pd_set_power_role(port, PD_ROLE_SOURCE);
@@ -3688,15 +3698,15 @@ void pd_task(void *u)
 				/* nothing connected, keep toggling*/
 				next_state = PD_STATE_DRP_AUTO_TOGGLE;
 			else if ((cc_is_rp(cc1) || cc_is_rp(cc2)) &&
-				 drp_state != PD_DRP_FORCE_SOURCE)
+				 drp_state[port] != PD_DRP_FORCE_SOURCE)
 				/* SNK allowed unless ForceSRC */
 				next_state = PD_STATE_SNK_DISCONNECTED;
 			else if (((cc1 == TYPEC_CC_VOLT_RD ||
 				   cc2 == TYPEC_CC_VOLT_RD) ||
 				  (cc1 == TYPEC_CC_VOLT_RA &&
 				   cc2 == TYPEC_CC_VOLT_RA)) &&
-				 (drp_state != PD_DRP_TOGGLE_OFF &&
-				  drp_state != PD_DRP_FORCE_SINK))
+				 (drp_state[port] != PD_DRP_TOGGLE_OFF &&
+				  drp_state[port] != PD_DRP_FORCE_SINK))
 				/* SRC allowed unless ForceSNK or Toggle Off */
 				next_state = PD_STATE_SRC_DISCONNECTED;
 			else
@@ -3830,16 +3840,19 @@ static void pd_chipset_resume(void)
 #endif
 			pd[i].flags |= PD_FLAGS_CHECK_PR_ROLE |
 				       PD_FLAGS_CHECK_DR_ROLE;
+		pd_set_dual_role(i, PD_DRP_TOGGLE_ON);
 	}
 
-	pd_set_dual_role(PD_DRP_TOGGLE_ON);
 	CPRINTS("PD:S3->S0");
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pd_chipset_resume, HOOK_PRIO_DEFAULT);
 
 static void pd_chipset_suspend(void)
 {
-	pd_set_dual_role(PD_DRP_TOGGLE_OFF);
+	int i;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+		pd_set_dual_role(i, PD_DRP_TOGGLE_OFF);
 	CPRINTS("PD:S0->S3");
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pd_chipset_suspend, HOOK_PRIO_DEFAULT);
@@ -3847,16 +3860,21 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pd_chipset_suspend, HOOK_PRIO_DEFAULT);
 static void pd_chipset_startup(void)
 {
 	int i;
-	pd_set_dual_role(PD_DRP_TOGGLE_OFF);
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+		pd_set_dual_role(i, PD_DRP_TOGGLE_OFF);
 		pd[i].flags |= PD_FLAGS_CHECK_IDENTITY;
+	}
 	CPRINTS("PD:S5->S3");
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pd_chipset_startup, HOOK_PRIO_DEFAULT);
 
 static void pd_chipset_shutdown(void)
 {
-	pd_set_dual_role(PD_DRP_FORCE_SINK);
+	int i;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+		pd_set_dual_role(i, PD_DRP_FORCE_SINK);
 	CPRINTS("PD:S3->S5");
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pd_chipset_shutdown, HOOK_PRIO_DEFAULT);
@@ -4085,45 +4103,6 @@ static int command_pd(int argc, char **argv)
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
-#if defined(CONFIG_CMD_PD) && defined(CONFIG_USB_PD_DUAL_ROLE)
-	/* command: pd <subcmd> <args> */
-	if (!strcasecmp(argv[1], "dualrole")) {
-		if (argc < 3) {
-			ccprintf("dual-role toggling: ");
-			switch (drp_state) {
-			case PD_DRP_TOGGLE_ON:
-				ccprintf("on\n");
-				break;
-			case PD_DRP_TOGGLE_OFF:
-				ccprintf("off\n");
-				break;
-			case PD_DRP_FREEZE:
-				ccprintf("freeze\n");
-				break;
-			case PD_DRP_FORCE_SINK:
-				ccprintf("force sink\n");
-				break;
-			case PD_DRP_FORCE_SOURCE:
-				ccprintf("force source\n");
-				break;
-			}
-		} else {
-			if (!strcasecmp(argv[2], "on"))
-				pd_set_dual_role(PD_DRP_TOGGLE_ON);
-			else if (!strcasecmp(argv[2], "off"))
-				pd_set_dual_role(PD_DRP_TOGGLE_OFF);
-			else if (!strcasecmp(argv[2], "freeze"))
-				pd_set_dual_role(PD_DRP_FREEZE);
-			else if (!strcasecmp(argv[2], "sink"))
-				pd_set_dual_role(PD_DRP_FORCE_SINK);
-			else if (!strcasecmp(argv[2], "source"))
-				pd_set_dual_role(PD_DRP_FORCE_SOURCE);
-			else
-				return EC_ERROR_PARAM3;
-		}
-		return EC_SUCCESS;
-	} else
-#endif
 	if (!strcasecmp(argv[1], "dump")) {
 #ifndef CONFIG_USB_PD_DEBUG_LEVEL
 		int level;
@@ -4276,6 +4255,44 @@ static int command_pd(int argc, char **argv)
 	} else if (!strncasecmp(argv[2], "flash", 4)) {
 		return remote_flashing(argc, argv);
 #endif
+#if defined(CONFIG_CMD_PD) && defined(CONFIG_USB_PD_DUAL_ROLE)
+	} else if (!strcasecmp(argv[2], "dualrole")) {
+		if (argc < 4) {
+			ccprintf("dual-role toggling: ");
+			switch (drp_state[port]) {
+			case PD_DRP_TOGGLE_ON:
+				ccprintf("on\n");
+				break;
+			case PD_DRP_TOGGLE_OFF:
+				ccprintf("off\n");
+				break;
+			case PD_DRP_FREEZE:
+				ccprintf("freeze\n");
+				break;
+			case PD_DRP_FORCE_SINK:
+				ccprintf("force sink\n");
+				break;
+			case PD_DRP_FORCE_SOURCE:
+				ccprintf("force source\n");
+				break;
+			}
+		} else {
+			if (!strcasecmp(argv[3], "on"))
+				pd_set_dual_role(port, PD_DRP_TOGGLE_ON);
+			else if (!strcasecmp(argv[3], "off"))
+				pd_set_dual_role(port, PD_DRP_TOGGLE_OFF);
+			else if (!strcasecmp(argv[3], "freeze"))
+				pd_set_dual_role(port, PD_DRP_FREEZE);
+			else if (!strcasecmp(argv[3], "sink"))
+				pd_set_dual_role(port, PD_DRP_FORCE_SINK);
+			else if (!strcasecmp(argv[3], "source"))
+				pd_set_dual_role(port,
+					PD_DRP_FORCE_SOURCE);
+			else
+				return EC_ERROR_PARAM4;
+		}
+		return EC_SUCCESS;
+#endif
 	} else
 #endif
 	if (!strncasecmp(argv[2], "state", 5)) {
@@ -4348,7 +4365,7 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 
 	if (p->role != USB_PD_CTRL_ROLE_NO_CHANGE)
-		pd_set_dual_role(dual_role_map[p->role]);
+		pd_set_dual_role(p->port, dual_role_map[p->role]);
 
 #ifdef CONFIG_USBC_SS_MUX
 	if (p->mux != USB_PD_CTRL_MUX_NO_CHANGE)

@@ -22,7 +22,6 @@
 
 /* Enable USART1,3,4 and USB streams */
 #define CONFIG_STREAM_USART
-
 #define CONFIG_STREAM_USART3
 #define CONFIG_STREAM_USART4
 #define CONFIG_STREAM_USB
@@ -102,12 +101,9 @@
 #define CONFIG_USB_PD_PULLUP TYPEC_RP_USB
 #define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
 
-/* Override PD_ROLE_DEFAULT in usb_pd.h */
-#define PD_ROLE_DEFAULT(port) ((port) ? PD_ROLE_SOURCE : PD_ROLE_SINK)
-
 /* Don't automatically change roles */
 #undef CONFIG_USB_PD_INITIAL_DRP_STATE
-#define CONFIG_USB_PD_INITIAL_DRP_STATE PD_DRP_FREEZE
+#define CONFIG_USB_PD_INITIAL_DRP_STATE PD_DRP_FORCE_SINK
 
 /* Variable-current Rp no connect and Ra attach macros */
 #define CC_NC(port, cc, sel)  (pd_tcpc_cc_nc(port, cc, sel))
