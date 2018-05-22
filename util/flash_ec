@@ -499,6 +499,9 @@ cleanup() {
 		fi
 
 	fi
+	if [ "${CHIP}" == "stm32" -o "${CHIP}" == "npcx_uut" ] ; then
+		dut_control ${MCU}_boot_mode:off
+	fi
 	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
 		dut_control ccd_ec_boot_mode_uut:off
 		dut_control ccd_ec_boot_mode_bitbang:off
@@ -596,22 +599,18 @@ servo_v4_with_ccd_cr50_VARS="cold_reset"
 # Flashing an STM32 over the UART requires modifying the UART properties along
 # with the boot mode pin.
 if [ "${CHIP}" = "stm32" ] ; then
-	common_stm32_VARS=" ${MCU}_boot_mode ${MCU}_uart_parity"
+	common_stm32_VARS=" ${MCU}_uart_parity"
 	common_stm32_VARS+=" ${MCU}_uart_baudrate"
 	servo_v2_VARS+=$common_stm32_VARS
 	servo_v2_VARS+=" ${MCU}_uart_en"
 	servo_micro_VARS+=$common_stm32_VARS
 	servo_micro_VARS+=" ${MCU}_uart_en"
 	servo_v4_with_ccd_cr50_VARS+=$common_stm32_VARS
-	servo_v4_with_ccd_cr50_VARS+=" ec_uart_bitbang_en ccd_ec_boot_mode_uut"
 fi
 if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
 	servo_v2_VARS+=" prog_en"
 fi
 if [ "${CHIP}" = "npcx_uut" ] ; then
-	servo_v2_VARS+=" ${MCU}_boot_mode"
-	servo_micro_VARS+=" ${MCU}_boot_mode"
-	servo_v4_with_ccd_cr50_VARS+=" ccd_${MCU}_boot_mode_uut"
 	servo_v4_with_ccd_cr50_VARS+=" ccd_keepalive_en"
 fi
 toad_VARS="${MCU}_uart_parity ${MCU}_uart_baudrate boot_mode"
