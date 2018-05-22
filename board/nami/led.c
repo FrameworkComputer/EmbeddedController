@@ -141,18 +141,18 @@ const static led_patterns battery_pattern_2 = {
 };
 
 /*
- * Pantheon - Power LED(single color):
- * S0:             White (solid on)
- * S3/Lid closed:  White Pulsing (Gradual 1sec on, Gradual 1sec off, 2sec off)
- * S5:             Off
+ * Pantheon - Power LED
+ * S0:        White on
+ * S3/S0ix:   White 1 second on, 3 second off
+ * S5:        Off
  */
 const static led_patterns power_pattern_2 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(20)}, {LED_OFF,   PULSE_NO}},
+	{{LED_WHITE, 0}, {LED_WHITE, ALTERNATE(BLINK(10))}, {LED_OFF, 0}},
 	/* charging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(20)}, {LED_OFF,   PULSE_NO}},
+	{{LED_WHITE, 0}, {LED_WHITE, ALTERNATE(BLINK(10))}, {LED_OFF, 0}},
 	/* full: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(20)}, {LED_OFF,   PULSE_NO}},
+	{{LED_WHITE, 0}, {LED_WHITE, ALTERNATE(BLINK(10))}, {LED_OFF, 0}},
 };
 
 /*
