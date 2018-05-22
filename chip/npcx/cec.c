@@ -424,6 +424,9 @@ static int rx_circbuf_push(struct cec_rx_cb *cb, uint8_t *msg, uint8_t msg_len)
 	int i;
 	uint32_t offset;
 
+	if (msg_len > MAX_CEC_MSG_LEN || msg_len == 0)
+		return EC_ERROR_INVAL;
+
 	offset = cb->write_offset;
 	/* Fill in message length last, if successful. Set to zero for now */
 	cb->buf[offset] = 0;
@@ -432,19 +435,27 @@ static int rx_circbuf_push(struct cec_rx_cb *cb, uint8_t *msg, uint8_t msg_len)
 	for (i = 0 ; i < msg_len; i++) {
 		if (offset == cb->read_offset) {
 			/* Buffer full */
-			return -1;
+			return EC_ERROR_OVERFLOW;
 		}
 
 		cb->buf[offset] = msg[i];
 		offset = (offset + 1) % CEC_CIRCBUF_SIZE;
 	}
 
+	/*
+	 * Don't commit if we caught up with read-offset
+	 * since that would indicate an empty buffer
+	 */
+	if (offset == cb->read_offset) {
+		/* Buffer full */
+		return EC_ERROR_OVERFLOW;
+	}
+
 	/* Commit the push */
 	cb->buf[cb->write_offset] = msg_len;
 	cb->write_offset = offset;
-	mutex_unlock(&circbuf_readoffset_mutex);
 
-	return 0;
+	return EC_SUCCESS;
 }
 
 static int rx_circbuf_pop(struct cec_rx_cb *cb, uint8_t *msg, uint8_t *msg_len)
@@ -1158,13 +1169,15 @@ void cec_task(void *unused)
 		if (events & TASK_EVENT_RECEIVED_DATA) {
 			rv = rx_circbuf_push(&cec_rx_cb, cec_rx.msgt.buf,
 					     cec_rx.msgt.byte);
-			if (rv < 0) {
+			if (rv == EC_ERROR_OVERFLOW) {
 				/* Buffer full, prefer the most recent msg */
 				rx_circbuf_flush(&cec_rx_cb);
-				rx_circbuf_push(&cec_rx_cb, cec_rx.msgt.buf,
-						cec_rx.msgt.byte);
+				rv = rx_circbuf_push(&cec_rx_cb,
+						     cec_rx.msgt.buf,
+						     cec_rx.msgt.byte);
 			}
-			mkbp_send_event(EC_MKBP_EVENT_CEC_MESSAGE);
+			if (rv == EC_SUCCESS)
+				mkbp_send_event(EC_MKBP_EVENT_CEC_MESSAGE);
 		}
 	}
 }
