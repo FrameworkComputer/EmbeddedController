@@ -350,6 +350,7 @@ enum nvmem_users {
 
 #define CONFIG_BASE32
 #define CONFIG_RMA_AUTH
+#define CONFIG_FACTORY_MODE
 #define CONFIG_RNG
 
 #define CONFIG_ENABLE_H1_ALERTS

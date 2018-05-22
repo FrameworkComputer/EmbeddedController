@@ -338,9 +338,9 @@ static void ccd_load_config(void)
 	/* Use defaults if config data is not present */
 	if (!t) {
 		if (board_is_first_factory_boot()) {
-			/* Give factory RMA access */
+			/* Give factory/RMA access */
 			CPRINTS("CCD using factory config");
-			ccd_reset_config(CCD_RESET_RMA);
+			ccd_reset_config(CCD_RESET_FACTORY);
 		} else {
 			/* Somehow we lost our config; normal defaults */
 			CPRINTS("CCD using default config");
@@ -443,8 +443,8 @@ int ccd_reset_config(unsigned int flags)
 		config.version = CCD_CONFIG_VERSION;
 	}
 
-	if (flags & CCD_RESET_RMA) {
-		/* Force RMA settings */
+	if (flags & CCD_RESET_FACTORY) {
+		/* Force factory mode settings */
 		int i;
 
 		/* Allow all capabilities all the time */
@@ -690,16 +690,16 @@ static int command_ccd_reset(int argc, char **argv)
 	int flags = 0;
 
 	if (argc > 1) {
-		if (!strcasecmp(argv[1], "rma"))
-			flags = CCD_RESET_RMA;
+		if (!strcasecmp(argv[1], "factory"))
+			flags = CCD_RESET_FACTORY;
 		else
 			return EC_ERROR_PARAM1;
 	}
 
 	switch (ccd_state) {
 	case CCD_STATE_OPENED:
-		ccprintf("%sResetting all settings.\n",
-			 flags & CCD_RESET_RMA ? "RMA " : "");
+		ccprintf("%s settings.\n",  flags & CCD_RESET_FACTORY ?
+			"Opening factory " : "Resetting all");
 		/* Note that this does not reset the testlab flag */
 		return ccd_reset_config(flags);
 
@@ -1115,7 +1115,7 @@ static int command_ccd_help(void)
 	       "\tSet capability to state\n\n"
 	       "password [<new password> | clear]\n"
 	       "\tSet or clear CCD password\n\n"
-	       "reset [rma]\n"
+	       "reset [factory]\n"
 	       "\tReset CCD config\n\n"
 	       "testlab [enable | disable | open]\n"
 	       "\tToggle testlab mode or force CCD open\n\n");
@@ -1409,10 +1409,10 @@ static enum vendor_cmd_rc ccd_vendor(struct vendor_cmd_params *p)
 }
 DECLARE_VENDOR_COMMAND_P(VENDOR_CC_CCD, ccd_vendor);
 
-static enum vendor_cmd_rc ccd_disable_rma(enum vendor_cmd_cc code,
-					  void *buf,
-					  size_t input_size,
-					  size_t *response_size)
+static enum vendor_cmd_rc ccd_disable_factory_mode(enum vendor_cmd_cc code,
+						   void *buf,
+						   size_t input_size,
+						   size_t *response_size)
 {
 	int rv = EC_SUCCESS;
 	int error_line;
@@ -1464,9 +1464,9 @@ static enum vendor_cmd_rc ccd_disable_rma(enum vendor_cmd_cc code,
 		ccd_lock(NULL);
 
 		/*
-		 * We do it here to make sure that the device comes out of RMA
-		 * with WP enabled, but in general CCD reset needs to enforce
-		 * WP state.
+		 * We do it here to make sure that the device comes out of
+		 * factory mode with WP enabled, but in general CCD reset needs
+		 * to enforce WP state.
 		 *
 		 * TODO(rspangler): sort out CCD state and WP correlation,
 		 * b/73075443.
@@ -1483,4 +1483,4 @@ static enum vendor_cmd_rc ccd_disable_rma(enum vendor_cmd_cc code,
 	*response_size = 1;
 	return VENDOR_RC_INTERNAL_ERROR;
 }
-DECLARE_VENDOR_COMMAND(VENDOR_CC_DISABLE_RMA, ccd_disable_rma);
+DECLARE_VENDOR_COMMAND(VENDOR_CC_DISABLE_FACTORY, ccd_disable_factory_mode);

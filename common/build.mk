@@ -53,6 +53,7 @@ common-$(CONFIG_HOSTCMD_ESPI)+=espi.o
 common-$(CONFIG_EXTENSION_COMMAND)+=extension.o
 common-$(CONFIG_EXTPOWER_GPIO)+=extpower_gpio.o
 common-$(CONFIG_FANS)+=fan.o pwm.o
+common-$(CONFIG_FACTORY_MODE)+=factory_mode.o
 common-$(CONFIG_FLASH)+=flash.o
 common-$(CONFIG_FLASH_NVCOUNTER)+=nvcounter.o
 common-$(CONFIG_FLASH_NVMEM)+=nvmem.o

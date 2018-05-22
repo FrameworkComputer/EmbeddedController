@@ -1863,7 +1863,7 @@ static void process_rma(struct transfer_descriptor *td, const char *authcode)
 
 	if (!strcmp(authcode, "disable")) {
 		printf("Disabling RMA mode\n");
-		send_vendor_command(td, VENDOR_CC_DISABLE_RMA, NULL, 0,
+		send_vendor_command(td, VENDOR_CC_DISABLE_FACTORY, NULL, 0,
 				    rma_response, &response_size);
 		if (response_size) {
 			fprintf(stderr, "Failed disabling RMA, error %d\n",

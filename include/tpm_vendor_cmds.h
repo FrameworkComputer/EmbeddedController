@@ -45,7 +45,11 @@ enum vendor_cmd_cc {
 	VENDOR_CC_GET_REC_BTN = 29,
 	VENDOR_CC_RMA_CHALLENGE_RESPONSE = 30,
 	/* DEPRECATED(31): CCD password command (now part of VENDOR_CC_CCD) */
-	VENDOR_CC_DISABLE_RMA = 32,
+	/*
+	 * Disable factory mode. Reset all ccd capabilities to default and reset
+	 * write protect to follow battery presence.
+	 */
+	VENDOR_CC_DISABLE_FACTORY = 32,
 	/* DEPRECATED(33): Manage CCD password phase */
 	VENDOR_CC_CCD = 34,
 	VENDOR_CC_GET_ALERTS_DATA = 35,
