@@ -8,6 +8,7 @@
 #include "common.h"
 #include "console.h"
 #include "dptf.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "keyboard_backlight.h"
@@ -16,6 +17,7 @@
 #include "tablet_mode.h"
 #include "pwm.h"
 #include "timer.h"
+#include "usb_charge.h"
 #include "util.h"
 
 /* Console output macros */
@@ -35,6 +37,10 @@ static uint8_t __bss_slow acpi_mem_test;
 #ifdef CONFIG_DPTF
 static int __bss_slow dptf_temp_sensor_id;	/* last sensor ID written */
 static int __bss_slow dptf_temp_threshold;	/* last threshold written */
+#endif
+
+#ifdef CONFIG_USB_PORT_POWER_DUMB
+extern const int usb_port_enable[USB_PORT_COUNT];
 #endif
 
 /*
@@ -203,6 +209,26 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			result = val >> (8 * off);
 			break;
 			}
+
+#ifdef CONFIG_USB_PORT_POWER_DUMB
+		case EC_ACPI_MEM_USB_PORT_POWER: {
+			int i;
+			const int port_count = MIN(8, USB_PORT_COUNT);
+
+			/*
+			 * Convert each USB port power GPIO signal to a bit
+			 * field with max size 8 bits. USB port ID (index) 0 is
+			 * the least significant bit.
+			 */
+			result = 0;
+			for (i = 0; i < port_count; ++i) {
+				if (gpio_get_level(usb_port_enable[i]) != 0)
+					result |= 1 << i;
+			}
+			break;
+			}
+#endif
+
 		default:
 			result = acpi_read(acpi_addr);
 			break;
@@ -267,6 +293,35 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			}
 			break;
 #endif
+
+#ifdef CONFIG_USB_PORT_POWER_DUMB
+		case EC_ACPI_MEM_USB_PORT_POWER: {
+			int i;
+			int mode_field = data;
+			const int port_count = MIN(8, USB_PORT_COUNT);
+
+			/*
+			 * Read the port power bit field (with max size 8 bits)
+			 * and set the charge mode of each USB port accordingly.
+			 * USB port ID 0 is the least significant bit.
+			 */
+			for (i = 0; i < port_count; ++i) {
+				int mode = USB_CHARGE_MODE_DISABLED;
+
+				if (mode_field & 1)
+					mode = USB_CHARGE_MODE_ENABLED;
+
+				if (usb_charge_set_mode(i, mode)) {
+					CPRINTS("ERROR: could not set charge "
+						"mode of USB port p%d to %d",
+						i, mode);
+				}
+				mode_field >>= 1;
+			}
+			break;
+			}
+#endif
+
 		default:
 			CPRINTS("ACPI write 0x%02x = 0x%02x (ignored)",
 				acpi_addr, data);
