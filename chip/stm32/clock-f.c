@@ -165,7 +165,8 @@ void rtc_read(struct rtc_time_reg *rtc)
 void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 		   struct rtc_time_reg *rtc)
 {
-	uint32_t alarm_sec, alarm_us;
+	uint32_t alarm_sec = 0;
+	uint32_t alarm_us = 0;
 
 	if (delay_s == EC_RTC_ALARM_CLEAR && !delay_us) {
 		reset_rtc_alarm(rtc);
