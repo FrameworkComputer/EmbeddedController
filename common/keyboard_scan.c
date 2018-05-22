@@ -89,6 +89,9 @@ static uint8_t __bss_slow prev_state[KEYBOARD_COLS];
 static uint8_t __bss_slow debouncing[KEYBOARD_COLS];
 /* Keys simulated-pressed */
 static uint8_t __bss_slow simulated_key[KEYBOARD_COLS];
+#ifdef CONFIG_KEYBOARD_LANGUAGE_ID
+static uint8_t __bss_slow keyboard_id[KEYBOARD_IDS];
+#endif
 
 /* Times of last scans */
 static uint32_t __bss_slow scan_time[SCAN_TIME_COUNT];
@@ -274,6 +277,35 @@ static int read_matrix(uint8_t *state)
 
 	return pressed ? 1 : 0;
 }
+
+#ifdef CONFIG_KEYBOARD_LANGUAGE_ID
+/**
+ * Read the raw keyboard IDs state.
+ *
+ * Used in pre-init, so must not make task-switching-dependent calls; udelay()
+ * is ok because it's a spin-loop.
+ *
+ * @param id		Destination for keyboard id (must be KEYBOARD_IDS long).
+ *
+ */
+static void read_matrix_id(uint8_t *id)
+{
+	int c;
+
+	for (c = 0; c < KEYBOARD_IDS; c++) {
+		/* Select the ID pin, then wait a bit for it to settle */
+		keyboard_raw_drive_column(KEYBOARD_COLS + c);
+		udelay(keyscan_config.output_settle_us);
+
+		/* Read the row state */
+		id[c] = keyboard_raw_read_rows();
+
+		CPRINTS("Keyboard ID%u: 0x%02x\n", c, id[c]);
+	}
+
+	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
+}
+#endif
 
 #ifdef CONFIG_KEYBOARD_RUNTIME_KEYS
 /**
@@ -646,6 +678,11 @@ void keyboard_scan_init(void)
 	/* Initialize raw state */
 	read_matrix(debounced_state);
 	memcpy(prev_state, debounced_state, sizeof(prev_state));
+
+#ifdef CONFIG_KEYBOARD_LANGUAGE_ID
+	/* Check keyboard ID state */
+	read_matrix_id(keyboard_id);
+#endif
 
 #ifdef CONFIG_KEYBOARD_BOOT_KEYS
 	/* Check for keys held down at boot */

@@ -363,7 +363,6 @@
 #define KB_ROW_NUM  8  /* Rows numbers of keyboard matrix */
 #define KB_COL_NUM  18 /* Columns numbers of keyboard matrix */
 #define KB_ROW_MASK ((1<<KB_ROW_NUM) - 1) /* Mask of rows of keyboard matrix */
-#define KB_COL_MASK ((1<<KB_COL_NUM) - 1) /* Mask of cols of keyboard matrix */
 
 /******************************************************************************/
 /* GLUE registers */

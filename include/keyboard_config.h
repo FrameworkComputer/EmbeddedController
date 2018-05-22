@@ -10,6 +10,11 @@
 
 #include "common.h"
 
+#ifdef CONFIG_KEYBOARD_LANGUAGE_ID
+/* Keyboard matrix support for language ID pins */
+#define KEYBOARD_IDS 2
+#endif
+
 /* Keyboard matrix is 13 output columns x 8 input rows */
 #define KEYBOARD_COLS 13
 #define KEYBOARD_ROWS 8
