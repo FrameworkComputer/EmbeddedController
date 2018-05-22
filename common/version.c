@@ -26,7 +26,7 @@ const struct image_data __keep current_image_data
 };
 
 const char build_info[] __keep __attribute__((section(".rodata.buildinfo"))) =
-	CROS_EC_VERSION " " DATE " " BUILDER;
+	VERSION " " DATE " " BUILDER;
 
 uint32_t ver_get_numcommits(void)
 {
