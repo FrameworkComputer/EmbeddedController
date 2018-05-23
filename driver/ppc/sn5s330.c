@@ -268,8 +268,16 @@ static int sn5s330_init(int port)
 	/*
 	 * Indicate we are using PP2 configuration 2 and enable OVP comparator
 	 * for CC lines.
+	 *
+	 * Also, turn off under-voltage protection for incoming Vbus as it would
+	 * prevent us from enabling SNK path before we hibernate the ec. We
+	 * need to enable the SNK path so USB power will assert ACOK and wake
+	 * the EC up went inserting USB power. We always turn off under-voltage
+	 * protection because the battery charger will boost the voltage up
+	 * to the needed battery voltage either way (and it will have its own
+	 * low voltage protection).
 	 */
-	regval = SN5S330_OVP_EN_CC | SN5S330_PP2_CONFIG;
+	regval = SN5S330_OVP_EN_CC | SN5S330_PP2_CONFIG | SN5S330_CONFIG_UVP;
 	status = i2c_write8(i2c_port, i2c_addr, SN5S330_FUNC_SET9, regval);
 	if (status) {
 		CPRINTS("ppc p%d: Failed to set FUNC_SET9!", port);

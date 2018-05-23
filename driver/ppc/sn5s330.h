@@ -103,6 +103,7 @@ enum sn5s330_pp_idx {
 /* FUNC_SET_9 */
 #define SN5S330_PP2_CONFIG (1 << 2)
 #define SN5S330_OVP_EN_CC (1 << 4)
+#define SN5S330_CONFIG_UVP (1 << 5)
 
 /* INT_STATUS_REG3 */
 #define SN5S330_VBUS_GOOD (1 << 0)
