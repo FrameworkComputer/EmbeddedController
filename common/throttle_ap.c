@@ -14,8 +14,8 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPUTS(outstr) cputs(CC_THERMAL, outstr)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
 
 /*****************************************************************************/
 /* This enforces the virtual OR of all throttling sources. */

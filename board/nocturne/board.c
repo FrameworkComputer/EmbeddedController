@@ -449,7 +449,7 @@ void board_reset_pd_mcu(void)
 
 void board_rtc_reset(void)
 {
-	cprints(CC_CHIPSET, "Asserting RTCRST# to PCH");
+	cprints(CC_SYSTEM, "Asserting RTCRST# to PCH");
 	gpio_set_level(GPIO_EC_PCH_RTCRST, 1);
 	udelay(100);
 	gpio_set_level(GPIO_EC_PCH_RTCRST, 0);

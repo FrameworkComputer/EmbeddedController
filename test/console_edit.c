@@ -254,8 +254,8 @@ static int test_output_channel(void)
 	UART_INJECT("chan 0\n");
 	msleep(30);
 	test_capture_console(1);
-	cprintf(CC_CHARGER, "shouldn't see this\n");
-	cputs(CC_CHIPSET, "shouldn't see this either\n");
+	cprintf(CC_SYSTEM, "shouldn't see this\n");
+	cputs(CC_TASK, "shouldn't see this either\n");
 	cflush();
 	test_capture_console(0);
 	TEST_ASSERT(compare_multiline_string(test_get_captured_console(),
@@ -263,8 +263,8 @@ static int test_output_channel(void)
 	UART_INJECT("chan restore\n");
 	msleep(30);
 	test_capture_console(1);
-	cprintf(CC_CHARGER, "see me\n");
-	cputs(CC_CHIPSET, "me as well\n");
+	cprintf(CC_SYSTEM, "see me\n");
+	cputs(CC_TASK, "me as well\n");
 	cflush();
 	test_capture_console(0);
 	TEST_ASSERT(compare_multiline_string(test_get_captured_console(),
