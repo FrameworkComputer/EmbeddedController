@@ -19,6 +19,28 @@ static const struct ec2i_t pnpcfg_settings[] = {
 	{HOST_INDEX_LDN, LDN_KBC_KEYBOARD},
 	/* Set IRQ=01h for logical device */
 	{HOST_INDEX_IRQNUMX, 0x01},
+	/* Configure IRQTP for KBC. */
+#ifdef CONFIG_HOSTCMD_ESPI
+	/*
+	 * Interrupt request type select (IRQTP) for KBC.
+	 * bit 1, 0: IRQ request is buffered and applied to SERIRQ
+	 *        1: IRQ request is inverted before being applied to SERIRQ
+	 * bit 0, 0: Edge triggered mode
+	 *        1: Level triggered mode
+	 *
+	 * SERIRQ# is by default deasserted level high. However, when using
+	 * eSPI, SERIRQ# is routed over virtual wire as interrupt event. As
+	 * per eSPI base spec (doc#327432), all virtual wire interrupt events
+	 * are deasserted level low. Thus, it is necessary to configure this
+	 * interrupt as inverted. ITE hardware takes care of routing the SERIRQ#
+	 * signal appropriately over eSPI / LPC depending upon the selected
+	 * mode.
+	 *
+	 * Additionally, this interrupt is configured as edge-triggered on the
+	 * host side. So, match the trigger mode on the EC side as well.
+	 */
+	{HOST_INDEX_IRQTP, 0x02},
+#endif
 	/* Enable logical device */
 	{HOST_INDEX_LDA, 0x01},
 
