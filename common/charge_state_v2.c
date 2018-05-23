@@ -49,7 +49,7 @@
 #define BAT_OCP_TIMEOUT_US (60 * SECOND)
 /* BAT_OCP_HYSTERESIS_PCT can be optionally overridden in board.h. */
 #ifndef BAT_OCP_HYSTERESIS_PCT
-#define BAT_OCP_HYSTERESIS_PCT	10
+#define BAT_OCP_HYSTERESIS_PCT 10
 #endif /* BAT_OCP_HYSTERESIS_PCT */
 #define BAT_OCP_HYSTERESIS \
 	(BAT_MAX_DISCHG_CURRENT * BAT_OCP_HYSTERESIS_PCT / 100) /* mA */
@@ -60,6 +60,12 @@
 #error "CONFIG_THROTTLE_AP_ON_BAT_VOLTAGE needs CONFIG_HOSTCMD_EVENTS"
 #endif /* CONFIG_HOSTCMD_EVENTS */
 #define BAT_UVP_TIMEOUT_US (60 * SECOND)
+/* BAT_UVP_HYSTERESIS_PCT can be optionally overridden in board.h. */
+#ifndef BAT_UVP_HYSTERESIS_PCT
+#define BAT_UVP_HYSTERESIS_PCT 3
+#endif /* BAT_UVP_HYSTERESIS_PCT */
+#define BAT_UVP_HYSTERESIS \
+	(BAT_LOW_VOLTAGE_THRESH * BAT_UVP_HYSTERESIS_PCT / 100) /* mV */
 static timestamp_t uvp_throttle_start_time;
 #endif /* CONFIG_THROTTLE_AP_ON_BAT_OLTAGE */
 
@@ -1361,11 +1367,18 @@ static void notify_host_of_low_battery_voltage(void)
 	    chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		return;
 
-	if (curr.batt.voltage < BAT_LOW_VOLTAGE_THRESH) {
-		if (!uvp_throttle_start_time.val) {
-			throttle_ap(THROTTLE_ON, THROTTLE_SOFT,
-				    THROTTLE_SRC_BAT_VOLTAGE);
-		}
+	if (!uvp_throttle_start_time.val &&
+	    (curr.batt.voltage < BAT_LOW_VOLTAGE_THRESH)) {
+		throttle_ap(THROTTLE_ON, THROTTLE_SOFT,
+			    THROTTLE_SRC_BAT_VOLTAGE);
+		uvp_throttle_start_time = get_time();
+	} else if (uvp_throttle_start_time.val &&
+		   (curr.batt.voltage < BAT_LOW_VOLTAGE_THRESH +
+		    BAT_UVP_HYSTERESIS)) {
+		/*
+		 * Reset the timer when we are not sure if VBAT can stay
+		 * above BAT_LOW_VOLTAGE_THRESH after we stop throttling.
+		 */
 		uvp_throttle_start_time = get_time();
 	} else if (uvp_throttle_start_time.val &&
 		   (get_time().val > uvp_throttle_start_time.val +
