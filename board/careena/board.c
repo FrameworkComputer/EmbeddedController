@@ -50,17 +50,10 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-/*
- * These GPIOs change pins depending on board version. They are configured
- * in board_init.
- */
-static enum gpio_signal gpio_usb_c1_oc_l = GPIO_USB_C1_OC_L_V2;
-static enum gpio_signal gpio_usb_c0_pd_rst_l = GPIO_USB_C0_PD_RST_L_V2;
-
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if ((signal == GPIO_USB_C0_PD_INT_ODL) &&
-			!gpio_get_level(gpio_usb_c0_pd_rst_l))
+			!gpio_get_level(GPIO_USB_C0_PD_RST_L))
 		return;
 
 	if ((signal == GPIO_USB_C1_PD_INT_ODL) &&
@@ -77,7 +70,7 @@ static void tcpc_alert_event(enum gpio_signal signal)
 static void anx74xx_cable_det_handler(void)
 {
 	int cable_det = gpio_get_level(GPIO_USB_C0_CABLE_DET);
-	int reset_n = gpio_get_level(gpio_usb_c0_pd_rst_l);
+	int reset_n = gpio_get_level(GPIO_USB_C0_PD_RST_L);
 
 	/*
 	 * A cable_det low->high transition was detected. If following the
@@ -115,31 +108,12 @@ const struct i2c_port_t i2c_ports[] = {
 	{"tcpc0",   I2C_PORT_TCPC0,   400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
 	{"tcpc1",   I2C_PORT_TCPC1,   400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 	{"thermal", I2C_PORT_THERMAL, 400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
-	{"kblight", I2C_PORT_KBLIGHT, 100, GPIO_I2C5_SCL, GPIO_I2C5_SDA},
 	{"sensor",  I2C_PORT_SENSOR,  400, GPIO_I2C7_SCL, GPIO_I2C7_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 static void board_init(void)
 {
-	if (system_get_board_version() < 2) {
-		/*
-		 * These GPIOs change pins depending on board version. Change
-		 * them here from the V2 pin to the V0 pin.
-		 */
-		gpio_usb_c1_oc_l = GPIO_USB_C1_OC_L_V0;
-		gpio_usb_c0_pd_rst_l = GPIO_USB_C0_PD_RST_L_V0;
-	} else {
-		/* Alternate functions for board version 2 only. */
-		gpio_set_alternate_function(GPIO_F, 0x02, 1); /* ADC8 */
-		gpio_set_alternate_function(GPIO_0, 0x10, 0); /* KSO_13 */
-		gpio_set_alternate_function(GPIO_8, 0x04, 0); /* KSO_14 */
-	}
-
-	/* Now that we know which pin to use, set the correct output mode. */
-	gpio_set_flags(gpio_usb_c1_oc_l, GPIO_OUT_HIGH);
-	gpio_set_flags(gpio_usb_c0_pd_rst_l, GPIO_OUT_HIGH);
-
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 }
@@ -148,7 +122,7 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 void board_overcurrent_event(int port)
 {
 	enum gpio_signal signal = (port == 0) ? GPIO_USB_C0_OC_L
-					      : gpio_usb_c1_oc_l;
+					      : GPIO_USB_C1_OC_L;
 
 	gpio_set_level(signal, 0);
 
@@ -175,10 +149,7 @@ void board_tcpc_init(void)
 
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_SWCTL_INT_ODL);
-	if (system_get_board_version() < 2)
-		gpio_enable_interrupt(GPIO_USB_C1_SWCTL_INT_ODL_V0);
-	else
-		gpio_enable_interrupt(GPIO_USB_C1_SWCTL_INT_ODL_V2);
+	gpio_enable_interrupt(GPIO_USB_C1_SWCTL_INT_ODL);
 
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
@@ -205,7 +176,7 @@ uint16_t tcpc_get_alert_status(void)
 	uint16_t status = 0;
 
 	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL)) {
-		if (gpio_get_level(gpio_usb_c0_pd_rst_l))
+		if (gpio_get_level(GPIO_USB_C0_PD_RST_L))
 			status |= PD_STATUS_TCPC_ALERT_0;
 	}
 
@@ -233,10 +204,10 @@ void board_set_tcpc_power_mode(int port, int mode)
 	case ANX74XX_NORMAL_MODE:
 		gpio_set_level(GPIO_EN_USB_C0_TCPC_PWR, 1);
 		msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
-		gpio_set_level(gpio_usb_c0_pd_rst_l, 1);
+		gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 		break;
 	case ANX74XX_STANDBY_MODE:
-		gpio_set_level(gpio_usb_c0_pd_rst_l, 0);
+		gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 		msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
 		gpio_set_level(GPIO_EN_USB_C0_TCPC_PWR, 0);
 		msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
@@ -252,7 +223,7 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
 
 	/* Assert reset to TCPC0 (anx3429) */
-	gpio_set_level(gpio_usb_c0_pd_rst_l, 0);
+	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 
 	/* TCPC1 (ps8751) requires 1ms reset down assertion */
 	msleep(MAX(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
@@ -268,14 +239,3 @@ void board_reset_pd_mcu(void)
 	msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 	board_set_tcpc_power_mode(USB_PD_PORT_ANX74XX, 1);
 }
-
-static void board_kblight_init(void)
-{
-	/*
-	 * Enable keyboard backlight. This needs to be done here because
-	 * the chip doesn't have power until PP3300_S0 comes up.
-	 */
-	gpio_set_level(GPIO_KB_BL_EN, 1);
-	lm3630a_poweron();
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_kblight_init, HOOK_PRIO_DEFAULT);

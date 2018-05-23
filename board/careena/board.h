@@ -36,9 +36,4 @@
 
 #define CONFIG_LED_PWM_COUNT 1
 
-#define I2C_PORT_KBLIGHT NPCX_I2C_PORT5_0
-
-/* KB backlight driver */
-#define CONFIG_LED_DRIVER_LM3630A
-
 #endif /* __CROS_EC_BOARD_H */

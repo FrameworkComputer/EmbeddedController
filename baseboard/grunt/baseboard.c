@@ -131,7 +131,7 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 /* BC 1.2 chip Configuration */
 const struct bq24392_config_t bq24392_config[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {
-		.chip_enable_pin = GPIO_USB_C0_BC12_VBUS_ON_L_V2,
+		.chip_enable_pin = GPIO_USB_C0_BC12_VBUS_ON_L,
 		.chg_det_pin = GPIO_USB_C0_BC12_CHG_DET,
 		.flags = BQ24392_FLAGS_ENABLE_ACTIVE_LOW,
 	},
