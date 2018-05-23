@@ -364,6 +364,9 @@ static int nx20p3483_dump(int port)
 			return rv;
 		}
 		ccprintf("[0x%02x]: 0x%02x\n", reg_addr, reg);
+
+		/* Flush every call otherwise buffer may get full */
+		cflush();
 	}
 
 	return EC_SUCCESS;

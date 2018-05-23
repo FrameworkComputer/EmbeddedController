@@ -51,6 +51,8 @@ static int sn5s330_dump(int port)
 	const int i2c_port = ppc_chips[port].i2c_port;
 	const int i2c_addr = ppc_chips[port].i2c_addr;
 
+	/* Flush after every set otherwise console buffer may get full. */
+
 	for (i = SN5S330_FUNC_SET1; i <= SN5S330_FUNC_SET12; i++) {
 		i2c_read8(i2c_port, i2c_addr, i, &data);
 		ccprintf("FUNC_SET%d [%02Xh] = 0x%02x\n",
@@ -59,6 +61,8 @@ static int sn5s330_dump(int port)
 			 data);
 	}
 
+	cflush();
+
 	for (i = SN5S330_INT_STATUS_REG1; i <= SN5S330_INT_STATUS_REG4; i++) {
 		i2c_read8(i2c_port, i2c_addr, i, &data);
 		ccprintf("INT_STATUS_REG%d [%02Xh] = 0x%02x\n",
@@ -66,6 +70,8 @@ static int sn5s330_dump(int port)
 			 i,
 			 data);
 	}
+
+	cflush();
 
 	for (i = SN5S330_INT_TRIP_RISE_REG1; i <= SN5S330_INT_TRIP_RISE_REG3;
 	     i++) {
@@ -76,6 +82,8 @@ static int sn5s330_dump(int port)
 			 data);
 	}
 
+	cflush();
+
 	for (i = SN5S330_INT_TRIP_FALL_REG1; i <= SN5S330_INT_TRIP_FALL_REG3;
 	     i++) {
 		i2c_read8(i2c_port, i2c_addr, i, &data);
@@ -84,6 +92,8 @@ static int sn5s330_dump(int port)
 			 i,
 			 data);
 	}
+
+	cflush();
 
 	for (i = SN5S330_INT_MASK_RISE_REG1; i <= SN5S330_INT_MASK_RISE_REG3;
 	     i++) {
@@ -94,6 +104,8 @@ static int sn5s330_dump(int port)
 			 data);
 	}
 
+	cflush();
+
 	for (i = SN5S330_INT_MASK_FALL_REG1; i <= SN5S330_INT_MASK_FALL_REG3;
 	     i++) {
 		i2c_read8(i2c_port, i2c_addr, i, &data);
@@ -102,6 +114,8 @@ static int sn5s330_dump(int port)
 			 i,
 			 data);
 	}
+
+	cflush();
 
 	return EC_SUCCESS;
 }
