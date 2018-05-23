@@ -6,6 +6,7 @@
 /* EC2I control module for IT83xx. */
 
 #include "common.h"
+#include "console.h"
 #include "ec2i_chip.h"
 #include "hooks.h"
 #include "registers.h"
@@ -13,8 +14,7 @@
 #include "timer.h"
 #include "util.h"
 
-/* PNPCFG settings */
-static const struct ec2i_t pnpcfg_settings[] = {
+static const struct ec2i_t keyboard_settings[] = {
 	/* Select logical device 06h(keyboard) */
 	{HOST_INDEX_LDN, LDN_KBC_KEYBOARD},
 	/* Set IRQ=01h for logical device */
@@ -43,21 +43,27 @@ static const struct ec2i_t pnpcfg_settings[] = {
 #endif
 	/* Enable logical device */
 	{HOST_INDEX_LDA, 0x01},
+};
 
+static const struct ec2i_t mouse_settings[] = {
 	/* Select logical device 05h(mouse) */
 	{HOST_INDEX_LDN, LDN_KBC_MOUSE},
 	/* Set IRQ=0Ch for logical device */
 	{HOST_INDEX_IRQNUMX, 0x0C},
 	/* Enable logical device */
 	{HOST_INDEX_LDA, 0x01},
+};
 
+static const struct ec2i_t pm1_settings[] = {
 	/* Select logical device 11h(PM1 ACPI) */
 	{HOST_INDEX_LDN, LDN_PMC1},
 	/* Set IRQ=00h for logical device */
 	{HOST_INDEX_IRQNUMX, 0x00},
 	/* Enable logical device */
 	{HOST_INDEX_LDA, 0x01},
+};
 
+static const struct ec2i_t pm2_settings[] = {
 	/* Select logical device 12h(PM2) */
 	{HOST_INDEX_LDN, LDN_PMC2},
 	/* I/O Port Base Address 200h/204h */
@@ -69,7 +75,9 @@ static const struct ec2i_t pnpcfg_settings[] = {
 	{HOST_INDEX_IRQNUMX, 0x00},
 	/* Enable logical device */
 	{HOST_INDEX_LDA, 0x01},
+};
 
+static const struct ec2i_t smfi_settings[] = {
 	/* Select logical device 0Fh(SMFI) */
 	{HOST_INDEX_LDN, LDN_SMFI},
 	/* H2RAM LPC I/O cycle Dxxx */
@@ -78,7 +86,13 @@ static const struct ec2i_t pnpcfg_settings[] = {
 	{HOST_INDEX_DSLDC7, 0x01},
 	/* Enable logical device */
 	{HOST_INDEX_LDA, 0x01},
+};
 
+/*
+ * PM3 is enabled and base address is set to 80h so that we are able to get an
+ * interrupt when host outputs data to port 80.
+ */
+static const struct ec2i_t pm3_settings[] = {
 	/* Select logical device 17h(PM3) */
 	{HOST_INDEX_LDN, LDN_PMC3},
 	/* I/O Port Base Address 80h */
@@ -90,6 +104,14 @@ static const struct ec2i_t pnpcfg_settings[] = {
 	{HOST_INDEX_IRQNUMX, 0x00},
 	/* Enable logical device */
 	{HOST_INDEX_LDA, 0x01},
+};
+
+/*
+ * This logical device is not enabled, however P80L* settings need to be
+ * performed on this logical device to ensure that port80 BRAM index is
+ * initialized correctly.
+ */
+static const struct ec2i_t rtct_settings[] = {
 	/* Select logical device 10h(RTCT) */
 	{HOST_INDEX_LDN, LDN_RTCT},
 	/* P80L Begin Index */
@@ -98,7 +120,10 @@ static const struct ec2i_t pnpcfg_settings[] = {
 	{HOST_INDEX_DSLDC5, P80L_P80LE},
 	/* P80L Current Index */
 	{HOST_INDEX_DSLDC6, P80L_P80LC},
+};
+
 #ifdef CONFIG_UART_HOST
+static const struct ec2i_t uart2_settings[] = {
 	/* Select logical device 2h(UART2) */
 	{HOST_INDEX_LDN, LDN_UART2},
 	/*
@@ -120,9 +145,8 @@ static const struct ec2i_t pnpcfg_settings[] = {
 	{HOST_INDEX_IRQTP, 0x02},
 	/* Enable logical device */
 	{HOST_INDEX_LDA, 0x01},
-#endif
 };
-BUILD_ASSERT(ARRAY_SIZE(pnpcfg_settings) == EC2I_SETTING_COUNT);
+#endif
 
 /* EC2I access index/data port */
 enum ec2i_access {
@@ -251,17 +275,36 @@ enum ec2i_message ec2i_write(enum host_pnpcfg_index index, uint8_t data)
 	return ret;
 }
 
+static void pnpcfg_configure(const struct ec2i_t *settings, size_t entries)
+{
+	size_t i;
+
+	for (i = 0; i < entries; i++) {
+		if (ec2i_write(settings[i].index_port, settings[i].data_port) ==
+		    EC2I_WRITE_ERROR) {
+			ccprints("Failed to apply %d", i);
+			break;
+		}
+	}
+}
+
+#define PNPCFG(_s)						\
+	pnpcfg_configure(_s##_settings, ARRAY_SIZE(_s##_settings))
+
 static void pnpcfg_init(void)
 {
-	int table;
-
 	/* Host access is disabled */
 	IT83XX_EC2I_LSIOHA |= 0x3;
 
-	for (table = 0x00; table < EC2I_SETTING_COUNT; table++) {
-		if (ec2i_write(pnpcfg_settings[table].index_port,
-			pnpcfg_settings[table].data_port) == EC2I_WRITE_ERROR)
-				break;
-	}
+	PNPCFG(keyboard);
+	PNPCFG(mouse);
+	PNPCFG(pm1);
+	PNPCFG(pm2);
+	PNPCFG(smfi);
+	PNPCFG(pm3);
+	PNPCFG(rtct);
+#ifdef CONFIG_UART_HOST
+	PNPCFG(uart2);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, pnpcfg_init, HOOK_PRIO_DEFAULT);
