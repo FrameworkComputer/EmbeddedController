@@ -319,6 +319,7 @@ DECLARE_CONSOLE_COMMAND(forcetime, command_force_time,
 			"Force current time");
 #endif
 
+#ifdef CONFIG_CMD_GETTIME
 static int command_get_time(int argc, char **argv)
 {
 	timestamp_t ts = get_time();
@@ -329,6 +330,7 @@ static int command_get_time(int argc, char **argv)
 DECLARE_SAFE_CONSOLE_COMMAND(gettime, command_get_time,
 			     NULL,
 			     "Print current time");
+#endif
 
 #ifdef CONFIG_CMD_TIMERINFO
 int command_timer_info(int argc, char **argv)
