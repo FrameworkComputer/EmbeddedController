@@ -139,6 +139,17 @@
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_WATCHDOG_HELP
 
+/* No need to hibernate, remove console commands that are not very useful. */
+#undef CONFIG_HIBERNATE
+#undef CONFIG_CONSOLE_CHANNEL
+#undef CONFIG_CONSOLE_HISTORY
+#undef CONFIG_CMD_GETTIME
+#undef CONFIG_CMD_MD
+#undef CONFIG_CMD_RW
+#undef CONFIG_CMD_SHMEM
+#undef CONFIG_CMD_TIMERINFO
+#undef CONFIG_CMD_WAITMS
+
 /*
  * Enlarge the allowed write / read count for trackpad debug
  * In the extended I2C reading over I2C ( >= 128 bytes ), the header size
