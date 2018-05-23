@@ -99,6 +99,14 @@
 #define CONFIG_STREAM_USB
 #define CONFIG_USB_UPDATE
 
+#undef CONFIG_UPDATE_PDU_SIZE
+#ifdef BOARD_WAND
+/* Wand does not have enough space to fit 4k PDU. */
+#define CONFIG_UPDATE_PDU_SIZE 2048
+#else
+#define CONFIG_UPDATE_PDU_SIZE 4096
+#endif
+
 #undef CONFIG_USB_MAXPOWER_MA
 #define CONFIG_USB_MAXPOWER_MA 100
 

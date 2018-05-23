@@ -69,6 +69,8 @@ OPENSSL_LDFLAGS := $(shell $(PKG_CONFIG) --libs openssl)
 
 $(out)/util/gen_touchpad_hash: BUILD_CFLAGS += $(OPENSSL_CFLAGS)
 $(out)/util/gen_touchpad_hash: BUILD_LDFLAGS += $(OPENSSL_LDFLAGS)
+
+deps-y += $(out)/util/gen_touchpad_hash.d
 endif # CONFIG_TOUCHPAD_VIRTUAL_OFF
 
 cbi-util-objs=../common/crc8.o ../common/cbi.o
