@@ -18,6 +18,7 @@
 #include "util.h"
 #include "usb_api.h"
 #include "usb_hid_touchpad.h"
+#include "watchdog.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_TOUCHPAD, outstr)
@@ -541,6 +542,7 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 		if (rv)
 			return rv;
 		CPRINTS("%s: page %d updated.", __func__, addr / FW_PAGE_SIZE);
+		watchdog_reload();
 	}
 
 	if (offset + size == FW_SIZE) {
