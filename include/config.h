@@ -945,6 +945,15 @@
 /*****************************************************************************/
 
 /*
+ * Make it possible for console to be output to different channels that can be
+ * turned on and off.
+ *
+ * Boards that do not require a typical FAFT flow may #undef this to reduce
+ * image size.
+ */
+#define CONFIG_CONSOLE_CHANNEL
+
+/*
  * Provide additional help on console commands, such as the supported
  * options/usage.
  *
