@@ -107,6 +107,8 @@ static inline void chipset_reset(void) { }
 static inline void power_interrupt(enum gpio_signal signal) { }
 static inline void chipset_handle_espi_reset_assert(void) { }
 static inline void chipset_handle_reboot(void) { }
+static inline void chipset_reset_request_interrupt(enum gpio_signal signal) { }
+static inline void chipset_power_signal_interrupt(enum gpio_signal signal) { }
 
 #endif /* !HAS_TASK_CHIPSET */
 
