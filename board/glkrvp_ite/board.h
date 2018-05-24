@@ -101,6 +101,7 @@
 #define CONFIG_VSTORE_SLOT_COUNT 1
 
 /* Optional feature - used by ITE */
+#define CONFIG_IT83XX_ENABLE_MOUSE_DEVICE
 #define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
 
 /* I2C ports */

@@ -45,6 +45,7 @@ static const struct ec2i_t keyboard_settings[] = {
 	{HOST_INDEX_LDA, 0x01},
 };
 
+#ifdef CONFIG_IT83XX_ENABLE_MOUSE_DEVICE
 static const struct ec2i_t mouse_settings[] = {
 	/* Select logical device 05h(mouse) */
 	{HOST_INDEX_LDN, LDN_KBC_MOUSE},
@@ -53,6 +54,7 @@ static const struct ec2i_t mouse_settings[] = {
 	/* Enable logical device */
 	{HOST_INDEX_LDA, 0x01},
 };
+#endif
 
 static const struct ec2i_t pm1_settings[] = {
 	/* Select logical device 11h(PM1 ACPI) */
@@ -297,7 +299,9 @@ static void pnpcfg_init(void)
 	IT83XX_EC2I_LSIOHA |= 0x3;
 
 	PNPCFG(keyboard);
+#ifdef CONFIG_IT83XX_ENABLE_MOUSE_DEVICE
 	PNPCFG(mouse);
+#endif
 	PNPCFG(pm1);
 	PNPCFG(pm2);
 	PNPCFG(smfi);
