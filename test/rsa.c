@@ -17,10 +17,11 @@
 #include "rsa2048-F4.h"
 #endif
 
+static uint32_t rsa_workbuf[3 * RSANUMBYTES/4];
+
 void run_test(void)
 {
 	int good;
-	uint32_t rsa_workbuf[3 * RSANUMBYTES/4];
 
 	good = rsa_verify(rsa_key, sig, hash, rsa_workbuf);
 	if (!good) {

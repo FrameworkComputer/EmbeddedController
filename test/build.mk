@@ -11,7 +11,7 @@ test-list-y=pingpong timer_calib timer_dos timer_jump mutex utils utils_str
 
 test-list-$(BOARD_BDS)+=
 
-test-list-$(BOARD_HAMMER)+=entropy
+test-list-$(BOARD_HAMMER)+=entropy rsa3
 
 # Samus has board-specific chipset code, and the tests don't
 # compile with it. Disable them for now.
