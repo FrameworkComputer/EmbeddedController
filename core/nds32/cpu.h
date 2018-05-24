@@ -55,5 +55,6 @@ static inline uint32_t get_itype(void)
 void cpu_init(void);
 
 extern uint32_t ilp;
+extern uint32_t ec_reset_lp;
 
 #endif /* __CROS_EC_CPU_H */

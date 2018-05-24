@@ -180,6 +180,9 @@ int cpu_int_entry_number;
  */
 uint32_t ilp;
 
+/* This variable is used to save link pointer register at EC reset. */
+uint32_t ec_reset_lp;
+
 static inline task_ *__task_id_to_ptr(task_id_t id)
 {
 	return tasks + id;
