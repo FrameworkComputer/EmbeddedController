@@ -182,9 +182,9 @@ static int test_memchr(void)
 {
 	char *buf = "1234";
 
-	TEST_ASSERT(memchr("123", '4', 8) == NULL);
+	TEST_ASSERT(memchr("123567890", '4', 8) == NULL);
 	TEST_ASSERT(memchr("123", '3', 2) == NULL);
-	TEST_ASSERT(memchr(buf, '3', 8) == buf + 2);
+	TEST_ASSERT(memchr(buf, '3', 4) == buf + 2);
 	TEST_ASSERT(memchr(buf, '4', 4) == buf + 3);
 	return EC_SUCCESS;
 }
