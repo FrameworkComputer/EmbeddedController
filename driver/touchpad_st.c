@@ -34,10 +34,11 @@ BUILD_ASSERT(sizeof(struct st_tp_event_t) == 8);
 static struct st_tp_system_info_t system_info;
 
 static int st_tp_read_all_events(void);
+static int st_tp_read_host_buffer_header(void);
 static int st_tp_send_ack(void);
 static int st_tp_start_scan(void);
 static int st_tp_stop_scan(void);
-static int st_tp_read_host_buffer_header(void);
+static int st_tp_update_system_state(int new_state, int mask);
 
 /*
  * Current system state, meaning of each bit is defined below.
@@ -121,9 +122,8 @@ static int st_tp_parse_finger(struct usb_hid_touchpad_report *report,
 
 static int st_tp_write_hid_report(void)
 {
-	int ret, i, num_finger;
+	int ret, i, num_finger, num_events;
 	struct usb_hid_touchpad_report report;
-	struct st_tp_event_t *event;
 
 	ret = st_tp_read_host_buffer_header();
 	if (ret)
@@ -140,31 +140,22 @@ static int st_tp_write_hid_report(void)
 			 SYSTEM_STATE_DOME_SWITCH_LEVEL);
 	}
 
-	ret = st_tp_read_all_events();
-	if (ret)
-		return ret;
+	num_events = st_tp_read_all_events();
+	if (num_events < 0)
+		return -num_events;
 
 	memset(&report, 0, sizeof(report));
 	report.id = 0x1;
 	num_finger = 0;
 
-	for (i = 0; i < ARRAY_SIZE(rx_buf.events); i++) {
-		event = &rx_buf.events[i];
+	for (i = 0; i < num_events; i++) {
+		struct st_tp_event_t *e = &rx_buf.events[i];
 
-		/*
-		 * this is not a valid event, and assume all following
-		 * events are invalid too
-		 */
-		if (event->magic != 0x3)
-			break;
-
-		switch (event->evt_id) {
+		switch (e->evt_id) {
 		case ST_TP_EVENT_ID_ENTER_POINTER:
 		case ST_TP_EVENT_ID_MOTION_POINTER:
 		case ST_TP_EVENT_ID_LEAVE_POINTER:
-			num_finger = st_tp_parse_finger(&report,
-							event,
-							num_finger);
+			num_finger = st_tp_parse_finger(&report, e, num_finger);
 			break;
 		default:
 			break;
@@ -176,7 +167,7 @@ static int st_tp_write_hid_report(void)
 	report.timestamp = irq_ts / USB_HID_TOUCHPAD_TIMESTAMP_UNIT;
 
 	set_touchpad_report(&report);
-	return ret;
+	return 0;
 }
 
 static int st_tp_read_report(void)
@@ -275,7 +266,8 @@ static int st_tp_start_scan(void)
 	return ret;
 }
 
-static int st_tp_read_host_data_memory(uint16_t addr, void *rx_buf, int len) {
+static int st_tp_read_host_data_memory(uint16_t addr, void *rx_buf, int len)
+{
 	uint8_t tx_buf[] = {
 		ST_TP_CMD_READ_HOST_DATA_MEMORY, addr >> 8, addr & 0xFF
 	};
@@ -372,18 +364,83 @@ static int st_tp_read_system_info(int reload)
 	return ret;
 }
 
+/*
+ * Handles error reports.
+ *
+ * @return 0 for minor errors, non-zero for major errors (must halt).
+ * TODO(stimim): check for major errors.
+ */
+static int st_tp_handle_error_report(struct st_tp_event_t *e)
+{
+	if (e->magic != ST_TP_EVENT_MAGIC ||
+	    e->evt_id != ST_TP_EVENT_ID_ERROR_REPORT)
+		return 0;
+
+	CPRINTS("Touchpad error: %x %x", e->report.report_type,
+		((e->report.info[0] << 24) | (e->report.info[1] << 16) |
+		 (e->report.info[2] << 8) | (e->report.info[3] << 0)));
+
+	return 0;
+}
+
+/*
+ * Read all events, and handle errors.
+ *
+ * @return number of events available on success, or negative error code on
+ *         failure.
+ */
 static int st_tp_read_all_events(void)
 {
 	uint8_t cmd = ST_TP_CMD_READ_ALL_EVENTS;
 	int rx_len = sizeof(rx_buf.events) + ST_TP_DUMMY_BYTE;
+	int ret;
+	int i;
 
-	return spi_transaction(SPI, &cmd, 1, (uint8_t *)&rx_buf, rx_len);
+	ret = spi_transaction(SPI, &cmd, 1, (uint8_t *)&rx_buf, rx_len);
+	if (ret)
+		return -ret;
+
+	for (i = 0; i < ARRAY_SIZE(rx_buf.events); i++) {
+		struct st_tp_event_t *e = &rx_buf.events[i];
+
+		if (e->magic != ST_TP_EVENT_MAGIC)
+			break;
+
+		if (e->evt_id == ST_TP_EVENT_ID_ERROR_REPORT) {
+			ret = st_tp_handle_error_report(e);
+			if (ret)
+				return -ret;
+		}
+	}
+	return i;
 }
 
+/*
+ * Reset touchpad.  This function will wait for "controller ready" event after
+ * the touchpad is reset.
+ */
 static int st_tp_reset(void)
 {
+	int i, num_events;
+
 	board_touchpad_reset();
-	return st_tp_read_all_events();
+
+	while (1) {
+		num_events = st_tp_read_all_events();
+		if (num_events < 0)
+			return -num_events;
+
+		for (i = 0; i < num_events; i++) {
+			struct st_tp_event_t *e = &rx_buf.events[i];
+
+			if (e->evt_id == ST_TP_EVENT_ID_CONTROLLER_READY)
+				break;
+		}
+
+		msleep(10);
+	}
+	CPRINTS("Touchpad ready");
+	return 0;
 }
 
 /* Initialize the controller ICs after reset */
