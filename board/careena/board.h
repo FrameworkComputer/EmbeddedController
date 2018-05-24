@@ -30,6 +30,11 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
+enum battery_type {
+	BATTERY_PANASONIC,
+	BATTERY_TYPE_COUNT,
+};
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
