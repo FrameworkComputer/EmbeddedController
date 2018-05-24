@@ -122,6 +122,7 @@
 /* Common battery defines */
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
+#define CONFIG_BATTERY_FUEL_GAUGE
 /* TODO(b/74427009): Ensure this works in dead battery conditions */
 #define CONFIG_BATTERY_HW_PRESENT_CUSTOM
 #define CONFIG_BATTERY_PRESENT_CUSTOM

@@ -5,8 +5,8 @@
  * Battery pack vendor provided charging profile
  */
 
+#include "battery_fuel_gauge.h"
 #include "common.h"
-#include "baseboard_battery.h"
 #include "util.h"
 
 /*

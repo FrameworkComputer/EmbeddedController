@@ -303,6 +303,13 @@
 #undef CONFIG_BATTERY_DEVICE_CHEMISTRY
 
 /*
+ * If defined, the board must supply fuel gauge and battery information for
+ * each supported battery. This information is then used for battery cut off
+ * and to check the charge/discharge FET status.
+ */
+#undef CONFIG_BATTERY_FUEL_GAUGE
+
+/*
  * Critical battery shutdown timeout (seconds)
  *
  * If the battery is at extremely low charge (and discharging) or extremely

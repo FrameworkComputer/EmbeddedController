@@ -1,12 +1,12 @@
 /* Copyright 2018 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
+ *
+ * Battery fuel gauge parameters
  */
 
-/* Grunt baseboard battery configuration */
-
-#ifndef __CROS_EC_BASEBOARD_BATTERY_H
-#define __CROS_EC_BASEBOARD_BATTERY_H
+#ifndef __CROS_EC_BATTERY_FUEL_GAUGE_H
+#define __CROS_EC_BATTERY_FUEL_GAUGE_H
 
 #include "battery.h"
 
@@ -32,13 +32,14 @@ struct fuel_gauge_info {
 	const struct ship_mode_info ship_mode;
 	const struct fet_info fet;
 };
+
 struct board_batt_params {
 	const struct fuel_gauge_info fuel_gauge;
 	const struct battery_info batt_info;
 };
 
-/* Forward declare board specific data used by baseboard code */
+/* Forward declare board specific data used by common code */
 extern const struct board_batt_params board_battery_info[];
 extern const enum battery_type DEFAULT_BATTERY_TYPE;
 
-#endif /* __CROS_EC_BASEBOARD_BATTERY_H */
+#endif /* __CROS_EC_BATTERY_FUEL_GAUGE_H */

@@ -2,11 +2,10 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Battery pack vendor provided charging profile
+ * Battery fuel gauge parameters
  */
 
-#include "battery.h"
-#include "baseboard_battery.h"
+#include "battery_fuel_gauge.h"
 #include "battery_smart.h"
 #include "charge_state.h"
 #include "common.h"
@@ -21,73 +20,70 @@
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
 /* Get type of the battery connected on the board */
-static int board_get_battery_type(void)
+static int get_battery_type(void)
 {
-	char manu_name[32], device_name[32];
+	char manuf_name[32], device_name[32];
 	int i;
-	static enum battery_type board_battery_type = BATTERY_TYPE_COUNT;
+	static enum battery_type battery_type = BATTERY_TYPE_COUNT;
 
 	/*
-	 * If board_battery_type is not the default value, then can return here
+	 * If battery_type is not the default value, then can return here
 	 * as there is no need to query the fuel gauge.
 	 */
-	if (board_battery_type != BATTERY_TYPE_COUNT)
-		return board_battery_type;
+	if (battery_type != BATTERY_TYPE_COUNT)
+		return battery_type;
 
-	/* Get the manufacture name. If can't read then just exit */
-	if (battery_manufacturer_name(manu_name, sizeof(manu_name)))
-		return board_battery_type;
+	/* Get the manufacturer name. If can't read then just exit */
+	if (battery_manufacturer_name(manuf_name, sizeof(manuf_name)))
+		return battery_type;
 
 	/*
 	 * Compare the manufacturer name read from the fuel gauge to the
-	 * manufacture names defined in the board_battery_info table above. If
+	 * manufacturer names defined in the board_battery_info table. If
 	 * a device name has been specified in the board_battery_info table,
-	 * then both the manufacture and device name must match.
+	 * then both the manufacturer and device name must match.
 	 */
 	for (i = 0; i < BATTERY_TYPE_COUNT; i++) {
 		const struct fuel_gauge_info * const fuel_gauge =
 			&board_battery_info[i].fuel_gauge;
 
-		if (strcasecmp(manu_name, fuel_gauge->manuf_name))
+		if (strcasecmp(manuf_name, fuel_gauge->manuf_name))
 			continue;
 
-		if (fuel_gauge->device_name == NULL) {
-			board_battery_type = i;
-			break;
+		if (fuel_gauge->device_name != NULL) {
+
+			if (battery_device_name(device_name,
+						sizeof(device_name)))
+				continue;
+
+			if (strcasecmp(device_name, fuel_gauge->device_name))
+				continue;
 		}
 
-		if (battery_device_name(device_name, sizeof(device_name)))
-			continue;
-
-		if (strcasecmp(device_name, fuel_gauge->device_name))
-			continue;
-
 		CPRINTS("found batt:%s", fuel_gauge->manuf_name);
-		board_battery_type = i;
-
+		battery_type = i;
 		break;
 	}
 
-	return board_battery_type;
+	return battery_type;
 }
 
 /*
  * Initialize the battery type for the board.
  *
- * Very first battery board_battery_info is called by the charger driver to
- * initialize the charger parameters hence initialize the battery type for the
- * board as soon as the I2C is initialized.
+ * The first call to battery_get_info() is when the charger task starts, so
+ * initialize the battery type as soon as I2C is initialized.
  */
-static void board_init_battery_type(void)
+static void init_battery_type(void)
 {
-	if (board_get_battery_type() == BATTERY_TYPE_COUNT)
+	if (get_battery_type() == BATTERY_TYPE_COUNT)
 		CPRINTS("battery not found");
 }
-DECLARE_HOOK(HOOK_INIT, board_init_battery_type, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, init_battery_type, HOOK_PRIO_INIT_I2C + 1);
 
-static inline const struct board_batt_params *board_get_batt_params(void)
+static inline const struct board_batt_params *get_batt_params(void)
 {
-	int type = board_get_battery_type();
+	int type = get_battery_type();
 
 	return &board_battery_info[type == BATTERY_TYPE_COUNT ?
 		DEFAULT_BATTERY_TYPE : type];
@@ -95,7 +91,7 @@ static inline const struct board_batt_params *board_get_batt_params(void)
 
 const struct battery_info *battery_get_info(void)
 {
-	return &board_get_batt_params()->batt_info;
+	return &get_batt_params()->batt_info;
 }
 
 int board_cut_off_battery(void)
@@ -103,13 +99,13 @@ int board_cut_off_battery(void)
 	int rv;
 	int cmd;
 	int data;
-	int type = board_get_battery_type();
+	int type = get_battery_type();
 
 	/* If battery type is unknown can't send ship mode command */
 	if (type == BATTERY_TYPE_COUNT)
 		return EC_RES_ERROR;
 
-	/* Ship mode command must be sent twice to take effect */
+	/* Ship mode command requires writing 2 data values */
 	cmd = board_battery_info[type].fuel_gauge.ship_mode.reg_addr;
 	data = board_battery_info[type].fuel_gauge.ship_mode.reg_data[0];
 	rv = sb_write(cmd, data);
@@ -120,37 +116,6 @@ int board_cut_off_battery(void)
 	rv = sb_write(cmd, data);
 
 	return rv ? EC_RES_ERROR : EC_RES_SUCCESS;
-}
-
-int charger_profile_override(struct charge_state_data *curr)
-{
-	int type = board_get_battery_type();
-
-	/*
-	 * Some batteries, when fully discharged, may request 0 voltage/current
-	 * which can then inadvertently disable the charger leading to the
-	 * battery not waking up. For this type of battery, marked by
-	 * override_nil being set, if SOC is 0 and requested voltage/current is
-	 * 0, then use precharge current and max voltage instead.
-	 */
-	if (type != BATTERY_TYPE_COUNT &&
-	    board_battery_info[type].fuel_gauge.override_nil) {
-		int v = board_battery_info[type].batt_info.voltage_max;
-		int i = board_battery_info[type].batt_info.precharge_current;
-
-		if (curr->requested_voltage == 0 &&
-		    curr->requested_current == 0 &&
-		    curr->batt.state_of_charge == 0) {
-			/*
-			 * Battery is dead, override with precharge current and
-			 * max voltage setting for the battery.
-			 */
-			curr->requested_voltage = v;
-			curr->requested_current = i;
-		}
-	}
-
-	return 0;
 }
 
 enum battery_present battery_hw_present(void)
@@ -184,7 +149,7 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 	int rv;
 	int reg;
 	uint8_t data[6];
-	int type = board_get_battery_type();
+	int type = get_battery_type();
 
 	/* If battery type is not known, can't check CHG/DCHG FETs */
 	if (type == BATTERY_TYPE_COUNT) {
