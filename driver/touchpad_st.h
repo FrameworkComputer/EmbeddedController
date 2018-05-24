@@ -227,6 +227,7 @@ struct st_tp_event_t {
 		} __packed finger;
 
 		struct {
+#define ST_TP_STATUS_CMD_ECHO 0x1
 			uint8_t report_type;
 			uint8_t info[4];
 			uint8_t reserved;

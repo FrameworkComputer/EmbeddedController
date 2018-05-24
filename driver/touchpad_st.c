@@ -316,7 +316,7 @@ static int st_tp_load_host_data(uint8_t mem_id)
 			ret = EC_SUCCESS;
 			break;
 		}
-		usleep(10 * MSEC);
+		msleep(10);
 	}
 	return ret;
 }
@@ -457,7 +457,6 @@ static void st_tp_init(void)
 
 	st_tp_start_scan();
 }
-DECLARE_DEFERRED(st_tp_init);
 
 #ifdef CONFIG_USB_UPDATE
 int touchpad_get_info(struct touchpad_info *tp)
@@ -534,7 +533,7 @@ static int wait_for_flash_ready(uint8_t type)
 				      (uint8_t *)&rx_buf, 2);
 		if (ret == EC_SUCCESS && !(rx_buf.bytes[0] & 0x80))
 			break;
-		usleep(50 * MSEC);
+		msleep(50);
 	}
 	return retry >= 0 ? ret : EC_ERROR_TIMEOUT;
 }
@@ -669,6 +668,58 @@ static int st_tp_write_flash(int offset, int size, const uint8_t *data)
 }
 
 /*
+ * Keep polling until received error event or command echo.
+ */
+static int st_tp_check_command_echo(const uint8_t *cmd,
+				    const size_t len,
+				    int retry)
+{
+	int num_events, i;
+
+	while (retry--) {
+		num_events = st_tp_read_all_events();
+		if (num_events < 0)
+			return -num_events;
+
+		for (i = 0; i < num_events; i++) {
+			struct st_tp_event_t *e = &rx_buf.events[i];
+
+			if (e->evt_id == ST_TP_EVENT_ID_STATUS_REPORT &&
+			    e->report.report_type == ST_TP_STATUS_CMD_ECHO &&
+			    memcmp(e->report.info, cmd, MIN(4, len)) == 0)
+				return 0;
+		}
+		msleep(100);
+	}
+	return EC_ERROR_TIMEOUT;
+}
+
+static void st_tp_full_initialize(void)
+{
+	int ret;
+	uint8_t tx_buf[] = { ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, 0x03 };
+
+	st_tp_stop_scan();
+	st_tp_reset();
+
+	CPRINTS("Start full initialization");
+	spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
+
+	msleep(100);
+
+	ret = st_tp_check_command_echo(tx_buf, sizeof(tx_buf), 20);
+	if (ret) {
+		CPRINTS("Full panel initialization failed.");
+		return;
+	}
+
+	CPRINTS("Full panel initialization completed.");
+
+	st_tp_init();
+}
+DECLARE_DEFERRED(st_tp_full_initialize);
+
+/*
  * @param offset: should be address between 0 to 1M, aligned with
  *	ST_TP_DMA_CHUNK_SIZE.
  * @param size: length of `data` array.
@@ -677,7 +728,6 @@ static int st_tp_write_flash(int offset, int size, const uint8_t *data)
 int touchpad_update_write(int offset, int size, const uint8_t *data)
 {
 	int ret;
-	uint8_t tx_buf[] = { ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, 0x03 };
 
 	CPRINTS("%s %08x %d", __func__, offset, size);
 	if (offset == 0) {
@@ -704,12 +754,7 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 	if (offset + size == CONFIG_TOUCHPAD_VIRTUAL_SIZE) {
 		CPRINTS("%s: End update, wait for reset.", __func__);
 
-		board_touchpad_reset();
-
-		/* Full panel initialization */
-		spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
-
-		hook_call_deferred(&st_tp_init_data, 10 * MSEC);
+		hook_call_deferred(&st_tp_full_initialize_data, 0);
 	}
 
 	return EC_SUCCESS;
@@ -746,13 +791,16 @@ static int command_touchpad_st(int argc, char **argv)
 {
 	if (argc != 2)
 		return EC_ERROR_PARAM_COUNT;
-	if (strcasecmp(argv[1], "enable") == 0) {
+	if (strcasecmp(argv[1], "version") == 0) {
+		st_tp_read_system_info(1);
+		return EC_SUCCESS;
+	} else if (strcasecmp(argv[1], "calibrate") == 0) {
+		st_tp_full_initialize();
+		return EC_SUCCESS;
+	} else if (strcasecmp(argv[1], "enable") == 0) {
 		return EC_ERROR_NOT_HANDLED;
 	} else if (strcasecmp(argv[1], "disable") == 0) {
 		return EC_ERROR_NOT_HANDLED;
-	} else if (strcasecmp(argv[1], "version") == 0) {
-		st_tp_read_system_info(1);
-		return 0;
 	} else {
 		return EC_ERROR_PARAM1;
 	}
