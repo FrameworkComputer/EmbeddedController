@@ -17,14 +17,21 @@ test-list-$(BOARD_HAMMER)+=entropy rsa3
 # compile with it. Disable them for now.
 test-list-$(BOARD_SAMUS)=
 
-# So does Cr50
-test-list-$(BOARD_CR50)=
+# So does anything that runs on chip/g
+ifneq ($(CHIP_G),)
+test-list-y=
+endif
+
+# Hadoken does not support scratchpad
+test-list-$(BOARD_HADOKEN)=
 
 # For some tests, we are running out of RAM. Disable them for now.
 test-list-$(BOARD_GLADOS_PD)=
 test-list-$(BOARD_CHELL_PD)=
 test-list-$(BOARD_OAK_PD)=
 test-list-$(BOARD_SAMUS_PD)=
+test-list-$(BOARD_COFFEECAKE)=
+test-list-$(BOARD_SERVO_V4)=
 
 # Emulator tests
 ifneq ($(TEST_LIST_HOST),)

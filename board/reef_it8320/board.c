@@ -136,6 +136,7 @@ static int hc_pd_host_event_status(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_PD_HOST_EVENT_STATUS, hc_pd_host_event_status,
 		     EC_VER_MASK(0));
 
+#if defined(HAS_TASK_HOSTCMD) && !defined(TEST_BUILD)
 /* Send host event up to AP */
 void pd_send_host_event(int mask)
 {
@@ -147,6 +148,7 @@ void pd_send_host_event(int mask)
 	/* interrupt the AP */
 	host_set_single_event(EC_HOST_EVENT_PD_MCU);
 }
+#endif
 
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_AC_PRESENT,

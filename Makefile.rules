@@ -154,6 +154,17 @@ buildall: build_boards
 	@touch .tests-passed
 	@echo "$@ completed successfully!"
 
+.PHONY: try_build_tests
+try_build_tests: $(foreach b, $(BOARDS), tests-$(b))
+
+.PHONY: buildalltests
+buildalltests:
+	@rm -rf $(FAILED_BOARDS_DIR)
+	@mkdir $(FAILED_BOARDS_DIR)
+	@for b in $(BOARDS); do echo 'starting' > $(FAILED_BOARDS_DIR)/$$b; done
+	$(MAKE) try_build_tests
+	@echo "$@ completed successfully!"
+
 showboards:
 	@echo $(sort $(boards))
 
@@ -172,6 +183,12 @@ proj-%:
 	@echo 'building' > $(FAILED_BOARDS_DIR)/$*
 	@echo "======= building $*"
 	$(MAKE) --no-print-directory BOARD=$* V=$(V)
+	@rm $(FAILED_BOARDS_DIR)/$*
+
+tests-%:
+	@echo 'building tests' > $(FAILED_BOARDS_DIR)/$*
+	@echo "======= building $* tests"
+	$(MAKE) --no-print-directory BOARD=$* V=$(V) tests
 	@rm $(FAILED_BOARDS_DIR)/$*
 
 dis-y := $(out)/RW/$(PROJECT).RW.dis
