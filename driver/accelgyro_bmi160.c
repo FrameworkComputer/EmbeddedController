@@ -1286,6 +1286,7 @@ static int init(const struct motion_sensor_t *s)
 	 * so set data rate to 0.
 	 */
 	data->odr = 0;
+	set_range(s, s->default_range, 0);
 
 	if (s->type == MOTIONSENSE_TYPE_ACCEL) {
 #ifdef CONFIG_ACCEL_INTERRUPTS
