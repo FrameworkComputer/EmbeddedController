@@ -322,6 +322,11 @@ void __idle(void)
 		t0 = get_time();
 		next_delay = __hw_clock_event_get() - t0.le.lo;
 
+#ifdef CONFIG_LOW_POWER_IDLE_LIMITED
+		if (idle_is_disabled())
+			goto en_int;
+#endif
+
 		if (DEEP_SLEEP_ALLOWED &&
 #ifdef CONFIG_HOSTCMD_RTC
 		    /*
@@ -381,6 +386,9 @@ void __idle(void)
 			/* normal idle : only CPU clock stopped */
 			asm("wfi");
 		}
+#ifdef CONFIG_LOW_POWER_IDLE_LIMITED
+en_int:
+#endif
 		asm volatile("cpsie i");
 	}
 }

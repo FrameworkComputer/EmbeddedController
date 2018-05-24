@@ -2061,6 +2061,9 @@
 #undef CONFIG_LOW_POWER_IDLE
 #undef CONFIG_LOW_POWER_USE_LFIOSC
 
+/* Allows us to enable/disable low power idle mode in runtime. */
+#undef CONFIG_LOW_POWER_IDLE_LIMITED
+
 /*
  * Enable deep sleep during S0 (ignores SLEEP_MASK_AP_RUN).
  */

@@ -479,6 +479,30 @@ static inline void disable_sleep(uint32_t mask)
 	atomic_or(&sleep_mask, mask);
 }
 
+#ifdef CONFIG_LOW_POWER_IDLE_LIMITED
+/*
+ * If this variable is nonzero, all levels of idle modes are disabled.
+ * Do NOT access it directly. Use idle_is_disabled() to read it and
+ * enable_idle()/disable_idle() to write it.
+ */
+extern uint32_t idle_disabled;
+
+static inline uint32_t idle_is_disabled(void)
+{
+	return idle_disabled;
+}
+
+static inline void disable_idle(void)
+{
+	atomic_or(&idle_disabled, 1);
+}
+
+static inline void enable_idle(void)
+{
+	atomic_clear(&idle_disabled, 1);
+}
+#endif
+
 /* The following three functions are not available on all chips. */
 /**
  * Postpone sleeping for at least this long, regardless of sleep_mask.

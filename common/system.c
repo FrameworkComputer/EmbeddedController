@@ -102,6 +102,11 @@ static enum ec_reboot_cmd reboot_at_shutdown;
 /* On-going actions preventing going into deep-sleep mode */
 uint32_t sleep_mask;
 
+#ifdef CONFIG_LOW_POWER_IDLE_LIMITED
+/* Set it to prevent going into idle mode */
+uint32_t idle_disabled;
+#endif
+
 #ifdef CONFIG_HOSTCMD_AP_SET_SKUID
 static uint32_t ap_sku_id;
 
