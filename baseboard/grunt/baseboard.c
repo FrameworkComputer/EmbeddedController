@@ -18,7 +18,6 @@
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/bc12/bq24392.h"
-#include "driver/led/lm3630a.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -33,8 +32,6 @@
 #include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
-#include "pwm.h"
-#include "pwm_chip.h"
 #include "registers.h"
 #include "switch.h"
 #include "system.h"
@@ -252,20 +249,6 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
 	},
 };
-
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] =     { 5, 0, 100 },
-	[PWM_CH_LED1_AMBER] = {
-		0, PWM_CONFIG_OPEN_DRAIN | PWM_CONFIG_ACTIVE_LOW |
-		PWM_CONFIG_DSLEEP, 100
-	},
-	[PWM_CH_LED2_BLUE] =   {
-		2, PWM_CONFIG_OPEN_DRAIN | PWM_CONFIG_ACTIVE_LOW |
-		PWM_CONFIG_DSLEEP, 100
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /*
  * We use 11 as the scaling factor so that the maximum mV value below (2761)

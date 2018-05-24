@@ -120,6 +120,28 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_KBLIGHT] = {
+		.channel = 5,
+		.flags = 0,
+		.freq = 100,
+	},
+	[PWM_CH_LED1_AMBER] = {
+		.channel = 0,
+		.flags = (PWM_CONFIG_OPEN_DRAIN | PWM_CONFIG_ACTIVE_LOW
+			  | PWM_CONFIG_DSLEEP),
+		.freq = 100,
+	},
+	[PWM_CH_LED2_BLUE] =   {
+		.channel = 2,
+		.flags = (PWM_CONFIG_OPEN_DRAIN | PWM_CONFIG_ACTIVE_LOW
+			  | PWM_CONFIG_DSLEEP),
+		.freq = 100,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
 static void board_init(void)
 {
 	if (system_get_board_version() < 2) {

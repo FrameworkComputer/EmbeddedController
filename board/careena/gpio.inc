@@ -44,6 +44,9 @@ GPIO(3AXIS_INT_L,		PIN(5, 0), GPIO_INPUT | GPIO_SEL_1P8V)		/* 3 Axis Accel */
 /* We don't have 5V rail control but the BQ24392 driver expects the GPIO */
 UNIMPLEMENTED(EN_PP5000)
 
+GPIO(BAT_LED_AMBER_L,		PIN(C, 3), GPIO_OUT_HIGH)
+GPIO(BAT_LED_WHITE_L,		PIN(C, 4), GPIO_OUT_HIGH)
+
 /* I2C pins - these will be reconfigured for alternate function below */
 GPIO(I2C0_SCL,			PIN(B, 5), GPIO_INPUT)				/* EC_I2C_POWER_SCL */
 GPIO(I2C0_SDA,			PIN(B, 4), GPIO_INPUT)				/* EC_I2C_POWER_SDA */
@@ -98,7 +101,6 @@ ALTERNATE(PIN_MASK(4, 0x02), 1, MODULE_ADC, 0)					/* ADC4 */
 ALTERNATE(PIN_MASK(F, 0x02), 1, MODULE_ADC, 0)					/* ADC8 */
 ALTERNATE(PIN_MASK(F, 0x01), 1, MODULE_ADC, 0)					/* ADC9 */
 ALTERNATE(PIN_MASK(B, 0x80), 1, MODULE_PWM, 0)					/* KB Backlight */
-ALTERNATE(PIN_MASK(C, 0x18), 1, MODULE_PWM, 0) 					/* LED 1 & 2 */
 
 /* Keyboard Pins */
 ALTERNATE(PIN_MASK(3, 0x03), 0, MODULE_KEYBOARD_SCAN, GPIO_INPUT)		/* KSI_00-01 */

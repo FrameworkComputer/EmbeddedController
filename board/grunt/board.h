@@ -41,4 +41,15 @@
 /* KB backlight driver */
 #define CONFIG_LED_DRIVER_LM3630A
 
+#ifndef __ASSEMBLER__
+
+enum pwm_channel {
+	PWM_CH_KBLIGHT = 0,
+	PWM_CH_LED1_AMBER,
+	PWM_CH_LED2_BLUE,
+	PWM_CH_COUNT
+};
+
+#endif /* !__ASSEMBLER__ */
+
 #endif /* __CROS_EC_BOARD_H */

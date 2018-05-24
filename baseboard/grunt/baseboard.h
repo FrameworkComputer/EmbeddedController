@@ -185,13 +185,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT = 0,
-	PWM_CH_LED1_AMBER,
-	PWM_CH_LED2_BLUE,
-	PWM_CH_COUNT
-};
-
 enum sensor_id {
 	LID_ACCEL,
 	BASE_ACCEL,
