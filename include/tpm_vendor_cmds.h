@@ -35,9 +35,7 @@ enum vendor_cmd_cc {
 	VENDOR_CC_IMMEDIATE_RESET = 19,
 	VENDOR_CC_INVALIDATE_INACTIVE_RW = 20,
 	VENDOR_CC_COMMIT_NVMEM = 21,
-
-	/* A gap left for the deep sleep control command. */
-
+	/* DEPRECATED(22): deep sleep control command. */
 	VENDOR_CC_REPORT_TPM_STATE = 23,
 	VENDOR_CC_TURN_UPDATE_ON = 24,
 	VENDOR_CC_GET_BOARD_ID = 25,
@@ -46,11 +44,9 @@ enum vendor_cmd_cc {
 	VENDOR_CC_POP_LOG_ENTRY = 28,
 	VENDOR_CC_GET_REC_BTN = 29,
 	VENDOR_CC_RMA_CHALLENGE_RESPONSE = 30,
-
-	/* A gap left for the no longer supported CCD password command. */
-
+	/* DEPRECATED(31): CCD password command (now part of VENDOR_CC_CCD) */
 	VENDOR_CC_DISABLE_RMA = 32,
-	VENDOR_CC_MANAGE_CCD_PWD = 33,
+	/* DEPRECATED(33): Manage CCD password phase */
 	VENDOR_CC_CCD = 34,
 	VENDOR_CC_GET_ALERTS_DATA = 35,
 	VENDOR_CC_SPI_HASH = 36,

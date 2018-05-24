@@ -66,5 +66,20 @@ void   _plat__GetFwVersion(uint32_t *firmwareV1, uint32_t *firmwareV2)
 void _plat__ResetCallback(void)
 {
 	pinweaver_init();
-	ccd_tpm_reset_callback();
+
+	/*
+	 * Eventually, we'll want to allow CCD unlock with no password, so
+	 * enterprise policy can set a password to block CCD instead of locking
+	 * it out via the FWMP.
+	 *
+	 * When we do that, we'll allow unlock without password between a real
+	 * TPM startup (not just a resume) - which is this callback - and
+	 * explicit disabling of that feature via a to-be-created vendor
+	 * command.  That vendor command will be called after enterprize policy
+	 * is updated, or the device is determined not to be enrolled.
+	 *
+	 * But for now, we'll just block unlock entirely if no password is set,
+	 * so we don't yet need to tell CCD that a real TPM startup has
+	 * occurred.
+	 */
 }
