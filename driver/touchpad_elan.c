@@ -574,6 +574,9 @@ allowed_command_hashes[TOUCHPAD_ELAN_DEBUG_NUM_CMD][SHA256_DIGEST_SIZE] = {
 	},
 };
 
+/* Debugging commands need to allocate a <=1k buffer. */
+SHARED_MEM_CHECK_SIZE(1024);
+
 int touchpad_debug(const uint8_t *param, unsigned int param_size,
 		   uint8_t **data, unsigned int *data_size)
 {
