@@ -184,10 +184,11 @@ int parse_offset_size(int argc, char **argv, int shift,
 
 #ifdef CONFIG_ASSEMBLY_MULA32
 /*
- * Compute (a*b)+c, where a, b, c are 32-bit integers, and the result is
- * 64-bit long.
+ * Compute (a*b)+c[+d], where a, b, c[, d] are 32-bit integers, and the result
+ * is 64-bit long.
  */
 uint64_t mula32(uint32_t a, uint32_t b, uint32_t c);
+uint64_t mulaa32(uint32_t a, uint32_t b, uint32_t c, uint32_t d);
 #else
 static inline uint64_t mula32(uint32_t a, uint32_t b, uint32_t c)
 {
@@ -195,6 +196,17 @@ static inline uint64_t mula32(uint32_t a, uint32_t b, uint32_t c)
 
 	ret *= b;
 	ret += c;
+
+	return ret;
+}
+
+static inline uint64_t mulaa32(uint32_t a, uint32_t b, uint32_t c, uint32_t d)
+{
+	uint64_t ret = a;
+
+	ret *= b;
+	ret += c;
+	ret += d;
 
 	return ret;
 }

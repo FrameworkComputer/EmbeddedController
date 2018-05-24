@@ -360,6 +360,7 @@ static int test_cond_t(void)
 static int test_mula32(void)
 {
 	uint64_t r = 0x0;
+	uint64_t r2 = 0x0;
 	uint32_t b = 0x1;
 	uint32_t c = 0x1;
 	uint32_t i;
@@ -368,15 +369,18 @@ static int test_mula32(void)
 	t0 = get_time();
 	for (i = 0; i < 5000000; i++) {
 		r = mula32(b, c, r + (r >> 32));
+		r2 = mulaa32(b, c, r2 >> 32, r2);
 		b = (b << 13) ^ (b >> 2) ^ i;
 		c = (c << 16) ^ (c >> 7) ^ i;
 		watchdog_reload();
 	}
 	t1 = get_time();
 
-	ccprintf("After %d iterations, r=%08x%08x (time: %d)\n", i,
-		(uint32_t)(r >> 32), (uint32_t)r, t1.le.lo-t0.le.lo);
-	TEST_ASSERT(r == 0x9df59b9fb0ab9d96L);
+	ccprintf("After %d iterations, r=%08x%08x, r2=%08x%08x (time: %d)\n",
+		i, (uint32_t)(r >> 32), (uint32_t)r,
+		(uint32_t)(r2 >> 32), (uint32_t)r2, t1.le.lo-t0.le.lo);
+	TEST_ASSERT(r  == 0x9df59b9fb0ab9d96L);
+	TEST_ASSERT(r2 == 0x9df59b9fb0beabd6L);
 
 	/* well okay then */
 	return EC_SUCCESS;
