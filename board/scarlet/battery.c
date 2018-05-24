@@ -8,6 +8,7 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "charge_state.h"
+#include "chipset.h"
 #include "console.h"
 #include "driver/battery/max17055.h"
 #include "driver/charger/rt946x.h"
@@ -15,6 +16,7 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "system.h"
 #include "util.h"
 
 /*
@@ -248,12 +250,28 @@ int charger_profile_override(struct charge_state_data *curr)
 	 * BATTERY_LEVEL_NEAR_FULL. So we can ensure both Chrome OS UI
 	 * and battery LED indicate full charge.
 	 */
-	if (rt946x_is_charge_done())
+	if (rt946x_is_charge_done()) {
 		curr->batt.state_of_charge = MAX(BATTERY_LEVEL_NEAR_FULL,
 						 curr->batt.state_of_charge);
+		/*
+		 * This is a workaround for b:78792296. When AP is off and
+		 * charge termination is detected, we disable idle mode.
+		 */
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
+				     CHIPSET_STATE_ANY_SUSPEND))
+			disable_idle();
+		else
+			enable_idle();
+	}
 
 	return 0;
 }
+
+static void board_enable_idle(void)
+{
+	enable_idle();
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, board_enable_idle, HOOK_PRIO_DEFAULT);
 
 static void board_charge_termination(void)
 {
