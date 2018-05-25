@@ -19,26 +19,30 @@
 #include "sha256.h"
 #include "base32.h"
 
+#define EC_PRIV_KEY_SZ 32
+
 #define SERVER_ADDRESS \
 	"https://www.google.com/chromeos/partner/console/cr50reset/request"
 
-/* Test server public and private keys */
-#define RMA_TEST_SERVER_PUBLIC_KEY {                                   \
-		0x03, 0xae, 0x2d, 0x2c, 0x06, 0x23, 0xe0, 0x73,         \
-		0x0d, 0xd3, 0xb7, 0x92, 0xac, 0x54, 0xc5, 0xfd,	\
-		0x7e, 0x9c, 0xf0, 0xa8, 0xeb, 0x7e, 0x2a, 0xb5,	\
-		0xdb, 0xf4, 0x79, 0x5f, 0x8a, 0x0f, 0x28, 0x3f}
-#define RMA_TEST_SERVER_PRIVATE_KEY {					\
-		0x47, 0x3b, 0xa5, 0xdb, 0xc4, 0xbb, 0xd6, 0x77,         \
-		0x20, 0xbd, 0xd8, 0xbd, 0xc8, 0x7a, 0xbb, 0x07,	\
-		0x03, 0x79, 0xba, 0x7b, 0x52, 0x8c, 0xec, 0xb3,	\
-		0x4d, 0xaa, 0x69, 0xf5, 0x65, 0xb4, 0x31, 0xad}
-#define RMA_TEST_SERVER_KEY_ID 0x10
+/* Test server keys for x25519 and p256 curves. */
+static const uint8_t rma_test_server_x25519_public_key[] = {
+	0x03, 0xae, 0x2d, 0x2c, 0x06, 0x23, 0xe0, 0x73,
+	0x0d, 0xd3, 0xb7, 0x92, 0xac, 0x54, 0xc5, 0xfd,
+	0x7e, 0x9c, 0xf0, 0xa8, 0xeb, 0x7e, 0x2a, 0xb5,
+	0xdb, 0xf4, 0x79, 0x5f, 0x8a, 0x0f, 0x28, 0x3f
+};
 
-/* Server public key and key ID */
-static uint8_t server_pri_key[32] = RMA_TEST_SERVER_PRIVATE_KEY;
-static uint8_t server_pub_key[32] = RMA_TEST_SERVER_PUBLIC_KEY;
-static uint8_t server_key_id = RMA_TEST_SERVER_KEY_ID;
+static const uint8_t rma_test_server_x25519_private_key[] = {
+	0x47, 0x3b, 0xa5, 0xdb, 0xc4, 0xbb, 0xd6, 0x77,
+	0x20, 0xbd, 0xd8, 0xbd, 0xc8, 0x7a, 0xbb, 0x07,
+	0x03, 0x79, 0xba, 0x7b, 0x52, 0x8c, 0xec, 0xb3,
+	0x4d, 0xaa, 0x69, 0xf5, 0x65, 0xb4, 0x31, 0xad
+};
+
+#define RMA_TEST_SERVER_X25519_KEY_ID 0x10
+
+/* Default values which can change based on command line arguments. */
+static uint8_t server_key_id = RMA_TEST_SERVER_X25519_KEY_ID;
 static uint8_t board_id[4] = {'Z', 'Z', 'C', 'R'};
 static uint8_t device_id[8] = {'T', 'H', 'X', 1, 1, 3, 8, 0xfe};
 static uint8_t hw_id[20] = "TESTSAMUS1234";
@@ -126,11 +130,16 @@ static int rma_server_side(const char *generated_challenge)
 	if (version != RMA_CHALLENGE_VERSION)
 		printf("Unsupported challenge version %d\n", version);
 
-	if (key_id != RMA_TEST_SERVER_KEY_ID)
+	/* Calculate the shared secret, use curve based on the key ID. */
+	switch (key_id) {
+	case RMA_TEST_SERVER_X25519_KEY_ID:
+		X25519(secret, rma_test_server_x25519_private_key,
+		       c.device_pub_key);
+		break;
+	default:
 		printf("Unsupported KeyID %d\n", key_id);
-
-	/* Calculate the shared secret */
-	X25519(secret, server_pri_key, c.device_pub_key);
+		return 1;
+	}
 
 	/*
 	 * Auth code is a truncated HMAC of the ephemeral public key, BoardID,
@@ -171,13 +180,12 @@ int rma_create_challenge(void)
 
 	/* Calculate a new ephemeral key pair */
 	X25519_keypair(c.device_pub_key, temp);
+	/* Calculate the shared secret */
+	X25519(secret, temp, rma_test_server_x25519_public_key);
 
 	/* Encode the challenge */
 	if (base32_encode(challenge, sizeof(challenge), cptr, 8 * sizeof(c), 9))
 		return 1;
-
-	/* Calculate the shared secret */
-	X25519(secret, temp, server_pub_key);
 
 	/*
 	 * Auth code is a truncated HMAC of the ephemeral public key, BoardID,
@@ -197,47 +205,60 @@ int rma_try_authcode(const char *code)
 	return safe_memcmp(authcode, code, RMA_AUTHCODE_CHARS);
 }
 
+static void dump_key(const char *title, const uint8_t *key, size_t key_size)
+{
+	size_t i;
+	const int bytes_per_line = 8;
+
+	printf("\n\n\%s\n", title);
+	for (i = 0; i < key_size; i++)
+		printf("%02x%c", key[i], ((i + 1) % bytes_per_line) ? ' ':'\n');
+
+	if (i % bytes_per_line)
+		printf("\n");
+}
+
 static void print_params(void)
 {
 	int i;
+	const uint8_t *priv_key;
+	const uint8_t *pub_key;
+	int key_id;
+	size_t pub_key_size;
 
-	{ /* For Testing only */
-		printf("\nBoard Id:\n");
-		for (i = 0; i < 4; i++)
-			printf("%c ", board_id[i]);
+	printf("\nBoard Id:\n");
+	for (i = 0; i < 4; i++)
+		printf("%c ", board_id[i]);
 
-		printf("\n\nDevice Id:\n");
-		for (i = 0; i < 3; i++)
-			printf("%c ", device_id[i]);
-		for (i = 3; i < 8; i++)
-			printf("%02x ", device_id[i]);
+	printf("\n\nDevice Id:\n");
+	for (i = 0; i < 3; i++)
+		printf("%c ", device_id[i]);
+	for (i = 3; i < 8; i++)
+		printf("%02x ", device_id[i]);
 
-		printf("\n\nServer Key Id:\n");
-		printf("%02x", server_key_id);
+	priv_key = rma_test_server_x25519_private_key;
+	pub_key = rma_test_server_x25519_public_key;
+	pub_key_size = sizeof(rma_test_server_x25519_public_key);
+	key_id = RMA_TEST_SERVER_X25519_KEY_ID;
 
-		printf("\n\nServer Private Key:\n");
-		for (i = 0; i < 32; i++)
-			printf("%02x%c", server_pri_key[i], ((i + 1) % 8)
-								? ' ':'\n');
+	printf("\n\nServer Key Id:\n");
+	printf("%02x", key_id);
 
-		printf("\nServer Public Key:\n");
-		for (i = 0; i < 32; i++)
-			printf("%02x%c", server_pub_key[i], ((i + 1) % 8)
-								? ' ':'\n');
+	dump_key("Server Private Key:", priv_key, EC_PRIV_KEY_SZ);
+	dump_key("Server Public Key:", pub_key, pub_key_size);
 
-		printf("\nChallenge:\n");
-		for (i = 0; i < RMA_CHALLENGE_CHARS; i++) {
-			printf("%c", challenge[i]);
-			if (((i + 1) % 5) == 0)
-				printf(" ");
-			if (((i + 1) % 40) == 0)
-				printf("\n");
-		}
-
-		printf("\nAuthorization Code:\n");
-		for (i = 0; i < RMA_AUTHCODE_BUF_SIZE; i++)
-			printf("%c", authcode[i]);
+	printf("\nChallenge:\n");
+	for (i = 0; i < RMA_CHALLENGE_CHARS; i++) {
+		printf("%c", challenge[i]);
+		if (((i + 1) % 5) == 0)
+			printf(" ");
+		if (((i + 1) % 40) == 0)
+			printf("\n");
 	}
+
+	printf("\nAuthorization Code:\n");
+	for (i = 0; i < RMA_AUTHCODE_BUF_SIZE; i++)
+		printf("%c", authcode[i]);
 
 	printf("\n\nChallenge String:\n");
 	printf("%s?challenge=", SERVER_ADDRESS);
@@ -268,7 +289,9 @@ static void usage(void)
 		"  -a,--auth_code    Reset authorization code\n"
 		"  -w,--hw_id        Hardware id\n"
 		"  -h,--help         Show this message\n"
-		"\n", progname);
+		"  -t,--test         "
+			"Generate challenge using default test inputs\n"
+	       "\n", progname);
 }
 
 static int atoh(char *v)
