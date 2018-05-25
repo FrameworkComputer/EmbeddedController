@@ -16,12 +16,12 @@
 
 /* CEC message during transfer */
 struct cec_msg_transfer {
-	/* The CEC message */
-	uint8_t buf[MAX_CEC_MSG_LEN];
 	/* Bit offset  */
 	uint8_t bit;
 	/* Byte offset */
 	uint8_t byte;
+	/* The CEC message */
+	uint8_t buf[MAX_CEC_MSG_LEN];
 };
 
 /*
