@@ -5,12 +5,12 @@
 
 #include "ec_commands.h"
 
-/* Size of circular buffer used to store incoming CEC messages */
-#define CEC_CIRCBUF_SIZE 20
-#if CEC_CIRCBUF_SIZE < MAX_CEC_MSG_LEN + 1
+/* Size of the buffer inside the rx queue */
+#define CEC_RX_BUFFER_SIZE 20
+#if CEC_RX_BUFFER_SIZE < MAX_CEC_MSG_LEN + 1
 #error "Buffer must fit at least a CEC message and a length byte"
 #endif
-#if CEC_CIRCBUF_SIZE > 255
+#if CEC_RX_BUFFER_SIZE > 255
 #error "Buffer size must not exceed 255 since offsets are uint8_t"
 #endif
 
@@ -25,10 +25,10 @@ struct cec_msg_transfer {
 };
 
 /*
- * Circular buffer of completed incoming CEC messages
+ * Queue of completed incoming CEC messages
  * ready to be read out by AP
  */
-struct cec_rx_cb {
+struct cec_rx_queue {
 	/*
 	 * Write offset. Updated from interrupt context when we
 	 * have received a complete message.
@@ -36,20 +36,60 @@ struct cec_rx_cb {
 	uint8_t write_offset;
 	/* Read offset. Updated when AP sends CEC read command */
 	uint8_t read_offset;
-	/* Cicular buffer data  */
-	uint8_t buf[CEC_CIRCBUF_SIZE];
+	/* Data buffer */
+	uint8_t buf[CEC_RX_BUFFER_SIZE];
 };
 
-int msgt_get_bit(const struct cec_msg_transfer *msgt);
+/**
+ * Get the current bit of a CEC message transfer
+ *
+ * @param queue		Queue to flush
+ */
+int cec_transfer_get_bit(const struct cec_msg_transfer *transfer);
 
-void msgt_set_bit(struct cec_msg_transfer *msgt, int val);
+/**
+ * Set the current bit of a CEC message transfer
+ *
+ * @param transfer	Message transfer to set current bit of
+ * @param val		New bit value
+ */
+void cec_transfer_set_bit(struct cec_msg_transfer *transfer, int val);
 
-void msgt_inc_bit(struct cec_msg_transfer *msgt);
+/**
+ * Make the current bit the next bit in the transfer buffer
+ *
+ * @param transfer	Message transfer to change current bit of
+ */
+void cec_transfer_inc_bit(struct cec_msg_transfer *transfer);
 
-int msgt_is_eom(const struct cec_msg_transfer *msgt, int len);
+/**
+ * Check if current bit is an end-of-message bit and if it is set
+ *
+ * @param transfer	Message transfer to check for end-of-message
+ */
+int cec_transfer_is_eom(const struct cec_msg_transfer *transfer, int len);
 
-void rx_circbuf_flush(struct cec_rx_cb *cb);
+/**
+ * Flush all messages from a CEC receive queue
+ *
+ * @param queue		Queue to flush
+ */
+void cec_rx_queue_flush(struct cec_rx_queue *queue);
 
-int rx_circbuf_push(struct cec_rx_cb *cb, uint8_t *msg, uint8_t msg_len);
+/**
+ * Push a CEC message to a CEC receive queue
+ *
+ * @param queue		Queue to add message to
+ */
+int cec_rx_queue_push(struct cec_rx_queue *queue, const uint8_t *msg,
+		      uint8_t msg_len);
 
-int rx_circbuf_pop(struct cec_rx_cb *cb, uint8_t *msg, uint8_t *msg_len);
+/**
+ * Pop a CEC message from a CEC receive queue
+ *
+ * @param queue		Queue to retrieve message from
+ * @param msg		Buffer to store retrieved message in
+ * @param msg_len	Number of data bytes in msg
+ */
+int cec_rx_queue_pop(struct cec_rx_queue *queue, uint8_t *msg,
+		     uint8_t *msg_len);
