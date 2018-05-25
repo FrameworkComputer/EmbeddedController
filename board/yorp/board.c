@@ -294,6 +294,14 @@ struct motion_sensor_t motion_sensors[] = {
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
+/* Initialize board. */
+static void board_init(void)
+{
+	/* Enable Base Accel interrupt */
+	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
 #ifndef TEST_BUILD
 /* This callback disables keyboard when convertibles are fully open */
 void lid_angle_peripheral_enable(int enable)

@@ -30,8 +30,7 @@
 #define CONFIG_ACCEL_KX022		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
 /* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK ((1 << LID_ACCEL) | \
-			(1 << BASE_ACCEL) | (1 << BASE_GYRO))
+#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
 
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
@@ -45,7 +44,16 @@
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_THERMISTOR_NCP15WB
 
+#define CONFIG_ACCEL_INTERRUPTS
+/* FIFO size is in power of 2. */
+#define CONFIG_ACCEL_FIFO 1024
 
+/* Depends on how fast the AP boots and typical ODRs */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+#define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_USE_HOST_EVENT
+
+#define CONFIG_ACCEL_LSM6DSM_INT_EVENT TASK_EVENT_CUSTOM(4)
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
