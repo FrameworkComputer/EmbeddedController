@@ -8,10 +8,15 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <stdio.h>
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/obj_mac.h>
+#include <openssl/rand.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "rma_auth.h"
@@ -19,7 +24,10 @@
 #include "sha256.h"
 #include "base32.h"
 
+#define EC_COORDINATE_SZ 32
 #define EC_PRIV_KEY_SZ 32
+#define EC_P256_UNCOMPRESSED_PUB_KEY_SZ (EC_COORDINATE_SZ * 2 + 1)
+#define EC_P256_COMPRESSED_PUB_KEY_SZ (EC_COORDINATE_SZ  + 1)
 
 #define SERVER_ADDRESS \
 	"https://www.google.com/chromeos/partner/console/cr50reset/request"
@@ -41,6 +49,37 @@ static const uint8_t rma_test_server_x25519_private_key[] = {
 
 #define RMA_TEST_SERVER_X25519_KEY_ID 0x10
 
+/*
+ * P256 curve keys, generated using openssl as follows:
+ *
+ * openssl ecparam -name prime256v1 -genkey -out key.pem
+ * openssl ec -in key.pem -text -noout
+ */
+static const uint8_t rma_test_server_p256_private_key[] = {
+	0x54, 0xb0, 0x82, 0x92, 0x54, 0x92, 0xfc, 0x4a,
+	0xa7, 0x6b, 0xea, 0x8f, 0x30, 0xcc, 0xf7, 0x3d,
+	0xa2, 0xf6, 0xa7, 0xad, 0xf0, 0xec, 0x7d, 0xe9,
+	0x26, 0x75, 0xd1, 0xec, 0xde, 0x20, 0x8f, 0x81
+};
+
+/*
+ * P256 public key in full form, x and y coordinates with a single byte
+ * prefix, 65 bytes total.
+ */
+static const uint8_t rma_test_server_p256_public_key[] = {
+	0x04, 0xe7, 0xbe, 0x37, 0xaa, 0x68, 0xca, 0xcc,
+	0x68, 0xf4, 0x8c, 0x56, 0x65, 0x5a, 0xcb, 0xf8,
+	0xf4, 0x65, 0x3c, 0xd3, 0xc6, 0x1b, 0xae, 0xd6,
+	0x51, 0x7a, 0xcc, 0x00, 0x8d, 0x59, 0x6d, 0x1b,
+	0x0a, 0x66, 0xe8, 0x68, 0x5e, 0x6a, 0x82, 0x19,
+	0x81, 0x76, 0x84, 0x92, 0x7f, 0x8d, 0xb2, 0xbe,
+	0xf5, 0x39, 0x50, 0xd5, 0xfe, 0xee, 0x00, 0x67,
+	0xcf, 0x40, 0x5f, 0x68, 0x12, 0x83, 0x4f, 0xa4,
+	0x35
+};
+
+#define RMA_TEST_SERVER_P256_KEY_ID 0x20
+
 /* Default values which can change based on command line arguments. */
 static uint8_t server_key_id = RMA_TEST_SERVER_X25519_KEY_ID;
 static uint8_t board_id[4] = {'Z', 'Z', 'C', 'R'};
@@ -51,17 +90,18 @@ static char challenge[RMA_CHALLENGE_BUF_SIZE];
 static char authcode[RMA_AUTHCODE_BUF_SIZE];
 
 static char *progname;
-static char *short_opts = "c:k:b:d:a:w:th";
+static char *short_opts = "a:b:c:d:hpk:tw:";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
-	{"challenge",  1,   NULL, 'c'},
-	{"key_id",     1,   NULL, 'k'},
-	{"board_id",   1,   NULL, 'b'},
-	{"device_id",  1,   NULL, 'd'},
 	{"auth_code",  1,   NULL, 'a'},
-	{"hw_id",      1,   NULL, 'w'},
-	{"test",       0,   NULL, 't'},
+	{"board_id",   1,   NULL, 'b'},
+	{"challenge",  1,   NULL, 'c'},
+	{"device_id",  1,   NULL, 'd'},
 	{"help",       0,   NULL, 'h'},
+	{"hw_id",      1,   NULL, 'w'},
+	{"key_id",     1,   NULL, 'k'},
+	{"p256",       0,   NULL, 'p'},
+	{"test",       0,   NULL, 't'},
 	{},
 };
 
@@ -91,19 +131,135 @@ int safe_memcmp(const void *s1, const void *s2, size_t size)
 
 void rand_bytes(void *buffer, size_t len)
 {
-	int random_togo = 0;
-	uint32_t buffer_index = 0;
-	uint32_t random_value;
-	uint8_t *buf = (uint8_t *) buffer;
+	RAND_bytes(buffer, len);
+}
 
-	while (buffer_index < len) {
-		if (!random_togo) {
-			random_value = rand();
-			random_togo = sizeof(random_value);
-		}
-		buf[buffer_index++] = random_value >>
-			((random_togo-- - 1) * 8);
-	}
+/*
+ * Generate a p256 key pair and calculate the shared secret based on our
+ * private key and the server public key.
+ *
+ * Return the X coordinate of the generated public key and the shared secret.
+ *
+ * @pub_key - the compressed public key without the prefix; by convention
+ *	      between RMA client and server the generated pubic key would
+ *	      always have prefix of 0x03, (the Y coordinate value is odd), so
+ *	      it is omitted from the key blob, which allows to keep the blob
+ *	      size at 32 bytes.
+ * @secret_seed - the product of multiplying of the server point by our
+ *	      private key, only the 32 bytes of X coordinate are returned.
+ */
+static void p256_key_and_secret_seed(uint8_t pub_key[32],
+				     uint8_t secret_seed[32])
+{
+	const EC_GROUP *group;
+	EC_KEY *key;
+	EC_POINT *pub;
+	EC_POINT *secret_point;
+	uint8_t buf[EC_P256_UNCOMPRESSED_PUB_KEY_SZ];
+
+	/* Prepare structures to operate on. */
+	key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+	group = EC_KEY_get0_group(key);
+	pub = EC_POINT_new(group);
+
+	/*
+	 * We might have to try multiple times, until the Y coordinate is an
+	 * odd value as required by convention.
+	 */
+	do {
+		EC_KEY_generate_key(key);
+
+		/* Extract public key into an octal array. */
+		EC_POINT_point2oct(group, EC_KEY_get0_public_key(key),
+				   POINT_CONVERSION_UNCOMPRESSED,
+				   buf, sizeof(buf), NULL);
+
+		/* If Y coordinate is an odd value, we are done. */
+	} while (!(buf[sizeof(buf) - 1] & 1));
+
+	/* Copy X coordinate out. */
+	memcpy(pub_key, buf + 1, 32);
+
+	/*
+	 * We have our private key and the server's point coordinates (aka
+	 * server public key). Let's multiply the coordinates by our private
+	 * key to get the shared secret.
+	 */
+
+	/* Load raw public key into the point structure. */
+	EC_POINT_oct2point(group, pub, rma_test_server_p256_public_key,
+			   sizeof(rma_test_server_p256_public_key), NULL);
+
+	secret_point = EC_POINT_new(group);
+
+	/* Multiply server public key by our private key. */
+	EC_POINT_mul(group, secret_point, 0, pub,
+		     EC_KEY_get0_private_key(key), 0);
+
+	/* Pull the result back into the octal buffer. */
+	EC_POINT_point2oct(group, secret_point, POINT_CONVERSION_UNCOMPRESSED,
+			   buf, sizeof(buf), NULL);
+
+	/*
+	 * Copy X coordinate into the output to use as the shared secret
+	 * seed.
+	 */
+	memcpy(secret_seed, buf + 1, 32);
+
+	/* release resources */
+	EC_KEY_free(key);
+	EC_POINT_free(pub);
+	EC_POINT_free(secret_point);
+}
+
+/*
+ * When imitating server side, calculate the secret value given the client's
+ * compressed public key (X coordinate only with 0x03 prefix implied) and
+ * knowing our (server) private key.
+ *
+ * @secret - array to return the X coordinate of the calculated point.
+ * @raw_pub_key - X coordinate of the point calculated by the client, 0x03
+ *		  prefix implied.
+ */
+static void p256_calculate_secret(uint8_t secret[32],
+				  const uint8_t raw_pub_key[32])
+{
+	uint8_t raw_pub_key_x[EC_P256_COMPRESSED_PUB_KEY_SZ];
+	EC_KEY *key;
+	const uint8_t *kp = raw_pub_key_x;
+	EC_POINT *secret_point;
+	const EC_GROUP *group;
+	BIGNUM *priv;
+	uint8_t buf[EC_P256_UNCOMPRESSED_PUB_KEY_SZ];
+
+	/* Express server private key as a BN. */
+	priv = BN_new();
+	BN_bin2bn(rma_test_server_p256_private_key, EC_PRIV_KEY_SZ, priv);
+
+	/*
+	 * Populate a p256 key structure based on the compressed
+	 * representation of the client's public key.
+	 */
+	raw_pub_key_x[0] = 3; /* Implied by convention. */
+	memcpy(raw_pub_key_x + 1, raw_pub_key, sizeof(raw_pub_key_x) - 1);
+	key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+	group = EC_KEY_get0_group(key);
+	key = o2i_ECPublicKey(&key, &kp, sizeof(raw_pub_key_x));
+
+	/* This is where the multiplication result will go. */
+	secret_point = EC_POINT_new(group);
+
+	/* Multiply client's point by our private key. */
+	EC_POINT_mul(group, secret_point, 0,
+		     EC_KEY_get0_public_key(key),
+		     priv, 0);
+
+	/* Pull the result back into the octal buffer. */
+	EC_POINT_point2oct(group, secret_point, POINT_CONVERSION_UNCOMPRESSED,
+			   buf, sizeof(buf), NULL);
+
+	/* Copy X coordinate into the output to use as the shared secret. */
+	memcpy(secret, buf + 1, 32);
 }
 
 static int rma_server_side(const char *generated_challenge)
@@ -136,6 +292,9 @@ static int rma_server_side(const char *generated_challenge)
 		X25519(secret, rma_test_server_x25519_private_key,
 		       c.device_pub_key);
 		break;
+	case RMA_TEST_SERVER_P256_KEY_ID:
+		p256_calculate_secret(secret, c.device_pub_key);
+		break;
 	default:
 		printf("Unsupported KeyID %d\n", key_id);
 		return 1;
@@ -156,10 +315,10 @@ static int rma_server_side(const char *generated_challenge)
 	return 0;
 };
 
-int rma_create_challenge(void)
+static int rma_create_test_challenge(int p256_mode)
 {
 	uint8_t temp[32];   /* Private key or HMAC */
-	uint8_t secret[32];
+	uint8_t secret_seed[32];
 	struct rma_challenge c;
 	uint8_t *cptr = (uint8_t *)&c;
 	uint32_t bid;
@@ -178,10 +337,14 @@ int rma_create_challenge(void)
 
 	memcpy(c.device_id, device_id, sizeof(c.device_id));
 
-	/* Calculate a new ephemeral key pair */
-	X25519_keypair(c.device_pub_key, temp);
-	/* Calculate the shared secret */
-	X25519(secret, temp, rma_test_server_x25519_public_key);
+	if (p256_mode) {
+		p256_key_and_secret_seed(c.device_pub_key, secret_seed);
+	} else {
+		/* Calculate a new ephemeral key pair */
+		X25519_keypair(c.device_pub_key, temp);
+		/* Calculate the shared secret seed. */
+		X25519(secret_seed, temp, rma_test_server_x25519_public_key);
+	}
 
 	/* Encode the challenge */
 	if (base32_encode(challenge, sizeof(challenge), cptr, 8 * sizeof(c), 9))
@@ -192,7 +355,8 @@ int rma_create_challenge(void)
 	 * and DeviceID.  Those are all in the right order in the challenge
 	 * struct, after the version/key id byte.
 	 */
-	hmac_SHA256(temp, secret, sizeof(secret), cptr + 1, sizeof(c) - 1);
+	hmac_SHA256(temp, secret_seed, sizeof(secret_seed),
+		    cptr + 1, sizeof(c) - 1);
 	if (base32_encode(authcode, sizeof(authcode), temp,
 			  RMA_AUTHCODE_CHARS * 5, 0))
 		return 1;
@@ -218,7 +382,7 @@ static void dump_key(const char *title, const uint8_t *key, size_t key_size)
 		printf("\n");
 }
 
-static void print_params(void)
+static void print_params(int p_flag)
 {
 	int i;
 	const uint8_t *priv_key;
@@ -236,14 +400,22 @@ static void print_params(void)
 	for (i = 3; i < 8; i++)
 		printf("%02x ", device_id[i]);
 
-	priv_key = rma_test_server_x25519_private_key;
-	pub_key = rma_test_server_x25519_public_key;
-	pub_key_size = sizeof(rma_test_server_x25519_public_key);
-	key_id = RMA_TEST_SERVER_X25519_KEY_ID;
+	if (p_flag) {
+		priv_key = rma_test_server_p256_private_key;
+		pub_key = rma_test_server_p256_public_key;
+		pub_key_size = sizeof(rma_test_server_p256_public_key);
+		key_id = RMA_TEST_SERVER_P256_KEY_ID;
+	} else {
+		priv_key = rma_test_server_x25519_private_key;
+		pub_key = rma_test_server_x25519_public_key;
+		pub_key_size = sizeof(rma_test_server_x25519_public_key);
+		key_id = RMA_TEST_SERVER_X25519_KEY_ID;
+	}
 
 	printf("\n\nServer Key Id:\n");
 	printf("%02x", key_id);
 
+	/* Both private keys are of the same size */
 	dump_key("Server Private Key:", priv_key, EC_PRIV_KEY_SZ);
 	dump_key("Server Public Key:", pub_key, pub_key_size);
 
@@ -271,9 +443,10 @@ static void print_params(void)
 
 static void usage(void)
 {
-	printf("\nUsage: %s --key_id <arg> --board_id <arg> --device_id <arg>"
-					"--hw_id <arg> | --auth_code <arg> | "
-					"--challenge <arg>\n"
+	printf("\nUsage: %s  [--p256] --key_id <arg> --board_id <arg> "
+	       "--device_id <arg> --hw_id <arg> |\n"
+	       "                           --auth_code <arg> |\n"
+	       "                           --challenge <arg>\n"
 		"\n"
 		"This is used to generate the cr50 or server responses for rma "
 		"open.\n"
@@ -289,6 +462,7 @@ static void usage(void)
 		"  -a,--auth_code    Reset authorization code\n"
 		"  -w,--hw_id        Hardware id\n"
 		"  -h,--help         Show this message\n"
+		"  -p,--p256         Use prime256v1 curve instead of x25519\n"
 		"  -t,--test         "
 			"Generate challenge using default test inputs\n"
 	       "\n", progname);
@@ -395,11 +569,12 @@ static int set_auth_code(char *code)
 int main(int argc, char **argv)
 {
 	int a_flag = 0;
-	int k_flag = 0;
 	int b_flag = 0;
 	int d_flag = 0;
-	int w_flag = 0;
+	int k_flag = 0;
+	int p_flag = 0;
 	int t_flag = 0;
+	int w_flag = 0;
 	int i;
 
 	progname = strrchr(argv[0], '/');
@@ -466,6 +641,10 @@ int main(int argc, char **argv)
 		case ':':
 			printf("Missing argument to %s\n", argv[optind - 1]);
 			break;
+		case 'p':
+			p_flag = 1;
+			server_key_id = RMA_TEST_SERVER_P256_KEY_ID;
+			break;
 		default:
 			printf("Internal error at %s:%d\n", __FILE__, __LINE__);
 			return 1;
@@ -503,7 +682,7 @@ int main(int argc, char **argv)
 			}
 		}
 
-		rma_create_challenge();
+		rma_create_test_challenge(p_flag);
 
 		{
 			FILE *acode;
@@ -515,7 +694,7 @@ int main(int argc, char **argv)
 			fclose(acode);
 		}
 
-		print_params();
+		print_params(p_flag);
 	}
 
 	return 0;
