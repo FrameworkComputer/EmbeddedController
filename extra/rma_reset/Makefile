@@ -9,8 +9,6 @@ OBJS    := curve25519.o curve25519-generic.o sha256.o base32.o
 LIBS    :=
 LFLAGS  :=
 CFLAGS  := -std=gnu99 \
-	-g3 \
-	-O3 \
         -Wall \
         -Werror \
         -Wpointer-arith \
@@ -21,6 +19,11 @@ CFLAGS  := -std=gnu99 \
         -Wredundant-decls \
         -Wmissing-declarations
 
+ifeq ($(DEBUG),1)
+CFLAGS += -g -O0
+else
+CFLAGS += -O3
+endif
 #
 # Add libusb-1.0 required flags
 #
