@@ -28,6 +28,7 @@ common-$(CONFIG_BLUETOOTH_LE)+=bluetooth_le.o
 common-$(CONFIG_BLUETOOTH_LE_STACK)+=btle_hci_controller.o btle_ll.o
 common-$(CONFIG_CAPSENSE)+=capsense.o
 common-$(CONFIG_CASE_CLOSED_DEBUG_V1)+=ccd_config.o
+common-$(CONFIG_CEC)+=cec.o
 common-$(CONFIG_CROS_BOARD_INFO)+=cbi.o
 common-$(CONFIG_CHARGE_MANAGER)+=charge_manager.o
 common-$(CONFIG_CHARGE_RAMP_HW)+=charge_ramp.o
