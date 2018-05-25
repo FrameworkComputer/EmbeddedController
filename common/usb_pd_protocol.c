@@ -2196,10 +2196,12 @@ void pd_task(void *u)
 #ifndef CONFIG_USB_PD_TCPC
 	if (!res) {
 		struct ec_response_pd_chip_info *info;
-		tcpm_get_chip_info(port, 0, &info);
-		CPRINTS("TCPC p%d VID:0x%x PID:0x%x DID:0x%x FWV:0x%lx",
-			port, info->vendor_id, info->product_id,
-			info->device_id, info->fw_version_number);
+
+		if (tcpm_get_chip_info(port, 0, &info) == EC_SUCCESS) {
+			CPRINTS("TCPC p%d VID:0x%x PID:0x%x DID:0x%x FWV:0x%lx",
+				port, info->vendor_id, info->product_id,
+				info->device_id, info->fw_version_number);
+		}
 	}
 #endif
 
