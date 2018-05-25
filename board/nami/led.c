@@ -113,34 +113,16 @@ const static led_patterns battery_pattern_0 = {
 
 /*
  * Sona - Battery LED (dual color)
- * AC is attached      Solid ON White
- * charging            Solid ON Amber
- * Discharge in S0/3/5 Off
- * Battery Error       Blinking white (0.5 sec On and 0.5 sec Off)
- * fuel < 10%          Blinking white (1 sec On, 1 sec Off)
+ * All patterns are the same as Nami except in S3/S0ix, we do alternate pulsing
+ * (up-down-off-off).
  */
 const static led_patterns battery_pattern_1 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_OFF,   PULSE_NO}, {LED_OFF,   PULSE_NO}, {LED_OFF,   PULSE_NO}},
+	{{LED_OFF, PULSE_NO}, {LED_WHITE, ALTERNATE(PULSE(10))}, {LED_OFF, 0}},
 	/* charging: s0, s3, s5 */
 	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}},
 	/* full: s0, s3, s5 */
 	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO}},
-};
-
-/*
- * Sona - Power LED (single color)
- * System S0         Solid on
- * System S3         1 second on, 1 second off
- * System S4/S5      Off
- */
-const static led_patterns power_pattern_1 = {
-	/* discharging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF,   PULSE_NO}},
-	/* charging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF,   PULSE_NO}},
-	/* full: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF,   PULSE_NO}},
 };
 
 /*
@@ -210,14 +192,9 @@ static void led_init(void)
 	case PROJECT_NAMI:
 	case PROJECT_VAYNE:
 		patterns[0] = &battery_pattern_0;
-		patterns[1] = NULL;
 		break;
 	case PROJECT_SONA:
 		patterns[0] = &battery_pattern_1;
-		patterns[1] = &power_pattern_1;
-		battery_error.color = LED_WHITE;
-		battery_error.pulse = BLINK(5);
-		low_battery_soc = 10;
 		break;
 	case PROJECT_PANTHEON:
 		patterns[0] = &battery_pattern_2;
@@ -225,7 +202,6 @@ static void led_init(void)
 		break;
 	case PROJECT_AKALI:
 		patterns[0] = &battery_pattern_3;
-		patterns[1] = NULL;
 		break;
 	default:
 		break;
