@@ -2349,6 +2349,12 @@
 /* Support RMA auth challenge-response */
 #undef CONFIG_RMA_AUTH
 
+/*
+ * Use the p256 curve for RMA challenge-response calculations (x21559 is used
+ * by default).
+ */
+#undef CONFIG_RMA_AUTH_USE_P256
+
 /* Enable hardware Random Number generator support */
 #undef CONFIG_RNG
 
