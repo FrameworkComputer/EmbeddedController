@@ -10,6 +10,9 @@ CHIP:=stm32
 CHIP_FAMILY:=stm32f0
 CHIP_VARIANT:=stm32f05x
 
+# Not enough SRAM: Disable all tests
+test-list-y=
+
 board-y=board.o
 
 # This target builds RW only.  Therefore, remove RO from dependencies.

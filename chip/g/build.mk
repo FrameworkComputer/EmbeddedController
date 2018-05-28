@@ -113,6 +113,9 @@ dirs-y += chip/g/dcrypto
 dirs-y += chip/g/loader
 endif
 
+# Do not build any test on chip/g
+test-list-y=
+
 %.hex: %.flat
 
 ifneq ($(CONFIG_RW_B),)
