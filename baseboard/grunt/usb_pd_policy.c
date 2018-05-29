@@ -23,15 +23,10 @@
 #define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
 			 PDO_FIXED_COMM_CAP)
 
-/* TODO(ecgh): fill in correct source and sink capabilities */
 const uint32_t pd_src_pdo[] = {
 	PDO_FIXED(5000, 1500, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
-const uint32_t pd_src_pdo_max[] = {
-	PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
-};
-const int pd_src_pdo_max_cnt = ARRAY_SIZE(pd_src_pdo_max);
 
 const uint32_t pd_snk_pdo[] = {
 	PDO_FIXED(5000, 500, PDO_FIXED_FLAGS),
@@ -127,11 +122,6 @@ void pd_power_supply_reset(int port)
 	if (prev_en)
 		pd_set_vbus_discharge(port, 1);
 
-#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
-	/* Give back the current quota we are no longer using */
-	charge_manager_source_port(port, 0);
-#endif /* defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) */
-
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
@@ -152,11 +142,6 @@ int pd_set_power_supply_ready(int port)
 	if (rv)
 		return rv;
 
-#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
-	/* Ensure we advertise the proper available current quota */
-	charge_manager_source_port(port, 1);
-#endif /* defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) */
-
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 
@@ -166,11 +151,6 @@ int pd_set_power_supply_ready(int port)
 void pd_transition_voltage(int idx)
 {
 	/* No-operation: we are always 5V */
-}
-
-void typec_set_source_current_limit(int port, int rp)
-{
-	ppc_set_vbus_source_current_limit(port, rp);
 }
 
 int pd_snk_is_vbus_provided(int port)
