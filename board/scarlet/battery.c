@@ -257,8 +257,7 @@ int charger_profile_override(struct charge_state_data *curr)
 		 * This is a workaround for b:78792296. When AP is off and
 		 * charge termination is detected, we disable idle mode.
 		 */
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
-				     CHIPSET_STATE_ANY_SUSPEND))
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 			disable_idle();
 		else
 			enable_idle();
