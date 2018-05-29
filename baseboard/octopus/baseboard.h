@@ -201,9 +201,13 @@
  * USB-A Configs
  */
 
- /* Common USB-A defines */
-#define CONFIG_USB_PORT_POWER_DUMB
+/* Common USB-A defines */
 #define USB_PORT_COUNT 2
+#define CONFIG_USB_PORT_POWER_SMART
+#define CONFIG_USB_PORT_POWER_SMART_CDP_SDP_ONLY
+#define CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE USB_CHARGE_MODE_CDP
+#define GPIO_USB1_ILIM_SEL GPIO_USB_A0_CHARGE_EN_L
+#define GPIO_USB2_ILIM_SEL GPIO_USB_A1_CHARGE_EN_L
 
 /*******************************************************************************
  * SoC / PCH Config
