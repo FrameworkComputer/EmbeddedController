@@ -27,7 +27,9 @@
 #define CONFIG_I2C_MASTER
 #define CONFIG_LED_COMMON
 #define CONFIG_ADC
-#undef CONFIG_PWM
+#define CONFIG_PWM
+#define CONFIG_PWM_DISPLIGHT
+
 #undef CONFIG_PECI
 
 #define CONFIG_HOSTCMD_SPS
@@ -154,6 +156,11 @@ enum adc_channel {
 enum sensor_id {
 	LID_ACCEL = 0,
 	LID_GYRO,
+};
+
+enum pwm_channel {
+	PWM_CH_DISPLIGHT,
+	PWM_CH_COUNT
 };
 
 void board_set_switchcap(int asserted);
