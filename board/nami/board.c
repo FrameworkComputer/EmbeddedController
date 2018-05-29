@@ -77,7 +77,7 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	    !gpio_get_level(GPIO_USB_C0_PD_RST_L))
 		return;
 	else if ((signal == GPIO_USB_C1_PD_INT_ODL) &&
-		 !gpio_get_level(GPIO_USB_C1_PD_RST_L))
+		 gpio_get_level(GPIO_USB_C1_PD_RST))
 		return;
 
 #ifdef HAS_TASK_PDCMD
@@ -241,10 +241,13 @@ void board_reset_pd_mcu(void)
 
 	/* Assert reset */
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
+	gpio_set_level(GPIO_USB_C1_PD_RST, 1);
 	msleep(1);
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
-	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
+	gpio_set_level(GPIO_USB_C1_PD_RST, 0);
+	/* After TEST_R release, anx7447/3447 needs 2ms to finish eFuse
+	 * loading. */
+	msleep(2);
 }
 
 void board_tcpc_init(void)
@@ -265,7 +268,6 @@ void board_tcpc_init(void)
 	 */
 	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
 		const struct usb_mux *mux = &usb_muxes[port];
-
 		mux->hpd_update(port, 0, 0);
 	}
 }
@@ -281,7 +283,7 @@ uint16_t tcpc_get_alert_status(void)
 	}
 
 	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL)) {
-		if (gpio_get_level(GPIO_USB_C1_PD_RST_L))
+		if (!gpio_get_level(GPIO_USB_C1_PD_RST))
 			status |= PD_STATUS_TCPC_ALERT_1;
 	}
 

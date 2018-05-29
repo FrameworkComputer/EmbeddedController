@@ -83,7 +83,7 @@ GPIO(USB_C1_5V_EN,		PIN(3, 3), GPIO_OUT_LOW)	/* C1 5V Enable */
 GPIO(USB_C1_3A_EN,		PIN(6, 6), GPIO_OUT_LOW)	/* C1 3A Enable */
 GPIO(USB_C1_CHARGE_L,		PIN(C, 3), GPIO_OUT_LOW)	/* C1 Charge enable. Active low. */
 GPIO(USB_C0_PD_RST_L,		PIN(C, 6), GPIO_ODR_HIGH)	/* C0 PD Reset */
-GPIO(USB_C1_PD_RST_L,		PIN(0, 0), GPIO_ODR_HIGH)	/* C1 PD Reset */
+GPIO(USB_C1_PD_RST,		PIN(0, 0), GPIO_OUT_LOW)	/* C1 PD Reset */
 GPIO(USB_C0_DP_HPD,		PIN(9, 4), GPIO_INPUT)		/* C0 DP Hotplug Detect */
 GPIO(USB_C1_DP_HPD,		PIN(A, 5), GPIO_INPUT)		/* C1 DP Hotplug Detect */
 GPIO(USB_PP3300_USB_PD,		PIN(8, 4), GPIO_INPUT)		/* Reserved. Currently, has no effect. */
