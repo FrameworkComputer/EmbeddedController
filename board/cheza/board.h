@@ -163,8 +163,6 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
-void board_set_switchcap(int asserted);
-
 /* Custom function to indicate if sourcing VBUS */
 int board_is_sourcing_vbus(int port);
 /* Enable VBUS sink for a given port */

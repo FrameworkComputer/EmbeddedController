@@ -222,7 +222,7 @@ DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, powerbtn_sdm845_changed,
 static void set_system_power(int enable)
 {
 	CPRINTS("set_system_power(%d)", enable);
-	board_set_switchcap(enable);
+	gpio_set_level(GPIO_SWITCHCAP_ON_L, enable);
 	gpio_set_level(GPIO_VBOB_EN, enable);
 }
 
