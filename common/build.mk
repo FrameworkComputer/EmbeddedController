@@ -157,6 +157,30 @@ $(out)/RW/common/rsa.o: CFLAGS+=-O3
 $(out)/RO/common/rsa.o: CFLAGS+=-O3
 endif
 
+ifneq ($(CONFIG_BOOTBLOCK),)
+build-util-bin += gen_emmc_transfer_data
+
+# Bootblock is only packed in RO image.
+$(out)/util/gen_emmc_transfer_data: BUILD_LDFLAGS += -DSECTION_IS_RO
+$(out)/bootblock_data.h: $(out)/util/gen_emmc_transfer_data $(out)/.bootblock
+	$(call quiet,emmc_bootblock,BTBLK  )
+
+# We only want to repack the bootblock if: $(BOOTBLOCK) variable value has
+# changed, or the file pointed at by $(BOOTBLOCK) has changed. We do this
+# by recording the latest $(BOOTBLOCK) file information in .bootblock
+# TODO: Need a better makefile tricks to do this.
+
+bootblock_ls := $(shell ls -l "$(BOOTBLOCK)" 2>&1)
+old_bootblock_ls := $(shell cat $(out)/.bootblock 2>/dev/null)
+
+$(out)/.bootblock: $(BOOTBLOCK)
+	@echo "$(bootblock_ls)" > $@
+
+ifneq ($(bootblock_ls),$(old_bootblock_ls))
+.PHONY: $(out)/.bootblock
+endif
+endif # CONFIG_BOOTBLOCK
+
 ifneq ($(CONFIG_TOUCHPAD_HASH_FW),)
 $(out)/RO/common/update_fw.o: $(out)/touchpad_fw_hash.h
 $(out)/RW/common/update_fw.o: $(out)/touchpad_fw_hash.h

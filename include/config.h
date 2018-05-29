@@ -420,6 +420,12 @@
 #undef CONFIG_BOOT_HEADER_STORAGE_SIZE
 
 /*****************************************************************************/
+/* Bootblock config */
+
+/* Pack AP-FW bootblock in EC image. */
+#undef CONFIG_BOOTBLOCK
+
+/*****************************************************************************/
 
 /* EC has GPIOs to allow board to reset RTC */
 #undef CONFIG_BOARD_HAS_RTC_RESET
