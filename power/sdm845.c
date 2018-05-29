@@ -305,16 +305,16 @@ static void set_pmic_pwron(int enable)
 	 * 5. Release PMIC_KPD_PWR_ODL
 	 *
 	 * Power-off sequence:
-	 * 1. Hold down PMIC_KPD_PWR_ODL and SYS_RST_L, which is a power-off
+	 * 1. Hold down PMIC_KPD_PWR_ODL and PM845_RESIN_L, which is a power-off
 	 *    trigger (requiring reprogramming PMIC registers to make
-	 *    PMIC_KPD_PWR_ODL + SYS_RST_L as a shutdown trigger)
+	 *    PMIC_KPD_PWR_ODL + PM845_RESIN_L as a shutdown trigger)
 	 * 2. PM845 pulls down AP_RST_L signal to power-off SDM845 (requreing
 	 *    reprogramming PMIC to set the stage-1 and stage-2 reset timers to
 	 *    0 such that the pull down happens just after the deboucing time
 	 *    of the trigger, like 2ms)
 	 * 3. SDM845 pulls down PS_HOLD signal
 	 * 4. Wait for PS_HOLD down
-	 * 5. Release PMIC_KPD_PWR_ODL and SYS_RST_L
+	 * 5. Release PMIC_KPD_PWR_ODL and PM845_RESIN_L
 	 *
 	 * If the above PMIC registers not programmed or programmed wrong, it
 	 * falls back to the next functions, which cuts off the system power.
@@ -322,11 +322,11 @@ static void set_pmic_pwron(int enable)
 
 	gpio_set_level(GPIO_PMIC_KPD_PWR_ODL, 0);
 	if (!enable)
-		gpio_set_level(GPIO_SYS_RST_L, 0);
+		gpio_set_level(GPIO_PM845_RESIN_L, 0);
 	wait_pmic_pwron(enable);
 	gpio_set_level(GPIO_PMIC_KPD_PWR_ODL, 1);
 	if (!enable)
-		gpio_set_level(GPIO_SYS_RST_L, 1);
+		gpio_set_level(GPIO_PM845_RESIN_L, 1);
 }
 
 enum power_state power_chipset_init(void)
