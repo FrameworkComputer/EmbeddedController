@@ -143,6 +143,44 @@ find_blob_in_blob() {
   return 1
 }
 
+# This function accepts two arguments, names of the two elf files.
+#
+# The files are searched for test RMA public key patterns - x25519 or p256,
+# both files are supposed to have pattern of one of these keys and not the
+# other. If this holds true the function prints the public key base name. If
+# not both files include the same key, or include more than one key, the
+# function reports failure and exits the script.
+determine_rma_key_base() {
+  local base_name="${EC_ROOT}/board/cr50/rma_key_blob"
+  local curve
+  local curves=( "x25519" "p256" )
+  local elf
+  local elves=( "$1" "$2" )
+  local key_file
+  local mask=1
+  local result=0
+
+  for curve in ${curves[@]}; do
+    key_file="${base_name}.${curve}.test"
+    for elf in ${elves[@]}; do
+      if find_blob_in_blob "${elf}" "${key_file}"; then
+        result=$(( result | mask ))
+      fi
+      mask=$(( mask << 1 ))
+    done
+  done
+
+  case "${result}" in
+    (3)  curve="x25519";;
+    (12) curve="p256";;
+    (*) echo "could not determine key type in the elves" >&2
+        exit 1
+        ;;
+  esac
+
+  echo "${base_name}.${curve}.test"
+}
+
 SIGNER="cr50-codesigner"
 if ! which "${SIGNER}" 2>/dev/null > /dev/null; then
   echo "${SIGNER} is not available, try running 'sudo emerge cr50-utils'" >&2
@@ -212,7 +250,7 @@ if [[ -n "${do_prod}" && -n "${do_b1}" ]]; then
   exit 1
 fi
 
-RMA_KEY_BASE="${EC_ROOT}/board/cr50/rma_key_blob"
+rma_key_base="$(determine_rma_key_base ${elves[@]})"
 
 signer_command_params=()
 signer_command_params+=(--b -x ${EC_BIN_ROOT}/fuses.xml)
@@ -222,7 +260,7 @@ else
   cp "${EC_BIN_ROOT}/ec_RW-manifest-prod.json" "${tmpf}"
   signer_command_params+=(-k ${EC_BIN_ROOT}/cr50_RW-prod.pem.pub)
   # Swap test public RMA server key with the prod version.
-  signer_command_params+=(-S "${RMA_KEY_BASE}.test","${RMA_KEY_BASE}.prod")
+  signer_command_params+=(-S "${rma_key_base}.test","${rma_key_base}.prod")
 fi
 signer_command_params+=(-j ${tmpf})
 
@@ -253,13 +291,13 @@ for elf in ${elves[@]}; do
     exit 1
   fi
 
-  if find_blob_in_blob  "${signed_file}" "${RMA_KEY_BASE}.test"; then
+  if find_blob_in_blob  "${signed_file}" "${rma_key_base}.test"; then
     echo "${progname}: test RMA key in the signed image!" >&2
     rm *."${dst_suffix}"
     exit 1
   fi
 
-  if ! find_blob_in_blob "${signed_file}" "${RMA_KEY_BASE}.prod"; then
+  if ! find_blob_in_blob "${signed_file}" "${rma_key_base}.prod"; then
     echo "${progname}: prod RMA key not in the signed image!" >&2
     rm *."${dst_suffix}"
     exit 1

@@ -182,7 +182,7 @@ endif
 ifeq ($(TEST_BUILD),)
 
 ifeq ($(CONFIG_RMA_AUTH_USE_P256),)
-BLOB_FILE = rma_key_blob.test
+BLOB_FILE = rma_key_blob.x25519.test
 else
 BLOB_FILE = rma_key_blob.p256.test
 endif
