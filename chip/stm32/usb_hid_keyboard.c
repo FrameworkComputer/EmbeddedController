@@ -17,6 +17,7 @@
 #include "pwm.h"
 #include "queue.h"
 #include "registers.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -49,6 +50,11 @@ enum hid_protocol {
 /* Current protocol, behaviour is identical in both modes. */
 static enum hid_protocol protocol = HID_REPORT_PROTOCOL;
 
+#if defined(CONFIG_KEYBOARD_ASSISTANT_KEY) || \
+    defined(CONFIG_KEYBOARD_TABLET_MODE_SWITCH)
+#define HID_KEYBOARD_EXTRA_FIELD
+#endif
+
 /*
  * Note: This first 8 bytes of this report format cannot be changed, as that
  * would break HID Boot protocol compatibility (see HID 1.11 "Appendix B: Boot
@@ -59,9 +65,9 @@ struct usb_hid_keyboard_report {
 	uint8_t reserved; /* 0x0 */
 	uint8_t keys[6];
 	/* Non-boot protocol fields below */
-#ifdef CONFIG_KEYBOARD_ASSISTANT_KEY
-	uint8_t assistant:1;
-	uint8_t reserved2:7;
+#ifdef HID_KEYBOARD_EXTRA_FIELD
+	/* Assistant/tablet mode switch bitmask */
+	uint8_t extra;
 #endif
 } __packed;
 
@@ -99,7 +105,11 @@ struct usb_hid_keyboard_output_report {
 #define HID_KEYBOARD_MODIFIER_LOW 0xe0
 #define HID_KEYBOARD_MODIFIER_HIGH 0xe7
 
+/* Special keys/switches */
+#define HID_KEYBOARD_EXTRA_LOW 0xf0
 #define HID_KEYBOARD_ASSISTANT_KEY 0xf0
+#define HID_KEYBOARD_TABLET_MODE_SWITCH 0xf1
+#define HID_KEYBOARD_EXTRA_HIGH 0xf1
 
 /* The standard Chrome OS keyboard matrix table. See HUT 1.12v2 Table 12 and
  * https://www.w3.org/TR/DOM-Level-3-Events-code .
@@ -191,19 +201,56 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_KEYBOARD, 02) = {
 	0x29, 0xa4, /* Usage Maximum (164) */				\
 	0x81, 0x00, /* Input (Data, Array), ;Key arrays (6 bytes) */
 
+/*
+ * Vendor-defined Usage Page 0xffd1:
+ *  - 0x18: Assistant key
+ *  - 0x19: Tablet mode switch
+ */
+#ifdef HID_KEYBOARD_EXTRA_FIELD
+#ifdef CONFIG_KEYBOARD_ASSISTANT_KEY
 #define KEYBOARD_ASSISTANT_KEY_DESC					\
-	0x06, 0xd1, 0xff, /* Usage Page (Vendor-defined 0xffd1) */	\
 	0x19, 0x18, /* Usage Minimum */					\
 	0x29, 0x18, /* Usage Maximum */					\
 	0x15, 0x00, /* Logical Minimum (0) */				\
 	0x25, 0x01, /* Logical Maximum (1) */				\
 	0x75, 0x01, /* Report Size (1) */				\
 	0x95, 0x01, /* Report Count (1) */				\
-	0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier byte */ \
+	0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier byte */
+#else
+/* No assistant key: just pad 1 bit. */
+#define KEYBOARD_ASSISTANT_KEY_DESC					\
+	0x95, 0x01, /* Report Count (1) */				\
+	0x75, 0x01, /* Report Size (1) */				\
+	0x81, 0x01, /* Input (Constant), ;1-bit padding */
+#endif /* !CONFIG_KEYBOARD_ASSISTANT_KEY */
+
+#ifdef CONFIG_KEYBOARD_TABLET_MODE_SWITCH
+#define KEYBOARD_TABLET_MODE_SWITCH_DESC				\
+	0x19, 0x19, /* Usage Minimum */					\
+	0x29, 0x19, /* Usage Maximum */					\
+	0x15, 0x00, /* Logical Minimum (0) */				\
+	0x25, 0x01, /* Logical Maximum (1) */				\
+	0x75, 0x01, /* Report Size (1) */				\
+	0x95, 0x01, /* Report Count (1) */				\
+	0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier byte */
+#else
+/* No tablet mode swtch: just pad 1 bit. */
+#define KEYBOARD_TABLET_MODE_SWITCH_DESC				\
+	0x95, 0x01, /* Report Count (1) */				\
+	0x75, 0x01, /* Report Size (1) */				\
+	0x81, 0x01, /* Input (Constant), ;1-bit padding */
+#endif /* CONFIG_KEYBOARD_TABLET_MODE_SWITCH */
+
+#define KEYBOARD_VENDOR_DESC						\
+	0x06, 0xd1, 0xff, /* Usage Page (Vendor-defined 0xffd1) */	\
+									\
+	KEYBOARD_ASSISTANT_KEY_DESC					\
+	KEYBOARD_TABLET_MODE_SWITCH_DESC				\
 									\
 	0x95, 0x01, /* Report Count (1) */				\
-	0x75, 0x07, /* Report Size (7) */				\
-	0x81, 0x01, /* Input (Constant), ;7-bit padding */
+	0x75, 0x06, /* Report Size (6) */				\
+	0x81, 0x01, /* Input (Constant), ;6-bit padding */
+#endif /* HID_KEYBOARD_EXTRA_FIELD */
 
 #define KEYBOARD_BACKLIGHT_DESC \
 	0xA1, 0x02, /* Collection (Logical) */				\
@@ -226,8 +273,8 @@ static const uint8_t report_desc[] = {
 
 	KEYBOARD_BASE_DESC
 
-#ifdef CONFIG_KEYBOARD_ASSISTANT_KEY
-	KEYBOARD_ASSISTANT_KEY_DESC
+#ifdef KEYBOARD_VENDOR_DESC
+	KEYBOARD_VENDOR_DESC
 #endif
 
 	0xC0        /* End Collection */
@@ -241,8 +288,8 @@ static const uint8_t report_desc_with_backlight[] = {
 
 	KEYBOARD_BASE_DESC
 
-#ifdef CONFIG_KEYBOARD_ASSISTANT_KEY
-	KEYBOARD_ASSISTANT_KEY_DESC
+#ifdef KEYBOARD_VENDOR_DESC
+	KEYBOARD_VENDOR_DESC
 #endif
 
 	KEYBOARD_BACKLIGHT_DESC
@@ -501,9 +548,14 @@ static void keyboard_process_queue(void)
 
 		queue_advance_head(&key_queue, 1);
 
-		if (ev.keycode == HID_KEYBOARD_ASSISTANT_KEY) {
-#ifdef CONFIG_KEYBOARD_ASSISTANT_KEY
-			report.assistant = ev.pressed ? 1 : 0;
+		if (ev.keycode >= HID_KEYBOARD_EXTRA_LOW &&
+		    ev.keycode <= HID_KEYBOARD_EXTRA_HIGH) {
+#ifdef HID_KEYBOARD_EXTRA_FIELD
+			mask = 0x01 << (ev.keycode - HID_KEYBOARD_EXTRA_LOW);
+			if (ev.pressed)
+				report.extra |= mask;
+			else
+				report.extra &= ~mask;
 			valid = 1;
 #endif
 		} else if (ev.keycode >= HID_KEYBOARD_MODIFIER_LOW &&
@@ -550,25 +602,39 @@ static void keyboard_process_queue(void)
 		write_keyboard_report();
 }
 
-void keyboard_state_changed(int row, int col, int is_pressed)
+static void queue_keycode_event(uint8_t keycode, int is_pressed)
 {
-	uint8_t keycode = keycodes[row][col];
 	struct key_event ev = {
 		.time = __hw_clock_source_read(),
 		.keycode = keycode,
 		.pressed = is_pressed,
 	};
 
-	if (!keycode) {
-		CPRINTF("Unknown key at %d/%d\n", row, col);
-		return;
-	}
-
 	mutex_lock(&key_queue_mutex);
 	queue_add_unit(&key_queue, &ev);
 	mutex_unlock(&key_queue_mutex);
 
 	keyboard_process_queue();
+}
+
+#ifdef CONFIG_KEYBOARD_TABLET_MODE_SWITCH
+static void tablet_mode_change(void)
+{
+	queue_keycode_event(HID_KEYBOARD_TABLET_MODE_SWITCH, tablet_get_mode());
+}
+DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, tablet_mode_change, HOOK_PRIO_DEFAULT);
+#endif
+
+void keyboard_state_changed(int row, int col, int is_pressed)
+{
+	uint8_t keycode = keycodes[row][col];
+
+	if (!keycode) {
+		CPRINTF("Unknown key at %d/%d\n", row, col);
+		return;
+	}
+
+	queue_keycode_event(keycode, is_pressed);
 }
 
 void clear_typematic_key(void)

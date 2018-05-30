@@ -1931,6 +1931,9 @@
 /* Add support for the assistant key. */
 #undef CONFIG_KEYBOARD_ASSISTANT_KEY
 
+/* Add support for a switch that indicates if the device is in tablet mode. */
+#undef CONFIG_KEYBOARD_TABLET_MODE_SWITCH
+
 /*
  * Minimum CPU clocks between scans.  This ensures that keyboard scanning
  * doesn't starve the other EC tasks of CPU when running at a decreased system

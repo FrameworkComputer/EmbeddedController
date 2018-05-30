@@ -41,6 +41,7 @@ static void tablet_mode_debounce(void)
 	/* We won't reach here on boards without a dedicated tablet switch */
 	tablet_set_mode(!gpio_get_level(TABLET_MODE_GPIO_L));
 
+#ifdef CONFIG_LID_ANGLE_UPDATE
 	/* Then, we disable peripherals only when the lid reaches 360 position.
 	 * (It's probably already disabled by motion_sense_task.)
 	 * We deliberately do not enable peripherals when the lid is leaving
@@ -48,6 +49,7 @@ static void tablet_mode_debounce(void)
 	 * reaches laptop zone (180 or less). */
 	if (tablet_mode)
 		lid_angle_peripheral_enable(0);
+#endif /* CONFIG_LID_ANGLE_UPDATE */
 }
 DECLARE_DEFERRED(tablet_mode_debounce);
 
