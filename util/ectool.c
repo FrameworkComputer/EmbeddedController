@@ -35,12 +35,14 @@ enum {
 	OPT_DEV = 1000,
 	OPT_INTERFACE,
 	OPT_NAME,
+	OPT_ASCII,
 };
 
 static struct option long_opts[] = {
 	{"dev", 1, 0, OPT_DEV},
 	{"interface", 1, 0, OPT_INTERFACE},
 	{"name", 1, 0, OPT_NAME},
+	{"ascii", 0, 0, OPT_ASCII},
 	{NULL, 0, 0, 0}
 };
 
@@ -285,6 +287,9 @@ static const char * const led_names[] = {
 	"sysrq debug" };
 BUILD_ASSERT(ARRAY_SIZE(led_names) == EC_LED_ID_COUNT);
 
+/* ASCII mode for printing, default off */
+static int ascii_mode = 0;
+
 /* Check SBS numerical value range */
 int is_battery_range(int val)
 {
@@ -309,7 +314,8 @@ int parse_bool(const char *s, int *dest)
 void print_help(const char *prog, int print_cmds)
 {
 	printf("Usage: %s [--dev=n] [--interface=dev|lpc|i2c] ", prog);
-	printf("[--name=cros_ec|cros_sh|cros_pd] <command> [params]\n\n");
+	printf("[--name=cros_ec|cros_sh|cros_pd] [--ascii] ");
+	printf("<command> [params]\n\n");
 	if (print_cmds)
 		puts(help_str);
 	else
@@ -5695,9 +5701,15 @@ int cmd_i2c_xfer(int argc, char *argv[])
 		return rv;
 
 	if (read_len) {
-		printf("Read bytes:");
-		for (i = 0; i < read_len; i++)
-			printf(" %#02x", read_buf[i]);
+		if (ascii_mode) {
+			for (i = 0; i < read_len; i++)
+				printf(isprint(read_buf[i]) ? "%c" : "\\x%02x",
+				       read_buf[i]);
+		} else {
+			printf("Read bytes:");
+			for (i = 0; i < read_len; i++)
+				printf(" %#02x", read_buf[i]);
+		}
 		printf("\n");
 	} else {
 		printf("Write successful.\n");
@@ -8114,6 +8126,9 @@ int main(int argc, char *argv[])
 		case OPT_NAME:
 			strncpy(device_name, optarg, 40);
 			device_name[40] = '\0';
+			break;
+		case OPT_ASCII:
+			ascii_mode = 1;
 			break;
 		}
 	}
