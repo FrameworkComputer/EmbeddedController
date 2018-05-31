@@ -16,14 +16,6 @@
 #include "hooks.h"
 #include "util.h"
 
-/*
- * TODO(dnojiri): Check if these parameters are valid for battery.
- *
- * Shutdown mode parameter to write to manufacturer access register
- */
-#define SB_SHIP_MODE_REG	SB_MANUFACTURER_ACCESS
-#define SB_SHUTDOWN_DATA        0x0010
-
 /* Default, Nami, Vayne */
 static const struct battery_info info_0 = {
 	.voltage_max = 8800,
@@ -66,7 +58,23 @@ static const struct battery_info info_2 = {
 	.discharging_max_c = 60,
 };
 
+/* Panasonic AP15O5L (Akali) */
+static const struct battery_info info_3 = {
+	.voltage_max = 13200,
+	.voltage_normal = 11550,
+	.voltage_min = 9000,
+	.precharge_current = 256,
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 50,
+	.charging_min_c = 0,
+	.charging_max_c = 60,
+	.discharging_min_c = 0,
+	.discharging_max_c = 60,
+};
+
 static const struct battery_info *info = &info_0;
+static int sb_ship_mode_reg = SB_MANUFACTURER_ACCESS;
+static int sb_shutdown_data = 0x0010;
 
 const struct battery_info *battery_get_info(void)
 {
@@ -75,7 +83,11 @@ const struct battery_info *battery_get_info(void)
 
 void board_battery_init(void)
 {
-	if (oem == PROJECT_SONA)
+	if (oem == PROJECT_AKALI) {
+		info = &info_3;
+		sb_ship_mode_reg = 0x3A;
+		sb_shutdown_data = 0xC574;
+	} else if (oem == PROJECT_SONA)
 		info = &info_1;
 	else if (oem == PROJECT_PANTHEON)
 		info = &info_2;
@@ -87,12 +99,12 @@ int board_cut_off_battery(void)
 	int rv;
 
 	/* Ship mode command must be sent twice to take effect */
-	rv = sb_write(SB_SHIP_MODE_REG, SB_SHUTDOWN_DATA);
+	rv = sb_write(sb_ship_mode_reg, sb_shutdown_data);
 
 	if (rv != EC_SUCCESS)
 		return rv;
 
-	return sb_write(SB_SHIP_MODE_REG, SB_SHUTDOWN_DATA);
+	return sb_write(sb_ship_mode_reg, sb_shutdown_data);
 }
 
 int charger_profile_override(struct charge_state_data *curr)
@@ -155,7 +167,7 @@ static int battery_init(void)
  * Check for case where both XCHG and XDSG bits are set indicating that even
  * though the FG can be read from the battery, the battery is not able to be
  * charged or discharged. This situation will happen if a battery disconnect was
- * intiaited via H1 setting the DISCONN signal to the battery. This will put the
+ * initiated via H1 setting the DISCONN signal to the battery. This will put the
  * battery pack into a sleep state and when power is reconnected, the FG can be
  * read, but the battery is still not able to provide power to the system. The
  * calling function returns batt_pres = BP_NO, which instructs the charging
@@ -163,7 +175,7 @@ static int battery_init(void)
  * to a brownout event when the battery isn't able yet to provide power to the
  * system. .
  */
-static int battery_check_disconnect(void)
+static int battery_check_disconnect_0(void)
 {
 	int rv;
 	uint8_t data[6];
@@ -181,6 +193,26 @@ static int battery_check_disconnect(void)
 		return BATTERY_DISCONNECTED;
 
 	return BATTERY_NOT_DISCONNECTED;
+}
+
+static int battery_check_disconnect_1(void)
+{
+	int batt_discharge_fet;
+
+	if (sb_read(SB_MANUFACTURER_ACCESS, &batt_discharge_fet))
+		return BATTERY_DISCONNECT_ERROR;
+
+	/* Bit 15: Discharge FET status (1: On, 0: Off) */
+	if (batt_discharge_fet & 0x4000)
+		return BATTERY_NOT_DISCONNECTED;
+
+	return BATTERY_DISCONNECTED;
+}
+
+static int battery_check_disconnect(void)
+{
+	return oem == PROJECT_AKALI ?
+		battery_check_disconnect_1() : battery_check_disconnect_0();
 }
 
 static enum battery_present batt_pres_prev; /* Default BP_NO (=0) */
@@ -237,4 +269,3 @@ enum battery_present battery_is_present(void)
 	batt_pres_prev = battery_check_present_status();
 	return batt_pres_prev;
 }
-
