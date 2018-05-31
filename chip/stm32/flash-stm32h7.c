@@ -79,6 +79,7 @@ static int unlock(int bank)
 
 		STM32_FLASH_KEYR(bank) = FLASH_KEYR_KEY1;
 		STM32_FLASH_KEYR(bank) = FLASH_KEYR_KEY2;
+		asm volatile("dsb; isb");
 		ignore_bus_fault(0);
 	}
 
@@ -113,6 +114,7 @@ static int unlock_optb(void)
 
 		STM32_FLASH_OPTKEYR(0) = FLASH_OPTKEYR_KEY1;
 		STM32_FLASH_OPTKEYR(0) = FLASH_OPTKEYR_KEY2;
+		asm volatile("dsb; isb");
 		ignore_bus_fault(0);
 	}
 
