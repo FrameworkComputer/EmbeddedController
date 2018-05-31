@@ -79,6 +79,20 @@ int charge_get_charge_state_debug(int param, uint32_t *value);
 #endif /* CONFIG_CHARGE_STATE_DEBUG */
 
 /**
+ * Set the desired manual charge current when in idle mode.
+ *
+ * @param curr_ma: Charge current in mA.
+ */
+void chgstate_set_manual_current(int curr_ma);
+
+/**
+ * Set the desired manual charge voltage when in idle mode.
+ *
+ * @param volt_mv: Charge voltage in mV.
+ */
+void chgstate_set_manual_voltage(int volt_mv);
+
+/**
  * Board-specific routine to indicate if the base is connected.
  */
 int board_is_base_connected(void);

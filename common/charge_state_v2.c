@@ -1227,6 +1227,15 @@ static int charge_request(int voltage, int current)
 	return r1 ? r1 : r2;
 }
 
+void chgstate_set_manual_current(int curr_ma)
+{
+	manual_current = charger_closest_current(curr_ma);
+}
+
+void chgstate_set_manual_voltage(int volt_mv)
+{
+	manual_voltage = charger_closest_voltage(volt_mv);
+}
 
 /* Force charging off before the battery is full. */
 static int set_chg_ctrl_mode(enum ec_charge_control_mode mode)
@@ -2294,10 +2303,10 @@ static int charge_command_charge_state(struct host_cmd_handler_args *args)
 #endif
 			switch (in->set_param.param) {
 			case CS_PARAM_CHG_VOLTAGE:
-				manual_voltage = charger_closest_voltage(val);
+				chgstate_set_manual_voltage(val);
 				break;
 			case CS_PARAM_CHG_CURRENT:
-				manual_current = charger_closest_current(val);
+				chgstate_set_manual_current(val);
 				break;
 			case CS_PARAM_CHG_INPUT_CURRENT:
 				if (charger_set_input_current(val))

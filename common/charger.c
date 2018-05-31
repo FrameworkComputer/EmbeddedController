@@ -6,6 +6,7 @@
  */
 
 #include "battery_smart.h"
+#include "charge_state_v2.h"
 #include "charger.h"
 #include "common.h"
 #include "console.h"
@@ -187,11 +188,17 @@ static int command_charger(int argc, char **argv)
 		d = strtoi(argv[2], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM2;
+#ifdef CONFIG_CHARGER_V2
+		chgstate_set_manual_current(d);
+#endif /* CONFIG_CHARGER_V2 */
 		return charger_set_current(d);
 	} else if (strcasecmp(argv[1], "voltage") == 0) {
 		d = strtoi(argv[2], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM2;
+#ifdef CONFIG_CHARGER_V2
+		chgstate_set_manual_voltage(d);
+#endif /* CONFIG_CHARGER_V2 */
 		return charger_set_voltage(d);
 	} else if (strcasecmp(argv[1], "dptf") == 0) {
 		d = strtoi(argv[2], &e, 0);
