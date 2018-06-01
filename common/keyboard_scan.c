@@ -9,6 +9,7 @@
 #include "clock.h"
 #include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "keyboard_config.h"
@@ -878,6 +879,26 @@ static int keyboard_factory_test(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_KEYBOARD_FACTORY_TEST,
 		     keyboard_factory_test,
 		     EC_VER_MASK(0));
+#endif
+
+#ifdef CONFIG_KEYBOARD_LANGUAGE_ID
+int keyboard_get_keyboard_id(void)
+{
+	int c;
+	uint32_t id = 0;
+
+	BUILD_ASSERT(sizeof(id) >= KEYBOARD_IDS);
+
+	for (c = 0; c < KEYBOARD_IDS; c++) {
+		/* Check ID ghosting if more than one bit in any KSIs was set */
+		if (keyboard_id[c] & (keyboard_id[c] - 1))
+			/* ID ghosting is found */
+			return KEYBOARD_ID_UNREADABLE;
+		else
+			id |= keyboard_id[c] << (c * 8);
+	}
+	return id;
+}
 #endif
 
 /*****************************************************************************/

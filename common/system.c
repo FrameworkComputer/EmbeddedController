@@ -17,6 +17,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "keyboard_scan.h"
 #include "lpc.h"
 #include "otp.h"
 #include "rwsig.h"
@@ -1364,6 +1365,21 @@ static int host_command_set_sku_id(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_SET_SKU_ID,
 		     host_command_set_sku_id,
+		     EC_VER_MASK(0));
+#endif
+
+#ifdef CONFIG_KEYBOARD_LANGUAGE_ID
+static int host_command_get_keyboard_id(struct host_cmd_handler_args *args)
+{
+	struct ec_response_keyboard_id *r = args->response;
+
+	r->keyboard_id = keyboard_get_keyboard_id();
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_KEYBOARD_ID,
+		     host_command_get_keyboard_id,
 		     EC_VER_MASK(0));
 #endif
 
