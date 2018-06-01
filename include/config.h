@@ -1092,6 +1092,12 @@
 #undef CONFIG_DCRYPTO
 
 /*
+ * When enabled, RSA 2048 bit keygen gets a 40% performance boost,
+ * at the cost of 2184 bytes of image size increase.
+ */
+#undef CONFIG_DCRYPTO_RSA_SPEEDUP
+
+/*
  * When enabled, accelerate sha512 using the generic crypto engine;
  * only supported on CR50
  */
