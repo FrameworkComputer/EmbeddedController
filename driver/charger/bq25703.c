@@ -228,7 +228,13 @@ int charger_get_input_current(int *input_current)
 {
 	int rv, reg;
 
-	rv = raw_read8(BQ25703_REG_IIN_HOST, &reg);
+	/*
+	 * IIN_DPM register reflects the actual input current limit programmed
+	 * in the register, either from host or from ICO. After ICO, the
+	 * current limit used by DPM regulation may differ from the IIN_HOST
+	 * register settings.
+	 */
+	rv = raw_read8(BQ25703_REG_IIN_DPM, &reg);
 	if (!rv)
 		*input_current = REG_TO_INPUT_CURRENT(reg);
 

@@ -138,8 +138,17 @@ int board_discharge_on_ac(int enable);
 int charger_get_system_power(void);
 
 /* Other parameters that may be charger-specific, but are common so far. */
+
+/* Set desired input current value */
 int charger_set_input_current(int input_current);
+
+/*
+ * Get actual input current value.
+ * Actual input current may be less than the desired input current set
+ * due to current ratings of the wall adapter.
+ */
 int charger_get_input_current(int *input_current);
+
 int charger_manufacturer_id(int *id);
 int charger_device_id(int *id);
 int charger_get_option(int *option);
