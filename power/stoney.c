@@ -24,12 +24,11 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 #define IN_S5_PGOOD POWER_SIGNAL_MASK(X86_S5_PGOOD)
 
-static int forcing_coldreset; /* Forced coldreset in progress? */
-static int forcing_shutdown;  /* Forced shutdown in progress? */
+static int forcing_shutdown; /* Forced shutdown in progress? */
 
 void chipset_force_shutdown(void)
 {
@@ -151,8 +150,6 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_G3S5:
 		/* Exit SOC G3 */
-		/* Platform is powering up, clear forcing_coldreset */
-		forcing_coldreset = 0;
 
 #ifndef BOARD_KAHLEE
 		/* Enable system power ("*_A" rails) in S5. */
@@ -265,13 +262,6 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5G3:
-
-		/* Power up the platform again for forced cold reset */
-		if (forcing_coldreset) {
-			forcing_coldreset = 0;
-			return POWER_G3S5;
-		}
-
 		chipset_force_g3();
 
 		return POWER_G3;
