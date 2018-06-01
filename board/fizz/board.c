@@ -662,6 +662,7 @@ static void setup_fan(void)
 	switch (oem) {
 	case OEM_KENCH:
 	case OEM_TEEMO:
+	case OEM_BLEEMO:
 	default:
 		fans[FAN_CH_0].rpm = &fan_rpm_1;
 		fan_table = fan_table0;
