@@ -26,6 +26,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
+static int source_enabled[CONFIG_USB_PD_PORT_COUNT];
 
 static int read_reg(uint8_t port, int reg, int *regval)
 {
@@ -132,29 +133,6 @@ static int get_func_set3(uint8_t port, int *regval)
 	return status;
 }
 
-static int sn5s330_is_pp_fet_enabled(uint8_t port, enum sn5s330_pp_idx pp,
-			     int *is_enabled)
-{
-	int pp_bit;
-	int status;
-	int regval;
-
-	if (pp == SN5S330_PP1)
-		pp_bit = SN5S330_PP1_EN;
-	else if (pp == SN5S330_PP2)
-		pp_bit = SN5S330_PP2_EN;
-	else
-		return EC_ERROR_INVAL;
-
-	status = get_func_set3(port, &regval);
-	if (status)
-		return status;
-
-	*is_enabled = !!(pp_bit & regval);
-
-	return EC_SUCCESS;
-}
-
 static int sn5s330_pp_fet_enable(uint8_t port, enum sn5s330_pp_idx pp,
 				 int enable)
 {
@@ -183,6 +161,9 @@ static int sn5s330_pp_fet_enable(uint8_t port, enum sn5s330_pp_idx pp,
 		CPRINTS("ppc p%d: Failed to set FUNC_SET3!", port);
 		return status;
 	}
+
+	if (pp == SN5S330_PP1)
+		source_enabled[port] = enable;
 
 	return EC_SUCCESS;
 }
@@ -466,17 +447,7 @@ static int sn5s330_is_vbus_present(int port)
 
 static int sn5s330_is_sourcing_vbus(int port)
 {
-	int is_sourcing_vbus = 0;
-	int rv;
-
-	rv = sn5s330_is_pp_fet_enabled(port, SN5S330_PP1, &is_sourcing_vbus);
-	if (rv) {
-		CPRINTS("ppc p%d: Failed to determine source FET status! (%d)",
-			port, rv);
-		return 0;
-	}
-
-	return is_sourcing_vbus;
+	return source_enabled[port];
 }
 
 #ifdef CONFIG_USBC_PPC_POLARITY
