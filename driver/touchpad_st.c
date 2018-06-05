@@ -421,11 +421,11 @@ static int st_tp_read_all_events(void)
  */
 static int st_tp_reset(void)
 {
-	int i, num_events;
+	int i, num_events, retry = 100;
 
 	board_touchpad_reset();
 
-	while (1) {
+	while (retry--) {
 		num_events = st_tp_read_all_events();
 		if (num_events < 0)
 			return -num_events;
@@ -433,20 +433,23 @@ static int st_tp_reset(void)
 		for (i = 0; i < num_events; i++) {
 			struct st_tp_event_t *e = &rx_buf.events[i];
 
-			if (e->evt_id == ST_TP_EVENT_ID_CONTROLLER_READY)
-				break;
+			if (e->evt_id == ST_TP_EVENT_ID_CONTROLLER_READY) {
+				CPRINTS("Touchpad ready");
+				return 0;
+			}
 		}
 
 		msleep(10);
 	}
-	CPRINTS("Touchpad ready");
-	return 0;
+	CPRINTS("Timeout waiting for controller ready.");
+	return EC_ERROR_TIMEOUT;
 }
 
 /* Initialize the controller ICs after reset */
 static void st_tp_init(void)
 {
-	st_tp_reset();
+	if (st_tp_reset())
+		return;
 	/*
 	 * On boot, ST firmware will load system info to host data memory,
 	 * So we don't need to reload it.
@@ -700,7 +703,8 @@ static void st_tp_full_initialize(void)
 	uint8_t tx_buf[] = { ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, 0x03 };
 
 	st_tp_stop_scan();
-	st_tp_reset();
+	if (st_tp_reset())
+		return;
 
 	CPRINTS("Start full initialization");
 	spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
