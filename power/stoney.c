@@ -63,9 +63,9 @@ void chipset_reset(void)
 	/*
 	 * Send a pulse to SYS_RST to trigger a warm reset.
 	 */
-	gpio_set_level(GPIO_PCH_RCIN_L, 0);
+	gpio_set_level(GPIO_SYS_RESET_L, 0);
 	usleep(32 * MSEC);
-	gpio_set_level(GPIO_PCH_RCIN_L, 1);
+	gpio_set_level(GPIO_SYS_RESET_L, 1);
 }
 
 void chipset_throttle_cpu(int throttle)

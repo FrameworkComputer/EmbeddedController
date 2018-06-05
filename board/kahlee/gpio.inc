@@ -86,7 +86,7 @@ GPIO(USB_C1_HPD_ODL,		PIN(9, 5), GPIO_INPUT)
  * be used. Set as input for now, we'll set it as an output when we want to use
  * it. Has external pull-down resistor. */
 GPIO(EC_PCH_RTCRST,		PIN(B, 7), GPIO_INPUT)
-GPIO(PCH_RCIN_L,		PIN(6, 1), GPIO_ODR_HIGH)	/* SYS_RST_ODL */
+GPIO(SYS_RESET_L,		PIN(6, 1), GPIO_ODR_HIGH)	/* SYS_RST_ODL */
 
 GPIO(USB_A_CHARGE_EN_L,		PIN(3, 6), GPIO_OUT_LOW)
 GPIO(USB1_ENABLE,		PIN(4, 1), GPIO_OUT_LOW)
