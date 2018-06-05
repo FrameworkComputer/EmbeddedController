@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 
-SCRIPT_VERSION = 2
+SCRIPT_VERSION = 3
 CCD_IS_UNRESTRICTED = 1 << 0
 WP_IS_DISABLED = 1 << 1
 TESTLAB_IS_ENABLED = 1 << 2
@@ -243,12 +243,30 @@ class RMAOpen(object):
     def get_rma_challenge(self):
         """Get the rma_auth challenge
 
+        There are two challenge formats
+
+        "
+        ABEQ8 UGA4F AVEQP SHCKV
+        DGGPR N8JHG V8PNC LCHR2
+        T27VF PRGBS N3ZXF RCCT2
+        UBMKP ACM7E WUZUA A4GTN
+        "
+        and
+        "
+        generated challenge:
+
+        CBYRYBEMH2Y75TC...rest of challenge
+        "
+        support extracting the challenge from both.
+
         Returns:
             The RMA challenge with all whitespace removed.
         """
         output = self.send_cmd_get_output('rma_auth').strip()
         print 'rma_auth output:\n', output
         # Extract the challenge from the console output
+        if 'generated challenge:' in output:
+            return output.split('generated challenge:')[-1].strip()
         challenge = ''.join(re.findall(' \S{5}' * 4, output))
         # Remove all whitespace
         return re.sub('\s', '', challenge)
