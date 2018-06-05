@@ -670,36 +670,46 @@ static int st_tp_write_flash(int offset, int size, const uint8_t *data)
 	return EC_SUCCESS;
 }
 
-/*
- * Keep polling until received error event or command echo.
- */
 static int st_tp_check_command_echo(const uint8_t *cmd,
-				    const size_t len,
-				    int retry)
+				    const size_t len)
 {
 	int num_events, i;
+	num_events = st_tp_read_all_events();
+	if (num_events < 0)
+		return -num_events;
 
-	while (retry--) {
-		num_events = st_tp_read_all_events();
-		if (num_events < 0)
-			return -num_events;
+	for (i = 0; i < num_events; i++) {
+		struct st_tp_event_t *e = &rx_buf.events[i];
 
-		for (i = 0; i < num_events; i++) {
-			struct st_tp_event_t *e = &rx_buf.events[i];
-
-			if (e->evt_id == ST_TP_EVENT_ID_STATUS_REPORT &&
-			    e->report.report_type == ST_TP_STATUS_CMD_ECHO &&
-			    memcmp(e->report.info, cmd, MIN(4, len)) == 0)
-				return 0;
-		}
-		msleep(100);
+		if (e->evt_id == ST_TP_EVENT_ID_STATUS_REPORT &&
+		    e->report.report_type == ST_TP_STATUS_CMD_ECHO &&
+		    memcmp(e->report.info, cmd, MIN(4, len)) == 0)
+			return 0;
 	}
-	return EC_ERROR_TIMEOUT;
+	return -EC_ERROR_BUSY;
 }
 
-static void st_tp_full_initialize(void)
+static void st_tp_full_initialize_end(void);
+DECLARE_DEFERRED(st_tp_full_initialize_end);
+
+static void st_tp_full_initialize_end(void)
 {
 	int ret;
+	uint8_t tx_buf[] = { ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, 0x03 };
+
+	ret = st_tp_check_command_echo(tx_buf, sizeof(tx_buf));
+	if (ret == EC_SUCCESS) {
+		CPRINTS("Full panel initialization completed.");
+		st_tp_init();
+	} else if (ret == -EC_ERROR_BUSY) {
+		hook_call_deferred(&st_tp_full_initialize_end_data, 100 * MSEC);
+	} else {
+		CPRINTS("Full Panel initialization failed: %x", -ret);
+	}
+}
+
+static void st_tp_full_initialize_start(void)
+{
 	uint8_t tx_buf[] = { ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, 0x03 };
 
 	st_tp_stop_scan();
@@ -709,19 +719,8 @@ static void st_tp_full_initialize(void)
 	CPRINTS("Start full initialization");
 	spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
 
-	msleep(100);
-
-	ret = st_tp_check_command_echo(tx_buf, sizeof(tx_buf), 20);
-	if (ret) {
-		CPRINTS("Full panel initialization failed.");
-		return;
-	}
-
-	CPRINTS("Full panel initialization completed.");
-
-	st_tp_init();
+	hook_call_deferred(&st_tp_full_initialize_end_data, 100 * MSEC);
 }
-DECLARE_DEFERRED(st_tp_full_initialize);
 
 /*
  * @param offset: should be address between 0 to 1M, aligned with
@@ -758,7 +757,7 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 	if (offset + size == CONFIG_TOUCHPAD_VIRTUAL_SIZE) {
 		CPRINTS("%s: End update, wait for reset.", __func__);
 
-		hook_call_deferred(&st_tp_full_initialize_data, 0);
+		st_tp_full_initialize_start();
 	}
 
 	return EC_SUCCESS;
@@ -775,7 +774,7 @@ int touchpad_debug(const uint8_t *param, unsigned int param_size,
 		/* no return value */
 		*data = NULL;
 		*data_size = 0;
-		st_tp_full_initialize();
+		st_tp_full_initialize_start();
 		return EC_SUCCESS;
 	}
 	return EC_RES_INVALID_PARAM;
@@ -810,7 +809,7 @@ static int command_touchpad_st(int argc, char **argv)
 		st_tp_read_system_info(1);
 		return EC_SUCCESS;
 	} else if (strcasecmp(argv[1], "calibrate") == 0) {
-		st_tp_full_initialize();
+		st_tp_full_initialize_start();
 		return EC_SUCCESS;
 	} else if (strcasecmp(argv[1], "enable") == 0) {
 		return EC_ERROR_NOT_HANDLED;
