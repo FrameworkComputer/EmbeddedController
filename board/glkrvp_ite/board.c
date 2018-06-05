@@ -15,6 +15,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "ioexpander_pca9555.h"
+#include "intc.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"

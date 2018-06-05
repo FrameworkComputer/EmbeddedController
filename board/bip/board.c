@@ -17,6 +17,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "intc.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"

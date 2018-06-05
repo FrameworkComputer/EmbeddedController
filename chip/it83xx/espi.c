@@ -417,6 +417,37 @@ static void espi_reset_vw_index_flags(void)
 		vw_index_flag[i] = IT83XX_ESPI_VWIDX(vw_isr_list[i].vw_index);
 }
 
+void espi_reset_pin_asserted_interrupt(enum gpio_signal signal)
+{
+	/* reset vw_index_flag when espi_reset# asserted. */
+	espi_reset_vw_index_flags();
+}
+
+static void espi_enable_reset(void)
+{
+	const struct gpio_info *espi_rst = gpio_list + GPIO_ESPI_RESET_L;
+
+	/*
+	 * bit[2-1]:
+	 * 00b: reserved.
+	 * 01b: espi_reset# is enabled on GPB7.
+	 * 10b: espi_reset# is enabled on GPD2.
+	 * 11b: reset is disabled.
+	 */
+	if (espi_rst->port == GPIO_D && espi_rst->mask == (1 << 2)) {
+		IT83XX_GPIO_GCR = (IT83XX_GPIO_GCR & ~0x6) | (1 << 2);
+	} else if (espi_rst->port == GPIO_B && espi_rst->mask == (1 << 7)) {
+		IT83XX_GPIO_GCR = (IT83XX_GPIO_GCR & ~0x6) | (1 << 1);
+	} else {
+		IT83XX_GPIO_GCR |= 0x6;
+		CPRINTS("EC's espi_reset pin is not enabled correctly");
+	}
+
+	/* enable interrupt of EC's espi_reset pin */
+	gpio_clear_pending_interrupt(GPIO_ESPI_RESET_L);
+	gpio_enable_interrupt(GPIO_ESPI_RESET_L);
+}
+
 /* Interrupt event of master enables the VW channel. */
 static void espi_vw_en_asserted(uint8_t evt)
 {
@@ -515,4 +546,7 @@ void espi_init(void)
 	/* bit4: eSPI to WUC enable */
 	IT83XX_ESPI_ESGCTRL2 |= (1 << 4);
 	task_enable_irq(IT83XX_IRQ_ESPI);
+
+	/* enable interrupt and reset from eSPI_reset# */
+	espi_enable_reset();
 }

@@ -29,6 +29,10 @@ GPIO_INT(POWER_BUTTON_L,PIN(E, 4), GPIO_INT_BOTH, power_button_interrupt)
 GPIO_INT(AC_PRESENT,	PIN(A, 6), GPIO_INT_BOTH, extpower_interrupt)
 
 GPIO_INT(UART1_RX,	PIN(B, 0), GPIO_INT_FALLING, uart_deepsleep_interrupt) /* UART1 RX input */
+#ifdef CONFIG_HOSTCMD_ESPI
+/* enable 1.8v input of EC's espi_reset pin, and then this pin takes effect. */
+GPIO_INT(ESPI_RESET_L, 	 PIN(D, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, espi_reset_pin_asserted_interrupt) /* eSPI_reset# */
+#endif
 
 /* Type-C interrupts */
 UNIMPLEMENTED(USB_C0_PD_INT_ODL)
