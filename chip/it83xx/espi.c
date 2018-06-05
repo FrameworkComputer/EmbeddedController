@@ -16,8 +16,6 @@
 #include "uart.h"
 #include "util.h"
 
-#define CHIP_ESPI_VW_INTERRUPT_NUM 8
-
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
 
@@ -27,29 +25,29 @@ struct vw_channel_t {
 	uint8_t  valid_mask;    /* valid bit of signal */
 };
 
-/* VW settings at initialization */
-#ifdef CONFIG_CHIPSET_GEMINILAKE
-static const struct vw_channel_t vw_init_setting[] = {
-	{ESPI_SYSTEM_EVENT_VW_IDX_4,
-		VW_LEVEL_FIELD(0),
-		VW_VALID_FIELD(VW_IDX_4_OOB_RST_ACK)},
-	{ESPI_SYSTEM_EVENT_VW_IDX_5,
-		VW_LEVEL_FIELD(VW_IDX_5_BTLD_STATUS_DONE),
-		VW_VALID_FIELD(VW_IDX_5_BTLD_STATUS_DONE)},
-};
-#else
-static const struct vw_channel_t vw_init_setting[] = {
-	{ESPI_SYSTEM_EVENT_VW_IDX_4,
-		VW_LEVEL_FIELD(0),
-		VW_VALID_FIELD(VW_IDX_4_OOB_RST_ACK)},
-	{ESPI_SYSTEM_EVENT_VW_IDX_5,
-		VW_LEVEL_FIELD(VW_IDX_5_BTLD_STATUS_DONE),
-		VW_VALID_FIELD(VW_IDX_5_BTLD_STATUS_DONE)},
+/* VW settings after the master enables the VW channel. */
+static const struct vw_channel_t en_vw_setting[] = {
+	/* EC sends SUS_ACK# = 1 VW to PCH. That does not apply to GLK SoC. */
+#ifndef CONFIG_CHIPSET_GEMINILAKE
 	{ESPI_SYSTEM_EVENT_VW_IDX_40,
 		VW_LEVEL_FIELD(0),
 		VW_VALID_FIELD(VW_IDX_40_SUS_ACK)},
-};
 #endif
+};
+
+/* VW settings after the master enables the OOB channel. */
+static const struct vw_channel_t en_oob_setting[] = {
+	{ESPI_SYSTEM_EVENT_VW_IDX_4,
+		VW_LEVEL_FIELD(0),
+		VW_VALID_FIELD(VW_IDX_4_OOB_RST_ACK)},
+};
+
+/* VW settings after the master enables the flash channel. */
+static const struct vw_channel_t en_flash_setting[] = {
+	{ESPI_SYSTEM_EVENT_VW_IDX_5,
+		VW_LEVEL_FIELD(VW_IDX_5_BTLD_STATUS_DONE),
+		VW_VALID_FIELD(VW_IDX_5_BTLD_STATUS_DONE)},
+};
 
 /* VW settings at host startup */
 static const struct vw_channel_t vw_host_startup_setting[] = {
@@ -265,47 +263,68 @@ int espi_vw_disable_wire_int(enum espi_vw_signal signal)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-static void espi_vw_host_startup(void)
+/* Configure virtual wire outputs */
+static void espi_configure_vw(const struct vw_channel_t *settings,
+						size_t entries)
 {
-	int i;
+	size_t i;
 
-	for (i = 0; i < ARRAY_SIZE(vw_host_startup_setting); i++)
-		IT83XX_ESPI_VWIDX(vw_host_startup_setting[i].index) =
-			(vw_host_startup_setting[i].level_mask |
-			vw_host_startup_setting[i].valid_mask);
+	for (i = 0; i < entries; i++)
+		IT83XX_ESPI_VWIDX(settings[i].index) |=
+			(settings[i].level_mask | settings[i].valid_mask);
 }
 
-static void espi_vw_no_isr(uint8_t flag_changed)
+static void espi_vw_host_startup(void)
 {
+	espi_configure_vw(vw_host_startup_setting,
+				ARRAY_SIZE(vw_host_startup_setting));
+}
+
+static void espi_vw_no_isr(uint8_t flag_changed, uint8_t vw_evt)
+{
+	CPRINTS("espi VW interrupt event is ignored! (bit%d at VWCTRL1)",
+								vw_evt);
 }
 
 #ifndef CONFIG_CHIPSET_GEMINILAKE
-static void espi_vw_idx41_isr(uint8_t flag_changed)
+static void espi_vw_idx41_isr(uint8_t flag_changed, uint8_t vw_evt)
 {
 	if (flag_changed & VW_LEVEL_FIELD(VW_IDX_41_SUS_WARN))
 		espi_vw_set_wire(VW_SUS_ACK, espi_vw_get_wire(VW_SUS_WARN_L));
 }
 #endif
 
-static void espi_vw_idx7_isr(uint8_t flag_changed)
+static void espi_vw_idx7_isr(uint8_t flag_changed, uint8_t vw_evt)
 {
 	if (flag_changed & VW_LEVEL_FIELD(VW_IDX_7_HOST_RST_WARN))
 		espi_vw_set_wire(VW_HOST_RST_ACK,
 			espi_vw_get_wire(VW_HOST_RST_WARN));
 }
 
-static void espi_vw_idx3_isr(uint8_t flag_changed)
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+static void espi_chipset_reset(void)
+{
+	hook_notify(HOOK_CHIPSET_RESET);
+}
+DECLARE_DEFERRED(espi_chipset_reset);
+#endif
+
+static void espi_vw_idx3_isr(uint8_t flag_changed, uint8_t vw_evt)
 {
 	if (flag_changed & VW_LEVEL_FIELD(VW_IDX_3_PLTRST)) {
 		int pltrst = espi_vw_get_wire(VW_PLTRST_L);
 
-		if (pltrst)
+		if (pltrst) {
 			espi_vw_host_startup();
-		else
+		} else {
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+			hook_call_deferred(&espi_chipset_reset_data, MSEC);
+#endif
 			/* Store port 80 reset event */
 			port_80_write(PORT_80_EVENT_RESET);
+		}
 
-		CPRINTS("PLTRST_L %sasserted", pltrst ? "de" : "");
+		CPRINTS("VW PLTRST_L %sasserted", pltrst ? "de" : "");
 	}
 
 	if (flag_changed & VW_LEVEL_FIELD(VW_IDX_3_OOB_RST_WARN))
@@ -313,7 +332,7 @@ static void espi_vw_idx3_isr(uint8_t flag_changed)
 			espi_vw_get_wire(VW_OOB_RST_WARN));
 }
 
-static void espi_vw_idx2_isr(uint8_t flag_changed)
+static void espi_vw_idx2_isr(uint8_t flag_changed, uint8_t vw_evt)
 {
 	if (flag_changed & VW_LEVEL_FIELD(VW_IDX_2_SLP_S3))
 		power_signal_interrupt(VW_SLP_S3_L);
@@ -324,31 +343,35 @@ static void espi_vw_idx2_isr(uint8_t flag_changed)
 }
 
 struct vw_interrupt_t {
-	void (*vw_isr)(uint8_t flag_changed);
+	void (*vw_isr)(uint8_t flag_changed, uint8_t vw_evt);
 	uint8_t vw_index;
 };
 
+/*
+ * The ISR of espi VW interrupt in array needs to match bit order in
+ * IT83XX_ESPI_VWCTRL1 register.
+ */
 #ifdef CONFIG_CHIPSET_GEMINILAKE
-static const struct vw_interrupt_t vw_isr_list[CHIP_ESPI_VW_INTERRUPT_NUM] = {
-	{espi_vw_idx2_isr,  ESPI_SYSTEM_EVENT_VW_IDX_2},
-	{espi_vw_idx3_isr,  ESPI_SYSTEM_EVENT_VW_IDX_3},
-	{espi_vw_idx7_isr,  ESPI_SYSTEM_EVENT_VW_IDX_7},
-	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_41},
-	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_42},
-	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_43},
-	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_44},
-	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_47},
+static const struct vw_interrupt_t vw_isr_list[] = {
+	[0] = {espi_vw_idx2_isr,  ESPI_SYSTEM_EVENT_VW_IDX_2},
+	[1] = {espi_vw_idx3_isr,  ESPI_SYSTEM_EVENT_VW_IDX_3},
+	[2] = {espi_vw_idx7_isr,  ESPI_SYSTEM_EVENT_VW_IDX_7},
+	[3] = {espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_41},
+	[4] = {espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_42},
+	[5] = {espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_43},
+	[6] = {espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_44},
+	[7] = {espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_47},
 };
 #else
-static const struct vw_interrupt_t vw_isr_list[CHIP_ESPI_VW_INTERRUPT_NUM] = {
-	{espi_vw_idx2_isr,  ESPI_SYSTEM_EVENT_VW_IDX_2},
-	{espi_vw_idx3_isr,  ESPI_SYSTEM_EVENT_VW_IDX_3},
-	{espi_vw_idx7_isr,  ESPI_SYSTEM_EVENT_VW_IDX_7},
-	{espi_vw_idx41_isr, ESPI_SYSTEM_EVENT_VW_IDX_41},
-	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_42},
-	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_43},
-	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_44},
-	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_47},
+static const struct vw_interrupt_t vw_isr_list[] = {
+	[0] = {espi_vw_idx2_isr,  ESPI_SYSTEM_EVENT_VW_IDX_2},
+	[1] = {espi_vw_idx3_isr,  ESPI_SYSTEM_EVENT_VW_IDX_3},
+	[2] = {espi_vw_idx7_isr,  ESPI_SYSTEM_EVENT_VW_IDX_7},
+	[3] = {espi_vw_idx41_isr, ESPI_SYSTEM_EVENT_VW_IDX_41},
+	[4] = {espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_42},
+	[5] = {espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_43},
+	[6] = {espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_44},
+	[7] = {espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_47},
 };
 #endif
 
@@ -356,7 +379,7 @@ static const struct vw_interrupt_t vw_isr_list[CHIP_ESPI_VW_INTERRUPT_NUM] = {
  * This is used to record the previous VW valid / level field state to discover
  * changes. Then do following sequence only when state is changed.
  */
-static uint8_t vw_index_flag[CHIP_ESPI_VW_INTERRUPT_NUM];
+static uint8_t vw_index_flag[ARRAY_SIZE(vw_isr_list)];
 
 void espi_vw_interrupt(void)
 {
@@ -374,32 +397,108 @@ void espi_vw_interrupt(void)
 #endif
 	task_clear_pending_irq(IT83XX_IRQ_ESPI_VW);
 
-	for (i = 0; i < CHIP_ESPI_VW_INTERRUPT_NUM; i++) {
+	for (i = 0; i < ARRAY_SIZE(vw_isr_list); i++) {
 		if (vwidx_updated & (1 << i)) {
 			uint8_t idx_flag;
 
 			idx_flag = IT83XX_ESPI_VWIDX(vw_isr_list[i].vw_index);
-			vw_isr_list[i].vw_isr(vw_index_flag[i] ^ idx_flag);
+			vw_isr_list[i].vw_isr(vw_index_flag[i] ^ idx_flag, i);
 			vw_index_flag[i] = idx_flag;
 		}
 	}
 }
 
+static void espi_reset_vw_index_flags(void)
+{
+	int i;
+
+	/* reset vw_index_flag */
+	for (i = 0; i < ARRAY_SIZE(vw_isr_list); i++)
+		vw_index_flag[i] = IT83XX_ESPI_VWIDX(vw_isr_list[i].vw_index);
+}
+
+/* Interrupt event of master enables the VW channel. */
+static void espi_vw_en_asserted(uint8_t evt)
+{
+	/*
+	 * Configure slave to master virtual wire outputs after receiving
+	 * the event of master enables the VW channel.
+	 */
+	espi_configure_vw(en_vw_setting, ARRAY_SIZE(en_vw_setting));
+}
+
+/* Interrupt event of master enables the OOB channel. */
+static void espi_oob_en_asserted(uint8_t evt)
+{
+	/*
+	 * Configure slave to master virtual wire outputs after receiving
+	 * the event of master enables the OOB channel.
+	 */
+	espi_configure_vw(en_oob_setting, ARRAY_SIZE(en_oob_setting));
+}
+
+/* Interrupt event of master enables the flash channel. */
+static void espi_flash_en_asserted(uint8_t evt)
+{
+	/*
+	 * Configure slave to master virtual wire outputs after receiving
+	 * the event of master enables the flash channel.
+	 */
+	espi_configure_vw(en_flash_setting, ARRAY_SIZE(en_flash_setting));
+}
+
+static void espi_no_isr(uint8_t evt)
+{
+	CPRINTS("espi interrupt event is ignored! (bit%d at ESGCTRL0)", evt);
+}
+
+/*
+ * The ISR of espi interrupt event in array need to be matched bit order in
+ * IT83XX_ESPI_ESGCTRL0 register.
+ */
+static void (*espi_isr[])(uint8_t evt) = {
+	[0] = espi_no_isr,
+	[1] = espi_vw_en_asserted,
+	[2] = espi_oob_en_asserted,
+	[3] = espi_flash_en_asserted,
+	[4] = espi_no_isr,
+	[5] = espi_no_isr,
+	[6] = espi_no_isr,
+	[7] = espi_no_isr,
+};
+
 void espi_interrupt(void)
 {
+	int i;
+	/* get espi interrupt events */
+	uint8_t espi_event = IT83XX_ESPI_ESGCTRL0;
+
+	/* write-1 to clear */
+	IT83XX_ESPI_ESGCTRL0 = espi_event;
+	/* process espi interrupt events */
+	for (i = 0; i < ARRAY_SIZE(espi_isr); i++) {
+		if (espi_event & (1 << i))
+			espi_isr[i](i);
+	}
+	/*
+	 * bit7: the slave has received a peripheral posted/completion.
+	 * This bit indicates the slave has received a packet from eSPI
+	 * peripheral channel. We can check cycle type (bit[3-0] at ESPCTRL0)
+	 * and make corresponding modification if needed.
+	 */
+	if (IT83XX_ESPI_ESPCTRL0 & ESPI_INTERRUPT_EVENT_PUT_PC) {
+		/* write-1-clear to release PC_FREE */
+		IT83XX_ESPI_ESPCTRL0 = ESPI_INTERRUPT_EVENT_PUT_PC;
+		CPRINTS("A packet from peripheral channel is ignored!");
+	}
+
+	task_clear_pending_irq(IT83XX_IRQ_ESPI);
 }
 
 void espi_init(void)
 {
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(vw_init_setting); i++)
-		IT83XX_ESPI_VWIDX(vw_init_setting[i].index) =
-			(vw_init_setting[i].level_mask |
-			vw_init_setting[i].valid_mask);
-
-	for (i = 0; i < CHIP_ESPI_VW_INTERRUPT_NUM; i++)
-		vw_index_flag[i] = IT83XX_ESPI_VWIDX(vw_isr_list[i].vw_index);
+	/* reset vw_index_flag at initialization */
+	espi_reset_vw_index_flags();
 
 	/*
 	 * bit[3]: The reset source of PNPCFG is RSTPNP bit in RSTCH
@@ -410,4 +509,10 @@ void espi_init(void)
 	/* bit7: VW interrupt enable */
 	IT83XX_ESPI_VWCTRL0 |= (1 << 7);
 	task_enable_irq(IT83XX_IRQ_ESPI_VW);
+
+	/* bit7: eSPI interrupt enable */
+	IT83XX_ESPI_ESGCTRL1 |= (1 << 7);
+	/* bit4: eSPI to WUC enable */
+	IT83XX_ESPI_ESGCTRL2 |= (1 << 4);
+	task_enable_irq(IT83XX_IRQ_ESPI);
 }
