@@ -27,7 +27,7 @@ GPIO_INT(ACCELGYRO3_INT_L,	PIN(4, 1), GPIO_INT_FALLING,			bmi160_interrupt)
 
 /* SoC section */
 GPIO(RSMRST_L,			PIN(3, 7), GPIO_OUT_LOW)			/* SOC Resume Reset */
-GPIO(EC_PCH_PWR_BTN_ODL,	PIN(C, 1), GPIO_ODR_HIGH)			/* Power button to SOC */
+GPIO(EC_PCH_PWR_BTN_L,		PIN(C, 1), GPIO_OUT_HIGH)			/* Power button to SOC */
 GPIO(EC_PCH_RTCRST,		PIN(7, 6), GPIO_OUT_LOW)			/* RTC Reset (broken) */
 GPIO(EC_PCH_WAKE_L,		PIN(7, 4), GPIO_ODR_HIGH)			/* PCH wake */
 GPIO(EC_PROCHOT_ODL,		PIN(3, 4), GPIO_INPUT)				/* SOC PROCHOT# */
