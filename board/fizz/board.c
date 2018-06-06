@@ -677,6 +677,102 @@ static void setup_fan(void)
 	}
 }
 
+/* List of BJ adapters shipped with Fizz or its variants */
+enum bj_adapter {
+	BJ_65W_19V,
+	BJ_90W_19V,
+	BJ_65W_19P5V,
+	BJ_90W_19P5V,
+};
+
+/* BJ adapter specs */
+static const struct charge_port_info bj_adapters[] = {
+	[BJ_65W_19V] = { .current = 3420, .voltage = 19000 },
+	[BJ_90W_19V] = { .current = 4740, .voltage = 19000 },
+	[BJ_65W_19P5V] = { .current = 3330, .voltage = 19500 },
+	[BJ_90W_19P5V] = { .current = 4620, .voltage = 19500 },
+};
+
+/*
+ * Bit masks to map SKU ID to BJ adapter wattage. 1:90W 0:65W
+ * KBL-R i7 8550U	4	90
+ * KBL-R i5 8250U	5	90
+ * KBL-R i3 8130U	6	90
+ * KBL-U i7 7600	3	65
+ * KBL-U i5 7500	2	65
+ * KBL-U i3  7100	1	65
+ * KBL-U Celeron 3965	7	65
+ * KBL-U Celeron 3865	0	65
+ */
+#define BJ_ADAPTER_90W_MASK (1 << 4 | 1 << 5 | 1 << 6)
+
+static void setup_bj(void)
+{
+	enum bj_adapter bj;
+
+	switch (oem) {
+	case OEM_KENCH:
+		bj = (BJ_ADAPTER_90W_MASK & (1 << sku)) ?
+			BJ_90W_19P5V : BJ_65W_19P5V;
+		break;
+	case OEM_TEEMO:
+		bj = (BJ_ADAPTER_90W_MASK & (1 << sku)) ?
+			BJ_90W_19V : BJ_65W_19V;
+		break;
+	case OEM_SION:
+		bj = (BJ_ADAPTER_90W_MASK & (1 << sku)) ?
+			BJ_90W_19V : BJ_65W_19V;
+		break;
+	default:
+		bj = (BJ_ADAPTER_90W_MASK & (1 << sku)) ?
+			BJ_90W_19P5V : BJ_65W_19P5V;
+		break;
+	}
+
+	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+				     DEDICATED_CHARGE_PORT, &bj_adapters[bj]);
+}
+
+/*
+ * Since fizz has no battery, it must source all of its power from either
+ * USB-C or the barrel jack (preferred). Fizz operates in continuous safe
+ * mode (charge_manager_leave_safe_mode() will never be called), which
+ * modifies port / ILIM selection as follows:
+ *
+ * - Dual-role / dedicated capability of the port partner is ignored.
+ * - Charge ceiling on PD voltage transition is ignored.
+ * - CHARGE_PORT_NONE will never be selected.
+ */
+static void board_charge_manager_init(void)
+{
+	enum charge_port port;
+	struct charge_port_info cpi = { 0 };
+	int i, j;
+
+	/* Initialize all charge suppliers to 0 */
+	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
+		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
+			charge_manager_update_charge(j, i, &cpi);
+	}
+
+	port = gpio_get_level(GPIO_ADP_IN_L) ?
+			CHARGE_PORT_TYPEC0 : CHARGE_PORT_BARRELJACK;
+	CPRINTS("Power source is p%d (%s)", port,
+		port == CHARGE_PORT_TYPEC0 ? "USB-C" : "BJ");
+
+	/* Initialize the power source supplier */
+	switch (port) {
+	case CHARGE_PORT_TYPEC0:
+		typec_set_input_current_limit(port, 3000, 5000);
+		break;
+	case CHARGE_PORT_BARRELJACK:
+		setup_bj();
+		break;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_charge_manager_init,
+	     HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
+
 static void board_init(void)
 {
 	setup_fan();

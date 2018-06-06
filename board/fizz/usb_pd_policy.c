@@ -218,49 +218,6 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	return 0;
 }
 
-/*
- * Since fizz has no battery, it must source all of its power from either
- * USB-C or the barrel jack (preferred). Fizz operates in continuous safe
- * mode (charge_manager_leave_safe_mode() will never be called), which
- * modifies port / ILIM selection as follows:
- *
- * - Dual-role / dedicated capability of the port partner is ignored.
- * - Charge ceiling on PD voltage transition is ignored.
- * - CHARGE_PORT_NONE will never be selected.
- */
-static void board_charge_manager_init(void)
-{
-	enum charge_port port;
-	struct charge_port_info cpi = { 0 };
-	int i, j;
-
-	/* Initialize all charge suppliers to 0 */
-	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
-		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
-			charge_manager_update_charge(j, i, &cpi);
-	}
-
-	port = gpio_get_level(GPIO_ADP_IN_L) ?
-			CHARGE_PORT_TYPEC0 : CHARGE_PORT_BARRELJACK;
-	CPRINTS("Power source is p%d (%s)", port,
-		port == CHARGE_PORT_TYPEC0 ? "USB-C" : "BJ");
-
-	/* Initialize the power source supplier */
-	switch (port) {
-	case CHARGE_PORT_TYPEC0:
-		typec_set_input_current_limit(port, 3000, 5000);
-		break;
-	case CHARGE_PORT_BARRELJACK:
-		cpi.voltage = 19500;
-		cpi.current = 3330;
-		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
-					     DEDICATED_CHARGE_PORT, &cpi);
-		break;
-	}
-}
-DECLARE_HOOK(HOOK_INIT, board_charge_manager_init,
-	     HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
-
 int board_set_active_charge_port(int port)
 {
 	const int active_port = charge_manager_get_active_charge_port();
