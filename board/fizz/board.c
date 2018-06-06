@@ -717,6 +717,7 @@ static void setup_bj(void)
 			BJ_90W_19P5V : BJ_65W_19P5V;
 		break;
 	case OEM_TEEMO:
+	case OEM_BLEEMO:
 		bj = (BJ_ADAPTER_90W_MASK & (1 << sku)) ?
 			BJ_90W_19V : BJ_65W_19V;
 		break;
