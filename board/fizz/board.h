@@ -237,7 +237,9 @@ enum OEM_ID {
 	OEM_KENCH = 0,
 	OEM_TEEMO = 1,
 	OEM_SION = 2,
-	OEM_WUKONG = 3,
+	OEM_WUKONG_N = 3,
+	OEM_WUKONG_A = 4,
+	OEM_WUKONG_M = 5,
 	OEM_BLEEMO = 6,
 	/* Number of OEM IDs */
 	OEM_COUNT
