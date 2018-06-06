@@ -62,8 +62,6 @@
 enum adc_channel {
 	ADC_TEMP_SENSOR_AMB,		/* ADC0 */
 	ADC_TEMP_SENSOR_CHARGER,	/* ADC1 */
-	ADC_VBUS_C0,			/* ADC4 */
-	ADC_VBUS_C1,			/* ADC9 */
 	ADC_CH_COUNT
 };
 

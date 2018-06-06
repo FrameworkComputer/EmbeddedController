@@ -60,11 +60,6 @@ const struct spi_device_t spi_devices[] = {
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
-enum adc_channel board_get_vbus_adc(int port)
-{
-	return port ? ADC_VBUS_C1 : ADC_VBUS_C0;
-}
-
 void board_overcurrent_event(int port)
 {
 	/* TODO(b/78344554): pass this signal upstream once hardware reworked */

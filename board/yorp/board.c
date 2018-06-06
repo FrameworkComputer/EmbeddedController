@@ -80,12 +80,6 @@ const struct adc_t adc_channels[] = {
 		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 	[ADC_TEMP_SENSOR_CHARGER] = {
 		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	/* Vbus C0 sensing (10x voltage divider). PPVAR_USB_C0_VBUS */
-	[ADC_VBUS_C0] = {
-		"VBUS_C0", NPCX_ADC_CH4, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
-	/* Vbus C1 sensing (10x voltage divider). PPVAR_USB_C1_VBUS */
-	[ADC_VBUS_C1] = {
-		"VBUS_C1", NPCX_ADC_CH9, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -193,12 +187,6 @@ const struct temp_sensor_t temp_sensors[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
-enum adc_channel board_get_vbus_adc(int port)
-{
-	return port ? ADC_VBUS_C1 : ADC_VBUS_C0;
-}
-
 
 /* Motion sensors */
 /* Mutexes */

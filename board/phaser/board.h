@@ -16,10 +16,6 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
-/* We don't have Vbus ADCs */
-#undef CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
-#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
