@@ -20,7 +20,7 @@
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
-	if ((signal == GPIO_USB_C1_PD_INT_ODL) &&
+	if ((signal == GPIO_USB_C1_MUX_INT_ODL) &&
 	    !gpio_get_level(GPIO_USB_C1_PD_RST_ODL))
 		return;
 
@@ -33,11 +33,11 @@ static void tcpc_alert_event(enum gpio_signal signal)
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
-	case GPIO_USB_PD_C0_INT_L:
+	case GPIO_USB_PD_C0_INT_ODL:
 		nx20p3483_interrupt(0);
 		break;
 
-	case GPIO_USB_PD_C1_INT_L:
+	case GPIO_USB_PD_C1_INT_ODL:
 		nx20p3483_interrupt(1);
 		break;
 

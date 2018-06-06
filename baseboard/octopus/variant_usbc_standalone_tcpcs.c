@@ -82,12 +82,12 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 void variant_tcpc_init(void)
 {
 	/* Enable PPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_PD_C0_INT_L);
-	gpio_enable_interrupt(GPIO_USB_PD_C1_INT_L);
+	gpio_enable_interrupt(GPIO_USB_PD_C0_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_PD_C1_INT_ODL);
 
 	/* Enable TCPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C0_MUX_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_MUX_INT_ODL);
 }
 /* Called after the baseboard_tcpc_init (via +2) */
 DECLARE_HOOK(HOOK_INIT, variant_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
@@ -96,10 +96,10 @@ uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;
 
-	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL))
+	if (!gpio_get_level(GPIO_USB_C0_MUX_INT_ODL))
 		status |= PD_STATUS_TCPC_ALERT_0;
 
-	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL)) {
+	if (!gpio_get_level(GPIO_USB_C1_MUX_INT_ODL)) {
 		if (gpio_get_level(GPIO_USB_C1_PD_RST_ODL))
 			status |= PD_STATUS_TCPC_ALERT_1;
 	}
