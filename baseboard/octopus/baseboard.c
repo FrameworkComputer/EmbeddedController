@@ -79,13 +79,8 @@ struct keyboard_scan_config keyscan_config = {
 /******************************************************************************/
 /* USB-A Configuration */
 const int usb_port_enable[USB_PORT_COUNT] = {
-#if USB_PORT_COUNT == 1
-	GPIO_EN_USB_A_5V,
-	/* TODO(b/74388692): Add second port control after hardware fix. */
-#else
 	GPIO_EN_USB_A0_5V,
 	GPIO_EN_USB_A1_5V,
-#endif
 };
 
 /******************************************************************************/

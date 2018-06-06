@@ -22,10 +22,6 @@
 
 #define CONFIG_LED_COMMON
 
-/* USB-A Configuration */
-#undef USB_PORT_COUNT
-#define USB_PORT_COUNT 1 /* TODO(b/74388692): Make 2 after hardware fix. */
-
 /* Sensors */
 #define CONFIG_ACCEL_KX022		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
@@ -58,6 +54,16 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
+
+/* GPIO signals updated base on board version. */
+#define GPIO_SYS_RESET_L gpio_sys_reset_l_runtime
+extern enum gpio_signal gpio_sys_reset_l_runtime;
+
+#define GPIO_ENTERING_RW gpio_entering_rw_runtime
+extern enum gpio_signal gpio_entering_rw_runtime;
+
+#define GPIO_USB2_OTG_ID gpio_usb2_otg_id_runtime
+extern enum gpio_signal gpio_usb2_otg_id_runtime;
 
 enum adc_channel {
 	ADC_TEMP_SENSOR_AMB,		/* ADC0 */
