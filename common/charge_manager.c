@@ -745,7 +745,7 @@ DECLARE_DEFERRED(charger_detect_debounced);
 static void charge_manager_make_change(enum charge_manager_change_type change,
 				       int supplier,
 				       int port,
-				       struct charge_port_info *charge)
+				       const struct charge_port_info *charge)
 {
 	int i;
 	int clear_override = 0;
@@ -888,7 +888,7 @@ void typec_set_input_current_limit(int port, typec_current_t max_ma,
 
 void charge_manager_update_charge(int supplier,
 				  int port,
-				  struct charge_port_info *charge)
+				  const struct charge_port_info *charge)
 {
 	charge_manager_make_change(CHANGE_CHARGE, supplier, port, charge);
 }

@@ -63,7 +63,7 @@ struct charge_port_info {
  */
 void charge_manager_update_charge(int supplier,
 				  int port,
-				  struct charge_port_info *charge);
+				  const struct charge_port_info *charge);
 
 /* Partner port dualrole capabilities */
 enum dualrole_capabilities {
