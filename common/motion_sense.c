@@ -26,7 +26,6 @@
 #include "timer.h"
 #include "task.h"
 #include "util.h"
-#include "accel_kionix.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_MOTION_SENSE, outstr)
