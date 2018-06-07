@@ -885,8 +885,14 @@ DECLARE_HOST_COMMAND(EC_CMD_KEYBOARD_FACTORY_TEST,
 #ifdef CONFIG_CMD_KEYBOARD
 static int command_ksstate(int argc, char **argv)
 {
-	if (argc > 1 && !parse_bool(argv[1], &print_state_changes))
-		return EC_ERROR_PARAM1;
+	if (argc > 1) {
+		if (!strcasecmp(argv[1], "force")) {
+			print_state_changes = 1;
+			keyboard_scan_enable(1, -1);
+		} else if (!parse_bool(argv[1], &print_state_changes)) {
+			return EC_ERROR_PARAM1;
+		}
+	}
 
 	print_state(debounced_state, "debounced ");
 	print_state(prev_state, "prev      ");
@@ -899,7 +905,7 @@ static int command_ksstate(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ksstate, command_ksstate,
-			"ksstate [on | off]",
+			"ksstate [on | off | force]",
 			"Show or toggle printing keyboard scan state");
 
 static int command_keyboard_press(int argc, char **argv)
