@@ -90,6 +90,15 @@
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 
+/* Sensors */
+#define CONFIG_ACCELGYRO_BMI160
+#define CONFIG_ACCEL_INTERRUPTS
+#define CONFIG_ACCELGYRO_BMI160_INT_EVENT TASK_EVENT_CUSTOM(4)
+#define CONFIG_ACCEL_FIFO 512
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+#define CONFIG_CMD_ACCELS
+#define CONFIG_CMD_ACCEL_INFO
+
 /* TODO(b/79163120): Use correct PD delay values, copied from Lux for rev-0 */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY   30000  /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY  250000 /* us */
@@ -112,6 +121,7 @@
 /* I2C Ports */
 #define I2C_PORT_BATTERY I2C_PORT_POWER
 #define I2C_PORT_CHARGER I2C_PORT_POWER
+#define I2C_PORT_ACCEL   I2C_PORT_SENSOR
 #define I2C_PORT_POWER   NPCX_I2C_PORT0_0
 #define I2C_PORT_TCPC0   NPCX_I2C_PORT1_0
 #define I2C_PORT_TCPC1   NPCX_I2C_PORT2_0
@@ -132,6 +142,12 @@ enum power_signal {
 enum adc_channel {
 	ADC_VBUS = -1,
 	ADC_CH_COUNT
+};
+
+/* Motion sensors */
+enum sensor_id {
+	LID_ACCEL = 0,
+	LID_GYRO,
 };
 
 void board_set_switchcap(int asserted);

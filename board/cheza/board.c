@@ -11,6 +11,7 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "extpower.h"
+#include "driver/accelgyro_bmi160.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -236,6 +237,9 @@ static void board_init(void)
 	/* Enable BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
+
+	/* Enable interrupt for BMI160 sensor */
+	gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -424,3 +428,60 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
+/* Mutexes */
+static struct mutex g_lid_mutex;
+
+static struct bmi160_drv_data_t g_bmi160_data;
+
+/* Matrix to rotate accelerometer into standard reference frame */
+const matrix_3x3_t base_standard_ref = {
+	{ FLOAT_TO_FP(-1), 0,  0},
+	{ 0,  FLOAT_TO_FP(-1),  0},
+	{ 0,  0, FLOAT_TO_FP(1)}
+};
+
+struct motion_sensor_t motion_sensors[] = {
+	/*
+	 * Note: bmi160: supports accelerometer and gyro sensor
+	 * Requirement: accelerometer sensor must init before gyro sensor
+	 * DO NOT change the order of the following table.
+	 */
+	[LID_ACCEL] = {
+	 .name = "Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_bmi160_data,
+	 .port = I2C_PORT_SENSOR,
+	 .addr = BMI160_ADDR0,
+	 .rot_standard_ref = &base_standard_ref,
+	 .default_range = 4,  /* g */
+	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
+	 .max_frequency = BMI160_ACCEL_MAX_FREQ,
+	 .config = {
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 10000 | ROUND_UP_FLAG,
+		 },
+	 },
+	},
+	[LID_GYRO] = {
+	 .name = "Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_bmi160_data,
+	 .port = I2C_PORT_SENSOR,
+	 .addr = BMI160_ADDR0,
+	 .default_range = 1000, /* dps */
+	 .rot_standard_ref = &base_standard_ref,
+	 .min_frequency = BMI160_GYRO_MIN_FREQ,
+	 .max_frequency = BMI160_GYRO_MAX_FREQ,
+	},
+};
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
