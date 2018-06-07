@@ -20,6 +20,7 @@
 #include "update_fw.h"
 #include "usb_api.h"
 #include "usb_hid_touchpad.h"
+#include "usb_isochronous.h"
 #include "util.h"
 
 /* Console output macros */
@@ -35,8 +36,7 @@
 
 BUILD_ASSERT(sizeof(struct st_tp_event_t) == 8);
 
-static struct st_tp_system_info_t system_info;
-
+/* Function prototypes */
 static int st_tp_read_all_events(void);
 static int st_tp_read_host_buffer_header(void);
 static int st_tp_send_ack(void);
@@ -44,6 +44,7 @@ static int st_tp_start_scan(void);
 static int st_tp_stop_scan(void);
 static int st_tp_update_system_state(int new_state, int mask);
 
+/* Global variables */
 /*
  * Current system state, meaning of each bit is defined below.
  */
@@ -61,6 +62,11 @@ static int system_state;
  */
 static uint32_t irq_ts;
 
+/*
+ * Cached system info.
+ */
+static struct st_tp_system_info_t system_info;
+
 static struct {
 #if ST_TP_DUMMY_BYTE == 1
 	uint8_t dummy;
@@ -73,6 +79,59 @@ static struct {
 		struct st_tp_event_t events[32];
 	} /* anonymous */;
 } __packed rx_buf;
+
+
+#ifdef CONFIG_USB_ISOCHRONOUS
+#define USB_ISO_PACKET_SIZE 256
+/*
+ * Header of each USB pacaket.
+ */
+struct packet_header_t {
+	uint8_t index;
+
+#define HEADER_FLAGS_NEW_FRAME	(1 << 0)
+	uint8_t flags;
+} __packed;
+BUILD_ASSERT(sizeof(struct packet_header_t) < USB_ISO_PACKET_SIZE);
+
+static struct packet_header_t packet_header;
+
+/* What will be sent to USB interface. */
+struct st_tp_usb_packet_t {
+#define USB_FRAME_FLAGS_BUTTON	(1 << 0)
+	/*
+	 * This will be true if user clicked on touchpad.
+	 * TODO(b/70482333): add corresponding code for button signal.
+	 */
+	uint8_t flags;
+
+	/*
+	 * This will be `st_tp_host_buffer_heat_map_t.frame` but each pixel
+	 * will be scaled to 8 bits value.
+	 */
+	uint8_t frame[ST_TOUCH_ROWS * ST_TOUCH_COLS];
+} __packed;
+
+/* Next buffer index SPI will write to. */
+static volatile uint32_t spi_buffer_index;
+/* Next buffer index USB will read from. */
+static volatile uint32_t usb_buffer_index;
+static struct st_tp_usb_packet_t usb_packet[2]; /* double buffering */
+/* How many bytes we have transmitted. */
+static size_t transmit_report_offset;
+
+/* Function prototypes */
+static int get_heat_map_addr(void);
+static void print_frame(void);
+static void st_tp_disable_heat_map(void);
+static void st_tp_enable_heat_map(void);
+static int st_tp_read_frame(void);
+static void st_tp_interrupt_send(void);
+DECLARE_DEFERRED(st_tp_interrupt_send);
+#endif
+
+
+/* Function implementations */
 
 static void set_bits(int *lvalue, int rvalue, int mask)
 {
@@ -183,7 +242,27 @@ static int st_tp_write_hid_report(void)
 static int st_tp_read_report(void)
 {
 	if (system_state & SYSTEM_STATE_ENABLE_HEAT_MAP) {
-		/* TODO(stimim): implement this */
+#ifdef CONFIG_USB_ISOCHRONOUS
+		/*
+		 * Because we are using double buffering, so, if
+		 * usb_buffer_index = N
+		 *
+		 * 1. spi_buffer_index == N      => ok, both slots are empty
+		 * 2. spi_buffer_index == N + 1  => ok, second slot is empty
+		 * 3. spi_buffer_index == N + 2  => not ok, need to wait for USB
+		 */
+		if (spi_buffer_index - usb_buffer_index <= 1) {
+			if (st_tp_read_frame() == EC_SUCCESS) {
+				spi_buffer_index++;
+				if (system_state & SYSTEM_STATE_DEBUG_MODE) {
+					print_frame();
+					usb_buffer_index++;
+				}
+			}
+		}
+		if (spi_buffer_index > usb_buffer_index)
+			hook_call_deferred(&st_tp_interrupt_send_data, 0);
+#endif
 	} else {
 		st_tp_write_hid_report();
 	}
@@ -209,6 +288,7 @@ static int st_tp_send_ack(void)
 static int st_tp_update_system_state(int new_state, int mask)
 {
 	int ret = EC_SUCCESS;
+	int need_locked_scan_mode = 0;
 
 	/* copy reserved bits */
 	set_bits(&new_state, system_state, ~mask);
@@ -224,8 +304,10 @@ static int st_tp_update_system_state(int new_state, int mask)
 			0x05,
 			0
 		};
-		if (new_state & SYSTEM_STATE_ENABLE_HEAT_MAP)
+		if (new_state & SYSTEM_STATE_ENABLE_HEAT_MAP) {
 			tx_buf[2] |= 1 << 0;
+			need_locked_scan_mode = 1;
+		}
 		if (new_state & SYSTEM_STATE_ENABLE_DOME_SWITCH)
 			tx_buf[2] |= 1 << 1;
 		ret = spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
@@ -246,6 +328,21 @@ static int st_tp_update_system_state(int new_state, int mask)
 		if (ret)
 			return ret;
 		set_bits(&system_state, new_state, mask);
+	}
+
+	/* We need to lock scan mode to prevent scan rate drop when heat map
+	 * mode is enabled.
+	 */
+	if (need_locked_scan_mode) {
+		uint8_t tx_buf[] = {
+			ST_TP_CMD_WRITE_SCAN_MODE_SELECT,
+			ST_TP_SCAN_MODE_LOCKED,
+			0x0,
+		};
+
+		ret = spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
+		if (ret)
+			return ret;
 	}
 	return ret;
 }
@@ -829,6 +926,317 @@ static void touchpad_usb_pm_change(void)
 DECLARE_HOOK(HOOK_USB_PM_CHANGE, touchpad_usb_pm_change, HOOK_PRIO_DEFAULT);
 #endif
 
+#ifdef CONFIG_USB_ISOCHRONOUS
+static void st_tp_enable_heat_map(void)
+{
+	int new_state = (SYSTEM_STATE_ENABLE_HEAT_MAP |
+			 SYSTEM_STATE_ENABLE_DOME_SWITCH |
+			 SYSTEM_STATE_ACTIVE_MODE);
+	int mask = new_state;
+
+	st_tp_update_system_state(new_state, mask);
+}
+DECLARE_DEFERRED(st_tp_enable_heat_map);
+
+static void st_tp_disable_heat_map(void)
+{
+	int new_state = 0;
+	int mask = SYSTEM_STATE_ENABLE_HEAT_MAP;
+
+	st_tp_update_system_state(new_state, mask);
+}
+DECLARE_DEFERRED(st_tp_disable_heat_map);
+
+static void print_frame(void)
+{
+	char debug_line[ST_TOUCH_COLS + 5];
+	int i, j, index;
+	int v;
+	struct st_tp_usb_packet_t *packet = &usb_packet[usb_buffer_index & 1];
+
+	if (usb_buffer_index == spi_buffer_index)
+		/* buffer is empty. */
+		return;
+
+	/* We will have ~150 FPS, let's print ~4 frames per second */
+	if (usb_buffer_index % 37 == 0) {
+		/* move cursor back to top left corner */
+		CPRINTF("\x1b[H");
+		CPUTS("==============\n");
+		for (i = 0; i < ST_TOUCH_ROWS; i++) {
+			for (j = 0; j < ST_TOUCH_COLS; j++) {
+				index = i * ST_TOUCH_COLS;
+				index += (ST_TOUCH_COLS - j - 1); // flip X
+				v = packet->frame[index];
+
+				if (v > 0)
+					debug_line[j] = '0' + v * 10 / 256;
+				else
+					debug_line[j] = ' ';
+			}
+			debug_line[j++] = '\n';
+			debug_line[j++] = '\0';
+			CPRINTF(debug_line);
+		}
+		CPUTS("==============\n");
+	}
+}
+
+static int st_tp_read_frame(void)
+{
+	struct st_tp_host_buffer_heat_map_t *heat_map = &rx_buf.heat_map;
+	int ret = EC_SUCCESS;
+	int rx_len = sizeof(*heat_map) + ST_TP_DUMMY_BYTE;
+	int heat_map_addr = get_heat_map_addr();
+	uint8_t tx_buf[] = {
+		ST_TP_CMD_READ_SPI_HOST_BUFFER,
+		(heat_map_addr >> 8) & 0xFF,
+		(heat_map_addr >> 0) & 0xFF,
+	};
+
+	if (heat_map_addr < 0)
+		goto failed;
+	/*
+	 * Theoretically, we should read host buffer header to check if data is
+	 * valid, but the data should always be ready when interrupt pin is low.
+	 * Let's skip this check for now.
+	 */
+	ret = spi_transaction(SPI, tx_buf, sizeof(tx_buf),
+			      (uint8_t *)&rx_buf, rx_len);
+	if (ret == EC_SUCCESS) {
+#if BYTES_PER_PIXEL == 1
+		/*
+		 * If BYTES_PER_PIXEL = 1, then we can memcpy directly.
+		 * This takes about 0.1ms per frame.
+		 */
+		memcpy(dest, heat_map->frame, ST_TOUCH_COLS * ST_TOUCH_ROWS);
+#elif BYTES_PER_PIXEL == 2
+		/*
+		 * Down scaling and move data into usb_packet, this takes
+		 * about 0.35ms per frame
+		 */
+		int i;
+		int16_t v;
+		uint8_t *dest = usb_packet[spi_buffer_index & 1].frame;
+		uint8_t max_value = 0;
+
+		for (i = 0; i < ST_TOUCH_COLS * ST_TOUCH_ROWS; i++) {
+			v = (heat_map->frame[i * 2] |
+			     (heat_map->frame[i * 2 + 1] << 8));
+			v = MAX(0, v);
+			v = MIN(v >> (BITS_PER_PIXEL - 8), 255);
+			if (v < ST_TP_HEAT_MAP_THRESHOLD)
+				v = 0;
+			dest[i] = v;
+			max_value |= v;
+		}
+
+		if (max_value == 0) // empty frame
+			return -1;
+#else
+#error "BYTES_PER_PIXEL can only be 1 or 2"
+#endif
+	}
+failed:
+	return ret;
+}
+
+/* Define USB interface for heat_map */
+
+/* function prototypes */
+static int st_tp_usb_set_interface(usb_uint alternate_setting,
+				   usb_uint interface);
+static int heatmap_send_packet(struct usb_isochronous_config const *config);
+static void st_tp_usb_tx_callback(struct usb_isochronous_config const *config);
+
+/* USB descriptors */
+USB_ISOCHRONOUS_CONFIG_FULL(usb_st_tp_heatmap_config,
+			    USB_IFACE_ST_TOUCHPAD,
+			    USB_CLASS_VENDOR_SPEC,
+			    0,  /* subclass */
+			    0,  /* protocol */
+			    USB_STR_HEATMAP_NAME,  /* interface name */
+			    USB_EP_ST_TOUCHPAD,
+			    USB_ISO_PACKET_SIZE,
+			    st_tp_usb_tx_callback,
+			    st_tp_usb_set_interface,
+			    1 /* 1 extra EP for interrupts */)
+
+/* ***This function will be executed in interrupt context*** */
+void st_tp_usb_tx_callback(struct usb_isochronous_config const *config)
+{
+	task_wake(TASK_ID_HEATMAP);
+}
+
+void heatmap_task(void *unused)
+{
+	struct usb_isochronous_config const *config;
+
+	config = &usb_st_tp_heatmap_config;
+
+	while (1) {
+		/* waiting st_tp_usb_tx_callback() */
+		task_wait_event(-1);
+
+		if (system_state & SYSTEM_STATE_DEBUG_MODE)
+			continue;
+
+		if (usb_buffer_index == spi_buffer_index)
+			/* buffer is empty */
+			continue;
+
+		while (heatmap_send_packet(config))
+			/* We failed to write a packet, try again later. */
+			task_wait_event(100);
+	}
+}
+
+/* USB interface has completed TX, it's asking for more data */
+static int heatmap_send_packet(struct usb_isochronous_config const *config)
+{
+	size_t num_byte_available;
+	size_t offset = 0;
+	int ret, buffer_id = -1;
+	struct st_tp_usb_packet_t *packet = &usb_packet[usb_buffer_index & 1];
+
+	packet_header.flags = 0;
+	num_byte_available = sizeof(*packet) - transmit_report_offset;
+	if (num_byte_available > 0) {
+		if (transmit_report_offset == 0)
+			packet_header.flags |= HEADER_FLAGS_NEW_FRAME;
+		ret = usb_isochronous_write_buffer(
+				config,
+				(uint8_t *)&packet_header,
+				sizeof(packet_header),
+				offset,
+				&buffer_id,
+				0);
+		/*
+		 * Since USB_ISO_PACKET_SIZE > sizeof(packet_header), this must
+		 * be true.
+		 */
+		if (ret != sizeof(packet_header))
+			return -1;
+
+		offset += ret;
+		packet_header.index++;
+
+		ret = usb_isochronous_write_buffer(
+				config,
+				(uint8_t *)packet + transmit_report_offset,
+				num_byte_available,
+				offset,
+				&buffer_id,
+				1);
+		if (ret < 0) {
+			/* TODO(b/70482333): handle this error, it might be:
+			 *   1. timeout (buffer_id changed)
+			 *   2. invalid offset
+			 *
+			 * For now, let's just return an error and try again.
+			 */
+			CPRINTS("%s %d: %d", __func__, __LINE__, -ret);
+			return ret;
+		}
+
+		/* We should have sent some bytes, update offset */
+		transmit_report_offset += ret;
+		if (transmit_report_offset == sizeof(*packet)) {
+			transmit_report_offset = 0;
+			usb_buffer_index++;
+		}
+	}
+	return 0;
+}
+
+static int st_tp_usb_set_interface(usb_uint alternate_setting,
+				   usb_uint interface)
+{
+	if (alternate_setting == 1) {
+		hook_call_deferred(&st_tp_enable_heat_map_data, 0);
+		return 0;
+	} else if (alternate_setting == 0) {
+		hook_call_deferred(&st_tp_disable_heat_map_data, 0);
+		return 0;
+	} else  /* we only have two settings. */
+		return -1;
+}
+
+static int get_heat_map_addr(void)
+{
+	/*
+	 * TODO(stimim): drop this when we are sure all trackpads are having the
+	 * same config (e.g. after EVT).
+	 */
+	if (system_info.release_info >= 0x3)
+		return 0x0120;
+	else if (system_info.release_info == 0x1)
+		return 0x20;
+	else
+		return -1; /* Unknown version */
+}
+
+struct st_tp_interrupt_t {
+#define ST_TP_INT_FRAME_AVAILABLE	(1 << 0)
+	uint8_t flags;
+} __packed;
+
+static usb_uint st_tp_usb_int_buffer[
+	DIV_ROUND_UP(sizeof(struct st_tp_interrupt_t), 2)] __usb_ram;
+
+const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_ST_TOUCHPAD, 81) = {
+	.bLength = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType = USB_DT_ENDPOINT,
+	.bEndpointAddress = 0x80 | USB_EP_ST_TOUCHPAD_INT,
+	.bmAttributes = 0x03 /* Interrupt endpoint */,
+	.wMaxPacketSize = sizeof(struct st_tp_interrupt_t),
+	.bInterval = 1 /* ms */,
+};
+
+static void st_tp_interrupt_send(void)
+{
+	struct st_tp_interrupt_t report;
+
+	memset(&report, 0, sizeof(report));
+
+	if (usb_buffer_index < spi_buffer_index)
+		report.flags |= ST_TP_INT_FRAME_AVAILABLE;
+	memcpy_to_usbram((void *)usb_sram_addr(st_tp_usb_int_buffer),
+			 &report, sizeof(report));
+	/* enable TX */
+	STM32_TOGGLE_EP(USB_EP_ST_TOUCHPAD_INT, EP_TX_MASK, EP_TX_VALID, 0);
+	usb_wake();
+}
+
+static void st_tp_interrupt_tx(void)
+{
+	STM32_USB_EP(USB_EP_ST_TOUCHPAD_INT) &= EP_MASK;
+
+	if (usb_buffer_index < spi_buffer_index)
+		/* pending frames */
+		hook_call_deferred(&st_tp_interrupt_send_data, 0);
+}
+
+static void st_tp_interrupt_event(enum usb_ep_event evt)
+{
+	int ep = USB_EP_ST_TOUCHPAD_INT;
+
+	if (evt == USB_EVENT_RESET) {
+		btable_ep[ep].tx_addr = usb_sram_addr(st_tp_usb_int_buffer);
+		btable_ep[ep].tx_count = sizeof(struct st_tp_interrupt_t);
+
+		STM32_USB_EP(ep) = ((ep << 0) |
+				    EP_TX_VALID |
+				    (3 << 9) /* interrupt EP */ |
+				    EP_RX_DISAB);
+	}
+}
+
+USB_DECLARE_EP(USB_EP_ST_TOUCHPAD_INT, st_tp_interrupt_tx, st_tp_interrupt_tx,
+	       st_tp_interrupt_event);
+
+#endif
+
 /* Debugging commands */
 static int command_touchpad_st(int argc, char **argv)
 {
@@ -841,9 +1249,22 @@ static int command_touchpad_st(int argc, char **argv)
 		st_tp_full_initialize_start();
 		return EC_SUCCESS;
 	} else if (strcasecmp(argv[1], "enable") == 0) {
+#ifdef CONFIG_USB_ISOCHRONOUS
+		set_bits(&system_state, SYSTEM_STATE_DEBUG_MODE,
+			 SYSTEM_STATE_DEBUG_MODE);
+		hook_call_deferred(&st_tp_enable_heat_map_data, 0);
+		return 0;
+#else
 		return EC_ERROR_NOT_HANDLED;
+#endif
 	} else if (strcasecmp(argv[1], "disable") == 0) {
+#ifdef CONFIG_USB_ISOCHRONOUS
+		set_bits(&system_state, 0, SYSTEM_STATE_DEBUG_MODE);
+		hook_call_deferred(&st_tp_disable_heat_map_data, 0);
+		return 0;
+#else
 		return EC_ERROR_NOT_HANDLED;
+#endif
 	} else {
 		return EC_ERROR_PARAM1;
 	}

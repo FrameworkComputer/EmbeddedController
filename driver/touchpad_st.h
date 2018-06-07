@@ -246,5 +246,7 @@ enum ST_TP_MODE {
 
 #define ST_TP_DEBUG_CMD_CALIBRATE 0x1
 
+#define ST_TP_HEAT_MAP_THRESHOLD 10
+
 #endif /* __CROS_EC_TOUCHPAD_ST_H */
 
