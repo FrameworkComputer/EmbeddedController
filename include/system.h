@@ -426,6 +426,7 @@ enum {
 	SLEEP_MASK_PWM        = (1 << 10), /* PWM output is enabled */
 	SLEEP_MASK_PHYSICAL_PRESENCE  = (1 << 11), /* Physical presence
 						    * detection ongoing */
+	SLEEP_MASK_PLL        = (1 << 12), /* High-speed PLL in-use */
 	SLEEP_MASK_FORCE_NO_DSLEEP    = (1 << 15), /* Force disable. */
 
 

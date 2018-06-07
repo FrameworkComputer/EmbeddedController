@@ -151,9 +151,14 @@
 #define STM32_IRQ_FPU             81 /* STM32F373 only */
 
 #ifdef CHIP_FAMILY_STM32H7
+#define STM32_IRQ_LPTIM1         93
 #define STM32_IRQ_TIM15         116
 #define STM32_IRQ_TIM16         117
 #define STM32_IRQ_TIM17         118
+#define STM32_IRQ_LPTIM2        138
+#define STM32_IRQ_LPTIM3        139
+#define STM32_IRQ_LPTIM4        140
+#define STM32_IRQ_LPTIM5        141
 #endif /* CHIP_FAMILY_STM32H7 */
 
 /* To simplify code generation, define DMA channel 9..10 */
@@ -398,6 +403,12 @@
 
 #define STM32_IWDG_BASE             0x58004800
 
+#define STM32_LPTIM1_BASE           0x40002400
+#define STM32_LPTIM2_BASE           0x58002400
+#define STM32_LPTIM3_BASE           0x58002800
+#define STM32_LPTIM4_BASE           0x58002C00
+#define STM32_LPTIM5_BASE           0x58003000
+
 #define STM32_PWR_BASE              0x58024800
 #define STM32_RCC_BASE              0x58024400
 #define STM32_RTC_BASE              0x58004000
@@ -588,6 +599,33 @@ struct timer_ctlr {
 };
 /* Must be volatile, or compiler optimizes out repeated accesses */
 typedef volatile struct timer_ctlr timer_ctlr_t;
+
+/* --- Low power timers --- */
+#define STM32_LPTIM_BASE(n)          CONCAT3(STM32_LPTIM, n, _BASE)
+
+#define STM32_LPTIM_REG(n, offset)   REG32(STM32_LPTIM_BASE(n) + (offset))
+
+#define STM32_LPTIM_ISR(n)           STM32_LPTIM_REG(n, 0x00)
+#define STM32_LPTIM_ICR(n)           STM32_LPTIM_REG(n, 0x04)
+#define STM32_LPTIM_IER(n)           STM32_LPTIM_REG(n, 0x08)
+#define STM32_LPTIM_INT_DOWN         (1 << 6)
+#define STM32_LPTIM_INT_UP           (1 << 5)
+#define STM32_LPTIM_INT_ARROK        (1 << 4)
+#define STM32_LPTIM_INT_CMPOK        (1 << 3)
+#define STM32_LPTIM_INT_EXTTRIG      (1 << 2)
+#define STM32_LPTIM_INT_ARRM         (1 << 1)
+#define STM32_LPTIM_INT_CMPM         (1 << 0)
+#define STM32_LPTIM_CFGR(n)          STM32_LPTIM_REG(n, 0x0C)
+#define STM32_LPTIM_CR(n)            STM32_LPTIM_REG(n, 0x10)
+#define STM32_LPTIM_CR_RSTARE        (1 << 4)
+#define STM32_LPTIM_CR_COUNTRST      (1 << 3)
+#define STM32_LPTIM_CR_CNTSTRT       (1 << 2)
+#define STM32_LPTIM_CR_SNGSTRT       (1 << 1)
+#define STM32_LPTIM_CR_ENABLE        (1 << 0)
+#define STM32_LPTIM_CMP(n)           STM32_LPTIM_REG(n, 0x14)
+#define STM32_LPTIM_ARR(n)           STM32_LPTIM_REG(n, 0x18)
+#define STM32_LPTIM_CNT(n)           STM32_LPTIM_REG(n, 0x1C)
+#define STM32_LPTIM_CFGR2(n)         STM32_LPTIM_REG(n, 0x24)
 
 /* --- GPIO --- */
 
@@ -823,6 +861,12 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 /* --- Power / Reset / Clocks --- */
 #define STM32_PWR_CR                REG32(STM32_PWR_BASE + 0x00)
 #define STM32_PWR_CR_LPSDSR		(1 << 0)
+#define STM32_PWR_CR_FLPS		(1 << 9)
+#define STM32_PWR_CR_SVOS5		(1 << 14)
+#define STM32_PWR_CR_SVOS4		(2 << 14)
+#define STM32_PWR_CR_SVOS3		(3 << 14)
+#define STM32_PWR_CR_SVOS_MASK		(3 << 14)
+
 #if defined(CHIP_FAMILY_STM32L4)
 #define STM32_PWR_CR2               REG32(STM32_PWR_BASE + 0x04)
 #define STM32_PWR_CSR               REG32(STM32_PWR_BASE + 0x10)
@@ -832,6 +876,15 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_PWR_CR2               REG32(STM32_PWR_BASE + 0x08)
 #define STM32_PWR_CR3               REG32(STM32_PWR_BASE + 0x0C)
 #define STM32_PWR_CPUCR             REG32(STM32_PWR_BASE + 0x10)
+#define STM32_PWR_CPUCR_PDDS_D1     (1 << 0)
+#define STM32_PWR_CPUCR_PDDS_D2     (1 << 1)
+#define STM32_PWR_CPUCR_PDDS_D3     (1 << 2)
+#define STM32_PWR_CPUCR_STOPF       (1 << 5)
+#define STM32_PWR_CPUCR_SBF         (1 << 6)
+#define STM32_PWR_CPUCR_SBF_D1      (1 << 7)
+#define STM32_PWR_CPUCR_SBF_D2      (1 << 8)
+#define STM32_PWR_CPUCR_CSSF        (1 << 9)
+#define STM32_PWR_CPUCR_RUN_D3      (1 << 11)
 #define STM32_PWR_D3CR              REG32(STM32_PWR_BASE + 0x18)
 #define STM32_PWR_WKUPCR            REG32(STM32_PWR_BASE + 0x20)
 #define STM32_PWR_WKUPFR            REG32(STM32_PWR_BASE + 0x24)
@@ -1455,9 +1508,21 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_D2CCIP2_USART16SEL_CSI       (4 << 3)
 #define STM32_RCC_D2CCIP2_USART16SEL_LSE       (5 << 3)
 #define STM32_RCC_D2CCIP2_USART16SEL_MASK      (7 << 3)
+#define STM32_RCC_D2CCIP2_LPTIM1SEL_PCLK       (0 << 28)
+#define STM32_RCC_D2CCIP2_LPTIM1SEL_PLL2       (1 << 28)
+#define STM32_RCC_D2CCIP2_LPTIM1SEL_PLL3       (2 << 28)
+#define STM32_RCC_D2CCIP2_LPTIM1SEL_LSE        (3 << 28)
+#define STM32_RCC_D2CCIP2_LPTIM1SEL_LSI        (4 << 28)
+#define STM32_RCC_D2CCIP2_LPTIM1SEL_PER        (5 << 28)
+#define STM32_RCC_D2CCIP2_LPTIM1SEL_MASK       (7 << 28)
+#define STM32_RCC_CSR_LSION                    (1 << 0)
+#define STM32_RCC_CSR_LSIRDY                   (1 << 1)
 
 #define STM32_SYSCFG_PMCR           REG32(STM32_SYSCFG_BASE + 0x04)
 #define STM32_SYSCFG_EXTICR(n)      REG32(STM32_SYSCFG_BASE + 8 + 4 * (n))
+
+/* Peripheral bits for APB1ENR regs */
+#define STM32_RCC_PB1_LPTIM1            (1 << 9)
 
 /* Peripheral bits for APB2ENR regs */
 #define STM32_RCC_PB2_TIM1              (1 << 0)

@@ -317,7 +317,8 @@ void uart_init(void)
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_UART, 1);
 
-#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) \
+|| defined(CHIP_FAMILY_STM32H7)
 	/*
 	 * Wake up on start bit detection. WUS can only be written when UE=0,
 	 * so clear UE first.

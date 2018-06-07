@@ -11,11 +11,30 @@
 #include "console.h"
 #include "cpu.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "registers.h"
+#include "system.h"
+#include "task.h"
+#include "uart.h"
 #include "util.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_CLOCK, outstr)
+#define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ## args)
 
 /* High-speed oscillator default is 64 MHz */
 #define STM32_HSI_CLOCK 64000000
+/* Low-speed oscillator is 32-Khz */
+#define STM32_LSI_CLOCK 32000
+
+/*
+ * LPTIM is a 16-bit counter clocked by LSI
+ * with /4 prescaler (2^2): period 125 us, full range ~8s
+ */
+#define LPTIM_PRESCALER_LOG2 2
+#define LPTIM_PRESCALER (1 << LPTIM_PRESCALER_LOG2)
+#define LPTIM_PERIOD_US (SECOND / (STM32_LSI_CLOCK / LPTIM_PRESCALER))
+
 /*
  * PLL1 configuration:
  * CPU freq = VCO / DIVP = HSI / DIVM * DIVN / DIVP
@@ -181,9 +200,178 @@ static void clock_set_osc(enum clock_osc osc)
 void clock_enable_module(enum module_id module, int enable)
 {
 	/* Assume we have a single task using MODULE_FAST_CPU */
-	if (module == MODULE_FAST_CPU)
+	if (module == MODULE_FAST_CPU) {
+		/* the PLL would be off in low power mode, disable it */
+		if (enable)
+			disable_sleep(SLEEP_MASK_PLL);
+		else
+			enable_sleep(SLEEP_MASK_PLL);
 		clock_set_osc(enable ? OSC_PLL : OSC_HSI);
+	}
 }
+
+#ifdef CONFIG_LOW_POWER_IDLE
+/* Low power idle statistics */
+static int idle_sleep_cnt;
+static int idle_dsleep_cnt;
+static uint64_t idle_dsleep_time_us;
+static int dsleep_recovery_margin_us = 1000000;
+
+/* STOP_MODE_LATENCY: delay to wake up from STOP mode with flash off in SVOS5 */
+#define STOP_MODE_LATENCY 50 /* us */
+
+static void low_power_init(void)
+{
+	/* Clock LPTIM1 on the 32-kHz LSI for STOP mode time keeping */
+	STM32_RCC_D2CCIP2R = (STM32_RCC_D2CCIP2R &
+		~STM32_RCC_D2CCIP2_LPTIM1SEL_MASK)
+		| STM32_RCC_D2CCIP2_LPTIM1SEL_LSI;
+
+	/* configure LPTIM1 as our 1-Khz low power timer in STOP mode */
+	STM32_RCC_APB1LENR |= STM32_RCC_PB1_LPTIM1;
+	STM32_LPTIM_CR(1) = 0; /* ensure it's disabled before configuring */
+	STM32_LPTIM_CFGR(1) = LPTIM_PRESCALER_LOG2 << 9; /* Prescaler /4 */
+	STM32_LPTIM_IER(1) = STM32_LPTIM_INT_CMPM; /* Compare int for wake-up */
+	/* Start the 16-bit free-running counter */
+	STM32_LPTIM_CR(1) = STM32_LPTIM_CR_ENABLE;
+	STM32_LPTIM_ARR(1) = 0xFFFF;
+	STM32_LPTIM_CR(1) = STM32_LPTIM_CR_ENABLE | STM32_LPTIM_CR_CNTSTRT;
+	task_enable_irq(STM32_IRQ_LPTIM1);
+
+	/* Wake-up interrupts from EXTI for USART and LPTIM */
+	STM32_EXTI_CPUIMR1 |= 1 << 26; /* [26] wkup26: USART1 wake-up */
+	STM32_EXTI_CPUIMR2 |= 1 << 15; /* [15] wkup47: LPTIM1 wake-up */
+
+	/* optimize power vs latency in STOP mode */
+	STM32_PWR_CR = (STM32_PWR_CR & ~STM32_PWR_CR_SVOS_MASK)
+		     | STM32_PWR_CR_SVOS5
+		     | STM32_PWR_CR_FLPS;
+}
+
+void clock_refresh_console_in_use(void)
+{
+}
+
+void lptim_interrupt(void)
+{
+	STM32_LPTIM_ICR(1) = STM32_LPTIM_INT_CMPM;
+}
+DECLARE_IRQ(STM32_IRQ_LPTIM1, lptim_interrupt, 2);
+
+static uint16_t lptim_read(void)
+{
+	uint16_t cnt;
+
+	do {
+		cnt = STM32_LPTIM_CNT(1);
+	} while (cnt != STM32_LPTIM_CNT(1));
+
+	return cnt;
+}
+
+static void set_lptim_event(int delay_us, uint16_t *lptim_cnt)
+{
+	uint16_t cnt = lptim_read();
+
+	STM32_LPTIM_CMP(1) = cnt + MIN(delay_us / LPTIM_PERIOD_US - 1, 0xffff);
+	/* clean-up previous event */
+	STM32_LPTIM_ICR(1) = STM32_LPTIM_INT_CMPM;
+	*lptim_cnt = cnt;
+}
+
+void __idle(void)
+{
+	timestamp_t t0;
+	int next_delay;
+	int margin_us, t_diff;
+	uint16_t lptim0;
+
+	while (1) {
+		asm volatile("cpsid i");
+
+		t0 = get_time();
+		next_delay = __hw_clock_event_get() - t0.le.lo;
+
+		if (DEEP_SLEEP_ALLOWED &&
+		    next_delay > LPTIM_PERIOD_US + STOP_MODE_LATENCY) {
+			/* deep-sleep in STOP mode */
+			idle_dsleep_cnt++;
+
+			uart_enable_wakeup(1);
+
+			/* set deep sleep bit */
+			CPU_SCB_SYSCTRL |= 0x4;
+
+			set_lptim_event(next_delay - STOP_MODE_LATENCY,
+					&lptim0);
+
+			/* ensure outstanding memory transactions complete */
+			asm volatile("dsb");
+
+			asm("wfi");
+
+			CPU_SCB_SYSCTRL &= ~0x4;
+
+			/* fast forward timer according to low power counter */
+			if (STM32_PWR_CPUCR & STM32_PWR_CPUCR_STOPF) {
+				uint16_t lptim_dt = lptim_read() - lptim0;
+
+				t_diff = (int)lptim_dt * LPTIM_PERIOD_US;
+				t0.val = t0.val + t_diff;
+				force_time(t0);
+				/* clear STOPF flag */
+				STM32_PWR_CPUCR |= STM32_PWR_CPUCR_CSSF;
+			} else { /* STOP entry was aborted, no fixup */
+				t_diff = 0;
+			}
+
+			uart_enable_wakeup(0);
+
+			/* Record time spent in deep sleep. */
+			idle_dsleep_time_us += t_diff;
+
+			/* Calculate how close we were to missing deadline */
+			margin_us = next_delay - t_diff;
+			if (margin_us < 0)
+				/* Use CPUTS to save stack space */
+				CPUTS("Overslept!\n");
+
+			/* Record the closest to missing a deadline. */
+			if (margin_us < dsleep_recovery_margin_us)
+				dsleep_recovery_margin_us = margin_us;
+		} else {
+			idle_sleep_cnt++;
+
+			/* normal idle : only CPU clock stopped */
+			asm("wfi");
+		}
+		asm volatile("cpsie i");
+	}
+}
+
+#ifdef CONFIG_CMD_IDLE_STATS
+/**
+ * Print low power idle statistics
+ */
+static int command_idle_stats(int argc, char **argv)
+{
+	timestamp_t ts = get_time();
+
+	ccprintf("Num idle calls that sleep:           %d\n", idle_sleep_cnt);
+	ccprintf("Num idle calls that deep-sleep:      %d\n", idle_dsleep_cnt);
+	ccprintf("Time spent in deep-sleep:            %.6lds\n",
+			idle_dsleep_time_us);
+	ccprintf("Total time on:                       %.6lds\n", ts.val);
+	ccprintf("Deep-sleep closest to wake deadline: %dus\n",
+			dsleep_recovery_margin_us);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
+			"",
+			"Print last idle stats");
+#endif /* CONFIG_CMD_IDLE_STATS */
+#endif /* CONFIG_LOW_POWER_IDLE */
 
 void clock_init(void)
 {
@@ -208,6 +396,15 @@ void clock_init(void)
 
 	/* Use more optimized flash latency settings for ACLK = HSI = 64 Mhz */
 	clock_flash_latency(FLASH_ACLK_64MHZ);
+
+	/* Ensure that LSI is ON to clock LPTIM1 and IWDG */
+	STM32_RCC_CSR |= STM32_RCC_CSR_LSION;
+	while (!(STM32_RCC_CSR & STM32_RCC_CSR_LSIRDY))
+		;
+
+#ifdef CONFIG_LOW_POWER_IDLE
+	low_power_init();
+#endif
 }
 
 static int command_clock(int argc, char **argv)
