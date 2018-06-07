@@ -1582,13 +1582,13 @@
 #undef CONFIG_LID_ANGLE_UPDATE
 
 /*
- * During shutdown sequence sensor rails can be powered down asynchronously
- * to the EC hence EC cannot interlock the sensor states with the power down
- * states. To avoid this issue, defer switching the sensors rate with a
- * configurable delay if in S3. By the time deferred function is serviced,
- * if the chipset is in S5 we can back out from switching the sensor rate.
+ * Defer the (re)configuration of motion sensors after the suspend event or
+ * resume event.  Sensor power rails may be powered up or down asynchronously
+ * from the EC, so it may be necessary to wait some time period before
+ * reconfiguring after a transition.
  */
 #define CONFIG_MOTION_SENSE_SUSPEND_DELAY_US 0
+#define CONFIG_MOTION_SENSE_RESUME_DELAY_US 0
 
 /* Define motion sensor count in board layer */
 #undef CONFIG_DYNAMIC_MOTION_SENSOR_COUNT

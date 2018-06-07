@@ -147,6 +147,11 @@
 #define CONFIG_LID_ANGLE_UPDATE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
+/*
+ * Slew rate on the PP1800_SENSOR load switch requires a short delay on startup.
+ */
+#undef  CONFIG_MOTION_SENSE_RESUME_DELAY_US
+#define CONFIG_MOTION_SENSE_RESUME_DELAY_US (10 * MSEC)
 
 /* Thermal */
 #define CONFIG_TEMP_SENSOR_SB_TSI

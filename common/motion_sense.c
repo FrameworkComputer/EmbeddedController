@@ -589,7 +589,7 @@ static void motion_sense_suspend(void)
 	 * brief stop in S3.
 	 */
 	hook_call_deferred(&motion_sense_switch_sensor_rate_data,
-				CONFIG_MOTION_SENSE_SUSPEND_DELAY_US);
+			   CONFIG_MOTION_SENSE_SUSPEND_DELAY_US);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, motion_sense_suspend,
 	     MOTION_SENSE_HOOK_PRIO);
@@ -597,7 +597,8 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, motion_sense_suspend,
 static void motion_sense_resume(void)
 {
 	sensor_active = SENSOR_ACTIVE_S0;
-	motion_sense_switch_sensor_rate();
+	hook_call_deferred(&motion_sense_switch_sensor_rate_data,
+			   CONFIG_MOTION_SENSE_RESUME_DELAY_US);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, motion_sense_resume,
 	     MOTION_SENSE_HOOK_PRIO);
