@@ -120,7 +120,6 @@ BOARDS_NPCX_SPI=(
 	fizz
 	glkrvp
 	gru
-	kahlee
 	kevin
         lux
 	nami

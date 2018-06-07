@@ -42,13 +42,8 @@ void chipset_force_shutdown(void)
 
 static void chipset_force_g3(void)
 {
-#ifdef BOARD_KAHLEE
-	/* Power off in G3 not supported on kahlee so shutdown instead. */
-	chipset_force_shutdown();
-#else
 	/* Disable system power ("*_A" rails) in G3. */
 	gpio_set_level(GPIO_EN_PWR_A, 0);
-#endif
 }
 
 void chipset_reset(void)
@@ -153,11 +148,8 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_G3S5:
 		/* Exit SOC G3 */
-
-#ifndef BOARD_KAHLEE
 		/* Enable system power ("*_A" rails) in S5. */
 		gpio_set_level(GPIO_EN_PWR_A, 1);
-#endif
 
 #ifdef CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
 		/*
