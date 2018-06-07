@@ -760,9 +760,8 @@
 #undef CONFIG_CHIPSET_ECDRIVEN		/* Dummy power module */
 #undef CONFIG_CHIPSET_GEMINILAKE	/* Intel Geminilake (x86) */
 #undef CONFIG_CHIPSET_MT817X		/* MediaTek MT817x */
+#undef CONFIG_CHIPSET_RK3288		/* Rockchip rk3288 */
 #undef CONFIG_CHIPSET_RK3399		/* Rockchip rk3399 */
-/* TODO: Rename below config to CONFIG_CHIPSET_RK32XX */
-#undef CONFIG_CHIPSET_ROCKCHIP		/* Rockchip rk32xx */
 #undef CONFIG_CHIPSET_SKYLAKE		/* Intel Skylake (x86) */
 #undef CONFIG_CHIPSET_SDM845            /* Qualcomm SDM845 */
 #undef CONFIG_CHIPSET_STONEY		/* AMD Stoney (x86)*/
@@ -3661,7 +3660,7 @@
 #undef CONFIG_CHIPSET_GEMINILAKE
 #undef CONFIG_CHIPSET_MT817X
 #undef CONFIG_CHIPSET_RK3399
-#undef CONFIG_CHIPSET_ROCKCHIP
+#undef CONFIG_CHIPSET_RK3288
 #undef CONFIG_CHIPSET_SDM845
 #undef CONFIG_CHIPSET_SKYLAKE
 #undef CONFIG_CHIPSET_STONEY
