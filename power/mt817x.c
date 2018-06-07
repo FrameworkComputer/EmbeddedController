@@ -4,7 +4,7 @@
  */
 
 /*
- * MEDIATEK SoC power sequencing module for Chrome EC
+ * MT817x SoC power sequencing module for Chrome EC
  *
  * This implements the following features:
  *
