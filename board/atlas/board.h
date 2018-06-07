@@ -148,7 +148,7 @@
 #define NPCX_UART_MODULE2	1 /* 1:GPIO64/65 as UART */
 #define NPCX_JTAG_MODULE2	0 /* 0:GPIO21/17/16/20 as JTAG */
 #define NPCX_TACH_SEL2		0 /* 0:GPIO40/73 1:GPIO93/A6 as TACH */
-#define NPCX7_PWM1_SEL		0 /* GPIO C2 is not used as PWM1. */
+#define NPCX7_PWM1_SEL		1 /* GPIO C2 is used as PWM1. */
 
 /* I2C ports */
 #define I2C_PORT_POWER		NPCX_I2C_PORT0_0	/* pmic/charger */
