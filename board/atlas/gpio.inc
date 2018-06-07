@@ -30,7 +30,7 @@ GPIO(RSMRST_L,			PIN(3, 7), GPIO_OUT_LOW)			/* SOC Resume Reset */
 GPIO(EC_PCH_PWR_BTN_L,		PIN(C, 1), GPIO_OUT_HIGH)			/* Power button to SOC */
 GPIO(EC_PCH_RTCRST,		PIN(7, 6), GPIO_OUT_LOW)			/* RTC Reset (broken) */
 GPIO(EC_PCH_WAKE_L,		PIN(7, 4), GPIO_ODR_HIGH)			/* PCH wake */
-GPIO(EC_PROCHOT_ODL,		PIN(3, 4), GPIO_INPUT)				/* SOC PROCHOT# */
+GPIO(EC_PROCHOT_ODL,		PIN(3, 4), GPIO_INPUT | GPIO_SEL_1P8V)		/* SOC PROCHOT# */
 GPIO(SYS_RESET_L,		PIN(0, 2), GPIO_ODR_HIGH)			/* SOC reset */
 GPIO(USB_C0_DP_HPD,		PIN(C, 5), GPIO_INPUT)				/* C0 Hotplug Detect */
 GPIO(USB_C1_DP_HPD,		PIN(C, 6), GPIO_INPUT)				/* C1 Hotplug Detect */
