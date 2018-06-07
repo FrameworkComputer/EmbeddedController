@@ -48,6 +48,7 @@ static const uint8_t rma_test_server_x25519_private_key[] = {
 };
 
 #define RMA_TEST_SERVER_X25519_KEY_ID 0x10
+#define RMA_PROD_SERVER_X25519_KEY_ID 0
 
 /*
  * P256 curve keys, generated using openssl as follows:
@@ -79,6 +80,7 @@ static const uint8_t rma_test_server_p256_public_key[] = {
 };
 
 #define RMA_TEST_SERVER_P256_KEY_ID 0x20
+#define RMA_PROD_SERVER_P256_KEY_ID 0x01
 
 /* Default values which can change based on command line arguments. */
 static uint8_t server_key_id = RMA_TEST_SERVER_X25519_KEY_ID;
@@ -288,15 +290,19 @@ static int rma_server_side(const char *generated_challenge)
 
 	/* Calculate the shared secret, use curve based on the key ID. */
 	switch (key_id) {
+	case RMA_PROD_SERVER_X25519_KEY_ID:
+		printf("Unsupported Prod KeyID %d\n", key_id);
 	case RMA_TEST_SERVER_X25519_KEY_ID:
 		X25519(secret, rma_test_server_x25519_private_key,
 		       c.device_pub_key);
 		break;
+	case RMA_PROD_SERVER_P256_KEY_ID:
+		printf("Unsupported Prod KeyID %d\n", key_id);
 	case RMA_TEST_SERVER_P256_KEY_ID:
 		p256_calculate_secret(secret, c.device_pub_key);
 		break;
 	default:
-		printf("Unsupported KeyID %d\n", key_id);
+		printf("Unknown KeyID %d\n", key_id);
 		return 1;
 	}
 
