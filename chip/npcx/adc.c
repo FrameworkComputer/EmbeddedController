@@ -15,6 +15,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -117,6 +118,11 @@ int adc_read_channel(enum adc_channel ch)
 
 	mutex_lock(&adc_lock);
 
+	/* Forbid ec enter deep sleep during ADC conversion is proceeding. */
+	disable_sleep(SLEEP_MASK_ADC);
+	/* Turn on ADC */
+	SET_BIT(NPCX_ADCCNF, NPCX_ADCCNF_ADCEN);
+
 	if (start_single_and_wait(adc->input_ch, ADC_TIMEOUT_US)) {
 		chn_data = NPCX_CHNDAT(adc->input_ch);
 		if ((adc->input_ch ==
@@ -131,6 +137,11 @@ int adc_read_channel(enum adc_channel ch)
 	} else {
 		value = ADC_READ_ERROR;
 	}
+
+	/* Turn off ADC */
+	CLEAR_BIT(NPCX_ADCCNF, NPCX_ADCCNF_ADCEN);
+	/* Allow ec enter deep sleep */
+	enable_sleep(SLEEP_MASK_ADC);
 
 	mutex_unlock(&adc_lock);
 
@@ -177,9 +188,6 @@ static void adc_init(void)
 	/* Enable ADC clock (bit4 mask = 0x10) */
 	clock_enable_peripheral(CGC_OFFSET_ADC, CGC_ADC_MASK,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
-
-	/* Enable ADC */
-	SET_BIT(NPCX_ADCCNF, NPCX_ADCCNF_ADCEN);
 
 	/* Set Core Clock Division Factor in order to obtain the ADC clock */
 	adc_freq_changed();
