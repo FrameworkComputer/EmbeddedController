@@ -16,6 +16,9 @@
 #include "hooks.h"
 #include "util.h"
 
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+
 /* Default, Nami, Vayne */
 static const struct battery_info info_0 = {
 	.voltage_max = 8800,
@@ -72,13 +75,51 @@ static const struct battery_info info_3 = {
 	.discharging_max_c = 60,
 };
 
+enum gauge_type {
+	GAUGE_TYPE_UNKNOWN = 0,
+	GAUGE_TYPE_TI_BQ40Z50,
+	GAUGE_TYPE_RENESAS_RAJ240,
+};
+
 static const struct battery_info *info = &info_0;
 static int sb_ship_mode_reg = SB_MANUFACTURER_ACCESS;
 static int sb_shutdown_data = 0x0010;
+static enum gauge_type fuel_gauge;
 
 const struct battery_info *battery_get_info(void)
 {
 	return info;
+}
+
+/*
+ * Read a value from the Manufacturer Access System (MAC).
+ */
+static int sb_get_mac(uint16_t cmd, uint8_t *data, int len)
+{
+	int rv;
+
+	rv = sb_write(SB_MANUFACTURER_ACCESS, cmd);
+	if (rv)
+		return rv;
+
+	return sb_read_string(SB_MANUFACTURER_DATA, data, len);
+}
+
+static enum gauge_type get_gauge_ic(void)
+{
+	uint8_t data[11];
+
+	/* 0x0002 is for 'Firmware Version' (p91 in BQ40Z50-R2 TRM).
+	 * We can't use sb_read_mfgacc because the command won't be included
+	 * in the returned block. */
+	if (sb_get_mac(0x0002, data, sizeof(data)))
+		return GAUGE_TYPE_UNKNOWN;
+
+	/* BQ40Z50 returns something while Renesus gauge returns all zeros. */
+	if (data[2] == 0 && data[3] == 0)
+		return GAUGE_TYPE_RENESAS_RAJ240;
+	else
+		return GAUGE_TYPE_TI_BQ40Z50;
 }
 
 void board_battery_init(void)
@@ -87,10 +128,14 @@ void board_battery_init(void)
 		info = &info_3;
 		sb_ship_mode_reg = 0x3A;
 		sb_shutdown_data = 0xC574;
+		return;
 	} else if (oem == PROJECT_SONA)
 		info = &info_1;
 	else if (oem == PROJECT_PANTHEON)
 		info = &info_2;
+
+	fuel_gauge = get_gauge_ic();
+	CPRINTS("fuel_gauge=%d\n", fuel_gauge);
 }
 DECLARE_HOOK(HOOK_INIT, board_battery_init, HOOK_PRIO_DEFAULT);
 
@@ -175,7 +220,7 @@ static int battery_init(void)
  * to a brownout event when the battery isn't able yet to provide power to the
  * system. .
  */
-static int battery_check_disconnect_0(void)
+static int battery_check_disconnect_ti_bq40z50(void)
 {
 	int rv;
 	uint8_t data[6];
@@ -186,13 +231,27 @@ static int battery_check_disconnect_0(void)
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
 
-	/* TODO(dnojiri): Verify if battery supports this check. */
 	if ((data[3] & (BATTERY_DISCHARGING_DISABLED |
 			BATTERY_CHARGING_DISABLED)) ==
 	    (BATTERY_DISCHARGING_DISABLED | BATTERY_CHARGING_DISABLED))
 		return BATTERY_DISCONNECTED;
 
 	return BATTERY_NOT_DISCONNECTED;
+}
+
+static int battery_check_disconnect_renesas_raj240(void)
+{
+	int data;
+	int rv;
+
+	rv = sb_read(0x41, &data);
+	if (rv)
+		return BATTERY_DISCONNECT_ERROR;
+
+	if (data != 0x1E /* 1E: Power down */)
+		return BATTERY_NOT_DISCONNECTED;
+
+	return BATTERY_DISCONNECTED;
 }
 
 static int battery_check_disconnect_1(void)
@@ -211,8 +270,16 @@ static int battery_check_disconnect_1(void)
 
 static int battery_check_disconnect(void)
 {
-	return oem == PROJECT_AKALI ?
-		battery_check_disconnect_1() : battery_check_disconnect_0();
+	if (oem == PROJECT_AKALI)
+		return battery_check_disconnect_1();
+
+	if (fuel_gauge == GAUGE_TYPE_UNKNOWN)
+		return BATTERY_DISCONNECT_ERROR;
+
+	if (fuel_gauge == GAUGE_TYPE_TI_BQ40Z50)
+		return battery_check_disconnect_ti_bq40z50();
+	else
+		return battery_check_disconnect_renesas_raj240();
 }
 
 static enum battery_present batt_pres_prev; /* Default BP_NO (=0) */
