@@ -31,6 +31,11 @@ struct transfer_descriptor {
 	 * header timestamp.
 	 */
 	uint32_t upstart_mode;
+	/*
+	 * Override in case updater is used w/ boards that do not follow
+	 * the cr50 versioning scheme.
+	 */
+	uint32_t background_update_supported;
 
 	/*
 	 * offsets of RO and WR sections available for update (not currently

@@ -196,31 +196,32 @@ struct upgrade_pkt {
 static int verbose_mode;
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "abcd:F:fhIikO:oPprstUuVvw";
+static char *short_opts = "aBbcd:F:fhIikO:oPprstUuVvw";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
-	{"any",		0,   NULL, 'a'},
-	{"binvers",	0,   NULL, 'b'},
-	{"board_id",    2,   NULL, 'i'},
-	{"ccd_info",    0,   NULL, 'I'},
-	{"ccd_lock",    0,   NULL, 'k'},
-	{"ccd_open",    0,   NULL, 'o'},
-	{"ccd_unlock",  0,   NULL, 'U'},
-	{"corrupt",	0,   NULL, 'c'},
-	{"device",	1,   NULL, 'd'},
-	{"factory",	1,   NULL, 'F'},
-	{"fwver",	0,   NULL, 'f'},
-	{"help",	0,   NULL, 'h'},
-	{"openbox_rma", 1,   NULL, 'O'},
-	{"password",	0,   NULL, 'P'},
-	{"post_reset",	0,   NULL, 'p'},
-	{"rma_auth",	2,   NULL, 'r'},
-	{"systemdev",	0,   NULL, 's'},
-	{"trunks_send",	0,   NULL, 't'},
-	{"verbose",	0,   NULL, 'V'},
-	{"version",	0,   NULL, 'v'},
-	{"wp",		0,   NULL, 'w'},
-	{"upstart",	0,   NULL, 'u'},
+	{"any",		                0,   NULL, 'a'},
+	{"background_update_supported", 0,   NULL, 'B'},
+	{"binvers",	                0,   NULL, 'b'},
+	{"board_id",                    2,   NULL, 'i'},
+	{"ccd_info",                    0,   NULL, 'I'},
+	{"ccd_lock",                    0,   NULL, 'k'},
+	{"ccd_open",                    0,   NULL, 'o'},
+	{"ccd_unlock",                  0,   NULL, 'U'},
+	{"corrupt",	                0,   NULL, 'c'},
+	{"device",	                1,   NULL, 'd'},
+	{"factory",	                1,   NULL, 'F'},
+	{"fwver",	                0,   NULL, 'f'},
+	{"help",	                0,   NULL, 'h'},
+	{"openbox_rma",                 1,   NULL, 'O'},
+	{"password",	                0,   NULL, 'P'},
+	{"post_reset",	                0,   NULL, 'p'},
+	{"rma_auth",	                2,   NULL, 'r'},
+	{"systemdev",	                0,   NULL, 's'},
+	{"trunks_send",	                0,   NULL, 't'},
+	{"verbose",	                0,   NULL, 'V'},
+	{"version",	                0,   NULL, 'v'},
+	{"wp",		                0,   NULL, 'w'},
+	{"upstart",	                0,   NULL, 'u'},
 	{},
 };
 
@@ -1337,7 +1338,8 @@ static void generate_reset_request(struct transfer_descriptor *td)
 	}
 
 	/* RW version 0.0.19 and above has support for background updates. */
-	background_update_supported = !a_newer_than_b(&ver19, &targ.shv[1]);
+	background_update_supported = td->background_update_supported ||
+				!a_newer_than_b(&ver19, &targ.shv[1]);
 
 	/*
 	 * If this is an upstart request and there is support for background
@@ -2021,8 +2023,14 @@ int main(int argc, char *argv[])
 			/* Try dev_xfer first. */
 			td.ep_type = dev_xfer;
 			break;
+		case 'B':
+			td.background_update_supported = 1;
+			break;
 		case 'b':
 			binary_vers = 1;
+			break;
+		case 'c':
+			corrupt_inactive_rw = 1;
 			break;
 		case 'd':
 			if (!parse_vidpid(optarg, &vid, &pid)) {
@@ -2032,8 +2040,9 @@ int main(int argc, char *argv[])
 				errorcnt++;
 			}
 			break;
-		case 'c':
-			corrupt_inactive_rw = 1;
+		case 'F':
+			factory_mode = 1;
+			factory_mode_arg = optarg;
 			break;
 		case 'f':
 			show_fw_ver = 1;
@@ -2070,10 +2079,6 @@ int main(int argc, char *argv[])
 			break;
 		case 'P':
 			password = 1;
-			break;
-		case 'F':
-			factory_mode = 1;
-			factory_mode_arg = optarg;
 			break;
 		case 'r':
 			rma = 1;
