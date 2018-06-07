@@ -1832,6 +1832,15 @@ int pd_ts_dts_plugged(int port);
  */
 int pd_capable(int port);
 
+
+/**
+ * Return true if partner port is capable of communication over USB data
+ * lines.
+ *
+ * @param port USB-C port number
+ */
+int pd_get_partner_usb_comm_capable(int port);
+
 /**
  * Return true if vbus is present on the specified port.
  *

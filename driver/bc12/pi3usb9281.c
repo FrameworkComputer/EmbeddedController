@@ -183,7 +183,7 @@ static int pi3usb9281_get_interrupts(int port)
 	return pi3usb9281_read(port, PI3USB9281_REG_INT);
 }
 
-static int pi3usb9281_get_device_type(int port)
+int pi3usb9281_get_device_type(int port)
 {
 	return pi3usb9281_read(port, PI3USB9281_REG_DEV_TYPE) & 0x77;
 }

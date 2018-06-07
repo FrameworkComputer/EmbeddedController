@@ -336,6 +336,15 @@ int pd_capable(int port)
 	return pd[port].flags & PD_FLAGS_PREVIOUS_PD_CONN;
 }
 
+/*
+ * Return true if partner port is capable of communication over USB data
+ * lines.
+ */
+int pd_get_partner_usb_comm_capable(int port)
+{
+	return pd[port].flags & PD_FLAGS_PARTNER_USB_COMM;
+}
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 void pd_vbus_low(int port)
 {

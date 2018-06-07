@@ -74,4 +74,7 @@ extern struct pi3usb9281_config pi3usb9281_chips[];
 /* Enable interrupts. */
 int pi3usb9281_enable_interrupts(int port);
 
+/* Get the device type */
+int pi3usb9281_get_device_type(int port);
+
 #endif /* __CROS_EC_PI3USB9281_H */
