@@ -138,7 +138,7 @@ __attribute__((weak)) int board_is_lid_angle_tablet_mode(void)
  *
  * There might be false positives:
  * - when the EC enters RO or RW mode.
- * - when lid is closed while the hinge is perpendicalar to the floor, we will
+ * - when lid is closed while the hinge is perpendicular to the floor, we will
  *   stay in tablet mode.
  *
  * Tablet mode is defined as the base being behind the lid. We use 2 threshold

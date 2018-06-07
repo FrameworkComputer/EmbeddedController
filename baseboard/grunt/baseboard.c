@@ -47,6 +47,8 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+static int board_is_convertible(void);
+
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_LID_OPEN,
 	GPIO_AC_PRESENT,
@@ -309,20 +311,34 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /*
- * Matrix to rotate accelerator into standard reference frame
+ * Matrix to rotate accelerators into the standard reference frame.  The default
+ * is the identity which is correct for the reference design.  Variations of
+ * Grunt may need to change it for manufacturability.
+ * For the lid:
+ *  +x to the right
+ *  +y up
+ *  +z out of the page
  *
- * TODO(teravest): Update this when we can physically test a Grunt.
+ * The principle axes of the body are aligned with the lid when the lid is in
+ * the 180 degree position (open, flat).
  */
-const matrix_3x3_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
+matrix_3x3_t base_standard_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(1),  0},
+	{ 0, 0, FLOAT_TO_FP(1)}
+};
+
+matrix_3x3_t lid_standard_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(1),  0},
+	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
 static struct bmi160_drv_data_t g_bmi160_data;
 
+/* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 	 .name = "Lid Accel",
@@ -335,7 +351,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_kx022_data,
 	 .port = I2C_PORT_SENSOR,
 	 .addr = KX022_ADDR1,
-	 .rot_standard_ref = NULL, /* Identity matrix. */
+	 .rot_standard_ref = (const matrix_3x3_t *)&lid_standard_ref,
 	 .default_range = 2, /* g, enough for laptop. */
 	 .min_frequency = KX022_ACCEL_MIN_FREQ,
 	 .max_frequency = KX022_ACCEL_MAX_FREQ,
@@ -359,7 +375,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_SENSOR,
 	 .addr = BMI160_ADDR0,
 	 .default_range = 2, /* g, enough for laptop */
-	 .rot_standard_ref = &base_standard_ref,
+	 .rot_standard_ref = (const matrix_3x3_t *)&base_standard_ref,
 	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
 	 .max_frequency = BMI160_ACCEL_MAX_FREQ,
 	 .config = {
@@ -387,7 +403,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_SENSOR,
 	 .addr = BMI160_ADDR0,
 	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = &base_standard_ref,
+	 .rot_standard_ref = (const matrix_3x3_t *)&base_standard_ref,
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
@@ -398,7 +414,8 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 #ifndef TEST_BUILD
 void lid_angle_peripheral_enable(int enable)
 {
-	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+	if (board_is_convertible())
+		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
 #endif
 
@@ -457,4 +474,18 @@ uint32_t system_get_sku_id(void)
 
 	sku_id = (sku_id2 << 4) | sku_id1;
 	return sku_id;
+}
+
+/*
+ * Returns 1 for boards that are convertible into tablet mode, and zero for
+ * clamshells.
+ */
+static int board_is_convertible(void)
+{
+	return system_get_sku_id() == 6;
+}
+
+int board_is_lid_angle_tablet_mode(void)
+{
+	return board_is_convertible();
 }
