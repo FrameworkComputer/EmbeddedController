@@ -380,6 +380,12 @@ int i2c_raw_mode(int port, int enable)
 		return EC_ERROR_INVAL;
 
 	if (enable) {
+		int raw_gpio_mode_flags = GPIO_ODR_HIGH;
+
+		/* If the CLK line is 1.8V, then ensure we set 1.8V mode */
+		if ((gpio_list + scl)->flags & GPIO_SEL_1P8V)
+			raw_gpio_mode_flags |= GPIO_SEL_1P8V;
+
 		/*
 		 * To enable raw mode, take out of alternate function mode and
 		 * set the flags to open drain output.
@@ -387,8 +393,8 @@ int i2c_raw_mode(int port, int enable)
 		ret_sda = gpio_config_pin(MODULE_I2C, sda, 0);
 		ret_scl = gpio_config_pin(MODULE_I2C, scl, 0);
 
-		gpio_set_flags(scl, GPIO_ODR_HIGH);
-		gpio_set_flags(sda, GPIO_ODR_HIGH);
+		gpio_set_flags(scl, raw_gpio_mode_flags);
+		gpio_set_flags(sda, raw_gpio_mode_flags);
 	} else {
 		/*
 		 * Configure the I2C pins to exit raw mode and return
