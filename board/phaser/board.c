@@ -8,7 +8,10 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "common.h"
+#include "console.h"
+#include "cros_board_info.h"
 #include "driver/ppc/nx20p3483.h"
+#include "driver/tcpm/anx7447.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -57,3 +60,17 @@ const struct adc_t adc_channels[] = {
 		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+static void customize_based_on_board_id(void)
+{
+	uint32_t board_id = 0;
+
+	/* Errors will count as board_id 0 */
+	cbi_get_board_version(&board_id);
+
+	if (board_id == 0) {
+		if (anx7447_flash_erase(0 /* C0: ANX7447 */))
+			ccprints("Failed to erase OCM flash!");
+	}
+}
+DECLARE_HOOK(HOOK_INIT, customize_based_on_board_id, HOOK_PRIO_INIT_I2C + 1);

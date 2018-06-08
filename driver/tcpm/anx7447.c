@@ -190,7 +190,7 @@ static int anx7447_flash_is_empty(int port)
 	return ((r == 0) ? 1 : 0);
 }
 
-int anx7447_flash_erase(int port)
+static int anx7447_flash_erase_internal(int port, int write_console_if_empty)
 {
 	int rv;
 	int r;
@@ -199,7 +199,8 @@ int anx7447_flash_erase(int port)
 	usleep(ANX7447_DELAY_IN_US);
 
 	if (anx7447_flash_is_empty(port) == 1) {
-		CPRINTS("C%d: Nothing to erase!", port);
+		if (write_console_if_empty)
+			CPRINTS("C%d: Nothing to erase!", port);
 		return EC_SUCCESS;
 	}
 	CPRINTS("C%d: Erasing OCM flash...", port);
@@ -222,6 +223,12 @@ int anx7447_flash_erase(int port)
 	return anx7447_wait_for_flash_done(port);
 }
 
+int anx7447_flash_erase(int port)
+{
+	return anx7447_flash_erase_internal(port,
+					    0 /* suppress console if empty */);
+}
+
 /* Add console command to erase OCM flash if needed. */
 static int command_anx_ocm(int argc, char **argv)
 {
@@ -240,7 +247,8 @@ static int command_anx_ocm(int argc, char **argv)
 		int rv;
 		if (strcasecmp(argv[2], "erase"))
 			return EC_ERROR_PARAM2;
-		rv = anx7447_flash_erase(port);
+		rv = anx7447_flash_erase_internal(
+			port, 1 /* write to console if empty */);
 		if (rv)
 			ccprintf("C%d: Failed to erase OCM flash (%d)\n", rv);
 	}
