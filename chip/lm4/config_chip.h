@@ -102,6 +102,6 @@
 #define CONFIG_CHIP_PRE_INIT
 
 #define GPIO_PIN(port, index) GPIO_##port, (1 << index)
-#define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)
+#define GPIO_PIN_MASK(p, m) .port = GPIO_##p, .mask = (m)
 
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

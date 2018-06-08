@@ -13,31 +13,32 @@
 
 /* GPIO alternate function structure */
 struct gpio_alt_func {
+	/* Module ID (as uint8_t, since enum would be 32-bit) */
+	uint8_t module_id;
+
+	/* Alternate function number */
+	uint8_t func;
+
 	/* Port base address */
 	uint32_t port;
 
 	/* Bitmask on that port (multiple bits allowed) */
 	uint32_t mask;
 
-	/* Alternate function number */
-	uint8_t func;
-
-	/* Module ID (as uint8_t, since enum would be 32-bit) */
-	uint8_t module_id;
-
 	/* Flags (GPIO_*; see above). */
-	uint16_t flags;
+	uint32_t flags;
 };
 
 /*
  * Construct the gpio_alt_funcs array.  This array is used by gpio_config_module
  * to enable and disable GPIO alternate functions on a module by module basis.
  */
-#define ALTERNATE(pinmask, function, module, flags)	\
-	{GPIO_##pinmask, function, module, flags},
+#define ALTERNATE(pinmask, function, module, flagz)                            \
+	{GPIO_##pinmask, .func = (function), .module_id = (module),            \
+	 .flags = (flagz)},
 
 static const struct gpio_alt_func gpio_alt_funcs[] = {
-	#include "gpio.wrap"
+#include "gpio.wrap"
 };
 
 /*
@@ -47,9 +48,7 @@ static const struct gpio_alt_func gpio_alt_funcs[] = {
  */
 #define GPIO_CONFIG_ALL_PORTS 0xFFFFFFFF
 
-static int gpio_config_pins(enum module_id id,
-			    uint32_t port,
-			    uint32_t pin_mask,
+static int gpio_config_pins(enum module_id id, uint32_t port, uint32_t pin_mask,
 			    int enable)
 {
 	const struct gpio_alt_func *af;
@@ -57,10 +56,9 @@ static int gpio_config_pins(enum module_id id,
 
 	/* Find pins and set to alternate functions */
 	for (af = gpio_alt_funcs;
-	     af < gpio_alt_funcs + ARRAY_SIZE(gpio_alt_funcs);
-	     af++) {
+	     af < gpio_alt_funcs + ARRAY_SIZE(gpio_alt_funcs); af++) {
 		if (af->module_id != id)
-			continue;  /* Pins for some other module */
+			continue; /* Pins for some other module */
 
 		/* Check to see if the requested port matches. */
 		if ((port != GPIO_CONFIG_ALL_PORTS) && (port != af->port))
@@ -73,13 +71,11 @@ static int gpio_config_pins(enum module_id id,
 		if ((af->mask & pin_mask) == pin_mask) {
 			if (!(af->flags & GPIO_DEFAULT))
 				gpio_set_flags_by_mask(
-					af->port,
-					(af->mask & pin_mask),
+					af->port, (af->mask & pin_mask),
 					enable ? af->flags : GPIO_INPUT);
-			gpio_set_alternate_function(
-				af->port,
-				(af->mask & pin_mask),
-				enable ? af->func : -1);
+			gpio_set_alternate_function(af->port,
+						    (af->mask & pin_mask),
+						    enable ? af->func : -1);
 			rv = EC_SUCCESS;
 			/* We're done here if we were just setting one port. */
 			if (port != GPIO_CONFIG_ALL_PORTS)
@@ -101,10 +97,8 @@ int gpio_config_module(enum module_id id, int enable)
 
 int gpio_config_pin(enum module_id id, enum gpio_signal signal, int enable)
 {
-	return gpio_config_pins(id,
-				gpio_list[signal].port,
-				gpio_list[signal].mask,
-				enable);
+	return gpio_config_pins(id, gpio_list[signal].port,
+				gpio_list[signal].mask, enable);
 }
 
 void gpio_set_flags(enum gpio_signal signal, int flags)
@@ -189,10 +183,9 @@ int gpio_power_down_module(enum module_id id)
 
 	/* Find pins and power down */
 	for (af = gpio_alt_funcs;
-	     af < gpio_alt_funcs + ARRAY_SIZE(gpio_alt_funcs);
-	     af++) {
+	     af < gpio_alt_funcs + ARRAY_SIZE(gpio_alt_funcs); af++) {
 		if (af->module_id != id)
-			continue;  /* Pins for some other module */
+			continue; /* Pins for some other module */
 
 		gpio_set_flags_by_mask(af->port, af->mask, GPIO_POWER_DOWN);
 		rv = EC_SUCCESS;

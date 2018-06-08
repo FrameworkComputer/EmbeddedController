@@ -58,7 +58,7 @@
 #define CONFIG_UART_TX_BUF_SIZE 1024
 
 #define GPIO_PIN(port, index) GPIO_##port, (1 << index)
-#define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)
+#define GPIO_PIN_MASK(p, m) .port = GPIO_##p, .mask = (m)
 
 #endif /* __CROS_EC_CONFIG_CHIP_H */
 

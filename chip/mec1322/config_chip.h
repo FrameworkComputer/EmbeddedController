@@ -108,6 +108,6 @@
 #define CONFIG_SWITCH
 
 #define GPIO_PIN(index) (index / 10), (1 << (index % 10))
-#define GPIO_PIN_MASK(pin, mask) (pin), (mask)
+#define GPIO_PIN_MASK(p, m) .port = (p), .mask = (m)
 
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

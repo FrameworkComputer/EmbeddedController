@@ -183,8 +183,7 @@
 #define GPIO_BANK_MASK(index) (1ul << ((index) & 0x1F))
 
 #define GPIO_PIN(index) GPIO_BANK(index), GPIO_BANK_MASK(index)
-
-#define GPIO_PIN_MASK(bank, mask) (bank), (mask)
+#define GPIO_PIN_MASK(p, m) .port = (p), .mask = (m)
 
 #ifndef __ASSEMBLER__
 
