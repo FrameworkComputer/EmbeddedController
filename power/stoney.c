@@ -71,6 +71,9 @@ void chipset_reset(void)
 void chipset_throttle_cpu(int throttle)
 {
 	CPRINTS("%s(%d)", __func__, throttle);
+#ifdef CONFIG_CPU_PROCHOT_ACTIVE_LOW
+	throttle = !throttle;
+#endif /* CONFIG_CPU_PROCHOT_ACTIVE_LOW */
 	if (chipset_in_state(CHIPSET_STATE_ON))
 		gpio_set_level(GPIO_CPU_PROCHOT, throttle);
 }

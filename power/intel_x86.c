@@ -170,6 +170,9 @@ DECLARE_HOOK(HOOK_CHIPSET_RESET, handle_chipset_reset, HOOK_PRIO_FIRST);
 
 void chipset_throttle_cpu(int throttle)
 {
+#ifdef CONFIG_CPU_PROCHOT_ACTIVE_LOW
+	throttle = !throttle;
+#endif /* CONFIG_CPU_PROCHOT_ACTIVE_LOW */
 	if (chipset_in_state(CHIPSET_STATE_ON))
 		gpio_set_level(GPIO_CPU_PROCHOT, throttle);
 }
@@ -368,7 +371,11 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		 * Throttle CPU if necessary.  This should only be asserted
 		 * when +VCCP is powered (it is by now).
 		 */
+#ifdef CONFIG_CPU_PROCHOT_ACTIVE_LOW
+		gpio_set_level(GPIO_CPU_PROCHOT, 1);
+#else
 		gpio_set_level(GPIO_CPU_PROCHOT, 0);
+#endif /* CONFIG_CPU_PROCHOT_ACTIVE_LOW */
 
 		return POWER_S0;
 
