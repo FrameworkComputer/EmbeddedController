@@ -216,6 +216,17 @@ void uart_deepsleep_interrupt(enum gpio_signal signal);
 static inline void uart_deepsleep_interrupt(enum gpio_signal signal) { }
 #endif /* !CONFIG_LOW_POWER_IDLE */
 
+#if defined(HAS_TASK_CONSOLE) && defined(CONFIG_FORCE_CONSOLE_RESUME)
+/**
+ * Enable/Disable the UART controller low-power mode wake-up capability.
+ *
+ * @param enable  1 to enable wake-up, 0 to disable it.
+ */
+void uart_enable_wakeup(int enable);
+#elif !defined(CHIP_FAMILY_NPCX5)
+static inline void uart_enable_wakeup(int enable) {}
+#endif
+
 #ifdef CONFIG_UART_INPUT_FILTER
 /**
  * Application-specific input filter, which takes the next input character as

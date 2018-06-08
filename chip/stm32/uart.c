@@ -376,3 +376,20 @@ void uart_init(void)
 
 	init_done = 1;
 }
+
+#ifdef CONFIG_FORCE_CONSOLE_RESUME
+void uart_enable_wakeup(int enable)
+{
+	if (enable) {
+		/*
+		 * Allow UART wake up from STOP mode. Note, UART clock must
+		 * be HSI(8MHz) for wakeup to work.
+		 */
+		STM32_USART_CR1(UARTN_BASE) |= STM32_USART_CR1_UESM;
+		STM32_USART_CR3(UARTN_BASE) |= STM32_USART_CR3_WUFIE;
+	} else {
+		/* Disable wake up from STOP mode. */
+		STM32_USART_CR1(UARTN_BASE) &= ~STM32_USART_CR1_UESM;
+	}
+}
+#endif

@@ -17,6 +17,7 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
+#include "uart.h"
 #include "util.h"
 
 /* Console output macros */
@@ -288,28 +289,6 @@ void clock_refresh_console_in_use(void)
 {
 }
 
-#ifdef CONFIG_FORCE_CONSOLE_RESUME
-#define UARTN_BASE STM32_USART_BASE(CONFIG_UART_CONSOLE)
-static void enable_serial_wakeup(int enable)
-{
-	if (enable) {
-		/*
-		 * Allow UART wake up from STOP mode. Note, UART clock must
-		 * be HSI(8MHz) for wakeup to work.
-		 */
-		STM32_USART_CR1(UARTN_BASE) |= STM32_USART_CR1_UESM;
-		STM32_USART_CR3(UARTN_BASE) |= STM32_USART_CR3_WUFIE;
-	} else {
-		/* Disable wake up from STOP mode. */
-		STM32_USART_CR1(UARTN_BASE) &= ~STM32_USART_CR1_UESM;
-	}
-}
-#else
-static void enable_serial_wakeup(int enable)
-{
-}
-#endif
-
 void __idle(void)
 {
 	timestamp_t t0;
@@ -343,7 +322,7 @@ void __idle(void)
 			/* deep-sleep in STOP mode */
 			idle_dsleep_cnt++;
 
-			enable_serial_wakeup(1);
+			uart_enable_wakeup(1);
 
 			/* set deep sleep bit */
 			CPU_SCB_SYSCTRL |= 0x4;
@@ -354,7 +333,7 @@ void __idle(void)
 
 			CPU_SCB_SYSCTRL &= ~0x4;
 
-			enable_serial_wakeup(0);
+			uart_enable_wakeup(0);
 
 			/*
 			 * By default only HSI 8MHz is enabled here. Re-enable
