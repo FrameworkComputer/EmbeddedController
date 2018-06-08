@@ -100,7 +100,6 @@
 #define NPCX_WUI_GPIO_1_0 WUI(1, MIWU_GROUP_2, 0)
 #define NPCX_WUI_GPIO_1_1 WUI(1, MIWU_GROUP_2, 1)
 #define NPCX_WUI_GPIO_F_4 WUI(1, MIWU_GROUP_2, 2)
-#define NPCX_WUI_GPIO_1_3 WUI(1, MIWU_GROUP_2, 3)
 #define NPCX_WUI_GPIO_1_4 WUI(1, MIWU_GROUP_2, 4)
 #define NPCX_WUI_GPIO_1_5 WUI(1, MIWU_GROUP_2, 5)
 #define NPCX_WUI_GPIO_1_6 WUI(1, MIWU_GROUP_2, 6)
@@ -151,7 +150,6 @@
 #define NPCX_WUI_GPIO_6_2 WUI(1, MIWU_GROUP_7, 2)
 #define NPCX_WUI_GPIO_6_3 WUI(1, MIWU_GROUP_7, 3)
 #define NPCX_WUI_GPIO_6_4 WUI(1, MIWU_GROUP_7, 4)
-#define NPCX_WUI_GPIO_6_5 WUI(1, MIWU_GROUP_7, 5)
 #ifndef NPCX_EXT32K_OSC_SUPPORT
 #define NPCX_WUI_GPIO_7_1 WUI(1, MIWU_GROUP_7, 7) /* Used as CLKOUT if support*/
 #endif
@@ -169,7 +167,17 @@
 /* Group F: NPCX_IRQ_WKINTFG_2 */
 #define NPCX_WUI_GPIO_F_1 WUI(2, MIWU_GROUP_6, 1)
 #define NPCX_WUI_GPIO_F_2 WUI(2, MIWU_GROUP_6, 2)
-#define NPCX_WUI_GPIO_B_6 WUI(2, MIWU_GROUP_6, 6)
+
+/* Others GPO without MIWU functionality */
+#define NPCX_WUI_GPIO_1_2 WUI_NONE
+#define NPCX_WUI_GPIO_1_3 WUI_NONE /* Software strap pin GP_SEL1_L */
+#define NPCX_WUI_GPIO_3_2 WUI_NONE
+#define NPCX_WUI_GPIO_3_5 WUI_NONE
+#define NPCX_WUI_GPIO_6_5 WUI_NONE /* Software strap pin FLPRG_L */
+#define NPCX_WUI_GPIO_6_6 WUI_NONE
+#define NPCX_WUI_GPIO_7_7 WUI_NONE
+#define NPCX_WUI_GPIO_B_6 WUI_NONE /* Software strap pin GP_SEL0_L */
+#define NPCX_WUI_GPIO_D_6 WUI_NONE
 
 /*****************************************************************************/
 /* Macro functions for Alternative mapping table */

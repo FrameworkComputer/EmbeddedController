@@ -9,6 +9,7 @@
 #include "common.h"
 #include "gpio.h"
 #include "gpio_chip.h"
+#include "i2c.h"
 #include "keyboard_config.h"
 #include "hooks.h"
 #include "registers.h"
@@ -38,6 +39,15 @@ struct npcx_wui {
 
 /* Constants for GPIO interrupt mapping */
 #define GPIO_INT(name, pin, flags, signal) NPCX_WUI_GPIO_##pin,
+#ifdef CONFIG_LOW_POWER_IDLE
+/* Extend gpio_wui_table for the bypass of better power consumption */
+#define GPIO(name, pin, flags) NPCX_WUI_GPIO_##pin,
+#define UNIMPLEMENTED(name) WUI_NONE,
+#else
+/* Ignore GPIO and UNIMPLEMENTED definitions if not using lower power idle */
+#define GPIO(name, pin, flags)
+#define UNIMPLEMENTED(name)
+#endif
 static const struct npcx_wui gpio_wui_table[] = {
 	#include "gpio.wrap"
 };
@@ -116,7 +126,7 @@ static void gpio_interrupt_type_sel(enum gpio_signal signal, uint32_t flags)
 {
 	uint8_t table, group, pmask;
 
-	if (signal >= ARRAY_SIZE(gpio_wui_table))
+	if (signal >= GPIO_IH_COUNT)
 		return;
 
 	table = gpio_wui_table[signal].table;
@@ -196,6 +206,49 @@ void gpio_low_voltage_level_sel(uint8_t port, uint8_t mask, uint8_t low_voltage)
 		CPRINTS("Warn! No low voltage support in port%d, mask%d\n",
 								port, mask);
 }
+
+/* The bypass of low voltage IOs for better power consumption */
+#ifdef CONFIG_LOW_POWER_IDLE
+static int gpio_is_i2c_pin(enum gpio_signal signal)
+{
+	int i;
+
+	for (i = 0; i < i2c_ports_used; i++)
+		if (i2c_ports[i].scl == signal || i2c_ports[i].sda == signal)
+			return 1;
+
+	return 0;
+}
+
+static void gpio_enable_wake_up_input(enum gpio_signal signal, int enable)
+{
+	const struct npcx_wui *wui = gpio_wui_table + signal;
+
+	/* Is it a valid wui mapping item? */
+	if (wui->table != MIWU_TABLE_COUNT) {
+		/* Turn on/off input io buffer by WKINENx registers */
+		if (enable)
+			SET_BIT(NPCX_WKINEN(wui->table, wui->group), wui->bit);
+		else
+			CLEAR_BIT(NPCX_WKINEN(wui->table, wui->group),
+						wui->bit);
+	}
+}
+
+void gpio_enable_1p8v_i2c_wake_up_input(int enable)
+{
+	int i;
+
+	/* Set input buffer of 1.8V i2c ports. */
+	for (i = 0; i < i2c_ports_used; i++) {
+		if (gpio_list[i2c_ports[i].scl].flags & GPIO_SEL_1P8V)
+			gpio_enable_wake_up_input(i2c_ports[i].scl, enable);
+		if (gpio_list[i2c_ports[i].sda].flags & GPIO_SEL_1P8V)
+			gpio_enable_wake_up_input(i2c_ports[i].sda, enable);
+	}
+}
+#endif
+
 /*
  * Make sure the bit depth of low voltage register.
  */
@@ -419,6 +472,21 @@ void gpio_pre_init(void)
 		 */
 		gpio_set_alternate_function(g->port, g->mask, -1);
 	}
+
+	/* The bypass of low voltage IOs for better power consumption */
+#ifdef CONFIG_LOW_POWER_IDLE
+	/* Disable input buffer of 1.8V GPIOs without ISR */
+	g = gpio_list + GPIO_IH_COUNT;
+	for (i = GPIO_IH_COUNT; i < GPIO_COUNT; i++, g++) {
+		/*
+		 * I2c ports are both alternate mode and normal gpio pin, but
+		 * the alternate mode needs the wake up input even though the
+		 * normal gpio definition doesn't have an ISR.
+		 */
+		if ((g->flags & GPIO_SEL_1P8V) && !gpio_is_i2c_pin(i))
+			gpio_enable_wake_up_input(i, 0);
+	}
+#endif
 }
 
 /* List of GPIO IRQs to enable. Don't automatically enable interrupts for

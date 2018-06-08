@@ -329,6 +329,13 @@ void __idle(void)
 			/* Enable UART wake-up and interrupt request */
 			SET_BIT(NPCX_WKEN(MIWU_TABLE_1, MIWU_GROUP_8), 7);
 #endif
+
+			/*
+			 * Disable input buffer of all 1.8v i2c ports before
+			 * entering deep sleep for better power consumption.
+			 */
+			gpio_enable_1p8v_i2c_wake_up_input(0);
+
 			/* Set deep idle - instant wake-up mode */
 			NPCX_PMCSR = IDLE_PARAMS;
 
@@ -360,6 +367,9 @@ void __idle(void)
 			/* GPIO back to UART-rx (console) */
 			clock_gpio2uart();
 #endif
+
+			/* Enable input buffer of all 1.8v i2c ports. */
+			gpio_enable_1p8v_i2c_wake_up_input(1);
 
 			/* Record time spent in deep sleep. */
 			idle_dsleep_time_us += next_evt_us;

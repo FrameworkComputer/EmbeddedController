@@ -11,6 +11,8 @@
 #define WUI(tbl, grp, idx) ((struct npcx_wui) { .table = tbl, .group = grp, \
 						.bit = idx })
 #define WUI_INT(tbl, grp)  WUI(tbl, grp, 0)
+#define WUI_NONE ((struct npcx_wui) { .table = MIWU_TABLE_COUNT, .group = 0, \
+				      .bit = 0 })
 
 /* Macros to initialize the alternative and low voltage mapping table. */
 #define NPCX_GPIO_NONE ((struct npcx_gpio) {.port = 0, .bit = 0, .valid = 0})
@@ -42,6 +44,9 @@ void npcx_uart2gpio(void);
  * pad, see uart.c).
  */
 void npcx_gpio2uart(void);
+
+/* Set input buffer of all 1.8v i2c ports. */
+void gpio_enable_1p8v_i2c_wake_up_input(int enable);
 
 /*
  * Include the MIWU, alternative and low-Voltage macro functions for GPIOs
