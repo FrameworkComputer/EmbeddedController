@@ -153,6 +153,12 @@ buildall: build_boards
 	$(MAKE) runtests
 	@touch .tests-passed
 	@echo "$@ completed successfully!"
+	@echo "Tightest boards' RW images, bytes left:"
+	@grep . build/*/RW/space_left.txt |\
+	 sed 's,build/\([^/]*\)/RW/space_left.txt:\(.*\)$$,\2 \1,' | \
+	 sort -n |head -3 | while read size board; do \
+		printf "%-10s: %6d\n" $$board $$size; \
+	 done
 
 .PHONY: try_build_tests
 try_build_tests: $(foreach b, $(BOARDS), tests-$(b))
@@ -298,6 +304,7 @@ cmd_size=$(Q)awk '\
   /__image_size =/ {image_size = strtonum($$1)} \
   /^FLASH/ {flash_size = strtonum($$3)} \
   END {room_left = flash_size - image_size; \
+       print room_left > "$(out)/RW/space_left.txt"; \
        printf ("  *** %s bytes still available in flash on $(BOARD) ****\n", \
 	       room_left)}' $(out)/RW/$(PROJECT).RW.map
 endif
