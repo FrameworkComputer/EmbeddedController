@@ -118,28 +118,59 @@ static bool image_auto_write(uint32_t offset, uint8_t *buffer,
 	uint32_t data_buf[4];
 	uint32_t addr, chunk_remain, file_seg, flash_index, seg;
 	uint32_t count, percent, total;
+	uint32_t i;
 
 	flash_index = offset;
 	/* Monitor tag */
 	data_buf[0] = MONITOR_HDR_TAG;
-	/* Where the source(RAM) address the firmware stored. */
-	data_buf[2] = FIRMWARE_START_ADDR;
 
 	file_seg = file_size;
 	total = 0;
 	while (file_seg) {
 		seg = (file_seg > FIRMWARE_SEGMENT) ?
 					FIRMWARE_SEGMENT : file_seg;
+		/*
+		 * Check if the content of the segment is all 0xff.
+		 * If yes, there is no need to write.
+		 * Call the monitor to erase the segment only for
+		 * time efficiency.
+		 */
+		for (i = 0; i < seg && buffer[i] == 0xFF; i++)
+			;
+		if (i == seg) {
+			data_buf[1] = seg;
+			/*
+			 * Set src_addr = 0 as a flag. When the monitor read 0
+			 * from this field, it will do sector erase only.
+			 */
+			data_buf[2] = 0;
+			data_buf[3] = flash_index;
+			opr_write_chunk((uint8_t *)data_buf, MONITOR_HDR_ADDR,
+						sizeof(data_buf));
+			if (opr_execute_return(MONITOR_ADDR) != true)
+				return false;
+			file_seg -= seg;
+			flash_index += seg;
+			buffer += seg;
+			total += seg;
+			percent = total * 100 / file_size;
+			printf("\r[%d%%] %d/%d", percent, total, file_size);
+			fflush(stdout);
+			continue;
+		}
 		chunk_remain = seg;
 		addr = FIRMWARE_START_ADDR;
 		/* the size to be programmed */
 		data_buf[1] = seg;
+		/* The source(RAM) address where the firmware is stored. */
+		data_buf[2] = FIRMWARE_START_ADDR;
 		/*
 		 * The offset of the flash where the segment to be programmed.
 		 */
 		data_buf[3] = flash_index;
 		/* Write the monitor header to RAM */
-		opr_write_chunk((uint8_t *)data_buf, MONITOR_HDR_ADDR, 16);
+		opr_write_chunk((uint8_t *)data_buf, MONITOR_HDR_ADDR,
+						sizeof(data_buf));
 		while (chunk_remain) {
 			count = (chunk_remain > MAX_RW_DATA_SIZE) ?
 						MAX_RW_DATA_SIZE : chunk_remain;
@@ -160,6 +191,9 @@ static bool image_auto_write(uint32_t offset, uint8_t *buffer,
 		flash_index += seg;
 	}
 	printf("\n");
+	/* Clear the UUT header tag */
+	data_buf[0] = 0;
+	opr_write_chunk((uint8_t *)data_buf, MONITOR_HDR_ADDR, 4);
 	return true;
 }
 
