@@ -202,6 +202,12 @@
 #define ISL9237_C2_PSYS_GAIN (1 << 0)
 
 /*
+ * Control3: Buck-Boost switching period
+ * 0: x1 frequency, 1: half frequency.
+ */
+#define ISL9238_C3_BB_SWITCHING_PERIOD (1 << 1)
+
+/*
  * Control3: AMON/BMON direction.
  * 0: adapter/charging, 1:OTG/discharging (ISL9238 only)
  */

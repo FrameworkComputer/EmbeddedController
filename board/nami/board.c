@@ -33,6 +33,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "isl923x.h"
 #include "keyboard_backlight.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
@@ -744,6 +745,8 @@ static void setup_motion_sensors(void)
 
 static void board_init(void)
 {
+	int reg;
+
 	/*
 	 * This enables pull-down on F_DIO1 (SPI MISO), and F_DIO0 (SPI MOSI),
 	 * whenever the EC is not doing SPI flash transactions. This avoids
@@ -755,8 +758,14 @@ static void board_init(void)
 	/* Provide AC status to the PCH */
 	gpio_set_level(GPIO_PCH_ACPRESENT, extpower_is_present());
 
-	/* Enable sensors power supply */
-	/* dnojiri: how do we enable it? */
+	/* Reduce Buck-boost mode switching frequency to reduce heat */
+	if (i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
+		       ISL9238_REG_CONTROL3, &reg) == EC_SUCCESS) {
+		reg |= ISL9238_C3_BB_SWITCHING_PERIOD;
+		if (i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
+			    ISL9238_REG_CONTROL3, reg))
+			CPRINTF("Failed to set isl9238\n");
+	}
 
 	/* Enable VBUS interrupt */
 	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
