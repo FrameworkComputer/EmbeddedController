@@ -359,10 +359,10 @@ enum nvmem_users {
 #define CONFIG_PINWEAVER
 
 /*
- * While RMA server support is not ready keep using x25519. Switching to P256
- * saves 5336 bytes of flash space.
+ * Disabling p256 will result in RMA Auth falling back to the x25519 curve
+ * which in turn would require extra 5328 bytes of flash space.
  */
-/* #define CONFIG_RMA_AUTH_USE_P256 */
+#define CONFIG_RMA_AUTH_USE_P256
 #ifndef CONFIG_RMA_AUTH_USE_P256
 #define CONFIG_CURVE25519
 #endif
