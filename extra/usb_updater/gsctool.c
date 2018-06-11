@@ -1933,6 +1933,8 @@ static void process_rma(struct transfer_descriptor *td, const char *authcode)
 static void process_factory_mode(struct transfer_descriptor *td,
 				 const char *arg)
 {
+	uint8_t rma_response;
+	size_t response_size = sizeof(rma_response);
 	char *cmd_str;
 	int rv;
 	uint16_t subcommand;
@@ -1950,10 +1952,13 @@ static void process_factory_mode(struct transfer_descriptor *td,
 	}
 
 	printf("%sabling factory mode\n", cmd_str);
-	rv = send_vendor_command(td, subcommand, NULL, 0, NULL, NULL);
+	rv = send_vendor_command(td, subcommand, NULL, 0, &rma_response,
+		&response_size);
 	if (rv) {
-		fprintf(stderr, "Failed %sabling factory mode, error "
+		fprintf(stderr, "Failed %sabling factory mode\nvc error "
 			"%d\n", cmd_str, rv);
+		if (response_size == 1)
+			fprintf(stderr, "ec error %d\n", rma_response);
 		exit(update_error);
 	}
 	printf("Factory %sable succeeded.\n", cmd_str);
