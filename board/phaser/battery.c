@@ -32,7 +32,6 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* TODO(b/78770233): Add real battery information from datasheets */
 	/* Panasonic AP1505L Battery Information */
 	[BATTERY_PANASONIC] = {
 		.fuel_gauge = {
@@ -112,6 +111,33 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c		= 60,
 			.discharging_min_c	= -20,
 			.discharging_max_c	= 73,
+		},
+	},
+	/* Sunwoda L18D3PG1  */
+	[BATTERY_SUNWODA] = {
+		.fuel_gauge = {
+			.manuf_name = "SUNWODA",
+			.ship_mode = {
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
+			},
+			.fet = {
+				.reg_addr = 0x34,
+				.reg_mask = 0x0100,
+				.disconnect_val = 0x0100,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13050, /* mV */
+			.voltage_normal		= 11250, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 200,	 /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 60,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 60,
 		},
 	},
 };
