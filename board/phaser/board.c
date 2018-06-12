@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "charge_state.h"
 #include "common.h"
 #include "console.h"
 #include "cros_board_info.h"
@@ -20,6 +21,9 @@
 #include "power_button.h"
 #include "switch.h"
 #include "tcpci.h"
+#include "temp_sensor.h"
+#include "thermistor.h"
+#include "util.h"
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -60,6 +64,25 @@ const struct adc_t adc_channels[] = {
 		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
+				 .type = TEMP_SENSOR_TYPE_BATTERY,
+				 .read = charge_get_battery_temp,
+				 .idx = 0,
+				 .action_delay_sec = 1},
+	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_51k1_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_AMB,
+				 .action_delay_sec = 5},
+	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_13k7_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_CHARGER,
+				 .action_delay_sec = 1},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 static void customize_based_on_board_id(void)
 {

@@ -16,6 +16,11 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
+#define CONFIG_TEMP_SENSOR
+#define CONFIG_THERMISTOR
+#define CONFIG_STEINHART_HART_3V3_13K7_47K_4050B
+#define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -25,6 +30,13 @@ enum adc_channel {
 	ADC_TEMP_SENSOR_AMB,		/* ADC0 */
 	ADC_TEMP_SENSOR_CHARGER,	/* ADC1 */
 	ADC_CH_COUNT,
+};
+
+enum temp_sensor_id {
+	TEMP_SENSOR_BATTERY,
+	TEMP_SENSOR_AMBIENT,
+	TEMP_SENSOR_CHARGER,
+	TEMP_SENSOR_COUNT
 };
 
 enum pwm_channel {
