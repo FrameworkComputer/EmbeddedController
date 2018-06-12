@@ -549,10 +549,10 @@ const matrix_3x3_t lid_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
-const matrix_3x3_t lid_Rx180_Ry180 = {
-	{ FLOAT_TO_FP(-1), 0, 0 },
+const matrix_3x3_t rotation_x180_z90 = {
 	{ 0, FLOAT_TO_FP(-1), 0 },
-	{ 0, 0, FLOAT_TO_FP(1) }
+	{ FLOAT_TO_FP(-1), 0, 0 },
+	{ 0, 0, FLOAT_TO_FP(-1) }
 };
 
 const struct motion_sensor_t lid_accel_1 = {
@@ -566,7 +566,7 @@ const struct motion_sensor_t lid_accel_1 = {
 	.drv_data = &g_kx022_data,
 	.port = I2C_PORT_ACCEL,
 	.addr = KX022_ADDR1,
-	.rot_standard_ref = &lid_Rx180_Ry180,
+	.rot_standard_ref = &rotation_x180_z90,
 	.min_frequency = KX022_ACCEL_MIN_FREQ,
 	.max_frequency = KX022_ACCEL_MAX_FREQ,
 	.default_range = 2, /* g, to support tablet mode */
@@ -738,9 +738,11 @@ static void setup_motion_sensors(void)
 	if (oem != PROJECT_NAMI)
 		/* Only Nami has ALS */
 		motion_sensor_count = ARRAY_SIZE(motion_sensors) - 1;
-	if (oem == PROJECT_AKALI)
-		/* Akali uses KX022 */
+	if (oem == PROJECT_AKALI) {
 		motion_sensors[LID_ACCEL] = lid_accel_1;
+		motion_sensors[BASE_ACCEL].rot_standard_ref = NULL;
+		motion_sensors[BASE_GYRO].rot_standard_ref = NULL;
+	}
 }
 
 static void board_init(void)
