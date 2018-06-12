@@ -206,7 +206,6 @@ static struct stprivate_data lsm6dsm_g_data;
 static struct stprivate_data lsm6dsm_a_data;
 
 /* Drivers */
-/* TODO(b/74602071): Tune sensor cfg after the board is received */
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 	 .name = "Lid Accel",
