@@ -94,6 +94,7 @@ driver-$(CONFIG_TOUCHPAD_ELAN)+=touchpad_elan.o
 driver-$(CONFIG_TOUCHPAD_ST)+=touchpad_st.o
 
 # Thermistors
+driver-$(CONFIG_THERMISTOR)+=temp_sensor/thermistor.o
 driver-$(CONFIG_THERMISTOR_NCP15WB)+=temp_sensor/thermistor_ncp15wb.o
 
 # Type-C port controller (TCPC) drivers

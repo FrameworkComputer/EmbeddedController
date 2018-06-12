@@ -2704,7 +2704,19 @@
 #undef CONFIG_TEMP_SENSOR_TMP432	/* TI TMP432 sensor, on I2C bus */
 #undef CONFIG_TEMP_SENSOR_F75303	/* Fintek  F75303 sensor, on I2C bus */
 
+/* Compile common code for thermistor support */
+#undef CONFIG_THERMISTOR
+
+/* Support particular thermistors */
 #undef CONFIG_THERMISTOR_NCP15WB	/* NCP15WB thermistor */
+
+/*
+ * If defined, image includes lookup tables and helper functions that convert
+ * thermistor ADC readings into degrees K based off of various circuit
+ * configurations.
+ */
+#undef CONFIG_STEINHART_HART_3V3_13K7_47K_4050B
+#undef CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 
 /*
  * If defined, active-high GPIO which indicates temperature sensor chips are
@@ -3662,6 +3674,12 @@
 	defined(CONFIG_USB_PD_DISCHARGE_TCPC) || \
 	defined(CONFIG_USB_PD_DISCHARGE_PPC)
 #define CONFIG_USB_PD_DISCHARGE
+#endif
+
+/*****************************************************************************/
+/* Define derived thermistor common path */
+#ifdef CONFIG_THERMISTOR_NCP15WB
+#define CONFIG_THERMISTOR
 #endif
 
 /*****************************************************************************/

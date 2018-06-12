@@ -33,7 +33,7 @@ struct thermistor_info {
 };
 
 /**
- * @brief Calculate temperature using linear interpolation of data points.
+ * Calculate temperature using linear interpolation of data points.
  *
  * Given a set of datapoints, the algorithm will calculate the "step" in
  * between each one in order to interpolate missing entries.
@@ -44,8 +44,9 @@ struct thermistor_info {
  * @return	temperature in C
  */
 int thermistor_linear_interpolate(uint16_t mv,
-				const struct thermistor_info *info);
+				  const struct thermistor_info *info);
 
+#ifdef CONFIG_THERMISTOR_NCP15WB
 /**
  * ncp15wb temperature conversion routine.
  *
@@ -54,5 +55,42 @@ int thermistor_linear_interpolate(uint16_t mv,
  * @return	temperature in C.
  */
 int ncp15wb_calculate_temp(uint16_t adc);
+#endif /* CONFIG_THERMISTOR_NCP15WB */
+
+#ifdef CONFIG_STEINHART_HART_3V3_13K7_47K_4050B
+/**
+ * Reads the specified ADC channel and uses a lookup table and interpolation to
+ * return a temperature in degrees K.
+ *
+ * The lookup table is based off of a resistor divider circuit on 3.3V with a
+ * 13.7K resistor in series with a thermistor with nominal value of 47K (at 25C)
+ * and a B (25/100) value of 4050.
+ *
+ * @param idx_adc	The idx value from the temp_sensor_t struct, which is
+ *			the ADC channel to read and convert to degrees K
+ * @param temp_ptr	Destination for temperature (in degrees K)
+ *
+ * @return EC_SUCCESS, or non-zero if error.
+ */
+int get_temp_3v3_13k7_47k_4050b(int idx_adc, int *temp_ptr);
+#endif
+
+#ifdef CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
+/**
+ * Reads the specified ADC channel and uses a lookup table and interpolation to
+ * return a temperature in degrees K.
+ *
+ * The lookup table is based off of a resistor divider circuit on 3.3V with a
+ * 51.1K resistor in series with a thermistor with nominal value of 47K (at 25C)
+ * and a B (25/100) value of 4050.
+ *
+ * @param idx_adc	The idx value from the temp_sensor_t struct, which is
+ *			the ADC channel to read and convert to degrees K
+ * @param temp_ptr	Destination for temperature (in degrees K)
+ *
+ * @return EC_SUCCESS, or non-zero if error.
+ */
+int get_temp_3v3_51k1_47k_4050b(int idx_adc, int *temp_ptr);
+#endif
 
 #endif  /* __CROS_EC_TEMP_SENSOR_THERMISTOR_NCP15WB_H */

@@ -190,91 +190,22 @@ const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
 	GPIO_USB1_ENABLE,
 };
 
-/*
- * Data derived from Seinhart-Hart equation in a resistor divider circuit with
- * Vdd=3300mV, R = 13.7Kohm, and Murata NCP15WB-series thermistor (B = 4050,
- * T0 = 298.15, nominal resistance (R0) = 47Kohm).
- */
-#define CHARGER_THERMISTOR_SCALING_FACTOR 13
-static const struct thermistor_data_pair charger_thermistor_data[] = {
-	{ 3044 / CHARGER_THERMISTOR_SCALING_FACTOR, 0 },
-	{ 2890 / CHARGER_THERMISTOR_SCALING_FACTOR, 10 },
-	{ 2680 / CHARGER_THERMISTOR_SCALING_FACTOR, 20 },
-	{ 2418 / CHARGER_THERMISTOR_SCALING_FACTOR, 30 },
-	{ 2117 / CHARGER_THERMISTOR_SCALING_FACTOR, 40 },
-	{ 1800 / CHARGER_THERMISTOR_SCALING_FACTOR, 50 },
-	{ 1490 / CHARGER_THERMISTOR_SCALING_FACTOR, 60 },
-	{ 1208 / CHARGER_THERMISTOR_SCALING_FACTOR, 70 },
-	{ 966 / CHARGER_THERMISTOR_SCALING_FACTOR, 80 },
-	{ 860 / CHARGER_THERMISTOR_SCALING_FACTOR, 85 },
-	{ 766 / CHARGER_THERMISTOR_SCALING_FACTOR, 90 },
-	{ 679 / CHARGER_THERMISTOR_SCALING_FACTOR, 95 },
-	{ 603 / CHARGER_THERMISTOR_SCALING_FACTOR, 100 },
-};
-
-static const struct thermistor_info charger_thermistor_info = {
-	.scaling_factor = CHARGER_THERMISTOR_SCALING_FACTOR,
-	.num_pairs = ARRAY_SIZE(charger_thermistor_data),
-	.data = charger_thermistor_data,
-};
-
-int board_get_charger_temp(int idx, int *temp_ptr)
-{
-	int mv = adc_read_channel(ADC_TEMP_SENSOR_CHARGER);
-
-	if (mv < 0)
-		return -1;
-
-	*temp_ptr = thermistor_linear_interpolate(mv, &charger_thermistor_info);
-	*temp_ptr = C_TO_K(*temp_ptr);
-	return 0;
-}
-
-/*
- * Data derived from Seinhart-Hart equation in a resistor divider circuit with
- * Vdd=3300mV, R = 51.1Kohm, and Murata NCP15WB-series thermistor (B = 4050,
- * T0 = 298.15, nominal resistance (R0) = 47Kohm).
- */
-#define AMB_THERMISTOR_SCALING_FACTOR 11
-static const struct thermistor_data_pair amb_thermistor_data[] = {
-	{ 2512 / AMB_THERMISTOR_SCALING_FACTOR, 0 },
-	{ 2158 / AMB_THERMISTOR_SCALING_FACTOR, 10 },
-	{ 1772 / AMB_THERMISTOR_SCALING_FACTOR, 20 },
-	{ 1398 / AMB_THERMISTOR_SCALING_FACTOR, 30 },
-	{ 1070 / AMB_THERMISTOR_SCALING_FACTOR, 40 },
-	{ 803 / AMB_THERMISTOR_SCALING_FACTOR, 50 },
-	{ 597 / AMB_THERMISTOR_SCALING_FACTOR, 60 },
-	{ 443 / AMB_THERMISTOR_SCALING_FACTOR, 70 },
-	{ 329 / AMB_THERMISTOR_SCALING_FACTOR, 80 },
-	{ 285 / AMB_THERMISTOR_SCALING_FACTOR, 85 },
-	{ 247 / AMB_THERMISTOR_SCALING_FACTOR, 90 },
-	{ 214 / AMB_THERMISTOR_SCALING_FACTOR, 95 },
-	{ 187 / AMB_THERMISTOR_SCALING_FACTOR, 100 },
-};
-
-static const struct thermistor_info amb_thermistor_info = {
-	.scaling_factor = AMB_THERMISTOR_SCALING_FACTOR,
-	.num_pairs = ARRAY_SIZE(amb_thermistor_data),
-	.data = amb_thermistor_data,
-};
-
-int board_get_ambient_temp(int idx, int *temp_ptr)
-{
-	int mv = adc_read_channel(ADC_TEMP_SENSOR_AMB);
-
-	if (mv < 0)
-		return -1;
-
-	*temp_ptr = thermistor_linear_interpolate(mv, &amb_thermistor_info);
-	*temp_ptr = C_TO_K(*temp_ptr);
-	return 0;
-}
-
 const struct temp_sensor_t temp_sensors[] = {
-	/* FIXME(dhendrix): tweak action_delay_sec */
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0, 1},
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, board_get_ambient_temp, 0, 5},
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_charger_temp, 1, 1},
+	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
+				 .type = TEMP_SENSOR_TYPE_BATTERY,
+				 .read = charge_get_battery_temp,
+				 .idx = 0,
+				 .action_delay_sec = 1},
+	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_51k1_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_AMB,
+				 .action_delay_sec = 5},
+	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_13k7_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_CHARGER,
+				 .action_delay_sec = 1},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
