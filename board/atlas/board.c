@@ -15,10 +15,10 @@
 #include "console.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/als_opt3001.h"
+#include "driver/pmic_bd99992gw.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
-#include "driver/temp_sensor/bd99992gw.h"
 #include "espi.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -36,6 +36,7 @@
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
+#include "system_chip.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "timer.h"
@@ -405,6 +406,30 @@ static void board_pmic_init(void)
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3b, 0x1f);
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
+
+void board_hibernate(void)
+{
+	int p;
+
+	/* Configure PSL pins */
+	for (p = 0; p < hibernate_wake_pins_used; p++)
+		system_config_psl_mode(hibernate_wake_pins[p]);
+
+	/*
+	 * Enter PSL mode.  Note that on Atlas, simply enabling PSL mode does
+	 * not cut the EC's power.  Therefore, we'll need to cut off power via
+	 * the ROP PMIC afterwards.
+	 */
+	system_enter_psl_mode();
+
+	/* Cut off DSW power via the ROP PMIC. */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_SDWNCTRL, BD99992GW_SDWNCTRL_SWDN);
+
+	/* Wait for power to be cut. */
+	while (1)
+		;
+}
 
 /* Initialize board. */
 static void board_init(void)
