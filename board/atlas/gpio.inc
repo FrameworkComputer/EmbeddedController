@@ -18,11 +18,11 @@ GPIO_INT(ROP_EC_RSMRST_L,	PIN(E, 2), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(MECH_PWR_BTN_ODL,	PIN(0, 1), GPIO_INT_BOTH | GPIO_PULL_UP,	power_button_interrupt)
 GPIO_INT(SLP_S0_L,		PIN(A, 4), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(SLP_SUS_L_PCH,		PIN(D, 4), GPIO_INT_BOTH,			power_signal_interrupt)
-GPIO_INT(ROP_EC_ACOK,		PIN(0, 0), GPIO_INT_BOTH,			extpower_interrupt)
+GPIO_INT(ROP_EC_ACOK,		PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	extpower_interrupt)
 
 /* misc interrupt handler section */
 GPIO_INT(EC_WP_L,		PIN(A, 1), GPIO_INT_BOTH,			switch_interrupt)
-GPIO_INT(LID_OPEN,		PIN(D, 2), GPIO_INT_BOTH,			lid_interrupt)
+GPIO_INT(LID_OPEN,		PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	lid_interrupt)
 GPIO_INT(ACCELGYRO3_INT_L,	PIN(4, 1), GPIO_INT_FALLING,			bmi160_interrupt)
 
 /* SoC section */
@@ -113,10 +113,11 @@ GPIO(NC_GPIOA7,			PIN(A, 7), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(NC_GPIOB0,			PIN(B, 0), GPIO_INPUT | GPIO_PULL_UP)
 
 /* gpio alternate functions */
-ALTERNATE(PIN_MASK(0, 0x19), 0, MODULE_GPIO, 0)		/* GPIO00|GPIO03|GPIO04 */
+ALTERNATE(PIN_MASK(0, 0x02), 0, MODULE_PMU, 0)		/* PSL3&GPI01 */
+ALTERNATE(PIN_MASK(0, 0x18), 0, MODULE_GPIO, 0)		/* GPIO03,4 */
+
 ALTERNATE(PIN_MASK(8, 0x08), 0, MODULE_GPIO, 0)		/* GPIO83 */
 ALTERNATE(PIN_MASK(A, 0x08), 0, MODULE_GPIO, 0)		/* GPIOA3 */
-ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_GPIO, 0)		/* GPIOD2 */
 
 /* PWM channels */
 ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)		/* GPIO80 PWM3 KBD_BL_PWM */
