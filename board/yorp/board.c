@@ -289,6 +289,20 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+void board_hibernate_late(void) {
+
+	int i;
+
+	const uint32_t hibernate_pins[][2] = {
+		/* Turn off LEDs before going to hibernate */
+		{GPIO_BAT_LED_BLUE_L, GPIO_INPUT | GPIO_PULL_UP},
+		{GPIO_BAT_LED_ORANGE_L, GPIO_INPUT | GPIO_PULL_UP},
+	};
+
+	for (i = 0; i < ARRAY_SIZE(hibernate_pins); ++i)
+		gpio_set_flags(hibernate_pins[i][0], hibernate_pins[i][1]);
+}
+
 #ifndef TEST_BUILD
 /* This callback disables keyboard when convertibles are fully open */
 void lid_angle_peripheral_enable(int enable)
