@@ -48,6 +48,7 @@ enum pd_rx_errors {
  * that owns the port does not send itself this event.
  */
 #define PD_EVENT_DEVICE_ACCESSED  (1<<7)
+#define PD_EVENT_DP_DISCONNECT    (1<<8) /* DisplayPort disconnect requested */
 
 /* --- PD data message helpers --- */
 #define PDO_MAX_OBJECTS   7
