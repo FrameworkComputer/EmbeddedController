@@ -16,24 +16,24 @@ Many configs can be found for the servo_ina_board in hdctools/servo/data/.
 Sweetberry is plug compatible with servo_ina headers, and config files
 can be converted with the following tool:
 
-./convert_servo_ina.py kevin_r0_loc.py
+./convert_servo_ina.py <board>_r0_loc.py
 
-This will produce kevin_r0_loc.board and kevin_r0_loc.scenario which
+This will produce <board>_r0_loc.board and <board>_r0_loc.scenario which
 can be used with powerlog.py.
 
 Method 2 (preferred) -
 
-If you are using powerlog.py within the chroot, copy kevin_r0_loc.py to
+If you are using powerlog.py within the chroot, copy <board>_r0_loc.py to
 src/third_party/hdctools/servo/data, then add line to file:
 config_type = 'sweetberry'
 and run command in terminal:
 sudo emerge hdctools
 The command will install the corresponding .board and .scenario file in the
 chroot. To use powerlog.py use the command:
-./powerlog.py -b kevin_r0_loc.board -c kevin_r0_loc.scenario
+./powerlog.py -b <board>_r0_loc.board -c <board>_r0_loc.scenario
 There is no need to specify the absolute path to the .board and .scenario file,
 once they are installed into the chroot. If there is any changes to
-kevin_r0_loc.py, you need to emerge hdctools again.
+<board>_r0_loc.py, you need to emerge hdctools again.
 
 
 Board files:

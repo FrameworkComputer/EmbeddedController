@@ -119,9 +119,7 @@ BOARDS_NPCX_SPI=(
 	eve
 	fizz
 	glkrvp
-	gru
-	kevin
-        lux
+	lux
 	nami
 	nautilus
 	poppy
@@ -158,8 +156,6 @@ BOARDS_MEC1322=(
 
 BOARDS_SPI_1800MV=(
 	coral
-	gru
-	kevin
 	reef
 )
 
@@ -167,8 +163,6 @@ BOARDS_RAIDEN=(
 	coral
 	eve
 	fizz
-	gru
-	kevin
 	nami
 	nautilus
 	poppy

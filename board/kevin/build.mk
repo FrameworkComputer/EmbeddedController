@@ -6,10 +6,8 @@
 # Board specific files build
 #
 
-# the IC is Nuvoton M-Series EC (npcx5m5g, npcx5m6g)
+# Board is only valid for host tools
 CHIP:=npcx
 CHIP_VARIANT:=npcx5m5g
 
-board-y=battery.o board.o charge_ramp.o usb_pd_policy.o
-board-$(BOARD_GRU)+=led_gru.o
-board-$(BOARD_KEVIN)+=led_kevin.o
+board-y=board.o
