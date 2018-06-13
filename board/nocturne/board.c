@@ -158,7 +158,7 @@ static struct opt3001_drv_data_t g_opt3001_data = {
 
 /* Matrix to rotate accel/gyro into standard reference frame. */
 const matrix_3x3_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1),  0},
+	{ 0, FLOAT_TO_FP(1),  0},
 	{ FLOAT_TO_FP(-1), 0,  0},
 	{ 0,  0, FLOAT_TO_FP(1)}
 };
@@ -176,14 +176,13 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_ALS_GYRO,
 		.addr = BMI160_ADDR0,
 		.rot_standard_ref = &lid_standard_ref,
-		.default_range = 4, /* g, enough for laptop. */
+		.default_range = 4, /* g */
 		.min_frequency = BMI160_ACCEL_MIN_FREQ,
 		.max_frequency = BMI160_ACCEL_MAX_FREQ,
 		.config = {
-			/* EC use accel for angle detection */
+			/* EC setup accel for chrome usage */
 			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 13000,
-				.ec_rate = 76 * MSEC,
+				.odr = 10000 | ROUND_UP_FLAG,
 			},
 		},
 	},
