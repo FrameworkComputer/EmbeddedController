@@ -10,13 +10,21 @@
 #include "accelgyro.h"
 #include "common.h"
 #include "console.h"
-#include "driver/accelgyro_bmi160.h"
 #include "driver/mag_bmm150.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+
+#ifdef CONFIG_MAG_BMI160_BMM150
+#include "driver/accelgyro_bmi160.h"
+#define raw_mag_read8 bmi160_sec_raw_read8
+#define raw_mag_write8 bmi160_sec_raw_write8
+#else
+#error "Not implemented"
+#endif
+
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
@@ -62,8 +70,6 @@
 * No license is granted by implication or otherwise under any patent or
 * patent rights of the copyright holder.
 */
-
-#include "mag_bmm150.h"
 
 #define BMI150_READ_16BIT_COM_REG(store_, addr_) do { \
 	int val; \

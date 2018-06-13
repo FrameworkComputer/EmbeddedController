@@ -241,14 +241,14 @@ static int raw_read_n(const int port, const int addr, const uint8_t reg,
 	return rv;
 }
 
-#ifdef CONFIG_MAG_BMI160_BMM150
+#ifdef CONFIG_BMI160_SEC_I2C
 /**
  * Control access to the compass on the secondary i2c interface:
  * enable values are:
  * 1: manual access, we can issue i2c to the compass
  * 0: data access: BMI160 gather data periodically from the compass.
  */
-static int bmm150_mag_access_ctrl(const int port, const int addr,
+static int bmi160_sec_access_ctrl(const int port, const int addr,
 				  const int enable)
 {
 	int mag_if_ctrl;
@@ -269,7 +269,7 @@ static int bmm150_mag_access_ctrl(const int port, const int addr,
  * Read register from compass.
  * Assuming we are in manual access mode, read compass i2c register.
  */
-int raw_mag_read8(const int port, const int addr, const uint8_t reg,
+int bmi160_sec_raw_read8(const int port, const int addr, const uint8_t reg,
 				  int *data_ptr)
 {
 	/* Only read 1 bytes */
@@ -281,7 +281,8 @@ int raw_mag_read8(const int port, const int addr, const uint8_t reg,
  * Write register from compass.
  * Assuming we are in manual access mode, write to compass i2c register.
  */
-int raw_mag_write8(const int port, const int addr, const uint8_t reg, int data)
+int bmi160_sec_raw_write8(const int port, const int addr, const uint8_t reg,
+			  int data)
 {
 	raw_write8(port, addr, BMI160_MAG_I2C_WRITE_DATA, data);
 	return raw_write8(port, addr, BMI160_MAG_I2C_WRITE_ADDR, reg);
@@ -1200,7 +1201,7 @@ static int init(const struct motion_sensor_t *s)
 		raw_write8(s->port, s->addr, BMI160_PMU_TRIGGER, 0);
 	}
 
-#ifdef CONFIG_MAG_BMI160_BMM150
+#ifdef CONFIG_BMI160_SEC_I2C
 	if (s->type == MOTIONSENSE_TYPE_MAG) {
 		struct bmi160_drv_data_t *data = BMI160_GET_DATA(s);
 
@@ -1263,7 +1264,7 @@ static int init(const struct motion_sensor_t *s)
 		}
 
 
-		bmm150_mag_access_ctrl(s->port, s->addr, 1);
+		bmi160_sec_access_ctrl(s->port, s->addr, 1);
 
 		ret = bmm150_init(s);
 		if (ret)
@@ -1277,7 +1278,7 @@ static int init(const struct motion_sensor_t *s)
 		 * Put back the secondary interface in normal mode.
 		 * BMI160 will poll based on the configure ODR.
 		 */
-		bmm150_mag_access_ctrl(s->port, s->addr, 0);
+		bmi160_sec_access_ctrl(s->port, s->addr, 0);
 	}
 #endif
 

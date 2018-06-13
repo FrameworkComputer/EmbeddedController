@@ -3779,4 +3779,9 @@
 #define CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ \
 	CONFIG_EC_MAX_SENSOR_FREQ_DEFAULT_MILLIHZ
 #endif
+
+/* Enable BMI160 secondary port if needed. */
+#ifdef CONFIG_MAG_BMI160_BMM150
+#define CONFIG_BMI160_SEC_I2C
+#endif
 #endif  /* __CROS_EC_CONFIG_H */
