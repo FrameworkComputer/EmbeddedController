@@ -178,7 +178,7 @@ determine_rma_key_base() {
         ;;
   esac
 
-  echo "${base_name}.${curve}.test"
+  echo "${base_name}.${curve}"
 }
 
 SIGNER="cr50-codesigner"
