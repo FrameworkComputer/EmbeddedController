@@ -507,10 +507,15 @@ void board_hibernate(void)
 }
 
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED1]   = { 3, PWM_CONFIG_DSLEEP, 100 },
-	[PWM_CH_LED2] = { 5, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED1]   = { 3, PWM_CONFIG_DSLEEP, 1200 },
+	[PWM_CH_LED2] = { 5, PWM_CONFIG_DSLEEP, 1200 },
 	[PWM_CH_FAN] = {4, PWM_CONFIG_OPEN_DRAIN, 25000},
-	[PWM_CH_KBLIGHT] = { 2, 0, 100 },
+	/*
+	 * 1.2kHz is a multiple of both 50 and 60. So a video recorder
+	 * (generally designed to ignore either 50 or 60 Hz flicker) will not
+	 * alias with refresh rate.
+	 */
+	[PWM_CH_KBLIGHT] = { 2, 0, 1200 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
