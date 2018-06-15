@@ -38,10 +38,10 @@ static int inactive_image_is_guc_image(void)
 	enum system_image_copy_t inactive_copy;
 	const struct SignedHeader *other;
 
-	if (system_get_image_copy() == SYSTEM_IMAGE_RW_A)
+	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
 		inactive_copy = SYSTEM_IMAGE_RW_B;
 	else
-		inactive_copy = SYSTEM_IMAGE_RW_A;
+		inactive_copy = SYSTEM_IMAGE_RW;
 	other = (struct SignedHeader *) get_program_memory_addr(
 		inactive_copy);
 	/*
