@@ -530,7 +530,7 @@ static void usage(int errs)
 	       "                           using information provided in "
 	       "<desc file>\n"
 	       "  -o,--ccd_open            Start CCD open sequence\n"
-	       "  -P,--password <password>\n"
+	       "  -P,--password\n"
 	       "                           Set or clear CCD password. Use\n"
 	       "                           'clear:<cur password>' to clear it\n"
 	       "  -p,--post_reset          Request post reset after transfer\n"
