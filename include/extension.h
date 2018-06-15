@@ -72,7 +72,7 @@ struct extension_command {
 	{								\
 		func(params->buffer, params->in_size,			\
 		     &params->out_size);				\
-		return 0;						\
+		return VENDOR_RC_SUCCESS;				\
 	}								\
 	const struct extension_command __keep __extension_cmd_##code	\
 	__attribute__((section(".rodata.extensioncmds")))		\
@@ -83,9 +83,8 @@ struct extension_command {
 	static enum vendor_cmd_rc					\
 	func##_wrap(struct vendor_cmd_params *params)			\
 	{								\
-		func(params->code, params->buffer, params->in_size,	\
-		     &params->out_size);				\
-		return 0;						\
+		return func(params->code, params->buffer,		\
+		      params->in_size, &params->out_size);		\
 	}								\
 	const struct extension_command __keep __vendor_cmd_##cmd_code	\
 	__attribute__((section(".rodata.extensioncmds")))		\
