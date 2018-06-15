@@ -895,6 +895,11 @@ int tpm_sync_reset(int wipe_first)
 	return wipe_result;
 }
 
+void tpm_stop(void)
+{
+	if_stop();
+}
+
 void tpm_task(void)
 {
 	uint32_t evt = 0;

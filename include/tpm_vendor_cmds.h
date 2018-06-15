@@ -69,6 +69,17 @@ enum vendor_cmd_cc {
 	 * WPV subcommands.
 	 */
 	VENDOR_CC_WP = 39,
+	/*
+	 * Either enable or disable TPM mode. This is allowed for one-time only
+	 * until next TPM reset EVENT. In other words, once TPM mode is set,
+	 * then it cannot be altered to the other mode value. The allowed input
+	 * values are either TPM_MODE_ENABLED or TPM_MODE_DISABLED as defined
+	 * in 'enum tpm_modes', tpm_registers.h.
+	 * If the input size is zero, it won't change TPM_MODE.
+	 * If either the input size is zero or the input value is valid,
+	 * it will response with the current tpm_mode value in uint8_t format.
+	 */
+	VENDOR_CC_TPM_MODE = 40,
 
 	LAST_VENDOR_COMMAND = 65535,
 };

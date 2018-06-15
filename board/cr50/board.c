@@ -1289,6 +1289,7 @@ static int command_sysinfo(int argc, char **argv)
 	const struct SignedHeader *h;
 	int reset_count = GREG32(PMU, LONG_LIFE_SCRATCH0);
 	char rollback_str[15];
+	uint8_t tpm_mode;
 
 	ccprintf("Reset flags: 0x%08x (", system_get_reset_flags());
 	system_print_reset_flags();
@@ -1315,6 +1316,11 @@ static int command_sysinfo(int argc, char **argv)
 
 	system_get_rollback_bits(rollback_str, sizeof(rollback_str));
 	ccprintf("Rollback:    %s\n", rollback_str);
+
+	tpm_mode = get_tpm_mode();
+	ccprintf("TPM MODE:    %s (%d)\n",
+		(tpm_mode == TPM_MODE_DISABLED) ? "disabled" : "enabled",
+		tpm_mode);
 
 	return EC_SUCCESS;
 }

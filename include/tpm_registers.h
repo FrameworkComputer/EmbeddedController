@@ -61,6 +61,11 @@ void tpm_reinstate_nvmem_commits(void);
 int tpm_sync_reset(int wipe_first);
 
 /*
+ * It shuts down the tpm interface, until next tpm reset event.
+ */
+void tpm_stop(void);
+
+/*
  * This structure describes the header of all commands and responses sent and
  * received over TPM FIFO.
  *
@@ -104,5 +109,17 @@ void tpm_alt_extension(struct tpm_cmd_header *tpmh, size_t buffer_size);
  */
 #define TPM2_PCR_Read		0x0000017e
 #define TPM2_Startup		0x00000144
+
+/* TPM mode */
+enum tpm_modes {
+	TPM_MODE_ENABLED_TENTATIVE = 0,
+	TPM_MODE_ENABLED = 1,
+	TPM_MODE_DISABLED = 2,
+};
+
+/*
+ * This function returns the current TPM_MODE value.
+ */
+enum tpm_modes get_tpm_mode(void);
 
 #endif	/* __CROS_EC_TPM_REGISTERS_H */
