@@ -99,6 +99,7 @@ enum sn5s330_pp_idx {
 #define SN5S330_VCONN_EN (1 << 0)
 #define SN5S330_CC_POLARITY (1 << 1)
 #define SN5S330_CC_EN (1 << 4)
+#define SN5S330_VCONN_ILIM_SEL (1 << 5)
 
 /* FUNC_SET_9 */
 #define SN5S330_PP2_CONFIG (1 << 2)

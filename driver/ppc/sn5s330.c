@@ -244,8 +244,6 @@ static int sn5s330_init(int port)
 		return status;
 	}
 
-	/* TODO(aaboagye): What about Vconn? */
-
 	/*
 	 * Indicate we are using PP2 configuration 2 and enable OVP comparator
 	 * for CC lines.
@@ -274,13 +272,17 @@ static int sn5s330_init(int port)
 		return status;
 	}
 
-	/* Turn off dead battery resistors and turn on CC FETs. */
+	/*
+	 * Turn off dead battery resistors, turn on CC FETs, and set the higher
+	 * of the two VCONN current limits (min 0.6A).  Many VCONN accessories
+	 * trip the default current limit of min 0.35A.
+	 */
 	status = i2c_read8(i2c_port, i2c_addr, SN5S330_FUNC_SET4, &regval);
 	if (status) {
 		CPRINTS("ppc p%d: Failed to read FUNC_SET4!", port);
 		return status;
 	}
-	regval |= SN5S330_CC_EN;
+	regval |= SN5S330_CC_EN | SN5S330_VCONN_ILIM_SEL;
 	status = i2c_write8(i2c_port, i2c_addr, SN5S330_FUNC_SET4, regval);
 	if (status) {
 		CPRINTS("ppc p%d: Failed to set FUNC_SET4!", port);
