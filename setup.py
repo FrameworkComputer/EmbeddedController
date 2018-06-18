@@ -81,8 +81,8 @@ setup(
     package_dir={"" : "util"},
     py_modules=["unpack_ftb"],
     entry_points = {
-        "build_scripts": ["unpack_ftb=unpack_ftb:main"],
+        "console_scripts": ["unpack_ftb=unpack_ftb:main"],
     },
-    description="Tool to convert .ftb files to .bin",
+    description="Tool to convert ST touchpad .ftb file to .bin",
 )
 
