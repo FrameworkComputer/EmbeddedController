@@ -51,34 +51,10 @@
 #define LIS2DH_STATUS_REG	0x27
 #define LIS2DH_STS_XLDA_UP	0x80
 
-#ifdef CONFIG_ACCEL_FIFO
-
-/* FIFO regs, masks and define */
-#define LIS2DH_FIFO_WTM_INT_MASK	0x04
-#define LIS2DH_FIFO_CTRL_REG	0x2e
-#define LIS2DH_FIFO_MODE_MASK	0xc0
-#define LIS2DH_FIFO_THR_MASK	0x1f
-
-/* Select FIFO supported mode:
- * BYPASS - Bypass FIFO
- * FIFO - FIFO mode collect data
- * STREAM - FIFO older data is replaced by new data
- * SFIFO - Stream-to-FIFO mode. Mix FIFO & STREAM
- */
-enum lis2dh_fifo_modes {
-	LIS2DH_FIFO_BYPASS_MODE = 0x00,
-	LIS2DH_FIFO_MODE,
-	LIS2DH_FIFO_STREAM_MODE,
-	LIS2DH_FIFO_SFIFO_MODE
-};
-
-/* Defines for LIS2DH_CTRL5_ADDR FIFO register */
-#define LIS2DH_FIFO_EN_MASK	0x40
-
-#define LIS2DH_FIFO_SRC_REG	0x2f
-#define LIS2DH_FIFO_EMPTY_FLAG	0x20
-#define LIS2DH_FIFO_UNREAD_MASK	0x1f
-#endif /* CONFIG_ACCEL_FIFO */
+#define LIS2DH_FS_2G_VAL         0x00
+#define LIS2DH_FS_4G_VAL         0x01
+#define LIS2DH_FS_8G_VAL         0x02
+#define LIS2DH_FS_16G_VAL        0x03
 
 /* Interrupt source status register */
 #define LIS2DH_INT1_SRC_REG	0x31
@@ -133,7 +109,5 @@ enum lis2dh_odr {
 #define LIS2DH_RESOLUTION      	10
 
 extern const struct accelgyro_drv lis2dh_drv;
-
-void lis2dh_interrupt(enum gpio_signal signal);
 
 #endif /* __CROS_EC_ACCEL_LIS2DH_H */

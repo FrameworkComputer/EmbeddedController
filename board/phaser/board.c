@@ -11,6 +11,8 @@
 #include "common.h"
 #include "console.h"
 #include "cros_board_info.h"
+#include "driver/accel_lis2dh.h"
+#include "driver/accelgyro_lsm6dsm.h"
 #include "driver/ppc/nx20p3483.h"
 #include "driver/tcpm/anx7447.h"
 #include "extpower.h"
@@ -20,6 +22,7 @@
 #include "power.h"
 #include "power_button.h"
 #include "switch.h"
+#include "task.h"
 #include "tcpci.h"
 #include "temp_sensor.h"
 #include "thermistor.h"
@@ -97,3 +100,108 @@ static void customize_based_on_board_id(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, customize_based_on_board_id, HOOK_PRIO_INIT_I2C + 1);
+
+/* Motion sensors */
+/* Mutexes */
+static struct mutex g_lid_mutex;
+static struct mutex g_base_mutex;
+
+/* Matrix to rotate lid and base sensor into standard reference frame */
+const matrix_3x3_t standard_rot_ref = {
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0,  FLOAT_TO_FP(1)}
+};
+
+/* sensor private data */
+static struct stprivate_data g_lis2dh_data;
+static struct lsm6dsm_data lsm6dsm_g_data;
+static struct lsm6dsm_data lsm6dsm_a_data;
+
+/* Drivers */
+/* lis2de only has a i2c address difference, so we use lis2dh driver */
+/* but use a different address */
+struct motion_sensor_t motion_sensors[] = {
+	[LID_ACCEL] = {
+	 .name = "Lid Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_LIS2DH,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &lis2dh_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_lis2dh_data,
+	 .port = I2C_PORT_SENSOR,
+	 .addr = LIS2DH_ADDR1,
+	 .rot_standard_ref = &standard_rot_ref,
+	 .default_range = 4, /* g */
+	 .min_frequency = LIS2DH_ODR_MIN_VAL,
+	 .max_frequency = LIS2DH_ODR_MAX_VAL,
+	 .config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		/* Sensor on for lid angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	 },
+	},
+
+	[BASE_ACCEL] = {
+	 .name = "Base Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
+	 .chip = MOTIONSENSE_CHIP_LSM6DSM,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &lsm6dsm_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &lsm6dsm_a_data,
+	 .port = I2C_PORT_SENSOR,
+	 .addr = LSM6DSM_ADDR0,
+	 .rot_standard_ref = &standard_rot_ref,
+	 .default_range = 4,  /* g */
+	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
+	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
+	 .config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 13000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* Sensor on for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+	 },
+	},
+
+	[BASE_GYRO] = {
+	 .name = "Base Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_LSM6DSM,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &lsm6dsm_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &lsm6dsm_g_data,
+	 .port = I2C_PORT_SENSOR,
+	 .addr = LSM6DSM_ADDR0,
+	 .default_range = 1000, /* dps */
+	 .rot_standard_ref = &standard_rot_ref,
+	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
+	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
+	},
+};
+
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+/* Initialize board. */
+static void board_init(void)
+{
+	/* Enable Base Accel interrupt */
+	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

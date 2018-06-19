@@ -17,7 +17,7 @@
 /* X, Y, Z axis data len */
 #define OUT_XYZ_SIZE			6
 
-#define ST_NORMALIZE_RATE(_fS)    (1 << __fls(_fs))
+#define ST_NORMALIZE_RATE(_fs)    (1 << __fls(_fs))
 
 #ifdef CONFIG_ACCEL_FIFO
 #define FIFO_BUFFER_NUM_PATTERN		32

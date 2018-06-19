@@ -34,12 +34,11 @@ GPIO_INT(ALL_SYS_PGOOD,	 PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)	/* PM
 /* Other interrupts */
 GPIO_INT(WP_L,		 PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)		/* EC_WP_ODL */
 
+GPIO_INT(BASE_SIXAXIS_INT_L,    PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, lsm6dsm_interrupt)
+GPIO(LID_ACCEL_INT_L,		PIN(5, 0), GPIO_INPUT | GPIO_SEL_1P8V)
+
 /* TODO: Convert to GPIO_INT with tablet_mode_isr */
 GPIO(TABLET_MODE_L,	 PIN(8, 6), GPIO_INPUT)
-
-/* TODO(b/74932344): Make it as an interrupt after driver supports this */
-GPIO(BASE_SIXAXIS_INT_L,	PIN(5, 6), GPIO_INPUT | GPIO_SEL_1P8V)
-GPIO(LID_ACCEL_INT_L,		PIN(5, 0), GPIO_INPUT | GPIO_SEL_1P8V)
 
 /* Define PCH_SLP_S0_L after all interrupts if CONFIG_POWER_S0IX not defined. */
 #ifndef CONFIG_POWER_S0IX
