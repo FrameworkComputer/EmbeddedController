@@ -115,6 +115,7 @@ enum tpm_modes {
 	TPM_MODE_ENABLED_TENTATIVE = 0,
 	TPM_MODE_ENABLED = 1,
 	TPM_MODE_DISABLED = 2,
+	TPM_MODE_MAX,
 };
 
 /*
