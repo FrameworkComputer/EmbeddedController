@@ -116,8 +116,8 @@ const matrix_3x3_t base_standard_ref = {
 
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
-static struct stprivate_data lsm6dsm_g_data;
-static struct stprivate_data lsm6dsm_a_data;
+static struct lsm6dsm_data lsm6dsm_g_data;
+static struct lsm6dsm_data lsm6dsm_a_data;
 
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {

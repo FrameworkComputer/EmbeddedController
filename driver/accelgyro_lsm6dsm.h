@@ -223,7 +223,13 @@ struct lsm6dsm_fifo_data {
 	int total_samples_in_pattern;
 };
 
-
+/*
+ * Please refer to b:110013316, motion_sensor_t.drv_data field should
+ * use this data type pointer rather than stprivate_data type pointer.
+ * Use stprivate_data type will lead to random corrupted runtime data
+ * since stprivate_data is smaller than required once CONFIG_ACCEL_FIFO
+ * is defined.
+ */
 struct lsm6dsm_data {
 	/* Must be first: ST generic accelerometer data. */
 	struct stprivate_data a_data;

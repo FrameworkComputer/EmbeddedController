@@ -219,8 +219,8 @@ static struct mutex g_base_mutex;
  */
 
 struct lsm6dsm_data lsm6dsm_a_data;
-struct stprivate_data lsm6dsm_g_data;
-struct stprivate_data lsm6dsm_m_data;
+struct lsm6dsm_data lsm6dsm_g_data;
+struct lsm6dsm_data lsm6dsm_m_data;
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
