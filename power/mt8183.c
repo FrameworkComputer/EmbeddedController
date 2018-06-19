@@ -69,13 +69,11 @@ static const struct power_seq_op s5s3_power_seq[] = {
 /* The power sequence for POWER_S3S0 */
 static const struct power_seq_op s3s0_power_seq[] = {
 	{ GPIO_PP3300_S0_EN, 1, 0 },
-	{ GPIO_PP1800_S0_EN, 1, 0 },
 };
 
 /* The power sequence for POWER_S0S3 */
 static const struct power_seq_op s0s3_power_seq[] = {
 	{ GPIO_PP3300_S0_EN, 0, 0 },
-	{ GPIO_PP1800_S0_EN, 0, 0 },
 };
 
 /* The power sequence for POWER_S3S5 */
