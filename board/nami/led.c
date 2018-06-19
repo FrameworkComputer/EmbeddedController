@@ -104,7 +104,7 @@ typedef struct led_pattern led_patterns[LED_CHARGE_STATE_COUNT]
  */
 const static led_patterns battery_pattern_0 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(20)}, {LED_OFF,   PULSE_NO}},
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(10)}, {LED_OFF,  PULSE_NO}},
 	/* charging: s0, s3, s5 */
 	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}},
 	/* full: s0, s3, s5 */
