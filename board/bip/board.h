@@ -20,6 +20,9 @@
 #undef CONFIG_PWM
 #undef CONFIG_PWM_KBLIGHT
 
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 4096
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
