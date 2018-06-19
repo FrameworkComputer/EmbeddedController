@@ -981,6 +981,9 @@ function flash_it83xx() {
 		dut_control dut_i2c_mux:ec_prog
 	fi
 
+	# Ensure that the AP is off while we are flashing the EC
+	servo_ec_hard_reset
+
 	info "Close connection to ftdi_i2c interface"
 	dut_control --ftdii2c close
 
