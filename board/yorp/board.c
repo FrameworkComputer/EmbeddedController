@@ -290,6 +290,12 @@ static void update_drivers_from_board_id(void)
 		reset_gpio_flags(GPIO_USB_A1_CHARGE_EN_L, GPIO_OUT_HIGH);
 		reset_gpio_flags(GPIO_USB2_OTG_ID_V1, GPIO_OUT_LOW);
 		reset_gpio_flags(GPIO_WFCAM_VSYNC, GPIO_INPUT);
+
+		/*
+		 * Configure alternate mode to enable PWM3 that is required for
+		 * KB_BL_PWM.
+		 */
+		gpio_set_alternate_function(GPIO_8, 0x1, 0);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, update_drivers_from_board_id, HOOK_PRIO_INIT_I2C + 1);
