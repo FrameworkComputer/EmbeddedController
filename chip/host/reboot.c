@@ -8,10 +8,18 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "console.h"
 #include "host_test.h"
 #include "reboot.h"
 #include "test_util.h"
 
+#ifdef TEST_FUZZ
+/* reboot breaks fuzzing, let's just not do it. */
+void emulator_reboot(void)
+{
+	ccprints("Emulator would reboot here. Fuzzing: doing nothing.");
+}
+#else /* !TEST_FUZZ */
 __attribute__((noreturn))
 void emulator_reboot(void)
 {
@@ -21,3 +29,4 @@ void emulator_reboot(void)
 	while (1)
 		;
 }
+#endif /* !TEST_FUZZ */

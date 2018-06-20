@@ -585,7 +585,7 @@ int system_is_in_rw(void)
 	return is_rw_image(system_get_image_copy());
 }
 
-int system_run_image_copy(enum system_image_copy_t copy)
+test_mockable int system_run_image_copy(enum system_image_copy_t copy)
 {
 	uintptr_t base;
 	uintptr_t init_addr;

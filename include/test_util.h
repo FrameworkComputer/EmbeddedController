@@ -107,6 +107,9 @@ void test_init(void);
 /* Test entry point */
 void run_test(void);
 
+/* Test entry point for fuzzing tests. */
+int test_fuzz_one_input(const uint8_t *data, unsigned int size);
+
 /* Resets test error count */
 void test_reset(void);
 
@@ -144,8 +147,10 @@ void interrupt_generator_udelay(unsigned us);
 
 #ifdef EMU_BUILD
 void wait_for_task_started(void);
+void wait_for_task_started_nosleep(void);
 #else
 static inline void wait_for_task_started(void) { }
+static inline void wait_for_task_started_nosleep(void) { }
 #endif
 
 uint32_t prng(uint32_t seed);

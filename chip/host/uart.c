@@ -6,6 +6,7 @@
 /* UART driver for emulator */
 
 #include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
 #include <termio.h>
 #include <unistd.h>
@@ -20,7 +21,9 @@
 static int stopped = 1;
 static int init_done;
 
+#ifndef TEST_FUZZ
 static pthread_t input_thread;
+#endif
 
 #define INPUT_BUFFER_SIZE 16
 static int char_available;
@@ -132,6 +135,11 @@ void uart_inject_char(char *s, int sz)
 	}
 }
 
+/*
+ * We do not really need console input when fuzzing, and having it enabled
+ * breaks terminal when an error is detected.
+ */
+#ifndef TEST_FUZZ
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t uart_monitor_initialized = PTHREAD_COND_INITIALIZER;
 
@@ -170,14 +178,17 @@ void *uart_monitor_stdin(void *d)
 
 	return 0;
 }
+#endif /* !TEST_FUZZ */
 
 void uart_init(void)
 {
+#ifndef TEST_FUZZ
 	/* Create UART monitor thread and wait for it to initialize. */
 	pthread_mutex_lock(&mutex);
 	pthread_create(&input_thread, NULL, uart_monitor_stdin, NULL);
 	pthread_cond_wait(&uart_monitor_initialized, &mutex);
 	pthread_mutex_unlock(&mutex);
+#endif
 
 	stopped = 1;  /* Not transmitting yet */
 	init_done = 1;

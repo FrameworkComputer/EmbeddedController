@@ -280,7 +280,10 @@ const char *system_get_build_info(void);
  *
  * @param flags		Reset flags; see SYSTEM_RESET_* above.
  */
-void system_reset(int flags) __attribute__((noreturn));
+#ifndef TEST_FUZZ
+__attribute__((noreturn))
+#endif
+void system_reset(int flags);
 
 /**
  * Set a scratchpad register to the specified value.

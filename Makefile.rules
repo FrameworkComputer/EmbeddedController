@@ -83,7 +83,10 @@ cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) $(HOST_LDFLAGS) -MMD -MF $@.d  -o $@ \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c))
 cmd_cxx_to_host = $(HOSTCXX) -std=c++0x $(COMMON_WARN) $(HOST_CXXFLAGS)\
 	-I ./$($(notdir $@)_ROOT) -o $@ $(filter %.cc,$^) $($(notdir $@)_LIBS)
-cmd_host_test = ./util/run_host_test $* $(silent)
+cmd_host_test = $(MAKE) --no-print-directory BOARD=host PROJECT=$* \
+	V=$(V) out=build/host/$* TEST_BUILD=y EMU_BUILD=y $(TEST_FLAG) \
+	CROSS_COMPILE= build/host/$*/$*.exe
+cmd_run_host_test = ./util/run_host_test $* $(silent)
 # generate new version.h, compare if it changed and replace if so
 cmd_version = ./util/getversion.sh > $@.tmp && cmp -s $@.tmp $@ || mv $@.tmp $@; rm -f $@.tmp
 cmd_vif = $(out)/util/genvif -b $(BOARD) -o $(out)
@@ -245,14 +248,10 @@ run-test-targets=$(foreach t,$(test-list-host),run-$(t))
 .PHONY: $(host-test-targets) $(run-test-targets)
 
 $(host-test-targets): host-%:
-	@set -e ; \
-	$(call echo,"  BUILD   host - build/host/$*") \
-	$(MAKE) --no-print-directory BOARD=host PROJECT=$* \
-	        V=$(V) out=build/host/$* TEST_BUILD=y EMU_BUILD=y $(TEST_FLAG) \
-		CROSS_COMPILE= build/host/$*/$*.exe
+	$(call quiet,host_test,BUILD  )
 
 $(run-test-targets): run-%: host-%
-	$(call quiet,host_test,TEST   )
+	$(call quiet,run_host_test,TEST   )
 
 .PHONY: hosttests runtests
 hosttests: $(host-test-targets)
@@ -320,6 +319,19 @@ build/host/%.info: run-%
 coverage: TEST_FLAG=TEST_COVERAGE=y
 coverage: $(cov-test-targets)
 	$(call quiet,report_cov,REPORT )
+
+# Fuzzing tests
+
+fuzz-test-targets=$(foreach t,$(fuzz-test-list-host),host-$(t))
+
+.PHONY: $(fuzz-test-targets)
+
+$(fuzz-test-targets): host-%:
+	$(call quiet,host_test,BUILD  )
+
+.PHONY: buildfuzztests
+buildfuzztests: TEST_FLAG=TEST_FUZZ=y TEST_ASAN=y
+buildfuzztests: $(fuzz-test-targets)
 
 $(out)/firmware_image.lds: common/firmware_image.lds.S
 	$(call quiet,lds,LDS    )

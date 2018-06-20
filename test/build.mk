@@ -65,6 +65,9 @@ test-list-host += vboot
 test-list-host += x25519
 endif
 
+# Fuzzing tests
+fuzz-test-list-host = host_command_fuzz
+
 base32-y=base32.o
 battery_get_params_smart-y=battery_get_params_smart.o
 bklight_lid-y=bklight_lid.o
@@ -81,6 +84,7 @@ fan-y=fan.o
 flash-y=flash.o
 hooks-y=hooks.o
 host_command-y=host_command.o
+host_command_fuzz-y=host_command_fuzz.o
 inductive_charging-y=inductive_charging.o
 interrupt-scale=10
 interrupt-y=interrupt.o

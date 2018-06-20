@@ -173,6 +173,15 @@ test_mockable int system_is_locked(void)
 	return 0;
 }
 
+#ifdef TEST_FUZZ
+/* When fuzzing, do not allow sysjumps. */
+int system_run_image_copy(enum system_image_copy_t copy)
+{
+	ccprints("Emulator would sysjump here. Fuzzing: doing nothing.");
+	return EC_ERROR_UNKNOWN;
+}
+#endif
+
 const char *system_get_chip_vendor(void)
 {
 	return "chromeos";

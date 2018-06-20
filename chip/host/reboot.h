@@ -8,7 +8,9 @@
 #ifndef __CROS_EC_REBOOT_H
 #define __CROS_EC_REBOOT_H
 
+#ifndef TEST_FUZZ
 __attribute__((noreturn))
+#endif
 void emulator_reboot(void);
 
 #endif

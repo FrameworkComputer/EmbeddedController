@@ -279,7 +279,7 @@ task_id_t task_get_running(void)
 	return running_task_id;
 }
 
-void wait_for_task_started(void)
+static void _wait_for_task_started(int can_sleep)
 {
 	int i, ok;
 
@@ -287,13 +287,24 @@ void wait_for_task_started(void)
 		ok = 1;
 		for (i = 0; i < TASK_ID_COUNT - 1; ++i)
 			if (!tasks[i].started) {
-				msleep(10);
+				if (can_sleep)
+					msleep(10);
 				ok = 0;
 				break;
 			}
 		if (ok)
 			return;
 	}
+}
+
+void wait_for_task_started(void)
+{
+	_wait_for_task_started(1);
+}
+
+void wait_for_task_started_nosleep(void)
+{
+	_wait_for_task_started(0);
 }
 
 static task_id_t task_get_next_wake(void)
