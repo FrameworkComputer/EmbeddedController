@@ -182,31 +182,9 @@ void chipset_do_shutdown(void)
 /******************************************************************************/
 /* Power Delivery and charing functions */
 
-static void wait_for_battery(void)
-{
-	int count = 0;
-
-	/* If battery is not present, don't bother waiting */
-	if (battery_hw_present() == BP_NO)
-		return;
-
-	/* Wait for disconnected battery to wake up */
-	while (battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED) {
-		usleep(100 * MSEC);
-		/* Give up waiting after more than 1 second */
-		if (++count > 10) {
-			ccprintf("Battery still disconnected > 1 second!\n");
-			break;
-		}
-	}
-}
-
 void baseboard_tcpc_init(void)
 {
 	int port;
-
-	/* Wait for battery to wake up (if present) */
-	wait_for_battery();
 
 	/* Only reset TCPC if not sysjump */
 	if (!system_jumped_to_this_image())
