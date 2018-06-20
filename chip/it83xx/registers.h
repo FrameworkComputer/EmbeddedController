@@ -659,6 +659,7 @@ enum {
 	GPIO_K = 0xb,
 	GPIO_L = 0xc,
 	GPIO_M = 0xd,
+	GPIO_PORT_COUNT,
 
 	/* NOTE: Support GPIO input only if KSO/KSI pins are used as GPIO. */
 	GPIO_KBS_OFF = 0x700,
