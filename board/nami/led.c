@@ -199,6 +199,8 @@ static void led_init(void)
 	case PROJECT_PANTHEON:
 		patterns[0] = &battery_pattern_2;
 		patterns[1] = &power_pattern_2;
+		battery_error.color = LED_OFF;
+		battery_error.pulse = 0;
 		break;
 	case PROJECT_AKALI:
 		patterns[0] = &battery_pattern_3;
