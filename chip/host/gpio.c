@@ -43,12 +43,14 @@ test_mockable void gpio_set_level(enum gpio_signal signal, int value)
 	const struct gpio_info *g = gpio_list + signal;
 	const uint32_t flags = g->flags;
 	const int old_value = gpio_values[signal];
-	void (*ih)(enum gpio_signal signal) = gpio_irq_handlers[signal];
+	void (*ih)(enum gpio_signal signal);
 
 	gpio_values[signal] = value;
 
 	if (signal >= GPIO_IH_COUNT || !gpio_interrupt_enabled[signal])
 		return;
+
+	ih = gpio_irq_handlers[signal];
 
 	if (gpio_interrupt_check(flags, old_value, value))
 		ih(signal);
