@@ -12,6 +12,7 @@
  */
 
 #include "battery.h"
+#include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
@@ -29,6 +30,27 @@
 #define LOW_BATTERY_PERCENTAGE 10
 
 #define PULSE_TICK (250 * MSEC)
+
+static uint8_t led_is_pulsing;
+
+static int ignore_set_led_color(enum pwm_led_id id, int color)
+{
+#ifdef CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY
+	int active_chg_port = charge_manager_get_active_charge_port();
+
+	/* We should always be able to turn off a LED.*/
+	if (color == -1)
+		return 0;
+
+	if (led_is_pulsing)
+		return 0;
+
+	if ((int)id != active_chg_port)
+		return 1;
+#endif /* CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY */
+
+	return 0;
+}
 
 void set_pwm_led_color(enum pwm_led_id id, int color)
 {
@@ -60,18 +82,27 @@ static void set_led_color(int color)
 	 */
 	if ((led_auto_control_is_enabled(EC_LED_ID_POWER_LED)) ||
 	    (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED)))
-		set_pwm_led_color(PWM_LED0, color);
+		if (!ignore_set_led_color(PWM_LED0, color))
+			set_pwm_led_color(PWM_LED0, color);
 
 #if CONFIG_LED_PWM_COUNT >= 2
 	if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
-		set_pwm_led_color(PWM_LED1, color);
+		if (!ignore_set_led_color(PWM_LED1, color))
+			set_pwm_led_color(PWM_LED1, color);
 #endif /* CONFIG_LED_PWM_COUNT >= 2 */
 }
 
-static uint8_t led_is_pulsing;
+static void init_leds_off(void)
+{
+	/* Turn off LEDs such that they are in a known state. */
+	set_led_color(-1);
+}
+DECLARE_HOOK(HOOK_INIT, init_leds_off, HOOK_PRIO_INIT_PWM + 1);
+
 static uint8_t pulse_period;
 static uint8_t pulse_ontime;
 static enum ec_led_colors pulse_color;
+static void update_leds(void);
 static void pulse_leds_deferred(void);
 DECLARE_DEFERRED(pulse_leds_deferred);
 static void pulse_leds_deferred(void)
@@ -80,6 +111,7 @@ static void pulse_leds_deferred(void)
 
 	if (!led_is_pulsing) {
 		tick_count = 0;
+		update_leds();
 		return;
 	}
 
@@ -101,21 +133,16 @@ static void pulse_leds(enum ec_led_colors color, int ontime, int period)
 	pulse_leds_deferred();
 }
 
-static void update_leds(void)
+static int show_charge_state(void)
 {
 	enum charge_state chg_st = charge_get_state();
-	int batt_percentage = charge_get_percent();
 
 	/*
-	 * Reflecting the charge state is the highest priority.
-	 *
 	 * The colors listed below are the default, but can be overridden.
 	 *
 	 * Solid Amber == Charging
 	 * Solid Green == Charging (near full)
 	 * Fast Flash Red == Charging error or battery not present
-	 * Slow Flash Amber == Low Battery
-	 * Fast Flash Amber == Critical Battery
 	 */
 	if (chg_st == PWR_STATE_CHARGE) {
 		led_is_pulsing = 0;
@@ -127,35 +154,72 @@ static void update_leds(void)
 		   (chg_st == PWR_STATE_ERROR)) {
 		/* 500 ms period, 50% duty cycle. */
 		pulse_leds(CONFIG_LED_PWM_CHARGE_ERROR_COLOR, 1, 2);
-	} else if (batt_percentage < CRITICAL_LOW_BATTERY_PERCENTAGE) {
+	} else {
+		/* Discharging or not charging. */
+		return 0;
+	}
+	return 1;
+}
+
+#ifndef CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY
+static int show_battery_state(void)
+{
+	int batt_percentage = charge_get_percent();
+
+	/*
+	 * The colors listed below are the default, but can be overridden.
+	 *
+	 * Fast Flash Amber == Critical Battery
+	 * Slow Flash Amber == Low Battery
+	 */
+	if (batt_percentage < CRITICAL_LOW_BATTERY_PERCENTAGE) {
 		/* Flash amber faster (1 second period, 50% duty cycle) */
 		pulse_leds(CONFIG_LED_PWM_LOW_BATT_COLOR, 2, 4);
 	} else if (batt_percentage < LOW_BATTERY_PERCENTAGE) {
 		/* Flash amber (4 second period, 50% duty cycle) */
 		pulse_leds(CONFIG_LED_PWM_LOW_BATT_COLOR, 8, 16);
 	} else {
-		/* Discharging or not charging. Reflect the SoC state. */
-		led_is_pulsing = 0;
-		if (chipset_in_state(CHIPSET_STATE_ON)) {
-			/* The LED must be on in the Active state. */
-			set_led_color(CONFIG_LED_PWM_SOC_ON_COLOR);
-		} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
-			/* The power LED must pulse in the suspend state. */
-			pulse_leds(CONFIG_LED_PWM_SOC_SUSPEND_COLOR, 4, 16);
-		} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-			/* The LED must be off in the Deep Sleep state. */
-			set_led_color(-1);
-		}
+		/* Sufficient charge, no need to show anything for this. */
+		return 0;
 	}
+	return 1;
 }
-DECLARE_HOOK(HOOK_TICK, update_leds, HOOK_PRIO_DEFAULT);
 
-static void init_leds_off(void)
+static int show_chipset_state(void)
 {
-	/* Turn off LEDs such that they are in a known state. */
+	/* Reflect the SoC state. */
+	led_is_pulsing = 0;
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		/* The LED must be on in the Active state. */
+		set_led_color(CONFIG_LED_PWM_SOC_ON_COLOR);
+	} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
+		/* The power LED must pulse in the suspend state. */
+		pulse_leds(CONFIG_LED_PWM_SOC_SUSPEND_COLOR, 4, 16);
+	} else {
+		/* Chipset is off, no need to show anything for this. */
+		return 0;
+	}
+	return 1;
+}
+#endif /* CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY */
+
+static void update_leds(void)
+{
+	/* Reflecting the charge state is the highest priority. */
+	if (show_charge_state())
+		return;
+
+#ifndef CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY
+	if (show_battery_state())
+		return;
+
+	if (show_chipset_state())
+		return;
+#endif /* CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY */
+
 	set_led_color(-1);
 }
-DECLARE_HOOK(HOOK_INIT, init_leds_off, HOOK_PRIO_INIT_PWM + 1);
+DECLARE_HOOK(HOOK_TICK, update_leds, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CMD_LEDTEST
 int command_ledtest(int argc, char **argv)

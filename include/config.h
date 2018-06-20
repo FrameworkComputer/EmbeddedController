@@ -2018,6 +2018,15 @@
 #define CONFIG_LED_PWM_LOW_BATT_COLOR EC_LED_COLOR_AMBER
 
 /*
+ * By default the PWM LED behaviour is reflected on both LEDs and includes the
+ * chipset state, battery state, as well as the charging state.  However, enable
+ * this CONFIG_* option to only allow the charging state to be reflected on the
+ * LEDs.  Additionally, only the active charge port will indicate the charge
+ * state.
+ */
+#undef CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY
+
+/*
  * How many PWM LEDs does the system have that will be controlled by the common
  * PWM LED policy?  Currently, this may be at most 2.
  */
