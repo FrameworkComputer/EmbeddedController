@@ -35,8 +35,6 @@ GPIO_INT(USB_C0_BC12_INT_L,	PIN(D, 2), GPIO_INT_FALLING,		usb0_evt)
 GPIO_INT(USB_C1_BC12_INT_L,	PIN(D, 3), GPIO_INT_FALLING,		usb1_evt)
 GPIO_INT(ACCELGYRO3_INT_L,	PIN(3, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V,	bmi160_interrupt)
 GPIO_INT(TABLET_MODE_L,		PIN(7, 2), GPIO_INT_BOTH,		tablet_mode_isr)
-/* Used to wake up system from deep S3. */
-/* GPIO_INT(TP_INT_CONN,		PIN(4, 2), GPIO_INT_BOTH, trackpad_connect) dnojiri: Revisit */
 /* GPIO_INT(ALS_INT,		PIN(3, 2),,) dnojiri: Revisit */
 /* GPIO_INT(3AXIS_INT,		PIN(9, 5),,) dnojiri: Revisit */
 
@@ -87,7 +85,7 @@ GPIO(USB_C1_PD_RST,		PIN(0, 0), GPIO_OUT_LOW)	/* C1 PD Reset */
 GPIO(USB_C0_DP_HPD,		PIN(9, 4), GPIO_INPUT)		/* C0 DP Hotplug Detect */
 GPIO(USB_C1_DP_HPD,		PIN(A, 5), GPIO_INPUT)		/* C1 DP Hotplug Detect */
 GPIO(USB_PP3300_USB_PD,		PIN(8, 4), GPIO_INPUT)		/* Reserved. Currently, has no effect. */
-GPIO(USB2_OTG_ID,		PIN(5, 7), GPIO_ODR_LOW)	/* OTG ID */
+GPIO(USB2_ID,			PIN(4, 2), GPIO_OUT_LOW)	/* USB OTG ID */
 
 /* Sensors */
 
