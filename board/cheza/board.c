@@ -62,30 +62,18 @@ static void tcpc_alert_event(enum gpio_signal signal)
 #endif
 }
 
-static void vbus0_handler(void)
+static void vbus0_evt(enum gpio_signal signal)
 {
 	/* VBUS present GPIO is inverted */
 	usb_charger_vbus_change(0, !gpio_get_level(GPIO_USB_C0_VBUS_DET_L));
 	task_wake(TASK_ID_PD_C0);
 }
-DECLARE_DEFERRED(vbus0_handler);
 
-static void vbus1_handler(void)
+static void vbus1_evt(enum gpio_signal signal)
 {
 	/* VBUS present GPIO is inverted */
 	usb_charger_vbus_change(1, !gpio_get_level(GPIO_USB_C1_VBUS_DET_L));
 	task_wake(TASK_ID_PD_C1);
-}
-DECLARE_DEFERRED(vbus1_handler);
-
-static void vbus0_evt(enum gpio_signal signal)
-{
-	hook_call_deferred(&vbus0_handler_data, 0);
-}
-
-static void vbus1_evt(enum gpio_signal signal)
-{
-	hook_call_deferred(&vbus1_handler_data, 0);
 }
 
 static void usb0_evt(enum gpio_signal signal)
