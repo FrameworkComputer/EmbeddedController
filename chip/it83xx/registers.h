@@ -1300,6 +1300,12 @@ enum usbpd_port {
 /* PUT_OOB data byte 0 - 79 */
 #define IT83XX_ESPI_QUEUE_PUT_OOB(i) REG8(IT83XX_ESPI_QUEUE_BASE+0x80+(i))
 
+/* USB Controller */
+#define IT83XX_USB_BASE   0x00F02F00
+
+#define IT83XX_USB_P0MCR  REG8(IT83XX_USB_BASE+0xE4)
+#define USB_DP_DM_PULL_DOWN_EN (1 << 4)
+
 /* Wake pin definitions, defined at board-level */
 extern const enum gpio_signal hibernate_wake_pins[];
 extern const int hibernate_wake_pins_used;
@@ -1313,6 +1319,5 @@ extern const int hibernate_wake_pins_used;
 #define IT83XX_DBGR_BASE  0x00F02500
 #define IT83XX_OW_BASE    0x00F02A00
 #define IT83XX_CEC_BASE   0x00F02E00
-#define IT83XX_USB_BASE   0x00F02F00
 
 #endif /* __CROS_EC_REGISTERS_H */

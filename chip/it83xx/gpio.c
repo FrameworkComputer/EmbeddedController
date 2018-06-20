@@ -464,6 +464,14 @@ void gpio_pre_init(void)
 	}
 #endif
 
+#ifndef CONFIG_USB
+	/*
+	 * Disable default pull-down of USB controller (GPH5 and GPH6) if we
+	 * don't use this module.
+	 */
+	IT83XX_USB_P0MCR &= ~USB_DP_DM_PULL_DOWN_EN;
+#endif
+
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		flags = g->flags;
 
