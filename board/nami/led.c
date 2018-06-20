@@ -207,6 +207,7 @@ static void led_init(void)
 		patterns[0] = &battery_pattern_1;
 		patterns[1] = &power_pattern_1;
 		battery_error.pulse = BLINK(5);
+		low_battery_soc = 100;
 		break;
 	case PROJECT_PANTHEON:
 		patterns[0] = &battery_pattern_2;
@@ -295,7 +296,7 @@ static struct {
 	uint8_t pulse;
 } tick[2];
 
-static void config_tick(enum ec_led_id id, struct led_pattern *pattern)
+static void config_tick(enum ec_led_id id, const struct led_pattern *pattern)
 {
 	uint32_t stride = PULSE_INTERVAL(pattern->pulse);
 	if (IS_PULSING(pattern->pulse)) {
@@ -371,7 +372,7 @@ static void cancel_tick(enum ec_led_id id)
 		hook_call_deferred(&tick_power_data, -1);
 }
 
-static void start_tick(enum ec_led_id id, struct led_pattern *pattern)
+static void start_tick(enum ec_led_id id, const struct led_pattern *pattern)
 {
 	if (!pattern->pulse) {
 		cancel_tick(id);
@@ -394,50 +395,56 @@ static void led_alert(int enable)
 		led_charge_hook();
 }
 
-void config_one_led(enum ec_led_id id, enum led_charge_state charge)
+void config_led(enum ec_led_id id, enum led_charge_state charge)
 {
 	const led_patterns *pattern;
-	struct led_pattern p;
 
 	pattern = patterns[id];
 	if (!pattern)
 		return;	/* This LED isn't present */
 
-	if (id == EC_LED_ID_BATTERY_LED &&
-			charge == LED_STATE_DISCHARGE &&
-			charge_get_percent() < low_battery_soc)
-		p = low_battery;
-	else
-		p = (*pattern)[charge][power_state];
-
-	start_tick(id, &p);
+	start_tick(id, &(*pattern)[charge][power_state]);
 }
 
 void config_leds(enum led_charge_state charge)
 {
-	config_one_led(EC_LED_ID_BATTERY_LED, charge);
-	config_one_led(EC_LED_ID_POWER_LED, charge);
+	config_led(EC_LED_ID_BATTERY_LED, charge);
+	config_led(EC_LED_ID_POWER_LED, charge);
 }
 
 static void call_handler(void)
 {
+	int soc;
+	enum charge_state cs;
+
 	if (!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		return;
-	switch (charge_get_state()) {
+
+	cs = charge_get_state();
+	soc = charge_get_display_charge();
+	if (soc < 0)
+		cs = PWR_STATE_ERROR;
+
+	switch (cs) {
 	case PWR_STATE_DISCHARGE:
 	case PWR_STATE_DISCHARGE_FULL:
-		config_leds(LED_STATE_DISCHARGE);
+		if (soc < low_battery_soc)
+			start_tick(EC_LED_ID_BATTERY_LED, &low_battery);
+		else
+			config_led(EC_LED_ID_BATTERY_LED, LED_STATE_DISCHARGE);
+		config_led(EC_LED_ID_POWER_LED, LED_STATE_DISCHARGE);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
-		config_leds(LED_STATE_FULL);
-		break;
 	case PWR_STATE_CHARGE:
-		config_leds(LED_STATE_CHARGE);
+		if (soc >= 1000)
+			config_leds(LED_STATE_FULL);
+		else
+			config_leds(LED_STATE_CHARGE);
 		break;
 	case PWR_STATE_ERROR:
 		/* It doesn't matter what 'charge' state we pass because power
 		 * LED (if it exists) is orthogonal to battery state. */
-		config_one_led(EC_LED_ID_POWER_LED, 0);
+		config_led(EC_LED_ID_POWER_LED, 0);
 		led_alert(1);
 		break;
 	default:
