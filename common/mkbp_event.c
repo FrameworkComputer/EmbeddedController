@@ -57,6 +57,7 @@ static void set_host_interrupt(int active)
 	interrupt_enable();
 }
 
+#ifdef CONFIG_MKBP_WAKEUP_MASK
 /**
  * Check if the host is sleeping. Check our power state in addition to the
  * self-reported sleep state of host (CONFIG_POWER_TRACK_HOST_SLEEP_STATE).
@@ -73,6 +74,7 @@ static inline int host_is_sleeping(void)
 #endif
 	return is_sleeping;
 }
+#endif /* CONFIG_MKBP_WAKEUP_MASK */
 
 int mkbp_send_event(uint8_t event_type)
 {

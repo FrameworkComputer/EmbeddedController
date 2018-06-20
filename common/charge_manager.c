@@ -81,9 +81,11 @@ static int override_port = OVERRIDE_OFF;
 static int delayed_override_port = OVERRIDE_OFF;
 static timestamp_t delayed_override_deadline;
 
+#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
 /* Bitmap of ports used as power source */
 static volatile uint32_t source_port_bitmap;
 BUILD_ASSERT(sizeof(source_port_bitmap)*8 >= CONFIG_USB_PD_PORT_COUNT);
+#endif
 static uint8_t source_port_last_rp[CONFIG_USB_PD_PORT_COUNT];
 
 /*

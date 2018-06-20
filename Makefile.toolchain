@@ -15,13 +15,16 @@ ifeq ($(make_version_ok),)
 $(error ERROR: GNU make version $(min_make_version) or higher required.)
 endif
 
+# Extract cc-name
+cc-name:=$(shell $(CC) -v 2>&1 | grep -q "clang version" && echo clang || echo gcc)
+
 # Try not to assume too much about optional tools and prefixes
 CCACHE:=$(shell which ccache 2>/dev/null)
 ifeq ($(origin HOST_CROSS_COMPILE),undefined)
 HOST_CROSS_COMPILE:=$(if $(shell which x86_64-pc-linux-gnu-gcc 2>/dev/null),x86_64-pc-linux-gnu-,)
 endif
 
-CC=$(CCACHE) $(CROSS_COMPILE)gcc
+CC=$(CCACHE) $(CROSS_COMPILE)$(cc-name)
 CPP=$(CC) -E
 LD=$(CROSS_COMPILE)ld
 NM=$(CROSS_COMPILE)nm
@@ -37,6 +40,10 @@ C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
 COMMON_WARN = -Wall -Werror -Wundef -Wno-trigraphs -fno-strict-aliasing \
 	-fno-common -Werror-implicit-function-declaration \
 	-Wno-format-security -fno-strict-overflow
+ifeq ($(cc-name),clang)
+# clang is pickier when it comes to packed struct members alignment.
+C_WARN+= -Wno-address-of-packed-member
+endif
 CFLAGS_WARN = $(COMMON_WARN) $(C_WARN)
 CXXFLAGS_WARN = $(COMMON_WARN)
 CFLAGS_DEBUG= -g
@@ -71,7 +78,11 @@ CPPFLAGS+=-Ibuiltin/
 endif
 CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(CFLAGS_WARN) $(CFLAGS_y)
 CFLAGS+= -ffunction-sections -fshort-wchar
-CFLAGS+= -fno-delete-null-pointer-checks -fconserve-stack
+ifneq ($(cc-name),clang)
+# TODO(chromium:854924): LLVM support for this flag is coming soon.
+CFLAGS+= -fno-delete-null-pointer-checks
+CFLAGS+= -fconserve-stack
+endif
 CFLAGS+= -DCHROMIUM_EC
 
 FTDIVERSION=$(shell $(PKG_CONFIG) --modversion libftdi1 2>/dev/null)
@@ -89,7 +100,7 @@ HOST_CFLAGS=$(HOST_CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN) -DHOST_TOOLS_BUI
 LDFLAGS=-nostdlib -g -Wl,-X -Wl,--gc-sections -Wl,--build-id=none \
 	$(LDFLAGS_EXTRA) $(CFLAGS_CPU)
 BUILD_LDFLAGS=$(LIBFTDI_LDLIBS)
-HOST_TEST_LDFLAGS=-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
+HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
 		  $(if $(TEST_COVERAGE),-fprofile-arcs,)
 
 # utility function to provide overridable defaults

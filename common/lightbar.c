@@ -412,21 +412,6 @@ static inline int cycle_010(uint8_t i)
 		((_ramp_table[bucket + 1] - _ramp_table[bucket]) * index >> 2);
 }
 
-/* This function provides a smooth oscillation between -0.5 and +0.5.
- * Zero starts at 0x00. */
-static inline int cycle_0p0n0(uint8_t i)
-{
-	return cycle_010(i + 64) - FP_SCALE / 2;
-}
-
-/* This function provides a pulsing oscillation between -0.5 and +0.5. */
-static inline int cycle_npn(uint16_t i)
-{
-	if ((i / 256) % 4)
-		return -FP_SCALE / 2;
-	return cycle_010(i) - FP_SCALE / 2;
-}
-
 /******************************************************************************/
 /* Here's where we keep messages waiting to be delivered to the lightbar task.
  * If more than one is sent before the task responds, we only want to deliver
@@ -523,6 +508,14 @@ static uint32_t sequence_S3S0(void)
 }
 
 #ifdef BLUE_PULSING
+
+/* This function provides a pulsing oscillation between -0.5 and +0.5. */
+static inline int cycle_npn(uint16_t i)
+{
+	if ((i / 256) % 4)
+		return -FP_SCALE / 2;
+	return cycle_010(i) - FP_SCALE / 2;
+}
 
 /* CPU is fully on */
 static uint32_t sequence_S0(void)

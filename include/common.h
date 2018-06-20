@@ -66,13 +66,24 @@
 #endif
 
 /*
+ * externally_visible is required by GCC to avoid kicking out memset.
+ */
+#ifndef __visible
+#ifndef __clang__
+#define __visible __attribute__((externally_visible))
+#else
+#define __visible __attribute__((used))
+#endif
+#endif
+
+/*
  * Force the toolchain to keep a symbol even with Link Time Optimization
  * activated.
  *
  * Useful for C functions called only from assembly or through special sections.
  */
 #ifndef __keep
-#define __keep __attribute__((used)) __attribute__((externally_visible))
+#define __keep __attribute__((used)) __visible
 #endif
 
 /*
