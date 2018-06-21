@@ -13,9 +13,12 @@
 #include "timer.h"
 #include "util.h"
 
+/* Request/response buffer size (and maximum command length) */
+#define BUFFER_SIZE 128
+
 struct host_packet pkt;
-static char resp_buf[128];
-static char req_buf[128];
+static char resp_buf[BUFFER_SIZE];
+static char req_buf[BUFFER_SIZE + 4];
 struct ec_host_request *req = (struct ec_host_request *)req_buf;
 struct ec_params_hello *p = (struct ec_params_hello *)(req_buf + sizeof(*req));
 struct ec_host_response *resp = (struct ec_host_response *)resp_buf;
@@ -58,10 +61,10 @@ static void hostcmd_fill_in_default(void)
 	pkt.request_size = 0;
 	pkt.send_response = hostcmd_respond;
 	pkt.request = (const void *)req_buf;
-	pkt.request_max = 128;
+	pkt.request_max = BUFFER_SIZE;
 	pkt.request_size = sizeof(*req) + sizeof(*p);
 	pkt.response = (void *)resp_buf;
-	pkt.response_max = 128;
+	pkt.response_max = BUFFER_SIZE;
 	pkt.driver_result = 0;
 }
 
@@ -101,7 +104,7 @@ static int test_hostcmd_too_long(void)
 	hostcmd_fill_in_default();
 
 	/* Larger than request buffer */
-	pkt.request_size = sizeof(req_buf) + 4;
+	pkt.request_size = BUFFER_SIZE + 4;
 	hostcmd_send();
 	TEST_ASSERT(resp->result == EC_RES_REQUEST_TRUNCATED);
 
