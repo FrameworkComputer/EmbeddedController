@@ -130,6 +130,20 @@ int rma_server_side(char *out_auth_code, const char *challenge)
 
 #define FORCE_TIME(t) { ts.val = (t); force_time(ts); }
 
+/*
+ * rma_try_authcode expects a buffer that is at least RMA_AUTHCODE_CHARS long,
+ * so copy the input string to a buffer before calling the function.
+ */
+static int rma_try_authcode_pad(const char *code)
+{
+	char authcode[RMA_AUTHCODE_BUF_SIZE];
+
+	memset(authcode, 0, sizeof(authcode));
+	strncpy(authcode, code, sizeof(authcode));
+
+	return rma_try_authcode(authcode);
+}
+
 static int test_rma_auth(void)
 {
 	const char *challenge;
@@ -139,7 +153,7 @@ static int test_rma_auth(void)
 	/* Test rate limiting */
 	FORCE_TIME(9 * SECOND);
 	TEST_ASSERT(rma_create_challenge() == EC_ERROR_TIMEOUT);
-	TEST_ASSERT(rma_try_authcode("Bad") == EC_ERROR_ACCESS_DENIED);
+	TEST_ASSERT(rma_try_authcode_pad("Bad") == EC_ERROR_ACCESS_DENIED);
 	TEST_ASSERT(strlen(rma_get_challenge()) == 0);
 
 	FORCE_TIME(10 * SECOND);
@@ -147,14 +161,14 @@ static int test_rma_auth(void)
 	TEST_ASSERT(strlen(rma_get_challenge()) == RMA_CHALLENGE_CHARS);
 
 	/* Test using up tries */
-	TEST_ASSERT(rma_try_authcode("Bad") == EC_ERROR_INVAL);
+	TEST_ASSERT(rma_try_authcode_pad("Bad") == EC_ERROR_INVAL);
 	TEST_ASSERT(strlen(rma_get_challenge()) == RMA_CHALLENGE_CHARS);
-	TEST_ASSERT(rma_try_authcode("BadCodeZ") == EC_ERROR_INVAL);
+	TEST_ASSERT(rma_try_authcode_pad("BadCodeZ") == EC_ERROR_INVAL);
 	TEST_ASSERT(strlen(rma_get_challenge()) == RMA_CHALLENGE_CHARS);
-	TEST_ASSERT(rma_try_authcode("BadLongCode") == EC_ERROR_INVAL);
+	TEST_ASSERT(rma_try_authcode_pad("BadLongCode") == EC_ERROR_INVAL);
 	/* Out of tries now */
 	TEST_ASSERT(strlen(rma_get_challenge()) == 0);
-	TEST_ASSERT(rma_try_authcode("Bad") == EC_ERROR_ACCESS_DENIED);
+	TEST_ASSERT(rma_try_authcode_pad("Bad") == EC_ERROR_ACCESS_DENIED);
 
 	FORCE_TIME(19 * SECOND);
 	TEST_ASSERT(rma_create_challenge() == EC_ERROR_TIMEOUT);
