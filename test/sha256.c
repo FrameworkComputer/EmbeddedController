@@ -164,7 +164,7 @@ static int test_hmac(const uint8_t *key, int key_len,
 
 	hmac_SHA256(tmp, key, key_len, input, input_len);
 
-	if (memcmp(tmp, output, sizeof(output)) != 0) {
+	if (memcmp(tmp, output, SHA256_DIGEST_SIZE) != 0) {
 		ccprintf("hmac_SHA256 test failed\n");
 		return 0;
 	}
