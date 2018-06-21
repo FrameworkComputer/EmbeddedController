@@ -348,9 +348,9 @@ static int test_op_failure(void)
 
 static int test_flash_info(void)
 {
-	struct ec_response_flash_info resp;
+	struct ec_response_flash_info_1 resp;
 
-	TEST_ASSERT(test_send_host_command(EC_CMD_FLASH_INFO, 0, NULL, 0,
+	TEST_ASSERT(test_send_host_command(EC_CMD_FLASH_INFO, 1, NULL, 0,
 		    &resp, sizeof(resp)) == EC_RES_SUCCESS);
 
 	TEST_CHECK((resp.flash_size == CONFIG_FLASH_SIZE) &&
