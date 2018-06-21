@@ -22,4 +22,10 @@
  */
 void get_storage_seed(void *buf, size_t *len);
 
+/* Reads PCR values for indexes from bitmask and computes sha256 digest of
+ * concatenated values. Populates the digest in |sha256_of_selected_pcr|.
+ */
+uint8_t get_current_pcr_digest(const uint8_t bitmask[2],
+			       uint8_t sha256_of_selected_pcr[32]);
+
 #endif  /* __CROS_EC_INCLUDE_PINWEAVER_TPM_IMPORTS_H */

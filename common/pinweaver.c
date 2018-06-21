@@ -52,6 +52,8 @@ BUILD_ASSERT(PW_MAX_MESSAGE_SIZE >=
 			struct pw_response_reset_auth_t reset_auth; \
 			struct pw_response_log_replay_t log_replay; }) + \
 		PW_LEAF_PAYLOAD_SIZE)
+#define PW_VALID_PCR_CRITERIA_SIZE \
+		(sizeof(struct valid_pcr_value_t) * PW_MAX_PCR_CRITERIA_COUNT)
 /* Verify that the request structs will fit into the message. */
 BUILD_ASSERT(PW_MAX_MESSAGE_SIZE >= PW_MAX_RESPONSE_SIZE);
 /* Make sure the largest possible message would fit in
@@ -69,7 +71,7 @@ BUILD_ASSERT(PW_MAX_MESSAGE_SIZE + sizeof(struct tpm_cmd_header) <= 2048);
  * fields.
  */
 BUILD_ASSERT(PW_LEAF_MAJOR_VERSION == 0);
-BUILD_ASSERT(PW_MAX_PATH_SIZE == 1536);
+BUILD_ASSERT(PW_MAX_PATH_SIZE == 1024);
 
 /* If fields are appended to struct leaf_sensitive_data_t, an encryption
  * operation should be performed on them reusing the same IV since the prefix
@@ -287,7 +289,8 @@ static int decrypt_leaf_data(
 		struct leaf_data_t *leaf_data)
 {
 	memcpy(&leaf_data->pub, imported_leaf_data->pub,
-	       sizeof(leaf_data->pub));
+	       MIN(imported_leaf_data->head->pub_len,
+		   sizeof(struct leaf_public_data_t)));
 	if (!DCRYPTO_aes_ctr((uint8_t *)&leaf_data->sec, merkle_tree->wrap_key,
 			    sizeof(merkle_tree->wrap_key) << 3,
 			    imported_leaf_data->iv,
@@ -407,6 +410,61 @@ static int validate_delay_schedule(const struct delay_schedule_entry_t
 	return EC_SUCCESS;
 }
 
+static int validate_pcr_value(const struct valid_pcr_value_t
+			      valid_pcr_criteria[PW_MAX_PCR_CRITERIA_COUNT])
+{
+	size_t index;
+	uint8_t sha256_of_selected_pcr[SHA256_DIGEST_SIZE];
+
+	for (index = 0; index < PW_MAX_PCR_CRITERIA_COUNT; ++index) {
+		/* The criteria with bitmask[0] = bitmask[1] = 0 is considered
+		 * the end of list criteria. If it happens that the first
+		 * bitmask is zero, we consider that no criteria has to be
+		 * satisfied and return success in that case.
+		 */
+		if (valid_pcr_criteria[index].bitmask[0] == 0 &&
+		    valid_pcr_criteria[index].bitmask[1] == 0) {
+			if (index == 0)
+				return EC_SUCCESS;
+
+			return PW_ERR_PCR_NOT_MATCH;
+		}
+
+		if (get_current_pcr_digest(valid_pcr_criteria[index].bitmask,
+					   sha256_of_selected_pcr)) {
+			cprints(CC_TASK,
+				"PinWeaver: Read PCR error, bitmask: %d, %d",
+				valid_pcr_criteria[index].bitmask[0],
+				valid_pcr_criteria[index].bitmask[1]);
+			return PW_ERR_PCR_NOT_MATCH;
+		}
+
+		/* Check if the curent PCR digest is the same as expected by
+		 * criteria.
+		 */
+		if (memcmp(sha256_of_selected_pcr,
+			   valid_pcr_criteria[index].digest,
+			   SHA256_DIGEST_SIZE) == 0) {
+			return EC_SUCCESS;
+		}
+	}
+
+	cprints(CC_TASK, "PinWeaver: No criteria matches PCR values");
+	return PW_ERR_PCR_NOT_MATCH;
+}
+
+static int expected_payload_len(int minor_version)
+{
+	switch (minor_version) {
+	case 0:
+		return PW_LEAF_PAYLOAD_SIZE - PW_VALID_PCR_CRITERIA_SIZE;
+	case PW_LEAF_MINOR_VERSION:
+		return PW_LEAF_PAYLOAD_SIZE;
+	default:
+		return 0;
+	}
+}
+
 static int validate_leaf_header(const struct leaf_header_t *head,
 				uint16_t payload_len, uint16_t aux_hash_len)
 {
@@ -415,11 +473,11 @@ static int validate_leaf_header(const struct leaf_header_t *head,
 	if (head->leaf_version.major != PW_LEAF_MAJOR_VERSION)
 		return PW_ERR_LEAF_VERSION_MISMATCH;
 
-	if (head->leaf_version.minor == PW_LEAF_MINOR_VERSION) {
-		if (leaf_payload_len != PW_LEAF_PAYLOAD_SIZE)
-			return PW_ERR_LENGTH_INVALID;
-	} else if (leaf_payload_len < PW_LEAF_PAYLOAD_SIZE)
+	if (head->leaf_version.minor <= PW_LEAF_MINOR_VERSION &&
+	    leaf_payload_len !=
+	    expected_payload_len(head->leaf_version.minor)) {
 		return PW_ERR_LENGTH_INVALID;
+	}
 
 	if (payload_len != leaf_payload_len + aux_hash_len * PW_HASH_SIZE)
 		return PW_ERR_LENGTH_INVALID;
@@ -479,7 +537,19 @@ static int validate_request_with_wrapped_leaf(
 	if (safe_memcmp(hmac, unimported_leaf_data->hmac, sizeof(hmac)))
 		return PW_ERR_HMAC_AUTH_FAILED;
 
-	return decrypt_leaf_data(merkle_tree, imported_leaf_data, leaf_data);
+	ret = decrypt_leaf_data(merkle_tree, imported_leaf_data, leaf_data);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	/* The code below handles version upgrades. */
+	if (unimported_leaf_data->head.leaf_version.minor == 0 &&
+	    unimported_leaf_data->head.leaf_version.major == 0) {
+		/* Populate the leaf_data with default pcr value */
+		memset(&leaf_data->pub.valid_pcr_criteria, 0,
+		       PW_VALID_PCR_CRITERIA_SIZE);
+	}
+
+	return EC_SUCCESS;
 }
 
 /* Sets the value of ts to the current notion of time. */
@@ -862,6 +932,8 @@ static int pw_handle_insert_leaf(struct merkle_tree_t *merkle_tree,
 
 	memset(&leaf_data, 0, sizeof(leaf_data));
 	leaf_data.pub.label.v = request->label.v;
+	memcpy(&leaf_data.pub.valid_pcr_criteria, request->valid_pcr_criteria,
+	       sizeof(request->valid_pcr_criteria));
 	memcpy(&leaf_data.pub.delay_schedule, &request->delay_schedule,
 	       sizeof(request->delay_schedule));
 	memcpy(&leaf_data.sec.low_entropy_secret, &request->low_entropy_secret,
@@ -952,9 +1024,11 @@ static int pw_handle_try_auth(struct merkle_tree_t *merkle_tree,
 		uint32_t attempts;
 		int ret;
 		uint8_t *secret;
+		uint8_t *reset_secret;
 	} results_table[2] = {
-			{ 0, PW_ERR_LOWENT_AUTH_FAILED, zeros },
-			{ 0, EC_SUCCESS, leaf_data.sec.high_entropy_secret },
+			{ 0, PW_ERR_LOWENT_AUTH_FAILED, zeros, zeros },
+			{ 0, EC_SUCCESS, leaf_data.sec.high_entropy_secret,
+			  leaf_data.sec.reset_secret },
 	};
 
 	if (req_size < sizeof(*request))
@@ -964,6 +1038,13 @@ static int pw_handle_try_auth(struct merkle_tree_t *merkle_tree,
 			merkle_tree, req_size - sizeof(*request),
 			&request->unimported_leaf_data, &imported_leaf_data,
 			&leaf_data);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	/* Check if at least one PCR criteria is satisfied if the leaf is
+	 * bound to PCR.
+	 */
+	ret = validate_pcr_value(leaf_data.pub.valid_pcr_criteria);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -1025,6 +1106,10 @@ static int pw_handle_try_auth(struct merkle_tree_t *merkle_tree,
 	memcpy(&response->high_entropy_secret,
 	       results_table[auth_result].secret,
 	       sizeof(response->high_entropy_secret));
+
+	memcpy(&response->reset_secret,
+	       results_table[auth_result].reset_secret,
+	       sizeof(response->reset_secret));
 
 	return results_table[auth_result].ret;
 }
@@ -1233,7 +1318,7 @@ static enum vendor_cmd_rc pw_vendor_specific_command(enum vendor_cmd_cc code,
 						     size_t input_size,
 						     size_t *response_size)
 {
-	const struct pw_request_t *request = buf;
+	struct pw_request_t *request = buf;
 	struct pw_response_t *response = buf;
 
 	if (input_size < sizeof(request->header)) {
@@ -1306,6 +1391,64 @@ void compute_hash(const uint8_t hashes[][PW_HASH_SIZE], uint16_t num_hashes,
 	memcpy(result, HASH_final(&ctx), PW_HASH_SIZE);
 }
 
+/* If a request from older protocol comes, this method should make it
+ * compatible with the current request structure.
+ */
+int make_compatible_request(struct merkle_tree_t *merkle_tree,
+			    struct pw_request_t *request)
+{
+	switch (request->header.version) {
+	case 0:
+		/* The switch from protocol version 0 to 1 means all the
+		 * requests have the same format, except insert_leaf.
+		 * Update the request in that case.
+		 */
+		if (request->header.type.v == PW_INSERT_LEAF) {
+			unsigned char *src = (unsigned char *)
+				(&request->data.insert_leaf00.path_hashes);
+			unsigned char *dest = (unsigned char *)
+				(&request->data.insert_leaf.path_hashes);
+			const int hash_count =
+				get_path_auxiliary_hash_count(merkle_tree);
+			const uint16_t hashes_size = hash_count * PW_HASH_SIZE;
+
+			memmove(dest, src, hashes_size);
+			memset(&request->data.insert_leaf.valid_pcr_criteria,
+				0, PW_VALID_PCR_CRITERIA_SIZE);
+			request->header.data_length +=
+				PW_VALID_PCR_CRITERIA_SIZE;
+		}
+		/* Fallthrough to make compatible from next version */
+	case PW_PROTOCOL_VERSION:
+		return 1;
+	}
+	/* Unsupported version. */
+	return 0;
+}
+
+/* Converts the response to be understandable by an older protocol.
+ */
+void make_compatible_response(int version, int req_type,
+			      struct pw_response_t *response)
+{
+	if (version >= PW_PROTOCOL_VERSION)
+		return;
+
+	response->header.version = version;
+	if (version == 0) {
+		if (req_type == PW_TRY_AUTH) {
+			unsigned char *src = (unsigned char *)
+			    (&response->data.try_auth.unimported_leaf_data);
+			unsigned char *dest = (unsigned char *)
+			    (&response->data.try_auth00.unimported_leaf_data);
+			memmove(dest, src,
+				PW_LEAF_PAYLOAD_SIZE +
+				sizeof(struct unimported_leaf_data_t));
+			response->header.data_length -= PW_SECRET_SIZE;
+		}
+	}
+}
+
 /* Handles the message in request using the context in merkle_tree and writes
  * the results to response. The return value captures any error conditions that
  * occurred or EC_SUCCESS if there were no errors.
@@ -1316,7 +1459,7 @@ void compute_hash(const uint8_t hashes[][PW_HASH_SIZE], uint16_t num_hashes,
  * has been written to.
  */
 int pw_handle_request(struct merkle_tree_t *merkle_tree,
-		      const struct pw_request_t *request,
+		      struct pw_request_t *request,
 		      struct pw_response_t *response)
 {
 	int32_t ret;
@@ -1325,14 +1468,14 @@ int pw_handle_request(struct merkle_tree_t *merkle_tree,
 	 * inside the switch whenever response and request overlap in memory.
 	 */
 	struct pw_message_type_t type = request->header.type;
+	int version = request->header.version;
 
 	resp_length = 0;
 
-	if (request->header.version != PW_PROTOCOL_VERSION) {
+	if (!make_compatible_request(merkle_tree, request)) {
 		ret = PW_ERR_VERSION_MISMATCH;
 		goto cleanup;
 	}
-
 	switch (type.v) {
 	case PW_RESET_TREE:
 		ret = pw_handle_reset_tree(merkle_tree,
@@ -1386,5 +1529,8 @@ cleanup:
 	response->header.result_code = ret;
 	memcpy(&response->header.root, merkle_tree->root,
 	       sizeof(merkle_tree->root));
+
+	make_compatible_response(version, type.v, response);
+
 	return ret;
 };

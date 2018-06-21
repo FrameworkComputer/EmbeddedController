@@ -65,18 +65,6 @@ struct PW_PACKED pw_log_storage_t {
 };
 
 /* Do not remove fields within the same PW_LEAF_MAJOR_VERSION. */
-/* Unencrypted part of the leaf data.
- */
-struct PW_PACKED leaf_public_data_t {
-	struct label_t label;
-	struct delay_schedule_entry_t delay_schedule[PW_SCHED_COUNT];
-
-	/* State used to rate limit. */
-	struct pw_timestamp_t timestamp;
-	struct attempt_count_t attempt_count;
-};
-
-/* Do not remove fields within the same PW_LEAF_MAJOR_VERSION. */
 /* Encrypted part of the leaf data.
  */
 struct PW_PACKED PW_ALIGN_TO_BLK leaf_sensitive_data_t {
@@ -142,7 +130,7 @@ void pinweaver_init(void);
  * merkle_tree->root needs to be updated with new_root outside of this function.
  */
 int pw_handle_request(struct merkle_tree_t *merkle_tree,
-		      const struct pw_request_t *request,
+		      struct pw_request_t *request,
 		      struct pw_response_t *response);
 
 /******************************************************************************/

@@ -12,9 +12,10 @@
 
 #define PW_PACKED __packed
 
-#define PW_PROTOCOL_VERSION 0
+#define PW_PROTOCOL_VERSION 1
 #define PW_LEAF_MAJOR_VERSION 0
-#define PW_LEAF_MINOR_VERSION 0
+/* The change from version zero is the addition of valid_pcr_value metadata */
+#define PW_LEAF_MINOR_VERSION 1
 
 #define PW_MAX_MESSAGE_SIZE (2048 - 12 /* sizeof(struct tpm_cmd_header) */)
 
@@ -45,6 +46,7 @@ enum pw_error_codes_enum {
 	PW_ERR_NV_EMPTY,
 	PW_ERR_NV_LENGTH_MISMATCH,
 	PW_ERR_NV_VERSION_MISMATCH,
+	PW_ERR_PCR_NOT_MATCH,
 };
 
 /* Represents the log2(fan out) of a tree. */
@@ -105,10 +107,25 @@ struct PW_PACKED delay_schedule_entry_t {
 	struct time_diff_t time_diff;
 };
 
+/* Represents a set of PCR values hashed into a single digest. This is a
+ * criterion that can be added to a leaf. A leaf is valid only if at least one
+ * of the valid_pcr_value_t criteria it contains is satisfied.
+ */
+struct PW_PACKED valid_pcr_value_t {
+	/* The set of PCR indexes that have to pass the validation. */
+	uint8_t bitmask[2];
+	/* The hash digest of the PCR values contained in the bitmask */
+	uint8_t digest[32];
+};
+
 /* Represents the number of entries in the delay schedule table which can be
  * used to determine the next time an authentication attempt can be made.
  */
 #define PW_SCHED_COUNT 16
+
+/* Represents the maximum number of criteria for valid PCR values.
+ */
+#define PW_MAX_PCR_CRITERIA_COUNT 2
 
 /* Number of bytes required to store a secret.
  */
@@ -141,6 +158,19 @@ struct PW_PACKED leaf_header_t {
 	struct leaf_version_t leaf_version;
 	uint16_t pub_len;
 	uint16_t sec_len;
+};
+
+/* Do not remove fields within the same PW_LEAF_MAJOR_VERSION. */
+/* Unencrypted part of the leaf data.
+ */
+struct PW_PACKED leaf_public_data_t {
+	struct label_t label;
+	struct delay_schedule_entry_t delay_schedule[PW_SCHED_COUNT];
+
+	/* State used to rate limit. */
+	struct pw_timestamp_t timestamp;
+	struct attempt_count_t attempt_count;
+	struct valid_pcr_value_t valid_pcr_criteria[PW_MAX_PCR_CRITERIA_COUNT];
 };
 
 /* Represents a struct of unknown length to be imported to process a request. */
@@ -209,12 +239,30 @@ struct PW_PACKED pw_request_reset_tree_t {
 	struct height_t height;
 };
 
+/* This is only used for parsing incoming data of version 0:0 */
+struct PW_PACKED pw_request_insert_leaf00_t {
+	struct label_t label;
+	struct delay_schedule_entry_t delay_schedule[PW_SCHED_COUNT];
+	uint8_t low_entropy_secret[PW_SECRET_SIZE];
+	uint8_t high_entropy_secret[PW_SECRET_SIZE];
+	uint8_t reset_secret[PW_SECRET_SIZE];
+	/* This is a variable length field because it size is determined at
+	 * runtime based on the chosen tree parameters. Its size is treated as
+	 * zero by the compiler so the computed size needs to be added to the
+	 * size of this struct in order to determine the actual size. This field
+	 * has the form:
+	 * uint8_t path_hashes[get_path_auxiliary_hash_count(.)][PW_HASH_SIZE];
+	 */
+	uint8_t path_hashes[][PW_HASH_SIZE];
+};
+
 struct PW_PACKED pw_request_insert_leaf_t {
 	struct label_t label;
 	struct delay_schedule_entry_t delay_schedule[PW_SCHED_COUNT];
 	uint8_t low_entropy_secret[PW_SECRET_SIZE];
 	uint8_t high_entropy_secret[PW_SECRET_SIZE];
 	uint8_t reset_secret[PW_SECRET_SIZE];
+	struct valid_pcr_value_t valid_pcr_criteria[PW_MAX_PCR_CRITERIA_COUNT];
 	/* This is a variable length field because it size is determined at
 	 * runtime based on the chosen tree parameters. Its size is treated as
 	 * zero by the compiler so the computed size needs to be added to the
@@ -241,11 +289,24 @@ struct PW_PACKED pw_request_try_auth_t {
 	struct unimported_leaf_data_t unimported_leaf_data;
 };
 
+/* This is only used to send response data of version 0:0 */
+struct PW_PACKED pw_response_try_auth00_t {
+	/* Valid for the PW_ERR_RATE_LIMIT_REACHED return code only. */
+	struct time_diff_t seconds_to_wait;
+	/* Valid for the EC_SUCCESS return code only. */
+	uint8_t high_entropy_secret[PW_SECRET_SIZE];
+	/* Valid for the PW_ERR_LOWENT_AUTH_FAILED and EC_SUCCESS return codes.
+	 */
+	struct unimported_leaf_data_t unimported_leaf_data;
+};
+
 struct PW_PACKED pw_response_try_auth_t {
 	/* Valid for the PW_ERR_RATE_LIMIT_REACHED return code only. */
 	struct time_diff_t seconds_to_wait;
 	/* Valid for the EC_SUCCESS return code only. */
 	uint8_t high_entropy_secret[PW_SECRET_SIZE];
+	/* Valid for the EC_SUCCESS return code only. */
+	uint8_t reset_secret[PW_SECRET_SIZE];
 	/* Valid for the PW_ERR_LOWENT_AUTH_FAILED and EC_SUCCESS return codes.
 	 */
 	struct unimported_leaf_data_t unimported_leaf_data;
@@ -312,6 +373,7 @@ struct PW_PACKED pw_request_t {
 	struct pw_request_header_t header;
 	union {
 		struct pw_request_reset_tree_t reset_tree;
+		struct pw_request_insert_leaf00_t insert_leaf00;
 		struct pw_request_insert_leaf_t insert_leaf;
 		struct pw_request_remove_leaf_t remove_leaf;
 		struct pw_request_try_auth_t try_auth;
@@ -326,6 +388,7 @@ struct PW_PACKED pw_response_t {
 	union {
 
 		struct pw_response_insert_leaf_t insert_leaf;
+		struct pw_response_try_auth00_t try_auth00;
 		struct pw_response_try_auth_t try_auth;
 		struct pw_response_reset_auth_t reset_auth;
 		/* An array with as many entries as are present in the log up to
@@ -341,9 +404,9 @@ struct PW_PACKED pw_response_t {
  * defined so that meaningful parameter limits can be set to validate the tree
  * parameters.
  *
- * 1536 was chosen because it is 3/4 of 2048 and allows for a maximum tree
- * height of 16 for the default fan-out of 4.
+ * 1024 was chosen because it is 1/2 of 2048 and allows for a maximum tree
+ * height of 10 for the default fan-out of 4.
  */
-#define PW_MAX_PATH_SIZE 1536
+#define PW_MAX_PATH_SIZE 1024
 
 #endif  /* __CROS_EC_INCLUDE_PINWEAVER_TYPES_H */
