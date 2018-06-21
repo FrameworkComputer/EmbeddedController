@@ -222,7 +222,7 @@ uint32_t system_get_scratchpad(void)
 	if (f == NULL)
 		return 0;
 
-	success = fscanf(f, "%lu", &value);
+	success = fscanf(f, "%u", &value);
 	release_persistent_storage(f);
 
 	if (success)
