@@ -171,18 +171,23 @@ int initvars(void)
 		return rv;
 
 	for (i = len = 0; /* FOREVER */ 1; i += len) {
-		tuple = (struct tuple *)(rbuf + i);
-
-		/* Zero key_len indicates end of tuples, we're done */
-		if (!tuple->key_len)
+		/* Zero byte (i.e. key_len == 0) indicates end of tuples. */
+		if (rbuf[i] == 0)
 			break;
+
+		tuple = (struct tuple *)(rbuf + i);
+		len = sizeof(struct tuple);
+
+		/* Make sure the tuple struct is within bounds. */
+		if (i + len > CONFIG_FLASH_NVMEM_VARS_USER_SIZE)
+			goto fixit;
 
 		/* Empty values are not allowed */
 		if (!tuple->val_len)
 			goto fixit;
 
 		/* See how big the tuple is */
-		len = sizeof(struct tuple) + tuple->key_len + tuple->val_len;
+		len += tuple->key_len + tuple->val_len;
 
 		/* Oops, it's off the end (leave one byte for final 0) */
 		if (i + len >= CONFIG_FLASH_NVMEM_VARS_USER_SIZE)
