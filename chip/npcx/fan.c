@@ -334,7 +334,12 @@ void fan_tick_func(void)
 		volatile struct fan_status_t *p_status = fan_status + ch;
 		/* Make sure rpm mode is enabled */
 		if (p_status->fan_mode != TACHO_FAN_RPM) {
-			p_status->auto_status = FAN_STATUS_STOPPED;
+		/* Fan in duty mode still want rpm_actual being updated. */
+			p_status->rpm_actual = mft_fan_rpm(ch);
+			if (p_status->rpm_actual > 0)
+				p_status->auto_status = FAN_STATUS_LOCKED;
+			else
+				p_status->auto_status = FAN_STATUS_STOPPED;
 			continue;
 		}
 		if (!fan_get_enabled(ch))
