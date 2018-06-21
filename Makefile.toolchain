@@ -15,6 +15,11 @@ ifeq ($(make_version_ok),)
 $(error ERROR: GNU make version $(min_make_version) or higher required.)
 endif
 
+# Default to clang if TEST_ASAN is enabled
+ifneq ($(TEST_ASAN),)
+CC=clang
+endif
+
 # Extract cc-name
 cc-name:=$(shell $(CC) -v 2>&1 | grep -q "clang version" && echo clang || echo gcc)
 
@@ -54,7 +59,8 @@ CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD \
             $(if $(CTS_MODULE), $(CFLAGS_CTS)) \
             $(if $(EMU_BUILD),-DEMU_BUILD) \
             $(if $($(PROJECT)-scale),-DTEST_TIME_SCALE=$($(PROJECT)-scale)) \
-            -DTEST_$(PROJECT) -DTEST_$(UC_PROJECT)
+            -DTEST_$(PROJECT) -DTEST_$(UC_PROJECT) \
+            $(if $(TEST_ASAN),-fsanitize=address)
 CFLAGS_COVERAGE=$(if $(TEST_COVERAGE),-fprofile-arcs -ftest-coverage \
 				      -DTEST_COVERAGE,)
 CFLAGS_DEFINE=-DOUTDIR=$(out)/$(BLD) -DCHIP=$(CHIP) -DBOARD_TASKFILE=$(_tsk_lst_file) \
@@ -101,7 +107,8 @@ LDFLAGS=-nostdlib -g -Wl,-X -Wl,--gc-sections -Wl,--build-id=none \
 	$(LDFLAGS_EXTRA) $(CFLAGS_CPU)
 BUILD_LDFLAGS=$(LIBFTDI_LDLIBS)
 HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
-		  $(if $(TEST_COVERAGE),-fprofile-arcs,)
+		  $(if $(TEST_COVERAGE),-fprofile-arcs,) \
+		  $(if $(TEST_ASAN), -fsanitize=address)
 
 # utility function to provide overridable defaults
 # $1: name of variable to set

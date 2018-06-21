@@ -266,7 +266,8 @@ int hook_call_deferred(const struct deferred_data *data, int us);
  *			order in which hooks are called.
  */
 #define DECLARE_HOOK(hooktype, routine, priority)			\
-	const struct hook_data __keep CONCAT4(__hook_, hooktype, _, routine) \
+	const struct hook_data __keep __no_sanitize_address		\
+	CONCAT4(__hook_, hooktype, _, routine)				\
 	__attribute__((section(".rodata." STRINGIFY(hooktype))))	\
 	     = {routine, priority}
 
@@ -290,7 +291,8 @@ int hook_call_deferred(const struct deferred_data *data, int us);
  * @param routine	Function pointer, with prototype void routine(void)
  */
 #define DECLARE_DEFERRED(routine)					\
-	const struct deferred_data __keep CONCAT2(routine, _data)	\
+	const struct deferred_data __keep __no_sanitize_address		\
+	CONCAT2(routine, _data)						\
 	__attribute__((section(".rodata.deferred")))			\
 	     = {routine}
 

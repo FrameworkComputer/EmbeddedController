@@ -158,7 +158,8 @@ void console_has_input(void);
 	static const char __con_cmd_label_##NAME[] = #NAME;		\
 	struct size_check##NAME {					\
 		int field[2 * (sizeof(__con_cmd_label_##NAME) < 16) - 1]; }; \
-	const struct console_command __keep __con_cmd_##NAME		\
+	const struct console_command __keep __no_sanitize_address	\
+	__con_cmd_##NAME						\
 	__attribute__((section(".rodata.cmds." #NAME))) =		\
 	{ .name = __con_cmd_label_##NAME,				\
 	  .handler = ROUTINE,						\

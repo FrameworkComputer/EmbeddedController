@@ -74,7 +74,8 @@ struct extension_command {
 		     &params->out_size);				\
 		return VENDOR_RC_SUCCESS;				\
 	}								\
-	const struct extension_command __keep __extension_cmd_##code	\
+	const struct extension_command __keep  __no_sanitize_address	\
+	__extension_cmd_##code						\
 	__attribute__((section(".rodata.extensioncmds")))		\
 		= {.command_code = code, .handler = func##_wrap }
 
@@ -86,13 +87,15 @@ struct extension_command {
 		return func(params->code, params->buffer,		\
 		      params->in_size, &params->out_size);		\
 	}								\
-	const struct extension_command __keep __vendor_cmd_##cmd_code	\
+	const struct extension_command __keep  __no_sanitize_address	\
+	__vendor_cmd_##cmd_code						\
 	__attribute__((section(".rodata.extensioncmds")))		\
 		= {.command_code = cmd_code, .handler = func##_wrap}
 
 /* Vendor command which takes params as struct */
 #define DECLARE_VENDOR_COMMAND_P(cmd_code, func)			\
-	const struct extension_command __keep __vendor_cmd_##cmd_code	\
+	const struct extension_command __keep  __no_sanitize_address	\
+	__vendor_cmd_##cmd_code						\
 	__attribute__((section(".rodata.extensioncmds")))		\
 		= {.command_code = cmd_code, .handler = func}
 

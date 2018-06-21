@@ -96,6 +96,23 @@
 #define __bss_slow __attribute__((section(".bss.slow")))
 #endif
 
+/* gcc does not support __has_feature */
+#ifndef __has_feature
+#define __has_feature(x) 0
+#endif
+
+/*
+ * Use this to prevent AddressSanitizer from putting guards around some global
+ * variables (e.g. hook/commands "arrays" that are put together at link time).
+ */
+#ifndef __no_sanitize_address
+#if __has_feature(address_sanitizer)
+#define __no_sanitize_address __attribute__((no_sanitize("address")))
+#else
+#define __no_sanitize_address
+#endif
+#endif
+
 /* There isn't really a better place for this */
 #define C_TO_K(temp_c) ((temp_c) + 273)
 #define K_TO_C(temp_c) ((temp_c) - 273)

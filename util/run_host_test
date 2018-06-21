@@ -5,6 +5,7 @@
 # found in the LICENSE file.
 
 from cStringIO import StringIO
+import os
 import pexpect
 import signal
 import subprocess
@@ -34,9 +35,9 @@ class Tee(object):
     sys.stdout.flush()
     self._target.flush()
 
-def RunOnce(test_name, log):
+def RunOnce(test_name, log, env):
   child = pexpect.spawn('build/host/{0}/{0}.exe'.format(test_name),
-                        timeout=TIMEOUT)
+                        timeout=TIMEOUT, env=env)
   child.logfile = log
   try:
     return child.expect(EXPECT_LIST)
@@ -49,12 +50,17 @@ def RunOnce(test_name, log):
       child.kill(signal.SIGTERM)
     child.read()
 
+# ASAN_OPTIONS environment variable is only required when test is built with
+# ASan, but is otherwise harmless.
+env = dict(os.environ)
+env["ASAN_OPTIONS"] = "log_path=stderr"
+
 log = StringIO()
 tee_log = Tee(log)
 test_name = sys.argv[1]
 start_time = time.time()
 
-result_id = RunOnce(test_name, tee_log)
+result_id = RunOnce(test_name, tee_log, env)
 
 elapsed_time = time.time() - start_time
 if result_id == RESULT_ID_TIMEOUT:

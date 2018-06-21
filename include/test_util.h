@@ -236,7 +236,8 @@ struct test_i2c_write_dev {
  * @param routine     Function pointer, with the same prototype as i2c_xfer()
  */
 #define DECLARE_TEST_I2C_XFER(routine)					\
-	const struct test_i2c_xfer __test_i2c_xfer_##routine	\
+	const struct test_i2c_xfer __no_sanitize_address		\
+	__test_i2c_xfer_##routine					\
 	__attribute__((section(".rodata.test_i2c.xfer")))		\
 		= {routine}
 

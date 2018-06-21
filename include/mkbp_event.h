@@ -40,7 +40,8 @@ struct mkbp_event_source {
 };
 
 #define DECLARE_EVENT_SOURCE(type, func)                       \
-	const struct mkbp_event_source __keep __evt_src_##type \
+	const struct mkbp_event_source __keep		       \
+	__no_sanitize_address _evt_src_##type		       \
 	__attribute__((section(".rodata.evtsrcs")))            \
 		 = {type, func}
 
