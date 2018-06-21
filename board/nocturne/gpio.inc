@@ -31,6 +31,7 @@ GPIO_INT(H1_EC_VOL_UP_ODL,   PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP, button_int
 GPIO_INT(EC_WP_L,            PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(LID_OPEN,           PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)
 GPIO_INT(ACCELGYRO3_INT_L,   PIN(4, 1), GPIO_INT_FALLING, bmi160_interrupt)
+GPIO_INT(BASE_USB_FAULT_ODL, PIN(2, 3), GPIO_INT_FALLING, base_pwr_fault_interrupt)
 GPIO_INT(BASE_PWR_FAULT_ODL, PIN(2, 4), GPIO_INT_FALLING, base_pwr_fault_interrupt)
 GPIO_INT(RCAM_VSYNC,         PIN(E, 4), GPIO_INT_FALLING, sync_interrupt)
 

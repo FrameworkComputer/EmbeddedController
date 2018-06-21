@@ -58,6 +58,18 @@ enum base_detect_state {
 static int debug;
 static enum base_detect_state state;
 
+static void enable_base_interrupts(int enable)
+{
+	int (*fn)(enum gpio_signal) = enable ? gpio_enable_interrupt :
+		gpio_disable_interrupt;
+
+	/* This pin is present on boards newer than rev 0. */
+	if (board_get_version() > 0)
+		fn(GPIO_BASE_USB_FAULT_ODL);
+
+	fn(GPIO_BASE_PWR_FAULT_ODL);
+}
+
 static void base_power_enable(int enable)
 {
 	/* Nothing to do if the state is the same. */
@@ -72,14 +84,14 @@ static void base_power_enable(int enable)
 			/* Allow time for the fault line to rise. */
 			msleep(1);
 			/* Monitor for base power faults. */
-			gpio_enable_interrupt(GPIO_BASE_PWR_FAULT_ODL);
+			enable_base_interrupts(1);
 		}
 	} else {
 		/*
 		 * Disable power fault interrupt.  It will read low when base
 		 * power is removed.
 		 */
-		gpio_disable_interrupt(GPIO_BASE_PWR_FAULT_ODL);
+		enable_base_interrupts(0);
 		/* Now, remove power to the base. */
 		gpio_set_level(GPIO_BASE_PWR_EN, 0);
 	}
@@ -256,9 +268,10 @@ DECLARE_DEFERRED(check_and_reapply_base_power_deferred);
 void base_pwr_fault_interrupt(enum gpio_signal s)
 {
 	/* Inverted because active low. */
-	int fault_detected = !gpio_get_level(GPIO_BASE_PWR_FAULT_ODL);
+	int pwr_fault_detected = !gpio_get_level(GPIO_BASE_PWR_FAULT_ODL);
+	int usb_fault_detected = s == GPIO_BASE_USB_FAULT_ODL;
 
-	if (fault_detected) {
+	if (pwr_fault_detected | usb_fault_detected) {
 		/* Turn off base power. */
 		CPRINTS("Base Pwr Flt!");
 		base_power_enable(0);
