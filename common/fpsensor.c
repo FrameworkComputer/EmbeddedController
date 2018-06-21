@@ -236,6 +236,8 @@ void fp_task(void)
 				timeout_us = -1;
 			if (mode & FP_MODE_ANY_WAIT_IRQ)
 				gpio_enable_interrupt(GPIO_FPS_INT);
+			else
+				fp_sensor_low_power();
 		} else if (evt & (TASK_EVENT_SENSOR_IRQ | TASK_EVENT_TIMER)) {
 			gpio_disable_interrupt(GPIO_FPS_INT);
 			if (sensor_mode & FP_MODE_ANY_DETECT_FINGER) {
@@ -261,6 +263,8 @@ void fp_task(void)
 			if (sensor_mode & FP_MODE_ANY_WAIT_IRQ) {
 				fp_sensor_configure_detect();
 				gpio_enable_interrupt(GPIO_FPS_INT);
+			} else {
+				fp_sensor_low_power();
 			}
 		}
 	}
