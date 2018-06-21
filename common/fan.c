@@ -515,7 +515,9 @@ static void pwm_fan_resume(void)
 #else
 		set_thermal_control_enabled(fan, 0);
 #endif
-		fan_set_rpm_target(FAN_CH(fan), fans[fan].rpm->rpm_max);
+		fan_set_rpm_target(FAN_CH(fan),
+				   fan_percent_to_rpm(FAN_CH(fan),
+						      CONFIG_FAN_INIT_SPEED));
 		set_enabled(fan, 1);
 	}
 }
