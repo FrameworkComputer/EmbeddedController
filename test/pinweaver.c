@@ -23,7 +23,7 @@ struct pw_test_data_t {
 		/* Reserve space for the variable length fields. */
 		uint8_t tpm_buffer_size[PW_MAX_MESSAGE_SIZE];
 	};
-};
+} PW_ALIGN_TO_WRD;
 
 /******************************************************************************/
 /* Test data
