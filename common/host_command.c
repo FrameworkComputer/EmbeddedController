@@ -512,7 +512,7 @@ static int host_command_read_test(struct host_cmd_handler_args *args)
 	for (i = 0; i < size; i++)
 		r->data[i] = offset + i;
 
-	args->response_size = sizeof(*r);
+	args->response_size = size * sizeof(uint32_t);
 
 	return EC_RES_SUCCESS;
 }
@@ -768,7 +768,7 @@ static int host_command_test_protocol(struct host_cmd_handler_args *args)
 
 	memset(r->buf, 0, sizeof(r->buf));
 	memcpy(r->buf, p->buf, copy_len);
-	args->response_size = p->ret_len;
+	args->response_size = copy_len;
 
 	return p->ec_result;
 }
