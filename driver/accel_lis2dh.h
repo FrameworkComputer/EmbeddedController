@@ -102,11 +102,15 @@ enum lis2dh_odr {
 #define LIS2DH_FS_TO_REG(_fs) (__fls(_fs) - 1)
 
 /* Sensor resolution in number of bits
- * This sensor has variable precision (8/10/12 bits) depending Power Mode
- * selected
- * TODO: Only Normal Power mode supported (10 bits)
+ * lis2dh has variable precision (8/10/12 bits) depending Power Mode
+ * selected, here Only Normal Power mode supported (10 bits).
+ * But for lis2de, it has only one 8bit resolution.
  */
+#ifdef CONFIG_ACCEL_LIS2DE
+#define LIS2DH_RESOLUTION       8
+#elif defined(CONFIG_ACCEL_LIS2DH)
 #define LIS2DH_RESOLUTION      	10
+#endif
 
 extern const struct accelgyro_drv lis2dh_drv;
 

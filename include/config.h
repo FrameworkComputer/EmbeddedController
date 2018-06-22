@@ -64,7 +64,17 @@
 #undef CONFIG_ACCEL_BMA255
 #undef CONFIG_ACCEL_KXCJ9
 #undef CONFIG_ACCEL_KX022
+/*
+ * lis2dh and lis2de have the same register interface but different
+ * supported resolution. In normal mode, lis2dh works in 10-bit resolution,
+ * but lis2de only supports 8bit resolution.
+ * define CONFIG_ACCEL_LIS2DH if using lis2dh chip on the board and define
+ * CONFIG_ACCEL_LIS2DE if using lis2de chip. CONFIG_ACCEL_LIS2D_COMMON get
+ * automatically defined if either of them get defined.
+ */
 #undef CONFIG_ACCEL_LIS2DH
+#undef CONFIG_ACCEL_LIS2DE
+#undef CONFIG_ACCEL_LIS2D_COMMON
 #undef CONFIG_ACCELGYRO_LSM6DS0
 #undef CONFIG_ACCELGYRO_BMI160
 #undef CONFIG_ACCELGYRO_LSM6DSM
@@ -3766,6 +3776,15 @@
 #endif
 
 /*****************************************************************************/
+
+/*
+ * Automatically define CONFIG_ACCEL_LIS2D_COMMON if either child option is
+ * defined.
+ */
+#if defined(CONFIG_ACCEL_LIS2DH) || defined(CONFIG_ACCEL_LIS2DE)
+#define CONFIG_ACCEL_LIS2D_COMMON
+#endif
+
 /*
  * Apply test config overrides last, since tests need to override some of the
  * config flags in non-standard ways to mock only parts of the system.
@@ -3794,3 +3813,4 @@
 #define CONFIG_BMI160_SEC_I2C
 #endif
 #endif  /* __CROS_EC_CONFIG_H */
+

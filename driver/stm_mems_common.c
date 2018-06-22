@@ -134,10 +134,13 @@ void st_normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
 {
 	int i, range;
 	struct stprivate_data *drvdata = s->drv_data;
+	/* data is left-aligned and the bottom bits need to be
+	 * cleared because they may contain trash data.
+	 */
+	uint16_t mask = ~((1 << (16 - drvdata->resol)) - 1);
 
 	for (i = X; i <= Z; i++) {
-		v[i] = (int16_t)((data[i * 2 + 1] << 8) |
-				data[i * 2]) >> (16 - drvdata->resol);
+		v[i] = ((data[i * 2 + 1] << 8) | data[i * 2]) & mask;
 	}
 
 	rotate(v, *s->rot_standard_ref, v);
