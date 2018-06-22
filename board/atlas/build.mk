@@ -12,4 +12,5 @@ CHIP_VARIANT:=npcx7m6f
 
 board-y=board.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o
+board-$(CONFIG_LED_COMMON)+=led.o
 board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
