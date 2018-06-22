@@ -125,7 +125,6 @@ BOARDS_NPCX_SPI=(
 	poppy
 	reef
 	soraka
-	wheatley
 )
 
 BOARDS_NPCX_INT_SPI=(
