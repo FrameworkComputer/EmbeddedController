@@ -18,6 +18,7 @@
 #include "driver/ppc/sn5s330.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
+#include "driver/temp_sensor/bd99992gw.h"
 #include "ec_commands.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -35,6 +36,7 @@
 #include "switch.h"
 #include "task.h"
 #include "tcpci.h"
+#include "temp_sensor.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
@@ -434,6 +436,21 @@ void board_overcurrent_event(int port)
 	/* TODO(b/69935262): Write a PD log entry for the OC event. */
 	CPRINTS("C%d: overcurrent!", port);
 }
+
+const struct temp_sensor_t temp_sensors[] = {
+	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0, 4},
+
+	/* These BD99992GW temp sensors are only readable in S0 */
+	{"Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	 BD99992GW_ADC_CHANNEL_SYSTHERM0, 4},
+	{"Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	 BD99992GW_ADC_CHANNEL_SYSTHERM1, 4},
+	{"DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	 BD99992GW_ADC_CHANNEL_SYSTHERM2, 4},
+	{"eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	 BD99992GW_ADC_CHANNEL_SYSTHERM3, 4},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
  * Check if PMIC fault registers indicate VR fault. If yes, print out fault
