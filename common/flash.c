@@ -159,6 +159,8 @@ int flash_bank_count(int offset, int size)
 int flash_range_ok(int offset, int size_req, int align)
 {
 	if (offset < 0 || size_req < 0 ||
+	    offset > CONFIG_FLASH_SIZE ||
+	    size_req > CONFIG_FLASH_SIZE ||
 	    offset + size_req > CONFIG_FLASH_SIZE ||
 	    (offset | size_req) & (align - 1))
 		return 0;  /* Invalid range */
