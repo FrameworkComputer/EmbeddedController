@@ -506,7 +506,7 @@ static int host_command_read_test(struct host_cmd_handler_args *args)
 	int size = p->size / sizeof(uint32_t);
 	int i;
 
-	if (size > ARRAY_SIZE(r->data))
+	if (size > ARRAY_SIZE(r->data) || p->size > args->response_size)
 		return EC_RES_ERROR;
 
 	for (i = 0; i < size; i++)
@@ -534,7 +534,7 @@ static int host_command_read_memmap(struct host_cmd_handler_args *args)
 	uint8_t size = p->size;
 
 	if (size > EC_MEMMAP_SIZE || offset > EC_MEMMAP_SIZE ||
-	    offset + size > EC_MEMMAP_SIZE)
+	    offset + size > EC_MEMMAP_SIZE || size > args->response_size)
 		return EC_RES_INVALID_PARAM;
 
 	/* Make sure switch data is initialized */
