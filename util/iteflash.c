@@ -583,9 +583,6 @@ static int send_special_waveform(struct ftdi_context *ftdi)
 		/* If we can talk to chip, then we can break the retry loop */
 		ret = check_chipid(ftdi);
 
-		if (ret != 0)
-			/* Sleep before next attempt */
-			sleep(1);
 	} while (ret != 0);
 
 	if (ret)
