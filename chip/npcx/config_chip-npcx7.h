@@ -28,6 +28,11 @@
 
 #if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M7WB)
 #define NPCX_UART_FIFO_SUPPORT
+/* Number of UART modules. */
+#define NPCX_SECOND_UART
+#define UART_MODULE_COUNT 2
+#else
+#define UART_MODULE_COUNT 1
 #endif
 
 #ifdef CHIP_VARIANT_NPCX7M7WB

@@ -52,11 +52,17 @@ GPIO(BOARD_VERSION2,       PIN(6, 5), GPIO_INPUT)
 GPIO(BOARD_VERSION3,       PIN(6, 6), GPIO_INPUT)
 
 /*********************** Alternate pins for npcx7 series **********************/
-/* UART Tx/Rx */
+#if (CONFIG_CONSOLE_UART == 0)
+/* UART1 Tx/Rx */
 #if NPCX_UART_MODULE2
 ALTERNATE(PIN_MASK(6, 0x30), 1, MODULE_UART, 0) /* CR_SIN/SOUT  GPIO64/65 */
 #else
 ALTERNATE(PIN_MASK(1, 0x03), 1, MODULE_UART, 0) /* CR_SIN/SOUT  GPIO10/11 */
+#endif
+#else
+/* UART2 Tx/Rx */
+ALTERNATE(PIN_MASK(7, 0x20), 1, MODULE_UART, 0) /* CR_SIN2  GPIO75 */
+ALTERNATE(PIN_MASK(8, 0x40), 1, MODULE_UART, 0) /* CR_SOUT2 GPIO86 */
 #endif
 
 /* ADC */

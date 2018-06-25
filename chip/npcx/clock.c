@@ -20,6 +20,7 @@
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
+#include "uartn.h"
 #include "util.h"
 #include "watchdog.h"
 
@@ -324,10 +325,7 @@ void __idle(void)
 			/* UART-rx(console) become to GPIO (NONE INT mode) */
 			clock_uart2gpio();
 #elif defined(CHIP_FAMILY_NPCX7)
-			/* Clear pending bit before enable uart wake-up */
-			SET_BIT(NPCX_WKPCL(MIWU_TABLE_1, MIWU_GROUP_8), 7);
-			/* Enable UART wake-up and interrupt request */
-			SET_BIT(NPCX_WKEN(MIWU_TABLE_1, MIWU_GROUP_8), 7);
+			uartn_wui_en(CONFIG_CONSOLE_UART);
 #endif
 
 			/*

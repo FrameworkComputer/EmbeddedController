@@ -15,6 +15,10 @@
 
 /*****************************************************************************/
 /* Hardware features */
+
+/* Number of UART modules. */
+#define UART_MODULE_COUNT 1
+
 /*
  * Number of I2C controllers. Controller 0 has 2 ports, so the chip has one
  * additional port.

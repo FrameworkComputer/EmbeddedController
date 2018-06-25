@@ -87,7 +87,6 @@
 #define NPCX_MTC_BASE_ADDR               0x400B7000
 #define NPCX_MSWC_BASE_ADDR              0x400C1000
 #define NPCX_SCFG_BASE_ADDR              0x400C3000
-#define NPCX_CR_UART_BASE_ADDR           0x400C4000
 #define NPCX_KBC_BASE_ADDR               0x400C7000
 #define NPCX_ADC_BASE_ADDR               0x400D1000
 #define NPCX_SPI_BASE_ADDR               0x400D2000
@@ -101,6 +100,7 @@
 #define NPCX_ITIM32_BASE_ADDR            0x400BC000
 #define NPCX_MIWU_BASE_ADDR(mdl)         (0x400BB000 + ((mdl) * 0x2000L))
 #define NPCX_MFT_BASE_ADDR(mdl)          (0x400E1000 + ((mdl) * 0x2000L))
+#define NPCX_CR_UART_BASE_ADDR(mdl)      (0x400C4000 + ((mdl) * 0x2000L))
 #define NPCX_PM_CH_BASE_ADDR(mdl)        (0x400C9000 + ((mdl) * 0x2000L))
 #if defined(CHIP_FAMILY_NPCX7)
 #define NPCX_SMB_BASE_ADDR(mdl)        (((mdl) < 2) ? \
@@ -217,7 +217,7 @@
 #define NPCX_IRQ29_NOUSED                NPCX_IRQ_29
 #define NPCX_IRQ30_NOUSED                NPCX_IRQ_30
 #define NPCX_IRQ_TWD_WKINTB_0            NPCX_IRQ_31
-#define NPCX_IRQ32_NOUSED                NPCX_IRQ_32
+#define NPCX_IRQ_UART2                   NPCX_IRQ_32
 #define NPCX_IRQ_UART                    NPCX_IRQ_33
 #define NPCX_IRQ34_NOUSED                NPCX_IRQ_34
 #define NPCX_IRQ35_NOUSED                NPCX_IRQ_35
@@ -294,20 +294,20 @@
 
 /******************************************************************************/
 /* CR UART Register */
-#define NPCX_UTBUF                        REG8(NPCX_CR_UART_BASE_ADDR + 0x000)
-#define NPCX_URBUF                        REG8(NPCX_CR_UART_BASE_ADDR + 0x002)
-#define NPCX_UICTRL                       REG8(NPCX_CR_UART_BASE_ADDR + 0x004)
-#define NPCX_USTAT                        REG8(NPCX_CR_UART_BASE_ADDR + 0x006)
-#define NPCX_UFRS                         REG8(NPCX_CR_UART_BASE_ADDR + 0x008)
-#define NPCX_UMDSL                        REG8(NPCX_CR_UART_BASE_ADDR + 0x00A)
-#define NPCX_UBAUD                        REG8(NPCX_CR_UART_BASE_ADDR + 0x00C)
-#define NPCX_UPSR                         REG8(NPCX_CR_UART_BASE_ADDR + 0x00E)
+#define NPCX_UTBUF(n)                    REG8(NPCX_CR_UART_BASE_ADDR(n) + 0x000)
+#define NPCX_URBUF(n)                    REG8(NPCX_CR_UART_BASE_ADDR(n) + 0x002)
+#define NPCX_UICTRL(n)                   REG8(NPCX_CR_UART_BASE_ADDR(n) + 0x004)
+#define NPCX_USTAT(n)                    REG8(NPCX_CR_UART_BASE_ADDR(n) + 0x006)
+#define NPCX_UFRS(n)                     REG8(NPCX_CR_UART_BASE_ADDR(n) + 0x008)
+#define NPCX_UMDSL(n)                    REG8(NPCX_CR_UART_BASE_ADDR(n) + 0x00A)
+#define NPCX_UBAUD(n)                    REG8(NPCX_CR_UART_BASE_ADDR(n) + 0x00C)
+#define NPCX_UPSR(n)                     REG8(NPCX_CR_UART_BASE_ADDR(n) + 0x00E)
 #ifdef NPCX_UART_FIFO_SUPPORT
  /* UART registers only used for FIFO mode */
-#define NPCX_UFTSTS                        REG8(NPCX_CR_UART_BASE_ADDR + 0x020)
-#define NPCX_UFRSTS                        REG8(NPCX_CR_UART_BASE_ADDR + 0x022)
-#define NPCX_UFTCTL                        REG8(NPCX_CR_UART_BASE_ADDR + 0x024)
-#define NPCX_UFRCTL                        REG8(NPCX_CR_UART_BASE_ADDR + 0x026)
+#define NPCX_UFTSTS(n)                   REG8(NPCX_CR_UART_BASE_ADDR(n) + 0x020)
+#define NPCX_UFRSTS(n)                   REG8(NPCX_CR_UART_BASE_ADDR(n) + 0x022)
+#define NPCX_UFTCTL(n)                   REG8(NPCX_CR_UART_BASE_ADDR(n) + 0x024)
+#define NPCX_UFRCTL(n)                   REG8(NPCX_CR_UART_BASE_ADDR(n) + 0x026)
 
 /* UART FIFO register fields */
 #define NPCX_UMDSL_FIFO_MD                0
@@ -331,6 +331,23 @@
 #define NPCX_UFRCTL_RNEMPTY_EN            6
 #define NPCX_UFRCTL_ERR_EN                7
 
+#endif
+
+#if defined(CHIP_FAMILY_NPCX5)
+enum {
+	NPCX_UART_PORT0 = 0, /* UART port 0 */
+	NPCX_UART_COUNT
+};
+#elif defined(CHIP_FAMILY_NPCX7)
+enum {
+	NPCX_UART_PORT0 = 0, /* UART port 0 */
+#ifdef NPCX_SECOND_UART
+	NPCX_UART_PORT1 = 1, /* UART port 1 */
+#endif
+	NPCX_UART_COUNT
+};
+#else
+#error "Unsupported chip family for uart ports."
 #endif
 
 /******************************************************************************/
@@ -713,6 +730,9 @@ enum {
 #define NPCX_DEVALTA_32KCLKIN_SL         3
 #endif
 #define NPCX_DEVALTA_NO_VCC1_RST         4
+#ifdef NPCX_SECOND_UART
+#define NPCX_DEVALTA_UART2_SL            5
+#endif
 #define NPCX_DEVALTA_NO_PECI_EN          6
 #define NPCX_DEVALTA_UART_SL1            7
 #define NPCX_DEVALTC_UART_SL2            0
@@ -930,7 +950,11 @@ enum {
 #define NPCX_PWDWN_CTL7_SMB5_PD          0
 #define NPCX_PWDWN_CTL7_SMB6_PD          1
 #define NPCX_PWDWN_CTL7_SMB7_PD          2
+#if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M7WB)
+#define NPCX_PWDWN_CTL7_ITIM64_PD        5
+#define NPCX_PWDWN_CTL7_UART2_PD         6
 #define NPCX_PWDWN_CTL7_WOV_PD           7
+#endif
 #endif
 
 /*
@@ -952,9 +976,12 @@ enum {
 	CGC_OFFSET_ESPI   = 5,
 #if defined(CHIP_FAMILY_NPCX7)
 	CGC_OFFSET_I2C2   = 6,
+#ifdef NPCX_SECOND_UART
+	CGC_OFFSET_UART2  = 6,
 #endif
 #ifdef NPCX_WOV_SUPPORT
-	CGC_OFFSET_WOV   = 6,
+	CGC_OFFSET_WOV    = 6,
+#endif
 #endif
 };
 
@@ -991,9 +1018,12 @@ enum NPCX_PMC_PWDWN_CTL_T {
 #define CGC_I2C_MASK2    ((1 << NPCX_PWDWN_CTL7_SMB5_PD) | \
 			 (1 << NPCX_PWDWN_CTL7_SMB6_PD) | \
 			 (1 << NPCX_PWDWN_CTL7_SMB7_PD))
+#ifdef NPCX_SECOND_UART
+#define CGC_UART2_MASK   (1 << NPCX_PWDWN_CTL7_UART2_PD)
 #endif
 #ifdef NPCX_WOV_SUPPORT
 #define CGC_WOV_MASK     (1 << NPCX_PWDWN_CTL7_WOV_PD)
+#endif
 #endif
 #define CGC_ADC_MASK     (1 << NPCX_PWDWN_CTL4_ADC_PD)
 #define CGC_PECI_MASK    (1 << NPCX_PWDWN_CTL4_PECI_PD)
@@ -2061,7 +2091,6 @@ enum {
 #define NPCX_UART_DEVALT_SL NPCX_DEVALTC_UART_SL2
 #define NPCX_UART_ALT_DEVALT NPCX_DEVALT(0x0A)
 #define NPCX_UART_ALT_DEVALT_SL NPCX_DEVALTA_UART_SL1
-
 #else /* !NPCX_UART_MODULE2 */
 
 #ifdef CHIP_FAMILY_NPCX5
@@ -2073,12 +2102,16 @@ enum {
 #define NPCX_UART_DEVALT_SL NPCX_DEVALTA_UART_SL1
 #define NPCX_UART_ALT_DEVALT NPCX_DEVALT(0x0C)
 #define NPCX_UART_ALT_DEVALT_SL NPCX_DEVALTC_UART_SL2
-
 #endif /* NPCX_UART_MODULE2 */
 
 #ifdef CHIP_FAMILY_NPCX7
-#define NPCX_UART_WK_GROUP MIWU_GROUP_8
-#define NPCX_UART_WK_BIT 7
+#define NPCX_UART_WK_GROUP     MIWU_GROUP_8
+#define NPCX_UART_WK_BIT       7
+#ifdef NPCX_SECOND_UART
+#define NPCX_UART2_WK_GROUP    MIWU_GROUP_1
+#define NPCX_UART2_WK_BIT      6
+#endif
+
 #endif
 
 /* This routine checks pending bit of GPIO wake-up functionality */

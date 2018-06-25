@@ -18,57 +18,15 @@
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
+#include "uartn.h"
 #include "util.h"
 
-#ifdef NPCX_UART_FIFO_SUPPORT
-/* Enable UART Tx FIFO empty interrupt */
-#define NPCX_UART_TX_EMPTY_INT_EN()      \
-			(SET_BIT(NPCX_UFTCTL, NPCX_UFTCTL_TEMPTY_EN))
-/* True if UART Tx FIFO empty interrupt is enabled */
-#define NPCX_UART_TX_EMPTY_INT_IS_EN()   \
-			(IS_BIT_SET(NPCX_UFTCTL, NPCX_UFTCTL_TEMPTY_EN))
-/* Disable UART Tx FIFO empty interrupt */
-#define NPCX_UART_TX_EMPTY_INT_DIS()     \
-			(CLEAR_BIT(NPCX_UFTCTL, NPCX_UFTCTL_TEMPTY_EN))
-/* True if the Tx FIFO is not completely full */
-#define NPCX_UART_TX_IS_READY()          \
-			(!(GET_FIELD(NPCX_UFTSTS, NPCX_UFTSTS_TEMPTY_LVL) == 0))
-/*
- * True if Tx is in progress
- * (i.e. FIFO is not empty or last byte in TSFT (Transmit Shift register)
- * is not sent)
- */
-#define NPCX_UART_TX_IN_XMIT()           \
-			(!IS_BIT_SET(NPCX_UFTSTS, NPCX_UFTSTS_NXMIP))
+#define CONSOLE_UART            CONFIG_CONSOLE_UART
 
-/*
- * Enable to generate interrupt when there is at least one byte
- * in the receive FIFO
- */
-#define NPCX_UART_RX_INT_EN()            \
-			(SET_BIT(NPCX_UFRCTL, NPCX_UFRCTL_RNEMPTY_EN))
-/* True if at least one byte is in the receive FIFO */
-#define NPCX_UART_RX_IS_AVAILABLE()      \
-			(IS_BIT_SET(NPCX_UFRSTS, NPCX_UFRSTS_RFIFO_NEMPTY_STS))
+#if CONSOLE_UART
+#define CONSOLE_UART_IRQ        NPCX_IRQ_UART2
 #else
-/* Enable UART Tx buffer empty interrupt */
-#define NPCX_UART_TX_EMPTY_INT_EN()      (NPCX_UICTRL |= 0x20)
-/* True if UART Tx buffer empty interrupt is enabled */
-#define NPCX_UART_TX_EMPTY_INT_IS_EN()   (NPCX_UICTRL & 0x20)
-/* Disable UART Tx buffer empty interrupt */
-#define NPCX_UART_TX_EMPTY_INT_DIS()     (NPCX_UICTRL &= ~0x20)
-/* True if 1-byte Tx buffer is empty */
-#define NPCX_UART_TX_IS_READY()          (NPCX_UICTRL & 0x01)
-/*
- * True if Tx is in progress
- * (i.e. Tx buffer is not empty or last byte in TSFT (Transmit Shift register)
- * is not sent)
- */
-#define NPCX_UART_TX_IN_XMIT()           (NPCX_USTAT & 0x40)
- /* Enable to generate interrupt when there is data in the receive buffer */
-#define NPCX_UART_RX_INT_EN()            (NPCX_UICTRL = 0x40)
-/* True if there is data in the 1-byte Receive buffer */
-#define NPCX_UART_RX_IS_AVAILABLE()      (NPCX_UICTRL & 0x02)
+#define CONSOLE_UART_IRQ        NPCX_IRQ_UART
 #endif
 
 static int init_done;
@@ -149,7 +107,6 @@ int uart_init_done(void)
 
 void uart_tx_start(void)
 {
-	/* We needn't to switch uart from gpio again in npcx7. */
 #if defined(CHIP_FAMILY_NPCX5)
 	if (uart_is_enable_wakeup() && pad == UART_DEFAULT_PAD) {
 		/* disable MIWU */
@@ -161,57 +118,35 @@ void uart_tx_start(void)
 	}
 #endif
 
-	/* If interrupt is already enabled, nothing to do */
-	if (NPCX_UART_TX_EMPTY_INT_IS_EN())
-		return;
-
-	/* Do not allow deep sleep while transmit in progress */
-	disable_sleep(SLEEP_MASK_UART);
-
-	/*
-	 * Re-enable the transmit interrupt, then forcibly trigger the
-	 * interrupt.  This works around a hardware problem with the
-	 * UART where the FIFO only triggers the interrupt when its
-	 * threshold is _crossed_, not just met.
-	 */
-	NPCX_UART_TX_EMPTY_INT_EN();
-
-	task_trigger_irq(NPCX_IRQ_UART);
+	uartn_tx_start(CONSOLE_UART);
 }
 
 void uart_tx_stop(void)
 {
-	/* Disable TX interrupt */
-	NPCX_UART_TX_EMPTY_INT_DIS();
+	uint8_t sleep_ena;
 
-	/*
-	 * Re-allow deep sleep when transmiting on the default pad (deep sleep
-	 * is always disabled when alternate pad is selected).
-	 */
-	if (pad == UART_DEFAULT_PAD)
-		enable_sleep(SLEEP_MASK_UART);
+	sleep_ena = (pad == UART_DEFAULT_PAD) ? 1 : 0;
+	uartn_tx_stop(CONSOLE_UART, sleep_ena);
 }
 
 void uart_tx_flush(void)
 {
-	/* Wait for transmit FIFO empty and last byte is sent */
-	while (NPCX_UART_TX_IN_XMIT())
-		;
+	uartn_tx_flush(CONSOLE_UART);
 }
 
 int uart_tx_ready(void)
 {
-	return NPCX_UART_TX_IS_READY();
+	return uartn_tx_ready(CONSOLE_UART);
 }
 
 int uart_tx_in_progress(void)
 {
-	return NPCX_UART_TX_IN_XMIT();
+	return uartn_tx_in_progress(CONSOLE_UART);
 }
 
 int uart_rx_available(void)
 {
-	int rx_available = NPCX_UART_RX_IS_AVAILABLE();
+	int rx_available = uartn_rx_available(CONSOLE_UART);
 
 	if (rx_available && pad == UART_DEFAULT_PAD) {
 #ifdef CONFIG_LOW_POWER_IDLE
@@ -232,44 +167,29 @@ int uart_rx_available(void)
 
 void uart_write_char(char c)
 {
-	/* Wait for space in transmit FIFO. */
-	while (!uart_tx_ready())
-		;
-
-	NPCX_UTBUF = c;
+	uartn_write_char(CONSOLE_UART, c);
 }
 
 int uart_read_char(void)
 {
-	return NPCX_URBUF;
+	return uartn_read_char(CONSOLE_UART);
 }
 
-void uart_clear_rx_fifo(int channel)
-{
-	int scratch __attribute__ ((unused));
-	if (channel == 0) { /* suppose '0' is EC UART*/
-		/*if '1' that mean have a RX data on the FIFO register*/
-		while (NPCX_UART_RX_IS_AVAILABLE())
-			scratch = NPCX_URBUF;
-	}
-}
-
-/**
- * Interrupt handler for UART0
- */
+/* Interrupt handler for Console UART */
 void uart_ec_interrupt(void)
 {
 #ifdef CONFIG_UART_PAD_SWITCH
 	if (pad == UART_ALTERNATE_PAD) {
-		if (uart_rx_available()) {
-			uint8_t c = uart_read_char();
+		if (uartn_rx_available(NPCX_UART_PORT0)) {
+			uint8_t c = uartn_read_char(NPCX_UART_PORT0);
 
 			if (altpad_rx_pos < altpad_rx_len)
 				altpad_rx_buf[altpad_rx_pos++] = c;
 		}
-		if (uart_tx_ready()) {
+		if (uartn_tx_ready(NPCX_UART_PORT0)) {
 			if (altpad_tx_pos < altpad_tx_len)
-				uart_write_char(altpad_tx_buf[altpad_tx_pos++]);
+				uartn_write_char(NPCX_UART_PORT0,
+					altpad_tx_buf[altpad_tx_pos++]);
 			else
 				uart_tx_stop();
 		}
@@ -283,9 +203,9 @@ void uart_ec_interrupt(void)
 	uart_process_output();
 }
 #ifdef NPCX_UART_FIFO_SUPPORT
-DECLARE_IRQ(NPCX_IRQ_UART, uart_ec_interrupt, 4);
+DECLARE_IRQ(CONSOLE_UART_IRQ, uart_ec_interrupt, 4);
 #else
-DECLARE_IRQ(NPCX_IRQ_UART, uart_ec_interrupt, 1);
+DECLARE_IRQ(CONSOLE_UART_IRQ, uart_ec_interrupt, 1);
 #endif
 
 #ifdef CONFIG_UART_PAD_SWITCH
@@ -308,15 +228,15 @@ void uart_reset_default_pad_panic(void)
 static void uart_set_pad(enum uart_pad newpad)
 {
 #ifdef NPCX_UART_FIFO_SUPPORT
-	NPCX_UFTCTL &= ~0xE0;
-	NPCX_UFRCTL &= ~0xE0;
+	NPCX_UFTCTL(NPCX_UART_PORT0) &= ~0xE0;
+	NPCX_UFRCTL(NPCX_UART_PORT0) &= ~0xE0;
 #else
-	NPCX_UICTRL = 0x00;
+	NPCX_UICTRL(NPCX_UART_PORT0) = 0x00;
 #endif
 	task_disable_irq(NPCX_IRQ_UART);
 
 	/* Flush the last byte */
-	uart_tx_flush();
+	uartn_tx_flush(NPCX_UART_PORT0);
 	uart_tx_stop();
 
 	/*
@@ -334,7 +254,7 @@ static void uart_set_pad(enum uart_pad newpad)
 	npcx_gpio2uart();
 
 	/* Re-enable receive interrupt. */
-	NPCX_UART_RX_INT_EN();
+	uartn_rx_int_en(NPCX_UART_PORT0);
 
 	/*
 	 * If pad is switched while a byte is being received, the last byte may
@@ -342,7 +262,7 @@ static void uart_set_pad(enum uart_pad newpad)
 	 * then flush the FIFO. See b/65526215.
 	 */
 	udelay(100);
-	uart_clear_rx_fifo(0);
+	uartn_clear_rx_fifo(NPCX_UART_PORT0);
 
 	task_enable_irq(NPCX_IRQ_UART);
 }
@@ -393,7 +313,7 @@ int uart_alt_pad_write_read(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len,
 	uart_set_pad(UART_ALTERNATE_PAD);
 	gpio_clear_pending_interrupt(GPIO_UART_MAIN_RX);
 	gpio_enable_interrupt(GPIO_UART_MAIN_RX);
-	uart_tx_start();
+	uartn_tx_start(NPCX_UART_PORT0);
 
 	do {
 		usleep(100);
@@ -430,85 +350,9 @@ out:
 	return ret;
 }
 #endif
-
-#ifdef NPCX_UART_FIFO_SUPPORT
-static void uart_set_fifo_mode(void)
-{
-	/* Enable the UART FIFO mode */
-	SET_BIT(NPCX_UMDSL, NPCX_UMDSL_FIFO_MD);
-	/* Disable all Tx interrupts */
-	NPCX_UFTCTL &= ~((1 << NPCX_UFTCTL_TEMPTY_LVL_EN) |
-					(1 << NPCX_UFTCTL_TEMPTY_EN) |
-					(1 << NPCX_UFTCTL_NXIMPEN));
-}
-
-#endif
-
-static void uart_config(void)
-{
-	/* Configure pins from GPIOs to CR_UART */
-	gpio_config_module(MODULE_UART, 1);
-
-	/* Enable MIWU IRQ of UART */
-	task_enable_irq(NPCX_UART_MIWU_IRQ);
-
-#ifdef CONFIG_LOW_POWER_IDLE
-	/*
-	 * Configure the UART wake-up event triggered from a falling edge
-	 * on CR_SIN pin.
-	 */
-	SET_BIT(NPCX_WKEDG(1, NPCX_UART_WK_GROUP), NPCX_UART_WK_BIT);
-#endif
-
-	/*
-	 * If apb2's clock is not 15MHz, we need to find the other optimized
-	 * values of UPSR and UBAUD for baud rate 115200.
-	 */
-#if (NPCX_APB_CLOCK(2) != 15000000)
-#error "Unsupported apb2 clock for UART!"
-#endif
-
-	/*
-	 * Fix baud rate to 115200. If this value is modified, please also
-	 * modify the delay in uart_set_pad and uart_reset_default_pad_panic.
-	 */
-	NPCX_UPSR = 0x38;
-	NPCX_UBAUD = 0x01;
-
-	/*
-	 * 8-N-1, FIFO enabled.  Must be done after setting
-	 * the divisor for the new divisor to take effect.
-	 */
-	NPCX_UFRS = 0x00;
-#ifdef NPCX_UART_FIFO_SUPPORT
-	uart_set_fifo_mode();
-#endif
-	NPCX_UART_RX_INT_EN();
-}
-
 void uart_init(void)
 {
-	uint32_t mask = 0;
 
-	/*
-	 * Enable UART0 in run, sleep, and deep sleep modes. Enable the Host
-	 * UART in run and sleep modes.
-	 */
-	mask = 0x10; /* bit 4 */
-	clock_enable_peripheral(CGC_OFFSET_UART, mask, CGC_MODE_ALL);
-
-	/* Set pin-mask for UART */
-	npcx_gpio2uart();
-
-	/* Configure UARTs (identically) */
-	uart_config();
-
-	/*
-	 * Enable interrupts for UART0 only. Host UART will have to wait
-	 * until the LPC bus is initialized.
-	 */
-	uart_clear_rx_fifo(0);
-	task_enable_irq(NPCX_IRQ_UART);
-
+	uartn_init(CONSOLE_UART);
 	init_done = 1;
 }

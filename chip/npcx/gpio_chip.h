@@ -6,6 +6,12 @@
 #ifndef __CROS_EC_GPIO_CHIP_H
 #define __CROS_EC_GPIO_CHIP_H
 
+struct npcx_wui {
+	uint8_t table : 2;
+	uint8_t group : 3;
+	uint8_t bit   : 3;
+};
+
 /* Macros to initialize the MIWU mapping table. */
 #define NPCX_WUI_GPIO_PIN(port, index) NPCX_WUI_GPIO_##port##_##index
 #define WUI(tbl, grp, idx) ((struct npcx_wui) { .table = tbl, .group = grp, \

@@ -74,6 +74,15 @@
 #endif
 
 /* Optional feature to configure npcx7 chip */
+
+/* Select which UART Controller is the Console UART */
+#undef CONFIG_CONSOLE_UART
+#define CONFIG_CONSOLE_UART    0 /* 0:UART1 1:UART2 */
+/*
+ * This definition below actually doesn't define which UART controller to be
+ * used. Instead, it defines which pinouts (GPIO10/11 or GPIO64/65) are
+ * connected to "UART1" controller.
+ */
 #if (BOARD_VERSION == 2)
 #define NPCX_UART_MODULE2  1 /* 1:GPIO64/65 as UART1 */
 #else

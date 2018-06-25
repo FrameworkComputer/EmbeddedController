@@ -31,12 +31,6 @@
 #define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
 #endif
 
-struct npcx_wui {
-	uint8_t table : 2;
-	uint8_t group : 3;
-	uint8_t bit   : 3;
-};
-
 /* Constants for GPIO interrupt mapping */
 #define GPIO_INT(name, pin, flags, signal) NPCX_WUI_GPIO_##pin,
 #ifdef CONFIG_LOW_POWER_IDLE
@@ -605,17 +599,35 @@ void __gpio_rtc_interrupt(void)
 		/* Clear pending bit for WUI */
 		SET_BIT(NPCX_WKPCL(MIWU_TABLE_0, MIWU_GROUP_4), 7);
 		host_set_single_event(EC_HOST_EVENT_RTC);
-	} else
-#endif
-	{
-		gpio_interrupt(WUI_INT(MIWU_TABLE_0, MIWU_GROUP_1));
-		gpio_interrupt(WUI_INT(MIWU_TABLE_0, MIWU_GROUP_4));
+		return;
 	}
+#endif
+#if defined(CHIP_FAMILY_NPCX7) && defined(CONFIG_LOW_POWER_IDLE) && \
+	(CONFIG_CONSOLE_UART == 1)
+	/* Handle the interrupt from UART wakeup event */
+	if (IS_BIT_SET(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_1), 6) &&
+	    IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0, MIWU_GROUP_1), 6)) {
+		/*
+		 * Disable WKEN bit to avoid the other unnecessary interrupts
+		 * from the coming data bits after the start bit. (Pending bit
+		 * of CR_SIN is set when a high-to-low transaction occurs.)
+		 */
+		CLEAR_BIT(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_1), 6);
+		/* Clear pending bit for WUI */
+		SET_BIT(NPCX_WKPCL(MIWU_TABLE_0, MIWU_GROUP_1), 6);
+		/* Notify the clock module that the console is in use. */
+		clock_refresh_console_in_use();
+		return;
+	}
+#endif
+	gpio_interrupt(WUI_INT(MIWU_TABLE_0, MIWU_GROUP_1));
+	gpio_interrupt(WUI_INT(MIWU_TABLE_0, MIWU_GROUP_4));
 }
 
 void __gpio_wk1h_interrupt(void)
 {
-#if defined(CHIP_FAMILY_NPCX7) && defined(CONFIG_LOW_POWER_IDLE)
+#if defined(CHIP_FAMILY_NPCX7) && defined(CONFIG_LOW_POWER_IDLE) && \
+	(CONFIG_CONSOLE_UART == 0)
 	/* Handle the interrupt from UART wakeup event */
 	if (IS_BIT_SET(NPCX_WKEN(MIWU_TABLE_1, MIWU_GROUP_8), 7) &&
 	    IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_1, MIWU_GROUP_8), 7)) {
