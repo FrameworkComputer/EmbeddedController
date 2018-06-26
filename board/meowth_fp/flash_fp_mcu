@@ -18,6 +18,8 @@ if [ -e "/sys/class/gpio/${CNL_GPIOCHIP}" ]; then
 	GPIO_NRST=291
 	# FPMCU BOOT0 is on GPP_A21 = 268 + 21 = 289
 	GPIO_BOOT0=289
+	# FP_PWR_EN is on GPP_A11 = 268 + 11 = 279
+	GPIO_PWREN=279
 elif [ -e "/sys/class/gpio/${KBL_GPIOCHIP}" ]; then
 	# Nocturne configuration
 	SPIDEV="/dev/spidev32765.0"
@@ -25,6 +27,8 @@ elif [ -e "/sys/class/gpio/${KBL_GPIOCHIP}" ]; then
 	GPIO_NRST=418
 	# FPMCU BOOT0 is on GPP_C8 = 360 + 56 = 416
 	GPIO_BOOT0=416
+	# FP_PWR_EN is on GPP_A11 = 360 + 11 = 371
+	GPIO_PWREN=371
 else
 	echo "Cannot find a known GPIO chip."
 	exit 1
@@ -35,6 +39,11 @@ if [ ! -f "$1" ]; then
 	echo "Usage: $0 ec.bin"
 	exit 1
 fi
+
+# Ensure the ACPI is not cutting power when unloading cros-ec-spi
+echo ${GPIO_PWREN} > /sys/class/gpio/export
+echo "out" > /sys/class/gpio/gpio${GPIO_PWREN}/direction
+echo 1 > /sys/class/gpio/gpio${GPIO_PWREN}/value
 
 # Remove cros_fp if present
 echo "${SPIID}" > /sys/bus/spi/drivers/cros-ec-spi/unbind
@@ -48,15 +57,15 @@ echo "out" > /sys/class/gpio/gpio${GPIO_NRST}/direction
 # Reset sequence to enter bootloader mode
 echo 1 > /sys/class/gpio/gpio${GPIO_BOOT0}/value
 echo 0 > /sys/class/gpio/gpio${GPIO_NRST}/value
+sleep 0.001
+# Release reset as the SPI bus is now ready
+echo 1 > /sys/class/gpio/gpio${GPIO_NRST}/value
+echo "in" > /sys/class/gpio/gpio${GPIO_NRST}/direction
 
 # load spidev (fail on cros-ec-spi first to change modalias)
 echo "${SPIID}" > /sys/bus/spi/drivers/cros-ec-spi/bind
 echo "${SPIID}" > /sys/bus/spi/drivers/spidev/bind
 
-# Release reset as the SPI bus is now ready
-echo 1 > /sys/class/gpio/gpio${GPIO_NRST}/value
-
-echo "in" > /sys/class/gpio/gpio${GPIO_NRST}/direction
 
 stm32mon -p -s ${SPIDEV} -e -w $1
 
@@ -79,5 +88,7 @@ echo ${GPIO_NRST} > /sys/class/gpio/unexport
 sleep 2
 # Put back cros_fp driver
 echo "${SPIID}" > /sys/bus/spi/drivers/cros-ec-spi/bind
+# Kernel driver is back, we are no longer controlling power
+echo ${GPIO_PWREN} > /sys/class/gpio/unexport
 # Test it
 ectool --name=cros_fp version
