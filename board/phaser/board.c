@@ -19,15 +19,19 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
 #include "switch.h"
 #include "task.h"
+#include "tablet_mode.h"
 #include "tcpci.h"
 #include "temp_sensor.h"
 #include "thermistor.h"
 #include "util.h"
+
+static uint16_t sku_id;
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -120,8 +124,6 @@ static struct lsm6dsm_data lsm6dsm_g_data;
 static struct lsm6dsm_data lsm6dsm_a_data;
 
 /* Drivers */
-/* lis2de only has a i2c address difference, so we use lis2dh driver */
-/* but use a different address */
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 	 .name = "Lid Accel",
@@ -197,7 +199,32 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+static int board_is_convertible(void)
+{
+	return (sku_id > 0 && sku_id <= 6) || sku_id == 255;
+}
+
+static void board_set_motion_sensor_count(void)
+{
+	if (board_is_convertible())
+		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+	else
+		motion_sensor_count = 0;
+}
+
+static void cbi_init(void)
+{
+	uint32_t val;
+
+	if (cbi_get_sku_id(&val) == EC_SUCCESS)
+		sku_id = val;
+	ccprints("SKU: 0x%04x", sku_id);
+
+	board_set_motion_sensor_count();
+}
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* Initialize board. */
 static void board_init(void)
@@ -206,3 +233,20 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+#ifndef TEST_BUILD
+/* This callback disables keyboard when convertibles are fully open */
+void lid_angle_peripheral_enable(int enable)
+{
+	/*
+	 * If the lid is in tablet position via other sensors,
+	 * ignore the lid angle, which might be faulty then
+	 * disable keyboard.
+	 */
+	if (tablet_get_mode())
+		enable = 0;
+
+	if (board_is_convertible())
+		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+}
+#endif
