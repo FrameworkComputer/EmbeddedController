@@ -120,8 +120,6 @@ const char help_str[] =
 	"      Reads from EC flash to a file\n"
 	"  flashwrite <offset> <infile>\n"
 	"      Writes to EC flash from a file\n"
-	"  fpcheckpixels\n"
-	"      Count the number of dead pixels on the sensor\n"
 	"  fpframe\n"
 	"      Retrieve the finger image as a PGM image\n"
 	"  fpinfo\n"
