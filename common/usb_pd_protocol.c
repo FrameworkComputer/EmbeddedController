@@ -550,7 +550,9 @@ static int get_bbram_idx(int port)
 static int pd_get_saved_port_flags(int port, uint8_t *flags)
 {
 	if (system_get_bbram(get_bbram_idx(port), flags) != EC_SUCCESS) {
+#ifndef CHIP_HOST
 		CPRINTS("PD NVRAM FAIL");
+#endif
 		return EC_ERROR_UNKNOWN;
 	}
 
@@ -559,8 +561,11 @@ static int pd_get_saved_port_flags(int port, uint8_t *flags)
 
 static void pd_set_saved_port_flags(int port, uint8_t flags)
 {
-	if (system_set_bbram(get_bbram_idx(port), flags) != EC_SUCCESS)
+	if (system_set_bbram(get_bbram_idx(port), flags) != EC_SUCCESS) {
+#ifndef CHIP_HOST
 		CPRINTS("PD NVRAM FAIL");
+#endif
+	}
 }
 
 static void pd_update_saved_port_flags(int port, uint8_t flag, uint8_t val)

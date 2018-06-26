@@ -85,5 +85,13 @@ enum nvmem_users {
 #endif /* ! FUZZ_HOSTCMD_VERBOSE */
 #endif /* TEST_HOST_COMMAND_FUZZ */
 
+#if defined(TEST_USB_PD_FUZZ)
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_PORT_COUNT 2
+#define CONFIG_SHA256
+#define CONFIG_SW_CRC
+#endif /* TEST_USB_PD_FUZZ */
+
 #endif  /* TEST_FUZZ */
 #endif  /* __TEST_TEST_CONFIG_H */
