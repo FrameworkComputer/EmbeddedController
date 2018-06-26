@@ -398,6 +398,19 @@ static void board_pmic_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
+static void board_quirks(void)
+{
+	/*
+	 * Newer board revisions have external pull ups stuffed, so remove the
+	 * internal pulls.
+	 */
+	if (board_get_version() > 0) {
+		gpio_set_flags(GPIO_USB_C0_PD_INT_ODL, GPIO_INT_FALLING);
+		gpio_set_flags(GPIO_USB_C1_PD_INT_ODL, GPIO_INT_FALLING);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_quirks, HOOK_PRIO_DEFAULT);
+
 void board_overcurrent_event(int port)
 {
 	/* Sanity check the port. */
