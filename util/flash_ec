@@ -179,6 +179,8 @@ declare -A VALID_CHIP_COMBO
 VALID_CHIP_COMBO["grunt.npcx_uut"]="ccd_cr50"
 VALID_CHIP_COMBO["grunt.npcx_spi"]="servo"
 
+DEFAULT_PORT="${SERVOD_PORT:-9999}"
+
 # Flags
 DEFINE_string board "${DEFAULT_BOARD}" \
 	"The board to run debugger on."
@@ -190,7 +192,7 @@ DEFINE_integer timeout 600 \
 	"Timeout for flashing the EC, measured in seconds."
 DEFINE_string offset "0" \
 	"Offset where to program the image from."
-DEFINE_integer port 9999 \
+DEFINE_integer port "${DEFAULT_PORT}" \
 	"Port to communicate to servo on."
 DEFINE_boolean raiden "${FLAGS_FALSE}" \
 	"Use raiden_debug_spi programmer"
