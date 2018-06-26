@@ -41,6 +41,9 @@
 
 	/* EC variant determines USB-C variant */
 	#define VARIANT_OCTOPUS_USBC_STANDALONE_TCPCS
+
+	/* Allow the EC to enter deep sleep in S0 */
+	#define CONFIG_LOW_POWER_S0
 #elif defined(VARIANT_OCTOPUS_EC_ITE8320)
 	 /* Flash clock must be > (50Mhz / 2) */
 	#define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
