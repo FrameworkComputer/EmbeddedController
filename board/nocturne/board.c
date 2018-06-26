@@ -246,6 +246,27 @@ const struct motion_sensor_t *motion_als_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 
+static void disable_sensor_irqs(void)
+{
+	/*
+	 * In S5, sensors are unpowered, therefore disable their interrupts on
+	 * shutdown.
+	 */
+	gpio_disable_interrupt(GPIO_ACCELGYRO3_INT_L);
+	gpio_disable_interrupt(GPIO_RCAM_VSYNC);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, disable_sensor_irqs, HOOK_PRIO_DEFAULT);
+
+static void enable_sensor_irqs(void)
+{
+	/*
+	 * Re-enable the sensor interrupts when entering S0.
+	 */
+	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
+	gpio_enable_interrupt(GPIO_RCAM_VSYNC);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_sensor_irqs, HOOK_PRIO_DEFAULT);
+
 struct ppc_config_t ppc_chips[] = {
 	{
 		.i2c_port = I2C_PORT_USB_C0,
@@ -356,10 +377,6 @@ void board_hibernate(void)
 
 static void board_init(void)
 {
-	/* Enable sensor interrupts. */
-	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
-	gpio_enable_interrupt(GPIO_RCAM_VSYNC);
-
 	/* Enable USB Type-C interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
