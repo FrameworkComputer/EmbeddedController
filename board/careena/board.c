@@ -239,3 +239,21 @@ void board_reset_pd_mcu(void)
 	msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 	board_set_tcpc_power_mode(USB_PD_PORT_ANX74XX, 1);
 }
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+/*
+ * We have total 24 pins for keyboard connecter, {-1, -1} mean
+ * the N/A pin that don't consider it and reserve index 0 area
+ * that we don't have pin 0.
+ */
+const int keyboard_factory_scan_pins[][2] = {
+		{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
+		{0, 7}, {1, 4}, {1, 3}, {1, 6}, {-1, -1},
+		{3, 1}, {2, 0}, {1, 5}, {2, 6}, {-1, -1},
+		{2, 1}, {2, 4}, {2, 5}, {1, 2}, {2, 3},
+		{2, 2}, {3, 0}, {-1, -1}, {-1, -1}, {-1, -1},
+};
+
+const int keyboard_factory_scan_pins_used =
+			ARRAY_SIZE(keyboard_factory_scan_pins);
+#endif

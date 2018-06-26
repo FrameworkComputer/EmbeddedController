@@ -22,6 +22,7 @@
 
 #define CONFIG_LED_COMMON
 #define CONFIG_CMD_LEDTEST
+#define CONFIG_KEYBOARD_FACTORY_TEST
 
 #ifndef __ASSEMBLER__
 
@@ -37,6 +38,11 @@ enum battery_type {
 	BATTERY_SAMSUNG_SDI,
 	BATTERY_TYPE_COUNT,
 };
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
 
 #endif /* !__ASSEMBLER__ */
 
