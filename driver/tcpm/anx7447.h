@@ -31,6 +31,13 @@
 
 #define ANX7447_REG_INTP_CTRL_0		0x9E
 
+#define ANX7447_REG_ANALOG_CTRL_8	0xA8
+#define ANX7447_REG_VCONN_OCP_MASK	0x0C
+#define ANX7447_REG_VCONN_OCP_240mA	0x00
+#define ANX7447_REG_VCONN_OCP_310mA	0x04
+#define ANX7447_REG_VCONN_OCP_370mA	0x08
+#define ANX7447_REG_VCONN_OCP_440mA	0x0C
+
 /*
  * This section of defines are only required to support the config option
  * CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE_COMMAND.

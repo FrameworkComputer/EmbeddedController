@@ -333,6 +333,14 @@ static int anx7447_init(int port)
 	if (rv)
 		return rv;
 
+	/* Set VCONN OCP(Over Current Protection) threshold */
+	rv = tcpc_read(port, ANX7447_REG_ANALOG_CTRL_8, &reg);
+	if (rv)
+		return rv;
+	reg &= ~ANX7447_REG_VCONN_OCP_MASK;
+	reg |= ANX7447_REG_VCONN_OCP_370mA;
+	rv = tcpc_write(port, ANX7447_REG_ANALOG_CTRL_8, reg);
+
 	/* init hpd status */
 	anx7447_hpd_mode_en(port);
 	anx7447_set_hpd_level(port, 0);
