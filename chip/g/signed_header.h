@@ -45,12 +45,36 @@ struct SignedHeader {
 	uint32_t err_response_;
 	/* action to take when expectation is violated */
 	uint32_t expect_response_;
-	/*
-	 * Padding to bring the total structure size to 1K. Note: First 17
-	 * words of _pad[] may be used by a second FIPS-compliant signature,
-	 * so don't put anything there.
-	 */
-	uint32_t _pad[23];
+
+	union {
+		// 2nd FIPS signature (gnubby RW / Cr51)
+		struct {
+			uint32_t keyid;
+			uint32_t r[8];
+			uint32_t s[8];
+		} ext_sig;
+
+		// FLASH trim override (Dauntless RO)
+		// iff config1_ & 65536
+		struct {
+			uint32_t FSH_SMW_SETTING_OPTION3;
+			uint32_t FSH_SMW_SETTING_OPTION2;
+			uint32_t FSH_SMW_SETTING_OPTIONA;
+			uint32_t FSH_SMW_SETTING_OPTIONB;
+			uint32_t FSH_SMW_SMP_WHV_OPTION1;
+			uint32_t FSH_SMW_SMP_WHV_OPTION0;
+			uint32_t FSH_SMW_SME_WHV_OPTION1;
+			uint32_t FSH_SMW_SME_WHV_OPTION0;
+		} fsh;
+	} u;
+
+	/* Padding to bring the total structure size to 1K. */
+	uint32_t _pad[5];
+	struct {
+		unsigned size:12;
+		unsigned offset:20;
+	} swap_mark;
+
 	/* Field for managing updates between RW product families. */
 	uint32_t rw_product_family_;
 	/* Board ID type, mask, flags (stored ^SIGNED_HEADER_PADDING) */
