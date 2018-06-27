@@ -730,6 +730,10 @@ static void cbi_init(void)
 	if (cbi_get_sku_id(&val) == EC_SUCCESS && val <= UINT16_MAX)
 		sku = val;
 	CPRINTS("SKU: 0x%04x", sku);
+
+	if (board_version < 0x300)
+		/* Previous boards have GPIO42 connected to TP_INT_CONN */
+		gpio_set_flags(GPIO_USB2_ID, GPIO_INPUT);
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
