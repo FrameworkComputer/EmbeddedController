@@ -39,7 +39,7 @@ static int time_set;
 
 void usleep(unsigned us)
 {
-	if (!task_start_called()) {
+	if (!task_start_called() || task_get_current() == TASK_ID_INVALID) {
 		udelay(us);
 		return;
 	}

@@ -54,7 +54,8 @@ static int generator_sleeping;
 static timestamp_t generator_sleep_deadline;
 static int has_interrupt_generator = 1;
 
-static __thread task_id_t my_task_id; /* thread local task id */
+/* thread local task id */
+static __thread task_id_t my_task_id = TASK_ID_INVALID;
 
 static void task_enable_all_tasks_callback(void);
 
