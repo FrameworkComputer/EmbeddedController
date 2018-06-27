@@ -16,6 +16,8 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
+#define CONFIG_LED_COMMON
+
 /* Hardware for proto bip does not support ec keyboard backlight control. */
 #undef CONFIG_PWM
 #undef CONFIG_PWM_KBLIGHT

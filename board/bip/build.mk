@@ -9,6 +9,6 @@
 CHIP:=it83xx
 BASEBOARD:=octopus
 
-board-y=board.o
+board-y=board.o led.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o
 board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
