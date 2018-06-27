@@ -8,6 +8,7 @@
 #include "common.h"
 #include "console.h"
 #include "system.h"
+#include "printf.h"
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
@@ -141,6 +142,14 @@ static int test_atoi(void)
 		   (atoi("\t111") == 111));
 }
 
+static int test_snprintf(void)
+{
+	char buffer[32];
+
+	TEST_CHECK(snprintf(buffer, sizeof(buffer), "%u", 1234) == 4);
+	TEST_CHECK(strncmp(buffer, "1234", sizeof(buffer)));
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -157,6 +166,7 @@ void run_test(void)
 	RUN_TEST(test_strcasecmp);
 	RUN_TEST(test_strncasecmp);
 	RUN_TEST(test_atoi);
+	RUN_TEST(test_snprintf);
 
 	test_print_result();
 }
