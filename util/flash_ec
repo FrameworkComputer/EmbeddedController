@@ -47,6 +47,7 @@ die() {
 
 BOARDS_IT83XX=(
 	bip
+	dragonegg
 	glkrvp_ite
 	it83xx_evb
 	reef_it8320
