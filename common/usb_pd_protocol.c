@@ -2228,8 +2228,6 @@ void pd_task(void *u)
 	usb_mux_init(port);
 #endif
 
-	/* Initialize PD protocol state variables for each port. */
-	pd_set_power_role(port, PD_ROLE_DEFAULT(port));
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/*
 	 * If there's an explicit contract in place, let's restore the data and
@@ -2265,7 +2263,11 @@ void pd_task(void *u)
 		}
 	}
 #endif /* defined(CONFIG_USB_PD_DUAL_ROLE) */
+	/* Set the power role if we haven't already. */
+	if (this_state != PD_STATE_SOFT_RESET)
+		pd_set_power_role(port, PD_ROLE_DEFAULT(port));
 
+	/* Initialize PD protocol state variables for each port. */
 	pd[port].vdm_state = VDM_STATE_DONE;
 	set_state(port, this_state);
 #ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
