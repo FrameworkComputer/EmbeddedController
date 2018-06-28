@@ -22,7 +22,7 @@ HOST_CROSS_COMPILE:=$(if $(shell which x86_64-pc-linux-gnu-gcc 2>/dev/null),x86_
 endif
 
 CC=$(CCACHE) $(CROSS_COMPILE)gcc
-CPP=$(CCACHE) $(CROSS_COMPILE)cpp
+CPP=$(CC) -E
 LD=$(CROSS_COMPILE)ld
 NM=$(CROSS_COMPILE)nm
 OBJCOPY=$(CROSS_COMPILE)objcopy

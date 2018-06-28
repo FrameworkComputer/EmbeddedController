@@ -286,7 +286,7 @@ $(foreach b, $(cts_boards), \
 )
 
 cov-test-targets=$(foreach t,$(test-list-host),build/host/$(t).info)
-bldversion=$(shell (./util/getversion.sh ; echo VERSION) | $(CPP) -P)
+bldversion=$(shell (./util/getversion.sh ; echo VERSION) | $(CPP) -P -)
 
 # lcov fails when multiple instances run at the same time.
 # We need to run them sequentially by using flock

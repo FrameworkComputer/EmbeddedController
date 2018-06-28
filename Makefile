@@ -146,21 +146,21 @@ ifneq "$(CONFIG_COMMON_RUNTIME)" "y"
 	_irq_list:=$(shell $(CPP) $(CPPFLAGS) -P -Ichip/$(CHIP) -I$(BASEDIR) \
 		-I$(BDIR) -D"ENABLE_IRQ(x)=EN_IRQ x" \
 		-imacros chip/$(CHIP)/registers.h \
-		$(BDIR)/ec.irqlist | grep "EN_IRQ .*" | cut -c8-)
+		- < $(BDIR)/ec.irqlist | grep "EN_IRQ .*" | cut -c8-)
 	CPPFLAGS+=$(foreach irq,$(_irq_list),\
 		    -D"irq_$(irq)_handler_optional=irq_$(irq)_handler")
 endif
 
 # Compute RW firmware size and offset
 _rw_off_str:=$(shell echo "CONFIG_RW_MEM_OFF" | $(CPP) $(CPPFLAGS) -P \
-		-Ichip/$(CHIP) -I$(BASEDIR) -I$(BDIR) -imacros include/config.h)
+	-Ichip/$(CHIP) -I$(BASEDIR) -I$(BDIR) -imacros include/config.h -)
 _rw_off:=$(shell echo "$$(($(_rw_off_str)))")
 _rw_size_str:=$(shell echo "CONFIG_RW_SIZE" | $(CPP) $(CPPFLAGS) -P \
-		-Ichip/$(CHIP) -I$(BASEDIR) -I$(BDIR) -imacros include/config.h)
+	-Ichip/$(CHIP) -I$(BASEDIR) -I$(BDIR) -imacros include/config.h -)
 _rw_size:=$(shell echo "$$(($(_rw_size_str)))")
 _program_memory_base_str:=$(shell echo "CONFIG_PROGRAM_MEMORY_BASE" | \
-		$(CPP) $(CPPFLAGS) -P \
-		-Ichip/$(CHIP) -I$(BDIR) -I$(BASEDIR) -imacros include/config.h)
+	$(CPP) $(CPPFLAGS) -P \
+	-Ichip/$(CHIP) -I$(BDIR) -I$(BASEDIR) -imacros include/config.h -)
 _program_memory_base=$(shell echo "$$(($(_program_memory_base_str)))")
 
 $(eval BASEBOARD_$(UC_BASEBOARD)=y)
