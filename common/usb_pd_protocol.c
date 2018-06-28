@@ -452,16 +452,18 @@ static inline void set_state(int port, enum pd_states next_state)
 		 */
 		if (pd[port].power_role == PD_ROLE_SOURCE) {
 			/*
-			 * Rp is restored by pd_power_supply_reset if
-			 * CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT is defined.
+			 * If CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT is
+			 * defined, Rp is reset as follows.
+			 * If all ports are open, pd_power_supply_reset will
+			 * change Rp to 3A for all ports. If the other port is
+			 * occupied, it'll be given 3A and this port will be
+			 * given 1.5A.
+			 * In either case, this port is immediately reset to
+			 * 1.5A by tcpm_select_rp_value.
 			 */
 			pd_power_supply_reset(port);
-#if !defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) && \
-		defined(CONFIG_USB_PD_REV30)
-			/* Restore Rp */
 			tcpm_select_rp_value(port, CONFIG_USB_PD_PULLUP);
 			tcpm_set_cc(port, TYPEC_CC_RP);
-#endif
 		}
 #ifdef CONFIG_USB_PD_REV30
 		/* Adjust rev to highest level*/
@@ -2278,12 +2280,7 @@ void pd_task(void *u)
 	/* Initialize PD protocol state variables for each port. */
 	pd[port].vdm_state = VDM_STATE_DONE;
 	set_state(port, this_state);
-#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
-	ASSERT(PD_ROLE_DEFAULT(port) == PD_ROLE_SINK);
-	tcpm_select_rp_value(port, CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT);
-#else
 	tcpm_select_rp_value(port, CONFIG_USB_PD_PULLUP);
-#endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/*
 	 * If we're not in an explicit contract, set our terminations to match
