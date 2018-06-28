@@ -43,6 +43,11 @@ enum pd_rx_errors {
 #define PD_EVENT_CC               (1<<4) /* CC line change event */
 #define PD_EVENT_TCPC_RESET       (1<<5) /* TCPC has reset */
 #define PD_EVENT_UPDATE_DUAL_ROLE (1<<6) /* DRP state has changed */
+/*
+ * A task, other than the task owning the PD port, accessed the TCPC. The task
+ * that owns the port does not send itself this event.
+ */
+#define PD_EVENT_DEVICE_ACCESSED  (1<<7)
 
 /* --- PD data message helpers --- */
 #define PDO_MAX_OBJECTS   7
@@ -717,6 +722,12 @@ enum pd_states {
 #define PD_FLAGS_PARTNER_USB_COMM  (1 << 14)/* port partner is USB comms */
 #define PD_FLAGS_UPDATE_SRC_CAPS   (1 << 15)/* send new source capabilities */
 #define PD_FLAGS_TS_DTS_PARTNER    (1 << 16)/* partner has rp/rp or rd/rd */
+/*
+ * These PD_FLAGS_LPM* flags track the software state (PD_LPM_FLAGS_REQUESTED)
+ * and hardware state (PD_LPM_FLAGS_ENGAGED) of the TCPC lower power mode.
+ */
+#define PD_FLAGS_LPM_REQUESTED     (1 << 17)/* Tracks SW LPM state */
+#define PD_FLAGS_LPM_ENGAGED       (1 << 18)/* Tracks HW LPM state */
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \
@@ -1005,6 +1016,17 @@ int pd_build_request(int port, uint32_t *rdo, uint32_t *ma, uint32_t *mv,
  * @return True if max voltage request allowed, False otherwise
  */
 int pd_is_max_request_allowed(void);
+
+/**
+ * Informs the TCPM state machine that code within the EC has accessed the TCPC
+ * via its communication bus (e.g. i2c). This is important to keep track of as
+ * accessing a TCPC may pull the hardware out of low-power mode.
+ *
+ * Note: Call this function after finished accessing the hardware.
+ *
+ * @param port USB-C port number
+ */
+void pd_device_accessed(int port);
 
 /**
  * Process source capabilities packet

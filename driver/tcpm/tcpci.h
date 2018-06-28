@@ -143,6 +143,9 @@ int tcpci_tcpm_release(int port);
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 int tcpci_tcpc_drp_toggle(int port, int enable);
 #endif
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+int tcpci_enter_low_power_mode(int port);
+#endif
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 void tcpci_tcpc_discharge_vbus(int port, int enable);
 #endif

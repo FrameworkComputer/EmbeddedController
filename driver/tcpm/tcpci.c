@@ -156,10 +156,17 @@ int tcpci_tcpc_drp_toggle(int port, int enable)
 	rv |= tcpc_write(port, TCPC_REG_COMMAND,
 			 TCPC_REG_COMMAND_LOOK4CONNECTION);
 
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	rv |= tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_I2CIDLE);
-#endif
 	return rv;
+}
+#endif
+
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+int tcpci_enter_low_power_mode(int port)
+{
+	/* This uses the raw i2c write to bypass the pd_device_accessed call */
+	return i2c_write8(tcpc_config[port].i2c_host_port,
+			  tcpc_config[port].i2c_slave_addr,
+			  TCPC_REG_COMMAND, TCPC_REG_COMMAND_I2CIDLE);
 }
 #endif
 
@@ -523,14 +530,15 @@ int tcpci_tcpm_mux_set(int i2c_port_addr, mux_state_t mux_state)
 {
 	int reg = 0;
 	int rv;
+
 #ifdef CONFIG_USB_PD_TCPM_TCPCI_MUX_ONLY
-	int port = MUX_PORT(i2c_port_addr);
-	int addr = MUX_ADDR(i2c_port_addr);
+	/* Parameter is port and i2c address */
+	rv = i2c_read8(MUX_PORT(i2c_port_addr), MUX_ADDR(i2c_port_addr),
+		       TCPC_REG_CONFIG_STD_OUTPUT, &reg);
 #else
-	int port = tcpc_config[i2c_port_addr].i2c_host_port;
-	int addr = tcpc_config[i2c_port_addr].i2c_slave_addr;
+	/* Parameter is port only */
+	rv = tcpc_read(i2c_port_addr, TCPC_REG_CONFIG_STD_OUTPUT, &reg);
 #endif
-	rv = i2c_read8(port, addr, TCPC_REG_CONFIG_STD_OUTPUT, &reg);
 	if (rv != EC_SUCCESS)
 		return rv;
 
@@ -543,7 +551,14 @@ int tcpci_tcpm_mux_set(int i2c_port_addr, mux_state_t mux_state)
 	if (mux_state & MUX_POLARITY_INVERTED)
 		reg |= TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED;
 
-	return i2c_write8(port, addr, TCPC_REG_CONFIG_STD_OUTPUT, reg);
+#ifdef CONFIG_USB_PD_TCPM_TCPCI_MUX_ONLY
+	/* Parameter is port and i2c address */
+	return i2c_write8(MUX_PORT(i2c_port_addr), MUX_ADDR(i2c_port_addr),
+			  TCPC_REG_CONFIG_STD_OUTPUT, reg);
+#else
+	/* Parameter is port only */
+	return tcpc_write(i2c_port_addr, TCPC_REG_CONFIG_STD_OUTPUT, reg);
+#endif
 }
 
 /* Reads control register and updates mux_state accordingly */
@@ -551,16 +566,17 @@ int tcpci_tcpm_mux_get(int i2c_port_addr, mux_state_t *mux_state)
 {
 	int reg = 0;
 	int rv;
-#ifdef CONFIG_USB_PD_TCPM_TCPCI_MUX_ONLY
-	int port = MUX_PORT(i2c_port_addr);
-	int addr = MUX_ADDR(i2c_port_addr);
-#else
-	int port = tcpc_config[i2c_port_addr].i2c_host_port;
-	int addr = tcpc_config[i2c_port_addr].i2c_slave_addr;
-#endif
 
 	*mux_state = 0;
-	rv = i2c_read8(port, addr, TCPC_REG_CONFIG_STD_OUTPUT, &reg);
+#ifdef CONFIG_USB_PD_TCPM_TCPCI_MUX_ONLY
+	/* Parameter is port and i2c address */
+	rv = i2c_read8(MUX_PORT(i2c_port_addr), MUX_ADDR(i2c_port_addr),
+		       TCPC_REG_CONFIG_STD_OUTPUT, &reg);
+#else
+	/* Parameter is port only */
+	rv = tcpc_read(i2c_port_addr, TCPC_REG_CONFIG_STD_OUTPUT, &reg);
+#endif
+
 	if (rv != EC_SUCCESS)
 		return rv;
 
@@ -609,5 +625,8 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 #ifdef CONFIG_USBC_PPC
 	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
 	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
+#endif
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
 #endif
 };

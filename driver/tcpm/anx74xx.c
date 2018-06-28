@@ -141,14 +141,28 @@ static void anx74xx_set_power_mode(int port, int mode)
 		/* Update cable cable det signal */
 		anx74xx_update_cable_det(port, mode);
 		/*
-		 * Delay between setting cable_det low and setting RESET_L low
-		 * as recommended the ANX3429 datasheet.
+		 * The final piece of entering low power mode is setting the
+		 * RESET_L signal low, which is done via
+		 * anx74xx_enter_low_power_mode which is called at least 10ms
+		 * after setting cable_det low (above).
 		 */
-		msleep(1);
-		/* Put chip into standby mode */
-		board_set_tcpc_power_mode(port, mode);
 	}
 }
+
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+static int anx74xx_enter_low_power_mode(int port)
+{
+	/*
+	 * The delay between setting cable_det low (in anx74xx_set_power_mode)
+	 * and setting RESET_L low in (board_set_tcpc_power_mode) is at least
+	 * 1 ms. This should be taken care of by the PD_LM_DEBOUCE_US delay of
+	 * 10ms, but we want to protect against any future tweaks of that value.
+	 */
+	msleep(1);
+	board_set_tcpc_power_mode(port, ANX74XX_STANDBY_MODE);
+	return EC_SUCCESS;
+}
+#endif
 
 void anx74xx_tcpc_set_vbus(int port, int enable)
 {
@@ -1094,6 +1108,9 @@ const struct tcpm_drv anx74xx_tcpm_drv = {
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
 		defined(CONFIG_USB_PD_TCPC_LOW_POWER)
 	.drp_toggle		= &anx74xx_tcpc_drp_toggle,
+#endif
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	.enter_low_power_mode	= &anx74xx_enter_low_power_mode,
 #endif
 };
 

@@ -242,6 +242,20 @@ struct tcpm_drv {
 	 */
 	int (*set_src_ctrl)(int port, int enable);
 #endif
+
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	/**
+	 * Instructs the TCPC to enter into low power mode.
+	 *
+	 * NOTE: Do no use tcpc_(read|write) style helper methods in this
+	 * function. You must use i2c_(read|write) directly.
+	 *
+	 * @param port Type-C port number
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*enter_low_power_mode)(int port);
+#endif
 };
 
 enum tcpc_alert_polarity {

@@ -189,6 +189,9 @@ const struct tcpm_drv ps8xxx_tcpm_drv = {
 	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
 #endif
 	.get_chip_info		= &tcpci_get_chip_info,
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
+#endif
 };
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC

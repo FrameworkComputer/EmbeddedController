@@ -63,16 +63,24 @@ const struct anx7447_i2c_addr anx7447_i2c_addrs[] = {
 
 static inline int anx7447_reg_write(int port, int reg, int val)
 {
-	return i2c_write8(tcpc_config[port].i2c_host_port,
+	int rv = i2c_write8(tcpc_config[port].i2c_host_port,
 			  anx[port].i2c_slave_addr,
 			  reg, val);
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	pd_device_accessed(port);
+#endif
+	return rv;
 }
 
 static inline int anx7447_reg_read(int port, int reg, int *val)
 {
-	return i2c_read8(tcpc_config[port].i2c_host_port,
+	int rv = i2c_read8(tcpc_config[port].i2c_host_port,
 			 anx[port].i2c_slave_addr,
 			 reg, val);
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	pd_device_accessed(port);
+#endif
+	return rv;
 }
 
 void anx7447_hpd_mode_en(int port)
@@ -553,6 +561,9 @@ const struct tcpm_drv anx7447_tcpm_drv = {
 #ifdef CONFIG_USBC_PPC
 	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
 	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
+#endif
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
 #endif
 };
 
