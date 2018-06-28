@@ -134,7 +134,8 @@ void st_normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
 {
 	int i, range;
 	struct stprivate_data *drvdata = s->drv_data;
-	/* data is left-aligned and the bottom bits need to be
+	/*
+	 * Data is left-aligned and the bottom bits need to be
 	 * cleared because they may contain trash data.
 	 */
 	uint16_t mask = ~((1 << (16 - drvdata->resol)) - 1);
