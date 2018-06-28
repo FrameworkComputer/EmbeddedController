@@ -40,6 +40,13 @@
 /* Region sizes are no longer a power of 2 so we can't enable MPU */
 #undef  CONFIG_MPU
 
+/* Bootblock */
+#ifdef SECTION_IS_RO
+#define CONFIG_BOOTBLOCK
+
+#define EMMC_SPI_PORT 2
+#endif
+
 /* Optional features */
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_BOARD_VERSION_CUSTOM
@@ -200,6 +207,11 @@ enum sensor_id {
 
 #include "gpio_signal.h"
 #include "registers.h"
+
+#ifdef SECTION_IS_RO
+/* Interrupt handler for emmc task */
+void emmc_cmd_interrupt(enum gpio_signal signal);
+#endif
 
 void board_reset_pd_mcu(void);
 int board_get_version(void);
