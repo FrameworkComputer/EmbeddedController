@@ -78,7 +78,7 @@ SECTIONS
 #if defined(SECTION_IS_RW) && defined(CONFIG_RW_HEAD_ROOM)
 	. = . +  CONFIG_RW_HEAD_ROOM;
 #endif
-        STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vecttable)
+        *(.text.vecttable)
         . = ALIGN(4);
         __image_data_offset = .;
         KEEP(*(.rodata.ver))

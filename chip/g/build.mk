@@ -108,6 +108,7 @@ custom-ro_objs-y += chip/g/uartn.o
 custom-ro_objs-y += common/printf.o
 custom-ro_objs-y += common/util.o
 custom-ro_objs-y += core/cortex-m/init.o
+custom-ro_objs-y += core/cortex-m/vecttable.o
 custom-ro_objs-y += core/cortex-m/panic.o
 dirs-y += chip/g/dcrypto
 dirs-y += chip/g/loader
