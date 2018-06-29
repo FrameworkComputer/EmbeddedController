@@ -534,7 +534,7 @@ static int host_command_read_memmap(struct host_cmd_handler_args *args)
 	uint8_t size = p->size;
 
 	if (size > EC_MEMMAP_SIZE || offset > EC_MEMMAP_SIZE ||
-	    offset + size > EC_MEMMAP_SIZE || size > args->response_size)
+	    offset + size > EC_MEMMAP_SIZE || size > args->response_max)
 		return EC_RES_INVALID_PARAM;
 
 	/* Make sure switch data is initialized */
