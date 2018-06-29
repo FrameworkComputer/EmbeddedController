@@ -309,13 +309,94 @@ uint16_t tcpc_get_alert_status(void)
 /*
  * F75303_Remote1 is near CPU, and F75303_Remote2 is near 5V power IC.
  */
-const struct temp_sensor_t temp_sensors[] = {
+const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
 	{"F75303_Remote1", TEMP_SENSOR_TYPE_CPU, f75303_get_val,
 		F75303_IDX_REMOTE1, 4},
 	{"F75303_Remote2", TEMP_SENSOR_TYPE_BOARD, f75303_get_val,
 		F75303_IDX_REMOTE2, 4},
 };
-BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
+
+/* Nami/Vayne Remote 1, 2 */
+const static struct ec_thermal_config thermal_a = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(39),
+	.temp_fan_max = C_TO_K(50),
+};
+
+/* Sona Remote 1 */
+const static struct ec_thermal_config thermal_b1 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(82),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(89),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(72),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(38),
+	.temp_fan_max = C_TO_K(58),
+};
+
+/* Sona Remote 2 */
+const static struct ec_thermal_config thermal_b2 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(84),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(91),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(74),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(60),
+};
+
+/* Pantheon Remote 1 */
+const static struct ec_thermal_config thermal_c1 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(66),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(71),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(56),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(38),
+	.temp_fan_max = C_TO_K(61),
+};
+
+/* Pantheon Remote 2 */
+const static struct ec_thermal_config thermal_c2 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(74),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(79),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(64),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(38),
+	.temp_fan_max = C_TO_K(61),
+};
 
 #define I2C_PMIC_READ(reg, data) \
 		i2c_read8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1, (reg), (data))
@@ -744,10 +825,23 @@ static void setup_motion_sensors(void)
 
 static void setup_fans(void)
 {
-	if (oem == PROJECT_SONA)
+	switch (oem) {
+	case PROJECT_SONA:
 		fans[FAN_CH_0].rpm = &fan_rpm_1;
-	else if (oem == PROJECT_PANTHEON)
+		thermal_params[0] = thermal_b1;
+		thermal_params[1] = thermal_b2;
+		break;
+	case PROJECT_PANTHEON:
 		fans[FAN_CH_0].rpm = &fan_rpm_2;
+		thermal_params[0] = thermal_c1;
+		thermal_params[1] = thermal_c2;
+		break;
+	default:
+	case PROJECT_NAMI:
+	case PROJECT_VAYNE:
+		thermal_params[0] = thermal_a;
+		thermal_params[1] = thermal_a;
+	}
 }
 
 /*
