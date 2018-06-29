@@ -7,6 +7,8 @@
 #
 
 CHIP:=it83xx
+CHIP_FAMILY:=it8320
+CHIP_VARIANT:=it8320bx
 BASEBOARD:=dragonegg
 
 board-y=board.o
