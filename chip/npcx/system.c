@@ -722,6 +722,14 @@ void system_pre_init(void)
 	 */
 	system_mpu_config();
 
+	/*
+	 * Change FMUL_WIN_DLY from 0x8A to 0x81 for better WoV
+	 * audio quality.
+	 */
+#ifdef CHIP_FAMILY_NPCX7
+	NPCX_FMUL_WIN_DLY = 0x81;
+#endif
+
 #ifdef CONFIG_CHIP_PANIC_BACKUP
 	chip_panic_data_restore();
 #endif

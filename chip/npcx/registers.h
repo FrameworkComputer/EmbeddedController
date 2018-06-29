@@ -889,6 +889,7 @@ enum {
 			(NPCX_PMC_BASE_ADDR + 0x024))
 #define NPCX_PWDWN_CTL(offset)         REG8(NPCX_PWDWN_CTL_ADDR(offset))
 #if defined(CHIP_FAMILY_NPCX7)
+#define NPCX_FMUL_WIN_DLY              REG8(NPCX_PMC_BASE_ADDR + 0x010)
 #define NPCX_RAM_PD(offset)            REG8(NPCX_PMC_BASE_ADDR + 0x020 + offset)
 #endif
 
