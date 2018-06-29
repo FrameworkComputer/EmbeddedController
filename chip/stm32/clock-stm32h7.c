@@ -384,6 +384,18 @@ void clock_init(void)
 	STM32_AXI_TARG_FN_MOD(7) |= READ_ISS_OVERRIDE;
 
 	/*
+	 * Lock (SCUEN=0) power configuration with the LDO enabled.
+	 *
+	 * The STM32H7 Reference Manual says:
+	 * The lower byte of this register is written once after POR and shall
+	 * be written before changing VOS level or ck_sys clock frequency.
+	 *
+	 * The interesting side-effect of this that while the LDO is enabled by
+	 * default at startup, if we enter STOP mode without locking it the MCU
+	 * seems to freeze forever.
+	 */
+	STM32_PWR_CR3 = STM32_PWR_CR3_LDOEN;
+	/*
 	 * Ensure the SPI is always clocked at the same frequency
 	 * by putting it on the fixed 64-Mhz HSI clock.
 	 * per_ck is clocked directly by the HSI (as per the default settings).
