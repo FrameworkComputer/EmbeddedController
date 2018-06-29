@@ -10,6 +10,7 @@
 #include "hooks.h"
 #include "registers.h"
 #include "spi.h"
+#include "system.h"
 #include "task.h"
 #include "util.h"
 
@@ -67,6 +68,9 @@ static void spi_configure(void)
 /* Initialize board. */
 static void board_init(void)
 {
+	/* TODO(b/75105319): re-enable STOP mode when it will fully work */
+	disable_sleep(SLEEP_MASK_FORCE_NO_DSLEEP);
+
 	spi_configure();
 
 	/* Enable interrupt on PCH power signals */
