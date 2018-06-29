@@ -215,6 +215,9 @@ enum sensor_id {
 	LID_ALS,
 };
 
+/* LID_ALS needs to be polled */
+#define CONFIG_ACCEL_FORCE_MODE_MASK	(1 << LID_ALS)
+
 enum adc_channel {
 	ADC_AMON_BMON,
 	ADC_PSYS,
