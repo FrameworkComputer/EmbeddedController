@@ -322,16 +322,21 @@
  * Critical battery shutdown timeout (seconds)
  *
  * If the battery is at extremely low charge (and discharging) or extremely
- * high temperature, the EC will shut itself down. This defines the timeout
- * period in seconds between the critical condition being detected and the
- * EC shutting itself down. Note that if the critical condition is corrected
- * before the timeout expiration, the EC will not shut itself down.
- *
+ * high temperature, the EC will notify the AP and start a timer with the
+ * timeout defined here. If the critical condition is not corrected before
+ * the timeout expires, the EC will shut down the AP (if the AP is not already
+ * off) and then optionally hibernate or cut off battery.
  */
 #define CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT 30
 
 /* Perform a battery cut-off when we reach the battery critical level */
 #undef CONFIG_BATTERY_CRITICAL_SHUTDOWN_CUT_OFF
+
+/*
+ * There is an extra condition we want to meet before cutting off battery
+ * when we found the battery is in a critical condition.
+ */
+#undef CONFIG_BATTERY_CRITICAL_CUT_OFF_CUSTOM_CONDITION
 
 /*
  * Support battery cut-off as host command and console command.

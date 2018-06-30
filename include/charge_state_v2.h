@@ -109,5 +109,11 @@ void board_enable_base_power(int enable);
  */
 void board_base_reset(void);
 
+/**
+ * Don't cut off battery in critical battery condition when this
+ * board-specific routine returns 0.
+ */
+int board_critical_shutdown_check(struct charge_state_data *curr);
+
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */
 

@@ -1277,11 +1277,13 @@ static inline int battery_too_low(void)
 		 curr.batt.voltage <= batt_info->voltage_min));
 }
 
-
-/*
- * Send host event to the AP if the battery is temperature or charge level
- * is critical. Force-shutdown if the problem isn't corrected after timeout.
- */
+ /*
+  * If the battery is at extremely low charge (and discharging) or extremely
+  * high temperature, the EC will notify the AP and start a timer. If the
+  * critical condition is not corrected before the timeout expires, the EC
+  * will shut down the AP (if the AP is not already off) and then optionally
+  * hibernate or cut off battery.
+  */
 static int shutdown_on_critical_battery(void)
 {
 	int batt_temp_c;
@@ -1321,6 +1323,10 @@ static int shutdown_on_critical_battery(void)
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 			/* Timeout waiting for charger to provide more power */
 #if defined(CONFIG_BATTERY_CRITICAL_SHUTDOWN_CUT_OFF)
+#ifdef CONFIG_BATTERY_CRITICAL_CUT_OFF_CUSTOM_CONDITION
+			if (!board_critical_shutdown_check(&curr))
+				return battery_critical;
+#endif /* CONFIG_BATTERY_CRITICAL_CUT_OFF_CUSTOM_CONDITION */
 			CPRINTS(
 			  "charge force battery cut-off due to critical level");
 			board_cut_off_battery();
