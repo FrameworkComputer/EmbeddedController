@@ -24,11 +24,11 @@ GPIO_INT(POWER_BUTTON_L,    PIN(A, 0),  GPIO_INT_BOTH | GPIO_PULL_UP,
 
 GPIO_INT(AP_IN_SLEEP_L,     PIN(C, 12), GPIO_INT_BOTH | GPIO_PULL_DOWN,
          power_signal_interrupt)
-GPIO_INT(PMIC_EC_RESETB,    PIN(B, 7),  GPIO_INT_BOTH | GPIO_PULL_UP,
+GPIO_INT(PMIC_EC_RESETB,    PIN(B, 7),  GPIO_INT_BOTH | GPIO_PULL_DOWN,
          power_signal_interrupt)
 GPIO_INT(WARM_RESET_REQ,    PIN(A, 3),  GPIO_INT_RISING | GPIO_PULL_DOWN,
          warm_reset_request_interrupt)
-GPIO_INT(AP_EC_WATCHDOG_L,  PIN(C, 2),  GPIO_INT_FALLING | GPIO_PULL_UP,
+GPIO_INT(AP_EC_WATCHDOG_L,  PIN(C, 2),  GPIO_INT_FALLING,
          ap_watchdog_interrupt)
 
 GPIO_INT(ACCEL_INT_ODL,     PIN(A, 4), GPIO_INT_FALLING | GPIO_SEL_1P8V | GPIO_PULL_UP,
@@ -45,8 +45,8 @@ GPIO(PP3300_S3_EN,         PIN(A, 8),  GPIO_OUT_LOW)
 
 /* Reset pins */
 GPIO(AP_SYS_RST_L,         PIN(C, 11), GPIO_ODR_LOW)
-GPIO(PMIC_WATCHDOG_L,      PIN(C, 3),  GPIO_ODR_HIGH)
-GPIO(PMIC_EN_ODL,          PIN(C, 10), GPIO_OUT_LOW)
+GPIO(PMIC_WATCHDOG_L,      PIN(C, 3),  GPIO_OUT_LOW)
+GPIO(PMIC_EN_ODL,          PIN(C, 10), GPIO_ODR_HIGH)
 GPIO(PMIC_FORCE_RESET,     PIN(A, 2),  GPIO_OUT_LOW)
 GPIO(MT6370_RST_L,         PIN(F, 0),  GPIO_OUT_LOW)
 
@@ -64,7 +64,7 @@ GPIO(BOARD_ID,             PIN(C, 0),  GPIO_ANALOG)
 
 /* Other input pins */
 GPIO(WP_L,                 PIN(C, 8),  GPIO_INPUT) /* EC_FLASH_WP_ODL */
-GPIO(CCD_MODE_ODL,         PIN(C, 9),  GPIO_INPUT | GPIO_PULL_UP)
+GPIO(CCD_MODE_ODL,         PIN(C, 9),  GPIO_INPUT)
 GPIO(BOOT0,                PIN(F, 11), GPIO_INPUT)
 
 /* Other output pins */

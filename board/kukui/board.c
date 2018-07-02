@@ -62,9 +62,14 @@ static void warm_reset_request_interrupt(enum gpio_signal signal)
 
 static void ap_watchdog_interrupt(enum gpio_signal signal)
 {
-	CPRINTS("AP watchdog triggered.");
-	cflush();
-	/* TODO(b:109900671): Handle AP watchdog, when necessary. */
+	int level = gpio_get_level(GPIO_AP_EC_WATCHDOG_L);
+
+	CPRINTS("AP watchdog level %d", level);
+	/*
+	 * TODO(b:109900671): Handle AP watchdog, when necessary, for now, just
+	 * mirror input to output.
+	 */
+	gpio_set_level(GPIO_PMIC_WATCHDOG_L, level);
 }
 
 #include "gpio_list.h"
