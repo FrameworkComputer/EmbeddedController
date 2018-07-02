@@ -4680,7 +4680,7 @@ enum ec_pd_control_cmd {
 };
 
 struct __ec_align1 ec_params_pd_control {
-	uint8_t chip;         /* chip id (should be 0) */
+	uint8_t chip;         /* chip id */
 	uint8_t subcmd;
 };
 
