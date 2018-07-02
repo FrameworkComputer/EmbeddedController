@@ -115,6 +115,15 @@ static void ppc_interrupt(enum gpio_signal signal)
 	sn5s330_interrupt(0);
 }
 
+/* Wake-up pins for hibernate */
+const enum gpio_signal hibernate_wake_pins[] = {
+	GPIO_LID_OPEN,
+	GPIO_AC_PRESENT,
+	GPIO_POWER_BUTTON_L,
+	GPIO_EC_RST_ODL,
+};
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
+
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Base detection */

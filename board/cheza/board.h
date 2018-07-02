@@ -149,8 +149,8 @@
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_PP5000_CONTROL
 
-/* TODO(b/79348203): Enable EC hibernate */
-#undef CONFIG_HIBERNATE
+/* NPCX Features */
+#define CONFIG_HIBERNATE_PSL
 
 /* I2C Ports */
 #define I2C_PORT_BATTERY I2C_PORT_POWER
