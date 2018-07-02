@@ -102,8 +102,8 @@ GPIO(USB_C1_PD_RST_ODL,  PIN(L, 7), GPIO_ODR_HIGH)	/* C1 PD Reset */
 GPIO(USB2_OTG_ID,	 PIN(I, 2), GPIO_OUT_LOW)	/* OTG ID */
 
 /* LED */
-GPIO(BAT_LED_ORANGE, PIN(A, 6), GPIO_OUT_LOW)		/* LED_1_L */
-GPIO(BAT_LED_BLUE,   PIN(A, 3), GPIO_OUT_LOW)		/* LED_2_L */
+GPIO(BAT_LED_ORANGE, PIN(A, 6), GPIO_OUT_LOW)		/* LED_1_L NOTE: actually active high, but labeled _L in the schematics */
+GPIO(BAT_LED_BLUE,   PIN(A, 3), GPIO_OUT_LOW)		/* LED_2_L NOTE: actually active high, but labeled _L in the schematics */
 
 /* Not implemented in hardware yet */
 UNIMPLEMENTED(KB_BL_PWR_EN)
