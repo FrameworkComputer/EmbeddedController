@@ -154,7 +154,8 @@ class Spower(object):
     self._board = board
 
     # Find the stm32.
-    dev_list = usb.core.find(idVendor=vendor, idProduct=product, find_all=True)
+    dev_g = usb.core.find(idVendor=vendor, idProduct=product, find_all=True)
+    dev_list = list(dev_g)
     if dev_list is None:
       raise Exception("Power", "USB device not found")
 
