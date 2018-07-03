@@ -122,7 +122,7 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_TOUCHPAD, 81) = {
  */
 static const uint8_t report_desc[] = {
 	0x05, 0x0D,        /* Usage Page (Digitizer) */
-	0x09, 0x04,        /* Usage (Touch Screen) */
+	0x09, 0x05,        /* Usage (Touch Pad) */
 	0xA1, 0x01,        /* Collection (Application) */
 	0x85, 0x01,        /*   Report ID (1, Touch) */
 	/* Finger 0 */
