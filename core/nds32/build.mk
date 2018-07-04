@@ -14,6 +14,7 @@ $(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_nds32),$(NDS32_DEFAULT_COMPILE))
 
 # CPU specific compilation flags
 CFLAGS_CPU+=-march=v3m -Os
+LDFLAGS_EXTRA+=-mrelax
 
 ifneq ($(CONFIG_LTO),)
 CFLAGS_CPU+=-flto
