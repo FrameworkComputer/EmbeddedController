@@ -164,12 +164,12 @@ static int command_crash(int argc, char **argv)
 	if (!strcasecmp(argv[1], "assert")) {
 		ASSERT(0);
 	} else if (!strcasecmp(argv[1], "divzero")) {
-		int zero = 0;
+		volatile int zero = 0;
 
 		cflush();
 		ccprintf("%08x", (long)1 / zero);
 	} else if (!strcasecmp(argv[1], "udivzero")) {
-		int zero = 0;
+		volatile int zero = 0;
 
 		cflush();
 		ccprintf("%08x", (unsigned long)1 / zero);
