@@ -84,7 +84,8 @@ cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) $(HOST_LDFLAGS) -MMD -MF $@.d  -o $@ \
 cmd_cxx_to_host = $(HOSTCXX) -std=c++0x $(COMMON_WARN) $(HOST_CXXFLAGS)\
 	-I ./$($(notdir $@)_ROOT) -o $@ $(filter %.cc,$^) $($(notdir $@)_LIBS)
 cmd_host_test = ./util/run_host_test $* $(silent)
-cmd_version = ./util/getversion.sh > $@
+# generate new version.h, compare if it changed and replace if so
+cmd_version = ./util/getversion.sh > $@.tmp && cmp $@.tmp $@ >/dev/null || mv $@.tmp $@; rm -f $@.tmp
 cmd_vif = $(out)/util/genvif -b $(BOARD) -o $(out)
 cmd_mv_from_tmp = mv $(out)/$*.bin.tmp $(out)/$*.bin
 cmd_extractrw-y = dd if=$(out)/$(PROJECT).bin.tmp of=$(out)/$(PROJECT).RW.bin \
