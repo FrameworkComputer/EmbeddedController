@@ -28,6 +28,9 @@ GPIO_INT(SLP_SUS_L,       PIN(G, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_EC_RSMRST_ODL,PIN(E, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_EC_DSW_PWROK, PIN(D, 6), GPIO_INT_BOTH, power_signal_interrupt)
 
+/* USB-C interrupts */
+GPIO_INT(USB_C0_TCPPC_INT_L, PIN(B, 2), GPIO_INT_FALLING, ppc_interrupt)
+
 /* Misc. interrupts */
 /* TODO (b:110880394) Uncomment this when support for buttons is added */
 /* GPIO_INT(VOL_DOWN_ODL,    PIN(I, 6), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt) */
@@ -57,6 +60,9 @@ GPIO(EC_PCH_DSW_PWROK,    PIN(L, 7), GPIO_OUT_LOW)
 GPIO(EC_PCH_RSMRST_L,     PIN(H, 0), GPIO_OUT_HIGH)
 GPIO(EC_PROCHOT_ODL,      PIN(D, 0), GPIO_ODR_HIGH)
 GPIO(PP5000_PG_OD,        PIN(F, 0), GPIO_INPUT)
+
+/* USB and USBC Signals */
+GPIO(USB_OC_ODL,          PIN(J, 6), GPIO_ODR_HIGH)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,            PIN(B, 3), GPIO_INPUT)     /* EC_PROG_SCL */

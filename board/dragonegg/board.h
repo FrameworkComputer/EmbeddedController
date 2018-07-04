@@ -50,6 +50,15 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
+/* List of possible batteries */
+enum battery_type {
+	BATTERY_0RD,
+	BATTERY_TYPE_COUNT,
+};
+
+int board_get_battery_soc(void);
+void board_pd_vconn_ctrl(int port, int cc_pin, int enabled);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

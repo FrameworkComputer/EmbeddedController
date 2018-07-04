@@ -12,3 +12,4 @@ CHIP_VARIANT:=it8320dx
 BASEBOARD:=dragonegg
 
 board-y=board.o
+board-$(CONFIG_BATTERY_SMART)+=battery.o

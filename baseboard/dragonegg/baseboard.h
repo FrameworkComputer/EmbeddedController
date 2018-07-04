@@ -17,7 +17,74 @@
 /* #define CONFIG_POWER_S0IX */
 /* #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
 
+/* Common charger defines */
+#define CONFIG_CHARGE_MANAGER
+/* TODO (b/111309500): Enable this option when support for MAX14637 is added */
+/* #define CONFIG_CHARGE_RAMP_HW */
+#define CONFIG_CHARGER
+#define CONFIG_CHARGER_BQ25710
+#define CONFIG_CHARGER_DISCHARGE_ON_AC
+#define CONFIG_CHARGER_INPUT_CURRENT 512 /* Allow low-current USB charging */
+#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
+#define CONFIG_CHARGER_SENSE_RESISTOR 10
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
+#define CONFIG_CHARGER_V2
+
+/* Common battery defines */
+#define CONFIG_BATTERY_CUT_OFF
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
+#define CONFIG_BATTERY_FUEL_GAUGE
+#define CONFIG_BATTERY_HW_PRESENT_CUSTOM
+#define CONFIG_BATTERY_PRESENT_CUSTOM
+#define CONFIG_BATTERY_REVIVE_DISCONNECT
+#define CONFIG_BATTERY_SMART
+
+/* USB Type C and USB PD defines */
+#undef CONFIG_USB_PD_TCPC_LOW_POWER
+#undef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#define CONFIG_USB_PD_VBUS_DETECT_PPC
+#define CONFIG_USB_PD_TCPM_ITE83XX	/* C0 & C1 TCPC: ITE EC */
+#define CONFIG_USB_POWER_DELIVERY
+/*
+ * TODO (b/111281797): DragonEgg has 3 ports. Only adding support for the port
+ * on the MLB for now. In addition, this config option will likely move to
+ * board.h as it likely board dependent and not same across all follower boards.
+ */
+#define CONFIG_USB_PD_PORT_COUNT 1
+#define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT TYPEC_RP_3A0
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_LOGGING
+#define CONFIG_USB_PD_ALT_MODE
+#define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_DISCHARGE_PPC
+#define CONFIG_USB_PD_TRY_SRC
+#define CONFIG_USB_PD_VBUS_DETECT_PPC
+#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
+#define CONFIG_USB_PD_TCPM_TCPCI
+#define CONFIG_USB_MUX_VIRTUAL
+#define CONFIG_USBC_PPC_SN5S330		/* C0 PPC */
+#define CONFIG_USBC_PPC_VCONN
+#define CONFIG_USBC_SS_MUX
+#define CONFIG_USBC_VCONN
+#define CONFIG_USBC_VCONN_SWAP
+
+#define CONFIG_CMD_PD_CONTROL
+#define CONFIG_CMD_PPC_DUMP
+
+/* TODO(b/111281797): Use correct PD delay values */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000	/* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY	250000	/* us */
+#define PD_VCONN_SWAP_DELAY		5000	/* us */
+
+/* TODO(b/111281797): Use correct PD power values */
+#define PD_OPERATING_POWER_MW	15000
+#define PD_MAX_POWER_MW		45000
+#define PD_MAX_CURRENT_MA	3000
+#define PD_MAX_VOLTAGE_MV	20000
+
 /* I2C Bus Configuration */
+#define CONFIG_I2C
+#define CONFIG_I2C_MASTER
 #define I2C_PORT_BATTERY	IT83XX_I2C_CH_F	/* Shared bus */
 #define I2C_PORT_CHARGER	IT83XX_I2C_CH_F	/* Shared bus */
 #define I2C_PORT_SENSOR		IT83XX_I2C_CH_B
@@ -38,6 +105,10 @@ enum power_signal {
 	/* Number of X86 signals */
 	POWER_SIGNAL_COUNT
 };
+
+/* Forward declare common (within DragonEgg) board-specific functions */
+void board_reset_pd_mcu(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BASEBOARD_H */

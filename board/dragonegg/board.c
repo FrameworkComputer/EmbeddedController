@@ -6,8 +6,11 @@
 /* DragonEgg board-specific configuration */
 
 #include "common.h"
+#include "console.h"
+#include "driver/ppc/sn5s330.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "intc.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -18,6 +21,12 @@
 #include "uart.h"
 #include "util.h"
 
+static void ppc_interrupt(enum gpio_signal signal)
+{
+	if (signal == GPIO_USB_C0_TCPPC_INT_L)
+		sn5s330_interrupt(0);
+}
+
 #include "gpio_list.h" /* Must come after other header files. */
 
 /******************************************************************************/
@@ -26,3 +35,12 @@
 const struct spi_device_t spi_devices[] = {
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
+
+void board_overcurrent_event(int port)
+{
+	if (port == 0) {
+		/* TODO(b/111281797): When does this get set high again? */
+		gpio_set_level(GPIO_USB_OC_ODL, 0);
+		cprints(CC_USBPD, "p%d: overcurrent!", port);
+	}
+}
