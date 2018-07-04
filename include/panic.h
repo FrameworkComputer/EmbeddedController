@@ -118,10 +118,11 @@ void panic_data_print(const struct panic_data *pdata);
  * @param linenum	Line number where assertion happened
  */
 #ifdef CONFIG_DEBUG_ASSERT_BRIEF
-void panic_assert_fail(const char *fname, int linenum);
+void panic_assert_fail(const char *fname, int linenum)
+	__attribute__((noreturn));
 #else
 void panic_assert_fail(const char *msg, const char *func, const char *fname,
-		       int linenum);
+		       int linenum) __attribute__((noreturn));
 #endif
 
 /**
@@ -141,7 +142,7 @@ void panic_reboot(void) __attribute__((noreturn));
  * Store a panic log and halt the system for a software-related reason, such as
  * stack overflow or assertion failure.
  */
-void software_panic(uint32_t reason, uint32_t info);
+void software_panic(uint32_t reason, uint32_t info) __attribute__((noreturn));
 
 /**
  * Log a panic in the panic log, but don't halt the system. Normally

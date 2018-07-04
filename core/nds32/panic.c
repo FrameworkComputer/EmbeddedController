@@ -98,6 +98,7 @@ void software_panic(uint32_t reason, uint32_t info)
 		asm("j excep_handler");
 	else
 		asm("break 0");
+	__builtin_unreachable();
 }
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)

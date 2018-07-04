@@ -172,6 +172,7 @@ void software_panic(uint32_t reason, uint32_t info)
 		"mov " STRINGIFY(SOFTWARE_PANIC_REASON_REG) ", %1\n"
 		"bl exception_panic\n"
 		: : "r"(info), "r"(reason));
+	__builtin_unreachable();
 }
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
