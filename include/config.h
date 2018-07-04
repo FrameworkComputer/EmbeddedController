@@ -781,6 +781,7 @@
 #undef CONFIG_CHIPSET_CANNONLAKE	/* Intel Cannonlake (x86) */
 #undef CONFIG_CHIPSET_ECDRIVEN		/* Dummy power module */
 #undef CONFIG_CHIPSET_GEMINILAKE	/* Intel Geminilake (x86) */
+#undef CONFIG_CHIPSET_ICELAKE		/* Intel Icelake (x86) */
 #undef CONFIG_CHIPSET_MT817X		/* MediaTek MT817x */
 #undef CONFIG_CHIPSET_MT8183		/* MediaTek MT8183 */
 #undef CONFIG_CHIPSET_RK3288		/* Rockchip rk3288 */
@@ -800,6 +801,12 @@
 
 /* Enable chipset reset hook, requires a deferrable function */
 #undef CONFIG_CHIPSET_RESET_HOOK
+
+/*
+ * Enable if chipset requires delay between power signals going high
+ * and deasserting RSMRST to PCH.
+ */
+#undef CONFIG_CHIPSET_X86_RSMRST_DELAY
 
 /* Support power rail control */
 #define CONFIG_CHIPSET_HAS_PP1350
@@ -3743,6 +3750,7 @@
 #undef CONFIG_CHIPSET_BRASWELL
 #undef CONFIG_CHIPSET_CANNONLAKE
 #undef CONFIG_CHIPSET_GEMINILAKE
+#undef CONFIG_CHIPSET_ICELAKE
 #undef CONFIG_CHIPSET_MT817X
 #undef CONFIG_CHIPSET_MT8183
 #undef CONFIG_CHIPSET_RK3399
@@ -3802,6 +3810,15 @@
 
 #if defined(CONFIG_CHIPSET_APL_GLK)
 #define CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
+#endif
+
+#if defined(CONFIG_CHIPSET_ICELAKE)
+#define CONFIG_POWER_COMMON
+#endif
+
+#if defined(CONFIG_CHIPSET_SKYLAKE) || defined(CONFIG_CHIPSET_CANNONLAKE) \
+	|| defined(CONFIG_CHIPSET_ICELAKE)
+#define CONFIG_CHIPSET_X86_RSMRST_DELAY
 #endif
 
 /*****************************************************************************/
