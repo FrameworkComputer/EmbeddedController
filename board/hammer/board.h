@@ -203,8 +203,8 @@
 #elif defined(BOARD_WHISKERS)
 #define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 2160
 #define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1080
-#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1000 /* tenth of mm */
-#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 500 /* tenth of mm */
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1030 /* tenth of mm */
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 750 /* tenth of mm */
 #define CONFIG_TOUCHPAD_VIRTUAL_SIZE (128*1024)
 #else
 #error "No touchpad information for board."
