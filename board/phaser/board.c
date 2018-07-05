@@ -251,3 +251,8 @@ void lid_angle_peripheral_enable(int enable)
 		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
 #endif
+
+int board_is_lid_angle_tablet_mode(void)
+{
+	return board_is_convertible();
+}
