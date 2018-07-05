@@ -3,9 +3,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# GSPI1 ACPI device for FP MCU
-SPIID="spi-PRP0001:01"
-
 # Cannonlake PCH GPIOs
 CNL_GPIOCHIP="gpiochip268"
 # Kabylake PCH GPIOs
@@ -13,7 +10,10 @@ KBL_GPIOCHIP="gpiochip360"
 
 if [ -e "/sys/class/gpio/${CNL_GPIOCHIP}" ]; then
 	# Meowth configuration
+
 	SPIDEV="/dev/spidev1.0"
+	# GSPI1 ACPI device for FP MCU
+	SPIID="spi-PRP0001:01"
 	# FPMCU RST_ODL is on GPP_A23 = 268 + 23 = 291
 	GPIO_NRST=291
 	# FPMCU BOOT0 is on GPP_A21 = 268 + 21 = 289
@@ -22,7 +22,10 @@ if [ -e "/sys/class/gpio/${CNL_GPIOCHIP}" ]; then
 	GPIO_PWREN=279
 elif [ -e "/sys/class/gpio/${KBL_GPIOCHIP}" ]; then
 	# Nocturne configuration
+
 	SPIDEV="/dev/spidev32765.0"
+	# GSPI1 ACPI device for FP MCU
+	SPIID="spi-PRP0001:02"
 	# FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
 	GPIO_NRST=418
 	# FPMCU BOOT0 is on GPP_C8 = 360 + 56 = 416
