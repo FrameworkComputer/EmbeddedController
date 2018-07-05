@@ -5,6 +5,7 @@
  * TI LM3630A LED driver.
  */
 
+#include "hooks.h"
 #include "i2c.h"
 #include "lm3630a.h"
 #include "timer.h"
@@ -22,6 +23,17 @@ static inline int lm3630a_read(uint8_t reg, int *val)
 {
 	return i2c_read8(I2C_PORT_KBLIGHT, LM3630A_I2C_ADDR, reg, val);
 }
+
+static void deferred_lm3630a_poweron(void)
+{
+	/*
+	 * Set full brightness so that PWM will control. This needs to happen
+	 * after setting the control register, because enabling the banks
+	 * resets the value to 0.
+	 */
+	lm3630a_write(LM3630A_REG_A_BRIGHTNESS, 0xff);
+}
+DECLARE_DEFERRED(deferred_lm3630a_poweron);
 
 int lm3630a_poweron(void)
 {
@@ -51,13 +63,11 @@ int lm3630a_poweron(void)
 				LM3630A_CTRL_BIT_LED2_ON_A);
 
 	/*
-	 * Set full brightness so that PWM will control. This needs to happen
-	 * after setting the control register, because enabling the banks
-	 * resets the value to 0 (the short sleep prevents a race between the
-	 * chip resetting the value to 0 and our command).
+	 * Only set the brightness after ~100 ms. Without this, LED may blink
+	 * for a short duration, as the PWM sampler sometimes appears to be
+	 * confused, and slowly dim from a large initial PWM input value.
 	 */
-	usleep(100);
-	ret |= lm3630a_write(LM3630A_REG_A_BRIGHTNESS, 0xff);
+	hook_call_deferred(&deferred_lm3630a_poweron_data, 100 * MSEC);
 
 	return ret;
 }
