@@ -18,6 +18,10 @@
 #undef CONFIG_VBOOT_HASH
 #undef CONFIG_USB_PD_LOGGING
 
+#ifdef TEST_AES
+#define CONFIG_AES
+#endif
+
 #ifdef TEST_BASE32
 #define CONFIG_BASE32
 #endif

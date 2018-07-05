@@ -38,16 +38,7 @@
 @ Profiler-assisted and platform-specific optimization resulted in 16%
 @ improvement on Cortex A8 core and ~21.5 cycles per byte.
 
-#ifndef __KERNEL__
-# include <openssl/arm_arch.h>
-#else
-# define __ARM_ARCH__ __LINUX_ARM_ARCH__
-#endif
-
-@ Silence ARMv8 deprecated IT instruction warnings. This file is used by both
-@ ARMv7 and ARMv8 processors and does not use ARMv8 instructions. (ARMv8 AES
-@ instructions are in aesv8-armx.pl.)
-.arch  armv7-a
+#define __ARM_ARCH__ 7
 
 .text
 #if defined(__thumb2__) && !defined(__APPLE__)

@@ -10,3 +10,5 @@ CHIP_FAMILY:=stm32h7
 CHIP_VARIANT:=stm32h7x3
 
 board-y=board.o
+
+test-list-y=aes sha256 sha256_unrolled
