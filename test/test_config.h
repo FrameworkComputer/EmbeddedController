@@ -20,6 +20,7 @@
 
 #ifdef TEST_AES
 #define CONFIG_AES
+#define CONFIG_AES_GCM
 #endif
 
 #ifdef TEST_BASE32

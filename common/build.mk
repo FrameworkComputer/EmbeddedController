@@ -19,6 +19,7 @@ common-$(CONFIG_ACCEL_KX022)+=math_util.o
 ifneq ($(CORE),cortex-m)
 common-$(CONFIG_AES)+=aes.o
 endif
+common-$(CONFIG_AES_GCM)+=aes-gcm.o
 common-$(CONFIG_CMD_ADC)+=adc.o
 common-$(HAS_TASK_ALS)+=als.o
 common-$(CONFIG_AP_HANG_DETECT)+=ap_hang_detect.o
@@ -161,6 +162,11 @@ ifneq ($(CONFIG_RSA_OPTIMIZED),)
 $(out)/RW/common/rsa.o: CFLAGS+=-O3
 $(out)/RO/common/rsa.o: CFLAGS+=-O3
 endif
+
+# AES-GCM code needs C99, else we'd have to move many variables declarations
+# around.
+$(out)/RW/common/aes-gcm.o: CFLAGS+=-std=c99 -Wno-declaration-after-statement
+$(out)/RO/common/aes-gcm.o: CFLAGS+=-std=c99 -Wno-declaration-after-statement
 
 ifneq ($(CONFIG_BOOTBLOCK),)
 build-util-bin += gen_emmc_transfer_data

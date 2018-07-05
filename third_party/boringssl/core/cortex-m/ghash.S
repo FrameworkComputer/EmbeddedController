@@ -8,12 +8,7 @@
 @ in the file LICENSE in the source distribution or at
 @ https://www.openssl.org/source/license.html
 
-#include <openssl/arm_arch.h>
-
-@ Silence ARMv8 deprecated IT instruction warnings. This file is used by both
-@ ARMv7 and ARMv8 processors and does not use ARMv8 instructions. (ARMv8 PMULL
-@ instructions are in aesv8-armx.pl.)
-.arch  armv7-a
+#define __ARM_ARCH__ 7
 
 .text
 #if defined(__thumb2__) || defined(__clang__)
@@ -111,7 +106,7 @@ gcm_ghash_4bit:
 #ifdef	__thumb2__
 	it	pl
 #endif
-	ldrplb	r12,[r2,r3]
+	ldrbpl	r12,[r2,r3]
 	eor	r6,r6,r7,lsl#28
 	eor	r7,r11,r7,lsr#4
 
@@ -124,7 +119,7 @@ gcm_ghash_4bit:
 #ifdef	__thumb2__
 	it	pl
 #endif
-	ldrplb	r8,[r0,r3]
+	ldrbpl	r8,[r0,r3]
 	eor	r4,r4,r5,lsl#28
 	eor	r5,r9,r5,lsr#4
 	ldrh	r9,[sp,r14]
@@ -180,7 +175,7 @@ gcm_ghash_4bit:
 #ifdef __thumb2__
 	it	ne
 #endif
-	ldrneb	r12,[r2,#15]
+	ldrbne	r12,[r2,#15]
 #if __ARM_ARCH__>=7 && defined(__ARMEL__)
 	rev	r6,r6
 	str	r6,[r0,#4]
@@ -270,7 +265,7 @@ gcm_gmult_4bit:
 #ifdef	__thumb2__
 	it	pl
 #endif
-	ldrplb	r12,[r0,r3]
+	ldrbpl	r12,[r0,r3]
 	eor	r6,r6,r7,lsl#28
 	eor	r7,r11,r7,lsr#4
 
@@ -363,7 +358,7 @@ gcm_gmult_4bit:
 	.word	0xe12fff1e			@ interoperable with Thumb ISA:-)
 #endif
 .size	gcm_gmult_4bit,.-gcm_gmult_4bit
-#if __ARM_MAX_ARCH__>=7
+#ifdef __ARM_NEON__
 .arch	armv7-a
 .fpu	neon
 
