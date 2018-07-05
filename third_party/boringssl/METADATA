@@ -1,0 +1,14 @@
+name: "BoringSSL"
+description:
+    "BoringSSL is a fork of OpenSSL that is designed to meet Google's needs."
+
+third_party {
+  url {
+    type: GIT
+    value: "https://boringssl.googlesource.com/boringssl/"
+  }
+  version: "859679518d3433cdd0dd6cf534bd7bdb2a32dd60"
+  last_upgrade_date { year: 2018 month: 07 day: 05 }
+  license_type: NOTICE
+  local_modifications: "Adapted code to work with EC codebase."
+}
