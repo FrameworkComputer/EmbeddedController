@@ -12,6 +12,7 @@
 
 #define REPORT_ID_TOUCHPAD		0x01
 #define REPORT_ID_DEVICE_CAPS		0x0A
+#define REPORT_ID_DEVICE_CERT		0x0B
 
 #define MAX_FINGERS			5
 
