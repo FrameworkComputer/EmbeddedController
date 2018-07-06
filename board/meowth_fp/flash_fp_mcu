@@ -69,8 +69,9 @@ echo "in" > /sys/class/gpio/gpio${GPIO_NRST}/direction
 echo "${SPIID}" > /sys/bus/spi/drivers/cros-ec-spi/bind
 echo "${SPIID}" > /sys/bus/spi/drivers/spidev/bind
 
+sleep 0.5
 
-stm32mon -p -s ${SPIDEV} -e -w $1
+stm32mon -u -p -s ${SPIDEV} -e -w $1
 
 # unload spidev
 echo "${SPIID}" > /sys/bus/spi/drivers/spidev/unbind
