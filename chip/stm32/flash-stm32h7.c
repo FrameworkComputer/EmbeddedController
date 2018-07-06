@@ -143,9 +143,9 @@ static void protect_blocks(uint32_t blocks)
 {
 	if (unlock_optb())
 		return;
-	STM32_FLASH_WPSN_PRG(0) |= blocks & BLOCKS_HWBANK_MASK;
-	STM32_FLASH_WPSN_PRG(1) |= (blocks >> BLOCKS_PER_HWBANK)
-				& BLOCKS_HWBANK_MASK;
+	STM32_FLASH_WPSN_PRG(0) &= ~(blocks & BLOCKS_HWBANK_MASK);
+	STM32_FLASH_WPSN_PRG(1) &= ~((blocks >> BLOCKS_PER_HWBANK)
+				& BLOCKS_HWBANK_MASK);
 	commit_optb();
 }
 
