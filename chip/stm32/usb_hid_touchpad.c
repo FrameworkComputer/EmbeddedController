@@ -166,7 +166,24 @@ static const uint8_t report_desc[] = {
 	0x95, 0x01,                    /*   Report Count (1) */
 	0x09, 0x56,                    /*   Usage (0x56, Relative Scan Time) */
 	0x81, 0x02,                    /*   Input (Data,Var,Abs) */
+
+	0x85, REPORT_ID_DEVICE_CAPS,   /*   Report ID (Device Capabilities) */
+	0x09, 0x55,                    /*   Usage (Contact Count Maximum) */
+	0x09, 0x59,                    /*   Usage (Pad Type) */
+	0x25, 0x0F,                    /*   Logical Maximum (15) */
+	0x75, 0x08,                    /*   Report Size (8) */
+	0x95, 0x01,                    /*   Report Count (2) */
+	0xB1, 0x02,                    /*   Feature (Data,Var,Abs) */
+
 	0xC0,                          /* End Collection */
+};
+
+/* Device capabilities feature report. */
+static const uint8_t device_caps_response[] = {
+	REPORT_ID_DEVICE_CAPS,
+
+	MAX_FINGERS,            /* Contact Count Maximum */
+	0x00,                   /* Pad Type: Depressible click-pad */
 };
 
 const struct usb_hid_descriptor USB_CUSTOM_DESC_VAR(USB_IFACE_HID_TOUCHPAD,
@@ -328,6 +345,12 @@ static int get_report(uint8_t report_id, uint8_t report_type,
 		      const uint8_t **buffer_ptr,
 		      int *buffer_size)
 {
+	switch (report_id) {
+	case REPORT_ID_DEVICE_CAPS:
+		*buffer_ptr = device_caps_response;
+		*buffer_size = MIN(sizeof(device_caps_response), *buffer_size);
+		return 0;
+	}
 	return -1;
 }
 

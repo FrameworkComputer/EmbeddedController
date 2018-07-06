@@ -11,6 +11,7 @@
 #define USB_HID_TOUCHPAD_TIMESTAMP_UNIT 100 /* usec */
 
 #define REPORT_ID_TOUCHPAD		0x01
+#define REPORT_ID_DEVICE_CAPS		0x0A
 
 #define MAX_FINGERS			5
 
