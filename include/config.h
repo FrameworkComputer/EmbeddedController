@@ -3613,6 +3613,12 @@
 #undef CONFIG_BOARD_ID_SUPPORT
 
 /*
+ * Define this if serial number support is required. For g chip based boards
+ * it allows a verifiable serial number to be stored / certified.
+ */
+#undef CONFIG_SN_BITS_SUPPORT
+
+/*
  * Define this to enable Cros Board Info support. I2C_EEPROM_PORT and
  * I2C_EEPROM_ADDR must be defined as well.
  */

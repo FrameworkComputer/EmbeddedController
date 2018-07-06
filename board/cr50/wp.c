@@ -57,7 +57,7 @@ static void set_wp_state(int asserted)
  *
  * @return 0 if WP deasserted, 1 if WP asserted
  */
-static int get_wp_state(void)
+int wp_is_asserted(void)
 {
 	/* Signal is active low, so invert */
 	return !GREG32(RBOX, EC_WP_L);
@@ -72,7 +72,7 @@ static void check_wp_battery_presence(void)
 		return;
 
 	/* Otherwise, mirror battery */
-	if (bp != get_wp_state()) {
+	if (bp != wp_is_asserted()) {
 		CPRINTS("WP %d", bp);
 		set_wp_state(bp);
 	}
@@ -123,7 +123,7 @@ static enum vendor_cmd_rc vc_set_wp(enum vendor_cmd_cc code,
 	/* Get current wp settings */
 	if (GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_FORCING_WP)
 		response |= WPV_FORCE;
-	if (get_wp_state())
+	if (wp_is_asserted())
 		response |= WPV_ENABLE;
 	/* Get atboot wp settings */
 	if (ccd_get_flag(CCD_FLAG_OVERRIDE_WP_AT_BOOT)) {
@@ -166,7 +166,7 @@ static int command_wp(int argc, char **argv)
 
 	forced = GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_FORCING_WP;
 	ccprintf("Flash WP: %s%s\n", forced ? "forced " : "",
-		 get_wp_state() ? "enabled" : "disabled");
+		 wp_is_asserted() ? "enabled" : "disabled");
 
 	ccprintf(" at boot: ");
 	if (ccd_get_flag(CCD_FLAG_OVERRIDE_WP_AT_BOOT))

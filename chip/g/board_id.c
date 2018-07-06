@@ -70,8 +70,8 @@ int read_board_id(struct board_id *id)
 	id_p = (uint32_t *)id;
 
 	/* Make sure INFO1 board ID space is readable */
-	if (flash_info_read_enable(INFO_BOARD_SPACE_OFFSET,
-				   INFO_BOARD_SPACE_PROTECT_SIZE) !=
+	if (flash_info_read_enable(INFO_BOARD_ID_OFFSET,
+				   INFO_BOARD_ID_PROTECT_SIZE) !=
 	    EC_SUCCESS) {
 		CPRINTS("%s: failed to enable read access to info", __func__);
 		return EC_ERROR_ACCESS_DENIED;
@@ -81,9 +81,7 @@ int read_board_id(struct board_id *id)
 		int rv;
 
 		rv = flash_physical_info_read_word
-			(INFO_BOARD_SPACE_OFFSET +
-			 offsetof(struct info1_board_space, bid) + i,
-			 id_p);
+			(INFO_BOARD_ID_OFFSET + i, id_p);
 		if (rv != EC_SUCCESS) {
 			CPRINTF("%s: failed to read word %d, error %d\n",
 				__func__, i, rv);
@@ -154,15 +152,15 @@ static int write_board_id(const struct board_id *id)
 	}
 
 	/* Enable write access */
-	if (flash_info_write_enable(INFO_BOARD_SPACE_OFFSET,
-				    INFO_BOARD_SPACE_PROTECT_SIZE) !=
+	if (flash_info_write_enable(INFO_BOARD_ID_OFFSET,
+				    INFO_BOARD_ID_PROTECT_SIZE) !=
 	    EC_SUCCESS) {
 		CPRINTS("%s: failed to enable write access", __func__);
 		return EC_ERROR_ACCESS_DENIED;
 	}
 
 	/* Write Board ID */
-	rv = flash_info_physical_write(INFO_BOARD_SPACE_OFFSET +
+	rv = flash_info_physical_write(INFO_BOARD_ID_OFFSET +
 			 offsetof(struct info1_board_space, bid),
 				       sizeof(*id), (const char *)id);
 	if (rv != EC_SUCCESS)

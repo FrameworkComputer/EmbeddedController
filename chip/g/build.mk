@@ -20,6 +20,7 @@ endif
 # Required chip modules
 chip-y = clock.o gpio.o hwtimer.o pre_init.o system.o
 chip-$(CONFIG_BOARD_ID_SUPPORT) += board_id.o
+chip-$(CONFIG_SN_BITS_SUPPORT) += sn_bits.o
 ifeq ($(CONFIG_POLLING_UART),y)
 chip-y += polling_uart.o
 else

@@ -355,6 +355,7 @@ enum nvmem_users {
 #define CONFIG_TPM_I2CS
 
 #define CONFIG_BOARD_ID_SUPPORT
+#define CONFIG_SN_BITS_SUPPORT
 #define CONFIG_EXTENDED_VERSION_INFO
 
 #define I2C_PORT_MASTER 0

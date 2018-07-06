@@ -16,6 +16,13 @@
 void init_wp_state(void);
 
 /**
+ * Get the current write protect state.
+ *
+ * @return 0 if WP deasserted, 1 if WP asserted
+ */
+int wp_is_asserted(void);
+
+/**
  * Read the FWMP value from TPM NVMEM and set the console restriction
  * appropriately.
  */

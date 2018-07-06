@@ -6,6 +6,7 @@
 #define __CROS_EC_SIGNED_HEADER_H
 
 #include "compile_time_macros.h"
+#include "stdint.h"
 
 #define FUSE_PADDING 0x55555555  /* baked in hw! */
 #define FUSE_IGNORE 0xa3badaac   /* baked in rom! */
