@@ -164,6 +164,8 @@ static int st_tp_parse_finger(struct usb_hid_touchpad_report *report,
 	switch (event->evt_id) {
 	case ST_TP_EVENT_ID_ENTER_POINTER:
 	case ST_TP_EVENT_ID_MOTION_POINTER:
+		/* Pressure == 255 is a palm. */
+		report->finger[i].confidence = (event->finger.z < 255);
 		report->finger[i].tip = 1;
 		report->finger[i].inrange = 1;
 		report->finger[i].id = event->finger.touch_id;
@@ -230,7 +232,7 @@ static int st_tp_write_hid_report(void)
 		return -num_events;
 
 	memset(&report, 0, sizeof(report));
-	report.id = 0x1;
+	report.id = REPORT_ID_TOUCHPAD;
 	num_finger = 0;
 
 	for (i = 0; i < num_events; i++) {

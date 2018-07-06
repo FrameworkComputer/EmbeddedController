@@ -224,6 +224,7 @@ static int elan_tp_read_report(void)
 			height = MIN(4095, height * elan_tp_params.width_y);
 			pressure = MIN(1023, pressure);
 
+			report.finger[ri].confidence = 1;
 			report.finger[ri].tip = 1;
 			report.finger[ri].inrange = 1;
 			report.finger[ri].id = i;
