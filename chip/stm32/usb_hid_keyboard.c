@@ -422,22 +422,18 @@ USB_DECLARE_EP(USB_EP_HID_KEYBOARD, hid_keyboard_tx,
 #endif
 	       hid_keyboard_event);
 
+static struct usb_hid_config_t hid_config_kb = {
+	.report_desc = report_desc,
+	.report_size = sizeof(report_desc),
+	.hid_desc = &hid_desc_kb,
+};
+
 static int hid_keyboard_iface_request(usb_uint *ep0_buf_rx,
 				      usb_uint *ep0_buf_tx)
 {
 	int ret;
-	const uint8_t *desc = report_desc;
-	uint32_t size = sizeof(report_desc);
 
-#ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
-	if (board_has_keyboard_backlight()) {
-		desc = report_desc_with_backlight;
-		size = sizeof(report_desc_with_backlight);
-	}
-#endif
-
-	ret = hid_iface_request(ep0_buf_rx, ep0_buf_tx,
-				desc, size, &hid_desc_kb);
+	ret = hid_iface_request(ep0_buf_rx, ep0_buf_tx, &hid_config_kb);
 	if (ret >= 0)
 		return ret;
 
@@ -644,6 +640,9 @@ void clear_typematic_key(void)
 void usb_hid_keyboard_init(void)
 {
 	if (board_has_keyboard_backlight()) {
+		hid_config_kb.report_desc = report_desc_with_backlight;
+		hid_config_kb.report_size = sizeof(report_desc_with_backlight);
+
 		set_descriptor_patch(USB_DESC_KEYBOARD_BACKLIGHT,
 			&hid_desc_kb.desc[0].wDescriptorLength,
 			sizeof(report_desc_with_backlight));

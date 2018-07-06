@@ -324,11 +324,23 @@ static void hid_touchpad_event(enum usb_ep_event evt)
 USB_DECLARE_EP(USB_EP_HID_TOUCHPAD, hid_touchpad_tx, hid_touchpad_tx,
 	       hid_touchpad_event);
 
+static int get_report(uint8_t report_id, uint8_t report_type,
+		      const uint8_t **buffer_ptr,
+		      int *buffer_size)
+{
+	return -1;
+}
+
+static const struct usb_hid_config_t hid_config_tp = {
+	.report_desc = report_desc,
+	.report_size = sizeof(report_desc),
+	.hid_desc = &hid_desc_tp,
+	.get_report = get_report,
+};
+
 static int hid_touchpad_iface_request(usb_uint *ep0_buf_rx,
 				      usb_uint *ep0_buf_tx)
 {
-	return hid_iface_request(ep0_buf_rx, ep0_buf_tx,
-				 report_desc, sizeof(report_desc),
-				 &hid_desc_tp);
+	return hid_iface_request(ep0_buf_rx, ep0_buf_tx, &hid_config_tp);
 }
 USB_DECLARE_IFACE(USB_IFACE_HID_TOUCHPAD, hid_touchpad_iface_request)
