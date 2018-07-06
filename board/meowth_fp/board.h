@@ -14,6 +14,54 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
+/*
+ * Flash layout: we redefine the sections offsets and sizes as we want to
+ * include a rollback region, and will use RO/RW regions of different sizes.
+ */
+#undef _IMAGE_SIZE
+#undef CONFIG_ROLLBACK_OFF
+#undef CONFIG_ROLLBACK_SIZE
+#undef CONFIG_FLASH_PSTATE
+#undef CONFIG_FW_PSTATE_SIZE
+#undef CONFIG_FW_PSTATE_OFF
+#undef CONFIG_SHAREDLIB_SIZE
+#undef CONFIG_RO_MEM_OFF
+#undef CONFIG_RO_STORAGE_OFF
+#undef CONFIG_RO_SIZE
+#undef CONFIG_RW_MEM_OFF
+#undef CONFIG_RW_STORAGE_OFF
+#undef CONFIG_RW_SIZE
+#undef CONFIG_EC_PROTECTED_STORAGE_OFF
+#undef CONFIG_EC_PROTECTED_STORAGE_SIZE
+#undef CONFIG_EC_WRITABLE_STORAGE_OFF
+#undef CONFIG_EC_WRITABLE_STORAGE_SIZE
+#undef CONFIG_WP_STORAGE_OFF
+#undef CONFIG_WP_STORAGE_SIZE
+
+#define CONFIG_SHAREDLIB_SIZE   0
+
+#define CONFIG_RO_MEM_OFF       0
+#define CONFIG_RO_STORAGE_OFF   0
+#define CONFIG_RO_SIZE          (768*1024)
+
+/* EC rollback protection block */
+#define CONFIG_ROLLBACK_OFF (CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE)
+#define CONFIG_ROLLBACK_SIZE (CONFIG_FLASH_BANK_SIZE * 2)
+
+#define CONFIG_RW_MEM_OFF	(CONFIG_ROLLBACK_OFF + CONFIG_ROLLBACK_SIZE)
+#define CONFIG_RW_STORAGE_OFF	0
+#define CONFIG_RW_SIZE		(CONFIG_FLASH_SIZE -			\
+				(CONFIG_RW_MEM_OFF - CONFIG_RO_MEM_OFF))
+
+#define CONFIG_EC_PROTECTED_STORAGE_OFF         CONFIG_RO_MEM_OFF
+#define CONFIG_EC_PROTECTED_STORAGE_SIZE        CONFIG_RO_SIZE
+#define CONFIG_EC_WRITABLE_STORAGE_OFF          CONFIG_RW_MEM_OFF
+#define CONFIG_EC_WRITABLE_STORAGE_SIZE         CONFIG_RW_SIZE
+
+#define CONFIG_WP_STORAGE_OFF           CONFIG_EC_PROTECTED_STORAGE_OFF
+#define CONFIG_WP_STORAGE_SIZE          CONFIG_EC_PROTECTED_STORAGE_SIZE
+
+
 /* the UART console is on USART1 */
 #undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
@@ -73,6 +121,20 @@
 #define CONFIG_RWSIG
 #endif
 #define CONFIG_RWSIG_TYPE_RWSIG
+
+/*
+ * Add rollback protection
+ */
+#define CONFIG_ROLLBACK
+#define CONFIG_ROLLBACK_SECRET_SIZE 32
+/*
+ * We do not use any "locally" generated entropy: this is normally used
+ * to add local entropy when the main source of entropy is remote.
+ */
+#undef CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE
+#ifdef SECTION_IS_RW
+#undef CONFIG_ROLLBACK_UPDATE
+#endif
 
 #define CONFIG_CMD_FLASH
 #define CONFIG_CMD_SPI_XFER
