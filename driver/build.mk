@@ -52,6 +52,7 @@ driver-$(CONFIG_CHARGER_BQ24738)+=charger/bq24738.o
 driver-$(CONFIG_CHARGER_BQ24770)+=charger/bq24773.o
 driver-$(CONFIG_CHARGER_BQ24773)+=charger/bq24773.o
 driver-$(CONFIG_CHARGER_BQ25703)+=charger/bq25703.o
+driver-$(CONFIG_CHARGER_BQ25710)+=charger/bq25710.o
 driver-$(CONFIG_CHARGER_BQ25890)+=charger/bq2589x.o
 driver-$(CONFIG_CHARGER_BQ25892)+=charger/bq2589x.o
 driver-$(CONFIG_CHARGER_BQ25895)+=charger/bq2589x.o
