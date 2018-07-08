@@ -93,8 +93,6 @@ static void print_spoof_mode_status(int id);
 /* Need to wake up the AP */
 static int wake_up_needed;
 
-/* Need to send flush events */
-static int fifo_flush_needed;
 /* Number of element the AP should collect */
 static int fifo_queue_count;
 static int fifo_int_enabled;
@@ -750,7 +748,6 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 		int flush_pending;
 		flush_pending = atomic_read_clear(&sensor->flush_pending);
 		for (; flush_pending > 0; flush_pending--) {
-			fifo_flush_needed = 1;
 			motion_sense_insert_flush(sensor);
 		}
 	}
@@ -976,16 +973,16 @@ void motion_sense_task(void *u)
 		 * - the queue is almost full,
 		 * - we haven't done it for a while.
 		 */
-		if (fifo_flush_needed || wake_up_needed ||
-		    event & TASK_EVENT_MOTION_ODR_CHANGE ||
+		if (wake_up_needed ||
+		    event & (TASK_EVENT_MOTION_ODR_CHANGE |
+			     TASK_EVENT_MOTION_FLUSH_PENDING) ||
 		    queue_space(&motion_sense_fifo) < CONFIG_ACCEL_FIFO_THRES ||
 		    (motion_int_interval > 0 &&
 		     time_after(ts_end_task.le.lo,
 				ts_last_int.le.lo + motion_int_interval))) {
-			if (!fifo_flush_needed)
+			if ((event & TASK_EVENT_MOTION_FLUSH_PENDING) == 0)
 				motion_sense_insert_timestamp(
 					__hw_clock_source_read());
-			fifo_flush_needed = 0;
 			ts_last_int = ts_end_task;
 			/*
 			 * Count the number of event the AP is allowed to
