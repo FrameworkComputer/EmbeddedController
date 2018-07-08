@@ -990,16 +990,13 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	}
 #endif
 
-	/*
-	 * Set a 5ms latch to be sure the EC can read the interrupt register
-	 * properly, even when it is running more slowly.
-	 */
 #ifdef CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
-	ret = raw_write8(s->port, s->addr, BMI160_INT_LATCH, BMI160_LATCH_5MS);
+	ret = raw_write8(s->port, s->addr, BMI160_INT_LATCH,
+		BMI160_LATCH_FOREVER);
 #else
 	/* Also, configure int2 as an external input. */
 	ret = raw_write8(s->port, s->addr, BMI160_INT_LATCH,
-		BMI160_INT2_INPUT_EN | BMI160_LATCH_5MS);
+		BMI160_INT2_INPUT_EN | BMI160_LATCH_FOREVER);
 #endif
 
 	/* configure int1 as an interrupt */
@@ -1047,46 +1044,18 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	return ret;
 }
 
-/**
- * irq_handler - bottom half of the interrupt stack.
- * Ran from the motion_sense task, finds the events that raised the interrupt.
- *
- * For now, we just print out. We should set a bitmask motion sense code will
- * act upon.
- */
-static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
+#ifdef CONFIG_BMI160_ORIENTATION_SENSOR
+static void irq_set_orientation(struct motion_sensor_t *s,
+				int interrupt)
 {
-	int interrupt;
-#ifdef CONFIG_BMI160_ORIENTATION_SENSOR
-	int shifted_masked_orientation;
-#endif
-
-	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
-			(!(*event & CONFIG_ACCELGYRO_BMI160_INT_EVENT)))
-		return EC_ERROR_NOT_HANDLED;
-
-	raw_read32(s->port, s->addr, BMI160_INT_STATUS_0, &interrupt);
-
-#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
-	if (interrupt & BMI160_D_TAP_INT)
-		*event |= CONFIG_GESTURE_TAP_EVENT;
-#endif
-#ifdef CONFIG_GESTURE_SIGMO
-	if (interrupt & BMI160_SIGMOT_INT)
-		*event |= CONFIG_GESTURE_SIGMO_EVENT;
-#endif
-#ifdef CONFIG_ACCEL_FIFO
-	if (interrupt & (BMI160_FWM_INT | BMI160_FFULL_INT))
-		load_fifo(s);
-#endif
-#ifdef CONFIG_BMI160_ORIENTATION_SENSOR
-	shifted_masked_orientation = (interrupt >> 24) & BMI160_ORIENT_XY_MASK;
+	int shifted_masked_orientation =
+		(interrupt >> 24) & BMI160_ORIENT_XY_MASK;
 	if (BMI160_GET_DATA(s)->raw_orientation != shifted_masked_orientation) {
 		enum motionsensor_orientation orientation =
-				MOTIONSENSE_ORIENTATION_UNKNOWN;
+			MOTIONSENSE_ORIENTATION_UNKNOWN;
 
 		BMI160_GET_DATA(s)->raw_orientation =
-				shifted_masked_orientation;
+			shifted_masked_orientation;
 
 		switch (shifted_masked_orientation) {
 		case BMI160_ORIENT_PORTRAIT:
@@ -1109,11 +1078,43 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		orientation = motion_sense_remap_orientation(s, orientation);
 		SET_ORIENTATION(s, orientation);
 	}
+}
 #endif
-	/*
-	 * No need to read the FIFO here, motion sense task is
-	 * doing it on every interrupt.
-	 */
+/**
+ * irq_handler - bottom half of the interrupt stack.
+ * Ran from the motion_sense task, finds the events that raised the interrupt.
+ *
+ * For now, we just print out. We should set a bitmask motion sense code will
+ * act upon.
+ */
+static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
+{
+	int interrupt;
+
+	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
+			(!(*event & CONFIG_ACCELGYRO_BMI160_INT_EVENT)))
+		return EC_ERROR_NOT_HANDLED;
+
+	do {
+		raw_read32(s->port, s->addr, BMI160_INT_STATUS_0, &interrupt);
+
+#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+		if (interrupt & BMI160_D_TAP_INT)
+			*event |= CONFIG_GESTURE_TAP_EVENT;
+#endif
+#ifdef CONFIG_GESTURE_SIGMO
+		if (interrupt & BMI160_SIGMOT_INT)
+			*event |= CONFIG_GESTURE_SIGMO_EVENT;
+#endif
+#ifdef CONFIG_ACCEL_FIFO
+		if (interrupt & (BMI160_FWM_INT | BMI160_FFULL_INT))
+			load_fifo(s);
+#endif
+#ifdef CONFIG_BMI160_ORIENTATION_SENSOR
+		irq_set_orientation(s, interrupt);
+#endif
+	} while (interrupt != 0);
+
 	return EC_SUCCESS;
 }
 #endif  /* CONFIG_ACCEL_INTERRUPTS */
