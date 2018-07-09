@@ -411,6 +411,7 @@
 
 #define STM32_PWR_BASE              0x58024800
 #define STM32_RCC_BASE              0x58024400
+#define STM32_RNG_BASE              0x48021800
 #define STM32_RTC_BASE              0x58004000
 
 #define STM32_SYSCFG_BASE           0x58000400
@@ -1411,6 +1412,9 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_AHB3ENR           REG32(STM32_RCC_BASE + 0x0D4)
 #define STM32_RCC_AHB1ENR           REG32(STM32_RCC_BASE + 0x0D8)
 #define STM32_RCC_AHB2ENR           REG32(STM32_RCC_BASE + 0x0DC)
+#define STM32_RCC_AHB2ENR_RNGEN     (1 << 6)
+#define STM32_RCC_AHB2ENR_HASHEN    (1 << 5)
+#define STM32_RCC_AHB2ENR_CRYPTEN   (1 << 4)
 #define STM32_RCC_AHB4ENR           REG32(STM32_RCC_BASE + 0x0E0)
 #define STM32_RCC_AHB4ENR_GPIOMASK  0x3ff
 #define STM32_RCC_APB3ENR           REG32(STM32_RCC_BASE + 0x0E4)
@@ -1435,6 +1439,8 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_CR_HSIRDY                    (1 << 2)
 #define STM32_RCC_CR_CSION                     (1 << 7)
 #define STM32_RCC_CR_CSIRDY                    (1 << 8)
+#define STM32_RCC_CR_HSI48ON                   (1 << 12)
+#define STM32_RCC_CR_HSI48RDY                  (1 << 13)
 #define STM32_RCC_CR_PLL1ON                    (1 << 24)
 #define STM32_RCC_CR_PLL1RDY                   (1 << 25)
 #define STM32_RCC_CR_PLL2ON                    (1 << 26)
@@ -1516,6 +1522,11 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_D2CCIP2_USART16SEL_CSI       (4 << 3)
 #define STM32_RCC_D2CCIP2_USART16SEL_LSE       (5 << 3)
 #define STM32_RCC_D2CCIP2_USART16SEL_MASK      (7 << 3)
+#define STM32_RCC_D2CCIP2_RNGSEL_HSI48         (0 << 8)
+#define STM32_RCC_D2CCIP2_RNGSEL_PLL1Q         (1 << 8)
+#define STM32_RCC_D2CCIP2_RNGSEL_LSE           (2 << 8)
+#define STM32_RCC_D2CCIP2_RNGSEL_LSI           (3 << 8)
+#define STM32_RCC_D2CCIP2_RNGSEL_MASK          (3 << 8)
 #define STM32_RCC_D2CCIP2_LPTIM1SEL_PCLK       (0 << 28)
 #define STM32_RCC_D2CCIP2_LPTIM1SEL_PLL2       (1 << 28)
 #define STM32_RCC_D2CCIP2_LPTIM1SEL_PLL3       (2 << 28)
@@ -3049,6 +3060,7 @@ enum dmamux1_request {
 #define STM32_RNG_CR                REG32(STM32_RNG_BASE + 0x0)
 #define STM32_RNG_CR_RNGEN          (1<<2)
 #define STM32_RNG_CR_IE             (1<<3)
+#define STM32_RNG_CR_CED            (1<<5)
 #define STM32_RNG_SR                REG32(STM32_RNG_BASE + 0x4)
 #define STM32_RNG_SR_DRDY           (1<<0)
 #define STM32_RNG_DR                REG32(STM32_RNG_BASE + 0x8)
