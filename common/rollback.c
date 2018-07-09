@@ -168,8 +168,10 @@ static int add_entropy(uint8_t *dst, const uint8_t *src,
 BUILD_ASSERT(SHA256_DIGEST_SIZE == CONFIG_ROLLBACK_SECRET_SIZE);
 	struct sha256_ctx ctx;
 	uint8_t *hash;
+#ifdef CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE
 	uint8_t extra;
 	int i;
+#endif
 
 	SHA256_init(&ctx);
 	SHA256_update(&ctx, src, CONFIG_ROLLBACK_SECRET_SIZE);
