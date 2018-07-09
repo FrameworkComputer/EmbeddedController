@@ -35,6 +35,37 @@
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
+#ifdef CONFIG_BD9995X_DELAY_INPUT_PORT_SELECT
+/*
+ * Used in a check to determine if VBUS is within the
+ * range of some VOLTAGE +/- VBUS_DELTA, where voltage
+ * is measured in mV.
+ */
+#define VBUS_DELTA 1000
+
+/* VBUS is debounced if it's stable for this length of time */
+#define VBUS_MSEC (100*MSEC)
+
+/* VBUS debouncing sample interval */
+#define VBUS_CHECK_MSEC (10*MSEC)
+
+/* Time to wait before VBUS debouncing begins */
+#define STABLE_TIMEOUT (500*MSEC)
+
+/* Maximum time to wait until VBUS is debounced */
+#define DEBOUNCE_TIMEOUT (500*MSEC)
+
+enum vstate {START, STABLE, DEBOUNCE};
+static enum vstate vbus_state;
+
+static int vbus_voltage;
+static uint64_t debounce_time;
+static uint64_t vbus_timeout;
+static int port_update;
+static int select_update;
+static int select_input_port_update;
+#endif
+
 /* Charger parameters */
 static const struct charger_info bd9995x_charger_info = {
 	.name         = CHARGER_NAME,
@@ -1048,7 +1079,12 @@ int bd9995x_is_vbus_provided(enum bd9995x_charge_port port)
 	return !!reg;
 }
 
+#ifdef CONFIG_BD9995X_DELAY_INPUT_PORT_SELECT
+static int bd9995x_select_input_port_private(enum bd9995x_charge_port port,
+								int select)
+#else
 int bd9995x_select_input_port(enum bd9995x_charge_port port, int select)
+#endif
 {
 	int rv;
 	int reg;
@@ -1092,6 +1128,49 @@ select_input_port_exit:
 	mutex_unlock(&bd9995x_vin_mutex);
 	return rv;
 }
+
+#ifdef CONFIG_BD9995X_DELAY_INPUT_PORT_SELECT
+int bd9995x_select_input_port(enum bd9995x_charge_port port, int select)
+{
+	port_update = port;
+	select_update = select;
+	vbus_state = START;
+	select_input_port_update = 1;
+	task_wake(TASK_ID_USB_CHG);
+
+	return EC_SUCCESS;
+}
+
+static inline int bd9995x_vbus_test(int value, int limit)
+{
+	uint32_t hi_value = limit + VBUS_DELTA;
+	uint32_t lo_value = limit - VBUS_DELTA;
+
+	return ((value > lo_value) && (value < hi_value));
+}
+
+static int bd9995x_vbus_debounce(enum bd9995x_charge_port port)
+{
+	int vbus_reg;
+	int voltage;
+
+	vbus_reg = (port == BD9995X_CHARGE_PORT_VBUS) ?
+		BD9995X_CMD_VBUS_VAL : BD9995X_CMD_VCC_VAL;
+	if (ch_raw_read16(vbus_reg, &voltage, BD9995X_EXTENDED_COMMAND))
+		voltage = 0;
+
+	if (!bd9995x_vbus_test(voltage, vbus_voltage)) {
+		vbus_voltage = voltage;
+		debounce_time = get_time().val + VBUS_MSEC;
+	} else {
+		if (get_time().val >= debounce_time)
+			return 1;
+	}
+
+	return 0;
+}
+#endif
+
 
 #ifdef CONFIG_CHARGER_BATTERY_TSENSE
 int bd9995x_get_battery_temp(int *temp_ptr)
@@ -1192,6 +1271,11 @@ void usb_charger_task(void *u)
 	int vbus_reg, voltage;
 #endif
 
+#ifdef CONFIG_BD9995X_DELAY_INPUT_PORT_SELECT
+	select_input_port_update = 0;
+	vbus_voltage = 0;
+#endif
+
 	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
 		bc12_detected_type[port] = CHARGE_SUPPLIER_NONE;
 		bd9995x_enable_vbus_detect_interrupts(port, 1);
@@ -1269,6 +1353,43 @@ void usb_charger_task(void *u)
 		}
 
 		initialized = 1;
+#ifdef CONFIG_BD9995X_DELAY_INPUT_PORT_SELECT
+/*
+ * When a charge port is selected and VBUS is 5V, the inrush current on some
+ * devices causes VBUS to droop, which could signal a sink disconnection.
+ *
+ * To mitigate the problem, charge port selection is delayed until VBUS
+ * is stable or one second has passed. Hopefully PD has negotiated a VBUS
+ * voltage of at least 9V before the one second timeout.
+ */
+	if (select_input_port_update) {
+		sleep_usec = VBUS_CHECK_MSEC;
+		changed = 0;
+
+		switch (vbus_state) {
+		case START:
+			vbus_timeout = get_time().val + STABLE_TIMEOUT;
+			vbus_state = STABLE;
+			break;
+		case STABLE:
+			if (get_time().val > vbus_timeout) {
+				vbus_state = DEBOUNCE;
+				vbus_timeout = get_time().val +
+							DEBOUNCE_TIMEOUT;
+			}
+			break;
+		case DEBOUNCE:
+			if (bd9995x_vbus_debounce(port_update) ||
+					get_time().val > vbus_timeout) {
+				select_input_port_update = 0;
+				bd9995x_select_input_port_private(
+						port_update, select_update);
+			}
+			break;
+		}
+	}
+#endif
+
 		/*
 		 * Re-read interrupt registers immediately if we got an
 		 * interrupt. We're dealing with multiple independent

@@ -2984,6 +2984,9 @@
 /* Define if this board can used TCPC-controlled DRP toggle */
 #undef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 
+/* Define to reduces VBUS droop caused by inrush current during charging */
+#undef CONFIG_BD9995X_DELAY_INPUT_PORT_SELECT
+
 /* Initial DRP / toggle policy */
 #define CONFIG_USB_PD_INITIAL_DRP_STATE PD_DRP_TOGGLE_OFF
 
