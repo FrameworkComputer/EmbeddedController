@@ -43,6 +43,11 @@ if [ ! -f "$1" ]; then
 	exit 1
 fi
 
+if ectool gpioget EC_WP_L | grep -q '= 0'; then
+	echo "Please make sure WP is deasserted."
+	exit 1
+fi
+
 # Ensure the ACPI is not cutting power when unloading cros-ec-spi
 echo ${GPIO_PWREN} > /sys/class/gpio/export
 echo "out" > /sys/class/gpio/gpio${GPIO_PWREN}/direction
