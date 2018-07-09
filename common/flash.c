@@ -483,22 +483,35 @@ int flash_read(int offset, int size, char *data)
 #endif
 }
 
+static void flash_abort_or_invalidate_hash(int offset, int size)
+{
+#ifdef CONFIG_VBOOT_HASH
+	if (vboot_hash_in_progress()) {
+		/* Abort hash calculation when flash update is in progress. */
+		vboot_hash_abort();
+		return;
+	}
+
+#ifdef CONFIG_EXTERNAL_STORAGE
+	/*
+	 * If EC executes in RAM, we keep the current hash. On the next
+	 * hash check, AP will catch hash mismatch between the flash
+	 * copy and the RAM copy, then take necessary actions.
+	 */
+	return;
+#endif
+
+	/* If EC executes in place, we need to invalidate the cached hash. */
+	vboot_hash_invalidate(offset, size);
+#endif
+}
+
 int flash_write(int offset, int size, const char *data)
 {
 	if (!flash_range_ok(offset, size, CONFIG_FLASH_WRITE_SIZE))
 		return EC_ERROR_INVAL;  /* Invalid range */
 
-#ifdef CONFIG_VBOOT_HASH
-	/*
-	* Abort hash calculations when flashrom flash updates
-	* are in progress.Otherwise invalidate the pre-computed hash,
-	* since it's likely to change after flash write
-	*/
-	if (vboot_hash_in_progress())
-		vboot_hash_abort();
-	else
-		vboot_hash_invalidate(offset, size);
-#endif
+	flash_abort_or_invalidate_hash(offset, size);
 
 	return flash_physical_write(offset, size, data);
 }
@@ -510,17 +523,7 @@ int flash_erase(int offset, int size)
 		return EC_ERROR_INVAL;  /* Invalid range */
 #endif
 
-#ifdef CONFIG_VBOOT_HASH
-	/*
-	* Abort hash calculations when flashrom flash updates
-	* are in progress.Otherwise invalidate the pre-computed hash,
-	* since it's likely to be wrong after erase.
-	*/
-	if (vboot_hash_in_progress())
-		vboot_hash_abort();
-	else
-		vboot_hash_invalidate(offset, size);
-#endif
+	flash_abort_or_invalidate_hash(offset, size);
 
 	return flash_physical_erase(offset, size);
 }
