@@ -8,9 +8,12 @@
 #include "common.h"
 #include "console.h"
 #include "flash.h"
+#include "hooks.h"
+#include "host_command.h"
 #include "rollback.h"
 #include "sha256.h"
 #include "system.h"
+#include "trng.h"
 #include "util.h"
 
 /* Console output macros */
@@ -325,7 +328,65 @@ static int command_rollback_add_entropy(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(rollbackaddent, command_rollback_add_entropy,
 			"data",
 			"Add entropy to rollback block");
-#endif
+
+#ifdef CONFIG_RNG
+static int add_entropy_action;
+static int add_entropy_rv = EC_RES_UNAVAILABLE;
+
+static void add_entropy_deferred(void)
+{
+	uint8_t rand[CONFIG_ROLLBACK_SECRET_SIZE];
+	int repeat = 1;
+
+	/*
+	 * If asked to reset the old secret, just add entropy multiple times,
+	 * which will ping-pong between the blocks.
+	 */
+	if (add_entropy_action == ADD_ENTROPY_RESET_ASYNC)
+		repeat = ROLLBACK_REGIONS;
+
+	init_trng();
+	do {
+		rand_bytes(rand, sizeof(rand));
+		if (rollback_add_entropy(rand, sizeof(rand)) != EC_SUCCESS) {
+			add_entropy_rv = EC_RES_ERROR;
+			goto out;
+		}
+	} while (--repeat);
+
+	add_entropy_rv = EC_RES_SUCCESS;
+out:
+	exit_trng();
+}
+DECLARE_DEFERRED(add_entropy_deferred);
+
+static int hc_rollback_add_entropy(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_rollback_add_entropy *p = args->params;
+
+	switch (p->action) {
+	case ADD_ENTROPY_ASYNC:
+	case ADD_ENTROPY_RESET_ASYNC:
+		if (add_entropy_rv == EC_RES_BUSY)
+			return EC_RES_BUSY;
+
+		add_entropy_action = p->action;
+		add_entropy_rv = EC_RES_BUSY;
+		hook_call_deferred(&add_entropy_deferred_data, 0);
+
+		return EC_RES_SUCCESS;
+
+	case ADD_ENTROPY_GET_RESULT:
+		return add_entropy_rv;
+	}
+
+	return EC_RES_INVALID_PARAM;
+}
+DECLARE_HOST_COMMAND(EC_CMD_ADD_ENTROPY,
+		     hc_rollback_add_entropy,
+		     EC_VER_MASK(0));
+#endif /* CONFIG_RNG */
+#endif /* CONFIG_ROLLBACK_SECRET_SIZE */
 #endif /* CONFIG_ROLLBACK_UPDATE */
 
 static int command_rollback_info(int argc, char **argv)

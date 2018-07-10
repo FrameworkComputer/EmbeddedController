@@ -54,6 +54,8 @@ static struct option long_opts[] = {
 
 const char help_str[] =
 	"Commands:\n"
+	"  addentropy [reset]\n"
+	"      Add entropy to device secret\n"
 	"  autofanctrl <on>\n"
 	"      Turn on automatic fan speed control.\n"
 	"  backlight <enabled>\n"
@@ -378,6 +380,44 @@ static int read_mapped_string(uint8_t offset, char *buffer, int max_size)
 		exit(1);
 	}
 	return ret;
+}
+
+int cmd_add_entropy(int argc, char *argv[])
+{
+	struct ec_params_rollback_add_entropy p;
+	int rv;
+	int tries = 100; /* Wait for 10 seconds at most */
+
+	if (argc >= 2 && !strcmp(argv[1], "reset"))
+		p.action = ADD_ENTROPY_RESET_ASYNC;
+	else
+		p.action = ADD_ENTROPY_ASYNC;
+
+	rv = ec_command(EC_CMD_ADD_ENTROPY, 0, &p, sizeof(p), NULL, 0);
+
+	if (rv != EC_RES_SUCCESS)
+		goto out;
+
+	while (tries--) {
+		usleep(100000);
+
+		p.action = ADD_ENTROPY_GET_RESULT;
+		rv = ec_command(EC_CMD_ADD_ENTROPY, 0, &p, sizeof(p), NULL, 0);
+
+		if (rv == EC_RES_SUCCESS) {
+			printf("Entropy added successfully\n");
+			return EC_RES_SUCCESS;
+		}
+
+		/* Abort if EC returns an error other than EC_RES_BUSY. */
+		if (rv <= -EECRESULT && rv != -EECRESULT-EC_RES_BUSY)
+			goto out;
+	}
+
+	rv = -EECRESULT-EC_RES_TIMEOUT;
+out:
+	fprintf(stderr, "Failed to add entropy: %d\n", rv);
+	return rv;
 }
 
 int cmd_hello(int argc, char *argv[])
@@ -8134,6 +8174,7 @@ int cmd_cec(int argc, char *argv[])
 
 /* NULL-terminated list of commands */
 const struct command commands[] = {
+	{"addentropy", cmd_add_entropy},
 	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
 	{"backlight", cmd_lcd_backlight},
 	{"battery", cmd_battery},
