@@ -32,6 +32,13 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_LID_OPEN,
 	GPIO_AC_PRESENT,
 	GPIO_POWER_BUTTON_L,
+#if defined(VARIANT_OCTOPUS_EC_NPCX796FB) && defined(CONFIG_HIBERNATE_PSL)
+	/*
+	 * Enable EC_RST_ODL as a wake source if using NPCX EC variant and PSL
+	 * hibernate mode is enabled.
+	 */
+	GPIO_EC_RST_ODL,
+#endif
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
