@@ -661,12 +661,13 @@
 #undef CONFIG_CHARGER_ILIM_PIN_DISABLED
 
 /*
- * Default input current for the board, in mA.
+ * Default input current for the board, in mA.  Many boards also use this as the
+ * least maximum input current during transients.
  *
  * This value should depend on external power adapter, designed charging
  * voltage, and the maximum power of the running system. For type-C chargers,
  * this should be set to 512 mA in order to not brown-out low-current USB
- * charge ports.
+ * charge ports in accordance with USB-PD r3.0 Sec. 7.3
  */
 #undef CONFIG_CHARGER_INPUT_CURRENT
 

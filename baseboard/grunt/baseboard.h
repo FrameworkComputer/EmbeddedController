@@ -54,7 +54,18 @@
 #define CONFIG_CHARGER_V2
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
-#define CONFIG_CHARGER_INPUT_CURRENT 128
+
+/*
+ * This limit impairs compatibility with BC1.2 chargers that are not actually
+ * capable of supplying 500 mA of current.  When the charger is paralleled with
+ * the battery, raising this limit allows the power system to draw more current
+ * from the charger during startup.  This improves compatibility with system
+ * batteries that may become excessively imbalanced after extended periods of
+ * rest.
+ *
+ * See also b/111214767
+ */
+#define CONFIG_CHARGER_INPUT_CURRENT 512
 #define CONFIG_CHARGER_ISL9238
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
