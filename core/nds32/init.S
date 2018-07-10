@@ -129,6 +129,11 @@ reset:
 	li   $r0, 0x00080005
 	mtsr $r0, $mr7
 
+	/* Set ROM address at 0x80000 (disabled). */
+	li  $r1, 0x00F0109B
+	movi $r0, #0x8
+	sbi $r0, [$r1]
+
 	/* Enable DLM 8k~12K(bit2) and DLM 12k~16k(bit3) */
 	li  $r1, 0x00F02030
 	lbi $r0, [$r1]
