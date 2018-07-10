@@ -1481,6 +1481,10 @@
  * If defined, inject some locally generated entropy when secret is updated,
  * using board_get_entropy function.
  * Large values may take a long time to generate.
+ *
+ * This is only meant to add a little bit of extra entropy, when the hardware
+ * lacks a random number generator (otherwise, the strong entropy can be
+ * directly added to the secret, using rollback_add_entropy).
  */
 #undef CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE
 
