@@ -165,9 +165,14 @@ void system_reset(int flags)
 	 */
 	IT83XX_SMB_SLVISELR |= (1 << 4);
 
+	/* bit0: enable watchdog hardware reset. */
+#ifdef IT83XX_ETWD_HW_RESET_SUPPORT
+	if (flags & SYSTEM_RESET_HARD)
+		IT83XX_GCTRL_ETWDUARTCR |= (1 << 0);
+#endif
 	/*
-	 * Writing invalid key to watchdog module triggers a soft reset. For
-	 * now this is the only option, no hard reset.
+	 * Writing invalid key to watchdog module triggers a soft or hardware
+	 * reset. It depends on the setting of bit0 at ETWDUARTCR register.
 	 */
 	IT83XX_ETWD_ETWCFG |= 0x20;
 	IT83XX_ETWD_EWDKEYR = 0x00;

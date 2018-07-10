@@ -62,6 +62,27 @@ static volatile uint8_t *wuemr(uint8_t grp)
 			(volatile uint8_t *)(IT83XX_WUC_WUEMR5 + 4*(grp-5));
 }
 
+/**
+ * Convert wake-up controller (WUC) group to the corresponding wake-up both edge
+ * mode register (WUBEMR). Return pointer to the register.
+ *
+ * @param grp  WUC group.
+ *
+ * @return Pointer to corresponding WUBEMR register.
+ */
+#ifdef IT83XX_GPIO_INT_FLEXIBLE
+static volatile uint8_t *wubemr(uint8_t grp)
+{
+	/*
+	 * From WUBEMR1-WUBEMR4, the address increases by ones. From WUBEMR5 on
+	 * the address increases by fours.
+	 */
+	return (grp <= 4) ?
+			(volatile uint8_t *)(IT83XX_WUC_WUBEMR1 + grp-1) :
+			(volatile uint8_t *)(IT83XX_WUC_WUBEMR5 + 4*(grp-5));
+}
+#endif
+
 /*
  * Array to store the corresponding GPIO port and mask, and WUC group and mask
  * for each WKO interrupt. This allows GPIO interrupts coming in through WKO
@@ -84,6 +105,11 @@ static const struct {
 	[IT83XX_IRQ_WKO22] =    {GPIO_C, (1<<4),        2, (1<<2)},
 	[IT83XX_IRQ_WKO23] =    {GPIO_C, (1<<6),        2, (1<<3)},
 	[IT83XX_IRQ_WKO24] =    {GPIO_D, (1<<2),        2, (1<<4)},
+#ifdef IT83XX_GPIO_INT_FLEXIBLE
+	[IT83XX_IRQ_WKO40] =    {GPIO_E, (1<<5),        4, (1<<0)},
+	[IT83XX_IRQ_WKO45] =    {GPIO_E, (1<<6),        4, (1<<5)},
+	[IT83XX_IRQ_WKO46] =    {GPIO_E, (1<<7),        4, (1<<6)},
+#endif
 	[IT83XX_IRQ_WKO50] =    {GPIO_K, (1<<0),        5, (1<<0)},
 	[IT83XX_IRQ_WKO51] =    {GPIO_K, (1<<1),        5, (1<<1)},
 	[IT83XX_IRQ_WKO52] =    {GPIO_K, (1<<2),        5, (1<<2)},
@@ -151,6 +177,12 @@ static const struct {
 	[IT83XX_IRQ_WKO120] =   {GPIO_I, (1<<1),        13, (1<<0)},
 	[IT83XX_IRQ_WKO121] =   {GPIO_I, (1<<2),        13, (1<<1)},
 	[IT83XX_IRQ_WKO122] =   {GPIO_I, (1<<3),        13, (1<<2)},
+#ifdef IT83XX_GPIO_INT_FLEXIBLE
+	[IT83XX_IRQ_WKO123] =   {GPIO_G, (1<<3),        13, (1<<3)},
+	[IT83XX_IRQ_WKO124] =   {GPIO_G, (1<<4),        13, (1<<4)},
+	[IT83XX_IRQ_WKO125] =   {GPIO_G, (1<<5),        13, (1<<5)},
+	[IT83XX_IRQ_WKO126] =   {GPIO_G, (1<<7),        13, (1<<6)},
+#endif
 	[IT83XX_IRQ_WKO128] =   {GPIO_J, (1<<0),        14, (1<<0)},
 	[IT83XX_IRQ_WKO129] =   {GPIO_J, (1<<1),        14, (1<<1)},
 	[IT83XX_IRQ_WKO130] =   {GPIO_J, (1<<2),        14, (1<<2)},
@@ -165,6 +197,15 @@ static const struct {
 	[IT83XX_IRQ_WKO141] =   {GPIO_L, (1<<5),        15, (1<<5)},
 	[IT83XX_IRQ_WKO142] =   {GPIO_L, (1<<6),        15, (1<<6)},
 	[IT83XX_IRQ_WKO143] =   {GPIO_L, (1<<7),        15, (1<<7)},
+#ifdef IT83XX_GPIO_INT_FLEXIBLE
+	[IT83XX_IRQ_WKO144] =   {GPIO_M, (1<<0),        16, (1<<0)},
+	[IT83XX_IRQ_WKO145] =   {GPIO_M, (1<<1),        16, (1<<1)},
+	[IT83XX_IRQ_WKO146] =   {GPIO_M, (1<<2),        16, (1<<2)},
+	[IT83XX_IRQ_WKO147] =   {GPIO_M, (1<<3),        16, (1<<3)},
+	[IT83XX_IRQ_WKO148] =   {GPIO_M, (1<<4),        16, (1<<4)},
+	[IT83XX_IRQ_WKO149] =   {GPIO_M, (1<<5),        16, (1<<5)},
+	[IT83XX_IRQ_WKO150] =   {GPIO_M, (1<<6),        16, (1<<6)},
+#endif
 	[IT83XX_IRQ_COUNT-1] =  {0,           0,         0,      0},
 };
 BUILD_ASSERT(ARRAY_SIZE(gpio_irqs) == IT83XX_IRQ_COUNT);
@@ -196,6 +237,86 @@ struct gpio_1p8v_t {
 };
 
 static const struct gpio_1p8v_t gpio_1p8v_sel[GPIO_PORT_COUNT][8] = {
+#ifdef IT83XX_GPIO_1P8V_PIN_EXTENDED
+	[GPIO_A] = { [4] = {&IT83XX_GPIO_GRC24, (1 << 0)},
+		     [5] = {&IT83XX_GPIO_GRC24, (1 << 1)},
+		     [6] = {&IT83XX_GPIO_GRC24, (1 << 5)},
+		     [7] = {&IT83XX_GPIO_GRC24, (1 << 6)} },
+	[GPIO_B] = { [3] = {&IT83XX_GPIO_GRC22, (1 << 1)},
+		     [4] = {&IT83XX_GPIO_GRC22, (1 << 0)},
+		     [5] = {&IT83XX_GPIO_GRC19, (1 << 7)},
+		     [6] = {&IT83XX_GPIO_GRC19, (1 << 6)},
+		     [7] = {&IT83XX_GPIO_GRC24, (1 << 4)} },
+	[GPIO_C] = { [0] = {&IT83XX_GPIO_GRC22, (1 << 7)},
+		     [1] = {&IT83XX_GPIO_GRC19, (1 << 5)},
+		     [2] = {&IT83XX_GPIO_GRC19, (1 << 4)},
+		     [4] = {&IT83XX_GPIO_GRC24, (1 << 2)},
+		     [6] = {&IT83XX_GPIO_GRC24, (1 << 3)},
+		     [7] = {&IT83XX_GPIO_GRC19, (1 << 3)} },
+	[GPIO_D] = { [0] = {&IT83XX_GPIO_GRC19, (1 << 2)},
+		     [1] = {&IT83XX_GPIO_GRC19, (1 << 1)},
+		     [2] = {&IT83XX_GPIO_GRC19, (1 << 0)},
+		     [3] = {&IT83XX_GPIO_GRC20, (1 << 7)},
+		     [4] = {&IT83XX_GPIO_GRC20, (1 << 6)},
+		     [5] = {&IT83XX_GPIO_GRC22, (1 << 4)},
+		     [6] = {&IT83XX_GPIO_GRC22, (1 << 5)},
+		     [7] = {&IT83XX_GPIO_GRC22, (1 << 6)} },
+	[GPIO_E] = { [0] = {&IT83XX_GPIO_GRC20, (1 << 5)},
+		     [1] = {&IT83XX_GPIO_GCR28, (1 << 6)},
+		     [2] = {&IT83XX_GPIO_GCR28, (1 << 7)},
+		     [4] = {&IT83XX_GPIO_GRC22, (1 << 2)},
+		     [5] = {&IT83XX_GPIO_GRC22, (1 << 3)},
+		     [6] = {&IT83XX_GPIO_GRC20, (1 << 4)},
+		     [7] = {&IT83XX_GPIO_GRC20, (1 << 3)} },
+	[GPIO_F] = { [0] = {&IT83XX_GPIO_GCR28, (1 << 4)},
+		     [1] = {&IT83XX_GPIO_GCR28, (1 << 5)},
+		     [2] = {&IT83XX_GPIO_GRC20, (1 << 2)},
+		     [3] = {&IT83XX_GPIO_GRC20, (1 << 1)},
+		     [4] = {&IT83XX_GPIO_GRC20, (1 << 0)},
+		     [5] = {&IT83XX_GPIO_GRC21, (1 << 7)},
+		     [6] = {&IT83XX_GPIO_GRC21, (1 << 6)},
+		     [7] = {&IT83XX_GPIO_GRC21, (1 << 5)} },
+	[GPIO_G] = { [0] = {&IT83XX_GPIO_GCR28, (1 << 2)},
+		     [1] = {&IT83XX_GPIO_GRC21, (1 << 4)},
+		     [2] = {&IT83XX_GPIO_GCR28, (1 << 3)},
+		     [6] = {&IT83XX_GPIO_GRC21, (1 << 3)} },
+	[GPIO_H] = { [0] = {&IT83XX_GPIO_GRC21, (1 << 2)},
+		     [1] = {&IT83XX_GPIO_GRC21, (1 << 1)},
+		     [2] = {&IT83XX_GPIO_GRC21, (1 << 0)},
+		     [5] = {&IT83XX_GPIO_GCR27, (1 << 7)},
+		     [6] = {&IT83XX_GPIO_GCR28, (1 << 0)} },
+	[GPIO_I] = { [0] = {&IT83XX_GPIO_GCR27, (1 << 3)},
+		     [1] = {&IT83XX_GPIO_GRC23, (1 << 4)},
+		     [2] = {&IT83XX_GPIO_GRC23, (1 << 5)},
+		     [3] = {&IT83XX_GPIO_GRC23, (1 << 6)},
+		     [4] = {&IT83XX_GPIO_GRC23, (1 << 7)},
+		     [5] = {&IT83XX_GPIO_GCR27, (1 << 4)},
+		     [6] = {&IT83XX_GPIO_GCR27, (1 << 5)},
+		     [7] = {&IT83XX_GPIO_GCR27, (1 << 6)} },
+	[GPIO_J] = { [0] = {&IT83XX_GPIO_GRC23, (1 << 0)},
+		     [1] = {&IT83XX_GPIO_GRC23, (1 << 1)},
+		     [2] = {&IT83XX_GPIO_GRC23, (1 << 2)},
+		     [3] = {&IT83XX_GPIO_GRC23, (1 << 3)},
+		     [4] = {&IT83XX_GPIO_GCR27, (1 << 0)},
+		     [5] = {&IT83XX_GPIO_GCR27, (1 << 1)},
+		     [6] = {&IT83XX_GPIO_GCR27, (1 << 2)} },
+	[GPIO_K] = { [0] = {&IT83XX_GPIO_GCR26, (1 << 0)},
+		     [1] = {&IT83XX_GPIO_GCR26, (1 << 1)},
+		     [2] = {&IT83XX_GPIO_GCR26, (1 << 2)},
+		     [3] = {&IT83XX_GPIO_GCR26, (1 << 3)},
+		     [4] = {&IT83XX_GPIO_GCR26, (1 << 4)},
+		     [5] = {&IT83XX_GPIO_GCR26, (1 << 5)},
+		     [6] = {&IT83XX_GPIO_GCR26, (1 << 6)},
+		     [7] = {&IT83XX_GPIO_GCR26, (1 << 7)} },
+	[GPIO_L] = { [0] = {&IT83XX_GPIO_GCR25, (1 << 0)},
+		     [1] = {&IT83XX_GPIO_GCR25, (1 << 1)},
+		     [2] = {&IT83XX_GPIO_GCR25, (1 << 2)},
+		     [3] = {&IT83XX_GPIO_GCR25, (1 << 3)},
+		     [4] = {&IT83XX_GPIO_GCR25, (1 << 4)},
+		     [5] = {&IT83XX_GPIO_GCR25, (1 << 5)},
+		     [6] = {&IT83XX_GPIO_GCR25, (1 << 6)},
+		     [7] = {&IT83XX_GPIO_GCR25, (1 << 7)} },
+#else
 	[GPIO_A] = { [4] = {&IT83XX_GPIO_GRC24, (1 << 0)},
 		     [5] = {&IT83XX_GPIO_GRC24, (1 << 1)} },
 	[GPIO_B] = { [3] = {&IT83XX_GPIO_GRC22, (1 << 1)},
@@ -230,14 +351,21 @@ static const struct gpio_1p8v_t gpio_1p8v_sel[GPIO_PORT_COUNT][8] = {
 		     [1] = {&IT83XX_GPIO_GRC23, (1 << 1)},
 		     [2] = {&IT83XX_GPIO_GRC23, (1 << 2)},
 		     [3] = {&IT83XX_GPIO_GRC23, (1 << 3)} },
+#endif
 };
 
 static void gpio_1p8v_3p3v_sel_by_pin(uint8_t port, uint8_t pin, int sel_1p8v)
 {
+	volatile uint8_t *reg_1p8v = gpio_1p8v_sel[port][pin].reg;
+	uint8_t sel = gpio_1p8v_sel[port][pin].sel;
+
+	if (reg_1p8v == NULL)
+		return;
+
 	if (sel_1p8v)
-		*gpio_1p8v_sel[port][pin].reg |= gpio_1p8v_sel[port][pin].sel;
+		*reg_1p8v |= sel;
 	else
-		*gpio_1p8v_sel[port][pin].reg &= ~gpio_1p8v_sel[port][pin].sel;
+		*reg_1p8v &= ~sel;
 }
 
 void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
@@ -293,6 +421,7 @@ void gpio_kbs_pin_gpio_mode(uint32_t port, uint32_t mask, uint32_t flags)
 		IT83XX_KBS_KSIGCTRL |= mask;
 }
 
+#ifndef IT83XX_GPIO_INT_FLEXIBLE
 /* Returns true when the falling trigger bit actually mean both trigger. */
 static int group_falling_is_both(const int group)
 {
@@ -315,6 +444,7 @@ static const char *get_gpio_string(const int port, const int mask)
 	}
 	return buffer;
 }
+#endif /* IT83XX_GPIO_INT_FLEXIBLE */
 
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
@@ -380,16 +510,36 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		wuc_group = gpio_irqs[irq].wuc_group;
 		wuc_mask = gpio_irqs[irq].wuc_mask;
 
+		/*
+		 * Set both edges interrupt.
+		 * The WUBEMR register is valid on IT8320 DX version.
+		 * And the setting (falling or rising edge) of WUEMR register is
+		 * invalid if this mode is set.
+		 */
+#ifdef IT83XX_GPIO_INT_FLEXIBLE
+		if ((flags & GPIO_INT_BOTH) == GPIO_INT_BOTH)
+			*(wubemr(wuc_group)) |= wuc_mask;
+		else
+			*(wubemr(wuc_group)) &= ~wuc_mask;
+#endif
+
 		if (flags & GPIO_INT_F_FALLING) {
+#ifndef IT83XX_GPIO_INT_FLEXIBLE
 			if (!!(flags & GPIO_INT_F_RISING) !=
 			    group_falling_is_both(wuc_group)) {
 				ccprintf("!!Fix GPIO %s interrupt config!!\n",
 					 get_gpio_string(port, mask));
 			}
+#endif
 			*(wuemr(wuc_group)) |= wuc_mask;
 		} else {
 			*(wuemr(wuc_group)) &= ~wuc_mask;
 		}
+		/*
+		 * Always write 1 to clear the WUC status register after
+		 * modifying edge mode selection register (WUBEMR and WUEMR).
+		 */
+		*(wuesr(wuc_group)) = wuc_mask;
 	}
 }
 

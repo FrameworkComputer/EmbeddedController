@@ -64,11 +64,31 @@
  */
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE CONFIG_FLASH_ERASE_SIZE
 
+#if defined(CHIP_VARIANT_IT8320BX)
 /* This is the physical size of the flash on the chip. We'll reserve one bank
  * in order to emulate per-bank write-protection UNTIL REBOOT. The hardware
  * doesn't support a write-protect pin, and if we make the write-protection
  * permanent, it can't be undone easily enough to support RMA. */
 #define CONFIG_FLASH_SIZE  0x00040000
+#elif defined(CHIP_VARIANT_IT8320DX)
+#define CONFIG_FLASH_SIZE  0x00080000
+/* The slave frequency is adjustable (bit[2-0] at register IT83XX_ESPI_GCAC1) */
+#define IT83XX_ESPI_SLAVE_MAX_FREQ_CONFIGURABLE
+/* Watchdog reset supports hardware reset. */
+/* TODO(b/111264984): watchdog hardware reset function failed. */
+#undef IT83XX_ETWD_HW_RESET_SUPPORT
+/*
+ * More GPIOs can be set as 1.8v input.
+ * Please refer to gpio_1p8v_sel[] for 1.8v GPIOs.
+ */
+#define IT83XX_GPIO_1P8V_PIN_EXTENDED
+/* All GPIOs support interrupt on rising, falling, and either edge. */
+#define IT83XX_GPIO_INT_FLEXIBLE
+/* Enable interrupts of group 21 and 22. */
+#define IT83XX_INTC_GROUP_21_22_SUPPORT
+#else
+#error "Unsupported chip variant!"
+#endif
 
 /****************************************************************************/
 /* Define our flash layout. */

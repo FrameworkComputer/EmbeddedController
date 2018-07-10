@@ -528,6 +528,17 @@ void espi_interrupt(void)
 
 void espi_init(void)
 {
+	/*
+	 * bit[2-0], the maximum frequency of operation supported by slave:
+	 * 000b: 20MHz
+	 * 001b: 25MHz
+	 * 010b: 33MHz
+	 * 011b: 50MHz
+	 * 100b: 66MHz
+	 */
+#ifdef IT83XX_ESPI_SLAVE_MAX_FREQ_CONFIGURABLE
+	IT83XX_ESPI_GCAC1 = (IT83XX_ESPI_GCAC1 & ~0x7) | (1 << 2);
+#endif
 	/* reset vw_index_flag at initialization */
 	espi_reset_vw_index_flags();
 
