@@ -981,3 +981,69 @@ int rt946x_enable_charge_termination(int en)
 	return (en ? rt946x_set_bit : rt946x_clr_bit)
 		(RT946X_REG_CHGCTRL2, RT946X_MASK_TE);
 }
+
+#ifdef CONFIG_CHARGER_MT6370
+/* MT6370 RGB LED */
+
+int mt6370_led_set_dim_mode(enum mt6370_led_index index,
+			    enum mt6370_led_dim_mode mode)
+{
+	if (index <= MT6370_LED_ID_OFF || index >= MT6370_LED_ID_COUNT)
+		return EC_ERROR_INVAL;
+
+	rt946x_update_bits(MT6370_REG_RGBDIM_BASE + index,
+			   MT6370_MASK_RGB_DIMMODE,
+			   mode << MT6370_SHIFT_RGB_DIMMODE);
+	return EC_SUCCESS;
+}
+
+int mt6370_led_set_color(enum mt6370_led_index index)
+{
+	int val;
+
+	if (index >= MT6370_LED_ID_COUNT)
+		return EC_ERROR_INVAL;
+
+	if (index == MT6370_LED_ID_OFF)
+		val = 0;
+	else
+		val = 1 << (MT6370_SHIFT_RGB_ISNKDIM_BASE + index);
+
+	rt946x_update_bits(MT6370_REG_RGBEN, MT6370_MASK_RGB_ISNK_ALL_EN, val);
+	return EC_SUCCESS;
+}
+
+int mt6370_led_set_brightness(enum mt6370_led_index index, uint8_t brightness)
+{
+	if (index >= MT6370_LED_ID_COUNT || index <= MT6370_LED_ID_OFF)
+		return EC_ERROR_INVAL;
+
+	rt946x_update_bits(MT6370_REG_RGBISNK_BASE + index,
+			   MT6370_MASK_RGBISNK_CURSEL,
+			   brightness << MT6370_SHIFT_RGBISNK_CURSEL);
+	return EC_SUCCESS;
+}
+
+int mt6370_led_set_pwm_dim_duty(enum mt6370_led_index index, uint8_t dim_duty)
+{
+	if (index >= MT6370_LED_ID_COUNT || index <= MT6370_LED_ID_OFF)
+		return EC_ERROR_INVAL;
+
+	rt946x_update_bits(MT6370_REG_RGBDIM_BASE + index,
+			   MT6370_MASK_RGB_DIMDUTY,
+			   dim_duty << MT6370_SHIFT_RGB_DIMDUTY);
+	return EC_SUCCESS;
+}
+
+int mt6370_led_set_pwm_frequency(enum mt6370_led_index index,
+				 enum mt6370_led_pwm_freq freq)
+{
+	if (index >= MT6370_LED_ID_COUNT || index <= MT6370_LED_ID_OFF)
+		return EC_ERROR_INVAL;
+
+	rt946x_update_bits(MT6370_REG_RGBISNK_BASE + index,
+			   MT6370_MASK_RGBISNK_DIMFSEL,
+			   freq << MT6370_SHIFT_RGBISNK_DIMFSEL);
+	return EC_SUCCESS;
+}
+#endif
