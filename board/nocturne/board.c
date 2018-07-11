@@ -448,6 +448,8 @@ const struct temp_sensor_t temp_sensors[] = {
 	 BD99992GW_ADC_CHANNEL_SYSTHERM2, 4},
 	{"eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
 	 BD99992GW_ADC_CHANNEL_SYSTHERM3, 4},
+	/* The Gyro temperature sensor is only readable in S0. */
+	{"Gyro", TEMP_SENSOR_TYPE_BOARD, bmi160_get_sensor_temp, LID_GYRO, 1}
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
