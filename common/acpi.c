@@ -177,11 +177,13 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			break;
 #endif
 
-#ifdef CONFIG_DPTF_DEVICE_ORIENTATION
 		case EC_ACPI_MEM_DEVICE_ORIENTATION:
+#ifdef CONFIG_DPTF_DEVICE_ORIENTATION
 			result = tablet_get_mode();
-			break;
+#else
+			result = 0;
 #endif
+			break;
 
 		case EC_ACPI_MEM_DEVICE_FEATURES0:
 		case EC_ACPI_MEM_DEVICE_FEATURES1:
