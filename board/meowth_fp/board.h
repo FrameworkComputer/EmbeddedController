@@ -109,10 +109,6 @@
 #define FP_FRAME_SECTION    __SECTION(ahb4)
 #define FP_TEMPLATE_SECTION __SECTION(ahb)
 
-/* we are doing slow compute */
-#undef CONFIG_WATCHDOG_PERIOD_MS
-#define CONFIG_WATCHDOG_PERIOD_MS 10000
-
 #else /* SECTION_IS_RO */
 /* RO verifies the RW partition signature */
 #define CONFIG_RSA
@@ -121,6 +117,10 @@
 #define CONFIG_RWSIG
 #endif
 #define CONFIG_RWSIG_TYPE_RWSIG
+
+/* RW does slow compute, RO does slow flash erase. */
+#undef CONFIG_WATCHDOG_PERIOD_MS
+#define CONFIG_WATCHDOG_PERIOD_MS 10000
 
 /*
  * Add rollback protection
@@ -135,6 +135,8 @@
 #ifdef SECTION_IS_RW
 #undef CONFIG_ROLLBACK_UPDATE
 #endif
+
+#define CONFIG_RNG
 
 #define CONFIG_CMD_FLASH
 #define CONFIG_CMD_SPI_XFER
