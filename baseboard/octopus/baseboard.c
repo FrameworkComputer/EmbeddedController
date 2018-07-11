@@ -294,12 +294,6 @@ void board_hibernate(void)
 		pd_request_source_voltage(port, NX20P3483_SAFE_RESET_VBUS_MV);
 #endif
 
-	/*
-	 * Delay allows AP power state machine to settle down along
-	 * with any PD contract renegotiation.
-	 */
-	msleep(100);
-
 	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
 		/*
 		 * If Vbus isn't already on this port, then open the SNK path
@@ -310,4 +304,11 @@ void board_hibernate(void)
 		if (!pd_is_vbus_present(port))
 			ppc_vbus_sink_enable(port, 1);
 	}
+
+	/*
+	 * Delay allows AP power state machine to settle down along
+	 * with any PD contract renegotiation, and tcpm to put TCPC into low
+	 * power mode if required.
+	 */
+	msleep(200);
 }
