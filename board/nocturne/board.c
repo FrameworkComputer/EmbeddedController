@@ -323,6 +323,21 @@ void board_chipset_startup(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
+static void imvp8_tune_deferred(void)
+{
+	/* For the IMVP8, reduce the steps during decay from 3 to 1. */
+	if (i2c_write16(I2C_PORT_POWER, I2C_ADDR_MP2949, 0xFA, 0x0AC5))
+		CPRINTS("Failed to change step decay!");
+}
+DECLARE_DEFERRED(imvp8_tune_deferred);
+
+void board_chipset_resume(void)
+{
+	/* Write to the IMVP8 after 250ms. */
+	hook_call_deferred(&imvp8_tune_deferred_data, 250 * MSEC);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
 void board_chipset_shutdown(void)
 {
 	gpio_set_level(GPIO_EN_5V, 0);
