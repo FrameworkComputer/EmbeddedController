@@ -10,6 +10,7 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charge_state_v2.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "compile_time_macros.h"
@@ -451,6 +452,18 @@ void board_overcurrent_event(int port)
 	CPRINTS("C%d: overcurrent!", port);
 }
 
+static int read_gyro_sensor_temp(int idx, int *temp_ptr)
+{
+	/*
+	 * The gyro is only powered in S0, so don't go and read it if the AP is
+	 * off.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return EC_ERROR_NOT_POWERED;
+
+	return bmi160_get_sensor_temp(idx, temp_ptr);
+}
+
 const struct temp_sensor_t temp_sensors[] = {
 	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0, 4},
 
@@ -464,7 +477,7 @@ const struct temp_sensor_t temp_sensors[] = {
 	{"eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
 	 BD99992GW_ADC_CHANNEL_SYSTHERM3, 4},
 	/* The Gyro temperature sensor is only readable in S0. */
-	{"Gyro", TEMP_SENSOR_TYPE_BOARD, bmi160_get_sensor_temp, LID_GYRO, 1}
+	{"Gyro", TEMP_SENSOR_TYPE_BOARD, read_gyro_sensor_temp, LID_GYRO, 1}
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
