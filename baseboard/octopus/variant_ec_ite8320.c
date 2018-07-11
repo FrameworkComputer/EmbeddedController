@@ -14,8 +14,8 @@
 const struct i2c_port_t i2c_ports[] = {
 	{"power",  IT83XX_I2C_CH_A, 100, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
 	{"sensor", IT83XX_I2C_CH_B, 100, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"usbc0",  IT83XX_I2C_CH_C, 100, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-	{"usbc1",  IT83XX_I2C_CH_E, 100, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
+	{"usbc0",  IT83XX_I2C_CH_C, 400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
+	{"usbc1",  IT83XX_I2C_CH_E, 400, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
 	{"eeprom", IT83XX_I2C_CH_F, 100, GPIO_I2C5_SCL, GPIO_I2C5_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
