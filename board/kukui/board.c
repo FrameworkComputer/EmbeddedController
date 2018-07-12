@@ -72,6 +72,18 @@ static void ap_watchdog_interrupt(enum gpio_signal signal)
 	gpio_set_level(GPIO_PMIC_WATCHDOG_L, level);
 }
 
+#if BOARD_REV >= 1
+static void hall_interrupt(enum gpio_signal signal)
+{
+	/* TODO(b/111378000): Implement hall_interrupt */
+}
+
+static void gauge_interrupt(enum gpio_signal signal)
+{
+	/* TODO(b/111378620): Impelement gauge_interrupt */
+}
+#endif
+
 #include "gpio_list.h"
 
 /******************************************************************************/

@@ -8,6 +8,13 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+/* board revision */
+#define BOARD_REV 0
+
+#if BOARD_REV < 0 || BOARD_REV > 1
+#error "Board revision out of range"
+#endif
+
 /* Optional modules */
 #define CONFIG_ADC
 #undef  CONFIG_ADC_WATCHDOG
