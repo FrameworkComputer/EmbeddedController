@@ -1648,6 +1648,9 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_IWDG_RLR              REG32(STM32_IWDG_BASE + 0x08)
 #define STM32_IWDG_RLR_MAX		0x0fff
 #define STM32_IWDG_SR               REG32(STM32_IWDG_BASE + 0x0C)
+#define STM32_IWDG_SR_WVU		(1 << 2)
+#define STM32_IWDG_SR_RVU		(1 << 1)
+#define STM32_IWDG_SR_PVU		(1 << 0)
 #define STM32_IWDG_WINR             REG32(STM32_IWDG_BASE + 0x10)
 
 /* --- Real-Time Clock --- */

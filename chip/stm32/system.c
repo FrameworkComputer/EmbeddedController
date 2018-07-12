@@ -388,6 +388,9 @@ void system_reset(int flags)
 		/* Ask the watchdog to trigger a hard reboot */
 		STM32_IWDG_KR = STM32_IWDG_KR_UNLOCK;
 		STM32_IWDG_RLR = 0x1;
+		/* Wait for value to be reloaded. */
+		while (STM32_IWDG_SR & STM32_IWDG_SR_RVU)
+			;
 		STM32_IWDG_KR = STM32_IWDG_KR_RELOAD;
 #endif
 		/* wait for the chip to reboot */
