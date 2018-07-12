@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include "clock.h"
+#include "cpu.h"
 #include "flash.h"
 #include "hooks.h"
 #include "registers.h"
@@ -243,6 +244,11 @@ exit_wr:
 
 	lock(bank);
 
+#ifdef CONFIG_ARMV7M_CACHE
+	/* Invalidate D-cache, to make sure we do not read back stale data. */
+	cpu_clean_invalidate_dcache();
+#endif
+
 	return res;
 }
 
@@ -313,6 +319,11 @@ exit_er:
 	STM32_FLASH_CR(bank) &= ~(FLASH_CR_SER | FLASH_CR_SNB_MASK);
 
 	lock(bank);
+
+#ifdef CONFIG_ARMV7M_CACHE
+	/* Invalidate D-cache, to make sure we do not read back stale data. */
+	cpu_clean_invalidate_dcache();
+#endif
 
 	return res;
 }
