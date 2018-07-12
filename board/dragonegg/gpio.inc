@@ -66,6 +66,7 @@ GPIO(FAN_PWM1,            PIN(A, 6), GPIO_INPUT)
 GPIO(FAN_PWM2,            PIN(A, 7), GPIO_INPUT)
 
 /* Alternate functions GPIO definitions */
+ALTERNATE(PIN_MASK(B, 0x03), 0, MODULE_UART, 0)            /* UART from EC to Servo */
 ALTERNATE(PIN_MASK(B, 0x18), 0, MODULE_I2C, 0)             /* I2C0 */
 ALTERNATE(PIN_MASK(C, 0x06), 0, MODULE_I2C, 0)             /* I2C1 */
 ALTERNATE(PIN_MASK(F, 0xC0), 0, MODULE_I2C, 0)             /* I2C2 */
