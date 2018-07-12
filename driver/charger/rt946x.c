@@ -1007,7 +1007,7 @@ int mt6370_led_set_color(enum mt6370_led_index index)
 	if (index == MT6370_LED_ID_OFF)
 		val = 0;
 	else
-		val = 1 << (MT6370_SHIFT_RGB_ISNKDIM_BASE + index);
+		val = 1 << (MT6370_SHIFT_RGB_ISNKDIM_BASE - index);
 
 	rt946x_update_bits(MT6370_REG_RGBEN, MT6370_MASK_RGB_ISNK_ALL_EN, val);
 	return EC_SUCCESS;
