@@ -70,6 +70,11 @@
  * doesn't support a write-protect pin, and if we make the write-protection
  * permanent, it can't be undone easily enough to support RMA. */
 #define CONFIG_FLASH_SIZE  0x00040000
+/*
+ * The voltage detector of CC1 and CC2 is enabled/disabled by different bit
+ * of the control register (bit1 and bit5 at register IT83XX_USBPD_CCCSR).
+ */
+#define IT83XX_USBPD_CC_VOLTAGE_DETECTOR_INDEPENDENT
 #elif defined(CHIP_VARIANT_IT8320DX)
 #define CONFIG_FLASH_SIZE  0x00080000
 /* The slave frequency is adjustable (bit[2-0] at register IT83XX_ESPI_GCAC1) */

@@ -57,9 +57,9 @@ static enum tcpc_cc_voltage_status it83xx_get_cc(
 	/* sink */
 	if (USBPD_GET_POWER_ROLE(port) == USBPD_POWER_ROLE_CONSUMER) {
 		if (cc_pin == USBPD_CC_PIN_1)
-			ufp_volt = IT83XX_USBPD_UFPVDR(port) & 0xf;
+			ufp_volt = IT83XX_USBPD_UFPVDR(port) & 0x7;
 		else
-			ufp_volt = (IT83XX_USBPD_UFPVDR(port) >> 4) & 0xf;
+			ufp_volt = (IT83XX_USBPD_UFPVDR(port) >> 4) & 0x7;
 
 		switch (ufp_volt) {
 		case USBPD_UFP_STATE_SNK_DEF:
@@ -138,9 +138,15 @@ static enum tcpc_transmit_complete it83xx_tx_data(
 	/* set message type */
 	IT83XX_USBPD_MTSR0(port) =
 		(IT83XX_USBPD_MTSR0(port) & ~0x1f) | (msg_type & 0xf);
-	/* SOP type: bit[5:4] 00 SOP, 01 SOP', 10 SOP" */
+	/*
+	 * SOP type bit[6~4]:
+	 * on bx version and before:
+	 * x00b=SOP, x01b=SOP', x10b=SOP", bit[6] is reserved.
+	 * on dx version:
+	 * 000b=SOP, 001b=SOP', 010b=SOP", 011b=Debug SOP', 100b=Debug SOP''.
+	 */
 	IT83XX_USBPD_MTSR1(port) =
-		(IT83XX_USBPD_MTSR1(port) & ~0x30) | ((type & 0x3) << 4);
+		(IT83XX_USBPD_MTSR1(port) & ~0x70) | ((type & 0x7) << 4);
 	/* bit7: transmit message is send to cable or not */
 	if (TCPC_TX_SOP == type)
 		IT83XX_USBPD_MTSR0(port) &= ~USBPD_REG_MASK_CABLE_ENABLE;
@@ -222,14 +228,12 @@ static void it83xx_enable_vconn(enum usbpd_port port, int enabled)
 	if (enabled) {
 		/* Disable unused CC to become VCONN */
 		if (cc_pin == USBPD_CC_PIN_1) {
-			IT83XX_USBPD_CCCSR(port) =
-				(IT83XX_USBPD_CCCSR(port) | 0xa0) & ~0xa;
+			IT83XX_USBPD_CCCSR(port) = USBPD_CC2_DISCONNECTED(port);
 			IT83XX_USBPD_CCPSR(port) = (IT83XX_USBPD_CCPSR(port)
 				& ~USBPD_REG_MASK_DISCONNECT_POWER_CC2)
 				| USBPD_REG_MASK_DISCONNECT_POWER_CC1;
 		} else {
-			IT83XX_USBPD_CCCSR(port) =
-				(IT83XX_USBPD_CCCSR(port) | 0xa) & ~0xa0;
+			IT83XX_USBPD_CCCSR(port) = USBPD_CC1_DISCONNECTED(port);
 			IT83XX_USBPD_CCPSR(port) = (IT83XX_USBPD_CCPSR(port)
 				& ~USBPD_REG_MASK_DISCONNECT_POWER_CC1)
 				| USBPD_REG_MASK_DISCONNECT_POWER_CC2;
@@ -490,6 +494,8 @@ static int it83xx_tcpm_transmit(int port,
 	case TCPC_TX_SOP:
 	case TCPC_TX_SOP_PRIME:
 	case TCPC_TX_SOP_PRIME_PRIME:
+	case TCPC_TX_SOP_DEBUG_PRIME:
+	case TCPC_TX_SOP_DEBUG_PRIME_PRIME:
 		status = it83xx_tx_data(port,
 					type,
 					PD_HEADER_TYPE(header),
