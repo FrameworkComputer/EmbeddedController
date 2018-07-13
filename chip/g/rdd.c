@@ -41,7 +41,7 @@ static int force_detected;
  *
  * @return 1 if debug accessory is detected, 0 if not detected
  */
-static int rdd_is_detected(void)
+int rdd_is_detected(void)
 {
 	uint8_t cc1 = GREAD_FIELD(RDD, INPUT_PIN_VALUES, CC1);
 	uint8_t cc2 = GREAD_FIELD(RDD, INPUT_PIN_VALUES, CC2);

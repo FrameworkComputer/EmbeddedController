@@ -16,4 +16,11 @@ void init_rdd_state(void);
  */
 void print_rdd_state(void);
 
+/**
+ * Get instantaneous cable detect state
+ *
+ * @return 1 if debug accessory is detected, 0 if not detected.
+ */
+int rdd_is_detected(void);
+
 #endif  /* __CROS_RDD_H */
