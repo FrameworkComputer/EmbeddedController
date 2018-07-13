@@ -199,11 +199,14 @@ int rwsig_check_signature(void)
 	 * if rollback information should be updated.
 	 *
 	 * When system is locked, we only increment the rollback if RW is
-	 * currently protected.
+	 * currently protected (and if CONFIG_FLASH_PROTECT_RW is defined).
 	 */
-	if (rw_rollback_version != min_rollback_version &&
-			((!system_is_locked() ||
-			flash_get_protect() & EC_FLASH_PROTECT_RW_NOW))) {
+	if (rw_rollback_version != min_rollback_version
+#ifdef CONFIG_FLASH_PROTECT_RW
+		&& ((!system_is_locked() ||
+				flash_get_protect() & EC_FLASH_PROTECT_RW_NOW))
+#endif
+			) {
 		/*
 		 * This will fail if the rollback block is protected (RW image
 		 * will unprotect that block later on).
