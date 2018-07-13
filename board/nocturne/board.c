@@ -126,9 +126,8 @@ const struct i2c_port_t i2c_ports[] = {
 		GPIO_EC_I2C0_POWER_SDA
 	},
 
-	/* TODO(aaboagye): Restore 1MHz bus speed for after eval. */
 	{
-		"als_gyro", I2C_PORT_ALS_GYRO, 100, GPIO_EC_I2C5_ALS_GYRO_SCL,
+		"als_gyro", I2C_PORT_ALS_GYRO, 400, GPIO_EC_I2C5_ALS_GYRO_SCL,
 		GPIO_EC_I2C5_ALS_GYRO_SDA
 	},
 
