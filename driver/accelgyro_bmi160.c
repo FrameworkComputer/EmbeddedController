@@ -27,7 +27,7 @@
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
 #ifdef CONFIG_ACCEL_FIFO
-static uint32_t last_interrupt_timestamp;
+static volatile uint32_t last_interrupt_timestamp;
 #endif
 
 /*
@@ -788,7 +788,7 @@ static uint8_t bmi160_buffer[BMI160_FIFO_BUFFER];
  * @bp: current pointer in the buffer, updated when processing the header.
  */
 static int bmi160_decode_header(struct motion_sensor_t *s,
-		enum fifo_header hdr, uint8_t **bp)
+		enum fifo_header hdr, uint32_t last_ts, uint8_t **bp)
 {
 	if ((hdr & BMI160_FH_MODE_MASK) == BMI160_EMPTY &&
 			(hdr & BMI160_FH_PARM_MASK) != 0) {
@@ -820,7 +820,7 @@ static int bmi160_decode_header(struct motion_sensor_t *s,
 				vector.data[Z] = v[Z];
 				vector.sensor_num = i + (s - motion_sensors);
 				motion_sense_fifo_add_data(&vector, s + i, 3,
-						last_interrupt_timestamp);
+						last_ts);
 				*bp += (i == MOTIONSENSE_TYPE_MAG ? 8 : 6);
 			}
 		}
@@ -841,7 +841,7 @@ static int bmi160_decode_header(struct motion_sensor_t *s,
  * for spoof_mode in order to load the sensor stack with the spoofed
  * data.  See accelgyro_bmi160.c::load_fifo for an example.
  */
-static int load_fifo(struct motion_sensor_t *s)
+static int load_fifo(struct motion_sensor_t *s, uint32_t last_ts)
 {
 	int done = 0;
 	struct bmi160_drv_data_t *data = BMI160_GET_DATA(s);
@@ -891,7 +891,7 @@ static int load_fifo(struct motion_sensor_t *s)
 			switch (state) {
 			case FIFO_HEADER: {
 				enum fifo_header hdr = *bp++;
-				if (bmi160_decode_header(s, hdr, &bp))
+				if (bmi160_decode_header(s, hdr, last_ts, &bp))
 					continue;
 				/* Other cases */
 				hdr &= 0xdc;
@@ -1089,13 +1089,19 @@ static void irq_set_orientation(struct motion_sensor_t *s,
  */
 static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
-	int interrupt;
+	uint32_t interrupt, last_ts;
 
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
 			(!(*event & CONFIG_ACCELGYRO_BMI160_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
 	do {
+		/*
+		 * Collect timestamp before resetting the interrupt line:
+		 * After reading, it is possible for the timestamp to change,
+		 * before we can process the FIFO.
+		 */
+		last_ts = last_interrupt_timestamp;
 		raw_read32(s->port, s->addr, BMI160_INT_STATUS_0, &interrupt);
 
 #ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
@@ -1108,7 +1114,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 #endif
 #ifdef CONFIG_ACCEL_FIFO
 		if (interrupt & (BMI160_FWM_INT | BMI160_FFULL_INT))
-			load_fifo(s);
+			load_fifo(s, last_ts);
 #endif
 #ifdef CONFIG_BMI160_ORIENTATION_SENSOR
 		irq_set_orientation(s, interrupt);
