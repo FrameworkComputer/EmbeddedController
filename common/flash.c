@@ -494,11 +494,12 @@ static void flash_abort_or_invalidate_hash(int offset, int size)
 
 #ifdef CONFIG_EXTERNAL_STORAGE
 	/*
-	 * If EC executes in RAM, we keep the current hash. On the next
-	 * hash check, AP will catch hash mismatch between the flash
-	 * copy and the RAM copy, then take necessary actions.
+	 * If EC executes in RAM and is currently in RW, we keep the current
+	 * hash. On the next hash check, AP will catch hash mismatch between the
+	 * flash copy and the RAM copy, then take necessary actions.
 	 */
-	return;
+	if (system_is_in_rw())
+		return;
 #endif
 
 	/* If EC executes in place, we need to invalidate the cached hash. */
