@@ -100,7 +100,7 @@
 
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO 256
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+#define CONFIG_ACCEL_FIFO_THRES 10
 
 /* USB PD config */
 #define CONFIG_CHARGE_MANAGER
