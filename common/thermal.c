@@ -139,7 +139,7 @@ static void thermal_control(void)
 
 	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_HALT])) {
 		CPRINTS("thermal SHUTDOWN");
-		chipset_force_shutdown();
+		chipset_force_shutdown(CHIPSET_SHUTDOWN_THERMAL);
 	} else if (cond_went_false(&cond_hot[EC_TEMP_THRESH_HALT])) {
 		/* We don't reboot automatically - the user has to push
 		 * the power button. It's likely that we can't even

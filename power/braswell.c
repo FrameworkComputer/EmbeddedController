@@ -53,9 +53,10 @@
 static int throttle_cpu;      /* Throttle CPU? */
 static int forcing_shutdown;  /* Forced shutdown in progress? */
 
-void chipset_force_shutdown(void)
+void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
-	CPRINTS("%s()", __func__);
+	CPRINTS("%s(%d)", __func__, reason);
+	report_ap_reset(reason);
 
 	/*
 	 * Force power off. This condition will reset once the state machine
@@ -68,9 +69,10 @@ void chipset_force_shutdown(void)
 	forcing_shutdown = 1;
 }
 
-void chipset_reset(void)
+void chipset_reset(enum chipset_reset_reason reason)
 {
-	CPRINTS("%s", __func__);
+	CPRINTS("%s: %d", __func__, reason);
+	report_ap_reset(reason);
 
 	/*
 	 * Send a reset pulse to the PCH.  This just causes it to
@@ -138,7 +140,7 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("Exit SOC G3");
 
 		if (power_wait_signals(IN_PGOOD_S5)) {
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_G3;
 		}
 
@@ -165,7 +167,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* Check for state transitions */
 		if (!power_has_signals(IN_PGOOD_S3)) {
 			/* Required rail went away */
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S3S5;
 		} else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 1) {
 			/* Power up to next state */
@@ -182,7 +184,7 @@ enum power_state power_handle_state(enum power_state state)
 		/*wireless_set_state(WIRELESS_ON);*/
 
 		if (!power_has_signals(IN_PGOOD_S3)) {
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 
 		/*wireless_set_state(WIRELESS_OFF);*/
 			return POWER_S3S5;
@@ -222,7 +224,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0:
 
 		if (!power_has_signals(IN_PGOOD_ALWAYS_ON)) {
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S0S3;
 		}
 

@@ -141,7 +141,7 @@ enum power_on_event_t {
 static void chipset_reset_request_handler(void)
 {
 	CPRINTS("AP wants reset");
-	chipset_reset();
+	chipset_reset(CHIPSET_RESET_AP_REQ);
 }
 DECLARE_DEFERRED(chipset_reset_request_handler);
 
@@ -582,22 +582,26 @@ static int check_for_power_off_event(void)
 /*****************************************************************************/
 /* Chipset interface */
 
-void chipset_force_shutdown(void)
+void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
-	CPRINTS("EC triggered shutdown");
+	CPRINTS("%s(%d)", __func__, reason);
+	report_ap_reset(reason);
+
 	power_off();
 
 	/* Clean-up internal variable */
 	power_request = POWER_REQ_NONE;
 }
 
-void chipset_reset(void)
+void chipset_reset(enum chipset_reset_reason reason)
 {
 	/*
 	 * Before we can reprogram the PMIC to make the PMIC RESIN_N pin as
 	 * reset pin and zero-latency. We do cold reset instead.
 	 */
-	CPRINTS("EC triggered cold reboot");
+	CPRINTS("%s(%d)", __func__, reason);
+	report_ap_reset(reason);
+
 	bypass_power_lost_trigger = 1;
 	power_off();
 	bypass_power_lost_trigger = 0;

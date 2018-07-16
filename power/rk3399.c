@@ -207,9 +207,10 @@ static const struct power_seq_op s3s5_power_seq[] = {
 
 static int forcing_shutdown;
 
-void chipset_force_shutdown(void)
+void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
-	CPRINTS("%s()", __func__);
+	CPRINTS("%s(%d)", __func__, reason);
+	report_ap_reset(reason);
 
 	/*
 	 * Force power off. This condition will reset once the state machine
@@ -220,13 +221,14 @@ void chipset_force_shutdown(void)
 }
 
 #define SYS_RST_HOLD_US (1 * MSEC)
-void chipset_reset(void)
+void chipset_reset(enum chipset_reset_reason reason)
 {
 #ifdef CONFIG_CMD_RTC
 	/* Print out the RTC to help correlate resets in logs. */
 	print_system_rtc(CC_CHIPSET);
 #endif
-	CPRINTS("%s", __func__);
+	CPRINTS("%s(%d)", __func__, reason);
+	report_ap_reset(reason);
 
 	/* Pulse SYS_RST */
 	gpio_set_level(GPIO_SYS_RST_L, 0);
@@ -389,7 +391,8 @@ enum power_state power_handle_state(enum power_state state)
 		if (charge_want_shutdown() ||
 		    tries > CHARGER_INITIALIZED_TRIES) {
 			CPRINTS("power-up inhibited");
-			chipset_force_shutdown();
+			chipset_force_shutdown(
+				CHIPSET_SHUTDOWN_BATTERY_INHIBIT);
 			return POWER_G3;
 		}
 
@@ -408,7 +411,7 @@ enum power_state power_handle_state(enum power_state state)
 #endif
 
 		if (power_wait_signals(IN_PGOOD_S3)) {
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_S3S5;
 		}
 
@@ -458,7 +461,7 @@ enum power_state power_handle_state(enum power_state state)
 #else
 		if (power_wait_signals(IN_PGOOD_S0)) {
 #endif /* POWER_SIGNAL_POLLING */
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_S0S3;
 		}
 

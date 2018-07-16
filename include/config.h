@@ -953,6 +953,7 @@
 #define CONFIG_CMD_USBMUX
 #undef  CONFIG_CMD_USB_PD_PE
 #define CONFIG_CMD_WAITMS
+#undef  CONFIG_CMD_AP_RESET_LOG
 
 /*****************************************************************************/
 

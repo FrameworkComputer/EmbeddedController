@@ -20,9 +20,9 @@
 
 static int forcing_shutdown;  /* Forced shutdown in progress? */
 
-void chipset_force_shutdown(void)
+void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
-	CPRINTS("%s()", __func__);
+	CPRINTS("%s(%d)", __func__, reason);
 
 	/*
 	 * Force off. Sending a reset command to the PMIC will power off
@@ -32,6 +32,7 @@ void chipset_force_shutdown(void)
 	 * hold time on the PMIC.
 	 */
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		report_ap_reset(reason);
 		forcing_shutdown = 1;
 		power_button_pch_press();
 	}
@@ -55,7 +56,7 @@ void chipset_handle_espi_reset_assert(void)
 enum power_state chipset_force_g3(void)
 {
 	int timeout = 50;
-	chipset_force_shutdown();
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_G3);
 
 	/* Turn off DSW load switch. */
 	gpio_set_level(GPIO_EN_PP3300_DSW, 0);

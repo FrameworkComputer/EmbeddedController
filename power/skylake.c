@@ -23,7 +23,7 @@
 static int forcing_shutdown;  /* Forced shutdown in progress? */
 
 
-void chipset_force_shutdown(void)
+void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s()", __func__);
 
@@ -35,6 +35,7 @@ void chipset_force_shutdown(void)
 	 * hold time on the PMIC.
 	 */
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		report_ap_reset(reason);
 		forcing_shutdown = 1;
 		power_button_pch_press();
 	}

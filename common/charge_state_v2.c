@@ -1333,7 +1333,7 @@ static int shutdown_on_critical_battery(void)
 			/* Timeout waiting for AP to shut down, so kill it */
 			CPRINTS(
 			  "charge force shutdown due to critical battery");
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_BATTERY_CRIT);
 		}
 	}
 

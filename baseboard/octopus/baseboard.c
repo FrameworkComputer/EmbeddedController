@@ -280,7 +280,7 @@ void board_hibernate(void)
 	 * To support hibernate called from console commands, ectool commands
 	 * and key sequence, shutdown the AP before hibernating.
 	 */
-	chipset_force_shutdown();
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_BOARD_CUSTOM);
 
 #ifdef CONFIG_USBC_PPC_NX20P3483
 	/*

@@ -55,13 +55,13 @@ static void tcpc_alert_event(enum gpio_signal signal)
 static void overtemp_interrupt(enum gpio_signal signal)
 {
 	CPRINTS("AP wants shutdown");
-	chipset_force_shutdown();
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_THERMAL);
 }
 
 static void warm_reset_request_interrupt(enum gpio_signal signal)
 {
 	CPRINTS("AP wants warm reset");
-	chipset_reset();
+	chipset_reset(CHIPSET_RESET_AP_REQ);
 }
 
 #include "gpio_list.h"

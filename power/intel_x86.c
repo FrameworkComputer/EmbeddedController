@@ -219,7 +219,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 	case POWER_S3:
 		if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
 			/* Required rail went away */
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S3S5;
 		} else if (chipset_get_sleep_signal(SYS_SLEEP_S3) == 1) {
 			/* Power up to next state */
@@ -232,7 +232,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 
 	case POWER_S0:
 		if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S0S3;
 		} else if (chipset_get_sleep_signal(SYS_SLEEP_S3) == 0) {
 			/* Power down to next state */
@@ -293,7 +293,8 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		if (tries == CHARGER_INITIALIZED_TRIES) {
 			CPRINTS("power-up inhibited");
 			power_up_inhibited = 1;
-			chipset_force_shutdown();
+			chipset_force_shutdown(
+				CHIPSET_SHUTDOWN_BATTERY_INHIBIT);
 			return POWER_G3;
 		}
 
@@ -320,7 +321,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 #endif
 
 		if (power_wait_signals(CHIPSET_G3S5_POWERUP_SIGNAL)) {
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_G3;
 		}
 
@@ -330,7 +331,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 	case POWER_S5S3:
 		if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
 			/* Required rail went away */
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S5G3;
 		}
 
@@ -349,7 +350,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 	case POWER_S3S0:
 		if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
 			/* Required rail went away */
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S3S5;
 		}
 
@@ -563,7 +564,7 @@ void power_chipset_handle_host_sleep_event(enum host_sleep_event state)
 
 #endif
 
-void chipset_reset(void)
+void chipset_reset(enum chipset_reset_reason reason)
 {
 	/*
 	 * Irrespective of cold_reset value, always toggle SYS_RESET_L to
@@ -574,7 +575,7 @@ void chipset_reset(void)
 	 * The EC cannot control warm vs cold reset of the chipset using
 	 * SYS_RESET_L; it's more of a request.
 	 */
-	CPRINTS("%s", __func__);
+	CPRINTS("%s: %d", __func__, reason);
 
 	/*
 	 * Toggling SYS_RESET_L will not have any impact when it's already
@@ -584,6 +585,8 @@ void chipset_reset(void)
 		CPRINTS("Chipset is in reset state");
 		return;
 	}
+
+	report_ap_reset(reason);
 
 	gpio_set_level(GPIO_SYS_RESET_L, 0);
 	/*

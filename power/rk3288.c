@@ -223,7 +223,7 @@ enum power_state power_chipset_init(void)
 		 * The warm reset triggers AP into the RK recovery mode (
 		 * flash SPI from USB).
 		 */
-		chipset_reset();
+		chipset_reset(CHIPSET_RESET_INIT);
 
 		init_power_state = POWER_G3;
 	} else {
@@ -265,8 +265,10 @@ static void chipset_turn_off_power_rails(void)
 	set_pmic_warm_reset(1);
 }
 
-void chipset_force_shutdown(void)
+void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
+	CPRINTS("%s(%d)", __func__, reason);
+	report_ap_reset(reason);
 	chipset_turn_off_power_rails();
 
 	/* clean-up internal variable */
@@ -380,9 +382,11 @@ static void power_off(void)
 	CPRINTS("power shutdown complete");
 }
 
-void chipset_reset(void)
+void chipset_reset(enum chipset_reset_reason reason)
 {
-	CPRINTS("EC triggered warm reboot");
+	CPRINTS("%s(%d)", __func__, reason);
+	report_ap_reset(reason);
+
 	CPRINTS("assert GPIO_PMIC_WARM_RESET_L for %d ms",
 			PMIC_WARM_RESET_L_HOLD_TIME / MSEC);
 	set_pmic_warm_reset(1);

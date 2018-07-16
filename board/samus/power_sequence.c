@@ -65,9 +65,10 @@
 static int throttle_cpu;      /* Throttle CPU? */
 static uint32_t pp5000_in_g3; /* Turn PP5000 on in G3? */
 
-void chipset_force_shutdown(void)
+void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
-	CPRINTS("%s()", __func__);
+	CPRINTS("%s(%d)", __func__, reason);
+	report_ap_reset(reason);
 
 	/*
 	 * Force off. This condition will reset once the state machine
@@ -111,9 +112,10 @@ static void chipset_reset_rtc(void)
 	udelay(10 * MSEC);
 }
 
-void chipset_reset(void)
+void chipset_reset(enum chipset_reset_reason reason)
 {
-	CPRINTS("%s", __func__);
+	CPRINTS("%s(%d)", __func__, reason);
+	report_ap_reset(reason);
 
 	/*
 	 * Send a RCIN# pulse to the PCH.  This just causes it to
@@ -184,7 +186,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* Check for state transitions */
 		if (!power_has_signals(IN_PGOOD_S3)) {
 			/* Required rail went away */
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S3S5;
 		} else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 1) {
 			/* Power up to next state */
@@ -198,7 +200,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0:
 		if (!power_has_signals(IN_PGOOD_S0)) {
 			/* Required rail went away */
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S0S3;
 		} else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 0) {
 			/* Power down to next state */
@@ -291,7 +293,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (power_wait_signals(IN_PGOOD_S3)) {
 			gpio_set_level(GPIO_PP1800_EN, 0);
 			gpio_set_level(GPIO_PP1200_EN, 0);
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_S5;
 		}
 
@@ -338,7 +340,7 @@ enum power_state power_handle_state(enum power_state state)
 			gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 0);
 			wireless_set_state(WIRELESS_OFF);
 			gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 1);
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_S3;
 		}
 
@@ -377,7 +379,7 @@ enum power_state power_handle_state(enum power_state state)
 			gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 0);
 			gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 1);
 			wireless_set_state(WIRELESS_OFF);
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_S3;
 		}
 

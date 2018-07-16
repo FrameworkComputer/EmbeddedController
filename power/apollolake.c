@@ -6,6 +6,7 @@
 /* Apollolake chipset power control module for Chrome EC */
 
 #include "apollolake.h"
+#include "chipset.h"
 #include "console.h"
 #include "gpio.h"
 #include "intel_x86.h"
@@ -42,8 +43,11 @@ static void internal_chipset_shutdown(void)
 	chipset_do_shutdown();
 }
 
-void chipset_force_shutdown(void)
+void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
+	CPRINTS("%s: %d", __func__, reason);
+	report_ap_reset(reason);
+
 	/*
 	 * This function is called from multiple tasks and hence it is racy! But
 	 * since things are going down hard, it does not matter if some task
@@ -55,7 +59,7 @@ void chipset_force_shutdown(void)
 
 enum power_state chipset_force_g3(void)
 {
-	chipset_force_shutdown();
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_G3);
 
 	return POWER_G3;
 }

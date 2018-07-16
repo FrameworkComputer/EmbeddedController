@@ -89,9 +89,10 @@ static const struct power_seq_op s3s5_power_seq[] = {
 
 static int forcing_shutdown;
 
-void chipset_force_shutdown(void)
+void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
-	CPRINTS("%s()", __func__);
+	CPRINTS("%s(%d)", __func__, reason);
+	report_ap_reset(reason);
 
 	/*
 	 * Force power off. This condition will reset once the state machine
@@ -100,12 +101,18 @@ void chipset_force_shutdown(void)
 	forcing_shutdown = 1;
 	task_wake(TASK_ID_CHIPSET);
 }
-DECLARE_DEFERRED(chipset_force_shutdown);
+
+void chipset_force_shutdown_button(void)
+{
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_BUTTON);
+}
+DECLARE_DEFERRED(chipset_force_shutdown_button);
 
 /* If chipset needs to be reset, EC also reboots to RO. */
-void chipset_reset(void)
+void chipset_reset(enum chipset_reset_reason reason)
 {
-	CPRINTS("%s", __func__);
+	CPRINTS("%s: %d", __func__, reason);
+	report_ap_reset(reason);
 
 	cflush();
 	system_reset(SYSTEM_RESET_HARD);
@@ -214,7 +221,7 @@ enum power_state power_handle_state(enum power_state state)
 			 * after debounce (32 ms), minus PMIC_EN_PULSE_MS above.
 			 * It would be good to avoid another _EN pulse above.
 			 */
-			chipset_reset();
+			chipset_reset(CHIPSET_RESET_INIT);
 		}
 
 		/* Wait for PMIC to bring up rails. */
@@ -238,7 +245,7 @@ enum power_state power_handle_state(enum power_state state)
 		power_seq_run(s3s0_power_seq, ARRAY_SIZE(s3s0_power_seq));
 
 		if (power_wait_signals(IN_PGOOD_S0)) {
-			chipset_force_shutdown();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_S0S3;
 		}
 
@@ -277,7 +284,8 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		if (power_button_is_pressed()) {
 			forcing_shutdown = 1;
-			hook_call_deferred(&chipset_force_shutdown_data, -1);
+			hook_call_deferred(&chipset_force_shutdown_button_data,
+					-1);
 		}
 
 		return POWER_S3;
@@ -306,11 +314,11 @@ static void power_button_changed(void)
 			chipset_exit_hard_off();
 
 		/* Delayed power down from S0/S3, cancel on PB release */
-		hook_call_deferred(&chipset_force_shutdown_data,
+		hook_call_deferred(&chipset_force_shutdown_button_data,
 				   FORCED_SHUTDOWN_DELAY);
 	} else {
 		/* Power button released, cancel deferred shutdown */
-		hook_call_deferred(&chipset_force_shutdown_data, -1);
+		hook_call_deferred(&chipset_force_shutdown_button_data, -1);
 	}
 }
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, power_button_changed, HOOK_PRIO_DEFAULT);
