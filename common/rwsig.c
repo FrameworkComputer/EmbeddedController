@@ -198,8 +198,11 @@ int rwsig_check_signature(void)
 	 * Signature verified: we know that rw_rollback_version is valid, check
 	 * if rollback information should be updated.
 	 *
-	 * When system is locked, we only increment the rollback if RW is
-	 * currently protected (and if CONFIG_FLASH_PROTECT_RW is defined).
+	 * If the RW region can be protected independently
+	 * (CONFIG_FLASH_PROTECT_RW is defined), and system is locked, we only
+	 * increment the rollback if RW is currently protected.
+	 *
+	 * Otherwise, we immediately increment the rollback version.
 	 */
 	if (rw_rollback_version != min_rollback_version
 #ifdef CONFIG_FLASH_PROTECT_RW
