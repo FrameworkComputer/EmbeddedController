@@ -42,7 +42,7 @@ extern void stack_end(void); /* not technically correct, it's just a pointer */
 extern void reset(void);
 
 #pragma GCC diagnostic push
-#if __GNUC__ >= 6
+#if __GNUC__ >= 8
 #pragma GCC diagnostic ignored "-Wattribute-alias"
 #endif
 /* Call default_handler if svc_handler is not found (task.c is not built) */
