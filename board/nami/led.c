@@ -113,12 +113,10 @@ const static led_patterns battery_pattern_0 = {
 
 /*
  * Sona - Battery LED (dual color)
- * All patterns are the same as Nami except in S3/S0ix, we do alternate pulsing
- * (up-down-off-off).
  */
 const static led_patterns battery_pattern_1 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_OFF, PULSE_NO}, {LED_WHITE, ALTERNATE(PULSE(10))}, {LED_OFF, 0}},
+	{{LED_OFF,   PULSE_NO}, {LED_OFF,   PULSE_NO}, {LED_OFF,   PULSE_NO}},
 	/* charging: s0, s3, s5 */
 	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}},
 	/* full: s0, s3, s5 */
@@ -138,6 +136,18 @@ const static led_patterns battery_pattern_2 = {
 	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}},
 	/* full: s0, s3, s5 */
 	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO}},
+};
+
+/*
+ * Sona - Power LED (single color)
+ */
+const static led_patterns power_pattern_1 = {
+	/* discharging: s0, s3, s5 */
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF, PULSE_NO}},
+	/* charging: s0, s3, s5 */
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF, PULSE_NO}},
+	/* full: s0, s3, s5 */
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF, PULSE_NO}},
 };
 
 /*
@@ -195,6 +205,8 @@ static void led_init(void)
 		break;
 	case PROJECT_SONA:
 		patterns[0] = &battery_pattern_1;
+		patterns[1] = &power_pattern_1;
+		battery_error.pulse = BLINK(5);
 		break;
 	case PROJECT_PANTHEON:
 		patterns[0] = &battery_pattern_2;
