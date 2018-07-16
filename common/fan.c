@@ -83,7 +83,7 @@ static void set_enabled(int fan, int enable)
 		gpio_set_level(fans[fan].conf->enable_gpio, enable);
 }
 
-static void set_thermal_control_enabled(int fan, int enable)
+test_export_static void set_thermal_control_enabled(int fan, int enable)
 {
 	thermal_control_enabled[fan] = enable;
 
@@ -454,9 +454,6 @@ static void pwm_fan_init(void)
 				CONFIG_FAN_INIT_SPEED));
 	}
 
-	for (fan = 0; fan < CONFIG_FANS; fan++)
-		set_thermal_control_enabled(fan, 1);
-
 	/* Initialize memory-mapped data */
 	mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_FAN);
 	for (i = 0; i < EC_FAN_SPEED_ENTRIES; i++)
@@ -522,21 +519,40 @@ static void pwm_fan_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwm_fan_resume, HOOK_PRIO_DEFAULT);
 
-static void pwm_fan_S3_S5(void)
+static void pwm_fan_startup(void)
+{
+	int fan;
+	/* Turn on fan control when the processor boots up (for BIOS screens) */
+	for (fan = 0; fan < CONFIG_FANS; fan++)
+		set_thermal_control_enabled(fan, 1);
+}
+/* We need to cover cold boot and warm boot. */
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pwm_fan_startup, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESET, pwm_fan_startup, HOOK_PRIO_FIRST);
+
+static void pwm_fan_s3_s5(void)
 {
 	int fan;
 
 	/* TODO(crosbug.com/p/23530): Still treating all fans as one. */
 	for (fan = 0; fan < CONFIG_FANS; fan++) {
-		/* Take back fan control when the processor shuts down */
-		set_thermal_control_enabled(fan, 1);
-		/* For now don't do anything with it. We'll have to turn it on
-		 * again if we need active cooling during heavy battery
-		 * charging or something.
+		/*
+		 * There is no need to cool CPU in S3 or S5. We currently don't
+		 * have fans for battery or charger chip. Battery systems will
+		 * control charge current based on its own temperature readings.
+		 * Thus, we do not need to keep fans running in S3 or S5.
+		 *
+		 * Even with a fan on charging system, it's questionable to run
+		 * a fan in S3/S5. Under an extreme heat condition, spinning a
+		 * fan would create more heat as it draws current from a
+		 * battery and heat would come from ambient air instead of CPU.
+		 *
+		 * Thermal control may be already disabled if DPTF is used.
 		 */
+		set_thermal_control_enabled(fan, 0);
 		fan_set_rpm_target(FAN_CH(fan), 0);
 		set_enabled(fan, 0); /* crosbug.com/p/8097 */
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwm_fan_S3_S5, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pwm_fan_S3_S5, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwm_fan_s3_s5, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pwm_fan_s3_s5, HOOK_PRIO_DEFAULT);

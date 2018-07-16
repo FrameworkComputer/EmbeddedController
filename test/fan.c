@@ -22,6 +22,8 @@
 /*****************************************************************************/
 /* Tests */
 
+void set_thermal_control_enabled(int fan, int enable);
+
 static int test_fan(void)
 {
 	/* "actual" fan speed from board/host/fan.c */
@@ -31,6 +33,8 @@ static int test_fan(void)
 
 	/* With nothing else to do, fans default to full-on */
 	TEST_ASSERT(fan_get_rpm_actual(0) == FAN_RPM(0)->rpm_max);
+
+	set_thermal_control_enabled(0, 1);
 
 	/*
 	 * fan_set_percent_needed() is normally called once a second by the
