@@ -16,12 +16,20 @@
 
 static enum led_states led_get_state(void)
 {
+	int  charge_lvl;
 	enum led_states new_state = LED_NUM_STATES;
 
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
-		new_state = STATE_CHARGING;
-		/* TODO(b/110086152): additional charging states for phasor */
+		/* Get percent charge */
+		charge_lvl = charge_get_percent();
+		/* Determine which charge state to use */
+		if (charge_lvl < led_charge_lvl_1)
+			new_state = STATE_CHARGING_LVL_1;
+		else if (charge_lvl < led_charge_lvl_2)
+			new_state = STATE_CHARGING_LVL_2;
+		else
+			new_state = STATE_CHARGING_FULL_CHARGE;
 		break;
 	case PWR_STATE_DISCHARGE_FULL:
 		if (extpower_is_present()) {
@@ -44,7 +52,10 @@ static enum led_states led_get_state(void)
 		new_state = STATE_CHARGING_FULL_CHARGE;
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
-		new_state = STATE_DISCHARGE_S0;
+		if (charge_get_flags() & CHARGE_FLAG_FORCE_IDLE)
+			new_state = STATE_FACTORY_TEST;
+		else
+			new_state = STATE_DISCHARGE_S0;
 		break;
 	default:
 		/* Other states don't alter LED behavior */
@@ -95,6 +106,47 @@ static void led_update_battery(void)
 	led_set_color_battery(led_bat_state_table[led_state][phase].color);
 }
 
+#ifdef OCTOPUS_POWER_LED
+static void led_update_power(void)
+{
+	int enable;
+	static int ticks;
+	enum led_states desired_state;
+
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		/* In S0 power LED is always on */
+		enable = 1;
+		ticks = 0;
+	} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
+		desired_state = led_get_state();
+		if (desired_state == STATE_CHARGING_FULL_CHARGE ||
+		desired_state == STATE_CHARGING_LVL_1 ||
+		desired_state == STATE_CHARGING_LVL_2) {
+			int period;
+			int led_power_on_ticks = led_power_blink_on_msec / HOOK_TICK_INTERVAL_MS;
+			int led_power_off_ticks = led_power_blink_off_msec / HOOK_TICK_INTERVAL_MS;
+
+			/*
+			* If in suspend/standby and the device is charging, then the
+			* power LED is blinking.
+			*/
+			period = led_power_on_ticks + led_power_off_ticks;
+			enable = ticks % period < led_power_off_ticks ?
+				0 : 1;
+			ticks++;
+		} else {
+			enable = 0;
+			ticks = 0;
+		}
+	} else {
+		enable = 0;
+		ticks = 0;
+	}
+
+	led_set_color_power(enable);
+}
+#endif
+
 static void led_init(void)
 {
 	/* If battery LED is enabled, set it to "off" to start with */
@@ -112,6 +164,9 @@ static void led_update(void)
 	 */
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		led_update_battery();
-	/* TODO(b/110084784): add power LED support for phasor */
+#ifdef OCTOPUS_POWER_LED
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		led_update_power();
+#endif
 }
 DECLARE_HOOK(HOOK_TICK, led_update, HOOK_PRIO_DEFAULT);
