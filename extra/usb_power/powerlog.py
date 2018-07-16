@@ -23,8 +23,14 @@ import usb
 
 from stats_manager import StatsManager
 
+# Directory where hdctools installs configuration files into.
 LIB_DIR = os.path.join(sysconfig.get_python_lib(standard_lib=False), 'servo',
                        'data')
+
+# Potential config file locations: current working directory, the same directory
+# as powerlog.py file or LIB_DIR.
+CONFIG_LOCATIONS = [os.getcwd(), os.path.dirname(os.path.realpath(__file__)),
+                    LIB_DIR]
 
 # This can be overridden by -v.
 debug = False
@@ -56,18 +62,11 @@ def process_filename(filename):
   # Check if filename is absolute path.
   if os.path.isabs(filename) and os.path.isfile(filename):
     return filename
-  # Check if filename is relative to current working directory.
-  cwd = os.path.join(os.getcwd(), filename)
-  if os.path.isfile(cwd):
-    return cwd
-  # Check if filename is relative to same directory as current .py file.
-  sd = os.path.join(os.path.dirname(os.path.realpath(__file__)), filename)
-  if os.path.isfile(sd):
-    return sd
-  # Check if file is installed by hdctools.
-  hdc = os.path.join(LIB_DIR, filename)
-  if os.path.isfile(hdc):
-    return hdc
+  # Check if filename is relative to a known config location.
+  for dirname in CONFIG_LOCATIONS:
+    file_at_dir = os.path.join(dirname, filename)
+    if os.path.isfile(file_at_dir):
+      return file_at_dir
   raise IOError('No such file or directory: \'%s\'' % filename)
 
 
