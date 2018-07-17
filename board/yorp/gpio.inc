@@ -12,7 +12,7 @@
 GPIO_INT(LID_OPEN,	 PIN(D, 2), GPIO_INT_BOTH |
 				    GPIO_HIB_WAKE_HIGH, lid_interrupt)
 GPIO_INT(POWER_BUTTON_L, PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)	/* MECH_PWR_BTN_ODL */
-GPIO_INT(AC_PRESENT, 	 PIN(0, 0), GPIO_INT_BOTH |
+GPIO_INT(AC_PRESENT,	 PIN(0, 0), GPIO_INT_BOTH |
 				    GPIO_HIB_WAKE_HIGH, extpower_interrupt)	/* ACOK_OD */
 
 /* USB-C interrupts */
@@ -48,11 +48,9 @@ GPIO(PCH_SLP_S0_L,	 PIN(A, 4), GPIO_INPUT)		/* SLP_S0_L */
  * only for debugging purposes.
  */
 GPIO(PLT_RST_L,		 PIN(C, 7), GPIO_INPUT)		/* Platform Reset from SoC */
-/* Must be GPIO_DEFAULT since pin is changed based on board version */
-GPIO(SYS_RESET_L_V1,	 PIN(3, 4), GPIO_DEFAULT)	/* SYS_RST_ODL */
+GPIO(SYS_RESET_L,	 PIN(3, 4), GPIO_ODR_HIGH)	/* SYS_RST_ODL */
 
-/* Must be GPIO_DEFAULT since pin is changed based on board version */
-GPIO(ENTERING_RW_V1,	 PIN(E, 1), GPIO_DEFAULT)	/* EC_ENTERING_RW */
+GPIO(ENTERING_RW,	 PIN(E, 1), GPIO_OUT_LOW)	/* EC_ENTERING_RW */
 GPIO(PCH_WAKE_L,	 PIN(7, 4), GPIO_ODR_HIGH)	/* EC_PCH_WAKE_ODL */
 GPIO(PCH_PWRBTN_L,	 PIN(C, 1), GPIO_ODR_HIGH)	/* EC_PCH_PWR_BTN_ODL */
 
@@ -69,7 +67,7 @@ GPIO(ENABLE_BACKLIGHT,		PIN(D, 3), GPIO_ODR_HIGH |
 					   GPIO_SEL_1P8V)	/* EC_BL_EN_OD */
 GPIO(EN_P3300_TRACKPAD_ODL,	PIN(3, 3), GPIO_ODR_HIGH)
 
-GPIO(EC_BATT_PRES_L, 	 PIN(E, 5), GPIO_INPUT)
+GPIO(EC_BATT_PRES_L,	 PIN(E, 5), GPIO_INPUT)
 
 /*
  * PCH_PROCHOT_ODL is primarily for monitoring the PROCHOT# signal which is
@@ -98,8 +96,7 @@ GPIO(I2C7_SDA,		 PIN(B, 2), GPIO_INPUT |
 GPIO(EN_USB_A0_5V,	 PIN(6, 7), GPIO_OUT_LOW)	/* Enable A0 5V Charging */
 GPIO(EN_USB_A1_5V,	 PIN(9, 6), GPIO_OUT_LOW)	/* Enable A1 5V Charging */
 GPIO(USB_A0_CHARGE_EN_L, PIN(A, 2), GPIO_OUT_HIGH)	/* Enable A0 1.5A Charging */
-/* Must be GPIO_DEFAULT since pin is changed based on board version */
-GPIO(USB_A1_CHARGE_EN_L, PIN(A, 0), GPIO_DEFAULT)	/* Enable A1 1.5A Charging */
+GPIO(USB_A1_CHARGE_EN_L, PIN(A, 0), GPIO_OUT_HIGH)	/* Enable A1 1.5A Charging */
 GPIO(USB_C0_BC12_VBUS_ON,   PIN(6, 3), GPIO_OUT_LOW)	/* C0 BC1.2 Power */
 GPIO(USB_C0_BC12_CHG_DET_L, PIN(9, 5), GPIO_INPUT)	/* C0 BC1.2 Detect */
 GPIO(USB_C0_HPD_1V8_ODL, PIN(C, 5), GPIO_INPUT |	/* C0 DP Hotplug Detect */
@@ -109,8 +106,13 @@ GPIO(USB_C1_BC12_VBUS_ON,   PIN(B, 1), GPIO_OUT_LOW)	/* C1 BC1.2 Power */
 GPIO(USB_C1_BC12_CHG_DET_L, PIN(E, 4), GPIO_INPUT)	/* C1 BC1.2 Detect */
 GPIO(USB_C1_HPD_1V8_ODL, PIN(C, 6), GPIO_INPUT |	/* C1 DP Hotplug Detect */
 				    GPIO_SEL_1P8V)
-/* Must be GPIO_DEFAULT since pin is changed based on board version */
-GPIO(USB2_OTG_ID_V1,	 PIN(8, 3), GPIO_DEFAULT)	/* OTG ID */
+
+/*
+ * USB2_OTG_ID is 1.8V pin on the SoC side with an internal pull-up. However, it
+ * 3.3V on the EC side. So, configure it as ODR so that the EC never drives it
+ * high.
+ */
+GPIO(USB2_OTG_ID,	 PIN(8, 3), GPIO_ODR_LOW)	/* OTG ID */
 
 /* LED */
 GPIO(BAT_LED_ORANGE_L,	 PIN(C, 3), GPIO_OUT_HIGH)	/* LED_1_L */
@@ -118,22 +120,10 @@ GPIO(BAT_LED_BLUE_L,	 PIN(C, 4), GPIO_OUT_HIGH)	/* LED_2_L */
 GPIO(LED_3_L,		 PIN(D, 7), GPIO_OUT_HIGH)
 
 /* Keyboard Backlight */
-GPIO(KB_BL_PWR_EN, 	 PIN(6, 2), GPIO_OUT_LOW)
+GPIO(KB_BL_PWR_EN,	 PIN(6, 2), GPIO_OUT_LOW)
 
 /* Camera */
-/* Must be GPIO_DEFAULT since this pin is changed based on board version */
-GPIO(WFCAM_VSYNC, 	 PIN(0, 3), GPIO_DEFAULT) 	/* TP only */
-
-/*
- * Only used for Version 0
- *
- * Note: GPIO_DEFAULT is important because
- * 1) it is a low power state
- * 2) the gpio code will not touch the GPIO settings after a sysjump
- */
-GPIO(C1_EN_SNK_V0,	 PIN(4, 0), GPIO_DEFAULT) 	/* C1: EN_SNK */
-GPIO(SYS_RESET_L_V0,	 PIN(0, 2), GPIO_DEFAULT) 	/* SYS_RESET_L */
-GPIO(ENTERING_RW_V0,	 PIN(8, 0), GPIO_DEFAULT) 	/* ENTERING_RW */
+GPIO(WFCAM_VSYNC,	 PIN(0, 3), GPIO_INPUT)	/* TP only */
 
 /* Overcurrent event to host */
 GPIO(USB_C_OC,      PIN(3, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
@@ -160,10 +150,4 @@ ALTERNATE(PIN_MASK(D, 0x03), 0, MODULE_I2C, 0)		/* I2C3 */
 ALTERNATE(PIN_MASK(F, 0x0C), 0, MODULE_I2C, 0)		/* I2C4 */
 ALTERNATE(PIN_MASK(B, 0x0C), 0, MODULE_I2C, (GPIO_INPUT | GPIO_SEL_1P8V)) /* 1.8V I2C7 */
 ALTERNATE(PIN_MASK(4, 0x30), 0, MODULE_ADC, 0)		/* ADC0-1 */
-
-/*
- * PWM3 needs to be configured for KB_BL_PWM on board versions >= 1. However, on
- * version 0, GPIO80 is used for ENTERING_RW signal and PWM alternate function
- * should be configured depending upon the board version. Hence, it is done in
- * update_drivers_from_board_id() in board.c file.
- */
+ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)		/* KB_BL_PWM */

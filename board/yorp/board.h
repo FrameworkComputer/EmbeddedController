@@ -62,16 +62,6 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
-/* GPIO signals updated base on board version. */
-#define GPIO_SYS_RESET_L gpio_sys_reset_l_runtime
-extern enum gpio_signal gpio_sys_reset_l_runtime;
-
-#define GPIO_ENTERING_RW gpio_entering_rw_runtime
-extern enum gpio_signal gpio_entering_rw_runtime;
-
-#define GPIO_USB2_OTG_ID gpio_usb2_otg_id_runtime
-extern enum gpio_signal gpio_usb2_otg_id_runtime;
-
 enum adc_channel {
 	ADC_TEMP_SENSOR_AMB,		/* ADC0 */
 	ADC_TEMP_SENSOR_CHARGER,	/* ADC1 */
