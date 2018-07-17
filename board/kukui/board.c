@@ -224,11 +224,13 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_AP_EC_WATCHDOG_L);
 	gpio_enable_interrupt(GPIO_AP_IN_SLEEP_L);
 
+#ifdef SECTION_IS_RW
 	/* Enable interrupts from BMI160 sensor. */
 	gpio_enable_interrupt(GPIO_ACCEL_INT_ODL);
 
 	/* Enable interrupt for the camera vsync. */
 	gpio_enable_interrupt(GPIO_SYNC_INT);
+#endif /* SECTION_IS_RW */
 
 	/* Enable interrupt from PMIC. */
 	gpio_enable_interrupt(GPIO_PMIC_EC_RESETB);
@@ -331,6 +333,7 @@ int board_get_version(void)
 
 /* Motion sensors */
 /* Mutexes */
+#ifdef SECTION_IS_RW
 static struct mutex g_base_mutex;
 
 static struct bmi160_drv_data_t g_bmi160_data;
@@ -400,6 +403,7 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+#endif /* SECTION_IS_RW */
 
 int board_allow_i2c_passthru(int port)
 {

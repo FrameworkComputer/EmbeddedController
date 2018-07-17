@@ -31,10 +31,12 @@ GPIO_INT(WARM_RESET_REQ,    PIN(A, 3),  GPIO_INT_RISING | GPIO_PULL_DOWN,
 GPIO_INT(AP_EC_WATCHDOG_L,  PIN(C, 2),  GPIO_INT_FALLING,
          ap_watchdog_interrupt)
 
+#ifdef SECTION_IS_RW
 GPIO_INT(ACCEL_INT_ODL,     PIN(A, 4), GPIO_INT_FALLING | GPIO_SEL_1P8V | GPIO_PULL_UP,
          bmi160_interrupt)
 GPIO_INT(SYNC_INT,          PIN(A, 5),  GPIO_INT_RISING | GPIO_PULL_DOWN,
          sync_interrupt)
+#endif
 GPIO_INT(CHARGER_INT_ODL,   PIN(C, 13), GPIO_INPUT | GPIO_PULL_UP,
          rt946x_interrupt)
 #ifdef SECTION_IS_RO
