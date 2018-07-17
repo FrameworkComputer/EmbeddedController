@@ -82,7 +82,9 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_TOUCHPAD, 81) = {
 	0x25, 0x0F,        /*     Logical Maximum (15) */ \
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */ \
 	0x05, 0x0D,        /*     Usage Page (Digitizer) */ \
-	0x26, 0xFF, 0x03,  /*     Logical Maximum (1023) */ \
+			   /*     Logical Maximum of Pressure */ \
+	0x26, (CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_PRESSURE & 0xFF), \
+	      (CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_PRESSURE >> 8), \
 	0x75, 0x0A,        /*     Report Size (10) */ \
 	0x09, 0x30,        /*     Usage (Tip pressure) */ \
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */ \
