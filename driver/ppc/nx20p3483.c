@@ -21,10 +21,13 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-#define NX20P3483_DB_EXIT_FAIL_THRESHOLD 10
-
 static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
+
+#define NX20P3483_DB_EXIT_FAIL_THRESHOLD 10
 static int db_exit_fail_count[CONFIG_USB_PD_PORT_COUNT];
+
+#define NX20P3483_FLAGS_SOURCE_ENABLED (1 << 0)
+static uint8_t flags[CONFIG_USB_PD_PORT_COUNT];
 
 static int read_reg(uint8_t port, int reg, int *regval)
 {
@@ -64,17 +67,7 @@ static int nx20p3483_set_ovp_limit(int port)
 
 static int nx20p3483_is_sourcing_vbus(int port)
 {
-	int mode;
-	int rv;
-
-	rv = read_reg(port, NX20P3483_DEVICE_STATUS_REG, &mode);
-	if (rv) {
-		CPRINTS("p%d: Failed to determine NX20P device status! (%d)",
-			port, rv);
-		return 0;
-	}
-
-	return ((mode & NX20P3483_DEVICE_MODE_MASK) == NX20P3483_MODE_5V_SRC);
+	return flags[port] & NX20P3483_FLAGS_SOURCE_ENABLED;
 }
 
 static int nx20p3483_set_vbus_source_current_limit(int port,
@@ -201,8 +194,16 @@ static int nx20p3483_vbus_source_enable(int port, int enable)
 	if (rv)
 		return rv;
 
-	return ((status & NX20P3483_DEVICE_MODE_MASK) == desired_mode) ?
-		EC_SUCCESS : EC_ERROR_UNKNOWN;
+	if ((status & NX20P3483_DEVICE_MODE_MASK) != desired_mode)
+		return EC_ERROR_UNKNOWN;
+
+	/* Cache the Vbus state */
+	if (enable)
+		flags[port] |= NX20P3483_FLAGS_SOURCE_ENABLED;
+	else
+		flags[port] &= ~NX20P3483_FLAGS_SOURCE_ENABLED;
+
+	return EC_SUCCESS;
 }
 
 static int nx20p3483_init(int port)
