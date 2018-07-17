@@ -106,7 +106,13 @@ GPIO(USB_C1_BC12_VBUS_ON,   PIN(B, 1), GPIO_OUT_LOW)	/* C1 BC1.2 Power */
 GPIO(USB_C1_BC12_CHG_DET_L, PIN(E, 4), GPIO_INPUT)	/* C1 BC1.2 Detect */
 GPIO(USB_C1_HPD_1V8_ODL, PIN(C, 6), GPIO_INPUT |	/* C1 DP Hotplug Detect */
 				    GPIO_SEL_1P8V)
-GPIO(USB2_OTG_ID,	 PIN(8, 3), GPIO_OUT_LOW)	/* OTG ID */
+
+/*
+ * USB2_OTG_ID is 1.8V pin on the SoC side with an internal pull-up. However, it
+ * 3.3V on the EC side. So, configure it as ODR so that the EC never drives it
+ * high.
+ */
+GPIO(USB2_OTG_ID,	 PIN(8, 3), GPIO_ODR_LOW)	/* OTG ID */
 
 /* LED */
 GPIO(LED_1_PWR_WHITE_L,	 PIN(C, 3), GPIO_OUT_HIGH)
