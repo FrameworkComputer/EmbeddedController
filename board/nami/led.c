@@ -430,6 +430,9 @@ static void call_handler(void)
 		config_leds(LED_STATE_CHARGE);
 		break;
 	case PWR_STATE_ERROR:
+		/* It doesn't matter what 'charge' state we pass because power
+		 * LED (if it exists) is orthogonal to battery state. */
+		config_one_led(EC_LED_ID_POWER_LED, 0);
 		led_alert(1);
 		break;
 	default:
