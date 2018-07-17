@@ -30,6 +30,9 @@
 #include "ps8xxx.h"
 #include "usb_pd.h"
 
+/* Maximum flash size (16 MB, conservative) */
+#define MAX_FLASH_SIZE 0x1000000
+
 /* Command line options */
 enum {
 	OPT_DEV = 1000,
@@ -676,7 +679,7 @@ int cmd_read_test(int argc, char *argv[])
 	}
 	offset = strtol(argv[1], &e, 0);
 	size = strtol(argv[2], &e, 0);
-	if ((e && *e) || size <= 0 || size > 0x100000) {
+	if ((e && *e) || size <= 0 || size > MAX_FLASH_SIZE) {
 		fprintf(stderr, "Bad size.\n");
 		return -1;
 	}
@@ -852,12 +855,12 @@ int cmd_flash_read(int argc, char *argv[])
 		return -1;
 	}
 	offset = strtol(argv[1], &e, 0);
-	if ((e && *e) || offset < 0 || offset > 0x100000) {
+	if ((e && *e) || offset < 0 || offset > MAX_FLASH_SIZE) {
 		fprintf(stderr, "Bad offset.\n");
 		return -1;
 	}
 	size = strtol(argv[2], &e, 0);
-	if ((e && *e) || size <= 0 || size > 0x100000) {
+	if ((e && *e) || size <= 0 || size > MAX_FLASH_SIZE) {
 		fprintf(stderr, "Bad size.\n");
 		return -1;
 	}
@@ -898,7 +901,7 @@ int cmd_flash_write(int argc, char *argv[])
 	}
 
 	offset = strtol(argv[1], &e, 0);
-	if ((e && *e) || offset < 0 || offset > 0x100000) {
+	if ((e && *e) || offset < 0 || offset > MAX_FLASH_SIZE) {
 		fprintf(stderr, "Bad offset.\n");
 		return -1;
 	}
@@ -934,13 +937,13 @@ int cmd_flash_erase(int argc, char *argv[])
 	}
 
 	offset = strtol(argv[1], &e, 0);
-	if ((e && *e) || offset < 0 || offset > 0x100000) {
+	if ((e && *e) || offset < 0 || offset > MAX_FLASH_SIZE) {
 		fprintf(stderr, "Bad offset.\n");
 		return -1;
 	}
 
 	size = strtol(argv[2], &e, 0);
-	if ((e && *e) || size <= 0 || size > 0x100000) {
+	if ((e && *e) || size <= 0 || size > MAX_FLASH_SIZE) {
 		fprintf(stderr, "Bad size.\n");
 		return -1;
 	}
