@@ -79,6 +79,11 @@
 #define CONFIG_FLASH_SIZE  0x00080000
 /* The slave frequency is adjustable (bit[2-0] at register IT83XX_ESPI_GCAC1) */
 #define IT83XX_ESPI_SLAVE_MAX_FREQ_CONFIGURABLE
+/*
+ * TODO(b/111480168): eSPI HW reset can't be used because the DMA address
+ * gets set incorrectly resulting in a memory access exception.
+ */
+#define IT83XX_ESPI_RESET_MODULE_BY_FW
 /* Watchdog reset supports hardware reset. */
 /* TODO(b/111264984): watchdog hardware reset function failed. */
 #undef IT83XX_ETWD_HW_RESET_SUPPORT

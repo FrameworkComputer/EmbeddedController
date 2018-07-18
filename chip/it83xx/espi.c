@@ -417,17 +417,42 @@ static void espi_reset_vw_index_flags(void)
 		vw_index_flag[i] = IT83XX_ESPI_VWIDX(vw_isr_list[i].vw_index);
 }
 
+#ifdef IT83XX_ESPI_RESET_MODULE_BY_FW
+void __ram_code espi_fw_reset_module(void)
+{
+	/*
+	 * (b/111480168): Force a reset of logic VCC domain in EC. This will
+	 * reset both LPC and eSPI blocks. The IT8320DX spec describes the
+	 * purpose of these bits as deciding whether VCC power status is used as
+	 * an internal "power good" signal. However, toggling this field while
+	 * VCC is applied results in resettig VCC domain logic in EC. This code
+	 * must reside in SRAM to prevent DMA address corruption.
+	 *
+	 * bit[7-6]:
+	 * 00b: The VCC power status is treated as power-off.
+	 * 01b: The VCC power status is treated as power-on.
+	 */
+	IT83XX_GCTRL_RSTS = (IT83XX_GCTRL_RSTS & ~0xc0);
+	IT83XX_GCTRL_RSTS = (IT83XX_GCTRL_RSTS & ~0xc0) | (1 << 6);
+}
+#endif
+
 void espi_reset_pin_asserted_interrupt(enum gpio_signal signal)
 {
+#ifdef IT83XX_ESPI_RESET_MODULE_BY_FW
+	espi_fw_reset_module();
+#endif
 	/* reset vw_index_flag when espi_reset# asserted. */
 	espi_reset_vw_index_flags();
 }
 
-static void espi_enable_reset(void)
+static int espi_get_reset_enable_config(void)
 {
+	uint8_t config;
 	const struct gpio_info *espi_rst = gpio_list + GPIO_ESPI_RESET_L;
 
 	/*
+	 * Determine if eSPI HW reset is connected to eiter B7 or D2.
 	 * bit[2-1]:
 	 * 00b: reserved.
 	 * 01b: espi_reset# is enabled on GPB7.
@@ -435,13 +460,33 @@ static void espi_enable_reset(void)
 	 * 11b: reset is disabled.
 	 */
 	if (espi_rst->port == GPIO_D && espi_rst->mask == (1 << 2)) {
-		IT83XX_GPIO_GCR = (IT83XX_GPIO_GCR & ~0x6) | (1 << 2);
+		config = IT83XX_GPIO_GCR_LPC_RST_D2;
 	} else if (espi_rst->port == GPIO_B && espi_rst->mask == (1 << 7)) {
-		IT83XX_GPIO_GCR = (IT83XX_GPIO_GCR & ~0x6) | (1 << 1);
+		config = IT83XX_GPIO_GCR_LPC_RST_B7;
 	} else {
-		IT83XX_GPIO_GCR |= 0x6;
+		config = IT83XX_GPIO_GCR_LPC_RST_DISABLE;
 		CPRINTS("EC's espi_reset pin is not enabled correctly");
 	}
+
+	return config;
+}
+
+static void espi_enable_reset(void)
+{
+	int config = espi_get_reset_enable_config();
+
+#ifdef IT83XX_ESPI_RESET_MODULE_BY_FW
+	/*
+	 * Need to overwrite the config to ensure that eSPI HW reset is
+	 * disabled. The reset function is instead handled by FW in the
+	 * interrupt handler.
+	 */
+	config = IT83XX_GPIO_GCR_LPC_RST_DISABLE;
+	CPRINTS("EC's espi_reset pin hw auto reset is disabled");
+
+#endif
+	IT83XX_GPIO_GCR = (IT83XX_GPIO_GCR & ~0x6) |
+		(config << IT83XX_GPIO_GCR_LPC_RST_POS);
 
 	/* enable interrupt of EC's espi_reset pin */
 	gpio_clear_pending_interrupt(GPIO_ESPI_RESET_L);
