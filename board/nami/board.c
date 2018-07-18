@@ -21,7 +21,6 @@
 #include "driver/accelgyro_bmi160.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
-#include "driver/als_opt3001.h"
 #include "driver/baro_bmp280.h"
 #include "driver/led/lm3509.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -201,7 +200,6 @@ const struct i2c_port_t i2c_ports[]  = {
 	{"charger",   NPCX_I2C_PORT2,   100, GPIO_I2C2_SCL,   GPIO_I2C2_SDA},
 	{"pmic",      NPCX_I2C_PORT2,   400, GPIO_I2C2_SCL,   GPIO_I2C2_SDA},
 	{"accelgyro", NPCX_I2C_PORT3,   400, GPIO_I2C3_SCL,   GPIO_I2C3_SDA},
-	/* dnojiri: Add KB backlight, ALS, G-sensor, Thermal sensor, BC1.2 Detectors. */
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -627,11 +625,6 @@ static struct kionix_accel_data g_kx022_data;
 /* BMA255 private data */
 static struct accelgyro_saved_data_t g_bma255_data;
 
-static struct opt3001_drv_data_t g_opt3001_data = {
-	.scale = 1,
-	.uscale = 0,
-	.offset = 0,
-};
 /* Matrix to rotate accelrator into standard reference frame */
 const matrix_3x3_t base_standard_ref = {
 	{ 0, FLOAT_TO_FP(-1), 0},
@@ -751,38 +744,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.min_frequency = BMI160_GYRO_MIN_FREQ,
 		.max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
-	[LID_ALS] = {
-		.name = "Light",
-		.active_mask = SENSOR_ACTIVE_S0,
-		.chip = MOTIONSENSE_CHIP_OPT3001,
-		.type = MOTIONSENSE_TYPE_LIGHT,
-		.location = MOTIONSENSE_LOC_LID,
-		.drv = &opt3001_drv,
-		.drv_data = &g_opt3001_data,
-		.port = I2C_PORT_ALS,
-		.addr = OPT3001_I2C_ADDR,
-		.rot_standard_ref = NULL,
-		.default_range = 0x10000, /* scale = 1; uscale = 0 */
-		.min_frequency = OPT3001_LIGHT_MIN_FREQ,
-		.max_frequency = OPT3001_LIGHT_MAX_FREQ,
-		.config = {
-			/* Sensor on in S0 */
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 1000,
-			},
-		},
-	},
-	/* Please make sure the LID_ALS is the last device in
-	 * motion_sensors array.
-	 */
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-
-/* ALS instances when LPC mapping is needed. Each entry directs to a sensor. */
-const struct motion_sensor_t *motion_als_sensors[] = {
-	&motion_sensors[LID_ALS],
-};
-BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 
 /* Enable or disable input devices, based on chipset state and tablet mode */
 #ifndef TEST_BUILD
@@ -815,9 +778,6 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 static void setup_motion_sensors(void)
 {
-	if (oem != PROJECT_NAMI)
-		/* Only Nami has ALS */
-		motion_sensor_count = ARRAY_SIZE(motion_sensors) - 1;
 	if (oem == PROJECT_AKALI) {
 		motion_sensors[LID_ACCEL] = lid_accel_1;
 		motion_sensors[BASE_ACCEL].rot_standard_ref = NULL;
