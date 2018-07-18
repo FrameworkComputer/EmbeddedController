@@ -32,7 +32,7 @@ static int get_temp(const int offset, int *temp_ptr)
 	if (rv != 0)
 		return rv;
 
-	*temp_ptr = temp_raw;
+	*temp_ptr = C_TO_K(temp_raw);
 	return EC_SUCCESS;
 }
 
@@ -58,13 +58,8 @@ int f75303_get_val(int idx, int *temp_ptr)
 static void f75303_sensor_poll(void)
 {
 	get_temp(F75303_TEMP_LOCAL, &temp_val_local);
-	temp_val_local = C_TO_K(temp_val_local);
-
 	get_temp(F75303_TEMP_REMOTE1, &temp_val_remote1);
-	temp_val_remote1 = C_TO_K(temp_val_remote1);
-
 	get_temp(F75303_TEMP_REMOTE2, &temp_val_remote2);
-	temp_val_remote2 = C_TO_K(temp_val_remote2);
 }
 DECLARE_HOOK(HOOK_SECOND, f75303_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 
