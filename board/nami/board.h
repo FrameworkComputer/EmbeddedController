@@ -274,6 +274,8 @@ enum oem_id {
 	PROJECT_COUNT,
 };
 
+#define SKU_ID_MASK_CONVERTIBLE	(1 << 9)
+
 /* TODO(crosbug.com/p/61098): Verify the numbers below. */
 /*
  * delay to turn on the power supply max is ~16ms.

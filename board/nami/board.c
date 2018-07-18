@@ -778,10 +778,20 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 static void setup_motion_sensors(void)
 {
-	if (oem == PROJECT_AKALI) {
-		motion_sensors[LID_ACCEL] = lid_accel_1;
-		motion_sensors[BASE_ACCEL].rot_standard_ref = NULL;
-		motion_sensors[BASE_GYRO].rot_standard_ref = NULL;
+	switch (oem) {
+	case PROJECT_AKALI:
+		if (sku & SKU_ID_MASK_CONVERTIBLE) {
+			/* Rotate axis for Akali 360 */
+			motion_sensors[LID_ACCEL] = lid_accel_1;
+			motion_sensors[BASE_ACCEL].rot_standard_ref = NULL;
+			motion_sensors[BASE_GYRO].rot_standard_ref = NULL;
+		} else {
+			/* Clamshell Akali has no accel/gyro */
+			motion_sensor_count = ARRAY_SIZE(motion_sensors) - 2;
+		}
+		break;
+	default:
+		break;
 	}
 }
 
@@ -867,8 +877,9 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
 
-	/* Enable Gyro interrupt for BMI160 */
-	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
+	/* Enable Accel/Gyro interrupt for convertibles. */
+	if (sku & SKU_ID_MASK_CONVERTIBLE)
+		gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
