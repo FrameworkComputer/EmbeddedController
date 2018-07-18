@@ -63,7 +63,7 @@ void   _plat__GetFwVersion(uint32_t *firmwareV1, uint32_t *firmwareV2)
 	*firmwareV2 = strtoi(ver_str, NULL, 16);
 }
 
-void _plat__ResetCallback(void)
+void _plat__StartupCallback()
 {
 	pinweaver_init();
 
