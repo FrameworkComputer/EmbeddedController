@@ -83,7 +83,7 @@ GPIO(USB_C1_PD_RST,		PIN(0, 0), GPIO_OUT_LOW)	/* C1 PD Reset */
 GPIO(USB_C0_DP_HPD,		PIN(9, 4), GPIO_INPUT)		/* C0 DP Hotplug Detect */
 GPIO(USB_C1_DP_HPD,		PIN(A, 5), GPIO_INPUT)		/* C1 DP Hotplug Detect */
 GPIO(USB_PP3300_USB_PD,		PIN(8, 4), GPIO_INPUT)		/* Reserved. Currently, has no effect. */
-GPIO(USB2_ID,			PIN(4, 2), GPIO_OUT_LOW)	/* USB OTG ID */
+GPIO(USB2_ID,			PIN(4, 2), GPIO_OUT_HIGH)	/* USB OTG ID */
 GPIO(USB3_POWER_DOWN_L,		PIN(3, 2), GPIO_OUT_LOW)	/* USB3 Redriver Power control. Only used by Sona. */
 
 /* Sensors */

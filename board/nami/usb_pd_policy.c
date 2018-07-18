@@ -166,8 +166,7 @@ void pd_execute_data_swap(int port, int data_role)
 	if (port != 0)
 		return;
 
-	gpio_set_level(GPIO_USB2_ID,
-		      (data_role == PD_ROLE_UFP) ? 1 : 0);
+	gpio_set_level(GPIO_USB2_ID, (data_role == PD_ROLE_UFP) ? 0 : 1);
 }
 
 void pd_check_pr_role(int port, int pr_role, int flags)
