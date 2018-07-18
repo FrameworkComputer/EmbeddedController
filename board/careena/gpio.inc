@@ -31,12 +31,11 @@ GPIO(ENABLE_BACKLIGHT_L,	PIN(D, 3), GPIO_OUT_HIGH)			/* Enable Backlight */
 GPIO(PCH_RSMRST_L,		PIN(C, 2), GPIO_OUT_LOW)			/* RSMRST# to SOC */
 GPIO(PCH_PWRBTN_L,		PIN(C, 1), GPIO_OUT_HIGH)			/* Power Button to SOC */
 GPIO(PCH_WAKE_L,		PIN(7, 4), GPIO_OUT_HIGH)			/* Wake SOC */
-GPIO(SYS_RESET_L,		PIN(3, 5), GPIO_ODR_HIGH)			/* Cold Reset to SOC */
+GPIO(SYS_RESET_L,		PIN(E, 4), GPIO_ODR_HIGH)			/* Cold Reset to SOC */
 GPIO(CCD_MODE_ODL,		PIN(E, 3), GPIO_INPUT)				/* Case Closed Debug Mode */
 GPIO(ENTERING_RW,		PIN(E, 1), GPIO_OUT_LOW)			/* EC Entering RW */
 GPIO(EC_BATT_PRES_L,		PIN(E, 5), GPIO_INPUT | GPIO_PULL_UP)		/* Battery Present */
 GPIO(PCH_SYS_PWROK,		PIN(D, 6), GPIO_OUT_LOW)			/* Power OK to SOC */
-GPIO(EC_APU_RST,		PIN(E, 4), GPIO_INPUT)				/* Reset to SOC */
 GPIO(CPU_PROCHOT,		PIN(3, 4), GPIO_INPUT | GPIO_SEL_1P8V)		/* PROCHOT to SOC */
 GPIO(APU_ALERT_L,		PIN(A, 2), GPIO_INPUT)				/* Alert to SOC */
 GPIO(3AXIS_INT_L,		PIN(5, 0), GPIO_INPUT | GPIO_SEL_1P8V)		/* 3 Axis Accel */
