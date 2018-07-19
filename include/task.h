@@ -13,7 +13,9 @@
 
 /* Task event bitmasks */
 /* Tasks may use the bits in TASK_EVENT_CUSTOM for their own events */
-#define TASK_EVENT_CUSTOM(x)	(x & 0x0007ffff)
+#define TASK_EVENT_CUSTOM(x)	(x & 0x0003ffff)
+
+#define TASK_EVENT_PD_AWAKE	(1 << 18)
 
 /* npcx peci event */
 #define TASK_EVENT_PECI_DONE	(1 << 19)

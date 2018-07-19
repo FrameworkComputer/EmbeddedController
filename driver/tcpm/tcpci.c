@@ -23,6 +23,77 @@ static int tcpc_vbus[CONFIG_USB_PD_PORT_COUNT];
 /* Save the selected rp value */
 static int selected_rp[CONFIG_USB_PD_PORT_COUNT];
 
+
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+int tcpc_write(int port, int reg, int val)
+{
+	int rv = i2c_write8(tcpc_config[port].i2c_host_port,
+			    tcpc_config[port].i2c_slave_addr, reg, val);
+	if (rv && pd_device_in_low_power(port)) {
+		pd_wait_for_wakeup(port);
+		rv = i2c_write8(tcpc_config[port].i2c_host_port,
+				tcpc_config[port].i2c_slave_addr, reg, val);
+	}
+	pd_device_accessed(port);
+	return rv;
+}
+
+int tcpc_write16(int port, int reg, int val)
+{
+	int rv = i2c_write16(tcpc_config[port].i2c_host_port,
+			     tcpc_config[port].i2c_slave_addr, reg, val);
+	if (rv && pd_device_in_low_power(port)) {
+		pd_wait_for_wakeup(port);
+		rv = i2c_write16(tcpc_config[port].i2c_host_port,
+				 tcpc_config[port].i2c_slave_addr, reg, val);
+	}
+	pd_device_accessed(port);
+	return rv;
+}
+
+int tcpc_read(int port, int reg, int *val)
+{
+	int rv = i2c_read8(tcpc_config[port].i2c_host_port,
+			   tcpc_config[port].i2c_slave_addr, reg, val);
+	if (rv && pd_device_in_low_power(port)) {
+		pd_wait_for_wakeup(port);
+		rv = i2c_read8(tcpc_config[port].i2c_host_port,
+			       tcpc_config[port].i2c_slave_addr, reg, val);
+	}
+	pd_device_accessed(port);
+	return rv;
+}
+
+int tcpc_read16(int port, int reg, int *val)
+{
+	int rv = i2c_read16(tcpc_config[port].i2c_host_port,
+			    tcpc_config[port].i2c_slave_addr, reg, val);
+	if (rv && pd_device_in_low_power(port)) {
+		pd_wait_for_wakeup(port);
+		rv = i2c_read16(tcpc_config[port].i2c_host_port,
+				tcpc_config[port].i2c_slave_addr, reg, val);
+	}
+	pd_device_accessed(port);
+	return rv;
+}
+
+int tcpc_xfer(int port, const uint8_t *out, int out_size,
+			    uint8_t *in, int in_size, int flags)
+{
+	int rv = i2c_xfer(tcpc_config[port].i2c_host_port,
+			  tcpc_config[port].i2c_slave_addr, out, out_size,
+			  in, in_size, flags);
+	if (rv && pd_device_in_low_power(port)) {
+		pd_wait_for_wakeup(port);
+		rv = i2c_xfer(tcpc_config[port].i2c_host_port,
+			      tcpc_config[port].i2c_slave_addr, out, out_size,
+			      in, in_size, flags);
+	}
+	pd_device_accessed(port);
+	return rv;
+}
+#endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
+
 static int init_alert_mask(int port)
 {
 	uint16_t mask;

@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "atomic.h"
 #include "battery.h"
 #include "battery_smart.h"
 #include "board.h"
@@ -356,10 +357,14 @@ static void set_vconn(int port, int enable)
 /* 10 ms is enough time for any TCPC transaction to complete. */
 #define PD_LPM_DEBOUNCE_US (10 * MSEC)
 static timestamp_t lpm_debounce_deadlines[CONFIG_USB_PD_PORT_COUNT];
+static int tasks_waiting_on_reset[CONFIG_USB_PD_PORT_COUNT];
 
 /* This is only called from the PD tasks that owns the port. */
 static void handle_device_access(int port)
 {
+	/* This should only be called from the PD task */
+	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
+
 	lpm_debounce_deadlines[port].val = get_time().val + PD_LPM_DEBOUNCE_US;
 	if (pd[port].flags & PD_FLAGS_LPM_ENGAGED) {
 		CPRINTS("TCPC p%d Exited Low Power Mode via bus access", port);
@@ -370,22 +375,129 @@ static void handle_device_access(int port)
 /* This can be called from any task. */
 void pd_device_accessed(int port)
 {
+	const int current_task = task_get_current();
+
 	/* If not in the PD TASK that owns data, marshal to that task */
-	if (task_get_current() == PD_PORT_TO_TASK_ID(port))
+	if (current_task == PD_PORT_TO_TASK_ID(port)) {
+		/* Ignore any access to device while it is waking up */
+		if (tasks_waiting_on_reset[port] & (1 << current_task))
+			return;
+
 		handle_device_access(port);
+	}
 	else
 		task_set_event(PD_PORT_TO_TASK_ID(port),
 			       PD_EVENT_DEVICE_ACCESSED, 0);
 }
 
+int pd_device_in_low_power(int port)
+{
+	const int current_task = task_get_current();
+
+	/*
+	 * If we are actively waking the device up in the PD task, do not
+	 * let TCPC operation wait or retry because we are in low power mode.
+	 */
+	if (port == TASK_ID_TO_PD_PORT(current_task) &&
+	    tasks_waiting_on_reset[port] & (1 << current_task))
+		return 0;
+
+	return pd[port].flags & PD_FLAGS_LPM_ENGAGED;
+}
+
 /* This is only called from the PD tasks that owns the port. */
 static void request_low_power_mode(int port, int enable)
 {
+	/* This should only be called from the PD task */
+	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
+
 	if (enable)
 		pd[port].flags |= PD_FLAGS_LPM_REQUESTED;
 	else
 		pd[port].flags &= ~PD_FLAGS_LPM_REQUESTED;
 }
+
+static int reset_device_and_notify(int port)
+{
+	int rv;
+	int task, waiting_tasks;
+	const int current_task_mask = 1 << task_get_current();
+
+	/* This should only be called from the PD task */
+	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
+
+	/*
+	 * Signal that this task is actively waiting for a wake up, which we
+	 * use to skip recursive wake calls within the tcpc_init method and
+	 * prevent pd_access from changing the HW status until we are done.
+	 */
+	atomic_or(&tasks_waiting_on_reset[port], current_task_mask);
+
+	rv = tcpm_init(port);
+	if (rv == EC_SUCCESS)
+		CPRINTS("TCPC p%d init ready", port);
+	else
+		CPRINTS("TCPC p%d init failed!", port);
+
+	waiting_tasks = atomic_read_clear(&tasks_waiting_on_reset[port]);
+
+	/*
+	 * Now that we are done waking up the device, handle device access
+	 * manually because we ignored it while waking up device.
+	 */
+	handle_device_access(port);
+
+	/* Clear SW LPM state; the state machine will set it again if needed */
+	request_low_power_mode(port, 0);
+
+	/* Wake up all waiting tasks (except this task). */
+	waiting_tasks &= ~current_task_mask;
+	while (waiting_tasks) {
+		task = __fls(waiting_tasks);
+		waiting_tasks &= ~(1 << task);
+		task_set_event(task, TASK_EVENT_PD_AWAKE, 0);
+	}
+
+	return rv;
+}
+
+void pd_wait_for_wakeup(int port)
+{
+	if (task_get_current() == PD_PORT_TO_TASK_ID(port)) {
+		/* If we are in the PD task, we can directly reset */
+		reset_device_and_notify(port);
+	} else {
+		/* Otherwise, we need to wait for the TCPC reset to complete */
+		atomic_or(&tasks_waiting_on_reset[port],
+			  1 << task_get_current());
+		/*
+		 * NOTE: We could be sending the PD task the reset event while
+		 * it is already processing the reset event. If that occurs,
+		 * then we will reset the TCPC multiple times, which is
+		 * undesirable but most likely benign. Empirically, this doesn't
+		 * happen much, but it if starts occurring, we can add a guard
+		 * to prevent/reduce it.
+		 */
+		task_set_event(PD_PORT_TO_TASK_ID(port),
+			       PD_EVENT_TCPC_RESET, 0);
+		task_wait_event_mask(TASK_EVENT_PD_AWAKE, -1);
+	}
+}
+#else /* !CONFIG_USB_PD_TCPC_LOW_POWER */
+
+/* We don't need to notify anyone if low power mode isn't involved. */
+static int reset_device_and_notify(int port)
+{
+	const int rv = tcpm_init(port);
+
+	if (rv == EC_SUCCESS)
+		CPRINTS("TCPC p%d init ready", port);
+	else
+		CPRINTS("TCPC p%d init failed!", port);
+
+	return rv;
+}
+
 #endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
 
 /* Local convenience method for two method currently always called together. */
@@ -2243,13 +2355,12 @@ void pd_task(void *u)
 	pd_power_supply_reset(port);
 
 	/* Initialize TCPM driver and wait for TCPC to be ready */
-	res = tcpm_init(port);
+	res = reset_device_and_notify(port);
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	pd_partner_port_reset(port);
 #endif
 
-	CPRINTS("TCPC p%d init %s", port, res ? "failed" : "ready");
 	this_state = res ? PD_STATE_SUSPENDED : PD_DEFAULT_STATE(port);
 #ifndef CONFIG_USB_PD_TCPC
 	if (!res) {
@@ -2400,13 +2511,7 @@ void pd_task(void *u)
 #else
 		/* if TCPC has reset, then need to initialize it again */
 		if (evt & PD_EVENT_TCPC_RESET) {
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-			/* Reset LPM software state after a reset */
-			request_low_power_mode(port, 0);
-#endif
-			CPRINTS("TCPC p%d reset!", port);
-			if (tcpm_init(port) != EC_SUCCESS)
-				CPRINTS("TCPC p%d init failed", port);
+			reset_device_and_notify(port);
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 		}
 

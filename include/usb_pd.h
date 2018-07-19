@@ -1029,6 +1029,24 @@ int pd_is_max_request_allowed(void);
 void pd_device_accessed(int port);
 
 /**
+ * Returns true if this TCPC is in low power mode and a failed i2c transaction
+ * should be retried after waiting for the device to wake up via
+ * pd_wait_for_wakeup()
+ *
+ * @param port USB-C port number
+ * @return True if device is in LPM and i2c transaction should be retried
+ */
+int pd_device_in_low_power(int port);
+
+/**
+ * Requests that the PD task wakeup the TCPC out of low power mode properly, and
+ * waits for the wakeup operation to complete.
+ *
+ * @param port USB-C port number
+ */
+void pd_wait_for_wakeup(int port);
+
+/**
  * Process source capabilities packet
  *
  * @param port USB-C port number
