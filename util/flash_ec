@@ -62,6 +62,8 @@ BOARDS_STM32=(
 	blaze
 	chell_pd
 	coffeecake
+	chocodile_bec
+	chocodile_vpdmcu
 	elm
 	glados_pd
 	hammer
@@ -545,14 +547,23 @@ fi
 
 # Get baseboard from build system if present
 BASEBOARD=
+
+# We do not want to exit script if make call fails; we turn -e back on after
+# setting BASEBOARD
+set +e
 if [[ -n "${EC_DIR}" ]]; then
-	BASEBOARD=$(make --quiet -C ${EC_DIR} BOARD=${BOARD} print-baseboard)
+	BASEBOARD=$(make --quiet -C ${EC_DIR} BOARD=${BOARD} print-baseboard \
+		2>/dev/null)
 elif [[ -d "${HOME}/trunk/src/platform/ec" ]]; then
 	BASEBOARD=$(make --quiet -C ${HOME}/trunk/src/platform/ec \
-		BOARD=${BOARD} print-baseboard)
+		BOARD=${BOARD} print-baseboard 2>/dev/null)
 else
 	info "Could not find ec build folder to calculate baseboard."
 fi
+if [ $? -ne 0 ]; then
+	info "EC build system didn't recognize ${BOARD}. Assuming no baseboard."
+fi
+set -e
 
 if [[ -n "${BASEBOARD}" ]]; then
 	EMERGE_BUILD=/build/${BASEBOARD}/firmware/${BOARD}/${EC_FILE}
@@ -596,6 +607,7 @@ function servo_ec_uart() {
 
 # Servo variables management
 case "${BOARD}" in
+        chocodile_bec ) MCU="usbpd" ;;
 	oak_pd|samus_pd|strago_pd ) MCU="usbpd" ;;
 	chell_pd|glados_pd ) MCU="usbpd" ;;
 	meowth_fp|nocturne_fp ) MCU="usbpd" ;;
