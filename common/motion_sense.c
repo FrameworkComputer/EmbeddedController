@@ -1351,6 +1351,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		case 0:
 		case 1:
 			fifo_int_enabled = in->fifo_int_enable.enable;
+			/* fallthrough */
 		case EC_MOTION_SENSE_NO_VALUE:
 			out->fifo_int_enable.ret = fifo_int_enabled;
 			args->response_size = sizeof(out->fifo_int_enable);

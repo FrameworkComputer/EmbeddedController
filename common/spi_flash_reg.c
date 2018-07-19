@@ -111,7 +111,7 @@ int spi_flash_reg_to_protect(uint8_t sr1, uint8_t sr2, unsigned int *start,
 		 >> 2;
 
 	/* Bad pointers or invalid data */
-	if (!start || !len || sr1 == -1 || sr2 == -1)
+	if (!start || !len || sr1 == 0xff || sr2 == 0xff)
 		return EC_ERROR_INVAL;
 
 	for (i = 0; i < ARRAY_SIZE(spi_flash_protect_ranges); ++i) {
@@ -159,7 +159,7 @@ int spi_flash_protect_to_reg(unsigned int start, unsigned int len, uint8_t *sr1,
 	char bp = 0;
 
 	/* Bad pointers */
-	if (!sr1 || !sr2 || *sr1 == -1 || *sr2 == -1)
+	if (!sr1 || !sr2)
 		return EC_ERROR_INVAL;
 
 	/* Invalid data */

@@ -56,8 +56,8 @@ void set_pwm_led_color(enum pwm_led_id id, int color)
 {
 	struct pwm_led duty = { 0 };
 
-	if ((id > CONFIG_LED_PWM_COUNT) || (id < 0) ||
-	    (color > EC_LED_COLOR_COUNT) || (color < -1))
+	if ((id >= CONFIG_LED_PWM_COUNT) || (id < 0) ||
+	    (color >= EC_LED_COLOR_COUNT) || (color < -1))
 		return;
 
 	if (color != -1) {
