@@ -139,6 +139,13 @@ int power_wait_signals_timeout(uint32_t want, int timeout);
 void power_set_state(enum power_state new_state);
 
 /**
+ * Set the low-level chipset power state.
+ *
+ * @return Current chipset power state
+ */
+enum power_state power_get_state(void);
+
+/**
  * Chipset-specific initialization
  *
  * @return The state the chipset should start in.  Usually POWER_G3, but may

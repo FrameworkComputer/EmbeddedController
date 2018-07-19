@@ -209,6 +209,11 @@ void power_set_state(enum power_state new_state)
 		want_g3_exit = 0;
 }
 
+enum power_state power_get_state(void)
+{
+	return state;
+}
+
 #ifdef CONFIG_HOSTCMD_X86
 
 /* If host doesn't program s0ix lazy wake mask, use default s0ix mask */
