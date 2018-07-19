@@ -31,6 +31,8 @@ enum mpu_region {
 	REGION_CHIP_RESERVED = 7,	/* Reserved for use in chip/ */
 	/* only for chips with MPU supporting 16 regions */
 	REGION_UNCACHED_RAM = 8,        /* For uncached data RAM */
+	REGION_UNCACHED_RAM2 = 9,       /* Second region for unaligned size */
+	REGION_ROLLBACK = 10,           /* For rollback */
 };
 
 #define MPU_TYPE		REG32(0xe000ed90)
@@ -102,6 +104,11 @@ int mpu_protect_code_ram(void);
  */
 int mpu_lock_ro_flash(void);
 int mpu_lock_rw_flash(void);
+
+/**
+ * Protect/unprotect rollback region readback.
+ */
+int mpu_lock_rollback(int lock);
 
 /**
  * Initialize MPU.

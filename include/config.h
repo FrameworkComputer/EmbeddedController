@@ -1513,6 +1513,10 @@
 /* If defined, add support for storing some entropy in the rollback region. */
 #undef CONFIG_ROLLBACK_SECRET_SIZE
 
+/* If defined, protect rollback region readback using MPU. */
+#undef CONFIG_ROLLBACK_MPU_PROTECT
+
+
 /*
  * If defined, inject some locally generated entropy when secret is updated,
  * using board_get_entropy function.

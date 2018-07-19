@@ -211,6 +211,16 @@ int mpu_lock_rw_flash(void)
 }
 #endif /* !CONFIG_EXTERNAL_STORAGE */
 
+#ifdef CONFIG_ROLLBACK_MPU_PROTECT
+int mpu_lock_rollback(int lock)
+{
+	return mpu_config_region(REGION_ROLLBACK,
+			CONFIG_MAPPED_STORAGE_BASE + CONFIG_ROLLBACK_OFF,
+			CONFIG_ROLLBACK_SIZE, MPU_ATTR_XN | MPU_ATTR_NO_NO,
+			lock);
+}
+#endif
+
 #ifdef CONFIG_CHIP_UNCACHED_REGION
 /* Store temporarily the regions ranges to use them for the MPU configuration */
 #define REGION(_name, _flag, _start, _size) \
@@ -236,6 +246,10 @@ int mpu_pre_init(void)
 	mpu_disable();
 	for (i = 0; i < MPU_TYPE_REG_COUNT(mpu_type); ++i)
 		mpu_config_region(i, CONFIG_RAM_BASE, CONFIG_RAM_SIZE, 0, 0);
+
+#ifdef CONFIG_ROLLBACK_MPU_PROTECT
+	mpu_lock_rollback(1);
+#endif
 
 #ifdef CONFIG_ARMV7M_CACHE
 #ifdef CONFIG_CHIP_UNCACHED_REGION

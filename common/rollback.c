@@ -10,9 +10,13 @@
 #include "flash.h"
 #include "hooks.h"
 #include "host_command.h"
+#ifdef CONFIG_MPU
+#include "mpu.h"
+#endif
 #include "rollback.h"
 #include "sha256.h"
 #include "system.h"
+#include "task.h"
 #include "trng.h"
 #include "util.h"
 
@@ -45,16 +49,39 @@ static uintptr_t get_rollback_offset(int region)
 	return CONFIG_ROLLBACK_OFF + region * CONFIG_FLASH_ERASE_SIZE;
 }
 
+/*
+ * When MPU is available, read rollback with interrupts disabled, to minimize
+ * time protection is left open.
+ */
+static void lock_rollback(void)
+{
+#ifdef CONFIG_ROLLBACK_MPU_PROTECT
+	mpu_lock_rollback(1);
+	interrupt_enable();
+#endif
+}
+
+static void unlock_rollback(void)
+{
+#ifdef CONFIG_ROLLBACK_MPU_PROTECT
+	interrupt_disable();
+	mpu_lock_rollback(0);
+#endif
+}
+
 static int read_rollback(int region, struct rollback_data *data)
 {
 	uintptr_t offset;
+	int ret = EC_SUCCESS;
 
 	offset = get_rollback_offset(region);
 
+	unlock_rollback();
 	if (flash_read(offset, sizeof(*data), (char *)data))
-		return EC_ERROR_UNKNOWN;
+		ret = EC_ERROR_UNKNOWN;
+	lock_rollback();
 
-	return EC_SUCCESS;
+	return ret;
 }
 
 /*
