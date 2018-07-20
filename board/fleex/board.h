@@ -26,6 +26,11 @@
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
 
+/* Volume button */
+#define CONFIG_VOLUME_BUTTONS
+#define GPIO_VOLUME_UP_L GPIO_EC_VOLUP_BTN_ODL
+#define GPIO_VOLUME_DOWN_L GPIO_EC_VOLDN_BTN_ODL
+
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
