@@ -181,6 +181,13 @@ const struct fan_rpm fan_rpm_2 = {
 	.rpm_max = 5100,
 };
 
+/* Akali */
+const struct fan_rpm fan_rpm_3 = {
+	.rpm_min = 2700,
+	.rpm_start = 2700,
+	.rpm_max = 5500,
+};
+
 struct fan_t fans[FAN_CH_COUNT] = {
 	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
 };
@@ -308,6 +315,8 @@ uint16_t tcpc_get_alert_status(void)
  * F75303_Remote1 is near CPU, and F75303_Remote2 is near 5V power IC.
  */
 const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
+	{"F75303_Local", TEMP_SENSOR_TYPE_BOARD, f75303_get_val,
+		F75303_IDX_LOCAL, 4},
 	{"F75303_Remote1", TEMP_SENSOR_TYPE_CPU, f75303_get_val,
 		F75303_IDX_REMOTE1, 4},
 	{"F75303_Remote2", TEMP_SENSOR_TYPE_BOARD, f75303_get_val,
@@ -394,6 +403,54 @@ const static struct ec_thermal_config thermal_c2 = {
 	},
 	.temp_fan_off = C_TO_K(38),
 	.temp_fan_max = C_TO_K(61),
+};
+
+/* Akali Local */
+const static struct ec_thermal_config thermal_d0 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(79),
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = C_TO_K(81),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(80),
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = C_TO_K(82),
+	},
+	.temp_fan_off = C_TO_K(35),
+	.temp_fan_max = C_TO_K(70),
+};
+
+/* Akali Remote 1 */
+const static struct ec_thermal_config thermal_d1 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(59),
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(60),
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = 0,
+	.temp_fan_max = 0,
+};
+
+/* Akali Remote 2 */
+const static struct ec_thermal_config thermal_d2 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(59),
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(60),
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = 0,
+	.temp_fan_max = 0,
 };
 
 #define I2C_PMIC_READ(reg, data) \
@@ -800,19 +857,25 @@ static void setup_fans(void)
 	switch (oem) {
 	case PROJECT_SONA:
 		fans[FAN_CH_0].rpm = &fan_rpm_1;
-		thermal_params[0] = thermal_b1;
-		thermal_params[1] = thermal_b2;
+		thermal_params[TEMP_SENSOR_REMOTE1] = thermal_b1;
+		thermal_params[TEMP_SENSOR_REMOTE2] = thermal_b2;
 		break;
 	case PROJECT_PANTHEON:
 		fans[FAN_CH_0].rpm = &fan_rpm_2;
-		thermal_params[0] = thermal_c1;
-		thermal_params[1] = thermal_c2;
+		thermal_params[TEMP_SENSOR_REMOTE1] = thermal_c1;
+		thermal_params[TEMP_SENSOR_REMOTE2] = thermal_c2;
 		break;
-	default:
+	case PROJECT_AKALI:
+		fans[FAN_CH_0].rpm = &fan_rpm_3;
+		thermal_params[TEMP_SENSOR_LOCAL] = thermal_d0;
+		thermal_params[TEMP_SENSOR_REMOTE1] = thermal_d1;
+		thermal_params[TEMP_SENSOR_REMOTE2] = thermal_d2;
+		break;
 	case PROJECT_NAMI:
 	case PROJECT_VAYNE:
-		thermal_params[0] = thermal_a;
-		thermal_params[1] = thermal_a;
+	default:
+		thermal_params[TEMP_SENSOR_REMOTE1] = thermal_a;
+		thermal_params[TEMP_SENSOR_REMOTE2] = thermal_a;
 	}
 }
 
