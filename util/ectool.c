@@ -1253,6 +1253,7 @@ int cmd_fp_info(int argc, char *argv[])
 	int cmdver = ec_cmd_version_supported(EC_CMD_FP_INFO, 1) ? 1 : 0;
 	int rsize = cmdver == 1 ? sizeof(r)
 				: sizeof(struct ec_response_fp_info_v0);
+	uint16_t dead;
 
 	rv = ec_command(EC_CMD_FP_INFO, cmdver, NULL, 0, &r, rsize);
 	if (rv < 0)
@@ -1261,12 +1262,18 @@ int cmd_fp_info(int argc, char *argv[])
 	printf("Fingerprint sensor: vendor %x product %x model %x version %x\n",
 		r.vendor_id, r.product_id, r.model_id, r.version);
 	printf("Image: size %dx%d %d bpp\n", r.width, r.height, r.bpp);
-	printf("Error flags: %s%s%s%s\nDead pixels: %u\n",
+	printf("Error flags: %s%s%s%s\n",
 	       r.errors & FP_ERROR_NO_IRQ ? "NO_IRQ " : "",
 	       r.errors & FP_ERROR_SPI_COMM ? "SPI_COMM " : "",
 	       r.errors & FP_ERROR_BAD_HWID ? "BAD_HWID " : "",
-	       r.errors & FP_ERROR_INIT_FAIL ? "INIT_FAIL " : "",
-	       FP_ERROR_DEAD_PIXELS(r.errors));
+	       r.errors & FP_ERROR_INIT_FAIL ? "INIT_FAIL " : "");
+	dead = FP_ERROR_DEAD_PIXELS(r.errors);
+	if (dead == FP_ERROR_DEAD_PIXELS_UNKNOWN) {
+		printf("Dead pixels: UNKNOWN\n");
+	} else {
+		printf("Dead pixels: %u\n", dead);
+	}
+
 	if (cmdver == 1) {
 		printf("Templates: size %d count %d/%d dirty bitmap %x\n",
 		       r.template_size, r.template_valid, r.template_max,

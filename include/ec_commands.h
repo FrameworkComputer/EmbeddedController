@@ -4887,6 +4887,8 @@ struct __ec_align4 ec_response_fp_mode {
 
 /* Number of dead pixels detected on the last maintenance */
 #define FP_ERROR_DEAD_PIXELS(errors) ((errors) & 0x3FF)
+/* Unknown number of dead pixels detected on the last maintenance */
+#define FP_ERROR_DEAD_PIXELS_UNKNOWN (0x3FF)
 /* No interrupt from the sensor */
 #define FP_ERROR_NO_IRQ    (1 << 12)
 /* SPI communication error */
