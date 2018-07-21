@@ -821,10 +821,16 @@
  */
 #undef CONFIG_CLOCK_CRYSTAL
 
-/* Indicate if a clock source is connected to stm32f4's "HSE" specific input */
+/*
+ * Indicate if a clock source is connected to stm32f4's high speed external
+ * clock signal (HSE) specific input
+ */
 #undef CONFIG_STM32_CLOCK_HSE_HZ
 
-/* Indicate if a clock source is connected to "LSE" specific input */
+/*
+ * Indicate if a clock source is connected to low speed external (LSE) specific
+ * input
+ */
 #undef CONFIG_STM32_CLOCK_LSE
 
 /*

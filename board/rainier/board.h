@@ -23,6 +23,7 @@
 #define CONFIG_SPI
 #define CONFIG_SPI_MASTER
 #define CONFIG_STM_HWTIMER32
+/* Source RTCCLK from external 32.768kHz source on PC15/OSC32_IN. */
 #define CONFIG_STM32_CLOCK_LSE
 #define CONFIG_SWITCH
 #define CONFIG_WATCHDOG_HELP
