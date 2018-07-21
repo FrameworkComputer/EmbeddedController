@@ -134,9 +134,13 @@ GPIO(BOARD_VERSION3,        PIN(8, 0), GPIO_INPUT)     /* BRD_ID3 */
 GPIO(SKU_ID1,               PIN(F, 0), GPIO_INPUT)
 GPIO(SKU_ID2,               PIN(4, 1), GPIO_INPUT)
 
-/* Misc. */
-GPIO(DA9313_GPIO0,          PIN(2, 3), GPIO_INPUT)     /* Switchcap GPIO0 */
-GPIO(DA9313_GPIO1,          PIN(2, 2), GPIO_INPUT)     /* Switchcap GPIO1 */
+/* Switchcap */
+/*
+ * GPIO0 is configured as PVC_PG. When the chip in power down mode, it outputs
+ * high-Z. Set pull-down to avoid floating.
+ */
+GPIO(DA9313_GPIO0,          PIN(2, 3), GPIO_INPUT | GPIO_PULL_DOWN) /* Switchcap GPIO0 */
+GPIO(DA9313_GPIO1,          PIN(2, 2), GPIO_INPUT | GPIO_PULL_DOWN) /* Switchcap GPIO1 */
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, GPIO_PULL_UP) /* UART (GPIO64/65) */
