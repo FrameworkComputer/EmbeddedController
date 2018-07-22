@@ -187,7 +187,7 @@ static void emmc_init_spi(void)
 #error "Please define EMMC_SPI_PORT in board.h."
 #endif
 	clock_wait_bus_cycles(BUS_APB, 1);
-	gpio_config_module(MODULE_SPI, 1);
+	gpio_config_module(MODULE_SPI_FLASH, 1);
 
 	STM32_SPI_EMMC_REGS->cr2 =
 		STM32_SPI_CR2_FRXTH | STM32_SPI_CR2_DATASIZE(8) |
