@@ -241,11 +241,13 @@ void board_config_pre_init(void)
 {
 	STM32_RCC_AHBENR |= STM32_RCC_HB_DMA1;
 	/*
-	 * Remap USART1:
+	 * Remap USART1 and SPI2 DMA:
 	 *
 	 * Ch4: USART1_TX / Ch5: USART1_RX (1000)
+	 * Ch6: SPI2_RX / Ch7: SPI2_TX (0011)
 	 */
-	STM32_DMA_CSELR(STM32_DMAC_CH4) = (8 << 12) | (8 << 16);
+	STM32_DMA_CSELR(STM32_DMAC_CH4) = (8 << 12) | (8 << 16) |
+					  (3 << 20) | (3 << 24);
 }
 
 enum kukui_board_version {
