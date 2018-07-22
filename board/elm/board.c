@@ -268,9 +268,8 @@ static void board_init(void)
 	/* Update VBUS supplier */
 	usb_charger_vbus_change(0, !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
 
-	/* Remap SPI2 to DMA channels 6 and 7 */
-	REG32(STM32_DMA1_BASE + 0xa8) |= (1 << 20) | (1 << 21) |
-					 (1 << 24) | (1 << 25);
+	/* Remap SPI2 to DMA channels 6 and 7 (0011) */
+	STM32_DMA_CSELR(STM32_DMAC_CH6) |= (3 << 20) | (3 << 24);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

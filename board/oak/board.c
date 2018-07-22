@@ -241,8 +241,8 @@ static void board_init(void)
 	/* SPI sensors: put back the GPIO in its expected state */
 	gpio_set_level(GPIO_SPI2_NSS, 1);
 
-	/* Remap SPI2 to DMA channels 6 and 7 */
-	REG32(STM32_DMA1_BASE + 0xa8) |= (1 << 20) | (1 << 21) | (1 << 24) | (1 << 25);
+	/* Remap SPI2 to DMA channels 6 and 7 (0011) */
+	STM32_DMA_CSELR(STM32_DMAC_CH6) |= (3 << 20) | (3 << 24);
 
 	/* Enable SPI for BMI160 */
 	gpio_config_module(MODULE_SPI_MASTER, 1);

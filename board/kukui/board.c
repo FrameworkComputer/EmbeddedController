@@ -243,9 +243,9 @@ void board_config_pre_init(void)
 	/*
 	 * Remap USART1:
 	 *
-	 * Ch4: USART1_TX / Ch5: USART1_RX
+	 * Ch4: USART1_TX / Ch5: USART1_RX (1000)
 	 */
-	STM32_DMA_CSELR(STM32_DMAC_CH4) = (1 << 15) | (1 << 19);
+	STM32_DMA_CSELR(STM32_DMAC_CH4) = (8 << 12) | (8 << 16);
 }
 
 enum kukui_board_version {
