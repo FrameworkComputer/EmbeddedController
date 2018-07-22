@@ -200,9 +200,9 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* If PMIC is off, switch it on by pulsing PMIC enable. */
 		if (!power_has_signals(IN_PGOOD_PMIC)) {
-			gpio_set_level(GPIO_PMIC_EN_ODL, 1);
-			msleep(PMIC_EN_PULSE_MS);
 			gpio_set_level(GPIO_PMIC_EN_ODL, 0);
+			msleep(PMIC_EN_PULSE_MS);
+			gpio_set_level(GPIO_PMIC_EN_ODL, 1);
 		}
 
 		/* If EC is in RW, reboot to RO. */
