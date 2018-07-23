@@ -26,6 +26,8 @@
 #include "switch.h"
 #include "system.h"
 #include "tcpci.h"
+#include "temp_sensor.h"
+#include "thermistor.h"
 #include "uart.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
@@ -50,8 +52,19 @@ const struct adc_t adc_channels[] = {
 	/* Vbus C1 sensing (10x voltage divider). PPVAR_USB_C1_VBUS */
 	[ADC_VBUS_C1] = {
 		"VBUS_C1", 10*ADC_MAX_MVOLT, ADC_READ_MAX+1, 0, CHIP_ADC_CH14},
+	/* Convert to mV (3300mV/1024). */
+	[ADC_TEMP_SENSOR_AMB] = { "TEMP_AMB", 3300, 1024, 0, CHIP_ADC_CH3},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_51k1_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_AMB,
+				 .action_delay_sec = 5},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /******************************************************************************/
 /* SPI devices */
