@@ -31,10 +31,12 @@
 #include "clock.h"
 #include "console.h"
 #include "dma.h"
+#include "driver/charger/rt946x.h"
 #include "endian.h"
 #include "gpio.h"
 #include "task.h"
 #include "timer.h"
+#include "util.h"
 
 #include "bootblock_data.h"
 
@@ -301,3 +303,26 @@ void emmc_task(void *u)
 		}
 	}
 }
+
+/* TODO(yllin): Remove this command once finish bring-up. */
+static int command_emmc_power(int argc, char **argv)
+{
+	int rv;
+	int en;
+	const int ldo_en_voltage = 1800;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!parse_bool(argv[1], &en))
+		return EC_ERROR_PARAM1;
+
+	rv = mt6370_set_ldo_voltage(en ? ldo_en_voltage : 0);
+
+	ccprintf("%s eMMC power.\n", en ? "Enabled" : "Disabled");
+
+	return rv;
+}
+DECLARE_CONSOLE_COMMAND(emmc_power, command_emmc_power,
+			"<enable | disable>",
+			"Enable/Disable eMMC power.");
