@@ -11,19 +11,17 @@
 #include "hooks.h"
 #include "util.h"
 
-static int temp_val_local;
-static int temp_val_remote1;
-static int temp_val_remote2;
+static int temps[F75303_IDX_COUNT];
 
 /**
  * Read 8 bits register from temp sensor.
  */
-static int raw_read8(const int offset, int *data_ptr)
+static int raw_read8(const int offset, int *data)
 {
-	return i2c_read8(I2C_PORT_THERMAL, F75303_I2C_ADDR, offset, data_ptr);
+	return i2c_read8(I2C_PORT_THERMAL, F75303_I2C_ADDR, offset, data);
 }
 
-static int get_temp(const int offset, int *temp_ptr)
+static int get_temp(const int offset, int *temp)
 {
 	int rv;
 	int temp_raw = 0;
@@ -32,34 +30,22 @@ static int get_temp(const int offset, int *temp_ptr)
 	if (rv != 0)
 		return rv;
 
-	*temp_ptr = C_TO_K(temp_raw);
+	*temp = C_TO_K(temp_raw);
 	return EC_SUCCESS;
 }
 
-int f75303_get_val(int idx, int *temp_ptr)
+int f75303_get_val(int idx, int *temp)
 {
-	switch (idx) {
-	case F75303_IDX_LOCAL:
-		*temp_ptr = temp_val_local;
-		break;
-	case F75303_IDX_REMOTE1:
-		*temp_ptr = temp_val_remote1;
-		break;
-	case F75303_IDX_REMOTE2:
-		*temp_ptr = temp_val_remote2;
-		break;
-	default:
-		return EC_ERROR_UNKNOWN;
-	}
-
+	if (idx < 0 || F75303_IDX_COUNT <= idx)
+		return EC_ERROR_INVAL;
+	*temp = temps[idx];
 	return EC_SUCCESS;
 }
 
 static void f75303_sensor_poll(void)
 {
-	get_temp(F75303_TEMP_LOCAL, &temp_val_local);
-	get_temp(F75303_TEMP_REMOTE1, &temp_val_remote1);
-	get_temp(F75303_TEMP_REMOTE2, &temp_val_remote2);
+	get_temp(F75303_TEMP_LOCAL, &temps[F75303_IDX_LOCAL]);
+	get_temp(F75303_TEMP_REMOTE1, &temps[F75303_IDX_REMOTE1]);
+	get_temp(F75303_TEMP_REMOTE2, &temps[F75303_IDX_REMOTE2]);
 }
 DECLARE_HOOK(HOOK_SECOND, f75303_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
-

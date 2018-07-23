@@ -14,6 +14,7 @@ enum f75303_index {
 	F75303_IDX_LOCAL = 0,
 	F75303_IDX_REMOTE1,
 	F75303_IDX_REMOTE2,
+	F75303_IDX_COUNT,
 };
 
 /* F75303 register */
@@ -24,12 +25,12 @@ enum f75303_index {
 /**
  * Get the last polled value of a sensor.
  *
- * @param idx		Index to read. Idx indicates whether to read die
- *			temperature or external temperature.
- * @param temp_ptr	Destination for temperature in K.
+ * @param idx	Index to read. Idx indicates whether to read die
+ *		temperature or external temperature.
+ * @param temp	Destination for temperature in K.
  *
  * @return EC_SUCCESS if successful, non-zero if error.
  */
-int f75303_get_val(int idx, int *temp_ptr);
+int f75303_get_val(int idx, int *temp);
 
 #endif  /* __CROS_EC_F75303_H */
