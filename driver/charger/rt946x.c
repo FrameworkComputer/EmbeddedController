@@ -983,6 +983,30 @@ int rt946x_enable_charge_termination(int en)
 }
 
 #ifdef CONFIG_CHARGER_MT6370
+/* MT6370 LDO */
+
+int mt6370_set_ldo_voltage(int mv)
+{
+	int rv;
+	int vout_val;
+	const int vout_mask = MT6370_MASK_LDOVOUT_EN | MT6370_MASK_LDOVOUT_VOUT;
+
+	/* LDO output-off mode to floating. */
+	rv = rt946x_update_bits(MT6370_REG_LDOCFG, MT6370_MASK_LDOCFG_OMS, 0);
+	if (rv)
+		return rv;
+
+	/* Disable LDO if voltage is zero. */
+	if (mv == 0)
+		return rt946x_clr_bit(MT6370_REG_LDOVOUT,
+				      MT6370_MASK_LDOVOUT_EN);
+
+	vout_val = 1 << MT6370_SHIFT_LDOVOUT_EN;
+	vout_val |= rt946x_closest_reg(MT6370_LDO_MIN, MT6370_LDO_MAX,
+				       MT6370_LDO_STEP, mv);
+	return rt946x_update_bits(MT6370_REG_LDOVOUT, vout_mask, vout_val);
+}
+
 /* MT6370 RGB LED */
 
 int mt6370_led_set_dim_mode(enum mt6370_led_index index,

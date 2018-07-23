@@ -118,6 +118,8 @@
 #define RT946X_REG_CHGNTC		0X4B
 #define RT946X_REG_ADCDATAH		0X4C
 #define RT946X_REG_ADCDATAL		0X4D
+#define MT6370_REG_LDOCFG		0X80
+#define MT6370_REG_LDOVOUT		0X81
 /* RGB led */
 #define MT6370_REG_RGBDIM_BASE		0x81
 #define MT6370_REG_RGB1DIM		0x82
@@ -205,6 +207,11 @@
 #define RT946X_BATTEMP_COOL	0x03
 #define RT946X_BATTEMP_COLD	0x05
 #define RT946X_BATTEMP_HOT	0x06
+
+/* LDO voltage */
+#define MT6370_LDO_MIN		1600
+#define MT6370_LDO_MAX		4000
+#define MT6370_LDO_STEP		200
 
 /* ========== CORECTRL0 0x00 ============ */
 #define RT946X_SHIFT_RST	7
@@ -379,6 +386,19 @@
 #define RT946X_MASK_DPDMIRQ_ATTACH	(1 << RT946X_SHIFT_DPDMIRQ_ATTACH)
 #endif
 
+
+/* ========== LDOCFG 0x80 (mt6370) ============ */
+#define MT6370_SHIFT_LDOCFG_OMS	6
+
+#define MT6370_MASK_LDOCFG_OMS		(1 << MT6370_SHIFT_LDOCFG_OMS)
+
+/* ========== LDOVOUT 0x81 (mt6370) ============ */
+#define MT6370_SHIFT_LDOVOUT_EN		7
+#define MT6370_SHIFT_LDOVOUT_VOUT	0
+
+#define MT6370_MASK_LDOVOUT_EN		(1 << MT6370_SHIFT_LDOVOUT_EN)
+#define MT6370_MASK_LDOVOUT_VOUT	(0xf << MT6370_SHIFT_LDOVOUT_VOUT)
+
 /* ========== RGBDIM 0x82/0x83/0x84 (mt6370) ============ */
 #define MT6370_LED_PWM_DIMDUTY_MIN	0x00
 #define MT6370_LED_PWM_DIMDUTY_MAX	0x1f
@@ -466,6 +486,12 @@ int rt946x_cutoff_battery(void);
 int rt946x_enable_charge_termination(int en);
 
 #ifdef CONFIG_CHARGER_MT6370
+
+/*
+ * Set LDO voltage.
+ * Disable LDO if voltage is zero.
+ */
+int mt6370_set_ldo_voltage(int mv);
 
 enum mt6370_led_index {
 	MT6370_LED_ID_OFF = 0,
