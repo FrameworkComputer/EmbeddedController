@@ -667,6 +667,13 @@ static int handle_keyboard_command(uint8_t command, uint8_t *output)
 
 	switch (command) {
 	case I8042_READ_CMD_BYTE:
+		/*
+		 * Ensure that the keyboard buffer is cleared before adding
+		 * command byte to it. Since the host is asking for command
+		 * byte, sending it buffered key press data can confuse the
+		 * host and result in it taking incorrect action.
+		 */
+		keyboard_clear_buffer();
 		output[out_len++] = read_ctl_ram(0);
 		break;
 
