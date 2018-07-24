@@ -216,6 +216,9 @@ void emmc_task(void *u)
 	/* Are we currently transmitting data? */
 	int tx = 0;
 
+	/* TODO(b:111773571): Remove this once we fix eMMC power supply. */
+	mt6370_set_ldo_voltage(0);
+
 	emmc_init_spi();
 
 	gpio_enable_interrupt(GPIO_EMMC_CMD);
@@ -231,6 +234,7 @@ void emmc_task(void *u)
 		/*
 		 * TODO(b:110907438): After the bootblock has been transferred
 		 * and AP has booted, disable SPI controller and interrupt.
+		 * TODO(b:111773571): Also, enable eMMC power supply.
 		 */
 
 		/* Wait for a command */
@@ -304,7 +308,7 @@ void emmc_task(void *u)
 	}
 }
 
-/* TODO(yllin): Remove this command once finish bring-up. */
+/* TODO(b:111773571): Remove this command once finish bring-up. */
 static int command_emmc_power(int argc, char **argv)
 {
 	int rv;
