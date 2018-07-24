@@ -76,7 +76,7 @@ class TestStatsManager(unittest.TestCase):
     self.data.AddValue('test', 250)
     self.data.SetUnit('test', 'mw')
     self.data.CalculateStats()
-    summary_str = self.data._SummaryToString()
+    summary_str = self.data.SummaryToString()
     self.assertIn('test_mw', summary_str)
 
   def test_DoubleUnitSuffix(self):
@@ -84,7 +84,7 @@ class TestStatsManager(unittest.TestCase):
     self.data.AddValue('test_mw', 250)
     self.data.SetUnit('test_mw', 'mw')
     self.data.CalculateStats()
-    summary_str = self.data._SummaryToString()
+    summary_str = self.data.SummaryToString()
     self.assertIn('test_mw', summary_str)
     self.assertNotIn('test_mw_mw', summary_str)
 

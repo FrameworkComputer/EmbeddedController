@@ -12,12 +12,13 @@ import argparse
 import array
 from distutils import sysconfig
 import json
+import logging
 import os
+import pprint
 import struct
 import sys
 import time
 import traceback
-from pprint import pprint
 
 import usb
 
@@ -31,12 +32,6 @@ LIB_DIR = os.path.join(sysconfig.get_python_lib(standard_lib=False), 'servo',
 # as powerlog.py file or LIB_DIR.
 CONFIG_LOCATIONS = [os.getcwd(), os.path.dirname(os.path.realpath(__file__)),
                     LIB_DIR]
-
-# This can be overridden by -v.
-debug = False
-def debuglog(msg):
-  if debug:
-    print(msg)
 
 def logoutput(msg):
   print(msg)
@@ -155,6 +150,7 @@ class Spower(object):
 
   def __init__(self, board, vendor=0x18d1,
                product=0x5020, interface=1, serialname=None):
+    self._logger = logging.getLogger(__name__)
     self._board = board
 
     # Find the stm32.
@@ -184,7 +180,7 @@ class Spower(object):
         # Incompatible pyUsb version.
         dev = dev_list.next()
 
-    debuglog("Found USB device: %04x:%04x" % (vendor, product))
+    self._logger.debug("Found USB device: %04x:%04x", vendor, product)
     self._dev = dev
 
     # Get an endpoint instance.
@@ -198,7 +194,7 @@ class Spower(object):
         i.bInterfaceClass==255 and i.bInterfaceSubClass==0x54)
 
     self._intf = intf
-    debuglog("InterfaceNumber: %s" % intf.bInterfaceNumber)
+    self._logger.debug("InterfaceNumber: %s", intf.bInterfaceNumber)
 
     read_ep = usb.util.find_descriptor(
       intf,
@@ -210,7 +206,7 @@ class Spower(object):
     )
 
     self._read_ep = read_ep
-    debuglog("Reader endpoint: 0x%x" % read_ep.bEndpointAddress)
+    self._logger.debug("Reader endpoint: 0x%x", read_ep.bEndpointAddress)
 
     write_ep = usb.util.find_descriptor(
       intf,
@@ -222,11 +218,11 @@ class Spower(object):
     )
 
     self._write_ep = write_ep
-    debuglog("Writer endpoint: 0x%x" % write_ep.bEndpointAddress)
+    self._logger.debug("Writer endpoint: 0x%x", write_ep.bEndpointAddress)
 
     self.clear_ina_struct()
 
-    debuglog("Found power logging USB endpoint.")
+    self._logger.debug("Found power logging USB endpoint.")
 
   def clear_ina_struct(self):
     """ Clear INA description struct."""
@@ -278,8 +274,8 @@ class Spower(object):
     Returns:
       bytes read, or None on failure.
     """
-    debuglog("Spower.wr_command(write_list=[%s] (%d), read_count=%s)" % (
-          list(bytearray(write_list)), len(write_list), read_count))
+    self._logger.debug("Spower.wr_command(write_list=[%s] (%d), read_count=%s)",
+                       list(bytearray(write_list)), len(write_list), read_count)
 
     # Clean up args from python style to correct types.
     write_length = 0
@@ -293,17 +289,17 @@ class Spower(object):
       cmd = write_list
       ret = self._write_ep.write(cmd, wtimeout)
 
-    debuglog("RET: %s " % ret)
+    self._logger.debug("RET: %s ", ret)
 
     # Read back response if necessary.
     if read_count:
       bytesread = self._read_ep.read(512, rtimeout)
-      debuglog("BYTES: [%s]" % bytesread)
+      self._logger.debug("BYTES: [%s]", bytesread)
 
       if len(bytesread) != read_count:
         pass
 
-      debuglog("STATUS: 0x%02x" % int(bytesread[0]))
+      self._logger.debug("STATUS: 0x%02x", int(bytesread[0]))
       if read_count == 1:
         return bytesread[0]
       else:
@@ -316,7 +312,8 @@ class Spower(object):
     try:
       while True:
         ret = self.wr_command("", read_count=512, rtimeout=100, wtimeout=50)
-        debuglog("Try Clear: read %s" % "success" if ret == 0 else "failure")
+        self._logger.debug("Try Clear: read %s",
+                           "success" if ret == 0 else "failure")
     except:
       pass
 
@@ -324,7 +321,8 @@ class Spower(object):
     """Reset the power interface on the stm32"""
     cmd = struct.pack("<H", self.CMD_RESET)
     ret = self.wr_command(cmd, rtimeout=50, wtimeout=50)
-    debuglog("Command RESET: %s" % "success" if ret == 0 else "failure")
+    self._logger.debug("Command RESET: %s",
+                       "success" if ret == 0 else "failure")
 
   def reset(self):
     """Try resetting the USB interface until success.
@@ -343,7 +341,7 @@ class Spower(object):
       except Exception as e:
         self.clear()
         self.clear()
-        debuglog("TRY %d of %d: %s" % (count, max_reset_retry, e))
+        self._logger.debug("TRY %d of %d: %s", count, max_reset_retry, e)
         time.sleep(count * 0.01)
     raise Exception("Power", "Failed to reset")
 
@@ -351,7 +349,8 @@ class Spower(object):
     """Stop any active data acquisition."""
     cmd = struct.pack("<H", self.CMD_STOP)
     ret = self.wr_command(cmd)
-    debuglog("Command STOP: %s" % "success" if ret == 0 else "failure")
+    self._logger.debug("Command STOP: %s",
+                       "success" if ret == 0 else "failure")
 
   def start(self, integration_us):
     """Start data acquisition.
@@ -368,10 +367,10 @@ class Spower(object):
     actual_us = 0
     if len(read) == 5:
       ret, actual_us = struct.unpack("<BI", read)
-      debuglog("Command START: %s %dus" % (
-               "success" if ret == 0 else "failure", actual_us))
+      self._logger.debug("Command START: %s %dus",
+               "success" if ret == 0 else "failure", actual_us)
     else:
-      debuglog("Command START: FAIL")
+      self._logger.debug("Command START: FAIL")
 
     return actual_us
 
@@ -417,7 +416,8 @@ class Spower(object):
     cmd = struct.pack("<HQ", self.CMD_SETTIME, timestamp_us)
     ret = self.wr_command(cmd)
 
-    debuglog("Command SETTIME: %s" % "success" if ret == 0 else "failure")
+    self._logger.debug("Command SETTIME: %s",
+                       "success" if ret == 0 else "failure")
 
   def add_ina(self, bus, ina_type, addr, extra, resistance, data=None):
     """Add an INA to the data acquisition list.
@@ -440,7 +440,8 @@ class Spower(object):
         name = "ina%d_%02x" % (bus, addr)
       self.append_ina_struct(name, resistance, bus, addr,
                              data=data, ina_type=ina_type)
-    debuglog("Command ADD_INA: %s" % "success" if ret == 0 else "failure")
+    self._logger.debug("Command ADD_INA: %s",
+                       "success" if ret == 0 else "failure")
 
   def report_header_size(self):
     """Helper function to calculate power record header size."""
@@ -470,18 +471,18 @@ class Spower(object):
       cmd = struct.pack("<H", self.CMD_NEXT)
       bytesread = self.wr_command(cmd, read_count=expected_bytes)
     except usb.core.USBError as e:
-      print("READ LINE FAILED %s" % e)
+      self._logger.error("READ LINE FAILED %s", e)
       return None
 
     if len(bytesread) == 1:
       if bytesread[0] != 0x6:
-        debuglog("READ LINE FAILED bytes: %d ret: %02x" % (
-            len(bytesread), bytesread[0]))
+        self._logger.debug("READ LINE FAILED bytes: %d ret: %02x",
+                           len(bytesread), bytesread[0])
       return None
 
     if len(bytesread) % expected_bytes != 0:
-      debuglog("READ LINE WARNING: expected %d, got %d" % (
-          expected_bytes, len(bytesread)))
+      self._logger.debug("READ LINE WARNING: expected %d, got %d",
+          expected_bytes, len(bytesread))
 
     packet_count = len(bytesread) / expected_bytes
 
@@ -508,13 +509,14 @@ class Spower(object):
     """
     status, size = struct.unpack("<BB", data[0:2])
     if len(data) != self.report_size(size):
-      print("READ LINE FAILED st:%d size:%d expected:%d len:%d" % (
-          status, size, self.report_size(size), len(data)))
+      self._logger.error("READ LINE FAILED st:%d size:%d expected:%d len:%d",
+                         status, size, self.report_size(size), len(data))
     else:
       pass
 
     timestamp = struct.unpack("<Q", data[2:10])[0]
-    debuglog("READ LINE: st:%d size:%d time:%dus" % (status, size, timestamp))
+    self._logger.debug("READ LINE: st:%d size:%d time:%dus", status, size,
+                       timestamp)
     ftimestamp = float(timestamp) / 1000000.
 
     record = {"ts": ftimestamp, "status": status, "berry":self._board}
@@ -535,8 +537,8 @@ class Spower(object):
       elif self._inas[i]['type'] == Spower.INA_SHUNTV:
         val = raw_val * self._inas[i]['uVscale']
 
-      debuglog("READ %d %s: %fs: 0x%04x %f" % (i,
-          name, ftimestamp, raw_val, val))
+      self._logger.debug("READ %d %s: %fs: 0x%04x %f", i, name, ftimestamp,
+                         raw_val, val)
       record[name_tuple] = val
 
     return record
@@ -552,8 +554,7 @@ class Spower(object):
 
     #TODO: validate this.
     self._brdcfg = data;
-    if debug:
-      pprint(data)
+    self._logger.debug(pprint.pformat(data))
 
 
 class powerlog(object):
@@ -592,6 +593,7 @@ class powerlog(object):
       raw_data_dir: directory to save sweetberry readings raw data; if None then
                     do not save the raw data.
     """
+    self._logger = logging.getLogger(__name__)
     self._data = StatsManager()
     self._pwr = {}
     self._use_ms = use_ms
@@ -739,8 +741,8 @@ class powerlog(object):
               aggregate_record[rkey] = record[rkey]
             aggregate_record["boards"].add(record["berry"])
           else:
-            print("break %s, %s" % (record["berry"],
-                                    aggregate_record["boards"]))
+            self._logger.info("break %s, %s", record["berry"],
+                              aggregate_record["boards"])
             break
 
           if aggregate_record["boards"] == set(self._pwr.keys()):
@@ -764,14 +766,14 @@ class powerlog(object):
               pending_records.pop(0)
 
     except KeyboardInterrupt:
-      print('\nCTRL+C caught.')
+      self._logger.info('\nCTRL+C caught.')
 
     finally:
       for key in self._pwr:
         self._pwr[key].stop()
       self._data.CalculateStats()
       if self._print_stats:
-        self._data.PrintSummary()
+        print(self._data.SummaryToString())
       save_dir = 'sweetberry%s' % time.time()
       if self._stats_dir:
         stats_dir = os.path.join(self._stats_dir, save_dir)
@@ -846,9 +848,15 @@ def main(argv=None):
 
   args = parser.parse_args(argv)
 
-  global debug
+  root_logger = logging.getLogger()
   if args.verbose:
-    debug = True
+    root_logger.setLevel(logging.DEBUG)
+  else:
+    root_logger.setLevel(logging.INFO)
+  # if powerlog is used through main log to sys.stdout
+  stdout_handler = logging.StreamHandler(sys.stdout)
+  stdout_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+  root_logger.addHandler(stdout_handler)
 
   integration_us_request = args.integration_us
   if not args.board:

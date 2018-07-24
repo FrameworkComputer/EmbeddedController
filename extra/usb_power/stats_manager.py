@@ -8,6 +8,7 @@ from __future__ import print_function
 
 import collections
 import json
+import logging
 import os
 
 import numpy
@@ -50,7 +51,7 @@ class StatsManager(object):
     >>> stats.AddValue('foobar', 11111.0)
     >>> stats.AddValue('foobar', 22222.0)
     >>> stats.CalculateStats()
-    >>> stats.PrintSummary()
+    >>> print(stats.SummaryToString())
     @@            NAME  COUNT      MEAN   STDDEV       MAX       MIN
     @@   sample_msecs      4     31.25    15.16     50.00     10.00
     @@         foobar      2  16666.50  5555.50  22222.00  11111.00
@@ -60,6 +61,7 @@ class StatsManager(object):
     _data: dict of list of readings for each domain(key)
     _unit: dict of unit for each domain(key)
     _summary: dict of stats per domain (key): min, max, count, mean, stddev
+    _logger = StatsManager logger
 
   Note:
     _summary is empty until CalculateStats() is called, and is updated when
@@ -71,6 +73,7 @@ class StatsManager(object):
     self._data = collections.defaultdict(list)
     self._unit = collections.defaultdict(str)
     self._summary = {}
+    self._logger = logging.getLogger('StatsManager')
 
   def AddValue(self, domain, value):
     """Add one value for a domain.
@@ -84,8 +87,8 @@ class StatsManager(object):
     if isinstance(value, float):
       self._data[domain].append(value)
       return
-    print('Warning: value %s for domain %s is not a number, thus ignored.' %
-          (value, domain))
+    self._logger.warn('value %s for domain %s is not a number, thus ignored.',
+                      value, domain)
 
   def SetUnit(self, domain, unit):
     """Set the unit for a domain.
@@ -98,8 +101,8 @@ class StatsManager(object):
       unit: unit of the domain.
     """
     if domain in self._unit:
-      print('Warning: overwriting the unit of %s, old unit is %s, new unit is '
-            '%s.' % (domain, self._unit[domain], unit))
+      self._logger.warn('overwriting the unit of %s, old unit is %s, new unit '
+                        'is %s.', domain, self._unit[domain], unit)
     self._unit[domain] = unit
 
   def CalculateStats(self):
@@ -118,7 +121,7 @@ class StatsManager(object):
           'count': data_np.size,
       }
 
-  def _SummaryToString(self, prefix=STATS_PREFIX):
+  def SummaryToString(self, prefix=STATS_PREFIX):
     """Format summary into a string, ready for pretty print.
 
     See class description for format example.
@@ -156,15 +159,6 @@ class StatsManager(object):
       formatted_table.append(formatted_row)
     return '\n'.join(formatted_table)
 
-  def PrintSummary(self, prefix=STATS_PREFIX):
-    """Print the formatted summary.
-
-    Args:
-      prefix: start every row in summary string with prefix, for easier reading.
-    """
-    summary_str = self._SummaryToString(prefix=prefix)
-    print(summary_str)
-
   def GetSummary(self):
     """Getter for summary."""
     return self._summary
@@ -177,7 +171,7 @@ class StatsManager(object):
       fname: filename to save summary under.
       prefix: start every row in summary string with prefix, for easier reading.
     """
-    summary_str = self._SummaryToString(prefix=prefix) + '\n'
+    summary_str = self.SummaryToString(prefix=prefix) + '\n'
 
     if not os.path.exists(directory):
       os.makedirs(directory)
