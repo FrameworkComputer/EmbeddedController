@@ -174,6 +174,9 @@ class StatsManager(object):
       directory: directory to save the summary in.
       fname: filename to save summary under.
       prefix: start every row in summary string with prefix, for easier reading.
+
+    Returns:
+      full path of summary save location
     """
     summary_str = self.SummaryToString(prefix=prefix) + '\n'
 
@@ -182,6 +185,7 @@ class StatsManager(object):
     fname = os.path.join(directory, fname)
     with open(fname, 'w') as f:
       f.write(summary_str)
+    return fname
 
   def SaveSummaryJSON(self, directory, fname='summary.json'):
     """Save summary (only MEAN) into a JSON file.
@@ -189,6 +193,9 @@ class StatsManager(object):
     Args:
       directory: directory to save the JSON summary in.
       fname: filename to save summary under.
+
+    Returns:
+      full path of summary save location
     """
     data = {}
     for domain in self._summary:
@@ -200,6 +207,7 @@ class StatsManager(object):
     fname = os.path.join(directory, fname)
     with open(fname, 'w') as f:
       json.dump(data, f)
+    return fname
 
   def GetRawData(self):
     """Getter for all raw_data."""
@@ -211,12 +219,16 @@ class StatsManager(object):
     Args:
       directory: directory to create the raw data folder in.
       dirname: folder in which raw data live.
+
+    Returns:
+      list of full path of each domain's raw data save location
     """
     if not os.path.exists(directory):
       os.makedirs(directory)
     dirname = os.path.join(directory, dirname)
     if not os.path.exists(dirname):
       os.makedirs(dirname)
+    fnames = []
     for domain, data in self._data.iteritems():
       if not domain.endswith(self._unit[domain]):
         domain = '%s_%s' % (domain, self._unit[domain])
@@ -224,3 +236,5 @@ class StatsManager(object):
       fname = os.path.join(dirname, fname)
       with open(fname, 'w') as f:
         f.write('\n'.join('%.2f' % sample for sample in data) + '\n')
+      fnames.append(fname)
+    return fnames

@@ -115,25 +115,31 @@ class TestStatsManager(unittest.TestCase):
     """SaveRawData stores same data as fed in."""
     self._populate_dummy_stats()
     dirname = 'unittest_raw_data'
-    self.data.SaveRawData(self.tempdir, dirname)
-    dirname = os.path.join(self.tempdir, dirname)
-    file_a = os.path.join(dirname, 'A_mW.txt')
-    file_b = os.path.join(dirname, 'B_mV.txt')
-    with open(file_a, 'r') as f_a:
-      self.assertEqual('99999.50', f_a.readline().strip())
-      self.assertEqual('100000.50', f_a.readline().strip())
-    with open(file_b, 'r') as f_b:
-      self.assertEqual('1.50', f_b.readline().strip())
-      self.assertEqual('2.50', f_b.readline().strip())
-      self.assertEqual('3.50', f_b.readline().strip())
+    expected_files = set(['A_mW.txt', 'B_mV.txt'])
+    fnames = self.data.SaveRawData(self.tempdir, dirname)
+    files_returned = set([os.path.basename(f) for f in fnames])
+    # Assert that only the expected files got returned.
+    self.assertEqual(expected_files, files_returned)
+    # Assert that only the returned files are in the outdir.
+    self.assertEqual(set(os.listdir(os.path.join(self.tempdir, dirname))),
+                     files_returned)
+    for fname in fnames:
+      with open(fname, 'r') as f:
+        if 'A_mW' in fname:
+          self.assertEqual('99999.50', f.readline().strip())
+          self.assertEqual('100000.50', f.readline().strip())
+        if 'B_mV' in fname:
+          self.assertEqual('1.50', f.readline().strip())
+          self.assertEqual('2.50', f.readline().strip())
+          self.assertEqual('3.50', f.readline().strip())
 
   def test_SaveRawDataNoUnit(self):
     """SaveRawData appends no unit suffix if the unit is not specified."""
     self._populate_dummy_stats_no_unit()
     self.data.CalculateStats()
     outdir = 'unittest_raw_data'
-    self.data.SaveRawData(self.tempdir, outdir)
-    files = os.listdir(os.path.join(self.tempdir, outdir))
+    files = self.data.SaveRawData(self.tempdir, outdir)
+    files = [os.path.basename(f) for f in files]
     # Verify nothing gets appended to domain for filename if no unit exists.
     self.assertIn('B.txt', files)
 
@@ -166,8 +172,13 @@ class TestStatsManager(unittest.TestCase):
     """SaveSummary properly dumps the summary into a file."""
     self._populate_dummy_stats()
     fname = 'unittest_summary.txt'
-    self.data.SaveSummary(self.tempdir, fname)
-    fname = os.path.join(self.tempdir, fname)
+    expected_fname = os.path.join(self.tempdir, fname)
+    fname = self.data.SaveSummary(self.tempdir, fname)
+    # Assert the reported fname is the same as the expected fname
+    self.assertEqual(expected_fname, fname)
+    # Assert only the reported fname is output (in the tempdir)
+    self.assertEqual(set([os.path.basename(fname)]),
+                     set(os.listdir(self.tempdir)))
     with open(fname, 'r') as f:
       self.assertEqual(
           '@@   NAME  COUNT       MEAN  STDDEV        MAX       MIN\n',
@@ -183,8 +194,13 @@ class TestStatsManager(unittest.TestCase):
     """SaveSummaryJSON saves the added data properly in JSON format."""
     self._populate_dummy_stats()
     fname = 'unittest_summary.json'
-    self.data.SaveSummaryJSON(self.tempdir, fname)
-    fname = os.path.join(self.tempdir, fname)
+    expected_fname = os.path.join(self.tempdir, fname)
+    fname = self.data.SaveSummaryJSON(self.tempdir, fname)
+    # Assert the reported fname is the same as the expected fname
+    self.assertEqual(expected_fname, fname)
+    # Assert only the reported fname is output (in the tempdir)
+    self.assertEqual(set([os.path.basename(fname)]),
+                     set(os.listdir(self.tempdir)))
     with open(fname, 'r') as f:
       summary = json.load(f)
       self.assertAlmostEqual(100000.0, summary['A']['mean'])
@@ -197,8 +213,7 @@ class TestStatsManager(unittest.TestCase):
     self._populate_dummy_stats_no_unit()
     self.data.CalculateStats()
     fname = 'unittest_summary.json'
-    self.data.SaveSummaryJSON(self.tempdir, fname)
-    fname = os.path.join(self.tempdir, fname)
+    fname = self.data.SaveSummaryJSON(self.tempdir, fname)
     with open(fname, 'r') as f:
       summary = json.load(f)
       self.assertEqual('blue', summary['A']['unit'])
