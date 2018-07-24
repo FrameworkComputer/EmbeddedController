@@ -229,10 +229,15 @@ static void ccd_state_change_hook(void)
 		flags_want |= CCD_ENABLE_UART_EC_BITBANG;
 #endif
 
-	/* External CCD will try to enable all the ports */
+	/*
+	 * External CCD will try to enable all the ports. If it's disabled,
+	 * disable all ports.
+	 */
 	if (ccd_ext_is_enabled())
 		flags_want |= (CCD_ENABLE_UART_AP_TX | CCD_ENABLE_UART_EC_TX |
 			       CCD_ENABLE_I2C | CCD_ENABLE_SPI);
+	else
+		flags_want = 0;
 
 	/* Then disable flags we can't have */
 
