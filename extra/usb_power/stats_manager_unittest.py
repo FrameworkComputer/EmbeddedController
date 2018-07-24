@@ -26,7 +26,6 @@ class TestStatsManager(unittest.TestCase):
     """Create a populated & processed StatsManager to test data retrieval."""
     self.data.AddSample('A', 99999.5)
     self.data.AddSample('A', 100000.5)
-    self.data.AddSample('A', 'ERROR')
     self.data.SetUnit('A', 'uW')
     self.data.SetUnit('A', 'mW')
     self.data.AddSample('B', 1.5)
@@ -57,14 +56,35 @@ class TestStatsManager(unittest.TestCase):
     summary = self.data.GetSummary()
     self.assertEqual(1, summary['Test']['count'])
 
-  def test_AddSampleNoFloat(self):
-    """Adding a non number gets ignored and doesn't raise an exception."""
-    self.data.AddSample('Test', 17)
+  def test_AddSampleNoFloatAcceptNaN(self):
+    """Adding a non-number adds 'NaN' and doesn't raise an exception."""
+    self.data.AddSample('Test', 10)
+    self.data.AddSample('Test', 20)
+    # adding a fake NaN: one that gets converted into NaN internally
     self.data.AddSample('Test', 'fiesta')
+    # adding a real NaN
+    self.data.AddSample('Test', float('NaN'))
     self.data.SetUnit('Test', 'test')
     self.data.CalculateStats()
     summary = self.data.GetSummary()
-    self.assertEqual(1, summary['Test']['count'])
+    # assert that 'NaN' as added.
+    self.assertEqual(4, summary['Test']['count'])
+    # assert that mean, min, and max calculatings ignore the 'NaN'
+    self.assertEqual(10, summary['Test']['min'])
+    self.assertEqual(20, summary['Test']['max'])
+    self.assertEqual(15, summary['Test']['mean'])
+
+  def test_AddSampleNoFloatNotAcceptNaN(self):
+    """Adding a non-number raises a StatsManagerError if accept_nan is False."""
+    self.data = stats_manager.StatsManager(accept_nan=False)
+    with self.assertRaisesRegexp(stats_manager.StatsManagerError,
+                                 'accept_nan is false. Cannot add NaN sample.'):
+      # adding a fake NaN: one that gets converted into NaN internally
+      self.data.AddSample('Test', 'fiesta')
+    with self.assertRaisesRegexp(stats_manager.StatsManagerError,
+                                 'accept_nan is false. Cannot add NaN sample.'):
+      # adding a real NaN
+      self.data.AddSample('Test', float('NaN'))
 
   def test_AddSampleNoUnit(self):
     """Not adding a unit does not cause an exception on CalculateStats()."""
