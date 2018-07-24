@@ -55,6 +55,9 @@ class StatsManager(object):
   Attributes:
     _data: dict of list of readings for each domain(key)
     _unit: dict of unit for each domain(key)
+    _smid: id supplied to differentiate data output to other StatsManager
+           instances that potentially save to the same directory
+           if smid all output files will be named |smid|_|fname|
     _order: list of formatting order for domains. Domains not listed are
             displayed in sorted order
     _hide_domains: collection of domains to hide when formatting summary string
@@ -67,10 +70,11 @@ class StatsManager(object):
   """
 
   # pylint: disable=W0102
-  def __init__(self, order=[], hide_domains=[]):
+  def __init__(self, smid='', order=[], hide_domains=[]):
     """Initialize infrastructure for data and their statistics."""
     self._data = collections.defaultdict(list)
     self._unit = collections.defaultdict(str)
+    self._smid = smid
     self._order = order
     self._hide_domains = hide_domains
     self._summary = {}
@@ -167,6 +171,47 @@ class StatsManager(object):
     """Getter for summary."""
     return self._summary
 
+  def _MakeUniqueFName(self, fname):
+    """prepend |_smid| to fname & rotate fname to ensure uniqueness.
+
+    Before saving a file through the StatsManager, make sure that the filename
+    is unique, first by prepending the smid if any and otherwise by appending
+    increasing integer suffixes until the filename is unique.
+
+    If |smid| is defined /path/to/example/file.txt becomes
+    /path/to/example/{smid}_file.txt.
+
+    The rotation works by changing /path/to/example/somename.txt to
+    /path/to/example/somename1.txt if the first one already exists on the
+    system.
+
+    Note: this is not thread-safe. While it makes sense to use StatsManager
+    in a threaded data-collection, the data retrieval should happen in a
+    single threaded environment to ensure files don't get potentially clobbered.
+
+    Args:
+      fname: filename to ensure uniqueness.
+
+    Returns:
+      {smid_}fname{tag}.ext
+      the smid portion gets prepended if |smid| is defined
+      the tag portion gets appended if necessary to ensure unique fname
+    """
+    fdir = os.path.dirname(fname)
+    base, ext = os.path.splitext(os.path.basename(fname))
+    if self._smid:
+      base = '%s_%s' % (self._smid, base)
+    unique_fname = os.path.join(fdir, '%s%s' % (base, ext))
+    tag = 0
+    while os.path.exists(unique_fname):
+      old_fname = unique_fname
+      unique_fname = os.path.join(fdir, '%s%d%s' % (base, tag, ext))
+      self._logger.warn('Attempted to store stats information at %s, but file '
+                        'already exists. Attempting to store at %s now.',
+                        old_fname, unique_fname)
+      tag += 1
+    return unique_fname
+
   def SaveSummary(self, directory, fname='summary.txt', prefix=STATS_PREFIX):
     """Save summary to file.
 
@@ -182,7 +227,7 @@ class StatsManager(object):
 
     if not os.path.exists(directory):
       os.makedirs(directory)
-    fname = os.path.join(directory, fname)
+    fname = self._MakeUniqueFName(os.path.join(directory, fname))
     with open(fname, 'w') as f:
       f.write(summary_str)
     return fname
@@ -204,7 +249,7 @@ class StatsManager(object):
       data[domain] = data_entry
     if not os.path.exists(directory):
       os.makedirs(directory)
-    fname = os.path.join(directory, fname)
+    fname = self._MakeUniqueFName(os.path.join(directory, fname))
     with open(fname, 'w') as f:
       json.dump(data, f)
     return fname
@@ -232,8 +277,7 @@ class StatsManager(object):
     for domain, data in self._data.iteritems():
       if not domain.endswith(self._unit[domain]):
         domain = '%s_%s' % (domain, self._unit[domain])
-      fname = '%s.txt' % domain
-      fname = os.path.join(dirname, fname)
+      fname = self._MakeUniqueFName(os.path.join(dirname, '%s.txt' % domain))
       with open(fname, 'w') as f:
         f.write('\n'.join('%.2f' % sample for sample in data) + '\n')
       fnames.append(fname)

@@ -143,6 +143,15 @@ class TestStatsManager(unittest.TestCase):
     # Verify nothing gets appended to domain for filename if no unit exists.
     self.assertIn('B.txt', files)
 
+  def test_SaveRawDataSMID(self):
+    """SaveRawData uses the smid when creating output filename."""
+    identifier = 'ec'
+    self.data = stats_manager.StatsManager(smid=identifier)
+    self._populate_dummy_stats()
+    files = self.data.SaveRawData(self.tempdir)
+    for fname in files:
+      self.assertTrue(os.path.basename(fname).startswith(identifier))
+
   def test_SummaryToStringHideDomains(self):
     """Keys indicated in hide_domains are not printed in the summary."""
     data = stats_manager.StatsManager(hide_domains=['A-domain'])
@@ -168,6 +177,14 @@ class TestStatsManager(unittest.TestCase):
     summary_str = data.SummaryToString()
     self.assertRegexpMatches(summary_str, d_b_a_c_regexp)
 
+  def test_MakeUniqueFName(self):
+    data = stats_manager.StatsManager()
+    testfile = os.path.join(self.tempdir, 'testfile.txt')
+    with open(testfile, 'w') as f:
+      f.write('')
+    expected_fname = os.path.join(self.tempdir, 'testfile0.txt')
+    self.assertEqual(expected_fname, data._MakeUniqueFName(testfile))
+
   def test_SaveSummary(self):
     """SaveSummary properly dumps the summary into a file."""
     self._populate_dummy_stats()
@@ -190,6 +207,14 @@ class TestStatsManager(unittest.TestCase):
           '@@   B_mV      3       2.50    0.82       3.50      1.50\n',
           f.readline())
 
+  def test_SaveSummarySMID(self):
+    """SaveSummary uses the smid when creating output filename."""
+    identifier = 'ec'
+    self.data = stats_manager.StatsManager(smid=identifier)
+    self._populate_dummy_stats()
+    fname = os.path.basename(self.data.SaveSummary(self.tempdir))
+    self.assertTrue(fname.startswith(identifier))
+
   def test_SaveSummaryJSON(self):
     """SaveSummaryJSON saves the added data properly in JSON format."""
     self._populate_dummy_stats()
@@ -207,6 +232,14 @@ class TestStatsManager(unittest.TestCase):
       self.assertEqual('milliwatt', summary['A']['unit'])
       self.assertAlmostEqual(2.5, summary['B']['mean'])
       self.assertEqual('millivolt', summary['B']['unit'])
+
+  def test_SaveSummaryJSONSMID(self):
+    """SaveSummaryJSON uses the smid when creating output filename."""
+    identifier = 'ec'
+    self.data = stats_manager.StatsManager(smid=identifier)
+    self._populate_dummy_stats()
+    fname = os.path.basename(self.data.SaveSummaryJSON(self.tempdir))
+    self.assertTrue(fname.startswith(identifier))
 
   def test_SaveSummaryJSONNoUnit(self):
     """SaveSummaryJSON marks unknown units properly as N/A."""
