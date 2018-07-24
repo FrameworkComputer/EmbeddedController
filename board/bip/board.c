@@ -47,13 +47,23 @@ static void ppc_interrupt(enum gpio_signal signal)
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Vbus C0 sensing (10x voltage divider). PPVAR_USB_C0_VBUS */
-	[ADC_VBUS_C0] = {
-		"VBUS_C0", 10*ADC_MAX_MVOLT, ADC_READ_MAX+1, 0, CHIP_ADC_CH13},
+	[ADC_VBUS_C0] = {.name = "VBUS_C0",
+			 .factor_mul = 10 * ADC_MAX_MVOLT,
+			 .factor_div = ADC_READ_MAX + 1,
+			 .shift = 0,
+			 .channel = CHIP_ADC_CH13},
 	/* Vbus C1 sensing (10x voltage divider). PPVAR_USB_C1_VBUS */
-	[ADC_VBUS_C1] = {
-		"VBUS_C1", 10*ADC_MAX_MVOLT, ADC_READ_MAX+1, 0, CHIP_ADC_CH14},
-	/* Convert to mV (3300mV/1024). */
-	[ADC_TEMP_SENSOR_AMB] = { "TEMP_AMB", 3300, 1024, 0, CHIP_ADC_CH3},
+	[ADC_VBUS_C1] = {.name = "VBUS_C1",
+			 .factor_mul = 10 * ADC_MAX_MVOLT,
+			 .factor_div = ADC_READ_MAX + 1,
+			 .shift = 0,
+			 .channel = CHIP_ADC_CH14},
+	/* Convert to raw mV for thermistor table lookup */
+	[ADC_TEMP_SENSOR_AMB] = {.name = "TEMP_AMB",
+			 .factor_mul = ADC_MAX_MVOLT,
+			 .factor_div = ADC_READ_MAX + 1,
+			 .shift = 0,
+			 .channel = CHIP_ADC_CH3},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
