@@ -173,6 +173,31 @@ class TestStatsManager(unittest.TestCase):
     for fname in files:
       self.assertTrue(os.path.basename(fname).startswith(identifier))
 
+  def test_SummaryToStringNaNHelp(self):
+    """NaN containing row gets tagged with *, help banner gets added."""
+    help_banner_exp = '%s %s' % (stats_manager.STATS_PREFIX,
+                                 stats_manager.NAN_DESCRIPTION)
+    nan_domain = 'A-domain'
+    nan_domain_exp = '%s%s' % (nan_domain, stats_manager.NAN_TAG)
+    # NaN helper banner is added when a NaN domain is found & domain gets tagged
+    data = stats_manager.StatsManager()
+    data.AddSample(nan_domain, float('NaN'))
+    data.AddSample(nan_domain, 17)
+    data.AddSample('B-domain', 17)
+    data.CalculateStats()
+    summarystr = data.SummaryToString()
+    self.assertIn(help_banner_exp, summarystr)
+    self.assertIn(nan_domain_exp, summarystr)
+    # NaN helper banner is not added when no NaN domain output, no tagging
+    data = stats_manager.StatsManager()
+    # nan_domain in this scenario does not contain any NaN
+    data.AddSample(nan_domain, 19)
+    data.AddSample('B-domain', 17)
+    data.CalculateStats()
+    summarystr = data.SummaryToString()
+    self.assertNotIn(help_banner_exp, summarystr)
+    self.assertNotIn(nan_domain_exp, summarystr)
+
   def test_SummaryToStringTitle(self):
     """Title shows up in SummaryToString if title specified."""
     title = 'titulo'

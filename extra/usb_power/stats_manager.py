@@ -15,6 +15,8 @@ import os
 import numpy
 
 STATS_PREFIX = '@@'
+NAN_TAG = '*'
+NAN_DESCRIPTION = '%s domains contain NaN samples' % NAN_TAG
 
 LONG_UNIT = {
     '': 'N/A',
@@ -68,6 +70,8 @@ class StatsManager(object):
     _order: list of formatting order for domains. Domains not listed are
             displayed in sorted order
     _hide_domains: collection of domains to hide when formatting summary string
+    _accept_nan: flag to indicate if NaN samples are acceptable
+    _nan_domains: set to keep track of which domains contain NaN samples
     _summary: dict of stats per domain (key): min, max, count, mean, stddev
     _logger = StatsManager logger
 
@@ -86,8 +90,9 @@ class StatsManager(object):
     self._smid = smid
     self._order = order
     self._hide_domains = hide_domains
-    self._summary = {}
     self._accept_nan = accept_nan
+    self._nan_domains = set()
+    self._summary = {}
     self._logger = logging.getLogger('StatsManager')
 
   def AddSample(self, domain, sample):
@@ -110,6 +115,8 @@ class StatsManager(object):
     if not self._accept_nan and math.isnan(sample):
       raise StatsManagerError('accept_nan is false. Cannot add NaN sample.')
     self._data[domain].append(sample)
+    if math.isnan(sample):
+      self._nan_domains.add(domain)
 
   def SetUnit(self, domain, unit):
     """Set the unit for a domain.
@@ -160,10 +167,14 @@ class StatsManager(object):
     display_order = [key for key in self._order if key in domains_to_display]
     domains_to_display -= set(display_order)
     display_order.extend(sorted(domains_to_display))
+    nan_in_output = False
     for domain in display_order:
       stats = self._summary[domain]
       if not domain.endswith(self._unit[domain]):
         domain = '%s_%s' % (domain, self._unit[domain])
+      if domain in self._nan_domains:
+        domain = '%s%s' % (domain, NAN_TAG)
+        nan_in_output = True
       row = [domain]
       row.append(str(stats['count']))
       for entry in headers[2:]:
@@ -181,6 +192,8 @@ class StatsManager(object):
       for i in range(len(row)):
         formatted_row += row[i].rjust(max_col_width[i] + 2)
       formatted_lines.append(formatted_row)
+    if nan_in_output:
+      formatted_lines.append('%s %s' % (prefix, NAN_DESCRIPTION))
 
     if self._title:
       line_length = len(formatted_lines[0])
