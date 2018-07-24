@@ -319,10 +319,24 @@ enum {
 static void ac_power_state_changed(void)
 {
 	uint32_t req;
+	int i = 0;
 
 	/* Get current status and clear it. */
 	req = GREG32(RBOX, INT_STATE) & (ac_pres_red | ac_pres_fed);
 	GREG32(RBOX, INT_STATE) = req;
+
+	/* Clear the wakeup interrupt */
+	GREG32(RBOX, WAKEUP) = GC_RBOX_WAKEUP_CLEAR_MASK;
+	/*
+	 * Wait until the interrupt status register is cleared, since RBOX runs
+	 * off of RTC instead of the core clock. Wait a max of 50 iterations.
+	 * Experimentally, 15 iterations is usually sufficient. We don't want to
+	 * wait here forever.
+	 */
+	while (GREAD(RBOX, WAKEUP_INTR) && i < 50)
+		i++;
+	/* Reenable rbox wakeup */
+	GREG32(RBOX, WAKEUP) = GC_RBOX_WAKEUP_ENABLE_MASK;
 
 	CPRINTS("AC: %c%c",
 		req & ac_pres_red ? 'R' : '-',
