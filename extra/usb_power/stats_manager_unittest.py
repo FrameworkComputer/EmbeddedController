@@ -14,6 +14,7 @@ import unittest
 
 import stats_manager
 
+
 class TestStatsManager(unittest.TestCase):
   """Test to verify StatsManager methods work as expected.
 
@@ -151,6 +152,14 @@ class TestStatsManager(unittest.TestCase):
     files = self.data.SaveRawData(self.tempdir)
     for fname in files:
       self.assertTrue(os.path.basename(fname).startswith(identifier))
+
+  def test_SummaryToStringTitle(self):
+    """Title shows up in SummaryToString if title specified."""
+    title = 'titulo'
+    data = stats_manager.StatsManager(title=title)
+    self._populate_dummy_stats()
+    summary_str = data.SummaryToString()
+    self.assertIn(title, summary_str)
 
   def test_SummaryToStringHideDomains(self):
     """Keys indicated in hide_domains are not printed in the summary."""

@@ -35,7 +35,7 @@ class StatsManager(object):
 
   Example usage:
 
-    >>> stats = StatsManager()
+    >>> stats = StatsManager(title='Title Banner')
     >>> stats.AddSample(TIME_KEY, 50.0)
     >>> stats.AddSample(TIME_KEY, 25.0)
     >>> stats.AddSample(TIME_KEY, 40.0)
@@ -47,10 +47,14 @@ class StatsManager(object):
     >>> stats.AddSample('foobar', 22222.0)
     >>> stats.CalculateStats()
     >>> print(stats.SummaryToString())
+  ` @@--------------------------------------------------------------
+  ` @@                        Title Banner
+    @@--------------------------------------------------------------
     @@            NAME  COUNT      MEAN   STDDEV       MAX       MIN
     @@   sample_msecs      4     31.25    15.16     50.00     10.00
     @@         foobar      2  16666.50  5555.50  22222.00  11111.00
     @@     frobnicate      2     10.25     1.25     11.50      9.00
+  ` @@--------------------------------------------------------------
 
   Attributes:
     _data: dict of list of readings for each domain(key)
@@ -58,6 +62,8 @@ class StatsManager(object):
     _smid: id supplied to differentiate data output to other StatsManager
            instances that potentially save to the same directory
            if smid all output files will be named |smid|_|fname|
+    _title: title to add as banner to formatted summary. If no title,
+            no banner gets added
     _order: list of formatting order for domains. Domains not listed are
             displayed in sorted order
     _hide_domains: collection of domains to hide when formatting summary string
@@ -70,8 +76,9 @@ class StatsManager(object):
   """
 
   # pylint: disable=W0102
-  def __init__(self, smid='', order=[], hide_domains=[]):
+  def __init__(self, smid='', title='', order=[], hide_domains=[]):
     """Initialize infrastructure for data and their statistics."""
+    self._title = title
     self._data = collections.defaultdict(list)
     self._unit = collections.defaultdict(str)
     self._smid = smid
@@ -159,13 +166,25 @@ class StatsManager(object):
       col_item_widths = [len(row[col_idx]) for row in table]
       max_col_width.append(max(col_item_widths))
 
-    formatted_table = []
+    formatted_lines = []
     for row in table:
       formatted_row = prefix + ' '
       for i in range(len(row)):
         formatted_row += row[i].rjust(max_col_width[i] + 2)
-      formatted_table.append(formatted_row)
-    return '\n'.join(formatted_table)
+      formatted_lines.append(formatted_row)
+
+    if self._title:
+      line_length = len(formatted_lines[0])
+      dec_length = len(prefix)
+      # trim title to be at most as long as the longest line without the prefix
+      title = self._title[:(line_length - dec_length)]
+      # line is a seperator line consisting of -----
+      line = '%s%s' % (prefix, '-' * (line_length - dec_length))
+      # prepend the prefix to the centered title
+      padded_title = '%s%s' % (prefix, title.center(line_length)[dec_length:])
+      formatted_lines = [line, padded_title, line] + formatted_lines + [line]
+    formatted_output = '\n'.join(formatted_lines)
+    return formatted_output
 
   def GetSummary(self):
     """Getter for summary."""
@@ -224,7 +243,6 @@ class StatsManager(object):
       full path of summary save location
     """
     summary_str = self.SummaryToString(prefix=prefix) + '\n'
-
     if not os.path.exists(directory):
       os.makedirs(directory)
     fname = self._MakeUniqueFName(os.path.join(directory, fname))
