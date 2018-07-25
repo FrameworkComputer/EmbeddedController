@@ -145,3 +145,47 @@ int get_temp_3v3_13k7_47k_4050b(int idx_adc, int *temp_ptr)
 	return EC_SUCCESS;
 }
 #endif /* CONFIG_STEINHART_HART_3V3_13K7_47K_4050B */
+
+#ifdef CONFIG_STEINHART_HART_6V0_51K1_47K_4050B
+/*
+ * Data derived from Steinhart-Hart equation in a resistor divider circuit with
+ * Vdd=6000mV, R = 51.1Kohm, and thermistor (B = 4050, T0 = 298.15 K, nominal
+ * resistance (R0) = 47Kohm).
+ */
+#define THERMISTOR_SCALING_FACTOR_6V0_51_47 18
+static const struct thermistor_data_pair thermistor_data_6v0_51_47[] = {
+	{ 4517 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 0   },
+	{ 3895 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 10  },
+	{ 3214 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 20  },
+	{ 2546 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 30  },
+	{ 1950 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 40  },
+	{ 1459 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 50  },
+	{ 1079 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 60  },
+	{  794 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 70  },
+	{  584 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 80  },
+	{  502 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 85  },
+	{  432 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 90  },
+	{  372 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 95  },
+	{  322 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 100 },
+};
+
+static const struct thermistor_info thermistor_info_6v0_51_47 = {
+	.scaling_factor = THERMISTOR_SCALING_FACTOR_6V0_51_47,
+	.num_pairs = ARRAY_SIZE(thermistor_data_6v0_51_47),
+	.data = thermistor_data_6v0_51_47,
+};
+
+int get_temp_6v0_51k1_47k_4050b(int idx_adc, int *temp_ptr)
+{
+	int mv = adc_read_channel(idx_adc);
+
+	if (mv < 0)
+		return EC_ERROR_UNKNOWN;
+
+	*temp_ptr = thermistor_linear_interpolate(mv, &thermistor_info_6v0_51_47);
+	*temp_ptr = C_TO_K(*temp_ptr);
+	return EC_SUCCESS;
+}
+#endif /* CONFIG_STEINHART_HART_6V0_51K1_47K_4050B */
+
+

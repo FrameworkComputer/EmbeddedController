@@ -65,8 +65,20 @@ const struct adc_t adc_channels[] = {
 			 .factor_div = ADC_READ_MAX + 1,
 			 .shift = 0,
 			 .channel = CHIP_ADC_CH3},
+	/* Convert to raw mV for thermistor table lookup */
+	[ADC_TEMP_SENSOR_CHARGER] = {.name = "TEMP_CHARGER",
+			 .factor_mul = ADC_MAX_MVOLT,
+			 .factor_div = ADC_READ_MAX + 1,
+			 .shift = 0,
+			 .channel = CHIP_ADC_CH5},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+static int read_charger_temp(int idx, int *temp_ptr) {
+	if (!gpio_get_level(GPIO_AC_PRESENT))
+		return EC_ERROR_NOT_POWERED;
+	return get_temp_6v0_51k1_47k_4050b(idx, temp_ptr);
+}
 
 const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
@@ -78,6 +90,11 @@ const struct temp_sensor_t temp_sensors[] = {
 				 .read = get_temp_3v3_51k1_47k_4050b,
 				 .idx = ADC_TEMP_SENSOR_AMB,
 				 .action_delay_sec = 5},
+	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = read_charger_temp,
+				 .idx = ADC_TEMP_SENSOR_CHARGER,
+				 .action_delay_sec = 1},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
