@@ -498,6 +498,10 @@ cleanup() {
 
 	fi
 	if [ "${CHIP}" == "stm32" -o "${CHIP}" == "npcx_uut" ] ; then
+		# Reconnect the EC-3PO interpreter to the UART.
+		dut_control ${MCU}_ec3po_interp_connect:on || \
+		    warn "hdctools cannot reconnect the EC-3PO interpreter to" \
+		    "the UART."
 		dut_control ${MCU}_boot_mode:off
 	fi
 	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
@@ -927,11 +931,6 @@ function flash_stm32() {
 	if $(servo_has_warm_reset); then
 		dut_control warm_reset:off
 	fi
-
-	# Reconnect the EC-3PO interpreter to the UART.
-	dut_control ${MCU}_ec3po_interp_connect:on || \
-	    warn "hdctools cannot reconnect the EC-3PO interpreter to" \
-	    "the UART."
 }
 
 function flash_stm32_dfu() {
@@ -1061,11 +1060,6 @@ function flash_npcx_uut() {
 	# Load monitor binary to address 0x200C3020
 	${NPCX_UUT} ${UUT_PARAMS} --opr wr --addr ${MON_ADDR} --file ${MON}
 	${NPCX_UUT} ${UUT_PARAMS} --auto --offset ${FLAGS_offset} --file ${IMG}
-
-	# Reconnect the EC-3PO interpreter to the UART.
-	dut_control ${MCU}_ec3po_interp_connect:on || \
-		warn "hdctools cannot reconnect the EC-3PO interpreter to" \
-		"the UART."
 }
 
 function flash_npcx_5m5g_jtag() {
