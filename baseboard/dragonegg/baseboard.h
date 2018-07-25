@@ -20,6 +20,11 @@
 /* #define CONFIG_POWER_S0IX */
 /* #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
 
+/* EC Defines */
+#define CONFIG_VBOOT_HASH
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
+
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
 /* TODO (b/111309500): Enable this option when support for MAX14637 is added */
