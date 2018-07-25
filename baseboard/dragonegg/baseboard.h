@@ -8,6 +8,9 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
+/* EC console commands  */
+#define CONFIG_CMD_BATT_MFG_ACCESS
+
 #define CONFIG_CHIPSET_ICELAKE
 #define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_EXTPOWER_GPIO

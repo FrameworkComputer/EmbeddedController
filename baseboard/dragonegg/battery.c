@@ -6,6 +6,7 @@
  */
 
 #include "battery.h"
+#include "battery_fuel_gauge.h"
 #include "battery_smart.h"
 #include "gpio.h"
 
@@ -14,7 +15,21 @@ static enum battery_present batt_pres_prev = BP_NOT_SURE;
 enum battery_present battery_hw_present(void)
 {
 	/* The GPIO is low when the battery is physically present */
-	return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES;
+	/*
+	 * TODO(b/111704193): The signal GPIO_EC_BATT_PRES_ODL has an issue
+	 * where it's floating (?) at ~2V when it should be low when the battery
+	 * is connected. The signal will read correctly following a cold reset
+	 * and the battery is connected, but following a warm reboot, it reads
+	 * high. In order to allow charging to work, replacing this with the a
+	 * check that the Operation Status register can be read. Once the HW
+	 * issue is resolved then change this back to checking the physical
+	 * presence pin.
+	 *
+	 */
+	/* return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES; */
+
+	return (battery_get_disconnect_state() == BATTERY_DISCONNECT_ERROR) ?
+		BP_NO : BP_YES;
 }
 
 static int battery_init(void)
