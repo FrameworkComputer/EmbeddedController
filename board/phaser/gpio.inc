@@ -19,8 +19,8 @@ GPIO_INT(LID_OPEN,	 PIN(D, 2), GPIO_INT_BOTH |
 GPIO_INT(POWER_BUTTON_L, PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)	/* MECH_PWR_BTN_ODL */
 GPIO_INT(AC_PRESENT,	 PIN(0, 0), GPIO_INT_BOTH |
 				    GPIO_HIB_WAKE_HIGH, extpower_interrupt)	/* ACOK_OD */
-GPIO_INT(EC_VOLUP_BTN_ODL, PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
-GPIO_INT(EC_VOLDN_BTN_ODL, PIN(4, 0), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(EC_VOLUP_BTN_ODL, PIN(7, 5), GPIO_INT_BOTH, button_interrupt)
+GPIO_INT(EC_VOLDN_BTN_ODL, PIN(4, 0), GPIO_INT_BOTH, button_interrupt)
 
 /* USB-C interrupts */
 GPIO_INT(USB_C0_MUX_INT_ODL, PIN(6, 1), GPIO_INT_FALLING, tcpc_alert_event)
