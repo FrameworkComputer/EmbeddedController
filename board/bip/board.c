@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "charge_state.h"
 #include "common.h"
 #include "driver/bc12/bq24392.h"
 #include "driver/ppc/sn5s330.h"
@@ -68,6 +69,10 @@ const struct adc_t adc_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
+				 .type = TEMP_SENSOR_TYPE_BATTERY,
+				 .read = charge_get_battery_temp,
+				 .action_delay_sec = 1},
 	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
 				 .type = TEMP_SENSOR_TYPE_BOARD,
 				 .read = get_temp_3v3_51k1_47k_4050b,
