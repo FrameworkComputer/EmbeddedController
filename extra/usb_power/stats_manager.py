@@ -14,11 +14,6 @@ import os
 import numpy
 
 STATS_PREFIX = '@@'
-# used to aid sorting of dict keys
-KEY_PREFIX = '__'
-# This prefix is used for keys that should not be shown in the summary tab, such
-# as timeline keys.
-NOSHOW_PREFIX = '!!'
 
 LONG_UNIT = {
     '': 'N/A',
@@ -41,15 +36,15 @@ class StatsManager(object):
   Example usage:
 
     >>> stats = StatsManager()
-    >>> stats.AddValue(TIME_KEY, 50.0)
-    >>> stats.AddValue(TIME_KEY, 25.0)
-    >>> stats.AddValue(TIME_KEY, 40.0)
-    >>> stats.AddValue(TIME_KEY, 10.0)
-    >>> stats.AddValue(TIME_KEY, 10.0)
-    >>> stats.AddValue('frobnicate', 11.5)
-    >>> stats.AddValue('frobnicate', 9.0)
-    >>> stats.AddValue('foobar', 11111.0)
-    >>> stats.AddValue('foobar', 22222.0)
+    >>> stats.AddSample(TIME_KEY, 50.0)
+    >>> stats.AddSample(TIME_KEY, 25.0)
+    >>> stats.AddSample(TIME_KEY, 40.0)
+    >>> stats.AddSample(TIME_KEY, 10.0)
+    >>> stats.AddSample(TIME_KEY, 10.0)
+    >>> stats.AddSample('frobnicate', 11.5)
+    >>> stats.AddSample('frobnicate', 9.0)
+    >>> stats.AddSample('foobar', 11111.0)
+    >>> stats.AddSample('foobar', 22222.0)
     >>> stats.CalculateStats()
     >>> print(stats.SummaryToString())
     @@            NAME  COUNT      MEAN   STDDEV       MAX       MIN
@@ -60,6 +55,9 @@ class StatsManager(object):
   Attributes:
     _data: dict of list of readings for each domain(key)
     _unit: dict of unit for each domain(key)
+    _order: list of formatting order for domains. Domains not listed are
+            displayed in sorted order
+    _hide_domains: collection of domains to hide when formatting summary string
     _summary: dict of stats per domain (key): min, max, count, mean, stddev
     _logger = StatsManager logger
 
@@ -68,27 +66,30 @@ class StatsManager(object):
     CalculateStats() is called.
   """
 
-  def __init__(self):
+  # pylint: disable=W0102
+  def __init__(self, order=[], hide_domains=[]):
     """Initialize infrastructure for data and their statistics."""
     self._data = collections.defaultdict(list)
     self._unit = collections.defaultdict(str)
+    self._order = order
+    self._hide_domains = hide_domains
     self._summary = {}
     self._logger = logging.getLogger('StatsManager')
 
-  def AddValue(self, domain, value):
-    """Add one value for a domain.
+  def AddSample(self, domain, sample):
+    """Add one sample for a domain.
 
     Args:
-      domain: the domain name for the value.
-      value: one time reading for domain, expect type float.
+      domain: the domain name for the sample.
+      sample: one time sample for domain, expect type float.
     """
-    if isinstance(value, int):
-      value = float(value)
-    if isinstance(value, float):
-      self._data[domain].append(value)
+    if isinstance(sample, int):
+      sample = float(sample)
+    if isinstance(sample, float):
+      self._data[domain].append(sample)
       return
-    self._logger.warn('value %s for domain %s is not a number, thus ignored.',
-                      value, domain)
+    self._logger.warn('sample %s for domain %s is not a number, thus ignored.',
+                      sample, domain)
 
   def SetUnit(self, domain, unit):
     """Set the unit for a domain.
@@ -134,13 +135,16 @@ class StatsManager(object):
     """
     headers = ('NAME', 'COUNT', 'MEAN', 'STDDEV', 'MAX', 'MIN')
     table = [headers]
-    for domain in sorted(self._summary.keys()):
-      if domain.startswith(NOSHOW_PREFIX):
-        continue
+    # determine what domains to display & and the order
+    domains_to_display = set(self._summary.keys()) - set(self._hide_domains)
+    display_order = [key for key in self._order if key in domains_to_display]
+    domains_to_display -= set(display_order)
+    display_order.extend(sorted(domains_to_display))
+    for domain in display_order:
       stats = self._summary[domain]
       if not domain.endswith(self._unit[domain]):
         domain = '%s_%s' % (domain, self._unit[domain])
-      row = [domain.lstrip(KEY_PREFIX)]
+      row = [domain]
       row.append(str(stats['count']))
       for entry in headers[2:]:
         row.append('%.2f' % stats[entry.lower()])
@@ -188,8 +192,6 @@ class StatsManager(object):
     """
     data = {}
     for domain in self._summary:
-      if domain.startswith(NOSHOW_PREFIX):
-        continue
       unit = LONG_UNIT.get(self._unit[domain], self._unit[domain])
       data_entry = {'mean': self._summary[domain]['mean'], 'unit': unit}
       data[domain] = data_entry
@@ -221,4 +223,4 @@ class StatsManager(object):
       fname = '%s.txt' % domain
       fname = os.path.join(dirname, fname)
       with open(fname, 'w') as f:
-        f.write('\n'.join('%.2f' % value for value in data) + '\n')
+        f.write('\n'.join('%.2f' % sample for sample in data) + '\n')

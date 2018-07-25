@@ -754,7 +754,7 @@ class powerlog(object):
                 value = aggregate_record[name] * multiplier
                 csv += ", %.2f" % value
                 name_type = name[0] + Spower.INA_SUFFIX[name[1]]
-                self._data.AddValue(name_type, value)
+                self._data.AddSample(name_type, value)
               else:
                 csv += ", "
             csv += ", %d" % aggregate_record["status"]

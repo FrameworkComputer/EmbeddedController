@@ -7,6 +7,7 @@
 from __future__ import print_function
 import json
 import os
+import re
 import shutil
 import tempfile
 import unittest
@@ -22,20 +23,20 @@ class TestStatsManager(unittest.TestCase):
 
   def _populate_dummy_stats(self):
     """Create a populated & processed StatsManager to test data retrieval."""
-    self.data.AddValue('A', 99999.5)
-    self.data.AddValue('A', 100000.5)
-    self.data.AddValue('A', 'ERROR')
+    self.data.AddSample('A', 99999.5)
+    self.data.AddSample('A', 100000.5)
+    self.data.AddSample('A', 'ERROR')
     self.data.SetUnit('A', 'uW')
     self.data.SetUnit('A', 'mW')
-    self.data.AddValue('B', 1.5)
-    self.data.AddValue('B', 2.5)
-    self.data.AddValue('B', 3.5)
+    self.data.AddSample('B', 1.5)
+    self.data.AddSample('B', 2.5)
+    self.data.AddSample('B', 3.5)
     self.data.SetUnit('B', 'mV')
     self.data.CalculateStats()
 
   def _populate_dummy_stats_no_unit(self):
-    self.data.AddValue('B', 1000)
-    self.data.AddValue('A', 200)
+    self.data.AddSample('B', 1000)
+    self.data.AddSample('A', 200)
     self.data.SetUnit('A', 'blue')
 
   def setUp(self):
@@ -47,33 +48,33 @@ class TestStatsManager(unittest.TestCase):
     """Delete the temporary directory and its content."""
     shutil.rmtree(self.tempdir)
 
-  def test_AddValue(self):
-    """Adding a value successfully adds a value."""
-    self.data.AddValue('Test', 1000)
+  def test_AddSample(self):
+    """Adding a sample successfully adds a sample."""
+    self.data.AddSample('Test', 1000)
     self.data.SetUnit('Test', 'test')
     self.data.CalculateStats()
     summary = self.data.GetSummary()
     self.assertEqual(1, summary['Test']['count'])
 
-  def test_AddValueNoFloat(self):
+  def test_AddSampleNoFloat(self):
     """Adding a non number gets ignored and doesn't raise an exception."""
-    self.data.AddValue('Test', 17)
-    self.data.AddValue('Test', 'fiesta')
+    self.data.AddSample('Test', 17)
+    self.data.AddSample('Test', 'fiesta')
     self.data.SetUnit('Test', 'test')
     self.data.CalculateStats()
     summary = self.data.GetSummary()
     self.assertEqual(1, summary['Test']['count'])
 
-  def test_AddValueNoUnit(self):
+  def test_AddSampleNoUnit(self):
     """Not adding a unit does not cause an exception on CalculateStats()."""
-    self.data.AddValue('Test', 17)
+    self.data.AddSample('Test', 17)
     self.data.CalculateStats()
     summary = self.data.GetSummary()
     self.assertEqual(1, summary['Test']['count'])
 
   def test_UnitSuffix(self):
     """Unit gets appended as a suffix in the displayed summary."""
-    self.data.AddValue('test', 250)
+    self.data.AddSample('test', 250)
     self.data.SetUnit('test', 'mw')
     self.data.CalculateStats()
     summary_str = self.data.SummaryToString()
@@ -81,7 +82,7 @@ class TestStatsManager(unittest.TestCase):
 
   def test_DoubleUnitSuffix(self):
     """If domain already ends in unit, verify that unit doesn't get appended."""
-    self.data.AddValue('test_mw', 250)
+    self.data.AddSample('test_mw', 250)
     self.data.SetUnit('test_mw', 'mw')
     self.data.CalculateStats()
     summary_str = self.data.SummaryToString()
@@ -135,6 +136,31 @@ class TestStatsManager(unittest.TestCase):
     files = os.listdir(os.path.join(self.tempdir, outdir))
     # Verify nothing gets appended to domain for filename if no unit exists.
     self.assertIn('B.txt', files)
+
+  def test_SummaryToStringHideDomains(self):
+    """Keys indicated in hide_domains are not printed in the summary."""
+    data = stats_manager.StatsManager(hide_domains=['A-domain'])
+    data.AddSample('A-domain', 17)
+    data.AddSample('B-domain', 17)
+    data.CalculateStats()
+    summary_str = data.SummaryToString()
+    self.assertIn('B-domain', summary_str)
+    self.assertNotIn('A-domain', summary_str)
+
+  def test_SummaryToStringOrder(self):
+    """Order passed into StatsManager is honoured when formatting summary."""
+    # StatsManager that should print D & B first, and the subsequent elements
+    # are sorted.
+    d_b_a_c_regexp = re.compile('D-domain.*B-domain.*A-domain.*C-domain',
+                                re.DOTALL)
+    data = stats_manager.StatsManager(order=['D-domain', 'B-domain'])
+    data.AddSample('A-domain', 17)
+    data.AddSample('B-domain', 17)
+    data.AddSample('C-domain', 17)
+    data.AddSample('D-domain', 17)
+    data.CalculateStats()
+    summary_str = data.SummaryToString()
+    self.assertRegexpMatches(summary_str, d_b_a_c_regexp)
 
   def test_SaveSummary(self):
     """SaveSummary properly dumps the summary into a file."""
