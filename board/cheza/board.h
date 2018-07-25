@@ -54,6 +54,9 @@
 #define CONFIG_CHARGER_ISL9238
 #define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_USB_CHARGER
+#define CONFIG_CMD_CHARGER_ADC_AMON_BMON
+#define CONFIG_CHARGER_PSYS
+#define CONFIG_CHARGER_PSYS_READ
 
 /* TODO(b/79163120): Use correct charger values, copied from Lux for rev-0 */
 #define CONFIG_CHARGER_INPUT_CURRENT 512
@@ -140,7 +143,10 @@ enum power_signal {
 };
 
 enum adc_channel {
-	ADC_VBUS = -1,
+	ADC_VBUS = -1,  /* No VBUS ADC detection */
+	ADC_BASE_DET,
+	ADC_AMON_BMON,
+	ADC_PSYS,
 	ADC_CH_COUNT
 };
 
