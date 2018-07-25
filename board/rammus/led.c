@@ -23,6 +23,8 @@
 #define LED_TOTAL_TICKS 16
 #define LED_ON_TICKS 8
 
+/* TODO(b:111815820): Need to implement the control of LED */
+
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_POWER_LED,
 	EC_LED_ID_BATTERY_LED};

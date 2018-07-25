@@ -1,39 +1,41 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-/* Eve board configuration */
+/* Rammus board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
 /*
  * Allow dangerous commands.
- * TODO: Remove this config before production.
+ * TODO(b:111816190): Remove this config before production.
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
 /* EC */
 #define CONFIG_ADC
 #define CONFIG_BACKLIGHT_LID
-#define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_BOARD_FORCE_RESET_PIN
-#define CONFIG_CASE_CLOSED_DEBUG_EXTERNAL
 #define CONFIG_DPTF
 #define CONFIG_DPTF_DEVICE_ORIENTATION
 #define CONFIG_FLASH_SIZE 0x80000
 #define CONFIG_FPU
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
-#define CONFIG_I2C_XFER_BOARD_CALLBACK
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PROTOCOL_8042
-#define CONFIG_LED_COMMON
+/* TODO(b:111815820): Need to enable LED setting later
+ *		led.c need to be modified too
+ */
+/* #define CONFIG_LED_COMMON */
 #define CONFIG_LID_SWITCH
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_LTO
 #define CONFIG_CHIP_PANIC_BACKUP
+#define CONFIG_PWM
+#define CONFIG_PWM_KBLIGHT
 #define CONFIG_SOFTWARE_PANIC
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25X40
@@ -47,7 +49,7 @@
 #define CONFIG_WIRELESS_SUSPEND \
 	(EC_WIRELESS_SWITCH_WLAN | EC_WIRELESS_SWITCH_WLAN_POWER)
 #define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
-#define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_DX_WLAN
+#define WIRELESS_GPIO_WLAN_POWER GPIO_EN_PP3300_DX_WLAN
 
 /* EC console commands */
 #define CONFIG_CMD_ACCELS
@@ -64,6 +66,7 @@
 #define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_HOSTCMD_ESPI
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
+#define CONFIG_HOSTCMD_FLASH_SPI_INFO
 
 /* Battery */
 #define CONFIG_BATTERY_CUT_OFF
@@ -81,7 +84,6 @@
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_INPUT_CURRENT 512
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 2
-#define CONFIG_CHARGER_PROFILE_OVERRIDE
 #define CONFIG_CHARGER_PSYS
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
@@ -102,7 +104,7 @@
 #define CONFIG_USB_PORT_POWER_SMART_CDP_SDP_ONLY
 #undef CONFIG_USB_PORT_POWER_SMART_PORT_COUNT
 #define CONFIG_USB_PORT_POWER_SMART_PORT_COUNT 1
-#define GPIO_USB1_ILIM_SEL GPIO_USB_A_ILIM_SEL
+#define GPIO_USB1_ILIM_SEL GPIO_USB_A_CHARGE_EN_L
 
 /* Sensor */
 #define CONFIG_TEMP_SENSOR
@@ -134,6 +136,8 @@
 
 #define CONFIG_TABLET_MODE
 #define CONFIG_TABLET_MODE_SWITCH
+#define CONFIG_TABLET_SWITCH
+#define TABLET_MODE_GPIO_L GPIO_TABLET_MODE
 
 /* USB */
 #define CONFIG_USB_CHARGER
@@ -149,6 +153,8 @@
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TCPM_TCPCI
+#define CONFIG_USB_PD_TCPM_ANX7447
+#define CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE_COMMAND
 #define CONFIG_USB_PD_TCPM_PS8751
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_POWER_DELIVERY
@@ -176,13 +182,29 @@
 #define I2C_PORT_PMIC		NPCX_I2C_PORT2
 #define I2C_PORT_MP2949		NPCX_I2C_PORT2
 #define I2C_PORT_GYRO		NPCX_I2C_PORT3
-#define I2C_PORT_BARO		NPCX_I2C_PORT3
 #define I2C_PORT_ACCEL		I2C_PORT_GYRO
 #define I2C_PORT_THERMAL	I2C_PORT_PMIC
 
 /* I2C addresses */
 #define I2C_ADDR_BD99992	0x60
 #define I2C_ADDR_MP2949		0x40
+
+/* Rename GPIOs */
+#define GPIO_PCH_SLP_S0_L	GPIO_SLP_S0_L
+#define GPIO_PCH_SLP_SUS_L	GPIO_SLP_SUS_L_PCH
+#define GPIO_RSMRST_L_PGOOD	GPIO_ROP_EC_RSMRST_L
+#define GPIO_PMIC_DPWROK	GPIO_ROP_DSW_PWROK
+#define GPIO_POWER_BUTTON_L	GPIO_PWR_BTN_ODL
+#define GPIO_VOLUME_DOWN_L	GPIO_VOLDN_BTN
+#define GPIO_VOLUME_UP_L	GPIO_VOLUP_BTN
+#define GPIO_AC_PRESENT		GPIO_ROP_EC_ACOK
+#define GPIO_ENABLE_BACKLIGHT	GPIO_BL_DISABLE_L
+#define GPIO_CPU_PROCHOT	GPIO_PCH_PROCHOT
+#define GPIO_PCH_PWRBTN_L	GPIO_PCH_PWR_BTN_L
+#define GPIO_EC_PLATFORM_RST	GPIO_PLATFORM_RST
+#define GPIO_PMIC_SLP_SUS_L	GPIO_SLP_SUS_L_PMIC
+#define GPIO_USB_C0_5V_EN	GPIO_EN_USB_C0_5V_OUT
+#define GPIO_USB_C1_5V_EN	GPIO_EN_USB_C1_5V_OUT
 
 #ifndef __ASSEMBLER__
 
@@ -201,11 +223,12 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
-/* Nautilus doesn't have systherm0 and systherm3 */
 enum temp_sensor_id {
-	TEMP_SENSOR_BATTERY,	/* BD99956GW TSENSE */
+	TEMP_SENSOR_BATTERY,	/* Smart Battery Temperature */
+	TEMP_SENSOR_AMBIENT,	/* BD99992GW SYSTHERM0 */
 	TEMP_SENSOR_CHARGER,	/* BD99992GW SYSTHERM1 */
 	TEMP_SENSOR_DRAM,	/* BD99992GW SYSTHERM2 */
+	TEMP_SENSOR_EMMC,	/* BD99992GW SYSTHERM3 */
 	TEMP_SENSOR_COUNT
 };
 
@@ -215,7 +238,6 @@ enum temp_sensor_id {
  * the first 2 entries must be accelerometers, then gyroscope.
  * For BMI160, accel, gyro and compass sensors must be next to each other.
  */
-
 enum sensor_id {
 	LID_ACCEL = 0,
 	BASE_ACCEL,
@@ -223,10 +245,15 @@ enum sensor_id {
 };
 
 enum adc_channel {
-	ADC_BASE_DET,
 	ADC_VBUS,
 	ADC_AMON_BMON,
 	ADC_CH_COUNT
+};
+
+enum pwm_channel {
+	PWM_CH_KBLIGHT,
+	/* Number of PWM channels */
+	PWM_CH_COUNT
 };
 
 /* TODO(crosbug.com/p/61098): Verify the numbers below. */
@@ -247,7 +274,6 @@ enum adc_channel {
 #define PD_MAX_VOLTAGE_MV		20000
 
 /* Board specific handlers */
-int board_get_version(void);
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
 
