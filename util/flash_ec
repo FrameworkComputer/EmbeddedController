@@ -125,6 +125,7 @@ BOARDS_NPCX_SPI=(
 	nami
 	nautilus
 	poppy
+	rammus
 	reef
 	soraka
 )
@@ -170,6 +171,7 @@ BOARDS_RAIDEN=(
 	nami
 	nautilus
 	poppy
+	rammus
 	reef
 	scarlet
 	soraka
