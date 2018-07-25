@@ -141,14 +141,15 @@ static uint32_t fp_process_enroll(void)
 
 static uint32_t fp_process_match(void)
 {
-	int res;
+	int res = -1;
 	uint32_t updated = 0;
 	int32_t fgr = -1;
 
 	/* match finger against current templates */
 	CPRINTS("Matching/%d ...", templ_valid);
-	res = fp_finger_match(fp_template[0], templ_valid, fp_buffer,
-			      &fgr, &updated);
+	if (templ_valid)
+		res = fp_finger_match(fp_template[0], templ_valid, fp_buffer,
+				      &fgr, &updated);
 	CPRINTS("Match =>%d (finger %d)", res, fgr);
 	if (res < 0)
 		res = EC_MKBP_FP_ERR_MATCH_NO_INTERNAL;
