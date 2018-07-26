@@ -984,8 +984,10 @@ int copy_file_to_file(char *dst_file_name,
 
 	/* Open the source file for read. */
 	src_file = fopen(src_file_name, "rb");
-	if (src_file == NULL)
+	if (src_file == NULL) {
+		fclose(dst_file);
 		return 0;
+	}
 
 	/* Get the source file length in bytes. */
 	src_file_size = get_file_length(src_file);
