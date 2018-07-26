@@ -14,7 +14,7 @@ GPIO_INT(POWER_BUTTON_L,	PIN(0, 4), GPIO_INT_BOTH | GPIO_PULL_UP,	power_button_i
 
 GPIO_INT(PCH_SLP_S0_L,		PIN(7, 5), GPIO_INT_BOTH,			power_signal_interrupt)
 /* Use VW signals instead of GPIOs */
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SIGNALS
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
 GPIO_INT(PCH_SLP_S3_L,		PIN(7, 3), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(PCH_SLP_S4_L,		PIN(8, 6), GPIO_INT_BOTH,			power_signal_interrupt)
 #endif

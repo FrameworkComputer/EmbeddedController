@@ -68,10 +68,10 @@
 #define CONFIG_HOSTCMD_ESPI
 /*
  * Eve and Poppy all have wires from GPIO to PCH but
- * CONFIG_HOSTCMD_ESPI_VW_SIGNALS is defined. So, those GPIOs are not used by
- * EC.
+ * CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS is defined. So, those GPIOs are not used
+ * by EC.
  */
-#define CONFIG_HOSTCMD_ESPI_VW_SIGNALS
+#define CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
 
 /* Charger */
 #define CONFIG_CHARGE_MANAGER

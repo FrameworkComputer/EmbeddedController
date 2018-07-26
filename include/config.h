@@ -2162,8 +2162,11 @@
 /* Support host command interface over eSPI bus. */
 #undef CONFIG_HOSTCMD_ESPI
 
-/* Use Virtual Wire signals instead of GPIO with eSPI interface */
-#undef CONFIG_HOSTCMD_ESPI_VW_SIGNALS
+/*
+ * SLP signals (SLP_S3 and SLP_S4) use virtual wires intead of physical pins
+ * with eSPI interface.
+ */
+#undef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
 
 /* MCHP next two items are EC eSPI slave configuration */
 /* Maximum clock frequence eSPI EC slave advertises

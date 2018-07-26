@@ -38,7 +38,7 @@
 #define CONFIG_ADC
 #define CONFIG_HOSTCMD_ESPI
 /* TODO(aaboagye): Uncomment when Si arrives. */
-/* #define CONFIG_HOSTCMD_ESPI_VW_SIGNALS */
+/* #define CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS */
 #define CONFIG_I2C
 #define CONFIG_PWM
 

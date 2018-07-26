@@ -25,10 +25,10 @@ GPIO_INT(AC_PRESENT,      PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpowe
 
 /* Power Signals. */
 GPIO_INT(PCH_SLP_S0_L,    PIN(A, 4), GPIO_INT_BOTH, power_signal_interrupt)
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SIGNALS
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
 GPIO_INT(PCH_SLP_S3_L,    PIN(A, 6), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S4_L,    PIN(A, 3), GPIO_INT_BOTH, power_signal_interrupt)
-#endif /* defined(CONFIG_HOSTCMD_ESPI_VW_SIGNALS) */
+#endif /* defined(CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS) */
 GPIO_INT(PCH_SLP_SUS_L,   PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
 /* TODO(aaboagye): Internal PU may be needed later on... */
 GPIO_INT(RSMRST_L_PGOOD,  PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)

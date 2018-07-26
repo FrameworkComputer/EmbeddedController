@@ -22,7 +22,7 @@
 #define CONFIG_I2C
 /* Features of eSPI */
 #define CONFIG_HOSTCMD_ESPI
-#define CONFIG_HOSTCMD_ESPI_VW_SIGNALS /* Use VW signals instead of GPIOs */
+#define CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS /* Use VW signals instead of GPIOs */
 
 /* Optional features */
 #define CONFIG_BOARD_VERSION_GPIO
