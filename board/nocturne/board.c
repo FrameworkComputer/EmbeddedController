@@ -397,6 +397,10 @@ static void board_init(void)
 	/* Enable USB Type-C interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
+
+	/* Enable sensor IRQs if we're in S0. */
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		enable_sensor_irqs();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
