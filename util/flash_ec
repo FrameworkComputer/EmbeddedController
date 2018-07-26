@@ -134,6 +134,7 @@ BOARDS_NPCX_INT_SPI=(
 	bobba
 	fleex
 	grunt
+	meep
 	meowth
 	nocturne
 	phaser
