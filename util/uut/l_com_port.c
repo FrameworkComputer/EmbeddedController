@@ -237,6 +237,7 @@ int com_port_open(const char *com_port_dev_name,
 			"com_port_open() Error %d, Failed on com_config_uart() %s, "
 			"%s\n",
 			errno, com_port_dev_name, strerror(errno));
+		close(port_handler);
 		return INVALID_HANDLE_VALUE;
 	}
 
