@@ -106,6 +106,7 @@ static int keyscan_read_fdt_matrix(struct keyscan_info *keyscan,
 		    matrix->col >= KEYBOARD_COLS) {
 			fprintf(stderr, "Matrix pos out of range (%d,%d)\n",
 				matrix->row, matrix->col);
+			fclose(f);
 			return -1;
 		}
 	}
