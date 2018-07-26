@@ -71,8 +71,7 @@ class Susb():
       SusbError: An error accessing Susb object
     """
     # Find the device.
-    dev_g = usb.core.find(idVendor=vendor, idProduct=product, find_all=True)
-    dev_list = list(dev_g)
+    dev_list = usb.core.find(idVendor=vendor, idProduct=product, find_all=True)
     if dev_list is None:
       raise SusbError("USB device not found")
 

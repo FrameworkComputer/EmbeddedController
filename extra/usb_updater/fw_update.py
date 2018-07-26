@@ -67,8 +67,7 @@ class Supdate(object):
     vendor = self._brdcfg['vid']
     product = self._brdcfg['pid']
 
-    dev_g = usb.core.find(idVendor=vendor, idProduct=product, find_all=True)
-    dev_list = list(dev_g)
+    dev_list = usb.core.find(idVendor=vendor, idProduct=product, find_all=True)
     if dev_list is None:
       raise Exception("Update", "USB device not found")
 
@@ -76,7 +75,7 @@ class Supdate(object):
     dev = None
     if serialname:
       for d in dev_list:
-        if usb.util.get_string(d, d.iSerialNumber) == serialname:
+        if usb.util.get_string(d, 256, d.iSerialNumber) == serialname:
           dev = d
           break
       if dev is None:
