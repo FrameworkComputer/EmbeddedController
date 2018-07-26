@@ -871,6 +871,7 @@ int write_flash(int fd, struct stm32_def *chip, const char *filename,
 	if (res <= 0) {
 		fprintf(stderr, "Cannot read %s\n", filename);
 		free(buffer);
+		fclose(hnd);
 		return -EIO;
 	}
 	fclose(hnd);
