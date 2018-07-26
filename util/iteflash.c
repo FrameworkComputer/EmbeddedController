@@ -1134,6 +1134,7 @@ int write_flash2(struct ftdi_context *ftdi, const char *filename,
 	if (res <= 0) {
 		fprintf(stderr, "Cannot read %s\n", filename);
 		free(buffer);
+		fclose(hnd);
 		return -EIO;
 	}
 	fclose(hnd);
