@@ -333,10 +333,12 @@ static void print_integer(const uint8_t *buf, enum cbi_data_tag tag)
 {
 	uint32_t v;
 	struct cbi_data *d = cbi_find_tag(buf, tag);
-	const char *name = d->tag < CBI_TAG_COUNT ? field_name[d->tag] : "???";
+	const char *name;
 
 	if (!d)
 		return;
+
+	name = d->tag < CBI_TAG_COUNT ? field_name[d->tag] : "???";
 
 	switch (d->size) {
 	case 1:
