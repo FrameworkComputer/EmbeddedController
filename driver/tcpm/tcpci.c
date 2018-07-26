@@ -212,14 +212,9 @@ int tcpci_tcpc_drp_toggle(int port, int enable)
 {
 	int rv;
 
-	if (!enable) {
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-		struct usb_mux *mux = &usb_muxes[port];
-		if (mux->board_init)
-			return mux->board_init(mux);
-#endif
+	if (!enable)
 		return EC_SUCCESS;
-	}
+
 	/* Set auto drp toggle */
 	rv = set_role_ctrl(port, 1, TYPEC_RP_USB, TYPEC_CC_RD);
 
