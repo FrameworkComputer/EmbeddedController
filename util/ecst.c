@@ -1872,9 +1872,9 @@ int calc_header_crc_bin(unsigned int *p_cksum)
 	/* Go thru the BIN File and calculate the Checksum */
 	fseek(g_hfd_pointer, 0x00000000, SEEK_SET);
 	if (fread(g_header_array,
-		  1,
 		  HEADER_SIZE,
-		  g_hfd_pointer) == 0)
+		  1,
+		  g_hfd_pointer) != 1)
 		return 0;
 
 	for (i = 0; i < (HEADER_SIZE - HEADER_CRC_FIELDS_SIZE); i++) {
@@ -1960,9 +1960,9 @@ int calc_firmware_csum_bin(unsigned int *p_cksum,
 		fseek(input_file_pointer, 0L, SEEK_SET);
 		fseek(input_file_pointer, calc_curr_position, SEEK_SET);
 		if (fread(g_fw_array,
-			  1,
 			  calc_read_bytes,
-			  input_file_pointer) == 0)
+			  1,
+			  input_file_pointer) != 1)
 			return 0;
 
 		for (i = 0; i < calc_read_bytes; i++) {
@@ -2305,9 +2305,9 @@ unsigned int calc_api_csum_bin(void)
 		fseek(api_file_pointer, 0L, SEEK_SET);
 		fseek(api_file_pointer, calc_curr_position, SEEK_SET);
 		if (fread(g_fw_array,
-			  1,
 			  calc_read_bytes,
-			  api_file_pointer) == 0)
+			  1,
+			  api_file_pointer) != 1)
 			return 0;
 
 		for (i = 0; i < calc_read_bytes; i++) {
