@@ -322,6 +322,7 @@ static int cmd_create(int argc, char **argv)
 		fprintf(stderr, "Unable to write CBI image to %s\n", filename);
 		return rv;
 	}
+	free(cbi);
 
 	fprintf(stderr, "CBI image is created successfully\n");
 
@@ -415,6 +416,8 @@ static int cmd_show(int argc, char **argv)
 	print_integer(buf, CBI_TAG_BOARD_VERSION);
 	print_integer(buf, CBI_TAG_OEM_ID);
 	print_integer(buf, CBI_TAG_SKU_ID);
+
+	free(buf);
 
 	printf("Data validated successfully\n");
 	return 0;
