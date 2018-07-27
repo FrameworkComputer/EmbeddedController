@@ -72,16 +72,11 @@ static void led_update_battery(void)
 	int phase;
 	enum led_states desired_state = led_get_state();
 
-	if (desired_state == led_state && period == LED_INDEFINITE)
-		/*
-		 * No change needed if we're on the same state and
-		 * it's configured to be solid
-		 */
-		return;
-
 	/*
-	 * If we're in a new valid state, update our ticks and period info.
-	 * If our new state isn't defined, continue using the previous one
+	 * We always need to check the current state since the value could
+	 * have been manually overwritten. If we're in a new valid state,
+	 * update our ticks and period info. If our new state isn't defined,
+	 * continue using the previous one.
 	 */
 	if (desired_state != led_state && desired_state < LED_NUM_STATES) {
 		/* State is changing */

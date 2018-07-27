@@ -73,21 +73,32 @@ void led_set_color_battery(enum ec_led_colors color)
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	brightness_range[EC_LED_COLOR_RED] = 1;
-	brightness_range[EC_LED_COLOR_AMBER] = 1;
-	brightness_range[EC_LED_COLOR_GREEN] = 1;
+	if (led_id == EC_LED_ID_BATTERY_LED) {
+		brightness_range[EC_LED_COLOR_RED] = 1;
+		brightness_range[EC_LED_COLOR_AMBER] = 1;
+		brightness_range[EC_LED_COLOR_GREEN] = 1;
+	} else if (led_id == EC_LED_ID_POWER_LED) {
+		brightness_range[EC_LED_COLOR_WHITE] = 1;
+	}
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	if (brightness[EC_LED_COLOR_RED] != 0)
-		led_set_color_battery(EC_LED_COLOR_RED);
-	else if (brightness[EC_LED_COLOR_AMBER] != 0)
-		led_set_color_battery(EC_LED_COLOR_AMBER);
-	else if (brightness[EC_LED_COLOR_GREEN] != 0)
-		led_set_color_battery(EC_LED_COLOR_GREEN);
-	else
-		led_set_color_battery(LED_OFF);
+	if (led_id == EC_LED_ID_BATTERY_LED) {
+		if (brightness[EC_LED_COLOR_RED] != 0)
+			led_set_color_battery(EC_LED_COLOR_RED);
+		else if (brightness[EC_LED_COLOR_AMBER] != 0)
+			led_set_color_battery(EC_LED_COLOR_AMBER);
+		else if (brightness[EC_LED_COLOR_GREEN] != 0)
+			led_set_color_battery(EC_LED_COLOR_GREEN);
+		else
+			led_set_color_battery(LED_OFF);
+	} else if (led_id == EC_LED_ID_POWER_LED) {
+		if (brightness[EC_LED_COLOR_WHITE] != 0)
+			led_set_color_power(1);
+		else
+			led_set_color_power(0);
+	}
 
 	return EC_SUCCESS;
 }
