@@ -29,9 +29,10 @@ GPIO_INT(LID_OPEN,          PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)  /* LID_OPE
 GPIO_INT(AP_RST_REQ,        PIN(C, 2), GPIO_INT_RISING | GPIO_PULL_DOWN | GPIO_SEL_1P8V, chipset_reset_request_interrupt)  /* Reset request from AP */
 /* AP_RST_L and PS_HOLD are used for PMIC and AP negotiation. Don't change their states. */
 GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH | GPIO_SEL_1P8V, power_signal_interrupt)
-GPIO_INT(PS_HOLD,           PIN(D, 4), GPIO_INT_BOTH | GPIO_SEL_1P8V, power_signal_interrupt)  /* Indicate when AP triggers reset/shutdown */
+GPIO_INT(PS_HOLD,           PIN(D, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, power_signal_interrupt)  /* Indicate when AP triggers reset/shutdown */
 GPIO_INT(PMIC_FAULT_L,      PIN(7, 6), GPIO_INT_BOTH | GPIO_SEL_1P8V, power_signal_interrupt)  /* Any PMIC fault? */
-GPIO_INT(POWER_GOOD,        PIN(5, 4), GPIO_INT_BOTH | GPIO_SEL_1P8V, power_signal_interrupt)  /* SRC_PP1800_S4A from PMIC */
+/* When switch-cap is off, the POWER_GOOD signal is floating. Need a pull-down to make it low. */
+GPIO_INT(POWER_GOOD,        PIN(5, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, power_signal_interrupt)  /* SRC_PP1800_S4A from PMIC */
 GPIO_INT(SHI_CS_L,          PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN | GPIO_SEL_1P8V, shi_cs_event)  /* AP_EC_SPI_CS_L */
 GPIO_INT(CC_LID_BASE_ADC,   PIN(4, 5), GPIO_INT_BOTH, base_detect_interrupt)  /* Base detection */
 

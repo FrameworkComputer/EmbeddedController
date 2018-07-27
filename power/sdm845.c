@@ -37,7 +37,7 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /* Masks for power signals */
-#define IN_POWER_GOOD POWER_SIGNAL_MASK(SDM845_AP_RST_L)
+#define IN_POWER_GOOD POWER_SIGNAL_MASK(SDM845_POWER_GOOD)
 
 /* Long power key press to force shutdown */
 #define DELAY_FORCE_SHUTDOWN		(8 * SECOND)
@@ -53,10 +53,16 @@
 #define DELAY_SHUTDOWN_ON_POWER_HOLD	(8 * SECOND)
 
 /*
- * After trigger PMIC power-on, how long it triggers AP to turn on.
- * Obversed that the worst case is ~150ms. Pick a safe vale.
+ * After trigger PMIC power sequence, how long it triggers AP to turn on
+ * or off. Observed that the worst case is ~150ms. Pick a safe vale.
  */
 #define PMIC_POWER_AP_RESPONSE_TIMEOUT	(350 * MSEC)
+
+/*
+ * After force off the switch cap, how long the PMIC/AP totally off.
+ * Observed that the worst case is 2s. Pick a safe vale.
+ */
+#define FORCE_OFF_RESPONSE_TIMEOUT	(4 * SECOND)
 
 /* Wait for polling the AP on signal */
 #define PMIC_POWER_AP_WAIT		(1 * MSEC)
@@ -75,9 +81,6 @@
 
 /* Delay between power-on the system and power-on the PMIC */
 #define SYSTEM_POWER_ON_DELAY		(10 * MSEC)
-
-/* Delay between power-off the system and all things (PMIC/AP) expected off */
-#define SYSTEM_POWER_OFF_DELAY		(350 * MSEC)
 
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
@@ -240,8 +243,8 @@ static int is_system_powered(void)
  */
 static int is_pmic_pwron(void)
 {
-	/* Use PS_HOLD to indicate PMIC/AP is on/off */
-	return gpio_get_level(GPIO_PS_HOLD);
+	/* Use POWER_GOOD to indicate PMIC/AP is on/off */
+	return gpio_get_level(GPIO_POWER_GOOD);
 }
 
 /**
@@ -249,8 +252,9 @@ static int is_pmic_pwron(void)
  *
  * @param enable	1 to wait the PMIC/AP on.
 			0 to wait the PMIC/AP off.
+ * @param timeout	Number of microsecond of timeout.
  */
-static void wait_pmic_pwron(int enable)
+static void wait_pmic_pwron(int enable, unsigned int timeout)
 {
 	timestamp_t poll_deadline;
 
@@ -259,7 +263,7 @@ static void wait_pmic_pwron(int enable)
 		return;
 
 	poll_deadline = get_time();
-	poll_deadline.val += PMIC_POWER_AP_RESPONSE_TIMEOUT;
+	poll_deadline.val += timeout;
 	while (enable != is_pmic_pwron() &&
 	       get_time().val < poll_deadline.val) {
 		usleep(PMIC_POWER_AP_WAIT);
@@ -293,22 +297,18 @@ static void set_pmic_pwron(int enable)
 	/*
 	 * Power-on sequence:
 	 * 1. Hold down PMIC_KPD_PWR_ODL, which is a power-on trigger
-	 * 2. PM845 pulls up AP_RST_L signal to power-on SDM845
-	 * 3. SDM845 pulls up PS_HOLD signal
-	 * 4. Wait for PS_HOLD up
-	 * 5. Release PMIC_KPD_PWR_ODL
+	 * 2. PM845 supplies power to POWER_GOOD
+	 * 3. Release PMIC_KPD_PWR_ODL
 	 *
 	 * Power-off sequence:
 	 * 1. Hold down PMIC_KPD_PWR_ODL and PM845_RESIN_L, which is a power-off
 	 *    trigger (requiring reprogramming PMIC registers to make
 	 *    PMIC_KPD_PWR_ODL + PM845_RESIN_L as a shutdown trigger)
-	 * 2. PM845 pulls down AP_RST_L signal to power-off SDM845 (requreing
+	 * 2. PM845 stops supplying power to POWER_GOOD (requiring
 	 *    reprogramming PMIC to set the stage-1 and stage-2 reset timers to
 	 *    0 such that the pull down happens just after the deboucing time
 	 *    of the trigger, like 2ms)
-	 * 3. SDM845 pulls down PS_HOLD signal
-	 * 4. Wait for PS_HOLD down
-	 * 5. Release PMIC_KPD_PWR_ODL and PM845_RESIN_L
+	 * 3. Release PMIC_KPD_PWR_ODL and PM845_RESIN_L
 	 *
 	 * If the above PMIC registers not programmed or programmed wrong, it
 	 * falls back to the next functions, which cuts off the system power.
@@ -317,7 +317,7 @@ static void set_pmic_pwron(int enable)
 	gpio_set_level(GPIO_PMIC_KPD_PWR_ODL, 0);
 	if (!enable)
 		gpio_set_level(GPIO_PM845_RESIN_L, 0);
-	wait_pmic_pwron(enable);
+	wait_pmic_pwron(enable, PMIC_POWER_AP_RESPONSE_TIMEOUT);
 	gpio_set_level(GPIO_PMIC_KPD_PWR_ODL, 1);
 	if (!enable)
 		gpio_set_level(GPIO_PM845_RESIN_L, 1);
@@ -387,8 +387,8 @@ static void power_off(void)
 	/* Force to switch off all rails */
 	set_system_power(0);
 
-	/* Wait longer to ensure the PMIC/AP totally off */
-	usleep(SYSTEM_POWER_OFF_DELAY);
+	/* If it is forced down, wait to ensure POWER_GOOD down */
+	wait_pmic_pwron(0, FORCE_OFF_RESPONSE_TIMEOUT);
 
 	/* Turn off the 5V rail. */
 #ifdef CONFIG_POWER_PP5000_CONTROL

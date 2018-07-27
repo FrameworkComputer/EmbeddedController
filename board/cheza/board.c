@@ -160,20 +160,6 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 
 /* Power signal list. Must match order of enum power_signal. */
-/*
- * PMIC pulls up the AP_RST_L signal to power-on AP. Once AP is up, it then
- * pulls up the PS_HOLD signal.
- *
- *      +--> GPIO_AP_RST_L >--+
- *   PMIC                     AP
- *      +--< GPIO_PS_HOLD <---+
- *
- * When AP initiates shutdown, it pulls down the PS_HOLD signal to notify
- * PMIC. PMIC then pulls down the AP_RST_L.
- *
- * TODO(b/78455067): By far, we use the AP_RST_L signal to indicate AP in a
- * good state. Address the issue of AP-initiated warm reset.
- */
 const struct power_signal_info power_signal_list[] = {
 	[SDM845_AP_RST_L] = {
 		GPIO_AP_RST_L, POWER_SIGNAL_ACTIVE_HIGH, "AP_RST_L"},
