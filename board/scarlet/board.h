@@ -126,7 +126,7 @@
 
 /* Battery parameters for max17055 ModelGauge m5 algorithm. */
 #define BATTERY_MAX17055_RSENSE             5     /* m-ohm */
-#define BATTERY_DESIRED_CHARGING_CURRENT    2000  /* mA */
+#define BATTERY_DESIRED_CHARGING_CURRENT    4000  /* mA */
 
 #define CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
 #define BAT_MAX_DISCHG_CURRENT	5000 /* mA */
