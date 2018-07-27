@@ -228,6 +228,8 @@ void flash_get_mfr_dev_id(uint8_t *dest)
 	flash_lock_mapped_storage(0);
 }
 
+#endif /* CONFIG_HOSTCMD_FLASH_SPI_INFO */
+
 void flash_get_jedec_id(uint8_t *dest)
 {
 	/* Lock physical flash operations */
@@ -247,8 +249,6 @@ void flash_get_jedec_id(uint8_t *dest)
 	/* Unlock physical flash operations */
 	flash_lock_mapped_storage(0);
 }
-
-#endif /* CONFIG_HOSTCMD_FLASH_SPI_INFO */
 
 static void flash_uma_lock(int enable)
 {
@@ -789,3 +789,20 @@ DECLARE_CONSOLE_COMMAND(flash_tristate, command_flash_tristate,
 			"[on | off]",
 			"Tristate spi flash pins");
 #endif /* CONFIG_CMD_FLASH_TRISTATE */
+
+static int command_flash_chip(int argc, char **argv)
+{
+	uint8_t jedec_id[3];
+
+	ccprintf("Status 1: 0x%02x, Status 2: 0x%02x\n", flash_get_status1(),
+			flash_get_status2());
+
+	flash_get_jedec_id(jedec_id);
+	ccprintf("Manufacturer: 0x%02x, DID: 0x%02x%02x\n", jedec_id[0],
+			jedec_id[1], jedec_id[2]);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(flashchip, command_flash_chip,
+			NULL,
+			"Print flash chip info");
