@@ -1717,12 +1717,18 @@ void charger_task(void *u)
 			} else
 #endif
 #ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
-			battery_seems_to_be_disconnected = 0;
+			/*
+			 * Always check the disconnect state.  This is because
+			 * the battery disconnect state is one of the items used
+			 * to decide whether or not to leave safe mode.
+			 */
+			battery_seems_to_be_disconnected =
+				battery_get_disconnect_state() ==
+				BATTERY_DISCONNECTED;
 
 			if (curr.requested_voltage == 0 &&
 			    curr.requested_current == 0 &&
-			    battery_get_disconnect_state() ==
-			    BATTERY_DISCONNECTED) {
+			    battery_seems_to_be_disconnected) {
 				/*
 				 * Battery is in disconnect state. Apply a
 				 * current to kick it out of this state.
@@ -1732,7 +1738,6 @@ void charger_task(void *u)
 					batt_info->voltage_max;
 				curr.requested_current =
 					batt_info->precharge_current;
-				battery_seems_to_be_disconnected = 1;
 			} else
 #endif
 			if (curr.state == ST_PRECHARGE ||
