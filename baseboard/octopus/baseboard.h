@@ -28,7 +28,7 @@
 	#define CONFIG_FLASH_SIZE (512 * 1024)
 
 	#define CONFIG_SPI_FLASH_REGS
-	#define CONFIG_SPI_FLASH_W25Q128 /* Internal SPI flash type. */
+	#define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 
 	/* I2C Bus Configuration */
 	#define I2C_PORT_BATTERY	NPCX_I2C_PORT0_0
