@@ -63,6 +63,8 @@ GPIO(PP5000_PG_OD,        PIN(F, 0), GPIO_INPUT)
 
 /* USB and USBC Signals */
 GPIO(USB_OC_ODL,          PIN(J, 6), GPIO_ODR_HIGH)
+GPIO(EN_USB_A_5V,         PIN(G, 6), GPIO_OUT_LOW)
+GPIO(EN_USB_A_HIGH_POWER_OD, PIN(D, 4), GPIO_ODR_LOW)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,            PIN(B, 3), GPIO_INPUT)     /* EC_PROG_SCL */

@@ -36,6 +36,11 @@ const struct spi_device_t spi_devices[] = {
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
+/* GPIO to enable/disable the USB Type-A port. */
+const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
+	GPIO_EN_USB_A_5V,
+};
+
 void board_overcurrent_event(int port)
 {
 	if (port == 0) {
