@@ -10,6 +10,14 @@
 
 #include "registers.h"
 
+#ifndef CONFIG_FPU
+#define save_fpu_ctx	"fnsave 20(%eax)\n"
+#define rstr_fpu_ctx	"frstor 20(%eax)\n"
+#else
+#define save_fpu_ctx
+#define rstr_fpu_ctx
+#endif
+
 struct irq_data {
 	void (*routine)(void);
 	int irq;
@@ -47,10 +55,12 @@ struct irq_data {
 			"test %eax, %eax\n"				\
 			"je 1f\n"					\
 			"movl current_task, %eax\n"			\
+			save_fpu_ctx 					\
 			"movl %esp, (%eax)\n"				\
 			"movl next_task, %eax\n"			\
 			"movl %eax, current_task\n"			\
 			"movl (%eax), %esp\n"				\
+			rstr_fpu_ctx					\
 			"1:\n"						\
 			"movl $"#vector ", (0xFEC00040)\n"              \
 			"sub  $1, __in_isr\n"				\
@@ -58,5 +68,4 @@ struct irq_data {
 			"popa\n"					\
 			"iret\n"					\
 		);
-
 #endif  /* __CROS_EC_IRQ_HANDLER_H */
