@@ -223,6 +223,15 @@ static void led_init(void)
 
 	pwm_enable(PWM_CH_LED1, 1);
 	pwm_enable(PWM_CH_LED2, 1);
+
+	/* After sysjump, power_state is cleared. Thus, we need to actively
+	 * retrieve it. */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		power_state = LED_STATE_S5;
+	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		power_state = LED_STATE_S3;
+	else
+		power_state = LED_STATE_S0;
 }
 DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_DEFAULT);
 
@@ -354,17 +363,6 @@ static void tick_power(void)
 	hook_call_deferred(&tick_power_data, tick_led(EC_LED_ID_POWER_LED));
 }
 
-static void led_alert(int enable)
-{
-	if (enable) {
-		/* Overwrite the current signal */
-		config_tick(EC_LED_ID_BATTERY_LED, &battery_error);
-		tick_battery();
-	} else {
-		led_charge_hook();
-	}
-}
-
 static void cancel_tick(enum ec_led_id id)
 {
 	if (id == EC_LED_ID_BATTERY_LED)
@@ -373,12 +371,27 @@ static void cancel_tick(enum ec_led_id id)
 		hook_call_deferred(&tick_power_data, -1);
 }
 
-static void start_tick(enum ec_led_id id)
+static void start_tick(enum ec_led_id id, struct led_pattern *pattern)
 {
+	if (!pattern->pulse) {
+		cancel_tick(id);
+		set_color(id, pattern->color, 100);
+		return;
+	}
+
+	config_tick(id, pattern);
 	if (id == EC_LED_ID_BATTERY_LED)
 		tick_battery();
 	else
 		tick_power();
+}
+
+static void led_alert(int enable)
+{
+	if (enable)
+		start_tick(EC_LED_ID_BATTERY_LED, &battery_error);
+	else
+		led_charge_hook();
 }
 
 void config_one_led(enum ec_led_id id, enum led_charge_state charge)
@@ -397,15 +410,7 @@ void config_one_led(enum ec_led_id id, enum led_charge_state charge)
 	else
 		p = (*pattern)[charge][power_state];
 
-	if (!p.pulse) {
-		/* solid/static color */
-		cancel_tick(id);
-		set_color(id, p.color, 100);
-		return;
-	}
-
-	config_tick(id, &p);
-	start_tick(id);
+	start_tick(id, &p);
 }
 
 void config_leds(enum led_charge_state charge)
