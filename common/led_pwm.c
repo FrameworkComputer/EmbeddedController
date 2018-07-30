@@ -111,6 +111,12 @@ static void pulse_leds_deferred(void)
 
 	if (!led_is_pulsing) {
 		tick_count = 0;
+		/*
+		 * Since we're not pulsing anymore, turn the colors off in case
+		 * we were in the "on" time.
+		 */
+		set_led_color(-1);
+		/* Then show the desired state. */
 		update_leds();
 		return;
 	}
