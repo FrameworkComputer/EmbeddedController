@@ -310,21 +310,9 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
-/*
- * Matrix to rotate accelerators into the standard reference frame.  The default
- * is the identity which is correct for the reference design.  Variations of
- * Grunt may need to change it for manufacturability.
- * For the lid:
- *  +x to the right
- *  +y up
- *  +z out of the page
- *
- * The principle axes of the body are aligned with the lid when the lid is in
- * the 180 degree position (open, flat).
- */
-matrix_3x3_t base_standard_ref = {
+matrix_3x3_t grunt_base_standard_ref = {
 	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(1),  0},
+	{ 0, FLOAT_TO_FP(1), 0},
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
@@ -375,7 +363,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_SENSOR,
 	 .addr = BMI160_ADDR0,
 	 .default_range = 2, /* g, enough for laptop */
-	 .rot_standard_ref = (const matrix_3x3_t *)&base_standard_ref,
+	 .rot_standard_ref = (const matrix_3x3_t *)&grunt_base_standard_ref,
 	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
 	 .max_frequency = BMI160_ACCEL_MAX_FREQ,
 	 .config = {
@@ -403,7 +391,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_SENSOR,
 	 .addr = BMI160_ADDR0,
 	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = (const matrix_3x3_t *)&base_standard_ref,
+	 .rot_standard_ref = (const matrix_3x3_t *)&grunt_base_standard_ref,
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
 	},

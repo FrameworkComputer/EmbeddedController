@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_MATH_UTIL_H
 #define __CROS_EC_MATH_UTIL_H
 
+#include <stdint.h>
+
 #ifdef CONFIG_FPU
 typedef float fp_t;
 typedef float fp_inter_t;

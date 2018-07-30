@@ -14,7 +14,7 @@
 enum bit_state {
 	OFF = 0,
 	ON = 1,
-	X = -1, /* Don't care */
+	IGN = -1, /* Don't care / Ignore */
 };
 
 struct protect_range {
@@ -26,10 +26,10 @@ struct protect_range {
 	uint32_t protect_len;
 };
 
-/* Compare macro for (x =? b) for 'X' comparison */
-#define COMPARE_BIT(a, b) ((a) != X && (a) != !!(b))
-/* Assignment macro where 'X' = 0 */
-#define GET_BIT(a) ((a) == X ? 0 : (a))
+/* Compare macro for (x =? b) for 'IGN' comparison */
+#define COMPARE_BIT(a, b) ((a) != IGN && (a) != !!(b))
+/* Assignment macro where 'IGN' = 0 */
+#define GET_BIT(a) ((a) == IGN ? 0 : (a))
 
 /*
  * Define flags and protect table for each SPI ROM part. It's not necessary
@@ -39,9 +39,9 @@ struct protect_range {
  */
 #if defined(CONFIG_SPI_FLASH_W25X40) || defined(CONFIG_SPI_FLASH_GD25Q41B)
 static const struct protect_range spi_flash_protect_ranges[] = {
-	{ X, X, X, { 0, 0, 0 }, 0, 0 },       /* No protection */
-	{ X, X, 1, { 0, 1, 1 }, 0, 0x40000 }, /* Lower 1/2 */
-	{ X, X, 1, { 0, 1, 0 }, 0, 0x20000 }, /* Lower 1/4 */
+	{ IGN, IGN, IGN, { 0, 0, 0 }, 0, 0 },     /* No protection */
+	{ IGN, IGN, 1, { 0, 1, 1 }, 0, 0x40000 }, /* Lower 1/2 */
+	{ IGN, IGN, 1, { 0, 1, 0 }, 0, 0x20000 }, /* Lower 1/4 */
 };
 
 #elif defined(CONFIG_SPI_FLASH_W25Q40) || defined(CONFIG_SPI_FLASH_GD25LQ40)
@@ -49,17 +49,17 @@ static const struct protect_range spi_flash_protect_ranges[] = {
 /* For GD25LQ40, BP3 and BP4 have same meaning as TB and SEC */
 static const struct protect_range spi_flash_protect_ranges[] = {
 	/* CMP = 0 */
-	{ 0, X, X, { 0, 0, 0 }, 0, 0 },             /* No protection */
+	{ 0, IGN, IGN, { 0, 0, 0 }, 0, 0 },         /* No protection */
 	{ 0, 0, 1, { 0, 1, 0 }, 0, 0x20000 },       /* Lower 1/4 */
 	{ 0, 0, 1, { 0, 1, 1 }, 0, 0x40000 },       /* Lower 1/2 */
 	/* CMP = 1 */
 	{ 1, 0, 0, { 0, 1, 1 }, 0, 0x40000 },       /* Lower 1/2 */
-	{ 1, 0, X, { 1, X, X }, 0, 0 },             /* None (W25Q40EW only) */
+	{ 1, 0, IGN, { 1, IGN, IGN }, 0, 0 },       /* None (W25Q40EW only) */
 };
 
 #elif defined(CONFIG_SPI_FLASH_W25Q64)
 static const struct protect_range spi_flash_protect_ranges[] = {
-	{ 0, X, X, { 0, 0, 0 }, 0, 0 },        /* No protection */
+	{ 0, IGN, IGN, { 0, 0, 0 }, 0, 0 },    /* No protection */
 	{ 0, 0, 1, { 1, 1, 0 }, 0, 0x400000 }, /* Lower 1/2 */
 	{ 0, 0, 1, { 1, 0, 1 }, 0, 0x200000 }, /* Lower 1/4 */
 };
@@ -67,7 +67,7 @@ static const struct protect_range spi_flash_protect_ranges[] = {
 #elif defined(CONFIG_SPI_FLASH_W25Q80)
 static const struct protect_range spi_flash_protect_ranges[] = {
 	/* CMP = 0 */
-	{ 0, X, X, { 0, 0, 0 }, 0, 0 },       /* No protection */
+	{ 0, IGN, IGN, { 0, 0, 0 }, 0, 0 },   /* No protection */
 	{ 0, 0, 1, { 0, 1, 0 }, 0, 0x20000 }, /* Lower 1/8 */
 	{ 0, 0, 1, { 0, 1, 1 }, 0, 0x40000 }, /* Lower 1/4 */
 	{ 0, 0, 1, { 1, 0, 0 }, 0, 0x80000 }, /* Lower 1/2 */
@@ -75,7 +75,7 @@ static const struct protect_range spi_flash_protect_ranges[] = {
 #elif defined(CONFIG_SPI_FLASH_W25Q128)
 static const struct protect_range spi_flash_protect_ranges[] = {
 	/* CMP = 0 */
-	{ 0, X, X, { 0, 0, 0 }, 0, 0 },       /* No protection */
+	{ 0, IGN, IGN, { 0, 0, 0 }, 0, 0 },   /* No protection */
 	{ 0, 0, 1, { 1, 0, 0 }, 0, 0x20000 }, /* Lower 1/8 */
 	{ 0, 0, 1, { 1, 0, 1 }, 0, 0x40000 }, /* Lower 1/4 */
 	{ 0, 0, 1, { 1, 1, 0 }, 0, 0x80000 }, /* Lower 1/2 */
