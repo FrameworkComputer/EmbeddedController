@@ -1527,8 +1527,9 @@ void charger_task(void *u)
 	 * as needed.
 	 */
 	battery_get_params(&curr.batt);
-	prev_bp = curr.batt.is_present;
-	curr.desired_input_current = get_desired_input_current(prev_bp, info);
+	prev_bp = BP_NOT_INIT;
+	curr.desired_input_current = get_desired_input_current(
+			curr.batt.is_present, info);
 
 	while (1) {
 

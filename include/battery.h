@@ -57,6 +57,7 @@ extern struct ec_response_battery_dynamic_info
  * wait until we've been able to talk to the battery.
  */
 enum battery_present {
+	BP_NOT_INIT = -1,
 	BP_NO = 0,
 	BP_YES = 1,
 	BP_NOT_SURE,
