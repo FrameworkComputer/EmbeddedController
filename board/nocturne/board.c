@@ -416,6 +416,9 @@ static void board_pmic_init(void)
 
 	/* Select 0.85V for the V085A nominal output voltage. */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x2a);
+
+	/* Enable active discharge (100 ohms) on V33A_PCH and V1.8A. */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3D, 0x5);
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
