@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 
-SCRIPT_VERSION = 3
+SCRIPT_VERSION = 4
 CCD_IS_UNRESTRICTED = 1 << 0
 WP_IS_DISABLED = 1 << 1
 TESTLAB_IS_ENABLED = 1 << 2
@@ -22,6 +22,8 @@ URL = 'https://www.google.com/chromeos/partner/console/cr50reset?' \
     'challenge=%s&hwid=%s'
 RMA_SUPPORT_PROD = '0.3.3'
 RMA_SUPPORT_PREPVT = '0.4.5'
+DEV_MODE_OPEN_PROD = '0.3.9'
+DEV_MODE_OPEN_PREPVT = '0.4.7'
 CR50_USB = '18d1:5014'
 ERASED_BID = 'ffffffff'
 
@@ -143,6 +145,8 @@ parser.add_argument('-a', '--authcode', type=str, default='',
         help='The authcode string generated from the challenge url')
 parser.add_argument('-P', '--servo_port', type=str, default='',
         help='the servo port')
+parser.add_argument('-I', '--ip', type=str, default='',
+        help='The DUT IP. Necessary to do ccd open')
 
 def debug(string):
     """Print yellow string"""
@@ -156,9 +160,10 @@ class RMAOpen(object):
     """Used to find the cr50 console and run RMA open"""
 
     def __init__(self, device=None, usb_serial=None, print_caps=False,
-            servo_port=None):
+            servo_port=None, ip=None):
         self.servo_port = servo_port if servo_port else '9999'
         self.print_caps = print_caps
+        self.ip = ip
         if device:
             self.set_cr50_device(device)
         elif servo_port:
@@ -362,13 +367,59 @@ class RMAOpen(object):
         return self._ccd_state & setting == setting
 
 
+    def _has_testlab_support(self):
+        """Return True if you can enable testlab mode"""
+        # all prepvt images can enable testlab
+        if self.is_prepvt:
+            return True
+        return not self._running_version_is_older(DEV_MODE_OPEN_PROD)
+
+
+    def _requires_dev_mode_open(self):
+        """Return True if the image requires dev mode to open"""
+        # All prod images that support 'open' require dev mode
+        if not self.is_prepvt:
+            return True
+        return not self._running_version_is_older(DEV_MODE_OPEN_PREPVT)
+
+
+    def _run_on_dut(self, command):
+        """Run the command on the DUT."""
+        return subprocess.check_output(['ssh', self.ip, command])
+
+
+    def _open_in_dev_mode(self):
+        """Open Cr50 when it's in dev mode"""
+        output = self.send_cmd_get_output('ccd')
+        # If the device is already open, nothing needs to be done.
+        if 'State: Open' not in output:
+            # Verify the device is in devmode before trying to run open.
+            if 'dev_mode' not in output:
+                debug('Enter dev mode to open ccd')
+                raise ValueError('DUT not in dev mode')
+            if not self.ip:
+                debug("If your DUT doesn't have ssh support, run 'gsctool -a "
+                      "-o' from the AP")
+                raise ValueError('Cannot run ccd open without dut ip')
+            self._run_on_dut('gsctool -a -o')
+            # Wait >1 second for cr50 to update ccd state
+            time.sleep(3)
+            output = self.send_cmd_get_output('ccd')
+            if 'State: Open' not in output:
+                raise ValueError('Could not open cr50')
+        info('ccd is open')
+
+
     def enable_testlab(self):
         """Disable write protect"""
-        if not self.is_prepvt:
+        if not self._has_testlab_support():
             debug('Testlab mode is not supported in prod iamges')
             return
-        print 'Disabling write protect'
-        self.send_cmd_get_output('ccd open')
+        # Some cr50 images need to be in dev mode before they can be opened.
+        if self._requires_dev_mode_open():
+            self._open_in_dev_mode()
+        else:
+            self.send_cmd_get_output('ccd open')
         print 'Enabling testlab mode reqires pressing the power button.'
         print 'Once the process starts keep tapping the power button for 10',
         print 'seconds.'
@@ -435,21 +486,28 @@ class RMAOpen(object):
 
         version = re.search('RW.*\* ([\d\.]+)/', output).group(1)
         print 'Running Cr50 Version:', version
-        fields = [int(field) for field in version.split('.')]
+        self.running_ver_fields = [int(field) for field in version.split('.')]
 
         # prePVT images have even major versions. Prod have odd
-        self.is_prepvt = fields[1] % 2 == 0
+        self.is_prepvt = self.running_ver_fields[1] % 2 == 0
         rma_support = RMA_SUPPORT_PREPVT if self.is_prepvt else RMA_SUPPORT_PROD
 
         print 'prePVT' if self.is_prepvt else 'prod',
         print 'RMA support added in:', rma_support
         if not self.is_prepvt:
             debug('No testlab support in prod images')
-        rma_fields = [int(field) for field in rma_support.split('.')]
-        for i, field in enumerate(fields):
-            if field < int(rma_fields[i]):
-                raise ValueError('%s does not have RMA support. Update to at '
-                        'least %s' % (version, rma_support))
+        if self._running_version_is_older(rma_support):
+            raise ValueError('%s does not have RMA support. Update to at '
+                    'least %s' % (version, rma_support))
+
+
+    def _running_version_is_older(self, comp_ver):
+        """Returns True if running version is older than comp_ver."""
+        comp_ver_fields = [int(field) for field in comp_ver.split('.')]
+        for i, field in enumerate(self.running_ver_fields):
+            if field < int(comp_ver_fields[i]):
+                return True
+        return False
 
 
     def device_matches_devid(self, devid, device):
@@ -545,7 +603,7 @@ def main():
     info('Running cr50_rma_open version %s' % SCRIPT_VERSION)
 
     cr50_rma_open = RMAOpen(args.device, args.serialname, args.print_caps,
-            args.servo_port)
+            args.servo_port, args.ip)
     if args.check_connection:
         sys.exit(0)
 
