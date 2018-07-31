@@ -18,10 +18,6 @@ const int led_charge_lvl_1 = 5;
 
 const int led_charge_lvl_2 = 97;
 
-const int led_power_blink_on_msec = 3000;
-
-const int led_power_blink_off_msec = 500;
-
 const struct led_descriptor
 			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_RED, LED_INDEFINITE} },
@@ -30,8 +26,19 @@ const struct led_descriptor
 	[STATE_DISCHARGE_S0]	     = {{LED_OFF,  LED_INDEFINITE} },
 	[STATE_DISCHARGE_S3]	     = {{LED_OFF,  LED_INDEFINITE} },
 	[STATE_DISCHARGE_S5]         = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_RED,  1 * LED_ONE_SEC}, {LED_OFF, 1 * LED_ONE_SEC} },
-	[STATE_FACTORY_TEST]         = {{EC_LED_COLOR_RED,  2 * LED_ONE_SEC}, {EC_LED_COLOR_GREEN,  2 * LED_ONE_SEC} },
+	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_RED,  1 * LED_ONE_SEC},
+					{LED_OFF,	    1 * LED_ONE_SEC} },
+	[STATE_FACTORY_TEST]         = {{EC_LED_COLOR_RED,   2 * LED_ONE_SEC},
+					{EC_LED_COLOR_GREEN, 2 * LED_ONE_SEC} },
+};
+
+const struct led_descriptor
+		led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
+	[PWR_LED_STATE_ON]           = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
+	[PWR_LED_STATE_SUSPEND_AC]   = {{EC_LED_COLOR_WHITE, 3 * LED_ONE_SEC},
+					{LED_OFF,	   0.5 * LED_ONE_SEC} },
+	[PWR_LED_STATE_SUSPEND_NO_AC] = {{LED_OFF, LED_INDEFINITE} },
+	[PWR_LED_STATE_OFF]           = {{LED_OFF, LED_INDEFINITE} },
 };
 
 const enum ec_led_id supported_led_ids[] = {
@@ -41,12 +48,13 @@ const enum ec_led_id supported_led_ids[] = {
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-void led_set_color_power(int enable)
+void led_set_color_power(enum ec_led_colors color)
 {
-	if (enable)
-		gpio_set_level(GPIO_LED_3_L, LED_ON_LVL);
+	if (color == EC_LED_COLOR_WHITE)
+		gpio_set_level(GPIO_PWR_LED_WHITE_L, LED_ON_LVL);
 	else
-		gpio_set_level(GPIO_LED_3_L, LED_OFF_LVL);
+		/* LED_OFF and unsupported colors */
+		gpio_set_level(GPIO_PWR_LED_WHITE_L, LED_OFF_LVL);
 }
 
 void led_set_color_battery(enum ec_led_colors color)
@@ -95,9 +103,9 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 			led_set_color_battery(LED_OFF);
 	} else if (led_id == EC_LED_ID_POWER_LED) {
 		if (brightness[EC_LED_COLOR_WHITE] != 0)
-			led_set_color_power(1);
+			led_set_color_power(EC_LED_COLOR_WHITE);
 		else
-			led_set_color_power(0);
+			led_set_color_power(LED_OFF);
 	}
 
 	return EC_SUCCESS;

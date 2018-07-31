@@ -8,11 +8,14 @@
 #include "battery.h"
 #include "charge_state.h"
 #include "chipset.h"
+#include "console.h"
 #include "ec_commands.h"
 #include "extpower.h"
 #include "hooks.h"
 #include "led_common.h"
 #include "led_states.h"
+
+#define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
 
 static enum led_states led_get_state(void)
 {
@@ -68,7 +71,7 @@ static enum led_states led_get_state(void)
 static void led_update_battery(void)
 {
 	static uint8_t ticks, period;
-	static int led_state = STATE_DEFAULT;
+	static int led_state = LED_NUM_STATES;
 	int phase;
 	enum led_states desired_state = led_get_state();
 
@@ -89,6 +92,14 @@ static void led_update_battery(void)
 
 	}
 
+	/* If this state is undefined, turn the LED off */
+	if (period == 0) {
+		CPRINTS("Undefined LED behavior for battery state %d,"
+			"turning off LED", led_state);
+		led_set_color_battery(LED_OFF);
+		return;
+	}
+
 	/*
 	 * Determine which phase of the state table to use. The phase is
 	 * determined if it falls within first phase time duration.
@@ -102,43 +113,63 @@ static void led_update_battery(void)
 }
 
 #ifdef OCTOPUS_POWER_LED
-static void led_update_power(void)
+static enum pwr_led_states pwr_led_get_state(void)
 {
-	int enable;
-	static int ticks;
-	enum led_states desired_state;
-
-	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		/* In S0 power LED is always on */
-		enable = 1;
-		ticks = 0;
-	} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
-		desired_state = led_get_state();
-		if (desired_state == STATE_CHARGING_FULL_CHARGE ||
-		desired_state == STATE_CHARGING_LVL_1 ||
-		desired_state == STATE_CHARGING_LVL_2) {
-			int period;
-			int led_power_on_ticks = led_power_blink_on_msec / HOOK_TICK_INTERVAL_MS;
-			int led_power_off_ticks = led_power_blink_off_msec / HOOK_TICK_INTERVAL_MS;
-
-			/*
-			* If in suspend/standby and the device is charging, then the
-			* power LED is blinking.
-			*/
-			period = led_power_on_ticks + led_power_off_ticks;
-			enable = ticks % period < led_power_off_ticks ?
-				0 : 1;
-			ticks++;
-		} else {
-			enable = 0;
-			ticks = 0;
-		}
-	} else {
-		enable = 0;
-		ticks = 0;
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
+		if (extpower_is_present())
+			return PWR_LED_STATE_SUSPEND_AC;
+		else
+			return PWR_LED_STATE_SUSPEND_NO_AC;
+	} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		return PWR_LED_STATE_OFF;
+	} else if (chipset_in_state(CHIPSET_STATE_ON)) {
+		return PWR_LED_STATE_ON;
 	}
 
-	led_set_color_power(enable);
+	return PWR_LED_NUM_STATES;
+}
+
+static void led_update_power(void)
+{
+	static uint8_t ticks, period;
+	static enum pwr_led_states led_state = PWR_LED_NUM_STATES;
+	int phase;
+	enum pwr_led_states desired_state = pwr_led_get_state();
+
+	/*
+	 * If we're in a new valid state, update our ticks and period info.
+	 * Otherwise, continue to use old state
+	 */
+	if (desired_state != led_state && desired_state < PWR_LED_NUM_STATES) {
+		/* State is changing */
+		led_state = desired_state;
+		/* Reset ticks and period when state changes */
+		ticks = 0;
+
+		period = led_pwr_state_table[led_state][LED_PHASE_0].time +
+			led_pwr_state_table[led_state][LED_PHASE_1].time;
+
+	}
+
+	/* If this state is undefined, turn the LED off */
+	if (period == 0) {
+		CPRINTS("Undefined LED behavior for power state %d,"
+			"turning off LED", led_state);
+		led_set_color_power(LED_OFF);
+		return;
+	}
+
+	/*
+	 * Determine which phase of the state table to use. The phase is
+	 * determined if it falls within first phase time duration.
+	 */
+	phase = ticks < led_pwr_state_table[led_state][LED_PHASE_0].time ?
+									0 : 1;
+	ticks = (ticks + 1) % period;
+
+	/* Set the color for the given state and phase */
+	led_set_color_power(led_pwr_state_table[led_state][phase].color);
+
 }
 #endif
 
