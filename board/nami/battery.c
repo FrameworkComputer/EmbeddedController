@@ -79,6 +79,7 @@ enum gauge_type {
 	GAUGE_TYPE_UNKNOWN = 0,
 	GAUGE_TYPE_TI_BQ40Z50,
 	GAUGE_TYPE_RENESAS_RAJ240,
+	GAUGE_TYPE_AKALI,
 };
 
 static const struct battery_info *info = &info_0;
@@ -109,6 +110,9 @@ static enum gauge_type get_gauge_ic(void)
 {
 	uint8_t data[11];
 
+	if (oem == PROJECT_AKALI)
+		return GAUGE_TYPE_AKALI;
+
 	/* 0x0002 is for 'Firmware Version' (p91 in BQ40Z50-R2 TRM).
 	 * We can't use sb_read_mfgacc because the command won't be included
 	 * in the returned block. */
@@ -124,6 +128,7 @@ static enum gauge_type get_gauge_ic(void)
 
 void board_battery_init(void)
 {
+	/* Only static config because gauge may not be initialized yet */
 	if (oem == PROJECT_AKALI) {
 		info = &info_3;
 		sb_ship_mode_reg = 0x3A;
@@ -133,9 +138,6 @@ void board_battery_init(void)
 		info = &info_1;
 	else if (oem == PROJECT_PANTHEON)
 		info = &info_2;
-
-	fuel_gauge = get_gauge_ic();
-	CPRINTS("fuel_gauge=%d\n", fuel_gauge);
 }
 DECLARE_HOOK(HOOK_INIT, board_battery_init, HOOK_PRIO_DEFAULT);
 
@@ -202,7 +204,10 @@ enum battery_present battery_hw_present(void)
 
 static int battery_init(void)
 {
-	int batt_status;
+	static int batt_status;
+
+	if (batt_status & STATUS_INITIALIZED)
+		return 1;
 
 	return battery_status(&batt_status) ? 0 :
 		!!(batt_status & STATUS_INITIALIZED);
@@ -270,16 +275,24 @@ static int battery_check_disconnect_1(void)
 
 static int battery_check_disconnect(void)
 {
-	if (oem == PROJECT_AKALI)
-		return battery_check_disconnect_1();
-
-	if (fuel_gauge == GAUGE_TYPE_UNKNOWN)
+	if (!battery_init())
 		return BATTERY_DISCONNECT_ERROR;
 
-	if (fuel_gauge == GAUGE_TYPE_TI_BQ40Z50)
+	if (fuel_gauge == GAUGE_TYPE_UNKNOWN) {
+		fuel_gauge = get_gauge_ic();
+		CPRINTS("fuel_gauge=%d\n", fuel_gauge);
+	}
+
+	switch (fuel_gauge) {
+	case GAUGE_TYPE_AKALI:
+		return battery_check_disconnect_1();
+	case GAUGE_TYPE_TI_BQ40Z50:
 		return battery_check_disconnect_ti_bq40z50();
-	else
+	case GAUGE_TYPE_RENESAS_RAJ240:
 		return battery_check_disconnect_renesas_raj240();
+	default:
+		return BATTERY_DISCONNECT_ERROR;
+	}
 }
 
 static enum battery_present batt_pres_prev; /* Default BP_NO (=0) */
@@ -324,8 +337,7 @@ static enum battery_present battery_check_present_status(void)
 	 * 3. Initialized
 	 */
 	if (battery_is_cut_off() != BATTERY_CUTOFF_STATE_NORMAL ||
-	    batt_disconnect_status != BATTERY_NOT_DISCONNECTED ||
-	    battery_init() == 0)
+	    batt_disconnect_status != BATTERY_NOT_DISCONNECTED)
 		return BP_NO;
 
 	return BP_YES;

@@ -314,7 +314,7 @@ static void state_machine(uint64_t tnow)
 		 * charger and battery to be ready to supply sufficient power.
 		 * Check every 100 milliseconds, and give up after 1 second.
 		 */
-		if (tnow > 1 * SECOND) {
+		if (tnow > CONFIG_POWER_BUTTON_INIT_TIMEOUT * SECOND) {
 			pwrbtn_state = PWRBTN_STATE_IDLE;
 			break;
 		}
