@@ -212,7 +212,7 @@ void ec_ec_comm_slave_task(void *u)
 	 * aligned on a 32-bit boundary.
 	 */
 	uint8_t __aligned(4) params[COMMAND_BUFFER_PARAMS_SIZE];
-	unsigned int len, seq, hascrc, cmdver;
+	unsigned int len, seq = 0, hascrc, cmdver;
 	uint32_t start;
 
 	while (1) {
