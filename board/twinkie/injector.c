@@ -380,7 +380,7 @@ static int cmd_send(int argc, char **argv)
 {
 	int pol, cnt, i;
 	uint16_t header;
-	uint32_t data[VDO_MAX_SIZE-1];
+	uint32_t data[VDO_MAX_SIZE];
 	char *e;
 	int bit_len;
 
