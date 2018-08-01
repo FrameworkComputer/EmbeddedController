@@ -65,7 +65,7 @@ static int spi_flash_write_enable(void)
 
 /**
  * Returns the contents of SPI flash status register 1
- * @return register contents or -1 on error
+ * @return register contents or 0xff on error
  */
 uint8_t spi_flash_get_status1(void)
 {
@@ -73,14 +73,14 @@ uint8_t spi_flash_get_status1(void)
 	uint8_t resp;
 
 	if (spi_transaction(SPI_FLASH_DEVICE, &cmd, 1, &resp, 1) != EC_SUCCESS)
-		return -1;
+		return 0xff;
 
 	return resp;
 }
 
 /**
  * Returns the contents of SPI flash status register 2
- * @return register contents or -1 on error
+ * @return register contents or 0xff on error
  */
 uint8_t spi_flash_get_status2(void)
 {
@@ -93,7 +93,7 @@ uint8_t spi_flash_get_status2(void)
 #endif
 
 	if (spi_transaction(SPI_FLASH_DEVICE, &cmd, 1, &resp, 1) != EC_SUCCESS)
-		return -1;
+		return 0xff;
 
 	return resp;
 }
@@ -435,7 +435,7 @@ int spi_flash_check_protect(unsigned int offset, unsigned int bytes)
 	int rv = EC_SUCCESS;
 
 	/* Invalid value */
-	if (sr1 == -1 || sr2 == -1 || offset + bytes > CONFIG_FLASH_SIZE)
+	if (sr1 == 0xff || sr2 == 0xff || offset + bytes > CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
 	/* Compute current protect range */
@@ -466,7 +466,7 @@ int spi_flash_set_protect(unsigned int offset, unsigned int bytes)
 	uint8_t sr2 = spi_flash_get_status2();
 
 	/* Invalid values */
-	if (sr1 == -1 || sr2 == -1 || offset + bytes > CONFIG_FLASH_SIZE)
+	if (sr1 == 0xff || sr2 == 0xff || offset + bytes > CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
 	/* Compute desired protect range */
