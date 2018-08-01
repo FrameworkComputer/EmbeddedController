@@ -1,0 +1,131 @@
+/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * MT6370 TCPC Driver
+ */
+
+#include "console.h"
+#include "hooks.h"
+#include "mt6370.h"
+#include "task.h"
+#include "tcpci.h"
+#include "tcpm.h"
+#include "timer.h"
+#include "usb_mux.h"
+#include "usb_pd.h"
+#include "util.h"
+
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+static int mt6370_init(int port)
+{
+	int rv;
+
+	/* Software reset. */
+	rv = tcpc_write(port, MT6370_REG_SWRESET, 1);
+	if (rv)
+		return rv;
+
+	/* Need 1 ms for software reset. */
+	msleep(1);
+
+	/* The earliest point that we can do generic init. */
+	rv = tcpci_tcpm_init(port);
+
+	if (rv)
+		return rv;
+
+	/*
+	 * AUTO IDLE off, shipping off, select CK_300K from BICIO_320K,
+	 * PD3.0 ext-msg on.
+	 */
+	rv = tcpc_write(port, MT6370_REG_IDLE_CTRL,
+			MT6370_REG_IDLE_SET(0, 1, 0, 0));
+	/* CC Detect Debounce 5 */
+	rv |= tcpc_write(port, MT6370_REG_TTCPC_FILTER, 5);
+	/* DRP Duty */
+	rv |= tcpc_write(port, MT6370_REG_DRP_TOGGLE_CYCLE, 4);
+	rv |= tcpc_write16(port, MT6370_REG_DRP_DUTY_CTRL, 400);
+	/* Vconn OC on */
+	rv |= tcpc_write(port, MT6370_REG_VCONN_CLIMITEN, 1);
+	/* PHY control */
+	rv |= tcpc_write(port, MT6370_REG_PHY_CTRL1,
+			 MT6370_REG_PHY_CTRL1_SET(0, 7, 0, 1));
+	rv |= tcpc_write(port, MT6370_REG_PHY_CTRL3, 0x82);
+
+	return rv;
+}
+
+#ifndef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+static int mt6370_get_cc(int port, int *cc1, int *cc2)
+{
+	int status;
+	int rv;
+	int role;
+
+	rv = tcpc_read(port, TCPC_REG_CC_STATUS, &status);
+
+	/* If tcpc read fails, return error and CC as open */
+	if (rv) {
+		*cc1 = TYPEC_CC_VOLT_OPEN;
+		*cc2 = TYPEC_CC_VOLT_OPEN;
+		return rv;
+	}
+
+	*cc1 = TCPC_REG_CC_STATUS_CC1(status);
+	*cc2 = TCPC_REG_CC_STATUS_CC2(status);
+
+	/*
+	 * If status is not open, then OR in termination to convert to
+	 * enum tcpc_cc_voltage_status.
+	 *
+	 * MT6370 TCPC follows USB PD 1.0 protocol. When DRP not auto-toggling,
+	 * it will not update the DRP_RESULT bits in TCPC_REG_CC_STATUS,
+	 * instead, we should check CC1/CC2 bits in TCPC_REG_ROLE_CTRL.
+	 */
+	rv = tcpc_read(port, TCPC_REG_ROLE_CTRL, &role);
+
+	if (*cc1 != TYPEC_CC_VOLT_OPEN)
+		*cc1 |= (TCPC_REG_ROLE_CTRL_CC1(role) == TYPEC_CC_RD) << 2;
+	if (*cc2 != TYPEC_CC_VOLT_OPEN)
+		*cc2 |= (TCPC_REG_ROLE_CTRL_CC2(role) == TYPEC_CC_RD) << 2;
+
+	return rv;
+}
+#endif
+
+/* MT6370 is a TCPCI compatible port controller */
+const struct tcpm_drv mt6370_tcpm_drv = {
+	.init			= &mt6370_init,
+	.release		= &tcpci_tcpm_release,
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	.get_cc			= &tcpci_tcpm_get_cc,
+#else
+	.get_cc			= &mt6370_get_cc,
+#endif
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
+	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,
+#endif
+	.select_rp_value	= &tcpci_tcpm_select_rp_value,
+	.set_cc			= &tcpci_tcpm_set_cc,
+	.set_polarity		= &tcpci_tcpm_set_polarity,
+	.set_vconn		= &tcpci_tcpm_set_vconn,
+	.set_msg_header		= &tcpci_tcpm_set_msg_header,
+	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
+	.get_message		= &tcpci_tcpm_get_message,
+	.transmit		= &tcpci_tcpm_transmit,
+	.tcpc_alert		= &tcpci_tcpc_alert,
+#ifdef CONFIG_USB_PD_DISCHARGE_TCPC
+	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
+#endif
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	.drp_toggle		= &tcpci_tcpc_drp_toggle,
+#endif
+	.get_chip_info		= &tcpci_get_chip_info,
+#ifdef CONFIG_USBC_PPC
+	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
+	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
+#endif
+};
