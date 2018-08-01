@@ -16,7 +16,7 @@
 #include "driver/accelgyro_bmi160.h"
 #include "driver/charger/rt946x.h"
 #include "driver/sync.h"
-#include "driver/tcpm/fusb302.h"
+#include "driver/tcpm/mt6370.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "ec_commands.h"
 #include "extpower.h"
@@ -130,7 +130,7 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC0, FUSB302_I2C_SLAVE_ADDR, &fusb302_tcpm_drv},
+	{I2C_PORT_TCPC0, MT6370_TCPC_I2C_ADDR, &mt6370_tcpm_drv},
 };
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
