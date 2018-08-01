@@ -126,7 +126,7 @@ int timestamp_expired(timestamp_t deadline, const timestamp_t *now)
 		now = &now_val;
 	}
 
-	return ((uint32_t)(now->le.lo - deadline.le.lo) >= 0);
+	return now->le.lo >= deadline.le.lo;
 }
 
 
