@@ -13,15 +13,13 @@
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
-
-#define CONFIG_KEYBOARD_BOARD_CONFIG
-#define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LOW_POWER_IDLE
-
 #define CONFIG_HOSTCMD_ESPI
-
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
+
+/* Keyboard features */
+#define CONFIG_PWM_KBLIGHT
 
 /* USB and USBC features */
 #define CONFIG_USB_PORT_POWER_SMART
@@ -54,6 +52,7 @@ enum adc_channel {
 };
 
 enum pwm_channel {
+	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT
 };
 
