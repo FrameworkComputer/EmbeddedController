@@ -431,6 +431,7 @@ enum {
 						    * detection ongoing */
 	SLEEP_MASK_PLL        = (1 << 12), /* High-speed PLL in-use */
 	SLEEP_MASK_ADC        = (1 << 13), /* ADC conversion ongoing */
+	SLEEP_MASK_EMMC       = (1 << 14), /* eMMC emulation ongoing */
 	SLEEP_MASK_FORCE_NO_DSLEEP    = (1 << 15), /* Force disable. */
 
 

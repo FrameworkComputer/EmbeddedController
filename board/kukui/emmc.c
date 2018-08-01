@@ -34,6 +34,8 @@
 #include "driver/charger/rt946x.h"
 #include "endian.h"
 #include "gpio.h"
+#include "hooks.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -198,7 +200,7 @@ static void emmc_init_spi(void)
 	/* Manual CS, disable. */
 	STM32_SPI_EMMC_REGS->cr1 = STM32_SPI_CR1_SSM | STM32_SPI_CR1_SSI;
 
-	/* Flush SPI FIFO, and make sure DAT line stays idle (high). */
+	/* Flush SPI TX FIFO, and make sure DAT line stays idle (high). */
 	STM32_SPI_EMMC_REGS->dr = 0xff;
 	STM32_SPI_EMMC_REGS->dr = 0xff;
 	STM32_SPI_EMMC_REGS->dr = 0xff;
@@ -207,6 +209,74 @@ static void emmc_init_spi(void)
 	/* Enable the SPI peripheral */
 	STM32_SPI_EMMC_REGS->cr1 |= STM32_SPI_CR1_SPE;
 }
+DECLARE_HOOK(HOOK_INIT, emmc_init_spi, HOOK_PRIO_INIT_SPI);
+
+static int spi_enabled;
+
+static void emmc_disable_spi(void);
+
+static void emmc_check_status(void)
+{
+	/* Bootblock switch disabled, switch off emulation */
+	if (gpio_get_level(GPIO_BOOTBLOCK_EN_L) == 1) {
+		emmc_disable_spi();
+		return;
+	}
+
+	/*
+	 * TODO(b:110907438): If we reach here, it is likely that the AP failed
+	 * to boot, and we should try to recover from that.
+	 */
+	CPRINTS("emmc: AP failed to boot.");
+}
+DECLARE_DEFERRED(emmc_check_status);
+
+static void emmc_enable_spi(void)
+{
+	if (spi_enabled)
+		return;
+
+	disable_sleep(SLEEP_MASK_EMMC);
+
+	/* Start receiving in circular buffer in_msg. */
+	dma_start_rx(&dma_rx_option, sizeof(in_msg), in_msg);
+	/* Enable internal chip select. */
+	STM32_SPI_EMMC_REGS->cr1 &= ~STM32_SPI_CR1_SSI;
+	gpio_enable_interrupt(GPIO_EMMC_CMD);
+
+	spi_enabled = 1;
+	CPRINTS("emmc enabled");
+
+	/* Check if AP has booted 5 seconds later. */
+	hook_call_deferred(&emmc_check_status_data, 5*SECOND);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, emmc_enable_spi, HOOK_PRIO_FIRST);
+
+static void emmc_disable_spi(void)
+{
+	if (!spi_enabled)
+		return;
+
+	/* Cancel check hook. */
+	hook_call_deferred(&emmc_check_status_data, -1);
+
+	gpio_disable_interrupt(GPIO_EMMC_CMD);
+	/* Disable any pending transfer. */
+	bootblock_stop();
+	/* Disable internal chip select. */
+	STM32_SPI_EMMC_REGS->cr1 |= STM32_SPI_CR1_SSI;
+	/* Disable RX DMA. */
+	dma_disable(STM32_DMAC_SPI_EMMC_RX);
+
+	/* Blank out buffer to make sure we do not look at old data. */
+	memset(in_msg, 0xff, sizeof(in_msg));
+
+	enable_sleep(SLEEP_MASK_EMMC);
+
+	spi_enabled = 0;
+	CPRINTS("emmc disabled");
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, emmc_disable_spi, HOOK_PRIO_FIRST);
 
 void emmc_task(void *u)
 {
@@ -216,27 +286,19 @@ void emmc_task(void *u)
 	/* Are we currently transmitting data? */
 	int tx = 0;
 
-	/* TODO(b:111773571): Remove this once we fix eMMC power supply. */
+#if BOARD_REV == 0
+	/*
+	 * TODO(b:111773571): Remove this once we fix eMMC power supply.
+	 * Note that we never enable power to the real eMMC (we could do that
+	 * in emmc_check_status(), but it is not trivial to do it fast
+	 * enough).
+	 */
 	mt6370_set_ldo_voltage(0);
+#endif
 
-	emmc_init_spi();
-
-	gpio_enable_interrupt(GPIO_EMMC_CMD);
-
-	/* Start receiving in circular buffer in_msg. */
 	rxdma = dma_get_channel(STM32_DMAC_SPI_EMMC_RX);
-	dma_start_rx(&dma_rx_option, sizeof(in_msg), in_msg);
-
-	/* Enable internal chip select. */
-	STM32_SPI_EMMC_REGS->cr1 &= ~STM32_SPI_CR1_SSI;
 
 	while (1) {
-		/*
-		 * TODO(b:110907438): After the bootblock has been transferred
-		 * and AP has booted, disable SPI controller and interrupt.
-		 * TODO(b:111773571): Also, enable eMMC power supply.
-		 */
-
 		/* Wait for a command */
 		task_wait_event(-1);
 
