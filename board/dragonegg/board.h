@@ -48,6 +48,8 @@
 #include "registers.h"
 
 enum adc_channel {
+	ADC_VBUS_C0,
+	ADC_VBUS_C1,
 	ADC_CH_COUNT
 };
 

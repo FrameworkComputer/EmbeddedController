@@ -21,6 +21,7 @@
 /* #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
 
 /* EC Defines */
+#define CONFIG_ADC
 #define CONFIG_PWM
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VSTORE
@@ -66,7 +67,7 @@
  * on the MLB for now. In addition, this config option will likely move to
  * board.h as it likely board dependent and not same across all follower boards.
  */
-#define CONFIG_USB_PD_PORT_COUNT 1
+#define CONFIG_USB_PD_PORT_COUNT 2
 #define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT TYPEC_RP_3A0
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_LOGGING
@@ -75,10 +76,15 @@
 #define CONFIG_USB_PD_DISCHARGE_PPC
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PD_VBUS_DETECT_PPC
+/*
+ * TODO(b/113541930): ADC measurements are available for port 0 and 1, but not
+ * port 2.
+ */
 #define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_MUX_VIRTUAL
 #define CONFIG_USBC_PPC_SN5S330		/* C0 PPC */
+#define CONFIG_USBC_PPC_SYV682X		/* C1 PPC */
 #define CONFIG_USBC_PPC_VCONN
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_VCONN
