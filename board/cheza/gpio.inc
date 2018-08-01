@@ -9,7 +9,7 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 /* USB-C interrupts */
-GPIO_INT(USB_C0_PD_INT_ODL,    PIN(A, 0), GPIO_INT_FALLING, tcpc_alert_event)  /* Interrupt from port-0 TCPC */
+GPIO_INT(USB_C0_PD_INT_ODL,    PIN(A, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V, tcpc_alert_event)  /* Interrupt from port-0 TCPC */
 GPIO_INT(USB_C1_PD_INT_ODL,    PIN(F, 5), GPIO_INT_FALLING, tcpc_alert_event)  /* Interrupt from port-1 TCPC */
 GPIO_INT(USB_C0_SWCTL_INT_ODL, PIN(0, 3), GPIO_INT_FALLING, ppc_interrupt)  /* Interrupt from port-0 PPC */
 GPIO_INT(USB_C0_BC12_INT_L,    PIN(6, 1), GPIO_INT_FALLING, usb0_evt)  /* Interrupt from port-0 BC1.2 */
@@ -26,26 +26,28 @@ GPIO_INT(VOLUME_DOWN_L,     PIN(7, 0), GPIO_INT_BOTH | GPIO_PULL_UP, button_inte
 GPIO_INT(VOLUME_UP_L,       PIN(1, 1), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* EC_VOLUP_BTN_ODL */
 GPIO_INT(WP_L,              PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)  /* EC_WP_ODL */
 GPIO_INT(LID_OPEN,          PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)  /* LID_OPEN_EC */
-GPIO_INT(AP_RST_REQ,        PIN(C, 2), GPIO_INT_RISING | GPIO_PULL_DOWN, chipset_reset_request_interrupt)  /* Reset request from AP */
+GPIO_INT(AP_RST_REQ,        PIN(C, 2), GPIO_INT_RISING | GPIO_PULL_DOWN | GPIO_SEL_1P8V, chipset_reset_request_interrupt)  /* Reset request from AP */
 /* AP_RST_L is used for PMIC and AP negotiation. Don't change its state. */
-GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH, chipset_power_signal_interrupt)
-GPIO_INT(SHI_CS_L,          PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN, shi_cs_event)  /* AP_EC_SPI_CS_L */
+GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH | GPIO_SEL_1P8V, chipset_power_signal_interrupt)
+GPIO_INT(SHI_CS_L,          PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN | GPIO_SEL_1P8V, shi_cs_event)  /* AP_EC_SPI_CS_L */
 
 GPIO(EC_SELF_RST,           PIN(E, 0), GPIO_OUT_LOW)   /* Self-reset EC */
 GPIO(EC_RST_ODL,            PIN(0, 2), GPIO_INPUT)     /* Wake source: EC reset */
-GPIO(PM845_RESIN_L,         PIN(3, 2), GPIO_ODR_HIGH)  /* PMIC reset trigger */
-GPIO(WARM_RESET_L,          PIN(F, 4), GPIO_ODR_HIGH)  /* AP warm reset */
-/* PS_HOLD is used for PMIC and AP negotiation. Don't change its state. */
-GPIO(PS_HOLD,               PIN(D, 4), GPIO_INPUT)     /* Indicate when AP triggers reset/shutdown */
 GPIO(ENTERING_RW,           PIN(E, 1), GPIO_OUT_LOW)   /* EC_ENTERING_RW: Indicate when EC is entering RW code */
 GPIO(CCD_MODE_ODL,          PIN(E, 3), GPIO_INPUT)     /* Case Closed Debug Mode */
 GPIO(BATT_PRES_ODL,         PIN(E, 5), GPIO_INPUT)     /* EC_BATT_PRES_ODL: Battery Present */
-GPIO(PMIC_FAULT_L,          PIN(7, 6), GPIO_INPUT)     /* Any PMIC fault? */
-GPIO(PMIC_KPD_PWR_ODL,      PIN(D, 6), GPIO_ODR_HIGH)  /* PMIC power button */
-GPIO(EC_INT_L,              PIN(A, 2), GPIO_ODR_HIGH)  /* Interrupt line between AP and EC */
-GPIO(POWER_GOOD,            PIN(5, 4), GPIO_INPUT)     /* SRC_PP1800_S4A from PMIC */
-GPIO(AP_SUSPEND_L,          PIN(5, 7), GPIO_INPUT)     /* Suspend signal from AP */
 GPIO(PROCHOT_L,             PIN(3, 4), GPIO_INPUT)
+
+/* PMIC/AP 1.8V */
+GPIO(PM845_RESIN_L,         PIN(3, 2), GPIO_ODR_HIGH | GPIO_SEL_1P8V)  /* PMIC reset trigger */
+GPIO(WARM_RESET_L,          PIN(F, 4), GPIO_ODR_HIGH | GPIO_SEL_1P8V)  /* AP warm reset */
+/* PS_HOLD is used for PMIC and AP negotiation. Don't change its state. */
+GPIO(PS_HOLD,               PIN(D, 4), GPIO_INPUT | GPIO_SEL_1P8V)     /* Indicate when AP triggers reset/shutdown */
+GPIO(PMIC_FAULT_L,          PIN(7, 6), GPIO_INPUT | GPIO_SEL_1P8V)     /* Any PMIC fault? */
+GPIO(PMIC_KPD_PWR_ODL,      PIN(D, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V)  /* PMIC power button */
+GPIO(EC_INT_L,              PIN(A, 2), GPIO_ODR_HIGH | GPIO_SEL_1P8V)  /* Interrupt line between AP and EC */
+GPIO(POWER_GOOD,            PIN(5, 4), GPIO_INPUT | GPIO_SEL_1P8V)     /* SRC_PP1800_S4A from PMIC */
+GPIO(AP_SUSPEND_L,          PIN(5, 7), GPIO_INPUT | GPIO_SEL_1P8V)     /* Suspend signal from AP */
 
 /* Power enables */
 GPIO(SWITCHCAP_ON_L,        PIN(D, 5), GPIO_OUT_LOW)   /* Enable switch cap. XXX: It's active-high */
@@ -57,7 +59,7 @@ GPIO(BL_DISABLE_L,          PIN(2, 6), GPIO_OUT_HIGH)  /* EC_BL_DISABLE_L: Backl
 
 /* Sensors */
 GPIO(ALS_INT_L,             PIN(5, 0), GPIO_INPUT)     /* ALS sensor interrupt */
-GPIO(P_SENSOR_INT_L,        PIN(1, 4), GPIO_INPUT)     /* P-sensor interrupt */
+GPIO(P_SENSOR_INT_L,        PIN(1, 4), GPIO_INPUT | GPIO_SEL_1P8V) /* P-sensor interrupt */
 GPIO(RCAM_VSYNC,            PIN(4, 0), GPIO_INPUT)     /* VSYNC from rear camera */
 
 /* Base */
@@ -144,6 +146,6 @@ ALTERNATE(PIN_MASK(8, 0x80), 1, MODULE_I2C, 0)             /* I2C1 SCL (GPIO87) 
 ALTERNATE(PIN_MASK(3, 0x48), 1, MODULE_I2C, 0)             /* I2C5 (GPIO33/36) */
 ALTERNATE(PIN_MASK(B, 0x0C), 1, MODULE_I2C, GPIO_SEL_1P8V) /* I2C7 (GPIOB2/B3) - 1.8V */
 ALTERNATE(PIN_MASK(4, 0x2C), 0, MODULE_ADC, 0)             /* ADC0 (GPIO45), ADC2 (GPIO43), ADC3 (GPIO42) */
-ALTERNATE(PIN_MASK(4, 0xC0), 1, MODULE_SPI, 0)             /* SHI_SDO (GPIO47), SHI_SDI (GPIO46) */
-ALTERNATE(PIN_MASK(5, 0x28), 1, MODULE_SPI, 0)             /* SHI_SCLK (GPIO55), SHI_CS# (GPIO53) */
+ALTERNATE(PIN_MASK(4, 0xC0), 1, MODULE_SPI, GPIO_SEL_1P8V) /* SHI_SDO (GPIO47), SHI_SDI (GPIO46) */
+ALTERNATE(PIN_MASK(5, 0x28), 1, MODULE_SPI, GPIO_SEL_1P8V) /* SHI_SCLK (GPIO55), SHI_CS# (GPIO53) */
 ALTERNATE(PIN_MASK(B, 0x80), 1, MODULE_PWM, 0)             /* PWM5 (GPIOB7) */
