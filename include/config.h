@@ -3252,6 +3252,7 @@
 /* USB Type-C Power Path Controllers (PPC) */
 #undef CONFIG_USBC_PPC_NX20P3483
 #undef CONFIG_USBC_PPC_SN5S330
+#undef CONFIG_USBC_PPC_SYV682X
 
 /* PPC is capable of providing VCONN */
 #undef CONFIG_USBC_PPC_VCONN
