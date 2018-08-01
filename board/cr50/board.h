@@ -135,9 +135,10 @@
 #define CONFIG_RESTRICTED_CONSOLE_COMMANDS
 #define CONFIG_CONSOLE_COMMAND_FLAGS_DEFAULT CMD_FLAG_RESTRICTED
 
-/* Include crypto stuff, both software and hardware. */
+/* Include crypto stuff, both software and hardware. Enable optimizations. */
 #define CONFIG_DCRYPTO
 #define CONFIG_UPTO_SHA512
+#define CONFIG_DCRYPTO_RSA_SPEEDUP
 
 /* Implement custom udelay, due to usec hwtimer imprecision. */
 #define CONFIG_HW_SPECIFIC_UDELAY
