@@ -55,7 +55,7 @@ GPIO(VBOB_EN,               PIN(9, 5), GPIO_OUT_LOW)   /* Enable VBOB */
 /* TODO(b/110988793): Default it to LOW and make it a S3 rail once the bug is fixed. */
 GPIO(EN_PP3300_A,           PIN(A, 6), GPIO_OUT_HIGH)  /* Enable PP3300 */
 GPIO(EN_PP5000,             PIN(6, 7), GPIO_OUT_LOW)   /* EN_PP5000_A: Enable PP5000 */
-GPIO(BL_DISABLE_L,          PIN(2, 6), GPIO_OUT_HIGH)  /* EC_BL_DISABLE_L: Backlight disable signal from EC */
+GPIO(ENABLE_BACKLIGHT,      PIN(2, 6), GPIO_OUT_LOW)   /* EC_BL_DISABLE_L: Backlight disable signal from EC */
 
 /* Sensors */
 GPIO(ALS_INT_L,             PIN(5, 0), GPIO_INPUT)     /* ALS sensor interrupt */
