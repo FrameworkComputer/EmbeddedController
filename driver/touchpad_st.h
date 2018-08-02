@@ -48,9 +48,9 @@
 
 #define ST_TOUCH_HEADER_SIZE	32
 
-#define BYTES_PER_PIXEL		2
+#define BYTES_PER_PIXEL		1
 /* Number of bits per pixel, this value is decided by experiments. */
-#define BITS_PER_PIXEL		(11)
+#define BITS_PER_PIXEL		8
 
 #define ST_TOUCH_FRAME_SIZE	(ST_TOUCH_ROWS * ST_TOUCH_COLS * \
 				 BYTES_PER_PIXEL)
@@ -247,6 +247,9 @@ enum ST_TP_MODE {
 #define ST_TP_DEBUG_CMD_CALIBRATE 0x1
 
 #define ST_TP_HEAT_MAP_THRESHOLD 10
+
+/* A minimum version that supports heatmap mode. */
+#define ST_TP_MIN_HEATMAP_VERSION 11
 
 #endif /* __CROS_EC_TOUCHPAD_ST_H */
 

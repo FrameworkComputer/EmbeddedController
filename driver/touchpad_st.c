@@ -328,7 +328,8 @@ static int st_tp_update_system_state(int new_state, int mask)
 		set_bits(&system_state, new_state, mask);
 	}
 
-	/* We need to lock scan mode to prevent scan rate drop when heat map
+	/*
+	 * We need to lock scan mode to prevent scan rate drop when heat map
 	 * mode is enabled.
 	 */
 	if (need_locked_scan_mode) {
@@ -991,6 +992,22 @@ static int st_tp_read_frame(void)
 		(heat_map_addr >> 8) & 0xFF,
 		(heat_map_addr >> 0) & 0xFF,
 	};
+#if BYTES_PER_PIXEL == 1
+	/*
+	 * Since usb_packet.frame is already an uint8_t byte array, we can just
+	 * make it the RX buffer for SPI transaction.
+	 *
+	 * When there is a dummy byte, since we know that flags is a one byte
+	 * value, and we will override it later, it's okay for SPI transaction
+	 * to write the dummy byte to flags address.
+	 */
+#if ST_TP_DUMMY_BYTE == 1
+	BUILD_ASSERT(sizeof(usb_packet[0].flags) == 1);
+	uint8_t *rx_buf = &usb_packet[spi_buffer_index & 1].flags;
+#else
+	uint8_t *rx_buf = usb_packet[spi_buffer_index & 1].frame;
+#endif
+#endif
 
 	if (heat_map_addr < 0)
 		goto failed;
@@ -1003,11 +1020,14 @@ static int st_tp_read_frame(void)
 			      (uint8_t *)&rx_buf, rx_len);
 	if (ret == EC_SUCCESS) {
 #if BYTES_PER_PIXEL == 1
-		/*
-		 * If BYTES_PER_PIXEL = 1, then we can memcpy directly.
-		 * This takes about 0.1ms per frame.
-		 */
-		memcpy(dest, heat_map->frame, ST_TOUCH_COLS * ST_TOUCH_ROWS);
+		int i;
+		uint8_t *dest = usb_packet[spi_buffer_index & 1].frame;
+		uint8_t max_value = 0;
+
+		for (i = 0; i < ST_TOUCH_COLS * ST_TOUCH_ROWS; i++)
+			max_value |= dest[i];
+		if (max_value == 0) // empty frame
+			return -1;
 #elif BYTES_PER_PIXEL == 2
 		/*
 		 * Down scaling and move data into usb_packet, this takes
@@ -1127,7 +1147,8 @@ static int heatmap_send_packet(struct usb_isochronous_config const *config)
 				&buffer_id,
 				1);
 		if (ret < 0) {
-			/* TODO(b/70482333): handle this error, it might be:
+			/*
+			 * TODO(b/70482333): handle this error, it might be:
 			 *   1. timeout (buffer_id changed)
 			 *   2. invalid offset
 			 *
@@ -1150,6 +1171,10 @@ static int heatmap_send_packet(struct usb_isochronous_config const *config)
 static int st_tp_usb_set_interface(usb_uint alternate_setting,
 				   usb_uint interface)
 {
+	if ((system_info.release_info & 0xFF) < ST_TP_MIN_HEATMAP_VERSION)
+		/* Heatmap mode is not supported in this version. */
+		return -1;
+
 	if (alternate_setting == 1) {
 		hook_call_deferred(&st_tp_enable_heat_map_data, 0);
 		return 0;
