@@ -210,8 +210,19 @@ static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
 
 	while (flen > 0) {
 		struct ec_response_motion_sensor_data vect;
-		int id = agm_maps[fifo_next(private)];
-		int *axis = (accel + id)->raw_xyz;
+		int id;
+		int *axis;
+		int next_fifo = fifo_next(private);
+		/*
+		 * This should never happen, but it could. There will be a
+		 * report from inside fifo_next about it, so no extra message
+		 * required here.
+		 */
+		if (next_fifo == FIFO_DEV_INVALID) {
+			return;
+		}
+		id = agm_maps[next_fifo];
+		axis = (accel + id)->raw_xyz;
 
 		/* Apply precision, sensitivity and rotation. */
 		st_normalize(accel + id, axis, fifo);
