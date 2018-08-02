@@ -115,9 +115,8 @@ static void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 
 static void ppc_interrupt(enum gpio_signal signal)
 {
-	int port = (signal == GPIO_USB_C0_SWCTL_INT_ODL) ? 0 : 1;
-
-	sn5s330_interrupt(port);
+	/* Only port-0 uses PPC chip */
+	sn5s330_interrupt(0);
 }
 
 /* ADC channels */
