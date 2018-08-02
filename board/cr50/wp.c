@@ -13,6 +13,7 @@
 #include "scratch_reg1.h"
 #include "system.h"
 #include "system_chip.h"
+#include "tpm_nvmem.h"
 #include "tpm_nvmem_read.h"
 #include "tpm_registers.h"
 #include "util.h"
@@ -275,8 +276,6 @@ int board_wipe_tpm(void)
  * src/platform/vboot_reference/firmware/lib/include/rollback_index.h. at
  * git sha c7282f6.
  */
-#define FIRMWARE_NV_INDEX           0x1007
-#define FWMP_NV_INDEX		    0x100a
 #define FWMP_HASH_SIZE		    32
 #define FWMP_DEV_DISABLE_CCD_UNLOCK (1 << 6)
 #define FIRMWARE_FLAG_DEV_MODE      0x02
