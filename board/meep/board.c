@@ -92,7 +92,6 @@ const struct temp_sensor_t temp_sensors[] = {
 				 .read = charge_get_battery_temp,
 				 .idx = 0,
 				 .action_delay_sec = 1},
-	/* TODO(b/111920102): confirm thermistor parts */
 	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
 				 .type = TEMP_SENSOR_TYPE_BOARD,
 				 .read = get_temp_3v3_51k1_47k_4050b,
