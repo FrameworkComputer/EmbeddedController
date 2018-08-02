@@ -133,10 +133,6 @@ enum power_state power_chipset_init(void)
 	} else if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF)) {
 		/* Auto-power on */
 		chipset_exit_hard_off();
-		/*
-		 * TODO(b:109850749): If we see that PMIC power good is up,
-		 * we could probably jump straight to S5 and power on the AP.
-		 */
 	}
 
 	return POWER_G3;
@@ -170,17 +166,6 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5:
 		if (forcing_shutdown) {
-			/*
-			 * While PMIC is still not off, press power+home button.
-			 * This should not happen if PMIC is configured
-			 * properly, and shuts down upon receiving WATCHDOG.
-			 */
-			if (power_has_signals(IN_PGOOD_PMIC)) {
-				gpio_set_level(GPIO_PMIC_EN_ODL, 0);
-				return POWER_S5;
-			}
-
-			gpio_set_level(GPIO_PMIC_EN_ODL, 1);
 			return POWER_S5G3;
 		} else {
 			return POWER_S5S3;
@@ -205,6 +190,12 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_G3S5:
 		forcing_shutdown = 0;
 
+		gpio_set_level(GPIO_PMIC_FORCE_RESET, 0);
+
+		/* Power up to next state */
+		return POWER_S5;
+
+	case POWER_S5S3:
 		/* If PMIC is off, switch it on by pulsing PMIC enable. */
 		if (!power_has_signals(IN_PGOOD_PMIC)) {
 			gpio_set_level(GPIO_PMIC_EN_ODL, 0);
@@ -228,10 +219,6 @@ enum power_state power_handle_state(enum power_state state)
 		if (power_wait_signals(IN_PGOOD_PMIC))
 			return POWER_G3;
 
-		/* Power up to next state */
-		return POWER_S5;
-
-	case POWER_S5S3:
 		/* Enable S3 power supplies, release AP reset. */
 		power_seq_run(s5s3_power_seq, ARRAY_SIZE(s5s3_power_seq));
 
@@ -300,6 +287,22 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5G3:
+		/*
+		 * If PMIC is still not off, assert PMIC_FORCE_RESET.
+		 * This should not happen if PMIC is configured properly, and
+		 * shuts down upon receiving WATCHDOG.
+		 */
+		if (power_has_signals(IN_PGOOD_PMIC)) {
+#if defined(BOARD_KUKUI) && BOARD_REV == 0
+			CPRINTS("Cannot force PMIC off (rev0)");
+#else
+			CPRINTS("Forcing PMIC off");
+			gpio_set_level(GPIO_PMIC_FORCE_RESET, 1);
+			msleep(50);
+			return POWER_S5G3;
+#endif
+		}
+
 		return POWER_G3;
 	}
 
