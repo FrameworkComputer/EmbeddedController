@@ -7,6 +7,13 @@
 #ifndef __CROS_EC_DRIVER_TCPM_IT83XX_H
 #define __CROS_EC_DRIVER_TCPM_IT83XX_H
 
+/*
+ * Dedicated setting for CC pin.
+ * This setting will connect CC pin to internal PD module directly without
+ * applying any GPIO/ALT configuration.
+ */
+#define IT83XX_USBPD_CC_PIN_CONFIG 0x86
+
 #define TASK_EVENT_PHY_TX_DONE TASK_EVENT_CUSTOM((1 << 17))
 
 #define SET_MASK(reg, bit_mask)      ((reg) |= (bit_mask))
@@ -97,5 +104,7 @@ struct usbpd_ctrl_t {
 
 extern const struct usbpd_ctrl_t usbpd_ctrl_regs[];
 extern const struct tcpm_drv it83xx_tcpm_drv;
+/* Disable integrated pd module */
+void it83xx_disable_pd_module(int port);
 
 #endif /* __CROS_EC_DRIVER_TCPM_IT83XX_H */

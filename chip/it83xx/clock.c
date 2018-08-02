@@ -13,6 +13,7 @@
 #include "hwtimer_chip.h"
 #include "intc.h"
 #include "irq_chip.h"
+#include "it83xx_pd.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -412,6 +413,15 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 		ext_timer_start(FREE_EXT_TIMER_H, 1);
 		ext_timer_start(FREE_EXT_TIMER_L, 0);
 	}
+
+#ifdef CONFIG_USB_PD_TCPM_ITE83XX
+	/*
+	 * Disable integrated pd modules in hibernate for
+	 * better power consumption.
+	 */
+	for (i = 0; i < USBPD_PORT_COUNT; i++)
+		it83xx_disable_pd_module(i);
+#endif
 
 	for (i = 0; i < hibernate_wake_pins_used; ++i)
 		gpio_enable_interrupt(hibernate_wake_pins[i]);

@@ -34,6 +34,26 @@ const struct usbpd_ctrl_t usbpd_ctrl_regs[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usbpd_ctrl_regs) == USBPD_PORT_COUNT);
 
+/*
+ * This function disables integrated pd module and enables 5.1K resistor for
+ * dead battery. A EC reset or calling _init() is able to re-active pd module.
+ */
+void it83xx_disable_pd_module(int port)
+{
+	/* This only apply to PD port. */
+	if (*usbpd_ctrl_regs[port].cc1 == IT83XX_USBPD_CC_PIN_CONFIG &&
+		*usbpd_ctrl_regs[port].cc2 == IT83XX_USBPD_CC_PIN_CONFIG) {
+		/* Disable PD PHY */
+		IT83XX_USBPD_GCR(port) &= ~((1 << 0) | (1 << 4));
+		/* Power down CC1/CC2 */
+		IT83XX_USBPD_CCGCR(port) |= 0x1f;
+		/* Disable CC1/CC2 voltage detector */
+		IT83XX_USBPD_CCCSR(port) = 0xff;
+		/* Connect 5.1K resistor to CC1/CC2 for dead battery. */
+		IT83XX_USBPD_CCPSR(port) = 0x33;
+	}
+}
+
 static enum tcpc_cc_voltage_status it83xx_get_cc(
 	enum usbpd_port port,
 	enum usbpd_cc_pin cc_pin)
@@ -317,8 +337,8 @@ static void it83xx_init(enum usbpd_port port, int role)
 	/* TX start from high */
 	IT83XX_USBPD_CCADCR(port) |= (1 << 6);
 	/* enable cc1/cc2 */
-	*usbpd_ctrl_regs[port].cc1 = 0x86;
-	*usbpd_ctrl_regs[port].cc2 = 0x86;
+	*usbpd_ctrl_regs[port].cc1 = IT83XX_USBPD_CC_PIN_CONFIG;
+	*usbpd_ctrl_regs[port].cc2 = IT83XX_USBPD_CC_PIN_CONFIG;
 	task_clear_pending_irq(usbpd_ctrl_regs[port].irq);
 	task_enable_irq(usbpd_ctrl_regs[port].irq);
 	USBPD_START(port);
