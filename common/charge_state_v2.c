@@ -1973,14 +1973,19 @@ int charge_prevent_power_on(int power_button_pressed)
 		automatic_power_on = 0;
 	/*
 	 * Require a minimum battery level to power on and ensure that the
-	 * battery can prvoide power to the system.
+	 * battery can provide power to the system.
 	 */
 	if (current_batt_params->is_present != BP_YES ||
+#ifdef CONFIG_BATTERY_MEASURE_IMBALANCE
+	    (current_batt_params->flags & BATT_FLAG_IMBALANCED_CELL &&
+		current_batt_params->state_of_charge <
+		CONFIG_CHARGER_MIN_BAT_PCT_IMBALANCED_POWER_ON) ||
+#endif
 #ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
 	    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED ||
 #endif
 	    current_batt_params->state_of_charge <
-	    CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON)
+		CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON)
 		prevent_power_on = 1;
 
 #if defined(CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON) && \

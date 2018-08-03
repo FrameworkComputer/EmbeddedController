@@ -31,6 +31,11 @@ struct fuel_gauge_info {
 	const uint8_t override_nil;
 	const struct ship_mode_info ship_mode;
 	const struct fet_info fet;
+
+#ifdef CONFIG_BATTERY_MEASURE_IMBALANCE
+	/* See battery_*_imbalance_mv() for functions which are suitable. */
+	int (*imbalance_mv)(void);
+#endif
 };
 
 struct board_batt_params {
@@ -41,5 +46,19 @@ struct board_batt_params {
 /* Forward declare board specific data used by common code */
 extern const struct board_batt_params board_battery_info[];
 extern const enum battery_type DEFAULT_BATTERY_TYPE;
+
+
+#ifdef CONFIG_BATTERY_MEASURE_IMBALANCE
+/**
+ * Report the absolute difference between the highest and lowest cell voltage in
+ * the battery pack, in millivolts.  On error or unimplemented, returns '0'.
+ */
+int battery_default_imbalance_mv(void);
+
+#ifdef CONFIG_BATTERY_BQ4050
+int battery_bq4050_imbalance_mv(void);
+#endif
+
+#endif
 
 #endif /* __CROS_EC_BATTERY_FUEL_GAUGE_H */

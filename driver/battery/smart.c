@@ -351,6 +351,11 @@ void battery_get_params(struct batt_params *batt)
 	if ((batt_new.flags & BATT_FLAG_BAD_ANY) != BATT_FLAG_BAD_ANY)
 		batt_new.flags |= BATT_FLAG_RESPONSIVE;
 
+#ifdef CONFIG_BATTERY_MEASURE_IMBALANCE
+	if (battery_imbalance_mv() > CONFIG_BATTERY_MAX_IMBALANCE_MV)
+		batt_new.flags |= BATT_FLAG_IMBALANCED_CELL;
+#endif
+
 #if defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||	\
 	defined(CONFIG_BATTERY_PRESENT_GPIO)
 	/* Hardware can tell us for certain */

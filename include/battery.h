@@ -117,6 +117,7 @@ int battery_get_avg_voltage(void); /* in mV */
 #define BATT_FLAG_BAD_REMAINING_CAPACITY	0x00000100
 #define BATT_FLAG_BAD_FULL_CAPACITY		0x00000200
 #define BATT_FLAG_BAD_STATUS			0x00000400
+#define BATT_FLAG_IMBALANCED_CELL		0x00000800
 /* All of the above BATT_FLAG_BAD_* bits */
 #define BATT_FLAG_BAD_ANY			0x000007fc
 
@@ -326,6 +327,12 @@ int battery_device_chemistry(char *dest, int size);
  * @return non-zero if error.
  */
 int battery_manufacturer_date(int *year, int *month, int *day);
+
+/**
+ * Report the absolute difference between the highest and lowest cell voltage in
+ * the battery pack, in millivolts.  On error or unimplemented, returns '0'.
+ */
+int battery_imbalance_mv(void);
 
 /**
  * Call board-specific cut-off function.
