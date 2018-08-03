@@ -489,7 +489,7 @@ static int anx7447_mux_set(int port, mux_state_t mux_state)
 
 	cc_direction = mux_state & MUX_POLARITY_INVERTED;
 	mux_type = mux_state & TYPEC_MUX_DOCK;
-	CPRINTS("mux_state = 0x%x, mux_type = 0x%x\n", mux_state, mux_type);
+	CPRINTS("mux_state = 0x%x, mux_type = 0x%x", mux_state, mux_type);
 
 	if (cc_direction == 0) {
 		/* cc1 connection */
