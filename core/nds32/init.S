@@ -189,6 +189,8 @@ data_loop:
 	li   $r5, 0x00000007
 	mtsr $r5, $IVB
 
+	/* clear BRAM if it is not valid */
+	jal chip_bram_valid
 	/* Jump to C routine */
 	jal main
 

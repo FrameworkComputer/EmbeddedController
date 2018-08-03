@@ -63,7 +63,7 @@ static void check_reset_cause(void)
 
 	/* Restore then clear saved reset flags. */
 	if (!(flags & RESET_FLAG_POWER_ON)) {
-		flags |= BRAM_RESET_FLAGS << 24;
+		flags |= BRAM_RESET_FLAGS0 << 24;
 		flags |= BRAM_RESET_FLAGS1 << 16;
 		flags |= BRAM_RESET_FLAGS2 << 8;
 		flags |= BRAM_RESET_FLAGS3;
@@ -73,7 +73,7 @@ static void check_reset_cause(void)
 			flags &= ~RESET_FLAG_WATCHDOG;
 	}
 
-	BRAM_RESET_FLAGS = 0;
+	BRAM_RESET_FLAGS0 = 0;
 	BRAM_RESET_FLAGS1 = 0;
 	BRAM_RESET_FLAGS2 = 0;
 	BRAM_RESET_FLAGS3 = 0;
@@ -122,6 +122,33 @@ void chip_pre_init(void)
 	IT83XX_SMB_SLVISELR &= ~(1 << 4);
 }
 
+#define BRAM_VALID_MAGIC        0x4252414D  /* "BRAM" */
+#define BRAM_VALID_MAGIC_FIELD0 (BRAM_VALID_MAGIC & 0xff)
+#define BRAM_VALID_MAGIC_FIELD1 ((BRAM_VALID_MAGIC >> 8) & 0xff)
+#define BRAM_VALID_MAGIC_FIELD2 ((BRAM_VALID_MAGIC >> 16) & 0xff)
+#define BRAM_VALID_MAGIC_FIELD3 ((BRAM_VALID_MAGIC >> 24) & 0xff)
+void chip_bram_valid(void)
+{
+	int i;
+
+	if ((BRAM_VALID_FLAGS0 != BRAM_VALID_MAGIC_FIELD0) ||
+	    (BRAM_VALID_FLAGS1 != BRAM_VALID_MAGIC_FIELD1) ||
+	    (BRAM_VALID_FLAGS2 != BRAM_VALID_MAGIC_FIELD2) ||
+	    (BRAM_VALID_FLAGS3 != BRAM_VALID_MAGIC_FIELD3)) {
+		/*
+		 * Magic does not match, so BRAM must be uninitialized. Clear
+		 * entire Bank0 BRAM, and set magic value.
+		 */
+		for (i = 0; i < BRAM_IDX_VALID_FLAGS0; i++)
+			IT83XX_BRAM_BANK0(i) = 0;
+
+		BRAM_VALID_FLAGS0 = BRAM_VALID_MAGIC_FIELD0;
+		BRAM_VALID_FLAGS1 = BRAM_VALID_MAGIC_FIELD1;
+		BRAM_VALID_FLAGS2 = BRAM_VALID_MAGIC_FIELD2;
+		BRAM_VALID_FLAGS3 = BRAM_VALID_MAGIC_FIELD3;
+	}
+}
+
 void system_pre_init(void)
 {
 	/* No initialization required */
@@ -142,7 +169,7 @@ void system_reset(int flags)
 		save_flags |= RESET_FLAG_HIBERNATE;
 
 	/* Store flags to battery backed RAM. */
-	BRAM_RESET_FLAGS = save_flags >> 24;
+	BRAM_RESET_FLAGS0 = save_flags >> 24;
 	BRAM_RESET_FLAGS1 = (save_flags >> 16) & 0xff;
 	BRAM_RESET_FLAGS2 = (save_flags >> 8) & 0xff;
 	BRAM_RESET_FLAGS3 = save_flags & 0xff;
@@ -187,7 +214,7 @@ int system_set_scratchpad(uint32_t value)
 	BRAM_SCRATCHPAD3 = (value >> 24) & 0xff;
 	BRAM_SCRATCHPAD2 = (value >> 16) & 0xff;
 	BRAM_SCRATCHPAD1 = (value >> 8) & 0xff;
-	BRAM_SCRATCHPAD = value & 0xff;
+	BRAM_SCRATCHPAD0 = value & 0xff;
 
 	return EC_SUCCESS;
 }
@@ -199,7 +226,7 @@ uint32_t system_get_scratchpad(void)
 	value |= BRAM_SCRATCHPAD3 << 24;
 	value |= BRAM_SCRATCHPAD2 << 16;
 	value |= BRAM_SCRATCHPAD1 << 8;
-	value |= BRAM_SCRATCHPAD;
+	value |= BRAM_SCRATCHPAD0;
 
 	return value;
 }
