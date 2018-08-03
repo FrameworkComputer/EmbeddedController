@@ -404,6 +404,92 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+static void board_pmic_disable_slp_s0_vr_decay(void)
+{
+	/*
+	 * VCCIOCNT:
+	 * Bit 6    (0)   - Disable decay of VCCIO on SLP_S0# assertion
+	 * Bits 5:4 (11)  - Nominal output voltage: 0.850V
+	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
+	 * Bits 1:0 (10)  - VR set to AUTO operating mode
+	 */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x3a);
+
+	/*
+	 * V18ACNT:
+	 * Bits 7:6 (00) - Disable low power mode on SLP_S0# assertion
+	 * Bits 5:4 (10) - Nominal voltage set to 1.8V
+	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
+	 * Bits 1:0 (10) - VR set to AUTO operating mode
+	 */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x34, 0x2a);
+
+	/*
+	 * V100ACNT:
+	 * Bits 7:6 (00) - Disable low power mode on SLP_S0# assertion
+	 * Bits 5:4 (01) - Nominal voltage 1.0V
+	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
+	 * Bits 1:0 (10) - VR set to AUTO operating mode
+	 */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x37, 0x1a);
+
+	/*
+	 * V085ACNT:
+	 * Bits 7:6 (00) - Disable low power mode on SLP_S0# assertion
+	 * Bits 5:4 (10) - Nominal voltage 0.85V
+	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
+	 * Bits 1:0 (10) - VR set to AUTO operating mode
+	 */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x2a);
+}
+
+static void board_pmic_enable_slp_s0_vr_decay(void)
+{
+	/*
+	 * VCCIOCNT:
+	 * Bit 6    (1)   - Enable decay of VCCIO on SLP_S0# assertion
+	 * Bits 5:4 (11)  - Nominal output voltage: 0.850V
+	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
+	 * Bits 1:0 (10)  - VR set to AUTO operating mode
+	 */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x7a);
+
+	/*
+	 * V18ACNT:
+	 * Bits 7:6 (01) - Enable low power mode on SLP_S0# assertion
+	 * Bits 5:4 (10) - Nominal voltage set to 1.8V
+	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
+	 * Bits 1:0 (10) - VR set to AUTO operating mode
+	 */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x34, 0x6a);
+
+	/*
+	 * V100ACNT:
+	 * Bits 7:6 (01) - Enable low power mode on SLP_S0# assertion
+	 * Bits 5:4 (01) - Nominal voltage 1.0V
+	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
+	 * Bits 1:0 (10) - VR set to AUTO operating mode
+	 */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x37, 0x5a);
+
+	/*
+	 * V085ACNT:
+	 * Bits 7:6 (01) - Enable low power mode on SLP_S0# assertion
+	 * Bits 5:4 (10) - Nominal voltage 0.85V
+	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
+	 * Bits 1:0 (10) - VR set to AUTO operating mode
+	 */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x6a);
+}
+
+void power_board_handle_host_sleep_event(enum host_sleep_event state)
+{
+	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND)
+		board_pmic_enable_slp_s0_vr_decay();
+	else if (state == HOST_SLEEP_EVENT_S0IX_RESUME)
+		board_pmic_disable_slp_s0_vr_decay();
+}
+
 static void board_pmic_init(void)
 {
 	int pgmask1;
@@ -414,8 +500,7 @@ static void board_pmic_init(void)
 	pgmask1 |= (1 << 2);
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x18, pgmask1);
 
-	/* Select 0.85V for the V085A nominal output voltage. */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x2a);
+	board_pmic_disable_slp_s0_vr_decay();
 
 	/* Enable active discharge (100 ohms) on V33A_PCH and V1.8A. */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3D, 0x5);
