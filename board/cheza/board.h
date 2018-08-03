@@ -89,6 +89,7 @@
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PD_VBUS_DETECT_TCPC
+#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
 #define CONFIG_USB_PD_5V_EN_CUSTOM
 #define CONFIG_USBC_PPC_SN5S330
 #define CONFIG_USBC_SS_MUX
@@ -145,7 +146,6 @@ enum power_signal {
 };
 
 enum adc_channel {
-	ADC_VBUS = -1,  /* No VBUS ADC detection */
 	ADC_BASE_DET,
 	ADC_AMON_BMON,
 	ADC_PSYS,
