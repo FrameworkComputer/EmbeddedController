@@ -5056,6 +5056,23 @@ struct __ec_align4 ec_response_fp_context {
 	uint32_t nonce[FP_CONTEXT_NONCE_WORDS];
 };
 
+#define EC_CMD_FP_STATS 0x0407
+
+#define FPSTATS_CAPTURE_INV  (1 << 0)
+#define FPSTATS_MATCHING_INV (1 << 1)
+
+struct __ec_align2 ec_response_fp_stats {
+	uint32_t capture_time_us;
+	uint32_t matching_time_us;
+	uint32_t overall_time_us;
+	struct {
+		uint32_t lo;
+		uint32_t hi;
+	} overall_t0;
+	uint8_t timestamps_invalid;
+	int8_t template_matched;
+};
+
 /*****************************************************************************/
 /* Touchpad MCU commands: range 0x0500-0x05FF */
 
