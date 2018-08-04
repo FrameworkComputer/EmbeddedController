@@ -18,6 +18,8 @@
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
+#define IN_PCH_SLP_SUS_WAIT_TIME_MS	100
+
 static int forcing_shutdown;  /* Forced shutdown in progress? */
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
@@ -70,7 +72,6 @@ enum power_state power_handle_state(enum power_state state)
 {
 	int dswpwrok_in = gpio_get_level(GPIO_PG_EC_DSW_PWROK);
 	static int dswpwrok_out = -1;
-	int timeout_ms = 100;
 
 	/* Pass-through DSW_PWROK to ICL. */
 	if (dswpwrok_in != dswpwrok_out) {
@@ -111,17 +112,9 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("Pass thru GPIO_DSW_PWROK: %d", dswpwrok_in);
 		dswpwrok_out = dswpwrok_in;
 
-		/*
-		 * TODO(b/111810925): Replace this wait with
-		 * power_wait_signals_timeout()
-		 */
 		/* Now wait 100ms for SLP_SUS_L to go high based on tPCH32 */
-		while (power_has_signals(IN_PCH_SLP_SUS_DEASSERTED) &&
-		       (timeout_ms > 0)) {
-			msleep(1);
-			timeout_ms--;
-		}
-		if (!timeout_ms) {
+		if (power_wait_signals_timeout(IN_PCH_SLP_SUS_DEASSERTED,
+				IN_PCH_SLP_SUS_WAIT_TIME_MS) != EC_SUCCESS) {
 			CPRINTS("SLP_SUS_L didn't go high!  Assuming G3.");
 			return POWER_G3;
 		}
