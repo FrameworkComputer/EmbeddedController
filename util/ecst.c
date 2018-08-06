@@ -1004,10 +1004,16 @@ int copy_file_to_file(char *dst_file_name,
 
 		/* If byte reading pass than write it to the destination, */
 		/* else exit from the reading loop. */
-		if (result)
+		if (result) {
 			/* Read pass, so write it to destination file.*/
 			result = fwrite(&local_val, 1, 1, dst_file);
-		else
+			if (!result)
+				/*
+				 * Write failed,
+				 * return with the copied bytes number.
+				 */
+				break;
+		} else
 			/* Read failed, return with the copied bytes number. */
 			break;
 	}
