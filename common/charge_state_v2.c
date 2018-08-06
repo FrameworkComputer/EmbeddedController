@@ -1229,7 +1229,10 @@ static int charge_request(int voltage, int current)
 
 void chgstate_set_manual_current(int curr_ma)
 {
-	manual_current = charger_closest_current(curr_ma);
+	if (curr_ma < 0)
+		manual_current = -1;
+	else
+		manual_current = charger_closest_current(curr_ma);
 }
 
 void chgstate_set_manual_voltage(int volt_mv)
