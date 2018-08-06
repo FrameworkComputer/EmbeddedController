@@ -635,8 +635,7 @@ static int keyscan_run_tests(struct keyscan_info *keyscan)
 		err = run_test(keyscan, test);
 		any_err |= err;
 		if (err) {
-			printf("%d: %s: ", testnum, test->name);
-			printf(" : %s\n", err ? "FAIL" : "pass");
+			printf("%d: %s:  : FAIL\n", testnum, test->name);
 		}
 	}
 
