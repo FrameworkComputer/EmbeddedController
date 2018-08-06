@@ -121,6 +121,8 @@ static void board_init(void)
 	uint8_t tmp;
 
 	/* i2c 0 has a tendancy to get wedged. TODO(nsanders): why? */
+	i2c_lock(0, 1);
 	i2c_xfer(0, 0, NULL, 0, &tmp, 1, I2C_XFER_SINGLE);
+	i2c_lock(0, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

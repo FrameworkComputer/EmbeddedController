@@ -411,8 +411,11 @@ uint16_t ina2xx_readagain(uint8_t port, uint8_t addr)
 	int res;
 	uint16_t val;
 
+	i2c_lock(port, 1);
 	res = i2c_xfer(port, addr, NULL, 0, (uint8_t *)&val, sizeof(uint16_t),
 		      I2C_XFER_SINGLE);
+	i2c_lock(port, 0);
+
 	if (res) {
 		CPRINTS("INA2XX I2C readagain failed p:%d a:%02x",
 			(int)port, (int)addr);
