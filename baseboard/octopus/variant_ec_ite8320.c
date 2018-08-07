@@ -10,6 +10,22 @@
 #include "util.h"
 
 /******************************************************************************/
+/* Wake up pins */
+const enum gpio_signal hibernate_wake_pins[] = {
+	GPIO_LID_OPEN,
+	GPIO_POWER_BUTTON_L,
+	/*
+	 * The PPC interrupts (which fire when Vbus changes) is a proxy for
+	 * AC_PRESENT. This allows us to turn off the PPC SNK FETS during
+	 * hibernation which saves power. Once the EC wakes up, it will enable
+	 * the SNK FETs and power will make it to the rest of the system.
+	 */
+	GPIO_USB_C0_PD_INT_ODL,
+	GPIO_USB_C1_PD_INT_ODL,
+};
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
+
+/******************************************************************************/
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
 	{"power",  IT83XX_I2C_CH_A, 100, GPIO_I2C0_SCL, GPIO_I2C0_SDA},

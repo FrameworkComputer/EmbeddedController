@@ -27,22 +27,6 @@
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 /******************************************************************************/
-/* Wake up pins */
-const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_LID_OPEN,
-	GPIO_AC_PRESENT,
-	GPIO_POWER_BUTTON_L,
-#if defined(VARIANT_OCTOPUS_EC_NPCX796FB) && defined(CONFIG_HIBERNATE_PSL)
-	/*
-	 * Enable EC_RST_ODL as a wake source if using NPCX EC variant and PSL
-	 * hibernate mode is enabled.
-	 */
-	GPIO_EC_RST_ODL,
-#endif
-};
-const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
-
-/******************************************************************************/
 /* Power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
 #ifdef CONFIG_POWER_S0IX
@@ -294,15 +278,30 @@ void board_hibernate(void)
 		pd_request_source_voltage(port, NX20P348X_SAFE_RESET_VBUS_MV);
 #endif
 
+	/*
+	 * If Vbus isn't already on this port, then we need to put the PPC into
+	 * low power mode or open the SNK FET based on which signals wake up
+	 * the EC from hibernate.
+	 */
 	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
-		/*
-		 * If Vbus isn't already on this port, then open the SNK path
-		 * to allow AC to pass through to the charger when connected.
-		 * This is need if the TCPC/PPC rails do not go away.
-		 * (b/79173959)
-		 */
-		if (!pd_is_vbus_present(port))
+		if (!pd_is_vbus_present(port)) {
+#ifdef VARIANT_OCTOPUS_EC_ITE8320
+			/*
+			 * ITE variant uses the PPC interrupts instead of
+			 * AC_PRESENT to wake up, so we do not need to enable
+			 * the SNK FETS.
+			 */
+			ppc_enter_low_power_mode(port);
+#else
+			/*
+			 * Open the SNK path to allow AC to pass through to the
+			 * charger when connected. This is need if the TCPC/PPC
+			 * rails do not go away and AC_PRESENT wakes up the EC
+			 * (b/79173959).
+			 */
 			ppc_vbus_sink_enable(port, 1);
+#endif
+		}
 	}
 
 	/*
