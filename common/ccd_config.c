@@ -822,15 +822,15 @@ static int ccd_command_wrapper(int argc, char *password,
 	vch->ccd_subcommand = subcmd;
 
 	memcpy(vch + 1, password, password_size);
-		    tpm_alt_extension(&vch->tpm_header, sizeof(buf));
+	tpm_alt_extension(&vch->tpm_header, sizeof(buf));
 
 	/*
 	 * Return status in the command code field now, in case of error,
 	 * error code is the first byte after the header.
 	 */
 	return_code = be32toh(vch->tpm_header.command_code);
-	if ((return_code != EC_SUCCESS) &&
-	    (return_code != VENDOR_RC_IN_PROGRESS)) {
+	if ((return_code != VENDOR_RC_SUCCESS) &&
+	    (return_code != (VENDOR_RC_IN_PROGRESS|VENDOR_RC_ERR))) {
 		return vch->ccd_subcommand;
 	}
 	return EC_SUCCESS;
