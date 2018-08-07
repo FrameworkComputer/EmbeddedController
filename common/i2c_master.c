@@ -322,6 +322,42 @@ exit:
 	return rv;
 }
 
+int i2c_read_block(int port, int slave_addr, int offset, uint8_t *data,
+		    int len)
+{
+	int rv;
+	uint8_t reg_address = offset;
+
+	i2c_lock(port, 1);
+	rv = i2c_xfer(port, slave_addr, &reg_address, 1, data, len,
+			I2C_XFER_SINGLE);
+	i2c_lock(port, 0);
+	return rv;
+}
+
+int i2c_write_block(int port, int slave_addr, int offset, const uint8_t *data,
+		    int len)
+{
+	int rv0, rv1;
+	uint8_t reg_address = offset;
+
+	/*
+	 * Split into two transactions to avoid the stack space consumption of
+	 * appending the destination address with the data array.  Even if the
+	 * first transaction fails, unconditionally perform the second one in
+	 * order to have a better chance at sending out the stop bit.
+	 */
+	i2c_lock(port, 1);
+	rv0 = i2c_xfer(port, slave_addr, &reg_address, 1, NULL, 0,
+		      I2C_XFER_START);
+	rv1 = i2c_xfer(port, slave_addr, data, len, NULL, 0,
+		      I2C_XFER_STOP);
+	i2c_lock(port, 0);
+
+	/* Guess that the first error seen is more helpful. */
+	return (rv0 != EC_SUCCESS) ? rv0 : rv1;
+}
+
 int get_sda_from_i2c_port(int port, enum gpio_signal *sda)
 {
 	const struct i2c_port_t *i2c_port = get_i2c_port(port);

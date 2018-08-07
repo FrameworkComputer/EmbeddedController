@@ -278,10 +278,27 @@ int i2c_unwedge(int port);
  *
  * <len>      : the max length of receiving buffer. to read N bytes
  *              ascii, len should be at least N+1 to include the
- *              terminating 0.
+ *              terminating 0.  Similar to strlcpy, the terminating null is
+ *              always written into the output buffer.
  * <len> == 0 : buffer size > 255
  */
 int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
+			int len);
+
+/**
+ * Read a data block of <len> 8-bit transfers from the slave at 8-bit slave
+ * address <slaveaddr>, at the specified 8-bit <offset> in the slave's address
+ * space.
+ */
+int i2c_read_block(int port, int slave_addr, int offset, uint8_t *data,
+			int len);
+
+/**
+ * Write a data block of <len> 8-bit transfers to the slave at 8-bit slave
+ * address <slaveaddr>, at the specified 8-bit <offset> in the slave's address
+ * space.
+ */
+int i2c_write_block(int port, int slave_addr, int offset, const uint8_t *data,
 			int len);
 
 /**
