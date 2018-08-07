@@ -6613,8 +6613,9 @@ static void cmd_cbi_help(char *cmd)
 		"      0: BOARD_VERSION\n"
 		"      1: OEM_ID\n"
 		"      2: SKU_ID\n"
+		"      3: DRAM_PART_NUM\n"
 		"    <size> is the size of the data in byte\n"
-		"    <value> is integer to be set. No raw data support yet.\n"
+		"    <value> is integer to be set, string for DRAM_PART_NUM\n"
 		"    [get_flag] is combination of:\n"
 		"      01b: Invalidate cache and reload data from EEPROM\n"
 		"    [set_flag] is combination of:\n"
@@ -6669,19 +6670,24 @@ static int cmd_cbi(int argc, char *argv[])
 			return -1;
 		}
 		r = ec_inbuf;
-		if (rv <= sizeof(uint32_t))
-			printf("As integer: %u (0x%x)\n", r[0], r[0]);
-		printf("As binary:");
-		for (i = 0; i < rv; i++) {
-			if (i % 32 == 31)
-				printf("\n");
-			printf(" %02x", r[i]);
+		if (tag != CBI_TAG_DRAM_PART_NUM) {
+			if (rv <= sizeof(uint32_t))
+				printf("As integer: %u (0x%x)\n", r[0], r[0]);
+			printf("As binary:");
+			for (i = 0; i < rv; i++) {
+				if (i % 32 == 31)
+					printf("\n");
+				printf(" %02x", r[i]);
+			}
+		} else {
+			printf("%.*s", rv, (const char *)r);
 		}
 		printf("\n");
 		return 0;
 	} else if (!strcasecmp(argv[1], "set")) {
 		struct ec_params_set_cbi *p =
 				(struct ec_params_set_cbi *)ec_outbuf;
+		void *val_ptr;
 		uint32_t val;
 		uint8_t size;
 		if (argc < 5) {
@@ -6691,19 +6697,32 @@ static int cmd_cbi(int argc, char *argv[])
 		}
 		memset(p, 0, ec_max_outsize);
 		p->tag = tag;
-		val = strtol(argv[3], &e, 0);
-		if (e && *e) {
-			fprintf(stderr, "Bad value\n");
-			return -1;
+
+		if (tag != CBI_TAG_DRAM_PART_NUM) {
+			val = strtol(argv[3], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad value\n");
+				return -1;
+			}
+			size = strtol(argv[4], &e, 0);
+			if ((e && *e) || size < 1 || 4 < size ||
+					val >= (1ull << size*8)) {
+				fprintf(stderr, "Bad size: %d\n", size);
+				return -1;
+			}
+			val_ptr = &val;
+		} else {
+			val_ptr = argv[3];
+			size = strlen(val_ptr) + 1;
 		}
-		size = strtol(argv[4], &e, 0);
-		if ((e && *e) || size < 1 || 4 < size ||
-				val >= (1ull << size*8)) {
-			fprintf(stderr, "Bad size: %d\n", size);
+
+		if (size > ec_max_outsize - sizeof(*p)) {
+			fprintf(stderr, "Size exceeds parameter buffer: %d\n",
+				size);
 			return -1;
 		}
 		/* Little endian */
-		memcpy(p->data, &val, size);
+		memcpy(p->data, val_ptr, size);
 		p->size = size;
 		if (argc > 5) {
 			p->flag = strtol(argv[5], &e, 0);

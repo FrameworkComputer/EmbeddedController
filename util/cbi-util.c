@@ -35,6 +35,7 @@ enum {
 	OPT_BOARD_VERSION,
 	OPT_OEM_ID,
 	OPT_SKU_ID,
+	OPT_DRAM_PART_NUM,
 	OPT_SIZE,
 	OPT_ERASE_BYTE,
 	OPT_SHOW_ALL,
@@ -46,6 +47,7 @@ static const struct option opts_create[] = {
 	{"board_version", 1, 0, OPT_BOARD_VERSION},
 	{"oem_id", 1, 0, OPT_OEM_ID},
 	{"sku_id", 1, 0, OPT_SKU_ID},
+	{"dram_part_num", 1, 0, OPT_DRAM_PART_NUM},
 	{"size", 1, 0, OPT_SIZE},
 	{"erase_byte", 1, 0, OPT_ERASE_BYTE},
 	{NULL, 0, 0, 0}
@@ -62,6 +64,7 @@ static const char *field_name[] = {
 	"BOARD_VERSION",
 	"OEM_ID",
 	"SKU_ID",
+	"DRAM_PART_NUM"
 };
 BUILD_ASSERT(ARRAY_SIZE(field_name) == CBI_TAG_COUNT);
 
@@ -76,8 +79,10 @@ const char help_create[] =
 	"  --size <size>               Size of output file in bytes\n"
 	"<value> must be a positive integer <= 0XFFFFFFFF and field size can\n"
 	"be optionally specified by <value:size> notation: e.g. 0xabcd:4.\n"
+	"<value> can be a string for DRAM PART NUM.\n"
 	"<size> must be a positive integer <= 0XFFFF.\n"
 	"Optional ARGS are:\n"
+	"  --dram_part_num <value>     DRAM PART NUM\n"
 	"  --erase_byte <uint8>       Byte used for empty space. Default:0xff\n"
 	"  --format_version <uint16>  Data format version\n"
 	"\n";
@@ -231,6 +236,7 @@ static int cmd_create(int argc, char **argv)
 		struct integer_field ver;
 		struct integer_field oem;
 		struct integer_field sku;
+		const char *dram_part_num;
 	} bi;
 	struct cbi_header *h;
 	int rv;
@@ -288,6 +294,9 @@ static int cmd_create(int argc, char **argv)
 				return -1;
 			set_mask |= ARGS_MASK_SKU_ID;
 			break;
+		case OPT_DRAM_PART_NUM:
+			bi.dram_part_num = optarg;
+			break;
 		}
 	}
 
@@ -313,6 +322,10 @@ static int cmd_create(int argc, char **argv)
 	p = cbi_set_data(p, CBI_TAG_BOARD_VERSION, &bi.ver.val, bi.ver.size);
 	p = cbi_set_data(p, CBI_TAG_OEM_ID, &bi.oem.val, bi.oem.size);
 	p = cbi_set_data(p, CBI_TAG_SKU_ID, &bi.sku.val, bi.sku.size);
+	if (bi.dram_part_num != NULL) {
+		p = cbi_set_data(p, CBI_TAG_DRAM_PART_NUM, bi.dram_part_num,
+				strlen(bi.dram_part_num) + 1);
+	}
 	h->total_size = p - cbi;
 	h->crc = cbi_crc8(h);
 
@@ -327,6 +340,20 @@ static int cmd_create(int argc, char **argv)
 	fprintf(stderr, "CBI image is created successfully\n");
 
 	return 0;
+}
+
+static void print_string(const uint8_t *buf, enum cbi_data_tag tag)
+{
+	struct cbi_data *d = cbi_find_tag(buf, tag);
+	const char *name;
+
+	if (!d)
+		return;
+
+	name = d->tag < CBI_TAG_COUNT ? field_name[d->tag] : "???";
+
+	printf("    %s: %.*s (%u, %u)\n", name, d->size, (const char *)d->value,
+		d->tag, d->size);
 }
 
 static void print_integer(const uint8_t *buf, enum cbi_data_tag tag)
@@ -418,6 +445,7 @@ static int cmd_show(int argc, char **argv)
 	print_integer(buf, CBI_TAG_BOARD_VERSION);
 	print_integer(buf, CBI_TAG_OEM_ID);
 	print_integer(buf, CBI_TAG_SKU_ID);
+	print_string(buf, CBI_TAG_DRAM_PART_NUM);
 
 	free(buf);
 
