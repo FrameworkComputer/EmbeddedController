@@ -44,6 +44,33 @@ static int write_reg(uint8_t port, int reg, int regval)
 			  regval);
 }
 
+static int set_flags(const int port, const int addr, const int flags_to_set)
+{
+	int val, rv;
+
+	rv = read_reg(port, addr, &val);
+	if (rv)
+		return rv;
+
+	val |= flags_to_set;
+
+	return write_reg(port, addr, val);
+}
+
+
+static int clr_flags(const int port, const int addr, const int flags_to_clear)
+{
+	int val, rv;
+
+	rv = read_reg(port, addr, &val);
+	if (rv)
+		return rv;
+
+	val &= ~flags_to_clear;
+
+	return write_reg(port, addr, val);
+}
+
 #ifdef CONFIG_CMD_PPC_DUMP
 static int sn5s330_dump(int port)
 {
@@ -122,21 +149,9 @@ static int sn5s330_dump(int port)
 }
 #endif /* defined(CONFIG_CMD_PPC_DUMP) */
 
-static int get_func_set3(uint8_t port, int *regval)
-{
-	int status;
-
-	status = read_reg(port, SN5S330_FUNC_SET3, regval);
-	if (status)
-		CPRINTS("ppc p%d: Failed to read FUNC_SET3!", port);
-
-	return status;
-}
-
 static int sn5s330_pp_fet_enable(uint8_t port, enum sn5s330_pp_idx pp,
 				 int enable)
 {
-	int regval;
 	int status;
 	int pp_bit;
 
@@ -147,16 +162,9 @@ static int sn5s330_pp_fet_enable(uint8_t port, enum sn5s330_pp_idx pp,
 	else
 		return EC_ERROR_INVAL;
 
-	status = get_func_set3(port, &regval);
-	if (status)
-		return status;
+	status = enable ? set_flags(port, SN5S330_FUNC_SET3, pp_bit)
+			: clr_flags(port, SN5S330_FUNC_SET3, pp_bit);
 
-	if (enable)
-		regval |= pp_bit;
-	else
-		regval &= ~pp_bit;
-
-	status = write_reg(port, SN5S330_FUNC_SET3, regval);
 	if (status) {
 		CPRINTS("ppc p%d: Failed to set FUNC_SET3!", port);
 		return status;
@@ -277,26 +285,16 @@ static int sn5s330_init(int port)
 	 * of the two VCONN current limits (min 0.6A).  Many VCONN accessories
 	 * trip the default current limit of min 0.35A.
 	 */
-	status = i2c_read8(i2c_port, i2c_addr, SN5S330_FUNC_SET4, &regval);
-	if (status) {
-		CPRINTS("ppc p%d: Failed to read FUNC_SET4!", port);
-		return status;
-	}
-	regval |= SN5S330_CC_EN | SN5S330_VCONN_ILIM_SEL;
-	status = i2c_write8(i2c_port, i2c_addr, SN5S330_FUNC_SET4, regval);
+	status = set_flags(port, SN5S330_FUNC_SET4,
+			   SN5S330_CC_EN | SN5S330_VCONN_ILIM_SEL);
 	if (status) {
 		CPRINTS("ppc p%d: Failed to set FUNC_SET4!", port);
 		return status;
 	}
 
 	/* Set ideal diode mode for both PP1 and PP2. */
-	status = i2c_read8(i2c_port, i2c_addr, SN5S330_FUNC_SET3, &regval);
-	if (status) {
-		CPRINTS("ppc p%d: Failed to read FUNC_SET3!", port);
-		return status;
-	}
-	regval |= SN5S330_SET_RCP_MODE_PP1 | SN5S330_SET_RCP_MODE_PP2;
-	status = i2c_write8(i2c_port, i2c_addr, SN5S330_FUNC_SET3, regval);
+	status = set_flags(port, SN5S330_FUNC_SET3,
+			   SN5S330_SET_RCP_MODE_PP1 | SN5S330_SET_RCP_MODE_PP2);
 	if (status) {
 		CPRINTS("ppc p%d: Failed to set FUNC_SET3!", port);
 		return status;
@@ -455,19 +453,12 @@ static int sn5s330_is_sourcing_vbus(int port)
 #ifdef CONFIG_USBC_PPC_POLARITY
 static int sn5s330_set_polarity(int port, int polarity)
 {
-	int regval;
-	int status;
-
-	status = read_reg(port, SN5S330_FUNC_SET4, &regval);
-	if (status)
-		return status;
-
 	if (polarity)
-		regval |= SN5S330_CC_POLARITY; /* CC2 active. */
+		/* CC2 active. */
+		return set_flags(port, SN5S330_FUNC_SET4, SN5S330_CC_POLARITY);
 	else
-		regval &= ~SN5S330_CC_POLARITY; /* CC1 active. */
-
-	return write_reg(port, SN5S330_FUNC_SET4, regval);
+		/* CC1 active. */
+		return clr_flags(port, SN5S330_FUNC_SET4, SN5S330_CC_POLARITY);
 }
 #endif
 
@@ -509,19 +500,11 @@ static int sn5s330_set_vbus_source_current_limit(int port,
 
 static int sn5s330_discharge_vbus(int port, int enable)
 {
-	int regval;
-	int status;
+	int status = enable ? set_flags(port, SN5S330_FUNC_SET3,
+					SN5S330_VBUS_DISCH_EN)
+			    : clr_flags(port, SN5S330_FUNC_SET3,
+					SN5S330_VBUS_DISCH_EN);
 
-	status = get_func_set3(port, &regval);
-	if (status)
-		return status;
-
-	if (enable)
-		regval |= SN5S330_VBUS_DISCH_EN;
-	else
-		regval &= ~SN5S330_VBUS_DISCH_EN;
-
-	status = write_reg(port, SN5S330_FUNC_SET3, regval);
 	if (status) {
 		CPRINTS("ppc p%d: Failed to %s vbus discharge",
 			port, enable ? "enable" : "disable");
