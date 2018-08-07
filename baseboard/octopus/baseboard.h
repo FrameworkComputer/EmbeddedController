@@ -76,6 +76,10 @@
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_PWM
 
+/* Port80 -- allow larger buffer for port80 messages */
+#undef CONFIG_PORT80_HISTORY_LEN
+#define CONFIG_PORT80_HISTORY_LEN 256
+
 /*
  * We don't need CONFIG_BACKLIGHT_LID since hardware AND's LID_OPEN and AP
  * signals with EC backlight enable signal.
