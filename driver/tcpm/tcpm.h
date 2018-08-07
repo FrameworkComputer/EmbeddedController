@@ -57,13 +57,30 @@ static inline int tcpc_xfer(int port, const uint8_t *out, int out_size,
 			tcpc_config[port].i2c_slave_addr, out, out_size, in,
 			in_size, flags);
 }
+
+static inline int tcpc_read_block(int port, int reg, uint8_t *in, int size)
+{
+	return i2c_read_block(tcpc_config[port].i2c_host_port,
+			tcpc_config[port].i2c_slave_addr, reg, in, size);
+}
+
+static inline int tcpc_write_block(int port, int reg,
+		const uint8_t *out, int size)
+{
+	return i2c_write_block(tcpc_config[port].i2c_host_port,
+			tcpc_config[port].i2c_slave_addr, reg, out, size);
+}
+
 #else /* !CONFIG_USB_PD_TCPC_LOW_POWER */
 int tcpc_write(int port, int reg, int val);
 int tcpc_write16(int port, int reg, int val);
 int tcpc_read(int port, int reg, int *val);
 int tcpc_read16(int port, int reg, int *val);
-int tcpc_xfer(int port, const uint8_t *out, int out_size, uint8_t *in,
-	      int in_size, int flags);
+int tcpc_read_block(int port, int reg, uint8_t *in, int size);
+int tcpc_write_block(int port, int reg, const uint8_t *out, int size);
+int tcpc_xfer(int port, const uint8_t *out, int out_size,
+		uint8_t *in, int in_size, int flags);
+
 #endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
 
 static inline void tcpc_lock(int port, int lock)

@@ -335,10 +335,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	xyz_reg = get_xyz_reg(s->type);
 
 	/* Read 6 bytes starting at xyz_reg */
-	i2c_lock(s->port, 1);
-	ret = i2c_xfer(s->port, s->addr,
-			&xyz_reg, 1, raw, 6, I2C_XFER_SINGLE);
-	i2c_lock(s->port, 0);
+	i2c_block_read(s->port, s->addr, xyz_reg, raw, 6);
 
 	if (ret != EC_SUCCESS) {
 		CPRINTF("[%T %s type:0x%X RD XYZ Error]",

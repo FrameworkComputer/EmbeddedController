@@ -72,14 +72,8 @@ static struct cbi_header * const head = (struct cbi_header *)cbi;
 
 static int read_eeprom(uint8_t offset, uint8_t *in, int in_size)
 {
-	int ret;
-
-	i2c_lock(I2C_PORT_EEPROM, 1);
-	ret = i2c_xfer(I2C_PORT_EEPROM, I2C_ADDR_EEPROM,
-			&offset, 1, in, in_size, I2C_XFER_SINGLE);
-	i2c_lock(I2C_PORT_EEPROM, 0);
-
-	return ret;
+	return i2c_read_block(I2C_PORT_EEPROM, I2C_ADDR_EEPROM, offset,
+			in, in_size);
 }
 
 /*
@@ -199,8 +193,7 @@ static int write_board_info(void)
 	/* The code is only tested for ST M24C02, whose page size for a single
 	 * write is 16 byte. To support different EEPROMs, you may need to
 	 * craft the i2c packets accordingly. */
-	uint8_t buf[EEPROM_PAGE_WRITE_SIZE + 1];  /* '1' for offset byte */
-	uint8_t *p = cbi;
+	const uint8_t *p = cbi;
 	int rest = head->total_size;
 
 	if (eeprom_is_write_protected()) {
@@ -208,24 +201,19 @@ static int write_board_info(void)
 		return EC_ERROR_ACCESS_DENIED;
 	}
 
-	buf[0] = 0;	/* Offset 0 */
 	while (rest > 0) {
 		int size = MIN(EEPROM_PAGE_WRITE_SIZE, rest);
 		int rv;
-		rest -= size;
-		memcpy(&buf[1], p, size);
-		i2c_lock(I2C_PORT_EEPROM, 1);
-		rv = i2c_xfer(I2C_PORT_EEPROM, I2C_ADDR_EEPROM, buf, size + 1,
-			      NULL, 0, I2C_XFER_SINGLE);
-		i2c_lock(I2C_PORT_EEPROM, 0);
+		rv = i2c_write_block(I2C_PORT_EEPROM, I2C_ADDR_EEPROM,
+				p - cbi, p, size);
 		if (rv) {
 			CPRINTS("Failed to write for %d", rv);
 			return rv;
 		}
 		/* Wait for internal write cycle completion */
 		msleep(EEPROM_PAGE_WRITE_MS);
-		buf[0] += size;
 		p += size;
+		rest -= size;
 	}
 
 	return EC_SUCCESS;

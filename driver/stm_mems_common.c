@@ -14,15 +14,8 @@
 int st_raw_read_n(const int port, const int addr, const uint8_t reg,
 	       uint8_t *data_ptr, const int len)
 {
-	int rv = -EC_ERROR_PARAM1;
-	uint8_t reg_a = reg | 0x80;
-
 	/* TODO: Implement SPI interface support */
-	i2c_lock(port, 1);
-	rv = i2c_xfer(port, addr, &reg_a, 1, data_ptr, len, I2C_XFER_SINGLE);
-	i2c_lock(port, 0);
-
-	return rv;
+	return i2c_read_block(port, addr, reg | 0x80, data_ptr, len);
 }
 
 /**
@@ -31,14 +24,8 @@ int st_raw_read_n(const int port, const int addr, const uint8_t reg,
 int st_raw_read_n_noinc(const int port, const int addr, const uint8_t reg,
 	       uint8_t *data_ptr, const int len)
 {
-	int rv = -EC_ERROR_PARAM1;
-
 	/* TODO: Implement SPI interface support */
-	i2c_lock(port, 1);
-	rv = i2c_xfer(port, addr, &reg, 1, data_ptr, len, I2C_XFER_SINGLE);
-	i2c_lock(port, 0);
-
-	return rv;
+	return i2c_read_block(port, addr, reg, data_ptr, len);
 }
 
  /**

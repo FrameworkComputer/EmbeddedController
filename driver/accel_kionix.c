@@ -187,10 +187,7 @@ static int raw_read_multi(const int port, int addr, uint8_t reg,
 				     &reg, 1, rxdata, rxlen);
 #endif
 	} else {
-		i2c_lock(port, 1);
-		rv = i2c_xfer(port, addr, &reg, 1, rxdata, rxlen,
-			      I2C_XFER_SINGLE);
-		i2c_lock(port, 0);
+		rv = i2c_read_block(port, addr, reg, rxdata, rxlen);
 	}
 	return rv;
 }

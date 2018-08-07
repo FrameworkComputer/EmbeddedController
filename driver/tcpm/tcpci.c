@@ -77,6 +77,34 @@ int tcpc_read16(int port, int reg, int *val)
 	return rv;
 }
 
+int tcpc_read_block(int port, int reg, uint8_t *in, int size)
+{
+	int rv = i2c_read_block(tcpc_config[port].i2c_host_port,
+			    tcpc_config[port].i2c_slave_addr, reg, in, size);
+	if (rv && pd_device_in_low_power(port)) {
+		pd_wait_for_wakeup(port);
+		rv = i2c_read_block(tcpc_config[port].i2c_host_port,
+				tcpc_config[port].i2c_slave_addr, reg,
+				in, size);
+	}
+	pd_device_accessed(port);
+	return rv;
+}
+
+int tcpc_write_block(int port, int reg, const uint8_t *out, int size)
+{
+	int rv = i2c_write_block(tcpc_config[port].i2c_host_port,
+			    tcpc_config[port].i2c_slave_addr, reg, out, size);
+	if (rv && pd_device_in_low_power(port)) {
+		pd_wait_for_wakeup(port);
+		rv = i2c_write_block(tcpc_config[port].i2c_host_port,
+				tcpc_config[port].i2c_slave_addr, reg,
+				out, size);
+	}
+	pd_device_accessed(port);
+	return rv;
+}
+
 int tcpc_xfer(int port, const uint8_t *out, int out_size,
 			    uint8_t *in, int in_size, int flags)
 {
@@ -314,11 +342,7 @@ int tcpci_tcpm_get_message(int port, uint32_t *payload, int *head)
 
 	cnt = cnt - 3;
 	if (rv == EC_SUCCESS && cnt > 0) {
-		tcpc_lock(port, 1);
-		rv = tcpc_xfer(port,
-			       (uint8_t *)&reg, 1, (uint8_t *)payload,
-			       cnt, I2C_XFER_SINGLE);
-		tcpc_lock(port, 0);
+		tcpc_read_block(port, reg, (uint8_t *)payload, cnt);
 	}
 
 clear:
@@ -344,12 +368,7 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 		return rv;
 
 	if (cnt > 0) {
-		tcpc_lock(port, 1);
-		rv = tcpc_xfer(port,
-			       (uint8_t *)&reg, 1, NULL, 0, I2C_XFER_START);
-		rv |= tcpc_xfer(port,
-				(uint8_t *)data, cnt, NULL, 0, I2C_XFER_STOP);
-		tcpc_lock(port, 0);
+		tcpc_write_block(port, reg, (const uint8_t *)data, cnt);
 	}
 
 	/* If tcpc read fails, return error */

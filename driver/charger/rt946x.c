@@ -153,20 +153,7 @@ static int rt946x_write8(int reg, int val)
 
 static int rt946x_block_write(int reg, const uint8_t *val, int len)
 {
-	int rv;
-	uint8_t buf[I2C_MAX_HOST_PACKET_SIZE];
-
-	if (len + 1 > I2C_MAX_HOST_PACKET_SIZE)
-		return EC_ERROR_INVAL;
-
-	buf[0] = reg & 0xff;
-	memcpy(&buf[1], val, len);
-
-	i2c_lock(I2C_PORT_CHARGER, 1);
-	rv = i2c_xfer(I2C_PORT_CHARGER, RT946X_ADDR, buf, len + 1, NULL, 0,
-		      I2C_XFER_SINGLE);
-	i2c_lock(I2C_PORT_CHARGER, 0);
-	return rv;
+	return i2c_write_block(I2C_PORT_CHARGER, RT946X_ADDR, reg, val, len);
 }
 
 static int rt946x_update_bits(int reg, int mask, int val)

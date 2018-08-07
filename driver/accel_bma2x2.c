@@ -43,19 +43,6 @@ static inline int raw_write8(const int port, const int addr, const int reg,
 	return i2c_write8(port, addr, reg, data);
 }
 
-static int raw_read_multi(const int port, int addr, uint8_t reg,
-			  uint8_t *rxdata, int rxlen)
-{
-	int rv;
-
-	i2c_lock(port, 1);
-	rv = i2c_xfer(port, addr, &reg, 1, rxdata, rxlen,
-		      I2C_XFER_SINGLE);
-	i2c_lock(port, 0);
-
-	return rv;
-}
-
 static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 {
 	int ret,  range_val, reg_val, range_reg_val;
@@ -173,7 +160,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 
 	/* Read 6 bytes starting at X_AXIS_LSB. */
 	mutex_lock(s->mutex);
-	ret = raw_read_multi(s->port, s->addr, BMA2x2_X_AXIS_LSB_ADDR, acc, 6);
+	ret = i2c_read_block(s->port, s->addr, BMA2x2_X_AXIS_LSB_ADDR, acc, 6);
 	mutex_unlock(s->mutex);
 
 	if (ret != EC_SUCCESS)
