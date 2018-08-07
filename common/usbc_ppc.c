@@ -86,6 +86,19 @@ int ppc_vbus_sink_enable(int port, int enable)
 	return ppc_chips[port].drv->vbus_sink_enable(port, enable);
 }
 
+int ppc_enter_low_power_mode(int port)
+{
+	const struct ppc_config_t *const ppc = &ppc_chips[port];
+
+	if ((port < 0) || (port >= ppc_cnt))
+		return EC_ERROR_INVAL;
+
+	if (ppc->drv->enter_low_power_mode)
+		return ppc->drv->enter_low_power_mode(port);
+	else
+		return EC_ERROR_UNIMPLEMENTED;
+}
+
 int ppc_vbus_source_enable(int port, int enable)
 {
 	if ((port < 0) || (port >= ppc_cnt))

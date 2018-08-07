@@ -86,34 +86,37 @@ enum sn5s330_pp_idx {
 #define SN5S330_ILIM_3_30  12
 
 /* FUNC_SET_2 */
-#define SN5S330_SBU_EN (1 << 4)
+#define SN5S330_SBU_EN			(1 << 4)
 
 /* FUNC_SET_3 */
-#define SN5S330_PP1_EN (1 << 0)
-#define SN5S330_PP2_EN (1 << 1)
-#define SN5S330_VBUS_DISCH_EN (1 << 2)
-#define SN5S330_SET_RCP_MODE_PP1 (1 << 5)
-#define SN5S330_SET_RCP_MODE_PP2 (1 << 6)
+#define SN5S330_PP1_EN			(1 << 0)
+#define SN5S330_PP2_EN			(1 << 1)
+#define SN5S330_VBUS_DISCH_EN		(1 << 2)
+#define SN5S330_SET_RCP_MODE_PP1	(1 << 5)
+#define SN5S330_SET_RCP_MODE_PP2	(1 << 6)
 
 /* FUNC_SET_4 */
-#define SN5S330_VCONN_EN (1 << 0)
-#define SN5S330_CC_POLARITY (1 << 1)
-#define SN5S330_CC_EN (1 << 4)
-#define SN5S330_VCONN_ILIM_SEL (1 << 5)
+#define SN5S330_VCONN_EN		(1 << 0)
+#define SN5S330_CC_POLARITY		(1 << 1)
+#define SN5S330_CC_EN			(1 << 4)
+#define SN5S330_VCONN_ILIM_SEL		(1 << 5)
 
 /* FUNC_SET_9 */
-#define SN5S330_PP2_CONFIG (1 << 2)
-#define SN5S330_OVP_EN_CC (1 << 4)
-#define SN5S330_CONFIG_UVP (1 << 5)
+#define SN5S330_FORCE_OVP_EN_SBU	(1 << 1)
+#define SN5S330_PP2_CONFIG		(1 << 2)
+#define SN5S330_OVP_EN_CC		(1 << 4)
+#define SN5S330_CONFIG_UVP		(1 << 5)
+#define SN5S330_FORCE_ON_VBUS_OVP	(1 << 6)
+#define SN5S330_FORCE_ON_VBUS_UVP	(1 << 7)
 
 /* INT_STATUS_REG3 */
-#define SN5S330_VBUS_GOOD (1 << 0)
+#define SN5S330_VBUS_GOOD		(1 << 0)
 
 /* INT_STATUS_REG4 */
-#define SN5S330_DIG_RES (1 << 0)
-#define SN5S330_DB_BOOT (1 << 1)
-#define SN5S330_VSAFE0V_STAT (1 << 2)
-#define SN5S330_VSAFE0V_MASK (1 << 3)
+#define SN5S330_DIG_RES			(1 << 0)
+#define SN5S330_DB_BOOT			(1 << 1)
+#define SN5S330_VSAFE0V_STAT		(1 << 2)
+#define SN5S330_VSAFE0V_MASK		(1 << 3)
 
 /*
  * INT_MASK_RISE/FALL_EDGE_1

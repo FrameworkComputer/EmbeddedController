@@ -514,6 +514,54 @@ static int sn5s330_discharge_vbus(int port, int enable)
 	return EC_SUCCESS;
 }
 
+static int sn5s330_enter_low_power_mode(int port)
+{
+	int rv;
+
+	/* Turn off both SRC and SNK FETs */
+	rv = clr_flags(port, SN5S330_FUNC_SET3,
+		       SN5S330_PP1_EN | SN5S330_PP2_EN);
+
+	if (rv) {
+		CPRINTS("ppc p%d: Could not disable both FETS (%d)", port, rv);
+		return rv;
+	}
+
+	/* Turn off Vconn power */
+	rv = clr_flags(port, SN5S330_FUNC_SET4, SN5S330_VCONN_EN);
+
+	if (rv) {
+		CPRINTS("ppc p%d: Could not disable Vconn (%d)", port, rv);
+		return rv;
+	}
+
+	/* Turn off SBU path */
+	rv = clr_flags(port, SN5S330_FUNC_SET2, SN5S330_SBU_EN);
+
+	if (rv) {
+		CPRINTS("ppc p%d: Could not disable SBU path (%d)", port, rv);
+		return rv;
+	}
+
+	/*
+	 * Turn off the Over Voltage Protection circuits. Needs to happen after
+	 * FETs are disabled, otherwise OVP can automatically turned back on.
+	 * Since FETs are off, any over voltage does not make it to the board
+	 * side of the PPC.
+	 */
+	rv = clr_flags(port, SN5S330_FUNC_SET9,
+		       SN5S330_FORCE_OVP_EN_SBU | SN5S330_FORCE_ON_VBUS_OVP |
+			       SN5S330_FORCE_ON_VBUS_UVP);
+
+	if (rv) {
+		CPRINTS("ppc p%d: Could not disable OVP circuit (%d)", port,
+			rv);
+		return rv;
+	}
+
+	return EC_SUCCESS;
+}
+
 #ifdef CONFIG_USBC_PPC_VCONN
 static int sn5s330_set_vconn(int port, int enable)
 {
@@ -600,17 +648,18 @@ const struct ppc_drv sn5s330_drv = {
 	.is_sourcing_vbus = &sn5s330_is_sourcing_vbus,
 	.vbus_sink_enable = &sn5s330_vbus_sink_enable,
 	.vbus_source_enable = &sn5s330_vbus_source_enable,
+	.set_vbus_source_current_limit = &sn5s330_set_vbus_source_current_limit,
+	.discharge_vbus = &sn5s330_discharge_vbus,
+	.enter_low_power_mode = &sn5s330_enter_low_power_mode,
 #ifdef CONFIG_CMD_PPC_DUMP
 	.reg_dump = &sn5s330_dump,
-#endif /* defined(CONFIG_CMD_PPC_DUMP) */
+#endif
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
 	.is_vbus_present = &sn5s330_is_vbus_present,
-#endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
+#endif
 #ifdef CONFIG_USBC_PPC_POLARITY
 	.set_polarity = &sn5s330_set_polarity,
 #endif
-	.set_vbus_source_current_limit = &sn5s330_set_vbus_source_current_limit,
-	.discharge_vbus = &sn5s330_discharge_vbus,
 #ifdef CONFIG_USBC_PPC_VCONN
 	.set_vconn = &sn5s330_set_vconn,
 #endif
