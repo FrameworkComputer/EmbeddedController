@@ -776,30 +776,33 @@ static void i8042_handle_from_host(void)
 static void keyboard_special(uint16_t k)
 {
 	static uint8_t s;
-	static const uint16_t a[] = {0xe075, 0xe075, 0xe072, 0xe072, 0xe06b,
-				     0xe074, 0xe06b, 0xe074, 0x0032, 0x001c};
+	static const uint16_t a[] = {
+		SCANCODE_UP, SCANCODE_UP, SCANCODE_DOWN, SCANCODE_DOWN,
+		SCANCODE_LEFT, SCANCODE_RIGHT, SCANCODE_LEFT, SCANCODE_RIGHT,
+		SCANCODE_B, SCANCODE_A};
+
 #ifdef HAS_TASK_LIGHTBAR
 	/* Lightbar demo mode: keyboard can fake the battery state */
 	switch (k) {
-	case 0xe075:				/* up */
+	case SCANCODE_UP:
 		demo_battery_level(1);
 		break;
-	case 0xe072:				/* down */
+	case SCANCODE_DOWN:
 		demo_battery_level(-1);
 		break;
-	case 0xe06b:				/* left */
+	case SCANCODE_LEFT:
 		demo_is_charging(0);
 		break;
-	case 0xe074:				/* right */
+	case SCANCODE_RIGHT:
 		demo_is_charging(1);
 		break;
-	case 0x000b:				/* dim */
+	case SCANCODE_F6:  /* dim */
 		demo_brightness(-1);
 		break;
-	case 0x0083:				/* bright */
+	case SCANCODE_F7:  /* bright */
 		demo_brightness(1);
 		break;
-	case 0x002c:				/* T */
+	case SCANCODE_T:
 		demo_tap();
 		break;
 	}
@@ -807,7 +810,7 @@ static void keyboard_special(uint16_t k)
 
 	if (k == a[s])
 		s++;
-	else if (k != 0xe075)
+	else if (k != SCANCODE_UP)
 		s = 0;
 	else if (s != 2)
 		s = 1;

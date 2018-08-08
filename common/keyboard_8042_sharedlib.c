@@ -76,20 +76,20 @@ uint8_t scancode_translate_set2_to_1(uint8_t code)
 }
 
 /*
- * Button scancodes in code set 2.
+ * Button scan codes.
  * Must be in the same order as defined in keyboard_button_type.
  */
 SHAREDLIB(const struct button_8042_t buttons_8042[] = {
-	{0xe037, 0}, /* Power */
-	{0xe021, 1}, /* Volume Down */
-	{0xe032, 1}, /* Volume Up */
-	{0x0016, 1}, /* 1 */
-	{0x001e, 1}, /* 2 */
-	{0x0026, 1}, /* 3 */
-	{0x0025, 1}, /* 4 */
-	{0x002e, 1}, /* 5 */
-	{0x0036, 1}, /* 6 */
-	{0x003d, 1}, /* 7 */
-	{0x003e, 1}, /* 8 */
+	{SCANCODE_POWER, 0},
+	{SCANCODE_VOLUME_DOWN, 1},
+	{SCANCODE_VOLUME_UP, 1},
+	{SCANCODE_1, 1},
+	{SCANCODE_2, 1},
+	{SCANCODE_3, 1},
+	{SCANCODE_4, 1},
+	{SCANCODE_5, 1},
+	{SCANCODE_6, 1},
+	{SCANCODE_7, 1},
+	{SCANCODE_8, 1},
 });
 BUILD_ASSERT(ARRAY_SIZE(buttons_8042) == KEYBOARD_BUTTON_COUNT);
