@@ -184,8 +184,12 @@ VALID_CHIP_COMBO["grunt.npcx_uut"]="ccd_cr50"
 VALID_CHIP_COMBO["grunt.npcx_spi"]="servo"
 
 DEFAULT_PORT="${SERVOD_PORT:-9999}"
+BITBANG_RATE="9600"  # Could be overwritten by a command line option.
 
 # Flags
+DEFINE_integer bitbang_rate "${BITBANG_RATE}" \
+	"UART baud rate to use when bit bang programming, "\
+"standard UART rates from 9600 to 57600 are supported."
 DEFINE_string board "${DEFAULT_BOARD}" \
 	"The board to run debugger on."
 DEFINE_string chip "" \
@@ -880,6 +884,11 @@ function flash_flashrom() {
 
 function flash_stm32() {
 	local log_option
+	local STM32MON
+
+	if ! $(servo_has_cold_reset); then
+		die "Cold reset must be available for STM32 programming"
+	fi
 
 	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
 	STM32MON=$(PATH="${TOOL_PATH}" which stm32mon)
@@ -892,38 +901,35 @@ function flash_stm32() {
 	info "${MCU} UART pty : ${EC_UART}"
 	claim_pty ${EC_UART}
 
+	# Make sure EC reboots in serial monitor mode.
+	ec_enable_boot0 "bitbang"
+
+	# Pulse EC reset.
+	ec_reset
+
 	if ! on_raiden && [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
 		dut_control ${MCU}_uart_en:on
 	fi
 	dut_control ${MCU}_uart_parity:even
 
 	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
-		# TODO(b/77965217): remove when cr50 stops clobbering bitbang
-		# when it notices the AP/EC turn off.
-		dut_control cold_reset:on
-		sleep 2
-		dut_control ${MCU}_uart_baudrate:9600
+		case "${FLAGS_bitbang_rate}" in
+			(9600|19200|38400|57600) : ;;
+			(*) die
+                            "${FLAGS_bitbang_rate} is not a valid bit bang rate"
+                            ;;
+		esac
+		info "Programming at ${FLAGS_bitbang_rate} baud"
+		dut_control ${MCU}_uart_baudrate:"${FLAGS_bitbang_rate}"
 		dut_control ${MCU}_uart_bitbang_en:on
 	else
 		dut_control ${MCU}_uart_baudrate:115200
-
-		if $(servo_has_warm_reset); then
-			dut_control warm_reset:on
-		fi
 	fi
-
-	# Force the EC to boot in serial monitor mode
-	ec_enable_boot0 "bitbang"
 
 	# Add a delay long enough for cr50 to update the ccdstate. Cr50 updates
 	# ccdstate once a second, so a 2 second delay should be safe.
 	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
 		sleep 2
-	fi
-
-	# Reset the EC
-	if $(servo_has_cold_reset); then
-		ec_reset
 	fi
 
         if [ -n "${FLAGS_logfile}" ]; then
