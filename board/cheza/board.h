@@ -60,6 +60,7 @@
 #define CONFIG_CMD_CHARGER_ADC_AMON_BMON
 #define CONFIG_CHARGER_PSYS
 #define CONFIG_CHARGER_PSYS_READ
+#define CONFIG_CHARGER_DISCHARGE_ON_AC
 
 /* TODO(b/79163120): Use correct charger values, copied from Lux for rev-0 */
 #define CONFIG_CHARGER_INPUT_CURRENT 512
