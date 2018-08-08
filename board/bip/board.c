@@ -98,6 +98,18 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
+void board_hibernate_late(void)
+{
+	/*
+	 * Set KSO/KSI pins to GPIO input function to disable keyboard scan
+	 * while hibernating. This also prevent leakage current caused
+	 * by internal pullup of keyboard scan module.
+	 */
+	gpio_set_flags_by_mask(GPIO_KSO_H, 0xff, GPIO_INPUT);
+	gpio_set_flags_by_mask(GPIO_KSO_L, 0xff, GPIO_INPUT);
+	gpio_set_flags_by_mask(GPIO_KSI, 0xff, GPIO_INPUT);
+}
+
 /******************************************************************************/
 /* SPI devices */
 /* TODO(b/75972988): Fill out correctly (SPI FLASH) */

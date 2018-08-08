@@ -110,6 +110,17 @@ GPIO(USB2_OTG_ID,	 PIN(I, 2), GPIO_ODR_LOW |
 GPIO(BAT_LED_ORANGE, PIN(A, 6), GPIO_OUT_LOW)		/* LED_1_L NOTE: actually active high, but labeled _L in the schematics */
 GPIO(BAT_LED_BLUE,   PIN(A, 3), GPIO_OUT_LOW)		/* LED_2_L NOTE: actually active high, but labeled _L in the schematics */
 
+/* NC pins, enable internal pull-down to avoid floating state. */
+GPIO(GPIOB2_NC,	     PIN(B, 2), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(GPIOE6_NC,	     PIN(E, 6), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(GPIOG0_NC,	     PIN(G, 0), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(GPIOG1_NC,	     PIN(G, 1), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(GPIOH0_NC,	     PIN(H, 0), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(GPIOL2_NC,	     PIN(L, 2), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(GPIOL3_NC,	     PIN(L, 3), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(GPIOL6_NC,	     PIN(L, 6), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(GPIOM6_NC,	     PIN(M, 6), GPIO_INPUT | GPIO_PULL_DOWN)
+
 /* Not implemented in hardware yet */
 UNIMPLEMENTED(KB_BL_PWR_EN)
 
