@@ -269,21 +269,44 @@ static void discard_input(int fd)
 {
 	uint8_t buffer[64];
 	int res, i;
+	int count_of_zeros;
 
 	/* Skip in i2c and spi modes */
 	if (mode != MODE_SERIAL)
 		return;
 
 	/* eat trailing garbage */
+	count_of_zeros = 0;
 	do {
 		res = read(fd, buffer, sizeof(buffer));
 		if (res > 0) {
-			printf("Recv[%d]:", res);
+
+			/* Discard zeros in the beginning of the buffer. */
 			for (i = 0; i < res; i++)
+				if (buffer[i])
+					break;
+
+			count_of_zeros += i;
+			if (i == res) {
+				/* Only zeros, nothing to print out. */
+				continue;
+			}
+
+			/* Discard zeros in the end of the buffer. */
+			while (!buffer[res - 1]) {
+				count_of_zeros++;
+				res--;
+			}
+
+			printf("Recv[%d]:", res - i);
+			for (; i < res; i++)
 				printf("%02x ", buffer[i]);
 			printf("\n");
 		}
 	} while (res > 0);
+
+	if (count_of_zeros)
+		printf("%d zeros ignored\n", count_of_zeros);
 }
 
 int wait_for_ack(int fd)
