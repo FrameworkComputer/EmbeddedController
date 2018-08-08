@@ -451,6 +451,12 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	uint32_t pin = 0;
 	uint32_t mask_copy = mask;
 
+	if (port > GPIO_KBS_OFF) {
+		/* set up GPIO of KSO/KSI pins (support input only). */
+		gpio_kbs_pin_gpio_mode(port, mask, flags);
+		return;
+	}
+
 	/*
 	 * Select open drain first, so that we don't glitch the signal
 	 * when changing the line to an output.
@@ -631,12 +637,8 @@ void gpio_pre_init(void)
 		if (is_warm)
 			flags &= ~(GPIO_LOW | GPIO_HIGH);
 
-		if (g->port > GPIO_KBS_OFF)
-			/* KSO/KSI pins to GPIO mode (input only). */
-			gpio_kbs_pin_gpio_mode(g->port, g->mask, flags);
-		else
-			/* Set up GPIO based on flags */
-			gpio_set_flags_by_mask(g->port, g->mask, flags);
+		/* Set up GPIO based on flags */
+		gpio_set_flags_by_mask(g->port, g->mask, flags);
 	}
 }
 
