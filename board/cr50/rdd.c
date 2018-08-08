@@ -58,7 +58,12 @@ int uart_tx_is_connected(int uart)
 {
 	if (uart == UART_AP)
 		return GREAD(PINMUX, DIOA7_SEL);
-	return GREAD(PINMUX, DIOB5_SEL);
+
+	/*
+	 * Enabling bit bang programming mode disconnected the EC UART from
+	 * the external pin, but muxed DIOB5 to a different GPIO bit.
+	 */
+	return !uart_bitbang_is_enabled() && GREAD(PINMUX, DIOB5_SEL);
 }
 
 /**
@@ -224,8 +229,7 @@ static void ccd_state_change_hook(void)
 		flags_want |= CCD_ENABLE_UART_EC;
 
 #ifdef CONFIG_UART_BITBANG
-	/* EC must be all the way on for bit-banging the EC UART */
-	if (ec_is_on() && uart_bitbang_is_wanted())
+	if (uart_bitbang_is_wanted())
 		flags_want |= CCD_ENABLE_UART_EC_BITBANG;
 #endif
 
@@ -322,8 +326,14 @@ static void ccd_state_change_hook(void)
 	if (delta & CCD_ENABLE_UART_EC_TX)
 		uartn_tx_connect(UART_EC);
 #ifdef CONFIG_UART_BITBANG
-	if (delta & CCD_ENABLE_UART_EC_BITBANG)
+	if (delta & CCD_ENABLE_UART_EC_BITBANG) {
+		/*
+		 * Servo detect interrupt will be re-enabled by the
+		 * servo_detect() poll once bit bang mode is disabled.
+		 */
+		gpio_disable_interrupt(GPIO_DETECT_SERVO);
 		uart_bitbang_enable();
+	}
 #endif
 	if (delta & CCD_ENABLE_I2C)
 		usb_i2c_board_enable();

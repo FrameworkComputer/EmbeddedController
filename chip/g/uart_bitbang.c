@@ -25,9 +25,6 @@
 	|| (rate == 19200) || (rate == 38400) || (rate == 57600) || \
 	 (rate == 115200))
 
-#define RX_BUF_SIZE 8
-#define BUF_NEXT(idx) ((idx+1) % RX_BUF_SIZE)
-
 #define TIMEUS_CLK_FREQ 24 /* units: MHz */
 
 /* Flag indicating whether bit banging is enabled or not. */
@@ -35,11 +32,7 @@ static uint8_t bitbang_enabled;
 /* Flag indicating bit banging is desired.  Allows async enable/disable. */
 static uint8_t bitbang_wanted;
 
-static int rx_buf[RX_BUF_SIZE];
-
 /* Current bitbang context */
-static int tx_pin;
-static int rx_pin;
 static uint32_t bit_period_ticks;
 static uint8_t set_parity;
 
@@ -90,27 +83,35 @@ int uart_bitbang_config(int baud_rate, int parity)
 		CPRINTF("Err: invalid parity '%d'. (0:N, 1:O, 2:E)\n", parity);
 		return EC_ERROR_INVAL;
 	};
-	bitbang_config.htp.parity = parity;
+	bitbang_config.parity = parity;
 
 	return EC_SUCCESS;
 }
 
 int uart_bitbang_enable(void)
 {
-	/* We only want to bit bang 1 UART at a time */
 	if (bitbang_enabled)
-		return EC_ERROR_BUSY;
+		return EC_SUCCESS;
 
 	/* UART TX must be disconnected first */
 	if (uart_tx_is_connected(bitbang_config.uart))
 		return EC_ERROR_BUSY;
 
+	/* Set this early to avoid interfering with CCD state machine. */
+	bitbang_enabled = 1;
+
+	/*
+	 * Disable aggregate interrupts from GPIOs, otherwise
+	 * _gpio0_interrupt() gets invoked along with the pin specific
+	 * interrupts.
+	 */
+	task_disable_irq(GC_IRQNUM_GPIO0_GPIOCOMBINT);
+	task_disable_irq(GC_IRQNUM_GPIO1_GPIOCOMBINT);
+
 	/* Select the GPIOs instead of the UART block */
-	REG32(bitbang_config.tx_pinmux_reg) =
-		bitbang_config.tx_pinmux_regval;
+	REG32(bitbang_config.tx_pinmux_reg) = bitbang_config.tx_pinmux_regval;
 	gpio_set_flags(bitbang_config.tx_gpio, GPIO_OUT_HIGH);
-	REG32(bitbang_config.rx_pinmux_reg) =
-		bitbang_config.rx_pinmux_regval;
+	REG32(bitbang_config.rx_pinmux_reg) = bitbang_config.rx_pinmux_regval;
 	gpio_set_flags(bitbang_config.rx_gpio, GPIO_INPUT);
 
 	/*
@@ -120,26 +121,20 @@ int uart_bitbang_enable(void)
 	pmu_clock_en(PERIPH_TIMEUS);
 	GR_TIMEUS_EN(0) = 0;
 	GR_TIMEUS_MAXVAL(0) = 0xFFFFFFFF;
+	GR_TIMEUS_CUR_MAJOR(0) = 0; /* Prevent timer counter overflows. */
 	GR_TIMEUS_EN(0) = 1;
 
 	/* Save context information. */
-	tx_pin = bitbang_config.tx_gpio;
-	rx_pin = bitbang_config.rx_gpio;
-	bit_period_ticks = TIMEUS_CLK_FREQ *
-		((1 * SECOND) / bitbang_config.baud_rate);
-	set_parity = bitbang_config.htp.parity;
+	bit_period_ticks = ((uint64_t)TIMEUS_CLK_FREQ * SECOND) /
+		bitbang_config.baud_rate;
+	set_parity = bitbang_config.parity;
 
-	/* Register the function pointers. */
-	uartn_funcs[bitbang_config.uart]._rx_available =
-		_uart_bitbang_rx_available;
-	uartn_funcs[bitbang_config.uart]._write_char =
-		_uart_bitbang_write_char;
-	uartn_funcs[bitbang_config.uart]._read_char =
-		_uart_bitbang_read_char;
-
-	bitbang_enabled = 1;
+	uartn_disable_interrupt(bitbang_config.uart);
+	task_enable_irq(bitbang_config.rx_irq);
 	gpio_enable_interrupt(bitbang_config.rx_gpio);
+
 	CPRINTS("Bit bang enabled");
+
 	return EC_SUCCESS;
 }
 
@@ -148,223 +143,212 @@ int uart_bitbang_disable(void)
 	if (!uart_bitbang_is_enabled())
 		return EC_SUCCESS;
 
-	/*
-	 * This is safe because if the UART was not specified in the config, we
-	 * would have already returned.
-	 */
-	bitbang_enabled = 0;
 	gpio_reset(bitbang_config.tx_gpio);
 	gpio_reset(bitbang_config.rx_gpio);
-
-	/* Unregister the function pointers. */
-	uartn_funcs[bitbang_config.uart]._rx_available = _uartn_rx_available;
-	uartn_funcs[bitbang_config.uart]._write_char = _uartn_write_char;
-	uartn_funcs[bitbang_config.uart]._read_char = _uartn_read_char;
 
 	/* Gate the microsecond timer since we're done with it. */
 	pmu_clock_dis(PERIPH_TIMEUS);
 
 	/* Don't need to watch RX */
 	gpio_disable_interrupt(bitbang_config.rx_gpio);
+	task_disable_irq(bitbang_config.rx_irq);
+	uartn_enable_interrupt(bitbang_config.uart);
+
+	/* Restore aggregate GPIO interrupts. */
+	task_enable_irq(GC_IRQNUM_GPIO0_GPIOCOMBINT);
+	task_enable_irq(GC_IRQNUM_GPIO1_GPIOCOMBINT);
+
+	bitbang_enabled = 0;
+
 	CPRINTS("Bit bang disabled");
 	return EC_SUCCESS;
 }
 
-static void wait_ticks(uint32_t ticks)
+/*
+ * Function waiting for completion of the current tick should be re-entrant -
+ * it is not likely to happen, but is possible that the RX interrupt gets
+ * asserted while the last period of the TX is still counting, because the
+ * last TX period is counting with interrupts enabled.
+ */
+static void wait_ticks(uint32_t *next_tick)
 {
-	uint32_t t0 = GR_TIMEUS_CUR_MAJOR(0);
+	uint32_t nt = *next_tick;
 
-	while ((GR_TIMEUS_CUR_MAJOR(0) - t0) < ticks)
+	while (GR_TIMEUS_CUR_MAJOR(0) < nt)
 		;
+
+	*next_tick += bit_period_ticks;
 }
 
-void uart_bitbang_write_char(char c)
+static uint32_t get_next_tick(uint32_t delta)
+{
+	return GR_TIMEUS_CUR_MAJOR(0) + delta;
+}
+
+static void uart_bitbang_write_char(char c)
 {
 	int val;
 	int ones;
 	int i;
-
-	if (!uart_bitbang_is_enabled())
-		return;
+	uint32_t next_tick;
 
 	interrupt_disable();
 
+	next_tick = get_next_tick(bit_period_ticks);
+
 	/* Start bit. */
-	gpio_set_level(tx_pin, 0);
-	wait_ticks(bit_period_ticks);
+	gpio_set_level(bitbang_config.tx_gpio, 0);
+	wait_ticks(&next_tick);
 
 	/* 8 data bits. */
 	ones = 0;
 	for (i = 0; i < 8; i++) {
 		val = (c & (1 << i));
+		gpio_set_level(bitbang_config.tx_gpio, val);
+
 		/* Count 1's in order to handle parity bit. */
 		if (val)
 			ones++;
-		gpio_set_level(tx_pin, val);
-		wait_ticks(bit_period_ticks);
+		wait_ticks(&next_tick);
 	}
 
 	/* Optional parity. */
-	switch (set_parity) {
-	case 1: /* odd parity */
-		if (ones & 0x1)
-			gpio_set_level(tx_pin, 0);
-		else
-			gpio_set_level(tx_pin, 1);
-		wait_ticks(bit_period_ticks);
-		break;
-
-	case 2: /* even parity */
-		if (ones & 0x1)
-			gpio_set_level(tx_pin, 1);
-		else
-			gpio_set_level(tx_pin, 0);
-		wait_ticks(bit_period_ticks);
-		break;
-
-	case 0: /* no parity */
-	default:
-		break;
+	if (set_parity) {
+		gpio_set_level(bitbang_config.tx_gpio,
+			       (set_parity == 1) ^ (ones & 1));
+		wait_ticks(&next_tick);
 	};
 
 	/* 1 stop bit. */
-	gpio_set_level(tx_pin, 1);
-	wait_ticks(bit_period_ticks);
+	gpio_set_level(bitbang_config.tx_gpio, 1);
+
+	/*
+	 * Re-enable interrupts early: this could be the last byte and the
+	 * response could come very soon, we don't want to waste time enabling
+	 * interrupts AFTER stop bit is completed.
+	 */
 	interrupt_enable();
+	wait_ticks(&next_tick);
 }
 
-int uart_bitbang_receive_char(void)
+void uart_bitbang_drain_tx_queue(struct queue const *q)
+{
+	uint8_t c;
+
+	while (queue_count(q)) {
+		QUEUE_REMOVE_UNITS(q, &c, 1);
+		uart_bitbang_write_char(c);
+	}
+}
+
+static int uart_bitbang_receive_char(uint8_t *rxed_char, uint32_t *next_tick)
 {
 	uint8_t rx_char;
 	int i;
-	int rv;
 	int ones;
 	int parity_bit;
 	int stop_bit;
-	uint8_t head;
-	uint8_t tail;
 
-	/* Disable interrupts so that we aren't interrupted. */
-	interrupt_disable();
 #if BITBANG_DEBUG
 	rx_buff_rx_char_cnt++;
 #endif /* BITBANG_DEBUG */
-	rv = EC_SUCCESS;
 
 	rx_char = 0;
+	ones = 0;
 
 	/* Wait 1 bit period for the start bit. */
-	wait_ticks(bit_period_ticks);
+	wait_ticks(next_tick);
 
-	/* 8 data bits. */
-	ones = 0;
 	for (i = 0; i < 8; i++) {
-		if (gpio_get_level(rx_pin)) {
+		if (gpio_get_level(bitbang_config.rx_gpio)) {
 			ones++;
 			rx_char |= (1 << i);
 		}
-		wait_ticks(bit_period_ticks);
+		wait_ticks(next_tick);
 	}
 
 	/* optional parity or stop bit. */
-	parity_bit = gpio_get_level(rx_pin);
+	parity_bit = gpio_get_level(bitbang_config.rx_gpio);
+
 	if (set_parity) {
-		wait_ticks(bit_period_ticks);
-		stop_bit = gpio_get_level(rx_pin);
+		wait_ticks(next_tick);
+		stop_bit = gpio_get_level(bitbang_config.rx_gpio);
+
+		if ((set_parity == 1) != ((ones + parity_bit) & 1)) {
+#if BITBANG_DEBUG
+			parity_err_cnt++;
+			parity_err_discard[parity_discard_idx] = rx_char;
+			parity_discard_idx = (parity_discard_idx + 1) %
+				DISCARD_LOG;
+#endif /* BITBANG_DEBUG */
+			return EC_ERROR_CRC;
+		}
 	} else {
 		/* If there's no parity, that _was_ the stop bit. */
 		stop_bit = parity_bit;
 	}
 
-	/* Check the parity if necessary. */
-	switch (set_parity) {
-	case 2: /* even parity */
-		if (ones & 0x1)
-			rv = parity_bit ? EC_SUCCESS : EC_ERROR_CRC;
-		else
-			rv = parity_bit ? EC_ERROR_CRC : EC_SUCCESS;
-		break;
-
-	case 1: /* odd parity */
-		if (ones & 0x1)
-			rv = parity_bit ? EC_ERROR_CRC : EC_SUCCESS;
-		else
-			rv = parity_bit ? EC_SUCCESS : EC_ERROR_CRC;
-		break;
-
-	case 0:
-	default:
-		break;
-	}
-
-#if BITBANG_DEBUG
-	if (rv != EC_SUCCESS) {
-		parity_err_cnt++;
-		parity_err_discard[parity_discard_idx] = rx_char;
-		parity_discard_idx = (parity_discard_idx + 1) % DISCARD_LOG;
-	}
-#endif /* BITBANG_DEBUG */
 
 	/* Check that the stop bit is valid. */
 	if (stop_bit != 1) {
-		rv = EC_ERROR_CRC;
 #if BITBANG_DEBUG
 		stop_bit_err_cnt++;
 		stop_bit_discard[stop_bit_discard_idx] = rx_char;
 		stop_bit_discard_idx = (stop_bit_discard_idx + 1) % DISCARD_LOG;
 #endif /* BITBANG_DEBUG */
-	}
-
-	if (rv != EC_SUCCESS) {
-		interrupt_enable();
-		return rv;
+		return EC_ERROR_CRC;
 	}
 
 	/* Place the received char in the RX buffer. */
-	head = bitbang_config.htp.head;
-	tail = bitbang_config.htp.tail;
-	if (BUF_NEXT(tail) != head) {
-		rx_buf[tail] = rx_char;
-		bitbang_config.htp.tail = BUF_NEXT(tail);
 #if BITBANG_DEBUG
-		rx_buff_inserted_cnt++;
+	rx_buff_inserted_cnt++;
 #endif /* BITBANG_DEBUG */
-	}
 
-	interrupt_enable();
+	*rxed_char = rx_char;
+
 	return EC_SUCCESS;
 }
 
-int uart_bitbang_read_char(void)
+void uart_bitbang_irq(void)
 {
-	int c;
-	uint8_t head;
+	uint8_t rx_buffer[20];
+	size_t i = 0;
+	uint32_t next_tick;
 
-	head = bitbang_config.htp.head;
-	c = rx_buf[head];
+	/* Empirically chosen IRQ latency compensation. */
+	next_tick = get_next_tick(bit_period_ticks  - 40);
+	do {
+		uint32_t max_time;
+		int rv;
+new_char:
+		rv = uart_bitbang_receive_char(rx_buffer + i, &next_tick);
+		gpio_clear_pending_interrupt(bitbang_config.rx_gpio);
 
-	if (head != bitbang_config.htp.tail)
-		bitbang_config.htp.head = BUF_NEXT(head);
+		if (rv != EC_SUCCESS)
+			break;
 
-#if BITBANG_DEBUG
-	read_char_cnt++;
-#endif /* BITBANG_DEBUG */
-	return c;
-}
+		if (++i == sizeof(rx_buffer))
+			break;
+		/*
+		 * For the duration of one byte wait for another byte from the
+		 * EC.
+		 */
+		max_time = GR_TIMEUS_CUR_MAJOR(0) + bit_period_ticks * 10;
+		while (GR_TIMEUS_CUR_MAJOR(0) < max_time) {
+			if (!gpio_get_level(bitbang_config.rx_gpio)) {
+				next_tick = get_next_tick(bit_period_ticks);
+				goto new_char;
+			}
+		}
 
-int uart_bitbang_is_char_available(void)
-{
-	return bitbang_config.htp.head != bitbang_config.htp.tail;
+	} while (0);
+
+	QUEUE_ADD_UNITS(bitbang_config.uart_in, rx_buffer, i);
 }
 
 #if BITBANG_DEBUG
 static int write_test_pattern(int pattern_idx)
 {
-	if (!uart_bitbang_is_enabled()) {
-		ccprintf("bit banging mode not enabled for UART%d\n", uart);
-		return EC_ERROR_INVAL;
-	}
-
 	switch (pattern_idx) {
 	case 0:
 		uart_bitbang_write_char(uart, 'a');
@@ -442,7 +426,7 @@ static int command_bitbang(int argc, char **argv)
 	} else {
 		ccprintf("baud rate - parity\n");
 		ccprintf("  %6d    ", bitbang_config.baud_rate);
-		switch (bitbang_config.htp.parity) {
+		switch (bitbang_config.parity) {
 		case 1:
 			ccprintf("odd\n");
 			break;
@@ -497,9 +481,6 @@ static int command_bitbang_dump_stats(int argc, char **argv)
 	for (i = 0; i < RX_BUF_SIZE; i++)
 		ccprintf(" %02x ", rx_buf[i] & 0xFF);
 	ccprintf("]\n");
-	ccprintf("head: %d\ntail: %d\n",
-		 bitbang_config.htp.head,
-		 bitbang_config.htp.tail);
 	ccprintf("Discards\nparity: ");
 	ccprintf("[");
 	for (i = 0; i < DISCARD_LOG; i++)

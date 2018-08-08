@@ -107,6 +107,9 @@ static void ec_detect(void)
 	/* Disable interrupts if we had them on for debouncing */
 	gpio_disable_interrupt(GPIO_DETECT_EC);
 
+	if (uart_bitbang_is_enabled())
+		return;
+
 	/* If we detect the EC, make sure it's on */
 	if (gpio_get_level(GPIO_DETECT_EC)) {
 		set_ec_on();

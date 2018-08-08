@@ -93,6 +93,7 @@ struct uart_bitbang_properties bitbang_config = {
 	.uart = UART_EC,
 	.tx_gpio = GPIO_DETECT_SERVO, /* This is TX to EC console. */
 	.rx_gpio = GPIO_EC_TX_CR50_RX,
+	.rx_irq = GC_IRQNUM_GPIO1_GPIO4INT, /* Must match gpoi.inc */
 	/*
 	 * The rx/tx_pinmux_regval values MUST agree with the pin config for
 	 * both the TX and RX GPIOs in gpio.inc.  Don't change one without
@@ -104,19 +105,7 @@ struct uart_bitbang_properties bitbang_config = {
 	.rx_pinmux_regval = GC_PINMUX_GPIO1_GPIO4_SEL,
 };
 
-void ec_tx_cr50_rx(enum gpio_signal signal)
-{
-	uart_bitbang_receive_char();
-	/*
-	 * Let the USART module know that there's new bits to consume.
-	 *
-	 * When programming the EC in bitbang mode the rest of the system is
-	 * shut down, there not much else to do, so this could be processed
-	 * directly on interrupt context the same way it is done with EC
-	 * console output.
-	 */
-	send_data_to_usb(&ec_uart);
-}
+DECLARE_IRQ(GC_IRQNUM_GPIO1_GPIO4INT, uart_bitbang_irq, 0);
 
 const char *device_state_names[] = {
 	"init",
@@ -715,6 +704,13 @@ static void board_init(void)
 	init_wp_state();
 
 	/*
+	 * Need to do this at run time as compile time constant initialization
+	 * to a variable value (even to a const known at compile time) is not
+	 * supported.
+	 */
+	bitbang_config.uart_in = ec_uart.producer.queue;
+
+	/*
 	 * Note that the AP, EC, and servo state machines do not have explicit
 	 * init_xxx_state() functions, because they don't need to configure
 	 * registers prior to starting their state machines.  Their state
@@ -951,11 +947,18 @@ DECLARE_SAFE_CONSOLE_COMMAND(sysrst, command_sys_rst,
 
 void assert_ec_rst(void)
 {
+	/* Prevent bit bang interrupt storm. */
+	if (uart_bitbang_is_enabled())
+		task_disable_irq(bitbang_config.rx_irq);
+
 	GWRITE(RBOX, ASSERT_EC_RST, 1);
 }
 void deassert_ec_rst(void)
 {
 	GWRITE(RBOX, ASSERT_EC_RST, 0);
+
+	if (uart_bitbang_is_enabled())
+		task_enable_irq(bitbang_config.rx_irq);
 }
 
 int is_ec_rst_asserted(void)

@@ -5,12 +5,15 @@
 
 #include "queue.h"
 #include "queue_policies.h"
-#include "uartn.h"
-#include "usart.h"
-#include "usb-stream.h"
 #ifdef CONFIG_STREAM_SIGNATURE
 #include "signing.h"
 #endif
+#ifdef CONFIG_UART_BITBANG
+#include "uart_bitbang.h"
+#endif
+#include "uartn.h"
+#include "usart.h"
+#include "usb-stream.h"
 
 #define USE_UART_INTERRUPTS (!(defined(CONFIG_CUSTOMIZED_RO) && \
 defined(SECTION_IS_RO)))
@@ -172,6 +175,14 @@ static void uart_written(struct consumer const *consumer, size_t count)
 {
 	struct usart_config const *config =
 		DOWNCAST(consumer, struct usart_config, consumer);
+
+#ifdef CONFIG_UART_BITBANG
+	if (uart_bitbang_is_enabled() &&
+	    (config->uart == bitbang_config.uart)) {
+		uart_bitbang_drain_tx_queue(consumer->queue);
+		return;
+	}
+#endif
 
 	if (uartn_tx_ready(config->uart), queue_count(consumer->queue))
 		uartn_tx_start(config->uart);

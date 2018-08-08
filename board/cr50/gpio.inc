@@ -65,7 +65,9 @@ GPIO_INT(DETECT_EC,       PIN(1, 2),  GPIO_INT_HIGH, ec_detect_asserted)
  */
 GPIO_INT(DETECT_SERVO,    PIN(1, 3),  GPIO_INT_HIGH | GPIO_PULL_DOWN,
 	 servo_detect_asserted)
-GPIO_INT(EC_TX_CR50_RX,   PIN(1, 4),  GPIO_INT_FALLING, ec_tx_cr50_rx)
+
+/* This is used for EC flash bit bang programming. */
+GPIO(EC_TX_CR50_RX,   PIN(1, 4),  GPIO_INPUT)
 
 /* Pull this low to interrupt the AP */
 GPIO(INT_AP_L,        PIN(0, 0), GPIO_OUT_HIGH)

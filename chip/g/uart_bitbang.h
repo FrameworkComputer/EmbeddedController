@@ -10,25 +10,7 @@
 
 #include "common.h"
 #include "gpio.h"
-
-/* These are functions that we'll have to replace. */
-struct uartn_function_ptrs {
-	int (*_rx_available)(int uart);
-	void (*_write_char)(int uart, char c);
-	int (*_read_char)(int uart);
-};
-
-/*
- * And these are the function definitions.  The functions live in
- * chip/g/uartn.c.
- */
-extern int _uartn_rx_available(int uart);
-extern void _uartn_write_char(int uart, char c);
-extern int _uartn_read_char(int uart);
-extern int _uart_bitbang_rx_available(int uart);
-extern void _uart_bitbang_write_char(int uart, char c);
-extern int _uart_bitbang_read_char(int uart);
-extern struct uartn_function_ptrs uartn_funcs[];
+#include "queue.h"
 
 struct uart_bitbang_properties {
 	enum gpio_signal tx_gpio;
@@ -37,13 +19,11 @@ struct uart_bitbang_properties {
 	uint32_t tx_pinmux_regval;
 	uint32_t rx_pinmux_reg;
 	uint32_t rx_pinmux_regval;
-	int baud_rate;
+	struct queue const *uart_in;
+	uint32_t baud_rate;
+	uint16_t rx_irq;
 	uint8_t uart;
-	struct {
-		unsigned int head : 3;
-		unsigned int tail : 3;
-		unsigned int parity : 2;
-	} htp __packed;
+	uint8_t parity;
 };
 
 /* In order to bitbang a UART, a board must define a bitbang_config. */
@@ -84,32 +64,14 @@ int uart_bitbang_is_enabled(void);
 int uart_bitbang_is_wanted(void);
 
 /**
- * TX a character on a UART configured for bit banging mode.
- *
- * @param c: Character to send out.
- */
-void uart_bitbang_write_char(char c);
-
-/**
  * Sample the RX line on a UART configured for bit banging mode.
  *
  * This is called when a falling edge is seen on the RX line and will attempt to
  * receive a character.  Incoming data with framing errors or parity errors will
  * be discarded.
- *
- * @returns EC_SUCCESS if a character was successfully received, EC_ERROR_CRC if
- *          there was a framing or parity issue.
  */
-int uart_bitbang_receive_char(void);
+void uart_bitbang_irq(void);
 
-/**
- * Returns 1 if there are characters available for consumption, otherwise 0.
- */
-int uart_bitbang_is_char_available(void);
-
-/**
- * Retrieve a character from the bit bang RX buffer.
- */
-int uart_bitbang_read_char(void);
+void uart_bitbang_drain_tx_queue(struct queue const *q);
 
 #endif /* __CROS_EC_CHIP_G_UART_BITBANG_H */
