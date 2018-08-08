@@ -192,8 +192,8 @@ DEFINE_string chip "" \
 	"The chip to run debugger on."
 DEFINE_string image "" \
 	"Full pathname of the EC firmware image to flash."
-DEFINE_integer timeout 600 \
-	"Timeout for flashing the EC, measured in seconds."
+DEFINE_string logfile "" \
+	"Stm32 only: pathname of the file to store communications log."
 DEFINE_string offset "0" \
 	"Offset where to program the image from."
 DEFINE_integer port "${DEFAULT_PORT}" \
@@ -202,6 +202,8 @@ DEFINE_boolean raiden "${FLAGS_FALSE}" \
 	"Use raiden_debug_spi programmer"
 DEFINE_boolean ro "${FLAGS_FALSE}" \
 	"Write only the read-only partition"
+DEFINE_integer timeout 600 \
+	"Timeout for flashing the EC, measured in seconds."
 DEFINE_boolean verbose "${FLAGS_FALSE}" \
 	"Verbose hw control logging"
 
@@ -877,6 +879,8 @@ function flash_flashrom() {
 }
 
 function flash_stm32() {
+	local log_option
+
 	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
 	STM32MON=$(PATH="${TOOL_PATH}" which stm32mon)
 	EC_UART="$(servo_ec_uart)"
@@ -921,8 +925,14 @@ function flash_stm32() {
 	if $(servo_has_cold_reset); then
 		ec_reset
 	fi
+
+        if [ -n "${FLAGS_logfile}" ]; then
+		log_option="-L ${FLAGS_logfile}"
+		info "Saving log in ${FLAGS_logfile}"
+	fi
+
 	# Unprotect flash, erase, and write
-	STM32MON_COMMAND="${STM32MON} -d ${EC_UART} -U -u -e -w"
+	STM32MON_COMMAND="${STM32MON} -d ${EC_UART} ${log_option} -U -u -e -w"
 	if [ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]; then
 		echo "${STM32MON_COMMAND}" "${IMG}"
 	fi
