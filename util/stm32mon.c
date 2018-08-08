@@ -152,6 +152,57 @@ static void discard_input(int);
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
+/* On user request save all data exchange with the target in this log file. */
+static FILE *log_file;
+
+/*
+ * Print data into the log file, in hex, 16 bytes per line, prefix the first
+ * line with the value supplied by the caller (usually 'r' or 'w' for
+ * read/write).
+ */
+static void dump_log(const char *prefix, const void *data, size_t count)
+{
+	size_t i;
+
+	fprintf(log_file, "%s: ", prefix);
+	for (i = 0; i < count; i++) {
+		if (i && !(i  % 16))
+			fprintf(log_file, "\n   ");
+		fprintf(log_file, " %02x", ((uint8_t *)data)[i]);
+	}
+
+	if (count % 16)
+		fprintf(log_file, "\n");
+
+	/* Make sure all data is there even in case of aborts/crashes. */
+	fflush(log_file);
+}
+
+/*
+ * Wrappers for standard library read() and write() functions. Add transferred
+ * data to the log if log file is opened.
+ */
+static ssize_t read_wrapper(int fd, void *buf, size_t count)
+{
+	ssize_t rv = read(fd, buf, count);
+
+	if (log_file && (rv > 0))
+		dump_log("r", buf, rv);
+
+	return rv;
+}
+
+static ssize_t write_wrapper(int fd, const void *buf, size_t count)
+{
+	ssize_t rv;
+
+	rv = write(fd, buf, count);
+
+	if (log_file && (rv > 0))
+		dump_log("w", buf, rv);
+
+	return rv;
+}
 int open_serial(const char *port)
 {
 	int fd, res;
@@ -278,7 +329,7 @@ static void discard_input(int fd)
 	/* eat trailing garbage */
 	count_of_zeros = 0;
 	do {
-		res = read(fd, buffer, sizeof(buffer));
+		res = read_wrapper(fd, buffer, sizeof(buffer));
 		if (res > 0) {
 
 			/* Discard zeros in the beginning of the buffer. */
@@ -317,7 +368,7 @@ int wait_for_ack(int fd)
 	uint8_t ack = RESP_ACK;
 
 	while (time(NULL) < deadline) {
-		res = read(fd, &resp, 1);
+		res = read_wrapper(fd, &resp, 1);
 		if ((res < 0) && (errno != EAGAIN)) {
 			perror("Failed to read answer");
 			return -EIO;
@@ -325,13 +376,13 @@ int wait_for_ack(int fd)
 		if (res == 1) {
 			if (resp == RESP_ACK) {
 				if (mode == MODE_SPI) /* Ack the ACK */
-					if (write(fd, &ack, 1) != 1)
+					if (write_wrapper(fd, &ack, 1) != 1)
 						return -EIO;
 				return 0;
 			} else if (resp == RESP_NACK) {
 				fprintf(stderr, "NACK\n");
 				if (mode == MODE_SPI) /* Ack the NACK */
-					if (write(fd, &ack, 1) != 1)
+					if (write_wrapper(fd, &ack, 1) != 1)
 						return -EIO;
 				discard_input(fd);
 				return -EINVAL;
@@ -360,7 +411,8 @@ int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
 	int cmd_off = mode == MODE_SPI ? 0 : 1;
 
 	/* Send the command index */
-	res = write(fd, cmd_frame + cmd_off, sizeof(cmd_frame) - cmd_off);
+	res = write_wrapper(fd, cmd_frame + cmd_off,
+			    sizeof(cmd_frame) - cmd_off);
 	if (res <= 0) {
 		perror("Failed to write command frame");
 		return -1;
@@ -392,7 +444,7 @@ int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
 		size++;
 		data_ptr = data;
 		while (size) {
-			res = write(fd, data_ptr, size);
+			res = write_wrapper(fd, data_ptr, size);
 			if (res < 0) {
 				perror("Failed to write command payload");
 				free(data);
@@ -418,9 +470,10 @@ int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
 	/* Read the answer payload */
 	if (resp) {
 		if (mode == MODE_SPI) /* ignore dummy byte */
-			if (read(fd, resp, 1) < 0)
+			if (read_wrapper(fd, resp, 1) < 0)
 				return -1;
-		while ((resp_size > 0) && (res = read(fd, resp, resp_size))) {
+		while ((resp_size > 0) &&
+		       (res = read_wrapper(fd, resp, resp_size))) {
 			if (res < 0) {
 				perror("Failed to read payload");
 				return -1;
@@ -484,7 +537,7 @@ int init_monitor(int fd)
 
 	while (1) {
 		/* Send the command index */
-		res = write(fd, &init, 1);
+		res = write_wrapper(fd, &init, 1);
 		if (res <= 0) {
 			perror("Failed to write command");
 			return -1;
@@ -931,6 +984,7 @@ static const struct option longopts[] = {
 	{"adapter", 1, 0, 'a'},
 	{"spi", 1, 0, 's'},
 	{"length", 1, 0, 'n'},
+	{"logfile", 1, 0, 'L'},
 	{"offset", 1, 0, 'o'},
 	{"progressbar", 0, 0, 'p'},
 	{NULL, 0, 0, 0}
@@ -941,7 +995,8 @@ void display_usage(char *program)
 	fprintf(stderr,
 		"Usage: %s [-a <i2c_adapter> [-l address ]] | [-s]"
 		" [-d <tty>] [-b <baudrate>]] [-u] [-e] [-U]"
-		" [-r <file>] [-w <file>] [-o offset] [-l length] [-g] [-p]\n",
+		" [-r <file>] [-w <file>] [-o offset] [-n length] [-g] [-p]"
+		" [-L <log_file>]\n",
 		program);
 	fprintf(stderr, "Can access the controller via serial port or i2c\n");
 	fprintf(stderr, "Serial port mode:\n");
@@ -965,6 +1020,8 @@ void display_usage(char *program)
 	fprintf(stderr, "--g[o] : jump to execute flash entrypoint\n");
 	fprintf(stderr, "--p[rogressbar] : use a progress bar instead of "
 			"the spinner\n");
+	fprintf(stderr, "-L[ogfile] <file> : save all communications exchange "
+		"in a log file\n");
 
 	exit(2);
 }
@@ -995,8 +1052,9 @@ int parse_parameters(int argc, char **argv)
 {
 	int opt, idx;
 	int flags = 0;
+	const char *log_file_name = NULL;
 
-	while ((opt = getopt_long(argc, argv, "a:l:b:d:eghn:o:pr:s:w:uU?",
+	while ((opt = getopt_long(argc, argv, "a:l:b:d:eghL:n:o:pr:s:w:uU?",
 				  longopts, &idx)) != -1) {
 		switch (opt) {
 		case 'a':
@@ -1023,6 +1081,9 @@ int parse_parameters(int argc, char **argv)
 		case '?':
 			display_usage(argv[0]);
 			break;
+		case 'L':
+			log_file_name = optarg;
+			break;
 		case 'n':
 			length = strtol(optarg, NULL, 0);
 			break;
@@ -1048,6 +1109,15 @@ int parse_parameters(int argc, char **argv)
 		case 'U':
 			flags |= FLAG_READ_UNPROTECT;
 			break;
+		}
+	}
+
+	if (log_file_name) {
+		log_file = fopen(log_file_name, "w");
+		if (!log_file) {
+			fprintf(stderr, "failed to open %s for writing\n",
+				log_file_name);
+			exit(2);
 		}
 	}
 	return flags;
@@ -1130,6 +1200,9 @@ int main(int argc, char **argv)
 	/* Normal exit */
 	ret = 0;
 terminate:
+	if (log_file)
+		fclose(log_file);
+
 	/* Close serial port */
 	close(ser);
 	return ret;
