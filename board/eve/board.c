@@ -489,7 +489,6 @@ static void board_init(void)
 	if (board_get_version() == 4) {
 		/* Set F13 to new defined key on EVT */
 		CPRINTS("Overriding F13 scan code");
-		scancode_set1[3][9] = 0xe058;
 		scancode_set2[3][9] = 0xe007;
 	}
 #endif

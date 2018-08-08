@@ -252,6 +252,11 @@ static enum scancode_set_list acting_code_set(enum scancode_set_list set)
 	return set;
 }
 
+static int is_supported_code_set(enum scancode_set_list set)
+{
+	return (set == SCANCODE_SET_1 || set == SCANCODE_SET_2);
+}
+
 /**
  * Return the make or break code bytes for the active scancode set.
  *
@@ -269,33 +274,22 @@ static void scancode_bytes(uint16_t make_code, int8_t pressed,
 
 	/* Output the make code (from table) */
 	if (make_code >= 0x0100) {
-		*len += 2;
-		scan_code[0] = make_code >> 8;
-		scan_code[1] = make_code & 0xff;
-	} else {
-		*len += 1;
-		scan_code[0] = make_code & 0xff;
+		scan_code[(*len)++] = make_code >> 8;
+		make_code &= 0xff;
 	}
 
 	switch (code_set) {
 	case SCANCODE_SET_1:
-		/* OR 0x80 for the last byte. */
-		if (!pressed) {
-			ASSERT(*len >= 1);
-			scan_code[*len - 1] |= 0x80;
-		}
+		make_code = scancode_translate_set2_to_1(make_code);
+		scan_code[(*len)++] = pressed ? make_code : (make_code | 0x80);
 		break;
 
 	case SCANCODE_SET_2:
-		/*
-		 * Insert the break byte, move back the last byte and insert a
-		 * 0xf0 byte before that.
-		 */
-		if (!pressed) {
-			ASSERT(*len >= 1);
-			scan_code[*len] = scan_code[*len - 1];
-			scan_code[*len - 1] = 0xf0;
-			*len += 1;
+		if (pressed) {
+			scan_code[(*len)++] = make_code;
+		} else {
+			scan_code[(*len)++] = 0xf0;
+			scan_code[(*len)++] = make_code;
 		}
 		break;
 	default:
@@ -316,21 +310,12 @@ static enum ec_error_list matrix_callback(int8_t row, int8_t col,
 	if (row >= KEYBOARD_ROWS || col >= KEYBOARD_COLS)
 		return EC_ERROR_INVAL;
 
+	make_code = scancode_set2[row][col];
 	if (pressed)
-		keyboard_special(scancode_set1[row][col]);
+		keyboard_special(make_code);
 
 	code_set = acting_code_set(code_set);
-
-	switch (code_set) {
-	case SCANCODE_SET_1:
-		make_code = scancode_set1[row][col];
-		break;
-
-	case SCANCODE_SET_2:
-		make_code = scancode_set2[row][col];
-		break;
-
-	default:
+	if (!is_supported_code_set(code_set)) {
 		CPRINTS("KB scancode set %d unsupported", code_set);
 		return EC_ERROR_UNIMPLEMENTED;
 	}
@@ -791,30 +776,30 @@ static void i8042_handle_from_host(void)
 static void keyboard_special(uint16_t k)
 {
 	static uint8_t s;
-	static const uint16_t a[] = {0xe048, 0xe048, 0xe050, 0xe050, 0xe04b,
-				     0xe04d, 0xe04b, 0xe04d, 0x0030, 0x001e};
+	static const uint16_t a[] = {0xe075, 0xe075, 0xe072, 0xe072, 0xe06b,
+				     0xe074, 0xe06b, 0xe074, 0x0032, 0x001c};
 #ifdef HAS_TASK_LIGHTBAR
 	/* Lightbar demo mode: keyboard can fake the battery state */
 	switch (k) {
-	case 0xe048:				/* up */
+	case 0xe075:				/* up */
 		demo_battery_level(1);
 		break;
-	case 0xe050:				/* down */
+	case 0xe072:				/* down */
 		demo_battery_level(-1);
 		break;
-	case 0xe04b:				/* left */
+	case 0xe06b:				/* left */
 		demo_is_charging(0);
 		break;
-	case 0xe04d:				/* right */
+	case 0xe074:				/* right */
 		demo_is_charging(1);
 		break;
-	case 0x0040:				/* dim */
+	case 0x000b:				/* dim */
 		demo_brightness(-1);
 		break;
-	case 0x0041:				/* bright */
+	case 0x0083:				/* bright */
 		demo_brightness(1);
 		break;
-	case 0x0014:				/* T */
+	case 0x002c:				/* T */
 		demo_tap();
 		break;
 	}
@@ -822,7 +807,7 @@ static void keyboard_special(uint16_t k)
 
 	if (k == a[s])
 		s++;
-	else if (k != 0xe048)
+	else if (k != 0xe075)
 		s = 0;
 	else if (s != 2)
 		s = 1;
@@ -919,7 +904,6 @@ test_mockable void keyboard_update_button(enum keyboard_button_type button,
 					  int is_pressed)
 {
 	uint8_t scan_code[MAX_SCAN_CODE_LEN];
-	uint16_t make_code;
 	uint32_t len;
 	struct button_8042_t button_8042;
 	enum scancode_set_list code_set;
@@ -932,20 +916,12 @@ test_mockable void keyboard_update_button(enum keyboard_button_type button,
 		return;
 
 	code_set = acting_code_set(scancode_set);
+	if (!is_supported_code_set(code_set))
+		return;
+
 	button_8042 = buttons_8042[button];
-
-	switch (code_set) {
-	case SCANCODE_SET_1:
-		make_code = button_8042.scancode_set1;
-		break;
-	case SCANCODE_SET_2:
-		make_code = button_8042.scancode_set2;
-		break;
-	default:
-		return; /* Other sets are not supported */
-	}
-
-	scancode_bytes(make_code, is_pressed, code_set, scan_code, &len);
+	scancode_bytes(button_8042.scancode, is_pressed, code_set, scan_code,
+		       &len);
 	ASSERT(len > 0);
 
 	if (button_8042.repeat) {
