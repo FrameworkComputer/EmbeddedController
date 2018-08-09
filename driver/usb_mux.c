@@ -38,8 +38,8 @@ static void enter_low_power_mode(int port)
 	flags[port] |= USB_MUX_FLAG_IN_LPM;
 
 	/* Apply any low power customization if present */
-	if (mux->enter_low_power_mode) {
-		res = mux->enter_low_power_mode(mux);
+	if (mux->driver->enter_low_power_mode) {
+		res = mux->driver->enter_low_power_mode(mux->port_addr);
 
 		if (res)
 			CPRINTS("Err: enter_low_power_mode mux port(%d): %d",

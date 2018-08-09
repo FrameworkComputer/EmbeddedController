@@ -68,6 +68,18 @@ struct usb_mux_driver {
 	 * @return EC_SUCCESS on success, non-zero error code on failure.
 	 */
 	int (*get)(int port_addr, mux_state_t *mux_state);
+
+	/**
+	 * Optional method that is called after the mux fully disconnects.
+	 *
+	 * Note: this method does not need to be defined for TCPC/MUX combos
+	 * where the TCPC is actively used since the PD state machine
+	 * will put the chip into lower power mode.
+	 *
+	 * @param mux USB mux to put into low power.
+	 * @return EC_SUCCESS on success, non-zero error code on failure.
+	 */
+	int (*enter_low_power_mode)(int port_addr);
 };
 
 /* Describes a USB mux present in the system */
@@ -80,18 +92,6 @@ struct usb_mux {
 
 	/* Mux driver */
 	const struct usb_mux_driver *driver;
-
-	/**
-	 * Optional method that is called after the mux fully disconnects.
-	 *
-	 * Note: this method does not need to be defined for TCPC/MUX combos
-	 * where the TCPC is actively used since the PD state machine
-	 * will put the chip into lower power mode.
-	 *
-	 * @param mux USB mux to put into low power.
-	 * @return EC_SUCCESS on success, non-zero error code on failure.
-	 */
-	int (*enter_low_power_mode)(const struct usb_mux *mux);
 
 	/**
 	 * Optional method for tuning for USB mux during mux->driver->init().
