@@ -37,7 +37,7 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /* Masks for power signals */
-#define IN_POWER_GOOD POWER_SIGNAL_MASK(SDM845_POWER_GOOD)
+#define IN_POWER_GOOD POWER_SIGNAL_MASK(SDM845_AP_RST_L)
 
 /* Long power key press to force shutdown */
 #define DELAY_FORCE_SHUTDOWN		(8 * SECOND)

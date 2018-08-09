@@ -175,7 +175,14 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
  * good state. Address the issue of AP-initiated warm reset.
  */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_AP_RST_L, POWER_SIGNAL_ACTIVE_HIGH, "POWER_GOOD"},
+	[SDM845_AP_RST_L] = {
+		GPIO_AP_RST_L, POWER_SIGNAL_ACTIVE_HIGH, "AP_RST_L"},
+	[SDM845_PS_HOLD] = {
+		GPIO_PS_HOLD, POWER_SIGNAL_ACTIVE_HIGH, "PS_HOLD"},
+	[SDM845_PMIC_FAULT_L] = {
+		GPIO_PMIC_FAULT_L, POWER_SIGNAL_ACTIVE_HIGH, "PMIC_FAULT_L"},
+	[SDM845_POWER_GOOD] = {
+		GPIO_POWER_GOOD, POWER_SIGNAL_ACTIVE_HIGH, "POWER_GOOD"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
