@@ -423,35 +423,43 @@ BUILD_ASSERT(CONFIG_FANS <= EC_FAN_SPEED_ENTRIES);
 /* Saved PWM state across sysjumps */
 struct pwm_fan_state {
 	/* TODO(crosbug.com/p/23530): Still treating all fans as one. */
-	uint16_t fan_rpm;
-	uint8_t fan_en;
+	uint16_t rpm;
+	uint8_t flag;	/* FAN_STATE_FLAG_* */
 };
+
+/* For struct pwm_fan_state.flag */
+#define FAN_STATE_FLAG_ENABLED	(1 << 0)
+#define FAN_STATE_FLAG_THERMAL	(1 << 1)
 
 static void pwm_fan_init(void)
 {
 	const struct pwm_fan_state *prev;
+	struct pwm_fan_state state;
 	uint16_t *mapped;
 	int version, size;
 	int i;
-	int fan = 0;
+	int fan;
 
 	for (fan = 0; fan < CONFIG_FANS; fan++)
 		fan_channel_setup(FAN_CH(fan), fans[fan].conf->flags);
 
+	/* Restore previous state. */
 	prev = (const struct pwm_fan_state *)
 		system_get_jump_tag(PWMFAN_SYSJUMP_TAG, &version, &size);
 	if (prev && version == PWM_HOOK_VERSION && size == sizeof(*prev)) {
-		/* Restore previous state. */
-		for (fan = 0; fan < CONFIG_FANS; fan++) {
-			fan_set_enabled(FAN_CH(fan), prev->fan_en);
-			fan_set_rpm_target(FAN_CH(fan), prev->fan_rpm);
-		}
+		memcpy(&state, prev, sizeof(state));
 	} else {
-		/* Set initial fan speed */
-		for (fan = 0; fan < CONFIG_FANS; fan++)
-			fan_set_rpm_target(FAN_CH(fan),
-				fan_percent_to_rpm(FAN_CH(fan),
-				CONFIG_FAN_INIT_SPEED));
+		memset(&state, 0, sizeof(state));
+		state.rpm = fan_percent_to_rpm(FAN_CH(fan),
+					       CONFIG_FAN_INIT_SPEED);
+	}
+
+	for (fan = 0; fan < CONFIG_FANS; fan++) {
+		fan_set_enabled(FAN_CH(fan),
+				state.flag & FAN_STATE_FLAG_ENABLED);
+		fan_set_rpm_target(FAN_CH(fan), state.rpm);
+		set_thermal_control_enabled(
+				fan, state.flag & FAN_STATE_FLAG_THERMAL);
 	}
 
 	/* Initialize memory-mapped data */
@@ -491,12 +499,15 @@ DECLARE_HOOK(HOOK_SECOND, pwm_fan_second, HOOK_PRIO_DEFAULT);
 
 static void pwm_fan_preserve_state(void)
 {
-	struct pwm_fan_state state;
+	struct pwm_fan_state state = {0};
 	int fan = 0;
 
 	/* TODO(crosbug.com/p/23530): Still treating all fans as one. */
-	state.fan_en = fan_get_enabled(FAN_CH(fan));
-	state.fan_rpm = fan_get_rpm_target(FAN_CH(fan));
+	if (fan_get_enabled(FAN_CH(fan)))
+		state.flag |= FAN_STATE_FLAG_ENABLED;
+	if (thermal_control_enabled[fan])
+		state.flag |= FAN_STATE_FLAG_THERMAL;
+	state.rpm = fan_get_rpm_target(FAN_CH(fan));
 
 	system_add_jump_tag(PWMFAN_SYSJUMP_TAG, PWM_HOOK_VERSION,
 			    sizeof(state), &state);
