@@ -6,6 +6,7 @@
 /* DragonEgg board-specific configuration */
 
 #include "common.h"
+#include "charger.h"
 #include "console.h"
 #include "driver/ppc/sn5s330.h"
 #include "extpower.h"
@@ -57,3 +58,45 @@ void board_overcurrent_event(int port)
 		cprints(CC_USBPD, "p%d: overcurrent!", port);
 	}
 }
+
+static void board_disable_learn_mode(void)
+{
+	/* Disable learn mode after checking to make sure AC is still present */
+	if (extpower_is_present())
+		charger_discharge_on_ac(0);
+}
+DECLARE_DEFERRED(board_disable_learn_mode);
+
+static void board_extpower(void)
+{
+	/*
+	 * For the bq25710 charger, we need the switching converter to remain
+	 * disabled until ~130 msec from when VBUS present to allow the
+	 * converter to be biased properly. Otherwise, there will be a reverse
+	 * buck/boost until the converter is biased. The recommendation is to
+	 * exit learn mode 200 msec after external charger is connected.
+	 *
+	 * TODO(b/112372451): When there are updated versions of the bq25710,
+	 * this set of changes can be removed.
+	 */
+	if (extpower_is_present()) {
+		hook_call_deferred(&board_disable_learn_mode_data, 200 * MSEC);
+	} else {
+		/* Enable charger learn mode */
+		charger_discharge_on_ac(1);
+		/* Cancel any pending call to disable learn mode */
+		hook_call_deferred(&board_disable_learn_mode_data, -1);
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
+
+/* Initialize board. */
+static void board_init(void)
+{
+	/*
+	 * On EC reboot, need to always set battery learn mode to the correct
+	 * state based on presence of AC.
+	 */
+	board_extpower();
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
