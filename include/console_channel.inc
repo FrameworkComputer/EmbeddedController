@@ -59,7 +59,11 @@ CONSOLE_CHANNEL(CC_LIDANGLE,     "lidangle")
 #ifdef HAS_TASK_LIGHTBAR
 CONSOLE_CHANNEL(CC_LIGHTBAR,     "lightbar")
 #endif
-#ifdef CONFIG_HOSTCMD_X86
+/*
+   Use CC_LPC for any host communication channels to x86,
+   like LPC, eSPI, or IPC...
+ */
+#if defined(CONFIG_HOSTCMD_X86) || defined(HAS_TASK_IPC_MNG) || defined(HAS_TASK_HECI_RX)
 CONSOLE_CHANNEL(CC_LPC,          "lpc")
 #endif
 CONSOLE_CHANNEL(CC_MOTION_LID,   "motionlid")
