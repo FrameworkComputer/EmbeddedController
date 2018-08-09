@@ -217,7 +217,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_ALS_GYRO,
 		.addr = OPT3001_I2C_ADDR,
 		.rot_standard_ref = NULL,
-		.default_range = 0x10000, /* scale = 1; uscale = 0 */
+		/* scale = 43.4513 http://b/111528815#comment14 */
+		.default_range = 0x2b11a1,
 		.min_frequency = OPT3001_LIGHT_MIN_FREQ,
 		.max_frequency = OPT3001_LIGHT_MAX_FREQ,
 		.config = {
