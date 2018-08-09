@@ -24,10 +24,8 @@ static int capsense_read_bitmask(void)
 	int rv;
 	uint8_t val = 0;
 
-	i2c_lock(I2C_PORT_CAPSENSE, 1);
 	rv = i2c_xfer(I2C_PORT_CAPSENSE, CAPSENSE_I2C_ADDR,
-		      0, 0, &val, 1, I2C_XFER_SINGLE);
-	i2c_lock(I2C_PORT_CAPSENSE, 0);
+		      0, 0, &val, 1);
 
 	if (rv)
 		CPRINTS("%s failed: error %d", __func__, rv);

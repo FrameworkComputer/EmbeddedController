@@ -112,36 +112,25 @@ const int pressure_div = 1024;
 static int elan_tp_read_cmd(uint16_t reg, uint16_t *val)
 {
 	uint8_t buf[2];
-	int rv;
 
 	buf[0] = reg;
 	buf[1] = reg >> 8;
 
-	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 1);
-	rv = i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, CONFIG_TOUCHPAD_I2C_ADDR,
-		      buf, sizeof(buf), (uint8_t *)val, sizeof(*val),
-		      I2C_XFER_SINGLE);
-	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 0);
-
-	return rv;
+	return i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, CONFIG_TOUCHPAD_I2C_ADDR,
+		      buf, sizeof(buf), (uint8_t *)val, sizeof(*val));
 }
 
 static int elan_tp_write_cmd(uint16_t reg, uint16_t val)
 {
 	uint8_t buf[4];
-	int rv;
 
 	buf[0] = reg;
 	buf[1] = reg >> 8;
 	buf[2] = val;
 	buf[3] = val >> 8;
 
-	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 1);
-	rv = i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, CONFIG_TOUCHPAD_I2C_ADDR,
-		      buf, sizeof(buf), NULL, 0, I2C_XFER_SINGLE);
-	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 0);
-
-	return rv;
+	return i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, CONFIG_TOUCHPAD_I2C_ADDR,
+		      buf, sizeof(buf), NULL, 0);
 }
 
 /* Power is on by default. */
@@ -201,10 +190,8 @@ static int elan_tp_read_report(void)
 	/* Compute and save timestamp early in case another interrupt comes. */
 	timestamp = irq_ts / USB_HID_TOUCHPAD_TIMESTAMP_UNIT;
 
-	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 1);
 	rv = i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, CONFIG_TOUCHPAD_I2C_ADDR,
-		      NULL, 0, tp_buf, ETP_I2C_REPORT_LEN, I2C_XFER_SINGLE);
-	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 0);
+		      NULL, 0, tp_buf, ETP_I2C_REPORT_LEN);
 
 	if (rv) {
 		CPRINTS("read report error (%d)", rv);
@@ -288,10 +275,8 @@ static void elan_tp_init(void)
 
 	elan_tp_write_cmd(ETP_I2C_STAND_CMD, ETP_I2C_RESET);
 	msleep(100);
-	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 1);
 	rv = i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, CONFIG_TOUCHPAD_I2C_ADDR,
-		      NULL, 0, val, sizeof(val), I2C_XFER_SINGLE);
-	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 0);
+		      NULL, 0, val, sizeof(val));
 
 	CPRINTS("reset rv %d buf=%04x", rv, *((uint16_t *)val));
 	if (rv)
@@ -480,11 +465,8 @@ static int touchpad_update_page(const uint8_t *data)
 	page_store[FW_PAGE_SIZE + 2 + 0] = checksum & 0xff;
 	page_store[FW_PAGE_SIZE + 2 + 1] = (checksum >> 8) & 0xff;
 
-	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 1);
 	rv = i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, CONFIG_TOUCHPAD_I2C_ADDR,
-		      page_store, sizeof(page_store), NULL, 0,
-		      I2C_XFER_SINGLE);
-	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 0);
+		      page_store, sizeof(page_store), NULL, 0);
 	if (rv)
 		return rv;
 	msleep(20);
@@ -647,12 +629,10 @@ int touchpad_debug(const uint8_t *param, unsigned int param_size,
 			memset(buffer, 0, buffer_size);
 		}
 
-		i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 1);
 		rv = i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT,
 			      CONFIG_TOUCHPAD_I2C_ADDR,
 			      &param[offset], write_length,
-			      buffer, read_length, I2C_XFER_SINGLE);
-		i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 0);
+			      buffer, read_length);
 
 		if (rv)
 			return EC_RES_BUS_ERROR;

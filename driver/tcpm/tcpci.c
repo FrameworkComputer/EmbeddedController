@@ -106,14 +106,26 @@ int tcpc_write_block(int port, int reg, const uint8_t *out, int size)
 }
 
 int tcpc_xfer(int port, const uint8_t *out, int out_size,
+			uint8_t *in, int in_size)
+{
+	int rv;
+	/* Dispatching to tcpc_xfer_unlocked reduces code size growth. */
+	tcpc_lock(port, 1);
+	rv = tcpc_xfer_unlocked(port, out, out_size, in, in_size,
+				I2C_XFER_SINGLE);
+	tcpc_lock(port, 0);
+	return rv;
+}
+
+int tcpc_xfer_unlocked(int port, const uint8_t *out, int out_size,
 			    uint8_t *in, int in_size, int flags)
 {
-	int rv = i2c_xfer(tcpc_config[port].i2c_host_port,
+	int rv = i2c_xfer_unlocked(tcpc_config[port].i2c_host_port,
 			  tcpc_config[port].i2c_slave_addr, out, out_size,
 			  in, in_size, flags);
 	if (rv && pd_device_in_low_power(port)) {
 		pd_wait_for_wakeup(port);
-		rv = i2c_xfer(tcpc_config[port].i2c_host_port,
+		rv = i2c_xfer_unlocked(tcpc_config[port].i2c_host_port,
 			      tcpc_config[port].i2c_slave_addr, out, out_size,
 			      in, in_size, flags);
 	}

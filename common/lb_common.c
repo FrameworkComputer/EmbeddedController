@@ -120,7 +120,7 @@ static inline void controller_write(int ctrl_num, uint8_t reg, uint8_t val)
 	buf[0] = reg;
 	buf[1] = val;
 	ctrl_num = ctrl_num % ARRAY_SIZE(i2c_addr);
-	i2c_xfer(I2C_PORT_LIGHTBAR, i2c_addr[ctrl_num], buf, 2, 0, 0,
+	i2c_xfer_unlocked(I2C_PORT_LIGHTBAR, i2c_addr[ctrl_num], buf, 2, 0, 0,
 		 I2C_XFER_SINGLE);
 }
 
@@ -130,8 +130,8 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
 	int rv;
 
 	ctrl_num = ctrl_num % ARRAY_SIZE(i2c_addr);
-	rv = i2c_xfer(I2C_PORT_LIGHTBAR, i2c_addr[ctrl_num], &reg, 1, buf, 1,
-		      I2C_XFER_SINGLE);
+	rv = i2c_xfer_unlocked(I2C_PORT_LIGHTBAR, i2c_addr[ctrl_num],
+			&reg, 1, buf, 1, I2C_XFER_SINGLE);
 	return rv ? 0 : buf[0];
 }
 

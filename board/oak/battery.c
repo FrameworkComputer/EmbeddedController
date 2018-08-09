@@ -57,9 +57,9 @@ static int cutoff(void)
 	buf[2] = PARAM_CUT_OFF_HIGH;
 
 	i2c_lock(I2C_PORT_BATTERY, 1);
-	rv = i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR, buf, 3, NULL, 0,
+	rv = i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR, buf, 3, NULL, 0,
 		      I2C_XFER_SINGLE);
-	rv |= i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR, buf, 3, NULL, 0,
+	rv |= i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR, buf, 3, NULL, 0,
 		       I2C_XFER_SINGLE);
 	i2c_lock(I2C_PORT_BATTERY, 0);
 

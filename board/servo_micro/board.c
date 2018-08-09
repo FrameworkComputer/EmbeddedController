@@ -231,12 +231,13 @@ static int ite_i2c_read_register(uint8_t register_offset, uint8_t *output)
 	 */
 	int ret;
 	/* Tell the ITE EC which register we want to read. */
-	ret = i2c_xfer(I2C_PORT_MASTER, ITE_DFU_I2C_CMD_ADDR, &register_offset,
-		sizeof(register_offset), NULL, 0, I2C_XFER_SINGLE);
+	ret = i2c_xfer_unlocked(I2C_PORT_MASTER, ITE_DFU_I2C_CMD_ADDR,
+		&register_offset, sizeof(register_offset),
+		NULL, 0, I2C_XFER_SINGLE);
 	if (ret != EC_SUCCESS)
 		return ret;
 	/* Read in the 1 byte register value. */
-	ret = i2c_xfer(I2C_PORT_MASTER, ITE_DFU_I2C_DATA_ADDR, NULL, 0,
+	ret = i2c_xfer_unlocked(I2C_PORT_MASTER, ITE_DFU_I2C_DATA_ADDR, NULL, 0,
 		output, sizeof(*output), I2C_XFER_SINGLE);
 	return ret;
 }

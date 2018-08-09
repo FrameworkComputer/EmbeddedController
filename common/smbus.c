@@ -20,9 +20,6 @@ int smbus_write_word(uint8_t i2c_port, uint8_t slave_addr,
 			uint8_t smbus_cmd, uint16_t d16)
 {
 	uint8_t buf[5];
-	int rv;
-
-	i2c_lock(i2c_port, 1);
 
 	/* Command sequence for CRC calculation */
 	buf[0] = slave_addr;
@@ -30,11 +27,7 @@ int smbus_write_word(uint8_t i2c_port, uint8_t slave_addr,
 	buf[2] = d16 & 0xff;
 	buf[3] = (d16 >> 8) & 0xff;
 	buf[4] = crc8(buf, 4);
-	rv = i2c_xfer(i2c_port, slave_addr,
-		      buf + 1, 4, NULL, 0, I2C_XFER_SINGLE);
-
-	i2c_lock(i2c_port, 0);
-	return rv;
+	return i2c_xfer(i2c_port, slave_addr, buf + 1, 4, NULL, 0);
 }
 
 /* Write up to SMBUS_MAX_BLOCK_SIZE bytes using smbus block access protocol */
@@ -52,20 +45,21 @@ int smbus_write_block(uint8_t i2c_port, uint8_t slave_addr,
 	i2c_lock(i2c_port, 1);
 
 	/* Send command + length */
-	rv = i2c_xfer(i2c_port, slave_addr,
+	rv = i2c_xfer_unlocked(i2c_port, slave_addr,
 		      buf + 1, 2, NULL, 0, I2C_XFER_START);
 	if (rv != EC_SUCCESS)
 		goto smbus_write_block_done;
 
 	/* Send data */
-	rv = i2c_xfer(i2c_port, slave_addr, data, len, NULL, 0, 0);
+	rv = i2c_xfer_unlocked(i2c_port, slave_addr, data, len, NULL, 0, 0);
 	if (rv != EC_SUCCESS)
 		goto smbus_write_block_done;
 
 	/* Send CRC */
 	buf[0] = crc8(buf, 3);
 	buf[0] = crc8_arg(data, len, buf[0]);
-	rv = i2c_xfer(i2c_port, slave_addr, buf, 1, NULL, 0, I2C_XFER_STOP);
+	rv = i2c_xfer_unlocked(i2c_port, slave_addr, buf, 1, NULL, 0,
+			I2C_XFER_STOP);
 
 smbus_write_block_done:
 	i2c_lock(i2c_port, 0);
@@ -86,11 +80,8 @@ int smbus_read_word(uint8_t i2c_port, uint8_t slave_addr,
 	buf[2] = slave_addr | 0x1;
 	crc = crc8(buf, 3);
 
-	i2c_lock(i2c_port, 1);
-
 	/* Read data bytes + CRC byte */
-	rv = i2c_xfer(i2c_port, slave_addr,
-		&smbus_cmd, 1, buf, 3, I2C_XFER_SINGLE);
+	rv = i2c_xfer(i2c_port, slave_addr, &smbus_cmd, 1, buf, 3);
 
 	/* Verify CRC */
 	if (crc8_arg(buf, 2, crc) != buf[2])
@@ -101,7 +92,6 @@ int smbus_read_word(uint8_t i2c_port, uint8_t slave_addr,
 	else
 		*p16 = 0;
 
-	i2c_lock(i2c_port, 0);
 	return rv;
 }
 
@@ -122,7 +112,7 @@ int smbus_read_block(uint8_t i2c_port, uint8_t slave_addr,
 	i2c_lock(i2c_port, 1);
 
 	/* First read size from slave */
-	rv = i2c_xfer(i2c_port, slave_addr,
+	rv = i2c_xfer_unlocked(i2c_port, slave_addr,
 		      &smbus_cmd, 1, buf + 3, 1, I2C_XFER_START);
 	if (rv != EC_SUCCESS)
 			goto smbus_read_block_done;
@@ -140,12 +130,13 @@ int smbus_read_block(uint8_t i2c_port, uint8_t slave_addr,
 	}
 
 	/* Now read back all bytes */
-	rv = i2c_xfer(i2c_port, slave_addr, NULL, 0, data, read_len, 0);
+	rv = i2c_xfer_unlocked(i2c_port, slave_addr,
+			NULL, 0, data, read_len, 0);
 	if (rv)
 		goto smbus_read_block_done;
 
 	/* Read CRC + verify */
-	rv = i2c_xfer(i2c_port, slave_addr,
+	rv = i2c_xfer_unlocked(i2c_port, slave_addr,
 		      NULL, 0, buf, 1, I2C_XFER_STOP);
 	if (do_crc && crc8_arg(data, read_len, crc) != buf[0])
 		rv = EC_ERROR_CRC;
