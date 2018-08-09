@@ -493,6 +493,7 @@ power_board_handle_host_sleep_event(enum host_sleep_event state)
 	/* Default weak implementation -- no action required. */
 }
 
+#ifdef CONFIG_POWER_S0IX
 /*
  * Backup copies of SCI and SMI mask to preserve across S0ix suspend/resume
  * cycle. If the host uses S0ix, BIOS is not involved during suspend and resume
@@ -531,6 +532,7 @@ static void lpc_s0ix_resume_restore_masks(void)
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, backup_sci_mask);
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, backup_smi_mask);
 }
+#endif
 
 void power_chipset_handle_host_sleep_event(enum host_sleep_event state)
 {
