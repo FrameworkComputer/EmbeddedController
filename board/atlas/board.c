@@ -243,13 +243,13 @@ uint16_t tcpc_get_alert_status(void)
 const struct temp_sensor_t temp_sensors[] = {
 	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0, 4},
 	/* BD99992GW temp sensors are only readable in S0 */
-	{"systherm0", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	{"Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
 	 BD99992GW_ADC_CHANNEL_SYSTHERM0, 4},
-	{"systherm1", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	{"Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
 	 BD99992GW_ADC_CHANNEL_SYSTHERM1, 4},
-	{"systherm2", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	{"DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
 	 BD99992GW_ADC_CHANNEL_SYSTHERM2, 4},
-	{"systherm3", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	{"eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
 	 BD99992GW_ADC_CHANNEL_SYSTHERM3, 4},
 	{"gyro", TEMP_SENSOR_TYPE_BOARD, bmi160_get_sensor_temp, BASE_GYRO, 1},
 };
