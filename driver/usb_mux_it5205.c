@@ -113,8 +113,23 @@ static int it5205_get_mux(int i2c_addr, mux_state_t *mux_state)
 	return EC_SUCCESS;
 }
 
+static int it5205_enter_low_power_mode(int i2c_addr)
+{
+	int rv;
+
+	/* Turn off all switches */
+	rv = it5205_write(i2c_addr, IT5205_REG_MUXCR, 0);
+
+	if (rv)
+		return rv;
+
+	/* Power down mux */
+	return it5205_write(i2c_addr, IT5205_REG_MUXPDR, IT5205_MUX_POWER_DOWN);
+}
+
 const struct usb_mux_driver it5205_usb_mux_driver = {
-	.init = it5205_init,
-	.set = it5205_set_mux,
-	.get = it5205_get_mux,
+	.init = &it5205_init,
+	.set = &it5205_set_mux,
+	.get = &it5205_get_mux,
+	.enter_low_power_mode = &it5205_enter_low_power_mode,
 };
