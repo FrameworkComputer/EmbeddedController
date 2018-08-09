@@ -2043,6 +2043,11 @@
 #undef CONFIG_KEYBOARD_SCANCODE_MUTABLE
 
 /*
+ * Allow board-specific 8042 keyboard callback when a key state is changed.
+ */
+#undef CONFIG_KEYBOARD_SCANCODE_CALLBACK
+
+/*
  * Call board-supplied keyboard_suppress_noise() function when the debounced
  * keyboard state changes.  Some boards use this to send a signal to the audio
  * codec to suppress typing noise picked up by the microphone.
