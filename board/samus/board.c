@@ -27,6 +27,8 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "keyboard_scan.h"
+#include "keyboard_8042.h"
+#include "keyboard_8042_sharedlib.h"
 #include "lid_switch.h"
 #include "lightbar.h"
 #include "motion_sense.h"
@@ -407,3 +409,55 @@ void jtag_interrupt(enum gpio_signal signal)
 }
 #endif /* CONFIG_LOW_POWER_IDLE */
 
+
+enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
+					      int8_t pressed)
+{
+	const uint16_t k = *make_code;
+	static uint8_t s;
+	static const uint16_t a[] = {
+		SCANCODE_UP, SCANCODE_UP, SCANCODE_DOWN, SCANCODE_DOWN,
+		SCANCODE_LEFT, SCANCODE_RIGHT, SCANCODE_LEFT, SCANCODE_RIGHT,
+		SCANCODE_B, SCANCODE_A};
+
+	if (!pressed)
+		return EC_SUCCESS;
+
+	/* Lightbar demo mode: keyboard can fake the battery state */
+	switch (k) {
+	case SCANCODE_UP:
+		demo_battery_level(1);
+		break;
+	case SCANCODE_DOWN:
+		demo_battery_level(-1);
+		break;
+	case SCANCODE_LEFT:
+		demo_is_charging(0);
+		break;
+	case SCANCODE_RIGHT:
+		demo_is_charging(1);
+		break;
+	case SCANCODE_F6:  /* dim */
+		demo_brightness(-1);
+		break;
+	case SCANCODE_F7:  /* bright */
+		demo_brightness(1);
+		break;
+	case SCANCODE_T:
+		demo_tap();
+		break;
+	}
+
+	if (k == a[s])
+		s++;
+	else if (k != a[0])
+		s = 0;
+	else if (s != 2)
+		s = 1;
+
+	if (s == ARRAY_SIZE(a)) {
+		s = 0;
+		lightbar_sequence(LIGHTBAR_KONAMI);
+	}
+	return EC_SUCCESS;
+}

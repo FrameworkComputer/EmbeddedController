@@ -108,7 +108,6 @@ static uint8_t controller_ram[0x20] = {
 	/* 0x01 - 0x1f are controller RAM */
 };
 static uint8_t A20_status;
-static void keyboard_special(uint16_t k);
 
 /*
  * Scancode settings
@@ -311,8 +310,6 @@ static enum ec_error_list matrix_callback(int8_t row, int8_t col,
 		return EC_ERROR_INVAL;
 
 	make_code = scancode_set2[row][col];
-	if (pressed)
-		keyboard_special(make_code);
 
 #ifdef CONFIG_KEYBOARD_SCANCODE_CALLBACK
 	{
@@ -778,57 +775,6 @@ static void i8042_handle_from_host(void)
 			ret_len = handle_keyboard_data(h.byte, output);
 
 		i8042_send_to_host(ret_len, output);
-	}
-}
-
-/* U U D D L R L R b a */
-static void keyboard_special(uint16_t k)
-{
-	static uint8_t s;
-	static const uint16_t a[] = {
-		SCANCODE_UP, SCANCODE_UP, SCANCODE_DOWN, SCANCODE_DOWN,
-		SCANCODE_LEFT, SCANCODE_RIGHT, SCANCODE_LEFT, SCANCODE_RIGHT,
-		SCANCODE_B, SCANCODE_A};
-
-#ifdef HAS_TASK_LIGHTBAR
-	/* Lightbar demo mode: keyboard can fake the battery state */
-	switch (k) {
-	case SCANCODE_UP:
-		demo_battery_level(1);
-		break;
-	case SCANCODE_DOWN:
-		demo_battery_level(-1);
-		break;
-	case SCANCODE_LEFT:
-		demo_is_charging(0);
-		break;
-	case SCANCODE_RIGHT:
-		demo_is_charging(1);
-		break;
-	case SCANCODE_F6:  /* dim */
-		demo_brightness(-1);
-		break;
-	case SCANCODE_F7:  /* bright */
-		demo_brightness(1);
-		break;
-	case SCANCODE_T:
-		demo_tap();
-		break;
-	}
-#endif
-
-	if (k == a[s])
-		s++;
-	else if (k != SCANCODE_UP)
-		s = 0;
-	else if (s != 2)
-		s = 1;
-
-	if (s == ARRAY_SIZE(a)) {
-		s = 0;
-#ifdef HAS_TASK_LIGHTBAR
-		lightbar_sequence(LIGHTBAR_KONAMI);
-#endif
 	}
 }
 
