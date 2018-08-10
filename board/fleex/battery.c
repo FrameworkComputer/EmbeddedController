@@ -37,14 +37,13 @@ const struct board_batt_params board_battery_info[] = {
 		.fuel_gauge = {
 			.manuf_name = "BYD",
 			.ship_mode = {
-				.reg_addr = 0x44,
+				.reg_addr = 0x00,
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x0,
-				.reg_mask = 0x0001,
-				.disconnect_val = 0x0,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
 			}
 		},
 		.batt_info = {
@@ -66,13 +65,13 @@ const struct board_batt_params board_battery_info[] = {
 		.fuel_gauge = {
 			.manuf_name = "LGC-LGC3.553",
 			.ship_mode = {
-				.reg_addr = 0x44,
+				.reg_addr = 0x00,
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
 				.reg_addr = 0x0,
-				.reg_mask = 0x0001,
-				.disconnect_val = 0x0,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
 			}
 		},
 		.batt_info = {
@@ -98,9 +97,9 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x0002,
-				.disconnect_val = 0x0,
+				.reg_addr = 0x043,
+				.reg_mask = 0x0001,
+				.disconnect_val = 0x000,
 			}
 		},
 		.batt_info = {
