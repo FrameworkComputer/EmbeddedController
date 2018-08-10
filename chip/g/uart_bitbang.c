@@ -57,31 +57,21 @@ static int stop_bit_discard[DISCARD_LOG];
 static int stop_bit_discard_idx;
 #endif /* BITBANG_DEBUG */
 
-static int is_uart_allowed(int uart)
+int uart_bitbang_is_enabled(void)
 {
-	return uart == bitbang_config.uart;
+	return bitbang_enabled;
 }
 
-int uart_bitbang_is_enabled(int uart)
+int uart_bitbang_is_wanted(void)
 {
-	return (is_uart_allowed(uart) && bitbang_enabled);
+	return bitbang_wanted;
 }
 
-int uart_bitbang_is_wanted(int uart)
-{
-	return (is_uart_allowed(uart) && bitbang_wanted);
-}
-
-int uart_bitbang_config(int uart, int baud_rate, int parity)
+int uart_bitbang_config(int baud_rate, int parity)
 {
 	/* Can't configure when enabled */
 	if (bitbang_enabled)
 		return EC_ERROR_BUSY;
-
-	if (!is_uart_allowed(uart)) {
-		CPRINTF("bit bang config not found for UART%d\n", uart);
-		return EC_ERROR_INVAL;
-	}
 
 	/* Check desired properties. */
 	if (!IS_BAUD_RATE_SUPPORTED(baud_rate)) {
@@ -105,20 +95,15 @@ int uart_bitbang_config(int uart, int baud_rate, int parity)
 	return EC_SUCCESS;
 }
 
-int uart_bitbang_enable(int uart)
+int uart_bitbang_enable(void)
 {
 	/* We only want to bit bang 1 UART at a time */
 	if (bitbang_enabled)
 		return EC_ERROR_BUSY;
 
 	/* UART TX must be disconnected first */
-	if (uart_tx_is_connected(uart))
+	if (uart_tx_is_connected(bitbang_config.uart))
 		return EC_ERROR_BUSY;
-
-	if (!is_uart_allowed(uart)) {
-		CPRINTS("bit bang config not found for UART%d", uart);
-		return EC_ERROR_INVAL;
-	}
 
 	/* Select the GPIOs instead of the UART block */
 	REG32(bitbang_config.tx_pinmux_reg) =
@@ -145,9 +130,12 @@ int uart_bitbang_enable(int uart)
 	set_parity = bitbang_config.htp.parity;
 
 	/* Register the function pointers. */
-	uartn_funcs[uart]._rx_available = _uart_bitbang_rx_available;
-	uartn_funcs[uart]._write_char = _uart_bitbang_write_char;
-	uartn_funcs[uart]._read_char = _uart_bitbang_read_char;
+	uartn_funcs[bitbang_config.uart]._rx_available =
+		_uart_bitbang_rx_available;
+	uartn_funcs[bitbang_config.uart]._write_char =
+		_uart_bitbang_write_char;
+	uartn_funcs[bitbang_config.uart]._read_char =
+		_uart_bitbang_read_char;
 
 	bitbang_enabled = 1;
 	gpio_enable_interrupt(bitbang_config.rx_gpio);
@@ -155,9 +143,9 @@ int uart_bitbang_enable(int uart)
 	return EC_SUCCESS;
 }
 
-int uart_bitbang_disable(int uart)
+int uart_bitbang_disable(void)
 {
-	if (!uart_bitbang_is_enabled(uart))
+	if (!uart_bitbang_is_enabled())
 		return EC_SUCCESS;
 
 	/*
@@ -169,9 +157,9 @@ int uart_bitbang_disable(int uart)
 	gpio_reset(bitbang_config.rx_gpio);
 
 	/* Unregister the function pointers. */
-	uartn_funcs[uart]._rx_available = _uartn_rx_available;
-	uartn_funcs[uart]._write_char = _uartn_write_char;
-	uartn_funcs[uart]._read_char = _uartn_read_char;
+	uartn_funcs[bitbang_config.uart]._rx_available = _uartn_rx_available;
+	uartn_funcs[bitbang_config.uart]._write_char = _uartn_write_char;
+	uartn_funcs[bitbang_config.uart]._read_char = _uartn_read_char;
 
 	/* Gate the microsecond timer since we're done with it. */
 	pmu_clock_dis(PERIPH_TIMEUS);
@@ -190,13 +178,13 @@ static void wait_ticks(uint32_t ticks)
 		;
 }
 
-void uart_bitbang_write_char(int uart, char c)
+void uart_bitbang_write_char(char c)
 {
 	int val;
 	int ones;
 	int i;
 
-	if (!uart_bitbang_is_enabled(uart))
+	if (!uart_bitbang_is_enabled())
 		return;
 
 	interrupt_disable();
@@ -245,7 +233,7 @@ void uart_bitbang_write_char(int uart, char c)
 	interrupt_enable();
 }
 
-int uart_bitbang_receive_char(int uart)
+int uart_bitbang_receive_char(void)
 {
 	uint8_t rx_char;
 	int i;
@@ -347,13 +335,10 @@ int uart_bitbang_receive_char(int uart)
 	return EC_SUCCESS;
 }
 
-int uart_bitbang_read_char(int uart)
+int uart_bitbang_read_char(void)
 {
 	int c;
 	uint8_t head;
-
-	if (!is_uart_allowed(uart))
-		return 0;
 
 	head = bitbang_config.htp.head;
 	c = rx_buf[head];
@@ -367,35 +352,32 @@ int uart_bitbang_read_char(int uart)
 	return c;
 }
 
-int uart_bitbang_is_char_available(int uart)
+int uart_bitbang_is_char_available(void)
 {
-	if (!is_uart_allowed(uart))
-		return 0;
-
 	return bitbang_config.htp.head != bitbang_config.htp.tail;
 }
 
 #if BITBANG_DEBUG
-static int write_test_pattern(int uart, int pattern_idx)
+static int write_test_pattern(int pattern_idx)
 {
-	if (!uart_bitbang_is_enabled(uart)) {
+	if (!uart_bitbang_is_enabled()) {
 		ccprintf("bit banging mode not enabled for UART%d\n", uart);
 		return EC_ERROR_INVAL;
 	}
 
 	switch (pattern_idx) {
 	case 0:
-		uartn_write_char(uart, 'a');
-		uartn_write_char(uart, 'b');
-		uartn_write_char(uart, 'c');
-		uartn_write_char(uart, '\n');
+		uart_bitbang_write_char(uart, 'a');
+		uart_bitbang_write_char(uart, 'b');
+		uart_bitbang_write_char(uart, 'c');
+		uart_bitbang_write_char(uart, '\n');
 		ccprintf("wrote: 'abc\\n'\n");
 		break;
 
 	case 1:
-		uartn_write_char(uart, 0xAA);
-		uartn_write_char(uart, 0xCC);
-		uartn_write_char(uart, 0x55);
+		uart_bitbang_write_char(uart, 0xAA);
+		uart_bitbang_write_char(uart, 0xCC);
+		uart_bitbang_write_char(uart, 0x55);
 		ccprintf("wrote: '0xAA 0xCC 0x55'\n");
 		break;
 
@@ -410,13 +392,11 @@ static int write_test_pattern(int uart, int pattern_idx)
 
 static int command_bitbang(int argc, char **argv)
 {
-	int uart;
 	int baud_rate;
 	int parity;
 	int rv;
 
 	if (argc > 1) {
-		uart = atoi(argv[1]);
 		if (argc == 3) {
 			if (!strcasecmp("disable", argv[2])) {
 				bitbang_wanted = 0;
@@ -429,7 +409,7 @@ static int command_bitbang(int argc, char **argv)
 		if (argc == 4) {
 #if BITBANG_DEBUG
 			if (!strncasecmp("test", argv[2], 4))
-				return write_test_pattern(uart, atoi(argv[3]));
+				return write_test_pattern(atoi(argv[3]));
 #endif /* BITBANG_DEBUG */
 
 			baud_rate = atoi(argv[2]);
@@ -442,7 +422,7 @@ static int command_bitbang(int argc, char **argv)
 			else
 				return EC_ERROR_PARAM3;
 
-			rv = uart_bitbang_config(uart, baud_rate, parity);
+			rv = uart_bitbang_config(baud_rate, parity);
 			if (rv)
 				return rv;
 
@@ -457,7 +437,7 @@ static int command_bitbang(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 	}
 
-	if (!uart_bitbang_is_enabled(bitbang_config.uart)) {
+	if (!uart_bitbang_is_enabled()) {
 		ccprintf("bit banging mode disabled.\n");
 	} else {
 		ccprintf("baud rate - parity\n");

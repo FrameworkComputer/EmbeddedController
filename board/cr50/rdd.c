@@ -169,7 +169,7 @@ static uint32_t get_state_flags(void)
 		flags_now |= CCD_ENABLE_UART_EC_TX;
 
 #ifdef CONFIG_UART_BITBANG
-	if (uart_bitbang_is_enabled(UART_EC))
+	if (uart_bitbang_is_enabled())
 		flags_now |= CCD_ENABLE_UART_EC_BITBANG;
 #endif
 
@@ -225,7 +225,7 @@ static void ccd_state_change_hook(void)
 
 #ifdef CONFIG_UART_BITBANG
 	/* EC must be all the way on for bit-banging the EC UART */
-	if (ec_is_on() && uart_bitbang_is_wanted(UART_EC))
+	if (ec_is_on() && uart_bitbang_is_wanted())
 		flags_want |= CCD_ENABLE_UART_EC_BITBANG;
 #endif
 
@@ -304,7 +304,7 @@ static void ccd_state_change_hook(void)
 		uartn_tx_disconnect(UART_EC);
 #ifdef CONFIG_UART_BITBANG
 	if (delta & CCD_ENABLE_UART_EC_BITBANG)
-		uart_bitbang_disable(UART_EC);
+		uart_bitbang_disable();
 #endif
 	if (delta & CCD_ENABLE_I2C)
 		usb_i2c_board_disable();
@@ -323,7 +323,7 @@ static void ccd_state_change_hook(void)
 		uartn_tx_connect(UART_EC);
 #ifdef CONFIG_UART_BITBANG
 	if (delta & CCD_ENABLE_UART_EC_BITBANG)
-		uart_bitbang_enable(UART_EC);
+		uart_bitbang_enable();
 #endif
 	if (delta & CCD_ENABLE_I2C)
 		usb_i2c_board_enable();

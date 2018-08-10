@@ -106,7 +106,7 @@ struct uart_bitbang_properties bitbang_config = {
 
 void ec_tx_cr50_rx(enum gpio_signal signal)
 {
-	uart_bitbang_receive_char(UART_EC);
+	uart_bitbang_receive_char();
 	/*
 	 * Let the USART module know that there's new bits to consume.
 	 *

@@ -71,8 +71,7 @@ static int servo_detectable(void)
 	 * that case, the UART transmit line is directly controlled as a GPIO
 	 * and can be high even if UART TX is disconnected.
 	 */
-	return !(uart_tx_is_connected(UART_EC) ||
-		 uart_bitbang_is_enabled(UART_EC));
+	return !(uart_tx_is_connected(UART_EC) || uart_bitbang_is_enabled());
 }
 
 /**

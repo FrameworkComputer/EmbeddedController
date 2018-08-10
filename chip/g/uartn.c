@@ -151,22 +151,22 @@ int uartn_read_char(int uart)
 #ifdef CONFIG_UART_BITBANG
 int _uart_bitbang_rx_available(int uart)
 {
-	if (uart_bitbang_is_enabled(uart))
-		return uart_bitbang_is_char_available(uart);
+	if (uart_bitbang_is_enabled())
+		return uart_bitbang_is_char_available();
 
 	return 0;
 }
 
 void _uart_bitbang_write_char(int uart, char c)
 {
-	if (uart_bitbang_is_enabled(uart))
-		uart_bitbang_write_char(uart, c);
+	if (uart_bitbang_is_enabled())
+		uart_bitbang_write_char(c);
 }
 
 int _uart_bitbang_read_char(int uart)
 {
-	if (uart_bitbang_is_enabled(uart))
-		return uart_bitbang_read_char(uart);
+	if (uart_bitbang_is_enabled())
+		return uart_bitbang_read_char();
 
 	return 0;
 }
