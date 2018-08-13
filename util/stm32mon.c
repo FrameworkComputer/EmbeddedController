@@ -133,6 +133,7 @@ enum {
 	FLAG_ERASE          = 0x02,
 	FLAG_GO             = 0x04,
 	FLAG_READ_UNPROTECT = 0x08,
+	FLAG_CR50_MODE	    = 0x10,
 };
 
 typedef struct {
@@ -203,7 +204,7 @@ static ssize_t write_wrapper(int fd, const void *buf, size_t count)
 
 	return rv;
 }
-int open_serial(const char *port)
+int open_serial(const char *port, int cr50_mode)
 {
 	int fd, res;
 	struct termios cfg, cfg_copy;
@@ -222,9 +223,14 @@ int open_serial(const char *port)
 		return -1;
 	}
 	cfmakeraw(&cfg);
-	cfsetspeed(&cfg, baudrate);
-	/* serial mode should be 8e1 */
-	cfg.c_cflag |= PARENB;
+
+	/* Don't bother setting speed and parity when programming over Cr50. */
+	if (!cr50_mode) {
+		cfsetspeed(&cfg, baudrate);
+		/* serial mode should be 8e1 */
+		cfg.c_cflag |= PARENB;
+	}
+
 	/* 200 ms timeout */
 	cfg.c_cc[VTIME] = 2;
 	cfg.c_cc[VMIN] = 0;
@@ -972,21 +978,22 @@ int write_flash(int fd, struct stm32_def *chip, const char *filename,
 }
 
 static const struct option longopts[] = {
+	{"adapter", 1, 0, 'a'},
+	{"baudrate", 1, 0, 'b'},
+	{"cr50", 0, 0, 'c'},
 	{"device", 1, 0, 'd'},
-	{"read", 1, 0, 'r'},
-	{"write", 1, 0, 'w'},
 	{"erase", 0, 0, 'e'},
 	{"go", 0, 0, 'g'},
 	{"help", 0, 0, 'h'},
-	{"location", 1, 0, 'l'},
-	{"unprotect", 0, 0, 'u'},
-	{"baudrate", 1, 0, 'b'},
-	{"adapter", 1, 0, 'a'},
-	{"spi", 1, 0, 's'},
 	{"length", 1, 0, 'n'},
+	{"location", 1, 0, 'l'},
 	{"logfile", 1, 0, 'L'},
 	{"offset", 1, 0, 'o'},
 	{"progressbar", 0, 0, 'p'},
+	{"read", 1, 0, 'r'},
+	{"spi", 1, 0, 's'},
+	{"unprotect", 0, 0, 'u'},
+	{"write", 1, 0, 'w'},
 	{NULL, 0, 0, 0}
 };
 
@@ -996,7 +1003,7 @@ void display_usage(char *program)
 		"Usage: %s [-a <i2c_adapter> [-l address ]] | [-s]"
 		" [-d <tty>] [-b <baudrate>]] [-u] [-e] [-U]"
 		" [-r <file>] [-w <file>] [-o offset] [-n length] [-g] [-p]"
-		" [-L <log_file>]\n",
+		" [-L <log_file>] [-c]\n",
 		program);
 	fprintf(stderr, "Can access the controller via serial port or i2c\n");
 	fprintf(stderr, "Serial port mode:\n");
@@ -1022,6 +1029,8 @@ void display_usage(char *program)
 			"the spinner\n");
 	fprintf(stderr, "-L[ogfile] <file> : save all communications exchange "
 		"in a log file\n");
+	fprintf(stderr, "-c[r50_mode] : consider device to be a Cr50 interface,"
+		" no need to set UART port attributes\n");
 
 	exit(2);
 }
@@ -1054,7 +1063,7 @@ int parse_parameters(int argc, char **argv)
 	int flags = 0;
 	const char *log_file_name = NULL;
 
-	while ((opt = getopt_long(argc, argv, "a:l:b:d:eghL:n:o:pr:s:w:uU?",
+	while ((opt = getopt_long(argc, argv, "a:l:b:cd:eghL:n:o:pr:s:w:uU?",
 				  longopts, &idx)) != -1) {
 		switch (opt) {
 		case 'a':
@@ -1066,6 +1075,9 @@ int parse_parameters(int argc, char **argv)
 			break;
 		case 'b':
 			baudrate = parse_baudrate(optarg);
+			break;
+		case 'c':
+			flags |= FLAG_CR50_MODE;
 			break;
 		case 'd':
 			serial_port = optarg;
@@ -1143,7 +1155,7 @@ int main(int argc, char **argv)
 	case MODE_SERIAL:
 	default:
 		/* Open the serial port tty */
-		ser = open_serial(serial_port);
+		ser = open_serial(serial_port, !!(flags & FLAG_CR50_MODE));
 	}
 	if (ser < 0)
 		return 1;
