@@ -1992,10 +1992,19 @@ int charge_prevent_power_on(int power_button_pressed)
 #if defined(CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON) && \
 	defined(CONFIG_CHARGE_MANAGER)
 	/* However, we can power on if a sufficient charger is present. */
-	if (prevent_power_on)
+	if (prevent_power_on) {
 		if (charge_manager_get_power_limit_uw() >=
 		    CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON * 1000)
 			prevent_power_on = 0;
+#if defined(CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT) && \
+	defined(CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON_WITH_AC)
+		else if (charge_manager_get_power_limit_uw() >=
+		    CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT * 1000
+		    && (current_batt_params->state_of_charge >=
+			CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON_WITH_AC))
+			prevent_power_on = 0;
+#endif
+	}
 #endif /* CONFIG_CHARGE_MANAGER && CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON */
 
 	/*

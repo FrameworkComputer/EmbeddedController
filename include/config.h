@@ -696,11 +696,25 @@
  */
 #undef CONFIG_CHARGER_MAINTAIN_VBAT
 
-/* Minimum battery percentage for power on */
+/*
+ * Power thresholds for AP boot
+ *
+ * If one of the following conditions is met, EC boots AP:
+ *
+ * 1. Battery charge >= CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
+ * 2. AC power >= CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
+ * 3. Battery charge >= CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON_WITH_AC
+ *    and
+ *    AC power >= CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT
+ *
+ * Note that CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT/_CHG_MW are thresholds
+ * for the OS boot used by Depthcharge. The OS has higher power requirement
+ * but PD power is also available.
+ */
 #undef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
-
-/* Minimum charger power (in mW) required for powering on. */
+#undef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON_WITH_AC
 #undef CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
+#undef CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT
 
 /* Minimum battery percentage for power on with an imbalanced pack */
 #undef CONFIG_CHARGER_MIN_BAT_PCT_IMBALANCED_POWER_ON
