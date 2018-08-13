@@ -384,6 +384,10 @@ static void power_off(void)
 	/* Do a graceful way to shutdown PMIC/AP first */
 	set_pmic_pwron(0);
 
+	/* Disable signal interrupts, as they are floating when switchcap off */
+	power_signal_disable_interrupt(GPIO_AP_RST_L);
+	power_signal_disable_interrupt(GPIO_PMIC_FAULT_L);
+
 	/* Force to switch off all rails */
 	set_system_power(0);
 
@@ -452,6 +456,11 @@ static void power_on(void)
 
 	set_system_power(1);
 	usleep(SYSTEM_POWER_ON_DELAY);
+
+	/* Enable signal interrupts */
+	power_signal_enable_interrupt(GPIO_AP_RST_L);
+	power_signal_enable_interrupt(GPIO_PMIC_FAULT_L);
+
 	set_pmic_pwron(1);
 
 	disable_sleep(SLEEP_MASK_AP_RUN);
