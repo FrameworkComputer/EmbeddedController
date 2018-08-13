@@ -7,7 +7,8 @@
 #
 
 # Select ARMv7-m bare-metal toolchain
-$(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_arm),arm-none-eabi-)
+$(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_arm),\
+	/opt/coreboot-sdk/bin/arm-eabi-)
 
 # FPU compilation flags
 CFLAGS_FPU-$(CONFIG_FPU)=-mfpu=fpv4-sp-d16 -mfloat-abi=hard

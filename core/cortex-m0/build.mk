@@ -7,7 +7,8 @@
 #
 
 # Select ARMv6-m compatible bare-metal toolchain
-$(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_arm),arm-none-eabi-)
+$(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_arm),\
+	/opt/coreboot-sdk/bin/arm-eabi-)
 
 # CPU specific compilation flags
 CFLAGS_CPU+=-mthumb -Os -mno-sched-prolog
