@@ -645,6 +645,7 @@ static const char * const ec_feature_names[] = {
 		"Tight timestamp for sensors events",
 	[EC_FEATURE_REFINED_TABLET_MODE_HYSTERESIS] =
 		"Refined tablet mode hysteresis",
+	[EC_FEATURE_AUDIO_CODEC] = "Audio Codec",
 };
 
 int cmd_inventory(int argc, char *argv[])

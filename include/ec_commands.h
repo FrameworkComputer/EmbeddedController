@@ -1336,6 +1336,8 @@ enum ec_feature_code {
 	 * MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE.
 	 */
 	EC_FEATURE_REFINED_TABLET_MODE_HYSTERESIS = 37,
+	/* EC supports audio codec. */
+	EC_FEATURE_AUDIO_CODEC = 38,
 };
 
 #define EC_FEATURE_MASK_0(event_code) (1UL << (event_code % 32))
