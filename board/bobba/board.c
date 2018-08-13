@@ -193,7 +193,31 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+static void setup_motion_sensors(uint8_t sku_id)
+{
+	/* SKU ID of Bobba360 and Sparky360: 9, 25, 26 */
+	if (sku_id != 9 && sku_id != 25 && sku_id != 26) {
+		/* Clamshell Bobba has no base accel and base gyro */
+		motion_sensor_count = ARRAY_SIZE(motion_sensors) - 2;
+	}
+}
+
+/* Read CBI from i2c eeprom and initialize variables for board variants */
+static void cbi_init(void)
+{
+	uint8_t sku_id;
+	uint32_t val;
+
+	if (cbi_get_sku_id(&val) != EC_SUCCESS || val > UINT8_MAX)
+		return;
+	sku_id = val;
+	CPRINTSUSB("SKU: %d", sku_id);
+
+	setup_motion_sensors(sku_id);
+}
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* Initialize board. */
 static void board_init(void)
