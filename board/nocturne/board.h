@@ -261,6 +261,7 @@ int board_get_version(void);
 
 /* Reset all TCPCs. */
 void board_reset_pd_mcu(void);
+void board_set_tcpc_power_mode(int port, int mode);
 
 #endif /* __ASSEMBLER__ */
 
