@@ -10,4 +10,4 @@ CHIP:=npcx
 CHIP_FAMILY:=npcx7
 CHIP_VARIANT:=npcx7m7wb
 
-board-y=battery.o board.o led.o usb_pd_policy.o
+board-y=battery.o board.o led.o usb_pd_policy.o base_detect.o

@@ -54,6 +54,9 @@
 #define CONFIG_LID_SWITCH
 #define CONFIG_EXTPOWER_GPIO
 
+#define CONFIG_TABLET_MODE
+#define CONFIG_TABLET_MODE_SWITCH
+
 /* Battery */
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_BATT_PRES_ODL
@@ -183,6 +186,8 @@ int board_is_sourcing_vbus(int port);
 int board_vbus_sink_enable(int port, int enable);
 /* Reset all TCPCs. */
 void board_reset_pd_mcu(void);
+/* Base detection interrupt handler */
+void base_detect_interrupt(enum gpio_signal signal);
 
 #endif /* !defined(__ASSEMBLER__) */
 
