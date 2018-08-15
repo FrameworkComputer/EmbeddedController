@@ -14,7 +14,7 @@
 #include "cros_board_info.h"
 #include "driver/accel_lis2dh.h"
 #include "driver/accelgyro_lsm6dsm.h"
-#include "driver/ppc/nx20p3483.h"
+#include "driver/ppc/nx20p348x.h"
 #include "driver/tcpm/anx7447.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -49,11 +49,11 @@ static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_PD_C0_INT_ODL:
-		nx20p3483_interrupt(0);
+		nx20p348x_interrupt(0);
 		break;
 
 	case GPIO_USB_PD_C1_INT_ODL:
-		nx20p3483_interrupt(1);
+		nx20p348x_interrupt(1);
 		break;
 
 	default:

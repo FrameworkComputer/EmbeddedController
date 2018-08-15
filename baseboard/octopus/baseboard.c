@@ -11,7 +11,7 @@
 #include "common.h"
 #include "console.h"
 #include "driver/bc12/bq24392.h"
-#include "driver/ppc/nx20p3483.h"
+#include "driver/ppc/nx20p348x.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
@@ -291,7 +291,7 @@ void board_hibernate(void)
 	 */
 	port = charge_manager_get_active_charge_port();
 	if (port != CHARGE_PORT_NONE)
-		pd_request_source_voltage(port, NX20P3483_SAFE_RESET_VBUS_MV);
+		pd_request_source_voltage(port, NX20P348X_SAFE_RESET_VBUS_MV);
 #endif
 
 	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
