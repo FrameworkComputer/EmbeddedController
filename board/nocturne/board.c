@@ -356,14 +356,14 @@ int board_get_version(void)
 
 	if (board_version == -1) {
 		board_version = 0;
-		/* BRD_ID3 is LSb. */
-		if (gpio_get_level(GPIO_EC_BRD_ID3))
-			board_version |= 0x1;
-		if (gpio_get_level(GPIO_EC_BRD_ID2))
-			board_version |= 0x2;
-		if (gpio_get_level(GPIO_EC_BRD_ID1))
-			board_version |= 0x4;
+		/* BRD_ID0 is LSb. */
 		if (gpio_get_level(GPIO_EC_BRD_ID0))
+			board_version |= 0x1;
+		if (gpio_get_level(GPIO_EC_BRD_ID1))
+			board_version |= 0x2;
+		if (gpio_get_level(GPIO_EC_BRD_ID2))
+			board_version |= 0x4;
+		if (gpio_get_level(GPIO_EC_BRD_ID3))
 			board_version |= 0x8;
 	}
 
