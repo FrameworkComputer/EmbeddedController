@@ -3190,6 +3190,7 @@
 #undef CONFIG_USB_PD_TCPM_PS8751
 #undef CONFIG_USB_PD_TCPM_PS8805
 #undef CONFIG_USB_PD_TCPM_MT6370
+#undef CONFIG_USB_PD_TCPM_TUSB422
 
 /*
  * Adds an EC console command to erase the ANX7447 OCM flash.
