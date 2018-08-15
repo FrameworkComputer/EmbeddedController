@@ -176,6 +176,40 @@ static void hexdump(const uint8_t *data, int len)
 		printf("\n");
 }
 
+static void dump_touchpad_info(const uint8_t *data, int len)
+{
+	const struct touchpad_info *info = (const struct touchpad_info *)data;
+
+	if (len != sizeof(struct touchpad_info)) {
+		fprintf(stderr, "Hex string length is not %zu",
+			sizeof(struct touchpad_info));
+		hexdump(data, len);
+		return;
+	}
+
+	printf("\n");
+	printf("status:         0x%02x\n", info->status);
+	printf("vendor:         0x%04x\n", info->vendor);
+	printf("fw_address:     0x%08x\n", info->fw_address);
+	printf("fw_size:        0x%08x\n", info->fw_size);
+
+	printf("allowed_fw_hash:\n");
+	hexdump(info->allowed_fw_hash, sizeof(info->allowed_fw_hash));
+
+	switch (info->vendor) {
+	case 0x04f3: /* ELAN */
+	case 0x0483: /* ST */
+		printf("id:             0x%04x\n", info->elan.id);
+		printf("fw_version:     0x%04x\n", info->elan.fw_version);
+		printf("fw_fw_checksum: 0x%04x\n", info->elan.fw_checksum);
+		break;
+	default:
+		fprintf(stderr, "Unknown vendor, vendor specific data:\n");
+		hexdump((const uint8_t *)&info->elan, sizeof(info->elan));
+		break;
+	}
+}
+
 /* Read file into buffer */
 static uint8_t *get_file_or_die(const char *filename, size_t *len_ptr)
 {
@@ -1132,9 +1166,15 @@ int main(int argc, char *argv[])
 				extra_command_data, extra_command_data_len,
 				extra_command_answer, extra_command_answer_len);
 
-		if (extra_command == UPDATE_EXTRA_CMD_TOUCHPAD_INFO ||
-			extra_command == UPDATE_EXTRA_CMD_TOUCHPAD_DEBUG)
+		switch (extra_command) {
+		case UPDATE_EXTRA_CMD_TOUCHPAD_INFO:
+			dump_touchpad_info(extra_command_answer,
+					   extra_command_answer_len);
+			break;
+		case  UPDATE_EXTRA_CMD_TOUCHPAD_DEBUG:
 			hexdump(extra_command_answer, extra_command_answer_len);
+			break;
+		}
 	}
 
 	libusb_close(td.uep.devh);
