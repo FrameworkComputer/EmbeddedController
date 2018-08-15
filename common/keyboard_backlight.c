@@ -41,7 +41,7 @@ DECLARE_DEFERRED(kblight_set_deferred);
  */
 int kblight_set(int percent)
 {
-	if (current_percent < 0 || 100 < current_percent)
+	if (percent < 0 || 100 < percent)
 		return EC_ERROR_INVAL;
 	current_percent = percent;
 	/* Need to defer i2c in case it's called from an interrupt handler. */
