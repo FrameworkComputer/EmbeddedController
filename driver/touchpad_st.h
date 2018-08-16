@@ -176,16 +176,12 @@ struct st_tp_host_buffer_header_t {
 #define ST_TP_BUFFER_HEADER_HEAT_MAP_MT_RDY	(1 << 3)
 #define ST_TP_BUFFER_HEADER_HEAT_MAP_SF_RDY	(1 << 4)
 #define ST_TP_BUFFER_HEADER_HEAT_MAP_SS_RDY	(1 << 5)
-#define ST_TP_BUFFER_HEADER_DOMESWITCH_CHG	(1 << 6)
+#define ST_TP_BUFFER_HEADER_DOMESWITCH_LVL	(1 << 6)
 	uint8_t flags;
 	uint8_t reserved[3];
 	uint8_t heatmap_miss_count;
 	uint8_t event_count;
 	uint8_t event_miss_count;
-	uint8_t dome_switch_down_count:3;
-	uint8_t dome_switch_up_count:3;
-	uint8_t dome_switch_level:1;
-	uint8_t dome_switch_overflow:1;
 } __packed;
 
 struct st_tp_host_buffer_heat_map_t {
@@ -249,7 +245,7 @@ enum ST_TP_MODE {
 #define ST_TP_HEAT_MAP_THRESHOLD 10
 
 /* A minimum version that supports heatmap mode. */
-#define ST_TP_MIN_HEATMAP_VERSION 11
+#define ST_TP_MIN_HEATMAP_VERSION 0x12
 
 #endif /* __CROS_EC_TOUCHPAD_ST_H */
 

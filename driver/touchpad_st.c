@@ -200,16 +200,14 @@ static int st_tp_check_domeswitch_state(void)
 	if (ret)
 		return ret;
 
-	if (rx_buf.buffer_header.flags & ST_TP_BUFFER_HEADER_DOMESWITCH_CHG) {
-		/*
-		 * dome_switch_level from device is inverted.
-		 * That is, 0 => pressed, 1 => released.
-		 */
-		set_bits(&system_state,
-			 (rx_buf.buffer_header.dome_switch_level ?
-			  0 : SYSTEM_STATE_DOME_SWITCH_LEVEL),
-			 SYSTEM_STATE_DOME_SWITCH_LEVEL);
-	}
+	ret = rx_buf.buffer_header.flags & ST_TP_BUFFER_HEADER_DOMESWITCH_LVL;
+	/*
+	 * Domeswitch level from device is inverted.
+	 * That is, 0 => pressed, 1 => released.
+	 */
+	set_bits(&system_state,
+		 ret ? 0 : SYSTEM_STATE_DOME_SWITCH_LEVEL,
+		 SYSTEM_STATE_DOME_SWITCH_LEVEL);
 	return 0;
 }
 
