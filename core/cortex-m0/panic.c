@@ -8,6 +8,7 @@
 #include "cpu.h"
 #include "host_command.h"
 #include "panic.h"
+#include "panic-internal.h"
 #include "printf.h"
 #include "system.h"
 #include "task.h"
@@ -138,7 +139,6 @@ void __keep report_panic(void)
  *
  * Declare this as a naked call so we can extract raw LR and IPSR values.
  */
-__keep void exception_panic(void) __attribute__((naked));
 void exception_panic(void)
 {
 	/* Save registers and branch directly to panic handler */

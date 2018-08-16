@@ -19,7 +19,7 @@ typedef void (*func)(void);
 
 #if PASS == 1
 /* Default exception handler */
-void __attribute__((used,naked)) default_handler(void);
+void __attribute__((used, naked)) default_handler(void);
 void default_handler()
 {
 	asm(

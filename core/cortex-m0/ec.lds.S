@@ -40,7 +40,7 @@ SECTIONS
     } > SHARED_LIB
 #endif
     .text : {
-        STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vecttable)
+	*(.text.vecttable)
         . = ALIGN(4);
         __image_data_offset = .;
         KEEP(*(.rodata.ver))
