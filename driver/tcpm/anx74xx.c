@@ -799,55 +799,6 @@ static int anx74xx_tcpm_set_msg_header(int port, int power_role, int data_role)
 		  ANX74XX_REG_AUTO_GOODCRC_SET(!!data_role, !!power_role));
 }
 
-static int anx74xx_alert_status(int port, int *alert)
-{
-	int reg, rv = EC_SUCCESS;
-
-	/* Clear soft irq bit */
-	rv |= tcpc_write(port, ANX74XX_REG_IRQ_EXT_SOURCE_3,
-			 ANX74XX_REG_CLEAR_SOFT_IRQ);
-	*alert = 0;
-	rv = tcpc_read(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG, &reg);
-	if (rv)
-		return EC_ERROR_UNKNOWN;
-
-	/*Clear msg received bit, until read it by TCPM*/
-	rv |= tcpc_write(port, ANX74XX_REG_RECVD_MSG_INT, (reg & 0xFE));
-
-	if (reg & ANX74XX_REG_IRQ_CC_MSG_INT)
-		*alert |= ANX74XX_REG_ALERT_MSG_RECV;
-
-	if (reg & ANX74XX_REG_IRQ_CC_STATUS_INT)
-		*alert |= ANX74XX_REG_ALERT_CC_CHANGE;
-
-	if (reg & ANX74XX_REG_IRQ_GOOD_CRC_INT)
-		*alert |= ANX74XX_REG_ALERT_TX_ACK_RECV;
-
-	if (reg & ANX74XX_REG_IRQ_TX_FAIL_INT)
-		*alert |= ANX74XX_REG_ALERT_TX_MSG_ERROR;
-
-	rv |= tcpc_read(port, ANX74XX_REG_IRQ_EXT_SOURCE_1, &reg);
-	if (rv)
-		return EC_ERROR_UNKNOWN;
-	/* Clears interrupt bits */
-	rv |= tcpc_write(port, ANX74XX_REG_IRQ_EXT_SOURCE_1, reg);
-
-	/* Check for Hard Reset done bit */
-	if (reg & ANX74XX_REG_ALERT_TX_HARD_RESETOK)
-		*alert |= ANX74XX_REG_ALERT_TX_HARD_RESETOK;
-
-	/* Read TCPC Alert register2 */
-	rv |= tcpc_read(port, ANX74XX_REG_IRQ_EXT_SOURCE_2, &reg);
-
-	/* Clears interrupt bits */
-	rv |= tcpc_write(port, ANX74XX_REG_IRQ_EXT_SOURCE_2, reg);
-
-	if (reg & ANX74XX_REG_EXT_HARD_RST)
-		*alert |= ANX74XX_REG_ALERT_HARD_RST_RECV;
-
-	return rv;
-}
-
 static int anx74xx_tcpm_set_rx_enable(int port, int enable)
 {
 	int reg, rv;
@@ -965,50 +916,51 @@ static int anx74xx_tcpm_transmit(int port, enum tcpm_transmit_type type,
 
 void anx74xx_tcpc_alert(int port)
 {
-	int status;
+	int reg;
 
-	/* Check the alert status from anx74xx */
-	if (anx74xx_alert_status(port, &status))
-		status = 0;
-	if (status) {
+	/* Clear soft irq bit */
+	tcpc_write(port, ANX74XX_REG_IRQ_EXT_SOURCE_3,
+			 ANX74XX_REG_CLEAR_SOFT_IRQ);
 
-		if (status & ANX74XX_REG_ALERT_CC_CHANGE) {
-			/* CC status changed, wake task */
-			task_set_event(PD_PORT_TO_TASK_ID(port),
-					PD_EVENT_CC, 0);
-		}
+	if (tcpc_read(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG, &reg))
+		return;
 
-		/* If alert is to receive a message */
-		if (status & ANX74XX_REG_ALERT_MSG_RECV) {
-			/* Set a PD_EVENT_RX */
-			task_set_event(PD_PORT_TO_TASK_ID(port),
-						PD_EVENT_RX, 0);
-		}
-		if (status & ANX74XX_REG_ALERT_TX_ACK_RECV) {
-			/* Inform PD about this TX success */
-			pd_transmit_complete(port,
-						TCPC_TX_COMPLETE_SUCCESS);
-		}
-		if (status & ANX74XX_REG_ALERT_TX_MSG_ERROR) {
-			/* let PD does not wait for this */
-			pd_transmit_complete(port,
-					      TCPC_TX_COMPLETE_FAILED);
-		}
-		if (status & ANX74XX_REG_ALERT_TX_CABLE_RESETOK) {
-			/* ANX hardware clears the request bit */
-			pd_transmit_complete(port,
-					      TCPC_TX_COMPLETE_SUCCESS);
-		}
-		if (status & ANX74XX_REG_ALERT_TX_HARD_RESETOK) {
-			/* ANX hardware clears the request bit */
-			pd_transmit_complete(port,
-					     TCPC_TX_COMPLETE_SUCCESS);
-		}
-		if (status & ANX74XX_REG_ALERT_HARD_RST_RECV) {
-			/* hard reset received */
-			pd_execute_hard_reset(port);
-			task_wake(PD_PORT_TO_TASK_ID(port));
-		}
+	/* Don't clear msg received bit, until read it is by TCPM */
+	tcpc_write(port, ANX74XX_REG_RECVD_MSG_INT, (reg & 0xFE));
+
+	if (reg & ANX74XX_REG_IRQ_CC_MSG_INT)
+		/* Set a PD_EVENT_RX */
+		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_RX, 0);
+
+	if (reg & ANX74XX_REG_IRQ_CC_STATUS_INT)
+		/* CC status changed, wake task */
+		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
+
+	if (reg & ANX74XX_REG_IRQ_GOOD_CRC_INT)
+		/* Inform PD about this TX success */
+		pd_transmit_complete(port, TCPC_TX_COMPLETE_SUCCESS);
+
+	if (reg & ANX74XX_REG_IRQ_TX_FAIL_INT)
+		/* let PD does not wait for this */
+		pd_transmit_complete(port, TCPC_TX_COMPLETE_FAILED);
+
+	/* Read and Clear register1 */
+	tcpc_read(port, ANX74XX_REG_IRQ_EXT_SOURCE_1, &reg);
+	tcpc_write(port, ANX74XX_REG_IRQ_EXT_SOURCE_1, reg);
+
+	/* Check for Hard Reset done bit */
+	if (reg & ANX74XX_REG_ALERT_TX_HARD_RESETOK)
+		/* ANX hardware clears the request bit */
+		pd_transmit_complete(port, TCPC_TX_COMPLETE_SUCCESS);
+
+	/* Read and Clear TCPC Alert register2 */
+	tcpc_read(port, ANX74XX_REG_IRQ_EXT_SOURCE_2, &reg);
+	tcpc_write(port, ANX74XX_REG_IRQ_EXT_SOURCE_2, reg);
+
+	if (reg & ANX74XX_REG_EXT_HARD_RST) {
+		/* hard reset received */
+		pd_execute_hard_reset(port);
+		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
 }
 
