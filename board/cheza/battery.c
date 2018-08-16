@@ -6,6 +6,11 @@
  */
 
 #include "battery.h"
+#include "battery_smart.h"
+
+/* Shutdown mode parameter to write to manufacturer access register */
+#define SB_SHIP_MODE_REG	SB_MANUFACTURER_ACCESS
+#define SB_SHUTDOWN_DATA	0x0010
 
 /* Battery info for rev-0 */
 static const struct battery_info info = {
@@ -25,4 +30,17 @@ static const struct battery_info info = {
 const struct battery_info *battery_get_info(void)
 {
 	return &info;
+}
+
+int board_cut_off_battery(void)
+{
+	int rv;
+
+	/* Ship mode command must be sent twice to take effect */
+	rv = sb_write(SB_SHIP_MODE_REG, SB_SHUTDOWN_DATA);
+
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	return sb_write(SB_SHIP_MODE_REG, SB_SHUTDOWN_DATA);
 }
