@@ -28,6 +28,8 @@ const struct led_descriptor
 	[STATE_DISCHARGE_S5]         = {{LED_OFF,            LED_INDEFINITE} },
 	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_AMBER, 1 * LED_ONE_SEC},
 					{LED_OFF,            1 * LED_ONE_SEC} },
+	[STATE_FACTORY_TEST]         = {{EC_LED_COLOR_BLUE,  2 * LED_ONE_SEC},
+					{EC_LED_COLOR_AMBER, 2 * LED_ONE_SEC} },
 };
 
 const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
