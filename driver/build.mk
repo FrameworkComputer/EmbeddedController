@@ -127,6 +127,9 @@ driver-$(CONFIG_USB_MUX_VIRTUAL)+=usb_mux_virtual.o
 
 # Type-C Power Path Controllers (PPC)
 driver-$(CONFIG_USBC_PPC_SN5S330)+=ppc/sn5s330.o
+ifeq ($(CONFIG_USBC_PPC_NX20P3481)$(CONFIG_USBC_PPC_NX20P3483),y)
+driver-y += ppc/nx20p348x.o
+endif
 driver-$(CONFIG_USBC_PPC_SYV682X)+=ppc/syv682x.o
 driver-$(CONFIG_USBC_PPC_NX20P3483)+=ppc/nx20p348x.o
 

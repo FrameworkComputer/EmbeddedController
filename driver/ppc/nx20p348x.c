@@ -130,25 +130,36 @@ static int nx20p348x_vbus_sink_enable(int port, int enable)
 {
 	int status;
 	int rv;
-	int desired_mode = enable ? NX20P348X_MODE_HV_SNK :
-		NX20P348X_MODE_STANDBY;
+	int control = enable ? NX20P348X_SWITCH_CONTROL_HVSNK : 0;
 
 	enable = !!enable;
 
+#if defined(CONFIG_USBC_PPC_NX20P3481)
+	rv = write_reg(port, NX20P348X_SWITCH_CONTROL_REG, control);
+#elif defined(CONFIG_USBC_PPC_NX20P3483)
 	/*
 	 * We cannot use an EC GPIO for EN_SNK since an EC reset will float the
 	 * GPIO thus browning out the board (without a battery).
 	 */
 	rv = tcpm_set_snk_ctrl(port, enable);
+#else
+#error "Either the NX20P3481 or NX20P3483 must be selected"
+#endif
 	if (rv)
 		return rv;
 
-	/* Read device status register to get mode */
-	rv = read_reg(port, NX20P348X_DEVICE_STATUS_REG, &status);
+	/*
+	 * Read switch status register. The bit definitions for switch control
+	 * and switch status resister are identical, so the control value can be
+	 * compared against the status value. The control switch has a debounce
+	 * (15 msec) before the status will reflect the control command.
+	 */
+	msleep(NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC);
+	rv = read_reg(port, NX20P348X_SWITCH_STATUS_REG, &status);
 	if (rv)
 		return rv;
 
-	return ((status & NX20P348X_DEVICE_MODE_MASK) == desired_mode) ?
+	return (status & NX20P348X_SWITCH_STATUS_MASK) == control ?
 		EC_SUCCESS : EC_ERROR_UNKNOWN;
 }
 
@@ -156,25 +167,36 @@ static int nx20p348x_vbus_source_enable(int port, int enable)
 {
 	int status;
 	int rv;
-	int desired_mode = enable ? NX20P348X_MODE_5V_SRC :
-		NX20P348X_MODE_STANDBY;
+	int control = enable ? NX20P348X_SWITCH_CONTROL_5VSRC : 0;
 
 	enable = !!enable;
 
+#if defined(CONFIG_USBC_PPC_NX20P3481)
+	rv = write_reg(port, NX20P348X_SWITCH_CONTROL_REG, control);
+#elif defined(CONFIG_USBC_PPC_NX20P3483)
 	/*
 	 * For parity's sake, we should not use an EC GPIO for EN_SRC since we
 	 * cannot use it for EN_SNK (for brown out reason listed above).
 	 */
 	rv = tcpm_set_src_ctrl(port, enable);
+#else
+#error "Either the NX20P3481 or NX20P3483 must be selected"
+#endif
 	if (rv)
 		return rv;
 
-	/* Read device status register to get mode */
-	rv = read_reg(port, NX20P348X_DEVICE_STATUS_REG, &status);
+	/*
+	 * Read switch status register. The bit definitions for switch control
+	 * and switch status resister are identical, so the control value can be
+	 * compared against the status value. The control switch has a debounce
+	 * (15 msec) before the status will reflect the control command.
+	 */
+	msleep(NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC);
+	rv = read_reg(port, NX20P348X_SWITCH_STATUS_REG, &status);
 	if (rv)
 		return rv;
 
-	if ((status & NX20P348X_DEVICE_MODE_MASK) != desired_mode)
+	if ((status & NX20P348X_SWITCH_STATUS_MASK) != control)
 		return EC_ERROR_UNKNOWN;
 
 	/* Cache the Vbus state */
@@ -201,6 +223,10 @@ static int nx20p348x_init(int port)
 
 	/* Mask interrupts for interrupt 1 register */
 	mask = ~(NX20P348X_INT1_OC_5VSRC | NX20P348X_INT1_DBEXIT_ERR);
+#ifdef CONFIG_USBC_PPC_NX20P3481
+	/* Unmask Fast Role Swap detect interrupt */
+	mask &= ~NX20P348X_INT1_FRS_DET;
+#endif
 	rv = write_reg(port, NX20P348X_INTERRUPT1_MASK_REG, mask);
 	if (rv)
 		return rv;
@@ -297,6 +323,28 @@ static void nx20p348x_handle_interrupt(int port)
 		 */
 	}
 
+#ifdef CONFIG_USBC_PPC_NX20P3481
+	/* Check for FRS detection */
+	if (reg & NX20P348X_INT1_FRS_DET) {
+		/*
+		 * TODO(b/113069469): Need to check for CC status and verifiy
+		 * that a sink is attached to continue with FRS. If a sink is
+		 * not attached, then this FRS detect is a false detect which is
+		 * triggered when removing an external charger. If FRS was
+		 * detected by the PPC, then it has automatically  enabled the
+		 * 5V SRC mode and this must be undone for a proper detach.
+		 */
+		/* Check CC status */
+
+		/*
+		 * False detect, disable SRC mode which was enabled by
+		 * NX20P3481.
+		 */
+		CPRINTS("C%d: PPC FRS false detect, disabling SRC mode!", port);
+		nx20p348x_vbus_source_enable(port, 0);
+	}
+#endif
+
 	/*
 	 * Read interrupt 2 status register. Note, interrupt register is
 	 * automatically cleared by reading.
@@ -354,6 +402,34 @@ static int nx20p348x_dump(int port)
 }
 #endif /* defined(CONFIG_CMD_PPC_DUMP) */
 
+/*
+ * TODO (b/112697473): The NX20P348x PPCs do not support vbus detection or vconn
+ * generation. However, if a different PPC does support these features and needs
+ * these config options, then these functions do need to exist. The
+ * configuration for what each PPC supports should be converted to bits within
+ * a flags variable that is part of the ppc_config_t struct.
+ */
+#ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
+static int nx20p348x_is_vbus_present(int port)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+#endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
+
+#ifdef CONFIG_USBC_PPC_POLARITY
+static int nx20p348x_set_polarity(int port, int polarity)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+#endif
+
+#ifdef CONFIG_USBC_PPC_VCONN
+static int nx20p348x_set_vconn(int port, int enable)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+#endif
+
 const struct ppc_drv nx20p348x_drv = {
 	.init = &nx20p348x_init,
 	.is_sourcing_vbus = &nx20p348x_is_sourcing_vbus,
@@ -365,4 +441,13 @@ const struct ppc_drv nx20p348x_drv = {
 	.set_vbus_source_current_limit =
 		&nx20p348x_set_vbus_source_current_limit,
 	.discharge_vbus = &nx20p348x_discharge_vbus,
+#ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
+	.is_vbus_present = &nx20p348x_is_vbus_present,
+#endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
+#ifdef CONFIG_USBC_PPC_POLARITY
+	.set_polarity = &nx20p348x_set_polarity,
+#endif /* defined(CONFIG_USBC_PPC_POLARITY) */
+#ifdef CONFIG_USBC_PPC_VCONN
+	.set_vconn = &nx20p348x_set_vconn,
+#endif /* defined(CONFIG_USBC_PPC_VCONN) */
 };
