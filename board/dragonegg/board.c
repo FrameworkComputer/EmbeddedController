@@ -9,10 +9,13 @@
 #include "common.h"
 #include "charger.h"
 #include "console.h"
+#include "driver/ppc/nx20p348x.h"
 #include "driver/ppc/sn5s330.h"
+#include "ec_commands.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "intc.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -26,8 +29,29 @@
 
 static void ppc_interrupt(enum gpio_signal signal)
 {
-	if (signal == GPIO_USB_C0_TCPPC_INT_L)
+
+	switch (signal) {
+	case GPIO_USB_C0_TCPPC_INT_L:
 		sn5s330_interrupt(0);
+		break;
+
+	case GPIO_USB_C2_TCPPC_INT_ODL:
+		nx20p348x_interrupt(2);
+		break;
+
+	default:
+		break;
+	}
+}
+
+static void tcpc_alert_event(enum gpio_signal signal)
+{
+
+
+#ifdef HAS_TASK_PDCMD
+	/* Exchange status with TCPCs */
+	host_command_pd_send_status(PD_CHARGE_NO_CHANGE);
+#endif
 }
 
 #include "gpio_list.h" /* Must come after other header files. */

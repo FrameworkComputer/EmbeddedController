@@ -12,6 +12,8 @@
 #include "ec_commands.h"
 #include "gpio.h"
 #include "system.h"
+#include "tcpci.h"
+#include "tcpm.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
@@ -172,6 +174,22 @@ void pd_transition_voltage(int idx)
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
 int pd_snk_is_vbus_provided(int port)
 {
+	/*
+	 * TODO(b/112661747): Until per port VBUS detection methods are
+	 * supported, DragonEgg needs to have CONFIG_USB_PD_VBUS_DETECT_PPC
+	 * defined, but the nx20p3481 PPC on port 2 does not support VBUS
+	 * detection. In the meantime, check specifically for port 2, and rely
+	 * on the TUSB422 TCPC for VBUS status. Note that the tcpm method can't
+	 * be called directly here as it's not supported unless
+	 * CONFIG_USB_PD_VBUS_DETECT_TCPC is defined.
+	 */
+	int reg;
+
+	if (port == 2) {
+		if (tcpc_read(port, TCPC_REG_POWER_STATUS, &reg))
+			return 0;
+		return reg & TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
+	}
 	return ppc_is_vbus_present(port);
 }
 #endif

@@ -29,7 +29,9 @@ GPIO_INT(PG_EC_RSMRST_ODL,PIN(E, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_EC_DSW_PWROK, PIN(D, 6), GPIO_INT_BOTH, power_signal_interrupt)
 
 /* USB-C interrupts */
-GPIO_INT(USB_C0_TCPPC_INT_L, PIN(B, 2), GPIO_INT_FALLING, ppc_interrupt)
+GPIO_INT(USB_C0_TCPPC_INT_L,   PIN(B, 2), GPIO_INT_FALLING, ppc_interrupt)
+GPIO_INT(USB_C2_TCPPC_INT_ODL, PIN(L, 1), GPIO_INT_FALLING, ppc_interrupt)
+GPIO_INT(USB_C2_TCPC_INT_ODL,  PIN(K, 6), GPIO_INT_FALLING, tcpc_alert_event)
 
 /* Misc. interrupts */
 /* TODO (b:110880394) Uncomment this when support for buttons is added */
