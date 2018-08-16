@@ -105,9 +105,7 @@ int pd_check_vconn_swap(int port)
 
 void pd_execute_data_swap(int port, int data_role)
 {
-	/* On Octopus, only the first port can act as OTG */
-	if (port == 0)
-		gpio_set_level(GPIO_USB2_OTG_ID, (data_role == PD_ROLE_UFP));
+	/* Do nothing - functionality moved to the AP for octopus */
 }
 
 int pd_is_valid_input_voltage(int mv)
