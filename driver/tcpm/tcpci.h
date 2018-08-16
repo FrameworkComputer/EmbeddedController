@@ -54,6 +54,7 @@
 #define TCPC_REG_ROLE_CTRL         0x1a
 #define TCPC_REG_ROLE_CTRL_SET(drp, rp, cc1, cc2) \
 		((drp) << 6 | (rp) << 4 | (cc2) << 2 | (cc1))
+#define TCPC_REG_ROLE_CTRL_DRP(reg) (((reg) & 0x40) >> 6)
 #define TCPC_REG_ROLE_CTRL_RP_MASK  0x30
 #define TCPC_REG_ROLE_CTRL_RP(reg)  (((reg) & TCPC_REG_ROLE_CTRL_RP_MASK) >> 4)
 #define TCPC_REG_ROLE_CTRL_CC2(reg) (((reg) & 0xc) >> 2)

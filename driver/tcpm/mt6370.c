@@ -58,12 +58,11 @@ static int mt6370_init(int port)
 	return rv;
 }
 
-#ifndef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 static int mt6370_get_cc(int port, int *cc1, int *cc2)
 {
 	int status;
 	int rv;
-	int role;
+	int role, is_snk;
 
 	rv = tcpc_read(port, TCPC_REG_CC_STATUS, &status);
 
@@ -87,24 +86,27 @@ static int mt6370_get_cc(int port, int *cc1, int *cc2)
 	 */
 	rv = tcpc_read(port, TCPC_REG_ROLE_CTRL, &role);
 
-	if (*cc1 != TYPEC_CC_VOLT_OPEN)
-		*cc1 |= (TCPC_REG_ROLE_CTRL_CC1(role) == TYPEC_CC_RD) << 2;
-	if (*cc2 != TYPEC_CC_VOLT_OPEN)
-		*cc2 |= (TCPC_REG_ROLE_CTRL_CC2(role) == TYPEC_CC_RD) << 2;
+	if (TCPC_REG_ROLE_CTRL_DRP(role))
+		is_snk = TCPC_REG_CC_STATUS_TERM(status);
+	else
+		/* CC1/CC2 states are the same, checking one-side is enough. */
+		is_snk = TCPC_REG_CC_STATUS_CC1(role) == TYPEC_CC_RD;
+
+	if (is_snk) {
+		if (*cc1 != TYPEC_CC_VOLT_OPEN)
+			*cc1 |= 0x04;
+		if (*cc2 != TYPEC_CC_VOLT_OPEN)
+			*cc2 |= 0x04;
+	}
 
 	return rv;
 }
-#endif
 
 /* MT6370 is a TCPCI compatible port controller */
 const struct tcpm_drv mt6370_tcpm_drv = {
 	.init			= &mt6370_init,
 	.release		= &tcpci_tcpm_release,
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.get_cc			= &tcpci_tcpm_get_cc,
-#else
 	.get_cc			= &mt6370_get_cc,
-#endif
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,
 #endif
