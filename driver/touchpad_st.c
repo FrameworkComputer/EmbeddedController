@@ -326,6 +326,7 @@ static int st_tp_update_system_state(int new_state, int mask)
 			0
 		};
 		if (new_state & SYSTEM_STATE_ENABLE_HEAT_MAP) {
+			CPRINTS("Enable Heatmap");
 			tx_buf[2] |= 1 << 0;
 			need_locked_scan_mode = 1;
 		}
@@ -1043,7 +1044,7 @@ static int st_tp_read_frame(void)
 	 * Let's skip this check for now.
 	 */
 	ret = spi_transaction(SPI, tx_buf, sizeof(tx_buf),
-			      (uint8_t *)&rx_buf, rx_len);
+			      (uint8_t *)rx_buf, rx_len);
 	if (ret == EC_SUCCESS) {
 		int i;
 		uint8_t *dest = usb_packet[spi_buffer_index & 1].frame;
@@ -1175,9 +1176,12 @@ static int heatmap_send_packet(struct usb_isochronous_config const *config)
 static int st_tp_usb_set_interface(usb_uint alternate_setting,
 				   usb_uint interface)
 {
-	if ((system_info.release_info & 0xFF) < ST_TP_MIN_HEATMAP_VERSION)
+	if ((system_info.release_info & 0xFF) < ST_TP_MIN_HEATMAP_VERSION) {
+		CPRINTS("release version %04x doesn't support heatmap",
+			system_info.release_info);
 		/* Heatmap mode is not supported in this version. */
 		return -1;
+	}
 
 	if (alternate_setting == 1) {
 		hook_call_deferred(&st_tp_enable_heat_map_data, 0);
