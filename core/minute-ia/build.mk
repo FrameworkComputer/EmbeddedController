@@ -7,8 +7,7 @@
 #
 
 # Select Minute-IA bare-metal toolchain
-$(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_i386),\
-	/opt/coreboot-sdk/bin/i386-elf-)
+$(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_i386),i686-pc-linux-gnu-)
 
 # FPU compilation flags
 CFLAGS_FPU-$(CONFIG_FPU)=
