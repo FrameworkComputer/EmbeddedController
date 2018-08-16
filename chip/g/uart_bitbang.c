@@ -50,6 +50,21 @@ static int stop_bit_discard[DISCARD_LOG];
 static int stop_bit_discard_idx;
 #endif /* BITBANG_DEBUG */
 
+enum parity_type {
+	PARITY_TYPE_NONE = 0,
+	PARITY_TYPE_ODD = 1,
+	PARITY_TYPE_EVEN = 2,
+	PARITY_TYPE_MAX,
+};
+
+char *parity_type_name[PARITY_TYPE_MAX] = {
+	"none",
+	"odd",
+	"even",
+};
+
+static char *feature_name = "Bit bang";
+
 int uart_bitbang_is_enabled(void)
 {
 	return bitbang_enabled;
@@ -60,7 +75,7 @@ int uart_bitbang_is_wanted(void)
 	return bitbang_wanted;
 }
 
-int uart_bitbang_config(int baud_rate, int parity)
+static int uart_bitbang_config(int baud_rate, uint8_t parity)
 {
 	/* Can't configure when enabled */
 	if (bitbang_enabled)
@@ -73,16 +88,10 @@ int uart_bitbang_config(int baud_rate, int parity)
 	}
 	bitbang_config.baud_rate = baud_rate;
 
-	switch (parity) {
-	case 0:
-	case 1:
-	case 2:
-		break;
-
-	default:
+	if (parity >= PARITY_TYPE_MAX) {
 		CPRINTF("Err: invalid parity '%d'. (0:N, 1:O, 2:E)\n", parity);
 		return EC_ERROR_INVAL;
-	};
+	}
 	bitbang_config.parity = parity;
 
 	return EC_SUCCESS;
@@ -133,7 +142,7 @@ int uart_bitbang_enable(void)
 	task_enable_irq(bitbang_config.rx_irq);
 	gpio_enable_interrupt(bitbang_config.rx_gpio);
 
-	CPRINTS("Bit bang enabled");
+	CPRINTS("%s enabled", feature_name);
 
 	return EC_SUCCESS;
 }
@@ -160,7 +169,7 @@ int uart_bitbang_disable(void)
 
 	bitbang_enabled = 0;
 
-	CPRINTS("Bit bang disabled");
+	CPRINTS("%s disabled", feature_name);
 	return EC_SUCCESS;
 }
 
@@ -203,21 +212,20 @@ static void uart_bitbang_write_char(char c)
 	/* 8 data bits. */
 	ones = 0;
 	for (i = 0; i < 8; i++) {
-		val = (c & (1 << i));
+		val = !!(c & (1 << i));
 		gpio_set_level(bitbang_config.tx_gpio, val);
 
 		/* Count 1's in order to handle parity bit. */
-		if (val)
-			ones++;
+		ones += val;
 		wait_ticks(&next_tick);
 	}
 
 	/* Optional parity. */
-	if (set_parity) {
+	if (set_parity != PARITY_TYPE_NONE) {
 		gpio_set_level(bitbang_config.tx_gpio,
-			       (set_parity == 1) ^ (ones & 1));
+			       (set_parity == PARITY_TYPE_ODD) ^ (ones & 1));
 		wait_ticks(&next_tick);
-	};
+	}
 
 	/* 1 stop bit. */
 	gpio_set_level(bitbang_config.tx_gpio, 1);
@@ -274,7 +282,8 @@ static int uart_bitbang_receive_char(uint8_t *rxed_char, uint32_t *next_tick)
 		wait_ticks(next_tick);
 		stop_bit = gpio_get_level(bitbang_config.rx_gpio);
 
-		if ((set_parity == 1) != ((ones + parity_bit) & 1)) {
+		if ((set_parity == PARITY_TYPE_ODD) !=
+			((ones + parity_bit) & 1)) {
 #if BITBANG_DEBUG
 			parity_err_cnt++;
 			parity_err_discard[parity_discard_idx] = rx_char;
@@ -368,7 +377,7 @@ static int write_test_pattern(int pattern_idx)
 	default:
 		ccprintf("unknown test pattern\n");
 		return EC_ERROR_INVAL;
-	};
+	}
 
 	return EC_SUCCESS;
 }
@@ -377,7 +386,7 @@ static int write_test_pattern(int pattern_idx)
 static int command_bitbang(int argc, char **argv)
 {
 	int baud_rate;
-	int parity;
+	uint32_t parity;
 	int rv;
 
 	if (argc > 1) {
@@ -397,13 +406,13 @@ static int command_bitbang(int argc, char **argv)
 #endif /* BITBANG_DEBUG */
 
 			baud_rate = atoi(argv[2]);
-			if (!strcasecmp("odd", argv[3]))
-				parity = 1;
-			else if (!strcasecmp("even", argv[3]))
-				parity = 2;
-			else if (!strcasecmp("none", argv[3]))
-				parity = 0;
-			else
+			for (parity = PARITY_TYPE_NONE;
+			     parity < PARITY_TYPE_MAX;
+			     ++parity)
+				if (!strcasecmp(parity_type_name[parity],
+						argv[3]))
+					break;
+			if (parity >= PARITY_TYPE_MAX)
 				return EC_ERROR_PARAM3;
 
 			rv = uart_bitbang_config(baud_rate, parity);
@@ -411,7 +420,8 @@ static int command_bitbang(int argc, char **argv)
 				return rv;
 
 			if (servo_is_connected())
-				ccprintf("Bit banging superseded by servo\n");
+				ccprintf("%sing superseded by servo\n",
+					feature_name);
 
 			bitbang_wanted = 1;
 			ccd_update_state();
@@ -422,24 +432,13 @@ static int command_bitbang(int argc, char **argv)
 	}
 
 	if (!uart_bitbang_is_enabled()) {
-		ccprintf("bit banging mode disabled.\n");
+		ccprintf("%s mode disabled.\n", feature_name);
 	} else {
 		ccprintf("baud rate - parity\n");
 		ccprintf("  %6d    ", bitbang_config.baud_rate);
-		switch (bitbang_config.parity) {
-		case 1:
-			ccprintf("odd\n");
-			break;
-
-		case 2:
-			ccprintf("even\n");
-			break;
-
-		case 0:
-		default:
-			ccprintf("none\n");
-		break;
-		};
+		ccprintf("%s\n", parity_type_name[
+			(bitbang_config.parity < PARITY_TYPE_MAX) ?
+			bitbang_config.parity : PARITY_TYPE_NONE]);
 	}
 
 	return EC_SUCCESS;

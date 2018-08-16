@@ -30,18 +30,6 @@ struct uart_bitbang_properties {
 extern struct uart_bitbang_properties bitbang_config;
 
 /**
- * Configure bit banging mode for a UART.
- *
- * If configuration succeeds, then call uart_bitbang_enable() on the port.
- *
- * @param baud_rate:  desired baud rate.
- * @param parity:  0: no parity, 1: odd parity, 2: even parity.
- *
- * @returns EC_SUCCESS on success, otherwise an error.
- */
-int uart_bitbang_config(int baud_rate, int parity);
-
-/**
  * Enable bit banging mode for a UART.
  *
  * The UART must have been configured first.
