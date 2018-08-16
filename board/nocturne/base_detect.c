@@ -17,12 +17,12 @@
  */
 
 #include "adc.h"
+#include "base_state.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "tablet_mode.h"
 #include "timer.h"
 #include "util.h"
 
@@ -103,17 +103,12 @@ static void base_detect_changed(void)
 {
 	switch (state) {
 	case BASE_DETACHED:
-		/* Indicate that we are in tablet mode. */
-		tablet_set_mode(1);
+		base_set_state(0);
 		base_power_enable(0);
 		break;
 
 	case BASE_ATTACHED:
-		/*
-		 * TODO(b/73133611): Note, this simple logic may suffice for
-		 * now, but we may have to revisit this.
-		 */
-		tablet_set_mode(0);
+		base_set_state(1);
 		base_power_enable(1);
 		break;
 
