@@ -21,6 +21,7 @@ void gesture_calc(uint32_t *event);
  * Note: lsm6ds0 accel needs twice the expected data rate in order to guarantee
  * that we have a new data sample every reading.
  */
-#define TAP_ODR (2 * (1000000 / CONFIG_GESTURE_SAMPLING_INTERVAL_MS))
+#define TAP_ODR (1000000 / CONFIG_GESTURE_SAMPLING_INTERVAL_MS)
+#define TAP_ODR_LSM6DS0 (2 * TAP_ODR)
 
 #endif /* __CROS_EC_GESTURE_H */

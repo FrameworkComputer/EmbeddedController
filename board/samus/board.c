@@ -337,11 +337,11 @@ struct motion_sensor_t motion_sensors[] = {
 		 },
 		 /* Used for double tap */
 		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = TAP_ODR | ROUND_UP_FLAG,
+			 .odr = TAP_ODR_LSM6DS0 | ROUND_UP_FLAG,
 			 .ec_rate = CONFIG_GESTURE_SAMPLING_INTERVAL_MS * MSEC,
 		 },
 		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = TAP_ODR | ROUND_UP_FLAG,
+			 .odr = TAP_ODR_LSM6DS0 | ROUND_UP_FLAG,
 			 .ec_rate = CONFIG_GESTURE_SAMPLING_INTERVAL_MS * MSEC,
 		 },
 	 },
