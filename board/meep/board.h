@@ -96,8 +96,13 @@ enum sensor_id {
 	SENSOR_COUNT
 };
 
-/* List of possible batteries */
 enum battery_type {
+	BATTERY_DANAPACK_COS,
+	BATTERY_DANAPACK_ATL,
+	BATTERY_DANAPACK_SDI,
+	BATTERY_SAMSUNG_SDI,
+	BATTERY_SIMPLO_COS,
+	BATTERY_SIMPLO_ATL,
 	BATTERY_TYPE_COUNT,
 };
 
