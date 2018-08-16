@@ -28,6 +28,10 @@
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
 
+/* USB PD */
+#define CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
+#undef CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
+
 /* Volume button */
 #define CONFIG_VOLUME_BUTTONS
 #define GPIO_VOLUME_UP_L GPIO_EC_VOLUP_BTN_ODL
@@ -65,6 +69,8 @@
 enum adc_channel {
 	ADC_TEMP_SENSOR_AMB,		/* ADC0 */
 	ADC_TEMP_SENSOR_CHARGER,	/* ADC1 */
+	ADC_VBUS_C1,				/* ADC4 */
+	ADC_VBUS_C0,				/* ADC9 */
 	ADC_CH_COUNT
 };
 

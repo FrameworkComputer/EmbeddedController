@@ -45,6 +45,9 @@
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+#define USB_PD_PORT_ANX7447	0
+#define USB_PD_PORT_PS8751	1
+
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if ((signal == GPIO_USB_C1_MUX_INT_ODL) &&
@@ -82,8 +85,19 @@ const struct adc_t adc_channels[] = {
 		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 	[ADC_TEMP_SENSOR_CHARGER] = {
 		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_VBUS_C0] = {"VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_VBUS_C1] = {"VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+enum adc_channel board_get_vbus_adc(int port)
+{
+	if (port == USB_PD_PORT_ANX7447)
+		return  ADC_VBUS_C0;
+	if (port == USB_PD_PORT_PS8751)
+		return  ADC_VBUS_C1;
+	return ADC_VBUS_C0;
+}
 
 const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
