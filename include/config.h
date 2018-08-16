@@ -2751,6 +2751,12 @@
 #undef CONFIG_TABLET_SWITCH
 
 /*
+ * Add a virtual switch to indicate when detachable device has
+ * base attached.
+ */
+#undef CONFIG_BASE_ATTACHED_SWITCH
+
+/*
  * Microchip Trace FIFO Debug Port
  */
 #undef CONFIG_MCHP_TFDP

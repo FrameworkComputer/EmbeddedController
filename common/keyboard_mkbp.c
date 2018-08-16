@@ -6,6 +6,7 @@
  */
 
 #include "atomic.h"
+#include "base_state.h"
 #include "button.h"
 #include "chipset.h"
 #include "common.h"
@@ -264,6 +265,16 @@ DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, mkbp_tablet_mode_change, HOOK_PRIO_LAST);
 DECLARE_HOOK(HOOK_INIT, mkbp_tablet_mode_change, HOOK_PRIO_INIT_LID+1);
 #endif
 
+#ifdef CONFIG_BASE_ATTACHED_SWITCH
+static void mkbp_base_attached_change(void)
+{
+	mkbp_update_switches(EC_MKBP_BASE_ATTACHED, base_get_state());
+}
+DECLARE_HOOK(HOOK_BASE_ATTACHED_CHANGE, mkbp_base_attached_change,
+	     HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_INIT, mkbp_base_attached_change, HOOK_PRIO_INIT_LID+1);
+#endif
+
 void keyboard_update_button(enum keyboard_button_type button, int is_pressed)
 {
 	switch (button) {
@@ -429,6 +440,9 @@ static uint32_t get_supported_switches(void)
 #endif
 #ifdef CONFIG_TABLET_MODE_SWITCH
 	val |= (1 << EC_MKBP_TABLET_MODE);
+#endif
+#ifdef CONFIG_BASE_ATTACHED_SWITCH
+	val |= (1 << EC_MKBP_BASE_ATTACHED);
 #endif
 	return val;
 }
