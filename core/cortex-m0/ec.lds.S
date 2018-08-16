@@ -172,6 +172,10 @@ SECTIONS
         __usb_desc_end = .;
         . = ALIGN(4);
         KEEP(*(.rodata.usb_ep))
+        KEEP(*(.rodata.usb_ep.usb_ep_tx))
+        KEEP(*(.rodata.usb_ep.usb_ep_rx))
+        KEEP(*(.rodata.usb_ep.usb_ep_event))
+        KEEP(*(.rodata.usb_ep.usb_iface_request))
 
         . = ALIGN(4);
         *(.rodata*)
