@@ -280,6 +280,17 @@ static void it83xx_set_power_role(enum usbpd_port port, int power_role)
 {
 	/* PD_ROLE_SINK 0, PD_ROLE_SOURCE 1 */
 	if (power_role == PD_ROLE_SOURCE) {
+		/*
+		 * bit[2,3] BMC Rx threshold setting
+		 * 00b: power neutral
+		 * 01b: sinking power =>
+		 *      High to low Y3Rx threshold = 0.38,
+		 *      Low to high Y3Rx threshold = 0.54.
+		 * 10b: sourcing power =>
+		 *      High to low Y3Rx threshold = 0.64,
+		 *      Low to high Y3Rx threshold = 0.79.
+		 */
+		IT83XX_USBPD_CCADCR(port) = 0x08;
 		/* bit0: source */
 		SET_MASK(IT83XX_USBPD_PDMSR(port), (1 << 0));
 		/* bit1: CC1 select Rp */
@@ -287,6 +298,17 @@ static void it83xx_set_power_role(enum usbpd_port port, int power_role)
 		/* bit3: CC2 select Rp */
 		SET_MASK(IT83XX_USBPD_BMCSR(port), (1 << 3));
 	} else {
+		/*
+		 * bit[2,3] BMC Rx threshold setting
+		 * 00b: power neutral
+		 * 01b: sinking power =>
+		 *      High to low Y3Rx threshold = 0.38,
+		 *      Low to high Y3Rx threshold = 0.54
+		 * 10b: sourcing power =>
+		 *      High to low Y3Rx threshold = 0.64,
+		 *      Low to high Y3Rx threshold = 0.79
+		 */
+		IT83XX_USBPD_CCADCR(port) = 0x04;
 		/* bit0: sink */
 		CLEAR_MASK(IT83XX_USBPD_PDMSR(port), (1 << 0));
 		/* bit1: CC1 select Rd */
