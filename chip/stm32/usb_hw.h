@@ -6,6 +6,9 @@
 #ifndef __CROS_EC_USB_HW_H
 #define __CROS_EC_USB_HW_H
 
+#include <stddef.h>
+#include <stdint.h>
+
 /* Event types for the endpoint event handler. */
 enum usb_ep_event {
 	USB_EVENT_RESET,
