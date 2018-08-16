@@ -290,6 +290,8 @@ static int bram_idx_lookup(enum system_bbram_idx idx)
 		return BRAM_IDX_PD0;
 	if (idx == SYSTEM_BBRAM_IDX_PD1)
 		return BRAM_IDX_PD1;
+	if (idx == SYSTEM_BBRAM_IDX_PD2)
+		return BRAM_IDX_PD2;
 #endif
 	return -1;
 }
