@@ -282,6 +282,8 @@
 
 #define CONFIG_USB_PAIRING
 
+#define CONFIG_USB_CONSOLE_READ
+
 #ifdef BOARD_WAND
 /* Battery and charger options. */
 #define CONFIG_CHARGER
