@@ -73,12 +73,61 @@
 #define UNIMPLEMENTED(name)
 #endif
 
+/*
+ * RO/RW pin macro.
+ *
+ * Some boards may have very different pin configurations between RO and RW, and
+ * also may vary from revisions to revisions. The RO/RW pin macros can ease the
+ * maintance effort.
+ */
+
+#ifdef SECTION_IS_RO
+#define GPIO_RO(name, pin, flags) GPIO(name, pin, flags)
+#define GPIO_RW(name, pin, flags)
+#define GPIO_INT_RO(name, pin, flags, signal) GPIO_INT(name, pin, flags, signal)
+#define GPIO_INT_RW(name, pin, flags, signal)
+#define ALTERNATE_RO(pinmask, function, module, flags) \
+		ALTERNATE(pinmask, function, module, flags)
+#define ALTERNATE_RW(pinmask, function, module, flags)
+#define UNIMPLEMENTED_RO(name) UNIMPLEMENTED(name)
+#define UNIMPLEMENTED_RW(name)
+#elif defined(SECTION_IS_RW)
+#define GPIO_RO(name, pin, flags)
+#define GPIO_RW(name, pin, flags) GPIO(name, pin, flags)
+#define GPIO_INT_RO(name, pin, flags, signal)
+#define GPIO_INT_RW(name, pin, flags, signal) GPIO_INT(name, pin, flags, signal)
+#define ALTERNATE_RO(pinmask, function, module, flags)
+#define ALTERNATE_RW(pinmask, function, module, flags) \
+		ALTERNATE(pinmask, function, module, flags)
+#define UNIMPLEMENTED_RO(name)
+#define UNIMPLEMENTED_RW(name) UNIMPLEMENTED(name)
+#else
+#define GPIO_RO(name, pin, flags) GPIO(name, pin, flags)
+#define GPIO_RW(name, pin, flags) GPIO(name, pin, flags)
+#define GPIO_INT_RO(name, pin, flags, signal) GPIO_INT(name, pin, flags, signal)
+#define GPIO_INT_RW(name, pin, flags, signal) GPIO_INT(name, pin, flags, signal)
+#define ALTERNATE_RO(pinmask, function, module, flags) \
+		ALTERNATE(pinmask, function, module, flags)
+#define ALTERNATE_RW(pinmask, function, module, flags) \
+		ALTERNATE(pinmask, function, module, flags)
+#define UNIMPLEMENTED_RO(name) UNIMPLEMENTED(name)
+#define UNIMPLEMENTED_RW(name) UNIMPLEMENTED(name)
+#endif
+
 #include "gpio.inc"
 
 /*
  * Once the gpio.inc file has been included these macros are no longer needed.
  */
 #undef GPIO
+#undef GPIO_RO
+#undef GPIO_RW
 #undef GPIO_INT
+#undef GPIO_INT_RO
+#undef GPIO_INT_RW
 #undef ALTERNATE
+#undef ALTERNATE_RO
+#undef ALTERNATE_RW
 #undef UNIMPLEMENTED
+#undef UNIMPLEMENTED_RO
+#undef UNIMPLEMENTED_RW
