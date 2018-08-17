@@ -27,7 +27,7 @@ endif
 #
 # Add libusb-1.0 required flags
 #
-INCLUDE=-I. -I../../ -I../../test -I../../include -I../../chip/host
+INCLUDE=-I. -I../../ -I../../fuzz -I../../test -I../../include -I../../chip/host
 LIBS    += -lcrypto -lssl
 CFLAGS  += ${INCLUDE}
 STANDALONE_FLAGS=${INCLUDE} -ffreestanding -fno-builtin \

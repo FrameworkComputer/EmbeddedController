@@ -3936,9 +3936,11 @@
 #endif
 
 /*
- * Apply test config overrides last, since tests need to override some of the
- * config flags in non-standard ways to mock only parts of the system.
+ * Apply fuzzer and test config overrides last, since fuzzers and tests need to
+ * override some of the config flags in non-standard ways to mock only parts of
+ * the system.
  */
+#include "fuzz_config.h"
 #include "test_config.h"
 
 /*

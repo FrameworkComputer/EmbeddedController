@@ -72,6 +72,7 @@ CPPFLAGS += -I$(abspath ./chip/$(CHIP))
 # For core includes
 CPPFLAGS += -I$(abspath .)
 CPPFLAGS += -I$(abspath $(BDIR))
+CPPFLAGS += -I$(abspath ./fuzz)
 CPPFLAGS += -I$(abspath ./test)
 ifeq ($(CONFIG_UPTO_SHA512),y)
 CPPFLAGS += -DSHA512_SUPPORT

@@ -91,13 +91,14 @@ UC_PROJECT:=$(call uppercase,$(PROJECT))
 # Transform the configuration into make variables.  This must be done after
 # the board/baseboard/project/chip/core variables are defined, since some of
 # the configs are dependent on particular configurations.
-includes=include core/$(CORE)/include $(dirs) $(out) test
+includes=include core/$(CORE)/include $(dirs) $(out) fuzz test
 ifdef CTS_MODULE
 includes+=cts/$(CTS_MODULE) cts
 endif
 ifeq "$(TEST_BUILD)" "y"
 	_tsk_lst_file:=ec.tasklist
-	_tsk_lst_flags:=-Itest -DTEST_BUILD -imacros $(PROJECT).tasklist
+	_tsk_lst_flags:=$(if $(TEST_FUZZ),-Ifuzz,-Itest) -DTEST_BUILD -imacros \
+			$(PROJECT).tasklist
 else ifdef CTS_MODULE
 	_tsk_lst_file:=ec.tasklist
 	_tsk_lst_flags:=-I cts/$(CTS_MODULE) -Icts -DCTS_MODULE=$(CTS_MODULE) \
@@ -195,6 +196,7 @@ include chip/$(CHIP)/build.mk
 include core/$(CORE)/build.mk
 include common/build.mk
 include driver/build.mk
+include fuzz/build.mk
 include power/build.mk
 -include private/build.mk
 ifneq ($(PDIR),)
@@ -226,14 +228,18 @@ all-obj-$(1)+=$(call objs_from_dir_p,power,power,$(1))
 ifdef CTS_MODULE
 all-obj-$(1)+=$(call objs_from_dir_p,cts,cts,$(1))
 endif
+ifeq ($(TEST_FUZZ),y)
+all-obj-$(1)+=$(call objs_from_dir_p,fuzz,$(PROJECT),$(1))
+else
 all-obj-$(1)+=$(call objs_from_dir_p,test,$(PROJECT),$(1))
+endif
 endef
 
 # Get all sources to build
 $(eval $(call get_sources,y))
 $(eval $(call get_sources,ro))
 
-dirs=core/$(CORE) chip/$(CHIP) $(BASEDIR) $(BDIR) common power test \
+dirs=core/$(CORE) chip/$(CHIP) $(BASEDIR) $(BDIR) common fuzz power test \
 	cts/common cts/$(CTS_MODULE)
 dirs+= private $(PDIR)
 dirs+=$(shell find common -type d)
