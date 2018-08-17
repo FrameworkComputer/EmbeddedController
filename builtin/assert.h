@@ -41,6 +41,9 @@ extern void panic_assert_fail(const char *msg, const char *func,
 #define ASSERT(cond)
 #endif
 
+/* This collides with cstdlib, so exclude it where cstdlib is supported. */
+#ifndef assert
 #define assert(x...) ASSERT(x)
+#endif
 
 #endif /* __CROS_EC_ASSERT_H__ */

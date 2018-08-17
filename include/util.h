@@ -56,31 +56,31 @@
 #define DIV_ROUND_UP(x, y) (((x) + ((y) - 1)) / (y))
 #define DIV_ROUND_NEAREST(x, y) (((x) + ((y) / 2)) / (y))
 
+#ifndef HIDE_EC_STDLIB
 /* Standard library functions */
-int atoi(const char *nptr);
-int isdigit(int c);
-int isspace(int c);
-int isalpha(int c);
-int isprint(int c);
-int memcmp(const void *s1, const void *s2, size_t len);
-int safe_memcmp(const void *s1, const void *s2, size_t len);
-void *memcpy(void *dest, const void *src, size_t len);
-__visible void *memset(void *dest, int c, size_t len);
-void *memmove(void *dest, const void *src, size_t len);
-void *memchr(const void *buffer, int c, size_t n);
-int strcasecmp(const char *s1, const char *s2);
-int strncasecmp(const char *s1, const char *s2, size_t size);
-size_t strlen(const char *s);
-size_t strnlen(const char *s, size_t maxlen);
-char *strncpy(char *dest, const char *src, size_t n);
-int strncmp(const char *s1, const char *s2, size_t n);
+__stdlib_compat int atoi(const char *nptr);
+__stdlib_compat int isdigit(int c);
+__stdlib_compat int isspace(int c);
+__stdlib_compat int isalpha(int c);
+__stdlib_compat int isprint(int c);
+__stdlib_compat int memcmp(const void *s1, const void *s2, size_t len);
+__stdlib_compat void *memcpy(void *dest, const void *src, size_t len);
+__stdlib_compat __visible void *memset(void *dest, int c, size_t len);
+__stdlib_compat void *memmove(void *dest, const void *src, size_t len);
+__stdlib_compat void *memchr(const void *buffer, int c, size_t n);
+__stdlib_compat int strcasecmp(const char *s1, const char *s2);
+__stdlib_compat int strncasecmp(const char *s1, const char *s2, size_t size);
+__stdlib_compat size_t strlen(const char *s);
+__stdlib_compat size_t strnlen(const char *s, size_t maxlen);
+__stdlib_compat char *strncpy(char *dest, const char *src, size_t n);
+__stdlib_compat int strncmp(const char *s1, const char *s2, size_t n);
 
 /* Like strtol(), but for integers. */
-int strtoi(const char *nptr, char **endptr, int base);
-uint64_t strtoul(const char *nptr, char **endptr, int base);
+__stdlib_compat int strtoi(const char *nptr, char **endptr, int base);
+__stdlib_compat uint64_t strtoul(const char *nptr, char **endptr, int base);
 
 /* Like strncpy(), but guarantees null termination. */
-char *strzcpy(char *dest, const char *src, int len);
+__stdlib_compat char *strzcpy(char *dest, const char *src, int len);
 
 /**
  * Parses a boolean option from a string.
@@ -99,9 +99,15 @@ char *strzcpy(char *dest, const char *src, int len);
  *
  * Other strings return 0 and leave *dest unchanged.
  */
-int parse_bool(const char *s, int *dest);
+__stdlib_compat int parse_bool(const char *s, int *dest);
 
-int tolower(int c);
+__stdlib_compat int tolower(int c);
+#endif  /* !HIDE_EC_STDLIB */
+
+/**
+ * Constant time implementation of memcmp to avoid timing side channels.
+ */
+int safe_memcmp(const void *s1, const void *s2, size_t len);
 
 /* 64-bit divide-and-modulo.  Does the equivalent of:
  *

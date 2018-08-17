@@ -215,6 +215,17 @@ enum ec_error_list {
 #define test_export_static static
 #endif
 
+/*
+ * Mark functions that collide with stdlib so they can be hidden when linking
+ * against libraries that require stdlib. HIDE_EC_STDLIB should be defined
+ * before including common.h from code that links to cstdlib.
+ */
+#ifdef TEST_FUZZ
+#define __stdlib_compat __attribute__((visibility("hidden")))
+#else /* TEST_FUZZ */
+#define __stdlib_compat
+#endif /* TEST_FUZZ */
+
 /* find the most significant bit. Not defined in n == 0. */
 #define __fls(n) (31 - __builtin_clz(n))
 
