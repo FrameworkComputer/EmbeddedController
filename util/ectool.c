@@ -54,6 +54,8 @@ static struct option long_opts[] = {
 
 const char help_str[] =
 	"Commands:\n"
+	"  adcread <channel>\n"
+	"      Read an ADC channel.\n"
 	"  addentropy [reset]\n"
 	"      Add entropy to device secret\n"
 	"  autofanctrl <on>\n"
@@ -382,6 +384,31 @@ static int read_mapped_string(uint8_t offset, char *buffer, int max_size)
 		exit(1);
 	}
 	return ret;
+}
+
+int cmd_adc_read(int argc, char *argv[])
+{
+	char *e;
+	struct ec_params_adc_read p;
+	struct ec_response_adc_read r;
+	int rv;
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <adc channel>\n", argv[0]);
+		return -1;
+	}
+
+	p.adc_channel = (uint8_t)strtoul(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "\"%s\": invalid channel!\n", argv[1]);
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_ADC_READ, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv > 0)
+		printf("%s: %d\n", argv[1], r.adc_value);
+
+	return rv;
 }
 
 int cmd_add_entropy(int argc, char *argv[])
@@ -8229,6 +8256,7 @@ int cmd_cec(int argc, char *argv[])
 
 /* NULL-terminated list of commands */
 const struct command commands[] = {
+	{"adcread", cmd_adc_read},
 	{"addentropy", cmd_add_entropy},
 	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
 	{"backlight", cmd_lcd_backlight},

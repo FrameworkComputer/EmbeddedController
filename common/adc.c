@@ -9,6 +9,8 @@
 #include "adc_chip.h"
 #include "common.h"
 #include "console.h"
+#include "ec_commands.h"
+#include "host_command.h"
 #include "util.h"
 
 /* 'adc' console command is not supported in continuous mode */
@@ -63,4 +65,24 @@ static int command_adc(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(adc, command_adc,
 			"[name]",
 			"Print ADC channel(s)");
-#endif
+
+static int hc_adc_read(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_adc_read *params = args->params;
+	struct ec_response_adc_read *resp = args->response;
+	enum adc_channel ch = (enum adc_channel)params->adc_channel;
+	int32_t adc_value;
+
+	if (ch >= ADC_CH_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	adc_value = adc_read_channel(ch);
+	if (adc_value == ADC_READ_ERROR)
+		return EC_RES_ERROR;
+
+	resp->adc_value = adc_value;
+	args->response_size = sizeof(*resp);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_ADC_READ, hc_adc_read, EC_VER_MASK(0));
+#endif /* CONFIG_ADC_PROFILE_FAST_CONTINUOUS */

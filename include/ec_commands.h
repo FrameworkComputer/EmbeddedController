@@ -4872,6 +4872,20 @@ struct __ec_align1 ec_params_rollback_add_entropy {
 	uint8_t action;
 };
 
+/*
+ * Perform a single read of a given ADC channel.
+ */
+#define EC_CMD_ADC_READ		0x0123
+
+struct __ec_align1 ec_params_adc_read {
+	uint8_t adc_channel;
+};
+
+struct __ec_align4 ec_response_adc_read {
+	int32_t adc_value;
+};
+
+
 /*****************************************************************************/
 /* The command range 0x200-0x2FF is reserved for Rotor. */
 
