@@ -158,7 +158,7 @@ struct tcpm_drv {
 	int (*set_rx_enable)(int port, int enable);
 
 	/**
-	 * Read last received PD message.
+	 * Read received PD message from the TCPC
 	 *
 	 * @param port Type-C port number
 	 * @param payload Pointer to location to copy payload of message
@@ -166,7 +166,7 @@ struct tcpm_drv {
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	int (*get_message)(int port, uint32_t *payload, int *head);
+	int (*get_message_raw)(int port, uint32_t *payload, int *head);
 
 	/**
 	 * Transmit PD message

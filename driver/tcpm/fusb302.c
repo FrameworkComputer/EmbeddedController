@@ -699,7 +699,7 @@ static int fusb302_rx_fifo_is_empty(int port)
 	       (reg & TCPC_REG_STATUS1_RX_EMPTY);
 }
 
-static int fusb302_tcpm_get_message(int port, uint32_t *payload, int *head)
+static int fusb302_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
 {
 	/*
 	 * This is the buffer that will get the burst-read data
@@ -711,10 +711,6 @@ static int fusb302_tcpm_get_message(int port, uint32_t *payload, int *head)
 	 */
 	uint8_t buf[32];
 	int rv, len;
-
-	/* If our FIFO is empty then we have no packet */
-	if (fusb302_rx_fifo_is_empty(port))
-		return EC_ERROR_UNKNOWN;
 
 	/* Read until we have a non-GoodCRC packet or an empty FIFO */
 	do {
@@ -761,13 +757,6 @@ static int fusb302_tcpm_get_message(int port, uint32_t *payload, int *head)
 		else
 			memcpy(payload, buf, len);
 	}
-
-	/*
-	 * If our FIFO is non-empty then we may have a packet, we may get
-	 * fewer interrupts than packets due to interrupt latency.
-	 */
-	if (!fusb302_rx_fifo_is_empty(port))
-		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_RX, 0);
 
 	return rv;
 }
@@ -933,8 +922,9 @@ void fusb302_tcpc_alert(int port)
 		/* Packet received and GoodCRC sent */
 		/* (this interrupt fires after the GoodCRC finishes) */
 		if (state[port].rx_enable) {
-			task_set_event(PD_PORT_TO_TASK_ID(port),
-					PD_EVENT_RX, 0);
+			/* Pull all RX messages from TCPC into EC memory */
+			while (!fusb302_rx_fifo_is_empty(port))
+				tcpm_enqueue_message(port);
 		} else {
 			/* flush rx fifo if rx isn't enabled */
 			fusb302_flush_rx_fifo(port);
@@ -971,7 +961,7 @@ const struct tcpm_drv fusb302_tcpm_drv = {
 	.set_vconn		= &fusb302_tcpm_set_vconn,
 	.set_msg_header		= &fusb302_tcpm_set_msg_header,
 	.set_rx_enable		= &fusb302_tcpm_set_rx_enable,
-	.get_message		= &fusb302_tcpm_get_message,
+	.get_message_raw	= &fusb302_tcpm_get_message_raw,
 	.transmit		= &fusb302_tcpm_transmit,
 	.tcpc_alert		= &fusb302_tcpc_alert,
 };

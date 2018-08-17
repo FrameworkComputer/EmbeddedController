@@ -132,7 +132,7 @@ static void anx7688_tcpc_alert(int port)
 
 	rv = tcpc_read16(port, TCPC_REG_ALERT, &alert);
 	/* process and clear alert status */
-	tcpci_tcpm_drv.tcpc_alert(port);
+	tcpci_tcpc_alert(port);
 
 	if (!rv && (alert & ANX7688_VENDOR_ALERT))
 		anx7688_update_hpd_enable(port);
@@ -193,7 +193,7 @@ const struct tcpm_drv anx7688_tcpm_drv = {
 	.set_vconn		= &tcpci_tcpm_set_vconn,
 	.set_msg_header		= &tcpci_tcpm_set_msg_header,
 	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
-	.get_message		= &tcpci_tcpm_get_message,
+	.get_message_raw	= &tcpci_tcpm_get_message_raw,
 	.transmit		= &tcpci_tcpm_transmit,
 	.tcpc_alert		= &anx7688_tcpc_alert,
 };

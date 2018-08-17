@@ -2613,10 +2613,15 @@ void pd_task(void *u)
 #endif
 
 		/* process any potential incoming message */
-		incoming_packet = evt & PD_EVENT_RX;
+		incoming_packet = tcpm_has_pending_message(port);
 		if (incoming_packet) {
-			if (!tcpm_get_message(port, payload, &head))
-				handle_request(port, head, payload);
+			tcpm_dequeue_message(port, payload, &head);
+			handle_request(port, head, payload);
+
+			/* Check if there are any more messages */
+			if (tcpm_has_pending_message(port))
+				task_set_event(PD_PORT_TO_TASK_ID(port),
+					       TASK_EVENT_WAKE, 0);
 		}
 
 		if (pd[port].req_suspend_state)

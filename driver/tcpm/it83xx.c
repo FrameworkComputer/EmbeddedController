@@ -125,7 +125,7 @@ static enum tcpc_cc_voltage_status it83xx_get_cc(
 	return cc_state;
 }
 
-static int it83xx_rx_data(enum usbpd_port port, int *head, uint32_t *buf)
+static int it83xx_tcpm_get_message_raw(int port, uint32_t *buf, int *head)
 {
 	int cnt = PD_HEADER_CNT(IT83XX_USBPD_RMH(port));
 
@@ -518,15 +518,6 @@ static int it83xx_tcpm_set_rx_enable(int port, int enable)
 	return EC_SUCCESS;
 }
 
-static int it83xx_tcpm_get_message(int port, uint32_t *payload, int *head)
-{
-	int ret = it83xx_rx_data(port, head, payload);
-	/* un-mask RX done interrupt */
-	IT83XX_USBPD_IMR(port) &= ~USBPD_REG_MASK_MSG_RX_DONE;
-
-	return ret;
-}
-
 static int it83xx_tcpm_transmit(int port,
 			enum tcpm_transmit_type type,
 			uint16_t header,
@@ -595,7 +586,7 @@ const struct tcpm_drv it83xx_tcpm_drv = {
 	.set_vconn		= &it83xx_tcpm_set_vconn,
 	.set_msg_header		= &it83xx_tcpm_set_msg_header,
 	.set_rx_enable		= &it83xx_tcpm_set_rx_enable,
-	.get_message		= &it83xx_tcpm_get_message,
+	.get_message_raw	= &it83xx_tcpm_get_message_raw,
 	.transmit		= &it83xx_tcpm_transmit,
 	.get_chip_info		= &it83xx_tcpm_get_chip_info,
 };

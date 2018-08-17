@@ -88,7 +88,12 @@ int tcpm_set_rx_enable(int port, int enable)
 	return tcpc_set_rx_enable(port, enable);
 }
 
-int tcpm_get_message(int port, uint32_t *payload, int *head)
+int tcpm_has_pending_message(int port)
+{
+	return !rx_buf_is_empty(port);
+}
+
+int tcpm_dequeue_message(int port, uint32_t *payload, int *head)
 {
 	int ret = tcpc_get_message(port, payload, head);
 
@@ -126,9 +131,8 @@ void tcpc_alert(int port)
 	if (status & TCPC_REG_ALERT_RX_STATUS) {
 		/*
 		 * message received. since TCPC is compiled in, we
-		 * already received PD_EVENT_RX from phy layer in
-		 * pd_rx_event(), so we don't need to set another
-		 * event.
+		 * already woke the PD task up from the phy layer via
+		 * pd_rx_event(), so we don't need to wake it again.
 		 */
 	}
 	if (status & TCPC_REG_ALERT_RX_HARD_RST) {

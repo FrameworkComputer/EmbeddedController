@@ -9,6 +9,7 @@
 #include "kmsc_chip.h"
 #include "registers.h"
 #include "task.h"
+#include "tcpm.h"
 #include "usb_pd.h"
 
 #ifdef CONFIG_USB_PD_TCPM_ITE83XX
@@ -24,12 +25,9 @@ static void chip_pd_irq(enum usbpd_port port)
 			PD_EVENT_TCPC_RESET, 0);
 	} else {
 		if (USBPD_IS_RX_DONE(port)) {
-			/* mask RX done interrupt */
-			IT83XX_USBPD_IMR(port) |= USBPD_REG_MASK_MSG_RX_DONE;
+			tcpm_enqueue_message(port);
 			/* clear RX done interrupt */
 			IT83XX_USBPD_ISR(port) = USBPD_REG_MASK_MSG_RX_DONE;
-			task_set_event(PD_PORT_TO_TASK_ID(port),
-				PD_EVENT_RX, 0);
 		}
 		if (USBPD_IS_TX_DONE(port)) {
 			/* clear TX done interrupt */
