@@ -28,7 +28,7 @@ GPIO_INT(PMIC_EC_RESETB,    PIN(B, 7),  GPIO_INT_BOTH | GPIO_PULL_DOWN,
          power_signal_interrupt)
 GPIO_INT(WARM_RESET_REQ,    PIN(A, 3),  GPIO_INT_RISING | GPIO_PULL_DOWN,
          warm_reset_request_interrupt)
-GPIO_INT(AP_EC_WATCHDOG_L,  PIN(C, 2),  GPIO_INT_FALLING,
+GPIO_INT(AP_EC_WATCHDOG_L,  PIN(C, 2),  GPIO_INT_BOTH,
          ap_watchdog_interrupt)
 
 #ifdef SECTION_IS_RW
@@ -51,7 +51,7 @@ GPIO(PP3300_S3_EN,         PIN(A, 8),  GPIO_OUT_LOW)
 
 /* Reset pins */
 GPIO(AP_SYS_RST_L,         PIN(C, 11), GPIO_OUT_LOW)
-GPIO(PMIC_WATCHDOG_L,      PIN(C, 3),  GPIO_OUT_HIGH)
+GPIO(PMIC_WATCHDOG_L,      PIN(C, 3),  GPIO_OUT_LOW)
 GPIO(PMIC_EN_ODL,          PIN(C, 10), GPIO_ODR_HIGH)
 GPIO(PMIC_FORCE_RESET,     PIN(A, 2),  GPIO_OUT_LOW)
 GPIO(MT6370_RST_L,         PIN(F, 0),  GPIO_OUT_LOW)
