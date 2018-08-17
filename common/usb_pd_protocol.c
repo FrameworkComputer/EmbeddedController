@@ -2353,6 +2353,55 @@ static int pd_restart_tcpc(int port)
 }
 #endif
 
+#ifdef HAS_TASK_PD_INT_C0
+/* Events for pd_interrupt_handler_task */
+#define PD_PROCESS_INTERRUPT  (1<<0)
+
+static uint8_t pd_int_task_id[CONFIG_USB_PD_PORT_COUNT];
+
+void schedule_deferred_pd_interrupt(const int port)
+{
+	task_set_event(pd_int_task_id[port], PD_PROCESS_INTERRUPT, 0);
+}
+
+/**
+ * Main task entry point that handles PD interrupts for a single port
+ *
+ * @param p The PD port number for which to handle interrupts (pointer is
+ * reinterpreted as an integer directly).
+ */
+void pd_interrupt_handler_task(void *p)
+{
+	const int port = (int) p;
+	const int port_mask = (PD_STATUS_TCPC_ALERT_0 << port);
+
+	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
+
+	pd_int_task_id[port] = task_get_current();
+
+	while (1) {
+		const int evt = task_wait_event(-1);
+
+		if (evt & PD_PROCESS_INTERRUPT) {
+			/*
+			 * While the interrupt signal is asserted; we have more
+			 * work to do. This effectively makes the interrupt a
+			 * level-interrupt instead of an edge-interrupt without
+			 * having to enable/disable a real level-interrupt in
+			 * multiple locations.
+			 *
+			 * Also, if the port is disabled do not process
+			 * interrupts. Upon existing suspend, we schedule a
+			 * PD_PROCESS_INTERRUPT to check if we missed anything.
+			 */
+			while ((tcpc_get_alert_status() & port_mask) &&
+			       pd_is_port_enabled(port))
+				tcpc_alert(port);
+		}
+	}
+}
+#endif /* HAS_TASK_PD_INT_C0 */
+
 void pd_task(void *u)
 {
 	int head;
@@ -3948,6 +3997,15 @@ void pd_set_suspend(int port, int enable)
 			CPRINTS("TCPC p%d suspend disable request "
 				"while not suspended!", port);
 		set_state(port, PD_DEFAULT_STATE(port));
+		/*
+		 * Since we did not service interrupts while we were suspended,
+		 * see if there is a waiting interrupt to be serviced. If the
+		 * interrupt line isn't asserted, we won't communicate with the
+		 * TCPC.
+		 */
+#ifdef HAS_TASK_PD_INT_C0
+		schedule_deferred_pd_interrupt(port);
+#endif
 		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
 }

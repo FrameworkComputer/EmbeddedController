@@ -972,6 +972,9 @@ enum pd_data_msg_type {
 
 /* --- Policy layer functions --- */
 
+/** Schedules the interrupt handler for the TCPC on a high priority task. */
+void schedule_deferred_pd_interrupt(int port);
+
 /* Request types for pd_build_request() */
 enum pd_request_type {
 	PD_REQUEST_VSAFE5V,
