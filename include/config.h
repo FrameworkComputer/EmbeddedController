@@ -712,10 +712,16 @@
  * Note that CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT/_CHG_MW are thresholds
  * for the OS boot used by Depthcharge. The OS has higher power requirement
  * but PD power is also available.
+ *
+ * WARNING: Locked RO firmware does not negotiate power greater than 15W via
+ * analog signaling.  If the AP requires greater than 15W to boot, then see
+ * CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW.
  */
 #undef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 #undef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON_WITH_AC
+/* Default: 15000 */
 #undef CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
+/* Default: Disabled */
 #undef CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT
 
 /* Minimum battery percentage for power on with an imbalanced pack */
@@ -733,10 +739,21 @@
 /*
  * Low energy thresholds - when battery level is below BAT_PCT and an external
  * charger provides less than CHG_MW of power, inform the AP of the situation
- * through the LIMIT_POWER host event.
+ * through the LIMIT_POWER charge state parameter.  Depthcharge will hold off on
+ * the boot for up to 3 seconds while waiting for either condition to clear
+ * before starting the kernel.  This wait happens after sw sync in RW mode, so
+ * the firmware may set it high enough that PD negotiation is required to clear
+ * it.
+ *
+ * Default: Disabled.  Depthcharge is immediately released to boot the kernel.
+ *
+ * Setting this value to 15001 will require PD negotiation to be complete prior
+ * to releasing depthcharge.  During PD negotiation, the charger will be briefly
+ * reduced to about 2.5W for a few hundred ms.
  */
-#undef CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT
 #undef CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW
+/* Default: CHARGER_MIN_BAT_PCT_FOR_POWER_ON */
+#undef CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT
 
 /*
  * Enable charger's OTG functions, i.e. make it possible to supply output power
@@ -3839,12 +3856,12 @@
 
 /*
  * If a board has a chipset task, set the minimum charger power required for
- * powering on to 15W.  This is also the highest power discovered over Type-C.
- * The EC normally does not communicate using USB PD when the system is locked
- * and in RO, so it would not be able to tell if higher power is available.
- * However, if a 15W charger is discovered, it's likely that the charger does
- * speak USB PD and we would be able to negotiate more power after booting the
- * AP and jumping to EC RW.
+ * powering on to 15W.  This is also the highest power discovered over Type-C by
+ * analog signaling.  The EC normally does not communicate using USB PD when the
+ * system is locked and in RO, so it would not be able to tell if higher power
+ * is available.  However, if a 15W charger is discovered, it's likely that the
+ * charger does speak USB PD and we would be able to negotiate more power after
+ * booting the AP and jumping to EC RW.
  *
  * If a board needs more or less power to power on, they can re-define this
  * value in their board.h file.
@@ -3854,6 +3871,14 @@
 #define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 15000
 #endif /* !defined(CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON) */
 #endif /* defined(HAS_TASK_CHIPSET) */
+
+
+#ifdef CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW
+# ifndef CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT
+#  define CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT \
+	(CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON)
+# endif
+#endif
 
 #ifndef CONFIG_CHARGER_MIN_BAT_PCT_IMBALANCED_POWER_ON
 /*

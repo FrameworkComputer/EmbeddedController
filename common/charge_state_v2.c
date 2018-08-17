@@ -2308,7 +2308,7 @@ static int charge_command_charge_state(struct host_cmd_handler_args *args)
 				val = curr.chg.option;
 				break;
 			case CS_PARAM_LIMIT_POWER:
-#ifdef CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT
+#ifdef CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW
 				/*
 				 * LIMIT_POWER status is based on battery level
 				 * and external charger power.
