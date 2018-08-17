@@ -405,6 +405,19 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+static void board_lid_change(void)
+{
+	/* This is done in hardware on old revisions. */
+	if (board_get_version() <= 1)
+		return;
+
+	if (lid_is_open())
+		gpio_set_level(GPIO_UHALL_PWR_EN, 1);
+	else
+		gpio_set_level(GPIO_UHALL_PWR_EN, 0);
+}
+DECLARE_HOOK(HOOK_LID_CHANGE, board_lid_change, HOOK_PRIO_DEFAULT);
+
 static void board_pmic_disable_slp_s0_vr_decay(void)
 {
 	/*
