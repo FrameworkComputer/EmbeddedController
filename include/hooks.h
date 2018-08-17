@@ -148,6 +148,13 @@ enum hook_type {
 	HOOK_TABLET_MODE_CHANGE,
 
 	/*
+	 * Detachable device connected to a base.
+	 *
+	 * Hook routines are called from the TICK task.
+	 */
+	HOOK_BASE_ATTACHED_CHANGE,
+
+	/*
 	 * Power button pressed or released.  Based on debounced power button
 	 * state, not raw GPIO input.
 	 *

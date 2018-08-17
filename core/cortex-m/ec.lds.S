@@ -191,6 +191,10 @@ SECTIONS
         KEEP(*(.rodata.HOOK_TABLET_MODE_CHANGE))
         __hooks_tablet_mode_change_end = .;
 
+        __hooks_base_attached_change = .;
+        KEEP(*(.rodata.HOOK_BASE_ATTACHED_CHANGE))
+        __hooks_base_attached_change_end = .;
+
         __hooks_pwrbtn_change = .;
         KEEP(*(.rodata.HOOK_POWER_BUTTON_CHANGE))
         __hooks_pwrbtn_change_end = .;

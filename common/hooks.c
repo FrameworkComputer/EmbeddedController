@@ -45,6 +45,7 @@ static const struct hook_ptrs hook_list[] = {
 	{__hooks_ac_change, __hooks_ac_change_end},
 	{__hooks_lid_change, __hooks_lid_change_end},
 	{__hooks_tablet_mode_change, __hooks_tablet_mode_change_end},
+	{__hooks_base_attached_change, __hooks_base_attached_change_end},
 	{__hooks_pwrbtn_change, __hooks_pwrbtn_change_end},
 	{__hooks_battery_soc_change, __hooks_battery_soc_change_end},
 #ifdef CONFIG_CASE_CLOSED_DEBUG_V1
