@@ -2071,7 +2071,7 @@ enum charge_state charge_get_state(void)
 {
 	switch (curr.state) {
 	case ST_IDLE:
-		if (battery_seems_to_be_dead || battery_was_removed)
+		if (battery_seems_to_be_dead || curr.batt.is_present != BP_YES)
 			return PWR_STATE_ERROR;
 		return PWR_STATE_IDLE;
 	case ST_DISCHARGE:
