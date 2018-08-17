@@ -79,6 +79,17 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 /******************************************************************************/
 /* Power Delivery and charing functions */
 
+void tcpc_alert_event(enum gpio_signal signal)
+{
+	const int port = (signal == GPIO_USB_C1_MUX_INT_ODL);
+
+	if ((signal == GPIO_USB_C1_MUX_INT_ODL) &&
+	    !gpio_get_level(GPIO_USB_C1_PD_RST_ODL))
+		return;
+
+	schedule_deferred_pd_interrupt(port);
+}
+
 void variant_tcpc_init(void)
 {
 	/* Enable PPC interrupts. */

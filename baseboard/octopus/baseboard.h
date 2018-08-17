@@ -252,6 +252,8 @@
 
 #ifndef __ASSEMBLER__
 
+#include "gpio_signal.h"
+
 enum power_signal {
 #ifdef CONFIG_POWER_S0IX
 	X86_SLP_S0_N,		/* PCH  -> SLP_S0_L */
@@ -274,6 +276,10 @@ void board_reset_pd_mcu(void);
 
 #ifdef VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS
 void board_pd_vconn_ctrl(int port, int cc_pin, int enabled);
+#endif
+
+#ifdef VARIANT_OCTOPUS_USBC_STANDALONE_TCPCS
+void tcpc_alert_event(enum gpio_signal signal);
 #endif
 
 #endif /* !__ASSEMBLER__ */
