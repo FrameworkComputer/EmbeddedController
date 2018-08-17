@@ -69,7 +69,6 @@
  */
 #define CONFIG_CHARGER_INPUT_CURRENT 512
 #define CONFIG_CHARGER_ISL9238
-#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
 #define CONFIG_CHARGE_RAMP_HW
@@ -133,6 +132,21 @@
 #define PD_MAX_POWER_MW		45000
 #define PD_MAX_CURRENT_MA	3000
 #define PD_MAX_VOLTAGE_MV	20000
+
+/*
+ * Minimum conditions to start AP and perform swsync.  Note that when the
+ * charger is connected via USB-PD analog signaling, the boot will proceed
+ * regardless.
+ */
+#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 3
+
+/*
+ * Require PD negotiation to be complete when we are in a low-battery condition
+ * prior to releasing depthcharge to the kernel.
+ */
+#define CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW 15001
+#define CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT 3
+
 
 #define I2C_PORT_BATTERY	I2C_PORT_POWER
 #define I2C_PORT_CHARGER	I2C_PORT_POWER
