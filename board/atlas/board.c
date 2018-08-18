@@ -570,7 +570,7 @@ static struct opt3001_drv_data_t g_opt3001_data = {
 	.offset = 0,
 };
 
-/* Matrix to rotate accelrator into standard reference frame */
+/* Matrix to rotate accelerometer into standard reference frame */
 const matrix_3x3_t base_standard_ref = {
 	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0,  FLOAT_TO_FP(1), 0},
@@ -630,7 +630,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_SENSOR,
 		.addr = OPT3001_I2C_ADDR,
 		.rot_standard_ref = NULL,
-		.default_range = 0x10000, /* scale = 1; uscale = 0 */
+		.default_range = 0x2b11a1, /* from nocturne */
 		.min_frequency = OPT3001_LIGHT_MIN_FREQ,
 		.max_frequency = OPT3001_LIGHT_MAX_FREQ,
 		.config = {
