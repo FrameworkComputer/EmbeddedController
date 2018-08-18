@@ -1157,8 +1157,17 @@
 /*
  * When enabled, build in support for software & hardware crypto;
  * only supported on CR50.
+ *
+ * If this is enabled on the host board, a minimal implementation is included to
+ * allow fuzzing targets to fuzz code that depends on dcrypto.
  */
 #undef CONFIG_DCRYPTO
+/*
+ * This provides struct definitions and function declarations that can be
+ * implemented by unit tests for testing code that depends on dcrypto.
+ * This should not be set at the same time as CONFIG_DCRYPTO.
+ */
+#undef CONFIG_DCRYPTO_MOCK
 
 /*
  * When enabled, RSA 2048 bit keygen gets a 40% performance boost,

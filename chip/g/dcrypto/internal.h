@@ -169,12 +169,14 @@ uint32_t dcrypto_dmem_load(size_t offset, const void *words, size_t n_words);
 /*
  * Key ladder.
  */
+#ifndef __cplusplus
 enum dcrypto_appid;      /* Forward declaration. */
 
 int dcrypto_ladder_compute_usr(enum dcrypto_appid id,
 			const uint32_t usr_salt[8]);
 int dcrypto_ladder_derive(enum dcrypto_appid appid, const uint32_t salt[8],
 			  const uint32_t input[8], uint32_t output[8]);
+#endif
 
 
 #endif  /* ! __EC_CHIP_G_DCRYPTO_INTERNAL_H */

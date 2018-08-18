@@ -293,6 +293,9 @@ enum dcrypto_appid {
 };
 
 struct APPKEY_CTX {
+#ifdef TEST_FUZZ
+	uint8_t unused_for_cxx_compatibility;
+#endif
 };
 
 int DCRYPTO_ladder_compute_frk2(size_t major_fw_version, uint8_t *frk2);

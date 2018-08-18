@@ -266,6 +266,7 @@ enum nvmem_vars {
 #endif	/* TEST_NVMEM_VARS */
 
 #ifdef TEST_PINWEAVER
+#define CONFIG_DCRYPTO_MOCK
 #define CONFIG_PINWEAVER
 #define CONFIG_SHA256
 #endif /* TEST_PINWEAVER */
