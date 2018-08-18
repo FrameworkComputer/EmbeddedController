@@ -10,4 +10,9 @@
  * Return true if the power button output shows it is pressed
  */
 int rbox_powerbtn_is_pressed(void);
+
+/**
+ * Clear the wakeup interrupts
+ */
+void rbox_clear_wakeup(void);
 #endif  /* __CROS_RBOX_H */

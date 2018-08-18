@@ -126,6 +126,7 @@
 #define CONFIG_TPM_SPS
 
 #define CONFIG_RBOX
+#define CONFIG_RBOX_WAKEUP
 
 /* We don't need to send events to the AP */
 #undef  CONFIG_HOSTCMD_EVENTS

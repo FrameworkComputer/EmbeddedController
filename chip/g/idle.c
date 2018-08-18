@@ -97,6 +97,14 @@ static void prepare_to_sleep(void)
 		GC_PMU_EXITPD_MASK_TIMELS0_PD_EXIT_TIMER0_MASK |
 		GC_PMU_EXITPD_MASK_TIMELS0_PD_EXIT_TIMER1_MASK;
 
+#ifdef CONFIG_RBOX_WAKEUP
+	/*
+	 * Enable RBOX wakeup. It will immediately be disabled on resume in
+	 * rbox_init or pmu_wakeup_interrupt.
+	 */
+	GREG32(RBOX, WAKEUP) = GC_RBOX_WAKEUP_ENABLE_MASK;
+#endif
+
 	if (utmi_wakeup_is_enabled() && idle_action != IDLE_DEEP_SLEEP)
 		GR_PMU_EXITPD_MASK |=
 			GC_PMU_EXITPD_MASK_UTMI_SUSPEND_N_MASK;

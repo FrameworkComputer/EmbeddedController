@@ -13,6 +13,22 @@
 #define DELAY_EC_BOOT_USEC	(2 * SECOND)
 DECLARE_DEFERRED(deassert_ec_rst);
 
+void rbox_clear_wakeup(void)
+{
+	int i = 0;
+
+	/* Clear the wakeup interrupt */
+	GREG32(RBOX, WAKEUP) = GC_RBOX_WAKEUP_CLEAR_MASK;
+	/*
+	 * Wait until the interrupt status register is cleared, since RBOX runs
+	 * off of RTC instead of the core clock. Wait a max of 50 iterations.
+	 * Experimentally, 15 iterations is usually sufficient. We don't want to
+	 * wait here forever.
+	 */
+	while (GREAD(RBOX, WAKEUP_INTR) && i < 50)
+		i++;
+}
+
 int rbox_powerbtn_is_pressed(void)
 {
 	return !GREAD_FIELD(RBOX, CHECK_OUTPUT, PWRB_OUT);
@@ -48,8 +64,10 @@ static void rbox_init(void)
 	/* Clear any interrupt bits (write 1's to clear) */
 	GREG32(RBOX, INT_STATE) = 0xffffffff;
 
-	/* Clear any wakeup bits (write 0x2, then 0x0) */
-	GREG32(RBOX, WAKEUP) = GC_RBOX_WAKEUP_CLEAR_MASK;
+	/* Clear any wakeup bits */
+	rbox_clear_wakeup();
+
+	/* Disable rbox wakeup. It will be reenabled before entering sleep. */
 	GREG32(RBOX, WAKEUP) = 0;
 
 	/* Override rbox fuses and setup correct behavior */
