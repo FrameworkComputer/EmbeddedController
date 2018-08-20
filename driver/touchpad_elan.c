@@ -25,8 +25,7 @@
 #define CPRINTF(format, args...) cprintf(CC_TOUCHPAD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_TOUCHPAD, format, ## args)
 
-#define TASK_EVENT_POWERON  TASK_EVENT_CUSTOM(1)
-#define TASK_EVENT_POWEROFF  TASK_EVENT_CUSTOM(2)
+#define TASK_EVENT_POWER  TASK_EVENT_CUSTOM(1)
 
 /******************************************************************************/
 /* How to talk to the controller */
@@ -697,11 +696,35 @@ void touchpad_interrupt(enum gpio_signal signal)
 	task_wake(TASK_ID_TOUCHPAD);
 }
 
+/* Make a decision on touchpad power, based on USB and tablet mode status. */
+static void touchpad_power_control(void)
+{
+	static int enabled = 1;
+	int enable = 1;
+
+#ifdef CONFIG_USB_SUSPEND
+	enable = enable &&
+		(!usb_is_suspended() || usb_is_remote_wakeup_enabled());
+#endif
+
+#ifdef CONFIG_TABLET_MODE
+	enable = enable && !tablet_get_mode();
+#endif
+
+	if (enabled == enable)
+		return;
+
+	elan_tp_set_power(enable);
+
+	enabled = enable;
+}
+
 void touchpad_task(void *u)
 {
 	uint32_t event;
 
 	elan_tp_init();
+	touchpad_power_control();
 
 	while (1) {
 		event = task_wait_event(-1);
@@ -709,24 +732,24 @@ void touchpad_task(void *u)
 		if (event & TASK_EVENT_WAKE)
 			elan_tp_read_report_retry();
 
-		if (event & TASK_EVENT_POWERON)
-			elan_tp_set_power(1);
-		else if (event & TASK_EVENT_POWEROFF)
-			elan_tp_set_power(0);
+		if (event & TASK_EVENT_POWER)
+			touchpad_power_control();
 	}
 }
 
-#ifdef CONFIG_USB_SUSPEND
-static void touchpad_usb_pm_change(void)
+/*
+ * When USB PM status changes, or tablet mode changes, call in the main task to
+ * decide whether to turn touchpad on or off.
+ */
+#if defined(CONFIG_USB_SUSPEND) || defined(CONFIG_TABLET_MODE)
+static void touchpad_power_change(void)
 {
-	/*
-	 * If USB interface is suspended, and host is not asking us to do remote
-	 * wakeup, we can turn off the touchpad.
-	 */
-	if (usb_is_suspended() && !usb_is_remote_wakeup_enabled())
-		task_set_event(TASK_ID_TOUCHPAD, TASK_EVENT_POWEROFF, 0);
-	else
-		task_set_event(TASK_ID_TOUCHPAD, TASK_EVENT_POWERON, 0);
+	task_set_event(TASK_ID_TOUCHPAD, TASK_EVENT_POWER, 0);
 }
-DECLARE_HOOK(HOOK_USB_PM_CHANGE, touchpad_usb_pm_change, HOOK_PRIO_DEFAULT);
+#endif
+#ifdef CONFIG_USB_SUSPEND
+DECLARE_HOOK(HOOK_USB_PM_CHANGE, touchpad_power_change, HOOK_PRIO_DEFAULT);
+#endif
+#ifdef CONFIG_TABLET_MODE
+DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, touchpad_power_change, HOOK_PRIO_DEFAULT);
 #endif
