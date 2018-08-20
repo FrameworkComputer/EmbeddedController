@@ -127,9 +127,6 @@
  */
 #define CONFIG_ROLLBACK
 #define CONFIG_ROLLBACK_SECRET_SIZE 32
-
-#define CONFIG_ROLLBACK_MPU_PROTECT
-
 /*
  * We do not use any "locally" generated entropy: this is normally used
  * to add local entropy when the main source of entropy is remote.
