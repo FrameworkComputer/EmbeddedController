@@ -77,6 +77,8 @@ cmd_elf = $(CC) $(objs) $(libsharedobjs_elf-y) $(LDFLAGS) \
 cmd_fuzz_exe = $(CXX) $^ $(HOST_TEST_LDFLAGS) $(LDFLAGS_EXTRA) -o $@
 cmd_exe = $(CC) $(ro-objs) $(HOST_TEST_LDFLAGS) -o $@
 cmd_c_to_o = $(CC) $(CFLAGS) -MMD -MP -MF $@.d -c $< -o $(@D)/$(@F)
+cmd_cxx_to_o = $(CXX) -std=c++11 $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d -c $< \
+		      -o $(@D)/$(@F)
 cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c)) \
 	         $(BUILD_LDFLAGS) \
@@ -443,6 +445,11 @@ $(out)/RO/%.o:%.c
 	$(call quiet,c_to_o,CC     )
 $(out)/RW/%.o:%.c
 	$(call quiet,c_to_o,CC     )
+
+$(out)/RO/%.o:%.cc
+	$(call quiet,cxx_to_o,CXX    )
+$(out)/RW/%.o:%.cc
+	$(call quiet,cxx_to_o,CXX    )
 
 $(out)/$(SHOBJLIB)/%.o: override LATE_CFLAGS_DEFINE:=-DSHAREDLIB_IMAGE
 $(out)/$(SHOBJLIB)/%.o:%.c

@@ -5,25 +5,28 @@
  * Fuzzer for the TPM2 and vendor specific Cr50 commands.
  */
 
-#include <stdint.h>
-#include <stdlib.h>
 #include <unistd.h>
 
+#include <cstdint>
+#include <cstdlib>
+
+extern "C" {
 #include "fuzz_config.h"
 #include "nvmem.h"
 #include "nvmem_vars.h"
 #include "persistence.h"
 #include "pinweaver.h"
+}
 
 #define NVMEM_TPM_SIZE ((sizeof((struct nvmem_partition *)0)->buffer) \
   - NVMEM_CR50_SIZE)
 
-uint32_t nvmem_user_sizes[NVMEM_NUM_USERS] = {
+extern "C" uint32_t nvmem_user_sizes[NVMEM_NUM_USERS] = {
 	NVMEM_TPM_SIZE,
 	NVMEM_CR50_SIZE
 };
 
-void rand_bytes(void *buffer, size_t len)
+extern "C" void rand_bytes(void *buffer, size_t len)
 {
 	size_t x = 0;
 
@@ -31,12 +34,12 @@ void rand_bytes(void *buffer, size_t len)
 		((uint8_t *)buffer)[x] = rand();
 }
 
-void get_storage_seed(void *buf, size_t *len)
+extern "C" void get_storage_seed(void *buf, size_t *len)
 {
 	memset(buf, 0x77, *len);
 }
 
-void run_test(void)
+extern "C" void run_test(void)
 {
 }
 
@@ -54,7 +57,7 @@ static void assign_pw_field_from_bytes(const uint8_t *data, unsigned int size,
 /* Prevent this from being stack allocated. */
 static uint8_t tpm_io_buffer[PW_MAX_MESSAGE_SIZE];
 
-int test_fuzz_one_input(const uint8_t *data, unsigned int size)
+extern "C" int test_fuzz_one_input(const uint8_t *data, unsigned int size)
 {
 	struct merkle_tree_t merkle_tree = {};
 	struct pw_request_t *request = (struct pw_request_t *)tpm_io_buffer;
