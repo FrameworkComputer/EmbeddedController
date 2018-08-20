@@ -478,6 +478,11 @@ void keyboard_clear_buffer(void)
 	mutex_unlock(&key_queue_mutex);
 
 	memset(&report, 0, sizeof(report));
+#ifdef CONFIG_KEYBOARD_TABLET_MODE_SWITCH
+	if (tablet_get_mode())
+		report.extra |= 0x01 <<	(HID_KEYBOARD_TABLET_MODE_SWITCH -
+					 HID_KEYBOARD_EXTRA_LOW);
+#endif
 	write_keyboard_report();
 }
 
@@ -614,11 +619,15 @@ static void queue_keycode_event(uint8_t keycode, int is_pressed)
 }
 
 #ifdef CONFIG_KEYBOARD_TABLET_MODE_SWITCH
+#include "console.h"
+
 static void tablet_mode_change(void)
 {
 	queue_keycode_event(HID_KEYBOARD_TABLET_MODE_SWITCH, tablet_get_mode());
 }
 DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, tablet_mode_change, HOOK_PRIO_DEFAULT);
+/* Run after tablet_mode_init. */
+DECLARE_HOOK(HOOK_INIT, tablet_mode_change, HOOK_PRIO_DEFAULT+1);
 #endif
 
 void keyboard_state_changed(int row, int col, int is_pressed)
