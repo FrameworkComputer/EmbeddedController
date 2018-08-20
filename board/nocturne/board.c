@@ -405,6 +405,15 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+int board_is_i2c_port_powered(int port)
+{
+	if (port != I2C_PORT_ALS_GYRO)
+		return 1;
+
+	/* The sensors are not powered in anything lower than S5. */
+	return chipset_in_state(CHIPSET_STATE_ANY_OFF) ? 0 : 1;
+}
+
 static void board_lid_change(void)
 {
 	/* This is done in hardware on old revisions. */
