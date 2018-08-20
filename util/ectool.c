@@ -405,8 +405,10 @@ int cmd_adc_read(int argc, char *argv[])
 	}
 
 	rv = ec_command(EC_CMD_ADC_READ, 0, &p, sizeof(p), &r, sizeof(r));
-	if (rv > 0)
+	if (rv > 0) {
 		printf("%s: %d\n", argv[1], r.adc_value);
+		return 0;
+	}
 
 	return rv;
 }
