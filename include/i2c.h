@@ -361,6 +361,16 @@ void i2cm_init(void);
 int board_allow_i2c_passthru(int port);
 
 /**
+ * Board level function that can indicate if a particular i2c bus is known to be
+ * currently powered or not.
+ *
+ * @param port: I2C port number
+ *
+ * @return non-zero if powered, 0 if the bus is not powered.
+ */
+int board_is_i2c_port_powered(int port);
+
+/**
  * Function to allow board to take any action before starting a new i2c
  * transaction on a given port. Board must implement this if it defines
  * CONFIG_I2C_XFER_BOARD_CALLBACK.

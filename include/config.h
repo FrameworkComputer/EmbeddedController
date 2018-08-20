@@ -1857,6 +1857,15 @@
 #undef CONFIG_I2C_VIRTUAL_BATTERY
 
 /*
+ * Define this option if an i2c bus may be unpowered at a certain point during
+ * runtime.  An example could be, a sensor bus which is not needed in lower
+ * power states so the power rail for those sensors is completely disabled.
+ *
+ * If defined, your board must provide a board_is_i2c_port_powered() function.
+ */
+#undef CONFIG_I2C_BUS_MAY_BE_UNPOWERED
+
+/*
  * Conservative I2C reading size per single transaction. For example, register
  * of stm32f0 and stm32l4 are limited to be 8 bits for this field.
  */

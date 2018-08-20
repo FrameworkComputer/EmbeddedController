@@ -491,6 +491,16 @@ int i2c_unwedge(int port)
 	int i, j;
 	int ret = EC_SUCCESS;
 
+#ifdef CONFIG_I2C_BUS_MAY_BE_UNPOWERED
+	/*
+	 * Don't try to unwedge the port if we know it's unpowered; it's futile.
+	 */
+	if (!board_is_i2c_port_powered(port)) {
+		CPRINTS("Skipping i2c unwedge, bus not powered.");
+		return EC_ERROR_NOT_POWERED;
+	}
+#endif /* CONFIG_I2C_BUS_MAY_BE_UNPOWERED */
+
 	/* Try to put port in to raw bit bang mode. */
 	if (i2c_raw_mode(port, 1) != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
