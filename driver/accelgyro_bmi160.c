@@ -1088,6 +1088,7 @@ static void irq_set_orientation(struct motion_sensor_t *s,
 static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
 	uint32_t interrupt, last_ts;
+	int rv;
 
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
 			(!(*event & CONFIG_ACCELGYRO_BMI160_INT_EVENT)))
@@ -1100,7 +1101,11 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		 * before we can process the FIFO.
 		 */
 		last_ts = last_interrupt_timestamp;
-		raw_read32(s->port, s->addr, BMI160_INT_STATUS_0, &interrupt);
+		rv = raw_read32(s->port, s->addr, BMI160_INT_STATUS_0,
+				&interrupt);
+		/* Bail out of this loop if the sensor isn't powered. */
+		if (rv == EC_ERROR_NOT_POWERED)
+			return rv;
 
 #ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
 		if (interrupt & BMI160_D_TAP_INT)
