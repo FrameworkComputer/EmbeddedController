@@ -41,8 +41,15 @@ static enum led_states led_get_state(void)
 		}
 		/* Intentional fall-through */
 	case PWR_STATE_DISCHARGE /* and PWR_STATE_DISCHARGE_FULL */:
-		if (chipset_in_state(CHIPSET_STATE_ON))
-			new_state = STATE_DISCHARGE_S0;
+		if (chipset_in_state(CHIPSET_STATE_ON)) {
+#ifdef OCTOPUS_BATT_FUEL_LOW_LED
+			if (charge_get_percent() <
+				OCTOPUS_BATT_FUEL_LOW_LED)
+				new_state = STATE_DISCHARGE_S0_BAT_LOW;
+			else
+#endif
+				new_state = STATE_DISCHARGE_S0;
+		}
 		else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
 			new_state = STATE_DISCHARGE_S3;
 		else
