@@ -240,7 +240,7 @@ $(eval $(call get_sources,y))
 $(eval $(call get_sources,ro))
 
 dirs=core/$(CORE) chip/$(CHIP) $(BASEDIR) $(BDIR) common fuzz power test \
-	cts/common cts/$(CTS_MODULE)
+	cts/common cts/$(CTS_MODULE) $(out)/gen
 dirs+= private $(PDIR)
 dirs+=$(shell find common -type d)
 dirs+=$(shell find driver -type d)

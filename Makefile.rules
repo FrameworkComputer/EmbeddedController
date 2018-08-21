@@ -25,10 +25,9 @@ _common_dir_create := $(foreach d,$(common_dirs),$(shell [ -d $(out)/$(d) ] || \
 	    mkdir -p $(out)/$(d)))
 _sharedlib_dir_create := $(foreach d,$(dirs),$(shell \
 	[ -d $(out)/$(SHOBJLIB)/$(d) ] || mkdir -p $(out)/$(SHOBJLIB)/$(d)))
-_dir_create := $(foreach d,$(dirs),$(shell [ -d $(out)/$(BLD)/$(d) ] || \
-	    mkdir -p $(out)/RO/$(d); mkdir -p $(out)/RW/$(d)))
-_dir_y_create := $(foreach d,$(dirs-y),$(shell [ -d $(out)/$(BLD)/$(d) ] || \
-	    mkdir -p $(out)/RO/$(d); mkdir -p $(out)/RW/$(d)))
+_dir_create := $(foreach d,$(dirs) $(dirs-y),\
+	$(shell [ -d $(out)/$(BLD)/$(d) ] || mkdir -p $(out)/RO/$(d); \
+	    mkdir -p $(out)/RW/$(d); mkdir -p $(out)/gen/$(d)))
 
 # V unset for normal output, V=1 for verbose output, V=0 for silent build
 # (warnings/errors only). Use echo thus: $(call echo,"stuff  to  echo")
@@ -109,6 +108,7 @@ cmd_c_to_taskinfo = $(BUILDCC) \
 	-MMD -MF $@.d -c $< -flto -o $@
 cmd_link_taskinfo = $(BUILDCC) $(BUILD_CFLAGS) --shared -fPIC $^ \
 	$(BUILD_LDFLAGS) -flto -o $@
+cmd_proto_to_cxx = $(PROTOC) -I. --cpp_out=$(out)/gen $^
 
 cmd_tp_hash = $(out)/util/gen_touchpad_hash \
 		$(if $(TOUCHPAD_FW),-f $(TOUCHPAD_FW)) -o $@
@@ -450,6 +450,15 @@ $(out)/RO/%.o:%.cc
 	$(call quiet,cxx_to_o,CXX    )
 $(out)/RW/%.o:%.cc
 	$(call quiet,cxx_to_o,CXX    )
+
+$(out)/RO/%.pb.o:$(out)/gen/%.pb.cc
+	$(call quiet,cxx_to_o,CXX    )
+$(out)/RW/%.pb.o:$(out)/gen/%.pb.cc
+	$(call quiet,cxx_to_o,CXX    )
+$(out)/gen/%.pb.cc:%.proto
+	$(call quiet,proto_to_cxx,PROTOC )
+$(out)/gen/%.pb.h:%.proto
+	$(call quiet,proto_to_cxx,PROTOC )
 
 $(out)/$(SHOBJLIB)/%.o: override LATE_CFLAGS_DEFINE:=-DSHAREDLIB_IMAGE
 $(out)/$(SHOBJLIB)/%.o:%.c

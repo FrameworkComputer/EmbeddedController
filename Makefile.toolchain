@@ -42,6 +42,7 @@ PKG_CONFIG?=pkg-config
 BUILDCC?=$(CCACHE) gcc
 HOSTCC?=$(CCACHE) $(HOST_CROSS_COMPILE)gcc
 HOSTCXX?=$(CCACHE) $(HOST_CROSS_COMPILE)g++
+PROTOC?=protoc
 
 C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
 COMMON_WARN = -Wall -Werror -Wundef -Wno-trigraphs -fno-strict-aliasing \
@@ -93,6 +94,7 @@ CFLAGS+= -fno-delete-null-pointer-checks
 CFLAGS+= -fconserve-stack
 endif
 CFLAGS+= -DCHROMIUM_EC
+CXXFLAGS+=-DPROTOBUF_INLINE_NOT_IN_HEADERS=0
 
 FTDIVERSION=$(shell $(PKG_CONFIG) --modversion libftdi1 2>/dev/null)
 ifneq ($(FTDIVERSION),)
