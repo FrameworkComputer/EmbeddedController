@@ -11,6 +11,8 @@
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 
+#define CONFIG_BOARD_PRE_INIT
+
 /* Enable USART1,3,4 and USB streams */
 #define CONFIG_STREAM_USART
 #define CONFIG_STREAM_USART2
