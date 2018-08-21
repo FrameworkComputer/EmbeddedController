@@ -1,0 +1,31 @@
+// Copyright 2018 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package fuzz;
+
+import public "fuzz/pinweaver/pinweaver.proto";
+
+message RandomBytes {
+  bytes value = 1;
+}
+
+message Cr50SubAction {
+  // Allows a logical representation of an action (PinWeaver) or a literal
+  // representation (RandomBytes). The logical representation fills out the
+  // expected values of particular fields when they are empty or not part of the
+  // proto so that the fuzzer can reach parts of the code without having to
+  // brute force an HMAC. The literal representation allows for the fuzzer to
+  // represent inputs that cannot be represented with the logical
+  // representation.
+  oneof sub_action {
+    RandomBytes random_bytes = 1;
+    pinweaver.Request pinweaver = 2;
+  }
+}
+
+message Cr50FuzzerInput {
+  repeated Cr50SubAction sub_actions = 1;
+}

@@ -1,0 +1,64 @@
+// Copyright 2018 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package fuzz.pinweaver;
+
+import public "google/protobuf/wrappers.proto";
+
+message ResetTree {
+  uint32 bits_per_level = 1;
+  uint32 height = 2;
+}
+
+message InsertLeaf {
+  uint64 label = 1;
+  bytes delay_schedule = 2;
+  bytes low_entropy_secret = 3;
+  bytes high_entropy_secret = 4;
+  bytes reset_secret = 5;
+  bytes path_hashes = 6;
+}
+
+message RemoveLeaf {
+  uint64 label = 1;
+  bytes leaf_hmac = 2;
+  bytes path_hashes = 3;
+}
+
+message TryAuth {
+  uint64 label = 1;
+  bytes low_entropy_secret = 2;
+  bytes unimported_leaf_data = 3;
+}
+
+message ResetAuth {
+  uint64 label = 1;
+  bytes reset_secret = 2;
+  bytes unimported_leaf_data = 3;
+}
+
+message GetLog {
+  uint32 index_of_root = 1;
+}
+
+message LogReplay {
+  uint32 index_of_root = 1;
+  bytes unimported_leaf_data = 2;
+}
+
+message Request {
+  // A work around to provide the has_version() function.
+  google.protobuf.UInt32Value version = 1;
+  oneof request {
+    ResetTree reset_tree = 2;
+    InsertLeaf insert_leaf = 3;
+    RemoveLeaf remove_leaf = 4;
+    TryAuth try_auth = 5;
+    ResetAuth reset_auth = 6;
+    GetLog get_log = 7;
+    LogReplay log_replay = 8;
+  }
+}

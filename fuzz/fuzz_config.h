@@ -61,6 +61,10 @@ enum nvmem_users {
 	NVMEM_NUM_USERS
 };
 #endif
+
+#define NVMEM_TPM_SIZE \
+	(sizeof(((nvmem_partition *)(0))->buffer) - NVMEM_CR50_SIZE)
+
 #define CONFIG_FLASH_NVMEM_VARS_USER_NUM NVMEM_CR50
 
 /******************************************************************************/
