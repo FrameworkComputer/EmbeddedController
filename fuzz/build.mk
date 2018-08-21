@@ -6,7 +6,7 @@
 # fuzzer binaries
 #
 
-fuzz-test-list-host = host_command_fuzz
+fuzz-test-list-host = cr50_fuzz host_command_fuzz
 
 # For fuzzing targets libec.a is built from the ro objects and hides functions
 # that collide with stdlib. The rw only objects are then linked against libec.a
@@ -20,4 +20,8 @@ fuzz-test-list-host = host_command_fuzz
 # Does your object file need to link against cstdlib?
 #   Yes -> use <obj_name>-rw
 # Otherwise use <obj_name>-y
-host_command_fuzz-rw = host_command_fuzz.o
+cr50_fuzz-rw = cr50_fuzz.o
+host_command_fuzz-y = host_command_fuzz.o
+
+$(out)/cr50_fuzz.exe: $(out)/cryptoc/libcryptoc.a
+$(out)/cr50_fuzz.exe: LDFLAGS_EXTRA+=-lcrypto

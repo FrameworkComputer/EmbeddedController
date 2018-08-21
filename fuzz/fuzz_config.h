@@ -12,6 +12,62 @@
 /* Disable hibernate: We never want to exit while fuzzing. */
 #undef CONFIG_HIBERNATE
 
+#ifdef TEST_CR50_FUZZ
+#define CONFIG_DCRYPTO
+#define CONFIG_PINWEAVER
+#define CONFIG_UPTO_SHA512
+#define SHA512_SUPPORT
+
+/******************************************************************************/
+/* From chip/g/config_chip.h */
+
+#define CFG_FLASH_HALF (CONFIG_FLASH_SIZE >> 1)
+#define CFG_TOP_SIZE  0x3800
+#define CFG_TOP_A_OFF (CFG_FLASH_HALF - CFG_TOP_SIZE)
+#define CFG_TOP_B_OFF (CONFIG_FLASH_SIZE - CFG_TOP_SIZE)
+
+/******************************************************************************/
+/* From board/cr50/board.h */
+/* Non-volatile counter storage for U2F */
+#define CONFIG_FLASH_NVCOUNTER
+#define CONFIG_FLASH_NVCTR_SIZE CONFIG_FLASH_BANK_SIZE
+#define CONFIG_FLASH_NVCTR_BASE_A (CONFIG_PROGRAM_MEMORY_BASE + \
+				   CFG_TOP_A_OFF)
+#define CONFIG_FLASH_NVCTR_BASE_B (CONFIG_PROGRAM_MEMORY_BASE + \
+				   CFG_TOP_B_OFF)
+/* We're using TOP_A for partition 0, TOP_B for partition 1 */
+#define CONFIG_FLASH_NVMEM
+/* Offset to start of NvMem area from base of flash */
+#define CONFIG_FLASH_NVMEM_OFFSET_A (CFG_TOP_A_OFF + CONFIG_FLASH_NVCTR_SIZE)
+#define CONFIG_FLASH_NVMEM_OFFSET_B (CFG_TOP_B_OFF + CONFIG_FLASH_NVCTR_SIZE)
+/* Address of start of Nvmem area */
+#define CONFIG_FLASH_NVMEM_BASE_A (CONFIG_PROGRAM_MEMORY_BASE + \
+				 CONFIG_FLASH_NVMEM_OFFSET_A)
+#define CONFIG_FLASH_NVMEM_BASE_B (CONFIG_PROGRAM_MEMORY_BASE + \
+				 CONFIG_FLASH_NVMEM_OFFSET_B)
+/* Size partition in NvMem */
+#define NVMEM_PARTITION_SIZE (CFG_TOP_SIZE - CONFIG_FLASH_NVCTR_SIZE)
+/* Size in bytes of NvMem area */
+#define CONFIG_FLASH_NVMEM_SIZE (NVMEM_PARTITION_SIZE * NVMEM_NUM_PARTITIONS)
+/* Enable <key, value> variable support. */
+#define CONFIG_FLASH_NVMEM_VARS
+#define NVMEM_CR50_SIZE 272
+#define CONFIG_FLASH_NVMEM_VARS_USER_SIZE NVMEM_CR50_SIZE
+
+#ifndef __ASSEMBLER__
+enum nvmem_users {
+	NVMEM_TPM = 0,
+	NVMEM_CR50,
+	NVMEM_NUM_USERS
+};
+#endif
+#define CONFIG_FLASH_NVMEM_VARS_USER_NUM NVMEM_NUM_USERS
+
+/******************************************************************************/
+#define CONFIG_SW_CRC
+
+#endif /* TEST_CR50_FUZZ */
+
 #ifdef TEST_HOST_COMMAND_FUZZ
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 
