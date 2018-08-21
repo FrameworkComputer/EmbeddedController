@@ -21,9 +21,15 @@
 
 static uint32_t *FLASH_CNT_LO = (uint32_t *)CONFIG_FLASH_NVCTR_BASE_A;
 static uint32_t *FLASH_CNT_HI = (uint32_t *)CONFIG_FLASH_NVCTR_BASE_B;
-/* Ensure the 2 flash counter areas are aligned on flash pages */
+
+#ifndef CHIP_HOST
+/* Ensure the 2 flash counter areas are aligned on flash pages except for the
+ * host board which simulates flash with a variable that cannot be checked
+ * at compile time.
+ */
 BUILD_ASSERT(CONFIG_FLASH_NVCTR_BASE_A % CONFIG_FLASH_ERASE_SIZE == 0);
 BUILD_ASSERT(CONFIG_FLASH_NVCTR_BASE_B % CONFIG_FLASH_ERASE_SIZE == 0);
+#endif
 
 /*
  * An anti-rollback, persistent flash counter. This counter requires two pages
