@@ -21,6 +21,6 @@ void print_rdd_state(void);
  *
  * @return 1 if debug accessory is detected, 0 if not detected.
  */
-int rdd_is_detected(void);
+uint8_t rdd_is_detected(void);
 
 #endif  /* __CROS_RDD_H */

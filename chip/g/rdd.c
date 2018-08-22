@@ -36,17 +36,20 @@ static enum device_state state = DEVICE_STATE_DISCONNECTED;
 /* Force detecting a debug accessory (ignore RDD CC detect hardware) */
 static int force_detected;
 
+/*
+ * The Rdd state. This is saved in the rdd_interrupt to make sure the state is
+ * stable.
+ */
+static uint8_t rdd_is_detected_shadow;
+
 /**
  * Get instantaneous cable detect state
  *
  * @return 1 if debug accessory is detected, 0 if not detected
  */
-int rdd_is_detected(void)
+uint8_t rdd_is_detected(void)
 {
-	uint8_t cc1 = GREAD_FIELD(RDD, INPUT_PIN_VALUES, CC1);
-	uint8_t cc2 = GREAD_FIELD(RDD, INPUT_PIN_VALUES, CC2);
-
-	return (cc1 == cc2 && (cc1 == 3 || cc1 == 1));
+	return rdd_is_detected_shadow;
 }
 
 void print_rdd_state(void)
@@ -73,6 +76,7 @@ static void rdd_disconnect(void)
 	 */
 	gpio_set_flags(GPIO_CCD_MODE_L, GPIO_INPUT);
 }
+DECLARE_DEFERRED(rdd_disconnect);
 
 /**
  * Handle debug accessory connecting
@@ -105,6 +109,12 @@ DECLARE_DEFERRED(rdd_connect);
  */
 static void rdd_interrupt(void)
 {
+	uint8_t cc1 = GREAD_FIELD(RDD, INPUT_PIN_VALUES, CC1);
+	uint8_t cc2 = GREAD_FIELD(RDD, INPUT_PIN_VALUES, CC2);
+
+	/* Save the rdd state while the cc lines are stable. */
+	rdd_is_detected_shadow = (cc1 == cc2 && (cc1 == 3 || cc1 == 1));
+
 	/*
 	 * The Rdd detector is level-sensitive with debounce.  That is, it
 	 * samples the RDCCx pin states.  If they're different, it resets the
@@ -128,12 +138,13 @@ static void rdd_interrupt(void)
 	 * unlikely to actually trigger the deferred function twice, and it
 	 * doesn't care if we do anyway because on the second call it'll
 	 * already be in the connected state.
-	 *
 	 */
 	if (rdd_is_detected()) {
 		/* Accessory detected; toggle to looking for disconnect */
 		GWRITE(RDD, PROG_DEBUG_STATE_MAP, DETECT_DISCONNECT);
 
+		/* Cancel any pending disconnects */
+		hook_call_deferred(&rdd_disconnect_data, -1);
 		/*
 		 * Trigger the deferred handler so that we move back into the
 		 * connected state before our debounce interval expires.
@@ -141,10 +152,15 @@ static void rdd_interrupt(void)
 		hook_call_deferred(&rdd_connect_data, 0);
 	} else {
 		/*
-		 * Not detected; toggle to looking for connect.  We'll start
-		 * debouncing disconnect the next time HOOK_SECOND triggers
-		 * rdd_detect() below.
+		 * Skip disconnecting Rdd, if rdd is force detected. If Rdd is
+		 * already disconnected, no need to do it again.
 		 */
+		if (!force_detected && state != DEVICE_STATE_DISCONNECTED) {
+			/* Debounce disconnect for 1 second */
+			state = DEVICE_STATE_DEBOUNCING;
+			hook_call_deferred(&rdd_disconnect_data, SECOND);
+		}
+		/* Not detected; toggle to looking for connect. */
 		GWRITE(RDD, PROG_DEBUG_STATE_MAP, DETECT_DEBUG);
 	}
 
@@ -155,42 +171,6 @@ static void rdd_interrupt(void)
 	GWRITE_FIELD(RDD, INT_STATE, INTR_DEBUG_STATE_DETECTED, 1);
 }
 DECLARE_IRQ(GC_IRQNUM_RDD0_INTR_DEBUG_STATE_DETECTED_INT, rdd_interrupt, 1);
-
-/**
- * RDD CC detect state machine
- */
-static void rdd_detect(void)
-{
-	/* Handle detecting device */
-	if (force_detected || rdd_is_detected()) {
-		rdd_connect();
-		return;
-	}
-
-	/* CC wasn't detected.  If we're already disconnected, done. */
-	if (state == DEVICE_STATE_DISCONNECTED)
-		return;
-
-	/* If we were debouncing, we're now sure we're disconnected */
-	if (state == DEVICE_STATE_DEBOUNCING) {
-		rdd_disconnect();
-		return;
-	}
-
-	/*
-	 * Otherwise, we were connected but the accessory seems to be
-	 * disconnected right now.  PD negotiation (e.g. during EC reset or
-	 * sysjump) can alter the RDCCx voltages, so we need to debounce this
-	 * signal for longer than the Rdd hardware does to make sure it's
-	 * really disconnected before we deassert CCD_MODE_L.
-	 */
-	state = DEVICE_STATE_DEBOUNCING;
-}
-/*
- * Bump up priority so this runs before the CCD_MODE_L state machine, because
- * we can change CCD_MODE_L.
- */
-DECLARE_HOOK(HOOK_SECOND, rdd_detect, HOOK_PRIO_DEFAULT - 1);
 
 void init_rdd_state(void)
 {
