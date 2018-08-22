@@ -46,8 +46,8 @@ enum pd_rx_errors {
  * A task, other than the task owning the PD port, accessed the TCPC. The task
  * that owns the port does not send itself this event.
  */
-#define PD_EVENT_DEVICE_ACCESSED  (1<<7)
-#define PD_EVENT_DP_DISCONNECT    (1<<8) /* DisplayPort disconnect requested */
+#define PD_EVENT_DEVICE_ACCESSED    (1<<7)
+#define PD_EVENT_POWER_STATE_CHANGE (1<<8) /* Chipset power state changed */
 
 /* --- PD data message helpers --- */
 #define PDO_MAX_OBJECTS   7

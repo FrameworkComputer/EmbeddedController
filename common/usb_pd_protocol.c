@@ -1106,21 +1106,27 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 			port, PD_VDO_VID(payload[0]), payload[0] & 0xFFFF);
 }
 
-static void pd_set_data_role(int port, int role)
+static void set_usb_mux_with_current_data_role(int port)
 {
-	pd[port].data_role = role;
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	pd_update_saved_port_flags(port, PD_BBRMFLG_DATA_ROLE, role);
-#endif /* defined(CONFIG_USB_PD_DUAL_ROLE) */
-	pd_execute_data_swap(port, role);
-
 #ifdef CONFIG_USBC_SS_MUX
+	/*
+	 * If the SoC is down, then we disconnect the MUX to save power since
+	 * no one cares about the data lines.
+	 */
+#ifdef CONFIG_POWER_COMMON
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
+		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
+			    pd[port].polarity);
+		return;
+	}
+#endif /* CONFIG_POWER_COMMON */
+
 #ifdef CONFIG_USBC_SS_MUX_DFP_ONLY
 	/*
 	 * Need to connect SS mux for if new data role is DFP.
 	 * If new data role is UFP, then disconnect the SS mux.
 	 */
-	if (role == PD_ROLE_DFP)
+	if (pd[port].data_role == PD_ROLE_DFP)
 		usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
 			    pd[port].polarity);
 	else
@@ -1129,8 +1135,19 @@ static void pd_set_data_role(int port, int role)
 #else
 	usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
 		    pd[port].polarity);
-#endif
-#endif
+#endif /* CONFIG_USBC_SS_MUX_DFP_ONLY */
+#endif /* CONFIG_USBC_SS_MUX */
+}
+
+static void pd_set_data_role(int port, int role)
+{
+	pd[port].data_role = role;
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	pd_update_saved_port_flags(port, PD_BBRMFLG_DATA_ROLE, role);
+#endif /* defined(CONFIG_USB_PD_DUAL_ROLE) */
+	pd_execute_data_swap(port, role);
+
+	set_usb_mux_with_current_data_role(port);
 	pd_update_roles(port);
 }
 
@@ -1997,6 +2014,38 @@ int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 	return 0;
 }
 
+#ifdef CONFIG_POWER_COMMON /* Needed b/c CONFIG_POWER_COMMON is only caller */
+static void exit_dp_mode(int port)
+{
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+
+	if (opos <= 0)
+		return;
+
+	CPRINTS("C%d Exiting DP mode", port);
+	if (!pd_dfp_exit_mode(port, USB_SID_DISPLAYPORT, opos))
+		return;
+	pd_send_vdm(port, USB_SID_DISPLAYPORT,
+		    CMD_EXIT_MODE | VDO_OPOS(opos), NULL, 0);
+	pd_vdm_send_state_machine(port);
+	/* Have to wait for ACK */
+#endif /* CONFIG_USB_PD_ALT_MODE_DFP */
+}
+#endif /* CONFIG_POWER_COMMON */
+
+#ifdef CONFIG_POWER_COMMON
+static void handle_new_power_state(int port)
+{
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
+		/* The SoC will negotiated DP mode again when it boots up */
+		exit_dp_mode(port);
+
+	/* Ensure mux is set properly after chipset transition */
+	set_usb_mux_with_current_data_role(port);
+}
+#endif /* CONFIG_POWER_COMMON */
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 enum pd_dual_role_states pd_get_dual_role(int port)
 {
@@ -2047,39 +2096,26 @@ static void pd_update_try_source(void)
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_update_try_source, HOOK_PRIO_DEFAULT);
 #endif
 
-void pd_set_dual_role(int port, enum pd_dual_role_states state)
+static inline void pd_set_dual_role_no_wakeup(int port,
+					      enum pd_dual_role_states state)
 {
-	int i;
-
 	drp_state[port] = state;
 
 #ifdef CONFIG_USB_PD_TRY_SRC
 	pd_update_try_source();
 #endif
-
-	/* Inform PD tasks of dual role change. */
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
-		task_set_event(PD_PORT_TO_TASK_ID(i),
-			       PD_EVENT_UPDATE_DUAL_ROLE, 0);
 }
 
-static void exit_dp_mode(int port)
+void pd_set_dual_role(int port, enum pd_dual_role_states state)
 {
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
-	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
-	if (opos <= 0)
-		return;
-	CPRINTS("C%d Exiting DP mode", port);
-	if (!pd_dfp_exit_mode(port, USB_SID_DISPLAYPORT, opos))
-		return;
-	pd_send_vdm(port, USB_SID_DISPLAYPORT,
-		    CMD_EXIT_MODE | VDO_OPOS(opos), NULL, 0);
-	pd_vdm_send_state_machine(port);
-	/* Have to wait for ACK */
-#endif
+	pd_set_dual_role_no_wakeup(port, state);
+
+	/* Wake task up to process change */
+	task_set_event(PD_PORT_TO_TASK_ID(port),
+		       PD_EVENT_UPDATE_DUAL_ROLE, 0);
 }
 
-void pd_update_dual_role_config(int port)
+static void pd_update_dual_role_config(int port)
 {
 	/*
 	 * Change to sink if port is currently a source AND (new DRP
@@ -2470,7 +2506,8 @@ void pd_task(void *u)
 	 * present. This flag is used to maintain a PD connection after a
 	 * reset by sending a soft reset.
 	 */
-	pd[port].flags = pd_is_vbus_present(port) ? PD_FLAGS_VBUS_NEVER_LOW : 0;
+	pd[port].flags |=
+		pd_is_vbus_present(port) ? PD_FLAGS_VBUS_NEVER_LOW : 0;
 #endif
 
 	/* Disable TCPC RX until connection is established */
@@ -2580,10 +2617,11 @@ void pd_task(void *u)
 		if (evt & PD_EVENT_DEVICE_ACCESSED)
 			handle_device_access(port);
 #endif
-
+#ifdef CONFIG_POWER_COMMON
+		if (evt & PD_EVENT_POWER_STATE_CHANGE)
+			handle_new_power_state(port);
+#endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-		if (evt & PD_EVENT_DP_DISCONNECT)
-			exit_dp_mode(port);
 		if (evt & PD_EVENT_UPDATE_DUAL_ROLE)
 			pd_update_dual_role_config(port);
 #endif
@@ -3944,8 +3982,12 @@ static void pd_chipset_startup(void)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
-		pd_set_dual_role(i, PD_DRP_TOGGLE_OFF);
+		pd_set_dual_role_no_wakeup(i, PD_DRP_TOGGLE_OFF);
 		pd[i].flags |= PD_FLAGS_CHECK_IDENTITY;
+		task_set_event(PD_PORT_TO_TASK_ID(i),
+			       PD_EVENT_POWER_STATE_CHANGE |
+				       PD_EVENT_UPDATE_DUAL_ROLE,
+			       0);
 	}
 	CPRINTS("PD:S5->S3");
 }
@@ -3956,9 +3998,11 @@ static void pd_chipset_shutdown(void)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+		pd_set_dual_role_no_wakeup(i, PD_DRP_FORCE_SINK);
 		task_set_event(PD_PORT_TO_TASK_ID(i),
-			       PD_EVENT_DP_DISCONNECT, 0);
-		pd_set_dual_role(i, PD_DRP_FORCE_SINK);
+			       PD_EVENT_POWER_STATE_CHANGE |
+				       PD_EVENT_UPDATE_DUAL_ROLE,
+			       0);
 	}
 	CPRINTS("PD:S3->S5");
 }
