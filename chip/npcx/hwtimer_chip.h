@@ -23,7 +23,14 @@ enum ITIM_SOURCE_CLOCK_T {
 	ITIM_SOURCE_CLOCK_32K  = 1,
 };
 
-/* Initialize ITIM16 timer */
+/**
+ * Initialise a hardware timer
+ *
+ * Select the source clock for a timer and prepare it for use.
+ *
+ * @param itim_no	Timer number to init (enum ITIM16_MODULE_T)
+ * @param source	Source for timer clock (enum ITIM_SOURCE_CLOCK_T)
+ */
 void init_hw_timer(int itim_no, enum ITIM_SOURCE_CLOCK_T source);
 
 /* Returns the counter value of event timer */

@@ -46,7 +46,7 @@ static volatile uint32_t cur_cnt_us_dbg;
 /* Internal functions */
 void init_hw_timer(int itim_no, enum ITIM_SOURCE_CLOCK_T source)
 {
-	/* Use internal 32K clock/APB2 for ITIM16 */
+	/* Select which clock to use for this timer */
 	UPDATE_BIT(NPCX_ITCTS(itim_no), NPCX_ITCTS_CKSEL,
 			source != ITIM_SOURCE_CLOCK_APB2);
 
