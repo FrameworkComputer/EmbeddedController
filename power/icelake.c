@@ -18,7 +18,8 @@
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
-#define IN_PCH_SLP_SUS_WAIT_TIME_MS	100
+/* The wait time is ~150 msec, allow for safety margin. */
+#define IN_PCH_SLP_SUS_WAIT_TIME_USEC	(250 * MSEC)
 
 static int forcing_shutdown;  /* Forced shutdown in progress? */
 
@@ -112,9 +113,12 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("Pass thru GPIO_DSW_PWROK: %d", dswpwrok_in);
 		dswpwrok_out = dswpwrok_in;
 
-		/* Now wait 100ms for SLP_SUS_L to go high based on tPCH32 */
+		/*
+		 * Now wait for SLP_SUS_L to go high based on tPCH32. If this
+		 * signal doesn't go high within 250 msec then go back to G3.
+		 */
 		if (power_wait_signals_timeout(IN_PCH_SLP_SUS_DEASSERTED,
-				IN_PCH_SLP_SUS_WAIT_TIME_MS) != EC_SUCCESS) {
+				IN_PCH_SLP_SUS_WAIT_TIME_USEC) != EC_SUCCESS) {
 			CPRINTS("SLP_SUS_L didn't go high!  Assuming G3.");
 			return POWER_G3;
 		}
