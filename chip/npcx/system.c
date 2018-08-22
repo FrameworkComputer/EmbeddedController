@@ -353,8 +353,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown,
 	     HOOK_PRIO_DEFAULT - 1);
 #endif
 
-/* Check reset cause */
-void system_check_reset_cause(void)
+static void check_reset_cause(void)
 {
 	uint32_t hib_wake_flags = bbram_data_read(BBRM_DATA_INDEX_WAKE);
 	uint32_t flags = bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
@@ -886,7 +885,7 @@ int system_is_reboot_warm(void)
 	 * Check reset cause here,
 	 * gpio_pre_init is executed faster than system_pre_init
 	 */
-	system_check_reset_cause();
+	check_reset_cause();
 	reset_flags = system_get_reset_flags();
 
 	if ((reset_flags & RESET_FLAG_RESET_PIN) ||
