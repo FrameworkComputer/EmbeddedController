@@ -594,6 +594,7 @@ static void st_tp_init(void)
 
 	st_tp_start_scan();
 }
+DECLARE_DEFERRED(st_tp_init);
 
 #ifdef CONFIG_USB_UPDATE
 int touchpad_get_info(struct touchpad_info *tp)
@@ -900,15 +901,57 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 int touchpad_debug(const uint8_t *param, unsigned int param_size,
 		   uint8_t **data, unsigned int *data_size)
 {
+	static uint8_t buf[8];
+	int num_events;
+
 	if (param_size != 1)
 		return EC_RES_INVALID_PARAM;
 
 	switch (*param) {
+	case ST_TP_DEBUG_CMD_RESET_TOUCHPAD:
+		*data = NULL;
+		*data_size = 0;
+		st_tp_stop_scan();
+		hook_call_deferred(&st_tp_init_data, 100 * MSEC);
+		return EC_SUCCESS;
 	case ST_TP_DEBUG_CMD_CALIBRATE:
 		/* no return value */
 		*data = NULL;
 		*data_size = 0;
 		st_tp_full_initialize_start();
+		return EC_SUCCESS;
+	case ST_TP_DEBUG_CMD_START_SCAN:
+		*data = NULL;
+		*data_size = 0;
+		st_tp_start_scan();
+		return EC_SUCCESS;
+	case ST_TP_DEBUG_CMD_STOP_SCAN:
+		*data = NULL;
+		*data_size = 0;
+		st_tp_stop_scan();
+		return EC_SUCCESS;
+	case ST_TP_DEBUG_CMD_READ_BUF_HEADER:
+		*data = buf;
+		*data_size = 8;
+		st_tp_read_host_buffer_header();
+		memcpy(buf, rx_buf.bytes, *data_size);
+		CPRINTS("header: %.*h", *data_size, buf);
+		return EC_SUCCESS;
+	case ST_TP_DEBUG_CMD_READ_EVENTS:
+		num_events = st_tp_read_all_events();
+		if (num_events) {
+			int i;
+
+			for (i = 0; i < num_events; i++) {
+				CPRINTS("event[%d]: id=%d, type=%d",
+					i, rx_buf.events[i].evt_id,
+					rx_buf.events[i].report.report_type);
+			}
+		}
+		*data = buf;
+		*data_size = 1;
+		*data[0] = num_events;
+		st_tp_send_ack();
 		return EC_SUCCESS;
 	}
 	return EC_RES_INVALID_PARAM;
