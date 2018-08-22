@@ -10,7 +10,11 @@
 
 /**
  * Programs when the next timer should fire an interrupt.
- * deadline: timestamp of the event.
+ *
+ * The deadline is ahead of the current counter (which may of course wrap) by
+ * the number of microseconds until the interrupt should fire.
+ *
+ * @param deadline	timestamp of the event in microseconds
  */
 void __hw_clock_event_set(uint32_t deadline);
 
@@ -20,10 +24,23 @@ uint32_t __hw_clock_event_get(void);
 /* Cancel the next event programed by __hw_clock_event_set */
 void __hw_clock_event_clear(void);
 
-/* Returns the value of the free-running counter used as clock. */
+/**
+ * Get the value of the free-running counter used as clock
+ *
+ * The counter resolution must be 1us, since udelay() relies on this.
+ *
+ * @return current counter value
+ */
 uint32_t __hw_clock_source_read(void);
 
-/* Override the current value of the hardware counter */
+/**
+ * Override the current value of the hardware counter
+ *
+ * The new value takes effect immediately and the counter continues counting
+ * from there, assuming it is enabled
+ *
+ * @ts	Value to write
+ */
 void __hw_clock_source_set(uint32_t ts);
 
 /**
