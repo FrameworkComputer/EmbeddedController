@@ -187,6 +187,15 @@ static void baseboard_chipset_shutdown(void)
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, baseboard_chipset_shutdown,
 	     HOOK_PRIO_DEFAULT);
 
+int board_is_i2c_port_powered(int port)
+{
+	if (port != I2C_PORT_SENSOR)
+		return 1;
+
+	/* Sensor power (lid accel, gyro) is off in S5 (and G3). */
+	return chipset_in_state(CHIPSET_STATE_ANY_OFF) ? 0 : 1;
+}
+
 int board_set_active_charge_port(int port)
 {
 	int i;
