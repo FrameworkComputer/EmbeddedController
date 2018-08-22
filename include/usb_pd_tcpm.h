@@ -263,11 +263,17 @@ enum tcpc_alert_polarity {
 	TCPC_ALERT_ACTIVE_HIGH,
 };
 
+enum tcpc_alert_open_drain {
+	TCPC_ALERT_PUSH_PULL = 0,
+	TCPC_ALERT_OPEN_DRAIN,
+};
+
 struct tcpc_config_t {
 	int i2c_host_port;
 	int i2c_slave_addr;
 	const struct tcpm_drv *drv;
 	enum tcpc_alert_polarity pol;
+	enum tcpc_alert_open_drain od;
 };
 
 /**
