@@ -12,6 +12,7 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
+#include "console.h"
 #include "cros_board_info.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_lsm6dsm.h"
@@ -45,6 +46,9 @@
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+
+#define USB_PD_PORT_ANX7447	0
+#define USB_PD_PORT_PS8751	1
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -83,8 +87,25 @@ const struct adc_t adc_channels[] = {
 		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 	[ADC_TEMP_SENSOR_CHARGER] = {
 		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	/* Vbus C0 sensing (10x voltage divider). PPVAR_USB_C0_VBUS */
+	[ADC_VBUS_C0] = {
+		"VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	/* Vbus C1 sensing (10x voltage divider). PPVAR_USB_C1_VBUS */
+	[ADC_VBUS_C1] = {
+		"VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+enum adc_channel board_get_vbus_adc(int port)
+{
+	if (port == USB_PD_PORT_ANX7447)
+		return  ADC_VBUS_C0;
+	if (port == USB_PD_PORT_PS8751)
+		return  ADC_VBUS_C1;
+
+	ccprints("Invaild VBUS adc channel!");
+	return ADC_VBUS_C0;
+}
 
 const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
