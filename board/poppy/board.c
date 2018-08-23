@@ -142,22 +142,6 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 }
 #endif
 
-static int command_attach_base(int argc, char **argv)
-{
-	tablet_set_mode(0);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(attachbase, command_attach_base,
-		NULL, "Simulate attach base");
-
-static int command_detach_base(int argc, char **argv)
-{
-	tablet_set_mode(1);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(detachbase, command_detach_base,
-		NULL, "Simulate detach base");
-
 #include "gpio_list.h"
 
 /* power signal list.  Must match order of enum power_signal. */

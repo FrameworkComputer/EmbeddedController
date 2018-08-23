@@ -13,3 +13,10 @@ int base_get_state(void);
  * and non-zero meaning attached.
  */
 void base_set_state(int state);
+
+/**
+ * Call board specific base_force_state function.
+ * Force the current state of the base, with 0 meaning detached,
+ * 1 meaning attached and 2 meaning reset to the original state.
+ */
+void base_force_state(int state);

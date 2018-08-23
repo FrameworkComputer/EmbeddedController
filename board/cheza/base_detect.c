@@ -197,3 +197,20 @@ static void base_init(void)
 	gpio_set_level(GPIO_EN_CC_LID_BASE_PULLDN, 1);
 }
 DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT+1);
+
+void base_force_state(int state)
+{
+	if (state == 1) {
+		gpio_disable_interrupt(GPIO_CC_LID_BASE_ADC);
+		base_detect_change(BASE_CONNECTED);
+		CPRINTS("BD forced connected");
+	} else if (state == 0) {
+		gpio_disable_interrupt(GPIO_CC_LID_BASE_ADC);
+		base_detect_change(BASE_DISCONNECTED);
+		CPRINTS("BD forced disconnected");
+	} else {
+		hook_call_deferred(&base_detect_deferred_data, 0);
+		gpio_enable_interrupt(GPIO_CC_LID_BASE_ADC);
+		CPRINTS("BD forced reset");
+	}
+}

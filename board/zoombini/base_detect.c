@@ -53,10 +53,13 @@ enum base_detect_state {
 	BASE_ATTACHED_DEBOUNCE,
 	BASE_ATTACHED,
 	BASE_DETACHED_DEBOUNCE,
+	// Default for |forced_state|. Should be set only on |forced_state|.
+	BASE_NO_FORCED_STATE,
 };
 
 static int debug;
 static enum base_detect_state state;
+static enum base_detect_state forced_state = BASE_NO_FORCED_STATE;
 
 static void base_power_enable(int enable)
 {
@@ -160,6 +163,16 @@ static void base_detect_deferred(void)
 		CPRINTS("BD st%d: att: %dmV det: %dmV", state,
 			attach_reading,
 			detach_reading);
+
+	if (forced_state != BASE_NO_FORCED_STATE) {
+		if (state != forced_state) {
+			CPRINTS("BD Forced  %s",
+				forced_state == BASE_ATTACHED ?
+				"attached" : "detached");
+			set_state(forced_state);
+		}
+		return;
+	}
 
 	switch (state) {
 	case BASE_DETACHED:
@@ -271,9 +284,23 @@ static int command_basedetectdebug(int argc, char **argv)
 	if ((argc > 1) && !parse_bool(argv[1], &debug))
 		return EC_ERROR_PARAM1;
 
-	CPRINTS("BD: st%d", state);
+	CPRINTS("BD: %sst%d", forced_state != BASE_NO_FORCED_STATE ?
+						  "forced " : "", state);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(basedebug, command_basedetectdebug, "[ena|dis]",
 			"En/Disable base detection debug");
+
+
+void base_force_state(int state)
+{
+	if (state == 1)
+		forced_state = BASE_ATTACHED;
+	else if (state == 0)
+		forced_state = BASE_DETACHED;
+	else
+		forced_state = BASE_NO_FORCED_STATE;
+
+	hook_call_deferred(&base_detect_deferred_data, 0);
+}

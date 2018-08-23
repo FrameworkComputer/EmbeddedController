@@ -514,6 +514,13 @@
 #undef CONFIG_BUTTON_TRIGGERED_RECOVERY
 
 /*
+ * Compile detachable base support
+ *
+ * Enabled on all boards that have a detachable base.
+ */
+#undef CONFIG_DETACHABLE_BASE
+
+/*
  * Indicates there is a dedicated recovery button.  Note, that if there are
  * volume buttons, a dedicated recovery button is not needed.  This is intended
  * because if a board has volume buttons, they can do everything a dedicated
