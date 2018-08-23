@@ -487,9 +487,9 @@ cleanup() {
 
 	if [ "${CHIP}" == "it83xx" ] ; then
 		info "Reinitialize ftdi_i2c interface"
-		dut_control --ftdii2c init
-		dut_control --ftdii2c open
-		dut_control --ftdii2c setclock
+		dut_control ftdii2c_cmd:init
+		dut_control ftdii2c_cmd:open
+		dut_control ftdii2c_cmd:setclock
 
 		# Reset the dut mux if it exists
 		if $(servo_has_dut_i2c_mux); then
@@ -1000,7 +1000,7 @@ function flash_it83xx() {
 	servo_ec_hard_reset
 
 	info "Close connection to ftdi_i2c interface"
-	dut_control --ftdii2c close
+	dut_control ftdii2c_cmd:close
 
 	info "Run iteflash..."
 	sudo ${ITEFLASH} -w ${IMG}
