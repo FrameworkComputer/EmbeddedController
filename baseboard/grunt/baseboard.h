@@ -260,6 +260,9 @@ extern matrix_3x3_t grunt_base_standard_ref;
 
 void board_reset_pd_mcu(void);
 
+/* Common definition for the USB PD interrupt handlers. */
+void tcpc_alert_event(enum gpio_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BASEBOARD_H */

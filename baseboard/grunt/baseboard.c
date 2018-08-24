@@ -40,6 +40,7 @@
 #include "temp_sensor.h"
 #include "thermistor.h"
 #include "usb_mux.h"
+#include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 #include "util.h"
@@ -99,6 +100,25 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.pol = TCPC_ALERT_ACTIVE_LOW,
 	},
 };
+
+void tcpc_alert_event(enum gpio_signal signal)
+{
+	int port;
+
+	if (signal == GPIO_USB_C0_PD_INT_ODL) {
+		if (!gpio_get_level(GPIO_USB_C0_PD_RST_L))
+			return;
+		port = 0;
+	}
+
+	if (signal == GPIO_USB_C1_PD_INT_ODL) {
+		if (!gpio_get_level(GPIO_USB_C1_PD_RST_L))
+			return;
+		port = 1;
+	}
+
+	schedule_deferred_pd_interrupt(port);
+}
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {
