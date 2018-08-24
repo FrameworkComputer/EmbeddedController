@@ -263,8 +263,20 @@ void board_hibernate(void)
 	/*
 	 * To support hibernate called from console commands, ectool commands
 	 * and key sequence, shutdown the AP before hibernating.
+	 *
+	 * If board_hibernate() is called from within chipset task, then
+	 * chipset_do_shutdown needs to be called directly since
+	 * chipset_force_shutdown basically just sets wake event for chipset
+	 * task. But that will not help since chipset task is in board_hibernate
+	 * and never returns back to the power state machine to take down power
+	 * rails.
 	 */
-	chipset_force_shutdown(CHIPSET_SHUTDOWN_BOARD_CUSTOM);
+#ifdef HAS_TASK_CHIPSET
+	if (task_get_current() == TASK_ID_CHIPSET)
+		chipset_do_shutdown();
+	else
+#endif
+		chipset_force_shutdown(CHIPSET_SHUTDOWN_BOARD_CUSTOM);
 
 #ifdef CONFIG_USBC_PPC_NX20P3483
 	/*
