@@ -99,6 +99,8 @@
 /* Enable Case Closed Debugging */
 #define CONFIG_CASE_CLOSED_DEBUG_V1
 #define CONFIG_PHYSICAL_PRESENCE
+/* Loosen CCD open requirements. Only allowed in prePVT images */
+#define CONFIG_CCD_OPEN_PREPVT
 
 #ifdef CR50_DEV
 /* Enable unsafe dev features for CCD in dev builds */
