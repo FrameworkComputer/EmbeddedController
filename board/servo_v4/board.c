@@ -15,6 +15,7 @@
 #include "queue_policies.h"
 #include "registers.h"
 #include "spi.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "update_fw.h"
@@ -31,6 +32,7 @@
 #include "gpio_list.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
 /******************************************************************************
  * Board pre-init function.
@@ -433,6 +435,10 @@ static void board_init(void)
 	init_ioexpander();
 	init_uservo_port();
 	init_usb3_port();
+
+	/* Clear BBRAM, we don't want any PD state carried over on reset. */
+	system_set_bbram(SYSTEM_BBRAM_IDX_PD0, 0);
+	system_set_bbram(SYSTEM_BBRAM_IDX_PD1, 0);
 
 	/*
 	 * Enable SBU mux. The polarity is set each time a new PD attach event
