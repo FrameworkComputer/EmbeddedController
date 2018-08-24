@@ -392,28 +392,34 @@ static void board_pmic_init(void)
 	board_report_pmic_fault("SYSJUMP");
 
 	/* Clear power source events */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x04, 0xff);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_PWRSRCINT, 0xff);
 
 	/* Disable power button shutdown timer */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x14, 0x00);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_PBCONFIG, 0x00);
 
 	if (system_jumped_to_this_image())
 		return;
 
 	/* DISCHGCNT2 - enable 100 ohm discharge on V3.3A and V1.8A */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3d, 0x05);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_DISCHGCNT2, 0x05);
 
 	/* DISCHGCNT3 - enable 100 ohm discharge on V1.00A */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3e, 0x04);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_DISCHGCNT3, 0x04);
 
 	/*
 	 * Set V085ACNT / V0.85A Control Register:
 	 * Nominal output = 0.85V.
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x2a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_V085ACNT, 0x2a);
 
 	/* VRMODECTRL - disable low-power mode for all rails */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3b, 0x1f);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_VRMODECTRL, 0x1f);
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
