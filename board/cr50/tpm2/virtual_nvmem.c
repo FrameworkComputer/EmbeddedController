@@ -10,6 +10,7 @@
 #include "board_id.h"
 #include "console.h"
 #include "link_defs.h"
+#include "sn_bits.h"
 
 /*
  * Functions to allow access to non-NVRam data through NVRam Indexes.
@@ -143,16 +144,20 @@ struct virtual_nv_index_cfg {
 enum virtual_nv_index {
 	VIRTUAL_NV_INDEX_START = 0x013fff00,
 	VIRTUAL_NV_INDEX_BOARD_ID = VIRTUAL_NV_INDEX_START,
+	VIRTUAL_NV_INDEX_SN_DATA,
 	VIRTUAL_NV_INDEX_END,
 };
 /* Reserved space for future virtual indexes; this is the last valid index. */
 #define VIRTUAL_NV_INDEX_MAX 0x013fffff
 
 static void GetBoardId(BYTE *to, size_t offset, size_t size);
+static void GetSnData(BYTE *to, size_t offset, size_t size);
 
 static const struct virtual_nv_index_cfg index_config[] = {
 	REGISTER_CONFIG(VIRTUAL_NV_INDEX_BOARD_ID,
-			12 /* data_size */, GetBoardId)
+			sizeof(struct board_id), GetBoardId)
+	REGISTER_CONFIG(VIRTUAL_NV_INDEX_SN_DATA,
+			sizeof(struct sn_data), GetSnData)
 };
 
 /* Check sanity of above config. */
@@ -311,4 +316,12 @@ static void GetBoardId(BYTE *to, size_t offset, size_t size)
 
 	read_board_id(&board_id_tmp);
 	memcpy(to, ((BYTE *) &board_id_tmp) + offset, size);
+}
+
+static void GetSnData(BYTE *to, size_t offset, size_t size)
+{
+	struct sn_data sn_data_tmp;
+
+	read_sn_data(&sn_data_tmp);
+	memcpy(to, ((BYTE *) &sn_data_tmp) + offset, size);
 }
