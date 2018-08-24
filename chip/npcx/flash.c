@@ -690,7 +690,7 @@ int flash_pre_init(void)
 	flash_pinmux(1);
 #endif
 
-#ifdef CONFIG_EXTERNAL_STORAGE
+#if defined(CONFIG_EXTERNAL_STORAGE) && !defined(NPCX_INT_FLASH_SUPPORT)
 	/* Disable tristate all the time */
 	CLEAR_BIT(NPCX_DEVCNT, NPCX_DEVCNT_F_SPI_TRIS);
 #endif
