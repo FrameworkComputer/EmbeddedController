@@ -30,6 +30,7 @@
 #include "temp_sensor.h"
 #include "thermistor.h"
 #include "util.h"
+#include "battery_smart.h"
 
 static uint16_t sku_id;
 
@@ -256,3 +257,46 @@ int board_is_lid_angle_tablet_mode(void)
 {
 	return board_is_convertible();
 }
+
+/* Battery functions */
+#define SB_OPTIONALMFG_FUNCTION2		0x3e
+/* Optional mfg function2 */
+#define SMART_QUICK_CHARGE			(1<<12)
+/* Quick charge support */
+#define MODE_QUICK_CHARGE_SUPPORT		(1<<4)
+
+static void sb_quick_charge_mode(int enable)
+{
+	int val, rv;
+
+	rv = sb_read(SB_BATTERY_MODE, &val);
+	if (rv || !(val & MODE_QUICK_CHARGE_SUPPORT))
+		return;
+
+	rv = sb_read(SB_OPTIONALMFG_FUNCTION2, &val);
+	if (rv)
+		return;
+
+	if (enable)
+		val |= SMART_QUICK_CHARGE;
+	else
+		val &= ~SMART_QUICK_CHARGE;
+
+	sb_write(SB_OPTIONALMFG_FUNCTION2, val);
+}
+
+/* Called on AP S3/S0ix -> S0 transition */
+static void board_chipset_resume(void)
+{
+	/* Normal charge current */
+	sb_quick_charge_mode(0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S0 -> S3/S0ix transition */
+static void board_chipset_suspend(void)
+{
+	/* Quick charge current */
+	sb_quick_charge_mode(1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
