@@ -887,6 +887,7 @@ static enum vendor_cmd_rc ccd_open(struct vendor_cmd_params *p)
 		 * command came from the AP.
 		 */
 	} else {
+#ifndef CONFIG_CCD_OPEN_PREPVT
 		/*
 		 * - Password not set
 		 * - Battery is present
@@ -894,6 +895,7 @@ static enum vendor_cmd_rc ccd_open(struct vendor_cmd_params *p)
 		 */
 		why_denied = "nopwd";
 		goto denied;
+#endif
 	}
 
 	/* Fail and abort if already checking physical presence */

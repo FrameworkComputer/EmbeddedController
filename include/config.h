@@ -531,6 +531,8 @@
 #undef CONFIG_CASE_CLOSED_DEBUG_V1
 /* Allow unsafe debugging functionality in V1 configuration */
 #undef CONFIG_CASE_CLOSED_DEBUG_V1_UNSAFE
+/* Loosen Open restrictions for prePVT devices */
+#undef CONFIG_CCD_OPEN_PREPVT
 
 /*
  * Capsense chip has buttons, too.
