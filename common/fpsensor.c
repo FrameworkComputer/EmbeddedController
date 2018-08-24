@@ -183,6 +183,13 @@ static void fp_process_finger(void)
 	if (!res) {
 		uint32_t evt = EC_MKBP_FP_IMAGE_READY;
 
+		/* Clean up SPI before clocking up to avoid hang on the dsb
+		 * in dma_go. Ignore the return value to let the WDT reboot
+		 * the MCU (and avoid getting trapped in the loop).
+		 * b/112781659 */
+		res = spi_transaction_flush(&spi_devices[0]);
+		if (res)
+			CPRINTS("Failed to flush SPI: 0x%x", res);
 		/* we need CPU power to do the computations */
 		clock_enable_module(MODULE_FAST_CPU, 1);
 
