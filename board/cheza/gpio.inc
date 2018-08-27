@@ -52,8 +52,7 @@ GPIO(AP_SUSPEND_L,          PIN(5, 7), GPIO_INPUT | GPIO_SEL_1P8V)     /* Suspen
 /* Power enables */
 GPIO(SWITCHCAP_ON_L,        PIN(D, 5), GPIO_OUT_LOW)   /* Enable switch cap. XXX: It's active-high */
 GPIO(VBOB_EN,               PIN(9, 5), GPIO_OUT_LOW)   /* Enable VBOB */
-/* TODO(b/110988793): Default it to LOW and make it a S3 rail once the bug is fixed. */
-GPIO(EN_PP3300_A,           PIN(A, 6), GPIO_OUT_HIGH)  /* Enable PP3300 */
+GPIO(EN_PP3300_A,           PIN(A, 6), GPIO_OUT_LOW)   /* Enable PP3300 */
 GPIO(EN_PP5000,             PIN(6, 7), GPIO_OUT_LOW)   /* EN_PP5000_A: Enable PP5000 */
 GPIO(ENABLE_BACKLIGHT,      PIN(B, 6), GPIO_OUT_LOW)   /* EC_BL_DISABLE_L: Backlight disable signal from EC */
 
