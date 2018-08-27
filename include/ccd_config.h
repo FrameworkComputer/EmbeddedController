@@ -100,6 +100,12 @@ enum ccd_capability {
 	/* Read-only access to hash or dump EC or AP flash */
 	CCD_CAP_FLASH_READ = 16,
 
+	/* Allow ccd open without dev mode enabled */
+	CCD_CAP_OPEN_WITHOUT_DEV_MODE = 17,
+
+	/* Allow ccd open from usb */
+	CCD_CAP_OPEN_FROM_USB = 18,
+
 	/* Number of currently defined capabilities */
 	CCD_CAP_COUNT
 };
@@ -130,6 +136,14 @@ struct ccd_capability_info {
 	enum ccd_capability_state default_state;
 };
 
+#ifdef CONFIG_CCD_OPEN_PREPVT
+/* In prepvt images always allow ccd open from the console without dev mode */
+#define CCD_CAP_STATE_OPEN_REQ CCD_CAP_STATE_ALWAYS
+#else
+/* In prod images restrict how ccd can be opened */
+#define CCD_CAP_STATE_OPEN_REQ CCD_CAP_STATE_IF_OPENED
+#endif
+
 #define CAP_INFO_DATA {					  \
 	{"UartGscRxAPTx",	CCD_CAP_STATE_ALWAYS},	  \
 	{"UartGscTxAPRx",	CCD_CAP_STATE_ALWAYS},	  \
@@ -151,6 +165,8 @@ struct ccd_capability_info {
 	{"UpdateNoTPMWipe",	CCD_CAP_STATE_ALWAYS},	  \
 	{"I2C",			CCD_CAP_STATE_IF_OPENED}, \
 	{"FlashRead",		CCD_CAP_STATE_ALWAYS},	  \
+	{"OpenNoDevMode",	CCD_CAP_STATE_OPEN_REQ}, \
+	{"OpenFromUSB",		CCD_CAP_STATE_OPEN_REQ}, \
 	}
 
 #define CCD_STATE_NAMES { "Locked", "Unlocked", "Opened" }

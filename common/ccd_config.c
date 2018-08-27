@@ -880,14 +880,16 @@ static enum vendor_cmd_rc ccd_open(struct vendor_cmd_params *p)
 		}
 	} else if (!board_battery_is_present()) {
 		/* Open allowed with no password if battery is removed */
-	} else if (board_vboot_dev_mode_enabled() &&
-		   !(p->flags & VENDOR_CMD_FROM_USB)) {
+	} else if ((ccd_is_cap_enabled(CCD_CAP_OPEN_WITHOUT_DEV_MODE) ||
+		    (board_vboot_dev_mode_enabled())) &&
+		   (ccd_is_cap_enabled(CCD_CAP_OPEN_FROM_USB) ||
+		    !(p->flags & VENDOR_CMD_FROM_USB))) {
 		/*
 		 * Open allowed with no password if dev mode enabled and
-		 * command came from the AP.
+		 * command came from the AP. CCD capabilities can be used to
+		 * bypass these checks.
 		 */
 	} else {
-#ifndef CONFIG_CCD_OPEN_PREPVT
 		/*
 		 * - Password not set
 		 * - Battery is present
@@ -895,7 +897,6 @@ static enum vendor_cmd_rc ccd_open(struct vendor_cmd_params *p)
 		 */
 		why_denied = "nopwd";
 		goto denied;
-#endif
 	}
 
 	/* Fail and abort if already checking physical presence */
