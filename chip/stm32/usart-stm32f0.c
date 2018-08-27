@@ -36,9 +36,14 @@ static void usart_variant_enable(struct usart_config const *config)
 	 */
 	configs[config->hw->index] = config;
 
-	usart_set_baud_f0_l(config, clock_get_freq());
+	usart_set_baud(config, config->baud);
 
 	task_enable_irq(config->hw->irq);
+}
+
+void usart_set_baud(struct usart_config const *config, int baud)
+{
+	usart_set_baud_f0_l(config, baud, clock_get_freq());
 }
 
 static void usart_variant_disable(struct usart_config const *config)
@@ -69,7 +74,8 @@ static void freq_change(void)
 
 	for (i = 0; i < ARRAY_SIZE(configs); ++i)
 		if (configs[i])
-			usart_set_baud_f0_l(configs[i], clock_get_freq());
+			usart_set_baud_f0_l(configs[i], configs[i]->baud,
+					clock_get_freq());
 }
 
 DECLARE_HOOK(HOOK_FREQ_CHANGE, freq_change, HOOK_PRIO_DEFAULT);

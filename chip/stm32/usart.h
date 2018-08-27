@@ -201,8 +201,10 @@ void usart_interrupt(struct usart_config const *config);
  * peripheral variant code uses during initialization and clock frequency
  * change.  The baud rate divisor input frequency is passed in Hertz.
  */
-void usart_set_baud_f0_l(struct usart_config const *config, int frequency_hz);
-void usart_set_baud_f(struct usart_config const *config, int frequency_hz);
+void usart_set_baud_f0_l(struct usart_config const *config, int baud,
+			int frequency_hz);
+void usart_set_baud_f(struct usart_config const *config, int baud,
+		int frequency_hz);
 
 /*
  * Allow specification of parity for this usart.
@@ -215,6 +217,13 @@ void usart_set_parity(struct usart_config const *config, int parity);
  * parity is 0: none, 1: odd, 2: even.
  */
 int usart_get_parity(struct usart_config const *config);
+
+/*
+ * Set baud rate for this usart. Note that baud rate will get reset on
+ * core frequency change, so this only makes sense if the board never
+ * goes to deep idle.
+ */
+void usart_set_baud(struct usart_config const *config, int baud);
 
 /*
  * Different families provide different ways of clearing the transmit complete

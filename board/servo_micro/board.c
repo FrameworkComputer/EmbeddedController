@@ -101,7 +101,7 @@ USB_STREAM_CONFIG_USART_IFACE(usart2_usb,
 static struct usart_config const usart3;
 struct usb_stream_config const usart3_usb;
 
-static struct queue const usart3_to_usb = QUEUE_DIRECT(128, uint8_t,
+static struct queue const usart3_to_usb = QUEUE_DIRECT(1024, uint8_t,
 	usart3.producer, usart3_usb.consumer);
 static struct queue const usb_to_usart3 = QUEUE_DIRECT(64, uint8_t,
 	usart3_usb.producer, usart3.consumer);
@@ -201,6 +201,39 @@ static int command_uart_parity(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(parity, command_uart_parity,
 			"usart[2|3|4] [0|1|2]",
 			"Set parity on uart");
+
+/******************************************************************************
+ * Set baud rate setting on usarts.
+ */
+static int command_uart_baud(int argc, char **argv)
+{
+	int baud = 0;
+	struct usart_config const *usart;
+	char *e;
+
+	if ((argc < 2) || (argc > 3))
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!strcasecmp(argv[1], "usart2"))
+		usart = &usart2;
+	else if (!strcasecmp(argv[1], "usart3"))
+		usart = &usart3;
+	else if (!strcasecmp(argv[1], "usart4"))
+		usart = &usart4;
+	else
+		return EC_ERROR_PARAM1;
+
+	baud = strtoi(argv[2], &e, 0);
+	if (*e || baud < 0)
+		return EC_ERROR_PARAM2;
+
+	usart_set_baud(usart, baud);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(baud, command_uart_baud,
+			"usart[2|3|4] rate",
+			"Set baud rate on uart");
 
 /******************************************************************************
  * Commands for sending the magic non-I2C handshake over I2C bus wires to an

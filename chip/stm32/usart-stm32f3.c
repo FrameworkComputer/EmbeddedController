@@ -37,7 +37,7 @@ static void usart_variant_enable(struct usart_config const *config)
 	 */
 	STM32_RCC_CFGR3 |= 0x000f0003;
 
-	usart_set_baud_f0_l(config, 8000000);
+	usart_set_baud_f0_l(config, config->baud, 8000000);
 
 	task_enable_irq(config->hw->irq);
 }

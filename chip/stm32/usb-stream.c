@@ -164,9 +164,12 @@ int usb_usart_interface(struct usb_stream_config const *config,
 	case USB_USART_SET_PARITY:
 		usart_set_parity(usart, req.wValue);
 		break;
+	case USB_USART_SET_BAUD:
+		usart_set_baud(usart, req.wValue * 100);
+		break;
 
 	/* TODO(nsanders): support reading parity. */
-	/* TODO(nsanders): support baud. */
+	/* TODO(nsanders): support reading baud. */
 	default:
 		return -1;
 	}

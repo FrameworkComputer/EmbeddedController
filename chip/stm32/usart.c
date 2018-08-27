@@ -86,9 +86,10 @@ void usart_shutdown(struct usart_config const *config)
 	config->hw->ops->disable(config);
 }
 
-void usart_set_baud_f0_l(struct usart_config const *config, int frequency_hz)
+void usart_set_baud_f0_l(struct usart_config const *config, int baud,
+			int frequency_hz)
 {
-	int      div  = DIV_ROUND_NEAREST(frequency_hz, config->baud);
+	int      div  = DIV_ROUND_NEAREST(frequency_hz, baud);
 	intptr_t base = config->hw->base;
 
 	if (div / 16 > 0) {
@@ -108,9 +109,10 @@ void usart_set_baud_f0_l(struct usart_config const *config, int frequency_hz)
 	}
 }
 
-void usart_set_baud_f(struct usart_config const *config, int frequency_hz)
+void usart_set_baud_f(struct usart_config const *config, int baud,
+		int frequency_hz)
 {
-	int div = DIV_ROUND_NEAREST(frequency_hz, config->baud);
+	int div = DIV_ROUND_NEAREST(frequency_hz, baud);
 
 	/* STM32F only supports x16 oversampling */
 	STM32_USART_BRR(config->hw->base) = div;
