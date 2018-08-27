@@ -374,7 +374,7 @@ def Crc8(data):
   return crc >> 8
 
 
-def StartLoop(interp, ppid = os.getppid()):
+def StartLoop(interp):
   """Starts an infinite loop of servicing the user and the EC.
 
   StartLoop checks to see if there are any commands to process, processing them
@@ -389,13 +389,10 @@ def StartLoop(interp, ppid = os.getppid()):
 
   Args:
     interp: An Interpreter object that has been properly initialised.
-    ppid: original parent pid to stop loop when parent dies.
   """
   try:
-    while os.getppid() == ppid:
-      # Timeout every 100ms to catch if the parent has died.
-      readable, writeable, _ = select.select(interp.inputs, interp.outputs, [],
-                                             0.1)
+    while True:
+      readable, writeable, _ = select.select(interp.inputs, interp.outputs, [])
 
       for obj in readable:
         # Handle any debug prints from the EC.

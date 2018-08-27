@@ -817,14 +817,13 @@ def IsPrintable(byte):
   """
   return byte >= ord(' ') and byte <= ord('~')
 
-def StartLoop(console, command_active, ppid = os.getppid()):
+def StartLoop(console, command_active):
   """Starts the infinite loop of console processing.
 
   Args:
     console: A Console object that has been properly initialzed.
     command_active: multiprocessing.Value indicating if servod owns
         the console, or user owns the console. This prevents input collisions.
-    ppid: original parent pid to stop loop when parent dies.
   """
   console.logger.debug('Console is being served on %s.', console.user_pty)
   console.logger.debug('Console master is on %s.', console.master_pty)
@@ -837,7 +836,7 @@ def StartLoop(console, command_active, ppid = os.getppid()):
     ep = select.epoll()
     ep.register(console.master_pty, select.EPOLLHUP)
 
-    while os.getppid() == ppid:
+    while True:
       # Check to see if pts is connected to anything
       events = ep.poll(0)
       master_connected = not events
@@ -981,7 +980,7 @@ def main(argv):
 
   # Spawn an interpreter process.
   itpr_process = multiprocessing.Process(target=interpreter.StartLoop,
-                                         args=(itpr,os.getpid()))
+                                         args=(itpr,))
   # Make sure to kill the interpreter when we terminate.
   itpr_process.daemon = True
   # Start the interpreter.
