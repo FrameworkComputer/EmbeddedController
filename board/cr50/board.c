@@ -943,10 +943,22 @@ void assert_ec_rst(void)
 	if (uart_bitbang_is_enabled())
 		task_disable_irq(bitbang_config.rx_irq);
 
+	/*
+	 * If ec_rst was explicitly asserted, then do not let
+	 * "power button release" deassert it if set earlier to do so.
+	 */
+	power_button_release_enable_interrupt(0);
+
 	GWRITE(RBOX, ASSERT_EC_RST, 1);
 }
 void deassert_ec_rst(void)
 {
+	/*
+	 * If ec_rst was explicitly deasserted, then do not let
+	 * "power button release" deassert it again if set earlier to do so.
+	 */
+	power_button_release_enable_interrupt(0);
+
 	GWRITE(RBOX, ASSERT_EC_RST, 0);
 
 	if (uart_bitbang_is_enabled())

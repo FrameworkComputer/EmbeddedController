@@ -17,6 +17,23 @@
 #define CPRINTS(format, args...) cprints(CC_RBOX, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_RBOX, format, ## args)
 
+DECLARE_DEFERRED(deassert_ec_rst);
+
+void power_button_release_enable_interrupt(int enable)
+{
+	/* Clear any leftover power button rising edge detection interrupts */
+	GWRITE_FIELD(RBOX, INT_STATE, INTR_PWRB_IN_RED, 1);
+
+	if (enable) {
+		/* Enable power button rising edge detection interrupt */
+		GWRITE_FIELD(RBOX, INT_ENABLE, INTR_PWRB_IN_RED, 1);
+		task_enable_irq(GC_IRQNUM_RBOX0_INTR_PWRB_IN_RED_INT);
+	} else {
+		GWRITE_FIELD(RBOX, INT_ENABLE, INTR_PWRB_IN_RED, 0);
+		task_disable_irq(GC_IRQNUM_RBOX0_INTR_PWRB_IN_RED_INT);
+	}
+}
+
 /**
  * Enable/disable power button interrupt.
  *
@@ -52,6 +69,24 @@ static void power_button_handler(void)
 	GWRITE_FIELD(RBOX, INT_STATE, INTR_PWRB_IN_FED, 1);
 }
 DECLARE_IRQ(GC_IRQNUM_RBOX0_INTR_PWRB_IN_FED_INT, power_button_handler, 1);
+
+static void power_button_release_handler(void)
+{
+#ifdef CR50_DEV
+	CPRINTS("power button released");
+#endif
+
+	/*
+	 * Let deassert_ec_rst be called deferred rather than
+	 * by interrupt handler.
+	 */
+	hook_call_deferred(&deassert_ec_rst_data, 0);
+
+	/* Note that this is for one-time use through the current power on. */
+	power_button_release_enable_interrupt(0);
+}
+DECLARE_IRQ(GC_IRQNUM_RBOX0_INTR_PWRB_IN_RED_INT, power_button_release_handler,
+	1);
 
 #ifdef CONFIG_U2F
 static void power_button_init(void)

@@ -269,6 +269,13 @@ int board_deep_sleep_allowed(void);
 
 void power_button_record(void);
 
+/**
+ * Enable/disable power button release interrupt.
+ *
+ * @param enable	Enable (!=0) or disable (==0)
+ */
+void power_button_release_enable_interrupt(int enable);
+
 /* Functions needed by CCD config */
 int board_battery_is_present(void);
 int board_fwmp_allows_unlock(void);

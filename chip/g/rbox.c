@@ -10,8 +10,6 @@
 #include "system.h"
 #include "timer.h"
 
-#define DELAY_EC_BOOT_USEC	(2 * SECOND)
-DECLARE_DEFERRED(deassert_ec_rst);
 
 void rbox_clear_wakeup(void)
 {
@@ -39,12 +37,13 @@ static void rbox_release_ec_reset(void)
 	/* Unfreeze the PINMUX */
 	GREG32(PINMUX, HOLD) = 0;
 
-	/* After a POR, if it finds RDD cable plugged and Power button pressed,
-	 * then it delays booting EC by DELAY_EC_BOOT_USEC.
+	/*
+	 * After a POR, if it finds RDD cable plugged and Power button pressed,
+	 * then it delays releasing EC-reset until power button gets released.
 	 */
 	if ((system_get_reset_flags() & RESET_FLAG_POWER_ON) &&
 	    rdd_is_detected() && rbox_powerbtn_is_pressed()) {
-		hook_call_deferred(&deassert_ec_rst_data, DELAY_EC_BOOT_USEC);
+		power_button_release_enable_interrupt(1);
 		return;
 	}
 
