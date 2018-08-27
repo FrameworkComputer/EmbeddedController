@@ -1906,6 +1906,12 @@ static void process_rma(struct transfer_descriptor *td, const char *authcode)
 		return;
 	}
 
+	if (!*authcode) {
+		printf("Empty response.\n");
+		exit(update_error);
+		return;
+	}
+
 	if (!strcmp(authcode, "disable")) {
 		printf("Invalid arg. Try using 'gsctool -F disable'\n");
 		exit(update_error);
