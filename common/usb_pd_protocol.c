@@ -193,6 +193,14 @@ static struct pd_protocol {
 	int tasks_waiting_on_reset;
 #endif
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	/*
+	 * Timer for handling TOGGLE_OFF/FORCE_SINK mode when auto-toggle
+	 * enabled. See drp_auto_toggle_next_state() for details.
+	 */
+	uint64_t drp_sink_time;
+#endif
+
 	/* PD state for Vendor Defined Messages */
 	enum vdm_states vdm_state;
 	/* Timeout for the current vdm state.  Set to 0 for no timeout. */
@@ -2204,6 +2212,64 @@ static void pd_partner_port_reset(int port)
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
+/**
+ * Returns whether the sink has detected a Rp resistor on the other side.
+ */
+static inline int cc_is_rp(int cc)
+{
+	return (cc == TYPEC_CC_VOLT_SNK_DEF) || (cc == TYPEC_CC_VOLT_SNK_1_5) ||
+	       (cc == TYPEC_CC_VOLT_SNK_3_0);
+}
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+static enum pd_states drp_auto_toggle_next_state(int port, int cc1, int cc2)
+{
+	enum pd_states next_state;
+
+	/* Set to appropriate port state */
+	if (cc1 == TYPEC_CC_VOLT_OPEN &&
+	    cc2 == TYPEC_CC_VOLT_OPEN)
+		/* nothing connected, keep toggling*/
+		next_state = PD_STATE_DRP_AUTO_TOGGLE;
+	else if ((cc_is_rp(cc1) || cc_is_rp(cc2)) &&
+		 drp_state[port] != PD_DRP_FORCE_SOURCE) {
+		/* SNK allowed unless ForceSRC */
+		next_state = PD_STATE_SNK_DISCONNECTED;
+	} else if ((cc1 == TYPEC_CC_VOLT_RD ||
+		   cc2 == TYPEC_CC_VOLT_RD) ||
+		  (cc1 == TYPEC_CC_VOLT_RA &&
+		   cc2 == TYPEC_CC_VOLT_RA)) {
+		/*
+		 * SRC allowed unless ForceSNK or Toggle Off
+		 *
+		 * Ideally we wouldn't use auto-toggle when drp_state is
+		 * TOGGLE_OFF/FORCE_SINK, but for some TCPCs, auto-toggle can't
+		 * be prevented in low power mode. Try being a sink in case the
+		 * connected device is dual-role (this ensures reliable charging
+		 * from a hub, b/72007056). 100 ms is enough time for a
+		 * dual-role partner to switch from sink to source. If the
+		 * connected device is sink-only, then we will attempt
+		 * SNK_DISCONNECTED twice (due to debounce time), then return to
+		 * low power mode (and stay there). After 200 ms, reset ready
+		 * for a new connection.
+		 */
+		if (drp_state[port] == PD_DRP_TOGGLE_OFF ||
+		    drp_state[port] == PD_DRP_FORCE_SINK) {
+			if (get_time().val > pd[port].drp_sink_time + 200*MSEC)
+				pd[port].drp_sink_time = get_time().val;
+			if (get_time().val < pd[port].drp_sink_time + 100*MSEC)
+				next_state = PD_STATE_SNK_DISCONNECTED;
+			else
+				next_state = PD_STATE_DRP_AUTO_TOGGLE;
+		} else
+			next_state = PD_STATE_SRC_DISCONNECTED;
+	} else
+		/* Anything else, keep toggling */
+		next_state = PD_STATE_DRP_AUTO_TOGGLE;
+	return next_state;
+}
+#endif /* CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE */
+
 int pd_get_polarity(int port)
 {
 	return pd[port].polarity;
@@ -2244,15 +2310,6 @@ void pd_ping_enable(int port, int enable)
 		pd[port].flags |= PD_FLAGS_PING_ENABLED;
 	else
 		pd[port].flags &= ~PD_FLAGS_PING_ENABLED;
-}
-
-/**
- * Returns whether the sink has detected a Rp resistor on the other side.
- */
-static inline int cc_is_rp(int cc)
-{
-	return (cc == TYPEC_CC_VOLT_SNK_DEF) || (cc == TYPEC_CC_VOLT_SNK_1_5) ||
-	       (cc == TYPEC_CC_VOLT_SNK_3_0);
 }
 
 /*
@@ -3804,26 +3861,7 @@ void pd_task(void *u)
 			/* Check for connection */
 			tcpm_get_cc(port, &cc1, &cc2);
 
-			/* Set to appropriate port state */
-			if (cc1 == TYPEC_CC_VOLT_OPEN &&
-			    cc2 == TYPEC_CC_VOLT_OPEN)
-				/* nothing connected, keep toggling*/
-				next_state = PD_STATE_DRP_AUTO_TOGGLE;
-			else if ((cc_is_rp(cc1) || cc_is_rp(cc2)) &&
-				 drp_state[port] != PD_DRP_FORCE_SOURCE)
-				/* SNK allowed unless ForceSRC */
-				next_state = PD_STATE_SNK_DISCONNECTED;
-			else if (((cc1 == TYPEC_CC_VOLT_RD ||
-				   cc2 == TYPEC_CC_VOLT_RD) ||
-				  (cc1 == TYPEC_CC_VOLT_RA &&
-				   cc2 == TYPEC_CC_VOLT_RA)) &&
-				 (drp_state[port] != PD_DRP_TOGGLE_OFF &&
-				  drp_state[port] != PD_DRP_FORCE_SINK))
-				/* SRC allowed unless ForceSNK or Toggle Off */
-				next_state = PD_STATE_SRC_DISCONNECTED;
-			else
-				/* Anything else, keep toggling */
-				next_state = PD_STATE_DRP_AUTO_TOGGLE;
+			next_state = drp_auto_toggle_next_state(port, cc1, cc2);
 
 			if (next_state == PD_STATE_SNK_DISCONNECTED) {
 				tcpm_set_cc(port, TYPEC_CC_RD);
