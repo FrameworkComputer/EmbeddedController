@@ -145,27 +145,36 @@ static void anx74xx_set_power_mode(int port, int mode)
 		/* Update cable cable det signal */
 		anx74xx_update_cable_det(port, mode);
 		/*
-		 * The final piece of entering low power mode is setting the
-		 * RESET_L signal low, which is done via
-		 * anx74xx_enter_low_power_mode which is called at least 10ms
-		 * after setting cable_det low (above).
+		 * Delay between setting cable_det low and setting RESET_L low
+		 * as recommended the ANX3429 datasheet.
 		 */
+		msleep(1);
+		/* Put chip into standby mode */
+		board_set_tcpc_power_mode(port, mode);
 	}
 }
 
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-static int anx74xx_enter_low_power_mode(int port)
+#if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
+	defined(CONFIG_USB_PD_TCPC_LOW_POWER)
+
+static int anx74xx_tcpc_drp_toggle(int port)
 {
 	/*
-	 * The delay between setting cable_det low (in anx74xx_set_power_mode)
-	 * and setting RESET_L low in (board_set_tcpc_power_mode) is at least
-	 * 1 ms. This should be taken care of by the PD_LM_DEBOUCE_US delay of
-	 * 10ms, but we want to protect against any future tweaks of that value.
+	 * The ANX3429 always auto-toggles when in low power mode. Since this is
+	 * not configurable, there is nothing to do here. DRP auto-toggle will
+	 * happen once low power mode is set via anx74xx_enter_low_power_mode().
+	 * Note: this means the ANX3429 auto-toggles in PD_DRP_FORCE_SINK mode,
+	 * which is undesirable (b/72007056).
 	 */
-	msleep(1);
-	board_set_tcpc_power_mode(port, ANX74XX_STANDBY_MODE);
 	return EC_SUCCESS;
 }
+
+static int anx74xx_enter_low_power_mode(int port)
+{
+	anx74xx_set_power_mode(port, ANX74XX_STANDBY_MODE);
+	return EC_SUCCESS;
+}
+
 #endif
 
 void anx74xx_tcpc_set_vbus(int port, int enable)
@@ -714,30 +723,6 @@ static int anx74xx_tcpm_set_cc(int port, int pull)
 	return rv;
 }
 
-#if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
-	defined(CONFIG_USB_PD_TCPC_LOW_POWER)
-static void anx74xx_handle_power_mode(int port, int mode)
-{
-	if (mode == ANX74XX_STANDBY_MODE) {
-		anx74xx_set_power_mode(port, mode);
-	} else if (anx[port].prev_mode != ANX74XX_NORMAL_MODE) {
-		/*
-		 * TODO: Interrupt high follows CC line hence ignore multiple
-		 * interrupts.
-		 */
-		anx74xx_tcpm_init(port);
-	}
-}
-
-static int anx74xx_tcpc_drp_toggle(int port)
-{
-	/* DRP auto-toggle happens when the ANX3429 is in standby mode. */
-	anx74xx_handle_power_mode(port, ANX74XX_STANDBY_MODE);
-
-	return EC_SUCCESS;
-}
-#endif /* CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE && CONFIG_USB_PD_TCPC_LOW_POWER */
-
 static int anx74xx_tcpm_set_polarity(int port, int polarity)
 {
 	int reg, mux_state, rv = EC_SUCCESS;
@@ -1090,8 +1075,6 @@ const struct tcpm_drv anx74xx_tcpm_drv = {
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
 		defined(CONFIG_USB_PD_TCPC_LOW_POWER)
 	.drp_toggle		= &anx74xx_tcpc_drp_toggle,
-#endif
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= &anx74xx_enter_low_power_mode,
 #endif
 };
