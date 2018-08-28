@@ -227,6 +227,8 @@ SECTIONS
     ASSERT((__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE) <=
                (CONFIG_RAM_BASE + CONFIG_RAM_SIZE),
            "Not enough space for shared memory.")
+    __ram_free = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE) -
+        (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
 
     __image_size = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
 

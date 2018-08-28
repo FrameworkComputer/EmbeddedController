@@ -355,6 +355,8 @@ SECTIONS
     ASSERT((__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE) <=
                (CONFIG_RAM_BASE + CONFIG_RAM_SIZE),
            "Not enough space for shared memory.")
+    __ram_free = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE) -
+        (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
 
     /* The linker won't notice if the .data section is too big to fit,
      * apparently because we're sending it into IRAM, not FLASH. The following

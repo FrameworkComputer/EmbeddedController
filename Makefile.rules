@@ -160,10 +160,16 @@ buildall: build_boards
 	$(MAKE) runtests
 	@touch .tests-passed
 	@echo "$@ completed successfully!"
-	@echo "Tightest boards' RW images, bytes left:"
-	@grep . build/*/RW/space_left.txt |\
-	 sed 's,build/\([^/]*\)/RW/space_left.txt:\(.*\)$$,\2 \1,' | \
-	 sort -n |head -3 | while read size board; do \
+	@echo "Tightest boards' RW flash images, bytes free:"
+	@grep . build/*/RW/space_free_flash.txt | \
+	 sed 's,build/\([^/]*\)/RW/space_free_flash.txt:\(.*\)$$,\2 \1,' | \
+	 sort -n | head -3 | while read size board; do \
+		printf "%-10s: %6d\n" $$board $$size; \
+	 done
+	@echo "Tightest boards' RW RAM images, bytes free:"
+	@grep . build/*/RW/space_free_ram.txt | \
+	 sed 's,build/\([^/]*\)/RW/space_free_ram.txt:\(.*\)$$,\2 \1,' | \
+	 sort -n | head -3 | while read size board; do \
 		printf "%-10s: %6d\n" $$board $$size; \
 	 done
 
@@ -306,10 +312,12 @@ else
 cmd_size=$(Q)awk '\
   /__image_size =/ {image_size = strtonum($$1)} \
   /^FLASH/ {flash_size = strtonum($$3)} \
-  END {room_left = flash_size - image_size; \
-       print room_left > "$(out)/RW/space_left.txt"; \
-       printf ("  *** %s bytes still available in flash on $(BOARD) ****\n", \
-	       room_left)}' $(out)/RW/$(PROJECT).RW.map
+  /__ram_free =/ {ram_free = strtonum($$1)} \
+  END {room_free = flash_size - image_size; \
+       print room_free > "$(out)/RW/space_free_flash.txt"; \
+       print ram_free > "$(out)/RW/space_free_ram.txt"; \
+       printf ("  *** %s bytes in flash and %s bytes in RAM still available on $(BOARD) ****\n", \
+	       room_free, ram_free)}' $(out)/RW/$(PROJECT).RW.map
 endif
 
 build/host/%.info: run-%
@@ -570,7 +578,8 @@ help:
 
 .PHONY: savesizes
 savesizes:
-	@find $(BUILD_DIR) -name '*.flat' -printf "%s %p\n" | sort --key 2 > \
+	@grep . build/*/*/space_free_*.txt | \
+		sed 's,\(.*\).txt:\(.*\),\2 \1,' | sort --key 2 > \
 		$(FLATSIZE_FILE)
 	@if [ -s $(FLATSIZE_FILE) ]; then \
 		echo "Saved sizes for $$(cat $(FLATSIZE_FILE) | wc -l) files"; \
@@ -589,7 +598,8 @@ newsizes:
 	FILES_IN_LIST=0; \
 	FILES_COMPARED=0; \
 	FILE_SIZE_CHANGE=0; \
-	NEW_SIZES=$$(find $(BUILD_DIR) -name '*.flat' -printf "%s %p\n"); \
+	NEW_SIZES=$$(grep . build/*/*/space_free_*.txt | \
+		sed 's,\(.*\).txt:\(.*\),\2 \1,'); \
 	while read -r -u 10 line; do \
 		FILES_IN_LIST=$$((FILES_IN_LIST+1)); \
 		FLATFILE=$$(echo "$$line" | cut -f2 -d ' '); \
