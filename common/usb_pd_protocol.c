@@ -407,18 +407,6 @@ int pd_device_in_low_power(int port)
 	return pd[port].flags & PD_FLAGS_LPM_ENGAGED;
 }
 
-/* This is only called from the PD tasks that owns the port. */
-static void request_low_power_mode(int port, int enable)
-{
-	/* This should only be called from the PD task */
-	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
-
-	if (enable)
-		pd[port].flags |= PD_FLAGS_LPM_REQUESTED;
-	else
-		pd[port].flags &= ~PD_FLAGS_LPM_REQUESTED;
-}
-
 static int reset_device_and_notify(int port)
 {
 	int rv;
@@ -450,7 +438,7 @@ static int reset_device_and_notify(int port)
 	handle_device_access(port);
 
 	/* Clear SW LPM state; the state machine will set it again if needed */
-	request_low_power_mode(port, 0);
+	pd[port].flags &= ~PD_FLAGS_LPM_REQUESTED;
 
 	/* Wake up all waiting tasks (except this task). */
 	waiting_tasks &= ~current_task_mask;
@@ -492,7 +480,7 @@ static void exit_low_power_mode(int port)
 	if (pd[port].flags & PD_FLAGS_LPM_ENGAGED)
 		reset_device_and_notify(port);
 	else
-		request_low_power_mode(port, 0);
+		pd[port].flags &= ~PD_FLAGS_LPM_REQUESTED;
 }
 
 #else /* !CONFIG_USB_PD_TCPC_LOW_POWER */
@@ -511,17 +499,6 @@ static int reset_device_and_notify(int port)
 }
 
 #endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
-
-/* Local convenience method for two method currently always called together. */
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-static void pd_set_drp_toggle(int port, int enable)
-{
-	tcpm_set_drp_toggle(port, enable);
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	request_low_power_mode(port, enable);
-#endif
-}
-#endif /* CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE */
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 static int get_bbram_idx(int port)
@@ -3856,7 +3833,8 @@ void pd_task(void *u)
 				pd_set_power_role(port, PD_ROLE_SOURCE);
 				timeout = 2*MSEC;
 			} else {
-				pd_set_drp_toggle(port, 1);
+				tcpm_set_drp_toggle(port, 1);
+				pd[port].flags |= PD_FLAGS_LPM_REQUESTED;
 				pd[port].flags |= PD_FLAGS_TCPC_DRP_TOGGLE;
 				timeout = -1;
 			}
