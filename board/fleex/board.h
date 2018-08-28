@@ -27,6 +27,7 @@
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
+#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 
 /* USB PD */
 #define CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
