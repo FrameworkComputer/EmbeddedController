@@ -58,7 +58,7 @@
 
 /*****************************************************************************/
 /* Memory mapping */
-#define NPCX_BTRAM_SIZE    0x400 /* 1KB data ram used by booter. */
+#define NPCX_BTRAM_SIZE    0x800 /* 2KB data ram used by booter. */
 #define CONFIG_RAM_BASE    0x200C0000 /* memory address of data ram */
 /* 63KB data RAM */
 #define CONFIG_DATA_RAM_SIZE    0x00010000
