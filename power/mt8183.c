@@ -190,7 +190,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_G3S5:
 		forcing_shutdown = 0;
 
-		gpio_set_level(GPIO_PMIC_FORCE_RESET, 0);
+		gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 1);
 
 		/* Power up to next state */
 		return POWER_S5;
@@ -288,7 +288,7 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5G3:
 		/*
-		 * If PMIC is still not off, assert PMIC_FORCE_RESET.
+		 * If PMIC is still not off, assert PMIC_FORCE_RESET_ODL.
 		 * This should not happen if PMIC is configured properly, and
 		 * shuts down upon receiving WATCHDOG.
 		 */
@@ -297,7 +297,7 @@ enum power_state power_handle_state(enum power_state state)
 			CPRINTS("Cannot force PMIC off (rev0)");
 #else
 			CPRINTS("Forcing PMIC off");
-			gpio_set_level(GPIO_PMIC_FORCE_RESET, 1);
+			gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 0);
 			msleep(50);
 			return POWER_S5G3;
 #endif
