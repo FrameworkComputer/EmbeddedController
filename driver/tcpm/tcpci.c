@@ -253,12 +253,9 @@ int tcpci_tcpm_set_cc(int port, int pull)
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-int tcpci_tcpc_drp_toggle(int port, int enable)
+int tcpci_tcpc_drp_toggle(int port)
 {
 	int rv;
-
-	if (!enable)
-		return EC_SUCCESS;
 
 	/* Set auto drp toggle */
 	rv = set_role_ctrl(port, 1, TYPEC_RP_USB, TYPEC_CC_RD);

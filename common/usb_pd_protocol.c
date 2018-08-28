@@ -3831,7 +3831,7 @@ void pd_task(void *u)
 				pd_set_power_role(port, PD_ROLE_SOURCE);
 				timeout = 2*MSEC;
 			} else {
-				tcpm_set_drp_toggle(port, 1);
+				tcpm_enable_drp_toggle(port);
 				pd[port].flags |= PD_FLAGS_LPM_REQUESTED;
 				pd[port].flags |= PD_FLAGS_TCPC_DRP_TOGGLE;
 				timeout = -1;

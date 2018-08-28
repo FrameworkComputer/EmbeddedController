@@ -729,15 +729,10 @@ static void anx74xx_handle_power_mode(int port, int mode)
 	}
 }
 
-static int anx74xx_tcpc_drp_toggle(int port, int enable)
+static int anx74xx_tcpc_drp_toggle(int port)
 {
-	/*
-	 * When using low power mode, this function is an entry to point to
-	 * bring the ANX3429 in to or out of standby mode. DRP toggle is
-	 * associated with the chip being in standby mode.
-	 */
-	anx74xx_handle_power_mode(port, enable ? ANX74XX_STANDBY_MODE :
-				  ANX74XX_NORMAL_MODE);
+	/* DRP auto-toggle happens when the ANX3429 is in standby mode. */
+	anx74xx_handle_power_mode(port, ANX74XX_STANDBY_MODE);
 
 	return EC_SUCCESS;
 }
