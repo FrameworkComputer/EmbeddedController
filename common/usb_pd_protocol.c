@@ -485,6 +485,16 @@ void pd_wait_for_wakeup(int port)
 		task_wait_event_mask(TASK_EVENT_PD_AWAKE, -1);
 	}
 }
+
+/* This is only called from the PD tasks that owns the port. */
+static void exit_low_power_mode(int port)
+{
+	if (pd[port].flags & PD_FLAGS_LPM_ENGAGED)
+		reset_device_and_notify(port);
+	else
+		request_low_power_mode(port, 0);
+}
+
 #else /* !CONFIG_USB_PD_TCPC_LOW_POWER */
 
 /* We don't need to notify anyone if low power mode isn't involved. */
@@ -2145,10 +2155,9 @@ static void pd_update_dual_role_config(int port)
 		tcpm_set_cc(port, TYPEC_CC_RP);
 	}
 
-#if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
-	defined(CONFIG_USB_PD_TCPC_LOW_POWER)
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	/* When switching drp mode, make sure tcpc is out of standby mode */
-	pd_set_drp_toggle(port, 0);
+	exit_low_power_mode(port);
 #endif
 }
 
@@ -3833,9 +3842,10 @@ void pd_task(void *u)
 				/* Anything else, keep toggling */
 				next_state = PD_STATE_DRP_AUTO_TOGGLE;
 
-			if (next_state != PD_STATE_DRP_AUTO_TOGGLE) {
-				pd_set_drp_toggle(port, 0);
-			}
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+			if (next_state != PD_STATE_DRP_AUTO_TOGGLE)
+				exit_low_power_mode(port);
+#endif
 
 			if (next_state == PD_STATE_SNK_DISCONNECTED) {
 				tcpm_set_cc(port, TYPEC_CC_RD);
