@@ -90,6 +90,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.i2c_slave_addr = ANX74XX_I2C_ADDR1,
 		.drv = &anx74xx_tcpm_drv,
 		.pol = TCPC_ALERT_ACTIVE_LOW,
+		.od = TCPC_ALERT_OPEN_DRAIN,
 	},
 	[USB_PD_PORT_PS8751] = {
 		.i2c_host_port = I2C_PORT_TCPC1,
