@@ -31,11 +31,11 @@
 #define OCTOPUS_POWER_LED
 
 /* Sensors */
-/* TODO(b/111842131): confirm lid accelerometer matches yorp */
 #define CONFIG_ACCEL_KX022		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
+#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 
 /* USB PD */
 #undef CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT

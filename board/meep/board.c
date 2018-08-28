@@ -50,6 +50,8 @@
 #define USB_PD_PORT_ANX7447	0
 #define USB_PD_PORT_PS8751	1
 
+static uint8_t sku_id;
+
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -205,7 +207,39 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+/*
+ * meep is convertible SKU (SKU ID is 1, 2, 3), mimrock is clamshell
+ * SKU (SKU ID is 17, 18) and default SKU is 255 for factory that enable
+ * all sensors.
+ */
+static int board_is_convertible(void)
+{
+	return sku_id == 1 || sku_id == 2 || sku_id == 3 || sku_id == 255;
+}
+
+static void board_update_sensor_config_from_sku(void)
+{
+	if (board_is_convertible()) {
+		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+	} else {
+		motion_sensor_count = 0;
+		tablet_disable_switch();
+	}
+}
+
+static void cbi_init(void)
+{
+	uint32_t val;
+
+	if (cbi_get_sku_id(&val) == EC_SUCCESS)
+		sku_id = val;
+	ccprints("SKU: 0x%04x", sku_id);
+
+	board_update_sensor_config_from_sku();
+}
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* Initialize board. */
 static void board_init(void)
@@ -241,6 +275,7 @@ void lid_angle_peripheral_enable(int enable)
 	if (tablet_get_mode())
 		enable = 0;
 
-	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+	if (board_is_convertible())
+		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
 #endif
