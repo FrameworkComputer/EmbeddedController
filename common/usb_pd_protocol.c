@@ -379,15 +379,15 @@ static void handle_device_access(int port)
 	}
 }
 
-/* This can be called from any task. */
+/*
+ * This can be called from any task. If we are in the PD task, we can handle
+ * immediately. Otherwise, we need to notify the PD task via event.
+ */
 void pd_device_accessed(int port)
 {
-	const int current_task = task_get_current();
-
-	/* If not in the PD TASK that owns data, marshal to that task */
-	if (current_task == PD_PORT_TO_TASK_ID(port)) {
+	if (port == TASK_ID_TO_PD_PORT(task_get_current())) {
 		/* Ignore any access to device while it is waking up */
-		if (pd[port].tasks_waiting_on_reset & (1 << current_task))
+		if (pd[port].flags & PD_FLAGS_LPM_TRANSITION)
 			return;
 
 		handle_device_access(port);
@@ -399,14 +399,12 @@ void pd_device_accessed(int port)
 
 int pd_device_in_low_power(int port)
 {
-	const int current_task = task_get_current();
-
 	/*
 	 * If we are actively waking the device up in the PD task, do not
 	 * let TCPC operation wait or retry because we are in low power mode.
 	 */
-	if (port == TASK_ID_TO_PD_PORT(current_task) &&
-	    pd[port].tasks_waiting_on_reset & (1 << current_task))
+	if (port == TASK_ID_TO_PD_PORT(task_get_current()) &&
+	    (pd[port].flags & PD_FLAGS_LPM_TRANSITION))
 		return 0;
 
 	return pd[port].flags & PD_FLAGS_LPM_ENGAGED;
@@ -416,19 +414,14 @@ static int reset_device_and_notify(int port)
 {
 	int rv;
 	int task, waiting_tasks;
-	const int current_task_mask = 1 << task_get_current();
 
 	/* This should only be called from the PD task */
 	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
 
-	/*
-	 * Signal that this task is actively waiting for a wake up, which we
-	 * use to skip recursive wake calls within the tcpc_init method and
-	 * prevent pd_access from changing the HW status until we are done.
-	 */
-	atomic_or(&pd[port].tasks_waiting_on_reset, current_task_mask);
-
+	pd[port].flags |= PD_FLAGS_LPM_TRANSITION;
 	rv = tcpm_init(port);
+	pd[port].flags &= ~PD_FLAGS_LPM_TRANSITION;
+
 	if (rv == EC_SUCCESS)
 		CPRINTS("TCPC p%d init ready", port);
 	else
@@ -445,8 +438,7 @@ static int reset_device_and_notify(int port)
 	/* Clear SW LPM state; the state machine will set it again if needed */
 	pd[port].flags &= ~PD_FLAGS_LPM_REQUESTED;
 
-	/* Wake up all waiting tasks (except this task). */
-	waiting_tasks &= ~current_task_mask;
+	/* Wake up all waiting tasks. */
 	while (waiting_tasks) {
 		task = __fls(waiting_tasks);
 		waiting_tasks &= ~(1 << task);
@@ -458,7 +450,7 @@ static int reset_device_and_notify(int port)
 
 void pd_wait_for_wakeup(int port)
 {
-	if (task_get_current() == PD_PORT_TO_TASK_ID(port)) {
+	if (port == TASK_ID_TO_PD_PORT(task_get_current())) {
 		/* If we are in the PD task, we can directly reset */
 		reset_device_and_notify(port);
 	} else {
@@ -2107,6 +2099,7 @@ void pd_set_dual_role(int port, enum pd_dual_role_states state)
 		       PD_EVENT_UPDATE_DUAL_ROLE, 0);
 }
 
+/* This must only be called from the PD task */
 static void pd_update_dual_role_config(int port)
 {
 	/*
@@ -3877,7 +3870,9 @@ void pd_task(void *u)
 				pd[port].low_power_time - now.val;
 			if (time_left <= 0) {
 				pd[port].flags |= PD_FLAGS_LPM_ENGAGED;
+				pd[port].flags |= PD_FLAGS_LPM_TRANSITION;
 				tcpm_enter_low_power_mode(port);
+				pd[port].flags &= ~PD_FLAGS_LPM_TRANSITION;
 				CPRINTS("TCPC p%d Enter Low Power Mode", port);
 				timeout = -1;
 			} else if (timeout < 0 || timeout > time_left) {

@@ -274,10 +274,7 @@ int tcpci_tcpc_drp_toggle(int port, int enable)
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 int tcpci_enter_low_power_mode(int port)
 {
-	/* This uses the raw i2c write to bypass the pd_device_accessed call */
-	return i2c_write8(tcpc_config[port].i2c_host_port,
-			  tcpc_config[port].i2c_slave_addr,
-			  TCPC_REG_COMMAND, TCPC_REG_COMMAND_I2CIDLE);
+	return tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_I2CIDLE);
 }
 #endif
 
