@@ -110,8 +110,11 @@ GPIO(NC_GPIOA5,			PIN(A, 5), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(NC_GPIOA7,			PIN(A, 7), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(NC_GPIOB0,			PIN(B, 0), GPIO_INPUT | GPIO_PULL_UP)
 
-/* gpio alternate functions */
+/* Power Switch Logic (PSL) inputs */
 ALTERNATE(PIN_MASK(0, 0x02), 0, MODULE_PMU, 0)		/* PSL3&GPI01 */
+ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, 0)		/* GPIOD2 */
+
+/* gpio alternate functions */
 ALTERNATE(PIN_MASK(0, 0x18), 0, MODULE_GPIO, 0)		/* GPIO03,4 */
 
 ALTERNATE(PIN_MASK(8, 0x08), 0, MODULE_GPIO, 0)		/* GPIO83 */
