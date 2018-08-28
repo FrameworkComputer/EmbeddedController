@@ -8,6 +8,9 @@
 #ifndef __CROS_EC_USB_PD_TCPC_H
 #define __CROS_EC_USB_PD_TCPC_H
 
+#include <stdint.h>
+#include "usb_pd_tcpm.h"
+
 /* If we are a TCPC but do not a TCPM, then we implement the slave TCPCI */
 #if defined(CONFIG_USB_PD_TCPC) && !defined(CONFIG_USB_PD_TCPM_STUB)
 #define TCPCI_I2C_SLAVE
@@ -38,5 +41,21 @@ void tcpc_i2c_process(int read, int port, int len, uint8_t *payload,
  */
 void pd_vbus_evt_p0(enum gpio_signal signal);
 void pd_vbus_evt_p1(enum gpio_signal signal);
+
+/* Methods for TCPCI slaves (e.g. zinger) to get/set their internal state */
+int tcpc_alert_status(int port, int *alert);
+int tcpc_alert_status_clear(int port, uint16_t mask);
+int tcpc_alert_mask_set(int port, uint16_t mask);
+int tcpc_get_cc(int port, int *cc1, int *cc2);
+int tcpc_select_rp_value(int port, int rp);
+int tcpc_set_cc(int port, int pull);
+int tcpc_set_polarity(int port, int polarity);
+int tcpc_set_power_status_mask(int port, uint8_t mask);
+int tcpc_set_vconn(int port, int enable);
+int tcpc_set_msg_header(int port, int power_role, int data_role);
+int tcpc_set_rx_enable(int port, int enable);
+int tcpc_get_message(int port, uint32_t *payload, int *head);
+int tcpc_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
+		  const uint32_t *data);
 
 #endif /* __CROS_EC_USB_PD_TCPC_H */

@@ -9,23 +9,8 @@
 #include "tcpci.h"
 #include "tcpm.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpc.h"
 #include "usb_pd_tcpm.h"
-
-extern int tcpc_alert_status(int port, int *alert);
-extern int tcpc_alert_status_clear(int port, uint16_t mask);
-extern int tcpc_alert_mask_set(int port, uint16_t mask);
-extern int tcpc_get_cc(int port, int *cc1, int *cc2);
-extern int tcpc_select_rp_value(int port, int rp);
-extern int tcpc_set_cc(int port, int pull);
-extern int tcpc_set_polarity(int port, int polarity);
-extern int tcpc_set_power_status_mask(int port, uint8_t mask);
-extern int tcpc_set_vconn(int port, int enable);
-extern int tcpc_set_msg_header(int port, int power_role, int data_role);
-extern int tcpc_set_rx_enable(int port, int enable);
-
-extern int tcpc_get_message(int port, uint32_t *payload, int *head);
-extern int tcpc_transmit(int port, enum tcpm_transmit_type type,
-			 uint16_t header, const uint32_t *data);
 
 static int init_alert_mask(int port)
 {
