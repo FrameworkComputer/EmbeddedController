@@ -43,6 +43,9 @@
 
 #define PMIC_EN_PULSE_MS 50
 
+/* Maximum time it should for PMIC to turn on after toggling PMIC_EN_ODL. */
+#define PMIC_EN_TIMEOUT (300 * MSEC)
+
 /* Data structure for a GPIO operation for power sequencing */
 struct power_seq_op {
 	/* enum gpio_signal in 8 bits */
@@ -135,6 +138,10 @@ enum power_state power_chipset_init(void)
 		chipset_exit_hard_off();
 	}
 
+	/* Start from S5 if the PMIC is already up. */
+	if (power_get_signals() & IN_PGOOD_PMIC)
+		return POWER_S5;
+
 	return POWER_G3;
 }
 
@@ -160,14 +167,21 @@ static void power_seq_run(const struct power_seq_op *power_seq_ops,
 
 enum power_state power_handle_state(enum power_state state)
 {
+	/* Retry S5->S3 transition, if not zero. */
+	static int s5s3_retry;
+
 	switch (state) {
 	case POWER_G3:
+		/* Go back to S5->G3 if the PMIC unexpectedly starts again. */
+		if (power_get_signals() & IN_PGOOD_PMIC)
+			return POWER_S5G3;
 		break;
 
 	case POWER_S5:
 		if (forcing_shutdown) {
 			return POWER_S5G3;
 		} else {
+			s5s3_retry = 1;
 			return POWER_S5S3;
 		}
 		break;
@@ -197,7 +211,7 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5S3:
 		/* If PMIC is off, switch it on by pulsing PMIC enable. */
-		if (!power_has_signals(IN_PGOOD_PMIC)) {
+		if (!(power_get_signals() & IN_PGOOD_PMIC)) {
 			gpio_set_level(GPIO_PMIC_EN_ODL, 0);
 			msleep(PMIC_EN_PULSE_MS);
 			gpio_set_level(GPIO_PMIC_EN_ODL, 1);
@@ -215,9 +229,20 @@ enum power_state power_handle_state(enum power_state state)
 			chipset_reset(CHIPSET_RESET_INIT);
 		}
 
-		/* Wait for PMIC to bring up rails. */
-		if (power_wait_signals(IN_PGOOD_PMIC))
-			return POWER_G3;
+		/*
+		 * Wait for PMIC to bring up rails. Retry if it fails
+		 * (it may take 2 attempts on restart after we use
+		 * force reset).
+		 */
+		if (power_wait_signals_timeout(IN_PGOOD_PMIC,
+					       PMIC_EN_TIMEOUT)) {
+			if (s5s3_retry) {
+				s5s3_retry = 0;
+				return POWER_S5S3;
+			}
+			/* Give up, go back to G3. */
+			return POWER_S5G3;
+		}
 
 		/* Enable S3 power supplies, release AP reset. */
 		power_seq_run(s5s3_power_seq, ARRAY_SIZE(s5s3_power_seq));
@@ -292,13 +317,14 @@ enum power_state power_handle_state(enum power_state state)
 		 * This should not happen if PMIC is configured properly, and
 		 * shuts down upon receiving WATCHDOG.
 		 */
-		if (power_has_signals(IN_PGOOD_PMIC)) {
+		if (power_get_signals() & IN_PGOOD_PMIC) {
 #if defined(BOARD_KUKUI) && BOARD_REV == 0
 			CPRINTS("Cannot force PMIC off (rev0)");
 #else
 			CPRINTS("Forcing PMIC off");
 			gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 0);
-			msleep(50);
+			msleep(5);
+
 			return POWER_S5G3;
 #endif
 		}
