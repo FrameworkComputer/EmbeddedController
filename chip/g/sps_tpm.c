@@ -87,15 +87,11 @@
  * buffer will start with a four-byte header, followed by whatever data
  * is sent by the master (none for a read, 1 to 64 bytes for a write).
  */
-#define RXBUF_MAX 512				/* chosen arbitrarily */
+#define RXBUF_MAX 512			/* chosen arbitrarily */
 static uint8_t rxbuf[RXBUF_MAX];
 static unsigned rxbuf_count;		/* num bytes received */
-static unsigned rxbuf_needed;		/* num bytes we'd like */
-static unsigned rx_fifo_base;		/* RX fifo at transaction start. */
-static unsigned stall_threshold;	/* num bytes we'd like */
-static uint32_t bytecount;
-static uint32_t regaddr;
-
+static uint32_t bytecount;		/* Num of payload bytes when writing. */
+static uint32_t regaddr;		/* Address of register to read/write. */
 
 /*
  * Outgoing messages are shoved in here. We need a TPM_STALL_DEASSERT byte to
@@ -122,9 +118,7 @@ static enum sps_state {
 static void init_new_cycle(void)
 {
 	rxbuf_count = 0;
-	rxbuf_needed = 4;
 	sps_tpm_state = SPS_TPM_STATE_RECEIVING_HEADER;
-	rx_fifo_base = sps_rx_fifo_wrptr();
 	sps_tx_status(TPM_STALL_ASSERT);
 	/* We're just waiting for a new command, so we could sleep. */
 	delay_sleep_by(1 * SECOND);
@@ -143,7 +137,7 @@ static int header_says_to_read(uint8_t *data, uint32_t *reg, uint32_t *count)
 }
 
 /* actual RX FIFO handler (runs in interrupt context) */
-static void process_rx_data(uint8_t *data, size_t data_size)
+static void process_rx_data(uint8_t *data, size_t data_size, int cs_deasserted)
 {
 	/* We're receiving some bytes, so don't sleep */
 	disable_sleep(SLEEP_MASK_SPI);
@@ -161,13 +155,10 @@ static void process_rx_data(uint8_t *data, size_t data_size)
 	memcpy(rxbuf + rxbuf_count, data, data_size);
 	rxbuf_count += data_size;
 
-	/* Wait until we have enough. */
-	if (rxbuf_count < rxbuf_needed)
-		return;
-
 	/* Okay, we have enough. Now what? */
 	if (sps_tpm_state == SPS_TPM_STATE_RECEIVING_HEADER) {
-		uint32_t old_wrptr, wrptr;
+		if (rxbuf_count < 4)
+			return;	/* Header is 4 bytes in size. */
 
 		/* Got the header. What's it say to do? */
 		if (header_says_to_read(rxbuf, &regaddr, &bytecount)) {
@@ -185,83 +176,31 @@ static void process_rx_data(uint8_t *data, size_t data_size)
 		}
 
 		/*
-		 * Master is writing, we will need more data.
-		 *
-		 * This is a tricky part, as we do not know how many dummy
-		 * bytes the master has already written. And the actual data
-		 * of course will start arriving only after we change the idle
-		 * byte to set the LSB to 1.
-		 *
-		 * What we do know is that the idle byte repeatedly sent on
-		 * the MISO line is sampled at the same time as the RX FIFO
-		 * write pointer is written by the chip, after clocking in the
-		 * next byte. That is, we can synchronize with the line by
-		 * waiting for the RX FIFO write pointer to change. Then we
-		 * can change the idle byte to indicate that the slave is
-		 * ready to receive the rest of the data, and take note of the
-		 * RX FIFO write pointer, as the first byte of the message
-		 * will show up in the receive FIFO 2 bytes later.
-		 */
-
-		/*
-		 * Let's wait til the start of the next byte cycle. This must
-		 * be done in a tight loop (with interrupts disabled?).
-		 */
-		old_wrptr = sps_rx_fifo_wrptr();
-		do {
-			wrptr = sps_rx_fifo_wrptr();
-		} while (old_wrptr == wrptr);
-
-		/*
-		 * Write the new idle byte value, it will start transmitting
-		 * *next* after the current byte.
+		 * Write the new idle byte value, to signal the master to
+		 * proceed with data.
 		 */
 		sps_tx_status(TPM_STALL_DEASSERT);
-
-		/*
-		 * Verify that we managed to change the idle byte value within
-		 * the required time (RX FIFO write pointer has not changed)
-		 */
-		if (sps_rx_fifo_wrptr() != wrptr) {
-			CPRINTS("%s:"
-				" ERROR: failed to change idle byte in time",
-				__func__);
-			sps_tpm_state = SPS_TPM_STATE_PONDERING;
-		} else {
-			/*
-			 * Ok, we're good. Remember where in the receive
-			 * stream the actual data will start showing up. It is
-			 * two bytes after the current one (the current idle
-			 * byte still has the LSB set to zero, the next one
-			 * will have the LSB set to one, only after receiving
-			 * it the master will start sending the actual data.
-			 */
-			stall_threshold =
-				((wrptr - rx_fifo_base) & SPS_FIFO_MASK) + 2;
-			rxbuf_needed = stall_threshold + bytecount;
-			sps_tpm_state = SPS_TPM_STATE_RECEIVING_WRITE_DATA;
-		}
+		sps_tpm_state = SPS_TPM_STATE_RECEIVING_WRITE_DATA;
 		return;
 	}
 
-	if (sps_tpm_state == SPS_TPM_STATE_RECEIVING_WRITE_DATA) {
-		/* Ok, we have all the write data. */
+	if (cs_deasserted &&
+	    (sps_tpm_state == SPS_TPM_STATE_RECEIVING_WRITE_DATA))
+		/* Ok, we have all the write data, pass it to the tpm. */
 		tpm_register_put(regaddr - TPM_LOCALITY_0_SPI_BASE,
-				 rxbuf + stall_threshold, bytecount);
-		sps_tpm_state = SPS_TPM_STATE_PONDERING;
-	}
+				 rxbuf + rxbuf_count - bytecount, bytecount);
 }
 
-static void tpm_rx_handler(uint8_t *data, size_t data_size, int cs_disabled)
+static void tpm_rx_handler(uint8_t *data, size_t data_size, int cs_deasserted)
 {
 	if (chip_factory_mode())
 		return;  /* Ignore TPM traffic in factory mode. */
 
 	if ((sps_tpm_state == SPS_TPM_STATE_RECEIVING_HEADER) ||
 	    (sps_tpm_state == SPS_TPM_STATE_RECEIVING_WRITE_DATA))
-		process_rx_data(data, data_size);
+		process_rx_data(data, data_size, cs_deasserted);
 
-	if (cs_disabled)
+	if (cs_deasserted)
 		init_new_cycle();
 }
 
