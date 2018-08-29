@@ -37,7 +37,7 @@ GPIO_INT(TABLET_MODE_L,         PIN(8, 6), GPIO_INT_BOTH, tablet_mode_isr)
 GPIO_INT(EC_VOLUP_BTN_ODL,	PIN(7, 5), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(EC_VOLDN_BTN_ODL,	PIN(4, 0), GPIO_INT_BOTH, button_interrupt)
 
-GPIO_INT(BASE_SIXAXIS_INT_L,	PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, lsm6dsm_interrupt)
+GPIO_INT(BASE_SIXAXIS_INT_L,	PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi160_interrupt)
 GPIO(LID_ACCEL_INT_L,		PIN(5, 0), GPIO_INPUT | GPIO_SEL_1P8V)
 
 /* Define PCH_SLP_S0_L after all interrupts if CONFIG_POWER_S0IX not defined. */
