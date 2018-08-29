@@ -105,12 +105,17 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 int gpio_disable_interrupt(enum gpio_signal signal)
 {
 	const struct gpio_info *g = gpio_list + signal;
+	uint32_t bit;
 
 	/* Fail if not implemented or no interrupt handler */
 	if (!g->mask || signal >= GPIO_IH_COUNT)
 		return EC_ERROR_INVAL;
 
 	STM32_EXTI_IMR &= ~g->mask;
+
+	bit = GPIO_MASK_TO_NUM(g->mask);
+
+	exti_events[bit] = 0;
 
 	return EC_SUCCESS;
 }

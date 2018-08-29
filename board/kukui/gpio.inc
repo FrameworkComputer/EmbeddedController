@@ -33,21 +33,15 @@ GPIO_INT_RW(ACCEL_INT_ODL,  PIN(A, 4), GPIO_INT_FALLING | GPIO_SEL_1P8V | GPIO_P
          bmi160_interrupt)
 GPIO_INT(CHARGER_INT_ODL,   PIN(C, 13), GPIO_INT_FALLING | GPIO_PULL_UP,
          rt946x_interrupt)
-#if BOARD_REV == 0
 GPIO_INT_RO(EMMC_CMD,       PIN(B, 15), GPIO_INT_FALLING,
-         emmc_cmd_interrupt)
-GPIO_INT_RW(SYNC_INT,       PIN(A, 5),  GPIO_INT_RISING | GPIO_PULL_DOWN,
-         sync_interrupt)
-/*
- * rev0 has an interrupt conflict between SPI1_NSS and EMMC_CMD (PIN(x, 15)),
- * let's just ignore interrupts as host command won't work anyway.
- */
-GPIO(SPI1_NSS,              PIN(A, 15), GPIO_INPUT)
-#elif BOARD_REV >= 1
-GPIO_INT_RO(EMMC_CMD,       PIN(A, 14), GPIO_INT_FALLING,
          emmc_cmd_interrupt)
 GPIO_INT(SPI1_NSS,          PIN(A, 15), GPIO_INT_BOTH,
          spi_event)
+#if BOARD_REV == 0
+GPIO_INT_RW(SYNC_INT,       PIN(A, 5),  GPIO_INT_RISING | GPIO_PULL_DOWN,
+         sync_interrupt)
+GPIO(SPI1_NSS,              PIN(A, 15), GPIO_INPUT)
+#elif BOARD_REV >= 1
 GPIO_INT_RW(SYNC_INT,       PIN(A, 8),  GPIO_INT_RISING | GPIO_PULL_DOWN,
          sync_interrupt)
 GPIO_INT(HALL_INT_L,        PIN(C, 5),  GPIO_INT_FALLING,
