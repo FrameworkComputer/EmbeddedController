@@ -1076,8 +1076,8 @@ static void st_tp_usb_tx_callback(struct usb_isochronous_config const *config);
 USB_ISOCHRONOUS_CONFIG_FULL(usb_st_tp_heatmap_config,
 			    USB_IFACE_ST_TOUCHPAD,
 			    USB_CLASS_VENDOR_SPEC,
-			    0,  /* subclass */
-			    0,  /* protocol */
+			    USB_SUBCLASS_GOOGLE_HEATMAP,
+			    USB_PROTOCOL_GOOGLE_HEATMAP,
 			    USB_STR_HEATMAP_NAME,  /* interface name */
 			    USB_EP_ST_TOUCHPAD,
 			    USB_ISO_PACKET_SIZE,

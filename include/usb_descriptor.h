@@ -208,6 +208,9 @@ struct usb_endpoint_descriptor {
 #define USB_SUBCLASS_GOOGLE_POWER  0x54
 #define USB_PROTOCOL_GOOGLE_POWER  0x01
 
+#define USB_SUBCLASS_GOOGLE_HEATMAP 0x55
+#define USB_PROTOCOL_GOOGLE_HEATMAP 0x01
+
 /* Control requests */
 
 /* bRequestType fields */
