@@ -1842,6 +1842,8 @@ enum {
 #define CMD_WRITE_STATUS_REG             0x01
 #define CMD_FLASH_PROGRAM                0x02
 #define CMD_SECTOR_ERASE                 0x20
+#define CMD_BLOCK_32K_ERASE              0x52
+#define CMD_BLOCK_64K_ERASE              0xd8
 #define CMD_PROGRAM_UINT_SIZE            0x08
 #define CMD_PAGE_SIZE                    0x00
 #define CMD_READ_ID_TYPE                 0x47

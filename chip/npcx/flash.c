@@ -559,7 +559,7 @@ int flash_physical_erase(int offset, int size)
 		/* Set erase address */
 		flash_set_address(offset);
 		/* Start erase */
-		flash_execute_cmd(CMD_SECTOR_ERASE, MASK_CMD_ADR);
+		flash_execute_cmd(NPCX_ERASE_COMMAND, MASK_CMD_ADR);
 
 		/* Wait erase completed */
 		rv = flash_wait_ready(FLASH_ABORT_TIMEOUT);

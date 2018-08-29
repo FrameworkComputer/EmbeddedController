@@ -64,6 +64,42 @@
 #define CONFIG_RW_MEM_OFF	CONFIG_RO_MEM_OFF
 #define CONFIG_RW_SIZE		CONFIG_RO_SIZE
 
+#if (CONFIG_RO_SIZE != CONFIG_RW_SIZE)
+#error "Unsupported.. FLASH_ERASE_SIZE assumes RO and RW size is same!"
+#endif
+
+#if (CONFIG_RO_MEM_OFF != 0)
+#error "Unsupported.. CONFIG_RO_MEM_OFF is assumed to be 0!"
+#endif
+
+/*
+ * CONFIG_FLASH_ERASE_SIZE is set to maximum possible out of 64k, 32k and 4k
+ * depending upon alignment of CONFIG_RO_SIZE. There are two assumptions here:
+ * 1. CONFIG_RO_MEM_OFF is always 0 i.e. RO starts at 0.
+ * 2. CONFIG_RO_SIZE and CONFIG_RW_SIZE are the same.
+ *
+ * If above assumptions are not true, then additional checks would be required
+ * to ensure that erase block size is selected based on the alignment of both
+ * CONFIG_RO_SIZE and CONFIG_RW_SIZE and the offset of RO.
+ */
+#if ((CONFIG_RO_SIZE & (0x10000 - 1)) == 0)
+#define CONFIG_FLASH_ERASE_SIZE	0x10000
+#define NPCX_ERASE_COMMAND		CMD_BLOCK_64K_ERASE
+#elif ((CONFIG_RO_SIZE & (0x8000 - 1)) == 0)
+#define CONFIG_FLASH_ERASE_SIZE	0x8000
+#define NPCX_ERASE_COMMAND		CMD_BLOCK_32K_ERASE
+#else
+#define CONFIG_FLASH_ERASE_SIZE	0x1000
+#define NPCX_ERASE_COMMAND		CMD_SECTOR_ERASE
+#endif
+
+#define CONFIG_FLASH_BANK_SIZE		CONFIG_FLASH_ERASE_SIZE
+#define CONFIG_FLASH_WRITE_SIZE		0x1  /* minimum write size */
+#define CONFIG_FLASH_WRITE_IDEAL_SIZE	256   /* one page size for write */
+
+/* Use 4k sector erase for NPCX monitor flash erase operations. */
+#define NPCX_MONITOR_FLASH_ERASE_SIZE	0x1000
+
 /* RO image resides at start of protected region, right after header */
 #define CONFIG_RO_STORAGE_OFF	CONFIG_RO_HDR_SIZE
 /* RW image resides at start of writable region */
