@@ -224,8 +224,9 @@ tarball="${dest_dir}.tbz2"
 tar jcf  "${tarball}" "${dest_dir}"
 rm -rf "${dest_dir}"
 
-bcs_path="gs://chromeos-localmirror/distfiles"
+bcs_path="gs://chromeos-localmirror-private/distfiles/cr50"
 echo "SUCCESS!!!!!!"
-echo "use the below commands to copy the new image to the BCS"
+echo "use the below commands to copy the new image to the GFS"
 echo "gsutil cp ${tarball} ${bcs_path}"
-echo "gsutil acl ch -u AllUsers:R ${bcs_path}/${tarball}"
+echo "gsutil acl ch -g cr50-firmware@google.com:R ${bcs_path}/${tarball}"
+
