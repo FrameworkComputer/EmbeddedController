@@ -749,20 +749,24 @@ uint16_t tcpc_get_alert_status(void)
 	 * The interrupt line is shared between the TCPC and PPC.  Therefore, go
 	 * out and actually read the alert registers to report the alert status.
 	 */
-	if (!tcpc_read16(0, TCPC_REG_ALERT, &regval)) {
-		/* The TCPCI spec says to ignore bits 14:12. */
-		regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
+	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL)) {
+		if (!tcpc_read16(0, TCPC_REG_ALERT, &regval)) {
+			/* The TCPCI spec says to ignore bits 14:12. */
+			regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
 
-		if (regval)
-			status |= PD_STATUS_TCPC_ALERT_0;
+			if (regval)
+				status |= PD_STATUS_TCPC_ALERT_0;
+		}
 	}
 
-	if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
-		/* TCPCI spec says to ignore bits 14:12. */
-		regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
+	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL)) {
+		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
+			/* TCPCI spec says to ignore bits 14:12. */
+			regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
 
-		if (regval)
-			status |= PD_STATUS_TCPC_ALERT_1;
+			if (regval)
+				status |= PD_STATUS_TCPC_ALERT_1;
+		}
 	}
 
 	return status;
