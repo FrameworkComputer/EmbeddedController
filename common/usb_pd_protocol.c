@@ -2830,6 +2830,7 @@ void pd_task(void *u)
 			break;
 		case PD_STATE_SRC_DISCOVERY:
 			if (pd[port].last_state != pd[port].task_state) {
+				caps_count = 0;
 				/*
 				 * If we have had PD connection with this port
 				 * partner, then start NoResponseTimer.
