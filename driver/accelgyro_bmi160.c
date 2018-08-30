@@ -980,12 +980,11 @@ static int config_interrupt(const struct motion_sensor_t *s)
 #endif
 
 #ifdef CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
-	ret = raw_write8(s->port, s->addr, BMI160_INT_LATCH,
-		BMI160_LATCH_FOREVER);
+	ret = raw_write8(s->port, s->addr, BMI160_INT_LATCH, BMI160_LATCH_5MS);
 #else
 	/* Also, configure int2 as an external input. */
 	ret = raw_write8(s->port, s->addr, BMI160_INT_LATCH,
-		BMI160_INT2_INPUT_EN | BMI160_LATCH_FOREVER);
+		BMI160_INT2_INPUT_EN | BMI160_LATCH_5MS);
 #endif
 
 	/* configure int1 as an interrupt */
