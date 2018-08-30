@@ -386,14 +386,12 @@ void espi_vw_interrupt(void)
 	int i;
 	uint8_t vwidx_updated = IT83XX_ESPI_VWCTRL1;
 
-	/*
-	 * TODO(b:68918637): write-1 clear bug.
-	 * for now, we have to write 0xff to clear pending bit.
-	 */
-#if 0
-	IT83XX_ESPI_VWCTRL1 = vwidx_updated;
-#else
+#ifdef IT83XX_ESPI_VWCTRL1_WRITE_FF_CLEAR
+	/* For IT8320BX, we have to write 0xff to clear pending bit.*/
 	IT83XX_ESPI_VWCTRL1 = 0xff;
+#else
+	/* write-1 to clear */
+	IT83XX_ESPI_VWCTRL1 = vwidx_updated;
 #endif
 	task_clear_pending_irq(IT83XX_IRQ_ESPI_VW);
 

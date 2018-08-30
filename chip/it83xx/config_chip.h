@@ -75,6 +75,8 @@
  * of the control register (bit1 and bit5 at register IT83XX_USBPD_CCCSR).
  */
 #define IT83XX_USBPD_CC_VOLTAGE_DETECTOR_INDEPENDENT
+/* For IT8320BX, we have to write 0xff to clear pending bit.*/
+#define IT83XX_ESPI_VWCTRL1_WRITE_FF_CLEAR
 #elif defined(CHIP_VARIANT_IT8320DX)
 #define CONFIG_FLASH_SIZE  0x00080000
 /* The slave frequency is adjustable (bit[2-0] at register IT83XX_ESPI_GCAC1) */
