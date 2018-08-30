@@ -258,7 +258,15 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_CROS_BOARD_INFO,
 static int hc_cbi_set(struct host_cmd_handler_args *args)
 {
 	const struct __ec_align4 ec_params_set_cbi *p = args->params;
-	int rv;
+
+	/*
+	 * If we ultimately cannot write to the flash, then fail early unless
+	 * we are explicitly trying to write to the in-memory CBI only
+	 */
+	if (eeprom_is_write_protected() && !(p->flag & CBI_SET_NO_SYNC)) {
+		CPRINTS("Failed to write for WP");
+		return EC_RES_ACCESS_DENIED;
+	}
 
 #ifndef CONFIG_SYSTEM_UNLOCKED
 	/* These fields are not allowed to be reprogrammed regardless the
@@ -290,10 +298,9 @@ static int hc_cbi_set(struct host_cmd_handler_args *args)
 	if (p->flag & CBI_SET_NO_SYNC)
 		return EC_RES_SUCCESS;
 
-	rv = write_board_info();
-	if (rv)
-		return (rv == EC_ERROR_ACCESS_DENIED) ?
-				EC_RES_ACCESS_DENIED : EC_RES_ERROR;
+	/* We already checked write protect failure case. */
+	if (write_board_info())
+		return EC_RES_ERROR;
 
 	return EC_RES_SUCCESS;
 }
