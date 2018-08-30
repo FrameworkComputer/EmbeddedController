@@ -125,6 +125,14 @@ const struct adc_t adc_channels[] = {
 		ADC_READ_MAX + 1,
 		0
 	},
+	/* Measure VBUS through a 1/10 voltage divider */
+	[ADC_VBUS] = {
+		"VBUS",
+		NPCX_ADC_CH1,
+		ADC_MAX_VOLT * 10,
+		ADC_READ_MAX + 1,
+		0
+	},
 	/*
 	 * Adapter current output or battery charging/discharging current (uV)
 	 * 18x amplification on charger side.
