@@ -10,12 +10,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-/* This describes USB endpoint used to communicate with Cr50. */
-struct usb_endpoint {
-	struct libusb_device_handle *devh;
-	uint8_t ep_num;
-	int     chunk_len;
-};
+#include "usb_if.h"
 
 /*
  * gsctool uses this structure to keep information about the communications

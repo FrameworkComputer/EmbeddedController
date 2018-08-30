@@ -491,8 +491,7 @@ static int tpm_send_pkt(struct transfer_descriptor *td, unsigned int digest,
 /* Release USB device and return error to the OS. */
 static void shut_down(struct usb_endpoint *uep)
 {
-	libusb_close(uep->devh);
-	libusb_exit(NULL);
+	usb_shut_down(uep);
 	exit(update_error);
 }
 
@@ -592,120 +591,6 @@ static uint8_t *get_file_or_die(const char *filename, size_t *len_ptr)
 	return data;
 }
 
-#define USB_ERROR(m, r) \
-	fprintf(stderr, "%s:%d, %s returned %d (%s)\n", __FILE__, __LINE__, \
-		m, r, libusb_strerror(r))
-
-/*
- * Actual USB transfer function, the 'allow_less' flag indicates that the
- * valid response could be shortef than allotted memory, the 'rxed_count'
- * pointer, if provided along with 'allow_less' lets the caller know how mavy
- * bytes were received.
- */
-static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
-		    void *inbuf, int inlen, int allow_less,
-		    size_t *rxed_count)
-{
-
-	int r, actual;
-
-	/* Send data out */
-	if (outbuf && outlen) {
-		actual = 0;
-		r = libusb_bulk_transfer(uep->devh, uep->ep_num,
-					 outbuf, outlen,
-					 &actual, 1000);
-		if (r < 0) {
-			USB_ERROR("libusb_bulk_transfer", r);
-			exit(update_error);
-		}
-		if (actual != outlen) {
-			fprintf(stderr, "%s:%d, only sent %d/%d bytes\n",
-				__FILE__, __LINE__, actual, outlen);
-			shut_down(uep);
-		}
-	}
-
-	/* Read reply back */
-	if (inbuf && inlen) {
-
-		actual = 0;
-		r = libusb_bulk_transfer(uep->devh, uep->ep_num | 0x80,
-					 inbuf, inlen,
-					 &actual, 1000);
-		if (r < 0) {
-			USB_ERROR("libusb_bulk_transfer", r);
-			exit(update_error);
-		}
-		if ((actual != inlen) && !allow_less) {
-			fprintf(stderr, "%s:%d, only received %d/%d bytes\n",
-				__FILE__, __LINE__, actual, inlen);
-			shut_down(uep);
-		}
-
-		if (rxed_count)
-			*rxed_count = actual;
-	}
-}
-
-static void xfer(struct usb_endpoint *uep, void *outbuf,
-		 size_t outlen, void *inbuf, size_t inlen)
-{
-	do_xfer(uep, outbuf, outlen, inbuf, inlen, 0, NULL);
-}
-
-/* Return 0 on error, since it's never gonna be EP 0 */
-static int find_endpoint(const struct libusb_interface_descriptor *iface,
-			 struct usb_endpoint *uep)
-{
-	const struct libusb_endpoint_descriptor *ep;
-
-	if (iface->bInterfaceClass == 255 &&
-	    iface->bInterfaceSubClass == SUBCLASS &&
-	    iface->bInterfaceProtocol == PROTOCOL &&
-	    iface->bNumEndpoints) {
-		ep = &iface->endpoint[0];
-		uep->ep_num = ep->bEndpointAddress & 0x7f;
-		uep->chunk_len = ep->wMaxPacketSize;
-		return 1;
-	}
-
-	return 0;
-}
-
-/* Return -1 on error */
-static int find_interface(struct usb_endpoint *uep)
-{
-	int iface_num = -1;
-	int r, i, j;
-	struct libusb_device *dev;
-	struct libusb_config_descriptor *conf = 0;
-	const struct libusb_interface *iface0;
-	const struct libusb_interface_descriptor *iface;
-
-	dev = libusb_get_device(uep->devh);
-	r = libusb_get_active_config_descriptor(dev, &conf);
-	if (r < 0) {
-		USB_ERROR("libusb_get_active_config_descriptor", r);
-		goto out;
-	}
-
-	for (i = 0; i < conf->bNumInterfaces; i++) {
-		iface0 = &conf->interface[i];
-		for (j = 0; j < iface0->num_altsetting; j++) {
-			iface = &iface0->altsetting[j];
-			if (find_endpoint(iface, uep)) {
-				iface_num = i;
-				goto out;
-			}
-		}
-	}
-
-out:
-	libusb_free_config_descriptor(conf);
-	return iface_num;
-}
-
 /* Returns true if parsed. */
 static int parse_vidpid(const char *input, uint16_t *vid_ptr, uint16_t *pid_ptr)
 {
@@ -729,55 +614,18 @@ static int parse_vidpid(const char *input, uint16_t *vid_ptr, uint16_t *pid_ptr)
 	return 1;
 }
 
-
-static void usb_findit(uint16_t vid, uint16_t pid, struct usb_endpoint *uep)
-{
-	int iface_num, r;
-
-	memset(uep, 0, sizeof(*uep));
-
-	r = libusb_init(NULL);
-	if (r < 0) {
-		USB_ERROR("libusb_init", r);
-		exit(update_error);
-	}
-
-	printf("open_device %04x:%04x\n", vid, pid);
-	/* NOTE: This doesn't handle multiple matches! */
-	uep->devh = libusb_open_device_with_vid_pid(NULL, vid, pid);
-	if (!uep->devh) {
-		fprintf(stderr, "Can't find device\n");
-		exit(update_error);
-	}
-
-	iface_num = find_interface(uep);
-	if (iface_num < 0) {
-		fprintf(stderr, "USB FW update not supported by that device\n");
-		shut_down(uep);
-	}
-	if (!uep->chunk_len) {
-		fprintf(stderr, "wMaxPacketSize isn't valid\n");
-		shut_down(uep);
-	}
-
-	printf("found interface %d endpoint %d, chunk_len %d\n",
-	       iface_num, uep->ep_num, uep->chunk_len);
-
-	libusb_set_auto_detach_kernel_driver(uep->devh, 1);
-	r = libusb_claim_interface(uep->devh, iface_num);
-	if (r < 0) {
-		USB_ERROR("libusb_claim_interface", r);
-		shut_down(uep);
-	}
-
-	printf("READY\n-------\n");
-}
-
 struct update_pdu {
 	uint32_t block_size; /* Total block size, include this field's size. */
 	struct upgrade_command cmd;
 	/* The actual payload goes here. */
 };
+
+static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
+		    void *inbuf, int inlen, int allow_less, size_t *rxed_count)
+{
+	if (usb_trx(uep, outbuf, outlen, inbuf, inlen, allow_less, rxed_count))
+		shut_down(uep);
+}
 
 static int transfer_block(struct usb_endpoint *uep, struct update_pdu *updu,
 			  uint8_t *transfer_data_ptr, size_t payload_size)
@@ -788,14 +636,14 @@ static int transfer_block(struct usb_endpoint *uep, struct update_pdu *updu,
 	int r;
 
 	/* First send the header. */
-	xfer(uep, updu, sizeof(*updu), NULL, 0);
+	do_xfer(uep, updu, sizeof(*updu), NULL, 0, 0, NULL);
 
 	/* Now send the block, chunk by chunk. */
 	for (transfer_size = 0; transfer_size < payload_size;) {
 		int chunk_size;
 
 		chunk_size = MIN(uep->chunk_len, payload_size - transfer_size);
-		xfer(uep, transfer_data_ptr, chunk_size, NULL, 0);
+		do_xfer(uep, transfer_data_ptr, chunk_size, NULL, 0, 0, NULL);
 		transfer_data_ptr += chunk_size;
 		transfer_size += chunk_size;
 	}
@@ -1198,7 +1046,7 @@ static void send_done(struct usb_endpoint *uep)
 
 	/* Send stop request, ignoring reply. */
 	out = htobe32(UPGRADE_DONE);
-	xfer(uep, &out, sizeof(out), &out, 1);
+	do_xfer(uep, &out, sizeof(out), &out, 1, 0, NULL);
 }
 
 /* Returns number of successfully transmitted image sections. */
@@ -2268,7 +2116,10 @@ int main(int argc, char *argv[])
 	}
 
 	if (td.ep_type == usb_xfer) {
-		usb_findit(vid, pid, &td.uep);
+		if (usb_findit(vid, pid, USB_SUBCLASS_GOOGLE_CR50,
+			       USB_PROTOCOL_GOOGLE_CR50_NON_HC_FW_UPDATE,
+			       &td.uep))
+			exit(update_error);
 	} else if (td.ep_type == dev_xfer) {
 		td.tpm_fd = open("/dev/tpm0", O_RDWR);
 		if (td.tpm_fd < 0) {

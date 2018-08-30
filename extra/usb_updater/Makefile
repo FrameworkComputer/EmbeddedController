@@ -32,6 +32,8 @@ LIBS    += $(shell $(PKG_CONFIG) --libs   libusb-1.0)
 CFLAGS  += $(shell $(PKG_CONFIG) --cflags libusb-1.0)
 CFLAGS  += -I../../include -I../../util -I../../fuzz -I../../test
 
+VPATH = ../../util
+
 BOARD := cr50
 LIBS_g  = $(shell $(PKG_CONFIG) --libs   libcrypto)
 CFLAGS_g = $(shell $(PKG_CONFIG) --cflags libcrypto)
@@ -41,7 +43,7 @@ LIBS_common  = -lfmap
 
 all: $(PROGRAMS)
 
-GSCTOOL_SOURCES := gsctool.c desc_parser.c verify_ro.c
+GSCTOOL_SOURCES := gsctool.c desc_parser.c usb_if.c verify_ro.c
 GSCTOOL_OBJS := $(patsubst %.c,%.o,$(GSCTOOL_SOURCES))
 DEPS := $(patsubst %.c,%.d,$(GSCTOOL_SOURCES))
 
