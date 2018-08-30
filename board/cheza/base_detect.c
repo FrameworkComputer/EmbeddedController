@@ -170,6 +170,23 @@ void base_detect_interrupt(enum gpio_signal signal)
 	base_detect_debounce_time = time_now + BASE_DETECT_DEBOUNCE_US;
 }
 
+static void base_detect_enable(void)
+{
+	/* Enable base detection interrupt. */
+	base_detect_debounce_time = get_time().val;
+	hook_call_deferred(&base_detect_deferred_data, 0);
+	gpio_enable_interrupt(GPIO_CC_LID_BASE_ADC);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, base_detect_enable, HOOK_PRIO_DEFAULT);
+
+static void base_detect_disable(void)
+{
+	/* Disable base detection interrupt and disable power to base. */
+	gpio_disable_interrupt(GPIO_CC_LID_BASE_ADC);
+	base_detect_change(BASE_DISCONNECTED);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, base_detect_disable, HOOK_PRIO_DEFAULT);
+
 static void base_init(void)
 {
 	/*
@@ -178,9 +195,5 @@ static void base_init(void)
 	 */
 	gpio_set_level(GPIO_EN_PPVAR_VAR_BASE, 0);
 	gpio_set_level(GPIO_EN_CC_LID_BASE_PULLDN, 1);
-
-	/* Enable base detection interrupt. */
-	hook_call_deferred(&base_detect_deferred_data, BASE_DETECT_DEBOUNCE_US);
-	gpio_enable_interrupt(GPIO_CC_LID_BASE_ADC);
 }
 DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT+1);
