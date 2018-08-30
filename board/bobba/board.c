@@ -197,8 +197,8 @@ static void setup_motion_sensors(uint8_t sku_id)
 {
 	/* SKU ID of Bobba360 and Sparky360: 9, 25, 26 */
 	if (sku_id != 9 && sku_id != 25 && sku_id != 26) {
-		/* Clamshell Bobba has no base accel and base gyro */
-		motion_sensor_count = ARRAY_SIZE(motion_sensors) - 2;
+		/* Clamshell Bobba has no motion sensors. */
+		motion_sensor_count = 0;
 	}
 }
 
