@@ -695,7 +695,7 @@ int command_write_pages(struct ftdi_context *ftdi, uint32_t address,
 	int res = -EIO;
 	uint32_t remaining = size;
 	int cnt;
-	uint8_t page;
+	uint8_t addr_H, addr_M, addr_L;
 	uint8_t cmd;
 
 	if (spi_flash_follow_mode(ftdi, "AAI write") < 0)
@@ -704,7 +704,9 @@ int command_write_pages(struct ftdi_context *ftdi, uint32_t address,
 	while (remaining) {
 		cnt = (remaining > BLOCK_WRITE_SIZE) ?
 				BLOCK_WRITE_SIZE : remaining;
-		page = address / BLOCK_WRITE_SIZE;
+		addr_H = (address >> 16) & 0xFF;
+		addr_M = (address >> 8) & 0xFF;
+		addr_L = (address) & 0xFF;
 
 		draw_spinner(remaining, size);
 
@@ -722,11 +724,10 @@ int command_write_pages(struct ftdi_context *ftdi, uint32_t address,
 			"AAI write") < 0)
 			goto failed_write;
 
-		/* Set page */
-		cmd = 0;
-		res = i2c_byte_transfer(ftdi, I2C_DATA_ADDR, &page, 1, 1);
-		res |= i2c_byte_transfer(ftdi, I2C_DATA_ADDR, &cmd, 1, 1);
-		res |= i2c_byte_transfer(ftdi, I2C_DATA_ADDR, &cmd, 1, 1);
+		/* Set eflash page address */
+		res = i2c_byte_transfer(ftdi, I2C_DATA_ADDR, &addr_H, 1, 1);
+		res |= i2c_byte_transfer(ftdi, I2C_DATA_ADDR, &addr_M, 1, 1);
+		res |= i2c_byte_transfer(ftdi, I2C_DATA_ADDR, &addr_L, 1, 1);
 		if (res < 0) {
 			fprintf(stderr, "Flash write set page FAILED (%d)\n",
 					res);
