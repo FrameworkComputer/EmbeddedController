@@ -201,11 +201,10 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 			TCPC_ALERT_ACTIVE_LOW},
 };
 
-static int ps8751_tune_mux(const struct usb_mux *mux)
+static int ps8751_tune_mux(int port)
 {
 	/* 0x98 sets lower EQ of DP port (4.5db) */
-	i2c_write8(I2C_PORT_TCPC0, I2C_ADDR_TCPC0,
-			   PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
+	mux_write(port, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
 	return EC_SUCCESS;
 }
 

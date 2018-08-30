@@ -43,14 +43,14 @@ static int dp_set_hpd(int port, int enable)
 	int reg;
 	int rv;
 
-	rv = tcpc_read(port, MUX_IN_HPD_ASSERTION_REG, &reg);
+	rv = mux_read(port, MUX_IN_HPD_ASSERTION_REG, &reg);
 	if (rv)
 		return rv;
 	if (enable)
 		reg |= IN_HPD;
 	else
 		reg &= ~IN_HPD;
-	return tcpc_write(port, MUX_IN_HPD_ASSERTION_REG, reg);
+	return mux_write(port, MUX_IN_HPD_ASSERTION_REG, reg);
 }
 
 static int dp_set_irq(int port, int enable)
@@ -59,14 +59,14 @@ static int dp_set_irq(int port, int enable)
 	int reg;
 	int rv;
 
-	rv = tcpc_read(port, MUX_IN_HPD_ASSERTION_REG, &reg);
+	rv = mux_read(port, MUX_IN_HPD_ASSERTION_REG, &reg);
 	if (rv)
 		return rv;
 	if (enable)
 		reg |= HPD_IRQ;
 	else
 		reg &= ~HPD_IRQ;
-	return tcpc_write(port, MUX_IN_HPD_ASSERTION_REG, reg);
+	return mux_write(port, MUX_IN_HPD_ASSERTION_REG, reg);
 }
 
 void ps8xxx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)

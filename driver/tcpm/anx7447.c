@@ -435,6 +435,15 @@ void anx7447_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
 {
 	int reg = 0;
 
+	/*
+	 * All calls within this method need to update to a mux_read/write calls
+	 * that use the secondary address. This is a non-trival change and no
+	 * one is using the anx7447 as a mux only (and probably never will since
+	 * it doesn't have a re-driver). If that changes, we need to update this
+	 * code.
+	 */
+	ASSERT(!(usb_muxes[port].flags & USB_MUX_FLAG_NOT_TCPC));
+
 	anx7447_set_hpd_level(port, hpd_lvl);
 
 	if (hpd_irq) {
@@ -524,9 +533,9 @@ static int anx7447_mux_set(int port, mux_state_t mux_state)
 			sw_sel = 0x10;
 		}
 	}
-	rv = tcpc_write(port, ANX7447_REG_TCPC_SWITCH_0, sw_sel);
-	rv |= tcpc_write(port, ANX7447_REG_TCPC_SWITCH_1, sw_sel);
-	rv |= tcpc_write(port, ANX7447_REG_TCPC_AUX_SWITCH, aux_sw);
+	rv = mux_write(port, ANX7447_REG_TCPC_SWITCH_0, sw_sel);
+	rv |= mux_write(port, ANX7447_REG_TCPC_SWITCH_1, sw_sel);
+	rv |= mux_write(port, ANX7447_REG_TCPC_AUX_SWITCH, aux_sw);
 
 	anx[port].mux_state = mux_state;
 

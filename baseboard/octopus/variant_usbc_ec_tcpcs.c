@@ -71,6 +71,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 		/* Use PS8751 as mux only */
 		.port_addr = MUX_PORT_AND_ADDR(
 			I2C_PORT_USBC1, PS8751_I2C_ADDR1),
+		.flags = USB_MUX_FLAG_NOT_TCPC,
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &board_it83xx_hpd_status,
 	}

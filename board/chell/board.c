@@ -171,10 +171,10 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
 
-static int ps874x_tune_mux(const struct usb_mux *mux)
+static int ps874x_tune_mux(int port)
 {
 	/* Apply same USB EQ settings to both Type-C mux */
-	ps874x_tune_usb_eq(mux->port_addr,
+	ps874x_tune_usb_eq(port,
 			   PS874X_USB_EQ_TX_6_5_DB,
 			   PS874X_USB_EQ_RX_14_3_DB);
 

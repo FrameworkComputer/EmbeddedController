@@ -413,13 +413,12 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
  * results taking up to 10ms before I2C communication with PS8751
  * is stable. Don't know how to fix this.
  */
-static int ps8751_tune_mux(const struct usb_mux *mux)
+static int ps8751_tune_mux(int port)
 {
 	int rv;
 
 	/* 0x98 sets lower EQ of DP port (4.5db) */
-	rv = i2c_write8(MCHP_I2C_PORT2, 0x16,
-		PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
+	rv = mux_write(port, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
 
 	/* TCPCI spec. delay msleep(6); */
 

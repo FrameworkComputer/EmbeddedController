@@ -39,7 +39,7 @@ static void enter_low_power_mode(int port)
 
 	/* Apply any low power customization if present */
 	if (mux->driver->enter_low_power_mode) {
-		res = mux->driver->enter_low_power_mode(mux->port_addr);
+		res = mux->driver->enter_low_power_mode(port);
 
 		if (res)
 			CPRINTS("Err: enter_low_power_mode mux port(%d): %d",
@@ -61,7 +61,7 @@ void usb_mux_init(int port)
 
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
 
-	res = mux->driver->init(mux->port_addr);
+	res = mux->driver->init(port);
 	if (res) {
 		CPRINTS("Err: init mux port(%d): %d", port, res);
 		return;
@@ -72,7 +72,7 @@ void usb_mux_init(int port)
 
 	/* Apply board specific initialization */
 	if (mux->board_init) {
-		res = mux->board_init(mux);
+		res = mux->board_init(port);
 
 		if (res)
 			CPRINTS("Err: board_init mux port(%d): %d", port, res);
@@ -109,7 +109,7 @@ void usb_mux_set(int port, enum typec_mux mux_mode,
 
 	/* Configure superspeed lanes */
 	mux_state = polarity ? mux_mode | MUX_POLARITY_INVERTED : mux_mode;
-	res = mux->driver->set(mux->port_addr, mux_state);
+	res = mux->driver->set(port, mux_state);
 	if (res) {
 		CPRINTS("Err: set mux port(%d): %d", port, res);
 		return;
@@ -137,7 +137,7 @@ int usb_mux_get(int port, const char **dp_str, const char **usb_str)
 
 	exit_low_power_mode(port);
 
-	res = mux->driver->get(mux->port_addr, &mux_state);
+	res = mux->driver->get(port, &mux_state);
 	if (res) {
 		CPRINTS("Err: get mux port(%d): %d", port, res);
 		return 0;
@@ -160,7 +160,7 @@ void usb_mux_flip(int port)
 
 	exit_low_power_mode(port);
 
-	res = mux->driver->get(mux->port_addr, &mux_state);
+	res = mux->driver->get(port, &mux_state);
 	if (res) {
 		CPRINTS("Err: get mux port(%d): %d", port, res);
 		return;
@@ -171,7 +171,7 @@ void usb_mux_flip(int port)
 	else
 		mux_state |= MUX_POLARITY_INVERTED;
 
-	res = mux->driver->set(mux->port_addr, mux_state);
+	res = mux->driver->set(port, mux_state);
 	if (res)
 		CPRINTS("Err: set mux port(%d): %d", port, res);
 }
@@ -237,7 +237,7 @@ static int hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 
 	mux = &usb_muxes[port];
-	if (mux->driver->get(mux->port_addr, &r->flags) != EC_SUCCESS)
+	if (mux->driver->get(port, &r->flags) != EC_SUCCESS)
 		return EC_RES_ERROR;
 
 #ifdef CONFIG_USB_MUX_VIRTUAL

@@ -11,7 +11,7 @@
 #include "usb_mux.h"
 #include "util.h"
 
-static int pi3usb30532_read(int i2c_addr, uint8_t reg, uint8_t *val)
+static int pi3usb30532_read(int port, uint8_t reg, uint8_t *val)
 {
 	int read, res;
 
@@ -20,7 +20,7 @@ static int pi3usb30532_read(int i2c_addr, uint8_t reg, uint8_t *val)
 	 * Second byte read will be vendor ID.
 	 * Third byte read will be selection control.
 	 */
-	res = i2c_read16(I2C_PORT_USB_MUX, i2c_addr, 0, &read);
+	res = i2c_read16(I2C_PORT_USB_MUX, MUX_ADDR(port), 0, &read);
 	if (res)
 		return res;
 
@@ -32,32 +32,32 @@ static int pi3usb30532_read(int i2c_addr, uint8_t reg, uint8_t *val)
 	return EC_SUCCESS;
 }
 
-static int pi3usb30532_write(int i2c_addr, uint8_t reg, uint8_t val)
+static int pi3usb30532_write(int port, uint8_t reg, uint8_t val)
 {
 	if (reg != PI3USB30532_REG_CONTROL)
 		return EC_ERROR_UNKNOWN;
 
-	return i2c_write8(I2C_PORT_USB_MUX, i2c_addr, 0, val);
+	return i2c_write8(I2C_PORT_USB_MUX, MUX_ADDR(port), 0, val);
 }
 
-static int pi3usb30532_reset(int i2c_addr)
+static int pi3usb30532_reset(int port)
 {
 	return pi3usb30532_write(
-		i2c_addr,
+		port,
 		PI3USB30532_REG_CONTROL,
 		(PI3USB30532_MODE_POWERDOWN & PI3USB30532_CTRL_MASK) |
 		PI3USB30532_CTRL_RSVD);
 }
 
-static int pi3usb30532_init(int i2c_addr)
+static int pi3usb30532_init(int port)
 {
 	uint8_t val;
 	int res;
 
-	res = pi3usb30532_reset(i2c_addr);
+	res = pi3usb30532_reset(port);
 	if (res)
 		return res;
-	res = pi3usb30532_read(i2c_addr, PI3USB30532_REG_VENDOR, &val);
+	res = pi3usb30532_read(port, PI3USB30532_REG_VENDOR, &val);
 	if (res)
 		return res;
 	if (val != PI3USB30532_VENDOR_ID)
@@ -67,7 +67,7 @@ static int pi3usb30532_init(int i2c_addr)
 }
 
 /* Writes control register to set switch mode */
-static int pi3usb30532_set_mux(int i2c_addr, mux_state_t mux_state)
+static int pi3usb30532_set_mux(int port, mux_state_t mux_state)
 {
 	uint8_t reg = 0;
 
@@ -78,18 +78,18 @@ static int pi3usb30532_set_mux(int i2c_addr, mux_state_t mux_state)
 	if (mux_state & MUX_POLARITY_INVERTED)
 		reg |= PI3USB30532_BIT_SWAP;
 
-	return pi3usb30532_write(i2c_addr, PI3USB30532_REG_CONTROL,
+	return pi3usb30532_write(port, PI3USB30532_REG_CONTROL,
 				 reg | PI3USB30532_CTRL_RSVD);
 }
 
 /* Reads control register and updates mux_state accordingly */
-static int pi3usb30532_get_mux(int i2c_addr, mux_state_t *mux_state)
+static int pi3usb30532_get_mux(int port, mux_state_t *mux_state)
 {
 	uint8_t reg = 0;
 	uint8_t res;
 
 	*mux_state = 0;
-	res = pi3usb30532_read(i2c_addr, PI3USB30532_REG_CONTROL, &reg);
+	res = pi3usb30532_read(port, PI3USB30532_REG_CONTROL, &reg);
 	if (res)
 		return res;
 

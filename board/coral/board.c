@@ -278,10 +278,10 @@ const enum gpio_signal hibernate_wake_pins[] = {
 
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
-static int ps8751_tune_mux(const struct usb_mux *mux)
+static int ps8751_tune_mux(int port)
 {
 	/* 0x98 sets lower EQ of DP port (4.5db) */
-	tcpc_write(mux->port_addr, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
+	mux_write(port, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
 	return EC_SUCCESS;
 }
 
