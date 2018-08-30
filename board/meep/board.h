@@ -28,6 +28,7 @@
 #define CONFIG_CMD_ACCEL_INFO
 
 #define CONFIG_LED_COMMON
+#define OCTOPUS_POWER_LED
 
 /* Sensors */
 /* TODO(b/111842131): confirm lid accelerometer matches yorp */
