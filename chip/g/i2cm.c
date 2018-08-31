@@ -324,6 +324,7 @@ static int i2cm_execute_sequence(int port, int slave_addr, const uint8_t *out,
 {
 	int rv;
 	uint32_t inst;
+	uint32_t status;
 
 	/* Build sequence instruction */
 	inst = i2cm_build_sequence(port, slave_addr, out, out_size, in,
@@ -338,8 +339,19 @@ static int i2cm_execute_sequence(int port, int slave_addr, const uint8_t *out,
 		return rv;
 
 	/* Check status value for errors */
-	if (GREAD_I(I2C, port, STATUS) & I2CM_ERROR_MASK) {
-		/* If failed, then clear INST register */
+	status = GREAD_I(I2C, port, STATUS);
+	if (status & I2CM_ERROR_MASK) {
+		if (status &
+		    (GFIELD_MASK(I2C, STATUS, FIRSTSTOP) |
+		     GFIELD_MASK(I2C, STATUS, FINALSTOP))) {
+			/*
+			 * A stop was requested but not generated, let's make
+			 * sure the bus is brought back to the idle state.
+			 */
+			GWRITE_I(I2C, port, INST, INST_STOP);
+			i2cm_poll_for_complete(port);
+		}
+		/* Clear INST register after processing failure(s). */
 		GWRITE_I(I2C, port, INST, 0);
 		return EC_ERROR_UNKNOWN;
 	}
