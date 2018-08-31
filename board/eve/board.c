@@ -226,12 +226,10 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
-		.port_addr = 0,
 		.driver = &anx74xx_tcpm_usb_mux_driver,
 		.hpd_update = &anx74xx_tcpc_update_hpd_status,
 	},
 	{
-		.port_addr = 1,
 		.driver = &anx74xx_tcpm_usb_mux_driver,
 		.hpd_update = &anx74xx_tcpc_update_hpd_status,
 	},

@@ -210,7 +210,6 @@ static int ps8751_tune_mux(int port)
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
-		.port_addr = 0,
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 		.board_init = &ps8751_tune_mux,

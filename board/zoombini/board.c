@@ -393,23 +393,20 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 #endif /* defined(BOARD_ZOOMBINI) */
 };
 
-/* The port_addr members are PD port numbers, not I2C port numbers. */
+/* The order is PD port (same as tcpc) */
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
-		.port_addr = 0,
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
 
 	{
-		.port_addr = 1,
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
 
 #ifdef BOARD_ZOOMBINI
 	{
-		.port_addr = 2,
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},

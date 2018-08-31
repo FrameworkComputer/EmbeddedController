@@ -92,8 +92,11 @@ struct usb_mux_driver {
 /* Describes a USB mux present in the system */
 struct usb_mux {
 	/*
-	 * Driver-defined parameter, typically an i2c slave address
-	 * (for i2c muxes) or a port number (for GPIO 'muxes').
+	 * Used by driver. Muxes that are also the TCPC do not need to specify
+	 * anything for this as they will use the values from tcpc_config_t. If
+	 * this mux is also a TCPC but not used as the TCPC then use the
+	 * MUX_PORT_AND_ADDR to pack the i2c port and i2c address into this
+	 * field and use the USB_MUX_FLAG_NOT_TCPC flag.
 	 */
 	const int port_addr;
 
