@@ -389,41 +389,32 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	normalized_rate = BMI160_REG_TO_ODR(reg_val);
 	if (rnd && (normalized_rate < rate)) {
 		reg_val++;
-		normalized_rate *= 2;
+		normalized_rate = BMI160_REG_TO_ODR(reg_val);
 	}
 
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
-		if (reg_val > BMI160_ODR_1600HZ) {
-			reg_val = BMI160_ODR_1600HZ;
-			normalized_rate = 1600000;
-		} else if (reg_val < BMI160_ODR_0_78HZ) {
-			reg_val = BMI160_ODR_0_78HZ;
-			normalized_rate = 780;
-		}
+		if (normalized_rate > MIN(BMI160_ACCEL_MAX_FREQ,
+					CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ) ||
+		    normalized_rate < BMI160_ACCEL_MIN_FREQ)
+			return EC_RES_INVALID_PARAM;
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
-		if (reg_val > BMI160_ODR_3200HZ) {
-			reg_val = BMI160_ODR_3200HZ;
-			normalized_rate = 3200000;
-		} else if (reg_val < BMI160_ODR_25HZ) {
-			reg_val = BMI160_ODR_25HZ;
-			normalized_rate = 25000;
-		}
+		if (normalized_rate > MIN(BMI160_GYRO_MAX_FREQ,
+					CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ) ||
+		    normalized_rate < BMI160_GYRO_MIN_FREQ)
+			return EC_RES_INVALID_PARAM;
 		break;
+#ifdef CONFIG_MAG_BMI160_BMM150
 	case MOTIONSENSE_TYPE_MAG:
 		/* We use the regular preset we can go about 100Hz */
-		if (reg_val > BMI160_ODR_100HZ) {
-			reg_val = BMI160_ODR_100HZ;
-			normalized_rate = 100000;
-		} else if (reg_val < BMI160_ODR_0_78HZ) {
-			reg_val = BMI160_ODR_0_78HZ;
-			normalized_rate = 780;
-		}
+		if (reg_val > BMI160_ODR_100HZ || reg_val < BMI160_ODR_0_78HZ)
+			return EC_RES_INVALID_PARAM;
 		break;
+#endif
 
 	default:
-		return -1;
+		return EC_RES_INVALID_PARAM;
 	}
 
 	/*

@@ -96,14 +96,10 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		normalized_rate = LIS2DH_REG_TO_NORMALIZE(reg_val);
 	}
 
-	/* Adjust rounded value */
-	if (reg_val > LIS2DH_ODR_400HZ_VAL) {
-		reg_val = LIS2DH_ODR_400HZ_VAL;
-		normalized_rate = LIS2DH_ODR_MAX_VAL;
-	} else if (reg_val < LIS2DH_ODR_1HZ_VAL) {
-		reg_val = LIS2DH_ODR_1HZ_VAL;
-		normalized_rate = LIS2DH_ODR_MIN_VAL;
-	}
+	if (normalized_rate > MIN(LIS2DH_ODR_MAX_VAL,
+				CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ) ||
+	    normalized_rate < LIS2DH_ODR_MIN_VAL)
+		return EC_RES_INVALID_PARAM;
 
 	/*
 	 * Lock accel resource to prevent another task from attempting
