@@ -63,6 +63,13 @@
 /* Size for FTDI outgoing buffer */
 #define FTDI_CMD_BUF_SIZE (1<<12)
 
+
+/* Reset Status */
+#define RSTS_VCCDO_PW_ON	0x40
+#define RSTS_VFSPIPG		0x20
+#define RSTS_HGRST		0x08
+#define RSTS_GRST		0x04
+
 /* store custom parameters */
 const char *input_filename;
 const char *output_filename;
@@ -347,14 +354,16 @@ static int check_chipid(struct ftdi_context *ftdi)
 }
 
 /* DBGR Reset*/
-static int dbgr_reset(struct ftdi_context *ftdi)
+static int dbgr_reset(struct ftdi_context *ftdi, unsigned char val)
 {
 	int ret = 0;
 
 	/* Reset CPU only, and we keep power state until flashing is done. */
 	ret |= i2c_write_byte(ftdi, 0x2f, 0x20);
 	ret |= i2c_write_byte(ftdi, 0x2e, 0x06);
-	ret |= i2c_write_byte(ftdi, 0x30, 0x40);
+
+	/* Enable the Reset Status by val */
+	ret |= i2c_write_byte(ftdi, 0x30, val);
 
 	ret |= i2c_write_byte(ftdi, 0x27, 0x80);
 	if (ret < 0)
@@ -1370,7 +1379,7 @@ int main(int argc, char **argv)
 		command_write_unprotect(hnd);
 
 	if (input_filename) {
-		dbgr_reset(hnd);
+		dbgr_reset(hnd, RSTS_VCCDO_PW_ON);
 		ret = read_flash(hnd, input_filename, 0, flash_size);
 		if (ret)
 			goto terminate;
@@ -1387,7 +1396,7 @@ int main(int argc, char **argv)
 			 */
 			command_erase2(hnd, flash_size, 0, 1);
 			/* Call DBGR Rest to clear the EC lock status */
-			dbgr_reset(hnd);
+			dbgr_reset(hnd, RSTS_VCCDO_PW_ON|RSTS_HGRST|RSTS_GRST);
 			if (config_i2c(hnd) < 0)
 				goto terminate;
 
@@ -1396,7 +1405,7 @@ int main(int argc, char **argv)
 		} else {
 			command_erase(hnd, flash_size, 0);
 			/* Call DBGR Rest to clear the EC lock status */
-			dbgr_reset(hnd);
+			dbgr_reset(hnd, RSTS_VCCDO_PW_ON|RSTS_HGRST|RSTS_GRST);
 		}
 
 	}
@@ -1421,10 +1430,9 @@ int main(int argc, char **argv)
 terminate:
 
 	/*
-	 * Do not exit DBGR because it wedges the I2C SDA line and we cannot
-	 * perform a cold reset of the EC.
+	 * Enable EC Host Global Reset to reset EC resource and EC domain
 	 */
-
+	dbgr_reset(hnd, RSTS_VCCDO_PW_ON|RSTS_HGRST|RSTS_GRST);
 	/* Close the FTDI USB handle */
 	ftdi_usb_close(hnd);
 	ftdi_free(hnd);
