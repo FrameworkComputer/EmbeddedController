@@ -46,6 +46,7 @@ GPIO(BATT_PRES_L,            PIN(3, 4), GPIO_INPUT)                  /* Battery 
 GPIO(CCD_MODE_ODL,           PIN(6, 3), GPIO_INPUT)                  /* Case Closed Debug Mode */
 GPIO(ENTERING_RW,            PIN(7, 6), GPIO_OUTPUT)                 /* EC Entering RW */
 GPIO(ROP_EC_INT_L,           PIN(6, 0), GPIO_INPUT)                  /* PMIC interrupt */
+GPIO(KB_BL_EN,               PIN(7, 1), GPIO_OUT_LOW)                /* Keyboard backlight enable */
 #ifndef CONFIG_POWER_S0IX
 GPIO(SLP_S0_L,               PIN(7, 5), GPIO_INPUT)
 #endif
