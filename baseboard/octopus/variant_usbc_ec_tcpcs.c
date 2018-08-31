@@ -73,7 +73,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 			I2C_PORT_USBC1, PS8751_I2C_ADDR1),
 		.flags = USB_MUX_FLAG_NOT_TCPC,
 		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &board_it83xx_hpd_status,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	}
 };
 
