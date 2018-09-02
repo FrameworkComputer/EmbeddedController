@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "aes.h"
+#include "aes-gcm.h"
 #include "atomic.h"
 #include "clock.h"
 #include "common.h"
@@ -13,12 +15,21 @@
 #include "host_command.h"
 #include "link_defs.h"
 #include "mkbp_event.h"
+#include "rollback.h"
+#include "sha256.h"
 #include "spi.h"
 #include "system.h"
 #include "task.h"
+#include "trng.h"
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
+
+#if !defined(CONFIG_AES) || !defined(CONFIG_AES_GCM) || \
+	!defined(CONFIG_ROLLBACK_SECRET_SIZE)
+#error "fpsensor requires AES, AES_GCM and ROLLBACK_SECRET_SIZE"
+#endif
+
 #if defined(HAVE_PRIVATE) && !defined(TEST_BUILD)
 #define HAVE_FP_PRIVATE_DRIVER
 #define PRIV_HEADER(header) STRINGIFY(header)
@@ -30,6 +41,10 @@
 #define FP_ALGORITHM_TEMPLATE_SIZE 0
 #define FP_MAX_FINGER_COUNT 0
 #endif
+#define SBP_ENC_KEY_LEN 16
+#define FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE \
+	(FP_ALGORITHM_TEMPLATE_SIZE + \
+		sizeof(struct ec_fp_template_encryption_metadata))
 
 /* if no special memory regions are defined, fallback on regular SRAM */
 #ifndef FP_FRAME_SECTION
@@ -43,6 +58,14 @@
 static uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE] FP_FRAME_SECTION __aligned(4);
 /* Fingers templates for the current user */
 static uint8_t fp_template[FP_MAX_FINGER_COUNT][FP_ALGORITHM_TEMPLATE_SIZE]
+	FP_TEMPLATE_SECTION;
+/* Encryption/decryption buffer */
+/* TODO: On-the-fly encryption/decryption without a dedicated buffer */
+/*
+ * Store the encryption metadata at the beginning of the buffer containing the
+ * ciphered data.
+ */
+static uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE]
 	FP_TEMPLATE_SECTION;
 /* Number of used templates */
 static uint32_t templ_valid;
@@ -307,12 +330,47 @@ void fp_task(void)
 #endif /* !HAVE_FP_PRIVATE_DRIVER */
 }
 
+static int derive_encryption_key(uint8_t *out_key, uint8_t *salt)
+{
+	int ret;
+	uint8_t key_buf[SHA256_DIGEST_SIZE];
+	uint8_t rb_secret[CONFIG_ROLLBACK_SECRET_SIZE];
+
+	BUILD_ASSERT(SBP_ENC_KEY_LEN <= SHA256_DIGEST_SIZE);
+	BUILD_ASSERT(SBP_ENC_KEY_LEN <= CONFIG_ROLLBACK_SECRET_SIZE);
+
+	ret = rollback_get_secret(rb_secret);
+	if (ret != EC_SUCCESS) {
+		CPRINTS("Failed to read rollback secret: %d", ret);
+		return EC_RES_ERROR;
+	}
+
+	/*
+	 * Derive a key with the "extract" step of HKDF
+	 * https://tools.ietf.org/html/rfc5869#section-2.2
+	 */
+	hmac_SHA256(key_buf, salt, FP_CONTEXT_SALT_BYTES, rb_secret,
+		    sizeof(rb_secret));
+	memcpy(out_key, key_buf, SBP_ENC_KEY_LEN);
+	return EC_RES_SUCCESS;
+}
+
+static void fp_clear_finger_context(int idx)
+{
+	memset(fp_template[idx], 0, sizeof(fp_template[0]));
+}
+
 static void fp_clear_context(void)
 {
+	int idx;
+
 	templ_valid = 0;
 	templ_dirty = 0;
 	memset(fp_buffer, 0, sizeof(fp_buffer));
-	memset(fp_template, 0, sizeof(fp_template));
+	memset(fp_enc_buffer, 0, sizeof(fp_enc_buffer));
+	memset(user_id, 0, sizeof(user_id));
+	for (idx = 0; idx < FP_MAX_FINGER_COUNT; idx++)
+		fp_clear_finger_context(idx);
 	/* TODO maybe shutdown and re-init the private libraries ? */
 }
 
@@ -392,7 +450,7 @@ static int fp_command_info(struct host_cmd_handler_args *args)
 #endif
 		return EC_RES_UNAVAILABLE;
 
-	r->template_size = FP_ALGORITHM_TEMPLATE_SIZE;
+	r->template_size = FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE;
 	r->template_max = FP_MAX_FINGER_COUNT;
 	r->template_valid = templ_valid;
 	r->template_dirty = templ_dirty;
@@ -405,38 +463,144 @@ static int fp_command_info(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_FP_INFO, fp_command_info,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
+BUILD_ASSERT(FP_CONTEXT_NONCE_BYTES == 12);
+
+static int aes_gcm_encrypt(const uint8_t *key, int key_size,
+			   const uint8_t *plaintext,
+			   uint8_t *ciphertext, int plaintext_size,
+			   const uint8_t *nonce, int nonce_size,
+			   uint8_t *tag, int tag_size)
+{
+	int res;
+	AES_KEY aes_key;
+	GCM128_CONTEXT ctx;
+
+	if (nonce_size != FP_CONTEXT_NONCE_BYTES) {
+		CPRINTS("Invalid nonce size %d bytes", nonce_size);
+		return EC_RES_INVALID_PARAM;
+	}
+
+	res = AES_set_encrypt_key(key, 8 * key_size, &aes_key);
+	if (res) {
+		CPRINTS("Failed to set encryption key: %d", res);
+		return EC_RES_ERROR;
+	}
+	CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f)AES_encrypt, 0);
+	CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
+	/* CRYPTO functions return 1 on success, 0 on error. */
+	res = CRYPTO_gcm128_encrypt(&ctx, &aes_key, plaintext, ciphertext,
+				    plaintext_size);
+	if (!res) {
+		CPRINTS("Failed to encrypt: %d", res);
+		return EC_RES_ERROR;
+	}
+	CRYPTO_gcm128_tag(&ctx, tag, tag_size);
+	return EC_RES_SUCCESS;
+}
+
+static int aes_gcm_decrypt(const uint8_t *key, int key_size, uint8_t *plaintext,
+			   const uint8_t *ciphertext, int plaintext_size,
+			   const uint8_t *nonce, int nonce_size,
+			   const uint8_t *tag, int tag_size)
+{
+	int res;
+	AES_KEY aes_key;
+	GCM128_CONTEXT ctx;
+
+	if (nonce_size != FP_CONTEXT_NONCE_BYTES) {
+		CPRINTS("Invalid nonce size %d bytes", nonce_size);
+		return EC_RES_INVALID_PARAM;
+	}
+
+	res = AES_set_encrypt_key(key, 8 * key_size, &aes_key);
+	if (res) {
+		CPRINTS("Failed to set decryption key: %d", res);
+		return EC_RES_ERROR;
+	}
+	CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f)AES_encrypt, 0);
+	CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
+	/* CRYPTO functions return 1 on success, 0 on error. */
+	res = CRYPTO_gcm128_decrypt(&ctx, &aes_key, ciphertext, plaintext,
+				    plaintext_size);
+	if (!res) {
+		CPRINTS("Failed to decrypt: %d", res);
+		return EC_RES_ERROR;
+	}
+	res = CRYPTO_gcm128_finish(&ctx, tag, tag_size);
+	if (!res) {
+		CPRINTS("Found incorrect tag: %d", res);
+		return EC_RES_ERROR;
+	}
+	return EC_RES_SUCCESS;
+}
+
 static int fp_command_frame(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_frame *params = args->params;
 	void *out = args->response;
-	uint32_t idx = FP_FRAME_TEMPLATE_INDEX(params->offset);
+	uint32_t idx = FP_FRAME_GET_BUFFER_INDEX(params->offset);
 	uint32_t offset = params->offset & FP_FRAME_OFFSET_MASK;
-	uint32_t max_size;
-	uint8_t *content;
+	uint32_t fgr;
+	uint8_t key[SBP_ENC_KEY_LEN];
+	struct ec_fp_template_encryption_metadata *enc_info;
+	int ret;
 
 	if (idx == FP_FRAME_INDEX_RAW_IMAGE) {
+		if (system_is_locked())
+			return EC_RES_ACCESS_DENIED;
 		if (!is_raw_capture(sensor_mode))
 			offset += FP_SENSOR_IMAGE_OFFSET;
-		max_size = sizeof(fp_buffer);
-		content = fp_buffer;
-	} else if (idx > FP_MAX_FINGER_COUNT) {
-		return EC_RES_INVALID_PARAM;
-	} else if (idx > templ_valid) {
-		return EC_RES_UNAVAILABLE;
-	} else { /* the host requested a template */
-		max_size = sizeof(fp_template[0]);
-		/* Templates are numbered from 1 in this host request. */
-		content = fp_template[idx - 1];
-		templ_dirty &= ~(1 << (idx - 1));
+		if (params->size + offset > sizeof(fp_buffer) ||
+		    params->size > args->response_max)
+			return EC_RES_INVALID_PARAM;
+		memcpy(out, fp_buffer + offset, params->size);
+		args->response_size = params->size;
+		return EC_RES_SUCCESS;
 	}
 
-	if (offset + params->size > max_size ||
+	/* The host requested a template. */
+
+	/* Templates are numbered from 1 in this host request. */
+	fgr = idx - FP_FRAME_INDEX_TEMPLATE;
+
+	if (fgr >= FP_MAX_FINGER_COUNT)
+		return EC_RES_INVALID_PARAM;
+	if (fgr >= templ_valid)
+		return EC_RES_UNAVAILABLE;
+	if (offset + params->size > sizeof(fp_enc_buffer) ||
 	    params->size > args->response_max)
 		return EC_RES_INVALID_PARAM;
 
-	memcpy(out, content + offset, params->size);
+	if (!offset) {
+		/* Host has requested the first chunk, do the encryption. */
+		memset(fp_enc_buffer, 0, sizeof(fp_enc_buffer));
+		/* The beginning of the buffer contains nonce/salt/tag. */
+		enc_info = (void *)fp_enc_buffer;
+		init_trng();
+		rand_bytes(enc_info->nonce, FP_CONTEXT_NONCE_BYTES);
+		rand_bytes(enc_info->salt, FP_CONTEXT_SALT_BYTES);
+		exit_trng();
 
+		ret = derive_encryption_key(key, enc_info->salt);
+		if (ret != EC_RES_SUCCESS) {
+			CPRINTS("fgr%d: Failed to derive key", fgr);
+			return EC_RES_UNAVAILABLE;
+		}
+
+		ret = aes_gcm_encrypt(key, SBP_ENC_KEY_LEN, fp_template[fgr],
+				      fp_enc_buffer + sizeof(*enc_info),
+				      sizeof(fp_template[0]),
+				      enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
+				      enc_info->tag, FP_CONTEXT_TAG_BYTES);
+		if (ret != EC_RES_SUCCESS) {
+			CPRINTS("fgr%d: Failed to encrypt template", fgr);
+			return EC_RES_UNAVAILABLE;
+		}
+		templ_dirty &= ~(1 << fgr);
+	}
+	memcpy(out, fp_enc_buffer + offset, params->size);
 	args->response_size = params->size;
+
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_FRAME, fp_command_frame, EC_VER_MASK(0));
@@ -463,6 +627,9 @@ static int fp_command_template(struct host_cmd_handler_args *args)
 	const struct ec_params_fp_template *params = args->params;
 	uint32_t size = params->size & ~FP_TEMPLATE_COMMIT;
 	uint32_t idx = templ_valid;
+	uint8_t key[SBP_ENC_KEY_LEN];
+	struct ec_fp_template_encryption_metadata *enc_info;
+	int ret;
 
 	/* Can we store one more template ? */
 	if (idx >= FP_MAX_FINGER_COUNT)
@@ -470,13 +637,38 @@ static int fp_command_template(struct host_cmd_handler_args *args)
 
 	if ((args->params_size !=
 	     size + offsetof(struct ec_params_fp_template, data)) ||
-	    (params->offset + size > sizeof(fp_template[0])))
+	    (params->offset + size > sizeof(fp_enc_buffer)))
 		return EC_RES_INVALID_PARAM;
 
-	memcpy(&fp_template[idx][params->offset], params->data, size);
+	memcpy(&fp_enc_buffer[params->offset], params->data, size);
 
-	if (params->size & FP_TEMPLATE_COMMIT)
+	if (params->size & FP_TEMPLATE_COMMIT) {
+		/*
+		 * The complete encrypted template has been received, start
+		 * decryption.
+		 */
+		fp_clear_finger_context(idx);
+		/* The beginning of the buffer contains nonce/salt/tag. */
+		enc_info = (void *)fp_enc_buffer;
+		ret = derive_encryption_key(key, enc_info->salt);
+		if (ret != EC_RES_SUCCESS) {
+			CPRINTS("fgr%d: Failed to derive key", idx);
+			return EC_RES_UNAVAILABLE;
+		}
+
+		ret = aes_gcm_decrypt(key, SBP_ENC_KEY_LEN, fp_template[idx],
+				      fp_enc_buffer + sizeof(*enc_info),
+				      sizeof(fp_template[0]),
+				      enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
+				      enc_info->tag, FP_CONTEXT_TAG_BYTES);
+		if (ret != EC_RES_SUCCESS) {
+			CPRINTS("fgr%d: Failed to decipher template", idx);
+			/* Don't leave bad data in the template buffer */
+			fp_clear_finger_context(idx);
+			return EC_RES_UNAVAILABLE;
+		}
 		templ_valid++;
+	}
 
 	return EC_RES_SUCCESS;
 }
@@ -485,15 +677,11 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_TEMPLATE, fp_command_template, EC_VER_MASK(0));
 static int fp_command_context(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_context *params = args->params;
-	struct ec_response_fp_context *resp = args->response;
 
 	fp_clear_context();
 
 	memcpy(user_id, params->userid, sizeof(user_id));
-	/* TODO(b/73337313): real crypto protocol */
-	memcpy(resp->nonce, params->nonce, sizeof(resp->nonce));
 
-	args->response_size = sizeof(*resp);
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_CONTEXT, fp_command_context, EC_VER_MASK(0));
