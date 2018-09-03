@@ -62,7 +62,7 @@
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if ((signal == GPIO_USB_C0_PD_INT_ODL) &&
-	    !gpio_get_level(GPIO_USB_PD_RST_C0_L))
+	    gpio_get_level(GPIO_USB_PD_RST_C0))
 		return;
 	else if ((signal == GPIO_USB_C1_PD_INT_ODL) &&
 		 !gpio_get_level(GPIO_USB_C1_PD_RST_ODL))
@@ -203,10 +203,10 @@ const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
 void board_reset_pd_mcu(void)
 {
 	/* Assert reset */
-	gpio_set_level(GPIO_USB_PD_RST_C0_L, 0);
+	gpio_set_level(GPIO_USB_PD_RST_C0, 1);
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
 	msleep(1);
-	gpio_set_level(GPIO_USB_PD_RST_C0_L, 1);
+	gpio_set_level(GPIO_USB_PD_RST_C0, 0);
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
 	/* After TEST_R release, anx7447/3447 needs 2ms to finish eFuse
 	 * loading.
@@ -243,7 +243,7 @@ uint16_t tcpc_get_alert_status(void)
 	uint16_t status = 0;
 
 	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL)) {
-		if (gpio_get_level(GPIO_USB_PD_RST_C0_L))
+		if (!gpio_get_level(GPIO_USB_PD_RST_C0))
 			status |= PD_STATUS_TCPC_ALERT_0;
 	}
 
