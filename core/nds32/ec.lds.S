@@ -155,6 +155,10 @@ SECTIONS
         KEEP(*(.rodata.HOOK_SECOND))
         __hooks_second_end = .;
 
+        __hooks_usb_pd_disconnect = .;
+        KEEP(*(.rodata.HOOK_USB_PD_DISCONNECT))
+        __hooks_usb_pd_disconnect_end = .;
+
         __deferred_funcs = .;
         KEEP(*(.rodata.deferred))
         __deferred_funcs_end = .;

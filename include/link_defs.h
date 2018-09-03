@@ -68,6 +68,8 @@ extern const struct hook_data __hooks_tick[];
 extern const struct hook_data __hooks_tick_end[];
 extern const struct hook_data __hooks_second[];
 extern const struct hook_data __hooks_second_end[];
+extern const struct hook_data __hooks_usb_pd_disconnect[];
+extern const struct hook_data __hooks_usb_pd_disconnect_end[];
 
 /* Deferrable functions and firing times*/
 extern const struct deferred_data __deferred_funcs[];

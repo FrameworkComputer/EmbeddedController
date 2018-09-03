@@ -650,6 +650,11 @@ static inline void set_state(int port, enum pd_states next_state)
 #endif
 		/* Disable TCPC RX */
 		tcpm_set_rx_enable(port, 0);
+
+#ifdef CONFIG_COMMON_RUNTIME
+		/* detect USB PD cc disconnect */
+		hook_notify(HOOK_USB_PD_DISCONNECT);
+#endif
 	}
 
 #ifdef CONFIG_LOW_POWER_IDLE

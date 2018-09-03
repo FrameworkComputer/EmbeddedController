@@ -16,6 +16,7 @@
 #include "util.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "hooks.h"
 
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) || \
 	defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) || \
@@ -574,6 +575,15 @@ static int it83xx_tcpm_get_chip_info(int port, int renew,
 
 	return EC_SUCCESS;
 }
+
+static void it83xx_tcpm_sw_reset(void)
+{
+	int port = TASK_ID_TO_PD_PORT(task_get_current());
+	/* exit BIST test data mode */
+	USBPD_SW_RESET(port);
+}
+
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, it83xx_tcpm_sw_reset, HOOK_PRIO_DEFAULT);
 
 const struct tcpm_drv it83xx_tcpm_drv = {
 	.init			= &it83xx_tcpm_init,
