@@ -172,7 +172,7 @@ static const uint8_t report_desc[] = {
 	0x09, 0x59,                    /*   Usage (Pad Type) */
 	0x25, 0x0F,                    /*   Logical Maximum (15) */
 	0x75, 0x08,                    /*   Report Size (8) */
-	0x95, 0x01,                    /*   Report Count (2) */
+	0x95, 0x02,                    /*   Report Count (2) */
 	0xB1, 0x02,                    /*   Feature (Data,Var,Abs) */
 
 	/* Page 0xFF, usage 0xC5 is device certificate. */
