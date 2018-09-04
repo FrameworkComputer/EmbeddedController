@@ -52,9 +52,6 @@
 #define CONFIG_TABLET_SWITCH
 #define TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
 
-#define CONFIG_DPTF
-#define CONFIG_DPTF_DEVICE_ORIENTATION
-
 /* Interrupt and fifo are only used for base accelerometer
  * and the lid sensor is polled real-time (in forced mode).
  */

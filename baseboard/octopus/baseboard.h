@@ -75,6 +75,8 @@
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_PWM
+#define CONFIG_DPTF
+#define CONFIG_DPTF_DEVICE_ORIENTATION
 
 /* Port80 -- allow larger buffer for port80 messages */
 #undef CONFIG_PORT80_HISTORY_LEN
