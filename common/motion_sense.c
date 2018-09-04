@@ -89,6 +89,9 @@ test_export_static enum chipset_state_mask sensor_active;
 static void print_spoof_mode_status(int id);
 #endif /* defined(CONFIG_ACCEL_SPOOF_MODE) */
 
+/* Flags to control whether to send an ODR change event for a sensor */
+static uint32_t odr_event_required;
+
 #ifdef CONFIG_ACCEL_FIFO
 /* Need to wake up the AP */
 static int wake_up_needed;
@@ -100,9 +103,6 @@ static int fifo_int_enabled;
 struct queue motion_sense_fifo = QUEUE_NULL(CONFIG_ACCEL_FIFO,
 		struct ec_response_motion_sensor_data);
 static int motion_sense_fifo_lost;
-
-/* Flags to control whether to send an ODR change event for a sensor */
-static uint32_t odr_event_required;
 
 /*
  * Do not use this function directly if you just want to add sensor data, use
@@ -724,9 +724,19 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 				const timestamp_t *ts)
 {
 	int ret = EC_SUCCESS;
+	int is_odr_pending = 0;
+
+	if (*event & TASK_EVENT_MOTION_ODR_CHANGE) {
+		const int sensor_bit = 1 << (sensor - motion_sensors);
+		int odr_pending = atomic_read_clear(&odr_event_required);
+
+		is_odr_pending = odr_pending & sensor_bit;
+		odr_pending &= ~sensor_bit;
+		atomic_or(&odr_event_required, odr_pending);
+	}
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
-	if ((*event & TASK_EVENT_MOTION_INTERRUPT_MASK) &&
+	if ((*event & TASK_EVENT_MOTION_INTERRUPT_MASK || is_odr_pending) &&
 	    (sensor->drv->irq_handler != NULL)) {
 		ret = sensor->drv->irq_handler(sensor, event);
 	}
@@ -756,17 +766,6 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 			ret = EC_ERROR_BUSY;
 		}
 	}
-	if (*event & TASK_EVENT_MOTION_ODR_CHANGE) {
-		const int sensor_bit = 1 << (sensor - motion_sensors);
-		int odr_pending = atomic_read_clear(&odr_event_required);
-
-		if (odr_pending & sensor_bit) {
-			motion_sense_insert_async_event(sensor,
-				ASYNC_EVENT_ODR);
-			odr_pending &= ~sensor_bit;
-		}
-		atomic_or(&odr_event_required, odr_pending);
-	}
 	if (*event & TASK_EVENT_MOTION_FLUSH_PENDING) {
 		int flush_pending = atomic_read_clear(&sensor->flush_pending);
 
@@ -792,6 +791,16 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 		}
 	}
 #endif
+
+	/* ODR change was requested. */
+	if (is_odr_pending) {
+		motion_sense_set_data_rate(sensor);
+		motion_sense_set_motion_intervals();
+#ifdef CONFIG_ACCEL_FIFO
+		motion_sense_insert_async_event(sensor,
+				ASYNC_EVENT_ODR);
+#endif
+	}
 	return ret;
 }
 
@@ -1214,23 +1223,10 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 		/* Set new data rate if the data arg has a value. */
 		if (in->sensor_odr.data != EC_MOTION_SENSE_NO_VALUE) {
-#ifdef CONFIG_ACCEL_FIFO
-			/*
-			 * To be sure timestamps are calculated properly,
-			 * Send an event to have a timestamp inserted in the
-			 * FIFO.
-			 */
-			motion_sense_insert_timestamp(__hw_clock_source_read());
-#endif
 			sensor->config[SENSOR_CONFIG_AP].odr =
 				in->sensor_odr.data |
 				(in->sensor_odr.roundup ? ROUND_UP_FLAG : 0);
 
-			ret = motion_sense_set_data_rate(sensor);
-			if (ret != EC_SUCCESS)
-				return EC_RES_INVALID_PARAM;
-
-#ifdef CONFIG_ACCEL_FIFO
 			/*
 			 * The new ODR may suspend sensor, leaving samples
 			 * in the FIFO. Flush it explicitly.
@@ -1239,13 +1235,6 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 				1 << (sensor - motion_sensors));
 			task_set_event(TASK_ID_MOTIONSENSE,
 					TASK_EVENT_MOTION_ODR_CHANGE, 0);
-#endif
-			/*
-			 * If the sensor was suspended before, or now
-			 * suspended, we have to recalculate the EC sampling
-			 * rate
-			 */
-			motion_sense_set_motion_intervals();
 		}
 
 		out->sensor_odr.ret = sensor->drv->get_data_rate(sensor);
@@ -1630,7 +1619,7 @@ DECLARE_CONSOLE_COMMAND(accelres, command_accelresolution,
 static int command_accel_data_rate(int argc, char **argv)
 {
 	char *e;
-	int id, data, round = 1, ret;
+	int id, data, round = 1;
 	struct motion_sensor_t *sensor;
 	enum sensor_config config_id;
 
@@ -1666,11 +1655,8 @@ static int command_accel_data_rate(int argc, char **argv)
 		sensor->config[SENSOR_CONFIG_AP].odr = 0;
 		sensor->config[config_id].odr =
 			data | (round ? ROUND_UP_FLAG : 0);
-		ret = motion_sense_set_data_rate(sensor);
-		if (ret)
-			return EC_ERROR_PARAM2;
-		/* Sensor might be out of suspend, check the ec_rate */
-		motion_sense_set_motion_intervals();
+		task_set_event(TASK_ID_MOTIONSENSE,
+				TASK_EVENT_MOTION_ODR_CHANGE, 0);
 	} else {
 		ccprintf("Data rate for sensor %d: %d\n", id,
 			 sensor->drv->get_data_rate(sensor));
