@@ -27,6 +27,7 @@
 #include "switch.h"
 #include "system.h"
 #include "tcpci.h"
+#include "tablet_mode.h"
 #include "temp_sensor.h"
 #include "thermistor.h"
 #include "uart.h"

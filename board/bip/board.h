@@ -26,6 +26,10 @@
 
 #define CONFIG_DPTF
 
+#define CONFIG_TABLET_MODE
+#define CONFIG_TABLET_SWITCH
+#define TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
+
 /* Hardware for proto bip does not support ec keyboard backlight control. */
 #undef CONFIG_PWM
 #undef CONFIG_PWM_KBLIGHT

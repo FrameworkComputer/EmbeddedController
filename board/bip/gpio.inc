@@ -37,6 +37,9 @@ GPIO_INT(AC_PRESENT, 	 PIN(A, 7), GPIO_INT_BOTH, extpower_interrupt)		/* ACOK_OD
 GPIO_INT(ESPI_RESET_L, 	 PIN(D, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, espi_reset_pin_asserted_interrupt) /* eSPI_reset# */
 #endif
 
+/* Other interrupts */
+GPIO_INT(TABLET_MODE_L,	 PIN(H, 4), GPIO_INT_BOTH, tablet_mode_isr)
+
 GPIO(PCH_PLTRST_L,	 PIN(E, 3), GPIO_INPUT)		/* PLT_RST_L: Platform Reset from SoC */
 GPIO(SYS_RESET_L,	 PIN(B, 6), GPIO_ODR_HIGH)	/* SYS_RST_ODL */
 /*
