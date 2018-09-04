@@ -242,6 +242,15 @@
 #define CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
 #define CONFIG_PWM_KBLIGHT
 
+/*******************************************************************************
+ * Sensor Config
+ */
+
+/* Common Sensor Defines */
+#define CONFIG_TABLET_MODE
+#define CONFIG_TABLET_SWITCH
+#define TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
+
 #ifndef __ASSEMBLER__
 
 enum power_signal {

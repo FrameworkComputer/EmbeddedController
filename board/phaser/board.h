@@ -48,10 +48,6 @@
 #define CONFIG_LID_ANGLE_INVALID_CHECK
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 
-#define CONFIG_TABLET_MODE
-#define CONFIG_TABLET_SWITCH
-#define TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
-
 /* Interrupt and fifo are only used for base accelerometer
  * and the lid sensor is polled real-time (in forced mode).
  */
