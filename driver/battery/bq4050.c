@@ -2,8 +2,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Smart battery driver for TI BQ4050 family, including BQ40Z50 (and -R1, -R2)
- * and BQ40Z552.
+ * Smart battery driver for TI BQ4050 family, including BQ40Z50 (and -R1, -R2),
+ * BQ40Z552, and BQ40Z60.
  */
 
 #include "battery_smart.h"

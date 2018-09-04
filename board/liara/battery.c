@@ -32,7 +32,10 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* Panasonic AP15O5L Battery Information */
+	/*
+	 * Panasonic AP15O5L battery information from the Grunt reference
+	 * design.
+	 */
 	[BATTERY_PANASONIC] = {
 		.fuel_gauge = {
 			.manuf_name = "PANASONIC",
@@ -44,19 +47,84 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x4000,
 				.disconnect_val = 0x0,
-			}
+			},
+			.imbalance_mv = battery_default_imbalance_mv,
 		},
 		.batt_info = {
 			.voltage_max		= 13200,
 			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 256,   /* mA */
 			.start_charging_min_c	= 0,
 			.start_charging_max_c	= 50,
 			.charging_min_c		= 0,
 			.charging_max_c		= 60,
 			.discharging_min_c	= 0,
 			.discharging_max_c	= 60,
+		},
+	},
+	/*
+	 * Sunwoda 02018 Battery Information for Liara.
+	 * Gauge IC: TI BQ40Z697A
+	 */
+	[BATTERY_SUNWODA] = {
+		.fuel_gauge = {
+			.manuf_name = "Sunwoda 02018",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0000,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
+			},
+			.imbalance_mv = battery_bq4050_imbalance_mv,
+		},
+		.batt_info = {
+			.voltage_max		= 13200,
+			.voltage_normal		= 11520, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 256,   /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
+	/*
+	 * Simplo 2018 Battery Information for Liara
+	 * Gauge IC: TI BQ40Z695A
+	 */
+	[BATTERY_SIMPLO] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP 2018",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0000,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
+			},
+			.imbalance_mv = battery_bq4050_imbalance_mv,
+		},
+		.batt_info = {
+			.voltage_max		= 13200,
+			.voltage_normal		= 11520, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 256,   /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
 		},
 	},
 };
