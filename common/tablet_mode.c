@@ -16,6 +16,8 @@
 /* 1: in tablet mode. 0: otherwise */
 static int tablet_mode = 1;
 
+static int disabled;
+
 int tablet_get_mode(void)
 {
 	return tablet_mode;
@@ -25,6 +27,11 @@ void tablet_set_mode(int mode)
 {
 	if (tablet_mode == mode)
 		return;
+
+	if (disabled) {
+		CPRINTS("Tablet mode set while disabled (ignoring)!");
+		return;
+	}
 
 	tablet_mode = mode;
 	CPRINTS("tablet mode %sabled", mode ? "en" : "dis");
@@ -62,10 +69,23 @@ void tablet_mode_isr(enum gpio_signal signal)
 
 static void tablet_mode_init(void)
 {
+	/* If this sub-system was disabled before initializing, honor that. */
+	if (disabled)
+		return;
+
 	gpio_enable_interrupt(TABLET_MODE_GPIO_L);
 	/* Ensure tablet mode is initialized according to the hardware state
 	 * so that the cached state reflects reality. */
 	tablet_mode_debounce();
 }
 DECLARE_HOOK(HOOK_INIT, tablet_mode_init, HOOK_PRIO_DEFAULT);
+
+void tablet_disable_switch(void)
+{
+	gpio_disable_interrupt(TABLET_MODE_GPIO_L);
+	/* Cancel any pending debounce calls */
+	hook_call_deferred(&tablet_mode_debounce_data, -1);
+	tablet_set_mode(0);
+	disabled = 1;
+}
 #endif

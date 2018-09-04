@@ -17,3 +17,9 @@ void tablet_set_mode(int mode);
  * @param signal: GPIO signal
  */
 void tablet_mode_isr(enum gpio_signal signal);
+
+/**
+ * Disables the tablet mode switch sub-system and turns off tablet mode. This is
+ * useful for clamshell devices.
+ */
+void tablet_disable_switch(void);
