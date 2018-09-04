@@ -304,7 +304,8 @@ void gesture_calc(uint32_t *event)
 		return;
 
 	if (gesture_tap_for_battery())
-		*event |= CONFIG_GESTURE_TAP_EVENT;
+		*event |= TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(
+				MOTIONSENSE_ACTIVITY_DOUBLE_TAP);
 }
 
 /*****************************************************************************/

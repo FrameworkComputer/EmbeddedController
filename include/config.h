@@ -1745,9 +1745,6 @@
 #undef CONFIG_GESTURE_TAP_MAX_INTERSTICE_T
 #undef CONFIG_GESTURE_TAP_THRES_MG
 
-/* Event generated when battery tap is detected */
-#undef CONFIG_GESTURE_TAP_EVENT
-
 /* Which sensor to look for significant motion activity */
 #undef CONFIG_GESTURE_SIGMO
 
@@ -1759,9 +1756,6 @@
 #undef CONFIG_GESTURE_SIGMO_PROOF_MS
 #undef CONFIG_GESTURE_SIGMO_SKIP_MS
 #undef CONFIG_GESTURE_SIGMO_THRES_MG
-/* Event generated when significant motion is detected. */
-
-#undef CONFIG_GESTURE_SIGMO_EVENT
 
 /*
  * Delay between power on and configuring GPIOs.

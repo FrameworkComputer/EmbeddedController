@@ -36,11 +36,39 @@ enum sensor_config {
 #define SENSOR_ACTIVE_S0_S3 (SENSOR_ACTIVE_S3 | SENSOR_ACTIVE_S0)
 #define SENSOR_ACTIVE_S0_S3_S5 (SENSOR_ACTIVE_S0_S3 | SENSOR_ACTIVE_S5)
 
-/* Events the motion sense task may have to process.*/
-#define TASK_EVENT_MOTION_FLUSH_PENDING     TASK_EVENT_CUSTOM(1)
-#define TASK_EVENT_MOTION_ODR_CHANGE        TASK_EVENT_CUSTOM(2)
-/* Next 8 events for sensor interrupt lines */
-#define TASK_EVENT_MOTION_INTERRUPT_MASK    (0xff << 2)
+
+/*
+ * Events layout:
+ * 0                       8              10
+ * +-----------------------+---------------+----------------------------
+ * | hardware interrupts   | internal ints | activity interrupts
+ * +-----------------------+---------------+----------------------------
+ */
+
+/* First 8 events for sensor interrupt lines */
+#define TASK_EVENT_MOTION_INTERRUPT_NUM      8
+#define TASK_EVENT_MOTION_INTERRUPT_MASK \
+	((1 << TASK_EVENT_MOTION_INTERRUPT_NUM) - 1)
+#define TASK_EVENT_MOTION_SENSOR_INTERRUPT(_sensor_id) \
+	BUILD_CHECK_INLINE( \
+		TASK_EVENT_CUSTOM(1 << (_sensor_id)), \
+		_sensor_id < TASK_EVENT_MOTION_INTERRUPT_NUM)
+
+/* Internal events to motion sense task.*/
+#define TASK_EVENT_MOTION_FIRST_INTERNAL_EVENT TASK_EVENT_MOTION_INTERRUPT_NUM
+#define TASK_EVENT_MOTION_INTERNAL_EVENT_NUM    2
+#define TASK_EVENT_MOTION_FLUSH_PENDING \
+	TASK_EVENT_CUSTOM(1 << TASK_EVENT_MOTION_FIRST_INTERNAL_EVENT)
+#define TASK_EVENT_MOTION_ODR_CHANGE \
+	TASK_EVENT_CUSTOM(1 << (TASK_EVENT_MOTION_FIRST_INTERNAL_EVENT + 1))
+
+/* Activity events */
+#define TASK_EVENT_MOTION_FIRST_SW_EVENT   \
+	(TASK_EVENT_MOTION_INTERRUPT_NUM + TASK_EVENT_MOTION_INTERNAL_EVENT_NUM)
+#define TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(_activity_id) \
+	(TASK_EVENT_CUSTOM( \
+		1 << (TASK_EVENT_MOTION_FIRST_SW_EVENT + (_activity_id))))
+
 
 #define ROUND_UP_FLAG (1 << 31)
 #define BASE_ODR(_odr) ((_odr) & ~ROUND_UP_FLAG)
@@ -168,6 +196,7 @@ struct motion_sensor_t {
 
 /* Defined at board level. */
 extern struct motion_sensor_t motion_sensors[];
+
 #ifdef CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 extern unsigned motion_sensor_count;
 #else

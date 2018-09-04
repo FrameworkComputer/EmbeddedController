@@ -1157,11 +1157,13 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 
 #ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
 		if (interrupt & BMI160_D_TAP_INT)
-			*event |= CONFIG_GESTURE_TAP_EVENT;
+			*event |= TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(
+					MOTIONSENSE_ACTIVITY_DOUBLE_TAP);
 #endif
 #ifdef CONFIG_GESTURE_SIGMO
 		if (interrupt & BMI160_SIGMOT_INT)
-			*event |= CONFIG_GESTURE_SIGMO_EVENT;
+			*event |= TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(
+					MOTIONSENSE_ACTIVITY_SIG_MOTION);
 #endif
 #ifdef CONFIG_ACCEL_FIFO
 		if (interrupt & (BMI160_FWM_INT | BMI160_FFULL_INT))

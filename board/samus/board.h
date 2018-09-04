@@ -214,8 +214,6 @@ void set_pp5000_in_g3(int mask, int enable);
 #define CONFIG_GESTURE_TAP_INNER_WINDOW_T 30
 #define CONFIG_GESTURE_TAP_MIN_INTERSTICE_T 120
 #define CONFIG_GESTURE_TAP_MAX_INTERSTICE_T 500
-/* event 2 to 9 are reserved for hardware interrupt */
-#define CONFIG_GESTURE_TAP_EVENT          TASK_EVENT_CUSTOM(1024)
 
 #define CONFIG_LID_ANGLE_SENSOR_BASE 0
 #define CONFIG_LID_ANGLE_SENSOR_LID 1

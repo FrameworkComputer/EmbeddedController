@@ -832,7 +832,8 @@ static void check_and_queue_gestures(uint32_t *event)
 	gesture_calc(event);
 #endif
 #ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
-	if (*event & CONFIG_GESTURE_TAP_EVENT) {
+	if (*event & TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(
+				MOTIONSENSE_ACTIVITY_DOUBLE_TAP)) {
 #ifdef CONFIG_GESTURE_HOST_DETECTION
 		struct ec_response_motion_sensor_data vector;
 
@@ -853,7 +854,8 @@ static void check_and_queue_gestures(uint32_t *event)
 	}
 #endif
 #ifdef CONFIG_GESTURE_SIGMO
-	if (*event & CONFIG_GESTURE_SIGMO_EVENT) {
+	if (*event & TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(
+				MOTIONSENSE_ACTIVITY_SIG_MOTION)) {
 		struct motion_sensor_t *activity_sensor;
 #ifdef CONFIG_GESTURE_HOST_DETECTION
 		struct ec_response_motion_sensor_data vector;
