@@ -44,6 +44,8 @@
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+static uint8_t sku_id;
+
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -181,19 +183,25 @@ struct motion_sensor_t motion_sensors[] = {
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-static void setup_motion_sensors(uint8_t sku_id)
+static int board_is_convertible(void)
 {
-	/* SKU ID of Bobba360 and Sparky360: 9, 25, 26 */
-	if (sku_id != 9 && sku_id != 25 && sku_id != 26) {
-		/* Clamshell Bobba has no motion sensors. */
+	/* SKU ID of Bobba360, Sparky360, & unprovisioned: 9, 25, 26, 255 */
+	return sku_id == 9 || sku_id == 25 || sku_id == 26 || sku_id == 255;
+}
+
+static void board_update_sensor_config_from_sku(void)
+{
+	if (board_is_convertible()) {
+		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+	} else {
 		motion_sensor_count = 0;
+		tablet_disable_switch();
 	}
 }
 
 /* Read CBI from i2c eeprom and initialize variables for board variants */
 static void cbi_init(void)
 {
-	uint8_t sku_id;
 	uint32_t val;
 
 	if (cbi_get_sku_id(&val) != EC_SUCCESS || val > UINT8_MAX)
@@ -201,7 +209,7 @@ static void cbi_init(void)
 	sku_id = val;
 	CPRINTSUSB("SKU: %d", sku_id);
 
-	setup_motion_sensors(sku_id);
+	board_update_sensor_config_from_sku();
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 

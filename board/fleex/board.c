@@ -49,6 +49,8 @@
 #define USB_PD_PORT_ANX7447	0
 #define USB_PD_PORT_PS8751	1
 
+static uint8_t sku_id;
+
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -130,7 +132,6 @@ static struct stprivate_data g_lis2dh_data;
 static struct lsm6dsm_data lsm6dsm_g_data;
 static struct lsm6dsm_data lsm6dsm_a_data;
 
-static uint16_t sku_id;
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -215,12 +216,14 @@ static int board_is_convertible(void)
 	return sku_id == 0x21 || sku_id == 0x22 || sku_id == 0xff;
 }
 
-static void board_set_motion_sensor_count(void)
+static void board_update_sensor_config_from_sku(void)
 {
-	if (board_is_convertible())
+	if (board_is_convertible()) {
 		motion_sensor_count = ARRAY_SIZE(motion_sensors);
-	else
+	} else {
 		motion_sensor_count = 0;
+		tablet_disable_switch();
+	}
 }
 
 static void cbi_init(void)
@@ -231,7 +234,7 @@ static void cbi_init(void)
 		sku_id = val;
 	ccprints("SKU: 0x%04x", sku_id);
 
-	board_set_motion_sensor_count();
+	board_update_sensor_config_from_sku();
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
