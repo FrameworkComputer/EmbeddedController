@@ -67,6 +67,14 @@ GPIO(USB_OC_ODL,          PIN(J, 6), GPIO_ODR_HIGH)
 GPIO(EN_USB_A_5V,         PIN(G, 6), GPIO_OUT_LOW)
 GPIO(EN_USB_A_HIGH_POWER_OD, PIN(D, 4), GPIO_ODR_LOW)
 
+/* BC 1.2 Detection Signals */
+GPIO(USB_C0_BC12_CHG_MAX,     PIN(D, 3), GPIO_INPUT)     /* C0 BC 1.2 CDP signal */
+GPIO(USB_C1_BC12_CHG_MAX,     PIN(B, 7), GPIO_INPUT)     /* C1 BC 1.2 CDP signal */
+GPIO(USB_C2_BC12_CHG_MAX,     PIN(K, 0), GPIO_INPUT)     /* C2 BC 1.2 CDP signal */
+GPIO(USB_C0_BC12_VBUS_ON_ODL, PIN(C, 0), GPIO_ODR_HIGH)  /* C0 BC 1.2 enable signal */
+GPIO(USB_C1_BC12_VBUS_ON_ODL, PIN(E, 5), GPIO_ODR_HIGH)  /* C1 BC 1.2 enable signal */
+GPIO(USB_C2_BC12_VBUS_ON_ODL, PIN(K, 1), GPIO_ODR_HIGH)  /* C2 BC 1.2 enable signal */
+
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,            PIN(B, 3), GPIO_INPUT)     /* EC_PROG_SCL */
 GPIO(I2C0_SDA,            PIN(B, 4), GPIO_INPUT)     /* EC_PROG_SDA */

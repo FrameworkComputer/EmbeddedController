@@ -36,8 +36,7 @@
 
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
-/* TODO (b/111309500): Enable this option when support for MAX14637 is added */
-/* #define CONFIG_CHARGE_RAMP_HW */
+#define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ25710
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
@@ -55,6 +54,10 @@
 #define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_SMART
+
+/* BC 1.2 Detection */
+#define CONFIG_BC12_DETECT_MAX14637
+#define CONFIG_USB_CHARGER
 
 /* USB Type C and USB PD defines */
 #undef CONFIG_USB_PD_TCPC_LOW_POWER
