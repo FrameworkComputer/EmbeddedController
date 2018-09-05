@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 
-SCRIPT_VERSION = 4
+SCRIPT_VERSION = 5
 CCD_IS_UNRESTRICTED = 1 << 0
 WP_IS_DISABLED = 1 << 1
 TESTLAB_IS_ENABLED = 1 << 2
@@ -24,6 +24,7 @@ RMA_SUPPORT_PROD = '0.3.3'
 RMA_SUPPORT_PREPVT = '0.4.5'
 DEV_MODE_OPEN_PROD = '0.3.9'
 DEV_MODE_OPEN_PREPVT = '0.4.7'
+TESTLAB_PROD = '0.3.10'
 CR50_USB = '18d1:5014'
 ERASED_BID = 'ffffffff'
 
@@ -375,8 +376,16 @@ class RMAOpen(object):
         return not self._running_version_is_older(DEV_MODE_OPEN_PROD)
 
 
+    def _capabilities_allow_open_from_console(self):
+        """Return True if ccd open is Always allowed from usb"""
+        output = self.send_cmd_get_output('ccd')
+        return (re.search('OpenNoDevMode.*Always', output) and
+                re.search('OpenFromUSB.*Always', output))
+
     def _requires_dev_mode_open(self):
         """Return True if the image requires dev mode to open"""
+        if self._capabilities_allow_open_from_console():
+            return False
         # All prod images that support 'open' require dev mode
         if not self.is_prepvt:
             return True
@@ -395,7 +404,8 @@ class RMAOpen(object):
         if 'State: Open' not in output:
             # Verify the device is in devmode before trying to run open.
             if 'dev_mode' not in output:
-                debug('Enter dev mode to open ccd')
+                debug('Enter dev mode to open ccd or update to %s' %
+                      TESTLAB_PROD)
                 raise ValueError('DUT not in dev mode')
             if not self.ip:
                 debug("If your DUT doesn't have ssh support, run 'gsctool -a "
@@ -494,8 +504,10 @@ class RMAOpen(object):
 
         print 'prePVT' if self.is_prepvt else 'prod',
         print 'RMA support added in:', rma_support
-        if not self.is_prepvt:
-            debug('No testlab support in prod images')
+        if (not self.is_prepvt and
+            self._running_version_is_older(TESTLAB_PROD)):
+            debug('No testlab support in old prod images')
+            debug('Update to %s to enable testlab' % TESTLAB_PROD)
         if self._running_version_is_older(rma_support):
             raise ValueError('%s does not have RMA support. Update to at '
                     'least %s' % (version, rma_support))
