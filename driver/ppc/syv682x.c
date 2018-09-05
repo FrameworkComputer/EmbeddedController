@@ -8,6 +8,7 @@
 #include "console.h"
 #include "driver/ppc/syv682x.h"
 #include "i2c.h"
+#include "usb_charge.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 #include "util.h"
@@ -15,6 +16,7 @@
 #define SYV682X_FLAGS_SOURCE_ENABLED (1 << 0)
 /* 0 -> CC1, 1 -> CC2 */
 #define SYV682X_FLAGS_CC_POLARITY (1 << 1)
+#define SYV682X_FLAGS_VBUS_PRESENT (1 << 2)
 static uint8_t flags[CONFIG_USB_PD_PORT_COUNT];
 
 #define SYV682X_VBUS_DET_THRESH_MV 4000
@@ -91,6 +93,15 @@ static int syv682x_is_vbus_present(int port)
 	if ((val & SYV682X_STATUS_VSAFE_5V) ||
 	    !(val & (SYV682X_STATUS_VSAFE_5V | SYV682X_STATUS_VSAFE_0V)))
 		vbus = 1;
+#ifdef CONFIG_USB_CHARGER
+	if (!!(flags[port] & SYV682X_FLAGS_VBUS_PRESENT) != vbus)
+		usb_charger_vbus_change(port, vbus);
+
+	if (vbus)
+		flags[port] |= SYV682X_FLAGS_VBUS_PRESENT;
+	else
+		flags[port] &= ~SYV682X_FLAGS_VBUS_PRESENT;
+#endif
 
 	return vbus;
 }
