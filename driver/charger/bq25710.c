@@ -7,9 +7,11 @@
 
 #include "battery_smart.h"
 #include "bq25710.h"
+#include "charge_ramp.h"
 #include "charger.h"
 #include "common.h"
 #include "console.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "timer.h"
 
