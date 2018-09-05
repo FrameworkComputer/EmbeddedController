@@ -24,6 +24,9 @@ OUTPUT_ARCH(BFD_ARCH)
 ENTRY(reset)
 MEMORY
 {
+#if !defined(CONFIG_FLASH_PHYSICAL)
+    IRAM (rwx)  : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
+#else
 #if defined(SECTION_IS_RO) && defined(NPCX_RO_HEADER)
     /*
      * Header structure used by npcx booter in RO region.
@@ -40,8 +43,9 @@ MEMORY
 #ifdef CONFIG_SHAREDLIB
     SHARED_LIB (rx) : ORIGIN = FW_OFF(SHAREDLIB), LENGTH = FW_SIZE(SHAREDLIB)
 #endif
-
     IRAM (rw)  : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
+#endif /* !CONFIG_FLASH_PHYSICAL */
+
 #ifdef CONFIG_EXTERNAL_STORAGE
 #ifdef CONFIG_REPLACE_LOADER_WITH_BSS_SLOW
    LDR_REGION(rw) : \
@@ -109,7 +113,11 @@ SECTIONS
         __flash_lplfw_end = .;
     } > CDRAM AT > FLASH
 #else
+#if !defined(CONFIG_FLASH_PHYSICAL)
+    } > IRAM
+#else
     } > FLASH
+#endif /* !CONFIG_FLASH_PHYSICAL */
 #endif
     . = ALIGN(4);
     .rodata : {
@@ -250,7 +258,9 @@ SECTIONS
         KEEP(*(.google))
 #endif
         . = ALIGN(4);
-#ifdef CONFIG_EXTERNAL_STORAGE
+#if !defined(CONFIG_FLASH_PHYSICAL)
+    } > IRAM
+#elif defined(CONFIG_EXTERNAL_STORAGE)
     } > CDRAM AT > FLASH
 #else
     } > FLASH
@@ -373,6 +383,8 @@ SECTIONS
      * explicit ASSERT afterwards will cause the linker to abort if we use too
      * much. */
     __hey_flash_used = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
+
+#ifdef CONFIG_FLASH_PHYSICAL
     ASSERT((FW_SIZE(SECTION)
 #if defined(CONFIG_RWSIG) && defined(SECTION_IS_RO)
         - CONFIG_RO_PUBKEY_SIZE
@@ -382,6 +394,7 @@ SECTIONS
 #endif
         ) >= (LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION)),
                  "No room left in the flash")
+#endif /* CONFIG_FLASH_PHYSICAL */
 
 #if defined(SECTION_IS_RO) && defined(NPCX_RO_HEADER)
     __image_size = __hey_flash_used - FW_SIZE(RO_HDR);
