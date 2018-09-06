@@ -90,6 +90,9 @@
 
 /* Motion Sensors */
 #ifdef SECTION_IS_RW
+#define CONFIG_MAG_BMI160_BMM150
+#define BMI160_SEC_ADDR BMM150_ADDR0  /* 8-bit address */
+#define CONFIG_MAG_CALIBRATE
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT TASK_EVENT_CUSTOM(4)
@@ -211,6 +214,7 @@ enum power_signal {
 enum sensor_id {
 	LID_ACCEL = 0,
 	LID_GYRO,
+	LID_MAG,
 	VSYNC,
 };
 
