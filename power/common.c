@@ -405,6 +405,37 @@ int chipset_in_state(int state_mask)
 	return (state_mask & need_mask) == need_mask;
 }
 
+int chipset_in_or_transitioning_to_state(int state_mask)
+{
+	switch (state) {
+	case POWER_G3:
+	case POWER_S5G3:
+		return state_mask & CHIPSET_STATE_HARD_OFF;
+	case POWER_S5:
+	case POWER_G3S5:
+	case POWER_S3S5:
+		return state_mask & CHIPSET_STATE_SOFT_OFF;
+	case POWER_S3:
+	case POWER_S5S3:
+	case POWER_S0S3:
+		return state_mask & CHIPSET_STATE_SUSPEND;
+#ifdef CONFIG_POWER_S0IX
+	case POWER_S0ix:
+	case POWER_S0S0ix:
+		return state_mask & CHIPSET_STATE_STANDBY;
+#endif
+	case POWER_S0:
+	case POWER_S3S0:
+#ifdef CONFIG_POWER_S0IX
+	case POWER_S0ixS0:
+#endif
+		return state_mask & CHIPSET_STATE_ON;
+	}
+
+	/* Unknown power state; return false. */
+	return 0;
+}
+
 void chipset_exit_hard_off(void)
 {
 	/*

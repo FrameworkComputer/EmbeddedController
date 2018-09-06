@@ -112,6 +112,18 @@ enum chipset_shutdown_reason {
 int chipset_in_state(int state_mask);
 
 /**
+ * Check if chipset is in a given state or if the chipset task is currently
+ * transitioning to that state. For example, G3S5, S5, and S3S5 would all count
+ * as the S5 state.
+ *
+ * @param state_mask	Combination of one or more CHIPSET_STATE_* flags.
+ *
+ * @return non-zero if the chipset is in one of the states specified in the
+ * mask.
+ */
+int chipset_in_or_transitioning_to_state(int state_mask);
+
+/**
  * Ask the chipset to exit the hard off state.
  *
  * Does nothing if the chipset has already left the state, or was not in the
