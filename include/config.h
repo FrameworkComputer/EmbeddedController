@@ -2035,9 +2035,6 @@
 #undef CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
 #undef CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI3
 
-/* Some boards see the refresh key pressed on boot when triggering recovery. */
-#undef CONFIG_KEYBOARD_IGNORE_REFRESH_BOOT_KEY
-
 /* Enable extra debugging output from keyboard modules */
 #undef CONFIG_KEYBOARD_DEBUG
 

@@ -590,9 +590,7 @@ static uint32_t check_key_list(const uint8_t *state)
 			curr_state[c] &= ~KEYBOARD_MASK_PWRBTN;
 #endif
 
-#ifdef CONFIG_KEYBOARD_IGNORE_REFRESH_BOOT_KEY
 	curr_state[KEYBOARD_COL_REFRESH] &= ~KEYBOARD_MASK_REFRESH;
-#endif
 
 	/* Update mask with all boot keys that were pressed. */
 	k = boot_key_list;
