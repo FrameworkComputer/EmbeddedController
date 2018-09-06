@@ -25,6 +25,7 @@ endif
 comm-objs=$(util-lock-objs:%=lock/%) comm-host.o comm-dev.o
 comm-objs+=comm-lpc.o comm-i2c.o misc_util.o
 
+iteflash-objs = iteflash.o usb_if.o
 ectool-objs=ectool.o ectool_keyscan.o ec_flash.o ec_panicinfo.o $(comm-objs)
 ectool_servo-objs=$(ectool-objs) comm-servo-spi.o
 ec_sb_firmware_update-objs=ec_sb_firmware_update.o $(comm-objs) misc_util.o
