@@ -98,6 +98,7 @@ enum usb_i2c_error {
 	USB_I2C_READ_COUNT_INVALID  = 0x0004,
 	USB_I2C_PORT_INVALID        = 0x0005,
 	USB_I2C_DISABLED            = 0x0006,
+	USB_I2C_MISSING_HANDLER     = 0x0007,
 	USB_I2C_UNKNOWN_ERROR       = 0x8000,
 };
 
@@ -203,5 +204,22 @@ void usb_i2c_deferred(struct usb_i2c_config const *config);
  * @return 1 if enabled, 0 if disabled.
  */
 int usb_i2c_board_is_enabled(void);
+
+/*
+ * Special i2c address to use when the client is required to execute some
+ * command which does not directly involve the i2c master driver.
+ */
+#define USB_I2C_CMD_ADDR 0xf0
+
+/*
+ * Function to call to register a handler for commands sent to the special i2c
+ * address above.
+ */
+int usb_i2c_register_cros_cmd_handler(int (*cmd_handler)
+				      (void *data_in,
+				       size_t in_size,
+				       void *data_out,
+				       size_t out_size));
+
 
 #endif  /* __CROS_USB_I2C_H */
