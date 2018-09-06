@@ -937,29 +937,54 @@ DECLARE_SAFE_CONSOLE_COMMAND(sysrst, command_sys_rst,
 	"[pulse [time] | <BOOLEAN>]",
 	"Assert/deassert SYS_RST_L to reset the AP");
 
+/*
+ * Set RBOX register controlling EC reset and wait until RBOX updates the
+ * output.
+ *
+ * Input parameter is treated as a Boolean, 1 means reset needs to be
+ * asserted, 0 means reset needs to be deasserted.
+ */
+static void wait_ec_rst(int level)
+{
+	int i;
+
+
+	/* Just in case. */
+	level = !!level;
+
+	GWRITE(RBOX, ASSERT_EC_RST, level);
+
+	/*
+	 * If ec_rst value is being explicitly set while power button is held
+	 * pressed after reset, do not let "power button release" ISR change
+	 * the ec_rst value.
+	 */
+	power_button_release_enable_interrupt(0);
+
+	/*
+	 * RBOX is running on its own clock, let's make sure we don't exit
+	 * this function until the ecr_rst output matches the desired setting.
+	 * 1000 cycles is way more than needed for RBOX to react.
+	 *
+	 * Note that the read back value is the inversion of the value written
+	 * into the register once it propagates through RBOX.
+	 */
+	for (i = 0; i < 1000; i++)
+		if (GREAD_FIELD(RBOX, CHECK_OUTPUT, EC_RST) != level)
+			break;
+}
+
 void assert_ec_rst(void)
 {
 	/* Prevent bit bang interrupt storm. */
 	if (uart_bitbang_is_enabled())
 		task_disable_irq(bitbang_config.rx_irq);
 
-	/*
-	 * If ec_rst was explicitly asserted, then do not let
-	 * "power button release" deassert it if set earlier to do so.
-	 */
-	power_button_release_enable_interrupt(0);
-
-	GWRITE(RBOX, ASSERT_EC_RST, 1);
+	wait_ec_rst(1);
 }
 void deassert_ec_rst(void)
 {
-	/*
-	 * If ec_rst was explicitly deasserted, then do not let
-	 * "power button release" deassert it again if set earlier to do so.
-	 */
-	power_button_release_enable_interrupt(0);
-
-	GWRITE(RBOX, ASSERT_EC_RST, 0);
+	wait_ec_rst(0);
 
 	if (uart_bitbang_is_enabled())
 		task_enable_irq(bitbang_config.rx_irq);
