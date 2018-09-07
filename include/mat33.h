@@ -20,7 +20,7 @@ void mat33_scalar_mul(mat33_t A, float c);
 
 void mat33_swap_rows(mat33_t A, const size_t i, const size_t j);
 
-void mat33_get_eigenbasis(mat33_t S, vec3_t eigenvals, mat33_t eigenvecs);
+void mat33_get_eigenbasis(mat33_t S, floatv3_t eigenvals, mat33_t eigenvecs);
 
 size_t mat33_maxind(mat33_t A, size_t k);
 

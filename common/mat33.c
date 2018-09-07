@@ -55,7 +55,7 @@ void mat33_swap_rows(mat33_t A, const size_t i, const size_t j)
  * The i-th eigenvalue corresponds to the eigenvector in the i-th _row_ of
  * "eigenvecs".
  */
-void mat33_get_eigenbasis(mat33_t S, vec3_t e_vals, mat33_t e_vecs)
+void mat33_get_eigenbasis(mat33_t S, floatv3_t e_vals, mat33_t e_vecs)
 {
 	const size_t N = 3;
 	size3_t ind;

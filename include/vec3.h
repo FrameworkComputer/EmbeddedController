@@ -7,11 +7,11 @@
 #ifndef __CROS_EC_VEC_3_H
 #define __CROS_EC_VEC_3_H
 
-typedef float vec3_t[3];
+typedef float floatv3_t[3];
 
-void vec3_scalar_mul(vec3_t v, float c);
-float vec3_dot(const vec3_t v, const vec3_t w);
-float vec3_norm_squared(const vec3_t v);
-float vec3_norm(const vec3_t v);
+void floatv3_scalar_mul(floatv3_t v, float c);
+float floatv3_dot(const floatv3_t v, const floatv3_t w);
+float floatv3_norm_squared(const floatv3_t v);
+float floatv3_norm(const floatv3_t v);
 
 #endif  /* __CROS_EC_VEC_3_H */

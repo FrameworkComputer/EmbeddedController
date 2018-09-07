@@ -35,7 +35,7 @@
 static int moc_eigen_test(struct mag_cal_t *moc)
 {
 	mat33_t S;
-	vec3_t eigenvals;
+	floatv3_t eigenvals;
 	mat33_t eigenvecs;
 	float evmax, evmin, evmag;
 	int eigen_pass;
@@ -80,7 +80,7 @@ static int moc_eigen_test(struct mag_cal_t *moc)
 /*
  * Kasa sphere fitting with normal equation
  */
-static int moc_fit(struct mag_cal_t *moc, vec3_t bias, float *radius)
+static int moc_fit(struct mag_cal_t *moc, floatv3_t bias, float *radius)
 {
 	size4_t pivot;
 	vec4_t out;
@@ -120,10 +120,10 @@ static int moc_fit(struct mag_cal_t *moc, vec3_t bias, float *radius)
 	 * r = sqrt(xc^2 + yc^2 + zc^2 - out[W])
 	 */
 
-	memcpy(bias, out, sizeof(vec3_t));
-	vec3_scalar_mul(bias, -0.5f);
+	memcpy(bias, out, sizeof(floatv3_t));
+	floatv3_scalar_mul(bias, -0.5f);
 
-	*radius = sqrtf(vec3_dot(bias, bias) - out[W]);
+	*radius = sqrtf(floatv3_dot(bias, bias) - out[W]);
 
 #if 0
 	CPRINTF("mag cal: bias (%d, %d, %d), R %d uT\n",
@@ -197,7 +197,7 @@ int mag_cal_update(struct mag_cal_t *moc, const intv3_t v)
 
 		/* 3. eigen test */
 		if (moc_eigen_test(moc)) {
-			vec3_t bias;
+			floatv3_t bias;
 			float radius;
 
 			/* 4. Kasa sphere fitting */
