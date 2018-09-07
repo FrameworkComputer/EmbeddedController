@@ -58,7 +58,7 @@ void mat33_swap_rows(mat33_t A, const size_t i, const size_t j)
 void mat33_get_eigenbasis(mat33_t S, floatv3_t e_vals, mat33_t e_vecs)
 {
 	const size_t N = 3;
-	size3_t ind;
+	sizev3_t ind;
 	size_t i, j, k, l, m;
 
 	for (k = 0; k < N; ++k) {

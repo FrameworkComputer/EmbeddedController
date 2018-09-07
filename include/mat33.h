@@ -11,7 +11,7 @@
 #include "util.h"
 
 typedef float mat33_t[3][3];
-typedef size_t size3_t[3];
+typedef size_t sizev3_t[3];
 
 void init_zero_matrix(mat33_t A);
 void init_diagonal_matrix(mat33_t A, float x);
