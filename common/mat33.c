@@ -10,12 +10,12 @@
 
 #define K_EPSILON 1E-5f
 
-void init_zero_matrix(mat33_t A)
+void init_zero_matrix(mat33_float_t A)
 {
-	memset(A, 0, sizeof(mat33_t));
+	memset(A, 0, sizeof(mat33_float_t));
 }
 
-void init_diagonal_matrix(mat33_t A, float x)
+void init_diagonal_matrix(mat33_float_t A, float x)
 {
 	size_t i;
 	init_zero_matrix(A);
@@ -24,7 +24,7 @@ void init_diagonal_matrix(mat33_t A, float x)
 		A[i][i] = x;
 }
 
-void mat33_scalar_mul(mat33_t A, float c)
+void mat33_float_scalar_mul(mat33_float_t A, float c)
 {
 	size_t i;
 	for (i = 0; i < 3; ++i) {
@@ -34,7 +34,7 @@ void mat33_scalar_mul(mat33_t A, float c)
 	}
 }
 
-void mat33_swap_rows(mat33_t A, const size_t i, const size_t j)
+void mat33_float_swap_rows(mat33_float_t A, const size_t i, const size_t j)
 {
 	const size_t N = 3;
 	size_t k;
@@ -55,14 +55,15 @@ void mat33_swap_rows(mat33_t A, const size_t i, const size_t j)
  * The i-th eigenvalue corresponds to the eigenvector in the i-th _row_ of
  * "eigenvecs".
  */
-void mat33_get_eigenbasis(mat33_t S, floatv3_t e_vals, mat33_t e_vecs)
+void mat33_float_get_eigenbasis(mat33_float_t S, floatv3_t e_vals,
+				mat33_float_t e_vecs)
 {
 	const size_t N = 3;
 	sizev3_t ind;
 	size_t i, j, k, l, m;
 
 	for (k = 0; k < N; ++k) {
-		ind[k] = mat33_maxind(S, k);
+		ind[k] = mat33_float_maxind(S, k);
 		e_vals[k] = S[k][k];
 	}
 
@@ -104,13 +105,13 @@ void mat33_get_eigenbasis(mat33_t S, floatv3_t e_vals, mat33_t e_vecs)
 		e_vals[l] += t;
 
 		for (i = 0; i < k; ++i)
-			mat33_rotate(S, c, s, i, k, i, l);
+			mat33_float_rotate(S, c, s, i, k, i, l);
 
 		for (i = k + 1; i < l; ++i)
-			mat33_rotate(S, c, s, k, i, i, l);
+			mat33_float_rotate(S, c, s, k, i, i, l);
 
 		for (i = l + 1; i < N; ++i)
-			mat33_rotate(S, c, s, k, i, l, i);
+			mat33_float_rotate(S, c, s, k, i, l, i);
 
 		for (i = 0; i < N; ++i) {
 			float tmp = c * e_vecs[k][i] - s * e_vecs[l][i];
@@ -118,8 +119,8 @@ void mat33_get_eigenbasis(mat33_t S, floatv3_t e_vals, mat33_t e_vecs)
 			e_vecs[k][i] = tmp;
 		}
 
-		ind[k] = mat33_maxind(S, k);
-		ind[l] = mat33_maxind(S, l);
+		ind[k] = mat33_float_maxind(S, k);
+		ind[l] = mat33_float_maxind(S, l);
 
 		sum = 0.0f;
 		for (i = 0; i < N; ++i)
@@ -141,13 +142,13 @@ void mat33_get_eigenbasis(mat33_t S, floatv3_t e_vals, mat33_t e_vecs)
 			e_vals[k] = e_vals[m];
 			e_vals[m] = tmp;
 
-			mat33_swap_rows(e_vecs, k, m);
+			mat33_float_swap_rows(e_vecs, k, m);
 		}
 	}
 }
 
 /* index of largest off-diagonal element in row k */
-size_t mat33_maxind(mat33_t A, size_t k)
+size_t mat33_float_maxind(mat33_float_t A, size_t k)
 {
 	const size_t N = 3;
 	size_t i, m = k + 1;
@@ -159,12 +160,10 @@ size_t mat33_maxind(mat33_t A, size_t k)
 	return m;
 }
 
-void mat33_rotate(mat33_t A, float c, float s,
+void mat33_float_rotate(mat33_float_t A, float c, float s,
 		  size_t k, size_t l, size_t i, size_t j)
 {
 	float tmp = c * A[k][l] - s * A[i][j];
 	A[i][j] = s * A[k][l] + c * A[i][j];
 	A[k][l] = tmp;
 }
-
-

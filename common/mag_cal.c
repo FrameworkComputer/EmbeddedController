@@ -34,9 +34,9 @@
  */
 static int moc_eigen_test(struct mag_cal_t *moc)
 {
-	mat33_t S;
+	mat33_float_t S;
 	floatv3_t eigenvals;
-	mat33_t eigenvecs;
+	mat33_float_t eigenvecs;
 	float evmax, evmin, evmag;
 	int eigen_pass;
 
@@ -48,7 +48,7 @@ static int moc_eigen_test(struct mag_cal_t *moc)
 	S[1][2] = S[2][1] = moc->acc[1][2] - moc->acc[1][3] * moc->acc[2][3];
 	S[2][2] = moc->acc[2][2] - moc->acc[2][3] * moc->acc[2][3];
 
-	mat33_get_eigenbasis(S, eigenvals, eigenvecs);
+	mat33_float_get_eigenbasis(S, eigenvals, eigenvecs);
 
 	evmax = (eigenvals[X] > eigenvals[Y]) ? eigenvals[X] : eigenvals[Y];
 	evmax = (eigenvals[Z] > evmax) ? eigenvals[Z] : evmax;
