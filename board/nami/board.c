@@ -683,19 +683,19 @@ static struct kionix_accel_data g_kx022_data;
 static struct accelgyro_saved_data_t g_bma255_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const matrix_3x3_t base_standard_ref = {
+const mat33_fp_t base_standard_ref = {
 	{ 0, FLOAT_TO_FP(-1), 0},
 	{ FLOAT_TO_FP(1), 0, 0},
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
-const matrix_3x3_t lid_standard_ref = {
+const mat33_fp_t lid_standard_ref = {
 	{ FLOAT_TO_FP(1), 0, 0},
 	{ 0, FLOAT_TO_FP(-1), 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
-const matrix_3x3_t rotation_x180_z90 = {
+const mat33_fp_t rotation_x180_z90 = {
 	{ 0, FLOAT_TO_FP(-1), 0 },
 	{ FLOAT_TO_FP(-1), 0, 0 },
 	{ 0, 0, FLOAT_TO_FP(-1) }

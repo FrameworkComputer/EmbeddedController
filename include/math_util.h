@@ -96,7 +96,7 @@ static inline fp_t fp_abs(fp_t a)
  * Note that constant matrices MUST be initialized using FLOAT_TO_FP()
  * or INT_TO_FP() for all non-zero values.
  */
-typedef fp_t matrix_3x3_t[3][3];
+typedef fp_t mat33_fp_t[3][3];
 
 /* Integer vector */
 typedef int intv3_t[3];
@@ -141,7 +141,7 @@ fp_t cosine_of_angle_diff(const intv3_t v1, const intv3_t v2);
  * @param R Rotation matrix.
  * @param res Resultant vector.
  */
-void rotate(const intv3_t v, const matrix_3x3_t R, intv3_t res);
+void rotate(const intv3_t v, const mat33_fp_t R, intv3_t res);
 
 /**
  * Rotate vector v by rotation matrix R^-1.
@@ -150,6 +150,6 @@ void rotate(const intv3_t v, const matrix_3x3_t R, intv3_t res);
  * @param R Rotation matrix.
  * @param res Resultant vector.
  */
-void rotate_inv(const intv3_t v, const matrix_3x3_t R, intv3_t res);
+void rotate_inv(const intv3_t v, const mat33_fp_t R, intv3_t res);
 
 #endif /* __CROS_EC_MATH_UTIL_H */

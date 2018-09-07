@@ -176,7 +176,7 @@ fp_t cosine_of_angle_diff(const intv3_t v1, const intv3_t v2)
  * rotate a vector v
  *  - support input v and output res are the same vector
  */
-void rotate(const intv3_t v, const matrix_3x3_t R, intv3_t res)
+void rotate(const intv3_t v, const mat33_fp_t R, intv3_t res)
 {
 	fp_inter_t t[3];
 
@@ -204,7 +204,7 @@ void rotate(const intv3_t v, const matrix_3x3_t R, intv3_t res)
 	res[2] = FP_TO_INT(t[2]);
 }
 
-void rotate_inv(const intv3_t v, const matrix_3x3_t R, intv3_t res)
+void rotate_inv(const intv3_t v, const mat33_fp_t R, intv3_t res)
 {
 	fp_inter_t t[3];
 	fp_t deter;

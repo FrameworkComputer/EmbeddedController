@@ -101,7 +101,7 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrix to rotate lid and base sensor into standard reference frame */
-const matrix_3x3_t standard_rot_ref = {
+const mat33_fp_t standard_rot_ref = {
 	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0, FLOAT_TO_FP(-1), 0},
 	{ 0, 0,  FLOAT_TO_FP(1)}

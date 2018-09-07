@@ -786,13 +786,13 @@ static struct si114x_drv_data_t g_si114x_data = {
 };
 
 /* Matrix to rotate accelrator into standard reference frame */
-const matrix_3x3_t mag_standard_ref = {
+const mat33_fp_t mag_standard_ref = {
 	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0,  FLOAT_TO_FP(1), 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
-const matrix_3x3_t lid_standard_ref = {
+const mat33_fp_t lid_standard_ref = {
 	{FLOAT_TO_FP(-1),  0,  0},
 	{ 0,  FLOAT_TO_FP(-1), 0},
 	{ 0,  0, FLOAT_TO_FP(1)}

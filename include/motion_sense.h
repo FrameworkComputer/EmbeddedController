@@ -90,7 +90,7 @@ struct motion_sensor_t {
 	 */
 	uint8_t in_spoof_mode;
 
-	const matrix_3x3_t *rot_standard_ref;
+	const mat33_fp_t *rot_standard_ref;
 
 	/*
 	 * default_range: set by default by the EC.

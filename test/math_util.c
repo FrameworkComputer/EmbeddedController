@@ -46,7 +46,7 @@ static int test_acos(void)
 }
 
 
-const matrix_3x3_t test_matrices[] = {
+const mat33_fp_t test_matrices[] = {
 	{{ 0, FLOAT_TO_FP(-1), 0},
 	 {FLOAT_TO_FP(-1), 0, 0},
 	 { 0, 0, FLOAT_TO_FP(1)} },

@@ -252,7 +252,7 @@ enum sensor_id {
  * Boards within the Grunt family may need to modify this definition at
  * board_init() time.
  */
-extern matrix_3x3_t grunt_base_standard_ref;
+extern mat33_fp_t grunt_base_standard_ref;
 
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
