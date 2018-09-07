@@ -27,8 +27,6 @@ static uint8_t flag_prot_inconsistent;
 static uint8_t saved_sr1;
 static uint8_t saved_sr2;
 
-#define FLASH_ABORT_TIMEOUT     10000
-
 #ifdef CONFIG_EXTERNAL_STORAGE
 #define TRISTATE_FLASH(x)
 #else
@@ -79,18 +77,20 @@ static void flash_cs_level(int level)
 	UPDATE_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_SW_CS1, level);
 }
 
-static int flash_wait_ready(int timeout)
+static int flash_wait_ready(void)
 {
 	uint8_t mask = SPI_FLASH_SR1_BUSY;
-
-	if (timeout <= 0)
-		return EC_ERROR_INVAL;
+	const timestamp_t start = get_time();
+	const uint32_t timeout_us = 10 * SECOND;
+	const timestamp_t deadline = {
+		.val = start.val + timeout_us,
+	};
 
 	/* Chip Select down. */
 	flash_cs_level(0);
 	/* Command for Read status register */
 	flash_execute_cmd(CMD_READ_STATUS_REG, MASK_CMD_ONLY);
-	while (timeout > 0) {
+	do {
 		/* Read status register */
 		NPCX_UMA_CTS  = MASK_RD_1BYTE;
 		while (IS_BIT_SET(NPCX_UMA_CTS, NPCX_UMA_CTS_EXEC_DONE))
@@ -98,14 +98,13 @@ static int flash_wait_ready(int timeout)
 		/* Busy bit is clear */
 		if ((NPCX_UMA_DB0 & mask) == 0)
 			break;
-		if (--timeout > 0)
-			msleep(1);
-	}; /* Wait for Busy clear */
+		usleep(10);
+	} while (!timestamp_expired(deadline, NULL)); /* Wait for Busy clear */
 
 	/* Chip Select high. */
 	flash_cs_level(1);
 
-	if (timeout == 0)
+	if (timestamp_expired(deadline, NULL))
 		return EC_ERROR_TIMEOUT;
 
 	return EC_SUCCESS;
@@ -116,7 +115,7 @@ static int flash_write_enable(void)
 	uint8_t mask = SPI_FLASH_SR1_WEL;
 	int rv;
 	/* Wait for previous operation to complete */
-	rv = flash_wait_ready(FLASH_ABORT_TIMEOUT);
+	rv = flash_wait_ready();
 	if (rv)
 		return rv;
 
@@ -124,7 +123,7 @@ static int flash_write_enable(void)
 	flash_execute_cmd(CMD_WRITE_EN, MASK_CMD_ONLY);
 
 	/* Wait for flash is not busy */
-	rv = flash_wait_ready(FLASH_ABORT_TIMEOUT);
+	rv = flash_wait_ready();
 	if (rv)
 		return rv;
 
@@ -418,7 +417,7 @@ static int flash_program_bytes(uint32_t offset, uint32_t bytes,
 		flash_burst_write(offset, write_size, data);
 
 		/* Wait write completed */
-		rv = flash_wait_ready(FLASH_ABORT_TIMEOUT);
+		rv = flash_wait_ready();
 		if (rv)
 			return rv;
 
@@ -562,7 +561,7 @@ int flash_physical_erase(int offset, int size)
 		flash_execute_cmd(NPCX_ERASE_COMMAND, MASK_CMD_ADR);
 
 		/* Wait erase completed */
-		rv = flash_wait_ready(FLASH_ABORT_TIMEOUT);
+		rv = flash_wait_ready();
 		if (rv)
 			break;
 	}
