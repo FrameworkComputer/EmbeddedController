@@ -10,7 +10,7 @@
 
 #define K_EPSILON 1E-5f
 
-void mat44_decompose_lup(mat44_t LU, sizev4_t pivot)
+void mat44_float_decompose_lup(mat44_float_t LU, sizev4_t pivot)
 {
 	const size_t N = 4;
 	size_t i, j, k;
@@ -26,7 +26,7 @@ void mat44_decompose_lup(mat44_t LU, sizev4_t pivot)
 		}
 
 		if (pivot[k] != k)
-			mat44_swap_rows(LU, k, pivot[k]);
+			mat44_float_swap_rows(LU, k, pivot[k]);
 
 		if (fabsf(LU[k][k]) < K_EPSILON)
 			continue;
@@ -40,7 +40,7 @@ void mat44_decompose_lup(mat44_t LU, sizev4_t pivot)
 	}
 }
 
-void mat44_swap_rows(mat44_t A, const size_t i, const size_t j)
+void mat44_float_swap_rows(mat44_float_t A, const size_t i, const size_t j)
 {
 	const size_t N = 4;
 	size_t k;
@@ -55,7 +55,7 @@ void mat44_swap_rows(mat44_t A, const size_t i, const size_t j)
 	}
 }
 
-void mat44_solve(mat44_t A, floatv4_t x, const floatv4_t b,
+void mat44_float_solve(mat44_float_t A, floatv4_t x, const floatv4_t b,
 		 const sizev4_t pivot)
 {
 	const size_t N = 4;

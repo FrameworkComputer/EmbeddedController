@@ -29,7 +29,7 @@ struct mag_cal_t {
 	 * | x  | y  | z  | 1  |
 	 * +----+----+----+----+
 	 */
-	mat44_t acc;
+	mat44_float_t acc;
 	floatv4_t acc_w;
 	float radius;
 

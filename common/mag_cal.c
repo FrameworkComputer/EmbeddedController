@@ -107,9 +107,9 @@ static int moc_fit(struct mag_cal_t *moc, floatv3_t bias, float *radius)
 	moc->acc_w[Z] *= -1;
 	moc->acc_w[W] *= -1;
 
-	mat44_decompose_lup(moc->acc, pivot);
+	mat44_float_decompose_lup(moc->acc, pivot);
 
-	mat44_solve(moc->acc, out, moc->acc_w, pivot);
+	mat44_float_solve(moc->acc, out, moc->acc_w, pivot);
 
 	/*
 	 * spherei is defined by:
