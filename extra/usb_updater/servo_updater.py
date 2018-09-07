@@ -137,7 +137,8 @@ def do_updater_version(vidpid, iface, serialno):
       return 2
     else:
       return 6
-  return 0
+  raise ServoUpdaterException(
+      "Can't determine updater target from vers: [%s]" % vers)
 
 def findfiles(cname, fname):
   """Select config and firmware binary files.
