@@ -490,6 +490,9 @@ static void board_init(void)
 		/* Set F13 to new defined key on EVT */
 		CPRINTS("Overriding F13 scan code");
 		scancode_set2[3][9] = 0xe007;
+#ifdef CONFIG_KEYBOARD_DEBUG
+		keycap_label[3][9] = KLLI_F13;
+#endif
 	}
 #endif
 }

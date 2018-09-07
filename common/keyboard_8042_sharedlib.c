@@ -65,6 +65,55 @@ SHAREDLIB(const uint8_t scancode_translate_table[128] = {
 	0x57, 0x4e, 0x51, 0x4a, 0x37, 0x49, 0x46, 0x54,
 });
 
+
+#ifdef CONFIG_KEYBOARD_DEBUG
+SHAREDLIB(const
+char * const keycap_long_label[KLLI_MAX & KEYCAP_LONG_LABEL_INDEX_BITMASK] = {
+	"UNKNOWN", "F1",    "F2",    "F3",
+	"F4",      "F5",    "F6",    "F7",
+	"F8",      "F9",    "F10",   "F11",
+	"F12",     "F13",   "RSVD",  "RSVD",
+	"L-ALT",   "R-ALT", "L-CTR", "R-CTR",
+	"L-SHT",   "R-SHT", "ENTER", "SPACE",
+	"B-SPC",   "TAB",   "SEARC", "LEFT",
+	"RIGHT",   "DOWN",  "UP",    "ESC",
+});
+
+#ifndef CONFIG_KEYBOARD_SCANCODE_MUTABLE
+SHAREDLIB(const
+#endif
+char keycap_label[KEYBOARD_ROWS][KEYBOARD_COLS] = {
+	{KLLI_UNKNO, KLLI_SEARC, KLLI_F1,    'b',        KLLI_F10,
+	 KLLI_UNKNO, 'n',        KLLI_UNKNO, '=',        KLLI_UNKNO,
+	 KLLI_R_ALT, KLLI_UNKNO, KLLI_UNKNO},
+	{KLLI_UNKNO, KLLI_ESC,   KLLI_F4,    'g',        KLLI_F7,
+	 KLLI_UNKNO, 'h',        KLLI_UNKNO, '\'',       KLLI_F9,
+	 KLLI_UNKNO, KLLI_B_SPC, KLLI_UNKNO},
+	{KLLI_L_CTR, KLLI_TAB,   KLLI_F3,    't',        KLLI_F6,
+	 ']',        'y',        KLLI_UNKNO, '[',        KLLI_F8,
+	 KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO},
+	{KLLI_UNKNO, '~',        KLLI_F2,    '5',        KLLI_F5,
+	 KLLI_UNKNO, '6',        KLLI_UNKNO, '-',        KLLI_UNKNO,
+	 KLLI_UNKNO, '\\',       KLLI_UNKNO},
+	{KLLI_R_CTR, 'a',        'd',        'f',        's',
+	 'k',        'j',        KLLI_UNKNO, ';',        '|',
+	 KLLI_UNKNO, KLLI_ENTER, KLLI_UNKNO},
+	{KLLI_UNKNO, 'z',        'c',        'v',        'x',
+	 ',',        'm',        KLLI_L_SHT, '/',        '.',
+	 KLLI_UNKNO, KLLI_SPACE, KLLI_UNKNO},
+	{KLLI_UNKNO, '1',        '3',        '4',        '2',
+	 '8',        '7',        KLLI_UNKNO, '0',        '9',
+	 KLLI_L_ALT, KLLI_DOWN,  KLLI_RIGHT},
+	{KLLI_UNKNO, 'q',        'e',        'r',        'w',
+	 'i',        'u',        KLLI_R_SHT, 'p',        'o',
+	 KLLI_UNKNO, KLLI_UP,    KLLI_LEFT},
+}
+#ifndef CONFIG_KEYBOARD_SCANCODE_MUTABLE
+)
+#endif
+;
+#endif
+
 uint8_t scancode_translate_set2_to_1(uint8_t code)
 {
 	if (code & 0x80) {
