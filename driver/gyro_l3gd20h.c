@@ -310,7 +310,7 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 	return EC_SUCCESS;
 }
 
-static int read(const struct motion_sensor_t *s, vector_3_t v)
+static int read(const struct motion_sensor_t *s, intv3_t v)
 {
 	uint8_t raw[6];
 	uint8_t xyz_reg;

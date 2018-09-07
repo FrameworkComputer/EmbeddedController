@@ -99,7 +99,7 @@ static inline fp_t fp_abs(fp_t a)
 typedef fp_t matrix_3x3_t[3][3];
 
 /* Integer vector */
-typedef int vector_3_t[3];
+typedef int intv3_t[3];
 
 /* For vectors, define which coordinates are in which location. */
 enum {
@@ -132,7 +132,7 @@ fp_t arc_cos(fp_t x);
  *
  * @return Cosine of the angle between v1 and v2.
  */
-fp_t cosine_of_angle_diff(const vector_3_t v1, const vector_3_t v2);
+fp_t cosine_of_angle_diff(const intv3_t v1, const intv3_t v2);
 
 /**
  * Rotate vector v by rotation matrix R.
@@ -141,7 +141,7 @@ fp_t cosine_of_angle_diff(const vector_3_t v1, const vector_3_t v2);
  * @param R Rotation matrix.
  * @param res Resultant vector.
  */
-void rotate(const vector_3_t v, const matrix_3x3_t R, vector_3_t res);
+void rotate(const intv3_t v, const matrix_3x3_t R, intv3_t res);
 
 /**
  * Rotate vector v by rotation matrix R^-1.
@@ -150,6 +150,6 @@ void rotate(const vector_3_t v, const matrix_3x3_t R, vector_3_t res);
  * @param R Rotation matrix.
  * @param res Resultant vector.
  */
-void rotate_inv(const vector_3_t v, const matrix_3x3_t R, vector_3_t res);
+void rotate_inv(const intv3_t v, const matrix_3x3_t R, intv3_t res);
 
 #endif /* __CROS_EC_MATH_UTIL_H */

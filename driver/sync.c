@@ -40,7 +40,7 @@ struct ec_response_motion_sensor_data vector =
 	{.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP, .data = {0, 0, 0} };
 int sync_enabled;
 
-static int sync_read(const struct motion_sensor_t *s, vector_3_t v)
+static int sync_read(const struct motion_sensor_t *s, intv3_t v)
 {
 	v[0] = next_event.counter;
 	return EC_SUCCESS;

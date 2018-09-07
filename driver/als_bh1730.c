@@ -55,7 +55,7 @@ static int bh1730_convert_to_lux(uint32_t data0_1)
 /**
  * Read BH1730 light sensor data.
  */
-static int bh1730_read_lux(const struct motion_sensor_t *s, vector_3_t v)
+static int bh1730_read_lux(const struct motion_sensor_t *s, intv3_t v)
 {
 	struct bh1730_drv_data_t *drv_data = BH1730_GET_DATA(s);
 	int ret;

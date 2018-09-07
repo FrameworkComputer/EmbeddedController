@@ -41,7 +41,7 @@ static int accel_init(const struct motion_sensor_t *s)
 	return EC_SUCCESS;
 }
 
-static int accel_read(const struct motion_sensor_t *s, vector_3_t v)
+static int accel_read(const struct motion_sensor_t *s, intv3_t v)
 {
 	rotate(s->xyz, *s->rot_standard_ref, v);
 	return EC_SUCCESS;

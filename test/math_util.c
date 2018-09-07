@@ -59,8 +59,8 @@ const matrix_3x3_t test_matrices[] = {
 static int test_rotate(void)
 {
 	int i, j, k;
-	vector_3_t v = {1, 2, 3};
-	vector_3_t w;
+	intv3_t v = {1, 2, 3};
+	intv3_t w;
 
 	for (i = 0; i < ARRAY_SIZE(test_matrices); i++) {
 		for (j = 0; j < 100; j += 10) {

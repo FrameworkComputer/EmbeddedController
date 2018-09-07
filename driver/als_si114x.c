@@ -242,7 +242,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 }
 
 /* Just trigger a measurement */
-static int read(const struct motion_sensor_t *s, vector_3_t v)
+static int read(const struct motion_sensor_t *s, intv3_t v)
 {
 	int ret = 0;
 	uint8_t cmd;

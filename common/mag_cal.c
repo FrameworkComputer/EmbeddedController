@@ -147,7 +147,7 @@ void init_mag_cal(struct mag_cal_t *moc)
 	moc->nsamples = 0;
 }
 
-int mag_cal_update(struct mag_cal_t *moc, const vector_3_t v)
+int mag_cal_update(struct mag_cal_t *moc, const intv3_t v)
 {
 	int new_bias = 0;
 

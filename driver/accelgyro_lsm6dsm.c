@@ -491,7 +491,7 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
  * and collect the FIFO, even if it has one item: we don't have to check if the
  * sensor is ready (minimize I2C access).
  */
-static int read(const struct motion_sensor_t *s, vector_3_t v)
+static int read(const struct motion_sensor_t *s, intv3_t v)
 {
 	uint8_t raw[OUT_XYZ_SIZE];
 	uint8_t xyz_reg;

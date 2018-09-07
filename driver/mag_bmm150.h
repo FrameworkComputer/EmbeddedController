@@ -118,13 +118,13 @@ int bmm150_init(const struct motion_sensor_t *s);
 
 /* Command to normalize and apply temperature compensation */
 void bmm150_normalize(const struct motion_sensor_t *s,
-		      vector_3_t v,
+		      intv3_t v,
 		      uint8_t *data);
 
 int bmm150_set_offset(const struct motion_sensor_t *s,
-		      const vector_3_t offset);
+		      const intv3_t offset);
 
 int bmm150_get_offset(const struct motion_sensor_t *s,
-		      vector_3_t   offset);
+		      intv3_t   offset);
 
 #endif /* __CROS_EC_MAG_BMM150_H */

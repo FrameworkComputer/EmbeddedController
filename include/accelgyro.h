@@ -30,7 +30,7 @@ struct accelgyro_drv {
 	 * @v Vector to store acceleration (in units of counts).
 	 * @return EC_SUCCESS if successful, non-zero if error.
 	 */
-	int (*read)(const struct motion_sensor_t *s, vector_3_t v);
+	int (*read)(const struct motion_sensor_t *s, intv3_t v);
 
 	/**
 	 * Setter and getter methods for the sensor range. The sensor range

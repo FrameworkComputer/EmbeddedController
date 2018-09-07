@@ -109,7 +109,7 @@ int st_get_data_rate(const struct motion_sensor_t *s);
  * @v: vector
  * @data: LSB raw data
  */
-void st_normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data);
+void st_normalize(const struct motion_sensor_t *s, intv3_t v, uint8_t *data);
 
 /* Internal data structure for sensors */
 struct stprivate_data {

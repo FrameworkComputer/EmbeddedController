@@ -134,7 +134,7 @@ static int opt3001_i2c_write(const int port, const int addr, const int reg,
 /**
  * Read OPT3001 light sensor data.
  */
-int opt3001_read_lux(const struct motion_sensor_t *s, vector_3_t v)
+int opt3001_read_lux(const struct motion_sensor_t *s, intv3_t v)
 {
 	struct opt3001_drv_data_t *drv_data = OPT3001_GET_DATA(s);
 	int ret;

@@ -26,7 +26,7 @@ struct accel_orientation {
 	matrix_3x3_t rot_hinge_180;
 
 	/* Vector pointing along hinge axis. */
-	vector_3_t hinge_axis;
+	intv3_t hinge_axis;
 };
 
 /* Link global structure for orientation. This must be defined in board.c. */

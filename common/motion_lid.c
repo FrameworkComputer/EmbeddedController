@@ -213,17 +213,17 @@ static int motion_lid_set_tablet_mode(int reliable)
  *
  * @return flag representing if resulting lid angle calculation is reliable.
  */
-static int calculate_lid_angle(const vector_3_t base, const vector_3_t lid,
+static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 			       int *lid_angle)
 {
-	vector_3_t v;
+	intv3_t v;
 	fp_t lid_to_base_fp, cos_lid_90, cos_lid_270;
 	fp_t lid_to_base, base_to_hinge;
 	fp_t denominator;
 	int reliable = 1;
 	int base_magnitude2, lid_magnitude2;
 	int base_range, lid_range, i;
-	vector_3_t scaled_base, scaled_lid;
+	intv3_t scaled_base, scaled_lid;
 
 	/*
 	 * The angle between lid and base is:
@@ -422,9 +422,9 @@ void motion_lid_calc(void)
 	 * because calculate_lid_angle assumes when the lid is closed, that
 	 * the lid and base accelerometer data matches
 	 */
-	vector_3_t lid = { accel_lid->xyz[X],
-			   accel_lid->xyz[Y] * -1,
-			   accel_lid->xyz[Z] * -1};
+	intv3_t lid = { accel_lid->xyz[X],
+			accel_lid->xyz[Y] * -1,
+			accel_lid->xyz[Z] * -1};
 	/* Calculate angle of lid accel. */
 	lid_angle_is_reliable = calculate_lid_angle(
 			accel_base->xyz, lid,

@@ -37,7 +37,7 @@
  * Orientation mode vectors, must match sequential ordering of
  * known orientations from enum motionsensor_orientation
  */
-const vector_3_t orientation_modes[] = {
+const intv3_t orientation_modes[] = {
 	[MOTIONSENSE_ORIENTATION_LANDSCAPE] = { 0, -1, 0 },
 	[MOTIONSENSE_ORIENTATION_PORTRAIT] = { 1, 0, 0 },
 	[MOTIONSENSE_ORIENTATION_UPSIDE_DOWN_PORTRAIT] = { -1, 0, 0 },
@@ -780,8 +780,8 @@ enum motionsensor_orientation motion_sense_remap_orientation(
 		enum motionsensor_orientation orientation)
 {
 	enum motionsensor_orientation rotated_orientation;
-	const vector_3_t *orientation_v;
-	vector_3_t rotated_orientation_v;
+	const intv3_t *orientation_v;
+	intv3_t rotated_orientation_v;
 
 	if (orientation == MOTIONSENSE_ORIENTATION_UNKNOWN)
 		return MOTIONSENSE_ORIENTATION_UNKNOWN;
@@ -1646,7 +1646,7 @@ static int command_accel_read_xyz(int argc, char **argv)
 	char *e;
 	int id, n = 1, ret;
 	struct motion_sensor_t *sensor;
-	vector_3_t v;
+	intv3_t v;
 
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;

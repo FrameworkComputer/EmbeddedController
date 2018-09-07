@@ -33,7 +33,7 @@ struct mag_cal_t {
 	vec4_t acc_w;
 	float radius;
 
-	vector_3_t bias;
+	intv3_t bias;
 
 	/* number of samples needed to calibrate */
 	uint16_t batch_size;
@@ -42,5 +42,5 @@ struct mag_cal_t {
 
 void init_mag_cal(struct mag_cal_t *moc);
 
-int mag_cal_update(struct mag_cal_t *moc, const vector_3_t v);
+int mag_cal_update(struct mag_cal_t *moc, const intv3_t v);
 #endif  /* __CROS_EC_MAG_CAL_H */

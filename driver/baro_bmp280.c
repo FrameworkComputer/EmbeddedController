@@ -298,7 +298,7 @@ static int bmp280_init(const struct motion_sensor_t *s)
 	return sensor_init_done(s);
 }
 
-static int bmp280_read(const struct motion_sensor_t *s, vector_3_t v)
+static int bmp280_read(const struct motion_sensor_t *s, intv3_t v)
 {
 	int ret, pres;
 	struct bmp280_drv_data_t *data = BMP280_GET_DATA(s);
