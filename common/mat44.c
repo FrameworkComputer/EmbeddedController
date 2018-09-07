@@ -55,13 +55,13 @@ void mat44_swap_rows(mat44_t A, const size_t i, const size_t j)
 	}
 }
 
-void mat44_solve(mat44_t A, vec4_t x, const vec4_t b, const size4_t pivot)
+void mat44_solve(mat44_t A, floatv4_t x, const floatv4_t b, const size4_t pivot)
 {
 	const size_t N = 4;
-	vec4_t b_copy;
+	floatv4_t b_copy;
 	size_t i, k;
 
-	memcpy(b_copy, b, sizeof(vec4_t));
+	memcpy(b_copy, b, sizeof(floatv4_t));
 
 	for (k = 0; k < N; ++k) {
 		if (pivot[k] != k) {

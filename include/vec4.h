@@ -7,7 +7,7 @@
 
 #define __CROS_EC_VEC_4_H
 
-typedef float vec4_t[4];
+typedef float floatv4_t[4];
 
 #endif  /* __CROS_EC_VEC_4_H */
 

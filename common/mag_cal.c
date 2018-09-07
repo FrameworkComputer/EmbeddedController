@@ -83,7 +83,7 @@ static int moc_eigen_test(struct mag_cal_t *moc)
 static int moc_fit(struct mag_cal_t *moc, floatv3_t bias, float *radius)
 {
 	size4_t pivot;
-	vec4_t out;
+	floatv4_t out;
 	int success = 0;
 
 	/*

@@ -18,6 +18,7 @@ void mat44_decompose_lup(mat44_t LU, size4_t pivot);
 
 void mat44_swap_rows(mat44_t A, const size_t i, const size_t j);
 
-void mat44_solve(mat44_t A, vec4_t x, const vec4_t b, const size4_t pivot);
+void mat44_solve(mat44_t A, floatv4_t x, const floatv4_t b,
+		 const size4_t pivot);
 
 #endif  /* __CROS_EC_MAT_44_H */

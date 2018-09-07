@@ -30,7 +30,7 @@ struct mag_cal_t {
 	 * +----+----+----+----+
 	 */
 	mat44_t acc;
-	vec4_t acc_w;
+	floatv4_t acc_w;
 	float radius;
 
 	intv3_t bias;
