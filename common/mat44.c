@@ -10,7 +10,7 @@
 
 #define K_EPSILON 1E-5f
 
-void mat44_decompose_lup(mat44_t LU, size4_t pivot)
+void mat44_decompose_lup(mat44_t LU, sizev4_t pivot)
 {
 	const size_t N = 4;
 	size_t i, j, k;
@@ -55,7 +55,8 @@ void mat44_swap_rows(mat44_t A, const size_t i, const size_t j)
 	}
 }
 
-void mat44_solve(mat44_t A, floatv4_t x, const floatv4_t b, const size4_t pivot)
+void mat44_solve(mat44_t A, floatv4_t x, const floatv4_t b,
+		 const sizev4_t pivot)
 {
 	const size_t N = 4;
 	floatv4_t b_copy;
@@ -80,6 +81,3 @@ void mat44_solve(mat44_t A, floatv4_t x, const floatv4_t b, const size4_t pivot)
 		for (i = k + 1; i < N; ++i)
 			x[k] -= x[i] * A[k][i];
 }
-
-
-
