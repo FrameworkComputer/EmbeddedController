@@ -1207,6 +1207,10 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 					sensor, in->ec_rate.data * MSEC);
 			/* Bound the new sampling rate. */
 			motion_sense_set_motion_intervals();
+
+			/* Force a collection to purge old events.  */
+			task_set_event(TASK_ID_MOTIONSENSE,
+					TASK_EVENT_MOTION_ODR_CHANGE, 0);
 		}
 
 		out->ec_rate.ret = motion_sense_ec_rate(sensor) / MSEC;
