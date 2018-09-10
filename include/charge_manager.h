@@ -9,7 +9,6 @@
 #include "common.h"
 
 /* Charge port that indicates no active port */
-#define CHARGE_SUPPLIER_NONE -1
 #define CHARGE_PORT_NONE -1
 #define CHARGE_CEIL_NONE -1
 
@@ -31,6 +30,7 @@ defined(TEST_BUILD)
 
 /* Commonly-used charge suppliers listed in no particular order */
 enum charge_supplier {
+	CHARGE_SUPPLIER_NONE = -1,
 	CHARGE_SUPPLIER_PD,
 	CHARGE_SUPPLIER_TYPEC,
 	CHARGE_SUPPLIER_TYPEC_DTS,
