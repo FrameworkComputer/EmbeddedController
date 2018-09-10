@@ -276,7 +276,7 @@ const char help_str[] =
 	"      Control USB PD/type-C\n"
 	"  usbpdmuxinfo\n"
 	"      Get USB-C SS mux info\n"
-	"  usbpdpower\n"
+	"  usbpdpower [port]\n"
 	"      Get USB PD power information\n"
 	"  version\n"
 	"      Prints EC version\n"
@@ -5119,6 +5119,7 @@ int cmd_usb_pd_power(int argc, char *argv[])
 	struct ec_response_usb_pd_power_info *r =
 		(struct ec_response_usb_pd_power_info *)ec_inbuf;
 	int num_ports, i, rv;
+	char *e;
 
 	rv = ec_command(EC_CMD_USB_PD_PORTS, 0, NULL, 0,
 			ec_inbuf, ec_max_insize);
@@ -5126,15 +5127,31 @@ int cmd_usb_pd_power(int argc, char *argv[])
 		return rv;
 	num_ports = ((struct ec_response_usb_pd_ports *)r)->num_ports;
 
-	for (i = 0; i < num_ports; i++) {
-		p.port = i;
+	if (argc < 2) {
+		for (i = 0; i < num_ports; i++) {
+			p.port = i;
+			rv = ec_command(EC_CMD_USB_PD_POWER_INFO, 0,
+					&p, sizeof(p),
+					ec_inbuf, ec_max_insize);
+			if (rv < 0)
+				return rv;
+
+			printf("Port %d: ", i);
+			print_pd_power_info(r);
+		}
+	} else {
+		p.port = strtol(argv[1], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad port.\n");
+			return -1;
+		}
 		rv = ec_command(EC_CMD_USB_PD_POWER_INFO, 0,
 				&p, sizeof(p),
 				ec_inbuf, ec_max_insize);
 		if (rv < 0)
 			return rv;
 
-		printf("Port %d: ", i);
+		printf("Port %d: ", p.port);
 		print_pd_power_info(r);
 	}
 
