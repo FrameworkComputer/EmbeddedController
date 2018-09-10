@@ -227,6 +227,12 @@ void clock_enable_module(enum module_id module, int enable)
 				  STM32_RCC_I2C3EN | STM32_RCC_FMPI2C4EN);
 		}
 		return;
+	} else if (module == MODULE_ADC) {
+		if (enable)
+			STM32_RCC_APB2ENR |= STM32_RCC_APB2ENR_ADC1EN;
+		else
+			STM32_RCC_APB2ENR &= ~STM32_RCC_APB2ENR_ADC1EN;
+		return;
 	}
 
 	CPRINTS("Module %d is not supported for clock %s\n",
