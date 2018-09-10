@@ -304,7 +304,7 @@ static void adc_init(void)
 		return;
 
 	/* Enable ADC clock */
-	STM32_RCC_APB2ENR |= (1 << 9);
+	clock_enable_module(MODULE_ADC, 1);
 	/* check HSI14 in RCC ? ON by default */
 
 	/* ADC calibration (done with ADEN = 0) */

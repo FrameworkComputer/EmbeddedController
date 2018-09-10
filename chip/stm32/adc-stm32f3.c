@@ -5,6 +5,7 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "dma.h"
@@ -222,7 +223,7 @@ static void adc_init(void)
 	 * APB2 clock is 16MHz. ADC clock prescaler is /2.
 	 * So the ADC clock is 8MHz.
 	 */
-	STM32_RCC_APB2ENR |= (1 << 9);
+	clock_enable_module(MODULE_ADC, 1);
 
 	/*
 	 * ADC clock is divided with respect to AHB, so no delay needed
