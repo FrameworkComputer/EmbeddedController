@@ -74,6 +74,8 @@ static uint32_t templ_valid;
 static uint32_t templ_dirty;
 /* Current user ID */
 static uint32_t user_id[FP_CONTEXT_USERID_WORDS];
+/* Ready to encrypt a template. */
+static timestamp_t encryption_deadline;
 
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
@@ -576,6 +578,13 @@ static int fp_command_frame(struct host_cmd_handler_args *args)
 
 	if (!offset) {
 		/* Host has requested the first chunk, do the encryption. */
+		timestamp_t now = get_time();
+
+		/* b/114160734: Not more than 1 encrypted message per second. */
+		if (!timestamp_expired(encryption_deadline, &now))
+			return EC_RES_BUSY;
+		encryption_deadline.val = now.val + (1 * SECOND);
+
 		memset(fp_enc_buffer, 0, sizeof(fp_enc_buffer));
 		/* The beginning of the buffer contains nonce/salt/tag. */
 		enc_info = (void *)fp_enc_buffer;
