@@ -9,8 +9,10 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 
 extern "C" {
+#define HIDE_EC_STDLIB
 #include "fuzz_config.h"
 #include "nvmem.h"
 #include "nvmem_vars.h"
