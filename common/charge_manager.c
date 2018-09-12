@@ -583,8 +583,10 @@ static void charge_manager_refresh(void)
 		 * Zero the available charge on the rejected port so that
 		 * it is no longer chosen.
 		 */
-		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
+		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i) {
 			available_charge[i][new_port].current = 0;
+			available_charge[i][new_port].voltage = 0;
+		}
 	}
 
 	active_charge_port_initialized = 1;

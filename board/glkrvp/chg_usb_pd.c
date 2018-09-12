@@ -162,10 +162,7 @@ DECLARE_HOOK(HOOK_AC_CHANGE, board_dc_jack_handle, HOOK_PRIO_FIRST);
 static void board_charge_init(void)
 {
 	int port, supplier;
-	struct charge_port_info charge_init = {
-		.current = 0,
-		.voltage = USB_CHARGER_VOLTAGE_MV,
-	};
+	struct charge_port_info charge_init = {0};
 
 	/* Initialize all charge suppliers to seed the charge manager */
 	for (port = 0; port < CHARGE_PORT_COUNT; port++) {

@@ -907,8 +907,6 @@ void usb_charger_task(void *u)
 	int bc12_type = CHARGE_SUPPLIER_NONE;
 	int reg = 0;
 
-	charge.voltage = USB_CHARGER_VOLTAGE_MV;
-
 	while (1) {
 		rt946x_read8(RT946X_REG_DPDMIRQ, &reg);
 
@@ -916,6 +914,7 @@ void usb_charger_task(void *u)
 		if (reg & RT946X_MASK_DPDMIRQ_ATTACH) {
 			bc12_type = rt946x_get_bc12_device_type();
 			if (bc12_type != CHARGE_SUPPLIER_NONE) {
+				charge.voltage = USB_CHARGER_VOLTAGE_MV;
 				charge.current =
 					rt946x_get_bc12_ilim(bc12_type);
 				charge_manager_update_charge(bc12_type,
@@ -927,6 +926,7 @@ void usb_charger_task(void *u)
 		/* VBUS detach event */
 		if (reg & RT946X_MASK_DPDMIRQ_DETACH) {
 			charge.current = 0;
+			charge.voltage = 0;
 			charge_manager_update_charge(bc12_type, 0, &charge);
 			rt946x_enable_bc12_detection(1);
 		}

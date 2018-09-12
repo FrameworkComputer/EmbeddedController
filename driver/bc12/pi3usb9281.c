@@ -289,10 +289,8 @@ void usb_charger_set_switches(int port, enum usb_switch setting)
 static void bc12_detect(int port)
 {
 	int device_type, charger_status;
-	struct charge_port_info charge;
+	struct charge_port_info charge = {0};
 	int type;
-
-	charge.voltage = USB_CHARGER_VOLTAGE_MV;
 
 	if (usb_charger_port_is_sourcing_vbus(port)) {
 		/* If we're sourcing VBUS then we're not charging */
@@ -364,11 +362,11 @@ static void bc12_detect(int port)
 		else
 			type = CHARGE_SUPPLIER_OTHER;
 
+		charge.voltage = USB_CHARGER_VOLTAGE_MV;
 		charge.current = pi3usb9281_get_ilim(device_type,
 						     charger_status);
 		charge_manager_update_charge(type, port, &charge);
-	} else { /* Detachment: update available charge to 0 */
-		charge.current = 0;
+	} else { /* Detachment */
 		charge_manager_update_charge(
 					CHARGE_SUPPLIER_PROPRIETARY,
 					port,
