@@ -67,6 +67,7 @@
 
 /* No Write-protect GPIO, force the write-protection */
 #define CONFIG_WP_ALWAYS
+#define CONFIG_FLASH_READOUT_PROTECTION
 
 #ifndef __ASSEMBLER__
 

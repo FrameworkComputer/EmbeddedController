@@ -53,6 +53,7 @@
 #define TIM_WATCHDOG 11
 
 #define CONFIG_WP_ALWAYS
+#define CONFIG_FLASH_READOUT_PROTECTION
 
 /* ADC signal */
 enum adc_channel {

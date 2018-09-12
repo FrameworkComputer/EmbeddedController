@@ -1441,6 +1441,11 @@
 #undef CONFIG_FLASH_PSTATE_LOCKED
 
 /*
+ * Enable readout protection.
+ */
+#undef CONFIG_FLASH_READOUT_PROTECTION
+
+/*
  * For flash that is segemented in different regions.
  */
 #undef CONFIG_FLASH_MULTIPLE_REGION

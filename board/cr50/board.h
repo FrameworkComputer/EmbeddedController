@@ -39,6 +39,7 @@
 /* Flash configuration */
 #undef CONFIG_FLASH_PSTATE
 #define CONFIG_WP_ALWAYS
+#define CONFIG_FLASH_READOUT_PROTECTION
 #define CONFIG_CMD_FLASH
 
 #define CONFIG_CRC8
