@@ -90,6 +90,13 @@
 /* TODO(b/111264984): watchdog hardware reset function failed. */
 #undef IT83XX_ETWD_HW_RESET_SUPPORT
 /*
+ * (b/112452221):
+ * Floating-point multiplication single-precision is failed on DX version,
+ * so we use the formula "A/(1/B)" to replace a multiplication operation
+ * (A*B = A/(1/B)).
+ */
+#define IT83XX_FPU_MUL_BY_DIV
+/*
  * More GPIOs can be set as 1.8v input.
  * Please refer to gpio_1p8v_sel[] for 1.8v GPIOs.
  */
