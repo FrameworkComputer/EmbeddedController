@@ -150,10 +150,25 @@ static void protect_blocks(uint32_t blocks)
 	commit_optb();
 }
 
-/* use the option bytes RSS1 bit as 'Write Protect enabled' flag. */
+/*
+ * If RDP as PSTATE option is defined, use that as 'Write Protect enabled' flag:
+ * it makes no sense to be able to unlock RO, as that'd allow flashing
+ * arbitrary RO that could read back all flash.
+ *
+ * crbug.com/888109: Do not copy this code over to other STM32 chips without
+ * understanding the full implications.
+ *
+ * If RDP is not defined, use the option bytes RSS1 bit.
+ * TODO(crbug.com/888104): Validate that using RSS1 for this purpose is safe.
+ */
 static int is_wp_enabled(void)
 {
+#ifdef CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE
+	return (STM32_FLASH_OPTSR_CUR(0) & FLASH_OPTSR_RDP_MASK)
+		!= FLASH_OPTSR_RDP_LEVEL_0;
+#else
 	return !!(STM32_FLASH_OPTSR_CUR(0) & FLASH_OPTSR_RSS1);
+#endif
 }
 
 static int set_wp(int enabled)
@@ -163,10 +178,20 @@ static int set_wp(int enabled)
 	rv = unlock_optb();
 	if (rv)
 		return rv;
+
+#ifdef CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE
+	if (enabled) {
+		/* Enable RDP level 1. */
+		STM32_FLASH_OPTSR_PRG(0) =
+			(STM32_FLASH_OPTSR_PRG(0) & ~FLASH_OPTSR_RDP_MASK) |
+			FLASH_OPTSR_RDP_LEVEL_1;
+	}
+#else
 	if (enabled)
 		STM32_FLASH_OPTSR_PRG(0) |= FLASH_OPTSR_RSS1;
 	else
 		STM32_FLASH_OPTSR_PRG(0) &= ~FLASH_OPTSR_RSS1;
+#endif
 
 	return commit_optb();
 }
@@ -447,8 +472,10 @@ int flash_pre_init(void)
 		 */
 		if ((prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) &&
 		    !(prot_flags & EC_FLASH_PROTECT_RO_NOW)) {
-			int rv = flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
-						   EC_FLASH_PROTECT_RO_NOW);
+			int rv;
+
+			rv = flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
+					       EC_FLASH_PROTECT_RO_NOW);
 			if (rv)
 				return rv;
 

@@ -1452,6 +1452,23 @@
 #undef CONFIG_FLASH_READOUT_PROTECTION
 
 /*
+ * Use Read-out protection status as PSTATE, i.e. after RDP is enabled, we never
+ * allow RO protection to be disabled.
+ *
+ * This is used when we want to prevent read-back of some critical region (e.g.
+ * rollback), even in DFU/BOOT0 mode.
+ *
+ * Note that this significantly changes the behaviour or flash protection,
+ * as this tie EC_FLASH_PROTECT_RO_AT_BOOT with RDP status: it makes no
+ * sense to be able to unlock RO protection if RDP is enabled, as a custom RO
+ * could allow protected regions readback.
+ *
+ * TODO(crbug.com/888109): Implementation is currently only available on
+ * STM32H7, and requires more documentation.
+ */
+#undef CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE
+
+/*
  * For flash that is segemented in different regions.
  */
 #undef CONFIG_FLASH_MULTIPLE_REGION
@@ -4036,5 +4053,20 @@
 #ifdef CONFIG_MAG_BMI160_BMM150
 #define CONFIG_BMI160_SEC_I2C
 #endif
+
+/*
+ * TODO(crbug.com/888109): Makes sure RDP as PSTATE is only enabled where it
+ * makes sense.
+ */
+#ifdef CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE
+#ifdef CONFIG_FLASH_PSTATE
+#error "Flash readout protection and PSTATE may not work as intended."
+#endif
+
+#ifndef CHIP_FAMILY_STM32H7
+#error "Flash readout protection only implemented on STM32H7."
+#endif
+#endif /* CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE */
+
 #endif  /* __CROS_EC_CONFIG_H */
 

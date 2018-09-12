@@ -69,8 +69,8 @@
 #define ERASE_BANK1  0xfffe
 #define ERASE_BANK2  0xfffd
 
-/* Upper bound of fully erasing the flash and rebooting the monitor */
-#define MAX_DELAY_MASS_ERASE_REBOOT 100000 /* us */
+/* Upper bound of rebooting the monitor */
+#define MAX_DELAY_REBOOT 100000 /* us */
 
 /* known STM32 SoC parameters */
 struct stm32_def {
@@ -810,27 +810,34 @@ int command_erase(int fd, uint16_t count, uint16_t start)
 int command_read_unprotect(int fd)
 {
 	int res;
+	int retries = EXT_ERASE_TIMEOUT / DEFAULT_TIMEOUT;
+
+	printf("Unprotecting flash read...\n");
 
 	res = send_command(fd, CMD_RU, NULL, 0, NULL, 0, 1);
-	if (res < 0)
-		return -EIO;
+	/*
+	 * Read unprotect can trigger a mass erase, which can take long time
+	 * (e.g. 13s+ on STM32H7)
+	 */
+	do {
+		res = wait_for_ack(fd);
+	} while ((res == -ETIMEDOUT) && --retries);
 
-	/* Wait for the ACK */
-	if (wait_for_ack(fd) < 0) {
+	if (res < 0) {
 		fprintf(stderr, "Failed to get read-protect ACK\n");
-		return -EINVAL;
+		return res;
 	}
 	printf("Flash read unprotected.\n");
 
 	/*
 	 * This command triggers a reset.
 	 *
-	 * Wait at least the 'mass-erase' delay, else we could reconnect
+	 * Wait at least the reboot delay, else we could reconnect
 	 * before the actual reset depending on the bootloader.
 	 */
-	usleep(MAX_DELAY_MASS_ERASE_REBOOT);
+	usleep(MAX_DELAY_REBOOT);
 	if (init_monitor(fd) < 0) {
-		fprintf(stderr, "Cannot recover after RP reset\n");
+		fprintf(stderr, "Cannot recover after RU reset\n");
 		return -EIO;
 	}
 
@@ -855,15 +862,14 @@ int command_write_unprotect(int fd)
 	/*
 	 * This command triggers a reset.
 	 *
-	 * Wait at least the 'mass-erase' delay, else we could reconnect
+	 * Wait at least the reboot delay, else we could reconnect
 	 * before the actual reset depending on the bootloader.
 	 */
-	usleep(MAX_DELAY_MASS_ERASE_REBOOT);
+	usleep(MAX_DELAY_REBOOT);
 	if (init_monitor(fd) < 0) {
 		fprintf(stderr, "Cannot recover after WP reset\n");
 		return -EIO;
 	}
-
 
 	return 0;
 }
