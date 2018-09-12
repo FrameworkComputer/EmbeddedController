@@ -49,7 +49,7 @@ struct led_descriptor {
 
 
 /* Charging LED state table - defined in board's led.c */
-extern const struct led_descriptor
+extern struct led_descriptor
 			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES];
 
 /* Charging LED state level 1 - defined in board's led.c */

@@ -18,8 +18,7 @@ const int led_charge_lvl_1 = 5;
 
 const int led_charge_lvl_2 = 97;
 
-const struct led_descriptor
-			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_RED, LED_INDEFINITE} },
 	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
 	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_GREEN,  LED_INDEFINITE} },

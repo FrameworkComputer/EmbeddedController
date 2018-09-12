@@ -9,6 +9,7 @@
 #include "gpio.h"
 #include "led_common.h"
 #include "led_states.h"
+#include "hooks.h"
 
 #define LED_OFF_LVL	1
 #define LED_ON_LVL	0
@@ -18,14 +19,14 @@ const int led_charge_lvl_1;
 const int led_charge_lvl_2 = 100;
 
 /* Meep: Note there is only LED for charge / power */
-const struct led_descriptor
-			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
 	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
 	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
 	[STATE_DISCHARGE_S0]	     = {{LED_OFF, LED_INDEFINITE} },
 	[STATE_DISCHARGE_S0_BAT_LOW] = {{EC_LED_COLOR_WHITE, 1 * LED_ONE_SEC},
 					{LED_OFF, 1 * LED_ONE_SEC} },
+	/* STATE_DISCHARGE_S3 will changed if sku is clamshells */
 	[STATE_DISCHARGE_S3]	     = {{LED_OFF, LED_INDEFINITE} },
 	[STATE_DISCHARGE_S5]         = {{LED_OFF, LED_INDEFINITE} },
 	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_WHITE, 0.5 * LED_ONE_SEC},
@@ -48,6 +49,22 @@ const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_BATTERY_LED,
 	EC_LED_ID_POWER_LED
 };
+
+static void s3_led_init(void)
+{
+	if (!board_is_convertible()) {
+		led_bat_state_table[STATE_DISCHARGE_S3][LED_PHASE_0].color =
+			EC_LED_COLOR_WHITE;
+		led_bat_state_table[STATE_DISCHARGE_S3][LED_PHASE_0].time =
+			1 * LED_ONE_SEC;
+
+		led_bat_state_table[STATE_DISCHARGE_S3][LED_PHASE_1].color =
+			LED_OFF;
+		led_bat_state_table[STATE_DISCHARGE_S3][LED_PHASE_1].time =
+			1 * LED_ONE_SEC;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, s3_led_init, HOOK_PRIO_DEFAULT);
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 

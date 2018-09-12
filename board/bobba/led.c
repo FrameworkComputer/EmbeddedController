@@ -18,8 +18,7 @@ const int led_charge_lvl_1 = 0;
 const int led_charge_lvl_2 = 100;
 
 /* Bobba: Note there is only LED for charge / power */
-const struct led_descriptor
-			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
 	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_BLUE,  LED_INDEFINITE} },
 	[STATE_DISCHARGE_S0]	     = {{EC_LED_COLOR_BLUE,  LED_INDEFINITE} },

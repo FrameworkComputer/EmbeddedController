@@ -214,7 +214,7 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
  * SKU (SKU ID is 17, 18) and default SKU is 255 for factory that enable
  * all sensors.
  */
-static int board_is_convertible(void)
+int board_is_convertible(void)
 {
 	return sku_id == 1 || sku_id == 2 || sku_id == 3 || sku_id == 255;
 }
