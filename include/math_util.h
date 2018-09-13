@@ -90,6 +90,11 @@ static inline fp_t fp_abs(fp_t a)
 	return (a >= INT_TO_FP(0) ? a : -a);
 }
 
+/**
+ * Square root
+ */
+fp_t fp_sqrtf(fp_t a);
+
 /*
  * Fixed point matrix
  *

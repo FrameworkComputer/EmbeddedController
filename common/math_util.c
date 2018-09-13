@@ -86,10 +86,16 @@ static inline int int_sqrtf(fp_inter_t x)
 {
 	return sqrtf(x);
 }
+
+/* If the platform support FPU, just return sqrtf. */
+fp_t fp_sqrtf(fp_t x)
+{
+	return sqrtf(x);
+}
 #else
 static int int_sqrtf(fp_inter_t x)
 {
-	int rmax = 0x7fffffff;
+	int rmax = INT32_MAX;
 	int rmin = 0;
 
 	/* Short cut if x is 32-bit value */
@@ -124,7 +130,14 @@ static int int_sqrtf(fp_inter_t x)
 		}
 	}
 }
-#endif
+
+fp_t fp_sqrtf(fp_t x)
+{
+	fp_inter_t preshift_x = (fp_inter_t)x << FP_BITS;
+
+	return int_sqrtf(preshift_x);
+}
+#endif /* CONFIG_FPU */
 
 int vector_magnitude(const intv3_t v)
 {
