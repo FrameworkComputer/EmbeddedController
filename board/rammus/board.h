@@ -29,10 +29,7 @@
 #define CONFIG_I2C_MASTER
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PROTOCOL_8042
-/* TODO(b:111815820): Need to enable LED setting later
- *		led.c need to be modified too
- */
-/* #define CONFIG_LED_COMMON */
+#define CONFIG_LED_COMMON
 #define CONFIG_LID_SWITCH
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_LTO

@@ -17,13 +17,11 @@
 #include "system.h"
 #include "util.h"
 
-#define BAT_LED_ON 1
-#define BAT_LED_OFF 0
-
-#define LED_TOTAL_TICKS 16
-#define LED_ON_TICKS 8
-
-/* TODO(b:111815820): Need to implement the control of LED */
+#define LED_ON 1
+#define LED_OFF 0
+#define LED_TOTAL_TICKS 20
+#define LED_CHARGE_PULSE 10
+#define LED_POWER_PULSE 15
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_POWER_LED,
@@ -31,108 +29,152 @@ const enum ec_led_id supported_led_ids[] = {
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-enum led_color {
-	LED_OFF = 0,
-	LED_RED,
-	LED_GREEN,
-	LED_BLUE,
-
-	/* Number of colors, not a color itself */
-	LED_COLOR_COUNT
+enum led_charge_state {
+	LED_STATE_DISCHARGE = 0,
+	LED_STATE_CHARGE,
+	LED_STATE_FULL,
+	LED_STATE_ERROR_PHASE0,
+	LED_STATE_ERROR_PHASE1,
+	LED_CHARGE_STATE_COUNT
 };
 
-/**
- * Set LED color
- *
- * @param color         Enumerated color value
- */
-static void set_color(enum led_color color)
-{
-	gpio_set_level(GPIO_POWER_LED, !(color == LED_BLUE));
-	gpio_set_level(GPIO_LED_ACIN, !(color == LED_GREEN));
-	gpio_set_level(GPIO_LED_CHARGE, !(color == LED_RED));
-}
+enum led_power_state {
+	LED_STATE_S0 = 0,
+	LED_STATE_S3_PHASE0,
+	LED_STATE_S3_PHASE1,
+	LED_STATE_S5,
+	LED_POWER_STATE_COUNT
+};
+
+static const struct {
+	uint8_t led1:1;
+	uint8_t led2:1;
+} led_chg_state_table[] = {
+	[LED_STATE_DISCHARGE] = {LED_OFF, LED_OFF},
+	[LED_STATE_CHARGE] = {LED_OFF, LED_ON},
+	[LED_STATE_FULL] = {LED_ON, LED_OFF},
+	[LED_STATE_ERROR_PHASE0] = {LED_OFF, LED_OFF},
+	[LED_STATE_ERROR_PHASE1] = {LED_OFF, LED_ON}
+};
+
+static const struct {
+	uint8_t led:1;
+} led_pwr_state_table[] = {
+	[LED_STATE_S0] = {LED_ON},
+	[LED_STATE_S3_PHASE0] = {LED_OFF},
+	[LED_STATE_S3_PHASE1] = {LED_ON},
+	[LED_STATE_S5] = {LED_OFF}
+};
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	brightness_range[EC_LED_COLOR_RED] = 1;
-	brightness_range[EC_LED_COLOR_BLUE] = 1;
+	brightness_range[EC_LED_COLOR_WHITE] = 1;
 	brightness_range[EC_LED_COLOR_GREEN] = 1;
+	brightness_range[EC_LED_COLOR_AMBER] = 1;
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	gpio_set_level(GPIO_POWER_LED, !brightness[EC_LED_COLOR_BLUE]);
-	gpio_set_level(GPIO_LED_ACIN, !brightness[EC_LED_COLOR_GREEN]);
-	gpio_set_level(GPIO_LED_CHARGE, !brightness[EC_LED_COLOR_RED]);
+	gpio_set_level(GPIO_PWR_LED, !brightness[EC_LED_COLOR_WHITE]);
+	gpio_set_level(GPIO_CHG_LED1, !brightness[EC_LED_COLOR_GREEN]);
+	gpio_set_level(GPIO_CHG_LED2, !brightness[EC_LED_COLOR_AMBER]);
 
 	return EC_SUCCESS;
 }
 
+void config_power_led(enum led_power_state state)
+{
+	gpio_set_level(GPIO_PWR_LED, led_pwr_state_table[state].led);
+}
 
-static void nautilus_led_set_power_battery(void)
+void config_battery_led(enum led_charge_state state)
+{
+	gpio_set_level(GPIO_CHG_LED1, led_chg_state_table[state].led1);
+	gpio_set_level(GPIO_CHG_LED2, led_chg_state_table[state].led2);
+}
+
+static void rammus_led_set_power(void)
 {
 	static unsigned int power_ticks;
-	enum led_color cur_led_color = LED_RED;
+	int chipset_state;
+
+	chipset_state = chipset_in_state(CHIPSET_STATE_HARD_OFF) |
+			(chipset_in_state(CHIPSET_STATE_SOFT_OFF) << 1) |
+			(chipset_in_state(CHIPSET_STATE_SUSPEND)  << 2) |
+			(chipset_in_state(CHIPSET_STATE_ON) << 3) |
+			(chipset_in_state(CHIPSET_STATE_STANDBY) << 4);
+
+	switch (chipset_state) {
+	case CHIPSET_STATE_ON:
+		config_power_led(LED_STATE_S0);
+		power_ticks = 0;
+		break;
+	case CHIPSET_STATE_SUSPEND:
+	case CHIPSET_STATE_STANDBY:
+		if ((power_ticks++ % LED_TOTAL_TICKS) < LED_POWER_PULSE)
+			config_power_led(LED_STATE_S3_PHASE0);
+		else
+			config_power_led(LED_STATE_S3_PHASE1);
+		break;
+	case CHIPSET_STATE_HARD_OFF:
+	case CHIPSET_STATE_SOFT_OFF:
+		config_power_led(LED_STATE_S5);
+		power_ticks = 0;
+		break;
+	default:
+		break;
+	}
+}
+
+static void rammus_led_set_battery(void)
+{
 	enum charge_state chg_state = charge_get_state();
 	int charge_percent = charge_get_percent();
-
-	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		set_color(LED_BLUE);
-		return;
-	}
-
-	/* Flash red on critical battery, which usually inhibits AP power-on. */
-	if (battery_is_present() != BP_YES ||
-		charge_percent < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
-			set_color(((power_ticks++ % LED_TOTAL_TICKS) < LED_ON_TICKS) ?
-						  LED_RED : LED_OFF);
-		return;
-	}
+	static unsigned int charge_ticks;
 
 	/* CHIPSET_STATE_OFF */
 	switch (chg_state) {
 	case PWR_STATE_DISCHARGE:
 		if ((charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER) &&
 			charge_percent >= BATTERY_LEVEL_NEAR_FULL)
-			cur_led_color = LED_GREEN;
+			config_battery_led(LED_STATE_FULL);
 		else
-			cur_led_color = LED_OFF;
+			config_battery_led(LED_STATE_DISCHARGE);
+		charge_ticks = 0;
 		break;
 	case PWR_STATE_CHARGE:
-		cur_led_color = LED_RED;
+		config_battery_led(LED_STATE_CHARGE);
+		charge_ticks = 0;
 		break;
 	case PWR_STATE_ERROR:
-		cur_led_color = ((power_ticks++ % LED_TOTAL_TICKS)
-					  < LED_ON_TICKS) ? LED_RED : LED_GREEN;
+		if ((charge_ticks++ % LED_TOTAL_TICKS) < LED_CHARGE_PULSE)
+			config_battery_led(LED_STATE_ERROR_PHASE0);
+		else
+			config_battery_led(LED_STATE_ERROR_PHASE1);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 	case PWR_STATE_IDLE:
 		if(charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER)
-			cur_led_color = LED_GREEN;
+			config_battery_led(LED_STATE_FULL);
 		else
-			cur_led_color = LED_OFF;
+			config_battery_led(LED_STATE_OFF);
+		charge_ticks = 0;
 		break;
 	default:
-		cur_led_color = LED_RED;
 		break;
 	}
-
-	set_color(cur_led_color);
-
-	if (chg_state != PWR_STATE_ERROR)
-		power_ticks = 0;
 }
 
 /**
- * Called by hook task every 250 ms
+ * Called by hook task every 200 ms
  */
 static void led_tick(void)
 {
-	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED) &&
-		led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
-			nautilus_led_set_power_battery();
-	}
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		rammus_led_set_power();
+
+	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
+		rammus_led_set_battery();
 }
 
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
