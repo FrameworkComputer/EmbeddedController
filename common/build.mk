@@ -128,7 +128,14 @@ common-$(CONFIG_USB_I2C)+=usb_i2c.o
 common-$(CONFIG_USB_CHARGER)+=usb_charger.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
+ifeq ($(CONFIG_USB_SM_FRAMEWORK),)
 common-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_protocol.o usb_pd_policy.o
+else
+common-$(CONFIG_USB_SM_FRAMEWORK)+=usb_sm.o
+common-$(CONFIG_USB_TYPEC_SM)+=usb_tc_sm.o
+common-$(CONFIG_USB_PRL_SM)+=usb_prl_sm.o
+common-$(CONFIG_USB_PE_SM)+=usb_pe_sm.o
+endif
 common-$(CONFIG_USB_PD_LOGGING)+=event_log.o pd_log.o
 common-$(CONFIG_USB_PD_TCPC)+=usb_pd_tcpc.o
 common-$(CONFIG_USB_UPDATE)+=usb_update.o update_fw.o

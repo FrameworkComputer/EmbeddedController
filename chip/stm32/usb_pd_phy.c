@@ -452,6 +452,16 @@ void pd_rx_handler(void)
 	int next_idx;
 	pending = STM32_EXTI_PR;
 
+#ifdef CONFIG_USB_TYPEC_CTVPD
+	/* Charge-Through Side detach event */
+	if (pending & EXTI_COMP2_MASK) {
+		task_set_event(PD_PORT_TO_TASK_ID(0), PD_EVENT_SM, 0);
+		/* Clear interrupt */
+		STM32_EXTI_PR = EXTI_COMP2_MASK;
+		pending &= ~EXTI_COMP2_MASK;
+	}
+#endif
+
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 		if (pending & EXTI_COMP_MASK(i)) {
 			rx_edge_ts[i][rx_edge_ts_idx[i]].val = get_time().val;
@@ -648,6 +658,7 @@ void pd_hw_init(int port, int role)
 		phy->tim_tx->ccmr1 = val;
 	else
 		phy->tim_tx->ccmr2 = val;
+
 	phy->tim_tx->ccer = 1 << ((TIM_TX_CCR_IDX(port) - 1) * 4);
 	phy->tim_tx->bdtr = 0x8000;
 	/* set prescaler to /1 */

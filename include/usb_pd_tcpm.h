@@ -16,6 +16,9 @@
 /* Time to wait for TCPC to complete transmit */
 #define PD_T_TCPC_TX_TIMEOUT  (100*MSEC)
 
+/* Number of valid Transmit Types */
+#define NUM_XMIT_TYPES (TCPC_TX_SOP_DEBUG_PRIME_PRIME + 1)
+
 /* Detected resistor values of port partner */
 enum tcpc_cc_voltage_status {
 	TYPEC_CC_VOLT_OPEN = 0,
@@ -32,6 +35,7 @@ enum tcpc_cc_pull {
 	TYPEC_CC_RP = 1,
 	TYPEC_CC_RD = 2,
 	TYPEC_CC_OPEN = 3,
+	TYPEC_CC_RA_RD = 4, /* Powered cable with Sink */
 };
 
 /* Pull-up values we apply as a SRC to advertise different current limits */
@@ -54,6 +58,7 @@ enum tcpm_transmit_type {
 };
 
 enum tcpc_transmit_complete {
+	TCPC_TX_UNSET = -1,
 	TCPC_TX_COMPLETE_SUCCESS =   0,
 	TCPC_TX_COMPLETE_DISCARDED = 1,
 	TCPC_TX_COMPLETE_FAILED =    2,

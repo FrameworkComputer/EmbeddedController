@@ -40,7 +40,11 @@ static const struct adc_profile_t profile = {
 	/* Sample all channels once using DMA */
 	.cfgr1_reg = STM32_ADC_CFGR1_OVRMOD,
 	.cfgr2_reg = 0,
+#ifdef CONFIG_ADC_SAMPLE_TIME
+	.smpr_reg = CONFIG_ADC_SAMPLE_TIME,
+#else
 	.smpr_reg = STM32_ADC_SMPR_13_5_CY,
+#endif
 	.ier_reg = 0,
 	.dma_option = &dma_single,
 	.dma_buffer_size = 1,
@@ -60,7 +64,11 @@ static const struct adc_profile_t profile = {
 		     STM32_ADC_CFGR1_CONT |
 		     STM32_ADC_CFGR1_DMACFG,
 	.cfgr2_reg = 0,
+#ifdef CONFIG_ADC_SAMPLE_TIME
+	.smpr_reg = CONFIG_ADC_SAMPLE_TIME,
+#else
 	.smpr_reg = STM32_ADC_SMPR_1_5_CY,
+#endif
 	/* Fire interrupt at end of sequence. */
 	.ier_reg = STM32_ADC_IER_EOSEQIE,
 	.dma_option = &dma_continuous,

@@ -343,11 +343,19 @@ int prepare_message(int port, uint16_t header, uint8_t cnt,
 	int off, i;
 	/* 64-bit preamble */
 	off = pd_write_preamble(port);
+#if defined(CONFIG_USB_TYPEC_VPD) || defined(CONFIG_USB_TYPEC_CTVPD)
+	/* Start Of Packet Prime: 2x Sync-1 + 2x Sync-3 */
+	off = pd_write_sym(port, off, BMC(PD_SYNC1));
+	off = pd_write_sym(port, off, BMC(PD_SYNC1));
+	off = pd_write_sym(port, off, BMC(PD_SYNC3));
+	off = pd_write_sym(port, off, BMC(PD_SYNC3));
+#else
 	/* Start Of Packet: 3x Sync-1 + 1x Sync-2 */
 	off = pd_write_sym(port, off, BMC(PD_SYNC1));
 	off = pd_write_sym(port, off, BMC(PD_SYNC1));
 	off = pd_write_sym(port, off, BMC(PD_SYNC1));
 	off = pd_write_sym(port, off, BMC(PD_SYNC2));
+#endif
 	/* header */
 	off = encode_short(port, off, header);
 
@@ -682,6 +690,17 @@ int pd_analyze_rx(int port, uint32_t *payload)
 	/* Find the Start Of Packet sequence */
 	while (bit > 0) {
 		bit = pd_dequeue_bits(port, bit, 20, &val);
+#if defined(CONFIG_USB_TYPEC_VPD) || defined(CONFIG_USB_TYPEC_CTVPD)
+		if (val == PD_SOP_PRIME) {
+			break;
+		} else if (val == PD_SOP) {
+			CPRINTF("SOP\n");
+			return PD_RX_ERR_UNSUPPORTED_SOP;
+		} else if (val == PD_SOP_PRIME_PRIME) {
+			CPRINTF("SOP''\n");
+			return PD_RX_ERR_UNSUPPORTED_SOP;
+		}
+#else /* CONFIG_USB_TYPEC_VPD || CONFIG_USB_TYPEC_CTVPD */
 #ifdef CONFIG_USB_PD_DECODE_SOP
 		if (val == PD_SOP || val == PD_SOP_PRIME ||
 						val == PD_SOP_PRIME_PRIME)
@@ -696,7 +715,8 @@ int pd_analyze_rx(int port, uint32_t *payload)
 			CPRINTF("SOP''\n");
 			return PD_RX_ERR_UNSUPPORTED_SOP;
 		}
-#endif
+#endif /* CONFIG_USB_PD_DECODE_SOP */
+#endif /* CONFIG_USB_TYPEC_VPD || CONFIG_USB_TYPEC_CTVPD */
 	}
 	if (bit < 0) {
 #ifdef CONFIG_USB_PD_DECODE_SOP
@@ -872,7 +892,11 @@ int tcpc_run(int port, int evt)
 	/* outgoing packet ? */
 	if ((evt & PD_EVENT_TX) && pd[port].rx_enabled) {
 		switch (pd[port].tx_type) {
+#if defined(CONFIG_USB_TYPEC_VPD) || defined(CONFIG_USB_TYPEC_CTVPD)
+		case TCPC_TX_SOP_PRIME:
+#else
 		case TCPC_TX_SOP:
+#endif
 			res = send_validate_message(port,
 					pd[port].tx_head,
 					pd[port].tx_data);
@@ -938,7 +962,7 @@ int tcpc_run(int port, int evt)
 #endif
 }
 
-#ifndef CONFIG_USB_POWER_DELIVERY
+#if !defined(CONFIG_USB_POWER_DELIVERY) && !defined(CONFIG_USB_SM_FRAMEWORK)
 void pd_task(void *u)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());

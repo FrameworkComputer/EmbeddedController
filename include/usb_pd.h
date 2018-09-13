@@ -49,6 +49,7 @@ enum pd_rx_errors {
 #define PD_EVENT_DEVICE_ACCESSED    (1<<7)
 #define PD_EVENT_POWER_STATE_CHANGE (1<<8) /* Chipset power state changed */
 #define PD_EVENT_SEND_HARD_RESET    (1<<9) /* Issue a Hard Reset. */
+#define PD_EVENT_SM                 (1<<10) /* PD State machine event */
 
 /* Ensure TCPC is out of low power mode before handling these events. */
 #define PD_EXIT_LOW_POWER_EVENT_MASK \
@@ -168,6 +169,7 @@ enum pd_rx_errors {
 #define PD_T_DRP_SNK           (40*MSEC) /* toggle time for sink DRP */
 #define PD_T_DRP_SRC           (30*MSEC) /* toggle time for source DRP */
 #define PD_T_DEBOUNCE          (15*MSEC) /* between 10ms and 20ms */
+#define PD_T_TRY_CC_DEBOUNCE   (15*MSEC) /* between 10ms and 20ms */
 #define PD_T_SINK_ADJ          (55*MSEC) /* between PD_T_DEBOUNCE and 60ms */
 #define PD_T_SRC_RECOVER      (760*MSEC) /* between 660ms and 1000ms */
 #define PD_T_SRC_RECOVER_MAX (1000*MSEC) /* 1000ms */
@@ -181,6 +183,10 @@ enum pd_rx_errors {
 #define PD_T_TRY_TIMEOUT      (550*MSEC) /* between 550ms and 1100ms */
 #define PD_T_TRY_WAIT         (600*MSEC) /* Max time for TryWait.SNK state */
 #define PD_T_SINK_REQUEST     (100*MSEC) /* Wait 100ms before next request */
+#define PD_T_PD_DEBOUNCE      (15*MSEC)  /* between 10ms and 20ms */
+#define PD_T_CHUNK_SENDER_RESPONSE (25*MSEC) /* 25ms */
+#define PD_T_CHUNK_SENDER_REQUEST  (25*MSEC) /* 25ms */
+#define PD_T_SWAP_SOURCE_START     (25*MSEC) /* Min of 20ms */
 
 /* number of edges and time window to detect CC line is not idle */
 #define PD_RX_TRANSITION_COUNT  3
@@ -195,6 +201,11 @@ enum pd_rx_errors {
 #define PD_T_VDM_RCVR_RSP      (15*MSEC) /* max of 15ms */
 #define PD_T_VDM_SNDR_RSP      (30*MSEC) /* max of 30ms */
 #define PD_T_VDM_WAIT_MODE_E  (100*MSEC) /* enter/exit the same max */
+
+/* CTVPD Timers ( USB Type-C ECN Table 4-27 ) */
+#define PD_T_VPDDETACH        (20*MSEC) /* max of 20*MSEC */
+#define PD_T_VPDCTDD           (4*MSEC) /* max of 4ms */
+#define PD_T_VPDDISABLE       (25*MSEC) /* min of 25ms */
 
 /* function table for entered mode */
 struct amode_fx {
@@ -391,6 +402,7 @@ struct pd_policy {
 #define IDH_PTYPE_PCABLE 3
 #define IDH_PTYPE_ACABLE 4
 #define IDH_PTYPE_AMA    5
+#define IDH_PTYPE_VPD    6
 
 #define VDO_IDH(usbh, usbd, ptype, is_modal, vid)		\
 	((usbh) << 31 | (usbd) << 30 | ((ptype) & 0x7) << 27	\
@@ -489,6 +501,34 @@ struct pd_policy {
 #define AMA_USBSS_U31_GEN1 1
 #define AMA_USBSS_U31_GEN2 2
 #define AMA_USBSS_BBONLY   3
+
+/*
+ * VPD VDO
+ * ---------
+ *  <31:28> :: HW version
+ *  <27:24> :: FW version
+ *  <23:21> :: VDO version
+ *  <20:17> :: SBZ
+ *  <16:15> :: Maximum VBUS Voltage
+ *  <14:13> :: SBZ
+ *  <12:7>  :: VBUS Impedance
+ *  <6:1>   :: Ground Impedance
+ *  <0>     :: Charge Through Support
+ */
+#define VDO_VPD(hw, fw, vbus, vbusz, gndz, cts)  \
+	(((hw) & 0xf) << 28 | ((fw) & 0xf) << 24 \
+	 | ((vbus) & 0x3) << 15                  \
+	 | ((vbusz) & 0x3f) << 7                 \
+	 | ((gndz) & 0x3f) << 1 | (cts))
+
+#define VPD_MAX_VBUS_20V       0
+#define VPD_MAX_VBUS_30V       1
+#define VPD_MAX_VBUS_40V       2
+#define VPD_MAX_VBUS_50V       3
+#define VPD_VBUS_IMP(mo)       ((mo + 1) >> 1)
+#define VPD_GND_IMP(mo)        (mo)
+#define VPD_CTS_SUPPORTED      1
+#define VPD_CTS_NOT_SUPPORTED  0
 
 /*
  * SVDM Discover SVIDs request -> response
@@ -787,6 +827,9 @@ enum pd_states {
 #define PD_BBRMFLG_DATA_ROLE         BIT(2)
 #define PD_BBRMFLG_VCONN_ROLE        BIT(3)
 
+/* Initial value for CC debounce variable */
+#define PD_CC_UNSET -1
+
 enum pd_cc_states {
 	PD_CC_NONE,
 
@@ -912,14 +955,25 @@ enum pd_data_msg_type {
 	PD_DATA_VENDOR_DEF = 15,
 };
 
+/* CC Polarity type */
+enum pd_cc_polarity_type {
+	POLARITY_CC1,
+	POLARITY_CC2
+};
+
 /* Protocol revision */
-#define PD_REV10 0
-#define PD_REV20 1
-#define PD_REV30 2
+enum pd_rev_type {
+	PD_REV10,
+	PD_REV20,
+	PD_REV30
+};
 
 /* Power role */
 #define PD_ROLE_SINK   0
 #define PD_ROLE_SOURCE 1
+/* Cable plug */
+#define PD_PLUG_DFP_UFP   0
+#define PD_PLUG_CABLE_VPD 1
 /* Data role */
 #define PD_ROLE_UFP          0
 #define PD_ROLE_DFP          1
@@ -997,6 +1051,9 @@ enum pd_data_msg_type {
 #define PD_EXT_HEADER_CHUNK_NUM(header) (((header) >> 11) & 0xf)
 #define PD_EXT_HEADER_REQ_CHUNK(header) (((header) >> 10) & 1)
 #define PD_EXT_HEADER_DATA_SIZE(header) ((header) & 0x1ff)
+
+/* Used to get extended header from the first 32-bit word of the message */
+#define GET_EXT_HEADER(msg) (msg & 0xffff)
 
 /* K-codes for special symbols */
 #define PD_SYNC1 0x18
