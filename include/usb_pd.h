@@ -49,6 +49,13 @@ enum pd_rx_errors {
 #define PD_EVENT_DEVICE_ACCESSED    (1<<7)
 #define PD_EVENT_POWER_STATE_CHANGE (1<<8) /* Chipset power state changed */
 
+/* Ensure TCPC is out of low power mode before handling these events. */
+#define PD_EXIT_LOW_POWER_EVENT_MASK \
+	(PD_EVENT_CC | \
+	 PD_EVENT_UPDATE_DUAL_ROLE | \
+	 PD_EVENT_POWER_STATE_CHANGE | \
+	 TASK_EVENT_WAKE)
+
 /* --- PD data message helpers --- */
 #define PDO_MAX_OBJECTS   7
 #define PDO_MODES (PDO_MAX_OBJECTS - 1)

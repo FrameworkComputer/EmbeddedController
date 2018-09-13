@@ -374,8 +374,14 @@ static void handle_device_access(int port)
 
 	pd[port].low_power_time = get_time().val + PD_LPM_DEBOUNCE_US;
 	if (pd[port].flags & PD_FLAGS_LPM_ENGAGED) {
-		CPRINTS("TCPC p%d Exited Low Power Mode via bus access", port);
-		pd[port].flags &= ~PD_FLAGS_LPM_ENGAGED;
+		CPRINTS("TCPC p%d Exit Low Power Mode", port);
+		pd[port].flags &= ~(PD_FLAGS_LPM_ENGAGED |
+				    PD_FLAGS_LPM_REQUESTED);
+		/*
+		 * Wake to ensure we make another pass through the main task
+		 * loop after clearing the flags.
+		 */
+		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
 }
 
@@ -559,6 +565,11 @@ static inline void set_state(int port, enum pd_states next_state)
 
 	if (last_state == next_state)
 		return;
+
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	if (next_state != PD_STATE_DRP_AUTO_TOGGLE)
+		exit_low_power_mode(port);
+#endif
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
@@ -2129,11 +2140,6 @@ static void pd_update_dual_role_config(int port)
 		set_state(port, PD_STATE_SRC_DISCONNECTED);
 		tcpm_set_cc(port, TYPEC_CC_RP);
 	}
-
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	/* When switching drp mode, make sure tcpc is out of standby mode */
-	exit_low_power_mode(port);
-#endif
 }
 
 int pd_get_role(int port)
@@ -2598,6 +2604,8 @@ void pd_task(void *u)
 		evt = task_wait_event(timeout);
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+		if (evt & PD_EXIT_LOW_POWER_EVENT_MASK)
+			exit_low_power_mode(port);
 		if (evt & PD_EVENT_DEVICE_ACCESSED)
 			handle_device_access(port);
 #endif
@@ -3816,11 +3824,6 @@ void pd_task(void *u)
 			else
 				/* Anything else, keep toggling */
 				next_state = PD_STATE_DRP_AUTO_TOGGLE;
-
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-			if (next_state != PD_STATE_DRP_AUTO_TOGGLE)
-				exit_low_power_mode(port);
-#endif
 
 			if (next_state == PD_STATE_SNK_DISCONNECTED) {
 				tcpm_set_cc(port, TYPEC_CC_RD);
