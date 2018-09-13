@@ -7,6 +7,7 @@
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
+#include "hooks.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -15,6 +16,9 @@
 #include "hwtimer_chip.h"
 #include "system_chip.h"
 #include "rom_chip.h"
+
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
 /* Macros for last 32K ram block */
 #define LAST_RAM_BLK ((NPCX_RAM_SIZE / (32 * 1024)) - 1)
@@ -158,3 +162,13 @@ void __hibernate_npcx_series(void)
 #endif
 }
 
+#if defined(CONFIG_HIBERNATE_PSL)
+static void report_psl_wake_source(void)
+{
+	if (!(system_get_reset_flags() & RESET_FLAG_HIBERNATE))
+		return;
+
+	CPRINTS("PSL_CTS: 0x%x", NPCX_GLUE_PSL_CTS & 0xf);
+}
+DECLARE_HOOK(HOOK_INIT, report_psl_wake_source, HOOK_PRIO_DEFAULT);
+#endif
