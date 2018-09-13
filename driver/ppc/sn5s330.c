@@ -280,6 +280,27 @@ static int sn5s330_init(int port)
 		return status;
 	}
 
+#ifdef CONFIG_USBC_PPC_VCONN
+	/*
+	 * Set the deglitch timeout on the Vconn current limit to 640us.  This
+	 * improves compatibility with some USB C -> HDMI devices versus the
+	 * reset default (20 us).
+	 */
+	regval = 0;
+	status = i2c_read8(i2c_port, i2c_addr, SN5S330_FUNC_SET8, &regval);
+	if (status) {
+		CPRINTS("ppc p%d: Failed to read FUNC_SET8!", port);
+		return status;
+	}
+	regval &= ~SN5S330_VCONN_DEGLITCH_MASK;
+	regval |= SN5S330_VCONN_DEGLITCH_640_US;
+	status = i2c_write8(i2c_port, i2c_addr, SN5S330_FUNC_SET8, regval);
+	if (status) {
+		CPRINTS("ppc p%d: Failed to set FUNC_SET8!", port);
+		return status;
+	}
+#endif /* CONFIG_USBC_PPC_VCONN */
+
 	/*
 	 * Turn off dead battery resistors, turn on CC FETs, and set the higher
 	 * of the two VCONN current limits (min 0.6A).  Many VCONN accessories

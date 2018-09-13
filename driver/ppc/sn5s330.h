@@ -101,6 +101,13 @@ enum sn5s330_pp_idx {
 #define SN5S330_CC_EN			(1 << 4)
 #define SN5S330_VCONN_ILIM_SEL		(1 << 5)
 
+/* FUNC_SET_8 */
+#define SN5S330_VCONN_DEGLITCH_MASK	(3 << 6)
+#define SN5S330_VCONN_DEGLITCH_63_US	(0 << 6)
+#define SN5S330_VCONN_DEGLITCH_125_US	(1 << 6)
+#define SN5S330_VCONN_DEGLITCH_640_US	(2 << 6)
+#define SN5S330_VCONN_DEGLITCH_1280_US	(3 << 6)
+
 /* FUNC_SET_9 */
 #define SN5S330_FORCE_OVP_EN_SBU	(1 << 1)
 #define SN5S330_PP2_CONFIG		(1 << 2)
