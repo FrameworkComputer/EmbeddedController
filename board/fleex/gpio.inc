@@ -74,6 +74,20 @@ GPIO(EN_P3300_TRACKPAD_ODL,	PIN(3, 3), GPIO_ODR_HIGH)
 GPIO(EC_BATT_PRES_L, 	 PIN(E, 5), GPIO_INPUT)
 
 /*
+ * EC_RST_ODL acts as a wake source from PSL hibernate mode. However, it does
+ * not need to be an interrupt for normal EC operations. Thus, configure it as
+ * GPIO_INPUT with wake on low-to-high edge using GPIO_HIB_WAKE_HIGH so that PSL
+ * common code can configure PSL_IN correctly.
+ *
+ * Reason for choosing low-to-high edge for waking from hibernate is to avoid
+ * the double reset - one because of PSL_IN wake and other because of VCC1_RST
+ * being asserted. Also, it should be fine to have the EC in hibernate when H1
+ * or servo wants to hold the EC in reset since VCC1 will be down and so entire
+ * EC logic (except PSL) as well as AP will be in reset.
+ */
+GPIO(EC_RST_ODL,	PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
+
+/*
  * PCH_PROCHOT_ODL is primarily for monitoring the PROCHOT# signal which is
  * normally driven by the PMIC. The EC can also drive this signal in the event
  * that the ambient or charger temperature sensors exceeds their thresholds.
@@ -148,3 +162,9 @@ ALTERNATE(PIN_MASK(F, 0x0C), 0, MODULE_I2C, 0)		/* I2C4 */
 ALTERNATE(PIN_MASK(B, 0x0C), 0, MODULE_I2C, GPIO_SEL_1P8V) /* I2C7 - 1.8V */
 ALTERNATE(PIN_MASK(4, 0x30), 0, MODULE_ADC, 0)		/* ADC0-1 */
 ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)		/* PWM3: KB_BL_PWM */
+
+/* Power Switch Logic (PSL) inputs */
+ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, 0)		/* GPIOD2 = LID_OPEN */
+ALTERNATE(PIN_MASK(0, 0x07), 0, MODULE_PMU, 0)		/* GPIO00 = ACOK_OD,
+							   GPIO01 = MECH_PWR_BTN_ODL
+							   GPIO02 = EC_RST_ODL */
