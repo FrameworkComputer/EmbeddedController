@@ -13,9 +13,6 @@
 #define VARIANT_OCTOPUS_CHARGER_ISL9238
 #include "baseboard.h"
 
-/* Enable PSL hibernate mode. */
-#define CONFIG_HIBERNATE_PSL
-
 #define CONFIG_VOLUME_BUTTONS
 #define GPIO_VOLUME_UP_L GPIO_EC_VOLUP_BTN_ODL
 #define GPIO_VOLUME_DOWN_L GPIO_EC_VOLDN_BTN_ODL

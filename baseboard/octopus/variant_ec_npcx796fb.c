@@ -20,10 +20,8 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_LID_OPEN,
 	GPIO_AC_PRESENT,
 	GPIO_POWER_BUTTON_L,
-#ifdef CONFIG_HIBERNATE_PSL
-	/* EC_RST_ODL needs to wake device if PSL hibernate mode is enabled. */
+	/* EC_RST_ODL needs to wake device while in PSL hibernate. */
 	GPIO_EC_RST_ODL,
-#endif
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 

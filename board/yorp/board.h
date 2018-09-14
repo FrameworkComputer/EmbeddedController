@@ -13,9 +13,6 @@
 #define VARIANT_OCTOPUS_CHARGER_ISL9238
 #include "baseboard.h"
 
-/* Enable PSL hibernate mode. */
-#define CONFIG_HIBERNATE_PSL
-
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 

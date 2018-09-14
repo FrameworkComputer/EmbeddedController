@@ -39,6 +39,9 @@
 	#define I2C_PORT_SENSOR		NPCX_I2C_PORT7_0
 	#define I2C_ADDR_EEPROM		0xA0
 
+	/* Enable PSL hibernate mode. */
+	#define CONFIG_HIBERNATE_PSL
+
 	/* EC variant determines USB-C variant */
 	#define VARIANT_OCTOPUS_USBC_STANDALONE_TCPCS
 
