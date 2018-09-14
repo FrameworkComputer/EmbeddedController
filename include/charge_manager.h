@@ -57,9 +57,10 @@ struct charge_port_info {
 /**
  * Called by charging tasks to update their available charge.
  *
- * @param supplier		Charge supplier to update.
- * @param port			Charge port to update.
- * @param charge		Charge port current / voltage.
+ * @param supplier	Charge supplier to update.
+ * @param port		Charge port to update.
+ * @param charge	Charge port current / voltage. If NULL, current = 0
+ * 			voltage = 0 will be used.
  */
 void charge_manager_update_charge(int supplier,
 				  int port,

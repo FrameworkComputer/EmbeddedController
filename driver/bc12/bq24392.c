@@ -107,13 +107,12 @@ static void bc12_detect(const int port)
 static void power_down_ic(const int port)
 {
 	const struct bq24392_config_t * const cfg = &bq24392_config[port];
-	struct charge_port_info no_chg = { 0 };
 
 	/* Turn off the IC. */
 	activate_chip_enable(cfg, 0);
 
 	/* Let charge manager know there's no more charge available. */
-	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, port, &no_chg);
+	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, port, NULL);
 }
 
 /**

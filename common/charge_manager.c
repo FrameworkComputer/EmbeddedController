@@ -910,6 +910,9 @@ void charge_manager_update_charge(int supplier,
 				  int port,
 				  const struct charge_port_info *charge)
 {
+	struct charge_port_info zero = {0};
+	if (!charge)
+		charge = &zero;
 	charge_manager_make_change(CHANGE_CHARGE, supplier, port, charge);
 }
 

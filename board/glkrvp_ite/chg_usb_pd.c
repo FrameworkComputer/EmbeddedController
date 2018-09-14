@@ -166,13 +166,11 @@ DECLARE_HOOK(HOOK_AC_CHANGE, board_dc_jack_handle, HOOK_PRIO_FIRST);
 static void board_charge_init(void)
 {
 	int port, supplier;
-	struct charge_port_info charge_init = {0};
 
 	/* Initialize all charge suppliers to seed the charge manager */
 	for (port = 0; port < CHARGE_PORT_COUNT; port++) {
 		for (supplier = 0; supplier < CHARGE_SUPPLIER_COUNT; supplier++)
-			charge_manager_update_charge(supplier, port,
-				&charge_init);
+			charge_manager_update_charge(supplier, port, NULL);
 	}
 
 	board_dc_jack_handle();

@@ -748,13 +748,12 @@ static void setup_bj(void)
 static void board_charge_manager_init(void)
 {
 	enum charge_port port;
-	struct charge_port_info cpi = { 0 };
 	int i, j;
 
 	/* Initialize all charge suppliers to 0 */
 	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
 		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
-			charge_manager_update_charge(j, i, &cpi);
+			charge_manager_update_charge(j, i, NULL);
 	}
 
 	port = gpio_get_level(GPIO_ADP_IN_L) ?

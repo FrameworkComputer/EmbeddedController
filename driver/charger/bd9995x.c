@@ -438,10 +438,8 @@ static int bd9995x_bc12_check_type(int port)
 
 static void bd9995x_bc12_detach(int port, int type)
 {
-	struct charge_port_info charge = {0};
-
 	/* Update charge manager */
-	charge_manager_update_charge(type, port, &charge);
+	charge_manager_update_charge(type, port, NULL);
 
 	/* Disable charging trigger by BC1.2 detection */
 	bd9995x_bc12_enable_charging(port, 0);

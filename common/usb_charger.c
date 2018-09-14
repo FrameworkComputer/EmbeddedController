@@ -18,6 +18,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "stddef.h"
 #include "task.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
@@ -83,25 +84,19 @@ void usb_charger_vbus_change(int port, int vbus_level)
 static void usb_charger_init(void)
 {
 	int i;
-	struct charge_port_info charge_none = {0};
 
 	/* Initialize all charge suppliers */
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
-					     i,
-					     &charge_none);
+					     i, NULL);
 		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
-					     i,
-					     &charge_none);
+					     i, NULL);
 		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
-					     i,
-					     &charge_none);
+					     i, NULL);
 		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
-					     i,
-					     &charge_none);
+					     i, NULL);
 		charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
-					     i,
-					     &charge_none);
+					     i, NULL);
 		/* Initialize VBUS supplier based on whether VBUS is present. */
 		update_vbus_supplier(i, pd_is_vbus_present(i));
 	}
