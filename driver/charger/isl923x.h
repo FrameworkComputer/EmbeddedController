@@ -213,6 +213,14 @@
  */
 #define ISL9238_C3_AMON_BMON_DIRECTION (1 << 3)
 
+/*
+ * Control3: Disables Autonomous Charing
+ *
+ * Note: This is disabled automatically when ever we set the current limit
+ * manually (which we always do).
+ */
+#define ISL9238_C3_DISABLE_AUTO_CHARING (1 << 7)
+
 /* Control3: PSYS gain in uA/W (ISL9238 only) */
 #define ISL9238_C3_PSYS_GAIN (1 << 9)
 

@@ -365,6 +365,12 @@ static void isl923x_init(void)
 		goto init_fail;
 	reg |= ISL9238_C3_NO_RELOAD_ACLIM_ON_ACIN |
 		ISL9238_C3_NO_REREAD_PROG_PIN;
+	/*
+	 * Disable autonomous charging initially since 1) it causes boot loop
+	 * issues with 2S batteries, and 2) it will automatically get disabled
+	 * as soon as we manually set the current limit anyway.
+	 */
+	reg |= ISL9238_C3_DISABLE_AUTO_CHARING;
 	if (raw_write16(ISL9238_REG_CONTROL3, reg))
 		goto init_fail;
 
