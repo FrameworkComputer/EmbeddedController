@@ -113,6 +113,18 @@ static const char * const state_names[] = {
 static uint64_t tnext_state;
 
 /*
+ * Record the time when power button task starts. It can be used by any code
+ * path that needs to compare the current time with power button task start time
+ * to identify any timeouts e.g. PB state machine checks current time to
+ * identify if it should wait more for charger and battery to be initialized. In
+ * case of recovery using buttons (where the user could be holding the buttons
+ * for >30seconds), it is not right to compare current time with the time when
+ * EC was reset since the tasks would not have started. Hence, this variable is
+ * being added to record the time at which power button task starts.
+ */
+static uint64_t tpb_task_start;
+
+/*
  * Determines whether to execute power button pulse (t0 stage)
  */
 static int power_button_pulse_enabled = 1;
@@ -312,9 +324,16 @@ static void state_machine(uint64_t tnow)
 		/*
 		 * Before attempting to power the system on, we need to wait for
 		 * charger and battery to be ready to supply sufficient power.
-		 * Check every 100 milliseconds, and give up after 1 second.
+		 * Check every 100 milliseconds, and give up
+		 * CONFIG_POWER_BUTTON_INIT_TIMEOUT seconds after the PB task
+		 * was started. Here, it is important to check the current time
+		 * against PB task start time to prevent unnecessary timeouts
+		 * happening in recovery case where the tasks could start as
+		 * late as 30 seconds after EC reset.
 		 */
-		if (tnow > CONFIG_POWER_BUTTON_INIT_TIMEOUT * SECOND) {
+		if (tnow >
+		    (tpb_task_start +
+		     CONFIG_POWER_BUTTON_INIT_TIMEOUT * SECOND)) {
 			pwrbtn_state = PWRBTN_STATE_IDLE;
 			break;
 		}
@@ -393,6 +412,12 @@ void power_button_task(void *u)
 {
 	uint64_t t;
 	uint64_t tsleep;
+
+	/*
+	 * Record the time when the task starts so that the state machine can
+	 * use this to identify any timeouts.
+	 */
+	tpb_task_start = get_time().val;
 
 	while (1) {
 		t = get_time().val;
