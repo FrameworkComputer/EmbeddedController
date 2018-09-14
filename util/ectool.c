@@ -229,6 +229,8 @@ const char help_str[] =
 	"  reboot_ec <RO|RW|cold|hibernate|hibernate-clear-ap-off|disable-jump>"
 			" [at-shutdown|switch-slot]\n"
 	"      Reboot EC to RO or RW\n"
+	"  rollbackinfo\n"
+	"      Print rollback block information\n"
 	"  rtcget\n"
 	"      Print real-time clock\n"
 	"  rtcgetalarm\n"
@@ -1303,6 +1305,25 @@ int cmd_rwsig_action(int argc, char *argv[])
 		return -1;
 
 	return ec_command(EC_CMD_RWSIG_ACTION, 0, &req, sizeof(req), NULL, 0);
+}
+
+int cmd_rollback_info(int argc, char *argv[])
+{
+	struct ec_response_rollback_info r;
+	int rv;
+
+	rv = ec_command(EC_CMD_ROLLBACK_INFO, 0, NULL, 0, &r, sizeof(r));
+	if (rv < 0) {
+		fprintf(stderr, "ERROR: EC_CMD_ROLLBACK_INFO failed: %d\n", rv);
+		return rv;
+	}
+
+	/* Print versions */
+	printf("Rollback block id:    %d\n", r.id);
+	printf("Rollback min version: %d\n", r.rollback_min_version);
+	printf("RW rollback version:  %d\n", r.rw_rollback_version);
+
+	return rv;
 }
 
 #define FP_FRAME_INDEX_SIMPLE_IMAGE -1
@@ -8363,6 +8384,7 @@ const struct command commands[] = {
 	{"pwmsetduty", cmd_pwm_set_duty},
 	{"readtest", cmd_read_test},
 	{"reboot_ec", cmd_reboot_ec},
+	{"rollbackinfo", cmd_rollback_info},
 	{"rtcget", cmd_rtc_get},
 	{"rtcgetalarm", cmd_rtc_get_alarm},
 	{"rtcset", cmd_rtc_set},

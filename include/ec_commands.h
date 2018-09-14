@@ -4886,6 +4886,17 @@ struct __ec_align4 ec_response_adc_read {
 	int32_t adc_value;
 };
 
+/*
+ * Read back rollback info
+ */
+#define EC_CMD_ROLLBACK_INFO		0x0124
+
+struct __ec_align4 ec_response_rollback_info {
+	int32_t id; /* Incrementing number to indicate which region to use. */
+	int32_t rollback_min_version;
+	int32_t rw_rollback_version;
+};
+
 
 /*****************************************************************************/
 /* The command range 0x200-0x2FF is reserved for Rotor. */
