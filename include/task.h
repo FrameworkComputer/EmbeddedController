@@ -39,6 +39,8 @@
 #define TASK_EVENT_DMA_TC       (1 << 26)
 /* ADC interrupt handler event */
 #define TASK_EVENT_ADC_DONE	(1 << 27)
+/* task_reset() that was requested has been completed */
+#define TASK_EVENT_RESET_DONE   (1 << 28)
 /* task_wake() called on task */
 #define TASK_EVENT_WAKE		(1 << 29)
 /* Mutex unlocking */
@@ -233,6 +235,55 @@ void task_disable_irq(int irq);
  * Software-trigger an interrupt.
  */
 void task_trigger_irq(int irq);
+
+/*
+ * A task that supports resets may call this to indicate that it may be reset
+ * at any point between this call and the next call to task_disable_resets().
+ *
+ * Calling this function will trigger any resets that were requested while
+ * resets were disabled.
+ *
+ * It is not expected for this to be called if resets are already enabled.
+ */
+void task_enable_resets(void);
+
+/*
+ * A task that supports resets may call this to indicate that it may not be
+ * reset until the next call to task_enable_resets(). Any calls to task_reset()
+ * during this time will cause a reset request to be queued, and executed
+ * the next time task_enable_resets() is called.
+ *
+ * Must not be called if resets are already disabled.
+ */
+void task_disable_resets(void);
+
+/*
+ * If the current task was reset, completes the reset operation.
+ *
+ * Returns a non-zero value if the task was reset; tasks with state outside
+ * of the stack should perform any necessary cleanup immediately after calling
+ * this function.
+ *
+ * Tasks that support reset must call this function once at startup before
+ * doing anything else.
+ *
+ * Must only be called once at task startup.
+ */
+int task_reset_cleanup(void);
+
+/*
+ * Resets the specified task, which must not be the current task,
+ * to initial state.
+ *
+ * Returns EC_SUCCESS, or EC_ERROR_INVAL if the specified task does
+ * not support resets.
+ *
+ * If wait is true, blocks until the task has been reset. Otherwise,
+ * returns immediately - in this case the task reset may be delayed until
+ * that task can be safely reset. The duration of this delay depends on the
+ * task implementation.
+ */
+int task_reset(task_id_t id, int wait);
 
 /**
  * Clear a pending interrupt.
