@@ -67,6 +67,13 @@ static int tp_control;
 #define TP_CONTROL_SHALL_RESET		(1 << 1)
 #define TP_CONTROL_SHALL_INITIALIZE	(1 << 2)
 
+/*
+ * Number of times we have reset the touchpad because of errors.
+ */
+static int tp_reset_retry_count;
+
+#define MAX_TP_RESET_RETRY_COUNT 3
+
 static int dump_memory_on_error;
 
 /*
@@ -636,6 +643,20 @@ static int st_tp_handle_error_report(struct st_tp_event_t *e,
 	}
 
 	/*
+	 * When 0xFF is received, it's very likely ST touchpad is down.
+	 * Try if touchpad can be recovered by reset.
+	 */
+	if (error_type == 0xFF) {
+		if (tp_reset_retry_count < MAX_TP_RESET_RETRY_COUNT) {
+			tp_control |= TP_CONTROL_SHALL_RESET;
+			tp_reset_retry_count++;
+		} else {
+			tp_control |= TP_CONTROL_SHALL_HALT;
+		}
+		return 1;
+	}
+
+	/*
 	 * Otherwise, just ignore it.
 	 */
 	return 0;
@@ -695,6 +716,7 @@ static int st_tp_reset(void)
 
 			if (e->evt_id == ST_TP_EVENT_ID_CONTROLLER_READY) {
 				CPRINTS("Touchpad ready");
+				tp_reset_retry_count = 0;
 				return 0;
 			}
 		}
