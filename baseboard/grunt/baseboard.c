@@ -425,7 +425,7 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #ifndef TEST_BUILD
 void lid_angle_peripheral_enable(int enable)
