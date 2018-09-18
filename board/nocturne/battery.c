@@ -8,16 +8,25 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "charge_manager.h"
+#include "charger.h"
 #include "chipset.h"
+#include "charge_state_v2.h"
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "extpower.h"
 #include "hooks.h"
+#include "temp_sensor.h"
 #include "usb_pd.h"
 
 /* Shutdown mode parameter to write to manufacturer access register */
 #define SB_SHUTDOWN_DATA	0x0010
+
+/*
+ * We need to stop charging the battery when the DRAM temperature sensor gets
+ * over 47 C (320 K), and resume charging once it cools back down.
+ */
+#define DRAM_STOPCHARGE_TEMP_K	320
 
 /* Battery info */
 static const struct battery_info info = {
@@ -115,3 +124,54 @@ static void reduce_input_voltage_when_full(void)
 	}
 }
 DECLARE_HOOK(HOOK_SECOND, reduce_input_voltage_when_full, HOOK_PRIO_DEFAULT);
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+static int should_stopcharge(void)
+{
+	int t_dram;
+
+	/* We can only stop charging on AC, if AC is plugged in. */
+	if (!gpio_get_level(GPIO_AC_PRESENT))
+		return 0;
+
+	/*
+	 * The DRAM temperature sensor is only available when the AP is on,
+	 * therefore only inhibit charging when we can actually read a
+	 * temperature.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ON) &&
+	    !temp_sensor_read(TEMP_SENSOR_DRAM, &t_dram) &&
+	    (t_dram >= DRAM_STOPCHARGE_TEMP_K))
+		return 1;
+	else
+		return 0;
+}
+
+int charger_profile_override(struct charge_state_data *curr)
+{
+	static uint8_t stopcharge_on_ac;
+	int enable_stopcharge;
+
+	enable_stopcharge = should_stopcharge();
+	if (enable_stopcharge != stopcharge_on_ac) {
+		stopcharge_on_ac = enable_stopcharge;
+		if (enable_stopcharge) {
+			chgstate_set_manual_current(0);
+		} else {
+			chgstate_set_manual_current(-1);
+		}
+	}
+
+	return 0;
+}
