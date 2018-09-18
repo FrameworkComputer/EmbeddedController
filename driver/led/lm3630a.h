@@ -59,6 +59,19 @@
 #define LM3630A_FMODE_500KHZ		(0 << 0)
 #define LM3630A_FMODE_1000KHZ		(1 << 0)
 
+/* Ramp register settings */
+#define LM3630A_RAMP_START_SHIFT	3
+#define LM3630A_RAMP_STOP_SHIFT		3
+
+#define LM3630A_RAMP_MINIMUM		0x0
+#define LM3630A_RAMP_261_MS		0x1
+#define LM3630A_RAMP_522_MS		0x2
+#define LM3630A_RAMP_1045_MS		0x3
+#define LM3630A_RAMP_2091_MS		0x4
+#define LM3630A_RAMP_4182_MS		0x5
+#define LM3630A_RAMP_8364_MS		0x6
+#define LM3630A_RAMP_16730_MS		0x7
+
 /* Power on and initialize LM3630A. */
 int lm3630a_poweron(void);
 
