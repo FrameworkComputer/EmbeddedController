@@ -274,17 +274,17 @@ uint16_t tcpc_get_alert_status(void)
 }
 
 /*
+ * TMP431 has one local and one remote sensor.
+ *
  * Temperature sensors data; must be in same order as enum temp_sensor_id.
  * Sensor index and name must match those present in coreboot:
  *     src/mainboard/google/${board}/acpi/dptf.asl
  */
 const struct temp_sensor_t temp_sensors[] = {
-	{"TMP432_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+	{"TMP431_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
 			TMP432_IDX_LOCAL, 4},
-	{"TMP432_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+	{"TMP431_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
 			TMP432_IDX_REMOTE1, 4},
-	{"TMP432_Sensor_2", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-			TMP432_IDX_REMOTE2, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -298,9 +298,8 @@ struct ec_thermal_config thermal_params[] = {
 	 * fan_off, fan_max
 	 */
 	{{0, C_TO_K(80), C_TO_K(81)}, {0, C_TO_K(78), 0},
-		C_TO_K(4), C_TO_K(76)},	/* TMP432_Internal */
-	{{0, 0, 0}, {0, 0, 0}, 0, 0},	/* TMP432_Sensor_1 */
-	{{0, 0, 0}, {0, 0, 0}, 0, 0},	/* TMP432_Sensor_2 */
+		C_TO_K(4), C_TO_K(76)},	/* TMP431_Internal */
+	{{0, 0, 0}, {0, 0, 0}, 0, 0},	/* TMP431_Sensor_1 */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
