@@ -89,7 +89,7 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_TOUCHPAD, 81) = {
 	0x75, 0x09,        /*     Report Size (9) */ \
 	0x09, 0x30,        /*     Usage (Tip pressure) */ \
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */ \
-	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */ \
+	0x26, 0xFF, 0x0F,  /*     Logical Maximum (4095) */ \
 	0x75, 0x0C,        /*     Report Size (12) */ \
 	0x09, 0x48,        /*     Usage (WIDTH) */ \
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */ \
