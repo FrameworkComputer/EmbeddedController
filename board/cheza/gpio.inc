@@ -27,12 +27,17 @@ GPIO_INT(VOLUME_UP_L,       PIN(F, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_inte
 GPIO_INT(WP_L,              PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)  /* EC_WP_ODL */
 GPIO_INT(LID_OPEN,          PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)  /* LID_OPEN_EC */
 GPIO_INT(AP_RST_REQ,        PIN(C, 2), GPIO_INT_RISING | GPIO_PULL_DOWN | GPIO_SEL_1P8V, chipset_reset_request_interrupt)  /* Reset request from AP */
-/* AP_RST_L and PS_HOLD are used for PMIC and AP negotiation. Don't change their states. */
 GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH | GPIO_SEL_1P8V, power_signal_interrupt)
 GPIO_INT(PS_HOLD,           PIN(D, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, power_signal_interrupt)  /* Indicate when AP triggers reset/shutdown */
 GPIO_INT(PMIC_FAULT_L,      PIN(7, 6), GPIO_INT_BOTH | GPIO_SEL_1P8V, power_signal_interrupt)  /* Any PMIC fault? */
-/* When switch-cap is off, the POWER_GOOD signal is floating. Need a pull-down to make it low. */
-GPIO_INT(POWER_GOOD,        PIN(5, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, power_signal_interrupt)  /* SRC_PP1800_S4A from PMIC */
+/*
+ * When switch-cap is off, the POWER_GOOD signal is floating. Need a pull-down
+ * to make it low. Overload the interrupt function chipset_warm_reset_interrupt
+ * for not only signalling power_signal_interrupt but also handling the logic
+ * of WARM_RESET_L which is pulled-up by the same rail of POWER_GOOD.
+ */
+GPIO_INT(POWER_GOOD,        PIN(5, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, chipset_warm_reset_interrupt)  /* SRC_PP1800_S4A from PMIC */
+GPIO_INT(WARM_RESET_L,      PIN(F, 4), GPIO_INT_BOTH | GPIO_SEL_1P8V, chipset_warm_reset_interrupt)  /* AP warm reset */
 GPIO_INT(SHI_CS_L,          PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN | GPIO_SEL_1P8V, shi_cs_event)  /* AP_EC_SPI_CS_L */
 GPIO_INT(CC_LID_BASE_ADC,   PIN(4, 5), GPIO_INT_BOTH, base_detect_interrupt)  /* Base detection */
 
@@ -54,7 +59,6 @@ GPIO(PROCHOT_L,             PIN(3, 4), GPIO_INPUT)
 
 /* PMIC/AP 1.8V */
 GPIO(PM845_RESIN_L,         PIN(3, 2), GPIO_ODR_HIGH | GPIO_SEL_1P8V)  /* PMIC reset trigger */
-GPIO(WARM_RESET_L,          PIN(F, 4), GPIO_ODR_HIGH | GPIO_SEL_1P8V)  /* AP warm reset */
 GPIO(PMIC_KPD_PWR_ODL,      PIN(D, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V)  /* PMIC power button */
 GPIO(EC_INT_L,              PIN(A, 2), GPIO_ODR_HIGH | GPIO_SEL_1P8V)  /* Interrupt line between AP and EC */
 GPIO(AP_SUSPEND_L,          PIN(5, 7), GPIO_INPUT | GPIO_SEL_1P8V)     /* Suspend signal from AP */

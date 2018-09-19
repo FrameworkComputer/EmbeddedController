@@ -204,6 +204,10 @@ const struct power_signal_info power_signal_list[] = {
 		GPIO_POWER_GOOD,
 		POWER_SIGNAL_ACTIVE_HIGH,
 		"POWER_GOOD"},
+	[SDM845_WARM_RESET] = {
+		GPIO_WARM_RESET_L,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"WARM_RESET_L"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 

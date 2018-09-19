@@ -172,6 +172,7 @@ enum power_signal {
 	SDM845_PS_HOLD,
 	SDM845_PMIC_FAULT_L,
 	SDM845_POWER_GOOD,
+	SDM845_WARM_RESET,
 	/* Number of power signals */
 	POWER_SIGNAL_COUNT
 };

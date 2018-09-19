@@ -89,6 +89,9 @@ static char power_button_was_pressed;
 /* 1 if lid-open event has been detected */
 static char lid_opened;
 
+/* 1 if AP_RST_L and PS_HOLD is overdriven by EC */
+static char ap_rst_overdriven;
+
 /*
  * 1 if power state is controlled by special functions, like a console command
  * or an interrupt handler, for bypassing POWER_GOOD lost trigger. It is
@@ -151,6 +154,64 @@ DECLARE_DEFERRED(chipset_reset_request_handler);
 void chipset_reset_request_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&chipset_reset_request_handler_data, 0);
+}
+
+void chipset_warm_reset_interrupt(enum gpio_signal signal)
+{
+	/*
+	 * The warm_reset signal is pulled-up by a rail from PMIC. If the
+	 * warm_reset drops, it means:
+	 *  * Servo or Cr50 holds the signal, or
+	 *  * its pull-up rail POWER_GOOD drops.
+	 */
+	if (!gpio_get_level(GPIO_WARM_RESET_L)) {
+		if (gpio_get_level(GPIO_POWER_GOOD)) {
+			/*
+			 * Servo or Cr50 holds the WARM_RESET_L signal.
+			 *
+			 * Overdrive AP_RST_L to hold AP. Overdrive PS_HOLD to
+			 * emulate AP being up to trick the PMIC into thinking
+			 * there’s nothing weird going on.
+			 */
+			ap_rst_overdriven = 1;
+			gpio_set_flags(GPIO_PS_HOLD, GPIO_INT_BOTH |
+				       GPIO_SEL_1P8V | GPIO_OUT_HIGH);
+			gpio_set_flags(GPIO_AP_RST_L, GPIO_INT_BOTH |
+				       GPIO_SEL_1P8V | GPIO_OUT_LOW);
+		} else {
+			/*
+			 * The pull-up rail POWER_GOOD drops.
+			 *
+			 * High-Z both AP_RST_L and PS_HOLD to restore their
+			 * states.
+			 */
+			gpio_set_flags(GPIO_AP_RST_L, GPIO_INT_BOTH |
+				       GPIO_SEL_1P8V);
+			gpio_set_flags(GPIO_PS_HOLD, GPIO_INT_BOTH |
+				       GPIO_SEL_1P8V);
+			ap_rst_overdriven = 0;
+		}
+	} else {
+		if (ap_rst_overdriven) {
+			/*
+			 * Servo or Cr50 releases the WARM_RESET_L signal.
+			 *
+			 * High-Z both AP_RST_L and PS_HOLD to restore their
+			 * state. Cold reset the PMIC, doing S0->S5->S0
+			 * transition, to recover the system.
+			 */
+			gpio_set_flags(GPIO_AP_RST_L, GPIO_INT_BOTH |
+				       GPIO_SEL_1P8V);
+			gpio_set_flags(GPIO_PS_HOLD, GPIO_INT_BOTH |
+				       GPIO_SEL_1P8V);
+			ap_rst_overdriven = 0;
+
+			/* TODO(b/112723105): Do S0->S5->S0 transition here. */
+		}
+		/* If not overdriven, just a normal power-up, do nothing. */
+	}
+
+	power_signal_interrupt(signal);
 }
 
 static void sdm845_lid_event(void)
@@ -328,8 +389,10 @@ enum power_state power_chipset_init(void)
 	int init_power_state;
 	uint32_t reset_flags = system_get_reset_flags();
 
-	/* Enable reboot control input from AP */
+	/* Enable interrupts */
 	gpio_enable_interrupt(GPIO_AP_RST_REQ);
+	gpio_enable_interrupt(GPIO_WARM_RESET_L);
+	gpio_enable_interrupt(GPIO_POWER_GOOD);
 
 	/*
 	 * Force the AP shutdown unless we are doing SYSJUMP. Otherwise,
