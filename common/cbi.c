@@ -161,11 +161,29 @@ int cbi_get_board_info(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size)
 	return EC_SUCCESS;
 }
 
+static void cbi_remove_tag(void *const cbi, struct cbi_data *const d)
+{
+	struct cbi_header *const h = cbi;
+	const size_t size = sizeof(*d) + d->size;
+	const uint8_t *next = (uint8_t *)d + size;
+	const size_t bytes_after = ((uint8_t *)cbi + h->total_size) - next;
+
+	memmove(d, next, bytes_after);
+	h->total_size -= size;
+}
+
 int cbi_set_board_info(enum cbi_data_tag tag, const uint8_t *buf, uint8_t size)
 {
 	struct cbi_data *d;
 
 	d = cbi_find_tag(cbi, tag);
+
+	/* If we found the entry, but the size doesn't match, delete it */
+	if (d && d->size != size) {
+		cbi_remove_tag(cbi, d);
+		d = NULL;
+	}
+
 	if (!d) {
 		/* Not found. Check if new item would fit */
 		if (sizeof(cbi) < head->total_size + sizeof(*d) + size)
@@ -173,13 +191,11 @@ int cbi_set_board_info(enum cbi_data_tag tag, const uint8_t *buf, uint8_t size)
 		/* Append new item */
 		cbi_set_data(&cbi[head->total_size], tag, buf, size);
 		head->total_size += (sizeof(*d) + size);
-		return EC_SUCCESS;
+	} else {
+		/* Overwrite existing item */
+		memcpy(d->value, buf, d->size);
 	}
-	/* No expand or shrink. Items are tightly packed. */
-	if (d->size != size)
-		return EC_ERROR_INVAL;
-	/* Overwrite existing item */
-	memcpy(d->value, buf, d->size);
+
 	return EC_SUCCESS;
 }
 
