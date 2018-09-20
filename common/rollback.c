@@ -249,7 +249,7 @@ static int rollback_update(int32_t next_min_version,
 	struct rollback_data *data = (struct rollback_data *)block;
 	BUILD_ASSERT(sizeof(block) >= sizeof(*data));
 	uintptr_t offset;
-	int region;
+	int region, ret;
 
 	if (flash_get_protect() & EC_FLASH_PROTECT_ROLLBACK_NOW)
 		return EC_ERROR_ACCESS_DENIED;
@@ -305,10 +305,11 @@ static int rollback_update(int32_t next_min_version,
 	if (flash_erase(offset, CONFIG_FLASH_ERASE_SIZE))
 		return EC_ERROR_UNKNOWN;
 
-	if (flash_write(offset, sizeof(block), block))
-		return EC_ERROR_UNKNOWN;
+	unlock_rollback();
+	ret = flash_write(offset, sizeof(block), block);
+	lock_rollback();
 
-	return EC_SUCCESS;
+	return ret;
 }
 
 int rollback_update_version(int32_t next_min_version)
