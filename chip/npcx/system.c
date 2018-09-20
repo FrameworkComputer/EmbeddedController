@@ -98,8 +98,11 @@ void system_check_bbram_on_reset(void)
 			IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_STS))
 			CPRINTF("VBAT drop!\n");
 
-		/* Clear IBBR bit */
-		SET_BIT(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR);
+		/*
+		 * npcx5/npcx7m6g/npcx7m6f - Clear IBBR bit
+		 * npcx7m6fb/npcx7m7wb - Clear IBBR/VSBY_STS/VCC1_STS bit
+		 */
+		NPCX_BKUP_STS = NPCX_BKUP_STS_ALL_MASK;
 	}
 }
 
@@ -112,7 +115,7 @@ static int bbram_valid(enum bbram_data_index index, int bytes)
 
 	/* Check BBRAM is valid */
 	if (IS_BIT_SET(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR)) {
-		SET_BIT(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR);
+		NPCX_BKUP_STS = (1 << NPCX_BKUP_STS_IBBR);
 		panic_printf("IBBR set: BBRAM corrupted!\n");
 		return 0;
 	}

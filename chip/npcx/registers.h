@@ -1234,8 +1234,14 @@ enum PM_CHANNEL_T {
 /* BBRAM register fields */
 #define NPCX_BKUP_STS_IBBR               7
 #if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M7WB)
+#define NPCX_BKUP_STS_VSBY_STS           1
+#define NPCX_BKUP_STS_VCC1_STS           0
+#define NPCX_BKUP_STS_ALL_MASK \
+	((1 << NPCX_BKUP_STS_IBBR) | (1 << NPCX_BKUP_STS_VSBY_STS) | \
+	(1 << NPCX_BKUP_STS_VCC1_STS))
 #define NPCX_BBRAM_SIZE                 128  /* Size of BBRAM */
 #else
+#define NPCX_BKUP_STS_ALL_MASK (1 << NPCX_BKUP_STS_IBBR)
 #define NPCX_BBRAM_SIZE                  64  /* Size of BBRAM */
 #endif
 
