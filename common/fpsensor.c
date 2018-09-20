@@ -42,6 +42,7 @@
 #define FP_MAX_FINGER_COUNT 0
 #endif
 #define SBP_ENC_KEY_LEN 16
+#define FP_TEMPLATE_FORMAT_VERSION 1
 #define FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE \
 	(FP_ALGORITHM_TEMPLATE_SIZE + \
 		sizeof(struct ec_fp_template_encryption_metadata))
@@ -105,6 +106,8 @@ static uint32_t overall_time_us;
 static timestamp_t overall_t0;
 static uint8_t timestamps_invalid;
 static int8_t template_matched;
+
+BUILD_ASSERT(sizeof(struct ec_fp_template_encryption_metadata) % 4 == 0);
 
 /* Interrupt line from the fingerprint sensor */
 void fps_event(enum gpio_signal signal)
@@ -576,6 +579,7 @@ static int fp_command_frame(struct host_cmd_handler_args *args)
 		memset(fp_enc_buffer, 0, sizeof(fp_enc_buffer));
 		/* The beginning of the buffer contains nonce/salt/tag. */
 		enc_info = (void *)fp_enc_buffer;
+		enc_info->struct_version = FP_TEMPLATE_FORMAT_VERSION;
 		init_trng();
 		rand_bytes(enc_info->nonce, FP_CONTEXT_NONCE_BYTES);
 		rand_bytes(enc_info->salt, FP_CONTEXT_SALT_BYTES);
@@ -622,6 +626,16 @@ static int fp_command_stats(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_STATS, fp_command_stats, EC_VER_MASK(0));
 
+static int validate_template_format(
+	struct ec_fp_template_encryption_metadata *enc_info)
+{
+	if (enc_info->struct_version != FP_TEMPLATE_FORMAT_VERSION) {
+		CPRINTS("Invalid template format %d", enc_info->struct_version);
+		return EC_RES_INVALID_PARAM;
+	}
+	return EC_RES_SUCCESS;
+}
+
 static int fp_command_template(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_template *params = args->params;
@@ -650,6 +664,11 @@ static int fp_command_template(struct host_cmd_handler_args *args)
 		fp_clear_finger_context(idx);
 		/* The beginning of the buffer contains nonce/salt/tag. */
 		enc_info = (void *)fp_enc_buffer;
+		ret = validate_template_format(enc_info);
+		if (ret != EC_RES_SUCCESS) {
+			CPRINTS("fgr%d: Template format not supported", idx);
+			return EC_RES_INVALID_PARAM;
+		}
 		ret = derive_encryption_key(key, enc_info->salt);
 		if (ret != EC_RES_SUCCESS) {
 			CPRINTS("fgr%d: Failed to derive key", idx);

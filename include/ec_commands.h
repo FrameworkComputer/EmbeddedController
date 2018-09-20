@@ -5055,6 +5055,12 @@ struct __ec_align4 ec_response_fp_info {
 
 struct ec_fp_template_encryption_metadata {
 	/*
+	 * Version of the structure format (N=1).
+	 */
+	uint16_t struct_version;
+	/* Reserved bytes, set to 0. */
+	uint16_t reserved;
+	/*
 	 * The salt is *only* ever used for key derivation. The nonce is unique,
 	 * a different one is used for every message.
 	 */
