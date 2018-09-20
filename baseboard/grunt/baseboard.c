@@ -516,7 +516,8 @@ uint32_t board_override_feature_flags0(uint32_t flags0)
 	 * check if the current device is one of them and return
 	 * the default value - with backlight here.
 	 */
-	if (sku == 16 || sku == 17 || sku == 20 || sku == 21)
+	if (sku == 16 || sku == 17 || sku == 20 || sku == 21 || sku == 32
+		|| sku == 33)
 		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
 	else
 		return flags0;
