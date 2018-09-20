@@ -44,10 +44,6 @@ int lm3630a_poweron(void)
 	/* Limit current to 24.5mA */
 	ret |= lm3630a_write(LM3630A_REG_A_CURRENT, 0x1a);
 
-	/* Set start-up ramp to 261ms, to prevent blip after initialization. */
-	ret |= lm3630a_write(LM3630A_REG_ONOFF_RAMP,
-			LM3630A_RAMP_261_MS << LM3630A_RAMP_START_SHIFT);
-
 	/* Enable bank A, put in linear mode, and connect LED2 to bank A. */
 	ret |= lm3630a_write(LM3630A_REG_CONTROL,
 				LM3630A_CTRL_BIT_LINEAR_A |
