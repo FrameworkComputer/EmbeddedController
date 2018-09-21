@@ -362,7 +362,7 @@ static void test_aes_gcm_speed(void)
 		0x00, 0x00, 0x00, 0x00,
 	};
 	const int nonce_size = sizeof(nonce);
-	uint8_t tag[12] = {0};
+	uint8_t tag[16] = {0};
 	const int tag_size = sizeof(tag);
 
 	uint8_t *out = tmp;
