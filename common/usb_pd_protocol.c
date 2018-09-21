@@ -201,6 +201,12 @@ static struct pd_protocol {
 	uint64_t drp_sink_time;
 #endif
 
+	/*
+	 * Time to ignore Vbus absence due to external IC debounce detection
+	 * logic immediately after a power role swap.
+	 */
+	uint64_t vbus_debounce_time;
+
 	/* PD state for Vendor Defined Messages */
 	enum vdm_states vdm_state;
 	/* Timeout for the current vdm state.  Set to 0 for no timeout. */
@@ -1579,6 +1585,13 @@ static void handle_ctrl_request(int port, uint16_t head,
 			pd[port].msg_id = 0;
 			pd_set_power_role(port, PD_ROLE_SINK);
 			pd_update_roles(port);
+			/*
+			 * Give the state machine time to read VBUS as high.
+			 * Note: This is empirically determined, not strictly
+			 * part of the USB PD spec.
+			 */
+			pd[port].vbus_debounce_time =
+				get_time().val + PD_T_DEBOUNCE;
 			set_state(port, PD_STATE_SNK_DISCOVERY);
 #ifdef CONFIG_USBC_VCONN_SWAP
 		} else if (pd[port].task_state == PD_STATE_VCONN_SWAP_INIT) {
@@ -3969,10 +3982,13 @@ void pd_task(void *u)
 		}
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 		/*
-		 * Sink disconnect if VBUS is low and we are not recovering
-		 * a hard reset.
+		 * Sink disconnect if VBUS is low and
+		 *  1) we are not waiting for VBUS to debounce after a power
+		 *     role swap.
+		 *  2) we are not recovering from a hard reset.
 		 */
 		if (pd[port].power_role == PD_ROLE_SINK &&
+		    pd[port].vbus_debounce_time < get_time().val &&
 		    !pd_is_vbus_present(port) &&
 		    pd[port].task_state != PD_STATE_SNK_HARD_RESET_RECOVER &&
 		    pd[port].task_state != PD_STATE_HARD_RESET_EXECUTE) {
