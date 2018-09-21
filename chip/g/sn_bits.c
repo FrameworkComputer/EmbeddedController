@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "board_id.h"
 #include "board_space.h"
 #include "console.h"
 #include "extension.h"
@@ -73,6 +74,7 @@ static int write_sn_data(struct sn_data *sn_data, int header_only)
 
 	return rv;
 }
+
 /**
  * Initialize SN data space in flash INFO1, and write sn hash. This can only
  * be called once per device; subsequent calls on a device that has already
@@ -150,6 +152,7 @@ static enum vendor_cmd_rc vc_sn_set_hash(enum vendor_cmd_cc code,
 					 size_t input_size,
 					 size_t *response_size)
 {
+	struct board_id bid;
 	uint32_t sn_hash[3];
 	uint8_t *pbuf = buf;
 
@@ -160,12 +163,22 @@ static enum vendor_cmd_rc vc_sn_set_hash(enum vendor_cmd_cc code,
 		return VENDOR_RC_BOGUS_ARGS;
 	}
 
+	/*
+	 * Only allow writing sn bits if we can successfully verify
+	 * that the board ID has not been writen yet.
+	 */
+	if (read_board_id(&bid) != EC_SUCCESS ||
+	    ~(bid.type & bid.type_inv & bid.flags) != 0) {
+		*pbuf = EC_ERROR_ACCESS_DENIED;
+		return *pbuf;
+	}
+
 	memcpy(&sn_hash, pbuf, sizeof(sn_hash));
 
 	/* We care about the LSB only. */
 	*pbuf = (uint8_t) write_sn_hash(sn_hash);
 
-	return *pbuf;
+	return VENDOR_RC_NOT_ALLOWED;
 }
 DECLARE_VENDOR_COMMAND(VENDOR_CC_SN_SET_HASH, vc_sn_set_hash);
 
