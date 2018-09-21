@@ -591,30 +591,8 @@ static void dump_memory(void)
 	msleep(8);
 }
 
-/*
- * Handles error reports.
- *
- * @param suppress_error: log and don't react on errors.
- *
- * @return 0 for minor errors, 1 for major errors (should not handle non-error
- *   events).
- */
-static int st_tp_handle_error_report(struct st_tp_event_t *e,
-				     int suppress_error)
+static int st_tp_handle_error(uint8_t error_type)
 {
-	uint8_t error_type = e->report.report_type;
-
-	if (e->magic != ST_TP_EVENT_MAGIC ||
-	    e->evt_id != ST_TP_EVENT_ID_ERROR_REPORT)
-		return 0;
-
-	CPRINTS("Touchpad error: %x %x", error_type,
-		((e->report.info[0] << 24) | (e->report.info[1] << 16) |
-		 (e->report.info[2] << 8) | (e->report.info[3] << 0)));
-
-	if (suppress_error)
-		return 0;
-
 	if (error_type <= 0x4E) {
 		enable_deep_sleep(0);
 		dump_error();
@@ -623,7 +601,7 @@ static int st_tp_handle_error_report(struct st_tp_event_t *e,
 	}
 
 	/*
-	 * Suggest action: memory Dump and power cycle.
+	 * Suggest action: memory dump and power cycle.
 	 */
 	if (error_type <= 0x06 ||
 	    (error_type >= 0x47 && error_type <= 0x4E)) {
@@ -666,6 +644,29 @@ static int st_tp_handle_error_report(struct st_tp_event_t *e,
 	 * Otherwise, just ignore it.
 	 */
 	return 0;
+}
+
+/*
+ * Handles error reports.
+ *
+ * @param suppress_error: log and don't react on errors.
+ *
+ * @return 0 for minor errors, 1 for major errors (should not handle non-error
+ *   events).
+ */
+static int st_tp_handle_error_report(struct st_tp_event_t *e,
+				     int suppress_error)
+{
+	uint8_t error_type = e->report.report_type;
+
+	CPRINTS("Touchpad error: %x %x", error_type,
+		((e->report.info[0] << 24) | (e->report.info[1] << 16) |
+		 (e->report.info[2] << 8) | (e->report.info[3] << 0)));
+
+	if (suppress_error)
+		return 0;
+
+	return st_tp_handle_error(error_type);
 }
 
 static void st_tp_handle_status_report(struct st_tp_event_t *e)
@@ -1183,6 +1184,91 @@ static void touchpad_power_control(void)
 		st_tp_stop_scan();
 }
 
+static void touchpad_read_idle_count(void)
+{
+	static uint32_t prev_count;
+	uint32_t count;
+	int ret;
+	int rx_len = 2 + ST_TP_DUMMY_BYTE;
+	uint8_t cmd_read_counter[] = {
+		0xFB, 0x00, 0x10, 0xff, 0xff
+	};
+
+	/* Find address of idle count. */
+	ret = st_tp_load_host_data(ST_TP_MEM_ID_SYSTEM_INFO);
+	if (ret)
+		return;
+	st_tp_read_host_data_memory(0x0082, &rx_buf, rx_len);
+
+	/* Fill in address of idle count, the byte order is reversed. */
+	cmd_read_counter[3] = rx_buf.bytes[1];
+	cmd_read_counter[4] = rx_buf.bytes[0];
+
+	/* Read idle count */
+	spi_transaction(SPI, cmd_read_counter, sizeof(cmd_read_counter),
+			(uint8_t *)&rx_buf, 4 + ST_TP_DUMMY_BYTE);
+
+	count = rx_buf.dump_info[0];
+
+	CPRINTS("idle_count = %08x", count);
+	if (count == prev_count)
+		CPRINTS("counter doesn't change...");
+	else
+		prev_count = count;
+}
+
+/*
+ * Try to collect symptoms of type B error.
+ *
+ * There are three possible symptoms:
+ *   1. error dump section is corrupted / contains error.
+ *   2. memory stack is corrupted (not 0xCC).
+ *   3. idle count is not changing.
+ */
+static void touchpad_collect_error(void)
+{
+	const uint8_t tx_dump_error[] = {
+		0xFB, 0x20, 0x01, 0xEF, 0x80
+	};
+	uint32_t dump_info[2];
+	const uint8_t tx_dump_memory[] = {
+		0xFB, 0x00, 0x10, 0x00, 0x00
+	};
+	uint32_t dump_memory[16];
+	int i;
+
+	enable_deep_sleep(0);
+	spi_transaction(SPI, tx_dump_error, sizeof(tx_dump_error),
+			(uint8_t *)&rx_buf,
+			sizeof(dump_info) + ST_TP_DUMMY_BYTE);
+	memcpy(dump_info, rx_buf.bytes, sizeof(dump_info));
+
+	spi_transaction(SPI, tx_dump_memory, sizeof(tx_dump_memory),
+			(uint8_t *)&rx_buf,
+			sizeof(dump_memory) + ST_TP_DUMMY_BYTE);
+	memcpy(dump_memory, rx_buf.bytes, sizeof(dump_memory));
+
+	CPRINTS("check error dump: %08x %08x", dump_info[0], dump_info[1]);
+	CPRINTS("check memory dump:");
+	for (i = 0; i < ARRAY_SIZE(dump_memory); i += 8) {
+		CPRINTF("%08x %08x %08x %08x %08x %08x %08x %08x\n",
+			dump_memory[i + 0],
+			dump_memory[i + 1],
+			dump_memory[i + 2],
+			dump_memory[i + 3],
+			dump_memory[i + 4],
+			dump_memory[i + 5],
+			dump_memory[i + 6],
+			dump_memory[i + 7]);
+	}
+
+	for (i = 0; i < 3; i++)
+		touchpad_read_idle_count();
+	enable_deep_sleep(1);
+
+	tp_control |= TP_CONTROL_SHALL_RESET;
+}
+
 void touchpad_task(void *u)
 {
 	uint32_t event;
@@ -1191,7 +1277,17 @@ void touchpad_task(void *u)
 	touchpad_power_control();
 
 	while (1) {
-		event = task_wait_event(-1);
+		/* wait for at most 3 seconds */
+		event = task_wait_event(3 * 1000 * 1000);
+
+		if ((event & TASK_EVENT_TIMER) &&
+		    (system_state & SYSTEM_STATE_ACTIVE_MODE))
+			/*
+			 * Haven't received anything for 3 seconds, and we are
+			 * supposed to be in active mode.  This is not normal,
+			 * check for errors and reset.
+			 */
+			touchpad_collect_error();
 
 		if (event & TASK_EVENT_WAKE)
 			while (!tp_control &&
