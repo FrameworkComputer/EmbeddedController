@@ -109,6 +109,9 @@ static timestamp_t overall_t0;
 static uint8_t timestamps_invalid;
 static int8_t template_matched;
 
+/* Forward declaration of static function */
+static void fp_clear_context(void);
+
 BUILD_ASSERT(sizeof(struct ec_fp_template_encryption_metadata) % 4 == 0);
 
 /* Interrupt line from the fingerprint sensor */
@@ -290,10 +293,15 @@ void fp_task(void)
 				timeout_us = FINGER_POLLING_DELAY;
 			else
 				timeout_us = -1;
-			if (mode & FP_MODE_ANY_WAIT_IRQ)
+			if (mode & FP_MODE_ANY_WAIT_IRQ) {
 				gpio_enable_interrupt(GPIO_FPS_INT);
-			else
+			} else if (mode & FP_MODE_RESET_SENSOR) {
+				sensor_mode &= ~FP_MODE_RESET_SENSOR;
+				fp_clear_context();
+				fp_sensor_init();
+			} else {
 				fp_sensor_low_power();
+			}
 		} else if (evt & (TASK_EVENT_SENSOR_IRQ | TASK_EVENT_TIMER)) {
 			overall_t0 = get_time();
 			timestamps_invalid = 0;
@@ -425,12 +433,20 @@ static int validate_fp_mode(const uint32_t mode)
 {
 	uint32_t capture_type = FP_CAPTURE_TYPE(mode);
 	uint32_t algo_mode = mode & ~FP_MODE_CAPTURE_TYPE_MASK;
+	uint32_t cur_mode = sensor_mode;
 
 	if (capture_type >= FP_CAPTURE_TYPE_MAX)
 		return EC_ERROR_INVAL;
 
 	if (algo_mode & ~FP_VALID_MODES)
 		return EC_ERROR_INVAL;
+
+	/* Don't allow sensor reset if any other mode is
+	 * set (including FP_MODE_RESET_SENSOR itself). */
+	if (mode & FP_MODE_RESET_SENSOR) {
+		if (cur_mode & FP_VALID_MODES)
+			return EC_ERROR_INVAL;
+	}
 
 	return EC_SUCCESS;
 }

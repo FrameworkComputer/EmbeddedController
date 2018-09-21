@@ -1419,6 +1419,8 @@ int cmd_fp_mode(int argc, char *argv[])
 			mode |= FP_MODE_ENROLL_IMAGE | FP_MODE_ENROLL_SESSION;
 		else if (!strncmp(argv[i], "match", 5))
 			mode |= FP_MODE_MATCH;
+		else if (!strncmp(argv[i], "reset_sensor", 12))
+			mode = FP_MODE_RESET_SENSOR;
 		else if (!strncmp(argv[i], "reset", 5))
 			mode = 0;
 		else if (!strncmp(argv[i], "capture", 7))
