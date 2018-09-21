@@ -1,0 +1,20 @@
+This directory contains the i2c-pseudo Linux kernel module.
+
+The i2c-pseudo module was written with the intention of being submitted upstream
+in the Linux kernel.  This copy exists because of as 2019-03 this module is not
+yet in the upstream kernel, and even if/when this is included, it may take years
+before making its way to the prepackaged Linux distribution kernels typically
+used by CrOS developers.
+
+See Documentation.txt for more information about the module itself.  That file
+is Documentation/i2c/pseudo-controller-interface in the upstream patch.
+
+When servod starts, if the i2c-pseudo module is loaded servod will automatically
+create an I2C pseudo adapter for the Servo I2C bus.  That I2C adapter may then
+be used in userspace through i2c-dev (/dev/i2c-<N>).  The i2c-tools package
+provides command line utilities for interfacing with i2c-dev devices, and some
+CrOS software can work directly with i2c-dev devices as well, such as iteflash
+which is used by flash_ec when reflashing an ITE EC through a Servo.
+
+Automated installation:
+$ ./install

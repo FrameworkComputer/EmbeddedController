@@ -1,0 +1,10 @@
+.i2c-pseudo.ko.cmd
+.i2c-pseudo.mod.o.cmd
+.i2c-pseudo.o.cmd
+.tmp_versions/
+Module.symvers
+i2c-pseudo.ko
+i2c-pseudo.mod.c
+i2c-pseudo.mod.o
+i2c-pseudo.o
+modules.order
