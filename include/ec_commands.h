@@ -4922,51 +4922,17 @@ struct __ec_align2 ec_params_fp_passthru {
 	uint8_t data[];		/* Data to send */
 };
 
-/* Fingerprint sensor configuration command: prototyping ONLY */
-#define EC_CMD_FP_SENSOR_CONFIG 0x0401
-
-#define EC_FP_SENSOR_CONFIG_MAX_REGS 16
-
-struct __ec_align2 ec_params_fp_sensor_config {
-	uint8_t count;		/* Number of setup registers */
-	/*
-	 * the value to send to each of the 'count' setup registers
-	 * is stored in the 'data' array for 'len' bytes just after
-	 * the previous one.
-	 */
-	uint8_t len[EC_FP_SENSOR_CONFIG_MAX_REGS];
-	uint8_t data[];
-};
-
 /* Configure the Fingerprint MCU behavior */
 #define EC_CMD_FP_MODE 0x0402
 
 /* Put the sensor in its lowest power mode */
-#define FP_MODE_DEEPSLEEP     (1<<0)
+#define FP_MODE_DEEPSLEEP      (1<<0)
 /* Wait to see a finger on the sensor */
-#define FP_MODE_FINGER_DOWN   (1<<1)
+#define FP_MODE_FINGER_DOWN    (1<<1)
 /* Poll until the finger has left the sensor */
-#define FP_MODE_FINGER_UP     (1<<2)
+#define FP_MODE_FINGER_UP      (1<<2)
 /* Capture the current finger image */
-#define FP_MODE_CAPTURE       (1<<3)
-/* Capture types defined in bits [30..28] */
-#define FP_MODE_CAPTURE_TYPE_SHIFT 28
-#define FP_MODE_CAPTURE_TYPE_MASK  0x7
-/* Full blown vendor-defined capture (produces 'frame_size' bytes) */
-#define FP_CAPTURE_VENDOR_FORMAT 0
-/* Simple raw image capture (produces width x height x bpp bits) */
-#define FP_CAPTURE_SIMPLE_IMAGE  1
-/* Self test pattern (e.g. checkerboard) */
-#define FP_CAPTURE_PATTERN0      2
-/* Self test pattern (e.g. inverted checkerboard) */
-#define FP_CAPTURE_PATTERN1      3
-/* Capture for Quality test with fixed contrast */
-#define FP_CAPTURE_QUALITY_TEST  4
-/* Capture for pixel reset value test */
-#define FP_CAPTURE_RESET_TEST    5
-/* Extracts the capture type from the sensor 'mode' word */
-#define FP_CAPTURE_TYPE(mode) (((mode) >> FP_MODE_CAPTURE_TYPE_SHIFT) \
-					& FP_MODE_CAPTURE_TYPE_MASK)
+#define FP_MODE_CAPTURE        (1<<3)
 /* Finger enrollment session on-going */
 #define FP_MODE_ENROLL_SESSION (1<<4)
 /* Enroll the current finger image */
@@ -4975,6 +4941,41 @@ struct __ec_align2 ec_params_fp_sensor_config {
 #define FP_MODE_MATCH          (1<<6)
 /* special value: don't change anything just read back current mode */
 #define FP_MODE_DONT_CHANGE    (1<<31)
+
+#define FP_VALID_MODES (FP_MODE_DEEPSLEEP      | \
+			FP_MODE_FINGER_DOWN    | \
+			FP_MODE_FINGER_UP      | \
+			FP_MODE_CAPTURE        | \
+			FP_MODE_ENROLL_SESSION | \
+			FP_MODE_ENROLL_IMAGE   | \
+			FP_MODE_MATCH          | \
+			FP_MODE_DONT_CHANGE)
+
+/* Capture types defined in bits [30..28] */
+#define FP_MODE_CAPTURE_TYPE_SHIFT 28
+#define FP_MODE_CAPTURE_TYPE_MASK  (0x7 << FP_MODE_CAPTURE_TYPE_SHIFT)
+/*
+ * This enum must remain ordered, if you add new values you must ensure that
+ * FP_CAPTURE_TYPE_MAX is still the last one.
+ */
+enum fp_capture_type {
+	/* Full blown vendor-defined capture (produces 'frame_size' bytes) */
+	FP_CAPTURE_VENDOR_FORMAT = 0,
+	/* Simple raw image capture (produces width x height x bpp bits) */
+	FP_CAPTURE_SIMPLE_IMAGE = 1,
+	/* Self test pattern (e.g. checkerboard) */
+	FP_CAPTURE_PATTERN0 = 2,
+	/* Self test pattern (e.g. inverted checkerboard) */
+	FP_CAPTURE_PATTERN1 = 3,
+	/* Capture for Quality test with fixed contrast */
+	FP_CAPTURE_QUALITY_TEST = 4,
+	/* Capture for pixel reset value test */
+	FP_CAPTURE_RESET_TEST = 5,
+	FP_CAPTURE_TYPE_MAX,
+};
+/* Extracts the capture type from the sensor 'mode' word */
+#define FP_CAPTURE_TYPE(mode) (((mode) & FP_MODE_CAPTURE_TYPE_MASK) \
+				       >> FP_MODE_CAPTURE_TYPE_SHIFT)
 
 struct __ec_align4 ec_params_fp_mode {
 	uint32_t mode; /* as defined by FP_MODE_ constants */
