@@ -252,6 +252,11 @@
 #define CONFIG_TABLET_MODE
 #define CONFIG_TABLET_SWITCH
 #define TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
+/*
+ * Slew rate on the PP1800_SENSOR load switch requires a short delay on startup.
+ */
+#undef  CONFIG_MOTION_SENSE_RESUME_DELAY_US
+#define CONFIG_MOTION_SENSE_RESUME_DELAY_US (10 * MSEC)
 
 #ifndef __ASSEMBLER__
 
