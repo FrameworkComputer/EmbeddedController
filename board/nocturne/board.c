@@ -116,17 +116,17 @@ const struct adc_t adc_channels[] = {
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_DB0_LED_RED] =   { 3, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-				   2400 },
+				   986 },
 	[PWM_CH_DB0_LED_GREEN] = { 0, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-				   2400 },
+				   986 },
 	[PWM_CH_DB0_LED_BLUE] =  { 2, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-				   2400 },
+				   986 },
 	[PWM_CH_DB1_LED_RED] =   { 7, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-				   2400 },
+				   986 },
 	[PWM_CH_DB1_LED_GREEN] = { 5, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-				   2400 },
+				   986 },
 	[PWM_CH_DB1_LED_BLUE] =  { 6, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-				   2400 },
+				   986 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 

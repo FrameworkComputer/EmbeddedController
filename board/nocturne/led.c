@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "ec_commands.h"
+#include "hooks.h"
 #include "led_pwm.h"
 #include "pwm.h"
 #include "util.h"
@@ -17,7 +18,29 @@ const enum ec_led_id supported_led_ids[] = {
 };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
+struct pwm_led led_color_map_v3[EC_LED_COLOR_COUNT] = {
+				/* Red, Green, Blue */
+	[EC_LED_COLOR_RED]    = {  36,   0,   0 },
+	[EC_LED_COLOR_GREEN]  = {   0,  15,   0 },
+	[EC_LED_COLOR_BLUE]   = {   0,   0, 100 },
+	[EC_LED_COLOR_YELLOW] = {  36,  15,   0 },
+	[EC_LED_COLOR_WHITE]  = {  30,   9,  15 },
+	[EC_LED_COLOR_AMBER]  = {  30,   1,   0 },
+};
+
+/* Map for board rev 2 */
+struct pwm_led led_color_map_v2[EC_LED_COLOR_COUNT] = {
+				/* Red, Green, Blue */
+	[EC_LED_COLOR_RED]    = {  62,   0,   0 },
+	[EC_LED_COLOR_GREEN]  = {   0,  31,   0 },
+	[EC_LED_COLOR_BLUE]   = {   0,   0, 100 },
+	[EC_LED_COLOR_YELLOW] = { 100,  54,   0 },
+	[EC_LED_COLOR_WHITE]  = {  70,  54, 100 },
+	[EC_LED_COLOR_AMBER]  = { 100,  15,   0 },
+};
+
+/* Map for board rev 0 and 1 */
+struct pwm_led led_color_map_v0_1[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
 	[EC_LED_COLOR_RED]    = {   1,   0,   0 },
 	[EC_LED_COLOR_GREEN]  = {   0,   1,   0 },
@@ -26,6 +49,8 @@ struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
 	[EC_LED_COLOR_WHITE]  = {   9,  15,  15 },
 	[EC_LED_COLOR_AMBER]  = {  15,   1,   0 },
 };
+
+struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = { { 0 } };
 
 /* Two tri-color LEDs with red, green, and blue channels. */
 struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
@@ -86,3 +111,27 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 	return EC_SUCCESS;
 }
+
+static void fill_led_color_map(struct pwm_led map[])
+{
+	memcpy(led_color_map, map, EC_LED_COLOR_COUNT * sizeof(struct pwm_led));
+}
+
+static void select_color_map(void)
+{
+	switch (board_get_version()) {
+	case 0:
+	case 1:
+		fill_led_color_map(led_color_map_v0_1);
+		break;
+
+	case 2:
+		fill_led_color_map(led_color_map_v2);
+		break;
+
+	default:
+		fill_led_color_map(led_color_map_v3);
+		break;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, select_color_map, HOOK_PRIO_INIT_PWM-1);
