@@ -33,23 +33,23 @@
 
 static uint8_t led_is_pulsing;
 
-static int ignore_set_led_color(enum pwm_led_id id, int color)
+static int get_led_id_color(enum pwm_led_id id, int color)
 {
 #ifdef CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY
 	int active_chg_port = charge_manager_get_active_charge_port();
 
-	/* We should always be able to turn off a LED.*/
+	/* We should always be able to turn off a LED. */
 	if (color == -1)
-		return 0;
+		return -1;
 
 	if (led_is_pulsing)
-		return 0;
+		return color;
 
+	/* The inactive charge port LEDs should be off. */
 	if ((int)id != active_chg_port)
-		return 1;
+		return -1;
 #endif /* CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY */
-
-	return 0;
+	return color;
 }
 
 void set_pwm_led_color(enum pwm_led_id id, int color)
@@ -82,13 +82,11 @@ static void set_led_color(int color)
 	 */
 	if ((led_auto_control_is_enabled(EC_LED_ID_POWER_LED)) ||
 	    (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED)))
-		if (!ignore_set_led_color(PWM_LED0, color))
-			set_pwm_led_color(PWM_LED0, color);
+		set_pwm_led_color(PWM_LED0, get_led_id_color(PWM_LED0, color));
 
 #if CONFIG_LED_PWM_COUNT >= 2
 	if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
-		if (!ignore_set_led_color(PWM_LED1, color))
-			set_pwm_led_color(PWM_LED1, color);
+		set_pwm_led_color(PWM_LED1, get_led_id_color(PWM_LED1, color));
 #endif /* CONFIG_LED_PWM_COUNT >= 2 */
 }
 
