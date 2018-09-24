@@ -746,7 +746,7 @@ static int anx74xx_tcpm_set_polarity(int port, int polarity)
 	return rv;
 }
 
-int anx74xx_tcpc_get_fw_version(int port, int *version)
+static int anx74xx_tcpc_get_fw_version(int port, int *version)
 {
 	return tcpc_read(port, ANX74XX_REG_FW_VERSION, version);
 }
@@ -1043,6 +1043,25 @@ static int anx74xx_tcpm_init(int port)
 	return EC_SUCCESS;
 }
 
+static int anx74xx_get_chip_info(int port, int renew,
+			struct ec_response_pd_chip_info_v1 **chip_info)
+{
+	int rv = tcpci_get_chip_info(port, renew, chip_info);
+	int val;
+
+	if (rv)
+		return rv;
+
+	rv = anx74xx_tcpc_get_fw_version(port, &val);
+
+	if (rv)
+		return rv;
+
+	(*chip_info)->fw_version_number = val;
+
+	return rv;
+}
+
 /*
  * Dissociate from the TCPC.
  */
@@ -1071,7 +1090,7 @@ const struct tcpm_drv anx74xx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 	.tcpc_discharge_vbus	= &anx74xx_tcpc_discharge_vbus,
 #endif
-	.get_chip_info		= &tcpci_get_chip_info,
+	.get_chip_info		= &anx74xx_get_chip_info,
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
 		defined(CONFIG_USB_PD_TCPC_LOW_POWER)
 	.drp_toggle		= &anx74xx_tcpc_drp_toggle,

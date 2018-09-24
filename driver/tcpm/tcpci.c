@@ -587,21 +587,18 @@ void tcpci_tcpc_alert(int port)
 }
 
 /*
- * For PS8751, this function will fail if the chip is in low power mode.
- * PS8751 has to be woken up by reading a random register first then wait for
- * 10ms.
+ * This call will wake up the TCPC if it is in low power mode upon accessing the
+ * i2c bus (but the pd state machine should put it back into low power mode).
  *
- * This code doesn't have the wake-up read to avoid 10ms delay. Instead, we
- * call this function immediately after the chip is reset or initialized
- * because it'll gurantee the chip is awake. Once it's called, the chip info
- * will be stored in cache, which can be accessed by tcpm_get_chip_info without
- * worrying about chip states.
+ * Once it's called, the chip info will be stored in cache, which can be
+ * accessed by tcpm_get_chip_info without worrying about chip states.
  */
 int tcpci_get_chip_info(int port, int renew,
-			struct ec_response_pd_chip_info **chip_info)
+			struct ec_response_pd_chip_info_v1 **chip_info)
 {
-	static struct ec_response_pd_chip_info info[CONFIG_USB_PD_PORT_COUNT];
-	struct ec_response_pd_chip_info *i;
+	static struct ec_response_pd_chip_info_v1
+		info[CONFIG_USB_PD_PORT_COUNT];
+	struct ec_response_pd_chip_info_v1 *i;
 	int error;
 	int val;
 
@@ -634,30 +631,11 @@ int tcpci_get_chip_info(int port, int renew,
 		return error;
 	i->device_id = val;
 
-	switch (i->vendor_id) {
-#if  defined(CONFIG_USB_PD_TCPM_ANX3429) || \
-	defined(CONFIG_USB_PD_TCPM_ANX740X) || \
-	defined(CONFIG_USB_PD_TCPM_ANX741X)
-	case ANX74XX_VENDOR_ID:
-		error = anx74xx_tcpc_get_fw_version(port, &val);
-		break;
-#endif
-#if defined(CONFIG_USB_PD_TCPM_PS8751) || defined(CONFIG_USB_PD_TCPM_PS8805)
-	/* The PS8751 and PS8805 share the same vendor ID. */
-	case PS8XXX_VENDOR_ID:
-		error = ps8xxx_tcpc_get_fw_version(port, &val);
-		break;
-#endif
-	default:
-		/* Even if the chip doesn't implement get_fw_version, we
-		 * return success.*/
-		val = -1;
-		error = EC_SUCCESS;
-	}
-	if (error)
-		return error;
-	/* This may vary chip to chip. For now everything fits in this format */
-	i->fw_version_number = val;
+	/*
+	 * This varies chip to chip; more specific driver code is expected to
+	 * override this value if it can.
+	 */
+	i->fw_version_number = -1;
 
 	return EC_SUCCESS;
 }

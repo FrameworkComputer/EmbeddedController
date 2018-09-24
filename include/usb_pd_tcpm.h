@@ -218,7 +218,7 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	int (*get_chip_info)(int port, int renew,
-			struct ec_response_pd_chip_info **info);
+			struct ec_response_pd_chip_info_v1 **info);
 
 #ifdef CONFIG_USBC_PPC
 	/**

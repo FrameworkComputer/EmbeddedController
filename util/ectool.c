@@ -7892,9 +7892,10 @@ int cmd_pd_control(int argc, char *argv[])
 int cmd_pd_chip_info(int argc, char *argv[])
 {
 	struct ec_params_pd_chip_info p;
-	struct ec_response_pd_chip_info r;
+	struct ec_response_pd_chip_info_v1 r;
 	char *e;
 	int rv;
+	int cmdver = 1;
 
 	if (argc < 2 || 3 < argc) {
 		fprintf(stderr, "Usage: %s <port> [renew(on/off)]\n", argv[0]);
@@ -7917,7 +7918,11 @@ int cmd_pd_chip_info(int argc, char *argv[])
 		p.renew = val;
 	}
 
-	rv = ec_command(EC_CMD_PD_CHIP_INFO, 0, &p, sizeof(p), &r, sizeof(r));
+	if (!ec_cmd_version_supported(EC_CMD_PD_CHIP_INFO, cmdver))
+		cmdver = 0;
+
+	rv = ec_command(EC_CMD_PD_CHIP_INFO, cmdver, &p, sizeof(p), &r,
+			sizeof(r));
 	if (rv < 0)
 		return rv;
 
@@ -7925,14 +7930,16 @@ int cmd_pd_chip_info(int argc, char *argv[])
 	printf("product_id: 0x%x\n", r.product_id);
 	printf("device_id: 0x%x\n", r.device_id);
 
-	switch (r.vendor_id) {
-	case ANX74XX_VENDOR_ID:
-	case PS8XXX_VENDOR_ID:
+	if (r.fw_version_number != -1)
 		printf("fw_version: 0x%" PRIx64 "\n", r.fw_version_number);
-		break;
-	default:
+	else
 		printf("fw_version: UNSUPPORTED\n");
-	}
+
+	if (cmdver >= 1)
+		printf("min_req_fw_version: 0x%" PRIx64 "\n",
+		       r.min_req_fw_version_number);
+	else
+		printf("min_req_fw_version: UNSUPPORTED\n");
 
 	return 0;
 }

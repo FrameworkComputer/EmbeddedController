@@ -62,7 +62,6 @@
 
 extern const struct tcpm_drv ps8xxx_tcpm_drv;
 void ps8xxx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq);
-int ps8xxx_tcpc_get_fw_version(int port, int *version);
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
 extern struct i2c_stress_test_dev ps8xxx_i2c_stress_test_dev;

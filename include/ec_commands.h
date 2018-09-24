@@ -4721,6 +4721,20 @@ struct __ec_align2 ec_response_pd_chip_info {
 	};
 };
 
+struct __ec_align2 ec_response_pd_chip_info_v1 {
+	uint16_t vendor_id;
+	uint16_t product_id;
+	uint16_t device_id;
+	union {
+		uint8_t fw_version_string[8];
+		uint64_t fw_version_number;
+	};
+	union {
+		uint8_t min_req_fw_version_string[8];
+		uint64_t min_req_fw_version_number;
+	};
+};
+
 /* Run RW signature verification and get status */
 #define EC_CMD_RWSIG_CHECK_STATUS	0x011C
 

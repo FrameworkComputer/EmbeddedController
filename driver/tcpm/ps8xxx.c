@@ -87,7 +87,7 @@ void ps8xxx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
 	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 }
 
-int ps8xxx_tcpc_get_fw_version(int port, int *version)
+static int ps8xxx_tcpc_get_fw_version(int port, int *version)
 {
 	return tcpc_read(port, FW_VER_REG, version);
 }
@@ -136,6 +136,26 @@ static int ps8xxx_tcpm_release(int port)
 	return tcpci_tcpm_release(port);
 }
 
+static int ps8xxx_get_chip_info(int port, int renew,
+			struct ec_response_pd_chip_info_v1 **chip_info)
+{
+	int val;
+	int rv = tcpci_get_chip_info(port, renew, chip_info);
+
+	if (rv)
+		return rv;
+
+	rv = ps8xxx_tcpc_get_fw_version(port, &val);
+
+	if (rv)
+		return rv;
+
+	(*chip_info)->fw_version_number = val;
+
+	return rv;
+}
+
+
 const struct tcpm_drv ps8xxx_tcpm_drv = {
 	.init			= &tcpci_tcpm_init,
 	.release		= &ps8xxx_tcpm_release,
@@ -162,7 +182,7 @@ const struct tcpm_drv ps8xxx_tcpm_drv = {
 	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
 	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
 #endif
-	.get_chip_info		= &tcpci_get_chip_info,
+	.get_chip_info		= &ps8xxx_get_chip_info,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
 #endif
