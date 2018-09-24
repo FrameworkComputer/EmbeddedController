@@ -557,6 +557,9 @@ static void board_pmic_init(void)
 
 	/* Enable active discharge (100 ohms) on V33A_PCH and V1.8A. */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x3D, 0x5);
+
+	/* Enable active discharge (500 ohms) on 1.8U and (100 ohms) 1.2U. */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x3E, 0xD0);
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
