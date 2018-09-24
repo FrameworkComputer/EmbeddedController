@@ -160,6 +160,14 @@ static int show_charge_state(void)
 		pulse_leds(CONFIG_LED_PWM_CHARGE_ERROR_COLOR, 1, 2);
 	} else {
 		/* Discharging or not charging. */
+#ifdef CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY
+		/*
+		 * If we only show the active charge port, the only reason we
+		 * would pulse the LEDs is if we had an error.  If it no longer
+		 * exists, stop pulsing the LEDs.
+		 */
+		led_is_pulsing = 0;
+#endif /* CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY */
 		return 0;
 	}
 	return 1;
