@@ -34,9 +34,8 @@ GPIO_INT(USB_C2_TCPPC_INT_ODL, PIN(L, 1), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C2_TCPC_INT_ODL,  PIN(K, 6), GPIO_INT_FALLING, tcpc_alert_event)
 
 /* Misc. interrupts */
-/* TODO (b:110880394) Uncomment this when support for buttons is added */
-/* GPIO_INT(VOL_DOWN_ODL,    PIN(I, 6), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt) */
-/* GPIO_INT(VOL_UP_ODL,      PIN(I, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt) */
+GPIO_INT(VOLUME_DOWN_L,    PIN(I, 6), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(VOLUME_UP_L,      PIN(I, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 /* TODO (b:110947310) Uncomment this when sensor task is added to image */
 /* GPIO_INT(BASE_SIXAXIS_INT_L,	PIN(J, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V, lsm6dsm_interrupt) */
 

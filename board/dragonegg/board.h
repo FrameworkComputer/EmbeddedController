@@ -20,6 +20,7 @@
 
 /* Keyboard features */
 #define CONFIG_PWM_KBLIGHT
+#define CONFIG_VOLUME_BUTTONS
 
 /* USB and USBC features */
 #define CONFIG_USB_PORT_POWER_SMART
