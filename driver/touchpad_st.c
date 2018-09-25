@@ -556,7 +556,7 @@ static void dump_error(void)
  */
 static void dump_memory(void)
 {
-	uint32_t size = 0x10000, rx_len = 512;
+	uint32_t size = 0x10000, rx_len = 512 + ST_TP_DUMMY_BYTE;
 	uint32_t offset, i;
 	uint8_t cmd[] = {0xFB, 0x00, 0x10, 0x00, 0x00};
 
@@ -818,7 +818,7 @@ static int wait_for_flash_ready(uint8_t type)
 
 	while (retry--) {
 		ret = spi_transaction(SPI, tx_buf, sizeof(tx_buf),
-				      (uint8_t *)&rx_buf, 2);
+				      (uint8_t *)&rx_buf, 1 + ST_TP_DUMMY_BYTE);
 		if (ret == EC_SUCCESS && !(rx_buf.bytes[0] & 0x80))
 			break;
 		msleep(50);
