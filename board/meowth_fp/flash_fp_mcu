@@ -68,7 +68,7 @@ echo 0 > /sys/class/gpio/gpio${GPIO_NRST}/value
 sleep 0.001
 
 # load spidev (fail on cros-ec-spi first to change modalias)
-echo "${SPIID}" > /sys/bus/spi/drivers/cros-ec-spi/bind
+echo "${SPIID}" > /sys/bus/spi/drivers/cros-ec-spi/bind 2>/dev/null
 echo "${SPIID}" > /sys/bus/spi/drivers/spidev/bind
 
 # Release reset as the SPI bus is now ready
