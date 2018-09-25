@@ -250,7 +250,20 @@ if [[ -n "${do_prod}" && -n "${do_b1}" ]]; then
   exit 1
 fi
 
-rma_key_base="$(determine_rma_key_base ${elves[@]})"
+# If signing a chip factory image (version 0.0.22) do not try figuring out the
+# RMA keys.
+ignore_rma_keys="$(awk '
+  BEGIN {count = 0};
+   /"major": 0,/ {count += 1};
+   /"minor": 22,/ {count += 1};
+   END {{if (count == 2) {print "yes"};}}' \
+        "${EC_BIN_ROOT}/ec_RW-manifest-prod.json")"
+
+if [ "${ignore_rma_keys}" != "yes" ]; then
+  rma_key_base="$(determine_rma_key_base ${elves[@]})"
+else
+  echo "Ignofing RMA keys for factory branch"
+fi
 
 signer_command_params=()
 signer_command_params+=(--b -x ${EC_BIN_ROOT}/fuses.xml)
@@ -260,7 +273,9 @@ else
   cp "${EC_BIN_ROOT}/ec_RW-manifest-prod.json" "${tmpf}"
   signer_command_params+=(-k ${EC_BIN_ROOT}/cr50_RW-prod.pem.pub)
   # Swap test public RMA server key with the prod version.
-  signer_command_params+=(-S "${rma_key_base}.test","${rma_key_base}.prod")
+  if [ "${ignore_rma_keys}" != "yes" ]; then
+    signer_command_params+=(-S "${rma_key_base}.test","${rma_key_base}.prod")
+  fi
 fi
 signer_command_params+=(-j ${tmpf})
 
@@ -291,16 +306,18 @@ for elf in ${elves[@]}; do
     exit 1
   fi
 
-  if find_blob_in_blob  "${signed_file}" "${rma_key_base}.test"; then
-    echo "${progname}: test RMA key in the signed image!" >&2
-    rm *."${dst_suffix}"
-    exit 1
-  fi
+  if [ "${ignore_rma_keys}" != "yes" ]; then
+    if find_blob_in_blob  "${signed_file}" "${rma_key_base}.test"; then
+      echo "${progname}: test RMA key in the signed image!" >&2
+      rm *."${dst_suffix}"
+      exit 1
+    fi
 
-  if ! find_blob_in_blob "${signed_file}" "${rma_key_base}.prod"; then
-    echo "${progname}: prod RMA key not in the signed image!" >&2
-    rm *."${dst_suffix}"
-    exit 1
+    if ! find_blob_in_blob "${signed_file}" "${rma_key_base}.prod"; then
+      echo "${progname}: prod RMA key not in the signed image!" >&2
+      rm *."${dst_suffix}"
+      exit 1
+    fi
   fi
   : $(( count++ ))
 done
