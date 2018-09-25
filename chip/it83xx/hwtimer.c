@@ -98,15 +98,14 @@ static void event_timer_clear_pending_isr(void)
 
 uint32_t __ram_code __hw_clock_source_read(void)
 {
-#if 0
+#ifdef IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
 	/*
 	 * In combinational mode, the counter observation register of
 	 * timer 4(TIMER_H) will increment.
 	 */
-	return IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H);
-#else
-	/* TODO(crosbug.com/p/55044) */
 	return ext_observation_reg_read(FREE_EXT_TIMER_H);
+#else
+	return IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H);
 #endif
 }
 
@@ -143,11 +142,10 @@ uint32_t __hw_clock_event_get(void)
 	if (IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) & (1 << 0)) {
 		/* timer counter observation value to microseconds */
 		next_event_us += EVENT_TIMER_COUNT_TO_US(
-#if 0
-			IT83XX_ETWD_ETXCNTOR(EVENT_EXT_TIMER));
-#else
-			/* TODO(crosbug.com/p/55044) */
+#ifdef IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
 			ext_observation_reg_read(EVENT_EXT_TIMER));
+#else
+			IT83XX_ETWD_ETXCNTOR(EVENT_EXT_TIMER));
 #endif
 	}
 	return next_event_us;
@@ -225,11 +223,7 @@ static void __hw_clock_source_irq(void)
 }
 DECLARE_IRQ(CPU_INT_GROUP_3, __hw_clock_source_irq, 1);
 
-/*
- * TODO(crosbug.com/p/55044):
- * observation register of external timer latch issue.
- * we can remove this workaround after version change.
- */
+#ifdef IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
 /* Number of CPU cycles in 125 us */
 #define CYCLES_125NS (125*(PLL_CLOCK/SECOND) / 1000)
 uint32_t __ram_code ext_observation_reg_read(enum ext_timer_sel ext_timer)
@@ -259,6 +253,7 @@ uint32_t __ram_code ext_observation_reg_read(enum ext_timer_sel ext_timer)
 
 	return val;
 }
+#endif
 
 void ext_timer_start(enum ext_timer_sel ext_timer, int en_irq)
 {

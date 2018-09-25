@@ -57,8 +57,9 @@ struct ext_timer_ctrl_t {
 };
 
 extern const struct ext_timer_ctrl_t et_ctrl_regs[];
-/* TODO(crosbug.com/p/55044) */
+#ifdef IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
 uint32_t __ram_code ext_observation_reg_read(enum ext_timer_sel ext_timer);
+#endif
 void ext_timer_start(enum ext_timer_sel ext_timer, int en_irq);
 void ext_timer_stop(enum ext_timer_sel ext_timer, int dis_irq);
 void fan_ext_timer_interrupt(void);

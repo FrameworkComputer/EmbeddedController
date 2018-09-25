@@ -339,11 +339,10 @@ static void clock_htimer_enable(void)
 	uint32_t c;
 
 	/* change event timer clock source to 32.768 KHz */
-#if 0
-	c = TIMER_CNT_8M_32P768K(IT83XX_ETWD_ETXCNTOR(EVENT_EXT_TIMER));
-#else
-	/* TODO(crosbug.com/p/55044) */
+#ifdef IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
 	c = TIMER_CNT_8M_32P768K(ext_observation_reg_read(EVENT_EXT_TIMER));
+#else
+	c = TIMER_CNT_8M_32P768K(IT83XX_ETWD_ETXCNTOR(EVENT_EXT_TIMER));
 #endif
 	clock_event_timer_clock_change(EXT_PSR_32P768K_HZ, c);
 }
@@ -357,11 +356,10 @@ static int clock_allow_low_power_idle(void)
 		et_ctrl_regs[EVENT_EXT_TIMER].mask)
 		return 0;
 
-#if 0
-	if (EVENT_TIMER_COUNT_TO_US(IT83XX_ETWD_ETXCNTOR(EVENT_EXT_TIMER)) <
-#else
-	/* TODO(crosbug.com/p/55044) */
+#ifdef IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
 	if (EVENT_TIMER_COUNT_TO_US(ext_observation_reg_read(EVENT_EXT_TIMER)) <
+#else
+	if (EVENT_TIMER_COUNT_TO_US(IT83XX_ETWD_ETXCNTOR(EVENT_EXT_TIMER)) <
 #endif
 		SLEEP_SET_HTIMER_DELAY_USEC)
 		return 0;
