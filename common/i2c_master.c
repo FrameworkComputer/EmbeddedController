@@ -319,12 +319,8 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 	 */
 	rv = i2c_xfer_unlocked(port, slave_addr, &reg, 1, &block_length, 1,
 		      I2C_XFER_START);
-	if (rv) {
-		/* Dummy read for the stop bit */
-		i2c_xfer_unlocked(port, slave_addr, 0, 0, &reg, 1,
-				  I2C_XFER_STOP);
+	if (rv)
 		goto exit;
-	}
 
 	if (len && block_length > (len - 1))
 		block_length = len - 1;
@@ -351,7 +347,7 @@ int i2c_read_block(int port, int slave_addr, int offset, uint8_t *data,
 int i2c_write_block(int port, int slave_addr, int offset, const uint8_t *data,
 		    int len)
 {
-	int rv0, rv1;
+	int rv;
 	uint8_t reg_address = offset;
 
 	/*
@@ -361,14 +357,15 @@ int i2c_write_block(int port, int slave_addr, int offset, const uint8_t *data,
 	 * order to have a better chance at sending out the stop bit.
 	 */
 	i2c_lock(port, 1);
-	rv0 = i2c_xfer_unlocked(port, slave_addr, &reg_address, 1, NULL, 0,
-		      I2C_XFER_START);
-	rv1 = i2c_xfer_unlocked(port, slave_addr, data, len, NULL, 0,
-		      I2C_XFER_STOP);
+	rv = i2c_xfer_unlocked(port, slave_addr, &reg_address, 1, NULL, 0,
+			       I2C_XFER_START);
+	if (!rv) {
+		rv = i2c_xfer_unlocked(port, slave_addr, data, len, NULL, 0,
+				       I2C_XFER_STOP);
+	}
 	i2c_lock(port, 0);
 
-	/* Guess that the first error seen is more helpful. */
-	return (rv0 != EC_SUCCESS) ? rv0 : rv1;
+	return rv;
 }
 
 int get_sda_from_i2c_port(int port, enum gpio_signal *sda)
