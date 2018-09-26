@@ -145,6 +145,14 @@ static void clock_switch_osc(enum clock_osc osc)
 		;
 }
 
+static void switch_voltage_scale(uint32_t vos)
+{
+	STM32_PWR_D3CR &= ~STM32_PWR_D3CR_VOSMASK;
+	STM32_PWR_D3CR |= vos;
+	while (!(STM32_PWR_D3CR & STM32_PWR_D3CR_VOSRDY))
+		;
+}
+
 static void clock_set_osc(enum clock_osc osc)
 {
 	if (osc == current_osc)
@@ -165,9 +173,11 @@ static void clock_set_osc(enum clock_osc osc)
 		clock_flash_latency(FLASH_ACLK_64MHZ);
 		/* Turn off the PLL1 to save power */
 		STM32_RCC_CR &= ~STM32_RCC_CR_PLL1ON;
+		switch_voltage_scale(STM32_PWR_D3CR_VOS3);
 		break;
 
 	case OSC_PLL:
+		switch_voltage_scale(STM32_PWR_D3CR_VOS1);
 		/* Configure PLL1 using 64 Mhz HSI as input */
 		STM32_RCC_PLLCKSELR = STM32_RCC_PLLCKSEL_PLLSRC_HSI |
 				      STM32_RCC_PLLCKSEL_DIVM1(PLL1_DIVM);
