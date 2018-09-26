@@ -118,7 +118,8 @@ ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, 0)		/* GPIOD2 */
 ALTERNATE(PIN_MASK(0, 0x18), 0, MODULE_GPIO, 0)		/* GPIO03,4 */
 
 ALTERNATE(PIN_MASK(8, 0x08), 0, MODULE_GPIO, 0)		/* GPIO83 */
-ALTERNATE(PIN_MASK(A, 0x08), 0, MODULE_GPIO, 0)		/* GPIOA3 */
+
+/* GPIOA3,1 are enabled by default even though they are ALT functions */
 
 /* PWM channels */
 ALTERNATE(PIN_MASK(6, 0x01), 0, MODULE_PWM, 0)		/* GPIO60 PWM7 CHARGE_LED5 */
