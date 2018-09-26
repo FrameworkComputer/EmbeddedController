@@ -951,6 +951,20 @@ enum pd_ctrl_msg_type {
 	/* 22-31 Reserved */
 };
 
+/* Control message types which always mark the start of an AMS */
+#define PD_CTRL_AMS_START_MASK ((1 << PD_CTRL_GOTO_MIN) | \
+				(1 << PD_CTRL_GET_SOURCE_CAP) | \
+				(1 << PD_CTRL_GET_SINK_CAP) | \
+				(1 << PD_CTRL_DR_SWAP) | \
+				(1 << PD_CTRL_PR_SWAP) | \
+				(1 << PD_CTRL_VCONN_SWAP) | \
+				(1 << PD_CTRL_GET_SOURCE_CAP_EXT) | \
+				(1 << PD_CTRL_GET_STATUS) | \
+				(1 << PD_CTRL_FR_SWAP) | \
+				(1 << PD_CTRL_GET_PPS_STATUS) | \
+				(1 << PD_CTRL_GET_COUNTRY_CODES))
+
+
 /* Battery Status Data Object fields for REV 3.0 */
 #define BSDO_CAP_UNKNOWN 0xffff
 #define BSDO_CAP(n)      (((n) & 0xffff) << 16)
