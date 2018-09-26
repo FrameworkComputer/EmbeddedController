@@ -18,8 +18,6 @@
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
-#define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
-
 /* Power and battery LEDs */
 #define CONFIG_LED_COMMON
 #define CONFIG_CMD_LEDTEST
