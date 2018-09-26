@@ -378,9 +378,16 @@ static int board_set_rp(int rp)
 	return EC_SUCCESS;
 }
 
+/* Shadow what would be in TCPC register state. */
+static int rp_value_stored = TYPEC_RP_USB;
+static int cc_pull_stored = TYPEC_CC_RD;
+
 int pd_set_rp_rd(int port, int cc_pull, int rp_value)
 {
 	int rv = EC_SUCCESS;
+
+	if (port != 1)
+		return EC_ERROR_UNIMPLEMENTED;
 
 	/* By default disconnect all Rp/Rd resistors from both CC lines */
 	/* Set Rd for CC1/CC2 to High-Z. */
@@ -412,12 +419,27 @@ int pd_set_rp_rd(int port, int cc_pull, int rp_value)
 			gpio_set_flags(GPIO_USB_DUT_CC2_RD, GPIO_OUT_LOW);
 	}
 
+	rp_value_stored = rp_value;
+	cc_pull_stored = cc_pull;
+
 	return rv;
 }
 
 int board_select_rp_value(int port, int rp)
 {
-	return pd_set_rp_rd(port, TYPEC_CC_RP, rp);
+	if (port != 1)
+		return EC_ERROR_UNIMPLEMENTED;
+
+	/*
+	 * Update Rp value to indicate non-pd power available.
+	 * Do not change pull direction though.
+	 */
+	if ((rp != rp_value_stored) && (cc_pull_stored == TYPEC_CC_RP)) {
+		rp_value_stored = rp;
+		return pd_set_rp_rd(port, TYPEC_CC_RP, rp);
+	}
+
+	return EC_SUCCESS;
 }
 
 int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port)
@@ -646,7 +668,7 @@ static void do_cc(int disable_dts_new, int allow_src_new)
 		disable_dts_mode = 0;
 		allow_src_mode = 0;
 		/* Remove Rp/Rd on both CC lines */
-		board_select_rp_value(DUT, TYPEC_RP_RESERVED);
+		pd_set_rp_rd(DUT, TYPEC_CC_RP, TYPEC_RP_RESERVED);
 
 		/* Some time for DUT to detach, use tErrorRecovery */
 		msleep(25);
