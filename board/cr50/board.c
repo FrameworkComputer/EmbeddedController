@@ -14,6 +14,7 @@
 #include "flash.h"
 #include "flash_config.h"
 #include "gpio.h"
+#include "ite_sync.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "i2cs.h"
@@ -620,6 +621,27 @@ static void  check_board_id_mismatch(void)
 	system_reset(0);
 }
 
+/*
+ * Check if ITE SYNC sequence generation was requested before the reset, if so
+ * - clear the request and call the function to generate the sequence.
+ */
+static void maybe_trigger_ite_sync(void)
+{
+	uint32_t lls1;
+
+	lls1 = GREG32(PMU, LONG_LIFE_SCRATCH1);
+
+	if (!(lls1 & BOARD_ITE_EC_SYNC_NEEDED))
+		return;
+
+	/* Clear the sync required bit, this should work only once. */
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 1);
+	GREG32(PMU, LONG_LIFE_SCRATCH1) = lls1 & ~BOARD_ITE_EC_SYNC_NEEDED;
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
+
+	generate_ite_sync();
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
@@ -639,6 +661,7 @@ static void board_init(void)
 	init_pmu();
 	reset_wake_logic();
 	init_trng();
+	maybe_trigger_ite_sync();
 	init_jittery_clock(1);
 	init_runlevel(PERMISSION_MEDIUM);
 	/* Initialize NvMem partitions */
@@ -1520,3 +1543,26 @@ static int command_rollback(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(rollback, command_rollback,
 	"", "Force rollback to escape DEV image.");
 #endif
+
+/*
+ * Set long life register bit requesting generating of the ITE SYNC sequence
+ * and reboot.
+ */
+static void deferred_ite_sync_reset(void)
+{
+	/* Enable writing to the long life register */
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 1);
+	GREG32(PMU, LONG_LIFE_SCRATCH1) |= BOARD_ITE_EC_SYNC_NEEDED;
+	/* Disable writing to the long life register */
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
+
+	system_reset(SYSTEM_RESET_MANUALLY_TRIGGERED |
+		     SYSTEM_RESET_HARD);
+}
+DECLARE_DEFERRED(deferred_ite_sync_reset);
+
+void board_start_ite_sync(void)
+{
+	/* Let the usb reply to make it to the host. */
+	hook_call_deferred(&deferred_ite_sync_reset_data, 10 * MSEC);
+}

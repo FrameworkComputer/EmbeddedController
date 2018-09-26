@@ -49,6 +49,10 @@
 #define BOARD_DEEP_SLEEP_DISABLED    (1 << 13)
 /* Use Cr50_RX_AP_TX to determine if the AP is off or on */
 #define BOARD_DETECT_AP_WITH_UART    (1 << 14)
+
+/* ITE EC sync sequence generation after reset is required. */
+#define BOARD_ITE_EC_SYNC_NEEDED     (1 << 15)
+
 /*
  * Macro to capture all properties related to board strapping pins. This must be
  * updated if additional strap related properties are added.

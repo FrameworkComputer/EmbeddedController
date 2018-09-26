@@ -304,6 +304,12 @@ void set_ap_on(void);
 /* Returns True if chip is brought up in a factory test harness. */
 int chip_factory_mode(void);
 
+/*
+ * Trigger generation of the ITE SYNC sequence on the way up after next
+ * reboot.
+ */
+void board_start_ite_sync(void);
+
 #endif /* !__ASSEMBLER__ */
 
 /* USB interface indexes (use define rather than enum to expand them) */
@@ -379,4 +385,17 @@ enum nvmem_users {
 #ifndef CONFIG_RMA_AUTH_USE_P256
 #define CONFIG_CURVE25519
 #endif
+
+#define CONFIG_CCD_ITE_PROGRAMMING
+
+/*
+ * Increase sizes of USB over I2C read and write queues. Sizes are are such
+ * that when appropriate overheads are included, total buffer sizes are powers
+ * of 2 (2^9 in both cases below).
+ */
+#undef CONFIG_USB_I2C_MAX_WRITE_COUNT
+#undef CONFIG_USB_I2C_MAX_READ_COUNT
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT 508
+#define CONFIG_USB_I2C_MAX_READ_COUNT 506
+
 #endif /* __CROS_EC_BOARD_H */
