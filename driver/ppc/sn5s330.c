@@ -246,7 +246,7 @@ static int sn5s330_init(int port)
 	}
 
 	/* Enable SBU Fets and set PP2 current limit to ~3A. */
-	regval = SN5S330_SBU_EN | 0xf;
+	regval = SN5S330_SBU_EN | 0x8;
 	status = i2c_write8(i2c_port, i2c_addr, SN5S330_FUNC_SET2, regval);
 	if (status) {
 		CPRINTS("ppc p%d: Failed to set FUNC_SET2!", port);
@@ -667,6 +667,20 @@ static void sn5s330_handle_interrupt(int port)
 	}
 }
 
+#ifdef CONFIG_USBC_PPC_SBU
+static int sn5s330_set_sbu(int port, int enable)
+{
+	int rv;
+
+	if (enable)
+		rv = set_flags(port, SN5S330_FUNC_SET2, SN5S330_SBU_EN);
+	else
+		rv = clr_flags(port, SN5S330_FUNC_SET2, SN5S330_SBU_EN);
+
+	return rv;
+}
+#endif /* CONFIG_USBC_PPC_SBU */
+
 static void sn5s330_irq_deferred(void)
 {
 	int i;
@@ -701,6 +715,9 @@ const struct ppc_drv sn5s330_drv = {
 #ifdef CONFIG_USBC_PPC_POLARITY
 	.set_polarity = &sn5s330_set_polarity,
 #endif
+#ifdef CONFIG_USBC_PPC_SBU
+	.set_sbu = &sn5s330_set_sbu,
+#endif /* defined(CONFIG_USBC_PPC_SBU) */
 #ifdef CONFIG_USBC_PPC_VCONN
 	.set_vconn = &sn5s330_set_vconn,
 #endif

@@ -140,6 +140,16 @@ int ppc_is_port_latched_off(int port)
 	return oc_event_cnt_tbl[port] >= PPC_OC_CNT_THRESH;
 }
 
+#ifdef CONFIG_USBC_PPC_SBU
+int ppc_set_sbu(int port, int enable)
+{
+	if ((port < 0) || (port >= ppc_cnt))
+		return EC_ERROR_INVAL;
+
+	return ppc_chips[port].drv->set_sbu(port, enable);
+}
+#endif /* defined(CONFIG_USBC_PPC_SBU) */
+
 #ifdef CONFIG_USBC_PPC_VCONN
 int ppc_set_vconn(int port, int enable)
 {

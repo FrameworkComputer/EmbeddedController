@@ -3463,6 +3463,9 @@
 #undef CONFIG_USBC_PPC_SN5S330
 #undef CONFIG_USBC_PPC_SYV682X
 
+/* PPC is capable of gating the SBU lines. */
+#undef CONFIG_USBC_PPC_SBU
+
 /* PPC is capable of providing VCONN */
 #undef CONFIG_USBC_PPC_VCONN
 
@@ -4028,6 +4031,7 @@
 /* The TI SN5S330 supports VCONN and needs to be informed of CC polarity */
 #if defined(CONFIG_USBC_PPC_SN5S330)
 #define CONFIG_USBC_PPC_POLARITY
+#define CONFIG_USBC_PPC_SBU
 #define CONFIG_USBC_PPC_VCONN
 #endif
 

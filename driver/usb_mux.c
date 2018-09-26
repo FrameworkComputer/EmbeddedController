@@ -9,6 +9,7 @@
 #include "console.h"
 #include "host_command.h"
 #include "usb_mux.h"
+#include "usbc_ppc.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -96,6 +97,14 @@ void usb_mux_set(int port, enum typec_mux mux_mode,
 	/* Configure USB2.0 */
 	usb_charger_set_switches(port, usb_mode);
 #endif
+
+#ifdef CONFIG_USBC_PPC_SBU
+	/* Make sure to disable/enable the SBU FETs if needed. */
+	if (mux_mode == TYPEC_MUX_NONE)
+		ppc_set_sbu(port, 0);
+	else
+		ppc_set_sbu(port, 1);
+#endif /* CONFIG_USBC_PPC_SBU */
 
 	/*
 	 * Don't wake device up just to put it back to sleep. Low power mode
