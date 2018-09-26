@@ -152,6 +152,15 @@ static int ps8xxx_get_chip_info(int port, int renew,
 
 	(*chip_info)->fw_version_number = val;
 
+#if defined(CONFIG_USB_PD_TCPM_PS8751) && \
+	defined(CONFIG_USB_PD_VBUS_DETECT_TCPC)
+	/*
+	 * Min firmware version of PS8751 to ensure that it can detect Vbus
+	 * properly. See b/109769787#comment7
+	 */
+	(*chip_info)->min_req_fw_version_number = 0x39;
+#endif
+
 	return rv;
 }
 
