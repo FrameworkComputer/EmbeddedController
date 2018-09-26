@@ -1059,6 +1059,15 @@ static int anx74xx_get_chip_info(int port, int renew,
 
 	(*chip_info)->fw_version_number = val;
 
+#ifdef CONFIG_USB_PD_TCPM_ANX3429
+	/*
+	 * Min firmware version of ANX3429 to ensure that false SOP' detection
+	 * doesn't occur for e-marked cables. See b/116255749#comment8 and
+	 * b/64752060#comment11
+	 */
+	(*chip_info)->min_req_fw_version_number = 0x16;
+#endif
+
 	return rv;
 }
 
