@@ -98,14 +98,6 @@ void usb_mux_set(int port, enum typec_mux mux_mode,
 	usb_charger_set_switches(port, usb_mode);
 #endif
 
-#ifdef CONFIG_USBC_PPC_SBU
-	/* Make sure to disable/enable the SBU FETs if needed. */
-	if (mux_mode == TYPEC_MUX_NONE)
-		ppc_set_sbu(port, 0);
-	else
-		ppc_set_sbu(port, 1);
-#endif /* CONFIG_USBC_PPC_SBU */
-
 	/*
 	 * Don't wake device up just to put it back to sleep. Low power mode
 	 * flag is only set if the mux set() operation succeeded previously for
