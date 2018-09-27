@@ -21,6 +21,7 @@
 #define CONFIG_CMD_ACCEL_INFO
 
 #define CONFIG_LED_COMMON
+#define OCTOPUS_BATT_FUEL_LOW_LED 10
 
 /* Sensors */
 #define CONFIG_ACCEL_LIS2DE		/* Lid accel */
