@@ -141,16 +141,18 @@ static uint8_t pd_try_src_enable;
 
 #ifdef CONFIG_USB_PD_REV30
 /*
- * The spec. revision is used to index into this array.
+ * The spec. revision is the argument for this macro.
  *  Rev 0 (PD 1.0) - return PD_CTRL_REJECT
  *  Rev 1 (PD 2.0) - return PD_CTRL_REJECT
  *  Rev 2 (PD 3.0) - return PD_CTRL_NOT_SUPPORTED
+ *
+ * Note: this should only be used in locations where responding on a lower
+ * revision with a Reject is valid (ex. a source refusing a PR_Swap).  For
+ * other uses of Not_Supported, use PD_CTRL_NOT_SUPPORTED directly.
  */
-static const uint8_t refuse[] = {
-	PD_CTRL_REJECT, PD_CTRL_REJECT, PD_CTRL_NOT_SUPPORTED};
-#define REFUSE(r) refuse[r]
+#define NOT_SUPPORTED(r) (r < 2 ? PD_CTRL_REJECT : PD_CTRL_NOT_SUPPORTED)
 #else
-#define REFUSE(r) PD_CTRL_REJECT
+#define NOT_SUPPORTED(r) PD_CTRL_REJECT
 #endif
 
 #ifdef CONFIG_USB_PD_REV30
@@ -1779,7 +1781,7 @@ static void handle_ctrl_request(int port, uint16_t head,
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 		send_sink_cap(port);
 #else
-		send_control(port, REFUSE(pd[port].rev));
+		send_control(port, NOT_SUPPORTED(pd[port].rev));
 #endif
 		break;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -1976,10 +1978,10 @@ static void handle_ctrl_request(int port, uint16_t head,
 					PD_STATE_SNK_SWAP_SNK_DISABLE,
 					PD_STATE_SRC_SWAP_SNK_DISABLE));
 		} else {
-			send_control(port, REFUSE(pd[port].rev));
+			send_control(port, PD_CTRL_REJECT);
 		}
 #else
-		send_control(port, REFUSE(pd[port].rev));
+		send_control(port, NOT_SUPPORTED(pd[port].rev));
 #endif
 		break;
 	case PD_CTRL_DR_SWAP:
@@ -1993,7 +1995,7 @@ static void handle_ctrl_request(int port, uint16_t head,
 			if (send_control(port, PD_CTRL_ACCEPT) >= 0)
 				pd_dr_swap(port);
 		} else {
-			send_control(port, REFUSE(pd[port].rev));
+			send_control(port, PD_CTRL_REJECT);
 
 		}
 		break;
@@ -2006,11 +2008,11 @@ static void handle_ctrl_request(int port, uint16_t head,
 					set_state(port,
 						  PD_STATE_VCONN_SWAP_INIT);
 			} else {
-				send_control(port, REFUSE(pd[port].rev));
+				send_control(port, PD_CTRL_REJECT);
 			}
 		}
 #else
-		send_control(port, REFUSE(pd[port].rev));
+		send_control(port, NOT_SUPPORTED(pd[port].rev));
 #endif
 		break;
 	default:
