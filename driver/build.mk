@@ -18,7 +18,7 @@ driver-$(CONFIG_ACCEL_LIS2D_COMMON)+=accel_lis2dh.o stm_mems_common.o
 driver-$(CONFIG_SYNC)+=sync.o
 
 # BC1.2 Charger Detection Devices
-driver-$(CONFIG_BC12_DETECT_BQ24392)+=bc12/bq24392.o
+driver-$(CONFIG_BC12_DETECT_MAX14637)+=bc12/max14637.o
 driver-$(CONFIG_BC12_DETECT_PI3USB9281)+=bc12/pi3usb9281.o
 
 # Gyrometers

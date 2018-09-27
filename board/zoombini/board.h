@@ -94,7 +94,7 @@
 #endif /* defined(BOARD_MEOWTH) */
 
 #ifdef BOARD_ZOOMBINI
-#define CONFIG_BC12_DETECT_BQ24392
+#define CONFIG_BC12_DETECT_MAX14637
 #endif /* defined(BOARD_ZOOMBINI) */
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_V2

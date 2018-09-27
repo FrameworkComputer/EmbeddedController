@@ -15,7 +15,6 @@
 #include "cros_board_info.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi160.h"
-#include "driver/bc12/bq24392.h"
 #include "driver/charger/bd9995x.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/tcpm/anx7447.h"

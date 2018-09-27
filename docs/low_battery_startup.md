@@ -63,7 +63,7 @@ input voltage-regulation mode.
 In effect, the EC limits to both a maximum current of 2.4A and minimum voltage
 of 4.5V, for about 12W of power draw from a BC1.2 source.
 
-See also `driver/bc12/bq24392.c:bc12_detect()`.
+See also `driver/bc12/max14637.c:bc12_detect()`.
 
 #### USB-PD Sources
 

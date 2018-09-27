@@ -10,7 +10,6 @@
 #include "button.h"
 #include "charge_state.h"
 #include "common.h"
-#include "driver/bc12/bq24392.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/tcpm/ps8xxx.h"

@@ -15,7 +15,7 @@
 #include "compile_time_macros.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/als_opt3001.h"
-#include "driver/bc12/bq24392.h"
+#include "driver/bc12/max14637.h"
 #include "driver/led/lm3630a.h"
 #include "driver/pmic_tps650x30.h"
 #include "driver/ppc/sn5s330.h"
@@ -329,21 +329,21 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 #ifdef BOARD_ZOOMBINI
 /* BC 1.2 chip Configuration */
-const struct bq24392_config_t bq24392_config[CONFIG_USB_PD_PORT_COUNT] = {
+const struct max14637_config_t max14637_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.chip_enable_pin = GPIO_USB_C0_BC12_VBUS_ON_L,
 		.chg_det_pin = GPIO_USB_C0_BC12_CHG_DET,
-		.flags = BQ24392_FLAGS_ENABLE_ACTIVE_LOW,
+		.flags = MAX14637_FLAGS_ENABLE_ACTIVE_LOW,
 	},
 	{
 		.chip_enable_pin = GPIO_USB_C1_BC12_VBUS_ON_L,
 		.chg_det_pin = GPIO_USB_C1_BC12_CHG_DET,
-		.flags = BQ24392_FLAGS_ENABLE_ACTIVE_LOW,
+		.flags = MAX14637_FLAGS_ENABLE_ACTIVE_LOW,
 	},
 	{
 		.chip_enable_pin = GPIO_USB_C2_BC12_VBUS_ON_L,
 		.chg_det_pin = GPIO_USB_C2_BC12_CHG_DET,
-		.flags = BQ24392_FLAGS_ENABLE_ACTIVE_LOW,
+		.flags = MAX14637_FLAGS_ENABLE_ACTIVE_LOW,
 	},
 };
 
