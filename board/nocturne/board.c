@@ -78,6 +78,21 @@ static void usb_c_interrupt(enum gpio_signal s)
 	sn5s330_interrupt(port);
 }
 
+static void board_connect_c0_sbu_deferred(void)
+{
+	/*
+	 * If CCD_MODE_ODL asserts, it means there's a debug accessory connected
+	 * and we should enable the SBU FETs.
+	 */
+	ppc_set_sbu(0, 1);
+}
+DECLARE_DEFERRED(board_connect_c0_sbu_deferred);
+
+static void board_connect_c0_sbu(enum gpio_signal s)
+{
+	hook_call_deferred(&board_connect_c0_sbu_deferred_data, 0);
+}
+
 #include "gpio_list.h"
 
 const enum gpio_signal hibernate_wake_pins[] = {
@@ -549,6 +564,14 @@ static void board_quirks(void)
 		gpio_set_flags(GPIO_USB_C0_PD_INT_ODL, GPIO_INT_FALLING);
 		gpio_set_flags(GPIO_USB_C1_PD_INT_ODL, GPIO_INT_FALLING);
 	}
+
+	/*
+	 * Older boards don't have the SBU bypass circuitry needed for CCD, so
+	 * enable the CCD_MODE_ODL interrupt such that we can help in making
+	 * sure the SBU FETs are connected.
+	 */
+	if (board_get_version() < 2)
+		gpio_enable_interrupt(GPIO_CCD_MODE_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_quirks, HOOK_PRIO_DEFAULT);
 

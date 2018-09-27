@@ -257,6 +257,17 @@ static void svdm_safe_dp_mode(int port)
 	dp_status[port] = 0;
 	usb_mux_set(port, TYPEC_MUX_NONE,
 		USB_SWITCH_CONNECT, pd_get_polarity(port));
+
+	/*
+	 * Isolate the SBU lines.
+	 *
+	 * Older boards don't have the SBU line bypass needed for CCD, so never
+	 * disable the SBU lines for port 0.
+	 */
+	if ((board_get_version() < 2) && (port == 0))
+		CPRINTS("Skip disable SBU lines for C0.");
+	else
+		ppc_set_sbu(port, 0);
 }
 
 static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
@@ -296,6 +307,8 @@ static int svdm_dp_config(int port, uint32_t *payload)
 	if (!pin_mode)
 		return 0;
 
+	/* Connect the SBU and USB lines to the connector. */
+	ppc_set_sbu(port, 1);
 	usb_mux_set(port, mf_pref ? TYPEC_MUX_DOCK : TYPEC_MUX_DP,
 		    USB_SWITCH_CONNECT, pd_get_polarity(port));
 
