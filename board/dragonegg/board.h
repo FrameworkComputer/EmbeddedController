@@ -29,6 +29,15 @@
 #define CONFIG_USB_PORT_POWER_SMART_CDP_SDP_ONLY
 #define GPIO_USB1_ILIM_SEL GPIO_EN_USB_A_HIGH_POWER_OD
 
+/* LEDs */
+#define CONFIG_LED_COMMON
+#define CONFIG_LED_PWM_COUNT 1
+#undef CONFIG_LED_PWM_SOC_ON_COLOR
+#define CONFIG_LED_PWM_SOC_ON_COLOR EC_LED_COLOR_BLUE
+#undef CONFIG_LED_PWM_SOC_SUSPEND_COLOR
+#define CONFIG_LED_PWM_SOC_SUSPEND_COLOR EC_LED_COLOR_WHITE
+#define CONFIG_CMD_LEDTEST
+
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
@@ -56,6 +65,9 @@ enum adc_channel {
 
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
+	PWM_CH_LED_RED,
+	PWM_CH_LED_GREEN,
+	PWM_CH_LED_BLUE,
 	PWM_CH_COUNT
 };
 

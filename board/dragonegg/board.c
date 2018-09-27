@@ -21,6 +21,7 @@
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
+#include "pwm.h"
 #include "pwm_chip.h"
 #include "spi.h"
 #include "switch.h"
@@ -85,7 +86,13 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 /******************************************************************************/
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = { .channel = 0, .flags = 0, .freq_hz = 100 },
+	[PWM_CH_KBLIGHT]   = { .channel = 0, .flags = 0, .freq_hz = 100 },
+	[PWM_CH_LED_RED]   = { .channel = 2, .flags = PWM_CONFIG_DSLEEP |
+			       PWM_CONFIG_ACTIVE_LOW, .freq_hz = 100 },
+	[PWM_CH_LED_GREEN] = { .channel = 1, .flags = PWM_CONFIG_DSLEEP |
+			       PWM_CONFIG_ACTIVE_LOW, .freq_hz = 100 },
+	[PWM_CH_LED_BLUE]  = { .channel = 3, .flags = PWM_CONFIG_DSLEEP |
+			       PWM_CONFIG_ACTIVE_LOW, .freq_hz = 100 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
