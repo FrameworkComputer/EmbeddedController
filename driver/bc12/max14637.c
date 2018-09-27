@@ -131,20 +131,16 @@ static void detect_or_power_down_ic(const int port)
 #endif /* !defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) */
 
 	if (vbus_present) {
-		/* Turn on the 5V rail to allow the chip to be powered. */
 #if defined(CONFIG_POWER_PP5000_CONTROL) && defined(HAS_TASK_CHIPSET)
+		/* Turn on the 5V rail to allow the chip to be powered. */
 		power_5v_enable(task_get_current(), 1);
-#else
-		gpio_set_level(GPIO_EN_PP5000, 1);
 #endif
 		bc12_detect(port);
 	} else {
 		power_down_ic(port);
-		/* Issue a request to turn off the rail. */
 #if defined(CONFIG_POWER_PP5000_CONTROL) && defined(HAS_TASK_CHIPSET)
+		/* Issue a request to turn off the rail. */
 		power_5v_enable(task_get_current(), 0);
-#else
-		gpio_set_level(GPIO_EN_PP5000, 0);
 #endif
 	}
 }
