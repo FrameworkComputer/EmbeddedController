@@ -346,7 +346,7 @@ static enum vendor_cmd_rc process_response(uint8_t *buf,
 	if (rv == EC_SUCCESS) {
 		CPRINTF("%s: success!\n", __func__);
 		*response_size = 0;
-		enable_ccd_factory_mode();
+		enable_ccd_factory_mode(0);
 		return VENDOR_RC_SUCCESS;
 	}
 

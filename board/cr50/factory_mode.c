@@ -112,7 +112,7 @@ static enum vendor_cmd_rc vc_factory_reset(enum vendor_cmd_cc code,
 		return VENDOR_RC_NOT_ALLOWED;
 
 	CPRINTF("factory reset\n");
-	enable_ccd_factory_mode();
+	enable_ccd_factory_mode(1);
 
 	return VENDOR_RC_SUCCESS;
 }

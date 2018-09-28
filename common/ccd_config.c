@@ -454,6 +454,7 @@ int ccd_reset_config(unsigned int flags)
 		/* Force WP disabled at boot */
 		raw_set_flag(CCD_FLAG_OVERRIDE_WP_AT_BOOT, 1);
 		raw_set_flag(CCD_FLAG_OVERRIDE_WP_STATE_ENABLED, 0);
+		set_wp_follow_ccd_config();
 	}
 
 	/* Restore test lab flag unless explicitly resetting it */

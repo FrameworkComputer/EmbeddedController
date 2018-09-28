@@ -301,8 +301,16 @@ void ccd_tpm_reset_callback(void);
 int ccd_has_password(void);
 
 /**
- * Enter CCD factory mode. This will clear the TPM and do a hard reboot after
- * updating the ccd config.
+ * Enter CCD factory mode. This will clear the TPM, update the ccd config, and
+ * then do a hard reboot if 'reset_required' is True.
  */
-void enable_ccd_factory_mode(void);
+void enable_ccd_factory_mode(int reset_required);
+
+/*
+ * Enable factory mode but not necessarily rebooting the device. This will
+ * clear the TPM and disable flash write protection. Will trigger system reset
+ * only if 'reset_required' is True.
+ */
+void factory_enable(int reset_required);
+
 #endif /* __CROS_EC_CCD_CONFIG_H */
