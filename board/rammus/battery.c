@@ -20,32 +20,19 @@ static enum battery_present batt_pres_prev = BP_NOT_SURE;
 #define SB_SHIP_MODE_REG	SB_MANUFACTURER_ACCESS
 #define SB_SHUTDOWN_DATA	0x0010
 
-/*
- * Unlike other smart batteries, Nautilus battery uses different bit fields
- * in manufacturer access register for the conditions of the CHG/DSG FETs.
- */
-#define BATFETS_SHIFT		(14)
-#define BATFETS_MASK		(0x3)
-#define BATFETS_DISABLED	(0x2)
-
-#define CHARGING_VOLTAGE_MV_SAFE	8400
-#define CHARGING_CURRENT_MA_SAFE	1500
-
-/* TODO(b:111815315): Need to config/implement the battery related code */
-
 static const struct battery_info info = {
-	.voltage_max = 8700,
-	.voltage_normal = 7700,
-	.voltage_min = 6000,
+	.voltage_max = 13200,
+	.voltage_normal = 11550,
+	.voltage_min = 9000,
 	/* Pre-charge values. */
-	.precharge_current = 200, /* mA */
+	.precharge_current = 256, /* mA */
 
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 45,
 	.charging_min_c = 0,
-	.charging_max_c = 50,
-	.discharging_min_c = -20,
-	.discharging_max_c = 70,
+	.charging_max_c = 60,
+	.discharging_min_c = 0,
+	.discharging_max_c = 60,
 };
 
 const struct battery_info *battery_get_info(void)
@@ -83,26 +70,29 @@ static int battery_init(void)
 /*
  * Check for case where both XCHG and XDSG bits are set indicating that even
  * though the FG can be read from the battery, the battery is not able to be
- * charged or discharged. This situation might happen when power is reconnected
- * to a battery pack in sleep mode. In this transient siuation, the FG can be
+ * charged or discharged. This situation will happen if a battery disconnect was
+ * intiaited via H1 setting the DISCONN signal to the battery. This will put the
+ * battery pack into a sleep state and when power is reconnected, the FG can be
  * read, but the battery is still not able to provide power to the system. The
  * calling function returns batt_pres = BP_NO, which instructs the charging
  * state machine to prevent powering up the AP on battery alone which could lead
  * to a brownout event when the battery isn't able yet to provide power to the
- * system.
+ * system. .
  */
 static int battery_check_disconnect(void)
 {
 	int rv;
-	int batt_mfgacc;
+	uint8_t data[6];
 
 	/* Check if battery charging + discharging is disabled. */
-	rv = sb_read(SB_MANUFACTURER_ACCESS, &batt_mfgacc);
+	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
+			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
 
-	if (((batt_mfgacc >> BATFETS_SHIFT) & BATFETS_MASK) ==
-	    BATFETS_DISABLED)
+	if ((data[3] & (BATTERY_DISCHARGING_DISABLED |
+			BATTERY_CHARGING_DISABLED)) ==
+	    (BATTERY_DISCHARGING_DISABLED | BATTERY_CHARGING_DISABLED))
 		return BATTERY_DISCONNECTED;
 
 	return BATTERY_NOT_DISCONNECTED;
