@@ -205,6 +205,8 @@ static int st_tp_parse_finger(struct usb_hid_touchpad_report *report,
 		break;
 	case ST_TP_EVENT_ID_LEAVE_POINTER:
 		report->finger[i].id = event->finger.touch_id;
+		/* When a finger is leaving, it's not a palm */
+		report->finger[i].confidence = 1;
 		break;
 	}
 	return i + 1;

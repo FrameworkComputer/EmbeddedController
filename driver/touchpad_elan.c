@@ -240,6 +240,8 @@ static int elan_tp_read_report(void)
 			finger_status[i] = 1;
 		} else if (finger_status[i]) {
 			report.finger[ri].id = i;
+			/* When a finger is leaving, it's not a plam */
+			report.finger[ri].confidence = 1;
 			ri++;
 			finger_status[i] = 0;
 		}
