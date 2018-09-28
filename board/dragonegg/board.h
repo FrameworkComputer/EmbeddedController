@@ -18,6 +18,9 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
+/* EC */
+#define CONFIG_BOARD_VERSION_GPIO
+
 /* Keyboard features */
 #define CONFIG_PWM_KBLIGHT
 #define CONFIG_VOLUME_BUTTONS
