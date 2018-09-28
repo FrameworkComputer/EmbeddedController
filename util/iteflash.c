@@ -479,6 +479,21 @@ static int dbgr_reset(struct common_hnd *chnd, unsigned char val)
 	return 0;
 }
 
+/* disable watchdog*/
+static int dbgr_disable_watchdog(struct common_hnd *chnd)
+{
+	int ret = 0;
+
+	ret |= i2c_write_byte(chnd, 0x2f, 0x1f);
+	ret |= i2c_write_byte(chnd, 0x2e, 0x05);
+	ret |= i2c_write_byte(chnd, 0x30, 0x30);
+
+	if (ret < 0)
+		printf("DBGR DISABLE WATCHDOG FAILED!\n");
+
+	return 0;
+}
+
 /* Enter follow mode and FSCE# high level */
 static int spi_flash_follow_mode(struct common_hnd *chnd, char *desc)
 {
@@ -731,6 +746,9 @@ static int ftdi_send_special_waveform(struct ftdi_context *ftdi, uint64_t *wave)
 	ret = ftdi_write_data(ftdi, (uint8_t *)wave, SPECIAL_BUFFER_SIZE);
 	if (ret < 0)
 		fprintf(stderr, "Cannot output special waveform\n");
+	else
+		/* no error */
+		ret = 0;
 
 	/* clean everything to go back to regular I2C communication */
 	ftdi_usb_purge_buffers(ftdi);
@@ -769,8 +787,22 @@ static int send_special_waveform(struct common_hnd *chnd)
 		/* wait for PLL stable for 5ms (plus remaining USB transfers) */
 		usleep(10 * MSEC);
 
-		/* If we can talk to chip, then we can break the retry loop */
-		ret = check_chipid(chnd);
+		if (spi_flash_follow_mode(chnd, "enter follow mode") >= 0) {
+			spi_flash_follow_mode_exit(chnd, "exit follow mode");
+			/*
+			 * If we can talk to chip, then we can break the retry
+			 * loop
+			 */
+			ret = check_chipid(chnd);
+			/* disable watchdog before programming sequence */
+			if (!ret)
+				dbgr_disable_watchdog(chnd);
+		} else {
+			ret = -1;
+			if (!(iterations % 10))
+				printf("!please reset EC if flashing sequence"
+						" is not starting!\n");
+		}
 
 	} while (ret && (iterations++ < 50));
 
@@ -1545,7 +1577,6 @@ int main(int argc, char **argv)
 		command_write_unprotect(&chnd);
 
 	if (input_filename) {
-		dbgr_reset(&chnd, RSTS_VCCDO_PW_ON);
 		ret = read_flash(&chnd, input_filename, 0, flash_size);
 
 		if (ret)
@@ -1553,32 +1584,14 @@ int main(int argc, char **argv)
 	}
 
 	if (flags & FLAG_ERASE || output_filename) {
-
-		if (is8320dx) {
-			/*
-			 * Do Sector Erase  twice to avoid the watchdog
-			 * reset during flash
-			 * Erase first sector to prevent watchdog reset
-			 * from happening
-			 */
-			command_erase2(&chnd, flash_size, 0, 1);
-			/* Call DBGR Rest to clear the EC lock status */
-
-			dbgr_reset(&chnd,
-				   RSTS_VCCDO_PW_ON|RSTS_HGRST|RSTS_GRST);
-			if (!(flags & FLAG_CCD_MODE) &&
-			    (config_i2c(chnd.ftdi_hnd) < 0))
-				goto terminate;
-
+		if (is8320dx)
 			/* Do Normal Erase Function */
 			command_erase2(&chnd, flash_size, 0, 0);
-		} else {
+		else
 			command_erase(&chnd, flash_size, 0);
-			/* Call DBGR Rest to clear the EC lock status */
-			dbgr_reset(&chnd,
-				   RSTS_VCCDO_PW_ON|RSTS_HGRST|RSTS_GRST);
-		}
 
+		/* Call DBGR Rest to clear the EC lock status after erasing */
+		dbgr_reset(&chnd, RSTS_VCCDO_PW_ON|RSTS_HGRST|RSTS_GRST);
 	}
 
 	if (output_filename) {
