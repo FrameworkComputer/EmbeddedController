@@ -28,6 +28,9 @@ extern uint32_t mkbp_last_event_time;
  */
 int mkbp_send_event(uint8_t event_type);
 
+void send_mkbp_event_gpio(int active);
+void send_mkbp_event_host(int active);
+
 /*
  * The struct to store the event source definition.  The get_data routine is
  * responsible for returning the event data when queried by the AP.  The
