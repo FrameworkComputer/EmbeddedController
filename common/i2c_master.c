@@ -352,9 +352,7 @@ int i2c_write_block(int port, int slave_addr, int offset, const uint8_t *data,
 
 	/*
 	 * Split into two transactions to avoid the stack space consumption of
-	 * appending the destination address with the data array.  Even if the
-	 * first transaction fails, unconditionally perform the second one in
-	 * order to have a better chance at sending out the stop bit.
+	 * appending the destination address with the data array.
 	 */
 	i2c_lock(port, 1);
 	rv = i2c_xfer_unlocked(port, slave_addr, &reg_address, 1, NULL, 0,
