@@ -42,7 +42,7 @@
 #define FP_MAX_FINGER_COUNT 0
 #endif
 #define SBP_ENC_KEY_LEN 16
-#define FP_TEMPLATE_FORMAT_VERSION 1
+#define FP_TEMPLATE_FORMAT_VERSION 2
 #define FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE \
 	(FP_ALGORITHM_TEMPLATE_SIZE + \
 		sizeof(struct ec_fp_template_encryption_metadata))
@@ -347,10 +347,13 @@ static int derive_encryption_key(uint8_t *out_key, uint8_t *salt)
 {
 	int ret;
 	uint8_t key_buf[SHA256_DIGEST_SIZE];
+	uint8_t prk[SHA256_DIGEST_SIZE];
 	uint8_t rb_secret[CONFIG_ROLLBACK_SECRET_SIZE];
+	uint8_t message[sizeof(user_id) + 1];
 
 	BUILD_ASSERT(SBP_ENC_KEY_LEN <= SHA256_DIGEST_SIZE);
 	BUILD_ASSERT(SBP_ENC_KEY_LEN <= CONFIG_ROLLBACK_SECRET_SIZE);
+	BUILD_ASSERT(sizeof(user_id) == SHA256_DIGEST_SIZE);
 
 	ret = rollback_get_secret(rb_secret);
 	if (ret != EC_SUCCESS) {
@@ -362,9 +365,24 @@ static int derive_encryption_key(uint8_t *out_key, uint8_t *salt)
 	 * Derive a key with the "extract" step of HKDF
 	 * https://tools.ietf.org/html/rfc5869#section-2.2
 	 */
-	hmac_SHA256(key_buf, salt, FP_CONTEXT_SALT_BYTES, rb_secret,
+	hmac_SHA256(prk, salt, FP_CONTEXT_SALT_BYTES, rb_secret,
 		    sizeof(rb_secret));
+	memset(rb_secret, 0, sizeof(rb_secret));
+
+	/*
+	 * Only 1 "expand" step of HKDF since the size of the "info" context
+	 * (user_id in our case) is exactly SHA256_DIGEST_SIZE.
+	 * https://tools.ietf.org/html/rfc5869#section-2.3
+	 */
+	memcpy(message, user_id, sizeof(user_id));
+	/* 1 step, set the counter byte to 1. */
+	message[sizeof(message) - 1] = 0x01;
+	hmac_SHA256(key_buf, prk, sizeof(prk), message, sizeof(message));
+	memset(prk, 0, sizeof(prk));
+
 	memcpy(out_key, key_buf, SBP_ENC_KEY_LEN);
+	memset(key_buf, 0, sizeof(key_buf));
+
 	return EC_RES_SUCCESS;
 }
 
