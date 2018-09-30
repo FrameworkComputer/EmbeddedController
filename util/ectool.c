@@ -1526,9 +1526,10 @@ int cmd_fp_info(int argc, char *argv[])
 	}
 
 	if (cmdver == 1) {
-		printf("Templates: size %d count %d/%d dirty bitmap %x\n",
-		       r.template_size, r.template_valid, r.template_max,
-		       r.template_dirty);
+		printf("Templates: version %d size %d count %d/%d"
+		       " dirty bitmap %x\n",
+		       r.template_version, r.template_size, r.template_valid,
+		       r.template_max, r.template_dirty);
 	}
 
 	return 0;

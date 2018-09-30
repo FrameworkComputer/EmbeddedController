@@ -5051,6 +5051,7 @@ struct __ec_align4 ec_response_fp_info {
 	uint16_t template_max;   /* maximum number of fingers/templates */
 	uint16_t template_valid; /* number of valid fingers/templates */
 	uint32_t template_dirty; /* bitmap of templates with MCU side changes */
+	uint32_t template_version; /* version of the template format */
 };
 
 /* Get the last captured finger frame or a template content */

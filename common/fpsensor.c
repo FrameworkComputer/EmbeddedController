@@ -505,6 +505,7 @@ static int fp_command_info(struct host_cmd_handler_args *args)
 	r->template_max = FP_MAX_FINGER_COUNT;
 	r->template_valid = templ_valid;
 	r->template_dirty = templ_dirty;
+	r->template_version = FP_TEMPLATE_FORMAT_VERSION;
 
 	/* V1 is identical to V0 with more information appended */
 	args->response_size = args->version ? sizeof(*r) :
