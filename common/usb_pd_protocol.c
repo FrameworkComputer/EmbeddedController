@@ -3893,7 +3893,9 @@ void pd_task(void *u)
 				 */
 				if (drp_state[port] == PD_DRP_TOGGLE_ON)
 					tcpm_enable_drp_toggle(port);
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 				pd[port].flags |= PD_FLAGS_LPM_REQUESTED;
+#endif
 				pd[port].flags |= PD_FLAGS_TCPC_DRP_TOGGLE;
 				timeout = -1;
 			}
