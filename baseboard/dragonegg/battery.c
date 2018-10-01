@@ -9,11 +9,13 @@
 #include "battery_fuel_gauge.h"
 #include "battery_smart.h"
 #include "gpio.h"
+#include "system.h"
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
 enum battery_present battery_hw_present(void)
 {
+	enum battery_present bp;
 	/* The GPIO is low when the battery is physically present */
 	/*
 	 * TODO(b/111704193): The signal GPIO_EC_BATT_PRES_ODL has an issue
@@ -26,10 +28,16 @@ enum battery_present battery_hw_present(void)
 	 * presence pin.
 	 *
 	 */
-	/* return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES; */
 
-	return (battery_get_disconnect_state() == BATTERY_DISCONNECT_ERROR) ?
-		BP_NO : BP_YES;
+	if (system_get_board_version() == 0)
+		/* P0 boards can't use gpio signal */
+		bp = (battery_get_disconnect_state() ==
+		      BATTERY_DISCONNECT_ERROR) ? BP_NO : BP_YES;
+	else
+		/* P1 boards can read presence from gpio signal */
+		bp = gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES;
+
+	return bp;
 }
 
 static int battery_init(void)
