@@ -19,6 +19,11 @@
 #define LSM6DSM_ADDR0			LSM6DSM_I2C_ADDR(0x6a)
 #define LSM6DSM_ADDR1			LSM6DSM_I2C_ADDR(0x6b)
 
+/* Access to embedded sensor hub register bank */
+#define LSM6DSM_FUNC_CFG_ACC_ADDR	0x01
+#define LSM6DSM_FUNC_CFG_EN			0x80
+#define LSM6DSM_FUNC_CFG_EN_B			0x20
+
 /* Who Am I */
 #define LSM6DSM_WHO_AM_I_REG		0x0f
 #define LSM6DSM_WHO_AM_I		0x6a
@@ -32,6 +37,8 @@
 #define LSM6DSM_ACCEL_OUT_X_L_ADDR	0x28
 
 #define LSM6DSM_CTRL1_ADDR		0x10
+#define LSM6DSM_XL_ODR_MASK			0xf0
+
 #define LSM6DSM_CTRL2_ADDR		0x11
 #define LSM6DSM_CTRL3_ADDR		0x12
 #define LSM6DSM_SW_RESET			0x01
@@ -45,6 +52,14 @@
 
 #define LSM6DSM_CTRL6_ADDR		0x15
 #define LSM6DSM_CTRL7_ADDR		0x16
+
+#define LSM6DSM_CTRL10_ADDR		0x19
+#define LSM6DSM_EMBED_FUNC_EN			0x4
+
+#define LSM6DSM_MASTER_CFG_ADDR		0x1a
+#define LSM6DSM_I2C_MASTER_ON			0x1
+#define LSM6DSM_I2C_PASS_THRU_MODE		0x4
+#define LSM6DSM_EXT_TRIGGER_EN			0x10
 
 #define LSM6DSM_STATUS_REG		0x1e
 
@@ -102,6 +117,27 @@
  * Value is limited to 416 Hz
  */
 
+
+/* Register values for Sensor Hub Slave 0 */
+#define LSM6DSM_SLV0_ADD_ADDR		0x02
+#define LSM6DSM_SLV0_ADDR_SHFT			1
+#define LSM6DSM_SLV0_ADDR_MASK			0xfe
+#define LSM6DSM_SLV0_RD_BIT			0x01
+
+#define LSM6DSM_SLV0_SUBADD_ADDR	0x03
+
+#define LSM6DSM_SLV0_CONFIG_ADDR	0x04
+#define LSM6DSM_SLV0_SLV_RATE_SHFT		6
+#define LSM6DSM_SLV0_SLV_RATE_MASK		0xc0
+#define LSM6DSM_SLV0_AUX_SENS_SHFT		4
+#define LSM6DSM_SLV0_AUX_SENS_MASK		0x30
+#define LSM6DSM_SLV0_NUM_OPS_MASK		0x07
+
+#define LSM6DSM_SLV1_CONFIG_ADDR	0x07
+#define LSM6DSM_SLV0_WR_ONCE_MASK		0x20
+
+#define LSM6DSM_SENSORHUB1_REG		0x2e
+
 /* Registers value for sensor Hub */
 #define LSM6DSM_FUNC_SRC1		0x53
 #define LSM6DSM_SENSORHUB_END_OP	0x01
@@ -111,6 +147,7 @@ enum dev_fifo {
 	FIFO_DEV_INVALID = -1,
 	FIFO_DEV_GYRO = 0,
 	FIFO_DEV_ACCEL,
+	FIFO_DEV_MAG,
 	FIFO_DEV_NUM,
 };
 

@@ -15,6 +15,7 @@ driver-$(CONFIG_ACCELGYRO_BMI160)+=accelgyro_bmi160.o
 driver-$(CONFIG_MAG_BMI160_BMM150)+=mag_bmm150.o
 driver-$(CONFIG_ACCELGYRO_LSM6DSM)+=accelgyro_lsm6dsm.o stm_mems_common.o
 driver-$(CONFIG_ACCEL_LIS2D_COMMON)+=accel_lis2dh.o stm_mems_common.o
+driver-$(CONFIG_SENSORHUB_LSM6DSM)+=sensorhub_lsm6dsm.o
 driver-$(CONFIG_SYNC)+=sync.o
 
 # BC1.2 Charger Detection Devices
