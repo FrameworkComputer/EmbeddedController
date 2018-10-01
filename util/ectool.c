@@ -637,6 +637,8 @@ static const char * const ec_feature_names[] = {
 	[EC_FEATURE_HOST_EVENT64] = "64-bit host events",
 	[EC_FEATURE_EXEC_IN_RAM] = "Execute code in RAM",
 	[EC_FEATURE_CEC] = "Consumer Electronics Control",
+	[EC_FEATURE_MOTION_SENSE_TIGHT_TIMESTAMPS] =
+		"Tight timestamp for sensors events",
 };
 
 int cmd_inventory(int argc, char *argv[])
