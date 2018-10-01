@@ -17,6 +17,7 @@
 #include "driver/accelgyro_bmi160.h"
 #include "driver/charger/bd9995x.h"
 #include "driver/ppc/nx20p348x.h"
+#include "driver/sync.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -196,6 +197,17 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
+	[VSYNC] = {
+		.name = "Camera VSYNC",
+		.active_mask = SENSOR_ACTIVE_S0,
+		.chip = MOTIONSENSE_CHIP_GPIO,
+		.type = MOTIONSENSE_TYPE_SYNC,
+		.location = MOTIONSENSE_LOC_CAMERA,
+		.drv = &sync_drv,
+		.default_range = 0,
+		.min_frequency = 0,
+		.max_frequency = 1,
+	},
 };
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
@@ -236,6 +248,9 @@ static void board_init(void)
 {
 	/* Enable Base Accel interrupt */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+
+	/* Enable interrupt for the camera vsync. */
+	gpio_enable_interrupt(GPIO_WFCAM_VSYNC);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
