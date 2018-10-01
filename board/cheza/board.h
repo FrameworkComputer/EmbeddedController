@@ -12,6 +12,7 @@
 #define CONFIG_BRINGUP
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands. */
 #define CONFIG_USB_PD_DEBUG_LEVEL 3
+#define CONFIG_CMD_AP_RESET_LOG
 
 /*
  * By default, enable all console messages excepted event and HC:
@@ -29,6 +30,7 @@
 #define CONFIG_FLASH_SIZE (1024 * 1024)  /* 1MB internal spi flash */
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
+#define CONFIG_HOSTCMD_FLASH_SPI_INFO
 
 /* EC Modules */
 #define CONFIG_I2C
