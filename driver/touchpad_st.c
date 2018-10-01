@@ -593,17 +593,18 @@ static void dump_memory(void)
 
 static int st_tp_handle_error(uint8_t error_type)
 {
-	if (error_type <= 0x4E) {
-		enable_deep_sleep(0);
-		dump_error();
-		dump_memory();
-		enable_deep_sleep(1);
-	}
+	enable_deep_sleep(0);
+	dump_error();
+	dump_memory();
+	enable_deep_sleep(1);
 
 	/*
 	 * Suggest action: memory dump and power cycle.
 	 */
 	if (error_type <= 0x06 ||
+	    error_type == 0xF1 ||
+	    error_type == 0xF2 ||
+	    error_type == 0xF3 ||
 	    (error_type >= 0x47 && error_type <= 0x4E)) {
 		tp_control |= TP_CONTROL_SHALL_RESET;
 		return 1;
