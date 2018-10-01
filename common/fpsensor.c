@@ -296,9 +296,9 @@ void fp_task(void)
 			if (mode & FP_MODE_ANY_WAIT_IRQ) {
 				gpio_enable_interrupt(GPIO_FPS_INT);
 			} else if (mode & FP_MODE_RESET_SENSOR) {
-				sensor_mode &= ~FP_MODE_RESET_SENSOR;
 				fp_clear_context();
 				fp_sensor_init();
+				sensor_mode &= ~FP_MODE_RESET_SENSOR;
 			} else {
 				fp_sensor_low_power();
 			}
