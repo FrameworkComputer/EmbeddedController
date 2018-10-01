@@ -124,7 +124,23 @@ uint16_t tcpc_get_alert_status(void)
  */
 void board_reset_pd_mcu(void)
 {
-	/* C0: ANX7447 does not have a reset pin. */
+	/*
+	 * C0: Assert reset to TCPC0 (ANX7447) for required delay (1ms) only if
+	 * we have a battery
+	 *
+	 * Note: The TEST_R pin is not hooked up to a GPIO on all boards, so
+	 * verify the name exists before setting it.  After the name is
+	 * introduced for later board firmware, this pin will still be wired
+	 * to USB2_OTG_ID on the proto boards, which should be set to open
+	 * drain so it can't be driven high.
+	 */
+	if (gpio_is_implemented(GPIO_USB_C0_PD_RST) &&
+	    battery_is_present() == BP_YES) {
+		gpio_set_level(GPIO_USB_C0_PD_RST, 1);
+		msleep(ANX74XX_RESET_HOLD_MS);
+		gpio_set_level(GPIO_USB_C0_PD_RST, 0);
+		msleep(ANX74XX_RESET_FINISH_MS);
+	}
 
 	/*
 	 * C1: Assert reset to TCPC1 (PS8751) for required delay (1ms) only if

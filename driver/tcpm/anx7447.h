@@ -94,6 +94,15 @@ struct anx7447_i2c_addr {
 #define AN7447_SPI2_I2C_ADDR 0x64
 #define AN7447_SPI3_I2C_ADDR 0x62
 
+/*
+ * Time TEST_R must be held high for a reset
+ */
+#define ANX74XX_RESET_HOLD_MS	1
+/*
+ * Time after TEST_R reset to wait for eFuse loading
+ */
+#define ANX74XX_RESET_FINISH_MS	2
+
 int anx7447_set_power_supply_ready(int port);
 int anx7447_power_supply_reset(int port);
 int anx7447_board_charging_enable(int port, int enable);

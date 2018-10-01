@@ -126,6 +126,9 @@ GPIO(USB_C1_BC12_CHG_DET_L, PIN(E, 4), GPIO_INPUT)	/* C1 BC1.2 Detect */
 GPIO(USB_C1_HPD_1V8_ODL, PIN(C, 6), GPIO_INPUT |	/* C1 DP Hotplug Detect */
 				    GPIO_SEL_1P8V)
 
+/* Not implemented in hardware */
+UNIMPLEMENTED(USB_C0_PD_RST)
+
 /*
  * USB2_OTG_ID is 1.8V pin on the SoC side with an internal pull-up. However, it
  * 3.3V on the EC side. So, configure it as ODR so that the EC never drives it

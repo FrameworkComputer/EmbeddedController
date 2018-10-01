@@ -116,8 +116,6 @@ GPIO(EN_USB_A1_5V,	 PIN(9, 6), GPIO_OUT_LOW)	/* Enable A1 5V Charging */
 GPIO(USB_A0_CHARGE_EN_L, PIN(A, 2), GPIO_OUT_HIGH)	/* Enable A0 1.5A Charging */
 GPIO(USB_A1_CHARGE_EN_L, PIN(A, 0), GPIO_OUT_HIGH)	/* Enable A1 1.5A Charging */
 /*
- * TODO(b/112756630): octopus: add reset logic for C0 TCPC
- *
  * Proto USB2_OTG_ID pin
  * Configure as default since on proto boards this pin should not be driven high
  */
