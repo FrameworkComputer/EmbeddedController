@@ -735,9 +735,11 @@ enum pd_states {
  * PD_FLAGS_LPM_TRANSITION is set while the HW is transitioning into or out of
  * low power (when PD_LPM_FLAGS_ENGAGED is changing).
  */
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 #define PD_FLAGS_LPM_REQUESTED     (1 << 17)/* Tracks SW LPM state */
 #define PD_FLAGS_LPM_ENGAGED       (1 << 18)/* Tracks HW LPM state */
 #define PD_FLAGS_LPM_TRANSITION    (1 << 19)/* Tracks HW LPM transition */
+#endif
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \

@@ -3862,6 +3862,7 @@ void pd_task(void *u)
 
 			assert(auto_toggle_supported);
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 			/*
 			 * If SW decided we should be in a low power state and
 			 * the CC lines did not change, then don't talk with the
@@ -3870,6 +3871,7 @@ void pd_task(void *u)
 			if (pd[port].flags & PD_FLAGS_LPM_REQUESTED &&
 			    !(evt & PD_EVENT_CC))
 				break;
+#endif
 
 			/* Check for connection */
 			tcpm_get_cc(port, &cc1, &cc2);
