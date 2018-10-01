@@ -277,9 +277,9 @@ static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts)
 }
 
 /**
- * config_fifo - update mode and ODR for FIFO decimator
+ * accelgyro_config_fifo - update mode and ODR for FIFO decimator
  */
-static int config_fifo(const struct motion_sensor_t *accel)
+int accelgyro_config_fifo(const struct motion_sensor_t *accel)
 {
 	int err;
 
@@ -425,7 +425,7 @@ static int get_range(const struct motion_sensor_t *s)
  */
 static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 {
-	int ret, normalized_rate;
+	int ret, normalized_rate = 0;
 	/*
 	 * Since 'stprivate_data a_data;' is the first member of lsm6dsm_data,
 	 * the address of lsm6dsm_data is the same as a_data's. Using this
@@ -435,7 +435,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	 *     struct stprivate_data *data = &lsm_data->a_data;
 	 */
 	struct stprivate_data *data = s->drv_data;
-	uint8_t ctrl_reg, reg_val;
+	uint8_t ctrl_reg, reg_val = 0;
 
 	ctrl_reg = LSM6DSM_ODR_REG(s->type);
 	if (rate > 0) {
@@ -450,9 +450,6 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		    normalized_rate > MIN(LSM6DSM_ODR_MAX_VAL,
 			    CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ))
 			return EC_RES_INVALID_PARAM;
-	} else {
-		reg_val = 0;
-		normalized_rate = 0;
 	}
 
 	mutex_lock(s->mutex);
@@ -460,7 +457,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	if (ret == EC_SUCCESS) {
 		data->base.odr = normalized_rate;
 #ifdef CONFIG_ACCEL_FIFO
-		config_fifo(LSM6DSM_MAIN_SENSOR(s));
+		accelgyro_config_fifo(LSM6DSM_MAIN_SENSOR(s));
 #endif
 	}
 
