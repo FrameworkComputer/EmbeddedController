@@ -10,7 +10,7 @@
  * Verify a RSA PKCS1.5 signature against an expected sha256. Unlocks for
  * execution upon success.
  */
-void LOADERKEY_verify(uint32_t keyid,
+void LOADERKEY_verify(const uint32_t *key,
 		      const uint32_t *signature, const uint32_t *sha256);
 
 #endif  /* __EC_CHIP_G_LOADER_VERIFY_H */

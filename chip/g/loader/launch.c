@@ -144,7 +144,7 @@ void tryLaunch(uint32_t adr, size_t max_size)
 
 	if (!unlockedForExecution()) {
 		/* Assume warm-boot failed; do full RSA verify. */
-		LOADERKEY_verify(hdr->keyid, hdr->signature, hash);
+		LOADERKEY_verify(&hdr->keyid, hdr->signature, hash);
 		/*
 		 * PWRDN_SCRATCH* should be write-locked, tied to successful
 		 * SIG_MATCH. Thus ARM is only able to write this hash if
