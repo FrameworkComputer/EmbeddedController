@@ -41,9 +41,6 @@ GPIO(APU_ALERT_L,		PIN(A, 2), GPIO_INPUT)				/* Alert to SOC */
 GPIO(3AXIS_INT_L,		PIN(5, 0), GPIO_INPUT | GPIO_SEL_1P8V)		/* 3 Axis Accel */
 GPIO(KB_BL_EN,			PIN(F, 2), GPIO_OUT_LOW)			/* Enable KB Backlight */
 
-/* We don't have 5V rail control but the BQ24392 driver expects the GPIO */
-UNIMPLEMENTED(EN_PP5000)
-
 /* I2C pins - these will be reconfigured for alternate function below */
 GPIO(I2C0_SCL,			PIN(B, 5), GPIO_INPUT)				/* EC_I2C_POWER_SCL */
 GPIO(I2C0_SDA,			PIN(B, 4), GPIO_INPUT)				/* EC_I2C_POWER_SDA */
