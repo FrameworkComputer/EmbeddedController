@@ -14,6 +14,11 @@
 #define __CROS_USB_I2C_H
 
 /*
+ * This header file describes i2c encapsulation when communicated over USB.
+ *
+ * Note that current implementation assumes that there is only one instance of
+ * interface of this kind per device.
+ *
  * 2 forms of command are supported:
  *   - When write payload + header is larger than 64 bytes, which exceed the
  *     common USB packet (64 bytes), remaining payload should send without
@@ -23,18 +28,18 @@
  *     be defined properly based on the use cases.
  *
  *   - Read less than 128 (0x80) bytes.
- *   +------+------+----+----+---------------+
- *   | port | addr | wc | rc | write payload |
- *   +------+------+----+----+---------------+
- *   |  1B  |  1B  | 1B | 1B |  < 256 bytes  |
- *   +------+------+----+----+---------------+
+ *   +---------+------+----+----+---------------+
+ *   | wc/port | addr | wc | rc | write payload |
+ *   +---------+------+----+----+---------------+
+ *   |   1B    |  1B  | 1B | 1B |  < 256 bytes  |
+ *   +---------+------+----+----+---------------+
  *
  *   - Read less than 32768 (0x8000) bytes.
- *   +------+------+----+----+-----+----------+---------------+
- *   | port | addr | wc | rc | rc1 | reserved | write payload |
- *   +------+------+----+----+----------------+---------------+
- *   |  1B  |  1B  | 1B | 1B |  1B |    1B    |  < 256 bytes  |
- *   +------+------+----+----+----------------+---------------+
+ *   +---------+------+----+----+-----+----------+---------------+
+ *   | wc/port | addr | wc | rc | rc1 | reserved | write payload |
+ *   +---------+------+----+----+----------------+---------------+
+ *   |    1B   |  1B  | 1B | 1B |  1B |    1B    |  < 256 bytes  |
+ *   +---------+------+----+----+----------------+---------------+
  *
  *   - Special notes for rc and rc1:
  *     If the most significant bit in rc is set (rc >= 0x80), this indicates
@@ -43,7 +48,10 @@
  *     will be (rc1 << 7) | (rc & 0x7F).
  *
  *   Fields:
- *   - port: port address, 1 byte, i2c interface index.
+ *
+ *   - wc/port: 1 byte: 4 top bits are the 4 top bits of the 12 bit write
+ *         counter, the 4 bottom bits are the port address, i2c interface
+ *         index.
  *
  *   - addr: slave address, 1 byte, i2c 7-bit bus address.
  *

@@ -45,7 +45,12 @@ static int16_t usb_i2c_map_error(int error)
 	}
 }
 
-static uint8_t usb_i2c_read_packet(struct usb_i2c_config const *config)
+/*
+ * Return value should be large enough to accommodate the entire read queue
+ * buffer size. Let's use 4 bytes in case future designs have a lot of RAM and
+ * allow for large buffers.
+ */
+static uint32_t usb_i2c_read_packet(struct usb_i2c_config const *config)
 {
 	return QUEUE_REMOVE_UNITS(config->consumer.queue, config->buffer,
 		queue_count(config->consumer.queue));
@@ -59,35 +64,54 @@ static void usb_i2c_write_packet(struct usb_i2c_config const *config,
 
 static uint8_t usb_i2c_executable(struct usb_i2c_config const *config)
 {
-	/*
-	 * In order to support larger write payload, we need to peek
-	 * the queue to see if we need to wait for more data.
-	 */
+	static size_t expected_size;
 
-	uint8_t write_count;
+	if (!expected_size) {
+		uint8_t peek[4];
 
-	if (queue_peek_units(config->consumer.queue, &write_count, 2, 1) == 1
-		&& (write_count + 4) > queue_count(config->consumer.queue)) {
 		/*
-		 * Feed me more data, please.
-		 * Reuse the buffer in usb_i2c_config to send ACK packet.
+		 * In order to support larger write payload, we need to peek
+		 * the queue to see if we need to wait for more data.
 		 */
-		config->buffer[0] = USB_I2C_SUCCESS;
-		config->buffer[1] = 0;
-		usb_i2c_write_packet(config, 4);
-		return 0;
+		if (queue_peek_units(config->consumer.queue,
+				     peek, 0, sizeof(peek))
+		    != sizeof(peek)) {
+			/* Not enough data to calculate expected_size. */
+			return 0;
+		}
+		/*
+		 * The first four bytes of the packet will describe its
+		 * expected size.
+		 */
+		/* Header bytes  and extra rc bytes, if present. */
+		if (peek[3] & 0x80)
+			expected_size = 6;
+		else
+			expected_size = 4;
+
+		/* write count */
+		expected_size += (((size_t)peek[0] & 0xf0) << 4) | peek[2];
 	}
-	return 1;
+
+
+	if (queue_count(config->consumer.queue) >= expected_size) {
+		expected_size = 0;
+		return 1;
+	}
+
+	return 0;
 }
 
 static void usb_i2c_execute(struct usb_i2c_config const *config)
 {
 	/* Payload is ready to execute. */
-	uint8_t count       = usb_i2c_read_packet(config);
-	int portindex       = (config->buffer[0] >> 0) & 0xff;
+	uint32_t count      = usb_i2c_read_packet(config);
+	int portindex       = (config->buffer[0] >> 0) & 0xf;
 	/* Convert 7-bit slave address to chromium EC 8-bit address. */
 	uint8_t slave_addr  = (config->buffer[0] >> 7) & 0xfe;
-	int write_count     = (config->buffer[1] >> 0) & 0xff;
+
+	int write_count     = ((config->buffer[0] << 4) & 0xf00) |
+		((config->buffer[1] >> 0) & 0xff);
 	int read_count      = (config->buffer[1] >> 8) & 0xff;
 	int offset          = 0;    /* Offset for extended reading header. */
 
