@@ -661,8 +661,8 @@ static int st_tp_handle_error_report(struct st_tp_event_t *e,
 	uint8_t error_type = e->report.report_type;
 
 	CPRINTS("Touchpad error: %x %x", error_type,
-		((e->report.info[0] << 24) | (e->report.info[1] << 16) |
-		 (e->report.info[2] << 8) | (e->report.info[3] << 0)));
+		((e->report.info[0] << 0) | (e->report.info[1] << 8) |
+		 (e->report.info[2] << 16) | (e->report.info[3] << 24)));
 
 	if (suppress_error)
 		return 0;
