@@ -194,9 +194,9 @@ static int st_tp_parse_finger(struct usb_hid_touchpad_report *report,
 		report->finger[i].id = event->finger.touch_id;
 		report->finger[i].pressure = event->finger.z;
 		report->finger[i].width = (event->finger.minor |
-					   (event->minor_high << 4)) << 4;
+					   (event->minor_high << 4)) << 5;
 		report->finger[i].height = (event->finger.major |
-					    (event->major_high << 4)) << 4;
+					    (event->major_high << 4)) << 5;
 
 		report->finger[i].x = (CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X -
 				       event->finger.x);
