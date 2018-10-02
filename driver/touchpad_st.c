@@ -668,6 +668,27 @@ static int st_tp_handle_error_report(struct st_tp_event_t *e,
 	return 0;
 }
 
+static void st_tp_handle_status_report(struct st_tp_event_t *e)
+{
+	uint32_t info = ((e->report.info[0] << 0) |
+			 (e->report.info[1] << 8) |
+			 (e->report.info[2] << 16) |
+			 (e->report.info[3] << 24));
+
+	if (e->report.report_type == ST_TP_STATUS_FCAL ||
+	    e->report.report_type == ST_TP_STATUS_FRAME_DROP)
+		CPRINTS("TP STATUS REPORT: %02x %08x",
+			e->report.report_type, info);
+
+	/*
+	 * Idle count might not change if ST FW is busy (for example, when the
+	 * user puts a big palm on touchpad).  Therefore we don't check if idle
+	 * count is changed.
+	 */
+	if (e->report.report_type == ST_TP_STATUS_BEACON)
+		CPRINTS("BEACON: idle count=%08x", info);
+}
+
 /*
  * Read all events, and handle errors.
  *
@@ -695,6 +716,9 @@ static int st_tp_read_all_events(int suppress_error)
 
 		if (e->evt_id == ST_TP_EVENT_ID_ERROR_REPORT)
 			ret |= st_tp_handle_error_report(e, suppress_error);
+
+		if (e->evt_id == ST_TP_EVENT_ID_STATUS_REPORT)
+			st_tp_handle_status_report(e);
 	}
 
 	if (!suppress_error && ret)
