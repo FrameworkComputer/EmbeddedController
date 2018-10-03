@@ -129,12 +129,10 @@
 #define CONFIG_USB_PORT_POWER_DUMB
 #define USB_PORT_COUNT 2
 
-/* TODO(b/69683108): Use correct PD delay values */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000  /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY	250000 /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
 #define PD_VCONN_SWAP_DELAY		5000 /* us */
 
-/* TODO(b/69683178): Use correct PD power values */
 #define PD_OPERATING_POWER_MW	15000
 #define PD_MAX_POWER_MW		45000
 #define PD_MAX_CURRENT_MA	3000
