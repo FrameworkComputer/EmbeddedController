@@ -103,6 +103,11 @@ int tcpm_dequeue_message(int port, uint32_t *payload, int *head)
 	return ret;
 }
 
+void tcpm_clear_pending_messages(int port)
+{
+	rx_buf_clear(port);
+}
+
 int tcpm_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
 		  const uint32_t *data)
 {

@@ -3246,6 +3246,9 @@ void pd_task(void *u)
 			if (rstatus != 0 && rstatus != EC_ERROR_UNIMPLEMENTED)
 				CPRINTS("TCPC p%d release failed!", port);
 #endif
+			/* Drain any outstanding software message queues. */
+			tcpm_clear_pending_messages(port);
+
 			/* Wait for resume */
 			while (pd[port].task_state == PD_STATE_SUSPENDED)
 				task_wait_event(-1);
@@ -4109,6 +4112,29 @@ void pd_set_suspend(int port, int enable)
 		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
 }
+
+#ifdef CONFIG_USB_PD_TCPM_TCPCI
+static uint32_t pd_ports_to_resume;
+static void resume_pd_port(void)
+{
+	uint32_t port;
+	uint32_t suspended_ports = atomic_read_clear(&pd_ports_to_resume);
+
+	while (suspended_ports) {
+		port = __builtin_ctz(suspended_ports);
+		suspended_ports &= ~(1 << port);
+		pd_set_suspend(port, 0);
+	}
+}
+DECLARE_DEFERRED(resume_pd_port);
+
+void pd_deferred_resume(int port)
+{
+	atomic_or(&pd_ports_to_resume, 1 << port);
+	hook_call_deferred(&resume_pd_port_data, SECOND);
+}
+
+#endif  /* CONFIG_USB_PD_DEFERRED_RESUME */
 
 int pd_is_port_enabled(int port)
 {

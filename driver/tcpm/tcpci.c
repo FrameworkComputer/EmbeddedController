@@ -446,6 +446,13 @@ int tcpm_dequeue_message(const int port, uint32_t *const payload,
 	return EC_SUCCESS;
 }
 
+void tcpm_clear_pending_messages(int port)
+{
+	struct queue *const q = &cached_messages[port];
+
+	q->tail = q->head;
+}
+
 int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 			uint16_t header, const uint32_t *data)
 {
@@ -528,13 +535,14 @@ void tcpci_tcpc_alert(int port)
 		/* Ensure we don't loop endlessly */
 		if (failed_attempts >= MAX_ALLOW_FAILED_RX_READS) {
 			CPRINTF("C%d Cannot consume RX buffer after %d failed "
-				"attempts!",
-				failed_attempts);
+				"attempts!", port, failed_attempts);
 			/*
 			 * The port is in a bad state, we don't want to consume
-			 * all EC resources so suspend port forever.
+			 * all EC resources so suspend the port for a little
+			 * while.
 			 */
 			pd_set_suspend(port, 1);
+			pd_deferred_resume(port);
 			return;
 		}
 	}

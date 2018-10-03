@@ -261,7 +261,12 @@ static struct pd_port_controller {
 
 static int rx_buf_is_full(int port)
 {
-	/* Buffer is full if the tail is 1 ahead of head */
+	/*
+	 * TODO: Refactor these to use the incrementing-counter idiom instead of
+	 * the wrapping-counter idiom to reclaim the last buffer entry.
+	 *
+	 * Buffer is full if the tail is 1 ahead of head.
+	 */
 	int diff = pd[port].rx_buf_tail - pd[port].rx_buf_head;
 	return (diff == 1) || (diff == -RX_BUFFER_SIZE);
 }
@@ -270,6 +275,11 @@ int rx_buf_is_empty(int port)
 {
 	/* Buffer is empty if the head and tail are the same */
 	return pd[port].rx_buf_tail == pd[port].rx_buf_head;
+}
+
+void rx_buf_clear(int port)
+{
+	pd[port].rx_buf_tail = pd[port].rx_buf_head;
 }
 
 static void rx_buf_increment(int port, int *buf_ptr)

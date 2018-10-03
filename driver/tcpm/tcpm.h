@@ -372,4 +372,11 @@ int tcpm_dequeue_message(int port, uint32_t *payload, int *header);
  */
 int tcpm_has_pending_message(int port);
 
+/**
+ * Clear any pending messages in the RX queue.  This function must be
+ * called from the same context as the caller of tcpm_dequeue_message to avoid
+ * race conditions.
+ */
+void tcpm_clear_pending_messages(int port);
+
 #endif

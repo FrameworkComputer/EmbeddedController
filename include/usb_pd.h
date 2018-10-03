@@ -1637,6 +1637,12 @@ int pd_rx_started(int port);
 void pd_set_suspend(int port, int enable);
 
 /**
+ * Resume the PD task for a port after a period of time has elapsed.
+ * @param port USB-C port number
+ */
+void pd_deferred_resume(int port);
+
+/**
  * Check if the port has been initialized and PD task has not been
  * suspended.
  *

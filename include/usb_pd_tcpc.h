@@ -58,5 +58,6 @@ int tcpc_get_message(int port, uint32_t *payload, int *head);
 int tcpc_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
 		  const uint32_t *data);
 int rx_buf_is_empty(int port);
+void rx_buf_clear(int port);
 
 #endif /* __CROS_EC_USB_PD_TCPC_H */
