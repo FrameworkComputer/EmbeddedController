@@ -1583,7 +1583,7 @@ int main(int argc, char **argv)
 			goto terminate;
 	}
 
-	if (flags & FLAG_ERASE || output_filename) {
+	if (flags & FLAG_ERASE) {
 		if (is8320dx)
 			/* Do Normal Erase Function */
 			command_erase2(&chnd, flash_size, 0, 0);

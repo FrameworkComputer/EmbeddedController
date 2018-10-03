@@ -1033,7 +1033,7 @@ function flash_it83xx() {
 	dut_control ftdii2c_cmd:close
 
 	info "Run iteflash..."
-	sudo ${ITEFLASH} -w ${IMG}
+	sudo ${ITEFLASH} -e -w ${IMG}
 }
 
 function flash_lm4() {
