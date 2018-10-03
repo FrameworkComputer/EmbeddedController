@@ -366,10 +366,13 @@ static int st_tp_update_system_state(int new_state, int mask)
 			0
 		};
 		if (new_state & SYSTEM_STATE_ENABLE_HEAT_MAP) {
-			CPRINTS("Enable Heatmap");
+			CPRINTS("Heatmap enabled");
 			tx_buf[2] |= 1 << 0;
 			need_locked_scan_mode = 1;
+		} else {
+			CPRINTS("Heatmap disabled");
 		}
+
 		if (new_state & SYSTEM_STATE_ENABLE_DOME_SWITCH)
 			tx_buf[2] |= 1 << 1;
 		ret = spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
