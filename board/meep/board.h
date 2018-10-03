@@ -17,9 +17,6 @@
 #define GPIO_VOLUME_UP_L GPIO_EC_VOLUP_BTN_ODL
 #define GPIO_VOLUME_DOWN_L GPIO_EC_VOLDN_BTN_ODL
 
-/* Optional features */
-#define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
-
 /* EC console commands  */
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO

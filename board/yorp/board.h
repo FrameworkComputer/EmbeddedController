@@ -13,9 +13,6 @@
 #define VARIANT_OCTOPUS_CHARGER_ISL9238
 #include "baseboard.h"
 
-/* Optional features */
-#define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
-
 /* EC console commands  */
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
