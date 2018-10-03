@@ -4086,5 +4086,12 @@
 #endif
 #endif /* CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE */
 
+#if defined(CONFIG_USB_PD_TCPM_ANX3429) || \
+	defined(CONFIG_USB_PD_TCPM_ANX740X) || \
+	defined(CONFIG_USB_PD_TCPM_ANX7471)
+/* Note: ANX7447 is handled by its own driver, not ANX74XX. */
+#define CONFIG_USB_PD_TCPM_ANX74XX
+#endif
+
 #endif  /* __CROS_EC_CONFIG_H */
 
