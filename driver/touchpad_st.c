@@ -1415,6 +1415,10 @@ static int st_tp_read_frame(void)
 	uint8_t *rx_buf = usb_packet[spi_buffer_index & 1].frame;
 #endif
 
+	ret = st_tp_read_all_events(0);
+	if (ret < 0)
+		goto failed;
+
 	if (heat_map_addr < 0)
 		goto failed;
 
