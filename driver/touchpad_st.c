@@ -1044,30 +1044,72 @@ static int st_tp_check_command_echo(const uint8_t *cmd, const size_t len)
 	return -EC_ERROR_BUSY;
 }
 
+static uint8_t get_cx_version(uint8_t tp_version)
+{
+	/*
+	 * CX version is tracked by ST release note: go/whiskers-st-release-note
+	 */
+
+	if (tp_version >= 32)
+		return 3;
+
+	if (tp_version >= 20)
+		return 2;
+
+	if (tp_version >= 18)
+		return 1;
+	return 0;
+}
+
 /*
  * Perform panel initialization.
  *
  * This function will wait until the initialization is done, or 10 second
  * timeout is reached.
  *
- * @param full: perform "full" panel initialization.
+ * @param full: 1 => perform "full" panel initialization.
+ *             -1 => decide by comparing previous and current cx version.
+ *
  * @return EC_SUCCESS or error code.
  */
 static int st_tp_panel_init(int full)
 {
-	const uint8_t tx_buf[] = {
-		ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, full ? 0x03 : 0x02
+	uint8_t tx_buf[] = {
+		ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, 0x02
 	};
 	int ret, retry;
+	uint8_t old_cx_version;
+	uint8_t new_cx_version;
 
 	if (tp_control & (TP_CONTROL_INIT | TP_CONTROL_INIT_FULL))
 		return EC_ERROR_BUSY;
 
-	tp_control = full ? TP_CONTROL_INIT_FULL : TP_CONTROL_INIT;
+	if (full == -1) /* not specified */
+		old_cx_version = get_cx_version(
+				system_info.release_info & 0xFF);
+
 	st_tp_stop_scan();
 	ret = st_tp_reset();
 	if (ret)
 		return ret;
+
+	if (full == -1) { /* not specified */
+		/*
+		 * On boot, ST firmware will load system info to host data
+		 * memory, So we don't need to reload it.
+		 */
+		st_tp_read_system_info(0);
+		new_cx_version = get_cx_version(
+				system_info.release_info & 0xFF);
+		full = old_cx_version != new_cx_version;
+	}
+
+	if (full) {  /* should perform full panel initialization */
+		tx_buf[2] = 0x3;
+		tp_control = TP_CONTROL_INIT_FULL;
+	} else {
+		tp_control = TP_CONTROL_INIT;
+	}
 
 	CPRINTS("Start panel initialization (full=%d)", full);
 	spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
@@ -1128,7 +1170,7 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 	if (offset + size == CONFIG_TOUCHPAD_VIRTUAL_SIZE) {
 		CPRINTS("%s: End update, wait for reset.", __func__);
 
-		return st_tp_panel_init(1);
+		return st_tp_panel_init(-1);
 	}
 
 	return EC_SUCCESS;
