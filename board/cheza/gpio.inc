@@ -17,7 +17,7 @@ GPIO_INT(USB_C1_BC12_INT_L,    PIN(8, 2), GPIO_INT_FALLING, usb1_evt)  /* Interr
 GPIO_INT(USB_C0_VBUS_DET_L,    PIN(6, 2), GPIO_INT_BOTH | GPIO_PULL_UP, vbus0_evt)  /* BC1.2 VBUS detection on port-0 */
 GPIO_INT(USB_C1_VBUS_DET_L,    PIN(8, 3), GPIO_INT_BOTH | GPIO_PULL_UP, vbus1_evt)  /* BC1.2 VBUS detection on port-1 */
 GPIO_INT(USB_C0_CABLE_DET,     PIN(3, 7), GPIO_INT_RISING, anx74xx_cable_det_interrupt)  /* Cable detection from port-0 TCPC */
-GPIO_INT(ACCEL_GYRO_INT_L,     PIN(D, 3), GPIO_INT_RISING | GPIO_SEL_1P8V, bmi160_interrupt)  /* Accelerometer/gyro interrupt */
+GPIO_INT(ACCEL_GYRO_INT_L,     PIN(D, 3), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi160_interrupt)  /* Accelerometer/gyro interrupt */
 
 /* System interrupts */
 GPIO_INT(AC_PRESENT,        PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt) /* ACOK_OD */
