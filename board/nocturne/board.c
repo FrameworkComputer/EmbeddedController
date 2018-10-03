@@ -26,6 +26,8 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "lid_switch.h"
+#include "lpc.h"
+#include "mkbp_event.h"
 #include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
@@ -388,6 +390,26 @@ void board_hibernate(void)
 	/* Wait for power to be cut. */
 	while (1)
 		;
+}
+
+static int mkbp_uses_gpio(void)
+{
+	return board_get_version() >= 2;
+}
+
+void mkbp_set_host_active(int active)
+{
+	if (mkbp_uses_gpio())
+		mkbp_set_host_active_via_gpio(active);
+
+	/*
+	 * Always send the host event for compatibility.
+	 * On board versions 2 and newer, the firmware is configured
+	 * to not actually trigger an SCI on MKBP events. This means that
+	 * the EC can send host event notifications without concern for the
+	 * board version and expect the right thing to happen.
+	 */
+	mkbp_set_host_active_via_event(active);
 }
 
 static void board_init(void)

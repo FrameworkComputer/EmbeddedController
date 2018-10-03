@@ -85,7 +85,6 @@
 
 /* MKBP */
 #define CONFIG_MKBP_EVENT
-#define CONFIG_MKBP_USE_HOST_EVENT
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 
 /* Sensors */
