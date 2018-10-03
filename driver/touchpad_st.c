@@ -39,7 +39,7 @@ BUILD_ASSERT(sizeof(struct st_tp_event_t) == 8);
 BUILD_ASSERT(BYTES_PER_PIXEL == 1);
 
 /* Function prototypes */
-static int st_tp_full_initialize(void);
+static int st_tp_panel_init(int full);
 static int st_tp_read_all_events(int suppress_error);
 static int st_tp_read_host_buffer_header(void);
 static int st_tp_send_ack(void);
@@ -67,9 +67,10 @@ static int tp_control;
 
 #define TP_CONTROL_SHALL_HALT		(1 << 0)
 #define TP_CONTROL_SHALL_RESET		(1 << 1)
-#define TP_CONTROL_SHALL_INITIALIZE	(1 << 2)
+#define TP_CONTROL_SHALL_INIT		(1 << 2)
 #define TP_CONTROL_RESETTING		(1 << 3)
-#define TP_CONTROL_INITIALIZING		(1 << 4)
+#define TP_CONTROL_INIT			(1 << 4)
+#define TP_CONTROL_INIT_FULL		(1 << 5)
 
 /*
  * Number of times we have reset the touchpad because of errors.
@@ -641,7 +642,7 @@ static int st_tp_handle_error(uint8_t error_type)
 	 * Corrupted panel configuration, a full initialization should fix it.
 	 */
 	if (error_type >= 0x28 && error_type <= 0x2A) {
-		tp_control |= TP_CONTROL_SHALL_INITIALIZE;
+		tp_control |= TP_CONTROL_SHALL_INIT;
 		return 1;
 	}
 
@@ -1044,28 +1045,31 @@ static int st_tp_check_command_echo(const uint8_t *cmd, const size_t len)
 }
 
 /*
- * Perform full panel initialization.
+ * Perform panel initialization.
  *
  * This function will wait until the initialization is done, or 10 second
  * timeout is reached.
  *
+ * @param full: perform "full" panel initialization.
  * @return EC_SUCCESS or error code.
  */
-static int st_tp_full_initialize(void)
+static int st_tp_panel_init(int full)
 {
-	uint8_t tx_buf[] = { ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, 0x03 };
+	const uint8_t tx_buf[] = {
+		ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, full ? 0x03 : 0x02
+	};
 	int ret, retry;
 
-	if (tp_control == TP_CONTROL_INITIALIZING)
+	if (tp_control & (TP_CONTROL_INIT | TP_CONTROL_INIT_FULL))
 		return EC_ERROR_BUSY;
 
-	tp_control = TP_CONTROL_INITIALIZING;
+	tp_control = full ? TP_CONTROL_INIT_FULL : TP_CONTROL_INIT;
 	st_tp_stop_scan();
 	ret = st_tp_reset();
 	if (ret)
 		return ret;
 
-	CPRINTS("Start full initialization");
+	CPRINTS("Start panel initialization (full=%d)", full);
 	spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
 
 	retry = 100;
@@ -1075,14 +1079,14 @@ static int st_tp_full_initialize(void)
 
 		ret = st_tp_check_command_echo(tx_buf, sizeof(tx_buf));
 		if (ret == EC_SUCCESS) {
-			CPRINTS("Full panel initialization completed.");
-			tp_control &= ~TP_CONTROL_INITIALIZING;
+			CPRINTS("Panel initialization completed.");
+			tp_control &= ~(TP_CONTROL_INIT | TP_CONTROL_INIT_FULL);
 			st_tp_init();
 			return EC_SUCCESS;
 		} else if (ret == -EC_ERROR_BUSY) {
-			CPRINTS("Full panel initialization ongoing...");
+			CPRINTS("Panel initialization on going...");
 		} else {
-			CPRINTS("Full Panel initialization failed: %x", -ret);
+			CPRINTS("Panel initialization failed: %x", -ret);
 			return -ret;
 		}
 	}
@@ -1124,7 +1128,7 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 	if (offset + size == CONFIG_TOUCHPAD_VIRTUAL_SIZE) {
 		CPRINTS("%s: End update, wait for reset.", __func__);
 
-		return st_tp_full_initialize();
+		return st_tp_panel_init(1);
 	}
 
 	return EC_SUCCESS;
@@ -1150,7 +1154,7 @@ int touchpad_debug(const uint8_t *param, unsigned int param_size,
 		/* no return value */
 		*data = NULL;
 		*data_size = 0;
-		st_tp_full_initialize();
+		st_tp_panel_init(1);
 		return EC_SUCCESS;
 	case ST_TP_DEBUG_CMD_START_SCAN:
 		*data = NULL;
@@ -1343,10 +1347,10 @@ void touchpad_task(void *u)
 		/*
 		 * React on touchpad errors.
 		 */
-		if (tp_control & TP_CONTROL_SHALL_INITIALIZE) {
+		if (tp_control & TP_CONTROL_SHALL_INIT) {
 			/* suppress other handlers */
-			tp_control = TP_CONTROL_SHALL_INITIALIZE;
-			st_tp_full_initialize();
+			tp_control = TP_CONTROL_SHALL_INIT;
+			st_tp_panel_init(1);
 		} else if (tp_control & TP_CONTROL_SHALL_RESET) {
 			/* suppress other handlers */
 			tp_control = TP_CONTROL_SHALL_RESET;
@@ -1711,7 +1715,7 @@ static int command_touchpad_st(int argc, char **argv)
 		st_tp_read_system_info(1);
 		return EC_SUCCESS;
 	} else if (strcasecmp(argv[1], "calibrate") == 0) {
-		st_tp_full_initialize();
+		st_tp_panel_init(1);
 		return EC_SUCCESS;
 	} else if (strcasecmp(argv[1], "enable") == 0) {
 #ifdef CONFIG_USB_ISOCHRONOUS
