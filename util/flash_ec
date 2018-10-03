@@ -413,27 +413,28 @@ ec_reset() {
 
 # force the EC to boot in serial monitor mode
 toad_ec_boot0() {
-	dut_control boot_mode:yes
+	dut_control boot_mode:$1
 }
 
 ccd_ec_boot0() {
-	info "Using CCD $1."
-	dut_control ccd_ec_boot_mode_$1:on
+	info "Using CCD $2."
+	dut_control ccd_ec_boot_mode_$2:$1
 }
 
 servo_ec_boot0() {
-	dut_control ec_boot_mode:on
+	dut_control ec_boot_mode:$1
 }
 
 servo_usbpd_boot0() {
-	dut_control usbpd_boot_mode:on
+	dut_control usbpd_boot_mode:$1
 }
 
 servo_sh_boot0() {
-	dut_control sh_boot_mode:on
+	dut_control sh_boot_mode:$1
 }
 
-ec_enable_boot0() {
+ec_switch_boot0() {
+	on_value=$1
 	# Enable programming GPIOs
 	if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
 		dut_control prog_en:yes
@@ -444,8 +445,23 @@ ec_enable_boot0() {
 		stype=servo
 	else
 		stype=${SERVO_TYPE}
+		if [[ "${SERVO_TYPE}" =~ "toad" ]] ; then
+			if [[ "${on_value}" == "on" ]] ; then
+				on_value="yes"
+			else
+				on_value="no"
+			fi
+		fi
 	fi
-	eval ${stype}_${MCU}_boot0 $1
+	eval ${stype}_${MCU}_boot0 "${on_value}" $2
+}
+
+ec_enable_boot0() {
+	ec_switch_boot0 "on" $1
+}
+
+ec_disable_boot0() {
+	ec_switch_boot0 "off" $1
 }
 
 # Returns 0 on success (if on beaglebone)
@@ -1093,6 +1109,10 @@ function flash_npcx_uut() {
 	ec_reset
 
 	# Have to wait a bit for EC boot-up
+	sleep 0.1
+
+	# For CCD, disable the trigger pin for normal UART operation
+	ec_disable_boot0 "uut"
 	sleep 0.1
 
 	# Remove the prefix "/dev/" because uartupdatetool will add it.
