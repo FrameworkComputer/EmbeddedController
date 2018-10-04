@@ -14,9 +14,6 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
-#include "driver/accel_kionix.h"
-#include "driver/accel_kx022.h"
-#include "driver/accelgyro_bmi160.h"
 #include "driver/led/lm3630a.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx74xx.h"
@@ -29,7 +26,6 @@
 #include "i2c.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
-#include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -120,8 +116,6 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 static void board_init(void)
 {
-	/* Enable Gyro interrupts */
-	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
