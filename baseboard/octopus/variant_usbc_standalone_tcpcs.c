@@ -158,3 +158,81 @@ void board_reset_pd_mcu(void)
 		CPRINTS("Skipping C1 TCPC reset because no battery");
 	}
 }
+
+#define PS8751_DEBUG_ADDR	0x12
+#define PS8751_GPIO_ENABLE	0x44
+#define PS8751_GPIO_LVL		0x45
+#define PS8751_GPIO3_VAL	(1 << 3)
+
+static void set_ps8751_gpio3(int enable)
+{
+	int rv, reg;
+
+	/*
+	 * Ensure that we don't put the TCPC back to sleep while we are
+	 * accessing debug registers.
+	 */
+	pd_prevent_low_power_mode(USB_PD_PORT_PS8751, 1);
+
+	/* Enable debug page access */
+	rv = tcpc_write(USB_PD_PORT_PS8751, PS8XXX_REG_I2C_DEBUGGING_ENABLE,
+			0x30);
+	if (rv)
+		goto error;
+
+	/* Enable GPIO3 (bit3) output by setting to bit3 to 1 */
+	rv = i2c_read8(I2C_PORT_TCPC1, PS8751_DEBUG_ADDR, PS8751_GPIO_ENABLE,
+		       &reg);
+	if (rv)
+		goto error;
+
+	if (!(reg & PS8751_GPIO3_VAL)) {
+		reg |= PS8751_GPIO3_VAL;
+
+		rv = i2c_write8(I2C_PORT_TCPC1, PS8751_DEBUG_ADDR,
+				PS8751_GPIO_ENABLE, reg);
+		if (rv)
+			goto error;
+	}
+
+	/* Set level for GPIO3, which controls the re-driver power */
+	rv = i2c_read8(I2C_PORT_TCPC1, PS8751_DEBUG_ADDR, PS8751_GPIO_LVL,
+		       &reg);
+	if (rv)
+		goto error;
+
+	if (!!(reg & PS8751_GPIO3_VAL) != !!enable) {
+		if (enable)
+			reg |= PS8751_GPIO3_VAL;
+		else
+			reg &= ~PS8751_GPIO3_VAL;
+
+		rv = i2c_write8(I2C_PORT_TCPC1, PS8751_DEBUG_ADDR,
+				PS8751_GPIO_LVL, reg);
+	}
+error:
+	if (rv)
+		CPRINTS("C1: Could not set re-driver power to %d", enable);
+
+	/* Disable debug page access and allow LPM again*/
+	tcpc_write(USB_PD_PORT_PS8751, PS8XXX_REG_I2C_DEBUGGING_ENABLE, 0x31);
+	pd_prevent_low_power_mode(USB_PD_PORT_PS8751, 0);
+}
+
+/*
+ * Most boards do not stuff the re-driver. We always toggle GPIO3 on the PS8751
+ * since it is benign if the re-driver isn't there.
+ */
+static void board_enable_a1_redriver(void)
+{
+	set_ps8751_gpio3(1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_enable_a1_redriver, HOOK_PRIO_DEFAULT);
+
+
+static void board_disable_a1_redriver(void)
+{
+	set_ps8751_gpio3(0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_disable_a1_redriver,
+	     HOOK_PRIO_DEFAULT);
