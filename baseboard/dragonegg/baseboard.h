@@ -27,6 +27,15 @@
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
 
+/* CBI */
+/*
+ * TODO (b/117174246): When EEPROMs are programmed, can use EEPROM for board
+ * version. But for P0/P1 boards rely on GPIO signals.
+ */
+/* #define CONFIG_BOARD_VERSION_CBI */
+#define CONFIG_CROS_BOARD_INFO
+#define CONFIG_CRC8
+
 /* Common Keyboard Defines */
 #define CONFIG_CMD_KEYBOARD
 #define CONFIG_KEYBOARD_BOARD_CONFIG
