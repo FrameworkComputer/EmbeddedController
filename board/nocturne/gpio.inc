@@ -93,6 +93,10 @@ GPIO(EC_I2C0_POWER_SDA,      PIN(B, 4), GPIO_INPUT)
 GPIO(EC_I2C4_BATTERY_SCL,    PIN(F, 3), GPIO_INPUT)
 GPIO(EC_I2C4_BATTERY_SDA,    PIN(F, 2), GPIO_INPUT)
 
+/* Strap pins */
+GPIO(GPO66_NC,       PIN(6, 6), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(GPOB6_NC,       PIN(B, 6), GPIO_INPUT | GPIO_PULL_UP)
+
 /* Alternate mode configuration */
 /* UART pins */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0) /* Cr50 requires no pullups. */
