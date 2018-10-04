@@ -35,8 +35,8 @@
 /* All inputs in the right state for S0 */
 #define IN_ALL_S0		(IN_PGOOD_S0 | IN_SUSPEND_DEASSERTED)
 
-/* Long power key press to force shutdown in S0 */
-#define FORCED_SHUTDOWN_DELAY	(8 * SECOND)
+/* Long power key press to force shutdown in S0. go/crosdebug */
+#define FORCED_SHUTDOWN_DELAY	(10 * SECOND)
 
 #define CHARGER_INITIALIZED_DELAY_MS 100
 #define CHARGER_INITIALIZED_TRIES 40
