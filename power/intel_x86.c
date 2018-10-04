@@ -140,6 +140,44 @@ static enum power_state power_wait_s5_rtc_reset(void)
 #endif
 
 #ifdef CONFIG_POWER_S0IX
+/*
+ * Backup copies of SCI and SMI mask to preserve across S0ix suspend/resume
+ * cycle. If the host uses S0ix, BIOS is not involved during suspend and resume
+ * operations and hence SCI/SMI masks are programmed only once during boot-up.
+ *
+ * These backup variables are set whenever host expresses its interest to
+ * enter S0ix and then lpc_host_event_mask for SCI and SMI are cleared. When
+ * host resumes from S0ix, masks from backup variables are copied over to
+ * lpc_host_event_mask for SCI and SMI.
+ */
+static host_event_t backup_sci_mask;
+static host_event_t backup_smi_mask;
+
+/*
+ * Clear host event masks for SMI and SCI when host is entering S0ix. This is
+ * done to prevent any SCI/SMI interrupts when the host is in suspend. Since
+ * BIOS is not involved in the suspend path, EC needs to take care of clearing
+ * these masks.
+ */
+static void lpc_s0ix_suspend_clear_masks(void)
+{
+	backup_sci_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
+	backup_smi_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SMI);
+
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, 0);
+}
+
+/*
+ * Restore host event masks for SMI and SCI when host exits S0ix. This is done
+ * because BIOS is not involved in the resume path and so EC needs to restore
+ * the masks from backup variables.
+ */
+static void lpc_s0ix_resume_restore_masks(void)
+{
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, backup_sci_mask);
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, backup_smi_mask);
+}
 
 enum s0ix_notify_type {
 	S0IX_NOTIFY_NONE,
@@ -154,6 +192,11 @@ static void s0ix_transition(int check_state, int hook_id)
 {
 	if (s0ix_notify != check_state)
 		return;
+
+	/* Clear masks before any hooks are run for suspend. */
+	if (s0ix_notify == S0IX_NOTIFY_SUSPEND)
+		lpc_s0ix_suspend_clear_masks();
+
 	hook_notify(hook_id);
 	s0ix_notify = S0IX_NOTIFY_NONE;
 }
@@ -493,47 +536,6 @@ power_board_handle_host_sleep_event(enum host_sleep_event state)
 	/* Default weak implementation -- no action required. */
 }
 
-#ifdef CONFIG_POWER_S0IX
-/*
- * Backup copies of SCI and SMI mask to preserve across S0ix suspend/resume
- * cycle. If the host uses S0ix, BIOS is not involved during suspend and resume
- * operations and hence SCI/SMI masks are programmed only once during boot-up.
- *
- * These backup variables are set whenever host expresses its interest to
- * enter S0ix and then lpc_host_event_mask for SCI and SMI are cleared. When
- * host resumes from S0ix, masks from backup variables are copied over to
- * lpc_host_event_mask for SCI and SMI.
- */
-static host_event_t backup_sci_mask;
-static host_event_t backup_smi_mask;
-
-/*
- * Clear host event masks for SMI and SCI when host is entering S0ix. This is
- * done to prevent any SCI/SMI interrupts when the host is in suspend. Since
- * BIOS is not involved in the suspend path, EC needs to take care of clearing
- * these masks.
- */
-static void lpc_s0ix_suspend_clear_masks(void)
-{
-	backup_sci_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
-	backup_smi_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SMI);
-
-	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
-	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, 0);
-}
-
-/*
- * Restore host event masks for SMI and SCI when host exits S0ix. This is done
- * because BIOS is not involved in the resume path and so EC needs to restore
- * the masks from backup variables.
- */
-static void lpc_s0ix_resume_restore_masks(void)
-{
-	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, backup_sci_mask);
-	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, backup_smi_mask);
-}
-#endif
-
 void power_chipset_handle_host_sleep_event(enum host_sleep_event state)
 {
 	power_board_handle_host_sleep_event(state);
@@ -546,7 +548,6 @@ void power_chipset_handle_host_sleep_event(enum host_sleep_event state)
 		 * notification needs to be sent to listeners.
 		 */
 		s0ix_notify = S0IX_NOTIFY_SUSPEND;
-		lpc_s0ix_suspend_clear_masks();
 		power_signal_enable_interrupt(sleep_sig[SYS_SLEEP_S0IX]);
 	} else if (state == HOST_SLEEP_EVENT_S0IX_RESUME) {
 		/*
