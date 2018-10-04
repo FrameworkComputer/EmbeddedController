@@ -191,6 +191,8 @@ static struct pd_protocol {
 	uint64_t low_power_time;
 	/* Tasks to notify after TCPC has been reset */
 	int tasks_waiting_on_reset;
+	/* Tasks preventing TCPC from entering low power mode */
+	int tasks_preventing_lpm;
 #endif
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
@@ -489,6 +491,16 @@ void pd_wait_for_wakeup(int port)
 			       PD_EVENT_TCPC_RESET, 0);
 		task_wait_event_mask(TASK_EVENT_PD_AWAKE, -1);
 	}
+}
+
+void pd_prevent_low_power_mode(int port, int prevent)
+{
+	const int current_task_mask = (1 << task_get_current());
+
+	if (prevent)
+		atomic_or(&pd[port].tasks_preventing_lpm, current_task_mask);
+	else
+		atomic_clear(&pd[port].tasks_preventing_lpm, current_task_mask);
 }
 
 /* This is only called from the PD tasks that owns the port. */
@@ -3934,8 +3946,15 @@ void pd_task(void *u)
 		/* Determine if we need to put the TCPC in low power mode */
 		if (pd[port].flags & PD_FLAGS_LPM_REQUESTED &&
 		    !(pd[port].flags & PD_FLAGS_LPM_ENGAGED)) {
-			const int64_t time_left =
-				pd[port].low_power_time - now.val;
+			int64_t time_left;
+
+			/* If any task prevents LPM, wait another debounce */
+			if (pd[port].tasks_preventing_lpm) {
+				pd[port].low_power_time =
+					PD_LPM_DEBOUNCE_US + now.val;
+			}
+
+			time_left = pd[port].low_power_time - now.val;
 			if (time_left <= 0) {
 				pd[port].flags |= PD_FLAGS_LPM_ENGAGED;
 				pd[port].flags |= PD_FLAGS_LPM_TRANSITION;

@@ -1046,6 +1046,18 @@ int pd_is_max_request_allowed(void);
 void pd_device_accessed(int port);
 
 /**
+ * Prevents the TCPC from going back into low power mode. Invocations must be
+ * called in a pair from the same task, otherwise the TCPC will never re-enter
+ * low power mode.
+ *
+ * Note: This will not wake the device up if it is in LPM.
+ *
+ * @param port USB-C port number
+ * @param prevent 1 to prevent this port from entering LPM
+ */
+void pd_prevent_low_power_mode(int port, int prevent);
+
+/**
  * Returns true if this TCPC is in low power mode and a failed i2c transaction
  * should be retried after waiting for the device to wake up via
  * pd_wait_for_wakeup()
