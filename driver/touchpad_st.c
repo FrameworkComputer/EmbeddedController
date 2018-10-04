@@ -80,6 +80,11 @@ static int tp_reset_retry_count;
 static int dump_memory_on_error;
 
 /*
+ * Bitmap to track if a finger exists.
+ */
+static int touch_slot;
+
+/*
  * Timestamp of last interrupt (32 bits are enough as we divide the value by 100
  * and then put it in a 16-bit field).
  */
@@ -176,13 +181,22 @@ static int st_tp_parse_finger(struct usb_hid_touchpad_report *report,
 			      struct st_tp_event_t *event,
 			      int i)
 {
-	/* We cannot report more fingers */
-	if (i >= ARRAY_SIZE(report->finger))
-		return i;
+	const int id = event->finger.touch_id;
 
 	/* This is not a finger */
 	if (event->finger.touch_type == ST_TP_TOUCH_TYPE_INVALID)
 		return i;
+
+	if (event->evt_id ==  ST_TP_EVENT_ID_ENTER_POINTER)
+		touch_slot |= 1 << id;
+	else if (event->evt_id ==  ST_TP_EVENT_ID_LEAVE_POINTER)
+		touch_slot &= ~(1 << id);
+
+	/* We cannot report more fingers */
+	if (i >= ARRAY_SIZE(report->finger)) {
+		CPRINTS("WARN: ST reports more than %d fingers", i);
+		return i;
+	}
 
 	switch (event->evt_id) {
 	case ST_TP_EVENT_ID_ENTER_POINTER:
@@ -191,7 +205,7 @@ static int st_tp_parse_finger(struct usb_hid_touchpad_report *report,
 		report->finger[i].confidence = (event->finger.z < 255);
 		report->finger[i].tip = 1;
 		report->finger[i].inrange = 1;
-		report->finger[i].id = event->finger.touch_id;
+		report->finger[i].id = id;
 		report->finger[i].pressure = event->finger.z;
 		report->finger[i].width = (event->finger.minor |
 					   (event->minor_high << 4)) << 5;
@@ -204,7 +218,7 @@ static int st_tp_parse_finger(struct usb_hid_touchpad_report *report,
 				       event->finger.y);
 		break;
 	case ST_TP_EVENT_ID_LEAVE_POINTER:
-		report->finger[i].id = event->finger.touch_id;
+		report->finger[i].id = id;
 		/* When a finger is leaving, it's not a palm */
 		report->finger[i].confidence = 1;
 		break;
@@ -672,6 +686,7 @@ static int st_tp_handle_error_report(struct st_tp_event_t *e,
 
 static void st_tp_handle_status_report(struct st_tp_event_t *e)
 {
+	static uint32_t prev_idle_count;
 	uint32_t info = ((e->report.info[0] << 0) |
 			 (e->report.info[1] << 8) |
 			 (e->report.info[2] << 16) |
@@ -684,11 +699,29 @@ static void st_tp_handle_status_report(struct st_tp_event_t *e)
 
 	/*
 	 * Idle count might not change if ST FW is busy (for example, when the
-	 * user puts a big palm on touchpad).  Therefore we don't check if idle
-	 * count is changed.
+	 * user puts a big palm on touchpad).  Therefore if idle count doesn't
+	 * change, we need to double check with touch count.
+	 *
+	 * If touch count is 0, and idle count doesn't change, it means that:
+	 *
+	 *   1) ST doesn't think there are any fingers.
+	 *   2) ST is busy on something, can't get into idle mode, and this
+	 *      might cause (1).
+	 *
+	 * Resetting touchpad should be the correct action.
 	 */
-	if (e->report.report_type == ST_TP_STATUS_BEACON)
+	if (e->report.report_type == ST_TP_STATUS_BEACON) {
+		const uint8_t touch_count = e->report.reserved;
+
 		CPRINTS("BEACON: idle count=%08x", info);
+		CPRINTS("  touch count=%d  touch slot=%04x",
+			touch_count, touch_slot);
+		if (prev_idle_count == info && touch_slot == 0) {
+			tp_control |= TP_CONTROL_SHALL_RESET;
+			return;
+		}
+		prev_idle_count = info;
+	}
 }
 
 /*
