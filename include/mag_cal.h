@@ -29,9 +29,9 @@ struct mag_cal_t {
 	 * | x  | y  | z  | 1  |
 	 * +----+----+----+----+
 	 */
-	mat44_float_t acc;
-	floatv4_t acc_w;
-	float radius;
+	mat44_fp_t acc;
+	fpv4_t acc_w;
+	fp_t radius;
 
 	intv3_t bias;
 

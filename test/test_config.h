@@ -54,6 +54,16 @@
 #define CONFIG_MATH_UTIL
 #endif
 
+#ifdef TEST_FLOAT
+#define CONFIG_FPU
+#define CONFIG_MAG_CALIBRATE
+#endif
+
+#ifdef TEST_FP
+#undef CONFIG_FPU
+#define CONFIG_MAG_CALIBRATE
+#endif
+
 #ifdef TEST_MOTION_LID
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_INVALID_CHECK
