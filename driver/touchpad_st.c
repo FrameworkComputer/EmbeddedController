@@ -23,6 +23,7 @@
 #include "usb_hid_touchpad.h"
 #include "usb_isochronous.h"
 #include "util.h"
+#include "watchdog.h"
 
 /* Console output macros */
 #define CC_TOUCHPAD CC_USB
@@ -38,7 +39,7 @@ BUILD_ASSERT(sizeof(struct st_tp_event_t) == 8);
 BUILD_ASSERT(BYTES_PER_PIXEL == 1);
 
 /* Function prototypes */
-static void st_tp_full_initialize_start(void);
+static int st_tp_full_initialize(void);
 static int st_tp_read_all_events(int suppress_error);
 static int st_tp_read_host_buffer_header(void);
 static int st_tp_send_ack(void);
@@ -1042,42 +1043,50 @@ static int st_tp_check_command_echo(const uint8_t *cmd, const size_t len)
 	return -EC_ERROR_BUSY;
 }
 
-static void st_tp_full_initialize_end(void);
-DECLARE_DEFERRED(st_tp_full_initialize_end);
-
-static void st_tp_full_initialize_end(void)
-{
-	int ret;
-	uint8_t tx_buf[] = { ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, 0x03 };
-
-	ret = st_tp_check_command_echo(tx_buf, sizeof(tx_buf));
-	if (ret == EC_SUCCESS) {
-		CPRINTS("Full panel initialization completed.");
-		tp_control &= ~TP_CONTROL_INITIALIZING;
-		st_tp_init();
-	} else if (ret == -EC_ERROR_BUSY) {
-		hook_call_deferred(&st_tp_full_initialize_end_data, 100 * MSEC);
-	} else {
-		CPRINTS("Full Panel initialization failed: %x", -ret);
-	}
-}
-
-static void st_tp_full_initialize_start(void)
+/*
+ * Perform full panel initialization.
+ *
+ * This function will wait until the initialization is done, or 10 second
+ * timeout is reached.
+ *
+ * @return EC_SUCCESS or error code.
+ */
+static int st_tp_full_initialize(void)
 {
 	uint8_t tx_buf[] = { ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, 0x03 };
+	int ret, retry;
 
 	if (tp_control == TP_CONTROL_INITIALIZING)
-		return;
+		return EC_ERROR_BUSY;
 
 	tp_control = TP_CONTROL_INITIALIZING;
 	st_tp_stop_scan();
-	if (st_tp_reset())
-		return;
+	ret = st_tp_reset();
+	if (ret)
+		return ret;
 
 	CPRINTS("Start full initialization");
 	spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
 
-	hook_call_deferred(&st_tp_full_initialize_end_data, 100 * MSEC);
+	retry = 100;
+	while (retry--) {
+		watchdog_reload();
+		msleep(100);
+
+		ret = st_tp_check_command_echo(tx_buf, sizeof(tx_buf));
+		if (ret == EC_SUCCESS) {
+			CPRINTS("Full panel initialization completed.");
+			tp_control &= ~TP_CONTROL_INITIALIZING;
+			st_tp_init();
+			return EC_SUCCESS;
+		} else if (ret == -EC_ERROR_BUSY) {
+			CPRINTS("Full panel initialization ongoing...");
+		} else {
+			CPRINTS("Full Panel initialization failed: %x", -ret);
+			return -ret;
+		}
+	}
+	return EC_ERROR_TIMEOUT;
 }
 
 /*
@@ -1115,7 +1124,7 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 	if (offset + size == CONFIG_TOUCHPAD_VIRTUAL_SIZE) {
 		CPRINTS("%s: End update, wait for reset.", __func__);
 
-		st_tp_full_initialize_start();
+		return st_tp_full_initialize();
 	}
 
 	return EC_SUCCESS;
@@ -1141,7 +1150,7 @@ int touchpad_debug(const uint8_t *param, unsigned int param_size,
 		/* no return value */
 		*data = NULL;
 		*data_size = 0;
-		st_tp_full_initialize_start();
+		st_tp_full_initialize();
 		return EC_SUCCESS;
 	case ST_TP_DEBUG_CMD_START_SCAN:
 		*data = NULL;
@@ -1337,7 +1346,7 @@ void touchpad_task(void *u)
 		if (tp_control & TP_CONTROL_SHALL_INITIALIZE) {
 			/* suppress other handlers */
 			tp_control = TP_CONTROL_SHALL_INITIALIZE;
-			st_tp_full_initialize_start();
+			st_tp_full_initialize();
 		} else if (tp_control & TP_CONTROL_SHALL_RESET) {
 			/* suppress other handlers */
 			tp_control = TP_CONTROL_SHALL_RESET;
@@ -1702,7 +1711,7 @@ static int command_touchpad_st(int argc, char **argv)
 		st_tp_read_system_info(1);
 		return EC_SUCCESS;
 	} else if (strcasecmp(argv[1], "calibrate") == 0) {
-		st_tp_full_initialize_start();
+		st_tp_full_initialize();
 		return EC_SUCCESS;
 	} else if (strcasecmp(argv[1], "enable") == 0) {
 #ifdef CONFIG_USB_ISOCHRONOUS

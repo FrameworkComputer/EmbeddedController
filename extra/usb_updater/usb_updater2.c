@@ -290,7 +290,7 @@ static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 		actual = 0;
 		r = libusb_bulk_transfer(uep->devh, uep->ep_num | 0x80,
 					 inbuf, inlen,
-					 &actual, 1000);
+					 &actual, 5000);
 		if (r < 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
 			exit(update_error);
