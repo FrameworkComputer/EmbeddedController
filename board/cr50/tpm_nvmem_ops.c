@@ -53,3 +53,42 @@ enum tpm_read_rv read_tpm_nvmem(uint16_t obj_index,
 
 	return tpm_read_success;
 }
+
+enum tpm_read_rv read_tpm_nvmem_hidden(uint16_t object_index,
+				       uint16_t object_size,
+				       void *obj_value)
+{
+	if (NvGetHiddenObject(HR_HIDDEN | object_index,
+			      object_size,
+			      obj_value) == TPM_RC_SUCCESS) {
+		return tpm_read_success;
+	} else {
+		return tpm_read_not_found;
+	}
+}
+
+enum tpm_write_rv write_tpm_nvmem_hidden(uint16_t object_index,
+					 uint16_t object_size,
+					 void *obj_value,
+					 int commit)
+{
+	enum tpm_write_rv ret = tpm_write_fail;
+
+	uint32_t handle = object_index | HR_HIDDEN;
+
+	if (!NvIsDefinedHiddenObject(handle) &&
+	    NvAddHiddenObject(handle,
+			      object_size,
+			      obj_value) == TPM_RC_SUCCESS) {
+		ret = tpm_write_created;
+	} else if (NvWriteHiddenObject(handle,
+				       object_size,
+				       obj_value) == TPM_RC_SUCCESS) {
+		ret = tpm_write_updated;
+	}
+
+	if (commit && !NvCommit())
+		ret = tpm_write_fail;
+
+	return ret;
+}
