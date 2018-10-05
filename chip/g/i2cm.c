@@ -173,21 +173,6 @@ static void i2cm_config_xfer_mode(int port, enum i2c_freq freq)
 	GWRITE_I(I2C, port, CTRL_MODE, i2c_mode_instruction);
 }
 
-static void i2cm_set_fwbytes(int port, uint32_t *inst, const uint8_t *data,
-			     int size)
-{
-	int i;
-	uint32_t fwbytes = 0;
-
-	/* Indicate that first write bytes field will be used */
-	*inst |= size << GFIELD_LSB(I2C, INST, FWBYTESCOUNT);
-
-	/* Now write data to FWBYTES register */
-	for (i = 0; i < size; i++)
-		fwbytes |= data[i] << (i * 8);
-	GWRITE_I(I2C, port, FW, fwbytes);
-}
-
 static void i2cm_write_rwbytes(int port, const uint8_t *out, int size)
 {
 	volatile uint32_t *rw_ptr;
@@ -262,58 +247,36 @@ static int i2cm_poll_for_complete(int port)
 	return EC_ERROR_TIMEOUT;
 }
 
-static uint32_t i2cm_build_sequence(int port, int slave_addr,
-			       const uint8_t *out,  int out_size,
-			       uint8_t *in, int in_size, int flags)
+static uint32_t i2cm_create_inst(int slave_addr, int is_write,
+				 size_t size, uint32_t flags)
 {
-	int bytes_consumed;
 	uint32_t inst = 0;
 
-	if (flags & I2C_XFER_START)
+	if (flags & I2C_XFER_START) {
+		/*
+		 * Start sequence will have to be issued, slave address needs
+		 * to be included.
+		 */
 		inst |= INST_START;
 
-	/*
-	 *  Setup slave device address. Calls to chip_i2c_xfer assume an 8 bit
-	 *  slave address. Need to shift right by 1 bit.
-	 */
-	inst |= INST_DEVADDRVAL(slave_addr >> 1);
-
-	if (out_size) {
-		/* Send slave addr byte if this is start of I2C transaction */
-		if (flags & I2C_XFER_START)
-			inst |= INST_FWDEVADDR;
-		bytes_consumed = MIN(I2CM_FW_BYTES_MAX, out_size);
-		/* Setup first write bytes */
-		i2cm_set_fwbytes(port, &inst, out, bytes_consumed);
-		out_size -= bytes_consumed;
-		/* If write data remains, then put the rest in RW fifo */
-		if (out_size) {
-			out += bytes_consumed;
-			inst |= INST_RWBYTES(out_size);
-			i2cm_write_rwbytes(port, out, out_size);
-		}
+		/*
+		 * Calls to chip_i2c_xfer assume an 8 bit slave address. Need
+		 * to shift right by 1 bit.
+		 */
+		inst |= INST_DEVADDRVAL(slave_addr >> 1);
+		inst |= INST_RWDEVADDR;
 	}
 
-	if (in_size) {
-		/*
-		 * If I2C_XFER_START is marked, then send slave address and
-		 * indicate it's a read transaction.
-		 */
-		if (flags & I2C_XFER_START) {
-			inst |= INST_RWDEVADDR;
-			inst |= INST_RWDEVADDR_RWB;
-			inst |= INST_RPT_START;
-		}
-		/* Setup number of bytes to read */
-		inst |= INST_RWBYTES(in_size);
+	if (!is_write)
+		inst |= INST_RWDEVADDR_RWB;
 
-		/* NACK the last byte read */
-		if (flags & I2C_XFER_STOP)
+	inst |= INST_RWBYTES(size);
+
+	if (flags & I2C_XFER_STOP) {
+		inst |= INST_STOP;
+		if (!is_write)
 			inst |= INST_NA;
 	}
-
-	if (flags & I2C_XFER_STOP)
-		inst |= INST_STOP;
 
 	return inst;
 }
@@ -325,35 +288,68 @@ static int i2cm_execute_sequence(int port, int slave_addr, const uint8_t *out,
 	int rv;
 	uint32_t inst;
 	uint32_t status;
+	size_t size;
+	int is_write;
+	size_t done_so_far;
+	uint32_t seq_flags;
 
-	/* Build sequence instruction */
-	inst = i2cm_build_sequence(port, slave_addr, out, out_size, in,
-				   in_size, flags);
-	/* Start transaction */
-	GWRITE_I(I2C, port, INST, inst);
+	size = in_size ? in_size : out_size;
+	done_so_far = 0;
+	is_write = !!out_size;
 
-	/* Wait for transaction to be complete */
-	rv = i2cm_poll_for_complete(port);
-	/* Handle timeout case */
-	if (rv)
-		return rv;
+	while (done_so_far < size) {
+		size_t batch_size;
 
-	/* Check status value for errors */
-	status = GREAD_I(I2C, port, STATUS);
-	if (status & I2CM_ERROR_MASK) {
-		if (status &
-		    (GFIELD_MASK(I2C, STATUS, FIRSTSTOP) |
-		     GFIELD_MASK(I2C, STATUS, FINALSTOP))) {
-			/*
-			 * A stop was requested but not generated, let's make
-			 * sure the bus is brought back to the idle state.
-			 */
-			GWRITE_I(I2C, port, INST, INST_STOP);
-			i2cm_poll_for_complete(port);
+		seq_flags = flags;
+
+		batch_size = MIN(size - done_so_far, I2CM_RW_BYTES_MAX);
+
+		if (done_so_far)
+			/* No need to generate start. */
+			seq_flags &= ~I2C_XFER_START;
+
+		if ((batch_size + done_so_far) != size)
+			/* No need to generate stop. */
+			seq_flags &= ~I2C_XFER_STOP;
+
+		/* Build sequence instruction */
+		inst = i2cm_create_inst(slave_addr, is_write,
+					batch_size, seq_flags);
+
+		/* If this is a write - copy data into the FIFO. */
+		if (is_write)
+			i2cm_write_rwbytes(port, out + done_so_far, batch_size);
+
+		/* Start transaction */
+		GWRITE_I(I2C, port, INST, inst);
+
+		/* Wait for transaction to be complete */
+		rv = i2cm_poll_for_complete(port);
+		/* Handle timeout case */
+		if (rv)
+			return rv;
+
+		/* Check status value for errors */
+		status = GREAD_I(I2C, port, STATUS);
+		if (status & I2CM_ERROR_MASK) {
+			if (status & GFIELD_MASK(I2C, STATUS, FINALSTOP)) {
+				/*
+				 * A stop was requested but not generated,
+				 * let's make sure the bus is brought back to
+				 * the idle state.
+				 */
+				GWRITE_I(I2C, port, INST, INST_STOP);
+				i2cm_poll_for_complete(port);
+			}
+			/* Clear INST register after processing failure(s). */
+			GWRITE_I(I2C, port, INST, 0);
+			return EC_ERROR_UNKNOWN;
 		}
-		/* Clear INST register after processing failure(s). */
-		GWRITE_I(I2C, port, INST, 0);
-		return EC_ERROR_UNKNOWN;
+
+		if (!is_write)
+			i2cm_read_rwbytes(port, in + done_so_far, batch_size);
+
+		done_so_far += batch_size;
 	}
 
 	return EC_SUCCESS;
@@ -365,63 +361,35 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
 	int rv;
-	int sequence_flags;
-	int num_out, num_in;
 
 	if (!in_size && !out_size)
 		/* Nothing to do */
 		return EC_SUCCESS;
 
-	/*
-	 * Cr50 can do sequences of up to 64 write or read bytes. In addition it
-	 * can accommodate up to 4 write bytes and up to 64 read bytes in a
-	 * sequence set up. However, if the number of write bytes is > 4, then
-	 * the write and read must be done in separate sequences.
-	 */
-
-	while (out_size > I2CM_FW_BYTES_MAX) {
-		/* number of bytes that can handed in 1 sequence */
-		num_out = MIN(I2CM_RW_BYTES_MAX + I2CM_FW_BYTES_MAX, out_size);
-		sequence_flags = flags;
-		/* If more than 1 sequence remaining, mask stop bit flag */
-		if ((out_size - num_out)  || in_size)
-			sequence_flags &= ~I2C_XFER_STOP;
-		/* Execute transaction */
-		rv = i2cm_execute_sequence(port, slave_addr, out, num_out, in,
-					   0, sequence_flags);
-		if (rv)
-			return rv;
-		/* Update counts and flags */
-		out += num_out;
-		out_size -= num_out;
-		flags &= ~sequence_flags;
+	if (in_size && out_size &&
+	    ((flags & I2C_XFER_SINGLE) != I2C_XFER_SINGLE)) {
+		/*
+		 * Not clear what to do: this is not a complete transaction,
+		 * but it has both receive and transmit parts.
+		 */
+		CPRINTS("%s: error: in %d, out %d, flags 0x%x",
+			__func__, in_size, out_size, flags);
+		return EC_ERROR_INVAL;
 	}
 
-	/* At this point out_size <= 4 */
-	while (out_size || in_size) {
-		num_in = MIN(I2CM_RW_BYTES_MAX, in_size);
-		num_out = out_size;
-		sequence_flags = flags;
-		/* If more than 1 sequence remaining, mask stop bit flag */
-		if (in_size - num_in)
-			sequence_flags &= ~I2C_XFER_STOP;
-
-		rv = i2cm_execute_sequence(port, slave_addr, out, num_out, in,
-					   num_in, sequence_flags);
-		if (rv)
+	if (out_size) {
+		/* Process write before read. */
+		rv = i2cm_execute_sequence(port, slave_addr, out,
+					   out_size, NULL, 0, flags);
+		if (rv != EC_SUCCESS)
 			return rv;
-
-		/* If bytes were read, copy to destination buffer */
-		if (num_in) {
-			i2cm_read_rwbytes(port, in, num_in);
-			in += num_in;
-			in_size -= num_in;
-		}
-		out_size = 0;
-		flags &= ~sequence_flags;
 	}
 
-	return EC_SUCCESS;
+	if (in_size)
+		rv = i2cm_execute_sequence(port, slave_addr,
+					   NULL, 0, in, in_size, flags);
+
+	return rv;
 }
 
 int i2c_raw_get_scl(int port)
