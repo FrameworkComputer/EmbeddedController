@@ -1354,7 +1354,7 @@ failed_write:
 }
 
 
-/* Return zero on success, a negative error value on failures. */
+/* Return zero on success, a non-zero value on failures. */
 int verify_flash(struct common_hnd *chnd, const char *filename,
 		uint32_t offset)
 {
@@ -1388,8 +1388,9 @@ int verify_flash(struct common_hnd *chnd, const char *filename,
 
 	printf("Verify %d bytes at 0x%08x\n", file_size, offset);
 	res = command_read_pages(chnd, offset, flash_size, buffer2);
-	draw_spinner(flash_size-res, flash_size);
-	res = memcmp(buffer, buffer2, file_size);
+	if (res > 0)
+		res = memcmp(buffer, buffer2, file_size);
+
 	printf("\n\rVerify %s\n", res ? "Failed!" : "Done.");
 exit:
 
