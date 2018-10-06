@@ -53,7 +53,6 @@
 
 /* Embedded flash block write size for different programming modes. */
 #define FTDI_BLOCK_WRITE_SIZE	65536
-#define CCD_BLOCK_WRITE_SIZE	56
 
 /* Embedded flash number of pages in a sector erase */
 #define SECTOR_ERASE_PAGES	4
@@ -262,11 +261,24 @@ static int ccd_i2c_byte_transfer(struct usb_endpoint *uep, uint8_t addr,
 	if (exit_requested)
 		return -1;
 
-	/* Build a message following format described in ./include/usb_i2c.h. */
-	usb_buffer[0] = 0; /* Hardcode port 0, may need to change this. */
+	/*
+	 * Build a message following format described in ./include/usb_i2c.h.
+	 *
+	 * Hardcode port, the lowest 4 bits of the first byte, to 0; may need
+	 * to make this a command line option.
+	 */
+	usb_buffer[0] = 0;
+
 	usb_buffer[1] = addr;
 	if (write) {
-		usb_buffer[2] = numbytes;
+		/*
+		 * Write count might spill over into the top 4 bits of the
+		 * first byte. We trust the caller not to pass numbytes
+		 * exceeding (2^12 - 1).
+		 */
+		if (numbytes > 255)
+			usb_buffer[0] |= (numbytes >> 4) & 0xf0;
+		usb_buffer[2] = numbytes & 0xff;
 		usb_buffer[3] = 0;
 		memcpy(usb_buffer + USB_I2C_HEADER_SIZE, data, numbytes);
 	} else {
@@ -804,7 +816,7 @@ static int send_special_waveform(struct common_hnd *chnd)
 						" is not starting!\n");
 		}
 
-	} while (ret && (iterations++ < 50));
+	} while (ret && (iterations++ < 10));
 
 	if (ret)
 		printf(" Failed!\n");
@@ -1477,7 +1489,7 @@ int parse_parameters(int argc, char **argv)
 			flags |= FLAG_CCD_MODE;
 			usb_vid = CR50_USB_VID;
 			usb_pid = CR50_USB_PID;
-			block_write_size_ = CCD_BLOCK_WRITE_SIZE;
+			block_write_size_ = PAGE_SIZE;
 			break;
 		case 'd':
 			debug = 1;
