@@ -1,0 +1,38 @@
+/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * List of enabled tasks in the priority order
+ *
+ * The first one has the lowest priority.
+ *
+ * For each task, use the macro TASK_ALWAYS(n, r, d, s) for base tasks and
+ * TASK_NOTEST(n, r, d, s) for tasks that can be excluded in test binaries,
+ * where :
+ * 'n' in the name of the task
+ * 'r' in the main routine of the task
+ * 'd' in an opaque parameter passed to the routine at startup
+ * 's' is the stack size in bytes; must be a multiple of 8
+ *
+ * For USB PD tasks, IDs must be in consecutive order and correspond to
+ * the port which they are for. See TASK_ID_TO_PD_PORT() macro.
+ */
+
+#define CONFIG_TASK_LIST \
+	TASK_ALWAYS(HOOKS, hook_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_ALWAYS(USB_CHG_P0, usb_charger_task, 0, TASK_STACK_SIZE) \
+	TASK_ALWAYS(USB_CHG_P1, usb_charger_task, 1, TASK_STACK_SIZE) \
+	TASK_ALWAYS(CHARGER, charger_task, NULL, VENTI_TASK_STACK_SIZE) \
+	TASK_NOTEST(CHIPSET, chipset_task, NULL, VENTI_TASK_STACK_SIZE) \
+	TASK_NOTEST(KEYPROTO, keyboard_protocol_task, NULL, TASK_STACK_SIZE) \
+	TASK_NOTEST(PDCMD, pd_command_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_ALWAYS(HOSTCMD, host_command_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_ALWAYS(CONSOLE, console_task, NULL, VENTI_TASK_STACK_SIZE) \
+	TASK_ALWAYS(POWERBTN, power_button_task, NULL, VENTI_TASK_STACK_SIZE) \
+	TASK_NOTEST(KEYSCAN, keyboard_scan_task, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS(PD_C0, pd_task, NULL, VENTI_TASK_STACK_SIZE) \
+	TASK_ALWAYS(PD_C1, pd_task, NULL, VENTI_TASK_STACK_SIZE) \
+	TASK_ALWAYS(PD_INT_C0, pd_interrupt_handler_task, 0, TASK_STACK_SIZE) \
+	TASK_ALWAYS(PD_INT_C1, pd_interrupt_handler_task, 1, TASK_STACK_SIZE)
