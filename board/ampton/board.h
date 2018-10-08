@@ -56,8 +56,8 @@ enum temp_sensor_id {
 };
 
 /* List of possible batteries */
-/* TODO(b/115502621): Ampton/Apel: need battery datasheets and specs */
 enum battery_type {
+	BATTERY_C214,
 	BATTERY_TYPE_COUNT,
 };
 

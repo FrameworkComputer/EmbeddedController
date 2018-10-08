@@ -32,8 +32,34 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* TODO(b/115502621): Ampton/Apel: need battery datasheets and specs */
+	[BATTERY_C214] = {
+		.fuel_gauge = {
+			.manuf_name = "AS1GUXd3KB",
+			.device_name = "C214-43",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x10, 0x10 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x00,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
+			},
+		},
+		.batt_info = {
+			.voltage_max = 13200,
+			.voltage_normal = 11550,
+			.voltage_min = 9000,
+			.precharge_current = 256,
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.discharging_min_c = 0,
+			.discharging_max_c = 60,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_TYPE_COUNT;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_C214;
