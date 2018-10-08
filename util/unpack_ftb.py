@@ -41,7 +41,15 @@ FLASH_SEC_ADDR = [
     None  # This section shouldn't exist
 ]
 
-OUTPUT_FILE_SIZE = 128 * 1024  # 128KB
+UPDATE_PDU_SIZE = 4096
+
+# Bin file format:
+#   FTB header (padded to `UPDATE_PDU_SIZE`)
+#   Flash sections
+#     CODE
+#     CX
+#     CONFIG
+OUTPUT_FILE_SIZE = UPDATE_PDU_SIZE + 128 * 1024
 
 
 def main():
@@ -85,6 +93,9 @@ def main():
     f.seek(OUTPUT_FILE_SIZE - 1, os.SEEK_SET)
     f.write('\x00')
 
+    f.seek(0, os.SEEK_SET)
+    f.write(bs[0 : ctypes.sizeof(header)])
+
     offset = 0
     # write each sections
     for i, addr in enumerate(FLASH_SEC_ADDR):
@@ -94,7 +105,7 @@ def main():
       if size == 0:
         continue
 
-      f.seek(addr, os.SEEK_SET)
+      f.seek(UPDATE_PDU_SIZE + addr, os.SEEK_SET)
       f.write(data[offset : offset + size])
       offset += size
 

@@ -898,12 +898,15 @@ static int wait_for_flash_ready(uint8_t type)
 	return retry >= 0 ? ret : EC_ERROR_TIMEOUT;
 }
 
-static int erase_flash(void)
+static int erase_flash(int full_init_required)
 {
 	int ret;
 
-	/* Erase everything, except CX */
-	ret = write_hwreg_cmd32(0x20000128, 0xFFFFFF83);
+	if (full_init_required)
+		ret = write_hwreg_cmd32(0x20000128, 0xFFFFFFFF);
+	else
+		/* Erase everything, except CX */
+		ret = write_hwreg_cmd32(0x20000128, 0xFFFFFF83);
 	if (ret)
 		return ret;
 	ret = write_hwreg_cmd8(0x2000006B, 0x00);
@@ -915,7 +918,7 @@ static int erase_flash(void)
 	return wait_for_flash_ready(0x6A);
 }
 
-static int st_tp_prepare_for_update(void)
+static int st_tp_prepare_for_update(int full_init_required)
 {
 	/* hold m3 */
 	write_hwreg_cmd8(0x20000024, 0x01);
@@ -923,7 +926,7 @@ static int st_tp_prepare_for_update(void)
 	write_hwreg_cmd8(0x20000025, 0x20);
 	/* unlock flash erase */
 	write_hwreg_cmd8(0x200000DE, 0x03);
-	erase_flash();
+	erase_flash(full_init_required);
 
 	return EC_SUCCESS;
 }
@@ -1079,31 +1082,14 @@ static int st_tp_panel_init(int full)
 		ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, 0x02
 	};
 	int ret, retry;
-	uint8_t old_cx_version;
-	uint8_t new_cx_version;
 
 	if (tp_control & (TP_CONTROL_INIT | TP_CONTROL_INIT_FULL))
 		return EC_ERROR_BUSY;
-
-	if (full == -1) /* not specified */
-		old_cx_version = get_cx_version(
-				system_info.release_info & 0xFF);
 
 	st_tp_stop_scan();
 	ret = st_tp_reset();
 	if (ret)
 		return ret;
-
-	if (full == -1) { /* not specified */
-		/*
-		 * On boot, ST firmware will load system info to host data
-		 * memory, So we don't need to reload it.
-		 */
-		st_tp_read_system_info(0);
-		new_cx_version = get_cx_version(
-				system_info.release_info & 0xFF);
-		full = old_cx_version != new_cx_version;
-	}
 
 	if (full) {  /* should perform full panel initialization */
 		tx_buf[2] = 0x3;
@@ -1144,34 +1130,50 @@ static int st_tp_panel_init(int full)
  */
 int touchpad_update_write(int offset, int size, const uint8_t *data)
 {
-	int ret;
+	static int full_init_required;
+	int ret, flash_offset;
 
 	CPRINTS("%s %08x %d", __func__, offset, size);
 	if (offset == 0) {
+		const struct st_tp_fw_header_t *header;
+		uint8_t old_cx_version;
+		uint8_t new_cx_version;
+
+		header = (const struct st_tp_fw_header_t *)data;
+		if (header->signature != 0xAA55AA55)
+			return EC_ERROR_INVAL;
+
+		old_cx_version = get_cx_version(system_info.release_info);
+		new_cx_version = get_cx_version(header->release_info);
+
+		full_init_required = old_cx_version != new_cx_version;
+
 		/* stop scanning, interrupt, etc... */
 		st_tp_stop_scan();
 
-		ret = st_tp_prepare_for_update();
+		ret = st_tp_prepare_for_update(full_init_required);
 		if (ret)
 			return ret;
+		return EC_SUCCESS;
 	}
 
-	if (offset % ST_TP_DMA_CHUNK_SIZE)
+	flash_offset = offset - CONFIG_UPDATE_PDU_SIZE;
+	if (flash_offset % ST_TP_DMA_CHUNK_SIZE)
 		return EC_ERROR_INVAL;
 
-	if (offset >= ST_TP_FLASH_OFFSET_CX &&
-	    offset < ST_TP_FLASH_OFFSET_CONFIG)
+	if (flash_offset >= ST_TP_FLASH_OFFSET_CX &&
+	    flash_offset < ST_TP_FLASH_OFFSET_CONFIG)
 		/* don't update CX section */
 		return EC_SUCCESS;
 
-	ret = st_tp_write_flash(offset, size, data);
+	ret = st_tp_write_flash(flash_offset, size, data);
 	if (ret)
 		return ret;
 
 	if (offset + size == CONFIG_TOUCHPAD_VIRTUAL_SIZE) {
 		CPRINTS("%s: End update, wait for reset.", __func__);
 
-		return st_tp_panel_init(-1);
+		return st_tp_panel_init(full_init_required);
 	}
 
 	return EC_SUCCESS;

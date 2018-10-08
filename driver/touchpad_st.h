@@ -238,6 +238,20 @@ struct st_tp_event_t {
 	unsigned evt_left:5;
 } __packed;
 
+struct st_tp_fw_header_t {
+	uint32_t signature;
+	uint32_t ftb_ver;
+	uint32_t chip_id;
+	uint32_t svn_ver;
+	uint32_t fw_ver;
+	uint32_t config_id;
+	uint32_t config_ver;
+	uint8_t reserved[8];
+	uint64_t release_info;
+	uint32_t sec_size[4];
+	uint32_t crc;
+} __packed;
+
 enum ST_TP_MODE {
 	X_Y_MODE = 0,
 	HEAT_MAP_MODE,
