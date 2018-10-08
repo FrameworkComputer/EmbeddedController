@@ -89,13 +89,15 @@ static const struct dma_option dma_rx_option = {
 /* Setup DMA to transfer bootblock. */
 static void bootblock_transfer(void)
 {
+	static int transfer_try;
+
 	dma_chan_t *txdma = dma_get_channel(STM32_DMAC_SPI_EMMC_TX);
 
 	dma_prepare_tx(&dma_tx_option, sizeof(bootblock_raw_data),
 		       bootblock_raw_data);
 	dma_go(txdma);
 
-	CPRINTS("transfer");
+	CPRINTS("transfer %d", ++transfer_try);
 }
 
 /* Abort an ongoing transfer. */
@@ -106,8 +108,11 @@ static void bootblock_stop(void)
 	/*
 	 * Wait a bit to for DMA to stop writing (we can't really wait for the
 	 * buffer to get empty, as the bus may not be clocked anymore).
+	 *
+	 * TODO(b:117253718): For some reason, a delay >=200us is necessary,
+	 * else the SPI/DMA skips bytes when the transfer is resumed.
 	 */
-	udelay(100);
+	udelay(200);
 
 	/* Then flush SPI FIFO, and make sure DAT line stays idle (high). */
 	STM32_SPI_EMMC_REGS->dr = 0xff;
