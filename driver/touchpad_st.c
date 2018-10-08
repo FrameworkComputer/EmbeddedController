@@ -32,6 +32,7 @@
 #define CPRINTS(format, args...) cprints(CC_TOUCHPAD, format, ## args)
 
 #define TASK_EVENT_POWER  TASK_EVENT_CUSTOM(1)
+#define TASK_EVENT_TP_UPDATED  TASK_EVENT_CUSTOM(2)
 
 #define SPI (&(spi_devices[SPI_ST_TP_DEVICE_ID]))
 
@@ -59,6 +60,7 @@ static int system_state;
 #define SYSTEM_STATE_ENABLE_DOME_SWITCH	(1 << 2)
 #define SYSTEM_STATE_ACTIVE_MODE	(1 << 3)
 #define SYSTEM_STATE_DOME_SWITCH_LEVEL	(1 << 4)
+#define SYSTEM_STATE_READY		(1 << 5)
 
 /*
  * Pending action for touchpad.
@@ -68,10 +70,11 @@ static int tp_control;
 #define TP_CONTROL_SHALL_HALT		(1 << 0)
 #define TP_CONTROL_SHALL_RESET		(1 << 1)
 #define TP_CONTROL_SHALL_INIT		(1 << 2)
-#define TP_CONTROL_SHALL_DUMP_ERROR	(1 << 3)
-#define TP_CONTROL_RESETTING		(1 << 4)
-#define TP_CONTROL_INIT			(1 << 5)
-#define TP_CONTROL_INIT_FULL		(1 << 6)
+#define TP_CONTROL_SHALL_INIT_FULL	(1 << 3)
+#define TP_CONTROL_SHALL_DUMP_ERROR	(1 << 4)
+#define TP_CONTROL_RESETTING		(1 << 5)
+#define TP_CONTROL_INIT			(1 << 6)
+#define TP_CONTROL_INIT_FULL		(1 << 7)
 
 /*
  * Number of times we have reset the touchpad because of errors.
@@ -641,10 +644,18 @@ static void st_tp_handle_error(uint8_t error_type)
 	}
 
 	/*
-	 * Corrupted panel configuration, a full initialization should fix it.
+	 * Corrupted panel configuration, a panel init should fix it.
 	 */
 	if (error_type >= 0x28 && error_type <= 0x2A) {
 		tp_control |= TP_CONTROL_SHALL_INIT;
+		return;
+	}
+
+	/*
+	 * Corrupted CX section, a full panel init should fix it.
+	 */
+	if (error_type >= 0xA0 && error_type <= 0xA6) {
+		tp_control |= TP_CONTROL_SHALL_INIT_FULL;
 		return;
 	}
 
@@ -665,11 +676,6 @@ static void st_tp_handle_error(uint8_t error_type)
 
 /*
  * Handles error reports.
- *
- * @param suppress_error: log and don't react on errors.
- *
- * @return 0 for minor errors, 1 for major errors (should not handle non-error
- *   events).
  */
 static void st_tp_handle_error_report(struct st_tp_event_t *e)
 {
@@ -766,6 +772,7 @@ static int st_tp_read_all_events(int show_error)
 		i = 0;
 	}
 	tp_control &= ~TP_CONTROL_SHALL_DUMP_ERROR;
+
 	return i;
 }
 
@@ -811,17 +818,22 @@ static int st_tp_reset(void)
 static void st_tp_init(void)
 {
 	tp_control = 0;
+	system_state = 0;
 
 	if (st_tp_reset())
 		return;
+
+	if (tp_control) {
+		CPRINTS("tp_control = %x", tp_control);
+		return;
+	}
 	/*
 	 * On boot, ST firmware will load system info to host data memory,
 	 * So we don't need to reload it.
 	 */
 	st_tp_read_system_info(0);
 
-	system_state = 0;
-	tp_control &= ~TP_CONTROL_RESETTING;
+	system_state = SYSTEM_STATE_READY;
 	touch_slot = 0;
 
 	touchpad_power_control();
@@ -1079,8 +1091,9 @@ static uint8_t get_cx_version(uint8_t tp_version)
  * This function will wait until the initialization is done, or 10 second
  * timeout is reached.
  *
- * @param full: 1 => perform "full" panel initialization.
- *             -1 => decide by comparing previous and current cx version.
+ * @param full: 1 => force "full" panel initialization.  Otherwise, tp_control
+ *              will be checked to decide if full panel initialization is
+ *              required.
  *
  * @return EC_SUCCESS or error code.
  */
@@ -1099,7 +1112,9 @@ static int st_tp_panel_init(int full)
 	if (ret)
 		return ret;
 
-	if (full) {  /* should perform full panel initialization */
+	full |= tp_control & TP_CONTROL_SHALL_INIT_FULL;
+	if (full) {
+		/* should perform full panel initialization */
 		tx_buf[2] = 0x3;
 		tp_control = TP_CONTROL_INIT_FULL;
 	} else {
@@ -1122,9 +1137,12 @@ static int st_tp_panel_init(int full)
 			return EC_SUCCESS;
 		} else if (ret == EC_ERROR_BUSY) {
 			CPRINTS("Panel initialization on going...");
-		} else {
-			CPRINTS("Panel initialization failed: %x", -ret);
-			return -ret;
+		} else if (tp_control & ~(TP_CONTROL_INIT |
+					  TP_CONTROL_INIT_FULL)) {
+			/* there are other kind of errors. */
+			CPRINTS("Panel initialization failed, tp_control: %x",
+				tp_control);
+			return EC_ERROR_UNKNOWN;
 		}
 	}
 	return EC_ERROR_TIMEOUT;
@@ -1146,10 +1164,21 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 		const struct st_tp_fw_header_t *header;
 		uint8_t old_cx_version;
 		uint8_t new_cx_version;
+		int retry;
 
 		header = (const struct st_tp_fw_header_t *)data;
 		if (header->signature != 0xAA55AA55)
 			return EC_ERROR_INVAL;
+
+		for (retry = 50; retry > 0; retry--) {
+			watchdog_reload();
+			if (system_state & SYSTEM_STATE_READY)
+				break;
+			if (retry % 10 == 0)
+				CPRINTS("TP not ready for update, "
+					"will check again");
+			msleep(100);
+		}
 
 		old_cx_version = get_cx_version(system_info.release_info);
 		new_cx_version = get_cx_version(header->release_info);
@@ -1181,7 +1210,9 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 	if (offset + size == CONFIG_TOUCHPAD_VIRTUAL_SIZE) {
 		CPRINTS("%s: End update, wait for reset.", __func__);
 
-		return st_tp_panel_init(full_init_required);
+		ret = st_tp_panel_init(full_init_required);
+		task_set_event(TASK_ID_TOUCHPAD, TASK_EVENT_TP_UPDATED, 0);
+		return ret;
 	}
 
 	return EC_SUCCESS;
@@ -1376,7 +1407,44 @@ void touchpad_task(void *u)
 {
 	uint32_t event;
 
-	st_tp_init();
+	while (1) {
+		uint32_t retry;
+
+		for (retry = 0; retry < 3; retry++) {
+			CPRINTS("st_tp_init: trial %d", retry + 1);
+			st_tp_init();
+
+			if (system_state & SYSTEM_STATE_READY)
+				break;
+			/*
+			 * React on touchpad errors.
+			 */
+			if (tp_control & TP_CONTROL_SHALL_INIT_FULL) {
+				/* suppress other handlers */
+				tp_control = TP_CONTROL_SHALL_INIT_FULL;
+				st_tp_panel_init(1);
+			} else if (tp_control & TP_CONTROL_SHALL_INIT) {
+				/* suppress other handlers */
+				tp_control = TP_CONTROL_SHALL_INIT;
+				st_tp_panel_init(0);
+			} else if (tp_control & TP_CONTROL_SHALL_RESET) {
+				/* suppress other handlers */
+				tp_control = TP_CONTROL_SHALL_RESET;
+			} else if (tp_control & TP_CONTROL_SHALL_HALT) {
+				CPRINTS("shall halt");
+				tp_control = 0;
+				break;
+			}
+		}
+
+		if (system_state & SYSTEM_STATE_READY)
+			break;
+
+		/* failed to init, mark it as ready to allow upgrade */
+		system_state = SYSTEM_STATE_READY;
+		/* wait for upgrade complete */
+		task_wait_event_mask(TASK_EVENT_TP_UPDATED, -1);
+	}
 	touchpad_power_control();
 
 	while (1) {
@@ -1400,10 +1468,14 @@ void touchpad_task(void *u)
 		/*
 		 * React on touchpad errors.
 		 */
-		if (tp_control & TP_CONTROL_SHALL_INIT) {
+		if (tp_control & TP_CONTROL_SHALL_INIT_FULL) {
+			/* suppress other handlers */
+			tp_control = TP_CONTROL_SHALL_INIT_FULL;
+			st_tp_panel_init(1);
+		} else if (tp_control & TP_CONTROL_SHALL_INIT) {
 			/* suppress other handlers */
 			tp_control = TP_CONTROL_SHALL_INIT;
-			st_tp_panel_init(1);
+			st_tp_panel_init(0);
 		} else if (tp_control & TP_CONTROL_SHALL_RESET) {
 			/* suppress other handlers */
 			tp_control = TP_CONTROL_SHALL_RESET;
