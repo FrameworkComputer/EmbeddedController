@@ -99,13 +99,13 @@ const struct pwm_t pwm_channels[] = {
 		.flags = 0,
 		.freq = 100,
 	},
-	[PWM_CH_LED1_AMBER] = {
+	[PWM_CH_LED1_WHITE] = {
 		.channel = 0,
 		.flags = (PWM_CONFIG_OPEN_DRAIN | PWM_CONFIG_ACTIVE_LOW
 			  | PWM_CONFIG_DSLEEP),
 		.freq = 100,
 	},
-	[PWM_CH_LED2_BLUE] =   {
+	[PWM_CH_LED2_AMBER] =   {
 		.channel = 2,
 		.flags = (PWM_CONFIG_OPEN_DRAIN | PWM_CONFIG_ACTIVE_LOW
 			  | PWM_CONFIG_DSLEEP),
