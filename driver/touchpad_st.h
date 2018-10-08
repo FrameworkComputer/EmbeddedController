@@ -59,9 +59,10 @@
 
 #define ST_TP_MEM_ID_SYSTEM_INFO	0x01
 
-#define ST_TP_FLASH_OFFSET_CODE (0x0000 << 2)
-#define ST_TP_FLASH_OFFSET_CONFIG (0x7C00 << 2)
-#define ST_TP_FLASH_OFFSET_CX (0x7000 << 2)
+#define ST_TP_FLASH_OFFSET_CODE		(0x0000 << 2)
+#define ST_TP_FLASH_OFFSET_PANEL_CFG	(0x6800 << 2)
+#define ST_TP_FLASH_OFFSET_CX		(0x7000 << 2)
+#define ST_TP_FLASH_OFFSET_CONFIG	(0x7C00 << 2)
 
 
 struct st_tp_host_data_header_t {

@@ -68,9 +68,10 @@ static int tp_control;
 #define TP_CONTROL_SHALL_HALT		(1 << 0)
 #define TP_CONTROL_SHALL_RESET		(1 << 1)
 #define TP_CONTROL_SHALL_INIT		(1 << 2)
-#define TP_CONTROL_RESETTING		(1 << 3)
-#define TP_CONTROL_INIT			(1 << 4)
-#define TP_CONTROL_INIT_FULL		(1 << 5)
+#define TP_CONTROL_SHALL_DUMP_ERROR	(1 << 3)
+#define TP_CONTROL_RESETTING		(1 << 4)
+#define TP_CONTROL_INIT			(1 << 5)
+#define TP_CONTROL_INIT_FULL		(1 << 6)
 
 /*
  * Number of times we have reset the touchpad because of errors.
@@ -612,10 +613,7 @@ static void dump_memory(void)
 
 static int st_tp_handle_error(uint8_t error_type)
 {
-	enable_deep_sleep(0);
-	dump_error();
-	dump_memory();
-	enable_deep_sleep(1);
+	tp_control |= TP_CONTROL_SHALL_DUMP_ERROR;
 
 	/*
 	 * Suggest action: memory dump and power cycle.
@@ -761,8 +759,18 @@ static int st_tp_read_all_events(int suppress_error)
 			st_tp_handle_status_report(e);
 	}
 
-	if (!suppress_error && ret)
-		return -ret;
+	if (!suppress_error) {
+		if (tp_control & TP_CONTROL_SHALL_DUMP_ERROR) {
+			enable_deep_sleep(0);
+			dump_error();
+			dump_memory();
+			enable_deep_sleep(1);
+			tp_control &= ~TP_CONTROL_SHALL_DUMP_ERROR;
+		}
+
+		if (ret)
+			return -ret;
+	}
 	return i;
 }
 
@@ -1161,9 +1169,9 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 	if (flash_offset % ST_TP_DMA_CHUNK_SIZE)
 		return EC_ERROR_INVAL;
 
-	if (flash_offset >= ST_TP_FLASH_OFFSET_CX &&
+	if (flash_offset >= ST_TP_FLASH_OFFSET_PANEL_CFG &&
 	    flash_offset < ST_TP_FLASH_OFFSET_CONFIG)
-		/* don't update CX section */
+		/* don't update CX section && panel config section */
 		return EC_SUCCESS;
 
 	ret = st_tp_write_flash(flash_offset, size, data);
