@@ -39,7 +39,7 @@ void power_button_release_enable_interrupt(int enable)
  *
  * @param enable	Enable (!=0) or disable (==0)
  */
-static void power_button_enable_interrupt(int enable)
+static void power_button_press_enable_interrupt(int enable)
 {
 	if (enable) {
 		/* Clear any leftover power button interrupts */
@@ -98,7 +98,7 @@ static void power_button_init(void)
 	 * a U2F request (using atomic operations for the PP enable mask so it
 	 * plays nicely with CCD config), but that doesn't happen yet.
 	 */
-	power_button_enable_interrupt(1);
+	power_button_press_enable_interrupt(1);
 }
 DECLARE_HOOK(HOOK_INIT, power_button_init, HOOK_PRIO_DEFAULT);
 #endif  /* CONFIG_U2F */
@@ -107,7 +107,7 @@ void board_physical_presence_enable(int enable)
 {
 #ifndef CONFIG_U2F
 	/* Enable/disable power button interrupts */
-	power_button_enable_interrupt(enable);
+	power_button_press_enable_interrupt(enable);
 #endif
 
 	/* Stay awake while we're doing this, just in case. */
