@@ -593,7 +593,7 @@ static void dump_memory(void)
 		spi_transaction(SPI, cmd, sizeof(cmd),
 				(uint8_t *)&rx_buf, rx_len);
 
-		for (i = 0; i < rx_len; i += 32) {
+		for (i = 0; i < rx_len - ST_TP_DUMMY_BYTE; i += 32) {
 			CPRINTF("%.4h %.4h %.4h %.4h %.4h %.4h %.4h %.4h\n",
 				rx_buf.bytes + i + 4 * 0,
 				rx_buf.bytes + i + 4 * 1,
