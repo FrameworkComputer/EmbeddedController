@@ -8,7 +8,7 @@
 
 CHIP:=npcx
 CHIP_FAMILY:=npcx7
-CHIP_VARIANT:=npcx7m6f
+CHIP_VARIANT:=npcx7m6fb
 
 board-y=board.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o
