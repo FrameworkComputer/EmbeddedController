@@ -146,8 +146,13 @@ BOARDS_NPCX_INT_SPI=(
 )
 
 BOARDS_NPCX_UUT=(
+	bobba
 	cheza
+	fleex
 	grunt
+	meep
+	phaser
+	yorp
 )
 
 BOARDS_NRF51=(
@@ -184,8 +189,18 @@ BOARDS_RAIDEN=(
 # i.e., If a board needs to use one CHIP when connected via a Suzy-Q and another
 # chip when connected via a Servo.
 declare -A VALID_CHIP_COMBO
+VALID_CHIP_COMBO["bobba.npcx_spi"]="(servo_micro|servo_v2)"
+VALID_CHIP_COMBO["bobba.npcx_uut"]="ccd_cr50"
+VALID_CHIP_COMBO["fleex.npcx_spi"]="(servo_micro|servo_v2)"
+VALID_CHIP_COMBO["fleex.npcx_uut"]="ccd_cr50"
+VALID_CHIP_COMBO["grunt.npcx_spi"]="(servo_micro|servo_v2)"
 VALID_CHIP_COMBO["grunt.npcx_uut"]="ccd_cr50"
-VALID_CHIP_COMBO["grunt.npcx_spi"]="servo"
+VALID_CHIP_COMBO["meep.npcx_spi"]="(servo_micro|servo_v2)"
+VALID_CHIP_COMBO["meep.npcx_uut"]="ccd_cr50"
+VALID_CHIP_COMBO["phaser.npcx_spi"]="(servo_micro|servo_v2)"
+VALID_CHIP_COMBO["phaser.npcx_uut"]="ccd_cr50"
+VALID_CHIP_COMBO["yorp.npcx_spi"]="(servo_micro|servo_v2)"
+VALID_CHIP_COMBO["yorp.npcx_uut"]="ccd_cr50"
 
 DEFAULT_PORT="${SERVOD_PORT:-9999}"
 BITBANG_RATE="9600"  # Could be overwritten by a command line option.
@@ -336,7 +351,7 @@ else
 	for i in "${SUPPORTED_CHIPS[@]}"; do
 		SUPPORTED_SERVO="${VALID_CHIP_COMBO["${BOARD}.${i}"]}"
 		if [[ -z "$SUPPORTED_SERVO" || \
-				"$SERVO_TYPE" =~ "$SUPPORTED_SERVO" ]]; then
+				"$SERVO_TYPE" =~ $SUPPORTED_SERVO ]]; then
 			FILTERED_CHIPS+=("$i")
 		fi
 
