@@ -22,6 +22,9 @@
 /* We have only one battery now. */
 #define BATT_ID 0
 
+#define BATTERY_SIMPLO_CHARGE_MIN_TEMP 0
+#define BATTERY_SIMPLO_CHARGE_MAX_TEMP 60
+
 enum battery_type {
 	BATTERY_SIMPLO = 0,
 	BATTERY_COUNT
@@ -51,6 +54,17 @@ static const struct max17055_batt_profile batt_profile[] = {
 	},
 };
 
+static const struct max17055_alert_profile alert_profile[] = {
+	[BATTERY_SIMPLO] = {
+		.v_alert_mxmn = VALRT_DISABLE,
+		.t_alert_mxmn = MAX17055_TALRTTH_REG(
+			BATTERY_SIMPLO_CHARGE_MAX_TEMP,
+			BATTERY_SIMPLO_CHARGE_MIN_TEMP),
+		.s_alert_mxmn = SALRT_DISABLE,
+		.i_alert_mxmn = IALRT_DISABLE,
+	},
+};
+
 const struct battery_info *battery_get_info(void)
 {
 	return &info[BATT_ID];
@@ -59,6 +73,11 @@ const struct battery_info *battery_get_info(void)
 const struct max17055_batt_profile *max17055_get_batt_profile(void)
 {
 	return &batt_profile[BATT_ID];
+}
+
+const struct max17055_alert_profile *max17055_get_alert_profile(void)
+{
+	return &alert_profile[BATT_ID];
 }
 
 int board_cut_off_battery(void)
@@ -99,9 +118,12 @@ int charger_profile_override(struct charge_state_data *curr)
 		int desired_voltage; /* mV */
 	} temp_zones[BATTERY_COUNT][TEMP_ZONE_COUNT] = {
 		[BATTERY_SIMPLO] = {
-			{0, 150, 1772, 4400}, /* TEMP_ZONE_0 */
-			{150, 450, 4020, 4400}, /* TEMP_ZONE_1 */
-			{450, 600, 3350, 4300}, /* TEMP_ZONE_2 */
+			/* TEMP_ZONE_0 */
+			{BATTERY_SIMPLO_CHARGE_MIN_TEMP * 10, 150, 1772, 4400},
+			/* TEMP_ZONE_1 */
+			{150, 450, 4020, 4400},
+			/* TEMP_ZONE_2 */
+			{450, BATTERY_SIMPLO_CHARGE_MAX_TEMP * 10, 3350, 4300},
 		},
 	};
 	BUILD_ASSERT(ARRAY_SIZE(temp_zones[0]) == TEMP_ZONE_COUNT);

@@ -14,6 +14,7 @@
 #include "common.h"
 #include "console.h"
 #include "driver/accelgyro_bmi160.h"
+#include "driver/battery/max17055.h"
 #include "driver/charger/rt946x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/mt6370.h"
@@ -62,7 +63,7 @@ static void hall_interrupt(enum gpio_signal signal)
 
 static void gauge_interrupt(enum gpio_signal signal)
 {
-	/* TODO(b/111378620): Impelement gauge_interrupt */
+	task_wake(TASK_ID_CHARGER);
 }
 #endif
 
@@ -222,6 +223,9 @@ static void board_init(void)
 
 	/* Enable interrupt from PMIC. */
 	gpio_enable_interrupt(GPIO_PMIC_EC_RESETB);
+
+	/* Enable gauge interrupt from max17055 */
+	gpio_enable_interrupt(GPIO_GAUGE_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

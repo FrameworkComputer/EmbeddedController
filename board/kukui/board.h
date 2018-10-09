@@ -134,6 +134,7 @@
 #define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_MAX17055
+#define CONFIG_BATTERY_MAX17055_ALERT
 
 /* Battery parameters for max17055 ModelGauge m5 algorithm. */
 #define BATTERY_MAX17055_RSENSE             5     /* m-ohm */
