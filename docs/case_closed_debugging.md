@@ -1,5 +1,5 @@
-Case Closed Debugging
-=====================
+Case Closed Debugging (CCD)
+===========================
 
 Case closed debugging is a feature of the EC codebase that can bridge UART
 consoles and SPI busses from a DUT (Device Under Test) to the host machine via
@@ -10,9 +10,10 @@ access and firmware flashing for kernel and system developers.
 Prerequisites
 -------------
 
-### Ryu
-Currently only Ryu has support for case closed debugging.  The first version of
-Ryu that supported case closed debugging was P3.
+### Supported Devices
+We have added CCD support for two chip families: stm32 and gchips. Ryu,
+servo\_micro, and servo\_v4 use the stm32 support. Cr50 uses gchips support.
+All boards with Cr50 have support for case closed debugging.
 
 ### Suzy-Q
 Suzy-Q is a Type-C dongle that exposes USB2.0/3.0 on a Type-A socket, case
@@ -57,8 +58,10 @@ charge the device.
 Suzy-Q should be connected to the DUT using the Type-C cable and connector
 integrated into Suzy-Q.  This connector may need to be flipped to make case
 closed debugging work because the SBU lines that are used to expose the PD
-MCU's USB interface are not orientation invariant.  Suzy-Q should be connected
-to the Host with a Type-A (Host) to Micro Type-B (Suzy-Q) cable.
+MCU's USB interface are not orientation invariant.  Only one port on the DUT
+will support CCD.  Try using the other port if the CCD device doesn't appear.
+Suzy-Q should be connected to the Host with a Type-A (Host) to Micro Type-B
+(Suzy-Q) cable.
 
 ### Host
 The Udev rule file should be installed, it will generate useful symlinks in
@@ -88,8 +91,13 @@ The raiden module solves this by identifying a CCD serial port by the subclass
 and protocol numbers of the USB device interface.  This means that there does
 not need to be a list of CCD capable device IDs anywhere.
 
-Use
----
+Basic CCD
+---------
+Here's the basic information for how to use CCD. Cr50 has more complicated
+usage and setup instructions. See the cr50 specific CCD doc for more in depth
+instructions.
+
+### Consoles
 
 The serial consoles exposed by case closed debugging can be found in
 `/dev/google/<device name>/serial/<console name>` and can be opened with any
@@ -103,6 +111,7 @@ reboots of either the Host or the DUT.  The `<console name>` field is just the
 associated with this console device.  This allows a single DUT to expose
 multiple serial consoles in a discoverable and consistent manner.
 
+### Flash AP
 Programming the AP SPI flash with a new firmware image can be done with flashrom
 using the command:
 
@@ -115,6 +124,15 @@ can be used to identify the intended DUT.  Flashrom programmer parameters are
 added to the programmer name (the -p argument) by appending a colon and then a
 comma separated list of key=value pairs.
 
+Cr50 can be used to flash the AP or EC.  You will need to specify the AP as the
+target device, so cr50 knows to flash the AP.
+`sudo flashrom -p raiden_debug_spi:target=AP -w image.bin`
+
+### Flash EC
+You can use `util/flash_ec` to flash the EC.  Steps for flashing the EC are more
+complex and board specific than flashing the AP.  This script will handle all
+the board specific setup.
+
 Known Issues
 ------------
 
@@ -122,16 +140,33 @@ Known Issues
 you need to attach a flash drive, or use Fastboot/adb you'll need to swap
 cables.
 
-2. Software sync of the EC/PD processor and the jump from RO to RW versions
-will cause the case closed debugging USB device to disconnect and reconnect.
-This can be prevented by disabling software sync.  This is done by setting the
-`GBB_FLAG_DISABLE_EC_SOFTWARE_SYNC` and `GBB_FLAG_DISABLE_PD_SOFTWARE_SYNC` flags
-with `gbb_utility`.
+2. Ryu implementation: software sync of the EC/PD processor and the jump from
+RO to RW versions will cause the case closed debugging USB device to disconnect
+and reconnect. This can be prevented by disabling software sync.  This is done
+by setting the `GBB_FLAG_DISABLE_EC_SOFTWARE_SYNC` and `
+GBB_FLAG_DISABLE_PD_SOFTWARE_SYNC` flags with`gbb_utility.
 
 Troubleshooting
 ---------------
+Check for the CCD device using the following vendor:product IDs
 
-1. No console interfaces are avaiable in the `/dev/google/<name>` directory.
+| Device | VID:PID |
+| :---| :---: |
+| servo_micro | 18d1:501a |
+| servo_v4 | 18d1:501b |
+| ryu | 18d1:500f |
+| cr50 | 18d1:5014 |
+
+1. Can't see the CCD device on the host.
+
+	1. Type-C cable from Suzy-Q to the DUT may be upside down.  The SBU lines
+	used for case closed debugging are not orientation invariant.
+	2. You may be using the wrong device port. Try using the other port.
+	3. The device may not be charged enough to boot. Suzy-Q can't charge the
+	device or supply enough power for the DUT to boot. Make sure the device
+	is somewhat charged.
+
+2. No console interfaces are available in the `/dev/google/<name>` directory.
 
 	1. Kernel module may not be loaded.
 	2. Udev rules file might not be installed correctly.
@@ -139,12 +174,12 @@ Troubleshooting
 	4. Type-C cable from Suzy-Q to the DUT may be upside down.  The SBU lines
 	used for case closed debugging are not orientation invariant.
 
-2. Garbage messages (AT command set) show up on one or more consoles.
+3. Garbage messages (AT command set) show up on one or more consoles.
 
 	1. ModemManager has claimed the interface, Udev rules file may not be
 	installed correctly.
 
-3. Console interfaces appear and then quickly disappear
+4. Console interfaces appear and then quickly disappear
 
 	1. Software sync from the AP has replaced the PD firmware with a version
 	that is not compatible with case closed debugging.
