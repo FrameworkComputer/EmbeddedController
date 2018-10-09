@@ -95,6 +95,8 @@ struct iteflash_config {
 	int usb_pid;
 	const char *usb_serial;
 	const struct i2c_interface *i2c_if;
+	size_t range_base;
+	size_t range_size;
 };
 
 struct common_hnd {
@@ -1288,15 +1290,43 @@ failed_erase:
 }
 
 /* Return zero on success, a negative error value on failures. */
-static int read_flash(struct common_hnd *chnd, const char *filename,
-		      uint32_t offset, uint32_t size)
+static int read_flash(struct common_hnd *chnd)
 {
 	int res;
 	FILE *hnd;
-	uint8_t *buffer = malloc(size);
+	uint8_t *buffer;
+	const char *filename = chnd->conf.input_filename;
+	size_t offset = chnd->conf.range_base;
+	size_t size;
 
+	if (!offset && !chnd->conf.range_size) {
+		size = chnd->flash_size;
+	} else {
+		/*
+		 * Zero conf.range_size means the user did not enter range
+		 * size in the command line.
+		 */
+		if (chnd->conf.range_size)
+			size = chnd->conf.range_size;
+		else
+			size = chnd->flash_size - offset;
+
+		if (!size) {
+			fprintf(stderr,
+				"Error: not reading a zero sized range!\n");
+			return -EINVAL;
+		}
+
+		if ((size + offset) > chnd->flash_size) {
+			fprintf(stderr,
+				"Error: Read range exceeds flash size!\n");
+			return -EINVAL;
+		}
+	}
+
+	buffer = malloc(size);
 	if (!buffer) {
-		fprintf(stderr, "Cannot allocate %d bytes\n", size);
+		fprintf(stderr, "Cannot allocate %zd bytes\n", size);
 		return -ENOMEM;
 	}
 
@@ -1307,9 +1337,7 @@ static int read_flash(struct common_hnd *chnd, const char *filename,
 		return -EIO;
 	}
 
-	if (!size)
-		size = chnd->flash_size;
-	printf("Reading %d bytes at 0x%08x\n", size, offset);
+	printf("Reading %zd bytes at %#08zx\n", size, offset);
 	res = command_read_pages(chnd, offset, size, buffer);
 	if (res > 0) {
 		if (fwrite(buffer, res, 1, hnd) != 1)
@@ -1578,6 +1606,7 @@ static const struct option longopts[] = {
 	{"i2c-interface", 1, 0, 'c'},
 	{"interface", 1, 0, 'i'},
 	{"product", 1, 0, 'p'},
+	{"range", 1, 0, 'R'},
 	{"read", 1, 0, 'r'},
 	{"send-waveform", 1, 0, 'W'},
 	{"serial", 1, 0, 's'},
@@ -1590,14 +1619,19 @@ static const struct option longopts[] = {
 static void display_usage(char *program)
 {
 	fprintf(stderr, "Usage: %s [-d] [-v <VID>] [-p <PID>] "
-		"[-c <ccd|ftdi>] [-i <1|2>] [-s <serial>] [-u] [-e] "
-		"[-r <file>] [-W <0|1|false|true>] [-w <file>]\n", program);
+		"[-c <ccd|ftdi>] [-i <1|2>] [-s <serial>] [-u] [-e] [-r <file>]"
+		"[-W <0|1|false|true>] [-w <file>]  [-R base[:size]]\n",
+		program);
 	fprintf(stderr, "--d[ebug] : output debug traces\n");
 	fprintf(stderr, "--e[rase] : erase all the flash content\n");
 	fprintf(stderr, "-c, --i2c_interface <ccd|ftdi> : I2C interface "
 			"to use\n");
 	fprintf(stderr, "--i[interface] <1> : FTDI interface: A=1, B=2, ...\n");
 	fprintf(stderr, "--p[roduct] <0x1234> : USB product ID\n");
+	fprintf(stderr, "[-R|--range base[:size]] - allow to read or write "
+		"just a slice of the file, starting at <base>. <size> bytes, or"
+		" til the end of the file if <size> is not specified, expressed"
+		" in hex\n");
 	fprintf(stderr, "--r[ead] <file> : read the flash content and "
 			"write it into <file>\n");
 	fprintf(stderr, "--s[erial] <serialname> : USB serial string\n");
@@ -1612,11 +1646,49 @@ static void display_usage(char *program)
 	exit(2);
 }
 
+/*
+ * Parses -R command line option parameter, returns zero on success and
+ * -1 on errors (non hex values, missing values, etc.).
+ */
+static int parse_range_options(char *str, struct iteflash_config *conf)
+{
+	char *base, *size;
+
+	base = str;
+
+	if (!base) {
+		fprintf(stderr,	"missing range base address specification\n");
+		return -1;
+	}
+
+	conf->range_base = strtoul(base, &size, 16);
+	if (!size || !*size)
+		return 0;
+
+	if (*size++ != ':') {
+		fprintf(stderr, "wrong range base address specification\n");
+		return -1;
+	}
+
+	if (!*size) {
+		fprintf(stderr, "missing range size specification\n");
+		return -1;
+	}
+
+	conf->range_size = strtoul(size, &size, 16);
+	if ((size && *size) || !conf->range_size) {
+		fprintf(stderr, "wrong range size specification\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 {
-	int opt, idx;
+	int opt, idx, rv;
 
-	while ((opt = getopt_long(argc, argv, "?dehc:i:p:r:s:uv:W:w:",
+	while ((opt = getopt_long(argc, argv, "?R:dehc:i:p:r:s:uv:W:w:",
 				  longopts, &idx)) != -1) {
 		switch (opt) {
 		case 'c':
@@ -1646,6 +1718,11 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 		case 'p':
 			conf->usb_pid = strtol(optarg, NULL, 16);
 			break;
+		case 'R':
+			rv = parse_range_options(optarg, conf);
+			if (rv)
+				return rv;
+			break;
 		case 'r':
 			conf->input_filename = optarg;
 			break;
@@ -1662,10 +1739,10 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 			if (!strcmp(optarg, "0") ||
 			    !strcasecmp(optarg, "false")) {
 				conf->send_waveform = 0;
-			} else if (!strcmp(optarg, "1") ||
-				   !strcasecmp(optarg, "true")) {
-				conf->send_waveform = 1;
-			} else {
+				break;
+			}
+
+			if (strcmp(optarg, "1") && strcasecmp(optarg, "true")) {
 				fprintf(stderr, "Unexpected -W / "
 					"--special-waveform value: %s\n",
 					optarg);
@@ -1747,8 +1824,7 @@ int main(int argc, char **argv)
 		command_write_unprotect(&chnd);
 
 	if (chnd.conf.input_filename) {
-		ret = read_flash(&chnd, chnd.conf.input_filename, 0,
-			chnd.flash_size);
+		ret = read_flash(&chnd);
 		if (ret)
 			goto terminate;
 	}
