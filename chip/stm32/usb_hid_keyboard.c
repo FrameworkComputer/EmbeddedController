@@ -407,6 +407,13 @@ static void hid_keyboard_event(enum usb_ep_event evt)
 			  NULL, 0
 #endif
 			  );
+
+		/*
+		 * Reload endpoint on reset, to make sure we report accurate
+		 * state to host (this is especially important for tablet mode
+		 * switch).
+		 */
+		write_keyboard_report();
 		return;
 	}
 
