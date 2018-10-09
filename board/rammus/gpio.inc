@@ -61,7 +61,7 @@ GPIO(BRD_ID_EN,              PIN(0, 2), GPIO_OUT_LOW)                /* Enable f
 /* Reserved, for the lid accelerator interrupt */
 GPIO(LID_ACCEL_INT_L,        PIN(D, 2), GPIO_INPUT | GPIO_SEL_1P8V | GPIO_PULL_UP)  /* LID Accelerator interrupt */
 /* Reserved, changing touchpad interrupt behavior for wakeup */
-GPIO(TP_INT_CONN,            PIN(C, 2), GPIO_INPUT | GPIO_PULL_UP)   /* Touchpad interrupt */
+GPIO(TP_INT_CONN,            PIN(C, 2), GPIO_INPUT)                  /* Touchpad interrupt */
 /* Reserved, output low to enable touchpad interrupt by default */
 GPIO(TP_INT_EN,              PIN(A, 1), GPIO_OUT_LOW)                /* Enable Touchpad interrupt */
 

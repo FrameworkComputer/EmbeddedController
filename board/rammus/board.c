@@ -407,8 +407,15 @@ static void board_pmic_init(void)
 	if (system_jumped_to_this_image())
 		return;
 
-	/* DISCHGCNT3 - enable 100 ohm discharge on V1.00A */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3e, 0x04);
+	/*
+	 * DISCHGCNT2 - enable 100 ohm discharge on
+	 * V5A_DS3/V33A_DSW/V33A_PCH/V1.8A
+	 */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3d, 0x55);
+	/* DISCHGCNT3 - enable 100 ohm discharge on V1.8U_25U/V1.00A */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3e, 0x44);
+	/* DISCHGCNT4 - enable 100 ohm discharge on v1.8S */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3f, 0x04);
 
 	board_pmic_disable_slp_s0_vr_decay();
 
