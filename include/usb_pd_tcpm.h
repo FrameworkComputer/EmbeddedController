@@ -18,11 +18,11 @@
 
 enum tcpc_cc_voltage_status {
 	TYPEC_CC_VOLT_OPEN = 0,
-	TYPEC_CC_VOLT_RA = 1,
-	TYPEC_CC_VOLT_RD = 2,
-	TYPEC_CC_VOLT_SNK_DEF = 5,
-	TYPEC_CC_VOLT_SNK_1_5 = 6,
-	TYPEC_CC_VOLT_SNK_3_0 = 7,
+	TYPEC_CC_VOLT_RA = 1,	   /* Port partner is applying Ra */
+	TYPEC_CC_VOLT_RD = 2,	   /* Port partner is applying Rd */
+	TYPEC_CC_VOLT_SNK_DEF = 5, /* Port partner is applying Rp (0.5A) */
+	TYPEC_CC_VOLT_SNK_1_5 = 6, /* Port partner is applying Rp (1.5A) */
+	TYPEC_CC_VOLT_SNK_3_0 = 7, /* Port partner is applying Rp (3.0A) */
 };
 
 enum tcpc_cc_pull {
