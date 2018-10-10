@@ -4937,11 +4937,6 @@ static int pd_control(struct host_cmd_handler_args *args)
 			 * to ask the battery directly.
 			 */
 			battery_get_params(&batt);
-			if (batt.is_present != BP_YES) {
-				CPRINTS("C%d: Cannot suspend for upgrade, no "
-					"battery!", cmd->chip);
-				return EC_RES_BUSY;
-			}
 			if (batt.remaining_capacity <
 				    MIN_BATTERY_FOR_TCPC_UPGRADE_MAH ||
 			    batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY) {
