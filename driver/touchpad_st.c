@@ -812,6 +812,7 @@ static void st_tp_init(void)
 
 	system_state = 0;
 	tp_control &= ~TP_CONTROL_RESETTING;
+	touch_slot = 0;
 
 	touchpad_power_control();
 }
