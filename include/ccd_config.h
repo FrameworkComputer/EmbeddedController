@@ -206,8 +206,20 @@ struct ccd_info_response {
 	uint32_t ccd_flags;
 	uint8_t ccd_state;
 	uint8_t ccd_force_disabled;
-	uint8_t ccd_has_password;
+	/*
+	 * A bitmap indicating ccd internal state.
+	 * See "enum ccd_indicator_bits" below.
+	 */
+	uint8_t ccd_indicator_bitmap;
 } __packed;
+
+enum ccd_indicator_bits {
+	/* has_password? */
+	CCD_INDICATOR_BIT_HAS_PASSWORD = (1 << 0),
+
+	/* Are CCD capabilities in CCD_CAP_STATE_DEFAULT */
+	CCD_INDICATOR_BIT_ALL_CAPS_DEFAULT = (1 << 1),
+};
 
 /**
  * Initialize CCD configuration at boot.

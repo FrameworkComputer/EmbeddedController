@@ -193,6 +193,23 @@ static void raw_set_cap(enum ccd_capability cap,
 }
 
 /**
+ * Check CCD configuration is reset to default value.
+ *
+ * @return 1 if it is in default mode.
+ *         0 otherwise.
+ */
+static int raw_check_all_caps_default(void)
+{
+	uint32_t i;
+
+	for (i = 0; i < CCD_CAP_COUNT; i++)
+		if (raw_get_cap(i, 0) != CCD_CAP_STATE_DEFAULT)
+			return 0;
+
+	return 1;
+}
+
+/**
  * Check if a password is set.
  * @return 1 if password is set, 0 if it's not
  */
@@ -692,6 +709,9 @@ static int command_ccd_info(void)
 	ccprintf("TPM:%s%s\n",
 		 board_fwmp_allows_unlock() ? "" : " fwmp_lock",
 		 board_vboot_dev_mode_enabled() ? " dev_mode" : "");
+
+	ccprintf("Capabilities are %s.\n", raw_check_all_caps_default() ?
+		 "default" : "modified");
 
 	ccputs("Use 'ccd help' to print subcommands\n");
 	return EC_SUCCESS;
@@ -1327,7 +1347,10 @@ static enum vendor_cmd_rc ccd_get_info(struct vendor_cmd_params *p)
 
 	response.ccd_flags = htobe32(raw_get_flags());
 	response.ccd_state = ccd_get_state();
-	response.ccd_has_password = raw_has_password();
+	response.ccd_indicator_bitmap = raw_has_password() ?
+				CCD_INDICATOR_BIT_HAS_PASSWORD : 0;
+	response.ccd_indicator_bitmap |= raw_check_all_caps_default() ?
+				CCD_INDICATOR_BIT_ALL_CAPS_DEFAULT : 0;
 	response.ccd_force_disabled = force_disabled;
 	for (i = 0; i < ARRAY_SIZE(response.ccd_caps_current); i++) {
 		response.ccd_caps_current[i] =
