@@ -162,7 +162,10 @@ static void raw_set_flag(enum ccd_flag flag, int value)
 static enum ccd_capability_state raw_get_cap(enum ccd_capability cap,
 					     int translate_default)
 {
-	int c =	(config.capabilities[cap / 4] >> (2 * (cap % 4))) & 3;
+	const uint32_t index = cap / CCD_CAPS_PER_BYTE;
+	const uint32_t shift = (cap % CCD_CAPS_PER_BYTE) * CCD_CAP_BITS;
+
+	int c =	(config.capabilities[index] >> shift) & CCD_CAP_BITMASK;
 
 	if (c == CCD_CAP_STATE_DEFAULT && translate_default)
 		c = cap_info[cap].default_state;
@@ -182,8 +185,11 @@ static enum ccd_capability_state raw_get_cap(enum ccd_capability cap,
 static void raw_set_cap(enum ccd_capability cap,
 			    enum ccd_capability_state state)
 {
-	config.capabilities[cap / 4] &= ~(3 << (2 * (cap % 4)));
-	config.capabilities[cap / 4] |= (state & 3) << (2 * (cap % 4));
+	const uint32_t index = cap / CCD_CAPS_PER_BYTE;
+	const uint32_t shift = (cap % CCD_CAPS_PER_BYTE) * CCD_CAP_BITS;
+
+	config.capabilities[index] &= ~(CCD_CAP_BITMASK << shift);
+	config.capabilities[index] |= (state & CCD_CAP_BITMASK) << shift;
 }
 
 /**
@@ -1312,8 +1318,8 @@ static enum vendor_cmd_rc ccd_get_info(struct vendor_cmd_params *p)
 		int shift;
 
 		/* Each capability takes 2 bits. */
-		index = i / (32/2);
-		shift = (i % (32/2)) * 2;
+		index = i / (32 / CCD_CAP_BITS);
+		shift = (i % (32 / CCD_CAP_BITS)) * CCD_CAP_BITS;
 		response.ccd_caps_current[index] |= raw_get_cap(i, 1) << shift;
 		response.ccd_caps_defaults[index] |=
 			cap_info[i].default_state << shift;

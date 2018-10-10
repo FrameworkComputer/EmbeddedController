@@ -172,6 +172,11 @@ struct ccd_capability_info {
 #define CCD_STATE_NAMES { "Locked", "Unlocked", "Opened" }
 #define CCD_CAP_STATE_NAMES { "Default", "Always", "UnlessLocked", "IfOpened" }
 
+/* Macros regarding ccd_capabilities */
+#define CCD_CAP_BITS		2
+#define CCD_CAP_BITMASK	((1 << CCD_CAP_BITS) - 1)
+#define CCD_CAPS_PER_BYTE	(8 / CCD_CAP_BITS)
+
 /*
  * Subcommand code, used to pass different CCD commands using the same TPM
  * vendor command.

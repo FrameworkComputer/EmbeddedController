@@ -1532,11 +1532,13 @@ static void print_ccd_info(void *response, size_t response_size)
 		int cap_current;
 		int cap_default;
 
-		index = i / (32/2);
-		shift = (i % (32/2)) * 2;
+		index = i / (32 / CCD_CAP_BITS);
+		shift = (i % (32 / CCD_CAP_BITS)) * CCD_CAP_BITS;
 
-		cap_current = (ccd_info.ccd_caps_current[index] >> shift) & 3;
-		cap_default = (ccd_info.ccd_caps_defaults[index] >> shift) & 3;
+		cap_current = (ccd_info.ccd_caps_current[index] >> shift)
+							 & CCD_CAP_BITMASK;
+		cap_default = (ccd_info.ccd_caps_defaults[index] >> shift)
+							 & CCD_CAP_BITMASK;
 
 		if (ccd_info.ccd_force_disabled) {
 			is_enabled = 0;
