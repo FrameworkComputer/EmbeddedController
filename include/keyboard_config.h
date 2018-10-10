@@ -15,13 +15,20 @@
 #define KEYBOARD_IDS 2
 #endif
 
-/* Keyboard matrix is 13 output columns x 8 input rows */
+/* Keyboard matrix is 13 (or 15 with keypad) output columns x 8 input rows */
+#define KEYBOARD_COLS_WITH_KEYPAD	15
+#define KEYBOARD_COLS_NO_KEYPAD		13
+
 /*
  * KEYBOARD_COLS_MAX has the build time column size. It's used to allocate
  * exact spaces for arrays. Actual keyboard scanning is done using
  * keyboard_cols, which holds a runtime column size.
  */
-#define KEYBOARD_COLS_MAX 13
+#ifdef CONFIG_KEYBOARD_KEYPAD
+#define KEYBOARD_COLS_MAX KEYBOARD_COLS_WITH_KEYPAD
+#else
+#define KEYBOARD_COLS_MAX KEYBOARD_COLS_NO_KEYPAD
+#endif
 #define KEYBOARD_ROWS 8
 
 extern uint8_t keyboard_cols;
