@@ -78,6 +78,12 @@ struct motion_sensor_t {
 	const struct accelgyro_drv *drv;
 	struct mutex *mutex;
 	void *drv_data;
+	/*
+	 * For use by motion sensors in cascade mode to refer
+	 * to their master/parent motion sensor. If a motion
+	 * sensor is not in cascade mode, leave it as NULL.
+	 */
+	const struct motion_sensor_t *parent;
 
 	/* i2c port */
 	uint8_t port;
