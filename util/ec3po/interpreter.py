@@ -20,7 +20,6 @@ import logging
 import os
 import Queue
 import select
-import sys
 
 
 COMMAND_RETRIES = 3  # Number of attempts to retry a command.
@@ -408,11 +407,18 @@ def StartLoop(interp):
         if obj is interp.ec_uart_pty:
           interp.SendCmdToEC()
 
+  except KeyboardInterrupt:
+    pass
+
+  # TODO(crbug.com/894870): Stop suppressing all exceptions.
+  except:
+    traceback.print_exc()
+
   finally:
     # Close pipes.
     interp.cmd_pipe.close()
     interp.dbg_pipe.close()
     # Close file descriptor.
     interp.ec_uart_pty.close()
-    # Exit.
-    sys.exit(0)
+    interp.logger.debug('Exit ec3po interpreter loop for %s',
+                        interp.ec_uart_pty_name)
