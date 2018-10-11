@@ -408,16 +408,11 @@ static void board_pmic_init(void)
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
 		   BD99992GW_REG_DISCHGCNT3, 0x04);
 
-	/*
-	 * Set V085ACNT / V0.85A Control Register:
-	 * Nominal output = 0.85V.
-	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
-		   BD99992GW_REG_V085ACNT, 0x2a);
-
 	/* VRMODECTRL - disable low-power mode for all rails */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
 		   BD99992GW_REG_VRMODECTRL, 0x1f);
+
+	board_pmic_disable_slp_s0_vr_decay();
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
