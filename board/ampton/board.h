@@ -10,7 +10,7 @@
 
 /* Select Baseboard features */
 #define VARIANT_OCTOPUS_EC_ITE8320
-#define VARIANT_OCTOPUS_CHARGER_BQ25703
+#define VARIANT_OCTOPUS_CHARGER_ISL9238
 #include "baseboard.h"
 
 #define CONFIG_VOLUME_BUTTONS
