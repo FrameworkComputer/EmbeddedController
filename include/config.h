@@ -275,6 +275,12 @@
 #undef CONFIG_BATTERY_BQ4050
 #undef CONFIG_BATTERY_MAX17055
 
+/*
+ * MAX17055 support alert on voltage, current, temperature, and state-of-charge.
+ */
+#undef CONFIG_BATTERY_MAX17055_ALERT
+
+
 /* Compile mock battery support; used by tests. */
 #undef CONFIG_BATTERY_MOCK
 

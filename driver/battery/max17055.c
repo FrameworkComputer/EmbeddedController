@@ -423,6 +423,10 @@ static void max17055_init(void)
 {
 	int reg;
 	int retries = 80;
+#ifdef CONFIG_BATTERY_MAX17055_ALERT
+	const struct max17055_alert_profile *alert_profile =
+		max17055_get_alert_profile();
+#endif
 
 	if (!max17055_probe()) {
 		CPRINTS("Wrong max17055 id!");
@@ -480,6 +484,25 @@ static void max17055_init(void)
 			}
 		}
 	}
+
+#ifdef CONFIG_BATTERY_MAX17055_ALERT
+	/* Set voltage alert range */
+	MAX17055_WRITE_DEBUG(REG_VALRTTH, alert_profile->v_alert_mxmn);
+	/* Set temperature alert range */
+	MAX17055_WRITE_DEBUG(REG_TALRTTH, alert_profile->t_alert_mxmn);
+	/* Set state-of-charge alert range */
+	MAX17055_WRITE_DEBUG(REG_SALRTTH, alert_profile->s_alert_mxmn);
+	/* Set current alert range */
+	MAX17055_WRITE_DEBUG(REG_IALRTTH, alert_profile->i_alert_mxmn);
+
+	/* Disable all sticky bits; enable alert AEN */
+	MAX17055_READ_DEBUG(REG_CONFIG, &reg);
+	MAX17055_WRITE_DEBUG(REG_CONFIG, (reg & ~CONF_ALL_STICKY) | CONF_AEN);
+
+	/* Clear alerts */
+	MAX17055_READ_DEBUG(REG_STATUS, &reg);
+	MAX17055_WRITE_DEBUG(REG_STATUS, reg & ~STATUS_ALL_ALRT);
+#endif
 
 	CPRINTS("max17055 configuration succeeded!");
 }
