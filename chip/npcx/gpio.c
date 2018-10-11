@@ -712,3 +712,100 @@ DECLARE_IRQ(NPCX_IRQ_WKINTFG_2,     __gpio_wk2fg_interrupt, 3);
 #endif
 
 #undef GPIO_IRQ_FUNC
+#if DEBUG_GPIO && defined(CONFIG_LOW_POWER_IDLE)
+/*
+ * Command used to disable input buffer of gpios one by one to
+ * investigate power consumption
+ */
+static int command_gpiodisable(int argc, char **argv)
+{
+	uint8_t i;
+	uint8_t offset;
+	const uint8_t non_isr_gpio_num = GPIO_COUNT - GPIO_IH_COUNT;
+	const struct gpio_info *g_list;
+	int flags;
+	static uint8_t idx = 0;
+	int num = -1;
+	int enable;
+	char *e;
+
+	if (argc == 2) {
+		if (!strcasecmp(argv[1], "info")) {
+			offset = idx + GPIO_IH_COUNT;
+			g_list = gpio_list + offset;
+			flags = g_list->flags;
+
+			ccprintf("Total GPIO declaration: %d\n", GPIO_COUNT);
+			ccprintf("Total Non-ISR GPIO declaration: %d\n",
+						non_isr_gpio_num);
+			ccprintf("Next GPIO Num to check by ");
+			ccprintf("\"gpiodisable next\"\n");
+			ccprintf("  offset: %d\n", offset);
+			ccprintf("  current GPIO name: %s\n", g_list->name);
+			ccprintf("  current GPIO flags: 0x%08x\n", flags);
+			return EC_SUCCESS;
+		}
+		/* List all non-ISR GPIOs in gpio.inc */
+		if (!strcasecmp(argv[1], "list")) {
+			for (i = GPIO_IH_COUNT; i < GPIO_COUNT; i++)
+				ccprintf("%d: %s\n", i, gpio_get_name(i));
+			return EC_SUCCESS;
+		}
+
+		if (!strcasecmp(argv[1], "next")) {
+			while (1) {
+				if (idx == non_isr_gpio_num)
+					break;
+
+				offset = idx + GPIO_IH_COUNT;
+				g_list = gpio_list + offset;
+				flags = g_list->flags;
+				ccprintf("current GPIO : %d %s --> ",
+							offset, g_list->name);
+				if (gpio_is_i2c_pin(offset)) {
+					ccprintf("Ignore I2C pin!\n");
+					idx++;
+					continue;
+				} else if (flags & GPIO_SEL_1P8V) {
+					ccprintf("Ignore 1v8 pin!\n");
+					idx++;
+					continue;
+				} else {
+					if ((flags & GPIO_INPUT) ||
+						    (flags & GPIO_OPEN_DRAIN)) {
+						ccprintf("Disable WKINEN!\n");
+						gpio_enable_wake_up_input(
+								offset, 0);
+						idx++;
+						break;
+					}
+					ccprintf("Not Input or OpenDrain\n");
+					idx++;
+					continue;
+				}
+			};
+			if (idx == non_isr_gpio_num) {
+				ccprintf("End of GPIO list, reset index!\n");
+				idx = 0;
+			};
+			return EC_SUCCESS;
+		}
+	}
+	if (argc == 3) {
+		num = strtoi(argv[1], &e, 0);
+		if (*e || num < GPIO_IH_COUNT || num >= GPIO_COUNT)
+			return EC_ERROR_PARAM1;
+
+		if (parse_bool(argv[2], &enable))
+			gpio_enable_wake_up_input(num, enable ? 1 : 0);
+		else
+			return EC_ERROR_PARAM2;
+
+		return EC_SUCCESS;
+	}
+	return EC_ERROR_INVAL;
+}
+DECLARE_CONSOLE_COMMAND(gpiodisable, command_gpiodisable,
+		"info/list/next/<num> on|off",
+		"Disable GPIO input buffer to investigate power consumption");
+#endif
