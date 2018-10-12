@@ -270,8 +270,8 @@ static void board_report_pmic_fault(const char *str)
 	uint32_t info;
 
 	/* RESETIRQ1 -- Bit 4: VRFAULT */
-	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x8, &vrfault)
-	    != EC_SUCCESS)
+	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		      BD99992GW_REG_RESETIRQ1, &vrfault) != EC_SUCCESS)
 		return;
 
 	if (!(vrfault & (1 << 4)))
@@ -280,19 +280,24 @@ static void board_report_pmic_fault(const char *str)
 	/* VRFAULT has occurred, print VRFAULT status bits. */
 
 	/* PWRSTAT1 */
-	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x16, &pwrstat1);
+	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		  BD99992GW_REG_PWRSTAT1, &pwrstat1);
 
 	/* PWRSTAT2 */
-	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x17, &pwrstat2);
+	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		  BD99992GW_REG_PWRSTAT2, &pwrstat2);
 
 	CPRINTS("PMIC VRFAULT: %s", str);
 	CPRINTS("PMIC VRFAULT: PWRSTAT1=0x%02x PWRSTAT2=0x%02x", pwrstat1,
 		pwrstat2);
 
 	/* Clear all faults -- Write 1 to clear. */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x8, (1 << 4));
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x16, pwrstat1);
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x17, pwrstat2);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_RESETIRQ1, (1 << 4));
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_PWRSTAT1, pwrstat1);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_PWRSTAT2, pwrstat2);
 
 	/*
 	 * Status of the fault registers can be checked in the OS by looking at
@@ -307,11 +312,12 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	/*
 	 * VCCIOCNT:
 	 * Bit 6    (0)   - Disable decay of VCCIO on SLP_S0# assertion
-	 * Bits 5:4 (00)  - Nominal output voltage: 0.850V
+	 * Bits 5:4 (11)  - Nominal output voltage: 0.850V
 	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10)  - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x3a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_VCCIOCNT, 0x3a);
 
 	/*
 	 * V18ACNT:
@@ -320,16 +326,18 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x34, 0x2a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_V18ACNT, 0x2a);
 
 	/*
 	 * V085ACNT:
 	 * Bits 7:6 (00) - Disable low power mode on SLP_S0# assertion
-	 * Bits 5:4 (11) - Nominal voltage 0.85V
+	 * Bits 5:4 (10) - Nominal voltage 0.85V
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x2a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_V085ACNT, 0x2a);
 }
 
 static void board_pmic_enable_slp_s0_vr_decay(void)
@@ -337,11 +345,12 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	/*
 	 * VCCIOCNT:
 	 * Bit 6    (1)   - Enable decay of VCCIO on SLP_S0# assertion
-	 * Bits 5:4 (00)  - Nominal output voltage: 0.850V
+	 * Bits 5:4 (11)  - Nominal output voltage: 0.850V
 	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10)  - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x7a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_VCCIOCNT, 0x7a);
 
 	/*
 	 * V18ACNT:
@@ -350,16 +359,18 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x34, 0x6a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_V18ACNT, 0x6a);
 
 	/*
 	 * V085ACNT:
 	 * Bits 7:6 (01) - Enable low power mode on SLP_S0# assertion
-	 * Bits 5:4 (11) - Nominal voltage 0.85V
+	 * Bits 5:4 (10) - Nominal voltage 0.85V
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x6a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_V085ACNT, 0x6a);
 }
 
 void power_board_handle_host_sleep_event(enum host_sleep_event state)
