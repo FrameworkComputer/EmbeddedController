@@ -22,3 +22,4 @@ stopgap until all commands are communicated via host commands.
 
 import console
 import interpreter
+import threadproc_shim
