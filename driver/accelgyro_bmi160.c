@@ -589,6 +589,29 @@ static int set_offset(const struct motion_sensor_t *s,
 	return ret;
 }
 
+int set_scale(const struct motion_sensor_t *s,
+	      const uint16_t *scale, int16_t temp)
+{
+	struct accelgyro_saved_data_t *data = BMI160_GET_SAVED_DATA(s);
+
+	data->scale[X] = scale[X];
+	data->scale[Y] = scale[Y];
+	data->scale[Z] = scale[Z];
+	return EC_SUCCESS;
+}
+
+int get_scale(const struct motion_sensor_t *s,
+	      uint16_t *scale, int16_t *temp)
+{
+	struct accelgyro_saved_data_t *data = BMI160_GET_SAVED_DATA(s);
+
+	scale[X] = data->scale[X];
+	scale[Y] = data->scale[Y];
+	scale[Z] = data->scale[Z];
+	*temp = EC_MOTION_SENSE_INVALID_CALIB_TEMP;
+	return EC_SUCCESS;
+}
+
 static int perform_calib(const struct motion_sensor_t *s)
 {
 	int ret, val, en_flag, status, rate;
@@ -647,11 +670,14 @@ end_perform_calib:
 	return ret;
 }
 
-void normalize(const struct motion_sensor_t *s, intv3_t v, uint8_t *data)
+void normalize(const struct motion_sensor_t *s, intv3_t v, uint8_t *input)
 {
+	int i;
+	struct accelgyro_saved_data_t *data = BMI160_GET_SAVED_DATA(s);
+
 #ifdef CONFIG_MAG_BMI160_BMM150
 	if (s->type == MOTIONSENSE_TYPE_MAG)
-		bmm150_normalize(s, v, data);
+		bmm150_normalize(s, v, input);
 	else
 #endif
 #ifdef CONFIG_MAG_BMI160_LIS2MDL
@@ -660,11 +686,13 @@ void normalize(const struct motion_sensor_t *s, intv3_t v, uint8_t *data)
 	else
 #endif
 	{
-		v[0] = ((int16_t)((data[1] << 8) | data[0]));
-		v[1] = ((int16_t)((data[3] << 8) | data[2]));
-		v[2] = ((int16_t)((data[5] << 8) | data[4]));
+		v[0] = ((int16_t)((input[1] << 8) | input[0]));
+		v[1] = ((int16_t)((input[3] << 8) | input[2]));
+		v[2] = ((int16_t)((input[5] << 8) | input[4]));
 	}
 	rotate(v, *s->rot_standard_ref, v);
+	for (i = X; i <= Z; i++)
+		v[i] = SENSOR_APPLY_SCALE(v[i], data->scale[i]);
 }
 
 /*
@@ -1182,8 +1210,8 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 
 static int init(const struct motion_sensor_t *s)
 {
-	int ret = 0, tmp;
-	struct accelgyro_saved_data_t *data = BMI160_GET_SAVED_DATA(s);
+	int ret = 0, tmp, i;
+	struct accelgyro_saved_data_t *saved_data = BMI160_GET_SAVED_DATA(s);
 
 	ret = raw_read8(s->port, s->addr, BMI160_CHIP_ID, &tmp);
 	if (ret)
@@ -1311,11 +1339,13 @@ static int init(const struct motion_sensor_t *s)
 	}
 #endif
 
+	for (i = X; i <= Z; i++)
+		saved_data->scale[i] = MOTION_SENSE_DEFAULT_SCALE;
 	/*
 	 * The sensor is in Suspend mode at init,
 	 * so set data rate to 0.
 	 */
-	data->odr = 0;
+	saved_data->odr = 0;
 	set_range(s, s->default_range, 0);
 
 	if (s->type == MOTIONSENSE_TYPE_ACCEL) {
@@ -1336,6 +1366,8 @@ const struct accelgyro_drv bmi160_drv = {
 	.set_data_rate = set_data_rate,
 	.get_data_rate = get_data_rate,
 	.set_offset = set_offset,
+	.get_scale = get_scale,
+	.set_scale = set_scale,
 	.get_offset = get_offset,
 	.perform_calib = perform_calib,
 #ifdef CONFIG_ACCEL_INTERRUPTS
