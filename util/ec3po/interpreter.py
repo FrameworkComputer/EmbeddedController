@@ -47,12 +47,13 @@ class Interpreter(object):
     logger: A logger for this module.
     ec_uart_pty: An opened file object to the raw EC UART PTY.
     ec_uart_pty_name: A string containing the name of the raw EC UART PTY.
-    cmd_pipe: A multiprocessing.Connection object which represents the
-      Interpreter side of the command pipe.  This must be a bidirectional pipe.
-      Commands and responses will utilize this pipe.
-    dbg_pipe: A multiprocessing.Connection object which represents the
-      Interpreter side of the debug pipe. This must be a unidirectional pipe
-      with write capabilities.  EC debug output will utilize this pipe.
+    cmd_pipe: A socket.socket or multiprocessing.Connection object which
+      represents the Interpreter side of the command pipe.  This must be a
+      bidirectional pipe.  Commands and responses will utilize this pipe.
+    dbg_pipe: A socket.socket or multiprocessing.Connection object which
+      represents the Interpreter side of the debug pipe. This must be a
+      unidirectional pipe with write capabilities.  EC debug output will utilize
+      this pipe.
     cmd_retries: An integer representing the number of attempts the console
       should retry commands if it receives an error.
     log_level: An integer representing the numeric value of the log level.
@@ -77,12 +78,13 @@ class Interpreter(object):
 
     Args:
       ec_uart_pty: A string representing the EC UART to connect to.
-      cmd_pipe: A multiprocessing.Connection object which represents the
-        Interpreter side of the command pipe.  This must be a bidirectional
-        pipe.  Commands and responses will utilize this pipe.
-      dbg_pipe: A multiprocessing.Connection object which represents the
-        Interpreter side of the debug pipe. This must be a unidirectional pipe
-        with write capabilities.  EC debug output will utilize this pipe.
+      cmd_pipe: A socket.socket or multiprocessing.Connection object which
+        represents the Interpreter side of the command pipe.  This must be a
+        bidirectional pipe.  Commands and responses will utilize this pipe.
+      dbg_pipe: A socket.socket or multiprocessing.Connection object which
+        represents the Interpreter side of the debug pipe. This must be a
+        unidirectional pipe with write capabilities.  EC debug output will
+        utilize this pipe.
       cmd_retries: An integer representing the number of attempts the console
         should retry commands if it receives an error.
       log_level: An optional integer representing the numeric value of the log

@@ -11,12 +11,12 @@ import binascii
 # pylint: disable=cros-logging-import
 import logging
 import mock
-import multiprocessing
 import tempfile
 import unittest
 
 import console
 import interpreter
+import threadproc_shim
 
 ESC_STRING = chr(console.ControlKey.ESC)
 
@@ -238,7 +238,7 @@ class TestConsoleEditingMethods(unittest.TestCase):
 
     # Create some dummy pipes.  These won't be used since we'll mock out sends
     # to the interpreter.
-    dummy_pipe_end_0, dummy_pipe_end_1 = multiprocessing.Pipe()
+    dummy_pipe_end_0, dummy_pipe_end_1 = threadproc_shim.Pipe()
     self.console = console.Console(self.tempfile.fileno(), self.tempfile,
                                    tempfile.TemporaryFile(),
                                    dummy_pipe_end_0, dummy_pipe_end_1)
@@ -249,9 +249,6 @@ class TestConsoleEditingMethods(unittest.TestCase):
     # which is why we have to override it here.
     self.console.enhanced_ec = True
     self.console.CheckForEnhancedECImage = mock.MagicMock(return_value=True)
-
-    # Mock out sends to the interpreter.
-    multiprocessing.Pipe.send = mock.MagicMock()
 
   def test_EnteringChars(self):
     """Verify that characters are echoed onto the console."""

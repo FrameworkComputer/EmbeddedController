@@ -17,7 +17,6 @@ import ctypes
 import binascii
 # pylint: disable=cros-logging-import
 import logging
-import multiprocessing
 import os
 import pty
 import re
@@ -27,6 +26,7 @@ import sys
 import traceback
 
 import interpreter
+import threadproc_shim
 
 
 PROMPT = '> '
@@ -96,14 +96,15 @@ class Console(object):
     master_pty: File descriptor to the master side of the PTY.  Used for driving
       output to the user and receiving user input.
     user_pty: A string representing the PTY name of the served console.
-    cmd_pipe: A multiprocessing.Connection object which represents the console
-      side of the command pipe.  This must be a bidirectional pipe.  Console
-      commands and responses utilize this pipe.
-    dbg_pipe: A multiprocessing.Connection object which represents the console's
-      read-only side of the debug pipe.  This must be a unidirectional pipe
-      attached to the intepreter.  EC debug messages use this pipe.
-    oobm_queue: A multiprocessing.Queue which is used for out of band management
-      for the interactive console.
+    cmd_pipe: A socket.socket or multiprocessing.Connection object which
+      represents the console side of the command pipe.  This must be a
+      bidirectional pipe.  Console commands and responses utilize this pipe.
+    dbg_pipe: A socket.socket or multiprocessing.Connection object which
+      represents the console's read-only side of the debug pipe.  This must be a
+      unidirectional pipe attached to the intepreter.  EC debug messages use
+      this pipe.
+    oobm_queue: A Queue.Queue or multiprocessing.Queue which is used for out of
+      band management for the interactive console.
     input_buffer: A string representing the current input command.
     input_buffer_pos: An integer representing the current position in the buffer
       to insert a char.
@@ -139,12 +140,13 @@ class Console(object):
     user_pty: A string representing the PTY name of the served console.
     interface_pty: A string representing the PTY name of the served command
       interface.
-    cmd_pipe: A multiprocessing.Connection object which represents the console
-      side of the command pipe.  This must be a bidirectional pipe.  Console
-      commands and responses utilize this pipe.
-    dbg_pipe: A multiprocessing.Connection object which represents the console's
-      read-only side of the debug pipe.  This must be a unidirectional pipe
-      attached to the intepreter.  EC debug messages use this pipe.
+    cmd_pipe: A socket.socket or multiprocessing.Connection object which
+      represents the console side of the command pipe.  This must be a
+      bidirectional pipe.  Console commands and responses utilize this pipe.
+    dbg_pipe: A socket.socket or multiprocessing.Connection object which
+      represents the console's read-only side of the debug pipe.  This must be a
+      unidirectional pipe attached to the intepreter.  EC debug messages use
+      this pipe.
     """
     logger = logging.getLogger('EC3PO.Console')
     self.logger = interpreter.LoggerAdapter(logger, {'pty': user_pty})
@@ -153,7 +155,7 @@ class Console(object):
     self.interface_pty = interface_pty
     self.cmd_pipe = cmd_pipe
     self.dbg_pipe = dbg_pipe
-    self.oobm_queue = multiprocessing.Queue()
+    self.oobm_queue = threadproc_shim.Queue()
     self.input_buffer = ''
     self.input_buffer_pos = 0
     self.partial_cmd = ''
@@ -822,8 +824,9 @@ def StartLoop(console, command_active, shutdown_pipe=None):
 
   Args:
     console: A Console object that has been properly initialzed.
-    command_active: multiprocessing.Value indicating if servod owns
-        the console, or user owns the console. This prevents input collisions.
+    command_active: ctypes data object or multiprocessing.Value indicating if
+      servod owns the console, or user owns the console. This prevents input
+      collisions.
     shutdown_pipe: A file object for a pipe or equivalent that becomes readable
       (not blocked) to indicate that the loop should exit.  Can be None to never
       exit the loop.
@@ -987,17 +990,17 @@ def main(argv):
 
   # Create some pipes to communicate between the interpreter and the console.
   # The command pipe is bidirectional.
-  cmd_pipe_interactive, cmd_pipe_interp = multiprocessing.Pipe()
+  cmd_pipe_interactive, cmd_pipe_interp = threadproc_shim.Pipe()
   # The debug pipe is unidirectional from interpreter to console only.
-  dbg_pipe_interactive, dbg_pipe_interp = multiprocessing.Pipe(duplex=False)
+  dbg_pipe_interactive, dbg_pipe_interp = threadproc_shim.Pipe(duplex=False)
 
   # Create an interpreter instance.
   itpr = interpreter.Interpreter(opts.ec_uart_pty, cmd_pipe_interp,
                                  dbg_pipe_interp, log_level)
 
   # Spawn an interpreter process.
-  itpr_process = multiprocessing.Process(target=interpreter.StartLoop,
-                                         args=(itpr,))
+  itpr_process = threadproc_shim.ThreadOrProcess(
+      target=interpreter.StartLoop, args=(itpr,))
   # Make sure to kill the interpreter when we terminate.
   itpr_process.daemon = True
   # Start the interpreter.
@@ -1012,7 +1015,7 @@ def main(argv):
   console = Console(master_pty, os.ttyname(user_pty), cmd_pipe_interactive,
                     dbg_pipe_interactive)
   # Start serving the console.
-  v = multiprocessing.Value(ctypes.c_bool, False)
+  v = threadproc_shim.Value(ctypes.c_bool, False)
   StartLoop(console, v)
 
 

@@ -10,11 +10,11 @@ from __future__ import print_function
 # pylint: disable=cros-logging-import
 import logging
 import mock
-import multiprocessing
 import tempfile
 import unittest
 
 import interpreter
+import threadproc_shim
 
 class TestEnhancedECBehaviour(unittest.TestCase):
   """Test case to verify all enhanced EC interpretation tasks."""
@@ -29,8 +29,8 @@ class TestEnhancedECBehaviour(unittest.TestCase):
     self.tempfile = tempfile.NamedTemporaryFile()
 
     # Create the pipes that the interpreter will use.
-    self.cmd_pipe_user, self.cmd_pipe_itpr = multiprocessing.Pipe()
-    self.dbg_pipe_user, self.dbg_pipe_itpr = multiprocessing.Pipe(duplex=False)
+    self.cmd_pipe_user, self.cmd_pipe_itpr = threadproc_shim.Pipe()
+    self.dbg_pipe_user, self.dbg_pipe_itpr = threadproc_shim.Pipe(duplex=False)
 
     # Mock the open() function so we can inspect reads/writes to the EC.
     self.ec_uart_pty = mock.mock_open()
@@ -264,8 +264,8 @@ class TestUARTDisconnection(unittest.TestCase):
     self.tempfile = tempfile.NamedTemporaryFile()
 
     # Create the pipes that the interpreter will use.
-    self.cmd_pipe_user, self.cmd_pipe_itpr = multiprocessing.Pipe()
-    self.dbg_pipe_user, self.dbg_pipe_itpr = multiprocessing.Pipe(duplex=False)
+    self.cmd_pipe_user, self.cmd_pipe_itpr = threadproc_shim.Pipe()
+    self.dbg_pipe_user, self.dbg_pipe_itpr = threadproc_shim.Pipe(duplex=False)
 
     # Mock the open() function so we can inspect reads/writes to the EC.
     self.ec_uart_pty = mock.mock_open()
