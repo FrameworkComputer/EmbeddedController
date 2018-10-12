@@ -587,15 +587,15 @@ static int anx74xx_check_cc_type(int cc_reg)
 		break;
 
 	case BIT_VALUE_OF_SNK_CC_DEFAULT:
-		cc = TYPEC_CC_VOLT_SNK_DEF;
+		cc = TYPEC_CC_VOLT_RP_DEF;
 		break;
 
 	case BIT_VALUE_OF_SNK_CC_1_P_5:
-		cc = TYPEC_CC_VOLT_SNK_1_5;
+		cc = TYPEC_CC_VOLT_RP_1_5;
 		break;
 
 	case BIT_VALUE_OF_SNK_CC_3_P_0:
-		cc = TYPEC_CC_VOLT_SNK_3_0;
+		cc = TYPEC_CC_VOLT_RP_3_0;
 		break;
 
 	default:

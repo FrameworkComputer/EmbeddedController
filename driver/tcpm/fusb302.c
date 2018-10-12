@@ -91,11 +91,11 @@ static int convert_bc_lvl(int port, int bc_lvl)
 			ret = TYPEC_CC_VOLT_RD;
 	} else {
 		if (bc_lvl == 0x1)
-			ret = TYPEC_CC_VOLT_SNK_DEF;
+			ret = TYPEC_CC_VOLT_RP_DEF;
 		else if (bc_lvl == 0x2)
-			ret = TYPEC_CC_VOLT_SNK_1_5;
+			ret = TYPEC_CC_VOLT_RP_1_5;
 		else if (bc_lvl == 0x3)
-			ret = TYPEC_CC_VOLT_SNK_3_0;
+			ret = TYPEC_CC_VOLT_RP_3_0;
 	}
 
 	return ret;

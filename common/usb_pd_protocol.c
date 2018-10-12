@@ -767,8 +767,8 @@ static int pd_transmit(int port, enum tcpm_transmit_type type,
 			int cc2;
 
 			tcpm_get_cc(port, &cc1, &cc2);
-			if (cc1 == TYPEC_CC_VOLT_SNK_1_5 ||
-				cc2 == TYPEC_CC_VOLT_SNK_1_5) {
+			if (cc1 == TYPEC_CC_VOLT_RP_1_5 ||
+				cc2 == TYPEC_CC_VOLT_RP_1_5) {
 				/* Sink can't transmit now. */
 				/* Check if message is already buffered. */
 				if (pd[port].ca_buffered)
@@ -821,8 +821,8 @@ static void pd_ca_send_pending(int port)
 		return;
 
 	tcpm_get_cc(port, &cc1, &cc2);
-	if ((cc1 != TYPEC_CC_VOLT_SNK_1_5) &&
-			(cc2 != TYPEC_CC_VOLT_SNK_1_5))
+	if ((cc1 != TYPEC_CC_VOLT_RP_1_5) &&
+			(cc2 != TYPEC_CC_VOLT_RP_1_5))
 		if (pd_transmit(port, pd[port].ca_type,
 				pd[port].ca_header,
 				pd[port].ca_buffer) < 0)
@@ -2242,8 +2242,8 @@ static void pd_partner_port_reset(int port)
  */
 static inline int cc_is_rp(int cc)
 {
-	return (cc == TYPEC_CC_VOLT_SNK_DEF) || (cc == TYPEC_CC_VOLT_SNK_1_5) ||
-	       (cc == TYPEC_CC_VOLT_SNK_3_0);
+	return (cc == TYPEC_CC_VOLT_RP_DEF) || (cc == TYPEC_CC_VOLT_RP_1_5) ||
+	       (cc == TYPEC_CC_VOLT_RP_3_0);
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
@@ -2356,9 +2356,9 @@ void pd_ping_enable(int port, int enable)
 static inline int get_snk_polarity(int cc1, int cc2)
 {
 	/* the following assumes:
-	 * TYPEC_CC_VOLT_SNK_3_0 > TYPEC_CC_VOLT_SNK_1_5
-	 * TYPEC_CC_VOLT_SNK_1_5 > TYPEC_CC_VOLT_SNK_DEF
-	 * TYPEC_CC_VOLT_SNK_DEF > TYPEC_CC_VOLT_OPEN
+	 * TYPEC_CC_VOLT_RP_3_0 > TYPEC_CC_VOLT_RP_1_5
+	 * TYPEC_CC_VOLT_RP_1_5 > TYPEC_CC_VOLT_RP_DEF
+	 * TYPEC_CC_VOLT_RP_DEF > TYPEC_CC_VOLT_OPEN
 	 */
 	return (cc2 > cc1);
 }
@@ -2373,9 +2373,9 @@ static typec_current_t get_typec_current_limit(int polarity, int cc1, int cc2)
 	int cc = polarity ? cc2 : cc1;
 	int cc_alt = polarity ? cc1 : cc2;
 
-	if (cc == TYPEC_CC_VOLT_SNK_3_0 && cc_alt != TYPEC_CC_VOLT_SNK_1_5)
+	if (cc == TYPEC_CC_VOLT_RP_3_0 && cc_alt != TYPEC_CC_VOLT_RP_1_5)
 		charge = 3000;
-	else if (cc == TYPEC_CC_VOLT_SNK_1_5)
+	else if (cc == TYPEC_CC_VOLT_RP_1_5)
 		charge = 1500;
 	else
 		charge = 0;

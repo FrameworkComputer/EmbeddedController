@@ -84,13 +84,13 @@ static enum tcpc_cc_voltage_status it83xx_get_cc(
 
 		switch (ufp_volt) {
 		case USBPD_UFP_STATE_SNK_DEF:
-			cc_state |= (TYPEC_CC_VOLT_SNK_DEF & 3);
+			cc_state |= (TYPEC_CC_VOLT_RP_DEF & 3);
 			break;
 		case USBPD_UFP_STATE_SNK_1_5:
-			cc_state |= (TYPEC_CC_VOLT_SNK_1_5 & 3);
+			cc_state |= (TYPEC_CC_VOLT_RP_1_5 & 3);
 			break;
 		case USBPD_UFP_STATE_SNK_3_0:
-			cc_state |= (TYPEC_CC_VOLT_SNK_3_0 & 3);
+			cc_state |= (TYPEC_CC_VOLT_RP_3_0 & 3);
 			break;
 		case USBPD_UFP_STATE_SNK_OPEN:
 			cc_state = TYPEC_CC_VOLT_OPEN;

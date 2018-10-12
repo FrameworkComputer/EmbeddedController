@@ -746,11 +746,11 @@ static int cc_voltage_to_status(int port, int cc_volt, int cc_sel)
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	else if (pd[port].cc_pull == TYPEC_CC_RD) {
 		if (cc_volt >= TYPE_C_SRC_3000_THRESHOLD)
-			return TYPEC_CC_VOLT_SNK_3_0;
+			return TYPEC_CC_VOLT_RP_3_0;
 		else if (cc_volt >= TYPE_C_SRC_1500_THRESHOLD)
-			return TYPEC_CC_VOLT_SNK_1_5;
+			return TYPEC_CC_VOLT_RP_1_5;
 		else if (CC_RP(cc_volt))
-			return TYPEC_CC_VOLT_SNK_DEF;
+			return TYPEC_CC_VOLT_RP_DEF;
 		else
 			return TYPEC_CC_VOLT_OPEN;
 	}

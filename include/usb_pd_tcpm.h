@@ -16,15 +16,17 @@
 /* Time to wait for TCPC to complete transmit */
 #define PD_T_TCPC_TX_TIMEOUT  (100*MSEC)
 
+/* Detected resistor values of port partner */
 enum tcpc_cc_voltage_status {
 	TYPEC_CC_VOLT_OPEN = 0,
-	TYPEC_CC_VOLT_RA = 1,	   /* Port partner is applying Ra */
-	TYPEC_CC_VOLT_RD = 2,	   /* Port partner is applying Rd */
-	TYPEC_CC_VOLT_SNK_DEF = 5, /* Port partner is applying Rp (0.5A) */
-	TYPEC_CC_VOLT_SNK_1_5 = 6, /* Port partner is applying Rp (1.5A) */
-	TYPEC_CC_VOLT_SNK_3_0 = 7, /* Port partner is applying Rp (3.0A) */
+	TYPEC_CC_VOLT_RA = 1,	  /* Port partner is applying Ra */
+	TYPEC_CC_VOLT_RD = 2,	  /* Port partner is applying Rd */
+	TYPEC_CC_VOLT_RP_DEF = 5, /* Port partner is applying Rp (0.5A) */
+	TYPEC_CC_VOLT_RP_1_5 = 6, /* Port partner is applying Rp (1.5A) */
+	TYPEC_CC_VOLT_RP_3_0 = 7, /* Port partner is applying Rp (3.0A) */
 };
 
+/* Resistor types we apply on our side of the CC lines */
 enum tcpc_cc_pull {
 	TYPEC_CC_RA = 0,
 	TYPEC_CC_RP = 1,
@@ -32,6 +34,7 @@ enum tcpc_cc_pull {
 	TYPEC_CC_OPEN = 3,
 };
 
+/* Pull-up values we apply as a SRC to advertise different current limits */
 enum tcpc_rp_value {
 	TYPEC_RP_USB = 0,
 	TYPEC_RP_1A5 = 1,
