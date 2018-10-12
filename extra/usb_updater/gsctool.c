@@ -12,6 +12,8 @@
 #include <getopt.h>
 #include <libusb.h>
 #include <openssl/sha.h>
+#include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -197,7 +199,7 @@ struct upgrade_pkt {
 static int verbose_mode;
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "aBbcd:F:fhIikmO:oPprstUuVvw";
+static char *short_opts = "aBbcd:F:fhIikMmO:oPprstUuVvw";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"any",		                0,   NULL, 'a'},
@@ -213,6 +215,7 @@ static const struct option long_opts[] = {
 	{"factory",	                1,   NULL, 'F'},
 	{"fwver",	                0,   NULL, 'f'},
 	{"help",	                0,   NULL, 'h'},
+	{"machine",	                0,   NULL, 'M'},
 	{"openbox_rma",                 1,   NULL, 'O'},
 	{"password",	                0,   NULL, 'P'},
 	{"post_reset",	                0,   NULL, 'p'},
@@ -526,6 +529,8 @@ static void usage(int errs)
 	       "                           ID could be 32 bit hex or 4 "
 	       "character string.\n"
 	       "  -k,--ccd_lock            Lock CCD\n"
+	       "  -M,--machine             Output in a machine-friendly way. "
+	       "Effective only with -f.\n"
 	       "  -m,--tpm_mode [enable|disable]\n"
 	       "                           Change or query tpm_mode\n"
 	       "  -O,--openbox_rma <desc_file>\n"
@@ -1837,6 +1842,53 @@ static void report_version(void)
 }
 
 /*
+ * Machine output is formatted as "key=value", one key-value pair per line, and
+ * parsed by other programs (e.g., debugd). The value part should be specified
+ * in the printf-like way. For example:
+ *
+ *           print_machine_output("date", "%d/%d/%d", 2018, 1, 1),
+ *
+ * which outputs this line in console:
+ *
+ *           date=2018/1/1
+ *
+ * The key part should not contain '=' or newline. The value part may contain
+ * special characters like spaces, quotes, brackets, but not newlines. The
+ * newline character means end of value.
+ *
+ * Any output format change in this function may require similar changes on the
+ * programs that are using this gsctool.
+ */
+__attribute__((__format__(__printf__, 2, 3)))
+static void print_machine_output(const char *key, const char *format, ...)
+{
+	va_list args;
+
+	if (strchr(key, '=') != NULL || strchr(key, '\n') != NULL) {
+		fprintf(stderr,
+			"Error: key %s contains '=' or a newline character.\n",
+			key);
+		return;
+	}
+
+	if (strchr(format, '\n') != NULL) {
+		fprintf(stderr,
+			"Error: value format %s contains a newline character. "
+			"\n",
+			format);
+		return;
+	}
+
+	va_start(args, format);
+
+	printf("%s=", key);
+	vprintf(format, args);
+	printf("\n");
+
+	va_end(args);
+}
+
+/*
  * Either change or query TPM mode value.
  */
 static int process_tpm_mode(struct transfer_descriptor *td,
@@ -1911,6 +1963,7 @@ int main(int argc, char *argv[])
 	int wp = 0;
 	int try_all_transfer = 0;
 	int tpm_mode = 0;
+	bool show_machine_output = false;
 
 	const char *exclusive_opt_error =
 		"Options -a, -s and -t are mutually exclusive\n";
@@ -1988,6 +2041,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'k':
 			ccd_lock = 1;
+			break;
+		case 'M':
+			show_machine_output = true;
 			break;
 		case 'm':
 			tpm_mode = 1;
@@ -2187,13 +2243,22 @@ int main(int argc, char *argv[])
 			generate_reset_request(&td);
 
 		if (show_fw_ver) {
-			printf("Current versions:\n");
-			printf("RO %d.%d.%d\n", targ.shv[0].epoch,
-			       targ.shv[0].major,
-			       targ.shv[0].minor);
-			printf("RW %d.%d.%d\n", targ.shv[1].epoch,
-			       targ.shv[1].major,
-			       targ.shv[1].minor);
+			if (show_machine_output) {
+				print_machine_output("RO_FW_VER", "%d.%d.%d",
+						     targ.shv[0].epoch,
+						     targ.shv[0].major,
+						     targ.shv[0].minor);
+				print_machine_output("RW_FW_VER", "%d.%d.%d",
+						     targ.shv[1].epoch,
+						     targ.shv[1].major,
+						     targ.shv[1].minor);
+			} else {
+				printf("Current versions:\n");
+				printf("RO %d.%d.%d\n", targ.shv[0].epoch,
+				       targ.shv[0].major, targ.shv[0].minor);
+				printf("RW %d.%d.%d\n", targ.shv[1].epoch,
+				       targ.shv[1].major, targ.shv[1].minor);
+			}
 		}
 	}
 
