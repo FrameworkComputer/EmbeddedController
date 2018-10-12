@@ -4101,6 +4101,7 @@ static const struct {
 	ST_BOTH_SIZES(fifo_int_enable),
 	ST_BOTH_SIZES(spoof),
 	ST_BOTH_SIZES(tablet_mode_threshold),
+	ST_BOTH_SIZES(sensor_scale),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 

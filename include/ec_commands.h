@@ -2366,6 +2366,12 @@ enum motionsense_command {
 	/* Set lid angle for tablet mode detection. */
 	MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE = 17,
 
+	/*
+	 * Sensor Scale command is a setter/getter command for the calibration
+	 * scale.
+	 */
+	MOTIONSENSE_CMD_SENSOR_SCALE = 18,
+
 	/* Number of motionsense sub-commands. */
 	MOTIONSENSE_NUM_CMDS
 };
@@ -2504,7 +2510,10 @@ struct ec_motion_sense_activity {
 
 /* MOTIONSENSE_CMD_SENSOR_OFFSET subcommand flag */
 /* Set Calibration information */
-#define MOTION_SENSE_SET_OFFSET 1
+#define MOTION_SENSE_SET_OFFSET (1 << 0)
+
+/* Default Scale value, factor 1. */
+#define MOTION_SENSE_DEFAULT_SCALE (1 << 15)
 
 #define LID_ANGLE_UNRELIABLE 500
 
@@ -2596,6 +2605,36 @@ struct ec_params_motion_sense {
 			 */
 			int16_t offset[3];
 		} sensor_offset;
+
+		/* Used for MOTIONSENSE_CMD_SENSOR_SCALE */
+		struct __ec_todo_packed {
+			uint8_t sensor_num;
+
+			/*
+			 * bit 0: If set (MOTION_SENSE_SET_OFFSET), set
+			 * the calibration information in the EC.
+			 * If unset, just retrieve calibration information.
+			 */
+			uint16_t flags;
+
+			/*
+			 * Temperature at calibration, in units of 0.01 C
+			 * 0x8000: invalid / unknown.
+			 * 0x0: 0C
+			 * 0x7fff: +327.67C
+			 */
+			int16_t temp;
+
+			/*
+			 * Scale for calibration:
+			 * By default scale is 1, it is encoded on 16bits:
+			 * 1 = 1 << 15
+			 * ~2 = 0xFFFF
+			 * ~0 = 0.
+			 */
+			uint16_t scale[3];
+		} sensor_scale;
+
 
 		/* Used for MOTIONSENSE_CMD_FIFO_INFO */
 		/* (no params) */
@@ -2723,11 +2762,20 @@ struct ec_response_motion_sense {
 		} ec_rate, sensor_odr, sensor_range, kb_wake_angle,
 		  fifo_int_enable, spoof;
 
-		/* Used for MOTIONSENSE_CMD_SENSOR_OFFSET */
+		/*
+		 * Used for MOTIONSENSE_CMD_SENSOR_OFFSET,
+		 * PERFORM_CALIB.
+		 */
 		struct __ec_todo_unpacked  {
 			int16_t temp;
 			int16_t offset[3];
 		} sensor_offset, perform_calib;
+
+		/* Used for MOTIONSENSE_CMD_SENSOR_SCALE */
+		struct __ec_todo_unpacked  {
+			int16_t temp;
+			uint16_t scale[3];
+		} sensor_scale;
 
 		struct ec_response_motion_sense_fifo_info fifo_info, fifo_flush;
 

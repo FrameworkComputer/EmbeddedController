@@ -1282,6 +1282,34 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		args->response_size = sizeof(out->sensor_offset);
 		break;
 
+	case MOTIONSENSE_CMD_SENSOR_SCALE:
+		/* Verify sensor number is valid. */
+		sensor = host_sensor_id_to_real_sensor(
+				in->sensor_scale.sensor_num);
+		if (sensor == NULL)
+			return EC_RES_INVALID_PARAM;
+		/* Set new range if the data arg has a value. */
+		if (in->sensor_scale.flags & MOTION_SENSE_SET_OFFSET) {
+			if (!sensor->drv->set_scale)
+				return EC_RES_INVALID_COMMAND;
+
+			ret = sensor->drv->set_scale(sensor,
+						in->sensor_scale.scale,
+						in->sensor_scale.temp);
+			if (ret != EC_SUCCESS)
+				return ret;
+		}
+
+		if (!sensor->drv->get_scale)
+			return EC_RES_INVALID_COMMAND;
+
+		ret = sensor->drv->get_scale(sensor, out->sensor_scale.scale,
+				&out->sensor_scale.temp);
+		if (ret != EC_SUCCESS)
+			return ret;
+		args->response_size = sizeof(out->sensor_scale);
+		break;
+
 	case MOTIONSENSE_CMD_PERFORM_CALIB:
 		/* Verify sensor number is valid. */
 		sensor = host_sensor_id_to_real_sensor(
