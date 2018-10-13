@@ -672,6 +672,7 @@ toad_VARS="${MCU}_uart_parity ${MCU}_uart_baudrate boot_mode"
 
 if $(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"); then
 	servo_v2_VARS+=" fw_up"
+	servo_micro_VARS+=" fw_up"
 fi
 # Some servo boards use the same controls.
 servo_v3_VARS="${servo_v2_VARS}"
