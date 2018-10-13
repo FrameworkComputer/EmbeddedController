@@ -41,6 +41,8 @@ struct anx_state {
 	int mux_state;
 };
 
+static int anx7447_mux_set(int port, mux_state_t mux_state);
+
 static struct anx_state anx[CONFIG_USB_PD_PORT_COUNT];
 
 /*
@@ -472,12 +474,12 @@ void anx7447_tcpc_clear_hpd_status(int port)
 #ifdef CONFIG_USB_PD_TCPM_MUX
 static int anx7447_mux_init(int port)
 {
-	/* Nothing to do here, ANX initializes its muxes
-	 * as (MUX_USB_ENABLED | MUX_DP_ENABLED)
+	/*
+	 * ANX initializes its muxes to (MUX_USB_ENABLED | MUX_DP_ENABLED)
+	 * when reinitialized, we need to force initialize it to
+	 * TYPEC_MUX_NONE
 	 */
-	anx[port].mux_state = MUX_USB_ENABLED | MUX_DP_ENABLED;
-
-	return EC_SUCCESS;
+	return anx7447_mux_set(port, TYPEC_MUX_NONE);
 }
 
 /*
