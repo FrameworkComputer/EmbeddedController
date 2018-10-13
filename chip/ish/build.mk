@@ -20,6 +20,7 @@ endif
 chip-y+=clock.o gpio.o system.o hwtimer.o uart.o flash.o
 chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_HOSTCMD_LPC)+=ipc.o
+chip-$(CONFIG_ISH_IPC)+=ipc_heci.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 
 # location of the scripts and keys used to pack the SPI flash image

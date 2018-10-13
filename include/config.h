@@ -2334,6 +2334,13 @@
 #undef CONFIG_LOW_POWER_S0
 
 /*
+ * Enable inter-processor communication between ISH(Intel Sensor Hub) and
+ * other modules in Intel SoC(listed below).
+ * - HOST(x64), CSME, PMC, cAVS, and ISP
+ */
+#undef CONFIG_ISH_IPC
+
+/*
  * EC supports x86 host communication with AP. This can either be through LPC
  * or eSPI. The CONFIG_HOSTCMD_X86 will get automatically defined if either
  * CONFIG_HOSTCMD_LPC or CONFIG_HOSTCMD_ESPI are defined. LPC and eSPI are
