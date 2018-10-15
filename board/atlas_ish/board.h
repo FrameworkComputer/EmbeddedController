@@ -33,6 +33,8 @@
 
 /* ISH IPC */
 #define CONFIG_ISH_IPC
+/* HECI */
+#define CONFIG_HECI
 /* I2C ports */
 #define I2C_PORT_TP ISH_I2C0
 #define GPIO_I2C_PORT_TP_SCL GPIO_ISH_I2C0_SCL
