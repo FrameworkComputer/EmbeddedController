@@ -16,14 +16,53 @@ TODO(b/79684405): After both platform/ec/ and third_party/hdctools/ sides of
 ec3po have been updated to use this library, replace the multiprocessing
 implementations with threading-oriented equivalents.
 
+TODO(b/79684405): Stop using multiprocessing.Pipe.  The
+multiprocessing.Connection objects it returns serialize and deserialize objects
+(via Python pickling), which is necessary for sending them between processes,
+but is unnecessary overhead between threads.  This will not be a simple change,
+because the ec3po Console and Interpreter classes use the underlying pipe/socket
+pairs with select/poll/epoll alongside other file descriptors.  A drop-in
+replacement would be non-trivial and add undesirable complexity.  The correct
+solution will be to split off the polling of the pipes/queues from this module
+into separate threads, so that they can be transitioned to another form of
+cross-thread synchronization, e.g. directly waiting on Queue.Queue.get() or a
+lower-level thread synchronization primitive.
+
 TODO(b/79684405): After this library has been updated to contain
 threading-oriented equivalents to its original multiprocessing implementations,
 and some reasonable amount of time has elapsed for thread-based ec3po problems
 to be discovered, migrate both the platform/ec/ and third_party/hdctools/ sides
-of ec3po off of this shim and then delete this file.
+of ec3po off of this shim and then delete this file.  IMPORTANT: This should
+wait until after completing the TODO above to stop using multiprocessing.Pipe!
 """
 
+# Imports to bring objects into this namespace for users of this module.
 from multiprocessing import Pipe
 from multiprocessing import Process as ThreadOrProcess
 from multiprocessing import Queue
 from multiprocessing import Value
+
+# True if this module has ec3po using subprocesses, False if using threads.
+# TODO(b/79684405): Change to False when switching to threading.
+USING_SUBPROCS = True
+
+
+def _DoNothing():
+  """Do-nothing function for use as a callback with DoIf()."""
+
+
+def DoIf(subprocs=_DoNothing, threads=_DoNothing):
+  """Return a callback or not based on ec3po use of subprocesses or threads.
+
+  Args:
+    subprocs: callback that does not require any args - This will be returned
+        (not called!) if and only if ec3po is using subprocesses.  This is
+        OPTIONAL, the default value is a do-nothing callback that returns None.
+    threads: callback that does not require any args - This will be returned
+        (not called!) if and only if ec3po is using threads.  This is OPTIONAL,
+        the default value is a do-nothing callback that returns None.
+
+  Returns:
+    Either the subprocs or threads argument will be returned.
+  """
+  return subprocs if USING_SUBPROCS else threads
