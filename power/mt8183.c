@@ -46,6 +46,12 @@
 /* Maximum time it should for PMIC to turn on after toggling PMIC_EN_ODL. */
 #define PMIC_EN_TIMEOUT (300 * MSEC)
 
+/*
+ * Amount of time we need to hold PMIC_FORCE_RESET_ODL to ensure PMIC is really
+ * off and will not restart on its own.
+ */
+#define PMIC_FORCE_RESET_TIME (10 * SECOND)
+
 /* Data structure for a GPIO operation for power sequencing */
 struct power_seq_op {
 	/* enum gpio_signal in 8 bits */
@@ -146,6 +152,17 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
+/*
+ * If we have to force reset the PMIC, we only need to do so for a few seconds,
+ * then we need to release the GPIO to prevent leakage in G3.
+ */
+static void release_pmic_force_reset(void)
+{
+	CPRINTS("Releasing PMIC force reset");
+	gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 1);
+}
+DECLARE_DEFERRED(release_pmic_force_reset);
+
 /**
  * Step through the power sequence table and do corresponding GPIO operations.
  *
@@ -211,6 +228,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_G3S5:
 		forcing_shutdown = 0;
 
+		hook_call_deferred(&release_pmic_force_reset_data, -1);
 		gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 1);
 
 		/* Power up to next state */
@@ -332,6 +350,8 @@ enum power_state power_handle_state(enum power_state state)
 			CPRINTS("Forcing PMIC off");
 			gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 0);
 			msleep(5);
+			hook_call_deferred(&release_pmic_force_reset_data,
+				PMIC_FORCE_RESET_TIME);
 
 			return POWER_S5G3;
 #endif
