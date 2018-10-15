@@ -74,7 +74,7 @@ static void rdd_disconnect(void)
 	 * This disables the SBUx muxes, if we were the only one driving
 	 * CCD_MODE_L.
 	 */
-	gpio_set_flags(GPIO_CCD_MODE_L, GPIO_INPUT);
+	gpio_set_level(GPIO_CCD_MODE_L, 1);
 }
 DECLARE_DEFERRED(rdd_disconnect);
 
@@ -99,8 +99,8 @@ static void rdd_connect(void)
 	CPRINTS("Rdd connect");
 	state = DEVICE_STATE_CONNECTED;
 
-	/* Start pulling CCD_MODE_L low to enable the SBUx muxes */
-	gpio_set_flags(GPIO_CCD_MODE_L, GPIO_OUT_LOW);
+	/* Assert CCD_MODE_L to enable the SBUx muxes */
+	gpio_set_level(GPIO_CCD_MODE_L, 0);
 }
 DECLARE_DEFERRED(rdd_connect);
 
