@@ -196,6 +196,20 @@ struct upgrade_pkt {
  */
 #define MAX_BUF_SIZE	500
 
+/*
+ * Max. length of the board ID string representation.
+ *
+ * Board ID is either a 4-character ASCII alphanumeric string or an 8-digit
+ * hex.
+ */
+#define MAX_BOARD_ID_LENGTH 9
+
+/*
+ * Max. length of FW version in the format of <epoch>.<major>.<minor>
+ * (3 uint32_t string representation + 2 separators + NULL terminator).
+ */
+#define MAX_FW_VER_LENGTH 33
+
 static int verbose_mode;
 static uint32_t protocol_version;
 static char *progname;
@@ -530,7 +544,7 @@ static void usage(int errs)
 	       "character string.\n"
 	       "  -k,--ccd_lock            Lock CCD\n"
 	       "  -M,--machine             Output in a machine-friendly way. "
-	       "Effective only with -f.\n"
+	       "Effective with -f and -b only.\n"
 	       "  -m,--tpm_mode [enable|disable]\n"
 	       "                           Change or query tpm_mode\n"
 	       "  -O,--openbox_rma <desc_file>\n"
@@ -1246,65 +1260,165 @@ static void generate_reset_request(struct transfer_descriptor *td)
 	printf("reboot %s\n", reset_type);
 }
 
-static int show_headers_versions(const void *image)
+/*
+ * Machine output is formatted as "key=value", one key-value pair per line, and
+ * parsed by other programs (e.g., debugd). The value part should be specified
+ * in the printf-like way. For example:
+ *
+ *           print_machine_output("date", "%d/%d/%d", 2018, 1, 1),
+ *
+ * which outputs this line in console:
+ *
+ *           date=2018/1/1
+ *
+ * The key part should not contain '=' or newline. The value part may contain
+ * special characters like spaces, quotes, brackets, but not newlines. The
+ * newline character means end of value.
+ *
+ * Any output format change in this function may require similar changes on the
+ * programs that are using this gsctool.
+ */
+__attribute__((__format__(__printf__, 2, 3)))
+static void print_machine_output(const char *key, const char *format, ...)
 {
+	va_list args;
+
+	if (strchr(key, '=') != NULL || strchr(key, '\n') != NULL) {
+		fprintf(stderr,
+			"Error: key %s contains '=' or a newline character.\n",
+			key);
+		return;
+	}
+
+	if (strchr(format, '\n') != NULL) {
+		fprintf(stderr,
+			"Error: value format %s contains a newline character. "
+			"\n",
+			format);
+		return;
+	}
+
+	va_start(args, format);
+
+	printf("%s=", key);
+	vprintf(format, args);
+	printf("\n");
+
+	va_end(args);
+}
+
+/*
+ * Prints out the header, including FW versions and board IDs, of the given
+ * image. Output in a machine-friendly format if show_machine_output is true.
+ */
+static int show_headers_versions(const void *image, bool show_machine_output)
+{
+	// There are 2 FW slots in an image, and each slot has 2 sections, RO
+	// and RW. The 2 slots should have identical FW versions and board IDs.
 	const struct {
 		const char *name;
-		uint32_t    offset;
+		uint32_t offset;
 	} sections[] = {
-		{"RO_A", CONFIG_RO_MEM_OFF},
-		{"RW_A", CONFIG_RW_MEM_OFF},
-		{"RO_B", CHIP_RO_B_MEM_OFF},
-		{"RW_B", CONFIG_RW_B_MEM_OFF}
+		// Slot A
+		{"RO", CONFIG_RO_MEM_OFF},
+		{"RW", CONFIG_RW_MEM_OFF},
+		// Slot B
+		{"RO", CHIP_RO_B_MEM_OFF},
+		{"RW", CONFIG_RW_B_MEM_OFF}
 	};
+	const size_t kNumSlots = 2;
+	const size_t kNumSectionsPerSlot = 2;
+
+	// String representation of FW version (<epoch>:<major>:<minor>), one
+	// string for each FW section.
+	char ro_fw_ver[kNumSlots][MAX_FW_VER_LENGTH];
+	char rw_fw_ver[kNumSlots][MAX_FW_VER_LENGTH];
+
+	struct board_id {
+		uint32_t id;
+		uint32_t mask;
+		uint32_t flags;
+	} bid[kNumSlots];
+
+	char bid_string[MAX_BOARD_ID_LENGTH];
+
 	size_t i;
 
 	for (i = 0; i < ARRAY_SIZE(sections); i++) {
-		const struct SignedHeader *h;
-		size_t j;
-		uint32_t bid;
-		uint32_t bid_mask;
-		uint32_t bid_flags;
+		const struct SignedHeader *h =
+			(const struct SignedHeader *)
+				((uintptr_t)image + sections[i].offset);
+		const size_t slot_idx = i / kNumSectionsPerSlot;
 
-		h = (const struct SignedHeader *)((uintptr_t)image +
-						  sections[i].offset);
-		printf("%s%s:%d.%d.%d", i ? " " : "", sections[i].name,
-		       h->epoch_, h->major_, h->minor_);
-
-		if (sections[i].name[1] != 'W')
+		if (sections[i].name[1] == 'O') {
+			// RO
+			snprintf(ro_fw_ver[slot_idx], MAX_FW_VER_LENGTH,
+				 "%u.%u.%u", h->epoch_, h->major_, h->minor_);
+			// No need to read board ID in an RO section.
 			continue;
-
-		/*
-		 * For read/write sections print the board ID fields'
-		 * contents, which are stored XORed with a padding value.
-		 */
-		bid = h->board_id_type ^ SIGNED_HEADER_PADDING;
-		bid_mask = h->board_id_type_mask ^ SIGNED_HEADER_PADDING;
-		bid_flags = h->board_id_flags ^ SIGNED_HEADER_PADDING;
-
-		/* Beginning of a board ID section of the string. */
-		printf("[");
-
-		/*
-		 * If board ID is an ASCII string (as it ought to be), print
-		 * it as 4 symbols, otherwise print it as an 8 digit hex.
-		 */
-		for (j = 0; j < sizeof(bid); j++)
-			if (!isalnum(((const char *)&bid)[j]))
-				break;
-
-		if (j == sizeof(bid)) {
-			/* Convert it for proper string representation. */
-			bid = be32toh(bid);
-			printf("%.4s", (const char *)&bid);
 		} else {
-			printf("%08x", bid);
+			// RW
+			snprintf(rw_fw_ver[slot_idx], MAX_FW_VER_LENGTH,
+				 "%u.%u.%u", h->epoch_, h->major_, h->minor_);
 		}
 
-		/* Print the rest of the board ID fields. */
-		printf(":%08x:%08x]", bid_mask, bid_flags);
+		/*
+		 * For RW sections, retrieves the board ID fields' contents,
+		 * which are stored XORed with a padding value.
+		 */
+		bid[slot_idx].id = h->board_id_type ^ SIGNED_HEADER_PADDING;
+		bid[slot_idx].mask =
+			h->board_id_type_mask ^ SIGNED_HEADER_PADDING;
+		bid[slot_idx].flags = h->board_id_flags ^ SIGNED_HEADER_PADDING;
 	}
-	printf("\n");
+
+	if (strncmp(ro_fw_ver[0], ro_fw_ver[1], MAX_FW_VER_LENGTH) != 0) {
+		fprintf(stderr,
+			"Error: RO FW versions in the 2 slots do not match.\n");
+		return -1;
+	}
+
+	if (strncmp(rw_fw_ver[0], rw_fw_ver[1], MAX_FW_VER_LENGTH) != 0) {
+		fprintf(stderr,
+			"Error: RW FW versions in the 2 slots do not match.\n");
+		return -1;
+	}
+
+	if (memcmp(&bid[0], &bid[1], sizeof(struct board_id)) != 0) {
+		fprintf(stderr,
+			"Error: board IDs in the 2 slots do not match.\n");
+		return -1;
+	}
+
+	/*
+	 * If board ID is an ASCII string (as it ought to be), print
+	 * it as 4 symbols, otherwise print it as an 8 digit hex.
+	 */
+	for (i = 0; i < sizeof(bid[0].id); ++i)
+		if (!isalnum(((const char *)&bid[0].id)[i]))
+			break;
+
+	if (i == sizeof(bid[0].id)) {
+		bid[0].id = be32toh(bid[0].id);
+		snprintf(bid_string, MAX_BOARD_ID_LENGTH,
+			 "%.4s", (const char *)&bid);
+	} else {
+		snprintf(bid_string, MAX_BOARD_ID_LENGTH, "%08x", bid[0].id);
+	}
+
+	if (show_machine_output) {
+		print_machine_output("IMAGE_RO_FW_VER", "%s", ro_fw_ver[0]);
+		print_machine_output("IMAGE_RW_FW_VER", "%s", rw_fw_ver[0]);
+		print_machine_output("IMAGE_BID_STRING", "%s", bid_string);
+		print_machine_output("IMAGE_BID_MASK", "%08x", bid[0].mask);
+		print_machine_output("IMAGE_BID_FLAGS", "%08x", bid[0].flags);
+	} else {
+		// TODO(garryxiao): remove "_A" from RO and RW after updating
+		// scripts that use gsctool.
+		printf("RO_A:%s RW_A:%s[%s:%08x:%08x]\n",
+		       ro_fw_ver[0], rw_fw_ver[0],
+		       bid_string, bid[0].mask, bid[0].flags);
+	}
 
 	return 0;
 }
@@ -1842,53 +1956,6 @@ static void report_version(void)
 }
 
 /*
- * Machine output is formatted as "key=value", one key-value pair per line, and
- * parsed by other programs (e.g., debugd). The value part should be specified
- * in the printf-like way. For example:
- *
- *           print_machine_output("date", "%d/%d/%d", 2018, 1, 1),
- *
- * which outputs this line in console:
- *
- *           date=2018/1/1
- *
- * The key part should not contain '=' or newline. The value part may contain
- * special characters like spaces, quotes, brackets, but not newlines. The
- * newline character means end of value.
- *
- * Any output format change in this function may require similar changes on the
- * programs that are using this gsctool.
- */
-__attribute__((__format__(__printf__, 2, 3)))
-static void print_machine_output(const char *key, const char *format, ...)
-{
-	va_list args;
-
-	if (strchr(key, '=') != NULL || strchr(key, '\n') != NULL) {
-		fprintf(stderr,
-			"Error: key %s contains '=' or a newline character.\n",
-			key);
-		return;
-	}
-
-	if (strchr(format, '\n') != NULL) {
-		fprintf(stderr,
-			"Error: value format %s contains a newline character. "
-			"\n",
-			format);
-		return;
-	}
-
-	va_start(args, format);
-
-	printf("%s=", key);
-	vprintf(format, args);
-	printf("\n");
-
-	va_end(args);
-}
-
-/*
  * Either change or query TPM mode value.
  */
 static int process_tpm_mode(struct transfer_descriptor *td,
@@ -2161,7 +2228,7 @@ int main(int argc, char *argv[])
 		fetch_header_versions(data);
 
 		if (binary_vers)
-			exit(show_headers_versions(data));
+			exit(show_headers_versions(data, show_machine_output));
 	} else {
 		if (optind < argc)
 			printf("Ignoring binary image %s\n", argv[optind]);
