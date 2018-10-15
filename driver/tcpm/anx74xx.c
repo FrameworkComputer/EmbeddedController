@@ -377,8 +377,8 @@ static int anx74xx_mux_aux_to_sbu(int port, int polarity, int enabled)
 
 static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 {
-	int reg;
-	int pin_cfg = 0;
+	int ctrl5;
+	int ctrl1 = 0;
 	int rv;
 	int port = i2c_addr;
 
@@ -387,28 +387,36 @@ static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 		return anx74xx_tcpm_mux_exit(port);
 	}
 
-	rv = mux_read(port, ANX74XX_REG_ANALOG_CTRL_5, &reg);
+	rv = mux_read(port, ANX74XX_REG_ANALOG_CTRL_5, &ctrl5);
 	if (rv)
 		return EC_ERROR_UNKNOWN;
-	reg &= 0x0f;
+	ctrl5 &= 0x0f;
 
 	if (mux_state & MUX_USB_ENABLED) {
 		/* Set pin assignment D */
 		if (mux_state & MUX_POLARITY_INVERTED) {
-			pin_cfg = ANX74XX_REG_MUX_DP_MODE_BDF_CC2;
-			reg |= ANX74XX_REG_MUX_SSTX_B;
+			ctrl1 = (ANX74XX_REG_MUX_ML0_RX1 |
+				 ANX74XX_REG_MUX_ML1_TX1 |
+				 ANX74XX_REG_MUX_SSRX_RX2);
+			ctrl5 |= ANX74XX_REG_MUX_SSTX_TX2;
 		} else {
-			pin_cfg = ANX74XX_REG_MUX_DP_MODE_BDF_CC1;
-			reg |= ANX74XX_REG_MUX_SSTX_A;
+			ctrl1 = (ANX74XX_REG_MUX_ML0_RX2 |
+				 ANX74XX_REG_MUX_ML1_TX2 |
+				 ANX74XX_REG_MUX_SSRX_RX1);
+			ctrl5 |= ANX74XX_REG_MUX_SSTX_TX1;
 		}
 	} else if (mux_state & MUX_DP_ENABLED) {
 		/* Set pin assignment C */
 		if (mux_state & MUX_POLARITY_INVERTED) {
-			pin_cfg = ANX74XX_REG_MUX_DP_MODE_ACE_CC2;
-			reg |= ANX74XX_REG_MUX_ML2_B;
+			ctrl1 = (ANX74XX_REG_MUX_ML0_RX1 |
+				 ANX74XX_REG_MUX_ML1_TX1 |
+				 ANX74XX_REG_MUX_ML3_RX2);
+			ctrl5 |= ANX74XX_REG_MUX_ML2_TX2;
 		} else {
-			pin_cfg = ANX74XX_REG_MUX_DP_MODE_ACE_CC1;
-			reg |= ANX74XX_REG_MUX_ML2_A;
+			ctrl1 = (ANX74XX_REG_MUX_ML0_RX2 |
+				 ANX74XX_REG_MUX_ML1_TX2 |
+				 ANX74XX_REG_MUX_ML3_RX1);
+			ctrl5 |= ANX74XX_REG_MUX_ML2_TX1;
 		}
 	} else if (!mux_state) {
 		return anx74xx_tcpm_mux_exit(port);
@@ -425,9 +433,9 @@ static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 		return EC_ERROR_UNKNOWN;
 
 	/* Write updated pin assignment */
-	rv = mux_write(port, ANX74XX_REG_ANALOG_CTRL_1, pin_cfg);
+	rv = mux_write(port, ANX74XX_REG_ANALOG_CTRL_1, ctrl1);
 	/* Write Rswitch config bits */
-	rv |= mux_write(port, ANX74XX_REG_ANALOG_CTRL_5, reg);
+	rv |= mux_write(port, ANX74XX_REG_ANALOG_CTRL_5, ctrl5);
 	if (rv)
 		return EC_ERROR_UNKNOWN;
 
