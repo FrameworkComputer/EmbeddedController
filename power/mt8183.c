@@ -168,6 +168,12 @@ static void power_seq_run(const struct power_seq_op *power_seq_ops,
 
 enum power_state power_handle_state(enum power_state state)
 {
+	/*
+	 * Set if we already had a rising edge on AP_SYS_RST_L. If so, any
+	 * subsequent boot attempt will require an EC reset.
+	 */
+	static int booted;
+
 	/* Retry S5->S3 transition, if not zero. */
 	static int s5s3_retry;
 
@@ -218,8 +224,8 @@ enum power_state power_handle_state(enum power_state state)
 			gpio_set_level(GPIO_PMIC_EN_ODL, 1);
 		}
 
-		/* If EC is in RW, reboot to RO. */
-		if (system_get_image_copy() != SYSTEM_IMAGE_RO) {
+		/* If EC is in RW, or has already booted once, reboot to RO. */
+		if (system_get_image_copy() != SYSTEM_IMAGE_RO || booted) {
 			/*
 			 * TODO(b:109850749): How quickly does the EC come back
 			 * up? Would IN_PGOOD_PMIC be ready by the time we are
@@ -227,7 +233,7 @@ enum power_state power_handle_state(enum power_state state)
 			 * after debounce (32 ms), minus PMIC_EN_PULSE_MS above.
 			 * It would be good to avoid another _EN pulse above.
 			 */
-			chipset_reset(CHIPSET_RESET_INIT);
+			chipset_reset(CHIPSET_RESET_AP_REQ);
 		}
 
 		/*
@@ -245,6 +251,7 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S5G3;
 		}
 
+		booted = 1;
 		/* Enable S3 power supplies, release AP reset. */
 		power_seq_run(s5s3_power_seq, ARRAY_SIZE(s5s3_power_seq));
 
