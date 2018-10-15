@@ -393,18 +393,24 @@ static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 	ctrl5 &= 0x0f;
 
 	if (mux_state & MUX_USB_ENABLED) {
-		/* Set pin assignment D */
+		/* Connect USB SS switches */
 		if (mux_state & MUX_POLARITY_INVERTED) {
-			ctrl1 = (ANX74XX_REG_MUX_ML0_RX1 |
-				 ANX74XX_REG_MUX_ML1_TX1 |
-				 ANX74XX_REG_MUX_SSRX_RX2);
+			ctrl1 = ANX74XX_REG_MUX_SSRX_RX2;
 			ctrl5 |= ANX74XX_REG_MUX_SSTX_TX2;
 		} else {
-			ctrl1 = (ANX74XX_REG_MUX_ML0_RX2 |
-				 ANX74XX_REG_MUX_ML1_TX2 |
-				 ANX74XX_REG_MUX_SSRX_RX1);
+			ctrl1 = ANX74XX_REG_MUX_SSRX_RX1;
 			ctrl5 |= ANX74XX_REG_MUX_SSTX_TX1;
 		}
+		if (mux_state & MUX_DP_ENABLED) {
+			/* Set pin assignment D */
+			if (mux_state & MUX_POLARITY_INVERTED)
+				ctrl1 |= (ANX74XX_REG_MUX_ML0_RX1 |
+					  ANX74XX_REG_MUX_ML1_TX1);
+			else
+				ctrl1 |= (ANX74XX_REG_MUX_ML0_RX2 |
+					  ANX74XX_REG_MUX_ML1_TX2);
+		}
+		/* Keep ML0/ML1 unconnected if DP is not enabled */
 	} else if (mux_state & MUX_DP_ENABLED) {
 		/* Set pin assignment C */
 		if (mux_state & MUX_POLARITY_INVERTED) {
