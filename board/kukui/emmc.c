@@ -35,6 +35,7 @@
 #include "endian.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -103,16 +104,19 @@ static void bootblock_transfer(void)
 /* Abort an ongoing transfer. */
 static void bootblock_stop(void)
 {
+	const uint32_t timeout = 1 * MSEC;
+	uint32_t start;
+
 	dma_disable(STM32_DMAC_SPI_EMMC_TX);
 
 	/*
-	 * Wait a bit to for DMA to stop writing (we can't really wait for the
-	 * buffer to get empty, as the bus may not be clocked anymore).
-	 *
-	 * TODO(b:117253718): For some reason, a delay >=200us is necessary,
-	 * else the SPI/DMA skips bytes when the transfer is resumed.
+	 * Wait for SPI FIFO to become empty.
+	 * We timeout after 1 ms in case the bus is not clocked anymore.
 	 */
-	udelay(200);
+	start = __hw_clock_source_read();
+	while (STM32_SPI_EMMC_REGS->sr & STM32_SPI_SR_FTLVL &&
+			__hw_clock_source_read() - start < timeout)
+		;
 
 	/* Then flush SPI FIFO, and make sure DAT line stays idle (high). */
 	STM32_SPI_EMMC_REGS->dr = 0xff;
@@ -266,8 +270,8 @@ static void emmc_disable_spi(void)
 	hook_call_deferred(&emmc_check_status_data, -1);
 
 	gpio_disable_interrupt(GPIO_EMMC_CMD);
-	/* Disable any pending transfer. */
-	bootblock_stop();
+	/* Disable TX DMA. */
+	dma_disable(STM32_DMAC_SPI_EMMC_TX);
 	/* Disable internal chip select. */
 	STM32_SPI_EMMC_REGS->cr1 |= STM32_SPI_CR1_SSI;
 	/* Disable RX DMA. */
