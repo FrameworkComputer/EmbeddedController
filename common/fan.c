@@ -450,8 +450,9 @@ static void pwm_fan_init(void)
 		memcpy(&state, prev, sizeof(state));
 	} else {
 		memset(&state, 0, sizeof(state));
-		state.rpm = fan_percent_to_rpm(FAN_CH(fan),
-					       CONFIG_FAN_INIT_SPEED);
+		for (fan = 0; fan < CONFIG_FANS; fan++)
+			state.rpm = fan_percent_to_rpm(FAN_CH(fan),
+						       CONFIG_FAN_INIT_SPEED);
 	}
 
 	for (fan = 0; fan < CONFIG_FANS; fan++) {
