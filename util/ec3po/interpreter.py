@@ -347,7 +347,11 @@ class Interpreter(object):
     self.dbg_pipe.send(data)
 
   def HandleUserData(self):
-    """Handle any incoming commands from the user."""
+    """Handle any incoming commands from the user.
+
+    Raises:
+      EOFError: Allowed to propagate through from self.cmd_pipe.recv().
+    """
     self.logger.log(1, 'Command data available.  Begin processing.')
     data = self.cmd_pipe.recv()
     # Process the command.
@@ -418,11 +422,17 @@ def StartLoop(interp, shutdown_pipe=None):
 
         # Handle any commands from the user.
         elif obj is interp.cmd_pipe:
-          interp.HandleUserData()
+          try:
+            interp.HandleUserData()
+          except EOFError:
+            interp.logger.debug(
+                'ec3po interpreter received EOF from cmd_pipe in '
+                'HandleUserData()')
+            continue_looping = False
 
         elif obj is shutdown_pipe:
           interp.logger.debug(
-              'ec3po console received shutdown pipe unblocked notification')
+              'ec3po interpreter received shutdown pipe unblocked notification')
           continue_looping = False
 
       for obj in writeable:

@@ -443,6 +443,9 @@ class Console(object):
     Returns:
       is_enhanced: A boolean indicating whether the EC responded to the
         interrogation correctly.
+
+    Raises:
+      EOFError: Allowed to propagate through from self.dbg_pipe.recv().
     """
     # Send interrogation byte and wait for the response.
     self.logger.debug('Performing interrogation.')
@@ -476,6 +479,10 @@ class Console(object):
 
     Args:
       byte: An integer representing the character received from the user.
+
+    Raises:
+      EOFError: Allowed to propagate through from self.CheckForEnhancedECImage()
+          i.e. from self.dbg_pipe.recv().
     """
     fd = self.master_pty
 
@@ -876,8 +883,15 @@ def StartLoop(console, command_active, shutdown_pipe=None):
               console.logger.debug('Input from user: %s, locked:%s',
                   str(line).strip(), command_active.value)
               for i in line:
-                # Handle each character as it arrives.
-                console.HandleChar(i)
+                try:
+                  # Handle each character as it arrives.
+                  console.HandleChar(i)
+                except EOFError:
+                  console.logger.debug(
+                      'ec3po console received EOF from dbg_pipe in HandleChar()'
+                      ' while reading console.master_pty')
+                  continue_looping = False
+                  break
             except OSError:
               console.logger.debug('Ptm read failed, probably user disconnect.')
 
@@ -889,34 +903,51 @@ def StartLoop(console, command_active, shutdown_pipe=None):
             console.logger.debug('Input from interface: %s, locked:%s',
                 str(line).strip(), command_active.value)
             for i in line:
-              # Handle each character as it arrives.
-              console.HandleChar(i)
+              try:
+                # Handle each character as it arrives.
+                console.HandleChar(i)
+              except EOFError:
+                console.logger.debug(
+                    'ec3po console received EOF from dbg_pipe in HandleChar()'
+                    ' while reading console.interface_pty')
+                continue_looping = False
+                break
 
         elif obj is console.cmd_pipe:
-          data = console.cmd_pipe.recv()
-          # Write it to the user console.
-          console.logger.debug('|CMD|-%s->\'%s\'',
-              ('u' if master_connected else '') +
-              ('i' if command_active.value else ''), data.strip())
-          if master_connected:
-            os.write(console.master_pty, data)
-          if command_active.value:
-            os.write(console.interface_pty, data)
-
-        elif obj is console.dbg_pipe:
-          data = console.dbg_pipe.recv()
-          if console.interrogation_mode == 'auto':
-            # Search look buffer for enhanced EC image string.
-            console.CheckBufferForEnhancedImage(data)
-          # Write it to the user console.
-          if len(data) > 1:
-            console.logger.debug('|DBG|-%s->\'%s\'',
+          try:
+            data = console.cmd_pipe.recv()
+          except EOFError:
+            console.logger.debug('ec3po console received EOF from cmd_pipe')
+            continue_looping = False
+          else:
+            # Write it to the user console.
+            console.logger.debug('|CMD|-%s->\'%s\'',
                 ('u' if master_connected else '') +
                 ('i' if command_active.value else ''), data.strip())
-          if master_connected:
-            os.write(console.master_pty, data)
-          if command_active.value:
-            os.write(console.interface_pty, data)
+            if master_connected:
+              os.write(console.master_pty, data)
+            if command_active.value:
+              os.write(console.interface_pty, data)
+
+        elif obj is console.dbg_pipe:
+          try:
+            data = console.dbg_pipe.recv()
+          except EOFError:
+            console.logger.debug('ec3po console received EOF from dbg_pipe')
+            continue_looping = False
+          else:
+            if console.interrogation_mode == 'auto':
+              # Search look buffer for enhanced EC image string.
+              console.CheckBufferForEnhancedImage(data)
+            # Write it to the user console.
+            if len(data) > 1:
+              console.logger.debug('|DBG|-%s->\'%s\'',
+                  ('u' if master_connected else '') +
+                  ('i' if command_active.value else ''), data.strip())
+            if master_connected:
+              os.write(console.master_pty, data)
+            if command_active.value:
+              os.write(console.interface_pty, data)
 
         elif obj is shutdown_pipe:
           console.logger.debug(
