@@ -934,40 +934,23 @@ void tpm_rst_deasserted(enum gpio_signal signal)
 
 void assert_sys_rst(void)
 {
-	/*
-	 * We don't have a good (any?) way to easily look up the pinmux/gpio
-	 * assignments in gpio.inc, so they're hard-coded in this routine. This
-	 * assertion is just to ensure it hasn't changed.
-	 */
-	ASSERT(GREAD(PINMUX, GPIO0_GPIO4_SEL) == GC_PINMUX_DIOM0_SEL);
-
-	/* Set SYS_RST_L_OUT as an output, connected to the pad */
-	GWRITE(PINMUX, DIOM0_SEL, GC_PINMUX_GPIO0_GPIO4_SEL);
-	gpio_set_flags(GPIO_SYS_RST_L_OUT, GPIO_OUT_HIGH);
-
 	/* Assert it */
 	gpio_set_level(GPIO_SYS_RST_L_OUT, 0);
 }
 
 void deassert_sys_rst(void)
 {
-	ASSERT(GREAD(PINMUX, GPIO0_GPIO4_SEL) == GC_PINMUX_DIOM0_SEL);
-
-	/* Deassert SYS_RST_L */
+	/* Deassert it */
 	gpio_set_level(GPIO_SYS_RST_L_OUT, 1);
-
-	/* Set SYS_RST_L_OUT as an input, disconnected from the pad */
-	gpio_set_flags(GPIO_SYS_RST_L_OUT, GPIO_INPUT);
-	GWRITE(PINMUX, DIOM0_SEL, 0);
 }
 
 int is_sys_rst_asserted(void)
 {
-	return (GREAD(PINMUX, DIOM0_SEL) == GC_PINMUX_GPIO0_GPIO4_SEL)
-#ifdef CONFIG_CMD_GPIO_EXTENDED
-		&& (gpio_get_flags(GPIO_SYS_RST_L_OUT) & GPIO_OUTPUT)
-#endif
-		&& (gpio_get_level(GPIO_SYS_RST_L_OUT) == 0);
+	/*
+	 * SYS_RST_L is pseudo open drain. It is only an output when it's
+	 * asserted.
+	 */
+	return gpio_get_flags(GPIO_SYS_RST_L_OUT) & GPIO_OUTPUT;
 }
 
 /**
