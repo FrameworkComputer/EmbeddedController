@@ -16,9 +16,12 @@
 #include "gpio.h"
 #include "test_util.h"
 #include "timer.h"
+#include "keyboard_config.h"
 #include "keyboard_protocol.h"
 
 #define UNCHANGED -1
+
+uint8_t keyboard_cols = KEYBOARD_COLS_MAX;
 
 static const struct button_config *button_vol_down =
 	&buttons[BUTTON_VOLUME_DOWN];

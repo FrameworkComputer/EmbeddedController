@@ -8,7 +8,7 @@
  * input and output entries in the board's gpio_list[]. Each set of inputs or
  * outputs must be listed in consecutive, increasing order so that scan loops
  * can iterate beginning at KB_IN00 or KB_OUT00 for however many GPIOs are
- * utilized (KEYBOARD_ROWS or KEYBOARD_COLS).
+ * utilized (KEYBOARD_ROWS or KEYBOARD_COLS_MAX).
  */
 
 #include "gpio.h"
@@ -28,7 +28,7 @@ void keyboard_raw_init(void)
 
 	/* Initialize col_mask */
 	col_mask = 0;
-	for (i = 0; i < KEYBOARD_COLS; i++)
+	for (i = 0; i < keyboard_cols; i++)
 		col_mask |= gpio_list[GPIO_KB_OUT00 + i].mask;
 
 	/* Ensure interrupts are disabled */

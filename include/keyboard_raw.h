@@ -18,7 +18,7 @@
 enum keyboard_column_index {
 	KEYBOARD_COLUMN_ALL = -2,  /* Drive all columns */
 	KEYBOARD_COLUMN_NONE = -1, /* Drive no columns (tri-state all) */
-	/* 0 ~ KEYBOARD_COLS-1 for the corresponding column */
+	/* 0 ~ KEYBOARD_COLS_MAX-1 for the corresponding column */
 };
 
 /**

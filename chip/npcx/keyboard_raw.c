@@ -101,7 +101,7 @@ test_mockable void keyboard_raw_drive_column(int col)
 	}
 	/* Set KBSOUT to zero to detect key-press */
 	else if (col == KEYBOARD_COLUMN_ALL) {
-		mask = ~((1 << KEYBOARD_COLS) - 1);
+		mask = ~((1 << keyboard_cols) - 1);
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 		gpio_set_level(GPIO_KBD_KSO2, 1);
 #endif

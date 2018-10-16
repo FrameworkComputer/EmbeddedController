@@ -31,7 +31,7 @@
 		old = fifo_add_count; \
 	} while (0)
 
-static uint8_t mock_state[KEYBOARD_COLS];
+static uint8_t mock_state[KEYBOARD_COLS_MAX];
 static int column_driven;
 static int fifo_add_count;
 static int lid_open;
@@ -60,7 +60,7 @@ int keyboard_raw_read_rows(void)
 	if (column_driven == KEYBOARD_COLUMN_NONE) {
 		return 0;
 	} else if (column_driven == KEYBOARD_COLUMN_ALL) {
-		for (i = 0; i < KEYBOARD_COLS; ++i)
+		for (i = 0; i < KEYBOARD_COLS_MAX; ++i)
 			r |= mock_state[i];
 		return r;
 	} else {

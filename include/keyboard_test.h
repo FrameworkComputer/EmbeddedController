@@ -19,7 +19,7 @@ struct keyscan_item {
 	timestamp_t abs_time;	/* absolute timestamp to present this item */
 	uint32_t time_us;	/* time for this item relative to test start */
 	uint8_t done;		/* 1 if we managed to present this */
-	uint8_t scan[KEYBOARD_COLS];
+	uint8_t scan[KEYBOARD_COLS_MAX];
 };
 
 /**

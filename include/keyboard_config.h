@@ -16,8 +16,15 @@
 #endif
 
 /* Keyboard matrix is 13 output columns x 8 input rows */
-#define KEYBOARD_COLS 13
+/*
+ * KEYBOARD_COLS_MAX has the build time column size. It's used to allocate
+ * exact spaces for arrays. Actual keyboard scanning is done using
+ * keyboard_cols, which holds a runtime column size.
+ */
+#define KEYBOARD_COLS_MAX 13
 #define KEYBOARD_ROWS 8
+
+extern uint8_t keyboard_cols;
 
 #define KEYBOARD_ROW_TO_MASK(r) (1 << (r))
 

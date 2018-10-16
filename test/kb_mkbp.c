@@ -16,7 +16,7 @@
 #include "test_util.h"
 #include "util.h"
 
-static uint8_t state[KEYBOARD_COLS];
+static uint8_t state[KEYBOARD_COLS_MAX];
 static int ec_int_level;
 
 static const char *action[2] = {"release", "press"};
@@ -48,7 +48,7 @@ int lid_is_open(void)
 
 void clear_state(void)
 {
-	memset(state, 0xff, KEYBOARD_COLS);
+	memset(state, 0xff, KEYBOARD_COLS_MAX);
 }
 
 void set_state(int c, int r, int pressed)
@@ -89,7 +89,7 @@ int verify_key(int c, int r, int pressed)
 		if (host_command_process(&args) != EC_RES_SUCCESS)
 			return 0;
 
-		for (i = 0; i < KEYBOARD_COLS; ++i)
+		for (i = 0; i < KEYBOARD_COLS_MAX; ++i)
 			if (event.data.key_matrix[i] != state[i])
 				return 0;
 	} else {

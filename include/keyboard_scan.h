@@ -30,7 +30,7 @@ struct keyboard_scan_config {
 	/* Revert to interrupt mode after no keyboard activity for this long */
 	uint32_t poll_timeout_us;
 	/* Mask with 1 bits only for keys that actually exist */
-	uint8_t actual_key_mask[KEYBOARD_COLS];
+	uint8_t actual_key_mask[KEYBOARD_COLS_MAX];
 };
 
 /**
@@ -78,7 +78,7 @@ static inline uint32_t keyboard_scan_get_boot_keys(void)
 
 /**
  * Return a pointer to the current debounced keyboard matrix state, which is
- * KEYBOARD_COLS bytes long.
+ * KEYBOARD_COLS_MAX bytes long.
  */
 const uint8_t *keyboard_scan_get_state(void);
 

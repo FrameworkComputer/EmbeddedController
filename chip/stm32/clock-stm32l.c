@@ -281,7 +281,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	 *
 	 * A little hacky to do this here.
 	 */
-	for (i = GPIO_KB_OUT00; i < GPIO_KB_OUT00 + KEYBOARD_COLS; i++)
+	for (i = GPIO_KB_OUT00; i < GPIO_KB_OUT00 + KEYBOARD_COLS_MAX; i++)
 		gpio_set_flags(i, GPIO_INPUT);
 
 	ccprints("fake hibernate. waits for power button/lid/RTC/AC");

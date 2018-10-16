@@ -32,7 +32,7 @@ struct matrix_entry {
 
 struct keyscan_test_item {
 	uint32_t beat;			/* Beat number */
-	uint8_t scan[KEYBOARD_COLS];	/* Scan data */
+	uint8_t scan[KEYBOARD_COLS_MAX];	/* Scan data */
 };
 
 /* A single test, consisting of a list of key scans and expected ascii input */
@@ -103,7 +103,7 @@ static int keyscan_read_fdt_matrix(struct keyscan_info *keyscan,
 
 		/* Hard-code some sanity limits for now */
 		if (matrix->row >= KEYBOARD_ROWS ||
-		    matrix->col >= KEYBOARD_COLS) {
+		    matrix->col >= KEYBOARD_COLS_MAX) {
 			fprintf(stderr, "Matrix pos out of range (%d,%d)\n",
 				matrix->row, matrix->col);
 			fclose(f);

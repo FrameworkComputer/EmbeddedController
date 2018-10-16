@@ -82,14 +82,16 @@ static const struct boot_key_entry boot_key_list[] = {
 static uint32_t boot_key_value = BOOT_KEY_NONE;
 #endif
 
+uint8_t keyboard_cols = KEYBOARD_COLS_MAX;
+
 /* Debounced key matrix */
-static uint8_t __bss_slow debounced_state[KEYBOARD_COLS];
+static uint8_t __bss_slow debounced_state[KEYBOARD_COLS_MAX];
 /* Matrix from previous scan */
-static uint8_t __bss_slow prev_state[KEYBOARD_COLS];
+static uint8_t __bss_slow prev_state[KEYBOARD_COLS_MAX];
 /* Mask of keys being debounced */
-static uint8_t __bss_slow debouncing[KEYBOARD_COLS];
+static uint8_t __bss_slow debouncing[KEYBOARD_COLS_MAX];
 /* Keys simulated-pressed */
-static uint8_t __bss_slow simulated_key[KEYBOARD_COLS];
+static uint8_t __bss_slow simulated_key[KEYBOARD_COLS_MAX];
 #ifdef CONFIG_KEYBOARD_LANGUAGE_ID
 static uint8_t __bss_slow keyboard_id[KEYBOARD_IDS];
 #endif
@@ -100,7 +102,7 @@ static uint32_t __bss_slow scan_time[SCAN_TIME_COUNT];
 static int __bss_slow scan_time_index;
 
 /* Index into scan_time[] when each key started debouncing */
-static uint8_t __bss_slow scan_edge_index[KEYBOARD_COLS][KEYBOARD_ROWS];
+static uint8_t __bss_slow scan_edge_index[KEYBOARD_COLS_MAX][KEYBOARD_ROWS];
 
 /* Minimum delay between keyboard scans based on current clock frequency */
 static uint32_t __bss_slow post_scan_clock_us;
@@ -151,7 +153,7 @@ static void print_state(const uint8_t *state, const char *msg)
 	int c;
 
 	CPRINTF("[%T KB %s:", msg);
-	for (c = 0; c < KEYBOARD_COLS; c++) {
+	for (c = 0; c < keyboard_cols; c++) {
 		if (state[c])
 			CPRINTF(" %02x", state[c]);
 		else
@@ -227,7 +229,7 @@ static void simulate_key(int row, int col, int pressed)
  * Used in pre-init, so must not make task-switching-dependent calls; udelay()
  * is ok because it's a spin-loop.
  *
- * @param state		Destination for new state (must be KEYBOARD_COLS long).
+ * @param state		Destination for new state (must be KEYBOARD_COLS_MAX long).
  *
  * @return 1 if at least one key is pressed, else zero.
  */
@@ -237,7 +239,7 @@ static int read_matrix(uint8_t *state)
 	uint8_t r;
 	int pressed = 0;
 
-	for (c = 0; c < KEYBOARD_COLS; c++) {
+	for (c = 0; c < keyboard_cols; c++) {
 		/*
 		 * Stop if scanning becomes disabled. Note, scanning is enabled
 		 * on boot by default.
@@ -294,8 +296,11 @@ static void read_matrix_id(uint8_t *id)
 	int c;
 
 	for (c = 0; c < KEYBOARD_IDS; c++) {
-		/* Select the ID pin, then wait a bit for it to settle */
-		keyboard_raw_drive_column(KEYBOARD_COLS + c);
+		/* Select the ID pin, then wait a bit for it to settle.
+		 * Caveat: If a keyboard maker puts ID pins right after scan
+		 * columns, we can't support variable column size with a single
+		 * image. */
+		keyboard_raw_drive_column(KEYBOARD_COLS_MAX + c);
 		udelay(keyscan_config.output_settle_us);
 
 		/* Read the row state */
@@ -378,7 +383,7 @@ static int check_runtime_keys(const uint8_t *state)
 	 * pressed for volume up and alt, so if only one more key is pressed
 	 * there will be exactly 3 non-zero columns.
 	 */
-	for (c = 0; c < KEYBOARD_COLS; c++) {
+	for (c = 0; c < keyboard_cols; c++) {
 		if (state[c])
 			num_press++;
 	}
@@ -419,11 +424,11 @@ static int has_ghosting(const uint8_t *state)
 {
 	int c, c2;
 
-	for (c = 0; c < KEYBOARD_COLS; c++) {
+	for (c = 0; c < keyboard_cols; c++) {
 		if (!state[c])
 			continue;
 
-		for (c2 = c + 1; c2 < KEYBOARD_COLS; c2++) {
+		for (c2 = c + 1; c2 < keyboard_cols; c2++) {
 			/*
 			 * A little bit of cleverness here.  Ghosting happens
 			 * if 2 columns share at least 2 keys.  So we OR the
@@ -453,7 +458,7 @@ static int check_keys_changed(uint8_t *state)
 	int any_pressed = 0;
 	int c, i;
 	int any_change = 0;
-	static uint8_t __bss_slow new_state[KEYBOARD_COLS];
+	static uint8_t __bss_slow new_state[KEYBOARD_COLS_MAX];
 	uint32_t tnow = get_time().le.lo;
 
 	/* Save the current scan time */
@@ -469,7 +474,7 @@ static int check_keys_changed(uint8_t *state)
 		return any_pressed;
 
 	/* Check for changes between previous scan and this one */
-	for (c = 0; c < KEYBOARD_COLS; c++) {
+	for (c = 0; c < keyboard_cols; c++) {
 		int diff = new_state[c] ^ prev_state[c];
 
 		if (!diff)
@@ -485,7 +490,7 @@ static int check_keys_changed(uint8_t *state)
 	}
 
 	/* Check for keys which are done debouncing */
-	for (c = 0; c < KEYBOARD_COLS; c++) {
+	for (c = 0; c < keyboard_cols; c++) {
 		int debc = debouncing[c];
 
 		if (!debc)
@@ -567,7 +572,7 @@ static int check_keys_changed(uint8_t *state)
  */
 static uint32_t check_key_list(const uint8_t *state)
 {
-	uint8_t curr_state[KEYBOARD_COLS];
+	uint8_t curr_state[KEYBOARD_COLS_MAX];
 	int c;
 	uint32_t boot_key_mask = BOOT_KEY_NONE;
 	const struct boot_key_entry *k;
@@ -580,13 +585,13 @@ static uint32_t check_key_list(const uint8_t *state)
 	 * Check if KSI2 or KSI3 is asserted for all columns due to power
 	 * button hold, and ignore it if so.
 	 */
-	for (c = 0; c < KEYBOARD_COLS; c++)
+	for (c = 0; c < keyboard_cols; c++)
 		if ((keyscan_config.actual_key_mask[c] & KEYBOARD_MASK_PWRBTN)
 		    && !(curr_state[c] & KEYBOARD_MASK_PWRBTN))
 			break;
 
-	if (c == KEYBOARD_COLS)
-		for (c = 0; c < KEYBOARD_COLS; c++)
+	if (c == keyboard_cols)
+		for (c = 0; c < keyboard_cols; c++)
 			curr_state[c] &= ~KEYBOARD_MASK_PWRBTN;
 #endif
 
@@ -602,7 +607,7 @@ static uint32_t check_key_list(const uint8_t *state)
 	}
 
 	/* If any other key was pressed, ignore all boot keys. */
-	for (c = 0; c < KEYBOARD_COLS; c++) {
+	for (c = 0; c < keyboard_cols; c++) {
 		if (curr_state[c])
 			return BOOT_KEY_NONE;
 	}
@@ -844,7 +849,7 @@ static int mkbp_command_simulate_key(struct host_cmd_handler_args *args)
 	if (system_is_locked())
 		return EC_RES_ACCESS_DENIED;
 
-	if (p->col >= KEYBOARD_COLS || p->row >= KEYBOARD_ROWS)
+	if (p->col >= keyboard_cols || p->row >= KEYBOARD_ROWS)
 		return EC_RES_INVALID_PARAM;
 
 	simulate_key(p->row, p->col, p->pressed);
@@ -933,7 +938,7 @@ static int command_keyboard_press(int argc, char **argv)
 		int i, j;
 
 		ccputs("Simulated keys:\n");
-		for (i = 0; i < KEYBOARD_COLS; ++i) {
+		for (i = 0; i < keyboard_cols; ++i) {
 			if (simulated_key[i] == 0)
 				continue;
 			for (j = 0; j < KEYBOARD_ROWS; ++j)
@@ -946,7 +951,7 @@ static int command_keyboard_press(int argc, char **argv)
 		char *e;
 
 		c = strtoi(argv[1], &e, 0);
-		if (*e || c < 0 || c >= KEYBOARD_COLS)
+		if (*e || c < 0 || c >= keyboard_cols)
 			return EC_ERROR_PARAM1;
 
 		r = strtoi(argv[2], &e, 0);
