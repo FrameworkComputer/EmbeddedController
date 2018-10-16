@@ -126,8 +126,14 @@ static int syv682x_vbus_source_enable(int port, int enable)
 			    SYV682X_CONTROL_1_PWR_ENB);
 		/* Disable HV Sink path */
 		regval |= SYV682X_CONTROL_1_HV_DR;
-	} else {
+	} else if (flags[port] & SYV682X_FLAGS_SOURCE_ENABLED) {
 		/*
+		 * For the disable case, make sure that VBUS was being sourced
+		 * proir to disabling the source path. Because the source/sink
+		 * paths can't be independently disabled, and this function will
+		 * get called as part of USB PD initialization, setting the
+		 * PWR_ENB always can lead to broken dead battery behavior.
+		 *
 		 * No need to change the voltage path or channel direction. But,
 		 * turn both paths off.
 		 */
