@@ -59,10 +59,7 @@
 
 void pd_mcu_interrupt(enum gpio_signal signal)
 {
-#ifdef HAS_TASK_PDCMD
-	/* Exchange status with PD MCU to determine interrupt cause */
-	host_command_pd_send_status(0);
-#endif
+	schedule_deferred_pd_interrupt(0 /* port */);
 }
 
 void deferred_reset_pd_mcu(void);
