@@ -694,6 +694,15 @@ static inline void set_state(int port, enum pd_states next_state)
 		/* Clear the SNK_READY holdoff timer. */
 		pd[port].snk_ready_holdoff_timer = 0;
 
+		/*
+		 * We should not clear any flags when transitioning back to the
+		 * disconnected state from the debounce state as the two states
+		 * here are really the same states in the state diagram.
+		 */
+		if (last_state != PD_STATE_SNK_DISCONNECTED_DEBOUNCE &&
+		    last_state != PD_STATE_SRC_DISCONNECTED_DEBOUNCE)
+			pd[port].flags &= ~PD_FLAGS_RESET_ON_DISCONNECT_MASK;
+
 		/* Clear the input current limit */
 		pd_set_input_current_limit(port, 0, 0);
 #ifdef CONFIG_CHARGE_MANAGER
@@ -733,7 +742,6 @@ static inline void set_state(int port, enum pd_states next_state)
 		pd[port].rev = PD_REV30;
 #endif
 		pd[port].dev_id = 0;
-		pd[port].flags &= ~PD_FLAGS_RESET_ON_DISCONNECT_MASK;
 #ifdef CONFIG_CHARGE_MANAGER
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 #endif
