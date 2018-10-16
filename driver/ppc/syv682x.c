@@ -129,7 +129,7 @@ static int syv682x_vbus_source_enable(int port, int enable)
 	} else if (flags[port] & SYV682X_FLAGS_SOURCE_ENABLED) {
 		/*
 		 * For the disable case, make sure that VBUS was being sourced
-		 * proir to disabling the source path. Because the source/sink
+		 * prior to disabling the source path. Because the source/sink
 		 * paths can't be independently disabled, and this function will
 		 * get called as part of USB PD initialization, setting the
 		 * PWR_ENB always can lead to broken dead battery behavior.
@@ -148,6 +148,14 @@ static int syv682x_vbus_source_enable(int port, int enable)
 		flags[port] |= SYV682X_FLAGS_SOURCE_ENABLED;
 	else
 		flags[port] &= ~SYV682X_FLAGS_SOURCE_ENABLED;
+
+#if defined(CONFIG_USB_CHARGER) && defined(CONFIG_USB_PD_VBUS_DETECT_PPC)
+	/*
+	 * Since the VBUS state could be changing here, need to wake the
+	 * USB_CHG_N task so that BC 1.2 detection will be triggered.
+	 */
+	usb_charger_vbus_change(port, enable);
+#endif
 
 	return EC_SUCCESS;
 }
