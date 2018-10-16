@@ -27,6 +27,7 @@
 #include "switch.h"
 #include "system.h"
 #include "uart.h"
+#include "usb_pd.h"
 #include "util.h"
 
 static void ppc_interrupt(enum gpio_signal signal)
@@ -48,12 +49,23 @@ static void ppc_interrupt(enum gpio_signal signal)
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
+	int port = -1;
 
+	/*
+	 * Since C0/C1 TCPC are embedded within EC, we don't need the PDCMD
+	 * tasks.The (embedded) TCPC status since chip driver code will
+	 * handles its own interrupts and forward the correct events to
+	 * the PD_C0/1 task. See it83xx/intc.c
+	 */
+	switch (signal) {
+	case GPIO_USB_C2_TCPC_INT_ODL:
+		port = 2;
+		break;
+	default:
+		return;
+	}
 
-#ifdef HAS_TASK_PDCMD
-	/* Exchange status with TCPCs */
-	host_command_pd_send_status(PD_CHARGE_NO_CHANGE);
-#endif
+	schedule_deferred_pd_interrupt(port);
 }
 
 #include "gpio_list.h" /* Must come after other header files. */

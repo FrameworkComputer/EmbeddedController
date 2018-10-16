@@ -2461,7 +2461,10 @@ static int pd_restart_tcpc(int port)
 }
 #endif
 
-#ifdef HAS_TASK_PD_INT_C0
+/* High-priority interrupt tasks implementations */
+#if	defined(HAS_TASK_PD_INT_C0) || defined(HAS_TASK_PD_INT_C1) || \
+	defined(HAS_TASK_PD_INT_C2)
+
 /* Events for pd_interrupt_handler_task */
 #define PD_PROCESS_INTERRUPT  (1<<0)
 
@@ -2508,7 +2511,7 @@ void pd_interrupt_handler_task(void *p)
 		}
 	}
 }
-#endif /* HAS_TASK_PD_INT_C0 */
+#endif /* HAS_TASK_PD_INT_C0 || HAS_TASK_PD_INT_C1 || HAS_TASK_PD_INT_C2 */
 
 void pd_task(void *u)
 {
