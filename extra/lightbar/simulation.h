@@ -48,6 +48,8 @@ int fake_consolecmd_lightbar(int argc, char *argv[]);
 #define _BA0_(c, x) _BA1_(c, x)
 #define BUILD_ASSERT(cond) _BA0_(cond, __LINE__)
 
+#define BUILD_CHECK_INLINE(value, cond_true) ((value) / (!!(cond_true)))
+
 /* Number of elements in an array */
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 

@@ -15,6 +15,12 @@
 #define _BA0_(c, x) _BA1_(c, x)
 #define BUILD_ASSERT(cond) _BA0_(cond, __LINE__)
 
+/*
+ * Test an important condition inside code path at run time, taking advantage of
+ * -Werror=div-by-zero.
+ */
+#define BUILD_CHECK_INLINE(value, cond_true) ((value) / (!!(cond_true)))
+
 /* Number of elements in an array */
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
