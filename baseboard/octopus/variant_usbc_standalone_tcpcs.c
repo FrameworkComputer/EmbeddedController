@@ -79,11 +79,18 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 void tcpc_alert_event(enum gpio_signal signal)
 {
-	const int port = (signal == GPIO_USB_C1_MUX_INT_ODL);
+	int port = -1;
 
-	if ((signal == GPIO_USB_C1_MUX_INT_ODL) &&
-	    !gpio_get_level(GPIO_USB_C1_PD_RST_ODL))
+	switch (signal) {
+	case GPIO_USB_C0_MUX_INT_ODL:
+		port = 0;
+		break;
+	case GPIO_USB_C1_MUX_INT_ODL:
+		port = 1;
+		break;
+	default:
 		return;
+	}
 
 	schedule_deferred_pd_interrupt(port);
 }

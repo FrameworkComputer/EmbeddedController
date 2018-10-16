@@ -104,18 +104,17 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 
 void tcpc_alert_event(enum gpio_signal signal)
 {
-	int port;
+	int port = -1;
 
-	if (signal == GPIO_USB_C0_PD_INT_ODL) {
-		if (!gpio_get_level(GPIO_USB_C0_PD_RST_L))
-			return;
+	switch (signal) {
+	case GPIO_USB_C0_PD_INT_ODL:
 		port = 0;
-	}
-
-	if (signal == GPIO_USB_C1_PD_INT_ODL) {
-		if (!gpio_get_level(GPIO_USB_C1_PD_RST_L))
-			return;
+		break;
+	case GPIO_USB_C1_PD_INT_ODL:
 		port = 1;
+		break;
+	default:
+		return;
 	}
 
 	schedule_deferred_pd_interrupt(port);
