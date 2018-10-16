@@ -376,7 +376,7 @@ int tcpci_tcpc_drp_toggle(int port)
 	 * and it may be wise as chips can use this to make this the
 	 * standard and remove this set_role_ctrl call.
 	 */
-	rv = tcpci_set_role_ctrl(port, 1, TYPEC_RP_USB, TYPEC_CC_RD);
+	rv = tcpci_set_role_ctrl(port, 1, tcpci_get_cached_rp(port), TYPEC_CC_RD);
 	if (rv)
 		return rv;
 
