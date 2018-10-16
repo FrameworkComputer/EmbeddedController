@@ -31,7 +31,6 @@
 #include "clock.h"
 #include "console.h"
 #include "dma.h"
-#include "driver/charger/rt946x.h"
 #include "endian.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -295,16 +294,6 @@ void emmc_task(void *u)
 	/* Are we currently transmitting data? */
 	int tx = 0;
 
-#if BOARD_REV == 0
-	/*
-	 * TODO(b:111773571): Remove this once we fix eMMC power supply.
-	 * Note that we never enable power to the real eMMC (we could do that
-	 * in emmc_check_status(), but it is not trivial to do it fast
-	 * enough).
-	 */
-	mt6370_set_ldo_voltage(0);
-#endif
-
 	rxdma = dma_get_channel(STM32_DMAC_SPI_EMMC_RX);
 
 	while (1) {
@@ -378,26 +367,3 @@ void emmc_task(void *u)
 		}
 	}
 }
-
-/* TODO(b:111773571): Remove this command once finish bring-up. */
-static int command_emmc_power(int argc, char **argv)
-{
-	int rv;
-	int en;
-	const int ldo_en_voltage = 1800;
-
-	if (argc < 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	if (!parse_bool(argv[1], &en))
-		return EC_ERROR_PARAM1;
-
-	rv = mt6370_set_ldo_voltage(en ? ldo_en_voltage : 0);
-
-	ccprintf("%s eMMC power.\n", en ? "Enabled" : "Disabled");
-
-	return rv;
-}
-DECLARE_CONSOLE_COMMAND(emmc_power, command_emmc_power,
-			"<enable | disable>",
-			"Enable/Disable eMMC power.");
