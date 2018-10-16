@@ -19,9 +19,9 @@ struct button_8042_t {
 
 /* The standard Chrome OS keyboard matrix table. */
 #ifdef CONFIG_KEYBOARD_SCANCODE_MUTABLE
-extern uint16_t scancode_set2[KEYBOARD_ROWS][KEYBOARD_COLS];
+extern uint16_t scancode_set2[KEYBOARD_COLS][KEYBOARD_ROWS];
 #else
-extern const uint16_t scancode_set2[KEYBOARD_ROWS][KEYBOARD_COLS];
+extern const uint16_t scancode_set2[KEYBOARD_COLS][KEYBOARD_ROWS];
 #endif
 
 /* Translation from scan code set 2 to set 1. */
@@ -70,9 +70,9 @@ enum keycap_long_label_idx {
 
 extern const char * const keycap_long_label[];
 #ifdef CONFIG_KEYBOARD_SCANCODE_MUTABLE
-extern char keycap_label[KEYBOARD_ROWS][KEYBOARD_COLS];
+extern char keycap_label[KEYBOARD_COLS][KEYBOARD_ROWS];
 #else
-extern const char keycap_label[KEYBOARD_ROWS][KEYBOARD_COLS];
+extern const char keycap_label[KEYBOARD_COLS][KEYBOARD_ROWS];
 #endif
 #endif
 
