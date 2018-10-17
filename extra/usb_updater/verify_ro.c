@@ -5,6 +5,7 @@
  */
 
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -291,7 +292,8 @@ static int process_descriptor_sections(struct transfer_descriptor *td)
 }
 
 int verify_ro(struct transfer_descriptor *td,
-	      const char *desc_file_name)
+	      const char *desc_file_name,
+	      bool show_machine_output)
 {
 	/* First find out board ID of the target. */
 	struct board_id bid;
@@ -303,7 +305,7 @@ int verify_ro(struct transfer_descriptor *td,
 	 * Find out what Board ID is the device we are talking to. This
 	 * function calls exit() on any error.
 	 */
-	process_bid(td, bid_get, &bid);
+	process_bid(td, bid_get, &bid, show_machine_output);
 
 	if (bid.type != ~bid.type_inv) {
 		fprintf(stderr, "Inconsistent board ID: %08x != ~%08x\n",

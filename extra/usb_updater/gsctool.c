@@ -544,7 +544,7 @@ static void usage(int errs)
 	       "character string.\n"
 	       "  -k,--ccd_lock            Lock CCD\n"
 	       "  -M,--machine             Output in a machine-friendly way. "
-	       "Effective with -f and -b only.\n"
+	       "Effective with -b, -f, -i, and -O.\n"
 	       "  -m,--tpm_mode [enable|disable]\n"
 	       "                           Change or query tpm_mode\n"
 	       "  -O,--openbox_rma <desc_file>\n"
@@ -1784,7 +1784,8 @@ static void process_wp(struct transfer_descriptor *td)
 
 void process_bid(struct transfer_descriptor *td,
 		 enum board_id_action bid_action,
-		 struct board_id *bid)
+		 struct board_id *bid,
+		 bool show_machine_output)
 {
 	size_t response_size;
 
@@ -1795,16 +1796,31 @@ void process_bid(struct transfer_descriptor *td,
 				    bid, sizeof(*bid),
 				    bid, &response_size);
 
-		if (response_size == sizeof(*bid)) {
-			printf("Board ID space: %08x:%08x:%08x\n",
-			       be32toh(bid->type), be32toh(bid->type_inv),
-			       be32toh(bid->flags));
-			return;
+		if (response_size != sizeof(*bid)) {
+			fprintf(stderr,
+				"Error reading board ID: response size %zd, "
+				"first byte %#02x\n",
+				response_size,
+				response_size ? *(uint8_t *)&bid : -1);
+			exit(update_error);
 		}
-		fprintf(stderr, "Error reading board ID: response size %zd,"
-			" first byte %#02x\n", response_size,
-			response_size ? *(uint8_t *)&bid : -1);
-		exit(update_error);
+
+		if (show_machine_output) {
+			print_machine_output(
+				"BID_TYPE", "%08x", be32toh(bid->type));
+			print_machine_output(
+				"BID_TYPE_INV", "%08x", be32toh(bid->type_inv));
+			print_machine_output(
+				"BID_FLAGS", "%08x", be32toh(bid->flags));
+
+		} else {
+			printf("Board ID space: %08x:%08x:%08x\n",
+			       be32toh(bid->type),
+			       be32toh(bid->type_inv),
+			       be32toh(bid->flags));
+		}
+
+		return;
 	}
 
 	if (bid_action == bid_set) {
@@ -2260,7 +2276,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (openbox_desc_file)
-		return verify_ro(&td, openbox_desc_file);
+		return verify_ro(&td, openbox_desc_file, show_machine_output);
 
 	if (ccd_unlock || ccd_open || ccd_lock || ccd_info)
 		process_ccd_state(&td, ccd_unlock, ccd_open,
@@ -2270,7 +2286,7 @@ int main(int argc, char *argv[])
 		process_password(&td);
 
 	if (bid_action != bid_none)
-		process_bid(&td, bid_action, &bid);
+		process_bid(&td, bid_action, &bid, show_machine_output);
 
 	if (rma)
 		process_rma(&td, rma_auth_code);
