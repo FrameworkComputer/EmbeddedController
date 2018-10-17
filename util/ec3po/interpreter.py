@@ -20,6 +20,7 @@ import logging
 import os
 import Queue
 import select
+import traceback
 
 
 COMMAND_RETRIES = 3  # Number of attempts to retry a command.
