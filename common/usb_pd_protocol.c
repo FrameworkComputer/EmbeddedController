@@ -2907,11 +2907,19 @@ void pd_task(void *u)
 
 #ifdef CONFIG_USBC_VCONN
 				/*
-				 * Start sourcing Vconn before Vbus to ensure
-				 * we are within USB Type-C Spec 1.3 tVconnON
+				 * Do not source Vconn when debug accessory is
+				 * detected. Section 4.5.2.2.17.1 in USB spec
+				 * v1-3
 				 */
-				set_vconn(port, 1);
-				pd[port].flags |= PD_FLAGS_VCONN_ON;
+				if (new_cc_state != PD_CC_DEBUG_ACC) {
+					/*
+					 * Start sourcing Vconn before Vbus to
+					 * ensure we are within USB Type-C
+					 * Spec 1.3 tVconnON.
+					 */
+					set_vconn(port, 1);
+					pd[port].flags |= PD_FLAGS_VCONN_ON;
+				}
 #endif
 
 #ifndef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
