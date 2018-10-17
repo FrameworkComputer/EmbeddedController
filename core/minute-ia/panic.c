@@ -49,6 +49,9 @@ void exception_panic(void)
 #ifdef CONFIG_SOFTWARE_PANIC
 void software_panic(uint32_t reason, uint32_t info)
 {
+	/* TODO: store panic log */
+	while (1)
+		;
 }
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
