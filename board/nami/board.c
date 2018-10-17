@@ -34,6 +34,8 @@
 #include "i2c.h"
 #include "isl923x.h"
 #include "keyboard_backlight.h"
+#include "keyboard_config.h"
+#include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "math_util.h"
@@ -941,6 +943,12 @@ static void board_init(void)
 	/* Enable Accel/Gyro interrupt for convertibles. */
 	if (sku & SKU_ID_MASK_CONVERTIBLE)
 		gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
+
+#ifndef TEST_BUILD
+	/* Disable scanning KSO13 & 14 if keypad isn't present. */
+	if (!(sku & SKU_ID_MASK_KEYPAD))
+		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -960,7 +968,7 @@ struct keyboard_scan_config keyscan_config = {
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
 		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
+		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca, 0xff, 0xff,  /* full set */
 	},
 };
 
