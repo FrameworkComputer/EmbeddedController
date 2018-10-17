@@ -506,6 +506,24 @@ static int dbgr_disable_watchdog(struct common_hnd *chnd)
 	return 0;
 }
 
+/* disable protect path from DBGR */
+static int dbgr_disable_protect_path(struct common_hnd *chnd)
+{
+	int ret = 0, i;
+
+	ret |= i2c_write_byte(chnd, 0x2f, 0x20);
+	for (i = 0; i < 32; i++) {
+		ret |= i2c_write_byte(chnd, 0x2e, 0xa0+i);
+		ret |= i2c_write_byte(chnd, 0x30, 0);
+	}
+
+	if (ret < 0)
+		printf("DISABLE PROTECT PATH FROM DBGR FAILED!\n");
+
+	return 0;
+}
+
+
 /* Enter follow mode and FSCE# high level */
 static int spi_flash_follow_mode(struct common_hnd *chnd, char *desc)
 {
@@ -800,15 +818,19 @@ static int send_special_waveform(struct common_hnd *chnd)
 		usleep(10 * MSEC);
 
 		if (spi_flash_follow_mode(chnd, "enter follow mode") >= 0) {
+
 			spi_flash_follow_mode_exit(chnd, "exit follow mode");
 			/*
 			 * If we can talk to chip, then we can break the retry
 			 * loop
 			 */
 			ret = check_chipid(chnd);
+
 			/* disable watchdog before programming sequence */
-			if (!ret)
+			if (!ret) {
 				dbgr_disable_watchdog(chnd);
+				dbgr_disable_protect_path(chnd);
+			}
 		} else {
 			ret = -1;
 			if (!(iterations % 10))
