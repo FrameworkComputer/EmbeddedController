@@ -746,11 +746,6 @@ static int anx74xx_tcpm_set_polarity(int port, int polarity)
 	return rv;
 }
 
-static int anx74xx_tcpc_get_fw_version(int port, int *version)
-{
-	return tcpc_read(port, ANX74XX_REG_FW_VERSION, version);
-}
-
 static int anx74xx_tcpm_set_vconn(int port, int enable)
 {
 	int reg, rv = EC_SUCCESS;
@@ -1053,12 +1048,15 @@ static int anx74xx_get_chip_info(int port, int renew,
 	if (rv)
 		return rv;
 
-	rv = anx74xx_tcpc_get_fw_version(port, &val);
+	if ((*chip_info)->fw_version_number == 0 ||
+		(*chip_info)->fw_version_number == -1 || renew) {
+		rv = tcpc_read(port, ANX74XX_REG_FW_VERSION, &val);
 
-	if (rv)
-		return rv;
+		if (rv)
+			return rv;
 
-	(*chip_info)->fw_version_number = val;
+		(*chip_info)->fw_version_number = val;
+	}
 
 #ifdef CONFIG_USB_PD_TCPM_ANX3429
 	/*

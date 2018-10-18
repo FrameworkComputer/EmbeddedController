@@ -87,11 +87,6 @@ void ps8xxx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
 	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 }
 
-static int ps8xxx_tcpc_get_fw_version(int port, int *version)
-{
-	return tcpc_read(port, FW_VER_REG, version);
-}
-
 static int ps8xxx_tcpc_bist_mode_2(int port)
 {
 	int rv;
@@ -145,12 +140,15 @@ static int ps8xxx_get_chip_info(int port, int renew,
 	if (rv)
 		return rv;
 
-	rv = ps8xxx_tcpc_get_fw_version(port, &val);
+	if ((*chip_info)->fw_version_number == 0 ||
+		(*chip_info)->fw_version_number == -1 || renew) {
+		rv = tcpc_read(port, FW_VER_REG, &val);
 
-	if (rv)
-		return rv;
+		if (rv)
+			return rv;
 
-	(*chip_info)->fw_version_number = val;
+		(*chip_info)->fw_version_number = val;
+	}
 
 #if defined(CONFIG_USB_PD_TCPM_PS8751) && \
 	defined(CONFIG_USB_PD_VBUS_DETECT_TCPC)
