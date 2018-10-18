@@ -33,6 +33,8 @@
 #undef CONFIG_PWM
 #undef CONFIG_PWM_KBLIGHT
 
+#define CONFIG_LED_COMMON
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

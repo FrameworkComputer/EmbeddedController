@@ -11,5 +11,5 @@ CHIP_FAMILY:=it8320
 CHIP_VARIANT:=it8320dx
 BASEBOARD:=octopus
 
-board-y=board.o
+board-y=board.o led.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o
