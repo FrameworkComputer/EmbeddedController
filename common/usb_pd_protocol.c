@@ -2261,6 +2261,11 @@ static void pd_vdm_send_state_machine(int port)
 			pd[port].vdm_state = VDM_STATE_ERR_TMOUT;
 		}
 		break;
+	case VDM_STATE_ERR_SEND:
+		/* Sending the VDM failed, so try again. */
+		CPRINTF("C%d VDMretry\n", port);
+		pd[port].vdm_state = VDM_STATE_READY;
+		break;
 	default:
 		break;
 	}
