@@ -15,7 +15,6 @@
 #include "util.h"
 #include "task_defs.h"
 #include "interrupts.h"
-#include "ipc.h"
 #include "hpet.h"
 
 /* Console output macros */
@@ -437,14 +436,6 @@ void task_enable_all_tasks(void)
 
 	/* BUG: task_start() was likely already called */
 	start_called = 1;
-
-	/* The host OS driver should wait till the FW completes all hook inits.
-	 * Otherwise, FW may fail to respond to host commands or crash when
-	 * not fully initialized. This MNG (management) type IPC message sent
-	 * asynchronously from the FW indicates completion of initialization.
-	 */
-	CPUTS("*** MNG FW ready ****\n");
-	REG32(IPC_ISH2HOST_DOORBELL) = IPC_BUILD_MNG_MSG(0x8, 1);
 
 	interrupt_enable();
 	/* Reschedule the highest priority task. */
