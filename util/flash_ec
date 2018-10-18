@@ -46,6 +46,7 @@ die() {
 
 
 BOARDS_IT83XX=(
+	ampton
 	bip
 	dragonegg
 	glkrvp_ite
