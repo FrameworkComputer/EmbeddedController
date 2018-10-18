@@ -13,6 +13,13 @@
 #define VARIANT_OCTOPUS_CHARGER_ISL9238
 #include "baseboard.h"
 
+/* I2C bus configuraiton */
+#define I2C_PORT_ACCEL	I2C_PORT_SENSOR
+
+/* EC console commands  */
+#define CONFIG_CMD_ACCELS
+#define CONFIG_CMD_ACCEL_INFO
+
 #define CONFIG_VOLUME_BUTTONS
 #define GPIO_VOLUME_UP_L GPIO_EC_VOLUP_BTN_ODL
 #define GPIO_VOLUME_DOWN_L GPIO_EC_VOLDN_BTN_ODL
@@ -26,6 +33,13 @@
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 #define CONFIG_STEINHART_HART_3V3_13K7_47K_4050B
 
+#define CONFIG_ACCEL_KX022	/* Lid accel */
+#define CONFIG_ACCELGYRO_BMI160	/* Base accel */
+
+#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
+
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
@@ -34,6 +48,22 @@
 #undef CONFIG_PWM_KBLIGHT
 
 #define CONFIG_LED_COMMON
+
+#define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_UPDATE
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
+
+#define CONFIG_ACCEL_INTERRUPTS
+/* FIFO size is in power of 2. */
+#define CONFIG_ACCEL_FIFO 1024
+
+/* Depends on how fast the AP boots and typical ODRs */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+#define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_USE_HOST_EVENT
+
+#define CONFIG_ACCELGYRO_BMI160_INT_EVENT TASK_EVENT_CUSTOM(1 << 2)
 
 #ifndef __ASSEMBLER__
 
@@ -53,6 +83,14 @@ enum temp_sensor_id {
 	TEMP_SENSOR_AMBIENT,
 	TEMP_SENSOR_CHARGER,
 	TEMP_SENSOR_COUNT
+};
+
+/* Motion sensors */
+enum sensor_id {
+	LID_ACCEL,
+	BASE_ACCEL,
+	BASE_GYRO,
+	SENSOR_COUNT
 };
 
 /* List of possible batteries */
