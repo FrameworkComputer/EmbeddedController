@@ -75,9 +75,9 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	gpio_set_level(GPIO_PWR_LED, !brightness[EC_LED_COLOR_WHITE]);
-	gpio_set_level(GPIO_CHG_LED1, !brightness[EC_LED_COLOR_GREEN]);
-	gpio_set_level(GPIO_CHG_LED2, !brightness[EC_LED_COLOR_AMBER]);
+	gpio_set_level(GPIO_PWR_LED, brightness[EC_LED_COLOR_WHITE]);
+	gpio_set_level(GPIO_CHG_LED1, brightness[EC_LED_COLOR_GREEN]);
+	gpio_set_level(GPIO_CHG_LED2, brightness[EC_LED_COLOR_AMBER]);
 
 	return EC_SUCCESS;
 }
