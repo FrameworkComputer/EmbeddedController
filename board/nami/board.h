@@ -314,7 +314,7 @@ void board_set_tcpc_power_mode(int port, int mode);
 /* These should be referenced only after  HOOK_INIT:HOOK_PRIO_INIT_I2C+1. */
 extern uint16_t board_version;
 extern uint8_t oem;
-extern uint16_t sku;
+extern uint32_t sku;
 
 #endif /* !__ASSEMBLER__ */
 
