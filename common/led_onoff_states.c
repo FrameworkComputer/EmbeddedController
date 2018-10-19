@@ -53,7 +53,7 @@ static enum led_states led_get_state(void)
 			new_state = STATE_DISCHARGE_S3;
 		else
 			new_state = STATE_DISCHARGE_S5;
-			break;
+		break;
 	case PWR_STATE_ERROR:
 		new_state = STATE_BATTERY_ERROR;
 		break;
