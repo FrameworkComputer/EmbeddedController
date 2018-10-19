@@ -37,6 +37,17 @@ static uint8_t __bss_slow acpi_mem_test;
 #ifdef CONFIG_DPTF
 static int __bss_slow dptf_temp_sensor_id;	/* last sensor ID written */
 static int __bss_slow dptf_temp_threshold;	/* last threshold written */
+
+/*
+ * Current DPTF profile number.
+ * This is by default initialized to 1 if multi-profile DPTF is not supported.
+ * If multi-profile DPTF is supported, this is by default initialized to 2 under
+ * the assumption that profile #2 corresponds to lower thresholds and is a safer
+ * profile to use until board or some EC driver sets the appropriate profile for
+ * device mode.
+ */
+static int current_dptf_profile = DPTF_PROFILE_DEFAULT;
+
 #endif
 
 #ifdef CONFIG_USB_PORT_POWER_DUMB
@@ -80,6 +91,38 @@ static void acpi_disable_burst_deferred(void)
 	CPUTS("ACPI missed burst disable?");
 }
 DECLARE_DEFERRED(acpi_disable_burst_deferred);
+
+#ifdef CONFIG_DPTF
+
+static int acpi_dptf_is_profile_valid(int n)
+{
+#ifdef CONFIG_DPTF_MULTI_PROFILE
+	if ((n < DPTF_PROFILE_VALID_FIRST) || (n > DPTF_PROFILE_VALID_LAST))
+		return EC_ERROR_INVAL;
+#else
+	if (n != DPTF_PROFILE_DEFAULT)
+		return EC_ERROR_INVAL;
+#endif
+
+	return EC_SUCCESS;
+}
+
+int acpi_dptf_set_profile_num(int n)
+{
+	int ret = acpi_dptf_is_profile_valid(n);
+
+	if (ret == EC_SUCCESS)
+		current_dptf_profile = n;
+
+	return ret;
+}
+
+int acpi_dptf_get_profile_num(void)
+{
+	return current_dptf_profile;
+}
+
+#endif
 
 /* Read memmapped data, returns read data or 0xff on error. */
 static int acpi_read(uint8_t addr)
@@ -178,7 +221,13 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 #endif
 
 		case EC_ACPI_MEM_DEVICE_ORIENTATION:
-			result = tablet_get_mode();
+			result = tablet_get_mode() << EC_ACPI_MEM_TBMD_SHIFT;
+
+#ifdef CONFIG_DPTF
+			result |= (acpi_dptf_get_profile_num() &
+				   EC_ACPI_MEM_DDPN_MASK)
+				<< EC_ACPI_MEM_DDPN_SHIFT;
+#endif
 			break;
 
 		case EC_ACPI_MEM_DEVICE_FEATURES0:

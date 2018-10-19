@@ -328,10 +328,19 @@
 
 /*
  * Report device orientation
- *   bit 0 device is tablet mode
+ *  Bits       Definition
+ *  3:1        Device DPTF Profile Number (DDPN)
+ *               0   = Reserved for backward compatibility (indicates no valid
+ *                     profile number. Host should fall back to using TBMD).
+ *              1..7 = DPTF Profile number to indicate to host which table needs
+ *                     to be loaded.
+ *   0         Tablet Mode Device Indicator (TBMD)
  */
 #define EC_ACPI_MEM_DEVICE_ORIENTATION 0x09
-#define EC_ACPI_MEM_DEVICE_TABLET_MODE 0x01
+#define EC_ACPI_MEM_TBMD_SHIFT         0
+#define EC_ACPI_MEM_TBMD_MASK          0x1
+#define EC_ACPI_MEM_DDPN_SHIFT         1
+#define EC_ACPI_MEM_DDPN_MASK          0x7
 
 /*
  * Report device features. Uses the same format as the host command, except:

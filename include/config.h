@@ -2986,6 +2986,17 @@
  */
 #undef CONFIG_DPTF
 
+/*
+ * If defined, device supports multiple DPTF profiles depending upon device mode
+ * e.g. clamshell v/s 360-degree flipped mode or base detached v/s attached
+ * mode.
+ *
+ * This config can be used by any driver that does lid angle calculation or base
+ * state detection to determine if different profile numbers need to be
+ * indicated to the host.
+ */
+#undef CONFIG_DPTF_MULTI_PROFILE
+
 /*****************************************************************************/
 /* Touchpad config */
 
@@ -4119,6 +4130,10 @@
 /* Note: ANX7447 is handled by its own driver, not ANX74XX. */
 #define CONFIG_USB_PD_TCPM_ANX74XX
 #endif
+
+#if defined(CONFIG_DPTF_MULTI_PROFILE) && !defined(CONFIG_DPTF)
+#error "CONFIG_DPTF_MULTI_PROFILE can be set only when CONFIG_DPTF is set."
+#endif /* CONFIG_DPTF_MULTI_PROFILE && !CONFIG_DPTF */
 
 #endif  /* __CROS_EC_CONFIG_H */
 
