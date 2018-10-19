@@ -103,7 +103,7 @@ void dptf_set_temp_threshold(int sensor_id, int temp, int idx, int enable)
 	}
 }
 
-#ifdef CONFIG_DPTF_DEVICE_ORIENTATION
+#ifdef CONFIG_TABLET_MODE
 /*
  * When tablet mode changes, send an event to ACPI to retrieve
  * tablet mode value and send an event to the kernel.
