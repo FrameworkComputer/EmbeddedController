@@ -33,6 +33,7 @@
 #define RESET_FLAG_RDD         (1 << 15)  /* USB Type-C debug cable */
 #define RESET_FLAG_RBOX        (1 << 16)  /* Fixed Reset Functionality */
 #define RESET_FLAG_SECURITY    (1 << 17)  /* Security threat */
+#define RESET_FLAG_AP_WATCHDOG (1 << 18)  /* AP experienced a watchdog reset */
 
 /* Per chip implementation to save/read raw RESET_FLAG_ flags. */
 void chip_save_reset_flags(int flags);
@@ -274,6 +275,10 @@ const char *system_get_build_info(void);
  * Wait for reset pin to be driven, rather that resetting ourselves.
  */
 #define SYSTEM_RESET_WAIT_EXT           (1 << 4)
+/*
+ * Indicate that this reset was triggered by an AP watchdog
+ */
+#define SYSTEM_RESET_AP_WATCHDOG        (1 << 5)
 
 /**
  * Reset the system.

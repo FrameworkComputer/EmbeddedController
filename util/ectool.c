@@ -769,7 +769,8 @@ int cmd_uptimeinfo(int argc, char *argv[])
 		"usb-resume",
 		"rdd",
 		"rbox",
-		"security"
+		"security",
+		"ap-watchdog"
 	};
 
 	struct ec_response_uptime_info r;

@@ -93,7 +93,7 @@ static const char * const reset_flag_descs[] = {
 	"other", "reset-pin", "brownout", "power-on", "watchdog", "soft",
 	"hibernate", "rtc-alarm", "wake-pin", "low-battery", "sysjump",
 	"hard", "ap-off", "preserved", "usb-resume", "rdd", "rbox",
-	"security" };
+	"security", "ap-watchdog" };
 
 static uint32_t reset_flags;
 static int jumped_to_image;

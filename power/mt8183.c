@@ -140,11 +140,16 @@ DECLARE_DEFERRED(chipset_force_shutdown_button);
 /* If chipset needs to be reset, EC also reboots to RO. */
 void chipset_reset(enum chipset_reset_reason reason)
 {
+	int flags = SYSTEM_RESET_HARD;
+
 	CPRINTS("%s: %d", __func__, reason);
 	report_ap_reset(reason);
 
 	cflush();
-	system_reset(SYSTEM_RESET_HARD);
+	if (reason == CHIPSET_RESET_AP_WATCHDOG)
+		flags |= SYSTEM_RESET_AP_WATCHDOG;
+
+	system_reset(flags);
 
 	/* This should not be reachable. */
 	while (1)
