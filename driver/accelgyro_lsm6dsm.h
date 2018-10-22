@@ -147,7 +147,9 @@ enum dev_fifo {
 	FIFO_DEV_INVALID = -1,
 	FIFO_DEV_GYRO = 0,
 	FIFO_DEV_ACCEL,
+#ifdef CONFIG_MAG_LIS2MDL
 	FIFO_DEV_MAG,
+#endif
 	FIFO_DEV_NUM,
 };
 
