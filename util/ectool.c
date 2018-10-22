@@ -718,6 +718,7 @@ static const char *reset_cause_to_str(uint16_t cause)
 		"reset: debug warm reboot",
 		"reset: at AP's request",
 		"reset: during EC initialization",
+		"reset: AP watchdog",
 	};
 	BUILD_ASSERT(ARRAY_SIZE(reset_causes) == CHIPSET_RESET_COUNT);
 

@@ -99,6 +99,25 @@ static const struct power_seq_op s3s5_power_seq[] = {
 
 static int forcing_shutdown;
 
+void chipset_reset_request_interrupt(enum gpio_signal signal)
+{
+	chipset_reset(CHIPSET_RESET_AP_REQ);
+}
+
+/*
+ * Triggers on falling edge of AP watchdog line only. The falling edge can
+ * happen in these 2 cases:
+ *  - AP asserts watchdog while the AP is on: this is a real AP-initiated reset.
+ *  - EC asserted GPIO_AP_SYS_RST_L, so the AP is in reset and AP watchdog falls
+ *    as well. This is _not_ a watchdog reset. We mask these cases by disabling
+ *    the interrupt just before shutting down the AP, and re-enabling it just
+ *    after starting the AP.
+ */
+void chipset_watchdog_interrupt(enum gpio_signal signal)
+{
+	chipset_reset(CHIPSET_RESET_AP_WATCHDOG);
+}
+
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s(%d)", __func__, reason);
@@ -134,6 +153,10 @@ void chipset_reset(enum chipset_reset_reason reason)
 
 enum power_state power_chipset_init(void)
 {
+	/* Enable reboot / watchdog / sleep control inputs from AP */
+	gpio_enable_interrupt(GPIO_WARM_RESET_REQ);
+	gpio_enable_interrupt(GPIO_AP_IN_SLEEP_L);
+
 	if (system_jumped_to_this_image()) {
 		if ((power_get_signals() & IN_ALL_S0) == IN_ALL_S0) {
 			disable_sleep(SLEEP_MASK_AP_RUN);
@@ -272,6 +295,7 @@ enum power_state power_handle_state(enum power_state state)
 		booted = 1;
 		/* Enable S3 power supplies, release AP reset. */
 		power_seq_run(s5s3_power_seq, ARRAY_SIZE(s5s3_power_seq));
+		gpio_enable_interrupt(GPIO_AP_EC_WATCHDOG_L);
 
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
@@ -332,6 +356,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
+		gpio_disable_interrupt(GPIO_AP_EC_WATCHDOG_L);
 		power_seq_run(s3s5_power_seq, ARRAY_SIZE(s3s5_power_seq));
 
 		/* Start shutting down */

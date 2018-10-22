@@ -54,24 +54,6 @@ static void tcpc_alert_event(enum gpio_signal signal)
 #endif
 }
 
-static void warm_reset_request_interrupt(enum gpio_signal signal)
-{
-	CPRINTS("AP wants warm reset");
-	chipset_reset(CHIPSET_RESET_AP_REQ);
-}
-
-static void ap_watchdog_interrupt(enum gpio_signal signal)
-{
-	int level = gpio_get_level(GPIO_AP_EC_WATCHDOG_L);
-
-	CPRINTS("AP watchdog level %d", level);
-	/*
-	 * TODO(b:109900671): Handle AP watchdog, when necessary, for now, just
-	 * mirror input to output.
-	 */
-	gpio_set_level(GPIO_PMIC_WATCHDOG_L, level);
-}
-
 #if BOARD_REV >= 1
 static void hall_interrupt(enum gpio_signal signal)
 {
@@ -229,11 +211,6 @@ static void board_init(void)
 
 	/* Enable charger interrupts */
 	gpio_enable_interrupt(GPIO_CHARGER_INT_ODL);
-
-	/* Enable reboot / shutdown / sleep control inputs from AP */
-	gpio_enable_interrupt(GPIO_WARM_RESET_REQ);
-	gpio_enable_interrupt(GPIO_AP_EC_WATCHDOG_L);
-	gpio_enable_interrupt(GPIO_AP_IN_SLEEP_L);
 
 #ifdef SECTION_IS_RW
 	/* Enable interrupts from BMI160 sensor. */
