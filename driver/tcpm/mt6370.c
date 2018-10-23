@@ -102,6 +102,22 @@ static int mt6370_get_cc(int port, int *cc1, int *cc2)
 	return rv;
 }
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+static int mt6370_enter_low_power_mode(int port)
+{
+	int rv;
+
+	/* VBUS_DET_EN for detecting charger plug. */
+	rv = tcpc_write(port, MT6370_REG_BMC_CTRL,
+			MT6370_REG_BMCIO_LPEN | MT6370_REG_VBUS_DET_EN);
+
+	if (rv)
+		return rv;
+
+	return tcpci_enter_low_power_mode(port);
+}
+#endif
+
 /* MT6370 is a TCPCI compatible port controller */
 const struct tcpm_drv mt6370_tcpm_drv = {
 	.init			= &mt6370_init,
@@ -129,5 +145,8 @@ const struct tcpm_drv mt6370_tcpm_drv = {
 #ifdef CONFIG_USBC_PPC
 	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
 	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
+#endif
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	.enter_low_power_mode	= &mt6370_enter_low_power_mode,
 #endif
 };
