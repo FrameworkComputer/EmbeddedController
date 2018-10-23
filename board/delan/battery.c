@@ -32,38 +32,93 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/*
-	 * Panasonic AP15O5L battery information from the Grunt reference
-	 * design.
-	 */
-	[BATTERY_PANASONIC] = {
+	/* BYD Battery Information */
+	[BATTERY_BYD] = {
 		.fuel_gauge = {
-			.manuf_name = "PANASONIC",
+			.manuf_name = "BYD",
 			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
 				.reg_addr = 0x0,
-				.reg_mask = 0x4000,
-				.disconnect_val = 0x0,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
 			},
-			.imbalance_mv = battery_default_imbalance_mv,
+			.imbalance_mv = battery_bq4050_imbalance_mv,
 		},
 		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 256,   /* mA */
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
 			.start_charging_min_c	= 0,
 			.start_charging_max_c	= 50,
 			.charging_min_c		= 0,
 			.charging_max_c		= 60,
 			.discharging_min_c	= 0,
-			.discharging_max_c	= 60,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* LGC Battery Information */
+	[BATTERY_LGC] = {
+		.fuel_gauge = {
+			.manuf_name = "LGC-LGC3.553",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
+			},
+			.imbalance_mv = battery_bq4050_imbalance_mv,
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= -3,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= -3,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* SIMPLO Battery Information */
+	[BATTERY_SIMPLO] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP-SDI3.72",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x43,
+				.reg_mask = 0x0001,
+				.disconnect_val = 0x000,
+			},
+			.imbalance_mv = battery_default_imbalance_mv,
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= -3,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -3,
+			.discharging_max_c	= 70,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_PANASONIC;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_LGC;
