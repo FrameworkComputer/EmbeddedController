@@ -711,6 +711,21 @@ static int ftdi_config_i2c(struct ftdi_context *ftdi)
 #define SPECIAL_BUFFER_SIZE \
 	(((SPECIAL_LEN_USEC * SPECIAL_FREQ * 2 / USEC) + 7) & ~7)
 
+static int connect_to_ccd_i2c_bridge(struct common_hnd *chnd)
+{
+	int rv;
+
+	rv = usb_findit(chnd->conf.usb_vid, chnd->conf.usb_pid,
+			CR50_I2C_SUBCLASS, CR50_I2C_PROTOCOL, &chnd->uep);
+
+	if (rv) {
+		fprintf(stderr, "%s: usb_findit returned error %d\n",
+			__func__, rv);
+	}
+
+	return rv;
+}
+
 static int ccd_trigger_special_waveform(struct common_hnd *chnd)
 {
 	uint8_t response[20];
@@ -731,8 +746,15 @@ static int ccd_trigger_special_waveform(struct common_hnd *chnd)
 
 	if (response[0])
 		return -response[0];
+	/*
+	 * The target is about to get reset, let's shut down the USB
+	 * connection.
+	 */
+	usb_shut_down(&chnd->uep);
 
-	return 0;
+	sleep(3);
+
+	return connect_to_ccd_i2c_bridge(chnd);
 }
 
 static int ftdi_send_special_waveform(struct common_hnd *chnd)
@@ -1485,16 +1507,12 @@ static int ccd_i2c_interface_init(struct common_hnd *chnd)
 	int ret;
 	chnd->conf.usb_vid = CR50_USB_VID;
 	chnd->conf.usb_pid = CR50_USB_PID;
-	ret = usb_findit(chnd->conf.usb_vid, chnd->conf.usb_pid,
-		CR50_I2C_SUBCLASS, CR50_I2C_PROTOCOL, &chnd->uep);
-	if (ret < 0) {
-		fprintf(stderr, "%s: usb_findit() returned %d error", __func__,
-			ret);
-		return ret;
+	ret = connect_to_ccd_i2c_bridge(chnd);
+	if (!ret) {
+		printf("Using CCD device%s\n",
+		       chnd->conf.usb_serial ? ", ignoring serial number" : "");
 	}
-	printf("Using CCD device%s\n",
-		chnd->conf.usb_serial ? ", ignoring serial number" : "");
-	return 0;
+	return ret;
 }
 
 static int ccd_i2c_interface_shutdown(struct common_hnd *chnd)
