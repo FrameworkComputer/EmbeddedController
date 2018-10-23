@@ -83,6 +83,11 @@
 #define IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
 #elif defined(CHIP_VARIANT_IT8320DX)
 #define CONFIG_FLASH_SIZE  0x00080000
+/*
+ * Set VCC power status as power-off, then PLL change
+ * (include EC clock frequency) is succeed even CS# is low.
+ */
+#define IT83XX_ESPI_INHIBIT_CS_BY_VCC_OFF
 /* The slave frequency is adjustable (bit[2-0] at register IT83XX_ESPI_GCAC1) */
 #define IT83XX_ESPI_SLAVE_MAX_FREQ_CONFIGURABLE
 /*

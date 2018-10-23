@@ -200,6 +200,16 @@ static void clock_set_pll(enum pll_freq_idx idx)
 		 * change PLL.
 		 */
 		IT83XX_GPIO_GPCRM5 = (IT83XX_GPIO_GPCRM5 & ~0xc0) | (1 << 7);
+#ifdef IT83XX_ESPI_INHIBIT_CS_BY_VCC_OFF
+		/*
+		 * On DX version, we have to turn off VCC before changing PLL
+		 * sequence or sequence will fail if CS# pin is low.
+		 *
+		 * The VCC power status will be treated as power-on later in
+		 * clock_init().
+		 */
+		IT83XX_GCTRL_RSTS = (IT83XX_GCTRL_RSTS & ~0xc0);
+#endif
 #endif
 		/* Update PLL settings. */
 		clock_pll_changed();
