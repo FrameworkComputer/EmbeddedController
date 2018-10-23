@@ -552,6 +552,8 @@
 #undef CONFIG_CASE_CLOSED_DEBUG_V1
 /* Allow unsafe debugging functionality in V1 configuration */
 #undef CONFIG_CASE_CLOSED_DEBUG_V1_UNSAFE
+/* Enable ITE EC programming by CCD using the INA i2c interface. */
+#undef CONFIG_CCD_ITE_PROGRAMMING
 /* Loosen Open restrictions for prePVT devices */
 #undef CONFIG_CCD_OPEN_PREPVT
 
