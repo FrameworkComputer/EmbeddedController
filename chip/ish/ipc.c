@@ -377,6 +377,9 @@ static void ipc_init(void)
 	memset(lpc_get_memmap_range(), 0, EC_MEMMAP_SIZE);
 
 	setup_ipc();
+
+	CPUTS("*** MNG Host Command FW ready ****\n");
+	REG32(IPC_ISH2HOST_DOORBELL) = IPC_BUILD_MNG_MSG(MNG_HC_FW_READY, 1);
 }
 DECLARE_HOOK(HOOK_INIT, ipc_init, HOOK_PRIO_INIT_LPC);
 

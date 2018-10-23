@@ -17,6 +17,7 @@
 #define IPC_PROTOCOL_MNG		3	/* Management protocol */
 #define IPC_PROTOCOL_ECP		4	/* EC protocol */
 #define MNG_TIME_UPDATE			5
+#define MNG_HC_FW_READY			8	/* host command ready */
 
 #define EVENT_FLAG_BIT_READ_IPC		(1<<0)
 #define EVENT_FLAG_BIT_WRITE_IPC	(1<<2)
