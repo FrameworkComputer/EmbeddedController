@@ -195,6 +195,8 @@ static void base_detect_deferred(void)
 	case BASE_ATTACHED_DEBOUNCE:
 		/* Check to see if it's still attached. */
 		if (base_seems_attached(attach_reading, detach_reading)) {
+			CPRINTS("BD: att: %dmV det: %dmV", attach_reading,
+				detach_reading);
 			set_state(BASE_ATTACHED);
 			base_detect_changed();
 		} else if (base_seems_detached(attach_reading,
@@ -214,6 +216,8 @@ static void base_detect_deferred(void)
 	case BASE_DETACHED_DEBOUNCE:
 		/* Check to see if a base is still detached. */
 		if (base_seems_detached(attach_reading, detach_reading)) {
+			CPRINTS("BD: att: %dmV det: %dmV", attach_reading,
+				detach_reading);
 			set_state(BASE_DETACHED);
 			base_detect_changed();
 		} else if (base_seems_attached(attach_reading,
