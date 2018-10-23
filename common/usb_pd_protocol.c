@@ -2921,22 +2921,21 @@ void pd_task(void *u)
 				timeout = 5*MSEC;
 				break;
 			}
-			/* If in Try.SRC state, then don't need to debounce */
-			if (!(pd[port].flags & PD_FLAGS_TRY_SRC)) {
-				/* Debounce the cc state */
-				if (new_cc_state != pd[port].cc_state) {
-					pd[port].cc_debounce = get_time().val +
-						PD_T_CC_DEBOUNCE;
-					pd[port].cc_state = new_cc_state;
-					break;
-				} else if (get_time().val <
-					   pd[port].cc_debounce) {
-					break;
-				}
+
+			/* Set debounce timer */
+			if (new_cc_state != pd[port].cc_state) {
+				pd[port].cc_debounce = get_time().val +
+					(pd[port].flags & PD_FLAGS_TRY_SRC) ?
+					PD_T_DEBOUNCE : PD_T_CC_DEBOUNCE;
+				pd[port].cc_state = new_cc_state;
+				break;
 			}
 
-			/* Debounce complete */
-			/* UFP is attached */
+			/* Debounce the cc state */
+			if (get_time().val < pd[port].cc_debounce)
+				break;
+
+			/* Debounce complete. UFP is attached */
 			if (new_cc_state == PD_CC_UFP_ATTACHED ||
 			    new_cc_state == PD_CC_DEBUG_ACC) {
 				pd[port].polarity = (cc1 != TYPEC_CC_VOLT_RD);
