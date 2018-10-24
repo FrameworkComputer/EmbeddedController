@@ -167,6 +167,7 @@ static int nx20p348x_vbus_source_enable(int port, int enable)
 {
 	int status;
 	int rv;
+	uint8_t previous_flags = flags[port];
 	int control = enable ? NX20P348X_SWITCH_CONTROL_5VSRC : 0;
 
 	enable = !!enable;
@@ -185,6 +186,12 @@ static int nx20p348x_vbus_source_enable(int port, int enable)
 	if (rv)
 		return rv;
 
+	/* Cache the anticipated Vbus state */
+	if (enable)
+		flags[port] |= NX20P348X_FLAGS_SOURCE_ENABLED;
+	else
+		flags[port] &= ~NX20P348X_FLAGS_SOURCE_ENABLED;
+
 	/*
 	 * Read switch status register. The bit definitions for switch control
 	 * and switch status resister are identical, so the control value can be
@@ -193,17 +200,15 @@ static int nx20p348x_vbus_source_enable(int port, int enable)
 	 */
 	msleep(NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC);
 	rv = read_reg(port, NX20P348X_SWITCH_STATUS_REG, &status);
-	if (rv)
+	if (rv) {
+		flags[port] = previous_flags;
 		return rv;
+	}
 
-	if ((status & NX20P348X_SWITCH_STATUS_MASK) != control)
+	if ((status & NX20P348X_SWITCH_STATUS_MASK) != control) {
+		flags[port] = previous_flags;
 		return EC_ERROR_UNKNOWN;
-
-	/* Cache the Vbus state */
-	if (enable)
-		flags[port] |= NX20P348X_FLAGS_SOURCE_ENABLED;
-	else
-		flags[port] &= ~NX20P348X_FLAGS_SOURCE_ENABLED;
+	}
 
 	return EC_SUCCESS;
 }
