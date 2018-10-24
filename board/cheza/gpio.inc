@@ -9,7 +9,7 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 /* USB-C interrupts */
-GPIO_INT(USB_C0_PD_INT_ODL,    PIN(A, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V, tcpc_alert_event)  /* Interrupt from port-0 TCPC */
+GPIO_INT(USB_C0_PD_INT_ODL,    PIN(A, 0), GPIO_INT_FALLING, tcpc_alert_event)  /* Interrupt from port-0 TCPC */
 GPIO_INT(USB_C1_PD_INT_ODL,    PIN(F, 5), GPIO_INT_FALLING, tcpc_alert_event)  /* Interrupt from port-1 TCPC */
 GPIO_INT(USB_C0_SWCTL_INT_ODL, PIN(0, 3), GPIO_INT_FALLING, ppc_interrupt)  /* Interrupt from port-0 PPC */
 GPIO_INT(USB_C0_BC12_INT_L,    PIN(6, 1), GPIO_INT_FALLING, usb0_evt)  /* Interrupt from port-0 BC1.2 */
@@ -36,9 +36,9 @@ GPIO_INT(PMIC_FAULT_L,      PIN(7, 6), GPIO_INT_BOTH | GPIO_SEL_1P8V, power_sign
  * for not only signalling power_signal_interrupt but also handling the logic
  * of WARM_RESET_L which is pulled-up by the same rail of POWER_GOOD.
  */
-GPIO_INT(POWER_GOOD,        PIN(5, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, chipset_warm_reset_interrupt)  /* SRC_PP1800_S4A from PMIC */
+GPIO_INT(POWER_GOOD,        PIN(5, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN, chipset_warm_reset_interrupt)  /* SRC_PP1800_S4A from PMIC */
 GPIO_INT(WARM_RESET_L,      PIN(F, 4), GPIO_INT_BOTH | GPIO_SEL_1P8V, chipset_warm_reset_interrupt)  /* AP warm reset */
-GPIO_INT(SHI_CS_L,          PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN | GPIO_SEL_1P8V, shi_cs_event)  /* AP_EC_SPI_CS_L */
+GPIO_INT(SHI_CS_L,          PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN, shi_cs_event)  /* AP_EC_SPI_CS_L */
 GPIO_INT(CC_LID_BASE_ADC,   PIN(4, 5), GPIO_INT_BOTH, base_detect_interrupt)  /* Base detection */
 
 /*
@@ -60,8 +60,8 @@ GPIO(PROCHOT_L,             PIN(3, 4), GPIO_INPUT)
 /* PMIC/AP 1.8V */
 GPIO(PM845_RESIN_L,         PIN(3, 2), GPIO_ODR_HIGH | GPIO_SEL_1P8V)  /* PMIC reset trigger */
 GPIO(PMIC_KPD_PWR_ODL,      PIN(D, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V)  /* PMIC power button */
-GPIO(EC_INT_L,              PIN(A, 2), GPIO_ODR_HIGH | GPIO_SEL_1P8V)  /* Interrupt line between AP and EC */
-GPIO(AP_SUSPEND_L,          PIN(5, 7), GPIO_INPUT | GPIO_SEL_1P8V)     /* Suspend signal from AP */
+GPIO(EC_INT_L,              PIN(A, 2), GPIO_ODR_HIGH)  /* Interrupt line between AP and EC */
+GPIO(AP_SUSPEND_L,          PIN(5, 7), GPIO_INPUT)     /* Suspend signal from AP */
 
 /* Power enables */
 GPIO(SWITCHCAP_ON_L,        PIN(D, 5), GPIO_OUT_LOW)   /* Enable switch cap. XXX: It's active-high */
