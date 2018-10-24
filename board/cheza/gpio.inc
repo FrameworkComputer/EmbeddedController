@@ -73,7 +73,7 @@ GPIO(ENABLE_BACKLIGHT,      PIN(B, 6), GPIO_OUT_LOW)   /* EC_BL_DISABLE_L: Backl
 /* Sensors */
 GPIO(ALS_INT_L,             PIN(5, 0), GPIO_INPUT)     /* ALS sensor interrupt */
 GPIO(P_SENSOR_INT_L,        PIN(F, 3), GPIO_INPUT | GPIO_SEL_1P8V) /* P-sensor interrupt */
-GPIO(RCAM_VSYNC,            PIN(4, 0), GPIO_INPUT)     /* VSYNC from rear camera */
+GPIO(RCAM_VSYNC,            PIN(4, 0), GPIO_INPUT | GPIO_SEL_1P8V) /* VSYNC from rear camera */
 
 /* Base */
 GPIO(EN_PPVAR_VAR_BASE,     PIN(0, 4), GPIO_OUT_LOW)   /* Power to the base */
