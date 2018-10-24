@@ -18,13 +18,6 @@
 /* Whether bus fault is ignored */
 static int bus_fault_ignored;
 
-/* Panic data goes at the end of RAM. */
-static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
-
-/* Preceded by stack, rounded down to nearest 64-bit-aligned boundary */
-static const uint32_t pstack_addr = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE
-				     - sizeof(struct panic_data)) & ~7;
-
 /*
  * Print panic data
  */
