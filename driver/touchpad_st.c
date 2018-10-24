@@ -1109,8 +1109,11 @@ static int st_tp_panel_init(int full)
 
 	st_tp_stop_scan();
 	ret = st_tp_reset();
-	if (ret)
-		return ret;
+	/*
+	 * TODO(b:118312397): Figure out how to handle st_tp_reset errors (if
+	 * needed at all).
+	 */
+	CPRINTS("st_tp_reset ret=%d", ret);
 
 	full |= tp_control & TP_CONTROL_SHALL_INIT_FULL;
 	if (full) {
