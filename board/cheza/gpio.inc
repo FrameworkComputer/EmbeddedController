@@ -124,7 +124,7 @@ GPIO(USBC_MUX_CONF1,        PIN(5, 1), GPIO_OUT_HIGH)  /* Port-1 enable DP switc
 
 /* USB-C port-1 interrupts */
 GPIO(USB_C1_DP_HPD,         PIN(9, 6), GPIO_INPUT)     /* DP HPD from port-1 TCPC */
-GPIO(USB_C1_OC_ODL,         PIN(D, 7), GPIO_INPUT)     /* Port-1 power switch over-current */
+GPIO(USB_C1_OC_ODL,         PIN(D, 7), GPIO_INPUT | GPIO_PULL_UP) /* Port-1 power switch over-current */
 
 /* I2C */
 GPIO(I2C0_SCL,              PIN(B, 5), GPIO_INPUT)     /* EC_I2C_POWER_SCL */
