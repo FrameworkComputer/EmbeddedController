@@ -64,12 +64,12 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 	/*
-	 * Sunwoda 02018 Battery Information for Liara.
+	 * Sunwoda 2018 Battery Information for Liara.
 	 * Gauge IC: TI BQ40Z697A
 	 */
 	[BATTERY_SUNWODA] = {
 		.fuel_gauge = {
-			.manuf_name = "Sunwoda 02018",
+			.manuf_name = "Sunwoda 2018",
 			.ship_mode = {
 				.reg_addr = 0x00,
 				.reg_data = { 0x0010, 0x0010 },
@@ -101,7 +101,7 @@ const struct board_batt_params board_battery_info[] = {
 	 */
 	[BATTERY_SIMPLO] = {
 		.fuel_gauge = {
-			.manuf_name = "SMP 2018",
+			.manuf_name = "SMP2018",
 			.ship_mode = {
 				.reg_addr = 0x00,
 				.reg_data = { 0x0010, 0x0010 },
