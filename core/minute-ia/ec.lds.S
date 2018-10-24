@@ -155,10 +155,12 @@ SECTIONS
 		*(.bss*);
 		*(COMMON*);
 
-		# Reserve space for deferred function firing times.  Each time
-		# is a uint64_t, each func is a 32-bit pointer, thus the scaling
-		# factor of two.  The 8 byte alignment of uint64_t is required
-		# by the ABI.
+		/*
+		 * Reserve space for deferred function firing times.
+		 * Each time is a uint64_t, each func is a 32-bit
+		 * pointer, thus the scaling factor of two.  The 8
+		 * byte alignment of uint64_t is required by the ABI.
+		 */
 
 		 . = ALIGN(8);
 		 __deferred_until = .;
@@ -169,7 +171,7 @@ SECTIONS
 		__bss_size_words = (__bss_end - __bss_start) / 4;
 	}
 
-	#TODO: Adjust __image_size to proper value for core minute-ia later
+	/* TODO: Adjust __image_size to proper value for core minute-ia later */
 	__image_size = . - CONFIG_ISH_BOOT_START;
 
 	def_irq_low  = ABSOLUTE(default_int_handler) & 0xFFFF;
