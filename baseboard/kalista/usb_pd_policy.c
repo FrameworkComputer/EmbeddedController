@@ -220,43 +220,9 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 
 int board_set_active_charge_port(int port)
 {
-	const int active_port = charge_manager_get_active_charge_port();
-
 	if (port < 0 || CHARGE_PORT_COUNT <= port)
 		return EC_ERROR_INVAL;
-
-	if (port == active_port)
-		return EC_SUCCESS;
-
-	/* Don't charge from a source port */
-	if (board_vbus_source_enabled(port))
-		return EC_ERROR_INVAL;
-
 	CPRINTS("New charger p%d", port);
-
-	switch (port) {
-	case CHARGE_PORT_TYPEC0:
-		/* This is connected to TP on board version 2.2+ thus no-op */
-		gpio_set_level(GPIO_USB_C0_CHARGE_L, 0);
-		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 1);
-		gpio_enable_interrupt(GPIO_ADP_IN_L);
-		break;
-	case CHARGE_PORT_BARRELJACK:
-		/* Make sure BJ adapter is sourcing power */
-		if (gpio_get_level(GPIO_ADP_IN_L))
-			return EC_ERROR_INVAL;
-		/* This will cause brown out when switching from type-c on
-		 * board version 2.2+ thus the rest of the code is no-op. */
-		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 0);
-		/* If type-c voltage > BJ voltage, we'll brown out due to the
-		 * reverse current protection of PU3 but it's intended. */
-		gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
-		gpio_disable_interrupt(GPIO_ADP_IN_L);
-		break;
-	default:
-		return EC_ERROR_INVAL;
-	}
-
 	return EC_SUCCESS;
 }
 

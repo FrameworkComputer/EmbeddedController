@@ -121,7 +121,7 @@
 
 /* USB-A config */
 #define CONFIG_USB_PORT_POWER_DUMB
-#define USB_PORT_COUNT 5
+#define USB_PORT_COUNT 4
 
 /* Optional feature to configure npcx chip */
 #define NPCX_UART_MODULE2	1 /* 1:GPIO64/65 as UART */
@@ -131,8 +131,7 @@
 /* I2C ports */
 #define I2C_PORT_TCPC0		NPCX_I2C_PORT0_0
 #define I2C_PORT_EEPROM		NPCX_I2C_PORT0_1
-#define I2C_PORT_BATTERY	NPCX_I2C_PORT1
-#define I2C_PORT_CHARGER	NPCX_I2C_PORT1
+#define I2C_PORT_BACKLIGHT	NPCX_I2C_PORT1
 #define I2C_PORT_PMIC		NPCX_I2C_PORT2
 #define I2C_PORT_THERMAL	NPCX_I2C_PORT3
 
@@ -233,13 +232,7 @@ enum mft_channel {
 };
 
 enum OEM_ID {
-	OEM_KENCH = 0,
-	OEM_TEEMO = 1,
-	OEM_SION = 2,
-	OEM_WUKONG_N = 3,
-	OEM_WUKONG_A = 4,
-	OEM_WUKONG_M = 5,
-	OEM_BLEEMO = 6,
+	OEM_KARMA = 7,
 	/* Number of OEM IDs */
 	OEM_COUNT
 };
@@ -255,7 +248,7 @@ enum OEM_ID {
 /* delay to turn on/off vconn */
 #define PD_VCONN_SWAP_DELAY		5000   /* us */
 
-/* Define typical operating power. Since Fizz doesn't have a battery to charge,
+/* Define typical operating power. Since Kalista doesn't have a battery,
  * we're not interested in any power lower than the AP power-on threshold. */
 #define PD_OPERATING_POWER_MW	CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
 #define PD_MAX_POWER_MW		100000

@@ -13,16 +13,10 @@ GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH,			extpower_interrupt)
 GPIO_INT(POWER_BUTTON_L,	PIN(0, 4), GPIO_INT_BOTH | GPIO_PULL_UP,	power_button_interrupt)	/* MECH_PWR_BTN_ODL */
 
 GPIO_INT(PCH_SLP_S0_L,		PIN(7, 5), GPIO_INT_BOTH,			power_signal_interrupt)
-/* Use VW signals instead of GPIOs */
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
-GPIO_INT(PCH_SLP_S3_L,		PIN(7, 3), GPIO_INT_BOTH,			power_signal_interrupt)
-GPIO_INT(PCH_SLP_S4_L,		PIN(8, 6), GPIO_INT_BOTH,			power_signal_interrupt)
-#endif
 GPIO_INT(PCH_SLP_SUS_L,		PIN(6, 2), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(RSMRST_L_PGOOD,	PIN(B, 0), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(PMIC_DPWROK,		PIN(C, 7), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(WP_L,			PIN(9, 3), GPIO_INT_BOTH,			switch_interrupt)
-GPIO_INT(ADP_IN_L,		PIN(C, 5), GPIO_INT_BOTH | GPIO_PULL_UP,	adp_in)	/* Low: BJ detected */
 GPIO_INT(USB_C0_VBUS_WAKE_L,	PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP,	vbus0_evt)
 GPIO_INT(RECOVERY_L,		PIN(8, 2), GPIO_INT_BOTH, button_interrupt)	/* Recovery button */
 GPIO(PCH_RTCRST,		PIN(E, 7), GPIO_OUT_LOW)			/* RTCRST# to SOC */
@@ -40,12 +34,9 @@ GPIO(CCD_MODE_ODL,		PIN(6, 3), GPIO_INPUT)				/* Case Closed Debug Mode */
 GPIO(EC_HAVEN_RESET_ODL,	PIN(0, 2), GPIO_ODR_HIGH)			/* H1 Reset */
 GPIO(ENTERING_RW,		PIN(7, 6), GPIO_OUTPUT)				/* EC Entering RW */
 GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT)				/* PMIC interrupt */
-GPIO(TYPE_C_60W,		PIN(3, 3), GPIO_OUTPUT | GPIO_PULL_DOWN)
-GPIO(TYPE_C_65W,		PIN(3, 4), GPIO_OUTPUT | GPIO_PULL_DOWN)
-GPIO(TYPE_C_87W,		PIN(4, 4), GPIO_OUTPUT | GPIO_PULL_DOWN)
+GPIO(U22_90W,			PIN(3, 4), GPIO_OUTPUT | GPIO_PULL_DOWN)
 GPIO(POWER_RATE,		PIN(7, 1), GPIO_INPUT)				/* High: i3/5/7. Low: Celeron */
 
-/* Fizz specific pins */
 GPIO(LAN_PWR_EN,		PIN(8, 3), GPIO_OUT_HIGH)			/* Ethernet power enabled */
 
 GPIO(PP5000_DX_NFC,		PIN(1, 5), GPIO_OUTPUT)
@@ -72,7 +63,6 @@ GPIO(I2C3_SDA,			PIN(D, 0), GPIO_INPUT)				/* EC_THEM_SDA */
 /* 5V enables: INPUT=1.5A, OUT_LOW=OFF, OUT_HIGH=3A */
 GPIO(USB_C0_5V_EN,		PIN(4, 2), GPIO_OUT_LOW | GPIO_PULL_UP)		/* C0 5V Enable */
 GPIO(USB_C0_CHARGE_L,		PIN(C, 0), GPIO_OUT_LOW)			/* C0 Charge enable */
-GPIO(AC_JACK_CHARGE_L,		PIN(C, 3), GPIO_OUT_LOW)			/* AC jack charge enable */
 GPIO(USB_C0_PD_RST_ODL,		PIN(0, 3), GPIO_OUT_LOW)			/* C0 PD Reset */
 GPIO(USB_C0_DP_HPD,		PIN(9, 4), GPIO_INPUT)				/* C0 DP Hotplug Detect */
 GPIO(USB_C0_TCPC_PWR,		PIN(8, 4), GPIO_OUT_LOW)			/* Enable C0 TCPC Power */

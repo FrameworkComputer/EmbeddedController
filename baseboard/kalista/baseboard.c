@@ -7,7 +7,7 @@
 
 #include "adc.h"
 #include "adc_chip.h"
-#include "als.h"
+#include "baseboard.h"
 #include "battery.h"
 #include "bd99992gw.h"
 #include "board_config.h"
@@ -54,66 +54,42 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-static uint16_t board_version;
-static uint8_t oem;
-static uint8_t sku;
+static uint8_t board_version;
+static uint32_t oem;
+static uint32_t sku;
+
+enum bj_adapter {
+	BJ_90W_19V,
+	BJ_135W_19V,
+};
+
+/*
+ * Bit masks to map SKU ID to BJ adapter wattage. 1:135W 0:90W
+ * KBL-R i7 8550U	4	135
+ * KBL-R i5 8250U	5	135
+ * KBL-R i3 8130U	6	135
+ * KBL-U i7 7600	3	135
+ * KBL-U i5 7500	2	135
+ * KBL-U i3 7100	1	90
+ * KBL-U Celeron 3965	7	90
+ * KBL-U Celeron 3865	0	90
+ */
+#define BJ_ADAPTER_135W_MASK (1 << 4 | 1 << 5 | 1 << 6 | 1 << 3 | 1 << 2)
+
+/* BJ adapter specs */
+static const struct charge_port_info bj_adapters[] = {
+	[BJ_90W_19V] = { .current = 4740, .voltage = 19000 },
+	[BJ_135W_19V] = { .current = 7100, .voltage = 19000 },
+};
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if (!gpio_get_level(GPIO_USB_C0_PD_RST_ODL))
 		return;
-
 #ifdef HAS_TASK_PDCMD
 	/* Exchange status with TCPCs */
 	host_command_pd_send_status(PD_CHARGE_NO_CHANGE);
 #endif
-}
-
-#define ADP_DEBOUNCE_MS		1000  /* Debounce time for BJ plug/unplug */
-/*
- * ADP_IN pin state. It's initialized to 1 (=unplugged) because the IRQ won't
- * be triggered if BJ is the power source.
- */
-static int adp_in_state = 1;
-
-static void adp_in_deferred(void);
-DECLARE_DEFERRED(adp_in_deferred);
-static void adp_in_deferred(void)
-{
-	struct charge_port_info pi = { 0 };
-	int level = gpio_get_level(GPIO_ADP_IN_L);
-
-	/* Debounce */
-	if (level == adp_in_state)
-		return;
-	if (!level) {
-		/* BJ is inserted but the voltage isn't effective because PU3
-		 * is still disabled. */
-		pi.voltage = 19500;
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-			/*
-			 * It doesn't matter what we set here because we'll
-			 * brown out anyway when charge_manager switches
-			 * input.
-			 */
-			pi.current = 3330;
-	}
-	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
-				     DEDICATED_CHARGE_PORT, &pi);
-	/*
-	 * Explicitly notifies the host that BJ is plugged or unplugged
-	 * (when running on a type-c adapter).
-	 */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
-	adp_in_state = level;
-}
-
-/* IRQ for BJ plug/unplug. It shouldn't be called if BJ is the power source. */
-void adp_in(enum gpio_signal signal)
-{
-	if (adp_in_state == gpio_get_level(GPIO_ADP_IN_L))
-		return;
-	hook_call_deferred(&adp_in_deferred_data, ADP_DEBOUNCE_MS * MSEC);
 }
 
 void vbus0_evt(enum gpio_signal signal)
@@ -126,13 +102,8 @@ void vbus0_evt(enum gpio_signal signal)
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
 	{GPIO_PCH_SLP_S0_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_S0_DEASSERTED"},
-#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
 	{VW_SLP_S3_L,		POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
 	{VW_SLP_S4_L,		POWER_SIGNAL_ACTIVE_HIGH, "SLP_S4_DEASSERTED"},
-#else
-	{GPIO_PCH_SLP_S3_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
-	{GPIO_PCH_SLP_S4_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_S4_DEASSERTED"},
-#endif
 	{GPIO_PCH_SLP_SUS_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_SUS_DEASSERTED"},
 	{GPIO_RSMRST_L_PGOOD,	POWER_SIGNAL_ACTIVE_HIGH, "RSMRST_L_PGOOD"},
 	{GPIO_PMIC_DPWROK,	POWER_SIGNAL_ACTIVE_HIGH, "PMIC_DPWROK"},
@@ -152,8 +123,7 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-/******************************************************************************/
-/* Physical fans. These are logically separate from pwm_channels. */
+/* TODO: Verify fan control and mft */
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
 	.ch = MFT_CH_0,	/* Use MFT id to control fan */
@@ -167,37 +137,28 @@ const struct fan_rpm fan_rpm_0 = {
 	.rpm_max = 5600,
 };
 
-const struct fan_rpm fan_rpm_1 = {
-	.rpm_min = 2800,
-	.rpm_start = 2800,
-	.rpm_max = 5600,
-};
-
 struct fan_t fans[] = {
 	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 
-/******************************************************************************/
-/* MFT channels. These are logically separate from pwm_channels. */
 const struct mft_t mft_channels[] = {
 	[MFT_CH_0] = {NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN},
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
-/* I2C port map */
 const struct i2c_port_t i2c_ports[]  = {
-	{"tcpc", NPCX_I2C_PORT0_0, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
-	{"eeprom", NPCX_I2C_PORT0_1, 400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
-	{"charger", NPCX_I2C_PORT1, 100, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"pmic", NPCX_I2C_PORT2, 400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-	{"thermal", NPCX_I2C_PORT3, 400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
+	{"tcpc", I2C_PORT_TCPC0, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
+	{"eeprom", I2C_PORT_EEPROM, 400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
+	{"backlight", I2C_PORT_BACKLIGHT, 100, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
+	{"pmic", I2C_PORT_PMIC, 400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
+	{"thermal", I2C_PORT_THERMAL, 400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* TCPC mux configuration */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{NPCX_I2C_PORT0_0, I2C_ADDR_TCPC0, &ps8xxx_tcpm_drv,
+	{I2C_PORT_TCPC0, I2C_ADDR_TCPC0, &ps8xxx_tcpm_drv,
 			TCPC_ALERT_ACTIVE_LOW},
 };
 
@@ -221,7 +182,6 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_USB2_ENABLE,
 	GPIO_USB3_ENABLE,
 	GPIO_USB4_ENABLE,
-	GPIO_USB5_ENABLE,
 };
 
 void board_reset_pd_mcu(void)
@@ -263,14 +223,10 @@ DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
 uint16_t tcpc_get_alert_status(void)
 {
-	uint16_t status = 0;
-
-	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL)) {
-		if (gpio_get_level(GPIO_USB_C0_PD_RST_ODL))
-			status |= PD_STATUS_TCPC_ALERT_0;
-	}
-
-	return status;
+	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL) &&
+			gpio_get_level(GPIO_USB_C0_PD_RST_ODL))
+		return PD_STATUS_TCPC_ALERT_0;
+	return 0;
 }
 
 /*
@@ -453,7 +409,7 @@ void chipset_pre_init_callback(void)
 }
 
 /**
- * Notify the AC presence GPIO to the PCH.
+ * Notify PCH of the AC presence.
  */
 static void board_extpower(void)
 {
@@ -461,49 +417,10 @@ static void board_extpower(void)
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
-/* Mapping to the old schematics */
-#define GPIO_U42_P GPIO_TYPE_C_60W
-#define GPIO_U22_C GPIO_TYPE_C_65W
-
-/*
- * Board version 2.1 or before uses a different current monitoring circuitry.
- */
-static void set_charge_limit(int charge_ma)
-{
-	/*
-	 * We have two FETs connected to two registers: PR257 & PR258.
-	 * These control thresholds of the over current monitoring system.
-	 *
-	 *                              PR257, PR258
-	 * For 4.62A (90W BJ adapter),     on,   off
-	 * For 3.33A (65W BJ adapter),    off,    on
-	 * For 3.00A (Type-C adapter),    off,   off
-	 *
-	 * The over current monitoring system doesn't support less than 3A
-	 * (e.g. 2.25A, 2.00A). These current most likely won't be enough to
-	 * power the system. However, if they're needed, EC can monitor
-	 * PMON_PSYS and trigger H_PROCHOT by itself.
-	 */
-	if (charge_ma >= 4620) {
-		gpio_set_level(GPIO_U42_P, 1);
-		gpio_set_level(GPIO_U22_C, 0);
-	} else if (charge_ma >= 3330) {
-		gpio_set_level(GPIO_U42_P, 0);
-		gpio_set_level(GPIO_U22_C, 1);
-	} else if (charge_ma >= 3000) {
-		gpio_set_level(GPIO_U42_P, 0);
-		gpio_set_level(GPIO_U22_C, 0);
-	} else {
-		/* TODO(http://crosbug.com/p/65013352) */
-		CPRINTS("Current %dmA not supported", charge_ma);
-	}
-}
-
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	int p87w = 0, p65w = 0, p60w = 0;
-
+	int u22 = 0;
 	/*
 	 * Turn on/off power shortage alert. Performs the same check as
 	 * system_can_boot_ap(). It's repeated here because charge_manager
@@ -514,68 +431,18 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 			CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON * 1000);
 
 	/*
-	 * In terms of timing, this should always work because
-	 * HOOK_PRIO_CHARGE_MANAGER_INIT is notified after HOOK_PRIO_INIT_I2C.
-	 * If CBI isn't initialized or contains invalid data, we assume it's
-	 * a new board.
+	 * Kalista has two types of charger: 90W, 135W.
+	 * 135W charger offers 7.1A/19V.
+	 * 90W charger offers 4.74A/19V.
 	 */
-	if (0 < board_version && board_version < 0x0202)
-		return set_charge_limit(charge_ma);
-	/*
-	 * We have three FETs connected to three registers: PR257, PR258,
-	 * PR7824. These control the thresholds of the current monitoring
-	 * system.
-	 *
-	 *                               PR257  PR7824 PR258
-	 *   For BJ (65W or 90W)           off     off   off
-	 *   For 4.35A (87W)                on     off   off
-	 *   For 3.25A (65W)               off     off    on
-	 *   For 3.00A (60W)               off      on   off
-	 *
-	 * The system power consumption is capped by PR259, which is stuffed
-	 * differently depending on the SKU (65W v.s. 90W or U42 v.s. U22).
-	 * So, we only need to monitor type-c adapters. For example:
-	 *
-	 *   a 90W system powered by 65W type-c charger
-	 *   b 65W system powered by 60W type-c charger
-	 *   c 65W system powered by 87W type-c charger
-	 *
-	 * In a case such as (c), we actually do not need to monitor the current
-	 * because the max is capped by PR259.
-	 *
-	 * AP is expected to read type-c adapter wattage from EC and control
-	 * power consumption to avoid over-current or system browns out.
-	 *
-	 */
-	if (supplier != CHARGE_SUPPLIER_DEDICATED) {
-		/* Apple 87W charger offers 4.3A @20V. */
-		if (charge_ma >= 4300) {
-			p87w = 1;
-		} else if (charge_ma >= 3250) {
-			p65w = 1;
-		} else if (charge_ma >= 3000) {
-			p60w = 1;
-		} else {
-			/*
-			 * TODO:http://crosbug.com/p/65013352.
-	 		 * The current monitoring system doesn't support lower
-	 		 * current. These currents are most likely not enough to
-	 		 * power the system. However, if they're needed, EC can
-	 		 * monitor PMON_PSYS and trigger H_PROCHOT by itself.
-	 		 */
-			p60w = 1;
-			CPRINTS("Current %dmA not supported", charge_ma);
-		}
-	}
-
-	gpio_set_level(GPIO_TYPE_C_87W, p87w);
-	gpio_set_level(GPIO_TYPE_C_65W, p65w);
-	gpio_set_level(GPIO_TYPE_C_60W, p60w);
+	if (charge_ma < bj_adapters[BJ_135W_19V].current)
+		/* GPIO_U22_90W high means 90W charger */
+		u22 = 1;
+	gpio_set_level(GPIO_U22_90W, u22);
 }
 
 enum battery_present battery_is_present(void)
 {
-	/* The GPIO is low when the battery is present */
 	return BP_NO;
 }
 
@@ -598,8 +465,6 @@ struct fan_step {
 	int rpm;
 };
 
-static const struct fan_step *fan_table;
-
 /* Note: Do not make the fan on/off point equal to 0 or 100 */
 static const struct fan_step fan_table0[] = {
 	{.on =  0, .off =  1, .rpm = 0},
@@ -611,142 +476,51 @@ static const struct fan_step fan_table0[] = {
 	{.on = 88, .off = 83, .rpm = 5200},
 	{.on = 98, .off = 91, .rpm = 5600},
 };
-static const struct fan_step fan_table1[] = {
-	{.on =  0, .off =  1, .rpm = 0},
-	{.on = 36, .off =  1, .rpm = 2800},
-	{.on = 62, .off = 58, .rpm = 3200},
-	{.on = 68, .off = 63, .rpm = 3400},
-	{.on = 75, .off = 69, .rpm = 4200},
-	{.on = 81, .off = 76, .rpm = 4800},
-	{.on = 88, .off = 83, .rpm = 5200},
-	{.on = 98, .off = 91, .rpm = 5600},
-};
-static const struct fan_step fan_table2[] = {
-	{.on =  0, .off =  1, .rpm = 0},
-	{.on = 36, .off =  1, .rpm = 2200},
-	{.on = 63, .off = 56, .rpm = 2900},
-	{.on = 69, .off = 65, .rpm = 3000},
-	{.on = 75, .off = 70, .rpm = 3300},
-	{.on = 80, .off = 76, .rpm = 3600},
-	{.on = 87, .off = 81, .rpm = 3900},
-	{.on = 98, .off = 91, .rpm = 5000},
-};
 /* All fan tables must have the same number of levels */
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
-BUILD_ASSERT(ARRAY_SIZE(fan_table1) == NUM_FAN_LEVELS);
-BUILD_ASSERT(ARRAY_SIZE(fan_table2) == NUM_FAN_LEVELS);
+
+static const struct fan_step *fan_table = fan_table0;
+
 
 static void cbi_init(void)
 {
 	uint32_t val;
-	if (cbi_get_board_version(&val) == EC_SUCCESS && val <= UINT16_MAX)
+	if (cbi_get_board_version(&val) == EC_SUCCESS && val <= UINT8_MAX)
 		board_version = val;
-	CPRINTS("Board Version: 0x%04x", board_version);
+	CPRINTS("Board Version: 0x%02x", board_version);
 
 	if (cbi_get_oem_id(&val) == EC_SUCCESS && val < OEM_COUNT)
 		oem = val;
 	CPRINTS("OEM: %d", oem);
 
-	if (cbi_get_sku_id(&val) == EC_SUCCESS && val <= UINT8_MAX)
+	if (cbi_get_sku_id(&val) == EC_SUCCESS)
 		sku = val;
-	CPRINTS("SKU: 0x%02x", sku);
+	CPRINTS("SKU: 0x%08x", sku);
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
-static void setup_fan(void)
-{
-	/* Configure Fan */
-	switch (oem) {
-	case OEM_KENCH:
-	case OEM_TEEMO:
-	case OEM_BLEEMO:
-	default:
-		fans[FAN_CH_0].rpm = &fan_rpm_1;
-		fan_table = fan_table0;
-		break;
-	case OEM_SION:
-		fans[FAN_CH_0].rpm = &fan_rpm_1;
-		fan_table = fan_table1;
-		break;
-	case OEM_WUKONG_N:
-	case OEM_WUKONG_A:
-	case OEM_WUKONG_M:
-		fans[FAN_CH_0].rpm = &fan_rpm_0;
-		fan_table = fan_table2;
-		break;
-	}
-}
-
-/* List of BJ adapters shipped with Fizz or its variants */
-enum bj_adapter {
-	BJ_65W_19V,
-	BJ_90W_19V,
-	BJ_65W_19P5V,
-	BJ_90W_19P5V,
-};
-
-/* BJ adapter specs */
-static const struct charge_port_info bj_adapters[] = {
-	[BJ_65W_19V] = { .current = 3420, .voltage = 19000 },
-	[BJ_90W_19V] = { .current = 4740, .voltage = 19000 },
-	[BJ_65W_19P5V] = { .current = 3330, .voltage = 19500 },
-	[BJ_90W_19P5V] = { .current = 4620, .voltage = 19500 },
-};
-
-/*
- * Bit masks to map SKU ID to BJ adapter wattage. 1:90W 0:65W
- * KBL-R i7 8550U	4	90
- * KBL-R i5 8250U	5	90
- * KBL-R i3 8130U	6	90
- * KBL-U i7 7600	3	65
- * KBL-U i5 7500	2	65
- * KBL-U i3  7100	1	65
- * KBL-U Celeron 3965	7	65
- * KBL-U Celeron 3865	0	65
- */
-#define BJ_ADAPTER_90W_MASK (1 << 4 | 1 << 5 | 1 << 6)
-
 static void setup_bj(void)
 {
-	enum bj_adapter bj;
-
-	switch (oem) {
-	case OEM_KENCH:
-		bj = (BJ_ADAPTER_90W_MASK & (1 << sku)) ?
-			BJ_90W_19P5V : BJ_65W_19P5V;
-		break;
-	case OEM_TEEMO:
-	case OEM_BLEEMO:
-	case OEM_SION:
-	case OEM_WUKONG_N:
-	case OEM_WUKONG_A:
-	case OEM_WUKONG_M:
-		bj = (BJ_ADAPTER_90W_MASK & (1 << sku)) ?
-			BJ_90W_19V : BJ_65W_19V;
-		break;
-	default:
-		bj = (BJ_ADAPTER_90W_MASK & (1 << sku)) ?
-			BJ_90W_19P5V : BJ_65W_19P5V;
-		break;
-	}
+	enum bj_adapter bj = (BJ_ADAPTER_135W_MASK & (1 << sku)) ?
+			BJ_135W_19V : BJ_90W_19V;
 
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 				     DEDICATED_CHARGE_PORT, &bj_adapters[bj]);
 }
 
 /*
- * Since fizz has no battery, it must source all of its power from either
- * USB-C or the barrel jack (preferred). Fizz operates in continuous safe
- * mode (charge_manager_leave_safe_mode() will never be called), which
- * modifies port / ILIM selection as follows:
+ * Kalista has no battery and power is sourced only from a BJ adapter.
+ * Kalista operates in continuous safe mode (charge_manager_leave_safe_mode()
+ * will never be called), which modifies port / ILIM selection as follows:
  *
  * - Dual-role / dedicated capability of the port partner is ignored.
  * - Charge ceiling on PD voltage transition is ignored.
  * - CHARGE_PORT_NONE will never be selected.
+ *
+ * TODO: Set USB-C port as source only.
  */
 static void board_charge_manager_init(void)
 {
-	enum charge_port port;
 	int i, j;
 
 	/* Initialize all charge suppliers to 0 */
@@ -755,28 +529,13 @@ static void board_charge_manager_init(void)
 			charge_manager_update_charge(j, i, NULL);
 	}
 
-	port = gpio_get_level(GPIO_ADP_IN_L) ?
-			CHARGE_PORT_TYPEC0 : CHARGE_PORT_BARRELJACK;
-	CPRINTS("Power source is p%d (%s)", port,
-		port == CHARGE_PORT_TYPEC0 ? "USB-C" : "BJ");
-
-	/* Initialize the power source supplier */
-	switch (port) {
-	case CHARGE_PORT_TYPEC0:
-		typec_set_input_current_limit(port, 3000, 5000);
-		break;
-	case CHARGE_PORT_BARRELJACK:
-		setup_bj();
-		break;
-	}
+	setup_bj();
 }
 DECLARE_HOOK(HOOK_INIT, board_charge_manager_init,
 	     HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
 
 static void board_init(void)
 {
-	setup_fan();
-
 	/* Provide AC status to the PCH */
 	board_extpower();
 
