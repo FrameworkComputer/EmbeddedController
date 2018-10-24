@@ -300,8 +300,14 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 
 	/* Select pull-up/down of GPIO 0:pull-up 1:pull-down */
 	if (flags & GPIO_PULL_UP) {
-		NPCX_PPUD(port)  &= ~mask;
-		NPCX_PPULL(port) |= mask; /* enable pull down/up */
+		if (flags & GPIO_SEL_1P8V) {
+			CPRINTS("Warn! enable internal PU and low voltage mode"
+					" at the same time is illegal. port 0x%x, mask 0x%x",
+					port, mask);
+		} else {
+			NPCX_PPUD(port)  &= ~mask;
+			NPCX_PPULL(port) |= mask; /* enable pull down/up */
+		}
 	} else if (flags & GPIO_PULL_DOWN) {
 		NPCX_PPUD(port)  |= mask;
 		NPCX_PPULL(port) |= mask; /* enable pull down/up */
@@ -313,11 +319,9 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	/* 1.8V low voltage select */
 	if (flags & GPIO_SEL_1P8V) {
 		/*
-		 * Set IO type to open-drain & disable internal pulling
-		 * before selecting low-voltage level
+		 * Set IO type to open-drain before selecting low-voltage level
 		 */
 		NPCX_PTYPE(port) |= mask;
-		NPCX_PPULL(port) &= ~mask;
 		gpio_low_voltage_level_sel(port, mask, 1);
 	} else
 		gpio_low_voltage_level_sel(port, mask, 0);
