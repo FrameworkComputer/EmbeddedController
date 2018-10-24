@@ -169,7 +169,18 @@ SECTIONS
 
 		 __bss_end = .;
 		__bss_size_words = (__bss_end - __bss_start) / 4;
+
+        	/*
+		 * Shared memory buffer must be at the end of
+        	 * preallocated RAM, so it can expand to use all the
+        	 * remaining RAM.
+		 */
+        	__shared_mem_buf = .;
 	}
+
+	ASSERT((__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE) <=
+			(CONFIG_RAM_BASE + CONFIG_RAM_SIZE),
+		"Not enough space for shared memory.")
 
 	/* TODO: Adjust __image_size to proper value for core minute-ia later */
 	__image_size = . - CONFIG_ISH_BOOT_START;
