@@ -2168,7 +2168,7 @@ static void pd_update_try_source(void)
 
 }
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_update_try_source, HOOK_PRIO_DEFAULT);
-#endif
+#endif /* CONFIG_USB_PD_TRY_SRC */
 
 static inline void pd_set_dual_role_no_wakeup(int port,
 					      enum pd_dual_role_states state)
@@ -2496,7 +2496,7 @@ static void pd_init_tasks(void)
 }
 #endif /* CONFIG_COMMON_RUNTIME */
 
-#ifndef CONFIG_USB_PD_TCPC
+#if !defined(CONFIG_USB_PD_TCPC) && defined(CONFIG_USB_PD_DUAL_ROLE)
 static int pd_restart_tcpc(int port)
 {
 	if (board_set_tcpc_power_mode) {
@@ -4674,6 +4674,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_PORTS,
 		     hc_pd_ports,
 		     EC_VER_MASK(0));
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE
 static const enum pd_dual_role_states dual_role_map[USB_PD_CTRL_ROLE_COUNT] = {
 	[USB_PD_CTRL_ROLE_TOGGLE_ON]    = PD_DRP_TOGGLE_ON,
 	[USB_PD_CTRL_ROLE_TOGGLE_OFF]   = PD_DRP_TOGGLE_OFF,
@@ -4681,6 +4682,7 @@ static const enum pd_dual_role_states dual_role_map[USB_PD_CTRL_ROLE_COUNT] = {
 	[USB_PD_CTRL_ROLE_FORCE_SOURCE] = PD_DRP_FORCE_SOURCE,
 	[USB_PD_CTRL_ROLE_FREEZE]       = PD_DRP_FREEZE,
 };
+#endif
 
 #ifdef CONFIG_USBC_SS_MUX
 static const enum typec_mux typec_mux_map[USB_PD_CTRL_MUX_COUNT] = {
@@ -4706,7 +4708,11 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 
 	if (p->role != USB_PD_CTRL_ROLE_NO_CHANGE)
+#ifdef CONFIG_USB_PD_DUAL_ROLE
 		pd_set_dual_role(p->port, dual_role_map[p->role]);
+#else
+		return EC_RES_INVALID_PARAM;
+#endif
 
 #ifdef CONFIG_USBC_SS_MUX
 	if (p->mux != USB_PD_CTRL_MUX_NO_CHANGE)
