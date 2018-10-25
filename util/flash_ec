@@ -184,6 +184,10 @@ function dut_control() {
 	$DUT_CONTROL_CMD "$@" >/dev/null
 }
 
+function dut_control_or_die {
+	dut_control "$@" || die "dut-control $* exited $? (non-zero)"
+}
+
 function get_servo_type() {
 	if dut_control "servo_type" ; then
 		$DUT_CONTROL_CMD servo_type | sed -e s/servo_type://
@@ -329,6 +333,11 @@ toad_ec_hard_reset() {
 	fi
 }
 
+servo_ec_hard_reset_or_die() {
+	dut_control_or_die cold_reset:on
+	dut_control_or_die cold_reset:off
+}
+
 servo_ec_hard_reset() {
 	dut_control cold_reset:on
 	dut_control cold_reset:off
@@ -353,7 +362,7 @@ ec_reset() {
 		stype=servo
 	fi
 
-	if [[ ! -z "${stype}" ]]; then
+	if [[ -n "${stype}" ]]; then
 		eval ${stype}_${MCU}_hard_reset
 	fi
 }
@@ -444,22 +453,42 @@ FROZEN_PIDS=""
 cleanup() {
 	for pid in ${FROZEN_PIDS}; do
 		info "Sending SIGCONT to process ${pid}!"
-		kill -CONT ${pid}
+		kill -CONT "${pid}"
 	done
 
-	# If TEMP_DIR exists, then delete it.
-	[[ -d "${TEMP_DIR}" ]] && rm -rf "${TEMP_DIR}" > /dev/null 2>&1
+	# If $TEMP_DIR exists, then delete it.
+	if [[ -d "${TEMP_DIR}" ]]; then
+		rm -rf "${TEMP_DIR}" > /dev/null 2>&1
+	fi
 
-	if [[ "${CHIP}" == "it83xx" ]]; then
-		if [[ "${SERVO_TYPE}" =~ "servo_v2" ]]; then
-			info "Reinitialize ftdi_i2c interface"
+	if [ "${CHIP}" = "it83xx" ]; then
+		if [ "${SERVO_TYPE}" = "servo_v2" ]; then
+			info "Reinitializing ftdi_i2c interface"
+			# Ask servod to close its FTDI I2C interface because it
+			# could be open or closed at this point.  Using
+			# ftdii2c_cmd:close when it's already closed is okay,
+			# however ftdii2c_cmd:open when it's already open
+			# triggers an error.
+			#
+			# If there is a simple, reliable way to detect whether
+			# servod FTDI I2C interface is open or closed, it would
+			# be preferable to check and only re-initialize if it's
+			# closed.  Patches welcome.
+			dut_control ftdii2c_cmd:close
 			dut_control ftdii2c_cmd:init
 			dut_control ftdii2c_cmd:open
 			dut_control ftdii2c_cmd:setclock
+		fi
 
-			# Ensure servo i2c mux is on so we can talk to dut
-			dut_control i2c_mux_en:on
-			dut_control i2c_mux:remote_adc
+		# Reset the dut mux if it exists
+		if servo_has_dut_i2c_mux; then
+			# Turn off dut i2c mux
+			dut_control dut_i2c_mux:none
+		fi
+
+		# Let the AP boot back up.
+		if servo_has_warm_reset; then
+			dut_control warm_reset:off
 		fi
 	fi
 
@@ -468,30 +497,21 @@ cleanup() {
 		servo_restore "$save"
 	fi
 
-	if [[ "${CHIP}" == "it83xx" ]]; then
-		# Reset the dut mux if it exists
-		servo_has_dut_i2c_mux && dut_control dut_i2c_mux:none
-
-		if [[ "${SERVO_TYPE}" =~ "servo_v2" ]]; then
-			# Turn off servo i2c mux
-			dut_control i2c_mux_en:off
-		fi
-	fi
-
-	if [ "${CHIP}" == "stm32" -o "${CHIP}" == "npcx_uut" ] ; then
+	if [ "${CHIP}" = "stm32" -o "${CHIP}" = "npcx_uut" ]; then
 		# Reconnect the EC-3PO interpreter to the UART.
-		dut_control ${MCU}_ec3po_interp_connect:on || \
+		dut_control "${MCU}"_ec3po_interp_connect:on || \
 		    warn "hdctools cannot reconnect the EC-3PO interpreter to" \
 		    "the UART."
-		dut_control ${MCU}_boot_mode:off
-	fi
-	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
-		dut_control ccd_ec_boot_mode_uut:off
-		dut_control ccd_ec_boot_mode_bitbang:off
-		dut_control ${MCU}_uart_bitbang_en:off
+		dut_control "${MCU}"_boot_mode:off
 	fi
 
-	if ! on_raiden || $(servo_has_cold_reset); then
+	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
+		dut_control ccd_ec_boot_mode_uut:off
+		dut_control ccd_ec_boot_mode_bitbang:off
+		dut_control "${MCU}"_uart_bitbang_en:off
+	fi
+
+	if ! on_raiden || servo_has_cold_reset; then
 		ec_reset
 	fi
 }
@@ -617,7 +637,7 @@ servo_v3_VARS="${servo_v2_VARS}"
 servo_v4_with_servo_micro_VARS="${servo_micro_VARS}"
 
 function servo_save() {
-	if [[ "${CHIP}" == "it83xx" && "${SERVO_TYPE}" =~ "servo_v2" ]]; then
+	if [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
 		dut_control i2c_mux_en:on
 		dut_control i2c_mux:remote_adc
 	fi
@@ -633,6 +653,10 @@ function servo_restore() {
 	do
 		dut_control "$line"
 	done
+
+	if [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
+		dut_control i2c_mux_en:off
+	fi
 }
 
 function claim_pty() {
@@ -877,7 +901,7 @@ function flash_stm32() {
 	local STM32MON
 	local STM32MON_OPT
 
-	if ! $(servo_has_cold_reset); then
+	if ! servo_has_cold_reset; then
 		die "Cold reset must be available for STM32 programming"
 	fi
 
@@ -976,7 +1000,7 @@ function flash_stm32() {
 
 	# Remove the Application processor reset
 	# TODO(crosbug.com/p/30738): we cannot rely on servo_VARS to restore it
-	if $(servo_has_warm_reset); then
+	if servo_has_warm_reset; then
 		dut_control warm_reset:off
 	fi
 }
@@ -1008,9 +1032,50 @@ function flash_stm32_dfu() {
 		$DFU_UTIL -a 0 -s ${ADDR}:${SIZE} -D "${IMG}"
 }
 
+function dut_i2c_dev() {
+	# TODO(b/79684405): Drop support for $DUT_I2C_DEV env var override
+	# as soon as dut-control dut_i2c_dev command is implemented.
+	if [ -n "$DUT_I2C_DEV" ]; then
+		[ -e "$DUT_I2C_DEV" ] ||
+			die "\$DUT_I2C_DEV is a non-existent path: $DUT_I2C_DEV"
+		echo "$DUT_I2C_DEV"
+		return
+	fi
+
+	# TODO(b/79684405): Drop this hack as soon as dut-control dut_i2c_dev
+	# command is implemented.
+	if (
+		set -e
+		cd /sys/class/i2c-dev
+		# Sorting in reverse numerical order generally picks the correct
+		# servod I2C bus when there are multiple servos in line to the
+		# DUT, e.g. servo_v4->servo_micro, or servo_v4->CR50 (CCD).
+		for dev in $(ls | grep ^i2c- | sort -s -t- -n -k2,2 -r); do
+			if grep -q servod "$dev"/name; then
+				echo /dev/"$dev"
+				exit
+			fi
+		done
+		false
+	); then
+		return
+	fi
+
+	# TODO(b/79684405): This should just work once a dut-control dut_i2c_dev
+	# command is implemented.
+	local dut_i2c_dev="$($DUT_CONTROL_CMD dut_i2c_dev)" ||
+		die "dut-control dut_i2c_dev exited $? (non-zero)"
+	dut_i2c_dev="$(echo "$dut_i2c_dev" | sed -e 's/^dut_i2c_dev://')"
+	[ -e "$dut_i2c_dev" ] ||
+		die "dut-control dut_i2c_dev returned non-existent path: "\
+"$dut_i2c_dev"
+	echo "$dut_i2c_dev"
+}
+
 function flash_it83xx() {
 	local TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
 	local ITEFLASH_BIN=$(PATH="${TOOL_PATH}" which iteflash)
+
 	if [[ ! -x "$ITEFLASH_BIN" ]]; then
 		die "no iteflash util found."
 	fi
@@ -1020,10 +1085,12 @@ function flash_it83xx() {
 	# there is a mux on the dut)
 	if servo_has_dut_i2c_mux; then
 		info "Switching DUT I2C Mux to ${CHIP}"
-		# TODO(b/126189871) Investigate about the timeout in CCD mode,
+		# TODO(b/126189871): Investigate about the timeout in CCD mode,
 		# and remove with this retry logic along with the fix.
 		local num_attempts=1
-		[[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] && num_attempts=3
+		if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
+			num_attempts=3
+		fi
 		while :; do
 			if dut_control dut_i2c_mux:ec_prog; then
 				break;
@@ -1035,37 +1102,50 @@ function flash_it83xx() {
 		done
 	fi
 
-	if [[ "${SERVO_TYPE}" =~ "servo_v2" ]]; then
-		# Ensure that the AP is off while we are flashing the EC
-		servo_ec_hard_reset
-
-		info "Close connection to ftdi_i2c interface"
-		dut_control ftdii2c_cmd:close
-	elif [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
-		info "Sending the dbgr special waveform to ${CHIP}"
-		dut_control cr50_i2c_ctrl:ite_debugger_mode
-
-		sleep 3
-	else
-		# TODO(b/124388894) Implement servo_micro support.
-		die "${SERVO_TYPE} is not yet supported."
+	# Ensure that the AP is off while we are flashing the EC via:
+	# - warm_reset:on
+	# - cold_reset:on
+	# - cold_reset:off
+	# ...reflash EC...
+	# - warm_reset:off
+	if servo_has_warm_reset; then
+		dut_control_or_die warm_reset:on
+	fi
+	if servo_has_cold_reset; then
+		servo_ec_hard_reset_or_die
 	fi
 
+	# Send the special waveform to the ITE EC.
+	if [[ "${SERVO_TYPE}" =~ "servo_micro" ]]; then
+		info "Asking Servo Micro to send the dbgr special waveform to "\
+"${CHIP}"
+		dut_control_or_die enable_ite_dfu
+	elif [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
+		info "Asking CR50 to send the dbgr special waveform to ${CHIP}"
+		sleep 2
+		dut_control_or_die cr50_i2c_ctrl:ite_debugger_mode
+		sleep 3
+	elif [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
+		info "Closing servod connection to ftdi_i2c interface"
+		dut_control_or_die ftdii2c_cmd:close
+	else
+		die "This servo type is not yet supported: ${SERVO_TYPE}"
+	fi
+
+	# Build the iteflash command line.
 	local ITEFLASH_ARGS=( "${ITEFLASH_BIN}" )
 
-	if [[ "${SERVO_TYPE}" =~ "servo_v2" ]]; then
-		ITEFLASH_ARGS+=( "--send-waveform=1" )
-		ITEFLASH_ARGS+=( "--i2c-interface=ftdi" )
-	elif [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
-		ITEFLASH_ARGS+=( "--send-waveform=0" )
-		ITEFLASH_ARGS+=( "--i2c-interface=ccd" )
+	if [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
+		ITEFLASH_ARGS+=( "--send-waveform=1" "--i2c-interface=ftdi" )
 	else
-		# TODO(b/124388894): Implement servo_micro support.
-		die "${SERVO_TYPE} is not yet supported."
-	fi
-
-	if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
-		ITEFLASH_ARGS+=( "--debug" )
+		ITEFLASH_ARGS+=( "--send-waveform=0" )
+		if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
+			ITEFLASH_ARGS+=( "--i2c-interface=ccd" )
+		else
+			ITEFLASH_ARGS=( "sudo" "--" "${ITEFLASH_ARGS[@]}" \
+				"--i2c-interface=linux" \
+				"--i2c-dev-path=$(dut_i2c_dev)" )
+		fi
 	fi
 
 	if [[ -n "${FLAGS_read}" ]]; then
@@ -1077,6 +1157,7 @@ function flash_it83xx() {
 	fi
 
 	if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+		ITEFLASH_ARGS+=( "--debug" )
 		echo "${ITEFLASH_ARGS[@]}"
 	fi
 
