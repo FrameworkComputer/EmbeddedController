@@ -27,9 +27,11 @@
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
 #define DEFAULT_POLL_TIMEOUT_US (250 * MSEC)
 #define DEBOUNCE_TIMEOUT_US (20 * MSEC)
+#define RAPID_DEBOUNCE_TIMEOUT_US (4 * MSEC)
 #define POWER_FAULT_RETRY_INTERVAL_US (15 * MSEC)
 
 /*
@@ -47,6 +49,19 @@
 /* Threshold for detach pin reading. */
 #define DETACH_MIN_MV 10
 
+/*
+ * For the base to be considered detached, the average detach pin readings must
+ * be below this value.  The reason that this is higher than DETACH_MIN_MV is
+ * that due to leakage current, sometimes the readings bounce under and over
+ * DETACH_MIN_MV.
+ */
+#define DETACH_MIN_AVG_MV 20
+
+/*
+ * The number of recent samples used to determine average detach pin readings.
+ */
+#define WINDOW_SIZE 5
+
 
 enum base_detect_state {
 	BASE_DETACHED = 0,
@@ -60,7 +75,9 @@ enum base_detect_state {
 static int debug;
 static enum base_detect_state forced_state = BASE_NO_FORCED_STATE;
 static enum base_detect_state state;
-
+static int detach_avg[WINDOW_SIZE]; /* Rolling buffer of detach pin readings. */
+static uint8_t last_idx; /* last insertion index into the buffer. */
+static timestamp_t detached_decision_deadline;
 
 static void enable_base_interrupts(int enable)
 {
@@ -156,6 +173,17 @@ static void set_state(enum base_detect_state new_state)
 	}
 }
 
+static int average_detach_mv(void)
+{
+	int i;
+	int sum = 0;
+
+	for (i = 0; i < WINDOW_SIZE; i++)
+		sum += detach_avg[i];
+
+	return sum / WINDOW_SIZE;
+}
+
 static void base_detect_deferred(void);
 DECLARE_DEFERRED(base_detect_deferred);
 static void base_detect_deferred(void)
@@ -178,10 +206,22 @@ static void base_detect_deferred(void)
 	attach_reading = adc_read_channel(ADC_BASE_ATTACH);
 	detach_reading = adc_read_channel(ADC_BASE_DETACH);
 
-	if (debug)
+	/* Update the detach_avg */
+	detach_avg[last_idx] = detach_reading;
+
+	if (debug) {
+		int i;
+
 		CPRINTS("BD st%d: att: %dmV det: %dmV", state,
 			attach_reading,
 			detach_reading);
+		CPRINTF("det readings = [");
+		for (i = 0; i < WINDOW_SIZE; i++)
+			CPRINTF("%d%s ", detach_avg[i],
+				i == last_idx ? "*" : " ");
+		CPRINTF("]\n");
+	}
+	last_idx = (last_idx + 1) % WINDOW_SIZE;
 
 	switch (state) {
 	case BASE_DETACHED:
@@ -208,22 +248,48 @@ static void base_detect_deferred(void)
 	case BASE_ATTACHED:
 		/* Check to see if a base may be detached. */
 		if (base_seems_detached(attach_reading, detach_reading)) {
-			timeout = DEBOUNCE_TIMEOUT_US;
+			/*
+			 * The base seems detached based off of one reading.
+			 * Let's pay closer attention to the pins and then
+			 * decide if it really is detached or not.  It could
+			 * have been just a spurious low reading.
+			 */
+			timeout = RAPID_DEBOUNCE_TIMEOUT_US;
+
+			/*
+			 * Set a deadline to make a call about actually being
+			 * detached.  In the meantime, we'll collect samples
+			 * and calculate an average.
+			 */
+			detached_decision_deadline = get_time();
+			detached_decision_deadline.val += DEBOUNCE_TIMEOUT_US;
 			set_state(BASE_DETACHED_DEBOUNCE);
 		}
 		break;
 
 	case BASE_DETACHED_DEBOUNCE:
-		/* Check to see if a base is still detached. */
-		if (base_seems_detached(attach_reading, detach_reading)) {
-			CPRINTS("BD: att: %dmV det: %dmV", attach_reading,
-				detach_reading);
-			set_state(BASE_DETACHED);
-			base_detect_changed();
-		} else if (base_seems_attached(attach_reading,
-					       detach_reading)) {
-			set_state(BASE_ATTACHED);
+		/* Check to see if a base is still detached.
+		 *
+		 * We look at rolling average of the detach readings to make
+		 * sure one or two consecutive low samples don't result in a
+		 * false detach.
+		 */
+		CPRINTS("BD: det avg: %d", average_detach_mv());
+		if (timestamp_expired(detached_decision_deadline, NULL)) {
+			/* Alright, time's up, time to decide. */
+			if (average_detach_mv() < DETACH_MIN_AVG_MV) {
+				set_state(BASE_DETACHED);
+				base_detect_changed();
+			} else {
+				set_state(BASE_ATTACHED);
+			}
 		}
+
+		/*
+		 * Shorten the timeout to collect more samples before the
+		 * deadline.
+		 */
+		timeout = RAPID_DEBOUNCE_TIMEOUT_US;
 		break;
 		/* TODO(b/74239259): do you want to add an interrupt? */
 
