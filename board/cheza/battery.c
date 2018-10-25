@@ -12,12 +12,11 @@
 #define SB_SHIP_MODE_REG	SB_MANUFACTURER_ACCESS
 #define SB_SHUTDOWN_DATA	0x0010
 
-/* Battery info for rev-0 */
+/* Battery info */
 static const struct battery_info info = {
-	/* Copied from Lux */
 	.voltage_max = 8800,
 	.voltage_normal = 7700,
-	.voltage_min = 6100,
+	.voltage_min = 6000,
 	.precharge_current = 256, /* mA */
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 45,
