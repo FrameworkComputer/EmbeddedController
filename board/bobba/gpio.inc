@@ -134,8 +134,8 @@ GPIO(LED_3_L,		 PIN(D, 7), GPIO_OUT_HIGH)
 /* Keyboard Backlight */
 GPIO(KB_BL_PWR_EN, 	 PIN(6, 2), GPIO_OUT_LOW)
 
-/* Camera */
-GPIO(CAM_SOC_EC_SYNC,	PIN(9, 4), GPIO_INPUT)
+/* MKBP event synchronization */
+GPIO(EC_INT_L,		PIN(9, 4), GPIO_ODR_HIGH)
 
 /* Misc. */
 GPIO(CCD_MODE_ODL,	PIN(E, 3), GPIO_INPUT)
