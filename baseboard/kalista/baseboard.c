@@ -12,9 +12,6 @@
 #include "bd99992gw.h"
 #include "board_config.h"
 #include "button.h"
-#include "charge_manager.h"
-#include "charge_state.h"
-#include "charger.h"
 #include "chipset.h"
 #include "console.h"
 #include "cros_board_info.h"
@@ -76,12 +73,6 @@ enum bj_adapter {
  * KBL-U Celeron 3865	0	90
  */
 #define BJ_ADAPTER_135W_MASK (1 << 4 | 1 << 5 | 1 << 6 | 1 << 3 | 1 << 2)
-
-/* BJ adapter specs */
-static const struct charge_port_info bj_adapters[] = {
-	[BJ_90W_19V] = { .current = 4740, .voltage = 19000 },
-	[BJ_135W_19V] = { .current = 7100, .voltage = 19000 },
-};
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -418,30 +409,6 @@ static void board_extpower(void)
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
-{
-	int u22 = 0;
-	/*
-	 * Turn on/off power shortage alert. Performs the same check as
-	 * system_can_boot_ap(). It's repeated here because charge_manager
-	 * hasn't updated charge_current/voltage when board_set_charge_limit
-	 * is called.
-	 */
-	led_alert(charge_ma * charge_mv <
-			CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON * 1000);
-
-	/*
-	 * Kalista has two types of charger: 90W, 135W.
-	 * 135W charger offers 7.1A/19V.
-	 * 90W charger offers 4.74A/19V.
-	 */
-	if (charge_ma < bj_adapters[BJ_135W_19V].current)
-		/* GPIO_U22_90W high means 90W charger */
-		u22 = 1;
-	gpio_set_level(GPIO_U22_90W, u22);
-}
-
 enum battery_present battery_is_present(void)
 {
 	return BP_NO;
@@ -504,40 +471,13 @@ static void setup_bj(void)
 {
 	enum bj_adapter bj = (BJ_ADAPTER_135W_MASK & (1 << sku)) ?
 			BJ_135W_19V : BJ_90W_19V;
-
-	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
-				     DEDICATED_CHARGE_PORT, &bj_adapters[bj]);
+	gpio_set_level(GPIO_U22_90W, bj == BJ_90W_19V);
 }
-
-/*
- * Kalista has no battery and power is sourced only from a BJ adapter.
- * Kalista operates in continuous safe mode (charge_manager_leave_safe_mode()
- * will never be called), which modifies port / ILIM selection as follows:
- *
- * - Dual-role / dedicated capability of the port partner is ignored.
- * - Charge ceiling on PD voltage transition is ignored.
- * - CHARGE_PORT_NONE will never be selected.
- *
- * TODO: Set USB-C port as source only.
- */
-static void board_charge_manager_init(void)
-{
-	int i, j;
-
-	/* Initialize all charge suppliers to 0 */
-	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
-		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
-			charge_manager_update_charge(j, i, NULL);
-	}
-
-	setup_bj();
-}
-DECLARE_HOOK(HOOK_INIT, board_charge_manager_init,
-	     HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
 
 static void board_init(void)
 {
-	/* Provide AC status to the PCH */
+	setup_bj();
+
 	board_extpower();
 
 	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);

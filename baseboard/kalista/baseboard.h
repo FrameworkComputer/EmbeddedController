@@ -73,11 +73,6 @@
  */
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
 
-/* Charger */
-#define CONFIG_CHARGE_MANAGER
-
-#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 50000
-
 #define CONFIG_CMD_PD_CONTROL
 #define CONFIG_EXTPOWER_GPIO
 #undef  CONFIG_EXTPOWER_DEBOUNCE_MS
@@ -94,30 +89,19 @@
 #define CONFIG_TEMP_SENSOR_TMP432
 
 /* USB */
-#undef  CONFIG_USB_CHARGER		/* dnojiri: verify */
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_DISCHARGE_TCPC
-#define CONFIG_USB_PD_DUAL_ROLE
-#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 #define CONFIG_USB_PD_LOGGING
 #define CONFIG_USB_PD_PORT_COUNT 1
 #define CONFIG_USB_PD_VBUS_DETECT_GPIO
-#define CONFIG_USB_PD_TCPC_LOW_POWER
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_PD_TCPM_PS8751
-#define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_SS_MUX_DFP_ONLY
 #define CONFIG_USBC_VCONN
-#define CONFIG_USBC_VCONN_SWAP
-
-/* Charge ports */
-#undef  CONFIG_DEDICATED_CHARGE_PORT_COUNT
-#define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
-#define DEDICATED_CHARGE_PORT 1
 
 /* USB-A config */
 #define CONFIG_USB_PORT_POWER_DUMB
@@ -252,13 +236,6 @@ enum OEM_ID {
 
 /* delay to turn on/off vconn */
 #define PD_VCONN_SWAP_DELAY		5000   /* us */
-
-/* Define typical operating power. Since Kalista doesn't have a battery,
- * we're not interested in any power lower than the AP power-on threshold. */
-#define PD_OPERATING_POWER_MW	CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
-#define PD_MAX_POWER_MW		100000
-#define PD_MAX_CURRENT_MA	5000
-#define PD_MAX_VOLTAGE_MV	20000
 
 /* Board specific handlers */
 void board_reset_pd_mcu(void);
