@@ -214,6 +214,11 @@
 
 #ifndef __ASSEMBLER__
 
+/* support factory keyboard test */
+#define CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+
 #include "gpio_signal.h"
 #include "registers.h"
 
