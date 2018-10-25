@@ -1050,7 +1050,8 @@ function flash_it83xx() {
 	dut_control ftdii2c_cmd:close
 
 	info "Run iteflash..."
-	sudo ${ITEFLASH} -e -w ${IMG}
+	sudo "${ITEFLASH}" --i2c-interface=ftdi --send-waveform=1 --erase \
+		--write="${IMG}"
 }
 
 function flash_lm4() {
