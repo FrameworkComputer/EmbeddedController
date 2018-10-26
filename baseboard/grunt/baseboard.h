@@ -29,7 +29,7 @@
 #define CONFIG_ADC
 #define CONFIG_BACKLIGHT_LID
 #define CONFIG_BACKLIGHT_LID_ACTIVE_LOW
-#define CONFIG_BOARD_VERSION_GPIO
+#define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_EC_FEATURE_BOARD_OVERRIDE
 #define CONFIG_HIBERNATE_PSL
 #define CONFIG_HOSTCMD_LPC
@@ -243,6 +243,8 @@ void board_reset_pd_mcu(void);
 
 /* Common definition for the USB PD interrupt handlers. */
 void tcpc_alert_event(enum gpio_signal signal);
+
+int board_get_version(void);
 
 #endif /* !__ASSEMBLER__ */
 

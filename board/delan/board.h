@@ -42,6 +42,13 @@
 #define CONFIG_BATTERY_BQ4050
 #define CONFIG_BATTERY_MEASURE_IMBALANCE
 
+/* CBI EEPROM for board version and SKU ID */
+#define CONFIG_CROS_BOARD_INFO
+#define CONFIG_BOARD_VERSION_CBI
+#define I2C_PORT_EEPROM		NPCX_I2C_PORT5_0
+#define I2C_ADDR_EEPROM		0xA0
+#define CONFIG_CRC8
+
 #ifndef __ASSEMBLER__
 
 enum pwm_channel {

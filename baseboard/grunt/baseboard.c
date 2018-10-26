@@ -14,6 +14,7 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
+#include "cros_board_info.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
@@ -474,13 +475,9 @@ static int board_read_sku_adc(enum adc_channel chan)
 	return -1;
 }
 
-uint32_t system_get_sku_id(void)
+static uint32_t board_get_adc_sku_id(void)
 {
-	static uint32_t sku_id = -1;
 	int sku_id1, sku_id2;
-
-	if (sku_id != -1)
-		return sku_id;
 
 	sku_id1 = board_read_sku_adc(ADC_SKU_ID1);
 	sku_id2 = board_read_sku_adc(ADC_SKU_ID2);
@@ -488,8 +485,57 @@ uint32_t system_get_sku_id(void)
 	if (sku_id1 < 0 || sku_id2 < 0)
 		return 0;
 
-	sku_id = (sku_id2 << 4) | sku_id1;
+	return (sku_id2 << 4) | sku_id1;
+}
+
+static int board_get_gpio_board_version(void)
+{
+	return
+		(!!gpio_get_level(GPIO_BOARD_VERSION1) << 0) |
+		(!!gpio_get_level(GPIO_BOARD_VERSION2) << 1) |
+		(!!gpio_get_level(GPIO_BOARD_VERSION3) << 2);
+}
+
+static int board_version;
+static uint32_t sku_id;
+
+static void cbi_init(void)
+{
+	board_version = board_get_gpio_board_version();
+	sku_id = board_get_adc_sku_id();
+
+	/*
+	 * Use board version and SKU ID from CBI EEPROM if the board supports
+	 * it and the SKU ID set via resistors + ADC is not valid.
+	 */
+#ifdef CONFIG_CROS_BOARD_INFO
+	if (sku_id == 0 || sku_id == 0xff) {
+		uint32_t val;
+
+		if (cbi_get_board_version(&val) == EC_SUCCESS)
+			board_version = val;
+		if (cbi_get_sku_id(&val) == EC_SUCCESS)
+			sku_id = val;
+	}
+#endif
+
+	ccprints("Board Version: %d (0x%x)", board_version, board_version);
+	ccprints("SKU: %d (0x%x)", sku_id, sku_id);
+}
+/*
+ * Reading the SKU resistors requires the ADC module. If we are using EEPROM
+ * then we also need the I2C module, but that is available before ADC.
+ */
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_ADC + 1);
+
+uint32_t system_get_sku_id(void)
+{
 	return sku_id;
+}
+
+int board_get_version(void)
+{
+	return board_version;
 }
 
 /*
