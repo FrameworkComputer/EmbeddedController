@@ -1813,11 +1813,27 @@ void process_bid(struct transfer_descriptor *td,
 			print_machine_output(
 				"BID_FLAGS", "%08x", be32toh(bid->flags));
 
+			for (int i = 0; i < 4; i++) {
+				if (!isupper(((const char *)bid)[i])) {
+					print_machine_output(
+						"BID_RLZ", "%s", "????");
+					return;
+				}
+			}
+
+			print_machine_output(
+				"BID_RLZ", "%c%c%c%c",
+				((const char *)bid)[0],
+				((const char *)bid)[1],
+				((const char *)bid)[2],
+				((const char *)bid)[3]);
 		} else {
-			printf("Board ID space: %08x:%08x:%08x\n",
-			       be32toh(bid->type),
-			       be32toh(bid->type_inv),
-			       be32toh(bid->flags));
+			if (bid_action == bid_get) {
+				printf("Board ID space: %08x:%08x:%08x\n",
+				       be32toh(bid->type),
+				       be32toh(bid->type_inv),
+				       be32toh(bid->flags));
+			}
 		}
 
 		return;
