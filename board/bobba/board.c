@@ -201,7 +201,7 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 	[BASE_GYRO] = {
 	 .name = "Base Gyro",
-	 .active_mask = SENSOR_ACTIVE_S0,
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_GYRO,
 	 .location = MOTIONSENSE_LOC_BASE,
@@ -216,15 +216,15 @@ struct motion_sensor_t motion_sensors[] = {
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
 	[VSYNC] = {
-		.name = "Camera VSYNC",
-		.active_mask = SENSOR_ACTIVE_S0,
-		.chip = MOTIONSENSE_CHIP_GPIO,
-		.type = MOTIONSENSE_TYPE_SYNC,
-		.location = MOTIONSENSE_LOC_CAMERA,
-		.drv = &sync_drv,
-		.default_range = 0,
-		.min_frequency = 0,
-		.max_frequency = 1,
+	.name = "Camera VSYNC",
+	.active_mask = SENSOR_ACTIVE_S0,
+	.chip = MOTIONSENSE_CHIP_GPIO,
+	.type = MOTIONSENSE_TYPE_SYNC,
+	.location = MOTIONSENSE_LOC_CAMERA,
+	.drv = &sync_drv,
+	.default_range = 0,
+	.min_frequency = 0,
+	.max_frequency = 1,
 	},
 };
 
