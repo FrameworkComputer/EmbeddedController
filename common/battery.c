@@ -445,6 +445,7 @@ DECLARE_HOST_COMMAND(EC_CMD_BATTERY_VENDOR_PARAM,
 
 #ifdef CONFIG_BATTERY_V2
 #ifdef CONFIG_HOSTCMD_BATTERY_V2
+static void battery_update(enum battery_index i);
 static int host_command_battery_get_static(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_battery_static_info *p = args->params;
@@ -452,7 +453,7 @@ static int host_command_battery_get_static(struct host_cmd_handler_args *args)
 
 	if (p->index < 0 || p->index >= CONFIG_BATTERY_COUNT)
 		return EC_RES_INVALID_PARAM;
-
+	battery_update(p->index);
 	args->response_size = sizeof(*r);
 	memcpy(r, &battery_static[p->index], sizeof(*r));
 
