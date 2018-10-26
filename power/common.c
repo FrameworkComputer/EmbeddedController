@@ -220,7 +220,8 @@ enum power_state power_get_state(void)
 #define DEFAULT_WAKE_MASK_S0IX  (EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) | \
 				EC_HOST_EVENT_MASK(EC_HOST_EVENT_MODE_CHANGE))
  /*
-  * Set wake mask on edge of sleep state entry
+  * Set wake mask after power state has stabilized (5ms after power state
+  * change):
   * 1. On transition to S0, wake mask is reset.
   * 2. In non-S0 states, active mask set by host gets a higher preference.
   * 3. If host has not set any active mask, then check if a lazy mask exists
@@ -228,11 +229,21 @@ enum power_state power_get_state(void)
   * 4. If state is S0ix and no lazy or active wake mask is set, then use default
   *    S0ix mask to be compatible with older BIOS versions.
   *
-  * @param state New sleep state
+  * Reason for making this a deferred call is to avoid race conditions occurring
+  * from S0ix periodic wakes on the SoC.
   */
-static void power_set_active_wake_mask(enum power_state state)
+
+static void power_update_wake_mask_deferred(void);
+DECLARE_DEFERRED(power_update_wake_mask_deferred);
+
+static void power_update_wake_mask_deferred(void)
 {
 	host_event_t wake_mask;
+	enum power_state state;
+
+	hook_call_deferred(&power_update_wake_mask_deferred_data, -1);
+
+	state = power_get_state();
 
 	if (state == POWER_S0)
 		wake_mask = 0;
@@ -247,8 +258,27 @@ static void power_set_active_wake_mask(enum power_state state)
 
 	lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, wake_mask);
 }
+
+static void power_set_active_wake_mask(void)
+{
+	/*
+	 * Allow state machine to stabilize and update wake mask after 5msec. It
+	 * was observed that on platforms where host wakes up periodically from
+	 * S0ix for hardware book-keeping activities, there is a small window
+	 * where host is not really up and running software, but still SLP_S0#
+	 * is de-asserted and hence setting wake mask right away can cause user
+	 * wake events to be missed.
+	 *
+	 * Time for deferred callback was chosen to be 5msec based on the fact
+	 * that it takes ~2msec for the periodic wake cycle to complete on the
+	 * host for KBL.
+	 */
+	hook_call_deferred(&power_update_wake_mask_deferred_data,
+			   5 * MSEC);
+}
+
 #else
-static void power_set_active_wake_mask(enum power_state state) { }
+static void power_set_active_wake_mask(void) { }
 #endif
 
 /**
@@ -502,7 +532,7 @@ void chipset_task(void *u)
 		/* Handle state changes */
 		if (new_state != state) {
 			power_set_state(new_state);
-			power_set_active_wake_mask(new_state);
+			power_set_active_wake_mask();
 		}
 	}
 }
