@@ -82,9 +82,9 @@ const struct gpio_lvol_item gpio_lvol_table[] = NPCX_LVOL_TABLE;
 /*****************************************************************************/
 /* Internal functions */
 
-static int gpio_match(uint8_t port, uint8_t mask, struct npcx_gpio gpio)
+static int gpio_match(uint8_t port, uint8_t bit, struct npcx_gpio gpio)
 {
-	return (gpio.valid && (gpio.port == port) && ((1 << gpio.bit) == mask));
+	return (gpio.valid && (gpio.port == port) && (gpio.bit == bit));
 }
 
 static int gpio_alt_sel(uint8_t port, uint8_t bit, int8_t func)
@@ -94,7 +94,7 @@ static int gpio_alt_sel(uint8_t port, uint8_t bit, int8_t func)
 	for (map = ARRAY_BEGIN(gpio_alt_table);
 	     map < ARRAY_END(gpio_alt_table);
 	     map++) {
-		if (gpio_match(port, 1 << bit, map->gpio)) {
+		if (gpio_match(port, bit, map->gpio)) {
 			uint8_t alt_mask = 1 << map->alt.bit;
 
 			/*
@@ -177,7 +177,7 @@ static void gpio_interrupt_type_sel(enum gpio_signal signal, uint32_t flags)
 }
 
 /* Select low voltage detection level */
-void gpio_low_voltage_level_sel(uint8_t port, uint8_t mask, uint8_t low_voltage)
+void gpio_low_voltage_level_sel(uint8_t port, uint8_t bit, uint8_t low_voltage)
 {
 	int i, j;
 
@@ -185,7 +185,7 @@ void gpio_low_voltage_level_sel(uint8_t port, uint8_t mask, uint8_t low_voltage)
 		const struct npcx_gpio *gpio = gpio_lvol_table[i].lvol_gpio;
 
 		for (j = 0; j < ARRAY_SIZE(gpio_lvol_table[0].lvol_gpio); j++)
-			if (gpio_match(port, mask, gpio[j])) {
+			if (gpio_match(port, bit, gpio[j])) {
 				if (low_voltage)
 					/* Select vol-detect level for 1.8V */
 					SET_BIT(NPCX_LV_GPIO_CTL(i), j);
@@ -198,10 +198,21 @@ void gpio_low_voltage_level_sel(uint8_t port, uint8_t mask, uint8_t low_voltage)
 	}
 
 	if (low_voltage)
-		CPRINTS("Warn! No low voltage support in port%d, mask%d\n",
-								port, mask);
+		CPRINTS("Warn! No low voltage support in port:0x%x, bit:%d",
+								port, bit);
 }
 
+/* Set the low voltage detection level by mask */
+static void gpio_low_vol_sel_by_mask(uint8_t p, uint8_t mask, uint8_t low_vol)
+{
+	int bit;
+	uint32_t lv_mask = mask;
+
+	while (lv_mask) {
+		bit = get_next_bit(&lv_mask);
+		gpio_low_voltage_level_sel(p, bit, low_vol);
+	};
+}
 /* The bypass of low voltage IOs for better power consumption */
 #ifdef CONFIG_LOW_POWER_IDLE
 static int gpio_is_i2c_pin(enum gpio_signal signal)
@@ -322,9 +333,9 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		 * Set IO type to open-drain before selecting low-voltage level
 		 */
 		NPCX_PTYPE(port) |= mask;
-		gpio_low_voltage_level_sel(port, mask, 1);
+		gpio_low_vol_sel_by_mask(port, mask, 1);
 	} else
-		gpio_low_voltage_level_sel(port, mask, 0);
+		gpio_low_vol_sel_by_mask(port, mask, 0);
 
 	/* Set up interrupt type */
 	if (flags & GPIO_INT_ANY) {

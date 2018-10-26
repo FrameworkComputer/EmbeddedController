@@ -442,7 +442,7 @@
 #define NPCX_LVOL_CTRL_1_3  NPCX_GPIO(D, 0)
 #define NPCX_LVOL_CTRL_1_4  NPCX_GPIO(3, 6)
 #define NPCX_LVOL_CTRL_1_5  NPCX_GPIO(6, 4)
-#define NPCX_LVOL_CTRL_1_6  NPCX_GPIO(6, 5)
+#define NPCX_LVOL_CTRL_1_6  NPCX_GPIO_NONE
 #define NPCX_LVOL_CTRL_1_7  NPCX_GPIO_NONE
 
 /* Low-Voltage GPIO Control 2 */
@@ -480,11 +480,7 @@
 #define NPCX_LVOL_CTRL_3_7  NPCX_GPIO(C, 5)
 
 /* Low-Voltage GPIO Control 4 */
-#ifdef NPCX_PSL_MODE_SUPPORT
-#define NPCX_LVOL_CTRL_4_0  NPCX_GPIO_NONE /* Remove 1.8V support since PSL */
-#else
 #define NPCX_LVOL_CTRL_4_0  NPCX_GPIO(8, 6)
-#endif
 #define NPCX_LVOL_CTRL_4_1  NPCX_GPIO(C, 2)
 #define NPCX_LVOL_CTRL_4_2  NPCX_GPIO(F, 3)
 #define NPCX_LVOL_CTRL_4_3  NPCX_GPIO(F, 2)
