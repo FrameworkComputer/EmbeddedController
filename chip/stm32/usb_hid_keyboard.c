@@ -635,7 +635,7 @@ DECLARE_HOOK(HOOK_INIT, tablet_mode_change, HOOK_PRIO_DEFAULT+1);
 
 void keyboard_state_changed(int row, int col, int is_pressed)
 {
-	uint8_t keycode = keycodes[row][col];
+	uint8_t keycode = keycodes[col][row];
 
 	if (!keycode) {
 		CPRINTF("Unknown key at %d/%d\n", row, col);
