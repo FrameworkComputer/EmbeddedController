@@ -105,7 +105,7 @@ const struct pwm_t pwm_channels[] = {
 			  | PWM_CONFIG_DSLEEP),
 		.freq = 100,
 	},
-	[PWM_CH_LED2_BLUE] =   {
+	[PWM_CH_LED2_WHITE] =   {
 		.channel = 2,
 		.flags = (PWM_CONFIG_OPEN_DRAIN | PWM_CONFIG_ACTIVE_LOW
 			  | PWM_CONFIG_DSLEEP),
