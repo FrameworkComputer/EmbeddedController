@@ -141,6 +141,22 @@ const mat33_fp_t base_standard_ref = {
 	{ 0, 0,  FLOAT_TO_FP(1)}
 };
 
+/*
+ * Sparky360 SKU ID 26 has AR Cam, and move base accel/gryo to AR Cam board.
+ * AR Cam board has about -16° bias with motherboard through Y axis.
+ * Rotation matrix with -16° through Y axis:
+ *     | cos(-16°)      0       sin(-16°)|
+ * R = |    0           1           0    |
+ *     |-sin(-16°)      0       cos(-16°)|
+ *
+ * base_ar_cam_ref = R * base_standard_ref
+ */
+const mat33_fp_t base_ar_cam_ref = {
+	{ 0, FLOAT_TO_FP(-0.96126), FLOAT_TO_FP(0.27564)},
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(0.27564), FLOAT_TO_FP(0.96126)}
+};
+
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
 static struct bmi160_drv_data_t g_bmi160_data;
@@ -237,6 +253,12 @@ static int board_is_convertible(void)
 		|| sku_id == 25 || sku_id == 26 || sku_id == 255;
 }
 
+static int board_with_ar_cam(void)
+{
+	/* SKU ID of Sparky360 with AR Cam: 26 */
+	return sku_id == 26;
+}
+
 static void board_update_sensor_config_from_sku(void)
 {
 	if (board_is_convertible()) {
@@ -244,6 +266,12 @@ static void board_update_sensor_config_from_sku(void)
 	} else {
 		motion_sensor_count = 0;
 		tablet_disable_switch();
+	}
+
+	/* Sparky360 with AR Cam: base accel/gyro sensor is on AR Cam board. */
+	if (board_with_ar_cam()) {
+		motion_sensors[BASE_ACCEL].rot_standard_ref = &base_ar_cam_ref;
+		motion_sensors[BASE_GYRO].rot_standard_ref = &base_ar_cam_ref;
 	}
 }
 
