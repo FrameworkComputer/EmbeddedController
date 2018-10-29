@@ -26,6 +26,7 @@
  * TODO: Allow host (powerd) to update it.
  */
 static int batt_full_factor = CONFIG_BATT_FULL_FACTOR;
+static int batt_host_shutdown_pct = CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE;
 
 #ifdef CONFIG_BATTERY_V2
 /*
@@ -565,6 +566,7 @@ DECLARE_HOOK(HOOK_INIT, battery_init, HOOK_PRIO_DEFAULT);
 
 void battery_compensate_params(struct batt_params *batt)
 {
+	int numer, denom;
 	int remain = batt->remaining_capacity;
 	int full = batt->full_capacity;
 
@@ -575,6 +577,19 @@ void battery_compensate_params(struct batt_params *batt)
 	if (remain <= 0 || full <= 0)
 		return;
 
-	if (remain * 100 > full * batt_full_factor)
+	if (remain * 100 > full * batt_full_factor) {
 		batt->remaining_capacity = full;
+		batt->display_charge = 1000;
+		return;
+	}
+
+	/*
+	 * Powerd uses the following equation to calculate display percentage:
+	 *   charge = remain/full;
+	 *   100 * (charge - shutdown_pct) / (full_factor - shutdown_pct);
+	 */
+	numer = (100 * remain - full * batt_host_shutdown_pct) * 1000;
+	denom = full * (batt_full_factor - batt_host_shutdown_pct);
+	/* Rounding (instead of truncating) */
+	batt->display_charge = (numer + denom / 2) / denom;
 }

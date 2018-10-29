@@ -431,6 +431,7 @@
  * the host boots.
  */
 #define CONFIG_BATT_FULL_FACTOR			98
+#define CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE	4
 
 /*
  * Expose some data when it is needed.
