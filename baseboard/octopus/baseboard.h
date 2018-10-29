@@ -70,6 +70,7 @@
 /* Common EC defines */
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
+#define CONFIG_I2C_BUS_MAY_BE_UNPOWERED
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
