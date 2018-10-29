@@ -22,4 +22,5 @@ LDFLAGS_EXTRA+=-flto
 endif
 
 core-y=cpu.o init.o panic.o task.o switch.o __muldi3.o math.o __builtin.o
+core-y+=__divdi3.o __udivdi3.o
 core-$(CONFIG_FPU)+=__libsoftfpu.o
