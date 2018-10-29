@@ -10,7 +10,7 @@
 
 #include "registers.h"
 
-#ifndef CONFIG_FPU
+#ifdef CONFIG_FPU
 #define save_fpu_ctx	"fnsave 20(%eax)\n"
 #define rstr_fpu_ctx	"frstor 20(%eax)\n"
 #else
