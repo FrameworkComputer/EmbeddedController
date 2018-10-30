@@ -630,23 +630,6 @@ static const struct fan_step fan_table2[] = {
 BUILD_ASSERT(ARRAY_SIZE(fan_table1) == NUM_FAN_LEVELS);
 BUILD_ASSERT(ARRAY_SIZE(fan_table2) == NUM_FAN_LEVELS);
 
-static void cbi_init(void)
-{
-	uint32_t val;
-	if (cbi_get_board_version(&val) == EC_SUCCESS && val <= UINT16_MAX)
-		board_version = val;
-	CPRINTS("Board Version: 0x%04x", board_version);
-
-	if (cbi_get_oem_id(&val) == EC_SUCCESS && val < OEM_COUNT)
-		oem = val;
-	CPRINTS("OEM: %d", oem);
-
-	if (cbi_get_sku_id(&val) == EC_SUCCESS && val <= UINT8_MAX)
-		sku = val;
-	CPRINTS("SKU: 0x%02x", sku);
-}
-DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
-
 static void setup_fan(void)
 {
 	/* Configure Fan */
@@ -668,8 +651,30 @@ static void setup_fan(void)
 		fans[FAN_CH_0].rpm = &fan_rpm_0;
 		fan_table = fan_table2;
 		break;
+	case OEM_JAX:
+		fan_set_count(0);
+		break;
 	}
 }
+
+static void cbi_init(void)
+{
+	uint32_t val;
+	if (cbi_get_board_version(&val) == EC_SUCCESS && val <= UINT16_MAX)
+		board_version = val;
+	CPRINTS("Board Version: 0x%04x", board_version);
+
+	if (cbi_get_oem_id(&val) == EC_SUCCESS && val < OEM_COUNT)
+		oem = val;
+	CPRINTS("OEM: %d", oem);
+
+	if (cbi_get_sku_id(&val) == EC_SUCCESS && val <= UINT8_MAX)
+		sku = val;
+	CPRINTS("SKU: 0x%02x", sku);
+
+	setup_fan();
+}
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* List of BJ adapters shipped with Fizz or its variants */
 enum bj_adapter {
@@ -717,6 +722,9 @@ static void setup_bj(void)
 	case OEM_WUKONG_M:
 		bj = (BJ_ADAPTER_90W_MASK & (1 << sku)) ?
 			BJ_90W_19V : BJ_65W_19V;
+		break;
+	case OEM_JAX:
+		bj = BJ_65W_19V;
 		break;
 	default:
 		bj = (BJ_ADAPTER_90W_MASK & (1 << sku)) ?
@@ -769,8 +777,6 @@ DECLARE_HOOK(HOOK_INIT, board_charge_manager_init,
 
 static void board_init(void)
 {
-	setup_fan();
-
 	/* Provide AC status to the PCH */
 	board_extpower();
 
