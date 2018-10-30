@@ -908,6 +908,26 @@ static void cbi_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
+/* Keyboard scan setting */
+struct keyboard_scan_config keyscan_config = {
+	/*
+	 * F3 key scan cycle completed but scan input is not
+	 * charging to logic high when EC start scan next
+	 * column for "T" key, so we set .output_settle_us
+	 * to 80us from 50us.
+	 */
+	.output_settle_us = 80,
+	.debounce_down_us = 9 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+	.actual_key_mask = {
+		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfe, 0xff, 0xff, 0xff,  /* full set */
+	},
+};
+
 static void board_init(void)
 {
 	int reg;
@@ -946,31 +966,14 @@ static void board_init(void)
 
 #ifndef TEST_BUILD
 	/* Disable scanning KSO13 & 14 if keypad isn't present. */
-	if (!(sku & SKU_ID_MASK_KEYPAD))
+	if (!(sku & SKU_ID_MASK_KEYPAD)) {
 		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
+		keyscan_config.actual_key_mask[11] = 0xfa;
+		keyscan_config.actual_key_mask[12] = 0xca;
+	}
 #endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-/* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
-	/*
-	 * F3 key scan cycle completed but scan input is not
-	 * charging to logic high when EC start scan next
-	 * column for "T" key, so we set .output_settle_us
-	 * to 80us from 50us.
-	 */
-	.output_settle_us = 80,
-	.debounce_down_us = 9 * MSEC,
-	.debounce_up_us = 30 * MSEC,
-	.scan_period_us = 3 * MSEC,
-	.min_post_scan_delay_us = 1000,
-	.poll_timeout_us = 100 * MSEC,
-	.actual_key_mask = {
-		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca, 0xff, 0xff,  /* full set */
-	},
-};
 
 int board_is_lid_angle_tablet_mode(void)
 {
