@@ -122,10 +122,16 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t base_standard_ref = {
+const mat33_fp_t lid_standrd_ref = {
+	{ FLOAT_TO_FP(1),  0, 0},
 	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+const mat33_fp_t base_standard_ref = {
+	{ FLOAT_TO_FP(1),  0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
 const mat33_fp_t mag_standard_ref = {
@@ -153,8 +159,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_kx022_data,
 	 .port = I2C_PORT_SENSOR,
 	 .addr = KX022_ADDR1,
-	 .rot_standard_ref = NULL, /* Identity matrix. */
-	 .default_range = 4, /* g */
+	 .rot_standard_ref = &lid_standrd_ref,
+	 .default_range = 2, /* g */
 	 .config = {
 		/* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S0] = {
@@ -179,7 +185,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_SENSOR,
 	 .addr = LSM6DSM_ADDR0,
 	 .rot_standard_ref = &base_standard_ref,
-	 .default_range = 4,  /* g */
+	 .default_range = 2,  /* g */
 	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
 	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
 	 .config = {
