@@ -149,6 +149,10 @@ int pd_set_power_supply_ready(int port)
 	if (rv)
 		return rv;
 
+	/* The 5V rail used for sourcing is not powered when the AP is off. */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return EC_ERROR_NOT_POWERED;
+
 	/* Provide Vbus. */
 	rv = ppc_vbus_source_enable(port, 1);
 	if (rv)
