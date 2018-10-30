@@ -47,6 +47,11 @@ int isalpha(int c)
 	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 }
 
+int isupper(int c)
+{
+	return c >= 'A' && c <= 'Z';
+}
+
 int isprint(int c)
 {
 	return c >= ' ' && c <= '~';

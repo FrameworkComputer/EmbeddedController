@@ -62,6 +62,7 @@ __stdlib_compat int atoi(const char *nptr);
 __stdlib_compat int isdigit(int c);
 __stdlib_compat int isspace(int c);
 __stdlib_compat int isalpha(int c);
+__stdlib_compat int isupper(int c);
 __stdlib_compat int isprint(int c);
 __stdlib_compat int memcmp(const void *s1, const void *s2, size_t len);
 __stdlib_compat void *memcpy(void *dest, const void *src, size_t len);
