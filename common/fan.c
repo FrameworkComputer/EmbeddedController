@@ -5,6 +5,7 @@
 
 /* Basic Chrome OS fan control */
 
+#include "assert.h"
 #include "common.h"
 #include "console.h"
 #include "fan.h"
@@ -23,6 +24,26 @@ static int thermal_control_enabled[CONFIG_FANS];
 /* Should we ignore the fans for a while? */
 static int fan_update_counter[CONFIG_FANS];
 #endif
+
+/*
+ * Number of fans.
+ *
+ * Use fan_get_count and fan_set_count to access it. It should be set only
+ * before HOOK_INIT/HOOK_PRIO_DEFAULT.
+ */
+static int fan_count = CONFIG_FANS;
+
+int fan_get_count(void)
+{
+	return fan_count;
+}
+
+void fan_set_count(int count)
+{
+	/* You can only decrease the count. */
+	assert(count <= CONFIG_FANS);
+	fan_count = count;
+}
 
 #ifndef CONFIG_FAN_RPM_CUSTOM
 /* This is the default implementation. It's only called over [0,100].
@@ -115,13 +136,13 @@ static int cc_fanauto(int argc, char **argv)
 	char *e;
 	int fan = 0;
 
-	if (CONFIG_FANS > 1) {
+	if (fan_count > 1) {
 		if (argc < 2) {
 			ccprintf("fan number is required as the first arg\n");
 			return EC_ERROR_PARAM_COUNT;
 		}
 		fan = strtoi(argv[1], &e, 0);
-		if (*e || fan >= CONFIG_FANS)
+		if (*e || fan >= fan_count)
 			return EC_ERROR_PARAM1;
 		argc--;
 		argv++;
@@ -157,8 +178,8 @@ static int cc_faninfo(int argc, char **argv)
 	int tmp, is_pgood;
 	int fan;
 	char leader[20] = "";
-	for (fan = 0; fan < CONFIG_FANS; fan++) {
-		if (CONFIG_FANS > 1)
+	for (fan = 0; fan < fan_count; fan++) {
+		if (fan_count > 1)
 			snprintf(leader, sizeof(leader), "Fan %d ", fan);
 		if (fan)
 			ccprintf("\n");
@@ -195,13 +216,18 @@ static int cc_fanset(int argc, char **argv)
 	char *e;
 	int fan = 0;
 
-	if (CONFIG_FANS > 1) {
+	if (fan_count == 0) {
+		ccprintf("Fan count is zero\n");
+		return EC_ERROR_INVAL;
+	}
+
+	if (fan_count > 1) {
 		if (argc < 2) {
 			ccprintf("fan number is required as the first arg\n");
 			return EC_ERROR_PARAM_COUNT;
 		}
 		fan = strtoi(argv[1], &e, 0);
-		if (*e || fan >= CONFIG_FANS)
+		if (*e || fan >= fan_count)
 			return EC_ERROR_PARAM1;
 		argc--;
 		argv++;
@@ -247,13 +273,18 @@ static int cc_fanduty(int argc, char **argv)
 	char *e;
 	int fan = 0;
 
-	if (CONFIG_FANS > 1) {
+	if (fan_count == 0) {
+		ccprintf("Fan count is zero\n");
+		return EC_ERROR_INVAL;
+	}
+
+	if (fan_count > 1) {
 		if (argc < 2) {
 			ccprintf("fan number is required as the first arg\n");
 			return EC_ERROR_PARAM_COUNT;
 		}
 		fan = strtoi(argv[1], &e, 0);
-		if (*e || fan >= CONFIG_FANS)
+		if (*e || fan >= fan_count)
 			return EC_ERROR_PARAM1;
 		argc--;
 		argv++;
@@ -283,6 +314,9 @@ int dptf_get_fan_duty_target(void)
 {
 	int fan = 0;				/* TODO(crosbug.com/p/23803) */
 
+	if (fan_count == 0)
+		return -1;
+
 	if (thermal_control_enabled[fan] || fan_get_rpm_mode(FAN_CH(fan)))
 		return -1;
 
@@ -296,11 +330,11 @@ void dptf_set_fan_duty_target(int pct)
 
 	if (pct < 0 || pct > 100) {
 		/* TODO(crosbug.com/p/23803) */
-		for (fan = 0; fan < CONFIG_FANS; fan++)
+		for (fan = 0; fan < fan_count; fan++)
 			set_thermal_control_enabled(fan, 1);
 	} else {
 		/* TODO(crosbug.com/p/23803) */
-		for (fan = 0; fan < CONFIG_FANS; fan++)
+		for (fan = 0; fan < fan_count; fan++)
 			set_duty_cycle(fan, pct);
 	}
 }
@@ -311,10 +345,12 @@ void dptf_set_fan_duty_target(int pct)
 static int hc_pwm_get_fan_target_rpm(struct host_cmd_handler_args *args)
 {
 	struct ec_response_pwm_get_fan_rpm *r = args->response;
-	int fan = 0;
+
+	if (fan_count == 0)
+		return EC_RES_ERROR;
 
 	/* TODO(crosbug.com/p/23803) */
-	r->rpm = fan_get_rpm_target(FAN_CH(fan));
+	r->rpm = fan_get_rpm_target(FAN_CH(0));
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
@@ -330,7 +366,7 @@ static int hc_pwm_set_fan_target_rpm(struct host_cmd_handler_args *args)
 	int fan;
 
 	if (args->version == 0) {
-		for (fan = 0; fan < CONFIG_FANS; fan++) {
+		for (fan = 0; fan < fan_count; fan++) {
 			/* enable the fan if rpm is non-zero */
 			set_enabled(fan, (p_v0->rpm > 0) ? 1 : 0);
 
@@ -343,7 +379,7 @@ static int hc_pwm_set_fan_target_rpm(struct host_cmd_handler_args *args)
 	}
 
 	fan = p_v1->fan_idx;
-	if (fan >= CONFIG_FANS)
+	if (fan >= fan_count)
 		return EC_RES_ERROR;
 
 	/* enable the fan if rpm is non-zero */
@@ -366,14 +402,14 @@ static int hc_pwm_set_fan_duty(struct host_cmd_handler_args *args)
 	int fan;
 
 	if (args->version == 0) {
-		for (fan = 0; fan < CONFIG_FANS; fan++)
+		for (fan = 0; fan < fan_count; fan++)
 			set_duty_cycle(fan, p_v0->percent);
 
 		return EC_RES_SUCCESS;
 	}
 
 	fan = p_v1->fan_idx;
-	if (fan >= CONFIG_FANS)
+	if (fan >= fan_count)
 		return EC_RES_ERROR;
 
 	set_duty_cycle(fan, p_v1->percent);
@@ -390,14 +426,14 @@ static int hc_thermal_auto_fan_ctrl(struct host_cmd_handler_args *args)
 	const struct ec_params_auto_fan_ctrl_v1 *p_v1 = args->params;
 
 	if (args->version == 0) {
-		for (fan = 0; fan < CONFIG_FANS; fan++)
+		for (fan = 0; fan < fan_count; fan++)
 			set_thermal_control_enabled(fan, 1);
 
 		return EC_RES_SUCCESS;
 	}
 
 	fan = p_v1->fan_idx;
-	if (fan >= CONFIG_FANS)
+	if (fan >= fan_count)
 		return EC_RES_ERROR;
 
 	set_thermal_control_enabled(fan, 1);
@@ -440,7 +476,10 @@ static void pwm_fan_init(void)
 	int i;
 	int fan;
 
-	for (fan = 0; fan < CONFIG_FANS; fan++)
+	if (fan_count == 0)
+		return;
+
+	for (fan = 0; fan < fan_count; fan++)
 		fan_channel_setup(FAN_CH(fan), fans[fan].conf->flags);
 
 	/* Restore previous state. */
@@ -450,12 +489,12 @@ static void pwm_fan_init(void)
 		memcpy(&state, prev, sizeof(state));
 	} else {
 		memset(&state, 0, sizeof(state));
-		for (fan = 0; fan < CONFIG_FANS; fan++)
+		for (fan = 0; fan < fan_count; fan++)
 			state.rpm = fan_percent_to_rpm(FAN_CH(fan),
 						       CONFIG_FAN_INIT_SPEED);
 	}
 
-	for (fan = 0; fan < CONFIG_FANS; fan++) {
+	for (fan = 0; fan < fan_count; fan++) {
 		fan_set_enabled(FAN_CH(fan),
 				state.flag & FAN_STATE_FLAG_ENABLED);
 		fan_set_rpm_target(FAN_CH(fan), state.rpm);
@@ -477,7 +516,7 @@ static void pwm_fan_second(void)
 	int stalled = 0;
 	int fan;
 
-	for (fan = 0; fan < CONFIG_FANS; fan++) {
+	for (fan = 0; fan < fan_count; fan++) {
 		if (fan_is_stalled(FAN_CH(fan))) {
 			rpm = EC_FAN_SPEED_STALLED;
 			stalled = 1;
@@ -503,6 +542,9 @@ static void pwm_fan_preserve_state(void)
 	struct pwm_fan_state state = {0};
 	int fan = 0;
 
+	if (fan_count == 0)
+		return;
+
 	/* TODO(crosbug.com/p/23530): Still treating all fans as one. */
 	if (fan_get_enabled(FAN_CH(fan)))
 		state.flag |= FAN_STATE_FLAG_ENABLED;
@@ -518,7 +560,7 @@ DECLARE_HOOK(HOOK_SYSJUMP, pwm_fan_preserve_state, HOOK_PRIO_DEFAULT);
 static void pwm_fan_resume(void)
 {
 	int fan;
-	for (fan = 0; fan < CONFIG_FANS; fan++) {
+	for (fan = 0; fan < fan_count; fan++) {
 		/* We don't enable or disable thermal control here.
 		 * It should be already enabled by pwm_fan_init on cold boot
 		 * or by pwm_fan_S3_S5 on warm reboot. If it needs
@@ -535,7 +577,7 @@ static void pwm_fan_startup(void)
 {
 	int fan;
 	/* Turn on fan control when the processor boots up (for BIOS screens) */
-	for (fan = 0; fan < CONFIG_FANS; fan++)
+	for (fan = 0; fan < fan_count; fan++)
 		set_thermal_control_enabled(fan, 1);
 }
 /* We need to cover cold boot and warm boot. */
@@ -547,7 +589,7 @@ static void pwm_fan_s3_s5(void)
 	int fan;
 
 	/* TODO(crosbug.com/p/23530): Still treating all fans as one. */
-	for (fan = 0; fan < CONFIG_FANS; fan++) {
+	for (fan = 0; fan < fan_count; fan++) {
 		/*
 		 * There is no need to cool CPU in S3 or S5. We currently don't
 		 * have fans for battery or charger chip. Battery systems will

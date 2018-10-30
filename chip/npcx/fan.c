@@ -235,7 +235,7 @@ static int fan_all_disabled(void)
 {
 	int ch;
 
-	for (ch = 0; ch < CONFIG_FANS; ch++)
+	for (ch = 0; ch < fan_get_count(); ch++)
 		if (fan_status[ch].auto_status != FAN_STATUS_STOPPED)
 			return 0;
 	return 1;

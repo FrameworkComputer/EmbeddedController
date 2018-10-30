@@ -6,7 +6,6 @@
 /* PWM control module for IT83xx. */
 
 #include "clock.h"
-#include "fan.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "pwm.h"

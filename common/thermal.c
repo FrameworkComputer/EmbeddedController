@@ -172,7 +172,7 @@ static void thermal_control(void)
 	 * profiles to each fan - in case one fan cools the CPU while another
 	 * cools the radios or battery.
 	 */
-		for (i = 0; i < CONFIG_FANS; i++)
+		for (i = 0; i < fan_get_count(); i++)
 			fan_set_percent_needed(i, fmax);
 #endif
 	}

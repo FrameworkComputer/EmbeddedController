@@ -97,12 +97,12 @@ static int fan_all_disabled(void)
 {
 	int fan, all_disabled = 0;
 
-	for (fan = 0; fan < CONFIG_FANS; fan++) {
+	for (fan = 0; fan < fan_get_count(); fan++) {
 		if (!fan_get_enabled(FAN_CH(fan)))
 			all_disabled++;
 	}
 
-	if (all_disabled >= CONFIG_FANS)
+	if (all_disabled >= fan_get_count())
 		return 1;
 
 	return 0;
@@ -422,7 +422,7 @@ void fan_ext_timer_interrupt(void)
 
 	task_clear_pending_irq(et_ctrl_regs[FAN_CTRL_EXT_TIMER].irq);
 
-	for (fan = 0; fan < CONFIG_FANS; fan++) {
+	for (fan = 0; fan < fan_get_count(); fan++) {
 		if (fan_get_enabled(FAN_CH(fan))) {
 			proc_tach(FAN_CH(fan));
 			fan_ctrl(FAN_CH(fan));
@@ -435,7 +435,7 @@ static void fan_init(void)
 	int ch, rpm_re, fan_p, s_duty;
 	enum tach_ch_sel tach_ch;
 
-	for (ch = 0; ch < CONFIG_FANS; ch++) {
+	for (ch = 0; ch < fan_get_count(); ch++) {
 
 		rpm_re = fan_tach[pwm_channels[FAN_CH(ch)].channel].rpm_re;
 		fan_p = fan_tach[pwm_channels[FAN_CH(ch)].channel].fan_p;

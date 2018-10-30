@@ -116,4 +116,8 @@ enum fan_status fan_get_status(int ch);
 /* Initialize the HW according to the desired flags */
 void fan_channel_setup(int ch, unsigned int flags);
 
+int fan_get_count(void);
+
+void fan_set_count(int count);
+
 #endif  /* __CROS_EC_FAN_H */

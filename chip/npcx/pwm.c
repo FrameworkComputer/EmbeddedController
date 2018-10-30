@@ -13,7 +13,6 @@
 #include "clock_chip.h"
 #include "console.h"
 #include "ec_commands.h"
-#include "fan.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "pwm.h"
