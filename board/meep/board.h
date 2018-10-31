@@ -58,6 +58,8 @@
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HOST_EVENT
 
+#define CONFIG_KEYBOARD_FACTORY_TEST
+
 #define OCTOPUS_BATT_FUEL_LOW_LED 10
 
 #define CONFIG_ACCEL_LSM6DSM_INT_EVENT TASK_EVENT_CUSTOM(4)
@@ -104,6 +106,11 @@ enum battery_type {
 	BATTERY_SIMPLO_ATL,
 	BATTERY_TYPE_COUNT,
 };
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
 
 int board_is_convertible(void);
 
