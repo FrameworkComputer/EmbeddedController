@@ -78,7 +78,6 @@ struct gpio_lvol_item {
 /* Constants for GPIO low-voltage mapping */
 const struct gpio_lvol_item gpio_lvol_table[] = NPCX_LVOL_TABLE;
 
-
 /*****************************************************************************/
 /* Internal functions */
 
@@ -86,6 +85,33 @@ static int gpio_match(uint8_t port, uint8_t bit, struct npcx_gpio gpio)
 {
 	return (gpio.valid && (gpio.port == port) && (gpio.bit == bit));
 }
+
+#ifdef CONFIG_CMD_GPIO_EXTENDED
+static uint8_t gpio_is_alt_sel(uint8_t port, uint8_t bit)
+{
+	struct gpio_alt_map const *map;
+	uint8_t alt_mask, devalt;
+
+	for (map = ARRAY_BEGIN(gpio_alt_table);
+	     map < ARRAY_END(gpio_alt_table);
+	     map++) {
+		if (gpio_match(port, bit, map->gpio)) {
+			alt_mask = 1 << map->alt.bit;
+			devalt = NPCX_DEVALT(map->alt.group);
+			/*
+			 * alt.inverted == 0:
+			 *   !!(devalt & alt_mask) == 0 -> GPIO
+			 *   !!(devalt & alt_mask) == 1 -> Alternate
+			 * alt.inverted == 1:
+			 *   !!(devalt & alt_mask) == 0 -> Alternate
+			 *   !!(devalt & alt_mask) == 1 -> GPIO
+			 */
+			return !!(devalt & alt_mask) ^ map->alt.inverted;
+		}
+	}
+	return 0;
+}
+#endif
 
 static int gpio_alt_sel(uint8_t port, uint8_t bit, int8_t func)
 {
@@ -176,6 +202,23 @@ static void gpio_interrupt_type_sel(enum gpio_signal signal, uint32_t flags)
 	/* No support analog mode */
 }
 
+#ifdef CONFIG_CMD_GPIO_EXTENDED
+static uint8_t gpio_is_low_voltage_level_sel(uint8_t port, uint8_t bit)
+{
+	int i, j;
+
+	for (i = 0; i < ARRAY_SIZE(gpio_lvol_table); i++) {
+		const struct npcx_gpio *gpio = gpio_lvol_table[i].lvol_gpio;
+
+		for (j = 0; j < ARRAY_SIZE(gpio_lvol_table[0].lvol_gpio); j++) {
+			if (gpio_match(port, bit, gpio[j]))
+				return IS_BIT_SET(NPCX_LV_GPIO_CTL(i), j);
+		}
+	}
+	return 0;
+}
+#endif
+
 /* Select low voltage detection level */
 void gpio_low_voltage_level_sel(uint8_t port, uint8_t bit, uint8_t low_voltage)
 {
@@ -184,7 +227,7 @@ void gpio_low_voltage_level_sel(uint8_t port, uint8_t bit, uint8_t low_voltage)
 	for (i = 0; i < ARRAY_SIZE(gpio_lvol_table); i++) {
 		const struct npcx_gpio *gpio = gpio_lvol_table[i].lvol_gpio;
 
-		for (j = 0; j < ARRAY_SIZE(gpio_lvol_table[0].lvol_gpio); j++)
+		for (j = 0; j < ARRAY_SIZE(gpio_lvol_table[0].lvol_gpio); j++) {
 			if (gpio_match(port, bit, gpio[j])) {
 				if (low_voltage)
 					/* Select vol-detect level for 1.8V */
@@ -194,7 +237,7 @@ void gpio_low_voltage_level_sel(uint8_t port, uint8_t bit, uint8_t low_voltage)
 					CLEAR_BIT(NPCX_LV_GPIO_CTL(i), j);
 				return;
 			}
-
+		}
 	}
 
 	if (low_voltage)
@@ -286,6 +329,45 @@ void gpio_set_level(enum gpio_signal signal, int value)
 	else
 		NPCX_PDOUT(gpio_list[signal].port) &= ~gpio_list[signal].mask;
 }
+
+#ifdef CONFIG_CMD_GPIO_EXTENDED
+int gpio_get_flags_by_mask(uint32_t port, uint32_t mask)
+{
+	uint32_t flags = 0;
+
+	if (NPCX_PDIR(port) & mask)
+		flags |= GPIO_OUTPUT;
+	else
+		flags |= GPIO_INPUT;
+
+	if (NPCX_PDIN(port) & mask)
+		flags |= GPIO_HIGH;
+	else
+		flags |= GPIO_LOW;
+
+	if (NPCX_PTYPE(port) & mask)
+		flags |= GPIO_OPEN_DRAIN;
+
+	/* If internal pulling is enabled */
+	if (NPCX_PPULL(port) & mask) {
+		if (NPCX_PPUD(port) & mask)
+			flags |= GPIO_PULL_DOWN;
+		else
+			flags |= GPIO_PULL_UP;
+	}
+
+	if (gpio_is_alt_sel(port, GPIO_MASK_TO_NUM(mask)))
+		flags |= GPIO_ALTERNATE;
+
+	if (gpio_is_low_voltage_level_sel(port, GPIO_MASK_TO_NUM(mask)))
+		flags |= GPIO_SEL_1P8V;
+
+	if (NPCX_PLOCK_CTL(port) & mask)
+		flags |= GPIO_LOCKED;
+
+	return flags;
+}
+#endif
 
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {

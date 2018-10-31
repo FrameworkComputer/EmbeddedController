@@ -92,7 +92,8 @@ static void print_gpio_info(int gpio)
 #endif
 	changed = last_val_changed(gpio, v);
 
-	ccprintf("  %d%c %s%s%s%s%s%s%s%s%s%s\n", v, (changed ? '*' : ' '),
+	ccprintf("  %d%c %s%s%s%s%s%s%s%s%s%s%s%s\n", v,
+		 (changed ? '*' : ' '),
 		 (flags & GPIO_INPUT ? "I " : ""),
 		 (flags & GPIO_OUTPUT ? "O " : ""),
 		 (flags & GPIO_LOW ? "L " : ""),
@@ -102,6 +103,8 @@ static void print_gpio_info(int gpio)
 		 (flags & GPIO_PULL_UP ? "PU " : ""),
 		 (flags & GPIO_PULL_DOWN ? "PD " : ""),
 		 (flags & GPIO_ALTERNATE ? "ALT " : ""),
+		 (flags & GPIO_SEL_1P8V ? "1P8 " : ""),
+		 (flags & GPIO_LOCKED ? "LCK " : ""),
 		 gpio_get_name(gpio));
 
 	/* Flush console to avoid truncating output */
