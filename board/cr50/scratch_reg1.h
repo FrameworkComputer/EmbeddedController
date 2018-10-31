@@ -15,7 +15,7 @@
 #define BOARD_SLAVE_CONFIG_I2C       (1 << 1)   /* TPM uses I2C interface */
 
 /*
- * The gaps are left to enusre backwards compatibility with the earliest cr50
+ * The gaps are left to ensure backwards compatibility with the earliest cr50
  * code releases. It will be possible to safely reuse these gaps if and when the
  * rest of the bits are taken.
  */
@@ -54,11 +54,28 @@
 #define BOARD_ITE_EC_SYNC_NEEDED     (1 << 15)
 
 /*
+ * Enable delayed write protect disable for systems that can be opened
+ * in less than 2 minutes
+ */
+#define BOARD_WP_DISABLE_DELAY       (1 << 16)
+/*
+ * Enable custom options required for the closed source EC on the
+ * Sarien/Arcada boards.  Includes the following behavior
+ *    Enable factory mode to closed-source EC via GPIO
+ *    Support customer diagnostic mode
+ *    UEFI factory mode
+ *    EC extended reset
+ *    Power+Refresh recovery mode (instead of Power+Refresh+Esc)
+ */
+#define BOARD_CLOSED_SOURCE_SET1     (1 << 17)
+
+/*
  * Macro to capture all properties related to board strapping pins. This must be
  * updated if additional strap related properties are added.
  */
 #define BOARD_ALL_PROPERTIES (BOARD_SLAVE_CONFIG_SPI | BOARD_SLAVE_CONFIG_I2C \
 	| BOARD_NEEDS_SYS_RST_PULL_UP | BOARD_USE_PLT_RESET | \
-	BOARD_DEEP_SLEEP_DISABLED | BOARD_DETECT_AP_WITH_UART)
+	BOARD_DEEP_SLEEP_DISABLED | BOARD_DETECT_AP_WITH_UART | \
+	BOARD_WP_DISABLE_DELAY | BOARD_CLOSED_SOURCE_SET1)
 
 #endif  /* ! __EC_BOARD_CR50_SCRATCH_REG1_H */

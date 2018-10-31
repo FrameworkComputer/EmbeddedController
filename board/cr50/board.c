@@ -225,16 +225,38 @@ const struct strap_desc strap_regs[] = {
 static struct board_cfg board_cfg_table[] = {
 	/* SPI Variants: DIOA12 = 1M PD, DIOA6 = 1M PD */
 	/* Kevin/Gru: DI0A9 = 5k PD, DIOA1 = 1M PU */
-	{ 0x02, BOARD_SLAVE_CONFIG_SPI | BOARD_NEEDS_SYS_RST_PULL_UP },
+	{
+		.strap_cfg = 0x02,
+		.board_properties = BOARD_SLAVE_CONFIG_SPI |
+			BOARD_NEEDS_SYS_RST_PULL_UP,
+	},
 	/* Poppy: DI0A9 = 1M PU, DIOA1 = 1M PU */
-	{ 0x0A, BOARD_SLAVE_CONFIG_SPI | BOARD_USE_PLT_RESET },
-
+	{
+		.strap_cfg = 0x0A,
+		.board_properties = BOARD_SLAVE_CONFIG_SPI |
+			BOARD_USE_PLT_RESET,
+	},
 	/* I2C Variants: DIOA9 = 1M PD, DIOA1 = 1M PD */
 	/* Reef/Eve: DIOA12 = 5k PD, DIOA6 = 1M PU */
-	{ 0x20, BOARD_SLAVE_CONFIG_I2C | BOARD_USE_PLT_RESET },
+	{
+		.strap_cfg = 0x20,
+		.board_properties = BOARD_SLAVE_CONFIG_I2C |
+			BOARD_USE_PLT_RESET,
+	},
 	/* Rowan: DIOA12 = 5k PD, DIOA6 = 5k PU */
-	{ 0x30, BOARD_SLAVE_CONFIG_I2C | BOARD_DEEP_SLEEP_DISABLED |
-	  BOARD_DETECT_AP_WITH_UART },
+	{
+		.strap_cfg = 0x30,
+		.board_properties = BOARD_SLAVE_CONFIG_I2C |
+			BOARD_DEEP_SLEEP_DISABLED | BOARD_DETECT_AP_WITH_UART,
+	},
+	/* Sarien/Arcada: DIOA12 = 1M PD, DIOA6 = 5k PU */
+	{
+		.strap_cfg = 0x70,
+		.board_properties = BOARD_SLAVE_CONFIG_I2C |
+			BOARD_USE_PLT_RESET | BOARD_WP_DISABLE_DELAY |
+			BOARD_CLOSED_SOURCE_SET1,
+	},
+
 };
 
 void post_reboot_request(void)
