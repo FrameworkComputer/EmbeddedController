@@ -69,10 +69,8 @@
 #define SPI_CMD_EWSR		0x50 /* Enable Write Status Register */
 #define SPI_CMD_WRSR		0x01 /* Write Status Register */
 
-
 /* Size for FTDI outgoing buffer */
 #define FTDI_CMD_BUF_SIZE (1<<12)
-
 
 /* Reset Status */
 #define RSTS_VCCDO_PW_ON	0x40
@@ -523,7 +521,6 @@ static int dbgr_disable_protect_path(struct common_hnd *chnd)
 	return 0;
 }
 
-
 /* Enter follow mode and FSCE# high level */
 static int spi_flash_follow_mode(struct common_hnd *chnd, char *desc)
 {
@@ -688,7 +685,6 @@ static int config_i2c(struct ftdi_context *ftdi)
 /* Special waveform definition */
 #define SPECIAL_LEN_USEC 50000ULL /* us */
 #define SPECIAL_FREQ    400000ULL
-
 
 #define SPECIAL_PATTERN 0x0000020301010302ULL
 #define SPECIAL_PATTERN_SDA_L_SCL_L 0x0000000000000000ULL
@@ -859,8 +855,8 @@ static void draw_spinner(uint32_t remaining, uint32_t size)
 	windex %= sizeof(wheel);
 }
 
-int command_read_pages(struct common_hnd *chnd, uint32_t address,
-		       uint32_t size, uint8_t *buffer)
+static int command_read_pages(struct common_hnd *chnd, uint32_t address,
+			      uint32_t size, uint8_t *buffer)
 {
 	int res = -EIO;
 	uint32_t remaining = size;
@@ -912,8 +908,8 @@ failed_read:
 	return res;
 }
 
-int command_write_pages(struct common_hnd *chnd, uint32_t address,
-			uint32_t size, uint8_t *buffer)
+static int command_write_pages(struct common_hnd *chnd, uint32_t address,
+			       uint32_t size, uint8_t *buffer)
 {
 	int res = -EIO;
 	uint32_t remaining = size;
@@ -1006,13 +1002,12 @@ failed_write:
 	return res;
 }
 
-
 /*
  * Write another program flow to match the
  * original ITE 8903 Download board.
  */
-int command_write_pages2(struct common_hnd *chnd, uint32_t address,
-			 uint32_t size, uint8_t *buffer)
+static int command_write_pages2(struct common_hnd *chnd, uint32_t address,
+				uint32_t size, uint8_t *buffer)
 {
 	int res = 0;
 	uint8_t BA, A1, A0, data;
@@ -1079,7 +1074,6 @@ int command_write_pages2(struct common_hnd *chnd, uint32_t address,
 	res = i2c_byte_transfer(chnd, I2C_DATA_ADDR, &data, 1, 1);
 	res = i2c_write_byte(chnd, 0x10, 0x00);
 
-
 failed_write:
 	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
 		"write disable exit AAI write") < 0)
@@ -1088,14 +1082,13 @@ failed_write:
 	return res;
 }
 
-
-int command_write_unprotect(struct common_hnd *chnd)
+static int command_write_unprotect(struct common_hnd *chnd)
 {
 	/* TODO(http://crosbug.com/p/23576): implement me */
 	return 0;
 }
 
-int command_erase(struct common_hnd *chnd, uint32_t len, uint32_t off)
+static int command_erase(struct common_hnd *chnd, uint32_t len, uint32_t off)
 {
 	int res = -EIO;
 	int page = 0;
@@ -1153,9 +1146,11 @@ wait_busy_cleared:
 			remaining -= SECTOR_ERASE_PAGES * PAGE_SIZE;
 		}
 	}
+
 	/* No error so far */
 	printf("\n\rErasing Done.\n");
 	res = 0;
+
 failed_erase:
 	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
 		"write disable exit erase") < 0)
@@ -1167,15 +1162,14 @@ failed_erase:
 	return res;
 }
 
-
 /*
  * This function can Erase First Sector or Erase All Sector by reset value
  * Some F/W will produce the H/W watchdog reset and it will happen
  * reset issue while flash.
  * Add such function to prevent the reset issue.
  */
-int command_erase2(struct common_hnd *chnd, uint32_t len,
-		   uint32_t off, uint32_t reset)
+static int command_erase2(struct common_hnd *chnd, uint32_t len,
+			  uint32_t off, uint32_t reset)
 {
 	int res = -EIO;
 	int page = 0;
@@ -1234,9 +1228,11 @@ int command_erase2(struct common_hnd *chnd, uint32_t len,
 		draw_spinner(remaining, len);
 
 	}
+
 	/* No error so far */
 	printf("\n\rErasing Done.\n");
 	res = 0;
+
 failed_erase:
 	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
 		"write disable exit erase") < 0)
@@ -1249,8 +1245,8 @@ failed_erase:
 }
 
 /* Return zero on success, a negative error value on failures. */
-int read_flash(struct common_hnd *chnd, const char *filename,
-	       uint32_t offset, uint32_t size)
+static int read_flash(struct common_hnd *chnd, const char *filename,
+		      uint32_t offset, uint32_t size)
 {
 	int res;
 	FILE *hnd;
@@ -1284,8 +1280,8 @@ int read_flash(struct common_hnd *chnd, const char *filename,
 }
 
 /* Return zero on success, a negative error value on failures. */
-int write_flash(struct common_hnd *chnd, const char *filename,
-		uint32_t offset)
+static int write_flash(struct common_hnd *chnd, const char *filename,
+		       uint32_t offset)
 {
 	int res, written;
 	FILE *hnd;
@@ -1331,8 +1327,8 @@ int write_flash(struct common_hnd *chnd, const char *filename,
  * The original flow may not work on the DX chip.
  *
  */
-int write_flash2(struct common_hnd *chnd, const char *filename,
-		uint32_t offset)
+static int write_flash2(struct common_hnd *chnd, const char *filename,
+			uint32_t offset)
 {
 	int res, written;
 	FILE *hnd;
@@ -1387,10 +1383,9 @@ failed_write:
 	return 0;
 }
 
-
 /* Return zero on success, a non-zero value on failures. */
-int verify_flash(struct common_hnd *chnd, const char *filename,
-		uint32_t offset)
+static int verify_flash(struct common_hnd *chnd, const char *filename,
+			uint32_t offset)
 {
 	int res;
 	int file_size;
@@ -1426,8 +1421,8 @@ int verify_flash(struct common_hnd *chnd, const char *filename,
 		res = memcmp(buffer, buffer2, file_size);
 
 	printf("\n\rVerify %s\n", res ? "Failed!" : "Done.");
-exit:
 
+exit:
 	free(buffer);
 	free(buffer2);
 	return res;
@@ -1479,7 +1474,7 @@ static const struct option longopts[] = {
 	{NULL, 0, 0, 0}
 };
 
-void display_usage(char *program)
+static void display_usage(char *program)
 {
 	fprintf(stderr, "Usage: %s [-c] [-d] [-v <VID>] [-p <PID>] [-i <1|2>] "
 		"[-s <serial>] [-u] [-e] [-r <file>] [-w <file>]\n", program);
@@ -1499,7 +1494,7 @@ void display_usage(char *program)
 	exit(2);
 }
 
-int parse_parameters(int argc, char **argv)
+static int parse_parameters(int argc, char **argv)
 {
 	int opt, idx;
 	int flags = 0;
@@ -1603,7 +1598,6 @@ int main(int argc, char **argv)
 	if (chnd.iftype == FTDI_IF) {
 		if (config_i2c(chnd.ftdi_hnd) < 0)
 			goto terminate;
-
 		if (check_chipid(&chnd) < 0)
 			goto terminate;
 	}
@@ -1613,7 +1607,6 @@ int main(int argc, char **argv)
 
 	if (input_filename) {
 		ret = read_flash(&chnd, input_filename, 0, flash_size);
-
 		if (ret)
 			goto terminate;
 	}
@@ -1624,21 +1617,17 @@ int main(int argc, char **argv)
 			command_erase2(&chnd, flash_size, 0, 0);
 		else
 			command_erase(&chnd, flash_size, 0);
-
 		/* Call DBGR Rest to clear the EC lock status after erasing */
 		dbgr_reset(&chnd, RSTS_VCCDO_PW_ON|RSTS_HGRST|RSTS_GRST);
 	}
 
 	if (output_filename) {
-
 		if (is8320dx)
 			ret = write_flash2(&chnd, output_filename, 0);
 		else
 			ret = write_flash(&chnd, output_filename, 0);
-
 		if (ret)
 			goto terminate;
-
 		ret = verify_flash(&chnd, output_filename, 0);
 		if (ret)
 			goto terminate;
@@ -1646,16 +1635,16 @@ int main(int argc, char **argv)
 
 	/* Normal exit */
 	ret = 0;
-terminate:
 
-	/*
-	 * Enable EC Host Global Reset to reset EC resource and EC domain
-	 */
+terminate:
+	/* Enable EC Host Global Reset to reset EC resource and EC domain. */
 	dbgr_reset(&chnd, RSTS_VCCDO_PW_ON|RSTS_HGRST|RSTS_GRST);
+
 	/* Close the FTDI USB handle */
 	if (chnd.iftype == FTDI_IF) {
 		ftdi_usb_close(chnd.ftdi_hnd);
 		ftdi_free(chnd.ftdi_hnd);
 	}
+
 	return ret;
 }
