@@ -88,6 +88,16 @@ int u2f_gen_kek(const uint8_t *origin, uint8_t *kek, size_t key_len);
  */
 int g2f_individual_keypair(p256_int *d, p256_int *pk_x, p256_int *pk_y);
 
+/***
+ * Generates and persists to nvram a new seed that will be used to
+ * derive kek in future calls to u2f_gen_kek().
+ *
+ * @param commit whether to commit nvram changes before returning.
+ * @return EC_SUCCESS if seed was successfully created
+ * (and persisted if requested).
+ */
+int u2f_gen_kek_seed(int commit);
+
 /* ---- protocol extensions ---- */
 
 /* Use non-standard extensions to the U2F protocol */

@@ -10,6 +10,7 @@
 #include "pinweaver.h"
 #include "tpm_nvmem.h"
 #include "trng.h"
+#include "u2f_impl.h"
 #include "util.h"
 #include "version.h"
 
@@ -88,4 +89,10 @@ void _plat__StartupCallback(void)
 BOOL _plat__ShallSurviveOwnerClear(uint32_t  index)
 {
 	return index == HR_NV_INDEX + FWMP_NV_INDEX;
+}
+
+void _plat__OwnerClearCallback(void)
+{
+	// Invalidate existing u2f registrations.
+	u2f_gen_kek_seed(0 /* commit */);
 }

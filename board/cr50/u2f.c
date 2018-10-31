@@ -13,6 +13,7 @@
 #include "registers.h"
 #include "signed_header.h"
 #include "system.h"
+#include "tpm_nvmem_ops.h"
 #include "tpm_vendor_cmds.h"
 #include "u2f.h"
 #include "u2f_impl.h"
@@ -63,6 +64,7 @@ enum u2f_mode {
 };
 
 static uint32_t salt[8];
+static uint32_t salt_kek[8];
 static uint8_t u2f_mode = MODE_UNSET;
 static const uint8_t k_salt = NVMEM_VAR_U2F_SALT;
 
@@ -81,6 +83,39 @@ static int load_state(void)
 		writevars();
 	} else {
 		memcpy(salt, tuple_val(t_salt), sizeof(salt));
+	}
+
+	if (read_tpm_nvmem_hidden(
+		TPM_HIDDEN_U2F_KEK,
+		sizeof(salt_kek), salt_kek) ==
+	    tpm_read_not_found) {
+		/*
+		 * Not found means that we have not used u2f before,
+		 * or not used it with updated fw that resets kek seed
+		 * on TPM clear.
+		 */
+		if (t_salt) {
+			/*
+			 * We have previously used u2f, and may have
+			 * existing registrations; we don't want to
+			 * invalidate these, so preserve the existing
+			 * seed as a one-off. It will be changed on
+			 * next TPM clear.
+			 */
+			memcpy(salt_kek, salt, sizeof(salt_kek));
+		} else {
+			/*
+			 * We have never used u2f before - generate
+			 * new seed.
+			 */
+			if (!DCRYPTO_ladder_random(salt_kek))
+				return 0;
+		}
+		if (write_tpm_nvmem_hidden(
+			TPM_HIDDEN_U2F_KEK,
+			sizeof(salt_kek), salt_kek, 1 /* commit */) !=
+		    tpm_write_created)
+			return 0;
 	}
 
 	return 1;
@@ -174,7 +209,7 @@ int u2f_gen_kek(const uint8_t *origin, uint8_t *kek, size_t key_len)
 
 	if (key_len != sizeof(buf))
 		return EC_ERROR_UNKNOWN;
-	if (!_derive_key(U2F_WRAP, salt, buf))
+	if (!_derive_key(U2F_WRAP, salt_kek, buf))
 		return EC_ERROR_UNKNOWN;
 	memcpy(kek, buf, key_len);
 
@@ -197,6 +232,19 @@ int g2f_individual_keypair(p256_int *d, p256_int *pk_x, p256_int *pk_y)
 		HASH_update(&sha, buf, sizeof(buf));
 		memcpy(buf, HASH_final(&sha), sizeof(buf));
 	}
+
+	return EC_SUCCESS;
+}
+
+int u2f_gen_kek_seed(int commit)
+{
+	if (!DCRYPTO_ladder_random(salt_kek))
+		return EC_ERROR_HW_INTERNAL;
+
+	if (write_tpm_nvmem_hidden(
+		TPM_HIDDEN_U2F_KEK, sizeof(salt_kek), salt_kek, commit) ==
+	    tpm_write_fail)
+		return EC_ERROR_UNKNOWN;
 
 	return EC_SUCCESS;
 }
