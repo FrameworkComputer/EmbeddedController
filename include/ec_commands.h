@@ -5071,10 +5071,11 @@ struct __ec_align4 ec_response_fp_info {
 #define FP_CONTEXT_USERID_WORDS (32 / sizeof(uint32_t))
 #define FP_CONTEXT_TAG_BYTES 16
 #define FP_CONTEXT_SALT_BYTES 16
+#define FP_CONTEXT_TPM_BYTES 32
 
 struct ec_fp_template_encryption_metadata {
 	/*
-	 * Version of the structure format (N=1).
+	 * Version of the structure format (N=3).
 	 */
 	uint16_t struct_version;
 	/* Reserved bytes, set to 0. */
@@ -5132,6 +5133,18 @@ struct __ec_align2 ec_response_fp_stats {
 	} overall_t0;
 	uint8_t timestamps_invalid;
 	int8_t template_matched;
+};
+
+#define EC_CMD_FP_SEED 0x0408
+struct __ec_align4 ec_params_fp_seed {
+	/*
+	 * Version of the structure format (N=3).
+	 */
+	uint16_t struct_version;
+	/* Reserved bytes, set to 0. */
+	uint16_t reserved;
+	/* Seed from the TPM. */
+	uint8_t seed[FP_CONTEXT_TPM_BYTES];
 };
 
 /*****************************************************************************/

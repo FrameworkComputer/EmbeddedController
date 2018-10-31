@@ -42,7 +42,7 @@
 #define FP_MAX_FINGER_COUNT 0
 #endif
 #define SBP_ENC_KEY_LEN 16
-#define FP_TEMPLATE_FORMAT_VERSION 2
+#define FP_TEMPLATE_FORMAT_VERSION 3
 #define FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE \
 	(FP_ALGORITHM_TEMPLATE_SIZE + \
 		sizeof(struct ec_fp_template_encryption_metadata))
@@ -76,6 +76,10 @@ static uint32_t templ_dirty;
 static uint32_t user_id[FP_CONTEXT_USERID_WORDS];
 /* Ready to encrypt a template. */
 static timestamp_t encryption_deadline;
+/* Part of the IKM used to derive encryption keys received from the TPM. */
+static uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
+/* Flag indicating whether the seed has been initialised or not. */
+static int fp_tpm_seed_is_set;
 
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
@@ -348,26 +352,39 @@ static int derive_encryption_key(uint8_t *out_key, uint8_t *salt)
 	int ret;
 	uint8_t key_buf[SHA256_DIGEST_SIZE];
 	uint8_t prk[SHA256_DIGEST_SIZE];
-	uint8_t rb_secret[CONFIG_ROLLBACK_SECRET_SIZE];
 	uint8_t message[sizeof(user_id) + 1];
+	uint8_t ikm[CONFIG_ROLLBACK_SECRET_SIZE + sizeof(tpm_seed)];
 
 	BUILD_ASSERT(SBP_ENC_KEY_LEN <= SHA256_DIGEST_SIZE);
 	BUILD_ASSERT(SBP_ENC_KEY_LEN <= CONFIG_ROLLBACK_SECRET_SIZE);
 	BUILD_ASSERT(sizeof(user_id) == SHA256_DIGEST_SIZE);
 
-	ret = rollback_get_secret(rb_secret);
+	if (!fp_tpm_seed_is_set) {
+		CPRINTS("Seed hasn't been set.");
+		return EC_RES_ERROR;
+	}
+
+	/*
+	 * The first CONFIG_ROLLBACK_SECRET_SIZE bytes of IKM are read from the
+	 * anti-rollback blocks.
+	 */
+	ret = rollback_get_secret(ikm);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to read rollback secret: %d", ret);
 		return EC_RES_ERROR;
 	}
+	/*
+	 * IKM is the concatenation of the rollback secret and the seed from
+	 * the TPM.
+	 */
+	memcpy(ikm + CONFIG_ROLLBACK_SECRET_SIZE, tpm_seed, sizeof(tpm_seed));
 
 	/*
 	 * Derive a key with the "extract" step of HKDF
 	 * https://tools.ietf.org/html/rfc5869#section-2.2
 	 */
-	hmac_SHA256(prk, salt, FP_CONTEXT_SALT_BYTES, rb_secret,
-		    sizeof(rb_secret));
-	memset(rb_secret, 0, sizeof(rb_secret));
+	hmac_SHA256(prk, salt, FP_CONTEXT_SALT_BYTES, ikm, sizeof(ikm));
+	memset(ikm, 0, sizeof(ikm));
 
 	/*
 	 * Only 1 "expand" step of HKDF since the size of the "info" context
@@ -781,6 +798,26 @@ static int fp_command_context(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_CONTEXT, fp_command_context, EC_VER_MASK(0));
+
+static int fp_command_tpm_seed(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_fp_seed *params = args->params;
+
+	if (params->struct_version != FP_TEMPLATE_FORMAT_VERSION) {
+		CPRINTS("Invalid seed format %d", params->struct_version);
+		return EC_RES_INVALID_PARAM;
+	}
+
+	if (fp_tpm_seed_is_set) {
+		CPRINTS("Seed has already been set.");
+		return EC_RES_ACCESS_DENIED;
+	}
+	memcpy(tpm_seed, params->seed, sizeof(tpm_seed));
+	fp_tpm_seed_is_set = 1;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FP_SEED, fp_command_tpm_seed, EC_VER_MASK(0));
 
 #ifdef CONFIG_CMD_FPSENSOR_DEBUG
 /* --- Debug console commands --- */

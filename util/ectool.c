@@ -134,6 +134,8 @@ const char help_str[] =
 	"      Prints information about the Fingerprint sensor\n"
 	"  fpmode [capture|deepsleep|fingerdown|fingerup]\n"
 	"      Configure/Read the fingerprint sensor current mode\n"
+	"  fpseed\n"
+	"      Sets the value of the TPM seed.\n"
 	"  fpstats\n"
 	"      Prints timing statisitcs relating to capture and matching\n"
 	"  fptemplate [<infile>|<index 0..2>]\n"
@@ -1465,6 +1467,29 @@ int cmd_fp_mode(int argc, char *argv[])
 		printf("capture ");
 	printf("\n");
 	return 0;
+}
+
+int cmd_fp_seed(int argc, char *argv[])
+{
+	struct ec_params_fp_seed p;
+	const char *seed = argv[1];
+	int rv;
+
+	if (argc == 1) {
+		printf("Missing seed argument.\n");
+		return 1;
+	}
+	if (strlen(seed) != FP_CONTEXT_TPM_BYTES) {
+		printf("Invalid seed '%s' is %zd bytes long instead of %d.\n",
+		       seed, strlen(seed), FP_CONTEXT_TPM_BYTES);
+		return 1;
+	}
+	printf("Setting seed '%s'\n", seed);
+	p.struct_version = 3;
+	memcpy(p.seed, seed, FP_CONTEXT_TPM_BYTES);
+
+	rv = ec_command(EC_CMD_FP_SEED, 0, &p, sizeof(p), NULL, 0);
+	return rv;
 }
 
 int cmd_fp_stats(int argc, char *argv[])
@@ -8351,6 +8376,7 @@ const struct command commands[] = {
 	{"fpframe", cmd_fp_frame},
 	{"fpinfo", cmd_fp_info},
 	{"fpmode", cmd_fp_mode},
+	{"fpseed", cmd_fp_seed},
 	{"fpstats", cmd_fp_stats},
 	{"fptemplate", cmd_fp_template},
 	{"gpioget", cmd_gpio_get},
