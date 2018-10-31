@@ -36,6 +36,7 @@ GPIO(ENTERING_RW,		PIN(7, 6), GPIO_OUTPUT)				/* EC Entering RW */
 GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT)				/* PMIC interrupt */
 GPIO(U22_90W,			PIN(3, 4), GPIO_OUTPUT | GPIO_PULL_DOWN)
 GPIO(POWER_RATE,		PIN(7, 1), GPIO_INPUT)				/* High: i3/5/7. Low: Celeron */
+GPIO(PP3300_USB_PD_EN,		PIN(6, 7), GPIO_OUT_HIGH)                       /* Initialize PP3300_USB_PD_EN as output high */
 
 GPIO(LAN_PWR_EN,		PIN(8, 3), GPIO_OUT_HIGH)			/* Ethernet power enabled */
 
@@ -71,22 +72,26 @@ GPIO(USB1_ENABLE,		PIN(3, 2), GPIO_OUT_LOW)			/* Rear port, bottom */
 GPIO(USB2_ENABLE,		PIN(C, 6), GPIO_OUT_LOW)			/* Rear port, top */
 GPIO(USB3_ENABLE,		PIN(A, 1), GPIO_OUT_LOW)			/* Rear port, single */
 GPIO(USB4_ENABLE,		PIN(0, 0), GPIO_OUT_LOW)			/* Front port 1 */
-GPIO(USB5_ENABLE,		PIN(B, 1), GPIO_OUT_LOW)			/* Front port 2 */
 GPIO(USB_A_CHARGE_EN_L,		PIN(A, 5), GPIO_OUT_LOW)
 
 GPIO(CEC_OUT,			PIN(3, 6), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
 GPIO(CEC_IN,			PIN(4, 0), GPIO_INPUT)
 GPIO(CEC_PULL_UP,		PIN(D, 3), GPIO_OUT_HIGH)
 
-/* Board ID */
-GPIO(BOARD_VERSION1,		PIN(C, 4), GPIO_INPUT)	/* Board ID bit0 */
-GPIO(BOARD_VERSION2,		PIN(C, 2), GPIO_INPUT)	/* Board ID bit1 */
-GPIO(BOARD_VERSION3,		PIN(0, 1), GPIO_INPUT)	/* Board ID bit2 */
+/* Speaker */
+GPIO(SPKR5,			PIN(C, 2), GPIO_INPUT)				/* No function */
 
 /* Test points */
-GPIO(TP248,			PIN(5, 7), GPIO_INPUT | GPIO_PULL_UP)		/* EC_GPIO57 */
-GPIO(TP249,			PIN(6, 6), GPIO_INPUT | GPIO_PULL_UP)		/* EC_GPO66_ARM_L */
-GPIO(TP250,			PIN(3, 5), GPIO_INPUT | GPIO_PULL_UP)		/* EC_GPIO35_TEST_L */
+GPIO(TP48,			PIN(B, 1), GPIO_INPUT)
+GPIO(TP52,			PIN(C, 3), GPIO_INPUT)
+GPIO(TP120,			PIN(4, 4), GPIO_INPUT)
+GPIO(TP121,			PIN(3, 3), GPIO_INPUT)
+GPIO(TP123,			PIN(C, 5), GPIO_INPUT)
+GPIO(TP127,			PIN(6, 6), GPIO_INPUT)
+GPIO(TP128,			PIN(C, 4), GPIO_INPUT)
+GPIO(TP129,			PIN(0, 1), GPIO_INPUT)
+GPIO(TP248,			PIN(5, 7), GPIO_INPUT)
+GPIO(TP250,			PIN(3, 5), GPIO_INPUT)
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(6, 0x30), 1, MODULE_UART, 0)		/* GPIO64-65 */		/* UART from EC to Servo */
