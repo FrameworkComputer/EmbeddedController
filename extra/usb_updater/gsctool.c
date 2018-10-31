@@ -1340,7 +1340,7 @@ static int show_headers_versions(const void *image, bool show_machine_output)
 		uint32_t flags;
 	} bid[kNumSlots];
 
-	char bid_string[MAX_BOARD_ID_LENGTH];
+	char bid_string[kNumSlots][MAX_BOARD_ID_LENGTH];
 
 	size_t i;
 
@@ -1349,6 +1349,9 @@ static int show_headers_versions(const void *image, bool show_machine_output)
 			(const struct SignedHeader *)
 				((uintptr_t)image + sections[i].offset);
 		const size_t slot_idx = i / kNumSectionsPerSlot;
+
+		uint32_t cur_bid;
+		size_t j;
 
 		if (sections[i].name[1] == 'O') {
 			// RO
@@ -1370,54 +1373,40 @@ static int show_headers_versions(const void *image, bool show_machine_output)
 		bid[slot_idx].mask =
 			h->board_id_type_mask ^ SIGNED_HEADER_PADDING;
 		bid[slot_idx].flags = h->board_id_flags ^ SIGNED_HEADER_PADDING;
-	}
 
-	if (strncmp(ro_fw_ver[0], ro_fw_ver[1], MAX_FW_VER_LENGTH) != 0) {
-		fprintf(stderr,
-			"Error: RO FW versions in the 2 slots do not match.\n");
-		return -1;
-	}
+		/*
+		 * If board ID is a 4-uppercase-letter string (as it ought to
+		 * be), print it as 4 letters, otherwise print it as an 8-digit
+		 * hex.
+		 */
+		cur_bid = bid[slot_idx].id;
+		for (j = 0; j < sizeof(cur_bid); ++j)
+			if (!isupper(((const char *)&cur_bid)[j]))
+				break;
 
-	if (strncmp(rw_fw_ver[0], rw_fw_ver[1], MAX_FW_VER_LENGTH) != 0) {
-		fprintf(stderr,
-			"Error: RW FW versions in the 2 slots do not match.\n");
-		return -1;
-	}
-
-	if (memcmp(&bid[0], &bid[1], sizeof(struct board_id)) != 0) {
-		fprintf(stderr,
-			"Error: board IDs in the 2 slots do not match.\n");
-		return -1;
-	}
-
-	/*
-	 * If board ID is an ASCII string (as it ought to be), print
-	 * it as 4 symbols, otherwise print it as an 8 digit hex.
-	 */
-	for (i = 0; i < sizeof(bid[0].id); ++i)
-		if (!isalnum(((const char *)&bid[0].id)[i]))
-			break;
-
-	if (i == sizeof(bid[0].id)) {
-		bid[0].id = be32toh(bid[0].id);
-		snprintf(bid_string, MAX_BOARD_ID_LENGTH,
-			 "%.4s", (const char *)&bid);
-	} else {
-		snprintf(bid_string, MAX_BOARD_ID_LENGTH, "%08x", bid[0].id);
+		if (j == sizeof(cur_bid)) {
+			cur_bid = be32toh(cur_bid);
+			snprintf(bid_string[slot_idx], MAX_BOARD_ID_LENGTH,
+				 "%.4s", (const char *)&cur_bid);
+		} else {
+			snprintf(bid_string[slot_idx], MAX_BOARD_ID_LENGTH,
+				 "%08x", cur_bid);
+		}
 	}
 
 	if (show_machine_output) {
 		print_machine_output("IMAGE_RO_FW_VER", "%s", ro_fw_ver[0]);
 		print_machine_output("IMAGE_RW_FW_VER", "%s", rw_fw_ver[0]);
-		print_machine_output("IMAGE_BID_STRING", "%s", bid_string);
+		print_machine_output("IMAGE_BID_STRING", "%s", bid_string[0]);
 		print_machine_output("IMAGE_BID_MASK", "%08x", bid[0].mask);
 		print_machine_output("IMAGE_BID_FLAGS", "%08x", bid[0].flags);
 	} else {
-		// TODO(garryxiao): remove "_A" from RO and RW after updating
-		// scripts that use gsctool.
-		printf("RO_A:%s RW_A:%s[%s:%08x:%08x]\n",
+		printf("RO_A:%s RW_A:%s[%s:%08x:%08x] ",
 		       ro_fw_ver[0], rw_fw_ver[0],
-		       bid_string, bid[0].mask, bid[0].flags);
+		       bid_string[0], bid[0].mask, bid[0].flags);
+		printf("RO_B:%s RW_B:%s[%s:%08x:%08x]\n",
+		       ro_fw_ver[1], rw_fw_ver[1],
+		       bid_string[1], bid[1].mask, bid[1].flags);
 	}
 
 	return 0;
