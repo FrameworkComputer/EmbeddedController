@@ -5,6 +5,7 @@
 
 /* Eve board-specific configuration */
 
+#include "acpi.h"
 #include "adc_chip.h"
 #include "bd99992gw.h"
 #include "board_config.h"
@@ -440,7 +441,15 @@ DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
 static void board_set_tablet_mode(void)
 {
-	tablet_set_mode(!gpio_get_level(GPIO_TABLET_MODE_L));
+	int flipped_360_mode = !gpio_get_level(GPIO_TABLET_MODE_L);
+
+	tablet_set_mode(flipped_360_mode);
+
+	/* Update DPTF profile based on mode */
+	if (flipped_360_mode)
+		acpi_dptf_set_profile_num(DPTF_PROFILE_FLIPPED_360_MODE);
+	else
+		acpi_dptf_set_profile_num(DPTF_PROFILE_CLAMSHELL);
 }
 
 int board_has_working_reset_flags(void)
