@@ -21,7 +21,7 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 enum led_color {
 	LED_OFF = 0,
 	LED_RED,
-	LED_GREEN,
+	LED_BLUE,
 	LED_AMBER,
 
 	/* Number of colors, not a color itself */
@@ -30,7 +30,7 @@ enum led_color {
 
 static int set_color_power(enum led_color color, int duty)
 {
-	int green = 0;
+	int blue = 0;
 	int red = 0;
 
 	if (duty < 0 || 100 < duty)
@@ -39,14 +39,14 @@ static int set_color_power(enum led_color color, int duty)
 	switch (color) {
 	case LED_OFF:
 		break;
-	case LED_GREEN:
-		green = 1;
+	case LED_BLUE:
+		blue = 1;
 		break;
 	case LED_RED:
 		red = 1;
 		break;
 	case LED_AMBER:
-		green = 1;
+		blue = 1;
 		red = 1;
 		break;
 	default:
@@ -58,10 +58,10 @@ static int set_color_power(enum led_color color, int duty)
 	else
 		pwm_set_duty(PWM_CH_LED_RED, 0);
 
-	if (green)
-		pwm_set_duty(PWM_CH_LED_GREEN, duty);
+	if (blue)
+		pwm_set_duty(PWM_CH_LED_BLUE, duty);
 	else
-		pwm_set_duty(PWM_CH_LED_GREEN, 0);
+		pwm_set_duty(PWM_CH_LED_BLUE, 0);
 
 	return EC_SUCCESS;
 }
@@ -90,7 +90,7 @@ static struct {
 	int duty;
 } led_pulse;
 
-#define CONFIG_TICK(interval, color) \
+#define LED_PULSE_TICK(interval, color) \
 	config_tick((interval), 100 / (LED_PULSE_US / (interval)), (color))
 
 static void config_tick(uint32_t interval, int duty_inc, enum led_color color)
@@ -122,7 +122,7 @@ static void led_tick(void)
 
 	if (!pwm_enabled) {
 		pwm_enable(PWM_CH_LED_RED, 1);
-		pwm_enable(PWM_CH_LED_GREEN, 1);
+		pwm_enable(PWM_CH_LED_BLUE, 1);
 		pwm_enabled = 1;
 	}
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
@@ -134,7 +134,7 @@ static void led_tick(void)
 
 static void led_suspend(void)
 {
-	CONFIG_TICK(LED_PULSE_TICK_US, LED_GREEN);
+	LED_PULSE_TICK(LED_PULSE_TICK_US, LED_BLUE);
 	led_tick();
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, led_suspend, HOOK_PRIO_DEFAULT);
@@ -153,7 +153,7 @@ static void led_resume(void)
 	 * runs in hook_task. */
 	hook_call_deferred(&led_tick_data, -1);
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		set_color(EC_LED_ID_POWER_LED, LED_GREEN, 100);
+		set_color(EC_LED_ID_POWER_LED, LED_BLUE, 100);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, led_resume, HOOK_PRIO_DEFAULT);
 
@@ -195,8 +195,8 @@ static int command_led(int argc, char **argv)
 		set_color(id, LED_OFF, 0);
 	} else if (!strcasecmp(argv[1], "red")) {
 		set_color(id, LED_RED, 100);
-	} else if (!strcasecmp(argv[1], "green")) {
-		set_color(id, LED_GREEN, 100);
+	} else if (!strcasecmp(argv[1], "blue")) {
+		set_color(id, LED_BLUE, 100);
 	} else if (!strcasecmp(argv[1], "amber")) {
 		set_color(id, LED_AMBER, 100);
 	} else if (!strcasecmp(argv[1], "alert")) {
@@ -209,13 +209,13 @@ static int command_led(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(led, command_led,
-			"[debug|red|green|amber|off|alert|crit]",
+			"[debug|red|blue|amber|off|alert|crit]",
 			"Turn on/off LED.");
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
 	brightness_range[EC_LED_COLOR_RED] = 100;
-	brightness_range[EC_LED_COLOR_GREEN] = 100;
+	brightness_range[EC_LED_COLOR_BLUE] = 100;
 	brightness_range[EC_LED_COLOR_AMBER] = 100;
 }
 
@@ -223,8 +223,8 @@ int led_set_brightness(enum ec_led_id id, const uint8_t *brightness)
 {
 	if (brightness[EC_LED_COLOR_RED])
 		return set_color(id, LED_RED, brightness[EC_LED_COLOR_RED]);
-	else if (brightness[EC_LED_COLOR_GREEN])
-		return set_color(id, LED_GREEN, brightness[EC_LED_COLOR_GREEN]);
+	else if (brightness[EC_LED_COLOR_BLUE])
+		return set_color(id, LED_BLUE, brightness[EC_LED_COLOR_BLUE]);
 	else if (brightness[EC_LED_COLOR_AMBER])
 		return set_color(id, LED_AMBER, brightness[EC_LED_COLOR_AMBER]);
 	else
