@@ -96,6 +96,7 @@ enum sensor_id {
 /* List of possible batteries */
 enum battery_type {
 	BATTERY_C214,
+	BATTERY_C204EE,
 	BATTERY_TYPE_COUNT,
 };
 
