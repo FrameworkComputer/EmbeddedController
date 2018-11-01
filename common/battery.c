@@ -203,7 +203,14 @@ static void print_battery_info(void)
 
 	print_item_name("Cap-full:");
 	if (check_print_error(battery_full_charge_capacity(&value)))
-		ccprintf("%d mAh\n", value);
+		ccprintf("%d mAh (%d mAh with %d %% compensation)\n",
+			 value, value*batt_full_factor/100, batt_full_factor);
+
+#ifdef CONFIG_CHARGER_V2
+	print_item_name("Display:");
+	value = charge_get_display_charge();
+	ccprintf("%d.%d %%\n", value / 10, value % 10);
+#endif
 
 	print_item_name("  Design:");
 	if (check_print_error(battery_design_capacity(&value)))
