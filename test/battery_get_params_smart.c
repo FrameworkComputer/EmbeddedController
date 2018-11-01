@@ -19,6 +19,11 @@ static int fail_on_first, fail_on_last;
 static int read_count, write_count;
 struct batt_params batt;
 
+
+void battery_compensate_params(struct batt_params *batt)
+{
+}
+
 static void reset_and_fail_on(int first, int last)
 {
 	/* We're not initializing the fake battery, so everything reads zero */

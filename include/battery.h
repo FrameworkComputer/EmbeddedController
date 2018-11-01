@@ -403,4 +403,28 @@ void battery_memmap_set_index(enum battery_index index);
 extern struct i2c_stress_test_dev battery_i2c_stress_test_dev;
 #endif
 
+/*
+ * If remaining charge is more than x% of the full capacity, the
+ * remaining charge is raised to the full capacity before it's
+ * reported to the rest of the system.
+ *
+ * Some batteries don't update full capacity timely or don't update it
+ * at all. On such systems, compensation is required to guarantee
+ * the remaining charge will be equal to the full capacity eventually.
+ *
+ * On some systems, Rohm charger generates audio noise when the battery
+ * is fully charged and AC is plugged. A workaround is to do charge-
+ * discharge cycles between 93 and 100%. On such systems, compensation
+ * was also applied to mask this cycle from users.
+ *
+ * This used to be done in ACPI, thus, all software components except EC
+ * was seeing the compensated charge. Now we do it in EC. It has more
+ * knowledge on the charger and the battery. So, it can perform more
+ * granular and precise compensation.
+ *
+ * TODO: Currently, this is applied only to smart battery. Apply it to other
+ *       battery drivers as needed.
+ */
+void battery_compensate_params(struct batt_params *batt);
+
 #endif /* __CROS_EC_BATTERY_H */

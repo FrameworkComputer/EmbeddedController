@@ -396,6 +396,8 @@ void battery_get_params(struct batt_params *batt)
 		/* Force both to zero */
 		batt_new.desired_voltage = batt_new.desired_current = 0;
 
+	battery_compensate_params(&batt_new);
+
 	/* Update visible battery parameters */
 	memcpy(batt, &batt_new, sizeof(*batt));
 }
