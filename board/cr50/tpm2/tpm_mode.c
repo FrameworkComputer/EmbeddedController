@@ -7,15 +7,24 @@
 #include "config.h"
 #include "Global.h"
 #include "console.h"
+#include "dcrypto.h"
 #include "extension.h"
 #include "hooks.h"
+#include "nvmem.h"
+#include "system.h"
 #include "timer.h"
 #include "tpm_registers.h"
 #include "tpm_vendor_cmds.h"
 
 #define CPRINTS(format, args...) cprints(CC_EXTENSION, format, ## args)
 
-DECLARE_DEFERRED(tpm_stop);
+static void disable_tpm(void)
+{
+	tpm_stop();
+	DCRYPTO_ladder_revoke();
+	nvmem_clear_cache();
+}
+DECLARE_DEFERRED(disable_tpm);
 
 /*
  * On TPM reset event, tpm_reset_now() in tpm_registers.c clears TPM2 BSS memory
@@ -24,7 +33,7 @@ DECLARE_DEFERRED(tpm_stop);
  */
 static enum tpm_modes s_tpm_mode __attribute__((section(".bss.Tpm2_common")));
 
-static enum vendor_cmd_rc set_tpm_mode(struct vendor_cmd_params *p)
+static enum vendor_cmd_rc process_tpm_mode(struct vendor_cmd_params *p)
 {
 	uint8_t mode_val;
 	uint8_t *buffer;
@@ -39,11 +48,31 @@ static enum vendor_cmd_rc set_tpm_mode(struct vendor_cmd_params *p)
 		if (s_tpm_mode != TPM_MODE_ENABLED_TENTATIVE)
 			return VENDOR_RC_NOT_ALLOWED;
 		mode_val = buffer[0];
-		if (mode_val == TPM_MODE_DISABLED)
-			hook_call_deferred(&tpm_stop_data, 10 * MSEC);
-		else if (mode_val != TPM_MODE_ENABLED)
-			return VENDOR_RC_NOT_ALLOWED;
+
+		switch (mode_val) {
+		case TPM_MODE_ENABLED:
+			/*
+			 * If Key ladder is disabled, then fail this request.
+			 */
+			if (!DCRYPTO_ladder_is_enabled())
+				return VENDOR_RC_INTERNAL_ERROR;
+			break;
+		case TPM_MODE_DISABLED:
+			/*
+			 * If it is to be disabled, call disable_tpm() deferred
+			 * so that this vendor command can be responded to
+			 * before TPM stops.
+			 */
+			hook_call_deferred(&disable_tpm_data, 10 * MSEC);
+			break;
+		default:
+			return VENDOR_RC_NO_SUCH_SUBCOMMAND;
+		}
 		s_tpm_mode = mode_val;
+	} else {
+		if (s_tpm_mode < TPM_MODE_DISABLED &&
+		    !DCRYPTO_ladder_is_enabled())
+			return VENDOR_RC_INTERNAL_ERROR;
 	}
 
 	p->out_size = sizeof(uint8_t);
@@ -51,10 +80,9 @@ static enum vendor_cmd_rc set_tpm_mode(struct vendor_cmd_params *p)
 
 	return VENDOR_RC_SUCCESS;
 }
-DECLARE_VENDOR_COMMAND_P(VENDOR_CC_TPM_MODE, set_tpm_mode);
+DECLARE_VENDOR_COMMAND_P(VENDOR_CC_TPM_MODE, process_tpm_mode);
 
 enum tpm_modes get_tpm_mode(void)
 {
 	return s_tpm_mode;
 }
-

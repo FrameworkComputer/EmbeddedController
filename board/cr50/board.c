@@ -1412,6 +1412,8 @@ static int command_sysinfo(int argc, char **argv)
 	ccprintf("TPM MODE:    %s (%d)\n",
 		(tpm_mode == TPM_MODE_DISABLED) ? "disabled" : "enabled",
 		tpm_mode);
+	ccprintf("Key Ladder:  %s\n",
+		DCRYPTO_ladder_is_enabled() ? "enabled" : "disabled");
 
 	return EC_SUCCESS;
 }

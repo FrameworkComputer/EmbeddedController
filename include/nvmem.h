@@ -205,6 +205,11 @@ void nvmem_disable_commits(void);
  */
 int nvmem_enable_commits(void);
 
+/*
+ * Clear all NVMEM cache in SRAM.
+ */
+void nvmem_clear_cache(void);
+
 #ifdef __cplusplus
 }
 #endif

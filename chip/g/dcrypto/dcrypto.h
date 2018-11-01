@@ -304,6 +304,13 @@ struct APPKEY_CTX {
 
 int DCRYPTO_ladder_compute_frk2(size_t major_fw_version, uint8_t *frk2);
 int DCRYPTO_ladder_random(void *output);
+void DCRYPTO_ladder_revoke(void);
+/*
+ * Query whether Key Ladder is enabled.
+ *
+ * @return 1 if Key Ladder is enabled, and 0 otherwise.
+ */
+int DCRYPTO_ladder_is_enabled(void);
 
 int DCRYPTO_appkey_init(enum dcrypto_appid id, struct APPKEY_CTX *ctx);
 void DCRYPTO_appkey_finish(struct APPKEY_CTX *ctx);

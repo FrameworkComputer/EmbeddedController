@@ -5,6 +5,9 @@
 
 #include "common.h"
 #include "console.h"
+#ifndef TEST_BUILD
+#include "dcrypto.h"
+#endif
 #include "flash.h"
 #include "nvmem.h"
 #include "task.h"
@@ -108,6 +111,13 @@ static int nvmem_save(void)
 	uint8_t sha_comp[NVMEM_SHA_SIZE];
 	int rv = EC_SUCCESS;
 
+#ifndef TEST_BUILD
+	if (!DCRYPTO_ladder_is_enabled()) {
+		CPRINTF("%s: Key ladder is disabled. Skipping flash write\n",
+			__func__);
+		goto release_cache;
+	}
+#endif
 	part = (struct nvmem_partition *)nvmem_cache;
 
 	/* Has anything changed in the cache? */
@@ -600,4 +610,14 @@ int nvmem_commit(void)
 
 	/* Write active partition to NvMem */
 	return nvmem_save();
+}
+
+void nvmem_clear_cache(void)
+{
+	nvmem_lock_cache();
+	/*
+	 * TODO(b/119221935): Clear areas that should be protected within
+	 *                    nvmem_cache.
+	 */
+	nvmem_release_cache();
 }
