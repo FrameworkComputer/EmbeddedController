@@ -5,6 +5,7 @@
 
 /* Motion sense module to read from various motion sensors. */
 
+#include "acpi.h"
 #include "accelgyro.h"
 #include "chipset.h"
 #include "common.h"
@@ -201,7 +202,68 @@ static int motion_lid_set_tablet_mode(int reliable)
 		tablet_mode_debounce_cnt = TABLET_MODE_DEBOUNCE_COUNT;
 	return reliable;
 }
-#endif
+
+#endif /* CONFIG_LID_ANGLE_TABLET_MODE */
+
+#if defined(CONFIG_DPTF_MULTI_PROFILE) && \
+	defined(CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR)
+
+/*
+ * If CONFIG_DPTF_MULTI_PROFILE is defined by a board, then lid motion driver
+ * sets different profile numbers depending upon the current lid
+ * angle. Following profiles are currently supported by this driver:
+ * 1. Clamshell mode - DPTF_PROFILE_CLAMSHELL
+ * 2. 360-degree flipped mode - DPTF_PROFILE_FLIPPED_360_MODE
+ *
+ * 360-degree flipped mode is defined as the mode with base being behind the
+ * lid. We use 2 threshold to calculate this:
+ *
+ * 360-degree mode
+ *   1 |                  +-----<----+----------
+ *     |                  \/         /\
+ *     |                  |          |
+ *   0 |------------------------>----+
+ *     +------------------+----------+----------+ lid angle
+ *     0                 240        300        360
+ */
+#define FLIPPED_360_ZONE_LID_ANGLE FLOAT_TO_FP(300)
+#define CLAMSHELL_ZONE_LID_ANGLE FLOAT_TO_FP(240)
+
+/*
+ * Detection of DPTF profile is very similar to tablet mode detection using
+ * debounce counter. This is done to avoid any spurious changes in setting DPTF
+ * profile numbers.
+ */
+#define DPTF_MODE_DEBOUNCE_COUNT 3
+
+static void motion_lid_set_dptf_profile(int reliable)
+{
+	static int debounce_cnt = DPTF_MODE_DEBOUNCE_COUNT;
+	int current_prof = acpi_dptf_get_profile_num();
+	int new_prof = current_prof;
+
+	if (reliable) {
+		if (last_lid_angle_fp > FLIPPED_360_ZONE_LID_ANGLE)
+			new_prof = DPTF_PROFILE_FLIPPED_360_MODE;
+		else if (last_lid_angle_fp < CLAMSHELL_ZONE_LID_ANGLE)
+			new_prof = DPTF_PROFILE_CLAMSHELL;
+
+		if (current_prof != new_prof) {
+			if (debounce_cnt != 0) {
+				debounce_cnt--;
+				return;
+			}
+
+			debounce_cnt = DPTF_MODE_DEBOUNCE_COUNT;
+			acpi_dptf_set_profile_num(new_prof);
+			return;
+		}
+	}
+
+	debounce_cnt = DPTF_MODE_DEBOUNCE_COUNT;
+}
+
+#endif /* CONFIG_DPTF_MULTI_PROFILE && CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR */
 
 /**
  * Calculate the lid angle using two acceleration vectors, one recorded in
@@ -397,6 +459,12 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 
 	if (board_is_lid_angle_tablet_mode())
 		reliable = motion_lid_set_tablet_mode(reliable);
+
+#if defined(CONFIG_DPTF_MULTI_PROFILE) && \
+	defined(CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR)
+	motion_lid_set_dptf_profile(reliable);
+#endif /* CONFIG_DPTF_MULTI_PROFILE && CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR */
+
 #else    /* CONFIG_LID_ANGLE_INVALID_CHECK */
 	*lid_angle = FP_TO_INT(lid_to_base_fp + FLOAT_TO_FP(0.5));
 #endif

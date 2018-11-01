@@ -2987,6 +2987,13 @@
 #undef CONFIG_DPTF
 
 /*
+ * If defined, this indicates to the motion lid driver that the board does not
+ * have any hall sensor and hence DPTF profile selection is required to be done
+ * based on lid angle.
+ */
+#undef CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR
+
+/*
  * If defined, device supports multiple DPTF profiles depending upon device mode
  * e.g. clamshell v/s 360-degree flipped mode or base detached v/s attached
  * mode.
