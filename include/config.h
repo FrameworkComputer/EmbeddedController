@@ -425,12 +425,9 @@
  * Some batteries don't update full capacity timely or don't update it at all.
  * On such systems, compensation is required to guarantee remaining_capacity
  * will be equal to full_capacity eventually. This used to be done in ACPI.
- *
- * This number should match those used by powerd to evenly scale battery
- * reading from 0 to 100%. These are default values, which are effective until
- * the host boots.
  */
 #define CONFIG_BATT_FULL_FACTOR			98
+#define CONFIG_BATT_HOST_FULL_FACTOR		94
 #define CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE	4
 
 /*

@@ -21,11 +21,9 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
-/*
- * See config.h for details.
- * TODO: Allow host (powerd) to update it.
- */
+/* See config.h for details */
 static int batt_full_factor = CONFIG_BATT_FULL_FACTOR;
+static int batt_host_full_factor = CONFIG_BATT_HOST_FULL_FACTOR;
 static int batt_host_shutdown_pct = CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE;
 
 #ifdef CONFIG_BATTERY_V2
@@ -577,7 +575,15 @@ void battery_compensate_params(struct batt_params *batt)
 	if (remain <= 0 || full <= 0)
 		return;
 
-	if (remain * 100 > full * batt_full_factor) {
+	if (batt_host_full_factor == 100) {
+		/* full_factor is effectively disabled in powerd. */
+		batt->full_capacity = full * batt_full_factor / 100;
+		full = batt->full_capacity;
+		if (remain > full) {
+			batt->remaining_capacity = full;
+			remain = batt->remaining_capacity;
+		}
+	} else if (remain * 100 > full * batt_full_factor) {
 		batt->remaining_capacity = full;
 		batt->display_charge = 1000;
 		return;
@@ -585,11 +591,11 @@ void battery_compensate_params(struct batt_params *batt)
 
 	/*
 	 * Powerd uses the following equation to calculate display percentage:
-	 *   charge = remain/full;
+	 *   charge = 100 * remain/full;
 	 *   100 * (charge - shutdown_pct) / (full_factor - shutdown_pct);
 	 */
 	numer = (100 * remain - full * batt_host_shutdown_pct) * 1000;
-	denom = full * (batt_full_factor - batt_host_shutdown_pct);
+	denom = full * (batt_host_full_factor - batt_host_shutdown_pct);
 	/* Rounding (instead of truncating) */
 	batt->display_charge = (numer + denom / 2) / denom;
 }
