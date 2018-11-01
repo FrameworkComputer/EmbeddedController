@@ -4,8 +4,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __EC_BOARD_CR50_TPM_NVMEM_READ_H
-#define __EC_BOARD_CR50_TPM_NVMEM_READ_H
+#ifndef __EC_BOARD_CR50_TPM_NVMEM_OPS_H
+#define __EC_BOARD_CR50_TPM_NVMEM_OPS_H
 
 enum tpm_read_rv {
 	tpm_read_success,
@@ -17,4 +17,4 @@ enum tpm_read_rv read_tpm_nvmem(uint16_t object_index,
 				uint16_t object_size,
 				void *obj_value);
 
-#endif  /* ! __EC_BOARD_CR50_TPM_NVMEM_READ_H */
+#endif  /* ! __EC_BOARD_CR50_TPM_NVMEM_OPS_H */

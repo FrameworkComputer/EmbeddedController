@@ -56,7 +56,7 @@ board-y += tpm2/tpm_mode.o
 board-y += tpm2/tpm_state.o
 board-y += tpm2/trng.o
 board-y += tpm2/virtual_nvmem.o
-board-y += tpm_nvmem_read.o
+board-y += tpm_nvmem_ops.o
 board-y += wp.o
 board-$(CONFIG_U2F) += u2f.o
 

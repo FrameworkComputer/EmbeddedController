@@ -14,7 +14,7 @@
 #include "system.h"
 #include "system_chip.h"
 #include "tpm_nvmem.h"
-#include "tpm_nvmem_read.h"
+#include "tpm_nvmem_ops.h"
 #include "tpm_registers.h"
 #include "util.h"
 

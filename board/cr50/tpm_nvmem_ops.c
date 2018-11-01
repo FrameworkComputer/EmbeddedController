@@ -6,7 +6,7 @@
 
 #include "common.h"
 #include "console.h"
-#include "tpm_nvmem_read.h"
+#include "tpm_nvmem_ops.h"
 
 /* These come from the tpm2 tree. */
 #include "Global.h"
