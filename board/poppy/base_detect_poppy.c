@@ -5,6 +5,7 @@
 
 /* Poppy/Soraka base detection code */
 
+#include "acpi.h"
 #include "adc.h"
 #include "adc_chip.h"
 #include "board.h"
@@ -96,6 +97,12 @@ static void base_detect_change(enum base_status status)
 	gpio_set_level(GPIO_PP3300_DX_BASE, connected);
 	tablet_set_mode(!connected);
 	current_base_status = status;
+
+	if (connected)
+		acpi_dptf_set_profile_num(DPTF_PROFILE_BASE_ATTACHED);
+	else
+		acpi_dptf_set_profile_num(DPTF_PROFILE_BASE_DETACHED);
+
 }
 
 /* Measure detection pin pulse duration (used to wake AP from deep S3). */
