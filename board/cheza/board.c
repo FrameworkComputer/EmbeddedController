@@ -246,14 +246,92 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 				TCPC_ALERT_ACTIVE_LOW},
 };
 
+/*
+ * Port-0 USB mux driver.
+ *
+ * The USB mux is handled by TCPC chip and the HPD is handled by AP.
+ * Redirect to anx74xx_tcpm_usb_mux_driver but override the get() function
+ * to check the HPD_IRQ mask from virtual_usb_mux_driver.
+ */
+static int port0_usb_mux_init(int port)
+{
+	return anx74xx_tcpm_usb_mux_driver.init(port);
+}
+
+static int port0_usb_mux_set(int i2c_addr, mux_state_t mux_state)
+{
+	return anx74xx_tcpm_usb_mux_driver.set(i2c_addr, mux_state);
+}
+
+static int port0_usb_mux_get(int port, mux_state_t *mux_state)
+{
+	int rv;
+	mux_state_t virtual_mux_state;
+
+	rv = anx74xx_tcpm_usb_mux_driver.get(port, mux_state);
+	rv |= virtual_usb_mux_driver.get(port, &virtual_mux_state);
+
+	if (virtual_mux_state & USB_PD_MUX_HPD_IRQ)
+		*mux_state |= USB_PD_MUX_HPD_IRQ;
+	return rv;
+}
+
+const struct usb_mux_driver port0_usb_mux_driver = {
+	.init = port0_usb_mux_init,
+	.set = port0_usb_mux_set,
+	.get = port0_usb_mux_get,
+};
+
+/*
+ * Port-1 USB mux driver.
+ *
+ * The USB mux is handled by TCPC chip and the HPD is handled by AP.
+ * Redirect to tcpci_tcpm_usb_mux_driver but override the get() function
+ * to check the HPD_IRQ mask from virtual_usb_mux_driver.
+ */
+static int port1_usb_mux_init(int port)
+{
+	return tcpci_tcpm_usb_mux_driver.init(port);
+}
+
+static int port1_usb_mux_set(int i2c_addr, mux_state_t mux_state)
+{
+	return tcpci_tcpm_usb_mux_driver.set(i2c_addr, mux_state);
+}
+
+static int port1_usb_mux_get(int port, mux_state_t *mux_state)
+{
+	int rv;
+	mux_state_t virtual_mux_state;
+
+	rv = tcpci_tcpm_usb_mux_driver.get(port, mux_state);
+	rv |= virtual_usb_mux_driver.get(port, &virtual_mux_state);
+
+	if (virtual_mux_state & USB_PD_MUX_HPD_IRQ)
+		*mux_state |= USB_PD_MUX_HPD_IRQ;
+	return rv;
+}
+
+static int port1_usb_mux_enter_low_power(int port)
+{
+	return tcpci_tcpm_usb_mux_driver.enter_low_power_mode(port);
+}
+
+const struct usb_mux_driver port1_usb_mux_driver = {
+	.init = &port1_usb_mux_init,
+	.set = &port1_usb_mux_set,
+	.get = &port1_usb_mux_get,
+	.enter_low_power_mode = &port1_usb_mux_enter_low_power,
+};
+
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
-		.driver = &anx74xx_tcpm_usb_mux_driver,
-		.hpd_update = &anx74xx_tcpc_update_hpd_status,
+		.driver = &port0_usb_mux_driver,
+		.hpd_update = &virtual_hpd_update,
 	},
 	{
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.driver = &port1_usb_mux_driver,
+		.hpd_update = &virtual_hpd_update,
 	}
 };
 
