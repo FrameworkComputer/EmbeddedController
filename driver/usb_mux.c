@@ -243,7 +243,7 @@ static int hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
 #ifdef CONFIG_USB_MUX_VIRTUAL
 	/* Clear HPD IRQ event since we're about to inform host of it. */
 	if ((r->flags & USB_PD_MUX_HPD_IRQ) &&
-	    mux->driver == &virtual_usb_mux_driver)
+	    mux->hpd_update == &virtual_hpd_update)
 		mux->hpd_update(port, 0, 0);
 #endif
 
