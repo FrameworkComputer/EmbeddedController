@@ -162,12 +162,12 @@ static int mkbp_get_next_event(struct host_cmd_handler_args *args)
 			set_event(evt);
 	} while (data_size == -EC_ERROR_BUSY);
 
+	if (!events)
+		set_host_interrupt(0);
+
 	if (data_size < 0)
 		return EC_RES_ERROR;
 	args->response_size = 1 + data_size;
-
-	if (!events)
-		set_host_interrupt(0);
 
 	return EC_RES_SUCCESS;
 }
