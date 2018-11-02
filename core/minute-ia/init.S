@@ -286,12 +286,38 @@ interrupt_descriptor
 interrupt_descriptor
 interrupt_descriptor		# 255
 
+__gdt:
+	# Entry 0: Null descriptor
+	.word 0x0000
+	.word 0x0000
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	# Entry 1: Code descriptor
+	.word 0xffff	# Limit: xffff
+	.word 0x0000	# Base: xxxx0000
+	.byte 0x00	# Base: xx00xxxx
+	.byte 0x9b	# Code E/R, Present, DPL0, Acesssed=1
+	.byte 0xcf	# Limit fxxxx, Page Gra, 32 bit
+	.byte 0x00	# Base: 00xxxxxx
+	# Entry 0: Data descriptor
+	.word 0xffff	# Limit: xffff
+	.word 0x0000	# Base: xxxx0000
+	.byte 0x00	# Base: xx00xxxx
+	.byte 0x93	# Data R/W, Present, DPL0, Acesssed=1
+	.byte 0xcf	# Limit fxxxx, Page Gra, 32 bit
+	.byte 0x00	# Base: 00xxxxxx
+
 #.section .data
 __idt_ptr:
 	.word 2047	# Table size in bytes, count from 0
 			# (8N - 1). N = 256 - the number of vectors
 	.long __idt	# Base address of IDT
 
+__gdt_ptr:
+	.word 24
+	.long __gdt
 
 .section .init
 .code32
@@ -315,6 +341,9 @@ reset:
 
 	# System stack is within .bss, already cleared
 	movl $stack_end, %esp
+
+	# Load GDT
+	lgdt __gdt_ptr
 
 	# Load IDT
 	lidt __idt_ptr
