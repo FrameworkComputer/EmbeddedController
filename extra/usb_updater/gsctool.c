@@ -1817,12 +1817,11 @@ void process_bid(struct transfer_descriptor *td,
 				((const char *)bid)[2],
 				((const char *)bid)[3]);
 		} else {
-			if (bid_action == bid_get) {
-				printf("Board ID space: %08x:%08x:%08x\n",
-				       be32toh(bid->type),
-				       be32toh(bid->type_inv),
-				       be32toh(bid->flags));
-			}
+			printf("Board ID space: %08x:%08x:%08x\n",
+			       be32toh(bid->type),
+			       be32toh(bid->type_inv),
+			       be32toh(bid->flags));
+
 		}
 
 		return;
