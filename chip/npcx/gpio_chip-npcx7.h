@@ -379,9 +379,10 @@
 	NPCX_ALT_GPIO_7_3 /* TA2_SEL1 */              \
 	NPCX_ALT_GPIO_7_5 /* CR_SIN2 & 32KHZ_OUT */   \
 	NPCX_ALT_GPIO_8_0 /* PWM3 */                  \
+	NPCX_ALT_GPIO_8_2 /* KSO14 */		      \
+	NPCX_ALT_GPIO_8_3 /* KSO15 */		      \
 	NPCX_ALT_GPIO_8_5 /* SMB4SCL0 */              \
-	NPCX_ALT_GPIO_8_6 /* CR_SOUT2 */              \
-	NPCX_ALT_GPIO_8_6 /* SMB4SDA0 */              \
+	NPCX_ALT_GPIO_8_6 /* CR_SOUT2 & SMB4SDA0 */   \
 	NPCX_ALT_GPIO_8_7 /* SMB1SDA0 */              \
 	NPCX_ALT_GPIO_9_0 /* SMB1SCL0 */              \
 	NPCX_ALT_GPIO_9_1 /* SMB2SDA0 */              \
@@ -396,6 +397,7 @@
 	NPCX_ALT_GPIO_A_6 /* TA2_SEL2 */              \
 	NPCX_ALT_GPIO_A_7 /* I2S_SCLK */              \
 	NPCX_ALT_GPIO_B_0 /* I2S_DATA */              \
+	NPCX_ALT_GPIO_B_1 /* KSO17 */		      \
 	NPCX_ALT_GPIO_B_2 /* SMB7SDA0 */              \
 	NPCX_ALT_GPIO_B_3 /* SMB7SCL0 */              \
 	NPCX_ALT_GPIO_B_4 /* SMB0SDA0 */              \
