@@ -348,6 +348,10 @@ reset:
 	# Load IDT
 	lidt __idt_ptr
 
+	# Reset Task-Switched flag to prevent an ESC instruction such
+	# as fninit, from triggering a Device-not-available fault
+	clts
+
 #ifdef CONFIG_FPU
 	fninit
 #endif
