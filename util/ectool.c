@@ -1485,7 +1485,7 @@ int cmd_fp_seed(int argc, char *argv[])
 		return 1;
 	}
 	printf("Setting seed '%s'\n", seed);
-	p.struct_version = 3;
+	p.struct_version = FP_TEMPLATE_FORMAT_VERSION;
 	memcpy(p.seed, seed, FP_CONTEXT_TPM_BYTES);
 
 	rv = ec_command(EC_CMD_FP_SEED, 0, &p, sizeof(p), NULL, 0);

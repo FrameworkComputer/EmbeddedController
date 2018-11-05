@@ -42,7 +42,6 @@
 #define FP_MAX_FINGER_COUNT 0
 #endif
 #define SBP_ENC_KEY_LEN 16
-#define FP_TEMPLATE_FORMAT_VERSION 3
 #define FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE \
 	(FP_ALGORITHM_TEMPLATE_SIZE + \
 		sizeof(struct ec_fp_template_encryption_metadata))

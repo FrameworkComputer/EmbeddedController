@@ -5066,6 +5066,9 @@ struct __ec_align4 ec_response_fp_info {
 #define FP_FRAME_GET_BUFFER_INDEX(offset) ((offset) >> FP_FRAME_INDEX_SHIFT)
 #define FP_FRAME_OFFSET_MASK       0x0FFFFFFF
 
+/* Version of the format of the encrypted templates. */
+#define FP_TEMPLATE_FORMAT_VERSION 3
+
 /* Constants for encryption parameters */
 #define FP_CONTEXT_NONCE_BYTES 12
 #define FP_CONTEXT_USERID_WORDS (32 / sizeof(uint32_t))
