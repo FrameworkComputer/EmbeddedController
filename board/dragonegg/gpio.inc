@@ -20,7 +20,7 @@ GPIO_INT(UART1_RX,        PIN(B, 0), GPIO_INT_BOTH, uart_deepsleep_interrupt) /*
 
 /* Power sequencing interrupts */
 GPIO_INT(SLP_S0_L,        PIN(E, 4), GPIO_INT_BOTH, power_signal_interrupt)
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SIGNALS
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
 GPIO_INT(SLP_S3_L,        PIN(I, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_S4_L,        PIN(I, 5), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
@@ -42,6 +42,11 @@ GPIO_INT(VOLUME_UP_L,      PIN(I, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_inter
 #ifdef CONFIG_HOSTCMD_ESPI
 /* enable 1.8v input of EC's espi_reset pin, and then this pin takes effect. */
 GPIO_INT(ESPI_RESET_L,    PIN(D, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, espi_reset_pin_asserted_interrupt) /* eSPI_reset# */
+#endif
+
+#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
+GPIO(SLP_S3_L,            PIN(I, 4), GPIO_INPUT)
+GPIO(SLP_S4_L,            PIN(I, 5), GPIO_INPUT)
 #endif
 
 GPIO(SYS_RESET_L,         PIN(D, 1), GPIO_ODR_HIGH)  /* SYS_RST_ODL */
