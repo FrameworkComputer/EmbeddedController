@@ -1604,7 +1604,7 @@ static void display_usage(char *program)
 	fprintf(stderr, "--u[nprotect] : remove flash write protect\n");
 	fprintf(stderr, "--v[endor] <0x1234> : USB vendor ID\n");
 	fprintf(stderr, "-W, --send-waveform <0|1|false|true> : Send the "
-			"specal waveform?  Default is false, subject to change."
+			"specal waveform?  Default is true."
 			"  Set to false if ITE direct firmware update mode has "
 			"already been enabled.\n");
 	fprintf(stderr, "--w[rite] <file> : read <file> and "
@@ -1705,6 +1705,7 @@ int main(int argc, char **argv)
 	struct common_hnd chnd = {
 		/* Default flag settings. */
 		.conf = {
+			.send_waveform = 1,
 			.usb_interface = SERVO_INTERFACE,
 			.usb_vid = SERVO_USB_VID,
 			.usb_pid = SERVO_USB_PID,
