@@ -136,6 +136,14 @@ enum sn5s330_pp_idx {
 #define SN5S330_ILIM_PP1_MASK (1 << 4)
 
 /*
+ * INT_MASK_RISE/FALL_EDGE2
+ *
+ * The VCONN_ILIM bit indicates an overcurrent condition on VCONN.  By default,
+ * VCONN will be latched off.
+ */
+#define SN5S330_VCONN_ILIM (1 << 1)
+
+/*
  * INT_MASK_RISE/FALL_EDGE_3
  *
  * The VBUS_GOOD bit indicates VBUS has increased beyond a 4.0V threshold.

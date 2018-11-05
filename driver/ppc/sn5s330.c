@@ -329,6 +329,12 @@ static int sn5s330_init(int port)
 	}
 
 	/*
+	 * Unmask the VCONN ILIM interrupt so we can print VCONN overcurrent
+	 * events.
+	 */
+	clr_flags(port, SN5S330_INT_MASK_RISE_REG2, SN5S330_VCONN_ILIM);
+
+	/*
 	 * Don't proceed with the rest of initialization if we're sysjumping.
 	 * We would have already done this before.
 	 */
@@ -664,6 +670,20 @@ static void sn5s330_handle_interrupt(int port)
 		write_reg(port, SN5S330_INT_TRIP_RISE_REG3, rise);
 		write_reg(port, SN5S330_INT_TRIP_FALL_REG3, fall);
 #endif  /* CONFIG_USB_PD_VBUS_DETECT_PPC && CONFIG_USB_CHARGER */
+
+		/*
+		 * VCONN may be latched off due to an overcurrent.  Indicate
+		 * when the VCONN overcurrent happens.
+		 */
+		read_reg(port, SN5S330_INT_TRIP_RISE_REG2, &rise);
+		read_reg(port, SN5S330_INT_TRIP_FALL_REG2, &fall);
+
+		if (rise & SN5S330_VCONN_ILIM)
+			CPRINTS("ppc p%d: VCONN OC!", port);
+
+		/* Clear the interrupt sources. */
+		write_reg(port, SN5S330_INT_TRIP_RISE_REG2, rise);
+		write_reg(port, SN5S330_INT_TRIP_FALL_REG2, fall);
 	}
 }
 
