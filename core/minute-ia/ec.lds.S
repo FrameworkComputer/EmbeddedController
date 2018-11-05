@@ -188,3 +188,7 @@ SECTIONS
 	def_irq_low  = ABSOLUTE(default_int_handler) & 0xFFFF;
 	def_irq_high = ABSOLUTE(default_int_handler) >> 16;
 }
+MEMORY
+{
+	FLASH (rwx) : ORIGIN = CONFIG_ISH_BOOT_START, LENGTH = 640 * 1024
+}
