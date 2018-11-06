@@ -276,6 +276,8 @@ static void plug_in_source(int port, int polarity)
 	pd_port[port].has_vbus = 1;
 	pd_port[port].partner_role = PD_ROLE_SOURCE;
 	pd_port[port].partner_polarity = polarity;
+	/* Indicate that the CC lines have changed. */
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
 }
 
 static void plug_in_sink(int port, int polarity)
@@ -283,6 +285,8 @@ static void plug_in_sink(int port, int polarity)
 	pd_port[port].has_vbus = 0;
 	pd_port[port].partner_role = PD_ROLE_SINK;
 	pd_port[port].partner_polarity = polarity;
+	/* Indicate that the CC lines have changed. */
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
 }
 
 static void unplug(int port)
@@ -291,6 +295,8 @@ static void unplug(int port)
 	pd_port[port].msg_rx_id = 0;
 	pd_port[port].has_vbus = 0;
 	pd_port[port].partner_role = -1;
+	/* Indicate that the CC lines have changed. */
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
 	task_wake(PD_PORT_TO_TASK_ID(port));
 	usleep(30 * MSEC);
 }
