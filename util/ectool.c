@@ -6749,8 +6749,9 @@ static void cmd_cbi_help(char *cmd)
 		"      1: OEM_ID\n"
 		"      2: SKU_ID\n"
 		"      3: DRAM_PART_NUM\n"
+		"      4: OEM_NAME\n"
 		"    <size> is the size of the data in byte\n"
-		"    <value> is integer to be set, string for DRAM_PART_NUM\n"
+		"    <value> is integer to be set, string for DRAM_PART_NUM/OEM_NAME\n"
 		"    [get_flag] is combination of:\n"
 		"      01b: Invalidate cache and reload data from EEPROM\n"
 		"    [set_flag] is combination of:\n"
@@ -6805,7 +6806,7 @@ static int cmd_cbi(int argc, char *argv[])
 			return -1;
 		}
 		r = ec_inbuf;
-		if (tag != CBI_TAG_DRAM_PART_NUM) {
+		if (tag != CBI_TAG_DRAM_PART_NUM && tag != CBI_TAG_OEM_NAME) {
 			if (rv <= sizeof(uint32_t))
 				printf("As integer: %u (0x%x)\n", r[0], r[0]);
 			printf("As binary:");
@@ -6833,7 +6834,7 @@ static int cmd_cbi(int argc, char *argv[])
 		memset(p, 0, ec_max_outsize);
 		p->tag = tag;
 
-		if (tag != CBI_TAG_DRAM_PART_NUM) {
+		if (tag != CBI_TAG_DRAM_PART_NUM && tag != CBI_TAG_OEM_NAME) {
 			val = strtol(argv[3], &e, 0);
 			if (e && *e) {
 				fprintf(stderr, "Bad value\n");

@@ -36,6 +36,7 @@ enum {
 	OPT_OEM_ID,
 	OPT_SKU_ID,
 	OPT_DRAM_PART_NUM,
+	OPT_OEM_NAME,
 	OPT_SIZE,
 	OPT_ERASE_BYTE,
 	OPT_SHOW_ALL,
@@ -48,6 +49,7 @@ static const struct option opts_create[] = {
 	{"oem_id", 1, 0, OPT_OEM_ID},
 	{"sku_id", 1, 0, OPT_SKU_ID},
 	{"dram_part_num", 1, 0, OPT_DRAM_PART_NUM},
+	{"oem_name", 1, 0, OPT_OEM_NAME},
 	{"size", 1, 0, OPT_SIZE},
 	{"erase_byte", 1, 0, OPT_ERASE_BYTE},
 	{NULL, 0, 0, 0}
@@ -64,7 +66,8 @@ static const char *field_name[] = {
 	"BOARD_VERSION",
 	"OEM_ID",
 	"SKU_ID",
-	"DRAM_PART_NUM"
+	"DRAM_PART_NUM",
+	"OEM_NAME"
 };
 BUILD_ASSERT(ARRAY_SIZE(field_name) == CBI_TAG_COUNT);
 
@@ -79,10 +82,11 @@ const char help_create[] =
 	"  --size <size>               Size of output file in bytes\n"
 	"<value> must be a positive integer <= 0XFFFFFFFF and field size can\n"
 	"be optionally specified by <value:size> notation: e.g. 0xabcd:4.\n"
-	"<value> can be a string for DRAM PART NUM.\n"
+	"<value> can be a string for DRAM PART NUM/OEM NAME.\n"
 	"<size> must be a positive integer <= 0XFFFF.\n"
 	"Optional ARGS are:\n"
 	"  --dram_part_num <value>     DRAM PART NUM\n"
+	"  --oem_name <value>	OEM NAME\n"
 	"  --erase_byte <uint8>       Byte used for empty space. Default:0xff\n"
 	"  --format_version <uint16>  Data format version\n"
 	"\n";
@@ -237,6 +241,7 @@ static int cmd_create(int argc, char **argv)
 		struct integer_field oem;
 		struct integer_field sku;
 		const char *dram_part_num;
+		const char *oem_name;
 	} bi;
 	struct cbi_header *h;
 	int rv;
@@ -297,6 +302,9 @@ static int cmd_create(int argc, char **argv)
 		case OPT_DRAM_PART_NUM:
 			bi.dram_part_num = optarg;
 			break;
+		case OPT_OEM_NAME:
+			bi.oem_name = optarg;
+			break;
 		}
 	}
 
@@ -326,6 +334,11 @@ static int cmd_create(int argc, char **argv)
 		p = cbi_set_data(p, CBI_TAG_DRAM_PART_NUM, bi.dram_part_num,
 				strlen(bi.dram_part_num) + 1);
 	}
+	if (bi.oem_name != NULL) {
+		p = cbi_set_data(p, CBI_TAG_OEM_NAME, bi.oem_name,
+				strlen(bi.oem_name) + 1);
+	}
+
 	h->total_size = p - cbi;
 	h->crc = cbi_crc8(h);
 
@@ -446,6 +459,7 @@ static int cmd_show(int argc, char **argv)
 	print_integer(buf, CBI_TAG_OEM_ID);
 	print_integer(buf, CBI_TAG_SKU_ID);
 	print_string(buf, CBI_TAG_DRAM_PART_NUM);
+	print_string(buf, CBI_TAG_OEM_NAME);
 
 	free(buf);
 
