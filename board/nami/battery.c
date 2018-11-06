@@ -75,6 +75,26 @@ static const struct battery_info info_3 = {
 	.discharging_max_c = 60,
 };
 
+/* Panasonic AP18F4M (Bard/Ekko) */
+static const struct battery_info info_4 = {
+	.voltage_max = 8700,
+	.voltage_normal = 7600,
+	.voltage_min = 5500,
+	.precharge_current = 256,
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 50,
+	.charging_min_c = 0,
+	.charging_max_c = 60,
+	.discharging_min_c = -20,
+	.discharging_max_c = 75,
+};
+
+enum battery_type {
+	BATTERY_TYPE_AP15 = 0,
+	BATTERY_TYPE_AP18,
+	BATTERY_TYPE_COUNT,
+};
+
 enum gauge_type {
 	GAUGE_TYPE_UNKNOWN = 0,
 	GAUGE_TYPE_TI_BQ40Z50,
@@ -126,18 +146,32 @@ static enum gauge_type get_gauge_ic(void)
 		return GAUGE_TYPE_TI_BQ40Z50;
 }
 
+static enum battery_type get_akali_battery_type(void)
+{
+	return CBI_SKU_CUSTOM_FIELD(sku);
+}
+
 void board_battery_init(void)
 {
 	/* Only static config because gauge may not be initialized yet */
-	if (oem == PROJECT_AKALI) {
-		info = &info_3;
+	switch (oem) {
+	case PROJECT_AKALI:
+		if (get_akali_battery_type() == BATTERY_TYPE_AP15)
+			info = &info_3;
+		else if (get_akali_battery_type() == BATTERY_TYPE_AP18)
+			info = &info_4;
 		sb_ship_mode_reg = 0x3A;
 		sb_shutdown_data = 0xC574;
-		return;
-	} else if (oem == PROJECT_SONA)
+		break;
+	case PROJECT_SONA:
 		info = &info_1;
-	else if (oem == PROJECT_PANTHEON)
+		break;
+	case PROJECT_PANTHEON:
 		info = &info_2;
+		break;
+	default:
+		break;
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_battery_init, HOOK_PRIO_DEFAULT);
 
@@ -300,9 +334,15 @@ static int battery_check_disconnect_1(void)
 	if (sb_read(SB_MANUFACTURER_ACCESS, &batt_discharge_fet))
 		return BATTERY_DISCONNECT_ERROR;
 
-	/* Bit 15: Discharge FET status (1: On, 0: Off) */
-	if (batt_discharge_fet & 0x4000)
-		return BATTERY_NOT_DISCONNECTED;
+	if (get_akali_battery_type() == BATTERY_TYPE_AP15) {
+		/* Bit 15: Discharge FET status (1: On, 0: Off) */
+		if (batt_discharge_fet & 0x4000)
+			return BATTERY_NOT_DISCONNECTED;
+	} else if (get_akali_battery_type() == BATTERY_TYPE_AP18) {
+		/* Bit 13: Discharge FET status (1: Off, 0: On) */
+		if (!(batt_discharge_fet & 0x2000))
+			return BATTERY_NOT_DISCONNECTED;
+	}
 
 	return BATTERY_DISCONNECTED;
 }
