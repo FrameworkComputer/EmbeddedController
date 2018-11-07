@@ -716,12 +716,15 @@ static void st_tp_handle_status_report(struct st_tp_event_t *e)
 	 * Resetting touchpad should be the correct action.
 	 */
 	if (e->report.report_type == ST_TP_STATUS_BEACON) {
+#if 0
 		const uint8_t touch_count = e->report.reserved;
 
 		CPRINTS("BEACON: idle count=%08x", info);
 		CPRINTS("  touch count=%d  touch slot=%04x",
 			touch_count, touch_slot);
+#endif
 		if (prev_idle_count == info && touch_slot == 0) {
+			CPRINTS("  idle count=%08x not changed", info);
 			tp_control |= TP_CONTROL_SHALL_RESET;
 			return;
 		}
