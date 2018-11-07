@@ -636,7 +636,8 @@ static void st_tp_handle_error(uint8_t error_type)
 	/*
 	 * Suggest action: FW shall halt, consult ST.
 	 */
-	if ((error_type >= 0x20 && error_type <= 0x25) ||
+	if ((error_type >= 0x20 && error_type <= 0x23) ||
+	    error_type == 0x25 ||
 	    (error_type >= 0x2E && error_type <= 0x46)) {
 		CPRINTS("tp shall halt");
 		tp_control |= TP_CONTROL_SHALL_HALT;
