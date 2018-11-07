@@ -557,7 +557,7 @@ static void power_on(void)
  *
  * @return non-zero if there has been a power-on event, 0 if not.
  */
-static int check_for_power_on_event(void)
+static uint8_t check_for_power_on_event(void)
 {
 	int ap_off_flag;
 
@@ -614,7 +614,7 @@ static int check_for_power_on_event(void)
  *
  * @return non-zero if a shutdown should happen, 0 if not
  */
-static int check_for_power_off_event(void)
+static uint8_t check_for_power_off_event(void)
 {
 	timestamp_t now;
 	int pressed = 0;
@@ -703,8 +703,8 @@ void chipset_reset(enum chipset_reset_reason reason)
  */
 enum power_state power_handle_state(enum power_state state)
 {
-	int value;
-	static int boot_from_g3;
+	uint8_t value;
+	static uint8_t boot_from_g3, shutdown_from_s0;
 
 	switch (state) {
 	case POWER_G3:
@@ -745,21 +745,29 @@ enum power_state power_handle_state(enum power_state state)
 				return POWER_S3;
 			}
 			CPRINTS("long-press button, shutdown");
-			power_off();
 			/*
-			 * Since the AP may be up already, return S0S3
-			 * state to go through the suspend hook.
+			 * Since the AP may be up already, but the resume
+			 * hook is not called, return S3S5 to power off
+			 * AP and wait the release of the power button.
 			 */
-			return POWER_S0S3;
+			return POWER_S3S5;
 		}
 		CPRINTS("POWER_GOOD not seen in time");
 		set_system_power(0);
 		return POWER_S5;
 
 	case POWER_S3:
-		if (!(power_get_signals() & IN_POWER_GOOD))
-			return POWER_S3S5;
+		if (shutdown_from_s0) {
+			value = shutdown_from_s0;
+			shutdown_from_s0 = 0;
+		} else {
+			value = check_for_power_off_event();
+		}
 
+		if (value) {
+			CPRINTS("power off %d", value);
+			return POWER_S3S5;
+		}
 		/* Go to S3S0 directly, as don't know if it is in suspend */
 		return POWER_S3S0;
 
@@ -768,12 +776,9 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S0;
 
 	case POWER_S0:
-		value = check_for_power_off_event();
-		if (value) {
-			CPRINTS("power off %d", value);
-			power_off();
+		shutdown_from_s0 = check_for_power_off_event();
+		if (shutdown_from_s0)
 			return POWER_S0S3;
-		}
 		break;
 
 	case POWER_S0S3:
@@ -789,6 +794,11 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S5:
+		power_off();
+		/*
+		 * Wait forever for the release of the power button; otherwise,
+		 * this power button press will then trigger a power-on in S5.
+		 */
 		power_button_wait_for_release(-1);
 		power_button_was_pressed = 0;
 		return POWER_S5;
