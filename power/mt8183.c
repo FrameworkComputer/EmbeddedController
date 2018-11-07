@@ -26,14 +26,14 @@
 
 /* Input state flags */
 #define IN_PGOOD_PMIC		POWER_SIGNAL_MASK(PMIC_PWR_GOOD)
-#define IN_SUSPEND_DEASSERTED	POWER_SIGNAL_MASK(AP_IN_S3_L)
+#define IN_SUSPEND_ASSERTED	POWER_SIGNAL_MASK(AP_IN_S3_L)
 
 /* Rails required for S3 and S0 */
 #define IN_PGOOD_S0		(IN_PGOOD_PMIC)
 #define IN_PGOOD_S3		(IN_PGOOD_PMIC)
 
 /* All inputs in the right state for S0 */
-#define IN_ALL_S0		(IN_PGOOD_S0 | IN_SUSPEND_DEASSERTED)
+#define IN_ALL_S0		(IN_PGOOD_S0 & ~IN_SUSPEND_ASSERTED)
 
 /* Long power key press to force shutdown in S0. go/crosdebug */
 #define FORCED_SHUTDOWN_DELAY	(10 * SECOND)
@@ -247,14 +247,14 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S3:
 		if (!power_has_signals(IN_PGOOD_S3) || forcing_shutdown)
 			return POWER_S3S5;
-		else if (power_get_signals() & IN_SUSPEND_DEASSERTED)
+		else if (!(power_get_signals() & IN_SUSPEND_ASSERTED))
 			return POWER_S3S0;
 		break;
 
 	case POWER_S0:
 		if (!power_has_signals(IN_PGOOD_S0) ||
 		    forcing_shutdown ||
-		    !(power_get_signals() & IN_SUSPEND_DEASSERTED))
+		    power_get_signals() & IN_SUSPEND_ASSERTED)
 			return POWER_S0S3;
 
 		break;
