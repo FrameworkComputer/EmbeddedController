@@ -4901,9 +4901,9 @@ struct ec_params_efs_verify {
 #define EC_CMD_SET_CROS_BOARD_INFO	0x0120
 
 enum cbi_data_tag {
-	CBI_TAG_BOARD_VERSION = 0, /* uint16_t or uint8_t[] = {minor,major} */
-	CBI_TAG_OEM_ID = 1,        /* uint8_t */
-	CBI_TAG_SKU_ID = 2,        /* uint8_t */
+	CBI_TAG_BOARD_VERSION = 0, /* uint32_t or smaller */
+	CBI_TAG_OEM_ID = 1,        /* uint32_t or smaller */
+	CBI_TAG_SKU_ID = 2,        /* uint32_t or smaller */
 	CBI_TAG_DRAM_PART_NUM = 3, /* variable length ascii, nul terminated. */
 	CBI_TAG_OEM_NAME = 4,      /* variable length ascii, nul terminated. */
 	CBI_TAG_COUNT,

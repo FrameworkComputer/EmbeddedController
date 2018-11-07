@@ -82,13 +82,13 @@ const char help_create[] =
 	"  --size <size>               Size of output file in bytes\n"
 	"<value> must be a positive integer <= 0XFFFFFFFF and field size can\n"
 	"be optionally specified by <value:size> notation: e.g. 0xabcd:4.\n"
-	"<value> can be a string for DRAM PART NUM/OEM NAME.\n"
 	"<size> must be a positive integer <= 0XFFFF.\n"
 	"Optional ARGS are:\n"
-	"  --dram_part_num <value>     DRAM PART NUM\n"
-	"  --oem_name <value>	OEM NAME\n"
+	"  --dram_part_num <string>   DRAM PART NUM\n"
+	"  --oem_name <string>        OEM NAME\n"
 	"  --erase_byte <uint8>       Byte used for empty space. Default:0xff\n"
 	"  --format_version <uint16>  Data format version\n"
+	"<string> is a string\n"
 	"\n";
 
 const char help_show[] =

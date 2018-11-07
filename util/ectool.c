@@ -6750,21 +6750,22 @@ int cmd_board_version(int argc, char *argv[])
 static void cmd_cbi_help(char *cmd)
 {
 	fprintf(stderr,
-		"  Usage: %s get <type> [get_flag]\n"
-		"  Usage: %s set <type> <value> <size> [set_flag]\n"
-		"    <type> is one of:\n"
-		"      0: BOARD_VERSION\n"
-		"      1: OEM_ID\n"
-		"      2: SKU_ID\n"
-		"      3: DRAM_PART_NUM\n"
-		"      4: OEM_NAME\n"
-		"    <size> is the size of the data in byte\n"
-		"    <value> is integer to be set, string for DRAM_PART_NUM/OEM_NAME\n"
-		"    [get_flag] is combination of:\n"
-		"      01b: Invalidate cache and reload data from EEPROM\n"
-		"    [set_flag] is combination of:\n"
-		"      01b: Skip write to EEPROM. Use for back-to-back writes\n"
-		"      10b: Set all fields to defaults first\n", cmd, cmd);
+	"  Usage: %s get <tag> [get_flag]\n"
+	"  Usage: %s set <tag> <value/string> <size> [set_flag]\n"
+	"    <tag> is one of:\n"
+	"      0: BOARD_VERSION\n"
+	"      1: OEM_ID\n"
+	"      2: SKU_ID\n"
+	"      3: DRAM_PART_NUM (string)\n"
+	"      4: OEM_NAME (string)\n"
+	"    <size> is the size of the data in byte. It should be zero for\n"
+	"      string types.\n"
+	"    <value/string> is an integer or a string to be set\n"
+	"    [get_flag] is combination of:\n"
+	"      01b: Invalidate cache and reload data from EEPROM\n"
+	"    [set_flag] is combination of:\n"
+	"      01b: Skip write to EEPROM. Use for back-to-back writes\n"
+	"      10b: Set all fields to defaults first\n", cmd, cmd);
 }
 
 /*
@@ -6879,9 +6880,9 @@ static int cmd_cbi(int argc, char *argv[])
 				p, sizeof(*p) + size, NULL, 0);
 		if (rv < 0) {
 			if (rv == -EC_RES_ACCESS_DENIED - EECRESULT)
-				fprintf(stderr, "Write failed. Write-protect "
-					"is enabled or EC explicitly refused "
-					"to change the requested field.");
+				fprintf(stderr, "Write-protect is enabled or "
+					"EC explicitly refused to change the "
+					"requested field.\n");
 			else
 				fprintf(stderr, "Error code: %d\n", rv);
 			return rv;
