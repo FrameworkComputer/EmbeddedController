@@ -86,7 +86,13 @@ static timestamp_t delayed_override_deadline;
 static volatile uint32_t source_port_bitmap;
 BUILD_ASSERT(sizeof(source_port_bitmap)*8 >= CONFIG_USB_PD_PORT_COUNT);
 #endif
-static uint8_t source_port_last_rp[CONFIG_USB_PD_PORT_COUNT];
+static uint8_t source_port_rp[CONFIG_USB_PD_PORT_COUNT];
+
+#ifdef CONFIG_USB_PD_MAX_TOTAL_SOURCE_CURRENT
+/* 3A on one port and 1.5A on the rest */
+BUILD_ASSERT(CONFIG_USB_PD_PORT_COUNT * 1500 + 1500 <=
+	     CONFIG_USB_PD_MAX_TOTAL_SOURCE_CURRENT);
+#endif
 
 /*
  * charge_manager initially operates in safe mode until asked to leave (through
@@ -178,7 +184,7 @@ static void charge_manager_init(void)
 		if (!is_pd_port(i))
 			dualrole_capability[i] = CAP_DEDICATED;
 		if (is_pd_port(i))
-			source_port_last_rp[i] = CONFIG_USB_PD_PULLUP;
+			source_port_rp[i] = CONFIG_USB_PD_PULLUP;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, charge_manager_init, HOOK_PRIO_CHARGE_MANAGER_INIT);
@@ -222,7 +228,7 @@ static int charge_manager_get_source_current(int port)
 	if (!is_pd_port(port))
 		return 0;
 
-	switch (source_port_last_rp[port]) {
+	switch (source_port_rp[port]) {
 	case TYPEC_RP_3A0:
 		return 3000;
 	case TYPEC_RP_1A5:
@@ -1041,10 +1047,49 @@ int charge_manager_get_power_limit_uw(void)
 }
 
 #ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
+
+static inline int has_other_active_source(int port)
+{
+	return source_port_bitmap & ~(1 << port);
+}
+
+static inline int is_active_source(int port)
+{
+	return source_port_bitmap & (1 << port);
+}
+
+static int can_supply_max_current(int port)
+{
+#ifdef CONFIG_USB_PD_MAX_TOTAL_SOURCE_CURRENT
+	/*
+	 * This guarantees active 3A source continues to supply 3A.
+	 *
+	 * Since redistribution occurs sequentially, younger ports get
+	 * priority. Priority surfaces only when 3A source is released.
+	 * That is, when 3A source is released, the youngest active
+	 * port gets 3A.
+	 */
+	int p;
+	if (!is_active_source(port) && has_other_active_source(port))
+		/* Another port will get 3A */
+		return 0;
+	for (p = 0; p < CONFIG_USB_PD_PORT_COUNT; p++) {
+		if (p == port)
+			continue;
+		if (is_active_source(p) && source_port_rp[p] ==
+				CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT)
+			return 0;
+	}
+	return 1;
+#else
+	return !has_other_active_source(port);
+#endif /* CONFIG_USB_PD_MAX_TOTAL_SOURCE_CURRENT */
+}
+
 void charge_manager_source_port(int port, int enable)
 {
 	uint32_t prev_bitmap = source_port_bitmap;
-	int p;
+	int p, rp;
 
 	if (enable)
 		atomic_or(&source_port_bitmap, 1 << port);
@@ -1057,14 +1102,10 @@ void charge_manager_source_port(int port, int enable)
 
 	/* Set port limit according to policy */
 	for (p = 0; p < CONFIG_USB_PD_PORT_COUNT; p++) {
-		/*
-		 * if we are the only active source port or there is none,
-		 * advertise all the available power.
-		 */
-		int rp = (source_port_bitmap & ~(1 << p)) ? CONFIG_USB_PD_PULLUP
-			: CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT;
-
-		source_port_last_rp[p] = rp;
+		rp = can_supply_max_current(p) ?
+				CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT :
+				CONFIG_USB_PD_PULLUP;
+		source_port_rp[p] = rp;
 
 #ifdef CONFIG_USB_PD_LOGGING
 		if (is_connected(p) && !is_sink(p))
@@ -1079,18 +1120,13 @@ void charge_manager_source_port(int port, int enable)
 
 int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port)
 {
-	/* Are there any other connected sinks? */
-	if (source_port_bitmap & ~(1 << port)) {
-		*src_pdo = pd_src_pdo;
-		return pd_src_pdo_cnt;
+	if (can_supply_max_current(port)) {
+		*src_pdo = pd_src_pdo_max;
+		return pd_src_pdo_max_cnt;
 	}
 
-	/*
-	 * If not, send the maximum current since we're sourcing on only one
-	 * port.
-	 */
-	*src_pdo = pd_src_pdo_max;
-	return pd_src_pdo_max_cnt;
+	*src_pdo = pd_src_pdo;
+	return pd_src_pdo_cnt;
 }
 #endif /* CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT */
 

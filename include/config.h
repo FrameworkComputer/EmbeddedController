@@ -3535,6 +3535,15 @@
  */
 #undef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
 
+/*
+ * Total current in mA the board can supply to external devices through
+ * USB-C ports
+ *
+ * When a sink device is plugged or unplugged, source current redistribution
+ * occurs. If this macro is defined, redistribution occurs in such a way
+ * that there is no current drop (e.g. 3A -> 1.5A) on active source ports.
+ */
+#undef CONFIG_USB_PD_MAX_TOTAL_SOURCE_CURRENT
 
 /******************************************************************************/
 /* stm32f4 dwc usb configs. */
