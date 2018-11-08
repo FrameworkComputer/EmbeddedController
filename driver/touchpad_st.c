@@ -647,7 +647,7 @@ static void st_tp_handle_error(uint8_t error_type)
 	/*
 	 * Corrupted panel configuration, a panel init should fix it.
 	 */
-	if (error_type >= 0x28 && error_type <= 0x2A) {
+	if (error_type >= 0x28 && error_type <= 0x29) {
 		tp_control |= TP_CONTROL_SHALL_INIT;
 		return;
 	}
