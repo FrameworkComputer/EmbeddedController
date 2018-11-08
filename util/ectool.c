@@ -58,6 +58,8 @@ const char help_str[] =
 	"      Read an ADC channel.\n"
 	"  addentropy [reset]\n"
 	"      Add entropy to device secret\n"
+	"  apreset\n"
+	"      Issue AP reset\n"
 	"  autofanctrl <on>\n"
 	"      Turn on automatic fan speed control.\n"
 	"  backlight <enabled>\n"
@@ -715,6 +717,7 @@ static const char *reset_cause_to_str(uint16_t cause)
 		"reset: board custom",
 		"reset: ap hang detected",
 		"reset: console command",
+		"reset: host command",
 		"reset: keyboard sysreset",
 		"reset: keyboard warm reboot",
 		"reset: debug warm reboot",
@@ -1330,6 +1333,11 @@ int cmd_rollback_info(int argc, char *argv[])
 	printf("RW rollback version:  %d\n", r.rw_rollback_version);
 
 	return rv;
+}
+
+int cmd_apreset(int argc, char *argv[])
+{
+	return ec_command(EC_CMD_AP_RESET, 0, NULL, 0, NULL, 0);
 }
 
 #define FP_FRAME_INDEX_SIMPLE_IMAGE -1
@@ -8338,6 +8346,7 @@ int cmd_cec(int argc, char *argv[])
 const struct command commands[] = {
 	{"adcread", cmd_adc_read},
 	{"addentropy", cmd_add_entropy},
+	{"apreset", cmd_apreset},
 	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
 	{"backlight", cmd_lcd_backlight},
 	{"battery", cmd_battery},

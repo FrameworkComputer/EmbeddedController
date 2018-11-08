@@ -4922,6 +4922,9 @@ struct __ec_align4 ec_response_rollback_info {
 };
 
 
+/* Issue AP reset */
+#define EC_CMD_AP_RESET 0x0125
+
 /*****************************************************************************/
 /* The command range 0x200-0x2FF is reserved for Rotor. */
 

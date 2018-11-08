@@ -1887,6 +1887,9 @@
 /* Set SKU ID from AP */
 #undef CONFIG_HOSTCMD_AP_SET_SKUID
 
+/* Command to issue AP reset */
+#undef  CONFIG_HOSTCMD_AP_RESET
+
 /* List of host commands whose debug output will be suppressed */
 #undef CONFIG_SUPPRESSED_HOST_COMMANDS
 

@@ -58,6 +58,8 @@ enum chipset_reset_reason {
 	CHIPSET_RESET_HANG_REBOOT,
 	/* Reset by EC console command */
 	CHIPSET_RESET_CONSOLE_CMD,
+	/* Reset by EC host command */
+	CHIPSET_RESET_HOST_CMD,
 	/* Keyboard module reset key combination */
 	CHIPSET_RESET_KB_SYSRESET,
 	/* Keyboard module warm reboot */

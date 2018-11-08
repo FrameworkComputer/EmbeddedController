@@ -45,6 +45,19 @@ DECLARE_CONSOLE_COMMAND(apshutdown, command_apshutdown,
 
 #endif
 
+#ifdef CONFIG_HOSTCMD_AP_RESET
+static int host_command_apreset(struct host_cmd_handler_args *args)
+{
+	/* Force the chipset to reset */
+	chipset_reset(CHIPSET_RESET_HOST_CMD);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_AP_RESET,
+		     host_command_apreset,
+		     EC_VER_MASK(0));
+
+#endif
+
 #ifdef CONFIG_CMD_AP_RESET_LOG
 static struct mutex reset_log_mutex;
 static int next_reset_log;
