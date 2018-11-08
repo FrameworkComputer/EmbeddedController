@@ -41,6 +41,13 @@ extern "C" void get_storage_seed(void *buf, size_t *len)
 	memset(buf, 0x77, *len);
 }
 
+extern "C" uint8_t get_current_pcr_digest(const uint8_t bitmask[2],
+					  uint8_t sha256_of_selected_pcr[32])
+{
+	memset(sha256_of_selected_pcr, 0, 32);
+	return 0;
+}
+
 extern "C" void run_test(void)
 {
 }
