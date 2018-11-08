@@ -201,8 +201,9 @@ static int i2c_reset(int controller)
 
 static void i2c_recovery(int controller, volatile struct i2c_status *p_status)
 {
-	CPRINTS("i2c %d recovery! error code is %d, current state is %d",
-			controller, p_status->err_code, p_status->oper_state);
+	cprintf(CC_I2C,
+		"i2c %d recovery! error code is %d, current state is %d\n",
+		controller, p_status->err_code, p_status->oper_state);
 
 	/* Abort data, wait for STOP condition completed. */
 	i2c_abort_data(controller);
