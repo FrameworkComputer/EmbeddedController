@@ -3338,6 +3338,9 @@
 /* PPC is capable of providing VCONN */
 #undef CONFIG_USBC_PPC_VCONN
 
+/* PPC has level interrupts and has a dedicated interrupt pin to check */
+#undef CONFIG_USBC_PPC_DEDICATED_INT
+
 /* Support for USB type-c superspeed mux */
 #undef CONFIG_USBC_SS_MUX
 

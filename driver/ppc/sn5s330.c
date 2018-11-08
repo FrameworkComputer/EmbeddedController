@@ -614,37 +614,56 @@ static int sn5s330_vbus_source_enable(int port, int enable)
 
 static void sn5s330_handle_interrupt(int port)
 {
-	int rise = 0;
-	int fall = 0;
+	int attempt = 0;
 
 	/*
-	 * The only interrupts that should be enabled are the PP1 overcurrent
-	 * condition, and for VBUS_GOOD if PPC is being used to detect VBUS.
+	 * SN5S330's /INT pin is level, so process interrupts until it
+	 * deasserts if the chip has a dedicated interrupt pin.
 	 */
-	read_reg(port, SN5S330_INT_TRIP_RISE_REG1, &rise);
-	read_reg(port, SN5S330_INT_TRIP_FALL_REG1, &fall);
+#ifdef CONFIG_USBC_PPC_DEDICATED_INT
+	while (ppc_get_alert_status(port))
+#endif
+	{
+		int rise = 0;
+		int fall = 0;
 
-	/* Let the board know about the overcurrent event. */
-	if (rise & SN5S330_ILIM_PP1_MASK)
-		board_overcurrent_event(port);
+		attempt++;
 
-	/* Clear the interrupt sources. */
-	write_reg(port, SN5S330_INT_TRIP_RISE_REG1, rise);
-	write_reg(port, SN5S330_INT_TRIP_FALL_REG1, fall);
+		if (attempt > 1)
+			CPRINTS("ppc p%d: Could not clear interrupts on first "
+				"try, retrying", port);
+
+		/*
+		 * The only interrupts that should be enabled are the PP1
+		 * overcurrent condition, and for VBUS_GOOD if PPC is being
+		 * used to detect VBUS.
+		 */
+		read_reg(port, SN5S330_INT_TRIP_RISE_REG1, &rise);
+		read_reg(port, SN5S330_INT_TRIP_FALL_REG1, &fall);
+
+		/* Let the board know about the overcurrent event. */
+		if (rise & SN5S330_ILIM_PP1_MASK)
+			board_overcurrent_event(port);
+
+		/* Clear the interrupt sources. */
+		write_reg(port, SN5S330_INT_TRIP_RISE_REG1, rise);
+		write_reg(port, SN5S330_INT_TRIP_FALL_REG1, fall);
 
 #if defined(CONFIG_USB_PD_VBUS_DETECT_PPC) && defined(CONFIG_USB_CHARGER)
-	read_reg(port, SN5S330_INT_TRIP_RISE_REG3, &rise);
-	read_reg(port, SN5S330_INT_TRIP_FALL_REG3, &fall);
+		read_reg(port, SN5S330_INT_TRIP_RISE_REG3, &rise);
+		read_reg(port, SN5S330_INT_TRIP_FALL_REG3, &fall);
 
-	/* Inform other modules about VBUS level */
-	if (rise & SN5S330_VBUS_GOOD_MASK
-	    || fall & SN5S330_VBUS_GOOD_MASK)
-		usb_charger_vbus_change(port, sn5s330_is_vbus_present(port));
+		/* Inform other modules about VBUS level */
+		if (rise & SN5S330_VBUS_GOOD_MASK
+		    || fall & SN5S330_VBUS_GOOD_MASK)
+			usb_charger_vbus_change(port,
+						sn5s330_is_vbus_present(port));
 
-	/* Clear the interrupt sources. */
-	write_reg(port, SN5S330_INT_TRIP_RISE_REG3, rise);
-	write_reg(port, SN5S330_INT_TRIP_FALL_REG3, fall);
+		/* Clear the interrupt sources. */
+		write_reg(port, SN5S330_INT_TRIP_RISE_REG3, rise);
+		write_reg(port, SN5S330_INT_TRIP_FALL_REG3, fall);
 #endif  /* CONFIG_USB_PD_VBUS_DETECT_PPC && CONFIG_USB_CHARGER */
+	}
 }
 
 static void sn5s330_irq_deferred(void)

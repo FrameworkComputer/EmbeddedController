@@ -147,6 +147,15 @@ struct ppc_config_t ppc_chips[] = {
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
+int ppc_get_alert_status(int port)
+{
+	if (port == 0)
+		return gpio_get_level(GPIO_USB_C0_SWCTL_INT_ODL) == 0;
+	else
+		return gpio_get_level(GPIO_USB_C1_SWCTL_INT_ODL) == 0;
+}
+
+
 /* BC 1.2 chip Configuration */
 const struct max14637_config_t max14637_config[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {

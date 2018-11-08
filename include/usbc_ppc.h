@@ -222,4 +222,12 @@ void board_overcurrent_event(int port);
  */
 int ppc_enter_low_power_mode(int port);
 
+/**
+ * Board specific callback to check if the PPC interrupt is still asserted
+ *
+ * @param port: The Type-C port number to check
+ * @return 0 if interrupt is cleared, 1 if it is still on
+ */
+int ppc_get_alert_status(int port);
+
 #endif /* !defined(__CROS_EC_USBC_PPC_H) */
