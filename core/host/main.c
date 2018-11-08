@@ -85,7 +85,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 	 * We lose the program name as LLVM fuzzer takes over main function:
 	 * make up one.
 	 */
-	static const char *name = "ec-fuzz";
+	static const char *name = STRINGIFY(PROJECT)".exe";
 
 	if (!initialized) {
 		__prog_name = name;

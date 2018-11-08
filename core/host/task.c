@@ -78,7 +78,7 @@ void _run_test(void *d)
 }
 
 #define TASK(n, r, d, s) {r, d},
-struct task_args task_info[TASK_ID_COUNT] = {
+const struct task_args task_info[TASK_ID_COUNT] = {
 	{__idle, NULL},
 	CONFIG_TASK_LIST
 	CONFIG_TEST_TASK_LIST
@@ -402,7 +402,7 @@ void task_scheduler(void)
 void *_task_start_impl(void *a)
 {
 	long tid = (long)a;
-	struct task_args *arg = task_info + tid;
+	const struct task_args *arg = task_info + tid;
 	my_task_id = tid;
 	pthread_mutex_lock(&run_lock);
 
