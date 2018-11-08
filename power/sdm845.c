@@ -92,14 +92,6 @@ static char lid_opened;
 /* 1 if AP_RST_L and PS_HOLD is overdriven by EC */
 static char ap_rst_overdriven;
 
-/*
- * 1 if power state is controlled by special functions, like a console command
- * or an interrupt handler, for bypassing POWER_GOOD lost trigger. It is
- * because these functions control the PMIC and AP power signals directly and
- * don't want to get preempted by the chipset state machine.
- */
-static uint8_t bypass_power_lost_trigger;
-
 /* Time where we will power off, if power button still held down */
 static timestamp_t power_off_deadline;
 
@@ -110,6 +102,7 @@ enum power_request_t {
 	POWER_REQ_NONE,
 	POWER_REQ_OFF,
 	POWER_REQ_ON,
+	POWER_REQ_RESET,
 
 	POWER_REQ_COUNT,
 };
@@ -124,7 +117,8 @@ enum power_off_event_t {
 	POWER_OFF_BY_POWER_BUTTON_PRESSED,
 	POWER_OFF_BY_LONG_PRESS,
 	POWER_OFF_BY_POWER_GOOD_LOST,
-	POWER_OFF_BY_POWER_REQ,
+	POWER_OFF_BY_POWER_REQ_OFF,
+	POWER_OFF_BY_POWER_REQ_RESET,
 
 	POWER_OFF_EVENT_COUNT,
 };
@@ -138,7 +132,8 @@ enum power_on_event_t {
 	POWER_ON_BY_AUTO_POWER_ON,
 	POWER_ON_BY_LID_OPEN,
 	POWER_ON_BY_POWER_BUTTON_PRESSED,
-	POWER_ON_BY_POWER_REQ_NONE,
+	POWER_ON_BY_POWER_REQ_ON,
+	POWER_ON_BY_POWER_REQ_RESET,
 
 	POWER_ON_EVENT_COUNT,
 };
@@ -600,7 +595,12 @@ static uint8_t check_for_power_on_event(void)
 
 	if (power_request == POWER_REQ_ON) {
 		power_request = POWER_REQ_NONE;
-		return POWER_ON_BY_POWER_REQ_NONE;
+		return POWER_ON_BY_POWER_REQ_ON;
+	}
+
+	if (power_request == POWER_REQ_RESET) {
+		power_request = POWER_REQ_NONE;
+		return POWER_ON_BY_POWER_REQ_RESET;
 	}
 
 	return POWER_OFF_CANCEL;
@@ -626,8 +626,13 @@ static uint8_t check_for_power_off_event(void)
 		pressed = POWER_OFF_BY_POWER_BUTTON_PRESSED;
 	} else if (power_request == POWER_REQ_OFF) {
 		power_request = POWER_REQ_NONE;
-		/* return non-zero for shudown down */
-		return POWER_OFF_BY_POWER_REQ;
+		return POWER_OFF_BY_POWER_REQ_OFF;
+	} else if (power_request == POWER_REQ_RESET) {
+		/*
+		 * The power_request flag will be cleared later
+		 * in check_for_power_on_event() in S5.
+		 */
+		return POWER_OFF_BY_POWER_REQ_RESET;
 	}
 
 	now = get_time();
@@ -652,7 +657,7 @@ static uint8_t check_for_power_off_event(void)
 	power_button_was_pressed = pressed;
 
 	/* POWER_GOOD released by AP : shutdown immediately */
-	if (!power_has_signals(IN_POWER_GOOD) && !bypass_power_lost_trigger) {
+	if (!power_has_signals(IN_POWER_GOOD)) {
 		if (power_button_was_pressed)
 			timer_cancel(TASK_ID_CHIPSET);
 
@@ -671,10 +676,9 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	CPRINTS("%s(%d)", __func__, reason);
 	report_ap_reset(reason);
 
-	power_off();
-
-	/* Clean-up internal variable */
-	power_request = POWER_REQ_NONE;
+	/* Issue a request to initiate a power-off sequence */
+	power_request = POWER_REQ_OFF;
+	task_wake(TASK_ID_CHIPSET);
 }
 
 void chipset_reset(enum chipset_reset_reason reason)
@@ -686,12 +690,8 @@ void chipset_reset(enum chipset_reset_reason reason)
 	CPRINTS("%s(%d)", __func__, reason);
 	report_ap_reset(reason);
 
-	bypass_power_lost_trigger = 1;
-	power_off();
-	bypass_power_lost_trigger = 0;
-
-	/* Issue a request to initiate a power-on sequence */
-	power_request = POWER_REQ_ON;
+	/* Issue a request to initiate a reset sequence */
+	power_request = POWER_REQ_RESET;
 	task_wake(TASK_ID_CHIPSET);
 }
 
