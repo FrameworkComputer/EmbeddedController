@@ -13,6 +13,10 @@
 #include <common.h>
 #include <pinweaver_types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PW_STORAGE_VERSION 0
 
 #define BITS_PER_LEVEL_MIN 1
@@ -176,5 +180,9 @@ int log_insert_leaf(struct label_t label, const uint8_t root[PW_HASH_SIZE],
 int log_remove_leaf(struct label_t label, const uint8_t root[PW_HASH_SIZE]);
 int log_auth(struct label_t label, const uint8_t root[PW_HASH_SIZE], int code,
 	     struct pw_timestamp_t timestamp);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __CROS_EC_INCLUDE_PINWEAVER_H */

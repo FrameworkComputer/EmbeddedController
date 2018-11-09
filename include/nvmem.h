@@ -8,6 +8,10 @@
 
 #include "crypto_api.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * In order to provide maximum robustness for NvMem operations, the NvMem space
  * is divided into two equal sized partitions. A partition contains a tag
@@ -200,5 +204,9 @@ void nvmem_disable_commits(void);
  *         fails, EC_SUCCESS otherwise.
  */
 int nvmem_enable_commits(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_NVMEM_UTILS_H */

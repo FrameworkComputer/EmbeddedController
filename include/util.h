@@ -15,6 +15,10 @@
 #include "builtin/assert.h"         /* For ASSERT(). */
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Standard macros / definitions */
 #ifndef MAX
 #define MAX(a, b)					\
@@ -216,6 +220,10 @@ static inline uint64_t mulaa32(uint32_t a, uint32_t b, uint32_t c, uint32_t d)
 	ret += d;
 
 	return ret;
+}
+#endif
+
+#ifdef __cplusplus
 }
 #endif
 

@@ -21,6 +21,10 @@
 
 #include "cryptoc/hmac.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum cipher_mode {
 	CIPHER_MODE_ECB = 0,
 	CIPHER_MODE_CTR = 1,
@@ -336,5 +340,9 @@ BUILD_ASSERT(DCRYPTO_CIPHER_SALT_SIZE == CIPHER_SALT_SIZE);
  */
 int DCRYPTO_app_cipher(enum dcrypto_appid appid, const void *salt,
 		void *out, const void *in, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* ! __EC_CHIP_G_DCRYPTO_DCRYPTO_H */

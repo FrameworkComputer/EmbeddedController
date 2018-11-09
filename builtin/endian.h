@@ -8,6 +8,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Functions to convert byte order in various sized big endian integers to
  * host byte order. Note that the code currently does not require functions
@@ -34,5 +38,8 @@ static inline uint64_t be64toh(uint64_t in)
 
 #endif  /* __BYTE_ORDER__  == __ORDER_LITTLE_ENDIAN__ */
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __EC_BUILTIN_ENDIAN_H */

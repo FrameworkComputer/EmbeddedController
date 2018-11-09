@@ -13,6 +13,10 @@
 
 #include <stdarg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* ARM Cortex-Mx registers saved on panic */
 struct cortex_panic_data {
 	uint32_t regs[12];        /* psp, ipsr, msp, r4-r11, lr(=exc_return).
@@ -180,5 +184,9 @@ struct panic_data *panic_get_data(void);
  * when it is safe to restore panic data during the system initialization step.
  */
 void chip_panic_data_backup(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __CROS_EC_PANIC_H */

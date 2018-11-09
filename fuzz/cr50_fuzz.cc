@@ -11,14 +11,12 @@
 #include <cstdlib>
 #include <cstring>
 
-extern "C" {
 #define HIDE_EC_STDLIB
 #include "fuzz_config.h"
 #include "nvmem.h"
 #include "nvmem_vars.h"
 #include "persistence.h"
 #include "pinweaver.h"
-}
 
 #define NVMEM_TPM_SIZE ((sizeof((struct nvmem_partition *)0)->buffer) \
   - NVMEM_CR50_SIZE)

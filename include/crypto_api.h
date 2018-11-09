@@ -9,6 +9,10 @@
 
 #include "util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Calculate hash of an arbitrary data
  *
@@ -51,5 +55,9 @@ void app_compute_hash(uint8_t *p_buf, size_t num_bytes,
  * @return non-zero on success, and zero otherwise.
  */
 int app_cipher(const void *salt, void *out, const void *in, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __INCLUDE_CRYPTO_API_H */

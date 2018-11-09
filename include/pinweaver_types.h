@@ -10,6 +10,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PW_PACKED __packed
 
 #define PW_PROTOCOL_VERSION 1
@@ -408,5 +412,9 @@ struct PW_PACKED pw_response_t {
  * height of 10 for the default fan-out of 4.
  */
 #define PW_MAX_PATH_SIZE 1024
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __CROS_EC_INCLUDE_PINWEAVER_TYPES_H */

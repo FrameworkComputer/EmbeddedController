@@ -6,6 +6,10 @@
 #ifndef __EC_INCLUDE_NVMEM_VARS_H
 #define __EC_INCLUDE_NVMEM_VARS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * CONFIG_FLASH_NVMEM provides persistent, atomic-update storage in
  * flash. The storage is logically divided into one or more "user regions", as
@@ -83,5 +87,9 @@ int setvar(const uint8_t *key, uint8_t key_len,
  * the RAM buffer. Return EC_SUCCESS or error code on failure.
  */
 int writevars(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* __EC_INCLUDE_NVMEM_VARS_H */
