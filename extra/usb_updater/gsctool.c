@@ -1356,13 +1356,13 @@ static int show_headers_versions(const void *image, bool show_machine_output)
 		if (sections[i].name[1] == 'O') {
 			// RO
 			snprintf(ro_fw_ver[slot_idx], MAX_FW_VER_LENGTH,
-				 "%u.%u.%u", h->epoch_, h->major_, h->minor_);
+				 "%d.%d.%d", h->epoch_, h->major_, h->minor_);
 			// No need to read board ID in an RO section.
 			continue;
 		} else {
 			// RW
 			snprintf(rw_fw_ver[slot_idx], MAX_FW_VER_LENGTH,
-				 "%u.%u.%u", h->epoch_, h->major_, h->minor_);
+				 "%d.%d.%d", h->epoch_, h->major_, h->minor_);
 		}
 
 		/*
