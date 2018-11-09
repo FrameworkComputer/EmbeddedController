@@ -138,6 +138,13 @@ enum power_on_event_t {
 	POWER_ON_EVENT_COUNT,
 };
 
+/* Issue a request to initiate a reset sequence */
+static void request_cold_reset(void)
+{
+	power_request = POWER_REQ_RESET;
+	task_wake(TASK_ID_CHIPSET);
+}
+
 /* AP-requested reset GPIO interrupt handlers */
 static void chipset_reset_request_handler(void)
 {
@@ -150,26 +157,6 @@ void chipset_reset_request_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&chipset_reset_request_handler_data, 0);
 }
-
-/* Cold reset AP after warm_reset-toggling finished */
-static void chipset_warm_reset_finished(void)
-{
-	CPRINTS("warm_reset-toggling finished -> cold reset AP");
-	chipset_reset(CHIPSET_RESET_AP_REQ);
-
-	if (ap_rst_overdriven) {
-		/*
-		 * This condition should not be reached as the above
-		 * chipset_reset() makes POWER_GOOD drop that triggers an
-		 * interrupt to high-Z both AP_RST_L and PS_HOLD.
-		 */
-		CPRINTS("Fatal: AP_RST_L and PS_HOLD not released. Force it!");
-		gpio_set_flags(GPIO_AP_RST_L, GPIO_INT_BOTH | GPIO_SEL_1P8V);
-		gpio_set_flags(GPIO_PS_HOLD, GPIO_INT_BOTH | GPIO_SEL_1P8V);
-		ap_rst_overdriven = 0;
-	}
-}
-DECLARE_DEFERRED(chipset_warm_reset_finished);
 
 void chipset_warm_reset_interrupt(enum gpio_signal signal)
 {
@@ -212,12 +199,12 @@ void chipset_warm_reset_interrupt(enum gpio_signal signal)
 			 * Servo or Cr50 releases the WARM_RESET_L signal.
 			 *
 			 * Cold reset the PMIC, doing S0->S5->S0 transition,
+			 * by issuing a request to initiate a reset sequence,
 			 * to recover the system. The transition to S5 makes
 			 * POWER_GOOD drop that triggers an interrupt to
 			 * high-Z both AP_RST_L and PS_HOLD.
 			 */
-			hook_call_deferred(&chipset_warm_reset_finished_data,
-					   0);
+			request_cold_reset();
 		}
 		/* If not overdriven, just a normal power-up, do nothing. */
 	}
@@ -690,9 +677,7 @@ void chipset_reset(enum chipset_reset_reason reason)
 	CPRINTS("%s(%d)", __func__, reason);
 	report_ap_reset(reason);
 
-	/* Issue a request to initiate a reset sequence */
-	power_request = POWER_REQ_RESET;
-	task_wake(TASK_ID_CHIPSET);
+	request_cold_reset();
 }
 
 /**
