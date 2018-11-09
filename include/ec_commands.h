@@ -1510,7 +1510,8 @@ struct __ec_align4 ec_params_flash_erase {
 
 
 #define EC_VER_FLASH_WRITE 1
-/* v1 add async erase:
+/*
+ * v1 add async erase:
  * subcommands can returns:
  * EC_RES_SUCCESS : erased (see ERASE_SECTOR_ASYNC case below).
  * EC_RES_INVALID_PARAM : offset/size are not aligned on a erase boundary.
@@ -1532,14 +1533,17 @@ enum ec_flash_erase_cmd {
 	FLASH_ERASE_GET_RESULT,  /* Ask for last erase result */
 };
 
+/**
+ * struct ec_params_flash_erase_v1 - Parameters for the flash erase command, v1.
+ * @cmd: One of ec_flash_erase_cmd.
+ * @reserved: Pad byte; currently always contains 0.
+ * @flag: No flags defined yet; set to 0.
+ * @params: Same as v0 parameters.
+ */
 struct __ec_align4 ec_params_flash_erase_v1 {
-	/* One of ec_flash_erase_cmd. */
 	uint8_t  cmd;
-	/* Pad byte; currently always contains 0 */
 	uint8_t  reserved;
-	/* No flags defined yet; set to 0 */
 	uint16_t flag;
-	/* Same as v0 parameters. */
 	struct ec_params_flash_erase params;
 };
 
@@ -1704,8 +1708,11 @@ struct __ec_align1 ec_response_flash_spi_info {
 /* Select flash during flash operations */
 #define EC_CMD_FLASH_SELECT 0x0019
 
+/**
+ * struct ec_params_flash_select - Parameters for the flash select command.
+ * @select: 1 to select flash, 0 to deselect flash
+ */
 struct __ec_align4 ec_params_flash_select {
-	/* 1 to select flash, 0 to deselect flash */
 	uint8_t select;
 };
 
@@ -5307,19 +5314,33 @@ struct __ec_align4 ec_params_tp_frame_get {
  */
 #define EC_CMD_BATTERY_GET_STATIC 0x0600
 
+/**
+ * struct ec_params_battery_static_info - Battery static info parameters
+ * @index: Battery index.
+ */
 struct __ec_align_size1 ec_params_battery_static_info {
-	uint8_t index; /* Battery index. */
+	uint8_t index;
 };
 
+/**
+ * struct ec_response_battery_static_info - Battery static info response
+ * @design_capacity: Battery Design Capacity (mAh)
+ * @design_voltage: Battery Design Voltage (mV)
+ * @manufacturer: Battery Manufacturer String
+ * @model: Battery Model Number String
+ * @serial: Battery Serial Number String
+ * @type: Battery Type String
+ * @cycle_count: Battery Cycle Count
+ */
 struct __ec_align4 ec_response_battery_static_info {
-	uint16_t design_capacity; /* Battery Design Capacity (mAh) */
-	uint16_t design_voltage; /* Battery Design Voltage (mV) */
-	char manufacturer[EC_COMM_TEXT_MAX]; /* Battery Manufacturer String */
-	char model[EC_COMM_TEXT_MAX]; /* Battery Model Number String */
-	char serial[EC_COMM_TEXT_MAX]; /* Battery Serial Number String */
-	char type[EC_COMM_TEXT_MAX]; /* Battery Type String */
+	uint16_t design_capacity;
+	uint16_t design_voltage;
+	char manufacturer[EC_COMM_TEXT_MAX];
+	char model[EC_COMM_TEXT_MAX];
+	char serial[EC_COMM_TEXT_MAX];
+	char type[EC_COMM_TEXT_MAX];
 	/* TODO(crbug.com/795991): Consider moving to dynamic structure. */
-	uint32_t cycle_count; /* Battery Cycle Count */
+	uint32_t cycle_count;
 };
 
 /*
@@ -5328,18 +5349,32 @@ struct __ec_align4 ec_response_battery_static_info {
  */
 #define EC_CMD_BATTERY_GET_DYNAMIC 0x0601
 
+/**
+ * struct ec_params_battery_dynamic_info - Battery dynamic info parameters
+ * @index: Battery index.
+ */
 struct __ec_align_size1 ec_params_battery_dynamic_info {
-	uint8_t index; /* Battery index. */
+	uint8_t index;
 };
 
+/**
+ * struct ec_response_battery_dynamic_info - Battery dynamic info response
+ * @actual_voltage: Battery voltage (mV)
+ * @actual_current: Battery current (mA); negative=discharging
+ * @remaining_capacity: Remaining capacity (mAh)
+ * @full_capacity: Capacity (mAh, might change occasionally)
+ * @flags: Flags, see EC_BATT_FLAG_*
+ * @desired_voltage: Charging voltage desired by battery (mV)
+ * @desired_current: Charging current desired by battery (mA)
+ */
 struct __ec_align2 ec_response_battery_dynamic_info {
-	int16_t actual_voltage; /* Battery voltage (mV) */
-	int16_t actual_current; /* Battery current (mA); negative=discharging */
-	int16_t remaining_capacity; /* Remaining capacity (mAh) */
-	int16_t full_capacity; /* Capacity (mAh, might change occasionally) */
-	int16_t flags; /* Flags, see EC_BATT_FLAG_* */
-	int16_t desired_voltage; /* Charging voltage desired by battery (mV) */
-	int16_t desired_current; /* Charging current desired by battery (mA) */
+	int16_t actual_voltage;
+	int16_t actual_current;
+	int16_t remaining_capacity;
+	int16_t full_capacity;
+	int16_t flags;
+	int16_t desired_voltage;
+	int16_t desired_current;
 };
 
 /*
@@ -5347,18 +5382,19 @@ struct __ec_align2 ec_response_battery_dynamic_info {
  */
 #define EC_CMD_CHARGER_CONTROL 0x0602
 
+/**
+ * struct ec_params_charger_control - Charger control parameters
+ * @max_current: Charger current (mA). Positive to allow base to draw up to
+ *     max_current and (possibly) charge battery, negative to request current
+ *     from base (OTG).
+ * @otg_voltage: Voltage (mV) to use in OTG mode, ignored if max_current is
+ *     >= 0.
+ * @allow_charging: Allow base battery charging (only makes sense if
+ *     max_current > 0).
+ */
 struct __ec_align_size1 ec_params_charger_control {
-	/*
-	 * Charger current (mA). Positive to allow base to draw up to
-	 * max_current and (possibly) charge battery, negative to request
-	 * current from base (OTG).
-	 */
 	int16_t max_current;
-
-	/* Voltage (mV) to use in OTG mode, ignored if max_current is >= 0. */
 	uint16_t otg_voltage;
-
-	/* Allow base battery charging (only makes sense if max_current > 0). */
 	uint8_t allow_charging;
 };
 
