@@ -396,7 +396,10 @@ void battery_get_params(struct batt_params *batt)
 		/* Force both to zero */
 		batt_new.desired_voltage = batt_new.desired_current = 0;
 
+#ifdef HAS_TASK_HOSTCMD
+	/* if there is no host, we don't care about compensation */
 	battery_compensate_params(&batt_new);
+#endif
 
 	/* Update visible battery parameters */
 	memcpy(batt, &batt_new, sizeof(*batt));
