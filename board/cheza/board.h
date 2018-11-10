@@ -169,7 +169,7 @@
 #include "registers.h"
 
 enum power_signal {
-	SDM845_AP_RST_L = 0,
+	SDM845_AP_RST_ASSERTED = 0,
 	SDM845_PS_HOLD,
 	SDM845_PMIC_FAULT_L,
 	SDM845_POWER_GOOD,

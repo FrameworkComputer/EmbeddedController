@@ -188,10 +188,10 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Power signal list. Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	[SDM845_AP_RST_L] = {
+	[SDM845_AP_RST_ASSERTED] = {
 		GPIO_AP_RST_L,
-		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
-		"AP_RST_L"},
+		POWER_SIGNAL_ACTIVE_LOW | POWER_SIGNAL_DISABLE_AT_BOOT,
+		"AP_RST_ASSERTED"},
 	[SDM845_PS_HOLD] = {
 		GPIO_PS_HOLD,
 		POWER_SIGNAL_ACTIVE_HIGH,
