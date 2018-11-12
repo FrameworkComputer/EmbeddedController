@@ -45,7 +45,7 @@ struct chip_info chip_info[] = {{NPCX5M5G_RAM_ADDR, NPCX5M5G_RAM_SIZE},
 
 /* Support chips name strings */
 const char *supported_chips = "npcx5m5g, npcx5m6g, npcx7m5g, npcx7m6g, "
-		"npcx7m6f, npcx7m6fb or npcx7m7wb";
+		"npcx7m6f, npcx7m6fb, npcx7m6fc, or npcx7m7wb";
 
 static unsigned int calc_api_csum_bin(void);
 static unsigned int initialize_crc_32(void);
@@ -261,6 +261,8 @@ int main(int argc, char *argv[])
 					"npcx7m6f") == 0) ||
 					       (str_cmp_no_case(main_str_temp,
 					"npcx7m6fb") == 0) ||
+					       (str_cmp_no_case(main_str_temp,
+					"npcx7m6fc") == 0) ||
 					       (str_cmp_no_case(main_str_temp,
 					"npcx7m6g") == 0)) {
 					if ((bin_params.bin_params
