@@ -2059,6 +2059,12 @@ int main(int argc, char *argv[])
 	char *factory_mode_arg;
 	char *tpm_mode_arg = NULL;
 
+	// Explicitly sets buffering type to line buffered so that output lines
+	// can be written to pipe instantly. This is needed when the
+	// cr50-verify-ro.sh execution in verify_ro is moved from crosh to
+	// debugd.
+	setlinebuf(stdout);
+
 	progname = strrchr(argv[0], '/');
 	if (progname)
 		progname++;
