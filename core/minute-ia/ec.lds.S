@@ -168,7 +168,7 @@ SECTIONS
 		 __deferred_until_end = .;
 
 		 __bss_end = .;
-		__bss_size_words = (__bss_end - __bss_start) / 4;
+		 __bss_size_words = ABSOLUTE((__bss_end - __bss_start) / 4);
 
         	/*
 		 * Shared memory buffer must be at the end of
