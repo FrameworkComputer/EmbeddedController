@@ -3224,10 +3224,8 @@ void pd_task(void *u)
 			 * TCPC otherwise we might wake it up.
 			 */
 			if (pd[port].flags & PD_FLAGS_LPM_REQUESTED &&
-			    !(evt & PD_EVENT_CC)) {
-				timeout = -1;
+			    !(evt & PD_EVENT_CC))
 				break;
-			}
 #endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
 
 			tcpm_get_cc(port, &cc1, &cc2);
@@ -3910,10 +3908,8 @@ void pd_task(void *u)
 			 * TCPC otherwise we might wake it up.
 			 */
 			if (pd[port].flags & PD_FLAGS_LPM_REQUESTED &&
-			    !(evt & PD_EVENT_CC)) {
-				timeout = -1;
+			    !(evt & PD_EVENT_CC))
 				break;
-			}
 #endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
 
 			tcpm_get_cc(port, &cc1, &cc2);
@@ -4713,7 +4709,6 @@ void pd_task(void *u)
 				 */
 				tcpm_enable_drp_toggle(port);
 				pd[port].flags |= PD_FLAGS_TCPC_DRP_TOGGLE;
-				timeout = -1;
 				set_state(port, PD_STATE_DRP_AUTO_TOGGLE);
 			}
 
