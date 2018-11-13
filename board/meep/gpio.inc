@@ -119,6 +119,7 @@ GPIO(EN_USB_A0_5V,	 PIN(6, 7), GPIO_OUT_LOW)	/* Enable A0 5V Charging */
 GPIO(EN_USB_A1_5V,	 PIN(9, 6), GPIO_OUT_LOW)	/* Enable A1 5V Charging */
 GPIO(USB_A0_CHARGE_EN_L, PIN(A, 2), GPIO_OUT_HIGH)	/* Enable A0 1.5A Charging */
 GPIO(USB_A1_CHARGE_EN_L, PIN(A, 0), GPIO_OUT_HIGH)	/* Enable A1 1.5A Charging */
+GPIO(USB_C0_PD_RST,	 PIN(8, 3), GPIO_OUT_LOW)	/* C0 PD Reset */
 GPIO(USB_C0_BC12_VBUS_ON,   PIN(6, 3), GPIO_OUT_LOW)	/* C0 BC1.2 Power */
 GPIO(USB_C0_BC12_CHG_DET_L, PIN(9, 5), GPIO_INPUT)	/* C0 BC1.2 Detect */
 GPIO(USB_C0_HPD_1V8_ODL, PIN(C, 5), GPIO_INPUT |	/* C0 DP Hotplug Detect */
@@ -129,16 +130,6 @@ GPIO(USB_C1_BC12_CHG_DET_L, PIN(E, 4), GPIO_INPUT)	/* C1 BC1.2 Detect */
 GPIO(USB_C1_HPD_1V8_ODL, PIN(C, 6), GPIO_INPUT |	/* C1 DP Hotplug Detect */
 				    GPIO_SEL_1P8V)
 
-/* Not implemented in hardware yet */
-UNIMPLEMENTED(USB_C0_PD_RST)
-
-/*
- * USB2_OTG_ID is 1.8V pin on the SoC side with an internal pull-up. However, it
- * 3.3V on the EC side. So, configure it as ODR so that the EC never drives it
- * high.
- */
-GPIO(USB2_OTG_ID,	 PIN(8, 3), GPIO_ODR_LOW)	/* USB_OTG */
-
 /* LED */
 GPIO(BAT_LED_AMBER_L,	 PIN(C, 3), GPIO_OUT_HIGH)	/* LED_1_L */
 GPIO(BAT_LED_WHITE_L,	 PIN(C, 4), GPIO_OUT_HIGH)	/* LED_2_L */
@@ -147,8 +138,8 @@ GPIO(PWR_LED_WHITE_L,	 PIN(D, 7), GPIO_OUT_HIGH)	/* LED_3_L */
 /* Keyboard Backlight */
 GPIO(KB_BL_PWR_EN,	 PIN(6, 2), GPIO_OUT_LOW)
 
-/* Camera */
-GPIO(WFCAM_VSYNC,	 PIN(0, 3), GPIO_INPUT)	/* TP only */
+/* MKBP event synchronization */
+GPIO(EC_INT_L,		 PIN(9, 4), GPIO_INPUT)		/* EC_AP_INT_ODL - currently unused */
 
 /* Overcurrent event to host */
 GPIO(USB_C_OC,      PIN(3, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
@@ -158,8 +149,9 @@ GPIO(GPO66_NC,       PIN(6, 6), GPIO_INPUT | GPIO_PULL_UP) /* GPO66_ARM_L_X86 */
 GPIO(GPOB6_NC,       PIN(B, 6), GPIO_INPUT | GPIO_PULL_UP) /* EC_GP_SEL_ODL */
 
 /* Misc */
-GPIO(CCD_MODE_ODL,   	   PIN(E, 3), GPIO_INPUT)
+GPIO(CCD_MODE_EC_L,   	   PIN(E, 3), GPIO_INPUT)
 GPIO(TRACKPAD_INT_1V8_ODL, PIN(9, 3), GPIO_INPUT)
+GPIO(EC_GPIO_03,	   PIN(0, 3), GPIO_INPUT)	/* TP only */
 
 /* Keyboard pins */
 ALTERNATE(PIN_MASK(3, 0x03), 0, MODULE_KEYBOARD_SCAN, GPIO_INPUT)	/* KSI_00-01 */

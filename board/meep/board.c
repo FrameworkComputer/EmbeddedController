@@ -251,6 +251,18 @@ int board_is_convertible(void)
 	return sku_id == 1 || sku_id == 2 || sku_id == 3 || sku_id == 255;
 }
 
+static void board_update_gpio_from_board_id(uint32_t board_id)
+{
+	if (board_id == 0) {
+		/*
+		 * USB2_OTG_ID is 1.8V pin on the SoC side with an internal
+		 * pull-up. However, it is 3.3V on the EC side. So, configure
+		 * it as ODR so that the EC never drives it high.
+		 */
+		gpio_set_flags(GPIO_USB_C0_PD_RST, GPIO_ODR_LOW);
+	}
+}
+
 static void board_update_sensor_config_from_sku(void)
 {
 	if (board_is_convertible()) {
@@ -268,6 +280,9 @@ static void cbi_init(void)
 	if (cbi_get_sku_id(&val) == EC_SUCCESS)
 		sku_id = val;
 	ccprints("SKU: 0x%04x", sku_id);
+
+	if (cbi_get_board_version(&val) == EC_SUCCESS)
+		board_update_gpio_from_board_id(val);
 
 	board_update_sensor_config_from_sku();
 }
