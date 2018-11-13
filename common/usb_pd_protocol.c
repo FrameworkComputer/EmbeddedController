@@ -2892,7 +2892,7 @@ void pd_task(void *u)
 				tcpm_set_cc(port, TYPEC_CC_RD);
 				next_role_swap = get_time().val + PD_T_DRP_SNK;
 				pd[port].try_src_marker = get_time().val
-					+ PD_T_TRY_WAIT;
+					+ PD_T_DEBOUNCE;
 
 				/* Swap states quickly */
 				timeout = 2*MSEC;
@@ -4064,7 +4064,7 @@ void pd_task(void *u)
 					tcpm_set_cc(port, TYPEC_CC_RD);
 					/* Set timer for TryWait.SNK state */
 					pd[port].try_src_marker = get_time().val
-						+ PD_T_TRY_WAIT;
+						+ PD_T_DEBOUNCE;
 					/* Advance to TryWait.SNK state */
 					set_state(port,
 						  PD_STATE_SNK_DISCONNECTED);
