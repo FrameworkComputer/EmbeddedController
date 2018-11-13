@@ -227,7 +227,8 @@ static int nx20p348x_init(int port)
 		return rv;
 
 	/* Mask interrupts for interrupt 1 register */
-	mask = ~(NX20P348X_INT1_OC_5VSRC | NX20P348X_INT1_DBEXIT_ERR);
+	mask = ~(NX20P348X_INT1_OC_5VSRC | NX20P348X_INT1_SC_5VSRC |
+		 NX20P348X_INT1_RCP_5VSRC | NX20P348X_INT1_DBEXIT_ERR);
 #ifdef CONFIG_USBC_PPC_NX20P3481
 	/* Unmask Fast Role Swap detect interrupt */
 	mask &= ~NX20P348X_INT1_FRS_DET;
@@ -320,13 +321,21 @@ static void nx20p348x_handle_interrupt(int port)
 
 	/* Check for 5V OC interrupt */
 	if (reg & NX20P348X_INT1_OC_5VSRC) {
-		CPRINTS("C%d: PPC detected overcurrent!", port);
+		CPRINTS("C%d: PPC detected Vbus overcurrent!", port);
 		/*
 		 * TODO (b/69935262): The overcurrent action hasn't
 		 * been completed yet, but is required for TI PPC. When that
 		 * work is complete, tie it in here.
 		 */
 	}
+
+	/* Check for Vbus reverse current protection */
+	if (reg & NX20P348X_INT1_RCP_5VSRC)
+		CPRINTS("C%d: PPC detected Vbus reverse current!", port);
+
+	/* Check for Vbus short protection */
+	if (reg & NX20P348X_INT1_SC_5VSRC)
+		CPRINTS("C%d: PPC Vbus short detected!", port);
 
 #ifdef CONFIG_USBC_PPC_NX20P3481
 	/* Check for FRS detection */
