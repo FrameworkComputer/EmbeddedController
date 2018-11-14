@@ -216,9 +216,15 @@ static void board_update_sensor_config_from_sku(void)
 {
 	if (board_is_convertible()) {
 		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+		/* Enable Base Accel interrupt */
+		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 	} else {
 		motion_sensor_count = 0;
 		tablet_disable_switch();
+
+		/* Base accel is not stuffed, don't allow line to float */
+		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
 
