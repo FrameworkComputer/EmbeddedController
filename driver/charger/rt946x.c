@@ -213,15 +213,28 @@ static inline int rt946x_enable_hz(int en)
 		(RT946X_REG_CHGCTRL1, RT946X_MASK_HZ_EN);
 }
 
-static int rt946x_por_reset(void)
+int rt946x_por_reset(void)
 {
-	int rv = 0;
+	int rv, val;
 
+#ifdef CONFIG_CHARGER_MT6370
+	/* Soft reset. It takes only 1ns for resetting. b/116682788 */
+	val = RT946X_MASK_SOFT_RST;
+	/*
+	 * MT6370 has to set passcodes before resetting all the registers and
+	 * logics.
+	 */
+	rv = rt946x_write8(MT6370_REG_RSTPASCODE1, MT6370_MASK_RSTPASCODE1);
+	rv |= rt946x_write8(MT6370_REG_RSTPASCODE2, MT6370_MASK_RSTPASCODE2);
+#else
+	/* Hard reset, may take several milliseconds. */
+	val = RT946X_MASK_RST;
 	rv = rt946x_enable_hz(0);
+#endif
 	if (rv)
 		return rv;
 
-	return rt946x_set_bit(RT946X_REG_CORECTRL_RST, RT946X_MASK_RST);
+	return rt946x_set_bit(RT946X_REG_CORECTRL_RST, val);
 }
 
 static int rt946x_reset_to_zero(void)
@@ -967,7 +980,12 @@ int rt946x_is_charge_done(void)
 
 int rt946x_cutoff_battery(void)
 {
-	return rt946x_set_bit(RT946X_REG_CHGCTRL2, RT946X_MASK_SHIP_MODE);
+	int val = RT946X_MASK_SHIP_MODE;
+
+#ifdef CONFIG_CHARGER_MT6370
+	val |= RT946X_MASK_TE | RT946X_MASK_CFO_EN | RT946X_MASK_CHG_EN;
+#endif
+	return rt946x_set_bit(RT946X_REG_CHGCTRL2, val);
 }
 
 int rt946x_enable_charge_termination(int en)
