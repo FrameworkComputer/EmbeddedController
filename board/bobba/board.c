@@ -263,15 +263,26 @@ static void board_update_sensor_config_from_sku(void)
 {
 	if (board_is_convertible()) {
 		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+		/* Enable Base Accel interrupt */
+		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 	} else {
 		motion_sensor_count = 0;
 		tablet_disable_switch();
+		/* Base accel is not stuffed, don't allow line to float */
+		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 
 	/* Sparky360 with AR Cam: base accel/gyro sensor is on AR Cam board. */
 	if (board_with_ar_cam()) {
+		/* Enable interrupt from camera */
+		gpio_enable_interrupt(GPIO_WFCAM_VSYNC);
+
 		motion_sensors[BASE_ACCEL].rot_standard_ref = &base_ar_cam_ref;
 		motion_sensors[BASE_GYRO].rot_standard_ref = &base_ar_cam_ref;
+	} else {
+		/* Camera isn't stuffed, don't allow line to float */
+		gpio_set_flags(GPIO_WFCAM_VSYNC, GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
 
@@ -288,17 +299,6 @@ static void cbi_init(void)
 	board_update_sensor_config_from_sku();
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
-
-/* Initialize board. */
-static void board_init(void)
-{
-	/* Enable Base Accel interrupt */
-	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
-
-	/* Enable interrupt for the camera vsync. */
-	gpio_enable_interrupt(GPIO_WFCAM_VSYNC);
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 void board_hibernate_late(void) {
 
