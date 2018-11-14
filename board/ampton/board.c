@@ -207,8 +207,9 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 static int board_is_convertible(void)
 {
-	/* SKU IDs of Ampton & unprovisioned: 1, 2, 255 */
-	return sku_id == 1 || sku_id == 2 || sku_id == 255;
+	/* SKU IDs of Ampton & unprovisioned: 1, 2, 3, 4, 255 */
+	return sku_id == 1 || sku_id == 2 || sku_id == 3 || sku_id == 4
+		|| sku_id == 255;
 }
 
 static void board_update_sensor_config_from_sku(void)
