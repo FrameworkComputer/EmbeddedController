@@ -539,15 +539,28 @@ enum power_state power_handle_state(enum power_state state)
 
 static void power_button_changed(void)
 {
+	static uint8_t tablet_boot_on_button_release;
+
 	if (power_button_is_pressed()) {
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION != 2
 			/* Power up from off */
 			chipset_exit_hard_off();
-
+#else
+			tablet_boot_on_button_release = 1;
+#endif
+		}
 		/* Delayed power down from S0/S3, cancel on PB release */
 		hook_call_deferred(&force_shutdown_data,
 				   FORCED_SHUTDOWN_DELAY);
 	} else {
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+		if (tablet_boot_on_button_release) {
+			/* Power up from off */
+			chipset_exit_hard_off();
+			tablet_boot_on_button_release = 0;
+		}
+#endif
 		/* Power button released, cancel deferred shutdown */
 		hook_call_deferred(&force_shutdown_data, -1);
 	}
