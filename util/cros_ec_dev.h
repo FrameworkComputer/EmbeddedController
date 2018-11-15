@@ -8,7 +8,11 @@
 
 #include <linux/ioctl.h>
 #include <linux/types.h>
-#include "include/ec_commands.h"
+#include "ec_commands.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define CROS_EC_DEV_NAME "cros_ec"
 #define CROS_EC_DEV_VERSION "1.0.0"
@@ -86,5 +90,9 @@ struct cros_ec_readmem_v2 {
 #define CROS_EC_DEV_IOCRDMEM_V2	_IOWR(CROS_EC_DEV_IOC_V2, 1, \
 				      struct cros_ec_readmem_v2)
 #define CROS_EC_DEV_IOCEVENTMASK_V2	_IO(CROS_EC_DEV_IOC_V2, 2)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __UTIL_CROS_EC_DEV_H */
