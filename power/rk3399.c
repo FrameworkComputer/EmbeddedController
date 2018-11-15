@@ -8,10 +8,8 @@
 /*
  * The description of each CONFIG_CHIPSET_POWER_SEQ_VERSION:
  *
- * Version 0: Initial/default revision.
- * Version 1: Control signals PP900_PLL_EN and PP900_PMU_EN
- *	      are merged with PP900_USB_EN.
- * Version 2: Simplified power tree, fewer control signals.
+ * Version 0: Initial/default revision for clamshell / convertible.
+ * Version 1: Simplified power tree for tablet / detachable.
  */
 
 #include "charge_state.h"
@@ -35,7 +33,7 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /* Input state flags */
-#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 1
 	#define IN_PGOOD_PP1250_S3   POWER_SIGNAL_MASK(PP1250_S3_PWR_GOOD)
 	#define IN_PGOOD_PP900_S0    POWER_SIGNAL_MASK(PP900_S0_PWR_GOOD)
 #else
@@ -47,7 +45,7 @@
 #define IN_SUSPEND_DEASSERTED  POWER_SIGNAL_MASK(SUSPEND_DEASSERTED)
 
 /* Rails requires for S3 and S0 */
-#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 1
 	#define IN_PGOOD_S3    (IN_PGOOD_PP1250_S3)
 	#define IN_PGOOD_S0    (IN_PGOOD_S3 | IN_PGOOD_PP900_S0 | IN_PGOOD_AP)
 	/* This board can optionally wake-on-USB in S3 */
@@ -92,7 +90,7 @@ BUILD_ASSERT(GPIO_COUNT < 256);
  * to the bottom.
  */
 
-#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 1
 static const struct power_seq_op s5s3_power_seq[] = {
 	{ GPIO_PP900_S3_EN, 1, 2 },
 	{ GPIO_PP3300_S3_EN, 1, 2 },
@@ -104,10 +102,8 @@ static const struct power_seq_op s5s3_power_seq[] = {
 	{ GPIO_PPVAR_LOGIC_EN, 1, 0 },
 	{ GPIO_PP900_AP_EN, 1, 0 },
 	{ GPIO_PP900_PCIE_EN, 1, 2 },
-#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 0
 	{ GPIO_PP900_PMU_EN, 1, 0 },
 	{ GPIO_PP900_PLL_EN, 1, 0 },
-#endif
 	{ GPIO_PP900_USB_EN, 1, 2 },
 	{ GPIO_SYS_RST_L, 0, 0 },
 	{ GPIO_PP1800_PMU_EN_L, 0, 2 },
@@ -123,7 +119,7 @@ static const struct power_seq_op s5s3_power_seq[] = {
 #endif
 
 /* The power sequence for POWER_S3S0 */
-#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 1
 static const struct power_seq_op s3s0_power_seq[] = {
 	{ GPIO_AP_CORE_EN, 1, 2 },
 	{ GPIO_PP1800_S0_EN, 1, 0 },
@@ -149,7 +145,7 @@ static const struct power_seq_op s3s0_usb_wake_power_seq[] = {
 #endif
 
 /* The power sequence for POWER_S0S3 */
-#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 1
 static const struct power_seq_op s0s3_power_seq[] = {
 	{ GPIO_AP_CORE_EN, 0, 20 },
 };
@@ -175,7 +171,7 @@ static const struct power_seq_op s0s3_usb_wake_power_seq[] = {
 #endif
 
 /* The power sequence for POWER_S3S5 */
-#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 1
 static const struct power_seq_op s3s5_power_seq[] = {
 	{ GPIO_SYS_RST_L, 0, 0 },
 	{ GPIO_PP1250_S3_EN, 0, 2 },
@@ -194,10 +190,8 @@ static const struct power_seq_op s3s5_power_seq[] = {
 	{ GPIO_PP1800_USB_EN_L, 1, 10 },
 	{ GPIO_LPDDR_PWR_EN, 0, 20 },
 	{ GPIO_PP1800_PMU_EN_L, 1, 2 },
-#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 0
 	{ GPIO_PP900_PLL_EN, 0, 0 },
 	{ GPIO_PP900_PMU_EN, 0, 0 },
-#endif
 	{ GPIO_PP900_USB_EN, 0, 6 },
 	{ GPIO_PP900_PCIE_EN, 0, 0 },
 	{ GPIO_PP900_AP_EN, 0, 0 },
@@ -351,7 +345,7 @@ enum power_state power_handle_state(enum power_state state)
 		    !(power_get_signals() & IN_SUSPEND_DEASSERTED))
 			return POWER_S0S3;
 
-#if CONFIG_CHIPSET_POWER_SEQ_VERSION != 2
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION != 1
 		/*
 		 * Wait up to PGOOD_AP_DEBOUNCE_TIMEOUT for IN_PGOOD_AP to
 		 * come back before transitioning back to S3. PGOOD_SYS can
@@ -543,7 +537,7 @@ static void power_button_changed(void)
 
 	if (power_button_is_pressed()) {
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-#if CONFIG_CHIPSET_POWER_SEQ_VERSION != 2
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION != 1
 			/* Power up from off */
 			chipset_exit_hard_off();
 #else
@@ -554,7 +548,7 @@ static void power_button_changed(void)
 		hook_call_deferred(&force_shutdown_data,
 				   FORCED_SHUTDOWN_DELAY);
 	} else {
-#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 1
 		if (tablet_boot_on_button_release) {
 			/* Power up from off */
 			chipset_exit_hard_off();

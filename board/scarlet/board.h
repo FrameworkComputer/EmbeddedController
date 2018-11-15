@@ -41,7 +41,7 @@
 
 /* Enable a different power-on sequence than the one on gru */
 #undef CONFIG_CHIPSET_POWER_SEQ_VERSION
-#define CONFIG_CHIPSET_POWER_SEQ_VERSION 2
+#define CONFIG_CHIPSET_POWER_SEQ_VERSION 1
 
 /* Optional features */
 #define CONFIG_BOARD_PRE_INIT
