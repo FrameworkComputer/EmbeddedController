@@ -2463,6 +2463,9 @@ static int pd_restart_tcpc(int port)
 #if	defined(HAS_TASK_PD_INT_C0) || defined(HAS_TASK_PD_INT_C1) || \
 	defined(HAS_TASK_PD_INT_C2)
 
+/* Used to conditionally compile code in main pd task.  */
+#define HAS_DEFFERED_INTERRUPT_HANDLER
+
 /* Events for pd_interrupt_handler_task */
 #define PD_PROCESS_INTERRUPT  (1<<0)
 
@@ -2664,6 +2667,17 @@ void pd_task(void *u)
 	pd_set_input_current_limit(port, 0, 0);
 	typec_set_input_current_limit(port, 0, 0);
 	charge_manager_update_dualrole(port, CAP_UNKNOWN);
+#endif
+
+#ifdef HAS_DEFFERED_INTERRUPT_HANDLER
+	/*
+	 * Since most boards configure the TCPC interrupt as edge
+	 * and it is possible that the interrupt line was asserted between init
+	 * and calling set_state, we need to process any pending interrupts now.
+	 * Otherwise future interrupts will never fire because another edge
+	 * never happens. Note this needs to happen after set_state() is called.
+	 */
+	schedule_deferred_pd_interrupt(port);
 #endif
 
 	while (1) {
