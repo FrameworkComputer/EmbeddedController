@@ -19,6 +19,10 @@
 
 #define CONFIG_LED_COMMON
 
+/* USB PD */
+#undef CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
+#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
+
 /* Sensors */
 #define CONFIG_ACCEL_KX022		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */

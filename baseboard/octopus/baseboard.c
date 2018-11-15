@@ -182,6 +182,18 @@ int board_is_i2c_port_powered(int port)
 /******************************************************************************/
 /* Power Delivery and charing functions */
 
+#ifdef CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
+enum adc_channel board_get_vbus_adc(int port)
+{
+	if (port == 0)
+		return  ADC_VBUS_C0;
+	if (port == 1)
+		return  ADC_VBUS_C1;
+	CPRINTSUSB("Unknown vbus adc port id: %d", port);
+	return ADC_VBUS_C0;
+}
+#endif /* CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT */
+
 void baseboard_tcpc_init(void)
 {
 	int port;

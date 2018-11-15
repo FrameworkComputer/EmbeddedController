@@ -100,16 +100,6 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-enum adc_channel board_get_vbus_adc(int port)
-{
-	if (port == USB_PD_PORT_ANX7447)
-		return  ADC_VBUS_C0;
-	if (port == USB_PD_PORT_PS8751)
-		return  ADC_VBUS_C1;
-	CPRINTSUSB("Unknown vbus adc port id: %d", port);
-	return ADC_VBUS_C0;
-}
-
 const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
 				 .type = TEMP_SENSOR_TYPE_BATTERY,
