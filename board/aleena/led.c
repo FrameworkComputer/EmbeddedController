@@ -7,6 +7,10 @@
 #include "led_onoff_states.h"
 #include "led_common.h"
 #include "gpio.h"
+#include "hooks.h"
+#include "console.h"
+
+#define CPRINTS(format, args...) cprints(CC_HOOK, format, ## args)
 
 #define LED_OFF_LVL	1
 #define LED_ON_LVL	0
@@ -14,6 +18,14 @@
 const int led_charge_lvl_1;
 
 const int led_charge_lvl_2 = 100;
+
+/*
+ *	board_id	others	5, 6
+ *	led1		Amber	Blue
+ *	led2		Blue	Amber
+ */
+static enum gpio_signal led_amber = GPIO_BAT_LED_1_L;
+static enum gpio_signal led_blue = GPIO_BAT_LED_2_L;
 
 /* Note there is only LED for charge / power */
 const struct led_descriptor
@@ -34,20 +46,38 @@ const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
+static void board_led_init(void)
+{
+	int board_id =
+		(gpio_get_level(GPIO_BOARD_VERSION3) << 2) |
+		(gpio_get_level(GPIO_BOARD_VERSION2) << 1) |
+		(gpio_get_level(GPIO_BOARD_VERSION1) << 0);
+
+	CPRINTS("board_id=%d", board_id);
+
+	if ((board_id == 5) || (board_id == 6)) {
+		led_amber = GPIO_BAT_LED_2_L;
+		led_blue = GPIO_BAT_LED_1_L;
+		CPRINTS("LED: switch LED");
+	}
+
+}
+DECLARE_HOOK(HOOK_INIT, board_led_init, HOOK_PRIO_DEFAULT);
+
 void led_set_color_battery(enum ec_led_colors color)
 {
 	switch (color) {
 	case EC_LED_COLOR_BLUE:
-		gpio_set_level(GPIO_BAT_LED_BLUE_L, LED_ON_LVL);
-		gpio_set_level(GPIO_BAT_LED_ORANGE_L, LED_OFF_LVL);
+		gpio_set_level(led_blue, LED_ON_LVL);
+		gpio_set_level(led_amber, LED_OFF_LVL);
 		break;
 	case EC_LED_COLOR_AMBER:
-		gpio_set_level(GPIO_BAT_LED_BLUE_L, LED_OFF_LVL);
-		gpio_set_level(GPIO_BAT_LED_ORANGE_L, LED_ON_LVL);
+		gpio_set_level(led_blue, LED_OFF_LVL);
+		gpio_set_level(led_amber, LED_ON_LVL);
 		break;
 	default: /* LED_OFF and other unsupported colors */
-		gpio_set_level(GPIO_BAT_LED_BLUE_L, LED_OFF_LVL);
-		gpio_set_level(GPIO_BAT_LED_ORANGE_L, LED_OFF_LVL);
+		gpio_set_level(led_blue, LED_OFF_LVL);
+		gpio_set_level(led_amber, LED_OFF_LVL);
 		break;
 	}
 }
