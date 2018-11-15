@@ -127,6 +127,37 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c	= 70,
 		},
 	},
+	/*
+	 * LGC 2018 Battery Information for Liara
+	 * Gauge IC: Renesas RAJ240047A20DNP
+	 */
+	[BATTERY_LGC] = {
+		.fuel_gauge = {
+			.manuf_name = "LGC2018",
+			.ship_mode = {
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x0010,
+				.disconnect_val = 0x0,
+			},
+			.imbalance_mv = battery_default_imbalance_mv,
+		},
+		.batt_info = {
+			.voltage_max		= 13200,
+			.voltage_normal		= 11520, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 256,   /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
