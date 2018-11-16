@@ -11,8 +11,24 @@
 #include "usb_mux.h"
 #include "util.h"
 
+/*
+ * USB PD protocol configures the USB & DP mux state and USB PD policy
+ * configures the HPD mux state. Both states are independent of each other
+ * may differ when the PD role changes when in dock mode.
+ */
+#define USB_PD_MUX_HPD_STATE	(USB_PD_MUX_HPD_LVL | USB_PD_MUX_HPD_IRQ)
+#define USB_PD_MUX_USB_DP_STATE	(USB_PD_MUX_USB_ENABLED | \
+			USB_PD_MUX_DP_ENABLED | USB_PD_MUX_POLARITY_INVERTED)
+
 static mux_state_t virtual_mux_state[CONFIG_USB_PD_PORT_COUNT];
-static int hpd_irq_state[CONFIG_USB_PD_PORT_COUNT];
+
+static inline void virtual_mux_update_state(int port, mux_state_t mux_state)
+{
+	if (virtual_mux_state[port] != mux_state) {
+		virtual_mux_state[port] = mux_state;
+		host_set_single_event(EC_HOST_EVENT_USB_MUX);
+	}
+}
 
 static int virtual_init(int port)
 {
@@ -25,10 +41,12 @@ static int virtual_init(int port)
  */
 static int virtual_set_mux(int port, mux_state_t mux_state)
 {
-	if (virtual_mux_state[port] != mux_state) {
-		virtual_mux_state[port] = mux_state;
-		host_set_single_event(EC_HOST_EVENT_USB_MUX);
-	}
+	/* Current USB & DP mux status + existing HPD related mux status */
+	mux_state_t new_mux_state = (mux_state & ~USB_PD_MUX_HPD_STATE) |
+		(virtual_mux_state[port] & USB_PD_MUX_HPD_STATE);
+
+	virtual_mux_update_state(port, new_mux_state);
+
 	return EC_SUCCESS;
 }
 
@@ -40,16 +58,18 @@ static int virtual_set_mux(int port, mux_state_t mux_state)
 static int virtual_get_mux(int port, mux_state_t *mux_state)
 {
 	*mux_state = virtual_mux_state[port];
-	*mux_state |= hpd_irq_state[port] ? USB_PD_MUX_HPD_IRQ : 0;
 
 	return EC_SUCCESS;
 }
 
 void virtual_hpd_update(int port, int hpd_lvl, int hpd_irq)
 {
-	hpd_irq_state[port] = hpd_irq;
-	if (hpd_irq)
-		host_set_single_event(EC_HOST_EVENT_USB_MUX);
+	/* Current HPD related mux status + existing USB & DP mux status */
+	mux_state_t new_mux_state = (hpd_lvl ? USB_PD_MUX_HPD_LVL : 0) |
+			(hpd_irq ? USB_PD_MUX_HPD_IRQ : 0) |
+			(virtual_mux_state[port] & USB_PD_MUX_USB_DP_STATE);
+
+	virtual_mux_update_state(port, new_mux_state);
 }
 
 const struct usb_mux_driver virtual_usb_mux_driver = {

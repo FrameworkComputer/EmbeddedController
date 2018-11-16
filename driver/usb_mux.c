@@ -244,7 +244,7 @@ static int hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
 	/* Clear HPD IRQ event since we're about to inform host of it. */
 	if ((r->flags & USB_PD_MUX_HPD_IRQ) &&
 	    mux->hpd_update == &virtual_hpd_update)
-		mux->hpd_update(port, 0, 0);
+		mux->hpd_update(port, r->flags & USB_PD_MUX_HPD_LVL, 0);
 #endif
 
 	args->response_size = sizeof(*r);
