@@ -165,7 +165,7 @@ __attribute__((weak)) int board_is_lid_angle_tablet_mode(void)
  */
 #define TABLET_MODE_DEBOUNCE_COUNT 3
 
-static int motion_lid_set_tablet_mode(int reliable)
+static void motion_lid_set_tablet_mode(int reliable)
 {
 	static int tablet_mode_debounce_cnt = TABLET_MODE_DEBOUNCE_COUNT;
 	const int current_mode = tablet_get_mode();
@@ -184,10 +184,10 @@ static int motion_lid_set_tablet_mode(int reliable)
 				tablet_mode_debounce_cnt =
 					TABLET_MODE_DEBOUNCE_COUNT;
 				tablet_set_mode(new_mode);
-				return reliable;
+				return;
 			}
 			tablet_mode_debounce_cnt--;
-			return reliable;
+			return;
 		}
 	}
 
@@ -200,7 +200,6 @@ static int motion_lid_set_tablet_mode(int reliable)
 	if (((reliable == 0) && current_mode == 1) ||
 	    ((reliable == 1) && (current_mode == new_mode)))
 		tablet_mode_debounce_cnt = TABLET_MODE_DEBOUNCE_COUNT;
-	return reliable;
 }
 
 #endif /* CONFIG_LID_ANGLE_TABLET_MODE */
@@ -458,7 +457,7 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 	*lid_angle = FP_TO_INT(last_lid_angle_fp + FLOAT_TO_FP(0.5));
 
 	if (board_is_lid_angle_tablet_mode())
-		reliable = motion_lid_set_tablet_mode(reliable);
+		motion_lid_set_tablet_mode(reliable);
 
 #if defined(CONFIG_DPTF_MULTI_PROFILE) && \
 	defined(CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR)
