@@ -6805,6 +6805,7 @@ static void cmd_cbi_help(char *cmd)
 	"      2: SKU_ID\n"
 	"      3: DRAM_PART_NUM (string)\n"
 	"      4: OEM_NAME (string)\n"
+	"      5: MODEL_ID\n"
 	"    <size> is the size of the data in byte. It should be zero for\n"
 	"      string types.\n"
 	"    <value/string> is an integer or a string to be set\n"
@@ -6813,6 +6814,11 @@ static void cmd_cbi_help(char *cmd)
 	"    [set_flag] is combination of:\n"
 	"      01b: Skip write to EEPROM. Use for back-to-back writes\n"
 	"      10b: Set all fields to defaults first\n", cmd, cmd);
+}
+
+static int cmd_cbi_is_string_field(enum cbi_data_tag tag)
+{
+	return tag == CBI_TAG_DRAM_PART_NUM || tag == CBI_TAG_OEM_NAME;
 }
 
 /*
@@ -6862,7 +6868,9 @@ static int cmd_cbi(int argc, char *argv[])
 			return -1;
 		}
 		r = ec_inbuf;
-		if (tag != CBI_TAG_DRAM_PART_NUM && tag != CBI_TAG_OEM_NAME) {
+		if (cmd_cbi_is_string_field(tag)) {
+			printf("%.*s", rv, (const char *)r);
+		} else {
 			if (rv <= sizeof(uint32_t))
 				printf("As integer: %u (0x%x)\n", r[0], r[0]);
 			printf("As binary:");
@@ -6871,8 +6879,6 @@ static int cmd_cbi(int argc, char *argv[])
 					printf("\n");
 				printf(" %02x", r[i]);
 			}
-		} else {
-			printf("%.*s", rv, (const char *)r);
 		}
 		printf("\n");
 		return 0;
@@ -6890,7 +6896,10 @@ static int cmd_cbi(int argc, char *argv[])
 		memset(p, 0, ec_max_outsize);
 		p->tag = tag;
 
-		if (tag != CBI_TAG_DRAM_PART_NUM && tag != CBI_TAG_OEM_NAME) {
+		if (cmd_cbi_is_string_field(tag)) {
+			val_ptr = argv[3];
+			size = strlen(val_ptr) + 1;
+		} else {
 			val = strtol(argv[3], &e, 0);
 			if (e && *e) {
 				fprintf(stderr, "Bad value\n");
@@ -6903,9 +6912,6 @@ static int cmd_cbi(int argc, char *argv[])
 				return -1;
 			}
 			val_ptr = &val;
-		} else {
-			val_ptr = argv[3];
-			size = strlen(val_ptr) + 1;
 		}
 
 		if (size > ec_max_outsize - sizeof(*p)) {
