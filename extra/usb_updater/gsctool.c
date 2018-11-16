@@ -235,7 +235,7 @@ static const struct option long_opts[] = {
 	{"post_reset",	                0,   NULL, 'p'},
 	{"rma_auth",	                2,   NULL, 'r'},
 	{"systemdev",	                0,   NULL, 's'},
-	{"tpm_mode",                    1,   NULL, 'm'},
+	{"tpm_mode",                    2,   NULL, 'm'},
 	{"trunks_send",	                0,   NULL, 't'},
 	{"verbose",	                0,   NULL, 'V'},
 	{"version",	                0,   NULL, 'v'},
