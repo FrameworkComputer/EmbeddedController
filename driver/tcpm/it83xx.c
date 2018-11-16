@@ -210,6 +210,10 @@ static enum tcpc_transmit_complete it83xx_tx_data(
 	if (r > PD_RETRY_COUNT)
 		return TCPC_TX_COMPLETE_DISCARDED;
 
+	/* Transmit softreset, invalidate last received message id variable */
+	if (PD_HEADER_TYPE(header) == PD_CTRL_SOFT_RESET && length == 0)
+		invalidate_last_message_id(port);
+
 	return TCPC_TX_COMPLETE_SUCCESS;
 }
 
@@ -227,6 +231,9 @@ static enum tcpc_transmit_complete it83xx_send_hw_reset(enum usbpd_port port,
 
 	if (IT83XX_USBPD_MTSR0(port) & USBPD_REG_MASK_SEND_HW_RESET)
 		return TCPC_TX_COMPLETE_FAILED;
+
+	/* Transmit hardreset, invalidate last received message id variable */
+	invalidate_last_message_id(port);
 
 	return TCPC_TX_COMPLETE_SUCCESS;
 }
@@ -328,6 +335,8 @@ static void it83xx_set_data_role(enum usbpd_port port, int pd_role)
 
 static void it83xx_init(enum usbpd_port port, int role)
 {
+	/* Invalidate last received message id variable */
+	invalidate_last_message_id(port);
 	/* bit7: Reload CC parameter setting. */
 	IT83XX_USBPD_CCPSR0(port) |= (1 << 7);
 	/* reset and disable HW auto generate message header */
@@ -570,6 +579,8 @@ static int it83xx_tcpm_get_chip_info(int port, int renew,
 static void it83xx_tcpm_sw_reset(void)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
+	/* Invalidate last received message id variable */
+	invalidate_last_message_id(port);
 	/* exit BIST test data mode */
 	USBPD_SW_RESET(port);
 }
