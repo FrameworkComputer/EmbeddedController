@@ -164,6 +164,8 @@ static int mkbp_get_next_event(struct host_cmd_handler_args *args)
 
 	if (!events)
 		set_host_interrupt(0);
+	else if (args->version >= 2)
+		resp[0] |= EC_MKBP_HAS_MORE_EVENTS;
 
 	if (data_size < 0)
 		return EC_RES_ERROR;
@@ -173,7 +175,7 @@ static int mkbp_get_next_event(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_NEXT_EVENT,
 		     mkbp_get_next_event,
-		     EC_VER_MASK(0) | EC_VER_MASK(1));
+		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
 
 #ifdef CONFIG_MKBP_WAKEUP_MASK
 static int mkbp_get_wake_mask(struct host_cmd_handler_args *args)
