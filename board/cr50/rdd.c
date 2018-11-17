@@ -42,7 +42,19 @@ enum ccd_block_flags {
 	 * interfering with servo, in the case where both CCD and servo is
 	 * connected but servo isn't properly detected.
 	 */
-	CCD_BLOCK_SERVO_SHARED = BIT(2)
+	CCD_BLOCK_SERVO_SHARED = BIT(2),
+
+	/*
+	 * In case of broken hardware use IGNORE_SERVO to bypass the "servo
+	 * connected check". If cr50 thinks servo is connected, it won't enable
+	 * the AP or EC uart. Using IGNORE_SERVO will force cr50 to enable uart
+	 * even if it thinks servo is connected.
+	 *
+	 * ONLY USE THIS IF SERVO IS DISCONNECTED. If you force enable AP and EC
+	 * uart while servo is connected, it could break the hardware and the
+	 * ccd uart could become permanently unusable.
+	 */
+	CCD_BLOCK_IGNORE_SERVO = BIT(3)
 };
 
 /* Which UARTs are blocked by console command */
@@ -245,7 +257,7 @@ static void ccd_state_change_hook(void)
 
 	/* Then disable flags we can't have */
 
-	/* Servo takes over UART TX, I2C, and SPI */
+	/* Servo takes over UART TX, I2C, and SPI. */
 	if (servo_is_connected() || (ccd_block & CCD_BLOCK_SERVO_SHARED))
 		flags_want &= ~(CCD_ENABLE_UART_AP_TX | CCD_ENABLE_UART_EC_TX |
 				CCD_ENABLE_UART_EC_BITBANG | CCD_ENABLE_I2C |
@@ -404,6 +416,11 @@ static void print_ccd_ports_blocked(void)
 		ccputs(" EC");
 	if (ccd_block & CCD_BLOCK_SERVO_SHARED)
 		ccputs(" SERVO");
+	if (ccd_block & CCD_BLOCK_IGNORE_SERVO) {
+		ccputs(" IGNORE_SERVO");
+		ccputs("\nWARNING: enabling UART while servo is connected may "
+		       "damage hardware");
+	}
 	if (!ccd_block)
 		ccputs(" (none)");
 	ccputs("\n");
@@ -444,6 +461,8 @@ static int command_ccd_block(int argc, char **argv)
 			block_flag = CCD_BLOCK_EC_UART;
 		else if (!strcasecmp(argv[1], "SERVO"))
 			block_flag = CCD_BLOCK_SERVO_SHARED;
+		else if (!strcasecmp(argv[1], "IGNORE_SERVO"))
+			block_flag = CCD_BLOCK_IGNORE_SERVO;
 		else
 			return EC_ERROR_PARAM1;
 
@@ -455,6 +474,9 @@ static int command_ccd_block(int argc, char **argv)
 		else
 			ccd_block &= ~block_flag;
 
+		if (block_flag == CCD_BLOCK_IGNORE_SERVO)
+			servo_ignore(new_state);
+
 		/* Update blocked state in deferred function */
 		ccd_update_state();
 	}
@@ -464,5 +486,5 @@ static int command_ccd_block(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ccdblock, command_ccd_block,
-			"[<AP | EC | SERVO> [BOOLEAN]]",
+			"[<AP | EC | SERVO | IGNORE_SERVO> [BOOLEAN]]",
 			"Force CCD ports disabled");

@@ -219,6 +219,9 @@ enum device_state {
 	/* Device state is unknown.  Used only by legacy device_state code. */
 	DEVICE_STATE_UNKNOWN,
 
+	/* The state is being ignored. */
+	DEVICE_STATE_IGNORED,
+
 	/* Number of device states */
 	DEVICE_STATE_COUNT
 };
@@ -258,6 +261,8 @@ int is_sys_rst_asserted(void);
 void assert_ec_rst(void);
 void deassert_ec_rst(void);
 int is_ec_rst_asserted(void);
+/* Ignore the servo state. */
+void servo_ignore(int enable);
 
 /**
  * Set up a deferred call to update CCD state.

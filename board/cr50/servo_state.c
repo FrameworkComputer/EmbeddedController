@@ -116,6 +116,25 @@ static void servo_connect(void)
 }
 DECLARE_DEFERRED(servo_connect);
 
+void servo_ignore(int enable)
+{
+	if (enable) {
+		/*
+		 * Set servo state to IGNORE, so servo presence wont prevent
+		 * cr50 from enabling EC and AP uart.
+		 */
+		set_state(DEVICE_STATE_IGNORED);
+		ccd_update_state();
+	} else {
+		/*
+		 * To be on the safe side 'connect' servo when we stop ignoring
+		 * the servo state. If servo is disconnected, then cr50 will
+		 * notice within 1 second and reenable ccd.
+		 */
+		servo_connect();
+	}
+}
+
 /**
  * Servo state machine
  */
@@ -123,6 +142,9 @@ static void servo_detect(void)
 {
 	/* Disable interrupts if we had them on for debouncing */
 	gpio_disable_interrupt(GPIO_DETECT_SERVO);
+
+	if (state == DEVICE_STATE_IGNORED)
+		return;
 
 	/* If we're driving EC UART TX, we can't detect servo */
 	if (!servo_detectable()) {
