@@ -119,7 +119,11 @@ echo "#define CROS_ECTOOL_VERSION \"${tool_ver}\""
 echo "/* Sub-fields for use in Makefile.rules and to form build info string"
 echo " * in common/version.c. */"
 echo "#define VERSION \"${ver}\""
-echo "#define BUILDER \"${USER}@`hostname`\""
+if [ "$REPRODUCIBLE_BUILD" = 1 ]; then
+	echo '#define BUILDER "reproducible@build"'
+else
+	echo "#define BUILDER \"${USER}@`hostname`\""
+fi
 
 if [ -n "$global_dirty" ]; then
     echo "/* Repo is dirty, using time of last compilation */"
