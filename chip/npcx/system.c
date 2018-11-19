@@ -99,8 +99,10 @@ void system_check_bbram_on_reset(void)
 			CPRINTF("VBAT drop!\n");
 
 		/*
-		 * npcx5/npcx7m6g/npcx7m6f - Clear IBBR bit
-		 * npcx7m6fb/npcx7m7wb - Clear IBBR/VSBY_STS/VCC1_STS bit
+		 * npcx5/npcx7m6g/npcx7m6f:
+		 *   Clear IBBR bit
+		 * npcx7m6fb/npcx7m6fc/npcx7m7wb:
+		 *   Clear IBBR/VSBY_STS/VCC1_STS bit
 		 */
 		NPCX_BKUP_STS = NPCX_BKUP_STS_ALL_MASK;
 	}
@@ -699,7 +701,8 @@ void system_pre_init(void)
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6) = pwdwn6;
 
 #if defined(CHIP_FAMILY_NPCX7)
-#if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M7WB)
+#if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M6FC) || \
+	defined(CHIP_VARIANT_NPCX7M7WB)
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0xE7;
 #else
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0x07;
@@ -811,6 +814,7 @@ const char *system_get_chip_name(void)
 	case 0x1F:
 		return "NPCX787G";
 	case 0x21:
+	case 0x29:
 		return "NPCX796F";
 	case 0x24:
 		return "NPCX797W";
@@ -831,6 +835,9 @@ const char *system_get_chip_revision(void)
 	uint8_t chip_gen = NPCX_SRID_CR;
 	/* Read ROM data for chip revision directly */
 	uint8_t rev_num = *((uint8_t *)CHIP_REV_ADDR);
+#ifdef CHIP_FAMILY_NPCX7
+	uint8_t chip_id = NPCX_DEVICE_ID_CR;
+#endif
 
 	switch (chip_gen) {
 #if defined(CHIP_FAMILY_NPCX5)
@@ -842,7 +849,10 @@ const char *system_get_chip_revision(void)
 		*p++ = 'A';
 		break;
 	case 0x07:
-		*p++ = 'B';
+		if (chip_id == 0x21 || chip_id == 0x24)
+			*p++ = 'B';
+		else
+			*p++ = 'C';
 		break;
 #endif
 	default:

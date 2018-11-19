@@ -952,9 +952,12 @@ enum {
 #define NPCX_PWDWN_CTL7_SMB5_PD          0
 #define NPCX_PWDWN_CTL7_SMB6_PD          1
 #define NPCX_PWDWN_CTL7_SMB7_PD          2
-#if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M7WB)
+#if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M6FC) || \
+	defined(CHIP_VARIANT_NPCX7M7WB)
 #define NPCX_PWDWN_CTL7_ITIM64_PD        5
 #define NPCX_PWDWN_CTL7_UART2_PD         6
+#endif
+#ifdef CHIP_VARIANT_NPCX7M7WB
 #define NPCX_PWDWN_CTL7_WOV_PD           7
 #endif
 #endif
@@ -1233,7 +1236,8 @@ enum PM_CHANNEL_T {
 
 /* BBRAM register fields */
 #define NPCX_BKUP_STS_IBBR               7
-#if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M7WB)
+#if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M6FC) || \
+	defined(CHIP_VARIANT_NPCX7M7WB)
 #define NPCX_BKUP_STS_VSBY_STS           1
 #define NPCX_BKUP_STS_VCC1_STS           0
 #define NPCX_BKUP_STS_ALL_MASK \
