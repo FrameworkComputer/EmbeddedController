@@ -340,8 +340,16 @@ static int anx7447_init(int port)
 	if (rv)
 		return rv;
 	reg &= ~ANX7447_REG_VCONN_OCP_MASK;
-	reg |= ANX7447_REG_VCONN_OCP_370mA;
+	reg |= ANX7447_REG_VCONN_OCP_440mA;
 	rv = tcpc_write(port, ANX7447_REG_ANALOG_CTRL_8, reg);
+
+	/* Vconn SW protection time of inrush current */
+	rv = tcpc_read(port, ANX7447_REG_ANALOG_CTRL_10, &reg);
+	if (rv)
+		return rv;
+	reg &= ~ANX7447_REG_R_VCONN_PWR_PRT_INRUSH_TIME_MASK;
+	reg |= ANX7447_REG_R_VCONN_PWR_PRT_INRUSH_TIME_2430US;
+	rv = tcpc_write(port, ANX7447_REG_ANALOG_CTRL_10, reg);
 
 	/* init hpd status */
 	anx7447_hpd_mode_en(port);
