@@ -160,20 +160,20 @@ static int show_charge_state(void)
 		pulse_leds(CONFIG_LED_PWM_CHARGE_ERROR_COLOR, 1, 2);
 	} else {
 		/* Discharging or not charging. */
-#ifdef CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY
+#ifdef CONFIG_LED_PWM_CHARGE_STATE_ONLY
 		/*
-		 * If we only show the active charge port, the only reason we
+		 * If we only show the charge state, the only reason we
 		 * would pulse the LEDs is if we had an error.  If it no longer
 		 * exists, stop pulsing the LEDs.
 		 */
 		led_is_pulsing = 0;
-#endif /* CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY */
+#endif /* CONFIG_LED_PWM_CHARGE_STATE_ONLY */
 		return 0;
 	}
 	return 1;
 }
 
-#ifndef CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY
+#ifndef CONFIG_LED_PWM_CHARGE_STATE_ONLY
 static int show_battery_state(void)
 {
 	int batt_percentage = charge_get_percent();
@@ -213,7 +213,7 @@ static int show_chipset_state(void)
 	}
 	return 1;
 }
-#endif /* CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY */
+#endif /* CONFIG_LED_PWM_CHARGE_STATE_ONLY */
 
 static void update_leds(void)
 {
@@ -221,13 +221,13 @@ static void update_leds(void)
 	if (show_charge_state())
 		return;
 
-#ifndef CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY
+#ifndef CONFIG_LED_PWM_CHARGE_STATE_ONLY
 	if (show_battery_state())
 		return;
 
 	if (show_chipset_state())
 		return;
-#endif /* CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY */
+#endif /* CONFIG_LED_PWM_CHARGE_STATE_ONLY */
 
 	set_led_color(-1);
 }
