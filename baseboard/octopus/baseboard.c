@@ -212,7 +212,8 @@ void baseboard_tcpc_init(void)
 		mux->hpd_update(port, 0, 0);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
+/* Called after the cbi_init (via +2) */
+DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
 
 int board_set_active_charge_port(int port)
 {

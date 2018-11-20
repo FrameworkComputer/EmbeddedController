@@ -60,6 +60,31 @@ int ppc_get_alert_status(int port)
 #include "gpio_list.h" /* Must come after other header files. */
 
 /******************************************************************************/
+/* USB-C MUX Configuration */
+
+#define USB_PD_PORT_ITE_0      0
+#define USB_PD_PORT_ITE_1      1
+
+struct usb_mux ampton_usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+	[USB_PD_PORT_ITE_0] = {
+		/* Use PS8751 as mux only */
+		.port_addr = MUX_PORT_AND_ADDR(
+			I2C_PORT_USBC0, PS8751_I2C_ADDR1),
+		.flags = USB_MUX_FLAG_NOT_TCPC,
+		.driver = &tcpci_tcpm_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	},
+	[USB_PD_PORT_ITE_1] = {
+		/* Use PS8751 as mux only */
+		.port_addr = MUX_PORT_AND_ADDR(
+			I2C_PORT_USBC1, PS8751_I2C_ADDR1),
+		.flags = USB_MUX_FLAG_NOT_TCPC,
+		.driver = &tcpci_tcpm_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	}
+};
+
+/******************************************************************************/
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Vbus C0 sensing (10x voltage divider). PPVAR_USB_C0_VBUS */
@@ -226,6 +251,14 @@ static void board_update_sensor_config_from_sku(void)
 	}
 }
 
+static void board_customize_usbc_mux(uint32_t board_version)
+{
+	if (board_version > 0) {
+		/* not proto, override the mux setting */
+		memcpy(usb_muxes, ampton_usb_muxes, sizeof(ampton_usb_muxes));
+	}
+}
+
 /* Read CBI from i2c eeprom and initialize variables for board variants */
 static void cbi_init(void)
 {
@@ -237,6 +270,11 @@ static void cbi_init(void)
 	ccprints("SKU: %d", sku_id);
 
 	board_update_sensor_config_from_sku();
+
+	if (cbi_get_board_version(&val) != EC_SUCCESS)
+		return;
+	ccprints("Board version: %d", val);
+	board_customize_usbc_mux(val);
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 

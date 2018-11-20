@@ -60,6 +60,7 @@ static void board_it83xx_hpd_status(int port, int hpd_lvl, int hpd_irq)
 	}
 }
 
+/* This configuration might be override by each boards */
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ITE_0] = {
 		/* Driver uses I2C_PORT_USB_MUX as I2C port */
@@ -102,8 +103,8 @@ void variant_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
 }
-/* Called after the baseboard_tcpc_init (via +2) */
-DECLARE_HOOK(HOOK_INIT, variant_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
+/* Called after the baseboard_tcpc_init (via +3) */
+DECLARE_HOOK(HOOK_INIT, variant_tcpc_init, HOOK_PRIO_INIT_I2C + 3);
 
 uint16_t tcpc_get_alert_status(void)
 {

@@ -116,8 +116,8 @@ void variant_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_MUX_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_MUX_INT_ODL);
 }
-/* Called after the baseboard_tcpc_init (via +2) */
-DECLARE_HOOK(HOOK_INIT, variant_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
+/* Called after the baseboard_tcpc_init (via +3) */
+DECLARE_HOOK(HOOK_INIT, variant_tcpc_init, HOOK_PRIO_INIT_I2C + 3);
 
 uint16_t tcpc_get_alert_status(void)
 {
