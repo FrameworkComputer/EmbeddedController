@@ -119,12 +119,10 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
-/* Matrix to rotate accelrator into standard reference frame */
-/* TODO(b/118756407): Ampton/Apel: tune motion sensors */
-const mat33_fp_t base_standard_ref = {
+const mat33_fp_t lid_standard_ref = {
 	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
 /* sensor private data */
@@ -144,7 +142,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_kx022_data,
 	 .port = I2C_PORT_SENSOR,
 	 .addr = KX022_ADDR1,
-	 .rot_standard_ref = NULL, /* Identity matrix. */
+	 .rot_standard_ref = &lid_standard_ref,
 	 .default_range = 4, /* g */
 	 .config = {
 		/* EC use accel for angle detection */
@@ -168,7 +166,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_SENSOR,
 	 .addr = BMI160_ADDR0,
-	 .rot_standard_ref = &base_standard_ref,
+	 .rot_standard_ref = NULL, /* Identity matrix. */
 	 .default_range = 4,  /* g */
 	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
 	 .max_frequency = BMI160_ACCEL_MAX_FREQ,
@@ -197,7 +195,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_SENSOR,
 	 .addr = BMI160_ADDR0,
 	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = &base_standard_ref,
+	 .rot_standard_ref = NULL, /* Identity matrix. */
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
