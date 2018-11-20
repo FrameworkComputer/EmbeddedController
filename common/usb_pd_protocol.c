@@ -1216,6 +1216,17 @@ void pd_execute_hard_reset(int port)
 					CHARGE_CEIL_NONE);
 #endif /* CONFIG_CHARGE_MANAGER */
 
+#ifdef CONFIG_USBC_VCONN
+		/*
+		 * Sink must turn off Vconn after a hard reset if it was being
+		 * sourced previously
+		 */
+		if (pd[port].flags & PD_FLAGS_VCONN_ON) {
+			set_vconn(port, 0);
+			pd[port].flags &= ~PD_FLAGS_VCONN_ON;
+		}
+#endif
+
 		set_state(port, PD_STATE_SNK_HARD_RESET_RECOVER);
 		return;
 	}
@@ -1224,6 +1235,9 @@ void pd_execute_hard_reset(int port)
 	/* We are a source, cut power */
 	pd_power_supply_reset(port);
 	pd[port].src_recover = get_time().val + PD_T_SRC_RECOVER;
+#ifdef CONFIG_USBC_VCONN
+	set_vconn(port, 0);
+#endif
 	set_state(port, PD_STATE_SRC_HARD_RESET_RECOVER);
 }
 
@@ -2975,6 +2989,15 @@ void pd_task(void *u)
 				timeout = 50*MSEC;
 				break;
 			}
+
+#ifdef CONFIG_USBC_VCONN
+			/*
+			 * Start sourcing Vconn again and set the flag, in case
+			 * it was 0 due to a previous swap
+			 */
+			set_vconn(port, 1);
+			pd[port].flags |= PD_FLAGS_VCONN_ON;
+#endif
 
 			/* Enable VBUS */
 			timeout = 10*MSEC;
