@@ -61,7 +61,7 @@ enum nvmem_users {
 	NVMEM_NUM_USERS
 };
 #endif
-#define CONFIG_FLASH_NVMEM_VARS_USER_NUM NVMEM_NUM_USERS
+#define CONFIG_FLASH_NVMEM_VARS_USER_NUM NVMEM_CR50
 
 /******************************************************************************/
 #define CONFIG_SW_CRC
