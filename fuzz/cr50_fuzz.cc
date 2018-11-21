@@ -6,6 +6,7 @@
 
 #include <unistd.h>
 
+#include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <unordered_map>
@@ -66,10 +67,53 @@ void InitializeFuzzerRun() {
   srand(0);
 }
 
+// Used to verify the model hasn't become out of sync with the implementation.
+// The usefulness of this fuzzer comes from its ability to reach all the code
+// paths.
+bool SelfTest() {
+  InitializeFuzzerRun();
+
+  PinweaverModel pinweaver_model;
+  alignas(kBufferAlignment) uint8_t buffer[PW_MAX_MESSAGE_SIZE] = {};
+  fuzz::span<uint8_t> buffer_view(buffer, sizeof(buffer));
+  fuzz::pinweaver::Request request;
+
+  fuzz::pinweaver::ResetTree* reset_tree = request.mutable_reset_tree();
+  reset_tree->set_height(2);
+  reset_tree->set_bits_per_level(2);
+  assert(pinweaver_model.ApplyRequest(request, buffer_view) == EC_SUCCESS);
+
+  fuzz::pinweaver::InsertLeaf* insert_leaf = request.mutable_insert_leaf();
+  constexpr char delay_schedule[] = "\000\000\000\005\377\377\377\377";
+  insert_leaf->mutable_delay_schedule()->assign(
+      delay_schedule, delay_schedule + sizeof(delay_schedule));
+  assert(pinweaver_model.ApplyRequest(request, buffer_view) == EC_SUCCESS);
+
+  request.mutable_try_auth();
+  assert(pinweaver_model.ApplyRequest(request, buffer_view) == EC_SUCCESS);
+
+  request.mutable_get_log();
+  assert(pinweaver_model.ApplyRequest(request, buffer_view) == EC_SUCCESS);
+
+  request.mutable_log_replay();
+  assert(pinweaver_model.ApplyRequest(request, buffer_view) == EC_SUCCESS);
+
+  request.mutable_reset_auth();
+  assert(pinweaver_model.ApplyRequest(request, buffer_view) == EC_SUCCESS);
+
+  request.mutable_remove_leaf();
+  assert(pinweaver_model.ApplyRequest(request, buffer_view) == EC_SUCCESS);
+
+  return true;
+}
+
 DEFINE_CUSTOM_PROTO_MUTATOR_IMPL(false, fuzz::Cr50FuzzerInput)
 DEFINE_CUSTOM_PROTO_CROSSOVER_IMPL(false, fuzz::Cr50FuzzerInput)
 
 extern "C" int test_fuzz_one_input(const uint8_t* data, unsigned int size) {
+  static bool initialized = SelfTest();
+  assert(initialized);
+
   fuzz::Cr50FuzzerInput input;
   if (!LoadProtoInput(false, data, size, &input)) {
     return 0;
