@@ -1003,6 +1003,9 @@ static void cec_init(void)
 	/* Enable capture TCNT1 into TCRA and preset TCNT1. */
 	SET_BIT(NPCX_TMCTRL(mdl), NPCX_TMCTRL_TAEN);
 
+	/* If RO doesn't set it, RW needs to set it explicitly. */
+	gpio_set_level(CEC_GPIO_PULL_UP, 1);
+
 	CPRINTS("CEC initialized");
 }
 DECLARE_HOOK(HOOK_INIT, cec_init, HOOK_PRIO_LAST);
