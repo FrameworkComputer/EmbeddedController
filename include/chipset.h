@@ -176,6 +176,11 @@ static inline int chipset_in_state(int state_mask)
 	return state_mask & CHIPSET_STATE_ANY_OFF;
 }
 
+static inline int chipset_in_or_transitioning_to_state(int state_mask)
+{
+	return state_mask & CHIPSET_STATE_ANY_OFF;
+}
+
 static inline void chipset_exit_hard_off(void) { }
 static inline void chipset_throttle_cpu(int throttle) { }
 static inline void chipset_force_shutdown(enum chipset_shutdown_reason reason)
