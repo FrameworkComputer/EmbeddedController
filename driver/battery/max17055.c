@@ -263,64 +263,67 @@ enum battery_present battery_is_present(void)
 void battery_get_params(struct batt_params *batt)
 {
 	int reg = 0;
+	struct batt_params batt_new = {0};
 
-	/* Reset params */
-	memset(batt, 0, sizeof(struct batt_params));
 	/*
 	 * Assuming the battery is responsive as long as
 	 * max17055 finds battery is present.
 	 */
-	batt->is_present = battery_is_present();
+	batt_new.is_present = battery_is_present();
 
-	if (batt->is_present == BP_YES)
-		batt->flags |= BATT_FLAG_RESPONSIVE;
-	else if (batt->is_present == BP_NO)
+	if (batt_new.is_present == BP_YES)
+		batt_new.flags |= BATT_FLAG_RESPONSIVE;
+	else if (batt_new.is_present == BP_NO)
 		/* Battery is not present, gauge won't report useful info. */
-		return;
+		goto batt_out;
 
 	if (max17055_read(REG_TEMPERATURE, &reg))
-		batt->flags |= BATT_FLAG_BAD_TEMPERATURE;
+		batt_new.flags |= BATT_FLAG_BAD_TEMPERATURE;
 
-	batt->temperature = TEMPERATURE_CONV((int16_t)reg);
+	batt_new.temperature = TEMPERATURE_CONV((int16_t)reg);
 
 	if (max17055_read(REG_STATE_OF_CHARGE, &reg) &&
 	    fake_state_of_charge < 0)
-		batt->flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
+		batt_new.flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
 
-	batt->state_of_charge = fake_state_of_charge >= 0 ?
+	batt_new.state_of_charge = fake_state_of_charge >= 0 ?
 				fake_state_of_charge : PERCENTAGE_CONV(reg);
 
 	if (max17055_read(REG_VOLTAGE, &reg))
-		batt->flags |= BATT_FLAG_BAD_VOLTAGE;
+		batt_new.flags |= BATT_FLAG_BAD_VOLTAGE;
 
-	batt->voltage = VOLTAGE_CONV(reg);
+	batt_new.voltage = VOLTAGE_CONV(reg);
 
 	if (max17055_read(REG_CURRENT, &reg))
-		batt->flags |= BATT_FLAG_BAD_CURRENT;
+		batt_new.flags |= BATT_FLAG_BAD_CURRENT;
 
-	batt->current = CURRENT_CONV((int16_t)reg);
+	batt_new.current = CURRENT_CONV((int16_t)reg);
 
-	batt->desired_voltage = battery_get_info()->voltage_max;
-	batt->desired_current = BATTERY_DESIRED_CHARGING_CURRENT;
+	batt_new.desired_voltage = battery_get_info()->voltage_max;
+	batt_new.desired_current = BATTERY_DESIRED_CHARGING_CURRENT;
 
-	if (battery_remaining_capacity(&batt->remaining_capacity))
-		batt->flags |= BATT_FLAG_BAD_REMAINING_CAPACITY;
+	if (battery_remaining_capacity(&batt_new.remaining_capacity))
+		batt_new.flags |= BATT_FLAG_BAD_REMAINING_CAPACITY;
 
-	if (battery_full_charge_capacity(&batt->full_capacity))
-		batt->flags |= BATT_FLAG_BAD_FULL_CAPACITY;
+	if (battery_full_charge_capacity(&batt_new.full_capacity))
+		batt_new.flags |= BATT_FLAG_BAD_FULL_CAPACITY;
 
 	/*
 	 * Charging allowed if both desired voltage and current are nonzero
 	 * and battery isn't full (and we read them all correctly).
 	 */
-	if (!(batt->flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
-	    batt->desired_voltage &&
-	    batt->desired_current &&
-	    batt->state_of_charge < BATTERY_LEVEL_FULL)
-		batt->flags |= BATT_FLAG_WANT_CHARGE;
+	if (!(batt_new.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
+	    batt_new.desired_voltage &&
+	    batt_new.desired_current &&
+	    batt_new.state_of_charge < BATTERY_LEVEL_FULL)
+		batt_new.flags |= BATT_FLAG_WANT_CHARGE;
 
-	if (battery_status(&batt->status))
-		batt->flags |= BATT_FLAG_BAD_STATUS;
+	if (battery_status(&batt_new.status))
+		batt_new.flags |= BATT_FLAG_BAD_STATUS;
+
+batt_out:
+	/* Update visible battery parameters */
+	memcpy(batt, &batt_new, sizeof(*batt));
 }
 
 #ifdef CONFIG_CMD_PWR_AVG
