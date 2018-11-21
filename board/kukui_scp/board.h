@@ -12,6 +12,20 @@
 #undef  CONFIG_LID_SWITCH
 #undef  CONFIG_FW_INCLUDE_RO
 
+/* IPI configs */
+#define CONFIG_IPI
+
+/* IPI ID should be in sync across kernel and EC. */
+#define IPI_SCP_INIT 0
+#define IPI_HOST_COMMAND 1
+#define IPI_MDP 2
+#define IPI_VDEC_H264 3
+#define IPI_VDEC_VP8 4
+#define IPI_VDEC_VP9 5
+#define IPI_VENC_H264 6
+#define IPI_VENC_VP8 7
+#define IPI_COUNT 8
+
 #undef  CONFIG_UART_CONSOLE
 /*
  * CONFIG_UART_CONSOLE

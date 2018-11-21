@@ -71,12 +71,22 @@
 #define   IPC_SCP2HOST_SSHUB		0xff0000
 #define   WDT_INT			0x100
 #define   IPC_SCP2HOST                  0xff
+#define   IPC_SCP2HOST_BIT		0x1
 
 /* SCP to SPM interrupt */
 #define SCP_SPM_INT			REG32(SCP_CFG_BASE + 0x20)
+#define   SPM_INT_A2SPM			(1 << 0)
+#define   SPM_INT_B2SPM			(1 << 1)
 #define SCP_SPM_INT2			REG32(SCP_CFG_BASE + 0x24)
 
+/*
+ * AP side to SCP IPC
+ * APMCU writes 1 bit to trigger ith IPC to SCP.
+ * SCP writes 1 bit to ith bit to clear ith IPC.
+ */
 #define SCP_GIPC_IN			REG32(SCP_CFG_BASE + 0x28)
+  #define SCP_GIPC_IN_CLEAR_IPCN(n)	(1 << (n))
+  #define SCP_GPIC_IN_CLEAR_ALL		0x7FFFF
 #define SCP_CONN_INT			REG32(SCP_CFG_BASE + 0x2C)
 
 /* 8 general purpose registers, 0 ~ 7 */
@@ -132,6 +142,7 @@
 #define SCP_INTC_BASE			(SCP_CFG_BASE + 0x2000)
 #define SCP_INTC_IRQ_STATUS		REG32(SCP_INTC_BASE)
 #define SCP_INTC_IRQ_ENABLE		REG32(SCP_INTC_BASE + 0x04)
+#define   IPC0_IRQ_EN			(1 << 0)
 #define SCP_INTC_IRQ_OUTPUT		REG32(SCP_INTC_BASE + 0x08)
 #define SCP_INTC_IRQ_WAKEUP		REG32(SCP_INTC_BASE + 0x0C)
 #define SCP_INTC_NMI			REG32(SCP_INTC_BASE + 0x10)

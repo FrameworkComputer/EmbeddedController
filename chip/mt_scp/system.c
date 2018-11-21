@@ -70,8 +70,8 @@ static void scp_enable_tcm(void)
 
 static void scp_enable_pirq(void)
 {
-	/* Enable peripheral to SCP IRQ */
-	SCP_INTC_IRQ_ENABLE = 0xFFFFFFFF;
+	/* Enable all peripheral to SCP IRQ, except IPC0. */
+	SCP_INTC_IRQ_ENABLE = 0xFFFFFFFE;
 	SCP_INTC_IRQ_ENABLE_MSB = 0xFFFFFFFF;
 }
 
@@ -216,8 +216,6 @@ void system_pre_init(void)
 	scp_enable_pirq();
 	/* Init dram mapping */
 	scp_memmap_init();
-	/* Init inter processor communication */
-	/* scp_ipi_init(); */
 }
 
 void system_reset(int flags)

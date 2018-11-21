@@ -49,6 +49,9 @@ CONSOLE_CHANNEL(CC_HOSTCMD,      "hostcmd")
 #ifdef CONFIG_I2C
 CONSOLE_CHANNEL(CC_I2C,          "i2c")
 #endif
+#ifdef CONFIG_IPI
+CONSOLE_CHANNEL(CC_IPI,          "ipi")
+#endif
 CONSOLE_CHANNEL(CC_KEYBOARD,     "keyboard")
 #ifdef HAS_TASK_KEYSCAN
 CONSOLE_CHANNEL(CC_KEYSCAN,      "keyscan")
