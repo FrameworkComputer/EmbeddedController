@@ -263,8 +263,8 @@
 
 /* Common Sensor Defines */
 #define CONFIG_TABLET_MODE
-#define CONFIG_TABLET_SWITCH
-#define TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
+#define CONFIG_HALL_SENSOR
+#define HALL_SENSOR_GPIO_L GPIO_TABLET_MODE_L
 /*
  * Slew rate on the PP1800_SENSOR load switch requires a short delay on startup.
  */

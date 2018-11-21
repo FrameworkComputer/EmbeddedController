@@ -39,52 +39,66 @@ void tablet_set_mode(int mode)
 }
 
 /* This ifdef can be removed once we clean up past projects which do own init */
-#ifdef CONFIG_TABLET_SWITCH
-#ifndef TABLET_MODE_GPIO_L
-#error  TABLET_MODE_GPIO_L must be defined
+#ifdef CONFIG_HALL_SENSOR
+#ifndef HALL_SENSOR_GPIO_L
+#error  HALL_SENSOR_GPIO_L must be defined
 #endif
-static void tablet_mode_debounce(void)
+static void hall_sensor_interrupt_debounce(void)
 {
-	/* We won't reach here on boards without a dedicated tablet switch */
-	tablet_set_mode(!gpio_get_level(TABLET_MODE_GPIO_L));
+	int flipped_360_mode = !gpio_get_level(HALL_SENSOR_GPIO_L);
+
+	/*
+	 * 1. Peripherals are disabled only when lid reaches 360 position (It's
+	 * probably already disabled by motion_sense task). We deliberately do
+	 * not enable peripherals when the lid is leaving 360 position. Instead,
+	 * we let motion sense task enable it once it is reaches laptop zone
+	 * (180 or less).
+	 * 2. Similarly, tablet mode is set here when lid reaches 360
+	 * position. It should already be set by motion lid driver. We
+	 * deliberately do not clear tablet mode when lid is leaving 360
+	 * position(if motion lid driver is used). Instead, we let motion lid
+	 * driver to clear it when lid goes into laptop zone.
+	 */
+
+#ifdef CONFIG_LID_ANGLE
+	if (flipped_360_mode)
+#endif /* CONFIG_LID_ANGLE */
+		tablet_set_mode(flipped_360_mode);
 
 #ifdef CONFIG_LID_ANGLE_UPDATE
-	/* Then, we disable peripherals only when the lid reaches 360 position.
-	 * (It's probably already disabled by motion_sense_task.)
-	 * We deliberately do not enable peripherals when the lid is leaving
-	 * 360 position. Instead, we let motion_sense_task enable it once it
-	 * reaches laptop zone (180 or less). */
-	if (tablet_mode)
+	if (flipped_360_mode)
 		lid_angle_peripheral_enable(0);
 #endif /* CONFIG_LID_ANGLE_UPDATE */
 }
-DECLARE_DEFERRED(tablet_mode_debounce);
+DECLARE_DEFERRED(hall_sensor_interrupt_debounce);
 
-#define TABLET_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for tablet switch */
+/* Debounce time for hall sensor interrupt */
+#define HALL_SENSOR_DEBOUNCE_US    (30 * MSEC)
 
-void tablet_mode_isr(enum gpio_signal signal)
+void hall_sensor_isr(enum gpio_signal signal)
 {
-	hook_call_deferred(&tablet_mode_debounce_data, TABLET_DEBOUNCE_US);
+	hook_call_deferred(&hall_sensor_interrupt_debounce_data,
+				HALL_SENSOR_DEBOUNCE_US);
 }
 
-static void tablet_mode_init(void)
+static void hall_sensor_init(void)
 {
 	/* If this sub-system was disabled before initializing, honor that. */
 	if (disabled)
 		return;
 
-	gpio_enable_interrupt(TABLET_MODE_GPIO_L);
+	gpio_enable_interrupt(HALL_SENSOR_GPIO_L);
 	/* Ensure tablet mode is initialized according to the hardware state
 	 * so that the cached state reflects reality. */
-	tablet_mode_debounce();
+	hall_sensor_interrupt_debounce();
 }
-DECLARE_HOOK(HOOK_INIT, tablet_mode_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, hall_sensor_init, HOOK_PRIO_DEFAULT);
 
-void tablet_disable_switch(void)
+void hall_sensor_disable(void)
 {
-	gpio_disable_interrupt(TABLET_MODE_GPIO_L);
+	gpio_disable_interrupt(HALL_SENSOR_GPIO_L);
 	/* Cancel any pending debounce calls */
-	hook_call_deferred(&tablet_mode_debounce_data, -1);
+	hook_call_deferred(&hall_sensor_interrupt_debounce_data, -1);
 	tablet_set_mode(0);
 	disabled = 1;
 }

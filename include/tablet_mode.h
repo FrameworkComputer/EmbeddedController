@@ -12,19 +12,21 @@ int tablet_get_mode(void);
 void tablet_set_mode(int mode);
 
 /**
- * Interrupt service routine for tablet switch.
+ * Interrupt service routine for hall sensor.
  *
- * TABLET_MODE_GPIO_L must be defined.
+ * HALL_SENSOR_GPIO_L must be defined.
  *
  * @param signal: GPIO signal
  */
-void tablet_mode_isr(enum gpio_signal signal);
+void hall_sensor_isr(enum gpio_signal signal);
 
 /**
- * Disables the tablet mode switch sub-system and turns off tablet mode. This is
- * useful for clamshell devices.
+ * Disables the interrupt on GPIO connected to hall sensor. Additionally, it
+ * disables the tablet mode switch sub-system and turns off tablet mode. This is
+ * useful when the same firmware is shared between convertible and clamshell
+ * devices to turn off hall sensor and tablet mode detection on clamshell.
  */
-void tablet_disable_switch(void);
+void hall_sensor_disable(void);
 
 #else
 

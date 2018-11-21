@@ -2877,10 +2877,11 @@
 #undef CONFIG_TABLET_MODE_SWITCH
 
 /*
- * Add a physical switch to indicate when we are in tablet mode.
- * Define TABLET_MODE_GPIO_L and direct its interrupt hander to tablet_mode_isr
+ * Config to identify what devices have hall sensor. If a board selects
+ * this config, it also needs to provide HALL_SENSOR_GPIO_L and direct its
+ * interrupt to hall_sensor_isr.
  */
-#undef CONFIG_TABLET_SWITCH
+#undef CONFIG_HALL_SENSOR
 
 /*
  * Add a virtual switch to indicate when detachable device has
