@@ -15,21 +15,21 @@
 
 const int led_charge_lvl_1 = 0;
 
-const int led_charge_lvl_2 = 100;
+const int led_charge_lvl_2 = 94;
 
 /* Ampton: Note there is only LED for charge / power */
 struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
-	[STATE_CHARGING_LVL_1]       = {{EC_LED_COLOR_WHITE, 2 * LED_ONE_SEC},
-					{EC_LED_COLOR_AMBER, 2 * LED_ONE_SEC} },
+	[STATE_CHARGING_LVL_1]       = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
 	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
-	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_WHITE,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0]	     = {{EC_LED_COLOR_WHITE,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S3]	     = {{EC_LED_COLOR_AMBER, 4 * LED_ONE_SEC},
-					{LED_OFF,            1 * LED_ONE_SEC} },
+	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
+	[STATE_DISCHARGE_S0]	     = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
+	[STATE_DISCHARGE_S3]	     = {{EC_LED_COLOR_AMBER, 1 * LED_ONE_SEC},
+					{LED_OFF,            3 * LED_ONE_SEC} },
 	[STATE_DISCHARGE_S5]         = {{LED_OFF,            LED_INDEFINITE} },
-	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_WHITE, 2 * LED_ONE_SEC},
+	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_WHITE, 1 * LED_ONE_SEC},
+					{EC_LED_COLOR_AMBER, 1 * LED_ONE_SEC} },
+	[STATE_FACTORY_TEST]         = {{EC_LED_COLOR_WHITE, 2 * LED_ONE_SEC},
 					{EC_LED_COLOR_AMBER, 2 * LED_ONE_SEC} },
-	[STATE_FACTORY_TEST]         = {{EC_LED_COLOR_WHITE,  LED_INDEFINITE} },
 };
 BUILD_ASSERT(ARRAY_SIZE(led_bat_state_table) == LED_NUM_STATES);
 
