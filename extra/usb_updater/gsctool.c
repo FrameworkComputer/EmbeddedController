@@ -207,7 +207,7 @@ struct upgrade_pkt {
 static int verbose_mode;
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "aBbcd:F:fhIikMmO:oPprstUuVvw";
+static char *short_opts = "aBbcd:F:fhIikMmO:oPpR:rS:stUuVvw";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"any",		                0,   NULL, 'a'},
@@ -228,6 +228,8 @@ static const struct option long_opts[] = {
 	{"password",	                0,   NULL, 'P'},
 	{"post_reset",	                0,   NULL, 'p'},
 	{"rma_auth",	                2,   NULL, 'r'},
+	{"sn_bits",	                1,   NULL, 'S'},
+	{"sn_rma_inc",	                1,   NULL, 'R'},
 	{"systemdev",	                0,   NULL, 's'},
 	{"tpm_mode",                    2,   NULL, 'm'},
 	{"trunks_send",	                0,   NULL, 't'},
@@ -545,6 +547,12 @@ static void usage(int errs)
 	       "                           Get or set Info1 board ID fields\n"
 	       "                           ID could be 32 bit hex or 4 "
 	       "character string.\n"
+	       "  -S,--sn_bits SN_1:SN_2:SN_3\n"
+	       "                           Set Info1 SN bits fields.\n"
+	       "                           SN_n should be 32 bit hex.\n"
+	       "  -R,--sn_rma_inc RMA_INC\n"
+	       "                           Increment SN RMA count by RMA_INC.\n"
+	       "                           RMA_INC should be 0-7.\n"
 	       "  -k,--ccd_lock            Lock CCD\n"
 	       "  -M,--machine             Output in a machine-friendly way. "
 	       "Effective with -b, -f, -i, and -O.\n"
@@ -1477,6 +1485,38 @@ static int parse_bid(const char *opt,
 	return 1;
 }
 
+static int parse_sn_bits(const char *opt, uint32_t *sn_bits)
+{
+	const char *s;
+	char *e;
+	int i = 0;
+
+	s = opt;
+	sn_bits[i] = (uint32_t)strtoul(s, &e, 0);
+
+	while (s != e && *e == ':' && i < 2) {
+		s = e + 1;
+		i++;
+		sn_bits[i] = (uint32_t)strtoul(s, &e, 0);
+	}
+
+	return *e == '\0' && i == 2;
+}
+
+static int parse_sn_inc_rma(const char *opt, uint8_t *arg)
+{
+	uint32_t inc;
+	char *e;
+
+	inc = (uint32_t)strtoul(opt, &e, 0);
+
+	if (opt == e || *e != '\0' || inc > 7)
+		return 0;
+
+	*arg = inc;
+	return 1;
+}
+
 static uint32_t common_process_password(struct transfer_descriptor *td,
 					enum ccd_vendor_subcommands subcmd)
 {
@@ -1864,6 +1904,69 @@ void process_bid(struct transfer_descriptor *td,
 	}
 }
 
+static void process_sn_bits(struct transfer_descriptor *td,
+			    uint32_t *sn_bits)
+{
+	int rv;
+	int i = 0;
+	uint32_t command_body[3];
+	uint8_t response_code;
+	size_t response_size = sizeof(response_code);
+
+	for (i = 0; i < 3; i++)
+		command_body[i] = htobe32(sn_bits[i]);
+
+	rv = send_vendor_command(td, VENDOR_CC_SN_SET_HASH,
+				 command_body, sizeof(command_body),
+				 &response_code, &response_size);
+
+	if (rv) {
+		fprintf(stderr, "Error %d while sending vendor command\n", rv);
+		exit(update_error);
+	}
+
+	if (response_size != 1) {
+		fprintf(stderr,
+			"Unexpected response size while setting sn bits\n");
+		exit(update_error);
+	}
+
+	if (response_code != 0) {
+		fprintf(stderr, "Error %d while setting sn bits\n",
+			response_code);
+		exit(update_error);
+	}
+}
+
+static void process_sn_inc_rma(struct transfer_descriptor *td,
+			       uint8_t arg)
+{
+	int rv;
+	uint8_t response_code;
+	size_t response_size = sizeof(response_code);
+
+	rv = send_vendor_command(td, VENDOR_CC_SN_INC_RMA,
+				 &arg, sizeof(arg),
+				 &response_code, &response_size);
+	if (rv) {
+		fprintf(stderr, "Error %d while sending vendor command\n", rv);
+		exit(update_error);
+	}
+
+	if (response_size != 1) {
+		fprintf(stderr,
+			"Unexpected response size while "
+			"incrementing sn rma count\n");
+		exit(update_error);
+	}
+
+	if (response_code != 0) {
+		fprintf(stderr, "Error %d while incrementing rma count\n",
+			response_code);
+		exit(update_error);
+	}
+}
+
 /*
  * Retrieve the RMA authentication challenge from the Cr50, print out the
  * challenge on the console, then prompt the user for the authentication code,
@@ -2061,6 +2164,10 @@ int main(int argc, char *argv[])
 	int factory_mode = 0;
 	char *factory_mode_arg;
 	char *tpm_mode_arg = NULL;
+	int sn_bits = 0;
+	uint32_t sn_bits_arg[3];
+	int sn_inc_rma = 0;
+	uint8_t sn_inc_rma_arg;
 
 	// Explicitly sets buffering type to line buffered so that output lines
 	// can be written to pipe instantly. This is needed when the
@@ -2169,6 +2276,21 @@ int main(int argc, char *argv[])
 
 			rma_auth_code = optarg;
 			break;
+		case 'R':
+			sn_inc_rma = 1;
+
+			if (!optarg && argv[optind] && argv[optind][0] != '-')
+				/* optional argument present. */
+				optarg = argv[optind++];
+
+			if (!parse_sn_inc_rma(optarg, &sn_inc_rma_arg)) {
+				fprintf(stderr,
+					"Invalid sn_rma_inc argument: \"%s\"\n",
+					optarg);
+				errorcnt++;
+			}
+
+			break;
 		case 's':
 			if (td.ep_type || try_all_transfer) {
 				errorcnt++;
@@ -2176,6 +2298,21 @@ int main(int argc, char *argv[])
 				break;
 			}
 			td.ep_type = dev_xfer;
+			break;
+		case 'S':
+			sn_bits = 1;
+
+			if (!optarg && argv[optind] && argv[optind][0] != '-')
+				/* optional argument present. */
+				optarg = argv[optind++];
+
+			if (!parse_sn_bits(optarg, sn_bits_arg)) {
+				fprintf(stderr,
+					"Invalid sn_bits argument: \"%s\"\n",
+					optarg);
+				errorcnt++;
+			}
+
 			break;
 		case 't':
 			if (td.ep_type || try_all_transfer) {
@@ -2236,6 +2373,8 @@ int main(int argc, char *argv[])
 	    !password &&
 	    !rma &&
 	    !show_fw_ver &&
+	    !sn_bits &&
+	    !sn_inc_rma &&
 	    !openbox_desc_file &&
 	    !tpm_mode &&
 	    !wp) {
@@ -2317,6 +2456,12 @@ int main(int argc, char *argv[])
 
 		exit(rv);
 	}
+
+	if (sn_bits)
+		process_sn_bits(&td, sn_bits_arg);
+
+	if (sn_inc_rma)
+		process_sn_inc_rma(&td, sn_inc_rma_arg);
 
 	if (data || show_fw_ver) {
 

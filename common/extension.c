@@ -31,6 +31,8 @@ uint32_t extension_route_command(struct vendor_cmd_params *p)
 		case VENDOR_CC_INVALIDATE_INACTIVE_RW:
 		case VENDOR_CC_SET_BOARD_ID:
 		case VENDOR_CC_TPM_MODE:
+		case VENDOR_CC_SN_SET_HASH:
+		case VENDOR_CC_SN_INC_RMA:
 #endif /* defined(CR50_DEV) */
 		case EXTENSION_POST_RESET: /* Always need to reset. */
 		case VENDOR_CC_CCD:
