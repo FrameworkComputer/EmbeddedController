@@ -14,6 +14,7 @@
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/ppc/sn5s330.h"
+#include "driver/sync.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/usb_mux_it5205.h"
@@ -224,6 +225,17 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
+	[VSYNC] = {
+	 .name = "Camera VSYNC",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_GPIO,
+	 .type = MOTIONSENSE_TYPE_SYNC,
+	 .location = MOTIONSENSE_LOC_CAMERA,
+	 .drv = &sync_drv,
+	 .default_range = 0,
+	 .min_frequency = 0,
+	 .max_frequency = 1,
+	},
 };
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
@@ -233,6 +245,12 @@ static int board_is_convertible(void)
 	/* SKU IDs of Ampton & unprovisioned: 1, 2, 3, 4, 255 */
 	return sku_id == 1 || sku_id == 2 || sku_id == 3 || sku_id == 4
 		|| sku_id == 255;
+}
+
+static int board_with_ar_cam(void)
+{
+	/* SKU ID of Ampton with AR Cam: 3, 4 */
+	return sku_id == 3 || sku_id == 4;
 }
 
 static void board_update_sensor_config_from_sku(void)
@@ -248,6 +266,14 @@ static void board_update_sensor_config_from_sku(void)
 		/* Base accel is not stuffed, don't allow line to float */
 		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
 			       GPIO_INPUT | GPIO_PULL_DOWN);
+	}
+
+	if (board_with_ar_cam()) {
+		/* Enable interrupt from camera */
+		gpio_enable_interrupt(GPIO_WFCAM_VSYNC);
+	} else {
+		/* Camera isn't stuffed, don't allow line to float */
+		gpio_set_flags(GPIO_WFCAM_VSYNC, GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
 
