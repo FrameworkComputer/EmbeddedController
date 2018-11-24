@@ -29,7 +29,7 @@
 #define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_MOTION_LID, format, ## args)
 
-#ifdef CONFIG_LID_ANGLE_INVALID_CHECK
+#ifdef CONFIG_TABLET_MODE
 /* Previous lid_angle. */
 static fp_t last_lid_angle_fp = FLOAT_TO_FP(-1);
 
@@ -116,19 +116,12 @@ const struct motion_sensor_t * const accel_base =
 const struct motion_sensor_t * const accel_lid =
 	&motion_sensors[CONFIG_LID_ANGLE_SENSOR_LID];
 
+#ifdef CONFIG_TABLET_MODE
 __attribute__((weak)) int board_is_lid_angle_tablet_mode(void)
 {
-#ifdef CONFIG_LID_ANGLE_TABLET_MODE
 	return 1;
-#else
-	return 0;
-#endif
 }
 
-#ifdef CONFIG_LID_ANGLE_TABLET_MODE
-#ifndef CONFIG_LID_ANGLE_INVALID_CHECK
-#error "Check for invalid transition needed"
-#endif
 /*
  * We are in tablet mode when the lid angle has been calculated
  * to be large.
@@ -202,7 +195,7 @@ static void motion_lid_set_tablet_mode(int reliable)
 		tablet_mode_debounce_cnt = TABLET_MODE_DEBOUNCE_COUNT;
 }
 
-#endif /* CONFIG_LID_ANGLE_TABLET_MODE */
+#endif /* CONFIG_TABLET_MODE */
 
 #if defined(CONFIG_DPTF_MULTI_PROFILE) && \
 	defined(CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR)
@@ -405,7 +398,7 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 	    (2 * 10 * NOISY_MAGNITUDE_DEVIATION))
 		reliable = 0;
 
-#ifdef CONFIG_LID_ANGLE_INVALID_CHECK
+#ifdef CONFIG_TABLET_MODE
 	/* Ignore large angles when the lid is closed. */
 	if (!lid_is_open() &&
 	    (lid_to_base_fp > FLOAT_TO_FP(SMALL_LID_ANGLE_RANGE)))
@@ -464,7 +457,7 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 	motion_lid_set_dptf_profile(reliable);
 #endif /* CONFIG_DPTF_MULTI_PROFILE && CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR */
 
-#else    /* CONFIG_LID_ANGLE_INVALID_CHECK */
+#else    /* CONFIG_TABLET_MODE */
 	*lid_angle = FP_TO_INT(lid_to_base_fp + FLOAT_TO_FP(0.5));
 #endif
 	return reliable;

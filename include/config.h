@@ -1732,17 +1732,6 @@
 /* Do we want to detect the lid angle? */
 #undef CONFIG_LID_ANGLE
 
-/*
- * Add code for preventing 0 and 360 degree transition. Needed when
- * Device supports tablet mode.
- */
-#undef CONFIG_LID_ANGLE_INVALID_CHECK
-
-/*
- * Use lid angle to detect tablet mode.
- */
-#undef CONFIG_LID_ANGLE_TABLET_MODE
-
 /* Which sensor is located on the base? */
 #undef CONFIG_LID_ANGLE_SENSOR_BASE
 /* Which sensor is located on the lid? */
