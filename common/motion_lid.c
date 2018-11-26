@@ -135,18 +135,18 @@ __attribute__((weak)) int board_is_lid_angle_tablet_mode(void)
  * - when lid is closed while the hinge is perpendicular to the floor, we will
  *   stay in tablet mode.
  *
- * Tablet mode is defined as the base being behind the lid. We use 2 threshold
- * to calculate tablet mode:
+ * Tablet mode is defined as the lid angle being greater than 180 degree. We use
+ * 2 threshold to calculate tablet mode:
  * tablet_mode:
- *   1 |                  +-----<----+----------
- *     |                  \/         /\
- *     |                  |          |
- *   0 |------------------------>----+
- *     +------------------+----------+----------+ lid angle
- *     0                 240        300        360
+ *   1 |            +-----<----+----------
+ *     |            \/         /\
+ *     |            |          |
+ *   0 |------------------>----+
+ *     +------------+----------+----------+ lid angle
+ *     0           160        200        360
  */
-#define TABLET_ZONE_LID_ANGLE FLOAT_TO_FP(300)
-#define LAPTOP_ZONE_LID_ANGLE FLOAT_TO_FP(240)
+#define TABLET_ZONE_LID_ANGLE FLOAT_TO_FP(200)
+#define LAPTOP_ZONE_LID_ANGLE FLOAT_TO_FP(160)
 
 /*
  * We will change our tablet mode status when we are "convinced" that it has
