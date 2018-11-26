@@ -8,12 +8,6 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/*
- * Allow dangerous commands.
- * TODO(b:111816190): Remove this config before production.
- */
-#define CONFIG_SYSTEM_UNLOCKED
-
 /* EC */
 #define CONFIG_ADC
 #define CONFIG_BACKLIGHT_LID
@@ -141,6 +135,7 @@
 #define CONFIG_USB_CHARGER
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_COMM_LOCKED
 #define CONFIG_USB_PD_DISCHARGE_TCPC
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE

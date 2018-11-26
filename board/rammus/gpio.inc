@@ -95,7 +95,6 @@ GPIO(USB_A_CHARGE_EN_L,      PIN(0, 0), GPIO_OUT_LOW)
 GPIO(EN_USB_A_5V,            PIN(8, 4), GPIO_OUT_LOW)
 
 /* LEDs */
-/* TODO(b:111815820): Need to modify the LED setting later */
 GPIO(CHG_LED1,               PIN(8, 0), GPIO_OUT_LOW)
 GPIO(CHG_LED2,               PIN(B, 7), GPIO_OUT_LOW)
 GPIO(PWR_LED,                PIN(8, 6), GPIO_OUT_LOW)
