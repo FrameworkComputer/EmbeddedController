@@ -242,7 +242,7 @@ int rt946x_por_reset(void)
 
 static int rt946x_reset_to_zero(void)
 {
-	int rv = 0;
+	int rv;
 
 	rv = charger_set_current(0);
 	if (rv)
@@ -888,11 +888,142 @@ static void rt946x_init(void)
 DECLARE_HOOK(HOOK_INIT, rt946x_init, HOOK_PRIO_INIT_I2C + 1);
 
 #ifdef HAS_TASK_USB_CHG
-static int rt946x_get_bc12_device_type(void)
+#ifdef CONFIG_CHARGER_MT6370
+static int mt6370_detect_apple_samsung_ta(int usb_stat)
+{
+	int ret, reg;
+	int chg_type =
+		(usb_stat & MT6370_MASK_USB_STATUS) >> MT6370_SHIFT_USB_STATUS;
+	int dp_2_3v, dm_2_3v;
+
+	/* Only SDP/CDP/DCP could possibly be Apple/Samsung TA */
+	if (chg_type != MT6370_CHG_TYPE_SDPNSTD &&
+	    chg_type != MT6370_CHG_TYPE_CDP &&
+	    chg_type != MT6370_CHG_TYPE_DCP)
+		return chg_type;
+
+	if (chg_type == MT6370_CHG_TYPE_SDPNSTD ||
+	    chg_type == MT6370_CHG_TYPE_CDP)
+		if (!(usb_stat & MT6370_MASK_DCD_TIMEOUT))
+			return chg_type;
+
+	/* Check D+ > 0.9V */
+	ret = rt946x_update_bits(MT6370_REG_QCSTATUS2, MT6360_MASK_CHECK_DPDM,
+				 MT6370_MASK_APP_SS_EN | MT6370_MASK_APP_SS_PL);
+	ret |= rt946x_read8(MT6370_REG_QCSTATUS2, &reg);
+
+	if (ret)
+		return chg_type;
+
+	/* Normal port (D+ < 0.9V) */
+	if (!(reg & MT6370_MASK_SS_OUT))
+		return chg_type;
+
+	/* Samsung charger (D+ < 1.5V) */
+	if (!(reg & MT6370_MASK_APP_OUT))
+		return MT6370_CHG_TYPE_SAMSUNG_CHARGER;
+
+	/* Check D+ > 2.3 V */
+	ret = rt946x_update_bits(MT6370_REG_QCSTATUS2, MT6360_MASK_CHECK_DPDM,
+				  MT6370_MASK_APP_REF | MT6370_MASK_APP_SS_PL |
+					  MT6370_MASK_APP_SS_EN);
+	ret |= rt946x_read8(MT6370_REG_QCSTATUS2, &reg);
+	dp_2_3v = reg & MT6370_MASK_APP_OUT;
+
+	/* Check D- > 2.3 V */
+	ret |= rt946x_update_bits(
+		MT6370_REG_QCSTATUS2, MT6360_MASK_CHECK_DPDM,
+		MT6370_MASK_APP_REF | MT6370_MASK_APP_DPDM_IN |
+			MT6370_MASK_APP_SS_PL | MT6370_MASK_APP_SS_EN);
+	ret |= rt946x_read8(MT6370_REG_QCSTATUS2, &reg);
+	dm_2_3v = reg & MT6370_MASK_APP_OUT;
+
+	if (ret)
+		return chg_type;
+
+	/* Apple charger */
+	if (!dp_2_3v && !dm_2_3v)
+		/* Apple 2.5W charger */
+		return MT6370_CHG_TYPE_APPLE_0_5A_CHARGER;
+	else if (!dp_2_3v && dm_2_3v)
+		/* Apple 5W charger */
+		return MT6370_CHG_TYPE_APPLE_1_0A_CHARGER;
+	else if (dp_2_3v && !dm_2_3v)
+		/* Apple 10W charger */
+		return MT6370_CHG_TYPE_APPLE_2_1A_CHARGER;
+	else
+		/* Apple 12W charger */
+		return MT6370_CHG_TYPE_APPLE_2_4A_CHARGER;
+}
+#endif
+
+static int mt6370_get_bc12_device_type(int charger_type)
+{
+	switch (charger_type) {
+	case MT6370_CHG_TYPE_SDP:
+	case MT6370_CHG_TYPE_SDPNSTD:
+		return CHARGE_SUPPLIER_BC12_SDP;
+	case MT6370_CHG_TYPE_CDP:
+		return CHARGE_SUPPLIER_BC12_CDP;
+	case MT6370_CHG_TYPE_DCP:
+	case MT6370_CHG_TYPE_SAMSUNG_CHARGER:
+	case MT6370_CHG_TYPE_APPLE_0_5A_CHARGER:
+	case MT6370_CHG_TYPE_APPLE_1_0A_CHARGER:
+	case MT6370_CHG_TYPE_APPLE_2_1A_CHARGER:
+	case MT6370_CHG_TYPE_APPLE_2_4A_CHARGER:
+		return CHARGE_SUPPLIER_BC12_DCP;
+	default:
+		return CHARGE_SUPPLIER_NONE;
+	}
+}
+
+/* Returns a mt6370 charger_type. */
+static int mt6370_get_charger_type(void)
+{
+#ifdef CONFIG_CHARGER_MT6370
+	int reg;
+
+	if (rt946x_read8(MT6370_REG_USBSTATUS1, &reg))
+		return CHARGE_SUPPLIER_NONE;
+	return mt6370_detect_apple_samsung_ta(reg);
+#else
+	return CHARGE_SUPPLIER_NONE;
+#endif
+}
+
+static int mt6370_get_bc12_ilim(int charge_supplier)
+{
+	switch (charge_supplier) {
+	case MT6370_CHG_TYPE_APPLE_0_5A_CHARGER:
+		return 500;
+	case MT6370_CHG_TYPE_APPLE_1_0A_CHARGER:
+		return 1000;
+	case MT6370_CHG_TYPE_APPLE_2_1A_CHARGER:
+		if (IS_ENABLED(CONFIG_CHARGE_RAMP_SW) ||
+		    IS_ENABLED(CONFIG_CHARGE_RAMP_HW))
+			return 2100;
+	case MT6370_CHG_TYPE_APPLE_2_4A_CHARGER:
+		if (IS_ENABLED(CONFIG_CHARGE_RAMP_SW) ||
+		    IS_ENABLED(CONFIG_CHARGE_RAMP_HW))
+			return 2400;
+	case MT6370_CHG_TYPE_DCP:
+		if (IS_ENABLED(CONFIG_CHARGE_RAMP_SW) ||
+		    IS_ENABLED(CONFIG_CHARGE_RAMP_HW))
+			/* A conservative value to prevent a bad charger. */
+			return RT946X_AICR_TYP2MAX(2000);
+	case MT6370_CHG_TYPE_CDP:
+	case MT6370_CHG_TYPE_SAMSUNG_CHARGER:
+		return 1500;
+	case MT6370_CHG_TYPE_SDP:
+	default:
+		return USB_CHARGER_MIN_CURR_MA;
+	}
+}
+
+static int rt946x_get_bc12_device_type(int charger_type)
 {
 	int reg;
 
-#if defined(CONFIG_CHARGER_RT9466) || defined(CONFIG_CHARGER_RT9467)
 	if (rt946x_read8(RT946X_REG_DPDM1, &reg))
 		return CHARGE_SUPPLIER_NONE;
 
@@ -906,22 +1037,6 @@ static int rt946x_get_bc12_device_type(void)
 	default:
 		return CHARGE_SUPPLIER_NONE;
 	}
-#elif defined(CONFIG_CHARGER_MT6370)
-	if (rt946x_read8(MT6370_REG_USBSTATUS1, &reg))
-		return CHARGE_SUPPLIER_NONE;
-
-	switch ((reg & MT6370_MASK_USB_STATUS) >> MT6370_SHIFT_USB_STATUS) {
-	case MT6370_CHG_TYPE_SDP:
-	case MT6370_CHG_TYPE_SDPNSTD:
-		return CHARGE_SUPPLIER_BC12_SDP;
-	case MT6370_CHG_TYPE_CDP:
-		return CHARGE_SUPPLIER_BC12_CDP;
-	case MT6370_CHG_TYPE_DCP:
-		return CHARGE_SUPPLIER_BC12_DCP;
-	default:
-		return CHARGE_SUPPLIER_NONE;
-	}
-#endif
 }
 
 static int rt946x_get_bc12_ilim(int charge_supplier)
@@ -929,7 +1044,7 @@ static int rt946x_get_bc12_ilim(int charge_supplier)
 	switch (charge_supplier) {
 	case CHARGE_SUPPLIER_BC12_DCP:
 		if (IS_ENABLED(CONFIG_CHARGE_RAMP_SW) ||
-				IS_ENABLED(CONFIG_CHARGE_RAMP_HW))
+		    IS_ENABLED(CONFIG_CHARGE_RAMP_HW))
 			/* A conservative value to prevent a bad charger. */
 			return RT946X_AICR_TYP2MAX(2000);
 		/* fallback */
@@ -969,6 +1084,7 @@ void usb_charger_task(void *u)
 {
 	struct charge_port_info chg;
 	int bc12_type = CHARGE_SUPPLIER_NONE;
+	int chg_type;
 	int reg = 0;
 
 	chg.voltage = USB_CHARGER_VOLTAGE_MV;
@@ -979,27 +1095,28 @@ void usb_charger_task(void *u)
 		if (reg & RT946X_MASK_DPDMIRQ_ATTACH) {
 			CPRINTS("VBUS attached: %dmV",
 					charger_get_vbus_voltage(0));
-			bc12_type = rt946x_get_bc12_device_type();
-
+			if (IS_ENABLED(CONFIG_CHARGER_MT6370)) {
+				chg_type = mt6370_get_charger_type();
+				bc12_type =
+					mt6370_get_bc12_device_type(chg_type);
+				chg.current = mt6370_get_bc12_ilim(bc12_type);
+			} else {
+				bc12_type =
+					rt946x_get_bc12_device_type(chg_type);
+				chg.current = rt946x_get_bc12_ilim(bc12_type);
+			}
 			CPRINTS("BC12 type %d", bc12_type);
-			if (bc12_type != CHARGE_SUPPLIER_NONE) {
-#ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
-				if ((bc12_type == CHARGE_SUPPLIER_BC12_SDP) &&
-						wpc_chip_is_online()) {
+			if (bc12_type == CHARGE_SUPPLIER_NONE)
+				goto bc12_none;
+			if (IS_ENABLED(CONFIG_WIRELESS_CHARGER_P9221_R7) &&
+			    bc12_type == CHARGE_SUPPLIER_BC12_SDP &&
+			    wpc_chip_is_online()) {
 					p9221_notify_vbus_change(1);
 					CPRINTS("WPC ON");
-				} else {
-
-#endif
-					chg.current = rt946x_get_bc12_ilim(
-								bc12_type);
-					charge_manager_update_charge(bc12_type,
-								     0, &chg);
-#ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
-				}
-#endif
 			}
 
+			charge_manager_update_charge(bc12_type, 0, &chg);
+bc12_none:
 			rt946x_enable_bc12_detection(0);
 			hook_notify(HOOK_AC_CHANGE);
 		}
