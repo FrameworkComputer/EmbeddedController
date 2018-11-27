@@ -160,7 +160,8 @@ struct fstatus {
 
 /* Absolute maximum rate for acc and gyro sensors */
 #define LSM6DSM_ODR_MIN_VAL		13000
-#define LSM6DSM_ODR_MAX_VAL		416000
+#define LSM6DSM_ODR_MAX_VAL \
+	MOTION_MAX_SENSOR_FREQUENCY(416000, LSM6DSM_ODR_MIN_VAL)
 
 /* ODR reg value from selected data rate in mHz */
 #define LSM6DSM_ODR_TO_REG(_odr) (__fls(_odr / LSM6DSM_ODR_MIN_VAL) + 1)

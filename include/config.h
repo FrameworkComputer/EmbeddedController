@@ -1341,8 +1341,8 @@
 /* Compile extra debugging and tests for the DMA module */
 #undef CONFIG_DMA_HELP
 
-/* Usually, EC capable of sensor speeds up to 200000 mHz */
-#define CONFIG_EC_MAX_SENSOR_FREQ_DEFAULT_MILLIHZ 200000
+/* Usually, EC capable of sensor speeds up to 250 Hz */
+#define CONFIG_EC_MAX_SENSOR_FREQ_DEFAULT_MILLIHZ 250000
 
 /* Maximal EC sampling rate */
 #undef CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ

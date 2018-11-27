@@ -39,6 +39,9 @@ enum opt3001_mode {
 /* Min and Max sampling frequency in mHz */
 #define OPT3001_LIGHT_MIN_FREQ          1250
 #define OPT3001_LIGHT_MAX_FREQ          10000
+#if (CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ <= OPT3001_LIGHT_MAX_FREQ)
+#error "EC too slow for light sensor"
+#endif
 
 #ifdef HAS_TASK_ALS
 int opt3001_init(void);

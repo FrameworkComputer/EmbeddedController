@@ -119,9 +119,10 @@ enum lsm6ds0_bdu {
 
 /* Min and Max sampling frequency in mHz */
 #define LSM6DS0_ACCEL_MIN_FREQ  14900
-#define LSM6DS0_ACCEL_MAX_FREQ  952000
+#define LSM6DS0_ACCEL_MAX_FREQ  MOTION_MAX_SENSOR_FREQUENCY(952000, 119000)
+
 #define LSM6DS0_GYRO_MIN_FREQ   14900
-#define LSM6DS0_GYRO_MAX_FREQ   952000
+#define LSM6DS0_GYRO_MAX_FREQ  MOTION_MAX_SENSOR_FREQUENCY(952000, 119000)
 
 extern const struct accelgyro_drv lsm6ds0_drv;
 struct lsm6ds0_data {

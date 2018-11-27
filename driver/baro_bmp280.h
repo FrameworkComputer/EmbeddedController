@@ -166,6 +166,9 @@
  */
 #define BMP280_BARO_MIN_FREQ  75000
 #define BMP280_BARO_MAX_FREQ  87000
+#if (CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ <= BMP280_BARO_MAX_FREQ)
+#error "EC too slow for accelerometer"
+#endif
 
 /**************************************************************/
 /*	STRUCTURE and ENUM DEFINITIONS                        */

@@ -219,6 +219,9 @@
 #define SI114X_PROX_MAX_FREQ            50000
 #define SI114X_LIGHT_MIN_FREQ           504
 #define SI114X_LIGHT_MAX_FREQ           50000
+#if (CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ <= SI114X_PROX_MAX_FREQ)
+#error "EC too slow for light sensor"
+#endif
 
 extern const struct accelgyro_drv si114x_drv;
 

@@ -106,6 +106,6 @@
 
 /* Min and Max sampling frequency in mHz */
 #define KXCJ9_ACCEL_MIN_FREQ    781
-#define KXCJ9_ACCEL_MAX_FREQ    1600000
+#define KXCJ9_ACCEL_MAX_FREQ    MOTION_MAX_SENSOR_FREQUENCY(1600000, 6250)
 
 #endif /* __CROS_EC_ACCEL_KXCJ9_H */

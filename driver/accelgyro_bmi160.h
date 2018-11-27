@@ -432,9 +432,9 @@ enum fifo_header {
 
 /* Min and Max sampling frequency in mHz */
 #define BMI160_ACCEL_MIN_FREQ 12500
-#define BMI160_ACCEL_MAX_FREQ 1600000
+#define BMI160_ACCEL_MAX_FREQ MOTION_MAX_SENSOR_FREQUENCY(1600000, 100000)
 #define BMI160_GYRO_MIN_FREQ  25000
-#define BMI160_GYRO_MAX_FREQ  3200000
+#define BMI160_GYRO_MAX_FREQ MOTION_MAX_SENSOR_FREQUENCY(3200000, 100000)
 
 extern const struct accelgyro_drv bmi160_drv;
 

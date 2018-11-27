@@ -29,6 +29,9 @@
 
 #define LIS2MDL_ODR_MIN_VAL	10000
 #define LIS2MDL_ODR_MAX_VAL	100000
+#if (CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ <= LIS2MDL_ODR_MAX_VAL)
+#error "EC too slow for magnetometer"
+#endif
 
 extern const struct accelgyro_drv lis2mdl_drv;
 

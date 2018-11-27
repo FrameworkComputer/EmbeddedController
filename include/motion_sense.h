@@ -51,6 +51,16 @@ enum sensor_config {
 #define MAX_FIFO_EVENT_COUNT 0
 #endif
 
+/*
+ * Define the frequency to use in max_frequency based on the maximal frequency
+ * the sensor support and what the EC can provide.
+ * Return a frequency the sensor supports.
+ * Trigger a compilation error when the EC way to slow for the sensor.
+ */
+#define MOTION_MAX_SENSOR_FREQUENCY(_max, _step) GENERIC_MIN( \
+	(_max) / (CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ >= (_step)), \
+	(_step) << __fls(CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ / (_step)))
+
 struct motion_data_t {
 	/*
 	 * data rate the sensor will measure, in mHz: 0 suspended.

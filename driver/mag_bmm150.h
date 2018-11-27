@@ -87,6 +87,10 @@
 #define BMM150_MAG_MAX_FREQ(_preset) (750000000 / \
 	(145 * BMM150_REP(_preset, XY) + 500 *  BMM150_REP(_preset, Z) + 980))
 
+#if (BMM150_MAG_MAX_FREQ(SPECIAL) > CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ)
+#error "EC too slow for magnetometer"
+#endif
+
 struct bmm150_comp_registers {
 	/* Local copy of the compensation registers. */
 	int8_t       dig1[2];
