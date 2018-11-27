@@ -92,20 +92,6 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-static void customize_based_on_board_id(void)
-{
-	uint32_t board_id = 0;
-
-	/* Errors will count as board_id 0 */
-	cbi_get_board_version(&board_id);
-
-	if (board_id == 0) {
-		if (anx7447_flash_erase(0 /* C0: ANX7447 */))
-			ccprints("Failed to erase OCM flash!");
-	}
-}
-DECLARE_HOOK(HOOK_INIT, customize_based_on_board_id, HOOK_PRIO_INIT_I2C + 1);
-
 /* Motion sensors */
 /* Mutexes */
 static struct mutex g_lid_mutex;
