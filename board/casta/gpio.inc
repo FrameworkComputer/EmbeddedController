@@ -50,6 +50,7 @@ GPIO(PCH_SLP_S0_L,	 PIN(A, 4), GPIO_INPUT)		/* SLP_S0_L */
  */
 GPIO(PLT_RST_L,		 PIN(C, 7), GPIO_INPUT)		/* Platform Reset from SoC */
 GPIO(SYS_RESET_L,	 PIN(3, 4), GPIO_ODR_HIGH)	/* SYS_RST_ODL */
+GPIO(PCH_RTCRST,	 PIN(7, 6), GPIO_OUT_LOW)	/* EC_PCH_RTCRST */
 
 GPIO(ENTERING_RW,	 PIN(E, 1), GPIO_OUT_LOW)	/* EC_ENTERING_RW */
 GPIO(PCH_WAKE_L,	 PIN(7, 4), GPIO_ODR_HIGH)	/* EC_PCH_WAKE_ODL */
@@ -90,8 +91,6 @@ GPIO(EC_RST_ODL,	PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
  * that the ambient or charger temperature sensors exceeds their thresholds.
  */
 GPIO(CPU_PROCHOT,	 PIN(3, 7), GPIO_INPUT | GPIO_SEL_1P8V)	/* PCH_PROCHOT_ODL */
-
-GPIO(PCH_RTCRST,	 PIN(7, 6), GPIO_OUT_LOW)		/* EC_PCH_RTCRST */
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,		 PIN(B, 5), GPIO_INPUT)		/* EC_I2C_BATTERY_3V3_SCL */

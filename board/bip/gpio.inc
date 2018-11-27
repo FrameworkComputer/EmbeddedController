@@ -42,6 +42,8 @@ GPIO_INT(TABLET_MODE_L,	 PIN(H, 4), GPIO_INT_BOTH, hall_sensor_isr)
 
 GPIO(PCH_PLTRST_L,	 PIN(E, 3), GPIO_INPUT)		/* PLT_RST_L: Platform Reset from SoC */
 GPIO(SYS_RESET_L,	 PIN(B, 6), GPIO_ODR_HIGH)	/* SYS_RST_ODL */
+GPIO(PCH_RTCRST,	 PIN(K, 7), GPIO_OUT_LOW)	/* EC_PCH_RTCRST */
+
 /*
  * TODO(b/76023457): Move below 2 signals to virtual wires over eSPI
  */
