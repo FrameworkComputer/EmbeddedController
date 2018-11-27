@@ -2062,7 +2062,7 @@ int charge_prevent_power_on(int power_button_pressed)
 
 static int battery_near_full(void)
 {
-	if (curr.batt.state_of_charge < BATTERY_LEVEL_NEAR_FULL)
+	if (charge_get_percent() < BATTERY_LEVEL_NEAR_FULL)
 		return 0;
 
 #ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
