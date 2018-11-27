@@ -586,3 +586,16 @@ uint32_t board_override_feature_flags1(uint32_t flags1)
 {
 	return flags1;
 }
+
+void board_hibernate(void)
+{
+	/*
+	 * Some versions of some boards keep the port 0 PPC powered on while
+	 * the EC hibernates (so Closed Case Debugging keeps working).
+	 * Make sure the source FET is off and turn on the sink FET, so that
+	 * plugging in AC will wake the EC. This matches the dead-battery
+	 * behavior of the powered off PPC.
+	 */
+	ppc_vbus_source_enable(0, 0);
+	ppc_vbus_sink_enable(0, 1);
+}
