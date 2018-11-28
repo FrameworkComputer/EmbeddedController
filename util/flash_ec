@@ -71,7 +71,6 @@ BOARDS_STM32=(
 	jerry
 	kitty
 	kukui
-	meowth_fp
 	minimuffin
 	nami_fp
 	nocturne_fp
@@ -140,11 +139,9 @@ BOARDS_NPCX_INT_SPI=(
 	fleex
 	grunt
 	meep
-	meowth
 	nocturne
 	phaser
 	yorp
-	zoombini
 )
 
 BOARDS_NPCX_UUT=(
@@ -643,7 +640,7 @@ case "${BOARD}" in
         chocodile_bec ) MCU="usbpd" ;;
 	oak_pd|samus_pd|strago_pd ) MCU="usbpd" ;;
 	chell_pd|glados_pd ) MCU="usbpd" ;;
-	meowth_fp|nami_fp|nocturne_fp ) MCU="usbpd" ;;
+	nami_fp|nocturne_fp ) MCU="usbpd" ;;
 	dingdong|hoho|twinkie ) DUT_CONTROL_CMD="true" ; MCU="ec" ;;
 	*) MCU="ec" ;;
 esac
@@ -832,14 +829,6 @@ function flash_flashrom() {
 		if [[ ! "${SERVO_TYPE}" =~ "servo_micro" ]]; then
 			# Servo micro doesn't support this control.
 			dut_control spi1_buf_on_flex_en:on
-		fi
-
-		# b/65694390: Zoombini and Meowth take enough power that when
-		# flashing without power, the SPI Vref voltage dips for a little
-		# bit.  Therefore, wait 1 second to let the voltage stabilize.
-		if [[ "${BOARD}" == "zoombini" || \
-		      "${BOARD}" == "meowth" ]]; then
-			sleep 1
 		fi
 	else
 		if [ $board_is_npcx_internal_spi -eq 0 ]; then
