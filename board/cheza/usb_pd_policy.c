@@ -329,6 +329,29 @@ static void svdm_dp_post_config(int port)
 	dp_flags[port] |= DP_FLAGS_DP_ON;
 }
 
+/**
+ * Is the port fine to be muxed its DisplayPort lines?
+ *
+ * Only one port can be muxed to DisplayPort at a time.
+ *
+ * @param port	Port number of TCPC.
+ * @return	1 is fine; 0 is bad as other port is already muxed;
+ */
+static int is_dp_muxable(int port)
+{
+	int i;
+	const char *dp_str, *usb_str;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+		if (i != port) {
+			usb_mux_get(i, &dp_str, &usb_str);
+			if (dp_str)
+				return 0;
+		}
+
+	return 1;
+}
+
 static int svdm_dp_attention(int port, uint32_t *payload)
 {
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
@@ -340,12 +363,19 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 
 	mux->hpd_update(port, lvl, irq);
 
-	if (lvl)
+	if (lvl && is_dp_muxable(port)) {
+		/*
+		 * The GPIO USBC_MUX_CONF1 enables the mux of the DP redriver
+		 * for the port 1.
+		 */
+		gpio_set_level(GPIO_USBC_MUX_CONF1, port == 1);
+
 		usb_mux_set(port, mf_pref ? TYPEC_MUX_DOCK : TYPEC_MUX_DP,
 			    USB_SWITCH_CONNECT, pd_get_polarity(port));
-	else
+	} else {
 		usb_mux_set(port, mf_pref ? TYPEC_MUX_USB : TYPEC_MUX_NONE,
 			    USB_SWITCH_CONNECT, pd_get_polarity(port));
+	}
 
 	/* ack */
 	return 1;
