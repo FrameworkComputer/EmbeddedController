@@ -133,13 +133,15 @@ const mat33_fp_t base_standard_ref = {
 
 /*
  * Sparky360 SKU ID 26 has AR Cam, and move base accel/gryo to AR Cam board.
- * AR Cam board has about -16° bias with motherboard through Y axis.
- * Rotation matrix with -16° through Y axis:
- *     | cos(-16°)      0       sin(-16°)|
- * R = |    0           1           0    |
- *     |-sin(-16°)      0       cos(-16°)|
+ * AR Cam board has about 16° bias with motherboard through Y axis.
+ * Rotation matrix with 16° through Y axis:
+ *     | cos(16°)      0       sin(16°)|   | 0.96126   0   0.27564|
+ * R = |    0          1          0    | = |     0     1      0   |
+ *     |-sin(16°)      0       cos(16°)|   |-0.27564   0   0.96126|
  *
- * base_ar_cam_ref = R * base_standard_ref
+ *                                           |0  -0.96126   0.27564|
+ * base_ar_cam_ref = R * base_standard_ref = |1       0        0   |
+ *                                           |0   0.27564   0.96126|
  */
 const mat33_fp_t base_ar_cam_ref = {
 	{ 0, FLOAT_TO_FP(-0.96126), FLOAT_TO_FP(0.27564)},
