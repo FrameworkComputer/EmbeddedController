@@ -1330,6 +1330,12 @@ enum ec_feature_code {
 	EC_FEATURE_CEC = 35,
 	/* EC supports tight sensor timestamping. */
 	EC_FEATURE_MOTION_SENSE_TIGHT_TIMESTAMPS = 36,
+	/*
+	 * EC supports tablet mode detection aligned to Chrome and allows
+	 * setting of threshold by host command using
+	 * MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE.
+	 */
+	EC_FEATURE_REFINED_TABLET_MODE_HYSTERESIS = 37,
 };
 
 #define EC_FEATURE_MASK_0(event_code) (1UL << (event_code % 32))
@@ -2359,6 +2365,9 @@ enum motionsense_command {
 	 */
 	MOTIONSENSE_CMD_SPOOF = 16,
 
+	/* Set lid angle for tablet mode detection. */
+	MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE = 17,
+
 	/* Number of motionsense sub-commands. */
 	MOTIONSENSE_NUM_CMDS
 };
@@ -2629,6 +2638,24 @@ struct ec_params_motion_sense {
 			/* Individual component values to spoof. */
 			int16_t components[3];
 		} spoof;
+
+		/* Used for MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE. */
+		struct __ec_todo_unpacked {
+			/*
+			 * Lid angle threshold for switching between tablet and
+			 * clamshell mode.
+			 */
+			int16_t lid_ang;
+
+			/*
+			 * Hysteresis degree to prevent fluctuations between
+			 * clamshell and tablet mode if lid angle keeps
+			 * changing around the threshold. Lid motion driver will
+			 * use lid_ang + hys_deg to trigger tablet mode and
+			 * lid_ang - hys_deg to trigger clamshell mode.
+			 */
+			int16_t hys_deg;
+		} tablet_mode_threshold;
 	};
 } __ec_todo_packed;
 
@@ -2724,6 +2751,19 @@ struct ec_response_motion_sense {
 			 */
 			uint16_t value;
 		} lid_angle;
+
+		/* Used for MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE. */
+		struct __ec_todo_unpacked {
+			/*
+			 * Lid angle threshold for switching between tablet and
+			 * clamshell mode.
+			 */
+			uint16_t lid_ang;
+
+			/* Hysteresis degree. */
+			uint16_t hys_deg;
+		} tablet_mode_threshold;
+
 	};
 } __ec_todo_packed;
 

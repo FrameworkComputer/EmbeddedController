@@ -643,6 +643,8 @@ static const char * const ec_feature_names[] = {
 	[EC_FEATURE_CEC] = "Consumer Electronics Control",
 	[EC_FEATURE_MOTION_SENSE_TIGHT_TIMESTAMPS] =
 		"Tight timestamp for sensors events",
+	[EC_FEATURE_REFINED_TABLET_MODE_HYSTERESIS] =
+		"Refined tablet mode hysteresis",
 };
 
 int cmd_inventory(int argc, char *argv[])
@@ -4098,6 +4100,7 @@ static const struct {
 	{ ST_CMD_SIZE, ST_RSP_SIZE(lid_angle) },
 	ST_BOTH_SIZES(fifo_int_enable),
 	ST_BOTH_SIZES(spoof),
+	ST_BOTH_SIZES(tablet_mode_threshold),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 
@@ -4131,6 +4134,8 @@ static int ms_help(const char *cmd)
 			cmd);
 	printf("  %s lid_angle                  - print lid angle\n", cmd);
 	printf("  %s spoof -- NUM [0/1] [X Y Z] - enable/disable spoofing\n",
+	       cmd);
+	printf("  %s tablet_mode_angle ANG HYS  - set/get tablet mode angle\n",
 	       cmd);
 
 	return 0;
@@ -4468,6 +4473,48 @@ static int cmd_motionsense(int argc, char **argv)
 			return rv;
 
 		printf("%d\n", resp->kb_wake_angle.ret);
+		return 0;
+	}
+
+	if (argc < 5 && !strcasecmp(argv[1], "tablet_mode_angle")) {
+		param.cmd = MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE;
+		/*
+		 * EC_MOTION_SENSE_NO_VALUE indicates to the EC that host is
+		 * attempting to only read the current values.
+		 */
+		param.tablet_mode_threshold.lid_ang = EC_MOTION_SENSE_NO_VALUE;
+		param.tablet_mode_threshold.hys_deg = EC_MOTION_SENSE_NO_VALUE;
+
+		if (argc == 4) {
+			param.tablet_mode_threshold.lid_ang = strtol(argv[2],
+								     &e, 0);
+
+			if (e && *e) {
+				fprintf(stderr, "Bad %s arg.\n", argv[2]);
+				return -1;
+			}
+
+			param.tablet_mode_threshold.hys_deg = strtol(argv[3],
+								     &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad %s arg.\n", argv[3]);
+				return -1;
+			}
+		} else if (argc != 2) {
+			return ms_help(argv[0]);
+		}
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+
+		if (rv < 0)
+			return rv;
+
+		printf("tablet_mode_angle=%d hys=%d\n",
+		       resp->tablet_mode_threshold.lid_ang,
+		       resp->tablet_mode_threshold.hys_deg);
+
 		return 0;
 	}
 
