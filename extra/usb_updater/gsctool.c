@@ -36,12 +36,6 @@
 #include "usb_descriptor.h"
 #include "verify_ro.h"
 
-#ifdef DEBUG
-#define debug printf
-#else
-#define debug(fmt, args...)
-#endif
-
 /*
  * This file contains the source code of a Linux application used to update
  * CR50 device firmware.
@@ -245,6 +239,17 @@ static const struct option long_opts[] = {
 };
 
 
+/* Helper to print debug messages when verbose flag is specified. */
+static void debug(const char *fmt, ...)
+{
+	va_list args;
+
+	if (verbose_mode) {
+		va_start(args, fmt);
+		vprintf(fmt, args);
+		va_end(args);
+	}
+}
 
 /* Helpers to convert between binary and hex ascii and back. */
 static char to_hexascii(uint8_t c)
@@ -471,7 +476,6 @@ static int tpm_send_pkt(struct transfer_descriptor *td, unsigned int digest,
 		break;
 	}
 
-#ifdef DEBUG
 	debug("Read %d bytes from TPM\n", len);
 	if (len > 0) {
 		int i;
@@ -480,7 +484,6 @@ static int tpm_send_pkt(struct transfer_descriptor *td, unsigned int digest,
 			debug("%2.2x ", outbuf[i]);
 		debug("\n");
 	}
-#endif
 	len = len - response_offset;
 	if (len < 0) {
 		fprintf(stderr, "Problems reading from TPM, got %d bytes\n",
