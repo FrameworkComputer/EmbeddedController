@@ -521,7 +521,7 @@ static void usage(int errs)
 	       "images, etc.\n"
 	       "The required argument is the file name of a full RO+RW\n"
 	       "binary image.\n"
-	       "A typical Chromebook use would exepect -s -t options\n"
+	       "A typical Chromebook use would expect -s -t options\n"
 	       "included in the command line.\n"
 	       "\n"
 	       "Options:\n"
