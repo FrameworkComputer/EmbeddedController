@@ -173,6 +173,14 @@ static wov_call_back_t callback_fun;
 
 const uint32_t voice_buffer[VOICE_BUF_SIZE] = {0};
 
+#define WOV_RATE_ERROR_THRESH_MSEC 10
+#define WOV_RATE_ERROR_THRESH 5
+
+static int irq_underrun_count;
+static int irq_overrun_count;
+static uint32_t wov_i2s_underrun_tstamp;
+static uint32_t wov_i2s_overrun_tstamp;
+
 #define WOV_CALLBACK(event)                  \
 	{                                    \
 		if (callback_fun != NULL)    \
@@ -536,6 +544,36 @@ static enum ec_error_list wov_set_mic_source_l(void)
 	return EC_SUCCESS;
 }
 
+static void wov_over_under_deferred(void)
+{
+	CPRINTS("wov: Under/Over run error: under = %d, over = %d",
+		irq_underrun_count, irq_overrun_count);
+}
+DECLARE_DEFERRED(wov_over_under_deferred);
+
+static void wov_under_over_error_handler(int *count, uint32_t *last_time)
+{
+	uint32_t time_delta_msec;
+	uint32_t current_time = get_time().le.lo;
+
+	if (!(*count)) {
+		*last_time = current_time;
+		(*count)++;
+	} else {
+		time_delta_msec = (current_time - *last_time) / MSEC;
+		*last_time = current_time;
+		if (time_delta_msec < WOV_RATE_ERROR_THRESH_MSEC)
+			(*count)++;
+		else
+			*count = 0;
+
+		if (*count >= WOV_RATE_ERROR_THRESH) {
+			wov_stop_i2s_capture();
+			hook_call_deferred(&wov_over_under_deferred_data, 0);
+		}
+	}
+}
+
 /**
  * WoV interrupt handler.
  *
@@ -586,12 +624,16 @@ void wov_interrupt_handler(void)
 	/* I2S FIFO is overrun. Reset the I2S FIFO and inform the FW. */
 	if (WOV_IS_I2S_FIFO_OVERRUN(wov_status)) {
 		WOV_CALLBACK(WOV_EVENT_ERROR_I2S_FIFO_OVERRUN);
+		wov_under_over_error_handler(&irq_overrun_count,
+					     &wov_i2s_overrun_tstamp);
 		wov_i2s_fifo_reset();
 	}
 
 	/* I2S FIFO is underrun. Reset the I2S FIFO and inform the FW. */
 	if (WOV_IS_I2S_FIFO_UNDERRUN(wov_status)) {
 		WOV_CALLBACK(WOV_EVENT_ERROR_I2S_FIFO_UNDERRUN);
+		wov_under_over_error_handler(&irq_underrun_count,
+					     &wov_i2s_underrun_tstamp);
 		wov_i2s_fifo_reset();
 	}
 
@@ -1166,6 +1208,10 @@ void wov_i2s_fifo_reset(void)
  */
 void wov_start_i2s_capture(void)
 {
+	/* Clear counters used to track for underrun/overrun errors */
+	irq_underrun_count = 0;
+	irq_overrun_count = 0;
+
 	/* Clear the I2S status bits in WoV status register. */
 	SET_FIELD(NPCX_WOV_STATUS, NPCX_WOV_STATUS_BITS, 0x18);
 
