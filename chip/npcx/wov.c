@@ -1536,6 +1536,19 @@ void wov_set_gain(int left_chan_gain, int right_chan_gain)
 }
 
 /**
+ * Gets gain values
+ *
+ * @param   left_chan_gain  - address of left channel gain response.
+ * @param   right_chan_gain - address of right channel gain response.
+ * @return  None
+ */
+void wov_get_gain(int *left_chan_gain, int *right_chan_gain)
+{
+	*left_chan_gain = wov_conf.left_chan_gain;
+	*right_chan_gain = wov_conf.right_chan_gain;
+}
+
+/**
  * Enables/Disables ADC.
  *
  * @param   enable - enabled flag, 1 means enable
