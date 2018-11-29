@@ -746,30 +746,25 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S5S3:
+		/*
+		 * Wait for power button release before actually boot AP.
+		 * It may be a long-hold power button with volume buttons
+		 * to trigger the recovery button. We don't want AP up
+		 * during the long-hold.
+		 */
+		power_button_wait_for_release(-1);
+
 		power_on();
-		if (power_wait_signals(IN_POWER_GOOD) == EC_SUCCESS) {
-			CPRINTS("POWER_GOOD seen");
-			if (power_button_wait_for_release(
-					DELAY_SHUTDOWN_ON_POWER_HOLD) ==
-					EC_SUCCESS) {
-				power_button_was_pressed = 0;
-
-				/* Call hooks now that AP is running */
-				hook_notify(HOOK_CHIPSET_STARTUP);
-
-				return POWER_S3;
-			}
-			CPRINTS("long-press button, shutdown");
-			/*
-			 * Since the AP may be up already, but the resume
-			 * hook is not called, return S3S5 to power off
-			 * AP and wait the release of the power button.
-			 */
-			return POWER_S3S5;
+		if (power_wait_signals(IN_POWER_GOOD) != EC_SUCCESS) {
+			CPRINTS("POWER_GOOD not seen in time");
+			set_system_power(0);
+			return POWER_S5;
 		}
-		CPRINTS("POWER_GOOD not seen in time");
-		set_system_power(0);
-		return POWER_S5;
+
+		CPRINTS("POWER_GOOD seen");
+		/* Call hooks now that AP is running */
+		hook_notify(HOOK_CHIPSET_STARTUP);
+		return POWER_S3;
 
 	case POWER_S3:
 		if (shutdown_from_s0) {
