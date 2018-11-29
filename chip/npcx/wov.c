@@ -1685,23 +1685,36 @@ int wov_get_vad_sensitivity(void)
 }
 
 /**
- * Configure I2S bus. (Sample rate and size are determined via common
+ * Configure I2S bus format. (Sample rate and size are determined via common
  * config functions.)
  *
- * @param   i2s_clock - I2S clock frequency in Hz (needed in order to
- *                      configure the internal PLL for 12MHz)
  * @param   format    - one of the following: I2S mode, Right Justified mode,
  *                      Left Justified mode, PCM A Audio, PCM B Audio and
  *                      Time Division Multiplexing
  * @return  EC error code.
  */
-void wov_set_i2s_config(uint32_t i2s_clock, enum wov_dai_format format)
+void wov_set_i2s_fmt(enum wov_dai_format format)
+{
+	if (wov_conf.mode != WOV_MODE_OFF)
+		return;
+
+	wov_conf.dai_format = format;
+}
+
+/**
+ * Configure I2S bus clock. (Sample rate and size are determined via common
+ * config functions.)
+ *
+ * @param   i2s_clock - I2S clock frequency in Hz (needed in order to
+ *                      configure the internal PLL for 12MHz)
+ * @return  EC error code.
+ */
+void wov_set_i2s_bclk(uint32_t i2s_clock)
 {
 	if (wov_conf.mode != WOV_MODE_OFF)
 		return;
 
 	wov_conf.i2s_clock = i2s_clock;
-	wov_conf.dai_format = format;
 }
 
 /**
@@ -1871,7 +1884,8 @@ static int command_wov(int argc, char **argv)
 			else
 				return EC_ERROR_INVAL;
 
-			wov_set_i2s_config(bit_clk, i2s_fmt);
+			wov_set_i2s_fmt(i2s_fmt);
+			wov_set_i2s_bclk(bit_clk);
 			return EC_SUCCESS;
 		}
 		if (strcasecmp(argv[1], "cfgfmt") == 0) {
@@ -1890,7 +1904,8 @@ static int command_wov(int argc, char **argv)
 			else
 				return EC_ERROR_INVAL;
 
-			wov_set_i2s_config(bit_clk, i2s_fmt);
+			wov_set_i2s_fmt(i2s_fmt);
+			wov_set_i2s_bclk(bit_clk);
 			return EC_SUCCESS;
 		}
 		if (strcasecmp(argv[1], "cfgdckV") == 0) {

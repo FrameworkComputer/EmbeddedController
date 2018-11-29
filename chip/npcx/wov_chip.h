@@ -388,17 +388,25 @@ int wov_set_vad_sensitivity(int sensitivity_db);
 int wov_get_vad_sensitivity(void);
 
 /**
- * Configure I2S bus. (Sample rate and size are determined via common
+ * Configure I2S bus format. (Sample rate and size are determined via common
  * config functions.)
  *
- * @param   i2s_clock - I2S clock frequency in Hz (needed in order to
- *                      configure the internal PLL for 12MHz)
  * @param   format    - one of the following: I2S mode, Right Justified mode,
  *                      Left Justified mode, PCM A Audio, PCM B Audio and
  *                      Time Division Multiplexing
  * @return  EC error code.
  */
-void wov_set_i2s_config(uint32_t i2s_clock, enum wov_dai_format format);
+void wov_set_i2s_fmt(enum wov_dai_format format);
+
+/**
+ * Configure I2S bus clock. (Sample rate and size are determined via common
+ * config functions.)
+ *
+ * @param   i2s_clock - I2S clock frequency in Hz (needed in order to
+ *                      configure the internal PLL for 12MHz)
+ * @return  EC error code.
+ */
+void wov_set_i2s_bclk(uint32_t i2s_clock);
 
 /**
  * Configure I2S bus. (Sample rate and size are determined via common
