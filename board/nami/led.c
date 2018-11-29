@@ -199,10 +199,6 @@ static enum led_power_state power_state;
 
 static void led_init(void)
 {
-	uint32_t oem = PROJECT_NAMI;
-
-	cbi_get_oem_id(&oem);
-
 	switch (oem) {
 	case PROJECT_NAMI:
 	case PROJECT_VAYNE:
@@ -212,7 +208,7 @@ static void led_init(void)
 		patterns[0] = &battery_pattern_1;
 		patterns[1] = &power_pattern_1;
 		battery_error.pulse = BLINK(5);
-		low_battery_soc = 100;
+		low_battery_soc = 100;  /* 10.0% */
 		break;
 	case PROJECT_PANTHEON:
 		patterns[0] = &battery_pattern_2;
