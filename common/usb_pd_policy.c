@@ -315,10 +315,11 @@ static int dfp_discover_svids(int port, uint32_t *payload)
 	return 1;
 }
 
-static void dfp_consume_svids(int port, uint32_t *payload)
+static void dfp_consume_svids(int port, int cnt, uint32_t *payload)
 {
 	int i;
 	uint32_t *ptr = payload + 1;
+	int vdo = 1;
 	uint16_t svid0, svid1;
 
 	for (i = pe[port].svid_cnt; i < pe[port].svid_cnt + 12; i += 2) {
@@ -326,6 +327,12 @@ static void dfp_consume_svids(int port, uint32_t *payload)
 			CPRINTF("ERR:SVIDCNT\n");
 			break;
 		}
+		/*
+		 * Verify we're still within the valid packet (count will be one
+		 * for the VDM header + xVDOs)
+		 */
+		if (vdo >= cnt)
+			break;
 
 		svid0 = PD_VDO_SVID_SVID0(*ptr);
 		if (!svid0)
@@ -339,6 +346,7 @@ static void dfp_consume_svids(int port, uint32_t *payload)
 		pe[port].svids[i + 1].svid = svid1;
 		pe[port].svid_cnt++;
 		ptr++;
+		vdo++;
 	}
 	/* TODO(tbroch) need to re-issue discover svids if > 12 */
 	if (i && ((i % 12) == 0))
@@ -741,7 +749,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 #endif
 			break;
 		case CMD_DISCOVER_SVID:
-			dfp_consume_svids(port, payload);
+			dfp_consume_svids(port, cnt, payload);
 			rsize = dfp_discover_modes(port, payload);
 			break;
 		case CMD_DISCOVER_MODES:
