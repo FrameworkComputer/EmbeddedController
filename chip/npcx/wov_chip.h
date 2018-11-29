@@ -205,7 +205,7 @@ struct wov_config {
 	int bit_depth;
 	enum wov_mic_source mic_src;
 	int left_chan_gain;
-	int rigth_chan_gain;
+	int right_chan_gain;
 	uint16_t i2s_start_delay_0;
 	uint16_t i2s_start_delay_1;
 	uint32_t i2s_clock;

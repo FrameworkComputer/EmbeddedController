@@ -906,7 +906,7 @@ void wov_init(void)
 	wov_conf.bit_depth = 16;
 	wov_conf.mic_src = WOV_SRC_LEFT;
 	wov_conf.left_chan_gain = 0;
-	wov_conf.rigth_chan_gain = 0;
+	wov_conf.right_chan_gain = 0;
 	wov_conf.i2s_start_delay_0 = 0;
 	wov_conf.i2s_start_delay_1 = 0;
 	wov_conf.i2s_clock = 0;
