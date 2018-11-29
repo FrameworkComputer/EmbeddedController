@@ -286,6 +286,14 @@ enum oem_id {
 	PROJECT_COUNT,
 };
 
+enum model_id {
+	/* Sona variants */
+	MODEL_SYNDRA = 1,
+	/* Akali variants */
+	MODEL_EKKO = 1,
+	MODEL_BARD = 2,
+};
+
 #define SKU_ID_MASK_CONVERTIBLE	(1 << 9)
 #define SKU_ID_MASK_KEYPAD	(1 << 15)
 
@@ -317,6 +325,7 @@ void board_set_tcpc_power_mode(int port, int mode);
 extern uint16_t board_version;
 extern uint8_t oem;
 extern uint32_t sku;
+extern uint8_t model;
 
 /* SKU_ID[24:31] are dedicated to OEM customization */
 #define CBI_SKU_CUSTOM_FIELD(val)	((val) >> 24)

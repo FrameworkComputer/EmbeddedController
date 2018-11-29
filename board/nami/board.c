@@ -72,6 +72,7 @@
 uint16_t board_version;
 uint8_t oem = PROJECT_NAMI;
 uint32_t sku;
+uint8_t model;
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -900,6 +901,10 @@ static void cbi_init(void)
 	if (cbi_get_sku_id(&val) == EC_SUCCESS)
 		sku = val;
 	CPRINTS("SKU: 0x%08x", sku);
+
+	if (cbi_get_model_id(&val) == EC_SUCCESS)
+		model = val;
+	CPRINTS("MODEL: 0x%08x", model);
 
 	if (board_version < 0x300)
 		/* Previous boards have GPIO42 connected to TP_INT_CONN */

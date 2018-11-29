@@ -185,6 +185,15 @@ const static led_patterns battery_pattern_3 = {
 	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO}, {LED_WHITE,  PULSE_NO}},
 };
 
+const static led_patterns battery_pattern_4 = {
+	/* discharging: s0, s3, s5 */
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF, PULSE_NO}},
+	/* charging: s0, s3, s5 */
+	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO},  {LED_AMBER, PULSE_NO}},
+	/* full: s0, s3, s5 */
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO},  {LED_WHITE, PULSE_NO}},
+};
+
 /* Patterns for battery LED and power LED. Initialized at run-time. */
 static led_patterns const *patterns[2];
 /* Pattern for battery error. Only blinking battery LED is supported. */
@@ -205,8 +214,13 @@ static void led_init(void)
 		patterns[0] = &battery_pattern_0;
 		break;
 	case PROJECT_SONA:
-		patterns[0] = &battery_pattern_1;
-		patterns[1] = &power_pattern_1;
+		if (model == MODEL_SYNDRA) {
+			/* Syndra doesn't have power LED */
+			patterns[0] = &battery_pattern_4;
+		} else {
+			patterns[0] = &battery_pattern_1;
+			patterns[1] = &power_pattern_1;
+		}
 		battery_error.pulse = BLINK(5);
 		low_battery_soc = 100;  /* 10.0% */
 		break;
