@@ -1528,6 +1528,9 @@ void wov_mute(int enable)
  */
 void wov_set_gain(int left_chan_gain, int right_chan_gain)
 {
+	wov_conf.left_chan_gain = left_chan_gain;
+	wov_conf.right_chan_gain = right_chan_gain;
+
 	(void) apm_adc_gain_config(APM_ADC_CHAN_GAINS_INDEPENDENT,
 				left_chan_gain, right_chan_gain);
 }
