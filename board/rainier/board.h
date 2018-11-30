@@ -73,6 +73,7 @@
 #define CONFIG_BARO_BMP280
 
 /* To be able to indicate the device is in tablet mode. */
+#define CONFIG_TABLET_MODE
 #define CONFIG_TABLET_MODE_SWITCH
 
 /* FIFO size is in power of 2. */

@@ -28,8 +28,4 @@ void hall_sensor_isr(enum gpio_signal signal);
  */
 void hall_sensor_disable(void);
 
-#else
-
-static inline int tablet_get_mode(void) { return 0; }
-
 #endif

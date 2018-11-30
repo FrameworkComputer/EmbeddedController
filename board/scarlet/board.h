@@ -94,6 +94,7 @@
 #define CONFIG_SYNC_INT_EVENT TASK_EVENT_CUSTOM(5)
 
 /* To be able to indicate the device is in tablet mode. */
+#define CONFIG_TABLET_MODE
 #define CONFIG_TABLET_MODE_SWITCH
 
 /* FIFO size is in power of 2. */

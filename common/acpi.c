@@ -221,7 +221,11 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 #endif
 
 		case EC_ACPI_MEM_DEVICE_ORIENTATION:
+			result = 0;
+
+#ifdef CONFIG_TABLET_MODE
 			result = tablet_get_mode() << EC_ACPI_MEM_TBMD_SHIFT;
+#endif
 
 #ifdef CONFIG_DPTF
 			result |= (acpi_dptf_get_profile_num() &
