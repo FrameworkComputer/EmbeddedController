@@ -13,6 +13,7 @@ session-persistent command history.
 from __future__ import print_function
 
 import argparse
+import copy
 import ctypes
 import binascii
 # pylint: disable=cros-logging-import
@@ -148,7 +149,9 @@ class Console(object):
       unidirectional pipe attached to the intepreter.  EC debug messages use
       this pipe.
     """
-    logger = logging.getLogger('EC3PO.Console')
+    # Copy the logger, so modifying one ec3po logger level will not modify the
+    # loglevel for every ec3po console.
+    logger = copy.copy(logging.getLogger('EC3PO.Console'))
     self.logger = interpreter.LoggerAdapter(logger, {'pty': user_pty})
     self.master_pty = master_pty
     self.user_pty = user_pty

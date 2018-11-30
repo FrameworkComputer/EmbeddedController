@@ -16,6 +16,7 @@ from __future__ import print_function
 
 import binascii
 # pylint: disable=cros-logging-import
+import copy
 import logging
 import os
 import Queue
@@ -91,7 +92,9 @@ class Interpreter(object):
       log_level: An optional integer representing the numeric value of the log
         level.  By default, the log level will be logging.INFO (20).
     """
-    logger = logging.getLogger('EC3PO.Interpreter')
+    # Copy the logger, so modifying one ec3po logger level will not modify the
+    # loglevel for every ec3po interpreter.
+    logger = copy.copy(logging.getLogger('EC3PO.Interpreter'))
     self.logger = LoggerAdapter(logger, {'pty': ec_uart_pty})
     self.ec_uart_pty = open(ec_uart_pty, 'a+')
     self.ec_uart_pty_name = ec_uart_pty
