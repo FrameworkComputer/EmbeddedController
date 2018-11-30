@@ -22,7 +22,6 @@
 
 
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
-#define MAX_BYTES_IN_ONE_READING 254
 
 
 USB_I2C_CONFIG(i2c,
