@@ -38,6 +38,7 @@ enum pwm_channel {
 
 enum battery_type {
 	BATTERY_PANASONIC,
+	BATTERY_MURATA,
 	BATTERY_TYPE_COUNT,
 };
 
