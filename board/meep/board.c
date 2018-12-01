@@ -130,10 +130,8 @@ const mat33_fp_t mag_standard_ref = {
 };
 
 /* sensor private data */
-static struct kionix_accel_data g_kx022_data;
-static struct lsm6dsm_data lsm6dsm_g_data;
-static struct lsm6dsm_data lsm6dsm_a_data;
-static struct lsm6dsm_data lis2mdl_data;
+static struct kionix_accel_data kx022_data;
+static struct lsm6dsm_data lsm6dsm_data;
 
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {
@@ -145,7 +143,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.location = MOTIONSENSE_LOC_LID,
 		.drv = &kionix_accel_drv,
 		.mutex = &g_lid_mutex,
-		.drv_data = &g_kx022_data,
+		.drv_data = &kx022_data,
 		.port = I2C_PORT_SENSOR,
 		.addr = KX022_ADDR1,
 		.rot_standard_ref = &lid_standrd_ref,
@@ -170,7 +168,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.location = MOTIONSENSE_LOC_BASE,
 		.drv = &lsm6dsm_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = &lsm6dsm_a_data,
+		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+				MOTIONSENSE_TYPE_ACCEL),
 		.port = I2C_PORT_SENSOR,
 		.addr = LSM6DSM_ADDR0,
 		.rot_standard_ref = &base_standard_ref,
@@ -199,7 +198,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.location = MOTIONSENSE_LOC_BASE,
 		.drv = &lsm6dsm_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = &lsm6dsm_g_data,
+		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+				MOTIONSENSE_TYPE_GYRO),
 		.port = I2C_PORT_SENSOR,
 		.addr = LSM6DSM_ADDR0,
 		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
@@ -211,16 +211,15 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_MAG] = {
 		.name = "Base Mag",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_LSM6DSM,
+		.chip = MOTIONSENSE_CHIP_LIS2MDL,
 		.type = MOTIONSENSE_TYPE_MAG,
 		.location = MOTIONSENSE_LOC_BASE,
 		.drv = &lis2mdl_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = &lis2mdl_data,
-		.parent = &motion_sensors[BASE_ACCEL],
+		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data, MOTIONSENSE_TYPE_MAG),
 		.port = I2C_PORT_SENSOR,
-		.addr = LIS2MDL_ADDR0,
-		.default_range = LIS2MDL_RANGE,
+		.addr = LSM6DSM_ADDR0,
+		.default_range = 1 << 11, /* 16LSB / uT, fixed */
 		.rot_standard_ref = &mag_standard_ref,
 		.min_frequency = LIS2MDL_ODR_MIN_VAL,
 		.max_frequency = LIS2MDL_ODR_MAX_VAL,

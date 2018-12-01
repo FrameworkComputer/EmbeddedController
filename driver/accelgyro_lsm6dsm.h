@@ -9,6 +9,9 @@
 #define __CROS_EC_ACCELGYRO_LSM6DSM_H
 
 #include "stm_mems_common.h"
+#include "mag_cal.h"
+#include "mag_bmm150.h"
+#include "mag_lis2mdl.h"
 
 #define LSM6DSM_I2C_ADDR(__x)		(__x << 1)
 
@@ -178,7 +181,7 @@ enum dev_fifo {
 	FIFO_DEV_INVALID = -1,
 	FIFO_DEV_GYRO = 0,
 	FIFO_DEV_ACCEL,
-#ifdef CONFIG_MAG_LIS2MDL
+#ifdef CONFIG_LSM6DSM_SEC_I2C
 	FIFO_DEV_MAG,
 #endif
 	FIFO_DEV_NUM,
@@ -247,7 +250,7 @@ struct fstatus {
 
 /* FS register address/mask for Acc/Gyro sensors */
 #define LSM6DSM_RANGE_REG(_sensor)  (LSM6DSM_ACCEL_FS_ADDR + (_sensor))
-#define LSM6DSM_RANGE_MASK  		0x0c
+#define LSM6DSM_RANGE_MASK		0x0c
 
 /* Status register bitmask for Acc/Gyro data ready */
 enum lsm6dsm_status {
@@ -260,7 +263,7 @@ enum lsm6dsm_status {
 #define LSM6DSM_STS_GDA_MASK		0x02
 
 /* Sensor resolution in number of bits: fixed 16 bit */
-#define LSM6DSM_RESOLUTION      	16
+#define LSM6DSM_RESOLUTION		16
 
 extern const struct accelgyro_drv lsm6dsm_drv;
 
@@ -285,15 +288,40 @@ struct lsm6dsm_fifo_data {
 };
 
 /*
- * Please refer to b:110013316, motion_sensor_t.drv_data field should
- * use this data type pointer rather than stprivate_data type pointer.
- * Use stprivate_data type will lead to random corrupted runtime data
- * since stprivate_data is smaller than required once CONFIG_ACCEL_FIFO
- * is defined.
+ * lsm6dsm_data is used for accel gyro and the sensor connect to a LSM6DSM.
+ *
+ * +---- lsm6dsm_data ------------------------------------------------+
+ * | +--- stprivate_data ---+                                         |
+ * | |                      | ST common data for accelerometer        |
+ * | +----------------------+                                         |
+ * | +--- stprivate_data ---+                                         |
+ * | |                      | ST common data for gyroscope            |
+ * | +----------------------+                                         |
+ * | +--- stprivate_data ---+                                         |
+ * | |                      | ST common data for LIS2MDL magnetomer   |
+ * | +----------------------+ (optional)                              |
+ * |                                                                  |
+ * | Fifo Information                                                 |
+ * |                                                                  |
+ * | +----- Magnetometer information -----------------------------+   |
+ * | | +--- mag_cal_t ------+                                     |   |
+ * | | |                    | Data for online calibration         |   |
+ * | | +--------------------+                                     |   |
+ * | | Other privata data                                         |   |
+ * | +------------------------------------------------------------+   |
+ * +------------------------------------------------------------------+
+ *
+ * In motion_sensors array, use LSM6DSM_ST_DATA to point drv_data
+ * to the right st_data structure.
  */
 struct lsm6dsm_data {
-	/* Must be first: ST generic accelerometer data. */
-	struct stprivate_data a_data;
+#ifdef CONFIG_MAG_LSM6DSM_LIS2MDL
+	/* LIS2MDL uses st_mems_common and needs stprivate_data */
+	struct stprivate_data st_data[3];
+#else
+	/* BMM150 doesn't use st_mems_common; no stprivate_data */
+	struct stprivate_data st_data[2];
+#endif
 #ifdef CONFIG_ACCEL_FIFO
 	struct lsm6dsm_fifo_data config;
 	struct lsm6dsm_fifo_data current;
@@ -304,6 +332,17 @@ struct lsm6dsm_data {
 	 */
 	unsigned int samples_to_discard[FIFO_DEV_NUM];
 #endif
+#if defined(CONFIG_LSM6DSM_SEC_I2C) && defined(CONFIG_MAG_CALIBRATE)
+	union {
+#ifdef CONFIG_MAG_LSM6DSM_BMM150
+		struct bmm150_private_data   compass;
+#endif
+#ifdef CONFIG_MAG_LSM6DSM_LIS2MDL
+		struct lis2mdl_private_data  compass;
+#endif
+		struct mag_cal_t             cal;
+	};
+#endif  /* CONFIG_MAG_CALIBRATE */
 };
 
 /*
@@ -314,11 +353,18 @@ struct lsm6dsm_data {
  */
 #define LSM6DSM_DISCARD_SAMPLES 4
 
+#define LSM6DSM_ST_DATA(g, type) (&(&(g))->st_data[(type)])
+
 #define LSM6DSM_MAIN_SENSOR(_s) ((_s) - (_s)->type)
 
-#ifdef CONFIG_ACCEL_FIFO
-int accelgyro_fifo_disable(const struct motion_sensor_t *s);
-int accelgyro_fifo_enable(const struct motion_sensor_t *s);
-#endif /* CONFIG_ACCEL_FIFO */
+#define LSM6DSM_GET_DATA(_s) \
+	((struct lsm6dsm_data *)(LSM6DSM_MAIN_SENSOR(_s))->drv_data)
+
+#if defined(CONFIG_LSM6DSM_SEC_I2C) && defined(CONFIG_MAG_CALIBRATE)
+#define LIS2MDL_CAL(_s) (&LSM6DSM_GET_DATA(_s)->cal)
+#endif
+
+int lsm6dsm_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd);
+
 
 #endif /* __CROS_EC_ACCELGYRO_LSM6DSM_H */

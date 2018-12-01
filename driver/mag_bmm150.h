@@ -108,8 +108,9 @@ struct bmm150_comp_registers {
 };
 
 struct bmm150_private_data {
-	struct bmm150_comp_registers comp;
+	/* lsm6dsm_data union requires cal be first element */
 	struct mag_cal_t             cal;
+	struct bmm150_comp_registers comp;
 };
 #define BMM150_COMP_REG(_s) \
 	(&BMI160_GET_DATA(_s)->compass.comp)

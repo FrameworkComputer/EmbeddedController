@@ -106,8 +106,7 @@ const mat33_fp_t standard_rot_ref = {
 
 /* sensor private data */
 static struct stprivate_data g_lis2dh_data;
-static struct lsm6dsm_data lsm6dsm_g_data;
-static struct lsm6dsm_data lsm6dsm_a_data;
+static struct lsm6dsm_data lsm6dsm_data;
 
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {
@@ -147,7 +146,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.location = MOTIONSENSE_LOC_BASE,
 		.drv = &lsm6dsm_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = &lsm6dsm_a_data,
+		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+				MOTIONSENSE_TYPE_ACCEL),
 		.port = I2C_PORT_SENSOR,
 		.addr = LSM6DSM_ADDR0,
 		.rot_standard_ref = &standard_rot_ref,
@@ -176,7 +176,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.location = MOTIONSENSE_LOC_BASE,
 		.drv = &lsm6dsm_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = &lsm6dsm_g_data,
+		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+				MOTIONSENSE_TYPE_GYRO),
 		.port = I2C_PORT_SENSOR,
 		.addr = LSM6DSM_ADDR0,
 		.default_range = 1000 | ROUND_UP_FLAG, /* dps */

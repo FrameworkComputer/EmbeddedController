@@ -15,21 +15,6 @@
 #include "motion_sense.h"
 
 /**
- * Set the output data rate of the external sensor that is attached
- * to the sensor hub to the requested rate.
- *
- * @param s Pointer to external motion sensor's data structure.
- * @param rate Preferred output data rate from the sensor.
- * @param rnd Flag to indicate rounding to the nearest supported
- *            output data rate by the sensor.
- * @param ret_rate Rate configured by the sensor hub depending on the
- *                 accelerometer data rate.
- * @return EC_SUCCESS on success, EC error codes on failure.
- */
-int sensorhub_set_ext_data_rate(const struct motion_sensor_t *s,
-					int rate, int rnd, int *ret_rate);
-
-/**
  * Configure the register of an external sensor that is attached to sensor
  * hub with a specific value.
  *
@@ -60,10 +45,10 @@ int sensorhub_config_slv0_read(const struct motion_sensor_t *s,
  * of the sensor hub.
  *
  * @param s Pointer to external motion sensor's data structure.
- * @param v Vector to hold the data from the external sensor.
+ * @param raw Vector to hold the data from the external sensor.
  * @return EC_SUCCESS on success, EC error codes on failure.
  */
-int sensorhub_slv0_data_read(const struct motion_sensor_t *s, intv3_t v);
+int sensorhub_slv0_data_read(const struct motion_sensor_t *s, uint8_t *raw);
 
 /**
  * Check the identity of the external sensor and then reset the external
