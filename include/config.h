@@ -75,17 +75,45 @@
 #undef CONFIG_ACCEL_LIS2DH
 #undef CONFIG_ACCEL_LIS2DE
 #undef CONFIG_ACCEL_LIS2D_COMMON
-#undef CONFIG_ACCELGYRO_LSM6DS0
 #undef CONFIG_ACCELGYRO_BMI160
+#undef CONFIG_ACCELGYRO_LSM6DS0
 #undef CONFIG_ACCELGYRO_LSM6DSM
-#undef CONFIG_MAG_LIS2MDL
+/* Add sensorhub function for LSM6DSM, required if 2nd device attached. */
 #undef CONFIG_SENSORHUB_LSM6DSM
+
+/* Specify type of Magnetometer attached. */
+#undef CONFIG_MAG_LIS2MDL
+#undef CONFIG_MAG_BMM150
+
+/* Presence of a Bosh Sensortec BMM150 magnetometer behind a BMI160. */
+#undef CONFIG_MAG_BMI160_BMM150
+
+/* Presence of a Bosh Sensortec BMM150 magnetometer behind a LSM6DSM. */
+#undef CONFIG_MAG_LSM6DSM_BMM150
+
+/* Presence of a ST LIS2MDL magnetometer behind a BMI160. */
+#undef CONFIG_MAG_BMI160_LIS2MDL
+
+/* Presence of a ST LIS2MDL magnetometer behind a LSM6DSM. */
+#undef CONFIG_MAG_LSM6DSM_LIS2MDL
+
+/* Specify barometer attached */
+#undef CONFIG_BARO_BMP280
+
+/* When set, it indicates a secondary sensor is attached behind a BMI160. */
+#undef CONFIG_BMI160_SEC_I2C
+
+/* When set, it indicates a secondary sensor is attached behind a LSM6DSM/L. */
+#undef CONFIG_LSM6DSM_SEC_I2C
 
 /* Support for BMI160 hardware orientation sensor */
 #undef CONFIG_BMI160_ORIENTATION_SENSOR
 
 /* Support for KIONIX KX022 hardware orientation sensor */
 #undef CONFIG_KX022_ORIENTATION_SENSOR
+
+/* Define the i2c address of the sensor behind the main sensor, if present. */
+#undef CONFIG_ACCELGYRO_SEC_ADDR
 
 /*
  * Define if either CONFIG_BMI160_ORIENTATION_SUPPORT or
@@ -95,9 +123,6 @@
 
 /* Support the orientation gesture */
 #undef CONFIG_GESTURE_ORIENTATION
-
-/* Specify barometer attached */
-#undef CONFIG_BARO_BMP280
 
 /*
  * Use the old standard reference frame for accelerometers. The old
@@ -2440,9 +2465,6 @@
 /* Include code to do online compass calibration */
 #undef CONFIG_MAG_CALIBRATE
 
-/* Presence of a Bosh Sensortec BMM150 magnetometer behind a BMI160. */
-#undef CONFIG_MAG_BMI160_BMM150
-
 /* Microchip LPC enable debug messages */
 #undef CONFIG_MCHP_DEBUG_LPC
 
@@ -4208,8 +4230,40 @@
 #endif
 
 /* Enable BMI160 secondary port if needed. */
-#ifdef CONFIG_MAG_BMI160_BMM150
+#if defined(CONFIG_MAG_BMI160_BMM150) || \
+	defined(CONFIG_MAG_BMI160_LIS2MDL)
 #define CONFIG_BMI160_SEC_I2C
+#endif
+
+/* Enable LSM2MDL secondary port if needed. */
+#if defined(CONFIG_MAG_LSM6DSM_BMM150) || \
+	defined(CONFIG_MAG_LSM6DSM_LIS2MDL)
+#define CONFIG_LSM6DSM_SEC_I2C
+#endif
+
+/* Load LIS2MDL driver if needed */
+#if defined(CONFIG_MAG_BMI160_LIS2MDL) || \
+	defined(CONFIG_MAG_LSM6DSM_LIS2MDL)
+#define CONFIG_MAG_LIS2MDL
+#ifndef CONFIG_ACCELGYRO_SEC_ADDR
+#error "The i2c address of the magnetometer is not set."
+#endif
+#endif
+
+/* Load BMM150 driver if needed */
+#if defined(CONFIG_MAG_BMI160_BMM150) || \
+	defined(CONFIG_MAG_LSM6DSM_BMM150)
+#define CONFIG_MAG_BMM150
+#ifndef CONFIG_ACCELGYRO_SEC_ADDR
+#error "The i2c address of the magnetometer is not set."
+#endif
+#endif
+
+/* Verify sensorhub is enabled */
+#ifdef CONFIG_MAG_LSM6DSM_LIS2MDL
+#ifndef CONFIG_SENSORHUB_LSM6DSM
+#error "Enable SENSORHUB_LSM6DSM."
+#endif
 #endif
 
 /*

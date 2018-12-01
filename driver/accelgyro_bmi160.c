@@ -1279,7 +1279,7 @@ static int init(const struct motion_sensor_t *s)
 
 			/* Set the i2c address of the compass */
 			ret = raw_write8(s->port, s->addr, BMI160_MAG_IF_0,
-					BMI160_SEC_ADDR);
+					CONFIG_ACCELGYRO_SEC_ADDR);
 
 			/* Enable the secondary interface as I2C */
 			ret = raw_write8(s->port, s->addr, BMI160_IF_CONF,

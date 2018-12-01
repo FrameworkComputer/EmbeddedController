@@ -92,7 +92,7 @@
 /* Motion Sensors */
 #ifdef SECTION_IS_RW
 #define CONFIG_MAG_BMI160_BMM150
-#define BMI160_SEC_ADDR BMM150_ADDR0  /* 8-bit address */
+#define CONFIG_ACCELGYRO_SEC_ADDR BMM150_ADDR0  /* 8-bit address */
 #define CONFIG_MAG_CALIBRATE
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCEL_INTERRUPTS
