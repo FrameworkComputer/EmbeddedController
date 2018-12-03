@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -62,11 +62,12 @@ int board_vbus_source_enabled(int port)
 
 int pd_set_power_supply_ready(int port)
 {
+	/* Disable NCP3902 to avoid charging from VBUS */
+	gpio_set_level(GPIO_NCP3902_EN_L, 1);
 
-	pd_set_vbus_discharge(port, 0);
 	/* Provide VBUS */
 	vbus_en = 1;
-	charger_enable_otg_power(1);
+	gpio_set_level(GPIO_EN_PP5000_USBC, 1);
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -81,10 +82,12 @@ void pd_power_supply_reset(int port)
 	prev_en = vbus_en;
 	/* Disable VBUS */
 	vbus_en = 0;
-	charger_enable_otg_power(0);
-	/* Enable discharge if we were previously sourcing 5V */
-	if (prev_en)
-		pd_set_vbus_discharge(port, 1);
+
+	if (prev_en) {
+		gpio_set_level(GPIO_EN_PP5000_USBC, 0);
+		msleep(250);
+		gpio_set_level(GPIO_NCP3902_EN_L, 0);
+	}
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -405,4 +408,3 @@ const struct svdm_amode_fx supported_modes[] = {
 };
 const int supported_modes_cnt = ARRAY_SIZE(supported_modes);
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
-
