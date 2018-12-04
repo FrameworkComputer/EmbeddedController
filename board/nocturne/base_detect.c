@@ -283,7 +283,8 @@ void base_pwr_fault_interrupt(enum gpio_signal s)
 
 	if (pwr_fault_detected | usb_fault_detected) {
 		/* Turn off base power. */
-		CPRINTS("Base Pwr Flt!");
+		CPRINTS("Base Pwr Flt! %s%s", pwr_fault_detected ? "p" : "-",
+			usb_fault_detected ? "u" : "-");
 		base_power_enable(0);
 
 		/*
