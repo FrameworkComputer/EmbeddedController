@@ -86,7 +86,6 @@
 #define CONFIG_CHARGER_PSYS_READ
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 
-/* TODO(b/79163120): Use correct charger values, copied from Lux for rev-0 */
 #define CONFIG_CHARGER_INPUT_CURRENT 512
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 2
 #define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 7500
@@ -135,17 +134,17 @@
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 
-/* TODO(b/79163120): Use correct PD delay values, copied from Lux for rev-0 */
+/* PD */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY   30000  /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY  250000 /* us */
 #define PD_VCONN_SWAP_DELAY             5000 /* us */
 
-/* TODO(b/79163120): Use correct PD power values, copied from Lux for rev-0 */
 #define PD_OPERATING_POWER_MW   15000
-#define PD_MAX_POWER_MW         45000
+#define PD_MAX_POWER_MW         ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
 #define PD_MAX_CURRENT_MA       3000
 #define PD_MAX_VOLTAGE_MV       20000
 
+/* Chipset */
 #define CONFIG_CHIPSET_SDM845
 #define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_POWER_COMMON
