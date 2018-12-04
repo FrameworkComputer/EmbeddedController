@@ -48,6 +48,7 @@ static void usb0_evt(enum gpio_signal signal);
 static void usb1_evt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
 static void anx74xx_cable_det_interrupt(enum gpio_signal signal);
+static void usb1_oc_evt(enum gpio_signal signal);
 
 #include "gpio_list.h"
 
@@ -123,6 +124,19 @@ static void ppc_interrupt(enum gpio_signal signal)
 {
 	/* Only port-0 uses PPC chip */
 	sn5s330_interrupt(0);
+}
+
+static void usb1_oc_evt_deferred(void)
+{
+	/* Only port-1 has overcurrent GPIO interrupt */
+	board_overcurrent_event(0);
+}
+DECLARE_DEFERRED(usb1_oc_evt_deferred);
+
+static void usb1_oc_evt(enum gpio_signal signal)
+{
+	/* Switch the context to handle the event */
+	hook_call_deferred(&usb1_oc_evt_deferred_data, 0);
 }
 
 /* Wake-up pins for hibernate */
@@ -417,7 +431,8 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
-	gpio_set_flags(GPIO_USB_C1_OC_ODL, GPIO_INPUT | GPIO_PULL_UP);
+	gpio_set_flags(GPIO_USB_C1_OC_ODL, GPIO_INT_FALLING | GPIO_PULL_UP);
+	gpio_enable_interrupt(GPIO_USB_C1_OC_ODL);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
@@ -425,7 +440,8 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 static void board_chipset_shutdown(void)
 {
 	/* 5V is off in S5. Disable pull-up to prevent current leak. */
-	gpio_set_flags(GPIO_USB_C1_OC_ODL, GPIO_INPUT);
+	gpio_disable_interrupt(GPIO_USB_C1_OC_ODL);
+	gpio_set_flags(GPIO_USB_C1_OC_ODL, GPIO_INT_FALLING);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
@@ -495,7 +511,7 @@ int board_is_sourcing_vbus(int port)
 
 void board_overcurrent_event(int port)
 {
-	/* TODO(waihong): Notify AP? */
+	/* TODO(b/120231371): Notify AP */
 	CPRINTS("p%d: overcurrent!", port);
 }
 
