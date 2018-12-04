@@ -752,8 +752,8 @@ function flash_openocd() {
 	OCD_CFG="servo.cfg"
 	if [[ -z "${EC_DIR}" ]]; then
 		# check if we're on beaglebone
-		if [[ -e "/usr/bin/lib" ]]; then
-			OCD_PATH="/usr/bin/lib"
+		if [[ -e "/usr/share/ec-devutils" ]]; then
+			OCD_PATH="/usr/share/ec-devutils"
 		else
 			die "Cannot locate openocd configs"
 		fi
