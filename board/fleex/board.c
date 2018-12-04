@@ -125,77 +125,77 @@ static struct lsm6dsm_data lsm6dsm_a_data;
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
-	 .name = "Lid Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_LIS2DE,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &lis2dh_drv,
-	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_lis2dh_data,
-	 .port = I2C_PORT_SENSOR,
-	 .addr = LIS2DH_ADDR1,
-	 .rot_standard_ref = &lid_standard_ref,
-	 .default_range = 2, /* g */
-	  /* We only use 2g because its resolution is only 8-bits */
-	 .min_frequency = LIS2DH_ODR_MIN_VAL,
-	 .max_frequency = LIS2DH_ODR_MAX_VAL,
-	 .config = {
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 10000 | ROUND_UP_FLAG,
+		.name = "Lid Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_LIS2DE,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &lis2dh_drv,
+		.mutex = &g_lid_mutex,
+		.drv_data = &g_lis2dh_data,
+		.port = I2C_PORT_SENSOR,
+		.addr = LIS2DH_ADDR1,
+		.rot_standard_ref = &lid_standard_ref,
+		.default_range = 2, /* g */
+		/* We only use 2g because its resolution is only 8-bits */
+		.min_frequency = LIS2DH_ODR_MIN_VAL,
+		.max_frequency = LIS2DH_ODR_MAX_VAL,
+		.config = {
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+			/* Sensor on for lid angle detection */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
 		},
-		 /* Sensor on for lid angle detection */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-		},
-	 },
 	},
 
 	[BASE_ACCEL] = {
-	 .name = "Base Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_LSM6DSM,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &lsm6dsm_drv,
-	 .mutex = &g_base_mutex,
-	 .drv_data = &lsm6dsm_a_data,
-	 .port = I2C_PORT_SENSOR,
-	 .addr = LSM6DSM_ADDR0,
-	 .rot_standard_ref = &base_standard_ref,
-	 .default_range = 4,  /* g */
-	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
-	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
-	 .config = {
-		 /* EC use accel for angle detection */
-		 [SENSOR_CONFIG_EC_S0] = {
-			.odr = 13000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
-		 },
-		 /* Sensor on for angle detection */
-		 [SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
-		 },
-	 },
+		.name = "Base Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_LSM6DSM,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_BASE,
+		.drv = &lsm6dsm_drv,
+		.mutex = &g_base_mutex,
+		.drv_data = &lsm6dsm_a_data,
+		.port = I2C_PORT_SENSOR,
+		.addr = LSM6DSM_ADDR0,
+		.rot_standard_ref = &base_standard_ref,
+		.default_range = 4,  /* g */
+		.min_frequency = LSM6DSM_ODR_MIN_VAL,
+		.max_frequency = LSM6DSM_ODR_MAX_VAL,
+		.config = {
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 13000 | ROUND_UP_FLAG,
+				.ec_rate = 100 * MSEC,
+			},
+			/* Sensor on for angle detection */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+				.ec_rate = 100 * MSEC,
+			},
+		},
 	},
 
 	[BASE_GYRO] = {
-	 .name = "Base Gyro",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_LSM6DSM,
-	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &lsm6dsm_drv,
-	 .mutex = &g_base_mutex,
-	 .drv_data = &lsm6dsm_g_data,
-	 .port = I2C_PORT_SENSOR,
-	 .addr = LSM6DSM_ADDR0,
-	 .default_range = 1000 | ROUND_UP_FLAG, /* dps */
-	 .rot_standard_ref = &base_standard_ref,
-	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
-	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
+		.name = "Base Gyro",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_LSM6DSM,
+		.type = MOTIONSENSE_TYPE_GYRO,
+		.location = MOTIONSENSE_LOC_BASE,
+		.drv = &lsm6dsm_drv,
+		.mutex = &g_base_mutex,
+		.drv_data = &lsm6dsm_g_data,
+		.port = I2C_PORT_SENSOR,
+		.addr = LSM6DSM_ADDR0,
+		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
+		.rot_standard_ref = &base_standard_ref,
+		.min_frequency = LSM6DSM_ODR_MIN_VAL,
+		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 	},
 };
 
