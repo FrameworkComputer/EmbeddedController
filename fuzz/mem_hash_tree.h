@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <vector>
 
+#define HIDE_EC_STDLIB
 #include "board/host/dcrypto.h"
 #include "fuzz/span.h"
 
