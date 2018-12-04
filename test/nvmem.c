@@ -696,6 +696,10 @@ static void run_test_setup(void)
 	test_reset();
 }
 
+void nvmem_wipe_cache(void)
+{
+}
+
 int DCRYPTO_ladder_is_enabled(void)
 {
 	return 1;

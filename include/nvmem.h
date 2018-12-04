@@ -214,4 +214,6 @@ void nvmem_clear_cache(void);
 }
 #endif
 
+void nvmem_wipe_cache(void);
+
 #endif /* __CROS_EC_NVMEM_UTILS_H */

@@ -611,10 +611,13 @@ int nvmem_commit(void)
 
 void nvmem_clear_cache(void)
 {
+	/* This will work only if key ladder is disabled. */
+	if (DCRYPTO_ladder_is_enabled())
+		return;
+
 	nvmem_lock_cache();
-	/*
-	 * TODO(b/119221935): Clear areas that should be protected within
-	 *                    nvmem_cache.
-	 */
-	nvmem_release_cache();
+
+	nvmem_wipe_cache();
+
+	nvmem_save();
 }

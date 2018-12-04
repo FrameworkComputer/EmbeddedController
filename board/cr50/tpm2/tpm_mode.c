@@ -20,6 +20,7 @@
 
 static void disable_tpm(void)
 {
+	nvmem_enable_commits();
 	tpm_stop();
 	DCRYPTO_ladder_revoke();
 	nvmem_clear_cache();
