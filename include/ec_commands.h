@@ -3477,6 +3477,7 @@ struct ec_response_keyboard_factory_test {
 /* code given by EC_MKBP_FP_ERRCODE() when EC_MKBP_FP_MATCH is set */
 #define EC_MKBP_FP_ERR_MATCH_NO                0
 #define EC_MKBP_FP_ERR_MATCH_NO_INTERNAL       6
+#define EC_MKBP_FP_ERR_MATCH_NO_TEMPLATES      7
 #define EC_MKBP_FP_ERR_MATCH_NO_LOW_QUALITY    2
 #define EC_MKBP_FP_ERR_MATCH_NO_LOW_COVERAGE   4
 #define EC_MKBP_FP_ERR_MATCH_YES               1
