@@ -248,6 +248,8 @@ void board_reset_pd_mcu(void);
 void tcpc_alert_event(enum gpio_signal signal);
 
 int board_get_version(void);
+int board_is_convertible(void);
+void board_update_sensor_config_from_sku(void);
 
 #endif /* !__ASSEMBLER__ */
 

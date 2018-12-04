@@ -49,8 +49,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-static int board_is_convertible(void);
-
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_LID_OPEN,
 	GPIO_AC_PRESENT,
@@ -348,6 +346,8 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
+#ifdef HAS_TASK_MOTIONSENSE
+
 /* Motion sensors */
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
@@ -441,6 +441,8 @@ struct motion_sensor_t motion_sensors[] = {
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
+#endif /* HAS_TASK_MOTIONSENSE */
+
 #ifndef TEST_BUILD
 void lid_angle_peripheral_enable(int enable)
 {
@@ -532,6 +534,10 @@ static void cbi_init(void)
 	}
 #endif
 
+#ifdef HAS_TASK_MOTIONSENSE
+	board_update_sensor_config_from_sku();
+#endif
+
 	ccprints("Board Version: %d (0x%x)", board_version, board_version);
 	ccprints("SKU: %d (0x%x)", sku_id, sku_id);
 }
@@ -555,9 +561,11 @@ int board_get_version(void)
  * Returns 1 for boards that are convertible into tablet mode, and zero for
  * clamshells.
  */
-static int board_is_convertible(void)
+int board_is_convertible(void)
 {
-	return system_get_sku_id() == 6;
+	/* Grunt: 6 */
+	/* Kasumi360: 82 */
+	return (sku_id == 6 || sku_id == 82);
 }
 
 int board_is_lid_angle_tablet_mode(void)
@@ -567,16 +575,12 @@ int board_is_lid_angle_tablet_mode(void)
 
 uint32_t board_override_feature_flags0(uint32_t flags0)
 {
-	uint32_t sku = system_get_sku_id();
-
 	/*
-	 * We always compile in backlight support for grunt baseboard,
-	 * but only some models come with the hardware. Therefore,
-	 * check if the current device is one of them and return
-	 * the default value - with backlight here.
+	 * Remove keyboard backlight feature for devices that don't support it.
 	 */
-	if (sku == 16 || sku == 17 || sku == 20 || sku == 21 || sku == 32
-		|| sku == 33)
+	if (sku_id == 16 || sku_id == 17 ||
+	    sku_id == 20 || sku_id == 21 ||
+	    sku_id == 32 || sku_id == 33)
 		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
 	else
 		return flags0;

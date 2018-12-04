@@ -101,11 +101,6 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
-static void board_init(void)
-{
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
 void board_overcurrent_event(int port)
 {
 	enum gpio_signal signal = (port == 0) ? GPIO_USB_C0_OC_L
