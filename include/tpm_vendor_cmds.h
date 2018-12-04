@@ -32,6 +32,12 @@ enum vendor_cmd_cc {
 	VENDOR_CC_GET_LOCK = 16,
 	VENDOR_CC_SET_LOCK = 17,
 	VENDOR_CC_SYSINFO = 18,
+	/*
+	 * VENDOR_CC_IMMEDIATE_RESET may have an argument, which is a (uint16_t)
+	 * time delay (in milliseconds) in doing a reset. Max value is 1000.
+	 * The command may also be called without an argument, which will be
+	 * regarded as zero time delay.
+	 */
 	VENDOR_CC_IMMEDIATE_RESET = 19,
 	VENDOR_CC_INVALIDATE_INACTIVE_RW = 20,
 	VENDOR_CC_COMMIT_NVMEM = 21,
