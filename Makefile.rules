@@ -89,8 +89,8 @@ cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) $(HOST_LDFLAGS) -MMD -MF $@.d  -o $@ \
 cmd_cxx_to_host = $(HOSTCXX) -std=c++0x $(COMMON_WARN) $(HOST_CXXFLAGS)\
 	-I ./$($(notdir $@)_ROOT) -o $@ $(filter %.cc,$^) $($(notdir $@)_LIBS)
 cmd_host_test = $(MAKE) --no-print-directory BOARD=host PROJECT=$* \
-	V=$(V) out=build/host/$* TEST_BUILD=y EMU_BUILD=y $(TEST_FLAG) \
-	CROSS_COMPILE= build/host/$*/$*.exe
+	V=$(V) out=build/host/$* TEST_BUILD=y EMU_BUILD=y CROSS_COMPILE= \
+	$(TEST_FLAG) build/host/$*/$*.exe
 cmd_run_host_test = ./util/run_host_test $* $(silent)
 # generate new version.h, compare if it changed and replace if so
 cmd_version = ./util/getversion.sh > $@.tmp && cmp -s $@.tmp $@ || mv $@.tmp $@; rm -f $@.tmp
@@ -345,7 +345,9 @@ $(fuzz-test-targets): host-%:
 
 .PHONY: buildfuzztests
 buildfuzztests: TEST_FLAG=TEST_FUZZ=y TEST_ASAN=$(TEST_ASAN) \
-	TEST_MSAN=$(TEST_MSAN) TEST_UBSAN=$(TEST_UBSAN)
+	TEST_MSAN=$(TEST_MSAN) TEST_UBSAN=$(TEST_UBSAN) \
+	CROSS_COMPILE=$(shell echo $(HOSTCC) | grep -v ccache | \
+		sed -e 's/[^-]*$$//')
 buildfuzztests: $(fuzz-test-targets)
 
 $(out)/libec.a: $(ro-objs)
