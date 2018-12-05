@@ -528,6 +528,8 @@ static int dbgr_disable_watchdog(struct common_hnd *chnd)
 {
 	int ret = 0;
 
+	printf("Disabling watchdog...\n");
+
 	ret |= i2c_write_byte(chnd, 0x2f, 0x1f);
 	ret |= i2c_write_byte(chnd, 0x2e, 0x05);
 	ret |= i2c_write_byte(chnd, 0x30, 0x30);
@@ -542,6 +544,8 @@ static int dbgr_disable_watchdog(struct common_hnd *chnd)
 static int dbgr_disable_protect_path(struct common_hnd *chnd)
 {
 	int ret = 0, i;
+
+	printf("Disabling protect path...\n");
 
 	ret |= i2c_write_byte(chnd, 0x2f, 0x20);
 	for (i = 0; i < 32; i++) {
@@ -682,9 +686,15 @@ failed_read_status:
 
 static int ftdi_config_i2c(struct ftdi_context *ftdi)
 {
+	static const uint16_t divisor =
+		60000000 / (2 * I2C_FREQ * 3 / 2 /* 3-phase CLK */) - 1;
+	static const uint8_t clock_buf[] = {
+		EN_3_PHASE,
+		DIS_DIV_5,
+		TCK_DIVISOR,
+		divisor & 0xff,
+		divisor >> 8};
 	int ret;
-	uint8_t buf[5];
-	uint16_t divisor;
 
 	ret = ftdi_set_latency_timer(ftdi, 16 /* ms */);
 	if (ret < 0)
@@ -706,14 +716,11 @@ static int ftdi_config_i2c(struct ftdi_context *ftdi)
 		fprintf(stderr, "Cannot purge buffers\n");
 
 	/* configure the clock */
-	divisor = (60000000 / (2 * I2C_FREQ * 3 / 2 /* 3-phase CLK */) - 1);
-	buf[0] = EN_3_PHASE;
-	buf[1] = DIS_DIV_5;
-	buf[2] = TCK_DIVISOR;
-	buf[3] = divisor & 0xff;
-	buf[4] = divisor >> 8;
-	ret = ftdi_write_data(ftdi, buf, sizeof(buf));
-	return ret;
+	ret = ftdi_write_data(ftdi, clock_buf, sizeof(clock_buf));
+	if (ret < 0)
+		return ret;
+
+	return 0;
 }
 
 /* Special waveform definition */
@@ -783,9 +790,9 @@ static int ftdi_send_special_waveform(struct common_hnd *chnd)
 {
 	int ret;
 	int i;
-	uint8_t release_lines[] = {SET_BITS_LOW, 0, 0};
 	uint64_t *wave;
 	struct ftdi_context *ftdi = chnd->ftdi_hnd;
+	static const uint8_t release_lines[] = {SET_BITS_LOW, 0, 0};
 
 	wave = malloc(SPECIAL_BUFFER_SIZE);
 	if (!wave) {
@@ -876,7 +883,6 @@ static int send_special_waveform(struct common_hnd *chnd)
 		usleep(10 * MSEC);
 
 		if (spi_flash_follow_mode(chnd, "enter follow mode") >= 0) {
-
 			spi_flash_follow_mode_exit(chnd, "exit follow mode");
 			/*
 			 * If we can talk to chip, then we can break the retry
@@ -1565,37 +1571,7 @@ static int ftdi_i2c_interface_init(struct common_hnd *chnd)
 
 static int ftdi_i2c_interface_post_waveform(struct common_hnd *chnd)
 {
-	int ret;
-
-	ret = ftdi_config_i2c(chnd->ftdi_hnd);
-	if (ret < 0)
-		return ret;
-
-	ret = check_chipid(chnd);
-	if (ret < 0)
-		return ret;
-
-	return 0;
-}
-
-static int interface_post_waveform(struct common_hnd *chnd)
-{
-	int ret;
-
-	printf("Performing post special waveform work...\n");
-
-	if (chnd->conf.i2c_if->interface_post_waveform)
-		ret = chnd->conf.i2c_if->interface_post_waveform(chnd);
-
-	/* disable watchdog before programming sequence */
-	ret = dbgr_disable_watchdog(chnd);
-	if (ret < 0)
-		return ret;
-
-	ret = dbgr_disable_protect_path(chnd);
-	if (ret < 0)
-		return ret;
-	return ret;
+	return chnd->conf.send_waveform ? 0 : ftdi_config_i2c(chnd->ftdi_hnd);
 }
 
 /* Close the FTDI USB handle */
@@ -1604,6 +1580,21 @@ static int ftdi_i2c_interface_shutdown(struct common_hnd *chnd)
 	ftdi_usb_close(chnd->ftdi_hnd);
 	ftdi_free(chnd->ftdi_hnd);
 	return 0;
+}
+
+static int post_waveform_work(struct common_hnd *chnd)
+{
+	int ret;
+
+	if (chnd->conf.i2c_if->interface_post_waveform) {
+		ret = chnd->conf.i2c_if->interface_post_waveform(chnd);
+		if (ret)
+			return ret;
+	}
+	ret = dbgr_disable_watchdog(chnd);
+	if (ret)
+		return ret;
+	return dbgr_disable_protect_path(chnd);
 }
 
 static const struct i2c_interface ccd_i2c_interface = {
@@ -1851,7 +1842,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (interface_post_waveform(&chnd))
+	ret = post_waveform_work(&chnd);
+	if (ret)
 		goto terminate;
 
 	if (chnd.conf.input_filename) {
