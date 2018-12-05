@@ -944,7 +944,11 @@ enum pd_data_msg_type {
 /* Used for processing pd header */
 #define PD_HEADER_EXT(header)   (((header) >> 15) & 1)
 #define PD_HEADER_CNT(header)   (((header) >> 12) & 7)
-#define PD_HEADER_TYPE(header)  ((header) & 0xF)
+/*
+ * NOTE: bit 4 was added in PD 3.0, and should be reserved and set to 0 in PD
+ * 2.0 messages
+ */
+#define PD_HEADER_TYPE(header)  ((header) & 0x1F)
 #define PD_HEADER_ID(header)    (((header) >> 9) & 7)
 #define PD_HEADER_REV(header)   (((header) >> 6) & 3)
 #define PD_HEADER_DROLE(header) (((header) >> 5) & 1)
