@@ -87,7 +87,6 @@ struct iteflash_config {
 	const char *input_filename;
 	const char *output_filename;
 	int send_waveform;  /* boolean */
-	int unprotect;  /* boolean */
 	int erase;  /* boolean */
 	int debug;  /* boolean */
 	int usb_interface;
@@ -1127,12 +1126,6 @@ failed_write:
 	return res;
 }
 
-static int command_write_unprotect(struct common_hnd *chnd)
-{
-	/* TODO(http://crosbug.com/p/23576): implement me */
-	return 0;
-}
-
 static int command_erase(struct common_hnd *chnd, uint32_t len, uint32_t off)
 {
 	int res = -EIO;
@@ -1610,7 +1603,6 @@ static const struct option longopts[] = {
 	{"read", 1, 0, 'r'},
 	{"send-waveform", 1, 0, 'W'},
 	{"serial", 1, 0, 's'},
-	{"unprotect", 0, 0, 'u'},
 	{"vendor", 1, 0, 'v'},
 	{"write", 1, 0, 'w'},
 	{NULL, 0, 0, 0}
@@ -1729,9 +1721,6 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 		case 's':
 			conf->usb_serial = optarg;
 			break;
-		case 'u':
-			conf->unprotect = 1;
-			break;
 		case 'v':
 			conf->usb_vid = strtol(optarg, NULL, 16);
 			break;
@@ -1819,9 +1808,6 @@ int main(int argc, char **argv)
 	if (chnd.conf.i2c_if->interface_post_waveform &&
 	    chnd.conf.i2c_if->interface_post_waveform(&chnd))
 		goto terminate;
-
-	if (chnd.conf.unprotect)
-		command_write_unprotect(&chnd);
 
 	if (chnd.conf.input_filename) {
 		ret = read_flash(&chnd);
