@@ -2077,7 +2077,7 @@ enum charge_state charge_get_state(void)
 {
 	switch (curr.state) {
 	case ST_IDLE:
-		if (battery_seems_to_be_dead || curr.batt.is_present != BP_YES)
+		if (battery_seems_to_be_dead || curr.batt.is_present == BP_NO)
 			return PWR_STATE_ERROR;
 		return PWR_STATE_IDLE;
 	case ST_DISCHARGE:
@@ -2093,6 +2093,9 @@ enum charge_state charge_get_state(void)
 			return PWR_STATE_CHARGE_NEAR_FULL;
 		else
 			return PWR_STATE_CHARGE;
+	case ST_PRECHARGE:
+		/* we're in battery discovery mode */
+		return PWR_STATE_IDLE;
 	default:
 		/* Anything else can be considered an error for LED purposes */
 		return PWR_STATE_ERROR;
