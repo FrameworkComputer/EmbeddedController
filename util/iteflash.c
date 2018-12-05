@@ -977,7 +977,7 @@ static int command_write_pages(struct common_hnd *chnd, uint32_t address,
 	uint32_t remaining = size;
 	int cnt;
 	uint8_t addr_H, addr_M, addr_L;
-	uint8_t cmd;
+	uint8_t data;
 
 	if (spi_flash_follow_mode(chnd, "AAI write") < 0)
 		goto failed_write;
@@ -987,7 +987,7 @@ static int command_write_pages(struct common_hnd *chnd, uint32_t address,
 			block_write_size : remaining;
 		addr_H = (address >> 16) & 0xFF;
 		addr_M = (address >> 8) & 0xFF;
-		addr_L = (address) & 0xFF;
+		addr_L = address & 0xFF;
 
 		draw_spinner(remaining, size);
 
@@ -1029,8 +1029,8 @@ static int command_write_pages(struct common_hnd *chnd, uint32_t address,
 			goto failed_write;
 		}
 
-		cmd = 0xff;
-		res = i2c_byte_transfer(chnd, I2C_DATA_ADDR, &cmd, 1, 1);
+		data = 0xFF;
+		res = i2c_byte_transfer(chnd, I2C_DATA_ADDR, &data, 1, 1);
 		res |= i2c_write_byte(chnd, 0x10, 0x00);
 		if (res < 0) {
 			fprintf(stderr, "Flash end data write FAILED (%d)\n",
@@ -1073,12 +1073,8 @@ static int command_write_pages2(struct common_hnd *chnd, uint32_t address,
 				int block_write_size)
 {
 	int res = 0;
-	uint8_t BA, A1, A0, data;
-
-	/*
-	 * TODOD(b/<>):
-	 * The code will merge to the original function
-	 */
+	uint8_t addr_H, addr_M, addr_L;
+	uint8_t data;
 
 	res |= i2c_write_byte(chnd, 0x07, 0x7f);
 	res |= i2c_write_byte(chnd, 0x06, 0xff);
@@ -1112,13 +1108,13 @@ static int command_write_pages2(struct common_hnd *chnd, uint32_t address,
 		goto failed_write;
 	}
 
-	BA = address>>16;
-	A1 = address>>8;
-	A0 = 0;
+	addr_H = (address >> 16) & 0xFF;
+	addr_M = (address >> 8) & 0xFF;
+	addr_L = address & 0xFF;
 
-	res = i2c_byte_transfer(chnd, I2C_DATA_ADDR, &BA, 1, 1);
-	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &A1, 1, 1);
-	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &A0, 1, 1);
+	res = i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_H, 1, 1);
+	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_M, 1, 1);
+	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_L, 1, 1);
 	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, buffer++, 1, 1);
 	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, buffer++, 1, 1);
 
@@ -1133,7 +1129,7 @@ static int command_write_pages2(struct common_hnd *chnd, uint32_t address,
 	/* No error so far */
 	res = size;
 
-	data = 0xff;
+	data = 0xFF;
 	res = i2c_byte_transfer(chnd, I2C_DATA_ADDR, &data, 1, 1);
 	res = i2c_write_byte(chnd, 0x10, 0x00);
 
