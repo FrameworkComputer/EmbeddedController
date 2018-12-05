@@ -194,6 +194,12 @@ const struct fan_rpm fan_rpm_3 = {
 	.rpm_max = 5500,
 };
 
+const struct fan_rpm fan_rpm_4 = {
+	.rpm_min = 2400,
+	.rpm_start = 2400,
+	.rpm_max = 4500,
+};
+
 struct fan_t fans[FAN_CH_COUNT] = {
 	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
 };
@@ -860,7 +866,10 @@ static void setup_fans(void)
 {
 	switch (oem) {
 	case PROJECT_SONA:
-		fans[FAN_CH_0].rpm = &fan_rpm_1;
+		if (model == MODEL_SYNDRA)
+			fans[FAN_CH_0].rpm = &fan_rpm_4;
+		else
+			fans[FAN_CH_0].rpm = &fan_rpm_1;
 		thermal_params[TEMP_SENSOR_REMOTE1] = thermal_b1;
 		thermal_params[TEMP_SENSOR_REMOTE2] = thermal_b2;
 		break;
