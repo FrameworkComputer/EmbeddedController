@@ -696,6 +696,11 @@ static void run_test_setup(void)
 	test_reset();
 }
 
+int DCRYPTO_ladder_is_enabled(void)
+{
+	return 1;
+}
+
 void run_test(void)
 {
 	run_test_setup();

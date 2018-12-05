@@ -13,6 +13,12 @@
 #define CRYPTO_TEST_SETUP
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if defined(TEST_FUZZ) || !defined(TEST_BUILD)
+
 #include "internal.h"
 
 #include "crypto_api.h"
@@ -20,10 +26,6 @@
 #include <stddef.h>
 
 #include "cryptoc/hmac.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 enum cipher_mode {
 	CIPHER_MODE_ECB = 0,
@@ -305,12 +307,6 @@ struct APPKEY_CTX {
 int DCRYPTO_ladder_compute_frk2(size_t major_fw_version, uint8_t *frk2);
 int DCRYPTO_ladder_random(void *output);
 void DCRYPTO_ladder_revoke(void);
-/*
- * Query whether Key Ladder is enabled.
- *
- * @return 1 if Key Ladder is enabled, and 0 otherwise.
- */
-int DCRYPTO_ladder_is_enabled(void);
 
 int DCRYPTO_appkey_init(enum dcrypto_appid id, struct APPKEY_CTX *ctx);
 void DCRYPTO_appkey_finish(struct APPKEY_CTX *ctx);
@@ -347,6 +343,14 @@ BUILD_ASSERT(DCRYPTO_CIPHER_SALT_SIZE == CIPHER_SALT_SIZE);
  */
 int DCRYPTO_app_cipher(enum dcrypto_appid appid, const void *salt,
 		void *out, const void *in, size_t len);
+
+#endif  /*  ^^^^^^^^^^^^^^^^^^^^^  !TEST_BUILD   */
+/*
+ * Query whether Key Ladder is enabled.
+ *
+ * @return 1 if Key Ladder is enabled, and 0 otherwise.
+ */
+int DCRYPTO_ladder_is_enabled(void);
 
 #ifdef __cplusplus
 }

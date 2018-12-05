@@ -139,3 +139,7 @@ extern "C" int test_fuzz_one_input(const uint8_t* data, unsigned int size) {
   }
   return 0;
 }
+
+extern "C" int DCRYPTO_ladder_is_enabled(void) {
+  return 1;
+}
