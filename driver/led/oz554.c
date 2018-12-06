@@ -1,6 +1,8 @@
 /* Copyright 2018 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
+ *
+ * O2 Micro OZ554 LED driver.
  */
 
 #include "console.h"
@@ -10,8 +12,8 @@
 #include "task.h"
 #include "timer.h"
 
-#define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_GPIO, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
 #define I2C_ADDR_OZ554		0x62
 #define OZ554_DATA_SIZE		6
@@ -22,7 +24,7 @@ struct oz554_value {
 };
 
 /* This ordering is suggested by vendor. */
-static const struct oz554_value oz554_order[] = {
+static const struct oz554_value order[] = {
 	/*
 	 * Reigster 0x01: Operation frequency control
 	 * Frequency selection: 300(KHz)
@@ -61,23 +63,18 @@ static const struct oz554_value oz554_order[] = {
 	 */
 	{.offset = 0, .data = 0xF2},
 };
-BUILD_ASSERT(ARRAY_SIZE(oz554_order) == OZ554_DATA_SIZE);
+BUILD_ASSERT(ARRAY_SIZE(order) == OZ554_DATA_SIZE);
 
 static void set_oz554_reg(void)
 {
-	int i, rv;
+	int i;
 
 	for (i = 0; i < OZ554_DATA_SIZE; ++i) {
-		rv = i2c_write8(
-			NPCX_I2C_PORT1,
-			I2C_ADDR_OZ554,
-			oz554_order[i].offset,
-			oz554_order[i].data);
-
+		int rv = i2c_write8(I2C_PORT_BACKLIGHT, I2C_ADDR_OZ554,
+				    order[i].offset, order[i].data);
 		if (rv) {
-			CPRINTS("Write OZ554 register index %d failed, rv = %d"
-				, i, rv);
-			break;
+			CPRINTS("Write OZ554 register %d failed rv=%d" , i, rv);
+			return;
 		}
 	}
 }
@@ -94,16 +91,14 @@ void backlight_enable_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&backlight_enable_deferred_data, 30 * MSEC);
 }
 
-static void karma_chipset_resume(void)
+static void on_chipset_resume(void)
 {
-	/* Enable panel backlight interrupt. */
 	gpio_enable_interrupt(GPIO_PANEL_BACKLIGHT_EN);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, karma_chipset_resume, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, on_chipset_resume, HOOK_PRIO_DEFAULT);
 
-static void karma_chipset_shutdown(void)
+static void on_chipset_shutdown(void)
 {
-	/* Disable panel backlight interrupt. */
 	gpio_disable_interrupt(GPIO_PANEL_BACKLIGHT_EN);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, karma_chipset_shutdown, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, on_chipset_shutdown, HOOK_PRIO_DEFAULT);

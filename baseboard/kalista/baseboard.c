@@ -33,6 +33,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "math_util.h"
+#include "oz554.h"
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"

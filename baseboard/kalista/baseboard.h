@@ -146,6 +146,11 @@
 #define CONFIG_VSTORE_SLOT_COUNT 1
 
 /*
+ * LED backlight controller
+ */
+#define CONFIG_LED_DRIVER_OZ554
+
+/*
  * Flash layout. Since config_flash_layout.h is included before board.h,
  * we can only overwrite (=undef/define) these parameters here.
  *
