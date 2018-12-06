@@ -62,7 +62,22 @@ extern "C" {
 #define DIV_ROUND_UP(x, y) (((x) + ((y) - 1)) / (y))
 #define DIV_ROUND_NEAREST(x, y) (((x) + ((y) / 2)) / (y))
 
+/*
+ * Swap two variables (requires c99)
+ *
+ * Swapping composites (e.g. a+b, x++) doesn't make sense. So, <a> and <b>
+ * can only be a variable (x) or a pointer reference (*x) without operator.
+ */
+#define swap(a, b) \
+	do { \
+		typeof(a) __t__; \
+		__t__ = a; \
+		a = b; \
+		b = __t__; \
+	} while (0)
+
 #ifndef HIDE_EC_STDLIB
+
 /* Standard library functions */
 __stdlib_compat int atoi(const char *nptr);
 __stdlib_compat int isdigit(int c);

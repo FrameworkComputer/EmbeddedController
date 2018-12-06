@@ -386,6 +386,25 @@ static int test_mula32(void)
 	return EC_SUCCESS;
 }
 
+#define SWAP_TEST_HARNESS(t, x, y) \
+	do { \
+		t a = x, b = y; \
+		swap(a, b); \
+		TEST_ASSERT(a == y); \
+		TEST_ASSERT(b == x); \
+	} while (0)
+
+
+static int test_swap(void)
+{
+	SWAP_TEST_HARNESS(uint8_t, UINT8_MAX, 0);
+	SWAP_TEST_HARNESS(uint16_t, UINT16_MAX, 0);
+	SWAP_TEST_HARNESS(uint32_t, UINT32_MAX, 0);
+	SWAP_TEST_HARNESS(float, 1, 0);
+	SWAP_TEST_HARNESS(double, 1, 0);
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -402,6 +421,7 @@ void run_test(void)
 	RUN_TEST(test_scratchpad);
 	RUN_TEST(test_cond_t);
 	RUN_TEST(test_mula32);
+	RUN_TEST(test_swap);
 
 	test_print_result();
 }
