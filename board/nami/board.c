@@ -959,7 +959,7 @@ struct keyboard_scan_config keyscan_config = {
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
-		0x1c, 0xfe, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
 		0xa4, 0xff, 0xfe, 0x55, 0xfe, 0xff, 0xff, 0xff,  /* full set */
 	},
 };
@@ -1004,10 +1004,15 @@ static void board_init(void)
 	/* Disable scanning KSO13 & 14 if keypad isn't present. */
 	if (!(sku & SKU_ID_MASK_KEYPAD)) {
 		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
-		keyscan_config.actual_key_mask[0] = 0x14;
-		keyscan_config.actual_key_mask[1] = 0xff;
 		keyscan_config.actual_key_mask[11] = 0xfa;
 		keyscan_config.actual_key_mask[12] = 0xca;
+	}
+	if (oem == PROJECT_AKALI && model == MODEL_BARD) {
+		/* Search key is moved to col=0,row=3 */
+		keyscan_config.actual_key_mask[0] = 0x1c;
+		keyscan_config.actual_key_mask[1] = 0xfe;
+		/* No need to swap scancode_set2[0][3] and [1][0] because both
+		 * are mapped to search key. */
 	}
 	if (sku & SKU_ID_MASK_UK2)
 		/*
