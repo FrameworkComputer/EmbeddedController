@@ -922,7 +922,13 @@ static int command_read_pages(struct common_hnd *chnd, uint32_t address,
 	int res = -EIO;
 	uint32_t remaining = size;
 	int cnt;
-	uint16_t page;
+	uint8_t addr_H, addr_M;
+
+	if (address & 0xFF) {
+		fprintf(stderr, "page read requested at non-page boundary: "
+			"0x%X\n", address);
+		return -EINVAL;
+	}
 
 	if (spi_flash_follow_mode(chnd, "fast read") < 0)
 		goto failed_read;
@@ -931,7 +937,8 @@ static int command_read_pages(struct common_hnd *chnd, uint32_t address,
 		uint8_t cmd = 0x9;
 
 		cnt = (remaining > PAGE_SIZE) ? PAGE_SIZE : remaining;
-		page = address / PAGE_SIZE;
+		addr_H = (address >> 16) & 0xFF;
+		addr_M = (address >> 8) & 0xFF;
 
 		draw_spinner(remaining, size);
 
@@ -939,9 +946,9 @@ static int command_read_pages(struct common_hnd *chnd, uint32_t address,
 		if (spi_flash_command_short(chnd, SPI_CMD_FAST_READ,
 			"fast read") < 0)
 			goto failed_read;
-		res = i2c_write_byte(chnd, 0x08, page >> 8);
-		res += i2c_write_byte(chnd, 0x08, page & 0xff);
-		res += i2c_write_byte(chnd, 0x08, 0x00);
+		res = i2c_write_byte(chnd, 0x08, addr_H);
+		res += i2c_write_byte(chnd, 0x08, addr_M);
+		res += i2c_write_byte(chnd, 0x08, 0x00);  /* addr_L */
 		res += i2c_write_byte(chnd, 0x08, 0x00);
 		if (res < 0) {
 			fprintf(stderr, "page address set failed\n");
