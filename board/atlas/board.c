@@ -396,13 +396,29 @@ static void board_pmic_init(void)
 	if (system_jumped_to_this_image())
 		return;
 
-	/* DISCHGCNT2 - enable 100 ohm discharge on V5.0A, V3.3A and V1.8A */
+	/* DISCHGCNT1 - enable 100 ohm discharge on VCCIO */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
-		   BD99992GW_REG_DISCHGCNT2, 0x45);
+		   BD99992GW_REG_DISCHGCNT1, 0x01);
 
-	/* DISCHGCNT3 - enable 100 ohm discharge on V1.00A */
+	/*
+	 * DISCHGCNT2 - enable 100 ohm discharge on
+	 * V5.0A, V3.3DSW, V3.3A and V1.8A
+	 */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
-		   BD99992GW_REG_DISCHGCNT3, 0x04);
+		   BD99992GW_REG_DISCHGCNT2, 0x55);
+
+	/*
+	 * DISCHGCNT3 - enable 500 ohm discharge on
+	 * V1.8U_2.5U
+	 * DISCHGCNT3 - enable 100 ohm discharge on
+	 * V12U, V1.00A, V0.85A
+	 */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_DISCHGCNT3, 0xd5);
+
+	/* DISCHGCNT4 - enable 100 ohm discharge on V33S, V18S, V100S */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_DISCHGCNT4, 0x15);
 
 	/* VRMODECTRL - disable low-power mode for all rails */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
