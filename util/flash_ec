@@ -153,6 +153,7 @@ BOARDS_NPCX_UUT=(
 	cheza
 	fleex
 	grunt
+	hatch
 	meep
 	phaser
 	yorp
