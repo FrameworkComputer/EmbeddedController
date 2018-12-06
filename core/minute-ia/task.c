@@ -598,7 +598,7 @@ void task_pre_init(void)
 	uint32_t *stack_next = (uint32_t *)task_stacks;
 
 #ifdef CONFIG_FPU
-	uint8_t default_fp_ctx[] = { /*Initial FP state */
+	static uint8_t default_fp_ctx[] = { /* Initial FP state */
 		0x7f, 0x03, 0xff, 0xff, 0x00, 0x00,
 		0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 #endif
