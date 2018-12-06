@@ -344,7 +344,8 @@ $(fuzz-test-targets): host-%:
 	$(call quiet,host_test,BUILD  )
 
 .PHONY: buildfuzztests
-buildfuzztests: TEST_FLAG=TEST_FUZZ=y TEST_ASAN=y
+buildfuzztests: TEST_FLAG=TEST_FUZZ=y TEST_ASAN=$(TEST_ASAN) \
+	TEST_MSAN=$(TEST_MSAN) TEST_UBSAN=$(TEST_UBSAN)
 buildfuzztests: $(fuzz-test-targets)
 
 $(out)/libec.a: $(ro-objs)

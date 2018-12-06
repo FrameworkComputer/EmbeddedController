@@ -16,7 +16,7 @@ $(error ERROR: GNU make version $(min_make_version) or higher required.)
 endif
 
 # Default to clang if TEST_ASAN is enabled
-ifneq ($(TEST_ASAN),)
+ifneq ($(TEST_FUZZ)$(TEST_ASAN)$(TEST_MSAN)$(TEST_UBSAN),)
 CC=clang
 endif
 
@@ -52,6 +52,10 @@ ifeq ($(cc-name),clang)
 # clang is pickier when it comes to packed struct members alignment.
 C_WARN+= -Wno-address-of-packed-member
 endif
+UBSAN_FLAGS=-fsanitize=array-bounds,vla-bound \
+	-fno-sanitize=vptr \
+	-fno-sanitize-recover=all
+
 CFLAGS_WARN = $(COMMON_WARN) $(C_WARN)
 CXXFLAGS_WARN = $(COMMON_WARN)
 CFLAGS_DEBUG= -g
@@ -64,6 +68,8 @@ CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD \
             $(if $($(PROJECT)-scale),-DTEST_TIME_SCALE=$($(PROJECT)-scale)) \
             -DTEST_$(PROJECT) -DTEST_$(UC_PROJECT) \
             $(if $(TEST_ASAN),-fsanitize=address) \
+            $(if $(TEST_MSAN),-fsanitize=memory) \
+            $(if $(TEST_UBSAN),$(UBSAN_FLAGS)) \
             $(if $(TEST_FUZZ),-fsanitize=fuzzer-no-link -DTEST_FUZZ)
 CFLAGS_COVERAGE=$(if $(TEST_COVERAGE),-fprofile-arcs -ftest-coverage \
 				      -DTEST_COVERAGE,)
@@ -127,6 +133,8 @@ BUILD_LDFLAGS=$(LIBFTDI_LDLIBS)
 HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
 		  $(if $(TEST_COVERAGE),-fprofile-arcs,) \
 		  $(if $(TEST_ASAN), -fsanitize=address) \
+		  $(if $(TEST_MSAN), -fsanitize=memory) \
+		  $(if $(TEST_UBSAN), ${UBSAN_FLAGS}) \
 		  $(if $(TEST_FUZZ), -fsanitize=fuzzer)
 
 # utility function to provide overridable defaults
