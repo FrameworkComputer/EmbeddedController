@@ -170,7 +170,7 @@ static enum vendor_cmd_rc vc_sn_set_hash(enum vendor_cmd_cc code,
 	if (read_board_id(&bid) != EC_SUCCESS ||
 	    ~(bid.type & bid.type_inv & bid.flags) != 0) {
 		*pbuf = EC_ERROR_ACCESS_DENIED;
-		return *pbuf;
+		return VENDOR_RC_NOT_ALLOWED;
 	}
 
 	memcpy(&sn_hash, pbuf, sizeof(sn_hash));
@@ -178,7 +178,7 @@ static enum vendor_cmd_rc vc_sn_set_hash(enum vendor_cmd_cc code,
 	/* We care about the LSB only. */
 	*pbuf = (uint8_t) write_sn_hash(sn_hash);
 
-	return VENDOR_RC_NOT_ALLOWED;
+	return *pbuf;
 }
 DECLARE_VENDOR_COMMAND(VENDOR_CC_SN_SET_HASH, vc_sn_set_hash);
 
