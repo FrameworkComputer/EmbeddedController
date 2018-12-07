@@ -45,7 +45,7 @@
 #define HPET_Tn_INT_ROUTE_CNF_MASK	(0x1f << 9)
 
 #define HPET_GENERAL_CONFIG	REG32(ISH_HPET_BASE + GENERAL_CONFIG_REG)
-#if defined CONFIG_ISH_30
+#ifdef CHIP_FAMILY_ISH3
 #define HPET_MAIN_COUNTER_64	REG64(ISH_HPET_BASE + MAIN_COUNTER_REG)
 #else
 #define HPET_MAIN_COUNTER	REG32(ISH_HPET_BASE + MAIN_COUNTER_REG)
@@ -59,19 +59,17 @@
  * HPET_TIMER_CONFIG_CAP(0) */
 #define HPET_TIMER_COMP(x) \
 	REG32(ISH_HPET_BASE + TIMER0_COMP_VAL_REG + ((x) * 0x20))
-#if defined CONFIG_ISH_30
+#ifdef CHIP_FAMILY_ISH3
 #define HPET_TIMER_COMP_64(x) \
 	REG64(ISH_HPET_BASE + TIMER0_COMP_VAL_REG + ((x) * 0x20))
 #endif
 
-#if defined CONFIG_ISH_20
-#define ISH_HPET_CLK_FREQ		1000000		/* 1 MHz clock */
-
-#elif defined CONFIG_ISH_30
+#if defined(CHIP_FAMILY_ISH3)
 #define ISH_HPET_CLK_FREQ		12000000	/* 12 MHz clock */
-
-#elif defined CONFIG_ISH_40
+#elif defined(CHIP_FAMILY_ISH4) || defined(CHIP_FAMILY_ISH5)
 #define ISH_HPET_CLK_FREQ		32768		/* 32.768 KHz clock */
+#else
+#define ISH_HPET_CLK_FREQ               1000000         /* 1 MHz clock */
 #endif
 
 /* HPET timer 0 period of 10ms (100 ticks per second) */

@@ -45,7 +45,7 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		ISH_GPIO_GPDR &= ~mask;
 
 	/* GRER/GFER interrupt trigger */
-#ifdef CONFIG_ISH_30
+#ifdef CHIP_FAMILY_ISH3
 	/* ISH 3 can't support both rising and falling edge */
 	if (((flags & GPIO_INT_F_RISING) && (flags & GPIO_INT_F_FALLING)) ||
 		((flags & GPIO_INT_F_HIGH) && (flags & GPIO_INT_F_LOW))) {
