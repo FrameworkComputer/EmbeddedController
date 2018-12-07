@@ -48,6 +48,7 @@ SECTIONS
         ASSERT((__flash_dma_size < IT83XX_ILM_BLOCK_SIZE),
                 "__flash_dma_size < IT83XX_ILM_BLOCK_SIZE");
         . = ALIGN(IT83XX_ILM_BLOCK_SIZE);
+        __flash_text_start = .;
         *(.text*)
     } > FLASH
     . = ALIGN(4);

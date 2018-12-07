@@ -13,4 +13,7 @@
  */
 extern const char __flash_dma_start;
 
+/* This symbol is the begin address of the text section. */
+extern const char __flash_text_start;
+
 #endif /* __CROS_EC_FLASH_CHIP_H */
