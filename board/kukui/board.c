@@ -325,21 +325,21 @@ int board_get_version(void)
 /* Motion sensors */
 /* Mutexes */
 #ifdef SECTION_IS_RW
-static struct mutex g_base_mutex;
+static struct mutex g_lid_mutex;
 
 static struct bmi160_drv_data_t g_bmi160_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0,  0},
-	{ 0,  FLOAT_TO_FP(-1),  0},
+const mat33_fp_t lid_standard_ref = {
+	{ FLOAT_TO_FP(1), 0,  0},
+	{ 0,  FLOAT_TO_FP(1),  0},
 	{ 0,  0, FLOAT_TO_FP(1)}
 };
 
 /* Matrix to rotate accelrator into standard reference frame */
 const mat33_fp_t mag_standard_ref = {
+	{ 0, FLOAT_TO_FP(-1), 0},
 	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0,  FLOAT_TO_FP(1), 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
@@ -356,11 +356,11 @@ struct motion_sensor_t motion_sensors[] = {
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &bmi160_drv,
-	 .mutex = &g_base_mutex,
+	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_ACCEL,
 	 .addr = BMI160_ADDR0,
-	 .rot_standard_ref = &base_standard_ref,
+	 .rot_standard_ref = &lid_standard_ref,
 	 .default_range = 4,  /* g */
 	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
 	 .max_frequency = BMI160_ACCEL_MAX_FREQ,
@@ -379,12 +379,12 @@ struct motion_sensor_t motion_sensors[] = {
 	 .type = MOTIONSENSE_TYPE_GYRO,
 	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &bmi160_drv,
-	 .mutex = &g_base_mutex,
+	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_ACCEL,
 	 .addr = BMI160_ADDR0,
 	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = &base_standard_ref,
+	 .rot_standard_ref = &lid_standard_ref,
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
@@ -395,13 +395,12 @@ struct motion_sensor_t motion_sensors[] = {
 	 .type = MOTIONSENSE_TYPE_MAG,
 	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &bmi160_drv,
-	 .mutex = &g_base_mutex,
+	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_ACCEL,
 	 .addr = BMI160_ADDR0,
 	 .default_range = 1 << 11, /* 16LSB / uT, fixed */
 	 .rot_standard_ref = &mag_standard_ref,
-	 .rot_standard_ref = NULL,
 	 .min_frequency = BMM150_MAG_MIN_FREQ,
 	 .max_frequency = BMM150_MAG_MAX_FREQ(SPECIAL),
 	},
