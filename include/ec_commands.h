@@ -1518,8 +1518,6 @@ struct ec_params_flash_erase {
 	uint32_t size;
 } __ec_align4;
 
-
-#define EC_VER_FLASH_WRITE 1
 /*
  * v1 add async erase:
  * subcommands can returns:
