@@ -66,6 +66,7 @@ BOARDS_STM32=(
 	chocodile_bec
 	chocodile_vpdmcu
 	elm
+	flapjack
 	glados_pd
 	hammer
 	jerry
@@ -173,6 +174,7 @@ BOARDS_RAIDEN=(
 	coral
 	eve
 	fizz
+	flapjack
 	kukui
 	nami
 	nautilus
