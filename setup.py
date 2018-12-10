@@ -40,7 +40,8 @@ setup(
     },
     data_files=[("share/servo_updater/configs",
                     ["extra/usb_updater/servo_v4.json",
-                     "extra/usb_updater/servo_micro.json"])],
+                     "extra/usb_updater/servo_micro.json",
+                     "extra/usb_updater/sweetberry.json"])],
     description="Servo usb updater.",
 )
 
