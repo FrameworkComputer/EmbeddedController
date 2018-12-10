@@ -56,6 +56,14 @@ extern "C" uint8_t get_current_pcr_digest(const uint8_t bitmask[2],
   return 0;
 }
 
+extern "C" int DCRYPTO_ladder_is_enabled(void) {
+  return 1;
+}
+
+extern "C" void nvmem_wipe_cache(void) {
+  // Nothing to do since there is no cache in this implementation.
+}
+
 // Needed for test targets to build.
 extern "C" void run_test(void) {}
 
@@ -138,8 +146,4 @@ extern "C" int test_fuzz_one_input(const uint8_t* data, unsigned int size) {
     }
   }
   return 0;
-}
-
-extern "C" int DCRYPTO_ladder_is_enabled(void) {
-  return 1;
 }
