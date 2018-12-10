@@ -5,6 +5,14 @@
 # Embedded Controller firmware build system
 #
 
+# Allow for masking of some targets based on the build architecture. When
+# building using a portage package (such as chromeos-ec), this variable will
+# already be set. To support the typical developer workflow a default value is
+# provided matching the typical architecture of developer workstations. Note
+# that amd64 represents the entire x84_64 architecture including intel CPUs.
+# This is used to exclude build targets that depend on sanitizers such as
+# fuzzers on architectures that don't support sanitizers yet (e.g. arm).
+ARCH?=amd64
 BOARD ?= bds
 
 # Directory where the board is configured (includes /$(BOARD) at the end)
