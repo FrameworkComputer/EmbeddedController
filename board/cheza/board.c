@@ -395,6 +395,7 @@ void board_tcpc_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
+/* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
 {
 	/*
@@ -405,12 +406,28 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
+/* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
 	/* Turn on display backlight in S0. */
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S5 -> S3 transition */
+static void board_chipset_startup(void)
+{
+	gpio_set_flags(GPIO_USB_C1_OC_ODL, GPIO_INPUT | GPIO_PULL_UP);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S3 -> S5 transition */
+static void board_chipset_shutdown(void)
+{
+	/* 5V is off in S5. Disable pull-up to prevent current leak. */
+	gpio_set_flags(GPIO_USB_C1_OC_ODL, GPIO_INPUT);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
 /**
  * Power on (or off) a single TCPC.
