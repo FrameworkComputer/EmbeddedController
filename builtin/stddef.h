@@ -25,7 +25,10 @@ typedef __SIZE_TYPE__ ssize_t;
 #ifndef __WCHAR_TYPE__
 #define __WCHAR_TYPE__ int
 #endif
+
+#ifndef __cplusplus
 typedef __WCHAR_TYPE__ wchar_t;
+#endif
 
 /* This macro definition is duplicated in compile_time_macros.h. It still needs
  * to be defined here to support code that expects offsetof to be defined in the
