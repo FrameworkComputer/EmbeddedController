@@ -10,7 +10,7 @@ fuzz-test-list-host =
 # Fuzzers should only be built for architectures that support sanitizers.
 ifeq ($(ARCH),amd64)
 # TODO(crbug.com/911310) Fix the chromeos-ec build before adding cr50_fuzz back.
-fuzz-test-list-host += host_command_fuzz usb_pd_fuzz
+fuzz-test-list-host += cr50_fuzz host_command_fuzz usb_pd_fuzz
 endif
 
 # For fuzzing targets libec.a is built from the ro objects and hides functions
