@@ -518,7 +518,7 @@ int DCRYPTO_x509_gen_u2f_cert(const p256_int *d, const p256_int *pk_x,
 	DCRYPTO_SHA256_init(&sha, 0);
 	HASH_update(&sha, body, (ctx.p + ctx.n) - body);
 	p256_from_bin(HASH_final(&sha), &h);
-	drbg_rfc6979_init(&drbg, d, &h);
+	hmac_drbg_init_rfc6979(&drbg, d, &h);
 	if (!dcrypto_p256_ecdsa_sign(&drbg, d, &h, &r, &s))
 		return 0;
 

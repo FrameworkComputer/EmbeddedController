@@ -256,7 +256,7 @@ CRYPT_RESULT _cpri__SignEcc(
 
 		reverse_tpm2b(&d->b);
 
-		drbg_rand_init(&drbg);
+		hmac_drbg_init_rand(&drbg, 512);
 		result = dcrypto_p256_ecdsa_sign(&drbg,
 				(p256_int *) d->b.buffer,
 				&p256_digest,

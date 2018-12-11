@@ -198,7 +198,7 @@ static unsigned u2f_register(struct apdu apdu, void *buf,
 	m_off += cert_len;
 
 	/* Sign over the response w/ the attestation key */
-	drbg_rfc6979_init(&ctx, &att_d, &h);
+	hmac_drbg_init_rfc6979(&ctx, &att_d, &h);
 	if (!dcrypto_p256_ecdsa_sign(&ctx, &att_d, &h, &r, &s)) {
 		p256_clear(&att_d);
 		p256_clear(&od);
@@ -283,7 +283,7 @@ static unsigned u2f_authenticate(struct apdu apdu, void *buf,
 	if (u2f_origin_key(od_seed, &origin_d))
 		return U2F_SW_WTF + 2;
 
-	drbg_rfc6979_init(&ctx, &origin_d, &h);
+	hmac_drbg_init_rfc6979(&ctx, &origin_d, &h);
 	if (!dcrypto_p256_ecdsa_sign(&ctx, &origin_d, &h, &r, &s)) {
 		p256_clear(&origin_d);
 		return U2F_SW_WTF + 3;

@@ -807,7 +807,7 @@ int dcrypto_p256_ecdsa_sign(struct drbg_ctx *drbg, const p256_int *key,
 
 	/* Pick uniform 0 < k < R */
 	do {
-		drbg_generate(drbg, &pEcc->rnd);
+		hmac_drbg_generate_p256(drbg, &pEcc->rnd);
 	} while (p256_cmp(&SECP256r1_nMin2, &pEcc->rnd) < 0);
 	drbg_exit(drbg);
 
