@@ -1705,6 +1705,8 @@ static int command_display_accel_info(int argc, char **argv)
 	if (argc > 3)
 		return EC_ERROR_PARAM_COUNT;
 
+	ccprintf("Motion sensors count = %d\n", motion_sensor_count);
+
 	/* First argument is on/off whether to display accel data. */
 	if (argc > 1) {
 		if (!parse_bool(argv[1], &val))
