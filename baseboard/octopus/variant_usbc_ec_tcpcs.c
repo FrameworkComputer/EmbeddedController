@@ -118,17 +118,24 @@ uint16_t tcpc_get_alert_status(void)
 }
 
 /**
- * Reset all system PD/TCPC MCUs -- currently only called from
- * handle_pending_reboot() in common/power.c just before hard
- * resetting the system. This logic is likely not needed as the
- * PP3300_A rail should be dropped on EC reset.
+ * Reset all system PD/TCPC MCUs -- currently called from both
+ * handle_pending_reboot() in common/system.c and baseboard_tcpc_init() in the
+ * octopus/baseboard.c
  */
 void board_reset_pd_mcu(void)
 {
 	/*
 	 * C0 & C1: The internal TCPC on ITE EC does not have a reset signal,
-	 * but it will get reset when the EC gets reset.
+	 * but it will get reset when the EC gets reset.  We will, however,
+	 * reset the USB muxes here.
 	 */
+	gpio_set_level(GPIO_USB_C0_PD_RST_ODL, 0);
+	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
+
+	msleep(PS8XXX_RESET_DELAY_MS);
+
+	gpio_set_level(GPIO_USB_C0_PD_RST_ODL, 1);
+	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
 }
 
 void board_pd_vconn_ctrl(int port, int cc_pin, int enabled)
