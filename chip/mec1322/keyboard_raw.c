@@ -87,12 +87,14 @@ DECLARE_IRQ(MEC1322_IRQ_KSC_INT, keyboard_raw_interrupt, 1);
 /* Run keyboard factory testing, scan out KSO/KSI if any shorted. */
 int keyboard_factory_test_scan(void)
 {
-	int i, j;
+	int i, j, flags;
 	uint16_t shorted = 0;
 	uint32_t port, id, val;
 
 	/* Disable keyboard scan while testing */
 	keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_CLOSED);
+
+	flags = gpio_get_default_flags(GPIO_KBD_KSO2);
 
 	/* Set all of KSO/KSI pins to internal pull-up and input */
 	for (i = 0; i < keyboard_factory_scan_pins_used; i++) {
@@ -144,6 +146,7 @@ int keyboard_factory_test_scan(void)
 	}
 done:
 	gpio_config_module(MODULE_KEYBOARD_SCAN, 1);
+	gpio_set_flags(GPIO_KBD_KSO2, flags);
 	keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_CLOSED);
 
 	return shorted;
