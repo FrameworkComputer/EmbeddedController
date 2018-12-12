@@ -27,6 +27,9 @@
 
 /* RW only, no flash
  * +-------------------- 0x0
+ * | ptr to stack_top  0x0
+ * | ptr to reset func 0x04
+ * |-------------------- 0x08
  * | free shared space with AP
  * +-------------------- 0x005B0
  * | IPI shared buffer with AP (288 + 8) * 2
@@ -53,6 +56,7 @@
 #define CONFIG_RW_STORAGE_OFF 0
 #define CONFIG_PROGRAM_MEMORY_BASE 0
 #define CONFIG_MAPPED_STORAGE_BASE 0
+#define CONFIG_CHIP_MEMORY_REGIONS
 
 /* Unsupported features/commands */
 #undef CONFIG_CMD_FLASHINFO
