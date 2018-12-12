@@ -36,8 +36,17 @@ static uint8_t event_high;
 /* Convert hardware countdown timer to 64bit countup ticks */
 static inline uint64_t timer_read_raw_system(void)
 {
-	/* TODO(b/120173036): fix racing condition in read_raw */
-	return OVERFLOW_TICKS - (((uint64_t)sys_high << 32) |
+	uint32_t timer_ctrl = SCP_TIMER_IRQ_CTRL(TIMER_SYSTEM);
+	uint32_t sys_high_adj = sys_high;
+
+	/*
+	 * If an IRQ is pending, but has not been serviced yet, adjust the
+	 * sys_high value.
+	 */
+	if (timer_ctrl & TIMER_IRQ_STATUS)
+		sys_high_adj = sys_high ? (sys_high - 1) : 25;
+
+	return OVERFLOW_TICKS - (((uint64_t)sys_high_adj << 32) |
 				 SCP_TIMER_VAL(TIMER_SYSTEM));
 }
 
