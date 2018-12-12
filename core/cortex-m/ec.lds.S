@@ -59,8 +59,10 @@ MEMORY
 #ifdef CONFIG_CHIP_MEMORY_REGIONS
 #define REGION(name, attr, start, size) \
     name(attr) : ORIGIN = (start), LENGTH = (size)
+#define REGION_LOAD REGION
 #include "memory_regions.inc"
 #undef REGION
+#undef REGION_LOAD
 #endif /* CONFIG_MEMORY_REGIONS */
 }
 SECTIONS
@@ -406,10 +408,18 @@ SECTIONS
 #define REGION(name, attr, start, size) \
     .name(NOLOAD) : { \
         __##name##_start = .; \
+        KEEP(*(SORT(.name.keep.*))) \
+        *(SORT(.name.*)) \
+    } > name
+#define REGION_LOAD(name, attr, start, size) \
+    .name : { \
+        __##name##_start = .; \
+        KEEP(*(SORT(.name.keep.*))) \
         *(SORT(.name.*)) \
     } > name
 #include "memory_regions.inc"
 #undef REGION
+#undef REGION_LOAD
 #endif /* CONFIG_CHIP_MEMORY_REGIONS */
 
 #if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH))

@@ -111,8 +111,11 @@ extern const void *__data_end;
 /* Helper for special chip-specific memory sections */
 #ifdef CONFIG_CHIP_MEMORY_REGIONS
 #define __SECTION(name) __attribute__((section("." STRINGIFY(name) ".50_auto")))
+#define __SECTION_KEEP(name)                                                   \
+	__attribute__((section("." STRINGIFY(name) ".keep.50_auto")))
 #else
 #define __SECTION(name)
+#define __SECTION_KEEP(name)
 #endif /* CONFIG_MEMORY_REGIONS */
 #ifdef CONFIG_CHIP_UNCACHED_REGION
 #define __uncached __SECTION(CONFIG_CHIP_UNCACHED_REGION)
