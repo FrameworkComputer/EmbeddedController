@@ -29,6 +29,8 @@
 #include "apollolake.h"
 #elif defined(CONFIG_CHIPSET_CANNONLAKE)
 #include "cannonlake.h"
+#elif defined(CONFIG_CHIPSET_COMETLAKE)
+#include "cometlake.h"
 #elif defined(CONFIG_CHIPSET_ICELAKE)
 #include "icelake.h"
 #elif defined(CONFIG_CHIPSET_SKYLAKE)
