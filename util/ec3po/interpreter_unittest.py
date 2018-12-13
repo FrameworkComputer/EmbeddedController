@@ -39,7 +39,8 @@ class TestEnhancedECBehaviour(unittest.TestCase):
       self.itpr = interpreter.Interpreter(self.tempfile.name,
                                           self.cmd_pipe_itpr,
                                           self.dbg_pipe_itpr,
-                                          log_level=logging.DEBUG)
+                                          log_level=logging.DEBUG,
+                                          name="EC")
 
   @mock.patch('interpreter.os')
   def test_HandlingCommandsThatProduceNoOutput(self, mock_os):
@@ -274,7 +275,8 @@ class TestUARTDisconnection(unittest.TestCase):
       self.itpr = interpreter.Interpreter(self.tempfile.name,
                                           self.cmd_pipe_itpr,
                                           self.dbg_pipe_itpr,
-                                          log_level=logging.DEBUG)
+                                          log_level=logging.DEBUG,
+                                          name="EC")
 
     # First, check that interpreter is initialized to connected.
     self.assertTrue(self.itpr.connected, ('The interpreter should be'

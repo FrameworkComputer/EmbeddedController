@@ -132,7 +132,8 @@ class Console(object):
       interrogations are performed with the EC or not and how often.
   """
 
-  def __init__(self, master_pty, user_pty, interface_pty, cmd_pipe, dbg_pipe):
+  def __init__(self, master_pty, user_pty, interface_pty, cmd_pipe, dbg_pipe,
+               name=None):
     """Initalises a Console object with the provided arguments.
 
     Args:
@@ -148,10 +149,11 @@ class Console(object):
       represents the console's read-only side of the debug pipe.  This must be a
       unidirectional pipe attached to the intepreter.  EC debug messages use
       this pipe.
+    name: the console source name
     """
-    # Copy the logger, so modifying one ec3po logger level will not modify the
-    # loglevel for every ec3po console.
-    logger = copy.copy(logging.getLogger('EC3PO.Console'))
+    # Create a unique logger based on the console name
+    console_prefix = ('%s - ' % name) if name else ''
+    logger = logging.getLogger('%sEC3PO.Console' % console_prefix)
     self.logger = interpreter.LoggerAdapter(logger, {'pty': user_pty})
     self.master_pty = master_pty
     self.user_pty = user_pty

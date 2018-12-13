@@ -75,7 +75,8 @@ class Interpreter(object):
     connected: A boolean indicating if the interpreter is actually connected to
       the UART and listening.
   """
-  def __init__(self, ec_uart_pty, cmd_pipe, dbg_pipe, log_level=logging.INFO):
+  def __init__(self, ec_uart_pty, cmd_pipe, dbg_pipe, log_level=logging.INFO,
+               name=None):
     """Intializes an Interpreter object with the provided args.
 
     Args:
@@ -91,10 +92,11 @@ class Interpreter(object):
         should retry commands if it receives an error.
       log_level: An optional integer representing the numeric value of the log
         level.  By default, the log level will be logging.INFO (20).
+      name: the console source name
     """
-    # Copy the logger, so modifying one ec3po logger level will not modify the
-    # loglevel for every ec3po interpreter.
-    logger = copy.copy(logging.getLogger('EC3PO.Interpreter'))
+    # Create a unique logger based on the interpreter name
+    interpreter_prefix = ('%s - ' % name) if name else ''
+    logger = logging.getLogger('%sEC3PO.Interpreter' % interpreter_prefix)
     self.logger = LoggerAdapter(logger, {'pty': ec_uart_pty})
     self.ec_uart_pty = open(ec_uart_pty, 'a+')
     self.ec_uart_pty_name = ec_uart_pty

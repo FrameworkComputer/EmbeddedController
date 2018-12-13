@@ -241,7 +241,7 @@ class TestConsoleEditingMethods(unittest.TestCase):
     dummy_pipe_end_0, dummy_pipe_end_1 = threadproc_shim.Pipe()
     self.console = console.Console(self.tempfile.fileno(), self.tempfile,
                                    tempfile.TemporaryFile(),
-                                   dummy_pipe_end_0, dummy_pipe_end_1)
+                                   dummy_pipe_end_0, dummy_pipe_end_1, "EC")
 
     # Console editing methods are only valid for enhanced EC images, therefore
     # we have to assume that the "EC" we're talking to is enhanced.  By default,
@@ -1145,7 +1145,7 @@ class TestConsoleCompatibility(unittest.TestCase):
     dummy_pipe_end_0, dummy_pipe_end_1 = mock.MagicMock(), mock.MagicMock()
     self.console = console.Console(self.tempfile.fileno(), self.tempfile,
                                    tempfile.TemporaryFile(),
-                                   dummy_pipe_end_0, dummy_pipe_end_1)
+                                   dummy_pipe_end_0, dummy_pipe_end_1, "EC")
 
   @mock.patch('console.Console.CheckForEnhancedECImage')
   def test_ActAsPassThruInNonEnhancedMode(self, mock_check):
@@ -1415,7 +1415,7 @@ class TestOOBMConsoleCommands(unittest.TestCase):
     dummy_pipe_end_0, dummy_pipe_end_1 = mock.MagicMock(), mock.MagicMock()
     self.console = console.Console(self.tempfile.fileno(), self.tempfile,
                                    tempfile.TemporaryFile(),
-                                   dummy_pipe_end_0, dummy_pipe_end_1)
+                                   dummy_pipe_end_0, dummy_pipe_end_1, "EC")
     self.console.oobm_queue = mock.MagicMock()
 
   @mock.patch('console.Console.CheckForEnhancedECImage')
