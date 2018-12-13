@@ -1039,6 +1039,15 @@ int pd_build_request(int port, uint32_t *rdo, uint32_t *ma, uint32_t *mv,
 int pd_is_max_request_allowed(void);
 
 /**
+ * Waits for the TCPC to exit low power mode (including re-initializing) if it
+ * is currently in low power mode. If not, then the function immediately
+ * returns.
+ *
+ * @param port USB-C port number
+ */
+void pd_wait_exit_low_power(int port);
+
+/**
  * Informs the TCPM state machine that code within the EC has accessed the TCPC
  * via its communication bus (e.g. i2c). This is important to keep track of as
  * accessing a TCPC may pull the hardware out of low-power mode.
@@ -1060,24 +1069,6 @@ void pd_device_accessed(int port);
  * @param prevent 1 to prevent this port from entering LPM
  */
 void pd_prevent_low_power_mode(int port, int prevent);
-
-/**
- * Returns true if this TCPC is in low power mode and a failed i2c transaction
- * should be retried after waiting for the device to wake up via
- * pd_wait_for_wakeup()
- *
- * @param port USB-C port number
- * @return True if device is in LPM and i2c transaction should be retried
- */
-int pd_device_in_low_power(int port);
-
-/**
- * Requests that the PD task wakeup the TCPC out of low power mode properly, and
- * waits for the wakeup operation to complete.
- *
- * @param port USB-C port number
- */
-void pd_wait_for_wakeup(int port);
 
 /**
  * Process source capabilities packet
