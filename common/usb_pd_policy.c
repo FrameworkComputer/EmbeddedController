@@ -1053,7 +1053,7 @@ void pd_get_info(uint32_t *info_data)
 	defined(CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR)
 	info_data[5] = VDO_INFO(CONFIG_USB_PD_HW_DEV_ID_BOARD_MAJOR,
 				CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR,
-				ver_get_numcommits(),
+				ver_get_num_commits(system_get_image_copy()),
 				(system_get_image_copy() != SYSTEM_IMAGE_RO));
 #else
 	info_data[5] = 0;

@@ -200,6 +200,14 @@ int system_run_image_copy(enum system_image_copy_t copy);
 int32_t system_get_rollback_version(enum system_image_copy_t copy);
 
 /**
+ * Get the image data of an image
+ *
+ * @param copy	Image copy to get the version of.
+ * @return	Image data
+ */
+const struct image_data *system_get_image_data(enum system_image_copy_t copy);
+
+/**
  * Get the version string for an image
  *
  * @param copy		Image copy to get version from, or SYSTEM_IMAGE_UNKNOWN
