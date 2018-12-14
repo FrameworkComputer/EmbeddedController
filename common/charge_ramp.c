@@ -19,9 +19,16 @@ test_mockable int chg_ramp_allowed(int supplier)
 	if (!system_is_in_rw() && system_is_locked())
 		return 0;
 
-	/* Ramp DTS suppliers. */
-	if (supplier == CHARGE_SUPPLIER_TYPEC_DTS)
+	switch (supplier) {
+	case CHARGE_SUPPLIER_TYPEC_DTS:
+#ifdef CONFIG_CHARGE_RAMP_HW
+	/* Need ramping for USB-C chargers as well to avoid voltage droops. */
+	case CHARGE_SUPPLIER_PD:
+	case CHARGE_SUPPLIER_TYPEC:
+#endif
 		return 1;
+	/* default: fall through */
+	}
 
 	/* Othewise ask the BC1.2 detect module */
 	return usb_charger_ramp_allowed(supplier);
@@ -29,12 +36,20 @@ test_mockable int chg_ramp_allowed(int supplier)
 
 test_mockable int chg_ramp_max(int supplier, int sup_curr)
 {
-	/*
-	 * Ramp DTS suppliers to advertised current or predetermined
-	 * limit, whichever is greater.
-	 */
-	if (supplier == CHARGE_SUPPLIER_TYPEC_DTS)
+	switch (supplier) {
+	case CHARGE_SUPPLIER_TYPEC_DTS:
+		/*
+		 * Ramp DTS suppliers to advertised current or predetermined
+		 * limit, whichever is greater.
+		 */
 		return MAX(TYPEC_DTS_RAMP_MAX, sup_curr);
+#ifdef CONFIG_CHARGE_RAMP_HW
+	case CHARGE_SUPPLIER_PD:
+	case CHARGE_SUPPLIER_TYPEC:
+#endif
+		return sup_curr;
+	/* default: fall through */
+	}
 
 	/* Otherwise ask the BC1.2 detect module */
 	return usb_charger_ramp_max(supplier, sup_curr);
