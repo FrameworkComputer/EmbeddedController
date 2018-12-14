@@ -784,27 +784,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 			CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
-/*
- * MCHP next two functions from production firmware-reef-9042.B
- * Have changes to USB PD common and TCPCI driver code deprecated
- * these functions?
- */
-/**
- * Return whether ramping is allowed for given supplier
- */
-int board_is_ramp_allowed(int supplier)
-{
-	/* Don't allow ramping in RO when write protected */
-	if (system_get_image_copy() != SYSTEM_IMAGE_RW
-		&& system_is_locked())
-		return 0;
-	else
-		return (supplier == CHARGE_SUPPLIER_BC12_DCP ||
-			supplier == CHARGE_SUPPLIER_BC12_SDP ||
-			supplier == CHARGE_SUPPLIER_BC12_CDP ||
-			supplier == CHARGE_SUPPLIER_OTHER);
-}
-
 /**
  * Return if board is consuming full amount of input current
  */
