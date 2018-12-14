@@ -5,7 +5,6 @@
  * Test vboot
  */
 
-#include <stdlib.h>
 #include "common.h"
 #include "rsa.h"
 #include "test_util.h"

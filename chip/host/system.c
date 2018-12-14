@@ -5,8 +5,6 @@
 
 /* System module for emulator */
 
-#include <stdlib.h>
-
 #include "common.h"
 #include "host_test.h"
 #include "panic.h"
@@ -15,6 +13,9 @@
 #include "system.h"
 #include "timer.h"
 #include "util.h"
+
+// Forward declaration from <stdlib.h> to avoid declaration conflicts.
+void exit(int);
 
 #define SHARED_MEM_SIZE 0x2000 /* bytes */
 #define RAM_DATA_SIZE (sizeof(struct panic_data) + 512) /* bytes */

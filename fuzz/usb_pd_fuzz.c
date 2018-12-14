@@ -4,6 +4,7 @@
  *
  * Test USB PD module.
  */
+#define HIDE_EC_STDLIB
 #include "common.h"
 #include "task.h"
 #include "tcpm.h"
@@ -15,6 +16,7 @@
 
 #include <pthread.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define TASK_EVENT_FUZZ TASK_EVENT_CUSTOM(1)
 

@@ -6,11 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common.h"
-#include "panic.h"
 #include "stack_trace.h"
-#include "test_util.h"
-#include "util.h"
 
 void panic_assert_fail(const char *msg, const char *func, const char *fname,
 		       int linenum)
