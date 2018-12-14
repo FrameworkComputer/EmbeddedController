@@ -3,13 +3,16 @@
  * found in the LICENSE file.
  *
  * STM32 SoC system monitor interface tool
- * For Serial, implement proctol v2.0 as defined in:
+ * For Serial, implement protocol v2.0 as defined in:
  * http://www.st.com/st-web-ui/static/active/en/resource/technical/\
  * document/application_note/CD00264342.pdf
  *
  * For i2C, implement protocol v1.0 as defined in:
  * http://www.st.com/st-web-ui/static/active/en/resource/technical/\
  * document/application_note/DM00072315.pdf
+ *
+ * For SPI, implement protocol v1.1 as defined in:
+ * https://www.st.com/resource/en/application_note/dm00081379.pdf
  */
 
 /* use cfmakeraw() */
