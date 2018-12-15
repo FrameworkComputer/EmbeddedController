@@ -80,6 +80,15 @@ static inline void keyboard_raw_gpio_interrupt(enum gpio_signal signal) { }
  */
 int keyboard_factory_test_scan(void);
 
+/**
+ * Return true if the current value of the given input GPIO port is zero
+ *
+ * @param port: GPIO port/bank number
+ * @param id:   GPIO index in <port>
+ * @return true:input is zero, false:otherwise
+ */
+int keyboard_raw_is_input_low(int port, int id);
+
 static inline int keyboard_raw_get_cols(void) {
 	return keyboard_cols;
 }
