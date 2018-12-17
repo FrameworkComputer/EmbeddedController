@@ -134,6 +134,9 @@ uint32_t get_feature_flags1(void)
 #ifdef CONFIG_AUDIO_CODEC
 		| EC_FEATURE_MASK_1(EC_FEATURE_AUDIO_CODEC)
 #endif
+#ifdef CONFIG_IPI
+		| EC_FEATURE_MASK_1(EC_FEATURE_SCP)
+#endif
 		;
 #ifdef CONFIG_EC_FEATURE_BOARD_OVERRIDE
 	result = board_override_feature_flags1(result);
