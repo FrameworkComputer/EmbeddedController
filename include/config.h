@@ -3271,6 +3271,9 @@
  */
 #undef CONFIG_USB_PD_TCPC_TRACK_VBUS
 
+/* Enable runtime config the TCPC */
+#undef CONFIG_USB_PD_TCPC_RUNTIME_CONFIG
+
 /*
  * Choose one of the following TCPMs (type-C port manager) to manage TCPC. The
  * TCPM stub is used to make direct function calls to TCPC when TCPC is on

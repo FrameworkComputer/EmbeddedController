@@ -17,6 +17,7 @@
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
+#include "cros_board_info.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -160,7 +161,7 @@ const struct i2c_port_t i2c_ports[]  = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* TCPC mux configuration */
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_PS8751] = {
 		.i2c_host_port = I2C_PORT_TCPC1,
 		.i2c_slave_addr = PS8751_I2C_ADDR1,
@@ -217,9 +218,31 @@ void board_reset_pd_mcu(void)
 	msleep(2);
 }
 
+/*
+ * Read CBI data from EEPROM via i2c and remap the ps8751 i2c port
+ */
+static void ps8751_i2c_remap(void)
+{
+	uint32_t board_version;
+
+	if (cbi_get_board_version(&board_version) != EC_SUCCESS ||
+		board_version > 1)
+		return;
+	/*
+	 * Due to b/118063849, we separate the ps8751 and anx3447 to
+	 * different i2c bus which start from board_version >= 2.
+	 * For the board_version <= 1, the ps8751 and anx3447 TCPC
+	 * use the same i2c bus. Thus, reconfig the ps8751 i2c port
+	 * to i2c_0_0.
+	 */
+	tcpc_config[USB_PD_PORT_PS8751].i2c_host_port = I2C_PORT_TCPC0;
+}
+
 void board_tcpc_init(void)
 {
 	int port;
+
+	ps8751_i2c_remap();
 
 	/* Only reset TCPC if not sysjump */
 	if (!system_jumped_to_this_image()) {
