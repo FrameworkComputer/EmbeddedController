@@ -33,6 +33,7 @@ extern unsigned motion_interval;
  * Time in ms to wait for the task to read the vectors.
  */
 #define TEST_LID_SLEEP_RATE (TEST_LID_EC_RATE / 5)
+#define ONE_G_MEASURED (1 << 14)
 
 /*****************************************************************************/
 /* Mock functions */
@@ -56,7 +57,7 @@ static int accel_set_range(const struct motion_sensor_t *s,
 
 static int accel_get_range(const struct motion_sensor_t *s)
 {
-	return 0;
+	return s->default_range;
 }
 
 static int accel_get_resolution(const struct motion_sensor_t *s)
@@ -97,7 +98,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &test_motion_sense,
 	 .rot_standard_ref = NULL,
-	 .default_range = 2,  /* g, enough for laptop. */
+	 .default_range = MOTION_SCALING_FACTOR / ONE_G_MEASURED,
 	 .config = {
 		 /* AP: by default shutdown all sensors */
 		 [SENSOR_CONFIG_AP] = {
@@ -127,7 +128,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &test_motion_sense,
 	 .rot_standard_ref = NULL,
-	 .default_range = 2,  /* g, enough for laptop. */
+	 .default_range = MOTION_SCALING_FACTOR / ONE_G_MEASURED,
 	 .config = {
 		 /* AP: by default shutdown all sensors */
 		 [SENSOR_CONFIG_AP] = {
@@ -174,6 +175,7 @@ static int test_lid_angle(void)
 		CONFIG_LID_ANGLE_SENSOR_BASE];
 	struct motion_sensor_t *lid = &motion_sensors[
 		CONFIG_LID_ANGLE_SENSOR_LID];
+	int lid_angle;
 
 	/* We don't have TASK_CHIP so simulate init ourselves */
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
@@ -195,10 +197,10 @@ static int test_lid_angle(void)
 	 */
 	base->xyz[X] = 0;
 	base->xyz[Y] = 0;
-	base->xyz[Z] = 1000;
+	base->xyz[Z] = ONE_G_MEASURED;
 	lid->xyz[X] = 0;
 	lid->xyz[Y] = 0;
-	lid->xyz[Z] = -1000;
+	lid->xyz[Z] = -ONE_G_MEASURED;
 	gpio_set_level(GPIO_LID_OPEN, 0);
 	/* Initial wake up, like init does */
 	task_wake(TASK_ID_MOTIONSENSE);
@@ -208,11 +210,16 @@ static int test_lid_angle(void)
 	task_wake(TASK_ID_MOTIONSENSE);
 
 	wait_for_valid_sample();
-	TEST_ASSERT(motion_lid_get_angle() == 0);
+	lid_angle = motion_lid_get_angle();
+	cprints(CC_ACCEL, "LID(%d, %d, %d)/BASE(%d, %d, %d): %d",
+			lid->xyz[X], lid->xyz[Y], lid->xyz[Z],
+			base->xyz[X], base->xyz[Y], base->xyz[Z],
+			lid_angle);
+	TEST_ASSERT(lid_angle == 0);
 
 	/* Set lid open to 90 degrees. */
 	lid->xyz[X] = 0;
-	lid->xyz[Y] = 1000;
+	lid->xyz[Y] = ONE_G_MEASURED;
 	lid->xyz[Z] = 0;
 	gpio_set_level(GPIO_LID_OPEN, 1);
 	msleep(100);
@@ -222,15 +229,15 @@ static int test_lid_angle(void)
 
 	/* Set lid open to 225. */
 	lid->xyz[X] = 0;
-	lid->xyz[Y] = -500;
-	lid->xyz[Z] = 500;
+	lid->xyz[Y] = -1 * ONE_G_MEASURED * 0.707106;
+	lid->xyz[Z] = ONE_G_MEASURED * 0.707106;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 225);
 
 	/* Set lid open to 350 */
 	lid->xyz[X] = 0;
-	lid->xyz[Y] = -173;
-	lid->xyz[Z] = -984;
+	lid->xyz[Y] = -1 * ONE_G_MEASURED * 0.1736;
+	lid->xyz[Z] = -1 * ONE_G_MEASURED * 0.9848;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 350);
 
@@ -239,15 +246,15 @@ static int test_lid_angle(void)
 	 * open, we should be getting an unreliable reading.
 	 */
 	lid->xyz[X] = 0;
-	lid->xyz[Y] = 173;
-	lid->xyz[Z] = -984;
+	lid->xyz[Y] = ONE_G_MEASURED * 0.1736;
+	lid->xyz[Z] = -1 * ONE_G_MEASURED * 0.9848;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == LID_ANGLE_UNRELIABLE);
 
 	/* Rotate back to 180 and then 10 */
 	lid->xyz[X] = 0;
 	lid->xyz[Y] = 0;
-	lid->xyz[Z] = 1000;
+	lid->xyz[Z] = ONE_G_MEASURED;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 180);
 
@@ -256,8 +263,8 @@ static int test_lid_angle(void)
 	 * See SMALL_LID_ANGLE_RANGE.
 	 */
 	lid->xyz[X] = 0;
-	lid->xyz[Y] = 173;
-	lid->xyz[Z] = -984;
+	lid->xyz[Y] = ONE_G_MEASURED * 0.1736;
+	lid->xyz[Z] = -1 * ONE_G_MEASURED * 0.9848;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == LID_ANGLE_UNRELIABLE);
 
@@ -265,7 +272,7 @@ static int test_lid_angle(void)
 	 * Align base with hinge and make sure it returns unreliable for angle.
 	 * In this test it doesn't matter what the lid acceleration vector is.
 	 */
-	base->xyz[X] = 1000;
+	base->xyz[X] = ONE_G_MEASURED;
 	base->xyz[Y] = 0;
 	base->xyz[Z] = 0;
 	wait_for_valid_sample();
@@ -275,12 +282,12 @@ static int test_lid_angle(void)
 	 * Use all three axes and set lid to negative base and make sure
 	 * angle is 180.
 	 */
-	base->xyz[X] = 500;
-	base->xyz[Y] = 400;
-	base->xyz[Z] = 300;
-	lid->xyz[X] =  500;
-	lid->xyz[Y] =  400;
-	lid->xyz[Z] =  300;
+	base->xyz[X] = 5296;
+	base->xyz[Y] = 7856;
+	base->xyz[Z] = 13712;
+	lid->xyz[X] = 5296;
+	lid->xyz[Y] = 7856;
+	lid->xyz[Z] = 13712;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 180);
 
@@ -289,10 +296,10 @@ static int test_lid_angle(void)
 	 */
 	base->xyz[X] = 0;
 	base->xyz[Y] = 0;
-	base->xyz[Z] = 1000;
+	base->xyz[Z] = ONE_G_MEASURED;
 	lid->xyz[X] = 0;
 	lid->xyz[Y] = 0;
-	lid->xyz[Z] = -1000;
+	lid->xyz[Z] = -1 * ONE_G_MEASURED;
 	gpio_set_level(GPIO_LID_OPEN, 0);
 	msleep(100);
 	wait_for_valid_sample();
@@ -303,8 +310,8 @@ static int test_lid_angle(void)
 	 * be regarded as unreliable.
 	 */
 	lid->xyz[X] = 0;
-	lid->xyz[Y] = -173;
-	lid->xyz[Z] = -984;
+	lid->xyz[Y] = -1 * ONE_G_MEASURED * 0.1736;
+	lid->xyz[Z] = -1 * ONE_G_MEASURED * 0.9848;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == LID_ANGLE_UNRELIABLE);
 
@@ -317,8 +324,8 @@ static int test_lid_angle(void)
 	gpio_set_level(GPIO_LID_OPEN, 0);
 	msleep(100);
 	lid->xyz[X] = 0;
-	lid->xyz[Y] = 173;
-	lid->xyz[Z] = -984;
+	lid->xyz[Y] = ONE_G_MEASURED * 0.1736;
+	lid->xyz[Z] = -1 * ONE_G_MEASURED * 0.9848;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 10);
 

@@ -38,7 +38,7 @@ static fp_t last_lid_angle_fp = FLOAT_TO_FP(-1);
  * measurements when the lid is physically closed.  This will be used in
  * reliability calculations.
  */
-#define SMALL_LID_ANGLE_RANGE 15
+#define SMALL_LID_ANGLE_RANGE (FLOAT_TO_FP(15))
 #endif
 
 /* Current acceleration vectors and current lid angle. */
@@ -46,15 +46,15 @@ static int lid_angle_deg;
 
 static int lid_angle_is_reliable;
 
-/*
- * Angle threshold for how close the hinge aligns with gravity before
- * considering the lid angle calculation unreliable. For computational
- * efficiency, value is given unit-less, so if you want the threshold to be
- * at 15 degrees, the value would be cos(15 deg) = 0.96593.
- *
- * Here we're using cos(27.5 deg) = 0.88701.
- */
-#define HINGE_ALIGNED_WITH_GRAVITY_THRESHOLD FLOAT_TO_FP(0.88701)
+/* Smoothed vectors to increase accurency. */
+static intv3_t smoothed_base, smoothed_lid;
+
+/* 8.7 m/s^2 is the the maximum acceleration parallel to the hinge */
+#define SCALED_HINGE_VERTICAL_MAXIMUM  \
+	((int)((8.7f * MOTION_SCALING_FACTOR) / MOTION_ONE_G))
+
+#define SCALED_HINGE_VERTICAL_SMOOTHING_START \
+	((int)((7.0f * MOTION_SCALING_FACTOR) / MOTION_ONE_G))
 
 /*
  * Constant to debounce lid angle changes around 360 - 0:
@@ -67,9 +67,20 @@ static int lid_angle_is_reliable;
  * under the same acceleration.  This constant, which mirrors
  * kNoisyMagnitudeDeviation used in Chromium, is an integer which defines the
  * maximum deviation in magnitude between the base and lid vectors.  The units
- * are in m/s^2.
+ * are in g. Currently set at 1m/s^2.
  */
-#define NOISY_MAGNITUDE_DEVIATION 1
+#define NOISY_MAGNITUDE_DEVIATION ((int)(MOTION_SCALING_FACTOR / MOTION_ONE_G))
+
+/*
+ * Even with noise, any measurement greater than 1g on any axis is not suitable
+ * for lid calculation. It means the device is moving.
+ * To avoid using 64bits arithmetic, we need to be sure that square of magnitude
+ * is less than 1<<31, so magnitude is less sqrt(2)*(1<<15), less than ~40% over
+ * 1g. This is way above any usable noise. Assume noise is less than 10%.
+ */
+#define MOTION_SCALING_AXIS_MAX (MOTION_SCALING_FACTOR * 110)
+
+#define MOTION_SCALING_FACTOR2 (MOTION_SCALING_FACTOR * MOTION_SCALING_FACTOR)
 
 /*
  * Define the accelerometer orientation matrices based on the standard
@@ -77,43 +88,16 @@ static int lid_angle_is_reliable;
  * frame before calculating lid angle).
  */
 #ifdef CONFIG_ACCEL_STD_REF_FRAME_OLD
-const struct accel_orientation acc_orient = {
-	/* Hinge aligns with y axis. */
-	.rot_hinge_90 = {
-		{ 0,  0,  FLOAT_TO_FP(1)},
-		{ 0,  FLOAT_TO_FP(1),  0},
-		{ FLOAT_TO_FP(-1), 0,  0}
-	},
-	.rot_hinge_180 = {
-		{ FLOAT_TO_FP(-1), 0,  0},
-		{ 0,  FLOAT_TO_FP(1),  0},
-		{ 0,  0, FLOAT_TO_FP(-1)}
-	},
-	.hinge_axis = {0, 1, 0},
-};
+static const intv3_t hinge_axis = { 0, 1, 0};
+#define HINGE_AXIS Y
 #else
-const struct accel_orientation acc_orient = {
-	/* Hinge aligns with x axis. */
-	.rot_hinge_90 = {
-		{ FLOAT_TO_FP(1),  0,  0},
-		{ 0,  0,  FLOAT_TO_FP(1)},
-		{ 0, FLOAT_TO_FP(-1),  0}
-	},
-	.rot_hinge_180 = {
-		{ FLOAT_TO_FP(1),  0,  0},
-		{ 0, FLOAT_TO_FP(-1),  0},
-		{ 0,  0, FLOAT_TO_FP(-1)}
-	},
-	.hinge_axis = {1, 0, 0},
-};
+static const intv3_t hinge_axis = { 1, 0, 0};
+#define HINGE_AXIS X
 #endif
 
-/* Pointer to constant acceleration orientation data. */
-const struct accel_orientation * const p_acc_orient = &acc_orient;
-
-const struct motion_sensor_t * const accel_base =
+static const struct motion_sensor_t * const accel_base =
 	&motion_sensors[CONFIG_LID_ANGLE_SENSOR_BASE];
-const struct motion_sensor_t * const accel_lid =
+static const struct motion_sensor_t * const accel_lid =
 	&motion_sensors[CONFIG_LID_ANGLE_SENSOR_LID];
 
 #ifdef CONFIG_TABLET_MODE
@@ -164,16 +148,6 @@ static fp_t laptop_zone_lid_angle =
 
 static int tablet_mode_lid_angle = DEFAULT_TABLET_MODE_ANGLE;
 static int tablet_mode_hys_degree = DEFAULT_TABLET_MODE_HYS;
-
-/*
- * We will change our tablet mode status when we are "convinced" that it has
- * changed.  This means we will have to consecutively calculate our new tablet
- * mode while the angle is stable and come to the same conclusion.  The number
- * of consecutive calculations is the debounce count with an interval between
- * readings set by the motion_sense task.  This should avoid spurious forces
- * that may trigger false transitions of the tablet mode switch.
- */
-#define TABLET_MODE_DEBOUNCE_COUNT 3
 
 static void motion_lid_set_tablet_mode(int reliable)
 {
@@ -305,109 +279,41 @@ static void motion_lid_set_dptf_profile(int reliable)
 static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 			       int *lid_angle)
 {
-	intv3_t v;
-	fp_t lid_to_base_fp, cos_lid_90, cos_lid_270;
-	fp_t lid_to_base, base_to_hinge;
-	fp_t denominator;
-	int reliable = 1;
-	int base_magnitude2, lid_magnitude2;
-	int base_range, lid_range, i;
-	intv3_t scaled_base, scaled_lid;
+	intv3_t cross, proj_lid, proj_base, scaled_base, scaled_lid;
+	fp_t lid_to_base_fp, smoothed_ratio;
+	int base_magnitude2, lid_magnitude2, largest_hinge_accel;
+	int reliable = 1, i;
 
 	/*
-	 * The angle between lid and base is:
-	 * acos((cad(base, lid) - cad(base, hinge)^2) /(1 - cad(base, hinge)^2))
-	 * where cad() is the cosine_of_angle_diff() function.
-	 *
-	 * Make sure to check for divide by 0.
+	 * Scale the vectors by their range, to be able to compare them.
+	 * If a single measurement is greated than 1g, we may overflow fixed
+	 * point calculation. However, we can exclude such a measurement, it
+	 * means the device is in movement and lid angle calculation is not
+	 * possible.
 	 */
-	lid_to_base = cosine_of_angle_diff(base, lid);
-	base_to_hinge = cosine_of_angle_diff(base, p_acc_orient->hinge_axis);
-
-	/*
-	 * If hinge aligns too closely with gravity, then result may be
-	 * unreliable.
-	 */
-	if (fp_abs(base_to_hinge) > HINGE_ALIGNED_WITH_GRAVITY_THRESHOLD)
-		reliable = 0;
-
-	base_to_hinge = fp_sq(base_to_hinge);
-
-	/* Check divide by 0. */
-	denominator = FLOAT_TO_FP(1.0) - base_to_hinge;
-	if (fp_abs(denominator) < FLOAT_TO_FP(0.01)) {
-		*lid_angle = 0;
-		return 0;
-	}
-
-	lid_to_base_fp = arc_cos(fp_div(lid_to_base - base_to_hinge,
-					denominator));
-
-	/*
-	 * The previous calculation actually has two solutions, a positive and
-	 * a negative solution. To figure out the sign of the answer, calculate
-	 * the cosine of the angle between the actual lid angle and the
-	 * estimated vector if the lid were open to 90 deg, cos_lid_90. Also
-	 * calculate the cosine of the angle between the actual lid angle and
-	 * the estimated vector if the lid were open to 270 deg,
-	 * cos_lid_270. The smaller of the two angles represents which one is
-	 * closer. If the lid is closer to the estimated 270 degree vector then
-	 * the result is negative, otherwise it is positive.
-	 */
-	rotate(base, p_acc_orient->rot_hinge_90, v);
-	cos_lid_90 = cosine_of_angle_diff(v, lid);
-	rotate(v, p_acc_orient->rot_hinge_180, v);
-	cos_lid_270 = cosine_of_angle_diff(v, lid);
-
-	/*
-	 * Note that cos_lid_90 and cos_lid_270 are not in degrees, because
-	 * the arc_cos() was never performed. But, since arc_cos() is
-	 * monotonically decreasing, we can do this comparison without ever
-	 * taking arc_cos(). But, since the function is monotonically
-	 * decreasing, the logic of this comparison is reversed.
-	 */
-	if (cos_lid_270 > cos_lid_90)
-		lid_to_base_fp = -lid_to_base_fp;
-
-	/* Place lid angle between 0 and 360 degrees. */
-	if (lid_to_base_fp < 0)
-		lid_to_base_fp += FLOAT_TO_FP(360);
-
-	/*
-	 * Perform some additional reliability checks.
-	 *
-	 * If the magnitude of the two vectors differ too greatly, then the
-	 * readings are unreliable and we can't use them to calculate the lid
-	 * angle.
-	 */
-
-	/* Scale the vectors by their range. */
-	base_range = accel_base->drv->get_range(accel_base);
-	lid_range = accel_lid->drv->get_range(accel_lid);
-
 	for (i = X; i <= Z; i++) {
-		/*
-		 * To increase precision, we'll use 8x the sensor data in the
-		 * intermediate calculation.  We would normally divide by 2^15.
-		 *
-		 * This is safe because even at a range of 8g, calculating the
-		 * magnitude squared should still be less than the max of a
-		 * 32-bit signed integer.
-		 *
-		 * The max that base[i] could be is 32768, resulting in a max
-		 * value for scaled_base[i] of 640 @ 8g range and force.
-		 * Typically our range is set to 2g.
-		 */
-		scaled_base[i] = base[i] * base_range * 10 >> 12;
-		scaled_lid[i] = lid[i] * lid_range * 10 >> 12;
+		scaled_base[i] = base[i] *
+			accel_base->drv->get_range(accel_base);
+		scaled_lid[i] = lid[i] *
+			accel_lid->drv->get_range(accel_lid);
+		if (ABS(scaled_base[i]) > MOTION_SCALING_AXIS_MAX ||
+		    ABS(scaled_lid[i]) > MOTION_SCALING_AXIS_MAX) {
+			reliable = 0;
+			goto end_calculate_lid_angle;
+		}
 	}
 
-	base_magnitude2 = (scaled_base[X] * scaled_base[X] +
-			   scaled_base[Y] * scaled_base[Y] +
-			   scaled_base[Z] * scaled_base[Z]) >> 6;
-	lid_magnitude2 = (scaled_lid[X] * scaled_lid[X] +
-			  scaled_lid[Y] * scaled_lid[Y] +
-			  scaled_lid[Z] * scaled_lid[Z]) >> 6;
+	/*
+	 * Calculate square of vector magnitude in g.
+	 * Each entry is guaranteed to be up to +/- 1<<15, so the square will be
+	 * less than 1<<30.
+	 */
+	base_magnitude2 = scaled_base[X] * scaled_base[X] +
+		scaled_base[Y] * scaled_base[Y] +
+		scaled_base[Z] * scaled_base[Z];
+	lid_magnitude2 = scaled_lid[X] * scaled_lid[X] +
+		scaled_lid[Y] * scaled_lid[Y] +
+		scaled_lid[Z] * scaled_lid[Z];
 
 	/*
 	 * Check to see if they differ than more than NOISY_MAGNITUDE_DEVIATION.
@@ -417,27 +323,93 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 	 * magnitude, but we can work with the magnitudes squared directly as
 	 * shown below:
 	 *
-	 * If A and B are the base and lid magnitudes, and x is the noisy
-	 * magnitude deviation:
+	 * If A is a magnitudes, and x is the noisy magnitude deviation:
 	 *
-	 *          A - B < x
-	 *          A^2 - B^2 < x * (A + B)
-	 *          A^2 - B^2 < 2 * x * avg(A, B)
+	 *          0 < 1g - A < x
+	 *          0 < 1g^2 - A^2 < x * (A + B)
+	 *          0 < 1g^2 - A^2 < 2 * x * avg(A, B)
 	 *
 	 * If we assume that the average acceleration should be about 1g, then
 	 * we have:
 	 *
-	 *          (A^2 - B^2) < 2 * 1g * NOISY_MAGNITUDE_DEVIATION
+	 *          0 < 1g^2 - A^2 < 2 * 1g * NOISY_MAGNITUDE_DEVIATION
 	 */
-	if (ABS(base_magnitude2 - lid_magnitude2) >
-	    (2 * 10 * NOISY_MAGNITUDE_DEVIATION))
+	if (MOTION_SCALING_FACTOR2 - base_magnitude2 >
+	    2 * MOTION_SCALING_FACTOR * NOISY_MAGNITUDE_DEVIATION) {
 		reliable = 0;
+		goto end_calculate_lid_angle;
+	}
+	if (MOTION_SCALING_FACTOR2 - lid_magnitude2 >
+	    2 * MOTION_SCALING_FACTOR * NOISY_MAGNITUDE_DEVIATION) {
+		reliable = 0;
+		goto end_calculate_lid_angle;
+	}
+
+	largest_hinge_accel = MAX(ABS(scaled_base[HINGE_AXIS]),
+				  ABS(scaled_lid[HINGE_AXIS]));
+
+	smoothed_ratio = MAX(INT_TO_FP(0), MIN(INT_TO_FP(1),
+		fp_div(INT_TO_FP(largest_hinge_accel -
+				 SCALED_HINGE_VERTICAL_SMOOTHING_START),
+		       INT_TO_FP(SCALED_HINGE_VERTICAL_MAXIMUM -
+				 SCALED_HINGE_VERTICAL_SMOOTHING_START))));
+
+	/* Check hinge is not too vertical */
+	if (largest_hinge_accel > SCALED_HINGE_VERTICAL_MAXIMUM) {
+		reliable = 0;
+		goto end_calculate_lid_angle;
+	}
+
+	/* Smooth input to reduce calculation error due to noise. */
+	vector_scale(smoothed_base, smoothed_ratio);
+	vector_scale(smoothed_lid, smoothed_ratio);
+	vector_scale(scaled_base, INT_TO_FP(1) - smoothed_ratio);
+	vector_scale(scaled_lid, INT_TO_FP(1) - smoothed_ratio);
+	for (i = X; i <= Z; i++) {
+		smoothed_base[i] += scaled_base[i];
+		smoothed_lid[i] += scaled_lid[i];
+	}
+
+	/* Project vectors on the hinge hyperplan, putting smooth ones aside. */
+	memcpy(proj_base, smoothed_base, sizeof(intv3_t));
+	memcpy(proj_lid, smoothed_lid, sizeof(intv3_t));
+	proj_base[HINGE_AXIS] = 0;
+	proj_lid[HINGE_AXIS] = 0;
+
+	/* Calculate the clockwise angle */
+	lid_to_base_fp = arc_cos(cosine_of_angle_diff(proj_base, proj_lid));
+	cross_product(proj_base, proj_lid, cross);
+
+	/*
+	 * If the dot product of this cross product is normal, it means that
+	 * the shortest angle between |base| and |lid| was counterclockwise
+	 * with respect to the surface represented by |hinge_axis| and this
+	 * angle must be reversed.
+	 */
+	if (dot_product(cross, hinge_axis) > 0)
+		lid_to_base_fp = FLOAT_TO_FP(360) - lid_to_base_fp;
+
+#ifndef CONFIG_ACCEL_STD_REF_FRAME_OLD
+	/*
+	 * Angle is between the keyboard and the front of screen: we need to
+	 * anlge between keyboard and back of screen:
+	 * 180 instead of 0 when lid and base are flat on surface.
+	 * 0 instead of 180 when lid is closed on keyboard.
+	 */
+	lid_to_base_fp = FLOAT_TO_FP(180) - lid_to_base_fp;
+#endif
+
+	/* Place lid angle between 0 and 360 degrees. */
+	if (lid_to_base_fp < 0)
+		lid_to_base_fp += FLOAT_TO_FP(360);
 
 #ifdef CONFIG_TABLET_MODE
 	/* Ignore large angles when the lid is closed. */
 	if (!lid_is_open() &&
-	    (lid_to_base_fp > FLOAT_TO_FP(SMALL_LID_ANGLE_RANGE)))
+	    (lid_to_base_fp > SMALL_LID_ANGLE_RANGE)) {
 		reliable = 0;
+		goto end_calculate_lid_angle;
+	}
 
 	/*
 	 * Ignore small angles when the lid is open.
@@ -451,33 +423,31 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 	 * reliable readings over a threshold to disable key scanning.
 	 */
 	if (lid_is_open() &&
-	    (lid_to_base_fp <= FLOAT_TO_FP(SMALL_LID_ANGLE_RANGE)))
+	    (lid_to_base_fp <= SMALL_LID_ANGLE_RANGE)) {
 		reliable = 0;
-
-	if (reliable) {
-		/*
-		 * Seed the lid angle now that we have a reliable
-		 * measurement.
-		 */
-		if (last_lid_angle_fp == FLOAT_TO_FP(-1))
-			last_lid_angle_fp = lid_to_base_fp;
-
-		/*
-		 * If the angle was last seen as really large and now it's quite
-		 * small, we may be rotating around from 360->0 so correct it to
-		 * be large. But in case that the lid switch is closed, we can
-		 * prove the small angle we see is correct so we take the angle
-		 * as is.
-		 */
-		if ((last_lid_angle_fp >=
-		     FLOAT_TO_FP(360) - DEBOUNCE_ANGLE_DELTA) &&
-		    (lid_to_base_fp <= DEBOUNCE_ANGLE_DELTA) &&
-		    (lid_is_open()))
-			last_lid_angle_fp = FLOAT_TO_FP(360) - lid_to_base_fp;
-		else
-			last_lid_angle_fp = lid_to_base_fp;
+		goto end_calculate_lid_angle;
 	}
 
+	/* Seed the lid angle now that we have a reliable measurement. */
+	if (last_lid_angle_fp == FLOAT_TO_FP(-1))
+		last_lid_angle_fp = lid_to_base_fp;
+
+	/*
+	 * If the angle was last seen as really large and now it's quite
+	 * small, we may be rotating around from 360->0 so correct it to
+	 * be large. But in case that the lid switch is closed, we can
+	 * prove the small angle we see is correct so we take the angle
+	 * as is.
+	 */
+	if ((last_lid_angle_fp >=
+	     FLOAT_TO_FP(360) - DEBOUNCE_ANGLE_DELTA) &&
+	     (lid_to_base_fp <= DEBOUNCE_ANGLE_DELTA) &&
+	     (lid_is_open()))
+		last_lid_angle_fp = FLOAT_TO_FP(360) - lid_to_base_fp;
+	else
+		last_lid_angle_fp = lid_to_base_fp;
+
+end_calculate_lid_angle:
 	/*
 	 * Round to nearest int by adding 0.5. Note, only works because lid
 	 * angle is known to be positive.
@@ -493,7 +463,9 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 #endif /* CONFIG_DPTF_MULTI_PROFILE && CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR */
 
 #else    /* CONFIG_TABLET_MODE */
-	*lid_angle = FP_TO_INT(lid_to_base_fp + FLOAT_TO_FP(0.5));
+end_calculate_lid_angle:
+	if (reliable)
+		*lid_angle = FP_TO_INT(lid_to_base_fp + FLOAT_TO_FP(0.5));
 #endif
 	return reliable;
 }
@@ -511,25 +483,10 @@ int motion_lid_get_angle(void)
  */
 void motion_lid_calc(void)
 {
-#ifndef CONFIG_ACCEL_STD_REF_FRAME_OLD
-	/*
-	 * rotate lid vector by 180 deg to be in the right coordinate frame
-	 * because calculate_lid_angle assumes when the lid is closed, that
-	 * the lid and base accelerometer data matches
-	 */
-	intv3_t lid = { accel_lid->xyz[X],
-			accel_lid->xyz[Y] * -1,
-			accel_lid->xyz[Z] * -1};
-	/* Calculate angle of lid accel. */
-	lid_angle_is_reliable = calculate_lid_angle(
-			accel_base->xyz, lid,
-			&lid_angle_deg);
-#else
 	/* Calculate angle of lid accel. */
 	lid_angle_is_reliable = calculate_lid_angle(
 			accel_base->xyz, accel_lid->xyz,
 			&lid_angle_deg);
-#endif
 
 #ifdef CONFIG_LID_ANGLE_UPDATE
 	lid_angle_update(motion_lid_get_angle());

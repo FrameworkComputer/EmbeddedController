@@ -11,27 +11,15 @@
 #include "host_command.h"
 #include "math_util.h"
 
-/**
- * This structure defines all of the data needed to specify the orientation
- * of the base and lid accelerometers in order to calculate the lid angle.
+/*
+ * We will change our tablet mode status when we are "convinced" that it has
+ * changed.  This means we will have to consecutively calculate our new tablet
+ * mode while the angle is stable and come to the same conclusion.  The number
+ * of consecutive calculations is the debounce count with an interval between
+ * readings set by the motion_sense task.  This should avoid spurious forces
+ * that may trigger false transitions of the tablet mode switch.
  */
-struct accel_orientation {
-	/* Rotation matrix to rotate positive 90 degrees around the hinge. */
-	mat33_fp_t rot_hinge_90;
-
-	/*
-	 * Rotation matrix to rotate 180 degrees around the hinge. The value
-	 * here should be rot_hinge_90 ^ 2.
-	 */
-	mat33_fp_t rot_hinge_180;
-
-	/* Vector pointing along hinge axis. */
-	intv3_t hinge_axis;
-};
-
-/* Link global structure for orientation. This must be defined in board.c. */
-extern const struct accel_orientation acc_orient;
-
+#define TABLET_MODE_DEBOUNCE_COUNT 3
 
 /**
  * Get last calculated lid angle. Note, the lid angle calculated by the EC
