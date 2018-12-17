@@ -114,6 +114,8 @@
 #define IT83XX_GPIO_INT_FLEXIBLE
 /* Enable interrupts of group 21 and 22. */
 #define IT83XX_INTC_GROUP_21_22_SUPPORT
+/* Enable detect type-c plug in interrupt. */
+#define IT83XX_INTC_PLUG_IN_SUPPORT
 #else
 #error "Unsupported chip variant!"
 #endif
