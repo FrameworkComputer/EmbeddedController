@@ -137,6 +137,7 @@ BOARDS_NPCX_SPI=(
 BOARDS_NPCX_INT_SPI=(
 	atlas
 	bobba
+	casta
 	fleex
 	grunt
 	meep
@@ -147,6 +148,7 @@ BOARDS_NPCX_INT_SPI=(
 
 BOARDS_NPCX_UUT=(
 	bobba
+	casta
 	cheza
 	fleex
 	grunt
@@ -192,6 +194,8 @@ BOARDS_RAIDEN=(
 declare -A VALID_CHIP_COMBO
 VALID_CHIP_COMBO["bobba.npcx_spi"]="(servo_micro|servo_v2)"
 VALID_CHIP_COMBO["bobba.npcx_uut"]="ccd_cr50"
+VALID_CHIP_COMBO["casta.npcx_spi"]="(servo_micro|servo_v2)"
+VALID_CHIP_COMBO["casta.npcx_uut"]="ccd_cr50"
 VALID_CHIP_COMBO["fleex.npcx_spi"]="(servo_micro|servo_v2)"
 VALID_CHIP_COMBO["fleex.npcx_uut"]="ccd_cr50"
 VALID_CHIP_COMBO["grunt.npcx_spi"]="(servo_micro|servo_v2)"
