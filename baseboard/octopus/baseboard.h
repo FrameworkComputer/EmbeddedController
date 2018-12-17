@@ -88,7 +88,6 @@
 #define CONFIG_CROS_BOARD_INFO
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_LOW_POWER_IDLE
-#define CONFIG_PWM
 #define CONFIG_DPTF
 #define CONFIG_BOARD_HAS_RTC_RESET
 
@@ -255,7 +254,6 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
-#define CONFIG_PWM_KBLIGHT
 
 /*******************************************************************************
  * Sensor Config
