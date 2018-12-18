@@ -17,6 +17,11 @@
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 #define CONFIG_I2C
 
+/* EC Defines */
+#define CONFIG_VBOOT_HASH
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
+
 /* Chipset config */
 #define CONFIG_CHIPSET_COMETLAKE
 #define CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
