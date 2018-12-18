@@ -52,6 +52,10 @@ GPIO(EN_USB_A_LOW_PWR_ODL,     PIN(9, 4), GPIO_OUT_LOW)
 
 /* Misc Signals */
 GPIO(EC_BATT_PRES_ODL,         PIN(E, 1), GPIO_INPUT)
+GPIO(LED_1_L,                  PIN(C, 4), GPIO_OUT_HIGH)        /* Yellow (hatch) */
+GPIO(LED_2_L,                  PIN(C, 3), GPIO_OUT_HIGH)        /* White (hatch) */
+GPIO(LED_3_L,                  PIN(C, 2), GPIO_OUT_HIGH)
+GPIO(LED_4_L,                  PIN(6, 0), GPIO_OUT_HIGH)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,                 PIN(B, 5), GPIO_INPUT |

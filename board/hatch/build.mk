@@ -11,5 +11,5 @@ CHIP_FAMILY:=npcx7
 CHIP_VARIANT:=npcx7m6fc
 BASEBOARD:=hatch
 
-board-y=board.o
+board-y=board.o led.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o
