@@ -3466,9 +3466,26 @@ void pd_task(void *u)
 						  PD_STATE_SRC_SWAP_SRC_DISABLE);
 			break;
 		case PD_STATE_SRC_SWAP_SRC_DISABLE:
-			/* Turn power off */
 			if (pd[port].last_state != pd[port].task_state) {
+				/* Turn power off */
 				pd_power_supply_reset(port);
+
+				/*
+				 * Switch to Rd and swap roles to sink
+				 *
+				 * The reason we do this as early as possible is
+				 * to help prevent CC disconnection cases where
+				 * both partners are applying an Rp.  Certain PD
+				 * stacks (e.g. qualcomm), reflexively apply
+				 * their Rp once VBUS falls beneath
+				 * ~3.67V. (b/77827528).
+				 */
+				tcpm_set_cc(port, TYPEC_CC_RD);
+				pd_set_power_role(port, PD_ROLE_SINK);
+
+				/* Inform TCPC of power role update. */
+				pd_update_roles(port);
+
 				set_state_timeout(port,
 						  get_time().val +
 						  PD_POWER_SUPPLY_TURN_OFF_DELAY,
@@ -3486,9 +3503,6 @@ void pd_task(void *u)
 						  PD_STATE_SRC_DISCONNECTED);
 					break;
 				}
-				/* Switch to Rd and swap roles to sink */
-				tcpm_set_cc(port, TYPEC_CC_RD);
-				pd_set_power_role(port, PD_ROLE_SINK);
 				/* Wait for PS_RDY from new source */
 				set_state_timeout(port,
 						  get_time().val +
@@ -3925,7 +3939,7 @@ void pd_task(void *u)
 			break;
 		case PD_STATE_SNK_SWAP_STANDBY:
 			if (pd[port].last_state != pd[port].task_state) {
-				/* Switch to Rp and enable power supply */
+				/* Switch to Rp and enable power supply. */
 				tcpm_set_cc(port, TYPEC_CC_RP);
 				if (pd_set_power_supply_ready(port)) {
 					/* Restore Rd */
