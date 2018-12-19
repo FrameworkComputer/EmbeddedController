@@ -901,8 +901,6 @@ static void lpc_init(void)
 
 	/* Don't stall SHM transactions */
 	NPCX_SHM_CTL = NPCX_SHM_CTL & ~0x40;
-	/* Semaphore and Indirect access disable */
-	NPCX_SHCFG = 0xE0;
 	/* Disable Protect Win1&2*/
 	NPCX_WIN_WR_PROT(0) = 0;
 	NPCX_WIN_WR_PROT(1) = 0;
