@@ -7,3 +7,5 @@
 #
 
 baseboard-y=baseboard.o
+baseboard-$(CONFIG_BATTERY_SMART)+=battery.o
+baseboard-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o

@@ -4,8 +4,16 @@
  */
 
 /* Hatch family-specific configuration */
+#include "battery_fuel_gauge.h"
+#include "charge_manager.h"
+#include "charge_state_v2.h"
 #include "chipset.h"
 #include "console.h"
+#include "driver/ppc/sn5s330.h"
+#include "driver/tcpm/anx7447.h"
+#include "driver/tcpm/ps8xxx.h"
+#include "driver/tcpm/tcpci.h"
+#include "driver/tcpm/tcpm.h"
 #include "espi.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -13,11 +21,17 @@
 #include "power.h"
 #include "tcpci.h"
 #include "timer.h"
+#include "usbc_ppc.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+#define USB_PD_PORT_TCPC_0	0
+#define USB_PD_PORT_TCPC_1	1
 
 /******************************************************************************/
 /* I2C port map configuration */
@@ -90,3 +104,188 @@ static void baseboard_chipset_shutdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, baseboard_chipset_shutdown,
 	     HOOK_PRIO_DEFAULT);
+
+/******************************************************************************/
+/* USB-C TPCP Configuration */
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+	[USB_PD_PORT_TCPC_0] = {
+		.i2c_host_port = I2C_PORT_TCPC0,
+		.i2c_slave_addr = AN7447_TCPC0_I2C_ADDR,
+		.drv = &anx7447_tcpm_drv,
+		.pol = TCPC_ALERT_ACTIVE_LOW,
+	},
+	[USB_PD_PORT_TCPC_1] = {
+		.i2c_host_port = I2C_PORT_TCPC1,
+		.i2c_slave_addr = PS8751_I2C_ADDR1,
+		.drv = &ps8xxx_tcpm_drv,
+		.pol = TCPC_ALERT_ACTIVE_LOW,
+	},
+};
+
+/******************************************************************************/
+/* USB-C PPC Configuration */
+struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
+	[USB_PD_PORT_TCPC_0] = {
+		.i2c_port = I2C_PORT_PPC0,
+		.i2c_addr = SN5S330_ADDR0,
+		.drv = &sn5s330_drv
+	},
+
+	[USB_PD_PORT_TCPC_1] = {
+		.i2c_port = I2C_PORT_TCPC1,
+		.i2c_addr = SN5S330_ADDR0,
+		.drv = &sn5s330_drv
+	},
+};
+unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+	[USB_PD_PORT_TCPC_0] = {
+		.driver = &anx7447_usb_mux_driver,
+		.hpd_update = &anx7447_tcpc_update_hpd_status,
+	},
+	[USB_PD_PORT_TCPC_1] = {
+		.driver = &tcpci_tcpm_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	}
+};
+
+/* Power Delivery and charging functions */
+
+void baseboard_tcpc_init(void)
+{
+	/* Enable PPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+
+	/* Enable TCPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
+
+}
+DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
+
+uint16_t tcpc_get_alert_status(void)
+{
+	uint16_t status = 0;
+
+	/*
+	 * Check which port has the ALERT line set and ignore if that TCPC has
+	 * its reset line active. Note that port 0 reset is active high and
+	 * port 1 reset is active low.
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL)) {
+		if (!gpio_get_level(GPIO_USB_C0_TCPC_RST))
+			status |= PD_STATUS_TCPC_ALERT_0;
+	}
+
+	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL)) {
+		if (gpio_get_level(GPIO_USB_C1_TCPC_RST_ODL))
+			status |= PD_STATUS_TCPC_ALERT_1;
+	}
+
+	return status;
+}
+
+void board_reset_pd_mcu(void)
+{
+	/*
+	 * C0: Assert reset to TCPC0 (ANX7447) for required delay (1ms) only if
+	 * we have a battery
+	 *
+	 */
+	if (battery_is_present() == BP_YES) {
+		gpio_set_level(GPIO_USB_C0_TCPC_RST, 1);
+		msleep(ANX74XX_RESET_HOLD_MS);
+		gpio_set_level(GPIO_USB_C0_TCPC_RST, 0);
+		msleep(ANX74XX_RESET_FINISH_MS);
+	}
+	/*
+	 * C1: Assert reset to TCPC1 (PS8751) for required delay (1ms) only if
+	 * we have a battery, otherwise we may brown out the system.
+	 */
+	if (battery_is_present() == BP_YES) {
+		/*
+		 * TODO(crbug:846412): After refactor, ensure that battery has
+		 * enough charge to last the reboot as well
+		 */
+		gpio_set_level(GPIO_USB_C1_TCPC_RST_ODL, 0);
+		msleep(PS8XXX_RESET_DELAY_MS);
+		gpio_set_level(GPIO_USB_C1_TCPC_RST_ODL, 1);
+	} else {
+		CPRINTS("Skipping C1 TCPC reset because no battery");
+	}
+}
+
+void board_pd_vconn_ctrl(int port, int cc_pin, int enabled)
+{
+	/*
+	 * We ignore the cc_pin because the polarity should already be set
+	 * correctly in the PPC driver via the pd state machine.
+	 */
+	if (ppc_set_vconn(port, enabled) != EC_SUCCESS)
+		cprints(CC_USBPD, "C%d: Failed %sabling vconn",
+			port, enabled ? "en" : "dis");
+}
+
+int board_set_active_charge_port(int port)
+{
+	int is_valid_port = (port >= 0 &&
+			    port < CONFIG_USB_PD_PORT_COUNT);
+	int i;
+
+	if (!is_valid_port && port != CHARGE_PORT_NONE)
+		return EC_ERROR_INVAL;
+
+	if (port == CHARGE_PORT_NONE) {
+		CPRINTSUSB("Disabling all charger ports");
+
+		/* Disable all ports. */
+		for (i = 0; i < ppc_cnt; i++) {
+			/*
+			 * Do not return early if one fails otherwise we can
+			 * get into a boot loop assertion failure.
+			 */
+			if (ppc_vbus_sink_enable(i, 0))
+				CPRINTSUSB("Disabling C%d as sink failed.", i);
+		}
+
+		return EC_SUCCESS;
+	}
+
+	/* Check if the port is sourcing VBUS. */
+	if (ppc_is_sourcing_vbus(port)) {
+		CPRINTFUSB("Skip enable C%d", port);
+		return EC_ERROR_INVAL;
+	}
+
+	CPRINTSUSB("New charge port: C%d", port);
+
+	/*
+	 * Turn off the other ports' sink path FETs, before enabling the
+	 * requested charge port.
+	 */
+	for (i = 0; i < ppc_cnt; i++) {
+		if (i == port)
+			continue;
+
+		if (ppc_vbus_sink_enable(i, 0))
+			CPRINTSUSB("C%d: sink path disable failed.", i);
+	}
+
+	/* Enable requested charge port. */
+	if (ppc_vbus_sink_enable(port, 1)) {
+		CPRINTSUSB("C%d: sink path enable failed.", port);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	return EC_SUCCESS;
+}
+
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+			    int max_ma, int charge_mv)
+{
+	charge_set_input_current_limit(MAX(charge_ma,
+					   CONFIG_CHARGER_INPUT_CURRENT),
+				       charge_mv);
+}

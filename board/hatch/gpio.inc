@@ -14,7 +14,6 @@ GPIO_INT(WP_L,                 PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)      
 GPIO_INT(POWER_BUTTON_L,       PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)        /* MECH_PWR_BTN_ODL */
 GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)
 
-
 /* Power sequencing interrupts */
 GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
 #ifndef CONFIG_HOSTCMD_ESPI_VW_SIGNALS
@@ -23,6 +22,12 @@ GPIO_INT(SLP_S4_L,             PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
 GPIO_INT(PG_EC_RSMRST_L,       PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
+
+/* USB-C interrupts */
+GPIO_INT(USB_C0_PPC_INT_ODL,   PIN(E, 0), GPIO_INT_FALLING, ppc_interrupt)
+GPIO_INT(USB_C1_PPC_INT_ODL,   PIN(A, 2), GPIO_INT_FALLING, ppc_interrupt)
+GPIO_INT(USB_C0_TCPC_INT_ODL,  PIN(6, 2), GPIO_INT_FALLING, tcpc_alert_event)
+GPIO_INT(USB_C1_TCPC_INT_ODL,  PIN(F, 5), GPIO_INT_FALLING, tcpc_alert_event)
 
 GPIO(SYS_RESET_L,              PIN(0, 2), GPIO_ODR_HIGH)        /* SYS_RST_ODL */
 GPIO(ENTERING_RW,              PIN(E, 3), GPIO_OUT_LOW)         /* EC_ENTERING_RW */
@@ -37,6 +42,16 @@ GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)
 GPIO(PP5000_A_PG_OD,           PIN(D, 7), GPIO_INPUT)
 GPIO(EC_PCH_SYS_PWROK,         PIN(3, 7), GPIO_OUT_LOW)
 GPIO(CPU_C10_GATE_L,           PIN(6, 7), GPIO_INPUT)
+
+/* USB and USBC Signals */
+GPIO(USB_C_OC_ODL,             PIN(B, 1), GPIO_ODR_HIGH)
+GPIO(USB_C0_TCPC_RST,          PIN(9, 7), GPIO_OUT_LOW)
+GPIO(USB_C1_TCPC_RST_ODL,      PIN(3, 2), GPIO_ODR_HIGH)
+GPIO(EN_USB_A_5V,              PIN(3, 5), GPIO_OUT_LOW)
+GPIO(EN_USB_A_LOW_PWR_ODL,     PIN(9, 4), GPIO_OUT_LOW)
+
+/* Misc Signals */
+GPIO(EC_BATT_PRES_ODL,         PIN(E, 1), GPIO_INPUT)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,                 PIN(B, 5), GPIO_INPUT |

@@ -15,6 +15,10 @@
 #include "i2c.h"
 #include "timer.h"
 
+#ifndef CONFIG_CHARGER_NARROW_VDC
+#error "BQ25710 is a NVDC charger, please enable CONFIG_CHARGER_NARROW_VDC."
+#endif
+
 /* Sense resistor configurations and macros */
 #define DEFAULT_SENSE_RESISTOR 10
 

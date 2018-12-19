@@ -52,6 +52,12 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
+/* List of possible batteries */
+enum battery_type {
+	BATTERY_KEYSTONE,
+	BATTERY_TYPE_COUNT,
+};
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
