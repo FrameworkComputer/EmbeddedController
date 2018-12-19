@@ -118,8 +118,14 @@ int pd_is_valid_input_voltage(int mv)
 
 void pd_power_supply_reset(int port)
 {
-	/* Disable VBUS. */
+	/*
+	 * Disable VBUS and discharge to vSafe0V.
+	 *
+	 * The PPC will automatically disable the discharge circuitry once it
+	 * reaches vSafe0V.
+	 */
 	ppc_vbus_source_enable(port, 0);
+	ppc_discharge_vbus(port, 1);
 
 #ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
 	/* Give back the current quota we are no longer using */
