@@ -151,6 +151,24 @@ enum {
 fp_t arc_cos(fp_t x);
 
 /**
+ * Calculate the dot product of 2 vectors.
+ */
+fp_inter_t dot_product(const intv3_t v1, const intv3_t v2);
+
+/*
+ * Calculate the dot product of 2 vectors,
+ *
+ * Assume the result vector components fits in 32bit.
+ */
+void cross_product(const intv3_t v1, const intv3_t v2, intv3_t v);
+
+/**
+ * Scale a vector by fixed point constant.
+ */
+void vector_scale(intv3_t v, fp_t s);
+
+
+/**
  * Find the cosine of the angle between two vectors.
  *
  * The implementation assumes no vector component is greater than
