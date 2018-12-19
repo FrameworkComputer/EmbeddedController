@@ -260,10 +260,36 @@ int is_ec_rst_asserted(void);
  */
 void ccd_update_state(void);
 
+/**
+ * Return the state of the BOARD_USE_PLT_RST board strap option.
+ *
+ * @return 0 if option is not set, !=0 if option set.
+ */
 int board_use_plt_rst(void);
+/**
+ * Return the state of the BOARD_NEEDS_SYS_RST_PULL_UP board strap option.
+ *
+ * @return 0 if option is not set, !=0 if option set.
+ */
 int board_rst_pullup_needed(void);
+/**
+ * Return the state of the BOARD_SLAVE_CONFIG_I2C board strap option.
+ *
+ * @return 0 if option is not set, !=0 if option set.
+ */
 int board_tpm_uses_i2c(void);
+/**
+ * Return the state of the BOARD_SLAVE_CONFIG_SPI board strap option.
+ *
+ * @return 0 if option is not set, !=0 if option set.
+ */
 int board_tpm_uses_spi(void);
+/**
+ * Return the state of the BOARD_CLOSED_SOURCE_SET1 board strap option.
+ *
+ * @return 0 if option is not set, !=0 if option set.
+ */
+int board_uses_closed_source_set1(void);
 int board_id_is_mismatched(void);
 /* Allow for deep sleep to be enabled on AP shutdown */
 int board_deep_sleep_allowed(void);

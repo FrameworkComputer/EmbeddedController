@@ -474,6 +474,8 @@ int ccd_reset_config(unsigned int flags)
 		for (i = 0; i < CCD_CAP_COUNT; i++)
 			raw_set_cap(i, CCD_CAP_STATE_ALWAYS);
 
+		raw_set_flag(CCD_FLAG_FACTORY_MODE_ENABLED, 1);
+
 		/* Force WP disabled at boot */
 		raw_set_flag(CCD_FLAG_OVERRIDE_WP_AT_BOOT, 1);
 		raw_set_flag(CCD_FLAG_OVERRIDE_WP_STATE_ENABLED, 0);
@@ -677,6 +679,11 @@ void ccd_disable(void)
 	CPRINTS("CCD disabled");
 	force_disabled = 1;
 	ccd_set_state(CCD_STATE_LOCKED);
+}
+
+int ccd_get_factory_mode(void)
+{
+	return ccd_get_flag(CCD_FLAG_FACTORY_MODE_ENABLED);
 }
 
 /******************************************************************************/
@@ -1510,6 +1517,13 @@ static enum vendor_cmd_rc ccd_disable_factory_mode(enum vendor_cmd_cc code,
 		 * b/73075443.
 		 */
 		set_wp_follow_ccd_config();
+
+		/*
+		 * Use raw_set_flag() because the factory mode flag is internal
+		 */
+		mutex_lock(&ccd_config_mutex);
+		raw_set_flag(CCD_FLAG_FACTORY_MODE_ENABLED, 0);
+		mutex_unlock(&ccd_config_mutex);
 
 		*response_size = 0;
 		return VENDOR_RC_SUCCESS;

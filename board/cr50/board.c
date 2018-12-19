@@ -5,6 +5,7 @@
 #include "board_id.h"
 #include "ccd_config.h"
 #include "clock.h"
+#include "closed_source_set1.h"
 #include "common.h"
 #include "console.h"
 #include "dcrypto/dcrypto.h"
@@ -155,6 +156,11 @@ int board_tpm_uses_i2c(void)
 int board_tpm_uses_spi(void)
 {
 	return !!(board_properties & BOARD_SLAVE_CONFIG_SPI);
+}
+
+int board_uses_closed_source_set1(void)
+{
+	return !!(board_properties & BOARD_CLOSED_SOURCE_SET1);
 }
 
 /* Get header address of the backup RW copy. */
@@ -597,6 +603,9 @@ static void configure_board_specific_gpios(void)
 		/* Enable powerdown exit on DIOM0 */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM0, 1);
 	}
+
+	if (board_uses_closed_source_set1())
+		closed_source_set1_configure_gpios();
 }
 
 void decrement_retry_counter(void)
@@ -768,6 +777,9 @@ static void board_ccd_config_changed(void)
 	GREG32(PMU, LONG_LIFE_SCRATCH1) |= (ccd_get_state() << BOARD_CCD_SHIFT)
 			& BOARD_CCD_STATE;
 	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
+
+	if (board_uses_closed_source_set1())
+		closed_source_set1_update_factory_mode();
 
 	/* Update CCD state */
 	ccd_update_state();

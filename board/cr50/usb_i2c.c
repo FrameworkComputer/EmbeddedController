@@ -20,6 +20,12 @@
 int usb_i2c_board_is_enabled(void)
 {
 	/*
+	 * Closed source set1 board options use the INA pins as GPIOs
+	 */
+	if (board_uses_closed_source_set1())
+		return 0;
+
+	/*
 	 * Note that this signal requires an external pullup, because this is
 	 * one of the real open drain pins; we cannot pull it up or drive it
 	 * high.  On test boards without the pullup, this will mis-detect as
@@ -79,6 +85,12 @@ void usb_i2c_board_disable(void)
 
 int usb_i2c_board_enable(void)
 {
+	/*
+	 * Closed source set1 board options use the INA pins as GPIOs
+	 */
+	if (board_uses_closed_source_set1())
+		return EC_SUCCESS;
+
 	if (servo_is_connected()) {
 		CPRINTS("Servo attached; cannot enable I2C");
 		usb_i2c_board_disable();

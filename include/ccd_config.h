@@ -39,6 +39,11 @@ enum ccd_flag {
 	 */
 	CCD_FLAG_PASSWORD_SET_WHEN_UNLOCKED = (1 << 1),
 
+	/*
+	 * Factory mode state
+	 */
+	CCD_FLAG_FACTORY_MODE_ENABLED = (1 << 2),
+
 	/* (flags in the middle are unused) */
 
 	/* Flags that can be set via ccd_set_flags(); fill from top down */
@@ -278,6 +283,13 @@ enum ccd_state ccd_get_state(void);
  * until reboot.
  */
 void ccd_disable(void);
+
+/**
+ * Get the factory mode state.
+ *
+ * @return 0 if factory mode is disabled, !=0 if factory mode is enabled.
+ */
+int ccd_get_factory_mode(void);
 
 /* Flags for ccd_reset_config() */
 enum ccd_reset_config_flags {

@@ -102,6 +102,10 @@ GPIO(STRAP_A1,        PIN(1, 13), GPIO_INPUT)
 GPIO(STRAP_B0,        PIN(1, 14), GPIO_INPUT)
 GPIO(STRAP_B1,        PIN(1, 15), GPIO_INPUT)
 
+/*
+ * If you change the names of EN_PP3300_INA_L, I2C_SCL_INA, or I2C_SDA_INA,
+ * you also need to update the usage in closed_source_set1.c
+ */
 /* Control the load switch powering the INA 3.3V rail */
 GPIO(EN_PP3300_INA_L, PIN(0, 11), GPIO_ODR_HIGH)
 /* GPIOs used for I2CM pins for INAs */
@@ -143,6 +147,10 @@ PINMUX(GPIO(INT_AP_L),        A5, DIO_INPUT)	/* DIOB7 is p_digitial_od */
                                                 /* We can't pull it up */
 PINMUX(GPIO(EC_FLASH_SELECT), B2, DIO_INPUT)
 PINMUX(GPIO(AP_FLASH_SELECT), B3, DIO_INPUT)
+/*
+ * Update closed_source_set1.c if pinmux for EN_PP3300_INA_L is changed or
+ * removed.
+ */
 PINMUX(GPIO(EN_PP3300_INA_L), B7, DIO_INPUT)
 /*
  * To allow the EC to drive the signal we set sys_rst_l_out as an input here and
@@ -157,6 +165,10 @@ PINMUX(GPIO(SYS_RST_L_OUT),   M0, DIO_INPUT)
  */
 PINMUX(GPIO(CCD_MODE_L),      M1, DIO_INPUT | DIO_OUTPUT)
 PINMUX(GPIO(BATT_PRES_L),     M2, 0)
+/*
+ * Update closed_source_set1.c if pinmux for I2C_SCL_INA or I2C_SDA_INA is
+ * changed or removed.
+ */
 PINMUX(GPIO(I2C_SCL_INA),     B0, DIO_INPUT)
 PINMUX(GPIO(I2C_SDA_INA),     B1, DIO_INPUT)
 /* UARTs */
