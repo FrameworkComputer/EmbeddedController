@@ -93,5 +93,8 @@ ALTERNATE(PIN_MASK(D, 0x03), 0, MODULE_I2C, 0)                             /* I2
 ALTERNATE(PIN_MASK(3, 0x48), 0, MODULE_I2C, 0)                             /* I2C5 */
 ALTERNATE(PIN_MASK(B, 0x0C), 0, MODULE_I2C, 0)                             /* I2C7 */
 
+/* UART */
+ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)                            /* UART from EC to Servo */
+
 /* PWM */
 ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)                             /* PWM3 */
