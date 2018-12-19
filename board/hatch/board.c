@@ -9,6 +9,7 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "lid_switch.h"
+#include "power.h"
 #include "power_button.h"
 #include "spi.h"
 #include "switch.h"

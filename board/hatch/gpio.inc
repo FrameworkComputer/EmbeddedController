@@ -12,12 +12,31 @@
 GPIO_INT(LID_OPEN,             PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)
 GPIO_INT(WP_L,                 PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)              /* EC_WP_ODL */
 GPIO_INT(POWER_BUTTON_L,       PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)        /* MECH_PWR_BTN_ODL */
+GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)
 
+
+/* Power sequencing interrupts */
+GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SIGNALS
+GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(SLP_S4_L,             PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
+#endif
+GPIO_INT(PG_EC_RSMRST_L,       PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
 
 GPIO(SYS_RESET_L,              PIN(0, 2), GPIO_ODR_HIGH)        /* SYS_RST_ODL */
 GPIO(ENTERING_RW,              PIN(E, 3), GPIO_OUT_LOW)         /* EC_ENTERING_RW */
 GPIO(PCH_WAKE_L,               PIN(7, 4), GPIO_ODR_HIGH)        /* EC_PCH_WAKE_ODL */
 GPIO(PCH_PWRBTN_L,             PIN(C, 1), GPIO_ODR_HIGH)        /* EC_PCH_PWR_BTN_ODL */
+
+/* Power Sequencing Signals */
+GPIO(EN_PP5000_A,              PIN(7, 3), GPIO_OUT_LOW)
+GPIO(EN_A_RAILS,               PIN(A, 3), GPIO_OUT_LOW)
+GPIO(EC_PCH_RSMRST_L,          PIN(A, 6), GPIO_OUT_LOW)
+GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)
+GPIO(PP5000_A_PG_OD,           PIN(D, 7), GPIO_INPUT)
+GPIO(EC_PCH_SYS_PWROK,         PIN(3, 7), GPIO_OUT_LOW)
+GPIO(CPU_C10_GATE_L,           PIN(6, 7), GPIO_INPUT)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,                 PIN(B, 5), GPIO_INPUT |
