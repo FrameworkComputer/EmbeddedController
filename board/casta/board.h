@@ -36,6 +36,9 @@
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HOST_EVENT
 
+/* Battery W/A */
+#define CONFIG_I2C_XFER_BOARD_CALLBACK
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -55,8 +58,8 @@ enum temp_sensor_id {
 };
 
 /* List of possible batteries */
-/* TODO(b/119871861): Casta: battery datasheets and specs */
 enum battery_type {
+	BATTERY_SDI,
 	BATTERY_TYPE_COUNT,
 };
 
