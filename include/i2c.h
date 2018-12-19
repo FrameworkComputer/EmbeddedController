@@ -392,4 +392,9 @@ void i2c_start_xfer_notify(int port, int slave_addr);
  */
 void i2c_end_xfer_notify(int port, int slave_addr);
 
+/**
+ * Function to protect I2C port/tunnel. This is invoked either when through
+ * host command or when sys_jump is disabld.
+ */
+void i2c_passthru_protect_port(uint32_t port);
 #endif  /* __CROS_EC_I2C_H */

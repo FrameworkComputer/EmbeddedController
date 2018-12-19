@@ -37,7 +37,7 @@ static struct mutex port_mutex[I2C_CONTROLLER_COUNT];
 /* A bitmap of the controllers which are currently servicing a request. */
 static uint32_t i2c_port_active_list;
 BUILD_ASSERT(I2C_CONTROLLER_COUNT < 32);
-static uint8_t port_protected[I2C_CONTROLLER_COUNT];
+static uint8_t port_protected[I2C_PORT_COUNT];
 
 /**
  * Non-deterministically test the lock status of the port.  If another task
@@ -761,6 +761,14 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_I2C_PASSTHRU, i2c_command_passthru, EC_VER_MASK(0));
 
+void i2c_passthru_protect_port(uint32_t port)
+{
+	if (port < I2C_PORT_COUNT)
+		port_protected[port] = 1;
+	else
+		PTHRUPRINTF("Invalid I2C port %d to be protected\n", port);
+}
+
 static int i2c_command_passthru_protect(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_i2c_passthru_protect *params = args->params;
@@ -790,7 +798,7 @@ static int i2c_command_passthru_protect(struct host_cmd_handler_args *args)
 		resp->status = port_protected[params->port];
 		args->response_size = sizeof(*resp);
 	} else if (params->subcmd == EC_CMD_I2C_PASSTHRU_PROTECT_ENABLE) {
-		port_protected[params->port] = 1;
+		i2c_passthru_protect_port(params->port);
 	} else {
 		return EC_RES_INVALID_COMMAND;
 	}
