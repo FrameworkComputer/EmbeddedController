@@ -108,6 +108,8 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, baseboard_chipset_startup,
 static void baseboard_chipset_resume(void)
 {
 	/* TODD(b/122266850): Need to fill out this hook */
+	/* Enable keyboard backlight */
+	gpio_set_level(GPIO_EC_KB_BL_EN, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
 
@@ -115,6 +117,8 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
 static void baseboard_chipset_suspend(void)
 {
 	/* TODD(b/122266850): Need to fill out this hook */
+	/* Disable keyboard backlight */
+	gpio_set_level(GPIO_EC_KB_BL_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, baseboard_chipset_suspend,
 	     HOOK_PRIO_DEFAULT);

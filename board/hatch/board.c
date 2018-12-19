@@ -12,6 +12,8 @@
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
@@ -70,6 +72,13 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 const struct spi_device_t spi_devices[] = {
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
+
+/******************************************************************************/
+/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_KBLIGHT]   = { .channel = 3, .flags = 0, .freq = 10000 }
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 void board_overcurrent_event(int port, int is_overcurrented)
 {

@@ -26,6 +26,9 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
+/* Keyboard features */
+#define CONFIG_PWM_KBLIGHT
+
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
@@ -50,6 +53,7 @@ enum adc_channel {
 };
 
 enum pwm_channel {
+	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT
 };
 
