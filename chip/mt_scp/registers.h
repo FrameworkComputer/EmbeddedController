@@ -129,14 +129,42 @@
 #define   AUTO_DDREN			(1 << 18)
 
 /* Memory remap control */
+/*
+ * EXT_ADDR3[29:24] remap register for addr msb 31~28 equal to 0x7
+ * EXT_ADDR2[21:16] remap register for addr msb 31~28 equal to 0x6
+ * EXT_ADDR1[13:8]  remap register for addr msb 31~28 equal to 0x3
+ * EXT_ADDR0[5:0]   remap register for addr msb 31~28 equal to 0x2
+ */
 #define SCP_REMAP_CFG1			REG32(SCP_CFG_BASE + 0x120)
+/*
+ * EXT_ADDR7[29:24] remap register for addr msb 31~28 equal to 0xb
+ * EXT_ADDR6[21:16] remap register for addr msb 31~28 equal to 0xa
+ * EXT_ADDR5[13:8]  remap register for addr msb 31~28 equal to 0x9
+ * EXT_ADDR4[5:0]   remap register for addr msb 31~28 equal to 0x8
+ */
 #define SCP_REMAP_CFG2			REG32(SCP_CFG_BASE + 0x124)
+/*
+ * AUD_ADDR[31:28]  remap register for addr msb 31~28 equal to 0xd
+ * EXT_ADDR10[21:16]remap register for addr msb 31~28 equal to 0xf
+ * EXT_ADDR9[13:8]  remap register for addr msb 31~28 equal to 0xe
+ * EXT_ADDR8[5:0]   remap register for addr msb 31~28 equal to 0xc
+ */
 #define SCP_REMAP_CFG3			REG32(SCP_CFG_BASE + 0x128)
+
+#define SCP_REMAP_ADDR_SHIFT		28
+#define SCP_REMAP_ADDR_LSB_MASK		((1 << SCP_REMAP_ADDR_SHIFT) - 1)
+#define SCP_REMAP_ADDR_MSB_MASK		((~0) << SCP_REMAP_ADDR_SHIFT)
+
 #define SCP_L1_REMAP_CFG0		REG32(SCP_CFG_BASE + 0x130)
 #define SCP_L1_REMAP_CFG1		REG32(SCP_CFG_BASE + 0x130)
 #define SCP_L1_REMAP_CFG2		REG32(SCP_CFG_BASE + 0x134)
 #define SCP_L1_REMAP_CFG3		REG32(SCP_CFG_BASE + 0x138)
 #define SCP_L1_REMAP_OTHER		REG32(SCP_CFG_BASE + 0x13C)
+
+#define SCP_L1_EXT_ADDR_SHIFT		20
+#define SCP_L1_EXT_ADDR_OTHER_SHIFT	28
+#define SCP_L1_EXT_ADDR_OTHER_LSB_MASK	((1 << SCP_REMAP_ADDR_SHIFT) - 1)
+#define SCP_L1_EXT_ADDR_OTHER_MSB_MASK	((~0) << SCP_REMAP_ADDR_SHIFT)
 
 /* INTC control */
 #define SCP_INTC_BASE			(SCP_CFG_BASE + 0x2000)

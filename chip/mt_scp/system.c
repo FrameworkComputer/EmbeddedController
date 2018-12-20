@@ -10,6 +10,7 @@
 #include "flash.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "memmap.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -182,28 +183,6 @@ static void scp_enable_clock(void)
 	/* Enable default clock gate */
 	SCP_CLK_GATE |= CG_DMA_CH3 | CG_DMA_CH2 | CG_DMA_CH1 | CG_DMA_CH0 |
 			CG_I2C_M | CG_MAD_M;
-}
-
-static void scp_memmap_init(void)
-{
-	/*
-	 * SCP addr    :  AP addr
-	 * 0xA0000000     0x10000000
-	 * 0xB0000000     0x20000000
-	 * 0xC0000000     0x30000000
-	 * 0x20000000     0x40000000
-	 * 0x30000000     0x50000000
-	 * 0x60000000     0x60000000
-	 * 0x70000000     0x70000000
-	 * 0x80000000     0x80000000
-	 * 0xF0000000     0x90000000
-	 *
-	 * Default config, LARGE DRAM not active:
-	 *   REG32(0xA0001F00) & 0x2000 != 0
-	 */
-	SCP_REMAP_CFG1 = 0x07060504;
-	SCP_REMAP_CFG2 = 0x02010008;
-	SCP_REMAP_CFG3 = 0x10000A03;
 }
 
 void system_pre_init(void)
