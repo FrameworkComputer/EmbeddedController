@@ -236,7 +236,7 @@ static int cc_fanset(int argc, char **argv)
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	rpm = strtoi(argv[1], &e, 0);
+	rpm = strtoi(argv[2], &e, 0);
 	if (*e == '%') {		/* Wait, that's a percentage */
 		ccprintf("Fan rpm given as %d%%\n", rpm);
 		if (rpm < 0)

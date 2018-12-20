@@ -57,6 +57,7 @@ GPIO(LED_2_L,                  PIN(C, 3), GPIO_OUT_HIGH)        /* White (hatch)
 GPIO(LED_3_L,                  PIN(C, 2), GPIO_OUT_HIGH)
 GPIO(LED_4_L,                  PIN(6, 0), GPIO_OUT_HIGH)
 GPIO(EC_KB_BL_EN,              PIN(8, 6), GPIO_OUT_LOW)         /* Keyboard backlight */
+GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
 
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
@@ -97,4 +98,9 @@ ALTERNATE(PIN_MASK(B, 0x0C), 0, MODULE_I2C, 0)                             /* I2
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)                            /* UART from EC to Servo */
 
 /* PWM */
-ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)                             /* PWM3 */
+ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)                             /* PWM3 - Keyboard backlight */
+ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)                             /* PWM5 - FAN */
+ALTERNATE(PIN_MASK(4, 0x01), 0, MODULE_PWM, 0)                             /* TA1 - Fan Tachometer */
+
+/* ADC */
+ALTERNATE(PIN_MASK(4, 0x30), 0, MODULE_ADC, 0)                             /* ADC0-1 */

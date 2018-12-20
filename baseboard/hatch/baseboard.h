@@ -18,6 +18,7 @@
 #define CONFIG_I2C
 
 /* EC Defines */
+#define CONFIG_ADC
 #define CONFIG_PWM
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VSTORE
