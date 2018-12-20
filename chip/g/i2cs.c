@@ -99,11 +99,10 @@ static uint16_t last_write_pointer;
 static uint16_t last_read_pointer;
 
 /*
- * Keep track of i2c interrupts and the number of times the "hosed slave"
- * condition was encountered.
+ * Keep track number of times the "hosed slave" condition was encountered.
  */
-static uint16_t i2cs_read_irq_count;
 static uint16_t i2cs_read_recovery_count;
+static uint16_t i2cs_sda_low_count;
 
 static void i2cs_init(void)
 {
@@ -127,7 +126,7 @@ static void i2cs_init(void)
 	memset(i2cs_buffer, 0, sizeof(i2cs_buffer));
 	last_write_pointer = 0;
 	last_read_pointer = 0;
-	i2cs_read_irq_count = 0;
+	i2cs_sda_low_count = 0;
 
 	GWRITE_FIELD(PMU, RST0, DI2CS0, 0);
 
@@ -146,54 +145,116 @@ static void i2cs_init(void)
 static void poll_read_state(void);
 DECLARE_DEFERRED(poll_read_state);
 
-/* Poll SDA line to detect the "hosed" condition. */
-#define READ_STATUS_CHECK_INTERVAL (500 * MSEC)
+/* Interval to poll SDA line when detecting the "hosed" condition. This value
+ * must be larger then the maximum i2c transaction time. They are normally less
+ * than 1 ms. The value multiplied by the threshold must also be larger than
+ * the ap_is_on debounce time, which is 2 seconds.
+ */
+#define READ_STATUS_CHECK_INTERVAL (700 * MSEC)
+
+/* Number of times SDA must be low between i2c writes before the i2cs controller
+ * is restarted.
+ *
+ * Three was chosen because we can have two i2c transactions in between write
+ * complete interrupts.
+ *
+ * Consider the following timeline:
+ * 1) START <i2c_addr|W> <reg> STOP
+ * 2) Write complete handler runs (i2cs_sda_low_count = 0)
+ * 3) START <i2c_addr|R> <data>+ STOP (i2cs_sda_low_count++)
+ * 4) START <i2c_addr|W> <reg> <data>+ STOP (i2cs_sda_low_count++)
+ * 5) Write complete handler runs
+ *
+ * If the poller happened to run during time 3 and time 4 while SDA was low,
+ * i2cs_sda_low_count would = 2. This is not considered an error case. If we
+ * were to see a third low value before time 5, we can assume the bus is stuck,
+ * or the master performed multiple reads between writes (which is not
+ * expected).
+ *
+ * If we were to enable the read complete interrupt and use it to clear
+ * i2cs_sda_low_count we could get away with a threshold of two. This would also
+ * support multiple reads after a write.
+ *
+ * We could in theory use the FIFO read/write pointers to determine if the bus
+ * is stuck. This was not chosen because we would need to take the following
+ * into account:
+ * 1) The poller could run at time 3 between the final ACK bit being asserted
+ *    and the stop condition happening. This would not increment any pointers.
+ * 2) The poller could run at time 4 between the start condition and the first
+ *    data byte being ACKed. The write pointer can only address full bytes,
+ *    unlike the read pointer.
+ * These two edge cases would force us to poll at least three times.
+ */
+#define READ_STATUS_CHECK_THRESHOLD 3
 
 /*
- * Check for receive problems, if found - reinitialize the i2c slave
- * interface.
+ * Restart the i2cs controller if the controller gets stuck transmitting a 0 on
+ * SDA.
+ *
+ * This can happen anytime the i2cs controller has control of SDA and the master
+ * happens to fail and stops clocking.
+ *
+ * For example when the i2cs controller is:
+ * 1) Transmitting an ACK for the slave address byte.
+ * 2) Transmitting an ACK for a write transaction.
+ * 3) Transmitting byte data for a read transaction.
+ *
+ * The reason this is problematic is because the master can't recover the bus
+ * by issuing a new transaction. A start condition is defined as the master
+ * pulling SDA low while SCL is high. The master can only initiate the start
+ * condition when the bus is free (i.e., SDA is high), otherwise the master
+ * thinks that it lost arbitration.
+ *
+ * We don't have to deal with the scenario where the controller gets stuck
+ * transmitting a 1 on SDA since the master can recover the bus by issuing a
+ * normal transaction. The master will at minimum clock 9 times on any
+ * transaction. This is enough for the slave to complete its current operation
+ * and NACK.
  */
 static void poll_read_state(void)
 {
-	/*
-	 * Make sure there is no accidental match between
-	 * last_i2cs_read_irq_count and i2cs_read_irq_count if the first run
-	 * of this function happens when SDA is low.
-	 */
-	static uint16_t last_i2cs_read_irq_count = ~0;
-
-	if (ap_is_on()) {
-		if (!gpio_get_level(GPIO_I2CS_SDA)) {
-			if (last_i2cs_read_irq_count == i2cs_read_irq_count) {
-				/*
-				 * SDA line is low and number of RX interrupts
-				 * has not changed since last poll when it was
-				 * low, it must be hosed. Reinitialize the i2c
-				 * interface (which will also restart this
-				 * polling function).
-				 */
-				last_i2cs_read_irq_count = ~0;
-				i2cs_read_recovery_count++;
-				i2cs_register_write_complete_handler
-					(write_complete_handler_);
-
-#ifdef CONFIG_TPM_LOGGING
-				tpm_log_event(TPM_I2C_RESET,
-					i2cs_read_recovery_count);
-#endif
-				return;
-			}
-			last_i2cs_read_irq_count = i2cs_read_irq_count;
-		}
+	if (!ap_is_on() || gpio_get_level(GPIO_I2CS_SDA)) {
+		/*
+		 * When the AP is off, the SDA line might drop low since the
+		 * pull ups might not be powered.
+		 *
+		 * If the AP is on, the bus is either idle, the master has
+		 * stopped clocking while SDA is high, or we have polled in the
+		 * middle of a transaction where SDA happens to be high.
+		 */
+		i2cs_sda_low_count = 0;
 	} else {
 		/*
-		 * AP is off, let's make sure that in case this function
-		 * happens to run right after AP wakes up and i2c is active,
-		 * there is no false positive 'hosed' condition detection.
+		 * The master has stopped clocking while the slave is holding
+		 * SDA low, or we have polled in the middle of a transaction
+		 * where SDA happens to be low.
 		 */
-		if (last_i2cs_read_irq_count == i2cs_read_irq_count)
-			last_i2cs_read_irq_count -= 1;
+		i2cs_sda_low_count++;
+
+		/*
+		 * SDA line has been stuck low without any write transactions
+		 * occurring. We will assume the controller is stuck.
+		 * Reinitialize the i2c interface (which will also restart this
+		 * polling function).
+		 */
+		if (i2cs_sda_low_count == READ_STATUS_CHECK_THRESHOLD) {
+			i2cs_sda_low_count = 0;
+			i2cs_read_recovery_count++;
+			CPRINTF("I2CS bus is stuck");
+			/*
+			 * i2cs_register_write_complete_handler will call
+			 * hook_call_deferred.
+			 */
+			i2cs_register_write_complete_handler(
+				write_complete_handler_);
+
+#ifdef CONFIG_TPM_LOGGING
+			tpm_log_event(TPM_I2C_RESET, i2cs_read_recovery_count);
+#endif
+			return;
+		}
 	}
+
 	hook_call_deferred(&poll_read_state_data, READ_STATUS_CHECK_INTERVAL);
 }
 
@@ -250,10 +311,10 @@ static void _i2cs_write_complete_int(void)
 
 		/* Invoke the callback to process the message. */
 		write_complete_handler_(i2cs_buffer, bytes_processed);
-
-		if (bytes_processed == 1)
-			i2cs_read_irq_count++;
 	}
+
+	/* The transaction is complete so the slave has released SDA. */
+	i2cs_sda_low_count = 0;
 
 	/*
 	 * Could be the end of a TPM trasaction. Set sleep to be reenabled in 1
