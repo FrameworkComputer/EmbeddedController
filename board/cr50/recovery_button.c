@@ -9,6 +9,8 @@
 #include "console.h"
 #include "extension.h"
 #include "registers.h"
+#include "timer.h"
+#include "u2f_impl.h"
 #include "util.h"
 
 /*
@@ -20,9 +22,50 @@
  */
 static uint8_t rec_btn_force_pressed;
 
+/*
+ * Timestamp of the most recent recovery button press
+ */
+static timestamp_t last_press;
+
+/* How long do we latch the last recovery button press */
+#define RECOVERY_BUTTON_TIMEOUT (10 * SECOND)
+
+void recovery_button_record(void)
+{
+	last_press = get_time();
+}
+
+/*
+ * Read the recovery button latched state and unconditionally clear the state.
+ *
+ * Returns 1 iff the recovery button key combination was recorded within the
+ * last RECOVERY_BUTTON_TIMEOUT microseconds.  Note that deep sleep also
+ * clears the recovery button state.
+ */
+static int pop_recovery_button_state(void)
+{
+	int latched_state = 0;
+
+	if (last_press.val &&
+		((get_time().val - last_press.val) < RECOVERY_BUTTON_TIMEOUT))
+		latched_state = 1;
+
+	last_press.val = 0;
+
+	/* Latched recovery button state */
+	return latched_state;
+}
+
 static uint8_t is_rec_btn_pressed(void)
 {
 	if (rec_btn_force_pressed)
+		return 1;
+
+	/*
+	 * Platform has a defined recovery button combination and it
+	 * the combination was pressed within a timeout
+	 */
+	if (board_uses_closed_source_set1() && pop_recovery_button_state())
 		return 1;
 
 	/*
@@ -67,6 +110,8 @@ static enum vendor_cmd_rc vc_get_rec_btn(enum vendor_cmd_cc code,
 {
 	*(uint8_t *)buf = is_rec_btn_pressed();
 	*response_size = 1;
+
+	ccprints("%s: state=%d", __func__, *(uint8_t *)buf);
 
 	return VENDOR_RC_SUCCESS;
 }
