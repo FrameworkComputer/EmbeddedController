@@ -18,6 +18,13 @@
 #define rstr_fpu_ctx
 #endif
 
+#ifdef CONFIG_TASK_PROFILING
+#define task_start_irq_handler_call "call task_start_irq_handler\n"
+#else
+#define task_start_irq_handler_call
+#endif
+
+
 struct irq_data {
 	void (*routine)(void);
 	int irq;
@@ -47,6 +54,7 @@ struct irq_data {
 		"_irq_"#irq"_handler:\n"				\
 			"pusha\n"					\
 			ASM_LOCK_PREFIX "addl  $1, __in_isr\n"		\
+			task_start_irq_handler_call			\
 			"call "#routine"\n"				\
 			"push $0\n"					\
 			"push $0\n"					\

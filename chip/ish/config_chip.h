@@ -10,7 +10,7 @@
 #include "core/minute-ia/config_core.h"
 
 /* Number of IRQ vectors on the ISH */
-#define CONFIG_IRQ_COUNT	15
+#define CONFIG_IRQ_COUNT	(VEC_TO_IRQ(255) + 1)
 
 /* Use a bigger console output buffer */
 #undef CONFIG_UART_TX_BUF_SIZE

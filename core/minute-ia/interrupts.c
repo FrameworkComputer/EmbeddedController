@@ -94,22 +94,31 @@ void set_interrupt_gate(uint8_t num, isr_handler_t func, uint8_t flags)
 	__idt[num].flags = flags;
 }
 
-void unhandled_vector(void)
+/* This should only be called from an interrupt context */
+uint32_t get_current_interrupt_vector(void)
 {
-	uint32_t vec = 0xff, i;
-	uint32_t ioapic_icr_last = LAPIC_ISR_REG; /* In service register */
+	uint32_t vec, i;
+	/* In service register */
+	uint32_t *ioapic_icr_last = (uint32_t *)LAPIC_ISR_REG;
 
-	/* Scan ISRs */
-	for (i = 7; i >= 0; i--, ioapic_icr_last -= 0x10) {
-
-		asm("movl (%1), %0\n" : "=&r" (vec) : "r" (ioapic_icr_last));
+	/* Scan ISRs from highest priority */
+	for (i = 7; i >= 0; i--, ioapic_icr_last -= 4) {
+		vec = *ioapic_icr_last;
 		if (vec) {
-			vec = (32 * __fls(vec)) + i;
-			break;
+			return (32 * i) + __fls(vec);
 		}
 	}
 
+	CPRINTS("Cannot get vector, not in ISR!");
+	return 0;
+}
+
+/* Should only be called in interrupt context */
+void unhandled_vector(void)
+{
+	uint32_t vec = get_current_interrupt_vector();
 	CPRINTF("Ignoring vector 0x%0x!\n", vec);
+	/* Put the vector number in eax so default_int_handler can use it */
 	asm("" : : "a" (vec));
 }
 

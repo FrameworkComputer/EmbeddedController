@@ -9,6 +9,12 @@
 #include "registers.h"
 #include "task_defs.h"
 
+#ifdef CONFIG_TASK_PROFILING
+#define task_start_irq_handler_call call task_start_irq_handler
+#else
+#define task_start_irq_handler_call
+#endif
+
 .text
 
 .extern current_task
@@ -57,7 +63,7 @@ default_int_handler:
 .endfunc
 
 # Switches from one task to another if ready.
-# __schedule triggeres software interrupt ISH_TS_VECTOR, which is handled by
+# __schedule triggers software interrupt ISH_TS_VECTOR, which is handled by
 # __switchto
 .align 4
 .func __switchto
@@ -71,10 +77,17 @@ __switchto:
 	# triggering ISH_TS_VECTOR
 	#
 	# Push %ecx and %edx into stack to pass them as function parameters
-	# to switch_handler(desched, resched)
-
+	# to switch_handler(desched, resched). After call, we clean up stack
+	# pointer. Note, we do this now before task_start_irq has a chance
+	# to clobber these caller-saved registers.
 	push %ecx
 	push %edx
+
+	# We don't push anything on the stack for start irq since the
+	# parameter is unused.
+	task_start_irq_handler_call
+
+	# Stack is already set up from previous pushes
 	call switch_handler
 	addl $0x8, %esp		# Clean up stack
 

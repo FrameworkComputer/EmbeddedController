@@ -46,8 +46,12 @@ static const char * const task_names[] = {
 
 #ifdef CONFIG_TASK_PROFILING
 static uint64_t task_start_time; /* Time task scheduling started */
-static uint64_t exc_start_time;  /* Time of task->exception transition */
-static uint64_t exc_end_time;    /* Time of exception->task transition */
+/*
+ * We only keep 32-bit values for exception start/end time, to avoid
+ * accounting errors when we service interrupt when the timer wraps around.
+ */
+static uint32_t exc_start_time;  /* Time of task->exception transition */
+static uint32_t exc_end_time;    /* Time of exception->task transition */
 static uint64_t exc_total_time;  /* Total time in exceptions */
 static uint32_t svc_calls;	 /* Number of service calls */
 static uint32_t task_switches;	/* Number of times active task changed */
@@ -160,11 +164,6 @@ inline int in_interrupt_context(void)
 	return !!__in_isr;
 }
 
-static inline int get_interrupt_context(void)
-{
-	return 0;
-}
-
 task_id_t task_get_current(void)
 {
 #ifdef CONFIG_DEBUG_BRINGUP
@@ -192,22 +191,6 @@ int task_start_called(void)
 uint32_t switch_handler(int desched, task_id_t resched)
 {
 	task_ *current, *next;
-#ifdef CONFIG_TASK_PROFILING
-	int exc = get_interrupt_context();
-	uint64_t t;
-#endif
-
-
-#ifdef CONFIG_TASK_PROFILING
-	/*
-	 * SVCall isn't triggered via DECLARE_IRQ(), so it needs to track its
-	 * start time explicitly.
-	 */
-	if (exc == 0xb) {
-		exc_start_time = get_time().val;
-		svc_calls++;
-	}
-#endif
 
 	current = current_task;
 
@@ -234,16 +217,14 @@ uint32_t switch_handler(int desched, task_id_t resched)
 	next = __task_id_to_ptr(__fls(tasks_ready & tasks_enabled));
 
 #ifdef CONFIG_TASK_PROFILING
-	/* Track time in interrupts */
-	t = get_time().val;
-	exc_total_time += (t - exc_start_time);
+	/* Only the first ISR on the (nested IRQ) stack calculates time */
+	if (__in_isr == 1) {
+		/* Track time in interrupts */
+		uint32_t t = get_time().le.lo;
 
-	/*
-	 * Bill the current task for time between the end of the last interrupt
-	 * and the start of this one.
-	 */
-	current->runtime += (exc_start_time - exc_end_time);
-	exc_end_time = t;
+		exc_end_time = t;
+		exc_total_time += (t - exc_start_time);
+	}
 #endif
 
 	/* Nothing to do */
@@ -274,23 +255,37 @@ void __schedule(int desched, int resched)
 }
 
 #ifdef CONFIG_TASK_PROFILING
-void __keep task_start_irq_handler(void *excep_return)
+void __keep task_start_irq_handler(void *unused)
 {
 	/*
 	 * Get time before checking depth, in case this handler is
 	 * pre-empted.
 	 */
-	uint64_t t = get_time().val;
-	int irq = get_interrupt_context() - 16;
+	uint32_t t = get_time().le.lo;
+	uint32_t vector = get_current_interrupt_vector();
+	int irq = VEC_TO_IRQ(vector);
 
 	/*
 	 * Track IRQ distribution.  No need for atomic add, because an IRQ
-	 * can't pre-empt itself.
+	 * can't pre-empt itself. If less than 0, then the vector did not map
+	 * to an IRQ but was for a synchronous exception instead (TS_VECTOR)
 	 */
-	if (irq < ARRAY_SIZE(irq_dist))
+	if (irq > 0 && irq < ARRAY_SIZE(irq_dist))
 		irq_dist[irq]++;
+	else
+		/* Track total number of service calls */
+		atomic_add(&svc_calls, 1);
 
-	exc_start_time = t;
+	/* Only the outer ISR should keep track of the ISR start time */
+	if (__in_isr == 1) {
+		exc_start_time = t;
+
+		/*
+		 * Bill the current task for time between the end of the last
+		 * interrupt and the start of this interrupt (now).
+		 */
+		current_task->runtime += (t - exc_end_time);
+	}
 }
 #endif
 
