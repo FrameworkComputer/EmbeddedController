@@ -39,8 +39,8 @@ GPIO_INT(SPI1_NSS,          PIN(A, 15), GPIO_INT_BOTH,
          spi_event)
 GPIO_INT_RW(SYNC_INT,       PIN(A, 8),  GPIO_INT_RISING | GPIO_PULL_DOWN,
          sync_interrupt)
-GPIO_INT(HALL_INT_L,        PIN(C, 5),  GPIO_INT_FALLING,
-         hall_interrupt)
+GPIO_INT(HALL_INT_L,        PIN(C, 5),  GPIO_INT_BOTH,
+         lid_interrupt)
 GPIO_INT(GAUGE_INT_ODL,     PIN(C, 9),  GPIO_INT_FALLING | GPIO_PULL_UP,
          gauge_interrupt)
 GPIO_INT(POGO_ADC_INT_L,    PIN(A, 6),  GPIO_INT_BOTH | GPIO_ANALOG,

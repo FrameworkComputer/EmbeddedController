@@ -26,6 +26,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -51,11 +52,6 @@
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	schedule_deferred_pd_interrupt(0 /* port */);
-}
-
-static void hall_interrupt(enum gpio_signal signal)
-{
-	/* TODO(b/111378000): Implement hall_interrupt */
 }
 
 static void gauge_interrupt(enum gpio_signal signal)

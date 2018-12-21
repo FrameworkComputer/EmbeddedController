@@ -56,7 +56,6 @@
 /* By default, set hcdebug to off */
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
-#undef CONFIG_LID_SWITCH
 #undef CONFIG_LTO
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_IGNORE_LID
@@ -102,6 +101,7 @@
 /* To be able to indicate the device is in tablet mode. */
 #define CONFIG_TABLET_MODE
 #define CONFIG_TABLET_MODE_SWITCH
+#define GPIO_LID_OPEN GPIO_HALL_INT_L
 
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO 256
