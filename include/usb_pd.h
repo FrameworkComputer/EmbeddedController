@@ -176,7 +176,8 @@ enum pd_rx_errors {
 #define PD_T_BIST_TRANSMIT     (50*MSEC) /* 50ms (used for task_wait arg) */
 #define PD_T_BIST_RECEIVE      (60*MSEC) /* 60ms (max time to process bist) */
 #define PD_T_VCONN_SOURCE_ON  (100*MSEC) /* 100ms */
-#define PD_T_TRY_SRC          (125*MSEC) /* Max time for Try.SRC state */
+#define PD_T_DRP_TRY          (125*MSEC) /* btween 75 and 150ms(monitor Vbus) */
+#define PD_T_TRY_TIMEOUT      (550*MSEC) /* between 550ms and 1100ms */
 #define PD_T_TRY_WAIT         (600*MSEC) /* Max time for TryWait.SNK state */
 #define PD_T_SINK_REQUEST     (100*MSEC) /* Wait 100ms before next request */
 
