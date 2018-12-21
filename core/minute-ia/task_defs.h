@@ -26,7 +26,7 @@ typedef union {
 	};
 } task_;
 
-int __task_start(int *task_stack_ready);
+int __task_start(void);
 void __switchto(void);
 
 /* Only the IF bit is set so tasks start with interrupts enabled. */

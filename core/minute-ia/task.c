@@ -122,19 +122,6 @@ uint8_t task_stacks[0
 
 
 task_ *current_task, *next_task;
-/*
- * Should IRQs chain to switch_handler()?  This should be set if either of the
- * following is true:
- *
- * 1) Task scheduling has started, and task profiling is enabled.  Task
- * profiling does its tracking in switch_handler().
- *
- * 2) An event was set by an interrupt; this could result in a higher-priority
- * task unblocking.  After checking for a task switch, switch_handler() will
- * clear  the flag (unless profiling is also enabled; then the flag remains
- * set).
- */
-static int need_resched_or_profiling;
 
 /*
  * Bitmap of all tasks ready to be run.
@@ -257,12 +244,6 @@ uint32_t switch_handler(int desched, task_id_t resched)
 	 */
 	current->runtime += (exc_start_time - exc_end_time);
 	exc_end_time = t;
-#else
-	/*
-	 * Don't chain here from interrupts until the next time an interrupt
-	 * sets an event.
-	 */
-	need_resched_or_profiling = 0;
 #endif
 
 	/* Nothing to do */
@@ -309,29 +290,9 @@ void __keep task_start_irq_handler(void *excep_return)
 	if (irq < ARRAY_SIZE(irq_dist))
 		irq_dist[irq]++;
 
-	/*
-	 * Continue iff a rescheduling event happened or profiling is active,
-	 * and we are not called from another exception (this must match the
-	 * logic for when we chain to svc_handler() below).
-	 */
-	if (!need_resched_or_profiling || (((uint32_t)excep_return & 0xf) == 1))
-		return;
-
 	exc_start_time = t;
 }
 #endif
-
-void __keep task_resched_if_needed(void *excep_return)
-{
-	/*
-	 * Continue iff a rescheduling event happened or profiling is active,
-	 * and we are not called from another exception.
-	 */
-	if (!need_resched_or_profiling || (((uint32_t)excep_return & 0xf) == 1))
-		return;
-
-	switch_handler(0, 0);
-}
 
 static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 {
@@ -382,10 +343,6 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 	if (in_interrupt_context()) {
 		/* The receiver might run again */
 		atomic_or(&tasks_ready, 1 << tskid);
-#ifndef CONFIG_TASK_PROFILING
-		if (start_called)
-			need_resched_or_profiling = 1;
-#endif
 	} else {
 		if (wait)
 			return __wait_evt(-1, tskid);
@@ -673,5 +630,5 @@ int task_start(void)
 #ifdef CONFIG_TASK_PROFILING
 	task_start_time = exc_end_time = get_time().val;
 #endif
-	return __task_start(&need_resched_or_profiling);
+	return __task_start();
 }
