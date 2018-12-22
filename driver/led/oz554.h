@@ -21,6 +21,10 @@ void oz554_board_init(void) __attribute__((weak));
  */
 int oz554_set_config(int offset, int data);
 
+#ifndef OZ554_POWER_BACKLIGHT_DELAY
+#define OZ554_POWER_BACKLIGHT_DELAY SECOND
+#endif
+
 void backlight_enable_interrupt(enum gpio_signal signal);
 
 #endif

@@ -99,7 +99,21 @@ DECLARE_DEFERRED(backlight_enable_deferred);
 
 void backlight_enable_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&backlight_enable_deferred_data, 30 * MSEC);
+	/*
+	 * 1. Spec says backlight should be turned on after 500ms
+	 *    after eDP signals are ready.
+	 *
+	 * 2. There's no way to get exact eDP ready time, therefore,
+	 *    give one second delay.
+	 *
+	 * power up  __/----------------
+	 * eDP       ______/------------
+	 * backlight _____________/-----
+	 *                 |- t1 -| : >=500 ms
+	 *             |-   t2   -| : 1 second is enough
+	 */
+	hook_call_deferred(&backlight_enable_deferred_data,
+                           OZ554_POWER_BACKLIGHT_DELAY);
 }
 
 int oz554_set_config(int offset, int data)
