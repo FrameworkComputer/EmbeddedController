@@ -131,6 +131,9 @@ void ipi_inform_ap(void)
 {
 	struct scp_run_t scp_run;
 	int ret;
+#ifdef CONFIG_RPMSG_NAME_SERVICE
+	struct rpmsg_ns_msg ns_msg;
+#endif
 
 	scp_run.signaled = 1;
 	strncpy(scp_run.fw_ver, system_get_version(SYSTEM_IMAGE_RW),
@@ -142,6 +145,14 @@ void ipi_inform_ap(void)
 
 	if (ret)
 		ccprintf("Failed to send initialization IPC messages.\n");
+
+#ifdef CONFIG_RPMSG_NAME_SERVICE
+	ns_msg.id = IPI_HOST_COMMAND;
+	strncpy(ns_msg.name, "cros-ec-rpmsg", RPMSG_NAME_SIZE);
+	ret = ipi_send(IPI_NS_SERVICE, &ns_msg, sizeof(ns_msg), 1);
+	if (ret)
+		ccprintf("Failed to announce host command channel.\n");
+#endif
 }
 
 #ifdef HAS_TASK_HOSTCMD
