@@ -54,7 +54,6 @@ TOUCHPAD_FW ?=
 
 # If TEST_FUZZ is set make sure at least one sanitizer is enabled.
 ifeq ($(TEST_FUZZ)_$(TEST_ASAN)$(TEST_MSAN)$(TEST_UBSAN),y_)
-$(warning No sanitizer was specified defaulting to address sanitization.)
 override TEST_ASAN:=y
 endif
 
