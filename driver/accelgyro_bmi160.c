@@ -1336,6 +1336,13 @@ static int init(const struct motion_sensor_t *s)
 		 * BMI160 will poll based on the configure ODR.
 		 */
 		bmi160_sec_access_ctrl(s->port, s->addr, 0);
+
+		/*
+		 * Clean interrupt event that may have occurred while the
+		 * BMI160 was in management mode.
+		 */
+		task_set_event(TASK_ID_MOTIONSENSE,
+				CONFIG_ACCELGYRO_BMI160_INT_EVENT, 0);
 	}
 #endif
 
