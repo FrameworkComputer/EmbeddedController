@@ -394,14 +394,12 @@ static int set_data_rate(const struct motion_sensor_t *s,
 
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
-		if (normalized_rate > MIN(BMI160_ACCEL_MAX_FREQ,
-					CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ) ||
+		if (normalized_rate > BMI160_ACCEL_MAX_FREQ ||
 		    normalized_rate < BMI160_ACCEL_MIN_FREQ)
 			return EC_RES_INVALID_PARAM;
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
-		if (normalized_rate > MIN(BMI160_GYRO_MAX_FREQ,
-					CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ) ||
+		if (normalized_rate > BMI160_GYRO_MAX_FREQ ||
 		    normalized_rate < BMI160_GYRO_MIN_FREQ)
 			return EC_RES_INVALID_PARAM;
 		break;
