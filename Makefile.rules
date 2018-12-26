@@ -275,16 +275,16 @@ run-fuzz-test-targets=$(foreach t,$(fuzz-test-list-host),run-$(t))
 
 .PHONY: $(fuzz-test-targets) $(run-fuzz-test-targets)
 
-$(fuzz-test-targets): host-%:
-	$(call quiet,host_test,BUILD  )
-$(run-fuzz-test-targets): run-%: buildfuzztests
-	$(call quiet,run_fuzz,TEST   )
-
-.PHONY: buildfuzztests
-buildfuzztests: TEST_FLAG=TEST_FUZZ=y TEST_ASAN=$(TEST_ASAN) \
+$(fuzz-test-targets): TEST_FLAG=TEST_FUZZ=y TEST_ASAN=$(TEST_ASAN) \
 	TEST_MSAN=$(TEST_MSAN) TEST_UBSAN=$(TEST_UBSAN) \
 	CROSS_COMPILE=$(shell echo $(HOSTCC) | grep -v ccache | \
 		sed -e 's/[^-]*$$//')
+$(fuzz-test-targets): host-%:
+	$(call quiet,host_test,BUILD  )
+$(run-fuzz-test-targets): run-%: host-%
+	$(call quiet,run_fuzz,TEST   )
+
+.PHONY: buildfuzztests
 buildfuzztests: $(fuzz-test-targets)
 
 .PHONY: hosttests runtests
