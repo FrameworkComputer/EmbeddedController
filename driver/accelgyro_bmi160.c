@@ -807,7 +807,7 @@ static uint8_t bmi160_buffer[BMI160_FIFO_BUFFER];
  * @bp: current pointer in the buffer, updated when processing the header.
  * @ep: pointer to the end of the valid data in the buffer.
  */
-static int bmi160_decode_header(struct motion_sensor_t *s,
+static int bmi160_decode_header(struct motion_sensor_t *accel,
 		enum fifo_header hdr, uint32_t last_ts,
 		uint8_t **bp, uint8_t *ep)
 {
@@ -827,20 +827,22 @@ static int bmi160_decode_header(struct motion_sensor_t *s,
 		}
 		for (i = MOTIONSENSE_TYPE_MAG; i >= MOTIONSENSE_TYPE_ACCEL;
 		     i--) {
+			struct motion_sensor_t *s = accel + i;
+
 			if (hdr & (1 << (i + BMI160_FH_PARM_OFFSET))) {
 				struct ec_response_motion_sensor_data vector;
-				int *v = (s + i)->raw_xyz;
+				int *v = s->raw_xyz;
 				vector.flags = 0;
-				normalize(s + i, v, *bp);
+				normalize(s, v, *bp);
 #ifdef CONFIG_ACCEL_SPOOF_MODE
-				if ((s+i)->in_spoof_mode)
-					v = (s+i)->spoof_xyz;
+				if (s->in_spoof_mode)
+					v = s->spoof_xyz;
 #endif  /* defined(CONFIG_ACCEL_SPOOF_MODE) */
 				vector.data[X] = v[X];
 				vector.data[Y] = v[Y];
 				vector.data[Z] = v[Z];
-				vector.sensor_num = i + (s - motion_sensors);
-				motion_sense_fifo_add_data(&vector, s + i, 3,
+				vector.sensor_num = s - motion_sensors;
+				motion_sense_fifo_add_data(&vector, s, 3,
 						last_ts);
 				*bp += (i == MOTIONSENSE_TYPE_MAG ? 8 : 6);
 			}
