@@ -159,7 +159,7 @@ static int config_slv0_read(const struct motion_sensor_t *s, uint8_t addr,
 	int ret;
 
 	ret = st_raw_write8(s->port, s->addr, LSM6DSM_SLV0_ADD_ADDR,
-			(addr << LSM6DSM_SLV0_ADDR_SHFT) | LSM6DSM_SLV0_RD_BIT);
+			(addr | LSM6DSM_SLV0_RD_BIT));
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x SA error ret: %d\n",
 			__func__, s->name, s->type, ret);
