@@ -46,6 +46,7 @@
 #define LSM6DSM_PP_OD				0x10
 #define LSM6DSM_H_L_ACTIVE			0x20
 #define LSM6DSM_BDU				0x40
+#define LSM6DSM_BOOT				0x80
 
 #define LSM6DSM_CTRL4_ADDR		0x13
 #define LSM6DSM_INT2_ON_INT1_MASK		0x20
