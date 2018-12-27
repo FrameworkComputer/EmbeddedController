@@ -62,7 +62,7 @@ void uart_tx_start(void)
 
 	enum UART_PORT id = ISH_DEBUG_UART; /* UART for ISH */
 
-	if ( REG8(IER(id) & IER_TDRQ) )
+	if (REG8(IER(id)) & IER_TDRQ)
 		return;
 
 	/* Do not allow deep sleep while transmit in progress */
