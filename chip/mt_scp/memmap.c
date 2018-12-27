@@ -7,9 +7,11 @@
 
 #include "common.h"
 #include "compile_time_macros.h"
+#include "console.h"
 #include "hooks.h"
 #include "memmap.h"
 #include "registers.h"
+#include "util.h"
 
 /*
  * Map SCP address (bits 31~28) to AP address
@@ -47,6 +49,118 @@ static const uint8_t addr_map[16] = {
  */
 #define CACHE_TRANS_AP_ADDR 0x50000000
 #define CACHE_TRANS_SCP_CACHE_ADDR 0x10000000
+/* FIXME: This should be configurable */
+#define CACHE_TRANS_AP_SIZE 0x00400000
+
+#ifdef CONFIG_DRAM_BASE
+BUILD_ASSERT(CONFIG_DRAM_BASE_LOAD == CACHE_TRANS_AP_ADDR);
+BUILD_ASSERT(CONFIG_DRAM_BASE == CACHE_TRANS_SCP_CACHE_ADDR);
+#endif
+
+static void cpu_invalidate_icache(void)
+{
+	SCP_CACHE_OP(CACHE_ICACHE) &= ~SCP_CACHE_OP_OP_MASK;
+	SCP_CACHE_OP(CACHE_ICACHE) |=
+		OP_INVALIDATE_ALL_LINES | SCP_CACHE_OP_EN;
+	asm volatile("dsb; isb");
+}
+
+void cpu_invalidate_dcache(void)
+{
+	SCP_CACHE_OP(CACHE_DCACHE) &= ~SCP_CACHE_OP_OP_MASK;
+	SCP_CACHE_OP(CACHE_DCACHE) |=
+		OP_INVALIDATE_ALL_LINES | SCP_CACHE_OP_EN;
+	asm volatile("dsb;");
+}
+
+void cpu_clean_invalidate_dcache(void)
+{
+	SCP_CACHE_OP(CACHE_DCACHE) &= ~SCP_CACHE_OP_OP_MASK;
+	SCP_CACHE_OP(CACHE_DCACHE) |=
+		OP_CACHE_FLUSH_ALL_LINES | SCP_CACHE_OP_EN;
+	SCP_CACHE_OP(CACHE_DCACHE) &= ~SCP_CACHE_OP_OP_MASK;
+	SCP_CACHE_OP(CACHE_DCACHE) |=
+		OP_INVALIDATE_ALL_LINES | SCP_CACHE_OP_EN;
+	asm volatile("dsb;");
+}
+
+static void scp_cache_init(void)
+{
+	int c;
+
+	/* First make sure all caches are disabled, and reset stats. */
+	for (c = 0; c < CACHE_COUNT; c++) {
+		SCP_CACHE_REGION_EN(c) = 0;
+		SCP_CACHE_CON(c) = 0;
+
+		/* Reset statistics. */
+		SCP_CACHE_HCNT0U(c) = 0;
+		SCP_CACHE_HCNT0L(c) = 0;
+		SCP_CACHE_CCNT0U(c) = 0;
+		SCP_CACHE_CCNT0L(c) = 0;
+	}
+
+	/* No "normal" remap. */
+	SCP_L1_REMAP_CFG0 = 0;
+	SCP_L1_REMAP_CFG1 = 0;
+	SCP_L1_REMAP_CFG2 = 0;
+	SCP_L1_REMAP_CFG3 = 0;
+	/*
+	 * Setup OTHER1: Remap register for addr msb 31 to 28 equal to 0x1 and
+	 * not overlap with L1C_EXT_ADDR0 to L1C_EXT_ADDR7.
+	 */
+	SCP_L1_REMAP_OTHER =
+		(CACHE_TRANS_AP_ADDR >> SCP_L1_EXT_ADDR_OTHER_SHIFT) << 8;
+
+	/* Disable sleep protect */
+	SCP_SLP_PROTECT_CFG = SCP_SLP_PROTECT_CFG &
+		~(P_CACHE_SLP_PROT_EN | D_CACHE_SLP_PROT_EN);
+
+	/* Enable region 0 for both I-cache and D-cache. */
+	for (c = 0; c < CACHE_COUNT; c++) {
+		const int region = 0;
+
+		SCP_CACHE_ENTRY(c, region) = CACHE_TRANS_SCP_CACHE_ADDR;
+		SCP_CACHE_END_ENTRY(c, region) =
+			CACHE_TRANS_SCP_CACHE_ADDR + CACHE_TRANS_AP_SIZE;
+		SCP_CACHE_ENTRY(c, region) |= SCP_CACHE_ENTRY_C;
+
+		SCP_CACHE_REGION_EN(c) |= 1 << region;
+
+		/* Set cache to 8 kb, clear other registers */
+		SCP_CACHE_CON(c) = SCP_CACHE_CON_CACHESIZE_8KB |
+			SCP_CACHE_CON_MCEN | SCP_CACHE_CON_CNTEN0;
+	}
+
+	cpu_invalidate_icache();
+	/*
+	 * TODO(b/123205971): It seems like we need to call this twice, else the
+	 * cache keeps stale data.
+	 */
+	cpu_invalidate_dcache();
+	cpu_invalidate_dcache();
+}
+
+static int command_cacheinfo(int argc, char **argv)
+{
+	const char cache_name[] = {'I', 'D'};
+	int c;
+
+	for (c = 0; c < 2; c++) {
+		uint64_t hit = ((uint64_t)SCP_CACHE_HCNT0U(c) << 32) |
+			SCP_CACHE_HCNT0L(c);
+		uint64_t access = ((uint64_t)SCP_CACHE_CCNT0U(c) << 32) |
+			SCP_CACHE_CCNT0L(c);
+
+		ccprintf("%ccache hit count:    %lu\n", cache_name[c], hit);
+		ccprintf("%ccache access count: %lu\n", cache_name[c], access);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_SAFE_CONSOLE_COMMAND(cacheinfo, command_cacheinfo,
+			     NULL,
+			     "Dump cache info");
 
 void scp_memmap_init(void)
 {
@@ -92,6 +206,9 @@ void scp_memmap_init(void)
 		(uint32_t)addr_map[0xf] << 16 |
 		(uint32_t)addr_map[0xe] << 8 |
 		(uint32_t)addr_map[0xc];
+
+	/* Initialize cache remapping. */
+	scp_cache_init();
 }
 
 int memmap_ap_to_scp(uintptr_t ap_addr, uintptr_t *scp_addr)
@@ -125,21 +242,31 @@ int memmap_scp_to_ap(uintptr_t scp_addr, uintptr_t *ap_addr)
 
 int memmap_ap_to_scp_cache(uintptr_t ap_addr, uintptr_t *scp_addr)
 {
+	uintptr_t lsb;
+
 	if ((ap_addr & SCP_L1_EXT_ADDR_OTHER_MSB_MASK) != CACHE_TRANS_AP_ADDR)
 		return EC_ERROR_INVAL;
 
-	*scp_addr = CACHE_TRANS_SCP_CACHE_ADDR |
-		(ap_addr & SCP_L1_EXT_ADDR_OTHER_LSB_MASK);
+	lsb = ap_addr & SCP_L1_EXT_ADDR_OTHER_LSB_MASK;
+	if (lsb > CACHE_TRANS_AP_SIZE)
+		return EC_ERROR_INVAL;
+
+	*scp_addr = CACHE_TRANS_SCP_CACHE_ADDR | lsb;
 	return EC_SUCCESS;
 }
 
 int memmap_scp_cache_to_ap(uintptr_t scp_addr, uintptr_t *ap_addr)
 {
+	uintptr_t lsb;
+
 	if ((scp_addr & SCP_L1_EXT_ADDR_OTHER_MSB_MASK) !=
 			CACHE_TRANS_SCP_CACHE_ADDR)
 		return EC_ERROR_INVAL;
 
-	*ap_addr = CACHE_TRANS_AP_ADDR |
-		(scp_addr & SCP_L1_EXT_ADDR_OTHER_LSB_MASK);
+	lsb = scp_addr & SCP_L1_EXT_ADDR_OTHER_LSB_MASK;
+	if (lsb >= CACHE_TRANS_AP_SIZE)
+		return EC_ERROR_INVAL;
+
+	*ap_addr = CACHE_TRANS_AP_ADDR | lsb;
 	return EC_SUCCESS;
 }

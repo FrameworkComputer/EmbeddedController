@@ -61,7 +61,7 @@ void chip_pre_init(void)
 
 static void scp_enable_tcm(void)
 {
-	/* Enable tightly coupled memory (TCM) */
+	/* Enable L1 cache and tightly coupled memory (TCM) */
 	SCP_CLK_L1_SRAM_PD = 0;
 	SCP_CLK_TCM_TAIL_SRAM_PD = 0;
 	/* SCP CM4 mod */
@@ -193,7 +193,7 @@ void system_pre_init(void)
 	scp_enable_clock();
 	/* Peripheral IRQ */
 	scp_enable_pirq();
-	/* Init dram mapping */
+	/* Init dram mapping (and cache) */
 	scp_memmap_init();
 }
 
