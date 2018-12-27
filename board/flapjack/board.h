@@ -110,6 +110,12 @@
 #define CONFIG_ACCEL_FIFO 256
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
 
+/* Wireless Power Charger Config */
+#ifdef SECTION_IS_RW
+#define CONFIG_WIRELESS_CHARGER_P9221_R7
+#endif
+
+
 /* USB PD config */
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_USB_POWER_DELIVERY
@@ -203,6 +209,7 @@
 /* I2C ports */
 #define I2C_PORT_CHARGER  0
 #define I2C_PORT_TCPC0    0
+#define I2C_PORT_WPC      0
 #define I2C_PORT_BATTERY  1
 #define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
 #define I2C_PORT_ACCEL    1

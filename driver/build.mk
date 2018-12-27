@@ -140,3 +140,6 @@ driver-$(CONFIG_USBC_PPC_NX20P3483)+=ppc/nx20p348x.o
 
 # video converters
 driver-$(CONFIG_MCDP28X0)+=mcdp28x0.o
+
+# Wireless Power Chargers
+driver-$(HAS_TASK_WPC) += wpc/p9221.o

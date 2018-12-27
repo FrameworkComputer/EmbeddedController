@@ -42,8 +42,14 @@ test_mockable const int supplier_priority[] = {
 	[CHARGE_SUPPLIER_BC12_CDP] = 4,
 	[CHARGE_SUPPLIER_BC12_SDP] = 5,
 	[CHARGE_SUPPLIER_OTHER] = 6,
-	[CHARGE_SUPPLIER_VBUS] = 7
+	[CHARGE_SUPPLIER_VBUS] = 7,
 #endif
+#ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
+	[CHARGE_SUPPLIER_WPC_BPP] = 6,
+	[CHARGE_SUPPLIER_WPC_EPP] = 6,
+	[CHARGE_SUPPLIER_WPC_GPP] = 6,
+#endif
+
 };
 BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
 
@@ -333,13 +339,28 @@ static void charge_manager_fill_power_info(int port,
 			r->type = USB_CHG_TYPE_VBUS;
 			break;
 #endif
+#ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
+		/*
+		 * Todo:need kernel add wpc device node in power_supply
+		 * before that use USB_CHG_TYPE_PROPRIETARY to present WPC.
+		 */
+		case CHARGE_SUPPLIER_WPC_BPP:
+		case CHARGE_SUPPLIER_WPC_EPP:
+		case CHARGE_SUPPLIER_WPC_GPP:
+			r->type = USB_CHG_TYPE_PROPRIETARY;
+			break;
+#endif
 #if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 		case CHARGE_SUPPLIER_DEDICATED:
 			r->type = USB_CHG_TYPE_DEDICATED;
 			break;
 #endif
 		default:
+#ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
+			r->type = USB_CHG_TYPE_VBUS;
+#else
 			r->type = USB_CHG_TYPE_OTHER;
+#endif
 		}
 		r->meas.voltage_max = available_charge[sup][port].voltage;
 

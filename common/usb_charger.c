@@ -97,6 +97,15 @@ void usb_charger_reset_charge(int port)
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 				     port, NULL);
 #endif
+#ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
+	charge_manager_update_charge(CHARGE_SUPPLIER_WPC_BPP,
+				     port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_WPC_EPP,
+				     port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_WPC_GPP,
+				     port, NULL);
+#endif
+
 }
 
 static void usb_charger_init(void)

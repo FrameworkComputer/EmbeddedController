@@ -43,9 +43,8 @@ GPIO_INT(LID_OPEN,        PIN(C, 5),  GPIO_INT_BOTH,
          lid_interrupt) /* HALL_INT_L */
 GPIO_INT(GAUGE_INT_ODL,     PIN(C, 9),  GPIO_INT_FALLING | GPIO_PULL_UP,
          gauge_interrupt)
-
-/* Interrupts not implemented yet */
-GPIO(P9221_INT_ODL,         PIN(A, 6), GPIO_INPUT)
+GPIO_INT_RW(P9221_INT_ODL,  PIN(A, 6), GPIO_INT_FALLING,
+        p9221_interrupt)
 
 /* Voltage rails control pins */
 
