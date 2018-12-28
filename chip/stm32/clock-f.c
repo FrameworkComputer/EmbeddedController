@@ -254,6 +254,9 @@ void reset_rtc_alarm(struct rtc_time_reg *rtc)
 	STM32_EXTI_IMR &= ~EXTI_RTC_ALR_EVENT;
 	STM32_EXTI_PR = EXTI_RTC_ALR_EVENT;
 
+	/* Clear the pending RTC alarm IRQ in NVIC */
+	task_clear_pending_irq(STM32_IRQ_RTC_ALARM);
+
 	/* Read current time */
 	rtc_read(rtc);
 
