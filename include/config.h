@@ -3290,6 +3290,9 @@
 /* Enable TCPC to enter low power mode */
 #undef CONFIG_USB_PD_TCPC_LOW_POWER
 
+/* Enable the encoding of msg SOP* in bits 31-28 of 32-bit msg header type */
+#undef CONFIG_USB_PD_DECODE_SOP
+
 /*
  * Track VBUS level in TCPC module. This will only be needed if we're acting
  * as an external TCPC.

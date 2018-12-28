@@ -954,6 +954,20 @@ enum pd_data_msg_type {
 #define PD_HEADER_REV(header)   (((header) >> 6) & 3)
 #define PD_HEADER_DROLE(header) (((header) >> 5) & 1)
 
+/*
+ * The message header is a 16-bit value that's stored in a 32-bit data type.
+ * SOP* is encoded in bits 31 to 28 of the 32-bit data type.
+ * NOTE: This is not part of the PD spec.
+ */
+#define PD_HEADER_GET_SOP(header) (((header) >> 28) & 0xf)
+#define PD_HEADER_SOP(sop) ((sop) << 28)
+#define PD_MSG_SOP         0
+#define PD_MSG_SOPP        1
+#define PD_MSG_SOPPP       2
+#define PD_MSG_SOP_DBGP    3
+#define PD_MSG_SOP_DBGPP   4
+#define PD_MSG_SOP_CBL_RST 5
+
 /* Used for processing pd extended header */
 #define PD_EXT_HEADER_CHUNKED(header)   (((header) >> 15) & 1)
 #define PD_EXT_HEADER_CHUNK_NUM(header) (((header) >> 11) & 0xf)

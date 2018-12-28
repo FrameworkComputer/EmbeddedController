@@ -23,6 +23,10 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+#ifdef CONFIG_USB_PD_DECODE_SOP
+static int vconn_en[CONFIG_USB_PD_PORT_COUNT];
+static int rx_en[CONFIG_USB_PD_PORT_COUNT];
+#endif
 static int tcpc_vbus[CONFIG_USB_PD_PORT_COUNT];
 
 /* Save the selected rp value */
@@ -303,6 +307,22 @@ int tcpci_tcpm_set_vconn(int port, int enable)
 	rv = tcpc_read(port, TCPC_REG_POWER_CTRL, &reg);
 	if (rv)
 		return rv;
+
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	/* save vconn */
+	vconn_en[port] = enable;
+
+	if (rx_en[port]) {
+		int detect_sop_en = TCPC_REG_RX_DETECT_SOP_HRST_MASK;
+
+		if (enable) {
+			detect_sop_en =
+				TCPC_REG_RX_DETECT_SOP_SOPP_SOPPP_HRST_MASK;
+		}
+
+		tcpc_write(port, TCPC_REG_RX_DETECT, detect_sop_en);
+	}
+#endif
 	reg &= ~TCPC_REG_POWER_CTRL_VCONN(1);
 	reg |= TCPC_REG_POWER_CTRL_VCONN(enable);
 	return tcpc_write(port, TCPC_REG_POWER_CTRL, reg);
@@ -322,9 +342,28 @@ static int tcpm_alert_status(int port, int *alert)
 
 int tcpci_tcpm_set_rx_enable(int port, int enable)
 {
+	int detect_sop_en = 0;
+
+	if (enable) {
+		detect_sop_en = TCPC_REG_RX_DETECT_SOP_HRST_MASK;
+
+#ifdef CONFIG_USB_PD_DECODE_SOP
+		/* save rx_on */
+		rx_en[port] = enable;
+
+		/*
+		 * Only the VCONN Source is allowed to communicate
+		 * with the Cable Plugs.
+		 */
+
+		if (vconn_en[port])
+			detect_sop_en =
+				TCPC_REG_RX_DETECT_SOP_SOPP_SOPPP_HRST_MASK;
+#endif
+	}
+
 	/* If enable, then set RX detect for SOP and HRST */
-	return tcpc_write(port, TCPC_REG_RX_DETECT,
-			  enable ? TCPC_REG_RX_DETECT_SOP_HRST_MASK : 0);
+	return tcpc_write(port, TCPC_REG_RX_DETECT, detect_sop_en);
 }
 
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
@@ -337,6 +376,9 @@ int tcpci_tcpm_get_vbus_level(int port)
 int tcpci_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
 {
 	int rv, cnt, reg = TCPC_REG_RX_DATA;
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	int frm;
+#endif
 
 	rv = tcpc_read(port, TCPC_REG_RX_BYTE_CNT, &cnt);
 
@@ -345,9 +387,21 @@ int tcpci_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
 		rv = EC_ERROR_UNKNOWN;
 		goto clear;
 	}
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	rv = tcpc_read(port, TCPC_REG_RX_BUF_FRAME_TYPE, &frm);
+	if (rv != EC_SUCCESS) {
+		rv = EC_ERROR_UNKNOWN;
+		goto clear;
+	}
+#endif
 
 	rv = tcpc_read16(port, TCPC_REG_RX_HDR, (int *)head);
 
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	/* Encode message address in bits 31 to 28 */
+	*head &= 0x0000ffff;
+	*head |= PD_HEADER_SOP(frm & 7);
+#endif
 	cnt = cnt - 3;
 	if (rv == EC_SUCCESS && cnt > 0) {
 		tcpc_read_block(port, reg, (uint8_t *)payload, cnt);

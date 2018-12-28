@@ -604,6 +604,17 @@ static int fusb302_tcpm_set_vconn(int port, int enable)
 	if (enable) {
 		/* set to saved polarity */
 		tcpm_set_polarity(port, state[port].cc_polarity);
+
+#ifdef CONFIG_USB_PD_DECODE_SOP
+		if (state[port].rx_enable) {
+			if (tcpc_read(port, TCPC_REG_CONTROL1, &reg))
+				return EC_ERROR_UNKNOWN;
+
+			reg |= (TCPC_REG_CONTROL1_ENSOP1 |
+				TCPC_REG_CONTROL1_ENSOP2);
+			tcpc_write(port, TCPC_REG_CONTROL1, reg);
+		}
+#endif
 	} else {
 
 		tcpc_read(port, TCPC_REG_SWITCHES0, &reg);
@@ -613,6 +624,17 @@ static int fusb302_tcpm_set_vconn(int port, int enable)
 		reg &= ~TCPC_REG_SWITCHES0_VCONN_CC2;
 
 		tcpc_write(port, TCPC_REG_SWITCHES0, reg);
+
+#ifdef CONFIG_USB_PD_DECODE_SOP
+		if (state[port].rx_enable) {
+			if (tcpc_read(port, TCPC_REG_CONTROL1, &reg))
+				return EC_ERROR_UNKNOWN;
+
+			reg &= ~(TCPC_REG_CONTROL1_ENSOP1 |
+				TCPC_REG_CONTROL1_ENSOP2);
+			tcpc_write(port, TCPC_REG_CONTROL1, reg);
+		}
+#endif
 	}
 
 	return 0;
@@ -684,6 +706,20 @@ static int fusb302_tcpm_set_rx_enable(int port, int enable)
 			tcpc_write(port, TCPC_REG_MASK,
 				   reg & ~TCPC_REG_MASK_BC_LVL);
 	}
+
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	/*
+	 * Only the VCONN Source is allowed to communicate
+	 * with the Cable Plugs.
+	 */
+	if (state[port].vconn_enabled) {
+		if (tcpc_read(port, TCPC_REG_CONTROL1, &reg))
+			return EC_ERROR_UNKNOWN;
+
+		reg |= (TCPC_REG_CONTROL1_ENSOP1 | TCPC_REG_CONTROL1_ENSOP2);
+		tcpc_write(port, TCPC_REG_CONTROL1, reg);
+	}
+#endif
 
 	fusb302_auto_goodcrc_enable(port, enable);
 
@@ -757,6 +793,20 @@ static int fusb302_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
 		else
 			memcpy(payload, buf, len);
 	}
+
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	{
+		int reg;
+
+		if (tcpc_read(port, TCPC_REG_STATUS1, &reg))
+			return EC_ERROR_UNKNOWN;
+
+		if (reg & TCPC_REG_STATUS1_RXSOP1)
+			*head |= PD_HEADER_SOP(PD_MSG_SOPP);
+		else if (reg & TCPC_REG_STATUS1_RXSOP2)
+			*head |= PD_HEADER_SOP(PD_MSG_SOPPP);
+	}
+#endif
 
 	return rv;
 }

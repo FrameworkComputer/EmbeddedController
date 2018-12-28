@@ -202,6 +202,12 @@ enum pd_tx_errors {
 	PD_TX_ERR_COLLISION = -5 /* Collision detected during transmit */
 };
 
+/* PD Header with SOP* encoded in bits 31 - 28 */
+union pd_header_sop {
+	uint16_t pd_header;
+	uint32_t head;
+};
+
 /*
  * If TCPM is not on this chip, and PD low power is defined, then use low
  * power task delay logic.
@@ -626,7 +632,7 @@ int pd_analyze_rx(int port, uint32_t *payload)
 	int bit;
 	char *msg = "---";
 	uint32_t val = 0;
-	uint16_t header;
+	union pd_header_sop phs;
 	uint32_t pcrc, ccrc;
 	int p, cnt;
 	uint32_t eop;
@@ -646,6 +652,11 @@ int pd_analyze_rx(int port, uint32_t *payload)
 	/* Find the Start Of Packet sequence */
 	while (bit > 0) {
 		bit = pd_dequeue_bits(port, bit, 20, &val);
+#ifdef CONFIG_USB_PD_DECODE_SOP
+		if (val == PD_SOP || val == PD_SOP_PRIME ||
+						val == PD_SOP_PRIME_PRIME)
+			break;
+#else
 		if (val == PD_SOP) {
 			break;
 		} else if (val == PD_SOP_PRIME) {
@@ -655,22 +666,50 @@ int pd_analyze_rx(int port, uint32_t *payload)
 			CPRINTF("SOP''\n");
 			return PD_RX_ERR_UNSUPPORTED_SOP;
 		}
+#endif
 	}
 	if (bit < 0) {
+#ifdef CONFIG_USB_PD_DECODE_SOP
+		if (val == PD_SOP)
+			msg = "SOP";
+		else if (val == PD_SOP_PRIME)
+			msg = "SOP'";
+		else if (val == PD_SOP_PRIME_PRIME)
+			msg = "SOP''";
+		else
+			msg = "SOP*";
+#else
 		msg = "SOP";
+#endif
 		goto packet_err;
 	}
 
+	phs.head = 0;
+
 	/* read header */
-	bit = decode_short(port, bit, &header);
+	bit = decode_short(port, bit, &phs.pd_header);
 
 #ifdef CONFIG_COMMON_RUNTIME
 	mutex_lock(&pd_crc_lock);
 #endif
 
 	crc32_init();
-	crc32_hash16(header);
-	cnt = PD_HEADER_CNT(header);
+	crc32_hash16(phs.pd_header);
+	cnt = PD_HEADER_CNT(phs.pd_header);
+
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	/* Encode message address */
+	if (val == PD_SOP) {
+		phs.head |= PD_HEADER_SOP(PD_MSG_SOP);
+	} else if (val == PD_SOP_PRIME) {
+		phs.head |= PD_HEADER_SOP(PD_MSG_SOPP);
+	} else if (val == PD_SOP_PRIME_PRIME) {
+		phs.head |= PD_HEADER_SOP(PD_MSG_SOPPP);
+	} else {
+		msg = "SOP*";
+		goto packet_err;
+	}
+#endif
 
 	/* read payload data */
 	for (p = 0; p < cnt && bit > 0; p++) {
@@ -710,7 +749,7 @@ int pd_analyze_rx(int port, uint32_t *payload)
 		goto packet_err;
 	}
 
-	return header;
+	return phs.head;
 packet_err:
 	if (debug_level >= 2)
 		pd_dump_packet(port, msg);

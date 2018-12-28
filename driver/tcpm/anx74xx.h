@@ -129,7 +129,10 @@
 #define ANX74XX_REG_IRQ_EXT_MASK_1		0x3b
 #define ANX74XX_REG_IRQ_EXT_MASK_2		0x3c
 #define ANX74XX_REG_IRQ_EXT_SOURCE_1	0x3e
+#define ANX74XX_REG_EXT_SOP                     (1 << 6)
+#define ANX74XX_REG_EXT_SOP_PRIME               (1 << 7)
 #define ANX74XX_REG_IRQ_EXT_SOURCE_2	0x4e
+#define ANX74XX_REG_EXT_SOP_PRIME_PRIME         (1 << 0)
 #define ANX74XX_REG_EXT_HARD_RST		(1 << 2)
 #define ANX74XX_REG_IRQ_EXT_SOURCE_3	0x4f
 #define ANX74XX_REG_CLEAR_SOFT_IRQ		(1 << 2)

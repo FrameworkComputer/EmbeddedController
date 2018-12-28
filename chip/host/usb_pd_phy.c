@@ -92,6 +92,22 @@ void pd_test_rx_msg_append_sop(int port)
 	pd_test_rx_msg_append_kcode(port, PD_SYNC2);
 }
 
+void pd_test_rx_msg_append_sop_prime(int port)
+{
+	pd_test_rx_msg_append_kcode(port, PD_SYNC1);
+	pd_test_rx_msg_append_kcode(port, PD_SYNC1);
+	pd_test_rx_msg_append_kcode(port, PD_SYNC3);
+	pd_test_rx_msg_append_kcode(port, PD_SYNC3);
+}
+
+void pd_test_rx_msg_append_sop_prime_prime(int port)
+{
+	pd_test_rx_msg_append_kcode(port, PD_SYNC1);
+	pd_test_rx_msg_append_kcode(port, PD_SYNC3);
+	pd_test_rx_msg_append_kcode(port, PD_SYNC1);
+	pd_test_rx_msg_append_kcode(port, PD_SYNC3);
+}
+
 void pd_test_rx_msg_append_eop(int port)
 {
 	pd_test_rx_msg_append_kcode(port, PD_EOP);
@@ -150,6 +166,24 @@ int pd_test_tx_msg_verify_sop(int port)
 	       pd_test_tx_msg_verify_kcode(port, PD_SYNC1) &&
 	       pd_test_tx_msg_verify_kcode(port, PD_SYNC1) &&
 	       pd_test_tx_msg_verify_kcode(port, PD_SYNC2);
+}
+
+int pd_test_tx_msg_verify_sop_prime(int port)
+{
+	crc32_init();
+	return pd_test_tx_msg_verify_kcode(port, PD_SYNC1) &&
+	       pd_test_tx_msg_verify_kcode(port, PD_SYNC1) &&
+	       pd_test_tx_msg_verify_kcode(port, PD_SYNC3) &&
+	       pd_test_tx_msg_verify_kcode(port, PD_SYNC3);
+}
+
+int pd_test_tx_msg_verify_sop_prime_prime(int port)
+{
+	crc32_init();
+	return pd_test_tx_msg_verify_kcode(port, PD_SYNC1) &&
+	       pd_test_tx_msg_verify_kcode(port, PD_SYNC3) &&
+	       pd_test_tx_msg_verify_kcode(port, PD_SYNC1) &&
+	       pd_test_tx_msg_verify_kcode(port, PD_SYNC3);
 }
 
 int pd_test_tx_msg_verify_eop(int port)
