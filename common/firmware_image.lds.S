@@ -40,6 +40,9 @@ OUTPUT_ARCH(BFD_ARCH)
 MEMORY
 {
     FLASH (rx) : ORIGIN = CONFIG_PROGRAM_MEMORY_BASE, LENGTH = CONFIG_FLASH_SIZE
+#ifdef CONFIG_DRAM_BASE
+    DRAM (rx) : ORIGIN = CONFIG_DRAM_BASE_LOAD, LENGTH = CONFIG_DRAM_SIZE
+#endif
 }
 SECTIONS
 {
@@ -87,4 +90,10 @@ SECTIONS
     .padding : AT(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_SIZE - 1) {
         BYTE(0xff);
     } > FLASH =0xff
+
+#ifdef CONFIG_DRAM_BASE
+    .image.RW.dram : AT(CONFIG_DRAM_BASE_LOAD) {
+        *(.image.RW.dram)
+    } > DRAM =0x00
+#endif
 }

@@ -240,6 +240,11 @@ int memmap_scp_to_ap(uintptr_t scp_addr, uintptr_t *ap_addr)
 	return EC_SUCCESS;
 }
 
+#ifdef CONFIG_DRAM_BASE
+BUILD_ASSERT(CONFIG_DRAM_BASE_LOAD == CACHE_TRANS_AP_ADDR);
+BUILD_ASSERT(CONFIG_DRAM_BASE == CACHE_TRANS_SCP_CACHE_ADDR);
+#endif
+
 int memmap_ap_to_scp_cache(uintptr_t ap_addr, uintptr_t *scp_addr)
 {
 	uintptr_t lsb;

@@ -1344,6 +1344,21 @@
 /* Compile extra debugging and tests for the DMA module */
 #undef CONFIG_DMA_HELP
 
+/*
+ * If the board supports DRAM, base DRAM address for the chip, where we want
+ * to load extra code/data (address from chip address space).
+ */
+#undef CONFIG_DRAM_BASE
+
+/*
+ * If the board supports DRAM, base DRAM address to load the extra code/data
+ * (if loaded by AP, this is the AP physical address space).
+ */
+#undef CONFIG_DRAM_BASE_LOAD
+
+/* DRAM size. */
+#undef CONFIG_DRAM_SIZE
+
 /* Usually, EC capable of sensor speeds up to 250 Hz */
 #define CONFIG_EC_MAX_SENSOR_FREQ_DEFAULT_MILLIHZ 250000
 

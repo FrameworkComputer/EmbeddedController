@@ -64,6 +64,10 @@ MEMORY
 #undef REGION
 #undef REGION_LOAD
 #endif /* CONFIG_MEMORY_REGIONS */
+
+#ifdef CONFIG_DRAM_BASE
+    DRAM (rwx) : ORIGIN = CONFIG_DRAM_BASE, LENGTH = CONFIG_DRAM_SIZE
+#endif
 }
 SECTIONS
 {
@@ -421,6 +425,13 @@ SECTIONS
 #undef REGION
 #undef REGION_LOAD
 #endif /* CONFIG_CHIP_MEMORY_REGIONS */
+
+#ifdef CONFIG_DRAM_BASE
+    .dram : {
+        KEEP(*(SORT(.dram.keep.*)))
+        *(SORT(.dram.*))
+    } > DRAM
+#endif
 
 #if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH))
     /DISCARD/ : {
