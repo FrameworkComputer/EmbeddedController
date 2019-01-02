@@ -173,6 +173,10 @@
 #define STM32_IRQ_I2C3 STM32_IRQ_I2C3_EV
 #endif /* !CHIP_FAMILY_STM32F0 */
 
+#if defined(CHIP_VARIANT_STM32F411) || defined(CHIP_VARIANT_STM32F412)
+#define CHIP_VARIANT_STM32F41X
+#endif
+
 #if defined(CHIP_FAMILY_STM32F4) || defined(CHIP_FAMILY_STM32H7)
 /*
  * STM32F4 introduces a concept of DMA stream to allow
@@ -332,9 +336,9 @@
 #define STM32_TIM10_BASE            0x40010C00 /* STM32L15X only */
 #define STM32_TIM11_BASE            0x40011000 /* STM32L15X only */
 #elif defined(CHIP_FAMILY_STM32F4)
-#define STM32_TIM9_BASE             0x40014000 /* STM32F411 only */
-#define STM32_TIM10_BASE            0x40014400 /* STM32F411 only */
-#define STM32_TIM11_BASE            0x40014800 /* STM32F411 only */
+#define STM32_TIM9_BASE             0x40014000 /* STM32F41x only */
+#define STM32_TIM10_BASE            0x40014400 /* STM32F41x only */
+#define STM32_TIM11_BASE            0x40014800 /* STM32F41x only */
 #endif /* TIM9-11 */
 #define STM32_TIM12_BASE            0x40001800 /* STM32F373 */
 #define STM32_TIM13_BASE            0x40001c00 /* STM32F373 */
@@ -2511,7 +2515,7 @@ enum dma_channel {
 	/* Legacy naming for uart.c */
 	STM32_DMAC_USART1_TX = STM32_DMAS_USART1_TX,
 	STM32_DMAC_USART1_RX = STM32_DMAS_USART1_RX,
-#if defined(CHIP_VARIANT_STM32F411) || defined(CHIP_VARIANT_STM32F76X)
+#if defined(CHIP_VARIANT_STM32F41X) || defined(CHIP_VARIANT_STM32F76X)
 	STM32_DMAS_USART2_TX = STM32_DMA1_STREAM6,
 	STM32_DMAS_USART2_RX = STM32_DMA1_STREAM5,
 
@@ -2520,7 +2524,7 @@ enum dma_channel {
 	STM32_DMAC_USART2_RX = STM32_DMAS_USART2_RX,
 #endif
 
-#if defined(CHIP_VARIANT_STM32F411) || defined(CHIP_VARIANT_STM32F76X)
+#if defined(CHIP_VARIANT_STM32F41X) || defined(CHIP_VARIANT_STM32F76X)
 	STM32_DMAC_I2C1_TX = STM32_DMA1_STREAM1,
 	STM32_DMAC_I2C1_RX = STM32_DMA1_STREAM0,
 
