@@ -40,15 +40,6 @@
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 
-/* Interrupt and fifo are only used for base accelerometer
- * and the lid sensor is polled real-time (in forced mode).
- */
-#define CONFIG_ACCEL_INTERRUPTS
-/* FIFO size is in power of 2. */
-#define CONFIG_ACCEL_FIFO 1024
-
-/* Depends on how fast the AP boots and typical ODRs */
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HOST_EVENT
 

@@ -31,11 +31,6 @@
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
 
-#define CONFIG_ACCEL_INTERRUPTS
-#define CONFIG_ACCEL_FIFO 256 /* Power of 2 */
-/* Depends on how fast the AP boots and typical ODRs */
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
-
 /* Motion Sense Task Events */
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT	TASK_EVENT_CUSTOM(1 << 2)
 #define CONFIG_SYNC_INT_EVENT			TASK_EVENT_CUSTOM(1 << 3)
