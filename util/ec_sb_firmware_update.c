@@ -748,7 +748,7 @@ void usage(char *argv[])
 
 int main(int argc, char *argv[])
 {
-	int rv = 0, interfaces = COMM_ALL;
+	int rv = 0;
 	int op = OP_UNKNOWN;
 	uint8_t val = 0;
 
@@ -767,14 +767,14 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	if (acquire_gec_lock(GEC_LOCK_TIMEOUT_SECS) < 0) {
-		printf("Could not acquire GEC lock.\n");
+	if (comm_init_dev(NULL)) {
+		printf("Couldn't initialize /dev.\n");
 		return -1;
 	}
 
-	if (comm_init(interfaces, NULL)) {
-		printf("Couldn't find EC\n");
-		goto out;
+	if (comm_init_buffer()) {
+		fprintf(stderr, "Couldn't initialize buffers\n");
+		return -1;
 	}
 
 	fw_update.flags = 0;
@@ -836,7 +836,6 @@ int main(int argc, char *argv[])
 	if (fw_update.flags & F_POWERD_DISABLED)
 		rv |= restore_power_management();
 out:
-	release_gec_lock();
 	if (rv)
 		return -1;
 	else

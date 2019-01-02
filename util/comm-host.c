@@ -82,10 +82,33 @@ int ec_command(int command, int version,
 				indata, insize);
 }
 
-int comm_init(int interfaces, const char *device_name)
+int comm_init_alt(int interfaces, const char *device_name)
 {
-	struct ec_response_get_protocol_info info;
+	if ((interfaces & COMM_SERVO) && comm_init_servo_spi &&
+	    !comm_init_servo_spi(device_name))
+		return 0;
+
+	/* Do not fallback to other communication methods if target is not a
+	 * cros_ec device */
+	if (!strcmp(CROS_EC_DEV_NAME, device_name)) {
+		/* Fallback to direct LPC on x86 */
+		if ((interfaces & COMM_LPC) && !comm_init_lpc())
+			return 0;
+
+		/* Fallback to direct i2c on ARM */
+		if ((interfaces & COMM_I2C) && !comm_init_i2c())
+			return 0;
+	}
+
+	/* Give up */
+	fprintf(stderr, "Unable to establish host communication\n");
+	return 1;
+}
+
+int comm_init_buffer(void)
+{
 	int allow_large_buffer;
+	struct ec_response_get_protocol_info info;
 
 	/* Default memmap access */
 	ec_readmem = fake_readmem;
@@ -96,34 +119,6 @@ int comm_init(int interfaces, const char *device_name)
 		return 1;
 	}
 
-	/* Prefer new /dev method */
-	if ((interfaces & COMM_DEV) && comm_init_dev &&
-	    !comm_init_dev(device_name))
-		goto init_ok;
-
-	if ((interfaces & COMM_SERVO) && comm_init_servo_spi &&
-	    !comm_init_servo_spi(device_name))
-		goto init_ok;
-
-	/* Do not fallback to other communication methods if target is not a
-	 * cros_ec device */
-	if (strcmp(CROS_EC_DEV_NAME, device_name))
-		goto init_failed;
-
-	/* Fallback to direct LPC on x86 */
-	if ((interfaces & COMM_LPC) && comm_init_lpc && !comm_init_lpc())
-		goto init_ok;
-
-	/* Fallback to direct i2c on ARM */
-	if ((interfaces & COMM_I2C) && comm_init_i2c && !comm_init_i2c())
-		goto init_ok;
-
- init_failed:
-	/* Give up */
-	fprintf(stderr, "Unable to establish host communication\n");
-	return 1;
-
- init_ok:
 	/* Allocate shared I/O buffers */
 	ec_outbuf = malloc(ec_max_outsize);
 	ec_inbuf = malloc(ec_max_insize);
@@ -154,5 +149,4 @@ int comm_init(int interfaces, const char *device_name)
 	}
 
 	return 0;
-
 }
