@@ -36,20 +36,21 @@ __task_start:
 default_int_handler:
 
 	pusha
-	add $1, __in_isr
+	ASM_LOCK_PREFIX addl $1, __in_isr
 
 	call unhandled_vector		# Handle system interrupts and
 					# unregistered user interrupts
-
+	# unhandled_vector call loads eax with vector for comparison
 	cmpl $LAPIC_SPURIOUS_INT_VECTOR, %eax
 	je 1f				# No EOI for LAPIC_SPURIOUS_INT_VECTOR
 
 	movl %eax, IOAPIC_EOI_REG	# Indicate completion of servicing the
 					# interrupt to IOAPIC first
-	sub $1, __in_isr
 	movl $0x00, LAPIC_EOI_REG	# Indicate completion of servicing the
 					# interrupt to LAPIC next
 	1:
+	# Ensure we balance the __in_isr counter
+	ASM_LOCK_PREFIX subl $1, __in_isr
 	popa
 	iret
 
@@ -64,7 +65,7 @@ __switchto:
 
 	# Save current task
 	pusha
-	addl $1, __in_isr
+	ASM_LOCK_PREFIX addl $1, __in_isr
 
 	# __schedule() copies 'resched' to %ecx and 'desched' to %edx before
 	# triggering ISH_TS_VECTOR
@@ -97,13 +98,13 @@ __switchto:
 #endif
 
 	1:
-	subl $1, __in_isr
 
 	# Indicate completion of servicing the interrupt to LAPIC.
 	# No IOAPIC EOI needed as this is SW triggered.
 	movl $0x00, LAPIC_EOI_REG
 
-	# Restore general purpose registers.
+	# Decrement ISR counter and restore general purpose registers.
+	ASM_LOCK_PREFIX subl $1, __in_isr
 	popa
 	iret
 
