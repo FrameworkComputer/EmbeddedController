@@ -34,12 +34,12 @@
 #define RTC_PREDIV_S (RTC_FREQ - 1)
 #define US_PER_RTC_TICK (1000000 / RTC_FREQ)
 
-int32_t rtc_ssr_to_us(uint32_t rtcss)
+int32_t rtcss_to_us(uint32_t rtcss)
 {
 	return ((RTC_PREDIV_S - rtcss) * US_PER_RTC_TICK);
 }
 
-uint32_t us_to_rtc_ssr(int32_t us)
+uint32_t us_to_rtcss(int32_t us)
 {
 	return (RTC_PREDIV_S - (us / US_PER_RTC_TICK));
 }
@@ -267,3 +267,31 @@ void rtc_init(void)
 
 	rtc_lock_regs();
 }
+
+#if defined(CONFIG_CMD_RTC) || defined(CONFIG_HOSTCMD_RTC)
+void rtc_set(uint32_t sec)
+{
+	struct rtc_time_reg rtc;
+
+	sec_to_rtc(sec, &rtc);
+	rtc_unlock_regs();
+
+	/* Disable alarm */
+	STM32_RTC_CR &= ~STM32_RTC_CR_ALRAE;
+
+	/* Enter RTC initialize mode */
+	STM32_RTC_ISR |= STM32_RTC_ISR_INIT;
+	while (!(STM32_RTC_ISR & STM32_RTC_ISR_INITF))
+		;
+
+	/* Set clock prescalars */
+	STM32_RTC_PRER = (RTC_PREDIV_A << 16) | RTC_PREDIV_S;
+
+	STM32_RTC_TR = rtc.rtc_tr;
+	STM32_RTC_DR = rtc.rtc_dr;
+	/* Start RTC timer */
+	STM32_RTC_ISR &= ~STM32_RTC_ISR_INIT;
+
+	rtc_lock_regs();
+}
+#endif
