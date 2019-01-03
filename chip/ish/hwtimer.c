@@ -8,6 +8,7 @@
 #include "console.h"
 #include "hpet.h"
 #include "hwtimer.h"
+#include "timer.h"
 #include "registers.h"
 #include "task.h"
 #include "util.h"
@@ -49,16 +50,56 @@ void __hw_clock_event_clear(void)
 	HPET_TIMER_CONF_CAP(1) &= ~HPET_Tn_INT_ENB_CNF;
 }
 
+#ifdef CHIP_FAMILY_ISH3
+/*
+ * The 64-bit read on a 32-bit chip can tear during the read. Ensure that the
+ * value returned for 64-bit didn't rollover while we were reading it.
+ */
+static inline uint64_t read_main_timer(void)
+{
+	timestamp_t t;
+	uint32_t hi;
+
+	do {
+		t.le.hi = HPET_MAIN_COUNTER_64_HI;
+		t.le.lo = HPET_MAIN_COUNTER_64_LO;
+		hi = HPET_MAIN_COUNTER_64_HI;
+	} while (t.le.hi != hi);
+
+	return t.val;
+}
+#endif
+
 uint32_t __hw_clock_source_read(void)
 {
 #if defined(CHIP_FAMILY_ISH3)
-	uint64_t tmp = HPET_MAIN_COUNTER_64;
-	uint32_t hi = tmp >> 32;
-	uint32_t lo = tmp;
-	uint32_t q, r;
-	const uint32_t d = CLOCK_FACTOR;
-	asm ("divl %4" : "=d" (r), "=a" (q) : "0" (hi), "1" (lo), "rm" (d) : "cc");
-	return q;
+	const uint64_t tmp = read_main_timer();
+	const uint32_t divisor = CLOCK_FACTOR;
+	/*
+	 * Modulating hi first ensures that the quotient fits in 32-bits due to
+	 * the follow math:
+	 * Let tmp = (hi << 32) + lo;
+	 * Let hi = N*CLOCK_FACTOR + R; where R is hi % CLOCK_FACTOR
+	 *
+	 * tmp = (N*CLOCK_FACTOR << 32) + (R << 32) + lo
+	 *
+	 * tmp / CLOCK_FACTOR = ((N*CLOCK_FACTOR << 32) + (R << 32) + lo) /
+	 *                      CLOCK_FACTOR
+	 * tmp / CLOCK_FACTOR = (N*CLOCK_FACTOR << 32) / CLOCK_FACTOR +
+	 *                      (R << 32) / CLOCK_FACTOR +
+	 *                      lo / CLOCK_FACTOR
+	 * tmp / CLOCK_FACTOR = (N << 32) +
+	 *                      (R << 32) / CLOCK_FACTOR +
+	 *                      lo / CLOCK_FACTOR
+	 * If we want to truncate to 32 bits, then the N << 32 can be dropped.
+	 * (tmp / CLOCK_FACTOR) & 0xFFFFFFFF = ((R << 32) + lo) / CLOCK_FACTOR
+	 */
+	const uint32_t hi = ((uint32_t)(tmp >> 32)) % divisor;
+	const uint32_t lo = tmp;
+
+	register uint32_t quotient;
+	asm("divl %3" : "=a"(quotient) : "d"(hi), "a"(lo), "rm"(divisor));
+	return quotient;
 #else
 	return HPET_MAIN_COUNTER;
 #endif
