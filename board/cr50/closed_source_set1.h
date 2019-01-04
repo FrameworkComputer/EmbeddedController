@@ -21,5 +21,11 @@ void closed_source_set1_configure_gpios(void);
  */
 void closed_source_set1_update_factory_mode(void);
 
+/**
+ * In response to a TPM_MODE disable, drive the GPIOs specific to
+ * BOARD_CLOSED_SOURCE_SET1 to match the diagnostic state setting.
+ */
+void close_source_set1_disable_tpm(void);
+
 
 #endif   /* ! __EC_BOARD_CR50_CLOSED_SOURCE_SET1_H */

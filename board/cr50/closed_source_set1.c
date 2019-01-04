@@ -54,15 +54,12 @@ void closed_source_set1_configure_gpios(void)
 	 * here.
 	 */
 
-	/* Enable falling edge interrupt on I2C_SDA_SCL/EXIT_FACTORY_MODE */
-
 	/*
 	 * TODO (keithshort): closed source EC documentation defines
 	 * EXIT_FACTORY_MODE as an output from the EC that is driven low
 	 * to indicate that factory mode must be terminated.  However, the
 	 * EC firmware has not yet (and may never) add this capability.
 	 */
-//	gpio_set_flags(GPIO_EXIT_FACTORY_MODE, GPIO_INPUT | GPIO_INT_F_FALLING);
 
 	closed_source_set1_update_factory_mode();
 }
@@ -118,6 +115,20 @@ void closed_source_set1_update_factory_mode(void)
 		closed_source_set1_update_ec_trust_level(EC_TL_FACTORY_MODE);
 	else
 		closed_source_set1_update_ec_trust_level(EC_TL_COREBOOT);
+}
+
+void close_source_set1_disable_tpm(void)
+{
+	/*
+	 * Once the TPM mode is disabled from the AP, set the EC trust level
+	 * to permit running diagnostics.  Diagnostic mode may be entered from
+	 * any of the EC trust level states, so no additional checks are needed.
+	 *
+	 * This state is only cleared by a reboot of the Cr50 and then the
+	 * trust level reverts back to either EC_TL_FACTORY_MODE or
+	 * EC_TL_COREBOOT.
+	 */
+	closed_source_set1_update_ec_trust_level(EC_TL_DIAGNOSTIC_MODE);
 }
 
 

@@ -6,6 +6,8 @@
 
 #include "config.h"
 #include "Global.h"
+#include "board.h"
+#include "closed_source_set1.h"
 #include "console.h"
 #include "dcrypto.h"
 #include "extension.h"
@@ -24,6 +26,9 @@ static void disable_tpm(void)
 	tpm_stop();
 	DCRYPTO_ladder_revoke();
 	nvmem_clear_cache();
+
+	if (board_uses_closed_source_set1())
+		close_source_set1_disable_tpm();
 }
 DECLARE_DEFERRED(disable_tpm);
 
