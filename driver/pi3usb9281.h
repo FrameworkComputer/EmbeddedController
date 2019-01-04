@@ -38,6 +38,8 @@
 #define PI3USB9281_INT_OVP          (1 << 5)
 #define PI3USB9281_INT_OCP          (1 << 6)
 #define PI3USB9281_INT_OVP_OC       (1 << 7)
+#define PI3USB9281_INT_ATTACH_DETACH (PI3USB9281_INT_ATTACH | \
+				      PI3USB9281_INT_DETACH)
 
 #define PI3USB9281_TYPE_NONE        0
 #define PI3USB9281_TYPE_MHL         (1 << 0)
