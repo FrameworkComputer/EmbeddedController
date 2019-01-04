@@ -366,16 +366,7 @@ static void state_machine(uint64_t tnow)
 
 		set_pwrbtn_to_pch(0, 1);
 		tnext_state = get_time().val + PWRBTN_INITIAL_US;
-
-		if (power_button_is_pressed()) {
-			if (system_get_reset_flags() & RESET_FLAG_RESET_PIN)
-				pwrbtn_state = PWRBTN_STATE_BOOT_KB_RESET;
-			else
-				pwrbtn_state = PWRBTN_STATE_WAS_OFF;
-		} else {
-			pwrbtn_state = PWRBTN_STATE_RELEASED;
-		}
-
+		pwrbtn_state = PWRBTN_STATE_BOOT_KB_RESET;
 		break;
 
 	case PWRBTN_STATE_BOOT_KB_RESET:
