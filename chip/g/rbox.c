@@ -32,18 +32,42 @@ int rbox_powerbtn_is_pressed(void)
 	return !GREAD_FIELD(RBOX, CHECK_OUTPUT, PWRB_OUT);
 }
 
+/*
+ * This is 4X as RDD_MAX_WAIT_TIME_COUNTER default value, which should be
+ *  long enough for rdd_is_detected() to represent a stable RDD status
+ */
+#define RDD_WAIT_TIME		(40 * MSEC)
+
+/*
+ * Delay EC_RST_L release if RDD cable is connected, or release EC_RST_L
+ * otherwise.
+ */
+static void rbox_check_rdd(void)
+{
+#ifdef CR50_DEV
+	print_rdd_state();
+#endif
+	if (rbox_powerbtn_is_pressed() && rdd_is_detected()) {
+		power_button_release_enable_interrupt(1);
+		return;
+	}
+
+	deassert_ec_rst();
+}
+DECLARE_DEFERRED(rbox_check_rdd);
+
 static void rbox_release_ec_reset(void)
 {
 	/* Unfreeze the PINMUX */
 	GREG32(PINMUX, HOLD) = 0;
 
 	/*
-	 * After a POR, if it finds RDD cable plugged and Power button pressed,
-	 * then it delays releasing EC-reset until power button gets released.
+	 * After a POR, if the power button is held, then delay releasing
+	 * EC_RST_L.
 	 */
 	if ((system_get_reset_flags() & RESET_FLAG_POWER_ON) &&
-	    rdd_is_detected() && rbox_powerbtn_is_pressed()) {
-		power_button_release_enable_interrupt(1);
+	    rbox_powerbtn_is_pressed()) {
+		hook_call_deferred(&rbox_check_rdd_data, RDD_WAIT_TIME);
 		return;
 	}
 
