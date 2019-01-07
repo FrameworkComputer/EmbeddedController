@@ -271,7 +271,9 @@ $(run-test-targets): run-%: host-%
 # Fuzzing tests
 
 fuzz-test-targets=$(foreach t,$(fuzz-test-list-host),host-$(t))
-run-fuzz-test-targets=$(foreach t,$(fuzz-test-list-host),run-$(t))
+# TODO(crbug.com/918662) Enable fuzz test runs once they are fixed for the new
+# compiler
+run-fuzz-test-targets=#$(foreach t,$(fuzz-test-list-host),run-$(t))
 
 .PHONY: $(fuzz-test-targets) $(run-fuzz-test-targets)
 
