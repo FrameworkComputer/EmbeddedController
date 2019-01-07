@@ -23,6 +23,16 @@ struct oz554_value {
 	uint8_t data;
 };
 
+/*
+ * OZ554ALN asserts the interrupt when it's ready for writing settings, which
+ * are cleared when it's turned off. We enable the interrupt on HOOK_INIT and
+ * keep it enabled in S0/S3/S5.
+ *
+ * It's assumed the device doesn't have a lid and OZ554ALN is powered only in
+ * S0. For clamshell devices, different interrupt & power control scheme may be
+ * needed.
+ */
+
 /* This ordering is suggested by vendor. */
 static const struct oz554_value order[] = {
 	/*
@@ -77,6 +87,7 @@ static void set_oz554_reg(void)
 			return;
 		}
 	}
+	CPRINTS("Wrote OZ554 settings");
 }
 
 static void backlight_enable_deferred(void)
@@ -91,14 +102,8 @@ void backlight_enable_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&backlight_enable_deferred_data, 30 * MSEC);
 }
 
-static void on_chipset_resume(void)
+static void init_oz554(void)
 {
 	gpio_enable_interrupt(GPIO_PANEL_BACKLIGHT_EN);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, on_chipset_resume, HOOK_PRIO_DEFAULT);
-
-static void on_chipset_shutdown(void)
-{
-	gpio_disable_interrupt(GPIO_PANEL_BACKLIGHT_EN);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, on_chipset_shutdown, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, init_oz554, HOOK_PRIO_DEFAULT);
