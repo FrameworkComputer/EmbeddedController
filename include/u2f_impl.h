@@ -103,17 +103,6 @@ int u2f_gen_kek_seed(int commit);
 /* Use non-standard extensions to the U2F protocol */
 int use_g2f(void);
 
-/* Non-standardized command status responses */
-#define U2F_SW_CLA_NOT_SUPPORTED 0x6E00
-#define U2F_SW_WRONG_LENGTH 0x6700
-#define U2F_SW_WTF 0x6f00
-/* Additional flags for the P1 fields */
-#define G2F_ATTEST 0x80  /* fixed attestation cert */
-#define G2F_CONSUME 0x02 /* consume presence */
-
-/* Vendor command to enable/disable the extensions */
-#define U2F_VENDOR_MODE U2F_VENDOR_LAST
-
 /* call extensions for unsupported U2F INS */
 unsigned u2f_custom_dispatch(uint8_t ins, struct apdu apdu, uint8_t *buf,
 			     unsigned *ret_len) __attribute__((weak));

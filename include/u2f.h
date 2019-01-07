@@ -99,6 +99,20 @@ typedef struct {
 #define U2F_SW_COMMAND_NOT_ALLOWED      0x6986 // SW_COMMAND_NOT_ALLOWED
 #define U2F_SW_INS_NOT_SUPPORTED        0x6D00 // SW_INS_NOT_SUPPORTED
 
+// Protocol extensions
+
+// Non-standardized command status responses
+#define U2F_SW_CLA_NOT_SUPPORTED        0x6E00
+#define U2F_SW_WRONG_LENGTH             0x6700
+#define U2F_SW_WTF                      0x6f00
+
+// Additional flags for P1 field
+#define G2F_ATTEST      0x80    // Fixed attestation key
+#define G2F_CONSUME     0x02    // Consume presence
+
+// Vendor command to enable/disable the extensions
+#define U2F_VENDOR_MODE U2F_VENDOR_LAST
+
 #ifdef __cplusplus
 }
 #endif
