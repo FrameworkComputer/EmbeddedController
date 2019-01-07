@@ -81,22 +81,25 @@ void usb_charger_vbus_change(int port, int vbus_level)
 #endif
 }
 
+void usb_charger_reset_charge(int port)
+{
+	charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
+				     port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
+				     port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
+				     port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
+				     port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
+				     port, NULL);
+}
+
 static void usb_charger_init(void)
 {
 	int i;
-
-	/* Initialize all charge suppliers */
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
-		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
-					     i, NULL);
-		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
-					     i, NULL);
-		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
-					     i, NULL);
-		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
-					     i, NULL);
-		charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
-					     i, NULL);
+		usb_charger_reset_charge(i);
 		/* Initialize VBUS supplier based on whether VBUS is present. */
 		update_vbus_supplier(i, pd_is_vbus_present(i));
 	}

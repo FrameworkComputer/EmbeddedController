@@ -106,4 +106,12 @@ int usb_charger_ramp_allowed(int supplier);
  * @return Maximum current in mA
  */
 int usb_charger_ramp_max(int supplier, int sup_curr);
+
+
+/**
+ * Reset available BC 1.2 chargers on all ports
+ * @param port
+ */
+void usb_charger_reset_charge(int port);
+
 #endif  /* __CROS_EC_USB_CHARGE_H */
