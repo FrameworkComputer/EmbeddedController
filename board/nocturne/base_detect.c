@@ -39,7 +39,7 @@
 
 /* Thresholds for attach pin reading when power is not applied. */
 #define ATTACH_MIN_MV 300
-#define ATTACH_MAX_MV 800
+#define ATTACH_MAX_MV 900
 
 /* Threshold for attach pin reading when power IS applied. */
 #define PWREN_ATTACH_MIN_MV 2300
