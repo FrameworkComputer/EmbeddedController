@@ -433,7 +433,7 @@ void mutex_lock(struct mutex *mtx)
 	do {
 		old_val = 0;
 		__asm__ __volatile__(
-				"lock; cmpxchg %1, %2\n"
+				ASM_LOCK_PREFIX "cmpxchg %1, %2\n"
 				: "=a" (old_val)
 				: "r" (value), "m" (mtx->lock), "a" (old_val)
 				: "memory");
@@ -454,7 +454,7 @@ void mutex_unlock(struct mutex *mtx)
 	task_ *tsk = current_task;
 
 	__asm__ __volatile__(
-			"lock; cmpxchg %1, %2\n"
+			ASM_LOCK_PREFIX "cmpxchg %1, %2\n"
 			: "=a" (old_val)
 			: "r" (val), "m" (mtx->lock), "a" (old_val)
 			: "memory");

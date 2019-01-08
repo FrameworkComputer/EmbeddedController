@@ -13,7 +13,7 @@
 
 #define ATOMIC_OP(asm_op, a, v) do {		\
 	__asm__ __volatile__ (			\
-		"lock;" #asm_op " %1, %0\n"	\
+		ASM_LOCK_PREFIX #asm_op " %1, %0\n"	\
 		: "+m" (*a)			\
 		: "ir" (v)			\
 		: "memory");			\
@@ -24,7 +24,7 @@ static inline int bool_compare_and_swap_u32(uint32_t *var, uint32_t old_value,
 {
 	uint32_t _old_value = old_value;
 
-	__asm__ __volatile__("lock; cmpxchgl %2, %1"
+	__asm__ __volatile__(ASM_LOCK_PREFIX "cmpxchgl %2, %1"
 			     : "=a" (old_value), "+m" (*var)
 			     : "r" (new_value), "0" (old_value)
 			     : "memory");
@@ -74,7 +74,7 @@ static inline uint32_t atomic_read_clear(uint32_t volatile *addr)
 	if (*addr == 0)
 		return 0;
 
-	asm volatile("lock; xchgl %0, %1\n"
+	asm volatile(ASM_LOCK_PREFIX "xchgl %0, %1\n"
 		     : "+r" (ret), "+m" (*addr)
 		     : : "memory", "cc");
 

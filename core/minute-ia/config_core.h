@@ -12,4 +12,18 @@
 
 #define CONFIG_SOFTWARE_PANIC
 
+/*
+ * Since all implementations minute-ia are a single core, we do not need a
+ * "lock;" prefix on any instructions. We use the below define in places where
+ * a lock statement would be needed if there were multiple cores.
+ *
+ * Also the destination operand needs to be a memory location instead of a
+ * register for us to drop the "lock;" prefix for a single-core chip.
+ */
+#ifndef __ASSEMBLER__
+#define ASM_LOCK_PREFIX ""
+#else
+#define ASM_LOCK_PREFIX
+#endif
+
 #endif /* __CROS_EC_CONFIG_CORE_H */
