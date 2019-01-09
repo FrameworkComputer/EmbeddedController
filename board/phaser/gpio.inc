@@ -147,7 +147,9 @@ GPIO(GPOB6_NC,           PIN(B, 6), GPIO_INPUT | GPIO_PULL_UP)
 
 /* Camera */
 GPIO(EC_GPIO_03,	 PIN(0, 3), GPIO_INPUT)		/* TP only */
-GPIO(EC_INT_L,		 PIN(9, 4), GPIO_INPUT)		/* EC_AP_INT_ODL - Unused GPIO_ODR_HIGH */
+
+/* MKBP event synchronization */
+GPIO(EC_INT_L,		 PIN(9, 4), GPIO_ODR_HIGH)	/* EC_AP_INT_ODL */
 
 /* Misc. */
 GPIO(CCD_MODE_EC_L,	 PIN(E, 3), GPIO_INPUT)

@@ -139,7 +139,7 @@ GPIO(PWR_LED_WHITE_L,	 PIN(D, 7), GPIO_OUT_HIGH)	/* LED_3_L */
 GPIO(KB_BL_PWR_EN,	 PIN(6, 2), GPIO_OUT_LOW)
 
 /* MKBP event synchronization */
-GPIO(EC_INT_L,		 PIN(9, 4), GPIO_INPUT)		/* EC_AP_INT_ODL - currently unused */
+GPIO(EC_INT_L,		 PIN(9, 4), GPIO_ODR_HIGH)	/* EC_AP_INT_ODL */
 
 /* Overcurrent event to host */
 GPIO(USB_C_OC,      PIN(3, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V)

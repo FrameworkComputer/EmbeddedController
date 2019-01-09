@@ -147,7 +147,9 @@ GPIO(TRACKPAD_INT_1V8_ODL, PIN(9, 3), GPIO_INPUT | GPIO_SEL_1P8V)
 
 /* Camera */
 GPIO(EC_GPIO03, 	 PIN(0, 3), GPIO_INPUT)		/* TP only */
-GPIO(EC_INT_L,	 	 PIN(9, 4), GPIO_INPUT)		/* EC_AP_INT_ODL - Unused GPIO_ODR_HIGH */
+
+/* MKBP event synchronization */
+GPIO(EC_INT_L,		 PIN(9, 4), GPIO_ODR_HIGH)	/* EC_AP_INT_ODL */
 
 /* Unused Pins */
 GPIO(CHARGER_PMON,	PIN(4, 2), GPIO_INPUT)

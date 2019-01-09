@@ -279,6 +279,13 @@
 /* Depends on how fast the AP boots and typical ODRs */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
 
+/*
+ * Sensor stack in EC/Kernel depends on a hardware interrupt pin from EC->AP, so
+ * do not define CONFIG_MKBP_USE_HOST_EVENT since all octopus boards use
+ * hardware pin to send interrupt from EC -> AP (except bip).
+ */
+#define CONFIG_MKBP_EVENT
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
