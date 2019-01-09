@@ -88,6 +88,7 @@ enum sensor_id {
 enum battery_type {
 	BATTERY_C214,
 	BATTERY_C204EE,
+	BATTERY_C424,
 	BATTERY_TYPE_COUNT,
 };
 
