@@ -272,22 +272,6 @@ static void wait_switchcap_power_good(int enable)
 }
 
 /**
- * Set the state of the system power signals.
- *
- * The system power signals are the enable pins of SwitchCap and VBOB.
- * They control the power of the set of PMIC chips and the AP.
- *
- * @param enable	1 to enable or 0 to disable
- */
-static void set_system_power(int enable)
-{
-	CPRINTS("set_system_power(%d)", enable);
-	gpio_set_level(GPIO_SWITCHCAP_ON_L, enable);
-	wait_switchcap_power_good(enable);
-	gpio_set_level(GPIO_VBOB_EN, enable);
-}
-
-/**
  * Get the state of the system power signals.
  *
  * @return 1 if the system is powered, 0 if not
@@ -343,6 +327,28 @@ static void wait_pmic_pwron(int enable, unsigned int timeout)
 }
 
 /**
+ * Set the state of the system power signals.
+ *
+ * The system power signals are the enable pins of SwitchCap and VBOB.
+ * They control the power of the set of PMIC chips and the AP.
+ *
+ * @param enable	1 to enable or 0 to disable
+ */
+static void set_system_power(int enable)
+{
+	CPRINTS("%s(%d)", __func__, enable);
+	gpio_set_level(GPIO_SWITCHCAP_ON_L, enable);
+	wait_switchcap_power_good(enable);
+	gpio_set_level(GPIO_VBOB_EN, enable);
+	if (enable) {
+		usleep(SYSTEM_POWER_ON_DELAY);
+	} else {
+		/* Ensure POWER_GOOD drop to low if it is a forced shutdown */
+		wait_pmic_pwron(0, FORCE_OFF_RESPONSE_TIMEOUT);
+	}
+}
+
+/**
  * Set the PMIC/AP power-on state.
  *
  * It triggers the PMIC/AP power-on and power-off sequence.
@@ -352,7 +358,7 @@ static void wait_pmic_pwron(int enable, unsigned int timeout)
  */
 static void set_pmic_pwron(int enable)
 {
-	CPRINTS("set_pmic_pwron(%d)", enable);
+	CPRINTS("%s(%d)", __func__, enable);
 
 	/* Check the PMIC/AP power state */
 	if (enable == is_pmic_pwron())
@@ -460,9 +466,6 @@ static void power_off(void)
 	/* Force to switch off all rails */
 	set_system_power(0);
 
-	/* If it is forced down, wait to ensure POWER_GOOD down */
-	wait_pmic_pwron(0, FORCE_OFF_RESPONSE_TIMEOUT);
-
 	/* Turn off the 3.3V and 5V rails. */
 	gpio_set_level(GPIO_EN_PP3300_A, 0);
 #ifdef CONFIG_POWER_PP5000_CONTROL
@@ -526,7 +529,6 @@ static void power_on(void)
 #endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
 
 	set_system_power(1);
-	usleep(SYSTEM_POWER_ON_DELAY);
 
 	/* Enable signal interrupts */
 	power_signal_enable_interrupt(GPIO_AP_RST_L);
