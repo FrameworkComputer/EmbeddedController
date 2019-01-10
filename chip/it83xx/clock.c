@@ -200,20 +200,21 @@ static void clock_set_pll(enum pll_freq_idx idx)
 		 * change PLL.
 		 */
 		IT83XX_GPIO_GPCRM5 = (IT83XX_GPIO_GPCRM5 & ~0xc0) | (1 << 7);
-#ifdef IT83XX_ESPI_INHIBIT_CS_BY_VCC_OFF
+#ifdef IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED
 		/*
-		 * On DX version, we have to turn off VCC before changing PLL
-		 * sequence or sequence will fail if CS# pin is low.
-		 *
-		 * The VCC power status will be treated as power-on later in
-		 * clock_init().
+		 * On DX version, we have to disable eSPI pad before changing
+		 * PLL sequence or sequence will fail if CS# pin is low.
 		 */
-		IT83XX_GCTRL_RSTS = (IT83XX_GCTRL_RSTS & ~0xc0);
+		IT83XX_ESPI_ESGCTRL2 |= (1 << 6);
 #endif
 #endif
 		/* Update PLL settings. */
 		clock_pll_changed();
 #ifdef CONFIG_HOSTCMD_ESPI
+#ifdef IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED
+		/* Enable eSPI pad after changing PLL sequence. */
+		IT83XX_ESPI_ESGCTRL2 &= ~(1 << 6);
+#endif
 		/* (b:70537592) Change back to ESPI CS# function. */
 		IT83XX_GPIO_GPCRM5 &= ~0xc0;
 #endif
