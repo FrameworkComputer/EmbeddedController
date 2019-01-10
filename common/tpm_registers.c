@@ -188,6 +188,7 @@ static void set_tpm_state(enum tpm_states state)
 		/* Make sure FIFO is empty. */
 		tpm_.fifo_read_index = 0;
 		tpm_.fifo_write_index = 0;
+		tpm_.regs.sts &= ~data_avail;
 	}
 }
 
