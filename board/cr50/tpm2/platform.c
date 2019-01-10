@@ -93,6 +93,6 @@ BOOL _plat__ShallSurviveOwnerClear(uint32_t  index)
 
 void _plat__OwnerClearCallback(void)
 {
-	// Invalidate existing u2f registrations.
+	/* Invalidate existing u2f registrations. */
 	u2f_gen_kek_seed(0 /* commit */);
 }
