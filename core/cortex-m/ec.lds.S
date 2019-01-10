@@ -271,7 +271,25 @@ SECTIONS
 #else
     } > FLASH
 #endif
-    __data_lma_start = . ;
+
+    .data_lma : {
+        /*
+         * Explicitly allocate a space for .data section LMA.  Linker should
+         * be able to do this while linking, but it doesn't guarantee LMV/VMA
+         * might be overlapped.  This is a trick to prevent .bss section
+         * overlapped with .data's LMA (This could happen if .rodata and .bss
+         * are in the same memory region, e.g. IRAM), so .data LMA might get
+         * cleared on program starting up.
+         */
+        __data_lma_start = .;
+        . += __data_end - __data_start;
+#if !defined(CONFIG_FLASH_PHYSICAL)
+    } > IRAM
+#elif defined(CONFIG_EXTERNAL_STORAGE)
+    } > CDRAM AT > FLASH
+#else
+    } > FLASH
+#endif
 
     .bss : {
 	/*
@@ -329,9 +347,9 @@ SECTIONS
 #endif /* defined(CONFIG_REPLACE_LOADER_WITH_BSS_SLOW) */
 
 #ifdef CONFIG_EXTERNAL_STORAGE
-    .data : AT(LOADADDR(.rodata) + SIZEOF(.rodata)) {
+    .data : AT(LOADADDR(.data_lma)) {
 #else
-    .data : AT(ADDR(.rodata) + SIZEOF(.rodata)) {
+    .data : AT(ADDR(.data_lma)) {
 #endif
         . = ALIGN(4);
         __data_start = .;
