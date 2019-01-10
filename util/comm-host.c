@@ -84,6 +84,9 @@ int ec_command(int command, int version,
 
 int comm_init_alt(int interfaces, const char *device_name)
 {
+	/* Default memmap access */
+	ec_readmem = fake_readmem;
+
 	if ((interfaces & COMM_SERVO) && comm_init_servo_spi &&
 	    !comm_init_servo_spi(device_name))
 		return 0;
@@ -109,9 +112,6 @@ int comm_init_buffer(void)
 {
 	int allow_large_buffer;
 	struct ec_response_get_protocol_info info;
-
-	/* Default memmap access */
-	ec_readmem = fake_readmem;
 
 	allow_large_buffer = kernel_version_ge(3, 14, 0);
 	if (allow_large_buffer < 0) {
