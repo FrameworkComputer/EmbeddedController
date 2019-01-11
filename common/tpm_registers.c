@@ -189,6 +189,9 @@ static void set_tpm_state(enum tpm_states state)
 		tpm_.fifo_read_index = 0;
 		tpm_.fifo_write_index = 0;
 		tpm_.regs.sts &= ~data_avail;
+		/* Set burst size for the following write requests. */
+		tpm_.regs.sts &= ~(burst_count_mask << burst_count_shift);
+		tpm_.regs.sts |= 63 << burst_count_shift;
 	}
 }
 
