@@ -99,7 +99,21 @@ enum power_state power_handle_state(enum power_state state)
 	int all_sys_pwrgd_in;
 	int all_sys_pwrgd_out;
 
-	common_intel_x86_handle_rsmrst(state);
+	/*
+	 * Check if RSMRST_L signal state has changed and if so, pass the new
+	 * value along to the PCH. However, if the new transition of RSMRST_L
+	 * from the Sielgo is from low to high, then gate this transition to the
+	 * AP by the PP5000_A rail. If the new transition is from high to low,
+	 * then pass that through regardless of the PP5000_A value.
+	 *
+	 * The PP5000_A power good signal will float high if the
+	 * regulator is not powered, so checking both that the EN and the PG
+	 * signals are high.
+	 */
+	if ((gpio_get_level(GPIO_PP5000_A_PG_OD) &&
+	     gpio_get_level(GPIO_EN_PP5000_A)) ||
+	    gpio_get_level(GPIO_PCH_RSMRST_L))
+		common_intel_x86_handle_rsmrst(state);
 
 	switch (state) {
 
