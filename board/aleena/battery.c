@@ -61,9 +61,37 @@ const struct board_batt_params board_battery_info[] = {
 	},
 
 	/* Murata AP18C4K Battery Information */
-	[BATTERY_MURATA] = {
+	[BATTERY_MURATA_4012] = {
 		.fuel_gauge = {
 			.manuf_name = "Murata KT00304012",
+			.ship_mode = {
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200,
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 75,
+		},
+	},
+
+	/* Murata AP18K4K Battery Information */
+	[BATTERY_MURATA_4013] = {
+		.fuel_gauge = {
+			.manuf_name = "Murata KT00304013",
 			.ship_mode = {
 				.reg_addr = 0x3A,
 				.reg_data = { 0xC574, 0xC574 },
