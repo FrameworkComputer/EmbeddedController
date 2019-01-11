@@ -4,6 +4,7 @@
  */
 
 /* Hatch family-specific configuration */
+#include "atomic.h"
 #include "battery_fuel_gauge.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
@@ -204,6 +205,8 @@ void baseboard_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
 
+	/* Enable HDMI HPD interrupt. */
+	gpio_enable_interrupt(GPIO_HDMI_CONN_HPD);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -330,4 +333,16 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	charge_set_input_current_limit(MAX(charge_ma,
 					   CONFIG_CHARGER_INPUT_CURRENT),
 				       charge_mv);
+}
+
+void baseboard_mst_enable_control(enum mst_source src, int level)
+{
+	static uint32_t mst_input_levels;
+
+	if (level)
+		atomic_or(&mst_input_levels, 1 << src);
+	else
+		atomic_clear(&mst_input_levels, 1 << src);
+
+	gpio_set_level(GPIO_EN_MST, mst_input_levels ? 1 : 0);
 }

@@ -143,8 +143,15 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
+enum mst_source {
+	MST_TYPE_C0,
+	MST_TYPE_C1,
+	MST_HDMI,
+};
+
 /* Forward declare common (within Hatch) board-specific functions */
 void board_reset_pd_mcu(void);
+void baseboard_mst_enable_control(enum mst_source, int level);
 
 #endif /* !__ASSEMBLER__ */
 
