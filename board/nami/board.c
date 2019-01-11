@@ -257,12 +257,19 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	},
 };
 
+static int ps8751_tune_mux(int port)
+{
+	/* 0x98 sets lower EQ of DP port (3.6db) */
+	mux_write(port, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
+	return EC_SUCCESS;
+}
+
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
-	{
+	[USB_PD_PORT_PS8751] = {
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
-	{
+	[USB_PD_PORT_ANX7447] = {
 		.driver = &anx7447_usb_mux_driver,
 		.hpd_update = &anx7447_tcpc_update_hpd_status,
 	}
@@ -311,6 +318,9 @@ void board_tcpc_init(void)
 	/* Enable TCPC interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
+
+	if (oem == PROJECT_SONA && model != MODEL_SYNDRA)
+		usb_muxes[USB_PD_PORT_PS8751].board_init = ps8751_tune_mux;
 
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
