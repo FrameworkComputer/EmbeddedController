@@ -283,4 +283,6 @@ void board_reset_pd_mcu(void);
 /* ps8751 requires 1ms reset down assertion */
 #define PS8XXX_RST_L_RST_H_DELAY_MS	1
 
+#define ATLAS_REV_FIXED_EC_WP	4
+
 #endif /* __CROS_EC_BOARD_H */

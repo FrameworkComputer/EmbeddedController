@@ -21,7 +21,7 @@ GPIO_INT(SLP_SUS_L_PCH,		PIN(D, 4), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(ROP_EC_ACOK,		PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	extpower_interrupt)
 
 /* misc interrupt handler section */
-GPIO_INT(EC_WP_L,		PIN(A, 1), GPIO_INT_BOTH | GPIO_PULL_UP,	switch_interrupt)
+GPIO_INT(EC_WP_L,		PIN(A, 1), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(LID_OPEN,		PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	lid_interrupt)
 GPIO_INT(ACCELGYRO3_INT_L,	PIN(4, 1), GPIO_INT_FALLING,			bmi160_interrupt)
 

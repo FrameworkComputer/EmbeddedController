@@ -455,6 +455,14 @@ void board_hibernate(void)
 /* Initialize board. */
 static void board_init(void)
 {
+	if (system_get_board_version() < ATLAS_REV_FIXED_EC_WP) {
+		int dflags;
+
+		CPRINTS("Applying EC_WP_L workaround");
+		dflags = gpio_get_default_flags(GPIO_EC_WP_L);
+		gpio_set_flags(GPIO_EC_WP_L, dflags | GPIO_PULL_UP);
+	}
+
 	/* Provide AC status to the PCH */
 	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
 
