@@ -447,6 +447,11 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 
 	/* EC sleep */
 	ec_sleep = 1;
+#if defined(IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED) && \
+defined(CONFIG_HOSTCMD_ESPI)
+	/* Disable eSPI pad. */
+	IT83XX_ESPI_ESGCTRL2 |= (1 << 6);
+#endif
 	clock_ec_pll_ctrl(EC_PLL_SLEEP);
 	interrupt_enable();
 	/* standby instruction */
@@ -462,8 +467,23 @@ void clock_sleep_mode_wakeup_isr(void)
 	uint32_t st_us, c;
 
 	/* trigger a reboot if wake up EC from sleep mode (system hibernate) */
-	if (clock_ec_wake_from_sleep())
+	if (clock_ec_wake_from_sleep()) {
+#if defined(IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED) && \
+defined(CONFIG_HOSTCMD_ESPI)
+		/*
+		 * Enable eSPI pad.
+		 * We will not need to enable eSPI pad here if Dx is able to
+		 * enable watchdog hardware reset function. But the function is
+		 * failed (b:111264984), so the following system reset is
+		 * software reset (PLL setting is not reset).
+		 * We will not go into the change PLL sequence on reboot if PLL
+		 * setting is the same, so the operation of enabling eSPI pad we
+		 * added in clock_set_pll() will not be applied.
+		 */
+		IT83XX_ESPI_ESGCTRL2 &= ~(1 << 6);
+#endif
 		system_reset(SYSTEM_RESET_HARD);
+	}
 
 	if (IT83XX_ECPM_PLLCTRL == EC_PLL_DEEP_DOZE) {
 		clock_ec_pll_ctrl(EC_PLL_DOZE);
