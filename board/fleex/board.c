@@ -278,3 +278,13 @@ static void update_gpios_from_board_id(void)
 }
 
 DECLARE_HOOK(HOOK_INIT, update_gpios_from_board_id, HOOK_PRIO_INIT_I2C + 1);
+
+void board_overcurrent_event(int port, int is_overcurrented)
+{
+	/* Sanity check the port. */
+	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_COUNT))
+		return;
+
+	/* Note that the level is inverted because the pin is active low. */
+	gpio_set_level(GPIO_USB_C_OC, !is_overcurrented);
+}

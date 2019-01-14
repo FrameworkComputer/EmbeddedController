@@ -330,3 +330,13 @@ const int keyboard_factory_scan_pins[][2] = {
 const int keyboard_factory_scan_pins_used =
 			ARRAY_SIZE(keyboard_factory_scan_pins);
 #endif
+
+void board_overcurrent_event(int port, int is_overcurrented)
+{
+	/* Sanity check the port. */
+	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_COUNT))
+		return;
+
+	/* Note that the level is inverted because the pin is active low. */
+	gpio_set_level(GPIO_USB_C_OC, !is_overcurrented);
+}

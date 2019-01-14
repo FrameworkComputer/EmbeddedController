@@ -88,3 +88,12 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
+void board_overcurrent_event(int port, int is_overcurrented)
+{
+	/* Sanity check the port. */
+	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_COUNT))
+		return;
+
+	/* Note that the level is inverted because the pin is active low. */
+	gpio_set_level(GPIO_USB_C_OC, !is_overcurrented);
+}
