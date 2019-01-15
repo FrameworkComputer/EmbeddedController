@@ -663,7 +663,10 @@ static inline void set_state(int port, enum pd_states next_state)
 					   0);
 #else /* CONFIG_USB_PD_DUAL_ROLE */
 	if (next_state == PD_STATE_SRC_DISCONNECTED) {
-#endif
+#ifdef CONFIG_USBC_VCONN
+		set_vconn(port, 0);
+#endif /* CONFIG_USBC_VCONN */
+#endif /* !CONFIG_USB_PD_DUAL_ROLE */
 		/*
 		 * If we are source, make sure VBUS is off and
 		 * if PD REV3.0, restore RP.
