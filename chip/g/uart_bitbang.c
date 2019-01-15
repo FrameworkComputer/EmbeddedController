@@ -319,7 +319,7 @@ static int uart_bitbang_receive_char(uint8_t *rxed_char, uint32_t *next_tick)
 	return EC_SUCCESS;
 }
 
-void uart_bitbang_irq(void)
+void __attribute__((used)) uart_bitbang_irq(void)
 {
 	uint8_t rx_buffer[RX_BUF_SIZE];
 	size_t i = 0;

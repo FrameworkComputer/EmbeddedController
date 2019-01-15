@@ -19,7 +19,7 @@
 /* Watchdog expiration */
 #define WATCHDOG_PERIOD (CONFIG_WATCHDOG_PERIOD_MS * (PCLK_FREQ / 1000))
 
-void trace_and_reset(uint32_t excep_lr, uint32_t excep_sp)
+void __attribute__((used)) trace_and_reset(uint32_t excep_lr, uint32_t excep_sp)
 {
 	watchdog_trace(excep_lr, excep_sp);
 	system_reset(RESET_FLAG_WATCHDOG);
