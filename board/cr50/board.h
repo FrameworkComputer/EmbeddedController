@@ -250,7 +250,6 @@ enum nvmem_vars {
 void board_configure_deep_sleep_wakepins(void);
 void ap_detect_asserted(enum gpio_signal signal);
 void ec_detect_asserted(enum gpio_signal signal);
-void ec_tx_cr50_rx(enum gpio_signal signal);
 void servo_detect_asserted(enum gpio_signal signal);
 void tpm_rst_deasserted(enum gpio_signal signal);
 void tpm_rst_asserted(enum gpio_signal signal);

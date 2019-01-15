@@ -157,7 +157,7 @@ int flash_bank_count(int offset, int size)
 }
 #endif  /* CONFIG_FLASH_MULTIPLE_REGION */
 
-int flash_range_ok(int offset, int size_req, int align)
+static int flash_range_ok(int offset, int size_req, int align)
 {
 	if (offset < 0 || size_req < 0 ||
 	    offset > CONFIG_FLASH_SIZE ||

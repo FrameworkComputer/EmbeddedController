@@ -448,7 +448,7 @@ void tpm_register_put(uint32_t regaddr, const uint8_t *data, uint32_t data_size)
 
 }
 
-void fifo_reg_read(uint8_t *dest, uint32_t data_size)
+static void fifo_reg_read(uint8_t *dest, uint32_t data_size)
 {
 	uint32_t still_in_fifo = tpm_.fifo_write_index -
 		tpm_.fifo_read_index;

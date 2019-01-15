@@ -639,17 +639,6 @@ static void configure_board_specific_gpios(void)
 		closed_source_set1_configure_gpios();
 }
 
-void decrement_retry_counter(void)
-{
-	uint32_t counter = GREG32(PMU, LONG_LIFE_SCRATCH0);
-
-	if (counter) {
-		GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 1);
-		GREG32(PMU, LONG_LIFE_SCRATCH0) = counter - 1;
-		GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 0);
-	}
-}
-
 static uint8_t mismatched_board_id;
 
 int board_id_is_mismatched(void)
@@ -718,7 +707,7 @@ static void board_init(void)
 	 * the rolling reboot count.
 	 */
 	if (system_get_reset_flags() & RESET_FLAG_HIBERNATE)
-		decrement_retry_counter();
+		system_decrement_retry_counter();
 	configure_board_specific_gpios();
 	init_pmu();
 	reset_wake_logic();

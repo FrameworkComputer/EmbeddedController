@@ -74,7 +74,7 @@ int uart_read_char(void)
 /**
  * Interrupt handlers for UART0
  */
-void uart_ec_tx_interrupt(void)
+static void uart_ec_tx_interrupt(void)
 {
 	/* Clear transmit interrupt status */
 	GR_UART_ISTATECLR(UARTN) = GC_UART_ISTATECLR_TX_MASK;
@@ -84,7 +84,7 @@ void uart_ec_tx_interrupt(void)
 }
 DECLARE_IRQ(GC_IRQNUM_UART0_TXINT, uart_ec_tx_interrupt, 1);
 
-void uart_ec_rx_interrupt(void)
+static void uart_ec_rx_interrupt(void)
 {
 	/* Clear receive interrupt status */
 	GR_UART_ISTATECLR(UARTN) = GC_UART_ISTATECLR_RX_MASK;
