@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+#define CONFIG_LTO
+
 /*
  * The default watchdog timeout is 1.6 seconds, but there are some legitimate
  * flash-intensive TPM operations that actually take close to that long to
