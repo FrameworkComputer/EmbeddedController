@@ -15,6 +15,7 @@
 #include "tcpm.h"
 #include "usb_charge.h"
 #include "usb_pd_tcpm.h"
+#include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -322,11 +323,7 @@ static void nx20p348x_handle_interrupt(int port)
 	/* Check for 5V OC interrupt */
 	if (reg & NX20P348X_INT1_OC_5VSRC) {
 		CPRINTS("C%d: PPC detected Vbus overcurrent!", port);
-		/*
-		 * TODO (b/69935262): The overcurrent action hasn't
-		 * been completed yet, but is required for TI PPC. When that
-		 * work is complete, tie it in here.
-		 */
+		pd_handle_overcurrent(port);
 	}
 
 	/* Check for Vbus reverse current protection */
