@@ -972,6 +972,12 @@ static void shi_disable(void)
 	 * SHI_SDI SHI_SDO SHI_CS# SHI_SCLK are selected to GPIO
 	 */
 	CLEAR_BIT(NPCX_DEVALT(ALT_GROUP_C), NPCX_DEVALTC_SHI_SL);
+
+	/*
+	 * Allow deep sleep again in case CS dropped before ec was
+	 * informed in hook function and turn off SHI's interrupt in time.
+	 */
+	enable_sleep(SLEEP_MASK_SPI);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, shi_disable, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_SYSJUMP, shi_disable, HOOK_PRIO_DEFAULT);
