@@ -262,6 +262,16 @@ void clock_init(void)
 	 */
 	IT83XX_GCTRL_RSTS = (IT83XX_GCTRL_RSTS & 0x3F) + 0x40;
 
+#if defined(IT83XX_ESPI_RESET_MODULE_BY_FW) && defined(CONFIG_HOSTCMD_ESPI)
+	/*
+	 * Because we don't support eSPI HW reset function (b/111480168) on DX
+	 * version, so we have to reset eSPI configurations during init to
+	 * ensure Host and EC are synchronized (especially for the field of
+	 * I/O mode)
+	 */
+	if (!system_jumped_to_this_image())
+		espi_fw_reset_module();
+#endif
 	/* Turn off auto clock gating. */
 	IT83XX_ECPM_AUTOCG = 0x00;
 

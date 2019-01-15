@@ -22,6 +22,7 @@ void clock_sleep_mode_wakeup_isr(void);
 int clock_ec_wake_from_sleep(void);
 void __enter_hibernate(uint32_t seconds, uint32_t microseconds);
 void espi_reset_pin_asserted_interrupt(enum gpio_signal signal);
+void espi_fw_reset_module(void);
 void espi_interrupt(void);
 void espi_vw_interrupt(void);
 void espi_init(void);
