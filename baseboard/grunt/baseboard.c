@@ -386,6 +386,11 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = KX022_ACCEL_MIN_FREQ,
 	 .max_frequency = KX022_ACCEL_MAX_FREQ,
 	 .config = {
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100,
+		 },
 		/* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S3] = {
 			.odr = 10000 | ROUND_UP_FLAG,
