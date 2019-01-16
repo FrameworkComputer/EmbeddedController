@@ -24,6 +24,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "ipi_chip.h"
+#include "mkbp_event.h"
 #include "system.h"
 #include "task.h"
 #include "util.h"
@@ -32,7 +33,10 @@
 #define CPRINTS(format, args...) cprints(CC_IPI, format, ##args)
 
 #define IPI_MAX_REQUEST_SIZE CONFIG_IPC_SHARED_OBJ_BUF_SIZE
-#define IPI_MAX_RESPONSE_SIZE CONFIG_IPC_SHARED_OBJ_BUF_SIZE
+/* Reserve 1 extra byte for HOSTCMD_TYPE and 3 bytes for padding. */
+#define IPI_MAX_RESPONSE_SIZE (CONFIG_IPC_SHARED_OBJ_BUF_SIZE - 4)
+#define HOSTCMD_TYPE_HOSTCMD 1
+#define HOSTCMD_TYPE_HOSTEVENT 2
 
 static struct mutex ipi_lock;
 /* IPC0 shared objects, including send object and receive object. */
@@ -41,7 +45,19 @@ static struct ipc_shared_obj *const scp_send_obj =
 static struct ipc_shared_obj *const scp_recv_obj =
 	(struct ipc_shared_obj *)(CONFIG_IPC_SHARED_OBJ_ADDR +
 				  sizeof(struct ipc_shared_obj));
+static char ipi_ready;
 #ifdef HAS_TASK_HOSTCMD
+/*
+ * hostcmd and hostevent share the same IPI ID, and use first byte type to
+ * indicate its type.
+ */
+static struct hostcmd_data {
+	const uint8_t type;
+	/* To be compatible with CONFIG_HOSTCMD_ALIGNED */
+	uint8_t response[IPI_MAX_RESPONSE_SIZE] __aligned(4);
+} hc_cmd_obj = { .type = HOSTCMD_TYPE_HOSTCMD };
+BUILD_ASSERT(sizeof(struct hostcmd_data) == CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
+
 static struct host_packet ipi_packet;
 #endif
 
@@ -61,6 +77,9 @@ static inline void try_to_wakeup_ap(int32_t id)
 /* Send data from SCP to AP. */
 int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 {
+	if (!ipi_ready)
+		return EC_ERROR_BUSY;
+
 	/*
 	 * TODO(b:117917141): Evaluate if we can remove this once we have the
 	 * video/camera feature code base.
@@ -156,11 +175,23 @@ void ipi_inform_ap(void)
 }
 
 #ifdef HAS_TASK_HOSTCMD
+#if defined(CONFIG_MKBP_USE_CUSTOM)
+void mkbp_set_host_active_via_custom(int active)
+{
+	static const uint8_t hc_evt_obj = HOSTCMD_TYPE_HOSTEVENT;
+	if (active)
+		ipi_send(IPI_HOST_COMMAND, &hc_evt_obj, sizeof(hc_evt_obj), 1);
+}
+#endif
+
 static void ipi_send_response_packet(struct host_packet *pkt)
 {
 	int ret;
 
-	ret = ipi_send(IPI_HOST_COMMAND, pkt->response, pkt->response_size, 0);
+	ret = ipi_send(IPI_HOST_COMMAND, &hc_cmd_obj,
+		       pkt->response_size +
+			       offsetof(struct hostcmd_data, response),
+		       1);
 	if (ret)
 		CPRINTS("#ERR IPI HOSTCMD %d", ret);
 }
@@ -193,7 +224,7 @@ static void ipi_hostcmd_handler(int32_t id, void *buf, uint32_t len)
 	ipi_packet.request_max = IPI_MAX_REQUEST_SIZE;
 	ipi_packet.request_size = host_request_expected_size(r);
 
-	ipi_packet.response = scp_send_obj->buffer;
+	ipi_packet.response = hc_cmd_obj.response;
 	/* Reserve space for the preamble and trailing byte */
 	ipi_packet.response_max = IPI_MAX_RESPONSE_SIZE;
 	ipi_packet.response_size = 0;
@@ -202,7 +233,7 @@ static void ipi_hostcmd_handler(int32_t id, void *buf, uint32_t len)
 
 	host_packet_receive(&ipi_packet);
 }
-DECLARE_IPI(IPI_HOST_COMMAND, ipi_hostcmd_handler, 0);
+DECLARE_IPI(IPI_HOST_COMMAND, ipi_hostcmd_handler, 1);
 
 /*
  * Get protocol information
@@ -232,6 +263,8 @@ static void ipi_enable_ipc0_deferred(void)
 	/* All tasks are up, we can safely enable IPC0 IRQ now. */
 	SCP_INTC_IRQ_ENABLE |= IPC0_IRQ_EN;
 	task_enable_irq(SCP_IRQ_IPC0);
+
+	ipi_ready = 1;
 
 	/* Inform AP that SCP is inited.  */
 	ipi_inform_ap();

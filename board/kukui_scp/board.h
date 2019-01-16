@@ -11,6 +11,9 @@
 #define CONFIG_FLASH_SIZE 0x40000 /* Image file size: 256KB */
 #undef  CONFIG_LID_SWITCH
 #undef  CONFIG_FW_INCLUDE_RO
+#define CONFIG_MKBP_EVENT
+/* Sent MKBP event via IPI. */
+#define CONFIG_MKBP_USE_CUSTOM
 
 /* Access DRAM through cached access */
 #define CONFIG_DRAM_BASE 0x10000000
