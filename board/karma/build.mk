@@ -9,3 +9,5 @@
 CHIP:=npcx
 CHIP_VARIANT:=npcx5m6g
 BASEBOARD:=kalista
+
+board-y=board.o
