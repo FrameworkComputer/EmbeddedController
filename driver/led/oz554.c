@@ -9,6 +9,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "oz554.h"
 #include "task.h"
 #include "timer.h"
 
@@ -16,7 +17,6 @@
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
 #define I2C_ADDR_OZ554		0x62
-#define OZ554_DATA_SIZE		6
 
 struct oz554_value {
 	uint8_t offset;
@@ -34,7 +34,7 @@ struct oz554_value {
  */
 
 /* This ordering is suggested by vendor. */
-static const struct oz554_value order[] = {
+static struct oz554_value oz554_conf[] = {
 	/*
 	 * Reigster 0x01: Operation frequency control
 	 * Frequency selection: 300(KHz)
@@ -73,15 +73,15 @@ static const struct oz554_value order[] = {
 	 */
 	{.offset = 0, .data = 0xF2},
 };
-BUILD_ASSERT(ARRAY_SIZE(order) == OZ554_DATA_SIZE);
+static const int oz554_conf_size = ARRAY_SIZE(oz554_conf);
 
 static void set_oz554_reg(void)
 {
 	int i;
 
-	for (i = 0; i < OZ554_DATA_SIZE; ++i) {
+	for (i = 0; i < oz554_conf_size; ++i) {
 		int rv = i2c_write8(I2C_PORT_BACKLIGHT, I2C_ADDR_OZ554,
-				    order[i].offset, order[i].data);
+				    oz554_conf[i].offset, oz554_conf[i].data);
 		if (rv) {
 			CPRINTS("Write OZ554 register %d failed rv=%d" , i, rv);
 			return;
@@ -102,8 +102,24 @@ void backlight_enable_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&backlight_enable_deferred_data, 30 * MSEC);
 }
 
+int oz554_set_config(int offset, int data)
+{
+	int i;
+	for (i = 0; i < oz554_conf_size; i++) {
+		if (oz554_conf[i].offset == offset)
+			break;
+	}
+	if (i >= oz554_conf_size)
+		/* Matching offset not found */
+		return EC_ERROR_INVAL;
+	oz554_conf[i].data = data;
+	return EC_SUCCESS;
+}
+
 static void init_oz554(void)
 {
+	oz554_board_init();
+
 	gpio_enable_interrupt(GPIO_PANEL_BACKLIGHT_EN);
 }
 DECLARE_HOOK(HOOK_INIT, init_oz554, HOOK_PRIO_DEFAULT);

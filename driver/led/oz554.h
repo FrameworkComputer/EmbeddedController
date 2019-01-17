@@ -10,6 +10,17 @@
 
 #include "gpio.h"
 
+void oz554_board_init(void) __attribute__((weak));
+
+/**
+ * Update oz554 configuration array (oz554_conf).
+ *
+ * @param offset: Offset of the register to be set.
+ * @param data:   Value to be set.
+ * @return EC_SUCCESS or EC_ERROR_* for errors.
+ */
+int oz554_set_config(int offset, int data);
+
 void backlight_enable_interrupt(enum gpio_signal signal);
 
 #endif
