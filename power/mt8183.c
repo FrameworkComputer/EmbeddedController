@@ -380,9 +380,6 @@ enum power_state power_handle_state(enum power_state state)
 		 * shuts down upon receiving WATCHDOG.
 		 */
 		if (power_get_signals() & IN_PGOOD_PMIC) {
-#if (defined(BOARD_KUKUI) || defined(BOARD_FLAPJACK)) && BOARD_REV == 0
-			CPRINTS("Cannot force PMIC off (rev0)");
-#else
 			CPRINTS("Forcing PMIC off");
 			gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 0);
 			msleep(5);
@@ -390,7 +387,6 @@ enum power_state power_handle_state(enum power_state state)
 				PMIC_FORCE_RESET_TIME);
 
 			return POWER_S5G3;
-#endif
 		}
 
 		return POWER_G3;

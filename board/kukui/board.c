@@ -52,7 +52,6 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(0 /* port */);
 }
 
-#if BOARD_REV >= 1
 static void hall_interrupt(enum gpio_signal signal)
 {
 	/* TODO(b/111378000): Implement hall_interrupt */
@@ -62,7 +61,6 @@ static void gauge_interrupt(enum gpio_signal signal)
 {
 	task_wake(TASK_ID_CHARGER);
 }
-#endif
 
 #include "gpio_list.h"
 

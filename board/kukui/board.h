@@ -11,7 +11,7 @@
 /* board revision */
 #define BOARD_REV 1
 
-#if BOARD_REV < 0 || BOARD_REV > 1
+#if BOARD_REV < 1 || BOARD_REV > 1
 #error "Board revision out of range"
 #endif
 

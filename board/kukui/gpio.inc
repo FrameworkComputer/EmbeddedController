@@ -37,32 +37,20 @@ GPIO_INT_RO(EMMC_CMD,       PIN(B, 15), GPIO_INT_FALLING,
          emmc_cmd_interrupt)
 GPIO_INT(SPI1_NSS,          PIN(A, 15), GPIO_INT_BOTH,
          spi_event)
-#if BOARD_REV == 0
-GPIO_INT_RW(SYNC_INT,       PIN(A, 5),  GPIO_INT_RISING | GPIO_PULL_DOWN,
-         sync_interrupt)
-GPIO(SPI1_NSS,              PIN(A, 15), GPIO_INPUT)
-#elif BOARD_REV >= 1
 GPIO_INT_RW(SYNC_INT,       PIN(A, 8),  GPIO_INT_RISING | GPIO_PULL_DOWN,
          sync_interrupt)
 GPIO_INT(HALL_INT_L,        PIN(C, 5),  GPIO_INT_FALLING,
          hall_interrupt)
 GPIO_INT(GAUGE_INT_ODL,     PIN(C, 9),  GPIO_INT_FALLING | GPIO_PULL_UP,
          gauge_interrupt)
-#endif
 
 /* Interrupts not implemented yet */
-#if BOARD_REV >= 1
 GPIO(ALS_INT_ODL,           PIN(A, 6), GPIO_INPUT)
-#endif
 
 /* Voltage rails control pins */
 GPIO(PP3300_S0_EN,         PIN(B, 6),  GPIO_OUT_LOW)
 GPIO(PP1800_S3_EN,         PIN(C, 7),  GPIO_OUT_LOW)
-#if BOARD_REV == 0
-GPIO(PP3300_S3_EN,         PIN(A, 8),  GPIO_OUT_LOW)
-#elif BOARD_REV >= 1
 GPIO(PP3300_S3_EN,         PIN(D, 2),  GPIO_OUT_LOW)
-#endif
 
 /* Reset pins */
 GPIO(AP_SYS_RST_L,         PIN(C, 11), GPIO_OUT_LOW)
@@ -86,12 +74,8 @@ GPIO(BOARD_ID,             PIN(C, 0),  GPIO_ANALOG)
 /* Other input pins */
 GPIO(WP_L,                 PIN(C, 8),  GPIO_INPUT) /* EC_FLASH_WP_ODL */
 GPIO(BOOT0,                PIN(F, 11), GPIO_INPUT)
-#if BOARD_REV == 0
-GPIO(CCD_MODE_ODL,         PIN(C, 9),  GPIO_INPUT)
-#elif BOARD_REV >= 1
 GPIO(CCD_MODE_ODL,         PIN(A, 1),  GPIO_INPUT)
 GPIO(BATT_ID,              PIN(A, 7),  GPIO_INPUT)
-#endif
 
 /* Other output pins */
 GPIO(ENTERING_RW,          PIN(C, 6),  GPIO_ODR_HIGH) /* EC_ENTERING_RW_ODL */
@@ -102,13 +86,8 @@ GPIO(USB_C0_DP_POLARITY,   PIN(C, 14), GPIO_OUT_LOW)
 GPIO(USB_C0_HPD_OD,        PIN(F, 1),  GPIO_ODR_LOW)
 GPIO(BOOTBLOCK_MUX_OE,     PIN(C, 4),  GPIO_ODR_HIGH)
 GPIO(BOOTBLOCK_EN_L,       PIN(C, 1),  GPIO_ODR_HIGH)
-#if BOARD_REV == 0
-GPIO(USB_C0_DP_OE_L,       PIN(C, 5),  GPIO_OUT_HIGH)
-GPIO(OTG_EN,               PIN(A, 6),  GPIO_OUT_LOW)
-#elif BOARD_REV >= 1
 GPIO(USB_C0_DP_OE_L,       PIN(A, 5),  GPIO_OUT_HIGH)
 GPIO(USB_ID,               PIN(A, 13), GPIO_ODR_HIGH)
-#endif
 
 /* USART1: PA9/PA10 */
 ALTERNATE(PIN_MASK(A, 0x0600), 1, MODULE_UART,       0)
