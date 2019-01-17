@@ -200,7 +200,14 @@ int sensorhub_set_ext_data_rate(const struct motion_sensor_t *s,
 	xl_rate = st_get_data_rate(s);
 	*ret_rate = MIN(rate, xl_rate);
 #ifdef CONFIG_ACCEL_FIFO
-	ret = accelgyro_config_fifo(s);
+	ret = accelgyro_fifo_disable(s);
+	if (ret != EC_SUCCESS)
+		return ret;
+	/*
+	 * NOTE: the ODR on the pass-through sensor does not currently change.
+	 * If it does, that step needs to be performed here
+	 */
+	ret = accelgyro_fifo_enable(s);
 #endif
 	return ret;
 }
