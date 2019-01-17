@@ -32,11 +32,17 @@ static enum led_states led_get_state(void)
 		else if (charge_lvl < led_charge_lvl_2)
 			new_state = STATE_CHARGING_LVL_2;
 		else
-			new_state = STATE_CHARGING_FULL_CHARGE;
+			if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+				new_state = STATE_CHARGING_FULL_S5;
+			else
+				new_state = STATE_CHARGING_FULL_CHARGE;
 		break;
 	case PWR_STATE_DISCHARGE_FULL:
 		if (extpower_is_present()) {
-			new_state = STATE_CHARGING_FULL_CHARGE;
+			if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+				new_state = STATE_CHARGING_FULL_S5;
+			else
+				new_state = STATE_CHARGING_FULL_CHARGE;
 			break;
 		}
 		/* Intentional fall-through */
@@ -59,7 +65,10 @@ static enum led_states led_get_state(void)
 		new_state = STATE_BATTERY_ERROR;
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
-		new_state = STATE_CHARGING_FULL_CHARGE;
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			new_state = STATE_CHARGING_FULL_S5;
+		else
+			new_state = STATE_CHARGING_FULL_CHARGE;
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
 		if (charge_get_flags() & CHARGE_FLAG_FORCE_IDLE)
@@ -89,6 +98,14 @@ static void led_update_battery(void)
 	 * continue using the previous one.
 	 */
 	if (desired_state != led_state && desired_state < LED_NUM_STATES) {
+		/*
+		 * Allow optional CHARGING_FULL_S5 state to fall back to
+		 * FULL_CHARGE if not defined.
+		 */
+		if (desired_state == STATE_CHARGING_FULL_S5 &&
+		    led_bat_state_table[desired_state][LED_PHASE_0].time == 0)
+			desired_state = STATE_CHARGING_FULL_CHARGE;
+
 		/* State is changing */
 		led_state = desired_state;
 		/* Reset ticks and period when state changes */
