@@ -280,12 +280,22 @@ static int svdm_dp_config(int port, uint32_t *payload)
 	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
 	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
 	int pin_mode = pd_dfp_dp_get_pin_mode(port, dp_status[port]);
+	enum typec_mux mux_mode;
 
 	if (!pin_mode)
 		return 0;
 
-	usb_mux_set(port, mf_pref ? TYPEC_MUX_DOCK : TYPEC_MUX_DP,
-		    USB_SWITCH_CONNECT, pd_get_polarity(port));
+	/*
+	 * Multi-function operation is only allowed if that pin config is
+	 * supported.
+	 */
+	mux_mode = ((pin_mode & MODE_DP_PIN_MF_MASK) && mf_pref) ?
+		TYPEC_MUX_DOCK : TYPEC_MUX_DP;
+	CPRINTS("pin_mode: %x, mf: %d, mux: %d", pin_mode, mf_pref, mux_mode);
+
+	/* Connect the SBU and USB lines to the connector. */
+	ppc_set_sbu(port, 1);
+	usb_mux_set(port, mux_mode, USB_SWITCH_CONNECT, pd_get_polarity(port));
 
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));
