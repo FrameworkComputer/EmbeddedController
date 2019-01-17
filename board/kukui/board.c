@@ -311,14 +311,6 @@ int board_get_version(void)
 		}
 	}
 
-	/*
-	 * Disable ADC module after we detect the board version,
-	 * since this is the only thing ADC module needs to do
-	 * for this board.
-	 */
-	if (version != BOARD_VERSION_UNKNOWN)
-		adc_disable();
-
 	return version;
 }
 
