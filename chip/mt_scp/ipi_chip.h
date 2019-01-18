@@ -69,7 +69,7 @@ extern int *ipi_wakeup_table[];
  * is_wakeup_src: Declare IPI ID as a wake-up source or not
  */
 #define DECLARE_IPI(_id, handler, is_wakeup_src) \
-	struct ipi_num_check1_##ipi { \
+	struct ipi_num_check##_id { \
 		int dummy1[_id < IPI_COUNT ? 1 : -1]; \
 		int dummy2[is_wakeup_src == 0 || is_wakeup_src == 1 ? 1 : -1]; \
 	};  \
