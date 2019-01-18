@@ -195,34 +195,24 @@ struct fstatus {
 #define LSM6DSM_GYRO_FS_ADDR		0x11
 #define LSM6DSM_GYRO_FS_MASK		0x0c
 
-#define LSM6DSM_GYRO_FS_245_VAL		0x00
-#define LSM6DSM_GYRO_FS_500_VAL		0x01
-#define LSM6DSM_GYRO_FS_1000_VAL	0x02
-#define LSM6DSM_GYRO_FS_2000_VAL	0x03
 
-#define LSM6DSM_GYRO_FS_245_GAIN	8750
-#define LSM6DSM_GYRO_FS_500_GAIN	17500
-#define LSM6DSM_GYRO_FS_1000_GAIN	35000
-#define LSM6DSM_GYRO_FS_2000_GAIN	70000
+/* Supported gyroscope ranges:
+ * name(dps) | register | gain(udps/LSB) | actual value(dps)
+ * 250       | 0        | 8750           |  286.72
+ * 500       | 1        | 17500          |  573.44
+ * 1000      | 2        | 35000          |  1146.88
+ * 2000      | 3        | 70000          |  2293.76
+ */
+#define LSM6DSM_GYRO_FS_MIN_VAL_MDPS ((8750 << 15) / 1000)
+#define LSM6DSM_GYRO_FS_MAX_REG_VAL 3
 
-#define LSM6DSM_GYRO_FS_MAX_VAL		20000
-
-/* Gyro FS Gain value from selected Full Scale */
-#define LSM6DSM_GYRO_FS_GAIN(_fs) \
-	(LSM6DSM_GYRO_FS_245_GAIN << __fls(_fs / 245))
-
-/* Gyro FS Full Scale value from Gain */
-#define LSM6DSM_GYRO_GAIN_FS(_gain) \
-	(_gain == LSM6DSM_GYRO_FS_245_GAIN ? 245 : \
-	500 << (30 - __builtin_clz(_gain / LSM6DSM_GYRO_FS_245_GAIN)))
-
-/* Gyro Reg value from Full Scale */
+/* Gyro Reg value for Full Scale selection */
 #define LSM6DSM_GYRO_FS_REG(_fs) \
-	__fls(_fs / 245)
+	__fls(MAX(1, (_fs * 1000) / LSM6DSM_GYRO_FS_MIN_VAL_MDPS))
 
-/* Gyro normalized FS value from Full Scale: for Gyro Gains are not multiple */
-#define LSM6DSM_GYRO_NORMALIZE_FS(_fs) \
-	(_fs == 245 ? 245 : 500 << __fls(_fs / 500))
+/* Gyro normalized FS value from Full Scale register */
+#define LSM6DSM_GYRO_NORMALIZE_FS(_reg) \
+	((LSM6DSM_GYRO_FS_MIN_VAL_MDPS << (_reg)) / 1000)
 
 /* FS register address/mask for Acc/Gyro sensors */
 #define LSM6DSM_RANGE_REG(_sensor)  (LSM6DSM_ACCEL_FS_ADDR + (_sensor))

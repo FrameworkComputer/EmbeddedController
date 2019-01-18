@@ -375,22 +375,20 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 		reg_val = LSM6DSM_ACCEL_FS_REG(newrange);
 	} else {
 		/* Adjust and check rounded value for gyro. */
-		if (rnd && (newrange < LSM6DSM_GYRO_NORMALIZE_FS(newrange)))
-			newrange *= 2;
+		reg_val = LSM6DSM_GYRO_FS_REG(range);
+		if (rnd && (range > LSM6DSM_GYRO_NORMALIZE_FS(reg_val)))
+			reg_val++;
 
-		if (newrange > LSM6DSM_GYRO_FS_MAX_VAL)
-			newrange = LSM6DSM_GYRO_FS_MAX_VAL;
-
-		reg_val = LSM6DSM_GYRO_FS_REG(newrange);
+		if (reg_val > LSM6DSM_GYRO_FS_MAX_REG_VAL)
+			reg_val = LSM6DSM_GYRO_FS_MAX_REG_VAL;
+		newrange = LSM6DSM_GYRO_NORMALIZE_FS(reg_val);
 	}
 
 	mutex_lock(s->mutex);
 	err = st_write_data_with_mask(s, ctrl_reg, LSM6DSM_RANGE_MASK, reg_val);
 	if (err == EC_SUCCESS)
 		/* Save internally gain for speed optimization. */
-		data->base.range = (s->type == MOTIONSENSE_TYPE_ACCEL ?
-				    newrange :
-				    LSM6DSM_GYRO_FS_GAIN(newrange));
+		data->base.range = newrange;
 	mutex_unlock(s->mutex);
 
 	return EC_SUCCESS;
@@ -414,9 +412,7 @@ static int get_range(const struct motion_sensor_t *s)
 	 */
 	struct stprivate_data *data = s->drv_data;
 
-	if (s->type == MOTIONSENSE_TYPE_ACCEL)
-		return data->base.range;
-	return LSM6DSM_GYRO_GAIN_FS(data->base.range);
+	return data->base.range;
 }
 
 /**
