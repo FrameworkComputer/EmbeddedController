@@ -230,8 +230,8 @@ DEFINE_integer port "${DEFAULT_PORT}" \
 	"Port to communicate to servo on."
 DEFINE_boolean raiden "${FLAGS_FALSE}" \
 	"Use raiden_debug_spi programmer"
-DEFINE_string read "" \
-	"Stm32 only: pathname of the file to store EC firmware image."
+DEFINE_string read "" "Stm32 and npcx_spi only:"\
+" pathname of the file to store EC firmware image."
 DEFINE_boolean ro "${FLAGS_FALSE}" \
 	"Write only the read-only partition"
 DEFINE_integer timeout 600 \
@@ -239,7 +239,7 @@ DEFINE_integer timeout 600 \
 DEFINE_boolean verbose "${FLAGS_FALSE}" \
 	"Verbose hw control logging"
 DEFINE_boolean verify "${FLAGS_FALSE}" \
-	"Stm32 only: verify EC firmware image after programming."
+	"Stm32 and npcx_spi only: verify EC firmware image after programming."
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -387,7 +387,7 @@ if [ "${CHIP}" = "stm32_dfu" -o "${CHIP}" = "it83xx" ]; then
 fi
 
 case "${CHIP}" in
-	"stm32") ;;
+	"stm32"|"npcx_spi") ;;
 	*)
 		if [[ -n "${FLAGS_read}" ]]; then
 			die "The flag is not yet supported on ${CHIP}."
@@ -883,59 +883,80 @@ function flash_flashrom() {
 		# Temp layout
 		L=/tmp/flash_spi_layout_$$
 
-		dump_fmap -F "${IMG}" > "${L}"
+		[[ -z "${FLAGS_read}" ]] && dump_fmap -F "${IMG}" > "${L}"
 
-		FLASHROM_OPTIONS="-i EC_RW -i WP_RO -l "${L}" --ignore-fmap \
-			--fast-verify"
+		FLASHROM_OPTIONS="-i EC_RW -i WP_RO -l "${L}" --ignore-fmap"
+		FLASHROM_OPTIONS+=" --fast-verify"
 	fi
 
-	# flashrom should report the image size at the end of the output.
-	FLASHROM_CMDLINE="sudo ${FLASHROM} ${FLASHROM_PARAM} --get-size"
-	if [ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]; then
-		echo "Running flashrom:" 1>&2
-		echo " ${FLASHROM_CMDLINE}" 1>&2
-	fi
-	SPI_SIZE=$(${FLASHROM_CMDLINE} 2>/dev/null |\
-		       grep -oe '[0-9]\+$') || \
-		die "Failed to determine chip size!"
-	(( SPI_SIZE == 0 )) && die "Chip size is 0!"
-
-	IMG_SIZE=$(stat -c%s "$IMG")
-	PATCH_SIZE=$((${SPI_SIZE} - ${IMG_SIZE}))
-
-	# Temp image
-	T=/tmp/flash_spi_$$
-
-	if [[ "${CHIP}" =~ ^npcx(|_int)_spi$ ]] ; then
-	{	# Patch temp image up to SPI_SIZE
-		cat $IMG
-		if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
-			dd if=/dev/zero bs=${PATCH_SIZE} count=1 | \
-				tr '\0' '\377'
-		fi
-	} > $T
-	else
-	{	# Patch temp image up to SPI_SIZE
-		if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
-			dd if=/dev/zero bs=${PATCH_SIZE} count=1 | \
-				tr '\0' '\377'
-		fi
-		cat $IMG
-	} > $T
-	fi
-
-	# Generate the correct flashrom command to write the ec.
+	# Generate the correct flashrom command base.
 	FLASHROM_CMDLINE="${FLASHROM} ${FLASHROM_PARAM}"
-	FLASHROM_CMDLINE+=" ${FLASHROM_OPTIONS} -w ${T}"
+	if [[ -z "${FLAGS_read}" ]]; then
+		# Program EC image.
+		# flashrom should report the image size at the end of the output.
+		local FLASHROM_GETSIZE="sudo ${FLASHROM_CMDLINE} --get-size"
+		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+			info "Running flashrom:" 1>&2
+			echo " ${FLASHROM_GETSIZE}" 1>&2
+		fi
+		SPI_SIZE=$(${FLASHROM_GETSIZE} 2>/dev/null |\
+			       grep -oe '[0-9]\+$') || \
+			die "Failed to determine chip size!"
+		[[ ${SPI_SIZE} -eq 0 ]] && die "Chip size is 0!"
 
-	if [ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]; then
-		echo "Running flashrom:" 1>&2
-		echo " ${FLASHROM_CMDLINE}" 1>&2
+		IMG_SIZE=$(stat -c%s "${IMG}")
+		PATCH_SIZE=$((${SPI_SIZE} - ${IMG_SIZE}))
+
+		# Temp image
+		T=/tmp/flash_spi_$$
+
+		if [[ "${CHIP}" =~ ^npcx(|_int)_spi$ ]] ; then
+		{	# Patch temp image up to SPI_SIZE
+			cat $IMG
+			if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
+				dd if=/dev/zero bs=${PATCH_SIZE} count=1 | \
+					tr '\0' '\377'
+			fi
+		} > $T
+		else
+		{	# Patch temp image up to SPI_SIZE
+			if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
+				dd if=/dev/zero bs=${PATCH_SIZE} count=1 | \
+					tr '\0' '\377'
+			fi
+			cat $IMG
+		} > $T
+		fi
+
+		info "Start programming EC firmware image."
+		local FLASHROM_WRITE="${FLASHROM_CMDLINE} ${FLASHROM_OPTIONS}"
+		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+			info "Running flashrom:" 1>&2
+			echo " ${FLASHROM_WRITE} -w ${T}" 1>&2
+		fi
+		sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
+			${FLASHROM_WRITE} -w "${T}"
+	else
+		# Read EC image.
+		info "Start reading EC firmware image."
+		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+			info "Running flashrom:" 1>&2
+			echo " ${FLASHROM_CMDLINE} -r ${FLAGS_read}" 1>&2
+		fi
+		sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
+			${FLASHROM_CMDLINE} -r "${FLAGS_read}"
 	fi
-	sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
-		${FLASHROM_CMDLINE}
-
-	rm $T
+	if [[ -z "${FLAGS_read}" && "${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
+		# Verify EC image.
+		info "Verify EC firmware image."
+		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+			info "Running flashrom:" 1>&2
+			echo " ${FLASHROM_CMDLINE} -v ${T}" 1>&2
+		fi
+		sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
+			${FLASHROM_CMDLINE} -v "${T}"
+	fi
+	[[ -f "${T}" ]] && rm "${T}"
 
 	# Set GP_SEL# as default to disable GP mode when ec reboots
 	if [[ ${board_is_npcx_internal_spi} -eq 0 ]]; then
@@ -950,7 +971,7 @@ function flash_flashrom() {
 		fi
 
 	else
-		rm $L
+		[[ -f "${L}" ]] && rm "${L}"
 	fi
 
 	# Do not save/restore servo settings
