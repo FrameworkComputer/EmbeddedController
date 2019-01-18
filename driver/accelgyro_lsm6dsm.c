@@ -139,6 +139,8 @@ int accelgyro_fifo_enable(const struct motion_sensor_t *s)
 			decimator[i] = LSM6DSM_FIFO_DECIMATOR(max_odr / rate);
 			private->config.total_samples_in_pattern +=
 				private->config.samples_in_pattern[i];
+			private->samples_to_discard[i] =
+							LSM6DSM_DISCARD_SAMPLES;
 		} else {
 			/* Not in FIFO if sensor disabled. */
 			private->config.samples_in_pattern[i] = 0;
@@ -172,6 +174,8 @@ int accelgyro_fifo_enable(const struct motion_sensor_t *s)
  * |________|_______|_______|_______|________|_______|_______|
  *
  * Total samples for each pattern: 2 Gyro, 4 Acc, 1 Mag.
+ *
+ * Returns dev_fifo enum value of next sample to process
  */
 static int fifo_next(struct lsm6dsm_data *private)
 {
@@ -230,18 +234,24 @@ static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
 		if (next_fifo == FIFO_DEV_INVALID) {
 			return;
 		}
-		id = agm_maps[next_fifo];
-		axis = (accel + id)->raw_xyz;
 
-		/* Apply precision, sensitivity and rotation. */
-		st_normalize(accel + id, axis, fifo);
-		vect.data[X] = axis[X];
-		vect.data[Y] = axis[Y];
-		vect.data[Z] = axis[Z];
+		if (private->samples_to_discard[next_fifo] > 0) {
+			private->samples_to_discard[next_fifo]--;
+		} else {
+			id = agm_maps[next_fifo];
+			axis = (accel + id)->raw_xyz;
 
-		vect.flags = 0;
-		vect.sensor_num = accel - motion_sensors + id;
-		motion_sense_fifo_add_data(&vect, accel + id, 3, int_ts);
+			/* Apply precision, sensitivity and rotation. */
+			st_normalize(accel + id, axis, fifo);
+			vect.data[X] = axis[X];
+			vect.data[Y] = axis[Y];
+			vect.data[Z] = axis[Z];
+
+			vect.flags = 0;
+			vect.sensor_num = accel - motion_sensors + id;
+			motion_sense_fifo_add_data(&vect, accel + id, 3,
+						   int_ts);
+		}
 
 		fifo += OUT_XYZ_SIZE;
 		flen -= OUT_XYZ_SIZE;
@@ -264,10 +274,6 @@ static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts)
 	/*
 	 * TODO(b/122912601): phaser360: Investigate Standard Deviation error
 	 *				 during CtsSensorTests
-	 * - track number of samples to throw out after ODR changes
-	 * Accel discard: "should" be 0 for freq <= 26, 1 until 1666 Hz (table
-	 * 17)
-	 * Gyro discard: 12.5 Hz - 2, 26-833 Hz - 3 (table 19)
 	 * - check "pattern" register versus where code thinks it is parsing
 	 */
 
