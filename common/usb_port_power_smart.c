@@ -25,7 +25,10 @@
 #define CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE USB_CHARGE_MODE_SDP2
 #endif
 
-static uint8_t charge_mode[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
+static struct {
+	uint8_t mode:7;
+	uint8_t inhibit_charging_in_suspend:1;
+} charge_mode[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
 
 /* GPIOs to enable/disable USB ports. Board specific. */
 extern const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
@@ -91,12 +94,13 @@ static void usb_charge_all_ports_ctrl(enum usb_charge_mode mode)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PORT_POWER_SMART_PORT_COUNT; i++)
-		usb_charge_set_mode(i, mode);
+		usb_charge_set_mode(i, mode, USB_ALLOW_SUSPEND_CHARGE);
 }
 
-int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
+int usb_charge_set_mode(int port_id, enum usb_charge_mode mode,
+			enum usb_suspend_charge inhibit_charge)
 {
-	CPRINTS("USB charge p%d m%d", port_id, mode);
+	CPRINTS("USB charge p%d m%d i%d", port_id, mode, inhibit_charge);
 
 	if (port_id >= CONFIG_USB_PORT_POWER_SMART_PORT_COUNT)
 		return EC_ERROR_INVAL;
@@ -125,7 +129,8 @@ int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
 		return EC_ERROR_UNKNOWN;
 	}
 
-	charge_mode[port_id] = mode;
+	charge_mode[port_id].mode = mode;
+	charge_mode[port_id].inhibit_charging_in_suspend = inhibit_charge;
 
 	return EC_SUCCESS;
 }
@@ -136,17 +141,18 @@ int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
 static int command_set_mode(int argc, char **argv)
 {
 	int port_id = -1;
-	int mode = -1;
+	int mode = -1, inhibit_charge = 0;
 	char *e;
 	int i;
 
 	if (argc == 1) {
 		for (i = 0; i < CONFIG_USB_PORT_POWER_SMART_PORT_COUNT; i++)
-			ccprintf("Port %d: %d\n", i, charge_mode[i]);
+			ccprintf("Port %d: %d,%d\n", i, charge_mode[i].mode,
+				charge_mode[i].inhibit_charging_in_suspend);
 		return EC_SUCCESS;
 	}
 
-	if (argc != 3)
+	if (argc != 3 && argc != 4)
 		return EC_ERROR_PARAM_COUNT;
 
 	port_id = strtoi(argv[1], &e, 0);
@@ -158,17 +164,26 @@ static int command_set_mode(int argc, char **argv)
 	if (*e || mode < 0 || mode >= USB_CHARGE_MODE_COUNT)
 		return EC_ERROR_PARAM2;
 
-	return usb_charge_set_mode(port_id, mode);
+	if (argc == 4) {
+		inhibit_charge = strtoi(argv[3], &e, 0);
+		if (*e || (inhibit_charge != 0 && inhibit_charge != 1))
+			return EC_ERROR_PARAM3;
+	}
+
+	return usb_charge_set_mode(port_id, mode, inhibit_charge);
 }
 DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode,
-			"[<port> <0 | 1 | 2 | 3>]",
+			"[<port> <0 | 1 | 2 | 3> [<0 | 1>]]",
 			"Set USB charge mode");
 /*
  * Modes:
- * 0=Disabled.
- * 1=Standard downstream port.
- * 2=Charging downstream port, BC 1.2.
- * 3=Dedicated charging port, BC 1.2.
+ *  0 = Disabled.
+ *  1 = Standard downstream port.
+ *  2 = Charging downstream port, BC 1.2.
+ *  3 = Dedicated charging port, BC 1.2.
+ * Inhibit Charge:
+ *  0 = Enable charging during system suspend
+ *  1 = Disable charging during system suspend
  */
 
 /*****************************************************************************/
@@ -178,7 +193,8 @@ static int usb_charge_command_set_mode(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_charge_set_mode *p = args->params;
 
-	if (usb_charge_set_mode(p->usb_port_id, p->mode) != EC_SUCCESS)
+	if (usb_charge_set_mode(p->usb_port_id, p->mode,
+				p->inhibit_charge) != EC_SUCCESS)
 		return EC_RES_ERROR;
 
 	return EC_RES_SUCCESS;
@@ -212,16 +228,35 @@ static void usb_charge_init(void)
 	}
 
 	for (i = 0; i < CONFIG_USB_PORT_POWER_SMART_PORT_COUNT; i++)
-		usb_charge_set_mode(i, prev[i]);
+		usb_charge_set_mode(i, prev[i], USB_ALLOW_SUSPEND_CHARGE);
 }
 DECLARE_HOOK(HOOK_INIT, usb_charge_init, HOOK_PRIO_DEFAULT);
 
 static void usb_charge_resume(void)
 {
+	int i;
+
 	/* Turn on USB ports on as we go into S0 from S3 or S5. */
-	usb_charge_all_ports_ctrl(CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE);
+	for (i = 0; i < CONFIG_USB_PORT_POWER_SMART_PORT_COUNT; i++)
+		usb_charge_set_mode(i,
+			CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE,
+			charge_mode[i].inhibit_charging_in_suspend);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, usb_charge_resume, HOOK_PRIO_DEFAULT);
+
+static void usb_charge_suspend(void)
+{
+	int i;
+
+	/*
+	 * Inhibit charging during suspend if the inhibit_charging_in_suspend
+	 * is set to 1.
+	 */
+	for (i = 0; i < CONFIG_USB_PORT_POWER_SMART_PORT_COUNT; i++)
+		if (charge_mode[i].inhibit_charging_in_suspend)
+			usb_charge_set_enabled(i, 0 /* disabled */);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, usb_charge_suspend, HOOK_PRIO_DEFAULT);
 
 static void usb_charge_shutdown(void)
 {

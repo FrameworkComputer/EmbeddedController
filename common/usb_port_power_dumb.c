@@ -47,7 +47,8 @@ static void usb_port_all_ports_off(void)
 /*****************************************************************************/
 /* Host commands */
 
-int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
+int usb_charge_set_mode(int port_id, enum usb_charge_mode mode,
+			enum usb_suspend_charge inhibit_charge)
 {
 	CPRINTS("USB port p%d %d", port_id, mode);
 
@@ -72,7 +73,8 @@ static int usb_port_command_set_mode(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_charge_set_mode *p = args->params;
 
-	if (usb_charge_set_mode(p->usb_port_id, p->mode) != EC_SUCCESS)
+	if (usb_charge_set_mode(p->usb_port_id, p->mode,
+		p->inhibit_charge) != EC_SUCCESS)
 		return EC_RES_ERROR;
 
 	return EC_RES_SUCCESS;

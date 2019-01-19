@@ -4916,9 +4916,10 @@ int cmd_usb_charge_set_mode(int argc, char *argv[])
 	char *e;
 	int rv;
 
-	if (argc != 3) {
+	if (argc != 3 && argc != 4) {
 		fprintf(stderr,
-			"Usage: %s <port_id> <mode_id>\n", argv[0]);
+			"Usage: %s <port_id> <mode_id> <inhibit_charge>\n",
+			argv[0]);
 		return -1;
 	}
 	p.usb_port_id = strtol(argv[1], &e, 0);
@@ -4931,8 +4932,18 @@ int cmd_usb_charge_set_mode(int argc, char *argv[])
 		fprintf(stderr, "Bad mode ID.\n");
 		return -1;
 	}
+	p.inhibit_charge = 0;
+	if (argc == 4) {
+		p.inhibit_charge = strtol(argv[3], &e, 0);
+		if ((e && *e) || (p.inhibit_charge != 0 &&
+			p.inhibit_charge != 1)) {
+			fprintf(stderr, "Bad value\n");
+			return -1;
+		}
+	}
 
-	printf("Setting port %d to mode %d...\n", p.usb_port_id, p.mode);
+	printf("Setting port %d to mode %d inhibit_charge %d...\n",
+		p.usb_port_id, p.mode, p.inhibit_charge);
 
 	rv = ec_command(EC_CMD_USB_CHARGE_SET_MODE, 0,
 			&p, sizeof(p), NULL, 0);

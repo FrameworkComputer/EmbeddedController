@@ -30,14 +30,23 @@ enum usb_charge_mode {
 	USB_CHARGE_MODE_COUNT
 };
 
+enum usb_suspend_charge {
+	/* Enable charging in suspend */
+	USB_ALLOW_SUSPEND_CHARGE,
+	/* Disable charging in suspend */
+	USB_DISALLOW_SUSPEND_CHARGE
+};
+
 /**
  * Set USB charge mode for the port.
  *
- * @param usb_port_id	Port to set.
- * @param mode		New mode for port.
+ * @param usb_port_id		Port to set.
+ * @param mode			New mode for port.
+ * @param inhibit_charge	Inhibit charging during system suspend.
  * @return EC_SUCCESS, or non-zero if error.
  */
-int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode);
+int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode,
+			enum usb_suspend_charge inhibit_charge);
 
 #ifdef HAS_TASK_USB_CHG_P0
 #define USB_CHG_EVENT_BC12 TASK_EVENT_CUSTOM(1)
