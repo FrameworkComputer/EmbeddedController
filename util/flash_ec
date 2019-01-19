@@ -194,19 +194,19 @@ BOARDS_RAIDEN=(
 # i.e., If a board needs to use one CHIP when connected via a Suzy-Q and another
 # chip when connected via a Servo.
 declare -A VALID_CHIP_COMBO
-VALID_CHIP_COMBO["bobba.npcx_spi"]="(servo_micro|servo_v2)"
+VALID_CHIP_COMBO["bobba.npcx_int_spi"]="(servo_micro|servo_v2)"
 VALID_CHIP_COMBO["bobba.npcx_uut"]="ccd_cr50"
-VALID_CHIP_COMBO["casta.npcx_spi"]="(servo_micro|servo_v2)"
+VALID_CHIP_COMBO["casta.npcx_int_spi"]="(servo_micro|servo_v2)"
 VALID_CHIP_COMBO["casta.npcx_uut"]="ccd_cr50"
-VALID_CHIP_COMBO["fleex.npcx_spi"]="(servo_micro|servo_v2)"
+VALID_CHIP_COMBO["fleex.npcx_int_spi"]="(servo_micro|servo_v2)"
 VALID_CHIP_COMBO["fleex.npcx_uut"]="ccd_cr50"
-VALID_CHIP_COMBO["grunt.npcx_spi"]="(servo_micro|servo_v2)"
+VALID_CHIP_COMBO["grunt.npcx_int_spi"]="(servo_micro|servo_v2)"
 VALID_CHIP_COMBO["grunt.npcx_uut"]="ccd_cr50"
-VALID_CHIP_COMBO["meep.npcx_spi"]="(servo_micro|servo_v2)"
+VALID_CHIP_COMBO["meep.npcx_int_spi"]="(servo_micro|servo_v2)"
 VALID_CHIP_COMBO["meep.npcx_uut"]="ccd_cr50"
-VALID_CHIP_COMBO["phaser.npcx_spi"]="(servo_micro|servo_v2)"
+VALID_CHIP_COMBO["phaser.npcx_int_spi"]="(servo_micro|servo_v2)"
 VALID_CHIP_COMBO["phaser.npcx_uut"]="ccd_cr50"
-VALID_CHIP_COMBO["yorp.npcx_spi"]="(servo_micro|servo_v2)"
+VALID_CHIP_COMBO["yorp.npcx_int_spi"]="(servo_micro|servo_v2)"
 VALID_CHIP_COMBO["yorp.npcx_uut"]="ccd_cr50"
 
 DEFAULT_PORT="${SERVOD_PORT:-9999}"
@@ -320,7 +320,7 @@ if $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
 fi
 
 if $(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"); then
-	SUPPORTED_CHIPS+=("npcx_spi")
+	SUPPORTED_CHIPS+=("npcx_int_spi")
 fi
 
 if $(in_array "${BOARDS_NPCX_UUT[@]}" "${BOARD}"); then
@@ -827,7 +827,14 @@ function flash_flashrom() {
 	# value.
 	set +e
 	local board_is_npcx_internal_spi
-	$(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}")
+	# TODO(b/123098518) Once npcx_int_spi replaces "npcx_spi" in servo board
+	# overlay files, then remove the codes below that checkes ${BOARD}
+	local TEMP_BOARD=${BOARD}
+	if [[ -z "${TEMP_BOARD}" ]]; then
+		TEMP_BOARD=$(${DUT_CONTROL_CMD} "ec_board" | cut -d: -f2)
+	fi
+	$(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${TEMP_BOARD}") || \
+	[[ "${CHIP}" == "npcx_int_spi" ]]
 	board_is_npcx_internal_spi=$?
 	set -e # Okay, don't ignore errors anymore.
 
@@ -848,7 +855,7 @@ function flash_flashrom() {
 		dut_control cold_reset:on
 
 		# If spi flash is in npcx's ec, enable gang programer mode
-		if [ $board_is_npcx_internal_spi -eq 0 ]; then
+		if [[ ${board_is_npcx_internal_spi} -eq 0 ]]; then
 			# Set GP_SEL# as low then start ec
 			dut_control fw_up:on
 			sleep 0.1
@@ -862,7 +869,7 @@ function flash_flashrom() {
 			dut_control spi1_buf_on_flex_en:on
 		fi
 	else
-		if [ $board_is_npcx_internal_spi -eq 0 ]; then
+		if [[ ${board_is_npcx_internal_spi} -eq 0 ]]; then
 			# Set GP_SEL# as low then start ec
 			dut_control cold_reset:on
 			dut_control fw_up:on
@@ -899,7 +906,7 @@ function flash_flashrom() {
 	# Temp image
 	T=/tmp/flash_spi_$$
 
-	if [ "${CHIP}" = "npcx_spi" ] ; then
+	if [[ "${CHIP}" =~ ^npcx(|_int)_spi$ ]] ; then
 	{	# Patch temp image up to SPI_SIZE
 		cat $IMG
 		if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
@@ -931,7 +938,7 @@ function flash_flashrom() {
 	rm $T
 
 	# Set GP_SEL# as default to disable GP mode when ec reboots
-	if [ $board_is_npcx_internal_spi -eq 0 ]; then
+	if [[ ${board_is_npcx_internal_spi} -eq 0 ]]; then
 		dut_control fw_up:off
 	fi
 
@@ -1222,6 +1229,10 @@ function flash_npcx_7m7x_jtag() {
 }
 
 function flash_npcx_spi() {
+	flash_flashrom
+}
+
+function flash_npcx_int_spi() {
 	flash_flashrom
 }
 
