@@ -28,6 +28,9 @@ extern "C" {
 #define U2F_CTR_SIZE            4       // Size of counter field
 #define U2F_APPID_SIZE          32      // Size of application id
 #define U2F_CHAL_SIZE           32      // Size of challenge
+#define U2F_MAX_ATTEST_SIZE     256     // Size of largest blob to sign
+#define U2F_P256_SIZE           32
+#define U2F_FIXED_KH_SIZE       64      // Size of fixed size key handles
 
 #define ENC_SIZE(x)             ((x + 7) & 0xfff8)
 
@@ -91,6 +94,41 @@ typedef struct {
     uint8_t sig[U2F_MAX_EC_SIG_SIZE];   // Signature
 } U2F_AUTHENTICATE_RESP;
 
+// TODO(louiscollard): Add Descriptions.
+
+typedef struct {
+    uint8_t appId[U2F_APPID_SIZE];      // Application id
+    uint8_t flags;
+} U2F_GENERATE_REQ;
+
+typedef struct {
+    U2F_EC_POINT pubKey;                   // Generated public key
+    uint8_t keyHandle[U2F_FIXED_KH_SIZE];  // Key handle
+} U2F_GENERATE_RESP;
+
+typedef struct {
+    uint8_t appId[U2F_APPID_SIZE];         // Application id
+    uint8_t keyHandle[U2F_FIXED_KH_SIZE];  // Key handle
+    uint8_t hash[U2F_P256_SIZE];
+    uint8_t flags;
+} U2F_SIGN_REQ;
+
+typedef struct {
+    uint8_t sig_r[U2F_P256_SIZE];   // Signature
+    uint8_t sig_s[U2F_P256_SIZE];   // Signature
+} U2F_SIGN_RESP;
+
+typedef struct {
+    uint8_t format;
+    uint8_t dataLen;
+    uint8_t data[U2F_MAX_ATTEST_SIZE];
+} U2F_ATTEST_REQ;
+
+typedef struct {
+    uint8_t sig_r[U2F_P256_SIZE];
+    uint8_t sig_s[U2F_P256_SIZE];
+} U2F_ATTEST_RESP;
+
 // Command status responses
 
 #define U2F_SW_NO_ERROR                 0x9000 // SW_NO_ERROR
@@ -109,6 +147,9 @@ typedef struct {
 // Additional flags for P1 field
 #define G2F_ATTEST      0x80    // Fixed attestation key
 #define G2F_CONSUME     0x02    // Consume presence
+
+// U2F Attest format for U2F Register Response.
+#define U2F_ATTEST_FORMAT_REG_RESP      0
 
 // Vendor command to enable/disable the extensions
 #define U2F_VENDOR_MODE U2F_VENDOR_LAST

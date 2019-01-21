@@ -123,6 +123,13 @@ enum vendor_cmd_cc {
 	 */
 	VENDOR_CC_GET_PWR_BTN = 43,
 
+	/*
+	 * U2F commands.
+	 */
+	VENDOR_CC_U2F_GENERATE = 44,
+	VENDOR_CC_U2F_SIGN = 45,
+	VENDOR_CC_U2F_ATTEST = 46,
+
 	LAST_VENDOR_COMMAND = 65535,
 };
 

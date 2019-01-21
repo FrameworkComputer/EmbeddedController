@@ -9,6 +9,7 @@
 #include "cryptoc/p256.h"
 #include "cryptoc/sha256.h"
 #include "dcrypto.h"
+#include "extension.h"
 #include "nvcounter.h"
 #include "system.h"
 #include "u2f_impl.h"
@@ -389,3 +390,242 @@ ret_status:
 
 	return ret_len;
 }
+
+/* U2F GENERATE command  */
+static enum vendor_cmd_rc u2f_generate(enum vendor_cmd_cc code,
+				       void *buf,
+				       size_t input_size,
+				       size_t *response_size)
+{
+	U2F_GENERATE_REQ *req = buf;
+	U2F_GENERATE_RESP *resp;
+
+	/* Origin keypair */
+	uint8_t od_seed[SHA256_DIGEST_SIZE];
+	p256_int od, opk_x, opk_y;
+
+	/* Key handle */
+	uint8_t kh[U2F_FIXED_KH_SIZE];
+	uint8_t tmp[U2F_FIXED_KH_SIZE];
+
+	if (input_size != sizeof(U2F_GENERATE_REQ) ||
+	    *response_size < sizeof(U2F_GENERATE_RESP))
+		return VENDOR_RC_BOGUS_ARGS;
+
+	/* Maybe enforce user presence, w/ optional consume */
+	if (pop_check_presence(req->flags & G2F_CONSUME) != POP_TOUCH_YES &&
+	    (req->flags & U2F_AUTH_FLAG_TUP) != 0)
+		return VENDOR_RC_NOT_ALLOWED;
+
+	/* Generate origin-specific keypair */
+	if (u2f_origin_keypair(od_seed, &od, &opk_x, &opk_y) !=
+	    EC_SUCCESS) {
+		CPRINTF("Origin keypair gen failed");
+		return VENDOR_RC_INTERNAL_ERROR;
+	}
+
+	/* Generate key handle */
+	/* Interleave origin ID and origin priv key, wrap and export. */
+	interleave32(req->appId, od_seed, tmp);
+	if (wrap_kh(NULL, tmp, kh, ENCRYPT_MODE) != EC_SUCCESS)
+		return VENDOR_RC_INTERNAL_ERROR;
+
+	/*
+	 * From this point: the request 'req' content is invalid as it is
+	 * overridden by the response we are building in the same buffer.
+	 */
+	resp = buf;
+
+	/* Insert origin-specific public keys into the response */
+	p256_to_bin(&opk_x, resp->pubKey.x); /* endianness */
+	p256_to_bin(&opk_y, resp->pubKey.y); /* endianness */
+
+	resp->pubKey.pointFormat = U2F_POINT_UNCOMPRESSED;
+
+	/* Copy key handle to response. */
+	memcpy(resp->keyHandle, kh, sizeof(kh));
+
+	*response_size = sizeof(resp->pubKey) +
+			 sizeof(kh);
+
+	return VENDOR_RC_SUCCESS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_U2F_GENERATE, u2f_generate);
+
+/* U2F SIGN command */
+static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
+				   void *buf,
+				   size_t input_size,
+				   size_t *response_size)
+{
+	const U2F_SIGN_REQ *req = buf;
+	U2F_SIGN_RESP *resp;
+
+	/* Decrypted key handle. */
+	uint8_t unwrapped_kh[KH_LEN];
+
+	/* Contents of key handle after de-interleaving. */
+	uint8_t od_seed[SHA256_DIGEST_SIZE];
+	uint8_t origin[U2F_APPID_SIZE];
+
+	struct drbg_ctx ctx;
+
+	/* Origin private key. */
+	p256_int origin_d;
+
+	/* Hash, and corresponding signature. */
+	p256_int h, r, s;
+
+	if (input_size != sizeof(U2F_SIGN_REQ))
+		return VENDOR_RC_BOGUS_ARGS;
+
+	/* Decrypt and unwrap key handle. */
+	if (wrap_kh(NULL, req->keyHandle, unwrapped_kh, DECRYPT_MODE))
+		return VENDOR_RC_NOT_ALLOWED;
+	deinterleave64(unwrapped_kh, origin, od_seed);
+
+	/* Check origin matches. */
+	if (memcmp(origin, req->appId, U2F_APPID_SIZE) != 0)
+		return VENDOR_RC_NOT_ALLOWED;
+
+	/* Always enforce user presence, with optional consume. */
+	if (pop_check_presence(req->flags & G2F_CONSUME) != POP_TOUCH_YES)
+		return VENDOR_RC_NOT_ALLOWED;
+
+	/* Re-create origin-specific key. */
+	if (u2f_origin_key(od_seed, &origin_d))
+		return VENDOR_RC_INTERNAL_ERROR;
+
+	/* Prepare hash to sign. */
+	p256_from_bin(req->hash, &h);
+
+	/* Sign. */
+	hmac_drbg_init_rfc6979(&ctx, &origin_d, &h);
+	if (!dcrypto_p256_ecdsa_sign(&ctx, &origin_d, &h, &r, &s)) {
+		p256_clear(&origin_d);
+		return VENDOR_RC_INTERNAL_ERROR;
+	}
+	p256_clear(&origin_d);
+
+	/*
+	 * From this point: the request 'req' content is invalid as it is
+	 * overridden by the response we are building in the same buffer.
+	 * The response is smaller than the request, so we have the space.
+	 */
+	resp = buf;
+
+	p256_to_bin(&r, resp->sig_r);
+	p256_to_bin(&s, resp->sig_s);
+
+	*response_size = sizeof(U2F_SIGN_RESP);
+	return 0;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_U2F_SIGN, u2f_sign);
+
+struct G2F_REGISTER_MSG {
+	uint8_t reserved;
+	uint8_t app_id[U2F_APPID_SIZE];
+	uint8_t challenge[U2F_CHAL_SIZE];
+	uint8_t key_handle[U2F_APPID_SIZE + sizeof(p256_int)];
+	U2F_EC_POINT public_key;
+};
+
+static inline int u2f_attest_verify_reg_resp(uint8_t data_size,
+					     const uint8_t *data)
+{
+	struct G2F_REGISTER_MSG *msg = (void *) data;
+	uint8_t unwrapped_kh[KH_LEN];
+
+	if (data_size != sizeof(struct G2F_REGISTER_MSG))
+		return VENDOR_RC_NOT_ALLOWED;
+
+	/* Check if we can decrypt keyhandle. */
+	if (wrap_kh(NULL, msg->key_handle, unwrapped_kh, DECRYPT_MODE))
+		return VENDOR_RC_NOT_ALLOWED;
+
+	return VENDOR_RC_SUCCESS;
+}
+
+static int u2f_attest_verify(uint8_t format,
+			     uint8_t data_size,
+			     const uint8_t *data)
+{
+	switch (format) {
+	case U2F_ATTEST_FORMAT_REG_RESP:
+		return u2f_attest_verify_reg_resp(data_size, data);
+	default:
+		return VENDOR_RC_NOT_ALLOWED;
+	}
+}
+
+static inline size_t u2f_attest_format_size(uint8_t format)
+{
+	switch (format) {
+	case U2F_ATTEST_FORMAT_REG_RESP:
+		return sizeof(struct G2F_REGISTER_MSG);
+	default:
+		return 0;
+	}
+}
+
+/* U2F ATTEST command */
+static enum vendor_cmd_rc u2f_attest(enum vendor_cmd_cc code,
+				     void *buf,
+				     size_t input_size,
+				     size_t *response_size)
+{
+	const U2F_ATTEST_REQ *req = buf;
+	U2F_ATTEST_RESP *resp;
+
+	int verify_ret;
+
+	HASH_CTX h_ctx;
+	struct drbg_ctx dr_ctx;
+
+	/* Data hash, and corresponding signature. */
+	p256_int h, r, s;
+
+	/* Attestation key */
+	p256_int d, pk_x, pk_y;
+
+	if (input_size != sizeof(U2F_ATTEST_REQ))
+		return VENDOR_RC_BOGUS_ARGS;
+
+	verify_ret = u2f_attest_verify(req->format, req->dataLen,
+				       req->data);
+
+	if (verify_ret != VENDOR_RC_SUCCESS)
+		return verify_ret;
+
+	/* Message signature */
+	DCRYPTO_SHA256_init(&h_ctx, 0);
+	HASH_update(&h_ctx, req->data, u2f_attest_format_size(req->format));
+	p256_from_bin(HASH_final(&h_ctx), &h);
+
+	/* Derive G2F Attestation Key */
+	if (g2f_individual_keypair(&d, &pk_x, &pk_y)) {
+		CPRINTF("G2F Attestation key generation failed");
+		return VENDOR_RC_INTERNAL_ERROR;
+	}
+
+	/* Sign over the response w/ the attestation key */
+	hmac_drbg_init_rfc6979(&dr_ctx, &d, &h);
+	if (!dcrypto_p256_ecdsa_sign(&dr_ctx, &d, &h, &r, &s)) {
+		CPRINTF("Signing error");
+		return VENDOR_RC_INTERNAL_ERROR;
+	}
+	p256_clear(&d);
+
+	/*
+	 * From this point: the request 'req' content is invalid as it is
+	 * overridden by the response we are building in the same buffer.
+	 * The response is smaller than the request, so we have the space.
+	 */
+	resp = buf;
+
+	p256_to_bin(&r, resp->sig_r);
+	p256_to_bin(&s, resp->sig_s);
+
+	return VENDOR_RC_SUCCESS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_U2F_ATTEST, u2f_attest);
