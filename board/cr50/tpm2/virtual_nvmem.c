@@ -11,6 +11,7 @@
 #include "console.h"
 #include "link_defs.h"
 #include "sn_bits.h"
+#include "u2f_impl.h"
 #include "virtual_nvmem.h"
 
 /*
@@ -139,6 +140,7 @@ struct virtual_nv_index_cfg {
 
 static void GetBoardId(BYTE *to, size_t offset, size_t size);
 static void GetSnData(BYTE *to, size_t offset, size_t size);
+static void GetG2fCert(BYTE *to, size_t offset, size_t size);
 
 static const struct virtual_nv_index_cfg index_config[] = {
 	REGISTER_CONFIG(VIRTUAL_NV_INDEX_BOARD_ID,
@@ -147,6 +149,9 @@ static const struct virtual_nv_index_cfg index_config[] = {
 	REGISTER_CONFIG(VIRTUAL_NV_INDEX_SN_DATA,
 			VIRTUAL_NV_INDEX_SN_DATA_SIZE,
 			GetSnData)
+	REGISTER_CONFIG(VIRTUAL_NV_INDEX_G2F_CERT,
+			VIRTUAL_NV_INDEX_G2F_CERT_SIZE,
+			GetG2fCert)
 };
 
 /* Check sanity of above config. */
@@ -318,3 +323,15 @@ static void GetSnData(BYTE *to, size_t offset, size_t size)
 }
 BUILD_ASSERT(VIRTUAL_NV_INDEX_SN_DATA_SIZE ==
 	     sizeof(struct sn_data));
+
+static void GetG2fCert(BYTE *to, size_t offset, size_t size)
+{
+	uint8_t cert[G2F_ATTESTATION_CERT_MAX_LEN] = { 0 };
+
+	if (!g2f_attestation_cert(cert))
+		memset(cert, 0, G2F_ATTESTATION_CERT_MAX_LEN);
+
+	memcpy(to, ((BYTE *) cert) + offset, size);
+}
+BUILD_ASSERT(VIRTUAL_NV_INDEX_G2F_CERT_SIZE ==
+	     G2F_ATTESTATION_CERT_MAX_LEN);

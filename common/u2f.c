@@ -81,6 +81,21 @@ static int individual_cert(const p256_int *d, const p256_int *pk_x,
 	return DCRYPTO_x509_gen_u2f_cert(d, pk_x, pk_y, serial, cert, n);
 }
 
+int g2f_attestation_cert(uint8_t *buf)
+{
+	p256_int d, pk_x, pk_y;
+
+	if (!use_g2f())
+		return 0;
+
+	if (g2f_individual_keypair(&d, &pk_x, &pk_y))
+		return 0;
+
+	/* Note that max length is not currently respected here. */
+	return individual_cert(&d, &pk_x, &pk_y,
+			       buf, G2F_ATTESTATION_CERT_MAX_LEN);
+}
+
 static unsigned u2f_version(struct apdu apdu, void *buf, unsigned *ret_len,
 			    unsigned max_len)
 {
