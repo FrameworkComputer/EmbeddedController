@@ -332,8 +332,8 @@ int parse_bool(const char *s, int *dest)
 
 void print_help(const char *prog, int print_cmds)
 {
-	printf("Usage: %s [--dev=n] [--interface=dev|lpc|i2c] ", prog);
-	printf("[--name=cros_ec|cros_sh|cros_pd] [--ascii] ");
+	printf("Usage: %s [--dev=n] [--interface=dev|i2c|lpc] ", prog);
+	printf("[--name=cros_ec|cros_pd|cros_scp|cros_sh] [--ascii] ");
 	printf("<command> [params]\n\n");
 	if (print_cmds)
 		puts(help_str);
