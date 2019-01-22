@@ -177,7 +177,6 @@ int __hw_clock_source_init(uint32_t start_t)
 	/*TIMER0 in 32-bit mode*/
 	timer0_config |= HPET_Tn_32MODE_CNF;
 #endif
-	timer0_config |= HPET_Tn_VAL_SET_CNF;
 
 	/* Timer 0 - IRQ routing, no need IRQ set for HPET0 */
 	timer0_config &= ~HPET_Tn_INT_ROUTE_CNF_MASK;
