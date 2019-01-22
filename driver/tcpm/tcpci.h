@@ -155,6 +155,7 @@ void tcpci_tcpc_discharge_vbus(int port, int enable);
 int tcpci_tcpm_mux_init(int i2c_addr);
 int tcpci_tcpm_mux_set(int i2c_addr, mux_state_t mux_state);
 int tcpci_tcpm_mux_get(int i2c_addr, mux_state_t *mux_state);
+int tcpci_tcpm_mux_enter_low_power(int port);
 int tcpci_get_chip_info(int port, int renew,
 			struct ec_response_pd_chip_info_v1 **chip_info);
 #ifdef CONFIG_USBC_PPC

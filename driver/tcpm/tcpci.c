@@ -809,7 +809,7 @@ int tcpci_tcpm_mux_init(int port)
 	return error ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
 
-static int tcpci_tcpm_mux_enter_low_power(int port)
+int tcpci_tcpm_mux_enter_low_power(int port)
 {
 	/* If this MUX is also the TCPC, then skip low power */
 	if (!(usb_muxes[port].flags & USB_MUX_FLAG_NOT_TCPC))

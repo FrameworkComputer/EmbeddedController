@@ -206,3 +206,17 @@ struct i2c_stress_test_dev ps8xxx_i2c_stress_test_dev = {
 	.i2c_write = &tcpc_i2c_write,
 };
 #endif /* CONFIG_CMD_I2C_STRESS_TEST_TCPC */
+
+static int ps8xxx_mux_enter_low_power_mode(int port)
+{
+	mux_write(port, TCPC_REG_ROLE_CTRL,
+		TCPC_REG_ROLE_CTRL_SET(0, 0, TYPEC_CC_RP, TYPEC_CC_RP));
+	return tcpci_tcpm_mux_enter_low_power(port);
+}
+
+const struct usb_mux_driver ps8xxx_usb_mux_driver = {
+	.init = &tcpci_tcpm_mux_init,
+	.set = &tcpci_tcpm_mux_set,
+	.get = &tcpci_tcpm_mux_get,
+	.enter_low_power_mode = &ps8xxx_mux_enter_low_power_mode,
+};

@@ -67,4 +67,6 @@ void ps8xxx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq);
 extern struct i2c_stress_test_dev ps8xxx_i2c_stress_test_dev;
 #endif /* defined(CONFIG_CMD_I2C_STRESS_TEST_TCPC) */
 
+extern const struct usb_mux_driver ps8xxx_usb_mux_driver;
+
 #endif /* defined(__CROS_EC_USB_PD_TCPM_PS8XXX_H) */
