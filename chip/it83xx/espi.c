@@ -569,6 +569,19 @@ void espi_interrupt(void)
 	task_clear_pending_irq(IT83XX_IRQ_ESPI);
 }
 
+#ifdef IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED
+/* Enable/Disable eSPI pad */
+void espi_enable_pad(int enable)
+{
+	if (enable)
+		/* Enable eSPI pad. */
+		IT83XX_ESPI_ESGCTRL2 &= ~(1 << 6);
+	else
+		/* Disable eSPI pad. */
+		IT83XX_ESPI_ESGCTRL2 |= (1 << 6);
+}
+#endif
+
 void espi_init(void)
 {
 	/*

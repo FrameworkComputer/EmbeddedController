@@ -205,7 +205,7 @@ static void clock_set_pll(enum pll_freq_idx idx)
 		 * On DX version, we have to disable eSPI pad before changing
 		 * PLL sequence or sequence will fail if CS# pin is low.
 		 */
-		IT83XX_ESPI_ESGCTRL2 |= (1 << 6);
+		espi_enable_pad(0);
 #endif
 #endif
 		/* Update PLL settings. */
@@ -213,7 +213,7 @@ static void clock_set_pll(enum pll_freq_idx idx)
 #ifdef CONFIG_HOSTCMD_ESPI
 #ifdef IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED
 		/* Enable eSPI pad after changing PLL sequence. */
-		IT83XX_ESPI_ESGCTRL2 &= ~(1 << 6);
+		espi_enable_pad(1);
 #endif
 		/* (b:70537592) Change back to ESPI CS# function. */
 		IT83XX_GPIO_GPCRM5 &= ~0xc0;
@@ -450,7 +450,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 #if defined(IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED) && \
 defined(CONFIG_HOSTCMD_ESPI)
 	/* Disable eSPI pad. */
-	IT83XX_ESPI_ESGCTRL2 |= (1 << 6);
+	espi_enable_pad(0);
 #endif
 	clock_ec_pll_ctrl(EC_PLL_SLEEP);
 	interrupt_enable();
@@ -480,7 +480,7 @@ defined(CONFIG_HOSTCMD_ESPI)
 		 * setting is the same, so the operation of enabling eSPI pad we
 		 * added in clock_set_pll() will not be applied.
 		 */
-		IT83XX_ESPI_ESGCTRL2 &= ~(1 << 6);
+		espi_enable_pad(1);
 #endif
 		system_reset(SYSTEM_RESET_HARD);
 	}
