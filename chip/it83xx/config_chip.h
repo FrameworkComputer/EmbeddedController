@@ -70,6 +70,8 @@
  * doesn't support a write-protect pin, and if we make the write-protection
  * permanent, it can't be undone easily enough to support RMA. */
 #define CONFIG_FLASH_SIZE  0x00040000
+/* For IT8320BX, we have to reload cc parameters after ec softreset. */
+#define IT83XX_USBPD_CC_PARAMETER_RELOAD
 /*
  * The voltage detector of CC1 and CC2 is enabled/disabled by different bit
  * of the control register (bit1 and bit5 at register IT83XX_USBPD_CCCSR).

@@ -337,8 +337,10 @@ static void it83xx_init(enum usbpd_port port, int role)
 {
 	/* Invalidate last received message id variable */
 	invalidate_last_message_id(port);
+#ifdef IT83XX_USBPD_CC_PARAMETER_RELOAD
 	/* bit7: Reload CC parameter setting. */
 	IT83XX_USBPD_CCPSR0(port) |= (1 << 7);
+#endif
 	/* reset and disable HW auto generate message header */
 	IT83XX_USBPD_GCR(port) = (1 << 5);
 	USBPD_SW_RESET(port);
