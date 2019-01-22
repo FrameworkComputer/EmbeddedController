@@ -149,21 +149,21 @@ __attribute__((weak)) int board_is_lid_angle_tablet_mode(void)
  * by using MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE.
  */
 
-#define DEFAULT_TABLET_MODE_ANG	(180)
+#define DEFAULT_TABLET_MODE_ANGLE	(180)
 #define DEFAULT_TABLET_MODE_HYS	(20)
 
 #define TABLET_ZONE_ANGLE(a, h)	((a) + (h))
 #define LAPTOP_ZONE_ANGLE(a, h)	((a) - (h))
 
 static fp_t tablet_zone_lid_angle =
-	FLOAT_TO_FP(TABLET_ZONE_ANGLE(DEFAULT_TABLET_MODE_ANG,
+	FLOAT_TO_FP(TABLET_ZONE_ANGLE(DEFAULT_TABLET_MODE_ANGLE,
 				      DEFAULT_TABLET_MODE_HYS));
 static fp_t laptop_zone_lid_angle =
-	FLOAT_TO_FP(LAPTOP_ZONE_ANGLE(DEFAULT_TABLET_MODE_ANG,
+	FLOAT_TO_FP(LAPTOP_ZONE_ANGLE(DEFAULT_TABLET_MODE_ANGLE,
 				      DEFAULT_TABLET_MODE_HYS));
 
-static int tablet_mode_lid_ang = DEFAULT_TABLET_MODE_ANG;
-static int tablet_mode_hys_deg = DEFAULT_TABLET_MODE_HYS;
+static int tablet_mode_lid_angle = DEFAULT_TABLET_MODE_ANGLE;
+static int tablet_mode_hys_degree = DEFAULT_TABLET_MODE_HYS;
 
 /*
  * We will change our tablet mode status when we are "convinced" that it has
@@ -212,20 +212,20 @@ static void motion_lid_set_tablet_mode(int reliable)
 		tablet_mode_debounce_cnt = TABLET_MODE_DEBOUNCE_COUNT;
 }
 
-static int lid_angle_set_tablet_mode_threshold(int ang, int hys)
+static int lid_angle_set_tablet_mode_threshold(int angle, int hys)
 {
-	if ((ang == EC_MOTION_SENSE_NO_VALUE) ||
+	if ((angle == EC_MOTION_SENSE_NO_VALUE) ||
 	    (hys == EC_MOTION_SENSE_NO_VALUE))
 		return EC_RES_SUCCESS;
 
-	if ((ang < 0) || (hys < 0) || (ang < hys) || ((ang + hys) > 360))
+	if ((angle < 0) || (hys < 0) || (angle < hys) || ((angle + hys) > 360))
 		return EC_RES_INVALID_PARAM;
 
-	tablet_mode_lid_ang = ang;
-	tablet_mode_hys_deg = hys;
+	tablet_mode_lid_angle = angle;
+	tablet_mode_hys_degree = hys;
 
-	tablet_zone_lid_angle = INT_TO_FP(TABLET_ZONE_ANGLE(ang, hys));
-	laptop_zone_lid_angle = INT_TO_FP(LAPTOP_ZONE_ANGLE(ang, hys));
+	tablet_zone_lid_angle = INT_TO_FP(TABLET_ZONE_ANGLE(angle, hys));
+	laptop_zone_lid_angle = INT_TO_FP(LAPTOP_ZONE_ANGLE(angle, hys));
 
 	return EC_RES_SUCCESS;
 }
@@ -574,16 +574,16 @@ int host_cmd_motion_lid(struct host_cmd_handler_args *args)
 #ifdef CONFIG_TABLET_MODE
 			int ret;
 			ret = lid_angle_set_tablet_mode_threshold(
-					in->tablet_mode_threshold.lid_ang,
-					in->tablet_mode_threshold.hys_deg);
+					in->tablet_mode_threshold.lid_angle,
+					in->tablet_mode_threshold.hys_degree);
 
 			if (ret != EC_RES_SUCCESS)
 				return ret;
 
-			out->tablet_mode_threshold.lid_ang =
-				tablet_mode_lid_ang;
-			out->tablet_mode_threshold.hys_deg =
-				tablet_mode_hys_deg;
+			out->tablet_mode_threshold.lid_angle =
+				tablet_mode_lid_angle;
+			out->tablet_mode_threshold.hys_degree =
+				tablet_mode_hys_degree;
 
 			args->response_size =
 				sizeof(out->tablet_mode_threshold);

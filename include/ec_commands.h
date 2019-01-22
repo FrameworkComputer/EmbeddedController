@@ -2701,16 +2701,16 @@ struct ec_params_motion_sense {
 			 * Lid angle threshold for switching between tablet and
 			 * clamshell mode.
 			 */
-			int16_t lid_ang;
+			int16_t lid_angle;
 
 			/*
 			 * Hysteresis degree to prevent fluctuations between
 			 * clamshell and tablet mode if lid angle keeps
 			 * changing around the threshold. Lid motion driver will
-			 * use lid_ang + hys_deg to trigger tablet mode and
-			 * lid_ang - hys_deg to trigger clamshell mode.
+			 * use lid_angle + hys_degree to trigger tablet mode and
+			 * lid_angle - hys_degree to trigger clamshell mode.
 			 */
-			int16_t hys_deg;
+			int16_t hys_degree;
 		} tablet_mode_threshold;
 	};
 } __ec_todo_packed;
@@ -2823,10 +2823,10 @@ struct ec_response_motion_sense {
 			 * Lid angle threshold for switching between tablet and
 			 * clamshell mode.
 			 */
-			uint16_t lid_ang;
+			uint16_t lid_angle;
 
 			/* Hysteresis degree. */
-			uint16_t hys_deg;
+			uint16_t hys_degree;
 		} tablet_mode_threshold;
 
 	};
@@ -4417,9 +4417,9 @@ struct ec_params_cec_write {
  * struct ec_params_cec_set - CEC parameters set
  * @cmd: parameter type, can be CEC_CMD_ENABLE or CEC_CMD_LOGICAL_ADDRESS
  * @val: in case cmd is CEC_CMD_ENABLE, this field can be 0 to disable CEC
- *	or 1 to enable CEC functionality, in case cmd is CEC_CMD_LOGICAL_ADDRESS,
- *	this field encodes the requested logical address between 0 and 15
- *	or 0xff to unregister
+ *	or 1 to enable CEC functionality, in case cmd is
+ *	CEC_CMD_LOGICAL_ADDRESS, this field encodes the requested logical
+ *	address between 0 and 15 or 0xff to unregister
  */
 struct ec_params_cec_set {
 	uint8_t cmd; /* enum cec_command */

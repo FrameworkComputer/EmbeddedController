@@ -4484,11 +4484,13 @@ static int cmd_motionsense(int argc, char **argv)
 		 * EC_MOTION_SENSE_NO_VALUE indicates to the EC that host is
 		 * attempting to only read the current values.
 		 */
-		param.tablet_mode_threshold.lid_ang = EC_MOTION_SENSE_NO_VALUE;
-		param.tablet_mode_threshold.hys_deg = EC_MOTION_SENSE_NO_VALUE;
+		param.tablet_mode_threshold.lid_angle =
+			EC_MOTION_SENSE_NO_VALUE;
+		param.tablet_mode_threshold.hys_degree =
+			EC_MOTION_SENSE_NO_VALUE;
 
 		if (argc == 4) {
-			param.tablet_mode_threshold.lid_ang = strtol(argv[2],
+			param.tablet_mode_threshold.lid_angle = strtol(argv[2],
 								     &e, 0);
 
 			if (e && *e) {
@@ -4496,7 +4498,7 @@ static int cmd_motionsense(int argc, char **argv)
 				return -1;
 			}
 
-			param.tablet_mode_threshold.hys_deg = strtol(argv[3],
+			param.tablet_mode_threshold.hys_degree = strtol(argv[3],
 								     &e, 0);
 			if (e && *e) {
 				fprintf(stderr, "Bad %s arg.\n", argv[3]);
@@ -4514,8 +4516,8 @@ static int cmd_motionsense(int argc, char **argv)
 			return rv;
 
 		printf("tablet_mode_angle=%d hys=%d\n",
-		       resp->tablet_mode_threshold.lid_ang,
-		       resp->tablet_mode_threshold.hys_deg);
+		       resp->tablet_mode_threshold.lid_angle,
+		       resp->tablet_mode_threshold.hys_degree);
 
 		return 0;
 	}
