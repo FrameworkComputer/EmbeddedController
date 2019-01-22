@@ -4,6 +4,7 @@
  */
 
 #include "console.h"
+#include "extension.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "physical_presence.h"
@@ -13,6 +14,7 @@
 #include "system_chip.h"
 #include "task.h"
 #include "timer.h"
+#include "u2f_impl.h"
 
 #define CPRINTS(format, args...) cprints(CC_RBOX, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_RBOX, format, ## args)
@@ -125,3 +127,22 @@ static int command_powerbtn(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn, "",
 			"get the state of the power button");
+
+/*
+ * Perform a user presence check using the power button.
+ */
+static enum vendor_cmd_rc vc_get_pwr_btn(enum vendor_cmd_cc code,
+					 void *buf,
+					 size_t input_size,
+					 size_t *response_size)
+{
+	if (pop_check_presence(1) == POP_TOUCH_YES)
+		*(uint8_t *)buf = 1;
+	else
+		*(uint8_t *)buf = 0;
+	*response_size = 1;
+
+	return VENDOR_RC_SUCCESS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_GET_PWR_BTN, vc_get_pwr_btn);
+

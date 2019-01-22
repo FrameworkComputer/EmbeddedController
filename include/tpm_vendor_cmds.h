@@ -116,6 +116,13 @@ enum vendor_cmd_cc {
 	 */
 	VENDOR_CC_SN_INC_RMA = 42,
 
+	/*
+	 * Gets the latched state of a power button press to indicate user
+	 * recent user presence. The power button state is automatically cleared
+	 * after PRESENCE_TIMEOUT.
+	 */
+	VENDOR_CC_GET_PWR_BTN = 43,
+
 	LAST_VENDOR_COMMAND = 65535,
 };
 
