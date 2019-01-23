@@ -2366,7 +2366,13 @@
 #undef CONFIG_LOW_POWER_S0
 
 /*
- * Enable inter-processor communication between ISH(Intel Sensor Hub) and
+ * Enable Host Embedded Controller Interface protocol. ISH (Intel Sensor Hub)
+ * Uses this protocol for the basis of communication.
+ */
+#undef CONFIG_HECI
+
+/*
+ * Enable inter-processor communication between ISH (Intel Sensor Hub) and
  * other modules in Intel SoC(listed below).
  * - HOST(x64), CSME, PMC, cAVS, and ISP
  */
