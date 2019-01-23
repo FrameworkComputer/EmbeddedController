@@ -9,6 +9,7 @@
 #include "console.h"
 #include "extension.h"
 #include "registers.h"
+#include "system.h"
 #include "timer.h"
 #include "u2f_impl.h"
 #include "util.h"
@@ -33,6 +34,14 @@ static timestamp_t last_press;
 void recovery_button_record(void)
 {
 	last_press = get_time();
+
+	/*
+	 * Pressing the power button causes the AP to shutdown, and typically
+	 * the Cr50 will enter deep sleep very quickly.  Delay deep sleep
+	 * so the recovery button state is saved long enough for the AP to
+	 * power on and read the recovery button state.
+	 */
+	delay_sleep_by(RECOVERY_BUTTON_TIMEOUT);
 }
 
 /*
