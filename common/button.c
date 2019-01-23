@@ -367,7 +367,8 @@ static int console_command_button(int argc, char **argv)
 			button_interrupt_simulate(button_idx);
 
 	/* Hold the button(s) */
-	msleep(press_ms);
+	if (press_ms > 0)
+		msleep(press_ms);
 
 	/* Release the button(s) */
 	for (button_idx = 0; button_idx < BUTTON_COUNT; button_idx++)

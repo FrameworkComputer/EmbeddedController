@@ -179,7 +179,8 @@ static int command_powerbtn(int argc, char **argv)
 	power_button_is_stable = 0;
 	hook_call_deferred(&power_button_change_deferred_data, 0);
 
-	msleep(ms);
+	if (ms > 0)
+		msleep(ms);
 
 	ccprintf("Simulating power button release.\n");
 	simulate_power_pressed = 0;
