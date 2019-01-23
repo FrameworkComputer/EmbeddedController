@@ -14,6 +14,9 @@
 #include "driver/ppc/nx20p348x.h"
 #include "gpio.h"
 #include "hooks.h"
+#ifdef VARIANT_OCTOPUS_EC_ITE8320
+#include "intc.h"
+#endif
 #include "keyboard_scan.h"
 #include "power.h"
 #include "system.h"
@@ -95,6 +98,14 @@ const struct max14637_config_t max14637_config[CONFIG_USB_PD_PORT_COUNT] = {
 /* Called by APL power state machine when transitioning from G3 to S5 */
 void chipset_pre_init_callback(void)
 {
+#ifdef IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED
+	/*
+	 * Since we disable eSPI module for IT8320 part when system goes into G3
+	 * state, so we need to enable it at system startup.
+	 */
+	espi_enable_pad(1);
+#endif
+
 	/* Enable 5.0V and 3.3V rails, and wait for Power Good */
 	power_5v_enable(task_get_current(), 1);
 
@@ -168,6 +179,15 @@ void chipset_do_shutdown(void)
 	gpio_set_level(GPIO_EN_PP3300, 0);
 	while (gpio_get_level(GPIO_PP3300_PG))
 		;
+
+#ifdef IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED
+	/*
+	 * The IT8320 part doesn't go into its lowest power state in idle task
+	 * when the eSPI module is on and CS# is asserted, so we need to
+	 * manually disable it.
+	 */
+	espi_enable_pad(0);
+#endif
 }
 
 int board_is_i2c_port_powered(int port)
