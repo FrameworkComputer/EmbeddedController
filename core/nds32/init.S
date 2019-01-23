@@ -167,7 +167,7 @@ bss_loop:
 	lwi  $r1, [$r0]
 	la $r0, _data_end
 	lwi  $r2, [$r0]
-	la $r0, _ro_end
+	la $r0, _data_lma_start
 	lwi  $r0, [$r0]
 data_loop:
 	lwi.bi $r3, [$r0], 4
@@ -251,8 +251,8 @@ _data_start:
 .long __data_start
 _data_end:
 .long __data_end
-_ro_end:
-.long __ro_end
+_data_lma_start:
+.long __data_lma_start
 
 /* Reserve space for system stack */
 .section .bss.system_stack

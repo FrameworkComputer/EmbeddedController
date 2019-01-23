@@ -29,7 +29,7 @@ void checkBuildVersion(void)
 
 void unlockFlashForRW(void)
 {
-	uint32_t text_end = ((uint32_t)(&__ro_end) +
+	uint32_t text_end = ((uint32_t)(&__data_lma_start) +
 			     (uint32_t)(&__data_end) -
 			     (uint32_t)(&__data_start) +
 			     CONFIG_FLASH_BANK_SIZE)

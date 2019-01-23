@@ -68,7 +68,7 @@ vtable_loop:
 #endif
 
 	/* Copy initialized data to Internal RAM */
-	ldr r0,_ro_end
+	ldr r0,_data_lma_start
 	ldr r1,_data_start
 	ldr r2,_data_end
 data_loop:
@@ -108,8 +108,8 @@ _data_start:
 .long __data_start
 _data_end:
 .long __data_end
-_ro_end:
-.long __ro_end
+_data_lma_start:
+.long __data_lma_start
 
 /* Dummy functions to avoid linker complaints */
 .global __aeabi_unwind_cpp_pr0

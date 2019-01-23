@@ -173,7 +173,7 @@ SECTIONS
 #endif
         . = ALIGN(4);
     } >FLASH
-    __ro_end = . ;
+    __data_lma_start = . ;
 
     .data : {
         . = ALIGN(4);

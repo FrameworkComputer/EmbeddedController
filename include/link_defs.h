@@ -104,7 +104,7 @@ extern uint8_t *__data_libtpm2_start;
 extern uint8_t *__data_libtpm2_end;
 
 /* Image sections. */
-extern const void *__ro_end;
+extern const void *__data_lma_start;
 extern const void *__data_start;
 extern const void *__data_end;
 

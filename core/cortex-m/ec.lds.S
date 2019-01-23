@@ -271,7 +271,7 @@ SECTIONS
 #else
     } > FLASH
 #endif
-    __ro_end = . ;
+    __data_lma_start = . ;
 
     .bss : {
 	/*
