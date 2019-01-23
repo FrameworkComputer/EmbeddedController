@@ -53,11 +53,21 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 /******************************************************************************/
 /* USB-C MUX Configuration */
 
+#if defined(VARIANT_OCTOPUS_TCPC_0_PS8751)
+static int ps8751_tune_mux(int port)
+{
+	/* Tune USB mux registers for casta's port 0 Rx measurement */
+	mux_write(port, PS8XXX_REG_MUX_USB_C2SS_EQ, 0x40);
+	return EC_SUCCESS;
+}
+#endif
+
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
 #if defined(VARIANT_OCTOPUS_TCPC_0_PS8751)
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.board_init = &ps8751_tune_mux,
 #else
 		.driver = &anx7447_usb_mux_driver,
 		.hpd_update = &anx7447_tcpc_update_hpd_status,
