@@ -17,8 +17,9 @@
 #include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "lpc.h"
 #include "keyboard_scan.h"
+#include "link_defs.h"
+#include "lpc.h"
 #ifdef CONFIG_MPU
 #include "mpu.h"
 #endif
@@ -83,6 +84,14 @@ test_mockable __keep int main(void)
 	 */
 	system_pre_init();
 	system_common_pre_init();
+
+#ifdef CONFIG_DRAM_BASE
+	/* Now that DRAM is initialized, clear up DRAM .bss, copy .data over. */
+	memset(&__dram_bss_start, 0,
+	       (uintptr_t)(&__dram_bss_end) - (uintptr_t)(&__dram_bss_start));
+	memcpy(&__dram_data_start, &__dram_data_lma_start,
+	       (uintptr_t)(&__dram_data_end) - (uintptr_t)(&__dram_data_start));
+#endif
 
 #if defined(CONFIG_FLASH_PHYSICAL)
 	/*

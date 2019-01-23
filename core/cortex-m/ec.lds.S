@@ -444,7 +444,34 @@ SECTIONS
 #endif /* CONFIG_CHIP_MEMORY_REGIONS */
 
 #ifdef CONFIG_DRAM_BASE
+    /* Allocate space for original copy of .data.dram (see .data_lma above). */
+    .dram.data_lma : {
+        __dram_data_lma_start = .;
+        . += __dram_data_end - __dram_data_start;
+    } > DRAM
+
+    /*
+     * TODO(b:122058243): Both .dram.data and .dram.bss do not actually
+     * need to be in the final image, as we have a second copy of the data
+     * (just above), and dram.bss is zeroed anyway.
+     */
+    .dram.data : AT(ADDR(.dram.data_lma)) {
+        . = ALIGN(4);
+        __dram_data_start = .;
+        *(.dram.data*)
+        __dram_data_end = .;
+    } > DRAM
+
+    .dram.bss : {
+        . = ALIGN(4);
+        __dram_bss_start = .;
+        *(SORT(.dram.bss*))
+        __dram_bss_end = .;
+    } > DRAM
+
+    /* Rest of DRAM sections, e.g. text. */
     .dram : {
+        . = ALIGN(4);
         KEEP(*(SORT(.dram.keep.*)))
         *(SORT(.dram.*))
     } > DRAM

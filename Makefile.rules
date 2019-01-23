@@ -61,9 +61,9 @@ cmd_obj_to_bin ?= $(OBJCOPY) --gap-fill=0xff -O binary $^ $(out)/$*.bin.tmp
 cmd_flat_to_obj = $(CC) -Wl,-T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
                   -Wl,--build-id=none -o $@ $<
 # Allow the .roshared section to overlap other sections (itself)
-cmd_ec_elf_to_flat ?= $(OBJCOPY) --set-section-flags .roshared=share -R .dram \
+cmd_ec_elf_to_flat ?= $(OBJCOPY) --set-section-flags .roshared=share -R .dram* \
 				-O binary $< $@
-cmd_ec_elf_to_flat_dram ?= $(OBJCOPY) -j .dram -O binary $< $@
+cmd_ec_elf_to_flat_dram ?= $(OBJCOPY) -j .dram* -O binary $< $@
 cmd_elf_to_signed ?= $(SIGNER) --key=util/signer/$(3) \
 	--b --input=$< --format=bin --output=$@.signed $(SIGNER_EXTRAS) \
 	&& sudo chown $(shell whoami) $@.signed && mv $@.signed $@

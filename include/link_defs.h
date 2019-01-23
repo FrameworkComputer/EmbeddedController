@@ -108,6 +108,13 @@ extern const void *__data_lma_start;
 extern const void *__data_start;
 extern const void *__data_end;
 
+/* DRAM image sections. */
+extern const void *__dram_data_lma_start;
+extern void *__dram_data_start;
+extern void *__dram_data_end;
+extern void *__dram_bss_start;
+extern void *__dram_bss_end;
+
 /* Helper for special chip-specific memory sections */
 #ifdef CONFIG_CHIP_MEMORY_REGIONS
 #define __SECTION(name) __attribute__((section("." STRINGIFY(name) ".50_auto")))
