@@ -2508,6 +2508,8 @@ static typec_current_t get_typec_current_limit(int polarity, int cc1, int cc2)
 		charge = 3000;
 	else if (cc == TYPEC_CC_VOLT_RP_1_5)
 		charge = 1500;
+	else if (cc == TYPEC_CC_VOLT_RP_DEF)
+		charge = 500;
 	else
 		charge = 0;
 
