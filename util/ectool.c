@@ -1335,7 +1335,7 @@ int cmd_rollback_info(int argc, char *argv[])
 	printf("Rollback min version: %d\n", r.rollback_min_version);
 	printf("RW rollback version:  %d\n", r.rw_rollback_version);
 
-	return rv;
+	return 0;
 }
 
 int cmd_apreset(int argc, char *argv[])
