@@ -22,8 +22,6 @@
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
-#define EVENT_FLAG_I2C_TIMEOUT			TASK_EVENT_CUSTOM(1 << 7)
-
 /*25MHz, 50MHz, 100MHz, 120MHz, 40MHz, 20MHz, 37MHz*/
 static uint16_t default_hcnt_scl_100[] = {
 	4000, 4420, 4920, 4400, 4000, 4000, 4300
@@ -378,7 +376,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 
 
 		/* need timeout in case no ACK from slave */
-		task_wait_event_mask(EVENT_FLAG_I2C_TIMEOUT, 2*MSEC);
+		task_wait_event_mask(TASK_EVENT_I2C_IDLE, 2*MSEC);
 
 		if (ctx->interrupts & M_TX_ABRT) {
 			ctx->error_flag = 1;
@@ -428,7 +426,7 @@ static void i2c_interrupt_handler(struct i2c_context *ctx)
 #endif
 	/* disable interrupts */
 	i2c_intr_switch(ctx->base, DISABLE_INT);
-	task_set_event(ctx->wait_task_id, EVENT_FLAG_I2C_TIMEOUT, 0);
+	task_set_event(ctx->wait_task_id, TASK_EVENT_I2C_IDLE, 0);
 }
 
 static void i2c_isr_bus0(void)
