@@ -9,7 +9,3 @@
  * it to be defined.
  */
 UNIMPLEMENTED(ENTERING_RW)
-
-/* TODO: We do want to fill these in correctly*/
-UNIMPLEMENTED(ISH_I2C0_SDA)
-UNIMPLEMENTED(ISH_I2C0_SCL)

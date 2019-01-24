@@ -15,8 +15,12 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 /* I2C port map */
-const struct i2c_port_t i2c_ports[]  = {
-	{"sensor", I2C_PORT_SENSOR,   1000, GPIO_ISH_I2C0_SCL,   GPIO_ISH_I2C0_SDA}
+const struct i2c_port_t i2c_ports[] = {
+	{
+		.name = "sensor",
+		.port = I2C_PORT_SENSOR,
+		.kbps = 1000
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

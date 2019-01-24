@@ -33,8 +33,6 @@
 
 /* I2C ports */
 #define I2C_PORT_SENSOR ISH_I2C0
-#define GPIO_I2C_PORT_TP_SCL GPIO_ISH_I2C0_SCL
-#define GPIO_I2C_PORT_TP_SDA GPIO_ISH_I2C0_SDA
 #define CONFIG_CMD_I2C_XFER
 
 /* Undefine features */
