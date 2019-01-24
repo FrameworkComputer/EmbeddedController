@@ -12,7 +12,7 @@
 #include "common.h"
 
 /* ISH GPIO has only one port */
-#define DUMMY_GPIO_BANK 0
+#define DUMMY_GPIO_BANK -1
 
 /*
  * ISH3.0 has 3 controllers. Locking must occur by-controller (not by-port).

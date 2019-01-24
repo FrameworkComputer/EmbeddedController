@@ -18,12 +18,23 @@
 
 test_mockable int gpio_get_level(enum gpio_signal signal)
 {
-	return  !!(ISH_GPIO_GPLR & gpio_list[signal].mask);
+	const struct gpio_info *g = gpio_list + signal;
+
+	/* Unimplemented GPIOs shouldn't do anything */
+	if (g->port == DUMMY_GPIO_BANK)
+		return 0;
+
+	return  !!(ISH_GPIO_GPLR & g->mask);
 }
 
 void gpio_set_level(enum gpio_signal signal, int value)
 {
 	const struct gpio_info *g = gpio_list + signal;
+
+	/* Unimplemented GPIOs shouldn't do anything */
+	if (g->port == DUMMY_GPIO_BANK)
+		return;
+
 	if (value)
 		ISH_GPIO_GPSR |= g->mask;
 	else
@@ -32,6 +43,10 @@ void gpio_set_level(enum gpio_signal signal, int value)
 
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
+	/* Unimplemented GPIOs shouldn't do anything */
+	if (port == DUMMY_GPIO_BANK)
+		return;
+
 	/* GPSR/GPCR Output high/low */
 	if (flags & GPIO_HIGH) /* Output high */
 		ISH_GPIO_GPSR |= mask;
@@ -68,6 +83,10 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 int gpio_enable_interrupt(enum gpio_signal signal)
 {
 	const struct gpio_info *g = gpio_list + signal;
+
+	/* Unimplemented GPIOs shouldn't do anything */
+	if (g->port == DUMMY_GPIO_BANK)
+		return EC_SUCCESS;
 
 	ISH_GPIO_GIMR |= g->mask;
 	return EC_SUCCESS;
@@ -118,6 +137,7 @@ static void gpio_init(void)
 {
 	task_enable_irq(ISH_GPIO_IRQ);
 }
+DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
 static void gpio_interrupt(void)
 {
@@ -137,7 +157,4 @@ static void gpio_interrupt(void)
 		}
 	}
 }
-
 DECLARE_IRQ(ISH_GPIO_IRQ, gpio_interrupt);
-
-DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
