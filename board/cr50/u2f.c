@@ -40,7 +40,8 @@ void power_button_record(void)
 
 enum touch_state pop_check_presence(int consume)
 {
-	int recent = (get_time().val - PRESENCE_TIMEOUT) < last_press.val;
+	int recent = ((last_press.val  > 0) &&
+		((get_time().val - last_press.val) < PRESENCE_TIMEOUT));
 
 	CPRINTS("Presence:%d", recent);
 	if (consume)
