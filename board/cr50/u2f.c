@@ -30,8 +30,12 @@ static timestamp_t last_press;
 
 void power_button_record(void)
 {
-	if (ap_is_on() && rbox_powerbtn_is_pressed())
+	if (ap_is_on() && rbox_powerbtn_is_pressed()) {
 		last_press = get_time();
+#ifdef CR50_DEV
+		CPRINTS("record pp");
+#endif
+	}
 }
 
 enum touch_state pop_check_presence(int consume)
