@@ -129,7 +129,7 @@ static void ppc_interrupt(enum gpio_signal signal)
 static void usb1_oc_evt_deferred(void)
 {
 	/* Only port-1 has overcurrent GPIO interrupt */
-	board_overcurrent_event(0, 1);
+	board_overcurrent_event(1, 1);
 }
 DECLARE_DEFERRED(usb1_oc_evt_deferred);
 
