@@ -35,6 +35,17 @@
 #define USB_PD_PORT_TCPC_1	1
 
 /******************************************************************************/
+/* Wake up pins */
+const enum gpio_signal hibernate_wake_pins[] = {
+	GPIO_LID_OPEN,
+	GPIO_ACOK_OD,
+	GPIO_POWER_BUTTON_L,
+	/* EC_RST_ODL needs to wake device while in PSL hibernate. */
+	GPIO_SYS_RESET_L,
+};
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
+
+/******************************************************************************/
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
 	/*

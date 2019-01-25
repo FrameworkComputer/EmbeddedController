@@ -9,10 +9,10 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 /* Wake Source interrupts */
-GPIO_INT(LID_OPEN,             PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)
+GPIO_INT(LID_OPEN,             PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)
 GPIO_INT(WP_L,                 PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)              /* EC_WP_ODL */
 GPIO_INT(POWER_BUTTON_L,       PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)        /* MECH_PWR_BTN_ODL */
-GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)
+GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
 
 /* Power sequencing interrupts */
 GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
@@ -104,3 +104,9 @@ ALTERNATE(PIN_MASK(4, 0x01), 0, MODULE_PWM, 0)                             /* TA
 
 /* ADC */
 ALTERNATE(PIN_MASK(4, 0x30), 0, MODULE_ADC, 0)                             /* ADC0-1 */
+
+/* Power Switch Logic (PSL) inputs */
+ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, 0)                             /* GPIOD2 = LID_OPEN */
+ALTERNATE(PIN_MASK(0, 0x07), 0, MODULE_PMU, 0)                             /* GPIO00 = ACOK_OD,
+                                                                              GPIO01 = MECH_PWR_BTN_ODL
+                                                                              GPIO02 = EC_RST_ODL */
