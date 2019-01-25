@@ -848,15 +848,17 @@ def main(argv=None):
 
   args = parser.parse_args(argv)
 
-  root_logger = logging.getLogger()
+  root_logger = logging.getLogger(__name__)
   if args.verbose:
     root_logger.setLevel(logging.DEBUG)
   else:
     root_logger.setLevel(logging.INFO)
-  # if powerlog is used through main log to sys.stdout
-  stdout_handler = logging.StreamHandler(sys.stdout)
-  stdout_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
-  root_logger.addHandler(stdout_handler)
+
+  # if powerlog is used through main, log to sys.stdout
+  if __name__ == "__main__":
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+    root_logger.addHandler(stdout_handler)
 
   integration_us_request = args.integration_us
   if not args.board:
