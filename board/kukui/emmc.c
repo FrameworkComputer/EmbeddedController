@@ -254,7 +254,7 @@ static void emmc_enable_spi(void)
 	boot_deadline.val = get_time().val + BOOT_TIMEOUT;
 
 	/* Check if AP has booted periodically. */
-	hook_call_deferred(&emmc_check_status_data, 100 * MSEC);
+	hook_call_deferred(&emmc_check_status_data, 10 * MSEC);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, emmc_enable_spi, HOOK_PRIO_FIRST);
 
