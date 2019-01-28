@@ -128,9 +128,9 @@ int charger_profile_override(struct charge_state_data *curr)
 	} temp_zones[BATTERY_COUNT][TEMP_ZONE_COUNT] = {
 		[BATTERY_SIMPLO] = {
 			/* TEMP_ZONE_0 */
-			{BATTERY_SIMPLO_CHARGE_MIN_TEMP * 10, 150, 1772, 4400},
+			{BATTERY_SIMPLO_CHARGE_MIN_TEMP * 10, 150, 1772, 4376},
 			/* TEMP_ZONE_1 */
-			{150, 450, 4020, 4400},
+			{150, 450, 4020, 4376},
 			/* TEMP_ZONE_2 */
 			{450, BATTERY_SIMPLO_CHARGE_MAX_TEMP * 10, 3350, 4300},
 		},
