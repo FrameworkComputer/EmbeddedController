@@ -646,6 +646,7 @@ static const char * const ec_feature_names[] = {
 	[EC_FEATURE_REFINED_TABLET_MODE_HYSTERESIS] =
 		"Refined tablet mode hysteresis",
 	[EC_FEATURE_AUDIO_CODEC] = "Audio Codec",
+	[EC_FEATURE_ISH] = "Intel Integrated Sensor Hub",
 };
 
 int cmd_inventory(int argc, char *argv[])
