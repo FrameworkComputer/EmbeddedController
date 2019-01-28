@@ -98,6 +98,7 @@ typedef struct {
 
 typedef struct {
     uint8_t appId[U2F_APPID_SIZE];      // Application id
+    uint8_t userSecret[U2F_P256_SIZE];
     uint8_t flags;
 } U2F_GENERATE_REQ;
 
@@ -108,6 +109,7 @@ typedef struct {
 
 typedef struct {
     uint8_t appId[U2F_APPID_SIZE];         // Application id
+    uint8_t userSecret[U2F_P256_SIZE];
     uint8_t keyHandle[U2F_FIXED_KH_SIZE];  // Key handle
     uint8_t hash[U2F_P256_SIZE];
     uint8_t flags;

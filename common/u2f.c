@@ -401,12 +401,11 @@ static enum vendor_cmd_rc u2f_generate(enum vendor_cmd_cc code,
 	U2F_GENERATE_RESP *resp;
 
 	/* Origin keypair */
-	uint8_t od_seed[SHA256_DIGEST_SIZE];
+	uint8_t od_seed[P256_NBYTES];
 	p256_int od, opk_x, opk_y;
 
 	/* Key handle */
 	uint8_t kh[U2F_FIXED_KH_SIZE];
-	uint8_t tmp[U2F_FIXED_KH_SIZE];
 
 	if (input_size != sizeof(U2F_GENERATE_REQ) ||
 	    *response_size < sizeof(U2F_GENERATE_RESP))
@@ -418,17 +417,16 @@ static enum vendor_cmd_rc u2f_generate(enum vendor_cmd_cc code,
 		return VENDOR_RC_NOT_ALLOWED;
 
 	/* Generate origin-specific keypair */
-	if (u2f_origin_keypair(od_seed, &od, &opk_x, &opk_y) !=
-	    EC_SUCCESS) {
-		CPRINTF("Origin keypair gen failed");
-		return VENDOR_RC_INTERNAL_ERROR;
-	}
+	do {
+		if (!DCRYPTO_ladder_random(&od_seed))
+			return VENDOR_RC_INTERNAL_ERROR;
 
-	/* Generate key handle */
-	/* Interleave origin ID and origin priv key, wrap and export. */
-	interleave32(req->appId, od_seed, tmp);
-	if (wrap_kh(NULL, tmp, kh, ENCRYPT_MODE) != EC_SUCCESS)
-		return VENDOR_RC_INTERNAL_ERROR;
+		u2f_origin_user_keyhandle(req->appId,
+					  req->userSecret,
+					  od_seed,
+					  kh);
+	} while (u2f_origin_user_keypair(kh, &od, &opk_x, &opk_y) !=
+		 EC_SUCCESS);
 
 	/*
 	 * From this point: the request 'req' content is invalid as it is
@@ -461,12 +459,8 @@ static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
 	const U2F_SIGN_REQ *req = buf;
 	U2F_SIGN_RESP *resp;
 
-	/* Decrypted key handle. */
-	uint8_t unwrapped_kh[KH_LEN];
-
-	/* Contents of key handle after de-interleaving. */
-	uint8_t od_seed[SHA256_DIGEST_SIZE];
-	uint8_t origin[U2F_APPID_SIZE];
+	/* Re-created key handle. */
+	uint8_t recreated_kh[KH_LEN];
 
 	struct drbg_ctx ctx;
 
@@ -479,13 +473,17 @@ static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
 	if (input_size != sizeof(U2F_SIGN_REQ))
 		return VENDOR_RC_BOGUS_ARGS;
 
-	/* Decrypt and unwrap key handle. */
-	if (wrap_kh(NULL, req->keyHandle, unwrapped_kh, DECRYPT_MODE))
-		return VENDOR_RC_NOT_ALLOWED;
-	deinterleave64(unwrapped_kh, origin, od_seed);
+	/*
+	 * Re-create the key handle and compare against that which
+	 * was provided. This allows us to verify that the key handle
+	 * is owned by the current user and appId.
+	 */
+	u2f_origin_user_keyhandle(req->appId,
+				  req->userSecret,
+				  req->keyHandle,
+				  recreated_kh);
 
-	/* Check origin matches. */
-	if (memcmp(origin, req->appId, U2F_APPID_SIZE) != 0)
+	if (memcmp(recreated_kh, req->keyHandle, KH_LEN) != 0)
 		return VENDOR_RC_NOT_ALLOWED;
 
 	/* Always enforce user presence, with optional consume. */
@@ -493,7 +491,8 @@ static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
 		return VENDOR_RC_NOT_ALLOWED;
 
 	/* Re-create origin-specific key. */
-	if (u2f_origin_key(od_seed, &origin_d))
+	if (u2f_origin_user_keypair(
+		req->keyHandle, &origin_d, NULL, NULL) != EC_SUCCESS)
 		return VENDOR_RC_INTERNAL_ERROR;
 
 	/* Prepare hash to sign. */

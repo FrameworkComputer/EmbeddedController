@@ -208,6 +208,52 @@ int u2f_origin_key(const uint8_t *seed, p256_int *d)
 					   (const uint8_t *)tmp) == 0;
 }
 
+int u2f_origin_user_keyhandle(const uint8_t *origin,
+			      const uint8_t *user,
+			      const uint8_t *origin_seed,
+			      uint8_t *key_handle)
+{
+	LITE_HMAC_CTX ctx;
+
+	memcpy(key_handle, origin_seed, P256_NBYTES);
+
+	DCRYPTO_HMAC_SHA256_init(&ctx, salt_kek, SHA256_DIGEST_SIZE);
+	HASH_update(&ctx.hash, origin, P256_NBYTES);
+	HASH_update(&ctx.hash, user, P256_NBYTES);
+	HASH_update(&ctx.hash, origin_seed, P256_NBYTES);
+
+	memcpy(key_handle + P256_NBYTES,
+	       DCRYPTO_HMAC_final(&ctx), SHA256_DIGEST_SIZE);
+
+	return EC_SUCCESS;
+}
+
+int u2f_origin_user_keypair(const uint8_t *key_handle,
+			    p256_int *d,
+			    p256_int *pk_x,
+			    p256_int *pk_y)
+{
+	uint32_t dev_salt[P256_NDIGITS];
+	uint8_t key_seed[P256_NBYTES];
+
+	struct drbg_ctx drbg;
+
+	if (!_derive_key(U2F_ORIGIN, salt_kek, dev_salt))
+		return EC_ERROR_UNKNOWN;
+
+	hmac_drbg_init(&drbg,
+		       dev_salt, P256_NBYTES,
+		       key_handle, P256_NBYTES * 2,
+		       NULL, 0);
+
+	hmac_drbg_generate(&drbg,
+			   key_seed, sizeof(key_seed),
+			   NULL, 0);
+
+	return DCRYPTO_p256_key_from_bytes(
+	    pk_x, pk_y, d, key_seed) == 0;
+}
+
 int u2f_gen_kek(const uint8_t *origin, uint8_t *kek, size_t key_len)
 {
 	uint32_t buf[P256_NDIGITS];
