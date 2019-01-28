@@ -954,13 +954,9 @@ int cmd_reboot_ec(int argc, char *argv[])
 		p.cmd = EC_REBOOT_CANCEL;
 	else if (!strcmp(argv[1], "RO"))
 		p.cmd = EC_REBOOT_JUMP_RO;
-	else if (!strcmp(argv[1], "RW") || !strcmp(argv[1], "A")) {
-		/*
-		 * TODO(crosbug.com/p/11149): remove "A" once all scripts are
-		 * updated to use "RW".
-		 */
+	else if (!strcmp(argv[1], "RW"))
 		p.cmd = EC_REBOOT_JUMP_RW;
-	} else if (!strcmp(argv[1], "cold"))
+	else if (!strcmp(argv[1], "cold"))
 		p.cmd = EC_REBOOT_COLD;
 	else if (!strcmp(argv[1], "disable-jump"))
 		p.cmd = EC_REBOOT_DISABLE_JUMP;
