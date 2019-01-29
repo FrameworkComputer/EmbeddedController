@@ -290,6 +290,13 @@ int board_tpm_uses_spi(void);
  * @return 0 if option is not set, !=0 if option set.
  */
 int board_uses_closed_source_set1(void);
+/**
+ * The board needs to wait until TPM_RST_L is asserted before deasserting
+ * system reset signals.
+ *
+ * @return 0 if option is not set, !=0 if option set.
+ */
+int board_uses_closed_loop_reset(void);
 int board_id_is_mismatched(void);
 /* Allow for deep sleep to be enabled on AP shutdown */
 int board_deep_sleep_allowed(void);

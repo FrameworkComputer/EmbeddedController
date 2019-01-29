@@ -164,6 +164,11 @@ int board_uses_closed_source_set1(void)
 	return !!(board_properties & BOARD_CLOSED_SOURCE_SET1);
 }
 
+int board_uses_closed_loop_reset(void)
+{
+	return !!(board_properties & BOARD_CLOSED_LOOP_RESET);
+}
+
 /* Get header address of the backup RW copy. */
 const struct SignedHeader *get_other_rw_addr(void)
 {

@@ -70,12 +70,18 @@
 #define BOARD_CLOSED_SOURCE_SET1     (1 << 17)
 
 /*
+ * Wait until PLT_RST_L is asserted before deasserting reset.
+ */
+#define BOARD_CLOSED_LOOP_RESET      (1 << 18)
+
+/*
  * Macro to capture all properties related to board strapping pins. This must be
  * updated if additional strap related properties are added.
  */
 #define BOARD_ALL_PROPERTIES (BOARD_SLAVE_CONFIG_SPI | BOARD_SLAVE_CONFIG_I2C \
 	| BOARD_NEEDS_SYS_RST_PULL_UP | BOARD_USE_PLT_RESET | \
 	BOARD_DEEP_SLEEP_DISABLED | BOARD_DETECT_AP_WITH_UART | \
-	BOARD_WP_DISABLE_DELAY | BOARD_CLOSED_SOURCE_SET1)
+	BOARD_WP_DISABLE_DELAY | BOARD_CLOSED_SOURCE_SET1 | \
+	BOARD_CLOSED_LOOP_RESET)
 
 #endif  /* ! __EC_BOARD_CR50_SCRATCH_REG1_H */
