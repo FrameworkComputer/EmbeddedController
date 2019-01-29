@@ -44,6 +44,8 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
+/*****************************************************************************/
+/* INTERRUPT GPIOs - interrupts processed in chip/g/gpio.c */
 /*
  * The system reset signal can be from two different pins depending on what the
  * board type is. One board uses plt_rst_l (diom3) and the other board type uses
@@ -66,9 +68,17 @@ GPIO_INT(DETECT_EC,       PIN(1, 2),  GPIO_INT_HIGH, ec_detect_asserted)
 GPIO_INT(DETECT_SERVO,    PIN(1, 3),  GPIO_INT_HIGH | GPIO_PULL_DOWN,
 	 servo_detect_asserted)
 
-/* This is used for EC flash bit bang programming. */
+/*****************************************************************************/
+/* NON STANDARD INTERRUPT GPIOs - handlers defined and configured in board.c */
+/*
+ * This signal is used as an interrupt for uart bitbang. This is setup manually
+ * in board.c instead of using chip/g/gpio.c, so the interrupts can be processed
+ * more quickly. This increases the max bitbang programming speed.
+ */
 GPIO(EC_TX_CR50_RX,   PIN(1, 4),  GPIO_INPUT)
 
+/*****************************************************************************/
+/* GPIOs */
 /* Pull this low to interrupt the AP */
 GPIO(INT_AP_L,        PIN(0, 0), GPIO_OUT_HIGH)
 
