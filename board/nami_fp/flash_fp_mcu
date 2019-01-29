@@ -3,86 +3,33 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+. /usr/share/flash_fp_mcu/flash_fp_mcu_common.sh
+
 # Kabylake PCH GPIOs
-KBL_GPIOCHIP="gpiochip360"
+readonly KBL_GPIOCHIP="gpiochip360"
 
 if [[ -e "/sys/class/gpio/${KBL_GPIOCHIP}" ]]; then
   # Ekko configuration
   echo "NOTE: For use with updating FP MCU on NAMI boards only"
-  SPIDEV="/dev/spidev32765.0"
+  readonly SPIDEV="/dev/spidev32765.0"
   # GSPI1 ACPI device for FP MCU
-  SPIID="spi-PRP0001:02"
+  readonly SPIID="spi-PRP0001:02"
   # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
-  GPIO_NRST=417
+  readonly GPIO_NRST=417
   # FPMCU BOOT0 is on GPP_D5 = 360 + 77 = 437
-  GPIO_BOOT0=437
+  readonly GPIO_BOOT0=437
   # FP_PWR_EN is on GPP_B11 = 360 + 35 = 395
-  GPIO_PWREN=395
+  readonly GPIO_PWREN=395
 else
   echo "Cannot find a known GPIO chip."
   exit 1
 fi
 
-if [[ ! -f "$1" ]]; then
-  echo "Invalid image file: $1"
-  echo "Usage: $0 ec.bin"
-  exit 1
-fi
+flash_fp_mcu_stm32 \
+  "${SPIDEV}"      \
+  "${SPIID}"       \
+  "${GPIO_NRST}"   \
+  "${GPIO_BOOT0}"  \
+  "${GPIO_PWREN}"  \
+  "${1}"
 
-if ectool gpioget EC_WP_L | grep -q '= 0'; then
-  echo "Please make sure WP is deasserted."
-  exit 1
-fi
-
-# Ensure the ACPI is not cutting power when unloading cros-ec-spi
-echo ${GPIO_PWREN} > /sys/class/gpio/export
-echo "out" > /sys/class/gpio/gpio${GPIO_PWREN}/direction
-echo 1 > /sys/class/gpio/gpio${GPIO_PWREN}/value
-
-# Remove cros_fp if present
-echo "${SPIID}" > /sys/bus/spi/drivers/cros-ec-spi/unbind
-
-# Configure the MCU Boot0 and NRST GPIOs
-echo ${GPIO_BOOT0} > /sys/class/gpio/export
-echo "out" > /sys/class/gpio/gpio${GPIO_BOOT0}/direction
-echo ${GPIO_NRST} > /sys/class/gpio/export
-echo "out" > /sys/class/gpio/gpio${GPIO_NRST}/direction
-
-# Reset sequence to enter bootloader mode
-echo 1 > /sys/class/gpio/gpio${GPIO_BOOT0}/value
-echo 0 > /sys/class/gpio/gpio${GPIO_NRST}/value
-sleep 0.001
-
-# load spidev (fail on cros-ec-spi first to change modalias)
-echo "${SPIID}" > /sys/bus/spi/drivers/cros-ec-spi/bind 2>/dev/null
-echo "${SPIID}" > /sys/bus/spi/drivers/spidev/bind
-
-# Release reset as the SPI bus is now ready
-echo 1 > /sys/class/gpio/gpio${GPIO_NRST}/value
-echo "in" > /sys/class/gpio/gpio${GPIO_NRST}/direction
-
-stm32mon -U -u -p -s ${SPIDEV} -e -w $1
-
-# unload spidev
-echo "${SPIID}" > /sys/bus/spi/drivers/spidev/unbind
-
-# Go back to normal mode
-echo "out" > /sys/class/gpio/gpio${GPIO_NRST}/direction
-echo 0 > /sys/class/gpio/gpio${GPIO_BOOT0}/value
-echo 0 > /sys/class/gpio/gpio${GPIO_NRST}/value
-echo 1 > /sys/class/gpio/gpio${GPIO_NRST}/value
-
-# Give up GPIO control
-echo "in" > /sys/class/gpio/gpio${GPIO_BOOT0}/direction
-echo "in" > /sys/class/gpio/gpio${GPIO_NRST}/direction
-echo ${GPIO_BOOT0} > /sys/class/gpio/unexport
-echo ${GPIO_NRST} > /sys/class/gpio/unexport
-
-# wait for FP MCU to come back up (including RWSIG delay)
-sleep 2
-# Put back cros_fp driver
-echo "${SPIID}" > /sys/bus/spi/drivers/cros-ec-spi/bind
-# Kernel driver is back, we are no longer controlling power
-echo ${GPIO_PWREN} > /sys/class/gpio/unexport
-# Test it
-ectool --name=cros_fp version
