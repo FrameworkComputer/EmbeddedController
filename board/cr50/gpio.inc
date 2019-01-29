@@ -74,8 +74,10 @@ GPIO_INT(DETECT_SERVO,    PIN(1, 3),  GPIO_INT_HIGH | GPIO_PULL_DOWN,
  * This signal is used as an interrupt for uart bitbang. This is setup manually
  * in board.c instead of using chip/g/gpio.c, so the interrupts can be processed
  * more quickly. This increases the max bitbang programming speed.
+ *
+ * If this gpio is changed, you must update the information in board.c.
  */
-GPIO(EC_TX_CR50_RX,   PIN(1, 4),  GPIO_INPUT)
+GPIO(EC_TX_CR50_RX,   PIN(1, 11),  GPIO_INPUT)
 
 /*****************************************************************************/
 /* GPIOs */

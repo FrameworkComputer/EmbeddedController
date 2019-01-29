@@ -97,7 +97,7 @@ struct uart_bitbang_properties bitbang_config = {
 	.uart = UART_EC,
 	.tx_gpio = GPIO_DETECT_SERVO, /* This is TX to EC console. */
 	.rx_gpio = GPIO_EC_TX_CR50_RX,
-	.rx_irq = GC_IRQNUM_GPIO1_GPIO4INT, /* Must match gpoi.inc */
+	.rx_irq = GC_IRQNUM_GPIO1_GPIO11INT, /* Must match gpoi.inc */
 	/*
 	 * The rx/tx_pinmux_regval values MUST agree with the pin config for
 	 * both the TX and RX GPIOs in gpio.inc.  Don't change one without
@@ -106,10 +106,10 @@ struct uart_bitbang_properties bitbang_config = {
 	.tx_pinmux_reg = GBASE(PINMUX) + GOFFSET(PINMUX, DIOB5_SEL),
 	.tx_pinmux_regval = GC_PINMUX_GPIO1_GPIO3_SEL,
 	.rx_pinmux_reg = GBASE(PINMUX) + GOFFSET(PINMUX, DIOB6_SEL),
-	.rx_pinmux_regval = GC_PINMUX_GPIO1_GPIO4_SEL,
+	.rx_pinmux_regval = GC_PINMUX_GPIO1_GPIO11_SEL,
 };
 
-DECLARE_IRQ(GC_IRQNUM_GPIO1_GPIO4INT, uart_bitbang_irq, 0);
+DECLARE_IRQ(GC_IRQNUM_GPIO1_GPIO11INT, uart_bitbang_irq, 0);
 
 const char *device_state_names[] = {
 	"init",
