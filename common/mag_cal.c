@@ -13,7 +13,7 @@
 #include "math_util.h"
 #include "util.h"
 
-/* Data from sensor is in 16th of uT */
+/* Data from sensor is in 16th of uT, 0.0625 uT/LSB */
 #define MAG_CAL_RAW_UT      16
 
 #define MAX_EIGEN_RATIO     FLOAT_TO_FP(25.0f)
