@@ -7,31 +7,31 @@
 KBL_GPIOCHIP="gpiochip360"
 
 if [ -e "/sys/class/gpio/${KBL_GPIOCHIP}" ]; then
-	# Ekko configuration
-    	echo "NOTE: For use with updating FP MCU on NAMI boards only"
-	SPIDEV="/dev/spidev32765.0"
-	# GSPI1 ACPI device for FP MCU
-	SPIID="spi-PRP0001:02"
-	# FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
-	GPIO_NRST=417
-	# FPMCU BOOT0 is on GPP_D5 = 360 + 77 = 437
-	GPIO_BOOT0=437
-	# FP_PWR_EN is on GPP_B11 = 360 + 35 = 395
-	GPIO_PWREN=395
+  # Ekko configuration
+  echo "NOTE: For use with updating FP MCU on NAMI boards only"
+  SPIDEV="/dev/spidev32765.0"
+  # GSPI1 ACPI device for FP MCU
+  SPIID="spi-PRP0001:02"
+  # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
+  GPIO_NRST=417
+  # FPMCU BOOT0 is on GPP_D5 = 360 + 77 = 437
+  GPIO_BOOT0=437
+  # FP_PWR_EN is on GPP_B11 = 360 + 35 = 395
+  GPIO_PWREN=395
 else
-	echo "Cannot find a known GPIO chip."
-	exit 1
+  echo "Cannot find a known GPIO chip."
+  exit 1
 fi
 
 if [ ! -f "$1" ]; then
-	echo "Invalid image file: $1"
-	echo "Usage: $0 ec.bin"
-	exit 1
+  echo "Invalid image file: $1"
+  echo "Usage: $0 ec.bin"
+  exit 1
 fi
 
 if ectool gpioget EC_WP_L | grep -q '= 0'; then
-	echo "Please make sure WP is deasserted."
-	exit 1
+  echo "Please make sure WP is deasserted."
+  exit 1
 fi
 
 # Ensure the ACPI is not cutting power when unloading cros-ec-spi

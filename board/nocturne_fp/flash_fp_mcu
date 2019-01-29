@@ -9,43 +9,43 @@ CNL_GPIOCHIP="gpiochip268"
 KBL_GPIOCHIP="gpiochip360"
 
 if [ -e "/sys/class/gpio/${CNL_GPIOCHIP}" ]; then
-	# Meowth configuration
+  # Meowth configuration
 
-	SPIDEV="/dev/spidev1.0"
-	# GSPI1 ACPI device for FP MCU
-	SPIID="spi-PRP0001:01"
-	# FPMCU RST_ODL is on GPP_A23 = 268 + 23 = 291
-	GPIO_NRST=291
-	# FPMCU BOOT0 is on GPP_A21 = 268 + 21 = 289
-	GPIO_BOOT0=289
-	# FP_PWR_EN is on GPP_A11 = 268 + 11 = 279
-	GPIO_PWREN=279
+  SPIDEV="/dev/spidev1.0"
+  # GSPI1 ACPI device for FP MCU
+  SPIID="spi-PRP0001:01"
+  # FPMCU RST_ODL is on GPP_A23 = 268 + 23 = 291
+  GPIO_NRST=291
+  # FPMCU BOOT0 is on GPP_A21 = 268 + 21 = 289
+  GPIO_BOOT0=289
+  # FP_PWR_EN is on GPP_A11 = 268 + 11 = 279
+  GPIO_PWREN=279
 elif [ -e "/sys/class/gpio/${KBL_GPIOCHIP}" ]; then
-	# Nocturne configuration
+  # Nocturne configuration
 
-	SPIDEV="/dev/spidev32765.0"
-	# GSPI1 ACPI device for FP MCU
-	SPIID="spi-PRP0001:02"
-	# FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
-	GPIO_NRST=418
-	# FPMCU BOOT0 is on GPP_C8 = 360 + 56 = 416
-	GPIO_BOOT0=416
-	# FP_PWR_EN is on GPP_A11 = 360 + 11 = 371
-	GPIO_PWREN=371
+  SPIDEV="/dev/spidev32765.0"
+  # GSPI1 ACPI device for FP MCU
+  SPIID="spi-PRP0001:02"
+  # FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
+  GPIO_NRST=418
+  # FPMCU BOOT0 is on GPP_C8 = 360 + 56 = 416
+  GPIO_BOOT0=416
+  # FP_PWR_EN is on GPP_A11 = 360 + 11 = 371
+  GPIO_PWREN=371
 else
-	echo "Cannot find a known GPIO chip."
-	exit 1
+  echo "Cannot find a known GPIO chip."
+  exit 1
 fi
 
 if [ ! -f "$1" ]; then
-	echo "Invalid image file: $1"
-	echo "Usage: $0 ec.bin"
-	exit 1
+  echo "Invalid image file: $1"
+  echo "Usage: $0 ec.bin"
+  exit 1
 fi
 
 if ectool gpioget EC_WP_L | grep -q '= 0'; then
-	echo "Please make sure WP is deasserted."
-	exit 1
+  echo "Please make sure WP is deasserted."
+  exit 1
 fi
 
 # Ensure the ACPI is not cutting power when unloading cros-ec-spi
