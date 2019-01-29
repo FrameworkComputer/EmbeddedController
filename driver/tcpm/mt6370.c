@@ -28,15 +28,21 @@ static int mt6370_i2c_write8(int port, int reg, int val)
 
 static int mt6370_init(int port)
 {
-	int rv;
+	int rv, val;
 
-	/* Software reset. */
-	rv = tcpc_write(port, MT6370_REG_SWRESET, 1);
-	if (rv)
-		return rv;
+	rv = tcpc_read(port, MT6370_REG_IDLE_CTRL, &val);
 
-	/* Need 1 ms for software reset. */
-	msleep(1);
+	/* Only do soft-reset in shipping mode. (b:122017882) */
+	if (!(val & MT6370_REG_SHIPPING_OFF)) {
+
+		/* Software reset. */
+		rv = tcpc_write(port, MT6370_REG_SWRESET, 1);
+		if (rv)
+			return rv;
+
+		/* Need 1 ms for software reset. */
+		msleep(1);
+	}
 
 	/* The earliest point that we can do generic init. */
 	rv = tcpci_tcpm_init(port);
