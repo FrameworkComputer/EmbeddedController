@@ -318,6 +318,7 @@ int board_battery_is_present(void);
 int board_fwmp_allows_unlock(void);
 int board_vboot_dev_mode_enabled(void);
 void board_reboot_ap(void);
+void board_closed_loop_reset(void);
 int board_wipe_tpm(void);
 int board_is_first_factory_boot(void);
 

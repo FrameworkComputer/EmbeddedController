@@ -1114,7 +1114,10 @@ static int command_ec_rst(int argc, char **argv)
 		if (!ccd_is_cap_enabled(CCD_CAP_REBOOT_EC_AP))
 			return EC_ERROR_ACCESS_DENIED;
 
-		if (!strcasecmp("pulse", argv[1])) {
+		if (!strcasecmp("cl", argv[1])) {
+			/* Assert EC_RST_L until TPM_RST_L is asserted */
+			board_closed_loop_reset();
+		} else if (!strcasecmp("pulse", argv[1])) {
 			ccprintf("Pulsing EC reset\n");
 			board_reboot_ec();
 		} else if (parse_bool(argv[1], &val)) {
@@ -1132,7 +1135,7 @@ static int command_ec_rst(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(ecrst, command_ec_rst,
-	"[pulse | <BOOLEAN>]",
+	"[cl | pulse | <BOOLEAN>]",
 	"Assert/deassert EC_RST_L to reset the EC (and AP)");
 
 /*
