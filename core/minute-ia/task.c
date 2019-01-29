@@ -596,7 +596,7 @@ void task_pre_init(void)
 		sp[10] = INITIAL_EFLAGS;
 
 		sp[11] = (uint32_t) task_exit_trap;
-		sp[12] = 0x00;
+		sp[12] = tasks_init[i].r0;	/* task argument */
 		sp[13] = 0x00;
 		sp[14] = 0x00;
 		sp[15] = 0x00;
