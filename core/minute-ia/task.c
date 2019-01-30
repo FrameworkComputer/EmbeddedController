@@ -26,7 +26,7 @@
 #define STACK_UNUSED_VALUE 0xdeadd00d
 
 /* declare task routine prototypes */
-#define TASK(n, r, d, s) void r(void *);
+#define TASK(n, r, d, s, f) void r(void *);
 void __idle(void);
 CONFIG_TASK_LIST
 CONFIG_TEST_TASK_LIST
@@ -36,7 +36,7 @@ CONFIG_TEST_TASK_LIST
 extern volatile uint32_t __in_isr;
 
 /* Task names for easier debugging */
-#define TASK(n, r, d, s)  #n,
+#define TASK(n, r, d, s, f)  #n,
 static const char * const task_names[] = {
 	"<< idle >>",
 	CONFIG_TASK_LIST
@@ -90,17 +90,19 @@ static void task_exit_trap(void)
 }
 
 /* Startup parameters for all tasks. */
-#define TASK(n, r, d, s)  {	\
+#define TASK(n, r, d, s, f)  {	\
 	.r0 = (uint32_t)d,	\
 	.pc = (uint32_t)r,	\
 	.stack_size = s,	\
+	.flags = f,		\
 },
 static const struct {
 	uint32_t r0;
 	uint32_t pc;
 	uint16_t stack_size;
+	uint32_t flags;
 } tasks_init[] = {
-	TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
+	TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE, 0)
 	CONFIG_TASK_LIST
 	CONFIG_TEST_TASK_LIST
 };
@@ -115,9 +117,9 @@ BUILD_ASSERT(TASK_ID_COUNT < (1 << (sizeof(task_id_t) * 8)));
 
 
 /* Stacks for all tasks */
-#define TASK(n, r, d, s)  + s
+#define TASK(n, r, d, s, f)  + s
 uint8_t task_stacks[0
-		    TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
+		    TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE, 0)
 		    CONFIG_TASK_LIST
 		    CONFIG_TEST_TASK_LIST
 ] __aligned(8);
@@ -474,10 +476,18 @@ void task_print_list(void)
 {
 	int i;
 
+#ifdef CONFIG_FPU
+	ccputs("Task Ready Name         Events      Time (s)  "
+	       "  StkUsed UseFPU\n");
+#else
 	ccputs("Task Ready Name         Events      Time (s)  StkUsed\n");
+#endif
 
 	for (i = 0; i < TASK_ID_COUNT; i++) {
 		char is_ready = (tasks_ready & (1<<i)) ? 'R' : ' ';
+#ifdef CONFIG_FPU
+		char use_fpu = tasks[i].use_fpu ? 'Y' : 'N';
+#endif
 		uint32_t *sp;
 
 		int stackused = tasks_init[i].stack_size;
@@ -487,9 +497,16 @@ void task_print_list(void)
 		     sp++)
 			stackused -= sizeof(uint32_t);
 
+#ifdef CONFIG_FPU
+		ccprintf("%4d %c %-16s %08x %11.6ld  %3d/%3d %c\n", i, is_ready,
+			 task_names[i], tasks[i].events, tasks[i].runtime,
+			 stackused, tasks_init[i].stack_size, use_fpu);
+#else
 		ccprintf("%4d %c %-16s %08x %11.6ld  %3d/%3d\n", i, is_ready,
 			 task_names[i], tasks[i].events, tasks[i].runtime,
 			 stackused, tasks_init[i].stack_size);
+#endif
+
 		cflush();
 	}
 }
@@ -606,6 +623,9 @@ void task_pre_init(void)
 		/* Copy default x86 FPU state for each task */
 		memcpy(tasks[i].fp_ctx, default_fp_ctx,
 			sizeof(default_fp_ctx));
+
+		if (tasks_init[i].flags & MIA_TASK_FLAG_USE_FPU)
+			tasks[i].use_fpu = 1;
 #endif
 		/* Fill unused stack; also used to detect stack overflow. */
 		for (sp = stack_next; sp < (uint32_t *)tasks[i].sp; sp++)
@@ -618,7 +638,6 @@ void task_pre_init(void)
 
 	/* Initialize IRQs */
 	init_interrupts();
-
 }
 
 void task_clear_fp_used(void)

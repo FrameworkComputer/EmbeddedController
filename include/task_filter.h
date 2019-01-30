@@ -13,21 +13,21 @@
 #define TASK_NOTEST_RO TASK_NOTEST
 #define TASK_TEST_RO TASK_TEST
 #define TASK_ALWAYS_RO TASK_ALWAYS
-#define TASK_NOTEST_RW(n, r, d, s)
-#define TASK_TEST_RW(n, r, d, s)
-#define TASK_ALWAYS_RW(n, r, d, s)
+#define TASK_NOTEST_RW(...)
+#define TASK_TEST_RW(...)
+#define TASK_ALWAYS_RW(...)
 #else /* SECTION_IS_RW */
 #define TASK_NOTEST_RW TASK_NOTEST
 #define TASK_TEST_RW TASK_TEST
 #define TASK_ALWAYS_RW TASK_ALWAYS
-#define TASK_NOTEST_RO(n, r, d, s)
-#define TASK_TEST_RO(n, r, d, s)
-#define TASK_ALWAYS_RO(n, r, d, s)
+#define TASK_NOTEST_RO(...)
+#define TASK_TEST_RO(...)
+#define TASK_ALWAYS_RO(...)
 #endif
 
 /* excludes non-base tasks for test build */
 #ifdef TEST_BUILD
-#define TASK_NOTEST(n, r, d, s)
+#define TASK_NOTEST(...)
 #define TASK_TEST TASK
 #else
 #define TASK_NOTEST TASK
@@ -42,7 +42,7 @@
 
 /* If included directly from Makefile, dump task list. */
 #ifdef _MAKEFILE
-#define TASK(n, r, d, s) n
+#define TASK(n, ...) n
 CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST CONFIG_CTS_TASK_LIST
 #endif
 

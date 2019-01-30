@@ -33,7 +33,11 @@ __task_start:
 	movl current_task, %eax
 	movl (%eax), %esp
 #ifdef CONFIG_FPU
-	frstor 20(%eax)
+	movl USE_FPU_OFFSET(%eax), %ebx
+	test %ebx, %ebx
+	jz 1f
+	frstor FPU_CTX_OFFSET(%eax)
+	1:
 #endif
 	movl $0x1, (%ebx)       # first task is ready. set start_called = 1
 	popa
@@ -112,7 +116,11 @@ __switchto:
 	movl current_task, %eax
 
 #ifdef CONFIG_FPU
-	fnsave 20(%eax)		# Save current FPU context at current->fp_ctx
+	movl USE_FPU_OFFSET(%eax), %ebx
+	test %ebx, %ebx
+	jz 2f
+	fnsave FPU_CTX_OFFSET(%eax) # Save current FPU context(current->fp_ctx)
+	2:
 #endif
 
 	# Save SP of current task and switch to new task
@@ -122,7 +130,10 @@ __switchto:
 	movl (%eax), %esp
 
 #ifdef CONFIG_FPU
-	frstor 20(%eax)		# Restore next FPU context
+	movl USE_FPU_OFFSET(%eax), %ebx
+	test %ebx, %ebx
+	jz 1f
+	frstor FPU_CTX_OFFSET(%eax)		# Restore next FPU context
 #endif
 
 	1:

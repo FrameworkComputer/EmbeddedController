@@ -9,10 +9,20 @@
 #define __CROS_EC_IRQ_HANDLER_H
 
 #include "registers.h"
+#include "task_defs.h"
 
 #ifdef CONFIG_FPU
-#define save_fpu_ctx	"fnsave 20(%eax)\n"
-#define rstr_fpu_ctx	"frstor 20(%eax)\n"
+#define save_fpu_ctx	"movl "USE_FPU_OFFSET_STR"(%eax), %ebx\n"	\
+			"test %ebx, %ebx\n"				\
+			"jz 9f\n"					\
+			"fnsave "FPU_CTX_OFFSET_STR"(%eax)\n"		\
+			"9:\n"
+
+#define rstr_fpu_ctx	"movl "USE_FPU_OFFSET_STR"(%eax), %ebx\n"	\
+			"test %ebx, %ebx\n"				\
+			"jz 9f\n"					\
+			"frstor "FPU_CTX_OFFSET_STR"(%eax)\n"		\
+			"9:\n"
 #else
 #define save_fpu_ctx
 #define rstr_fpu_ctx
