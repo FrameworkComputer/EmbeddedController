@@ -69,6 +69,7 @@
 /* Who Am I */
 #define LSM6DSM_WHO_AM_I_REG		0x0f
 #define LSM6DSM_WHO_AM_I			0x6a
+#define LSM6DS3_WHO_AM_I			0x69
 
 #define LSM6DSM_CTRL1_ADDR		0x10
 #define LSM6DSM_XL_ODR_MASK			0xf0
