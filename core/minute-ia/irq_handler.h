@@ -39,6 +39,7 @@ struct irq_data {
  *
  * Note: No 'naked' function support for x86, so function is implemented within
  * __asm__
+ * Note: currently we don't allow nested irq handling
  */
 #define DECLARE_IRQ(irq, routine) DECLARE_IRQ_(irq, routine, irq + 32 + 10)
 /* Each irq has a irq_data structure placed in .rodata.irqs section,
@@ -54,12 +55,16 @@ struct irq_data {
 		"_irq_"#irq"_handler:\n"				\
 			"pusha\n"					\
 			ASM_LOCK_PREFIX "addl  $1, __in_isr\n"		\
+			"movl %esp, %eax\n"                             \
+			"movl $stack_end, %esp\n"                       \
+			"push %eax\n"                                   \
 			task_start_irq_handler_call			\
 			"call "#routine"\n"				\
 			"push $0\n"					\
 			"push $0\n"					\
 			"call switch_handler\n"				\
 			"addl $0x08, %esp\n"				\
+			"pop %esp\n"                                    \
 			"test %eax, %eax\n"				\
 			"je 1f\n"					\
 			"movl current_task, %eax\n"			\

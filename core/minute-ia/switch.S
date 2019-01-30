@@ -49,8 +49,13 @@ default_int_handler:
 	pusha
 	ASM_LOCK_PREFIX addl $1, __in_isr
 
+	movl %esp, %eax
+	movl $stack_end, %esp		# use system stack
+	push %eax			# push sp of preempted context
+
 	call unhandled_vector		# Handle system interrupts and
 					# unregistered user interrupts
+	pop %esp			# restore sp of preempted context
 	# unhandled_vector call loads eax with vector for comparison
 	cmpl $LAPIC_SPURIOUS_INT_VECTOR, %eax
 	je 1f				# No EOI for LAPIC_SPURIOUS_INT_VECTOR
@@ -78,6 +83,10 @@ __switchto:
 	pusha
 	ASM_LOCK_PREFIX addl $1, __in_isr
 
+	movl %esp, %eax
+	movl $stack_end, %esp		# use system stack
+	push %eax			# push sp of preempted context
+
 	# __schedule() copies 'resched' to %ecx and 'desched' to %edx before
 	# triggering ISH_TS_VECTOR
 	#
@@ -95,6 +104,7 @@ __switchto:
 	# Stack is already set up from previous pushes
 	call switch_handler
 	addl $0x8, %esp		# Clean up stack
+	pop %esp		# restore sp of preempted context
 
 	test %eax, %eax		# Check if task switch required
 	jz 1f
