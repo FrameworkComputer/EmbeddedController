@@ -386,9 +386,6 @@ void task_enable_all_tasks(void)
 	/* Mark all tasks as ready and table to run. */
 	tasks_ready = tasks_enabled = (1 << TASK_ID_COUNT) - 1;
 
-	/* BUG: task_start() was likely already called */
-	start_called = 1;
-
 	/* Reschedule the highest priority task. */
 	__schedule(0, 0);
 }
@@ -628,5 +625,5 @@ int task_start(void)
 #ifdef CONFIG_TASK_PROFILING
 	task_start_time = exc_end_time = get_time().val;
 #endif
-	return __task_start();
+	return __task_start(&start_called);
 }

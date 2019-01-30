@@ -29,11 +29,13 @@
 .align 4
 .func __task_start
 __task_start:
+	movl 0x4(%esp), %ebx
 	movl current_task, %eax
 	movl (%eax), %esp
 #ifdef CONFIG_FPU
 	frstor 20(%eax)
 #endif
+	movl $0x1, (%ebx)       # first task is ready. set start_called = 1
 	popa
 	iret
 .endfunc
