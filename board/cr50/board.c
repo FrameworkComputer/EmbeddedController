@@ -968,6 +968,10 @@ int is_sys_rst_asserted(void)
  */
 void board_reboot_ap(void)
 {
+	if (board_uses_closed_loop_reset()) {
+		board_closed_loop_reset();
+		return;
+	}
 	assert_sys_rst();
 	msleep(20);
 	deassert_sys_rst();
@@ -978,6 +982,10 @@ void board_reboot_ap(void)
  */
 static void board_reboot_ec(void)
 {
+	if (board_uses_closed_loop_reset()) {
+		board_closed_loop_reset();
+		return;
+	}
 	assert_ec_rst();
 	deassert_ec_rst();
 }

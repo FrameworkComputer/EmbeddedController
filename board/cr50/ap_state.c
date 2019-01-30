@@ -159,18 +159,41 @@ static void init_ap_detect(void)
 	gpio_enable_interrupt(GPIO_TPM_RST_L);
 	gpio_enable_interrupt(GPIO_DETECT_TPM_RST_L_ASSERTED);
 	/*
-	 * Enable TPM reset GPIO interrupt.
+	 * After resuming from any reset other than deep sleep, cr50 needs to
+	 * make sure the rest of the system has reset. If cr50 needs a closed
+	 * loop reset to reset the system, it can't rely on the short EC_RST
+	 * pulse from RO. Use the closed loop reset to ensure the system has
+	 * actually been reset.
 	 *
-	 * If the TPM_RST_L signal is already high when cr50 wakes up or
-	 * transitions to high before we are able to configure the gpio then we
-	 * will have missed the edge and the tpm reset isr will not get
-	 * called. Check that we haven't already missed the rising edge. If we
-	 * have alert tpm_rst_isr.
+	 * During this reset, the ap state will not be set to 'on' until the AP
+	 * enters and then leaves reset. The tpm waits until the ap is on before
+	 * allowing any tpm activity, so it wont do anything until the reset is
+	 * complete.
 	 */
-	if (gpio_get_level(GPIO_TPM_RST_L))
-		tpm_rst_deasserted(GPIO_TPM_RST_L);
-	else
-		tpm_rst_asserted(GPIO_TPM_RST_L);
+	if (board_uses_closed_loop_reset() &&
+	    !(system_get_reset_flags() & RESET_FLAG_HIBERNATE)) {
+		board_closed_loop_reset();
+	} else {
+		/*
+		 * If the TPM_RST_L signal is already high when cr50 wakes up or
+		 * transitions to high before we are able to configure the gpio
+		 * then we will have missed the edge and the tpm reset isr will
+		 * not get called. Check that we haven't already missed the
+		 * rising edge. If we have alert tpm_rst_isr.
+		 *
+		 * DONT alert tpm_rst_isr if the board is waiting for the closed
+		 * loop reset to finish. The isr is edge triggered, so
+		 * tpm_rst_deasserted wont be called until the AP enters and
+		 * exits reset. That is what we want. The TPM and other
+		 * peripherals check ap_is_on before enabling interactions with
+		 * the AP, and we want these to be disabled until the closed
+		 * loop reset is complete.
+		 */
+		if (gpio_get_level(GPIO_TPM_RST_L))
+			tpm_rst_deasserted(GPIO_TPM_RST_L);
+		else
+			tpm_rst_asserted(GPIO_TPM_RST_L);
+	}
 }
 /*
  * TPM_RST_L isn't setup until board_init. Make sure init_ap_detect happens

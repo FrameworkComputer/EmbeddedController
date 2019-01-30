@@ -62,6 +62,18 @@ static void rbox_release_ec_reset(void)
 	GREG32(PINMUX, HOLD) = 0;
 
 	/*
+	 * If the board uses closed loop reset, the short EC_RST_L pulse may
+	 * not actually put the system in reset. Don't release EC_RST_L here.
+	 * Let ap_state.c handle it once it sees the system is reset.
+	 *
+	 * Release PINMUX HOLD, so the board can detect changes on TPM_RST_L.
+	 */
+	if (!(system_get_reset_flags() & RESET_FLAG_HIBERNATE) &&
+	    board_uses_closed_loop_reset()) {
+		return;
+	}
+
+	/*
 	 * After a POR, if the power button is held, then delay releasing
 	 * EC_RST_L.
 	 */
