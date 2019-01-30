@@ -1728,12 +1728,33 @@ DECLARE_CONSOLE_COMMAND(accelinit, command_accel_init,
 static int command_display_accel_info(int argc, char **argv)
 {
 	char *e;
-	int val;
+	int val, i, j;
 
 	if (argc > 3)
 		return EC_ERROR_PARAM_COUNT;
 
 	ccprintf("Motion sensors count = %d\n", motion_sensor_count);
+
+	/* Print motion sensor info. */
+	for (i = 0; i < motion_sensor_count; i++) {
+		ccprintf("\nsensor %d name: %s\n", i, motion_sensors[i].name);
+		ccprintf("active mask: %d\n", motion_sensors[i].active_mask);
+		ccprintf("chip: %d\n", motion_sensors[i].chip);
+		ccprintf("type: %d\n", motion_sensors[i].type);
+		ccprintf("location: %d\n", motion_sensors[i].location);
+		ccprintf("port: %d\n", motion_sensors[i].port);
+		ccprintf("addr: %d\n", motion_sensors[i].addr);
+		ccprintf("range: %d\n", motion_sensors[i].default_range);
+		ccprintf("min_freq: %d\n", motion_sensors[i].min_frequency);
+		ccprintf("max_freq: %d\n", motion_sensors[i].max_frequency);
+		ccprintf("config:\n");
+		for (j = 0; j < SENSOR_CONFIG_MAX; j++) {
+			ccprintf("%d - odr: %umHz, ec_rate: %uus\n", j,
+				motion_sensors[i].config[j].odr &
+				~ROUND_UP_FLAG,
+				motion_sensors[i].config[j].ec_rate);
+		}
+	}
 
 	/* First argument is on/off whether to display accel data. */
 	if (argc > 1) {
