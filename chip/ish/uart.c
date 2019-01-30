@@ -164,8 +164,6 @@ static void uart_hw_init(enum UART_PORT id)
 	uint8_t fcr = 0;
 	struct uart_ctx *ctx = &uart_ctx[id];
 
-	interrupt_disable();
-
 	/* Calculate baud rate divisor */
 	divisor = (ctx->input_freq / ctx->baud_rate) >> 4;
 
@@ -205,7 +203,6 @@ static void uart_hw_init(enum UART_PORT id)
 #else
 	REG8(IER(ctx->id)) = IER_RECV;
 #endif
-	interrupt_enable();
 }
 
 static void uart_stop_hw(enum UART_PORT id)

@@ -389,7 +389,6 @@ void task_enable_all_tasks(void)
 	/* BUG: task_start() was likely already called */
 	start_called = 1;
 
-	interrupt_enable();
 	/* Reschedule the highest priority task. */
 	__schedule(0, 0);
 }
