@@ -582,7 +582,10 @@ static void configure_board_specific_gpios(void)
 	 */
 	if (board_use_plt_rst()) {
 		/* Use plt_rst_l as the tpm reset signal. */
+		/* Select for TPM_RST_L */
 		GWRITE(PINMUX, GPIO1_GPIO0_SEL, GC_PINMUX_DIOM3_SEL);
+		/* Select for DETECT_TPM_RST_L_ASSERTED */
+		GWRITE(PINMUX, GPIO1_GPIO4_SEL, GC_PINMUX_DIOM3_SEL);
 
 		/* Enable the input */
 		GWRITE_FIELD(PINMUX, DIOM3_CTL, IE, 1);
@@ -604,7 +607,10 @@ static void configure_board_specific_gpios(void)
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM3, 1);
 	} else {
 		/* Use sys_rst_l as the tpm reset signal. */
+		/* Select for TPM_RST_L */
 		GWRITE(PINMUX, GPIO1_GPIO0_SEL, GC_PINMUX_DIOM0_SEL);
+		/* Select for DETECT_TPM_RST_L_ASSERTED */
+		GWRITE(PINMUX, GPIO1_GPIO4_SEL, GC_PINMUX_DIOM0_SEL);
 		/* Enable the input */
 		GWRITE_FIELD(PINMUX, DIOM0_CTL, IE, 1);
 
@@ -736,19 +742,6 @@ static void board_init(void)
 	 */
 	check_board_id_mismatch();
 	check_board_id_mismatch();
-
-	/*
-	 * Enable TPM reset GPIO interrupt.
-	 *
-	 * If the TPM_RST_L signal is already high when cr50 wakes up or
-	 * transitions to high before we are able to configure the gpio then we
-	 * will have missed the edge and the tpm reset isr will not get
-	 * called. Check that we haven't already missed the rising edge. If we
-	 * have alert tpm_rst_isr.
-	 */
-	gpio_enable_interrupt(GPIO_TPM_RST_L);
-	if (gpio_get_level(GPIO_TPM_RST_L))
-		hook_call_deferred(&deferred_tpm_rst_isr_data, 0);
 
 	/*
 	 * Start monitoring AC detect to wake Cr50 from deep sleep.  This is

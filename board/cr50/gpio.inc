@@ -67,6 +67,12 @@ GPIO_INT(DETECT_EC_UART,  PIN(1, 2),  GPIO_INT_HIGH, ec_detect_asserted)
  */
 GPIO_INT(DETECT_SERVO,    PIN(1, 3),  GPIO_INT_HIGH | GPIO_PULL_DOWN,
 	 servo_detect_asserted)
+/*
+ * Whan TPM_RST_L is asserted, the AP is in reset. Use this for detecting when
+ * the AP is off.
+ */
+GPIO_INT(DETECT_TPM_RST_L_ASSERTED, PIN(1, 4),  GPIO_INT_FALLING,
+         tpm_rst_asserted)
 
 /*****************************************************************************/
 /* NON STANDARD INTERRUPT GPIOs - handlers defined and configured in board.c */

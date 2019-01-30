@@ -22,8 +22,7 @@ void print_ap_state(void)
 
 int ap_is_on(void)
 {
-	/* Debouncing and on are both still on */
-	return (state == DEVICE_STATE_DEBOUNCING || state == DEVICE_STATE_ON);
+	return state == DEVICE_STATE_ON;
 }
 
 /**
@@ -47,9 +46,10 @@ static void set_state(enum device_state new_state)
 }
 
 /**
- * Set AP to the off state
+ * Set AP to the off state. Disable functionality that should only be available
+ * when the AP is on.
  */
-static void set_ap_off(void)
+static void deferred_set_ap_off(void)
 {
 	CPRINTS("AP off");
 	set_state(DEVICE_STATE_OFF);
@@ -77,12 +77,14 @@ static void set_ap_off(void)
 	if (board_deep_sleep_allowed())
 		enable_deep_sleep();
 }
+DECLARE_DEFERRED(deferred_set_ap_off);
 
 /**
  * Move the AP to the ON state
  */
 void set_ap_on(void)
 {
+	hook_call_deferred(&deferred_set_ap_off_data, -1);
 	CPRINTS("AP on");
 	set_state(DEVICE_STATE_ON);
 
@@ -99,62 +101,48 @@ void set_ap_on(void)
 		disable_deep_sleep();
 }
 
-/**
- * Detect state machine
+/*
+ * If TPM_RST_L is asserted, the AP is in reset. Disable all AP functionality
+ * in 1 second if it remains asserted.
  */
-static void ap_detect(void)
+void tpm_rst_asserted(enum gpio_signal unused)
 {
-	/* Handle detecting device */
-	if (gpio_get_level(GPIO_TPM_RST_L)) {
-		/*
-		 * It is important to check if the AP is already 'on' here, so
-		 * we don't call tpm_rst_deasserted() when the AP is already on.
-		 *
-		 * If we were debouncing ON->OFF, cancel debouncing and go back
-		 * to the ON state.
-		 */
-		if (state == DEVICE_STATE_DEBOUNCING)
-			set_state(DEVICE_STATE_ON);
-		/* If AP is already on, nothing needs to be done */
-		if (state == DEVICE_STATE_ON)
-			return;
-
-		/*
-		 * The platform reset handler has not run yet; otherwise, it
-		 * would have already turned the AP on and we wouldn't get here.
-		 *
-		 * This can happen if the hook task calls ap_detect() before
-		 * deferred_tpm_rst_isr(). In this case, the deferred handler is
-		 * already pending so calling the ISR has no effect.
-		 *
-		 * But we may actually have missed the edge. In that case,
-		 * calling the ISR makes sure we don't miss the reset. It will
-		 * call set_ap_on() to move the AP to the ON state.
-		 */
-		CPRINTS("AP detect calling tpm_rst_deasserted()");
-		tpm_rst_deasserted(GPIO_TPM_RST_L);
-		return;
-	}
-
-	/* TPM_RST_L is asserted.  If we're already off, done. */
-	if (state == DEVICE_STATE_OFF)
-		return;
-
-	/* If we were debouncing, we're now sure we're off */
-	if (state == DEVICE_STATE_DEBOUNCING ||
-	    state == DEVICE_STATE_INIT_DEBOUNCING) {
-		set_ap_off();
-		return;
-	}
+	CPRINTS("%s", __func__);
 
 	/*
-	 * Otherwise, we were on before and haven't detected the AP off.  We
-	 * don't know if thats because the AP is actually off, or because the
-	 * TPM_RST_L signal is being pulsed for a short reset. Start debouncing.
+	 * It's possible the signal is being pulsed. Wait 1 second to disable
+	 * functionality, so it's more likely the AP is fully off and not being
+	 * reset.
 	 */
-	if (state == DEVICE_STATE_INIT)
-		set_state(DEVICE_STATE_INIT_DEBOUNCING);
-	else
-		set_state(DEVICE_STATE_DEBOUNCING);
+	hook_call_deferred(&deferred_set_ap_off_data, SECOND);
+
+	set_state(DEVICE_STATE_DEBOUNCING);
 }
-DECLARE_HOOK(HOOK_SECOND, ap_detect, HOOK_PRIO_DEFAULT);
+
+/**
+ * Check the initial AP state.
+ */
+static void init_ap_detect(void)
+{
+	/* Enable interrupts for AP state detection */
+	gpio_enable_interrupt(GPIO_TPM_RST_L);
+	gpio_enable_interrupt(GPIO_DETECT_TPM_RST_L_ASSERTED);
+	/*
+	 * Enable TPM reset GPIO interrupt.
+	 *
+	 * If the TPM_RST_L signal is already high when cr50 wakes up or
+	 * transitions to high before we are able to configure the gpio then we
+	 * will have missed the edge and the tpm reset isr will not get
+	 * called. Check that we haven't already missed the rising edge. If we
+	 * have alert tpm_rst_isr.
+	 */
+	if (gpio_get_level(GPIO_TPM_RST_L))
+		tpm_rst_deasserted(GPIO_TPM_RST_L);
+	else
+		tpm_rst_asserted(GPIO_TPM_RST_L);
+}
+/*
+ * TPM_RST_L isn't setup until board_init. Make sure init_ap_detect happens
+ * after that.
+ */
+DECLARE_HOOK(HOOK_INIT, init_ap_detect, HOOK_PRIO_DEFAULT + 1);

@@ -244,6 +244,7 @@ void ec_detect_asserted(enum gpio_signal signal);
 void ec_tx_cr50_rx(enum gpio_signal signal);
 void servo_detect_asserted(enum gpio_signal signal);
 void tpm_rst_deasserted(enum gpio_signal signal);
+void tpm_rst_asserted(enum gpio_signal signal);
 
 void post_reboot_request(void);
 
