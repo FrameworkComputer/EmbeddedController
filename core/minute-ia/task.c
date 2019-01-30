@@ -156,6 +156,11 @@ void interrupt_disable(void)
 
 void interrupt_enable(void)
 {
+	/*
+	 * allow enbling interrupt only after task switch is ready
+	 */
+	ASSERT(task_start_called() != 1);
+
 	__asm__ __volatile__ ("sti");
 }
 
