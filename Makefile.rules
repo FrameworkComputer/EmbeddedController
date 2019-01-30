@@ -157,10 +157,8 @@ FAILED_BOARDS_DIR = .failedboards
 try_build_boards: $(foreach b, $(BOARDS), proj-$(b))
 
 .PHONY: build_boards
-build_boards:
-	@rm -rf $(FAILED_BOARDS_DIR)
-	@mkdir $(FAILED_BOARDS_DIR)
-	@for b in $(BOARDS); do echo 'starting' > $(FAILED_BOARDS_DIR)/$$b; done
+build_boards: | $(FAILED_BOARDS_DIR)
+	@rm -f $(FAILED_BOARDS_DIR)/*
 	$(MAKE) try_build_boards
 
 .PHONY: buildall
@@ -187,10 +185,7 @@ buildall: build_boards
 try_build_tests: $(foreach b, $(BOARDS), tests-$(b))
 
 .PHONY: buildalltests
-buildalltests:
-	@rm -rf $(FAILED_BOARDS_DIR)
-	@mkdir $(FAILED_BOARDS_DIR)
-	@for b in $(BOARDS); do echo 'starting' > $(FAILED_BOARDS_DIR)/$$b; done
+buildalltests: | $(FAILED_BOARDS_DIR)
 	$(MAKE) try_build_tests
 	@echo "$@ completed successfully!"
 
@@ -208,17 +203,15 @@ ifeq ($(TEST_BUILD),)
 endif # not a TEST_BUILD
 endif # CONFIG_EXPERIMENTAL_CONSOLE=y
 
-proj-%:
-	@echo 'building' > $(FAILED_BOARDS_DIR)/$*
+proj-%: | $(FAILED_BOARDS_DIR)
+	@touch $(FAILED_BOARDS_DIR)/$*
 	@echo "======= building $*"
 	$(MAKE) --no-print-directory BOARD=$* V=$(V)
 	@rm $(FAILED_BOARDS_DIR)/$*
 
 tests-%:
-	@echo 'building tests' > $(FAILED_BOARDS_DIR)/$*
 	@echo "======= building $* tests"
 	$(MAKE) --no-print-directory BOARD=$* V=$(V) tests
-	@rm $(FAILED_BOARDS_DIR)/$*
 
 dis-y := $(out)/RW/$(PROJECT).RW.dis
 dis-$(CONFIG_FW_INCLUDE_RO) += $(out)/RO/$(PROJECT).RO.dis
@@ -263,11 +256,13 @@ host-test-targets=$(foreach t,$(test-list-host),host-$(t))
 run-test-targets=$(foreach t,$(test-list-host),run-$(t))
 .PHONY: $(host-test-targets) $(run-test-targets)
 
-$(host-test-targets): host-%:
+$(host-test-targets): host-%: | $(FAILED_BOARDS_DIR)
+	@touch $(FAILED_BOARDS_DIR)/test-$*
 	$(call quiet,host_test,BUILD  )
 
 $(run-test-targets): run-%: host-%
 	$(call quiet,run_host_test,TEST   )
+	@rm -f $(FAILED_BOARDS_DIR)/test-$*
 
 # Fuzzing tests
 
@@ -280,10 +275,15 @@ $(fuzz-test-targets): TEST_FLAG=TEST_FUZZ=y TEST_ASAN=$(TEST_ASAN) \
 	TEST_MSAN=$(TEST_MSAN) TEST_UBSAN=$(TEST_UBSAN) \
 	CROSS_COMPILE=$(shell echo $(HOSTCC) | grep -v ccache | \
 		sed -e 's/[^-]*$$//')
-$(fuzz-test-targets): host-%:
+$(fuzz-test-targets): host-%: | $(FAILED_BOARDS_DIR)
+	@touch $(FAILED_BOARDS_DIR)/test-$*
 	$(call quiet,host_test,BUILD  )
 $(run-fuzz-test-targets): run-%: host-%
 	$(call quiet,run_fuzz,TEST   )
+	@rm -f $(FAILED_BOARDS_DIR)/test-$*
+
+$(FAILED_BOARDS_DIR):
+	@mkdir $(FAILED_BOARDS_DIR)
 
 .PHONY: buildfuzztests
 buildfuzztests: $(fuzz-test-targets)
@@ -307,8 +307,10 @@ cts_boards := stm32l476g-eval nucleo-f072rb
 # $2: board name
 define make-cts =
 build_cts: cts-$(1)-$(2)
-cts-$(1)-$(2):
+cts-$(1)-$(2): | $(FAILED_BOARDS_DIR)
+	@touch $(FAILED_BOARDS_DIR)/cts-$(2)-$(1)
 	$$(MAKE) CTS_MODULE=$(1) BOARD=$(2)
+	@rm -f $(FAILED_BOARDS_DIR)/cts-$(2)-$(1)
 # Do not remove this blank line
 
 endef
