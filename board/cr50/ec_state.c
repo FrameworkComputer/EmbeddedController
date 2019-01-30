@@ -95,7 +95,7 @@ DECLARE_DEFERRED(set_ec_on);
  */
 void ec_detect_asserted(enum gpio_signal signal)
 {
-	gpio_disable_interrupt(GPIO_DETECT_EC);
+	gpio_disable_interrupt(GPIO_DETECT_EC_UART);
 	hook_call_deferred(&set_ec_on_data, 0);
 }
 
@@ -105,13 +105,13 @@ void ec_detect_asserted(enum gpio_signal signal)
 static void ec_detect(void)
 {
 	/* Disable interrupts if we had them on for debouncing */
-	gpio_disable_interrupt(GPIO_DETECT_EC);
+	gpio_disable_interrupt(GPIO_DETECT_EC_UART);
 
 	if (uart_bitbang_is_enabled())
 		return;
 
 	/* If we detect the EC, make sure it's on */
-	if (gpio_get_level(GPIO_DETECT_EC)) {
+	if (gpio_get_level(GPIO_DETECT_EC_UART)) {
 		set_ec_on();
 		return;
 	}
@@ -119,7 +119,7 @@ static void ec_detect(void)
 	 * Make sure the interrupt is enabled. We will need to detect the on
 	 * transition if we enter the off or debouncing state
 	 */
-	gpio_enable_interrupt(GPIO_DETECT_EC);
+	gpio_enable_interrupt(GPIO_DETECT_EC_UART);
 
 	/* EC wasn't detected.  If we're already off, done. */
 	if (state == DEVICE_STATE_OFF)

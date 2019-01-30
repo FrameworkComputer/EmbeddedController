@@ -58,8 +58,8 @@
  * system resets.
  */
 GPIO_INT(TPM_RST_L,       PIN(1, 0),  GPIO_INT_RISING, tpm_rst_deasserted)
-GPIO_INT(DETECT_AP,       PIN(1, 1),  GPIO_INT_HIGH, ap_detect_asserted)
-GPIO_INT(DETECT_EC,       PIN(1, 2),  GPIO_INT_HIGH, ec_detect_asserted)
+GPIO_INT(DETECT_AP_UART,  PIN(1, 1),  GPIO_INT_HIGH, ap_detect_asserted)
+GPIO_INT(DETECT_EC_UART,  PIN(1, 2),  GPIO_INT_HIGH, ec_detect_asserted)
 /*
  * DETECT_SERVO and EC_TX_CR50_RX pins must NOT be changed without also changing
  * the pinmux_regval fields in the bitbang_config in board.c.  The pinmux values
@@ -205,8 +205,8 @@ PINMUX(FUNC(UART2_RX),        B6, DIO_INPUT)	/* EC console */
  * driving the cr50 uart TX at the same time as servo is driving those pins may
  * damage both servo and cr50.
  */
-PINMUX(GPIO(DETECT_AP),         A3, DIO_INPUT)
-PINMUX(GPIO(DETECT_EC),         B6, DIO_INPUT)
+PINMUX(GPIO(DETECT_AP_UART),    A3, DIO_INPUT)
+PINMUX(GPIO(DETECT_EC_UART),    B6, DIO_INPUT)
 PINMUX(GPIO(EC_TX_CR50_RX),     B6, DIO_INPUT)
 PINMUX(GPIO(EC_TX_CR50_RX_OUT), B6, DIO_INPUT)
 PINMUX(GPIO(DETECT_SERVO),      B5, DIO_INPUT)

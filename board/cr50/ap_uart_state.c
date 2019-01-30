@@ -86,7 +86,7 @@ DECLARE_DEFERRED(set_ap_uart_on_deferred);
  */
 void ap_detect_asserted(enum gpio_signal signal)
 {
-	gpio_disable_interrupt(GPIO_DETECT_AP);
+	gpio_disable_interrupt(GPIO_DETECT_AP_UART);
 	hook_call_deferred(&set_ap_uart_on_deferred_data, 0);
 }
 
@@ -96,10 +96,10 @@ void ap_detect_asserted(enum gpio_signal signal)
 static void ap_uart_detect(void)
 {
 	/* Disable interrupts if we had them on for debouncing */
-	gpio_disable_interrupt(GPIO_DETECT_AP);
+	gpio_disable_interrupt(GPIO_DETECT_AP_UART);
 
 	/* If the AP UART signal is high, make sure it's on */
-	if (gpio_get_level(GPIO_DETECT_AP)) {
+	if (gpio_get_level(GPIO_DETECT_AP_UART)) {
 		hook_call_deferred(&set_ap_uart_on_deferred_data, 0);
 		return;
 	}
@@ -108,7 +108,7 @@ static void ap_uart_detect(void)
 	 * Make sure the interrupt is enabled. We will need to detect the on
 	 * transition if we enter the off or debouncing state
 	 */
-	gpio_enable_interrupt(GPIO_DETECT_AP);
+	gpio_enable_interrupt(GPIO_DETECT_AP_UART);
 
 	/* AP UART wasn't detected.  If we're already off, done. */
 	if (state == DEVICE_STATE_OFF)
