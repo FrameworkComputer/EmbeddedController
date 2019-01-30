@@ -230,7 +230,7 @@ DEFINE_integer port "${DEFAULT_PORT}" \
 	"Port to communicate to servo on."
 DEFINE_boolean raiden "${FLAGS_FALSE}" \
 	"Use raiden_debug_spi programmer"
-DEFINE_string read "" "Stm32 and npcx_spi only:"\
+DEFINE_string read "" "Stm32 and npcx_(|int_)spi only:"\
 " pathname of the file to store EC firmware image."
 DEFINE_boolean ro "${FLAGS_FALSE}" \
 	"Write only the read-only partition"
@@ -238,8 +238,8 @@ DEFINE_integer timeout 600 \
 	"Timeout for flashing the EC, measured in seconds."
 DEFINE_boolean verbose "${FLAGS_FALSE}" \
 	"Verbose hw control logging"
-DEFINE_boolean verify "${FLAGS_FALSE}" \
-	"Stm32 and npcx_spi only: verify EC firmware image after programming."
+DEFINE_boolean verify "${FLAGS_FALSE}" "Stm32 and npcx_(int_)spi only:"\
+" verify EC firmware image after programming."
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -387,7 +387,7 @@ if [ "${CHIP}" = "stm32_dfu" -o "${CHIP}" = "it83xx" ]; then
 fi
 
 case "${CHIP}" in
-	"stm32"|"npcx_spi") ;;
+	"stm32"|"npcx_spi"|"npcx_int_spi") ;;
 	*)
 		if [[ -n "${FLAGS_read}" ]]; then
 			die "The flag is not yet supported on ${CHIP}."
@@ -820,24 +820,6 @@ function flash_flashrom() {
 		die "no flashrom util found."
 	fi
 
-	# Check whether the SPI flash is internal to the NPCX's EC.
-	#
-	# If the in_array function return non-zero, the script will exit.
-	# Therefore, temporarily ignore errors so we can capture the return
-	# value.
-	set +e
-	local board_is_npcx_internal_spi
-	# TODO(b/123098518) Once npcx_int_spi replaces "npcx_spi" in servo board
-	# overlay files, then remove the codes below that checkes ${BOARD}
-	local TEMP_BOARD=${BOARD}
-	if [[ -z "${TEMP_BOARD}" ]]; then
-		TEMP_BOARD=$(${DUT_CONTROL_CMD} "ec_board" | cut -d: -f2)
-	fi
-	$(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${TEMP_BOARD}") || \
-	[[ "${CHIP}" == "npcx_int_spi" ]]
-	board_is_npcx_internal_spi=$?
-	set -e # Okay, don't ignore errors anymore.
-
 	if ! on_servov3; then
 		SERIALNAME=$(get_serial)
 		if [[ "$SERIALNAME" != "" ]] ; then
@@ -855,7 +837,7 @@ function flash_flashrom() {
 		dut_control cold_reset:on
 
 		# If spi flash is in npcx's ec, enable gang programer mode
-		if [[ ${board_is_npcx_internal_spi} -eq 0 ]]; then
+		if [[ "${CHIP}" == "npcx_int_spi" ]]; then
 			# Set GP_SEL# as low then start ec
 			dut_control fw_up:on
 			sleep 0.1
@@ -869,7 +851,7 @@ function flash_flashrom() {
 			dut_control spi1_buf_on_flex_en:on
 		fi
 	else
-		if [[ ${board_is_npcx_internal_spi} -eq 0 ]]; then
+		if [[ "${CHIP}" == "npcx_int_spi" ]]; then
 			# Set GP_SEL# as low then start ec
 			dut_control cold_reset:on
 			dut_control fw_up:on
@@ -959,7 +941,7 @@ function flash_flashrom() {
 	[[ -f "${T}" ]] && rm "${T}"
 
 	# Set GP_SEL# as default to disable GP mode when ec reboots
-	if [[ ${board_is_npcx_internal_spi} -eq 0 ]]; then
+	if [[ "${CHIP}" == "npcx_int_spi" ]]; then
 		dut_control fw_up:off
 	fi
 
