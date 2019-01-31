@@ -65,16 +65,18 @@
 #undef CONFIG_ACCEL_KXCJ9
 #undef CONFIG_ACCEL_KX022
 /*
- * lis2dh and lis2de have the same register interface but different
+ * lis2dh/lis2de/lng2dm have the same register interface but different
  * supported resolution. In normal mode, lis2dh works in 10-bit resolution,
- * but lis2de only supports 8bit resolution.
- * define CONFIG_ACCEL_LIS2DH if using lis2dh chip on the board and define
- * CONFIG_ACCEL_LIS2DE if using lis2de chip. CONFIG_ACCEL_LIS2D_COMMON get
- * automatically defined if either of them get defined.
+ * but lis2de/lng2dm only support 8bit resolution.
+ *
+ * Use the define for your correct chip and the CONFIG_ACCEL_LIS2D_COMMON will
+ * automatically get defined.
  */
-#undef CONFIG_ACCEL_LIS2DH
 #undef CONFIG_ACCEL_LIS2DE
+#undef CONFIG_ACCEL_LIS2DH
+#undef CONFIG_ACCEL_LNG2DM
 #undef CONFIG_ACCEL_LIS2D_COMMON
+
 #undef CONFIG_ACCELGYRO_BMI160
 #undef CONFIG_ACCELGYRO_LSM6DS0
 /* Use CONFIG_ACCELGYRO_LSM6DSM for LSM6DSL, LSM6DSM, and/or LSM6DS3 */
@@ -4232,10 +4234,11 @@
 /*****************************************************************************/
 
 /*
- * Automatically define CONFIG_ACCEL_LIS2D_COMMON if either child option is
- * defined.
+ * Automatically define CONFIG_ACCEL_LIS2D_COMMON if a child option is defined.
  */
-#if defined(CONFIG_ACCEL_LIS2DH) || defined(CONFIG_ACCEL_LIS2DE)
+#if defined(CONFIG_ACCEL_LIS2DH) || \
+	defined(CONFIG_ACCEL_LIS2DE) || \
+	defined(CONFIG_ACCEL_LNG2DM)
 #define CONFIG_ACCEL_LIS2D_COMMON
 #endif
 

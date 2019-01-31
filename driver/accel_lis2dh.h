@@ -3,21 +3,30 @@
  * found in the LICENSE file.
  */
 
-/* LIS2DH accelerometer module for Chrome EC */
+/* LIS2DH/LIS2DE/LNG2DM accelerometer module for Chrome EC */
 
 #ifndef __CROS_EC_ACCEL_LIS2DH_H
 #define __CROS_EC_ACCEL_LIS2DH_H
 
 #include "driver/stm_mems_common.h"
 
-#define LIS2DH_I2C_ADDR(__x)	(__x << 1)
+/*
+ * LIS2DH/LIS2DE:
+ *
+ * 8-bit address is 0011 00XW b. Where 'X' is determined
+ * by the voltage on the ADDR pin, and 'W' is read write bit
+ */
+#define LIS2DH_ADDR0		0x30
+#define LIS2DH_ADDR1		0x32
 
 /*
- * 7-bit address is 000110Xb. Where 'X' is determined
- * by the voltage on the ADDR pin
+ * LNG2DM:
+ *
+ * 8-bit address is 0101 00XW b. Where 'X' is determined
+ * by the voltage on the ADDR pin, and 'W' is read write bit
  */
-#define LIS2DH_ADDR0		LIS2DH_I2C_ADDR(0x18)
-#define LIS2DH_ADDR1		LIS2DH_I2C_ADDR(0x19)
+#define LNG2DM_ADDR0		0x50
+#define LNG2DM_ADDR1		0x52
 
 /* Who Am I  */
 #define LIS2DH_WHO_AM_I_REG	0x0f
@@ -107,11 +116,13 @@ enum lis2dh_odr {
 
 /*
  * Sensor resolution in number of bits
+ *
  * lis2dh has variable precision (8/10/12 bits) depending Power Mode
  * selected, here Only Normal Power mode supported (10 bits).
- * But for lis2de, it has only one 8bit resolution.
+ *
+ * lis2de/lng2dm only support 8bit resolution.
  */
-#ifdef CONFIG_ACCEL_LIS2DE
+#if defined(CONFIG_ACCEL_LIS2DE) || defined(CONFIG_ACCEL_LNG2DM)
 #define LIS2DH_RESOLUTION       8
 #elif defined(CONFIG_ACCEL_LIS2DH)
 #define LIS2DH_RESOLUTION      	10

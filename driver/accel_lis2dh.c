@@ -4,7 +4,8 @@
  */
 
 /**
- * LIS2DH/LIS2DH12 accelerometer module for Chrome EC 3D digital accelerometer
+ * Accelerometer module driver for Chrome EC 3D digital accelerometers:
+ * LIS2DH/LIS2DH12/LNG2DM
  */
 
 #include "accelgyro.h"
