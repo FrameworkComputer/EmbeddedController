@@ -130,6 +130,9 @@ void board_closed_loop_reset(void)
 	/* Disable sleep while waiting for the reset */
 	disable_sleep(SLEEP_MASK_AP_RUN);
 
+	/* Until the AP resets, we can't trust it's state */
+	set_state(DEVICE_STATE_UNKNOWN);
+
 	waiting_for_ap_reset = 1;
 
 	/* Disable AP communications with the TPM until cr50 sees the reset */
