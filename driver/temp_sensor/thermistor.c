@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "common.h"
+#include "gpio.h"
 #include "thermistor.h"
 #include "util.h"
 
@@ -93,8 +94,17 @@ static const struct thermistor_info thermistor_info_51_47 = {
 
 int get_temp_3v3_51k1_47k_4050b(int idx_adc, int *temp_ptr)
 {
-	int mv = adc_read_channel(idx_adc);
+	int mv;
 
+#ifdef CONFIG_TEMP_SENSOR_POWER_GPIO
+	/*
+	 * If the power rail for the thermistor circuit is not enabled, then
+	 * need to ignore any ADC measurments.
+	 */
+	if (!gpio_get_level(CONFIG_TEMP_SENSOR_POWER_GPIO))
+		return EC_ERROR_NOT_POWERED;
+#endif
+	mv = adc_read_channel(idx_adc);
 	if (mv < 0)
 		return EC_ERROR_UNKNOWN;
 
@@ -135,8 +145,17 @@ static const struct thermistor_info thermistor_info_13_47 = {
 
 int get_temp_3v3_13k7_47k_4050b(int idx_adc, int *temp_ptr)
 {
-	int mv = adc_read_channel(idx_adc);
+	int mv;
 
+#ifdef CONFIG_TEMP_SENSOR_POWER_GPIO
+	/*
+	 * If the power rail for the thermistor circuit is not enabled, then
+	 * need to ignore any ADC measurments.
+	 */
+	if (!gpio_get_level(CONFIG_TEMP_SENSOR_POWER_GPIO))
+		return EC_ERROR_NOT_POWERED;
+#endif
+	mv = adc_read_channel(idx_adc);
 	if (mv < 0)
 		return EC_ERROR_UNKNOWN;
 
@@ -177,15 +196,23 @@ static const struct thermistor_info thermistor_info_6v0_51_47 = {
 
 int get_temp_6v0_51k1_47k_4050b(int idx_adc, int *temp_ptr)
 {
-	int mv = adc_read_channel(idx_adc);
+	int mv;
 
+#ifdef CONFIG_TEMP_SENSOR_POWER_GPIO
+	/*
+	 * If the power rail for the thermistor circuit is not enabled, then
+	 * need to ignore any ADC measurments.
+	 */
+	if (!gpio_get_level(CONFIG_TEMP_SENSOR_POWER_GPIO))
+		return EC_ERROR_NOT_POWERED;
+#endif
+	mv = adc_read_channel(idx_adc);
 	if (mv < 0)
 		return EC_ERROR_UNKNOWN;
 
-	*temp_ptr = thermistor_linear_interpolate(mv, &thermistor_info_6v0_51_47);
+	*temp_ptr = thermistor_linear_interpolate(mv,
+						  &thermistor_info_6v0_51_47);
 	*temp_ptr = C_TO_K(*temp_ptr);
 	return EC_SUCCESS;
 }
 #endif /* CONFIG_STEINHART_HART_6V0_51K1_47K_4050B */
-
-
