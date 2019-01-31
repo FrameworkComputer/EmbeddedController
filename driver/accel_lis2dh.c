@@ -51,8 +51,10 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 		normalized_range = 2;
 	}
 
-	/* Lock accel resource to prevent another task from attempting
-	 * to write accel parameters until we are done */
+	/*
+	 * Lock accel resource to prevent another task from attempting
+	 * to write accel parameters until we are done.
+	 */
 	mutex_lock(s->mutex);
 	err = st_write_data_with_mask(s, LIS2DH_CTRL4_ADDR, LIS2DH_FS_MASK,
 				      val);
@@ -194,8 +196,9 @@ static int init(const struct motion_sensor_t *s)
 		return EC_ERROR_ACCESS_DENIED;
 
 	mutex_lock(s->mutex);
-	/* Device can be re-initialized after a reboot so any control
-	 * register must be restored to it's default
+	/*
+	 * Device can be re-initialized after a reboot so any control
+	 * register must be restored to it's default.
 	 */
 	/* Enable all accel axes data and clear old settings */
 	ret = st_raw_write8(s->port, s->addr, LIS2DH_CTRL1_ADDR,
@@ -237,8 +240,8 @@ static int init(const struct motion_sensor_t *s)
 	return sensor_init_done(s);
 
 err_unlock:
-	CPRINTF("[%T %s: MS Init type:0x%X Error]\n", s->name, s->type);
 	mutex_unlock(s->mutex);
+	CPRINTF("[%T %s: MS Init type:0x%X Error]\n", s->name, s->type);
 
 	return ret;
 }
@@ -253,5 +256,4 @@ const struct accelgyro_drv lis2dh_drv = {
 	.get_data_rate = st_get_data_rate,
 	.set_offset = st_set_offset,
 	.get_offset = st_get_offset,
-	.perform_calib = NULL,
 };
