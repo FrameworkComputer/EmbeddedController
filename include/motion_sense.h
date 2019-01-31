@@ -44,6 +44,7 @@ enum sensor_config {
 
 #define ROUND_UP_FLAG (1 << 31)
 #define BASE_ODR(_odr) ((_odr) & ~ROUND_UP_FLAG)
+#define BASE_RANGE(_range) ((_range) & ~ROUND_UP_FLAG)
 
 #ifdef CONFIG_ACCEL_FIFO
 #define MAX_FIFO_EVENT_COUNT CONFIG_ACCEL_FIFO

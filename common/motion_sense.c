@@ -465,7 +465,8 @@ int sensor_init_done(const struct motion_sensor_t *s)
 {
 	int ret;
 
-	ret = s->drv->set_range(s, s->default_range, 0);
+	ret = s->drv->set_range(s, BASE_RANGE(s->default_range),
+				!!(s->default_range & ROUND_UP_FLAG));
 	if (ret == EC_RES_SUCCESS) {
 #ifdef CONFIG_CONSOLE_VERBOSE
 		CPRINTS("%s: MS Done Init type:0x%X range:%d",
