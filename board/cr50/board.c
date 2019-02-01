@@ -1329,6 +1329,10 @@ static uint32_t get_properties(void)
 		return BOARD_SLAVE_CONFIG_SPI;
 	}
 
+#ifdef H1_RED_BOARD
+	CPRINTS("Unconditionally enabling SPI and platform reset");
+	return (BOARD_SLAVE_CONFIG_SPI | BOARD_USE_PLT_RESET);
+#endif
 	if (get_strap_config(&config) != EC_SUCCESS) {
 		/*
 		 * No pullups were detected on any of the strap pins so there

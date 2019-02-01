@@ -62,6 +62,10 @@ board-y += tpm_nvmem_ops.o
 board-y += wp.o
 board-$(CONFIG_U2F) += u2f.o
 
+ifneq ($(H1_RED_BOARD),)
+CPPFLAGS += -DH1_RED_BOARD
+endif
+
 # Build and link with an external library
 EXTLIB := $(realpath ../../third_party/tpm2)
 CFLAGS += -I$(EXTLIB)
