@@ -903,7 +903,9 @@ int tpm_sync_reset(int wipe_first)
 
 void tpm_stop(void)
 {
-	if_stop();
+	/* Stop the TPM interface if it has been initialized. */
+	if (if_stop)
+		if_stop();
 }
 
 void tpm_task(void *u)
