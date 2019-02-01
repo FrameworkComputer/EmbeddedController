@@ -1606,6 +1606,11 @@
 /* Address of start of Nvmem area */
 #undef CONFIG_FLASH_NVMEM_BASE_A
 #undef CONFIG_FLASH_NVMEM_BASE_B
+
+/* Flash offsets for the 'new' (as of 1/2019) nvmem storage scheme. */
+#undef CONFIG_FLASH_NEW_NVMEM_BASE_A
+#undef CONFIG_FLASH_NEW_NVMEM_BASE_B
+
 /* Size in bytes of NvMem area */
 #undef CONFIG_FLASH_NVMEM_SIZE
 

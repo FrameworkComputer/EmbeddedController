@@ -17,6 +17,7 @@ enum flash_event_type {
 	FE_TPM_I2C_ERROR = 2,
 	FE_LOG_OVERFLOWS = 3, /* A single byte, overflow counter. */
 	FE_LOG_LOCKS = 4,     /* A single byte, lock failures counter. */
+	FE_LOG_NVMEM = 5,     /* NVMEM failure, variable structure. */
 
 	/*
 	 * Fixed padding value makes it easier to parse log space
@@ -43,6 +44,37 @@ struct flash_log_entry {
 	uint8_t type; /* event type, caller-defined */
 	uint8_t crc;
 	uint8_t payload[0]; /* optional additional data payload: 0..63 bytes. */
+} __packed;
+
+/* Payloads for various log events. */
+/* NVMEM failures. */
+enum nvmem_failure_type {
+	NVMEMF_MALLOC = 0,
+	NVMEMF_PH_SIZE_MISMATCH = 1,
+	NVMEMF_READ_UNDERRUN = 2,
+	NVMEMF_INCONSISTENT_FLASH_CONTENTS = 3,
+	NVMEMF_MIGRATION_FAILURE = 4,
+	NVMEMF_LEGACY_ERASE_FAILURE = 5,
+	NVMEMF_EXCESS_DELETE_OBJECTS = 6,
+	NVMEMF_UNEXPECTED_LAST_OBJ = 7,
+	NVMEMF_MISSING_OBJECT = 8,
+	NVMEMF_SECTION_VERIFY = 9,
+	NVMEMF_PRE_ERASE_MISMATCH = 10,
+	NVMEMF_PAGE_LIST_OVERFLOW = 11
+};
+
+/* Not all nvmem failures require payload. */
+struct nvmem_failure_payload {
+	uint8_t failure_type;
+	union {
+		uint16_t size; /* How much memory was requested. */
+		struct {
+			uint16_t ph_offset;
+			uint16_t expected;
+		} ph __packed;
+		uint16_t underrun_size; /* How many bytes short. */
+		uint8_t last_obj_type;
+	} __packed;
 } __packed;
 
 /* Returned in the "type" field, when there is no entry available */
