@@ -277,6 +277,21 @@ static void svdm_safe_dp_mode(int port)
 
 static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 {
+	/*
+	 * Don't enter the mode if the SoC is off.
+	 *
+	 * There's no need to enter the mode while the SoC is off; we'll
+	 * actually enter the mode on the chipset resume hook.  Entering DP Alt
+	 * Mode twice will confuse some monitors and require and unplug/replug
+	 * to get them to work again.  The DP Alt Mode on USB-C spec says that
+	 * if we don't need to maintain HPD connectivity info in a low power
+	 * mode, then we shall exit DP Alt Mode.  (This is why we don't enter
+	 * when the SoC is off as opposed to suspend where adding a display
+	 * could cause a wake up.)
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return -1;
+
 	/* Only enter mode if device is DFP_D capable */
 	if (mode_caps & MODE_DP_SNK) {
 		svdm_safe_dp_mode(port);
