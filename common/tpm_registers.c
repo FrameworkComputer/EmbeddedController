@@ -904,7 +904,7 @@ void tpm_stop(void)
 	if_stop();
 }
 
-void tpm_task(void)
+void tpm_task(void *u)
 {
 	uint32_t evt = 0;
 
