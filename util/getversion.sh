@@ -81,6 +81,8 @@ main() {
   local dir_list
   local gitdate
   local global_dirty
+  local most_recent_file
+  local timestamp
   local tool_ver
   local values
   local vbase
@@ -136,8 +138,12 @@ main() {
   fi
 
   if [ -n "$global_dirty" ]; then
-    echo "/* Repo is dirty, using time of last compilation */"
-    echo "#define DATE \"$(date '+%F %T')\""
+    most_recent_file="$(git status --porcelain | \
+               awk '$1 ~ /[M|A|?]/ {print $2}' |  \
+               xargs ls -t | head -1)"
+    timestamp="$(stat -c '%y' "${most_recent_file}" | sed 's/\..*//')"
+    echo "/* Repo is dirty, using time of most recent file modification. */"
+    echo "#define DATE \"${timestamp}\""
   else
     echo "/* Repo is clean, use the commit date of the last commit */"
     # If called from an ebuild we won't have a git repo, so redirect stderr
