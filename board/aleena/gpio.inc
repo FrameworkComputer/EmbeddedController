@@ -40,6 +40,7 @@ GPIO(CPU_PROCHOT,		PIN(3, 4), GPIO_INPUT | GPIO_SEL_1P8V)		/* PROCHOT to SOC */
 GPIO(APU_ALERT_L,		PIN(A, 2), GPIO_INPUT)				/* Alert to SOC */
 GPIO(3AXIS_INT_L,		PIN(5, 0), GPIO_INPUT | GPIO_SEL_1P8V)		/* 3 Axis Accel */
 GPIO(KB_BL_EN,			PIN(F, 2), GPIO_OUT_LOW)			/* Enable KB Backlight */
+GPIO(EC_INT_L,			PIN(A, 4), GPIO_ODR_HIGH)			/* Sensor MKBP event to SOC */
 
 /* I2C pins - these will be reconfigured for alternate function below */
 GPIO(I2C0_SCL,			PIN(B, 5), GPIO_INPUT)				/* EC_I2C_POWER_SCL */
@@ -62,7 +63,6 @@ GPIO(I2C7_SDA,			PIN(B, 2), GPIO_INPUT | GPIO_SEL_1P8V)		/* EC_I2C_SENSOR_SDA */
  * so PCH_SCI_ODL [PIN(7, 6)] and PCH_SMI_ODL [PIN(C, 6)] are
  * not defined here as GPIOs.
  */
-GPIO(PCH_SLP_S0_L,		PIN(A, 4), GPIO_INPUT)
 
 GPIO(EN_USB_A0_5V,		PIN(6, 1), GPIO_OUT_LOW)			/* Enable A0 5V Charging */
 GPIO(EN_USB_A1_5V,		PIN(C, 0), GPIO_OUT_LOW)			/* Enable A1 5V Charging */
