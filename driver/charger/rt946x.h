@@ -566,8 +566,14 @@ enum mt6370_led_pwm_freq {
 /* Set LED brightness */
 int mt6370_led_set_brightness(enum mt6370_led_index index, uint8_t brightness);
 
-/* Set LED Color */
-int mt6370_led_set_color(enum mt6370_led_index index);
+/**
+ * Set LED Color
+ *
+ * mask: Bitmap indicating 1=on 0=off for each LED. 000 = all off.
+ *       Combination of MT6370_MASK_RGB_ISNK1/2/3DIM_EN.
+ * return: EC_SUCCESS or EC_ERROR_* on error.
+ */
+int mt6370_led_set_color(uint8_t mask);
 
 /* Set LED dim mode, available modes: REGISTER, PWM, BREATH. */
 int mt6370_led_set_dim_mode(enum mt6370_led_index index,

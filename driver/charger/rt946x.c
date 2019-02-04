@@ -1033,20 +1033,10 @@ int mt6370_led_set_dim_mode(enum mt6370_led_index index,
 	return EC_SUCCESS;
 }
 
-int mt6370_led_set_color(enum mt6370_led_index index)
+int mt6370_led_set_color(uint8_t mask)
 {
-	int val;
-
-	if (index >= MT6370_LED_ID_COUNT)
-		return EC_ERROR_INVAL;
-
-	if (index == MT6370_LED_ID_OFF)
-		val = 0;
-	else
-		val = 1 << (MT6370_SHIFT_RGB_ISNKDIM_BASE - index);
-
-	rt946x_update_bits(MT6370_REG_RGBEN, MT6370_MASK_RGB_ISNK_ALL_EN, val);
-	return EC_SUCCESS;
+	return rt946x_update_bits(MT6370_REG_RGBEN, MT6370_MASK_RGB_ISNK_ALL_EN,
+				  mask);
 }
 
 int mt6370_led_set_brightness(enum mt6370_led_index index, uint8_t brightness)

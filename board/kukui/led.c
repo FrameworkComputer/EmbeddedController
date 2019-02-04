@@ -20,6 +20,10 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 #define LED_GREEN	MT6370_LED_ID1
 #define LED_RED		MT6370_LED_ID2
 
+#define LED_MASK_OFF	0
+#define LED_MASK_GREEN	MT6370_MASK_RGB_ISNK1DIM_EN
+#define LED_MASK_RED	MT6370_MASK_RGB_ISNK2DIM_EN
+
 static void kukui_led_set_battery(void)
 {
 	static int battery_second;
@@ -30,29 +34,29 @@ static void kukui_led_set_battery(void)
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
 		/* Always indicate when charging, even in suspend. */
-		mt6370_led_set_color(LED_RED);
+		mt6370_led_set_color(LED_MASK_RED);
 		break;
 	case PWR_STATE_DISCHARGE:
 		if (charge_get_percent() <= 10)
-			mt6370_led_set_color(
-			   (battery_second & 0x4) ? LED_RED : LED_OFF);
+			mt6370_led_set_color((battery_second & 0x4) ?
+					LED_MASK_RED : LED_MASK_OFF);
 		else
-			mt6370_led_set_color(LED_OFF);
+			mt6370_led_set_color(LED_MASK_OFF);
 		break;
 	case PWR_STATE_ERROR:
 		mt6370_led_set_color((battery_second & 0x2) ?
-				LED_RED : LED_OFF);
+				LED_MASK_RED : LED_MASK_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
-		mt6370_led_set_color(LED_GREEN);
+		mt6370_led_set_color(LED_MASK_GREEN);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE. */
 		if (chflags & CHARGE_FLAG_FORCE_IDLE) {
-			mt6370_led_set_color(LED_RED);
+			mt6370_led_set_color(LED_MASK_RED);
 			mt6370_led_set_dim_mode(LED_RED,
 						MT6370_LED_DIM_MODE_BREATH);
 		} else {
-			mt6370_led_set_color(LED_GREEN);
+			mt6370_led_set_color(LED_MASK_GREEN);
 			mt6370_led_set_dim_mode(LED_GREEN,
 						MT6370_LED_DIM_MODE_BREATH);
 		}
