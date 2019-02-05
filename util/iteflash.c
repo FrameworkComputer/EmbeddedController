@@ -1616,7 +1616,7 @@ static void display_usage(char *program)
 		program);
 	fprintf(stderr, "--d[ebug] : output debug traces\n");
 	fprintf(stderr, "--e[rase] : erase all the flash content\n");
-	fprintf(stderr, "-c, --i2c_interface <ccd|ftdi> : I2C interface "
+	fprintf(stderr, "-c, --i2c-interface <ccd|ftdi> : I2C interface "
 			"to use\n");
 	fprintf(stderr, "--i[interface] <1> : FTDI interface: A=1, B=2, ...\n");
 	fprintf(stderr, "--p[roduct] <0x1234> : USB product ID\n");
