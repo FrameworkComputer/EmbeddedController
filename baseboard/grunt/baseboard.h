@@ -178,7 +178,7 @@
 #define CONFIG_TEMP_SENSOR_SB_TSI
 
 /* FIFO size is a power of 2. */
-#define CONFIG_ACCEL_FIFO 1024  /* TODO(teravest): Check this value. */
+#define CONFIG_ACCEL_FIFO 256
 
 /* Depends on how fast the AP boots and typical ODRs. */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
