@@ -764,9 +764,11 @@ int tpm_reset_request(int wait_until_done, int wipe_nvmem_first)
 		return EC_ERROR_BUSY;
 	}
 
+#ifdef CONFIG_TPM_LOGGING
 	/* Record input parameters as two bits in the data field. */
 	tpm_log_event(TPM_EVENT_INIT,
 		      (!!wait_until_done << 1) | !!wipe_nvmem_first);
+#endif
 
 	reset_in_progress = 1;
 	wipe_result = EC_SUCCESS;
