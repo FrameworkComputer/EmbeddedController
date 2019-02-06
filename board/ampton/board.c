@@ -115,13 +115,6 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-static int read_charger_temp(int idx, int *temp_ptr)
-{
-	if (!gpio_get_level(GPIO_AC_PRESENT))
-		return EC_ERROR_NOT_POWERED;
-	return get_temp_3v3_13k7_47k_4050b(idx, temp_ptr);
-}
-
 const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
 				 .type = TEMP_SENSOR_TYPE_BATTERY,
@@ -134,7 +127,7 @@ const struct temp_sensor_t temp_sensors[] = {
 				 .action_delay_sec = 5},
 	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
 				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = read_charger_temp,
+				 .read = get_temp_3v3_13k7_47k_4050b,
 				 .idx = ADC_TEMP_SENSOR_CHARGER,
 				 .action_delay_sec = 1},
 };
