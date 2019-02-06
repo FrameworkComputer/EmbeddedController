@@ -244,6 +244,20 @@ int uart_puts(const char *outstr)
 	return *outstr ? EC_ERROR_OVERFLOW : EC_SUCCESS;
 }
 
+int uart_put(const char *out, int len)
+{
+	/* Put all characters in the output buffer */
+	while (len--) {
+		if (__tx_char(NULL, *out++) != 0)
+			break;
+	}
+
+	uart_tx_start();
+
+	/* Successful if we consumed all output */
+	return len ? EC_ERROR_OVERFLOW : EC_SUCCESS;
+}
+
 int uart_vprintf(const char *format, va_list args)
 {
 	int rv = vfnprintf(__tx_char, NULL, format, args);
