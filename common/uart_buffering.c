@@ -219,6 +219,14 @@ void uart_process_input(void)
 		console_has_input();
 }
 
+void uart_clear_input(void)
+{
+	int scratch __attribute__ ((unused));
+	while (uart_rx_available())
+		scratch = uart_read_char();
+	rx_buf_head = rx_buf_tail = 0;
+}
+
 #endif /* !CONFIG_UART_RX_DMA */
 
 int uart_putc(int c)

@@ -191,6 +191,11 @@ void uart_tx_stop(void);
 void uart_process_input(void);
 
 /**
+ * Clear input buffer
+ */
+void uart_clear_input(void);
+
+/**
  * Helper for processing UART output.
  *
  * Fills the output FIFO until the transmit buffer is empty or the FIFO full.
