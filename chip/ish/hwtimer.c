@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Hardware timers driver  - HPET */
+/* Hardware timers driver for ISH High Precision Event Timers (HPET) */
 
 #include "console.h"
 #include "hpet.h"
@@ -13,44 +13,108 @@
 #include "task.h"
 #include "util.h"
 
-#if defined(CHIP_FAMILY_ISH3)
-#define CLOCK_FACTOR 12
-#endif
-
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
 #define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ## args)
 
 static uint32_t last_deadline;
 
-/* TODO: Conform to EC API
- * ISH supports 32KHz and 12MHz clock sources.
- * EC expects timer value in 1MHz.
- * Scale the values and support it.
+/*
+ * Number of ticks for timer0 comparator representing 2^32 us seconds. SECONDS
+ * represents the expected clock frequency of the OS (i.e. 1 Mhz).
  */
+#define ROLLOVER_CMP_VAL (((uint64_t)ISH_HPET_CLK_FREQ << 32) / SECOND)
 
-void __hw_clock_event_set(uint32_t deadline)
-{
-	last_deadline = deadline;
-#if defined(CHIP_FAMILY_ISH3)
-	HPET_TIMER_COMP(1) = deadline * CLOCK_FACTOR;
-#else
-	HPET_TIMER_COMP(1) = deadline;
-#endif
-	HPET_TIMER_CONF_CAP(1) |= HPET_Tn_INT_ENB_CNF;
-}
+/*
+ * The ISH hardware needs at least 25 ticks of leeway to arms the timer.
+ * ISH4/5 are the slowest with 32kHz timers, so we wait at least 800us when
+ * scheduling events in the future
+ */
+#define MINIMUM_EVENT_DELAY_US 800
 
-uint32_t __hw_clock_event_get(void)
-{
-	return last_deadline;
-}
-
-void __hw_clock_event_clear(void)
-{
-	HPET_TIMER_CONF_CAP(1) &= ~HPET_Tn_INT_ENB_CNF;
-}
-
+/* Scaling helper methods for different ISH chip variants */
 #ifdef CHIP_FAMILY_ISH3
+#define CLOCK_FACTOR 12
+BUILD_ASSERT(CLOCK_FACTOR * SECOND == ISH_HPET_CLK_FREQ);
+
+static inline uint64_t scale_us2ticks(uint32_t us)
+{
+	return (uint64_t)us * CLOCK_FACTOR;
+}
+
+static inline uint32_t scale_ticks2us(uint64_t ticks)
+{
+	/*
+	 * We drop into asm here since this is on the critical path of reading
+	 * the hardware timer for clock result. This needs to be efficient.
+	 *
+	 * Modulating hi first ensures that the quotient fits in 32-bits due to
+	 * the follow math:
+	 * Let ticks = (hi << 32) + lo;
+	 * Let hi = N*CLOCK_FACTOR + R; where R is hi % CLOCK_FACTOR
+	 *
+	 * ticks = (N*CLOCK_FACTOR << 32) + (R << 32) + lo
+	 *
+	 * ticks / CLOCK_FACTOR = ((N*CLOCK_FACTOR << 32) + (R << 32) + lo) /
+	 *                        CLOCK_FACTOR
+	 * ticks / CLOCK_FACTOR = (N*CLOCK_FACTOR << 32) / CLOCK_FACTOR +
+	 *                        (R << 32) / CLOCK_FACTOR +
+	 *                        lo / CLOCK_FACTOR
+	 * ticks / CLOCK_FACTOR = (N << 32) +
+	 *                        (R << 32) / CLOCK_FACTOR +
+	 *                        lo / CLOCK_FACTOR
+	 * If we want to truncate to 32 bits, then the N << 32 can be dropped.
+	 * (ticks / CLOCK_FACTOR) & 0xFFFFFFFF = ((R << 32) + lo) / CLOCK_FACTOR
+	 */
+	const uint32_t divisor = CLOCK_FACTOR;
+	const uint32_t hi = ((uint32_t)(ticks >> 32)) % divisor;
+	const uint32_t lo = ticks;
+	uint32_t quotient;
+
+	asm("divl %3" : "=a"(quotient) : "d"(hi), "a"(lo), "rm"(divisor));
+	return quotient;
+}
+
+#elif defined(CHIP_FAMILY_ISH4) || defined(CHIP_FAMILY_ISH5)
+#define CLOCK_SCALE_BITS 15
+BUILD_ASSERT((1 << CLOCK_SCALE_BITS) == ISH_HPET_CLK_FREQ);
+
+static inline uint32_t scale_us2ticks(uint32_t us)
+{
+	/*
+	 * ticks = us * ISH_HPET_CLK_FREQ / SECOND;
+	 *
+	 * First multiple us by ISH_HPET_CLK_FREQ via bit shift, then use
+	 * 64-bit div into 32-bit result.
+	 *
+	 * We use asm directly to maintain full 32-bit precision without using
+	 * an iterative divide (i.e. 64-bit / 64-bit => 64-bit). We use the
+	 * 64-bit / 32-bit => 32-bit asm instruction directly since there is no
+	 * way to emitted that instruction via the compiler.
+	 *
+	 * The intermediate result of (us * ISH_HPET_CLK_FREQ) needs 64-bits of
+	 * precision to maintain full 32-bit precision for the end result.
+	 */
+	const uint32_t hi = us >> (32 - CLOCK_SCALE_BITS);
+	const uint32_t lo = us << CLOCK_SCALE_BITS;
+	const uint32_t divisor = SECOND;
+	uint32_t ticks;
+
+	asm("divl %3" : "=a"(ticks) : "d"(hi), "a"(lo), "rm"(divisor));
+	return ticks;
+}
+
+static inline uint32_t scale_ticks2us(uint64_t ticks)
+{
+	/*
+	 * us = ticks / ISH_HPET_CLK_FREQ * SECOND;
+	 */
+	const uint64_t intermediate = (uint64_t)ticks * SECOND;
+
+	return intermediate >> CLOCK_SCALE_BITS;
+}
+#endif /* CHIP_FAMILY_ISH4 || CHIP_FAMILY_ISH5 */
+
 /*
  * The 64-bit read on a 32-bit chip can tear during the read. Ensure that the
  * value returned for 64-bit didn't rollover while we were reading it.
@@ -68,51 +132,72 @@ static inline uint64_t read_main_timer(void)
 
 	return t.val;
 }
+
+void __hw_clock_event_set(uint32_t deadline)
+{
+	uint32_t remaining_us;
+
+	last_deadline = deadline;
+
+	remaining_us = deadline - __hw_clock_source_read();
+
+	/* Ensure HW has enough time to react to new timer value */
+	remaining_us = MAX(remaining_us, MINIMUM_EVENT_DELAY_US);
+
+	/*
+	 * For ISH3, this assumes that remaining_us is less than 360 seconds
+	 * (2^32 us / 12Mhz), otherwise we would need to handle 32-bit rollover
+	 * of 12Mhz timer comparator value. Watchdog refresh happens at least
+	 * every 10 seconds.
+	 */
+	HPET_TIMER_COMP(1) = read_main_timer() + scale_us2ticks(remaining_us);
+
+	do {
+		/* Arm timer */
+		HPET_TIMER_CONF_CAP(1) |= HPET_Tn_INT_ENB_CNF;
+
+#if defined(CHIP_FAMILY_ISH4) || defined(CHIP_FAMILY_ISH5)
+		/* Wait for timer settings to settle ~ 150us */
+		while (HPET_CTRL_STATUS & HPET_T1_SETTLING)
+			continue;
 #endif
+	/*
+	 * TODO(b/124890290): Remove or update while loop that ensures timer is
+	 * armed once we have a better hardware understanding.
+	 */
+	} while (!(HPET_TIMER_CONF_CAP(1) & HPET_Tn_INT_ENB_CNF));
+}
+
+uint32_t __hw_clock_event_get(void)
+{
+	return last_deadline;
+}
+
+void __hw_clock_event_clear(void)
+{
+	HPET_TIMER_CONF_CAP(1) &= ~HPET_Tn_INT_ENB_CNF;
+}
 
 uint32_t __hw_clock_source_read(void)
 {
-#if defined(CHIP_FAMILY_ISH3)
-	const uint64_t tmp = read_main_timer();
-	const uint32_t divisor = CLOCK_FACTOR;
-	/*
-	 * Modulating hi first ensures that the quotient fits in 32-bits due to
-	 * the follow math:
-	 * Let tmp = (hi << 32) + lo;
-	 * Let hi = N*CLOCK_FACTOR + R; where R is hi % CLOCK_FACTOR
-	 *
-	 * tmp = (N*CLOCK_FACTOR << 32) + (R << 32) + lo
-	 *
-	 * tmp / CLOCK_FACTOR = ((N*CLOCK_FACTOR << 32) + (R << 32) + lo) /
-	 *                      CLOCK_FACTOR
-	 * tmp / CLOCK_FACTOR = (N*CLOCK_FACTOR << 32) / CLOCK_FACTOR +
-	 *                      (R << 32) / CLOCK_FACTOR +
-	 *                      lo / CLOCK_FACTOR
-	 * tmp / CLOCK_FACTOR = (N << 32) +
-	 *                      (R << 32) / CLOCK_FACTOR +
-	 *                      lo / CLOCK_FACTOR
-	 * If we want to truncate to 32 bits, then the N << 32 can be dropped.
-	 * (tmp / CLOCK_FACTOR) & 0xFFFFFFFF = ((R << 32) + lo) / CLOCK_FACTOR
-	 */
-	const uint32_t hi = ((uint32_t)(tmp >> 32)) % divisor;
-	const uint32_t lo = tmp;
-
-	register uint32_t quotient;
-	asm("divl %3" : "=a"(quotient) : "d"(hi), "a"(lo), "rm"(divisor));
-	return quotient;
-#else
-	return HPET_MAIN_COUNTER;
-#endif
+	return scale_ticks2us(read_main_timer());
 }
 
 void __hw_clock_source_set(uint32_t ts)
 {
+	/* Reset both clock and overflow comparators */
+
 	HPET_GENERAL_CONFIG &= ~HPET_ENABLE_CNF;
-#if defined(CHIP_FAMILY_ISH3)
-	HPET_MAIN_COUNTER_64 = (uint64_t)ts * CLOCK_FACTOR;
-#else
-	HPET_MAIN_COUNTER = ts;
+
+	HPET_MAIN_COUNTER_64 = scale_us2ticks(ts);
+	HPET_TIMER0_COMP_64 = ROLLOVER_CMP_VAL;
+
+#if defined(CHIP_FAMILY_ISH4) || defined(CHIP_FAMILY_ISH5)
+	/* Wait for timer to settle. required for ISH 4 */
+	while (HPET_CTRL_STATUS & HPET_MAIN_COUNTER_SETTLING)
+		continue;
 #endif
+
 	HPET_GENERAL_CONFIG |= HPET_ENABLE_CNF;
 }
 
@@ -121,7 +206,10 @@ static void __hw_clock_source_irq(int timer_id)
 	/* Clear interrupt */
 	HPET_INTR_CLEAR = (1 << timer_id);
 
-	/* If IRQ is from timer 0, 32-bit timer overflowed */
+	/*
+	 * If IRQ is from timer 0, 2^32 us have elapsed (i.e. OS timer
+	 * overflowed).
+	 */
 	process_timers(timer_id == 0);
 }
 
@@ -152,31 +240,11 @@ int __hw_clock_source_init(uint32_t start_t)
 
 	/* Disable HPET */
 	HPET_GENERAL_CONFIG &= ~HPET_ENABLE_CNF;
-#if defined(CHIP_FAMILY_ISH3)
-	HPET_MAIN_COUNTER_64 = (uint64_t)start_t * CLOCK_FACTOR;
-#else
-	HPET_MAIN_COUNTER = start_t;
-#endif
+	HPET_MAIN_COUNTER_64 = scale_us2ticks(start_t);
 
-#if defined(CHIP_FAMILY_ISH3)
-	/*
-	 * Set comparator value. HMC will operate in 64 bit mode.
-	 * HMC is 12MHz, Hence set COMP to 12x of 1MHz.
-	 */
-	HPET_TIMER_COMP_64(0) = (uint64_t)CLOCK_FACTOR << 32; /*0xC00000000ULL;*/
-#else
-	/* Set comparator value */
-	HPET_TIMER_COMP(0) = 0XFFFFFFFF;
-#endif
-	/* Timer 0 - enable periodic mode */
+	/* Set comparator value for Timer 0 and enable periodic mode */
+	HPET_TIMER0_COMP_64 = ROLLOVER_CMP_VAL;
 	timer0_config |= HPET_Tn_TYPE_CNF;
-#if defined(CHIP_FAMILY_ISH3)
-	/* TIMER0 in 64-bit mode */
-	timer0_config &= ~HPET_Tn_32MODE_CNF;
-#else
-	/*TIMER0 in 32-bit mode*/
-	timer0_config |= HPET_Tn_32MODE_CNF;
-#endif
 
 	/* Timer 0 - IRQ routing, no need IRQ set for HPET0 */
 	timer0_config &= ~HPET_Tn_INT_ROUTE_CNF_MASK;
@@ -192,9 +260,8 @@ int __hw_clock_source_init(uint32_t start_t)
 
 	/* Enable interrupt */
 	timer0_config |= HPET_Tn_INT_ENB_CNF;
-	timer1_config |= HPET_Tn_INT_ENB_CNF;
 
-	/* Unask HPET IRQ in IOAPIC */
+	/* Unmask HPET IRQ in IOAPIC */
 	task_enable_irq(ISH_HPET_TIMER0_IRQ);
 	task_enable_irq(ISH_HPET_TIMER1_IRQ);
 
@@ -204,8 +271,8 @@ int __hw_clock_source_init(uint32_t start_t)
 
 #if defined(CHIP_FAMILY_ISH4) || defined(CHIP_FAMILY_ISH5)
 	/* Wait for timer to settle. required for ISH 4 */
-	while (HPET_CTRL_STATUS & HPET_T_CONF_CAP_BIT)
-		;
+	while (HPET_CTRL_STATUS & HPET_MAIN_COUNTER_SETTLING)
+		continue;
 #endif
 
 	/*
@@ -214,5 +281,6 @@ int __hw_clock_source_init(uint32_t start_t)
 	 */
 	HPET_GENERAL_CONFIG |= (HPET_ENABLE_CNF | HPET_LEGACY_RT_CNF);
 
+	/* Return IRQ value for OS event timer */
 	return ISH_HPET_TIMER1_IRQ;
 }
