@@ -49,7 +49,7 @@
 
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
-/* #define CONFIG_CHARGE_RAMP_HW */
+#define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ25710
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
@@ -97,6 +97,10 @@
 
 #define CONFIG_CMD_PD_CONTROL
 #define CONFIG_CMD_PPC_DUMP
+
+/* BC 1.2 */
+#define CONFIG_USB_CHARGER
+#define CONFIG_BC12_DETECT_PI3USB9201
 
 /* USB Type A Features */
 #define CONFIG_USB_PORT_POWER_SMART

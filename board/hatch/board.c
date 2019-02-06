@@ -24,10 +24,12 @@
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
+#include "task.h"
 #include "temp_sensor.h"
 #include "thermal.h"
 #include "thermistor.h"
 #include "uart.h"
+#include "usb_charge.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "util.h"
@@ -72,6 +74,22 @@ static void tcpc_alert_event(enum gpio_signal signal)
 static void hdmi_hpd_interrupt(enum gpio_signal signal)
 {
 	baseboard_mst_enable_control(MST_HDMI, gpio_get_level(signal));
+}
+
+static void bc12_interrupt(enum gpio_signal signal)
+{
+	switch (signal) {
+	case GPIO_USB_C0_BC12_INT_ODL:
+		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
+		break;
+
+	case GPIO_USB_C1_BC12_INT_ODL:
+		task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
+		break;
+
+	default:
+		break;
+	}
 }
 
 #include "gpio_list.h" /* Must come after other header files. */
