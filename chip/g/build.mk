@@ -218,15 +218,17 @@ $(out)/RW/ec.RW_B.flat: $(out)/RW/ec.RW.flat
 $(out)/RW/ec.RW.flat $(out)/RW/ec.RW_B.flat: SIGNER_EXTRAS = $(RW_SIGNER_EXTRAS)
 
 ifeq ($(CONFIG_DCRYPTO),y)
-$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: LDFLAGS_EXTRA += -L$(out)/cryptoc \
-						-lcryptoc
-$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: $(out)/cryptoc/libcryptoc.a
+
+CRYPTOC_OBJS = $(shell find $(out)/cryptoc -name '*.o')
+$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: LDFLAGS_EXTRA += $(CRYPTOC_OBJS)
+$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: cryptoc_objs
+
 
 # Force the external build each time, so it can look for changed sources.
-.PHONY: $(out)/cryptoc/libcryptoc.a
-$(out)/cryptoc/libcryptoc.a:
+.PHONY: cryptoc_objs
+cryptoc_objs:
 	$(MAKE) obj=$(realpath $(out))/cryptoc SUPPORT_UNALIGNED=1 \
-		CONFIG_UPTO_SHA512=$(CONFIG_UPTO_SHA512) -C $(CRYPTOCLIB)
+		CONFIG_UPTO_SHA512=$(CONFIG_UPTO_SHA512) -C $(CRYPTOCLIB) objs
 endif   # end CONFIG_DCRYPTO
 
 endif   # CHIP_MK_INCLUDED_ONCE is nonempty
