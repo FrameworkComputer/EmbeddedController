@@ -335,14 +335,11 @@ static void dump_flash(void)
 	uint8_t buf[16];
 	int i;
 	for (i = 0; i < CBI_EEPROM_SIZE; i += sizeof(buf)) {
-		int j;
 		if (read_eeprom(i, buf, sizeof(buf))) {
 			ccprintf("\nFailed to read EEPROM\n");
 			return;
 		}
-		for (j = 0; j < sizeof(buf); j++)
-			ccprintf(" %02x", buf[j]);
-		ccprintf("\n");
+		hexdump(buf, sizeof(buf));
 	}
 }
 
