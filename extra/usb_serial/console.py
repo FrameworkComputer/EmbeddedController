@@ -88,7 +88,7 @@ class Susb():
           dev = d
           break
       if dev is None:
-        raise SusbError("USB device(%s) not found" % serialname)
+        raise SusbError("USB device(%s) not found" % (serialname,))
     else:
       try:
         dev = dev_list[0]
@@ -147,6 +147,7 @@ class SuartError(Exception):
 
 class Suart():
   """Provide interface to serial usb endpoint."""
+
   def __init__(self, vendor=0x18d1, product=0x501c, interface=0,
                serialname=None):
     """Suart contstructor.
@@ -162,68 +163,57 @@ class Suart():
     Raises:
       SuartError: If init fails
     """
+    self._done = threading.Event()
     self._susb = Susb(vendor=vendor, product=product,
         interface=interface, serialname=serialname)
-    self._exit = False
 
-  def exit(self):
-    self._exit = True
-
-  def running(self):
-    return (not self._exit)
-
-  def __del__(self):
-    """Suart destructor."""
-    self.exit()
+  def wait_until_done(self, timeout=None):
+    return self._done.wait(timeout=timeout)
 
   def run_rx_thread(self):
-    while self.running():
-        try:
-          r = self._susb._read_ep.read(64, self._susb.TIMEOUT_MS)
-          if r:
-            sys.stdout.write(r.tostring())
-            sys.stdout.flush()
+    try:
+      while True:
+          try:
+            r = self._susb._read_ep.read(64, self._susb.TIMEOUT_MS)
+            if r:
+              sys.stdout.write(r.tostring())
+              sys.stdout.flush()
 
-        except Exception as e:
-          # If we miss some characters on pty disconnect, that's fine.
-          # ep.read() also throws USBError on timeout, which we discard.
-          if type(e) not in [exceptions.OSError, usb.core.USBError]:
-            print "rx %s" % e
+          except Exception as e:
+            # If we miss some characters on pty disconnect, that's fine.
+            # ep.read() also throws USBError on timeout, which we discard.
+            if not isinstance(e, (exceptions.OSError, usb.core.USBError)):
+              print "rx %s" % (e,)
+    finally:
+      self._done.set()
 
   def run_tx_thread(self):
-    while self.running():
-        try:
-          r = sys.stdin.read(1)
-          if r == '\x03':
-            self.exit()
-          if r:
-            self._susb._write_ep.write(array.array('B', r), self._susb.TIMEOUT_MS)
-
-        except Exception as e:
-          print "tx %s" % e
+    try:
+      while True:
+          try:
+            r = sys.stdin.read(1)
+            if not r or r == b"\x03":
+              break
+            if r:
+              self._susb._write_ep.write(array.array(b"B", r),
+                                         self._susb.TIMEOUT_MS)
+          except Exception as e:
+            print "tx %s" % (e,)
+    finally:
+      self._done.set()
 
   def run(self):
     """Creates pthreads to poll USB & PTY for data.
     """
     self._exit = False
 
-    self._rx_thread = threading.Thread(target=self.run_rx_thread, args=[])
+    self._rx_thread = threading.Thread(target=self.run_rx_thread)
     self._rx_thread.daemon = True
     self._rx_thread.start()
 
-    self._tx_thread = threading.Thread(target=self.run_tx_thread, args=[])
+    self._tx_thread = threading.Thread(target=self.run_tx_thread)
     self._tx_thread.daemon = True
     self._tx_thread.start()
-
-
-"""Terminal settings cleanup."""
-
-def force_exit():
-  global old_settings
-  global fd
-  termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-  os.system("stty echo")
-  sys.exit(0)
 
 
 
@@ -240,15 +230,16 @@ parser.add_argument('-i', '--interface', type=int,
     help="interface number of console", default=0)
 parser.add_argument('-s', '--serialno', type=str,
     help="serial number of device", default="")
+parser.add_argument('-S', '--notty-exit-sleep', type=float, default=0.2,
+    help="When stdin is *not* a TTY, wait this many seconds after EOF from "
+    "stdin before exiting, to give time for receiving a reply from the USB "
+    "device.")
 
 
 def runconsole():
   """Run the usb console code
 
   Starts the pty thread, and idles until a ^C is caught.
-
-  Raises:
-    KeyboardInterrupt on ^C.
   """
   args = parser.parse_args()
 
@@ -260,38 +251,31 @@ def runconsole():
   interface = args.interface
 
   sobj = Suart(vendor=vid, product=pid, interface=interface,
-                 serialname=serialno)
-  try:
+               serialname=serialno)
+  if sys.stdin.isatty():
     tty.setraw(sys.stdin.fileno())
-  except:
-    pass
   sobj.run()
+  sobj.wait_until_done()
+  if not sys.stdin.isatty() and args.notty_exit_sleep > 0:
+    time.sleep(args.notty_exit_sleep)
 
-  # run() is a thread so just busy wait to mimic server
-  while sobj.running():
-    time.sleep(.1)
 
 def main():
-  global old_settings
-  global fd
-  try:
-    os.system("stty -echo")
+  stdin_isatty = sys.stdin.isatty()
+  if stdin_isatty:
     fd = sys.stdin.fileno()
+    os.system("stty -echo")
     old_settings = termios.tcgetattr(fd)
-  except:
-    pass
+
   try:
     runconsole()
-  except KeyboardInterrupt:
-    sobj.exit()
-  except Exception as e:
-    try:
+  finally:
+    if stdin_isatty:
       termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
       os.system("stty echo")
-    finally:
-      traceback.print_exc()
-  finally:
-    force_exit()
+    # Avoid having the user's shell prompt start mid-line after the final output
+    # from this program.
+    print
 
 
 if __name__ == '__main__':
