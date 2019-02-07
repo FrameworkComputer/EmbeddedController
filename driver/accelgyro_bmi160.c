@@ -654,6 +654,11 @@ void normalize(const struct motion_sensor_t *s, intv3_t v, uint8_t *data)
 		bmm150_normalize(s, v, data);
 	else
 #endif
+#ifdef CONFIG_MAG_BMI160_LIS2MDL
+	if (s->type == MOTIONSENSE_TYPE_MAG)
+		lis2mdl_normalize(s, v, data);
+	else
+#endif
 	{
 		v[0] = ((int16_t)((data[1] << 8) | data[0]));
 		v[1] = ((int16_t)((data[3] << 8) | data[2]));
