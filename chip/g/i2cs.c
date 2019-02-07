@@ -259,7 +259,7 @@ static void poll_read_state(void)
 }
 
 /* Process the 'end of a write cycle' interrupt. */
-static void _i2cs_write_complete_int(void)
+void __attribute__((used)) _i2cs_write_complete_int(void)
 {
 	/* Reset the IRQ condition. */
 	GWRITE_FIELD(I2CS, INT_STATE, INTR_WRITE_COMPLETE, 1);
