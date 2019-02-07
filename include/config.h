@@ -2406,6 +2406,9 @@
  */
 #undef CONFIG_ISH_IPC
 
+/* Support host command interface over HECI */
+#undef CONFIG_HOSTCMD_HECI
+
 /*
  * EC supports x86 host communication with AP. This can either be through LPC
  * or eSPI. The CONFIG_HOSTCMD_X86 will get automatically defined if either
