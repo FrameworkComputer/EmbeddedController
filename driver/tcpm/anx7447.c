@@ -7,7 +7,6 @@
 
 #include "anx7447.h"
 #include "console.h"
-#include "ec_version.h"
 #include "hooks.h"
 #include "tcpci.h"
 #include "tcpm.h"
