@@ -307,7 +307,6 @@ SECTIONS
 
 	/* Group libtpm2 data so it can be cleared on system reset */
 	__bss_libtpm2_start = .;
-	Tpm2_*(.bss)
 	/* TPM registers should be cleared at the same time */
         STRINGIFY(OUTDIR/common/tpm_registers.o*)(.bss)
 	 *(.bss.Tpm2_common)
