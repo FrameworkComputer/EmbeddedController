@@ -47,6 +47,22 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	if (port == DUMMY_GPIO_BANK)
 		return;
 
+	/* ISH does not support level-trigger interrupts; only edge. */
+	if (flags & (GPIO_INT_F_HIGH | GPIO_INT_F_LOW)) {
+		ccprintf("\n\nISH does not support level trigger GPIO for %d "
+			 "0x%02x!\n\n",
+			 port, mask);
+	}
+
+	/* ISH 3 can't support both rising and falling edge */
+#ifdef CHIP_FAMILY_ISH3
+	if ((flags & GPIO_INT_F_RISING) && (flags & GPIO_INT_F_FALLING)) {
+		ccprintf("\n\nISH 2/3 does not support both rising & falling "
+			 "edge for %d 0x%02x\n\n",
+			 port, mask);
+	}
+#endif
+
 	/* GPSR/GPCR Output high/low */
 	if (flags & GPIO_HIGH) /* Output high */
 		ISH_GPIO_GPSR |= mask;
@@ -59,21 +75,13 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	else /* GPIO_INPUT or un-configured */
 		ISH_GPIO_GPDR &= ~mask;
 
-	/* GRER/GFER interrupt trigger */
-#ifdef CHIP_FAMILY_ISH3
-	/* ISH 3 can't support both rising and falling edge */
-	if (((flags & GPIO_INT_F_RISING) && (flags & GPIO_INT_F_FALLING)) ||
-		((flags & GPIO_INT_F_HIGH) && (flags & GPIO_INT_F_LOW))) {
-		ccprintf("ISH 2/3 not support both rising&falling edge\n");
-	}
-#endif
-	/* Interrupt is asserted on rising edge/active high */
+	/* Interrupt is asserted on rising edge */
 	if (flags & GPIO_INT_F_RISING)
 		ISH_GPIO_GRER |= mask;
 	else
 		ISH_GPIO_GRER &= ~mask;
 
-	/* Interrupt is asserted on falling edge/active low */
+	/* Interrupt is asserted on falling edge */
 	if (flags & GPIO_INT_F_FALLING)
 		ISH_GPIO_GFER |= mask;
 	else
