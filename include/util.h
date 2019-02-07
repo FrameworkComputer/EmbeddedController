@@ -210,6 +210,19 @@ static inline int cond_went_true(cond_t *c) { return cond_went(c, 1); }
 int parse_offset_size(int argc, char **argv, int shift,
 			     int *offset, int *size);
 
+/**
+ * Print binary in hex and ASCII
+ *
+ * Sample output of hexdump(image_data.version, 30):
+ *
+ *   6e 61 6d 69 5f 76 32 2e 30 2e 37 37 34 2d 63 66 |nami_v2.0.774-cf|
+ *   34 62 64 33 34 38 30 00 00 00 00 00 00 00       |4bd3480.......  |
+ *
+ * @param data	Data to be dumped
+ * @param len	Size of data
+ */
+void hexdump(const uint8_t *data, int len);
+
 #ifdef CONFIG_ASSEMBLY_MULA32
 /*
  * Compute (a*b)+c[+d], where a, b, c[, d] are 32-bit integers, and the result

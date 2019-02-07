@@ -5,6 +5,7 @@
 
 /* Utility functions for Chrome EC */
 
+#include "console.h"
 #include "util.h"
 
 size_t strlen(const char *s)
@@ -597,4 +598,29 @@ int parse_offset_size(int argc, char **argv, int shift,
 		return EC_ERROR_PARAM_COUNT;
 
 	return EC_SUCCESS;
+}
+
+void hexdump(const uint8_t *data, int len)
+{
+	int i, j;
+
+	if (!data || !len)
+		return;
+
+	for (i = 0; i < len; i += 16) {
+		/* Left column (Hex) */
+		for (j = i; j < i + 16; j++) {
+			if (j < len)
+				ccprintf(" %02x", data[j]);
+			else
+				ccprintf("   ");
+		}
+		/* Right column (ASCII) */
+		ccprintf(" |");
+		for (j = i; j < i + 16; j++) {
+			int c = j < len ? data[j] : ' ';
+			ccprintf("%c", isprint(c) ? c : '.');
+		}
+		ccprintf("|\n");
+	}
 }
