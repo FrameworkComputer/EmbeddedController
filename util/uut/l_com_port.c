@@ -200,6 +200,57 @@ bool com_config_uart(int h_dev_drv, struct comport_fields com_port_fields)
 	return true;
 }
 
+/**
+ * Drain the console RX buffer before programming. The device should be in
+ * programming mode and shouldn't be printing anything. Anything that's
+ * currently in the buffer could interfere with programming. discard_input
+ * will discard everything currently in the buffer. It prints any non zero
+ * characters and returns when the console is empty and ready for programming.
+ *
+ * This is the same as discard_input in stm32mon.
+ * TODO: create common library for initializing serial consoles.
+ */
+static void discard_input(int fd)
+{
+	uint8_t buffer[64];
+	int res, i;
+	int count_of_zeros;
+
+	/* Keep track of discarded zeros */
+	count_of_zeros = 0;
+	do {
+		res = read(fd, buffer, sizeof(buffer));
+		if (res > 0) {
+
+			/* Discard zeros in the beginning of the buffer. */
+			for (i = 0; i < res; i++)
+				if (buffer[i])
+					break;
+
+			count_of_zeros += i;
+			if (i == res) {
+				/* Only zeros, nothing to print out. */
+				continue;
+			}
+
+			/* Discard zeros in the end of the buffer. */
+			while (!buffer[res - 1]) {
+				count_of_zeros++;
+				res--;
+			}
+
+			printf("Recv[%d]:", res - i);
+			for (; i < res; i++)
+				printf("%02x ", buffer[i]);
+			printf("\n");
+		}
+	} while (res > 0);
+
+	if (count_of_zeros)
+		printf("%d zeros ignored\n", count_of_zeros);
+}
+
+
 /******************************************************************************
  * Function: int com_port_open()
  *
@@ -240,6 +291,12 @@ int com_port_open(const char *com_port_dev_name,
 		close(port_handler);
 		return INVALID_HANDLE_VALUE;
 	}
+
+	/*
+	 * Drain the console, so what ever is already in the EC console wont
+	 * interfere with programming.
+	 */
+	discard_input(port_handler);
 
 	return port_handler;
 }
