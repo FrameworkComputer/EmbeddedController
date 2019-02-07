@@ -11,8 +11,11 @@
 /* Optional modules */
 #define CONFIG_ADC
 #undef  CONFIG_ADC_WATCHDOG
+#define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CHIPSET_MT8183
 #define CONFIG_CMD_ACCELS
+#define CONFIG_CRC8
+#define CONFIG_CROS_BOARD_INFO
 #define CONFIG_EMULATED_SYSRQ
 #undef  CONFIG_HIBERNATE
 #define CONFIG_I2C
@@ -179,6 +182,10 @@
 #define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
 #define I2C_PORT_ACCEL    1
 #define I2C_PORT_ALS      1
+#define I2C_PORT_EEPROM		1
+
+/* I2C addresses */
+#define I2C_ADDR_EEPROM		0xA0
 
 /* Route sbs host requests to virtual battery driver */
 #define VIRTUAL_BATTERY_ADDR 0x16
@@ -194,6 +201,11 @@
 		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
 
 #ifndef __ASSEMBLER__
+
+enum oem_id {
+	PROJECT_FLAPJACK = 0,
+	PROJECT_COUNT,
+};
 
 enum adc_channel {
 	/* Real ADC channels begin here */

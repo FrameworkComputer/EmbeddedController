@@ -13,6 +13,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "cros_board_info.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/als_opt3001.h"
 #include "driver/battery/max17055.h"
@@ -48,6 +49,28 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+uint16_t board_version;
+uint8_t oem;
+uint32_t sku;
+
+static void cbi_init(void)
+{
+	uint32_t val;
+
+	if (cbi_get_board_version(&val) == EC_SUCCESS && val <= UINT16_MAX)
+		board_version = val;
+	CPRINTS("Board Version: 0x%04x", board_version);
+
+	if (cbi_get_oem_id(&val) == EC_SUCCESS && val <= PROJECT_COUNT)
+		oem = val;
+	CPRINTS("OEM: %d", oem);
+
+	if (cbi_get_sku_id(&val) == EC_SUCCESS)
+		sku = val;
+	CPRINTS("SKU: 0x%08x", sku);
+}
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
+
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	schedule_deferred_pd_interrupt(0 /* port */);
@@ -82,6 +105,7 @@ const struct i2c_port_t i2c_ports[] = {
 	{"tcpc0",     I2C_PORT_TCPC0,     400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
 	{"battery",   I2C_PORT_BATTERY,   400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 	{"accelgyro", I2C_PORT_ACCEL,     400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
+	{"eeprom",    I2C_PORT_EEPROM,    400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
