@@ -96,16 +96,16 @@ CFLAGS += -DEMBEDDED_MODE=1
 # Configure cryptoc headers to handle unaligned accesses.
 CFLAGS += -DSUPPORT_UNALIGNED=1
 
+TPM2_OBJS = $(shell find $(out)/tpm2 -name '*.cp.o')
 # Add dependencies on that library
-$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: LDFLAGS_EXTRA += -L$(out)/tpm2 -ltpm2
-$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: $(out)/tpm2/libtpm2.a
-
-#$(out)/RW/ec.RW_B.elf: $(out)/tpm2/libtpm2.a LDFLAGS_EXTRA += -L$(out)/tpm2 -ltpm2
+$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: LDFLAGS_EXTRA += $(TPM2_OBJS)
+$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: copied_objs
 
 # Force the external build each time, so it can look for changed sources.
-.PHONY: $(out)/tpm2/libtpm2.a
-$(out)/tpm2/libtpm2.a:
-	$(MAKE) obj=$(realpath $(out))/tpm2 EMBEDDED_MODE=1 OBJ_PREFIX=Tpm2_ -C $(EXTLIB)
+.PHONY: copied_objs
+copied_objs:
+	$(MAKE) obj=$(realpath $(out))/tpm2 EMBEDDED_MODE=1 \
+		-C $(EXTLIB) copied_objs
 
 endif   # BOARD_MK_INCLUDED_ONCE is nonempty
 
