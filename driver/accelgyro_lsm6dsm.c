@@ -149,8 +149,6 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 				LSM6DSM_FIFO_DECIMATOR(max_odr / odrs[i]);
 			private->config.total_samples_in_pattern +=
 				private->config.samples_in_pattern[i];
-			private->samples_to_discard[i] =
-							LSM6DSM_DISCARD_SAMPLES;
 		} else {
 			/* Not in FIFO if sensor disabled. */
 			private->config.samples_in_pattern[i] = 0;
@@ -170,6 +168,17 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 	 * the specified ODR.
 	 * Contrary to gyroscope, sampling faster will not affect measurements.
 	 * Set the ODR behind the back of set/get_data_rate.
+	 *
+	 * First samples after ODR changes must be thrown out [See
+	 * AN4987, section 3.9].
+	 * When increasing accel ODR, the FIFO is going to drop samples,
+	 * - except the first one after ODR change.
+	 * When decreasing accel ODR, we don't need to drop sample if
+	 * frequency is less than 52Hz.
+	 * At most, we need to drop one sample, but Android requirement specify
+	 * that chaning one sensor ODR should not affect other sensors.
+	 * Leave the bad sample alone, it will be a single glitch in the
+	 * accelerometer data stream.
 	 */
 	if (max_odr > MAX(odrs[FIFO_DEV_ACCEL], odrs[FIFO_DEV_GYRO])) {
 		st_write_data_with_mask(accel, LSM6DSM_ODR_REG(accel->type),
@@ -264,10 +273,10 @@ static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
 			return;
 		}
 
-		if (private->samples_to_discard[next_fifo] > 0) {
-			private->samples_to_discard[next_fifo]--;
+		id = agm_maps[next_fifo];
+		if (private->samples_to_discard[id] > 0) {
+			private->samples_to_discard[id]--;
 		} else {
-			id = agm_maps[next_fifo];
 			s = accel + id;
 			axis = s->raw_xyz;
 
@@ -461,11 +470,13 @@ static int get_range(const struct motion_sensor_t *s)
  */
 int lsm6dsm_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 {
-	int ret = EC_SUCCESS, normalized_rate = 0;
+	struct stprivate_data *data = s->drv_data;
 #ifdef CONFIG_ACCEL_FIFO
 	const struct motion_sensor_t *accel = LSM6DSM_MAIN_SENSOR(s);
+	struct lsm6dsm_data *private = LSM6DSM_GET_DATA(accel);
+	int old_normalized_rate = data->base.odr;
 #endif
-	struct stprivate_data *data = s->drv_data;
+	int ret = EC_SUCCESS, normalized_rate = 0;
 	uint8_t ctrl_reg, reg_val = 0;
 
 #ifdef CONFIG_ACCEL_FIFO
@@ -522,6 +533,9 @@ int lsm6dsm_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	if (ret == EC_SUCCESS) {
 		data->base.odr = normalized_rate;
 #ifdef CONFIG_ACCEL_FIFO
+		if (data->base.odr != old_normalized_rate)
+			private->samples_to_discard[s->type] =
+				LSM6DSM_DISCARD_SAMPLES;
 		ret = fifo_enable(accel);
 		if (ret != EC_SUCCESS)
 			CPRINTS("Failed to enable FIFO. Error: %d", ret);
