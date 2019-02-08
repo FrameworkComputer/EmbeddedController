@@ -133,6 +133,10 @@
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
+#define CONFIG_ALS
+#define CONFIG_ALS_OPT3001
+#define ALS_COUNT 1
+#define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
 
 /* PD */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY   30000  /* us */
@@ -190,6 +194,7 @@ enum adc_channel {
 enum sensor_id {
 	LID_ACCEL = 0,
 	LID_GYRO,
+	LID_ALS,
 };
 
 enum pwm_channel {
@@ -205,6 +210,9 @@ int board_vbus_sink_enable(int port, int enable);
 void board_reset_pd_mcu(void);
 /* Base detection interrupt handler */
 void base_detect_interrupt(enum gpio_signal signal);
+
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ALS)
 
 #endif /* !defined(__ASSEMBLER__) */
 
