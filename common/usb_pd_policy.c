@@ -89,7 +89,7 @@ static unsigned max_request_mv = PD_MAX_VOLTAGE_MV; /* no cap */
 
 int pd_find_pdo_index(int port, int max_mv, uint32_t *selected_pdo)
 {
-	int i, uw, mv, ma;
+	int i, uw, mv;
 	int ret = 0;
 	int __attribute__((unused)) cur_mv = 0;
 	int cur_uw = 0;
@@ -116,7 +116,7 @@ int pd_find_pdo_index(int port, int max_mv, uint32_t *selected_pdo)
 		if ((src_caps[i] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
 			uw = 250000 * (src_caps[i] & 0x3FF);
 		} else {
-			ma = (src_caps[i] & 0x3FF) * 10;
+			int ma = (src_caps[i] & 0x3FF) * 10;
 			ma = MIN(ma, PD_MAX_CURRENT_MA);
 			uw = ma * mv;
 		}
