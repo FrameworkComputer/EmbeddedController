@@ -8,8 +8,6 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/* board revision */
-
 /* Optional modules */
 #define CONFIG_ADC
 #undef  CONFIG_ADC_WATCHDOG
@@ -140,14 +138,9 @@
 #define BATTERY_DESIRED_CHARGING_CURRENT    2000  /* mA */
 
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
+#define PD_MAX_VOLTAGE_MV     9000
 #define PD_MAX_CURRENT_MA     3000
-
-/*
- * The Maximum input voltage is 13.5V, need another 5% tolerance.
- * 12.85V * 1.05 = 13.5V
- */
-#define PD_MAX_VOLTAGE_MV     12850
+#define PD_MAX_POWER_MW       18000
 
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000  /* us */
