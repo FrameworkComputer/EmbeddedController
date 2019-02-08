@@ -248,6 +248,12 @@ static struct board_cfg board_cfg_table[] = {
 		.board_properties = BOARD_SLAVE_CONFIG_SPI |
 			BOARD_USE_PLT_RESET,
 	},
+	/* Mistral: DI0A9 = 1M PU, DIOA1 = 5k PU */
+	{
+		.strap_cfg = 0x0B,
+		.board_properties = BOARD_SLAVE_CONFIG_SPI |
+			BOARD_USE_PLT_RESET,
+	},
 	/* I2C Variants: DIOA9 = 1M PD, DIOA1 = 1M PD */
 	/* Reef/Eve: DIOA12 = 5k PD, DIOA6 = 1M PU */
 	{
