@@ -1357,16 +1357,9 @@ static int pd_send_request_msg(int port, int always_send_request)
 	 * If this port is not actively charging or we are not allowed to
 	 * request the max voltage, then select vSafe5V
 	 */
-	res = pd_build_request(port, &rdo, &curr_limit, &supply_voltage,
-			       charging && max_request_allowed ?
-					PD_REQUEST_MAX : PD_REQUEST_VSAFE5V);
-
-	if (res != EC_SUCCESS)
-		/*
-		 * If fail to choose voltage, do nothing, let source re-send
-		 * source cap
-		 */
-		return -1;
+	pd_build_request(port, &rdo, &curr_limit, &supply_voltage,
+			 charging && max_request_allowed ?
+					 PD_REQUEST_MAX : PD_REQUEST_VSAFE5V);
 
 	if (!always_send_request) {
 		/* Don't re-request the same voltage */

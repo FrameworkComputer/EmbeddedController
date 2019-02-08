@@ -1041,10 +1041,9 @@ int pd_get_vdo_ver(int port);
  * @param ma  selected current limit (stored on success)
  * @param mv  selected supply voltage (stored on success)
  * @param req_type request type
- * @return <0 if invalid, else EC_SUCCESS
  */
-int pd_build_request(int port, uint32_t *rdo, uint32_t *ma, uint32_t *mv,
-		     enum pd_request_type req_type);
+void pd_build_request(int port, uint32_t *rdo, uint32_t *ma, uint32_t *mv,
+		      enum pd_request_type req_type);
 
 /**
  * Check if max voltage request is allowed (only used if

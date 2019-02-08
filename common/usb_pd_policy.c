@@ -171,8 +171,8 @@ void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *mv)
 	*ma = MIN(max_ma, PD_MAX_CURRENT_MA);
 }
 
-int pd_build_request(int port, uint32_t *rdo, uint32_t *ma, uint32_t *mv,
-		     enum pd_request_type req_type)
+void pd_build_request(int port, uint32_t *rdo, uint32_t *ma, uint32_t *mv,
+		      enum pd_request_type req_type)
 {
 	uint32_t pdo;
 	int pdo_index, flags = 0;
@@ -225,7 +225,6 @@ int pd_build_request(int port, uint32_t *rdo, uint32_t *ma, uint32_t *mv,
 	} else {
 		*rdo = RDO_FIXED(pdo_index + 1, *ma, max_or_min_ma, flags);
 	}
-	return EC_SUCCESS;
 }
 
 void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
