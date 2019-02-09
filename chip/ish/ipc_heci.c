@@ -468,6 +468,20 @@ static void ipc_host2ish_isr(void)
 	uint32_t pisr = REG32(IPC_PISR);
 	uint32_t pimr = REG32(IPC_PIMR);
 
+#ifdef CHIP_FAMILY_ISH5
+	/*
+	 * TODO(b/122364080): Remove this code once proper power management is
+	 * in place for ISH.
+	 *
+	 * Ensure that the host IPC power is requested after getting an
+	 * interrupt otherwise the resume message will never get delivered (via
+	 * host ipc communication). Resume is where we would like to restore all
+	 * power settings, but that is too late for this power request.
+	 */
+
+	PMU_VNN_REQ = VNN_REQ_IPC_HOST_WRITE & ~PMU_VNN_REQ;
+#endif
+
 	if ((pisr & IPC_PISR_HOST2ISH_BIT) && (pimr & IPC_PIMR_HOST2ISH_BIT))
 		handle_msg_recv_interrupt(IPC_PEER_ID_HOST);
 }
@@ -696,6 +710,17 @@ void ipc_mng_task(void)
 	struct ipc_msg msg;
 	ipc_handle_t handle;
 
+#ifdef CHIP_FAMILY_ISH5
+	/*
+	 * TODO(b/122364080): Remove this code once proper power management is
+	 * in place for ISH.
+	 *
+	 * Ensure that power for host IPCs is requested and ack'ed
+	 */
+	PMU_VNN_REQ = VNN_REQ_IPC_HOST_WRITE & ~PMU_VNN_REQ;
+	while (!(PMU_VNN_REQ_ACK & PMU_VNN_REQ_ACK_STATUS))
+		continue;
+#endif
 	handle = ipc_open(IPC_PEER_ID_HOST, IPC_PROTOCOL_MNG,
 			  EVENT_FLAG_BIT_MNG_MSG);
 

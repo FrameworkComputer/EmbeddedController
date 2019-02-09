@@ -4,6 +4,7 @@
  */
 
 #include "heci_client.h"
+#include "registers.h"
 #include "system_state.h"
 #include "console.h"
 
@@ -27,6 +28,11 @@
 #define SYSTEM_STATE_STATE_CHANGE_REQ           0x4
 
 #define SUSPEND_STATE_BIT                       (1<<1) /* suspend/resume */
+
+/* Cached state of ISH's requested power rails when AP suspends */
+#ifdef CHIP_FAMILY_ISH5
+static uint32_t cached_vnn_request;
+#endif
 
 struct ss_header {
 	uint32_t cmd;
@@ -102,12 +108,41 @@ static int ss_subsys_suspend(void)
 						ss_subsys_ctx.clients[i]);
 	}
 
+#ifdef CHIP_FAMILY_ISH5
+	/*
+	 * TODO(b/122364080): Remove this code once proper power management is
+	 * in place for ISH.
+	 *
+	 * PMU_VNN_REQ is used by ISH FW to assert power requirements of ISH to
+	 * PMC. The system won't enter S0ix if ISH is requesting any power
+	 * rails. Setting a bit to 1 both sets and clears a requested value.
+	 * Cache the value of request power so we can restore it on resume.
+	 */
+	cached_vnn_request = PMU_VNN_REQ;
+	PMU_VNN_REQ = cached_vnn_request;
+#endif
 	return EC_SUCCESS;
 }
 
 static int ss_subsys_resume(void)
 {
 	int i;
+
+#ifdef CHIP_FAMILY_ISH5
+	/*
+	 * TODO(b/122364080): Remove this code once proper power management is
+	 * in place for ISH.
+	 *
+	 * Restore VNN power request from before suspend.
+	 */
+	if (cached_vnn_request) {
+		/* Request all cached power rails that are not already on. */
+		PMU_VNN_REQ = cached_vnn_request & ~PMU_VNN_REQ;
+		/* Wait for power request to get acknowledged */
+		while (!(PMU_VNN_REQ_ACK & PMU_VNN_REQ_ACK_STATUS))
+			continue;
+	}
+#endif
 
 	for (i = 0; i < ss_subsys_ctx.num_of_ss_client; i++) {
 		if (ss_subsys_ctx.clients[i]->cbs->resume)

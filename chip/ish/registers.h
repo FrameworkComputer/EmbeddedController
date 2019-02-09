@@ -36,6 +36,7 @@ enum ish_i2c_port {
 #define ISH_I2C2_BASE     0x00105000
 #define ISH_UART_BASE     0x00103000
 #define ISH_GPIO_BASE     0x001F0000
+#define ISH_PMU_BASE      0x00800000
 #define ISH_IPC_BASE      0x00B00000
 #define ISH_IOAPIC_BASE   0xFEC00000
 #define ISH_HPET_BASE     0xFED00000
@@ -114,6 +115,13 @@ enum ish_i2c_port {
 #define IPC_HOST2ISH_MSG_REGS      (ISH_IPC_BASE + 0xE0)
 #define IPC_ISH2HOST_DOORBELL      (ISH_IPC_BASE + 0x54)
 #define IPC_BUSY_CLEAR             (ISH_IPC_BASE + 0x378)
+
+/* PMU Registers */
+#define PMU_VNN_REQ		REG32(ISH_PMU_BASE + 0x3c)
+#define VNN_REQ_IPC_HOST_WRITE		(1 << 3) /* Power for IPC host write */
+
+#define PMU_VNN_REQ_ACK		REG32(ISH_PMU_BASE + 0x40)
+#define PMU_VNN_REQ_ACK_STATUS		(1 << 0) /* VNN req and ack status */
 
 /* IOAPIC registers */
 #define IOAPIC_IDX        0xFEC00000
