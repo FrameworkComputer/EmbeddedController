@@ -175,6 +175,10 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 		st_write_data_with_mask(accel, LSM6DSM_ODR_REG(accel->type),
 				LSM6DSM_ODR_MASK,
 				LSM6DSM_ODR_TO_REG(max_odr));
+	} else {
+		st_write_data_with_mask(accel, LSM6DSM_ODR_REG(accel->type),
+				LSM6DSM_ODR_MASK,
+				LSM6DSM_ODR_TO_REG(odrs[FIFO_DEV_ACCEL]));
 	}
 #endif /* CONFIG_MAG_LSM6DSM_LIS2MDL */
 	/*
@@ -493,17 +497,6 @@ int lsm6dsm_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	 */
 	if (s->type == MOTIONSENSE_TYPE_MAG) {
 		struct mag_cal_t *cal = LIS2MDL_CAL(s);
-
-#ifdef CONFIG_ACCEL_FIFO
-		/*
-		 * Accelormeter rate may have been changed when setting the
-		 * FIFO.
-		 * Put back correct rate if rate of magnetometer changes.
-		 */
-		data->base.odr = 0;
-		accel->drv->set_data_rate(accel,
-				accel->drv->get_data_rate(accel), 0);
-#endif
 
 		init_mag_cal(cal);
 		/*
