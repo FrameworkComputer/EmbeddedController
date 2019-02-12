@@ -88,7 +88,7 @@ L_sub_loop1:
 
 	eor	r1, r5		@ undo add mask
 	adds	r2, r6		@ undo subtract
-	adc	r3, r7
+	adc	r3, r3, r7
 
 L_done_sub1:
 	lsrs	r7, #1		@ denom(r7:r6) >>= 1
@@ -114,7 +114,7 @@ L_divison_by_0:
 
 L_fallback_32bits:
 	mov	r1, r0
-	udiv	r0, r2		@ r0 = quotient
+	udiv	r0, r0, r2	@ r0 = quotient
 	mul	r3, r0, r2	@ r3 = quotient * divisor
 	sub	r2, r1, r3	@ r2 = remainder
 	mov	r1, #0
@@ -164,7 +164,7 @@ L_sub_loop4:
 
 	eor	r0, r5		 @ undo add mask
 	adds	r2, r6		 @ undo subtract
-	adc	r3, r7
+	adc	r3, r3, r7
 
 L_done_sub4:
 	lsrs	r7, #1		@ denom(r7:r6) >>= 1
