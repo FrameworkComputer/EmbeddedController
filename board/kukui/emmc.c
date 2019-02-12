@@ -64,6 +64,7 @@ static int emmc_enabled;
 /* Maximum amount of time to wait for AP to boot. */
 static timestamp_t boot_deadline;
 #define BOOT_TIMEOUT (5 * SECOND)
+#define EMMC_STATUS_CHECK_PERIOD (10 * MSEC)
 
 /* 1024 bytes circular buffer is enough for ~0.6ms @ 13Mhz. */
 #define SPI_RX_BUF_BYTES 1024
@@ -254,7 +255,7 @@ static void emmc_enable_spi(void)
 	boot_deadline.val = get_time().val + BOOT_TIMEOUT;
 
 	/* Check if AP has booted periodically. */
-	hook_call_deferred(&emmc_check_status_data, 10 * MSEC);
+	hook_call_deferred(&emmc_check_status_data, EMMC_STATUS_CHECK_PERIOD);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, emmc_enable_spi, HOOK_PRIO_FIRST);
 
@@ -304,7 +305,7 @@ static void emmc_check_status(void)
 	}
 
 	/* Check if AP has booted again, next time. */
-	hook_call_deferred(&emmc_check_status_data, 100 * MSEC);
+	hook_call_deferred(&emmc_check_status_data, EMMC_STATUS_CHECK_PERIOD);
 }
 
 void emmc_task(void *u)
