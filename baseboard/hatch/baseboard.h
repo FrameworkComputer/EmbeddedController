@@ -48,6 +48,26 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
 
+/* Sensors */
+#define CONFIG_MKBP_EVENT
+/*
+ * TODO(b/125933998): Remove this config and use EC_PCH_INT_L to signal AP
+ * instead.
+ */
+#define CONFIG_MKBP_USE_HOST_EVENT
+#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
+/* I2C_PORT_ACCEL needs to be defined for i2c transactions */
+#define I2C_PORT_ACCEL I2C_PORT_SENSOR
+
+/* FIFO size is in power of 2. */
+#define CONFIG_ACCEL_FIFO 256
+/* Depends on how fast the AP boots and typical ODRs */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+
+/* Sensor console commands */
+#define CONFIG_CMD_ACCELS
+#define CONFIG_CMD_ACCEL_INFO
+
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGE_RAMP_HW

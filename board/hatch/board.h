@@ -29,6 +29,12 @@
 /* Keyboard features */
 #define CONFIG_PWM_KBLIGHT
 
+/* Sensors */
+#define CONFIG_ACCEL_INTERRUPTS
+#define CONFIG_ACCELGYRO_BMI160
+#define CONFIG_ACCELGYRO_BMI160_INT_EVENT TASK_EVENT_CUSTOM(4)
+#define CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
+
 /* Fan features */
 #define CONFIG_FANS 1
 #undef CONFIG_FAN_INIT_SPEED
@@ -69,6 +75,12 @@ enum adc_channel {
 	ADC_TEMP_SENSOR_1,	/* ADC0 */
 	ADC_TEMP_SENSOR_2,	/* ADC1 */
 	ADC_CH_COUNT
+};
+
+enum sensor_id {
+	BASE_ACCEL = 0,
+	BASE_GYRO,
+	SENSOR_COUNT,
 };
 
 enum pwm_channel {
