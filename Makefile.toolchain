@@ -29,6 +29,21 @@ endif
 # library.
 USE_BUILTIN_STDLIB:=1
 
+# Boards that compile with clang by default.
+# We can't use a config for this since the config generation uses the compiler.
+CLANG_BOARDS:= \
+	bloonchipper \
+	dartmonkey \
+	hatch_fp \
+	nami_fp \
+	nocturne_fp \
+	nucleo-dartmonkey \
+
+ifeq ($(filter $(BOARD), $(CLANG_BOARDS)), $(BOARD))
+CC=clang
+USE_BUILTIN_STDLIB:=0
+endif
+
 # Set the prefix for the compiler if specified (e.g., "x86_64-pc-linux-gnu-").
 ifeq ($(origin BUILDCC_PREFIX),undefined)
 # If building with Portage use the environment variable it provides.
@@ -170,9 +185,14 @@ ifneq ($(cc-name),clang)
 CFLAGS+= -ffat-lto-objects
 CFLAGS+= -fconserve-stack
 endif
+CXXFLAGS=$(CXXFLAGS_WARN)
 CXXFLAGS+=-DPROTOBUF_INLINE_NOT_IN_HEADERS=0
 ifeq ($(USE_BUILTIN_STDLIB), 1)
 CPPFLAGS+=-DUSE_BUILTIN_STDLIB
+else
+# TODO(https://issuetracker.google.com/234507656#comment19): C++ include path
+# should not be necessary.
+CXXFLAGS+=-I/usr/armv7m-cros-eabi/usr/include/c++/v1
 endif
 
 ifeq ($(LIBFTDI_NAME),)
