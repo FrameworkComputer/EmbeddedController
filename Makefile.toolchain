@@ -29,6 +29,21 @@ endif
 # library.
 USE_BUILTIN_STDLIB:=1
 
+# Boards that compile with clang by default.
+# We can't use a config for this since the config generation uses the compiler.
+CLANG_BOARDS:= \
+	bloonchipper \
+	dartmonkey \
+	hatch_fp \
+	nami_fp \
+	nocturne_fp \
+	nucleo-dartmonkey \
+
+ifeq ($(filter $(BOARD), $(CLANG_BOARDS)), $(BOARD))
+CC=clang
+USE_BUILTIN_STDLIB:=0
+endif
+
 # Extract cc-name
 cc-name:=$(shell $(CC) -v 2>&1 | grep -q "clang version" && echo clang || echo gcc)
 
@@ -154,6 +169,10 @@ endif
 CXXFLAGS+=-DPROTOBUF_INLINE_NOT_IN_HEADERS=0
 ifeq ($(USE_BUILTIN_STDLIB), 1)
 CPPFLAGS+=-DUSE_BUILTIN_STDLIB
+else
+# TODO(https://issuetracker.google.com/234507656#comment19): C++ include path
+# should not be necessary.
+CXXFLAGS+=-I/usr/armv7m-cros-eabi/usr/include/c++/v1
 endif
 
 ifeq ($(LIBFTDI_NAME),)

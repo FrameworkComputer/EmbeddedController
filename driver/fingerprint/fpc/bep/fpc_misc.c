@@ -44,8 +44,3 @@ void __unused fpc_log_var(const char *source, uint8_t level, const char *format,
 	uart_vprintf(format, args);
 	va_end(args);
 }
-
-uint32_t abs(int32_t a)
-{
-	return (a < 0) ? (uint32_t)(-a) : (uint32_t)a;
-}
