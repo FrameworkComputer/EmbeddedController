@@ -17,7 +17,6 @@
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/charger/bd9995x.h"
-#include "driver/mag_lis2mdl.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -123,12 +122,6 @@ const mat33_fp_t base_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
-const mat33_fp_t mag_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0,  FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
-
 /* sensor private data */
 static struct kionix_accel_data kx022_data;
 static struct lsm6dsm_data lsm6dsm_data;
@@ -207,24 +200,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 	},
-
-	[BASE_MAG] = {
-		.name = "Base Mag",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_LIS2MDL,
-		.type = MOTIONSENSE_TYPE_MAG,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &lis2mdl_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data, MOTIONSENSE_TYPE_MAG),
-		.port = I2C_PORT_SENSOR,
-		.addr = LSM6DSM_ADDR0,
-		.default_range = 1 << 11, /* 16LSB / uT, fixed */
-		.rot_standard_ref = &mag_standard_ref,
-		.min_frequency = LIS2MDL_ODR_MIN_VAL,
-		.max_frequency = LIS2MDL_ODR_MAX_VAL,
-	},
-
 };
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
