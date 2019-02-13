@@ -374,7 +374,8 @@ static int ipc_get_protocol_data(const struct ipc_if_ctx *ctx,
 		break;
 	}
 
-	memcpy(dest, src, payload_size);
+	if (src && dest)
+		memcpy(dest, src, payload_size);
 
 	return len;
 }
