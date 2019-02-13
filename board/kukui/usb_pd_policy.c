@@ -329,6 +329,11 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 		return 1;
 	}
 
+	usb_mux_set(port, lvl ? TYPEC_MUX_DP : TYPEC_MUX_NONE,
+		    USB_SWITCH_CONNECT, pd_get_polarity(port));
+
+	mux->hpd_update(port, lvl, irq);
+
 	if (irq & cur_lvl) {
 		uint64_t now = get_time().val;
 		/* wait for the minimum spacing between IRQ_HPD if needed */
@@ -356,7 +361,6 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 		hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 	}
 
-	mux->hpd_update(port, lvl, irq);
 	/* ack */
 	return 1;
 }
