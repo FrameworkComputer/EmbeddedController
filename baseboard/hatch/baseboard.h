@@ -36,9 +36,8 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
-/* TODO(b/111155507): Don't enable SOiX for now */
-/* #define CONFIG_POWER_S0IX */
-/* #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
+#define CONFIG_POWER_S0IX
+#define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 
 /* Common Keyboard Defines */
 #define CONFIG_CMD_KEYBOARD
