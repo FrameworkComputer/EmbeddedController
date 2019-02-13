@@ -147,6 +147,16 @@ int sb_read_string(int offset, uint8_t *data, int len);
 /* Write to battery */
 int sb_write(int cmd, int param);
 
+/**
+ * Write block to do battery cutoff
+ *
+ * @param reg		Battery cutoff register
+ * @param val		Battery cutoff data value
+ * @param len		Param val data length
+ * @return          non-zero if error
+ */
+int sb_write_block(int reg, const uint8_t *val, int len);
+
 /* Read manufactures access data from the battery */
 int sb_read_mfgacc(int cmd, int block, uint8_t *data, int len);
 

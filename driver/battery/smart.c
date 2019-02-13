@@ -108,6 +108,21 @@ int sb_read_mfgacc(int cmd, int block, uint8_t *data, int len)
 	return EC_SUCCESS;
 }
 
+int sb_write_block(int reg, const uint8_t *val, int len)
+{
+#ifdef CONFIG_BATTERY_CUT_OFF
+	/*
+	 * Some batteries would wake up after cut-off if we talk to it.
+	 */
+	if (battery_is_cut_off())
+		return EC_RES_ACCESS_DENIED;
+#endif
+
+	/* TODO: implement smbus_write_block. */
+	return i2c_write_block(I2C_PORT_BATTERY, BATTERY_ADDR, reg, val, len);
+
+}
+
 int battery_get_mode(int *mode)
 {
 	return sb_read(SB_BATTERY_MODE, mode);

@@ -9,6 +9,7 @@
 #include "battery_smart.h"
 #include "console.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
@@ -89,26 +90,60 @@ const struct battery_info *battery_get_info(void)
 	return &get_batt_params()->batt_info;
 }
 
+int cut_off_battery_block_write(const struct ship_mode_info *ship_mode)
+{
+	int rv;
+
+	uint8_t cutdata[3] = {
+		0x02,
+		ship_mode->reg_data[0] & 0xFF,
+		ship_mode->reg_data[0] >> 8,
+	};
+
+	/* SMBus protocols are block write, which include byte count
+	 * byte. Byte count segments are required to communicate
+	 * required action and the number of data bytes.
+	 * Due to ship mode command requires writing data values twice
+	 * to cutoff the battery, so byte count is 0x02.
+	 */
+	rv = sb_write_block(ship_mode->reg_addr, cutdata, sizeof(cutdata));
+	if (rv)
+		return rv;
+
+	/* Use the next set of values */
+	cutdata[1] = ship_mode->reg_data[1] & 0xFF;
+	cutdata[2] = ship_mode->reg_data[1] >> 8;
+
+	return sb_write_block(ship_mode->reg_addr, cutdata, sizeof(cutdata));
+}
+
+int cut_off_battery_sb_write(const struct ship_mode_info *ship_mode)
+{
+	int rv;
+
+	/* Ship mode command requires writing 2 data values */
+	rv = sb_write(ship_mode->reg_addr, ship_mode->reg_data[0]);
+	if (rv)
+		return rv;
+
+	return sb_write(ship_mode->reg_addr, ship_mode->reg_data[1]);
+}
+
 int board_cut_off_battery(void)
 {
 	int rv;
-	int cmd;
-	int data;
 	int type = get_battery_type();
 
 	/* If battery type is unknown can't send ship mode command */
 	if (type == BATTERY_TYPE_COUNT)
 		return EC_RES_ERROR;
 
-	/* Ship mode command requires writing 2 data values */
-	cmd = board_battery_info[type].fuel_gauge.ship_mode.reg_addr;
-	data = board_battery_info[type].fuel_gauge.ship_mode.reg_data[0];
-	rv = sb_write(cmd, data);
-	if (rv != EC_SUCCESS)
-		return EC_RES_ERROR;
-
-	data = board_battery_info[type].fuel_gauge.ship_mode.reg_data[1];
-	rv = sb_write(cmd, data);
+	if (board_battery_info[type].fuel_gauge.ship_mode.wb_support)
+		rv = cut_off_battery_block_write(
+			  &board_battery_info[type].fuel_gauge.ship_mode);
+	else
+		rv = cut_off_battery_sb_write(
+			  &board_battery_info[type].fuel_gauge.ship_mode);
 
 	return rv ? EC_RES_ERROR : EC_RES_SUCCESS;
 }

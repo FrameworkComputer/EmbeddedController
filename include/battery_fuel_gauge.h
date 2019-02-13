@@ -14,6 +14,13 @@
 #define SHIP_MODE_WRITES 2
 
 struct ship_mode_info {
+	/*
+	 * Write Block Support. If wb_support is true, then we use a i2c write
+	 * block command instead of a 16-bit write. The effective difference is
+	 * that the i2c transaction will prefix the length (2) when wb_support
+	 * is enabled.
+	 */
+	const uint8_t wb_support;
 	const uint8_t reg_addr;
 	const uint16_t reg_data[SHIP_MODE_WRITES];
 };
@@ -60,5 +67,21 @@ int battery_bq4050_imbalance_mv(void);
 #endif
 
 #endif
+
+/**
+ * Battery cut off command via SMBus write block.
+ *
+ * @param ship_mode		Battery ship mode information
+ * @return non-zero if error
+ */
+int cut_off_battery_block_write(const struct ship_mode_info *ship_mode);
+
+/**
+ * Battery cut off command via SMBus write word.
+ *
+ * @param ship_mode		Battery ship mode information
+ * @return non-zero if error
+ */
+int cut_off_battery_sb_write(const struct ship_mode_info *ship_mode);
 
 #endif /* __CROS_EC_BATTERY_FUEL_GAUGE_H */
