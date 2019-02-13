@@ -2174,7 +2174,16 @@ static void pd_update_try_source(void)
 	 */
 	pd_try_src_enable = try_src &&
 			    batt_soc >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC;
-#if defined(CONFIG_BATTERY_PRESENT_CUSTOM) || \
+
+#ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
+	/*
+	 * Don't attempt Try.Src if the battery is in the disconnect state.  The
+	 * discharge FET may not be enabled and so attempting Try.Src may cut
+	 * off our only power source at the time.
+	 */
+	pd_try_src_enable &= (battery_get_disconnect_state() ==
+			      BATTERY_NOT_DISCONNECTED);
+#elif defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||	\
 	defined(CONFIG_BATTERY_PRESENT_GPIO)
 	/*
 	 * When battery is cutoff in ship mode it may not be reliable to
@@ -2182,7 +2191,7 @@ static void pd_update_try_source(void)
 	 * Also check if battery is initialized and ready to provide power.
 	 */
 	pd_try_src_enable &= (battery_is_present() == BP_YES);
-#endif
+#endif /* CONFIG_BATTERY_PRESENT_[CUSTOM|GPIO] */
 
 	/*
 	 * Clear this flag to cover case where a TrySrc
@@ -2191,7 +2200,6 @@ static void pd_update_try_source(void)
 	 */
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
 		pd[i].flags &= ~PD_FLAGS_TRY_SRC;
-
 }
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_update_try_source, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_USB_PD_TRY_SRC */
