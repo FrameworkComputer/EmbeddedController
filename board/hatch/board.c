@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "common.h"
+#include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/ppc/sn5s330.h"
 #include "ec_commands.h"
@@ -114,9 +115,13 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 /* Sensors */
 /* Base Sensor mutex */
 static struct mutex g_base_mutex;
+static struct mutex g_lid_mutex;
 
 /* Base accel private data */
 static struct bmi160_drv_data_t g_bmi160_data;
+
+/* BMA255 private data */
+static struct accelgyro_saved_data_t g_bma255_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
 static const mat33_fp_t base_standard_ref = {
@@ -125,7 +130,45 @@ static const mat33_fp_t base_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
+/*
+ * TODO(b/124337208): P0 boards don't have this sensor mounted so the rotation
+ * matrix can't be tested properly. This needs to be revisited after EVT to make
+ * sure the rotaiton matrix for the lid sensor is correct.
+ */
+static const mat33_fp_t lid_standard_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
 struct motion_sensor_t motion_sensors[] = {
+	[LID_ACCEL] = {
+		.name = "Lid Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_BMA255,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &bma2x2_accel_drv,
+		.mutex = &g_lid_mutex,
+		.drv_data = &g_bma255_data,
+		.port = I2C_PORT_ACCEL,
+		.addr = BMA2x2_I2C_ADDR1,
+		.rot_standard_ref = &lid_standard_ref,
+		.min_frequency = BMA255_ACCEL_MIN_FREQ,
+		.max_frequency = BMA255_ACCEL_MAX_FREQ,
+		.default_range = 2, /* g, to support tablet mode */
+		.config = {
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+			/* Sensor on in S3 */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+		},
+	},
+
 	[BASE_ACCEL] = {
 		.name = "Base Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
@@ -151,6 +194,7 @@ struct motion_sensor_t motion_sensors[] = {
 			},
 		},
 	},
+
 	[BASE_GYRO] = {
 		.name = "Base Gyro",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
