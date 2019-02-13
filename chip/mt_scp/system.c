@@ -232,9 +232,10 @@ void system_reset(int flags)
 		}
 	}
 
-	/* SCB AIRCR reset */
-	CPU_NVIC_APINT = 0x05fa0004;
-	/* Spin wait for chip to reboot */
+	/* Set watchdog timer to small value, and spin wait for watchdog reset */
+	SCP_WDT_CFG = 0;
+	SCP_WDT_CFG = SCP_WDT_ENABLE | SCP_WDT_PERIOD(1);
+	watchdog_reload();
 	while (1)
 		;
 }
