@@ -31,8 +31,8 @@
 #define CR50_I2C_SUBCLASS  82
 #define CR50_I2C_PROTOCOL  1
 
-#define CROS_CMD_ADDR	  0x78
-#define CROS_CMD_ITE_SYNC    0
+#define CROS_CMD_ADDR		0x78	/* USB_I2C_CMD_ADDR 0xF0 >> 1 */
+#define CROS_CMD_ITE_SYNC	0
 
 /* DBGR I2C addresses */
 #define I2C_CMD_ADDR   0x5A
@@ -78,6 +78,12 @@
 #define RSTS_HGRST		0x08
 #define RSTS_GRST		0x04
 
+/* I2C MUX Configuration: TCA9543 or PCA9546 */
+#define I2C_MUX_CMD_ADDR		0x70
+#define I2C_MUX_CMD_NONE		0x00
+#define I2C_MUX_CMD_INAS		0x01
+#define I2C_MUX_CMD_EC			0x02
+
 static volatile sig_atomic_t exit_requested;
 
 struct i2c_interface;
@@ -88,6 +94,7 @@ struct iteflash_config {
 	const char *output_filename;
 	int send_waveform;  /* boolean */
 	int erase;  /* boolean */
+	int i2c_mux; /* boolean */
 	int debug;  /* boolean */
 	int usb_interface;
 	int usb_vid;
@@ -421,6 +428,20 @@ static int i2c_read_byte(struct common_hnd *chnd, uint8_t cmd, uint8_t *data)
 	ret = i2c_byte_transfer(chnd, I2C_DATA_ADDR, data, 0, 1);
 	if (ret < 0)
 		return -EIO;
+
+	return 0;
+}
+
+/* Configure I2C MUX to choose EC Prog channel */
+static int config_i2c_mux(struct common_hnd *chnd, uint8_t cmd)
+{
+	int ret;
+
+	ret = i2c_byte_transfer(chnd, I2C_MUX_CMD_ADDR, &cmd, 1, 1);
+	if (ret < 0) {
+		fprintf(stderr, "Failed to configure I2C MUX.");
+		return -EIO;
+	}
 
 	return 0;
 }
@@ -834,6 +855,7 @@ static int ftdi_send_special_waveform(struct common_hnd *chnd)
 
 static int send_special_waveform(struct common_hnd *chnd)
 {
+	const int max_iterations = 10;
 	int ret;
 	int iterations;
 
@@ -842,10 +864,6 @@ static int send_special_waveform(struct common_hnd *chnd)
 			"special waveform with the chosen I2C interface.\n");
 		return -1;
 	}
-
-	/* Is this printed log line accurate here?  Is this FTDI-specific? */
-	printf("Waiting for the EC power-on sequence ...");
-	fflush(stdout);
 
 	iterations = 0;
 
@@ -873,17 +891,16 @@ static int send_special_waveform(struct common_hnd *chnd)
 			}
 		} else {
 			ret = -1;
-			if (!(iterations % 10))
-				printf("!please reset EC if flashing sequence"
-					" is not starting!\n");
+			if (!(iterations % max_iterations))
+				fprintf(stderr, "!please reset EC if flashing"
+					" sequence is not starting!\n");
 		}
-
-	} while (ret && (iterations++ < 10));
+	} while (ret && (iterations++ < max_iterations));
 
 	if (ret)
-		printf(" Failed!\n");
+		fprintf(stderr, "Failed to send special waveform!\n");
 	else
-		printf(" Done.\n");
+		printf("Done with sending special waveform.\n");
 
 	return ret;
 }
@@ -1597,6 +1614,7 @@ static const struct option longopts[] = {
 	{"erase", 0, 0, 'e'},
 	{"help", 0, 0, 'h'},
 	{"i2c-interface", 1, 0, 'c'},
+	{"i2c-mux", 0, 0, 'm'},
 	{"interface", 1, 0, 'i'},
 	{"product", 1, 0, 'p'},
 	{"range", 1, 0, 'R'},
@@ -1611,31 +1629,34 @@ static const struct option longopts[] = {
 static void display_usage(char *program)
 {
 	fprintf(stderr, "Usage: %s [-d] [-v <VID>] [-p <PID>] \\\n"
-		"      [-c <ccd|ftdi>] [-i <1|2>] [-s <serial>] [-u] \\\n"
-		"      [-e] [-r <file>] [-W <0|1|false|true>] [-w <file>] \\\n"
-		"      [-R base[:size]]\n",
+		"\t[-c <ccd|ftdi>] [-i <1|2>] [-s <serial>] \\\n"
+		"\t[-e] [-r <file>] [-W <0|1|false|true>] [-w <file>] \\\n"
+		"\t[-R base[:size]] [-m]\n",
 		program);
-	fprintf(stderr, "--d[ebug] : output debug traces\n");
-	fprintf(stderr, "--e[rase] : erase all the flash content\n");
+	fprintf(stderr, "-d, --debug : Output debug traces.\n");
+	fprintf(stderr, "-e, --erase : Erase all the flash content.\n");
 	fprintf(stderr, "-c, --i2c-interface <ccd|ftdi> : I2C interface "
 			"to use\n");
-	fprintf(stderr, "--i[interface] <1> : FTDI interface: A=1, B=2, ...\n");
-	fprintf(stderr, "--p[roduct] <0x1234> : USB product ID\n");
-	fprintf(stderr, "[-R|--range base[:size]] - allow to read or write "
-		"just a slice of the file,\n    starting at <base>:<size> "
-		"bytes, or til the end of the file if <size>\n    is not "
-		"specified, expressed in hex\n");
-	fprintf(stderr, "--r[ead] <file> : read the flash content and "
-			"write it into <file>\n");
-	fprintf(stderr, "--s[erial] <serialname> : USB serial string\n");
-	fprintf(stderr, "--u[nprotect] : remove flash write protect\n");
-	fprintf(stderr, "--v[endor] <0x1234> : USB vendor ID\n");
-	fprintf(stderr, "-W, --send-waveform <0|1|false|true> : Send the "
-		"special waveform?\n    Default is true. Set to false if ITE"
-		" direct firmware update\n    mode has already been enabled.\n"
-		);
-	fprintf(stderr, "--w[rite] <file> : read <file> and "
-			"write it to flash\n");
+	fprintf(stderr, "-i, --interface <1> : FTDI interface: A=1, B=2,"
+			" ...\n");
+	fprintf(stderr, "-m, --i2c-mux: Enable i2c-mux (to EC).\n"
+		"\tSpecify this flag only if the board has an I2C MUX and\n"
+		"\tyou are not using servod.\n");
+	fprintf(stderr, "-p, --product <0x1234> : USB product ID\n");
+	fprintf(stderr, "-R, --range base[:size] : Allow to read or write"
+		" just a slice\n"
+		"\tof the file, starting at <base>:<size> bytes, or til\n"
+		"\tthe end of the file if <size> is not specified, expressed\n"
+		"\tin hex.\n");
+	fprintf(stderr, "-r, --read <file> : Read the flash content and"
+			" write it into <file>.\n");
+	fprintf(stderr, "-s, --serial <serialname> : USB serial string\n");
+	fprintf(stderr, "-v, --vendor <0x1234> : USB vendor ID\n");
+	fprintf(stderr, "-W, --send-waveform <0|1|false|true> : Send the"
+		" special waveform.\n"
+		"\tDefault is true. Set to false if ITE direct firmware\n"
+		"\tupdate mode has already been enabled.\n");
+	fprintf(stderr, "-w, --write <file> : Write <file> to flash.\n");
 	exit(2);
 }
 
@@ -1681,7 +1702,7 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 {
 	int opt, idx, rv;
 
-	while ((opt = getopt_long(argc, argv, "?R:dehc:i:p:r:s:uv:W:w:",
+	while ((opt = getopt_long(argc, argv, "?R:dehc:i:mp:r:s:uv:W:w:",
 				  longopts, &idx)) != -1) {
 		switch (opt) {
 		case 'c':
@@ -1707,6 +1728,9 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 			break;
 		case 'i':
 			conf->usb_interface = atoi(optarg);
+			break;
+		case 'm':
+			conf->i2c_mux = 1;
 			break;
 		case 'p':
 			conf->usb_pid = strtol(optarg, NULL, 16);
@@ -1792,6 +1816,13 @@ int main(int argc, char **argv)
 	/* Register signal handler after opening the communications channel. */
 	register_sigaction();
 
+	if (chnd.conf.i2c_mux) {
+		printf("configuring I2C MUX to EC.\n");
+
+		if (config_i2c_mux(&chnd, I2C_MUX_CMD_EC))
+			goto terminate;
+	}
+
 	/* Trigger embedded monitor detection */
 	if (chnd.conf.send_waveform) {
 		if (send_special_waveform(&chnd))
@@ -1844,6 +1875,11 @@ int main(int argc, char **argv)
 terminate:
 	/* Enable EC Host Global Reset to reset EC resource and EC domain. */
 	dbgr_reset(&chnd, RSTS_VCCDO_PW_ON|RSTS_HGRST|RSTS_GRST);
+
+	if (chnd.conf.i2c_mux) {
+		printf("configuring I2C MUX to none.\n");
+		config_i2c_mux(&chnd, I2C_MUX_CMD_NONE);
+	}
 
 	if (chnd.conf.i2c_if->interface_shutdown) {
 		other_ret = chnd.conf.i2c_if->interface_shutdown(&chnd);
