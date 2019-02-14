@@ -26,10 +26,18 @@ endif
 # Extract cc-name
 cc-name:=$(shell $(CC) -v 2>&1 | grep -q "clang version" && echo clang || echo gcc)
 
+# Assume we want to use same compiler for both C and C++
+ifeq ($(cc-name),gcc)
+cxx-name:=g++
+else
+cxx-name:=clang++
+CROSS_COMPILE_arm:=arm-none-eabi-
+endif
+
 # Try not to assume too much about optional tools and prefixes
 CCACHE:=$(shell which ccache 2>/dev/null)
 ifeq ($(origin HOST_CROSS_COMPILE),undefined)
-HOST_CROSS_COMPILE:=$(if $(shell which x86_64-pc-linux-gnu-gcc 2>/dev/null),x86_64-pc-linux-gnu-,)
+HOST_CROSS_COMPILE:=$(if $(shell which x86_64-pc-linux-gnu-$(cc-name) 2>/dev/null),x86_64-pc-linux-gnu-,)
 endif
 
 AR=$(CROSS_COMPILE)ar
@@ -42,8 +50,8 @@ OBJCOPY=$(CROSS_COMPILE)objcopy
 OBJDUMP=$(CROSS_COMPILE)objdump
 ADDR2LINE=$(CROSS_COMPILE)addr2line
 PKG_CONFIG?=pkg-config
-BUILDCC?=$(CCACHE) gcc
-HOSTCC?=$(CCACHE) $(HOST_CROSS_COMPILE)gcc
+BUILDCC?=$(CCACHE) $(cc-name)
+HOSTCC?=$(CCACHE) $(HOST_CROSS_COMPILE)$(cc-name)
 HOSTCXX?=$(CCACHE) $(HOST_CROSS_COMPILE)clang++
 HOST_PKG_CONFIG?=$(HOST_CROSS_COMPILE)pkg-config
 PROTOC?=protoc
@@ -59,6 +67,11 @@ COMMON_WARN+=-Werror=uninitialized
 endif
 ifeq ($(cc-name),gcc)
 COMMON_WARN+=-Werror=maybe-uninitialized
+endif
+
+ifeq ($(cc-name),clang)
+# TODO(b/172020503): Re-enabling this warning requires a large CL.
+C_WARN+= -Wno-ignored-attributes
 endif
 
 UBSAN_FLAGS=-fsanitize=array-bounds,vla-bound \

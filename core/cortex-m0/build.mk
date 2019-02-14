@@ -12,7 +12,10 @@ $(call set-option,CROSS_COMPILE,\
 	/opt/coreboot-sdk/bin/arm-eabi-)
 
 # CPU specific compilation flags
-CFLAGS_CPU+=-mthumb -Os -mno-sched-prolog
+CFLAGS_CPU+=-mthumb -Os
+ifneq ($(cc-name),clang)
+CFLAGS_CPU+=-mno-sched-prolog
+endif
 CFLAGS_CPU+=-mno-unaligned-access
 
 ifneq ($(CONFIG_LTO),)
