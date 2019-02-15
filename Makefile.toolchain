@@ -108,8 +108,8 @@ else
   LIBFTDI_NAME=ftdi
 endif
 
-LIBFTDI_CFLAGS:=$(shell $(PKG_CONFIG) --cflags lib${LIBFTDI_NAME})
-LIBFTDI_LDLIBS:=$(shell $(PKG_CONFIG) --libs   lib${LIBFTDI_NAME})
+LIBFTDIUSB_CFLAGS:=$(shell $(PKG_CONFIG) --cflags lib${LIBFTDI_NAME} libusb-1.0)
+LIBFTDIUSB_LDLIBS:=$(shell $(PKG_CONFIG) --libs   lib${LIBFTDI_NAME} libusb-1.0)
 
 ifeq ($(TEST_FUZZ),y)
 LIBPROTOBUF_CFLAGS:=$(shell $(PKG_CONFIG) --cflags protobuf)
@@ -121,14 +121,15 @@ LIBPROTOBUF_MUTATOR_LDLIBS:=$(shell $(PKG_CONFIG) --libs libprotobuf-mutator) \
 	${LIBPROTOBUF_LDLIBS}
 endif
 
-BUILD_CFLAGS= $(LIBFTDI_CFLAGS) $(BUILD_CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
+BUILD_CFLAGS = $(LIBFTDIUSB_CFLAGS) $(BUILD_CPPFLAGS) -O3 $(CFLAGS_DEBUG)
+BUILD_CFLAGS += $(CFLAGS_WARN)
 HOST_CFLAGS=$(HOST_CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN) -DHOST_TOOLS_BUILD
 ifneq (${SYSROOT},)
   LDFLAGS_EXTRA+=--sysroot=${SYSROOT}
 endif
 LDFLAGS=-nostdlib -g -Wl,-X -Wl,--gc-sections -Wl,--build-id=none \
 	$(LDFLAGS_EXTRA) $(CFLAGS_CPU)
-BUILD_LDFLAGS=$(LIBFTDI_LDLIBS)
+BUILD_LDFLAGS=$(LIBFTDIUSB_LDLIBS)
 HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
 		  -fuse-ld=bfd \
 		  $(if $(TEST_COVERAGE),-fprofile-arcs,) \
