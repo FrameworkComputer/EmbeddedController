@@ -550,25 +550,25 @@ cleanup() {
 	# If TEMP_DIR exists, then delete it.
 	[[ -d "${TEMP_DIR}" ]] && rm -rf "${TEMP_DIR}" > /dev/null 2>&1
 
-	if [ "${CHIP}" == "it83xx" ] ; then
-		info "Reinitialize ftdi_i2c interface"
-		dut_control ftdii2c_cmd:init
-		dut_control ftdii2c_cmd:open
-		dut_control ftdii2c_cmd:setclock
+	if [[ "${CHIP}" == "it83xx" ]]; then
+		if [[ "${SERVO_TYPE}" =~ "servo_v2" ]]; then
+			info "Reinitialize ftdi_i2c interface"
+			dut_control ftdii2c_cmd:init
+			dut_control ftdii2c_cmd:open
+			dut_control ftdii2c_cmd:setclock
 
-		# Reset the dut mux if it exists
-		if $(servo_has_dut_i2c_mux); then
 			# Ensure servo i2c mux is on so we can talk to dut
 			dut_control i2c_mux_en:on
 			dut_control i2c_mux:remote_adc
+		fi
 
-			# Turn off dut i2c mux
-			dut_control dut_i2c_mux:none
+		# Reset the dut mux if it exists
+		servo_has_dut_i2c_mux && dut_control dut_i2c_mux:none
 
+		if [[ "${SERVO_TYPE}" =~ "servo_v2" ]]; then
 			# Turn off servo i2c mux
 			dut_control i2c_mux_en:off
 		fi
-
 	fi
 	if [ "${CHIP}" == "stm32" -o "${CHIP}" == "npcx_uut" ] ; then
 		# Reconnect the EC-3PO interpreter to the UART.
@@ -910,7 +910,7 @@ function flash_flashrom() {
 		} > $T
 		fi
 
-		info "Start programming EC firmware image."
+		info "Programming EC firmware image."
 		local FLASHROM_WRITE="${FLASHROM_CMDLINE} ${FLASHROM_OPTIONS}"
 		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
 			info "Running flashrom:" 1>&2
@@ -920,7 +920,7 @@ function flash_flashrom() {
 			${FLASHROM_WRITE} -w "${T}"
 	else
 		# Read EC image.
-		info "Start reading EC firmware image."
+		info "Reading EC firmware image."
 		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
 			info "Running flashrom:" 1>&2
 			echo " ${FLASHROM_CMDLINE} -r ${FLAGS_read}" 1>&2
@@ -930,7 +930,7 @@ function flash_flashrom() {
 	fi
 	if [[ -z "${FLAGS_read}" && "${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
 		# Verify EC image.
-		info "Verify EC firmware image."
+		info "Verifying EC firmware image."
 		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
 			info "Running flashrom:" 1>&2
 			echo " ${FLASHROM_CMDLINE} -v ${T}" 1>&2
@@ -1021,7 +1021,7 @@ function flash_stm32() {
 	local IMG_READ=""
 	# Program EC image.
 	if [[ -z "${FLAGS_read}" ]]; then
-		info "Start programming EC firmware image."
+		info "Programming EC firmware image."
 		# Unprotect flash, erase, and write
 		local STM32MON_COMMAND="${STM32MON} ${STM32MON_OPT} -u -e -w"
 		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
@@ -1043,7 +1043,7 @@ function flash_stm32() {
 
 	# Read EC image.
 	if [[ -n "${IMG_READ}" ]]; then
-		info "Start reading EC firmware image."
+		info "Reading EC firmware image."
 		local STM32MON_READ_CMD="${STM32MON} ${STM32MON_OPT} -U -r"
 		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
 			echo "${STM32MON_READ_CMD} ${IMG_READ}"
@@ -1056,7 +1056,7 @@ function flash_stm32() {
 	# only if it was a flash write request.
 	if [[ -z "${FLAGS_read}" && \
 		"${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
-		info "Verify EC firmware image."
+		info "Verifying EC firmware image."
 		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
 			echo "diff ${IMG} ${IMG_READ}"
 		fi
@@ -1099,32 +1099,75 @@ function flash_stm32_dfu() {
 }
 
 function flash_it83xx() {
-
 	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
 	ITEFLASH=$(PATH="${TOOL_PATH}" which iteflash)
 	if [ ! -x "$ITEFLASH" ]; then
 		die "no iteflash util found."
 	fi
 
-	dut_control i2c_mux_en:on
-	dut_control i2c_mux:remote_adc
+	if [[ "${SERVO_TYPE}" =~ "servo_v2" ]]; then
+		dut_control i2c_mux_en:on
+		dut_control i2c_mux:remote_adc
+	fi
 
 	# Now the we have enabled the I2C mux on the servo to talk to the dut,
 	# we need to switch the I2C mux on the dut to allow ec programing (if
 	# there is a mux on the dut)
-	if $(servo_has_dut_i2c_mux); then
-		dut_control dut_i2c_mux:ec_prog
+	if servo_has_dut_i2c_mux; then
+		# TODO(b/126189871) Investigate about the timeout in CCD mode,
+		# and remove with this retry logic along with the fix.
+		local num_attempts=1
+		[[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] && num_attempts=3
+		while :; do
+			if dut_control dut_i2c_mux:ec_prog; then
+				break;
+			fi
+			if (( --num_attempts <= 0 )); then
+				die "dut_i2c_mux failed."
+			fi
+			sleep 5
+		done
 	fi
 
-	# Ensure that the AP is off while we are flashing the EC
-	servo_ec_hard_reset
+	if [[ "${SERVO_TYPE}" =~ "servo_v2" ]]; then
+		# Ensure that the AP is off while we are flashing the EC
+		servo_ec_hard_reset
 
-	info "Close connection to ftdi_i2c interface"
-	dut_control ftdii2c_cmd:close
+		info "Close connection to ftdi_i2c interface"
+		dut_control ftdii2c_cmd:close
+	elif [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
+		info "Triggering to send the dbgr special waveform to EC..."
+		dut_control cr50_i2c_ctrl:ite_debugger_mode
+
+		sleep 3
+	else
+		# TODO(b/124388894) Implement servo_micro support.
+		die "This servo type is not yet supported."
+	fi
+
+	declare -a ITEFLASH_PARAM
+	if [[ "${SERVO_TYPE}" =~ "servo_v2" ]]; then
+		ITEFLASH_PARAM+=("--send-waveform=1")
+		ITEFLASH_PARAM+=("--i2c-interface=ftdi")
+	elif [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
+		ITEFLASH_PARAM+=("--send-waveform=0")
+		ITEFLASH_PARAM+=("--i2c-interface=ccd")
+	else
+		# TODO(b/124388894) Implement servo_micro support.
+		die "This servo type is not yet supported."
+	fi
+
+	if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+		ITEFLASH_PARAM+=("--debug")
+	fi
 
 	info "Run iteflash..."
-	sudo "${ITEFLASH}" --i2c-interface=ftdi --send-waveform=1 --erase \
-		--write="${IMG}"
+	if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+		echo "${ITEFLASH}" "${ITEFLASH_PARAM[@]}" --erase \
+			--write="${IMG}"
+	fi
+
+	sudo "${ITEFLASH}" "${ITEFLASH_PARAM[@]}" --erase --write="${IMG}"
 }
 
 function flash_lm4() {
