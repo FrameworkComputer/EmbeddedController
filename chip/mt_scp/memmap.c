@@ -73,6 +73,14 @@ void cpu_invalidate_dcache(void)
 	asm volatile("dsb;");
 }
 
+void cpu_invalidate_dcache_address(uintptr_t address)
+{
+	SCP_CACHE_OP(CACHE_DCACHE) = (address & SCP_CACHE_OP_TADDR_MASK);
+	SCP_CACHE_OP(CACHE_DCACHE) |=
+		OP_INVALIDATE_ONE_LINE_BY_ADDRESS | SCP_CACHE_OP_EN;
+	asm volatile("dsb;");
+}
+
 void cpu_clean_invalidate_dcache(void)
 {
 	SCP_CACHE_OP(CACHE_DCACHE) &= ~SCP_CACHE_OP_OP_MASK;
@@ -81,6 +89,17 @@ void cpu_clean_invalidate_dcache(void)
 	SCP_CACHE_OP(CACHE_DCACHE) &= ~SCP_CACHE_OP_OP_MASK;
 	SCP_CACHE_OP(CACHE_DCACHE) |=
 		OP_INVALIDATE_ALL_LINES | SCP_CACHE_OP_EN;
+	asm volatile("dsb;");
+}
+
+void cpu_clean_invalidate_dcache_address(uintptr_t address)
+{
+	SCP_CACHE_OP(CACHE_DCACHE) = (address & SCP_CACHE_OP_TADDR_MASK);
+	SCP_CACHE_OP(CACHE_DCACHE) |=
+		OP_CACHE_FLUSH_ONE_LINE_BY_ADDRESS | SCP_CACHE_OP_EN;
+	SCP_CACHE_OP(CACHE_DCACHE) = (address & SCP_CACHE_OP_TADDR_MASK);
+	SCP_CACHE_OP(CACHE_DCACHE) |=
+		OP_INVALIDATE_ONE_LINE_BY_ADDRESS | SCP_CACHE_OP_EN;
 	asm volatile("dsb;");
 }
 
