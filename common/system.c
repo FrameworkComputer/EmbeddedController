@@ -1632,3 +1632,13 @@ int board_write_serial(const char *serialno)
 }
 #endif
 #endif  /* CONFIG_SERIALNO_LEN */
+
+
+__attribute__((weak))
+void clock_enable_module(enum module_id module, int enable)
+{
+	/*
+	 * Default weak implementation - for chips that don't support this
+	 * function.
+	 */
+}

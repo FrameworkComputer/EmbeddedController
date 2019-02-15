@@ -163,12 +163,24 @@ void clock_turbo(void)
 	NPCX_HFCBCD = (1 << 4);
 }
 
-void clock_turbo_disable(void)
+void clock_normal(void)
 {
 	/* Set CORE_CLK (CPU), AHB6_CLK and FIU_CLK back to original values. */
 	NPCX_HFCGP = ((FPRED << 4) | AHB6DIV);
 	NPCX_HFCBCD = (FIUDIV << 4);
 }
+
+void clock_enable_module(enum module_id module, int enable)
+{
+	/* Assume we have a single task using MODULE_FAST_CPU */
+	if (module == MODULE_FAST_CPU) {
+		if (enable)
+			clock_turbo();
+		else
+			clock_normal();
+	}
+}
+
 #endif
 
 /**
