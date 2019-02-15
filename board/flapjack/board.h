@@ -200,6 +200,9 @@
 		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |\
 		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
 
+/* Define panel size mask according to skuid */
+#define SKU_ID_PANEL_SIZE_MASK  (1 << 1)
+
 #ifndef __ASSEMBLER__
 
 enum oem_id {
