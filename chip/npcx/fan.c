@@ -519,11 +519,8 @@ enum fan_status fan_get_status(int ch)
  */
 int fan_is_stalled(int ch)
 {
-	/* if fan is enabled but we didn't detect any tacho */
-	if (fan_get_enabled(ch) && fan_status[ch].cur_state == TACHO_UNDERFLOW)
-		return 1;
-	else
-		return 0;
+	return fan_get_enabled(ch) && fan_get_duty(ch) &&
+			fan_status[ch].cur_state == TACHO_UNDERFLOW;
 }
 
 /**
