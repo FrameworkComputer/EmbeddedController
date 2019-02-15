@@ -1610,9 +1610,10 @@ static const struct option longopts[] = {
 
 static void display_usage(char *program)
 {
-	fprintf(stderr, "Usage: %s [-d] [-v <VID>] [-p <PID>] "
-		"[-c <ccd|ftdi>] [-i <1|2>] [-s <serial>] [-u] [-e] [-r <file>]"
-		"[-W <0|1|false|true>] [-w <file>]  [-R base[:size]]\n",
+	fprintf(stderr, "Usage: %s [-d] [-v <VID>] [-p <PID>] \\\n"
+		"      [-c <ccd|ftdi>] [-i <1|2>] [-s <serial>] [-u] \\\n"
+		"      [-e] [-r <file>] [-W <0|1|false|true>] [-w <file>] \\\n"
+		"      [-R base[:size]]\n",
 		program);
 	fprintf(stderr, "--d[ebug] : output debug traces\n");
 	fprintf(stderr, "--e[rase] : erase all the flash content\n");
@@ -1621,18 +1622,18 @@ static void display_usage(char *program)
 	fprintf(stderr, "--i[interface] <1> : FTDI interface: A=1, B=2, ...\n");
 	fprintf(stderr, "--p[roduct] <0x1234> : USB product ID\n");
 	fprintf(stderr, "[-R|--range base[:size]] - allow to read or write "
-		"just a slice of the file, starting at <base>. <size> bytes, or"
-		" til the end of the file if <size> is not specified, expressed"
-		" in hex\n");
+		"just a slice of the file,\n    starting at <base>:<size> "
+		"bytes, or til the end of the file if <size>\n    is not "
+		"specified, expressed in hex\n");
 	fprintf(stderr, "--r[ead] <file> : read the flash content and "
 			"write it into <file>\n");
 	fprintf(stderr, "--s[erial] <serialname> : USB serial string\n");
 	fprintf(stderr, "--u[nprotect] : remove flash write protect\n");
 	fprintf(stderr, "--v[endor] <0x1234> : USB vendor ID\n");
 	fprintf(stderr, "-W, --send-waveform <0|1|false|true> : Send the "
-			"specal waveform?  Default is true."
-			"  Set to false if ITE direct firmware update mode has "
-			"already been enabled.\n");
+		"special waveform?\n    Default is true. Set to false if ITE"
+		" direct firmware update\n    mode has already been enabled.\n"
+		);
 	fprintf(stderr, "--w[rite] <file> : read <file> and "
 			"write it to flash\n");
 	exit(2);
