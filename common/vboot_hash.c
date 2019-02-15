@@ -5,6 +5,7 @@
 
 /* Verified boot hash computing module for Chrome EC */
 
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "flash.h"
@@ -118,6 +119,7 @@ static void vboot_hash_next_chunk(void)
 	/* Handle abort */
 	if (want_abort) {
 		in_progress = 0;
+		clock_enable_module(MODULE_FAST_CPU, 0);
 		vboot_hash_abort();
 		return;
 	}
@@ -142,6 +144,8 @@ static void vboot_hash_next_chunk(void)
 		CPRINTS("hash done %.*h", SHA256_PRINT_SIZE, hash);
 
 		in_progress = 0;
+
+		clock_enable_module(MODULE_FAST_CPU, 0);
 
 		/* Handle receiving abort during finalize */
 		if (want_abort)
@@ -176,6 +180,7 @@ static int vboot_hash_start(uint32_t offset, uint32_t size,
 		return EC_ERROR_INVAL;
 	}
 
+	clock_enable_module(MODULE_FAST_CPU, 1);
 	/* Save new hash request */
 	data_offset = offset;
 	data_size = size;
