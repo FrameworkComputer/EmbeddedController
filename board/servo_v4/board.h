@@ -73,6 +73,10 @@
 /* Remove console commands / features for flash / RAM savings */
 #undef CONFIG_CONSOLE_CMDHELP
 #undef CONFIG_CMD_CRASH
+#undef CONFIG_CMD_ACCELSPOOF
+#undef CONFIG_CMD_FASTCHARGE
+#undef CONFIG_CMD_GETTIME
+#undef CONFIG_CMD_MEM
 
 /* Enable control of I2C over USB */
 #define CONFIG_USB_I2C
