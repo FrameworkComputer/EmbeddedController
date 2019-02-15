@@ -54,7 +54,7 @@ enum npcx_pwm_heartbeat_mode {
  * @param   freq    desired PWM frequency
  * @notes   changed when initialization
  */
-void pwm_set_freq(enum pwm_channel ch, uint32_t freq)
+static void pwm_set_freq(enum pwm_channel ch, uint32_t freq)
 {
 	int mdl = pwm_channels[ch].channel;
 	uint32_t clock;
@@ -77,8 +77,11 @@ void pwm_set_freq(enum pwm_channel ch, uint32_t freq)
 	/* Calculate prescaler */
 	pre = DIV_ROUND_UP(clock, (0xffff * freq));
 
-	/* Calculate maximum resolution for the given freq. and prescaler */
-	pwm_res[ch] = (clock / pre) / freq;
+	/*
+	 * Calculate maximum resolution for the given freq. and prescaler. And
+	 * prevent it exceed the resolution of CTR/DCR registers.
+	 */
+	pwm_res[ch] = MIN((clock / pre) / freq, NPCX_PWM_MAX_RAW_DUTY);
 
 	/* Set PWM prescaler. */
 	NPCX_PRSC(mdl) = pre - 1;
@@ -95,7 +98,6 @@ void pwm_set_freq(enum pwm_channel ch, uint32_t freq)
  *
  * @param   ch      operation channel
  * @param   enabled enabled flag
- * @return  none
  */
 void pwm_enable(enum pwm_channel ch, int enabled)
 {
@@ -122,7 +124,6 @@ int pwm_get_enabled(enum pwm_channel ch)
  *
  * @param   ch      operation channel
  * @param   percent duty cycle percent
- * @return  none
  */
 void pwm_set_duty(enum pwm_channel ch, int percent)
 {
@@ -135,7 +136,6 @@ void pwm_set_duty(enum pwm_channel ch, int percent)
  *
  * @param   ch      operation channel
  * @param   duty    cycle duty
- * @return  none
  */
 void pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty)
 {
@@ -154,10 +154,8 @@ void pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty)
 	/* duty ranges from 0 - 0xffff, so scale down to 0 - pwm_res[ch] */
 	sd = DIV_ROUND_NEAREST(duty * pwm_res[ch], EC_PWM_MAX_DUTY);
 
-	/* Set the duty cycle */
-	NPCX_DCR(mdl) = (uint16_t)sd;
-
-	pwm_enable(ch, !!duty);
+	/* Set the duty cycle. If it is zero, set DCR > CTR */
+	NPCX_DCR(mdl) = sd ? sd : NPCX_PWM_MAX_RAW_DUTY + 1;
 }
 
 /**
@@ -183,7 +181,7 @@ uint16_t pwm_get_raw_duty(enum pwm_channel ch)
 	int mdl = pwm_channels[ch].channel;
 
 	/* Return duty */
-	if (!pwm_get_enabled(ch))
+	if (NPCX_DCR(mdl) > NPCX_CTR(mdl))
 		return 0;
 	else
 		/*
@@ -198,7 +196,6 @@ uint16_t pwm_get_raw_duty(enum pwm_channel ch)
  * PWM configuration.
  *
  * @param  ch    operation channel
- * @return none
  */
 void pwm_config(enum pwm_channel ch)
 {
@@ -232,9 +229,6 @@ void pwm_config(enum pwm_channel ch)
 
 /**
  * PWM initial.
- *
- * @param none
- * @return none
  */
 static void pwm_init(void)
 {
