@@ -44,7 +44,7 @@
   "timestamp": 1,
   "epoch": 0,  // FWR diversification contributor, 32 bits.
   "major": 3,  // FW2_HIK_CHAIN counter.
-  "minor": 12,  // Mostly harmless version field.
+  "minor": 14,  // Mostly harmless version field.
   "applysec": -1,  // Mask to and with fuse BROM_APPLYSEC.
   "config1": 13,  // Which BROM_CONFIG1 actions to take before launching.
   "err_response": 0,  // Mask to or with fuse BROM_ERR_RESPONSE.
