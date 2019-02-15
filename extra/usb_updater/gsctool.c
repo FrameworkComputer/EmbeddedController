@@ -2075,9 +2075,10 @@ static void process_factory_mode(struct transfer_descriptor *td,
 static void report_version(void)
 {
 	/* Get version from the generated file, ignore the underscore prefix. */
-	const char *v = VERSION + 1;
+	const char *v = strchr(VERSION, '_');
 
-	printf("Version: %s, built on %s by %s\n", v, DATE, BUILDER);
+	printf("Version: %s, built on %s by %s\n", v ? v + 1 : "?",
+	       DATE, BUILDER);
 	exit(0);
 }
 
