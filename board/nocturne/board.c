@@ -703,9 +703,12 @@ int board_set_active_charge_port(int port)
 			    port < CONFIG_USB_PD_PORT_COUNT);
 	int i;
 	int rv;
+	int old_port;
 
 	if (!is_real_port && port != CHARGE_PORT_NONE)
 		return EC_ERROR_INVAL;
+
+	old_port = charge_manager_get_active_charge_port();
 
 	CPRINTS("New chg p%d", port);
 
@@ -742,11 +745,22 @@ int board_set_active_charge_port(int port)
 			CPRINTS("p%d: sink path disable failed.", i);
 	}
 
+	/*
+	 * Stop the charger IC from switching while changing ports.  Otherwise,
+	 * we can overcurrent the adapter we're switching to. (crbug.com/926056)
+	 */
+	if (old_port != CHARGE_PORT_NONE)
+		charger_discharge_on_ac(1);
+
 	/* Enable requested charge port. */
 	if (ppc_vbus_sink_enable(port, 1)) {
 		CPRINTS("p%d: sink path enable failed.");
+		charger_discharge_on_ac(0);
 		return EC_ERROR_UNKNOWN;
 	}
+
+	/* Allow the charger IC to begin/continue switching. */
+	charger_discharge_on_ac(0);
 
 	return EC_SUCCESS;
 }
