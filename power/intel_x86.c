@@ -177,8 +177,19 @@ static void lpc_s0ix_suspend_clear_masks(void)
  */
 static void lpc_s0ix_resume_restore_masks(void)
 {
+	/*
+	 * No need to restore SCI/SMI masks if both backup_sci_mask and
+	 * backup_smi_mask are zero. This indicates that there was a failure to
+	 * enter S0ix(SLP_S0# assertion) and hence SCI/SMI masks were never
+	 * backed up.
+	 */
+	if (!backup_sci_mask && !backup_smi_mask)
+		return;
+
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, backup_sci_mask);
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, backup_smi_mask);
+
+	backup_sci_mask = backup_smi_mask = 0;
 }
 
 enum s0ix_notify_type {
