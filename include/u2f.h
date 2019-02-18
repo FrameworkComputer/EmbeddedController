@@ -121,6 +121,7 @@ typedef struct {
 } U2F_SIGN_RESP;
 
 typedef struct {
+    uint8_t userSecret[U2F_P256_SIZE];
     uint8_t format;
     uint8_t dataLen;
     uint8_t data[U2F_MAX_ATTEST_SIZE];

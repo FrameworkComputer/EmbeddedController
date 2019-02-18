@@ -450,6 +450,25 @@ static enum vendor_cmd_rc u2f_generate(enum vendor_cmd_cc code,
 }
 DECLARE_VENDOR_COMMAND(VENDOR_CC_U2F_GENERATE, u2f_generate);
 
+static int verify_kh_owned(const uint8_t *user_secret, const uint8_t *app_id,
+			   const uint8_t *key_handle)
+{
+	/* Re-created key handle. */
+	uint8_t recreated_kh[KH_LEN];
+
+	/*
+	 * Re-create the key handle and compare against that which
+	 * was provided. This allows us to verify that the key handle
+	 * is owned by this combination of device, current user and app_id.
+	 */
+	u2f_origin_user_keyhandle(app_id,
+				  user_secret,
+				  key_handle,
+				  recreated_kh);
+
+	return safe_memcmp(recreated_kh, key_handle, KH_LEN) == 0;
+}
+
 /* U2F SIGN command */
 static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
 				   void *buf,
@@ -458,9 +477,6 @@ static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
 {
 	const U2F_SIGN_REQ *req = buf;
 	U2F_SIGN_RESP *resp;
-
-	/* Re-created key handle. */
-	uint8_t recreated_kh[KH_LEN];
 
 	struct drbg_ctx ctx;
 
@@ -473,21 +489,11 @@ static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
 	if (input_size != sizeof(U2F_SIGN_REQ))
 		return VENDOR_RC_BOGUS_ARGS;
 
-	/*
-	 * Re-create the key handle and compare against that which
-	 * was provided. This allows us to verify that the key handle
-	 * is owned by the current user and appId.
-	 */
-	u2f_origin_user_keyhandle(req->appId,
-				  req->userSecret,
-				  req->keyHandle,
-				  recreated_kh);
-
-	if (memcmp(recreated_kh, req->keyHandle, KH_LEN) != 0)
-		return VENDOR_RC_NOT_ALLOWED;
-
 	/* Always enforce user presence, with optional consume. */
 	if (pop_check_presence(req->flags & G2F_CONSUME) != POP_TOUCH_YES)
+		return VENDOR_RC_NOT_ALLOWED;
+
+	if (!verify_kh_owned(req->userSecret, req->appId, req->keyHandle))
 		return VENDOR_RC_NOT_ALLOWED;
 
 	/* Re-create origin-specific key. */
@@ -529,29 +535,29 @@ struct G2F_REGISTER_MSG {
 	U2F_EC_POINT public_key;
 };
 
-static inline int u2f_attest_verify_reg_resp(uint8_t data_size,
+static inline int u2f_attest_verify_reg_resp(const uint8_t *user_secret,
+					     uint8_t data_size,
 					     const uint8_t *data)
 {
 	struct G2F_REGISTER_MSG *msg = (void *) data;
-	uint8_t unwrapped_kh[KH_LEN];
 
 	if (data_size != sizeof(struct G2F_REGISTER_MSG))
 		return VENDOR_RC_NOT_ALLOWED;
 
-	/* Check if we can decrypt keyhandle. */
-	if (wrap_kh(NULL, msg->key_handle, unwrapped_kh, DECRYPT_MODE))
+	if (!verify_kh_owned(user_secret, msg->app_id, msg->key_handle))
 		return VENDOR_RC_NOT_ALLOWED;
 
 	return VENDOR_RC_SUCCESS;
 }
 
-static int u2f_attest_verify(uint8_t format,
+static int u2f_attest_verify(const uint8_t *user_secret,
+			     uint8_t format,
 			     uint8_t data_size,
 			     const uint8_t *data)
 {
 	switch (format) {
 	case U2F_ATTEST_FORMAT_REG_RESP:
-		return u2f_attest_verify_reg_resp(data_size, data);
+		return u2f_attest_verify_reg_resp(user_secret, data_size, data);
 	default:
 		return VENDOR_RC_NOT_ALLOWED;
 	}
@@ -587,10 +593,15 @@ static enum vendor_cmd_rc u2f_attest(enum vendor_cmd_cc code,
 	/* Attestation key */
 	p256_int d, pk_x, pk_y;
 
-	if (input_size != sizeof(U2F_ATTEST_REQ))
+	if (input_size < 2 ||
+	    input_size < (2 + req->dataLen) ||
+	    input_size > sizeof(U2F_ATTEST_REQ) ||
+	    *response_size < sizeof(*resp))
 		return VENDOR_RC_BOGUS_ARGS;
 
-	verify_ret = u2f_attest_verify(req->format, req->dataLen,
+	verify_ret = u2f_attest_verify(req->userSecret,
+				       req->format,
+				       req->dataLen,
 				       req->data);
 
 	if (verify_ret != VENDOR_RC_SUCCESS)
