@@ -3781,6 +3781,15 @@
 #undef CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE_COMMAND
 
 /*
+ * Use this config option to enable and internal pullup resistor on the AUX_N
+ * and internal pulldown resistor on the AUX_P line. Only use this config
+ * option if there are no external pu/pd resistors on these signals. This
+ * configuration should be used to avoid noise issues on the DDI1_AUX_N &
+ * DDI1_AUX_P signals (b/122873171)
+ */
+#undef CONFIG_USB_PD_TCPM_ANX7447_AUX_PU_PD
+
+/*
  * Use this option if the TCPC port controller supports the optional register
  * 18h CONFIG_STANDARD_OUTPUT to steer the high-speed muxes.
  */
