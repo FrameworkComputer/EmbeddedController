@@ -73,11 +73,17 @@ void cpu_invalidate_dcache(void)
 	asm volatile("dsb;");
 }
 
-void cpu_invalidate_dcache_address(uintptr_t address)
+void cpu_invalidate_dcache_range(uintptr_t base, unsigned int length)
 {
-	SCP_CACHE_OP(CACHE_DCACHE) = (address & SCP_CACHE_OP_TADDR_MASK);
-	SCP_CACHE_OP(CACHE_DCACHE) |=
-		OP_INVALIDATE_ONE_LINE_BY_ADDRESS | SCP_CACHE_OP_EN;
+	size_t pos;
+	uintptr_t addr;
+
+	for (pos = 0; pos < length; pos += SCP_CACHE_LINE_SIZE) {
+		addr = base + pos;
+		SCP_CACHE_OP(CACHE_DCACHE) = addr & SCP_CACHE_OP_TADDR_MASK;
+		SCP_CACHE_OP(CACHE_DCACHE) |=
+			OP_INVALIDATE_ONE_LINE_BY_ADDRESS | SCP_CACHE_OP_EN;
+	}
 	asm volatile("dsb;");
 }
 
@@ -92,14 +98,20 @@ void cpu_clean_invalidate_dcache(void)
 	asm volatile("dsb;");
 }
 
-void cpu_clean_invalidate_dcache_address(uintptr_t address)
+void cpu_clean_invalidate_dcache_range(uintptr_t base, unsigned int length)
 {
-	SCP_CACHE_OP(CACHE_DCACHE) = (address & SCP_CACHE_OP_TADDR_MASK);
-	SCP_CACHE_OP(CACHE_DCACHE) |=
-		OP_CACHE_FLUSH_ONE_LINE_BY_ADDRESS | SCP_CACHE_OP_EN;
-	SCP_CACHE_OP(CACHE_DCACHE) = (address & SCP_CACHE_OP_TADDR_MASK);
-	SCP_CACHE_OP(CACHE_DCACHE) |=
-		OP_INVALIDATE_ONE_LINE_BY_ADDRESS | SCP_CACHE_OP_EN;
+	size_t pos;
+	uintptr_t addr;
+
+	for (pos = 0; pos < length; pos += SCP_CACHE_LINE_SIZE) {
+		addr = base + pos;
+		SCP_CACHE_OP(CACHE_DCACHE) = addr & SCP_CACHE_OP_TADDR_MASK;
+		SCP_CACHE_OP(CACHE_DCACHE) |=
+			OP_CACHE_FLUSH_ONE_LINE_BY_ADDRESS | SCP_CACHE_OP_EN;
+		SCP_CACHE_OP(CACHE_DCACHE) = addr & SCP_CACHE_OP_TADDR_MASK;
+		SCP_CACHE_OP(CACHE_DCACHE) |=
+			OP_INVALIDATE_ONE_LINE_BY_ADDRESS | SCP_CACHE_OP_EN;
+	}
 	asm volatile("dsb;");
 }
 

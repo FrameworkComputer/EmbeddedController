@@ -71,9 +71,9 @@ void cpu_invalidate_dcache(void);
 /* Clean and Invalidate the D-cache to the Point of Coherency */
 void cpu_clean_invalidate_dcache(void);
 
-/* Invalidate a single address of the D-cache */
-void cpu_invalidate_dcache_address(uintptr_t address);
-/* Clean and Invalidate a single address of the D-cache */
-void cpu_clean_invalidate_dcache_address(uintptr_t address);
+/* Invalidate a single range of the D-cache */
+void cpu_invalidate_dcache_range(uintptr_t base, unsigned int length);
+/* Clean and Invalidate a single range of the D-cache */
+void cpu_clean_invalidate_dcache_range(uintptr_t base, unsigned int length);
 
 #endif /* __CROS_EC_CPU_H */
