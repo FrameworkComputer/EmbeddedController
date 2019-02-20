@@ -91,6 +91,7 @@ cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) $(HOST_LDFLAGS) -MMD -MF $@.d  -o $@ \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c))
 cmd_cxx_to_host = $(HOSTCXX) -std=c++0x $(COMMON_WARN) $(HOST_CXXFLAGS)\
 	-I ./$($(notdir $@)_ROOT) -o $@ $(filter %.cc,$^) $($(notdir $@)_LIBS)
+cmd_o_to_a = $(AR) rcs $@ $^
 cmd_host_test = $(MAKE) --no-print-directory BOARD=host PROJECT=$* \
 	V=$(V) out=build/host/$* TEST_BUILD=y EMU_BUILD=y CROSS_COMPILE= \
 	$(TEST_FLAG) build/host/$*/$*.exe
@@ -492,6 +493,11 @@ $(out)/RO/%.o:%.S
 $(out)/RW/%.o:%.S
 	$(call quiet,c_to_o,AS     )
 
+# Default rules for archives, dependencies need to be fixes in build.mk
+$(out)/RO/%.a:
+	$(call quiet,o_to_a,AR     )
+$(out)/RW/%.a:
+	$(call quiet,o_to_a,AR     )
 
 # Conditionally force the rebuilding of ec_version.h only if it would be
 # changed.
