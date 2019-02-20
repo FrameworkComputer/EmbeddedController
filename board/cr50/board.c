@@ -169,6 +169,11 @@ int board_uses_closed_loop_reset(void)
 	return !!(board_properties & BOARD_CLOSED_LOOP_RESET);
 }
 
+int board_has_ina_support(void)
+{
+	return !(board_properties & BOARD_NO_INA_SUPPORT);
+}
+
 /* Get header address of the backup RW copy. */
 const struct SignedHeader *get_other_rw_addr(void)
 {
@@ -252,7 +257,7 @@ static struct board_cfg board_cfg_table[] = {
 	{
 		.strap_cfg = 0x0B,
 		.board_properties = BOARD_SLAVE_CONFIG_SPI |
-			BOARD_USE_PLT_RESET,
+			BOARD_USE_PLT_RESET | BOARD_NO_INA_SUPPORT,
 	},
 	/* I2C Variants: DIOA9 = 1M PD, DIOA1 = 1M PD */
 	/* Reef/Eve: DIOA12 = 5k PD, DIOA6 = 1M PU */
@@ -272,7 +277,7 @@ static struct board_cfg board_cfg_table[] = {
 		.strap_cfg = 0x70,
 		.board_properties = BOARD_SLAVE_CONFIG_I2C |
 			BOARD_USE_PLT_RESET | BOARD_WP_DISABLE_DELAY |
-			BOARD_CLOSED_SOURCE_SET1,
+			BOARD_CLOSED_SOURCE_SET1 | BOARD_NO_INA_SUPPORT,
 	},
 
 };

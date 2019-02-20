@@ -75,6 +75,12 @@
 #define BOARD_CLOSED_LOOP_RESET      (1 << 18)
 
 /*
+ * The board uses INA pins as GPIOs, so it can't support reading inas using usb
+ * i2c.
+ */
+#define BOARD_NO_INA_SUPPORT             (1 << 19)
+
+/*
  * Macro to capture all properties related to board strapping pins. This must be
  * updated if additional strap related properties are added.
  */
@@ -82,6 +88,6 @@
 	| BOARD_NEEDS_SYS_RST_PULL_UP | BOARD_USE_PLT_RESET | \
 	BOARD_DEEP_SLEEP_DISABLED | BOARD_DETECT_AP_WITH_UART | \
 	BOARD_WP_DISABLE_DELAY | BOARD_CLOSED_SOURCE_SET1 | \
-	BOARD_CLOSED_LOOP_RESET)
+	BOARD_CLOSED_LOOP_RESET | BOARD_NO_INA_SUPPORT)
 
 #endif  /* ! __EC_BOARD_CR50_SCRATCH_REG1_H */

@@ -300,6 +300,12 @@ int board_uses_closed_source_set1(void);
  * @return 0 if option is not set, !=0 if option set.
  */
 int board_uses_closed_loop_reset(void);
+/**
+ * The board has all necessary I2C pins connected for INA support.
+ *
+ * @return 0 if option is not set, !=0 if option set.
+ */
+int board_has_ina_support(void);
 int board_id_is_mismatched(void);
 /* Allow for deep sleep to be enabled on AP shutdown */
 int board_deep_sleep_allowed(void);

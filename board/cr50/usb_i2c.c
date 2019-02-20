@@ -19,10 +19,8 @@
 
 int usb_i2c_board_is_enabled(void)
 {
-	/*
-	 * Closed source set1 board options use the INA pins as GPIOs
-	 */
-	if (board_uses_closed_source_set1())
+	/* board options use the INA pins as GPIOs */
+	if (!board_has_ina_support())
 		return 0;
 
 	/*
@@ -85,10 +83,8 @@ void usb_i2c_board_disable(void)
 
 int usb_i2c_board_enable(void)
 {
-	/*
-	 * Closed source set1 board options use the INA pins as GPIOs
-	 */
-	if (board_uses_closed_source_set1())
+	/* board options use the INA pins as GPIOs */
+	if (!board_has_ina_support())
 		return EC_SUCCESS;
 
 	if (servo_is_connected()) {
