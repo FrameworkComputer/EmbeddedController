@@ -20,7 +20,8 @@ enum tpm_write_rv {
 };
 
 enum tpm_nv_hidden_object {
-	TPM_HIDDEN_U2F_KEK
+	TPM_HIDDEN_U2F_KEK,
+	TPM_HIDDEN_U2F_KH_SALT,
 };
 
 enum tpm_read_rv read_tpm_nvmem(uint16_t object_index,

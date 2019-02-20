@@ -70,6 +70,7 @@ enum u2f_mode {
 
 static uint32_t salt[8];
 static uint32_t salt_kek[8];
+static uint32_t salt_kh[8];
 static uint8_t u2f_mode = MODE_UNSET;
 static const uint8_t k_salt = NVMEM_VAR_U2F_SALT;
 
@@ -119,6 +120,24 @@ static int load_state(void)
 		if (write_tpm_nvmem_hidden(
 			TPM_HIDDEN_U2F_KEK,
 			sizeof(salt_kek), salt_kek, 1 /* commit */) !=
+		    tpm_write_created)
+			return 0;
+	}
+
+	if (read_tpm_nvmem_hidden(
+		TPM_HIDDEN_U2F_KH_SALT,
+		sizeof(salt_kh), salt_kh) ==
+	    tpm_read_not_found) {
+		/*
+		 * We have never used u2f before - generate
+		 * new seed.
+		 */
+		if (!DCRYPTO_ladder_random(salt_kh))
+			return 0;
+
+		if (write_tpm_nvmem_hidden(
+			TPM_HIDDEN_U2F_KH_SALT,
+			sizeof(salt_kh), salt_kh, 1 /* commit */) !=
 		    tpm_write_created)
 			return 0;
 	}
@@ -242,13 +261,13 @@ int u2f_origin_user_keypair(const uint8_t *key_handle,
 		return EC_ERROR_UNKNOWN;
 
 	hmac_drbg_init(&drbg,
+		       salt_kh, P256_NBYTES,
 		       dev_salt, P256_NBYTES,
-		       key_handle, P256_NBYTES * 2,
 		       NULL, 0);
 
 	hmac_drbg_generate(&drbg,
 			   key_seed, sizeof(key_seed),
-			   NULL, 0);
+			   key_handle, P256_NBYTES * 2);
 
 	return DCRYPTO_p256_key_from_bytes(
 	    pk_x, pk_y, d, key_seed) == 0;
