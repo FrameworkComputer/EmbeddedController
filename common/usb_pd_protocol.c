@@ -93,6 +93,15 @@ static const int debug_level;
 #define PD_CAPS_COUNT 50
 #define PD_SNK_CAP_RETRIES 3
 
+/*
+ * The time that we allow the source to send any messages after an explicit
+ * contract is established.  200ms was chosen somewhat arbitrarily as it should
+ * be long enough for sources to decide to send a message if they were going to,
+ * but not so long that a "low power charger connected" notification would be
+ * shown in the chrome OS UI.
+ */
+#define SNK_READY_HOLD_OFF_US (200 * MSEC)
+
 enum vdm_states {
 	VDM_STATE_ERR_BUSY = -3,
 	VDM_STATE_ERR_SEND = -2,
@@ -233,6 +242,13 @@ static struct pd_protocol {
 	/* protocol revision */
 	uint8_t rev;
 #endif
+	/*
+	 * Time at which the port acting as a sink can start to request for
+	 * higher power and interrogate the port partner.  Some port partners
+	 * are really chatty after the initial request so we allow this time for
+	 * the port partner to send any messages in order to avoid a collision.
+	 */
+	uint64_t snk_ready_holdoff_timer;
 } pd[CONFIG_USB_PD_PORT_COUNT];
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -677,6 +693,9 @@ static inline void set_state(int port, enum pd_states next_state)
 			ppc_clear_oc_event_counter(port);
 		}
 #endif /* CONFIG_USBC_PPC */
+		/* Clear the SNK_READY holdoff timer. */
+		pd[port].snk_ready_holdoff_timer = 0;
+
 		/* Clear the input current limit */
 		pd_set_input_current_limit(port, 0, 0);
 #ifdef CONFIG_CHARGE_MANAGER
@@ -1695,6 +1714,14 @@ static void handle_ctrl_request(int port, uint16_t head,
 		} else if (pd[port].task_state == PD_STATE_SNK_SWAP_STANDBY) {
 			/* Do nothing, assume this is a redundant PD_RDY */
 		} else if (pd[port].power_role == PD_ROLE_SINK) {
+			/*
+			 * Give the source some time to send any messages before
+			 * we start our interrogation.
+			 */
+			if (pd[port].task_state == PD_STATE_SNK_TRANSITION)
+				pd[port].snk_ready_holdoff_timer =
+					get_time().val + SNK_READY_HOLD_OFF_US;
+
 			set_state(port, PD_STATE_SNK_READY);
 			pd_set_input_current_limit(port, pd[port].curr_limit,
 						   pd[port].supply_voltage);
@@ -3743,6 +3770,16 @@ void pd_task(void *u)
 			break;
 		case PD_STATE_SNK_READY:
 			timeout = 20*MSEC;
+
+			/*
+			 * Don't send any traffic yet until our holdoff timer
+			 * has expired.  Some devices are chatty once we reach
+			 * the SNK_READY state and we may end up in a collision
+			 * of messages if we try to immediately send our
+			 * interrogations.
+			 */
+			if (get_time().val <= pd[port].snk_ready_holdoff_timer)
+				break;
 
 			/*
 			 * Don't send any PD traffic if we woke up due to
