@@ -68,6 +68,11 @@ void init_trng(void)
 	STM32_RCC_D2CCIP2R =
 		(STM32_RCC_D2CCIP2R & ~STM32_RCC_D2CCIP2_RNGSEL_MASK)
 			| STM32_RCC_D2CCIP2_RNGSEL_HSI48;
+#elif defined(CHIP_FAMILY_STM32F4)
+	/*
+	 * The RNG clock is the same as the SDIO/USB OTG clock, already set at
+	 * 48 MHz during clock initialisation. Nothing to do.
+	 */
 #else
 #error "Please add support for CONFIG_RNG on this chip family."
 #endif
@@ -85,6 +90,8 @@ void exit_trng(void)
 	STM32_RCC_CRRCR &= ~STM32_RCC_CRRCR_HSI48ON;
 #elif defined(CHIP_FAMILY_STM32H7)
 	STM32_RCC_CR &= ~STM32_RCC_CR_HSI48ON;
+#elif defined(CHIP_FAMILY_STM32F4)
+	/* Nothing to do */
 #endif
 }
 
