@@ -260,15 +260,24 @@
 #define STM32_FLASH_REGS_BASE       0x40022000
 #endif
 
-#if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F4)
+#if defined(CHIP_FAMILY_STM32L)
 #define STM32_GPIOA_BASE            0x40020000
 #define STM32_GPIOB_BASE            0x40020400
 #define STM32_GPIOC_BASE            0x40020800
 #define STM32_GPIOD_BASE            0x40020C00
 #define STM32_GPIOE_BASE            0x40021000
-#define STM32_GPIOF_BASE            0x40021400
-#define STM32_GPIOG_BASE            0x40021800
+#define STM32_GPIOF_BASE            0x40021800 /* see RM0038 table 5 */
+#define STM32_GPIOG_BASE            0x40021C00
 #define STM32_GPIOH_BASE            0x40021400
+#elif defined(CHIP_FAMILY_STM32F4)
+#define STM32_GPIOA_BASE            0x40020000
+#define STM32_GPIOB_BASE            0x40020400
+#define STM32_GPIOC_BASE            0x40020800
+#define STM32_GPIOD_BASE            0x40020C00
+#define STM32_GPIOE_BASE            0x40021000
+#define STM32_GPIOF_BASE            0x40021400 /* see RM0402/0390 table 1 */
+#define STM32_GPIOG_BASE            0x40021800
+#define STM32_GPIOH_BASE            0x40021C00
 #elif defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
 	defined(CHIP_FAMILY_STM32L4)
 #define STM32_GPIOA_BASE            0x48000000
