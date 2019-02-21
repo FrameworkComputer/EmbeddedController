@@ -60,7 +60,8 @@ static inline int raw_write16(int offset, int value)
 			   value);
 }
 
-#ifdef CONFIG_CHARGE_RAMP_HW
+#if defined(CONFIG_CHARGE_RAMP_HW) || \
+	defined(CONFIG_USB_PD_VBUS_MEASURE_CHARGER)
 static int bq25710_get_low_power_mode(int *mode)
 {
 	int rv;
@@ -92,6 +93,50 @@ static int bq25710_set_low_power_mode(int enable)
 	rv = raw_write16(BQ25710_REG_CHARGE_OPTION_0, reg);
 	if (rv)
 		return rv;
+
+	return EC_SUCCESS;
+}
+
+static int bq25710_adc_start(int adc_en_mask)
+{
+	int reg;
+	int mode;
+	int tries_left = 8;
+
+	/* Save current mode to restore same state after ADC read */
+	if (bq25710_get_low_power_mode(&mode))
+		return EC_ERROR_UNKNOWN;
+
+	/* Exit low power mode so ADC conversion takes typical time */
+	if (bq25710_set_low_power_mode(0))
+		return EC_ERROR_UNKNOWN;
+
+	/*
+	 * Turn on the ADC for one reading. Note that adc_en_mask
+	 * maps to bit[7:0] in ADCOption register.
+	 */
+	reg = (adc_en_mask & BQ25710_ADC_OPTION_EN_ADC_ALL) |
+	      BQ25710_ADC_OPTION_ADC_START;
+	if (raw_write16(BQ25710_REG_ADC_OPTION, reg))
+		return EC_ERROR_UNKNOWN;
+
+	/*
+	 * Wait until the ADC operation completes. The spec says typical
+	 * conversion time is 10 msec. If low power mode isn't exited first,
+	 * then the conversion time jumps to ~60 msec.
+	 */
+	do {
+		msleep(2);
+		raw_read16(BQ25710_REG_ADC_OPTION, &reg);
+	} while (--tries_left && (reg & BQ25710_ADC_OPTION_ADC_START));
+
+	/* ADC reading attempt complete, go back to low power mode */
+	if (bq25710_set_low_power_mode(mode))
+		return EC_ERROR_UNKNOWN;
+
+	/* Could not complete read */
+	if (reg & BQ25710_ADC_OPTION_ADC_START)
+		return EC_ERROR_TIMEOUT;
 
 	return EC_SUCCESS;
 }
@@ -254,6 +299,30 @@ int charger_device_id(int *id)
 	return raw_read16(BQ25710_REG_DEVICE_ADDRESS, id);
 }
 
+#ifdef CONFIG_USB_PD_VBUS_MEASURE_CHARGER
+int charger_get_vbus_voltage(int port)
+{
+	int reg, rv;
+
+	rv = bq25710_adc_start(BQ25710_ADC_OPTION_EN_ADC_VBUS);
+	if (rv)
+		goto error;
+
+	/* Read ADC value */
+	rv = raw_read16(BQ25710_REG_ADC_VBUS_PSYS, &reg);
+	if (rv)
+		goto error;
+
+	/* LSB => 64mV */
+	return (reg >> BQ25710_ADC_VBUS_STEP_BIT_OFFSET) *
+		BQ25710_ADC_VBUS_STEP_MV + BQ25710_ADC_VBUS_BASE_MV;
+
+error:
+	CPRINTF("Could not read VBUS ADC! Error: %d\n", rv);
+	return 0;
+}
+#endif
+
 int charger_get_option(int *option)
 {
 	/* There are 4 option registers, but we only need the first for now. */
@@ -339,43 +408,15 @@ int chg_ramp_is_stable(void)
 
 int chg_ramp_get_current_limit(void)
 {
-	int reg;
-	int mode;
-	int tries_left = 8;
+	int reg, rv;
 
-	/* Save current mode to restore same state after ADC read */
-	if (bq25710_get_low_power_mode(&mode))
-		goto error;
-
-	/* Exit low power mode so ADC conversion takes typical time */
-	if (bq25710_set_low_power_mode(0))
-		goto error;
-
-	/* Turn on the ADC for one reading */
-	reg = BQ25710_ADC_OPTION_ADC_START | BQ25710_ADC_OPTION_EN_ADC_IIN;
-	if (raw_write16(BQ25710_REG_ADC_OPTION, reg))
-		goto error;
-
-	/*
-	 * Wait until the ADC operation completes. The spec says typical
-	 * conversion time is 10 msec. If low power mode isn't exited first,
-	 * then the conversion time jumps to ~60 msec.
-	 */
-	do {
-		msleep(2);
-		raw_read16(BQ25710_REG_ADC_OPTION, &reg);
-	} while (--tries_left && (reg & BQ25710_ADC_OPTION_ADC_START));
-
-	/* ADC reading attempt complete, go back to low power mode */
-	if (bq25710_set_low_power_mode(mode))
-		goto error;
-
-	/* Could not complete read */
-	if (reg & BQ25710_ADC_OPTION_ADC_START)
+	rv = bq25710_adc_start(BQ25710_ADC_OPTION_EN_ADC_IIN);
+	if (rv)
 		goto error;
 
 	/* Read ADC value */
-	if (raw_read16(BQ25710_REG_ADC_CMPIN_IIN, &reg))
+	rv = raw_read16(BQ25710_REG_ADC_CMPIN_IIN, &reg);
+	if (rv)
 		goto error;
 
 	/* LSB => 50mA */
@@ -383,7 +424,7 @@ int chg_ramp_get_current_limit(void)
 		BQ25710_ADC_IIN_STEP_MA;
 
 error:
-	CPRINTF("Could not read input current limit ADC!\n");
+	CPRINTF("Could not read input current limit ADC! Error: %d\n", rv);
 	return 0;
 }
 #endif /* CONFIG_CHARGE_RAMP_HW */
