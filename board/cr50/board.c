@@ -257,7 +257,8 @@ static struct board_cfg board_cfg_table[] = {
 	{
 		.strap_cfg = 0x0B,
 		.board_properties = BOARD_SLAVE_CONFIG_SPI |
-			BOARD_USE_PLT_RESET | BOARD_NO_INA_SUPPORT,
+			BOARD_USE_PLT_RESET | BOARD_NO_INA_SUPPORT |
+			BOARD_CLOSED_LOOP_RESET,
 	},
 	/* I2C Variants: DIOA9 = 1M PD, DIOA1 = 1M PD */
 	/* Reef/Eve: DIOA12 = 5k PD, DIOA6 = 1M PU */
