@@ -424,6 +424,10 @@ static void board_pmic_init(void)
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
 		   BD99992GW_REG_VRMODECTRL, 0x1f);
 
+	/* V5ADS3CNT - boost V5A_DS3 by 2% */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992,
+		   BD99992GW_REG_V5ADS3CNT, 0x1a);
+
 	board_pmic_disable_slp_s0_vr_decay();
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
