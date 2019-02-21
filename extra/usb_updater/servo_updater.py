@@ -110,7 +110,7 @@ def do_version(vidpid, iface, serialno):
   pty = connect(vidpid, iface, serialno)
 
   cmd = '\r\nversion\r\n'
-  regex = 'Build:\s+(\S+)'
+  regex = 'Build:\s+(\S+)[\r\n]+'
 
   results = pty._issue_cmd_get_results(cmd, [regex])[0]
   pty.close()
