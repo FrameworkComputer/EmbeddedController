@@ -26,8 +26,8 @@
 #include "watchdog.h"
 
 #if !defined(CONFIG_AES) || !defined(CONFIG_AES_GCM) || \
-	!defined(CONFIG_ROLLBACK_SECRET_SIZE)
-#error "fpsensor requires AES, AES_GCM and ROLLBACK_SECRET_SIZE"
+	!defined(CONFIG_ROLLBACK_SECRET_SIZE) || !defined(CONFIG_RNG)
+#error "fpsensor requires AES, AES_GCM, ROLLBACK_SECRET_SIZE and RNG"
 #endif
 
 #if defined(HAVE_PRIVATE) && !defined(TEST_BUILD)
