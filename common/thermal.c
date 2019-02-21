@@ -119,8 +119,15 @@ static void thermal_control(void)
 		 * bringup of a new board, where we haven't debugged the I2C
 		 * bus to the sensors; forcing a shutdown in that case would
 		 * merely hamper board bringup.
+		 *
+		 * If in G3, then there is no need trigger an SMI event since
+		 * the AP is off and this can be an expected state if
+		 * temperature sensors are powered by a power rail that's only
+		 * on if the AP is out of G3. Note this could be 'ANY_OFF' as
+		 * well, but that causes the thermal unit test to fail.
 		 */
-		smi_sensor_failure_warning();
+		if (!chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			smi_sensor_failure_warning();
 		return;
 	}
 
