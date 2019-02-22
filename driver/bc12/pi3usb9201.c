@@ -107,32 +107,53 @@ static int pi3usb9201_set_mode(int port, int desired_mode)
 			      desired_mode << PI3USB9201_REG_CTRL_1_MODE_SHIFT);
 }
 
-static void bc12_update_charge_manager(int port)
+static int pi3usb9201_get_mode(int port, int *mode)
 {
-	int client_status;
 	int rv;
-	enum pi3usb9201_client_sts type;
+
+	rv = raw_read8(port, PI3USB9201_REG_CTRL_1, mode);
+	if (rv)
+		return rv;
+
+	*mode &= PI3USB9201_REG_CTRL_1_MODE_MASK;
+	*mode >>= PI3USB9201_REG_CTRL_1_MODE_SHIFT;
+
+	return EC_SUCCESS;
+}
+
+static int pi3usb9201_get_status(int port, int *client, int *host)
+{
+	int rv;
+	int status;
+
+	rv = raw_read8(port, PI3USB9201_REG_CLIENT_STS, &status);
+	if (client)
+		*client = status;
+	rv |= raw_read8(port, PI3USB9201_REG_HOST_STS, &status);
+	if (host)
+		*host = status;
+
+	return rv;
+}
+
+static void bc12_update_charge_manager(int port, int client_status)
+{
 	struct charge_port_info new_chg;
 	enum charge_supplier supplier;
+	int bit_pos;
 
 	/* Set charge voltage to 5V */
 	new_chg.voltage = USB_CHARGER_VOLTAGE_MV;
-	/* Read BC 1.2 client mode detection result */
-	rv = raw_read8(port, PI3USB9201_REG_CLIENT_STS, &client_status);
-	/* Find set bit position. If no bits set will return 0 */
-	type = __builtin_ffs(client_status) - 1;
 
-	if (!rv && (type >= 0)) {
-		new_chg.current = bc12_chg_limits[type].current_limit;
-		supplier = bc12_chg_limits[type].supplier;
-	} else {
-		/*
-		 * If bc 1.2 detetion failed for some reason, then set limit to
-		 * minimum and set supplier to other.
-		 */
-		new_chg.current = 500;
-		supplier = CHARGE_SUPPLIER_OTHER;
-	}
+	/*
+	 * Find set bit position. Note that this funciton is only called if a
+	 * bit was set in client_status, so bit_pos won't be negative.
+	 */
+	bit_pos = __builtin_ffs(client_status) - 1;
+
+	new_chg.current = bc12_chg_limits[bit_pos].current_limit;
+	supplier = bc12_chg_limits[bit_pos].supplier;
+
 	CPRINTS("pi3usb9201[p%d]: sts = 0x%x, lim = %d mA, supplier = %d",
 		port, client_status, new_chg.current, supplier);
 	/* bc1.2 is complete and start bit does not auto clear */
@@ -144,6 +165,13 @@ static void bc12_update_charge_manager(int port)
 static int bc12_detect_start(int port)
 {
 	int rv;
+
+	/*
+	 * Read both status registers to ensure that all interrupt indications
+	 * are cleared prior to starting bc1.2 detection.
+	 */
+	pi3usb9201_get_status(port, NULL, NULL);
+
 	/* Put pi3usb9201 into client mode */
 	rv = pi3usb9201_set_mode(port, PI3USB9201_CLIENT_MODE);
 	if (rv)
@@ -168,53 +196,6 @@ static void bc12_power_down(int port)
 	charge_manager_update_charge(CHARGE_SUPPLIER_NONE, port, NULL);
 }
 
-static void bc12_handle_vbus_change(int port)
-{
-	int role = pd_get_role(port);
-	int vbus = pd_snk_is_vbus_provided(port);
-
-#ifndef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	CPRINTS("VBUS p%d %d", port, vbus);
-#endif
-	/*
-	 * TODO(b/124061702): For host mode, currently only setting it to host
-	 * CDP mode. However, there are 3 host status bits to know things such
-	 * as an adapter connected, but no USB device present, or bc1.2 activity
-	 * detected.
-	 */
-	if (role == PD_ROLE_SOURCE &&
-	    board_vbus_source_enabled(port)) {
-		/*
-		 * For source role, if vbus is present, then set
-		 * CDP host mode (will close D+/D-) switches. If
-		 * vbus is not present, then put into power down
-		 * mode.
-		 */
-		if (pi3usb9201_set_mode(port,
-					PI3USB9201_CDP_HOST_MODE))
-			CPRINTS("pi3usb9201[p%d]: failed to set host mode",
-				port);
-	} else if (vbus) {
-		if (bc12_detect_start(port)) {
-			struct charge_port_info new_chg;
-
-			/*
-			 * VBUS is present, but starting bc1.2 detection failed
-			 * for some reason. So limit charge current to default
-			 * 500 mA for this case.
-			 */
-
-			new_chg.voltage = USB_CHARGER_VOLTAGE_MV;
-			new_chg.current = 500;
-			charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
-						     port, &new_chg);
-			CPRINTS("pi3usb9201[p%d]: bc1.2 start failed", port);
-		}
-	} else {
-		bc12_power_down(port);
-	}
-}
-
 void usb_charger_task(void *u)
 {
 	int port = (task_get_current() == TASK_ID_USB_CHG_P0 ? 0 : 1);
@@ -225,25 +206,74 @@ void usb_charger_task(void *u)
 	 * than enabling the interrupt mask.
 	 */
 	pi3usb9201_interrupt_mask(port, 1);
-	/*
-	 * Upon EC reset, there likely won't be a VBUS status change to set the
-	 * event to wake up this task. So need to check if VBUS is
-	 * present to make sure that D+/D- switches remain in the correct state
-	 * and bc1.2 detection is triggered (for client mode) to set the correct
-	 * input current limit.
-	 */
-	bc12_handle_vbus_change(port);
 
 	while (1) {
 		/* Wait for interrupt */
 		evt = task_wait_event(-1);
 
 		/* Interrupt from the Pericom chip, determine charger type */
-		if (evt & USB_CHG_EVENT_BC12)
-			bc12_update_charge_manager(port);
+		if (evt & USB_CHG_EVENT_BC12) {
+			int client;
+			int rv;
 
+			rv = pi3usb9201_get_status(port, &client, NULL);
+			if (!rv && client)
+				/*
+				 * Any bit set in client status register
+				 * indicates that BC1.2 detection has
+				 * completed.
+				 */
+				bc12_update_charge_manager(port, client);
+		}
+
+#ifndef CONFIG_USB_PD_VBUS_DETECT_TCPC
 		if (evt & USB_CHG_EVENT_VBUS)
-			bc12_handle_vbus_change(port);
+			CPRINTS("VBUS p%d %d", port,
+				pd_snk_is_vbus_provided(port));
+#endif
+
+		if (evt & USB_CHG_EVENT_DR_UFP) {
+			if (bc12_detect_start(port)) {
+				struct charge_port_info new_chg;
+
+				/*
+				 * VBUS is present, but starting bc1.2 detection
+				 * failed for some reason. So limit charge
+				 * current to default 500 mA for this case.
+				 */
+
+				new_chg.voltage = USB_CHARGER_VOLTAGE_MV;
+				new_chg.current = USB_CHARGER_MIN_CURR_MA;
+				charge_manager_update_charge(
+					CHARGE_SUPPLIER_OTHER,
+					port, &new_chg);
+				CPRINTS("pi3usb9201[p%d]: bc1.2 failed use "
+					"defaults", port);
+			}
+		}
+
+		/*
+		 * TODO(b/124061702): For host mode, currently only setting it
+		 * to host CDP mode. However, there are 3 host status bits to
+		 * know things such as an adapter connected, but no USB device
+		 * present, or bc1.2 activity detected.
+		 */
+		if (evt & USB_CHG_EVENT_DR_DFP) {
+			int mode;
+			int rv;
+
+			/*
+			 * If the port is in DFP mode, then need to set mode to
+			 * CDP_HOST which will auto close D+/D- switches.
+			 */
+			rv = pi3usb9201_get_mode(port, &mode);
+			if (!rv && (mode != PI3USB9201_CDP_HOST_MODE))
+				pi3usb9201_set_mode(port,
+						    PI3USB9201_CDP_HOST_MODE);
+		}
+
+		if (evt & USB_CHG_EVENT_CC_OPEN)
+			bc12_power_down(port);
 	}
 }
 
@@ -258,9 +288,10 @@ void usb_charger_set_switches(int port, enum usb_switch setting)
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
 int usb_charger_ramp_allowed(int supplier)
 {
-	/* Don't allow ramp if charge supplier is OTHER or SDP */
+	/* Don't allow ramp if charge supplier is OTHER, SDP, or NONE */
 	return !(supplier == CHARGE_SUPPLIER_OTHER ||
-		 supplier == CHARGE_SUPPLIER_BC12_SDP);
+		 supplier == CHARGE_SUPPLIER_BC12_SDP ||
+		 supplier == CHARGE_SUPPLIER_NONE);
 }
 
 int usb_charger_ramp_max(int supplier, int sup_curr)
