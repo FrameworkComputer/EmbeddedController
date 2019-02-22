@@ -99,7 +99,7 @@ static const uint8_t out_preamble[4] = {
  * times in order to make sure it actually stays at the repeating byte after DMA
  * ends.
  *
- * See crbug.com/31390
+ * See crosbug.com/p/31390
  */
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4)
 #define EC_SPI_PAST_END_LENGTH 4
@@ -424,7 +424,7 @@ static void spi_send_response_packet(struct host_packet *pkt)
 	((uint8_t *)pkt->response)[pkt->response_size + 0] = EC_SPI_PAST_END;
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4)
 	/* Make sure we are going to be outputting it properly when the DMA
-	 * ends due to the TX FIFO bug on the F0. See crbug.com/31390
+	 * ends due to the TX FIFO bug on the F0. See crosbug.com/p/31390
 	 */
 	((uint8_t *)pkt->response)[pkt->response_size + 1] = EC_SPI_PAST_END;
 	((uint8_t *)pkt->response)[pkt->response_size + 2] = EC_SPI_PAST_END;
@@ -563,7 +563,7 @@ void spi_event(enum gpio_signal signal)
 
 #ifdef CHIP_FAMILY_STM32F0
 		CPRINTS("WARNING: Protocol version 2 is not supported on the F0"
-			" line due to crbug.com/31390");
+			" line due to crosbug.com/p/31390");
 #endif
 
 		args.version = in_msg[0] - EC_CMD_VERSION0;
