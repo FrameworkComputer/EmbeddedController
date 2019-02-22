@@ -279,7 +279,7 @@ static void reply(dma_chan_t *txdma,
  */
 static void tx_status(uint8_t byte)
 {
-	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
+	stm32_spi_regs_t *spi __attribute__((unused)) = STM32_SPI1_REGS;
 
 	SPI_TXDR = byte;
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4)
@@ -302,7 +302,7 @@ static void tx_status(uint8_t byte)
  */
 static void setup_for_transaction(void)
 {
-	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
+	stm32_spi_regs_t *spi __attribute__((unused)) = STM32_SPI1_REGS;
 	volatile uint8_t dummy __attribute__((unused));
 
 	/* clear this as soon as possible */
