@@ -33,8 +33,13 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	/* Turn off A (except PP5000_A) rails*/
 	gpio_set_level(GPIO_EN_A_RAILS, 0);
 
+#ifdef CONFIG_POWER_PP5000_CONTROL
+	/* Issue a request to turn off the rail. */
+	power_5v_enable(task_get_current(), 0);
+#else
 	/* Turn off PP5000_A rail */
 	gpio_set_level(GPIO_EN_PP5000_A, 0);
+#endif
 
 	/* Need to wait a min of 10 msec before check for power good */
 	msleep(10);
@@ -78,15 +83,13 @@ enum power_state chipset_force_g3(void)
 /* Called by APL power state machine when transitioning from G3 to S5 */
 void chipset_pre_init_callback(void)
 {
-	/*
-	 * TODO (b/122265772): Need to use CONFIG_POWER_PP5000_CONTROL, but want
-	 * to do that after some refactoring so that more than 1 signal can be
-	 * tracked if necessary.
-	 */
-
 	/* Enable 5.0V and 3.3V rails, and wait for Power Good */
+#ifdef CONFIG_POWER_PP5000_CONTROL
+	power_5v_enable(task_get_current(), 1);
+#else
 	/* Turn on PP5000_A rail */
 	gpio_set_level(GPIO_EN_PP5000_A, 1);
+#endif
 	/* Turn on A (except PP5000_A) rails*/
 	gpio_set_level(GPIO_EN_A_RAILS, 1);
 
