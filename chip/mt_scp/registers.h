@@ -241,6 +241,11 @@
 /* Clock, PMIC wrapper, etc. */
 #define SCP_CLK_BASE			(SCP_CFG_BASE + 0x4000)
 #define SCP_CLK_SEL			REG32(SCP_CLK_BASE)
+#define   CLK_SEL_SYS_26M		0
+#define   CLK_SEL_32K			1
+#define   CLK_SEL_ULPOSC_1		2
+#define   CLK_SEL_ULPOSC_2		3
+
 #define SCP_CLK_EN			REG32(SCP_CLK_BASE + 0x04)
 #define   EN_CLK_SYS			(1 << 0) /* System clock */
 #define   EN_CLK_HIGH			(1 << 1) /* ULPOSC */
