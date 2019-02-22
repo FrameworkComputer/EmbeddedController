@@ -194,6 +194,21 @@ static void bc12_power_down(int port)
 	pi3usb9201_interrupt_mask(port, 1);
 	/* Let charge manager know there's no more charge available. */
 	charge_manager_update_charge(CHARGE_SUPPLIER_NONE, port, NULL);
+#if defined(CONFIG_POWER_PP5000_CONTROL) && defined(HAS_TASK_CHIPSET)
+	/* Indicate PP5000_A rail is not required by USB_CHG task. */
+	power_5v_enable(task_get_current(), 0);
+#endif
+}
+
+static void bc12_power_up(int port)
+{
+#if defined(CONFIG_POWER_PP5000_CONTROL) && defined(HAS_TASK_CHIPSET)
+	/* Turn on the 5V rail to allow the chip to be powered. */
+	power_5v_enable(task_get_current(), 1);
+	/* Give the pi3usb9201 time so it's ready to receive i2c messages */
+	msleep(1);
+#endif
+	pi3usb9201_interrupt_mask(port, 1);
 }
 
 void usb_charger_task(void *u)
@@ -233,6 +248,7 @@ void usb_charger_task(void *u)
 #endif
 
 		if (evt & USB_CHG_EVENT_DR_UFP) {
+			bc12_power_up(port);
 			if (bc12_detect_start(port)) {
 				struct charge_port_info new_chg;
 
@@ -266,6 +282,7 @@ void usb_charger_task(void *u)
 			 * If the port is in DFP mode, then need to set mode to
 			 * CDP_HOST which will auto close D+/D- switches.
 			 */
+			bc12_power_up(port);
 			rv = pi3usb9201_get_mode(port, &mode);
 			if (!rv && (mode != PI3USB9201_CDP_HOST_MODE))
 				pi3usb9201_set_mode(port,
