@@ -6,10 +6,11 @@
 /* Power managerment module for ISH */
 #include "common.h"
 #include "console.h"
-#include "registers.h"
-#include "interrupts.h"
-#include "task.h"
 #include "hooks.h"
+#include "interrupts.h"
+#include "registers.h"
+#include "system.h"
+#include "task.h"
 
 #ifdef PM_DEBUG
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
@@ -21,14 +22,13 @@
 #define CPRINTF(format, args...)
 #endif
 
+/*
+ * IRQ fires when we receive a RESET_PREP message from AP. This happens at S0
+ * entry.
+ */
 static void reset_prep_wr_isr(void)
 {
-	/*
-	 * ISH HW looks at the rising edge of this bit to
-	 * trigger a MIA reset. Now in S0, reset MIA.
-	 */
-	ISH_RST_REG = 0;
-	ISH_RST_REG = 1;
+	system_reset(SYSTEM_RESET_HARD);
 }
 DECLARE_IRQ(ISH_RESET_PREP_IRQ, reset_prep_wr_isr);
 
@@ -37,7 +37,7 @@ void reset_prep_init(void)
 	/* Clear reset bit */
 	ISH_RST_REG = 0;
 
-	/* clear reset history register in CCU */
+	/* Clear reset history register from previous boot. */
 	CCU_RST_HST = CCU_RST_HST;
 	/* Unmask reset prep avail interrupt mask */
 	PMU_RST_PREP = 0;

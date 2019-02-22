@@ -46,6 +46,12 @@ uint32_t chip_read_reset_flags(void)
 
 void _system_reset(int flags, int wake_from_hibernate)
 {
+	/*
+	 * ISH HW looks at the rising edge of this bit to
+	 * trigger a MIA reset.
+	 */
+	ISH_RST_REG = 0;
+	ISH_RST_REG = 1;
 }
 
 void system_reset(int flags)
