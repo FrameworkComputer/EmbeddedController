@@ -1206,8 +1206,10 @@ static int get_strap_config(uint8_t *config)
 	enum strap_list s0;
 	int lvl;
 	int flags;
-	uint8_t pull_a;
-	uint8_t pull_b;
+	uint8_t use_i2c;
+	uint8_t i2c_prop;
+	uint8_t use_spi;
+	uint8_t spi_prop;
 
 	/*
 	 * There are 4 pins that are used to determine Cr50 board strapping
@@ -1313,13 +1315,37 @@ static int get_strap_config(uint8_t *config)
 	 * config table entries.
 	 */
 
-	pull_a = *config & 0xa0;
-	pull_b = *config & 0xa;
-	if ((!pull_a && !pull_b) || (pull_a && pull_b))
+	use_i2c = *config & 0xa0;
+	use_spi = *config & 0x0a;
+	/*
+	 * The strap signals should have at least one pullup. Nothing can
+	 * interfere with these. If we did not read any pullups, these are
+	 * invalid straps. The config can't be salvaged.
+	 */
+	if (!use_i2c && !use_spi)
 		return EC_ERROR_INVAL;
+	/*
+	 * The unused strap signals are used for the bus to the AP. If the AP
+	 * has added pullups to the signals, it could interfere with the strap
+	 * readings. If pullups are found on both the SPI and I2C straps, use
+	 * the board properties to determine SPI vs I2C. We can use this to mask
+	 * unused config pins the AP is interfering with.
+	 */
+	if (use_i2c && use_spi) {
+		spi_prop = (GREG32(PMU, LONG_LIFE_SCRATCH1) &
+			    BOARD_SLAVE_CONFIG_SPI);
+		i2c_prop = (GREG32(PMU, LONG_LIFE_SCRATCH1) &
+			    BOARD_SLAVE_CONFIG_I2C);
+		/* Make sure exactly one interface is selected */
+		if ((i2c_prop && spi_prop) || (!spi_prop && !i2c_prop))
+			return EC_ERROR_INVAL;
+		use_spi = spi_prop;
+		CPRINTS("Ambiguous strap config. Use %s based on old "
+			"brdprop.", use_spi ? "spi" : "i2c");
+	}
 
 	/* Now that I2C vs SPI is known, mask the unused strap bits. */
-	*config &= *config & 0xa ? 0xf : 0xf0;
+	*config &= use_spi ? 0xf : 0xf0;
 
 	return EC_SUCCESS;
 }
