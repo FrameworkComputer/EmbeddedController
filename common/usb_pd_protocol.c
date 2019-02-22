@@ -704,6 +704,15 @@ static inline void set_state(int port, enum pd_states next_state)
 					CEIL_REQUESTOR_PD,
 					CHARGE_CEIL_NONE);
 #endif
+#ifdef CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER
+		/*
+		 * When data role set events are used to enable BC1.2, then CC
+		 * detach events are used to notify BC1.2 that it can be powered
+		 * down.
+		 */
+		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
+			       USB_CHG_EVENT_CC_OPEN, 0);
+#endif /* CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER */
 #ifdef CONFIG_USBC_VCONN
 		set_vconn(port, 0);
 #endif /* defined(CONFIG_USBC_VCONN) */
@@ -1243,6 +1252,19 @@ static void pd_set_data_role(int port, int role)
 
 	set_usb_mux_with_current_data_role(port);
 	pd_update_roles(port);
+#ifdef CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER
+	/*
+	 * For BC1.2 detection that is triggered on data role change events
+	 * instead of VBUS changes, need to set an event to wake up the USB_CHG
+	 * task and indicate the current data role.
+	 */
+	if (role == PD_ROLE_UFP)
+		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
+			       USB_CHG_EVENT_DR_UFP, 0);
+	else if (role == PD_ROLE_DFP)
+		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
+			       USB_CHG_EVENT_DR_DFP, 0);
+#endif /* CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER */
 }
 
 void pd_execute_hard_reset(int port)

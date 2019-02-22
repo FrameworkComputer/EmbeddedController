@@ -3526,6 +3526,12 @@
 /* Common USB / BC1.2 charger detection routines */
 #undef CONFIG_USB_CHARGER
 
+/*
+ * Used for bc1.2 chips that need to be triggered from data role swaps instead
+ * of just VBUS changes.
+ */
+#undef CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER
+
 /* External BC1.2 charger detection devices. */
 #undef CONFIG_BC12_DETECT_MAX14637
 #undef CONFIG_BC12_DETECT_PI3USB9201
@@ -4101,6 +4107,12 @@
 /* Define derived thermistor common path */
 #ifdef CONFIG_THERMISTOR_NCP15WB
 #define CONFIG_THERMISTOR
+#endif
+
+/*****************************************************************************/
+/* Define derived config options for BC1.2 detection */
+#ifdef CONFIG_BC12_DETECT_PI3USB9201
+#define CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER
 #endif
 
 /*****************************************************************************/
