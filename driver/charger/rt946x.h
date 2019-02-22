@@ -135,6 +135,9 @@
 #define MT6370_REG_RGBCHRINDDIM		0x92
 #define MT6370_REG_RGBCHRINDCTRL	0x93
 
+/* Display bias */
+#define MT6370_REG_DBCTRL1		0XB0
+
 #define RT946X_REG_DPDMIRQ		0xC6
 /* backlight */
 #define MT6370_BACKLIGHT_BLEN		0xA0
@@ -477,6 +480,19 @@
 #define MT6370_MASK_RGBISNK_CURSEL	(0x7 << MT6370_SHIFT_RGBISNK_CURSEL)
 #define MT6370_MASK_RGBISNK_DIMFSEL	(0x7 << MT6370_SHIFT_RGBISNK_DIMFSEL)
 
+/* ========== DBCTRL1 (mt6370) ============ */
+#define MT6370_SHIFT_DB_EXT_EN		0
+#define MT6370_SHIFT_DB_PERIODIC_FIX	4
+#define MT6370_SHIFT_DB_SINGLE_PIN	5
+#define MT6370_SHIFT_DB_FREQ_PM		6
+#define MT6370_SHIFT_DB_PERIODIC_MODE	7
+
+#define MT6370_MASK_DB_EXT_EN		1
+#define MT6370_MASK_DB_PERIODIC_FIX	1
+#define MT6370_MASK_DB_SINGLE_PIN	1
+#define MT6370_MASK_DB_FREQ_PM		1
+#define MT6370_MASK_DB_PERIODIC_MODE	1
+
 /* ========== CHGSTAT2 0xD1 (mt6370) ============ */
 #ifdef CONFIG_CHARGER_MT6370
 #define MT6370_SHIFT_CHG_VBUSOV_STAT	7
@@ -566,6 +582,9 @@ enum mt6370_led_pwm_freq {
 	MT6370_LED_PWM_FREQ200 = 6, /* 200 Hz */
 	MT6370_LED_PWM_FREQ1000 = 7 /* 1000 Hz */
 };
+
+/* Enable display bias external pin control. */
+int mt6370_db_external_control(int en);
 
 /* Set LED brightness */
 int mt6370_led_set_brightness(enum mt6370_led_index index, uint8_t brightness);

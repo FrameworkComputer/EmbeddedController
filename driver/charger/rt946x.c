@@ -1019,6 +1019,13 @@ int mt6370_set_ldo_voltage(int mv)
 	return rt946x_update_bits(MT6370_REG_LDOVOUT, vout_mask, vout_val);
 }
 
+/* MT6370 Display bias */
+int mt6370_db_external_control(int en)
+{
+	return rt946x_update_bits(MT6370_REG_DBCTRL1, MT6370_MASK_DB_EXT_EN,
+				  en << MT6370_SHIFT_DB_EXT_EN);
+}
+
 /* MT6370 RGB LED */
 
 int mt6370_led_set_dim_mode(enum mt6370_led_index index,

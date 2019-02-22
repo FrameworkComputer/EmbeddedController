@@ -235,8 +235,14 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 static void board_rev_init(void)
 {
 	/* Board revision specific configs. */
-	if (board_get_version() >= 2)
+	if (board_get_version() >= 2) {
 		gpio_set_flags(GPIO_USBC_THERM, GPIO_ANALOG);
+
+		/*
+		 * Enable MT6370 DB_POSVOUT/DB_NEGVOUT (controlled by _EN pins).
+		 */
+		mt6370_db_external_control(1);
+	}
 
 	if (board_get_version() == 2) {
 		/* configure PI3USB9201 to USB Path ON Mode */
