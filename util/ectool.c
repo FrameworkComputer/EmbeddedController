@@ -272,7 +272,7 @@ const char help_str[] =
 	"  uptimeinfo\n"
 	"      Get info about how long the EC has been running and the most\n"
 	"      recent AP resets\n"
-	"  usbchargemode <port> <mode>\n"
+	"  usbchargemode <port> <mode> [<inhibit_charge>]\n"
 	"      Set USB charging mode\n"
 	"  usbmux <mux>\n"
 	"      Set USB mux switch state\n"
@@ -4933,7 +4933,7 @@ int cmd_usb_charge_set_mode(int argc, char *argv[])
 
 	if (argc != 3 && argc != 4) {
 		fprintf(stderr,
-			"Usage: %s <port_id> <mode_id> <inhibit_charge>\n",
+			"Usage: %s <port_id> <mode_id> [<inhibit_charge>]\n",
 			argv[0]);
 		return -1;
 	}
