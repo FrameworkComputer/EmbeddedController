@@ -503,7 +503,7 @@ static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
 		return VENDOR_RC_NOT_ALLOWED;
 
 	if (!verify_kh_owned(req->userSecret, req->appId, req->keyHandle))
-		return VENDOR_RC_NOT_ALLOWED;
+		return VENDOR_RC_PASSWORD_REQUIRED;
 
 	/* Re-create origin-specific key. */
 	if (u2f_origin_user_keypair(
