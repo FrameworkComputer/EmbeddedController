@@ -31,7 +31,7 @@ ifneq (1,$(words $(PBDIR)))
 $(error multiple private definitions for BOARD $(BOARD): $(PBDIR))
 endif
 
-PDIR=$(subst /board/$(BOARD),,$(BDIR))
+PDIR:=$(subst /board/$(BOARD),,$(PBDIR))
 endif
 
 # If only private is present, use that as BDIR.
