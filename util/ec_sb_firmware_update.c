@@ -469,7 +469,7 @@ static enum fw_update_state s1_read_battery_info(
 	if (!(fw_update->flags & F_AC_PRESENT)) {
 		fw_update->rv = 0;
 		log_msg(fw_update, S1_READ_INFO,
-			"Require AC Adapter Counnected.");
+			"Require AC Adapter Connected.");
 		return S10_TERMINAL;
 	}
 
@@ -583,7 +583,7 @@ static enum fw_update_state s6_write_block(struct fw_update_ctrl *fw_update)
 	}
 
 	/*
-	 * Add more detays after the last a few block (3) writes.
+	 * Add more delays after the last few (3) block writes.
 	 * 3 is chosen based on current test results.
 	 */
 	if ((offset + 3*fw_update->step_size) >= fw_update->size)
