@@ -1070,19 +1070,19 @@ static int can_supply_max_current(int port)
 	 * port gets 3A.
 	 */
 	int p;
-	if (!is_active_source(port) && has_other_active_source(port))
-		/* Another port will get 3A */
+	if (!is_active_source(port))
+		/* Non-active ports don't get 3A */
 		return 0;
 	for (p = 0; p < CONFIG_USB_PD_PORT_COUNT; p++) {
 		if (p == port)
 			continue;
-		if (is_active_source(p) && source_port_rp[p] ==
+		if (source_port_rp[p] ==
 				CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT)
 			return 0;
 	}
 	return 1;
 #else
-	return !has_other_active_source(port);
+	return is_active_source(port) && !has_other_active_source(port);
 #endif /* CONFIG_USB_PD_MAX_TOTAL_SOURCE_CURRENT */
 }
 

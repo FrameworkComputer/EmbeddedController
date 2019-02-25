@@ -715,23 +715,10 @@ static inline void set_state(int port, enum pd_states next_state)
 		set_vconn(port, 0);
 #endif /* CONFIG_USBC_VCONN */
 #endif /* !CONFIG_USB_PD_DUAL_ROLE */
-		/*
-		 * If we are source, make sure VBUS is off and
-		 * if PD REV3.0, restore RP.
-		 */
+		/* If we are source, make sure VBUS is off and restore RP */
 		if (pd[port].power_role == PD_ROLE_SOURCE) {
-			/*
-			 * If CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT is
-			 * defined, Rp is reset as follows.
-			 * If all ports are open, pd_power_supply_reset will
-			 * change Rp to 3A for all ports. If the other port is
-			 * occupied, it'll be given 3A and this port will be
-			 * given 1.5A.
-			 * In either case, this port is immediately reset to
-			 * 1.5A by tcpm_select_rp_value.
-			 */
+			/* Restore non-active ports to CONFIG_USB_PD_PULLUP */
 			pd_power_supply_reset(port);
-			tcpm_select_rp_value(port, CONFIG_USB_PD_PULLUP);
 			tcpm_set_cc(port, TYPEC_CC_RP);
 		}
 #ifdef CONFIG_USB_PD_REV30
@@ -3118,6 +3105,13 @@ void pd_task(void *u)
 #endif /* CONFIG_USBC_SS_MUX */
 					break;
 				}
+				/*
+				 * Set correct Rp value determined during
+				 * pd_set_power_supply_ready.  This should be
+				 * safe because Vconn is being sourced,
+				 * preventing incorrect CCD detection.
+				 */
+				tcpm_set_cc(port, TYPEC_CC_RP);
 #endif /* CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP */
 				/* If PD comm is enabled, enable TCPC RX */
 				if (pd_comm_is_enabled(port))
