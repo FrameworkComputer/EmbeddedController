@@ -591,6 +591,10 @@ print-configs:
 		-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RW include/config.h | \
 		grep "#define CONFIG_" | cut -c9- | sort
 
+.PHONY: print-chip-variant
+print-chip-variant:
+	@echo "$(CHIP_VARIANT)"
+
 .PHONY: clean
 clean:
 	-rm -rf $(out)
