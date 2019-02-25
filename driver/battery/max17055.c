@@ -214,7 +214,7 @@ int battery_status(int *status)
 	if (reg & FSTAT_FQ)
 		*status |= BATTERY_FULLY_CHARGED;
 
-	rv = max17055_read(REG_CURRENT, &reg);
+	rv = max17055_read(REG_AVERAGE_CURRENT, &reg);
 	if (rv)
 		return rv;
 	if (reg >> 15)
@@ -294,7 +294,7 @@ void battery_get_params(struct batt_params *batt)
 
 	batt_new.voltage = VOLTAGE_CONV(reg);
 
-	if (max17055_read(REG_CURRENT, &reg))
+	if (max17055_read(REG_AVERAGE_CURRENT, &reg))
 		batt_new.flags |= BATT_FLAG_BAD_CURRENT;
 
 	batt_new.current = CURRENT_CONV((int16_t)reg);
