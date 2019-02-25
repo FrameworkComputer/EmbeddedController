@@ -86,6 +86,7 @@
 /* MKBP */
 #define CONFIG_MKBP_EVENT
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
+#define CONFIG_MKBP_USE_GPIO
 
 /* Sensors */
 #define CONFIG_ALS

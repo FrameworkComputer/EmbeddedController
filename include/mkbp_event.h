@@ -58,6 +58,13 @@ void mkbp_set_host_active_via_gpio(int active);
 void mkbp_set_host_active_via_event(int active);
 
 /*
+ * Communicate an MKBP event to the AP via custom method.
+ *
+ * This can be used if a board has a custom method.
+ */
+void mkbp_set_host_active_via_custom(int active);
+
+/*
  * The struct to store the event source definition.  The get_data routine is
  * responsible for returning the event data when queried by the AP.  The
  * parameter 'data' points to where the event data needs to be stored, and

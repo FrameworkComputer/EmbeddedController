@@ -33,24 +33,28 @@ static int event_is_set(uint8_t event_type)
 	return events & (1 << event_type);
 }
 
-#ifndef CONFIG_MKBP_USE_HOST_EVENT
+#ifdef CONFIG_MKBP_USE_GPIO
 void mkbp_set_host_active_via_gpio(int active)
 {
 	gpio_set_level(GPIO_EC_INT_L, !active);
 }
 #endif
 
+#ifdef CONFIG_MKBP_USE_HOST_EVENT
 void mkbp_set_host_active_via_event(int active)
 {
 	if (active)
 		host_set_single_event(EC_HOST_EVENT_MKBP);
 }
+#endif
 
-__attribute__((weak)) void mkbp_set_host_active(int active)
+void mkbp_set_host_active(int active)
 {
-#ifdef CONFIG_MKBP_USE_HOST_EVENT
+#if defined(CONFIG_MKBP_USE_CUSTOM)
+	mkbp_set_host_active_via_custom(active);
+#elif defined(CONFIG_MKBP_USE_HOST_EVENT)
 	mkbp_set_host_active_via_event(active);
-#else
+#elif defined(CONFIG_MKBP_USE_GPIO)
 	mkbp_set_host_active_via_gpio(active);
 #endif
 }

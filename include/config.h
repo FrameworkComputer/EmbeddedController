@@ -2496,8 +2496,14 @@
 /* Support MKBP event */
 #undef CONFIG_MKBP_EVENT
 
-/* MKBP events are sent using host event */
+/* MKBP events are sent by using host event */
 #undef CONFIG_MKBP_USE_HOST_EVENT
+
+/* MKBP events are sent by using GPIO */
+#undef CONFIG_MKBP_USE_GPIO
+
+/* MKBP events are sent by using custom method */
+#undef CONFIG_MKBP_USE_CUSTOM
 
 /*
  * With this option, we can define the MKBP wakeup events in this mask (as a
@@ -3966,6 +3972,22 @@
 #ifdef CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_EVENT
 #endif
+
+/******************************************************************************/
+/* MKBP events delivery methods. */
+#ifdef CONFIG_MKBP_EVENT
+#if !defined(CONFIG_MKBP_USE_CUSTOM) && \
+	!defined(CONFIG_MKBP_USE_HOST_EVENT) && \
+	!defined(CONFIG_MKBP_USE_GPIO)
+#error Please define one of CONFIG_MKBP_USE_* macro.
+#endif
+
+#if defined(CONFIG_MKBP_USE_CUSTOM) + \
+	defined(CONFIG_MKBP_USE_GPIO) + \
+	defined(CONFIG_MKBP_USE_HOST_EVENT) > 1
+#error Must select only one type of MKBP event delivery method.
+#endif
+#endif /* CONFIG_MKBP_EVENT */
 
 /******************************************************************************/
 /* Set generic orientation config if a specific orientation config is set. */

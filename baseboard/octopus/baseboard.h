@@ -282,9 +282,10 @@
 /*
  * Sensor stack in EC/Kernel depends on a hardware interrupt pin from EC->AP, so
  * do not define CONFIG_MKBP_USE_HOST_EVENT since all octopus boards use
- * hardware pin to send interrupt from EC -> AP (except bip).
+ * hardware pin to send interrupt from EC -> AP (except bip and casta).
  */
 #define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_USE_GPIO
 
 #ifndef __ASSEMBLER__
 
