@@ -378,12 +378,6 @@
 #undef CONFIG_BATTERY_CRITICAL_SHUTDOWN_CUT_OFF
 
 /*
- * There is an extra condition we want to meet before cutting off battery
- * when we found the battery is in a critical condition.
- */
-#undef CONFIG_BATTERY_CRITICAL_CUT_OFF_CUSTOM_CONDITION
-
-/*
  * Support battery cut-off as host command and console command.
  *
  * Once defined, you have to implement a board_cut_off_battery() function

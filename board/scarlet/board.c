@@ -137,10 +137,14 @@ void board_reset_pd_mcu(void)
 {
 }
 
-int board_critical_shutdown_check(struct charge_state_data *curr)
+enum critical_shutdown board_critical_shutdown_check(
+		struct charge_state_data *curr)
 {
-	return ((curr->batt.flags & BATT_FLAG_BAD_VOLTAGE) ||
-		(curr->batt.voltage <= BAT_LOW_VOLTAGE_THRESH));
+	if ((curr->batt.flags & BATT_FLAG_BAD_VOLTAGE) ||
+		(curr->batt.voltage <= BAT_LOW_VOLTAGE_THRESH))
+		return CRITICAL_SHUTDOWN_CUTOFF;
+	else
+		return CRITICAL_SHUTDOWN_IGNORE;
 }
 
 uint16_t tcpc_get_alert_status(void)
