@@ -1063,3 +1063,13 @@ void board_kblight_init(void)
 		break;
 	}
 }
+
+enum critical_shutdown board_critical_shutdown_check(
+		struct charge_state_data *curr)
+{
+	if (oem == PROJECT_VAYNE)
+		return CRITICAL_SHUTDOWN_CUTOFF;
+	else
+		return CRITICAL_SHUTDOWN_HIBERNATE;
+
+}
