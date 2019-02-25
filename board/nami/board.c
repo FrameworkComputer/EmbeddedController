@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "anx7447.h"
+#include "battery.h"
 #include "board_config.h"
 #include "button.h"
 #include "charge_manager.h"
@@ -1072,4 +1073,14 @@ enum critical_shutdown board_critical_shutdown_check(
 	else
 		return CRITICAL_SHUTDOWN_HIBERNATE;
 
+}
+
+uint8_t board_set_battery_level_shutdown(void)
+{
+	if (oem == PROJECT_VAYNE)
+		/* We match the shutdown threshold with Powerd's.
+		 * 4 + 1 = 5% because Powerd uses '<=' while EC uses '<'. */
+		return CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE + 1;
+	else
+		return BATTERY_LEVEL_SHUTDOWN;
 }
