@@ -1,0 +1,239 @@
+/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Intel BASEBOARD-RVP board-specific configuration */
+
+#ifndef __CROS_EC_BASEBOARD_H
+#define __CROS_EC_BASEBOARD_H
+
+#ifdef CHIP_FAMILY_IT83XX
+#include "ite_ec.h"
+#endif /* CHIP_FAMILY_IT83XX */
+
+/*
+ * Allow dangerous commands.
+ * TODO: Remove this config before production.
+ */
+#define CONFIG_SYSTEM_UNLOCKED
+
+#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
+#undef CONFIG_HOSTCMD_DEBUG_MODE
+
+/*
+ * By default, enable all console messages excepted HC, ACPI and event:
+ * The sensor stack is generating a lot of activity.
+ */
+#define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
+
+/* EC console commands  */
+#define CONFIG_CMD_CHARGER_DUMP
+
+/* Port80 display */
+#define CONFIG_MAX695X_SEVEN_SEGMENT_DISPLAY
+
+/* Battery */
+#define CONFIG_BATTERY_CUT_OFF
+#define CONFIG_BATTERY_FUEL_GAUGE
+#define CONFIG_BATTERY_PRESENT_GPIO GPIO_EC_BATT_PRES_L
+#define CONFIG_BATTERY_REVIVE_DISCONNECT
+#define CONFIG_BATTERY_SMART
+
+/* Charger */
+#define CONFIG_CHARGE_MANAGER
+#define CONFIG_CHARGER
+#define CONFIG_CHARGER_DISCHARGE_ON_AC
+#define CONFIG_CHARGER_INPUT_CURRENT 512
+#define CONFIG_CHARGER_SENSE_RESISTOR 5
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
+#define CONFIG_CHARGER_V2
+#undef  CONFIG_EXTPOWER_DEBOUNCE_MS
+#define CONFIG_EXTPOWER_DEBOUNCE_MS 200
+#define CONFIG_EXTPOWER_GPIO
+#define CONFIG_TRICKLE_CHARGING
+
+/* Keyboard */
+#define CONFIG_KEYBOARD_BOARD_CONFIG
+#define CONFIG_KEYBOARD_PROTOCOL_8042
+
+/* UART */
+#define CONFIG_LOW_POWER_IDLE
+
+/* USB-A config */
+
+/* BC1.2 config */
+#ifdef HAS_TASK_USB_CHG_P0
+#define CONFIG_CHARGE_RAMP_HW
+#endif
+
+/* USB PD config */
+#define CONFIG_USB_PD_ALT_MODE
+#define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT TYPEC_RP_3A0
+#define CONFIG_USB_PD_TCPM_TCPCI
+#define CONFIG_USB_PD_TRY_SRC
+#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
+#define CONFIG_USB_POWER_DELIVERY
+
+/* USB MUX */
+#define CONFIG_USBC_SS_MUX
+
+/* SoC / PCH */
+#define CONFIG_HOSTCMD_ESPI
+#define CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
+#define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_USE_HOST_EVENT
+#define CONFIG_CHIPSET_RESET_HOOK
+#define CONFIG_POWER_BUTTON
+#define CONFIG_POWER_BUTTON_X86
+#define CONFIG_POWER_COMMON
+#define CONFIG_POWER_S0IX
+#define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+
+/* EC */
+#define CONFIG_BOARD_VERSION_CUSTOM
+#define CONFIG_LED_COMMON
+#define CONFIG_LID_SWITCH
+#define CONFIG_VOLUME_BUTTONS
+#define CONFIG_WP_ALWAYS
+
+/* Tablet mode */
+#define CONFIG_TABLET_MODE
+#define CONFIG_HALL_SENSOR
+#define HALL_SENSOR_GPIO_L GPIO_TABLET_MODE_L
+
+/* Verified boot */
+#define CONFIG_SHA256_UNROLLED
+#define CONFIG_VBOOT_HASH
+/*
+ * Enable 1 slot of secure temporary storage to support
+ * suspend/resume with read/write memory training.
+ */
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
+
+/* Temperature sensor */
+#ifdef CONFIG_TEMP_SENSOR
+#define CONFIG_STEINHART_HART_3V0_22K6_47K_4050B
+#define CONFIG_THERMISTOR
+#define CONFIG_THROTTLE_AP
+#ifdef CONFIG_PECI
+#define CONFIG_PECI_COMMON
+#endif
+#endif
+
+/* Fan features */
+#ifdef CONFIG_FANS
+#undef CONFIG_FAN_INIT_SPEED
+#define CONFIG_FAN_INIT_SPEED 50
+#endif
+
+/* I2C ports */
+#define CONFIG_I2C
+#define CONFIG_I2C_MASTER
+
+/* EC exclude modules */
+#undef CONFIG_WATCHDOG
+
+#ifndef __ASSEMBLER__
+
+#include "gpio_signal.h"
+#include "registers.h"
+#include "usb_pd_tcpm.h"
+
+enum power_signal {
+	X86_SLP_S0_DEASSERTED,
+	X86_SLP_S3_DEASSERTED,
+	X86_SLP_S4_DEASSERTED,
+	X86_RSMRST_L_PGOOD,
+	X86_ALL_SYS_PWRGD,
+#if defined(CONFIG_CHIPSET_ICELAKE)
+	X86_SLP_SUS_DEASSERTED,
+	X86_DSW_DPWROK,
+#elif defined(CONFIG_CHIPSET_COMETLAKE)
+	PP5000_A_PGOOD,
+#else
+	#error "define Intel AP chipset variant"
+#endif
+	/* Number of X86 signals */
+	POWER_SIGNAL_COUNT
+};
+
+/* PWM channels */
+enum pwm_channel {
+	PWM_CH_FAN,
+	PWM_CH_COUNT
+};
+
+/* FAN channels */
+enum fan_channel {
+	FAN_CH_0,
+	FAN_CH_COUNT,
+};
+
+/* ADC channels */
+enum adc_channel {
+	ADC_TEMP_SNS_AMBIENT,
+	ADC_TEMP_SNS_DDR,
+	ADC_TEMP_SNS_SKIN,
+	ADC_TEMP_SNS_VR,
+	ADC_CH_COUNT,
+};
+
+/* Temperature sensors */
+enum temp_sensor_id {
+	TEMP_SNS_AMBIENT,
+	TEMP_SNS_BATTERY,
+	TEMP_SNS_DDR,
+	TEMP_SNS_PECI,
+	TEMP_SNS_SKIN,
+	TEMP_SNS_VR,
+	TEMP_SENSOR_COUNT,
+};
+
+/* List of supported batteries */
+enum battery_type {
+	BATTERY_SIMPLO_SMP_HHP_408,
+	BATTERY_SIMPLO_SMP_CA_445,
+	BATTERY_TYPE_COUNT,
+};
+
+/* TODO(b:132652892): Verify the below numbers. */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
+
+/* Define typical operating power */
+#define PD_OPERATING_POWER_MW  15000
+#define PD_MAX_CURRENT_MA      3000
+#define PD_MAX_VOLTAGE_MV      20000
+#define DC_JACK_MAX_VOLTAGE_MV 19000
+
+/* TCPC gpios */
+struct tcpc_gpio_t {
+	enum gpio_signal pin;
+	uint8_t pin_pol;
+};
+
+struct tcpc_gpio_config_t {
+	/* VBUS interrput */
+	struct tcpc_gpio_t vbus;
+	/* Source enable */
+	struct tcpc_gpio_t src;
+	/* Sink enable */
+	struct tcpc_gpio_t snk;
+};
+extern const struct tcpc_gpio_config_t tcpc_gpios[];
+
+/* Reset PD MCU */
+void board_reset_pd_mcu(void);
+void vbus0_evt(enum gpio_signal signal);
+void vbus1_evt(enum gpio_signal signal);
+void board_charging_enable(int port, int enable);
+void board_vbus_enable(int port, int enable);
+int ioexpander_read_intelrvp_version(int *port0, int *port1);
+
+#endif /* !__ASSEMBLER__ */
+
+#endif /* __CROS_EC_BASEBOARD_H */
