@@ -5,6 +5,7 @@
 
 /* System : hardware specific implementation */
 
+#include "clock_chip.h"
 #include "console.h"
 #include "cpu.h"
 #include "flash.h"
@@ -74,115 +75,6 @@ static void scp_enable_pirq(void)
 	/* Enable all peripheral to SCP IRQ, except IPC0. */
 	SCP_INTC_IRQ_ENABLE = 0xFFFFFFFE;
 	SCP_INTC_IRQ_ENABLE_MSB = 0xFFFFFFFF;
-}
-
-/* TODO(b/120176040): move to clock.c */
-static void scp_ulposc_config(int osc)
-{
-	/* TODO(b/120176040): add ULPOSC calibration */
-	const struct {
-		uint8_t div;
-		uint8_t cali;
-	} ulposc_config[] = {
-		{ .div = 12, .cali = 32},
-		{ .div = 16, .cali = 32},
-	};
-	const int osc_index = osc - 1;
-	uint32_t val;
-
-	if (osc != 1 || osc != 2)
-		return;
-
-	/* Clear all bits */
-	val = 0;
-	/* Enable CP */
-	val |= OSC_CP_EN;
-	/* Set div */
-	val |= ulposc_config[osc_index].div << 17;
-	/* F-band = 0, I-band = 4 */
-	val |= 4 << 6;
-	/* Set calibration */
-	val |= ulposc_config[osc_index].cali;
-	/* Set control register 1 */
-	AP_ULPOSC_CON02(osc) = val;
-	/* Set control register 2, enable div2 */
-	AP_ULPOSC_CON13(osc) |= OSC_DIV2_EN;
-}
-
-/*
- * TODO(b/120176040): move to clock.c and separate into
- * scp_set_clock_high_enable and _disable functions.
- */
-void scp_set_clock_high(int osc, int on)
-{
-	if (on) {
-		switch (osc) {
-		case 1:
-			/* Enable ULPOSC */
-			SCP_CLK_EN |= EN_CLK_HIGH;
-			/* TODO: Turn on clock gate after 25ms */
-			SCP_CLK_EN |= CG_CLK_HIGH;
-			break;
-		case 2:
-			/* Enable ULPOSC1 & ULPOSC2 */
-			SCP_CLK_EN |= EN_CLK_HIGH;
-			SCP_CLK_ON_CTRL &= ~HIGH_CORE_DIS_SUB;
-			/* TODO: Turn on clock gate after 25ms */
-			SCP_CLK_HIGH_CORE |= 1;
-			break;
-		default:
-			break;
-		}
-	} else {
-		switch (osc) {
-		case 1:
-			/* Disable clock gate */
-			SCP_CLK_EN &= CG_CLK_HIGH;
-			/* TODO: Turn off ULPOSC1 after 50us */
-			SCP_CLK_EN &= EN_CLK_HIGH;
-			break;
-		case 2:
-			SCP_CLK_HIGH_CORE &= ~1;
-			/* TODO: Turn off ULPOSC1 after 50us */
-			SCP_CLK_ON_CTRL |= HIGH_CORE_DIS_SUB;
-			break;
-		default:
-			break;
-		}
-	}
-	/* TODO: Wait 25us */
-}
-
-/* TODO(b/120176040): move to clock.c */
-static void scp_enable_clock(void)
-{
-	/* VREQ */
-	SCP_CPU_VREQ = 0x10001;
-	SCP_SECURE_CTRL &= ~ENABLE_SPM_MASK_VREQ;
-
-	/* DDREN auto mode */
-	SCP_SYS_CTRL |= AUTO_DDREN;
-
-	/* Set settle time */
-	SCP_CLK_SYS_VAL = 1;  /* System clock */
-	SCP_CLK_HIGH_VAL = 1; /* ULPOSC */
-	SCP_CLK_SLEEP_CTRL = (SCP_CLK_SLEEP_CTRL & ~VREQ_COUNTER_MASK) | 2;
-
-	/* Disable slow wake */
-	SCP_CLK_SLEEP = SLOW_WAKE_DISABLE;
-	/* Disable SPM sleep control, disable sleep mode */
-	SCP_CLK_SLEEP_CTRL &= ~(SPM_SLEEP_MODE | EN_SLEEP_CTRL);
-
-	/* Turn off ULPOSC2 */
-	SCP_CLK_ON_CTRL |= HIGH_CORE_DIS_SUB;
-	scp_ulposc_config(1);
-	scp_set_clock_high(1, 1); /* Turn on ULPOSC1 */
-	scp_ulposc_config(2);
-	scp_set_clock_high(2, 1); /* Turn on ULPOSC2 */
-
-	/* Enable default clock gate */
-	SCP_CLK_GATE |= CG_DMA_CH3 | CG_DMA_CH2 | CG_DMA_CH1 | CG_DMA_CH0 |
-			CG_I2C_M | CG_MAD_M;
 }
 
 void system_pre_init(void)
