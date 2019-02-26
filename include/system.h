@@ -392,24 +392,25 @@ void board_hibernate_late(void) __attribute__((weak));
 /* Minimum duration to get proper hibernation */
 #define SYSTEM_HIB_MINIMUM_DURATION 0, 150000
 
+#ifdef CONFIG_RTC
 /**
  * Read the real-time clock.
  *
  * @return The real-time clock value as a timestamp.
  */
 timestamp_t system_get_rtc(void);
+#endif /* defined(CONFIG_RTC) */
 
 /**
  * Print out the current real-time clock value to the console.
  *
  * @param channel	Console channel to print on.
  */
-/* TODO(aaboagye): Replace this with CONFIG_RTC eventually. */
-#ifdef CONFIG_CMD_RTC
+#ifdef CONFIG_RTC
 void print_system_rtc(enum console_channel channel);
 #else
 static inline void print_system_rtc(enum console_channel channel) { }
-#endif /* !defined(CONFIG_CMD_RTC) */
+#endif /* !defined(CONFIG_RTC) */
 
 /**
  * Enable hibernate interrupt

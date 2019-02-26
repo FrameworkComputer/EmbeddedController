@@ -364,7 +364,6 @@ DECLARE_HOOK(HOOK_SYSJUMP, reset_flash_cache, HOOK_PRIO_DEFAULT);
 /*****************************************************************************/
 /* Console commands */
 
-#ifdef CONFIG_CMD_RTC
 void print_system_rtc(enum console_channel ch)
 {
 	uint32_t sec;
@@ -376,6 +375,7 @@ void print_system_rtc(enum console_channel ch)
 	cprintf(ch, "RTC: 0x%08x (%d.00 s)\n", sec, sec);
 }
 
+#ifdef CONFIG_CMD_RTC
 static int command_system_rtc(int argc, char **argv)
 {
 	char *e;

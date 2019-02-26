@@ -95,6 +95,7 @@
 #define CONFIG_HOSTCMD_ALIGNED
 #define CONFIG_HOSTCMD_LPC
 #define CONFIG_PECI
+#define CONFIG_RTC
 #define CONFIG_SWITCH
 #define CONFIG_MPU
 

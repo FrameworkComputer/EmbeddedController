@@ -2670,6 +2670,9 @@
  */
 #undef CONFIG_PWM_KBLIGHT
 
+/* Support Real-Time Clock (RTC) */
+#undef CONFIG_RTC
+
 /* Base address of RAM for the chip */
 #undef CONFIG_RAM_BASE
 

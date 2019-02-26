@@ -660,7 +660,6 @@ const char *system_get_chip_revision(void)
 
 /*****************************************************************************/
 /* Console commands */
-#ifdef CONFIG_CMD_RTC
 void print_system_rtc(enum console_channel ch)
 {
 	uint32_t rtc;
@@ -671,6 +670,7 @@ void print_system_rtc(enum console_channel ch)
 		 rtc, rtcss, rtc, HIB_RTC_SUBSEC_TO_USEC(rtcss));
 }
 
+#ifdef CONFIG_CMD_RTC
 static int command_system_rtc(int argc, char **argv)
 {
 	if (argc == 3 && !strcasecmp(argv[1], "set")) {

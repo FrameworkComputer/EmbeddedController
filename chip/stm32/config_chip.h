@@ -118,6 +118,9 @@
 /* Use DMA */
 #define CONFIG_DMA
 
+/* STM32 features RTC (optional feature) */
+#define CONFIG_RTC
+
 /* Number of peripheral request signals per DMA channel */
 #define STM32_DMA_PERIPHERALS_PER_CHANNEL	4
 

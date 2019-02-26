@@ -914,7 +914,6 @@ int system_is_reboot_warm(void)
 
 /*****************************************************************************/
 /* Console commands */
-#ifdef CONFIG_CMD_RTC
 void print_system_rtc(enum console_channel ch)
 {
 	uint32_t sec = system_get_rtc_sec();
@@ -922,6 +921,7 @@ void print_system_rtc(enum console_channel ch)
 	cprintf(ch, "RTC: 0x%08x (%d.00 s)\n", sec, sec);
 }
 
+#ifdef CONFIG_CMD_RTC
 static int command_system_rtc(int argc, char **argv)
 {
 	if (argc == 3 && !strcasecmp(argv[1], "set")) {
