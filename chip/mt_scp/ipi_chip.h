@@ -47,7 +47,7 @@ struct ipc_shared_obj {
 };
 
 /* Send a IPI contents to AP. */
-int ipi_send(int32_t id, void *buf, uint32_t len, int wait);
+int ipi_send(int32_t id, const void *buf, uint32_t len, int wait);
 
 /* Size of the rpmsg device name, should sync across kernel and EC. */
 #define RPMSG_NAME_SIZE 32

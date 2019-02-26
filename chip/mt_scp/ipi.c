@@ -59,7 +59,7 @@ static inline void try_to_wakeup_ap(int32_t id)
 }
 
 /* Send data from SCP to AP. */
-int ipi_send(int32_t id, void *buf, uint32_t len, int wait)
+int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 {
 	/*
 	 * TODO(b:117917141): Evaluate if we can remove this once we have the
