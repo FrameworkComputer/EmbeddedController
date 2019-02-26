@@ -61,10 +61,6 @@ static int accel_disp;
 
 #define SENSOR_ACTIVE(_sensor) (sensor_active & (_sensor)->active_mask)
 
-#if defined(CONFIG_HOSTCMD_X86) || defined(TEST_MOTION_LID)
-#define UPDATE_HOST_MEM_MAP
-#endif
-
 /*
  * Adjustment in us to ec rate when calculating interrupt interval:
  * To be sure the EC will send an interrupt even if it finishes processing
@@ -636,7 +632,7 @@ static inline void set_present(uint8_t *lpc_status)
 	*lpc_status |= EC_MEMMAP_ACC_STATUS_PRESENCE_BIT;
 }
 
-#ifdef UPDATE_HOST_MEM_MAP
+#ifdef CONFIG_MOTION_FILL_LPC_SENSE_DATA
 /* Update/Write LPC data */
 static inline void update_sense_data(uint8_t *lpc_status, int *psample_id)
 {
@@ -935,7 +931,7 @@ void motion_sense_task(void *u)
 #ifdef CONFIG_ACCEL_FIFO
 	timestamp_t ts_last_int;
 #endif
-#ifdef UPDATE_HOST_MEM_MAP
+#ifdef CONFIG_MOTION_FILL_LPC_SENSE_DATA
 	int sample_id = 0;
 	uint8_t *lpc_status;
 
@@ -994,7 +990,7 @@ void motion_sense_task(void *u)
 			CPRINTF("]\n");
 		}
 #endif
-#ifdef UPDATE_HOST_MEM_MAP
+#ifdef CONFIG_MOTION_FILL_LPC_SENSE_DATA
 		update_sense_data(lpc_status, &sample_id);
 #endif
 

@@ -1801,6 +1801,10 @@
 
 /* Define motion sensor count in board layer */
 #undef CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
+
+/* Define when LPC memory space needs to be populated. */
+#undef CONFIG_MOTION_FILL_LPC_SENSE_DATA
+
 /******************************************************************************/
 /* Host to RAM (H2RAM) Memory Mapping */
 
@@ -4275,6 +4279,11 @@
 #ifndef CONFIG_SENSORHUB_LSM6DSM
 #error "Enable SENSORHUB_LSM6DSM."
 #endif
+#endif
+
+/* Fill LPC sense data on X86 architecture. */
+#ifdef CONFIG_HOSTCMD_X86
+#define CONFIG_MOTION_FILL_LPC_SENSE_DATA
 #endif
 
 /*
