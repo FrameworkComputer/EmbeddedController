@@ -74,7 +74,7 @@ static void scp_ulposc_config(int osc)
 	const int osc_index = osc - 1;
 	uint32_t val;
 
-	if (osc != 1 || osc != 2)
+	if (osc != 1 && osc != 2)
 		return;
 
 	/* Clear all bits */
