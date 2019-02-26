@@ -8,13 +8,6 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/* board revision */
-#define BOARD_REV 2
-
-#if BOARD_REV < 1 || BOARD_REV > 2
-#error "Board revision out of range"
-#endif
-
 #define CONFIG_FLASH_SIZE 0x40000 /* Image file size: 256KB */
 #undef  CONFIG_LID_SWITCH
 #undef  CONFIG_FW_INCLUDE_RO
@@ -47,13 +40,10 @@
  *   2 - share with AP UART0
  */
 #define CONFIG_UART_CONSOLE 0
-#if BOARD_REV <= 1
-#define   UART0_PINMUX_11_12
-#undef    UART0_PINMUX_110_112
-#else
+
+/* We let AP setup the correct pinmux. */
 #undef    UART0_PINMUX_11_12
-#define   UART0_PINMUX_110_112
-#endif
+#undef    UART0_PINMUX_110_112
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
