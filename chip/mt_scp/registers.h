@@ -333,6 +333,7 @@
 #define   CPU_VREQ_HW_MODE		0x10001
 #define SCP_CLK_CLEAR			REG32(SCP_CLK_BASE + 0x58)
 #define SCP_CLK_HIGH_CORE		REG32(SCP_CLK_BASE + 0x5C)
+#define   CLK_HIGH_CORE_CG		(1 << 1)
 #define SCP_SLEEP_IRQ2			REG32(SCP_CLK_BASE + 0x64)
 #define SCP_CLK_ON_CTRL			REG32(SCP_CLK_BASE + 0x6C)
 #define   HIGH_AO			(1 << 0)
@@ -451,9 +452,25 @@
 #define   SCR_DEEPSLEEP			(1 << 2)
 
 /* AP regs */
-#define AP_BASE                         0xA0000000
+#define AP_BASE				0xA0000000
 #define TOPCK_BASE			AP_BASE /* Top clock */
 #define SCP_UART2_BASE			(AP_BASE + 0x01002000) /* AP UART0 */
+
+/* OSC meter */
+#define AP_CLK_MISC_CFG_0		REG32(TOPCK_BASE + 0x0104)
+#define   MISC_METER_DIVISOR_MASK	0xff000000
+#define   MISC_METER_DIV_1		0
+#define AP_CLK_DBG_CFG			REG32(TOPCK_BASE + 0x010C)
+#define   DBG_MODE_MASK			3
+#define   DBG_MODE_SET_CLOCK            0
+#define   DBG_BIST_SOURCE_MASK		(0x3f << 16)
+#define   DBG_BIST_SOURCE_ULPOSC1	(0x26 << 16)
+#define   DBG_BIST_SOURCE_ULPOSC2	(0x25 << 16)
+#define AP_SCP_CFG_0			REG32(TOPCK_BASE + 0x0220)
+#define   CFG_FREQ_METER_RUN		(1 << 4)
+#define   CFG_FREQ_METER_ENABLE		(1 << 12)
+#define AP_SCP_CFG_1			REG32(TOPCK_BASE + 0x0224)
+#define   CFG_FREQ_COUNTER(CFG1)	((CFG1) & 0xFFFF)
 
 /* GPIO */
 #define AP_GPIO_BASE			(AP_BASE + 0x00005000)
@@ -493,10 +510,10 @@
  * PLL ULPOSC
  * ULPOSC1:  AP_ULPOSC_CON[0] AP_ULPOSC_CON[1]
  * ULPOSC2:  AP_ULPOSC_CON[2] AP_ULPOSC_CON[3]
- * osc: 1 for ULPOSC1, 2 for ULPSOC2.
+ * osc: 0 for ULPOSC1, 1 for ULPSOC2.
  */
-#define AP_ULPOSC_BASE0			(AP_BASE + 0xC700 - 0x8)
-#define AP_ULPOSC_BASE1			(AP_BASE + 0xC704 - 0x8)
+#define AP_ULPOSC_BASE0			(AP_BASE + 0xC700)
+#define AP_ULPOSC_BASE1			(AP_BASE + 0xC704)
 #define AP_ULPOSC_CON02(osc)		REG32(AP_ULPOSC_BASE0 + (osc) * 0x8)
 #define AP_ULPOSC_CON13(osc)		REG32(AP_ULPOSC_BASE1 + (osc) * 0x8)
 /*
@@ -514,7 +531,7 @@
 #define OSC_DIV_MASK			(0x1f << 17)
 #define OSC_CP_EN			(1 << 23)
 #define OSC_RESERVED_MASK		(0xff << 24)
-/* AP_ILPOSC_CON[1,3] */
+/* AP_ULPOSC_CON[1,3] */
 #define OSC_MOD_MASK			(0x03 << 0)
 #define OSC_DIV2_EN			(1 << 2)
 

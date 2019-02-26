@@ -7,8 +7,10 @@
 
 #include "clock.h"
 #include "common.h"
+#include "console.h"
 #include "registers.h"
 #include "task.h"
+#include "timer.h"
 #include "util.h"
 
 void clock_init(void)
@@ -61,16 +63,18 @@ void clock_init(void)
 	task_enable_irq(SCP_IRQ_CLOCK2);
 }
 
+/* TODO(b/120176040): add ULPOSC calibration */
+static const struct {
+	uint8_t div;
+	uint8_t cali;
+} ulposc_config[] = {
+	/* Default config */
+	{ .div = 12, .cali = 32},
+	{ .div = 16, .cali = 32},
+};
+
 static void scp_ulposc_config(int osc)
 {
-	/* TODO(b/120176040): add ULPOSC calibration */
-	const struct {
-		uint8_t div;
-		uint8_t cali;
-	} ulposc_config[] = {
-		{ .div = 12, .cali = 32},
-		{ .div = 16, .cali = 32},
-	};
 	const int osc_index = osc - 1;
 	uint32_t val;
 
@@ -88,49 +92,32 @@ static void scp_ulposc_config(int osc)
 	/* Set calibration */
 	val |= ulposc_config[osc_index].cali;
 	/* Set control register 1 */
-	AP_ULPOSC_CON02(osc) = val;
+	AP_ULPOSC_CON02(osc_index) = val;
 	/* Set control register 2, enable div2 */
-	AP_ULPOSC_CON13(osc) |= OSC_DIV2_EN;
+	AP_ULPOSC_CON13(osc_index) |= OSC_DIV2_EN;
 }
 
-void scp_set_clock_high(int osc, int on)
+void scp_clock_high_enable(int osc)
 {
-	if (on) {
-		switch (osc) {
-		case 1:
-			/* Enable ULPOSC */
-			SCP_CLK_EN |= EN_CLK_HIGH;
-			/* TODO: Turn on clock gate after 25ms */
-			SCP_CLK_EN |= CG_CLK_HIGH;
-			break;
-		case 2:
-			/* Enable ULPOSC1 & ULPOSC2 */
-			SCP_CLK_EN |= EN_CLK_HIGH;
-			SCP_CLK_ON_CTRL &= ~HIGH_CORE_DIS_SUB;
-			/* TODO: Turn on clock gate after 25ms */
-			SCP_CLK_HIGH_CORE |= 1;
-			break;
-		default:
-			break;
-		}
-	} else {
-		switch (osc) {
-		case 1:
-			/* Disable clock gate */
-			SCP_CLK_EN &= CG_CLK_HIGH;
-			/* TODO: Turn off ULPOSC1 after 50us */
-			SCP_CLK_EN &= EN_CLK_HIGH;
-			break;
-		case 2:
-			SCP_CLK_HIGH_CORE &= ~1;
-			/* TODO: Turn off ULPOSC1 after 50us */
-			SCP_CLK_ON_CTRL |= HIGH_CORE_DIS_SUB;
-			break;
-		default:
-			break;
-		}
+	/* Enable high speed clock */
+	SCP_CLK_EN |= EN_CLK_HIGH;
+
+	switch (osc) {
+	case 1:
+		/* After 25ms, enable ULPOSC */
+		udelay(25 * MSEC);
+		SCP_CLK_EN |= CG_CLK_HIGH;
+		break;
+	case 2:
+		/* Turn off ULPOSC2 high-core-disable switch */
+		SCP_CLK_ON_CTRL &= ~HIGH_CORE_DIS_SUB;
+		/* After 25ms, turn on ULPOSC2 high core clock gate */
+		udelay(25 * MSEC);
+		SCP_CLK_HIGH_CORE |= CLK_HIGH_CORE_CG;
+		break;
+	default:
+		break;
 	}
-	/* TODO: Wait 25us */
 }
 
 void scp_enable_clock(void)
@@ -155,13 +142,56 @@ void scp_enable_clock(void)
 	/* Turn off ULPOSC2 */
 	SCP_CLK_ON_CTRL |= HIGH_CORE_DIS_SUB;
 	scp_ulposc_config(1);
-	scp_set_clock_high(1, 1); /* Turn on ULPOSC1 */
+	scp_clock_high_enable(1); /* Turn on ULPOSC1 */
 	scp_ulposc_config(2);
-	scp_set_clock_high(2, 1); /* Turn on ULPOSC2 */
+	scp_clock_high_enable(2); /* Turn on ULPOSC2 */
 
 	/* Enable default clock gate */
 	SCP_CLK_GATE |= CG_DMA_CH3 | CG_DMA_CH2 | CG_DMA_CH1 | CG_DMA_CH0 |
 			CG_I2C_M | CG_MAD_M;
+}
+
+unsigned int clock_measure_ulposc_freq(int osc)
+{
+	timestamp_t deadline;
+	unsigned int result = 0;
+
+	if (osc != 1 && osc != 2)
+		return result;
+
+	/* Before select meter clock input, bit[1:0] = b00 */
+	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_MODE_MASK) |
+			 DBG_MODE_SET_CLOCK;
+
+	/* Select source, bit[21:16] = clk_src */
+	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_BIST_SOURCE_MASK) |
+			 (osc == 1 ? DBG_BIST_SOURCE_ULPOSC1 :
+				     DBG_BIST_SOURCE_ULPOSC2);
+
+	/* Set meter divisor to 1, bit[31:24] = b00000000 */
+	AP_CLK_MISC_CFG_0 = (AP_CLK_MISC_CFG_0 & ~MISC_METER_DIVISOR_MASK) |
+			    MISC_METER_DIV_1;
+
+	/* Enable frequency meter, without start */
+	AP_SCP_CFG_0 |= CFG_FREQ_METER_ENABLE;
+
+	/* Trigger frequency meter start */
+	AP_SCP_CFG_0 |= CFG_FREQ_METER_RUN;
+
+	deadline.val = get_time().val + 400 * MSEC;
+	while (AP_SCP_CFG_0 & CFG_FREQ_METER_RUN) {
+		if (timestamp_expired(deadline, NULL))
+			goto exit;
+		msleep(1);
+	}
+
+	/* Get result */
+	result = CFG_FREQ_COUNTER(AP_SCP_CFG_1);
+
+exit:
+	/* Disable freq meter */
+	AP_SCP_CFG_0 &= ~CFG_FREQ_METER_ENABLE;
+	return result;
 }
 
 void clock_control_irq(void)
@@ -179,3 +209,16 @@ void clock_fast_wakeup_irq(void)
 	task_clear_pending_irq(SCP_IRQ_CLOCK2);
 }
 DECLARE_IRQ(SCP_IRQ_CLOCK2, clock_fast_wakeup_irq, 3);
+
+/* Console command */
+int command_ulposc(int argc, char *argv[])
+{
+	/* SCP clock meter counts every (26MHz / 1024) tick */
+	ccprintf("ULPOSC1 frequency: %u MHz\n",
+		 clock_measure_ulposc_freq(1) * 26 / 1024);
+	ccprintf("ULPOSC2 frequency: %u MHz\n",
+		 clock_measure_ulposc_freq(2) * 26 / 1024);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(ulposc, command_ulposc, NULL, NULL);
