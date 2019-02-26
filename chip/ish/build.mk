@@ -32,4 +32,8 @@ SCRIPTDIR:=./chip/${CHIP}/util
 # Allow SPI size to be overridden by board specific size, default to 256KB.
 CHIP_SPI_SIZE_KB?=256
 
-$(out)/$(PROJECT).bin:
+# Commands to convert $^ to $@.tmp - This will add the manifest header needed
+# to load the FW onto the ISH HW.
+cmd_obj_to_bin = $(OBJCOPY) --gap-fill=0xff -O binary $< $@.tmp1 ; \
+		 ${SCRIPTDIR}/pack_ec.py -o $@.tmp -i $@.tmp1 \
+		 --image_size $(_rw_size); rm -f $@.tmp1
