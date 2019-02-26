@@ -240,6 +240,12 @@ enum power_state power_handle_state(enum power_state state)
 	/* Retry S5->S3 transition, if not zero. */
 	static int s5s3_retry;
 
+	/*
+	 * PMIC power went away (AP most likely decided to shut down):
+	 * transition to S5, G3.
+	 */
+	static int ap_shutdown;
+
 	switch (state) {
 	case POWER_G3:
 		/* Go back to S5->G3 if the PMIC unexpectedly starts again. */
@@ -248,7 +254,8 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S5:
-		if (forcing_shutdown) {
+		if (forcing_shutdown || ap_shutdown) {
+			ap_shutdown = 0;
 			return POWER_S5G3;
 		} else {
 			s5s3_retry = 1;
@@ -376,6 +383,10 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S5:
+		/* PMIC has shutdown, transition to G3. */
+		if (!(power_get_signals() & IN_PGOOD_PMIC))
+			ap_shutdown = 1;
+
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
