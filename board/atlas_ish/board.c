@@ -24,17 +24,3 @@ const struct i2c_port_t i2c_ports[]  = {
 	GPIO_I2C_PORT_TP_SCL, GPIO_I2C_PORT_TP_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
-/* dummy functions to remove 'undefined' symbol link error for acpi.o
- * due to CONFIG_LPC flag
- */
-#ifdef CONFIG_HOSTCMD_LPC
-int lpc_query_host_event_state(void)
-{
-	return 0;
-}
-
-void lpc_set_acpi_status_mask(uint8_t mask)
-{
-}
-#endif

@@ -35,10 +35,6 @@
 /* TODO(b/123634700): This is temporary until FIFO is supported */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << BASE_ACCEL)
 
-/* HECI Support*/
-#define CONFIG_HECI
-/* ISH IPC (over HECI) */
-#define CONFIG_ISH_IPC
 /* Host command over HECI */
 #define CONFIG_HOSTCMD_HECI
 

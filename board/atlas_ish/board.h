@@ -31,12 +31,8 @@
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 
-/* ISH IPC */
-#define CONFIG_ISH_IPC
-/* HECI */
-#define CONFIG_HECI
 /* HID subsystem */
-#define CONFIG_HID_SUBSYS
+#define CONFIG_HID_HECI
 
 /* I2C ports */
 #define I2C_PORT_TP ISH_I2C0
