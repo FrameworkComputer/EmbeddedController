@@ -207,6 +207,13 @@ int pd_snk_is_vbus_provided(int port)
 
 static void board_init(void)
 {
+	/* If the reset cause is external, pulse PMIC force reset. */
+	if (system_get_reset_flags() == RESET_FLAG_RESET_PIN) {
+		gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 0);
+		msleep(100);
+		gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 1);
+	}
+
 	/* Set SPI1 PB13/14/15 pins to high speed */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xfc000000;
 
