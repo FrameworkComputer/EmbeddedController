@@ -187,6 +187,49 @@
 #define SCP_L1_EXT_ADDR_OTHER_LSB_MASK	(BIT(SCP_REMAP_ADDR_SHIFT) - 1)
 #define SCP_L1_EXT_ADDR_OTHER_MSB_MASK	((~0) << SCP_REMAP_ADDR_SHIFT)
 
+/* Audio/voice FIFO */
+#define SCP_AUDIO_BASE			(SCP_CFG_BASE + 0x1000)
+#define SCP_VIF_FIFO_EN			REG32(SCP_AUDIO_BASE)
+#define   VIF_FIFO_RSTN			(1 << 0)
+#define   VIF_FIFO_IRQ_EN		(1 << 1)
+#define   VIF_FIFO_SRAM_PWR		(1 << 2)
+#define   VIF_FIFO_RSTN_STATUS		(1 << 4)
+#define SCP_VIF_FIFO_STATUS		REG32(SCP_AUDIO_BASE + 0x04)
+#define   VIF_FIFO_VALID		(1 << 0)
+#define   VIF_FIFO_FULL			(1 << 4)
+#define   VIF_FIFO_LEVEL(status)	(((status) >> 16) & 0xff)
+#define   VIF_FIFO_MAX			256
+#define SCP_VIF_FIFO_DATA		REG32(SCP_AUDIO_BASE + 0x08)
+#define SCP_VIF_FIFO_DATA_THRE		REG32(SCP_AUDIO_BASE + 0x0C)
+/* VIF IRQ status clears on read! */
+#define SCP_VIF_FIFO_IRQ_STATUS		REG32(SCP_AUDIO_BASE + 0x10)
+/* Audio/voice serial interface */
+#define SCP_RXIF_CFG0			REG32(SCP_AUDIO_BASE + 0x14)
+#define   RXIF_CFG0_RESET_VAL		0x2A130001
+#define   RXIF_AFE_ON			(1 << 0)
+#define   RXIF_SCKINV			(1 << 1)
+#define   RXIF_RG_DL_2_IN_MODE(mode)	(((mode) & 0xf) << 8)
+#define   RXIF_RGDL2_AMIC_16K		(0x1 << 8)
+#define   RXIF_RGDL2_DMIC_16K		(0x2 << 8)
+#define   RXIF_RGDL2_DMIC_LP_16K	(0x3 << 8)
+#define   RXIF_RGDL2_AMIC_32K		(0x5 << 8)
+#define   RXIF_RGDL2_MASK		(0xf << 8)
+#define   RXIF_UP8X_RSP(p)		(((p) & 0x7) << 16)
+#define   RXIF_RG_RX_READEN		(1 << 19)
+#define   RXIF_MONO			(1 << 20)
+#define   RXIF_RG_CLK_A16P7K_EN(cnt)	(((cnt) & 0xff) << 24)
+#define SCP_RXIF_CFG1			REG32(SCP_AUDIO_BASE + 0x18)
+#define   RXIF_CFG1_RESET_VAL		0x33180014
+#define   RXIF_RG_SYNC_CNT_TBL(t)	((t) & 0x1ff)
+#define   RXIF_RG_SYNC_SEARCH_TBL(t)	(((t) & 0x1f) << 16)
+#define   RXIF_RG_SYNC_CHECK_ROUND(r)	(((r) & 0xf) << 24)
+#define   RXIF_RG_INSYNC_CHECK_ROUND(r)	(((r) & 0xf) << 28)
+#define SCP_RXIF_CFG2			REG32(SCP_AUDIO_BASE + 0x1C)
+#define   RXIF_SYNC_WORD(w)		((w) & 0xffff)
+#define SCP_RXIF_OUT			REG32(SCP_AUDIO_BASE + 0x20)
+#define SCP_RXIF_STATUS			REG32(SCP_AUDIO_BASE + 0x24)
+#define SCP_RXIF_IRQ_EN			REG32(SCP_AUDIO_BASE + 0x28)
+
 /* INTC control */
 #define SCP_INTC_BASE			(SCP_CFG_BASE + 0x2000)
 #define SCP_INTC_IRQ_STATUS		REG32(SCP_INTC_BASE)
