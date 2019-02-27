@@ -10,7 +10,15 @@
 
 #define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ## args)
 
-static const uint32_t capabilities;
+static const uint32_t capabilities =
+	0
+#ifdef CONFIG_AUDIO_CODEC_CAP_WOV_AUDIO_SHM
+	| BIT(EC_CODEC_CAP_WOV_AUDIO_SHM)
+#endif
+#ifdef CONFIG_AUDIO_CODEC_CAP_WOV_LANG_SHM
+	| BIT(EC_CODEC_CAP_WOV_LANG_SHM)
+#endif
+	;
 
 static struct {
 	uint8_t cap;

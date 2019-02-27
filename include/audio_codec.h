@@ -176,4 +176,79 @@ int audio_codec_i2s_rx_set_daifmt(uint8_t daifmt);
  */
 int audio_codec_i2s_rx_set_bclk(uint32_t bclk);
 
+
+/*
+ * WoV abstract layer
+ */
+
+/*
+ * Enables WoV.
+ *
+ * Returns:
+ *   EC_SUCCESS if success.
+ *   EC_ERROR_UNKNOWN if internal error.
+ *   EC_ERROR_BUSY if has enabled.
+ */
+int audio_codec_wov_enable(void);
+
+/*
+ * Disables WoV.
+ *
+ * Returns:
+ *   EC_SUCCESS if success.
+ *   EC_ERROR_UNKNOWN if internal error.
+ *   EC_ERROR_BUSY if has not enabled.
+ */
+int audio_codec_wov_disable(void);
+
+/*
+ * Reads the WoV audio data from chip.
+ *
+ * @buf is the target pointer to put the data.
+ * @count is the maximum number of bytes to read.
+ *
+ * Returns:
+ *   -1 if any errors.
+ *   0 if no data.
+ *   >0 if success.  The returned value denotes number of bytes read.
+ */
+int32_t audio_codec_wov_read(void *buf, uint32_t count);
+
+/*
+ * Enables notification if WoV audio data is available.
+ *
+ * Returns:
+ *   EC_SUCCESS if success.
+ *   EC_ERROR_UNKNOWN if internal error.
+ *   EC_ERROR_BUSY if has enabled.
+ *   EC_ERROR_ACCESS_DENIED if the notifiee has not set.
+ */
+int audio_codec_wov_enable_notifier(void);
+
+/*
+ * Disables WoV data notification.
+ *
+ * Returns:
+ *   EC_SUCCESS if success.
+ *   EC_ERROR_UNKNOWN if internal error.
+ *   EC_ERROR_BUSY if has not enabled.
+ *   EC_ERROR_ACCESS_DENIED if the notifiee has not set.
+ */
+int audio_codec_wov_disable_notifier(void);
+
+/*
+ * Audio buffer for 2 seconds S16_LE, 16kHz, mono.
+ */
+extern uintptr_t audio_codec_wov_audio_buf_addr;
+
+/*
+ * Language model buffer for speech-micro.  At least 67KB.
+ */
+extern uintptr_t audio_codec_wov_lang_buf_addr;
+
+/*
+ * Task for running WoV.
+ */
+void audio_codec_wov_task(void *arg);
+
 #endif

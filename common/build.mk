@@ -32,6 +32,7 @@ common-$(CONFIG_AP_HANG_DETECT)+=ap_hang_detect.o
 common-$(CONFIG_AUDIO_CODEC)+=audio_codec.o
 common-$(CONFIG_AUDIO_CODEC_DMIC)+=audio_codec_dmic.o
 common-$(CONFIG_AUDIO_CODEC_I2S_RX)+=audio_codec_i2s_rx.o
+common-$(CONFIG_AUDIO_CODEC_WOV)+=audio_codec_wov.o
 common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o
 common-$(CONFIG_BASE32)+=base32.o
 common-$(CONFIG_DETACHABLE_BASE)+=base_state.o
