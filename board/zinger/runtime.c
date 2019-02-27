@@ -145,7 +145,6 @@ uint32_t task_wait_event(int timeout_us)
 	uint32_t evt;
 	timestamp_t t0, t1;
 	struct rtc_time_reg rtc0, rtc1;
-	int rtc_diff;
 
 	t1.val = get_time().val + timeout_us;
 
@@ -190,8 +189,7 @@ uint32_t task_wait_event(int timeout_us)
 
 			/* fast forward timer according to RTC counter */
 			reset_rtc_alarm(&rtc1);
-			rtc_diff = get_rtc_diff(&rtc0, &rtc1);
-			t0.val = t0.val + rtc_diff;
+			t0.val += get_rtc_diff(&rtc0, &rtc1);
 			force_time(t0);
 		}
 

@@ -57,8 +57,8 @@ int32_t rtcss_to_us(uint32_t rtcss);
 uint32_t us_to_rtcss(int32_t us);
 
 /* Return sub-10-sec time diff between two rtc readings */
-int32_t get_rtc_diff(const struct rtc_time_reg *rtc0,
-		     const struct rtc_time_reg *rtc1);
+uint32_t get_rtc_diff(const struct rtc_time_reg *rtc0,
+		      const struct rtc_time_reg *rtc1);
 
 /* Read RTC values */
 void rtc_read(struct rtc_time_reg *rtc);

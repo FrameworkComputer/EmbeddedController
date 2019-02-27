@@ -168,19 +168,28 @@ void sec_to_rtc(uint32_t sec, struct rtc_time_reg *rtc)
 	rtc->rtc_ssr = 0;
 }
 
-/* Return sub-10-sec time diff between two rtc readings */
-int32_t get_rtc_diff(const struct rtc_time_reg *rtc0,
-		     const struct rtc_time_reg *rtc1)
+/* Return sub-10-sec time diff between two rtc readings
+ *
+ * Note: this function assumes rtc0 was sampled before rtc1.
+ * Additionally, this function only looks at the difference mod 10
+ * seconds.
+ */
+uint32_t get_rtc_diff(const struct rtc_time_reg *rtc0,
+		      const struct rtc_time_reg *rtc1)
 {
-	int32_t diff;
+	uint32_t rtc0_val, rtc1_val, diff;
 
-	/* Note: This only looks at the diff mod 10 seconds */
-	diff =  ((rtc1->rtc_tr & 0xf) * SECOND +
-		 rtcss_to_us(rtc1->rtc_ssr)) -
-		((rtc0->rtc_tr & 0xf) * SECOND +
-		 rtcss_to_us(rtc0->rtc_ssr));
-
-	return (diff < 0) ? (diff + 10 * SECOND) : diff;
+	rtc0_val = (rtc0->rtc_tr & 0xF) * SECOND + rtcss_to_us(rtc0->rtc_ssr);
+	rtc1_val = (rtc1->rtc_tr & 0xF) * SECOND + rtcss_to_us(rtc1->rtc_ssr);
+	diff = rtc1_val;
+	if (rtc1_val < rtc0_val) {
+		/* rtc_ssr has wrapped, since we assume rtc0 < rtc1, add
+		 * 10 seconds to get the correct value
+		 */
+		diff += 10 * SECOND;
+	}
+	diff -= rtc0_val;
+	return diff;
 }
 
 void rtc_read(struct rtc_time_reg *rtc)

@@ -311,7 +311,8 @@ void clock_refresh_console_in_use(void)
 void __idle(void)
 {
 	timestamp_t t0;
-	int next_delay, margin_us, rtc_diff;
+	uint32_t rtc_diff;
+	int next_delay, margin_us;
 	struct rtc_time_reg rtc0, rtc1;
 
 	while (1) {
