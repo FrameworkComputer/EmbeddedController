@@ -46,6 +46,9 @@ die() {
 }
 
 
+# Include a board name to the BOARDS_${EC_CHIP} array below ONLY IF servod is
+# not aware of its 'ec_chip'. If servod becomes able to answer 'ec_chip'
+# for the board, remove it from BOARDS_XXXX array below.
 BOARDS_IT83XX=(
 	ampton
 	bip
@@ -251,10 +254,6 @@ fi
 
 set -e
 
-if [ -z "${FLAGS_board}" -a -z "${FLAGS_chip}" ]; then
-	die "should specify a board or a chip."
-fi
-
 DUT_CONTROL_CMD="dut-control --port=${FLAGS_port}"
 
 function dut_control() {
@@ -270,6 +269,17 @@ function get_servo_type() {
 		$DUT_CONTROL_CMD servo_type | sed -e s/servo_type://
 	fi
 }
+
+SERVO_EC_CHIP="$(($DUT_CONTROL_CMD ec_chip) | sed -e s/ec_chip://)"
+SERVO_EC_CHIP="${SERVO_EC_CHIP,,}"
+if [[ "${SERVO_EC_CHIP}" =~ "unknown" ]]; then
+	SERVO_EC_CHIP=""
+fi
+
+if [[ -z "${FLAGS_board}" && -z "${FLAGS_chip}" && \
+      -z "${SERVO_EC_CHIP}" ]]; then
+	die "should specify a board or a chip."
+fi
 
 BOARD=${FLAGS_board}
 
@@ -343,9 +353,16 @@ if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 && -n "${FLAGS_chip}" ]]; then
 	SUPPORTED_CHIPS+="${FLAGS_chip}"
 fi
 
+if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 && -n "${SERVO_EC_CHIP}" ]]; then
+	SUPPORTED_CHIPS+=("${SERVO_EC_CHIP}")
+fi
+
 SERVO_TYPE="$(get_servo_type)"
 
 if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 ]]; then
+	# This happens if ${FLAGS_board} is not known in this flash_ec yet,
+	# ${FLAGS_chip} is not given, and servod doesn't know ec_chip.
+	# In this case, '--chip' should be specified in the command line.
 	die "board '${BOARD}' not supported. Please manually specify --chip="
 elif [[ ${#SUPPORTED_CHIPS[@]} -eq 1 ]]; then
 	CHIP="${SUPPORTED_CHIPS[0]}"
