@@ -60,6 +60,34 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 
+	/* BYD 16DPHYMD Battery Information */
+	[BATTERY_BYD16] = {
+		.fuel_gauge = {
+			.manuf_name = "BYD-BYD3.685",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x043,
+				.reg_mask = 0x0001,
+				.disconnect_val = 0x000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 70,
+		},
+	},
+
 	/* LGC Battery Information */
 	[BATTERY_LGC] = {
 		.fuel_gauge = {
@@ -88,6 +116,35 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 
+	/* LGC JPFMRYMD Battery Information */
+	[BATTERY_LGC3] = {
+		.fuel_gauge = {
+			.manuf_name = "LGC-LGC3.685",
+			.ship_mode = {
+				.wb_support = 1,
+				.reg_addr = 0x44,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 70,
+		},
+	},
+
 	/* SIMPLO Battery Information */
 	[BATTERY_SIMPLO] = {
 		.fuel_gauge = {
@@ -112,6 +169,120 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_min_c		= 0,
 			.charging_max_c		= 60,
 			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* SIMPLO-ATL 7T0D3YMD Battery Information */
+	[BATTERY_SIMPLO_ATL] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP-ATL3.61",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x043,
+				.reg_mask = 0x0001,
+				.disconnect_val = 0x000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* SIMPLO-LISHEN 7T0D3YMD Battery Information */
+	[BATTERY_SIMPLO_LS] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP-LS3.66",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x043,
+				.reg_mask = 0x0001,
+				.disconnect_val = 0x000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* SWD-ATL 65N6HYMD Battery Information */
+	[BATTERY_SWD_ATL] = {
+		.fuel_gauge = {
+			.manuf_name = "SWD-ATL3.618",
+			.ship_mode = {
+				.wb_support = 1,
+				.reg_addr = 0x44,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* SWD-COSLIGHT 65N6HYMD Battery Information */
+	[BATTERY_SWD_COS] = {
+		.fuel_gauge = {
+			.manuf_name = "SWD-COS3.634",
+			.ship_mode = {
+				.wb_support = 1,
+				.reg_addr = 0x44,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
 			.discharging_max_c	= 70,
 		},
 	},
