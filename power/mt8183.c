@@ -118,16 +118,21 @@ void chipset_reset_request_interrupt(enum gpio_signal signal)
 
 /*
  * Triggers on falling edge of AP watchdog line only. The falling edge can
- * happen in these 2 cases:
+ * happen in these 3 cases:
  *  - AP asserts watchdog while the AP is on: this is a real AP-initiated reset.
  *  - EC asserted GPIO_AP_SYS_RST_L, so the AP is in reset and AP watchdog falls
  *    as well. This is _not_ a watchdog reset. We mask these cases by disabling
  *    the interrupt just before shutting down the AP, and re-enabling it just
  *    after starting the AP.
+ *  - PMIC has shut down (e.g. the AP powered off by itself), this is not a
+ *    watchdog reset either. This should be covered by the case above if the
+ *    EC reacts quickly enough, but we mask those cases as well by testing if
+ *    the PMIC is still on when the watchdog line falls.
  */
 void chipset_watchdog_interrupt(enum gpio_signal signal)
 {
-	chipset_reset(CHIPSET_RESET_AP_WATCHDOG);
+	if (power_get_signals() & IN_PGOOD_PMIC)
+		chipset_reset(CHIPSET_RESET_AP_WATCHDOG);
 }
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
