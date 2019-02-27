@@ -76,7 +76,7 @@ int usb_findit(uint16_t vid, uint16_t pid, uint16_t subclass,
 	r = libusb_init(NULL);
 	if (r < 0) {
 		USB_ERROR("libusb_init", r);
-		return -1;
+		goto terminate_usb_findit;
 	}
 
 	printf("open_device %04x:%04x\n", vid, pid);
@@ -84,17 +84,17 @@ int usb_findit(uint16_t vid, uint16_t pid, uint16_t subclass,
 	uep->devh = libusb_open_device_with_vid_pid(NULL, vid, pid);
 	if (!uep->devh) {
 		fprintf(stderr, "Can't find device\n");
-		return -1;
+		goto terminate_usb_findit;
 	}
 
 	iface_num = find_interface(subclass, protocol, uep);
 	if (iface_num < 0) {
-		fprintf(stderr, "USB FW update not supported by that device\n");
-		usb_shut_down(uep);
+		fprintf(stderr, "USB interface %d is not found\n", uep->ep_num);
+		goto terminate_usb_findit;
 	}
 	if (!uep->chunk_len) {
 		fprintf(stderr, "wMaxPacketSize isn't valid\n");
-		usb_shut_down(uep);
+		goto terminate_usb_findit;
 	}
 
 	printf("found interface %d endpoint %d, chunk_len %d\n",
@@ -104,11 +104,16 @@ int usb_findit(uint16_t vid, uint16_t pid, uint16_t subclass,
 	r = libusb_claim_interface(uep->devh, iface_num);
 	if (r < 0) {
 		USB_ERROR("libusb_claim_interface", r);
-		usb_shut_down(uep);
+		goto terminate_usb_findit;
 	}
 
 	printf("READY\n-------\n");
 	return 0;
+
+terminate_usb_findit:
+	if (uep->devh)
+		usb_shut_down(uep);
+	return -1;
 }
 
 int usb_trx(struct usb_endpoint *uep, void *outbuf, int outlen,
