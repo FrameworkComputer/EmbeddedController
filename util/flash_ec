@@ -58,10 +58,6 @@ BOARDS_IT83XX=(
 	reef_it8320
 )
 
-BOARDS_LM4=(
-	samus
-)
-
 BOARDS_STM32=(
 	chell_pd
 	coffeecake
@@ -277,10 +273,6 @@ in_array() {
 }
 
 declare -a SUPPORTED_CHIPS
-
-if $(in_array "${BOARDS_LM4[@]}" "${BOARD}"); then
-	SUPPORTED_CHIPS+=("lm4")
-fi
 
 if $(in_array "${BOARDS_STM32[@]}" "${BOARD}"); then
 	SUPPORTED_CHIPS+=("stm32")
