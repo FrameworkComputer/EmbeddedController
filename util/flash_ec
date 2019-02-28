@@ -112,30 +112,6 @@ BOARDS_NPCX_SPI=(
 	glkrvp
 )
 
-BOARDS_NPCX_INT_SPI=(
-	atlas
-	bobba
-	casta
-	fleex
-	grunt
-	meep
-	nocturne
-	phaser
-	yorp
-)
-
-BOARDS_NPCX_UUT=(
-	bobba
-	casta
-	cheza
-	fleex
-	grunt
-	hatch
-	meep
-	phaser
-	yorp
-)
-
 BOARDS_NRF51=(
 	hadoken
 )
@@ -159,26 +135,6 @@ BOARDS_RAIDEN=(
 	scarlet
 	soraka
 )
-
-# A map of supported board + chip + servo permutations.
-# The value is a regex that will be checked against $SERVO_TYPE.
-# i.e., If a board needs to use one CHIP when connected via a Suzy-Q and another
-# chip when connected via a Servo.
-declare -A VALID_CHIP_COMBO
-VALID_CHIP_COMBO["bobba.npcx_int_spi"]="(servo_micro|servo_v2)"
-VALID_CHIP_COMBO["bobba.npcx_uut"]="ccd_cr50"
-VALID_CHIP_COMBO["casta.npcx_int_spi"]="(servo_micro|servo_v2)"
-VALID_CHIP_COMBO["casta.npcx_uut"]="ccd_cr50"
-VALID_CHIP_COMBO["fleex.npcx_int_spi"]="(servo_micro|servo_v2)"
-VALID_CHIP_COMBO["fleex.npcx_uut"]="ccd_cr50"
-VALID_CHIP_COMBO["grunt.npcx_int_spi"]="(servo_micro|servo_v2)"
-VALID_CHIP_COMBO["grunt.npcx_uut"]="ccd_cr50"
-VALID_CHIP_COMBO["meep.npcx_int_spi"]="(servo_micro|servo_v2)"
-VALID_CHIP_COMBO["meep.npcx_uut"]="ccd_cr50"
-VALID_CHIP_COMBO["phaser.npcx_int_spi"]="(servo_micro|servo_v2)"
-VALID_CHIP_COMBO["phaser.npcx_uut"]="ccd_cr50"
-VALID_CHIP_COMBO["yorp.npcx_int_spi"]="(servo_micro|servo_v2)"
-VALID_CHIP_COMBO["yorp.npcx_uut"]="ccd_cr50"
 
 DEFAULT_PORT="${SERVOD_PORT:-9999}"
 BITBANG_RATE="9600"  # Could be overwritten by a command line option.
@@ -293,14 +249,6 @@ if $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
 	SUPPORTED_CHIPS+=("npcx_spi")
 fi
 
-if $(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"); then
-	SUPPORTED_CHIPS+=("npcx_int_spi")
-fi
-
-if $(in_array "${BOARDS_NPCX_UUT[@]}" "${BOARD}"); then
-	SUPPORTED_CHIPS+=("npcx_uut")
-fi
-
 if $(in_array "${BOARDS_NRF51[@]}" "${BOARD}"); then
 	SUPPORTED_CHIPS+=("nrf51")
 fi
@@ -331,28 +279,14 @@ elif [ -n "${FLAGS_chip}" ]; then
 		CHIP="${FLAGS_chip}"
 	else
 		die "board ${BOARD} only supports (${SUPPORTED_CHIPS[@]})," \
-		"not ${FLAGS_chip}."
+			"not ${FLAGS_chip}."
 	fi
 else
-	declare -a FILTERED_CHIPS
-
-	for i in "${SUPPORTED_CHIPS[@]}"; do
-		SUPPORTED_SERVO="${VALID_CHIP_COMBO["${BOARD}.${i}"]}"
-		if [[ -z "$SUPPORTED_SERVO" || \
-				"$SERVO_TYPE" =~ $SUPPORTED_SERVO ]]; then
-			FILTERED_CHIPS+=("$i")
-		fi
-
-	done
-
-	if [[ ${#FILTERED_CHIPS[@]} -eq 0 ]]; then
-		die "servo ${SERVO_TYPE} is unsupported for board ${BOARD}."
-	elif [[ ${#FILTERED_CHIPS[@]} -eq 1 ]]; then
-		CHIP="${FILTERED_CHIPS[0]}"
-	else
-		die "board ${BOARD} supports multiple chips" \
-		"(${FILTERED_CHIPS[@]}). Use --chip= to choose one."
-	fi
+	# Ideally, ec_chip per servo_type should be specified in servo overlay
+	# file, instead of having multiple board-to-chip mapping info in this
+	# script. Please refer to crrev.com/c/1496460 for example.
+	die "board ${BOARD} supports multiple chips" \
+	"(${FILTERED_CHIPS[@]}). Use --chip= to choose one."
 fi
 
 if [ -n "${FLAGS_chip}" -a "${CHIP}" != "${FLAGS_chip}" ]; then
@@ -677,7 +611,7 @@ if [ "${CHIP}" = "npcx_uut" ] ; then
 fi
 toad_VARS="${MCU}_uart_parity ${MCU}_uart_baudrate boot_mode"
 
-if $(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"); then
+if [[ "${CHIP}" == "npcx_int_spi" ]]; then
 	servo_v2_VARS+=" fw_up"
 	servo_micro_VARS+=" fw_up"
 fi
@@ -1231,8 +1165,19 @@ function flash_npcx_uut() {
 	UUT_PARAMS="--port ${EC_UART} --baudrate 115200"
 
 	# Load monitor binary to address 0x200C3020
-	${NPCX_UUT} ${UUT_PARAMS} --opr wr --addr ${MON_ADDR} --file ${MON}
-	${NPCX_UUT} ${UUT_PARAMS} --auto --offset ${FLAGS_offset} --file ${IMG}
+	if [[ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]]; then
+		echo ${NPCX_UUT} ${UUT_PARAMS} --opr wr --addr ${MON_ADDR} \
+			--file ${MON}
+	fi
+	${NPCX_UUT} ${UUT_PARAMS} --opr wr --addr "${MON_ADDR}" \
+		--file "${MON}" || die "Failed to load monitor binary."
+
+	if [[ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]]; then
+		echo ${NPCX_UUT} ${UUT_PARAMS} --auto --offset ${FLAGS_offset} \
+			--file ${IMG}
+	fi
+	${NPCX_UUT} ${UUT_PARAMS} --auto --offset "${FLAGS_offset}" \
+		--file "${IMG}" || die "Failed to flash EC."
 }
 
 function flash_npcx_5m5g_jtag() {
