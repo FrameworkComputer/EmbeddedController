@@ -1342,7 +1342,7 @@ enum ec_feature_code {
 	EC_FEATURE_AUDIO_CODEC = 38,
 	/* EC Supports SCP. */
 	EC_FEATURE_SCP = 39,
-	/* The MCU is Intel Integrated Sensor Hub */
+	/* The MCU is an Integrated Sensor Hub */
 	EC_FEATURE_ISH = 40,
 };
 
