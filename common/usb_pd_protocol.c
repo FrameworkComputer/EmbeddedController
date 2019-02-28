@@ -2653,6 +2653,14 @@ void pd_task(void *u)
 	int snk_cap_count = 0;
 	int evt;
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	/*
+	 * Set the ports in Low Power Mode so that other tasks wait until
+	 * TCPC is initialized and ready.
+	 */
+	pd[port].flags |= PD_FLAGS_LPM_ENGAGED;
+#endif
+
 #ifdef CONFIG_COMMON_RUNTIME
 	pd_init_tasks();
 #endif
