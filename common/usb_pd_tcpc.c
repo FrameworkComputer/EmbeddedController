@@ -257,6 +257,7 @@ static struct pd_port_controller {
 	int rx_head[RX_BUFFER_SIZE+1];
 	uint32_t rx_payload[RX_BUFFER_SIZE+1][7];
 	int rx_buf_head, rx_buf_tail;
+	uint8_t msg_id_last;
 
 	/* Next transmit */
 	enum tcpm_transmit_type tx_type;
@@ -264,6 +265,34 @@ static struct pd_port_controller {
 	uint32_t tx_payload[7];
 	const uint32_t *tx_data;
 } pd[CONFIG_USB_PD_PORT_COUNT];
+
+void invalidate_last_message_id(int port)
+{
+	/*
+	 * Message id starts from 0 to 7. If msg_id_last is initialized to 0,
+	 * it will lead to repetitive message id with first received packet,
+	 * so initialize it with an invalid value 0xff.
+	 */
+	pd[port].msg_id_last = 0xff;
+}
+
+int consume_repeat_message(int port, uint16_t msg_header)
+{
+	uint8_t msg_id = PD_HEADER_ID(msg_header);
+
+	/* If repeat message ignore, except softreset control request. */
+	if (PD_HEADER_TYPE(msg_header) == PD_CTRL_SOFT_RESET &&
+	    PD_HEADER_CNT(msg_header) == 0) {
+		invalidate_last_message_id(port);
+	} else if (pd[port].msg_id_last != msg_id) {
+		pd[port].msg_id_last = msg_id;
+	} else if (pd[port].msg_id_last == msg_id) {
+		CPRINTF("Repeat msg_id[%d] port[%d]\n", msg_id, port);
+		return 1;
+	}
+
+	return 0;
+}
 
 static int rx_buf_is_full(int port)
 {
@@ -643,6 +672,7 @@ int pd_analyze_rx(int port, uint32_t *payload)
 	bit = pd_find_preamble(port);
 	if (bit == PD_RX_ERR_HARD_RESET || bit == PD_RX_ERR_CABLE_RESET) {
 		/* Hard reset or cable reset */
+		invalidate_last_message_id(port);
 		return bit;
 	} else if (bit < 0) {
 		msg = "Preamble";
@@ -1160,6 +1190,7 @@ void tcpc_init(int port)
 
 	/* make sure PD monitoring is disabled initially */
 	pd[port].rx_enabled = 0;
+	invalidate_last_message_id(port);
 
 	/* make initial readings of CC voltages */
 	for (i = 0; i < 2; i++) {

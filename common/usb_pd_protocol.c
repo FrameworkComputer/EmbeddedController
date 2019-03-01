@@ -25,6 +25,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usb_pd_tcpc.h"
 #include "usbc_ppc.h"
 #include "tcpm.h"
 #include "version.h"
@@ -746,6 +747,14 @@ static inline void set_state(int port, enum pd_states next_state)
 		/* Disable TCPC RX */
 		tcpm_set_rx_enable(port, 0);
 
+#ifdef CONFIG_USB_PD_TCPC
+		/*
+		 * Invalidate message IDs for PD_TCPC only, since off-board
+		 * TCPCs will automatically perform message id de-dup logic
+		 * without manual intervention.
+		 */
+		invalidate_last_message_id(port);
+#endif /* CONFIG_USB_PD_TCPC */
 #ifdef CONFIG_COMMON_RUNTIME
 		/* detect USB PD cc disconnect */
 		hook_notify(HOOK_USB_PD_DISCONNECT);
@@ -2938,8 +2947,18 @@ void pd_task(void *u)
 		/* process any potential incoming message */
 		incoming_packet = tcpm_has_pending_message(port);
 		if (incoming_packet) {
-			tcpm_dequeue_message(port, payload, &head);
-			handle_request(port, head, payload);
+			/*
+			 * Dequeue and consume duplicate message ID for PD_TCPC
+			 * only, since off-board TCPCs will automatically
+			 * perform this de-dup logic before notifying the EC.
+			 */
+			if (tcpm_dequeue_message(port, payload, &head) ==
+								EC_SUCCESS
+#ifdef CONFIG_USB_PD_TCPC
+			    && !consume_repeat_message(port, head)
+#endif
+			   )
+				handle_request(port, head, payload);
 
 			/* Check if there are any more messages */
 			if (tcpm_has_pending_message(port))
