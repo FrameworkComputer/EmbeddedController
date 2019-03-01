@@ -16,6 +16,8 @@
 
 #include "test_util.h"
 
+#include <stdlib.h>
+
 struct pw_test_data_t {
 	union {
 		struct pw_request_t request;
@@ -152,13 +154,10 @@ const uint8_t DEFAULT_PCR_DIGEST[] = {
 /* Config Variables and defines for Mocks.
  */
 
-struct tuple MOCK_pw_tuple;
 struct pw_long_term_storage_t MOCK_pw_long_term_storage;
 struct pw_log_storage_t MOCK_pw_log_storage;
 int MOCK_getvar_ret = EC_SUCCESS;
 int MOCK_setvar_ret = EC_SUCCESS;
-int MOCK_writevars_ret = EC_SUCCESS;
-void *MOCK_tuple_val_ret;
 
 const uint8_t *MOCK_rand_bytes_src;
 size_t MOCK_rand_bytes_offset;
@@ -342,7 +341,6 @@ static void setup_storage(int num_operations)
 {
 	MOCK_getvar_ret = EC_SUCCESS;
 	MOCK_setvar_ret = EC_SUCCESS;
-	MOCK_writevars_ret = EC_SUCCESS;
 
 	memset(&MOCK_pw_long_term_storage, 0,
 	       sizeof(MOCK_pw_long_term_storage));
@@ -470,7 +468,6 @@ static void setup_reset_tree_defaults(struct merkle_tree_t *merkle_tree,
 	MOCK_rand_bytes_len = sizeof(EMPTY_TREE.key_derivation_nonce);
 	MOCK_appkey_derive_fail = EC_SUCCESS;
 	MOCK_setvar_ret = EC_SUCCESS;
-	MOCK_writevars_ret = EC_SUCCESS;
 }
 
 static void setup_insert_leaf_defaults(struct merkle_tree_t *merkle_tree,
@@ -513,7 +510,6 @@ static void setup_insert_leaf_defaults(struct merkle_tree_t *merkle_tree,
 	MOCK_hmac = DEFAULT_HMAC;
 	MOCK_aes_fail = 0;
 	MOCK_setvar_ret = EC_SUCCESS;
-	MOCK_writevars_ret = EC_SUCCESS;
 }
 
 static void setup_remove_leaf_defaults(struct merkle_tree_t *merkle_tree,
@@ -540,7 +536,6 @@ static void setup_remove_leaf_defaults(struct merkle_tree_t *merkle_tree,
 	setup_default_empty_path(request->data.remove_leaf.path_hashes);
 
 	MOCK_setvar_ret = EC_SUCCESS;
-	MOCK_writevars_ret = EC_SUCCESS;
 }
 
 static void setup_try_auth_defaults_with_leaf(
@@ -598,7 +593,6 @@ static void setup_try_auth_defaults_with_leaf(
 	MOCK_hash_update_cb = auth_hash_update_cb;
 	MOCK_aes_fail = 0;
 	MOCK_setvar_ret = EC_SUCCESS;
-	MOCK_writevars_ret = EC_SUCCESS;
 }
 
 static void setup_try_auth_defaults(struct merkle_tree_t *merkle_tree,
@@ -645,7 +639,6 @@ static void setup_reset_auth_defaults(struct merkle_tree_t *merkle_tree,
 	MOCK_hmac = EMPTY_HMAC; /* Gets overwritten by auth_hash_update_cb. */
 	MOCK_aes_fail = 0;
 	MOCK_setvar_ret = EC_SUCCESS;
-	MOCK_writevars_ret = EC_SUCCESS;
 }
 
 static void setup_get_log_defaults(struct merkle_tree_t *merkle_tree,
@@ -800,35 +793,57 @@ uint8_t get_current_pcr_digest(const uint8_t bitmask[2],
 /******************************************************************************/
 /* Mock implementations of nvmem_vars functionality.
  */
-const struct tuple *getvar(const uint8_t *key, uint8_t key_len)
+struct tuple *getvar(const uint8_t *key, uint8_t key_len)
 {
+	struct tuple *var = NULL;
+	size_t i;
+
+	const struct {
+		size_t key_len;
+		const void *key;
+		size_t val_size;
+		const void *val;
+	} vars[] = {
+		{sizeof(PW_TREE_VAR) - 1, PW_TREE_VAR,
+		 sizeof(MOCK_pw_long_term_storage), &MOCK_pw_long_term_storage},
+		{sizeof(PW_LOG_VAR0) - 1, PW_LOG_VAR0,
+		 sizeof(MOCK_pw_log_storage), &MOCK_pw_log_storage},
+	};
+
+	if (!key || !key_len)
+		return NULL;
+
 	if (MOCK_getvar_ret != EC_SUCCESS)
 		return NULL;
 
-	MOCK_pw_tuple.flags = 0;
-	MOCK_pw_tuple.key_len = key_len;
+	for (i = 0; i < ARRAY_SIZE(vars); i++) {
+		if ((key_len != vars[i].key_len) ||
+		    memcmp(key, vars[i].key, key_len)) {
+			continue;
+		}
+		var = malloc(sizeof(struct tuple) + key_len + vars[i].val_size);
+		var->flags = 0;
+		var->val_len = vars[i].val_size;
+		memcpy(var->data_ + var->key_len, vars[i].val, var->val_len);
+		break;
+	}
 
-	if (key_len == (sizeof(PW_TREE_VAR) - 1) &&
-	    memcmp(key, PW_TREE_VAR, (sizeof(PW_TREE_VAR) - 1)) == 0) {
-		MOCK_pw_tuple.val_len = sizeof(MOCK_pw_long_term_storage);
-		MOCK_tuple_val_ret = &MOCK_pw_long_term_storage;
-		return &MOCK_pw_tuple;
-	} else if (key_len == (sizeof(PW_LOG_VAR0) - 1) &&
-		   memcmp(key, PW_LOG_VAR0, (sizeof(PW_LOG_VAR0) - 1)) == 0) {
-		MOCK_pw_tuple.val_len = sizeof(struct pw_log_storage_t);
-		MOCK_tuple_val_ret = &MOCK_pw_log_storage;
-		return &MOCK_pw_tuple;
-	} else
-		return NULL;
+	return var;
 }
 
+int freevar(struct tuple *var)
+{
+	free(var);
+
+	return EC_SUCCESS;
+}
 const uint8_t *tuple_val(const struct tuple *tpl)
 {
-	return MOCK_tuple_val_ret;
+	return tpl->data_ + tpl->key_len;
 }
 
-int setvar(const uint8_t *key, uint8_t key_len,
-	   const uint8_t *val, uint8_t val_len)
+int setvar(const uint8_t *key, uint8_t key_len, const uint8_t *val,
+	   uint8_t val_len)
 {
 	if (MOCK_setvar_ret != EC_SUCCESS)
 		return MOCK_setvar_ret;
@@ -845,11 +860,6 @@ int setvar(const uint8_t *key, uint8_t key_len,
 		return EC_SUCCESS;
 	} else
 		return EC_ERROR_UNKNOWN;
-}
-
-int writevars(void)
-{
-	return MOCK_writevars_ret;
 }
 
 /******************************************************************************/
@@ -1214,7 +1224,7 @@ static int handle_reset_tree_nv_fail(void)
 
 	setup_reset_tree_defaults(&merkle_tree, &buf.request);
 
-	MOCK_writevars_ret = PW_ERR_NV_LENGTH_MISMATCH;
+	MOCK_setvar_ret = PW_ERR_NV_LENGTH_MISMATCH;
 
 	TEST_RET_EQ(test_handle_short_msg(&merkle_tree, &buf, merkle_tree.root),
 		    PW_ERR_NV_LENGTH_MISMATCH);
@@ -1364,7 +1374,7 @@ static int handle_insert_leaf_nv_fail(void)
 
 	setup_insert_leaf_defaults(&merkle_tree, &buf.request);
 
-	MOCK_writevars_ret = PW_ERR_NV_LENGTH_MISMATCH;
+	MOCK_setvar_ret = PW_ERR_NV_LENGTH_MISMATCH;
 
 	TEST_RET_EQ(test_handle_short_msg(&merkle_tree, &buf, merkle_tree.root),
 		    PW_ERR_NV_LENGTH_MISMATCH);
@@ -1535,7 +1545,7 @@ static int handle_remove_leaf_nv_fail(void)
 
 	setup_remove_leaf_defaults(&merkle_tree, &buf.request);
 
-	MOCK_writevars_ret = PW_ERR_NV_LENGTH_MISMATCH;
+	MOCK_setvar_ret = PW_ERR_NV_LENGTH_MISMATCH;
 
 	TEST_RET_EQ(test_handle_short_msg(&merkle_tree, &buf, merkle_tree.root),
 		    PW_ERR_NV_LENGTH_MISMATCH);
@@ -1789,7 +1799,7 @@ static int handle_try_auth_nv_fail(void)
 	force_restart_count(0);
 	force_time((timestamp_t){.val = 65 * SECOND});
 
-	MOCK_writevars_ret = PW_ERR_NV_LENGTH_MISMATCH;
+	MOCK_setvar_ret = PW_ERR_NV_LENGTH_MISMATCH;
 
 	TEST_RET_EQ(test_handle_short_msg(&merkle_tree, &buf, merkle_tree.root),
 		    PW_ERR_NV_LENGTH_MISMATCH);
@@ -2136,7 +2146,7 @@ static int handle_reset_auth_nv_fail(void)
 
 	setup_reset_auth_defaults(&merkle_tree, &buf.request);
 
-	MOCK_writevars_ret = PW_ERR_NV_LENGTH_MISMATCH;
+	MOCK_setvar_ret = PW_ERR_NV_LENGTH_MISMATCH;
 
 	TEST_RET_EQ(test_handle_short_msg(&merkle_tree, &buf, merkle_tree.root),
 		    PW_ERR_NV_LENGTH_MISMATCH);

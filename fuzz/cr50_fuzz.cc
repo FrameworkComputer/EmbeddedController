@@ -71,7 +71,6 @@ void InitializeFuzzerRun() {
   memset(__host_flash, 0xff, sizeof(__host_flash));
   nvmem_init();
   nvmem_enable_commits();
-  initvars();
   srand(0);
 }
 

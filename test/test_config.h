@@ -257,52 +257,36 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_PORT_COUNT 2
 #endif
 
-#ifdef TEST_NVMEM
+#if defined(TEST_NVMEM) || defined(TEST_NVMEM_VARS)
+#define CONFIG_CRC8
+#define CONFIG_FLASH_ERASED_VALUE32 (-1U)
+#define CONFIG_FLASH_LOG
+#define CONFIG_FLASH_LOG_BASE CONFIG_PROGRAM_MEMORY_BASE
+#define CONFIG_FLASH_LOG_SPACE 0x800
 #define CONFIG_FLASH_NVMEM
-#define CONFIG_FLASH_NVMEM_OFFSET_A 0x1000
-#define CONFIG_FLASH_NVMEM_OFFSET_B 0x4000
-#define CONFIG_FLASH_NVMEM_BASE_A (CONFIG_PROGRAM_MEMORY_BASE + \
-				 CONFIG_FLASH_NVMEM_OFFSET_A)
-#define CONFIG_FLASH_NVMEM_BASE_B (CONFIG_PROGRAM_MEMORY_BASE + \
-				 CONFIG_FLASH_NVMEM_OFFSET_B)
-#define CONFIG_FLASH_NVMEM_SIZE 0x4000
-#define CONFIG_SW_CRC
-
-#define NVMEM_PARTITION_SIZE \
-	(CONFIG_FLASH_NVMEM_SIZE / NVMEM_NUM_PARTITIONS)
-/* User buffer definitions for test purposes */
-#define NVMEM_USER_2_SIZE 0x201
-#define NVMEM_USER_1_SIZE 0x402
-#define NVMEM_USER_0_SIZE (NVMEM_PARTITION_SIZE - \
-			   NVMEM_USER_2_SIZE - NVMEM_USER_1_SIZE - \
-			   sizeof(struct nvmem_tag))
-
-#ifndef __ASSEMBLER__
-enum nvmem_users {
-	NVMEM_USER_0,
-	NVMEM_USER_1,
-	NVMEM_USER_2,
-	NVMEM_NUM_USERS
-};
-#endif
-#endif
-
-#ifdef TEST_NVMEM_VARS
+#define CONFIG_FLASH_NVMEM_OFFSET_A 0x3d000
+#define CONFIG_FLASH_NVMEM_OFFSET_B 0x7d000
+#define CONFIG_FLASH_NVMEM_BASE_A                                              \
+	(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_NVMEM_OFFSET_A)
+#define CONFIG_FLASH_NVMEM_BASE_B                                              \
+	(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_NVMEM_OFFSET_B)
+#define CONFIG_FLASH_NEW_NVMEM_BASE_A (CONFIG_FLASH_NVMEM_BASE_A + 0x800)
+#define CONFIG_FLASH_NEW_NVMEM_BASE_B (CONFIG_FLASH_NVMEM_BASE_B + 0x800)
+#define CONFIG_MALLOC
+/* This is legacy NVMEM partition size. */
 #define NVMEM_PARTITION_SIZE 0x3000
+#define NEW_FLASH_HALF_NVMEM_SIZE                                              \
+	(NVMEM_PARTITION_SIZE - CONFIG_FLASH_BANK_SIZE)
+#define NEW_NVMEM_PARTITION_SIZE (NVMEM_PARTITION_SIZE - CONFIG_FLASH_BANK_SIZE)
+#define NEW_NVMEM_TOTAL_PAGES                                                  \
+	(2 * NEW_NVMEM_PARTITION_SIZE / CONFIG_FLASH_BANK_SIZE)
+#define CONFIG_SW_CRC
 #define CONFIG_FLASH_NVMEM_VARS
+
 #ifndef __ASSEMBLER__
-/* Define the user region numbers */
-enum nvmem_users {
-	CONFIG_FLASH_NVMEM_VARS_USER_NUM,
-	NVMEM_NUM_USERS
-};
-/* Define a test var. */
-enum nvmem_vars {
-	NVMEM_VAR_TEST_VAR,
-};
+enum nvmem_users { NVMEM_TPM = 0, NVMEM_CR50, NVMEM_NUM_USERS };
 #endif
-#define CONFIG_FLASH_NVMEM_VARS_USER_SIZE 600
-#endif	/* TEST_NVMEM_VARS */
+#endif
 
 #ifdef TEST_PINWEAVER
 #define CONFIG_DCRYPTO_MOCK

@@ -17,6 +17,7 @@
 #define CONFIG_PINWEAVER
 #define CONFIG_UPTO_SHA512
 #define SHA512_SUPPORT
+#define CONFIG_MALLOC
 
 /******************************************************************************/
 /* From chip/g/config_chip.h */
@@ -29,6 +30,11 @@
 /******************************************************************************/
 /* From board/cr50/board.h */
 /* Non-volatile counter storage for U2F */
+#define CONFIG_CRC8
+#define CONFIG_FLASH_ERASED_VALUE32 (-1U)
+#define CONFIG_FLASH_LOG
+#define CONFIG_FLASH_LOG_BASE CONFIG_PROGRAM_MEMORY_BASE
+#define CONFIG_FLASH_LOG_SPACE 0x800
 #define CONFIG_FLASH_NVCOUNTER
 #define CONFIG_FLASH_NVCTR_SIZE CONFIG_FLASH_BANK_SIZE
 #define CONFIG_FLASH_NVCTR_BASE_A (CONFIG_PROGRAM_MEMORY_BASE + \
@@ -41,14 +47,23 @@
 #define CONFIG_FLASH_NVMEM_OFFSET_A (CFG_TOP_A_OFF + CONFIG_FLASH_NVCTR_SIZE)
 #define CONFIG_FLASH_NVMEM_OFFSET_B (CFG_TOP_B_OFF + CONFIG_FLASH_NVCTR_SIZE)
 /* Address of start of Nvmem area */
-#define CONFIG_FLASH_NVMEM_BASE_A (CONFIG_PROGRAM_MEMORY_BASE + \
-				 CONFIG_FLASH_NVMEM_OFFSET_A)
-#define CONFIG_FLASH_NVMEM_BASE_B (CONFIG_PROGRAM_MEMORY_BASE + \
-				 CONFIG_FLASH_NVMEM_OFFSET_B)
+#define CONFIG_FLASH_NVMEM_BASE_A                                              \
+	(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_NVMEM_OFFSET_A)
+#define CONFIG_FLASH_NVMEM_BASE_B                                              \
+	(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_NVMEM_OFFSET_B)
+#define CONFIG_FLASH_NEW_NVMEM_BASE_A                                          \
+	(CONFIG_FLASH_NVMEM_BASE_A + CONFIG_FLASH_BANK_SIZE)
+#define CONFIG_FLASH_NEW_NVMEM_BASE_B                                          \
+	(CONFIG_FLASH_NVMEM_BASE_B + CONFIG_FLASH_BANK_SIZE)
 /* Size partition in NvMem */
 #define NVMEM_PARTITION_SIZE (CFG_TOP_SIZE - CONFIG_FLASH_NVCTR_SIZE)
 /* Size in bytes of NvMem area */
 #define CONFIG_FLASH_NVMEM_SIZE (NVMEM_PARTITION_SIZE * NVMEM_NUM_PARTITIONS)
+
+#define NEW_NVMEM_PARTITION_SIZE (NVMEM_PARTITION_SIZE - CONFIG_FLASH_BANK_SIZE)
+#define NEW_NVMEM_TOTAL_PAGES                                                  \
+	(2 * NEW_NVMEM_PARTITION_SIZE / CONFIG_FLASH_BANK_SIZE)
+
 /* Enable <key, value> variable support. */
 #define CONFIG_FLASH_NVMEM_VARS
 #define NVMEM_CR50_SIZE 272
