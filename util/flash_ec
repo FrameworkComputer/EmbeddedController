@@ -50,9 +50,6 @@ die() {
 # not aware of its 'ec_chip'. If servod becomes able to answer 'ec_chip'
 # for the board, remove it from BOARDS_XXXX array below.
 BOARDS_IT83XX=(
-	ampton
-	bip
-	dragonegg
 	glkrvp_ite
 	it83xx_evb
 	reef_it8320
