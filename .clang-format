@@ -1,4 +1,5 @@
 Language:                                  Cpp
+AllowShortFunctionsOnASingleLine:          None
 AllowShortIfStatementsOnASingleLine:       false
 BasedOnStyle:                              LLVM
 BreakBeforeBraces:                         Linux
@@ -6,5 +7,6 @@ ColumnLimit:                               80
 ContinuationIndentWidth:                   8
 IndentCaseLabels:                          false
 IndentWidth:                               8
+PenaltyReturnTypeOnItsOwnLine:             1000
 SortIncludes:                              false
 UseTab:                                    Always
