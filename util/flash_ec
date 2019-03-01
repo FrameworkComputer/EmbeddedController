@@ -63,29 +63,20 @@ BOARDS_LM4=(
 )
 
 BOARDS_STM32=(
-	big
-	blaze
 	chell_pd
 	coffeecake
 	chocodile_bec
 	chocodile_vpdmcu
-	elm
-	flapjack
 	glados_pd
-	hammer
 	jerry
-	kitty
-	kukui
 	minimuffin
 	nami_fp
 	nocturne_fp
-	oak
 	oak_pd
 	pit
 	plankton
 	rainier
 	samus_pd
-	scarlet
 	staff
 	strago_pd
 	wand
