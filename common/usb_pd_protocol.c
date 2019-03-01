@@ -254,29 +254,21 @@ static struct pd_protocol {
 #ifdef CONFIG_COMMON_RUNTIME
 static const char * const pd_state_names[] = {
 	"DISABLED", "SUSPENDED",
-#ifdef CONFIG_USB_PD_DUAL_ROLE
 	"SNK_DISCONNECTED", "SNK_DISCONNECTED_DEBOUNCE",
 	"SNK_HARD_RESET_RECOVER",
 	"SNK_DISCOVERY", "SNK_REQUESTED", "SNK_TRANSITION", "SNK_READY",
 	"SNK_SWAP_INIT", "SNK_SWAP_SNK_DISABLE",
 	"SNK_SWAP_SRC_DISABLE", "SNK_SWAP_STANDBY", "SNK_SWAP_COMPLETE",
-#endif /* CONFIG_USB_PD_DUAL_ROLE */
 	"SRC_DISCONNECTED", "SRC_DISCONNECTED_DEBOUNCE",
 	"SRC_HARD_RESET_RECOVER", "SRC_STARTUP",
 	"SRC_DISCOVERY", "SRC_NEGOCIATE", "SRC_ACCEPTED", "SRC_POWERED",
 	"SRC_TRANSITION", "SRC_READY", "SRC_GET_SNK_CAP", "DR_SWAP",
-#ifdef CONFIG_USB_PD_DUAL_ROLE
 	"SRC_SWAP_INIT", "SRC_SWAP_SNK_DISABLE", "SRC_SWAP_SRC_DISABLE",
 	"SRC_SWAP_STANDBY",
-#ifdef CONFIG_USBC_VCONN_SWAP
 	"VCONN_SWAP_SEND", "VCONN_SWAP_INIT", "VCONN_SWAP_READY",
-#endif /* CONFIG_USBC_VCONN_SWAP */
-#endif /* CONFIG_USB_PD_DUAL_ROLE */
 	"SOFT_RESET", "HARD_RESET_SEND", "HARD_RESET_EXECUTE", "BIST_RX",
 	"BIST_TX",
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	"DRP_AUTO_TOGGLE",
-#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(pd_state_names) == PD_STATE_COUNT);
 #endif
@@ -772,7 +764,7 @@ static inline void set_state(int port, enum pd_states next_state)
 		disable_sleep(SLEEP_MASK_USB_PD);
 #endif
 
-	if (debug_level >= 1)
+	if (debug_level > 0)
 		CPRINTF("C%d st%d %s\n", port, next_state,
 					 pd_state_names[next_state]);
 	else
@@ -4627,20 +4619,21 @@ static int command_pd(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	if (!strcasecmp(argv[1], "dump")) {
-#ifndef CONFIG_USB_PD_DEBUG_LEVEL
-		int level;
-
 		if (argc >= 3) {
-			level = strtoi(argv[2], &e, 10);
+#ifdef CONFIG_USB_PD_DEBUG_LEVEL
+			return EC_ERROR_PARAM2;
+#else
+			int level = strtoi(argv[2], &e, 10);
 			if (*e)
 				return EC_ERROR_PARAM2;
 			debug_level = level;
-		} else
 #endif
-			ccprintf("dump level: %d\n", debug_level);
+		}
+		ccprintf("debug=%d\n", debug_level);
 
 		return EC_SUCCESS;
 	}
+
 #ifdef CONFIG_CMD_PD
 #ifdef CONFIG_CMD_PD_DEV_DUMP_INFO
 	else if (!strncasecmp(argv[1], "rwhashtable", 3)) {
@@ -4820,13 +4813,15 @@ static int command_pd(int argc, char **argv)
 #endif
 	if (!strncasecmp(argv[2], "state", 5)) {
 		ccprintf("Port C%d CC%d, %s - Role: %s-%s%s "
-			 "State: %s, Flags: 0x%04x\n",
+			 "State: %d(%s), Flags: 0x%04x\n",
 			port, pd[port].polarity + 1,
 			pd_comm_is_enabled(port) ? "Ena" : "Dis",
 			pd[port].power_role == PD_ROLE_SOURCE ? "SRC" : "SNK",
 			pd[port].data_role == PD_ROLE_DFP ? "DFP" : "UFP",
 			(pd[port].flags & PD_FLAGS_VCONN_ON) ? "-VC" : "",
-			pd_state_names[pd[port].task_state],
+			pd[port].task_state,
+			debug_level > 0 ?
+				pd_state_names[pd[port].task_state] : "",
 			pd[port].flags);
 	} else {
 		return EC_ERROR_PARAM1;
@@ -4963,10 +4958,16 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 			((pd[p->port].flags & PD_FLAGS_PARTNER_EXTPOWER) ?
 				PD_CTRL_RESP_ROLE_EXT_POWERED : 0);
 		r_v2->polarity = pd[p->port].polarity;
-		strzcpy(r_v2->state,
-			pd_state_names[pd[p->port].task_state],
-			sizeof(r_v2->state));
+
+		if (debug_level > 0)
+			strzcpy(r_v2->state,
+				pd_state_names[pd[p->port].task_state],
+				sizeof(r_v2->state));
+		else
+			r_v2->state[0] = '\0';
+
 		r_v2->cc_state =  pd[p->port].cc_state;
+
 		if (args->version == 1)
 			args->response_size = sizeof(*r_v1);
 		else
