@@ -192,12 +192,28 @@ void power_set_pause_in_s5(int pause);
 enum host_sleep_event power_get_host_sleep_state(void);
 
 /**
+ * Set sleep state of host.
+ *
+ * @param state The new state to set.
+ */
+void power_set_host_sleep_state(enum host_sleep_event state);
+
+/* Context to pass to a host sleep command handler. */
+struct host_sleep_event_context {
+	uint32_t sleep_transitions; /* Number of sleep transitions observed */
+	uint16_t sleep_timeout_ms;  /* Timeout in milliseconds */
+};
+
+/**
  * Provide callback to allow chipset to take any action on host sleep event
  * command.
  *
  * @param state Current host sleep state updated by the host.
+ * @param ctx Possible sleep parameters and return values, depending on state.
  */
-void power_chipset_handle_host_sleep_event(enum host_sleep_event state);
+void
+power_chipset_handle_host_sleep_event(enum host_sleep_event state,
+				      struct host_sleep_event_context *ctx);
 
 /**
  * Provide callback to allow board to take any action on host sleep event

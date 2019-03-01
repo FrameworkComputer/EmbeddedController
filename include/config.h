@@ -2652,6 +2652,9 @@
 /* Support S0ix */
 #undef CONFIG_POWER_S0IX
 
+/* Support detecting failure to enter S0ix */
+#undef CONFIG_POWER_S0IX_FAILURE_DETECTION
+
 /*
  * Allow the host to self-report its sleep state, in case there is some delay
  * between the host beginning to enter the sleep state and power signals
@@ -4370,5 +4373,14 @@
 #if defined(CONFIG_DPTF_MULTI_PROFILE) && !defined(CONFIG_DPTF)
 #error "CONFIG_DPTF_MULTI_PROFILE can be set only when CONFIG_DPTF is set."
 #endif /* CONFIG_DPTF_MULTI_PROFILE && !CONFIG_DPTF */
+
+/*
+ * Define the timeout in milliseconds between when the EC receives a suspend
+ * command and when the EC times out and asserts wake because the sleep signal
+ * SLP_S0 did not assert.
+ */
+#ifndef CONFIG_SLEEP_TIMEOUT_MS
+#define CONFIG_SLEEP_TIMEOUT_MS 10000
+#endif
 
 #endif  /* __CROS_EC_CONFIG_H */

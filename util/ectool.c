@@ -509,16 +509,52 @@ int cmd_hibdelay(int argc, char *argv[])
 	return 0;
 }
 
+static int get_latest_cmd_version(uint8_t cmd, int *version)
+{
+	struct ec_params_get_cmd_versions p;
+	struct ec_response_get_cmd_versions r;
+	int rv;
+
+	*version = 0;
+	/* Figure out the latest version of the given command the EC supports */
+	p.cmd = cmd;
+	rv = ec_command(EC_CMD_GET_CMD_VERSIONS, 0, &p, sizeof(p),
+			&r, sizeof(r));
+	if (rv < 0) {
+		if (rv == -EC_RES_INVALID_PARAM)
+			printf("Command 0x%02x not supported by EC.\n",
+					EC_CMD_GET_CMD_VERSIONS);
+		return rv;
+	}
+
+	if (r.version_mask)
+		*version = __fls(r.version_mask);
+
+	return rv;
+}
+
 int cmd_hostsleepstate(int argc, char *argv[])
 {
 	struct ec_params_host_sleep_event p;
+	struct ec_params_host_sleep_event_v1 p1;
+	struct ec_response_host_sleep_event_v1 r;
+	void *pp = &p;
+	size_t psize = sizeof(p), rsize = 0;
+	char *afterscan;
+	int rv;
+	int version = 0, max_version = 0;
+	uint32_t timeout, transitions;
 
 	if (argc < 2) {
 		fprintf(stderr, "Usage: %s "
-			"[suspend|wsuspend|resume|freeze|thaw]\n",
+			"[suspend|wsuspend|resume|freeze|thaw] [timeout]\n",
 			argv[0]);
 		return -1;
 	}
+
+	rv = get_latest_cmd_version(EC_CMD_HOST_SLEEP_EVENT, &max_version);
+	if (rv < 0)
+		return rv;
 
 	if (!strcmp(argv[1], "suspend"))
 		p.sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND;
@@ -526,16 +562,63 @@ int cmd_hostsleepstate(int argc, char *argv[])
 		p.sleep_event = HOST_SLEEP_EVENT_S3_WAKEABLE_SUSPEND;
 	else if (!strcmp(argv[1], "resume"))
 		p.sleep_event = HOST_SLEEP_EVENT_S3_RESUME;
-	else if (!strcmp(argv[1], "freeze"))
+	else if (!strcmp(argv[1], "freeze")) {
 		p.sleep_event = HOST_SLEEP_EVENT_S0IX_SUSPEND;
-	else if (!strcmp(argv[1], "thaw"))
+		if (max_version >= 1) {
+			p1.sleep_event = p.sleep_event;
+			p1.reserved = 0;
+			p1.suspend_params.sleep_timeout_ms =
+				EC_HOST_SLEEP_TIMEOUT_DEFAULT;
+
+			if (argc > 2) {
+				p1.suspend_params.sleep_timeout_ms =
+					strtoul(argv[2], &afterscan, 0);
+
+				if ((*afterscan != '\0') ||
+				    (afterscan == argv[2])) {
+					fprintf(stderr,
+						"Invalid value: %s\n",
+						argv[2]);
+
+					return -1;
+				}
+			}
+
+			pp = &p1;
+			psize = sizeof(p1);
+			version = 1;
+		}
+
+	} else if (!strcmp(argv[1], "thaw")) {
 		p.sleep_event = HOST_SLEEP_EVENT_S0IX_RESUME;
-	else {
+		if (max_version >= 1) {
+			version = 1;
+			rsize = sizeof(r);
+		}
+	} else {
 		fprintf(stderr, "Unknown command: %s\n", argv[1]);
 		return -1;
 	}
 
-	return ec_command(EC_CMD_HOST_SLEEP_EVENT, 0, &p, sizeof(p), NULL, 0);
+	rv = ec_command(EC_CMD_HOST_SLEEP_EVENT, version, pp, psize, &r, rsize);
+	if (rv < 0) {
+		fprintf(stderr, "EC host sleep command failed: %d\n", rv);
+		return rv;
+	}
+
+	if (rsize) {
+		timeout = r.resume_response.sleep_transitions &
+			  EC_HOST_RESUME_SLEEP_TIMEOUT;
+
+		transitions = r.resume_response.sleep_transitions &
+			      EC_HOST_RESUME_SLEEP_TRANSITIONS_MASK;
+
+		printf("%s%d sleep line transitions.\n",
+		       timeout ? "Timeout: " : "",
+		       transitions);
+	}
+
+	return 0;
 }
 
 int cmd_test(int argc, char *argv[])
@@ -4218,9 +4301,11 @@ static int cmd_motionsense(int argc, char **argv)
 	}
 
 	if (argc == 3 && !strcasecmp(argv[1], "info")) {
-		struct ec_params_get_cmd_versions p;
-		struct ec_response_get_cmd_versions r;
 		int version = 0;
+
+		rv = get_latest_cmd_version(EC_CMD_MOTION_SENSE_CMD, &version);
+		if (rv < 0)
+			return rv;
 
 		param.cmd = MOTIONSENSE_CMD_INFO;
 		param.sensor_odr.sensor_num = strtol(argv[2], &e, 0);
@@ -4228,20 +4313,6 @@ static int cmd_motionsense(int argc, char **argv)
 			fprintf(stderr, "Bad %s arg.\n", argv[2]);
 			return -1;
 		}
-
-		/* tool defaults to using latest version of info command */
-		p.cmd = EC_CMD_MOTION_SENSE_CMD;
-		rv = ec_command(EC_CMD_GET_CMD_VERSIONS, 0, &p, sizeof(p),
-				&r, sizeof(r));
-		if (rv < 0) {
-			if (rv == -EC_RES_INVALID_PARAM)
-				printf("Command 0x%02x not supported by EC.\n",
-						EC_CMD_GET_CMD_VERSIONS);
-			return rv;
-		}
-
-		if (r.version_mask)
-			version = __fls(r.version_mask);
 
 		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, version,
 				&param, ms_command_sizes[param.cmd].outsize,
