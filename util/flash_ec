@@ -125,17 +125,7 @@ BOARDS_NPCX_7M7X_JTAG=(
 )
 
 BOARDS_NPCX_SPI=(
-	coral
-	eve
-	fizz
 	glkrvp
-	lux
-	nami
-	nautilus
-	poppy
-	rammus
-	reef
-	soraka
 )
 
 BOARDS_NPCX_INT_SPI=(
