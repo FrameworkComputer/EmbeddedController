@@ -1034,19 +1034,19 @@ static int command_i2cxfer(int argc, char **argv)
 
 	if (strcasecmp(argv[1], "r") == 0) {
 		/* 8-bit read */
-                if(offset_size == 2)
-                        rv = i2c_read_offset16(port, slave_addr, offset, &v, 1);
-                else
-		        rv = i2c_read8(port, slave_addr, offset, &v);
+		if (offset_size == 2)
+			rv = i2c_read_offset16(port, slave_addr, offset, &v, 1);
+		else
+			rv = i2c_read8(port, slave_addr, offset, &v);
 		if (!rv)
 			ccprintf("0x%02x [%d]\n", v, v);
 
 	} else if (strcasecmp(argv[1], "r16") == 0) {
 		/* 16-bit read */
-                if(offset_size == 2)
-                        rv = i2c_read_offset16(port, slave_addr, offset, &v, 2);
-                else
-		        rv = i2c_read16(port, slave_addr, offset, &v);
+		if (offset_size == 2)
+			rv = i2c_read_offset16(port, slave_addr, offset, &v, 2);
+		else
+			rv = i2c_read16(port, slave_addr, offset, &v);
 		if (!rv)
 			ccprintf("0x%04x [%d]\n", v, v);
 
@@ -1064,19 +1064,19 @@ static int command_i2cxfer(int argc, char **argv)
 		/* 8-bit write */
 		if (argc < 6)
 			return EC_ERROR_PARAM5;
-                if(offset_size == 2)
-		        rv = i2c_write8(port, slave_addr, offset, v);
-                else
-                        rv = i2c_write_offset16(port, slave_addr, offset, v, 1);
+		if (offset_size == 2)
+			rv = i2c_write_offset16(port, slave_addr, offset, v, 1);
+		else
+			rv = i2c_write8(port, slave_addr, offset, v);
 
 	} else if (strcasecmp(argv[1], "w16") == 0) {
 		/* 16-bit write */
 		if (argc < 6)
 			return EC_ERROR_PARAM5;
-                if(offset_size == 2)
-		        rv = i2c_write16(port, slave_addr, offset, v);
-                else
-                        rv = i2c_write_offset16(port, slave_addr, offset, v, 2);
+		if (offset_size == 2)
+			rv = i2c_write_offset16(port, slave_addr, offset, v, 2);
+		else
+			rv = i2c_write16(port, slave_addr, offset, v);
 
 	} else {
 		return EC_ERROR_PARAM1;
