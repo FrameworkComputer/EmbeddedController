@@ -65,11 +65,31 @@ struct tuple {
 int initvars(void);
 
 /*
- * Look up a key, return a pointer to the tuple. If the key is not found,
- * return NULL. WARNING: The returned pointer is only valid until the next call
- * to setvar() or writevars(). Use it or lose it.
+ * Look up the key passed in the input tuple and fill the value, if found.
+ *
+ * The val_len field in the passed in tuple indicates how much room is
+ * available, the actual value size could be smaller.
+ *
+ * Return:
+ *
+ * EC_SUCCESS - if the key was found and there was enough room in the passed
+ *              in tuple for the value.
+ * EC_ERROR_INVAL - if the key was not found.
+ *
+ * EC_ERROR_MEMORY_ALLOCATION - if the value would not fit into the supplied
+ *              tuple.
  */
 const struct tuple *getvar(const uint8_t *key, uint8_t key_len);
+
+/*
+ * Free memory held by the previously read tuple.
+ *
+ * Note that tuple address is not the address to be returned to the heap, so
+ * the user must use this function to free this memory. If var is NULL this
+ * function is a no-op.
+ *
+ */
+void freevar(const struct tuple *var);
 
 /* Use these to access the data components of a valid struct tuple pointer */
 const uint8_t *tuple_key(const struct tuple *);
@@ -87,6 +107,15 @@ int setvar(const uint8_t *key, uint8_t key_len,
  * the RAM buffer. Return EC_SUCCESS or error code on failure.
  */
 int writevars(void);
+
+/*
+ * A fully contained function which does not use any available nvmem_vars
+ * methods, as it is used solely for retrieving vars from legacy storage
+ * format. Runs only during migration.
+ */
+const struct tuple *legacy_getnextvar(const struct tuple *prev_var);
+
+int set_local_copy(void);
 
 #ifdef __cplusplus
 }

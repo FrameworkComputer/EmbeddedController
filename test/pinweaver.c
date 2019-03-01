@@ -793,7 +793,7 @@ uint8_t get_current_pcr_digest(const uint8_t bitmask[2],
 /******************************************************************************/
 /* Mock implementations of nvmem_vars functionality.
  */
-struct tuple *getvar(const uint8_t *key, uint8_t key_len)
+const struct tuple *getvar(const uint8_t *key, uint8_t key_len)
 {
 	struct tuple *var = NULL;
 	size_t i;
@@ -831,11 +831,13 @@ struct tuple *getvar(const uint8_t *key, uint8_t key_len)
 	return var;
 }
 
-int freevar(struct tuple *var)
+void freevar(const struct tuple *var)
 {
-	free(var);
+	if (!var)
+		return;
 
-	return EC_SUCCESS;
+	/* This typecast is OK because we know that 'var' came from malloc. */
+	free((void *)var);
 }
 const uint8_t *tuple_val(const struct tuple *tpl)
 {

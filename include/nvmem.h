@@ -178,15 +178,6 @@ int nvmem_move(uint32_t src_offset, uint32_t dest_offset, uint32_t size,
 int nvmem_commit(void);
 
 /*
- * Clear out a user's data across all partitions.
- *
- * @param user:   The user who's data should be cleared.
- * @return        EC_SUCCESS if the user's data across all partitions was
- *                cleared.  Error othrwise.
- */
-int nvmem_erase_user_data(enum nvmem_users user);
-
-/*
  * Temporarily stopping NVMEM commits could be beneficial. One use case is
  * when TPM operations need to be sped up.
  *
@@ -204,6 +195,15 @@ void nvmem_disable_commits(void);
  *         fails, EC_SUCCESS otherwise.
  */
 int nvmem_enable_commits(void);
+
+/*
+ * Function to retrieve the base address of the nvmem cache of the appropriate
+ * user. After migration there is only one user and one base address, this
+ * function will be eliminated.
+ *
+ * @return pointer to the base address.
+ */
+void *nvmem_cache_base(enum nvmem_users user);
 
 /*
  * Clear all NVMEM cache in SRAM.

@@ -82,25 +82,22 @@ static int load_state(void)
 		/* create random salt */
 		if (!DCRYPTO_ladder_random(salt))
 			return 0;
-		if (setvar(&k_salt, sizeof(k_salt),
-			   (const uint8_t *)salt, sizeof(salt)))
+		if (setvar(&k_salt, sizeof(k_salt), (const uint8_t *)salt,
+			   sizeof(salt)))
 			return 0;
-		/* really save the new variable to flash */
-		writevars();
 	} else {
 		memcpy(salt, tuple_val(t_salt), sizeof(salt));
+		freevar(t_salt);
 	}
 
-	if (read_tpm_nvmem_hidden(
-		TPM_HIDDEN_U2F_KEK,
-		sizeof(salt_kek), salt_kek) ==
-	    tpm_read_not_found) {
+	if (read_tpm_nvmem_hidden(TPM_HIDDEN_U2F_KEK, sizeof(salt_kek),
+				  salt_kek) == tpm_read_not_found) {
 		/*
 		 * Not found means that we have not used u2f before,
 		 * or not used it with updated fw that resets kek seed
 		 * on TPM clear.
 		 */
-		if (t_salt) {
+		if (t_salt) { /* Note that memory has been freed already!. */
 			/*
 			 * We have previously used u2f, and may have
 			 * existing registrations; we don't want to

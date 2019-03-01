@@ -66,6 +66,7 @@ common-$(CONFIG_FLASH)+=flash.o
 common-$(CONFIG_FLASH_LOG)+=flash_log.o flash_log_vc.o
 common-$(CONFIG_FLASH_NVCOUNTER)+=nvcounter.o
 common-$(CONFIG_FLASH_NVMEM)+=nvmem.o
+common-$(CONFIG_FLASH_NVMEM)+=new_nvmem.o
 common-$(CONFIG_FLASH_NVMEM_VARS)+=nvmem_vars.o
 common-$(CONFIG_FMAP)+=fmap.o
 common-$(CONFIG_GESTURE_SW_DETECTION)+=gesture.o

@@ -8,14 +8,13 @@
 #include "dcrypto.h"
 #include "flash.h"
 #include "nvmem.h"
+#include "new_nvmem.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_COMMAND, format, ## args)
-
-#define NVMEM_NOT_INITIALIZED (-1)
+#define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_COMMAND, format, ##args)
 
 /*
  * The NVMEM contents are stored in flash memory. At run time there is an SRAM
@@ -103,74 +102,13 @@ static void nvmem_compute_sha(struct nvmem_tag *tag, void *sha_buf)
 
 static int nvmem_save(void)
 {
-	struct nvmem_partition *part;
-	size_t nvmem_offset;
-	int dest_partition;
-	uint8_t sha_comp[NVMEM_SHA_SIZE];
-	int rv = EC_SUCCESS;
+	enum ec_error_list rv;
 
-	if (!DCRYPTO_ladder_is_enabled()) {
-		CPRINTF("%s: Key ladder is disabled. Skipping flash write\n",
-			__func__);
-		goto release_cache;
-	}
+	rv = new_nvmem_save();
 
-	part = (struct nvmem_partition *)nvmem_cache;
+	if (rv == EC_SUCCESS)
+		nvmem_act_partition = NVMEM_NOT_INITIALIZED;
 
-	/* Has anything changed in the cache? */
-	nvmem_compute_sha(&part->tag, sha_comp);
-
-	if (!memcmp(part->tag.sha, sha_comp, sizeof(part->tag.sha))) {
-		CPRINTF("%s: Nothing changed, skipping flash write\n",
-			__func__);
-		goto release_cache;
-	}
-
-	/* Get flash offset of the partition to save to. */
-	dest_partition = (nvmem_act_partition + 1) % NVMEM_NUM_PARTITIONS;
-	nvmem_offset = nvmem_base_addr[dest_partition] -
-		CONFIG_PROGRAM_MEMORY_BASE;
-
-	/* Erase partition */
-	rv = flash_physical_erase(nvmem_offset, NVMEM_PARTITION_SIZE);
-	if (rv != EC_SUCCESS) {
-		CPRINTF("%s flash erase failed\n", __func__);
-		goto release_cache;
-	}
-
-	part->tag.layout_version = NVMEM_LAYOUT_VERSION;
-	part->tag.generation++;
-
-	/* Calculate sha of the whole thing. */
-	nvmem_compute_sha(&part->tag, part->tag.sha);
-
-	/* Encrypt actual payload. */
-	if (!app_cipher(part->tag.sha, part->buffer, part->buffer,
-			sizeof(part->buffer))) {
-		CPRINTF("%s encryption failed\n", __func__);
-		rv = EC_ERROR_UNKNOWN;
-		goto release_cache;
-	}
-
-	rv = flash_physical_write(nvmem_offset,
-				  NVMEM_PARTITION_SIZE,
-				  nvmem_cache);
-	if (rv != EC_SUCCESS) {
-		CPRINTF("%s flash write failed\n", __func__);
-		goto release_cache;
-	}
-
-	/* Restore payload. */
-	if (!app_cipher(part->tag.sha, part->buffer, part->buffer,
-			sizeof(part->buffer))) {
-		CPRINTF("%s decryption failed\n", __func__);
-		rv = EC_ERROR_UNKNOWN;
-		goto release_cache;
-	}
-
-	nvmem_act_partition = dest_partition;
-
- release_cache:
 	nvmem_mutex.write_in_progress = 0;
 	nvmem_release_cache();
 	return rv;
@@ -245,21 +183,6 @@ static void nvmem_release_cache(void)
 	mutex_unlock(&nvmem_mutex.mtx);
 }
 
-static int nvmem_reinitialize(void)
-{
-	nvmem_lock_cache();  /* Unlocked by nvmem_save() below. */
-	/*
-	 * NvMem is not properly initialized. Let's just erase everything and
-	 * start over, so that at least 1 partition is ready to be used.
-	 */
-	nvmem_act_partition = 0;
-
-	memset(nvmem_cache, 0xff, NVMEM_PARTITION_SIZE);
-
-	/* Start with generation zero in the current active partition. */
-	return nvmem_save();
-}
-
 static int nvmem_compare_generation(void)
 {
 	struct nvmem_partition *p_part;
@@ -301,10 +224,10 @@ static int nvmem_find_partition(void)
 
 		if (nvmem_partition_read_verify(check_part) == EC_SUCCESS) {
 			nvmem_act_partition = check_part;
+			ccprintf("%s:%d found legacy partition %d\n", __func__,
+				 __LINE__, check_part);
 			return EC_SUCCESS;
 		}
-		ccprintf("%s:%d partiton %d verification FAILED\n",
-			 __func__, __LINE__, check_part);
 	}
 
 	/*
@@ -312,14 +235,8 @@ static int nvmem_find_partition(void)
 	 * is valid. Let's reinitialize the NVMEM - there is nothing else we
 	 * can do.
 	 */
-	CPRINTS("%s: No Valid Partition found, will reinitialize!", __func__);
-
-	if (nvmem_reinitialize() != EC_SUCCESS) {
-		CPRINTS("%s: Reinitialization failed!!");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	return EC_SUCCESS;
+	CPRINTS("%s: No Legacy Partitions found.", __func__);
+	return EC_ERROR_INVALID_CONFIG;
 }
 
 static int nvmem_generate_offset_table(void)
@@ -342,8 +259,17 @@ static int nvmem_generate_offset_table(void)
 
 	return EC_SUCCESS;
 }
-static int nvmem_get_partition_off(int user, uint32_t offset,
-				   uint32_t len, uint32_t *p_buf_offset)
+
+void *nvmem_cache_base(enum nvmem_users user)
+{
+	if ((user < 0) || (user >= NVMEM_NUM_USERS))
+		return NULL;
+
+	return nvmem_cache + nvmem_user_start_offset[user];
+}
+
+static int nvmem_get_partition_off(int user, uint32_t offset, uint32_t len,
+				   uint32_t *p_buf_offset)
 {
 	uint32_t start_offset;
 
@@ -365,48 +291,6 @@ static int nvmem_get_partition_off(int user, uint32_t offset,
 	return EC_SUCCESS;
 }
 
-int nvmem_erase_user_data(enum nvmem_users user)
-{
-	int part;
-	int ret;
-	uint32_t user_offset, user_size;
-
-	if (user >= NVMEM_NUM_USERS)
-		return EC_ERROR_INVAL;
-
-	CPRINTS("Erasing NVMEM Flash Partition user: %d", user);
-
-	ret = EC_SUCCESS;
-
-	/* Find offset within cache. */
-	user_offset = nvmem_user_start_offset[user];
-	user_size = nvmem_user_sizes[user];
-
-	for (part = 0; part < NVMEM_NUM_PARTITIONS; part++) {
-		int rv;
-
-		/* Lock the cache buffer. */
-		nvmem_lock_cache();
-		/* Erase the user's data. */
-		memset(nvmem_cache + user_offset, 0xFF, user_size);
-
-		/*
-		 * Make sure the contents change between runs of
-		 * nvmem_save() so that all flash partitions are
-		 * written with empty contents and different
-		 * generation numbers.
-		 */
-		((struct nvmem_partition *)nvmem_cache)->tag.generation = part;
-
-		/* Make a best effort to clear each partition. */
-		rv = nvmem_save();
-		if (rv != EC_SUCCESS)
-			ret = rv;
-	}
-
-	return ret;
-}
-
 int nvmem_init(void)
 {
 	int ret;
@@ -417,8 +301,6 @@ int nvmem_init(void)
 		CPRINTF("%s:%d\n", __func__, __LINE__);
 		return ret;
 	}
-	/* Initialize error state, assume everything is good */
-	nvmem_error_state = EC_SUCCESS;
 	nvmem_write_error = 0;
 
 	/*
@@ -426,24 +308,27 @@ int nvmem_init(void)
 	 * succeeds to bootstrap the nvmem area.
 	 */
 	commits_enabled = 1;
-	ret = nvmem_find_partition();
+
+	/*
+	 * Try discovering legacy partition(s). If even one is present, need
+	 * to migrate to the new nvmem storage scheme.
+	 */
+	if (nvmem_find_partition() == EC_SUCCESS)
+		ret = new_nvmem_migrate(nvmem_act_partition);
+	else
+		ret = new_nvmem_init();
+
+	nvmem_error_state = ret;
 
 	if (ret != EC_SUCCESS) {
-		/* Change error state to non-zero */
-		nvmem_error_state = ret;
-		CPRINTF("%s:%d\n", __func__, __LINE__);
+		CPRINTF("%s:%d error %d!\n", __func__, __LINE__, ret);
 		return ret;
 	}
-
-	CPRINTS("Active Nvmem partition set to %d", nvmem_act_partition);
 
 	return EC_SUCCESS;
 }
 
-int nvmem_get_error_state(void)
-{
-	return nvmem_error_state;
-}
+int nvmem_get_error_state(void) { return nvmem_error_state; }
 
 int nvmem_is_different(uint32_t offset, uint32_t size, void *data,
 		       enum nvmem_users user)

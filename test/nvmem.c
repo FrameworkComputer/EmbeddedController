@@ -523,7 +523,7 @@ static int var_read_write_delete_helper(int do_write)
 		const void *value;
 
 		for (j = 0; j < ARRAY_SIZE(kv_pairs); j++) {
-			struct tuple *t;
+			const struct tuple *t;
 
 			coverage_map |= 1;
 

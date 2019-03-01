@@ -717,8 +717,6 @@ static void board_init(void)
 	init_runlevel(PERMISSION_MEDIUM);
 	/* Initialize NvMem partitions */
 	nvmem_init();
-	/* Initialize the persistent storage. */
-	initvars();
 
 	/*
 	 * If this was a low power wake and not a rollback, restore the ccd

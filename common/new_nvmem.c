@@ -1379,7 +1379,7 @@ static enum ec_error_list migrate_vars(struct nn_container *ch)
 	var = NULL;
 	total_var_space = 0;
 
-	while ((var = getnextvar(var)) != NULL)
+	while ((var = legacy_getnextvar(var)) != NULL)
 		save_var(var->data_, var->key_len, var->data_ + var->key_len,
 			 var->val_len, (struct max_var_container *)ch);
 
@@ -2607,9 +2607,9 @@ static struct max_var_container *find_var(const uint8_t *key, size_t key_len,
 	return NULL;
 }
 
-struct tuple *getvar(const uint8_t *key, uint8_t key_len)
+const struct tuple *getvar(const uint8_t *key, uint8_t key_len)
 {
-	struct max_var_container *vc;
+	const struct max_var_container *vc;
 	struct access_tracker at = {};
 
 	if (!key || !key_len)
@@ -2623,14 +2623,15 @@ struct tuple *getvar(const uint8_t *key, uint8_t key_len)
 	return NULL;
 }
 
-int freevar(struct tuple *var)
+void freevar(const struct tuple *var)
 {
 	void *vc;
 
+	if (!var)
+		return;
+
 	vc = (uint8_t *)var - offsetof(struct max_var_container, t_header);
 	shared_mem_release(vc);
-
-	return EC_SUCCESS; /* Could verify var first before releasing. */
 }
 
 static enum ec_error_list save_container(struct nn_container *nc)

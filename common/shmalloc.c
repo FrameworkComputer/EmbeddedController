@@ -310,6 +310,8 @@ int shared_mem_acquire(int size, char **dest_ptr)
 	int rv;
 	struct shm_buffer *new_buf;
 
+	*dest_ptr = NULL;
+
 	if (in_interrupt_context())
 		return EC_ERROR_INVAL;
 
