@@ -97,7 +97,7 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 /******************************************************************************
  * Forward USART3 as a simple USB serial interface.
  */
-#ifdef SECTION_IS_RW
+
 static struct usart_config const usart3;
 struct usb_stream_config const usart3_usb;
 
@@ -123,7 +123,7 @@ USB_STREAM_CONFIG(usart3_usb,
 	USB_STREAM_TX_SIZE,
 	usb_to_usart3,
 	usart3_to_usb)
-#endif /* SECTION_IS_RW */
+
 
 /******************************************************************************
  * Forward USART4 as a simple USB serial interface.
@@ -412,17 +412,13 @@ int board_get_version(void)
 static void board_init(void)
 {
 	/* USB to serial queues */
-#ifdef SECTION_IS_RW
 	queue_init(&usart3_to_usb);
 	queue_init(&usb_to_usart3);
-#endif
 	queue_init(&usart4_to_usb);
 	queue_init(&usb_to_usart4);
 
 	/* UART init */
-#ifdef SECTION_IS_RW
 	usart_init(&usart3);
-#endif
 	usart_init(&usart4);
 
 	/* Delay DUT hub to avoid brownout. */

@@ -22,9 +22,7 @@
 
 /* Enable USART1,3,4 and USB streams */
 #define CONFIG_STREAM_USART
-#ifdef SECTION_IS_RW
 #define CONFIG_STREAM_USART3
-#endif
 #define CONFIG_STREAM_USART4
 #define CONFIG_STREAM_USB
 #define CONFIG_CMD_USART_INFO
