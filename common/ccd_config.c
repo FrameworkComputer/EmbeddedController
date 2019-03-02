@@ -369,8 +369,7 @@ static void ccd_load_config(void)
 			CPRINTS("CCD using default config");
 			ccd_reset_config(CCD_RESET_TEST_LAB);
 		}
-		ccd_config_loaded = 1;
-		return;
+		goto ccd_is_loaded;
 	}
 
 	/* Copy the tuple data */
@@ -388,6 +387,7 @@ static void ccd_load_config(void)
 		ccd_reset_config(t->val_len < 2 ? CCD_RESET_TEST_LAB : 0);
 	}
 
+ccd_is_loaded:
 	ccd_config_loaded = 1;
 
 	/* Notify CCD users of configuration change */
@@ -410,8 +410,14 @@ static int ccd_save_config(void)
 
 	rv = writevars();
 
-	/* Notify CCD users of configuration change */
-	hook_notify(HOOK_CCD_CHANGE);
+	/*
+	 * Notify CCD users of configuration change.
+	 * Protect this notify with the ccd_config_loaded flag so recipients of
+	 * HOOK_CCD_CHANGE don't call ccd_get/ccd_set before the CCD
+	 * initialization is complete.
+	 */
+	if (ccd_config_loaded)
+		hook_notify(HOOK_CCD_CHANGE);
 
 	return rv;
 }
