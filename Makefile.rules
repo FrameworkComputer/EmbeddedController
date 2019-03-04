@@ -347,10 +347,14 @@ cmd_size=$(Q)awk '\
   /^FLASH/ {flash_size = strtonum($$3)} \
   /__ram_free =/ {ram_free = strtonum($$1)} \
   END {room_free = flash_size - image_size; \
-       print room_free > "$(out)/RW/space_free_flash.txt"; \
        print ram_free > "$(out)/RW/space_free_ram.txt"; \
-       printf ("  *** %s bytes in flash and %s bytes in RAM still available on $(BOARD) ****\n", \
-	       room_free, ram_free)}' $(out)/RW/$(PROJECT).RW.map
+       printf "  *** "; \
+       if (flash_size > 0) { \
+         print room_free > "$(out)/RW/space_free_flash.txt"; \
+         printf ("%s bytes in flash and ", room_free);\
+       } \
+       printf ("%s bytes in RAM still available on $(BOARD) ****\n", ram_free) \
+  }' $(out)/RW/$(PROJECT).RW.map
 endif
 
 build/host/%.info: run-%
