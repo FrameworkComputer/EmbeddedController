@@ -268,30 +268,29 @@ int i2c_write8(int port, int slave_addr, int offset, int data);
  * Read one or two bytes data from the slave at 8-bit slave address
  * * <slaveaddr>, at 16-bit <offset> in the slave's address space.
  */
-int i2c_read_offset16(int port, int slave_addr, uint16_t offset,
-                        int *data, int len);
+int i2c_read_offset16(int port, int slave_addr, uint16_t offset, int *data,
+		      int len);
 
 /**
  * Write one or two bytes data to the slave at 8-bit slave address
  * <slaveaddr>, at 16-bit <offset> in the slave's address space.
  */
-int i2c_write_offset16(int port, int slave_addr, uint16_t offset,
-                        int data, int len);
+int i2c_write_offset16(int port, int slave_addr, uint16_t offset, int data,
+		       int len);
 
 /**
  * Read <len> bytes block data from the slave at 8-bit slave address
  * * <slaveaddr>, at 16-bit <offset> in the slave's address space.
  */
 int i2c_read_offset16_block(int port, int slave_addr, uint16_t offset,
-			uint8_t *data, int len);
+			    uint8_t *data, int len);
 
 /**
  * Write <len> bytes block data to the slave at 8-bit slave address
  * <slaveaddr>, at 16-bit <offset> in the slave's address space.
  */
 int i2c_write_offset16_block(int port, int slave_addr, uint16_t offset,
-			const uint8_t *data, int len);
-
+			     const uint8_t *data, int len);
 
 /**
  * @return non-zero if i2c bus is busy

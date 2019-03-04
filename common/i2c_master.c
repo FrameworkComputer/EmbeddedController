@@ -304,14 +304,14 @@ int i2c_write8(int port, int slave_addr, int offset, int data)
 	return i2c_xfer(port, slave_addr, buf, 2, 0, 0);
 }
 
-int i2c_read_offset16(int port, int slave_addr, uint16_t offset,
-                                int *data, int len)
+int i2c_read_offset16(int port, int slave_addr, uint16_t offset, int *data,
+		      int len)
 {
 	int rv;
 	uint8_t buf[sizeof(uint16_t)], addr[sizeof(uint16_t)];
 
-        if (len < 0 || len > 2)
-                return EC_ERROR_INVAL;
+	if (len < 0 || len > 2)
+		return EC_ERROR_INVAL;
 
 	addr[0] = (offset >> 8) & 0xff;
 	addr[1] = offset & 0xff;
@@ -334,14 +334,13 @@ int i2c_read_offset16(int port, int slave_addr, uint16_t offset,
 	return EC_SUCCESS;
 }
 
-int i2c_write_offset16(int port, int slave_addr, uint16_t offset,
-                                int data, int len)
+int i2c_write_offset16(int port, int slave_addr, uint16_t offset, int data,
+		       int len)
 {
 	uint8_t buf[2 + sizeof(uint16_t)];
 
-        if (len < 0 || len > 2)
-                return EC_ERROR_INVAL;
-
+	if (len < 0 || len > 2)
+		return EC_ERROR_INVAL;
 
 	buf[0] = (offset >> 8) & 0xff;
 	buf[1] = offset & 0xff;
@@ -362,7 +361,7 @@ int i2c_write_offset16(int port, int slave_addr, uint16_t offset,
 }
 
 int i2c_read_offset16_block(int port, int slave_addr, uint16_t offset,
-			uint8_t *data, int len)
+			    uint8_t *data, int len)
 {
 	uint8_t addr[sizeof(uint16_t)];
 
@@ -373,7 +372,7 @@ int i2c_read_offset16_block(int port, int slave_addr, uint16_t offset,
 }
 
 int i2c_write_offset16_block(int port, int slave_addr, uint16_t offset,
-			const uint8_t *data, int len)
+			     const uint8_t *data, int len)
 {
 	int rv;
 	uint8_t addr[sizeof(uint16_t)];
@@ -387,10 +386,10 @@ int i2c_write_offset16_block(int port, int slave_addr, uint16_t offset,
 	 */
 	i2c_lock(port, 1);
 	rv = i2c_xfer_unlocked(port, slave_addr, addr, 2, NULL, 0,
-			I2C_XFER_START);
+			       I2C_XFER_START);
 	if (!rv)
 		rv = i2c_xfer_unlocked(port, slave_addr, data, len, NULL, 0,
-				 I2C_XFER_STOP);
+				       I2C_XFER_STOP);
 	i2c_lock(port, 0);
 
 	return rv;
@@ -1003,7 +1002,7 @@ static int command_i2cxfer(int argc, char **argv)
 {
 	int port, slave_addr;
 	uint16_t offset = 0;
-        uint8_t offset_size = 0;
+	uint8_t offset_size = 0;
 	int v = 0;
 	uint8_t data[32];
 	char *e;
@@ -1024,7 +1023,7 @@ static int command_i2cxfer(int argc, char **argv)
 	if (*e)
 		return EC_ERROR_PARAM4;
 
-        offset_size = (strlen(argv[4]) == 6) ? 2 : 1;
+	offset_size = (strlen(argv[4]) == 6) ? 2 : 1;
 
 	if (argc >= 6) {
 		v = strtoi(argv[5], &e, 0);
@@ -1055,7 +1054,7 @@ static int command_i2cxfer(int argc, char **argv)
 		if (argc < 6 || v < 0 || v > sizeof(data))
 			return EC_ERROR_PARAM5;
 
-		rv = i2c_xfer(port, slave_addr, (uint8_t*)&offset, 1, data, v);
+		rv = i2c_xfer(port, slave_addr, (uint8_t *)&offset, 1, data, v);
 
 		if (!rv)
 			ccprintf("Data: %.*h\n", v, data);
