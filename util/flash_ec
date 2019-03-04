@@ -359,7 +359,7 @@ if [ -n "${FLAGS_chip}" -a "${CHIP}" != "${FLAGS_chip}" ]; then
 	die "board ${BOARD} doesn't use chip ${FLAGS_chip}"
 fi
 
-if [ "${CHIP}" = "stm32_dfu" -o "${CHIP}" = "it83xx" ]; then
+if [[ "${CHIP}" = "stm32_dfu" ]]; then
 	NEED_SERVO="no"
 fi
 
