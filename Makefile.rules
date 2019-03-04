@@ -591,7 +591,7 @@ print-configs:
 	@echo "----------------------------------------------------------------"
 	@echo "| RW Config:                                                   |"
 	@echo "----------------------------------------------------------------"
-	@$(_tsk_cfg_rw) $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
+	@$(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
 		-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RW include/config.h | \
 		grep "#define CONFIG_" | cut -c9- | sort
 
