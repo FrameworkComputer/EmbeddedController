@@ -15,6 +15,7 @@
 #include "console.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/battery/max17055.h"
+#include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/rt946x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/mt6370.h"
@@ -82,8 +83,11 @@ const struct i2c_port_t i2c_ports[] = {
 	{"tcpc0",     I2C_PORT_TCPC0,     400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
 	{"battery",   I2C_PORT_BATTERY,   400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 	{"accelgyro", I2C_PORT_ACCEL,     400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
+	{"bc12",      I2C_PORT_BC12,      400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+#define BC12_I2C_ADDR PI3USB9201_I2C_ADDR_3
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -233,6 +237,14 @@ static void board_rev_init(void)
 	/* Board revision specific configs. */
 	if (board_get_version() >= 2)
 		gpio_set_flags(GPIO_USBC_THERM, GPIO_ANALOG);
+
+	if (board_get_version() == 2) {
+		/* configure PI3USB9201 to USB Path ON Mode */
+		i2c_write8(I2C_PORT_BC12, BC12_I2C_ADDR,
+			   PI3USB9201_REG_CTRL_1,
+			   (PI3USB9201_USB_PATH_ON <<
+			    PI3USB9201_REG_CTRL_1_MODE_SHIFT));
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_rev_init, HOOK_PRIO_INIT_ADC + 1);
 

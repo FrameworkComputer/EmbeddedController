@@ -176,6 +176,7 @@
 #define I2C_PORT_BATTERY  1
 #define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
 #define I2C_PORT_ACCEL    1
+#define I2C_PORT_BC12     1
 
 /* Route sbs host requests to virtual battery driver */
 #define VIRTUAL_BATTERY_ADDR 0x16
