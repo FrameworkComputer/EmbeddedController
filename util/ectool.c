@@ -5002,6 +5002,8 @@ int cmd_usb_pd(int argc, char *argv[])
 	const char *mux_str[] = {"", "none", "usb", "dp", "dock", "auto"};
 	const char *swap_str[] = {"", "dr_swap", "pr_swap", "vconn_swap"};
 	struct ec_params_usb_pd_control p;
+	struct ec_response_usb_pd_control_v2 *r_v2 =
+		(struct ec_response_usb_pd_control_v2 *)ec_inbuf;
 	struct ec_response_usb_pd_control_v1 *r_v1 =
 		(struct ec_response_usb_pd_control_v1 *)ec_inbuf;
 	struct ec_response_usb_pd_control *r =
@@ -5009,7 +5011,7 @@ int cmd_usb_pd(int argc, char *argv[])
 	int rv, i, j;
 	int option_ok;
 	char *e;
-	int cmdver = 1;
+	int cmdver = 2;
 
 	BUILD_ASSERT(ARRAY_SIZE(role_str) == USB_PD_CTRL_ROLE_COUNT);
 	BUILD_ASSERT(ARRAY_SIZE(mux_str) == USB_PD_CTRL_MUX_COUNT);
@@ -5120,6 +5122,25 @@ int cmd_usb_pd(int argc, char *argv[])
 		       (r_v1->role & PD_CTRL_RESP_ROLE_DATA) ? "DFP" : "UFP",
 		       (r_v1->role & PD_CTRL_RESP_ROLE_VCONN) ? " VCONN" : "",
 		       r_v1->polarity + 1);
+
+		if (cmdver == 2) {
+			printf("CC State: %d:", r_v2->cc_state);
+			if (r_v2->cc_state == USBC_PD_CC_NONE)
+				printf("None");
+			else if (r_v2->cc_state == USBC_PD_CC_NO_UFP)
+				printf("No UFP");
+			else if (r_v2->cc_state == USBC_PD_CC_AUDIO_ACC)
+				printf("Audio accessory");
+			else if (r_v2->cc_state == USBC_PD_CC_DEBUG_ACC)
+				printf("Debug accessory");
+			else if (r_v2->cc_state == USBC_PD_CC_UFP_ATTACHED)
+				printf("UFP attached");
+			else if (r_v2->cc_state == USBC_PD_CC_DFP_ATTACHED)
+				printf("DFP attached");
+			else
+				printf("UNKNOWN");
+			printf("\n");
+		}
 
 		/* If connected to a PD device, then print port partner info */
 		if ((r_v1->enabled & PD_CTRL_RESP_ENABLED_CONNECTED) &&

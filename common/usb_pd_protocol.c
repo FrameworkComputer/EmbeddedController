@@ -4878,6 +4878,7 @@ static const enum typec_mux typec_mux_map[USB_PD_CTRL_MUX_COUNT] = {
 static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_control *p = args->params;
+	struct ec_response_usb_pd_control_v2 *r_v2 = args->response;
 	struct ec_response_usb_pd_control_v1 *r_v1 = args->response;
 	struct ec_response_usb_pd_control *r = args->response;
 
@@ -4915,21 +4916,24 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 #endif
 #endif
 
-	if (args->version == 0) {
+	switch (args->version) {
+	case 0:
 		r->enabled = pd_comm_is_enabled(p->port);
 		r->role = pd[p->port].power_role;
 		r->polarity = pd[p->port].polarity;
 		r->state = pd[p->port].task_state;
 		args->response_size = sizeof(*r);
-	} else {
-		r_v1->enabled =
+		break;
+	case 1:
+	case 2:
+		r_v2->enabled =
 			(pd_comm_is_enabled(p->port) ?
 				PD_CTRL_RESP_ENABLED_COMMS : 0) |
 			(pd_is_connected(p->port) ?
 				PD_CTRL_RESP_ENABLED_CONNECTED : 0) |
 			((pd[p->port].flags & PD_FLAGS_PREVIOUS_PD_CONN) ?
 				PD_CTRL_RESP_ENABLED_PD_CAPABLE : 0);
-		r_v1->role =
+		r_v2->role =
 			(pd[p->port].power_role ? PD_CTRL_RESP_ROLE_POWER : 0) |
 			(pd[p->port].data_role ? PD_CTRL_RESP_ROLE_DATA : 0) |
 			((pd[p->port].flags & PD_FLAGS_VCONN_ON) ?
@@ -4942,17 +4946,24 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 				PD_CTRL_RESP_ROLE_USB_COMM : 0) |
 			((pd[p->port].flags & PD_FLAGS_PARTNER_EXTPOWER) ?
 				PD_CTRL_RESP_ROLE_EXT_POWERED : 0);
-		r_v1->polarity = pd[p->port].polarity;
-		strzcpy(r_v1->state,
+		r_v2->polarity = pd[p->port].polarity;
+		strzcpy(r_v2->state,
 			pd_state_names[pd[p->port].task_state],
-			sizeof(r_v1->state));
-		args->response_size = sizeof(*r_v1);
+			sizeof(r_v2->state));
+		r_v2->cc_state =  pd[p->port].cc_state;
+		if (args->version == 1)
+			args->response_size = sizeof(*r_v1);
+		else
+			args->response_size = sizeof(*r_v2);
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
 	}
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_CONTROL,
 		     hc_usb_pd_control,
-		     EC_VER_MASK(0) | EC_VER_MASK(1));
+		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
 
 static int hc_remote_flash(struct host_cmd_handler_args *args)
 {
