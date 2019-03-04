@@ -720,6 +720,12 @@ static void transfer_section(struct transfer_descriptor *td,
 	while (data_len && (data_ptr[data_len - 1] == 0xff))
 		data_len--;
 
+	/*
+	 * Make sure total size is 4 bytes aligned, this is required for
+	 * successful flashing.
+	 */
+	data_len = (data_len + 3) &  ~3;
+
 	printf("sending 0x%zx bytes to %#x\n", data_len, section_addr);
 	while (data_len) {
 		size_t payload_size;
