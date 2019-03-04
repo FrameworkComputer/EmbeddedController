@@ -181,14 +181,12 @@ SECTIONS
 	ASSERT((__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE) <=
 			(CONFIG_RAM_BASE + CONFIG_RAM_SIZE),
 		"Not enough space for shared memory.")
+	__ram_free = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE) -
+        	(__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
 
 	/* TODO: Adjust __image_size to proper value for core minute-ia later */
 	__image_size = . - CONFIG_ISH_BOOT_START;
 
 	def_irq_low  = ABSOLUTE(default_int_handler) & 0xFFFF;
 	def_irq_high = ABSOLUTE(default_int_handler) >> 16;
-}
-MEMORY
-{
-	FLASH (rwx) : ORIGIN = CONFIG_ISH_BOOT_START, LENGTH = 640 * 1024
 }
