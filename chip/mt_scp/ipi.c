@@ -70,6 +70,11 @@ static inline int is_ipi_busy(void)
 /* If IPI is declared as a wake-up source, wake AP up. */
 static inline void try_to_wakeup_ap(int32_t id)
 {
+#ifdef CONFIG_RPMSG_NAME_SERVICE
+	if (id == IPI_NS_SERVICE)
+		return;
+#endif
+
 	if (*ipi_wakeup_table[id])
 		SCP_SPM_INT = SPM_INT_A2SPM;
 }
