@@ -80,6 +80,14 @@ struct motion_sensor_t motion_sensors[] = {
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
+/* Initialize board. */
+static void board_init(void)
+{
+	/* Enable interrupt for LSM6DS3 sensor */
+	gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
 /* TODO(b/122364080): replace when implement real chipset/power task */
 int chipset_in_state(int state_mask)
 {
