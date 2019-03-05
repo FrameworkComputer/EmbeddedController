@@ -33,7 +33,7 @@
 
 #define CONFIG_ACCELGYRO_LSM6DSM	/* For LSM6DS3 */
 /* TODO(b/123634700): This is temporary until FIFO is supported */
-#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << BASE_ACCEL)
+#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
 
 /* Host command over HECI */
 #define CONFIG_HOSTCMD_HECI
@@ -78,7 +78,8 @@
 
 /* Motion sensors */
 enum sensor_id {
-	BASE_ACCEL,
+	LID_ACCEL,
+	LID_GYRO,
 	/* TODO(b/122281217): Add remain sensors */
 	SENSOR_COUNT
 };

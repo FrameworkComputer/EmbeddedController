@@ -28,21 +28,22 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* Sensor config */
-static struct mutex g_base_mutex;
+static struct mutex g_lid_mutex;
 /* sensor private data */
 static struct lsm6dsm_data lsm6dsm_a_data;
 
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {
-	[BASE_ACCEL] = {
-		.name = "Base Accel",
+	[LID_ACCEL] = {
+		.name = "Lid Accel",
 		.active_mask = SENSOR_ACTIVE_S0,
 		.chip = MOTIONSENSE_CHIP_LSM6DS3,
 		.type = MOTIONSENSE_TYPE_ACCEL,
-		.location = MOTIONSENSE_LOC_BASE,
+		.location = MOTIONSENSE_LOC_LID,
 		.drv = &lsm6dsm_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = &lsm6dsm_a_data,
+		.mutex = &g_lid_mutex,
+		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_a_data,
+				MOTIONSENSE_TYPE_ACCEL),
 		.port = I2C_PORT_SENSOR,
 		.addr = LSM6DSM_ADDR1,
 		.rot_standard_ref = NULL, /* TODO rotate correctly */
@@ -56,6 +57,24 @@ struct motion_sensor_t motion_sensors[] = {
 				.ec_rate = 100 * MSEC,
 			},
 		},
+	},
+
+	[LID_GYRO] = {
+		.name = "Lid Gyro",
+		.active_mask = SENSOR_ACTIVE_S0,
+		.chip = MOTIONSENSE_CHIP_LSM6DS3,
+		.type = MOTIONSENSE_TYPE_GYRO,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &lsm6dsm_drv,
+		.mutex = &g_lid_mutex,
+		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_a_data,
+				MOTIONSENSE_TYPE_GYRO),
+		.port = I2C_PORT_SENSOR,
+		.addr = LSM6DSM_ADDR1,
+		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
+		.rot_standard_ref = NULL, /* TODO rotate correctly */
+		.min_frequency = LSM6DSM_ODR_MIN_VAL,
+		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 	},
 	/* TODO(b/122281217): Add remain sensors */
 };
