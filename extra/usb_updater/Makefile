@@ -63,7 +63,10 @@ usb_updater2: usb_updater2.c Makefile
 .PHONY: clean
 
 generated_version.h: $(GSCTOOL_SOURCES)
-	@(cd ../../; util/getversion.sh) > $@
+	# Make sure ${BOARD} not set to anything when invoking getversion.sh,
+	# as even when building with Cr50 enabled, other directories do not
+	# matter for gsctool.
+	@(cd ../../; BOARD= util/getversion.sh) > $@
 
 clean:
 	rm -rf $(PROGRAMS) *~ *.o *.d dp generated_version.h
