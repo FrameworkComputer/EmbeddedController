@@ -18,8 +18,9 @@
 
 /* Control_1 regiter bit definitions */
 #define PI3USB9201_REG_CTRL_1_INT_MASK (1 << 0)
-#define PI3USB9201_REG_CTRL_1_MODE (1 << 1)
-#define PI3USB9201_REG_CTRL_1_MODE_MASK (0x7 << 1)
+#define PI3USB9201_REG_CTRL_1_MODE_SHIFT 1
+#define PI3USB9201_REG_CTRL_1_MODE_MASK ( \
+		0x7 << PI3USB9201_REG_CTRL_1_MODE_SHIFT)
 
 /* Control_2 regiter bit definitions */
 #define PI3USB9201_REG_CTRL_2_AUTO_SW (1 << 1)
@@ -33,6 +34,17 @@
 struct pi3usb2901_config_t {
 	const int i2c_port;
 	const int i2c_addr;
+};
+
+enum pi3usb9201_mode {
+	PI3USB9201_POWER_DOWN,
+	PI3USB9201_SDP_HOST_MODE,
+	PI3USB9201_DCP_HOST_MODE,
+	PI3USB9201_CDP_HOST_MODE,
+	PI3USB9201_CLIENT_MODE,
+	PI3USB9201_RESERVED_1,
+	PI3USB9201_RESERVED_2,
+	PI3USB9201_USB_PATH_ON,
 };
 
 /* Configuration struct defined at board level */

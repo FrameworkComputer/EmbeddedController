@@ -21,17 +21,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
-enum pi3usb9201_mode {
-	PI3USB9201_POWER_DOWN,
-	PI3USB9201_SDP_HOST_MODE,
-	PI3USB9201_DCP_HOST_MODE,
-	PI3USB9201_CDP_HOST_MODE,
-	PI3USB9201_CLIENT_MODE,
-	PI3USB9201_RESERVED_1,
-	PI3USB9201_RESERVED_2,
-	PI3USB9201_USB_PATH_ON,
-};
-
 enum pi3usb9201_client_sts {
 	CHG_OTHER = 0,
 	CHG_2_4A,
@@ -115,7 +104,7 @@ static int pi3usb9201_set_mode(int port, int desired_mode)
 {
 	return pi3usb9201_raw(port, PI3USB9201_REG_CTRL_1,
 			      PI3USB9201_REG_CTRL_1_MODE_MASK,
-			      desired_mode << 1);
+			      desired_mode << PI3USB9201_REG_CTRL_1_MODE_SHIFT);
 }
 
 static void bc12_update_charge_manager(int port)
