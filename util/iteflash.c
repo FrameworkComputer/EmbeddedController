@@ -96,6 +96,8 @@ struct iteflash_config {
 	int erase;  /* boolean */
 	int i2c_mux; /* boolean */
 	int debug;  /* boolean */
+	int disable_watchdog;  /* boolean */
+	int disable_protect_path;  /* boolean */
 	int usb_interface;
 	int usb_vid;
 	int usb_pid;
@@ -1591,10 +1593,20 @@ static int post_waveform_work(struct common_hnd *chnd)
 		if (ret)
 			return ret;
 	}
-	ret = dbgr_disable_watchdog(chnd);
-	if (ret)
-		return ret;
-	return dbgr_disable_protect_path(chnd);
+
+	if (chnd->conf.disable_watchdog) {
+		ret = dbgr_disable_watchdog(chnd);
+		if (ret)
+			return ret;
+	}
+
+	if (chnd->conf.disable_protect_path) {
+		ret = dbgr_disable_protect_path(chnd);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
 }
 
 static const struct i2c_interface ccd_i2c_interface = {
@@ -1628,6 +1640,8 @@ static const struct option longopts[] = {
 	{"serial", 1, 0, 's'},
 	{"vendor", 1, 0, 'v'},
 	{"write", 1, 0, 'w'},
+	{"nodisable-watchdog", 0, 0, 'z'},
+	{"nodisable-protect-path", 0, 0, 'Z'},
 	{NULL, 0, 0, 0}
 };
 
@@ -1662,6 +1676,10 @@ static void display_usage(char *program)
 		"\tDefault is true. Set to false if ITE direct firmware\n"
 		"\tupdate mode has already been enabled.\n");
 	fprintf(stderr, "-w, --write <file> : Write <file> to flash.\n");
+	fprintf(stderr, "-z, --nodisable-watchdog : Do *not* disable EC "
+		"watchdog.\n");
+	fprintf(stderr, "-Z, --nodisable-protect-path : Do *not* disable EC "
+		"protect path.\n");
 	exit(2);
 }
 
@@ -1707,7 +1725,7 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 {
 	int opt, idx, rv;
 
-	while ((opt = getopt_long(argc, argv, "?R:dehc:i:mp:r:s:uv:W:w:",
+	while ((opt = getopt_long(argc, argv, "?R:dehc:i:mp:r:s:uv:W:w:Zz",
 				  longopts, &idx)) != -1) {
 		switch (opt) {
 		case 'c':
@@ -1771,6 +1789,12 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 		case 'w':
 			conf->output_filename = optarg;
 			break;
+		case 'z':
+			conf->disable_watchdog = 0;
+			break;
+		case 'Z':
+			conf->disable_protect_path = 0;
+			break;
 		}
 	}
 	return 0;
@@ -1802,6 +1826,8 @@ int main(int argc, char **argv)
 		/* Default flag settings. */
 		.conf = {
 			.send_waveform = 1,
+			.disable_watchdog = 1,
+			.disable_protect_path = 1,
 			.usb_interface = SERVO_INTERFACE,
 			.usb_vid = SERVO_USB_VID,
 			.usb_pid = SERVO_USB_PID,
