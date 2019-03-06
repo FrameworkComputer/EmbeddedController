@@ -152,6 +152,11 @@ static const uint8_t vdo_ver[] = {
 #define VDO_VER(v) VDM_VER10
 #endif
 
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+/* Tracker for which task is waiting on sysjump prep to finish */
+static volatile task_id_t sysjump_task_waiting = TASK_ID_INVALID;
+#endif
+
 static struct pd_protocol {
 	/* current port power role (SOURCE or SINK) */
 	uint8_t power_role;
@@ -2165,7 +2170,7 @@ int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 	return 0;
 }
 
-#ifdef CONFIG_POWER_COMMON /* Needed b/c CONFIG_POWER_COMMON is only caller */
+#if defined(CONFIG_POWER_COMMON) || defined(CONFIG_USB_PD_ALT_MODE_DFP)
 static void exit_dp_mode(int port)
 {
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
@@ -2768,6 +2773,12 @@ void pd_task(void *u)
 			this_state = PD_STATE_SOFT_RESET;
 
 			/*
+			 * Re-discover any alternate modes we may have been
+			 * using with this port partner.
+			 */
+			pd[port].flags |= PD_FLAGS_CHECK_IDENTITY;
+
+			/*
 			 * Set the TCPC reset event such that we can set our CC
 			 * terminations, determine polarity, and enable RX so we
 			 * can hear back from our port partner.
@@ -2859,6 +2870,20 @@ void pd_task(void *u)
 		if (evt & PD_EVENT_POWER_STATE_CHANGE)
 			handle_new_power_state(port);
 #endif
+
+#if defined(CONFIG_USB_PD_ALT_MODE_DFP)
+		if (evt & PD_EVENT_SYSJUMP) {
+			exit_dp_mode(port);
+			/*
+			 * If event was set from pd_prepare_sysjump, wake the
+			 * task waiting on us to complete.
+			 */
+			if (sysjump_task_waiting != TASK_ID_INVALID)
+				task_set_event(sysjump_task_waiting,
+					       TASK_EVENT_SYSJUMP_READY, 0);
+		}
+#endif
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 		if (evt & PD_EVENT_UPDATE_DUAL_ROLE)
 			pd_update_dual_role_config(port);
@@ -4370,6 +4395,28 @@ static void pd_chipset_shutdown(void)
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pd_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
+
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+void pd_prepare_sysjump(void)
+{
+	int i;
+
+	/* Exit modes before sysjump so we can cleanly enter again later */
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+		/*
+		 * We can't be in an alternate mode if PD comm is disabled, so
+		 * no need to send the event
+		 */
+		if (!pd_comm_is_enabled(i))
+			continue;
+
+		sysjump_task_waiting = task_get_current();
+		task_set_event(PD_PORT_TO_TASK_ID(i), PD_EVENT_SYSJUMP, 0);
+		task_wait_event_mask(TASK_EVENT_SYSJUMP_READY, -1);
+		sysjump_task_waiting = TASK_ID_INVALID;
+	}
+}
+#endif
 
 #ifdef CONFIG_COMMON_RUNTIME
 

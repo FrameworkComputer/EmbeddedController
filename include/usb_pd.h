@@ -50,6 +50,7 @@ enum pd_rx_errors {
 #define PD_EVENT_POWER_STATE_CHANGE (1<<8) /* Chipset power state changed */
 #define PD_EVENT_SEND_HARD_RESET    (1<<9) /* Issue a Hard Reset. */
 #define PD_EVENT_SM                 (1<<10) /* PD State machine event */
+#define PD_EVENT_SYSJUMP	    (1<<11) /* Prepare for sysjump */
 
 /* Ensure TCPC is out of low power mode before handling these events. */
 #define PD_EXIT_LOW_POWER_EVENT_MASK \
@@ -1977,5 +1978,16 @@ static inline void pd_log_event(uint8_t type, uint8_t size_port,
 				uint16_t data, void *payload) {}
 static inline int pd_vdm_get_log_entry(uint32_t *payload) { return 0; }
 #endif /* CONFIG_USB_PD_LOGGING */
+
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+/**
+ * Prepare for a sysjump by exiting any alternate modes, if PD communication is
+ * allowed.
+ *
+ * Note: this call will block until the PD task has finished its exit mode and
+ * re-awoken the calling task.
+ */
+void pd_prepare_sysjump(void);
+#endif
 
 #endif  /* __CROS_EC_USB_PD_H */

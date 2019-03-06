@@ -554,6 +554,11 @@ static void jump_to_image(uintptr_t init_addr)
 	usleep(MSEC);
 	gpio_set_level(GPIO_ENTERING_RW, 0);
 
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+	/* Note: must be before i2c module is locked down */
+	pd_prepare_sysjump();
+#endif
+
 #ifdef CONFIG_I2C_MASTER
 	/* Prepare I2C module for sysjump */
 	i2c_prepare_sysjump();
