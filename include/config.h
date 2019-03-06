@@ -2502,6 +2502,9 @@
 /* MKBP events are sent by using GPIO */
 #undef CONFIG_MKBP_USE_GPIO
 
+/* MKBP events are sent by using HECI on an ISH */
+#undef CONFIG_MKBP_USE_HECI
+
 /* MKBP events are sent by using custom method */
 #undef CONFIG_MKBP_USE_CUSTOM
 
@@ -3979,13 +3982,15 @@
 #ifdef CONFIG_MKBP_EVENT
 #if !defined(CONFIG_MKBP_USE_CUSTOM) && \
 	!defined(CONFIG_MKBP_USE_HOST_EVENT) && \
-	!defined(CONFIG_MKBP_USE_GPIO)
+	!defined(CONFIG_MKBP_USE_GPIO) && \
+	!defined(CONFIG_MKBP_USE_HECI)
 #error Please define one of CONFIG_MKBP_USE_* macro.
 #endif
 
 #if defined(CONFIG_MKBP_USE_CUSTOM) + \
 	defined(CONFIG_MKBP_USE_GPIO) + \
-	defined(CONFIG_MKBP_USE_HOST_EVENT) > 1
+	defined(CONFIG_MKBP_USE_HOST_EVENT) + \
+	defined(CONFIG_MKBP_USE_HOST_HECI) > 1
 #error Must select only one type of MKBP event delivery method.
 #endif
 #endif /* CONFIG_MKBP_EVENT */
