@@ -340,14 +340,8 @@ static int cmd_create(int argc, char **argv)
 	p = cbi_set_data(p, CBI_TAG_OEM_ID, &bi.oem.val, bi.oem.size);
 	p = cbi_set_data(p, CBI_TAG_SKU_ID, &bi.sku.val, bi.sku.size);
 	p = cbi_set_data(p, CBI_TAG_MODEL_ID, &bi.model.val, bi.model.size);
-	if (bi.dram_part_num != NULL) {
-		p = cbi_set_data(p, CBI_TAG_DRAM_PART_NUM, bi.dram_part_num,
-				strlen(bi.dram_part_num) + 1);
-	}
-	if (bi.oem_name != NULL) {
-		p = cbi_set_data(p, CBI_TAG_OEM_NAME, bi.oem_name,
-				strlen(bi.oem_name) + 1);
-	}
+	p = cbi_set_string(p, CBI_TAG_DRAM_PART_NUM, bi.dram_part_num);
+	p = cbi_set_string(p, CBI_TAG_OEM_NAME, bi.oem_name);
 
 	h->total_size = p - cbi;
 	h->crc = cbi_crc8(h);

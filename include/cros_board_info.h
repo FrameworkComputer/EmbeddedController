@@ -90,6 +90,22 @@ uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag,
 		      const void *buf, int size);
 
 /**
+ * Store string data in memory in CBI data format.
+ *
+ * @param p	Pointer to the buffer where a new data item will be stored. It
+ * 		should be pointing to the data section of CBI.
+ * @param tag	Tag of the data item
+ * @param str	Pointer to the string data being copied. If pointer is NULL,
+ * 		this function will ignore adding the tag as well. Else, the
+ * 		string data will be added to CBI using size of strlen + 1. This
+ * 		string is assumed to be NUL-terminated and NUL gets stored in
+ * 		CBI along with the string data.
+ * @return	Address of the byte following the stored data in the destination
+ * 		buffer.
+ */
+uint8_t *cbi_set_string(uint8_t *p, enum cbi_data_tag tag, const char *str);
+
+/**
  * Find a data field in CBI
  *
  * @param cbi	Buffer containing CBI struct

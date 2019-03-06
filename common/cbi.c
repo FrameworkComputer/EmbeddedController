@@ -49,6 +49,14 @@ uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag,
 	return p;
 }
 
+uint8_t *cbi_set_string(uint8_t *p, enum cbi_data_tag tag, const char *str)
+{
+	if (str == NULL)
+		return p;
+
+	return cbi_set_data(p, tag, str, strlen(str) + 1);
+}
+
 struct cbi_data *cbi_find_tag(const void *cbi, enum cbi_data_tag tag)
 {
 	struct cbi_data *d;
