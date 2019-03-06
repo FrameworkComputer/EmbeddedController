@@ -34,6 +34,14 @@ uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag,
 		      const void *buf, int size)
 {
 	struct cbi_data *d = (struct cbi_data *)p;
+
+	/*
+	 * If size of the data to be added is zero, then no need to add the tag
+	 * as well.
+	 */
+	if (size == 0)
+		return p;
+
 	d->tag = tag;
 	d->size = size;
 	memcpy(d->value, buf, size);
@@ -185,12 +193,13 @@ int cbi_set_board_info(enum cbi_data_tag tag, const uint8_t *buf, uint8_t size)
 	}
 
 	if (!d) {
+		uint8_t *p;
 		/* Not found. Check if new item would fit */
 		if (sizeof(cbi) < head->total_size + sizeof(*d) + size)
 			return EC_ERROR_OVERFLOW;
 		/* Append new item */
-		cbi_set_data(&cbi[head->total_size], tag, buf, size);
-		head->total_size += (sizeof(*d) + size);
+		p = cbi_set_data(&cbi[head->total_size], tag, buf, size);
+		head->total_size = p - cbi;
 	} else {
 		/* Overwrite existing item */
 		memcpy(d->value, buf, d->size);
