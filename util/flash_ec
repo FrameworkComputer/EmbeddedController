@@ -717,16 +717,16 @@ function flash_flashrom() {
 	FLASHROM=$(PATH="${TOOL_PATH}" which flashrom)
 
 	if on_servov3; then
-		FLASHROM_PARAM="-p linux_spi"
+		FLASHROM_ARGS="-p linux_spi"
 	elif on_raiden; then
 	    if [[ "${SERVO_TYPE}" =~ "servo_micro" ]]; then
 		# Servo micro doesn't use the "target" parameter.
-		FLASHROM_PARAM="-p raiden_debug_spi:"
+		FLASHROM_ARGS="-p raiden_debug_spi:"
 	    else
-		FLASHROM_PARAM="-p raiden_debug_spi:target=EC,"
+		FLASHROM_ARGS="-p raiden_debug_spi:target=EC,"
 	    fi
 	else
-		FLASHROM_PARAM="-p ft2232_spi:type=servo-v2,port=B,"
+		FLASHROM_ARGS="-p ft2232_spi:type=servo-v2,port=B,"
 	fi
 
 	if [ ! -x "$FLASHROM" ]; then
@@ -736,7 +736,7 @@ function flash_flashrom() {
 	if ! on_servov3; then
 		SERIALNAME=$(get_serial)
 		if [[ "$SERIALNAME" != "" ]] ; then
-			FLASHROM_PARAM+="serial=${SERIALNAME}"
+			FLASHROM_ARGS+="serial=${SERIALNAME}"
 		fi
 	fi
 
@@ -785,7 +785,7 @@ function flash_flashrom() {
 	fi
 
 	# Generate the correct flashrom command base.
-	FLASHROM_CMDLINE="${FLASHROM} ${FLASHROM_PARAM}"
+	FLASHROM_CMDLINE="${FLASHROM} ${FLASHROM_ARGS}"
 	if [[ -z "${FLAGS_read}" ]]; then
 		# Program EC image.
 		# flashrom should report the image size at the end of the output.
@@ -1009,9 +1009,9 @@ function flash_stm32_dfu() {
 }
 
 function flash_it83xx() {
-	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
-	ITEFLASH=$(PATH="${TOOL_PATH}" which iteflash)
-	if [ ! -x "$ITEFLASH" ]; then
+	local TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
+	local ITEFLASH_BIN=$(PATH="${TOOL_PATH}" which iteflash)
+	if [[ ! -x "$ITEFLASH_BIN" ]]; then
 		die "no iteflash util found."
 	fi
 
@@ -1051,44 +1051,36 @@ function flash_it83xx() {
 		die "${SERVO_TYPE} is not yet supported."
 	fi
 
-	declare -a ITEFLASH_PARAM
+	local ITEFLASH_ARGS=( "${ITEFLASH_BIN}" )
+
 	if [[ "${SERVO_TYPE}" =~ "servo_v2" ]]; then
-		ITEFLASH_PARAM+=("--send-waveform=1")
-		ITEFLASH_PARAM+=("--i2c-interface=ftdi")
+		ITEFLASH_ARGS+=( "--send-waveform=1" )
+		ITEFLASH_ARGS+=( "--i2c-interface=ftdi" )
 	elif [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
-		ITEFLASH_PARAM+=("--send-waveform=0")
-		ITEFLASH_PARAM+=("--i2c-interface=ccd")
+		ITEFLASH_ARGS+=( "--send-waveform=0" )
+		ITEFLASH_ARGS+=( "--i2c-interface=ccd" )
 	else
-		# TODO(b/124388894) Implement servo_micro support.
+		# TODO(b/124388894): Implement servo_micro support.
 		die "${SERVO_TYPE} is not yet supported."
 	fi
 
 	if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
-		ITEFLASH_PARAM+=("--debug")
+		ITEFLASH_ARGS+=( "--debug" )
 	fi
 
-	local IMG_READ="${FLAGS_read}"
-	if [[ -z "${IMG_READ}" ]]; then
-		# Program EC Image
-		info "Programming EC firmware image"
-		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
-			echo "${ITEFLASH}" "${ITEFLASH_PARAM[@]}" --erase \
-				--write="${IMG}"
-		fi
-		sudo "${ITEFLASH}" "${ITEFLASH_PARAM[@]}" --erase \
-			--write="${IMG}"
-
-		# iteflash verifies the programmed EC binary by reading it
-		# back as default. flash_ec does not need to verify it here.
+	if [[ -n "${FLAGS_read}" ]]; then
+		ITEFLASH_ARGS+=( "--read=${FLAGS_read}" )
+		info "Reading EC firmware image using iteflash..."
 	else
-		# Read EC Image
-		info "Reading EC firmware image"
-		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
-			echo "${ITEFLASH}" "${ITEFLASH_PARAM[@]}" \
-			--read="${IMG_READ}"
-		fi
-		sudo "${ITEFLASH}" "${ITEFLASH_PARAM[@]}" --read="${IMG_READ}"
+		ITEFLASH_ARGS+=( "--erase" "--write=${IMG}" )
+		info "Programming EC firmware image using iteflash..."
 	fi
+
+	if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+		echo "${ITEFLASH_ARGS[@]}"
+	fi
+
+	sudo "${ITEFLASH_ARGS[@]}"
 }
 
 function flash_lm4() {
@@ -1172,21 +1164,21 @@ function flash_npcx_uut() {
 
 	# Remove the prefix "/dev/" because uartupdatetool will add it.
 	EC_UART=${EC_UART#/dev/}
-	UUT_PARAMS="--port ${EC_UART} --baudrate 115200"
+	UUT_ARGS="--port ${EC_UART} --baudrate 115200"
 
 	# Load monitor binary to address 0x200C3020
 	if [[ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]]; then
-		echo ${NPCX_UUT} ${UUT_PARAMS} --opr wr --addr ${MON_ADDR} \
+		echo ${NPCX_UUT} ${UUT_ARGS} --opr wr --addr ${MON_ADDR} \
 			--file ${MON}
 	fi
-	${NPCX_UUT} ${UUT_PARAMS} --opr wr --addr "${MON_ADDR}" \
+	${NPCX_UUT} ${UUT_ARGS} --opr wr --addr "${MON_ADDR}" \
 		--file "${MON}" || die "Failed to load monitor binary."
 
 	if [[ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]]; then
-		echo ${NPCX_UUT} ${UUT_PARAMS} --auto --offset ${FLAGS_offset} \
+		echo ${NPCX_UUT} ${UUT_ARGS} --auto --offset ${FLAGS_offset} \
 			--file ${IMG}
 	fi
-	${NPCX_UUT} ${UUT_PARAMS} --auto --offset "${FLAGS_offset}" \
+	${NPCX_UUT} ${UUT_ARGS} --auto --offset "${FLAGS_offset}" \
 		--file "${IMG}" || die "Failed to flash EC."
 }
 
