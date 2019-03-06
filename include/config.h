@@ -1091,6 +1091,7 @@
 #undef  CONFIG_CMD_BATDEBUG
 #define CONFIG_CMD_BATTFAKE
 #undef  CONFIG_CMD_BATT_MFG_ACCESS
+#define CONFIG_CMD_RETIMER
 #undef  CONFIG_CMD_BUTTON
 #define CONFIG_CMD_CBI
 #undef  CONFIG_CMD_CCD_DISABLE  /* 'ccd disable' subcommand */
@@ -3568,6 +3569,16 @@
 #undef CONFIG_USB_PD_TCPM_TUSB422
 
 /*
+ * Type-C multi-protocol retimer is present.
+ */
+#undef CONFIG_USB_PD_RETIMER
+
+/*
+ * Type-C multi-protocol retimer to be used in on-board applications.
+ */
+#undef CONFIG_USB_PD_RETIMER_INTEL_BB
+
+/*
  * Adds an EC console command to erase the ANX7447 OCM flash.
  * Note: this is intended to be a temporary option and
  * won't be needed when ANX7447 are put on boards with OCM already erased
@@ -4332,6 +4343,12 @@
 /* Define derived config options for BC1.2 detection */
 #ifdef CONFIG_BC12_DETECT_PI3USB9201
 #define CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER
+#endif
+
+/*****************************************************************************/
+/* Define derived config options for Retimer chips */
+#ifdef CONFIG_USB_PD_RETIMER_INTEL_BB
+#define CONFIG_USB_PD_RETIMER
 #endif
 
 /*****************************************************************************/

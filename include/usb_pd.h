@@ -1962,6 +1962,22 @@ int pd_is_vbus_present(int port);
  */
 uint8_t board_get_dp_pin_mode(int port);
 
+#ifdef CONFIG_USB_PD_RETIMER
+/**
+ * Return true if specified PD port is UFP.
+ *
+ * @param port USB-C port number
+ */
+int pd_is_ufp(int port);
+
+/**
+ * Return true if specified PD port is debug accessory.
+ *
+ * @param port USB-C port number
+ */
+int pd_is_debug_acc(int port);
+#endif
+
 /* ----- Logging ----- */
 #ifdef CONFIG_USB_PD_LOGGING
 /**

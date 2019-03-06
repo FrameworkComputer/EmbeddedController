@@ -376,6 +376,18 @@ int pd_is_vbus_present(int port)
 #endif
 }
 
+#ifdef CONFIG_USB_PD_RETIMER
+int pd_is_ufp(int port)
+{
+	return pd[port].cc_state == PD_CC_UFP_ATTACHED;
+}
+
+int pd_is_debug_acc(int port)
+{
+	return pd[port].cc_state == PD_CC_DEBUG_ACC;
+}
+#endif
+
 static void set_polarity(int port, int polarity)
 {
 	tcpm_set_polarity(port, polarity);
