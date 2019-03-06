@@ -18,6 +18,7 @@ enum flash_event_type {
 	FE_LOG_OVERFLOWS = 3, /* A single byte, overflow counter. */
 	FE_LOG_LOCKS = 4,     /* A single byte, lock failures counter. */
 	FE_LOG_NVMEM = 5,     /* NVMEM failure, variable structure. */
+	FE_LOG_TPM_WIPE_ERROR = 6,     /* Failed to wipe the TPM */
 
 	/*
 	 * Fixed padding value makes it easier to parse log space

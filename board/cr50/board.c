@@ -957,7 +957,7 @@ void board_reboot_ap(void)
 /**
  * Reboot the EC
  */
-static void board_reboot_ec(void)
+void board_reboot_ec(void)
 {
 	if (board_uses_closed_loop_reset()) {
 		board_closed_loop_reset();

@@ -569,7 +569,7 @@ static void ccd_open_done(int sync)
 		if (sync)
 			rv = tpm_sync_reset(1);
 		else
-			rv = board_wipe_tpm();
+			rv = board_wipe_tpm(1);
 
 		if (rv != EC_SUCCESS) {
 			CPRINTS("CCD open TPM wipe failed");
