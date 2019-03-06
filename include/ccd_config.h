@@ -49,6 +49,15 @@ enum ccd_flag {
 
 	/* Flags that can be set via ccd_set_flags(); fill from top down */
 
+	/* Override BATT_PRES_L at boot */
+	CCD_FLAG_OVERRIDE_BATT_AT_BOOT = BIT(20),
+
+	/*
+	 * If overriding BATT_PRES_L at boot, set it to what value
+	 * (0=disconnect, 1=connected)
+	 */
+	CCD_FLAG_OVERRIDE_BATT_STATE_CONNECT = BIT(21),
+
 	/* Override write protect at boot */
 	CCD_FLAG_OVERRIDE_WP_AT_BOOT = BIT(22),
 
@@ -112,6 +121,9 @@ enum ccd_capability {
 	/* Allow ccd open from usb */
 	CCD_CAP_OPEN_FROM_USB = 18,
 
+	/* Override battery presence temporarily or at boot */
+	CCD_CAP_OVERRIDE_BATT_STATE = 19,
+
 	/* Number of currently defined capabilities */
 	CCD_CAP_COUNT
 };
@@ -173,6 +185,7 @@ struct ccd_capability_info {
 	{"FlashRead",		CCD_CAP_STATE_ALWAYS},	  \
 	{"OpenNoDevMode",	CCD_CAP_STATE_OPEN_REQ}, \
 	{"OpenFromUSB",		CCD_CAP_STATE_OPEN_REQ}, \
+	{"OverrideBatt",	CCD_CAP_STATE_IF_OPENED}, \
 	}
 
 #define CCD_STATE_NAMES { "Locked", "Unlocked", "Opened" }

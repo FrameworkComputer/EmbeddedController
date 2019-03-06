@@ -29,8 +29,8 @@ int wp_is_asserted(void);
 void read_fwmp(void);
 
 /**
- * Set WP as dicated by CCD configuration.
+ * Set WP and battery presence as dicated by CCD configuration.
  */
-void set_wp_follow_ccd_config(void);
+void board_wp_follow_ccd_config(void);
 
 #endif  /* ! __EC_BOARD_CR50_WP_H */

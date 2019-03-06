@@ -96,7 +96,9 @@ static const uint8_t k_ccd_config = NVMEM_VAR_CCD_CONFIG;
 /* Flags which can be set via ccd_set_flag() */
 static const uint32_t k_public_flags =
 		CCD_FLAG_OVERRIDE_WP_AT_BOOT |
-		CCD_FLAG_OVERRIDE_WP_STATE_ENABLED;
+		CCD_FLAG_OVERRIDE_WP_STATE_ENABLED |
+		CCD_FLAG_OVERRIDE_BATT_AT_BOOT |
+		CCD_FLAG_OVERRIDE_BATT_STATE_CONNECT;
 
 /* List of CCD capability info; must be in same order as enum ccd_capability */
 static const struct ccd_capability_info cap_info[CCD_CAP_COUNT] = CAP_INFO_DATA;
@@ -470,6 +472,8 @@ int ccd_reset_config(unsigned int flags)
 		/* Reset the entire config */
 		memset(&config, 0, sizeof(config));
 		config.version = CCD_CONFIG_VERSION;
+		/* Update write protect after resetting the config */
+		board_wp_follow_ccd_config();
 	}
 
 	if (flags & CCD_RESET_FACTORY) {
@@ -485,7 +489,7 @@ int ccd_reset_config(unsigned int flags)
 		/* Force WP disabled at boot */
 		raw_set_flag(CCD_FLAG_OVERRIDE_WP_AT_BOOT, 1);
 		raw_set_flag(CCD_FLAG_OVERRIDE_WP_STATE_ENABLED, 0);
-		set_wp_follow_ccd_config();
+		board_wp_follow_ccd_config();
 	}
 
 	/* Restore test lab flag unless explicitly resetting it */
@@ -1522,7 +1526,7 @@ static enum vendor_cmd_rc ccd_disable_factory_mode(enum vendor_cmd_cc code,
 		 * TODO(rspangler): sort out CCD state and WP correlation,
 		 * b/73075443.
 		 */
-		set_wp_follow_ccd_config();
+		board_wp_follow_ccd_config();
 
 		/*
 		 * Use raw_set_flag() because the factory mode flag is internal
