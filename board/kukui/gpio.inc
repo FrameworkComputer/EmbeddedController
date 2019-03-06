@@ -45,19 +45,8 @@ GPIO_INT(GAUGE_INT_ODL,     PIN(C, 9),  GPIO_INT_FALLING | GPIO_PULL_UP,
          gauge_interrupt)
 
 /* Interrupts not implemented yet */
-#if BOARD_REV < 2
-GPIO(ALS_INT_ODL,           PIN(A, 6), GPIO_INPUT)
-#elif BOARD_REV >= 2
 /* TODO(b:122993147): It's also an analog input. */
 GPIO(POGO_ADC_INT_L,        PIN(A, 6), GPIO_INPUT)
-#endif
-
-/* Voltage rails control pins */
-#if BOARD_REV < 2
-GPIO(PP3300_S0_EN,         PIN(B, 6),  GPIO_OUT_LOW)
-GPIO(PP1800_S3_EN,         PIN(C, 7),  GPIO_OUT_LOW)
-GPIO(PP3300_S3_EN,         PIN(D, 2),  GPIO_OUT_LOW)
-#endif
 
 /* Reset pins */
 GPIO(AP_SYS_RST_L,         PIN(C, 11), GPIO_OUT_LOW)
@@ -78,18 +67,13 @@ GPIO(I2C2_SDA,             PIN(A, 12), GPIO_INPUT)
 /* Analog pins */
 GPIO(BATT_ID,              PIN(A, 7),  GPIO_ANALOG)
 GPIO(BOARD_ID,             PIN(C, 0),  GPIO_ANALOG)
-#if BOARD_REV >= 2
 GPIO(EC_SKU_ID,            PIN(B, 0),  GPIO_ANALOG)
-GPIO(USBC_THERM,           PIN(C, 4),  GPIO_ANALOG)
-#endif
 
 /* Other input pins */
 GPIO(WP_L,                 PIN(C, 8),  GPIO_INPUT) /* EC_FLASH_WP_ODL */
 GPIO(BOOT0,                PIN(F, 11), GPIO_INPUT)
 GPIO(CCD_MODE_ODL,         PIN(A, 1),  GPIO_INPUT)
-#if BOARD_REV >= 2
 GPIO(POGO_VBUS_PRESENT,    PIN(A, 14), GPIO_INPUT)
-#endif
 
 /* Other output pins */
 GPIO(ENTERING_RW,          PIN(C, 6),  GPIO_ODR_HIGH) /* EC_ENTERING_RW_ODL */
@@ -99,17 +83,18 @@ GPIO(USB_C0_DP_POLARITY,   PIN(C, 14), GPIO_OUT_LOW)
 GPIO(USB_C0_HPD_OD,        PIN(F, 1),  GPIO_ODR_LOW)
 GPIO(BOOTBLOCK_EN_L,       PIN(C, 1),  GPIO_ODR_HIGH)
 GPIO(USB_C0_DP_OE_L,       PIN(A, 5),  GPIO_OUT_HIGH)
-#if BOARD_REV < 2
-GPIO(USB_C0_DISCHARGE,     PIN(B, 0),  GPIO_OUT_LOW)
-GPIO(BOOTBLOCK_MUX_OE,     PIN(C, 4),  GPIO_ODR_HIGH)
-GPIO(USB_ID,               PIN(A, 13), GPIO_ODR_HIGH)
-#elif BOARD_REV >= 2
 GPIO(EN_PP3300_POGO,     PIN(A, 13), GPIO_OUT_LOW)
 GPIO(EN_POGO_CHARGE_L,   PIN(B, 6),  GPIO_OUT_HIGH)
 GPIO(EN_USBC_CHARGE_L,   PIN(C, 7),  GPIO_OUT_LOW)
 GPIO(EN_PP5000_USBC,     PIN(D, 2),  GPIO_OUT_LOW)
-#endif
 
+/*
+ * It's a P1 pin BOOTBLOCK_MUX_OE, also a P2 pin USBC_THERM (test poin).
+ * Keep this pin defaults to P1 setting since that eMMC enabled with
+ * High-Z stat.
+ * TODO(b:122866184): Rename this pin as BC12_DET_EN.
+ */
+GPIO(USBC_THERM,     PIN(C, 4),  GPIO_ODR_HIGH)
 
 /* USART1: PA9/PA10 */
 ALTERNATE(PIN_MASK(A, 0x0600), 1, MODULE_UART,       0)

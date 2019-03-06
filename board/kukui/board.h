@@ -8,13 +8,6 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/* board revision */
-#define BOARD_REV 1
-
-#if BOARD_REV < 1 || BOARD_REV > 2
-#error "Board revision out of range"
-#endif
-
 /* Optional modules */
 #define CONFIG_ADC
 #undef  CONFIG_ADC_WATCHDOG
@@ -203,12 +196,10 @@
 enum adc_channel {
 	/* Real ADC channels begin here */
 	ADC_BOARD_ID = 0,
-#if BOARD_REV >= 2
 	ADC_EC_SKU_ID,
 	ADC_BATT_ID,
 	ADC_POGO_ADC_INT_L,
 	ADC_USBC_THERM,
-#endif
 	ADC_CH_COUNT
 };
 

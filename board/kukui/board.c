@@ -68,12 +68,10 @@ static void gauge_interrupt(enum gpio_signal signal)
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
 	[ADC_BOARD_ID] = {"BOARD_ID", 3300, 4096, 0, STM32_AIN(10)},
-#if BOARD_REV >= 2
 	[ADC_EC_SKU_ID] = {"EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8)},
 	[ADC_BATT_ID] = {"BATT_ID", 3300, 4096, 0, STM32_AIN(7)},
 	[ADC_USBC_THERM] = {"USBC_THERM", 3300, 4096, 0, STM32_AIN(14)},
 	[ADC_POGO_ADC_INT_L] = {"POGO_ADC_INT_L", 3300, 4096, 0, STM32_AIN(6)},
-#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -229,6 +227,14 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_GAUGE_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+static void board_rev_init(void)
+{
+	/* Board revision specific configs. */
+	if (board_get_version() >= 2)
+		gpio_set_flags(GPIO_USBC_THERM, GPIO_ANALOG);
+}
+DECLARE_HOOK(HOOK_INIT, board_rev_init, HOOK_PRIO_INIT_ADC + 1);
 
 void board_config_pre_init(void)
 {

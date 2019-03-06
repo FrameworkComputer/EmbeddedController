@@ -52,10 +52,6 @@
  */
 #define PMIC_FORCE_RESET_TIME (10 * SECOND)
 
-#if defined(BOARD_KUKUI) && BOARD_REV < 2
-#define BOARD_KUKUI_REV_LT_2
-#endif
-
 /* Data structure for a GPIO operation for power sequencing */
 struct power_seq_op {
 	/* enum gpio_signal in 8 bits */
@@ -75,36 +71,22 @@ BUILD_ASSERT(GPIO_COUNT < 256);
 static const struct power_seq_op s5s3_power_seq[] = {
 	/* Release PMIC watchdog. */
 	{ GPIO_PMIC_WATCHDOG_L, 1, 0 },
-#ifdef BOARD_KUKUI_REV_LT_2
-	{ GPIO_PP3300_S3_EN, 1, 2 },
-	{ GPIO_PP1800_S3_EN, 1, 2 },
-#endif
 	/* Turn on AP. */
 	{ GPIO_AP_SYS_RST_L, 1, 2 },
 };
 
 /* The power sequence for POWER_S3S0 */
 static const struct power_seq_op s3s0_power_seq[] = {
-#ifdef BOARD_KUKUI_REV_LT_2
-	{ GPIO_PP3300_S0_EN, 1, 0 },
-#endif
 };
 
 /* The power sequence for POWER_S0S3 */
 static const struct power_seq_op s0s3_power_seq[] = {
-#ifdef BOARD_KUKUI_REV_LT_2
-	{ GPIO_PP3300_S0_EN, 0, 0 },
-#endif
 };
 
 /* The power sequence for POWER_S3S5 */
 static const struct power_seq_op s3s5_power_seq[] = {
 	/* Turn off AP. */
 	{ GPIO_AP_SYS_RST_L, 0, 0 },
-#ifdef BOARD_KUKUI_REV_LT_2
-	{ GPIO_PP1800_S3_EN, 0, 2 },
-	{ GPIO_PP3300_S3_EN, 0, 2 },
-#endif
 	/* Assert watchdog to PMIC (there may be a 1.6ms debounce) */
 	{ GPIO_PMIC_WATCHDOG_L, 0, 3 },
 };
