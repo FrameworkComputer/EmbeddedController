@@ -2411,6 +2411,9 @@
  */
 #undef CONFIG_LOW_POWER_S0
 
+/* DMA paging between SRAM and DRAM */
+#undef CONFIG_DMA_PAGING
+
 /*
  * Enable HID subsystem using HECI on Intel ISH (Integrated Sensor Hub)
  */

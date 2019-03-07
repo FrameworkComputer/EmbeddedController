@@ -52,6 +52,9 @@
 
 #define CONFIG_TABLET_MODE
 
+/* DMA paging between SRAM and DRAM */
+#define CONFIG_DMA_PAGING
+
 /* Host command over HECI */
 #define CONFIG_HOSTCMD_HECI
 

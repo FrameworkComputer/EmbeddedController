@@ -25,6 +25,7 @@ chip-$(CONFIG_HOSTCMD_HECI)+=host_command_heci.o
 chip-$(CONFIG_HOSTCMD_HECI)+=heci.o system_state_subsys.o ipc_heci.o
 chip-$(CONFIG_HID_HECI)+=hid_subsys.o
 chip-$(CONFIG_HID_HECI)+=heci.o system_state_subsys.o ipc_heci.o
+chip-$(CONFIG_DMA_PAGING)+=dma.o
 
 # location of the scripts and keys used to pack the SPI flash image
 SCRIPTDIR:=./chip/${CHIP}/util

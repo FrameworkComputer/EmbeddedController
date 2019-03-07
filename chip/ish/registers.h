@@ -38,6 +38,9 @@ enum ish_i2c_port {
 #define ISH_UART_BASE     0x00103000
 #define ISH_GPIO_BASE     0x001F0000
 #define ISH_PMU_BASE      0x00800000
+#define ISH_OCP_BASE      0x00700000
+#define ISH_MISC_BASE     0x00C00000
+#define ISH_DMA_BASE      0x00400000
 #define ISH_CCU_BASE      0x00900000
 #define ISH_IPC_BASE      0x00B00000
 #define ISH_WDT_BASE      0xFDE00000
@@ -122,6 +125,10 @@ enum ish_i2c_port {
 #define IPC_HOST2ISH_MSG_REGS      (ISH_IPC_BASE + 0xE0)
 #define IPC_ISH2HOST_DOORBELL      (ISH_IPC_BASE + 0x54)
 #define IPC_BUSY_CLEAR             (ISH_IPC_BASE + 0x378)
+#define IPC_UMA_RANGE_LOWER_0      REG32(ISH_IPC_BASE + 0x380)
+#define IPC_UMA_RANGE_LOWER_1      REG32(ISH_IPC_BASE + 0x384)
+#define IPC_UMA_RANGE_UPPER_0      REG32(ISH_IPC_BASE + 0x388)
+#define IPC_UMA_RANGE_UPPER_1      REG32(ISH_IPC_BASE + 0x38C)
 
 /* PMU Registers */
 #define PMU_VNN_REQ		REG32(ISH_PMU_BASE + 0x3c)
@@ -134,6 +141,62 @@ enum ish_i2c_port {
 #define PMU_RST_PREP_GET		BIT(0)
 #define PMU_RST_PREP_AVAIL		BIT(1)
 #define PMU_RST_PREP_INT_MASK		BIT(31)
+
+#define VNN_ID_DMA0             4
+#define VNN_ID_DMA(chan)        (VNN_ID_DMA0 + chan)
+
+/* OCP registers */
+#define OCP_IOSF2OCP_BRIDGE      (ISH_OCP_BASE + 0x9400)
+#define OCP_AGENT_CONTROL        REG32(OCP_IOSF2OCP_BRIDGE + 0x20)
+#define OCP_RESPONSE_TO_DISABLE  0xFFFFF8FF
+
+/* MISC registers */
+#define MISC_REG_BASE            ISH_MISC_BASE
+#define MISC_CHID_CFG_REG        REG32(MISC_REG_BASE + 0x40)
+#define MISC_DMA_CTL_REG(ch)     REG32(MISC_REG_BASE + (4 * (ch)))
+#define MISC_SRC_FILLIN_DMA(ch)  REG32(MISC_REG_BASE + 0x20 + (4 * (ch)))
+#define MISC_DST_FILLIN_DMA(ch)  REG32(MISC_REG_BASE + 0x80 + (4 * (ch)))
+
+/* DMA registers */
+#define DMA_REG_BASE                  ISH_DMA_BASE
+#define DMA_CH_REGS_SIZE              0x58
+#define DMA_CLR_BLOCK_REG             REG32(DMA_REG_BASE + 0x340)
+#define DMA_CLR_ERR_REG               REG32(DMA_REG_BASE + 0x358)
+#define DMA_EN_REG_ADDR               (DMA_REG_BASE + 0x3A0)
+#define DMA_EN_REG                    REG32(DMA_EN_REG_ADDR)
+#define DMA_CFG_REG                   REG32(DMA_REG_BASE + 0x398)
+#define DMA_PSIZE_01                  REG32(DMA_REG_BASE + 0x400)
+#define DMA_PSIZE_CHAN0_SIZE          512
+#define DMA_PSIZE_CHAN0_OFFSET        0
+#define DMA_PSIZE_CHAN1_SIZE          128
+#define DMA_PSIZE_CHAN1_OFFSET        13
+#define DMA_PSIZE_UPDATE              (1 << 26)
+#define DMA_MAX_CHANNEL               4
+#define DMA_SAR(chan)                 REG32(chan + 0x000)
+#define DMA_DAR(chan)                 REG32(chan + 0x008)
+#define DMA_LLP(chan)                 REG32(chan + 0x010)
+#define DMA_CTL_LOW(chan)             REG32(chan + 0x018)
+#define DMA_CTL_HIGH(chan)            REG32(chan + 0x018 + 0x4)
+#define DMA_CTL_INT_EN_BIT            0
+#define DMA_CTL_INT_EN_MASK           (1 << DMA_CTL_INT_EN_BIT)
+#define DMA_CTL_DST_TR_WIDTH_SHIFT    1
+#define DMA_CTL_SRC_TR_WIDTH_SHIFT    4
+#define DMA_CTL_DINC_SHIFT            7
+#define DMA_CTL_SINC_SHIFT            9
+#define DMA_CTL_ADDR_INC              0
+#define DMA_CTL_DEST_MSIZE_SHIFT      11
+#define DMA_CTL_SRC_MSIZE_SHIFT       14
+#define DMA_CTL_TT_FC_SHIFT           20
+#define DMA_CTL_TT_FC_M2M_DMAC        0
+#define DMA_EN_BIT                    0
+#define DMA_EN_MASK                   (1 << DMA_EN_BIT)
+#define DMA_CH_EN_BIT(n)              (1 << (n))
+#define DMA_CH_EN_WE_BIT(n)           (1 << (8 + (n)))
+#define DMA_MAX_BLOCK_SIZE	      (4096)
+#define SRC_TR_WIDTH                  2
+#define SRC_BURST_SIZE                3
+#define DEST_TR_WIDTH                 2
+#define DEST_BURST_SIZE               3
 
 /* CCU Registers */
 #define CCU_TCG_EN		REG32(ISH_CCU_BASE + 0x0)
