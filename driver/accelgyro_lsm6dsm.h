@@ -351,10 +351,10 @@ struct lsm6dsm_data {
 /*
  * Note: The specific number of samples to discard depends on the filters
  * configured for the chip, as well as the ODR being set.  For most of our
- * allowed ODRs, 4 should suffice.
+ * allowed ODRs, 5 should suffice.
  * See: ST's LSM6DSM application notes (AN4987) Tables 17 and 19 for details
  */
-#define LSM6DSM_DISCARD_SAMPLES 4
+#define LSM6DSM_DISCARD_SAMPLES 5
 
 #define LSM6DSM_ST_DATA(g, type) (&(&(g))->st_data[(type)])
 

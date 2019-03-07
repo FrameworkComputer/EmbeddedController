@@ -308,6 +308,7 @@ static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
 
 static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts)
 {
+	uint32_t int_ts = last_interrupt_timestamp;
 	int err, left, length;
 	uint8_t fifo[FIFO_READ_LEN];
 
@@ -341,12 +342,13 @@ static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts)
 			return err;
 
 		/*
-		 * Manage patterns and push data. Data should be pushed with the
-		 * timestamp of the last IRQ before the FIFO was read, so make a
-		 * copy of the current time in case another interrupt comes in
-		 * during processing.
+		 * Manage patterns and push data. Data is pushed with the
+		 * timestamp of the interrupt that got us into this function
+		 * in the first place. This avoids a potential race condition
+		 * where we empty the FIFO, and a new IRQ comes in between
+		 * reading the last sample and pushing it into the FIFO.
 		 */
-		push_fifo_data(s, fifo, length, last_interrupt_timestamp);
+		push_fifo_data(s, fifo, length, int_ts);
 		left -= length;
 	} while (left > 0);
 
@@ -474,7 +476,6 @@ int lsm6dsm_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 #ifdef CONFIG_ACCEL_FIFO
 	const struct motion_sensor_t *accel = LSM6DSM_MAIN_SENSOR(s);
 	struct lsm6dsm_data *private = LSM6DSM_GET_DATA(accel);
-	int old_normalized_rate = data->base.odr;
 #endif
 	int ret = EC_SUCCESS, normalized_rate = 0;
 	uint8_t ctrl_reg, reg_val = 0;
@@ -533,9 +534,8 @@ int lsm6dsm_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	if (ret == EC_SUCCESS) {
 		data->base.odr = normalized_rate;
 #ifdef CONFIG_ACCEL_FIFO
-		if (data->base.odr != old_normalized_rate)
-			private->samples_to_discard[s->type] =
-				LSM6DSM_DISCARD_SAMPLES;
+		private->samples_to_discard[s->type] =
+			LSM6DSM_DISCARD_SAMPLES;
 		ret = fifo_enable(accel);
 		if (ret != EC_SUCCESS)
 			CPRINTS("Failed to enable FIFO. Error: %d", ret);
