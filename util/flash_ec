@@ -202,7 +202,8 @@ fi
 
 if [[ -z "${FLAGS_board}" && -z "${FLAGS_chip}" && \
       -z "${SERVO_EC_CHIP}" ]]; then
-	die "should specify a board or a chip."
+	die "Please check that servod is running or," \
+	"manually specify either --board or --chip."
 fi
 
 BOARD=${FLAGS_board}
@@ -271,7 +272,8 @@ if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 ]]; then
 	# This happens if ${FLAGS_board} is not known in this flash_ec yet,
 	# ${FLAGS_chip} is not given, and servod doesn't know ec_chip.
 	# In this case, '--chip' should be specified in the command line.
-	die "board '${BOARD}' not supported. Please manually specify --chip="
+	die "board '${BOARD}' not supported." \
+	    "Please check that servod is running, or manually specify --chip."
 elif [[ ${#SUPPORTED_CHIPS[@]} -eq 1 ]]; then
 	CHIP="${SUPPORTED_CHIPS[0]}"
 elif [ -n "${FLAGS_chip}" ]; then
@@ -448,11 +450,6 @@ on_raiden() {
 # Put back the servo and the system in a clean state at exit
 FROZEN_PIDS=""
 cleanup() {
-	if [ -n "${save}" ]; then
-		info "Restoring servo settings..."
-		servo_restore "$save"
-	fi
-
 	for pid in ${FROZEN_PIDS}; do
 		info "Sending SIGCONT to process ${pid}!"
 		kill -CONT ${pid}
@@ -472,7 +469,14 @@ cleanup() {
 			dut_control i2c_mux_en:on
 			dut_control i2c_mux:remote_adc
 		fi
+	fi
 
+	if [ -n "${save}" ]; then
+		info "Restoring servo settings..."
+		servo_restore "$save"
+	fi
+
+	if [[ "${CHIP}" == "it83xx" ]]; then
 		# Reset the dut mux if it exists
 		servo_has_dut_i2c_mux && dut_control dut_i2c_mux:none
 
@@ -481,6 +485,7 @@ cleanup() {
 			dut_control i2c_mux_en:off
 		fi
 	fi
+
 	if [ "${CHIP}" == "stm32" -o "${CHIP}" == "npcx_uut" ] ; then
 		# Reconnect the EC-3PO interpreter to the UART.
 		dut_control ${MCU}_ec3po_interp_connect:on || \
@@ -620,6 +625,11 @@ servo_v3_VARS="${servo_v2_VARS}"
 servo_v4_with_servo_micro_VARS="${servo_micro_VARS}"
 
 function servo_save() {
+	if [[ "${CHIP}" == "it83xx" && "${SERVO_TYPE}" =~ "servo_v2" ]]; then
+		dut_control i2c_mux_en:on
+		dut_control i2c_mux:remote_adc
+	fi
+
 	SERVO_VARS_NAME=${SERVO_TYPE}_VARS
 	if [[ -n "${!SERVO_VARS_NAME}" ]]; then
 		$DUT_CONTROL_CMD ${!SERVO_VARS_NAME}
@@ -1014,11 +1024,6 @@ function flash_it83xx() {
 	ITEFLASH=$(PATH="${TOOL_PATH}" which iteflash)
 	if [ ! -x "$ITEFLASH" ]; then
 		die "no iteflash util found."
-	fi
-
-	if [[ "${SERVO_TYPE}" =~ "servo_v2" ]]; then
-		dut_control i2c_mux_en:on
-		dut_control i2c_mux:remote_adc
 	fi
 
 	# Now the we have enabled the I2C mux on the servo to talk to the dut,
