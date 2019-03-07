@@ -1259,6 +1259,20 @@ static void pd_set_data_role(int port, int role)
 #endif /* CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER */
 }
 
+#ifdef CONFIG_USBC_VCONN
+static void pd_set_vconn_role(int port, int role)
+{
+	if (role == PD_ROLE_VCONN_ON)
+		pd[port].flags |= PD_FLAGS_VCONN_ON;
+	else
+		pd[port].flags &= ~PD_FLAGS_VCONN_ON;
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	pd_update_saved_port_flags(port, PD_BBRMFLG_VCONN_ROLE, role);
+#endif
+}
+#endif /* CONFIG_USBC_VCONN */
+
 void pd_execute_hard_reset(int port)
 {
 	if (pd[port].last_state == PD_STATE_HARD_RESET_SEND)
@@ -1310,7 +1324,7 @@ void pd_execute_hard_reset(int port)
 		 */
 		if (pd[port].flags & PD_FLAGS_VCONN_ON) {
 			set_vconn(port, 0);
-			pd[port].flags &= ~PD_FLAGS_VCONN_ON;
+			pd_set_vconn_role(port, PD_ROLE_VCONN_OFF);
 		}
 #endif
 
@@ -2728,6 +2742,11 @@ void pd_task(void *u)
 			pd_set_data_role(port,
 					 (saved_flgs & PD_BBRMFLG_DATA_ROLE) ?
 					 PD_ROLE_DFP : PD_ROLE_UFP);
+#ifdef CONFIG_USBC_VCONN
+			pd_set_vconn_role(port,
+					  (saved_flgs & PD_BBRMFLG_VCONN_ROLE) ?
+					  PD_ROLE_VCONN_ON : PD_ROLE_VCONN_OFF);
+#endif /* CONFIG_USBC_VCONN */
 
 			/*
 			 * Since there is an explicit contract in place, let's
@@ -3100,7 +3119,8 @@ void pd_task(void *u)
 					 * Spec 1.3 tVconnON.
 					 */
 					set_vconn(port, 1);
-					pd[port].flags |= PD_FLAGS_VCONN_ON;
+					pd_set_vconn_role(port,
+							  PD_ROLE_VCONN_ON);
 				}
 #endif
 
@@ -3110,7 +3130,8 @@ void pd_task(void *u)
 #ifdef CONFIG_USBC_VCONN
 					/* Stop sourcing Vconn if Vbus failed */
 					set_vconn(port, 0);
-					pd[port].flags &= ~PD_FLAGS_VCONN_ON;
+					pd_set_vconn_role(port,
+							  PD_ROLE_VCONN_OFF);
 #endif /* CONFIG_USBC_VCONN */
 #ifdef CONFIG_USBC_SS_MUX
 					usb_mux_set(port, TYPEC_MUX_NONE,
@@ -3155,7 +3176,7 @@ void pd_task(void *u)
 			 * it was 0 due to a previous swap
 			 */
 			set_vconn(port, 1);
-			pd[port].flags |= PD_FLAGS_VCONN_ON;
+			pd_set_vconn_role(port, PD_ROLE_VCONN_ON);
 #endif
 
 			/* Enable VBUS */
@@ -3966,7 +3987,8 @@ void pd_task(void *u)
 			if (pd[port].last_state != pd[port].task_state) {
 				if (!(pd[port].flags & PD_FLAGS_VCONN_ON)) {
 					/* VCONN is now on, send PS_RDY */
-					pd[port].flags |= PD_FLAGS_VCONN_ON;
+					pd_set_vconn_role(port,
+							  PD_ROLE_VCONN_ON);
 					res = send_control(port,
 							   PD_CTRL_PS_RDY);
 					if (res == -1) {
@@ -3984,7 +4006,8 @@ void pd_task(void *u)
 				} else {
 					/* Turn VCONN off and wait for it */
 					set_vconn(port, 0);
-					pd[port].flags &= ~PD_FLAGS_VCONN_ON;
+					pd_set_vconn_role(port,
+							  PD_ROLE_VCONN_OFF);
 					set_state_timeout(port,
 					  get_time().val + PD_VCONN_SWAP_DELAY,
 					  READY_RETURN_STATE(port));

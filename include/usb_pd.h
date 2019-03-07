@@ -785,6 +785,7 @@ enum pd_states {
 #define PD_BBRMFLG_EXPLICIT_CONTRACT BIT(0)
 #define PD_BBRMFLG_POWER_ROLE        BIT(1)
 #define PD_BBRMFLG_DATA_ROLE         BIT(2)
+#define PD_BBRMFLG_VCONN_ROLE        BIT(3)
 
 enum pd_cc_states {
 	PD_CC_NONE,
