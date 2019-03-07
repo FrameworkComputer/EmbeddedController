@@ -324,9 +324,13 @@ int charger_get_vbus_voltage(int port)
 	if (rv)
 		goto error;
 
-	/* LSB => 64mV */
-	return (reg >> BQ25710_ADC_VBUS_STEP_BIT_OFFSET) *
-		BQ25710_ADC_VBUS_STEP_MV + BQ25710_ADC_VBUS_BASE_MV;
+	reg >>= BQ25710_ADC_VBUS_STEP_BIT_OFFSET;
+	/*
+	 * LSB => 64mV.
+	 * Return 0 when VBUS <= 3.2V as ADC can't measure it.
+	 */
+	return reg ?
+	       (reg * BQ25710_ADC_VBUS_STEP_MV + BQ25710_ADC_VBUS_BASE_MV) : 0;
 
 error:
 	CPRINTF("Could not read VBUS ADC! Error: %d\n", rv);
