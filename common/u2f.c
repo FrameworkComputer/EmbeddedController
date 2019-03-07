@@ -498,12 +498,16 @@ static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
 	if (input_size != sizeof(U2F_SIGN_REQ))
 		return VENDOR_RC_BOGUS_ARGS;
 
+	if (!verify_kh_owned(req->userSecret, req->appId, req->keyHandle))
+		return VENDOR_RC_PASSWORD_REQUIRED;
+
+	/* We might not actually need to sign anything. */
+	if (req->flags == U2F_AUTH_CHECK_ONLY)
+		return VENDOR_RC_SUCCESS;
+
 	/* Always enforce user presence, with optional consume. */
 	if (pop_check_presence(req->flags & G2F_CONSUME) != POP_TOUCH_YES)
 		return VENDOR_RC_NOT_ALLOWED;
-
-	if (!verify_kh_owned(req->userSecret, req->appId, req->keyHandle))
-		return VENDOR_RC_PASSWORD_REQUIRED;
 
 	/* Re-create origin-specific key. */
 	if (u2f_origin_user_keypair(
