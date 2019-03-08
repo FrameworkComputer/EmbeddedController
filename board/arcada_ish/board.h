@@ -31,11 +31,14 @@
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 
-#define CONFIG_ACCELGYRO_LSM6DSM	/* For LSM6DS3 */
+#define CONFIG_ACCEL_LNG2DM	 /* Base sensor: LNG2DM (uses LIS2DH driver) */
+#define CONFIG_ACCELGYRO_LSM6DSM /* Lid sensor: LSM6DS3 (uses LSM6DSM driver) */
 
 #define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCEL_FIFO 256
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK  (1 << BASE_ACCEL)
 
 #define CONFIG_ACCEL_LSM6DSM_INT_EVENT TASK_EVENT_CUSTOM(1 << 2)
 
@@ -83,10 +86,15 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
-/* Motion sensors */
+/* Motion sensors
+ *
+ * Note: Since we aren't using LPC memory map to transmit sensor data, the
+ * order of this enum does not need to be accel, accel, gyro
+ */
 enum sensor_id {
 	LID_ACCEL,
 	LID_GYRO,
+	BASE_ACCEL,
 	/* TODO(b/122281217): Add remain sensors */
 	SENSOR_COUNT
 };
