@@ -45,6 +45,12 @@
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HECI
 
+#define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
+
+#define CONFIG_TABLET_MODE
+
 /* Host command over HECI */
 #define CONFIG_HOSTCMD_HECI
 
@@ -68,7 +74,6 @@
 #undef CONFIG_KEYBOARD_KSO_BASE
 #undef CONFIG_FLASH
 #undef CONFIG_FMAP
-#undef CONFIG_LID_SWITCH
 #undef CONFIG_SWITCH
 /* TODO: Watch Dog is supported but temporarily removed. Currently under 
  * development on KBL and will be carried over to WHL.

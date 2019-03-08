@@ -14,6 +14,7 @@
 #include "i2c.h"
 #include "motion_sense.h"
 #include "power.h"
+#include "tablet_mode.h"
 #include "task.h"
 
 #include "gpio_list.h" /* has to be included last */
@@ -156,3 +157,11 @@ int board_idle_task(void *unused)
 	while (1)
 		task_wait_event(-1);
 }
+
+static void board_tablet_mode_change(void)
+{
+	/* Update GPIO to EC letting it know that we entered tablet mode */
+	gpio_set_level(GPIO_NB_MODE_L, tablet_get_mode());
+}
+DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, board_tablet_mode_change,
+	     HOOK_PRIO_DEFAULT);
