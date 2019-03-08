@@ -298,33 +298,28 @@ static enum power_state power_common_state(enum power_state state)
 
 		in_want = 0;
 #ifdef CONFIG_HIBERNATE
-		if (extpower_is_present())
-			task_wait_event(-1);
-		else {
-			uint64_t target_time;
-			uint64_t time_now = get_time().val;
+		{
+			uint64_t target, now, wait;
 			uint32_t delay = hibernate_delay;
+			if (extpower_is_present()) {
+				task_wait_event(-1);
+				break;
+			}
+
+			now = get_time().val;
 #ifdef CONFIG_HIBERNATE_BATT_PCT
 			if (charge_get_percent() <= CONFIG_HIBERNATE_BATT_PCT
 			    && CONFIG_HIBERNATE_BATT_SEC < delay)
 				delay = CONFIG_HIBERNATE_BATT_SEC;
 #endif
-			target_time = last_shutdown_time + delay * 1000000ull;
-			if (time_now > target_time) {
-				/*
-				 * Time's up.  Hibernate until wake pin
-				 * asserted.
-				 */
+			target = last_shutdown_time + delay * SECOND;
+			if (now > target) {
 				CPRINTS("hibernating");
 				system_hibernate(0, 0);
-			} else {
-				uint64_t wait = target_time - time_now;
-				if (wait > TASK_MAX_WAIT_US)
-					wait = TASK_MAX_WAIT_US;
-
-				/* Wait for a message */
-				task_wait_event(wait);
 			}
+
+			wait = MIN(target - now, TASK_MAX_WAIT_US);
+			task_wait_event(wait);
 		}
 #else /* !CONFIG_HIBERNATE */
 		task_wait_event(-1);
