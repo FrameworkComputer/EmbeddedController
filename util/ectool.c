@@ -5127,7 +5127,7 @@ int cmd_usb_pd(int argc, char *argv[])
 		       r_v1->polarity + 1);
 
 		if (cmdver == 2) {
-			printf("CC State: %d:", r_v2->cc_state);
+			printf("CC State:");
 			if (r_v2->cc_state == USBC_PD_CC_NONE)
 				printf("None");
 			else if (r_v2->cc_state == USBC_PD_CC_NO_UFP)
@@ -5143,6 +5143,25 @@ int cmd_usb_pd(int argc, char *argv[])
 			else
 				printf("UNKNOWN");
 			printf("\n");
+
+			if (r_v2->dp_mode) {
+				printf("DP pin mode:");
+				if (r_v2->dp_mode == MODE_DP_PIN_A)
+					printf("A");
+				else if (r_v2->dp_mode == MODE_DP_PIN_B)
+					printf("B");
+				else if (r_v2->dp_mode == MODE_DP_PIN_C)
+					printf("C");
+				else if (r_v2->dp_mode == MODE_DP_PIN_D)
+					printf("D");
+				else if (r_v2->dp_mode == MODE_DP_PIN_E)
+					printf("E");
+				else if (r_v2->dp_mode == MODE_DP_PIN_F)
+					printf("F");
+				else
+					printf("UNKNOWN");
+				printf("\n");
+			}
 		}
 
 		/* If connected to a PD device, then print port partner info */
