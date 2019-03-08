@@ -14,6 +14,7 @@
 /* Time units in microseconds */
 #define MSEC         1000
 #define SECOND    1000000
+#define SEC_UL    1000000ul
 #define MINUTE   60000000
 #define HOUR   3600000000ull  /* Too big to fit in a signed int */
 

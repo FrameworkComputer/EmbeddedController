@@ -104,6 +104,12 @@ enum chipset_shutdown_reason {
 	CHIPSET_SHUTDOWN_COUNT,
 };
 
+enum critical_shutdown {
+	CRITICAL_SHUTDOWN_IGNORE,
+	CRITICAL_SHUTDOWN_HIBERNATE,
+	CRITICAL_SHUTDOWN_CUTOFF,
+};
+
 #ifdef HAS_TASK_CHIPSET
 
 /**
@@ -231,6 +237,17 @@ void chipset_warm_reset_interrupt(enum gpio_signal signal);
  * edge only.
  */
 void chipset_watchdog_interrupt(enum gpio_signal signal);
+
+/**
+ * Callback which allows board to take custom action on G3 timer expiration
+ *
+ * @param last_shutdown_time Last shutdown time
+ * @param target             Expiration time. Can be modified by board.
+ * @param now                Current time
+ * @return Action to take
+ */
+enum critical_shutdown board_system_is_idle(uint64_t last_shutdown_time,
+					    uint64_t *target, uint64_t now);
 
 #ifdef CONFIG_CMD_AP_RESET_LOG
 

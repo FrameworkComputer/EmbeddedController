@@ -5,6 +5,7 @@
 
 /* Common functionality across all chipsets */
 
+#include "battery.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
@@ -281,6 +282,14 @@ static void power_set_active_wake_mask(void)
 static void power_set_active_wake_mask(void) { }
 #endif
 
+__attribute__((weak))
+enum critical_shutdown board_system_is_idle(uint64_t last_shutdown_time,
+					    uint64_t *target, uint64_t now)
+{
+	return now > *target ?
+			CRITICAL_SHUTDOWN_HIBERNATE : CRITICAL_SHUTDOWN_IGNORE;
+}
+
 /**
  * Common handler for steady states
  *
@@ -300,22 +309,28 @@ static enum power_state power_common_state(enum power_state state)
 #ifdef CONFIG_HIBERNATE
 		{
 			uint64_t target, now, wait;
-			uint32_t delay = hibernate_delay;
 			if (extpower_is_present()) {
 				task_wait_event(-1);
 				break;
 			}
 
 			now = get_time().val;
-#ifdef CONFIG_HIBERNATE_BATT_PCT
-			if (charge_get_percent() <= CONFIG_HIBERNATE_BATT_PCT
-			    && CONFIG_HIBERNATE_BATT_SEC < delay)
-				delay = CONFIG_HIBERNATE_BATT_SEC;
-#endif
-			target = last_shutdown_time + delay * SECOND;
-			if (now > target) {
-				CPRINTS("hibernating");
+			target = last_shutdown_time + hibernate_delay * SECOND;
+			switch (board_system_is_idle(last_shutdown_time,
+						     &target, now)) {
+			case CRITICAL_SHUTDOWN_HIBERNATE:
+				CPRINTS("Hibernate due to G3 idle");
 				system_hibernate(0, 0);
+				break;
+#ifdef CONFIG_BATTERY_CUT_OFF
+			case CRITICAL_SHUTDOWN_CUTOFF:
+				CPRINTS("Cutoff due to G3 idle");
+				board_cut_off_battery();
+				break;
+#endif
+			case CRITICAL_SHUTDOWN_IGNORE:
+			default:
+				break;
 			}
 
 			wait = MIN(target - now, TASK_MAX_WAIT_US);

@@ -6,6 +6,7 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "charger.h"
+#include "chipset.h"
 #include "ec_ec_comm_master.h"
 #include "timer.h"
 
@@ -118,11 +119,6 @@ void board_base_reset(void);
  * @param curr Pointer to struct charge_state_data
  * @return Action to take.
  */
-enum critical_shutdown {
-	CRITICAL_SHUTDOWN_IGNORE,
-	CRITICAL_SHUTDOWN_HIBERNATE,
-	CRITICAL_SHUTDOWN_CUTOFF,
-};
 enum critical_shutdown board_critical_shutdown_check(
 		struct charge_state_data *curr);
 

@@ -461,3 +461,24 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	}
 	return EC_SUCCESS;
 }
+
+/*
+ * Use to define going in to hibernate early if low on battery.
+ * HIBERNATE_BATT_PCT specifies the low battery threshold
+ * for going into hibernate early, and HIBERNATE_BATT_SEC defines
+ * the minimum amount of time to stay in G3 before checking for low
+ * battery hibernate.
+ */
+#define HIBERNATE_BATT_PCT 10
+#define HIBERNATE_BATT_SEC (3600 * 24)
+
+enum critical_shutdown board_system_is_idle(uint64_t last_shutdown_time,
+					    uint64_t *target, uint64_t now)
+{
+	if (charge_get_percent() <= HIBERNATE_BATT_PCT) {
+		uint64_t t = last_shutdown_time + HIBERNATE_BATT_SEC * SEC_UL;
+		*target = MIN(*target, t);
+	}
+	return now > *target ?
+			CRITICAL_SHUTDOWN_HIBERNATE : CRITICAL_SHUTDOWN_IGNORE;
+}
