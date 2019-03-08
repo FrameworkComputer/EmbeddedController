@@ -70,7 +70,6 @@
 
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
-#define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ25710
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
