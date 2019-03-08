@@ -26,14 +26,14 @@ static int is_hibernated;
 static int override_voltage, override_current, override_usec;
 
 /* The simulation doesn't really hibernate, so we must reset this ourselves */
-extern timestamp_t shutdown_warning_time;
+extern timestamp_t shutdown_target_time;
 
 static void reset_mocks(void)
 {
 	mock_chipset_state = CHIPSET_STATE_ON;
 	is_shutdown = is_force_discharge = is_hibernated = 0;
 	override_voltage = override_current = override_usec = 0;
-	shutdown_warning_time.val = 0ULL;
+	shutdown_target_time.val = 0ULL;
 }
 
 int board_cut_off_battery(void)
