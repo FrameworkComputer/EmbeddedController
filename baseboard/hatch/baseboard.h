@@ -51,11 +51,7 @@
 
 /* Sensors */
 #define CONFIG_MKBP_EVENT
-/*
- * TODO(b/125933998): Remove this config and use EC_PCH_INT_L to signal AP
- * instead.
- */
-#define CONFIG_MKBP_USE_HOST_EVENT
+#define CONFIG_MKBP_USE_GPIO
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 /* I2C_PORT_ACCEL needs to be defined for i2c transactions */
 #define I2C_PORT_ACCEL I2C_PORT_SENSOR

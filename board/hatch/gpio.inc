@@ -55,6 +55,9 @@ GPIO(PP5000_A_PG_OD,           PIN(D, 7), GPIO_INPUT)
 GPIO(EC_PCH_SYS_PWROK,         PIN(3, 7), GPIO_OUT_LOW)
 GPIO(CPU_C10_GATE_L,           PIN(6, 7), GPIO_INPUT)
 
+/* MKBP event synchronization */
+GPIO(EC_INT_L,                 PIN(7, 0), GPIO_OUT_HIGH)
+
 /* USB and USBC Signals */
 GPIO(USB_C_OC_ODL,             PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(USB_C0_TCPC_RST,          PIN(9, 7), GPIO_OUT_LOW)
