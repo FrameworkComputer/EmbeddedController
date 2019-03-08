@@ -62,6 +62,7 @@ enum ish_i2c_port {
 #define ISH_UART0_IRQ              34
 #define ISH_UART1_IRQ              35
 #define ISH_RESET_PREP_IRQ         62
+#define ISH_PMU_WAKEUP_IRQ         18
 
 /* Interrupt vectors 0-31 are architecture reserved.
  * Vectors 32-255 are user-defined.
@@ -105,6 +106,7 @@ enum ish_i2c_port {
 #define ISH_UART1_VEC              IRQ_TO_VEC(ISH_UART1_IRQ)
 #define ISH_IPC_VEC                IRQ_TO_VEC(ISH_IPC_HOST2ISH_IRQ)
 #define ISH_RESET_PREP_VEC         IRQ_TO_VEC(ISH_RESET_PREP_IRQ)
+#define ISH_PMU_WAKEUP_VEC         IRQ_TO_VEC(ISH_PMU_WAKEUP_IRQ)
 
 #ifdef CONFIG_ISH_UART_0
 #define ISH_DEBUG_UART       		UART_PORT_0
@@ -198,6 +200,28 @@ enum ish_i2c_port {
 #define DEST_TR_WIDTH                 2
 #define DEST_BURST_SIZE               3
 
+#define PMU_MASK_EVENT		REG32(ISH_PMU_BASE + 0x10)
+#define PMU_MASK_EVENT_BIT_GPIO(pin)	(0x1 << (pin))
+#define PMU_MASK_EVENT_BIT_HPET		(0x1 << 16)
+#define PMU_MASK_EVENT_BIT_IPC		(0x1 << 17)
+#define PMU_MASK_EVENT_BIT_D3		(0x1 << 18)
+#define PMU_MASK_EVENT_BIT_DMA		(0x1 << 19)
+#define PMU_MASK_EVENT_BIT_I2C0		(0x1 << 20)
+#define PMU_MASK_EVENT_BIT_I2C1		(0x1 << 21)
+#define PMU_MASK_EVENT_BIT_SPI		(0x1 << 22)
+#define PMU_MASK_EVENT_BIT_UART		(0x1 << 23)
+#define PMU_MASK_EVENT_BIT_ALL		(0xffffffff)
+
+#define PMU_RF_ROM_PWR_CTRL	REG32(ISH_PMU_BASE + 0x30)
+
+#define PMU_LDO_CTRL		REG32(ISH_PMU_BASE + 0x44)
+#define PMU_LDO_BIT_ON			(0x1 << 0)
+#define PMU_LDO_BIT_OFF			(0)
+#define PMU_LDO_BIT_RETENTION_ON	(0x1 << 1)
+#define PMU_LDO_BIT_RETENTION_OFF	(0)
+#define PMU_LDO_BIT_CALIBRATION		(0x1 << 2)
+#define PMU_LDO_BIT_READY		(0x1 << 3)
+
 /* CCU Registers */
 #define CCU_TCG_EN		REG32(ISH_CCU_BASE + 0x0)
 #define CCU_BCG_EN		REG32(ISH_CCU_BASE + 0x4)
@@ -205,6 +229,18 @@ enum ish_i2c_port {
 #define CCU_RST_HST		REG32(ISH_CCU_BASE + 0x34) /* Reset history */
 #define CCU_TCG_ENABLE		REG32(ISH_CCU_BASE + 0x38)
 #define CCU_BCG_ENABLE		REG32(ISH_CCU_BASE + 0x3c)
+#define CCU_BCG_BIT_MIA         (0x1 << 0)
+#define CCU_BCG_BIT_DMA		(0x1 << 1)
+#define CCU_BCG_BIT_I2C0	(0x1 << 2)
+#define CCU_BCG_BIT_I2C1	(0x1 << 3)
+#define CCU_BCG_BIT_SPI 	(0x1 << 4)
+#define CCU_BCG_BIT_SRAM	(0x1 << 5)
+#define CCU_BCG_BIT_HPET	(0x1 << 6)
+#define CCU_BCG_BIT_UART	(0x1 << 7)
+#define CCU_BCG_BIT_GPIO	(0x1 << 8)
+#define CCU_BCG_BIT_I2C2	(0x1 << 9)
+#define CCU_BCG_BIT_SPI2	(0x1 << 10)
+#define CCU_BCG_BIT_ALL		(0x7ff)
 
 /* Bitmasks for CCU_RST_HST */
 #define CCU_SW_RST	(1 << 0)  /* Used to indicate SW reset */

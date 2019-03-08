@@ -19,6 +19,7 @@
 #include "timer.h"
 #include "util.h"
 #include "spi.h"
+#include "power_mgt.h"
 
 /* Indices for hibernate data registers (RAM backed by VBAT) */
 enum hibdata_index {
@@ -33,6 +34,9 @@ int system_is_reboot_warm(void)
 
 void system_pre_init(void)
 {
+#ifdef CONFIG_LOW_POWER_IDLE
+	ish_pm_init();
+#endif
 }
 
 void chip_save_reset_flags(int flags)

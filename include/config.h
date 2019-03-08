@@ -4406,4 +4406,20 @@
 #define CONFIG_KEYBOARD_BACKLIGHT
 #endif
 
+/*****************************************************************************/
+/* ISH power management related definitions */
+#if defined(CONFIG_ISH_PM_D0I2) || \
+	defined(CONFIG_ISH_PM_D0I3) || \
+	defined(CONFIG_ISH_PM_D3) || \
+	defined(CONFIG_ISH_PM_RESET_PREP)
+
+#ifndef CONFIG_LOW_POWER_IDLE
+#error "Must define CONFIG_LOW_POWER_IDLE if enable ISH low power states"
+#endif
+
+#define CONFIG_ISH_PM_AONTASK
+
+#endif
+
+
 #endif  /* __CROS_EC_CONFIG_H */

@@ -46,6 +46,46 @@ void set_ioapic_redtbl_raw(const unsigned irq, const uint32_t val)
 	write_ioapic_reg(redtbl_hi, DEST_APIC_ID);
 }
 
+/**
+ * bitmap for current IRQ's mask status
+ * ISH support max 64 IRQs, 64 bit bitmap value is ok
+ */
+#define ISH_MAX_IOAPIC_IRQS	(64)
+uint64_t ioapic_irq_mask_bitmap;
+
+/**
+ * disable current all enabled intrrupts
+ * return current irq mask bitmap
+ * power management typically use 'disable_all_interrupts' to disable current
+ * all interrupts and save current interrupts enabling settings before enter
+ * low power state, and use 'restore_interrupts' to restore the interrupts
+ * settings after exit low power state.
+ */
+uint64_t disable_all_interrupts(void)
+{
+	uint64_t saved_map;
+	int i;
+
+	saved_map =  ioapic_irq_mask_bitmap;
+
+	for (i = 0; i < ISH_MAX_IOAPIC_IRQS; i++) {
+		if (((uint64_t)0x1 << i) & saved_map)
+			mask_interrupt(i);
+	}
+
+	return saved_map;
+}
+
+void restore_interrupts(uint64_t irq_map)
+{
+	int i;
+
+	for (i = 0; i < ISH_MAX_IOAPIC_IRQS; i++) {
+		if (((uint64_t)0x1 << i) & irq_map)
+			unmask_interrupt(i);
+	}
+}
+
 /*
  * Get lower 32bit of IOAPIC redirection table entry.
  *
@@ -75,6 +115,7 @@ void unmask_interrupt(uint32_t irq)
 	val = read_ioapic_reg(redtbl_lo);
 	val &= ~IOAPIC_REDTBL_MASK;
 	set_ioapic_redtbl_raw(irq, val);
+	ioapic_irq_mask_bitmap |= ((uint64_t)0x1) << irq;
 }
 
 void mask_interrupt(uint32_t irq)
@@ -85,6 +126,8 @@ void mask_interrupt(uint32_t irq)
 	val = read_ioapic_reg(redtbl_lo);
 	val |= IOAPIC_REDTBL_MASK;
 	set_ioapic_redtbl_raw(irq, val);
+
+	ioapic_irq_mask_bitmap &= ~(((uint64_t)0x1) << irq);
 }
 
 /* Maps IRQs to vectors. To be programmed in IOAPIC redirection table */
@@ -100,6 +143,9 @@ static const irq_desc_t system_irqs[] = {
 	LEVEL_INTR(ISH_HPET_TIMER1_IRQ, ISH_HPET_TIMER1_VEC),
 	LEVEL_INTR(ISH_DEBUG_UART_IRQ, ISH_DEBUG_UART_VEC),
 	LEVEL_INTR(ISH_RESET_PREP_IRQ, ISH_RESET_PREP_VEC),
+#ifdef CONFIG_ISH_PM_D0I1
+	LEVEL_INTR(ISH_PMU_WAKEUP_IRQ, ISH_PMU_WAKEUP_VEC),
+#endif
 };
 
 /**

@@ -51,6 +51,17 @@ void init_interrupts(void);
 void mask_interrupt(unsigned int irq);
 void unmask_interrupt(unsigned int irq);
 
+/**
+ * disable current all enabled intrrupts
+ * return current irq mask bitmap
+ * power management typically use 'disable_all_interrupts' to disable current
+ * all interrupts and save current interrupts enabling settings before enter
+ * low power state, and use 'restore_interrupts' to restore the interrupts
+ * settings after exit low power state.
+ */
+uint64_t disable_all_interrupts(void);
+void restore_interrupts(uint64_t irq_map);
+
 /* Only call in interrupt context */
 uint32_t get_current_interrupt_vector(void);
 #endif

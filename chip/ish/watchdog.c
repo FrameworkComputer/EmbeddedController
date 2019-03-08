@@ -46,6 +46,16 @@ int watchdog_init(void)
 	return EC_SUCCESS;
 }
 
+void watchdog_enable(void)
+{
+	WDT_CONTROL |= WDT_CONTROL_ENABLE_BIT;
+}
+
+void watchdog_disable(void)
+{
+	WDT_CONTROL &= ~WDT_CONTROL_ENABLE_BIT;
+}
+
 /* Parameters are pushed by hardware, we only care about %EIP */
 __attribute__ ((noreturn))
 void watchdog_warning(uint32_t errorcode,

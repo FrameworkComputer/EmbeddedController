@@ -14,6 +14,8 @@
 
 
 .global __idt
+.global __gdt
+.global __gdt_ptr
 
 # GDT is loaded by ISH ROM. The FW code retains the same GDT
 # and hence the same segment selector
@@ -307,6 +309,19 @@ __gdt:
 	# Flags: 0x93 (Data R/W, Present, DPL0, Acessed=1)
 	.long GEN_GDT_DESC_LO(0x0, 0xffffffff, GDT_DESC_DATA_FLAGS)
 	.long GEN_GDT_DESC_UP(0x0, 0xffffffff, GDT_DESC_DATA_FLAGS)
+#if defined(CONFIG_ISH_PM_AONTASK)
+	# placeholder entries, will be updated by init_aon_task()
+	# in power_mgt.c
+	# Entry 3: placeholder TSS descriptor for main FW
+	.long 0x0
+	.long 0x0
+	# Entry 4: placeholder TSS descriptor for aontask
+	.long 0x0
+	.long 0x0
+	# Entry 5: placeholder LDT descriptor for aontask
+	.long 0x0
+	.long 0x0
+#endif
 
 #.section .data
 __idt_ptr:

@@ -26,6 +26,13 @@ chip-$(CONFIG_HOSTCMD_HECI)+=heci.o system_state_subsys.o ipc_heci.o
 chip-$(CONFIG_HID_HECI)+=hid_subsys.o
 chip-$(CONFIG_HID_HECI)+=heci.o system_state_subsys.o ipc_heci.o
 chip-$(CONFIG_DMA_PAGING)+=dma.o
+chip-$(CONFIG_LOW_POWER_IDLE)+=power_mgt.o
+
+ifeq ($(CONFIG_ISH_PM_AONTASK),y)
+ish-aontask-fw=chip/ish/aontaskfw/ish_aontask
+ish-aontask-fw-bin=$(out)/$(ish-aontask-fw).bin
+PROJECT_EXTRA+=$(ish-aontask-fw-bin)
+endif
 
 # location of the scripts and keys used to pack the SPI flash image
 SCRIPTDIR:=./chip/${CHIP}/util

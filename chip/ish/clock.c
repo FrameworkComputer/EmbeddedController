@@ -18,3 +18,16 @@ void clock_init(void)
 {
 	/* No initialization for ISH clock since D0ix is not enabled yet */
 }
+
+#ifdef CONFIG_LOW_POWER_IDLE
+
+void clock_refresh_console_in_use(void)
+{
+	/**
+	 * TODO nothing need to do at current, on ISH, uart interrupt can
+	 * wakeup ISH from low power state, will understand this function more
+	 * to see if need anything to handle in ISH
+	 */
+}
+
+#endif
