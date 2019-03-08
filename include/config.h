@@ -3060,6 +3060,7 @@
  */
 #undef CONFIG_STEINHART_HART_3V3_13K7_47K_4050B
 #undef CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
+#undef CONFIG_STEINHART_HART_6V0_51K1_47K_4050B
 
 /*
  * If defined, active-high GPIO which indicates temperature sensor chips are
