@@ -5,45 +5,13 @@
 
 /* PECI interface for Chrome EC */
 
-#include "chipset.h"
 #include "clock.h"
-#include "common.h"
-#include "console.h"
-#include "gpio.h"
 #include "hooks.h"
 #include "peci.h"
 #include "registers.h"
-#include "temp_sensor.h"
 #include "util.h"
 #include "timer.h"
 #include "task.h"
-
-#define TEMP_AVG_LENGTH 4  /* Should be power of 2 */
-static int temp_vals[TEMP_AVG_LENGTH];
-static int temp_idx;
-
-#define PECI_TARGET_ADDRESS         0x30
-#define PECI_WRITE_DATA_FIFO_SIZE   15
-#define PECI_READ_DATA_FIFO_SIZE    16
-
-#define PECI_GET_TEMP_READ_LENGTH   2
-#define PECI_GET_TEMP_WRITE_LENGTH  0
-#define PECI_GET_TEMP_TIMEOUT_US    200
-
-/* PECI Command Code */
-enum peci_command_code {
-	PECI_CMD_PING             = 0x00,
-	PECI_CMD_GET_DIB          = 0xF7,
-	PECI_CMD_GET_TEMP         = 0x01,
-	PECI_CMD_RD_PKG_CFG       = 0xA1,
-	PECI_CMD_WR_PKG_CFG       = 0xA5,
-	PECI_CMD_RD_IAMSR         = 0xB1,
-	PECI_CMD_WR_IAMSR         = 0xB5,
-	PECI_CMD_RD_PCI_CFG       = 0x61,
-	PECI_CMD_WR_PCI_CFG       = 0x65,
-	PECI_CMD_RD_PCI_CFG_LOCAL = 0xE1,
-	PECI_CMD_WR_PCI_CFG_LOCAL = 0xE5,
-};
 
 enum peci_status {
 	PECI_STATUS_NO_ERR        = 0x00,
@@ -103,23 +71,11 @@ static void peci_reset(void)
 /**
  * Start a PECI transaction
  *
- * @param  addr       client address
- * @param  w_len      write length (no include [Cmd Code] and [AW FCS])
- * @param  r_len      read length (no include [FCS])
- * @param  cmd_code   command code
- * @param  *w_buf How buffer pointer of write data
- * @param  *r_buf How buffer pointer of read data
- * @param  timeout_us transaction timeout unit:us
+ * @param  peci transaction data
  *
  * @return zero if successful, non-zero if error
  */
-static enum peci_status peci_transaction(uint8_t addr,
-				uint8_t w_len,
-				uint8_t r_len,
-				enum peci_command_code cmd_code,
-				uint8_t *w_buf,
-				uint8_t *r_buf,
-				int timeout_us)
+int peci_transaction(struct peci_data *peci)
 {
 	uint8_t status;
 	int index;
@@ -140,22 +96,22 @@ static enum peci_status peci_transaction(uint8_t addr,
 	IT83XX_PECI_HOCTLR |= 0x34;
 
 	/* This register is the target address field of the PECI protocol. */
-	IT83XX_PECI_HOTRADDR = addr;
+	IT83XX_PECI_HOTRADDR = peci->addr;
 
 	/* This register is the write length field of the PECI protocol. */
-	ASSERT(w_len <= PECI_WRITE_DATA_FIFO_SIZE);
+	ASSERT(peci->w_len <= PECI_WRITE_DATA_FIFO_SIZE);
 
-	if (cmd_code == PECI_CMD_PING) {
+	if (peci->cmd_code == PECI_CMD_PING) {
 		/* write length is 0 */
 		IT83XX_PECI_HOWRLR = 0x00;
 	} else {
-		if ((cmd_code == PECI_CMD_WR_PKG_CFG) ||
-			(cmd_code == PECI_CMD_WR_IAMSR) ||
-			(cmd_code == PECI_CMD_WR_PCI_CFG) ||
-			(cmd_code == PECI_CMD_WR_PCI_CFG_LOCAL)) {
+		if ((peci->cmd_code == PECI_CMD_WR_PKG_CFG) ||
+			(peci->cmd_code == PECI_CMD_WR_IAMSR) ||
+			(peci->cmd_code == PECI_CMD_WR_PCI_CFG) ||
+			(peci->cmd_code == PECI_CMD_WR_PCI_CFG_LOCAL)) {
 
 			/* write length include Cmd Code + AW FCS */
-			IT83XX_PECI_HOWRLR = w_len + 2;
+			IT83XX_PECI_HOWRLR = peci->w_len + 2;
 
 			/* bit1, The bit enables the AW_FCS hardwired mechanism
 			 * based on the PECI command. This bit is functional
@@ -167,22 +123,22 @@ static enum peci_status peci_transaction(uint8_t addr,
 			IT83XX_PECI_HOCTLR |= 0x02;
 		} else {
 			/* write length include Cmd Code */
-			IT83XX_PECI_HOWRLR = w_len + 1;
+			IT83XX_PECI_HOWRLR = peci->w_len + 1;
 
 			IT83XX_PECI_HOCTLR &= ~0x02;
 		}
 	}
 
 	/* This register is the read length field of the PECI protocol. */
-	ASSERT(r_len <= PECI_READ_DATA_FIFO_SIZE);
-	IT83XX_PECI_HORDLR = r_len;
+	ASSERT(peci->r_len <= PECI_READ_DATA_FIFO_SIZE);
+	IT83XX_PECI_HORDLR = peci->r_len;
 
 	/* This register is the command field of the PECI protocol. */
-	IT83XX_PECI_HOCMDR = cmd_code;
+	IT83XX_PECI_HOCMDR = peci->cmd_code;
 
 	/* The write data field of the PECI protocol. */
-	for (index = 0x00; index < w_len; index++)
-		IT83XX_PECI_HOWRDR = w_buf[index];
+	for (index = 0x00; index < peci->w_len; index++)
+		IT83XX_PECI_HOWRDR = peci->w_buf[index];
 
 	peci_current_task = task_get_current();
 	task_clear_pending_irq(IT83XX_IRQ_PECI);
@@ -192,15 +148,15 @@ static enum peci_status peci_transaction(uint8_t addr,
 	IT83XX_PECI_HOCTLR |= 0x01;
 
 	/* pre-set timeout */
-	index = timeout_us;
-	if (task_wait_event(timeout_us) != TASK_EVENT_TIMER)
+	index = peci->timeout_us;
+	if (task_wait_event(peci->timeout_us) != TASK_EVENT_TIMER)
 		index = 0;
 
 	task_disable_irq(IT83XX_IRQ_PECI);
 
 	peci_current_task = TASK_ID_INVALID;
 
-	if (index < timeout_us) {
+	if (index < peci->timeout_us) {
 
 		status = IT83XX_PECI_HOSTAR;
 
@@ -213,8 +169,8 @@ static enum peci_status peci_transaction(uint8_t addr,
 		} else if (IT83XX_PECI_HOSTAR & PECI_STATUS_FINISH) {
 
 			/* The read data field of the PECI protocol. */
-			for (index = 0x00; index < r_len; index++)
-				r_buf[index] = IT83XX_PECI_HORDDR;
+			for (index = 0x00; index < peci->r_len; index++)
+				peci->r_buf[index] = IT83XX_PECI_HORDDR;
 
 			/* W/C */
 			IT83XX_PECI_HOSTAR = PECI_STATUS_FINISH;
@@ -237,72 +193,6 @@ static enum peci_status peci_transaction(uint8_t addr,
 	return status;
 }
 
-int peci_get_cpu_temp(void)
-{
-	uint8_t r_buf[PECI_GET_TEMP_READ_LENGTH] = {0};
-	int cpu_temp = -1;
-
-	if (peci_transaction(PECI_TARGET_ADDRESS,
-				PECI_GET_TEMP_WRITE_LENGTH,
-				PECI_GET_TEMP_READ_LENGTH,
-				PECI_CMD_GET_TEMP,
-				NULL,
-				r_buf,
-				PECI_GET_TEMP_TIMEOUT_US) ==
-				PECI_STATUS_NO_ERR) {
-
-		/* Get relative raw data of temperature. */
-		cpu_temp = (r_buf[1] << 8) | r_buf[0];
-
-#ifdef CONFIG_PECI_TJMAX
-		/* Convert relative raw data to degrees C. */
-		cpu_temp = ((cpu_temp ^ 0xFFFF) + 1) >> 6;
-		/* temperature in K */
-		cpu_temp = (CONFIG_PECI_TJMAX - cpu_temp) + 273;
-#endif
-	}
-
-	return cpu_temp;
-}
-
-int peci_temp_sensor_get_val(int idx, int *temp_ptr)
-{
-	int sum = 0;
-	int success_cnt = 0;
-	int i;
-
-	if (!chipset_in_state(CHIPSET_STATE_ON))
-		return EC_ERROR_NOT_POWERED;
-
-	for (i = 0; i < TEMP_AVG_LENGTH; ++i) {
-		if (temp_vals[i] >= 0) {
-			success_cnt++;
-			sum += temp_vals[i];
-		}
-	}
-
-	/*
-	 * Require at least two valid samples. When the AP transitions into S0,
-	 * it is possible, depending on the timing of the PECI sample, to read
-	 * an invalid temperature. This is very rare, but when it does happen
-	 * the temperature returned is CONFIG_PECI_TJMAX. Requiring two valid
-	 * samples here assures us that one bad maximum temperature reading
-	 * when entering S0 won't cause us to trigger an over temperature.
-	 */
-	if (success_cnt < 2)
-		return EC_ERROR_UNKNOWN;
-
-	*temp_ptr = sum / success_cnt;
-	return EC_SUCCESS;
-}
-
-static void peci_temp_sensor_poll(void)
-{
-	temp_vals[temp_idx] = peci_get_cpu_temp();
-	temp_idx = (temp_idx + 1) & (TEMP_AVG_LENGTH - 1);
-}
-DECLARE_HOOK(HOOK_TICK, peci_temp_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
-
 void peci_interrupt(void)
 {
 	task_clear_pending_irq(IT83XX_IRQ_PECI);
@@ -314,8 +204,6 @@ void peci_interrupt(void)
 
 static void peci_init(void)
 {
-	int i;
-
 	clock_enable_peripheral(CGC_OFFSET_PECI, 0, 0);
 	peci_init_vtt_freq();
 
@@ -324,97 +212,5 @@ static void peci_init(void)
 
 	/* bit4, PECI enable */
 	IT83XX_GPIO_GRC2 |= 0x10;
-
-	/* Initialize temperature reading buffer to a sane value. */
-	for (i = 0; i < TEMP_AVG_LENGTH; ++i)
-		temp_vals[i] = 300; /* 27 C */
 }
 DECLARE_HOOK(HOOK_INIT, peci_init, HOOK_PRIO_DEFAULT);
-
-/*****************************************************************************/
-/* Console commands */
-
-static int peci_cmd(int argc, char **argv)
-{
-	uint8_t r_buf[PECI_READ_DATA_FIFO_SIZE] = {0};
-	uint8_t w_buf[PECI_WRITE_DATA_FIFO_SIZE] = {0};
-
-	int addr, wlen, rlen, cmd, time_us, param;
-	char *e;
-
-	if ((argc < 6) || (argc > 8))
-		return EC_ERROR_PARAM_COUNT;
-
-	addr = strtoi(argv[1], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM1;
-
-	wlen = strtoi(argv[2], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM2;
-
-	rlen = strtoi(argv[3], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM3;
-
-	cmd = strtoi(argv[4], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM4;
-
-	time_us = strtoi(argv[5], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM5;
-
-	if (argc > 6) {
-		param = strtoi(argv[6], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM6;
-
-		/* MSB of parameter */
-		w_buf[3] = (uint8_t)(param >> 24);
-		/* LSB of parameter */
-		w_buf[2] = (uint8_t)(param >> 16);
-		/* Index */
-		w_buf[1] = (uint8_t)(param >> 8);
-		/* Host ID[7:1] & Retry[0] */
-		w_buf[0] = (uint8_t)(param >> 0);
-
-		if (argc > 7) {
-			param = strtoi(argv[7], &e, 0);
-			if (*e)
-				return EC_ERROR_PARAM7;
-
-			/* Data (1, 2 or 4 bytes) */
-			w_buf[7] = (uint8_t)(param >> 24);
-			w_buf[6] = (uint8_t)(param >> 16);
-			w_buf[5] = (uint8_t)(param >> 8);
-			w_buf[4] = (uint8_t)(param >> 0);
-		}
-	} else {
-		wlen = 0x00;
-	}
-
-	if (peci_transaction(addr, wlen, rlen, cmd, w_buf, r_buf, time_us)) {
-		ccprintf("PECI transaction error\n");
-		return EC_ERROR_UNKNOWN;
-	}
-	ccprintf("PECI read data: %.*h\n", rlen, r_buf);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(peci, peci_cmd,
-			"addr wlen rlen cmd timeout(us)",
-			"PECI command");
-
-static int command_peci_temp(int argc, char **argv)
-{
-	int t = peci_get_cpu_temp();
-	if (t == -1) {
-		ccprintf("PECI get cpu temp error\n");
-		return EC_ERROR_UNKNOWN;
-	}
-	ccprintf("CPU temp = %d K = %d C\n", t, K_TO_C(t));
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp,
-			NULL,
-			"Print CPU temperature");
