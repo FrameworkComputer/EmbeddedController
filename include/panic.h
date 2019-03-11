@@ -41,6 +41,25 @@ struct nds32_n8_panic_data {
 	uint32_t ipsw;
 };
 
+/* x86 registers saved on panic */
+struct x86_panic_data {
+	uint32_t vector;          /* Exception vector number */
+
+	/* Data pushed when exception handler called */
+	uint32_t error_code;
+	uint32_t eip;
+	uint32_t cs;
+	uint32_t eflags;
+
+	/* General purpose registers */
+	uint32_t eax;
+	uint32_t ebx;
+	uint32_t ecx;
+	uint32_t edx;
+	uint32_t esi;
+	uint32_t edi;
+};
+
 /* Data saved across reboots */
 struct panic_data {
 	uint8_t arch;             /* Architecture (PANIC_ARCH_*) */
@@ -52,6 +71,7 @@ struct panic_data {
 	union {
 		struct cortex_panic_data cm;       /* Cortex-Mx registers */
 		struct nds32_n8_panic_data nds_n8; /* NDS32 N8 registers */
+		struct x86_panic_data x86;         /* Intel x86 */
 	};
 
 	/*
@@ -66,6 +86,7 @@ struct panic_data {
 enum panic_arch {
 	PANIC_ARCH_CORTEX_M = 1,     /* Cortex-M architecture */
 	PANIC_ARCH_NDS32_N8 = 2,     /* NDS32 N8 architecture */
+	PANIC_ARCH_X86 = 3,          /* Intel x86 */
 };
 
 /*

@@ -100,6 +100,50 @@ static const irq_desc_t system_irqs[] = {
 	LEVEL_INTR(ISH_RESET_PREP_IRQ, ISH_RESET_PREP_VEC),
 };
 
+/**
+ * The macro below is used to define 20 exeption handler routines, each
+ * of which will push their corresponding interrupt vector number to
+ * the stack, and then call exception_panic. The remaining arguments to
+ * exception_panic were pushed by the hardware when the exception was
+ * called.
+ *
+ * This is done since the ISR appears to be zero when exceptions are
+ * handled (b:128444630). A more ideal solution would be to use
+ * get_current_interrupt_vector from exception_panic. A fix for this
+ * *might* involve a closer investigation of the flags passed to
+ * set_interrupt_gate.
+ */
+#define DEFINE_EXN_HANDLER(vector)					\
+	void __keep exception_panic_##vector(void);			\
+	__attribute__ ((noreturn)) void exception_panic_##vector(void)	\
+	{								\
+		__asm__ (						\
+			"push $" #vector "\n"				\
+			"call exception_panic\n");			\
+		while (1)						\
+			continue;					\
+	}
+
+DEFINE_EXN_HANDLER(0);
+DEFINE_EXN_HANDLER(1);
+DEFINE_EXN_HANDLER(2);
+DEFINE_EXN_HANDLER(3);
+DEFINE_EXN_HANDLER(4);
+DEFINE_EXN_HANDLER(5);
+DEFINE_EXN_HANDLER(6);
+DEFINE_EXN_HANDLER(7);
+DEFINE_EXN_HANDLER(8);
+DEFINE_EXN_HANDLER(9);
+DEFINE_EXN_HANDLER(10);
+DEFINE_EXN_HANDLER(11);
+DEFINE_EXN_HANDLER(12);
+DEFINE_EXN_HANDLER(13);
+DEFINE_EXN_HANDLER(14);
+DEFINE_EXN_HANDLER(16);
+DEFINE_EXN_HANDLER(17);
+DEFINE_EXN_HANDLER(18);
+DEFINE_EXN_HANDLER(19);
+DEFINE_EXN_HANDLER(20);
 
 void set_interrupt_gate(uint8_t num, isr_handler_t func, uint8_t flags)
 {
@@ -116,10 +160,19 @@ void set_interrupt_gate(uint8_t num, isr_handler_t func, uint8_t flags)
 	__idt[num].flags = flags;
 }
 
-/* This should only be called from an interrupt context */
+/**
+ * This procedure gets the current interrupt vector number, and should
+ * only be called from an interrupt vector context. Note that it may
+ * fail under some cases (see b:128444630).
+ *
+ * Returns an integer in range 0-255 upon success, or 256 (0x100)
+ * upon failure.
+ */
 uint32_t get_current_interrupt_vector(void)
 {
-	uint32_t vec, i;
+	int i;
+	uint32_t vec;
+
 	/* In service register */
 	uint32_t *ioapic_icr_last = (uint32_t *)LAPIC_ISR_REG;
 
@@ -131,8 +184,7 @@ uint32_t get_current_interrupt_vector(void)
 		}
 	}
 
-	CPRINTS("Cannot get vector, not in ISR!");
-	return 0;
+	return 0x100;
 }
 
 static uint32_t lapic_lvt_error_count;
@@ -280,6 +332,28 @@ void init_interrupts(void)
 				      system_irqs[entry].trigger);
 
 	set_interrupt_gate(ISH_TS_VECTOR, __switchto, IDT_FLAGS);
+
+	/* Bind exception handlers to print panic message */
+	set_interrupt_gate(0, exception_panic_0, IDT_FLAGS);
+	set_interrupt_gate(1, exception_panic_1, IDT_FLAGS);
+	set_interrupt_gate(2, exception_panic_2, IDT_FLAGS);
+	set_interrupt_gate(3, exception_panic_3, IDT_FLAGS);
+	set_interrupt_gate(4, exception_panic_4, IDT_FLAGS);
+	set_interrupt_gate(5, exception_panic_5, IDT_FLAGS);
+	set_interrupt_gate(6, exception_panic_6, IDT_FLAGS);
+	set_interrupt_gate(7, exception_panic_7, IDT_FLAGS);
+	set_interrupt_gate(8, exception_panic_8, IDT_FLAGS);
+	set_interrupt_gate(9, exception_panic_9, IDT_FLAGS);
+	set_interrupt_gate(10, exception_panic_10, IDT_FLAGS);
+	set_interrupt_gate(11, exception_panic_11, IDT_FLAGS);
+	set_interrupt_gate(12, exception_panic_12, IDT_FLAGS);
+	set_interrupt_gate(13, exception_panic_13, IDT_FLAGS);
+	set_interrupt_gate(14, exception_panic_14, IDT_FLAGS);
+	set_interrupt_gate(16, exception_panic_16, IDT_FLAGS);
+	set_interrupt_gate(17, exception_panic_17, IDT_FLAGS);
+	set_interrupt_gate(18, exception_panic_18, IDT_FLAGS);
+	set_interrupt_gate(19, exception_panic_19, IDT_FLAGS);
+	set_interrupt_gate(20, exception_panic_20, IDT_FLAGS);
 
 	/* Note: At reset, ID field is already set to 0 in APIC ID register */
 
