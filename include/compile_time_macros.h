@@ -35,4 +35,10 @@
 
 #define member_size(type, member) sizeof(((type *)0)->member)
 
+/*
+ * Bit operation macros.
+ */
+#define BIT(nr)			(1UL << (nr))
+#define BIT_ULL(nr)		(1ULL << (nr))
+
 #endif /* __CROS_EC_COMPILE_TIME_MACROS_H */

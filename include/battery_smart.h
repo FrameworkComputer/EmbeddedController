@@ -61,14 +61,14 @@
 #define SB_ALT_MANUFACTURER_ACCESS      0x44
 
 /* Battery mode */
-#define MODE_INTERNAL_CHARGE_CONTROLLER (1 << 0)
-#define MODE_PRIMARY_BATTERY_SUPPORT    (1 << 1)
-#define MODE_CONDITION_CYCLE            (1 << 7)
-#define MODE_CHARGE_CONTROLLER_ENABLED  (1 << 8)
-#define MODE_PRIMARY_BATTERY            (1 << 9)
-#define MODE_ALARM                      (1 << 13)
-#define MODE_CHARGER                    (1 << 14)
-#define MODE_CAPACITY                   (1 << 15)
+#define MODE_INTERNAL_CHARGE_CONTROLLER BIT(0)
+#define MODE_PRIMARY_BATTERY_SUPPORT    BIT(1)
+#define MODE_CONDITION_CYCLE            BIT(7)
+#define MODE_CHARGE_CONTROLLER_ENABLED  BIT(8)
+#define MODE_PRIMARY_BATTERY            BIT(9)
+#define MODE_ALARM                      BIT(13)
+#define MODE_CHARGER                    BIT(14)
+#define MODE_CAPACITY                   BIT(15)
 
 /* Battery status */
 #define STATUS_ERR_CODE_MASK            0xf
@@ -80,16 +80,16 @@
 #define STATUS_CODE_OVERUNDERFLOW       5
 #define STATUS_CODE_BADSIZE             6
 #define STATUS_CODE_UNKNOWN_ERROR       7
-#define STATUS_FULLY_DISCHARGED         (1 << 4)
-#define STATUS_FULLY_CHARGED            (1 << 5)
-#define STATUS_DISCHARGING              (1 << 6)
-#define STATUS_INITIALIZED              (1 << 7)
-#define STATUS_REMAINING_TIME_ALARM     (1 << 8)
-#define STATUS_REMAINING_CAPACITY_ALARM (1 << 9)
-#define STATUS_TERMINATE_DISCHARGE_ALARM (1 << 11)
-#define STATUS_OVERTEMP_ALARM           (1 << 12)
-#define STATUS_TERMINATE_CHARGE_ALARM   (1 << 14)
-#define STATUS_OVERCHARGED_ALARM        (1 << 15)
+#define STATUS_FULLY_DISCHARGED         BIT(4)
+#define STATUS_FULLY_CHARGED            BIT(5)
+#define STATUS_DISCHARGING              BIT(6)
+#define STATUS_INITIALIZED              BIT(7)
+#define STATUS_REMAINING_TIME_ALARM     BIT(8)
+#define STATUS_REMAINING_CAPACITY_ALARM BIT(9)
+#define STATUS_TERMINATE_DISCHARGE_ALARM BIT(11)
+#define STATUS_OVERTEMP_ALARM           BIT(12)
+#define STATUS_TERMINATE_CHARGE_ALARM   BIT(14)
+#define STATUS_OVERCHARGED_ALARM        BIT(15)
 
 /* Charger alarm warning */
 #define ALARM_OVER_CHARGED              0x8000
@@ -105,27 +105,27 @@
 #define ALARM_STATUS_FULLY_CHARGED      0x0020
 #define ALARM_STATUS_FULLY_DISCHARGED   0x0010
 /* Charge mode */
-#define CHARGE_FLAG_INHIBIT_CHARGE      (1 << 0)
-#define CHARGE_FLAG_ENABLE_POLLING      (1 << 1)
-#define CHARGE_FLAG_POR_RESET           (1 << 2)
-#define CHARGE_FLAG_RESET_TO_ZERO       (1 << 3)
+#define CHARGE_FLAG_INHIBIT_CHARGE      BIT(0)
+#define CHARGE_FLAG_ENABLE_POLLING      BIT(1)
+#define CHARGE_FLAG_POR_RESET           BIT(2)
+#define CHARGE_FLAG_RESET_TO_ZERO       BIT(3)
 /* Charger status */
-#define CHARGER_CHARGE_INHIBITED        (1 << 0)
-#define CHARGER_POLLING_ENABLED         (1 << 1)
-#define CHARGER_VOLTAGE_NOTREG          (1 << 2)
-#define CHARGER_CURRENT_NOTREG          (1 << 3)
-#define CHARGER_LEVEL_2                 (1 << 4)
-#define CHARGER_LEVEL_3                 (1 << 5)
-#define CHARGER_CURRENT_OR              (1 << 6)
-#define CHARGER_VOLTAGE_OR              (1 << 7)
-#define CHARGER_RES_OR                  (1 << 8)
-#define CHARGER_RES_COLD                (1 << 9)
-#define CHARGER_RES_HOT                 (1 << 10)
-#define CHARGER_RES_UR                  (1 << 11)
-#define CHARGER_ALARM_INHIBITED         (1 << 12)
-#define CHARGER_POWER_FAIL              (1 << 13)
-#define CHARGER_BATTERY_PRESENT         (1 << 14)
-#define CHARGER_AC_PRESENT              (1 << 15)
+#define CHARGER_CHARGE_INHIBITED        BIT(0)
+#define CHARGER_POLLING_ENABLED         BIT(1)
+#define CHARGER_VOLTAGE_NOTREG          BIT(2)
+#define CHARGER_CURRENT_NOTREG          BIT(3)
+#define CHARGER_LEVEL_2                 BIT(4)
+#define CHARGER_LEVEL_3                 BIT(5)
+#define CHARGER_CURRENT_OR              BIT(6)
+#define CHARGER_VOLTAGE_OR              BIT(7)
+#define CHARGER_RES_OR                  BIT(8)
+#define CHARGER_RES_COLD                BIT(9)
+#define CHARGER_RES_HOT                 BIT(10)
+#define CHARGER_RES_UR                  BIT(11)
+#define CHARGER_ALARM_INHIBITED         BIT(12)
+#define CHARGER_POWER_FAIL              BIT(13)
+#define CHARGER_BATTERY_PRESENT         BIT(14)
+#define CHARGER_AC_PRESENT              BIT(15)
 /* Charger specification info */
 #define INFO_CHARGER_SPEC(INFO)         ((INFO) & 0xf)
 #define INFO_SELECTOR_SUPPORT(INFO)     (((INFO) >> 4) & 1)
