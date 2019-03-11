@@ -272,26 +272,25 @@ SECTIONS
     } > FLASH
 #endif
 
-    .data_lma : {
-        /*
-         * Explicitly allocate a space for .data section LMA.  Linker should
-         * be able to do this while linking, but it doesn't guarantee LMV/VMA
-         * might be overlapped.  This is a trick to prevent .bss section
-         * overlapped with .data's LMA (This could happen if .rodata and .bss
-         * are in the same memory region, e.g. IRAM), so .data LMA might get
-         * cleared on program starting up.
-         */
-        __data_lma_start = .;
-        . += __data_end - __data_start;
-#if !defined(CONFIG_FLASH_PHYSICAL)
-    } > IRAM
-#elif defined(CONFIG_EXTERNAL_STORAGE)
-    } > CDRAM AT > FLASH
-#else
-    } > FLASH
-#endif
+    __data_lma_start = .;
 
+#if !defined(CONFIG_FLASH_PHYSICAL)
+    /*
+     * Make a space for .data section's LMA. Otherwise, ld won't preserve
+     * a space for .data if .rodata and .bss sections are both in IRAM.
+     */
+#if defined(__clang__)
+     /*
+      * The lazy evaluation timing of symbols and builtin functions of ld and
+      * lld are different.
+      */
+    .bss __data_lma_start + SIZEOF(.data) : {
+#else
+    .bss __data_lma_start + __data_end - __data_start : {
+#endif  /* __clang__ */
+#else
     .bss : {
+#endif /* !CONFIG_FLASH_PHYSICAL */
 	/*
 	 * Align to 512 bytes. This is convenient when some memory block
 	 * needs big alignment. This is the beginning of the RAM, so there
@@ -346,9 +345,9 @@ SECTIONS
 #endif /* defined(CONFIG_REPLACE_LOADER_WITH_BSS_SLOW) */
 
 #ifdef CONFIG_EXTERNAL_STORAGE
-    .data : AT(LOADADDR(.data_lma)) {
+    .data : AT(LOADADDR(.rodata) + SIZEOF(.rodata)) {
 #else
-    .data : AT(ADDR(.data_lma)) {
+    .data : AT(ADDR(.rodata) + SIZEOF(.rodata)) {
 #endif
         . = ALIGN(4);
         __data_start = .;
@@ -444,7 +443,11 @@ SECTIONS
 #endif /* CONFIG_CHIP_MEMORY_REGIONS */
 
 #ifdef CONFIG_DRAM_BASE
-    /* Allocate space for original copy of .data.dram (see .data_lma above). */
+    /*
+     * Allocate space for original copy of .data.dram (see .data_lma above).
+     * TODO(b:128269393): Remove .dram.data_lma sections to be compatible
+     * with clang.
+     */
     .dram.data_lma : {
         __dram_data_lma_start = .;
         . += __dram_data_end - __dram_data_start;
