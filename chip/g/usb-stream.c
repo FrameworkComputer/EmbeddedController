@@ -116,6 +116,9 @@ int tx_stream_handler(struct usb_stream_config const *config)
 	if (!*config->is_reset)
 		return 0;
 
+	if (!tx_fifo_is_ready(config))
+		return 0;
+
 	count = QUEUE_REMOVE_UNITS(config->consumer.queue, config->tx_ram,
 				   config->tx_size);
 	if (count)
