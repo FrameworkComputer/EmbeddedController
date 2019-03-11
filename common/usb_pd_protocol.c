@@ -391,8 +391,8 @@ static void set_vconn(int port, int enable)
 {
 	/*
 	 * We always need to tell the TCPC to enable Vconn first, otherwise some
-	 * TCPCs get confused and think the CC line is in over voltage mode and
-	 * immediately disconnects. If there is a PPC, both devices will
+	 * TCPCs get confused when a PPC sets secondary CC line to 5V and TCPC
+	 * immediately disconnect. If there is a PPC, both devices will
 	 * potentially source Vconn, but that should be okay since Vconn has
 	 * "make before break" electrical requirements when swapping anyway.
 	 */
