@@ -20,11 +20,11 @@
 #include "cros_board_info.h"
 #include "crc8.h"
 
-#define ARGS_MASK_BOARD_VERSION		(1 << 0)
-#define ARGS_MASK_FILENAME		(1 << 1)
-#define ARGS_MASK_OEM_ID		(1 << 2)
-#define ARGS_MASK_SIZE			(1 << 3)
-#define ARGS_MASK_SKU_ID		(1 << 4)
+#define ARGS_MASK_BOARD_VERSION		BIT(0)
+#define ARGS_MASK_FILENAME		BIT(1)
+#define ARGS_MASK_OEM_ID		BIT(2)
+#define ARGS_MASK_SIZE			BIT(3)
+#define ARGS_MASK_SKU_ID		BIT(4)
 
 /* TODO: Set it by macro */
 const char cmd_name[] = "cbi-util";

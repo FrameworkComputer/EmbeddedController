@@ -80,11 +80,11 @@
 #define I8042_RET_ERR           0xff
 
 /* port 64 - command byte bits */
-#define I8042_XLATE             (1 << 6)
-#define I8042_AUX_DIS           (1 << 5)
-#define I8042_KBD_DIS           (1 << 4)
-#define I8042_SYS_FLAG          (1 << 2)
-#define I8042_ENIRQ12           (1 << 1)
-#define I8042_ENIRQ1            (1 << 0)
+#define I8042_XLATE             BIT(6)
+#define I8042_AUX_DIS           BIT(5)
+#define I8042_KBD_DIS           BIT(4)
+#define I8042_SYS_FLAG          BIT(2)
+#define I8042_ENIRQ12           BIT(1)
+#define I8042_ENIRQ1            BIT(0)
 
 #endif /* __CROS_EC_I8042_PROTOCOL_H */

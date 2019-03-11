@@ -71,9 +71,9 @@ enum bus_type {
 void clock_wait_bus_cycles(enum bus_type bus, uint32_t cycles);
 
 /* Clock gate control modes for clock_enable_peripheral() */
-#define CGC_MODE_RUN    (1 << 0)
-#define CGC_MODE_SLEEP  (1 << 1)
-#define CGC_MODE_DSLEEP (1 << 2)
+#define CGC_MODE_RUN    BIT(0)
+#define CGC_MODE_SLEEP  BIT(1)
+#define CGC_MODE_DSLEEP BIT(2)
 #define CGC_MODE_ALL    (CGC_MODE_RUN | CGC_MODE_SLEEP | CGC_MODE_DSLEEP)
 
 /**

@@ -97,9 +97,9 @@ void hpd_event(enum gpio_signal signal)
 void board_config_pre_init(void)
 {
 	/* enable SYSCFG clock */
-	STM32_RCC_APB2ENR |= 1 << 0;
+	STM32_RCC_APB2ENR |= BIT(0);
 	/* Remap USART DMA to match the USART driver */
-	STM32_SYSCFG_CFGR1 |= (1 << 9) | (1 << 10);/* Remap USART1 RX/TX DMA */
+	STM32_SYSCFG_CFGR1 |= BIT(9) | BIT(10);/* Remap USART1 RX/TX DMA */
 }
 
 #ifdef CONFIG_SPI_FLASH
@@ -107,7 +107,7 @@ void board_config_pre_init(void)
 static void board_init_spi2(void)
 {
 	/* Remap SPI2 to DMA channels 6 and 7 */
-	STM32_SYSCFG_CFGR1 |= (1 << 24);
+	STM32_SYSCFG_CFGR1 |= BIT(24);
 
 	/* Set pin NSS to general purpose output mode (01b). */
 	/* Set pins SCK, MISO, and MOSI to alternate function (10b). */
@@ -127,8 +127,8 @@ static void board_init_spi2(void)
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xff000000;
 
 	/* Reset SPI2 */
-	STM32_RCC_APB1RSTR |= (1 << 14);
-	STM32_RCC_APB1RSTR &= ~(1 << 14);
+	STM32_RCC_APB1RSTR |= BIT(14);
+	STM32_RCC_APB1RSTR &= ~BIT(14);
 
 	/* Enable clocks to SPI2 module */
 	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;

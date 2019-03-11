@@ -202,7 +202,7 @@ static void idle_init(void)
 	 * If bus obfuscation is enabled disable sleep.
 	 */
 	if ((GR_FUSE(OBFUSCATION_EN) == 5) ||
-	    (GR_FUSE(FW_DEFINED_BROM_APPLYSEC) & (1 << 3)) ||
+	    (GR_FUSE(FW_DEFINED_BROM_APPLYSEC) & BIT(3)) ||
 	    (runlevel_is_high() && GREAD(GLOBALSEC, OBFS_SW_EN))) {
 		CPRINTS("bus obfuscation enabled disabling sleep");
 		idle_default = IDLE_WFI;

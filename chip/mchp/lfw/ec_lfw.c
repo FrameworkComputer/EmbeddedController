@@ -100,10 +100,10 @@ void timer_init(void)
 	uint32_t val = 0;
 
 	/* Ensure timer is not running */
-	MCHP_TMR32_CTL(0) &= ~(1 << 5);
+	MCHP_TMR32_CTL(0) &= ~BIT(5);
 
 	/* Enable timer */
-	MCHP_TMR32_CTL(0) |= (1 << 0);
+	MCHP_TMR32_CTL(0) |= BIT(0);
 
 	val = MCHP_TMR32_CTL(0);
 
@@ -119,10 +119,10 @@ void timer_init(void)
 	MCHP_TMR32_CNT(0) = 0xffffffff;
 
 	/* Auto restart */
-	MCHP_TMR32_CTL(0) |= (1 << 3);
+	MCHP_TMR32_CTL(0) |= BIT(3);
 
 	/* Start counting in timer 0 */
-	MCHP_TMR32_CTL(0) |= (1 << 5);
+	MCHP_TMR32_CTL(0) |= BIT(5);
 
 }
 
@@ -246,7 +246,7 @@ void uart_write_c(char c)
 		uart_write_c('\r');
 
 	/* Wait for space in transmit FIFO. */
-	while (!(MCHP_UART_LSR(0) & (1 << 5)))
+	while (!(MCHP_UART_LSR(0) & BIT(5)))
 		;
 	MCHP_UART_TB(0) = c;
 }
@@ -282,31 +282,31 @@ void jump_to_image(uintptr_t init_addr)
 void uart_init(void)
 {
 	/* Set UART to reset on VCC1_RESET instaed of nSIO_RESET */
-	MCHP_UART_CFG(0) &= ~(1 << 1);
+	MCHP_UART_CFG(0) &= ~BIT(1);
 
 	/* Baud rate = 115200. 1.8432MHz clock. Divisor = 1 */
 
 	/* Set CLK_SRC = 0 */
-	MCHP_UART_CFG(0) &= ~(1 << 0);
+	MCHP_UART_CFG(0) &= ~BIT(0);
 
 	/* Set DLAB = 1 */
-	MCHP_UART_LCR(0) |= (1 << 7);
+	MCHP_UART_LCR(0) |= BIT(7);
 
 	/* PBRG0/PBRG1 */
 	MCHP_UART_PBRG0(0) = 1;
 	MCHP_UART_PBRG1(0) = 0;
 
 	/* Set DLAB = 0 */
-	MCHP_UART_LCR(0) &= ~(1 << 7);
+	MCHP_UART_LCR(0) &= ~BIT(7);
 
 	/* Set word length to 8-bit */
-	MCHP_UART_LCR(0) |= (1 << 0) | (1 << 1);
+	MCHP_UART_LCR(0) |= BIT(0) | BIT(1);
 
 	/* Enable FIFO */
-	MCHP_UART_FCR(0) = (1 << 0);
+	MCHP_UART_FCR(0) = BIT(0);
 
 	/* Activate UART */
-	MCHP_UART_ACT(0) |= (1 << 0);
+	MCHP_UART_ACT(0) |= BIT(0);
 
 	gpio_config_module(MODULE_UART, 1);
 }

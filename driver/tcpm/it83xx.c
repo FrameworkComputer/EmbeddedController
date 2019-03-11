@@ -45,7 +45,7 @@ void it83xx_disable_pd_module(int port)
 	if (*usbpd_ctrl_regs[port].cc1 == IT83XX_USBPD_CC_PIN_CONFIG &&
 		*usbpd_ctrl_regs[port].cc2 == IT83XX_USBPD_CC_PIN_CONFIG) {
 		/* Disable PD PHY */
-		IT83XX_USBPD_GCR(port) &= ~((1 << 0) | (1 << 4));
+		IT83XX_USBPD_GCR(port) &= ~(BIT(0) | BIT(4));
 		/* Power down CC1/CC2 */
 		IT83XX_USBPD_CCGCR(port) |= 0x1f;
 		/* Disable CC1/CC2 voltage detector */
@@ -70,10 +70,10 @@ static enum tcpc_cc_voltage_status it83xx_get_cc(
 
 	/* select Rp */
 	if (pull)
-		CLEAR_MASK(cc_state, (1 << 2));
+		CLEAR_MASK(cc_state, BIT(2));
 	/* select Rd */
 	else
-		SET_MASK(cc_state, (1 << 2));
+		SET_MASK(cc_state, BIT(2));
 
 	/* sink */
 	if (USBPD_GET_POWER_ROLE(port) == USBPD_POWER_ROLE_CONSUMER) {
@@ -181,7 +181,7 @@ static enum tcpc_transmit_complete it83xx_tx_data(
 
 	if (length) {
 		/* set data bit */
-		IT83XX_USBPD_MTSR0(port) |= (1 << 4);
+		IT83XX_USBPD_MTSR0(port) |= BIT(4);
 		/* set data length setting */
 		IT83XX_USBPD_MTSR1(port) |= length;
 		/* set data */
@@ -279,9 +279,9 @@ static void it83xx_enable_vconn(enum usbpd_port port, int enabled)
 static void it83xx_enable_cc(enum usbpd_port port, int enable)
 {
 	if (enable)
-		CLEAR_MASK(IT83XX_USBPD_CCGCR(port), (1 << 4));
+		CLEAR_MASK(IT83XX_USBPD_CCGCR(port), BIT(4));
 	else
-		SET_MASK(IT83XX_USBPD_CCGCR(port), (1 << 4));
+		SET_MASK(IT83XX_USBPD_CCGCR(port), BIT(4));
 }
 
 static void it83xx_set_power_role(enum usbpd_port port, int power_role)
@@ -300,11 +300,11 @@ static void it83xx_set_power_role(enum usbpd_port port, int power_role)
 		 */
 		IT83XX_USBPD_CCADCR(port) = 0x08;
 		/* bit0: source */
-		SET_MASK(IT83XX_USBPD_PDMSR(port), (1 << 0));
+		SET_MASK(IT83XX_USBPD_PDMSR(port), BIT(0));
 		/* bit1: CC1 select Rp */
-		SET_MASK(IT83XX_USBPD_CCGCR(port), (1 << 1));
+		SET_MASK(IT83XX_USBPD_CCGCR(port), BIT(1));
 		/* bit3: CC2 select Rp */
-		SET_MASK(IT83XX_USBPD_BMCSR(port), (1 << 3));
+		SET_MASK(IT83XX_USBPD_BMCSR(port), BIT(3));
 	} else {
 		/*
 		 * bit[2,3] BMC Rx threshold setting
@@ -318,11 +318,11 @@ static void it83xx_set_power_role(enum usbpd_port port, int power_role)
 		 */
 		IT83XX_USBPD_CCADCR(port) = 0x04;
 		/* bit0: sink */
-		CLEAR_MASK(IT83XX_USBPD_PDMSR(port), (1 << 0));
+		CLEAR_MASK(IT83XX_USBPD_PDMSR(port), BIT(0));
 		/* bit1: CC1 select Rd */
-		CLEAR_MASK(IT83XX_USBPD_CCGCR(port), (1 << 1));
+		CLEAR_MASK(IT83XX_USBPD_CCGCR(port), BIT(1));
 		/* bit3: CC2 select Rd */
-		CLEAR_MASK(IT83XX_USBPD_BMCSR(port), (1 << 3));
+		CLEAR_MASK(IT83XX_USBPD_BMCSR(port), BIT(3));
 	}
 }
 
@@ -339,10 +339,10 @@ static void it83xx_init(enum usbpd_port port, int role)
 	invalidate_last_message_id(port);
 #ifdef IT83XX_USBPD_CC_PARAMETER_RELOAD
 	/* bit7: Reload CC parameter setting. */
-	IT83XX_USBPD_CCPSR0(port) |= (1 << 7);
+	IT83XX_USBPD_CCPSR0(port) |= BIT(7);
 #endif
 	/* reset and disable HW auto generate message header */
-	IT83XX_USBPD_GCR(port) = (1 << 5);
+	IT83XX_USBPD_GCR(port) = BIT(5);
 	USBPD_SW_RESET(port);
 	/* set SOP: receive SOP message only.
 	 * bit[7]: SOP" support enable.
@@ -379,7 +379,7 @@ static void it83xx_init(enum usbpd_port port, int role)
 	/* disable vconn */
 	it83xx_enable_vconn(port, 0);
 	/* TX start from high */
-	IT83XX_USBPD_CCADCR(port) |= (1 << 6);
+	IT83XX_USBPD_CCADCR(port) |= BIT(6);
 	/* enable cc1/cc2 */
 	*usbpd_ctrl_regs[port].cc1 = IT83XX_USBPD_CC_PIN_CONFIG;
 	*usbpd_ctrl_regs[port].cc2 = IT83XX_USBPD_CC_PIN_CONFIG;
@@ -393,9 +393,9 @@ static void it83xx_select_polarity(enum usbpd_port port,
 {
 	/* cc1/cc2 selection */
 	if (cc_pin == USBPD_CC_PIN_1)
-		SET_MASK(IT83XX_USBPD_CCGCR(port), (1 << 0));
+		SET_MASK(IT83XX_USBPD_CCGCR(port), BIT(0));
 	else
-		CLEAR_MASK(IT83XX_USBPD_CCGCR(port), (1 << 0));
+		CLEAR_MASK(IT83XX_USBPD_CCGCR(port), BIT(0));
 }
 
 static int it83xx_set_cc(enum usbpd_port port, int pull)
@@ -457,7 +457,7 @@ static int it83xx_tcpm_select_rp_value(int port, int rp_sel)
 		rp = 2 << 2;
 		break;
 	case TYPEC_RP_3A0:
-		rp = 1 << 2;
+		rp = BIT(2);
 		break;
 	case TYPEC_RP_USB:
 	default:

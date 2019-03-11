@@ -50,14 +50,14 @@ static int start_single_and_wait(int timeout)
 	/* clear all R/W1C channel status */
 	MCHP_ADC_STS = 0xffffu;
 	/* clear R/W1C single done status */
-	MCHP_ADC_CTRL |= (1 << 7);
+	MCHP_ADC_CTRL |= BIT(7);
 	/* clear GIRQ single status */
 	MCHP_INT_SOURCE(MCHP_ADC_GIRQ) = MCHP_ADC_GIRQ_SINGLE_BIT;
 	/* make sure all writes are issued before starting conversion */
 	asm volatile ("dsb");
 
 	/* Start conversion */
-	MCHP_ADC_CTRL |= 1 << 1;
+	MCHP_ADC_CTRL |= BIT(1);
 
 	MCHP_INT_ENABLE(MCHP_ADC_GIRQ) = MCHP_ADC_GIRQ_SINGLE_BIT;
 
@@ -131,7 +131,7 @@ static void adc_init(void)
 	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_ADC);
 
 	/* Activate ADC module */
-	MCHP_ADC_CTRL |= 1 << 0;
+	MCHP_ADC_CTRL |= BIT(0);
 
 	/* Enable interrupt */
 	task_waiting = TASK_ID_INVALID;
@@ -148,7 +148,7 @@ void adc_interrupt(void)
 	MCHP_ADC_STS = 0xffffu;
 
 	/* Clear interrupt status bit */
-	MCHP_ADC_CTRL |= 1 << 7;
+	MCHP_ADC_CTRL |= BIT(7);
 
 	MCHP_INT_SOURCE(MCHP_ADC_GIRQ) = MCHP_ADC_GIRQ_SINGLE_BIT;
 

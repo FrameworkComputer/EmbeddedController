@@ -1179,26 +1179,26 @@ enum i2c_channels {
 #define IT83XX_USBPD_BASE(port)   (0x00F03700 + (0x100 * (port)))
 
 #define IT83XX_USBPD_GCR(p)       REG8(IT83XX_USBPD_BASE(p)+0x0)
-#define USBPD_REG_MASK_SW_RESET_BIT           (1 << 7)
-#define USBPD_REG_MASK_TYPE_C_DETECT_RESET    (1 << 6)
-#define USBPD_REG_MASK_BMC_PHY                (1 << 4)
-#define USBPD_REG_MASK_AUTO_SEND_SW_RESET     (1 << 3)
-#define USBPD_REG_MASK_AUTO_SEND_HW_RESET     (1 << 2)
-#define USBPD_REG_MASK_SNIFFER_MODE           (1 << 1)
-#define USBPD_REG_MASK_GLOBAL_ENABLE          (1 << 0)
+#define USBPD_REG_MASK_SW_RESET_BIT           BIT(7)
+#define USBPD_REG_MASK_TYPE_C_DETECT_RESET    BIT(6)
+#define USBPD_REG_MASK_BMC_PHY                BIT(4)
+#define USBPD_REG_MASK_AUTO_SEND_SW_RESET     BIT(3)
+#define USBPD_REG_MASK_AUTO_SEND_HW_RESET     BIT(2)
+#define USBPD_REG_MASK_SNIFFER_MODE           BIT(1)
+#define USBPD_REG_MASK_GLOBAL_ENABLE          BIT(0)
 #define IT83XX_USBPD_PDMSR(p)     REG8(IT83XX_USBPD_BASE(p)+0x01)
-#define USBPD_REG_MASK_SOPPP_ENABLE           (1 << 7)
-#define USBPD_REG_MASK_SOPP_ENABLE            (1 << 6)
-#define USBPD_REG_MASK_SOP_ENABLE             (1 << 5)
+#define USBPD_REG_MASK_SOPPP_ENABLE           BIT(7)
+#define USBPD_REG_MASK_SOPP_ENABLE            BIT(6)
+#define USBPD_REG_MASK_SOP_ENABLE             BIT(5)
 #define IT83XX_USBPD_CCGCR(p)     REG8(IT83XX_USBPD_BASE(p)+0x04)
-#define USBPD_REG_MASK_DISABLE_CC             (1 << 4)
+#define USBPD_REG_MASK_DISABLE_CC             BIT(4)
 #define IT83XX_USBPD_CCCSR(p)     REG8(IT83XX_USBPD_BASE(p)+0x05)
 #ifdef IT83XX_USBPD_CC_VOLTAGE_DETECTOR_INDEPENDENT
-#define IT83XX_USBPD_REG_MASK_CC1_DISCONNECT  ((1 << 3) | (1 << 1))
-#define IT83XX_USBPD_REG_MASK_CC2_DISCONNECT  ((1 << 7) | (1 << 5))
+#define IT83XX_USBPD_REG_MASK_CC1_DISCONNECT  (BIT(3) | BIT(1))
+#define IT83XX_USBPD_REG_MASK_CC2_DISCONNECT  (BIT(7) | BIT(5))
 #else
-#define IT83XX_USBPD_REG_MASK_CC1_DISCONNECT  (1 << 3)
-#define IT83XX_USBPD_REG_MASK_CC2_DISCONNECT  (1 << 7)
+#define IT83XX_USBPD_REG_MASK_CC1_DISCONNECT  BIT(3)
+#define IT83XX_USBPD_REG_MASK_CC2_DISCONNECT  BIT(7)
 #endif
 #define USBPD_CC1_DISCONNECTED(p) \
 	((IT83XX_USBPD_CCCSR(p) | IT83XX_USBPD_REG_MASK_CC1_DISCONNECT) & \
@@ -1208,35 +1208,35 @@ enum i2c_channels {
 	~IT83XX_USBPD_REG_MASK_CC1_DISCONNECT)
 
 #define IT83XX_USBPD_CCPSR(p)     REG8(IT83XX_USBPD_BASE(p)+0x06)
-#define USBPD_REG_MASK_DISCONNECT_POWER_CC2   (1 << 5)
-#define USBPD_REG_MASK_DISCONNECT_POWER_CC1   (1 << 1)
+#define USBPD_REG_MASK_DISCONNECT_POWER_CC2   BIT(5)
+#define USBPD_REG_MASK_DISCONNECT_POWER_CC1   BIT(1)
 #define IT83XX_USBPD_DFPVDR(p)    REG8(IT83XX_USBPD_BASE(p)+0x08)
 #define IT83XX_USBPD_UFPVDR(p)    REG8(IT83XX_USBPD_BASE(p)+0x09)
 #define IT83XX_USBPD_CCADCR(p)    REG8(IT83XX_USBPD_BASE(p)+0x0C)
 #define IT83XX_USBPD_ISR(p)       REG8(IT83XX_USBPD_BASE(p)+0x14)
-#define USBPD_REG_MASK_TYPE_C_DETECT           (1 << 7)
-#define USBPD_REG_MASK_CABLE_RESET_DETECT      (1 << 6)
-#define USBPD_REG_MASK_HARD_RESET_DETECT       (1 << 5)
-#define USBPD_REG_MASK_MSG_RX_DONE             (1 << 4)
-#define USBPD_REG_MASK_AUTO_SOFT_RESET_TX_DONE (1 << 3)
-#define USBPD_REG_MASK_HARD_RESET_TX_DONE      (1 << 2)
-#define USBPD_REG_MASK_MSG_TX_DONE             (1 << 1)
-#define USBPD_REG_MASK_TIMER_TIMEOUT           (1 << 0)
+#define USBPD_REG_MASK_TYPE_C_DETECT           BIT(7)
+#define USBPD_REG_MASK_CABLE_RESET_DETECT      BIT(6)
+#define USBPD_REG_MASK_HARD_RESET_DETECT       BIT(5)
+#define USBPD_REG_MASK_MSG_RX_DONE             BIT(4)
+#define USBPD_REG_MASK_AUTO_SOFT_RESET_TX_DONE BIT(3)
+#define USBPD_REG_MASK_HARD_RESET_TX_DONE      BIT(2)
+#define USBPD_REG_MASK_MSG_TX_DONE             BIT(1)
+#define USBPD_REG_MASK_TIMER_TIMEOUT           BIT(0)
 #define IT83XX_USBPD_IMR(p)       REG8(IT83XX_USBPD_BASE(p)+0x15)
 #define IT83XX_USBPD_MTCR(p)      REG8(IT83XX_USBPD_BASE(p)+0x18)
-#define USBPD_REG_MASK_SW_RESET_TX_STAT        (1 << 3)
-#define USBPD_REG_MASK_TX_BUSY_STAT            (1 << 2)
-#define USBPD_REG_MASK_TX_DISCARD_STAT         (1 << 2)
-#define USBPD_REG_MASK_TX_ERR_STAT             (1 << 1)
-#define USBPD_REG_MASK_TX_START                (1 << 0)
+#define USBPD_REG_MASK_SW_RESET_TX_STAT        BIT(3)
+#define USBPD_REG_MASK_TX_BUSY_STAT            BIT(2)
+#define USBPD_REG_MASK_TX_DISCARD_STAT         BIT(2)
+#define USBPD_REG_MASK_TX_ERR_STAT             BIT(1)
+#define USBPD_REG_MASK_TX_START                BIT(0)
 #define IT83XX_USBPD_MTSR0(p)     REG8(IT83XX_USBPD_BASE(p)+0x19)
-#define USBPD_REG_MASK_CABLE_ENABLE            (1 << 7)
-#define USBPD_REG_MASK_SEND_HW_RESET           (1 << 6)
-#define USBPD_REG_MASK_SEND_BIST_MODE_2        (1 << 5)
+#define USBPD_REG_MASK_CABLE_ENABLE            BIT(7)
+#define USBPD_REG_MASK_SEND_HW_RESET           BIT(6)
+#define USBPD_REG_MASK_SEND_BIST_MODE_2        BIT(5)
 #define IT83XX_USBPD_MTSR1(p)     REG8(IT83XX_USBPD_BASE(p)+0x1A)
 #define IT83XX_USBPD_VDMMCSR(p)   REG8(IT83XX_USBPD_BASE(p)+0x1B)
 #define IT83XX_USBPD_MRSR(p)      REG8(IT83XX_USBPD_BASE(p)+0x1C)
-#define USBPD_REG_MASK_RX_MSG_VALID            (1 << 0)
+#define USBPD_REG_MASK_RX_MSG_VALID            BIT(0)
 #define IT83XX_USBPD_PEFSMR(p)    REG8(IT83XX_USBPD_BASE(p)+0x1D)
 #define IT83XX_USBPD_PES0R(p)     REG8(IT83XX_USBPD_BASE(p)+0x1E)
 #define IT83XX_USBPD_PES1R(p)     REG8(IT83XX_USBPD_BASE(p)+0x1F)
@@ -1252,11 +1252,11 @@ enum i2c_channels {
 #define IT83XX_USBPD_PDMHSR(p)    REG8(IT83XX_USBPD_BASE(p)+0x65)
 #ifdef IT83XX_INTC_PLUG_IN_SUPPORT
 #define IT83XX_USBPD_TCDCR(p)     REG8(IT83XX_USBPD_BASE(p)+0x67)
-#define USBPD_REG_PLUG_OUT_DETECT_TYPE_SELECT  (1 << 7)
-#define USBPD_REG_MASK_TYPEC_PLUG_IN_OUT_ISR   (1 << 4)
-#define USBPD_REG_PLUG_IN_OUT_SELECT           (1 << 3)
-#define USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE   (1 << 1)
-#define USBPD_REG_PLUG_IN_OUT_DETECT_STAT      (1 << 0)
+#define USBPD_REG_PLUG_OUT_DETECT_TYPE_SELECT  BIT(7)
+#define USBPD_REG_MASK_TYPEC_PLUG_IN_OUT_ISR   BIT(4)
+#define USBPD_REG_PLUG_IN_OUT_SELECT           BIT(3)
+#define USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE   BIT(1)
+#define USBPD_REG_PLUG_IN_OUT_DETECT_STAT      BIT(0)
 #endif //IT83XX_INTC_PLUG_IN_SUPPORT
 
 enum usbpd_port {
@@ -1283,55 +1283,55 @@ enum usbpd_port {
 #define VW_VALID_FIELD(f)          ((f) << 4)
 
 #define ESPI_SYSTEM_EVENT_VW_IDX_2 0x2
-#define VW_IDX_2_SLP_S3            (1 << 0)
-#define VW_IDX_2_SLP_S4            (1 << 1)
-#define VW_IDX_2_SLP_S5            (1 << 2)
+#define VW_IDX_2_SLP_S3            BIT(0)
+#define VW_IDX_2_SLP_S4            BIT(1)
+#define VW_IDX_2_SLP_S5            BIT(2)
 
 #define ESPI_SYSTEM_EVENT_VW_IDX_3 0x3
-#define VW_IDX_3_SUS_STAT          (1 << 0)
-#define VW_IDX_3_PLTRST            (1 << 1)
-#define VW_IDX_3_OOB_RST_WARN      (1 << 2)
+#define VW_IDX_3_SUS_STAT          BIT(0)
+#define VW_IDX_3_PLTRST            BIT(1)
+#define VW_IDX_3_OOB_RST_WARN      BIT(2)
 
 #define ESPI_SYSTEM_EVENT_VW_IDX_4 0x4
-#define VW_IDX_4_OOB_RST_ACK       (1 << 0)
-#define VW_IDX_4_WAKE              (1 << 2)
-#define VW_IDX_4_PME               (1 << 3)
+#define VW_IDX_4_OOB_RST_ACK       BIT(0)
+#define VW_IDX_4_WAKE              BIT(2)
+#define VW_IDX_4_PME               BIT(3)
 
 #define ESPI_SYSTEM_EVENT_VW_IDX_5 0x5
-#define VW_IDX_5_SLAVE_BTLD_DONE   (1 << 0)
-#define VW_IDX_5_FATAL             (1 << 1)
-#define VW_IDX_5_NON_FATAL         (1 << 2)
-#define VW_IDX_5_SLAVE_BTLD_STATUS (1 << 3)
+#define VW_IDX_5_SLAVE_BTLD_DONE   BIT(0)
+#define VW_IDX_5_FATAL             BIT(1)
+#define VW_IDX_5_NON_FATAL         BIT(2)
+#define VW_IDX_5_SLAVE_BTLD_STATUS BIT(3)
 #define VW_IDX_5_BTLD_STATUS_DONE  (VW_IDX_5_SLAVE_BTLD_DONE | \
 					VW_IDX_5_SLAVE_BTLD_STATUS)
 
 #define ESPI_SYSTEM_EVENT_VW_IDX_6 0x6
-#define VW_IDX_6_SCI               (1 << 0)
-#define VW_IDX_6_SMI               (1 << 1)
-#define VW_IDX_6_RCIN              (1 << 2)
-#define VW_IDX_6_HOST_RST_ACK      (1 << 3)
+#define VW_IDX_6_SCI               BIT(0)
+#define VW_IDX_6_SMI               BIT(1)
+#define VW_IDX_6_RCIN              BIT(2)
+#define VW_IDX_6_HOST_RST_ACK      BIT(3)
 
 #define ESPI_SYSTEM_EVENT_VW_IDX_7 0x7
-#define VW_IDX_7_HOST_RST_WARN     (1 << 0)
+#define VW_IDX_7_HOST_RST_WARN     BIT(0)
 
 #define ESPI_SYSTEM_EVENT_VW_IDX_40 0x40
-#define VW_IDX_40_SUS_ACK           (1 << 0)
+#define VW_IDX_40_SUS_ACK           BIT(0)
 
 #define ESPI_SYSTEM_EVENT_VW_IDX_41 0x41
-#define VW_IDX_41_SUS_WARN          (1 << 0)
-#define VW_IDX_41_SUS_PWRDN_ACK     (1 << 1)
-#define VW_IDX_41_SLP_A             (1 << 3)
+#define VW_IDX_41_SUS_WARN          BIT(0)
+#define VW_IDX_41_SUS_PWRDN_ACK     BIT(1)
+#define VW_IDX_41_SLP_A             BIT(3)
 
 #define ESPI_SYSTEM_EVENT_VW_IDX_42 0x42
-#define VW_IDX_42_SLP_LAN           (1 << 0)
-#define VW_IDX_42_SLP_WLAN          (1 << 1)
+#define VW_IDX_42_SLP_LAN           BIT(0)
+#define VW_IDX_42_SLP_WLAN          BIT(1)
 
 #define ESPI_SYSTEM_EVENT_VW_IDX_43 0x43
 #define ESPI_SYSTEM_EVENT_VW_IDX_44 0x44
 #define ESPI_SYSTEM_EVENT_VW_IDX_47 0x47
 
 #define IT83XX_ESPI_VWCTRL0    REG8(IT83XX_ESPI_VW_BASE+0x90)
-#define ESPI_INTERRUPT_EVENT_PUT_PC (1 << 7)
+#define ESPI_INTERRUPT_EVENT_PUT_PC BIT(7)
 
 #define IT83XX_ESPI_VWCTRL1    REG8(IT83XX_ESPI_VW_BASE+0x91)
 #define IT83XX_ESPI_VWCTRL2    REG8(IT83XX_ESPI_VW_BASE+0x92)
@@ -1348,7 +1348,7 @@ enum usbpd_port {
 #define IT83XX_USB_BASE   0x00F02F00
 
 #define IT83XX_USB_P0MCR  REG8(IT83XX_USB_BASE+0xE4)
-#define USB_DP_DM_PULL_DOWN_EN (1 << 4)
+#define USB_DP_DM_PULL_DOWN_EN BIT(4)
 
 /* Wake pin definitions, defined at board-level */
 extern const enum gpio_signal hibernate_wake_pins[];

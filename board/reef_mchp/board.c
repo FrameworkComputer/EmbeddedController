@@ -1052,7 +1052,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_GYRO,
 	 .addr = BMI160_ADDR0,
-	 .default_range = 1 << 11, /* 16LSB / uT, fixed */
+	 .default_range = BIT(11), /* 16LSB / uT, fixed */
 	 .rot_standard_ref = &mag_standard_ref,
 	 .min_frequency = BMM150_MAG_MIN_FREQ,
 	 .max_frequency = BMM150_MAG_MAX_FREQ(SPECIAL),
@@ -1067,7 +1067,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &bmp280_drv_data,
 	 .port = I2C_PORT_BARO,
 	 .addr = BMP280_I2C_ADDRESS1,
-	 .default_range = 1 << 18, /*  1bit = 4 Pa, 16bit ~= 2600 hPa */
+	 .default_range = BIT(18), /*  1bit = 4 Pa, 16bit ~= 2600 hPa */
 	 .min_frequency = BMP280_BARO_MIN_FREQ,
 	 .max_frequency = BMP280_BARO_MAX_FREQ,
 	},

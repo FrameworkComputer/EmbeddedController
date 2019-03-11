@@ -74,7 +74,7 @@ static void tmp112_init(void)
 	set_mask = (3 << 5);
 
 	/* not oneshot mode */
-	clr_mask = (1 << 7);
+	clr_mask = BIT(7);
 
 	raw_read16(TMP112_REG_CONF, &tmp);
 	raw_write16(TMP112_REG_CONF, (tmp & ~clr_mask) | set_mask);

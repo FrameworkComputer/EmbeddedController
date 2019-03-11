@@ -101,7 +101,7 @@ int watchdog_init(void)
 	LM4_WATCHDOG_LOCK(0) = LM4_WATCHDOG_MAGIC_WORD;
 
 	/* De-activate the watchdog when the JTAG stops the CPU */
-	LM4_WATCHDOG_TEST(0) |= 1 << 8;
+	LM4_WATCHDOG_TEST(0) |= BIT(8);
 
 	/* Reset after 2 time-out, activate the watchdog and lock the control
 	 * register. */

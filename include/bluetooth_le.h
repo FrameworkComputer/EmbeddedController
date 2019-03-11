@@ -139,7 +139,7 @@ struct ble_adv_header {
 
 /* LL SCA Values.  They are shifted left 5 bits for Hop values */
 #define BLE_LL_SCA_251_PPM_TO_500_PPM    (0 << 5)
-#define BLE_LL_SCA_151_PPM_TO_250_PPM    (1 << 5)
+#define BLE_LL_SCA_151_PPM_TO_250_PPM    BIT(5)
 #define BLE_LL_SCA_101_PPM_TO_150_PPM    (2 << 5)
 #define BLE_LL_SCA_076_PPM_TO_100_PPM    (3 << 5)
 #define BLE_LL_SCA_051_PPM_TO_075_PPM    (4 << 5)

@@ -52,9 +52,9 @@ extern struct keyboard_scan_config keyscan_config;
 enum boot_key {
 	/* No keys other than keyboard-controlled reset keys */
 	BOOT_KEY_NONE = 0,
-	BOOT_KEY_ESC = (1 << 0),
-	BOOT_KEY_DOWN_ARROW = (1 << 1),
-	BOOT_KEY_LEFT_SHIFT = (1 << 2),
+	BOOT_KEY_ESC = BIT(0),
+	BOOT_KEY_DOWN_ARROW = BIT(1),
+	BOOT_KEY_LEFT_SHIFT = BIT(2),
 };
 
 #if defined(HAS_TASK_KEYSCAN) && defined(CONFIG_KEYBOARD_BOOT_KEYS)

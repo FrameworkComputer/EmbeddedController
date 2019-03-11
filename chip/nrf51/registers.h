@@ -361,7 +361,7 @@
 #define NRF51_RADIO_TXADD_MAX                         8
 
 /* OVERRIDE4 */
-#define NRF51_RADIO_OVERRIDE_EN                       (1 << 31)
+#define NRF51_RADIO_OVERRIDE_EN                       BIT(31)
 
 
 /*
@@ -433,8 +433,8 @@
 #define NRF51_TWI_ENABLE_VAL      0x5
 #define NRF51_TWI_DISABLE_VAL     0x0
 
-#define NRF51_TWI_ERRORSRC_ANACK  (1<<1) /* Address NACK */
-#define NRF51_TWI_ERRORSRC_DNACK  (1<<2) /* Data NACK */
+#define NRF51_TWI_ERRORSRC_ANACK  BIT(1) /* Address NACK */
+#define NRF51_TWI_ERRORSRC_DNACK  BIT(2) /* Data NACK */
 
 /*
  *  TWI (I2C) Instance 0
@@ -526,14 +526,14 @@
 #define NRF51_GPIOTE_PORT_BIT  31
 /* For GPIOTE.CONFIG */
 #define NRF51_GPIOTE_MODE_DISABLED     (0<<0)
-#define NRF51_GPIOTE_MODE_EVENT        (1<<0)
+#define NRF51_GPIOTE_MODE_EVENT        BIT(0)
 #define NRF51_GPIOTE_MODE_TASK         (3<<0)
 #define NRF51_GPIOTE_PSEL_POS          (8)
-#define NRF51_GPIOTE_POLARITY_LOTOHI   (1<<16)
+#define NRF51_GPIOTE_POLARITY_LOTOHI   BIT(16)
 #define NRF51_GPIOTE_POLARITY_HITOLO   (2<<16)
 #define NRF51_GPIOTE_POLARITY_TOGGLE   (3<<16)
 #define NRF51_GPIOTE_OUTINIT_LOW       (0<<20)
-#define NRF51_GPIOTE_OUTINIT_HIGH      (1<<20)
+#define NRF51_GPIOTE_OUTINIT_HIGH      BIT(20)
 
 /*
  *  Timer / Counter
@@ -590,9 +590,9 @@
 #define NRF51_RNG_CONFIG             REG32(NRF51_RNG_BASE + 0x504)
 #define NRF51_RNG_VALUE              REG32(NRF51_RNG_BASE + 0x508)
 /* For RNG Shortcuts */
-#define NRF51_RNG_SHORTS_VALRDY_STOP (1 << 0)
+#define NRF51_RNG_SHORTS_VALRDY_STOP BIT(0)
 /* For RNG Config */
-#define NRF51_RNG_DERCEN             (1 << 0)
+#define NRF51_RNG_DERCEN             BIT(0)
 
 
 /*
@@ -620,7 +620,7 @@
 #define NRF51_WDT_CONFIG_SLEEP_PAUSE       0
 #define NRF51_WDT_CONFIG_SLEEP_RUN         1
 #define NRF51_WDT_CONFIG_HALT_PAUSE       (0<<4)
-#define NRF51_WDT_CONFIG_HALT_RUN         (1<<4)
+#define NRF51_WDT_CONFIG_HALT_RUN         BIT(4)
 
 #define NRF51_WDT_RELOAD_VAL             0x6E524635
 
@@ -644,16 +644,16 @@
 #define NRF51_PIN_CNF_DIR_INPUT        (0)
 #define NRF51_PIN_CNF_DIR_OUTPUT       (1)
 #define NRF51_PIN_CNF_INPUT_CONNECT    (0<<1)
-#define NRF51_PIN_CNF_INPUT_DISCONNECT (1<<1)
+#define NRF51_PIN_CNF_INPUT_DISCONNECT BIT(1)
 #define NRF51_PIN_CNF_PULL_DISABLED    (0<<2)
-#define NRF51_PIN_CNF_PULLDOWN         (1<<2)
+#define NRF51_PIN_CNF_PULLDOWN         BIT(2)
 #define NRF51_PIN_CNF_PULLUP           (3<<2)
 /*
  * Logic levels 0 and 1, strengths S=Standard, H=High D=Disconnect
  * for example, S0D1 = Standard drive 0, disconnect on 1
  */
 #define NRF51_PIN_CNF_DRIVE_S0S1       (0<<8)
-#define NRF51_PIN_CNF_DRIVE_H0S1       (1<<8)
+#define NRF51_PIN_CNF_DRIVE_H0S1       BIT(8)
 #define NRF51_PIN_CNF_DRIVE_S0H1       (2<<8)
 #define NRF51_PIN_CNF_DRIVE_H0H1       (3<<8)
 #define NRF51_PIN_CNF_DRIVE_D0S1       (4<<8)

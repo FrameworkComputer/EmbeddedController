@@ -47,7 +47,7 @@ static inline void spi_enable_clock(int port)
 #define TIM_RX_CCR_IDX(p) TIM_RX_CCR_C0
 /* connect TIM3 CH1 to TIM3_CH2 input */
 #define TIM_CCR_CS  2
-#define EXTI_COMP_MASK(p) (1 << 7)
+#define EXTI_COMP_MASK(p) BIT(7)
 #define IRQ_COMP STM32_IRQ_EXTI4_15
 /* the RX is inverted, triggers on rising edge */
 #define EXTI_XTSR STM32_EXTI_RTSR
@@ -64,8 +64,8 @@ static inline void pd_set_pins_speed(int port)
 static inline void pd_tx_spi_reset(int port)
 {
 	/* Reset SPI1 */
-	STM32_RCC_APB2RSTR |= (1 << 12);
-	STM32_RCC_APB2RSTR &= ~(1 << 12);
+	STM32_RCC_APB2RSTR |= BIT(12);
+	STM32_RCC_APB2RSTR &= ~BIT(12);
 }
 
 /* Drive the CC line from the TX block */
@@ -81,7 +81,7 @@ static inline void pd_tx_enable(int port, int polarity)
 static inline void pd_tx_disable(int port, int polarity)
 {
 	/* Put TX GND (PA4) in Hi-Z state */
-	STM32_GPIO_BSRR(GPIO_A) = 1 << 4 /* Set */;
+	STM32_GPIO_BSRR(GPIO_A) = BIT(4) /* Set */;
 	/* Put SPI MISO (PA6) in Hi-Z by putting it in input mode  */
 	STM32_GPIO_MODER(GPIO_A) &= ~(0x3 << (2*6));
 }

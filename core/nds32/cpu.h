@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 /* Process Status Word bits */
-#define PSW_GIE		(1 << 0) /* Global Interrupt Enable */
+#define PSW_GIE		BIT(0) /* Global Interrupt Enable */
 #define PSW_INTL_SHIFT	1        /* Interrupt Stack Level */
 #define PSW_INTL_MASK	(0x3 << PSW_INTL_SHIFT)
 

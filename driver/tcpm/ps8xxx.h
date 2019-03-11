@@ -43,8 +43,8 @@
 #define PS8XXX_REG_VENDOR_ID_L                  0x00
 #define PS8XXX_REG_VENDOR_ID_H                  0x01
 #define MUX_IN_HPD_ASSERTION_REG                0xD0
-#define IN_HPD  (1 << 0)
-#define HPD_IRQ (1 << 1)
+#define IN_HPD  BIT(0)
+#define HPD_IRQ BIT(1)
 #define PS8XXX_REG_MUX_DP_EQ_CONFIGURATION      0xD3
 #define PS8XXX_REG_MUX_USB_C2SS_EQ              0xE7
 #define PS8XXX_REG_MUX_USB_C2SS_HS_THRESHOLD    0xE8
@@ -55,8 +55,8 @@
 
 #define FW_VER_REG               0x82
 #define MUX_IN_HPD_ASSERTION_REG 0xD0
-#define IN_HPD  (1 << 0)
-#define HPD_IRQ (1 << 1)
+#define IN_HPD  BIT(0)
+#define HPD_IRQ BIT(1)
 
 #endif
 

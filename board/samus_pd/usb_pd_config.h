@@ -64,7 +64,7 @@ static inline void spi_enable_clock(int port)
 #define TIM_TX_CCR_IDX(p) ((p) ? TIM_TX_CCR_C1 : TIM_TX_CCR_C0)
 #define TIM_RX_CCR_IDX(p) ((p) ? TIM_RX_CCR_C1 : TIM_RX_CCR_C0)
 #define TIM_CCR_CS  1
-#define EXTI_COMP_MASK(p) ((p) ? (1<<22) : (1 << 21))
+#define EXTI_COMP_MASK(p) ((p) ? BIT(22) : BIT(21))
 #define IRQ_COMP STM32_IRQ_COMP
 /* triggers packet detection on comparator falling edge */
 #define EXTI_XTSR STM32_EXTI_FTSR
@@ -93,12 +93,12 @@ static inline void pd_tx_spi_reset(int port)
 {
 	if (port == 0) {
 		/* Reset SPI2 */
-		STM32_RCC_APB1RSTR |= (1 << 14);
-		STM32_RCC_APB1RSTR &= ~(1 << 14);
+		STM32_RCC_APB1RSTR |= BIT(14);
+		STM32_RCC_APB1RSTR &= ~BIT(14);
 	} else {
 		/* Reset SPI1 */
-		STM32_RCC_APB2RSTR |= (1 << 12);
-		STM32_RCC_APB2RSTR &= ~(1 << 12);
+		STM32_RCC_APB2RSTR |= BIT(12);
+		STM32_RCC_APB2RSTR &= ~BIT(12);
 	}
 }
 

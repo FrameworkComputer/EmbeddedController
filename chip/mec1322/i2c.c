@@ -21,22 +21,22 @@
 #define I2C_CLOCK 16000000 /* 16 MHz */
 
 /* Status */
-#define STS_NBB (1 << 0) /* Bus busy */
-#define STS_LAB (1 << 1) /* Arbitration lost */
-#define STS_LRB (1 << 3) /* Last received bit */
-#define STS_BER (1 << 4) /* Bus error */
-#define STS_PIN (1 << 7) /* Pending interrupt */
+#define STS_NBB BIT(0) /* Bus busy */
+#define STS_LAB BIT(1) /* Arbitration lost */
+#define STS_LRB BIT(3) /* Last received bit */
+#define STS_BER BIT(4) /* Bus error */
+#define STS_PIN BIT(7) /* Pending interrupt */
 
 /* Control */
-#define CTRL_ACK (1 << 0) /* Acknowledge */
-#define CTRL_STO (1 << 1) /* STOP */
-#define CTRL_STA (1 << 2) /* START */
-#define CTRL_ENI (1 << 3) /* Enable interrupt */
-#define CTRL_ESO (1 << 6) /* Enable serial output */
-#define CTRL_PIN (1 << 7) /* Pending interrupt not */
+#define CTRL_ACK BIT(0) /* Acknowledge */
+#define CTRL_STO BIT(1) /* STOP */
+#define CTRL_STA BIT(2) /* START */
+#define CTRL_ENI BIT(3) /* Enable interrupt */
+#define CTRL_ESO BIT(6) /* Enable serial output */
+#define CTRL_PIN BIT(7) /* Pending interrupt not */
 
 /* Completion */
-#define COMP_IDLE (1 << 29)    /* i2c bus is idle */
+#define COMP_IDLE BIT(29)    /* i2c bus is idle */
 #define COMP_RW_BITS_MASK 0x3C /* R/W bits mask */
 
 /* Maximum transfer of a SMBUS block transfer */
@@ -116,21 +116,21 @@ static void configure_controller(int controller, int kbps)
 	configure_controller_speed(controller, kbps);
 	MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
 				       CTRL_ACK | CTRL_ENI;
-	MEC1322_I2C_CONFIG(controller) |= 1 << 10; /* ENAB */
+	MEC1322_I2C_CONFIG(controller) |= BIT(10); /* ENAB */
 
 	/* Enable interrupt */
-	MEC1322_I2C_CONFIG(controller) |= 1 << 29; /* ENIDI */
+	MEC1322_I2C_CONFIG(controller) |= BIT(29); /* ENIDI */
 	MEC1322_INT_ENABLE(12) |= (1 << controller);
-	MEC1322_INT_BLK_EN |= 1 << 12;
+	MEC1322_INT_BLK_EN |= BIT(12);
 }
 
 static void reset_controller(int controller)
 {
 	int i;
 
-	MEC1322_I2C_CONFIG(controller) |= 1 << 9;
+	MEC1322_I2C_CONFIG(controller) |= BIT(9);
 	udelay(100);
-	MEC1322_I2C_CONFIG(controller) &= ~(1 << 9);
+	MEC1322_I2C_CONFIG(controller) &= ~BIT(9);
 
 	for (i = 0; i < i2c_ports_used; ++i)
 		if (controller == i2c_port_to_controller(i2c_ports[i].port)) {

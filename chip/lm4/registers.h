@@ -41,11 +41,11 @@ static inline int lm4_spi_addr(int ch, int offset)
 #define LM4_SSI_CR1(ch)        LM4SSIREG(ch, 0x004)
 #define LM4_SSI_DR(ch)         LM4SSIREG(ch, 0x008)
 #define LM4_SSI_SR(ch)         LM4SSIREG(ch, 0x00c)
-#define LM4_SSI_SR_TFE         (1 << 0)  /* Transmit FIFO empty */
-#define LM4_SSI_SR_TNF         (1 << 1)  /* Transmit FIFO not full */
-#define LM4_SSI_SR_RNE         (1 << 2)  /* Receive FIFO not empty */
-#define LM4_SSI_SR_RFF         (1 << 3)  /* Receive FIFO full */
-#define LM4_SSI_SR_BSY         (1 << 4)  /* Busy */
+#define LM4_SSI_SR_TFE         BIT(0)  /* Transmit FIFO empty */
+#define LM4_SSI_SR_TNF         BIT(1)  /* Transmit FIFO not full */
+#define LM4_SSI_SR_RNE         BIT(2)  /* Receive FIFO not empty */
+#define LM4_SSI_SR_RFF         BIT(3)  /* Receive FIFO full */
+#define LM4_SSI_SR_BSY         BIT(4)  /* Busy */
 #define LM4_SSI_CPSR(ch)       LM4SSIREG(ch, 0x010)
 #define LM4_SSI_IM(ch)         LM4SSIREG(ch, 0x014)
 #define LM4_SSI_RIS(ch)        LM4SSIREG(ch, 0x018)
@@ -85,7 +85,7 @@ static inline int lm4_adc_addr(int ss, int offset)
 #define LM4_ADC_SSEMUX(ss)     LM4ADCREG(ss, 0x018)
 
 #define LM4_LPC_LPCCTL         REG32(0x40080000)
-#define LM4_LPC_SCI_START      (1 << 9)  /* Start a pulse on LPC0SCI signal */
+#define LM4_LPC_SCI_START      BIT(9)  /* Start a pulse on LPC0SCI signal */
 #define LM4_LPC_SCI_CLK_1      (0 << 10) /* SCI asserted for 1 clock period */
 #define LM4_LPC_SCI_CLK_2      (1 << 10) /* SCI asserted for 2 clock periods */
 #define LM4_LPC_SCI_CLK_4      (2 << 10) /* SCI asserted for 4 clock periods */
@@ -115,13 +115,13 @@ static inline int lm4_lpc_addr(int ch, int offset)
 #define LM4LPCREG(ch, offset)  REG32(lm4_lpc_addr(ch, offset))
 #define LM4_LPC_CTL(ch)        LM4LPCREG(ch, 0x000)
 #define LM4_LPC_ST(ch)         LM4LPCREG(ch, 0x004)
-#define LM4_LPC_ST_TOH         (1 << 0)  /* TO Host bit */
-#define LM4_LPC_ST_FRMH        (1 << 1)  /* FRoM Host bit */
-#define LM4_LPC_ST_CMD         (1 << 3)  /* Last from-host byte was command */
-#define LM4_LPC_ST_BURST       (1 << 8)
-#define LM4_LPC_ST_SCI         (1 << 9)
-#define LM4_LPC_ST_SMI         (1 << 10)
-#define LM4_LPC_ST_BUSY        (1 << 12)
+#define LM4_LPC_ST_TOH         BIT(0)  /* TO Host bit */
+#define LM4_LPC_ST_FRMH        BIT(1)  /* FRoM Host bit */
+#define LM4_LPC_ST_CMD         BIT(3)  /* Last from-host byte was command */
+#define LM4_LPC_ST_BURST       BIT(8)
+#define LM4_LPC_ST_SCI         BIT(9)
+#define LM4_LPC_ST_SMI         BIT(10)
+#define LM4_LPC_ST_BUSY        BIT(12)
 #define LM4_LPC_ADR(ch)        LM4LPCREG(ch, 0x008)
 #define LM4_LPC_POOL_BYTES     1024   /* Size of LPCPOOL in bytes */
 #define LM4_LPC_LPCPOOL        ((volatile unsigned char *)0x40080400)
@@ -186,12 +186,12 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_HIBERNATE_HIBRTCM0 REG32(0x400fc004)
 #define LM4_HIBERNATE_HIBRTCLD REG32(0x400fc00c)
 #define LM4_HIBERNATE_HIBCTL   REG32(0x400fc010)
-#define LM4_HIBCTL_WRC         (1 << 31)
-#define LM4_HIBCTL_CLK32EN     (1 << 6)
-#define LM4_HIBCTL_PINWEN      (1 << 4)
-#define LM4_HIBCTL_RTCWEN      (1 << 3)
-#define LM4_HIBCTL_HIBREQ      (1 << 1)
-#define LM4_HIBCTL_RTCEN       (1 << 0)
+#define LM4_HIBCTL_WRC         BIT(31)
+#define LM4_HIBCTL_CLK32EN     BIT(6)
+#define LM4_HIBCTL_PINWEN      BIT(4)
+#define LM4_HIBCTL_RTCWEN      BIT(3)
+#define LM4_HIBCTL_HIBREQ      BIT(1)
+#define LM4_HIBCTL_RTCEN       BIT(0)
 #define LM4_HIBERNATE_HIBIM    REG32(0x400fc014)
 #define LM4_HIBERNATE_HIBRIS   REG32(0x400fc018)
 #define LM4_HIBERNATE_HIBMIS   REG32(0x400fc01c)
@@ -228,22 +228,22 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_SYSTEM_MISC        REG32(0x400fe058)
 #define LM4_SYSTEM_RESC        REG32(0x400fe05c)
 #define LM4_SYSTEM_RCC         REG32(0x400fe060)
-#define LM4_SYSTEM_RCC_ACG        (1 << 27)
+#define LM4_SYSTEM_RCC_ACG        BIT(27)
 #define LM4_SYSTEM_RCC_SYSDIV(x)  (((x) & 0xf) << 23)
-#define LM4_SYSTEM_RCC_USESYSDIV  (1 << 22)
-#define LM4_SYSTEM_RCC_PWRDN      (1 << 13)
-#define LM4_SYSTEM_RCC_BYPASS     (1 << 11)
+#define LM4_SYSTEM_RCC_USESYSDIV  BIT(22)
+#define LM4_SYSTEM_RCC_PWRDN      BIT(13)
+#define LM4_SYSTEM_RCC_BYPASS     BIT(11)
 #define LM4_SYSTEM_RCC_XTAL(x)    (((x) & 0x1f) << 6)
 #define LM4_SYSTEM_RCC_OSCSRC(x)  (((x) & 0x3) << 4)
-#define LM4_SYSTEM_RCC_IOSCDIS    (1 << 1)
-#define LM4_SYSTEM_RCC_MOSCDIS    (1 << 0)
+#define LM4_SYSTEM_RCC_IOSCDIS    BIT(1)
+#define LM4_SYSTEM_RCC_MOSCDIS    BIT(0)
 #define LM4_SYSTEM_RCC2        REG32(0x400fe070)
-#define LM4_SYSTEM_RCC2_USERCC2     (1 << 31)
-#define LM4_SYSTEM_RCC2_DIV400      (1 << 30)
+#define LM4_SYSTEM_RCC2_USERCC2     BIT(31)
+#define LM4_SYSTEM_RCC2_DIV400      BIT(30)
 #define LM4_SYSTEM_RCC2_SYSDIV2(x)  (((x) & 0x3f) << 23)
-#define LM4_SYSTEM_RCC2_SYSDIV2LSB  (1 << 22)
-#define LM4_SYSTEM_RCC2_PWRDN2      (1 << 13)
-#define LM4_SYSTEM_RCC2_BYPASS2     (1 << 11)
+#define LM4_SYSTEM_RCC2_SYSDIV2LSB  BIT(22)
+#define LM4_SYSTEM_RCC2_PWRDN2      BIT(13)
+#define LM4_SYSTEM_RCC2_BYPASS2     BIT(11)
 #define LM4_SYSTEM_RCC2_OSCSRC2(x)  (((x) & 0x7) << 4)
 #define LM4_SYSTEM_MOSCCTL     REG32(0x400fe07c)
 #define LM4_SYSTEM_DSLPCLKCFG  REG32(0x400fe144)

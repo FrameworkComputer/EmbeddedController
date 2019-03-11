@@ -405,7 +405,7 @@ void lpc_clear_acpi_status_mask(uint8_t mask)
 
 int lpc_get_pltrst_asserted(void)
 {
-	return (LM4_LPC_LPCSTS & (1<<10)) ? 1 : 0;
+	return (LM4_LPC_LPCSTS & BIT(10)) ? 1 : 0;
 }
 
 /**
@@ -594,8 +594,8 @@ void lpc_interrupt(void)
 #endif
 
 	/* Debugging: print changes to LPC0RESET */
-	if (mis & (1 << 31)) {
-		if (LM4_LPC_LPCSTS & (1 << 10)) {
+	if (mis & BIT(31)) {
+		if (LM4_LPC_LPCSTS & BIT(10)) {
 			int i;
 
 			/* Store port 80 reset event */
@@ -682,7 +682,7 @@ static void lpc_init(void)
 	 * data writes, pool bytes 0(data)/1(cmd)
 	 */
 	LM4_LPC_ADR(LPC_CH_KEYBOARD) = 0x60;
-	LM4_LPC_CTL(LPC_CH_KEYBOARD) = (1 << 24/* IRQSEL1 */) |
+	LM4_LPC_CTL(LPC_CH_KEYBOARD) = (BIT(24)/* IRQSEL1 */) |
 		(0 << 18/* IRQEN1 */) | (LPC_POOL_OFFS_KEYBOARD << (5 - 1));
 	LM4_LPC_ST(LPC_CH_KEYBOARD) = 0;
 	/* Unmask interrupt for host command/data writes and data reads */
@@ -743,7 +743,7 @@ static void lpc_init(void)
 	 * Unmask LPC bus reset interrupt.  This lets us monitor the PCH
 	 * PLTRST# signal for debugging.
 	 */
-	LM4_LPC_LPCIM |= (1 << 31);
+	LM4_LPC_LPCIM |= BIT(31);
 
 	/* Enable LPC channels */
 	LM4_LPC_LPCCTL = LM4_LPC_SCI_CLK_1 |
@@ -820,7 +820,7 @@ static int lpc_get_protocol_info(struct host_cmd_handler_args *args)
 	struct ec_response_get_protocol_info *r = args->response;
 
 	memset(r, 0, sizeof(*r));
-	r->protocol_versions = (1 << 2) | (1 << 3);
+	r->protocol_versions = BIT(2) | BIT(3);
 	r->max_request_packet_size = EC_LPC_HOST_PACKET_SIZE;
 	r->max_response_packet_size = EC_LPC_HOST_PACKET_SIZE;
 	r->flags = 0;

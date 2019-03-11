@@ -90,64 +90,64 @@
 #define MCHP_PCR_JTAG		(0x0000)
 
 /* Command all blocks to sleep */
-#define MCHP_PCR_SLP_EN0_ISPI	(1 << 2)
-#define MCHP_PCR_SLP_EN0_EFUSE	(1 << 1)
-#define MCHP_PCR_SLP_EN0_JTAG	(1 << 0)
+#define MCHP_PCR_SLP_EN0_ISPI	BIT(2)
+#define MCHP_PCR_SLP_EN0_EFUSE	BIT(1)
+#define MCHP_PCR_SLP_EN0_JTAG	BIT(0)
 #define MCHP_PCR_SLP_EN0_SLEEP	0x07ul
 
 /* Sleep Enable, Clock Required, Reset on Sleep 1 bits */
-#define MCHP_PCR_BTMR16_1	((1 << 8) + 31)
-#define MCHP_PCR_BTMR16_0	((1 << 8) + 30)
-#define MCHP_PCR_ECS		((1 << 8) + 29)
-#define MCHP_PCR_PWM8		((1 << 8) + 27)
-#define MCHP_PCR_PWM7		((1 << 8) + 26)
-#define MCHP_PCR_PWM6		((1 << 8) + 25)
-#define MCHP_PCR_PWM5		((1 << 8) + 24)
-#define MCHP_PCR_PWM4		((1 << 8) + 23)
-#define MCHP_PCR_PWM3		((1 << 8) + 22)
-#define MCHP_PCR_PWM2		((1 << 8) + 21)
-#define MCHP_PCR_PWM1		((1 << 8) + 20)
-#define MCHP_PCR_TACH2		((1 << 8) + 12)
-#define MCHP_PCR_TACH1		((1 << 8) + 11)
-#define MCHP_PCR_I2C0		((1 << 8) + 10)
-#define MCHP_PCR_WDT		((1 << 8) + 9)
-#define MCHP_PCR_CPU		((1 << 8) + 8)
-#define MCHP_PCR_TFDP		((1 << 8) + 7)
-#define MCHP_PCR_DMA		((1 << 8) + 6)
-#define MCHP_PCR_PMC		((1 << 8) + 5)
-#define MCHP_PCR_PWM0		((1 << 8) + 4)
-#define MCHP_PCR_TACH0		((1 << 8) + 2)
-#define MCHP_PCR_PECI		((1 << 8) + 1)
-#define MCHP_PCR_ECIA		((1 << 8) + 0)
+#define MCHP_PCR_BTMR16_1	(BIT(8) + 31)
+#define MCHP_PCR_BTMR16_0	(BIT(8) + 30)
+#define MCHP_PCR_ECS		(BIT(8) + 29)
+#define MCHP_PCR_PWM8		(BIT(8) + 27)
+#define MCHP_PCR_PWM7		(BIT(8) + 26)
+#define MCHP_PCR_PWM6		(BIT(8) + 25)
+#define MCHP_PCR_PWM5		(BIT(8) + 24)
+#define MCHP_PCR_PWM4		(BIT(8) + 23)
+#define MCHP_PCR_PWM3		(BIT(8) + 22)
+#define MCHP_PCR_PWM2		(BIT(8) + 21)
+#define MCHP_PCR_PWM1		(BIT(8) + 20)
+#define MCHP_PCR_TACH2		(BIT(8) + 12)
+#define MCHP_PCR_TACH1		(BIT(8) + 11)
+#define MCHP_PCR_I2C0		(BIT(8) + 10)
+#define MCHP_PCR_WDT		(BIT(8) + 9)
+#define MCHP_PCR_CPU		(BIT(8) + 8)
+#define MCHP_PCR_TFDP		(BIT(8) + 7)
+#define MCHP_PCR_DMA		(BIT(8) + 6)
+#define MCHP_PCR_PMC		(BIT(8) + 5)
+#define MCHP_PCR_PWM0		(BIT(8) + 4)
+#define MCHP_PCR_TACH0		(BIT(8) + 2)
+#define MCHP_PCR_PECI		(BIT(8) + 1)
+#define MCHP_PCR_ECIA		(BIT(8) + 0)
 
 /* Command all blocks to sleep */
-#define MCHP_PCR_SLP_EN1_BTMR16_1	(1 << 31)
-#define MCHP_PCR_SLP_EN1_BTMR16_0	(1 << 30)
-#define MCHP_PCR_SLP_EN1_ECS		(1 << 29)
+#define MCHP_PCR_SLP_EN1_BTMR16_1	BIT(31)
+#define MCHP_PCR_SLP_EN1_BTMR16_0	BIT(30)
+#define MCHP_PCR_SLP_EN1_ECS		BIT(29)
 /* bit[28] reserved */
-#define MCHP_PCR_SLP_EN1_PWM_ALL	((1 << 4) + (0xff << 20))
-#define MCHP_PCR_SLP_EN1_PWM8		(1 << 27)
-#define MCHP_PCR_SLP_EN1_PWM7		(1 << 26)
-#define MCHP_PCR_SLP_EN1_PWM6		(1 << 25)
-#define MCHP_PCR_SLP_EN1_PWM5		(1 << 24)
-#define MCHP_PCR_SLP_EN1_PWM4		(1 << 23)
-#define MCHP_PCR_SLP_EN1_PWM3		(1 << 22)
-#define MCHP_PCR_SLP_EN1_PWM2		(1 << 21)
-#define MCHP_PCR_SLP_EN1_PWM1		(1 << 20)
+#define MCHP_PCR_SLP_EN1_PWM_ALL	(BIT(4) + (0xff << 20))
+#define MCHP_PCR_SLP_EN1_PWM8		BIT(27)
+#define MCHP_PCR_SLP_EN1_PWM7		BIT(26)
+#define MCHP_PCR_SLP_EN1_PWM6		BIT(25)
+#define MCHP_PCR_SLP_EN1_PWM5		BIT(24)
+#define MCHP_PCR_SLP_EN1_PWM4		BIT(23)
+#define MCHP_PCR_SLP_EN1_PWM3		BIT(22)
+#define MCHP_PCR_SLP_EN1_PWM2		BIT(21)
+#define MCHP_PCR_SLP_EN1_PWM1		BIT(20)
 /* bits[19:13] reserved */
-#define MCHP_PCR_SLP_EN1_TACH2		(1 << 12)
-#define MCHP_PCR_SLP_EN1_TACH1		(1 << 11)
-#define MCHP_PCR_SLP_EN1_I2C0		(1 << 10)
-#define MCHP_PCR_SLP_EN1_WDT		(1 << 9)
-#define MCHP_PCR_SLP_EN1_CPU		(1 << 8)
-#define MCHP_PCR_SLP_EN1_TFDP		(1 << 7)
-#define MCHP_PCR_SLP_EN1_DMA		(1 << 6)
-#define MCHP_PCR_SLP_EN1_PMC		(1 << 5)
-#define MCHP_PCR_SLP_EN1_PWM0		(1 << 4)
+#define MCHP_PCR_SLP_EN1_TACH2		BIT(12)
+#define MCHP_PCR_SLP_EN1_TACH1		BIT(11)
+#define MCHP_PCR_SLP_EN1_I2C0		BIT(10)
+#define MCHP_PCR_SLP_EN1_WDT		BIT(9)
+#define MCHP_PCR_SLP_EN1_CPU		BIT(8)
+#define MCHP_PCR_SLP_EN1_TFDP		BIT(7)
+#define MCHP_PCR_SLP_EN1_DMA		BIT(6)
+#define MCHP_PCR_SLP_EN1_PMC		BIT(5)
+#define MCHP_PCR_SLP_EN1_PWM0		BIT(4)
 /* bit[3] reserved */
-#define MCHP_PCR_SLP_EN1_TACH0		(1 << 2)
-#define MCHP_PCR_SLP_EN1_PECI		(1 << 1)
-#define MCHP_PCR_SLP_EN1_ECIA		(1 << 0)
+#define MCHP_PCR_SLP_EN1_TACH0		BIT(2)
+#define MCHP_PCR_SLP_EN1_PECI		BIT(1)
+#define MCHP_PCR_SLP_EN1_ECIA		BIT(0)
 /* all sleep enable 1 bits */
 #define MCHP_PCR_SLP_EN1_SLEEP		0xffffffff
 /*
@@ -176,25 +176,25 @@
 
 /* Command all blocks to sleep */
 /* bits[31:27] reserved */
-#define MCHP_PCR_SLP_EN2_P80CAP1	(1 << 26)
-#define MCHP_PCR_SLP_EN2_P80CAP0	(1 << 25)
+#define MCHP_PCR_SLP_EN2_P80CAP1	BIT(26)
+#define MCHP_PCR_SLP_EN2_P80CAP0	BIT(25)
 /* bit[24] reserved */
-#define MCHP_PCR_SLP_EN2_ACPI_EC4	(1 << 23)
-#define MCHP_PCR_SLP_EN2_ACPI_EC3	(1 << 22)
-#define MCHP_PCR_SLP_EN2_ACPI_EC2	(1 << 21)
+#define MCHP_PCR_SLP_EN2_ACPI_EC4	BIT(23)
+#define MCHP_PCR_SLP_EN2_ACPI_EC3	BIT(22)
+#define MCHP_PCR_SLP_EN2_ACPI_EC2	BIT(21)
 /* bit[20] reserved */
-#define MCHP_PCR_SLP_EN2_ESPI		(1 << 19)
-#define MCHP_PCR_SLP_EN2_RTC		(1 << 18)
-#define MCHP_PCR_SLP_EN2_MAILBOX	(1 << 17)
-#define MCHP_PCR_SLP_EN2_MIF8042	(1 << 16)
-#define MCHP_PCR_SLP_EN2_ACPI_PM1	(1 << 15)
-#define MCHP_PCR_SLP_EN2_ACPI_EC1	(1 << 14)
-#define MCHP_PCR_SLP_EN2_ACPI_EC0	(1 << 13)
-#define MCHP_PCR_SLP_EN2_GCFG		(1 << 12)
+#define MCHP_PCR_SLP_EN2_ESPI		BIT(19)
+#define MCHP_PCR_SLP_EN2_RTC		BIT(18)
+#define MCHP_PCR_SLP_EN2_MAILBOX	BIT(17)
+#define MCHP_PCR_SLP_EN2_MIF8042	BIT(16)
+#define MCHP_PCR_SLP_EN2_ACPI_PM1	BIT(15)
+#define MCHP_PCR_SLP_EN2_ACPI_EC1	BIT(14)
+#define MCHP_PCR_SLP_EN2_ACPI_EC0	BIT(13)
+#define MCHP_PCR_SLP_EN2_GCFG		BIT(12)
 /* bits[11:3] reserved */
-#define MCHP_PCR_SLP_EN2_UART1		(1 << 2)
-#define MCHP_PCR_SLP_EN2_UART0		(1 << 1)
-#define MCHP_PCR_SLP_EN2_LPC		(1 << 0)
+#define MCHP_PCR_SLP_EN2_UART1		BIT(2)
+#define MCHP_PCR_SLP_EN2_UART0		BIT(1)
+#define MCHP_PCR_SLP_EN2_LPC		BIT(0)
 /* all sleep enable 2 bits */
 #define MCHP_PCR_SLP_EN2_SLEEP		0x07ffffff
 
@@ -228,35 +228,35 @@
 #define MCHP_PCR_ADC		((3 << 8) + 3)
 
 /* Command all blocks to sleep */
-#define MCHP_PCR_SLP_EN3_PWM9		(1 << 31)
-#define MCHP_PCR_SLP_EN3_CCT0		(1 << 30)
-#define MCHP_PCR_SLP_EN3_HTMR1		(1 << 29)
-#define MCHP_PCR_SLP_EN3_AESHASH	(1 << 28)
-#define MCHP_PCR_SLP_EN3_RNG		(1 << 27)
-#define MCHP_PCR_SLP_EN3_PKE		(1 << 26)
-#define MCHP_PCR_SLP_EN3_LED3		(1 << 25)
-#define MCHP_PCR_SLP_EN3_BTMR32_1	(1 << 24)
-#define MCHP_PCR_SLP_EN3_BTMR32_0	(1 << 23)
-#define MCHP_PCR_SLP_EN3_BTMR16_3	(1 << 22)
-#define MCHP_PCR_SLP_EN3_BTMR16_2	(1 << 21)
-#define MCHP_PCR_SLP_EN3_GPSPI1		(1 << 20)
-#define MCHP_PCR_SLP_EN3_BCM0		(1 << 19)
-#define MCHP_PCR_SLP_EN3_LED2		(1 << 18)
-#define MCHP_PCR_SLP_EN3_LED1		(1 << 17)
-#define MCHP_PCR_SLP_EN3_LED0		(1 << 16)
-#define MCHP_PCR_SLP_EN3_I2C3		(1 << 15)
-#define MCHP_PCR_SLP_EN3_I2C2		(1 << 14)
-#define MCHP_PCR_SLP_EN3_I2C1		(1 << 13)
-#define MCHP_PCR_SLP_EN3_RPMPWM0	(1 << 12)
-#define MCHP_PCR_SLP_EN3_KEYSCAN	(1 << 11)
-#define MCHP_PCR_SLP_EN3_HTMR0		(1 << 10)
-#define MCHP_PCR_SLP_EN3_GPSPI0		(1 << 9)
+#define MCHP_PCR_SLP_EN3_PWM9		BIT(31)
+#define MCHP_PCR_SLP_EN3_CCT0		BIT(30)
+#define MCHP_PCR_SLP_EN3_HTMR1		BIT(29)
+#define MCHP_PCR_SLP_EN3_AESHASH	BIT(28)
+#define MCHP_PCR_SLP_EN3_RNG		BIT(27)
+#define MCHP_PCR_SLP_EN3_PKE		BIT(26)
+#define MCHP_PCR_SLP_EN3_LED3		BIT(25)
+#define MCHP_PCR_SLP_EN3_BTMR32_1	BIT(24)
+#define MCHP_PCR_SLP_EN3_BTMR32_0	BIT(23)
+#define MCHP_PCR_SLP_EN3_BTMR16_3	BIT(22)
+#define MCHP_PCR_SLP_EN3_BTMR16_2	BIT(21)
+#define MCHP_PCR_SLP_EN3_GPSPI1		BIT(20)
+#define MCHP_PCR_SLP_EN3_BCM0		BIT(19)
+#define MCHP_PCR_SLP_EN3_LED2		BIT(18)
+#define MCHP_PCR_SLP_EN3_LED1		BIT(17)
+#define MCHP_PCR_SLP_EN3_LED0		BIT(16)
+#define MCHP_PCR_SLP_EN3_I2C3		BIT(15)
+#define MCHP_PCR_SLP_EN3_I2C2		BIT(14)
+#define MCHP_PCR_SLP_EN3_I2C1		BIT(13)
+#define MCHP_PCR_SLP_EN3_RPMPWM0	BIT(12)
+#define MCHP_PCR_SLP_EN3_KEYSCAN	BIT(11)
+#define MCHP_PCR_SLP_EN3_HTMR0		BIT(10)
+#define MCHP_PCR_SLP_EN3_GPSPI0		BIT(9)
 /* bit[8] reserved */
-#define MCHP_PCR_SLP_EN3_PS2_2		(1 << 7)
-#define MCHP_PCR_SLP_EN3_PS2_1		(1 << 6)
-#define MCHP_PCR_SLP_EN3_PS2_0		(1 << 5)
+#define MCHP_PCR_SLP_EN3_PS2_2		BIT(7)
+#define MCHP_PCR_SLP_EN3_PS2_1		BIT(6)
+#define MCHP_PCR_SLP_EN3_PS2_0		BIT(5)
 /* bit[4] reserved */
-#define MCHP_PCR_SLP_EN3_ADC		(1 << 3)
+#define MCHP_PCR_SLP_EN3_ADC		BIT(3)
 /* bits[2:0] reserved */
 /* all sleep enable 3 bits */
 #define MCHP_PCR_SLP_EN3_SLEEP		0xfffffeed
@@ -281,23 +281,23 @@
 #define MCHP_PCR_PWM10		((4 << 8) + 0)
 
 /* Command all blocks to sleep */
-#define MCHP_PCR_SLP_EN4_FJCL		(1 << 15)
-#define MCHP_PCR_SLP_EN4_PSPI		(1 << 14)
-#define MCHP_PCR_SLP_EN4_PROCHOT	(1 << 13)
-#define MCHP_PCR_SLP_EN4_RCID2		(1 << 12)
-#define MCHP_PCR_SLP_EN4_RCID1		(1 << 11)
-#define MCHP_PCR_SLP_EN4_RCID0		(1 << 10)
-#define MCHP_PCR_SLP_EN4_BCM1		(1 << 9)
-#define MCHP_PCR_SLP_EN4_QMSPI		(1 << 8)
-#define MCHP_PCR_SLP_EN4_RPMPWM1	(1 << 7)
-#define MCHP_PCR_SLP_EN4_RTMR		(1 << 6)
-#define MCHP_PCR_SLP_EN4_CNT16_3	(1 << 5)
-#define MCHP_PCR_SLP_EN4_CNT16_2	(1 << 4)
-#define MCHP_PCR_SLP_EN4_CNT16_1	(1 << 3)
-#define MCHP_PCR_SLP_EN4_CNT16_0	(1 << 2)
+#define MCHP_PCR_SLP_EN4_FJCL		BIT(15)
+#define MCHP_PCR_SLP_EN4_PSPI		BIT(14)
+#define MCHP_PCR_SLP_EN4_PROCHOT	BIT(13)
+#define MCHP_PCR_SLP_EN4_RCID2		BIT(12)
+#define MCHP_PCR_SLP_EN4_RCID1		BIT(11)
+#define MCHP_PCR_SLP_EN4_RCID0		BIT(10)
+#define MCHP_PCR_SLP_EN4_BCM1		BIT(9)
+#define MCHP_PCR_SLP_EN4_QMSPI		BIT(8)
+#define MCHP_PCR_SLP_EN4_RPMPWM1	BIT(7)
+#define MCHP_PCR_SLP_EN4_RTMR		BIT(6)
+#define MCHP_PCR_SLP_EN4_CNT16_3	BIT(5)
+#define MCHP_PCR_SLP_EN4_CNT16_2	BIT(4)
+#define MCHP_PCR_SLP_EN4_CNT16_1	BIT(3)
+#define MCHP_PCR_SLP_EN4_CNT16_0	BIT(2)
 #define MCHP_PCR_SLP_EN4_PWM_ALL	(3 << 0)
-#define MCHP_PCR_SLP_EN4_PWM11		(1 << 1)
-#define MCHP_PCR_SLP_EN4_PWM10		(1 << 0)
+#define MCHP_PCR_SLP_EN4_PWM11		BIT(1)
+#define MCHP_PCR_SLP_EN4_PWM10		BIT(0)
 /* all sleep enable 4 bits */
 #define MCHP_PCR_SLP_EN4_SLEEP		0x0000ffff
 
@@ -314,17 +314,17 @@
 /* Bit definitions for MCHP_PCR_SLP_EN2/CLK_REQ2/RST_EN2 */
 
 /* Bit definitions for MCHP_PCR_SLP_EN3/CLK_REQ3/RST_EN3 */
-#define MCHP_PCR_SLP_EN1_PKE		(1 << 26)
-#define MCHP_PCR_SLP_EN1_NDRNG		(1 << 27)
-#define MCHP_PCR_SLP_EN1_AES_SHA	(1 << 28)
+#define MCHP_PCR_SLP_EN1_PKE		BIT(26)
+#define MCHP_PCR_SLP_EN1_NDRNG		BIT(27)
+#define MCHP_PCR_SLP_EN1_AES_SHA	BIT(28)
 #define MCHP_PCR_SLP_EN1_ALL_CRYPTO	(0x07 << 26)
 
 /* Bit definitions for MCHP_PCR_SLP_EN4/CLK_REQ4/RST_EN4 */
 
 
 /* Bit defines for MCHP_PCR_PWR_RST_STS */
-#define MCHP_PWR_RST_STS_VTR		(1 << 6)
-#define MCHP_PWR_RST_STS_VBAT		(1 << 5)
+#define MCHP_PWR_RST_STS_VTR		BIT(6)
+#define MCHP_PWR_RST_STS_VBAT		BIT(5)
 
 /* Bit defines for MCHP_PCR_PWR_RST_CTL */
 #define MCHP_PCR_PWR_HOST_RST_SEL_BITPOS	8
@@ -333,7 +333,7 @@
 
 
 /* Bit defines for MCHP_PCR_SYS_RST */
-#define MCHP_PCR_SYS_SOFT_RESET  (1 << 8)
+#define MCHP_PCR_SYS_SOFT_RESET  BIT(8)
 
 
 /* TFDP */
@@ -554,7 +554,7 @@
 #define MCHP_UART_GIRQ_BIT(x)	(1ul << (x))
 
 /* Bit defines for MCHP_UARTx_LSR */
-#define MCHP_LSR_TX_EMPTY     (1 << 5)
+#define MCHP_LSR_TX_EMPTY     BIT(5)
 
 
 /* GPIO */
@@ -580,7 +580,7 @@
  * Example: GPIO043, Control 1 register address = 0x4008108c
  * port/bank = 0x23 >> 5 = 1
  * id        = 0x23 & 0x1F = 0x03
- * Control 1 Address = 0x40081000 + (((1 << 5) + 0x03) << 2) = 0x4008108c
+ * Control 1 Address = 0x40081000 + ((BIT(5) + 0x03) << 2) = 0x4008108c
  *
  * Example: GPIO235, Control 1 register address = 0x40081274
  * port/bank = 0x9d >> 5   = 4
@@ -641,7 +641,7 @@
 #define MCHP_GPIO_CTRL_FUNC_1		(1 << 12)
 #define MCHP_GPIO_CTRL_FUNC_2		(2 << 12)
 #define MCHP_GPIO_CTRL_FUNC_3		(3 << 12)
-#define MCHP_GPIO_CTRL_OUT_LVL		(1 << 16)
+#define MCHP_GPIO_CTRL_OUT_LVL		BIT(16)
 
 /* GPIO Parallel Input and Output registers.
  * gpio_bank in [0, 5]
@@ -705,11 +705,11 @@
 #define MCHP_VBAT_VWIRE_BACKUP       30
 
 /* Bit definition for MCHP_VBAT_STS */
-#define MCHP_VBAT_STS_SOFTRESET		(1 << 2)
-#define MCHP_VBAT_STS_RESETI		(1 << 4)
-#define MCHP_VBAT_STS_WDT	        (1 << 5)
-#define MCHP_VBAT_STS_SYSRESETREQ	(1 << 6)
-#define MCHP_VBAT_STS_VBAT_RST		(1 << 7)
+#define MCHP_VBAT_STS_SOFTRESET		BIT(2)
+#define MCHP_VBAT_STS_RESETI		BIT(4)
+#define MCHP_VBAT_STS_WDT	        BIT(5)
+#define MCHP_VBAT_STS_SYSRESETREQ	BIT(6)
+#define MCHP_VBAT_STS_VBAT_RST		BIT(7)
 #define MCHP_VBAT_STS_ANY_RST		(0xF4u)
 
 /* Bit definitions for MCHP_VBAT_CE */
@@ -1326,9 +1326,9 @@ enum MCHP_i2c_port {
 	((MCHP_QMSPI_C_NUM_UNITS_MASK0) << 17)
 
 /* Bits in MCHP_QMSPI0_EXE */
-#define MCHP_QMSPI_EXE_START		(1 << 0)
-#define MCHP_QMSPI_EXE_STOP		(1 << 1)
-#define MCHP_QMSPI_EXE_CLR_FIFOS	(1 << 2)
+#define MCHP_QMSPI_EXE_START		BIT(0)
+#define MCHP_QMSPI_EXE_STOP		BIT(1)
+#define MCHP_QMSPI_EXE_CLR_FIFOS	BIT(2)
 
 /* MCHP QMSPI FIFO Sizes */
 #define MCHP_QMSPI_TX_FIFO_LEN	8
@@ -1982,30 +1982,30 @@ enum dma_channel {
 
 
 /* Bits for DMA Main Control */
-#define MCHP_DMA_MAIN_CTRL_ACT	(1 << 0)
-#define MCHP_DMA_MAIN_CTRL_SRST	(1 << 1)
+#define MCHP_DMA_MAIN_CTRL_ACT	BIT(0)
+#define MCHP_DMA_MAIN_CTRL_SRST	BIT(1)
 
 /* Bits for DMA channel regs */
-#define MCHP_DMA_ACT_EN		(1 << 0)
+#define MCHP_DMA_ACT_EN		BIT(0)
 /* DMA Channel Control */
-#define MCHP_DMA_ABORT		(1 << 25)
-#define MCHP_DMA_SW_GO		(1 << 24)
+#define MCHP_DMA_ABORT		BIT(25)
+#define MCHP_DMA_SW_GO		BIT(24)
 #define MCHP_DMA_XFER_SIZE_MASK	(7ul << 20)
 #define MCHP_DMA_XFER_SIZE(x)	((x) << 20)
-#define MCHP_DMA_DIS_HW_FLOW	(1 << 19)
-#define MCHP_DMA_INC_DEV	(1 << 17)
-#define MCHP_DMA_INC_MEM	(1 << 16)
+#define MCHP_DMA_DIS_HW_FLOW	BIT(19)
+#define MCHP_DMA_INC_DEV	BIT(17)
+#define MCHP_DMA_INC_MEM	BIT(16)
 #define MCHP_DMA_DEV(x)		((x) << 9)
 #define MCHP_DMA_DEV_MASK0	(0x7f)
 #define MCHP_DMA_DEV_MASK	(0x7f << 9)
-#define MCHP_DMA_TO_DEV		(1 << 8)
-#define MCHP_DMA_DONE		(1 << 2)
-#define MCHP_DMA_RUN		(1 << 0)
+#define MCHP_DMA_TO_DEV		BIT(8)
+#define MCHP_DMA_DONE		BIT(2)
+#define MCHP_DMA_RUN		BIT(0)
 /* DMA Channel Status */
-#define MCHP_DMA_STS_ALU_DONE	(1 << 3)
-#define MCHP_DMA_STS_DONE	(1 << 2)
-#define MCHP_DMA_STS_HWFL_ERR	(1 << 1)
-#define MCHP_DMA_STS_BUS_ERR	(1 << 0)
+#define MCHP_DMA_STS_ALU_DONE	BIT(3)
+#define MCHP_DMA_STS_DONE	BIT(2)
+#define MCHP_DMA_STS_HWFL_ERR	BIT(1)
+#define MCHP_DMA_STS_BUS_ERR	BIT(0)
 
 /*
  * Peripheral device DMA Device ID's for bits [15:9]

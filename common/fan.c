@@ -464,8 +464,8 @@ struct pwm_fan_state {
 };
 
 /* For struct pwm_fan_state.flag */
-#define FAN_STATE_FLAG_ENABLED	(1 << 0)
-#define FAN_STATE_FLAG_THERMAL	(1 << 1)
+#define FAN_STATE_FLAG_ENABLED	BIT(0)
+#define FAN_STATE_FLAG_THERMAL	BIT(1)
 
 static void pwm_fan_init(void)
 {

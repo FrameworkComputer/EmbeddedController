@@ -47,8 +47,8 @@ void generate_ite_sync(void)
 	 * 1 to be able to generate two necessary waveforms.
 	 */
 	both_zero = 0;
-	one_zero = 1 << 13;
-	zero_one = 1 << 12;
+	one_zero = BIT(13);
+	zero_one = BIT(12);
 	both_one = one_zero | zero_one;
 
 	/* Address of the mask byte register to use to set both pins. */

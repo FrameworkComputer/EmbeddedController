@@ -62,11 +62,11 @@ struct clock_gate_ctrl {
 static void clock_module_disable(void)
 {
 	/* bit0: FSPI interface tri-state */
-	IT83XX_SMFI_FLHCTRL3R |= (1 << 0);
+	IT83XX_SMFI_FLHCTRL3R |= BIT(0);
 	/* bit7: USB pad power-on disable */
-	IT83XX_GCTRL_PMER2 &= ~(1 << 7);
+	IT83XX_GCTRL_PMER2 &= ~BIT(7);
 	/* bit7: USB debug disable */
-	IT83XX_GCTRL_MCCR &= ~(1 << 7);
+	IT83XX_GCTRL_MCCR &= ~BIT(7);
 	clock_disable_peripheral((CGC_OFFSET_EGPC | CGC_OFFSET_CIR), 0, 0);
 	clock_disable_peripheral((CGC_OFFSET_SMBA | CGC_OFFSET_SMBB |
 		CGC_OFFSET_SMBC | CGC_OFFSET_SMBD | CGC_OFFSET_SMBE |
@@ -146,7 +146,7 @@ void __ram_code clock_ec_pll_ctrl(enum ec_pll_ctrl mode)
 
 void __ram_code clock_pll_changed(void)
 {
-	IT83XX_GCTRL_SSCR &= ~(1 << 0);
+	IT83XX_GCTRL_SSCR &= ~BIT(0);
 	/*
 	 * Update PLL settings.
 	 * Writing data to this register doesn't change the
@@ -199,7 +199,7 @@ static void clock_set_pll(enum pll_freq_idx idx)
 		 * We have to set chip select pin as input mode in order to
 		 * change PLL.
 		 */
-		IT83XX_GPIO_GPCRM5 = (IT83XX_GPIO_GPCRM5 & ~0xc0) | (1 << 7);
+		IT83XX_GPIO_GPCRM5 = (IT83XX_GPIO_GPCRM5 & ~0xc0) | BIT(7);
 #ifdef IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED
 		/*
 		 * On DX version, we have to disable eSPI pad before changing
@@ -281,10 +281,10 @@ void clock_init(void)
 	clock_module_disable();
 
 #ifdef CONFIG_HOSTCMD_X86
-	IT83XX_WUC_WUESR4 = (1 << 2);
+	IT83XX_WUC_WUESR4 = BIT(2);
 	task_clear_pending_irq(IT83XX_IRQ_WKINTAD);
 	/* bit2, wake-up enable for LPC access */
-	IT83XX_WUC_WUENR4 |= (1 << 2);
+	IT83XX_WUC_WUENR4 |= BIT(2);
 #endif
 }
 
@@ -349,7 +349,7 @@ void clock_refresh_console_in_use(void)
 static void clock_event_timer_clock_change(enum ext_timer_clock_source clock,
 					uint32_t count)
 {
-	IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) &= ~(1 << 0);
+	IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) &= ~BIT(0);
 	IT83XX_ETWD_ETXPSR(EVENT_EXT_TIMER) = clock;
 	IT83XX_ETWD_ETXCNTLR(EVENT_EXT_TIMER) = count;
 	IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) |= 0x3;
@@ -370,7 +370,7 @@ static void clock_htimer_enable(void)
 
 static int clock_allow_low_power_idle(void)
 {
-	if (!(IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) & (1 << 0)))
+	if (!(IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) & BIT(0)))
 		return 0;
 
 	if (*et_ctrl_regs[EVENT_EXT_TIMER].isr &
@@ -412,7 +412,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 		chip_clear_pending_irq(i);
 	}
 	/* bit5: watchdog is disabled. */
-	IT83XX_ETWD_ETWCTRL |= (1 << 5);
+	IT83XX_ETWD_ETWCTRL |= BIT(5);
 	/* Setup GPIOs for hibernate */
 	if (board_hibernate_late)
 		board_hibernate_late();
@@ -501,7 +501,7 @@ defined(CONFIG_HOSTCMD_ESPI)
 #ifdef CONFIG_HOSTCMD_X86
 		/* disable lpc access wui */
 		task_disable_irq(IT83XX_IRQ_WKINTAD);
-		IT83XX_WUC_WUESR4 = (1 << 2);
+		IT83XX_WUC_WUESR4 = BIT(2);
 		task_clear_pending_irq(IT83XX_IRQ_WKINTAD);
 #endif
 		/* disable uart wui */
@@ -534,7 +534,7 @@ void __idle(void)
 		/* Check if the EC can enter deep doze mode or not */
 		if (DEEP_SLEEP_ALLOWED && clock_allow_low_power_idle()) {
 			/* reset low power mode hw timer */
-			IT83XX_ETWD_ETXCTRL(LOW_POWER_EXT_TIMER) |= (1 << 1);
+			IT83XX_ETWD_ETXCTRL(LOW_POWER_EXT_TIMER) |= BIT(1);
 			sleep_mode_t0 = get_time();
 #ifdef CONFIG_HOSTCMD_X86
 			/* enable lpc access wui */

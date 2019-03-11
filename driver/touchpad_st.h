@@ -33,10 +33,10 @@
 /* Max number of bytes that can be written in I2C to the DMA */
 #define ST_TP_DMA_CHUNK_SIZE		32
 
-#define ST_HOST_BUFFER_DATA_VALID	(1 << 0)
-#define ST_HOST_BUFFER_MT_READY		(1 << 3)
-#define ST_HOST_BUFFER_SF_READY		(1 << 4)
-#define ST_HOST_BUFFER_SS_READY		(1 << 5)
+#define ST_HOST_BUFFER_DATA_VALID	BIT(0)
+#define ST_HOST_BUFFER_MT_READY		BIT(3)
+#define ST_HOST_BUFFER_SF_READY		BIT(4)
+#define ST_HOST_BUFFER_SS_READY		BIT(5)
 
 #define ST_TP_SCAN_MODE_ACTIVE		0x00
 #define ST_TP_SCAN_MODE_LOW_POWER	0x01
@@ -171,13 +171,13 @@ struct st_tp_system_info_t {
 				 ST_TP_SYSTEM_INFO_PART_1_RESERVED)
 
 struct st_tp_host_buffer_header_t {
-#define ST_TP_BUFFER_HEADER_DATA_VALID		(1 << 0)
-#define ST_TP_BUFFER_HEADER_EVT_FIFO_NOT_EMPTY	(1 << 1)
-#define ST_TP_BUFFER_HEADER_SYS_FAULT		(1 << 2)
-#define ST_TP_BUFFER_HEADER_HEAT_MAP_MT_RDY	(1 << 3)
-#define ST_TP_BUFFER_HEADER_HEAT_MAP_SF_RDY	(1 << 4)
-#define ST_TP_BUFFER_HEADER_HEAT_MAP_SS_RDY	(1 << 5)
-#define ST_TP_BUFFER_HEADER_DOMESWITCH_LVL	(1 << 6)
+#define ST_TP_BUFFER_HEADER_DATA_VALID		BIT(0)
+#define ST_TP_BUFFER_HEADER_EVT_FIFO_NOT_EMPTY	BIT(1)
+#define ST_TP_BUFFER_HEADER_SYS_FAULT		BIT(2)
+#define ST_TP_BUFFER_HEADER_HEAT_MAP_MT_RDY	BIT(3)
+#define ST_TP_BUFFER_HEADER_HEAT_MAP_SF_RDY	BIT(4)
+#define ST_TP_BUFFER_HEADER_HEAT_MAP_SS_RDY	BIT(5)
+#define ST_TP_BUFFER_HEADER_DOMESWITCH_LVL	BIT(6)
 	uint8_t flags;
 	uint8_t reserved[3];
 	uint8_t heatmap_miss_count;

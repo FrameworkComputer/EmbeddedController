@@ -131,8 +131,8 @@ extern struct dwc_usb usb_ctl;
 #define GR_USB_GNPTXFSIZ              GR_USB_REG(GC_USB_GNPTXFSIZ_OFFSET)
 /*#define GR_USB_GGPIO                  GR_USB_REG(GC_USB_GGPIO_OFFSET)*/
 #define GR_USB_GCCFG                  GR_USB_REG(GC_USB_GCCFG_OFFSET)
-#define  GCCFG_VBDEN            (1 << 21)
-#define  GCCFG_PWRDWN           (1 << 16)
+#define  GCCFG_VBDEN            BIT(21)
+#define  GCCFG_PWRDWN           BIT(16)
 #define GR_USB_PCGCCTL                GR_USB_REG(GC_USB_PCGCCTL_OFFSET)
 
 #define GR_USB_GSNPSID                GR_USB_REG(GC_USB_GSNPSID_OFFSET)
@@ -156,9 +156,9 @@ extern struct dwc_usb usb_ctl;
 #define GR_USB_DTHRCTL                GR_USB_REG(GC_USB_DTHRCTL_OFFSET)
 #define  DTHRCTL_TXTHRLEN_6           (0x40 << 2)
 #define  DTHRCTL_RXTHRLEN_6           (0x40 << 17)
-#define  DTHRCTL_RXTHREN              (1 << 16)
-#define  DTHRCTL_ISOTHREN             (1 << 1)
-#define  DTHRCTL_NONISOTHREN          (1 << 0)
+#define  DTHRCTL_RXTHREN              BIT(16)
+#define  DTHRCTL_ISOTHREN             BIT(1)
+#define  DTHRCTL_NONISOTHREN          BIT(0)
 #define GR_USB_DIEPEMPMSK             GR_USB_REG(GC_USB_DIEPEMPMSK_OFFSET)
 
 #define GR_USB_EPIREG(off, n)         GR_USB_REG(0x900 + (n) * 0x20 + (off))
@@ -176,7 +176,7 @@ extern struct dwc_usb usb_ctl;
 #define GR_USB_DOEPDMAB(n)            GR_USB_EPOREG(0x1c, n)
 
 #define GOTGCTL_BVALOEN               (1 << GC_USB_GOTGCTL_BVALIDOVEN_LSB)
-#define GOTGCTL_BVALOVAL              (1 << 7)
+#define GOTGCTL_BVALOVAL              BIT(7)
 
 /* Bit 5 */
 #define GAHBCFG_DMA_EN                (1 << GC_USB_GAHBCFG_DMAEN_LSB)
@@ -187,7 +187,7 @@ extern struct dwc_usb usb_ctl;
 /* Bit 7 */
 #define GAHBCFG_NP_TXF_EMP_LVL        (1 <<  GC_USB_GAHBCFG_NPTXFEMPLVL_LSB)
 #define GAHBCFG_TXFELVL               GAHBCFG_NP_TXF_EMP_LVL
-#define GAHBCFG_PTXFELVL              (1 << 8)
+#define GAHBCFG_PTXFELVL              BIT(8)
 
 #define GUSBCFG_TOUTCAL(n)            (((n) << GC_USB_GUSBCFG_TOUTCAL_LSB) \
 				       & GC_USB_GUSBCFG_TOUTCAL_MASK)
@@ -195,19 +195,19 @@ extern struct dwc_usb usb_ctl;
 				       & GC_USB_GUSBCFG_USBTRDTIM_MASK)
 /* Force device mode */
 #define GUSBCFG_FDMOD                 (1 << GC_USB_GUSBCFG_FDMOD_LSB)
-#define GUSBCFG_PHYSEL                (1 << 6)
-#define GUSBCFG_SRPCAP                (1 << 8)
-#define GUSBCFG_HNPCAP                (1 << 9)
-#define GUSBCFG_ULPIFSLS              (1 << 17)
-#define GUSBCFG_ULPIAR                (1 << 18)
-#define GUSBCFG_ULPICSM               (1 << 19)
-#define GUSBCFG_ULPIEVBUSD            (1 << 20)
-#define GUSBCFG_ULPIEVBUSI            (1 << 21)
-#define GUSBCFG_TSDPS                 (1 << 22)
-#define GUSBCFG_PCCI                  (1 << 23)
-#define GUSBCFG_PTCI                  (1 << 24)
-#define GUSBCFG_ULPIIPD               (1 << 25)
-#define GUSBCFG_TSDPS                 (1 << 22)
+#define GUSBCFG_PHYSEL                BIT(6)
+#define GUSBCFG_SRPCAP                BIT(8)
+#define GUSBCFG_HNPCAP                BIT(9)
+#define GUSBCFG_ULPIFSLS              BIT(17)
+#define GUSBCFG_ULPIAR                BIT(18)
+#define GUSBCFG_ULPICSM               BIT(19)
+#define GUSBCFG_ULPIEVBUSD            BIT(20)
+#define GUSBCFG_ULPIEVBUSI            BIT(21)
+#define GUSBCFG_TSDPS                 BIT(22)
+#define GUSBCFG_PCCI                  BIT(23)
+#define GUSBCFG_PTCI                  BIT(24)
+#define GUSBCFG_ULPIIPD               BIT(25)
+#define GUSBCFG_TSDPS                 BIT(22)
 
 
 #define GRSTCTL_CSFTRST               (1 << GC_USB_GRSTCTL_CSFTRST_LSB)
@@ -313,12 +313,12 @@ extern struct dwc_usb usb_ctl;
 #define DOEPDMA_BS_HOST_BSY           (3 << 30)
 #define DOEPDMA_BS_MASK               (3 << 30)
 #define DOEPDMA_RXSTS_MASK            (3 << 28)
-#define DOEPDMA_LAST                  (1 << 27)
-#define DOEPDMA_SP                    (1 << 26)
-#define DOEPDMA_IOC                   (1 << 25)
-#define DOEPDMA_SR                    (1 << 24)
-#define DOEPDMA_MTRF                  (1 << 23)
-#define DOEPDMA_NAK                   (1 << 16)
+#define DOEPDMA_LAST                  BIT(27)
+#define DOEPDMA_SP                    BIT(26)
+#define DOEPDMA_IOC                   BIT(25)
+#define DOEPDMA_SR                    BIT(24)
+#define DOEPDMA_MTRF                  BIT(23)
+#define DOEPDMA_NAK                   BIT(16)
 #define DOEPDMA_RXBYTES(n)            (((n) & 0xFFFF) << 0)
 #define DOEPDMA_RXBYTES_MASK          (0xFFFF << 0)
 
@@ -328,9 +328,9 @@ extern struct dwc_usb usb_ctl;
 #define DIEPDMA_BS_HOST_BSY           (3 << 30)
 #define DIEPDMA_BS_MASK               (3 << 30)
 #define DIEPDMA_TXSTS_MASK            (3 << 28)
-#define DIEPDMA_LAST                  (1 << 27)
-#define DIEPDMA_SP                    (1 << 26)
-#define DIEPDMA_IOC                   (1 << 25)
+#define DIEPDMA_LAST                  BIT(27)
+#define DIEPDMA_SP                    BIT(26)
+#define DIEPDMA_IOC                   BIT(25)
 #define DIEPDMA_TXBYTES(n)            (((n) & 0xFFFF) << 0)
 #define DIEPDMA_TXBYTES_MASK          (0xFFFF << 0)
 
@@ -942,31 +942,31 @@ extern struct dwc_usb usb_ctl;
 #define GC_USB_GUSBCFG_TERMSELDLPULSE_OFFSET     0xc
 
 #define GC_USB_GUSBCFG_PCCI_LSB                  23
-#define GC_USB_GUSBCFG_PCCI_MASK                 (1 << 23)
+#define GC_USB_GUSBCFG_PCCI_MASK                 BIT(23)
 #define GC_USB_GUSBCFG_PCCI_SIZE                 0x1
 #define GC_USB_GUSBCFG_PCCI_DEFAULT              0x0
 #define GC_USB_GUSBCFG_PCCI_OFFSET               0xc
 
 #define GC_USB_GUSBCFG_PTCI_LSB                  24
-#define GC_USB_GUSBCFG_PTCI_MASK                 (1 << 24)
+#define GC_USB_GUSBCFG_PTCI_MASK                 BIT(24)
 #define GC_USB_GUSBCFG_PTCI_SIZE                 0x1
 #define GC_USB_GUSBCFG_PTCI_DEFAULT              0x0
 #define GC_USB_GUSBCFG_PTCI_OFFSET               0xc
 
 #define GC_USB_GUSBCFG_ULPIIPD_LSB               25
-#define GC_USB_GUSBCFG_ULPIIPD_MASK              (1 << 25)
+#define GC_USB_GUSBCFG_ULPIIPD_MASK              BIT(25)
 #define GC_USB_GUSBCFG_ULPIIPD_SIZE              0x1
 #define GC_USB_GUSBCFG_ULPIIPD_DEFAULT           0x0
 #define GC_USB_GUSBCFG_ULPIIPD_OFFSET            0xc
 
 #define GC_USB_GUSBCFG_FHMOD_LSB                 29
-#define GC_USB_GUSBCFG_FHMOD_MASK                (1 << 29)
+#define GC_USB_GUSBCFG_FHMOD_MASK                BIT(29)
 #define GC_USB_GUSBCFG_FHMOD_SIZE                0x1
 #define GC_USB_GUSBCFG_FHMOD_DEFAULT             0x0
 #define GC_USB_GUSBCFG_FHMOD_OFFSET              0xc
 
 #define GC_USB_GUSBCFG_FDMOD_LSB                 30
-#define GC_USB_GUSBCFG_FDMOD_MASK                (1 << 30)
+#define GC_USB_GUSBCFG_FDMOD_MASK                BIT(30)
 #define GC_USB_GUSBCFG_FDMOD_SIZE                0x1
 #define GC_USB_GUSBCFG_FDMOD_DEFAULT             0x0
 #define GC_USB_GUSBCFG_FDMOD_OFFSET              0xc

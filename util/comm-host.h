@@ -27,10 +27,10 @@ extern void *ec_inbuf;
 
 /* Interfaces to allow for comm_init() */
 enum comm_interface {
-	COMM_DEV = (1 << 0),
-	COMM_LPC = (1 << 1),
-	COMM_I2C = (1 << 2),
-	COMM_SERVO = (1 << 3),
+	COMM_DEV = BIT(0),
+	COMM_LPC = BIT(1),
+	COMM_I2C = BIT(2),
+	COMM_SERVO = BIT(3),
 	COMM_ALL = -1
 };
 

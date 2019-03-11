@@ -68,10 +68,10 @@
 #define IT8300_GPCR_E5		0x37
 #define IT8300_GPCR_E6		0x38
 
-#define IT8300_GPCR_GPI_MODE	(1 << 7)
-#define IT8300_GPCR_GP0_MODE	(1 << 6)
-#define IT8300_GPCR_PULL_UP_EN	(1 << 2)
-#define IT8300_GPCR_PULL_DN_EN	(1 << 1)
+#define IT8300_GPCR_GPI_MODE	BIT(7)
+#define IT8300_GPCR_GP0_MODE	BIT(6)
+#define IT8300_GPCR_PULL_UP_EN	BIT(2)
+#define IT8300_GPCR_PULL_DN_EN	BIT(1)
 
 /* EXGPIO Clear Alert */
 #define IT8300_ECA		0x30
@@ -94,13 +94,13 @@
 #define IT8300_OODER_E		0x3D
 
 /* IT83200 Port GPIOs */
-#define IT8300_GPX_0		(1 << 0)
-#define IT8300_GPX_1		(1 << 1)
-#define IT8300_GPX_2		(1 << 2)
-#define IT8300_GPX_3		(1 << 3)
-#define IT8300_GPX_4		(1 << 4)
-#define IT8300_GPX_5		(1 << 5)
-#define IT8300_GPX_6		(1 << 6)
-#define IT8300_GPX_7		(1 << 7)
+#define IT8300_GPX_0		BIT(0)
+#define IT8300_GPX_1		BIT(1)
+#define IT8300_GPX_2		BIT(2)
+#define IT8300_GPX_3		BIT(3)
+#define IT8300_GPX_4		BIT(4)
+#define IT8300_GPX_5		BIT(5)
+#define IT8300_GPX_6		BIT(6)
+#define IT8300_GPX_7		BIT(7)
 
 #endif /* __CROS_EC_IOEXPANDER_IT8300_H */

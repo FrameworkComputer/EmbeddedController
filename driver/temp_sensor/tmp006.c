@@ -30,10 +30,10 @@
 #define ALGORITHM_PARAMS 12
 
 /* Flags for tdata->fail */
-#define FAIL_INIT        (1 << 0)  /* Just initialized */
-#define FAIL_POWER       (1 << 1)  /* Sensor not powered */
-#define FAIL_I2C         (1 << 2)  /* I2C communication error */
-#define FAIL_NOT_READY   (1 << 3)  /* Data not ready */
+#define FAIL_INIT        BIT(0)  /* Just initialized */
+#define FAIL_POWER       BIT(1)  /* Sensor not powered */
+#define FAIL_I2C         BIT(2)  /* I2C communication error */
+#define FAIL_NOT_READY   BIT(3)  /* Data not ready */
 
 /* State and conversion factors to track for each sensor */
 struct tmp006_data_t {

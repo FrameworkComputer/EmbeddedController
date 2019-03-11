@@ -59,10 +59,10 @@ static void adc_configure(int ain_id)
 	adc_set_channel(0, ain_id);
 
 	/* Disable DMA */
-	STM32_ADC_CR2 &= ~(1 << 8);
+	STM32_ADC_CR2 &= ~BIT(8);
 
 	/* Disable scan mode */
-	STM32_ADC_CR1 &= ~(1 << 8);
+	STM32_ADC_CR1 &= ~BIT(8);
 }
 
 static void __attribute__((unused)) adc_configure_all(void)
@@ -75,25 +75,25 @@ static void __attribute__((unused)) adc_configure_all(void)
 		adc_set_channel(i, adc_channels[i].channel);
 
 	/* Enable DMA */
-	STM32_ADC_CR2 |= (1 << 8);
+	STM32_ADC_CR2 |= BIT(8);
 
 	/* Enable scan mode */
-	STM32_ADC_CR1 |= (1 << 8);
+	STM32_ADC_CR1 |= BIT(8);
 }
 
 static inline int adc_powered(void)
 {
-	return STM32_ADC_CR2 & (1 << 0);
+	return STM32_ADC_CR2 & BIT(0);
 }
 
 static inline int adc_conversion_ended(void)
 {
-	return STM32_ADC_SR & (1 << 1);
+	return STM32_ADC_SR & BIT(1);
 }
 
 static int adc_watchdog_enabled(void)
 {
-	return STM32_ADC_CR1 & (1 << 23);
+	return STM32_ADC_CR1 & BIT(23);
 }
 
 static int adc_enable_watchdog_no_lock(void)
@@ -111,16 +111,16 @@ static int adc_enable_watchdog_no_lock(void)
 	STM32_ADC_SR &= ~0x1;
 
 	/* AWDSGL=1, SCAN=1, AWDIE=1, AWDEN=1 */
-	STM32_ADC_CR1 |= (1 << 9) | (1 << 8) | (1 << 6) | (1 << 23);
+	STM32_ADC_CR1 |= BIT(9) | BIT(8) | BIT(6) | BIT(23);
 
 	/* Disable DMA */
-	STM32_ADC_CR2 &= ~(1 << 8);
+	STM32_ADC_CR2 &= ~BIT(8);
 
 	/* CONT=1 */
-	STM32_ADC_CR2 |= (1 << 1);
+	STM32_ADC_CR2 |= BIT(1);
 
 	/* Start conversion */
-	STM32_ADC_CR2 |= (1 << 0);
+	STM32_ADC_CR2 |= BIT(0);
 
 	return EC_SUCCESS;
 }
@@ -152,10 +152,10 @@ static int adc_disable_watchdog_no_lock(void)
 		return EC_ERROR_UNKNOWN;
 
 	/* AWDEN=0, AWDIE=0 */
-	STM32_ADC_CR1 &= ~(1 << 23) & ~(1 << 6);
+	STM32_ADC_CR1 &= ~BIT(23) & ~BIT(6);
 
 	/* CONT=0 */
-	STM32_ADC_CR2 &= ~(1 << 1);
+	STM32_ADC_CR2 &= ~BIT(1);
 
 	return EC_SUCCESS;
 }
@@ -193,7 +193,7 @@ int adc_read_channel(enum adc_channel ch)
 	adc_configure(adc->channel);
 
 	/* Clear EOC bit */
-	STM32_ADC_SR &= ~(1 << 1);
+	STM32_ADC_SR &= ~BIT(1);
 
 	/* Start conversion (Note: For now only confirmed on F4) */
 #if defined(CHIP_FAMILY_STM32F4)

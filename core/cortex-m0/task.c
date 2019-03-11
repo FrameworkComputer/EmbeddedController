@@ -371,7 +371,7 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 			 * Trigger the scheduler when there's
 			 * no other irqs happening.
 			 */
-			CPU_SCB_ICSR = (1 << 28);
+			CPU_SCB_ICSR = BIT(28);
 		}
 	} else {
 		if (wait) {

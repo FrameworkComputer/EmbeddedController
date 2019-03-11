@@ -63,45 +63,45 @@
  * MT6370_REG_CLK_CTRL2				0x87
  */
 
-#define MT6370_REG_CLK_DIV_600K_EN		(1 << 7)
-#define MT6370_REG_CLK_BCLK2_EN			(1 << 6)
-#define MT6370_REG_CLK_BCLK2_TG_EN		(1 << 5)
-#define MT6370_REG_CLK_DIV_300K_EN		(1 << 3)
-#define MT6370_REG_CLK_CK_300K_EN		(1 << 2)
-#define MT6370_REG_CLK_BCLK_EN			(1 << 1)
-#define MT6370_REG_CLK_BCLK_TH_EN		(1 << 0)
+#define MT6370_REG_CLK_DIV_600K_EN		BIT(7)
+#define MT6370_REG_CLK_BCLK2_EN			BIT(6)
+#define MT6370_REG_CLK_BCLK2_TG_EN		BIT(5)
+#define MT6370_REG_CLK_DIV_300K_EN		BIT(3)
+#define MT6370_REG_CLK_CK_300K_EN		BIT(2)
+#define MT6370_REG_CLK_BCLK_EN			BIT(1)
+#define MT6370_REG_CLK_BCLK_TH_EN		BIT(0)
 
 /*
  * MT6370_REG_CLK_CTRL3				0x88
  */
 
-#define MT6370_REG_CLK_OSCMUX_RG_EN		(1 << 7)
-#define MT6370_REG_CLK_CK_24M_EN		(1 << 6)
-#define MT6370_REG_CLK_OSC_RG_EN		(1 << 5)
-#define MT6370_REG_CLK_DIV_2P4M_EN		(1 << 4)
-#define MT6370_REG_CLK_CK_2P4M_EN		(1 << 3)
-#define MT6370_REG_CLK_PCLK_EN			(1 << 2)
-#define MT6370_REG_CLK_PCLK_RG_EN		(1 << 1)
-#define MT6370_REG_CLK_PCLK_TG_EN		(1 << 0)
+#define MT6370_REG_CLK_OSCMUX_RG_EN		BIT(7)
+#define MT6370_REG_CLK_CK_24M_EN		BIT(6)
+#define MT6370_REG_CLK_OSC_RG_EN		BIT(5)
+#define MT6370_REG_CLK_DIV_2P4M_EN		BIT(4)
+#define MT6370_REG_CLK_CK_2P4M_EN		BIT(3)
+#define MT6370_REG_CLK_PCLK_EN			BIT(2)
+#define MT6370_REG_CLK_PCLK_RG_EN		BIT(1)
+#define MT6370_REG_CLK_PCLK_TG_EN		BIT(0)
 
 /*
  * MT6370_REG_RX_TX_DBG				0x8b
  */
 
-#define MT6370_REG_RX_TX_DBG_RX_BUSY		(1 << 7)
-#define MT6370_REG_RX_TX_DBG_TX_BUSY		(1 << 6)
+#define MT6370_REG_RX_TX_DBG_RX_BUSY		BIT(7)
+#define MT6370_REG_RX_TX_DBG_TX_BUSY		BIT(6)
 
 /*
  * MT6370_REG_BMC_CTRL				0x90
  */
 
-#define MT6370_REG_IDLE_EN			(1 << 6)
-#define MT6370_REG_DISCHARGE_EN			(1 << 5)
-#define MT6370_REG_BMCIO_LPRPRD			(1 << 4)
-#define MT6370_REG_BMCIO_LPEN			(1 << 3)
-#define MT6370_REG_BMCIO_BG_EN			(1 << 2)
-#define MT6370_REG_VBUS_DET_EN			(1 << 1)
-#define MT6370_REG_BMCIO_OSC_EN			(1 << 0)
+#define MT6370_REG_IDLE_EN			BIT(6)
+#define MT6370_REG_DISCHARGE_EN			BIT(5)
+#define MT6370_REG_BMCIO_LPRPRD			BIT(4)
+#define MT6370_REG_BMCIO_LPEN			BIT(3)
+#define MT6370_REG_BMCIO_BG_EN			BIT(2)
+#define MT6370_REG_VBUS_DET_EN			BIT(1)
+#define MT6370_REG_BMCIO_OSC_EN			BIT(0)
 #define MT6370_REG_BMC_CTRL_DEFAULT                                            \
 	(MT6370_REG_BMCIO_BG_EN | MT6370_REG_VBUS_DET_EN |                     \
 	 MT6370_REG_BMCIO_OSC_EN)
@@ -111,41 +111,41 @@
  */
 
 #define MT6370_MASK_DISCHARGE_LVL		0x03
-#define MT6370_REG_DISCHARGE_LVL		(1 << 0)
+#define MT6370_REG_DISCHARGE_LVL		BIT(0)
 
 /*
  * MT6370_REG_RT_STATUS				0x97
  */
 
-#define MT6370_REG_RA_DETACH			(1 << 5)
-#define MT6370_REG_VBUS_80			(1 << 1)
+#define MT6370_REG_RA_DETACH			BIT(5)
+#define MT6370_REG_VBUS_80			BIT(1)
 
 /*
  * MT6370_REG_RT_INT				0x98
  */
 
-#define MT6370_REG_INT_RA_DETACH		(1 << 5)
-#define MT6370_REG_INT_WATCHDOG			(1 << 2)
-#define MT6370_REG_INT_VBUS_80			(1 << 1)
-#define MT6370_REG_INT_WAKEUP			(1 << 0)
+#define MT6370_REG_INT_RA_DETACH		BIT(5)
+#define MT6370_REG_INT_WATCHDOG			BIT(2)
+#define MT6370_REG_INT_VBUS_80			BIT(1)
+#define MT6370_REG_INT_WAKEUP			BIT(0)
 
 /*
  * MT6370_REG_RT_MASK				0x99
  */
 
-#define MT6370_REG_M_RA_DETACH			(1 << 5)
-#define MT6370_REG_M_WATCHDOG			(1 << 2)
-#define MT6370_REG_M_VBUS_80			(1 << 1)
-#define MT6370_REG_M_WAKEUP			(1 << 0)
+#define MT6370_REG_M_RA_DETACH			BIT(5)
+#define MT6370_REG_M_WATCHDOG			BIT(2)
+#define MT6370_REG_M_VBUS_80			BIT(1)
+#define MT6370_REG_M_WAKEUP			BIT(0)
 
 /*
  * MT6370_REG_IDLE_CTRL				0x9B
  */
 
-#define MT6370_REG_CK_300K_SEL			(1 << 7)
-#define MT6370_REG_SHIPPING_OFF			(1 << 5)
-#define MT6370_REG_ENEXTMSG			(1 << 4)
-#define MT6370_REG_AUTOIDLE_EN			(1 << 3)
+#define MT6370_REG_CK_300K_SEL			BIT(7)
+#define MT6370_REG_SHIPPING_OFF			BIT(5)
+#define MT6370_REG_ENEXTMSG			BIT(4)
+#define MT6370_REG_AUTOIDLE_EN			BIT(3)
 
 /* timeout = (tout*2+1) * 6.4ms */
 #ifdef CONFIG_USB_PD_REV30
@@ -161,7 +161,7 @@
  * MT6370_REG_INTRST_CTRL			0x9C
  */
 
-#define MT6370_REG_INTRST_EN			(1 << 7)
+#define MT6370_REG_INTRST_EN			BIT(7)
 
 /* timeout = (tout+1) * 0.2sec */
 #define MT6370_REG_INTRST_SET(en, tout)		((en << 7) | (tout & 0x03))
@@ -170,7 +170,7 @@
  * MT6370_REG_WATCHDOG_CTRL			0x9D
  */
 
-#define MT6370_REG_WATCHDOG_EN			(1 << 7)
+#define MT6370_REG_WATCHDOG_EN			BIT(7)
 
 /* timeout = (tout+1) * 0.4sec */
 #define MT6370_REG_WATCHDOG_CTRL_SET(en, tout)	((en << 7) | (tout & 0x07))
@@ -179,7 +179,7 @@
  * MT6370_REG_I2CRST_CTRL			0x9E
  */
 
-#define MT6370_REG_I2CRST_EN			(1 << 7)
+#define MT6370_REG_I2CRST_EN			BIT(7)
 
 /* timeout = (tout+1) * 12.5ms */
 #define MT6370_REG_I2CRST_SET(en, tout)		((en << 7) | (tout & 0x0f))

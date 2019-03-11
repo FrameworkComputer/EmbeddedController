@@ -209,10 +209,10 @@ void uart_init(void)
 	 * bit3: uart1 belongs to the EC side.
 	 * This is necessary for enabling eSPI module.
 	 */
-	IT83XX_GCTRL_RSTDMMC |= (1 << 3);
+	IT83XX_GCTRL_RSTDMMC |= BIT(3);
 
 	/* reset uart before config it */
-	IT83XX_GCTRL_RSTC4 |= (1 << 1);
+	IT83XX_GCTRL_RSTC4 |= BIT(1);
 
 	/* Waiting for when we can use the GPIO module to set pin muxing */
 	gpio_config_module(MODULE_UART, 1);
@@ -229,9 +229,9 @@ void uart_init(void)
 
 #ifdef CONFIG_UART_HOST
 	/* bit2, reset UART2 */
-	IT83XX_GCTRL_RSTC4 |= (1 << 2);
+	IT83XX_GCTRL_RSTC4 |= BIT(2);
 	/* SIN1/SOUT1 of UART 2 is enabled. */
-	IT83XX_GPIO_GRC1 |= (1 << 2);
+	IT83XX_GPIO_GRC1 |= BIT(2);
 	/* Config UART 2 */
 	host_uart_config();
 #endif

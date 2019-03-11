@@ -28,10 +28,10 @@
 /* Command all blocks to sleep */
 #define  MEC1322_PCR_EC_SLP_EN_SLEEP	0xe0700ff7
 #define  MEC1322_PCR_EC_SLP_EN_PWM(n)	(1 << ((n) ? (19 + (n)) : 4))
-#define  MEC1322_PCR_EC_SLP_EN_PWM3	(1 << 22)
-#define  MEC1322_PCR_EC_SLP_EN_PWM2	(1 << 21)
-#define  MEC1322_PCR_EC_SLP_EN_PWM1	(1 << 20)
-#define  MEC1322_PCR_EC_SLP_EN_PWM0	(1 << 4)
+#define  MEC1322_PCR_EC_SLP_EN_PWM3	BIT(22)
+#define  MEC1322_PCR_EC_SLP_EN_PWM2	BIT(21)
+#define  MEC1322_PCR_EC_SLP_EN_PWM1	BIT(20)
+#define  MEC1322_PCR_EC_SLP_EN_PWM0	BIT(4)
 /* Allow all blocks to request clocks */
 #define  MEC1322_PCR_EC_SLP_EN_WAKE	(~0xe0700ff7)
 #define MEC1322_PCR_EC_CLK_REQ   REG32(MEC1322_PCR_BASE + 0xc)
@@ -59,8 +59,8 @@
 #define MEC1322_PCR_PWR_RST_CTL  REG32(MEC1322_PCR_BASE + 0x48)
 
 /* Bit defines for MEC1322_PCR_CHIP_PWR_RST */
-#define MEC1322_PWR_RST_STS_VCC1 (1 << 6)
-#define MEC1322_PWR_RST_STS_VBAT (1 << 5)
+#define MEC1322_PWR_RST_STS_VCC1 BIT(6)
+#define MEC1322_PWR_RST_STS_VBAT BIT(5)
 
 /* EC Subsystem */
 #define MEC1322_EC_BASE        0x4000fc00
@@ -106,7 +106,7 @@
 #define MEC1322_UART_SCR       REG8(MEC1322_UART_RUNTIME_BASE + 0x7)
 
 /* Bit defines for MEC1322_UART_LSR */
-#define MEC1322_LSR_TX_EMPTY     (1 << 5)
+#define MEC1322_LSR_TX_EMPTY     BIT(5)
 
 /* GPIO */
 #define MEC1322_GPIO_BASE      0x40081000
@@ -152,7 +152,7 @@ static inline uintptr_t gpio_port_base(int port_id)
 #define MEC1322_VBAT_RAM(x)    REG32(MEC1322_VBAT_BASE + 0x400 + 4 * (x))
 
 /* Bit definition for MEC1322_VBAT_STS */
-#define MEC1322_VBAT_STS_WDT	(1 << 5)
+#define MEC1322_VBAT_STS_WDT	BIT(5)
 
 /* Miscellaneous firmware control fields
  * scratch pad index cannot be more than 16 as
@@ -416,14 +416,14 @@ typedef volatile struct mec1322_dma_regs mec1322_dma_regs_t;
 #define MEC1322_DMA_REGS ((mec1322_dma_regs_t *)MEC1322_DMA_BASE)
 
 /* Bits for DMA channel regs */
-#define MEC1322_DMA_ACT_EN		(1 << 0)
+#define MEC1322_DMA_ACT_EN		BIT(0)
 #define MEC1322_DMA_XFER_SIZE(x)	((x) << 20)
-#define MEC1322_DMA_INC_DEV		(1 << 17)
-#define MEC1322_DMA_INC_MEM		(1 << 16)
+#define MEC1322_DMA_INC_DEV		BIT(17)
+#define MEC1322_DMA_INC_MEM		BIT(16)
 #define MEC1322_DMA_DEV(x)		((x) << 9)
-#define MEC1322_DMA_TO_DEV		(1 << 8)
-#define MEC1322_DMA_DONE		(1 << 2)
-#define MEC1322_DMA_RUN			(1 << 0)
+#define MEC1322_DMA_TO_DEV		BIT(8)
+#define MEC1322_DMA_DONE		BIT(2)
+#define MEC1322_DMA_RUN			BIT(0)
 
 
 /* IRQ Numbers */

@@ -70,7 +70,7 @@ static int accel_set_data_rate(const struct motion_sensor_t *s,
 			      const int rate,
 			      const int rnd)
 {
-	test_data_rate[s - motion_sensors] = rate | (rnd ? ROUND_UP_FLAG : 0);
+	test_data_rate[s - motion_sensors] = rate;
 	return EC_SUCCESS;
 }
 
@@ -186,7 +186,7 @@ static int test_lid_angle(void)
 	hook_notify(HOOK_CHIPSET_RESUME);
 	msleep(1000);
 	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S0);
-	TEST_ASSERT(accel_get_data_rate(lid) == (119000 | ROUND_UP_FLAG));
+	TEST_ASSERT(accel_get_data_rate(lid) == 119000);
 	TEST_ASSERT(motion_interval == TEST_LID_EC_RATE);
 
 	/*

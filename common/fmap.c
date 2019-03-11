@@ -51,9 +51,9 @@ struct fmap_header {
 	uint16_t    fmap_nareas;
 } __packed;
 
-#define FMAP_AREA_STATIC      (1 << 0)	/* can be checksummed */
-#define FMAP_AREA_COMPRESSED  (1 << 1)  /* may be compressed */
-#define FMAP_AREA_RO          (1 << 2)  /* writes may fail */
+#define FMAP_AREA_STATIC      BIT(0)	/* can be checksummed */
+#define FMAP_AREA_COMPRESSED  BIT(1)  /* may be compressed */
+#define FMAP_AREA_RO          BIT(2)  /* writes may fail */
 
 struct fmap_area_header {
 	uint32_t area_offset;

@@ -48,9 +48,9 @@
  * Use this register to see HPET timer are settled after a write.
  */
 #define HPET_CTRL_STATUS	REG32(ISH_HPET_BASE + 0x160)
-#define HPET_T1_CMP_SETTLING		(1 << 8)
-#define HPET_T1_CAP_SETTLING		(1 << 5)
-#define HPET_MAIN_COUNTER_SETTLING	(1 << 2)
+#define HPET_T1_CMP_SETTLING		BIT(8)
+#define HPET_T1_CAP_SETTLING		BIT(5)
+#define HPET_MAIN_COUNTER_SETTLING	BIT(2)
 #define HPET_T1_SETTLING		(HPET_T1_CAP_SETTLING | \
 					 HPET_T1_CMP_SETTLING)
 

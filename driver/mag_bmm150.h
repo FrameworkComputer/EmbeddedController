@@ -23,8 +23,8 @@
 
 #define BMM150_INT_STATUS        0x4a
 #define BMM150_PWR_CTRL          0x4b
-#define BMM150_SRST                  ((1 << 7) | (1 << 1))
-#define BMM150_PWR_ON                (1 << 0)
+#define BMM150_SRST                  (BIT(7) | BIT(1))
+#define BMM150_PWR_ON                BIT(0)
 
 #define BMM150_OP_CTRL           0x4c
 #define BMM150_OP_MODE_OFFSET    1

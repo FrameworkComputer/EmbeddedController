@@ -72,7 +72,7 @@ static inline void spi_enable_clock(int port)
  * EXTI line 22 is connected to the CMP2 output,
  * C0 uses CMP2, and C1 uses CMP1.
  */
-#define EXTI_COMP_MASK(p) ((p) ? (1<<21) : (1 << 22))
+#define EXTI_COMP_MASK(p) ((p) ? BIT(21) : BIT(22))
 
 #define IRQ_COMP STM32_IRQ_COMP
 /* triggers packet detection on comparator falling edge */
@@ -108,12 +108,12 @@ static inline void pd_tx_spi_reset(int port)
 {
 	if (port == 0) {
 		/* Reset SPI1 */
-		STM32_RCC_APB2RSTR |= (1 << 12);
-		STM32_RCC_APB2RSTR &= ~(1 << 12);
+		STM32_RCC_APB2RSTR |= BIT(12);
+		STM32_RCC_APB2RSTR &= ~BIT(12);
 	} else {
 		/* Reset SPI2 */
-		STM32_RCC_APB1RSTR |= (1 << 14);
-		STM32_RCC_APB1RSTR &= ~(1 << 14);
+		STM32_RCC_APB1RSTR |= BIT(14);
+		STM32_RCC_APB1RSTR &= ~BIT(14);
 	}
 }
 

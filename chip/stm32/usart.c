@@ -47,12 +47,12 @@ void usart_init(struct usart_config const *config)
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
     defined(CHIP_FAMILY_STM32L4)
 	if (config->flags & USART_CONFIG_FLAG_RX_INV)
-		cr2 |= (1 << 16);
+		cr2 |= BIT(16);
 	if (config->flags & USART_CONFIG_FLAG_TX_INV)
-		cr2 |= (1 << 17);
+		cr2 |= BIT(17);
 #endif
 	if (config->flags & USART_CONFIG_FLAG_HDSEL)
-		cr3 |= (1 << 3);
+		cr3 |= BIT(3);
 
 	STM32_USART_CR1(base) = 0x0000;
 	STM32_USART_CR2(base) = cr2;

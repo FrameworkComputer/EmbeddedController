@@ -19,8 +19,8 @@ void keyboard_raw_init(void)
 	gpio_config_module(MODULE_KEYBOARD_SCAN, 1);
 
 	/* Enable keyboard scan interrupt */
-	MEC1322_INT_ENABLE(17) |= 1 << 21;
-	MEC1322_INT_BLK_EN |= 1 << 17;
+	MEC1322_INT_ENABLE(17) |= BIT(21);
+	MEC1322_INT_BLK_EN |= BIT(17);
 	MEC1322_KS_KSI_INT_EN = 0xff;
 }
 
@@ -32,19 +32,19 @@ void keyboard_raw_task_start(void)
 test_mockable void keyboard_raw_drive_column(int out)
 {
 	if (out == KEYBOARD_COLUMN_ALL) {
-		MEC1322_KS_KSO_SEL = 1 << 5; /* KSEN=0, KSALL=1 */
+		MEC1322_KS_KSO_SEL = BIT(5); /* KSEN=0, KSALL=1 */
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 		gpio_set_level(GPIO_KBD_KSO2, 1);
 #endif
 	} else if (out == KEYBOARD_COLUMN_NONE) {
-		MEC1322_KS_KSO_SEL = 1 << 6; /* KSEN=1 */
+		MEC1322_KS_KSO_SEL = BIT(6); /* KSEN=1 */
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 		gpio_set_level(GPIO_KBD_KSO2, 0);
 #endif
 	} else {
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 		if (out == 2) {
-			MEC1322_KS_KSO_SEL = 1 << 6; /* KSEN=1 */
+			MEC1322_KS_KSO_SEL = BIT(6); /* KSEN=1 */
 			gpio_set_level(GPIO_KBD_KSO2, 1);
 		} else {
 			MEC1322_KS_KSO_SEL = out + CONFIG_KEYBOARD_KSO_BASE;
@@ -84,5 +84,5 @@ DECLARE_IRQ(MEC1322_IRQ_KSC_INT, keyboard_raw_interrupt, 1);
 
 int keyboard_raw_is_input_low(int port, int id)
 {
-	return (MEC1322_GPIO_CTL(port, id) & (1 << 24)) == 0;
+	return (MEC1322_GPIO_CTL(port, id) & BIT(24)) == 0;
 }

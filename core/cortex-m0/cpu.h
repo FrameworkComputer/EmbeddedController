@@ -9,6 +9,7 @@
 #define __CROS_EC_CPU_H
 
 #include <stdint.h>
+#include "compile_time_macros.h"
 
 /* Macro to access 32-bit registers */
 #define CPUREG(addr) (*(volatile uint32_t*)(addr))
@@ -31,7 +32,7 @@
 #define CPU_NVIC_SHCSR2        CPUREG(0xe000ed1c)
 #define CPU_NVIC_SHCSR3        CPUREG(0xe000ed20)
 
-#define CPU_NVIC_CCR_UNALIGN_TRAP (1 << 3)
+#define CPU_NVIC_CCR_UNALIGN_TRAP BIT(3)
 
 /* Set up the cpu to detect faults */
 void cpu_init(void);

@@ -27,37 +27,37 @@
 #define LM3630A_REG_FILTER_STRENGTH	0x50
 
 /* Control register bits */
-#define LM3630A_CTRL_BIT_SLEEP_CMD	(1 << 7)
-#define LM3630A_CTRL_BIT_SLEEP_STAT	(1 << 6)
-#define LM3630A_CTRL_BIT_LINEAR_A	(1 << 4)
-#define LM3630A_CTRL_BIT_LINEAR_B	(1 << 3)
-#define LM3630A_CTRL_BIT_LED_EN_A	(1 << 2)
-#define LM3630A_CTRL_BIT_LED_EN_B	(1 << 1)
-#define LM3630A_CTRL_BIT_LED2_ON_A	(1 << 0)
+#define LM3630A_CTRL_BIT_SLEEP_CMD	BIT(7)
+#define LM3630A_CTRL_BIT_SLEEP_STAT	BIT(6)
+#define LM3630A_CTRL_BIT_LINEAR_A	BIT(4)
+#define LM3630A_CTRL_BIT_LINEAR_B	BIT(3)
+#define LM3630A_CTRL_BIT_LED_EN_A	BIT(2)
+#define LM3630A_CTRL_BIT_LED_EN_B	BIT(1)
+#define LM3630A_CTRL_BIT_LED2_ON_A	BIT(0)
 
 /* Config register bits */
-#define LM3630A_CFG_BIT_FB_EN_B		(1 << 4)
-#define LM3630A_CFG_BIT_FB_EN_A		(1 << 3)
-#define LM3630A_CFG_BIT_PWM_LOW		(1 << 2)
-#define LM3630A_CFG_BIT_PWM_EN_B	(1 << 1)
-#define LM3630A_CFG_BIT_PWM_EN_A	(1 << 0)
+#define LM3630A_CFG_BIT_FB_EN_B		BIT(4)
+#define LM3630A_CFG_BIT_FB_EN_A		BIT(3)
+#define LM3630A_CFG_BIT_PWM_LOW		BIT(2)
+#define LM3630A_CFG_BIT_PWM_EN_B	BIT(1)
+#define LM3630A_CFG_BIT_PWM_EN_A	BIT(0)
 
 /* Boost control register bits */
 #define LM3630A_BOOST_OVP_16V		(0 << 5)
-#define LM3630A_BOOST_OVP_24V		(1 << 5)
+#define LM3630A_BOOST_OVP_24V		BIT(5)
 #define LM3630A_BOOST_OVP_32V		(2 << 5)
 #define LM3630A_BOOST_OVP_40V		(3 << 5)
 #define LM3630A_BOOST_OCP_600MA		(0 << 3)
-#define LM3630A_BOOST_OCP_800MA		(1 << 3)
+#define LM3630A_BOOST_OCP_800MA		BIT(3)
 #define LM3630A_BOOST_OCP_1000MA	(2 << 3)
 #define LM3630A_BOOST_OCP_1200MA	(3 << 3)
-#define LM3630A_BOOST_SLOW_START	(1 << 2)
+#define LM3630A_BOOST_SLOW_START	BIT(2)
 #define LM3630A_SHIFT_500KHZ		(0 << 1)  /* FMODE=0 */
-#define LM3630A_SHIFT_560KHZ		(1 << 1)  /* FMODE=0 */
+#define LM3630A_SHIFT_560KHZ		BIT(1)  /* FMODE=0 */
 #define LM3630A_SHIFT_1000KHZ		(0 << 1)  /* FMODE=1 */
-#define LM3630A_SHIFT_1120KHZ		(1 << 1)  /* FMODE=1 */
+#define LM3630A_SHIFT_1120KHZ		BIT(1)  /* FMODE=1 */
 #define LM3630A_FMODE_500KHZ		(0 << 0)
-#define LM3630A_FMODE_1000KHZ		(1 << 0)
+#define LM3630A_FMODE_1000KHZ		BIT(0)
 
 /* Power on and initialize LM3630A. */
 int lm3630a_poweron(void);

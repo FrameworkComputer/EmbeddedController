@@ -174,7 +174,7 @@ static void print_panic_information(uint32_t *regs, uint32_t itype,
 		panic_printf("Exception type: General exception [%s]\n",
 			itype_exc_type[(itype & 0xf)]);
 		panic_printf("Exception is caused by %s\n",
-			itype_inst[(itype & (1 << 4))]);
+			itype_inst[(itype & BIT(4))]);
 	}
 #endif
 }

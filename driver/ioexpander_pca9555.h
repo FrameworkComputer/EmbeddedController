@@ -19,14 +19,14 @@
 #define PCA9555_CMD_CONFIGURATION_PORT_0	6
 #define PCA9555_CMD_CONFIGURATION_PORT_1	7
 
-#define PCA9555_IO_0	(1 << 0)
-#define PCA9555_IO_1	(1 << 1)
-#define PCA9555_IO_2	(1 << 2)
-#define PCA9555_IO_3	(1 << 3)
-#define PCA9555_IO_4	(1 << 4)
-#define PCA9555_IO_5	(1 << 5)
-#define PCA9555_IO_6	(1 << 6)
-#define PCA9555_IO_7	(1 << 7)
+#define PCA9555_IO_0	BIT(0)
+#define PCA9555_IO_1	BIT(1)
+#define PCA9555_IO_2	BIT(2)
+#define PCA9555_IO_3	BIT(3)
+#define PCA9555_IO_4	BIT(4)
+#define PCA9555_IO_5	BIT(5)
+#define PCA9555_IO_6	BIT(6)
+#define PCA9555_IO_7	BIT(7)
 
 static inline int pca9555_read(int port, int addr, int reg, int *data_ptr)
 {

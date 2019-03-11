@@ -122,15 +122,15 @@ enum ish_i2c_port {
 
 /* PMU Registers */
 #define PMU_VNN_REQ		REG32(ISH_PMU_BASE + 0x3c)
-#define VNN_REQ_IPC_HOST_WRITE		(1 << 3) /* Power for IPC host write */
+#define VNN_REQ_IPC_HOST_WRITE		BIT(3) /* Power for IPC host write */
 
 #define PMU_VNN_REQ_ACK		REG32(ISH_PMU_BASE + 0x40)
-#define PMU_VNN_REQ_ACK_STATUS		(1 << 0) /* VNN req and ack status */
+#define PMU_VNN_REQ_ACK_STATUS		BIT(0) /* VNN req and ack status */
 
 #define PMU_RST_PREP		REG32(ISH_PMU_BASE + 0x5c)
-#define PMU_RST_PREP_GET		(1 << 0)
-#define PMU_RST_PREP_AVAIL		(1 << 1)
-#define PMU_RST_PREP_INT_MASK		(1 << 31)
+#define PMU_RST_PREP_GET		BIT(0)
+#define PMU_RST_PREP_AVAIL		BIT(1)
+#define PMU_RST_PREP_INT_MASK		BIT(31)
 
 /* CCU Registers */
 #define CCU_TCG_EN		REG32(ISH_CCU_BASE + 0x0)
@@ -163,7 +163,7 @@ enum ish_i2c_port {
 #define LAPIC_ISR_REG   0xFEE00170
 #define LAPIC_IRR_REG   (ISH_LAPIC_BASE + 0x200)
 #define LAPIC_ESR_REG   (ISH_LAPIC_BASE + 0x280)
-#define LAPIC_ERR_RECV_ILLEGAL       (1 << 6)
+#define LAPIC_ERR_RECV_ILLEGAL       BIT(6)
 #define LAPIC_ICR_REG   (ISH_LAPIC_BASE + 0x300)
 
 #endif /* __CROS_EC_REGISTERS_H */

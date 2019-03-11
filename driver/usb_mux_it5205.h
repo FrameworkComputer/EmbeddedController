@@ -20,11 +20,11 @@
 
 /* MUX power down register */
 #define IT5205_REG_MUXPDR        0x10
-#define IT5205_MUX_POWER_DOWN    (1 << 0)
+#define IT5205_MUX_POWER_DOWN    BIT(0)
 
 /* MUX control register */
 #define IT5205_REG_MUXCR         0x11
-#define IT5205_POLARITY_INVERTED (1 << 4)
+#define IT5205_POLARITY_INVERTED BIT(4)
 
 #define IT5205_DP_USB_CTRL_MASK  0x0f
 #define IT5205_DP                0x0f

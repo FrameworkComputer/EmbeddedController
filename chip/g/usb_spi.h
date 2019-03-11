@@ -77,9 +77,9 @@ enum usb_spi_request {
 /* USB SPI device bitmasks */
 enum usb_spi {
 	USB_SPI_DISABLE = 0,
-	USB_SPI_AP = (1 << 0),
-	USB_SPI_EC = (1 << 1),
-	USB_SPI_H1 = (1 << 2),
+	USB_SPI_AP = BIT(0),
+	USB_SPI_EC = BIT(1),
+	USB_SPI_H1 = BIT(2),
 	USB_SPI_ALL = USB_SPI_AP | USB_SPI_EC | USB_SPI_H1
 };
 

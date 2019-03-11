@@ -427,12 +427,12 @@ void wov_set_i2s_bclk(uint32_t i2s_clock);
  *                      first bit (MSB) of channel 1 (right channel).
  *                      If channel 1 is not used set this field to -1.
  *
- * @param   flags     -  WOV_TDM_ADJACENT_TO_CH0 = (1 << 0).  There is a
+ * @param   flags     -  WOV_TDM_ADJACENT_TO_CH0 = BIT(0).  There is a
  *                       channel adjacent to channel 0, so float SDAT when
  *                       driving the last bit (LSB) of the channel during the
  *                       second half of the clock cycle to avoid bus contention.
  *
- *                       WOV_TDM_ADJACENT_TO_CH1 = (1 << 1). There is a channel
+ *                       WOV_TDM_ADJACENT_TO_CH1 = BIT(1). There is a channel
  *                       adjacent to channel 1.
  *
  * @return  EC error code.

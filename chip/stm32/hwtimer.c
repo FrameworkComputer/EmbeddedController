@@ -414,7 +414,7 @@ void hwtimer_setup_watchdog(void)
 	 * Timer configuration : Down counter, counter disabled, update
 	 * event only on overflow.
 	 */
-	timer->cr1 = 0x0014 | (1 << 7);
+	timer->cr1 = 0x0014 | BIT(7);
 
 	/* TIM (slave mode) uses TIM_CLOCK_LSB as internal trigger */
 	timer->smcr = 0x0007 | (TSMAP(TIM_WATCHDOG, TIM_CLOCK_LSB) << 4);
@@ -426,7 +426,7 @@ void hwtimer_setup_watchdog(void)
 	 * to obtain the number of times TIM_CLOCK_LSB can overflow before we
 	 * generate an interrupt.
 	 */
-	timer->arr = timer->cnt = CONFIG_AUX_TIMER_PERIOD_MS * MSEC / (1 << 16);
+	timer->arr = timer->cnt = CONFIG_AUX_TIMER_PERIOD_MS * MSEC / BIT(16);
 
 	/* count on every TIM_CLOCK_LSB overflow */
 	timer->psc = 0;

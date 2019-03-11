@@ -46,7 +46,7 @@ static void gcm_init_iv(
 
 	if (iv_len == 12) {
 		memcpy(counter, iv, 12);
-		counter[3] = 1 << 24;
+		counter[3] = BIT(24);
 	} else {
 		size_t i;
 		uint32_t len = iv_len;

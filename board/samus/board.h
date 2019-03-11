@@ -202,8 +202,8 @@ void bkboost_det_interrupt(enum gpio_signal signal);
 void jtag_interrupt(enum gpio_signal signal);
 
 /* Bit masks for turning on PP5000 rail in G3 */
-#define PP5000_IN_G3_AC       (1 << 0)
-#define PP5000_IN_G3_LIGHTBAR (1 << 1)
+#define PP5000_IN_G3_AC       BIT(0)
+#define PP5000_IN_G3_LIGHTBAR BIT(1)
 
 /* Enable/disable PP5000 rail mask in G3 */
 void set_pp5000_in_g3(int mask, int enable);

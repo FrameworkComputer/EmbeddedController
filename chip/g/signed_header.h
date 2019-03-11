@@ -100,7 +100,7 @@ BUILD_ASSERT(offsetof(struct SignedHeader, info_chk_) == 1020);
  *
  * This convention is enforced at the key generation time.
  */
-#define G_SIGNED_FOR_PROD(h) ((h)->keyid & (1 << 2))
+#define G_SIGNED_FOR_PROD(h) ((h)->keyid & BIT(2))
 
 
 #endif /* __CROS_EC_SIGNED_HEADER_H */

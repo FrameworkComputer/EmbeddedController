@@ -63,7 +63,7 @@
 
 /* PROCHOT# debounce time and duration time in micro seconds */
 #define ISL923X_PROCHOT_DURATION_10000  (0 << 6)
-#define ISL923X_PROCHOT_DURATION_20000  (1 << 6)
+#define ISL923X_PROCHOT_DURATION_20000  BIT(6)
 #define ISL923X_PROCHOT_DURATION_15000  (2 << 6)
 #define ISL923X_PROCHOT_DURATION_5000   (3 << 6)
 #define ISL923X_PROCHOT_DURATION_1000   (4 << 6)
@@ -73,7 +73,7 @@
 #define ISL923X_PROCHOT_DURATION_MASK   (7 << 6)
 
 #define ISL923X_PROCHOT_DEBOUNCE_10   (0 << 9)
-#define ISL923X_PROCHOT_DEBOUNCE_100  (1 << 9)
+#define ISL923X_PROCHOT_DEBOUNCE_100  BIT(9)
 #define ISL923X_PROCHOT_DEBOUNCE_500  (2 << 9)
 #define ISL923X_PROCHOT_DEBOUNCE_1000 (3 << 9)
 #define ISL923X_PROCHOT_DEBOUNCE_MASK (3 << 9)
@@ -90,35 +90,35 @@
 #define ISL9237_C0_VREG_REF_MASK 0x03
 
 /* Control0: disable adapter voltaqe regulation */
-#define ISL923X_C0_DISABLE_VREG (1 << 2)
+#define ISL923X_C0_DISABLE_VREG BIT(2)
 
 /* Control0: battery DCHOT reference for RS2 == 20mOhm */
 #define ISL923X_C0_DCHOT_6A   (0 << 3)
-#define ISL923X_C0_DCHOT_5A   (1 << 3)
+#define ISL923X_C0_DCHOT_5A   BIT(3)
 #define ISL923X_C0_DCHOT_4A   (2 << 3)
 #define ISL923X_C0_DCHOT_3A   (3 << 3)
 #define ISL923X_C0_DCHOT_MASK (3 << 3)
 
 /* Control1: general purpose comparator debounce time in micro second */
 #define ISL923X_C1_GP_DEBOUNCE_2       (0 << 14)
-#define ISL923X_C1_GP_DEBOUNCE_12      (1 << 14)
+#define ISL923X_C1_GP_DEBOUNCE_12      BIT(14)
 #define ISL923X_C1_GP_DEBOUNCE_2000    (2 << 14)
 #define ISL923X_C1_GP_DEBOUNCE_5000000 (3 << 14)
 #define ISL923X_C1_GP_DEBOUNCE_MASK    (3 << 14)
 
 /* Control1: learn mode */
-#define ISL923X_C1_LEARN_MODE_AUTOEXIT (1 << 13)
-#define ISL923X_C1_LEARN_MODE_ENABLE   (1 << 12)
+#define ISL923X_C1_LEARN_MODE_AUTOEXIT BIT(13)
+#define ISL923X_C1_LEARN_MODE_ENABLE   BIT(12)
 
 /* Control1: OTG enable */
-#define ISL923X_C1_OTG (1 << 11)
+#define ISL923X_C1_OTG BIT(11)
 
 /* Control1: audio filter */
-#define ISL923X_C1_AUDIO_FILTER (1 << 10)
+#define ISL923X_C1_AUDIO_FILTER BIT(10)
 
 /* Control1: switch frequency, ISL9238 defines bit 7 as unused */
 #define ISL923X_C1_SWITCH_FREQ_PROG (0 << 7) /* 1000kHz or PROG */
-#define ISL9237_C1_SWITCH_FREQ_913K (1 << 7)
+#define ISL9237_C1_SWITCH_FREQ_913K BIT(7)
 #define ISL923X_C1_SWITCH_FREQ_839K (2 << 7)
 #define ISL9237_C1_SWITCH_FREQ_777K (3 << 7)
 #define ISL923X_C1_SWITCH_FREQ_723K (4 << 7)
@@ -128,15 +128,15 @@
 #define ISL923X_C1_SWITCH_FREQ_MASK (7 << 7)
 
 /* Control1: turbo mode */
-#define ISL923X_C1_TURBO_MODE (1 << 6)
+#define ISL923X_C1_TURBO_MODE BIT(6)
 
 /* Control1: AMON & BMON */
-#define ISL923X_C1_DISABLE_MON (1 << 5)
-#define ISL923X_C1_SELECT_BMON (1 << 4)
+#define ISL923X_C1_DISABLE_MON BIT(5)
+#define ISL923X_C1_SELECT_BMON BIT(4)
 
 /* Control1: PSYS, VSYS, VSYSLO */
-#define ISL923X_C1_ENABLE_PSYS (1 << 3)
-#define ISL923X_C1_ENABLE_VSYS (1 << 2)
+#define ISL923X_C1_ENABLE_PSYS BIT(3)
+#define ISL923X_C1_ENABLE_VSYS BIT(2)
 #define ISL923X_C1_VSYSLO_REF_6000 0
 #define ISL923X_C1_VSYSLO_REF_6300 1
 #define ISL923X_C1_VSYSLO_REF_6600 2
@@ -145,35 +145,35 @@
 
 /* Control2: trickle charging current in mA */
 #define ISL923X_C2_TRICKLE_256  (0 << 14)
-#define ISL923X_C2_TRICKLE_128  (1 << 14)
+#define ISL923X_C2_TRICKLE_128  BIT(14)
 #define ISL923X_C2_TRICKLE_64   (2 << 14)
 #define ISL923X_C2_TRICKLE_512  (3 << 14)
 #define ISL923X_C2_TRICKLE_MASK (3 << 14)
 
 /* Control2: OTGEN debounce time in ms */
 #define ISL923X_C2_OTG_DEBOUNCE_1300 (0 << 13)
-#define ISL923X_C2_OTG_DEBOUNCE_150  (1 << 13)
-#define ISL923X_C2_OTG_DEBOUNCE_MASK (1 << 13)
+#define ISL923X_C2_OTG_DEBOUNCE_150  BIT(13)
+#define ISL923X_C2_OTG_DEBOUNCE_MASK BIT(13)
 
 /* Control2: 2-level adapter over current */
-#define ISL923X_C2_2LVL_OVERCURRENT (1 << 12)
+#define ISL923X_C2_2LVL_OVERCURRENT BIT(12)
 
 /* Control2: adapter insertion debounce time in ms */
 #define ISL923X_C2_ADAPTER_DEBOUNCE_1300 (0 << 11)
-#define ISL923X_C2_ADAPTER_DEBOUNCE_150  (1 << 11)
-#define ISL923X_C2_ADAPTER_DEBOUNCE_MASK (1 << 11)
+#define ISL923X_C2_ADAPTER_DEBOUNCE_150  BIT(11)
+#define ISL923X_C2_ADAPTER_DEBOUNCE_MASK BIT(11)
 
 /* Control2: PROCHOT debounce time in uS */
 #define ISL9238_C2_PROCHOT_DEBOUNCE_7    (0 << 9)
 #define ISL9237_C2_PROCHOT_DEBOUNCE_10   (0 << 9)
-#define ISL923X_C2_PROCHOT_DEBOUNCE_100  (1 << 9)
+#define ISL923X_C2_PROCHOT_DEBOUNCE_100  BIT(9)
 #define ISL923X_C2_PROCHOT_DEBOUNCE_500  (2 << 9)
 #define ISL923X_C2_PROCHOT_DEBOUNCE_1000 (3 << 9)
 #define ISL923X_C2_PROCHOT_DEBOUNCE_MASK (3 << 9)
 
 /* Control2: min PROCHOT duration in uS */
 #define ISL923X_C2_PROCHOT_DURATION_10000 (0 << 6)
-#define ISL923X_C2_PROCHOT_DURATION_20000 (1 << 6)
+#define ISL923X_C2_PROCHOT_DURATION_20000 BIT(6)
 #define ISL923X_C2_PROCHOT_DURATION_15000 (2 << 6)
 #define ISL923X_C2_PROCHOT_DURATION_5000  (3 << 6)
 #define ISL923X_C2_PROCHOT_DURATION_1000  (4 << 6)
@@ -183,35 +183,35 @@
 #define ISL923X_C2_PROCHOT_DURATION_MASK  (7 << 6)
 
 /* Control2: turn off ASGATE in OTG mode */
-#define ISL923X_C2_ASGATE_OFF (1 << 5)
+#define ISL923X_C2_ASGATE_OFF BIT(5)
 
 /* Control2: CMIN, general purpose comparator reference in mV */
 #define ISL923X_C2_CMIN_2000 (0 << 4)
-#define ISL923X_C2_CMIN_1200 (1 << 4)
+#define ISL923X_C2_CMIN_1200 BIT(4)
 
 /* Control2: general purpose comparator enable */
-#define ISL923X_C2_COMPARATOR (1 << 3)
+#define ISL923X_C2_COMPARATOR BIT(3)
 
 /* Control2: invert CMOUT, general purpose comparator output, polarity */
-#define ISL923X_C2_INVERT_CMOUT (1 << 2)
+#define ISL923X_C2_INVERT_CMOUT BIT(2)
 
 /* Control2: disable WOC, way over current */
-#define ISL923X_C2_WOC_OFF (1 << 1)
+#define ISL923X_C2_WOC_OFF BIT(1)
 
 /* Control2: PSYS gain in uA/W (ISL9237 only) */
-#define ISL9237_C2_PSYS_GAIN (1 << 0)
+#define ISL9237_C2_PSYS_GAIN BIT(0)
 
 /*
  * Control3: Buck-Boost switching period
  * 0: x1 frequency, 1: half frequency.
  */
-#define ISL9238_C3_BB_SWITCHING_PERIOD (1 << 1)
+#define ISL9238_C3_BB_SWITCHING_PERIOD BIT(1)
 
 /*
  * Control3: AMON/BMON direction.
  * 0: adapter/charging, 1:OTG/discharging (ISL9238 only)
  */
-#define ISL9238_C3_AMON_BMON_DIRECTION (1 << 3)
+#define ISL9238_C3_AMON_BMON_DIRECTION BIT(3)
 
 /*
  * Control3: Disables Autonomous Charing
@@ -219,16 +219,16 @@
  * Note: This is disabled automatically when ever we set the current limit
  * manually (which we always do).
  */
-#define ISL9238_C3_DISABLE_AUTO_CHARING (1 << 7)
+#define ISL9238_C3_DISABLE_AUTO_CHARING BIT(7)
 
 /* Control3: PSYS gain in uA/W (ISL9238 only) */
-#define ISL9238_C3_PSYS_GAIN (1 << 9)
+#define ISL9238_C3_PSYS_GAIN BIT(9)
 
 /* Control3: Don't reload ACLIM on ACIN. */
-#define ISL9238_C3_NO_RELOAD_ACLIM_ON_ACIN (1 << 14)
+#define ISL9238_C3_NO_RELOAD_ACLIM_ON_ACIN BIT(14)
 
 /* Control3: Don't reread PROG pin. */
-#define ISL9238_C3_NO_REREAD_PROG_PIN (1 << 15)
+#define ISL9238_C3_NO_REREAD_PROG_PIN BIT(15)
 
 /* OTG voltage limit in mV, current limit in mA */
 #define ISL9237_OTG_VOLTAGE_MIN 4864
@@ -247,7 +247,7 @@
 
 /* Info register fields */
 #define ISL9237_INFO_PROG_RESISTOR_MASK 0xf
-#define ISL923X_INFO_TRICKLE_ACTIVE_MASK (1 << 4)
+#define ISL923X_INFO_TRICKLE_ACTIVE_MASK BIT(4)
 #define ISL9237_INFO_PSTATE_SHIFT 5
 #define ISL9237_INFO_PSTATE_MASK 3
 
@@ -272,9 +272,9 @@ enum isl9237_fsm_state {
 	FSM_OTG
 };
 
-#define ISL923X_INFO_VSYSLO (1 << 10)
-#define ISL923X_INFO_DCHOT (1 << 11)
-#define ISL9237_INFO_ACHOT (1 << 12)
+#define ISL923X_INFO_VSYSLO BIT(10)
+#define ISL923X_INFO_DCHOT BIT(11)
+#define ISL9237_INFO_ACHOT BIT(12)
 
 #if defined(CONFIG_CHARGER_ISL9237)
 #define CHARGER_NAME  "isl9237"

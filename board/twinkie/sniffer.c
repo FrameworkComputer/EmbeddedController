@@ -256,7 +256,7 @@ static void rx_timer_init(int tim_id, timer_ctlr_t *tim, int ch_idx, int up_idx)
 void sniffer_init(void)
 {
 	/* remap TIM1 CH1/2/3 to DMA channel 6 */
-	STM32_SYSCFG_CFGR1 |= 1 << 28;
+	STM32_SYSCFG_CFGR1 |= BIT(28);
 
 	/* TIM1 CH1 for CC1 RX */
 	rx_timer_init(TIM_RX1, (void *)STM32_TIM_BASE(TIM_RX1),
@@ -266,7 +266,7 @@ void sniffer_init(void)
 		      TIM_RX2_CCR_IDX, 2);
 
 	/* turn on COMP/SYSCFG */
-	STM32_RCC_APB2ENR |= 1 << 0;
+	STM32_RCC_APB2ENR |= BIT(0);
 	STM32_COMP_CSR = STM32_COMP_CMP1EN | STM32_COMP_CMP1MODE_HSPEED |
 			 STM32_COMP_CMP1INSEL_VREF12 |
 			 STM32_COMP_CMP1OUTSEL_TIM1_IC1 |

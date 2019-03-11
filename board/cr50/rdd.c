@@ -34,15 +34,15 @@ enum ccd_block_flags {
 	 * UARTs.  Disabling these can be helpful if the AP or EC is doing
 	 * something which creates an interrupt storm on these ports.
 	 */
-	CCD_BLOCK_AP_UART = (1 << 0),
-	CCD_BLOCK_EC_UART = (1 << 1),
+	CCD_BLOCK_AP_UART = BIT(0),
+	CCD_BLOCK_EC_UART = BIT(1),
 
 	/*
 	 * Any ports shared with servo.  Disabling these will stop CCD from
 	 * interfering with servo, in the case where both CCD and servo is
 	 * connected but servo isn't properly detected.
 	 */
-	CCD_BLOCK_SERVO_SHARED = (1 << 2)
+	CCD_BLOCK_SERVO_SHARED = BIT(2)
 };
 
 /* Which UARTs are blocked by console command */
@@ -128,28 +128,28 @@ enum ccd_state_flag {
 	/* Flags for individual devices/ports */
 
 	/* AP UART is enabled.  RX-only, unless TX is also enabled. */
-	CCD_ENABLE_UART_AP		= (1 << 0),
+	CCD_ENABLE_UART_AP		= BIT(0),
 
 	/* AP UART transmit is enabled.  Requires AP UART enabled. */
-	CCD_ENABLE_UART_AP_TX		= (1 << 1),
+	CCD_ENABLE_UART_AP_TX		= BIT(1),
 
 	/* EC UART is enabled.  RX-only, unless TX is also enabled. */
-	CCD_ENABLE_UART_EC		= (1 << 2),
+	CCD_ENABLE_UART_EC		= BIT(2),
 
 	/* EC UART transmit is enabled.  Requires EC UART enabled. */
-	CCD_ENABLE_UART_EC_TX		= (1 << 3),
+	CCD_ENABLE_UART_EC_TX		= BIT(3),
 
 	/*
 	 * EC UART bit-banging is enabled.  Requires EC UART enabled, and
 	 * blocks EC UART transmit.
 	 */
-	CCD_ENABLE_UART_EC_BITBANG	= (1 << 4),
+	CCD_ENABLE_UART_EC_BITBANG	= BIT(4),
 
 	/* I2C port is enabled */
-	CCD_ENABLE_I2C			= (1 << 5),
+	CCD_ENABLE_I2C			= BIT(5),
 
 	/* SPI port is enabled for AP and/or EC flash */
-	CCD_ENABLE_SPI			= (1 << 6),
+	CCD_ENABLE_SPI			= BIT(6),
 };
 
 int console_is_restricted(void)

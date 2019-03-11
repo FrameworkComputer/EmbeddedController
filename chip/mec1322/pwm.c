@@ -67,8 +67,8 @@ static void pwm_configure(int ch, int active_low, int clock_low)
 	 * clock_low=1 selects the 100kHz_Clk source
 	 */
 	MEC1322_PWM_CFG(ch) = (15 << 3) |    /* Pre-divider = 16 */
-			      (active_low ? (1 << 2) : 0) |
-			      (clock_low  ? (1 << 1) : 0);
+			      (active_low ? BIT(2) : 0) |
+			      (clock_low  ? BIT(1) : 0);
 }
 
 static void pwm_init(void)

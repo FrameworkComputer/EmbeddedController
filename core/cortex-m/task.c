@@ -142,8 +142,8 @@ static const struct {
 static task_ tasks[TASK_ID_COUNT];
 
 /* Reset constants and state for all tasks */
-#define TASK_RESET_SUPPORTED		(1 << 31)
-#define TASK_RESET_LOCK			(1 << 30)
+#define TASK_RESET_SUPPORTED		BIT(31)
+#define TASK_RESET_LOCK			BIT(30)
 #define TASK_RESET_STATE_MASK		(TASK_RESET_SUPPORTED | TASK_RESET_LOCK)
 #define TASK_RESET_WAITERS_MASK		~TASK_RESET_STATE_MASK
 #define TASK_RESET_UNSUPPORTED		0

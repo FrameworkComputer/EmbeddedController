@@ -80,7 +80,7 @@ enum chipset_reset_reason {
  * Hard shutdowns are logged on the same path as resets.
  */
 enum chipset_shutdown_reason {
-	CHIPSET_SHUTDOWN_BEGIN = 1 << 15,
+	CHIPSET_SHUTDOWN_BEGIN = BIT(15),
 	CHIPSET_SHUTDOWN_POWERFAIL = CHIPSET_SHUTDOWN_BEGIN,
 	/* Forcing a shutdown as part of EC initialization */
 	CHIPSET_SHUTDOWN_INIT,

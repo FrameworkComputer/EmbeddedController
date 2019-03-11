@@ -160,7 +160,7 @@ void clock_turbo(void)
 	 * CORE_CLK > 66MHz, we also need to set AHB6DIV and FIUDIV as 1.
 	 */
 	NPCX_HFCGP = 0x01;
-	NPCX_HFCBCD = (1 << 4);
+	NPCX_HFCBCD = BIT(4);
 }
 
 void clock_normal(void)

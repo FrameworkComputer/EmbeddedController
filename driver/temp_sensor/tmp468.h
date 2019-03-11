@@ -77,7 +77,7 @@
 #define TMP468_DEVICE_ID		0xfd
 #define TMP468_MANUFACTURER_ID		0xfe
 
-#define TMP468_SHUTDOWN			(1 << 5)
+#define TMP468_SHUTDOWN			BIT(5)
 
 enum tmp468_channel_id {
 	TMP468_CHANNEL_LOCAL,

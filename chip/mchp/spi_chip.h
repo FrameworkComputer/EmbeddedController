@@ -36,7 +36,7 @@
 #define GPSPI_CLASS0	1
 
 #define QMSPI_CLASS	(0 << 4)
-#define GPSPI_CLASS	(1 << 4)
+#define GPSPI_CLASS	BIT(4)
 
 #define QMSPI_CTRL0	0
 #define GPSPI_CTRL0	0

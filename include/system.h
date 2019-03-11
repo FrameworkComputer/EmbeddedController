@@ -15,26 +15,26 @@
 #include "timer.h"
 
 /* Reset causes */
-#define RESET_FLAG_OTHER       (1 << 0)   /* Other known reason */
-#define RESET_FLAG_RESET_PIN   (1 << 1)   /* Reset pin asserted */
-#define RESET_FLAG_BROWNOUT    (1 << 2)   /* Brownout */
-#define RESET_FLAG_POWER_ON    (1 << 3)   /* Power-on reset */
-#define RESET_FLAG_WATCHDOG    (1 << 4)   /* Watchdog timer reset */
-#define RESET_FLAG_SOFT        (1 << 5)   /* Soft reset trigger by core */
-#define RESET_FLAG_HIBERNATE   (1 << 6)   /* Wake from hibernate */
-#define RESET_FLAG_RTC_ALARM   (1 << 7)   /* RTC alarm wake */
-#define RESET_FLAG_WAKE_PIN    (1 << 8)   /* Wake pin triggered wake */
-#define RESET_FLAG_LOW_BATTERY (1 << 9)   /* Low battery triggered wake */
-#define RESET_FLAG_SYSJUMP     (1 << 10)  /* Jumped directly to this image */
-#define RESET_FLAG_HARD        (1 << 11)  /* Hard reset from software */
-#define RESET_FLAG_AP_OFF      (1 << 12)  /* Do not power on AP */
-#define RESET_FLAG_PRESERVED   (1 << 13)  /* Some reset flags preserved from
+#define RESET_FLAG_OTHER       BIT(0)   /* Other known reason */
+#define RESET_FLAG_RESET_PIN   BIT(1)   /* Reset pin asserted */
+#define RESET_FLAG_BROWNOUT    BIT(2)   /* Brownout */
+#define RESET_FLAG_POWER_ON    BIT(3)   /* Power-on reset */
+#define RESET_FLAG_WATCHDOG    BIT(4)   /* Watchdog timer reset */
+#define RESET_FLAG_SOFT        BIT(5)   /* Soft reset trigger by core */
+#define RESET_FLAG_HIBERNATE   BIT(6)   /* Wake from hibernate */
+#define RESET_FLAG_RTC_ALARM   BIT(7)   /* RTC alarm wake */
+#define RESET_FLAG_WAKE_PIN    BIT(8)   /* Wake pin triggered wake */
+#define RESET_FLAG_LOW_BATTERY BIT(9)   /* Low battery triggered wake */
+#define RESET_FLAG_SYSJUMP     BIT(10)  /* Jumped directly to this image */
+#define RESET_FLAG_HARD        BIT(11)  /* Hard reset from software */
+#define RESET_FLAG_AP_OFF      BIT(12)  /* Do not power on AP */
+#define RESET_FLAG_PRESERVED   BIT(13)  /* Some reset flags preserved from
 					   * previous boot */
-#define RESET_FLAG_USB_RESUME  (1 << 14)  /* USB resume triggered wake */
-#define RESET_FLAG_RDD         (1 << 15)  /* USB Type-C debug cable */
-#define RESET_FLAG_RBOX        (1 << 16)  /* Fixed Reset Functionality */
-#define RESET_FLAG_SECURITY    (1 << 17)  /* Security threat */
-#define RESET_FLAG_AP_WATCHDOG (1 << 18)  /* AP experienced a watchdog reset */
+#define RESET_FLAG_USB_RESUME  BIT(14)  /* USB resume triggered wake */
+#define RESET_FLAG_RDD         BIT(15)  /* USB Type-C debug cable */
+#define RESET_FLAG_RBOX        BIT(16)  /* Fixed Reset Functionality */
+#define RESET_FLAG_SECURITY    BIT(17)  /* Security threat */
+#define RESET_FLAG_AP_WATCHDOG BIT(18)  /* AP experienced a watchdog reset */
 
 /* Per chip implementation to save/read raw RESET_FLAG_ flags. */
 void chip_save_reset_flags(int flags);
@@ -257,29 +257,29 @@ const char *system_get_build_info(void);
  * Hard reset.  Cuts power to the entire system.  If not present, does a soft
  * reset which just resets the core and on-chip peripherals.
  */
-#define SYSTEM_RESET_HARD               (1 << 0)
+#define SYSTEM_RESET_HARD               BIT(0)
 /*
  * Preserve existing reset flags.  Used by flash pre-init when it discovers it
  * needs to do a hard reset to clear write protect registers.
  */
-#define SYSTEM_RESET_PRESERVE_FLAGS     (1 << 1)
+#define SYSTEM_RESET_PRESERVE_FLAGS     BIT(1)
 /*
  * Leave AP off on next reboot, instead of powering it on to do EC software
  * sync.
  */
-#define SYSTEM_RESET_LEAVE_AP_OFF       (1 << 2)
+#define SYSTEM_RESET_LEAVE_AP_OFF       BIT(2)
 /*
  * Indicate that this was a manually triggered reset.
  */
-#define SYSTEM_RESET_MANUALLY_TRIGGERED (1 << 3)
+#define SYSTEM_RESET_MANUALLY_TRIGGERED BIT(3)
 /*
  * Wait for reset pin to be driven, rather that resetting ourselves.
  */
-#define SYSTEM_RESET_WAIT_EXT           (1 << 4)
+#define SYSTEM_RESET_WAIT_EXT           BIT(4)
 /*
  * Indicate that this reset was triggered by an AP watchdog
  */
-#define SYSTEM_RESET_AP_WATCHDOG        (1 << 5)
+#define SYSTEM_RESET_AP_WATCHDOG        BIT(5)
 
 /**
  * Reset the system.
@@ -423,32 +423,32 @@ enum {
 	/*
 	 * Sleep masks to prevent going in to deep sleep.
 	 */
-	SLEEP_MASK_AP_RUN     = (1 << 0), /* the main CPU is running */
-	SLEEP_MASK_UART       = (1 << 1), /* UART communication ongoing */
-	SLEEP_MASK_I2C_MASTER = (1 << 2), /* I2C master communication ongoing */
-	SLEEP_MASK_CHARGING   = (1 << 3), /* Charging loop ongoing */
-	SLEEP_MASK_USB_PWR    = (1 << 4), /* USB power loop ongoing */
-	SLEEP_MASK_USB_PD     = (1 << 5), /* USB PD device connected */
-	SLEEP_MASK_SPI        = (1 << 6), /* SPI communications ongoing */
-	SLEEP_MASK_I2C_SLAVE  = (1 << 7), /* I2C slave communication ongoing */
-	SLEEP_MASK_FAN        = (1 << 8), /* Fan control loop ongoing */
-	SLEEP_MASK_USB_DEVICE = (1 << 9), /* Generic USB device in use */
-	SLEEP_MASK_PWM        = (1 << 10), /* PWM output is enabled */
-	SLEEP_MASK_PHYSICAL_PRESENCE  = (1 << 11), /* Physical presence
+	SLEEP_MASK_AP_RUN     = BIT(0), /* the main CPU is running */
+	SLEEP_MASK_UART       = BIT(1), /* UART communication ongoing */
+	SLEEP_MASK_I2C_MASTER = BIT(2), /* I2C master communication ongoing */
+	SLEEP_MASK_CHARGING   = BIT(3), /* Charging loop ongoing */
+	SLEEP_MASK_USB_PWR    = BIT(4), /* USB power loop ongoing */
+	SLEEP_MASK_USB_PD     = BIT(5), /* USB PD device connected */
+	SLEEP_MASK_SPI        = BIT(6), /* SPI communications ongoing */
+	SLEEP_MASK_I2C_SLAVE  = BIT(7), /* I2C slave communication ongoing */
+	SLEEP_MASK_FAN        = BIT(8), /* Fan control loop ongoing */
+	SLEEP_MASK_USB_DEVICE = BIT(9), /* Generic USB device in use */
+	SLEEP_MASK_PWM        = BIT(10), /* PWM output is enabled */
+	SLEEP_MASK_PHYSICAL_PRESENCE  = BIT(11), /* Physical presence
 						    * detection ongoing */
-	SLEEP_MASK_PLL        = (1 << 12), /* High-speed PLL in-use */
-	SLEEP_MASK_ADC        = (1 << 13), /* ADC conversion ongoing */
-	SLEEP_MASK_EMMC       = (1 << 14), /* eMMC emulation ongoing */
-	SLEEP_MASK_FORCE_NO_DSLEEP    = (1 << 15), /* Force disable. */
+	SLEEP_MASK_PLL        = BIT(12), /* High-speed PLL in-use */
+	SLEEP_MASK_ADC        = BIT(13), /* ADC conversion ongoing */
+	SLEEP_MASK_EMMC       = BIT(14), /* eMMC emulation ongoing */
+	SLEEP_MASK_FORCE_NO_DSLEEP    = BIT(15), /* Force disable. */
 
 
 	/*
 	 * Sleep masks to prevent using slow speed clock in deep sleep.
 	 */
-	SLEEP_MASK_JTAG     = (1 << 16), /* JTAG is in use. */
-	SLEEP_MASK_CONSOLE  = (1 << 17), /* Console is in use. */
+	SLEEP_MASK_JTAG     = BIT(16), /* JTAG is in use. */
+	SLEEP_MASK_CONSOLE  = BIT(17), /* Console is in use. */
 
-	SLEEP_MASK_FORCE_NO_LOW_SPEED = (1 << 31)  /* Force disable. */
+	SLEEP_MASK_FORCE_NO_LOW_SPEED = BIT(31)  /* Force disable. */
 };
 
 /*

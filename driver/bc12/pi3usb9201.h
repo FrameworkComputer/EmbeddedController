@@ -17,19 +17,19 @@
 #define PI3USB9201_REG_HOST_STS 0x3
 
 /* Control_1 regiter bit definitions */
-#define PI3USB9201_REG_CTRL_1_INT_MASK (1 << 0)
+#define PI3USB9201_REG_CTRL_1_INT_MASK BIT(0)
 #define PI3USB9201_REG_CTRL_1_MODE_SHIFT 1
 #define PI3USB9201_REG_CTRL_1_MODE_MASK (0x7 << \
 					 PI3USB9201_REG_CTRL_1_MODE_SHIFT)
 
 /* Control_2 regiter bit definitions */
-#define PI3USB9201_REG_CTRL_2_AUTO_SW (1 << 1)
-#define PI3USB9201_REG_CTRL_2_START_DET (1 << 3)
+#define PI3USB9201_REG_CTRL_2_AUTO_SW BIT(1)
+#define PI3USB9201_REG_CTRL_2_START_DET BIT(3)
 
 /* Host status register bit definitions */
-#define PI3USB9201_REG_HOST_STS_BC12_DET (1 << 0)
-#define PI3USB9201_REG_HOST_STS_DEV_PLUG (1 << 1)
-#define PI3USB9201_REG_HOST_STS_DEV_UNPLUG (1 << 2)
+#define PI3USB9201_REG_HOST_STS_BC12_DET BIT(0)
+#define PI3USB9201_REG_HOST_STS_DEV_PLUG BIT(1)
+#define PI3USB9201_REG_HOST_STS_DEV_UNPLUG BIT(2)
 
 struct pi3usb2901_config_t {
 	const int i2c_port;

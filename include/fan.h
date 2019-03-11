@@ -33,9 +33,9 @@ struct fan_t {
 
 /* Values for .flags field */
 /*   Enable automatic RPM control using tach input */
-#define FAN_USE_RPM_MODE   (1 << 0)
+#define FAN_USE_RPM_MODE   BIT(0)
 /*   Require a higher duty cycle to start up than to keep running */
-#define FAN_USE_FAST_START (1 << 1)
+#define FAN_USE_FAST_START BIT(1)
 
 /* The list of fans is instantiated in board.c. */
 extern struct fan_t fans[];

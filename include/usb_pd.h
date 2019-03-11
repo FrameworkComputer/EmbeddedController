@@ -74,16 +74,16 @@ enum pd_rx_errors {
  *     above by examining bits <29:28> to determine the additional PDO function.
  */
 #define PDO_TYPE_FIXED     (0 << 30)
-#define PDO_TYPE_BATTERY   (1 << 30)
+#define PDO_TYPE_BATTERY   BIT(30)
 #define PDO_TYPE_VARIABLE  (2 << 30)
 #define PDO_TYPE_AUGMENTED (3 << 30)
 #define PDO_TYPE_MASK      (3 << 30)
 
-#define PDO_FIXED_DUAL_ROLE (1 << 29) /* Dual role device */
-#define PDO_FIXED_SUSPEND   (1 << 28) /* USB Suspend supported */
-#define PDO_FIXED_EXTERNAL  (1 << 27) /* Externally powered */
-#define PDO_FIXED_COMM_CAP  (1 << 26) /* USB Communications Capable */
-#define PDO_FIXED_DATA_SWAP (1 << 25) /* Data role swap command supported */
+#define PDO_FIXED_DUAL_ROLE BIT(29) /* Dual role device */
+#define PDO_FIXED_SUSPEND   BIT(28) /* USB Suspend supported */
+#define PDO_FIXED_EXTERNAL  BIT(27) /* Externally powered */
+#define PDO_FIXED_COMM_CAP  BIT(26) /* USB Communications Capable */
+#define PDO_FIXED_DATA_SWAP BIT(25) /* Data role swap command supported */
 #define PDO_FIXED_PEAK_CURR () /* [21..20] Peak current */
 #define PDO_FIXED_VOLT(mv)  (((mv)/50) << 10) /* Voltage in 50mV units */
 #define PDO_FIXED_CURR(ma)  (((ma)/10) << 0)  /* Max current in 10mA units */
@@ -114,10 +114,10 @@ enum pd_rx_errors {
 /* RDO : Request Data Object */
 #define RDO_OBJ_POS(n)             (((n) & 0x7) << 28)
 #define RDO_POS(rdo)               (((rdo) >> 28) & 0x7)
-#define RDO_GIVE_BACK              (1 << 27)
-#define RDO_CAP_MISMATCH           (1 << 26)
-#define RDO_COMM_CAP               (1 << 25)
-#define RDO_NO_SUSPEND             (1 << 24)
+#define RDO_GIVE_BACK              BIT(27)
+#define RDO_CAP_MISMATCH           BIT(26)
+#define RDO_COMM_CAP               BIT(25)
+#define RDO_NO_SUSPEND             BIT(24)
 #define RDO_FIXED_VAR_OP_CURR(ma)  ((((ma) / 10) & 0x3FF) << 10)
 #define RDO_FIXED_VAR_MAX_CURR(ma) ((((ma) / 10) & 0x3FF) << 0)
 
@@ -137,7 +137,7 @@ enum pd_rx_errors {
 
 /* BDO : BIST Data Object */
 #define BDO_MODE_RECV       (0 << 28)
-#define BDO_MODE_TRANSMIT   (1 << 28)
+#define BDO_MODE_TRANSMIT   BIT(28)
 #define BDO_MODE_COUNTERS   (2 << 28)
 #define BDO_MODE_CARRIER0   (3 << 28)
 #define BDO_MODE_CARRIER1   (4 << 28)
@@ -252,8 +252,8 @@ enum hpd_event {
 };
 
 /* DisplayPort flags */
-#define DP_FLAGS_DP_ON              (1 << 0) /* Display port mode is on */
-#define DP_FLAGS_HPD_HI_PENDING     (1 << 1) /* Pending HPD_HI */
+#define DP_FLAGS_DP_ON              BIT(0) /* Display port mode is on */
+#define DP_FLAGS_HPD_HI_PENDING     BIT(1) /* Pending HPD_HI */
 
 /* supported alternate modes */
 enum pd_alternate_modes {
@@ -306,7 +306,7 @@ struct pd_policy {
 	((type) << 15) |       \
 	((custom) & 0x7FFF))
 
-#define VDO_SVDM_TYPE     (1 << 15)
+#define VDO_SVDM_TYPE     BIT(15)
 #define VDO_SVDM_VERS(x)  (x << 13)
 #define VDO_OPOS(x)       (x << 8)
 #define VDO_CMDT(x)       (x << 6)
@@ -321,7 +321,7 @@ struct pd_policy {
 
 /* reserved for SVDM ... for Google UVDM */
 #define VDO_SRC_INITIATOR (0 << 5)
-#define VDO_SRC_RESPONDER (1 << 5)
+#define VDO_SRC_RESPONDER BIT(5)
 
 #define CMD_DISCOVER_IDENT  1
 #define CMD_DISCOVER_SVID   2
@@ -698,23 +698,23 @@ enum pd_states {
 	PD_STATE_COUNT,
 };
 
-#define PD_FLAGS_PING_ENABLED      (1 << 0) /* SRC_READY pings enabled */
-#define PD_FLAGS_PARTNER_DR_POWER  (1 << 1) /* port partner is dualrole power */
-#define PD_FLAGS_PARTNER_DR_DATA   (1 << 2) /* port partner is dualrole data */
-#define PD_FLAGS_CHECK_IDENTITY    (1 << 3) /* discover identity in READY */
-#define PD_FLAGS_SNK_CAP_RECVD     (1 << 4) /* sink capabilities received */
-#define PD_FLAGS_TCPC_DRP_TOGGLE   (1 << 5) /* TCPC-controlled DRP toggling */
-#define PD_FLAGS_EXPLICIT_CONTRACT (1 << 6) /* explicit pwr contract in place */
-#define PD_FLAGS_VBUS_NEVER_LOW    (1 << 7) /* VBUS input has never been low */
-#define PD_FLAGS_PREVIOUS_PD_CONN  (1 << 8) /* previously PD connected */
-#define PD_FLAGS_CHECK_PR_ROLE     (1 << 9) /* check power role in READY */
-#define PD_FLAGS_CHECK_DR_ROLE     (1 << 10)/* check data role in READY */
-#define PD_FLAGS_PARTNER_EXTPOWER  (1 << 11)/* port partner has external pwr */
-#define PD_FLAGS_VCONN_ON          (1 << 12)/* vconn is being sourced */
-#define PD_FLAGS_TRY_SRC           (1 << 13)/* Try.SRC states are active */
-#define PD_FLAGS_PARTNER_USB_COMM  (1 << 14)/* port partner is USB comms */
-#define PD_FLAGS_UPDATE_SRC_CAPS   (1 << 15)/* send new source capabilities */
-#define PD_FLAGS_TS_DTS_PARTNER    (1 << 16)/* partner has rp/rp or rd/rd */
+#define PD_FLAGS_PING_ENABLED      BIT(0) /* SRC_READY pings enabled */
+#define PD_FLAGS_PARTNER_DR_POWER  BIT(1) /* port partner is dualrole power */
+#define PD_FLAGS_PARTNER_DR_DATA   BIT(2) /* port partner is dualrole data */
+#define PD_FLAGS_CHECK_IDENTITY    BIT(3) /* discover identity in READY */
+#define PD_FLAGS_SNK_CAP_RECVD     BIT(4) /* sink capabilities received */
+#define PD_FLAGS_TCPC_DRP_TOGGLE   BIT(5) /* TCPC-controlled DRP toggling */
+#define PD_FLAGS_EXPLICIT_CONTRACT BIT(6) /* explicit pwr contract in place */
+#define PD_FLAGS_VBUS_NEVER_LOW    BIT(7) /* VBUS input has never been low */
+#define PD_FLAGS_PREVIOUS_PD_CONN  BIT(8) /* previously PD connected */
+#define PD_FLAGS_CHECK_PR_ROLE     BIT(9) /* check power role in READY */
+#define PD_FLAGS_CHECK_DR_ROLE     BIT(10)/* check data role in READY */
+#define PD_FLAGS_PARTNER_EXTPOWER  BIT(11)/* port partner has external pwr */
+#define PD_FLAGS_VCONN_ON          BIT(12)/* vconn is being sourced */
+#define PD_FLAGS_TRY_SRC           BIT(13)/* Try.SRC states are active */
+#define PD_FLAGS_PARTNER_USB_COMM  BIT(14)/* port partner is USB comms */
+#define PD_FLAGS_UPDATE_SRC_CAPS   BIT(15)/* send new source capabilities */
+#define PD_FLAGS_TS_DTS_PARTNER    BIT(16)/* partner has rp/rp or rd/rd */
 /*
  * These PD_FLAGS_LPM* flags track the software state (PD_LPM_FLAGS_REQUESTED)
  * and hardware state (PD_LPM_FLAGS_ENGAGED) of the TCPC low power mode.
@@ -722,9 +722,9 @@ enum pd_states {
  * low power (when PD_LPM_FLAGS_ENGAGED is changing).
  */
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-#define PD_FLAGS_LPM_REQUESTED     (1 << 17)/* Tracks SW LPM state */
-#define PD_FLAGS_LPM_ENGAGED       (1 << 18)/* Tracks HW LPM state */
-#define PD_FLAGS_LPM_TRANSITION    (1 << 19)/* Tracks HW LPM transition */
+#define PD_FLAGS_LPM_REQUESTED     BIT(17)/* Tracks SW LPM state */
+#define PD_FLAGS_LPM_ENGAGED       BIT(18)/* Tracks HW LPM state */
+#define PD_FLAGS_LPM_TRANSITION    BIT(19)/* Tracks HW LPM transition */
 #endif
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
@@ -744,9 +744,9 @@ enum pd_states {
 					   PD_FLAGS_TS_DTS_PARTNER)
 
 /* Per-port battery backed RAM flags */
-#define PD_BBRMFLG_EXPLICIT_CONTRACT (1 << 0)
-#define PD_BBRMFLG_POWER_ROLE        (1 << 1)
-#define PD_BBRMFLG_DATA_ROLE         (1 << 2)
+#define PD_BBRMFLG_EXPLICIT_CONTRACT BIT(0)
+#define PD_BBRMFLG_POWER_ROLE        BIT(1)
+#define PD_BBRMFLG_DATA_ROLE         BIT(2)
 
 enum pd_cc_states {
 	PD_CC_NONE,
@@ -830,10 +830,10 @@ enum pd_ctrl_msg_type {
 /* Battery Status Data Object fields for REV 3.0 */
 #define BSDO_CAP_UNKNOWN 0xffff
 #define BSDO_CAP(n)      (((n) & 0xffff) << 16)
-#define BSDO_INVALID     (1 << 8)
-#define BSDO_PRESENT     (1 << 9)
-#define BSDO_DISCHARGING (1 << 10)
-#define BSDO_IDLE        (1 << 11)
+#define BSDO_INVALID     BIT(8)
+#define BSDO_PRESENT     BIT(9)
+#define BSDO_DISCHARGING BIT(10)
+#define BSDO_IDLE        BIT(11)
 
 /* Get Battery Cap Message fields for REV 3.0 */
 #define BATT_CAP_REF(n)  (((n) >> 16) & 0xff)
@@ -918,7 +918,7 @@ enum pd_data_msg_type {
 /* build extended message header */
 /* All extended messages are chunked, so set bit 15 */
 #define PD_EXT_HEADER(cnum, rchk, dsize) \
-	 ((1 << 15) | ((cnum) << 11) | \
+	 (BIT(15) | ((cnum) << 11) | \
 	 ((rchk) << 10) | (dsize))
 
 /* build message header */
@@ -1213,7 +1213,7 @@ void pd_update_contract(int port);
 
 /* Encode DTS status of port partner in current limit parameter */
 typedef uint32_t typec_current_t;
-#define TYPEC_CURRENT_DTS_MASK (1 << 31)
+#define TYPEC_CURRENT_DTS_MASK BIT(31)
 #define TYPEC_CURRENT_ILIM_MASK (~TYPEC_CURRENT_DTS_MASK)
 
 /**

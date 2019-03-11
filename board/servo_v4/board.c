@@ -41,7 +41,7 @@
 void board_config_pre_init(void)
 {
 	/* enable SYSCFG clock */
-	STM32_RCC_APB2ENR |= 1 << 0;
+	STM32_RCC_APB2ENR |= BIT(0);
 
 	/*
 	 * the DMA mapping is :
@@ -60,13 +60,13 @@ void board_config_pre_init(void)
 	 * Reference Manual
 	 */
 	/* Remap USART1 Tx from DMA channel 2 to channel 4 */
-	STM32_SYSCFG_CFGR1 |= (1 << 9);
+	STM32_SYSCFG_CFGR1 |= BIT(9);
 	/* Remap USART1 Rx from DMA channel 3 to channel 5 */
-	STM32_SYSCFG_CFGR1 |= (1 << 10);
+	STM32_SYSCFG_CFGR1 |= BIT(10);
 	/* Remap TIM3_CH1 from DMA channel 4 to channel 6 */
-	STM32_SYSCFG_CFGR1 |= (1 << 30);
+	STM32_SYSCFG_CFGR1 |= BIT(30);
 	/* Remap SPI2 Tx from DMA channel 5 to channel 7 */
-	STM32_SYSCFG_CFGR1 |= (1 << 24);
+	STM32_SYSCFG_CFGR1 |= BIT(24);
 }
 
 /******************************************************************************

@@ -426,10 +426,10 @@ static void show_pinmux(const char *name, int i, int ofs)
 	ccprintf("%08x: %s%-2d  %2d %s%s%s%s  ",
 		 GC_PINMUX_BASE_ADDR + i * 8 + ofs,
 		 name, i, sel,
-		 (ctl & (1<<2)) ? " IN" : "",
-		 (ctl & (1<<3)) ? " PD" : "",
-		 (ctl & (1<<4)) ? " PU" : "",
-		 (ctl & (1<<5)) ? " INV" : "");
+		 (ctl & BIT(2)) ? " IN" : "",
+		 (ctl & BIT(3)) ? " PD" : "",
+		 (ctl & BIT(4)) ? " PU" : "",
+		 (ctl & BIT(5)) ? " INV" : "");
 
 	print_periph(sel);
 

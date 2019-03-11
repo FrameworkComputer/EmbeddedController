@@ -39,19 +39,19 @@ void keyboard_raw_task_start(void)
 test_mockable void keyboard_raw_drive_column(int out)
 {
 	if (out == KEYBOARD_COLUMN_ALL) {
-		MCHP_KS_KSO_SEL = 1 << 5; /* KSEN=0, KSALL=1 */
+		MCHP_KS_KSO_SEL = BIT(5); /* KSEN=0, KSALL=1 */
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 		gpio_set_level(GPIO_KBD_KSO2, 1);
 #endif
 	} else if (out == KEYBOARD_COLUMN_NONE) {
-		MCHP_KS_KSO_SEL = 1 << 6; /* KSEN=1 */
+		MCHP_KS_KSO_SEL = BIT(6); /* KSEN=1 */
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 		gpio_set_level(GPIO_KBD_KSO2, 0);
 #endif
 	} else {
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 		if (out == 2) {
-			MCHP_KS_KSO_SEL = 1 << 6; /* KSEN=1 */
+			MCHP_KS_KSO_SEL = BIT(6); /* KSEN=1 */
 			gpio_set_level(GPIO_KBD_KSO2, 1);
 		} else {
 			MCHP_KS_KSO_SEL = out + CONFIG_KEYBOARD_KSO_BASE;
@@ -100,5 +100,5 @@ DECLARE_IRQ(MCHP_IRQ_KSC_INT, keyboard_raw_interrupt, 1);
 
 int keyboard_raw_is_input_low(int port, int id)
 {
-	return (MCHP_GPIO_CTL(port, id) & (1 << 24)) == 0;
+	return (MCHP_GPIO_CTL(port, id) & BIT(24)) == 0;
 }

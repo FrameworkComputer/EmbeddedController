@@ -387,7 +387,7 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
  */
 #define GP_OUT(v) (GC_USB_GGPIO_GPO_MASK & ((v) << GC_USB_GGPIO_GPO_LSB))
 #define GP_IN(v) (GC_USB_GGPIO_GPI_MASK & ((v) << GC_USB_GGPIO_GPI_LSB))
-#define GGPIO_WRITE(reg, val) GP_OUT(((1 << 15) |	      /* write bit */ \
+#define GGPIO_WRITE(reg, val) GP_OUT((BIT(15) |	      /* write bit */ \
 				      (((val) & 0xFF) << 4) | /* value */ \
 				      ((reg) & 0x0F)))	      /* register */
 #define GGPIO_READ(reg) GP_OUT((reg) & 0x0F)		      /* register */
@@ -399,14 +399,14 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 #define  USB_SEL_PHY0    0x00			/* bit 0 */
 #define  USB_SEL_PHY1    0x01			/* bit 0 */
 #define USB_IDLE_PHY_CTRL_REG 1			/* register number */
-#define  USB_FS_SUSPENDB    (1 << 7)
-#define  USB_FS_EDGE_SEL    (1 << 6)
-#define  USB_DM_PULLUP_EN   (1 << 5)
-#define  USB_DP_RPU2_ENB    (1 << 4)
-#define  USB_DP_RPU1_ENB    (1 << 3)
-#define  USB_TX_OEB         (1 << 2)
-#define  USB_TX_DPO         (1 << 1)
-#define  USB_TX_DMO         (1 << 0)
+#define  USB_FS_SUSPENDB    BIT(7)
+#define  USB_FS_EDGE_SEL    BIT(6)
+#define  USB_DM_PULLUP_EN   BIT(5)
+#define  USB_DP_RPU2_ENB    BIT(4)
+#define  USB_DP_RPU1_ENB    BIT(3)
+#define  USB_TX_OEB         BIT(2)
+#define  USB_TX_DPO         BIT(1)
+#define  USB_TX_DMO         BIT(0)
 
 #define GAHBCFG_DMA_EN                (1 << GC_USB_GAHBCFG_DMAEN_LSB)
 #define GAHBCFG_GLB_INTR_EN           (1 << GC_USB_GAHBCFG_GLBLINTRMSK_LSB)
@@ -515,8 +515,8 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 #define DXEPCTL_USBACTEP              (1 << GC_USB_DIEPCTL0_USBACTEP_LSB)
 #define DXEPCTL_MPS64                 (0 << GC_USB_DIEPCTL0_MPS_LSB)
 #define DXEPCTL_MPS(cnt)              ((cnt) << GC_USB_DIEPCTL1_MPS_LSB)
-#define DXEPCTL_SET_D0PID             (1 << 28)
-#define DXEPCTL_SET_D1PID             (1 << 29)
+#define DXEPCTL_SET_D0PID             BIT(28)
+#define DXEPCTL_SET_D1PID             BIT(29)
 
 #define DXEPTSIZ_SUPCNT(n)            ((n) << GC_USB_DOEPTSIZ0_SUPCNT_LSB)
 #define DXEPTSIZ_PKTCNT(n)            ((n) << GC_USB_DIEPTSIZ0_PKTCNT_LSB)
@@ -528,12 +528,12 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 #define DOEPDMA_BS_HOST_BSY           (3 << 30)
 #define DOEPDMA_BS_MASK               (3 << 30)
 #define DOEPDMA_RXSTS_MASK            (3 << 28)
-#define DOEPDMA_LAST                  (1 << 27)
-#define DOEPDMA_SP                    (1 << 26)
-#define DOEPDMA_IOC                   (1 << 25)
-#define DOEPDMA_SR                    (1 << 24)
-#define DOEPDMA_MTRF                  (1 << 23)
-#define DOEPDMA_NAK                   (1 << 16)
+#define DOEPDMA_LAST                  BIT(27)
+#define DOEPDMA_SP                    BIT(26)
+#define DOEPDMA_IOC                   BIT(25)
+#define DOEPDMA_SR                    BIT(24)
+#define DOEPDMA_MTRF                  BIT(23)
+#define DOEPDMA_NAK                   BIT(16)
 #define DOEPDMA_RXBYTES(n)            (((n) & 0xFFFF) << 0)
 #define DOEPDMA_RXBYTES_MASK          (0xFFFF << 0)
 
@@ -543,9 +543,9 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 #define DIEPDMA_BS_HOST_BSY           (3 << 30)
 #define DIEPDMA_BS_MASK               (3 << 30)
 #define DIEPDMA_TXSTS_MASK            (3 << 28)
-#define DIEPDMA_LAST                  (1 << 27)
-#define DIEPDMA_SP                    (1 << 26)
-#define DIEPDMA_IOC                   (1 << 25)
+#define DIEPDMA_LAST                  BIT(27)
+#define DIEPDMA_SP                    BIT(26)
+#define DIEPDMA_IOC                   BIT(25)
 #define DIEPDMA_TXBYTES(n)            (((n) & 0xFFFF) << 0)
 #define DIEPDMA_TXBYTES_MASK          (0xFFFF << 0)
 

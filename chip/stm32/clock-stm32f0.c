@@ -113,11 +113,11 @@ void config_hispeed_clock(void)
 {
 #ifdef CHIP_FAMILY_STM32F3
 	/* Ensure that HSE is ON */
-	if (!(STM32_RCC_CR & (1 << 17))) {
+	if (!(STM32_RCC_CR & BIT(17))) {
 		/* Enable HSE */
-		STM32_RCC_CR |= 1 << 16;
+		STM32_RCC_CR |= BIT(16);
 		/* Wait for HSE to be ready */
-		while (!(STM32_RCC_CR & (1 << 17)))
+		while (!(STM32_RCC_CR & BIT(17)))
 			;
 	}
 
@@ -186,11 +186,11 @@ defined(CHIP_VARIANT_STM32F070)
 		;
 #else
 	/* Ensure that HSI48 is ON */
-	if (!(STM32_RCC_CR2 & (1 << 17))) {
+	if (!(STM32_RCC_CR2 & BIT(17))) {
 		/* Enable HSI */
-		STM32_RCC_CR2 |= 1 << 16;
+		STM32_RCC_CR2 |= BIT(16);
 		/* Wait for HSI to be ready */
-		while (!(STM32_RCC_CR2 & (1 << 17)))
+		while (!(STM32_RCC_CR2 & BIT(17)))
 			;
 	}
 

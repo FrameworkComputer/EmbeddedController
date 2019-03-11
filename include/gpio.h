@@ -12,29 +12,29 @@
 
 /* Flag definitions for gpio_info and gpio_alt_func */
 /* The following are valid for both gpio_info and gpio_alt_func: */
-#define GPIO_OPEN_DRAIN    (1 << 0)  /* Output type is open-drain */
-#define GPIO_PULL_UP       (1 << 1)  /* Enable on-chip pullup */
-#define GPIO_PULL_DOWN     (1 << 2)  /* Enable on-chip pulldown */
+#define GPIO_OPEN_DRAIN    BIT(0)  /* Output type is open-drain */
+#define GPIO_PULL_UP       BIT(1)  /* Enable on-chip pullup */
+#define GPIO_PULL_DOWN     BIT(2)  /* Enable on-chip pulldown */
 /* The following are valid for gpio_alt_func only */
-#define GPIO_ANALOG        (1 << 3)  /* Set pin to analog-mode */
+#define GPIO_ANALOG        BIT(3)  /* Set pin to analog-mode */
 /* The following are valid for gpio_info only */
-#define GPIO_INPUT         (1 << 4)  /* Input */
-#define GPIO_OUTPUT        (1 << 5)  /* Output */
-#define GPIO_LOW           (1 << 6)  /* If GPIO_OUTPUT, set level low */
-#define GPIO_HIGH          (1 << 7)  /* If GPIO_OUTPUT, set level high */
-#define GPIO_INT_F_RISING  (1 << 8)  /* Interrupt on rising edge */
-#define GPIO_INT_F_FALLING (1 << 9)  /* Interrupt on falling edge */
-#define GPIO_INT_F_LOW     (1 << 11) /* Interrupt on low level */
-#define GPIO_INT_F_HIGH    (1 << 12) /* Interrupt on high level */
-#define GPIO_DEFAULT       (1 << 13) /* Don't set up on boot */
-#define GPIO_INT_DSLEEP    (1 << 14) /* Interrupt in deep sleep */
-#define GPIO_INT_SHARED    (1 << 15) /* Shared among multiple pins */
-#define GPIO_SEL_1P8V      (1 << 16) /* Support 1.8v */
-#define GPIO_ALTERNATE     (1 << 17) /* GPIO used for alternate function. */
-#define GPIO_LOCKED        (1 << 18) /* Lock GPIO output and configuration */
-#define GPIO_HIB_WAKE_HIGH (1 << 19) /* Hibernate wake on high level */
+#define GPIO_INPUT         BIT(4)  /* Input */
+#define GPIO_OUTPUT        BIT(5)  /* Output */
+#define GPIO_LOW           BIT(6)  /* If GPIO_OUTPUT, set level low */
+#define GPIO_HIGH          BIT(7)  /* If GPIO_OUTPUT, set level high */
+#define GPIO_INT_F_RISING  BIT(8)  /* Interrupt on rising edge */
+#define GPIO_INT_F_FALLING BIT(9)  /* Interrupt on falling edge */
+#define GPIO_INT_F_LOW     BIT(11) /* Interrupt on low level */
+#define GPIO_INT_F_HIGH    BIT(12) /* Interrupt on high level */
+#define GPIO_DEFAULT       BIT(13) /* Don't set up on boot */
+#define GPIO_INT_DSLEEP    BIT(14) /* Interrupt in deep sleep */
+#define GPIO_INT_SHARED    BIT(15) /* Shared among multiple pins */
+#define GPIO_SEL_1P8V      BIT(16) /* Support 1.8v */
+#define GPIO_ALTERNATE     BIT(17) /* GPIO used for alternate function. */
+#define GPIO_LOCKED        BIT(18) /* Lock GPIO output and configuration */
+#define GPIO_HIB_WAKE_HIGH BIT(19) /* Hibernate wake on high level */
 #ifdef CONFIG_GPIO_POWER_DOWN
-#define GPIO_POWER_DOWN    (1 << 20) /* Pin and pad is powered off */
+#define GPIO_POWER_DOWN    BIT(20) /* Pin and pad is powered off */
 #endif
 
 /* Common flag combinations */

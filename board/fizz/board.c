@@ -703,7 +703,7 @@ static const struct charge_port_info bj_adapters[] = {
  * KBL-U Celeron 3965	7	65
  * KBL-U Celeron 3865	0	65
  */
-#define BJ_ADAPTER_90W_MASK (1 << 4 | 1 << 5 | 1 << 6)
+#define BJ_ADAPTER_90W_MASK (BIT(4) | BIT(5) | BIT(6))
 
 static void setup_bj(void)
 {

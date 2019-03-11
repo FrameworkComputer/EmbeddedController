@@ -35,7 +35,7 @@
 #define  LP8555_REG_CURRENT_MAXCURR_50MA  0x07
 #define LP8555_REG_STEP           0x15
 #define  LP8555_REG_STEP_STEP_0MS           (0 << 0)
-#define  LP8555_REG_STEP_STEP_8MS           (1 << 0)
+#define  LP8555_REG_STEP_STEP_8MS           BIT(0)
 #define  LP8555_REG_STEP_STEP_16MS          (2 << 0)
 #define  LP8555_REG_STEP_STEP_24MS          (3 << 0)
 #define  LP8555_REG_STEP_STEP_28MS          (4 << 0)
@@ -43,7 +43,7 @@
 #define  LP8555_REG_STEP_STEP_100MS         (6 << 0)
 #define  LP8555_REG_STEP_STEP_200MS         (7 << 0)
 #define  LP8555_REG_STEP_PWM_IN_HYST_NONE   (0 << 3)
-#define  LP8555_REG_STEP_PWM_IN_HYST_1LSB   (1 << 3)
+#define  LP8555_REG_STEP_PWM_IN_HYST_1LSB   BIT(3)
 #define  LP8555_REG_STEP_PWM_IN_HYST_2LSB   (2 << 3)
 #define  LP8555_REG_STEP_PWM_IN_HYST_4LSB   (3 << 3)
 #define  LP8555_REG_STEP_PWM_IN_HYST_8LSB   (4 << 3)
@@ -51,7 +51,7 @@
 #define  LP8555_REG_STEP_PWM_IN_HYST_32LSB  (6 << 3)
 #define  LP8555_REG_STEP_PWM_IN_HYST_64LSB  (7 << 3)
 #define  LP8555_REG_STEP_SMOOTH_NONE        (0 << 6)
-#define  LP8555_REG_STEP_SMOOTH_LIGHT       (1 << 6)
+#define  LP8555_REG_STEP_SMOOTH_LIGHT       BIT(6)
 #define  LP8555_REG_STEP_SMOOTH_MEDIUM      (2 << 6)
 #define  LP8555_REG_STEP_SMOOTH_HEAVY       (3 << 6)
 

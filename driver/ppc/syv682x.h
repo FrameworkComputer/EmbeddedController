@@ -22,13 +22,13 @@
 #define SYV682X_CONTROL_4_REG		0x04
 
 /* Status Register */
-#define SYV682X_STATUS_VSAFE_5V		(1 << 1)
-#define SYV682X_STATUS_VSAFE_0V		(1 << 0)
+#define SYV682X_STATUS_VSAFE_5V		BIT(1)
+#define SYV682X_STATUS_VSAFE_0V		BIT(0)
 
 /* Control Register 1 */
-#define SYV682X_CONTROL_1_CH_SEL	(1 << 1)
-#define SYV682X_CONTROL_1_HV_DR		(1 << 2)
-#define SYV682X_CONTROL_1_PWR_ENB	(1 << 7)
+#define SYV682X_CONTROL_1_CH_SEL	BIT(1)
+#define SYV682X_CONTROL_1_HV_DR		BIT(2)
+#define SYV682X_CONTROL_1_PWR_ENB	BIT(7)
 
 #define SYV682X_ILIM_MASK		0x18
 #define SYV682X_ILIM_BIT_SHIFT		3
@@ -38,8 +38,8 @@
 #define SYV682X_ILIM_3_30		3
 
 /* Control Register 2 */
-#define SYV682X_CONTROL_2_SDSG		(1 << 1)
-#define SYV682X_CONTROL_2_FDSG		(1 << 0)
+#define SYV682X_CONTROL_2_SDSG		BIT(1)
+#define SYV682X_CONTROL_2_FDSG		BIT(0)
 
 /* Control Register 3 */
 #define SYV682X_OVP_MASK		0x70
@@ -54,13 +54,13 @@
 #define SYV682X_OVP_23_7		7
 
 /* Control Register 4 */
-#define SYV682X_CONTROL_4_CC1_BPS	(1 << 7)
-#define SYV682X_CONTROL_4_CC2_BPS	(1 << 6)
-#define SYV682X_CONTROL_4_VCONN1	(1 << 5)
-#define SYV682X_CONTROL_4_VCONN2	(1 << 4)
-#define SYV682X_CONTROL_4_VBAT_OVP	(1 << 3)
-#define SYV682X_CONTROL_4_VCONN_OCP	(1 << 2)
-#define SYV682X_CONTROL_4_CC_FRS	(1 << 1)
+#define SYV682X_CONTROL_4_CC1_BPS	BIT(7)
+#define SYV682X_CONTROL_4_CC2_BPS	BIT(6)
+#define SYV682X_CONTROL_4_VCONN1	BIT(5)
+#define SYV682X_CONTROL_4_VCONN2	BIT(4)
+#define SYV682X_CONTROL_4_VBAT_OVP	BIT(3)
+#define SYV682X_CONTROL_4_VCONN_OCP	BIT(2)
+#define SYV682X_CONTROL_4_CC_FRS	BIT(1)
 
 struct ppc_drv;
 extern const struct ppc_drv syv682x_drv;

@@ -312,7 +312,7 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 		rv = bq27541_read(REG_PROTECTOR, &val);
 		if (rv)
 			return BATTERY_DISCONNECT_ERROR;
-		if (!(val & (1 << 6))) {
+		if (!(val & BIT(6))) {
 			not_disconnected = 1;
 			return BATTERY_NOT_DISCONNECTED;
 		}

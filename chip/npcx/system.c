@@ -25,7 +25,7 @@
 
 /* Delay after writing TTC for value to latch */
 #define MTC_TTC_LOAD_DELAY_US 250
-#define MTC_ALARM_MASK     ((1 << 25) - 1)
+#define MTC_ALARM_MASK     (BIT(25) - 1)
 #define MTC_WUI_GROUP      MIWU_GROUP_4
 #define MTC_WUI_MASK       MASK_PIN7
 
@@ -266,7 +266,7 @@ void system_set_rtc(uint32_t seconds)
 #define BKUP_LREG3		(BBRM_DATA_INDEX_PANIC_BKUP + 16)
 #define BKUP_LREG4		(BBRM_DATA_INDEX_PANIC_BKUP + 20)
 
-#define BKUP_PANIC_DATA_VALID	(1 << 0)
+#define BKUP_PANIC_DATA_VALID	BIT(0)
 
 void chip_panic_data_backup(void)
 {

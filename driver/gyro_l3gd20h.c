@@ -75,7 +75,7 @@ static inline int get_ctrl_reg(enum motionsensor_type type)
 
 static inline int get_xyz_reg(enum motionsensor_type type)
 {
-	return L3GD20_OUT_X_L | (1 << 7);
+	return L3GD20_OUT_X_L | BIT(7);
 }
 
 /**
@@ -240,8 +240,8 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	if (ret != EC_SUCCESS)
 		goto gyro_cleanup;
 
-	val |= (1 << 4); /* high-pass filter enabled */
-	val |= (1 << 0); /* data in data reg are high-pass filtered */
+	val |= BIT(4); /* high-pass filter enabled */
+	val |= BIT(0); /* data in data reg are high-pass filtered */
 	ret = raw_write8(s->port, s->addr, L3GD20_CTRL_REG5, val);
 	if (ret != EC_SUCCESS)
 		goto gyro_cleanup;

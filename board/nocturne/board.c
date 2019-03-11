@@ -544,7 +544,7 @@ static void board_pmic_init(void)
 	/* Mask V5A_DS3_PG from PMIC PGMASK1. */
 	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x18, &pgmask1))
 		return;
-	pgmask1 |= (1 << 2);
+	pgmask1 |= BIT(2);
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x18, pgmask1);
 
 	board_pmic_disable_slp_s0_vr_decay();
@@ -645,7 +645,7 @@ static void board_report_pmic_fault(const char *str)
 	    != EC_SUCCESS)
 		return;
 
-	if (!(vrfault & (1 << 4)))
+	if (!(vrfault & BIT(4)))
 		return;
 
 	/* VRFAULT has occurred, print VRFAULT status bits. */
@@ -661,7 +661,7 @@ static void board_report_pmic_fault(const char *str)
 		pwrstat2);
 
 	/* Clear all faults -- Write 1 to clear. */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x8, (1 << 4));
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x8, BIT(4));
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x16, pwrstat1);
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x17, pwrstat2);
 
@@ -799,7 +799,7 @@ uint16_t tcpc_get_alert_status(void)
 	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL)) {
 		if (!tcpc_read16(0, TCPC_REG_ALERT, &regval)) {
 			/* The TCPCI spec says to ignore bits 14:12. */
-			regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
+			regval &= ~(BIT(14) | BIT(13) | BIT(12));
 
 			if (regval)
 				status |= PD_STATUS_TCPC_ALERT_0;
@@ -809,7 +809,7 @@ uint16_t tcpc_get_alert_status(void)
 	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL)) {
 		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
 			/* TCPCI spec says to ignore bits 14:12. */
-			regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
+			regval &= ~(BIT(14) | BIT(13) | BIT(12));
 
 			if (regval)
 				status |= PD_STATUS_TCPC_ALERT_1;

@@ -81,15 +81,15 @@ int fan_get_duty(int ch)
 
 int fan_get_rpm_mode(int ch)
 {
-	return !!(MEC1322_FAN_CFG1 & (1 << 7));
+	return !!(MEC1322_FAN_CFG1 & BIT(7));
 }
 
 void fan_set_rpm_mode(int ch, int rpm_mode)
 {
 	if (rpm_mode)
-		MEC1322_FAN_CFG1 |= 1 << 7;
+		MEC1322_FAN_CFG1 |= BIT(7);
 	else
-		MEC1322_FAN_CFG1 &= ~(1 << 7);
+		MEC1322_FAN_CFG1 &= ~BIT(7);
 	clear_status();
 }
 
@@ -117,7 +117,7 @@ enum fan_status fan_get_status(int ch)
 {
 	uint8_t sts = MEC1322_FAN_STATUS;
 
-	if (sts & ((1 << 5) | (1 << 1)))
+	if (sts & (BIT(5) | BIT(1)))
 		return FAN_STATUS_FRUSTRATED;
 	if (fan_get_rpm_actual(ch) == 0)
 		return FAN_STATUS_STOPPED;

@@ -18,15 +18,15 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define ANX7447_VENDOR_ALERT    (1 << 15)
+#define ANX7447_VENDOR_ALERT    BIT(15)
 
 #define ANX7447_REG_STATUS      0x82
-#define ANX7447_REG_STATUS_LINK (1 << 0)
+#define ANX7447_REG_STATUS_LINK BIT(0)
 
 #define ANX7447_REG_HPD         0x83
-#define ANX7447_REG_HPD_HIGH    (1 << 0)
-#define ANX7447_REG_HPD_IRQ     (1 << 1)
-#define ANX7447_REG_HPD_ENABLE  (1 << 2)
+#define ANX7447_REG_HPD_HIGH    BIT(0)
+#define ANX7447_REG_HPD_IRQ     BIT(1)
+#define ANX7447_REG_HPD_ENABLE  BIT(2)
 
 #define vsafe5v_min (3800/25)
 #define vsafe0v_max (800/25)

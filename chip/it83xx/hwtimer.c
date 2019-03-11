@@ -81,7 +81,7 @@ static void free_run_timer_overflow(void)
 		/* set timer counter register */
 		IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_H) = 0xffffffff;
 		/* bit[1], timer reset */
-		IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= (1 << 1);
+		IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= BIT(1);
 	}
 	/* w/c interrupt status */
 	task_clear_pending_irq(et_ctrl_regs[FREE_EXT_TIMER_H].irq);
@@ -114,14 +114,14 @@ void __hw_clock_source_set(uint32_t ts)
 	/* counting down timer, microseconds to timer counter register */
 	IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_H) = 0xffffffff - ts;
 	/* bit[1], timer reset */
-	IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= (1 << 1);
+	IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= BIT(1);
 }
 
 void __hw_clock_event_set(uint32_t deadline)
 {
 	uint32_t wait;
 	/* bit0, disable event timer */
-	IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) &= ~(1 << 0);
+	IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) &= ~BIT(0);
 	/* w/c interrupt status */
 	event_timer_clear_pending_isr();
 	/* microseconds to timer counter */
@@ -139,7 +139,7 @@ uint32_t __hw_clock_event_get(void)
 	uint32_t next_event_us = __hw_clock_source_read();
 
 	/* bit0, event timer is enabled */
-	if (IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) & (1 << 0)) {
+	if (IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) & BIT(0)) {
 		/* timer counter observation value to microseconds */
 		next_event_us += EVENT_TIMER_COUNT_TO_US(
 #ifdef IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
@@ -161,7 +161,7 @@ void __hw_clock_event_clear(void)
 int __hw_clock_source_init(uint32_t start_t)
 {
 	/* bit3, timer 3 and timer 4 combinational mode */
-	IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= (1 << 3);
+	IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= BIT(3);
 	/* init free running timer (timer 4, TIMER_H), clock source is 8mhz */
 	ext_timer_ms(FREE_EXT_TIMER_H, EXT_PSR_8M_HZ, 0, 1, 0xffffffff, 1, 1);
 	/* 1us counter setting (timer 3, TIMER_L) */
@@ -181,7 +181,7 @@ static void __hw_clock_source_irq(void)
 	/* SW/HW interrupt of event timer. */
 	if (irq == et_ctrl_regs[EVENT_EXT_TIMER].irq) {
 		IT83XX_ETWD_ETXCNTLR(EVENT_EXT_TIMER) = 0xffffffff;
-		IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) |= (1 << 1);
+		IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) |= BIT(1);
 		event_timer_clear_pending_isr();
 		process_timers(0);
 		return;

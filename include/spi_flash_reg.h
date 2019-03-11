@@ -15,21 +15,21 @@
  * Common register bits for SPI flash. All registers / bits may not be valid
  * for all parts.
  */
-#define SPI_FLASH_SR2_SUS               (1 << 7)
-#define SPI_FLASH_SR2_CMP               (1 << 6)
-#define SPI_FLASH_SR2_LB3               (1 << 5)
-#define SPI_FLASH_SR2_LB2               (1 << 4)
-#define SPI_FLASH_SR2_LB1               (1 << 3)
-#define SPI_FLASH_SR2_QE                (1 << 1)
-#define SPI_FLASH_SR2_SRP1              (1 << 0)
-#define SPI_FLASH_SR1_SRP0              (1 << 7)
-#define SPI_FLASH_SR1_SEC               (1 << 6)
-#define SPI_FLASH_SR1_TB                (1 << 5)
-#define SPI_FLASH_SR1_BP2               (1 << 4)
-#define SPI_FLASH_SR1_BP1               (1 << 3)
-#define SPI_FLASH_SR1_BP0               (1 << 2)
-#define SPI_FLASH_SR1_WEL               (1 << 1)
-#define SPI_FLASH_SR1_BUSY              (1 << 0)
+#define SPI_FLASH_SR2_SUS               BIT(7)
+#define SPI_FLASH_SR2_CMP               BIT(6)
+#define SPI_FLASH_SR2_LB3               BIT(5)
+#define SPI_FLASH_SR2_LB2               BIT(4)
+#define SPI_FLASH_SR2_LB1               BIT(3)
+#define SPI_FLASH_SR2_QE                BIT(1)
+#define SPI_FLASH_SR2_SRP1              BIT(0)
+#define SPI_FLASH_SR1_SRP0              BIT(7)
+#define SPI_FLASH_SR1_SEC               BIT(6)
+#define SPI_FLASH_SR1_TB                BIT(5)
+#define SPI_FLASH_SR1_BP2               BIT(4)
+#define SPI_FLASH_SR1_BP1               BIT(3)
+#define SPI_FLASH_SR1_BP0               BIT(2)
+#define SPI_FLASH_SR1_WEL               BIT(1)
+#define SPI_FLASH_SR1_BUSY              BIT(0)
 
 /* SR2 register existence based upon chip */
 #ifdef CONFIG_SPI_FLASH_W25X40

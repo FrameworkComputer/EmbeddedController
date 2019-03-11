@@ -11,17 +11,17 @@
 /* Mode register for setting mux */
 #define PS874X_REG_MODE 0x00
 #ifdef CONFIG_USB_MUX_PS8740
-	#define PS874X_MODE_POLARITY_INVERTED (1 << 4)
-	#define PS874X_MODE_USB_ENABLED       (1 << 5)
-	#define PS874X_MODE_DP_ENABLED        (1 << 6)
-	#define PS874X_MODE_POWER_DOWN        (1 << 7)
+	#define PS874X_MODE_POLARITY_INVERTED BIT(4)
+	#define PS874X_MODE_USB_ENABLED       BIT(5)
+	#define PS874X_MODE_DP_ENABLED        BIT(6)
+	#define PS874X_MODE_POWER_DOWN        BIT(7)
 #elif defined(CONFIG_USB_MUX_PS8743)
-	#define PS874X_MODE_POLARITY_INVERTED (1 << 2)
-	#define PS874X_MODE_FLIP_PIN_ENABLED  (1 << 3)
-	#define PS874X_MODE_USB_ENABLED       (1 << 4)
-	#define PS874X_MODE_CE_USB_ENABLED    (1 << 5)
-	#define PS874X_MODE_DP_ENABLED        (1 << 6)
-	#define PS874X_MODE_CE_DP_ENABLED     (1 << 7)
+	#define PS874X_MODE_POLARITY_INVERTED BIT(2)
+	#define PS874X_MODE_FLIP_PIN_ENABLED  BIT(3)
+	#define PS874X_MODE_USB_ENABLED       BIT(4)
+	#define PS874X_MODE_CE_USB_ENABLED    BIT(5)
+	#define PS874X_MODE_DP_ENABLED        BIT(6)
+	#define PS874X_MODE_CE_DP_ENABLED     BIT(7)
 	/* To reset the state machine to default */
 	#define PS874X_MODE_POWER_DOWN (PS874X_MODE_CE_USB_ENABLED |  \
 					PS874X_MODE_CE_DP_ENABLED)
@@ -29,10 +29,10 @@
 
 /* Status register for checking mux state */
 #define PS874X_REG_STATUS 0x09
-#define PS874X_STATUS_POLARITY_INVERTED (1 << 2)
-#define PS874X_STATUS_USB_ENABLED       (1 << 3)
-#define PS874X_STATUS_DP_ENABLED        (1 << 4)
-#define PS874X_STATUS_HPD_ASSERTED      (1 << 7)
+#define PS874X_STATUS_POLARITY_INVERTED BIT(2)
+#define PS874X_STATUS_USB_ENABLED       BIT(3)
+#define PS874X_STATUS_DP_ENABLED        BIT(4)
+#define PS874X_STATUS_HPD_ASSERTED      BIT(7)
 
 /* Chip ID / revision registers and expected fused values */
 #define PS874X_REG_REVISION_ID1 0xf0
@@ -62,7 +62,7 @@
 	#define PS874X_USB_EQ_TX_9_5_DB  0xc0
 	#define PS874X_USB_EQ_TX_7_5_DB  0xe0
 	#define PS874X_USB_EQ_TERM_100_OHM (0 << 2)
-	#define PS874X_USB_EQ_TERM_85_OHM  (1 << 2)
+	#define PS874X_USB_EQ_TERM_85_OHM  BIT(2)
 #elif defined(CONFIG_USB_MUX_PS8743)
 	#define PS874X_USB_EQ_TX_12_8_DB 0x00
 	#define PS874X_USB_EQ_TX_17_DB   0x20

@@ -214,7 +214,7 @@ static inline task_ *__task_id_to_ptr(task_id_t id)
 void __ram_code interrupt_disable(void)
 {
 	/* Mask all interrupts, only keep division by zero exception */
-	uint32_t val = (1 << 30);
+	uint32_t val = BIT(30);
 	asm volatile ("mtsr %0, $INT_MASK" : : "r"(val));
 	asm volatile ("dsb");
 }
@@ -222,7 +222,7 @@ void __ram_code interrupt_disable(void)
 void __ram_code interrupt_enable(void)
 {
 	/* Enable HW2 ~ HW15 and division by zero exception interrupts */
-	uint32_t val = ((1 << 30) | 0xFFFC);
+	uint32_t val = (BIT(30) | 0xFFFC);
 	asm volatile ("mtsr %0, $INT_MASK" : : "r"(val));
 }
 
@@ -600,7 +600,7 @@ static void ivic_init_irqs(void)
 	 * bit0 @ INT_CTRL = 0,
 	 * Interrupts still keep programmable priority level.
 	 */
-	set_int_ctrl((get_int_ctrl() & ~(1 << 0)));
+	set_int_ctrl((get_int_ctrl() & ~BIT(0)));
 
 	/*
 	 * Re-enable global interrupts in case they're disabled.  On a reboot,

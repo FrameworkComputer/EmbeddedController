@@ -55,16 +55,16 @@
 #define REG_MODELCFG                0xdb
 
 /* Status reg (0x00) flags */
-#define STATUS_POR                  (1 << 1)
-#define STATUS_IMN                  (1 << 2)
-#define STATUS_BST                  (1 << 3)
-#define STATUS_IMX                  (1 << 6)
-#define STATUS_VMN                  (1 << 8)
-#define STATUS_TMN                  (1 << 9)
-#define STATUS_SMN                  (1 << 10)
-#define STATUS_VMX                  (1 << 12)
-#define STATUS_TMX                  (1 << 13)
-#define STATUS_SMX                  (1 << 14)
+#define STATUS_POR                  BIT(1)
+#define STATUS_IMN                  BIT(2)
+#define STATUS_BST                  BIT(3)
+#define STATUS_IMX                  BIT(6)
+#define STATUS_VMN                  BIT(8)
+#define STATUS_TMN                  BIT(9)
+#define STATUS_SMN                  BIT(10)
+#define STATUS_VMX                  BIT(12)
+#define STATUS_TMX                  BIT(13)
+#define STATUS_SMX                  BIT(14)
 #define STATUS_ALL_ALRT                                                        \
 	(STATUS_IMN | STATUS_IMX | STATUS_VMN | STATUS_VMX | STATUS_TMN |      \
 	 STATUS_TMX | STATUS_SMN | STATUS_SMX)
@@ -76,12 +76,12 @@
 #define IALRT_DISABLE               0x7f80
 
 /* Config reg (0x1d) flags */
-#define CONF_AEN                    (1 << 2)
-#define CONF_IS                     (1 << 11)
-#define CONF_VS                     (1 << 12)
-#define CONF_TS                     (1 << 13)
-#define CONF_SS                     (1 << 14)
-#define CONF_TSEL                   (1 << 15)
+#define CONF_AEN                    BIT(2)
+#define CONF_IS                     BIT(11)
+#define CONF_VS                     BIT(12)
+#define CONF_TS                     BIT(13)
+#define CONF_SS                     BIT(14)
+#define CONF_TSEL                   BIT(15)
 #define CONF_ALL_STICKY             (CONF_IS | CONF_VS | CONF_TS | CONF_SS)
 
 /* FStat reg (0x3d) flags */

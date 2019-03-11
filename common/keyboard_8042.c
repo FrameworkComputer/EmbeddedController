@@ -126,7 +126,7 @@ static enum scancode_set_list scancode_set = SCANCODE_SET_2;
  *   the inter-char delay = (2 ** B) * (D + 8) / 240 (sec)
  * Default: 500ms delay, 10.9 chars/sec.
  */
-#define DEFAULT_TYPEMATIC_VALUE ((1 << 5) | (1 << 3) | (3 << 0))
+#define DEFAULT_TYPEMATIC_VALUE (BIT(5) | BIT(3) | (3 << 0))
 static uint8_t typematic_value_from_host;
 static int typematic_first_delay;
 static int typematic_inter_delay;
@@ -531,7 +531,7 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 	case STATE_WRITE_OUTPUT_PORT:
 		CPRINTS5("KB eaten by STATE_WRITE_OUTPUT_PORT: 0x%02x",
 			 data);
-		A20_status = (data & (1 << 1)) ? 1 : 0;
+		A20_status = (data & BIT(1)) ? 1 : 0;
 		data_port_state = STATE_NORMAL;
 		break;
 
@@ -696,9 +696,9 @@ static int handle_keyboard_command(uint8_t command, uint8_t *output)
 
 	case I8042_READ_OUTPUT_PORT:
 		output[out_len++] =
-			(lpc_keyboard_input_pending() ? (1 << 5) : 0) |
-			(lpc_keyboard_has_char() ? (1 << 4) : 0) |
-			(A20_status ? (1 << 1) : 0) |
+			(lpc_keyboard_input_pending() ? BIT(5) : 0) |
+			(lpc_keyboard_has_char() ? BIT(4) : 0) |
+			(A20_status ? BIT(1) : 0) |
 			1;  /* Main processor in normal mode */
 		break;
 
@@ -756,7 +756,7 @@ static int handle_keyboard_command(uint8_t command, uint8_t *output)
 			 *   b0=0 to reset CPU, see I8042_SYSTEM_RESET above
 			 *   b1=0 to disable A20 line
 			 */
-			A20_status = command & (1 << 1) ? 1 : 0;
+			A20_status = command & BIT(1) ? 1 : 0;
 		} else {
 			CPRINTS("KB unsupported cmd: 0x%02x", command);
 			reset_rate_and_delay();

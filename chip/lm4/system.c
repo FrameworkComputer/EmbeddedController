@@ -30,9 +30,9 @@ enum hibdata_index {
 };
 
 /* Flags for HIBDATA_INDEX_WAKE */
-#define HIBDATA_WAKE_RTC        (1 << 0)  /* RTC alarm */
-#define HIBDATA_WAKE_HARD_RESET (1 << 1)  /* Hard reset via short RTC alarm */
-#define HIBDATA_WAKE_PIN        (1 << 2)  /* Wake pin */
+#define HIBDATA_WAKE_RTC        BIT(0)  /* RTC alarm */
+#define HIBDATA_WAKE_HARD_RESET BIT(1)  /* Hard reset via short RTC alarm */
+#define HIBDATA_WAKE_PIN        BIT(2)  /* Wake pin */
 
 /*
  * Time to hibernate to trigger a power-on reset.  50 ms is sufficient for the

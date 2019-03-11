@@ -76,8 +76,8 @@
 
 /* SCP to SPM interrupt */
 #define SCP_SPM_INT			REG32(SCP_CFG_BASE + 0x20)
-#define   SPM_INT_A2SPM			(1 << 0)
-#define   SPM_INT_B2SPM			(1 << 1)
+#define   SPM_INT_A2SPM			BIT(0)
+#define   SPM_INT_B2SPM			BIT(1)
 #define SCP_SPM_INT2			REG32(SCP_CFG_BASE + 0x24)
 
 /*
@@ -101,8 +101,8 @@
  */
 #define SCP_PWRON_STATE			SCP_GPR[1]
 #define   PWRON_DEFAULT			0xdee80000
-#define   PWRON_WATCHDOG		(1 << 0)
-#define   PWRON_RESET			(1 << 1)
+#define   PWRON_WATCHDOG		BIT(0)
+#define   PWRON_RESET			BIT(1)
 /* AP defined features */
 #define SCP_EXPECTED_FREQ		SCP_GPR[3]
 #define SCP_CURRENT_FREQ		SCP_GPR[4]
@@ -119,17 +119,17 @@
 #define CORE_REG_PSP			REG32(SCP_CFG_BASE + 0xB0)
 #define CORE_REG_PC			REG32(SCP_CFG_BASE + 0xB4)
 #define SCP_SLP_PROTECT_CFG		REG32(SCP_CFG_BASE + 0xC8)
-#define   P_CACHE_SLP_PROT_EN		(1 << 3)
-#define   D_CACHE_SLP_PROT_EN		(1 << 4)
+#define   P_CACHE_SLP_PROT_EN		BIT(3)
+#define   D_CACHE_SLP_PROT_EN		BIT(4)
 #define SCP_ONE_TIME_LOCK		REG32(SCP_CFG_BASE + 0xDC)
 #define SCP_SECURE_CTRL			REG32(SCP_CFG_BASE + 0xE0)
-#define   ENABLE_SPM_MASK_VREQ		(1 << 28)
-#define   DISABLE_REMAP			(1 << 22)
-#define   DISABLE_JTAG			(1 << 21)
-#define   DISABLE_AP_TCM		(1 << 20)
+#define   ENABLE_SPM_MASK_VREQ		BIT(28)
+#define   DISABLE_REMAP			BIT(22)
+#define   DISABLE_JTAG			BIT(21)
+#define   DISABLE_AP_TCM		BIT(20)
 #define SCP_SYS_CTRL			REG32(SCP_CFG_BASE + 0xE4)
-#define   DDREN_FIX_VALUE		(1 << 28)
-#define   AUTO_DDREN			(1 << 18)
+#define   DDREN_FIX_VALUE		BIT(28)
+#define   AUTO_DDREN			BIT(18)
 
 /* Memory remap control */
 /*
@@ -191,7 +191,7 @@
 #define SCP_INTC_BASE			(SCP_CFG_BASE + 0x2000)
 #define SCP_INTC_IRQ_STATUS		REG32(SCP_INTC_BASE)
 #define SCP_INTC_IRQ_ENABLE		REG32(SCP_INTC_BASE + 0x04)
-#define   IPC0_IRQ_EN			(1 << 0)
+#define   IPC0_IRQ_EN			BIT(0)
 #define SCP_INTC_IRQ_OUTPUT		REG32(SCP_INTC_BASE + 0x08)
 #define SCP_INTC_IRQ_WAKEUP		REG32(SCP_INTC_BASE + 0x0C)
 #define SCP_INTC_NMI			REG32(SCP_INTC_BASE + 0x10)
@@ -210,12 +210,12 @@
 #define SCP_TIMER_RESET_VAL(n)		REG32(SCP_TIMER_BASE(n) + 0x04)
 #define SCP_TIMER_VAL(n)		REG32(SCP_TIMER_BASE(n) + 0x08)
 #define SCP_TIMER_IRQ_CTRL(n)		REG32(SCP_TIMER_BASE(n) + 0x0C)
-#define   TIMER_IRQ_ENABLE		(1 << 0)
-#define   TIMER_IRQ_STATUS		(1 << 4)
-#define   TIMER_IRQ_CLEAR		(1 << 5)
+#define   TIMER_IRQ_ENABLE		BIT(0)
+#define   TIMER_IRQ_STATUS		BIT(4)
+#define   TIMER_IRQ_CLEAR		BIT(5)
 #define SCP_TIMER_CLK_SEL(n)		REG32(SCP_TIMER_BASE(n) + 0x40)
 #define   TIMER_CLK_32K			(0 << 4)
-#define   TIMER_CLK_26M			(1 << 4)
+#define   TIMER_CLK_26M			BIT(4)
 #define   TIMER_CLK_BCLK		(2 << 4)
 #define   TIMER_CLK_PCLK		(3 << 4)
 #define   TIMER_CLK_MASK		(3 << 4)
@@ -228,9 +228,9 @@
 #define SCP_OSTIMER_VAL_H		REG32(SCP_OSTIMER_BASE + 0x10)
 #define SCP_OSTIMER_TVAL		REG32(SCP_OSTIMER_BASE + 0x14)
 #define SCP_OSTIMER_IRQ_ACK		REG32(SCP_OSTIMER_BASE + 0x18)
-#define   OSTIMER_LATCH0_EN		(1 << 5)
-#define   OSTIMER_LATCH1_EN		(1 << 13)
-#define   OSTIMER_LATCH2_EN		(1 << 21)
+#define   OSTIMER_LATCH0_EN		BIT(5)
+#define   OSTIMER_LATCH1_EN		BIT(13)
+#define   OSTIMER_LATCH2_EN		BIT(21)
 #define SCP_OSTIMER_LATCH_CTRL		REG32(SCP_OSTIMER_BASE + 0x20)
 #define SCP_OSTIMER_LATCH0_L		REG32(SCP_OSTIMER_BASE + 0x24)
 #define SCP_OSTIMER_LATCH0_H		REG32(SCP_OSTIMER_BASE + 0x28)
@@ -248,11 +248,11 @@
 #define   CLK_SEL_ULPOSC_2		3
 
 #define SCP_CLK_EN			REG32(SCP_CLK_BASE + 0x04)
-#define   EN_CLK_SYS			(1 << 0) /* System clock */
-#define   EN_CLK_HIGH			(1 << 1) /* ULPOSC */
-#define   CG_CLK_HIGH			(1 << 2)
-#define   EN_SYS_IRQ			(1 << 16)
-#define   EN_HIGH_IRQ			(1 << 17)
+#define   EN_CLK_SYS			BIT(0) /* System clock */
+#define   EN_CLK_HIGH			BIT(1) /* ULPOSC */
+#define   CG_CLK_HIGH			BIT(2)
+#define   EN_SYS_IRQ			BIT(16)
+#define   EN_HIGH_IRQ			BIT(17)
 #define SCP_CLK_SAFE_ACK		REG32(SCP_CLK_BASE + 0x08)
 #define SCP_CLK_ACK			REG32(SCP_CLK_BASE + 0x0C)
 #define SCP_CLK_IRQ_ACK			REG32(SCP_CLK_BASE + 0x10)
@@ -283,43 +283,43 @@
  *     voltage after returning from  sleep mode.
  */
 #define SCP_CLK_SLEEP_CTRL		REG32(SCP_CLK_BASE + 0x20)
-#define   EN_SLEEP_CTRL			(1 << 0)
+#define   EN_SLEEP_CTRL			BIT(0)
 #define   VREQ_COUNTER_MASK		0xfe
 #define   VREQ_COUNTER_VAL(v)		(((v) << 1) & VREQ_COUNTER_MASK)
-#define   SPM_SLEEP_MODE		(1 << 8)
-#define   SPM_SLEEP_MODE_CLK_AO		(1 << 9)
+#define   SPM_SLEEP_MODE		BIT(8)
+#define   SPM_SLEEP_MODE_CLK_AO		BIT(9)
 #define SCP_CLK_DIV_SEL			REG32(SCP_CLK_BASE + 0x24)
 #define SCP_CLK_DEBUG			REG32(SCP_CLK_BASE + 0x28)
 #define SCP_CLK_SRAM_POWERDOWN		REG32(SCP_CLK_BASE + 0x2C)
 #define SCP_CLK_GATE			REG32(SCP_CLK_BASE + 0x30)
-#define   CG_TIMER_M			(1 << 0)
-#define   CG_TIMER_B			(1 << 1)
-#define   CG_MAD_M			(1 << 2)
-#define   CG_I2C_M			(1 << 3)
-#define   CG_I2C_B			(1 << 4)
-#define   CG_GPIO_M			(1 << 5)
-#define   CG_AP2P_M			(1 << 6)
-#define   CG_UART_M			(1 << 7)
-#define   CG_UART_B			(1 << 8)
-#define   CG_UART_RSTN			(1 << 9)
-#define   CG_UART1_M			(1 << 10)
-#define   CG_UART1_B			(1 << 11)
-#define   CG_UART1_RSTN			(1 << 12)
-#define   CG_SPI0			(1 << 13)
-#define   CG_SPI1			(1 << 14)
-#define   CG_SPI2			(1 << 15)
-#define   CG_DMA_CH0			(1 << 16)
-#define   CG_DMA_CH1			(1 << 17)
-#define   CG_DMA_CH2			(1 << 18)
-#define   CG_DMA_CH3			(1 << 19)
-#define   CG_TWAM			(1 << 20)
-#define   CG_CACHE_I_CTRL		(1 << 21)
-#define   CG_CACHE_D_CTRL		(1 << 22)
+#define   CG_TIMER_M			BIT(0)
+#define   CG_TIMER_B			BIT(1)
+#define   CG_MAD_M			BIT(2)
+#define   CG_I2C_M			BIT(3)
+#define   CG_I2C_B			BIT(4)
+#define   CG_GPIO_M			BIT(5)
+#define   CG_AP2P_M			BIT(6)
+#define   CG_UART_M			BIT(7)
+#define   CG_UART_B			BIT(8)
+#define   CG_UART_RSTN			BIT(9)
+#define   CG_UART1_M			BIT(10)
+#define   CG_UART1_B			BIT(11)
+#define   CG_UART1_RSTN			BIT(12)
+#define   CG_SPI0			BIT(13)
+#define   CG_SPI1			BIT(14)
+#define   CG_SPI2			BIT(15)
+#define   CG_DMA_CH0			BIT(16)
+#define   CG_DMA_CH1			BIT(17)
+#define   CG_DMA_CH2			BIT(18)
+#define   CG_DMA_CH3			BIT(19)
+#define   CG_TWAM			BIT(20)
+#define   CG_CACHE_I_CTRL		BIT(21)
+#define   CG_CACHE_D_CTRL		BIT(22)
 #define SCP_PMICW_CTRL			REG32(SCP_CLK_BASE + 0x34)
-#define   PMICW_SLEEP_REQ		(1 << 0)
-#define   PMICW_SLEEP_ACK		(1 << 4)
-#define   PMICW_CLK_MUX			(1 << 8)
-#define   PMICW_DCM			(1 << 9)
+#define   PMICW_SLEEP_REQ		BIT(0)
+#define   PMICW_SLEEP_ACK		BIT(4)
+#define   PMICW_CLK_MUX			BIT(8)
+#define   PMICW_DCM			BIT(9)
 #define SCP_SLEEP_WAKE_DEBUG		REG32(SCP_CLK_BASE + 0x38)
 #define SCP_DCM_EN			REG32(SCP_CLK_BASE + 0x3C)
 #define SCP_WAKE_CKSW			REG32(SCP_CLK_BASE + 0x40)
@@ -337,11 +337,11 @@
 #define   CLK_HIGH_CORE_CG		(1 << 1)
 #define SCP_SLEEP_IRQ2			REG32(SCP_CLK_BASE + 0x64)
 #define SCP_CLK_ON_CTRL			REG32(SCP_CLK_BASE + 0x6C)
-#define   HIGH_AO			(1 << 0)
-#define   HIGH_CG_AO			(1 << 2)
-#define   HIGH_CORE_AO			(1 << 4)
-#define   HIGH_CORE_DIS_SUB		(1 << 5)
-#define   HIGH_CORE_CG_AO		(1 << 6)
+#define   HIGH_AO			BIT(0)
+#define   HIGH_CG_AO			BIT(2)
+#define   HIGH_CORE_AO			BIT(4)
+#define   HIGH_CORE_DIS_SUB		BIT(5)
+#define   HIGH_CORE_CG_AO		BIT(6)
 #define   HIGH_FINAL_VAL_MASK		0x1f00
 #define   HIGH_FINAL_VAL_DEFAULT	0x300
 #define SCP_CLK_L1_SRAM_PD		REG32(SCP_CLK_BASE + 0x80)
@@ -402,9 +402,9 @@
 #define SCP_CACHE_BASE			(SCP_CFG_BASE + 0x14000)
 #define SCP_CACHE_SEL(x)		(SCP_CACHE_BASE + (x)*0x3000)
 #define SCP_CACHE_CON(x)		REG32(SCP_CACHE_SEL(x))
-#define SCP_CACHE_CON_MCEN		(1 << 0)
-#define SCP_CACHE_CON_CNTEN0		(1 << 2)
-#define SCP_CACHE_CON_CNTEN1		(1 << 3)
+#define SCP_CACHE_CON_MCEN		BIT(0)
+#define SCP_CACHE_CON_CNTEN0		BIT(2)
+#define SCP_CACHE_CON_CNTEN1		BIT(3)
 #define SCP_CACHE_CON_CACHESIZE_SHIFT	8
 #define SCP_CACHE_CON_CACHESIZE_MASK	(0x3 << SCP_CACHE_CON_CACHESIZE_SHIFT)
 #define SCP_CACHE_CON_CACHESIZE_0KB	(0x0 << SCP_CACHE_CON_CACHESIZE_SHIFT)
@@ -413,7 +413,7 @@
 #define SCP_CACHE_CON_CACHESIZE_32KB	(0x3 << SCP_CACHE_CON_CACHESIZE_SHIFT)
 
 #define SCP_CACHE_OP(x)			REG32(SCP_CACHE_SEL(x) + 0x04)
-#define SCP_CACHE_OP_EN			(1 << 0)
+#define SCP_CACHE_OP_EN			BIT(0)
 #define SCP_CACHE_OP_OP_SHIFT		1
 #define SCP_CACHE_OP_OP_MASK		(0xf << SCP_CACHE_OP_OP_SHIFT)
 
@@ -445,12 +445,12 @@
 #define SCP_CACHE_END_ENTRY_BASE(x)	(SCP_CACHE_SEL(x) + 0x2040)
 #define SCP_CACHE_END_ENTRY(x, reg)	REG32(SCP_CACHE_END_ENTRY_BASE(x) + \
 						(reg)*4)
-#define SCP_CACHE_ENTRY_C		(1 << 8)
+#define SCP_CACHE_ENTRY_C		BIT(8)
 #define SCP_CACHE_ENTRY_BASEADDR_MASK	(0xfffff << 12)
 
 /* ARMV7 regs */
 #define ARM_SCB_SCR			REG32(0xE000ED10)
-#define   SCR_DEEPSLEEP			(1 << 2)
+#define   SCR_DEEPSLEEP			BIT(2)
 
 /* AP regs */
 #define AP_BASE				0xA0000000
@@ -530,11 +530,11 @@
 #define OSC_IBAND_MASK			(0x7f << 6)
 #define OSC_FBAND_MASK			(0x0f << 13)
 #define OSC_DIV_MASK			(0x1f << 17)
-#define OSC_CP_EN			(1 << 23)
+#define OSC_CP_EN			BIT(23)
 #define OSC_RESERVED_MASK		(0xff << 24)
 /* AP_ULPOSC_CON[1,3] */
 #define OSC_MOD_MASK			(0x03 << 0)
-#define OSC_DIV2_EN			(1 << 2)
+#define OSC_DIV2_EN			BIT(2)
 
 #define DUMMY_GPIO_BANK 0
 
@@ -556,7 +556,7 @@
 #define   SCP_WDT_FREQ			33825
 #define   SCP_WDT_MAX_PERIOD		0xFFFFF /* 31 seconds */
 #define   SCP_WDT_PERIOD(ms)		(SCP_WDT_FREQ * (ms) / 1000)
-#define   SCP_WDT_ENABLE		(1 << 31)
+#define   SCP_WDT_ENABLE		BIT(31)
 #define SCP_WDT_RELOAD			SCP_WDT_REG(4)
 #define   SCP_WDT_RELOAD_VALUE		1
 

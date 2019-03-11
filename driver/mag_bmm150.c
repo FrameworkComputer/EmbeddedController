@@ -149,7 +149,7 @@ void bmm150_temp_compensate_xy(const struct motion_sensor_t *s,
 	if (r == 0)
 		inter = 0;
 	else
-		inter = ((int)regs->dig_xyz1 << 14) / r - (1 << 14);
+		inter = ((int)regs->dig_xyz1 << 14) / r - BIT(14);
 
 	for (axis = X; axis <= Y; axis++) {
 		if (raw[axis] == BMM150_FLIP_OVERFLOW_ADCVAL) {
@@ -195,16 +195,16 @@ void bmm150_temp_compensate_z(const struct motion_sensor_t *s,
 	 * ((z - dig_z4) * 131072 - dig_z3 * (r - dig_xyz1)) /
 	 * ((dig_z2 + dig_z1 * r / 32768) * 4);
 	 *
-	 * We spread 4 so we multiply by 131072 / 4 == (1<<15) only.
+	 * We spread 4 so we multiply by 131072 / 4 == BIT(15) only.
 	 */
 	dividend = (raw[Z] - (int)regs->dig_z4) << 15;
 	dividend -= (regs->dig_z3 * (r - (int)regs->dig_xyz1)) >> 2;
-	/* add 1 << 15 to round to next integer. */
-	divisor = (int)regs->dig_z1 * (r << 1) + (1 << 15);
+	/* add BIT(15) to round to next integer. */
+	divisor = (int)regs->dig_z1 * (r << 1) + BIT(15);
 	divisor >>= 16;
 	divisor += (int)regs->dig_z2;
 	comp[Z] = dividend / divisor;
-	if (comp[Z] > (1 << 15) || comp[Z] < -(1 << 15))
+	if (comp[Z] > BIT(15) || comp[Z] < -(BIT(15)))
 		comp[Z] = BMM150_OVERFLOW_OUTPUT;
 }
 

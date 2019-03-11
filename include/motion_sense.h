@@ -70,7 +70,7 @@ enum sensor_config {
 		1 << (TASK_EVENT_MOTION_FIRST_SW_EVENT + (_activity_id))))
 
 
-#define ROUND_UP_FLAG (1 << 31)
+#define ROUND_UP_FLAG BIT(31)
 #define BASE_ODR(_odr) ((_odr) & ~ROUND_UP_FLAG)
 #define BASE_RANGE(_range) ((_range) & ~ROUND_UP_FLAG)
 

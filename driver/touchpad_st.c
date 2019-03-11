@@ -55,26 +55,26 @@ static void touchpad_power_control(void);
  */
 static int system_state;
 
-#define SYSTEM_STATE_DEBUG_MODE		(1 << 0)
-#define SYSTEM_STATE_ENABLE_HEAT_MAP	(1 << 1)
-#define SYSTEM_STATE_ENABLE_DOME_SWITCH	(1 << 2)
-#define SYSTEM_STATE_ACTIVE_MODE	(1 << 3)
-#define SYSTEM_STATE_DOME_SWITCH_LEVEL	(1 << 4)
-#define SYSTEM_STATE_READY		(1 << 5)
+#define SYSTEM_STATE_DEBUG_MODE		BIT(0)
+#define SYSTEM_STATE_ENABLE_HEAT_MAP	BIT(1)
+#define SYSTEM_STATE_ENABLE_DOME_SWITCH	BIT(2)
+#define SYSTEM_STATE_ACTIVE_MODE	BIT(3)
+#define SYSTEM_STATE_DOME_SWITCH_LEVEL	BIT(4)
+#define SYSTEM_STATE_READY		BIT(5)
 
 /*
  * Pending action for touchpad.
  */
 static int tp_control;
 
-#define TP_CONTROL_SHALL_HALT		(1 << 0)
-#define TP_CONTROL_SHALL_RESET		(1 << 1)
-#define TP_CONTROL_SHALL_INIT		(1 << 2)
-#define TP_CONTROL_SHALL_INIT_FULL	(1 << 3)
-#define TP_CONTROL_SHALL_DUMP_ERROR	(1 << 4)
-#define TP_CONTROL_RESETTING		(1 << 5)
-#define TP_CONTROL_INIT			(1 << 6)
-#define TP_CONTROL_INIT_FULL		(1 << 7)
+#define TP_CONTROL_SHALL_HALT		BIT(0)
+#define TP_CONTROL_SHALL_RESET		BIT(1)
+#define TP_CONTROL_SHALL_INIT		BIT(2)
+#define TP_CONTROL_SHALL_INIT_FULL	BIT(3)
+#define TP_CONTROL_SHALL_DUMP_ERROR	BIT(4)
+#define TP_CONTROL_RESETTING		BIT(5)
+#define TP_CONTROL_INIT			BIT(6)
+#define TP_CONTROL_INIT_FULL		BIT(7)
 
 /*
  * Number of times we have reset the touchpad because of errors.
@@ -124,7 +124,7 @@ static struct {
 struct packet_header_t {
 	uint8_t index;
 
-#define HEADER_FLAGS_NEW_FRAME	(1 << 0)
+#define HEADER_FLAGS_NEW_FRAME	BIT(0)
 	uint8_t flags;
 } __packed;
 BUILD_ASSERT(sizeof(struct packet_header_t) < USB_ISO_PACKET_SIZE);
@@ -133,7 +133,7 @@ static struct packet_header_t packet_header;
 
 /* What will be sent to USB interface. */
 struct st_tp_usb_packet_t {
-#define USB_FRAME_FLAGS_BUTTON	(1 << 0)
+#define USB_FRAME_FLAGS_BUTTON	BIT(0)
 	/*
 	 * This will be true if user clicked on touchpad.
 	 * TODO(b/70482333): add corresponding code for button signal.
@@ -375,14 +375,14 @@ static int st_tp_update_system_state(int new_state, int mask)
 		};
 		if (new_state & SYSTEM_STATE_ENABLE_HEAT_MAP) {
 			CPRINTS("Heatmap enabled");
-			tx_buf[2] |= 1 << 0;
+			tx_buf[2] |= BIT(0);
 			need_locked_scan_mode = 1;
 		} else {
 			CPRINTS("Heatmap disabled");
 		}
 
 		if (new_state & SYSTEM_STATE_ENABLE_DOME_SWITCH)
-			tx_buf[2] |= 1 << 1;
+			tx_buf[2] |= BIT(1);
 		ret = spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
 		if (ret)
 			return ret;
@@ -1782,7 +1782,7 @@ static int get_heat_map_addr(void)
 }
 
 struct st_tp_interrupt_t {
-#define ST_TP_INT_FRAME_AVAILABLE	(1 << 0)
+#define ST_TP_INT_FRAME_AVAILABLE	BIT(0)
 	uint8_t flags;
 } __packed;
 

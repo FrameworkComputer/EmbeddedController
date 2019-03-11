@@ -26,26 +26,26 @@ enum bd99992gw_adc_channel {
 
 /* Registers */
 #define BD99992GW_REG_IRQLVL1		0x02
-#define BD99992GW_IRQLVL1_ADC		 (1 << 1) /* ADC IRQ asserted */
+#define BD99992GW_IRQLVL1_ADC		 BIT(1) /* ADC IRQ asserted */
 
 #define BD99992GW_REG_ADC1INT		0x03
-#define BD99992GW_ADC1INT_RND		 (1 << 0) /* RR cycle completed */
+#define BD99992GW_ADC1INT_RND		 BIT(0) /* RR cycle completed */
 
 #define BD99992GW_REG_MADC1INT		0x0a
-#define BD99992GW_MADC1INT_RND		 (1 << 0) /* RR cycle mask */
+#define BD99992GW_MADC1INT_RND		 BIT(0) /* RR cycle mask */
 
 #define BD99992GW_REG_IRQLVL1MSK	0x13
-#define BD99992GW_IRQLVL1MSK_MADC	 (1 << 1) /* ADC IRQ mask */
+#define BD99992GW_IRQLVL1MSK_MADC	 BIT(1) /* ADC IRQ mask */
 
 #define BD99992GW_REG_ADC1CNTL1		0x80
 #define BD99992GW_ADC1CNTL1_SLP27MS	 (0x6 << 3) /* 27ms between pass */
 #define BD99992GW_ADC1CNTL1_NOLOOP	 (0x7 << 3) /* Single loop pass only */
-#define BD99992GW_ADC1CNTL1_ADPAUSE	 (1 << 2)   /* ADC pause */
-#define BD99992GW_ADC1CNTL1_ADSTRT	 (1 << 1)   /* ADC start */
-#define BD99992GW_ADC1CNTL1_ADEN	 (1 << 0)   /* ADC enable */
+#define BD99992GW_ADC1CNTL1_ADPAUSE	 BIT(2)   /* ADC pause */
+#define BD99992GW_ADC1CNTL1_ADSTRT	 BIT(1)   /* ADC start */
+#define BD99992GW_ADC1CNTL1_ADEN	 BIT(0)   /* ADC enable */
 
 #define BD99992GW_REG_ADC1CNTL2		0x81
-#define BD99992GW_ADC1CNTL2_ADCTHERM	 (1 << 0) /* Enable ADC sequencing */
+#define BD99992GW_ADC1CNTL2_ADCTHERM	 BIT(0) /* Enable ADC sequencing */
 
  /* ADC1 Pointer file regs - assign to proper bd99992gw_adc_channel */
 #define BD99992GW_ADC_POINTER_REG_COUNT	8
@@ -57,7 +57,7 @@ enum bd99992gw_adc_channel {
 #define BD99992GW_REG_ADC1ADDR5		0x87
 #define BD99992GW_REG_ADC1ADDR6		0x88
 #define BD99992GW_REG_ADC1ADDR7		0x89
-#define BD99992GW_ADC1ADDR_STOP		 (1 << 3) /* Last conversion channel */
+#define BD99992GW_ADC1ADDR_STOP		 BIT(3) /* Last conversion channel */
 
 /* Result registers */
 #define BD99992GW_REG_ADC1DATA0L	0x95

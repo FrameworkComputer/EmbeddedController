@@ -24,17 +24,17 @@
 #define REG_PRODUCT_INFORMATION     0x64
 
 /* Over Temperature in charge */
-#define MM8013_FLAG_OTC             (1 << 15)
+#define MM8013_FLAG_OTC             BIT(15)
 /* Over Temperature in discharge */
-#define MM8013_FLAG_OTD             (1 << 14)
+#define MM8013_FLAG_OTD             BIT(14)
 /* Over-charge */
-#define MM8013_FLAG_BATHI           (1 << 13)
+#define MM8013_FLAG_BATHI           BIT(13)
 /* Full Charge */
-#define MM8013_FLAG_FC              (1 << 9)
+#define MM8013_FLAG_FC              BIT(9)
 /* Charge allowed */
-#define MM8013_FLAG_CHG             (1 << 8)
+#define MM8013_FLAG_CHG             BIT(8)
 /* Discharge */
-#define MM8013_FLAG_DSG             (1 << 0)
+#define MM8013_FLAG_DSG             BIT(0)
 
 
 #endif /* __CROS_EC_MM8013_H */

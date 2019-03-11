@@ -416,7 +416,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &bmp280_drv_data,
 	 .port = CONFIG_SPI_ACCEL_PORT,
 	 .addr = BMI160_SET_SPI_ADDRESS(CONFIG_SPI_ACCEL_PORT),
-	 .default_range = 1 << 18, /*  1bit = 4 Pa, 16bit ~= 2600 hPa */
+	 .default_range = BIT(18), /*  1bit = 4 Pa, 16bit ~= 2600 hPa */
 	 .min_frequency = BMP280_BARO_MIN_FREQ,
 	 .max_frequency = BMP280_BARO_MAX_FREQ,
 	},

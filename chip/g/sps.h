@@ -19,7 +19,7 @@ enum sps_mode {
 };
 
 /* Receive and transmit FIFO size and mask. */
-#define SPS_FIFO_SIZE		(1 << 10)
+#define SPS_FIFO_SIZE		BIT(10)
 #define SPS_FIFO_MASK		(SPS_FIFO_SIZE - 1)
 
 /*

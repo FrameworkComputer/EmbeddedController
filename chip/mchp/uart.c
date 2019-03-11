@@ -30,7 +30,7 @@ int uart_init_done(void)
 void uart_tx_start(void)
 {
 	/* If interrupt is already enabled, nothing to do */
-	if (MCHP_UART_IER(0) & (1 << 1))
+	if (MCHP_UART_IER(0) & BIT(1))
 		return;
 
 	/* Do not allow deep sleep while transmit in progress */
@@ -42,13 +42,13 @@ void uart_tx_start(void)
 	 * UART where the FIFO only triggers the interrupt when its
 	 * threshold is _crossed_, not just met.
 	 */
-	MCHP_UART_IER(0) |= (1 << 1);
+	MCHP_UART_IER(0) |= BIT(1);
 	task_trigger_irq(MCHP_IRQ_UART0);
 }
 
 void uart_tx_stop(void)
 {
-	MCHP_UART_IER(0) &= ~(1 << 1);
+	MCHP_UART_IER(0) &= ~BIT(1);
 
 	/* Re-allow deep sleep */
 	enable_sleep(SLEEP_MASK_UART);
@@ -79,7 +79,7 @@ int uart_tx_in_progress(void)
 
 int uart_rx_available(void)
 {
-	return MCHP_UART_LSR(0) & (1 << 0);
+	return MCHP_UART_LSR(0) & BIT(0);
 }
 
 void uart_write_char(char c)
@@ -99,7 +99,7 @@ int uart_read_char(void)
 
 static void uart_clear_rx_fifo(int channel)
 {
-	MCHP_UART_FCR(0) = (1 << 0) | (1 << 1);
+	MCHP_UART_FCR(0) = BIT(0) | BIT(1);
 }
 
 void uart_disable_interrupt(void)
@@ -131,31 +131,31 @@ void uart_init(void)
 	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_UART0);
 
 	/* Set UART to reset on VCC1_RESET instead of nSIO_RESET */
-	MCHP_UART_CFG(0) &= ~(1 << 1);
+	MCHP_UART_CFG(0) &= ~BIT(1);
 
 	/* Baud rate = 115200. 1.8432MHz clock. Divisor = 1 */
 
 	/* Set CLK_SRC = 0 */
-	MCHP_UART_CFG(0) &= ~(1 << 0);
+	MCHP_UART_CFG(0) &= ~BIT(0);
 
 	/* Set DLAB = 1 */
-	MCHP_UART_LCR(0) |= (1 << 7);
+	MCHP_UART_LCR(0) |= BIT(7);
 
 	/* PBRG0/PBRG1 */
 	MCHP_UART_PBRG0(0) = 1;
 	MCHP_UART_PBRG1(0) = 0;
 
 	/* Set DLAB = 0 */
-	MCHP_UART_LCR(0) &= ~(1 << 7);
+	MCHP_UART_LCR(0) &= ~BIT(7);
 
 	/* Set word length to 8-bit */
-	MCHP_UART_LCR(0) |= (1 << 0) | (1 << 1);
+	MCHP_UART_LCR(0) |= BIT(0) | BIT(1);
 
 	/* Enable FIFO */
-	MCHP_UART_FCR(0) = (1 << 0);
+	MCHP_UART_FCR(0) = BIT(0);
 
 	/* Activate UART */
-	MCHP_UART_ACT(0) |= (1 << 0);
+	MCHP_UART_ACT(0) |= BIT(0);
 
 	gpio_config_module(MODULE_UART, 1);
 
@@ -163,8 +163,8 @@ void uart_init(void)
 	 * Enable interrupts for UART0.
 	 */
 	uart_clear_rx_fifo(0);
-	MCHP_UART_IER(0) |= (1 << 0);
-	MCHP_UART_MCR(0) |= (1 << 3);
+	MCHP_UART_IER(0) |= BIT(0);
+	MCHP_UART_MCR(0) |= BIT(3);
 	MCHP_INT_ENABLE(MCHP_UART_GIRQ) = MCHP_UART_GIRQ_BIT(0);
 
 	task_enable_irq(MCHP_IRQ_UART0);
@@ -185,13 +185,13 @@ void uart_enter_dsleep(void)
 	gpio_reset(GPIO_UART0_RX);
 
 	/* power-down/de-activate UART0 */
-	MCHP_UART_ACT(0) &= ~(1 << 0);
+	MCHP_UART_ACT(0) &= ~BIT(0);
 
 	/* clear interrupt enable for UART0 */
 	MCHP_INT_DISABLE(MCHP_UART_GIRQ) = MCHP_UART_GIRQ_BIT(0);
 
 	/* Clear pending interrupts on GPIO_UART0_RX(GPIO105, girq=9, bit=5) */
-	MCHP_INT_SOURCE(9) = (1 << 5);
+	MCHP_INT_SOURCE(9) = BIT(5);
 
 	/* Enable GPIO interrupts on the UART0 RX pin. */
 	gpio_enable_interrupt(GPIO_UART0_RX);
@@ -207,7 +207,7 @@ void uart_exit_dsleep(void)
 	 * Note: we can't disable this interrupt if it has already fired
 	 * because then the IRQ will not run at all.
 	 */
-	if (!((1 << 5) & MCHP_INT_SOURCE(9))) /* if edge interrupt */
+	if (!(BIT(5) & MCHP_INT_SOURCE(9))) /* if edge interrupt */
 		gpio_disable_interrupt(GPIO_UART0_RX);
 
 	/* Configure UART0 pins for use in UART peripheral. */
@@ -220,7 +220,7 @@ void uart_exit_dsleep(void)
 	task_enable_irq(MCHP_IRQ_UART0); /* NVIC interrupt for UART = 40 */
 
 	/* power-up/activate UART0 */
-	MCHP_UART_ACT(0) |= (1 << 0);
+	MCHP_UART_ACT(0) |= BIT(0);
 }
 
 void uart_deepsleep_interrupt(enum gpio_signal signal)

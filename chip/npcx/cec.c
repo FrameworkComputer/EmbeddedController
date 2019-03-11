@@ -34,7 +34,7 @@
 #endif
 
 /* Notification from interrupt to CEC task that data has been received */
-#define TASK_EVENT_RECEIVED_DATA TASK_EVENT_CUSTOM(1 << 0)
+#define TASK_EVENT_RECEIVED_DATA TASK_EVENT_CUSTOM(BIT(0))
 
 /* CEC broadcast address. Also the highest possible CEC address */
 #define CEC_BROADCAST_ADDR 15

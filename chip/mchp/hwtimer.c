@@ -18,7 +18,7 @@ void __hw_clock_event_set(uint32_t deadline)
 {
 	MCHP_TMR32_CNT(1) = MCHP_TMR32_CNT(0) -
 			       (0xffffffff - deadline);
-	MCHP_TMR32_CTL(1) |= (1 << 5);
+	MCHP_TMR32_CTL(1) |= BIT(5);
 }
 
 uint32_t __hw_clock_event_get(void)
@@ -28,7 +28,7 @@ uint32_t __hw_clock_event_get(void)
 
 void __hw_clock_event_clear(void)
 {
-	MCHP_TMR32_CTL(1) &= ~(1 << 5);
+	MCHP_TMR32_CTL(1) &= ~BIT(5);
 }
 
 uint32_t __hw_clock_source_read(void)
@@ -38,9 +38,9 @@ uint32_t __hw_clock_source_read(void)
 
 void __hw_clock_source_set(uint32_t ts)
 {
-	MCHP_TMR32_CTL(0) &= ~(1 << 5);
+	MCHP_TMR32_CTL(0) &= ~BIT(5);
 	MCHP_TMR32_CNT(0) = 0xffffffff - ts;
-	MCHP_TMR32_CTL(0) |= (1 << 5);
+	MCHP_TMR32_CTL(0) |= BIT(5);
 }
 
 /*
@@ -66,10 +66,10 @@ static void configure_timer(int timer_id)
 	uint32_t val;
 
 	/* Ensure timer is not running */
-	MCHP_TMR32_CTL(timer_id) &= ~(1 << 5);
+	MCHP_TMR32_CTL(timer_id) &= ~BIT(5);
 
 	/* Enable timer */
-	MCHP_TMR32_CTL(timer_id) |= (1 << 0);
+	MCHP_TMR32_CTL(timer_id) |= BIT(0);
 
 	val = MCHP_TMR32_CTL(timer_id);
 
@@ -103,10 +103,10 @@ int __hw_clock_source_init(uint32_t start_t)
 	MCHP_TMR32_CNT(0) = 0xffffffff - start_t;
 
 	/* Auto restart */
-	MCHP_TMR32_CTL(0) |= (1 << 3);
+	MCHP_TMR32_CTL(0) |= BIT(3);
 
 	/* Start counting in timer 0 */
-	MCHP_TMR32_CTL(0) |= (1 << 5);
+	MCHP_TMR32_CTL(0) |= BIT(5);
 
 	/* Enable interrupt */
 	task_enable_irq(MCHP_IRQ_TIMER32_0);

@@ -222,8 +222,8 @@ static void adc_init(void)
 	 * NOTE: A sample time delay (60us) also need to be included in
 	 * conversion time, so the final result is ~= 121.6us.
 	 */
-	IT83XX_ADC_ADCSTS &= ~(1 << 7);
-	IT83XX_ADC_ADCCFG &= ~(1 << 5);
+	IT83XX_ADC_ADCSTS &= ~BIT(7);
+	IT83XX_ADC_ADCCFG &= ~BIT(5);
 	IT83XX_ADC_ADCCTL = 1;
 
 	task_waiting = TASK_ID_INVALID;

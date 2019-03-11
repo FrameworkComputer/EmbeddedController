@@ -249,8 +249,8 @@ static void low_power_init(void)
 	task_enable_irq(STM32_IRQ_LPTIM1);
 
 	/* Wake-up interrupts from EXTI for USART and LPTIM */
-	STM32_EXTI_CPUIMR1 |= 1 << 26; /* [26] wkup26: USART1 wake-up */
-	STM32_EXTI_CPUIMR2 |= 1 << 15; /* [15] wkup47: LPTIM1 wake-up */
+	STM32_EXTI_CPUIMR1 |= BIT(26); /* [26] wkup26: USART1 wake-up */
+	STM32_EXTI_CPUIMR2 |= BIT(15); /* [15] wkup47: LPTIM1 wake-up */
 
 	/* optimize power vs latency in STOP mode */
 	STM32_PWR_CR = (STM32_PWR_CR & ~STM32_PWR_CR_SVOS_MASK)

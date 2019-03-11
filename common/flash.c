@@ -45,8 +45,8 @@
 /* Flags for persist_state.flags */
 /* Protect persist state and RO firmware at boot */
 #define PERSIST_FLAG_PROTECT_RO 0x02
-#define PSTATE_VALID_FLAGS	(1 << 0)
-#define PSTATE_VALID_SERIALNO	(1 << 1)
+#define PSTATE_VALID_FLAGS	BIT(0)
+#define PSTATE_VALID_SERIALNO	BIT(1)
 
 struct persist_state {
 	uint8_t version;            /* Version of this struct */

@@ -70,7 +70,7 @@ static enum faults fault;
 static timestamp_t fault_deadline;
 
 /* ADC in 12-bit mode */
-#define ADC_SCALE (1 << 12)
+#define ADC_SCALE BIT(12)
 /* ADC power supply : VDDA = 3.3V */
 #define VDDA_MV   3300
 /* Current sense resistor : 5 milliOhm */

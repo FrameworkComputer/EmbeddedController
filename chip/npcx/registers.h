@@ -480,14 +480,14 @@ enum {
 };
 
 enum {
-	MASK_PIN0 = (1<<0),
-	MASK_PIN1 = (1<<1),
-	MASK_PIN2 = (1<<2),
-	MASK_PIN3 = (1<<3),
-	MASK_PIN4 = (1<<4),
-	MASK_PIN5 = (1<<5),
-	MASK_PIN6 = (1<<6),
-	MASK_PIN7 = (1<<7),
+	MASK_PIN0 = BIT(0),
+	MASK_PIN1 = BIT(1),
+	MASK_PIN2 = BIT(2),
+	MASK_PIN3 = BIT(3),
+	MASK_PIN4 = BIT(4),
+	MASK_PIN5 = BIT(5),
+	MASK_PIN6 = BIT(6),
+	MASK_PIN7 = BIT(7),
 };
 
 /* Chip-independent aliases for port base group */
@@ -1863,21 +1863,21 @@ enum {
 /*
  * Status registers for the W25Q16CV SPI flash
  */
-#define SPI_FLASH_SR2_SUS               (1 << 7)
-#define SPI_FLASH_SR2_CMP               (1 << 6)
-#define SPI_FLASH_SR2_LB3               (1 << 5)
-#define SPI_FLASH_SR2_LB2               (1 << 4)
-#define SPI_FLASH_SR2_LB1               (1 << 3)
-#define SPI_FLASH_SR2_QE                (1 << 1)
-#define SPI_FLASH_SR2_SRP1              (1 << 0)
-#define SPI_FLASH_SR1_SRP0              (1 << 7)
-#define SPI_FLASH_SR1_SEC               (1 << 6)
-#define SPI_FLASH_SR1_TB                (1 << 5)
-#define SPI_FLASH_SR1_BP2               (1 << 4)
-#define SPI_FLASH_SR1_BP1               (1 << 3)
-#define SPI_FLASH_SR1_BP0               (1 << 2)
-#define SPI_FLASH_SR1_WEL               (1 << 1)
-#define SPI_FLASH_SR1_BUSY              (1 << 0)
+#define SPI_FLASH_SR2_SUS               BIT(7)
+#define SPI_FLASH_SR2_CMP               BIT(6)
+#define SPI_FLASH_SR2_LB3               BIT(5)
+#define SPI_FLASH_SR2_LB2               BIT(4)
+#define SPI_FLASH_SR2_LB1               BIT(3)
+#define SPI_FLASH_SR2_QE                BIT(1)
+#define SPI_FLASH_SR2_SRP1              BIT(0)
+#define SPI_FLASH_SR1_SRP0              BIT(7)
+#define SPI_FLASH_SR1_SEC               BIT(6)
+#define SPI_FLASH_SR1_TB                BIT(5)
+#define SPI_FLASH_SR1_BP2               BIT(4)
+#define SPI_FLASH_SR1_BP1               BIT(3)
+#define SPI_FLASH_SR1_BP0               BIT(2)
+#define SPI_FLASH_SR1_WEL               BIT(1)
+#define SPI_FLASH_SR1_BUSY              BIT(0)
 
 
 /* 0: F_CS0 1: F_CS1_1(GPIO86) 2:F_CS1_2(GPIOA6) */

@@ -19,10 +19,10 @@
 
 #define INA2XX_CONFIG_MODE_MASK     (7 << 0)
 #define INA2XX_CONFIG_MODE_PWRDWN   (0 << 0)
-#define INA2XX_CONFIG_MODE_SHUNT    (1 << 0)
-#define INA2XX_CONFIG_MODE_BUS      (1 << 1)
+#define INA2XX_CONFIG_MODE_SHUNT    BIT(0)
+#define INA2XX_CONFIG_MODE_BUS      BIT(1)
 #define INA2XX_CONFIG_MODE_TRG      (0 << 2)
-#define INA2XX_CONFIG_MODE_CONT     (1 << 2)
+#define INA2XX_CONFIG_MODE_CONT     BIT(2)
 
 /* Conversion time for bus and shunt in micro-seconds */
 enum ina2xx_conv_time {
@@ -40,7 +40,7 @@ enum ina2xx_conv_time {
 #define INA2XX_CONFIG_BUS_CONV_TIME(t)   ((t) << 6)
 
 #define INA2XX_CONFIG_AVG_1        (0 << 9)
-#define INA2XX_CONFIG_AVG_4        (1 << 9)
+#define INA2XX_CONFIG_AVG_4        BIT(9)
 #define INA2XX_CONFIG_AVG_16       (2 << 9)
 #define INA2XX_CONFIG_AVG_64       (3 << 9)
 #define INA2XX_CONFIG_AVG_128      (4 << 9)
@@ -48,17 +48,17 @@ enum ina2xx_conv_time {
 #define INA2XX_CONFIG_AVG_512      (6 << 9)
 #define INA2XX_CONFIG_AVG_1024     (7 << 9)
 
-#define INA2XX_MASK_EN_LEN         (1 << 0)
-#define INA2XX_MASK_EN_APOL        (1 << 1)
-#define INA2XX_MASK_EN_OVF         (1 << 2)
-#define INA2XX_MASK_EN_CVRF        (1 << 3)
-#define INA2XX_MASK_EN_AFF         (1 << 4)
-#define INA2XX_MASK_EN_CNVR        (1 << 10)
-#define INA2XX_MASK_EN_POL         (1 << 11)
-#define INA2XX_MASK_EN_BUL         (1 << 12)
-#define INA2XX_MASK_EN_BOL         (1 << 13)
-#define INA2XX_MASK_EN_SUL         (1 << 14)
-#define INA2XX_MASK_EN_SOL        (1 << 15)
+#define INA2XX_MASK_EN_LEN         BIT(0)
+#define INA2XX_MASK_EN_APOL        BIT(1)
+#define INA2XX_MASK_EN_OVF         BIT(2)
+#define INA2XX_MASK_EN_CVRF        BIT(3)
+#define INA2XX_MASK_EN_AFF         BIT(4)
+#define INA2XX_MASK_EN_CNVR        BIT(10)
+#define INA2XX_MASK_EN_POL         BIT(11)
+#define INA2XX_MASK_EN_BUL         BIT(12)
+#define INA2XX_MASK_EN_BOL         BIT(13)
+#define INA2XX_MASK_EN_SUL         BIT(14)
+#define INA2XX_MASK_EN_SOL        BIT(15)
 
 
 #if defined(CONFIG_INA231) && defined(CONFIG_INA219)

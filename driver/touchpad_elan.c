@@ -74,15 +74,15 @@
 #define ETP_I2C_IAP_RESET_CMD		0x0314
 #define ETP_I2C_IAP_RESET		0xF0F0
 #define ETP_I2C_IAP_CTRL_CMD		0x0310
-#define ETP_I2C_MAIN_MODE_ON		(1 << 9)
+#define ETP_I2C_MAIN_MODE_ON		BIT(9)
 #define ETP_I2C_IAP_CMD			0x0311
 #define ETP_I2C_IAP_PASSWORD		0x1EA5
 
 #define ETP_I2C_IAP_REG_L		0x01
 #define ETP_I2C_IAP_REG_H		0x06
 
-#define ETP_FW_IAP_PAGE_ERR		(1 << 5)
-#define ETP_FW_IAP_INTF_ERR		(1 << 4)
+#define ETP_FW_IAP_PAGE_ERR		BIT(5)
+#define ETP_FW_IAP_INTF_ERR		BIT(4)
 
 #ifdef CONFIG_USB_UPDATE
 /* The actual FW_SIZE depends on IC. */

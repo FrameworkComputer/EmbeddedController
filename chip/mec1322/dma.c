@@ -27,8 +27,8 @@ void dma_disable(enum dma_channel channel)
 {
 	mec1322_dma_chan_t *chan = dma_get_channel(channel);
 
-	if (chan->ctrl & (1 << 0))
-		chan->ctrl &= ~(1 << 0);
+	if (chan->ctrl & BIT(0))
+		chan->ctrl &= ~BIT(0);
 
 	if (chan->act == 1)
 		chan->act = 0;
@@ -42,9 +42,9 @@ void dma_disable_all(void)
 	for (ch = 0; ch < MEC1322_DMAC_COUNT; ch++) {
 		mec1322_dma_chan_t *chan = dma_get_channel(ch);
 		/* Abort any current transfer. */
-		chan->ctrl |= (1 << 25);
+		chan->ctrl |= BIT(25);
 		/* Disable the channel. */
-		chan->ctrl &= ~(1 << 0);
+		chan->ctrl &= ~BIT(0);
 		chan->act = 0;
 	}
 
@@ -69,8 +69,8 @@ static void prepare_channel(mec1322_dma_chan_t *chan, unsigned count,
 {
 	int xfer_size = (flags >> 20) & 0x7;
 
-	if (chan->ctrl & (1 << 0))
-		chan->ctrl &= ~(1 << 0);
+	if (chan->ctrl & BIT(0))
+		chan->ctrl &= ~BIT(0);
 
 	chan->act |= 0x1;
 	chan->dev = (uint32_t)periph;

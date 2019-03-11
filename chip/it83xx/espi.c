@@ -431,7 +431,7 @@ void __ram_code espi_fw_reset_module(void)
 	 * 01b: The VCC power status is treated as power-on.
 	 */
 	IT83XX_GCTRL_RSTS = (IT83XX_GCTRL_RSTS & ~0xc0);
-	IT83XX_GCTRL_RSTS = (IT83XX_GCTRL_RSTS & ~0xc0) | (1 << 6);
+	IT83XX_GCTRL_RSTS = (IT83XX_GCTRL_RSTS & ~0xc0) | BIT(6);
 }
 #endif
 
@@ -457,9 +457,9 @@ static int espi_get_reset_enable_config(void)
 	 * 10b: espi_reset# is enabled on GPD2.
 	 * 11b: reset is disabled.
 	 */
-	if (espi_rst->port == GPIO_D && espi_rst->mask == (1 << 2)) {
+	if (espi_rst->port == GPIO_D && espi_rst->mask == BIT(2)) {
 		config = IT83XX_GPIO_GCR_LPC_RST_D2;
-	} else if (espi_rst->port == GPIO_B && espi_rst->mask == (1 << 7)) {
+	} else if (espi_rst->port == GPIO_B && espi_rst->mask == BIT(7)) {
 		config = IT83XX_GPIO_GCR_LPC_RST_B7;
 	} else {
 		config = IT83XX_GPIO_GCR_LPC_RST_DISABLE;
@@ -575,10 +575,10 @@ void espi_enable_pad(int enable)
 {
 	if (enable)
 		/* Enable eSPI pad. */
-		IT83XX_ESPI_ESGCTRL2 &= ~(1 << 6);
+		IT83XX_ESPI_ESGCTRL2 &= ~BIT(6);
 	else
 		/* Disable eSPI pad. */
-		IT83XX_ESPI_ESGCTRL2 |= (1 << 6);
+		IT83XX_ESPI_ESGCTRL2 |= BIT(6);
 }
 #endif
 
@@ -593,7 +593,7 @@ void espi_init(void)
 	 * 100b: 66MHz
 	 */
 #ifdef IT83XX_ESPI_SLAVE_MAX_FREQ_CONFIGURABLE
-	IT83XX_ESPI_GCAC1 = (IT83XX_ESPI_GCAC1 & ~0x7) | (1 << 2);
+	IT83XX_ESPI_GCAC1 = (IT83XX_ESPI_GCAC1 & ~0x7) | BIT(2);
 #endif
 	/* reset vw_index_flag at initialization */
 	espi_reset_vw_index_flags();
@@ -602,16 +602,16 @@ void espi_init(void)
 	 * bit[3]: The reset source of PNPCFG is RSTPNP bit in RSTCH
 	 * register and WRST#.
 	 */
-	IT83XX_GCTRL_RSTS &= ~(1 << 3);
+	IT83XX_GCTRL_RSTS &= ~BIT(3);
 	task_clear_pending_irq(IT83XX_IRQ_ESPI_VW);
 	/* bit7: VW interrupt enable */
-	IT83XX_ESPI_VWCTRL0 |= (1 << 7);
+	IT83XX_ESPI_VWCTRL0 |= BIT(7);
 	task_enable_irq(IT83XX_IRQ_ESPI_VW);
 
 	/* bit7: eSPI interrupt enable */
-	IT83XX_ESPI_ESGCTRL1 |= (1 << 7);
+	IT83XX_ESPI_ESGCTRL1 |= BIT(7);
 	/* bit4: eSPI to WUC enable */
-	IT83XX_ESPI_ESGCTRL2 |= (1 << 4);
+	IT83XX_ESPI_ESGCTRL2 |= BIT(4);
 	task_enable_irq(IT83XX_IRQ_ESPI);
 
 	/* enable interrupt and reset from eSPI_reset# */

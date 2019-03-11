@@ -21,9 +21,9 @@
 #define PI3USB30532_VENDOR_ID 0
 
 /* PI3USB30532 control flags */
-#define PI3USB30532_BIT_SWAP (1 << 0)
-#define PI3USB30532_BIT_DP (1 << 1)
-#define PI3USB30532_BIT_USB (1 << 2)
+#define PI3USB30532_BIT_SWAP BIT(0)
+#define PI3USB30532_BIT_DP BIT(1)
+#define PI3USB30532_BIT_USB BIT(2)
 
 /* PI3USB30532 modes */
 /* Power down, switch open */

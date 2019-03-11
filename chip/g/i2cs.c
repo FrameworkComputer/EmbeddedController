@@ -73,7 +73,7 @@
 #include "task.h"
 #include "tpm_log.h"
 
-#define REGISTER_FILE_SIZE (1 << 6) /* 64 bytes. */
+#define REGISTER_FILE_SIZE BIT(6) /* 64 bytes. */
 #define REGISTER_FILE_MASK (REGISTER_FILE_SIZE - 1)
 
 /* Console output macros */

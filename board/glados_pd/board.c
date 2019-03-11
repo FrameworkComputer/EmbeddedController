@@ -37,7 +37,7 @@ void pd_send_ec_int(void)
 void board_config_pre_init(void)
 {
 	/* enable SYSCFG clock */
-	STM32_RCC_APB2ENR |= 1 << 0;
+	STM32_RCC_APB2ENR |= BIT(0);
 	/*
 	 * the DMA mapping is :
 	 *  Chan 2 : TIM1_CH1  (C0 RX)

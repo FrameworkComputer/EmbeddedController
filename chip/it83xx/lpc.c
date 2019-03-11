@@ -103,7 +103,7 @@ static void pm_put_data_out(enum lpc_pm_ch ch, uint8_t out)
 static void pm_clear_ibf(enum lpc_pm_ch ch)
 {
 	/* bit7, write-1 clear IBF */
-	IT83XX_PMC_PMIE(ch) |= (1 << 7);
+	IT83XX_PMC_PMIE(ch) |= BIT(7);
 }
 
 #ifdef CONFIG_KEYBOARD_IRQ_GPIO
@@ -340,8 +340,8 @@ void lpc_keyboard_clear_buffer(void)
 	uint32_t int_mask = get_int_mask();
 	interrupt_disable();
 	/* bit6, write-1 clear OBF */
-	IT83XX_KBC_KBHICR |= (1 << 6);
-	IT83XX_KBC_KBHICR &= ~(1 << 6);
+	IT83XX_KBC_KBHICR |= BIT(6);
+	IT83XX_KBC_KBHICR &= ~BIT(6);
 	set_int_mask(int_mask);
 }
 
@@ -392,8 +392,8 @@ void lpc_kbc_ibf_interrupt(void)
 		keyboard_host_write(IT83XX_KBC_KBHIDIR,
 			(IT83XX_KBC_KBHISR & 0x08) ? 1 : 0);
 		/* bit7, write-1 clear IBF */
-		IT83XX_KBC_KBHICR |= (1 << 7);
-		IT83XX_KBC_KBHICR &= ~(1 << 7);
+		IT83XX_KBC_KBHICR |= BIT(7);
+		IT83XX_KBC_KBHICR &= ~BIT(7);
 	}
 
 	task_clear_pending_irq(IT83XX_IRQ_KBC_IN);
@@ -745,7 +745,7 @@ static int lpc_get_protocol_info(struct host_cmd_handler_args *args)
 	struct ec_response_get_protocol_info *r = args->response;
 
 	memset(r, 0, sizeof(*r));
-	r->protocol_versions = (1 << 3);
+	r->protocol_versions = BIT(3);
 	r->max_request_packet_size = EC_LPC_HOST_PACKET_SIZE;
 	r->max_response_packet_size = EC_LPC_HOST_PACKET_SIZE;
 	r->flags = 0;

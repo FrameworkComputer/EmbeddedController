@@ -285,24 +285,24 @@ void system_pre_init(void)
 	STM32_RCC_AHB1ENR |= STM32_RCC_AHB1ENR_BKPSRAMEN;
 #elif defined(CHIP_FAMILY_STM32H7)
 	/* enable backup registers */
-	STM32_RCC_AHB4ENR |= 1 << 28;
+	STM32_RCC_AHB4ENR |= BIT(28);
 #else
 	/* enable backup registers */
-	STM32_RCC_APB1ENR |= 1 << 27;
+	STM32_RCC_APB1ENR |= BIT(27);
 #endif
 	/* Delay 1 APB clock cycle after the clock is enabled */
 	clock_wait_bus_cycles(BUS_APB, 1);
 	/* Enable access to RCC CSR register and RTC backup registers */
-	STM32_PWR_CR |= 1 << 8;
+	STM32_PWR_CR |= BIT(8);
 #ifdef CHIP_VARIANT_STM32L476
 	/* Enable Vddio2 */
-	STM32_PWR_CR2 |= 1 << 9;
+	STM32_PWR_CR2 |= BIT(9);
 #endif
 
 	/* switch on LSI */
-	STM32_RCC_CSR |= 1 << 0;
+	STM32_RCC_CSR |= BIT(0);
 	/* Wait for LSI to be ready */
-	while (!(STM32_RCC_CSR & (1 << 1)))
+	while (!(STM32_RCC_CSR & BIT(1)))
 		;
 	/* re-configure RTC if needed */
 #ifdef CHIP_FAMILY_STM32L

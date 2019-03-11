@@ -75,34 +75,34 @@
 #define KX022_INTERNAL		0x7f
 
 
-#define KX022_CNTL1_PC1		(1 << 7)
-#define KX022_CNTL1_WUFE	(1 << 1)
-#define KX022_CNTL1_TPE		(1 << 0)
+#define KX022_CNTL1_PC1		BIT(7)
+#define KX022_CNTL1_WUFE	BIT(1)
+#define KX022_CNTL1_TPE		BIT(0)
 
 /* TSCP orientations */
-#define KX022_ORIENT_PORTRAIT		(1 << 2)
-#define KX022_ORIENT_INVERT_PORTRAIT	(1 << 3)
-#define KX022_ORIENT_LANDSCAPE		(1 << 4)
-#define KX022_ORIENT_INVERT_LANDSCAPE	(1 << 5)
+#define KX022_ORIENT_PORTRAIT		BIT(2)
+#define KX022_ORIENT_INVERT_PORTRAIT	BIT(3)
+#define KX022_ORIENT_LANDSCAPE		BIT(4)
+#define KX022_ORIENT_INVERT_LANDSCAPE	BIT(5)
 #define KX022_ORIENT_MASK		(KX022_ORIENT_PORTRAIT | \
 					 KX022_ORIENT_INVERT_PORTRAIT | \
 					 KX022_ORIENT_LANDSCAPE | \
 					 KX022_ORIENT_INVERT_LANDSCAPE)
 
-#define KX022_CNTL2_SRST	(1 << 7)
+#define KX022_CNTL2_SRST	BIT(7)
 
 #define KX022_CNTL3_OWUF_FIELD	7
 
-#define KX022_INC1_IEA		(1 << 4)
-#define KX022_INC1_IEN		(1 << 5)
+#define KX022_INC1_IEA		BIT(4)
+#define KX022_INC1_IEN		BIT(5)
 
 #define KX022_GSEL_2G		(0 << 3)
-#define KX022_GSEL_4G		(1 << 3)
+#define KX022_GSEL_4G		BIT(3)
 #define KX022_GSEL_8G		(2 << 3)
 #define KX022_GSEL_FIELD	(3 << 3)
 
 #define KX022_RES_8BIT		(0 << 6)
-#define KX022_RES_16BIT		(1 << 6)
+#define KX022_RES_16BIT		BIT(6)
 
 #define KX022_OSA_0_781HZ	8
 #define KX022_OSA_1_563HZ	9
@@ -127,12 +127,12 @@
 #define KX022_OWUF_50_00HZ	6
 #define KX022_OWUF_100_0HZ	7
 
-#define KX022_INC2_ZPWUE	(1 << 0)
-#define KX022_INC2_ZNWUE	(1 << 1)
-#define KX022_INC2_YPWUE	(1 << 2)
-#define KX022_INC2_YNWUE	(1 << 3)
-#define KX022_INC2_XPWUE	(1 << 4)
-#define KX022_INC2_XNWUE	(1 << 5)
+#define KX022_INC2_ZPWUE	BIT(0)
+#define KX022_INC2_ZNWUE	BIT(1)
+#define KX022_INC2_YPWUE	BIT(2)
+#define KX022_INC2_YNWUE	BIT(3)
+#define KX022_INC2_XPWUE	BIT(4)
+#define KX022_INC2_XNWUE	BIT(5)
 
 /* Min and Max sampling frequency in mHz */
 #define KX022_ACCEL_MIN_FREQ    781

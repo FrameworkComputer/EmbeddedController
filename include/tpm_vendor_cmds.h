@@ -206,7 +206,7 @@ enum vendor_cc_spi_hash_request_subcmd {
 
 enum vendor_cc_spi_hash_request_flags {
 	/* EC uses gang programmer mode */
-	SPI_HASH_FLAG_EC_GANG = (1 << 0),
+	SPI_HASH_FLAG_EC_GANG = BIT(0),
 };
 
 /* Structure for VENDOR_CC_SPI_HASH request which follows tpm_header */
@@ -224,10 +224,10 @@ struct vendor_cc_spi_hash_request {
 /*
  * Subcommand code, used to set write protect.
  */
-#define WPV_UPDATE		(1 << 0)
-#define WPV_ENABLE		(1 << 1)
-#define WPV_FORCE		(1 << 2)
-#define WPV_ATBOOT_SET		(1 << 3)
-#define WPV_ATBOOT_ENABLE	(1 << 4)
+#define WPV_UPDATE		BIT(0)
+#define WPV_ENABLE		BIT(1)
+#define WPV_FORCE		BIT(2)
+#define WPV_ATBOOT_SET		BIT(3)
+#define WPV_ATBOOT_ENABLE	BIT(4)
 
 #endif /* __INCLUDE_TPM_VENDOR_CMDS_H */

@@ -88,7 +88,7 @@ void system_pre_init(void)
 	MEC1322_EC_TRACE_EN &= ~1;
 
 	/* Deassert nSIO_RESET */
-	MEC1322_PCR_PWR_RST_CTL &= ~(1 << 0);
+	MEC1322_PCR_PWR_RST_CTL &= ~BIT(0);
 
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 }
@@ -323,8 +323,8 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	}
 
 	if (seconds || microseconds) {
-		MEC1322_INT_BLK_EN |= 1 << 17;
-		MEC1322_INT_ENABLE(17) |= 1 << 20;
+		MEC1322_INT_BLK_EN |= BIT(17);
+		MEC1322_INT_ENABLE(17) |= BIT(20);
 		interrupt_enable();
 		task_enable_irq(MEC1322_IRQ_HTIMER);
 		if (seconds > 2) {

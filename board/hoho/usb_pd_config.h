@@ -50,7 +50,7 @@ static inline void spi_enable_clock(int port)
 #define TIM_TX_CCR_IDX(p) TIM_TX_CCR_C0
 #define TIM_RX_CCR_IDX(p) TIM_RX_CCR_C0
 #define TIM_CCR_CS  1
-#define EXTI_COMP_MASK(p) (1 << 21)
+#define EXTI_COMP_MASK(p) BIT(21)
 #define IRQ_COMP STM32_IRQ_COMP
 /* triggers packet detection on comparator falling edge */
 #define EXTI_XTSR STM32_EXTI_FTSR
@@ -71,8 +71,8 @@ static inline void pd_set_pins_speed(int port)
 static inline void pd_tx_spi_reset(int port)
 {
 	/* Reset SPI1 */
-	STM32_RCC_APB2RSTR |= (1 << 12);
-	STM32_RCC_APB2RSTR &= ~(1 << 12);
+	STM32_RCC_APB2RSTR |= BIT(12);
+	STM32_RCC_APB2RSTR &= ~BIT(12);
 }
 
 /* Drive the CC line from the TX block */

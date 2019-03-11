@@ -87,7 +87,7 @@ const struct adc_t adc_channels[] = {
 	 * now.
 	 */
 	{"BatteryTemp", LM4_ADC_SEQ2, 1, 1, 0,
-	 LM4_AIN(10), 0x06 /* IE0 | END0 */, LM4_GPIO_B, (1<<4)},
+	 LM4_AIN(10), 0x06 /* IE0 | END0 */, LM4_GPIO_B, BIT(4)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 

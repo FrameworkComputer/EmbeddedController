@@ -420,7 +420,7 @@ struct cached_tcpm_message {
 };
 
 /* Cache depth needs to be power of 2 */
-#define CACHE_DEPTH (1 << 2)
+#define CACHE_DEPTH BIT(2)
 #define CACHE_DEPTH_MASK (CACHE_DEPTH - 1)
 
 struct queue {

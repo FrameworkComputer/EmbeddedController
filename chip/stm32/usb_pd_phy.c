@@ -176,7 +176,7 @@ int pd_find_preamble(int port)
 			}
 		}
 		cnt = vals[bit] - vals[bit-1];
-		all = (all >> 1) | (cnt <= PERIOD_THRESHOLD ? 1 << 31 : 0);
+		all = (all >> 1) | (cnt <= PERIOD_THRESHOLD ? BIT(31) : 0);
 		if (all == 0x36db6db6)
 			return bit - 1; /* should be SYNC-1 */
 		if (all == 0xF33F3F3F)
@@ -557,7 +557,7 @@ void pd_hw_init_rx(int port)
 	/* --- DAC configuration for comparator at 850mV --- */
 #ifdef CONFIG_PD_USE_DAC_AS_REF
 	/* Enable DAC interface clock. */
-	STM32_RCC_APB1ENR |= (1 << 29);
+	STM32_RCC_APB1ENR |= BIT(29);
 	/* Delay 1 APB clock cycle after the clock is enabled */
 	clock_wait_bus_cycles(BUS_APB, 1);
 	/* set voltage Vout=0.850V (Vref = 3.0V) */
@@ -570,7 +570,7 @@ void pd_hw_init_rx(int port)
 #ifdef CONFIG_USB_PD_INTERNAL_COMP
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 	/* turn on COMP/SYSCFG */
-	STM32_RCC_APB2ENR |= 1 << 0;
+	STM32_RCC_APB2ENR |= BIT(0);
 	/* Delay 1 APB clock cycle after the clock is enabled */
 	clock_wait_bus_cycles(BUS_APB, 1);
 	/* currently in hi-speed mode : TODO revisit later, INM = PA0(INM6) */
@@ -583,12 +583,12 @@ void pd_hw_init_rx(int port)
 			 CMP2OUTSEL |
 			 STM32_COMP_CMP2HYST_HI;
 #elif defined(CHIP_FAMILY_STM32L)
-	STM32_RCC_APB1ENR |= 1 << 31; /* turn on COMP */
+	STM32_RCC_APB1ENR |= BIT(31); /* turn on COMP */
 
 	STM32_COMP_CSR = STM32_COMP_OUTSEL_TIM2_IC4 | STM32_COMP_INSEL_DAC_OUT1
 			| STM32_COMP_SPEED_FAST;
 	/* route PB4 to COMP input2 through GR6_1 bit 4 (or PB5->GR6_2 bit 5) */
-	STM32_RI_ASCR2 |= 1 << 4;
+	STM32_RI_ASCR2 |= BIT(4);
 #else
 #error Unsupported chip family
 #endif
@@ -641,7 +641,7 @@ void pd_hw_init(int port, int role)
 	/* 50% duty cycle on the output */
 	phy->tim_tx->ccr[TIM_TX_CCR_IDX(port)] = phy->tim_tx->arr / 2;
 	/* Timer channel output configuration */
-	val = (6 << 4) | (1 << 3);
+	val = (6 << 4) | BIT(3);
 	if ((TIM_TX_CCR_IDX(port) & 1) == 0) /* CH2 or CH4 */
 		val <<= 8;
 	if (TIM_TX_CCR_IDX(port) <= 2)

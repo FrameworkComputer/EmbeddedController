@@ -45,10 +45,10 @@ static int hexdigit(int c)
 }
 
 /* Flags for vfnprintf() flags */
-#define PF_LEFT		(1 << 0)  /* Left-justify */
-#define PF_PADZERO	(1 << 1)  /* Pad with 0's not spaces */
-#define PF_SIGN		(1 << 2)  /* Add sign (+) for a positive number */
-#define PF_64BIT	(1 << 3)  /* Number is 64-bit */
+#define PF_LEFT		BIT(0)  /* Left-justify */
+#define PF_PADZERO	BIT(1)  /* Pad with 0's not spaces */
+#define PF_SIGN		BIT(2)  /* Add sign (+) for a positive number */
+#define PF_64BIT	BIT(3)  /* Number is 64-bit */
 
 int vfnprintf(int (*addchar)(void *context, int c), void *context,
 	      const char *format, va_list args)

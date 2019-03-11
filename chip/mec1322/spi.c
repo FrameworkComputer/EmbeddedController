@@ -83,14 +83,14 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 	gpio_set_level(spi_device->gpio_cs, 0);
 
 	/* Disable auto read */
-	MEC1322_SPI_CR(port) &= ~(1 << 5);
+	MEC1322_SPI_CR(port) &= ~BIT(5);
 
 	ret = spi_tx(port, txdata, txlen);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	/* Enable auto read */
-	MEC1322_SPI_CR(port) |= 1 << 5;
+	MEC1322_SPI_CR(port) |= BIT(5);
 
 	if (rxlen != 0) {
 		dma_start_rx(&spi_rx_option[port], rxlen, rxdata);
@@ -108,7 +108,7 @@ int spi_transaction_flush(const struct spi_device_t *spi_device)
 	timestamp_t deadline;
 
 	/* Disable auto read */
-	MEC1322_SPI_CR(port) &= ~(1 << 5);
+	MEC1322_SPI_CR(port) &= ~BIT(5);
 
 	deadline.val = get_time().val + SPI_BYTE_TRANSFER_TIMEOUT_US;
 	/* Wait for FIFO empty SPISR_TXBE */

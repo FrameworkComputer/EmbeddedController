@@ -100,7 +100,7 @@ int watchdog_init(void)
 
 #ifdef CONFIG_HIBERNATE
 	/* bit4: watchdog can be stopped. */
-	IT83XX_ETWD_ETWCTRL |= (1 << 4);
+	IT83XX_ETWD_ETWCTRL |= BIT(4);
 #else
 	/* Specify that watchdog cannot be stopped. */
 	IT83XX_ETWD_ETWCTRL = 0x00;

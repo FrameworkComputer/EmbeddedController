@@ -292,7 +292,7 @@ static void i2c_pio_trans_data(int p, enum enhanced_i2c_transfer_direct direct,
 	if (first_byte) {
 		/* First byte must be slave address. */
 		IT83XX_I2C_DTR(p_ch) =
-			data | (direct == RX_DIRECT ? (1 << 0) : 0);
+			data | (direct == RX_DIRECT ? BIT(0) : 0);
 		/* start or repeat start signal. */
 		IT83XX_I2C_CTR(p_ch) = E_START_ID;
 	} else {
@@ -457,7 +457,7 @@ static void enhanced_i2c_start(int p)
 	 */
 	IT83XX_I2C_TOR(p_ch) = I2C_CLK_LOW_TIMEOUT;
 	/* bit1: Enable enhanced i2c module */
-	IT83XX_I2C_CTR1(p_ch) = (1 << 1);
+	IT83XX_I2C_CTR1(p_ch) = BIT(1);
 }
 
 static int enhanced_i2c_tran_write(int p)

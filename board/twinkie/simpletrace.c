@@ -223,7 +223,7 @@ void trace_packets(void)
 	dma_disable(STM32_DMAC_CH7);
 	task_disable_irq(STM32_IRQ_DMA_CHANNEL_4_7);
 	/* remove TIM1 CH1/2/3 DMA remapping */
-	STM32_SYSCFG_CFGR1 &= ~(1 << 28);
+	STM32_SYSCFG_CFGR1 &= ~BIT(28);
 #endif
 
 	/* "classical" PD RX configuration */

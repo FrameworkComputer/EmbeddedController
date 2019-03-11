@@ -31,7 +31,7 @@ void keyboard_raw_init(void)
 
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 	/* KSO[2] is high, others are low. */
-	IT83XX_KBS_KSOL = (1 << 2);
+	IT83XX_KBS_KSOL = BIT(2);
 #else
 	/* KSO[7:0] pins low. */
 	IT83XX_KBS_KSOL = 0x00;
@@ -81,7 +81,7 @@ test_mockable void keyboard_raw_drive_column(int col)
 
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 	/* KSO[2] is inverted. */
-	mask ^= (1 << 2);
+	mask ^= BIT(2);
 #endif
 	IT83XX_KBS_KSOL = mask & 0xff;
 	IT83XX_KBS_KSOH1 = (mask >> 8) & 0xff;

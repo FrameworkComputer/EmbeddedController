@@ -11,19 +11,19 @@
 #include "timer.h"
 #include "usb_mux.h"
 
-#define ANX7688_VENDOR_ALERT    (1 << 15)
+#define ANX7688_VENDOR_ALERT    BIT(15)
 
 #define ANX7688_REG_STATUS      0x82
-#define ANX7688_REG_STATUS_LINK (1 << 0)
+#define ANX7688_REG_STATUS_LINK BIT(0)
 
 #define ANX7688_REG_HPD         0x83
-#define ANX7688_REG_HPD_HIGH    (1 << 0)
-#define ANX7688_REG_HPD_IRQ     (1 << 1)
-#define ANX7688_REG_HPD_ENABLE  (1 << 2)
+#define ANX7688_REG_HPD_HIGH    BIT(0)
+#define ANX7688_REG_HPD_IRQ     BIT(1)
+#define ANX7688_REG_HPD_ENABLE  BIT(2)
 
 #define ANX7688_USBC_ADDR		0x50
 #define ANX7688_REG_RAMCTRL		0xe7
-#define ANX7688_REG_RAMCTRL_BOOT_DONE	(1 << 6)
+#define ANX7688_REG_RAMCTRL_BOOT_DONE	BIT(6)
 
 static int anx7688_init(int port)
 {

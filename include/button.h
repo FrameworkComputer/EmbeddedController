@@ -12,7 +12,7 @@
 #include "compile_time_macros.h"
 #include "gpio.h"
 
-#define BUTTON_FLAG_ACTIVE_HIGH (1 << 0)
+#define BUTTON_FLAG_ACTIVE_HIGH BIT(0)
 
 enum keyboard_button_type {
 	KEYBOARD_BUTTON_POWER = 0,

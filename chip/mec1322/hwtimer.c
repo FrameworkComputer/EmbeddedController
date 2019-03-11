@@ -17,7 +17,7 @@ void __hw_clock_event_set(uint32_t deadline)
 {
 	MEC1322_TMR32_CNT(1) = MEC1322_TMR32_CNT(0) -
 			       (0xffffffff - deadline);
-	MEC1322_TMR32_CTL(1) |= (1 << 5);
+	MEC1322_TMR32_CTL(1) |= BIT(5);
 }
 
 uint32_t __hw_clock_event_get(void)
@@ -27,7 +27,7 @@ uint32_t __hw_clock_event_get(void)
 
 void __hw_clock_event_clear(void)
 {
-	MEC1322_TMR32_CTL(1) &= ~(1 << 5);
+	MEC1322_TMR32_CTL(1) &= ~BIT(5);
 }
 
 uint32_t __hw_clock_source_read(void)
@@ -37,9 +37,9 @@ uint32_t __hw_clock_source_read(void)
 
 void __hw_clock_source_set(uint32_t ts)
 {
-	MEC1322_TMR32_CTL(0) &= ~(1 << 5);
+	MEC1322_TMR32_CTL(0) &= ~BIT(5);
 	MEC1322_TMR32_CNT(0) = 0xffffffff - ts;
-	MEC1322_TMR32_CTL(0) |= (1 << 5);
+	MEC1322_TMR32_CTL(0) |= BIT(5);
 }
 
 static void __hw_clock_source_irq(int timer_id)
@@ -60,10 +60,10 @@ static void configure_timer(int timer_id)
 	uint32_t val;
 
 	/* Ensure timer is not running */
-	MEC1322_TMR32_CTL(timer_id) &= ~(1 << 5);
+	MEC1322_TMR32_CTL(timer_id) &= ~BIT(5);
 
 	/* Enable timer */
-	MEC1322_TMR32_CTL(timer_id) |= (1 << 0);
+	MEC1322_TMR32_CTL(timer_id) |= BIT(0);
 
 	val = MEC1322_TMR32_CTL(timer_id);
 
@@ -94,16 +94,16 @@ int __hw_clock_source_init(uint32_t start_t)
 	MEC1322_TMR32_CNT(0) = 0xffffffff - start_t;
 
 	/* Auto restart */
-	MEC1322_TMR32_CTL(0) |= (1 << 3);
+	MEC1322_TMR32_CTL(0) |= BIT(3);
 
 	/* Start counting in timer 0 */
-	MEC1322_TMR32_CTL(0) |= (1 << 5);
+	MEC1322_TMR32_CTL(0) |= BIT(5);
 
 	/* Enable interrupt */
 	task_enable_irq(MEC1322_IRQ_TIMER32_0);
 	task_enable_irq(MEC1322_IRQ_TIMER32_1);
-	MEC1322_INT_ENABLE(23) |= (1 << 4) | (1 << 5);
-	MEC1322_INT_BLK_EN |= (1 << 23);
+	MEC1322_INT_ENABLE(23) |= BIT(4) | BIT(5);
+	MEC1322_INT_BLK_EN |= BIT(23);
 
 	return MEC1322_IRQ_TIMER32_1;
 }

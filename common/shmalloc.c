@@ -62,10 +62,10 @@ static void do_release(struct shm_buffer *ptr)
 	/* Take the buffer out of the allocated buffers chain. */
 	if (ptr == allocced_buf_chain) {
 		if (ptr->next_buffer) {
-			set_map_bit(1 << 20);
+			set_map_bit(BIT(20));
 			ptr->next_buffer->prev_buffer = NULL;
 		} else {
-			set_map_bit(1 << 21);
+			set_map_bit(BIT(21));
 		}
 		allocced_buf_chain = ptr->next_buffer;
 	} else {
@@ -83,10 +83,10 @@ static void do_release(struct shm_buffer *ptr)
 
 		ptr->prev_buffer->next_buffer = ptr->next_buffer;
 		if (ptr->next_buffer) {
-			set_map_bit(1 << 22);
+			set_map_bit(BIT(22));
 			ptr->next_buffer->prev_buffer = ptr->prev_buffer;
 		} else {
-			set_map_bit(1 << 23);
+			set_map_bit(BIT(23));
 		}
 	}
 
@@ -100,7 +100,7 @@ static void do_release(struct shm_buffer *ptr)
 		 * All memory had been allocated - this buffer is going to be
 		 * the only available free space.
 		 */
-		set_map_bit(1 << 0);
+		set_map_bit(BIT(0));
 		free_buf_chain = ptr;
 		free_buf_chain->buffer_size = released_size;
 		free_buf_chain->next_buffer = NULL;
@@ -115,23 +115,23 @@ static void do_release(struct shm_buffer *ptr)
 		 */
 		pfb = (struct shm_buffer *)((uintptr_t)ptr + released_size);
 		if (pfb == free_buf_chain) {
-			set_map_bit(1 << 1);
+			set_map_bit(BIT(1));
 			/* Merge the two buffers. */
 			ptr->buffer_size = free_buf_chain->buffer_size +
 				released_size;
 			ptr->next_buffer =
 				free_buf_chain->next_buffer;
 		} else {
-			set_map_bit(1 << 2);
+			set_map_bit(BIT(2));
 			ptr->buffer_size = released_size;
 			ptr->next_buffer = free_buf_chain;
 			free_buf_chain->prev_buffer = ptr;
 		}
 		if (ptr->next_buffer) {
-			set_map_bit(1 << 3);
+			set_map_bit(BIT(3));
 			ptr->next_buffer->prev_buffer = ptr;
 		} else {
-			set_map_bit(1 << 4);
+			set_map_bit(BIT(4));
 		}
 		ptr->prev_buffer = NULL;
 		free_buf_chain = ptr;
@@ -166,10 +166,10 @@ static void do_release(struct shm_buffer *ptr)
 			pfb->next_buffer =
 				pfb->next_buffer->next_buffer;
 			if (pfb->next_buffer) {
-				set_map_bit(1 << 5);
+				set_map_bit(BIT(5));
 				pfb->next_buffer->prev_buffer = pfb;
 			} else {
-				set_map_bit(1 << 6);
+				set_map_bit(BIT(6));
 			}
 		}
 		return;
@@ -178,23 +178,23 @@ static void do_release(struct shm_buffer *ptr)
 	top = (struct shm_buffer *)((uintptr_t)ptr + released_size);
 	if (top == pfb->next_buffer) {
 		/* The new buffer is adjacent with the one right above it. */
-		set_map_bit(1 << 7);
+		set_map_bit(BIT(7));
 		ptr->buffer_size = released_size +
 			pfb->next_buffer->buffer_size;
 		ptr->next_buffer = pfb->next_buffer->next_buffer;
 	} else {
 		/* Just include the new free buffer into the chain. */
-		set_map_bit(1 << 8);
+		set_map_bit(BIT(8));
 		ptr->next_buffer = pfb->next_buffer;
 		ptr->buffer_size = released_size;
 	}
 	ptr->prev_buffer = pfb;
 	pfb->next_buffer = ptr;
 	if (ptr->next_buffer) {
-		set_map_bit(1 << 9);
+		set_map_bit(BIT(9));
 		ptr->next_buffer->prev_buffer = ptr;
 	} else {
-		set_map_bit(1 << 10);
+		set_map_bit(BIT(10));
 	}
 }
 
@@ -223,7 +223,7 @@ static int do_acquire(int size, struct shm_buffer **dest_ptr)
 	}
 
 	if (!candidate) {
-		set_map_bit(1 << 11);
+		set_map_bit(BIT(11));
 		return EC_ERROR_BUSY;
 	}
 
@@ -242,20 +242,20 @@ static int do_acquire(int size, struct shm_buffer **dest_ptr)
 			 */
 			free_buf_chain = candidate->next_buffer;
 			if (free_buf_chain) {
-				set_map_bit(1 << 12);
+				set_map_bit(BIT(12));
 				free_buf_chain->prev_buffer = 0;
 			} else {
-				set_map_bit(1 << 13);
+				set_map_bit(BIT(13));
 			}
 		} else {
 			candidate->prev_buffer->next_buffer =
 				candidate->next_buffer;
 			if (candidate->next_buffer) {
-				set_map_bit(1 << 14);
+				set_map_bit(BIT(14));
 				candidate->next_buffer->prev_buffer =
 					candidate->prev_buffer;
 			} else {
-				set_map_bit(1 << 15);
+				set_map_bit(BIT(15));
 			}
 		}
 		return EC_SUCCESS;
@@ -270,17 +270,17 @@ static int do_acquire(int size, struct shm_buffer **dest_ptr)
 	pfb->prev_buffer = candidate->prev_buffer;
 
 	if (pfb->next_buffer) {
-		set_map_bit(1 << 16);
+		set_map_bit(BIT(16));
 		pfb->next_buffer->prev_buffer = pfb;
 	} else {
-		set_map_bit(1 << 17);
+		set_map_bit(BIT(17));
 	}
 
 	if (candidate == free_buf_chain) {
-		set_map_bit(1 << 18);
+		set_map_bit(BIT(18));
 		free_buf_chain = pfb;
 	} else {
-		set_map_bit(1 << 19);
+		set_map_bit(BIT(19));
 		pfb->prev_buffer->next_buffer = pfb;
 	}
 	return EC_SUCCESS;

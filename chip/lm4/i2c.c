@@ -21,22 +21,22 @@
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
 /* Flags for writes to MCS */
-#define LM4_I2C_MCS_RUN   (1 << 0)
-#define LM4_I2C_MCS_START (1 << 1)
-#define LM4_I2C_MCS_STOP  (1 << 2)
-#define LM4_I2C_MCS_ACK   (1 << 3)
-#define LM4_I2C_MCS_HS    (1 << 4)
-#define LM4_I2C_MCS_QCMD  (1 << 5)
+#define LM4_I2C_MCS_RUN   BIT(0)
+#define LM4_I2C_MCS_START BIT(1)
+#define LM4_I2C_MCS_STOP  BIT(2)
+#define LM4_I2C_MCS_ACK   BIT(3)
+#define LM4_I2C_MCS_HS    BIT(4)
+#define LM4_I2C_MCS_QCMD  BIT(5)
 
 /* Flags for reads from MCS */
-#define LM4_I2C_MCS_BUSY   (1 << 0)
-#define LM4_I2C_MCS_ERROR  (1 << 1)
-#define LM4_I2C_MCS_ADRACK (1 << 2)
-#define LM4_I2C_MCS_DATACK (1 << 3)
-#define LM4_I2C_MCS_ARBLST (1 << 4)
-#define LM4_I2C_MCS_IDLE   (1 << 5)
-#define LM4_I2C_MCS_BUSBSY (1 << 6)
-#define LM4_I2C_MCS_CLKTO  (1 << 7)
+#define LM4_I2C_MCS_BUSY   BIT(0)
+#define LM4_I2C_MCS_ERROR  BIT(1)
+#define LM4_I2C_MCS_ADRACK BIT(2)
+#define LM4_I2C_MCS_DATACK BIT(3)
+#define LM4_I2C_MCS_ARBLST BIT(4)
+#define LM4_I2C_MCS_IDLE   BIT(5)
+#define LM4_I2C_MCS_BUSBSY BIT(6)
+#define LM4_I2C_MCS_CLKTO  BIT(7)
 
 /*
  * Minimum delay between resetting the port or sending a stop condition, and
@@ -298,7 +298,7 @@ int i2c_raw_get_sda(int port)
 
 int i2c_get_line_levels(int port)
 {
-	/* Conveniently, MBMON bit (1 << 1) is SDA and (1 << 0) is SCL. */
+	/* Conveniently, MBMON bit BIT(1) is SDA and BIT(0) is SCL. */
 	return LM4_I2C_MBMON(port) & 0x03;
 }
 

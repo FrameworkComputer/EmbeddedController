@@ -42,10 +42,10 @@ static void adc_configure(int ain_id)
 	adc_set_channel(0, ain_id);
 
 	/* Disable DMA */
-	STM32_ADC_CR2 &= ~(1 << 8);
+	STM32_ADC_CR2 &= ~BIT(8);
 
 	/* Disable scan mode */
-	STM32_ADC_CR1 &= ~(1 << 8);
+	STM32_ADC_CR1 &= ~BIT(8);
 }
 
 static void adc_configure_all(void)
@@ -58,22 +58,22 @@ static void adc_configure_all(void)
 		adc_set_channel(i, adc_channels[i].channel);
 
 	/* Enable DMA */
-	STM32_ADC_CR2 |= (1 << 8);
+	STM32_ADC_CR2 |= BIT(8);
 
 	/* Enable scan mode */
-	STM32_ADC_CR1 |= (1 << 8);
+	STM32_ADC_CR1 |= BIT(8);
 }
 
 static inline int adc_powered(void)
 {
-	return STM32_ADC_SR & (1 << 6); /* ADONS */
+	return STM32_ADC_SR & BIT(6); /* ADONS */
 }
 
 static void adc_enable_clock(void)
 {
-	STM32_RCC_APB2ENR |= (1 << 9);
+	STM32_RCC_APB2ENR |= BIT(9);
 	/* ADCCLK = HSI / 2 = 8MHz*/
-	STM32_ADC_CCR |= (1 << 16);
+	STM32_ADC_CCR |= BIT(16);
 }
 
 static void adc_init(void)
@@ -92,10 +92,10 @@ static void adc_init(void)
 
 	if (!adc_powered())
 		/* Power on ADC module */
-		STM32_ADC_CR2 |= (1 << 0);  /* ADON */
+		STM32_ADC_CR2 |= BIT(0);  /* ADON */
 
 	/* Set right alignment */
-	STM32_ADC_CR2 &= ~(1 << 11);
+	STM32_ADC_CR2 &= ~BIT(11);
 
 	/*
 	 * Set sample time of all channels to 16 cycles.
@@ -132,7 +132,7 @@ static void adc_release(void)
 
 static inline int adc_conversion_ended(void)
 {
-	return STM32_ADC_SR & (1 << 1);
+	return STM32_ADC_SR & BIT(1);
 }
 
 int adc_read_channel(enum adc_channel ch)
@@ -148,10 +148,10 @@ int adc_read_channel(enum adc_channel ch)
 	adc_configure(adc->channel);
 
 	/* Clear EOC bit */
-	STM32_ADC_SR &= ~(1 << 1);
+	STM32_ADC_SR &= ~BIT(1);
 
 	/* Start conversion */
-	STM32_ADC_CR2 |= (1 << 30); /* SWSTART */
+	STM32_ADC_CR2 |= BIT(30); /* SWSTART */
 
 	/* Wait for EOC bit set */
 	deadline.val = get_time().val + ADC_SINGLE_READ_TIMEOUT;

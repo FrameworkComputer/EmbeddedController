@@ -53,7 +53,7 @@ static int bq24192_watchdog_reset(void)
 	rv = bq24192_read(BQ24192_REG_POWER_ON_CFG, &val);
 	if (rv)
 		return rv;
-	val |= (1 << 6);
+	val |= BIT(6);
 	return bq24192_write(BQ24192_REG_POWER_ON_CFG, val) ||
 	       bq24192_write(BQ24192_REG_POWER_ON_CFG, val);
 }

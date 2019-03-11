@@ -23,7 +23,7 @@ static int enable_debug_prints;
  */
 static uint8_t flags[CONFIG_USB_PD_PORT_COUNT];
 
-#define USB_MUX_FLAG_IN_LPM (1 << 0) /* Device is in low power mode. */
+#define USB_MUX_FLAG_IN_LPM BIT(0) /* Device is in low power mode. */
 
 
 static void enter_low_power_mode(int port)

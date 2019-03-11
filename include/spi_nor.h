@@ -73,8 +73,8 @@ extern const unsigned int spi_nor_devices_used;
 #define SPI_NOR_OPCODE_CHIP_ERASE 0xc7     /* Erase whole flash chip */
 
 /* Flags for SPI_NOR_OPCODE_READ_STATUS */
-#define SPI_NOR_STATUS_REGISTER_WIP (1 << 0)  /* Write in progres */
-#define SPI_NOR_STATUS_REGISTER_WEL (1 << 1)  /* Write enabled latch */
+#define SPI_NOR_STATUS_REGISTER_WIP BIT(0)  /* Write in progres */
+#define SPI_NOR_STATUS_REGISTER_WEL BIT(1)  /* Write enabled latch */
 
 /* If needed in the future this driver can be extended to discover SFDP
  * advertised erase sizes and opcodes for SFDP v1.0+. */

@@ -17,12 +17,12 @@
 static void system_init(void)
 {
 	/* Enable access to RCC CSR register and RTC backup registers */
-	STM32_PWR_CR |= 1 << 8;
+	STM32_PWR_CR |= BIT(8);
 
 	/* switch on LSI */
-	STM32_RCC_CSR |= 1 << 0;
+	STM32_RCC_CSR |= BIT(0);
 	/* Wait for LSI to be ready */
-	while (!(STM32_RCC_CSR & (1 << 1)))
+	while (!(STM32_RCC_CSR & BIT(1)))
 		;
 	/* re-configure RTC if needed */
 	if ((STM32_RCC_BDCR & 0x00018300) != 0x00008200) {
@@ -108,7 +108,7 @@ static void adc_init(void)
 			;
 	}
 	/* Single conversion, right aligned, 12-bit */
-	STM32_ADC_CFGR1 = 1 << 12; /* (1 << 15) => AUTOOFF */;
+	STM32_ADC_CFGR1 = BIT(12); /* BIT(15) => AUTOOFF */;
 	/* clock is ADCCLK (ADEN must be off when writing this reg) */
 	STM32_ADC_CFGR2 = 0;
 	/* Sampling time : 71.5 ADC clock cycles, about 5us */
@@ -172,9 +172,9 @@ void hardware_init(void)
 	power_init();
 
 	/* Clear the hardware reset cause by setting the RMVF bit */
-	STM32_RCC_CSR |= 1 << 24;
+	STM32_RCC_CSR |= BIT(24);
 	/* Clear SBF in PWR_CSR */
-	STM32_PWR_CR |= 1 << 3;
+	STM32_PWR_CR |= BIT(3);
 
 	/*
 	 * WORKAROUND: as we cannot de-activate the watchdog during
@@ -206,7 +206,7 @@ static int adc_enable_last_watchdog(void)
 
 static inline int adc_watchdog_enabled(void)
 {
-	return STM32_ADC_CFGR1 & (1 << 23);
+	return STM32_ADC_CFGR1 & BIT(23);
 }
 
 int adc_read_channel(enum adc_channel ch)
@@ -222,9 +222,9 @@ int adc_read_channel(enum adc_channel ch)
 	/* Clear flags */
 	STM32_ADC_ISR = 0x8e;
 	/* Start conversion */
-	STM32_ADC_CR |= 1 << 2; /* ADSTART */
+	STM32_ADC_CR |= BIT(2); /* ADSTART */
 	/* Wait for end of conversion */
-	while (!(STM32_ADC_ISR & (1 << 2)))
+	while (!(STM32_ADC_ISR & BIT(2)))
 		;
 	/* read converted value */
 	value = STM32_ADC_DR;
@@ -249,12 +249,12 @@ int adc_enable_watchdog(int ch, int high, int low)
 	/* Clear flags */
 	STM32_ADC_ISR = 0x8e;
 	/* Set Watchdog enable bit on a single channel / continuous mode */
-	STM32_ADC_CFGR1 = (ch << 26) | (1 << 23) | (1 << 22)
-			|  (1 << 13) | (1 << 12);
+	STM32_ADC_CFGR1 = (ch << 26) | BIT(23) | BIT(22)
+			|  BIT(13) | BIT(12);
 	/* Enable watchdog interrupt */
-	STM32_ADC_IER = 1 << 7;
+	STM32_ADC_IER = BIT(7);
 	/* Start continuous conversion */
-	STM32_ADC_CR |= 1 << 2; /* ADSTART */
+	STM32_ADC_CR |= BIT(2); /* ADSTART */
 
 	return EC_SUCCESS;
 }
@@ -262,12 +262,12 @@ int adc_enable_watchdog(int ch, int high, int low)
 int adc_disable_watchdog(void)
 {
 	/* Stop on-going conversion */
-	STM32_ADC_CR |= 1 << 4; /* ADSTP */
+	STM32_ADC_CR |= BIT(4); /* ADSTP */
 	/* Wait for conversion to stop */
-	while (STM32_ADC_CR & (1 << 4))
+	while (STM32_ADC_CR & BIT(4))
 		;
 	/* CONT=0 -> continuous mode off / Clear Watchdog enable */
-	STM32_ADC_CFGR1 = 1 << 12;
+	STM32_ADC_CFGR1 = BIT(12);
 	/* Disable interrupt */
 	STM32_ADC_IER = 0;
 	/* Clear flags */
@@ -294,13 +294,13 @@ int adc_disable_watchdog(void)
 #define KEY2    0xCDEF89AB
 
 /* Lock bits for FLASH_CR register */
-#define PG       (1<<0)
-#define PER      (1<<1)
-#define OPTPG    (1<<4)
-#define OPTER    (1<<5)
-#define STRT     (1<<6)
-#define CR_LOCK  (1<<7)
-#define OPTWRE   (1<<9)
+#define PG       BIT(0)
+#define PER      BIT(1)
+#define OPTPG    BIT(4)
+#define OPTER    BIT(5)
+#define STRT     BIT(6)
+#define CR_LOCK  BIT(7)
+#define OPTWRE   BIT(9)
 
 int flash_physical_write(int offset, int size, const char *data)
 {

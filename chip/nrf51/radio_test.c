@@ -111,7 +111,7 @@ static int ble_test_init(int chan)
 	if (chan > BLE_MAX_TEST_CHANNEL || chan < BLE_MIN_TEST_CHANNEL)
 		return HCI_ERR_Invalid_HCI_Command_Parameters;
 
-	NRF51_RADIO_CRCCNF = 3 | (1 << 8); /* 3-byte, skip address */
+	NRF51_RADIO_CRCCNF = 3 | BIT(8); /* 3-byte, skip address */
 	/* x^24 + x^10 + x^9 + x^6 + x^4 + x^3 + x + 1 */
 	/* 0x1_0000_0000_0000_0110_0101_1011 */
 	NRF51_RADIO_CRCPOLY = 0x100065B;

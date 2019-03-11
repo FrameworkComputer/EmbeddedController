@@ -118,7 +118,7 @@ int system_is_reboot_warm(void)
 void chip_pre_init(void)
 {
 	/* bit4, enable debug mode through SMBus */
-	IT83XX_SMB_SLVISELR &= ~(1 << 4);
+	IT83XX_SMB_SLVISELR &= ~BIT(4);
 }
 
 #define BRAM_VALID_MAGIC        0x4252414D  /* "BRAM" */
@@ -189,12 +189,12 @@ void system_reset(int flags)
 	 * If we are in debug mode, we need disable it before triggering
 	 * a soft reset or reset will fail.
 	 */
-	IT83XX_SMB_SLVISELR |= (1 << 4);
+	IT83XX_SMB_SLVISELR |= BIT(4);
 
 	/* bit0: enable watchdog hardware reset. */
 #ifdef IT83XX_ETWD_HW_RESET_SUPPORT
 	if (flags & SYSTEM_RESET_HARD)
-		IT83XX_GCTRL_ETWDUARTCR |= (1 << 0);
+		IT83XX_GCTRL_ETWDUARTCR |= BIT(0);
 #endif
 	/*
 	 * Writing invalid key to watchdog module triggers a soft or hardware

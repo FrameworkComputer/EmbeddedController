@@ -19,7 +19,7 @@ enum vendor_cmd_flags {
 	 * command endpoint or the console).  If this flag is not present,
 	 * the command is coming from the AP.
 	 */
-	VENDOR_CMD_FROM_USB = (1 << 0),
+	VENDOR_CMD_FROM_USB = BIT(0),
 };
 
 /* Parameters for vendor commands */

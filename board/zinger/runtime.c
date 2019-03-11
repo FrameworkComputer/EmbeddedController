@@ -94,19 +94,19 @@ DECLARE_IRQ(STM32_IRQ_TIM2, tim2_interrupt, 1);
 static void zinger_config_hispeed_clock(void)
 {
 	/* Ensure that HSI8 is ON */
-	if (!(STM32_RCC_CR & (1 << 1))) {
+	if (!(STM32_RCC_CR & BIT(1))) {
 		/* Enable HSI */
-		STM32_RCC_CR |= 1 << 0;
+		STM32_RCC_CR |= BIT(0);
 		/* Wait for HSI to be ready */
-		while (!(STM32_RCC_CR & (1 << 1)))
+		while (!(STM32_RCC_CR & BIT(1)))
 			;
 	}
 	/* PLLSRC = HSI, PLLMUL = x12 (x HSI/2) = 48Mhz */
 	STM32_RCC_CFGR = 0x00288000;
 	/* Enable PLL */
-	STM32_RCC_CR |= 1 << 24;
+	STM32_RCC_CR |= BIT(24);
 	/* Wait for PLL to be ready */
-	while (!(STM32_RCC_CR & (1 << 25)))
+	while (!(STM32_RCC_CR & BIT(25)))
 			;
 
 	/* switch SYSCLK to PLL */

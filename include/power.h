@@ -51,12 +51,12 @@ enum power_state {
  * +-----------------+------------------------------------+
  */
 
-#define POWER_SIGNAL_ACTIVE_STATE	(1 << 0)
+#define POWER_SIGNAL_ACTIVE_STATE	BIT(0)
 #define POWER_SIGNAL_ACTIVE_LOW	(0 << 0)
-#define POWER_SIGNAL_ACTIVE_HIGH	(1 << 0)
+#define POWER_SIGNAL_ACTIVE_HIGH	BIT(0)
 
-#define POWER_SIGNAL_INTR_STATE	(1 << 1)
-#define POWER_SIGNAL_DISABLE_AT_BOOT	(1 << 1)
+#define POWER_SIGNAL_INTR_STATE	BIT(1)
+#define POWER_SIGNAL_DISABLE_AT_BOOT	BIT(1)
 
 /* Information on an power signal */
 struct power_signal_info {

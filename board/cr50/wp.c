@@ -277,7 +277,7 @@ int board_wipe_tpm(void)
  * git sha c7282f6.
  */
 #define FWMP_HASH_SIZE		    32
-#define FWMP_DEV_DISABLE_CCD_UNLOCK (1 << 6)
+#define FWMP_DEV_DISABLE_CCD_UNLOCK BIT(6)
 #define FIRMWARE_FLAG_DEV_MODE      0x02
 
 struct RollbackSpaceFirmware {

@@ -30,7 +30,7 @@ static int start_single_and_wait(int timeout)
 	task_waiting = task_get_current();
 
 	/* Start conversion */
-	MEC1322_ADC_CTRL |= 1 << 1;
+	MEC1322_ADC_CTRL |= BIT(1);
 
 	/* Wait for interrupt */
 	event = task_wait_event(timeout);
@@ -60,12 +60,12 @@ int adc_read_channel(enum adc_channel ch)
 static void adc_init(void)
 {
 	/* Activate ADC module */
-	MEC1322_ADC_CTRL |= 1 << 0;
+	MEC1322_ADC_CTRL |= BIT(0);
 
 	/* Enable interrupt */
 	task_waiting = TASK_ID_INVALID;
-	MEC1322_INT_ENABLE(17) |= 1 << 10;
-	MEC1322_INT_BLK_EN |= 1 << 17;
+	MEC1322_INT_ENABLE(17) |= BIT(10);
+	MEC1322_INT_BLK_EN |= BIT(17);
 	task_enable_irq(MEC1322_IRQ_ADC_SNGL);
 }
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_INIT_ADC);
@@ -73,7 +73,7 @@ DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_INIT_ADC);
 void adc_interrupt(void)
 {
 	/* Clear interrupt status bit */
-	MEC1322_ADC_CTRL |= 1 << 7;
+	MEC1322_ADC_CTRL |= BIT(7);
 
 	if (task_waiting != TASK_ID_INVALID)
 		task_wake(task_waiting);

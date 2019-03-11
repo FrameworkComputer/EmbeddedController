@@ -14,7 +14,7 @@
  */
 #define IT83XX_USBPD_CC_PIN_CONFIG 0x86
 
-#define TASK_EVENT_PHY_TX_DONE TASK_EVENT_CUSTOM((1 << 17))
+#define TASK_EVENT_PHY_TX_DONE TASK_EVENT_CUSTOM(BIT(17))
 
 #define SET_MASK(reg, bit_mask)      ((reg) |= (bit_mask))
 #define CLEAR_MASK(reg, bit_mask)    ((reg) &= (~(bit_mask)))
@@ -51,9 +51,9 @@
 #define USBPD_GET_POWER_ROLE(port)                  \
 	(IT83XX_USBPD_PDMSR(port) & 1)
 #define USBPD_GET_CC1_PULL_REGISTER_SELECTION(port) \
-	(IT83XX_USBPD_CCGCR(port) & (1 << 1))
+	(IT83XX_USBPD_CCGCR(port) & BIT(1))
 #define USBPD_GET_CC2_PULL_REGISTER_SELECTION(port) \
-	(IT83XX_USBPD_BMCSR(port) & (1 << 3))
+	(IT83XX_USBPD_BMCSR(port) & BIT(3))
 #define USBPD_GET_PULL_CC_SELECTION(port)           \
 	(IT83XX_USBPD_CCGCR(port) & 1)
 

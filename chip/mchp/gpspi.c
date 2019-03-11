@@ -109,7 +109,7 @@ int gpspi_transaction_async(const struct spi_device_t *spi_device,
 	ctrl = gpspi_port_to_ctrl_id(hw_port);
 
 	/* Disable auto read */
-	MCHP_SPI_CR(ctrl) &= ~(1 << 5);
+	MCHP_SPI_CR(ctrl) &= ~BIT(5);
 
 	if ((txdata != NULL) && (txdata != 0)) {
 #ifdef CONFIG_MCHP_GPSPI_TX_DMA
@@ -151,7 +151,7 @@ int gpspi_transaction_async(const struct spi_device_t *spi_device,
 				if (!cs_asserted)
 					gpio_set_level(spi_device->gpio_cs, 0);
 				/* Enable auto read */
-				MCHP_SPI_CR(ctrl) |= 1 << 5;
+				MCHP_SPI_CR(ctrl) |= BIT(5);
 				dma_start_rx(opdma, rxlen, rxdata);
 				MCHP_SPI_TD(ctrl) = 0;
 				ret = EC_SUCCESS;
@@ -180,7 +180,7 @@ int gpspi_transaction_flush(const struct spi_device_t *spi_device)
 	ret = dma_wait(chan);
 
 	/* Disable auto read */
-	MCHP_SPI_CR(ctrl) &= ~(1 << 5);
+	MCHP_SPI_CR(ctrl) &= ~BIT(5);
 
 	deadline.val = get_time().val + SPI_BYTE_TRANSFER_TIMEOUT_US;
 	/* Wait for FIFO empty SPISR_TXBE */

@@ -880,10 +880,10 @@ static void ds1624_update(void)
 			DS1624_READ_TEMP16, &temp);
 
 	d = (temp & 0x7FFF) >> 8;
-	if ((uint32_t)temp & (1 << 7))
+	if ((uint32_t)temp & BIT(7))
 		d++;
 
-	if ((uint32_t)temp & (1 << 15))
+	if ((uint32_t)temp & BIT(15))
 		d |= (1u << 31);
 
 	ds1624_temp = (int32_t)d;

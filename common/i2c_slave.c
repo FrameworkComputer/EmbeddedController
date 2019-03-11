@@ -14,7 +14,7 @@ int i2c_get_protocol_info(struct host_cmd_handler_args *args)
 	struct ec_response_get_protocol_info *r = args->response;
 
 	memset(r, 0, sizeof(*r));
-	r->protocol_versions = (1 << 3);
+	r->protocol_versions = BIT(3);
 	r->max_request_packet_size = I2C_MAX_HOST_PACKET_SIZE;
 	r->max_response_packet_size = I2C_MAX_HOST_PACKET_SIZE;
 	r->flags = 0;

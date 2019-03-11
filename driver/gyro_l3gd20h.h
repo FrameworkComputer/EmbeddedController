@@ -51,25 +51,25 @@
 #define L3GD20_LOW_ODR           0x39
 
 #define L3GD20_DPS_SEL_245       (0 << 4)
-#define L3GD20_DPS_SEL_500       (1 << 4)
+#define L3GD20_DPS_SEL_500       BIT(4)
 #define L3GD20_DPS_SEL_2000_0    (2 << 4)
 #define L3GD20_DPS_SEL_2000_1    (3 << 4)
 
 #define L3GD20_ODR_PD            (0 << 3)
 #define L3GD20_ODR_12_5HZ        (0 << 6)
-#define L3GD20_ODR_25HZ          (1 << 6)
+#define L3GD20_ODR_25HZ          BIT(6)
 #define L3GD20_ODR_50HZ_0        (2 << 6)
 #define L3GD20_ODR_50HZ_1        (3 << 6)
 #define L3GD20_ODR_100HZ         (0 << 6)
-#define L3GD20_ODR_200HZ         (1 << 6)
+#define L3GD20_ODR_200HZ         BIT(6)
 #define L3GD20_ODR_400HZ         (2 << 6)
 #define L3GD20_ODR_800HZ         (3 << 6)
 
 #define L3GD20_ODR_MASK          (3 << 6)
-#define L3GD20_STS_ZYXDA_MASK    (1 << 3)
+#define L3GD20_STS_ZYXDA_MASK    BIT(3)
 #define L3GD20_RANGE_MASK        (3 << 4)
-#define L3GD20_LOW_ODR_MASK      (1 << 0)
-#define L3GD20_ODR_PD_MASK       (1 << 3)
+#define L3GD20_LOW_ODR_MASK      BIT(0)
+#define L3GD20_ODR_PD_MASK       BIT(3)
 
 /* Min and Max sampling frequency in mHz */
 #define L3GD20_GYRO_MIN_FREQ     12500

@@ -17,9 +17,9 @@ void watchdog_reload(void)
 
 #ifdef CONFIG_WATCHDOG_HELP
 	/* Reload the auxiliary timer */
-	MCHP_TMR16_CTL(0) &= ~(1 << 5);
+	MCHP_TMR16_CTL(0) &= ~BIT(5);
 	MCHP_TMR16_CNT(0) = CONFIG_AUX_TIMER_PERIOD_MS;
-	MCHP_TMR16_CTL(0) |= 1 << 5;
+	MCHP_TMR16_CTL(0) |= BIT(5);
 #endif
 }
 DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
@@ -38,10 +38,10 @@ int watchdog_init(void)
 	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_BTMR16_0);
 
 	/* Stop the auxiliary timer if it's running */
-	MCHP_TMR16_CTL(0) &= ~(1 << 5);
+	MCHP_TMR16_CTL(0) &= ~BIT(5);
 
 	/* Enable auxiliary timer */
-	MCHP_TMR16_CTL(0) |= 1 << 0;
+	MCHP_TMR16_CTL(0) |= BIT(0);
 
 	val = MCHP_TMR16_CTL(0);
 
@@ -49,10 +49,10 @@ int watchdog_init(void)
 	val = (val & 0xffff) | (47999 << 16);
 
 	/* No auto restart */
-	val &= ~(1 << 3);
+	val &= ~BIT(3);
 
 	/* Count down */
-	val &= ~(1 << 2);
+	val &= ~BIT(2);
 
 	MCHP_TMR16_CTL(0) = val;
 
@@ -63,7 +63,7 @@ int watchdog_init(void)
 
 	/* Load and start the auxiliary timer */
 	MCHP_TMR16_CNT(0) = CONFIG_AUX_TIMER_PERIOD_MS;
-	MCHP_TMR16_CNT(0) |= 1 << 5;
+	MCHP_TMR16_CNT(0) |= BIT(5);
 #endif
 
 	/* Clear WDT PCR sleep enable */
@@ -75,7 +75,7 @@ int watchdog_init(void)
 	/* Start watchdog */
 #ifdef CONFIG_CHIPSET_DEBUG
 	/* WDT will not count if JTAG TRST# is pulled high by JTAG cable */
-	MCHP_WDG_CTL = (1 << 4) | (1 << 0);
+	MCHP_WDG_CTL = BIT(4) | BIT(0);
 #else
 	MCHP_WDG_CTL |= 1;
 #endif

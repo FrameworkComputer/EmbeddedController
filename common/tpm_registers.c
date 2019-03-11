@@ -118,27 +118,27 @@ static struct {
 
 /* Bit definitions for some TPM registers. */
 enum tpm_access_bits {
-	tpm_reg_valid_sts = (1 << 7),
-	active_locality = (1 << 5),
-	request_use = (1 << 1),
-	tpm_establishment = (1 << 0),
+	tpm_reg_valid_sts = BIT(7),
+	active_locality = BIT(5),
+	request_use = BIT(1),
+	tpm_establishment = BIT(0),
 };
 
 enum tpm_sts_bits {
 	tpm_family_shift = 26,
-	tpm_family_mask = ((1 << 2) - 1),  /* 2 bits wide */
+	tpm_family_mask = (BIT(2) - 1),  /* 2 bits wide */
 	tpm_family_tpm2 = 1,
-	reset_establishment_bit = (1 << 25),
-	command_cancel = (1 << 24),
+	reset_establishment_bit = BIT(25),
+	command_cancel = BIT(24),
 	burst_count_shift = 8,
-	burst_count_mask = ((1 << 16) - 1),  /* 16 bits wide */
-	sts_valid = (1 << 7),
-	command_ready = (1 << 6),
-	tpm_go = (1 << 5),
-	data_avail = (1 << 4),
-	expect = (1 << 3),
-	self_test_done = (1 << 2),
-	response_retry = (1 << 1),
+	burst_count_mask = (BIT(16) - 1),  /* 16 bits wide */
+	sts_valid = BIT(7),
+	command_ready = BIT(6),
+	tpm_go = BIT(5),
+	data_avail = BIT(4),
+	expect = BIT(3),
+	self_test_done = BIT(2),
+	response_retry = BIT(1),
 };
 
 /* Used to count bytes read in version string */
@@ -676,9 +676,9 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
  * Events used on the TPM task context. Make sure there is no collision with
  * event(s) defined in chip/g/dcrypto/dcrypto_runtime.c
  */
-#define TPM_EVENT_RESET TASK_EVENT_CUSTOM(1 << 1)
-#define TPM_EVENT_COMMIT TASK_EVENT_CUSTOM(1 << 2)
-#define TPM_EVENT_ALT_EXTENSION TASK_EVENT_CUSTOM(1 << 3)
+#define TPM_EVENT_RESET TASK_EVENT_CUSTOM(BIT(1))
+#define TPM_EVENT_COMMIT TASK_EVENT_CUSTOM(BIT(2))
+#define TPM_EVENT_ALT_EXTENSION TASK_EVENT_CUSTOM(BIT(3))
 
 /*
  * Result of executing of the TPM command on the alternative path, could have

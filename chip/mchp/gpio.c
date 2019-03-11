@@ -57,7 +57,7 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 	while (mask) {
 		i = __builtin_ffs(mask) - 1;
 		val = MCHP_GPIO_CTL(port, i);
-		val &= ~((1 << 12) | (1 << 13));
+		val &= ~(BIT(12) | BIT(13));
 		/* mux_control = 0 indicates GPIO */
 		if (func > 0)
 			val |= (func & 0x3) << 12;
@@ -77,7 +77,7 @@ test_mockable int gpio_get_level(enum gpio_signal signal)
 	i = GPIO_MASK_TO_NUM(mask);
 	val = MCHP_GPIO_CTL(gpio_list[signal].port, i);
 
-	return (val & (1 << 24)) ? 1 : 0;
+	return (val & BIT(24)) ? 1 : 0;
 }
 
 void gpio_set_level(enum gpio_signal signal, int value)
@@ -90,9 +90,9 @@ void gpio_set_level(enum gpio_signal signal, int value)
 	i = GPIO_MASK_TO_NUM(mask);
 
 	if (value)
-		MCHP_GPIO_CTL(gpio_list[signal].port, i) |= (1 << 16);
+		MCHP_GPIO_CTL(gpio_list[signal].port, i) |= BIT(16);
 	else
-		MCHP_GPIO_CTL(gpio_list[signal].port, i) &= ~(1 << 16);
+		MCHP_GPIO_CTL(gpio_list[signal].port, i) &= ~BIT(16);
 }
 
 /*

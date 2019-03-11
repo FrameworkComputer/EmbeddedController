@@ -150,20 +150,20 @@
 /* UART config flag, send to sc_io_control if the current UART line has HW
  * flow control lines connected.
  */
-#define UART_CONFIG_HW_FLOW_CONTROL       (1<<0)
+#define UART_CONFIG_HW_FLOW_CONTROL       BIT(0)
 
  /* UART config flag for sc_io_control.  If defined a sc_io_event_rx_msg is
   * raised only when the rx buffer is completely full. Otherwise, the event
   * is raised after a timeout is received on the UART line,
   * and all data received until now is provided.
   */
-#define UART_CONFIG_DELIVER_FULL_RX_BUF   (1<<1)
+#define UART_CONFIG_DELIVER_FULL_RX_BUF   BIT(1)
 
 /* UART config flag for sc_io_control.  If defined a sc_io_event_rx_buf_depleted
  * is raised when all rx buffers that were added are full. Otherwise, no
  * event is raised.
  */
-#define UART_CONFIG_ANNOUNCE_DEPLETED_BUF (1<<2)
+#define UART_CONFIG_ANNOUNCE_DEPLETED_BUF BIT(2)
 
 #define UART_INT_DEVICES		2
 #define UART_EXT_DEVICES		8

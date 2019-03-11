@@ -46,44 +46,44 @@
 #define SPEED_100KHZ_IDLE_SCALING	0x01FC01EDul
 #define SPEED_100KHZ_TIMEOUT_SCALING	0x4B9CC2C7ul
 /* Status */
-#define STS_NBB (1 << 0) /* Bus busy */
-#define STS_LAB (1 << 1) /* Arbitration lost */
-#define STS_LRB (1 << 3) /* Last received bit */
-#define STS_BER (1 << 4) /* Bus error */
-#define STS_PIN (1 << 7) /* Pending interrupt */
+#define STS_NBB BIT(0) /* Bus busy */
+#define STS_LAB BIT(1) /* Arbitration lost */
+#define STS_LRB BIT(3) /* Last received bit */
+#define STS_BER BIT(4) /* Bus error */
+#define STS_PIN BIT(7) /* Pending interrupt */
 /* Control */
-#define CTRL_ACK (1 << 0) /* Acknowledge */
-#define CTRL_STO (1 << 1) /* STOP */
-#define CTRL_STA (1 << 2) /* START */
-#define CTRL_ENI (1 << 3) /* Enable interrupt */
-#define CTRL_ESO (1 << 6) /* Enable serial output */
-#define CTRL_PIN (1 << 7) /* Pending interrupt not */
+#define CTRL_ACK BIT(0) /* Acknowledge */
+#define CTRL_STO BIT(1) /* STOP */
+#define CTRL_STA BIT(2) /* START */
+#define CTRL_ENI BIT(3) /* Enable interrupt */
+#define CTRL_ESO BIT(6) /* Enable serial output */
+#define CTRL_PIN BIT(7) /* Pending interrupt not */
 /* Completion */
-#define COMP_DTEN	(1 << 2) /* enable device timeouts */
-#define COMP_MCEN	(1 << 3) /* enable master cumulative timeouts */
-#define COMP_SCEN	(1 << 4) /* enable slave cumulative timeouts */
-#define COMP_BIDEN	(1 << 5) /* enable Bus idle timeouts */
-#define COMP_IDLE	(1 << 29)  /* i2c bus is idle */
+#define COMP_DTEN	BIT(2) /* enable device timeouts */
+#define COMP_MCEN	BIT(3) /* enable master cumulative timeouts */
+#define COMP_SCEN	BIT(4) /* enable slave cumulative timeouts */
+#define COMP_BIDEN	BIT(5) /* enable Bus idle timeouts */
+#define COMP_IDLE	BIT(29)  /* i2c bus is idle */
 #define COMP_RW_BITS_MASK 0x3C /* R/W bits mask */
 /* Configuration */
 #define CFG_PORT_MASK	(0x0F)	/* port selection field */
-#define CFG_TCEN	(1 << 4) /* Enable HW bus timeouts */
-#define CFG_FEN		(1 << 8) /* enable input filtering */
-#define CFG_RESET	(1 << 9) /* reset controller */
-#define CFG_ENABLE	(1 << 10) /* enable controller */
-#define CFG_GC_DIS	(1 << 14) /* disable general call address */
-#define CFG_ENIDI	(1 << 29) /* Enable I2C idle interrupt */
+#define CFG_TCEN	BIT(4) /* Enable HW bus timeouts */
+#define CFG_FEN		BIT(8) /* enable input filtering */
+#define CFG_RESET	BIT(9) /* reset controller */
+#define CFG_ENABLE	BIT(10) /* enable controller */
+#define CFG_GC_DIS	BIT(14) /* disable general call address */
+#define CFG_ENIDI	BIT(29) /* Enable I2C idle interrupt */
 /* Enable network layer master done interrupt */
-#define CFG_ENMI	(1 << 30)
+#define CFG_ENMI	BIT(30)
 /* Enable network layer slave done interrupt */
-#define CFG_ENSI	(1 << 31)
+#define CFG_ENSI	BIT(31)
 /* Master Command */
-#define MCMD_MRUN		(1 << 0)
-#define MCMD_MPROCEED		(1 << 1)
-#define MCMD_START0		(1 << 8)
-#define MCMD_STARTN		(1 << 9)
-#define MCMD_STOP		(1 << 10)
-#define MCMD_READM		(1 << 12)
+#define MCMD_MRUN		BIT(0)
+#define MCMD_MPROCEED		BIT(1)
+#define MCMD_START0		BIT(8)
+#define MCMD_STARTN		BIT(9)
+#define MCMD_STOP		BIT(10)
+#define MCMD_READM		BIT(12)
 #define MCMD_WCNT_BITPOS	(16)
 #define MCMD_WCNT_MASK0		(0xFF)
 #define MCMD_WCNT_MASK		(0xFF << 16)
@@ -342,9 +342,9 @@ static void reset_controller(int controller)
 	int i;
 
 	/* Reset asserted for at least one AHB clock */
-	MCHP_I2C_CONFIG(controller) |= 1 << 9;
+	MCHP_I2C_CONFIG(controller) |= BIT(9);
 	MCHP_EC_ID_RO = 0;
-	MCHP_I2C_CONFIG(controller) &= ~(1 << 9);
+	MCHP_I2C_CONFIG(controller) &= ~BIT(9);
 
 	for (i = 0; i < i2c_ports_used; ++i)
 		if (controller == i2c_port_to_controller(i2c_ports[i].port)) {
@@ -464,9 +464,9 @@ static void select_port(int port, int controller)
 	if ((MCHP_I2C_CONFIG(controller) & 0x0f) == port_sel)
 		return;
 
-	MCHP_I2C_CONFIG(controller) |= 1 << 9;
+	MCHP_I2C_CONFIG(controller) |= BIT(9);
 	MCHP_EC_ID_RO = 0; /* dummy write to read-only as delay */
-	MCHP_I2C_CONFIG(controller) &= ~(1 << 9);
+	MCHP_I2C_CONFIG(controller) &= ~BIT(9);
 	configure_controller(controller, port_sel, i2c_ports[port].kbps);
 }
 

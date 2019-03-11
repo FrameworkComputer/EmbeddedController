@@ -89,7 +89,7 @@ static int rpm_pre[FAN_CH_COUNT];
 	((fan_status[ch].mft_freq * 60 / PULSES_ROUND) / MAX((tach), 1))
 
 /* MFT TCNT default count */
-#define TACHO_MAX_CNT ((1 << 16) - 1)
+#define TACHO_MAX_CNT (BIT(16) - 1)
 
 /* Margin of target rpm */
 #define RPM_MARGIN(rpm_target) (((rpm_target) * RPM_DEVIATION) / 100)

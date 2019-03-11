@@ -9,8 +9,8 @@
 #define __CROS_EC_SYSTEM_CHIP_H
 
 /* Flags for BBRM_DATA_INDEX_WAKE */
-#define HIBERNATE_WAKE_MTC        (1 << 0)  /* MTC alarm */
-#define HIBERNATE_WAKE_PIN        (1 << 1)  /* Wake pin */
+#define HIBERNATE_WAKE_MTC        BIT(0)  /* MTC alarm */
+#define HIBERNATE_WAKE_PIN        BIT(1)  /* Wake pin */
 
 /* Indices for battery-backed ram (BBRAM) data position */
 enum bbram_data_index {

@@ -33,8 +33,8 @@ static int fake_hibernate;
  * because it's the lowest clock rate we can still run 115200 baud serial
  * for the debug console.
  */
-#define MSI_2MHZ_CLOCK (1 << 21)
-#define MSI_1MHZ_CLOCK (1 << 20)
+#define MSI_2MHZ_CLOCK BIT(21)
+#define MSI_1MHZ_CLOCK BIT(20)
 
 enum clock_osc {
 	OSC_INIT = 0,	/* Uninitialized */

@@ -27,7 +27,7 @@ static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 #define NX20P348X_DB_EXIT_FAIL_THRESHOLD 10
 static int db_exit_fail_count[CONFIG_USB_PD_PORT_COUNT];
 
-#define NX20P348X_FLAGS_SOURCE_ENABLED (1 << 0)
+#define NX20P348X_FLAGS_SOURCE_ENABLED BIT(0)
 static uint8_t flags[CONFIG_USB_PD_PORT_COUNT];
 
 static int read_reg(uint8_t port, int reg, int *regval)

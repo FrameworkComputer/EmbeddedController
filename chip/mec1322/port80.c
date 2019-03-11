@@ -31,7 +31,7 @@ static void port_80_interrupt_enable(void)
 	/* Enable the interrupt. */
 	task_enable_irq(MEC1322_IRQ_TIMER16_1);
 	/* Enable and start the timer. */
-	MEC1322_TMR16_CTL(1) |= 1 | (1 << 5);
+	MEC1322_TMR16_CTL(1) |= 1 | BIT(5);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, port_80_interrupt_enable, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_RESET, port_80_interrupt_enable, HOOK_PRIO_DEFAULT);
@@ -61,9 +61,9 @@ static void port_80_interrupt_init(void)
 	val = MEC1322_TMR16_CTL(1);
 	val = (val & 0xFFFF) | (47 << 16);
 	/* Automatically restart the timer. */
-	val |= (1 << 3);
+	val |= BIT(3);
 	/* The counter should decrement. */
-	val &= ~(1 << 2);
+	val &= ~BIT(2);
 	MEC1322_TMR16_CTL(1) = val;
 
 	/* Set the reload value(us). */
@@ -73,12 +73,12 @@ static void port_80_interrupt_init(void)
 	MEC1322_TMR16_STS(1) |= 1;
 
 	/* Clear any pending interrupt. */
-	MEC1322_INT_SOURCE(23) = (1 << 1);
+	MEC1322_INT_SOURCE(23) = BIT(1);
 	/* Enable IRQ vector 23. */
-	MEC1322_INT_BLK_EN |= (1 << 23);
+	MEC1322_INT_BLK_EN |= BIT(23);
 	/* Enable the interrupt. */
 	MEC1322_TMR16_IEN(1) |= 1;
-	MEC1322_INT_ENABLE(23) = (1 << 1);
+	MEC1322_INT_ENABLE(23) = BIT(1);
 
 	port_80_interrupt_enable();
 }
@@ -89,7 +89,7 @@ void port_80_interrupt(void)
 	int data;
 
 	MEC1322_TMR16_STS(1) = 1; /* Ack the interrupt */
-	if ((1 << 1) & MEC1322_INT_RESULT(23)) {
+	if (BIT(1) & MEC1322_INT_RESULT(23)) {
 		data = port_80_read();
 
 		if (data != PORT_80_IGNORE) {

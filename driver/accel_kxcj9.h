@@ -40,34 +40,34 @@
 #define KXCJ9_SELF_TEST		0x3a
 #define KXCJ9_WAKEUP_THRESHOLD	0x6a
 
-#define KXCJ9_INT_SRC1_WUFS	(1 << 1)
-#define KXCJ9_INT_SRC1_DRDY	(1 << 4)
+#define KXCJ9_INT_SRC1_WUFS	BIT(1)
+#define KXCJ9_INT_SRC1_DRDY	BIT(4)
 
-#define KXCJ9_INT_SRC2_ZPWU	(1 << 0)
-#define KXCJ9_INT_SRC2_ZNWU	(1 << 1)
-#define KXCJ9_INT_SRC2_YPWU	(1 << 2)
-#define KXCJ9_INT_SRC2_YNWU	(1 << 3)
-#define KXCJ9_INT_SRC2_XPWU	(1 << 4)
-#define KXCJ9_INT_SRC2_XNWU	(1 << 5)
+#define KXCJ9_INT_SRC2_ZPWU	BIT(0)
+#define KXCJ9_INT_SRC2_ZNWU	BIT(1)
+#define KXCJ9_INT_SRC2_YPWU	BIT(2)
+#define KXCJ9_INT_SRC2_YNWU	BIT(3)
+#define KXCJ9_INT_SRC2_XPWU	BIT(4)
+#define KXCJ9_INT_SRC2_XNWU	BIT(5)
 
-#define KXCJ9_STATUS_INT	(1 << 4)
+#define KXCJ9_STATUS_INT	BIT(4)
 
-#define KXCJ9_CTRL1_WUFE	(1 << 1)
-#define KXCJ9_CTRL1_DRDYE	(1 << 5)
-#define KXCJ9_CTRL1_PC1		(1 << 7)
+#define KXCJ9_CTRL1_WUFE	BIT(1)
+#define KXCJ9_CTRL1_DRDYE	BIT(5)
+#define KXCJ9_CTRL1_PC1		BIT(7)
 
 #define KXCJ9_GSEL_2G		(0 << 3)
-#define KXCJ9_GSEL_4G		(1 << 3)
+#define KXCJ9_GSEL_4G		BIT(3)
 #define KXCJ9_GSEL_8G		(2 << 3)
 #define KXCJ9_GSEL_8G_14BIT	(3 << 3)
 #define KXCJ9_GSEL_ALL          (3 << 3)
 
 #define KXCJ9_RES_8BIT		(0 << 6)
-#define KXCJ9_RES_12BIT		(1 << 6)
+#define KXCJ9_RES_12BIT		BIT(6)
 
 #define KXCJ9_CTRL2_OWUF	(7 << 0)
-#define KXCJ9_CTRL2_DCST	(1 << 4)
-#define KXCJ9_CTRL2_SRST	(1 << 7)
+#define KXCJ9_CTRL2_DCST	BIT(4)
+#define KXCJ9_CTRL2_SRST	BIT(7)
 
 #define KXCJ9_OWUF_0_781HZ	0
 #define KXCJ9_OWUF_1_563HZ	1
@@ -78,16 +78,16 @@
 #define KXCJ9_OWUF_50_00HZ	6
 #define KXCJ9_OWUF_100_0HZ	7
 
-#define KXCJ9_INT_CTRL1_IEL		(1 << 3)
-#define KXCJ9_INT_CTRL1_IEA		(1 << 4)
-#define KXCJ9_INT_CTRL1_IEN		(1 << 5)
+#define KXCJ9_INT_CTRL1_IEL		BIT(3)
+#define KXCJ9_INT_CTRL1_IEA		BIT(4)
+#define KXCJ9_INT_CTRL1_IEN		BIT(5)
 
-#define KXCJ9_INT_CTRL2_ZPWUE		(1 << 0)
-#define KXCJ9_INT_CTRL2_ZNWUE		(1 << 1)
-#define KXCJ9_INT_CTRL2_YPWUE		(1 << 2)
-#define KXCJ9_INT_CTRL2_YNWUE		(1 << 3)
-#define KXCJ9_INT_CTRL2_XPWUE		(1 << 4)
-#define KXCJ9_INT_CTRL2_XNWUE		(1 << 5)
+#define KXCJ9_INT_CTRL2_ZPWUE		BIT(0)
+#define KXCJ9_INT_CTRL2_ZNWUE		BIT(1)
+#define KXCJ9_INT_CTRL2_YPWUE		BIT(2)
+#define KXCJ9_INT_CTRL2_YNWUE		BIT(3)
+#define KXCJ9_INT_CTRL2_XPWUE		BIT(4)
+#define KXCJ9_INT_CTRL2_XNWUE		BIT(5)
 
 #define KXCJ9_OSA_0_000HZ	0
 #define KXCJ9_OSA_0_781HZ	8

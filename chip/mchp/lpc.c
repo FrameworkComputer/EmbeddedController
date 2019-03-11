@@ -348,7 +348,7 @@ void chip_8042_config(uint32_t io_base)
 	MCHP_LPC_8042_BAR = (io_base << 16) + (1ul << 15);
 #endif
 	/* Set up indication of Auxiliary sts */
-	MCHP_8042_KB_CTRL |= 1 << 7;
+	MCHP_8042_KB_CTRL |= BIT(7);
 
 	MCHP_8042_ACT |= 1;
 
@@ -360,7 +360,7 @@ void chip_8042_config(uint32_t io_base)
 
 #ifndef CONFIG_KEYBOARD_IRQ_GPIO
 	/* Set up SERIRQ for keyboard */
-	MCHP_8042_KB_CTRL |= (1 << 5);
+	MCHP_8042_KB_CTRL |= BIT(5);
 	MCHP_LPC_SIRQ(1) = 0x01;
 #endif
 }
@@ -464,7 +464,7 @@ static void setup_lpc(void)
 
 #ifndef CONFIG_KEYBOARD_IRQ_GPIO
 	/* Set up SERIRQ for keyboard */
-	MCHP_8042_KB_CTRL |= (1 << 5);
+	MCHP_8042_KB_CTRL |= BIT(5);
 	MCHP_LPC_SIRQ(1) = 0x01;
 #endif
 	/* EMI0 at IO 0x800 */
@@ -815,7 +815,7 @@ void kb_ibf_interrupt(void)
 {
 	if (lpc_keyboard_input_pending())
 		keyboard_host_write(MCHP_8042_H2E,
-				    MCHP_8042_STS & (1 << 3));
+				    MCHP_8042_STS & BIT(3));
 
 	MCHP_INT_SOURCE(MCHP_8042_GIRQ) = MCHP_8042_IBF_GIRQ_BIT;
 	task_wake(TASK_ID_KEYPROTO);
@@ -844,12 +844,12 @@ DECLARE_IRQ(MCHP_IRQ_8042EM_OBE, kb_obe_interrupt, 1);
  */
 int lpc_keyboard_has_char(void)
 {
-	return (MCHP_8042_STS & (1 << 0)) ? 1 : 0;
+	return (MCHP_8042_STS & BIT(0)) ? 1 : 0;
 }
 
 int lpc_keyboard_input_pending(void)
 {
-	return (MCHP_8042_STS & (1 << 1)) ? 1 : 0;
+	return (MCHP_8042_STS & BIT(1)) ? 1 : 0;
 }
 
 /*
@@ -944,7 +944,7 @@ static int lpc_get_protocol_info(struct host_cmd_handler_args *args)
 	CPUTS("MEC1701 Handler EC_CMD_GET_PROTOCOL_INFO");
 
 	memset(r, 0, sizeof(*r));
-	r->protocol_versions = (1 << 3);
+	r->protocol_versions = BIT(3);
 	r->max_request_packet_size = EC_LPC_HOST_PACKET_SIZE;
 	r->max_response_packet_size = EC_LPC_HOST_PACKET_SIZE;
 	r->flags = 0;

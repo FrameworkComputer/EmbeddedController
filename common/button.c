@@ -437,9 +437,9 @@ enum debug_state {
 	STATE_WARM_RESET_EXEC,
 };
 
-#define DEBUG_BTN_POWER         (1 << 0)
-#define DEBUG_BTN_VOL_UP        (1 << 1)
-#define DEBUG_BTN_VOL_DN        (1 << 2)
+#define DEBUG_BTN_POWER         BIT(0)
+#define DEBUG_BTN_VOL_UP        BIT(1)
+#define DEBUG_BTN_VOL_DN        BIT(2)
 #define DEBUG_TIMEOUT           (10 * SECOND)
 
 static enum debug_state curr_debug_state = STATE_DEBUG_NONE;

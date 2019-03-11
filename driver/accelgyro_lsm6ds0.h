@@ -72,7 +72,7 @@
 #define LSM6DS0_INT_GEN_DUR_G     0x37
 
 #define LSM6DS0_DPS_SEL_245     (0 << 3)
-#define LSM6DS0_DPS_SEL_500     (1 << 3)
+#define LSM6DS0_DPS_SEL_500     BIT(3)
 #define LSM6DS0_DPS_SEL_1000    (2 << 3)
 #define LSM6DS0_DPS_SEL_2000    (3 << 3)
 #define LSM6DS0_GSEL_2G         (0 << 3)
@@ -82,8 +82,8 @@
 #define LSM6DS0_RANGE_MASK      (3 << 3)
 
 #define LSM6DS0_ODR_PD          (0 << 5)
-#define LSM6DS0_ODR_10HZ        (1 << 5)
-#define LSM6DS0_ODR_15HZ        (1 << 5)
+#define LSM6DS0_ODR_10HZ        BIT(5)
+#define LSM6DS0_ODR_15HZ        BIT(5)
 #define LSM6DS0_ODR_50HZ        (2 << 5)
 #define LSM6DS0_ODR_59HZ        (2 << 5)
 #define LSM6DS0_ODR_119HZ       (3 << 5)

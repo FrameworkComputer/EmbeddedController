@@ -210,7 +210,7 @@
 		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
 
 /* Define panel size mask according to skuid */
-#define SKU_ID_PANEL_SIZE_MASK  (1 << 1)
+#define SKU_ID_PANEL_SIZE_MASK  BIT(1)
 
 #ifndef __ASSEMBLER__
 

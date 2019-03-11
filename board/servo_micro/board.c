@@ -43,12 +43,12 @@ void board_config_pre_init(void)
 	 *  i2c : no dma
 	 *  tim16/17: no dma
 	 */
-	STM32_SYSCFG_CFGR1 |= (1 << 26);  /* Remap USART3 RX/TX DMA */
+	STM32_SYSCFG_CFGR1 |= BIT(26);  /* Remap USART3 RX/TX DMA */
 
 	/* Remap SPI2 to DMA channels 6 and 7 */
 	/* STM32F072 SPI2 defaults to using DMA channels 4 and 5 */
 	/* but cros_ec hardcodes a 6/7 assumption in registers.h */
-	STM32_SYSCFG_CFGR1 |= (1 << 24);
+	STM32_SYSCFG_CFGR1 |= BIT(24);
 
 }
 

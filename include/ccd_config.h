@@ -32,31 +32,31 @@ enum ccd_flag {
 	 * Note: This is used internally by CCD config.  Do NOT test this
 	 * to control other things; use capabilities for those.
 	 */
-	CCD_FLAG_TEST_LAB = (1 << 0),
+	CCD_FLAG_TEST_LAB = BIT(0),
 
 	/*
 	 * What state were we in when the password was set?
 	 * (0=opened, 1=unlocked)
 	 */
-	CCD_FLAG_PASSWORD_SET_WHEN_UNLOCKED = (1 << 1),
+	CCD_FLAG_PASSWORD_SET_WHEN_UNLOCKED = BIT(1),
 
 	/*
 	 * Factory mode state
 	 */
-	CCD_FLAG_FACTORY_MODE_ENABLED = (1 << 2),
+	CCD_FLAG_FACTORY_MODE_ENABLED = BIT(2),
 
 	/* (flags in the middle are unused) */
 
 	/* Flags that can be set via ccd_set_flags(); fill from top down */
 
 	/* Override write protect at boot */
-	CCD_FLAG_OVERRIDE_WP_AT_BOOT = (1 << 22),
+	CCD_FLAG_OVERRIDE_WP_AT_BOOT = BIT(22),
 
 	/*
 	 * If overriding WP at boot, set it to what value
 	 * (0=disabled, 1=enabled)
 	 */
-	CCD_FLAG_OVERRIDE_WP_STATE_ENABLED = (1 << 23),
+	CCD_FLAG_OVERRIDE_WP_STATE_ENABLED = BIT(23),
 };
 
 /* Capabilities */
@@ -221,10 +221,10 @@ struct ccd_info_response {
 
 enum ccd_indicator_bits {
 	/* has_password? */
-	CCD_INDICATOR_BIT_HAS_PASSWORD = (1 << 0),
+	CCD_INDICATOR_BIT_HAS_PASSWORD = BIT(0),
 
 	/* Are CCD capabilities in CCD_CAP_STATE_DEFAULT */
-	CCD_INDICATOR_BIT_ALL_CAPS_DEFAULT = (1 << 1),
+	CCD_INDICATOR_BIT_ALL_CAPS_DEFAULT = BIT(1),
 };
 
 /**
@@ -295,16 +295,16 @@ int ccd_get_factory_mode(void);
 /* Flags for ccd_reset_config() */
 enum ccd_reset_config_flags {
 	/* Also reset test lab flag */
-	CCD_RESET_TEST_LAB = (1 << 0),
+	CCD_RESET_TEST_LAB = BIT(0),
 
 	/* Only reset Always/UnlessLocked settings */
-	CCD_RESET_UNLOCKED_ONLY = (1 << 1),
+	CCD_RESET_UNLOCKED_ONLY = BIT(1),
 
 	/*
 	 * Do a factory reset to enable factory mode. Factory mode sets all ccd
 	 * capabilities to always and disables write protect
 	 */
-	CCD_RESET_FACTORY = (1 << 2)
+	CCD_RESET_FACTORY = BIT(2)
 };
 
 /**

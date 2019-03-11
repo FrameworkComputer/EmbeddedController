@@ -10,7 +10,7 @@
  * RC Trim constants
  */
 #define RCTRIM_RESOLUTION       (12)
-#define RCTRIM_LOAD_VAL	        (1 << 11)
+#define RCTRIM_LOAD_VAL	        BIT(11)
 #define RCTRIM_RANGE_MAX	(7 * 7)
 #define RCTRIM_RANGE_MIN	(-8 * 7)
 #define RCTRIM_RANGE		(RCTRIM_RANGE_MAX - RCTRIM_RANGE_MIN + 1)

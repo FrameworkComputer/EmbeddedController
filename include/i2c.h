@@ -84,8 +84,8 @@ extern const int i2c_test_dev_used;
 #endif
 
 /* Flags for i2c_xfer_unlocked() */
-#define I2C_XFER_START (1 << 0)  /* Start smbus session from idle state */
-#define I2C_XFER_STOP (1 << 1)  /* Terminate smbus session with stop bit */
+#define I2C_XFER_START BIT(0)  /* Start smbus session from idle state */
+#define I2C_XFER_STOP BIT(1)  /* Terminate smbus session with stop bit */
 #define I2C_XFER_SINGLE (I2C_XFER_START | I2C_XFER_STOP)  /* One transaction */
 
 /**
@@ -115,8 +115,8 @@ int i2c_xfer_unlocked(int port, int slave_addr,
 		      const uint8_t *out, int out_size,
 		      uint8_t *in, int in_size, int flags);
 
-#define I2C_LINE_SCL_HIGH (1 << 0)
-#define I2C_LINE_SDA_HIGH (1 << 1)
+#define I2C_LINE_SCL_HIGH BIT(0)
+#define I2C_LINE_SDA_HIGH BIT(1)
 #define I2C_LINE_IDLE (I2C_LINE_SCL_HIGH | I2C_LINE_SDA_HIGH)
 
 /**

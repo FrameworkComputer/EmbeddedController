@@ -43,9 +43,9 @@
 
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK          (3 << 2)
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_NONE          (0 << 2)
-#define TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB           (1 << 2)
+#define TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB           BIT(2)
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_DP            (2 << 2)
-#define TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED (1 << 0)
+#define TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED BIT(0)
 
 #define TCPC_REG_TCPC_CTRL         0x19
 #define TCPC_REG_TCPC_CTRL_SET(polarity) (polarity)
@@ -62,7 +62,7 @@
 
 #define TCPC_REG_FAULT_CTRL        0x1b
 #define TCPC_REG_POWER_CTRL        0x1c
-#define TCPC_REG_POWER_CTRL_FORCE_DISCHARGE  (1 << 2)
+#define TCPC_REG_POWER_CTRL_FORCE_DISCHARGE  BIT(2)
 #define TCPC_REG_POWER_CTRL_SET(vconn) (vconn)
 #define TCPC_REG_POWER_CTRL_VCONN(reg)    ((reg) & 0x1)
 

@@ -86,44 +86,44 @@ enum sn5s330_pp_idx {
 #define SN5S330_ILIM_3_30  12
 
 /* FUNC_SET_2 */
-#define SN5S330_SBU_EN			(1 << 4)
+#define SN5S330_SBU_EN			BIT(4)
 
 /* FUNC_SET_3 */
-#define SN5S330_PP1_EN			(1 << 0)
-#define SN5S330_PP2_EN			(1 << 1)
-#define SN5S330_VBUS_DISCH_EN		(1 << 2)
-#define SN5S330_SET_RCP_MODE_PP1	(1 << 5)
-#define SN5S330_SET_RCP_MODE_PP2	(1 << 6)
+#define SN5S330_PP1_EN			BIT(0)
+#define SN5S330_PP2_EN			BIT(1)
+#define SN5S330_VBUS_DISCH_EN		BIT(2)
+#define SN5S330_SET_RCP_MODE_PP1	BIT(5)
+#define SN5S330_SET_RCP_MODE_PP2	BIT(6)
 
 /* FUNC_SET_4 */
-#define SN5S330_VCONN_EN		(1 << 0)
-#define SN5S330_CC_POLARITY		(1 << 1)
-#define SN5S330_CC_EN			(1 << 4)
-#define SN5S330_VCONN_ILIM_SEL		(1 << 5)
+#define SN5S330_VCONN_EN		BIT(0)
+#define SN5S330_CC_POLARITY		BIT(1)
+#define SN5S330_CC_EN			BIT(4)
+#define SN5S330_VCONN_ILIM_SEL		BIT(5)
 
 /* FUNC_SET_8 */
 #define SN5S330_VCONN_DEGLITCH_MASK	(3 << 6)
 #define SN5S330_VCONN_DEGLITCH_63_US	(0 << 6)
-#define SN5S330_VCONN_DEGLITCH_125_US	(1 << 6)
+#define SN5S330_VCONN_DEGLITCH_125_US	BIT(6)
 #define SN5S330_VCONN_DEGLITCH_640_US	(2 << 6)
 #define SN5S330_VCONN_DEGLITCH_1280_US	(3 << 6)
 
 /* FUNC_SET_9 */
-#define SN5S330_FORCE_OVP_EN_SBU	(1 << 1)
-#define SN5S330_PP2_CONFIG		(1 << 2)
-#define SN5S330_OVP_EN_CC		(1 << 4)
-#define SN5S330_CONFIG_UVP		(1 << 5)
-#define SN5S330_FORCE_ON_VBUS_OVP	(1 << 6)
-#define SN5S330_FORCE_ON_VBUS_UVP	(1 << 7)
+#define SN5S330_FORCE_OVP_EN_SBU	BIT(1)
+#define SN5S330_PP2_CONFIG		BIT(2)
+#define SN5S330_OVP_EN_CC		BIT(4)
+#define SN5S330_CONFIG_UVP		BIT(5)
+#define SN5S330_FORCE_ON_VBUS_OVP	BIT(6)
+#define SN5S330_FORCE_ON_VBUS_UVP	BIT(7)
 
 /* INT_STATUS_REG3 */
-#define SN5S330_VBUS_GOOD		(1 << 0)
+#define SN5S330_VBUS_GOOD		BIT(0)
 
 /* INT_STATUS_REG4 */
-#define SN5S330_DIG_RES			(1 << 0)
-#define SN5S330_DB_BOOT			(1 << 1)
-#define SN5S330_VSAFE0V_STAT		(1 << 2)
-#define SN5S330_VSAFE0V_MASK		(1 << 3)
+#define SN5S330_DIG_RES			BIT(0)
+#define SN5S330_DB_BOOT			BIT(1)
+#define SN5S330_VSAFE0V_STAT		BIT(2)
+#define SN5S330_VSAFE0V_MASK		BIT(3)
 
 /*
  * INT_MASK_RISE/FALL_EDGE_1
@@ -133,7 +133,7 @@ enum sn5s330_pp_idx {
  * occured; similarly for falling edge, it means the overcurrent condition is no
  * longer present.
  */
-#define SN5S330_ILIM_PP1_MASK (1 << 4)
+#define SN5S330_ILIM_PP1_MASK BIT(4)
 
 /*
  * INT_MASK_RISE/FALL_EDGE2
@@ -150,7 +150,7 @@ enum sn5s330_pp_idx {
  * For rising edge registers, this indicates VBUS has risen above 4.0V.
  * For falling edge registers, this indicates VBUS has fallen below 4.0V.
  */
-#define SN5S330_VBUS_GOOD_MASK (1 << 0)
+#define SN5S330_VBUS_GOOD_MASK BIT(0)
 
 extern const struct ppc_drv sn5s330_drv;
 
