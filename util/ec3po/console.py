@@ -13,9 +13,10 @@ session-persistent command history.
 from __future__ import print_function
 
 import argparse
+import binascii
 import copy
 import ctypes
-import binascii
+from datetime import datetime
 # pylint: disable=cros-logging-import
 import logging
 import os
@@ -60,6 +61,8 @@ ENHANCED_EC_INTERROGATION_TIMEOUT = 1.0  # Maximum number of seconds to wait for
 INTERROGATION_MODES = ['never', 'always', 'auto']  # List of modes which control
                                                    # when interrogations are
                                                    # performed with the EC.
+# Format for printing host timestamp
+HOST_STRFTIME="%Y-%m-%d %H:%M:%S "
 
 
 class EscState(object):
@@ -858,6 +861,9 @@ def StartLoop(console, command_active, shutdown_pipe=None):
     # an iteration.
     continue_looping = True
 
+    # Used for determining when to print host timestamps
+    tm_req = True
+
     while continue_looping:
       # Check to see if pts is connected to anything
       events = ep.poll(0)
@@ -950,7 +956,27 @@ def StartLoop(console, command_active, shutdown_pipe=None):
                   ('u' if master_connected else '') +
                   ('i' if command_active.value else ''), data.strip())
             if master_connected:
-              os.write(console.master_pty, data)
+
+              # A timestamp is required at the beginning of this line
+              if tm_req is True:
+                now = datetime.now()
+                tm = now.strftime(HOST_STRFTIME)
+                os.write(console.master_pty, tm)
+                tm_req = False
+
+              # Insert timestamps into the middle where appropriate
+              # except if the last character is a newline
+              end = len(data) - 1
+              nls_found = data.count('\n', 0, end)
+              now = datetime.now()
+              tm = now.strftime('\n' + HOST_STRFTIME)
+              data_tm = data.replace('\n', tm, nls_found)
+
+              # timestamp required on next input
+              if data[end] == '\n':
+                tm_req = True
+
+              os.write(console.master_pty, data_tm)
             if command_active.value:
               os.write(console.interface_pty, data)
 
