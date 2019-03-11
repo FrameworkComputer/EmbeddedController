@@ -256,7 +256,7 @@ enum sensor_id {
 	VSYNC,
 };
 
-#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ALS)
+#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ALS)
 
 void base_pwr_fault_interrupt(enum gpio_signal s);
 int board_get_version(void);

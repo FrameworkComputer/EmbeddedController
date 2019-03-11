@@ -43,7 +43,7 @@ static void pwm_configure(enum pwm_channel ch)
 	int frequency = pwm->frequency ? pwm->frequency : 100;
 	uint16_t ccer;
 
-	if (using_pwm & (1 << ch))
+	if (using_pwm & BIT(ch))
 		return;
 
 	/* Enable timer */
@@ -109,7 +109,7 @@ static void pwm_disable(enum pwm_channel ch)
 	const struct pwm_t *pwm = pwm_channels + ch;
 	timer_ctlr_t *tim = (timer_ctlr_t *)(pwm->tim.base);
 
-	if ((using_pwm & (1 << ch)) == 0)
+	if ((using_pwm & BIT(ch)) == 0)
 		return;
 
 	/* Main output disable */
@@ -141,7 +141,7 @@ void pwm_enable(enum pwm_channel ch, int enabled)
 
 int pwm_get_enabled(enum pwm_channel ch)
 {
-	return using_pwm & (1 << ch);
+	return using_pwm & BIT(ch);
 }
 
 static void pwm_reconfigure(enum pwm_channel ch)

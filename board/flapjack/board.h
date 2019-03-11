@@ -94,7 +94,7 @@
 #define ALS_COUNT 1
 #define CONFIG_ALS_OPT3001
 /* LID_ALS needs to be polled */
-#define CONFIG_ACCEL_FORCE_MODE_MASK    (1 << LID_ALS)
+#define CONFIG_ACCEL_FORCE_MODE_MASK    BIT(LID_ALS)
 
 /* Camera VSYNC */
 #define CONFIG_SYNC

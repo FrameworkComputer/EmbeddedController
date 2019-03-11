@@ -15,7 +15,7 @@
 
 int flash_physical_get_protect(int block)
 {
-	return !(STM32_FLASH_WRPR & (1 << block));
+	return !(STM32_FLASH_WRPR & BIT(block));
 }
 
 /*

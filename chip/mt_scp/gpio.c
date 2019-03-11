@@ -162,9 +162,9 @@ void __keep gpio_interrupt(void)
 
 		while (pending) {
 			bit = get_next_bit(&pending);
-			SCP_EINT_ACK[port] = (1 << bit);
+			SCP_EINT_ACK[port] = BIT(bit);
 			/* Skip masked gpio */
-			if (SCP_EINT_MASK_GET[port] & (1 << bit))
+			if (SCP_EINT_MASK_GET[port] & BIT(bit))
 				continue;
 			/* Call handler */
 			signal = port * 32 + bit;

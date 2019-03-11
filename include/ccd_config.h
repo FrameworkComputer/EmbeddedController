@@ -180,7 +180,7 @@ struct ccd_capability_info {
 
 /* Macros regarding ccd_capabilities */
 #define CCD_CAP_BITS		2
-#define CCD_CAP_BITMASK	((1 << CCD_CAP_BITS) - 1)
+#define CCD_CAP_BITMASK	(BIT(CCD_CAP_BITS) - 1)
 #define CCD_CAPS_PER_BYTE	(8 / CCD_CAP_BITS)
 
 /*

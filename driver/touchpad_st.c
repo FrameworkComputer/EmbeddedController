@@ -196,7 +196,7 @@ static int st_tp_parse_finger(struct usb_hid_touchpad_report *report,
 	if (event->evt_id ==  ST_TP_EVENT_ID_ENTER_POINTER)
 		touch_slot |= 1 << id;
 	else if (event->evt_id ==  ST_TP_EVENT_ID_LEAVE_POINTER)
-		touch_slot &= ~(1 << id);
+		touch_slot &= ~BIT(id);
 
 	/* We cannot report more fingers */
 	if (i >= ARRAY_SIZE(report->finger)) {

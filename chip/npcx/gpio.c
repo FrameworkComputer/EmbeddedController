@@ -313,7 +313,7 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 
 	/* check each bit from mask  */
 	for (pin = 0; pin < 8; pin++)
-		if (mask & (1 << pin))
+		if (mask & BIT(pin))
 			gpio_alt_sel(port, pin, func);
 }
 

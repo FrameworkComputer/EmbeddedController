@@ -66,7 +66,7 @@
 /* Default use UART1 as console */
 #define CONFIG_CONSOLE_UART    0
 
-#define GPIO_PIN(port, index) GPIO_##port, (1 << index)
+#define GPIO_PIN(port, index) GPIO_##port, BIT(index)
 #define GPIO_PIN_MASK(p, m) .port = GPIO_##p, .mask = (m)
 
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

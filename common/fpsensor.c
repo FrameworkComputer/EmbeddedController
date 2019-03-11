@@ -167,7 +167,7 @@ static uint32_t fp_process_enroll(void)
 	if (res < 0)
 		return EC_MKBP_FP_ENROLL
 		     | EC_MKBP_FP_ERRCODE(EC_MKBP_FP_ERR_ENROLL_INTERNAL);
-	templ_dirty |= (1 << templ_valid);
+	templ_dirty |= BIT(templ_valid);
 	if (percent == 100) {
 		res = fp_enrollment_finish(fp_template[templ_valid]);
 		if (res)
@@ -694,7 +694,7 @@ static int fp_command_frame(struct host_cmd_handler_args *args)
 			CPRINTS("fgr%d: Failed to encrypt template", fgr);
 			return EC_RES_UNAVAILABLE;
 		}
-		templ_dirty &= ~(1 << fgr);
+		templ_dirty &= ~BIT(fgr);
 	}
 	memcpy(out, fp_enc_buffer + offset, size);
 	args->response_size = size;

@@ -34,13 +34,13 @@ void uart_tx_start(void)
 {
 	disable_sleep(SLEEP_MASK_UART);
 	should_stop = 0;
-	NRF51_UART_INTENSET = (1 << NRF55_UART_TXDRDY_BIT);
+	NRF51_UART_INTENSET = BIT(NRF55_UART_TXDRDY_BIT);
 	task_trigger_irq(NRF51_PERID_USART);
 }
 
 void uart_tx_stop(void)
 {
-	NRF51_UART_INTENCLR = (1 << NRF55_UART_TXDRDY_BIT);
+	NRF51_UART_INTENCLR = BIT(NRF55_UART_TXDRDY_BIT);
 	should_stop = 1;
 	enable_sleep(SLEEP_MASK_UART);
 }
@@ -96,7 +96,7 @@ void uart_interrupt(void)
 
 #ifndef CONFIG_UART_TX_DMA
 	if (!should_stop)
-		NRF51_UART_INTENSET = (1 << NRF55_UART_TXDRDY_BIT);
+		NRF51_UART_INTENSET = BIT(NRF55_UART_TXDRDY_BIT);
 #endif  /* CONFIG_UART_TX_DMA */
 
 }
@@ -113,7 +113,7 @@ void uart_init(void)
 
 	task_enable_irq(NRF51_PERID_USART);
 
-	NRF51_UART_INTENSET = (1 << NRF55_UART_RXDRDY_BIT);
+	NRF51_UART_INTENSET = BIT(NRF55_UART_RXDRDY_BIT);
 	NRF51_UART_STARTRX = 1;
 
 	init_done = 1;

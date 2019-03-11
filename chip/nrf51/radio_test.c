@@ -145,7 +145,7 @@ int ble_test_rx_init(int chan)
 
 int ble_test_tx_init(int chan, int len, int type)
 {
-	if (((1 << type) & BLE_TEST_TYPES_IMPLEMENTED) == 0 ||
+	if ((BIT(type) & BLE_TEST_TYPES_IMPLEMENTED) == 0 ||
 			(len < 0 || len > BLE_MAX_TEST_PAYLOAD_OCTETS))
 		return HCI_ERR_Invalid_HCI_Command_Parameters;
 

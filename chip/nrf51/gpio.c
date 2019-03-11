@@ -164,7 +164,7 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 {
 	uint32_t bit = GPIO_MASK_TO_NUM(mask);
 
-	ASSERT((~mask & (1 << bit)) == 0); /* Only one bit set. */
+	ASSERT((~mask & BIT(bit)) == 0); /* Only one bit set. */
 	ASSERT(port == GPIO_0);
 	ASSERT((func >= 0 && func < nrf51_alt_func_count) || func == -1);
 

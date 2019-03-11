@@ -50,7 +50,7 @@
  */
 #define BATTERY_KEY_COL 0
 #define BATTERY_KEY_ROW 7
-#define BATTERY_KEY_ROW_MASK (1 << BATTERY_KEY_ROW)
+#define BATTERY_KEY_ROW_MASK BIT(BATTERY_KEY_ROW)
 
 static uint32_t fifo_start;	/* first entry */
 static uint32_t fifo_end;	/* last entry */
@@ -238,7 +238,7 @@ test_mockable int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp)
 void mkbp_update_switches(uint32_t sw, int state)
 {
 
-	mkbp_switch_state &= ~(1 << sw);
+	mkbp_switch_state &= ~BIT(sw);
 	mkbp_switch_state |= (!!state << sw);
 
 	mkbp_fifo_add(EC_MKBP_EVENT_SWITCH,
@@ -280,22 +280,22 @@ void keyboard_update_button(enum keyboard_button_type button, int is_pressed)
 {
 	switch (button) {
 	case KEYBOARD_BUTTON_POWER:
-		mkbp_button_state &= ~(1 << EC_MKBP_POWER_BUTTON);
+		mkbp_button_state &= ~BIT(EC_MKBP_POWER_BUTTON);
 		mkbp_button_state |= (is_pressed << EC_MKBP_POWER_BUTTON);
 		break;
 
 	case KEYBOARD_BUTTON_VOLUME_UP:
-		mkbp_button_state &= ~(1 << EC_MKBP_VOL_UP);
+		mkbp_button_state &= ~BIT(EC_MKBP_VOL_UP);
 		mkbp_button_state |= (is_pressed << EC_MKBP_VOL_UP);
 		break;
 
 	case KEYBOARD_BUTTON_VOLUME_DOWN:
-		mkbp_button_state &= ~(1 << EC_MKBP_VOL_DOWN);
+		mkbp_button_state &= ~BIT(EC_MKBP_VOL_DOWN);
 		mkbp_button_state |= (is_pressed << EC_MKBP_VOL_DOWN);
 		break;
 
 	case KEYBOARD_BUTTON_RECOVERY:
-		mkbp_button_state &= ~(1 << EC_MKBP_RECOVERY);
+		mkbp_button_state &= ~BIT(EC_MKBP_RECOVERY);
 		mkbp_button_state |= (is_pressed << EC_MKBP_RECOVERY);
 		break;
 
@@ -418,15 +418,15 @@ static uint32_t get_supported_buttons(void)
 	uint32_t val = 0;
 
 #ifdef CONFIG_VOLUME_BUTTONS
-	val |= (1 << EC_MKBP_VOL_UP) | (1 << EC_MKBP_VOL_DOWN);
+	val |= BIT(EC_MKBP_VOL_UP) | BIT(EC_MKBP_VOL_DOWN);
 #endif /* defined(CONFIG_VOLUME_BUTTONS) */
 
 #ifdef CONFIG_DEDICATED_RECOVERY_BUTTON
-	val |= (1 << EC_MKBP_RECOVERY);
+	val |= BIT(EC_MKBP_RECOVERY);
 #endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON) */
 
 #ifdef CONFIG_POWER_BUTTON
-	val |= (1 << EC_MKBP_POWER_BUTTON);
+	val |= BIT(EC_MKBP_POWER_BUTTON);
 #endif /* defined(CONFIG_POWER_BUTTON) */
 
 	return val;
@@ -437,13 +437,13 @@ static uint32_t get_supported_switches(void)
 	uint32_t val = 0;
 
 #ifdef CONFIG_LID_SWITCH
-	val |= (1 << EC_MKBP_LID_OPEN);
+	val |= BIT(EC_MKBP_LID_OPEN);
 #endif
 #ifdef CONFIG_TABLET_MODE_SWITCH
-	val |= (1 << EC_MKBP_TABLET_MODE);
+	val |= BIT(EC_MKBP_TABLET_MODE);
 #endif
 #ifdef CONFIG_BASE_ATTACHED_SWITCH
-	val |= (1 << EC_MKBP_BASE_ATTACHED);
+	val |= BIT(EC_MKBP_BASE_ATTACHED);
 #endif
 	return val;
 }
@@ -536,12 +536,12 @@ DECLARE_HOST_COMMAND(EC_CMD_MKBP_INFO, mkbp_get_info,
 /* For boards without a keyscan task, try and simulate keyboard presses. */
 static void simulate_key(int row, int col, int pressed)
 {
-	if ((simulated_key[col] & (1 << row)) == ((pressed ? 1 : 0) << row))
+	if ((simulated_key[col] & BIT(row)) == ((pressed ? 1 : 0) << row))
 		return;  /* No change */
 
-	simulated_key[col] &= ~(1 << row);
+	simulated_key[col] &= ~BIT(row);
 	if (pressed)
-		simulated_key[col] |= (1 << row);
+		simulated_key[col] |= BIT(row);
 
 	keyboard_fifo_add(simulated_key);
 }
@@ -556,7 +556,7 @@ static int command_mkbp_keyboard_press(int argc, char **argv)
 			if (simulated_key[i] == 0)
 				continue;
 			for (j = 0; j < KEYBOARD_ROWS; ++j)
-				if (simulated_key[i] & (1 << j))
+				if (simulated_key[i] & BIT(j))
 					ccprintf("\t%d %d\n", i, j);
 		}
 

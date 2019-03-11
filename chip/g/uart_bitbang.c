@@ -213,7 +213,7 @@ static void uart_bitbang_write_char(char c)
 	/* 8 data bits. */
 	ones = 0;
 	for (i = 0; i < 8; i++) {
-		val = !!(c & (1 << i));
+		val = !!(c & BIT(i));
 		gpio_set_level(bitbang_config.tx_gpio, val);
 
 		/* Count 1's in order to handle parity bit. */
@@ -271,7 +271,7 @@ static int uart_bitbang_receive_char(uint8_t *rxed_char, uint32_t *next_tick)
 	for (i = 0; i < 8; i++) {
 		if (gpio_get_level(bitbang_config.rx_gpio)) {
 			ones++;
-			rx_char |= (1 << i);
+			rx_char |= BIT(i);
 		}
 		wait_ticks(next_tick);
 	}

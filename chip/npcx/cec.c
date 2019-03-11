@@ -791,7 +791,7 @@ void cec_isr(void)
 	/* Retrieve events NPCX_TECTRL_TAXND */
 	events = GET_FIELD(NPCX_TECTRL(mdl), FIELD(0, 4));
 
-	if (events & (1 << NPCX_TECTRL_TAPND)) {
+	if (events & BIT(NPCX_TECTRL_TAPND)) {
 		/* Capture event */
 		cec_event_cap();
 	} else {
@@ -801,11 +801,11 @@ void cec_isr(void)
 		 * happening, since we will get both events in the
 		 * edge-trigger case
 		 */
-		if (events & (1 << NPCX_TECTRL_TCPND))
+		if (events & BIT(NPCX_TECTRL_TCPND))
 			cec_event_timeout();
 	}
 	/* Oneshot timer, a transfer has been initiated from AP */
-	if (events & (1 << NPCX_TECTRL_TDPND)) {
+	if (events & BIT(NPCX_TECTRL_TDPND)) {
 		tmr2_stop();
 		cec_event_tx();
 	}

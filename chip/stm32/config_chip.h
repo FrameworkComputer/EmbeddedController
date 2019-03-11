@@ -140,7 +140,7 @@
 #define CONFIG_CHIP_PRE_INIT
 
 #define GPIO_NAME_BY_PIN(port, index) #port#index
-#define GPIO_PIN(port, index) GPIO_##port, (1 << index)
+#define GPIO_PIN(port, index) GPIO_##port, BIT(index)
 #define GPIO_PIN_MASK(p, m) .port = GPIO_##p, .mask = (m)
 
 /* Prescaler values for PLL. Currently used only by STM32L476. */

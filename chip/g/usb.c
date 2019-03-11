@@ -136,7 +136,7 @@ static void showbits(uint32_t b)
 	int i;
 
 	for (i = 0; i < 32; i++)
-		if (b & (1 << i)) {
+		if (b & BIT(i)) {
 			if (deezbits[i])
 				ccprintf(" %s", deezbits[i]);
 			else
@@ -1255,7 +1255,7 @@ void usb_save_suspended_state(void)
 	/* Record the state the DATA PIDs toggling on each endpoint. */
 	for (i = 1; i < USB_EP_COUNT; i++) {
 		if (GR_USB_DOEPCTL(i) & DXEPCTL_DPID)
-			pid |= (1 << i);
+			pid |= BIT(i);
 		if (GR_USB_DIEPCTL(i) & DXEPCTL_DPID)
 			pid |= (1 << (i + 16));
 	}
@@ -1275,7 +1275,7 @@ void usb_restore_suspended_state(void)
 	/* Restore the DATA PIDs on endpoints. */
 	pid = GREG32(PMU, PWRDN_SCRATCH19);
 	for (i = 1; i < USB_EP_COUNT; i++) {
-		GR_USB_DOEPCTL(i) = pid & (1 << i) ?
+		GR_USB_DOEPCTL(i) = pid & BIT(i) ?
 			DXEPCTL_SET_D1PID : DXEPCTL_SET_D0PID;
 		GR_USB_DIEPCTL(i) = pid & (1 << (i + 16)) ?
 			DXEPCTL_SET_D1PID : DXEPCTL_SET_D0PID;

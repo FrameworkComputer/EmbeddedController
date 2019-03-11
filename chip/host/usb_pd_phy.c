@@ -259,7 +259,7 @@ static uint8_t decode_bmc(uint32_t val10)
 	for (i = 0; i < 5; ++i)
 		if (!!(val10 & (1 << (2 * i))) !=
 		    !!(val10 & (1 << (2 * i + 1))))
-			ret |= (1 << i);
+			ret |= BIT(i);
 	return ret;
 }
 

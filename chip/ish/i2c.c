@@ -335,7 +335,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	if (in_size > (ISH_I2C_FIFO_SIZE - out_size)) {
 
 		while ((i2c_mmio_read(ctx->base, IC_STATUS) &
-			(1 << IC_STATUS_TFE)) == 0) {
+			BIT(IC_STATUS_TFE)) == 0) {
 
 			if (__hw_clock_source_read() >= expire_ts) {
 				ctx->error_flag = 1;
@@ -398,7 +398,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	expire_ts = __hw_clock_source_read() + I2C_TSC_TIMEOUT;
 
 	while (i2c_mmio_read(ctx->base, IC_STATUS) &
-	       (1 << IC_STATUS_MASTER_ACTIVITY)) {
+	       BIT(IC_STATUS_MASTER_ACTIVITY)) {
 
 		if (__hw_clock_source_read() >= expire_ts) {
 			ctx->error_flag = 1;

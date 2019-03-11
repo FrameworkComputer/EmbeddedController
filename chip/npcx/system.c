@@ -117,7 +117,7 @@ static int bbram_valid(enum bbram_data_index index, int bytes)
 
 	/* Check BBRAM is valid */
 	if (IS_BIT_SET(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR)) {
-		NPCX_BKUP_STS = (1 << NPCX_BKUP_STS_IBBR);
+		NPCX_BKUP_STS = BIT(NPCX_BKUP_STS_IBBR);
 		panic_printf("IBBR set: BBRAM corrupted!\n");
 		return 0;
 	}
@@ -693,8 +693,8 @@ void system_pre_init(void)
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5) = 0xF8;
 
 	pwdwn6 = 0x70 |
-		(1 << NPCX_PWDWN_CTL6_ITIM6_PD) |
-		(1 << NPCX_PWDWN_CTL6_ITIM4_PD); /* Skip ITIM5_PD */
+		BIT(NPCX_PWDWN_CTL6_ITIM6_PD) |
+		BIT(NPCX_PWDWN_CTL6_ITIM4_PD); /* Skip ITIM5_PD */
 #if !defined(CONFIG_HOSTCMD_ESPI)
 	pwdwn6 |= 1 << NPCX_PWDWN_CTL6_ESPI_PD;
 #endif

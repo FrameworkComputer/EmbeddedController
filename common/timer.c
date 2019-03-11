@@ -77,7 +77,7 @@ void process_timers(int overflow)
 					  next.le.lo))
 					next.val = timer_deadline[tskid].val;
 
-				check_timer &= ~(1 << tskid);
+				check_timer &= ~BIT(tskid);
 			}
 		/* if there is a new timer, let's retry */
 		} while (timer_running & ~running_t0);

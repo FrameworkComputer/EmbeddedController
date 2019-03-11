@@ -137,7 +137,7 @@ static void print_led_set(FILE *fp, uint8_t led)
 
 	fprintf(fp, "{");
 	for (i = 0; i < NUM_LEDS; i++)
-		if (led & (1 << i)) {
+		if (led & BIT(i)) {
 			if (!first)
 				fprintf(fp, ",");
 			fprintf(fp, "%d", i);

@@ -396,7 +396,7 @@ void espi_vw_interrupt(void)
 	task_clear_pending_irq(IT83XX_IRQ_ESPI_VW);
 
 	for (i = 0; i < ARRAY_SIZE(vw_isr_list); i++) {
-		if (vwidx_updated & (1 << i)) {
+		if (vwidx_updated & BIT(i)) {
 			uint8_t idx_flag;
 
 			idx_flag = IT83XX_ESPI_VWIDX(vw_isr_list[i].vw_index);
@@ -551,7 +551,7 @@ void espi_interrupt(void)
 	IT83XX_ESPI_ESGCTRL0 = espi_event;
 	/* process espi interrupt events */
 	for (i = 0; i < ARRAY_SIZE(espi_isr); i++) {
-		if (espi_event & (1 << i))
+		if (espi_event & BIT(i))
 			espi_isr[i](i);
 	}
 	/*

@@ -77,7 +77,7 @@ static inline uint32_t scale_ticks2us(uint64_t ticks)
 
 #elif defined(CHIP_FAMILY_ISH4) || defined(CHIP_FAMILY_ISH5)
 #define CLOCK_SCALE_BITS 15
-BUILD_ASSERT((1 << CLOCK_SCALE_BITS) == ISH_HPET_CLK_FREQ);
+BUILD_ASSERT(BIT(CLOCK_SCALE_BITS) == ISH_HPET_CLK_FREQ);
 
 static inline uint32_t scale_us2ticks(uint32_t us)
 {
@@ -204,7 +204,7 @@ void __hw_clock_source_set(uint32_t ts)
 static void __hw_clock_source_irq(int timer_id)
 {
 	/* Clear interrupt */
-	HPET_INTR_CLEAR = (1 << timer_id);
+	HPET_INTR_CLEAR = BIT(timer_id);
 
 	/*
 	 * If IRQ is from timer 0, 2^32 us have elapsed (i.e. OS timer

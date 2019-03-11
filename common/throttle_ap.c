@@ -30,7 +30,7 @@ void throttle_ap(enum throttle_level level,
 
 	mutex_lock(&throttle_mutex);
 
-	bitmask = (1 << source);
+	bitmask = BIT(source);
 
 	switch (level) {
 	case THROTTLE_ON:

@@ -17,7 +17,7 @@
 #define FLASH_FWB_BYTES (FLASH_FWB_WORDS * 4)
 
 #define BANK_SHIFT 5 /* bank registers have 32bits each, 2^32 */
-#define BANK_MASK ((1 << BANK_SHIFT) - 1) /* 5 bits */
+#define BANK_MASK (BIT(BANK_SHIFT) - 1) /* 5 bits */
 #define F_BANK(b) ((b) >> BANK_SHIFT)
 #define F_BIT(b) (1 << ((b) & BANK_MASK))
 

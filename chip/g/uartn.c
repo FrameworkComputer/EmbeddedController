@@ -144,7 +144,7 @@ int uartn_is_enabled(int uart)
 
 void uartn_init(int uart)
 {
-	long long setting = (16 * (1 << UART_NCO_WIDTH) *
+	long long setting = (16 * BIT(UART_NCO_WIDTH) *
 			     (long long)CONFIG_UART_BAUD_RATE / PCLK_FREQ);
 
 	/* set frequency */

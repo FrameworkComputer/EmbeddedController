@@ -20,7 +20,7 @@
 
 /* Depth of event timer */
 #define TICK_EVT_DEPTH         16 /* Depth of event timer Unit: bits */
-#define TICK_EVT_INTERVAL      (1 << TICK_EVT_DEPTH) /* Unit: us */
+#define TICK_EVT_INTERVAL      BIT(TICK_EVT_DEPTH) /* Unit: us */
 #define TICK_EVT_INTERVAL_MASK (TICK_EVT_INTERVAL - 1) /* Mask of interval */
 #define TICK_EVT_MAX_CNT     (TICK_EVT_INTERVAL - 1) /* Maximum event counter */
 

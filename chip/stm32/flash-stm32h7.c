@@ -46,7 +46,7 @@
  */
 #define HWBANK_SIZE  (CONFIG_FLASH_SIZE / 2)
 #define BLOCKS_PER_HWBANK (HWBANK_SIZE / CONFIG_FLASH_ERASE_SIZE)
-#define BLOCKS_HWBANK_MASK ((1 << BLOCKS_PER_HWBANK) - 1)
+#define BLOCKS_HWBANK_MASK (BIT(BLOCKS_PER_HWBANK) - 1)
 
 /*
  * We can tune the power consumption vs erase/write speed
@@ -358,7 +358,7 @@ int flash_physical_get_protect(int block)
 	int bank = block / BLOCKS_PER_HWBANK;
 	int index = block % BLOCKS_PER_HWBANK;
 
-	return !(STM32_FLASH_WPSN_CUR(bank) & (1 << index));
+	return !(STM32_FLASH_WPSN_CUR(bank) & BIT(index));
 }
 
 /*

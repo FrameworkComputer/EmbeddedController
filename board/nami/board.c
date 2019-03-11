@@ -990,7 +990,7 @@ static void board_init(void)
 	 * floating SPI buffer input (MISO), which causes power leakage (see
 	 * b/64797021).
 	 */
-	NPCX_PUPD_EN1 |= (1 << NPCX_DEVPU1_F_SPI_PUD_EN);
+	NPCX_PUPD_EN1 |= BIT(NPCX_DEVPU1_F_SPI_PUD_EN);
 
 	/* Provide AC status to the PCH */
 	gpio_set_level(GPIO_PCH_ACPRESENT, extpower_is_present());

@@ -32,7 +32,7 @@
  * with /4 prescaler (2^2): period 125 us, full range ~8s
  */
 #define LPTIM_PRESCALER_LOG2 2
-#define LPTIM_PRESCALER (1 << LPTIM_PRESCALER_LOG2)
+#define LPTIM_PRESCALER BIT(LPTIM_PRESCALER_LOG2)
 #define LPTIM_PERIOD_US (SECOND / (STM32_LSI_CLOCK / LPTIM_PRESCALER))
 
 /*

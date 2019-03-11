@@ -1322,7 +1322,7 @@ static uint32_t lightbyte_SET_COLOR_SINGLE(void)
 		return EC_RES_INVALID_PARAM;
 
 	for (i = 0; i < NUM_LEDS; i++)
-		if (led & (1 << i))
+		if (led & BIT(i))
 			led_desc[i][control][color] = value;
 
 	return EC_SUCCESS;
@@ -1350,7 +1350,7 @@ static uint32_t lightbyte_SET_COLOR_RGB(void)
 		return EC_RES_INVALID_PARAM;
 
 	for (i = 0; i < NUM_LEDS; i++)
-		if (led & (1 << i)) {
+		if (led & BIT(i)) {
 			led_desc[i][control][LB_COL_RED] = r;
 			led_desc[i][control][LB_COL_GREEN] = g;
 			led_desc[i][control][LB_COL_BLUE] = b;

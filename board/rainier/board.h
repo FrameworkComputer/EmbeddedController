@@ -82,7 +82,7 @@
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
 
 /* Sensors without hardware FIFO are in forced mode. */
-#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_BARO)
+#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_BARO)
 
 /* USB PD config */
 #define CONFIG_CHARGE_MANAGER

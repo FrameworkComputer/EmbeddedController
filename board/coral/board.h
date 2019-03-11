@@ -319,7 +319,7 @@ int board_get_version(void);
 void board_set_tcpc_power_mode(int port, int mode);
 
 /* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
+#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 
 #endif /* !__ASSEMBLER__ */
 

@@ -61,7 +61,7 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 		int i;
 		/* Expand mask from bits to nibbles */
 		for (i = 0; i < 8; i++) {
-			if (mask & (1 << i))
+			if (mask & BIT(i))
 				pctlmask |= 1 << (4 * i);
 		}
 
@@ -191,7 +191,7 @@ static int gpio_port_to_clock_gate_mask(uint32_t gpio_port)
 {
 	int index = find_gpio_port_index(gpio_port);
 
-	return index >= 0 ? (1 << index) : 0;
+	return index >= 0 ? BIT(index) : 0;
 }
 #endif
 

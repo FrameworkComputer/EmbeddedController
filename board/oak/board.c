@@ -485,7 +485,7 @@ void vbus_task(void)
 			if (vbus)
 				bc12[port].vbus |= 1 << port;
 			else
-				bc12[port].vbus &= ~(1 << port);
+				bc12[port].vbus &= ~BIT(port);
 
 			wake = 0;
 			reg = pi3usb9281_get_interrupts(port);

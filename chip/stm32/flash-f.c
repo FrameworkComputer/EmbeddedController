@@ -442,7 +442,7 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
 #endif
 
 		if (protect)
-			val &= ~(1 << block);
+			val &= ~BIT(block);
 		else
 			val |= 1 << block;
 	}

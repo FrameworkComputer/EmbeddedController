@@ -122,7 +122,7 @@ static int command_mmapinfo(int argc, char **argv)
 	};
 	ccprintf("memmap switches = 0x%x\n", val);
 	for (i = 0; i < ARRAY_SIZE(explanation); i++)
-		if (val & (1 << i))
+		if (val & BIT(i))
 			ccprintf(" %s\n", explanation[i]);
 
 	return EC_SUCCESS;

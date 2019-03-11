@@ -109,7 +109,7 @@ void uart_rx_interrupt(void)
 	uint8_t ier;
 
 	task_clear_pending_irq(UART_RX_IRQ(UARTN));
-	SCP_INTC_UART_RX_IRQ &= ~(1 << UARTN);
+	SCP_INTC_UART_RX_IRQ &= ~BIT(UARTN);
 	uart_process();
 	ier = UART_IER(UARTN);
 	UART_IER(UARTN) = 0;

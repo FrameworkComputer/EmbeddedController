@@ -1005,44 +1005,44 @@ enum NPCX_PMC_PWDWN_CTL_T {
 };
 
 /* TODO: set PD masks based upon actual peripheral usage */
-#define CGC_KBS_MASK     (1 << NPCX_PWDWN_CTL1_KBS_PD)
-#define CGC_UART_MASK    (1 << NPCX_PWDWN_CTL1_UART_PD)
-#define CGC_FAN_MASK     ((1 << NPCX_PWDWN_CTL1_MFT1_PD) | \
-			 (1 << NPCX_PWDWN_CTL1_MFT2_PD))
-#define CGC_FIU_MASK     (1 << NPCX_PWDWN_CTL1_FIU_PD)
+#define CGC_KBS_MASK     BIT(NPCX_PWDWN_CTL1_KBS_PD)
+#define CGC_UART_MASK    BIT(NPCX_PWDWN_CTL1_UART_PD)
+#define CGC_FAN_MASK     (BIT(NPCX_PWDWN_CTL1_MFT1_PD) | \
+			 BIT(NPCX_PWDWN_CTL1_MFT2_PD))
+#define CGC_FIU_MASK     BIT(NPCX_PWDWN_CTL1_FIU_PD)
 #if defined(CHIP_FAMILY_NPCX5)
-#define CGC_I2C_MASK     ((1 << NPCX_PWDWN_CTL3_SMB0_PD) | \
-			 (1 << NPCX_PWDWN_CTL3_SMB1_PD) | \
-			 (1 << NPCX_PWDWN_CTL3_SMB2_PD) | \
-			 (1 << NPCX_PWDWN_CTL3_SMB3_PD))
+#define CGC_I2C_MASK     (BIT(NPCX_PWDWN_CTL3_SMB0_PD) | \
+			 BIT(NPCX_PWDWN_CTL3_SMB1_PD) | \
+			 BIT(NPCX_PWDWN_CTL3_SMB2_PD) | \
+			 BIT(NPCX_PWDWN_CTL3_SMB3_PD))
 #elif defined(CHIP_FAMILY_NPCX7)
-#define CGC_I2C_MASK     ((1 << NPCX_PWDWN_CTL3_SMB0_PD) | \
-			 (1 << NPCX_PWDWN_CTL3_SMB1_PD) | \
-			 (1 << NPCX_PWDWN_CTL3_SMB2_PD) | \
-			 (1 << NPCX_PWDWN_CTL3_SMB3_PD) | \
-			 (1 << NPCX_PWDWN_CTL3_SMB4_PD))
-#define CGC_I2C_MASK2    ((1 << NPCX_PWDWN_CTL7_SMB5_PD) | \
-			 (1 << NPCX_PWDWN_CTL7_SMB6_PD) | \
-			 (1 << NPCX_PWDWN_CTL7_SMB7_PD))
+#define CGC_I2C_MASK     (BIT(NPCX_PWDWN_CTL3_SMB0_PD) | \
+			 BIT(NPCX_PWDWN_CTL3_SMB1_PD) | \
+			 BIT(NPCX_PWDWN_CTL3_SMB2_PD) | \
+			 BIT(NPCX_PWDWN_CTL3_SMB3_PD) | \
+			 BIT(NPCX_PWDWN_CTL3_SMB4_PD))
+#define CGC_I2C_MASK2    (BIT(NPCX_PWDWN_CTL7_SMB5_PD) | \
+			 BIT(NPCX_PWDWN_CTL7_SMB6_PD) | \
+			 BIT(NPCX_PWDWN_CTL7_SMB7_PD))
 #ifdef NPCX_SECOND_UART
-#define CGC_UART2_MASK   (1 << NPCX_PWDWN_CTL7_UART2_PD)
+#define CGC_UART2_MASK   BIT(NPCX_PWDWN_CTL7_UART2_PD)
 #endif
 #ifdef NPCX_WOV_SUPPORT
-#define CGC_WOV_MASK     (1 << NPCX_PWDWN_CTL7_WOV_PD)
+#define CGC_WOV_MASK     BIT(NPCX_PWDWN_CTL7_WOV_PD)
 #endif
 #endif
-#define CGC_ADC_MASK     (1 << NPCX_PWDWN_CTL4_ADC_PD)
-#define CGC_PECI_MASK    (1 << NPCX_PWDWN_CTL4_PECI_PD)
-#define CGC_SPI_MASK     (1 << NPCX_PWDWN_CTL4_SPIP_PD)
-#define CGC_TIMER_MASK   ((1 << NPCX_PWDWN_CTL4_ITIM1_PD) | \
-			 (1 << NPCX_PWDWN_CTL4_ITIM2_PD) | \
-			 (1 << NPCX_PWDWN_CTL4_ITIM3_PD))
-#define CGC_LPC_MASK     ((1 << NPCX_PWDWN_CTL5_C2HACC_PD) | \
-			 (1 << NPCX_PWDWN_CTL5_SHM_REG_PD) | \
-			 (1 << NPCX_PWDWN_CTL5_SHM_PD) | \
-			 (1 << NPCX_PWDWN_CTL5_DP80_PD) | \
-			 (1 << NPCX_PWDWN_CTL5_MSWC_PD))
-#define CGC_ESPI_MASK    (1 << NPCX_PWDWN_CTL6_ESPI_PD)
+#define CGC_ADC_MASK     BIT(NPCX_PWDWN_CTL4_ADC_PD)
+#define CGC_PECI_MASK    BIT(NPCX_PWDWN_CTL4_PECI_PD)
+#define CGC_SPI_MASK     BIT(NPCX_PWDWN_CTL4_SPIP_PD)
+#define CGC_TIMER_MASK   (BIT(NPCX_PWDWN_CTL4_ITIM1_PD) | \
+			 BIT(NPCX_PWDWN_CTL4_ITIM2_PD) | \
+			 BIT(NPCX_PWDWN_CTL4_ITIM3_PD))
+#define CGC_LPC_MASK     (BIT(NPCX_PWDWN_CTL5_C2HACC_PD) | \
+			 BIT(NPCX_PWDWN_CTL5_SHM_REG_PD) | \
+			 BIT(NPCX_PWDWN_CTL5_SHM_PD) | \
+			 BIT(NPCX_PWDWN_CTL5_DP80_PD) | \
+			 BIT(NPCX_PWDWN_CTL5_MSWC_PD))
+#define CGC_ESPI_MASK    BIT(NPCX_PWDWN_CTL6_ESPI_PD)
 
 /******************************************************************************/
 /* Flash Interface Unit (FIU) Registers */
@@ -1242,11 +1242,11 @@ enum PM_CHANNEL_T {
 #define NPCX_BKUP_STS_VSBY_STS           1
 #define NPCX_BKUP_STS_VCC1_STS           0
 #define NPCX_BKUP_STS_ALL_MASK \
-	((1 << NPCX_BKUP_STS_IBBR) | (1 << NPCX_BKUP_STS_VSBY_STS) | \
-	(1 << NPCX_BKUP_STS_VCC1_STS))
+	(BIT(NPCX_BKUP_STS_IBBR) | BIT(NPCX_BKUP_STS_VSBY_STS) | \
+	BIT(NPCX_BKUP_STS_VCC1_STS))
 #define NPCX_BBRAM_SIZE                 128  /* Size of BBRAM */
 #else
-#define NPCX_BKUP_STS_ALL_MASK (1 << NPCX_BKUP_STS_IBBR)
+#define NPCX_BKUP_STS_ALL_MASK BIT(NPCX_BKUP_STS_IBBR)
 #define NPCX_BBRAM_SIZE                  64  /* Size of BBRAM */
 #endif
 
@@ -1625,32 +1625,32 @@ enum ITIM16_MODULE_T {
 #define ENABLE_ESPI_CHAN(ch)             SET_BIT(NPCX_ESPICFG, ch)
 #define DISABLE_ESPI_CHAN(ch)            CLEAR_BIT(NPCX_ESPICFG, ch)
 /* ESPI Slave Channel Support Definitions */
-#define ESPI_SUPP_CH_PC                  (1 << NPCX_ESPICFG_PCCHN_SUPP)
-#define ESPI_SUPP_CH_VM                  (1 << NPCX_ESPICFG_VWCHN_SUPP)
-#define ESPI_SUPP_CH_OOB                 (1 << NPCX_ESPICFG_OOBCHN_SUPP)
-#define ESPI_SUPP_CH_FLASH               (1 << NPCX_ESPICFG_FLASHCHN_SUPP)
+#define ESPI_SUPP_CH_PC                  BIT(NPCX_ESPICFG_PCCHN_SUPP)
+#define ESPI_SUPP_CH_VM                  BIT(NPCX_ESPICFG_VWCHN_SUPP)
+#define ESPI_SUPP_CH_OOB                 BIT(NPCX_ESPICFG_OOBCHN_SUPP)
+#define ESPI_SUPP_CH_FLASH               BIT(NPCX_ESPICFG_FLASHCHN_SUPP)
 #define ESPI_SUPP_CH_ALL                 (ESPI_SUPP_CH_PC | ESPI_SUPP_CH_VM | \
 					  ESPI_SUPP_CH_OOB | ESPI_SUPP_CH_FLASH)
 /* ESPI Interrupts Enable Definitions */
-#define ESPIIE_IBRST                     (1 << NPCX_ESPIIE_IBRSTIE)
-#define ESPIIE_CFGUPD                    (1 << NPCX_ESPIIE_CFGUPDIE)
-#define ESPIIE_BERR                      (1 << NPCX_ESPIIE_BERRIE)
-#define ESPIIE_OOBRX                     (1 << NPCX_ESPIIE_OOBRXIE)
-#define ESPIIE_FLASHRX                   (1 << NPCX_ESPIIE_FLASHRXIE)
-#define ESPIIE_SFLASHRD                  (1 << NPCX_ESPIIE_SFLASHRDIE)
-#define ESPIIE_PERACC                    (1 << NPCX_ESPIIE_PERACCIE)
-#define ESPIIE_DFRD                      (1 << NPCX_ESPIIE_DFRDIE)
-#define ESPIIE_VWUPD                     (1 << NPCX_ESPIIE_VWUPDIE)
-#define ESPIIE_ESPIRST                   (1 << NPCX_ESPIIE_ESPIRSTIE)
-#define ESPIIE_PLTRST                    (1 << NPCX_ESPIIE_PLTRSTIE)
-#define ESPIIE_AMERR                     (1 << NPCX_ESPIIE_AMERRIE)
-#define ESPIIE_AMDONE                    (1 << NPCX_ESPIIE_AMDONEIE)
+#define ESPIIE_IBRST                     BIT(NPCX_ESPIIE_IBRSTIE)
+#define ESPIIE_CFGUPD                    BIT(NPCX_ESPIIE_CFGUPDIE)
+#define ESPIIE_BERR                      BIT(NPCX_ESPIIE_BERRIE)
+#define ESPIIE_OOBRX                     BIT(NPCX_ESPIIE_OOBRXIE)
+#define ESPIIE_FLASHRX                   BIT(NPCX_ESPIIE_FLASHRXIE)
+#define ESPIIE_SFLASHRD                  BIT(NPCX_ESPIIE_SFLASHRDIE)
+#define ESPIIE_PERACC                    BIT(NPCX_ESPIIE_PERACCIE)
+#define ESPIIE_DFRD                      BIT(NPCX_ESPIIE_DFRDIE)
+#define ESPIIE_VWUPD                     BIT(NPCX_ESPIIE_VWUPDIE)
+#define ESPIIE_ESPIRST                   BIT(NPCX_ESPIIE_ESPIRSTIE)
+#define ESPIIE_PLTRST                    BIT(NPCX_ESPIIE_PLTRSTIE)
+#define ESPIIE_AMERR                     BIT(NPCX_ESPIIE_AMERRIE)
+#define ESPIIE_AMDONE                    BIT(NPCX_ESPIIE_AMDONEIE)
 #if defined(CHIP_FAMILY_NPCX7)
-#define ESPIIE_BMTXDONE                  (1 << NPCX_ESPIIE_BMTXDONEIE)
-#define ESPIIE_PBMRX                     (1 << NPCX_ESPIIE_PBMRXIE)
-#define ESPIIE_PMSGRX                    (1 << NPCX_ESPIIE_PMSGRXIE)
-#define ESPIIE_BMBURSTERR                (1 << NPCX_ESPIIE_BMBURSTERRIE)
-#define ESPIIE_BMBURSTDONE               (1 << NPCX_ESPIIE_BMBURSTDONEIE)
+#define ESPIIE_BMTXDONE                  BIT(NPCX_ESPIIE_BMTXDONEIE)
+#define ESPIIE_PBMRX                     BIT(NPCX_ESPIIE_PBMRXIE)
+#define ESPIIE_PMSGRX                    BIT(NPCX_ESPIIE_PMSGRXIE)
+#define ESPIIE_BMBURSTERR                BIT(NPCX_ESPIIE_BMBURSTERRIE)
+#define ESPIIE_BMBURSTDONE               BIT(NPCX_ESPIIE_BMBURSTDONEIE)
 #endif
 /* eSPI Interrupts for VW */
 #define ESPIIE_VW                        (ESPIIE_VWUPD | ESPIIE_PLTRST)
@@ -1658,18 +1658,18 @@ enum ITIM16_MODULE_T {
 #define ESPIIE_GENERIC                   (ESPIIE_IBRST | ESPIIE_CFGUPD | \
 					  ESPIIE_BERR | ESPIIE_ESPIRST)
 /* ESPI Wake-up Enable Definitions */
-#define ESPIWE_IBRST                     (1 << NPCX_ESPIWE_IBRSTWE)
-#define ESPIWE_CFGUPD                    (1 << NPCX_ESPIWE_CFGUPDWE)
-#define ESPIWE_BERR                      (1 << NPCX_ESPIWE_BERRWE)
-#define ESPIWE_OOBRX                     (1 << NPCX_ESPIWE_OOBRXWE)
-#define ESPIWE_FLASHRX                   (1 << NPCX_ESPIWE_FLASHRXWE)
-#define ESPIWE_PERACC                    (1 << NPCX_ESPIWE_PERACCWE)
-#define ESPIWE_DFRD                      (1 << NPCX_ESPIWE_DFRDWE)
-#define ESPIWE_VWUPD                     (1 << NPCX_ESPIWE_VWUPDWE)
-#define ESPIWE_ESPIRST                   (1 << NPCX_ESPIWE_ESPIRSTWE)
+#define ESPIWE_IBRST                     BIT(NPCX_ESPIWE_IBRSTWE)
+#define ESPIWE_CFGUPD                    BIT(NPCX_ESPIWE_CFGUPDWE)
+#define ESPIWE_BERR                      BIT(NPCX_ESPIWE_BERRWE)
+#define ESPIWE_OOBRX                     BIT(NPCX_ESPIWE_OOBRXWE)
+#define ESPIWE_FLASHRX                   BIT(NPCX_ESPIWE_FLASHRXWE)
+#define ESPIWE_PERACC                    BIT(NPCX_ESPIWE_PERACCWE)
+#define ESPIWE_DFRD                      BIT(NPCX_ESPIWE_DFRDWE)
+#define ESPIWE_VWUPD                     BIT(NPCX_ESPIWE_VWUPDWE)
+#define ESPIWE_ESPIRST                   BIT(NPCX_ESPIWE_ESPIRSTWE)
 #if defined(CHIP_FAMILY_NPCX7)
-#define ESPIWE_PBMRX                     (1 << NPCX_ESPIWE_PBMRXWE)
-#define ESPIWE_PMSGRX                    (1 << NPCX_ESPIWE_PMSGRXWE)
+#define ESPIWE_PBMRX                     BIT(NPCX_ESPIWE_PBMRXWE)
+#define ESPIWE_PMSGRX                    BIT(NPCX_ESPIWE_PMSGRXWE)
 #endif
 /* eSPI  Wake-up enable for VW */
 #define ESPIWE_VW                        ESPIWE_VWUPD

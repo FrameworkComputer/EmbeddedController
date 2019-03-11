@@ -12,7 +12,7 @@ static int pca9534_pin_read(int port, int addr, int reg, int pin, int *val)
 {
 	int ret;
 	ret = i2c_read8(port, addr, reg, val);
-	*val = (*val & (1 << pin)) ? 1 : 0;
+	*val = (*val & BIT(pin)) ? 1 : 0;
 	return ret;
 }
 
@@ -22,7 +22,7 @@ static int pca9534_pin_write(int port, int addr, int reg, int pin, int val)
 	ret = i2c_read8(port, addr, reg, &v);
 	if (ret != EC_SUCCESS)
 		return ret;
-	v &= ~(1 << pin);
+	v &= ~BIT(pin);
 	if (val)
 		v |= 1 << pin;
 	return i2c_write8(port, addr, reg, v);

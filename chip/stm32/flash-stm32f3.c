@@ -88,7 +88,7 @@ int flash_physical_get_protect(int block)
 {
 	return (entire_flash_locked ||
 #if defined(CHIP_FAMILY_STM32F3)
-		!(STM32_FLASH_WRPR & (1 << block))
+		!(STM32_FLASH_WRPR & BIT(block))
 #elif defined(CHIP_FAMILY_STM32F4)
 		!(STM32_OPTB_WP & STM32_OPTB_nWRP(block))
 #endif

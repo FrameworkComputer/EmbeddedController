@@ -437,7 +437,7 @@ static const char *get_gpio_string(const int port, const int mask)
 	buffer[1] = '!';
 
 	for (i = 0; i < 8; ++i) {
-		if (mask & (1 << i)) {
+		if (mask & BIT(i)) {
 			buffer[1] = i + '0';
 			break;
 		}

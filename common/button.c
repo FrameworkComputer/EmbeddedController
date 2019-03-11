@@ -353,7 +353,7 @@ static int console_command_button(int argc, char **argv)
 		if (button == BUTTON_COUNT)
 			return EC_ERROR_PARAM1 + argv_idx - 1;
 
-		button_mask |= (1 << button);
+		button_mask |= BIT(button);
 	}
 
 	if (!button_mask)
@@ -363,7 +363,7 @@ static int console_command_button(int argc, char **argv)
 
 	/* Press the button(s) */
 	for (button_idx = 0; button_idx < BUTTON_COUNT; button_idx++)
-		if (button_mask & (1 << button_idx))
+		if (button_mask & BIT(button_idx))
 			button_interrupt_simulate(button_idx);
 
 	/* Hold the button(s) */
@@ -372,7 +372,7 @@ static int console_command_button(int argc, char **argv)
 
 	/* Release the button(s) */
 	for (button_idx = 0; button_idx < BUTTON_COUNT; button_idx++)
-		if (button_mask & (1 << button_idx))
+		if (button_mask & BIT(button_idx))
 			button_interrupt_simulate(button_idx);
 
 	/* Wait till button processing is finished */

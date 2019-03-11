@@ -557,7 +557,7 @@ static void motion_sense_shutdown(void)
 		sensor->drv->list_activities(sensor,
 				&enabled, &disabled);
 		/* exclude double tap, it is used internally. */
-		enabled &= ~(1 << MOTIONSENSE_ACTIVITY_DOUBLE_TAP);
+		enabled &= ~BIT(MOTIONSENSE_ACTIVITY_DOUBLE_TAP);
 		while (enabled) {
 			int activity = get_next_bit(&enabled);
 			sensor->drv->manage_activity(sensor, activity, 0, NULL);
@@ -927,8 +927,8 @@ void motion_sense_task(void *u)
 	uint16_t ready_status;
 	struct motion_sensor_t *sensor;
 #ifdef CONFIG_LID_ANGLE
-	const uint16_t lid_angle_sensors = ((1 << CONFIG_LID_ANGLE_SENSOR_BASE)|
-					    (1 << CONFIG_LID_ANGLE_SENSOR_LID));
+	const uint16_t lid_angle_sensors = (BIT(CONFIG_LID_ANGLE_SENSOR_BASE)|
+					    BIT(CONFIG_LID_ANGLE_SENSOR_LID));
 #endif
 #ifdef CONFIG_ACCEL_FIFO
 	timestamp_t ts_last_int;
@@ -961,7 +961,7 @@ void motion_sense_task(void *u)
 						&ts_begin_task);
 				if (ret != EC_SUCCESS)
 					continue;
-				ready_status |= (1 << i);
+				ready_status |= BIT(i);
 			}
 		}
 #ifdef CONFIG_GESTURE_DETECTION

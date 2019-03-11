@@ -707,14 +707,14 @@ static void sn5s330_irq_deferred(void)
 	uint32_t pending = atomic_read_clear(&irq_pending);
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
-		if ((1 << i) & pending)
+		if (BIT(i) & pending)
 			sn5s330_handle_interrupt(i);
 }
 DECLARE_DEFERRED(sn5s330_irq_deferred);
 
 void sn5s330_interrupt(int port)
 {
-	atomic_or(&irq_pending, (1 << port));
+	atomic_or(&irq_pending, BIT(port));
 	hook_call_deferred(&sn5s330_irq_deferred_data, 0);
 }
 

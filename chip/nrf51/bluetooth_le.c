@@ -48,20 +48,20 @@ static void nrf2ble_packet(struct ble_pdu *ble_p,
 		ble_p->header_type_adv = 1;
 		ble_p->header.adv.type = radio_p->s0 & 0xf;
 		ble_p->header.adv.txaddr = (radio_p->s0 &
-			(1 << BLE_ADV_HEADER_TXADD_SHIFT)) != 0;
+			BIT(BLE_ADV_HEADER_TXADD_SHIFT)) != 0;
 		ble_p->header.adv.rxaddr = (radio_p->s0 &
-			(1 << BLE_ADV_HEADER_RXADD_SHIFT)) != 0;
+			BIT(BLE_ADV_HEADER_RXADD_SHIFT)) != 0;
 		/* Length check? 6-37 Bytes */
 		ble_p->header.adv.length = radio_p->length;
 	} else {
 		ble_p->header_type_adv = 0;
 		ble_p->header.data.llid = radio_p->s0 & 0x3;
 		ble_p->header.data.nesn = (radio_p->s0 &
-			(1 << BLE_DATA_HEADER_NESN_SHIFT)) != 0;
+			BIT(BLE_DATA_HEADER_NESN_SHIFT)) != 0;
 		ble_p->header.data.sn = (radio_p->s0 &
-			(1 << BLE_DATA_HEADER_SN_SHIFT)) != 0;
+			BIT(BLE_DATA_HEADER_SN_SHIFT)) != 0;
 		ble_p->header.data.md = (radio_p->s0 &
-			(1 << BLE_DATA_HEADER_MD_SHIFT)) != 0;
+			BIT(BLE_DATA_HEADER_MD_SHIFT)) != 0;
 		/* Length check? 0-31 Bytes */
 		ble_p->header.data.length = radio_p->length;
 	}
@@ -170,8 +170,8 @@ int ble_rx(struct ble_pdu *pdu, int timeout, int adv)
 	 */
 	ppi_channel_requested = NRF51_PPI_CH_RADIO_ADDR__TIMER0CC1;
 	if (ppi_request_channel(&ppi_channel_requested) == EC_SUCCESS) {
-		NRF51_PPI_CHEN |= (1 << ppi_channel_requested);
-		NRF51_PPI_CHENSET |= (1 << ppi_channel_requested);
+		NRF51_PPI_CHEN |= BIT(ppi_channel_requested);
+		NRF51_PPI_CHENSET |= BIT(ppi_channel_requested);
 	}
 
 

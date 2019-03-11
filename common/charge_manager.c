@@ -1050,12 +1050,12 @@ int charge_manager_get_power_limit_uw(void)
 
 static inline int has_other_active_source(int port)
 {
-	return source_port_bitmap & ~(1 << port);
+	return source_port_bitmap & ~BIT(port);
 }
 
 static inline int is_active_source(int port)
 {
-	return source_port_bitmap & (1 << port);
+	return source_port_bitmap & BIT(port);
 }
 
 static int can_supply_max_current(int port)

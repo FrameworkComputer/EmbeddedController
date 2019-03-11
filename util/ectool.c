@@ -661,7 +661,7 @@ int cmd_inventory(int argc, char *argv[])
 	printf("EC supported features:\n");
 	for (i = 0, idx = 0; i < 2; i++) {
 		for (j = 0; j < 32; j++, idx++) {
-			if (r.flags[i] & (1 << j)) {
+			if (r.flags[i] & BIT(j)) {
 				if (idx >= ARRAY_SIZE(ec_feature_names) ||
 				    !ec_feature_names[idx] ||
 				    strlen(ec_feature_names[idx]) == 0)
@@ -820,7 +820,7 @@ int cmd_uptimeinfo(int argc, char *argv[])
 	printf("EC reset flags at last EC boot: ");
 	flag_count = 0;
 	for (flag = 0; flag != ARRAY_SIZE(reset_flag_strings); ++flag) {
-		if ((r.ec_reset_flags & (1 << flag)) != 0) {
+		if ((r.ec_reset_flags & BIT(flag)) != 0) {
 			if (flag_count)
 				printf(" | ");
 			printf(reset_flag_strings[flag]);
@@ -2413,7 +2413,7 @@ static int get_num_fans(void)
 	 * check whether it has fan support enabled.
 	 */
 	rv = ec_command(EC_CMD_GET_FEATURES, 0, NULL, 0, &r, sizeof(r));
-	if (rv >= 0 && !(r.flags[0] & (1 << EC_FEATURE_PWM_FAN)))
+	if (rv >= 0 && !(r.flags[0] & BIT(EC_FEATURE_PWM_FAN)))
 		return 0;
 
 	for (idx = 0; idx < EC_FAN_SPEED_ENTRIES; idx++) {
@@ -4142,10 +4142,10 @@ static int ms_help(const char *cmd)
 
 static void motionsense_display_activities(uint32_t activities)
 {
-	if (activities & (1 << MOTIONSENSE_ACTIVITY_SIG_MOTION))
+	if (activities & BIT(MOTIONSENSE_ACTIVITY_SIG_MOTION))
 		printf("%d: Significant motion\n",
 		       MOTIONSENSE_ACTIVITY_SIG_MOTION);
-	if (activities & (1 << MOTIONSENSE_ACTIVITY_DOUBLE_TAP))
+	if (activities & BIT(MOTIONSENSE_ACTIVITY_DOUBLE_TAP))
 		printf("%d: Double tap\n",
 		       MOTIONSENSE_ACTIVITY_DOUBLE_TAP);
 }
@@ -7029,7 +7029,7 @@ int cmd_proto_info(int argc, char *argv[])
 
 	printf("  protocol versions:");
 	for (i = 0; i < 32; i++) {
-		if (info.protocol_versions & (1 << i))
+		if (info.protocol_versions & BIT(i))
 			printf(" %d", i);
 	}
 	printf("\n");
@@ -7388,7 +7388,7 @@ static int show_fields(struct ec_mkbp_config *config, int argc, char *argv[])
 
 	param = keyconfig_params;
 	for (i = 0; i < ARRAY_SIZE(keyconfig_params); i++, param++) {
-		if (mask & (1 << i)) {
+		if (mask & BIT(i)) {
 			fprintf(stderr, "%-12s   %u\n", param->name,
 				get_value(param, (char *)config));
 		}

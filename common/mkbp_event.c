@@ -31,7 +31,7 @@ static void clear_event(uint8_t event_type)
 
 static int event_is_set(uint8_t event_type)
 {
-	return events & (1 << event_type);
+	return events & BIT(event_type);
 }
 
 #ifdef CONFIG_MKBP_USE_GPIO

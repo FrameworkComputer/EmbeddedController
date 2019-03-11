@@ -215,7 +215,7 @@ static inline unsigned int lapic_get_vector(uint32_t reg_base, uint32_t vector)
 	uint32_t reg_pos = (vector >> 5) << 4;
 	uint32_t vec_pos = vector & (32 - 1);
 
-	return REG32(reg_base + reg_pos) & (1 << vec_pos);
+	return REG32(reg_base + reg_pos) & BIT(vec_pos);
 }
 
 /*

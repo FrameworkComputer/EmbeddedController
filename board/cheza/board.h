@@ -214,7 +214,7 @@ void board_reset_pd_mcu(void);
 void base_detect_interrupt(enum gpio_signal signal);
 
 /* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ALS)
+#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ALS)
 
 #endif /* !defined(__ASSEMBLER__) */
 

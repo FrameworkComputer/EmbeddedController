@@ -22,7 +22,7 @@
 void pmu_clock_en(uint32_t periph)
 {
 	if (periph <= 31)
-		GR_PMU_PERICLKSET0 = (1 << periph);
+		GR_PMU_PERICLKSET0 = BIT(periph);
 	else
 		GR_PMU_PERICLKSET1 = (1 << (periph - 32));
 }
@@ -34,7 +34,7 @@ void pmu_clock_en(uint32_t periph)
 void pmu_clock_dis(uint32_t periph)
 {
 	if (periph <= 31)
-		GR_PMU_PERICLKCLR0 = (1 << periph);
+		GR_PMU_PERICLKCLR0 = BIT(periph);
 	else
 		GR_PMU_PERICLKCLR1 = (1 << (periph - 32));
 }

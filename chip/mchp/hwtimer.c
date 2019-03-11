@@ -115,7 +115,7 @@ int __hw_clock_source_init(uint32_t start_t)
 			MCHP_TMR32_GIRQ_BIT(1);
 	/*
 	 * Not needed when using direct mode interrupts
-	 * MCHP_INT_BLK_EN |= (1 << MCHP_TMR32_GIRQ);
+	 * MCHP_INT_BLK_EN |= BIT(MCHP_TMR32_GIRQ);
 	 */
 	return MCHP_IRQ_TIMER32_1;
 }

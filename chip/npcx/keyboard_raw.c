@@ -101,7 +101,7 @@ test_mockable void keyboard_raw_drive_column(int col)
 	}
 	/* Set KBSOUT to zero to detect key-press */
 	else if (col == KEYBOARD_COLUMN_ALL) {
-		mask = ~((1 << keyboard_cols) - 1);
+		mask = ~(BIT(keyboard_cols) - 1);
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 		gpio_set_level(GPIO_KBD_KSO2, 1);
 #endif
@@ -114,7 +114,7 @@ test_mockable void keyboard_raw_drive_column(int col)
 		else
 			gpio_set_level(GPIO_KBD_KSO2, 0);
 #endif
-		mask = ~(1 << col_out);
+		mask = ~BIT(col_out);
 	}
 
 	/* Set KBSOUT */
@@ -158,6 +158,6 @@ DECLARE_IRQ(NPCX_IRQ_KSI_WKINTC_1, keyboard_raw_interrupt, 5);
 
 int keyboard_raw_is_input_low(int port, int id)
 {
-	return (NPCX_PDIN(port) & (1 << id)) == 0;
+	return (NPCX_PDIN(port) & BIT(id)) == 0;
 }
 

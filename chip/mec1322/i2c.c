@@ -120,7 +120,7 @@ static void configure_controller(int controller, int kbps)
 
 	/* Enable interrupt */
 	MEC1322_I2C_CONFIG(controller) |= BIT(29); /* ENIDI */
-	MEC1322_INT_ENABLE(12) |= (1 << controller);
+	MEC1322_INT_ENABLE(12) |= BIT(controller);
 	MEC1322_INT_BLK_EN |= BIT(12);
 }
 

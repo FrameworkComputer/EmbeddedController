@@ -324,9 +324,9 @@ void clock_enable_module(enum module_id module, int enable)
 	int new_mask;
 
 	if (enable)
-		new_mask = clock_mask | (1 << module);
+		new_mask = clock_mask | BIT(module);
 	else
-		new_mask = clock_mask & ~(1 << module);
+		new_mask = clock_mask & ~BIT(module);
 
 	/* Only change clock if needed */
 	if ((!!new_mask) != (!!clock_mask)) {

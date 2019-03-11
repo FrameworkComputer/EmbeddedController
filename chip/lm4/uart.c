@@ -193,7 +193,7 @@ void uart_init(void)
 	clock_enable_peripheral(CGC_OFFSET_UART, mask, CGC_MODE_ALL);
 
 #ifdef CONFIG_UART_HOST
-	mask |= (1 << CONFIG_UART_HOST);
+	mask |= BIT(CONFIG_UART_HOST);
 #endif
 
 	clock_enable_peripheral(CGC_OFFSET_UART, mask,

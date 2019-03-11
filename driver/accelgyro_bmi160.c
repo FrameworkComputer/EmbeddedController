@@ -763,9 +763,9 @@ int manage_activity(const struct motion_sensor_t *s,
 	if (ret == EC_RES_SUCCESS) {
 		if (enable) {
 			data->enabled_activities |= 1 << activity;
-			data->disabled_activities &= ~(1 << activity);
+			data->disabled_activities &= ~BIT(activity);
 		} else {
-			data->enabled_activities &= ~(1 << activity);
+			data->enabled_activities &= ~BIT(activity);
 			data->disabled_activities |= 1 << activity;
 		}
 	}

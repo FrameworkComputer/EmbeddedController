@@ -156,7 +156,7 @@ static void show_fault(uint32_t mmfs, uint32_t hfsr, uint32_t dfsr)
 	int count = 0;
 
 	for (upto = 0; upto < 32; upto++) {
-		if ((mmfs & (1 << upto)) && mmfs_name[upto]) {
+		if ((mmfs & BIT(upto)) && mmfs_name[upto]) {
 			do_separate(&count);
 			panic_puts(mmfs_name[upto]);
 		}
@@ -176,7 +176,7 @@ static void show_fault(uint32_t mmfs, uint32_t hfsr, uint32_t dfsr)
 	}
 
 	for (upto = 0; upto < 5; upto++) {
-		if ((dfsr & (1 << upto))) {
+		if ((dfsr & BIT(upto))) {
 			do_separate(&count);
 			panic_puts(dfsr_name[upto]);
 		}

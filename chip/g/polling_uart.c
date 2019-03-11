@@ -7,7 +7,7 @@
 #include "registers.h"
 #include "uart.h"
 
-#define UART_NCO ((16 * (1 << UART_NCO_WIDTH) *				\
+#define UART_NCO ((16 * BIT(UART_NCO_WIDTH) *				\
 		   (long long)CONFIG_UART_BAUD_RATE) / PCLK_FREQ)
 
 /* 115200N81 uart0, TX on A0, RX on A1 */

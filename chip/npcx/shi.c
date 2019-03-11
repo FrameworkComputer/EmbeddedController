@@ -661,7 +661,7 @@ void shi_int_handler(void)
 	/* SHI CS pin is asserted in EVSTAT2 */
 	if (IS_BIT_SET(stat2_reg, NPCX_EVSTAT2_CSNFE)) {
 		/* clear CSNFE bit */
-		NPCX_EVSTAT2 = (1 << NPCX_EVSTAT2_CSNFE);
+		NPCX_EVSTAT2 = BIT(NPCX_EVSTAT2_CSNFE);
 		DEBUG_CPRINTF("CSNFE-");
 		/*
 		 * BUSY bit is set when SHI_CS is asserted. If not, leave it for
@@ -688,7 +688,7 @@ void shi_int_handler(void)
 	 */
 	if (IS_BIT_SET(stat2_reg, NPCX_EVSTAT2_CSNRE)) {
 		/* Clear pending bit of CSNRE */
-		NPCX_EVSTAT2 = (1 << NPCX_EVSTAT2_CSNRE);
+		NPCX_EVSTAT2 = BIT(NPCX_EVSTAT2_CSNRE);
 #else
 	if (IS_BIT_SET(stat_reg, NPCX_EVSTAT_EOR)) {
 #endif
@@ -784,7 +784,7 @@ void shi_int_handler(void)
 	 */
 	if (IS_BIT_SET(stat2_reg, NPCX_EVSTAT2_IBHF2)) {
 		/* Clear IBHF2 */
-		NPCX_EVSTAT2 = (1 << NPCX_EVSTAT2_IBHF2);
+		NPCX_EVSTAT2 = BIT(NPCX_EVSTAT2_IBHF2);
 		DEBUG_CPRINTF("HDR-");
 		/* Disable second IBF interrupt and start to parse header */
 		shi_sec_ibf_int_enable(0);

@@ -301,7 +301,7 @@ void sniffer_task(void)
 		task_wait_event(-1);
 		/* send the available samples over USB if we have a buffer*/
 		while (filled_dma && free_usb) {
-			while (!(filled_dma & (1 << d))) {
+			while (!(filled_dma & BIT(d))) {
 				d = (d + 1) & 31;
 				off += EP_PAYLOAD_SIZE;
 				if (off >= RX_COUNT)

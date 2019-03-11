@@ -214,9 +214,9 @@ static void write_ioexpander(int bank, int gpio, int val)
 	/* Read output port register */
 	i2c_read8(1, GPIOX_I2C_ADDR, GPIOX_OUT_PORT_A + bank, &tmp);
 	if (val)
-		tmp |= (1 << gpio);
+		tmp |= BIT(gpio);
 	else
-		tmp &= ~(1 << gpio);
+		tmp &= ~BIT(gpio);
 	/* Write back modified output port register */
 	i2c_write8(1, GPIOX_I2C_ADDR, GPIOX_OUT_PORT_A + bank, tmp);
 }

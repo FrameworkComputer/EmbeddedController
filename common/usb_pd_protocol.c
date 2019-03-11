@@ -477,7 +477,7 @@ static int reset_device_and_notify(int port)
 	/* Wake up all waiting tasks. */
 	while (waiting_tasks) {
 		task = __fls(waiting_tasks);
-		waiting_tasks &= ~(1 << task);
+		waiting_tasks &= ~BIT(task);
 		task_set_event(task, TASK_EVENT_PD_AWAKE, 0);
 	}
 
@@ -4366,7 +4366,7 @@ static void resume_pd_port(void)
 
 	while (suspended_ports) {
 		port = __builtin_ctz(suspended_ports);
-		suspended_ports &= ~(1 << port);
+		suspended_ports &= ~BIT(port);
 		pd_set_suspend(port, 0);
 	}
 }
@@ -4574,7 +4574,7 @@ static void re_enable_ports(void)
 	while (ports) {
 		int port = __fls(ports);
 
-		ports &= ~(1 << port);
+		ports &= ~BIT(port);
 
 		/*
 		 * Let the board know that the overcurrent is
@@ -4605,7 +4605,7 @@ void pd_handle_overcurrent(int port)
 	board_overcurrent_event(port, 1);
 
 	/* Wait 1s before trying to re-enable the port. */
-	atomic_or(&port_oc_reset_req, (1 << port));
+	atomic_or(&port_oc_reset_req, BIT(port));
 	hook_call_deferred(&re_enable_ports_data, SECOND);
 }
 #endif /* defined(CONFIG_USBC_PPC) */

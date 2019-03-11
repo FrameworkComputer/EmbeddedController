@@ -77,7 +77,7 @@ test_mockable void keyboard_raw_drive_column(int col)
 		mask = 0;
 	/* Assert a single output */
 	else
-		mask = 0xffff ^ (1 << col);
+		mask = 0xffff ^ BIT(col);
 
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 	/* KSO[2] is inverted. */

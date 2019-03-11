@@ -62,7 +62,7 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 		if (func > 0)
 			val |= (func & 0x3) << 12;
 		MCHP_GPIO_CTL(port, i) = val;
-		mask &= ~(1 << i);
+		mask &= ~BIT(i);
 	}
 }
 
@@ -111,7 +111,7 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 
 	while (mask) {
 		i = GPIO_MASK_TO_NUM(mask);
-		mask &= ~(1 << i);
+		mask &= ~BIT(i);
 		val = MCHP_GPIO_CTL(port, i);
 
 #ifdef CONFIG_GPIO_POWER_DOWN
@@ -191,7 +191,7 @@ void gpio_power_off_by_mask(uint32_t port, uint32_t mask)
 
 	while (mask) {
 		i = GPIO_MASK_TO_NUM(mask);
-		mask &= ~(1 << i);
+		mask &= ~BIT(i);
 
 		MCHP_GPIO_CTL(port, i) = (MCHP_GPIO_CTRL_PWR_OFF +
 					MCHP_GPIO_INTDET_DISABLED);
@@ -235,8 +235,8 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	port = gpio_list[signal].port;
 	girq_id = int_map[port].girq_id;
 
-	MCHP_INT_ENABLE(girq_id) = (1 << i);
-	MCHP_INT_BLK_EN |= (1 << girq_id);
+	MCHP_INT_ENABLE(girq_id) = BIT(i);
+	MCHP_INT_BLK_EN |= BIT(girq_id);
 
 	return EC_SUCCESS;
 }
@@ -253,7 +253,7 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 	girq_id = int_map[port].girq_id;
 
 
-	MCHP_INT_DISABLE(girq_id) = (1 << i);
+	MCHP_INT_DISABLE(girq_id) = BIT(i);
 
 	return EC_SUCCESS;
 }
@@ -291,7 +291,7 @@ int gpio_clear_pending_interrupt(enum gpio_signal signal)
 	girq_id = int_map[port].girq_id;
 
 	/* Clear interrupt source sticky status bit even if not enabled */
-	MCHP_INT_SOURCE(girq_id) = (1 << i);
+	MCHP_INT_SOURCE(girq_id) = BIT(i);
 	i = MCHP_INT_SOURCE(girq_id);
 	task_clear_pending_irq(girq_id - 8);
 
@@ -394,13 +394,13 @@ static void gpio_interrupt(int girq, int port)
 		bit = __builtin_ffs(g->mask);
 		if (bit) {
 			bit--;
-			if (sts & (1 << bit)) {
+			if (sts & BIT(bit)) {
 				trace12(0, GPIO, 0,
 					"Bit[%d]: handler @ 0x%08x", bit,
 					(uint32_t)gpio_irq_handlers[i]);
 				gpio_irq_handlers[i](i);
 			}
-			sts &= ~(1 << bit);
+			sts &= ~BIT(bit);
 		}
 	}
 }

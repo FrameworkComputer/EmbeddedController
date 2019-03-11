@@ -105,7 +105,7 @@ static void adc_disable_channel(int ch)
 static int adc_data_valid(enum chip_adc_channel adc_ch)
 {
 	return (adc_ch <= CHIP_ADC_CH7) ?
-		(IT83XX_ADC_ADCDVSTS & (1 << adc_ch)) :
+		(IT83XX_ADC_ADCDVSTS & BIT(adc_ch)) :
 		(IT83XX_ADC_ADCDVSTS2 & (1 << (adc_ch - CHIP_ADC_CH13)));
 }
 
@@ -138,7 +138,7 @@ int adc_read_channel(enum adc_channel ch)
 
 			/* W/C data valid flag */
 			if (adc_ch <= CHIP_ADC_CH7)
-				IT83XX_ADC_ADCDVSTS = (1 << adc_ch);
+				IT83XX_ADC_ADCDVSTS = BIT(adc_ch);
 			else
 				IT83XX_ADC_ADCDVSTS2 =
 					(1 << (adc_ch - CHIP_ADC_CH13));

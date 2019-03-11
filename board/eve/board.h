@@ -150,7 +150,7 @@
 #define CONFIG_GESTURE_TAP_THRES_MG 100
 #define CONFIG_GESTURE_TAP_MAX_INTERSTICE_T 500
 #define CONFIG_GESTURE_DETECTION_MASK \
-	 (1 << CONFIG_GESTURE_SENSOR_BATTERY_TAP)
+	 BIT(CONFIG_GESTURE_SENSOR_BATTERY_TAP)
 
 /* USB */
 #define CONFIG_USB_CHARGER
@@ -299,7 +299,7 @@ void led_register_double_tap(void);
 void board_update_ac_status(void);
 
 /* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK ((1 << LID_ACCEL) | (1 << LID_LIGHT))
+#define CONFIG_ACCEL_FORCE_MODE_MASK (BIT(LID_ACCEL) | BIT(LID_LIGHT))
 
 #endif /* !__ASSEMBLER__ */
 

@@ -747,12 +747,12 @@ static void lpc_init(void)
 
 	/* Enable LPC channels */
 	LM4_LPC_LPCCTL = LM4_LPC_SCI_CLK_1 |
-		(1 << LPC_CH_ACPI) |
-		(1 << LPC_CH_PORT80) |
-		(1 << LPC_CH_CMD_DATA) |
-		(1 << LPC_CH_KEYBOARD) |
-		(1 << LPC_CH_CMD) |
-		(1 << LPC_CH_MEMMAP);
+		BIT(LPC_CH_ACPI) |
+		BIT(LPC_CH_PORT80) |
+		BIT(LPC_CH_CMD_DATA) |
+		BIT(LPC_CH_KEYBOARD) |
+		BIT(LPC_CH_CMD) |
+		BIT(LPC_CH_MEMMAP);
 
 #ifdef CONFIG_UART_HOST
 	LM4_LPC_LPCCTL |= 1 << LPC_CH_COMX;

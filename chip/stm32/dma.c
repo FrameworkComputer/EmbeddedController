@@ -65,7 +65,7 @@ void dma_select_channel(enum dma_channel channel, unsigned char stream)
 	/* Local channel # starting from 0 on each DMA controller */
 	const unsigned char ch = channel % STM32_DMAC_PER_CTLR;
 	const unsigned char shift = STM32_DMA_PERIPHERALS_PER_CHANNEL;
-	const unsigned char mask = (1 << shift) - 1;
+	const unsigned char mask = BIT(shift) - 1;
 	uint32_t val;
 
 	ASSERT(ch < STM32_DMAC_PER_CTLR);

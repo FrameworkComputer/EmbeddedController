@@ -44,7 +44,7 @@ extern char __host_flash[CONFIG_FLASH_SIZE];
 /* Do NOT use common timer code which is designed for hardware counters. */
 #undef CONFIG_COMMON_TIMER
 
-#define GPIO_PIN(port, index) GPIO_##port, (1 << index)
+#define GPIO_PIN(port, index) GPIO_##port, BIT(index)
 #define GPIO_PIN_MASK(p, m) .port = GPIO_##p, .mask = (m)
 
 #define I2C_PORT_COUNT 1

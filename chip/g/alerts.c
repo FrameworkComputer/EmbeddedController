@@ -260,7 +260,7 @@ static int alert_intr_status(int alert)
 	int reg = alert / 32;
 	int offset = alert % 32;
 
-	return !!(*INTR_STATUS_ADDR[reg] & (1 << offset));
+	return !!(*INTR_STATUS_ADDR[reg] & BIT(offset));
 }
 
 #ifdef CONFIG_BOARD_ID_SUPPORT
@@ -300,7 +300,7 @@ static void command_alerts_list(void)
 
 		if (fuse == BROM_FWBIT_APPLYSEC_UNKNOWN)
 			fuse_status = '?';
-		else if (fuses & (1 << fuse))
+		else if (fuses & BIT(fuse))
 			fuse_status = '+';
 		else
 			fuse_status = '#';

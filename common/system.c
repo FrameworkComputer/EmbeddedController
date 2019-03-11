@@ -285,7 +285,7 @@ void system_print_reset_flags(void)
 	}
 
 	for (i = 0; i < ARRAY_SIZE(reset_flag_descs); i++) {
-		if (reset_flags & (1 << i)) {
+		if (reset_flags & BIT(i)) {
 			if (count++)
 				CPUTS(" ");
 

@@ -37,7 +37,7 @@ struct sn_data {
 /* Number of bits reserved for RMA counter */
 #define RMA_COUNT_BITS	7
 /* Value used to indicate device has been RMA'd */
-#define RMA_INDICATOR	((uint8_t) ~(1 << RMA_COUNT_BITS))
+#define RMA_INDICATOR	((uint8_t) ~BIT(RMA_COUNT_BITS))
 
 /* Info1 Board space contents. */
 struct info1_board_space {

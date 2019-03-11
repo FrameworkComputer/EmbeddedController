@@ -532,7 +532,7 @@ void espi_interrupt(void)
 	 * Bit 17 of ESPIIE is reserved. We need to set the same bit in mask
 	 * in case bit 17 in ESPISTS of npcx7 is not cleared in ISR.
 	 */
-	mask = NPCX_ESPIIE | (1 << NPCX_ESPISTS_VWUPDW);
+	mask = NPCX_ESPIIE | BIT(NPCX_ESPISTS_VWUPDW);
 #else
 	mask = NPCX_ESPIIE;
 #endif

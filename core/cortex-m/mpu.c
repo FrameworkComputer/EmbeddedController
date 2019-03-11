@@ -95,7 +95,7 @@ static int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
 	blocks = size >> (size_bit - 2);
 
 	/* Represent occupied blocks of two regions with srd mask. */
-	srd1 = (1 << blocks) - 1;
+	srd1 = BIT(blocks) - 1;
 	srd2 = (1 << ((size >> (size_bit - 5)) & 0x7)) - 1;
 
 	/*

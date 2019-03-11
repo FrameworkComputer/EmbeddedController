@@ -22,7 +22,7 @@
 
 /* Macros for last 32K ram block */
 #define LAST_RAM_BLK ((NPCX_RAM_SIZE / (32 * 1024)) - 1)
-#define RAM_PD_MASK  (~(1 << LAST_RAM_BLK))
+#define RAM_PD_MASK  (BIT(LAST_RAM_BLK) - 1)
 
 /*****************************************************************************/
 /* IC specific low-level driver depends on chip series */

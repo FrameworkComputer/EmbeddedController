@@ -343,7 +343,7 @@ uint16_t board_i2c_slave_addrs(int controller);
  */
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
-	((1 << LID_ACCEL) | (1 << BASE_BARO) | (1 << LID_ALS))
+	(BIT(LID_ACCEL) | BIT(BASE_BARO) | BIT(LID_ALS))
 
 #endif /* !__ASSEMBLER__ */
 

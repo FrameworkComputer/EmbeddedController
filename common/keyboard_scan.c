@@ -197,10 +197,10 @@ static void simulate_key(int row, int col, int pressed)
 {
 	int old_polls;
 
-	if ((simulated_key[col] & (1 << row)) == ((pressed ? 1 : 0) << row))
+	if ((simulated_key[col] & BIT(row)) == ((pressed ? 1 : 0) << row))
 		return;  /* No change */
 
-	simulated_key[col] ^= (1 << row);
+	simulated_key[col] ^= BIT(row);
 
 	/* Keep track of polls now that we've got keys simulated */
 	old_polls = kbd_polls;
@@ -481,7 +481,7 @@ static int check_keys_changed(uint8_t *state)
 			continue;
 
 		for (i = 0; i < KEYBOARD_ROWS; i++) {
-			if (diff & (1 << i))
+			if (diff & BIT(i))
 				scan_edge_index[c][i] = scan_time_index;
 		}
 
@@ -601,7 +601,7 @@ static uint32_t check_key_list(const uint8_t *state)
 	k = boot_key_list;
 	for (c = 0; c < ARRAY_SIZE(boot_key_list); c++, k++) {
 		if (curr_state[k->mask_index] & k->mask_value) {
-			boot_key_mask |= (1 << c);
+			boot_key_mask |= BIT(c);
 			curr_state[k->mask_index] &= ~k->mask_value;
 		}
 	}
@@ -1005,7 +1005,7 @@ static int command_keyboard_press(int argc, char **argv)
 			if (simulated_key[i] == 0)
 				continue;
 			for (j = 0; j < KEYBOARD_ROWS; ++j)
-				if (simulated_key[i] & (1 << j))
+				if (simulated_key[i] & BIT(j))
 					ccprintf("\t%d %d\n", i, j);
 		}
 

@@ -314,13 +314,13 @@ int flash_physical_get_protect(int block)
 		return 1;
 
 	/* Check the active write protect status */
-	return STM32_FLASH_WRPR & (1 << block);
+	return STM32_FLASH_WRPR & BIT(block);
 }
 
 int flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	uint32_t prot;
-	uint32_t mask = ((1 << WP_BANK_COUNT) - 1) << WP_BANK_OFFSET;
+	uint32_t mask = (BIT(WP_BANK_COUNT) - 1) << WP_BANK_OFFSET;
 	int rv;
 
 	if (new_flags & EC_FLASH_PROTECT_ALL_AT_BOOT)

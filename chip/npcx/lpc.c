@@ -981,7 +981,7 @@ static void lpc_init(void)
 	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SMIPOL);
 	/* Set SMIB/SCIB to make sure SMI/SCI are high at init */
 	NPCX_HIPMIC(PMC_ACPI) = NPCX_HIPMIC(PMC_ACPI)
-			| (1 << NPCX_HIPMIC_SMIB) | (1 << NPCX_HIPMIC_SCIB);
+			| BIT(NPCX_HIPMIC_SMIB) | BIT(NPCX_HIPMIC_SCIB);
 #ifndef CONFIG_SCI_GPIO
 	/*
 	 * Allow SMI/SCI generated from PM module.

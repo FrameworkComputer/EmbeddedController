@@ -506,7 +506,7 @@ int uint64divmod(uint64_t *n, int d)
 int get_next_bit(uint32_t *mask)
 {
 	int bit = 31 - __builtin_clz(*mask);
-	*mask &= ~(1 << bit);
+	*mask &= ~BIT(bit);
 	return bit;
 }
 

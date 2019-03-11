@@ -18,10 +18,10 @@ int ppi_request_pre_programmed_channel(int ppi_chan)
 	ASSERT(ppi_chan >= NRF51_PPI_FIRST_PP_CH &&
 		ppi_chan <= NRF51_PPI_LAST_PP_CH);
 
-	if (channels_in_use & (1 << ppi_chan))
+	if (channels_in_use & BIT(ppi_chan))
 		return EC_ERROR_BUSY;
 
-	channels_in_use |= (1 << ppi_chan);
+	channels_in_use |= BIT(ppi_chan);
 
 	return EC_SUCCESS;
 }
@@ -31,25 +31,25 @@ int ppi_request_channel(int *ppi_chan)
 	int chan;
 
 	for (chan = 0; chan < NRF51_PPI_NUM_PROGRAMMABLE_CHANNELS; chan++)
-		if ((channels_in_use & (1 << chan)) == 0)
+		if ((channels_in_use & BIT(chan)) == 0)
 			break;
 
 	if (chan == NRF51_PPI_NUM_PROGRAMMABLE_CHANNELS)
 		return EC_ERROR_BUSY;
 
-	channels_in_use |= (1 << chan);
+	channels_in_use |= BIT(chan);
 	*ppi_chan = chan;
 	return EC_SUCCESS;
 }
 
 void ppi_release_channel(int ppi_chan)
 {
-	channels_in_use &= ~(1 << ppi_chan);
+	channels_in_use &= ~BIT(ppi_chan);
 }
 
 void ppi_release_group(int ppi_group)
 {
-	channel_groups_in_use &= ~(1 << ppi_group);
+	channel_groups_in_use &= ~BIT(ppi_group);
 }
 
 int ppi_request_group(int *ppi_group)
@@ -57,13 +57,13 @@ int ppi_request_group(int *ppi_group)
 	int group;
 
 	for (group = 0; group < NRF51_PPI_NUM_GROUPS; group++)
-		if ((channel_groups_in_use & (1 << group)) == 0)
+		if ((channel_groups_in_use & BIT(group)) == 0)
 			break;
 
 	if (group == NRF51_PPI_NUM_GROUPS)
 		return EC_ERROR_BUSY;
 
-	channel_groups_in_use |= (1 << group);
+	channel_groups_in_use |= BIT(group);
 	*ppi_group = group;
 	return EC_SUCCESS;
 }
