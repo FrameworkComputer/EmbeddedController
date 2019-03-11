@@ -208,6 +208,11 @@ struct options_map {
 #define MAX_BOARD_ID_LENGTH 9
 
 /*
+ * Length, in bytes, of the SN Bits serial number bits.
+ */
+#define SN_BITS_SIZE  (96 >> 3)
+
+/*
  * Max. length of FW version in the format of <epoch>.<major>.<minor>
  * (3 uint32_t string representation + 2 separators + NULL terminator).
  */
@@ -576,9 +581,9 @@ static void usage(int errs)
 	       "  -r,--rma_auth [auth_code]\n"
 	       "                           Request RMA challenge, process "
 	       "RMA authentication code\n"
-	       "  -S,--sn_bits SN_1:SN_2:SN_3\n"
+	       "  -S,--sn_bits SN_BITS\n"
 	       "                           Set Info1 SN bits fields.\n"
-	       "                           SN_n should be 32 bit hex.\n"
+	       "                           SN_BITS should be 96 bit hex.\n"
 	       "  -s,--systemdev           Use /dev/tpm0 (-d is ignored)\n"
 	       "  -t,--trunks_send         Use `trunks_send --raw' "
 	       "(-d is ignored)\n"
@@ -1505,22 +1510,41 @@ static int parse_bid(const char *opt,
 	return 1;
 }
 
-static int parse_sn_bits(const char *opt, uint32_t *sn_bits)
-{
-	const char *s;
-	char *e;
-	int i = 0;
-
-	s = opt;
-	sn_bits[i] = (uint32_t)strtoul(s, &e, 0);
-
-	while (s != e && *e == ':' && i < 2) {
-		s = e + 1;
-		i++;
-		sn_bits[i] = (uint32_t)strtoul(s, &e, 0);
+/*
+ * Reads a two-character hexadecimal byte from a string. If the string is
+ * ill-formed, returns 0. Otherwise, |byte| contains the byte value and the
+ * return value is non-zero.
+ */
+static int read_hex_byte(const char* s, uint8_t* byte) {
+	uint8_t b = 0;
+	for (const char* end = s + 2; s < end; ++s) {
+		if (*s >= '0' && *s <= '9')
+			b = b * 16 + *s - '0';
+		else if (*s >= 'A' && *s <= 'F')
+			b = b * 16 + 10 + *s - 'A';
+		else if (*s >= 'a' && *s <= 'f')
+			b = b * 16 + 10 + *s - 'a';
+		else
+			return 0;
 	}
+	*byte = b;
+	return 1;
+}
 
-	return *e == '\0' && i == 2;
+static int parse_sn_bits(const char *opt, uint8_t *sn_bits)
+{
+	size_t len = strlen(opt);
+
+	if (!strncmp(opt, "0x", 2)) {
+		opt += 2;
+		len -= 2;
+	}
+	if (len != SN_BITS_SIZE * 2) return 0;
+
+	for (int i = 0; i < SN_BITS_SIZE; ++i, opt +=2)
+		if (!read_hex_byte(opt, sn_bits++)) return 0;
+
+	return 1;
 }
 
 static int parse_sn_inc_rma(const char *opt, uint8_t *arg)
@@ -1925,19 +1949,14 @@ void process_bid(struct transfer_descriptor *td,
 }
 
 static void process_sn_bits(struct transfer_descriptor *td,
-			    uint32_t *sn_bits)
+			    uint8_t *sn_bits)
 {
 	int rv;
-	int i = 0;
-	uint32_t command_body[3];
 	uint8_t response_code;
 	size_t response_size = sizeof(response_code);
 
-	for (i = 0; i < 3; i++)
-		command_body[i] = htobe32(sn_bits[i]);
-
 	rv = send_vendor_command(td, VENDOR_CC_SN_SET_HASH,
-				 command_body, sizeof(command_body),
+				 sn_bits, SN_BITS_SIZE,
 				 &response_code, &response_size);
 
 	if (rv) {
@@ -2217,7 +2236,7 @@ int main(int argc, char *argv[])
 	char *factory_mode_arg;
 	char *tpm_mode_arg = NULL;
 	int sn_bits = 0;
-	uint32_t sn_bits_arg[3];
+	uint8_t sn_bits_arg[SN_BITS_SIZE];
 	int sn_inc_rma = 0;
 	uint8_t sn_inc_rma_arg;
 
