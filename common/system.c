@@ -86,16 +86,6 @@ struct jump_data {
 /* Jump data (at end of RAM, or preceding panic data) */
 static struct jump_data *jdata;
 
-/*
- * Reset flag descriptions.  Must be in same order as bits of RESET_FLAG_
- * constants.
- */
-static const char * const reset_flag_descs[] = {
-	"other", "reset-pin", "brownout", "power-on", "watchdog", "soft",
-	"hibernate", "rtc-alarm", "wake-pin", "low-battery", "sysjump",
-	"hard", "ap-off", "preserved", "usb-resume", "rdd", "rbox",
-	"security", "ap-watchdog" };
-
 static uint32_t reset_flags;
 static int jumped_to_image;
 static int disable_jump;  /* Disable ALL jumps if system is locked */
@@ -278,6 +268,9 @@ void system_print_reset_flags(void)
 {
 	int count = 0;
 	int i;
+	static const char * const reset_flag_descs[] = {
+		#include "reset_flag_desc.inc"
+	};
 
 	if (!reset_flags) {
 		CPUTS("unknown");
@@ -291,6 +284,13 @@ void system_print_reset_flags(void)
 
 			CPUTS(reset_flag_descs[i]);
 		}
+	}
+
+	if (reset_flags >= BIT(i)) {
+		if (count)
+			CPUTS(" ");
+
+		CPUTS("no-desc");
 	}
 }
 
