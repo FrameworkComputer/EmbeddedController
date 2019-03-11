@@ -69,6 +69,41 @@ static const struct adc_profile_t profile = {
 };
 #endif
 
+static void adc_init(void)
+{
+	/*
+	 * If clock is already enabled, and ADC module is enabled
+	 * then this is a warm reboot and ADC is already initialized.
+	 */
+	if (STM32_RCC_APB2ENR & (1 << 9) && (STM32_ADC_CR & STM32_ADC_CR_ADEN))
+		return;
+
+	/* Enable ADC clock */
+	clock_enable_module(MODULE_ADC, 1);
+	/* check HSI14 in RCC ? ON by default */
+
+	/* ADC calibration (done with ADEN = 0) */
+	STM32_ADC_CR = STM32_ADC_CR_ADCAL; /* set ADCAL = 1, ADC off */
+	/* wait for the end of calibration */
+	while (STM32_ADC_CR & STM32_ADC_CR_ADCAL)
+		;
+
+	/* Single conversion, right aligned, 12-bit */
+	STM32_ADC_CFGR1 = profile.cfgr1_reg;
+	/* clock is ADCCLK (ADEN must be off when writing this reg) */
+	STM32_ADC_CFGR2 = profile.cfgr2_reg;
+	/* Sampling time */
+	STM32_ADC_SMPR = profile.smpr_reg;
+
+	/*
+	 * ADC enable (note: takes 4 ADC clocks between end of calibration
+	 * and setting ADEN).
+	 */
+	STM32_ADC_CR = STM32_ADC_CR_ADEN;
+	while (!(STM32_ADC_ISR & STM32_ADC_ISR_ADRDY))
+		STM32_ADC_CR = STM32_ADC_CR_ADEN;
+}
+
 static void adc_configure(int ain_id)
 {
 	/* Select channel to convert */
@@ -258,6 +293,9 @@ int adc_read_channel(enum adc_channel ch)
 	int restore_watchdog = 0;
 
 	mutex_lock(&adc_lock);
+
+	adc_init();
+
 	if (adc_watchdog_enabled()) {
 		restore_watchdog = 1;
 		adc_disable_watchdog_no_lock();
@@ -293,39 +331,3 @@ void adc_disable(void)
 	 * STM32_ADC_CR_ADDIS bit will be cleared by hardware.
 	 */
 }
-
-static void adc_init(void)
-{
-	/*
-	 * If clock is already enabled, and ADC module is enabled
-	 * then this is a warm reboot and ADC is already initialized.
-	 */
-	if (STM32_RCC_APB2ENR & (1 << 9) && (STM32_ADC_CR & STM32_ADC_CR_ADEN))
-		return;
-
-	/* Enable ADC clock */
-	clock_enable_module(MODULE_ADC, 1);
-	/* check HSI14 in RCC ? ON by default */
-
-	/* ADC calibration (done with ADEN = 0) */
-	STM32_ADC_CR = STM32_ADC_CR_ADCAL; /* set ADCAL = 1, ADC off */
-	/* wait for the end of calibration */
-	while (STM32_ADC_CR & STM32_ADC_CR_ADCAL)
-		;
-
-	/* Single conversion, right aligned, 12-bit */
-	STM32_ADC_CFGR1 = profile.cfgr1_reg;
-	/* clock is ADCCLK (ADEN must be off when writing this reg) */
-	STM32_ADC_CFGR2 = profile.cfgr2_reg;
-	/* Sampling time */
-	STM32_ADC_SMPR = profile.smpr_reg;
-
-	/*
-	 * ADC enable (note: takes 4 ADC clocks between end of calibration
-	 * and setting ADEN).
-	 */
-	STM32_ADC_CR = STM32_ADC_CR_ADEN;
-	while (!(STM32_ADC_ISR & STM32_ADC_ISR_ADRDY))
-		STM32_ADC_CR = STM32_ADC_CR_ADEN;
-}
-DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_INIT_ADC);
