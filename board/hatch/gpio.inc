@@ -46,7 +46,8 @@ GPIO(PCH_WAKE_L,               PIN(7, 4), GPIO_ODR_HIGH)        /* EC_PCH_WAKE_O
 GPIO(PCH_PWRBTN_L,             PIN(C, 1), GPIO_ODR_HIGH)        /* EC_PCH_PWR_BTN_ODL */
 
 /* Power Sequencing Signals */
-GPIO(EN_PP5000_A,              PIN(7, 3), GPIO_OUT_LOW)
+GPIO(EN_PP5000_A_V1,           PIN(A, 4), GPIO_DEFAULT)
+GPIO(EN_PP5000_A_V0,           PIN(7, 3), GPIO_DEFAULT)
 GPIO(EN_A_RAILS,               PIN(A, 3), GPIO_OUT_LOW)
 GPIO(EC_PCH_RSMRST_L,          PIN(A, 6), GPIO_OUT_LOW)
 GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)
