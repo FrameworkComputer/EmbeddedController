@@ -58,10 +58,14 @@ void led_set_color_power(enum ec_led_colors color)
         }
 
 	if (color == EC_LED_COLOR_BLUE)
+	{
+                gpio_set_level(GPIO_BAT_LED_RED_L, LED_OFF_LVL);
+                gpio_set_level(GPIO_BAT_LED_GREEN_L, LED_OFF_LVL);
 		gpio_set_level(GPIO_PWR_LED_BLUE_L, LED_ON_LVL);
-	else
+	} else {
 		/* LED_OFF and unsupported colors */
 		gpio_set_level(GPIO_PWR_LED_BLUE_L, LED_OFF_LVL);
+	}
 }
 
 void led_set_color_battery(enum ec_led_colors color)
