@@ -128,8 +128,12 @@
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
+#ifdef BOARD_KRANE
+#define CONFIG_BATTERY_MM8013
+#else
 #define CONFIG_BATTERY_MAX17055
 #define CONFIG_BATTERY_MAX17055_ALERT
+#endif
 
 /* Battery parameters for max17055 ModelGauge m5 algorithm. */
 #define BATTERY_MAX17055_RSENSE             5     /* m-ohm */
