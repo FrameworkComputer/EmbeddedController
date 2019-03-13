@@ -140,7 +140,18 @@ static enum vendor_cmd_rc vc_get_pwr_btn(enum vendor_cmd_cc code,
 					 size_t input_size,
 					 size_t *response_size)
 {
-	if (pop_check_presence(1) == POP_TOUCH_YES)
+	/*
+	 * The AP uses VENDOR_CC_GET_PWR_BTN to poll both for the press and
+	 * release of the power button.
+	 *
+	 * pop_check_presence(1) returns true if a new power button press was
+	 * recorded in the last 10 seconds.
+	 *
+	 * Indicate button release if no new presses have been recorded and the
+	 * current button state is not pressed.
+	 */
+	if (pop_check_presence(1) == POP_TOUCH_YES ||
+		rbox_powerbtn_is_pressed())
 		*(uint8_t *)buf = 1;
 	else
 		*(uint8_t *)buf = 0;
