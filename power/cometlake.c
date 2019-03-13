@@ -27,6 +27,9 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	CPRINTS("%s(%d)", __func__, reason);
 	report_ap_reset(reason);
 
+	/* Turn off RSMRST_L to meet tPCH12 */
+	gpio_set_level(GPIO_EC_PCH_RSMRST_L, 0);
+
 	/* Turn off A (except PP5000_A) rails*/
 	gpio_set_level(GPIO_EN_A_RAILS, 0);
 
