@@ -103,19 +103,6 @@ void dptf_set_temp_threshold(int sensor_id, int temp, int idx, int enable)
 	}
 }
 
-#ifdef CONFIG_TABLET_MODE
-/*
- * When tablet mode changes, send an event to ACPI to retrieve
- * tablet mode value and send an event to the kernel.
- */
-static void dptf_tablet_mode_changed(void)
-{
-	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
-}
-DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, dptf_tablet_mode_changed,
-	     HOOK_PRIO_DEFAULT);
-#endif
-
 /*****************************************************************************/
 /* EC-specific thermal controls */
 

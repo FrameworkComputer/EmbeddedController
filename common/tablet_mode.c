@@ -6,6 +6,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "lid_angle.h"
 #include "tablet_mode.h"
 #include "timer.h"
@@ -36,6 +37,14 @@ void tablet_set_mode(int mode)
 	tablet_mode = mode;
 	CPRINTS("tablet mode %sabled", mode ? "en" : "dis");
 	hook_notify(HOOK_TABLET_MODE_CHANGE);
+
+	/*
+	 * When tablet mode changes, send an event to ACPI to retrieve
+	 * tablet mode value and send an event to the kernel.
+	 */
+#ifdef CONFIG_HOSTCMD_EVENTS
+	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
+#endif
 }
 
 /* This ifdef can be removed once we clean up past projects which do own init */
