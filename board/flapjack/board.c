@@ -161,7 +161,8 @@ const struct adc_t adc_channels[] = {
 	[ADC_LCM_ID] = {"LCM_ID", 3300, 4096, 0, STM32_AIN(10)},
 	[ADC_EC_SKU_ID] = {"EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8)},
 	[ADC_BATT_ID] = {"BATT_ID", 3300, 4096, 0, STM32_AIN(7)},
-	[ADC_USBC_THERM] = {"USBC_THERM", 3300, 4096, 0, STM32_AIN(14)},
+	[ADC_USBC_THERM] = {"USBC_THERM", 3300, 4096, 0, STM32_AIN(14),
+		STM32_ADC_SMPR_239_5_CY},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -292,8 +293,31 @@ int pd_snk_is_vbus_provided(int port)
 	return rt946x_is_vbus_ready();
 }
 
+/*
+ * Threshold to detect USB-C board. If the USB-C board isn't connected,
+ * USBC_THERM is floating thus the ADC pin should read about the pull-up
+ * voltage. If it's connected, the voltage is capped by the resistor (429k)
+ * place in parallel to the thermistor. 3.3V x 429k/(39k + 429k) = 3.025V
+ */
+#define USBC_THERM_THRESHOLD 3025
+
 static void board_init(void)
 {
+#ifdef SECTION_IS_RO
+	/* If USB-C board isn't connected, the device is being assembled.
+	 * We cut off the battery until the assembly is done for better yield.
+	 * Timing is ok because STM32F0 initializes ADC on demand. */
+	if (board_version > 0x02) {
+		int mv = adc_read_channel(ADC_USBC_THERM);
+		if (mv == ADC_READ_ERROR)
+			mv = adc_read_channel(ADC_USBC_THERM);
+		CPRINTS("USBC_THERM=%d", mv);
+		if (mv > USBC_THERM_THRESHOLD) {
+			cflush();
+			board_cut_off_battery();
+		}
+	}
+#endif
 	/* Set SPI1 PB13/14/15 pins to high speed */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xfc000000;
 
