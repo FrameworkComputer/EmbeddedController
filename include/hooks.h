@@ -44,6 +44,8 @@ enum hook_priority {
 	/* Init charge manager before usage in board init */
 	HOOK_PRIO_CHARGE_MANAGER_INIT = HOOK_PRIO_FIRST + 12,
 
+	HOOK_PRIO_INIT_ADC = HOOK_PRIO_DEFAULT,
+
 	/* Specific values to lump temperature-related hooks together */
 	HOOK_PRIO_TEMP_SENSOR = 6000,
 	/* After all sensors have been polled */
