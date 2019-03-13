@@ -547,12 +547,6 @@ static void usage(int errs)
 	       "                           Get or set Info1 board ID fields\n"
 	       "                           ID could be 32 bit hex or 4 "
 	       "character string.\n"
-	       "  -S,--sn_bits SN_1:SN_2:SN_3\n"
-	       "                           Set Info1 SN bits fields.\n"
-	       "                           SN_n should be 32 bit hex.\n"
-	       "  -R,--sn_rma_inc RMA_INC\n"
-	       "                           Increment SN RMA count by RMA_INC.\n"
-	       "                           RMA_INC should be 0-7.\n"
 	       "  -k,--ccd_lock            Lock CCD\n"
 	       "  -M,--machine             Output in a machine-friendly way. "
 	       "Effective with -b, -f, -i, and -O.\n"
@@ -567,9 +561,15 @@ static void usage(int errs)
 	       "                           Set or clear CCD password. Use\n"
 	       "                           'clear:<cur password>' to clear it\n"
 	       "  -p,--post_reset          Request post reset after transfer\n"
+	       "  -R,--sn_rma_inc RMA_INC\n"
+	       "                           Increment SN RMA count by RMA_INC.\n"
+	       "                           RMA_INC should be 0-7.\n"
 	       "  -r,--rma_auth [auth_code]\n"
 	       "                           Request RMA challenge, process "
 	       "RMA authentication code\n"
+	       "  -S,--sn_bits SN_1:SN_2:SN_3\n"
+	       "                           Set Info1 SN bits fields.\n"
+	       "                           SN_n should be 32 bit hex.\n"
 	       "  -s,--systemdev           Use /dev/tpm0 (-d is ignored)\n"
 	       "  -t,--trunks_send         Use `trunks_send --raw' "
 	       "(-d is ignored)\n"
@@ -1330,24 +1330,29 @@ static void print_machine_output(const char *key, const char *format, ...)
  */
 static int show_headers_versions(const void *image, bool show_machine_output)
 {
-	// There are 2 FW slots in an image, and each slot has 2 sections, RO
-	// and RW. The 2 slots should have identical FW versions and board IDs.
+	/*
+	 * There are 2 FW slots in an image, and each slot has 2 sections, RO
+	 * and RW. The 2 slots should have identical FW versions and board
+	 * IDs.
+	 */
 	const struct {
 		const char *name;
 		uint32_t offset;
 	} sections[] = {
-		// Slot A
+		/* Slot A. */
 		{"RO", CONFIG_RO_MEM_OFF},
 		{"RW", CONFIG_RW_MEM_OFF},
-		// Slot B
+		/* Slot B. */
 		{"RO", CHIP_RO_B_MEM_OFF},
 		{"RW", CONFIG_RW_B_MEM_OFF}
 	};
 	const size_t kNumSlots = 2;
 	const size_t kNumSectionsPerSlot = 2;
 
-	// String representation of FW version (<epoch>:<major>:<minor>), one
-	// string for each FW section.
+	/*
+	 * String representation of FW version (<epoch>:<major>:<minor>), one
+	 * string for each FW section.
+	 */
 	char ro_fw_ver[kNumSlots][MAX_FW_VER_LENGTH];
 	char rw_fw_ver[kNumSlots][MAX_FW_VER_LENGTH];
 
@@ -1371,13 +1376,13 @@ static int show_headers_versions(const void *image, bool show_machine_output)
 		size_t j;
 
 		if (sections[i].name[1] == 'O') {
-			// RO
+			/* RO. */
 			snprintf(ro_fw_ver[slot_idx], MAX_FW_VER_LENGTH,
 				 "%d.%d.%d", h->epoch_, h->major_, h->minor_);
-			// No need to read board ID in an RO section.
+			/* No need to read board ID in an RO section. */
 			continue;
 		} else {
-			// RW
+			/* RW. */
 			snprintf(rw_fw_ver[slot_idx], MAX_FW_VER_LENGTH,
 				 "%d.%d.%d", h->epoch_, h->major_, h->minor_);
 		}
@@ -2176,10 +2181,12 @@ int main(int argc, char *argv[])
 	int sn_inc_rma = 0;
 	uint8_t sn_inc_rma_arg;
 
-	// Explicitly sets buffering type to line buffered so that output lines
-	// can be written to pipe instantly. This is needed when the
-	// cr50-verify-ro.sh execution in verify_ro is moved from crosh to
-	// debugd.
+	/*
+	 * Explicitly sets buffering type to line buffered so that output
+	 * lines can be written to pipe instantly. This is needed when the
+	 * cr50-verify-ro.sh execution in verify_ro is moved from crosh to
+	 * debugd.
+	 */
 	setlinebuf(stdout);
 
 	progname = strrchr(argv[0], '/');
