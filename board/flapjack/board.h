@@ -46,7 +46,6 @@
 
 /* Optional features */
 #define CONFIG_BOARD_PRE_INIT
-#define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_BUTTON_TRIGGERED_RECOVERY
 #define CONFIG_CHARGER_ILIM_PIN_DISABLED
 #define CONFIG_FORCE_CONSOLE_RESUME
@@ -253,7 +252,6 @@ void emmc_cmd_interrupt(enum gpio_signal signal);
 #endif
 
 void board_reset_pd_mcu(void);
-int board_get_version(void);
 
 #endif /* !__ASSEMBLER__ */
 
