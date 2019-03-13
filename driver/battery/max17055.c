@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "max17055.h"
+#include "printf.h"
 #include "timer.h"
 #include "util.h"
 
@@ -87,9 +88,14 @@ static int max17055_probe(void)
 
 int battery_device_name(char *device_name, int buf_size)
 {
-	strzcpy(device_name, "<BATT>", buf_size);
+	int dev_id;
+	int rv;
 
-	return EC_SUCCESS;
+	rv = max17055_read(REG_DEVICE_NAME, &dev_id);
+	if (!rv)
+		snprintf(device_name, buf_size, "0x%04x", dev_id);
+
+	return rv;
 }
 
 int battery_state_of_charge_abs(int *percent)
