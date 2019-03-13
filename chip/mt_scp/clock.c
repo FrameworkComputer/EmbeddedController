@@ -6,12 +6,26 @@
 /* Clocks, PLL and power settings */
 
 #include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "console.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+
+#define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ## args)
+
+/* Default ULPOSC clock speed in Hz */
+#ifndef ULPOSC1_CLOCK_HZ
+#define ULPOSC1_CLOCK_HZ 250000000
+#endif
+#ifndef ULPOSC2_CLOCK_HZ
+#define ULPOSC2_CLOCK_HZ 330000000
+#endif
+
+#define ULPOSC_DIV_MAX (1 << OSC_DIV_BITS)
+#define ULPOSC_CALI_MAX (1 << OSC_CALI_BITS)
 
 void clock_init(void)
 {
@@ -63,33 +77,20 @@ void clock_init(void)
 	task_enable_irq(SCP_IRQ_CLOCK2);
 }
 
-/* TODO(b/120176040): add ULPOSC calibration */
-static const struct {
-	uint8_t div;
-	uint8_t cali;
-} ulposc_config[] = {
-	/* Default config */
-	{ .div = 12, .cali = 32},
-	{ .div = 16, .cali = 32},
-};
-
-static void scp_ulposc_config(int osc)
+static void scp_ulposc_config(int osc, uint32_t osc_div, uint32_t osc_cali)
 {
 	uint32_t val;
-
-	if (osc != 0 && osc != 1)
-		return;
 
 	/* Clear all bits */
 	val = 0;
 	/* Enable CP */
 	val |= OSC_CP_EN;
 	/* Set div */
-	val |= ulposc_config[osc].div << 17;
+	val |= osc_div << 17;
 	/* F-band = 0, I-band = 4 */
 	val |= 4 << 6;
 	/* Set calibration */
-	val |= ulposc_config[osc].cali;
+	val |= osc_cali;
 	/* Set control register 1 */
 	AP_ULPOSC_CON02(osc) = val;
 	/* Set control register 2, enable div2 */
@@ -109,7 +110,149 @@ static inline void busy_udelay(int usec)
 		;
 }
 
-void scp_clock_high_enable(int osc)
+static unsigned int scp_measure_ulposc_freq(int osc)
+{
+	unsigned int result = 0;
+
+	/* Before select meter clock input, bit[1:0] = b00 */
+	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_MODE_MASK) |
+			 DBG_MODE_SET_CLOCK;
+
+	/* Select source, bit[21:16] = clk_src */
+	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_BIST_SOURCE_MASK) |
+			 (osc == 0 ? DBG_BIST_SOURCE_ULPOSC1 :
+				     DBG_BIST_SOURCE_ULPOSC2);
+
+	/* Set meter divisor to 1, bit[31:24] = b00000000 */
+	AP_CLK_MISC_CFG_0 = (AP_CLK_MISC_CFG_0 & ~MISC_METER_DIVISOR_MASK) |
+			    MISC_METER_DIV_1;
+
+	/* Enable frequency meter, without start */
+	AP_SCP_CFG_0 |= CFG_FREQ_METER_ENABLE;
+
+	/* Trigger frequency meter start */
+	AP_SCP_CFG_0 |= CFG_FREQ_METER_RUN;
+
+	/*
+	 * Frequency meter counts cycles in 1 / (26 * 1000) second period.
+	 *   freq_in_hz = freq_counter * 26 * 1000
+	 *
+	 * The hardware takes 38us to count cycles. Delay 50us then check
+	 * METER_RUN flag.
+	 */
+	busy_udelay(50);
+	if (!(AP_SCP_CFG_0 & CFG_FREQ_METER_RUN))
+		result = CFG_FREQ_COUNTER(AP_SCP_CFG_1);
+
+	/* Disable freq meter */
+	AP_SCP_CFG_0 &= ~CFG_FREQ_METER_ENABLE;
+	return result;
+}
+
+static inline int signum(int v)
+{
+	return (v > 0) - (v < 0);
+}
+
+static inline int abs(int v)
+{
+	return (v >= 0) ? v : -v;
+}
+
+static int scp_ulposc_config_measure(int osc, int div, int cali)
+{
+	int freq;
+
+	scp_ulposc_config(osc, div, cali);
+	freq = scp_measure_ulposc_freq(osc);
+	CPRINTF("ULPOSC%d: %d %d %d (%dMHz)\n",
+		osc + 1, div, cali, freq,
+		freq * 26 / 1000);
+
+	return freq;
+}
+
+/**
+ * Calibrate ULPOSC to target frequency.
+ *
+ * @param osc           0:ULPOSC1, 1:ULPOSC2
+ * @param target_hz     Target frequency to set
+ * @return              Frequency counter output
+ *
+ */
+static int scp_calibrate_ulposc(int osc, int target_hz)
+{
+	int target_freq = target_hz / (26 * 1000);
+	struct ulposc {
+		int div;        /* frequency divisor/multiplier */
+		int cali;       /* variable resistor calibrator */
+		int freq;       /* frequency counter measure result */
+	} curr, prev = {0};
+	enum { STAGE_DIV, STAGE_CALI } stage = STAGE_DIV;
+	int param, param_max;
+
+	curr.div = ULPOSC_DIV_MAX / 2;
+	curr.cali = ULPOSC_CALI_MAX / 2;
+
+	param = curr.div;
+	param_max = ULPOSC_DIV_MAX;
+
+	/*
+	 * In the loop below, linear search closest div value to get desired
+	 * frequency counter value. Then adjust cali to get a better result.
+	 * Note that this doesn't give optimal output frequency, and we prefer
+	 * a frequency slightly above our target.
+	 *
+	 * The frequency function follows. Note that f is positively correlated
+	 * with both div and cali:
+	 * f(div, cali) = k1 * (div + k2) / R(cali) * C
+	 * Where:
+	 *   R(cali) = k3 / (1 + k4 * (cali - k4))
+	 */
+	while (1) {
+		curr.freq = scp_ulposc_config_measure(osc, curr.div, curr.cali);
+
+		if (!curr.freq)
+			return 0;
+
+		/*
+		 * If previous and current are on either side of the desired
+		 * frequency, pick the one above the desired frequency.
+		 */
+		if (prev.freq && signum(target_freq - curr.freq) !=
+				 signum(target_freq - prev.freq)) {
+			if (prev.freq > curr.freq)
+				curr = prev;
+
+			if (stage == STAGE_CALI)
+				break;
+
+			/* Switch to optimizing cali */
+			stage = STAGE_CALI;
+			param = curr.cali;
+			param_max = ULPOSC_CALI_MAX;
+		}
+
+		prev = curr;
+		param += signum(target_freq - curr.freq);
+
+		if (param < 0 || param >= param_max)
+			return 0;
+
+		if (stage == STAGE_DIV)
+			curr.div = param;
+		else
+			curr.cali = param;
+	}
+
+	/*
+	 * It's possible we end up using prev, so reset the configuration and
+	 * measure again.
+	 */
+	return scp_ulposc_config_measure(osc, curr.div, curr.cali);
+}
+
+static void scp_clock_high_enable(int osc)
 {
 	/* Enable high speed clock */
 	SCP_CLK_EN |= EN_CLK_HIGH;
@@ -156,10 +299,14 @@ void scp_enable_clock(void)
 
 	/* Turn off ULPOSC2 */
 	SCP_CLK_ON_CTRL |= HIGH_CORE_DIS_SUB;
-	scp_ulposc_config(0);
+	scp_ulposc_config(0, 12, 32);
 	scp_clock_high_enable(0); /* Turn on ULPOSC1 */
-	scp_ulposc_config(1);
+	scp_ulposc_config(1, 16, 32);
 	scp_clock_high_enable(1); /* Turn on ULPOSC2 */
+
+	/* Calibrate ULPOSC */
+	scp_calibrate_ulposc(0, ULPOSC1_CLOCK_HZ);
+	scp_calibrate_ulposc(1, ULPOSC2_CLOCK_HZ);
 
 	/* Select ULPOSC2 high speed CPU clock */
 	SCP_CLK_SEL = CLK_SEL_ULPOSC_2;
@@ -167,49 +314,6 @@ void scp_enable_clock(void)
 	/* Enable default clock gate */
 	SCP_CLK_GATE |= CG_DMA_CH3 | CG_DMA_CH2 | CG_DMA_CH1 | CG_DMA_CH0 |
 			CG_I2C_M | CG_MAD_M;
-}
-
-unsigned int clock_measure_ulposc_freq(int osc)
-{
-	timestamp_t deadline;
-	unsigned int result = 0;
-
-	if (osc != 0 && osc != 1)
-		return result;
-
-	/* Before select meter clock input, bit[1:0] = b00 */
-	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_MODE_MASK) |
-			 DBG_MODE_SET_CLOCK;
-
-	/* Select source, bit[21:16] = clk_src */
-	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_BIST_SOURCE_MASK) |
-			 (osc == 0 ? DBG_BIST_SOURCE_ULPOSC1 :
-				     DBG_BIST_SOURCE_ULPOSC2);
-
-	/* Set meter divisor to 1, bit[31:24] = b00000000 */
-	AP_CLK_MISC_CFG_0 = (AP_CLK_MISC_CFG_0 & ~MISC_METER_DIVISOR_MASK) |
-			    MISC_METER_DIV_1;
-
-	/* Enable frequency meter, without start */
-	AP_SCP_CFG_0 |= CFG_FREQ_METER_ENABLE;
-
-	/* Trigger frequency meter start */
-	AP_SCP_CFG_0 |= CFG_FREQ_METER_RUN;
-
-	deadline.val = get_time().val + 400 * MSEC;
-	while (AP_SCP_CFG_0 & CFG_FREQ_METER_RUN) {
-		if (timestamp_expired(deadline, NULL))
-			goto exit;
-		msleep(1);
-	}
-
-	/* Get result */
-	result = CFG_FREQ_COUNTER(AP_SCP_CFG_1);
-
-exit:
-	/* Disable freq meter */
-	AP_SCP_CFG_0 &= ~CFG_FREQ_METER_ENABLE;
-	return result;
 }
 
 void clock_control_irq(void)
@@ -231,12 +335,18 @@ DECLARE_IRQ(SCP_IRQ_CLOCK2, clock_fast_wakeup_irq, 3);
 /* Console command */
 int command_ulposc(int argc, char *argv[])
 {
-	/* SCP clock meter counts every (26MHz / 1024) tick */
+	if (argc > 1 && !strncmp(argv[1], "cal", 3)) {
+		scp_calibrate_ulposc(0, ULPOSC1_CLOCK_HZ);
+		scp_calibrate_ulposc(1, ULPOSC2_CLOCK_HZ);
+	}
+
+	/* SCP clock meter counts every (26MHz / 1000) tick */
 	ccprintf("ULPOSC1 frequency: %u MHz\n",
-		 clock_measure_ulposc_freq(0) * 26 / 1024);
+		 scp_measure_ulposc_freq(0) * 26 / 1000);
 	ccprintf("ULPOSC2 frequency: %u MHz\n",
-		 clock_measure_ulposc_freq(1) * 26 / 1024);
+		 scp_measure_ulposc_freq(1) * 26 / 1000);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(ulposc, command_ulposc, NULL, NULL);
+DECLARE_CONSOLE_COMMAND(ulposc, command_ulposc, "[calibrate]",
+			"Calibrate ULPOSC frequency");
