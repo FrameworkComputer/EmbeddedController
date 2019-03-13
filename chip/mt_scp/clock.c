@@ -75,10 +75,9 @@ static const struct {
 
 static void scp_ulposc_config(int osc)
 {
-	const int osc_index = osc - 1;
 	uint32_t val;
 
-	if (osc != 1 && osc != 2)
+	if (osc != 0 && osc != 1)
 		return;
 
 	/* Clear all bits */
@@ -86,15 +85,15 @@ static void scp_ulposc_config(int osc)
 	/* Enable CP */
 	val |= OSC_CP_EN;
 	/* Set div */
-	val |= ulposc_config[osc_index].div << 17;
+	val |= ulposc_config[osc].div << 17;
 	/* F-band = 0, I-band = 4 */
 	val |= 4 << 6;
 	/* Set calibration */
-	val |= ulposc_config[osc_index].cali;
+	val |= ulposc_config[osc].cali;
 	/* Set control register 1 */
-	AP_ULPOSC_CON02(osc_index) = val;
+	AP_ULPOSC_CON02(osc) = val;
 	/* Set control register 2, enable div2 */
-	AP_ULPOSC_CON13(osc_index) |= OSC_DIV2_EN;
+	AP_ULPOSC_CON13(osc) |= OSC_DIV2_EN;
 }
 
 void scp_clock_high_enable(int osc)
@@ -103,12 +102,12 @@ void scp_clock_high_enable(int osc)
 	SCP_CLK_EN |= EN_CLK_HIGH;
 
 	switch (osc) {
-	case 1:
+	case 0:
 		/* After 25ms, enable ULPOSC */
 		udelay(25 * MSEC);
 		SCP_CLK_EN |= CG_CLK_HIGH;
 		break;
-	case 2:
+	case 1:
 		/* Turn off ULPOSC2 high-core-disable switch */
 		SCP_CLK_ON_CTRL &= ~HIGH_CORE_DIS_SUB;
 		/* After 25ms, turn on ULPOSC2 high core clock gate */
@@ -141,10 +140,10 @@ void scp_enable_clock(void)
 
 	/* Turn off ULPOSC2 */
 	SCP_CLK_ON_CTRL |= HIGH_CORE_DIS_SUB;
+	scp_ulposc_config(0);
+	scp_clock_high_enable(0); /* Turn on ULPOSC1 */
 	scp_ulposc_config(1);
-	scp_clock_high_enable(1); /* Turn on ULPOSC1 */
-	scp_ulposc_config(2);
-	scp_clock_high_enable(2); /* Turn on ULPOSC2 */
+	scp_clock_high_enable(1); /* Turn on ULPOSC2 */
 
 	/* Enable default clock gate */
 	SCP_CLK_GATE |= CG_DMA_CH3 | CG_DMA_CH2 | CG_DMA_CH1 | CG_DMA_CH0 |
@@ -156,7 +155,7 @@ unsigned int clock_measure_ulposc_freq(int osc)
 	timestamp_t deadline;
 	unsigned int result = 0;
 
-	if (osc != 1 && osc != 2)
+	if (osc != 0 && osc != 1)
 		return result;
 
 	/* Before select meter clock input, bit[1:0] = b00 */
@@ -165,7 +164,7 @@ unsigned int clock_measure_ulposc_freq(int osc)
 
 	/* Select source, bit[21:16] = clk_src */
 	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_BIST_SOURCE_MASK) |
-			 (osc == 1 ? DBG_BIST_SOURCE_ULPOSC1 :
+			 (osc == 0 ? DBG_BIST_SOURCE_ULPOSC1 :
 				     DBG_BIST_SOURCE_ULPOSC2);
 
 	/* Set meter divisor to 1, bit[31:24] = b00000000 */
@@ -215,9 +214,9 @@ int command_ulposc(int argc, char *argv[])
 {
 	/* SCP clock meter counts every (26MHz / 1024) tick */
 	ccprintf("ULPOSC1 frequency: %u MHz\n",
-		 clock_measure_ulposc_freq(1) * 26 / 1024);
+		 clock_measure_ulposc_freq(0) * 26 / 1024);
 	ccprintf("ULPOSC2 frequency: %u MHz\n",
-		 clock_measure_ulposc_freq(2) * 26 / 1024);
+		 clock_measure_ulposc_freq(1) * 26 / 1024);
 
 	return EC_SUCCESS;
 }
