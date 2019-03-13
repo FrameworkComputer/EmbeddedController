@@ -35,6 +35,18 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
+/* Remove commands to give more flash space */
+#undef CONFIG_CMD_ADC
+#undef CONFIG_CMD_ACCELSPOOF
+#undef CONFIG_CMD_BATTFAKE
+#undef CONFIG_CMD_FLASH
+#undef CONFIG_CMD_KEYBOARD
+#undef CONFIG_CMD_HASH
+#undef CONFIG_CMD_HCDEBUG
+#undef CONFIG_CMD_MD
+#undef CONFIG_CMD_POWERINDEBUG
+#undef CONFIG_CMD_TIMERINFO
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
