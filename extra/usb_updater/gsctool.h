@@ -26,12 +26,12 @@ struct transfer_descriptor {
 	 * RW images with the same version, as they get started based on the
 	 * header timestamp.
 	 */
-	uint32_t upstart_mode;
+	int upstart_mode;
 	/*
 	 * Override in case updater is used w/ boards that do not follow
 	 * the cr50 versioning scheme.
 	 */
-	uint32_t background_update_supported;
+	int background_update_supported;
 
 	/*
 	 * offsets of RO and WR sections available for update (not currently
@@ -39,7 +39,9 @@ struct transfer_descriptor {
 	 */
 	uint32_t ro_offset;
 	uint32_t rw_offset;
-	uint32_t post_reset;
+
+	/* Do not reset the H1 immediately after update, wait for TPM reset. */
+	int post_reset;
 
 	/* Type of channel used to communicate with Cr50. */
 	enum transfer_type {

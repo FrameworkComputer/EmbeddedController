@@ -183,6 +183,15 @@ struct upgrade_pkt {
 	};
 } __packed;
 
+/*
+ * Structure used to simplify mapping command line options into Boolean
+ * variables. If an option is present, the corresponding integer value is set
+ * to 1.
+ */
+struct options_map {
+	char opt;
+	int *flag;
+};
 
 /*
  * This by far exceeds the largest vendor command response size we ever
@@ -2143,6 +2152,26 @@ static int process_tpm_mode(struct transfer_descriptor *td,
 	return rv;
 }
 
+/*
+ * Search the passed in zero terminated array of options_map structures for
+ * option 'option'.
+ *
+ * If found - set the corresponding integer to 1 and return 1. If not found -
+ * return 0.
+ */
+static int check_boolean(const struct options_map *omap, char option)
+{
+	do {
+		if (omap->opt != option)
+			continue;
+
+		*omap->flag = 1;
+		return 1;
+	} while (!(++omap)->opt);
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	struct transfer_descriptor td;
@@ -2182,6 +2211,27 @@ int main(int argc, char *argv[])
 	uint8_t sn_inc_rma_arg;
 
 	/*
+	 * All options which result in setting a Boolean flag to True, along
+	 * with addresses of the flags. Terminated by a zeroed entry.
+	 */
+	const struct options_map omap[] = {
+		{ 'B', &td.background_update_supported},
+		{ 'b', &binary_vers },
+		{ 'c', &corrupt_inactive_rw },
+		{ 'f', &show_fw_ver },
+		{ 'I', &ccd_info },
+		{ 'k', &ccd_lock },
+		{ 'o', &ccd_open },
+		{ 'P', &password },
+		{ 'p', &td.post_reset },
+		{ 'U', &ccd_unlock },
+		{ 'u', &td.upstart_mode },
+		{ 'V', &verbose_mode },
+		{ 'w', &wp },
+		{},
+	};
+
+	/*
 	 * Explicitly sets buffering type to line buffered so that output
 	 * lines can be written to pipe instantly. This is needed when the
 	 * cr50-verify-ro.sh execution in verify_ro is moved from crosh to
@@ -2203,6 +2253,8 @@ int main(int argc, char *argv[])
 	errorcnt = 0;
 	opterr = 0;				/* quiet, you */
 	while ((i = getopt_long(argc, argv, short_opts, long_opts, 0)) != -1) {
+		if (check_boolean(omap, i))
+			continue;
 		switch (i) {
 		case 'a':
 			if (td.ep_type) {
@@ -2213,15 +2265,6 @@ int main(int argc, char *argv[])
 			try_all_transfer = 1;
 			/* Try dev_xfer first. */
 			td.ep_type = dev_xfer;
-			break;
-		case 'B':
-			td.background_update_supported = 1;
-			break;
-		case 'b':
-			binary_vers = 1;
-			break;
-		case 'c':
-			corrupt_inactive_rw = 1;
 			break;
 		case 'd':
 			if (!parse_vidpid(optarg, &vid, &pid)) {
@@ -2235,14 +2278,8 @@ int main(int argc, char *argv[])
 			factory_mode = 1;
 			factory_mode_arg = optarg;
 			break;
-		case 'f':
-			show_fw_ver = 1;
-			break;
 		case 'h':
 			usage(errorcnt);
-			break;
-		case 'I':
-			ccd_info = 1;
 			break;
 		case 'i':
 			if (!optarg && argv[optind] && argv[optind][0] != '-')
@@ -2256,9 +2293,6 @@ int main(int argc, char *argv[])
 				errorcnt++;
 			}
 			break;
-		case 'k':
-			ccd_lock = 1;
-			break;
 		case 'M':
 			show_machine_output = true;
 			break;
@@ -2271,15 +2305,6 @@ int main(int argc, char *argv[])
 			break;
 		case 'O':
 			openbox_desc_file = optarg;
-			break;
-		case 'o':
-			ccd_open = 1;
-			break;
-		case 'p':
-			td.post_reset = 1;
-			break;
-		case 'P':
-			password = 1;
 			break;
 		case 'r':
 			rma = 1;
@@ -2336,20 +2361,8 @@ int main(int argc, char *argv[])
 			}
 			td.ep_type = ts_xfer;
 			break;
-		case 'U':
-			ccd_unlock = 1;
-			break;
-		case 'u':
-			td.upstart_mode = 1;
-			break;
-		case 'V':
-			verbose_mode = 1;
-			break;
 		case 'v':
 			report_version();  /* This will call exit(). */
-			break;
-		case 'w':
-			wp = 1;
 			break;
 		case 0:				/* auto-handled option */
 			break;
