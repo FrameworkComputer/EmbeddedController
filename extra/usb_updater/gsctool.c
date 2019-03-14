@@ -26,6 +26,7 @@
 
 #include "ccd_config.h"
 #include "compile_time_macros.h"
+#include "flash_log.h"
 #include "generated_version.h"
 #include "gsctool.h"
 #include "misc_util.h"
@@ -221,7 +222,7 @@ struct options_map {
 static int verbose_mode;
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "aBbcd:F:fhIikMmO:oPpR:rS:stUuVvw";
+static char *short_opts = "aBbcd:F:fhIikLMmO:oPpR:rS:stUuVvw";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"any",		                0,   NULL, 'a'},
@@ -234,6 +235,7 @@ static const struct option long_opts[] = {
 	{"ccd_unlock",                  0,   NULL, 'U'},
 	{"corrupt",	                0,   NULL, 'c'},
 	{"device",	                1,   NULL, 'd'},
+	{"flog",	                0,   NULL, 'L'},
 	{"factory",	                1,   NULL, 'F'},
 	{"fwver",	                0,   NULL, 'f'},
 	{"help",	                0,   NULL, 'h'},
@@ -562,6 +564,8 @@ static void usage(int errs)
 	       "                           ID could be 32 bit hex or 4 "
 	       "character string.\n"
 	       "  -k,--ccd_lock            Lock CCD\n"
+	       "  -L,--flog [prev entry]   Retrieve contents of the flash log"
+	       " (newer than <prev entry> if specified)\n"
 	       "  -M,--machine             Output in a machine-friendly way. "
 	       "Effective with -b, -f, -i, and -O.\n"
 	       "  -m,--tpm_mode [enable|disable]\n"
@@ -2183,6 +2187,35 @@ static int process_tpm_mode(struct transfer_descriptor *td,
 }
 
 /*
+ * Retrieve from H1 flash log entries which are newer than the passed in
+ * timestamp.
+ */
+static int process_get_flog(struct transfer_descriptor *td, uint32_t prev_stamp)
+{
+	int rv;
+	union entry_u entry;
+	size_t resp_size;
+
+	resp_size = sizeof(entry);
+	while (((rv = send_vendor_command(td, VENDOR_CC_POP_LOG_ENTRY,
+					  &prev_stamp, sizeof(prev_stamp),
+					  &entry, &resp_size)) == 0) &&
+	       (resp_size > 0)) {
+		size_t i;
+
+		memcpy(&prev_stamp, &entry.r.timestamp, sizeof(prev_stamp));
+		printf("%08x:%02x", prev_stamp, entry.r.type);
+		for (i = 0; i < FLASH_LOG_PAYLOAD_SIZE(entry.r.size); i++)
+			printf(" %02x", entry.r.payload[i]);
+		printf("\n");
+
+		resp_size = sizeof(entry);
+	}
+
+	return 0;
+}
+
+/*
  * Search the passed in zero terminated array of options_map structures for
  * option 'option'.
  *
@@ -2224,6 +2257,8 @@ int main(int argc, char *argv[])
 	int ccd_unlock = 0;
 	int ccd_lock = 0;
 	int ccd_info = 0;
+	int get_flog = 0;
+	uint32_t prev_log_entry = 0;
 	int wp = 0;
 	int try_all_transfer = 0;
 	int tpm_mode = 0;
@@ -2321,6 +2356,14 @@ int main(int argc, char *argv[])
 					"Invalid board id argument: \"%s\"\n",
 					optarg);
 				errorcnt++;
+			}
+			break;
+		case 'L':
+			get_flog = 1;
+			if (!optarg && argv[optind] &&
+			    (argv[optind][0] != '-')) {
+				prev_log_entry =
+					strtoul(argv[optind++], NULL, 16);
 			}
 			break;
 		case 'M':
@@ -2426,6 +2469,7 @@ int main(int argc, char *argv[])
 	    !ccd_open &&
 	    !ccd_unlock &&
 	    !corrupt_inactive_rw &&
+	    !get_flog &&
 	    !factory_mode &&
 	    !password &&
 	    !rma &&
@@ -2459,11 +2503,12 @@ int main(int argc, char *argv[])
 			printf("Ignoring binary image %s\n", argv[optind]);
 	}
 
-	if (((bid_action != bid_none) + !!rma + !!password +
-	     !!ccd_open + !!ccd_unlock + !!ccd_lock + !!ccd_info +
+	if (((bid_action != bid_none) + !!rma + !!password + !!ccd_open +
+	     !!ccd_unlock + !!ccd_lock + !!ccd_info + !!get_flog +
 	     !!openbox_desc_file + !!factory_mode + !!wp) > 2) {
-		fprintf(stderr, "ERROR: "
-			"options -F, -I, -i, -k, -O, -o, -P, -r, -u and -w "
+		fprintf(stderr,
+			"ERROR: "
+			"options -F, -I, -i, -k, -L, -O, -o, -P, -r, -u and -w "
 			"are mutually exclusive\n");
 		exit(update_error);
 	}
@@ -2519,6 +2564,9 @@ int main(int argc, char *argv[])
 
 	if (sn_inc_rma)
 		process_sn_inc_rma(&td, sn_inc_rma_arg);
+
+	if (get_flog)
+		process_get_flog(&td, prev_log_entry);
 
 	if (data || show_fw_ver) {
 
