@@ -116,11 +116,7 @@ GPIO(EN_USB_A0_5V,	 PIN(6, 7), GPIO_OUT_LOW)	/* Enable A0 5V Charging */
 GPIO(EN_USB_A1_5V,	 PIN(9, 6), GPIO_OUT_LOW)	/* Enable A1 5V Charging */
 GPIO(USB_A0_CHARGE_EN_L, PIN(A, 2), GPIO_OUT_HIGH)	/* Enable A0 1.5A Charging */
 GPIO(USB_A1_CHARGE_EN_L, PIN(A, 0), GPIO_OUT_HIGH)	/* Enable A1 1.5A Charging */
-/*
- * Proto USB2_OTG_ID pin
- * Configure as default since on proto boards this pin should not be driven high
- */
-GPIO(USB_C0_PD_RST,	 PIN(8, 3), GPIO_DEFAULT)	/* C0 PD Reset */
+GPIO(USB_C0_PD_RST,	 PIN(8, 3), GPIO_OUT_LOW)	/* C0 PD Reset */
 GPIO(USB_C0_BC12_VBUS_ON,   PIN(6, 3), GPIO_OUT_LOW)	/* C0 BC1.2 Power */
 GPIO(USB_C0_BC12_CHG_DET_L, PIN(9, 5), GPIO_INPUT)	/* C0 BC1.2 Detect */
 GPIO(USB_C0_HPD_1V8_ODL, PIN(C, 5), GPIO_INPUT |	/* C0 DP Hotplug Detect */

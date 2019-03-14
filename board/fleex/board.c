@@ -250,36 +250,6 @@ void lid_angle_peripheral_enable(int enable)
 }
 #endif
 
-/*
- * Set gpio flags based on board ID, can be removed when proto is no longer
- * supported
- */
-static void update_gpios_from_board_id(void)
-{
-	uint32_t board_id = 0;
-
-	/* Errors will count as board_id 0 */
-	cbi_get_board_version(&board_id);
-
-	if (board_id == 0) {
-		/*
-		 * USB2_OTG_ID is a 1.8V pin on the SoC side with an internal
-		 * pull-up. However, it is 3.3V on the EC side. So, configure
-		 * it as ODR so that the EC never drives it high.
-		 */
-		gpio_set_flags(GPIO_USB_C0_PD_RST, GPIO_ODR_LOW);
-	} else {
-		int flags = GPIO_OUTPUT;
-
-		if (!system_is_reboot_warm() && !system_jumped_to_this_image())
-			flags |= GPIO_LOW;
-
-		gpio_set_flags(GPIO_USB_C0_PD_RST, flags);
-	}
-}
-
-DECLARE_HOOK(HOOK_INIT, update_gpios_from_board_id, HOOK_PRIO_INIT_I2C + 1);
-
 void board_overcurrent_event(int port, int is_overcurrented)
 {
 	/* Sanity check the port. */
