@@ -210,18 +210,6 @@ static void board_update_sensor_config_from_sku(void)
 	}
 }
 
-/* This method can be removed once version 3+ boards are the majority */
-static void board_update_gpio_from_board_id(uint32_t board_id)
-{
-	/*
-	 * GPIO83 used to be USB_OTG which is unused on the SoC side, but is
-	 * a 1.8V signal.
-	 */
-	if (board_id < 3) {
-		gpio_set_flags(GPIO_USB_C0_PD_RST, GPIO_ODR_LOW);
-	}
-}
-
 static void cbi_init(void)
 {
 	uint32_t val;
@@ -229,9 +217,6 @@ static void cbi_init(void)
 	if (cbi_get_sku_id(&val) == EC_SUCCESS)
 		sku_id = val;
 	ccprints("SKU: 0x%04x", sku_id);
-
-	if (cbi_get_board_version(&val) == EC_SUCCESS)
-		board_update_gpio_from_board_id(val);
 
 	board_update_sensor_config_from_sku();
 }
