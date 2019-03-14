@@ -102,6 +102,7 @@ struct iteflash_config {
 	int debug;  /* boolean */
 	int disable_watchdog;  /* boolean */
 	int disable_protect_path;  /* boolean */
+	int block_write_size;
 	int usb_interface;
 	int usb_vid;
 	int usb_pid;
@@ -139,7 +140,7 @@ struct i2c_interface {
 	int (*byte_transfer)(struct common_hnd *chnd, uint8_t addr,
 		uint8_t *data, int write, int numbytes);
 	/* Required, must be positive. */
-	int block_write_size;
+	int default_block_write_size;
 };
 
 static void null_and_free(void **ptr)
@@ -1041,7 +1042,7 @@ static int command_write_pages(struct common_hnd *chnd, uint32_t address,
 			       uint32_t size, uint8_t *buffer)
 {
 	int res = -EIO;
-	int block_write_size = chnd->conf.i2c_if->block_write_size;
+	int block_write_size = chnd->conf.block_write_size;
 	uint32_t remaining = size;
 	int cnt;
 	uint8_t addr_H, addr_M, addr_L;
@@ -1481,7 +1482,7 @@ static int write_flash2(struct common_hnd *chnd, const char *filename,
 			uint32_t offset)
 {
 	int res, written;
-	int block_write_size = chnd->conf.i2c_if->block_write_size;
+	int block_write_size = chnd->conf.block_write_size;
 	FILE *hnd;
 	int size = chnd->flash_size;
 	int cnt;
@@ -1716,12 +1717,8 @@ static const struct i2c_interface linux_i2c_interface = {
 	 * compatible with both Ampton and Servo Micro.
 	 *
 	 * See https://issuetracker.google.com/79684405 for background.
-	 *
-	 * TODO(b/79684405): Make this configurable, and have flash_ec set it to
-	 * the optimum value for each board, falling back on either 254 or 128
-	 * as a default.
 	 */
-	.block_write_size = 128,
+	.default_block_write_size = 128,
 };
 
 static const struct i2c_interface ccd_i2c_interface = {
@@ -1729,7 +1726,7 @@ static const struct i2c_interface ccd_i2c_interface = {
 	.interface_shutdown = ccd_i2c_interface_shutdown,
 	.send_special_waveform = ccd_trigger_special_waveform,
 	.byte_transfer = ccd_i2c_byte_transfer,
-	.block_write_size = PAGE_SIZE,
+	.default_block_write_size = PAGE_SIZE,
 };
 
 static const struct i2c_interface ftdi_i2c_interface = {
@@ -1738,7 +1735,7 @@ static const struct i2c_interface ftdi_i2c_interface = {
 	.interface_shutdown = ftdi_i2c_interface_shutdown,
 	.send_special_waveform = ftdi_send_special_waveform,
 	.byte_transfer = ftdi_i2c_byte_transfer,
-	.block_write_size = FTDI_BLOCK_WRITE_SIZE,
+	.default_block_write_size = FTDI_BLOCK_WRITE_SIZE,
 };
 
 static int post_waveform_work(struct common_hnd *chnd)
@@ -1779,6 +1776,7 @@ static int strdup_with_errmsg(const char *source, char **dest, const char *name)
 }
 
 static const struct option longopts[] = {
+	{"block-write-size", 1, 0, 'b'},
 	{"debug", 0, 0, 'd'},
 	{"erase", 0, 0, 'e'},
 	{"help", 0, 0, 'h'},
@@ -1786,6 +1784,8 @@ static const struct option longopts[] = {
 	{"i2c-interface", 1, 0, 'c'},
 	{"i2c-mux", 0, 0, 'm'},
 	{"interface", 1, 0, 'i'},
+	{"nodisable-protect-path", 0, 0, 'Z'},
+	{"nodisable-watchdog", 0, 0, 'z'},
 	{"product", 1, 0, 'p'},
 	{"range", 1, 0, 'R'},
 	{"read", 1, 0, 'r'},
@@ -1793,8 +1793,6 @@ static const struct option longopts[] = {
 	{"serial", 1, 0, 's'},
 	{"vendor", 1, 0, 'v'},
 	{"write", 1, 0, 'w'},
-	{"nodisable-watchdog", 0, 0, 'z'},
-	{"nodisable-protect-path", 0, 0, 'Z'},
 	{NULL, 0, 0, 0}
 };
 
@@ -1803,7 +1801,7 @@ static void display_usage(const char *program)
 	fprintf(stderr, "Usage: %s [-d] [-v <VID>] [-p <PID>] \\\n"
 		"\t[-c <linux|ccd|ftdi>] [-D /dev/i2c-<N>] [-i <1|2>] [-S] \\\n"
 		"\t[-s <serial>] [-e] [-r <file>] [-W <0|1|false|true>] \\\n"
-		"\t[-w <file>] [-R base[:size]] [-m]\n",
+		"\t[-w <file>] [-R base[:size]] [-m] [-b <size>]\n",
 		program);
 	fprintf(stderr, "-d, --debug : Output debug traces.\n");
 	fprintf(stderr, "-e, --erase : Erase all the flash content.\n");
@@ -1814,9 +1812,11 @@ static void display_usage(const char *program)
 			"\tonly applicable with --i2c-interface=linux\n");
 	fprintf(stderr, "-i, --interface <1> : FTDI interface: A=1, B=2,"
 			" ...\n");
-	fprintf(stderr, "-m, --i2c-mux: Enable i2c-mux (to EC).\n"
+	fprintf(stderr, "-m, --i2c-mux : Enable i2c-mux (to EC).\n"
 		"\tSpecify this flag only if the board has an I2C MUX and\n"
 		"\tyou are not using servod.\n");
+	fprintf(stderr, "-b, --block-write-size <size> : Perform writes in\n"
+		"\tblocks of this many bytes.\n");
 	fprintf(stderr, "-p, --product <0x1234> : USB product ID\n");
 	fprintf(stderr, "-R, --range base[:size] : Allow to read or write"
 		" just a slice\n"
@@ -1879,9 +1879,12 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 	int opt, idx, ret = 0;
 
 	while (!ret &&
-	       (opt = getopt_long(argc, argv, "?c:D:dehi:mp:R:r:s:uv:W:w:Zz",
+	       (opt = getopt_long(argc, argv, "?b:c:D:dehi:mp:R:r:s:uv:W:w:Zz",
 				  longopts, &idx)) != -1) {
 		switch (opt) {
+		case 'b':
+			conf->block_write_size = strtol(optarg, NULL, 10);
+			break;
 		case 'c':
 			if (!strcasecmp(optarg, "linux")) {
 				conf->i2c_if = &linux_i2c_interface;
@@ -1911,7 +1914,7 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 			ret = 2;
 			break;
 		case 'i':
-			conf->usb_interface = atoi(optarg);
+			conf->usb_interface = strtol(optarg, NULL, 10);
 			break;
 		case 'm':
 			conf->i2c_mux = 1;
@@ -2005,6 +2008,11 @@ int main(int argc, char **argv)
 	other_ret = parse_parameters(argc, argv, &chnd.conf);
 	if (other_ret)
 		return other_ret;
+
+	/* Fill in block_write_size if not set from command line. */
+	if (!chnd.conf.block_write_size)
+		chnd.conf.block_write_size =
+			chnd.conf.i2c_if->default_block_write_size;
 
 	/* Open the communications channel. */
 	if (chnd.conf.i2c_if->interface_init &&
