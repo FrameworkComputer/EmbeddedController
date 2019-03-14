@@ -40,6 +40,7 @@ enum ish_i2c_port {
 #define ISH_PMU_BASE      0x00800000
 #define ISH_CCU_BASE      0x00900000
 #define ISH_IPC_BASE      0x00B00000
+#define ISH_WDT_BASE      0xFDE00000
 #define ISH_IOAPIC_BASE   0xFEC00000
 #define ISH_HPET_BASE     0xFED00000
 #define ISH_LAPIC_BASE    0xFEE00000
@@ -48,6 +49,7 @@ enum ish_i2c_port {
 #define ISH_I2C0_IRQ               0
 #define ISH_I2C1_IRQ               1
 #define ISH_I2C2_IRQ               40
+#define ISH_WDT_IRQ                6
 #define ISH_GPIO_IRQ               7
 #define ISH_HPET_TIMER0_IRQ        55
 #define ISH_HPET_TIMER1_IRQ        8
@@ -90,6 +92,7 @@ enum ish_i2c_port {
 #define ISH_I2C0_VEC               IRQ_TO_VEC(ISH_I2C0_IRQ)
 #define ISH_I2C1_VEC               IRQ_TO_VEC(ISH_I2C1_IRQ)
 #define ISH_I2C2_VEC               IRQ_TO_VEC(ISH_I2C2_IRQ)
+#define ISH_WDT_VEC                IRQ_TO_VEC(ISH_WDT_IRQ)
 #define ISH_GPIO_VEC               IRQ_TO_VEC(ISH_GPIO_IRQ)
 #define ISH_HPET_TIMER0_VEC        IRQ_TO_VEC(ISH_HPET_TIMER0_IRQ)
 #define ISH_HPET_TIMER1_VEC        IRQ_TO_VEC(ISH_HPET_TIMER1_IRQ)
@@ -135,9 +138,16 @@ enum ish_i2c_port {
 /* CCU Registers */
 #define CCU_TCG_EN		REG32(ISH_CCU_BASE + 0x0)
 #define CCU_BCG_EN		REG32(ISH_CCU_BASE + 0x4)
-#define CCU_RST_HST		REG32(ISH_CCU_BASE + 0x34)
+#define CCU_WDT_CD		REG32(ISH_CCU_BASE + 0x8)
+#define CCU_RST_HST		REG32(ISH_CCU_BASE + 0x34) /* Reset history */
 #define CCU_TCG_ENABLE		REG32(ISH_CCU_BASE + 0x38)
 #define CCU_BCG_ENABLE		REG32(ISH_CCU_BASE + 0x3c)
+
+/* Bitmasks for CCU_RST_HST */
+#define CCU_SW_RST	(1 << 0)  /* Used to indicate SW reset */
+#define CCU_WDT_RST	(1 << 1)  /* Used to indicate WDT reset */
+#define CCU_MIASS_RST	(1 << 2)  /* Used to indicate UIA shutdown reset */
+#define CCU_SRECC_RST	(1 << 3)  /* Used to indicate SRAM ECC reset */
 
 /* CSME Registers */
 #define ISH_RST_REG		REG32(ISH_IPC_BASE + 0x44)
@@ -157,6 +167,12 @@ enum ish_i2c_port {
 #define IOAPIC_REDTBL_TRIGGER_EDGE   0x00000000
 #define IOAPIC_REDTBL_TRIGGER_LEVEL  0x00008000
 #define IOAPIC_REDTBL_MASK           0x00010000
+
+/* WDT (Watchdog Timer) Registers */
+#define WDT_CONTROL		REG32(ISH_WDT_BASE + 0x0)
+#define WDT_RELOAD		REG32(ISH_WDT_BASE + 0x4)
+#define WDT_VALUES		REG32(ISH_WDT_BASE + 0x8)
+#define WDT_CONTROL_ENABLE_BIT	(1 << 17)
 
 /* LAPIC registers */
 #define LAPIC_EOI_REG   0xFEE000B0

@@ -76,10 +76,6 @@
 #undef CONFIG_FLASH
 #undef CONFIG_FMAP
 #undef CONFIG_SWITCH
-/* TODO: Watch Dog is supported but temporarily removed. Currently under 
- * development on KBL and will be carried over to WHL.
- */
-#undef CONFIG_WATCHDOG
 
 /* Modules we want to exclude */
 #undef CONFIG_CMD_HASH

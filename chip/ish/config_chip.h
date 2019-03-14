@@ -67,6 +67,17 @@
 
 #include "config_flash_layout.h"
 
+/*****************************************************************************/
+/*                        Watchdog Timer Configuration                       */
+/*****************************************************************************/
+#if defined(CHIP_FAMILY_ISH3) || defined(CHIP_FAMILY_ISH5)
+#define WDT_CLOCK_HZ		(120000000) /* 120 MHz */
+#elif defined(CHIP_FAMILY_ISH4)
+#define WDT_CLOCK_HZ		(100000000) /* 100 MHz */
+#else
+#error "CHIP_FAMILY_ISH(3|4|5) must be defined"
+#endif
+
 /****************************************************************************/
 /* Customize the build */
 /* Optional features present on this chip */
