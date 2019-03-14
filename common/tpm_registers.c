@@ -20,7 +20,6 @@
 #include "system.h"
 #include "system_chip.h"
 #include "task.h"
-#include "tpm_log.h"
 #include "tpm_manufacture.h"
 #include "tpm_registers.h"
 #include "util.h"
@@ -763,12 +762,6 @@ int tpm_reset_request(int wait_until_done, int wipe_nvmem_first)
 		cprints(CC_TASK, "%s: already scheduled", __func__);
 		return EC_ERROR_BUSY;
 	}
-
-#ifdef CONFIG_TPM_LOGGING
-	/* Record input parameters as two bits in the data field. */
-	tpm_log_event(TPM_EVENT_INIT,
-		      (!!wait_until_done << 1) | !!wipe_nvmem_first);
-#endif
 
 	reset_in_progress = 1;
 	wipe_result = EC_SUCCESS;
