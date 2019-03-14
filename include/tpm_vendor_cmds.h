@@ -134,7 +134,22 @@ enum vendor_cmd_cc {
 	LAST_VENDOR_COMMAND = 65535,
 };
 
-/* Error codes reported by extension and vendor commands. */
+/*
+ * Error codes reported by extension and vendor commands.
+ *
+ * As defined by the TPM2 spec, the TPM response code is all zero for success,
+ * and errors are a little complicated:
+ *
+ *   Bits 31:12 must be zero.
+ *
+ *   Bit 11     S=0   Error
+ *   Bit 10     T=1   Vendor defined response code
+ *   Bit  9     r=0   reserved
+ *   Bit  8     V=1   Conforms to TPMv2 spec
+ *   Bit  7     F=0   Confirms to Table 14, Format-Zero Response Codes
+ *   Bits 6:0   num   128 possible failure reasons
+ */
+
 enum vendor_cmd_rc {
 	/* EXTENSION_HASH error codes */
 	/* Attempt to start a session on an active handle. */
@@ -156,8 +171,15 @@ enum vendor_cmd_rc {
 	VENDOR_RC_IN_PROGRESS = 9,
 	VENDOR_RC_PASSWORD_REQUIRED = 10,
 
-	/* Only 7 bits available; max is 127 */
+	/* Maximum possible failure reason. */
 	VENDOR_RC_NO_SUCH_COMMAND = 127,
+
+	/*
+	 * Bits 10 and 8 set, this is to be ORed with the rest of the error
+	 * values to make the combined value compliant with the spec
+	 * requirements.
+	 */
+	VENDOR_RC_ERR = 0x500,
 };
 
 /*
@@ -171,21 +193,6 @@ enum vendor_cmd_rc {
 #define VENDOR_CC_MASK         0x0000ffff
 /* Our vendor-specific command codes go here */
 #define TPM_CC_VENDOR_CR50         0x0000
-
-/*
- * The TPM response code is all zero for success.
- * Errors are a little complicated:
- *
- *   Bits 31:12 must be zero.
- *
- *   Bit 11     S=0   Error
- *   Bit 10     T=1   Vendor defined response code
- *   Bit  9     r=0   reserved
- *   Bit  8     V=1   Conforms to TPMv2 spec
- *   Bit  7     F=0   Confirms to Table 14, Format-Zero Response Codes
- *   Bits 6:0   num   128 possible failure reasons
- */
-#define VENDOR_RC_ERR 0x00000500
 
 /*** Structures and constants for VENDOR_CC_SPI_HASH ***/
 

@@ -1106,7 +1106,6 @@
 #undef  CONFIG_CMD_TASKREADY
 #define CONFIG_CMD_TEMP_SENSOR
 #define CONFIG_CMD_TIMERINFO
-#undef  CONFIG_CMD_TPM_LOG
 #define CONFIG_CMD_TYPEC
 #undef  CONFIG_CMD_USART_INFO
 #define CONFIG_CMD_USBMUX
@@ -3184,8 +3183,6 @@
 #undef CONFIG_TPM_SPS
 /* Speak to the TPM 2.0 hardware protocol on the I2C slave interface */
 #undef CONFIG_TPM_I2CS
-/* Record TPM events in circular buffer */
-#undef CONFIG_TPM_LOGGING
 
 /*****************************************************************************/
 /* USART stream config */
