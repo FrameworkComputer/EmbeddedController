@@ -147,4 +147,13 @@
 /* Number of I2C ports */
 #define I2C_PORT_COUNT 2
 
-#endif	/* __CROS_EC_CONFIG_CHIP_H */
+#define CONFIG_FLASH_LOG_SPACE CONFIG_FLASH_BANK_SIZE
+
+/*
+ * Flash log occupies space in the top of RO_B section, its counterpart in
+ * RO_A is occupied by the certs.
+ */
+#define CONFIG_FLASH_LOG_BASE                                                  \
+	(CONFIG_PROGRAM_MEMORY_BASE + CHIP_RO_B_MEM_OFF + CONFIG_RO_SIZE -     \
+	 CONFIG_FLASH_LOG_SPACE)
+#endif /* __CROS_EC_CONFIG_CHIP_H */

@@ -43,6 +43,7 @@
 #include "cryptoc/util.h"
 #include "flash.h"
 #include "flash_config.h"
+#include "flash_log.h"
 #include "flash_info.h"
 #include "registers.h"
 #include "shared_mem.h"
@@ -54,6 +55,13 @@
 
 /* Mutex to prevent concurrent accesses to flash engine. */
 static struct mutex flash_mtx;
+
+#ifdef CONFIG_FLASH_LOG
+static void flash_log_space_control(int enable)
+{
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION7_CTRL, WR_EN, !!enable);
+}
+#endif
 
 int flash_pre_init(void)
 {
@@ -85,6 +93,17 @@ int flash_pre_init(void)
 		REG32(reg_base) = regions[i].reg_perms;
 	}
 
+#ifdef CONFIG_FLASH_LOG
+	/*
+	 * Allow access to flash elog space and register the access control
+	 * function.
+	 */
+	GREG32(GLOBALSEC, FLASH_REGION7_BASE_ADDR) = CONFIG_FLASH_LOG_BASE;
+	GREG32(GLOBALSEC, FLASH_REGION7_SIZE) = CONFIG_FLASH_LOG_SPACE - 1;
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION7_CTRL, EN, 1);
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION7_CTRL, RD_EN, 1);
+	flash_log_register_flash_control_callback(flash_log_space_control);
+#endif
 	return EC_SUCCESS;
 }
 
