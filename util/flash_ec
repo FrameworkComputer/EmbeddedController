@@ -174,14 +174,17 @@ fi
 
 set -e
 
-DUT_CONTROL_CMD="dut-control --port=${FLAGS_port}"
+DUT_CONTROL_CMD=( "dut-control" "--port=${FLAGS_port}" )
 
 function dut_control() {
+	local DUT_CTRL_CML=( "${DUT_CONTROL_CMD[@]}" )
+	DUT_CTRL_CML+=( "$@" )
+
 	if [ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]; then
-		echo "$DUT_CONTROL_CMD $@" 1>&2
+		echo "${DUT_CTRL_CML[*]}" 1>&2
 	fi
 
-	$DUT_CONTROL_CMD "$@" >/dev/null
+	"${DUT_CTRL_CML[@]}" >/dev/null
 }
 
 function dut_control_or_die {
@@ -189,31 +192,23 @@ function dut_control_or_die {
 }
 
 function dut_control_get() {
-	local DUT_GETVAL=
-	if dut_control "$1" ; then
-		DUT_GETVAL=$(${DUT_CONTROL_CMD} $1)
+	if [ $# -gt 1 ]; then
+		error "${FUNCNAME[0]} failed: more than one argument: $@"
+		return 1
+	fi
+
+	local ARGS DUT_GETVAL RETVAL
+	ARGS=( "${DUT_CONTROL_CMD[@]}" "$1" )
+	RETVAL=0
+	# || statement is attached to avoid an exit if error exit is enabled.
+	DUT_GETVAL=$( "${ARGS[@]}" ) || RETVAL="$?"
+	if (( "${RETVAL}" )) ; then
+		error "${FUNCNAME[0]} failed: ${ARGS[*]} returned ${RETVAL}."
+		return "${RETVAL}"
 	fi
 	# Remove the shortest prefix ending ':'
 	echo "${DUT_GETVAL#*:}"
- }
-
-function get_servo_type() {
-	if dut_control "servo_type" ; then
-		$DUT_CONTROL_CMD servo_type | sed -e s/servo_type://
-	fi
 }
-
-SERVO_EC_CHIP="$(($DUT_CONTROL_CMD ec_chip) | sed -e s/ec_chip://)"
-SERVO_EC_CHIP="${SERVO_EC_CHIP,,}"
-if [[ "${SERVO_EC_CHIP}" =~ "unknown" ]]; then
-	SERVO_EC_CHIP=""
-fi
-
-if [[ -z "${FLAGS_board}" && -z "${FLAGS_chip}" && \
-      -z "${SERVO_EC_CHIP}" ]]; then
-	die "Please check that servod is running or," \
-	"manually specify either --board or --chip."
-fi
 
 BOARD=${FLAGS_board}
 
@@ -267,11 +262,15 @@ if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 && -n "${FLAGS_chip}" ]]; then
 	SUPPORTED_CHIPS+="${FLAGS_chip}"
 fi
 
-if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 && -n "${SERVO_EC_CHIP}" ]]; then
+if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 ]]; then
+	SERVO_EC_CHIP="$(dut_control_get ec_chip)"
+	SERVO_EC_CHIP="${SERVO_EC_CHIP,,}"
+	if [[ "${SERVO_EC_CHIP}" =~ "unknown" || -z "${SERVO_EC_CHIP}" ]]; then
+		die "Please check that servod is running or," \
+		"manually specify either --board or --chip."
+	fi
 	SUPPORTED_CHIPS+=("${SERVO_EC_CHIP}")
 fi
-
-SERVO_TYPE="$(get_servo_type)"
 
 if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 ]]; then
 	# This happens if ${FLAGS_board} is not known in this flash_ec yet,
@@ -304,6 +303,16 @@ if [[ "${CHIP}" = "stm32_dfu" ]]; then
 	NEED_SERVO="no"
 fi
 
+# Servo variables management
+case "${BOARD}" in
+	chocodile_bec ) MCU="usbpd" ;;
+	oak_pd|samus_pd|strago_pd ) MCU="usbpd" ;;
+	chell_pd|glados_pd ) MCU="usbpd" ;;
+	nami_fp|nocturne_fp ) MCU="usbpd" ;;
+	dingdong|hoho|twinkie ) DUT_CONTROL_CMD=( "true" ); MCU="ec" ;;
+	*) MCU="ec" ;;
+esac
+
 case "${CHIP}" in
 	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx") ;;
 	*)
@@ -319,6 +328,8 @@ case "${CHIP}" in
 		fi
 		;;
 esac
+
+SERVO_TYPE="$(dut_control_get servo_type)"
 
 servo_has_warm_reset() {
 	dut_control -i warm_reset >/dev/null 2>&1
@@ -595,23 +606,13 @@ function ec_image() {
 # Find the EC UART provided by servo.
 function servo_ec_uart() {
 	SERVOD_FAIL="Cannot communicate with servod. Is servod running?"
-	PTY=$(($DUT_CONTROL_CMD raw_${MCU}_uart_pty ||
-	       $DUT_CONTROL_CMD ${MCU}_uart_pty) | cut -d: -f2)
+	PTY=$(dut_control_get raw_${MCU}_uart_pty ||
+	      dut_control_get ${MCU}_uart_pty)
 	if [[ -z "${PTY}" ]]; then
 	    die "${SERVOD_FAIL}"
 	fi
 	echo $PTY
 }
-
-# Servo variables management
-case "${BOARD}" in
-        chocodile_bec ) MCU="usbpd" ;;
-	oak_pd|samus_pd|strago_pd ) MCU="usbpd" ;;
-	chell_pd|glados_pd ) MCU="usbpd" ;;
-	nami_fp|nocturne_fp ) MCU="usbpd" ;;
-	dingdong|hoho|twinkie ) DUT_CONTROL_CMD="true" ; MCU="ec" ;;
-	*) MCU="ec" ;;
-esac
 
 # Not every control is supported on every servo type.  Therefore, define which
 # controls are supported by each servo type.
@@ -653,7 +654,7 @@ function servo_save() {
 
 	SERVO_VARS_NAME=${SERVO_TYPE}_VARS
 	if [[ -n "${!SERVO_VARS_NAME}" ]]; then
-		$DUT_CONTROL_CMD ${!SERVO_VARS_NAME}
+		"${DUT_CONTROL_CMD[@]}" "${!SERVO_VARS_NAME}"
 	fi
 }
 
@@ -715,8 +716,7 @@ function get_serial() {
 		sn_ctl=""
 	fi
 
-	SERIALNAME=$(${DUT_CONTROL_CMD} "${sn_ctl}serialname" | cut -d: -f2)
-	echo $SERIALNAME
+	dut_control_get "${sn_ctl}serialname"
 }
 
 # Board specific flashing scripts
