@@ -1080,7 +1080,7 @@ function flash_it83xx() {
 		echo "${ITEFLASH_ARGS[@]}"
 	fi
 
-	sudo "${ITEFLASH_ARGS[@]}"
+	"${ITEFLASH_ARGS[@]}"
 }
 
 function flash_lm4() {
