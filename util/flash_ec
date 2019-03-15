@@ -188,6 +188,15 @@ function dut_control_or_die {
 	dut_control "$@" || die "dut-control $* exited $? (non-zero)"
 }
 
+function dut_control_get() {
+	local DUT_GETVAL=
+	if dut_control "$1" ; then
+		DUT_GETVAL=$(${DUT_CONTROL_CMD} $1)
+	fi
+	# Remove the shortest prefix ending ':'
+	echo "${DUT_GETVAL#*:}"
+ }
+
 function get_servo_type() {
 	if dut_control "servo_type" ; then
 		$DUT_CONTROL_CMD servo_type | sed -e s/servo_type://
@@ -1121,6 +1130,12 @@ function flash_it83xx() {
 "${CHIP}"
 		dut_control_or_die enable_ite_dfu
 	elif [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
+		local CCD_I2C_CAP="$(dut_control_get ccd_i2c_en)"
+		if [[ "${CCD_I2C_CAP,,}" != "always" ]]; then
+			die "CCD I2C capability is not set as 'Always'" \
+				": ${CCD_I2C_CAP}"
+		fi
+
 		info "Asking CR50 to send the dbgr special waveform to ${CHIP}"
 		sleep 2
 		dut_control_or_die cr50_i2c_ctrl:ite_debugger_mode
