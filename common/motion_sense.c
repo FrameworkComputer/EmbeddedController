@@ -180,7 +180,9 @@ void motion_sense_fifo_add_data(struct ec_response_motion_sensor_data *data,
 				struct motion_sensor_t *sensor,
 				int valid_data,
 				uint32_t time) {
+#ifdef CONFIG_SENSOR_TIGHT_TIMESTAMPS
 	motion_sense_insert_timestamp(time);
+#endif
 	motion_sense_fifo_add_unit(data, sensor, valid_data);
 }
 

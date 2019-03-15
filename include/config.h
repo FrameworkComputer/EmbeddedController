@@ -151,6 +151,30 @@
 /* Specify type of Gyrometers attached. */
 #undef CONFIG_GYRO_L3GD20H
 
+/*
+ * If this is defined, motion_sense sends sensor events to the AP in the format
+ * +-----------+
+ * | Timestamp |
+ * |  Payload  |
+ * | Timestamp |
+ * |  Payload  |
+ * |    ...    |
+ * +-----------+
+ *
+ * If this is not defined, the events will be sent in the format
+ * +-----------+
+ * |  Payload  |
+ * |  Payload  |
+ * |  Payload  |
+ * |    ...    |
+ * | Timestamp |
+ * +-----------+
+ *
+ * The former format enables improved filtering of sensor event timestamps on
+ * the AP, but comes with stricter jitter requirements.
+ */
+#define CONFIG_SENSOR_TIGHT_TIMESTAMPS
+
 /* Sync event driver */
 #undef CONFIG_SYNC
 
