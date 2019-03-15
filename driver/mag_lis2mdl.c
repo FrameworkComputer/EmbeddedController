@@ -14,6 +14,8 @@
 #include "driver/sensorhub_lsm6dsm.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/stm_mems_common.h"
+#include "hwtimer.h"
+#include "mag_cal.h"
 #include "task.h"
 
 #ifdef CONFIG_MAG_LSM6DSM_LIS2MDL
@@ -21,6 +23,8 @@
 #error "Need Sensor Hub LSM6DSM support"
 #endif
 #endif
+
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 
 void lis2mdl_normalize(const struct motion_sensor_t *s,
 		       intv3_t v,
@@ -88,10 +92,7 @@ static int get_range(const struct motion_sensor_t *s)
 static int set_offset(const struct motion_sensor_t *s,
 		      const int16_t *offset, int16_t temp)
 {
-
-#ifdef CONFIG_LSM6DSM_SEC_I2C
 	struct mag_cal_t *cal = LIS2MDL_CAL(s);
-#endif
 
 	cal->bias[X] = offset[X];
 	cal->bias[Y] = offset[Y];
@@ -109,9 +110,7 @@ static int set_offset(const struct motion_sensor_t *s,
 static int get_offset(const struct motion_sensor_t *s,
 		      int16_t *offset, int16_t *temp)
 {
-#ifdef CONFIG_LSM6DSM_SEC_I2C
 	struct mag_cal_t *cal = LIS2MDL_CAL(s);
-#endif
 	intv3_t offset_int;
 
 	rotate(cal->bias, *s->rot_standard_ref, offset_int);
@@ -159,7 +158,7 @@ int lis2mdl_thru_lsm6dsm_init(const struct motion_sensor_t *s)
 			LSM6DSM_MAIN_SENSOR(s),
 			CONFIG_ACCELGYRO_SEC_ADDR,
 			LIS2MDL_CFG_REG_A_ADDR,
-			LIS2MDL_ODR_100HZ | LIS2MDL_CONT_MODE);
+			LIS2MDL_ODR_50HZ | LIS2MDL_CONT_MODE);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
@@ -180,18 +179,224 @@ err_unlock:
 	mutex_unlock(s->mutex);
 	return ret;
 }
-#endif  /* CONFIG_MAG_LSM6DSM_LIS2MDL */
+
+#else /* END: CONFIG_MAG_LSM6DSM_LIS2MDL */
+
+/**
+ * Checks whether or not data is ready. If the check succeeds EC_SUCCESS will be
+ * returned and the ready target written with the axes that are available, see:
+ * <ul>
+ *   <li>LIS2MDL_X_DIRTY</li>
+ *   <li>LIS2MDL_Y_DIRTY</li>
+ *   <li>LIS2MDL_Z_DIRTY</li>
+ *   <li>LIS2MDL_XYZ_DIRTY</li>
+ * </ul>
+ *
+ * @param s Motion sensor pointer
+ * @param[out] ready Writeback pointer to store the result.
+ * @return EC_SUCCESS when the status register was read successfully.
+ */
+static int lis2mdl_is_data_ready(const struct motion_sensor_t *s, int *ready)
+{
+	int ret, tmp;
+
+	ret = st_raw_read8(s->port, s->addr, LIS2MDL_STATUS_REG, &tmp);
+	if (ret != EC_SUCCESS) {
+		*ready = 0;
+		return ret;
+	}
+
+	*ready = tmp & LIS2MDL_XYZ_DIRTY_MASK;
+	return EC_SUCCESS;
+
+}
+
+/**
+ * Read the most recent data from the sensor. If no new data is available,
+ * simply return the last available values.
+ *
+ * @param s Motion sensor pointer
+ * @param v A vector of 3 ints for x, y, z values.
+ * @return EC_SUCCESS when the values were read successfully or no new data was
+ * available.
+ */
+int lis2mdl_read(const struct motion_sensor_t *s, intv3_t v)
+{
+	int ret = EC_SUCCESS, ready = 0;
+	uint8_t raw[OUT_XYZ_SIZE];
+
+	ret = lis2mdl_is_data_ready(s, &ready);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	/*
+	 * If sensor data is not ready, return the previous read data.
+	 * Note: return success so that the motion sensor task can read again to
+	 * get the latest updated sensor data quickly.
+	 */
+	if (!ready) {
+		if (v != s->raw_xyz)
+			memcpy(v, s->raw_xyz, sizeof(intv3_t));
+		return ret;
+	}
+
+	mutex_lock(s->mutex);
+	ret = st_raw_read_n(s->port, s->addr, LIS2MDL_OUT_REG, raw,
+			    OUT_XYZ_SIZE);
+	mutex_unlock(s->mutex);
+	if (ret == EC_SUCCESS) {
+		lis2mdl_normalize(s, v, raw);
+		rotate(v, *s->rot_standard_ref, v);
+	}
+	return ret;
+}
+
+/**
+ * Initialize the sensor. This function will verify the who-am-I register
+ */
+int lis2mdl_init(const struct motion_sensor_t *s)
+{
+	int ret = EC_ERROR_UNKNOWN, who_am_i, count = LIS2MDL_STARTUP_MS;
+	struct mag_cal_t *cal = LIS2MDL_CAL(s);
+
+	/* Check who am I value */
+	do {
+		ret = st_raw_read8(s->port, LIS2MDL_ADDR, LIS2MDL_WHO_AM_I_REG,
+				   &who_am_i);
+		if (ret != EC_SUCCESS) {
+			/* Make sure we wait for the chip to start up. Sleep 1ms
+			 * and try again.
+			 */
+			udelay(10);
+			count--;
+		} else {
+			break;
+		}
+	} while (count > 0);
+	if (ret != EC_SUCCESS)
+		return ret;
+	if (who_am_i != LIS2MDL_WHO_AM_I)
+		return EC_ERROR_ACCESS_DENIED;
+
+	mutex_lock(s->mutex);
+
+	/* Reset the sensor */
+	ret = st_raw_write8(s->port, LIS2MDL_ADDR, LIS2MDL_CFG_REG_A_ADDR,
+			    LIS2MDL_FLAG_SW_RESET);
+	if (ret != EC_SUCCESS)
+		goto lis2mdl_init_error;
+
+	mutex_unlock(s->mutex);
+
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	init_mag_cal(cal);
+	cal->radius = 0.0f;
+	LIS2MDL_ST_DATA(s)->base.odr = 0;
+	return sensor_init_done(s);
+
+lis2mdl_init_error:
+	mutex_unlock(s->mutex);
+	return ret;
+}
+
+/**
+ * Set the data rate of the sensor. Use a rate of 0 or below to turn off the
+ * magnetometer. All other values will turn on the sensor in continuous mode.
+ * The rate will be set to the nearest available value:
+ * <ul>
+ *   <li>LIS2MDL_ODR_10HZ</li>
+ *   <li>LIS2MDL_ODR_20HZ</li>
+ *   <li>LIS2MDL_ODR_50HZ</li>
+ * </ul>
+ *
+ * @param s Motion sensor pointer
+ * @param rate Rate (mHz)
+ * @param rnd Flag used to tell whether or not to round up (1) or down (0)
+ * @return EC_SUCCESS when the rate was successfully changed.
+ */
+int lis2mdl_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
+{
+	int ret = EC_SUCCESS, normalized_rate = 0;
+	uint8_t reg_val = 0;
+	struct mag_cal_t *cal = LIS2MDL_CAL(s);
+	struct stprivate_data *data = LIS2MDL_ST_DATA(s);
+
+	if (rate > 0) {
+		if (rnd)
+			/* Round up */
+			reg_val = rate <= 10000 ? LIS2MDL_ODR_10HZ
+				: rate <= 20000 ? LIS2MDL_ODR_20HZ
+				: LIS2MDL_ODR_50HZ;
+		else
+			/* Round down */
+			reg_val = rate < 20000 ? LIS2MDL_ODR_10HZ
+				: rate < 50000 ? LIS2MDL_ODR_20HZ
+				: LIS2MDL_ODR_50HZ;
+	}
+
+	normalized_rate = rate <= 0 ? 0
+		: reg_val == LIS2MDL_ODR_10HZ ? 10000
+		: reg_val == LIS2MDL_ODR_20HZ ? 20000
+		: 50000;
+
+	/* b/130417518 - verify why skipping init_mag_cal is needed here. */
+	if (normalized_rate == data->base.odr)
+		return ret;
+
+	init_mag_cal(cal);
+
+	if (normalized_rate > 0)
+		cal->batch_size = MAX(
+				MAG_CAL_MIN_BATCH_SIZE,
+				(normalized_rate * 1000) /
+					MAG_CAL_MIN_BATCH_WINDOW_US);
+	else
+		cal->batch_size = 0;
+
+	mutex_lock(s->mutex);
+	if (rate <= 0) {
+		ret = st_raw_write8(s->port, LIS2MDL_ADDR,
+				    LIS2MDL_CFG_REG_A_ADDR,
+				    LIS2MDL_FLAG_SW_RESET);
+	} else {
+		/* Add continuous and temp compensation flags */
+		reg_val |= LIS2MDL_MODE_CONT | LIS2MDL_FLAG_TEMP_COMPENSATION;
+		ret = st_raw_write8(s->port, LIS2MDL_ADDR,
+				    LIS2MDL_CFG_REG_A_ADDR, reg_val);
+	}
+
+	mutex_unlock(s->mutex);
+
+	if (ret == EC_SUCCESS)
+		data->base.odr = normalized_rate;
+
+	return ret;
+}
+
+int get_data_rate(const struct motion_sensor_t *s)
+{
+	return LIS2MDL_ST_DATA(s)->base.odr;
+}
+
+#endif /* CONFIG_MAG_LIS2MDL */
 
 const struct accelgyro_drv lis2mdl_drv = {
 #ifdef CONFIG_MAG_LSM6DSM_LIS2MDL
 	.init = lis2mdl_thru_lsm6dsm_init,
 	.read = lis2mdl_thru_lsm6dsm_read,
 	.set_data_rate = lsm6dsm_set_data_rate,
-#endif
+	.get_data_rate = st_get_data_rate,
+#else /* CONFIG_MAG_LSM6DSM_LIS2MDL */
+	.init = lis2mdl_init,
+	.read = lis2mdl_read,
+	.set_data_rate = lis2mdl_set_data_rate,
+	.get_data_rate = get_data_rate,
+#endif /* !CONFIG_MAG_LSM6DSM_LIS2MDL */
 	.set_range = set_range,
 	.get_range = get_range,
 	.get_resolution = st_get_resolution,
-	.get_data_rate = st_get_data_rate,
 	.set_offset = set_offset,
 	.get_offset = get_offset,
 };
