@@ -753,7 +753,7 @@ static int ftdi_config_i2c(struct ftdi_context *ftdi)
 	int ret;
 	static const uint16_t divisor =
 		60000000 / (2 * FTDI_I2C_FREQ * 3 / 2 /* 3-phase CLK */) - 1;
-	static const uint8_t clock_buf[] = {
+	uint8_t clock_buf[] = {
 		EN_3_PHASE,
 		DIS_DIV_5,
 		TCK_DIVISOR,
@@ -856,7 +856,7 @@ static int ftdi_send_special_waveform(struct common_hnd *chnd)
 	int i;
 	uint64_t *wave;
 	struct ftdi_context *ftdi = chnd->ftdi_hnd;
-	static const uint8_t release_lines[] = {SET_BITS_LOW, 0, 0};
+	uint8_t release_lines[] = {SET_BITS_LOW, 0, 0};
 
 	wave = malloc(SPECIAL_BUFFER_SIZE);
 	if (!wave) {
