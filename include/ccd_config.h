@@ -7,8 +7,9 @@
 #ifndef __CROS_EC_CCD_CONFIG_H
 #define __CROS_EC_CCD_CONFIG_H
 
-#include <common.h>
 #include <stdint.h>
+#include "common.h"
+#include "compile_time_macros.h"
 
 /* Case-closed debugging state */
 enum ccd_state {

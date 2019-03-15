@@ -9,6 +9,7 @@
 #define __CROS_EC_REGISTERS_H
 
 #include "common.h"
+#include "compile_time_macros.h"
 
 /* IRQ numbers */
 #define SCP_IRQ_IPC0			0

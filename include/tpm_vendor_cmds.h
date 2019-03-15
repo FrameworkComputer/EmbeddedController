@@ -7,6 +7,7 @@
 #define __INCLUDE_TPM_VENDOR_CMDS_H
 
 #include "common.h"  /* For __packed. */
+#include "compile_time_macros.h"  /* For BIT. */
 
 /*
  * This file includes definitions of extended/vendor TPM2 commands and their

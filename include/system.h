@@ -10,6 +10,7 @@
 
 #include "atomic.h"
 #include "common.h"
+#include "compile_time_macros.h"
 #include "console.h"
 #include "timer.h"
 

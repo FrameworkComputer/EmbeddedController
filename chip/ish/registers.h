@@ -10,6 +10,7 @@
 
 #ifndef __ASSEMBLER__
 #include "common.h"
+#include "compile_time_macros.h"
 
 /* ISH GPIO has only one port */
 #define DUMMY_GPIO_BANK -1

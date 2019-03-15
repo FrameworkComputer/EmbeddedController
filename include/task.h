@@ -9,6 +9,7 @@
 #define __CROS_EC_TASK_H
 
 #include "common.h"
+#include "compile_time_macros.h"
 #include "task_id.h"
 
 /* Task event bitmasks */
