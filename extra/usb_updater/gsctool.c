@@ -2036,7 +2036,7 @@ static void process_rma(struct transfer_descriptor *td, const char *authcode)
 		return;
 	}
 
-	printf("Processing response...");
+	printf("Processing response...\n");
 	auth_size = strlen(authcode);
 	response_size = sizeof(rma_response);
 
@@ -2045,8 +2045,19 @@ static void process_rma(struct transfer_descriptor *td, const char *authcode)
 			    rma_response, &response_size);
 
 	if (response_size == 1) {
-		fprintf(stderr, "\nrma unlock failed, code %d\n",
+		fprintf(stderr, "\nrma unlock failed, code %d ",
 			*rma_response);
+		switch (*rma_response) {
+		case VENDOR_RC_BOGUS_ARGS:
+			fprintf(stderr, "(wrong authcode size)\n");
+			break;
+		case VENDOR_RC_INTERNAL_ERROR:
+			fprintf(stderr, "(authcode mismatch)\n");
+			break;
+		default:
+			fprintf(stderr, "(unknown error)\n");
+			break;
+		}
 		if (td->ep_type == usb_xfer)
 			shut_down(&td->uep);
 		exit(update_error);
