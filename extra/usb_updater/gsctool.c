@@ -2167,7 +2167,7 @@ static int check_boolean(const struct options_map *omap, char option)
 
 		*omap->flag = 1;
 		return 1;
-	} while (!(++omap)->opt);
+	} while ((++omap)->opt);
 
 	return 0;
 }
