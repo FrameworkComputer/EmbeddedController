@@ -358,7 +358,7 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 
 		/* set the minimum time delay (2ms) for the next HPD IRQ */
 		hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
-	} else if (irq && !cur_lvl) {
+	} else if (irq && !lvl) {
 		/*
 		 * IRQ can only be generated when the level is high, because
 		 * the IRQ is signaled by a short low pulse from the high level.
