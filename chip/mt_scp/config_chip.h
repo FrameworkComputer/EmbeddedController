@@ -25,27 +25,8 @@
 #define MAX_NUM_EINT 8
 #define MAX_EINT_PORT (MAX_NUM_EINT / 32)
 
-/* RW only, no flash
- * +-------------------- 0x0
- * | ptr to stack_top  0x0
- * | ptr to reset func 0x04
- * |-------------------- 0x08
- * | free shared space with AP
- * +-------------------- 0x005B0
- * | IPI shared buffer with AP (288 + 8) * 2
- * +-------------------- 0x00800
- * | scp.img, exception vectors starting location.
- * +-------------------- 0x7B800
- * | free shared space with AP 2KB
- * +-------------------- 0x7C000
- * | 8KB I-CACHE
- * +-------------------- 0x7E000
- * | 8KB D-CACHE
- * +-------------------- 0x80000
- */
+/* RW only, no flash */
 #undef  CONFIG_FW_INCLUDE_RO
-#define CONFIG_RAM_BASE 0x00800
-#define CONFIG_RAM_SIZE 0x7B000
 #define CONFIG_RO_MEM_OFF 0
 #define CONFIG_RO_SIZE 0
 #define CONFIG_RW_MEM_OFF 0
@@ -73,12 +54,6 @@
 #define TASK_STACK_SIZE 488
 #define LARGER_TASK_STACK_SIZE 640
 #define VENTI_TASK_STACK_SIZE 768
-
-/* IPI */
-#define CONFIG_IPC_SHARED_OBJ_BUF_SIZE 288
-#define CONFIG_IPC_SHARED_OBJ_ADDR                                             \
-	(CONFIG_RAM_BASE -                                                     \
-	 (CONFIG_IPC_SHARED_OBJ_BUF_SIZE + 2 * sizeof(int32_t)) * 2)
 
 #define CONFIG_CHIP_PRE_INIT
 

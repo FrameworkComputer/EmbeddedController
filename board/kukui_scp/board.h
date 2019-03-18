@@ -15,6 +15,27 @@
 /* Sent MKBP event via IPI. */
 #define CONFIG_MKBP_USE_CUSTOM
 
+/*
+ * RW only, no flash
+ * +-------------------- 0x0
+ * | ptr to stack_top  0x0
+ * | ptr to reset func 0x04
+ * |-------------------- 0x08
+ * | free shared space with AP
+ * +-------------------- 0x005B0
+ * | IPI shared buffer with AP (288 + 8) * 2
+ * +-------------------- 0x00800
+ * | scp.img, exception vectors starting location.
+ * +-------------------- 0x7B800
+ * | free shared space with AP 2KB
+ * +-------------------- 0x7C000
+ * | 8KB I-CACHE
+ * +-------------------- 0x7E000
+ */
+#define CONFIG_RAM_BASE 0x00800
+#define CONFIG_RAM_SIZE 0x7B000
+#define CONFIG_RO_MEM_OFF 0
+
 /* Access DRAM through cached access */
 #define CONFIG_DRAM_BASE 0x10000000
 /* Shared memory address in AP physical address space. */
@@ -22,6 +43,10 @@
 #define CONFIG_DRAM_SIZE 0x01400000 /* 20 MB */
 
 /* IPI configs */
+#define CONFIG_IPC_SHARED_OBJ_BUF_SIZE 288
+#define CONFIG_IPC_SHARED_OBJ_ADDR                                             \
+	(CONFIG_RAM_BASE -                                                     \
+	 (CONFIG_IPC_SHARED_OBJ_BUF_SIZE + 2 * 4 /* int32_t */) * 2)
 #define CONFIG_IPI
 #define CONFIG_RPMSG_NAME_SERVICE
 
