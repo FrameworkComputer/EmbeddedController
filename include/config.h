@@ -2707,14 +2707,25 @@
 #undef CONFIG_RAM_BASE
 
 /*
+ * Base address of ROM for the chip. Only used in no physical flash case (
+ * !CONFIG_FLASH_PHYSICAL).
+ */
+#undef CONFIG_ROM_BASE
+
+/*
  * CONFIG_DATA_RAM_SIZE and CONFIG_RAM_SIZE indicate size of all data RAM
  * available on the chip in bytes and size of data RAM available for EC in
  * bytes, respectively.
  * Usually, CONFIG_DATA_RAM_SIZE = CONFIG_RAM_SIZE but some chips need to
  * allocate RAM for the mask ROM. Then CONFIG_DATA_RAM_SIZE > CONFIG_RAM_SIZE.
+ *
+ * CONFIG_ROM_SIZE indicates the size of ROM allocated by a linker script.  This
+ * is only needed when no physical flash present (!CONFIG_FLASH_PHYSICAL).  The
+ * ROM region will place common RO setions, e.g. .text, .rodata, .data LMA etc.
  */
 #undef CONFIG_DATA_RAM_SIZE
 #undef CONFIG_RAM_SIZE
+#undef CONFIG_ROM_SIZE
 
 /* Enable rbox peripheral */
 #undef CONFIG_RBOX
