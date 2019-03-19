@@ -96,6 +96,19 @@ static void scp_ulposc_config(int osc)
 	AP_ULPOSC_CON13(osc) |= OSC_DIV2_EN;
 }
 
+static inline void busy_udelay(int usec)
+{
+	/*
+	 * Delaying by busy-looping, for place that can't use udelay because of
+	 * the clock not configured yet. The value 28 is chosen approximately
+	 * from experiment.
+	 */
+	volatile int i = usec * 28;
+
+	while (i--)
+		;
+}
+
 void scp_clock_high_enable(int osc)
 {
 	/* Enable high speed clock */
@@ -104,14 +117,14 @@ void scp_clock_high_enable(int osc)
 	switch (osc) {
 	case 0:
 		/* After 25ms, enable ULPOSC */
-		udelay(25 * MSEC);
+		busy_udelay(25 * MSEC);
 		SCP_CLK_EN |= CG_CLK_HIGH;
 		break;
 	case 1:
 		/* Turn off ULPOSC2 high-core-disable switch */
 		SCP_CLK_ON_CTRL &= ~HIGH_CORE_DIS_SUB;
 		/* After 25ms, turn on ULPOSC2 high core clock gate */
-		udelay(25 * MSEC);
+		busy_udelay(25 * MSEC);
 		SCP_CLK_HIGH_CORE |= CLK_HIGH_CORE_CG;
 		break;
 	default:
