@@ -129,7 +129,7 @@ uint32_t board_id_mismatch(const struct SignedHeader *sh)
  * @return EC_SUCCESS or an error code in cases of various failures to read or
  *              if the space has been already initialized.
  */
-static int write_board_id(const struct board_id *id)
+static int write_board_id(const struct board_id *id, int clear_flags)
 {
 	struct board_id id_test;
 	uint32_t rv;
@@ -151,7 +151,7 @@ static int write_board_id(const struct board_id *id)
 		return rv;
 	}
 
-	if (!board_id_is_blank(&id_test)) {
+	if (!clear_flags && !board_id_is_blank(&id_test)) {
 		CPRINTS("%s: Board ID already programmed", __func__);
 		return EC_ERROR_ACCESS_DENIED;
 	}
@@ -201,7 +201,7 @@ static enum vendor_cmd_rc vc_set_board_id(enum vendor_cmd_cc code,
 	id.flags = be32toh(id.flags);
 
 	/* We care about the LSB only. */
-	*pbuf = write_board_id(&id);
+	*pbuf = write_board_id(&id, 0);
 
 	return *pbuf;
 }
@@ -239,17 +239,42 @@ static int command_board_id(int argc, char **argv)
 		id.flags = strtoi(argv[2], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM2;
+		rv = write_board_id(&id, 0);
+	}
+#endif
+#ifdef CR50_RELAXED
+	else if (argc == 2) {
+		int clear_flags;
 
-		rv = write_board_id(&id);
-	} else {
-		ccprintf("specify board type and flags\n");
-		rv = EC_ERROR_PARAM_COUNT;
+		if (strcasecmp(argv[1], "force_pvt"))
+			return EC_ERROR_PARAM2;
+
+		clear_flags = 1;
+		rv = read_board_id(&id);
+		if (rv != EC_SUCCESS) {
+			CPRINTS("%s: error reading Board ID", __func__);
+			return rv;
+		}
+		if (board_id_is_blank(&id)) {
+			CPRINTS("%s: Board ID isn't set", __func__);
+			return EC_ERROR_INVAL;
+		}
+		id.flags = 0;
+		rv = write_board_id(&id, clear_flags);
+
 	}
 #endif
 	return rv;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(bid,
-			     command_board_id, NULL, "Set/Get Board ID");
+DECLARE_SAFE_CONSOLE_COMMAND(bid, command_board_id,
+#ifdef CR50_DEV
+			     "[force_pvt | bid flags]",
+#elif defined(CR50_RELAXED)
+			     "[force_pvt]",
+#else
+			     NULL,
+#endif
+			     "Set/Get Board ID");
 
 static enum vendor_cmd_rc vc_get_board_id(enum vendor_cmd_cc code,
 					  void *buf,

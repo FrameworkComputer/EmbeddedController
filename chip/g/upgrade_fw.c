@@ -162,7 +162,7 @@ int usb_pdu_valid(struct upgrade_command *cmd_body,  size_t cmd_size)
 	return 1;
 }
 
-#ifdef CR50_DEV
+#ifdef CR50_RELAXED
 #ifndef CONFIG_IGNORE_G_UPDATE_CHECKS
 #define CONFIG_IGNORE_G_UPDATE_CHECKS
 #endif
@@ -318,7 +318,7 @@ static int contents_allowed(uint32_t block_offset,
 			    size_t body_size, void *upgrade_data,
 			    uint8_t *error_code)
 {
-#ifndef CR50_DEV
+#ifdef CR50_RELAXED
 #ifdef CONFIG_BOARD_ID_SUPPORT
 	if (block_offset == valid_sections.rw_base_offset) {
 		/* This block is a rw header of the new image. */

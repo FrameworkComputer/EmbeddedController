@@ -126,8 +126,21 @@ ifneq ($(CONFIG_RW_B),)
 $(out)/$(PROJECT).obj: $(out)/RW/ec.RW_B.flat
 endif
 
+CR50_OPTS=
+
 ifneq ($(CR50_DEV),)
 CPPFLAGS += -DCR50_DEV=$(CR50_DEV)
+CR50_OPTS+=CR50_DEV
+endif
+
+ifneq ($(CR50_SQA),)
+CPPFLAGS += -DCR50_SQA=$(CR50_SQA)
+CR50_OPTS+=CR50_SQA
+endif
+
+# Test if more than one Cr50 build option is specified
+ifneq ($(wordlist 2,3,$(CR50_OPTS)),)
+$(error Incompatible CR50 build options specified: $(CR50_OPTS))
 endif
 
 MANIFEST := util/signer/ec_RW-manifest-dev.json

@@ -1662,7 +1662,7 @@ int chip_factory_mode(void)
 	return mode_set & 1;
 }
 
-#ifdef CR50_DEV
+#ifdef CR50_RELAXED
 static int command_rollback(int argc, char **argv)
 {
 	system_ensure_rollback();
@@ -1672,7 +1672,7 @@ static int command_rollback(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(rollback, command_rollback,
+DECLARE_SAFE_CONSOLE_COMMAND(rollback, command_rollback,
 	"", "Force rollback to escape DEV image.");
 #endif
 
