@@ -47,4 +47,12 @@ const struct SignedHeader *get_current_image_header(void);
  */
 uint32_t board_id_mismatch(const struct SignedHeader *h);
 
+/**
+ * Check if every field of the board id is 0xffffffff
+ *
+ * @param id	Pointer to a Board ID structure
+ *
+ * @return True if the board id is all 0xffffffff.
+ */
+int board_id_is_blank(const struct board_id *id);
 #endif  /* ! __EC_CHIP_G_BOARD_ID_H */

@@ -25,8 +25,7 @@ static int board_id_is_erased(void)
 		return 0;
 	}
 
-	/* If all of the fields are all 0xffffffff, the board id is not set */
-	if (~(id.type & id.type_inv & id.flags) == 0) {
+	if (board_id_is_blank(&id)) {
 		CPRINTS("BID erased");
 		return 1;
 	}
