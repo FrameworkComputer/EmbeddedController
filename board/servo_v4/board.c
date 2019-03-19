@@ -268,128 +268,114 @@ static void init_ioexpander(void)
 	i2c_write8(1, GPIOX_I2C_ADDR, GPIOX_DIR_PORT_B, 0x18);
 }
 
-/* Define voltage thresholds for SBU USB detection */
-#define GND_MAX_MV	350
-#define USB_HIGH_MV	1500
+/*
+ * Define voltage thresholds for SBU USB detection.
+ *
+ * Max observed USB low across sampled systems: 666mV
+ * Min observed USB high across sampled systems: 3026mV
+ */
+#define GND_MAX_MV	700
+#define USB_HIGH_MV	2500
+#define SBU_DIRECT	0
+#define SBU_FLIP	1
+
+#define MODE_SBU_DISCONNECT	0
+#define MODE_SBU_CONNECT	1
+#define MODE_SBU_FLIP		2
+#define MODE_SBU_OTHER		3
 
 static void ccd_measure_sbu(void);
 DECLARE_DEFERRED(ccd_measure_sbu);
-
 static void ccd_measure_sbu(void)
 {
 	int sbu1;
 	int sbu2;
+	int mux_en;
+	static int count /* = 0 */;
+	static int last /* = 0 */;
+	static int polarity /* = 0 */;
 
 	/* Read sbu voltage levels */
 	sbu1 = adc_read_channel(ADC_SBU1_DET);
 	sbu2 = adc_read_channel(ADC_SBU2_DET);
+	mux_en = gpio_get_level(GPIO_SBU_MUX_EN);
 
-	/* USB FS pulls one line high for connect request */
-	if ((sbu1 > USB_HIGH_MV) && (sbu2 < GND_MAX_MV)) {
-		/* SBU flip = 1 */
-		write_ioexpander(0, 2, 1);
-		msleep(10);
-		CPRINTS("CCD: connected flip");
-	} else if ((sbu2 > USB_HIGH_MV) &&
-		   (sbu1 < GND_MAX_MV)) {
-		/* SBU flip = 0 */
-		write_ioexpander(0, 2, 0);
-		msleep(10);
-		CPRINTS("CCD: connected noflip");
+	/*
+	 * While SBU_MUX is disabled (SuzyQ unplugged), we'll poll the SBU lines
+	 * to check if an idling, unconfigured USB device is present.
+	 * USB FS pulls one line high for connect request.
+	 * If so, and it persists for 500ms, we'll enable the SuzyQ in that
+	 * orientation.
+	 */
+	if ((!mux_en) && (sbu1 > USB_HIGH_MV) && (sbu2 < GND_MAX_MV)) {
+		/* Check flip connection polarity. */
+		if (last != MODE_SBU_FLIP) {
+			last = MODE_SBU_FLIP;
+			polarity = SBU_FLIP;
+			count = 0;
+		} else {
+			count++;
+		}
+	} else if ((!mux_en) && (sbu2 > USB_HIGH_MV) && (sbu1 < GND_MAX_MV)) {
+		/* Check direct connection polarity. */
+		if (last != MODE_SBU_CONNECT) {
+			last = MODE_SBU_CONNECT;
+			polarity = SBU_DIRECT;
+			count = 0;
+		} else {
+			count++;
+		}
+	/*
+	 * If SuzyQ is enabled, we'll poll for a persistent no-signal for
+	 * 500ms. Since USB is differential, we should never see GND/GND
+	 * while the device is connected.
+	 * If disconnected, electrically remove SuzyQ.
+	 */
+	} else if ((mux_en) && (sbu1 < GND_MAX_MV) && (sbu2 < GND_MAX_MV)) {
+		/* Check for SBU disconnect if connected. */
+		if (last != MODE_SBU_DISCONNECT) {
+			last = MODE_SBU_DISCONNECT;
+			count = 0;
+		} else {
+			count++;
+		}
 	} else {
-		/* Measure again after 100 msec */
-		hook_call_deferred(&ccd_measure_sbu_data, 100 * MSEC);
-	}
-}
-
-static uint8_t ccd_keepalive_enabled;
-static int command_keepalive(int argc, char **argv)
-{
-	int val;
-
-	if (argc > 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	if (argc == 2) {
-		if (!parse_bool(argv[1], &val))
-			return EC_ERROR_PARAM1;
-
-		ccd_keepalive_enabled = val;
-	}
-	ccprintf("ccd_keepalive: %sabled\n",
-		 ccd_keepalive_enabled ? "en" : "dis");
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(keepalive, command_keepalive, "[enable | disable]",
-			"Enable CCD keepalive.  Prevents SBU sampling.");
-
-static void check_for_disconnect(void);
-DECLARE_DEFERRED(check_for_disconnect);
-static void check_for_disconnect(void)
-{
-	static uint8_t entries;
-	int dut_is_connected = pd_is_connected(1);
-
-	entries++;
-
-	if (dut_is_connected) {
-		entries = 0;
-		return;
-	} else if ((entries < 3) && !dut_is_connected) {
-		/* Hmm, it's still not connected? Let's keep checking. */
-		hook_call_deferred(&check_for_disconnect_data, 100 * MSEC);
-		return;
+		/* Didn't find anything, reset state. */
+		last = MODE_SBU_OTHER;
+		count = 0;
 	}
 
 	/*
-	 * Hmm, okay.  Maybe the DUT is actually disconnected.  Clear
-	 * the CCD keepalive such that the auto flip orientation
-	 * detection will work upon a plug in.
+	 * We have seen a new state continuously for 500ms.
+	 * Let's update the mux to enable/disable SuzyQ appropriately.
 	 */
-	CPRINTS("DUT seems disconnected.  Clearing CCD keepalive.");
-	entries = 0;
-	ccd_keepalive_enabled = 0;
+	if (count > 5) {
+		if (mux_en) {
+			/* Disable mux as it's disconnected now. */
+			gpio_set_level(GPIO_SBU_MUX_EN, 0);
+			msleep(10);
+			CPRINTS("CCD: disconnected.");
+		} else {
+			/* SBU flip = polarity */
+			write_ioexpander(0, 2, polarity);
+			gpio_set_level(GPIO_SBU_MUX_EN, 1);
+			msleep(10);
+			CPRINTS("CCD: connected %s",
+				polarity ? "noflip" : "flip");
+		}
+	}
+
+	/* Measure every 100ms, forever. */
+	hook_call_deferred(&ccd_measure_sbu_data, 100 * MSEC);
 }
+
 
 void ccd_enable(int enable)
 {
-	if (enable) {
-		/*
-		 * Unfortunately the polarity detect is designed for real plug
-		 * events, and only accurately detects pre-connect idle. If
-		 * there's active traffic on the line (like while EC is
-		 * rebooting) this could pretty much go either way.  Therefore,
-		 * if CCD keepalive is enabled, let's not measure the SBU lines
-		 * and leave the mux alone.  Most likely nothing has changed.
-		 *
-		 * NOTE: Once CCD keepalive has been enabled, it will remained
-		 * enabled until the DUT is seen disconnected for at least
-		 * 900ms.
-		 */
-		if (!ccd_keepalive_enabled)
-			/* Allow some time following turning on of VBUS */
-			hook_call_deferred(&ccd_measure_sbu_data,
-					   PD_POWER_SUPPLY_TURN_ON_DELAY);
-	} else {
-		/* We are not connected to anything */
-
-		/* Disable ccd_measure_sbu deferred call always */
-		hook_call_deferred(&ccd_measure_sbu_data, -1);
-
-		/*
-		 * In a bit, start checking to see if we're still
-		 * disconnected.
-		 */
-		hook_call_deferred(&check_for_disconnect_data, 600 * MSEC);
-
-		/*
-		 * The DUT port has detected a detach event. Don't want to
-		 * disconnect the SBU mux here so that the H1 USB console can
-		 * remain connected.
-		 */
-		CPRINTS("CCD: TypeC detach, no change to SBU mux");
-	}
+	/*
+	 * We may use this if displayport is ever enabled.
+	 * For now, CCD is always enabled on SBU.
+	 */
 }
 
 int board_get_version(void)
@@ -441,16 +427,19 @@ static void board_init(void)
 	system_set_bbram(SYSTEM_BBRAM_IDX_PD1, 0);
 
 	/*
-	 * Enable SBU mux. The polarity is set each time a new PD attach event
-	 * occurs. But, the SBU mux is not disabled on detach so that the H1 USB
-	 * console will survie a DUT EC reset.
+	 * Disable SBU mux. The polarity is set each time a presense is detected
+	 * on SBU, and wired thorugh. On missing voltage on SBU. SBU wires are
+	 * disconnected.
 	 */
-	gpio_set_level(GPIO_SBU_MUX_EN, 1);
+	gpio_set_level(GPIO_SBU_MUX_EN, 0);
 
 	/*
 	 * Voltage transition needs to occur in lockstep between the CHG and
 	 * DUT ports, so initially limit voltage to 5V.
 	 */
 	pd_set_max_voltage(PD_MIN_MV);
+
+	hook_call_deferred(&ccd_measure_sbu_data, 1000 * MSEC);
+
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
