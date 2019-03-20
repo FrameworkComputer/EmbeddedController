@@ -29,35 +29,6 @@ extern uint32_t mkbp_last_event_time;
 int mkbp_send_event(uint8_t event_type);
 
 /*
- * Set MKBP active event status on the AP.
- *
- * This communicates to the AP whether an MKBP event is currently available
- * for processing. It is used by mkbp_send_event().
- *
- * The default implementation in mkbp_event.c has weak linkage and can be
- * overridden by individual boards depending on their hardware configuration.
- *
- * @param active  1 if there is an event, 0 otherwise
- */
-void mkbp_set_host_active(int active);
-
-/*
- * Communicate an MKBP event to the host via a dedicated GPIO pin.
- *
- * This can be used if the board schematic has a pin reserved for this purpose.
- */
-void mkbp_set_host_active_via_gpio(int active);
-
-/*
- * Communicate an MKBP event to the AP via EC_HOST_EVENT.
- *
- * This can be used without a dedicated interrupt pin configured. It is the
- * default behavior of mkbp_set_host_active when CONFIG_MKBP_USE_HOST_EVENT
- * is defined in board.h.
- */
-void mkbp_set_host_active_via_event(int active);
-
-/*
  * Communicate an MKBP event to the AP via custom method.
  *
  * This can be used if a board has a custom method.

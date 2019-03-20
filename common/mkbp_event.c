@@ -35,14 +35,14 @@ static int event_is_set(uint8_t event_type)
 }
 
 #ifdef CONFIG_MKBP_USE_GPIO
-void mkbp_set_host_active_via_gpio(int active)
+static void mkbp_set_host_active_via_gpio(int active)
 {
 	gpio_set_level(GPIO_EC_INT_L, !active);
 }
 #endif
 
 #ifdef CONFIG_MKBP_USE_HOST_EVENT
-void mkbp_set_host_active_via_event(int active)
+static void mkbp_set_host_active_via_event(int active)
 {
 	if (active)
 		host_set_single_event(EC_HOST_EVENT_MKBP);
@@ -50,14 +50,20 @@ void mkbp_set_host_active_via_event(int active)
 #endif
 
 #ifdef CONFIG_MKBP_USE_HECI
-void mkbp_set_host_active_via_heci(int active)
+static void mkbp_set_host_active_via_heci(int active)
 {
 	if (active)
 		heci_send_mkbp_event();
 }
 #endif
 
-void mkbp_set_host_active(int active)
+/*
+ * This communicates to the AP whether an MKBP event is currently available
+ * for processing.
+ *
+ * @param active  1 if there is an event, 0 otherwise
+ */
+static void mkbp_set_host_active(int active)
 {
 #if defined(CONFIG_MKBP_USE_CUSTOM)
 	mkbp_set_host_active_via_custom(active);
@@ -76,8 +82,18 @@ void mkbp_set_host_active(int active)
 static void set_host_interrupt(int active)
 {
 	static int old_active;
-
+	/*
+	 * If we are going to perform a simple GPIO toggle, then pause
+	 * interrupts to let last_event_time marker have the best chance of
+	 * matching the time we toggle the GPIO pin.
+	 *
+	 * If we are passing mkbp events through host communication, then
+	 * pausing interrupts can have unintended consequences (say if that code
+	 * waits for a mutex and then de-schedules its tasks).
+	 */
+#ifdef CONFIG_MKBP_USE_GPIO
 	interrupt_disable();
+#endif
 
 	if (old_active == 0 && active == 1)
 		mkbp_last_event_time = __hw_clock_source_read();
@@ -85,7 +101,10 @@ static void set_host_interrupt(int active)
 	mkbp_set_host_active(active);
 
 	old_active = active;
+
+#ifdef CONFIG_MKBP_USE_GPIO
 	interrupt_enable();
+#endif
 }
 
 #ifdef CONFIG_MKBP_WAKEUP_MASK
