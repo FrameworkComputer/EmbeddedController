@@ -87,6 +87,8 @@ void system_pre_init(void)
 	scp_enable_pirq();
 	/* Init dram mapping (and cache) */
 	scp_memmap_init();
+	/* Disable jump (mt_scp has only RW) and enable MPU. */
+	system_disable_jump();
 }
 
 void system_reset(int flags)

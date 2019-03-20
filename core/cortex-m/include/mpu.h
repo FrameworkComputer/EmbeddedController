@@ -58,6 +58,8 @@ enum mpu_region {
 
 /* AP bit. See table 3-5 of Stellaris LM4F232H5QC datasheet for details */
 #define MPU_ATTR_NO_NO (0 << 8)  /* previleged no access, unprev no access */
+#define MPU_ATTR_RW_NO (1 << 8)  /* previleged ReadWrite, unprev no access */
+#define MPU_ATTR_RW_RO (2 << 8)  /* previleged ReadWrite, unprev Read-only */
 #define MPU_ATTR_RW_RW (3 << 8)  /* previleged ReadWrite, unprev ReadWrite */
 #define MPU_ATTR_RO_NO (5 << 8)  /* previleged Read-only, unprev no access */
 

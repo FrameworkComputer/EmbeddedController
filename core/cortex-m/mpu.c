@@ -147,7 +147,7 @@ void mpu_enable(void)
 	MPU_CTRL |= MPU_CTRL_PRIVDEFEN | MPU_CTRL_HFNMIENA | MPU_CTRL_ENABLE;
 }
 
-void mpu_disable(void)
+static void mpu_disable(void)
 {
 	MPU_CTRL &= ~(MPU_CTRL_PRIVDEFEN | MPU_CTRL_HFNMIENA | MPU_CTRL_ENABLE);
 }
@@ -179,13 +179,13 @@ int mpu_protect_data_ram(void)
 		MPU_ATTR_INTERNAL_SRAM);
 }
 
-#ifdef CONFIG_EXTERNAL_STORAGE
+#if defined(CONFIG_EXTERNAL_STORAGE) || !defined(CONFIG_FLASH_PHYSICAL)
 int mpu_protect_code_ram(void)
 {
 	/* Prevent write access to code RAM */
 	return mpu_config_region(REGION_STORAGE,
 				 CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RO_MEM_OFF,
-				 CONFIG_RO_SIZE,
+				 CONFIG_CODE_RAM_SIZE,
 				 MPU_ATTR_RO_NO | MPU_ATTR_INTERNAL_SRAM,
 				 1);
 }
