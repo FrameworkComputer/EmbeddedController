@@ -31,7 +31,8 @@ ENTRY(ish_aon_main);
 MEMORY
 {
     /* leave STACK_SIZE bytes in the end of memory for stack */
-    RAM : ORIGIN = SRAM_START, LENGTH = RAM_LEN }
+    RAM : ORIGIN = SRAM_START, LENGTH = RAM_LEN
+}
 
 SECTIONS
 {
@@ -63,6 +64,5 @@ SECTIONS
     {
 	KEEP(*(.stack_tag))
     } > RAM
-
 
 }

@@ -30,6 +30,7 @@ chip-$(CONFIG_LOW_POWER_IDLE)+=power_mgt.o
 
 ifeq ($(CONFIG_ISH_PM_AONTASK),y)
 ish-aontask-fw=chip/ish/aontaskfw/ish_aontask
+ish-aontask-dma=chip/ish/dma
 ish-aontask-fw-bin=$(out)/$(ish-aontask-fw).bin
 PROJECT_EXTRA+=$(ish-aontask-fw-bin)
 endif

@@ -571,7 +571,9 @@ $(ish-aontask-fw-bin):$(out)/$(ish-aontask-fw).ld
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
 	-@ $(CC) $(CFLAGS) -MMD -MF $(out)/$(ish-aontask-fw).d -c $(ish-aontask-fw).c \
 		-o $(out)/$(ish-aontask-fw).o
-	-@ $(CC) $(out)/$(ish-aontask-fw).o $(LDFLAGS) \
+	-@ $(CC) $(CFLAGS) -MMD -MF $(out)/$(ish-aontask-dma).d -c $(ish-aontask-dma).c \
+		-o $(out)/$(ish-aontask-dma).o
+	-@ $(CC) $(out)/$(ish-aontask-fw).o $(out)/$(ish-aontask-dma).o $(LDFLAGS) \
 		-o $(out)/$(ish-aontask-fw).elf -Wl,-T,$(out)/$(ish-aontask-fw).ld \
 		-Wl,-Map,$(out)/$(ish-aontask-fw).map
 	-@ $(OBJCOPY) -O binary $(out)/$(ish-aontask-fw).elf $@

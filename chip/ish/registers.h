@@ -126,6 +126,8 @@ enum ish_i2c_port {
 #define IPC_HOST2ISH_DOORBELL      (ISH_IPC_BASE + 0x48)
 #define IPC_HOST2ISH_MSG_REGS      (ISH_IPC_BASE + 0xE0)
 #define IPC_ISH2HOST_DOORBELL      (ISH_IPC_BASE + 0x54)
+#define IPC_ISH2PMC_DOORBELL       (ISH_IPC_BASE + 0x58)
+#define IPC_ISH2PMC_MSG_REGS       (ISH_IPC_BASE + 0x260)
 #define IPC_BUSY_CLEAR             (ISH_IPC_BASE + 0x378)
 #define IPC_UMA_RANGE_LOWER_0      REG32(ISH_IPC_BASE + 0x380)
 #define IPC_UMA_RANGE_LOWER_1      REG32(ISH_IPC_BASE + 0x384)
@@ -133,6 +135,7 @@ enum ish_i2c_port {
 #define IPC_UMA_RANGE_UPPER_1      REG32(ISH_IPC_BASE + 0x38C)
 
 /* PMU Registers */
+#define PMU_SRAM_PG_EN		REG32(ISH_PMU_BASE + 0x0)
 #define PMU_VNN_REQ		REG32(ISH_PMU_BASE + 0x3c)
 #define VNN_REQ_IPC_HOST_WRITE		BIT(3) /* Power for IPC host write */
 
@@ -280,5 +283,33 @@ enum ish_i2c_port {
 #define LAPIC_ESR_REG   (ISH_LAPIC_BASE + 0x280)
 #define LAPIC_ERR_RECV_ILLEGAL       BIT(6)
 #define LAPIC_ICR_REG   (ISH_LAPIC_BASE + 0x300)
+
+/* SRAM control registers */
+#define ISH_SRAM_CTRL_BASE	        0x00500000
+#define ISH_SRAM_CTRL_CSFGR	        REG32(ISH_SRAM_CTRL_BASE + 0x00)
+#define ISH_SRAM_CTRL_INTR	        REG32(ISH_SRAM_CTRL_BASE + 0x04)
+#define ISH_SRAM_CTRL_INTR_MASK	        REG32(ISH_SRAM_CTRL_BASE + 0x08)
+#define ISH_SRAM_CTRL_ERASE_CTRL	REG32(ISH_SRAM_CTRL_BASE + 0x0c)
+#define ISH_SRAM_CTRL_ERASE_ADDR	REG32(ISH_SRAM_CTRL_BASE + 0x10)
+#define ISH_SRAM_CTRL_BANK_STATUS	REG32(ISH_SRAM_CTRL_BASE + 0x2c)
+
+/* Software defined registers */
+
+#if defined(CHIP_FAMILY_ISH3)
+/* on ISH3, reused ISH2PMC IPC message registers */
+#define SNOWBALL_BASE     IPC_ISH2PMC_MSG_REGS
+#else
+/* from ISH4, used reserved rom part of AON memory */
+#define SNOWBALL_BASE     CONFIG_ISH_AON_SRAM_ROM_START
+#endif
+
+/**
+ * registers about UMA/IMR DDR information and FW location in it
+ * ISH Bringup will set these registers' value at boot
+ */
+#define SNOWBALL_UMA_BASE_HI  REG32(SNOWBALL_BASE + (4 * 28))
+#define SNOWBALL_UMA_BASE_LO  REG32(SNOWBALL_BASE + (4 * 29))
+#define SNOWBALL_UMA_LIMIT    REG32(SNOWBALL_BASE + (4 * 30))
+#define SNOWBALL_FW_OFFSET    REG32(SNOWBALL_BASE + (4 * 31))
 
 #endif /* __CROS_EC_REGISTERS_H */

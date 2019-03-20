@@ -21,7 +21,7 @@
 # and hence the same segment selector
 .set code_seg, 0x8
 
-.section .text.vecttable
+.section .data.vecttable
 
 # Macro that defines an interrupt descriptor
 .macro interrupt_descriptor

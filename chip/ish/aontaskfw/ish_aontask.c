@@ -46,6 +46,7 @@
 #include <common.h>
 #include <ia_structs.h>
 #include "power_mgt.h"
+#include "ish_dma.h"
 #include "ish_aon_share.h"
 
 /**
@@ -273,26 +274,261 @@ struct ish_aon_share aon_share = {
 	.aon_ldt_size = sizeof(aon_ldt),
 };
 
+/* In IMR DDR, ISH FW image has a manifest header */
+#define ISH_FW_IMAGE_MANIFEST_HEADER_SIZE (0x1000)
+
+/* simple count based delay */
+static inline void delay(uint32_t count)
+{
+	while (count)
+		count--;
+}
+
+static int store_main_fw(void)
+{
+	int ret;
+	uint64_t imr_fw_addr;
+	uint64_t imr_fw_rw_addr;
+
+	imr_fw_addr = ((uint64_t)SNOWBALL_UMA_BASE_HI << 32) +
+			SNOWBALL_UMA_BASE_LO +
+			SNOWBALL_FW_OFFSET +
+			ISH_FW_IMAGE_MANIFEST_HEADER_SIZE;
+
+	imr_fw_rw_addr = imr_fw_addr + aon_share.main_fw_rw_addr -
+			CONFIG_ISH_SRAM_BASE_START;
+
+	/* disable BCG (Block Clock Gating) for DMA, DMA can be accessed now */
+	CCU_BCG_EN = CCU_BCG_EN & ~CCU_BCG_BIT_DMA;
+
+	/* store main FW's read and write data region to IMR/UMA DDR */
+	ret = ish_dma_copy(
+			PAGING_CHAN,
+			imr_fw_rw_addr,
+			aon_share.main_fw_rw_addr,
+			aon_share.main_fw_rw_size,
+			SRAM_TO_UMA
+			);
+
+	/* enable BCG for DMA, DMA can't be accessed now */
+	CCU_BCG_EN = CCU_BCG_EN | CCU_BCG_BIT_DMA;
+
+	if (ret != DMA_RC_OK) {
+
+		aon_share.last_error = AON_ERROR_DMA_FAILED;
+		aon_share.error_count++;
+
+		return AON_ERROR_DMA_FAILED;
+	}
+
+	return AON_SUCCESS;
+}
+
+static int restore_main_fw(void)
+{
+	int ret;
+	uint64_t imr_fw_addr;
+	uint64_t imr_fw_ro_addr;
+	uint64_t imr_fw_rw_addr;
+
+	imr_fw_addr = ((uint64_t)SNOWBALL_UMA_BASE_HI << 32) +
+			SNOWBALL_UMA_BASE_LO +
+			SNOWBALL_FW_OFFSET +
+			ISH_FW_IMAGE_MANIFEST_HEADER_SIZE;
+
+	imr_fw_ro_addr = imr_fw_addr + aon_share.main_fw_ro_addr -
+			CONFIG_ISH_SRAM_BASE_START;
+
+	imr_fw_rw_addr = imr_fw_addr + aon_share.main_fw_rw_addr -
+			CONFIG_ISH_SRAM_BASE_START;
+
+	/* disable BCG (Block Clock Gating) for DMA, DMA can be accessed now */
+	CCU_BCG_EN = CCU_BCG_EN & ~CCU_BCG_BIT_DMA;
+
+	/* restore main FW's read only code and data region from IMR/UMA DDR */
+	ret = ish_dma_copy(
+			PAGING_CHAN,
+			aon_share.main_fw_ro_addr,
+			imr_fw_ro_addr,
+			aon_share.main_fw_ro_size,
+			UMA_TO_SRAM
+			);
+
+	if (ret != DMA_RC_OK) {
+
+		aon_share.last_error = AON_ERROR_DMA_FAILED;
+		aon_share.error_count++;
+
+		/* enable BCG for DMA, DMA can't be accessed now */
+		CCU_BCG_EN = CCU_BCG_EN | CCU_BCG_BIT_DMA;
+
+		return AON_ERROR_DMA_FAILED;
+	}
+
+	/* restore main FW's read and write data region from IMR/UMA DDR */
+	ret = ish_dma_copy(
+			PAGING_CHAN,
+			aon_share.main_fw_rw_addr,
+			imr_fw_rw_addr,
+			aon_share.main_fw_rw_size,
+			UMA_TO_SRAM
+			);
+
+	/* enable BCG for DMA, DMA can't be accessed now */
+	CCU_BCG_EN = CCU_BCG_EN | CCU_BCG_BIT_DMA;
+
+	if (ret != DMA_RC_OK) {
+
+		aon_share.last_error = AON_ERROR_DMA_FAILED;
+		aon_share.error_count++;
+
+		return AON_ERROR_DMA_FAILED;
+	}
+
+	return AON_SUCCESS;
+}
+
+#ifdef CHIP_FAMILY_ISH3
+/* on ISH3, need reserve last SRAM bank for AON use */
+#define SRAM_POWER_OFF_BANKS	(CONFIG_ISH_SRAM_BANKS - 1)
+#else
+/* from ISH4, has seprated AON memory, can power off entire main SRAM  */
+#define SRAM_POWER_OFF_BANKS	CONFIG_ISH_SRAM_BANKS
+#endif
+
+/**
+ * check SRAM bank i power gated status in PMU_SRAM_PG_EN register
+ * 1: power gated 0: not power gated
+ */
+#define BANK_PG_STATUS(i)	(PMU_SRAM_PG_EN & (0x1 << (i)))
+
+/* enable power gate of a SRAM bank */
+#define BANK_PG_ENABLE(i)	(PMU_SRAM_PG_EN |= (0x1 << (i)))
+
+/* disable power gate of a SRAM bank */
+#define BANK_PG_DISABLE(i)	(PMU_SRAM_PG_EN &= ~(0x1 << (i)))
+
+/**
+ * check SRAM bank i disabled status in ISH_SRAM_CTRL_CSFGR register
+ * 1: disabled 0: enabled
+ */
+#define BANK_DISABLE_STATUS(i)	(ISH_SRAM_CTRL_CSFGR & (0x1 << ((i) + 4)))
+
+/* enable a SRAM bank in ISH_SRAM_CTRL_CSFGR register */
+#define BANK_ENABLE(i)		(ISH_SRAM_CTRL_CSFGR &= ~(0x1 << ((i) + 4)))
+
+/* disable a SRAM bank in ISH_SRAM_CTRL_CSFGR register */
+#define BANK_DISABLE(i)		(ISH_SRAM_CTRL_CSFGR |= (0x1 << ((i) + 4)))
+
+/* SRAM needs time to warm up after power on */
+#define SRAM_WARM_UP_DELAY_CNT		10
+
+/* SRAM needs time to enter retention mode */
+#define CYCLES_PER_US                  100
+#define SRAM_RETENTION_US_DELAY	       5
+#define SRAM_RETENTION_CYCLES_DELAY    (SRAM_RETENTION_US_DELAY * CYCLES_PER_US)
+
+static void sram_power(int on)
+{
+	int i;
+	uint32_t bank_size;
+	uint32_t sram_addr;
+	uint32_t erase_cfg;
+
+	bank_size = CONFIG_ISH_SRAM_BANK_SIZE;
+	sram_addr = CONFIG_ISH_SRAM_BASE_START;
+
+	/**
+	 * set erase size as one bank, erase control register using DWORD as
+	 * size unit, and using 0 based length, i.e if set 0, will erase one
+	 * DWORD
+	 */
+	erase_cfg = (((bank_size - 4) >> 2) << 2) | 0x1;
+
+	for (i = 0; i < SRAM_POWER_OFF_BANKS; i++) {
+
+		if (on && (BANK_PG_STATUS(i) || BANK_DISABLE_STATUS(i))) {
+
+			/* power on and enable a bank */
+			BANK_PG_DISABLE(i);
+
+			delay(SRAM_WARM_UP_DELAY_CNT);
+
+			BANK_ENABLE(i);
+
+			/* erase a bank */
+			ISH_SRAM_CTRL_ERASE_ADDR = sram_addr + (i * bank_size);
+			ISH_SRAM_CTRL_ERASE_CTRL = erase_cfg;
+
+			/* wait erase complete */
+			while (ISH_SRAM_CTRL_ERASE_CTRL & 0x1)
+				continue;
+
+		} else {
+			/* disable and power off a bank */
+			BANK_DISABLE(i);
+			BANK_PG_ENABLE(i);
+		}
+
+		/**
+		 * clear interrupt status register, not allow generate SRAM
+		 * interrupts. Bringup already masked all SRAM interrupts when
+		 * booting ISH
+		 */
+		ISH_SRAM_CTRL_INTR = 0xFFFFFFFF;
+
+	}
+}
+
 static void handle_d0i2(void)
 {
-	/* TODO set main SRAM into retention mode*/
+	/* set main SRAM into retention mode*/
+	PMU_LDO_CTRL = PMU_LDO_BIT_RETENTION_ON | PMU_LDO_BIT_ON;
 
-	/* ish_halt(); */
+	/* delay some cycles before halt */
+	delay(SRAM_RETENTION_CYCLES_DELAY);
+
+	ish_halt();
 	/* wakeup from PMU interrupt */
 
-	/* TODO set main SRAM intto normal mode */
+	/* set main SRAM intto normal mode */
+	PMU_LDO_CTRL = PMU_LDO_BIT_ON;
+
+	/**
+	 * poll LDO_READY status to make sure SRAM LDO is on
+	 * (exited retention mode)
+	 */
+	while (!(PMU_LDO_CTRL & PMU_LDO_BIT_READY))
+		continue;
 }
 
 static void handle_d0i3(void)
 {
-	/* TODO store main FW 's context to IMR DDR from main SRAM */
-	/* TODO power off main SRAM */
+	int ret;
 
-	/* ish_halt(); */
+	/* store main FW 's context to IMR DDR from main SRAM */
+	ret = store_main_fw();
+
+	/* if store main FW failed, then switch back to main FW */
+	if (ret != AON_SUCCESS)
+		return;
+
+	/* power off main SRAM */
+	sram_power(0);
+
+	ish_halt();
 	/* wakeup from PMU interrupt */
 
-	/* TODO power on main SRAM */
-	/* TODO restore main FW 's context to main SRAM from IMR DDR */
+	/* power on main SRAM */
+	sram_power(1);
+
+	/* restore main FW 's context to main SRAM from IMR DDR */
+	ret = restore_main_fw();
+
+	if (ret != AON_SUCCESS) {
+		/* we can't switch back to main FW now, reset ISH */
+		handle_reset();
+	}
 }
 
 static void handle_d3(void)

@@ -13,6 +13,8 @@ SECTIONS
 {
 	. = CONFIG_ISH_BOOT_START; /* ISH SRAM (640KB) begins at 0xFF000000 */
 
+	__aon_ro_start = .;
+
 	/* .init section should be first, since it contains the boot code */
 	.init : { *(.init*); }
 	.text : { *(.text.*); }
@@ -140,6 +142,15 @@ SECTIONS
 		 KEEP(*(.rodata.*))
 	}
 
+	/*
+	 * ISH DMA need 64 bytes address align, in D0i3 low power state
+	 * need copy RW part to IMR DDR via DMA
+	 */
+	. = ALIGN(64);
+	__aon_ro_end = .;
+
+	__aon_rw_start = .;
+
 	.data : {
 		 __data_start = .;
 		*(.data.*);
@@ -177,6 +188,8 @@ SECTIONS
 		 */
         	__shared_mem_buf = .;
 	}
+
+	__aon_rw_end = . + CONFIG_SHAREDMEM_MINIMUM_SIZE;
 
 	ASSERT((__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE) <=
 			(CONFIG_RAM_BASE + CONFIG_RAM_SIZE),

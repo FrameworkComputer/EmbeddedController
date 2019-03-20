@@ -37,6 +37,19 @@ struct ish_aon_share {
 	/* for store/restore main FW's IDT */
 	struct idt_header main_fw_idt_hdr;
 
+	/**
+	 * main FW's read only code and data region in main SRAM,
+	 * address need 64 bytes align due to DMA requirement
+	 */
+	uint32_t main_fw_ro_addr;
+	uint32_t main_fw_ro_size;
+
+	/**
+	 * main FW's read and write data region in main SRAM,
+	 * address need 64 bytes align due to DMA requirement
+	 */
+	uint32_t main_fw_rw_addr;
+	uint32_t main_fw_rw_size;
 } __packed;
 
 #endif /* __CROS_EC_ISH_AON_SHARE_H */
