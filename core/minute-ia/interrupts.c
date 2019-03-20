@@ -12,6 +12,7 @@
 #include "task_defs.h"
 #include "irq_handler.h"
 #include "console.h"
+#include "ia_structs.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
@@ -19,7 +20,7 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
 /* The IDT  - initialized in init.S */
-extern IDT_entry __idt[NUM_VECTORS];
+extern struct idt_entry __idt[NUM_VECTORS];
 
 /* To count the interrupt nesting depth. Usually it is not nested */
 volatile uint32_t __in_isr;
@@ -149,16 +150,12 @@ DEFINE_EXN_HANDLER(20);
 void set_interrupt_gate(uint8_t num, isr_handler_t func, uint8_t flags)
 {
 	uint16_t code_segment;
-	uint32_t base = (uint32_t) func;
-
-	__idt[num].ISR_low = (uint16_t) (base & USHRT_MAX);
-	__idt[num].ISR_high = (uint16_t) ((base >> 16UL) & USHRT_MAX);
 
 	/* When the flat model is used the CS will never change. */
 	__asm volatile ("mov %%cs, %0":"=r" (code_segment));
-	__idt[num].segment_selector = code_segment;
-	__idt[num].zero = 0;
-	__idt[num].flags = flags;
+
+	__idt[num].dword_lo = GEN_IDT_DESC_LO(func, code_segment, flags);
+	__idt[num].dword_up = GEN_IDT_DESC_UP(func, code_segment, flags);
 }
 
 /**
@@ -312,11 +309,11 @@ void init_interrupts(void)
 
 	/* Setup gates for IRQs declared by drivers using DECLARE_IRQ */
 	for (; p < __irq_data_end; p++)
-		set_interrupt_gate(IRQ_TO_VEC(p->irq), p->routine, IDT_FLAGS);
+		set_interrupt_gate(IRQ_TO_VEC(p->irq), p->routine, IDT_DESC_FLAGS);
 
 	/* Setup gate for LAPIC_LVT_ERROR vector */
 	set_interrupt_gate(LAPIC_LVT_ERROR_VECTOR, _lapic_error_handler,
-			   IDT_FLAGS);
+			   IDT_DESC_FLAGS);
 
 	/* Mask all interrupts by default in IOAPIC */
 	for (entry = 0; entry < max_entries; entry++)
@@ -332,29 +329,29 @@ void init_interrupts(void)
 				      system_irqs[entry].polarity |
 				      system_irqs[entry].trigger);
 
-	set_interrupt_gate(ISH_TS_VECTOR, __switchto, IDT_FLAGS);
+	set_interrupt_gate(ISH_TS_VECTOR, __switchto, IDT_DESC_FLAGS);
 
 	/* Bind exception handlers to print panic message */
-	set_interrupt_gate(0, exception_panic_0, IDT_FLAGS);
-	set_interrupt_gate(1, exception_panic_1, IDT_FLAGS);
-	set_interrupt_gate(2, exception_panic_2, IDT_FLAGS);
-	set_interrupt_gate(3, exception_panic_3, IDT_FLAGS);
-	set_interrupt_gate(4, exception_panic_4, IDT_FLAGS);
-	set_interrupt_gate(5, exception_panic_5, IDT_FLAGS);
-	set_interrupt_gate(6, exception_panic_6, IDT_FLAGS);
-	set_interrupt_gate(7, exception_panic_7, IDT_FLAGS);
-	set_interrupt_gate(8, exception_panic_8, IDT_FLAGS);
-	set_interrupt_gate(9, exception_panic_9, IDT_FLAGS);
-	set_interrupt_gate(10, exception_panic_10, IDT_FLAGS);
-	set_interrupt_gate(11, exception_panic_11, IDT_FLAGS);
-	set_interrupt_gate(12, exception_panic_12, IDT_FLAGS);
-	set_interrupt_gate(13, exception_panic_13, IDT_FLAGS);
-	set_interrupt_gate(14, exception_panic_14, IDT_FLAGS);
-	set_interrupt_gate(16, exception_panic_16, IDT_FLAGS);
-	set_interrupt_gate(17, exception_panic_17, IDT_FLAGS);
-	set_interrupt_gate(18, exception_panic_18, IDT_FLAGS);
-	set_interrupt_gate(19, exception_panic_19, IDT_FLAGS);
-	set_interrupt_gate(20, exception_panic_20, IDT_FLAGS);
+	set_interrupt_gate(0, exception_panic_0, IDT_DESC_FLAGS);
+	set_interrupt_gate(1, exception_panic_1, IDT_DESC_FLAGS);
+	set_interrupt_gate(2, exception_panic_2, IDT_DESC_FLAGS);
+	set_interrupt_gate(3, exception_panic_3, IDT_DESC_FLAGS);
+	set_interrupt_gate(4, exception_panic_4, IDT_DESC_FLAGS);
+	set_interrupt_gate(5, exception_panic_5, IDT_DESC_FLAGS);
+	set_interrupt_gate(6, exception_panic_6, IDT_DESC_FLAGS);
+	set_interrupt_gate(7, exception_panic_7, IDT_DESC_FLAGS);
+	set_interrupt_gate(8, exception_panic_8, IDT_DESC_FLAGS);
+	set_interrupt_gate(9, exception_panic_9, IDT_DESC_FLAGS);
+	set_interrupt_gate(10, exception_panic_10, IDT_DESC_FLAGS);
+	set_interrupt_gate(11, exception_panic_11, IDT_DESC_FLAGS);
+	set_interrupt_gate(12, exception_panic_12, IDT_DESC_FLAGS);
+	set_interrupt_gate(13, exception_panic_13, IDT_DESC_FLAGS);
+	set_interrupt_gate(14, exception_panic_14, IDT_DESC_FLAGS);
+	set_interrupt_gate(16, exception_panic_16, IDT_DESC_FLAGS);
+	set_interrupt_gate(17, exception_panic_17, IDT_DESC_FLAGS);
+	set_interrupt_gate(18, exception_panic_18, IDT_DESC_FLAGS);
+	set_interrupt_gate(19, exception_panic_19, IDT_DESC_FLAGS);
+	set_interrupt_gate(20, exception_panic_20, IDT_DESC_FLAGS);
 
 	/* Note: At reset, ID field is already set to 0 in APIC ID register */
 
