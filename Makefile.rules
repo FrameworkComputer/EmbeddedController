@@ -475,8 +475,10 @@ $(out)/RO/%.o:%.cc
 $(out)/RW/%.o:%.cc
 	$(call quiet,cxx_to_o,CXX    )
 
+$(out)/RO/%.pb.o: CXXFLAGS+= -Wno-unreachable-code
 $(out)/RO/%.pb.o:$(out)/gen/%.pb.cc
 	$(call quiet,cxx_to_o,CXX    )
+$(out)/RW/%.pb.o: CXXFLAGS+= -Wno-unreachable-code
 $(out)/RW/%.pb.o:$(out)/gen/%.pb.cc
 	$(call quiet,cxx_to_o,CXX    )
 $(out)/gen/%.pb.cc:%.proto
