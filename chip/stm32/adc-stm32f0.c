@@ -22,7 +22,7 @@ struct adc_profile_t {
 	/* Register values. */
 	uint32_t cfgr1_reg;
 	uint32_t cfgr2_reg;
-	uint32_t smpr_reg;
+	uint32_t smpr_reg;	/* Default Sampling Rate */
 	uint32_t ier_reg;
 	/* DMA config. */
 	const struct dma_option *dma_option;
@@ -69,7 +69,7 @@ static const struct adc_profile_t profile = {
 };
 #endif
 
-static void adc_init(void)
+static void adc_init(const struct adc_t *adc)
 {
 	/*
 	 * If clock is already enabled, and ADC module is enabled
@@ -93,7 +93,7 @@ static void adc_init(void)
 	/* clock is ADCCLK (ADEN must be off when writing this reg) */
 	STM32_ADC_CFGR2 = profile.cfgr2_reg;
 	/* Sampling time */
-	STM32_ADC_SMPR = profile.smpr_reg;
+	STM32_ADC_SMPR = adc->sample_rate ? adc->sample_rate : profile.smpr_reg;
 
 	/*
 	 * ADC enable (note: takes 4 ADC clocks between end of calibration
@@ -294,7 +294,7 @@ int adc_read_channel(enum adc_channel ch)
 
 	mutex_lock(&adc_lock);
 
-	adc_init();
+	adc_init(adc);
 
 	if (adc_watchdog_enabled()) {
 		restore_watchdog = 1;

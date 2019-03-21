@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_ADC_CHIP_H
 #define __CROS_EC_ADC_CHIP_H
 
+#include "stdint.h"
+
 /* Data structure to define ADC channels. */
 struct adc_t {
 	const char *name;
@@ -15,6 +17,7 @@ struct adc_t {
 	int factor_div;
 	int shift;
 	int channel;
+	uint32_t sample_rate;	/* Sampling Rate of the channel */
 };
 
 /*
