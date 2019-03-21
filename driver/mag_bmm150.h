@@ -84,10 +84,10 @@
  *
  *  To be safe, declare only 75% of the value.
  */
-#define BMM150_MAG_MAX_FREQ(_preset) (750000000 / \
+#define __BMM150_MAG_MAX_FREQ(_preset) (750000000 / \
 	(145 * BMM150_REP(_preset, XY) + 500 *  BMM150_REP(_preset, Z) + 980))
 
-#if (BMM150_MAG_MAX_FREQ(SPECIAL) > CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ)
+#if (__BMM150_MAG_MAX_FREQ(SPECIAL) > CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ)
 #error "EC too slow for magnetometer"
 #endif
 
@@ -117,6 +117,18 @@ struct bmm150_private_data {
 
 #define BMM150_CAL(_s) \
 	(&BMI160_GET_DATA(_s)->compass.cal)
+
+#ifdef CONFIG_MAG_BMI160_BMM150
+#include "accelgyro_bmi160.h"
+/*
+ * Behind a BMI160, the BMM150 is in forced mode. Be sure to choose a frequency
+ * comptible with BMI160.
+ */
+#define BMM150_MAG_MAX_FREQ(_preset) \
+	BMI160_REG_TO_ODR(BMI160_ODR_TO_REG(__BMM150_MAG_MAX_FREQ(_preset)))
+#else
+#define BMM150_MAG_MAX_FREQ(_preset) __BMM150_MAG_MAX_FREQ(_preset)
+#endif
 
 /* Specific initialization of BMM150 when behing BMI160 */
 int bmm150_init(const struct motion_sensor_t *s);
