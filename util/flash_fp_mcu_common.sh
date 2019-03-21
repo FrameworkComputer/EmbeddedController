@@ -54,9 +54,11 @@ flash_fp_mcu_stm32() {
   check_hardware_write_protect_disabled
 
   # Ensure the ACPI is not cutting power when unloading cros-ec-spi
-  echo "${gpio_pwren}" > /sys/class/gpio/export
-  echo "out" > "/sys/class/gpio/gpio${gpio_pwren}/direction"
-  echo 1 > "/sys/class/gpio/gpio${gpio_pwren}/value"
+  if [[ -n "${gpio_pwren}" ]]; then
+    echo "${gpio_pwren}" > /sys/class/gpio/export
+    echo "out" > "/sys/class/gpio/gpio${gpio_pwren}/direction"
+    echo 1 > "/sys/class/gpio/gpio${gpio_pwren}/value"
+  fi
 
   # Remove cros_fp if present
   echo "${spiid}" > /sys/bus/spi/drivers/cros-ec-spi/unbind
@@ -102,7 +104,9 @@ flash_fp_mcu_stm32() {
   # Put back cros_fp driver
   echo "${spiid}" > /sys/bus/spi/drivers/cros-ec-spi/bind
   # Kernel driver is back, we are no longer controlling power
-  echo "${gpio_pwren}" > /sys/class/gpio/unexport
+  if [[ -n "${gpio_pwren}" ]]; then
+    echo "${gpio_pwren}" > /sys/class/gpio/unexport
+  fi
   # Test it
   ectool --name=cros_fp version
 }
