@@ -3,7 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-. /usr/share/flash_fp_mcu/flash_fp_mcu_common.sh
+. "$(dirname "$(readlink -f "$0")")"/../share/flash_fp_mcu/flash_fp_mcu_common.sh
 
 # Kabylake PCH GPIOs
 readonly KBL_GPIOCHIP="gpiochip360"
