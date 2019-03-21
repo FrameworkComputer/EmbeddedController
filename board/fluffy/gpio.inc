@@ -1,0 +1,60 @@
+/* -*- mode:c -*-
+ *
+ * Copyright 2019 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
+/* Misc */
+GPIO(XP_RESET_L,         PIN(A, 10), GPIO_OUT_LOW)
+GPIO(EN_CC_FLIP,         PIN(A, 4),  GPIO_OUT_LOW)
+GPIO(ADC_PPVAR_VBUS_DUT, PIN(A, 0),  GPIO_ANALOG)
+
+/* Port Enables */
+GPIO(EN_C0,		PIN(B, 0),  GPIO_OUT_LOW)
+GPIO(EN_C1,		PIN(B, 1),  GPIO_OUT_LOW)
+GPIO(EN_C2,		PIN(B, 2),  GPIO_OUT_LOW)
+GPIO(EN_C3,		PIN(B, 3),  GPIO_OUT_LOW)
+GPIO(EN_C4,		PIN(B, 4),  GPIO_OUT_LOW)
+GPIO(EN_C5,		PIN(B, 5),  GPIO_OUT_LOW)
+GPIO(EN_C6,		PIN(B, 6),  GPIO_OUT_LOW)
+GPIO(EN_C7,		PIN(B, 7),  GPIO_OUT_LOW)
+GPIO(EN_C8,		PIN(B, 8),  GPIO_OUT_LOW)
+GPIO(EN_C9,		PIN(B, 9),  GPIO_OUT_LOW)
+GPIO(EN_C10,		PIN(B, 10), GPIO_OUT_LOW)
+GPIO(EN_C11,		PIN(B, 11), GPIO_OUT_LOW)
+GPIO(EN_C12,		PIN(B, 12), GPIO_OUT_LOW)
+GPIO(EN_C13,		PIN(A, 8),  GPIO_OUT_LOW)
+GPIO(EN_C14,		PIN(A, 9),  GPIO_OUT_LOW)
+GPIO(EN_C15,		PIN(B, 15), GPIO_OUT_LOW)
+GPIO(EN_C16,		PIN(C, 13), GPIO_OUT_LOW)
+GPIO(EN_C17,		PIN(C, 14), GPIO_OUT_LOW)
+GPIO(EN_C18,		PIN(C, 15), GPIO_OUT_LOW)
+GPIO(EN_C19,		PIN(F, 0),  GPIO_OUT_LOW)
+
+/* I2C Port for I/O expander */
+GPIO(I2C_SCL,           PIN(B, 13), GPIO_INPUT)
+GPIO(I2C_SDA,           PIN(B, 14), GPIO_INPUT)
+
+/* USB 2.0 Muxes */
+GPIO(USB_MUX0_C0,	PIN(A, 1),  GPIO_OUT_LOW)
+GPIO(USB_MUX0_C1,	PIN(A, 2),  GPIO_OUT_LOW)
+GPIO(USB_MUX0_C2,	PIN(A, 3),  GPIO_OUT_LOW)
+
+GPIO(USB_MUX1_C0,	PIN(A, 5),  GPIO_OUT_LOW)
+GPIO(USB_MUX1_C1,	PIN(A, 6),  GPIO_OUT_LOW)
+GPIO(USB_MUX1_C2,	PIN(A, 7),  GPIO_OUT_LOW)
+
+GPIO(EN_USB_MUX2,	PIN(A, 13), GPIO_OUT_LOW)
+GPIO(USB_MUX2_C0,	PIN(A, 14), GPIO_OUT_LOW)
+GPIO(USB_MUX2_C1,	PIN(A, 15), GPIO_OUT_LOW)
+GPIO(USB_MUX2_C2,	PIN(F, 1),  GPIO_OUT_LOW)
+
+/* Unimplemented signals since we are not an EC */
+UNIMPLEMENTED(ENTERING_RW)
+UNIMPLEMENTED(WP_L)
+
+ALTERNATE(PIN_MASK(B, 0x6000), 5, MODULE_I2C, GPIO_ODR_HIGH) /* PB13/14 I2C2 */
