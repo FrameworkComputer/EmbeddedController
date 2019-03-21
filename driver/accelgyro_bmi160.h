@@ -180,18 +180,13 @@ enum fifo_header {
 
 /* odr = 100 / (1 << (8 - reg)) ,within limit */
 #define BMI160_ODR_0_78HZ      0x01
-#define BMI160_ODR_25HZ	       0x06
-#define BMI160_ODR_50HZ        0x07
 #define BMI160_ODR_100HZ       0x08
-#define BMI160_ODR_800HZ       0x0b
-#define BMI160_ODR_1600HZ      0x0c
-#define BMI160_ODR_3200HZ      0x0d
 
 #define BMI160_REG_TO_ODR(_regval) \
-	((_regval) < 8 ? 100000 / (1 << (8 - (_regval))) : \
-			 100000 * (1 << ((_regval) - 8)))
+	((_regval) < BMI160_ODR_100HZ ? 100000 / (1 << (8 - (_regval))) : \
+					100000 * (1 << ((_regval) - 8)))
 #define BMI160_ODR_TO_REG(_odr) \
-	((_odr) < 100000 ? (__builtin_clz(100000 / (_odr)) - 23) : \
+	((_odr) < 100000 ? (__builtin_clz(100000 / (_odr)) - 24) : \
 			   (39 - __builtin_clz((_odr) / 100000)))
 
 #define BMI160_CONF_REG(_sensor)   (0x40 + 2 * (_sensor))
