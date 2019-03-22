@@ -93,6 +93,10 @@ void usb_charger_reset_charge(int port)
 				     port, NULL);
 	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
 				     port, NULL);
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
+	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+				     port, NULL);
+#endif
 }
 
 static void usb_charger_init(void)
