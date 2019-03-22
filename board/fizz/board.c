@@ -433,16 +433,14 @@ static void board_pmic_init(void)
 	if (err)
 		goto pmic_error;
 
-	if (oem == OEM_TEEMO) {
-		/*
-		 * V100ACNT Register Field Description. Default: 0x2A
-		 * [1:0] : 11b Forced PWM Operation.
-		 * [5:4] : 01b Output Voltage Select Vnom (1V)
-		 */
-		err = I2C_PMIC_WRITE(TPS650X30_REG_V100ACNT, 0x1B);
-		if (err)
-			goto pmic_error;
-	}
+	/*
+	 * V100ACNT Register Field Description. Default: 0x2A
+	 * [1:0] : 11b Forced PWM Operation.
+	 * [5:4] : 01b Output Voltage Select Vnom (1V)
+	 */
+	err = I2C_PMIC_WRITE(TPS650X30_REG_V100ACNT, 0x1B);
+	if (err)
+		goto pmic_error;
 
 	CPRINTS("PMIC init done");
 	pmic_initialized = 1;
