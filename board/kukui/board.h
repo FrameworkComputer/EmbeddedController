@@ -63,6 +63,9 @@
 #define CONFIG_SOFTWARE_PANIC
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VOLUME_BUTTONS
+#undef CONFIG_DEDICATED_CHARGE_PORT_COUNT
+#define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
+#define DEDICATED_CHARGE_PORT 1
 
 #define CONFIG_CHARGE_RAMP_SW
 #define CONFIG_CHARGER
@@ -74,6 +77,7 @@
 #define CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW 15000
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
+#define CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM
 #define CONFIG_CHARGER_OTG
 #define CONFIG_USB_CHARGER
 #define CONFIG_USB_MUX_VIRTUAL
@@ -251,6 +255,12 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
+enum charge_port {
+	CHARGE_PORT_USB_C,
+	CHARGE_PORT_POGO,
+};
+
+#include "ec_commands.h"
 #include "gpio_signal.h"
 #include "registers.h"
 
@@ -263,6 +273,11 @@ void board_reset_pd_mcu(void);
 int board_get_version(void);
 int board_is_sourcing_vbus(int port);
 void pogo_adc_interrupt(enum gpio_signal signal);
+int board_discharge_on_ac(int enable);
+int board_charge_port_is_sink(int port);
+int board_charge_port_is_connected(int port);
+void board_fill_source_power_info(int port,
+				  struct ec_response_usb_pd_power_info *r);
 
 #endif /* !__ASSEMBLER__ */
 

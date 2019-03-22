@@ -50,6 +50,8 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+#define POGO_VBUS_DETECT_DEBOUNCE_US (20 * MSEC)
+
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	schedule_deferred_pd_interrupt(0 /* port */);
@@ -58,6 +60,33 @@ static void tcpc_alert_event(enum gpio_signal signal)
 static void gauge_interrupt(enum gpio_signal signal)
 {
 	task_wake(TASK_ID_CHARGER);
+}
+
+static void pogo_vbus_detect_deferred(void);
+DECLARE_DEFERRED(pogo_vbus_detect_deferred);
+
+static void pogo_vbus_detect_deferred(void)
+{
+	if (gpio_get_level(GPIO_POGO_VBUS_PRESENT)) {
+		struct charge_port_info info = {
+			.voltage = 5000, .current = 1500};
+		/*
+		 * Set supplier type to PD to have same priority as type c
+		 * port.
+		 */
+		charge_manager_update_charge(
+			CHARGE_SUPPLIER_DEDICATED, CHARGE_PORT_POGO, &info);
+	} else {
+		charge_manager_update_charge(
+			CHARGE_SUPPLIER_DEDICATED, CHARGE_PORT_POGO, NULL);
+	}
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+}
+
+static void pogo_vbus_present(enum gpio_signal signal)
+{
+	hook_call_deferred(&pogo_vbus_detect_deferred_data,
+			   POGO_VBUS_DETECT_DEBOUNCE_US);
 }
 
 #include "gpio_list.h"
@@ -155,15 +184,34 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
+static void board_pogo_charge_init(void)
+{
+	int i;
+
+	/* Initialize all charge suppliers to 0 */
+	for (i = 0; i < CHARGE_SUPPLIER_COUNT; i++)
+		charge_manager_update_charge(i, CHARGE_PORT_POGO, NULL);
+
+	hook_call_deferred(&pogo_vbus_detect_deferred_data, 0);
+}
+DECLARE_HOOK(HOOK_INIT, board_pogo_charge_init,
+	     HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
+
 int board_set_active_charge_port(int charge_port)
 {
 	CPRINTS("New chg p%d", charge_port);
 
 	switch (charge_port) {
-	case 0:
+	case CHARGE_PORT_USB_C:
 		/* Don't charge from a source port */
 		if (board_vbus_source_enabled(charge_port))
 			return -1;
+		gpio_set_level(GPIO_EN_POGO_CHARGE_L, 1);
+		gpio_set_level(GPIO_EN_USBC_CHARGE_L, 0);
+		break;
+	case CHARGE_PORT_POGO:
+		gpio_set_level(GPIO_EN_USBC_CHARGE_L, 1);
+		gpio_set_level(GPIO_EN_POGO_CHARGE_L, 0);
 		break;
 	case CHARGE_PORT_NONE:
 		/*
@@ -171,6 +219,8 @@ int board_set_active_charge_port(int charge_port)
 		 * even when battery is disconnected, keep VBAT rail on but
 		 * set the charging current to minimum.
 		 */
+		gpio_set_level(GPIO_EN_POGO_CHARGE_L, 1);
+		gpio_set_level(GPIO_EN_USBC_CHARGE_L, 1);
 		charger_set_current(0);
 		break;
 	default:
@@ -188,16 +238,23 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 			       CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
+int board_discharge_on_ac(int enable)
+{
+	/* TODO(b:123268580): Implement POGO discharge logic. */
+	return charger_discharge_on_ac(enable);
+}
+
 int extpower_is_present(void)
 {
 	/*
 	 * The charger will indicate VBUS presence if we're sourcing 5V,
 	 * so exclude such ports.
 	 */
-	if (board_vbus_source_enabled(0))
+	/* TODO(b:127767432): Also need to check pogo_vbus_present. */
+	if (board_vbus_source_enabled(CHARGE_PORT_USB_C))
 		return 0;
 	else
-		return tcpm_get_vbus_level(0);
+		return tcpm_get_vbus_level(CHARGE_PORT_USB_C);
 }
 
 int pd_snk_is_vbus_provided(int port)
@@ -253,6 +310,9 @@ static void board_init(void)
 	if (IS_ENABLED(BOARD_KRANE))
 		/* Display bias settings.  */
 		mt6370_db_set_voltages(6000, 5800, 5800);
+
+	/* Enable pogo charging signal */
+	gpio_enable_interrupt(GPIO_POGO_VBUS_PRESENT);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -531,4 +591,25 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 	 * actually close to 4600)
 	 */
 	return charger_get_vbus_voltage(port) < 4400;
+}
+
+int board_charge_port_is_sink(int port)
+{
+	/* TODO(b:128386458): Check POGO_ADC_INT_L */
+	return 1;
+}
+
+int board_charge_port_is_connected(int port)
+{
+	return gpio_get_level(GPIO_POGO_VBUS_PRESENT);
+}
+
+void board_fill_source_power_info(int port,
+				  struct ec_response_usb_pd_power_info *r)
+{
+	r->meas.voltage_now = 3300;
+	r->meas.voltage_max = 3300;
+	r->meas.current_max = 1500;
+	r->meas.current_lim = 1500;
+	r->max_power = r->meas.voltage_now * r->meas.current_max;
 }
