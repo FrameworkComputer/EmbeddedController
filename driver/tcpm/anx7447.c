@@ -30,6 +30,10 @@
 
 #define vsafe5v_min (3800/25)
 #define vsafe0v_max (800/25)
+/*
+ * These interface are workable while ADC is enabled, before
+ * calling them should make sure ec driver finished chip initilization.
+ */
 #define is_equal_greater_safe5v(port) \
 		(((anx7447_get_vbus_voltage(port))) > vsafe5v_min)
 #define is_equal_greater_safe0v(port) \
@@ -392,11 +396,6 @@ static int anx7447_get_vbus_voltage(int port)
 	return vbus_volt;
 }
 
-static int anx7447_tcpm_get_vbus_level(int port)
-{
-	return is_equal_greater_safe5v(port);
-}
-
 int anx7447_set_power_supply_ready(int port)
 {
 	int count = 0;
@@ -566,7 +565,7 @@ const struct tcpm_drv anx7447_tcpm_drv = {
 	.release		= &anx7447_release,
 	.get_cc			= &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.get_vbus_level		= &anx7447_tcpm_get_vbus_level,
+	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,
 #endif
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
 	.set_cc			= &tcpci_tcpm_set_cc,
