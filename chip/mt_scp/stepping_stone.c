@@ -13,7 +13,7 @@
 #include "common.h"
 #include "link_defs.h"
 
-extern void *stack_end;
+extern void stack_end(void); /* not technically correct, it's just a pointer */
 extern void reset(void);
 
 __SECTION_KEEP(stepping_stone) const void *ss_header[2] = {

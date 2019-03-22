@@ -119,7 +119,7 @@ extern void *__dram_bss_end;
 #ifdef CONFIG_CHIP_MEMORY_REGIONS
 #define __SECTION(name) __attribute__((section("." STRINGIFY(name) ".50_auto")))
 #define __SECTION_KEEP(name)                                                   \
-	__attribute__((section("." STRINGIFY(name) ".keep.50_auto")))
+	__keep __attribute__((section("." STRINGIFY(name) ".keep.50_auto")))
 #else
 #define __SECTION(name)
 #define __SECTION_KEEP(name)

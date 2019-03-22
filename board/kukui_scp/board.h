@@ -50,6 +50,8 @@
 #define CONFIG_IPI
 #define CONFIG_RPMSG_NAME_SERVICE
 
+#define CONFIG_LTO
+
 /* IPI ID should be in sync across kernel and EC. */
 #define IPI_SCP_INIT 0
 #define IPI_VDEC_H264 1
