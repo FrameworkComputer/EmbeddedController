@@ -5,122 +5,196 @@
  * Power and battery LED control for Bloog/Blooguard
  */
 
+#include "battery.h"
+#include "charge_manager.h"
+#include "charge_state.h"
+#include "chipset.h"
 #include "ec_commands.h"
 #include "gpio.h"
+#include "host_command.h"
 #include "led_common.h"
-#include "led_onoff_states.h"
 #include "hooks.h"
 
-#define LED_OFF_LVL	1
-#define LED_ON_LVL	0
+#define BAT_LED_ON 0
+#define BAT_LED_OFF 1
 
-const int led_charge_lvl_1;
+#define POWER_LED_ON 0
+#define POWER_LED_OFF 1
 
-const int led_charge_lvl_2 = 100;
-
-/* Bloog: Note there is only LED for charge / power */
-struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
-	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
-	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
-	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0]	     = {{LED_OFF, LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0_BAT_LOW] = {{EC_LED_COLOR_WHITE, 1 * LED_ONE_SEC},
-					{LED_OFF, 1 * LED_ONE_SEC} },
-	/* STATE_DISCHARGE_S3 will changed if sku is clamshells */
-	[STATE_DISCHARGE_S3]	     = {{LED_OFF, LED_INDEFINITE} },
-	[STATE_DISCHARGE_S5]         = {{LED_OFF, LED_INDEFINITE} },
-	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_WHITE, 0.5 * LED_ONE_SEC},
-					{LED_OFF, 0.5 * LED_ONE_SEC} },
-	[STATE_FACTORY_TEST]         = {{EC_LED_COLOR_AMBER, 1 * LED_ONE_SEC},
-					{LED_OFF, 1 * LED_ONE_SEC} },
-};
-
-const struct led_descriptor
-		led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
-	[PWR_LED_STATE_ON]           = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
-	[PWR_LED_STATE_SUSPEND_AC]   = {{EC_LED_COLOR_WHITE, 1 * LED_ONE_SEC},
-					{LED_OFF,	   1 * LED_ONE_SEC} },
-	[PWR_LED_STATE_SUSPEND_NO_AC] = {{EC_LED_COLOR_WHITE, 1 * LED_ONE_SEC},
-					{LED_OFF,	   1 * LED_ONE_SEC} },
-	[PWR_LED_STATE_OFF]           = {{LED_OFF, LED_INDEFINITE} },
-};
+#define LED_TICKS_PER_CYCLE 10
+#define LED_ON_TICKS 5
 
 const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED,
+	EC_LED_ID_LEFT_LED,
+	EC_LED_ID_RIGHT_LED,
 	EC_LED_ID_POWER_LED
 };
 
-static void s3_led_init(void)
-{
-	if (!board_is_convertible()) {
-		led_bat_state_table[STATE_DISCHARGE_S3][LED_PHASE_0].color =
-			EC_LED_COLOR_WHITE;
-		led_bat_state_table[STATE_DISCHARGE_S3][LED_PHASE_0].time =
-			1 * LED_ONE_SEC;
-
-		led_bat_state_table[STATE_DISCHARGE_S3][LED_PHASE_1].color =
-			LED_OFF;
-		led_bat_state_table[STATE_DISCHARGE_S3][LED_PHASE_1].time =
-			1 * LED_ONE_SEC;
-	}
-}
-DECLARE_HOOK(HOOK_INIT, s3_led_init, HOOK_PRIO_DEFAULT);
-
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
+
+enum led_color {
+	LED_OFF = 0,
+	LED_AMBER,
+	LED_WHITE,
+	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+};
+
+static void led_set_color_battery(int port, enum led_color color)
+{
+	gpio_set_level(port ? GPIO_LED_AMBER_C1_L : GPIO_LED_AMBER_C0_L,
+		(color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
+	gpio_set_level(port ? GPIO_LED_WHITE_C1_L : GPIO_LED_WHITE_C0_L,
+		(color == LED_WHITE) ? BAT_LED_ON : BAT_LED_OFF);
+}
 
 void led_set_color_power(enum ec_led_colors color)
 {
-	if (color == EC_LED_COLOR_WHITE)
-		gpio_set_level(GPIO_PWR_LED_WHITE_L, LED_ON_LVL);
-	else
-		/* LED_OFF and unsupported colors */
-		gpio_set_level(GPIO_PWR_LED_WHITE_L, LED_OFF_LVL);
-}
-
-void led_set_color_battery(enum ec_led_colors color)
-{
 	switch (color) {
-	case EC_LED_COLOR_WHITE:
-		gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_ON_LVL);
-		gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_OFF_LVL);
+	case LED_OFF:
+		gpio_set_level(GPIO_PWR_LED_WHITE_L, POWER_LED_OFF);
 		break;
-	case EC_LED_COLOR_AMBER:
-		gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_OFF_LVL);
-		gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_ON_LVL);
+	case LED_WHITE:
+		gpio_set_level(GPIO_PWR_LED_WHITE_L, POWER_LED_ON);
 		break;
-	default: /* LED_OFF and other unsupported colors */
-		gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_OFF_LVL);
-		gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_OFF_LVL);
+	default:
 		break;
 	}
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	if (led_id == EC_LED_ID_BATTERY_LED) {
+	switch (led_id) {
+	case EC_LED_ID_LEFT_LED:
 		brightness_range[EC_LED_COLOR_WHITE] = 1;
 		brightness_range[EC_LED_COLOR_AMBER] = 1;
-	} else if (led_id == EC_LED_ID_POWER_LED) {
+		break;
+	case EC_LED_ID_RIGHT_LED:
 		brightness_range[EC_LED_COLOR_WHITE] = 1;
+		brightness_range[EC_LED_COLOR_AMBER] = 1;
+		break;
+	case EC_LED_ID_POWER_LED:
+		brightness_range[EC_LED_COLOR_WHITE] = 1;
+		break;
+	default:
+		break;
 	}
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	if (led_id == EC_LED_ID_BATTERY_LED) {
+	switch (led_id) {
+	case EC_LED_ID_LEFT_LED:
 		if (brightness[EC_LED_COLOR_WHITE] != 0)
-			led_set_color_battery(EC_LED_COLOR_WHITE);
+			led_set_color_battery(0, LED_WHITE);
 		else if (brightness[EC_LED_COLOR_AMBER] != 0)
-			led_set_color_battery(EC_LED_COLOR_AMBER);
+			led_set_color_battery(0, LED_AMBER);
 		else
-			led_set_color_battery(LED_OFF);
-	} else if (led_id == EC_LED_ID_POWER_LED) {
+			led_set_color_battery(0, LED_OFF);
+		break;
+	case EC_LED_ID_RIGHT_LED:
+		if (brightness[EC_LED_COLOR_WHITE] != 0)
+			led_set_color_battery(1, LED_WHITE);
+		else if (brightness[EC_LED_COLOR_AMBER] != 0)
+			led_set_color_battery(1, LED_AMBER);
+		else
+			led_set_color_battery(1, LED_OFF);
+		break;
+	case EC_LED_ID_POWER_LED:
 		if (brightness[EC_LED_COLOR_WHITE] != 0)
 			led_set_color_power(EC_LED_COLOR_WHITE);
 		else
 			led_set_color_power(LED_OFF);
+		break;
+	default:
+		return EC_ERROR_PARAM1;
 	}
 
 	return EC_SUCCESS;
 }
 
+/*
+ * Set active charge port color to the parameter, turn off all others.
+ * If no port is active (-1), turn off all LEDs.
+ */
+static void set_active_port_color(enum led_color color)
+{
+	int port = charge_manager_get_active_charge_port();
+
+	if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
+		led_set_color_battery(0, (port == 0) ? color : LED_OFF);
+	if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
+		led_set_color_battery(1, (port == 1) ? color : LED_OFF);
+}
+
+static void led_set_battery(void)
+{
+	static int battery_ticks;
+	uint32_t chflags = charge_get_flags();
+
+	battery_ticks++;
+
+	switch (charge_get_state()) {
+	case PWR_STATE_CHARGE:
+		/* Always indicate when charging, even in suspend. */
+		set_active_port_color(LED_AMBER);
+		break;
+	case PWR_STATE_DISCHARGE:
+		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED)) {
+			if (charge_get_percent() < 10)
+				led_set_color_battery(1, (battery_ticks %
+					LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
+					LED_WHITE : LED_OFF);
+			else
+				led_set_color_battery(1, LED_OFF);
+		}
+
+		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
+			led_set_color_battery(0, LED_OFF);
+		break;
+	case PWR_STATE_ERROR:
+		set_active_port_color((battery_ticks & 0x2) ?
+				LED_WHITE : LED_OFF);
+		break;
+	case PWR_STATE_CHARGE_NEAR_FULL:
+		set_active_port_color(LED_WHITE);
+		break;
+	case PWR_STATE_IDLE: /* External power connected in IDLE */
+		if (chflags & CHARGE_FLAG_FORCE_IDLE)
+			set_active_port_color((battery_ticks %
+				LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
+				LED_AMBER : LED_OFF);
+		else
+			set_active_port_color(LED_WHITE);
+		break;
+	default:
+		/* Other states don't alter LED behavior */
+		break;
+	}
+}
+
+static void led_set_power(void)
+{
+	static int power_tick;
+
+	power_tick++;
+
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		led_set_color_power(LED_WHITE);
+	else if (chipset_in_state(CHIPSET_STATE_SUSPEND |
+				  CHIPSET_STATE_STANDBY))
+		led_set_color_power((power_tick %
+			LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
+			LED_WHITE : LED_OFF);
+	else
+		led_set_color_power(LED_OFF);
+}
+
+/* Called by hook task every TICK */
+static void led_tick(void)
+{
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		led_set_power();
+
+	led_set_battery();
+}
+DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
