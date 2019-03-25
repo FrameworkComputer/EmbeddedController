@@ -1186,7 +1186,7 @@ int main(int argc, char **argv)
 
 	if (flags & FLAG_ERASE || output_filename) {
 		if ((!strncmp("STM32L15", chip->name, 8)) ||
-		    (!strncmp("STM32F41", chip->name, 8))) {
+		    (!strncmp("STM32F411", chip->name, 9))) {
 			/* Mass erase is not supported on these chips*/
 			int i, page_count = chip->flash_size / chip->page_size;
 			for (i = 0; i < page_count; i += 128) {
