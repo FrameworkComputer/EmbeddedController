@@ -31,6 +31,14 @@ int board_battery_is_present(void)
 }
 
 /**
+ * Return non-zero if the wp state is being overridden.
+ */
+static int board_forcing_wp(void)
+{
+	return GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_FORCING_WP;
+}
+
+/**
  * Set the current write protect state in RBOX and long life scratch register.
  *
  * @param asserted: 0 to disable write protect, otherwise enable write protect.
@@ -68,7 +76,7 @@ static void check_wp_battery_presence(void)
 	int bp = board_battery_is_present();
 
 	/* If we're forcing WP, ignore battery detect */
-	if (GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_FORCING_WP)
+	if (board_forcing_wp())
 		return;
 
 	/* Otherwise, mirror battery */
@@ -121,7 +129,7 @@ static enum vendor_cmd_rc vc_set_wp(enum vendor_cmd_cc code,
 		return VENDOR_RC_BOGUS_ARGS;
 
 	/* Get current wp settings */
-	if (GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_FORCING_WP)
+	if (board_forcing_wp())
 		response |= WPV_FORCE;
 	if (wp_is_asserted())
 		response |= WPV_ENABLE;
@@ -164,8 +172,7 @@ static int command_wp(int argc, char **argv)
 		}
 	}
 
-	forced = GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_FORCING_WP;
-	ccprintf("Flash WP: %s%s\n", forced ? "forced " : "",
+	ccprintf("Flash WP: %s%s\n", board_forcing_wp() ? "forced " : "",
 		 wp_is_asserted() ? "enabled" : "disabled");
 
 	ccprintf(" at boot: ");
@@ -204,7 +211,7 @@ void init_wp_state(void)
 		 * that was saved to the long-life registers before the deep
 		 * sleep instead of going back to the at-boot default.
 		 */
-		if (GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_FORCING_WP) {
+		if (board_forcing_wp()) {
 			/* Temporarily forcing WP */
 			set_wp_state(GREG32(PMU, LONG_LIFE_SCRATCH1) &
 				     BOARD_WP_ASSERTED);
