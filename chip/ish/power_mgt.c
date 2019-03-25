@@ -228,6 +228,30 @@ static void switch_to_aontask(void)
 	interrupt_enable();
 }
 
+__attribute__ ((noreturn))
+static void handle_reset_in_aontask(int pm_state)
+{
+	pm_ctx.aon_share->pm_state = pm_state;
+
+	/* only enable PMU wakeup interrupt */
+	disable_all_interrupts();
+	task_enable_irq(ISH_PMU_WAKEUP_IRQ);
+
+#ifdef CONFIG_ISH_PM_RESET_PREP
+	task_enable_irq(ISH_RESET_PREP_IRQ);
+#endif
+
+	/* enable Trunk Clock Gating (TCG) of ISH */
+	CCU_TCG_EN = 1;
+
+	/* enable power gating of RF(Cache) and ROMs */
+	PMU_RF_ROM_PWR_CTRL = 1;
+
+	switch_to_aontask();
+
+	__builtin_unreachable();
+}
+
 #endif
 
 static void enter_d0i0(void)
@@ -239,7 +263,7 @@ static void enter_d0i0(void)
 	pm_ctx.aon_share->pm_state = ISH_PM_STATE_D0I0;
 
 	/* halt ISH cpu, will wakeup from any interrupt */
-	ish_halt();
+	ish_mia_halt();
 
 	t1 = get_time();
 
@@ -264,11 +288,15 @@ static void enter_d0i1(void)
 	current_irq_map = disable_all_interrupts();
 	task_enable_irq(ISH_PMU_WAKEUP_IRQ);
 
+#ifdef CONFIG_ISH_PM_RESET_PREP
+	task_enable_irq(ISH_RESET_PREP_IRQ);
+#endif
+
 	/* enable Trunk Clock Gating (TCG) of ISH */
 	CCU_TCG_EN = 1;
 
 	/* halt ISH cpu, will wakeup from PMU wakeup interrupt */
-	ish_halt();
+	ish_mia_halt();
 
 	/* disable Trunk Clock Gating (TCG) of ISH */
 	CCU_TCG_EN = 0;
@@ -300,6 +328,10 @@ static void enter_d0i2(void)
 	/* only enable PMU wakeup interrupt */
 	current_irq_map = disable_all_interrupts();
 	task_enable_irq(ISH_PMU_WAKEUP_IRQ);
+
+#ifdef CONFIG_ISH_PM_RESET_PREP
+	task_enable_irq(ISH_RESET_PREP_IRQ);
+#endif
 
 	/* enable Trunk Clock Gating (TCG) of ISH */
 	CCU_TCG_EN = 1;
@@ -345,6 +377,10 @@ static void enter_d0i3(void)
 	/* only enable PMU wakeup interrupt */
 	current_irq_map = disable_all_interrupts();
 	task_enable_irq(ISH_PMU_WAKEUP_IRQ);
+
+#ifdef CONFIG_ISH_PM_RESET_PREP
+	task_enable_irq(ISH_RESET_PREP_IRQ);
+#endif
 
 	/* enable Trunk Clock Gating (TCG) of ISH */
 	CCU_TCG_EN = 1;
@@ -444,6 +480,15 @@ static void pm_process(uint32_t idle_us)
 
 void ish_pm_init(void)
 {
+	/* clear reset bit */
+	ISH_RST_REG = 0;
+
+	/* clear reset history register in CCU */
+	CCU_RST_HST = CCU_RST_HST;
+
+	/* disable TCG and disable BCG */
+	CCU_TCG_EN = 0;
+	CCU_BCG_EN = 0;
 
 #ifdef CONFIG_ISH_PM_AONTASK
 	init_aon_task();
@@ -451,6 +496,48 @@ void ish_pm_init(void)
 
 	/* unmask all wake up events */
 	PMU_MASK_EVENT = ~PMU_MASK_EVENT_BIT_ALL;
+
+#ifdef CONFIG_ISH_PM_RESET_PREP
+	/* unmask reset prep avail interrupt */
+	PMU_RST_PREP = 0;
+
+	task_enable_irq(ISH_RESET_PREP_IRQ);
+#endif
+
+#ifdef CONFIG_ISH_PM_D3
+
+	/* unmask D3 and BME interrupts */
+	PMU_D3_STATUS &= (PMU_D3_BIT_SET | PMU_BME_BIT_SET);
+
+	if ((!(PMU_D3_STATUS & PMU_D3_BIT_SET)) &&
+			(PMU_D3_STATUS & PMU_BME_BIT_SET)) {
+		PMU_D3_STATUS = PMU_D3_STATUS;
+	}
+
+	task_enable_irq(ISH_D3_RISE_IRQ);
+	task_enable_irq(ISH_D3_FALL_IRQ);
+	task_enable_irq(ISH_BME_RISE_IRQ);
+	task_enable_irq(ISH_BME_FALL_IRQ);
+
+#endif
+
+}
+
+__attribute__ ((noreturn))
+void ish_pm_reset(void)
+{
+
+#ifdef CONFIG_ISH_PM_AONTASK
+	if (pm_ctx.aon_valid) {
+		handle_reset_in_aontask(ISH_PM_STATE_RESET_PREP);
+	} else {
+		ish_mia_reset();
+	}
+#else
+	ish_mia_reset();
+#endif
+
+	__builtin_unreachable();
 }
 
 void __idle(void)
@@ -533,5 +620,107 @@ static void pmu_wakeup_isr(void)
 }
 
 DECLARE_IRQ(ISH_PMU_WAKEUP_IRQ, pmu_wakeup_isr);
+
+#endif
+
+#ifdef CONFIG_ISH_PM_RESET_PREP
+
+/**
+ * from ISH5.0, when system doing S0->Sx transition, will receive reset prep
+ * interrupt, will switch to aontask for handling
+ *
+ */
+
+__attribute__ ((noreturn))
+static void reset_prep_isr(void)
+{
+	/* mask reset prep avail interrupt */
+	PMU_RST_PREP = PMU_RST_PREP_INT_MASK;
+
+	/**
+	 * Indicate completion of servicing the interrupt to IOAPIC first
+	 * then indicate completion of servicing the interrupt to LAPIC
+	 */
+	REG32(IOAPIC_EOI_REG) = ISH_RESET_PREP_VEC;
+	REG32(LAPIC_EOI_REG) = 0x0;
+
+	if (pm_ctx.aon_valid) {
+		handle_reset_in_aontask(ISH_PM_STATE_RESET_PREP);
+	} else {
+		ish_mia_reset();
+	}
+
+	__builtin_unreachable();
+}
+
+DECLARE_IRQ(ISH_RESET_PREP_IRQ, reset_prep_isr);
+
+#endif
+
+#ifdef CONFIG_ISH_PM_D3
+
+static void handle_d3(uint32_t irq_vec)
+{
+	PMU_D3_STATUS = PMU_D3_STATUS;
+
+	if (PMU_D3_STATUS & (PMU_D3_BIT_RISING_EDGE_STATUS | PMU_D3_BIT_SET)) {
+
+		if (!pm_ctx.aon_valid)
+			ish_mia_reset();
+
+		/**
+		 * Indicate completion of servicing the interrupt to IOAPIC
+		 * first then indicate completion of servicing the interrupt
+		 * to LAPIC
+		 */
+		REG32(IOAPIC_EOI_REG) = irq_vec;
+		REG32(LAPIC_EOI_REG) = 0x0;
+
+		pm_ctx.aon_share->pm_state = ISH_PM_STATE_D3;
+
+		/* only enable PMU wakeup interrupt */
+		disable_all_interrupts();
+		task_enable_irq(ISH_PMU_WAKEUP_IRQ);
+
+#ifdef CONFIG_ISH_PM_RESET_PREP
+		task_enable_irq(ISH_RESET_PREP_IRQ);
+#endif
+
+		/* enable Trunk Clock Gating (TCG) of ISH */
+		CCU_TCG_EN = 1;
+
+		/* enable power gating of RF(Cache) and ROMs */
+		PMU_RF_ROM_PWR_CTRL = 1;
+
+		switch_to_aontask();
+
+		__builtin_unreachable();
+	}
+}
+
+static void d3_rise_isr(void)
+{
+	handle_d3(ISH_D3_RISE_VEC);
+}
+
+static void d3_fall_isr(void)
+{
+	handle_d3(ISH_D3_FALL_VEC);
+}
+
+static void bme_rise_isr(void)
+{
+	handle_d3(ISH_BME_RISE_VEC);
+}
+
+static void bme_fall_isr(void)
+{
+	handle_d3(ISH_BME_FALL_VEC);
+}
+
+DECLARE_IRQ(ISH_D3_RISE_IRQ, d3_rise_isr);
+DECLARE_IRQ(ISH_D3_FALL_IRQ, d3_fall_isr);
+DECLARE_IRQ(ISH_BME_RISE_IRQ, bme_rise_isr);
+DECLARE_IRQ(ISH_BME_FALL_IRQ, bme_fall_isr);
 
 #endif

@@ -50,12 +50,15 @@ uint32_t chip_read_reset_flags(void)
 
 void _system_reset(int flags, int wake_from_hibernate)
 {
-	/*
-	 * ISH HW looks at the rising edge of this bit to
-	 * trigger a MIA reset.
+#ifdef CONFIG_LOW_POWER_IDLE
+	/**
+	 * ish_pm_reset() do more (poweroff main SRAM etc) than
+	 * ish_mia_reset() which just reset the ISH minute-ia cpu core
 	 */
-	ISH_RST_REG = 0;
-	ISH_RST_REG = 1;
+	ish_pm_reset();
+#else
+	ish_mia_reset();
+#endif
 }
 
 void system_reset(int flags)

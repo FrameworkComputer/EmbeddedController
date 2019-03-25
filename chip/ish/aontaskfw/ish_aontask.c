@@ -76,7 +76,7 @@
 #define AON_IDT_ENTRY_VEC_LAST         ISH_PMU_WAKEUP_VEC
 #endif
 
-static void handle_reset(void);
+static void handle_reset(int pm_state);
 
 /* ISR for PMU wakeup interrupt */
 static void pmu_wakeup_isr(void)
@@ -108,7 +108,7 @@ static void reset_prep_isr(void)
 	REG32(IOAPIC_EOI_REG) = ISH_RESET_PREP_VEC;
 	REG32(LAPIC_EOI_REG) = 0x0;
 
-	handle_reset();
+	handle_reset(ISH_PM_STATE_RESET_PREP);
 
 	__builtin_unreachable();
 }
@@ -488,7 +488,7 @@ static void handle_d0i2(void)
 	/* delay some cycles before halt */
 	delay(SRAM_RETENTION_CYCLES_DELAY);
 
-	ish_halt();
+	ish_mia_halt();
 	/* wakeup from PMU interrupt */
 
 	/* set main SRAM intto normal mode */
@@ -516,7 +516,7 @@ static void handle_d0i3(void)
 	/* power off main SRAM */
 	sram_power(0);
 
-	ish_halt();
+	ish_mia_halt();
 	/* wakeup from PMU interrupt */
 
 	/* power on main SRAM */
@@ -527,22 +527,43 @@ static void handle_d0i3(void)
 
 	if (ret != AON_SUCCESS) {
 		/* we can't switch back to main FW now, reset ISH */
-		handle_reset();
+		handle_reset(ISH_PM_STATE_RESET);
 	}
 }
 
 static void handle_d3(void)
 {
-	/* TODO store main FW 's context to IMR DDR from main sram */
-	/* TODO power off main SRAM */
-
-	/* TODO handle D3 */
+	/* handle D3 */
+	handle_reset(ISH_PM_STATE_RESET);
 }
 
-static void handle_reset(void)
+static void handle_reset(int pm_state)
 {
-	/* TODO power off main SRAM */
-	/* TODO handle reset */
+	/* disable CSME CSR irq */
+	REG32(IPC_PIMR) &= ~IPC_PIMR_CSME_CSR_BIT;
+
+	/* power off main SRAM */
+	sram_power(0);
+
+	while (1) {
+
+		/* check if host ish driver already set the DMA enable flag */
+		if (REG32(IPC_ISH_RMP2) & DMA_ENABLED_MASK) {
+
+			/* clear ISH2HOST doorbell register */
+			REG32(IPC_ISH2HOST_DOORBELL) = 0;
+
+			/* clear error register in MISC space */
+			MISC_ISH_ECC_ERR_SRESP = 1;
+
+			/* reset ISH minute-ia cpu core, will goto ISH ROM */
+			ish_mia_reset();
+		}
+
+		ish_mia_halt();
+	}
+
+	__builtin_unreachable();
 }
 
 static void handle_unknown_state(void)
@@ -600,12 +621,20 @@ void ish_aon_main(void)
 		case ISH_PM_STATE_D3:
 			handle_d3();
 			break;
+		case ISH_PM_STATE_RESET:
 		case ISH_PM_STATE_RESET_PREP:
-			handle_reset();
+			handle_reset(aon_share.pm_state);
 			break;
 		default:
 			handle_unknown_state();
 			break;
+		}
+
+		/* check if D3 rising status */
+		if (PMU_D3_STATUS &
+		    (PMU_D3_BIT_RISING_EDGE_STATUS | PMU_D3_BIT_SET)) {
+			aon_share.pm_state = ISH_PM_STATE_D3;
+			handle_d3();
 		}
 
 		/* restore main FW's IDT and switch back to main FW */

@@ -58,11 +58,15 @@ enum ish_i2c_port {
 #define ISH_HPET_TIMER1_IRQ        8
 #define ISH_HPET_TIMER2_IRQ        11
 #define ISH_IPC_HOST2ISH_IRQ       12
+#define ISH_PMU_WAKEUP_IRQ         18
+#define ISH_D3_RISE_IRQ            19
+#define ISH_D3_FALL_IRQ            29
+#define ISH_BME_RISE_IRQ           50
+#define ISH_BME_FALL_IRQ           51
 #define ISH_IPC_ISH2HOST_CLR_IRQ   24
 #define ISH_UART0_IRQ              34
 #define ISH_UART1_IRQ              35
 #define ISH_RESET_PREP_IRQ         62
-#define ISH_PMU_WAKEUP_IRQ         18
 
 /* Interrupt vectors 0-31 are architecture reserved.
  * Vectors 32-255 are user-defined.
@@ -107,6 +111,10 @@ enum ish_i2c_port {
 #define ISH_IPC_VEC                IRQ_TO_VEC(ISH_IPC_HOST2ISH_IRQ)
 #define ISH_RESET_PREP_VEC         IRQ_TO_VEC(ISH_RESET_PREP_IRQ)
 #define ISH_PMU_WAKEUP_VEC         IRQ_TO_VEC(ISH_PMU_WAKEUP_IRQ)
+#define ISH_D3_RISE_VEC            IRQ_TO_VEC(ISH_D3_RISE_IRQ)
+#define ISH_D3_FALL_VEC            IRQ_TO_VEC(ISH_D3_FALL_IRQ)
+#define ISH_BME_RISE_VEC           IRQ_TO_VEC(ISH_BME_RISE_IRQ)
+#define ISH_BME_FALL_VEC           IRQ_TO_VEC(ISH_BME_FALL_IRQ)
 
 #ifdef CONFIG_ISH_UART_0
 #define ISH_DEBUG_UART       		UART_PORT_0
@@ -121,6 +129,7 @@ enum ish_i2c_port {
 /* IPC_Registers */
 #define IPC_PISR                   (ISH_IPC_BASE + 0x0)
 #define IPC_PIMR                   (ISH_IPC_BASE + 0x4)
+#define IPC_PIMR_CSME_CSR_BIT      (0x1 << 23)
 #define IPC_ISH2HOST_MSG_REGS      (ISH_IPC_BASE + 0x60)
 #define IPC_ISH_FWSTS              (ISH_IPC_BASE + 0x34)
 #define IPC_HOST2ISH_DOORBELL      (ISH_IPC_BASE + 0x48)
@@ -128,6 +137,10 @@ enum ish_i2c_port {
 #define IPC_ISH2HOST_DOORBELL      (ISH_IPC_BASE + 0x54)
 #define IPC_ISH2PMC_DOORBELL       (ISH_IPC_BASE + 0x58)
 #define IPC_ISH2PMC_MSG_REGS       (ISH_IPC_BASE + 0x260)
+#define IPC_ISH_RMP0               (ISH_IPC_BASE + 0x360)
+#define IPC_ISH_RMP1               (ISH_IPC_BASE + 0x364)
+#define IPC_ISH_RMP2               (ISH_IPC_BASE + 0x368)
+#define DMA_ENABLED_MASK           (0x1 << 0)
 #define IPC_BUSY_CLEAR             (ISH_IPC_BASE + 0x378)
 #define IPC_UMA_RANGE_LOWER_0      REG32(ISH_IPC_BASE + 0x380)
 #define IPC_UMA_RANGE_LOWER_1      REG32(ISH_IPC_BASE + 0x384)
@@ -136,6 +149,17 @@ enum ish_i2c_port {
 
 /* PMU Registers */
 #define PMU_SRAM_PG_EN		REG32(ISH_PMU_BASE + 0x0)
+#define PMU_D3_STATUS		REG32(ISH_PMU_BASE + 0x4)
+#define PMU_D3_BIT_SET                    (0x1 << 0)
+#define PMU_D3_BIT_RISING_EDGE_STATUS     (0x1 << 1)
+#define PMU_D3_BIT_FALLING_EDGE_STATUS    (0x1 << 2)
+#define PMU_D3_BIT_RISING_EDGE_MASK       (0x1 << 3)
+#define PMU_D3_BIT_FALLING_EDGE_MASK      (0x1 << 4)
+#define PMU_BME_BIT_SET                   (0x1 << 5)
+#define PMU_BME_BIT_RISING_EDGE_STATUS    (0x1 << 6)
+#define PMU_BME_BIT_FALLING_EDGE_STATUS   (0x1 << 7)
+#define PMU_BME_BIT_RISING_EDGE_MASK      (0x1 << 8)
+#define PMU_BME_BIT_FALLING_EDGE_MASK     (0x1 << 9)
 #define PMU_VNN_REQ		REG32(ISH_PMU_BASE + 0x3c)
 #define VNN_REQ_IPC_HOST_WRITE		BIT(3) /* Power for IPC host write */
 
@@ -161,6 +185,7 @@ enum ish_i2c_port {
 #define MISC_DMA_CTL_REG(ch)     REG32(MISC_REG_BASE + (4 * (ch)))
 #define MISC_SRC_FILLIN_DMA(ch)  REG32(MISC_REG_BASE + 0x20 + (4 * (ch)))
 #define MISC_DST_FILLIN_DMA(ch)  REG32(MISC_REG_BASE + 0x80 + (4 * (ch)))
+#define MISC_ISH_ECC_ERR_SRESP   REG32(MISC_REG_BASE + 0x94)
 
 /* DMA registers */
 #define DMA_REG_BASE                  ISH_DMA_BASE
