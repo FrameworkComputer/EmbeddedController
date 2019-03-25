@@ -134,6 +134,9 @@ void scp_clock_high_enable(int osc)
 
 void scp_enable_clock(void)
 {
+	/* Select default CPU clock */
+	SCP_CLK_SEL = CLK_SEL_SYS_26M;
+
 	/* VREQ */
 	SCP_CPU_VREQ = 0x10001;
 	SCP_SECURE_CTRL &= ~ENABLE_SPM_MASK_VREQ;
@@ -157,6 +160,9 @@ void scp_enable_clock(void)
 	scp_clock_high_enable(0); /* Turn on ULPOSC1 */
 	scp_ulposc_config(1);
 	scp_clock_high_enable(1); /* Turn on ULPOSC2 */
+
+	/* Select ULPOSC2 high speed CPU clock */
+	SCP_CLK_SEL = CLK_SEL_ULPOSC_2;
 
 	/* Enable default clock gate */
 	SCP_CLK_GATE |= CG_DMA_CH3 | CG_DMA_CH2 | CG_DMA_CH1 | CG_DMA_CH0 |
