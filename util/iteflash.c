@@ -1713,9 +1713,9 @@ static const struct i2c_interface linux_i2c_interface = {
 	 * can be increased to match FTDI_BLOCK_WRITE_SIZE would be a useful
 	 * speedup.
 	 *
-	 * While 254 bytes works with Bip, it causes corruption with Ampton
-	 * (using any kind of servo).  128 bytes is the largest block_write_size
-	 * compatible with both Ampton and Servo Micro.
+	 * 254 byte block sizes cause corruption with Ampton (using any kind of
+	 * servo).  128 bytes is the largest block_write_size compatible with
+	 * both Ampton and Servo Micro.
 	 *
 	 * See https://issuetracker.google.com/79684405 for background.
 	 */
