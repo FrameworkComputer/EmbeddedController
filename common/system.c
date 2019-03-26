@@ -937,7 +937,15 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 		return system_run_image_copy(system_get_active_copy());
 	case EC_REBOOT_COLD:
 #ifdef HAS_TASK_PDCMD
-		/* Reboot the PD chip as well */
+		/*
+		 * Reboot the PD chip(s) as well, but first suspend the ports
+		 * if this board has PD tasks running so they don't query the
+		 * TCPCs while they reset.
+		 */
+#ifdef HAS_TASK_PD_C0
+		for (int port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++)
+			pd_set_suspend(port, 1);
+#endif
 		board_reset_pd_mcu();
 #endif
 
