@@ -285,8 +285,6 @@ void board_config_pre_init(void)
 					  (3 << 20) | (3 << 24);
 }
 
-#define THRESHOLD_MV 56 /* Simply assume 1800/16/2 */
-
 /* Motion sensors */
 /* Mutexes */
 #ifdef SECTION_IS_RW
