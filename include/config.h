@@ -18,6 +18,14 @@
 #ifndef __CROS_EC_CONFIG_H
 #define __CROS_EC_CONFIG_H
 
+#ifdef INCLUDE_ENV_CONFIG
+/*
+ * When building for an EC target, pick up the .h file which allows to
+ * keep track of changing make variables.
+ */
+#include "env_config.h"
+#endif
+
 /*
  * All config options are listed alphabetically and described here.
  *

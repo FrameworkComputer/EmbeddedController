@@ -15,6 +15,11 @@ CHIP_VARIANT ?= cr50_fpga
 # a guard so that recipe definitions and variable extensions only happen the
 # second time.
 ifeq ($(BOARD_MK_INCLUDED_ONCE),)
+
+# List of variables which can be defined in the environment or set in the make
+# command line.
+ENV_VARS := CR50_DEV CR50_SQA H1_RED_BOARD
+
 BOARD_MK_INCLUDED_ONCE=1
 SIG_EXTRA = --cros
 else
