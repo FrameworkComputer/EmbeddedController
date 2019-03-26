@@ -5085,7 +5085,7 @@ int cmd_usb_pd(int argc, char *argv[])
 	int rv, i, j;
 	int option_ok;
 	char *e;
-	int cmdver = 2;
+	int cmdver;
 
 	BUILD_ASSERT(ARRAY_SIZE(role_str) == USB_PD_CTRL_ROLE_COUNT);
 	BUILD_ASSERT(ARRAY_SIZE(mux_str) == USB_PD_CTRL_MUX_COUNT);
@@ -5093,9 +5093,6 @@ int cmd_usb_pd(int argc, char *argv[])
 	p.role = USB_PD_CTRL_ROLE_NO_CHANGE;
 	p.mux = USB_PD_CTRL_MUX_NO_CHANGE;
 	p.swap = USB_PD_CTRL_SWAP_NONE;
-
-	if (!ec_cmd_version_supported(EC_CMD_USB_PD_CONTROL, cmdver))
-		cmdver = 0;
 
 	if (argc < 2) {
 		fprintf(stderr, "No port specified.\n");
@@ -5170,6 +5167,13 @@ int cmd_usb_pd(int argc, char *argv[])
 			return -1;
 		}
 	}
+
+	if (ec_cmd_version_supported(EC_CMD_USB_PD_CONTROL, 2))
+		cmdver = 2;
+	else if (ec_cmd_version_supported(EC_CMD_USB_PD_CONTROL, 1))
+		cmdver = 1;
+	else
+		cmdver = 0;
 
 	rv = ec_command(EC_CMD_USB_PD_CONTROL, cmdver, &p, sizeof(p),
 			ec_inbuf, ec_max_insize);
@@ -5248,7 +5252,7 @@ int cmd_usb_pd(int argc, char *argv[])
 				(r_v1->role & PD_CTRL_RESP_ROLE_EXT_POWERED) ?
 					" Externally powered\n" : "");
 	}
-	return (rv < 0 ? rv : 0);
+	return 0;
 }
 
 static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
