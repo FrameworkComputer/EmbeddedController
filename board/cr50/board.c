@@ -261,6 +261,12 @@ static struct board_cfg board_cfg_table[] = {
 			BOARD_USE_PLT_RESET | BOARD_NO_INA_SUPPORT |
 			BOARD_CLOSED_LOOP_RESET,
 	},
+	/* Kukui: DI0A9 = 5k PU, DIOA1 = 5k PU */
+	{
+		.strap_cfg = 0x0F,
+		.board_properties = BOARD_SLAVE_CONFIG_SPI |
+			BOARD_USE_PLT_RESET,
+	},
 	/* I2C Variants: DIOA9 = 1M PD, DIOA1 = 1M PD */
 	/* Reef/Eve: DIOA12 = 5k PD, DIOA6 = 1M PU */
 	{
