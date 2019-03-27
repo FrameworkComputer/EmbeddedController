@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -34,6 +35,8 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
+
+#define KBYTES_TO_BYTES		1024
 
 /*
  * Some Ubuntu versions do not export SPI_IOC_WR_MODE32 even though
@@ -75,6 +78,56 @@
 /* Upper bound of rebooting the monitor */
 #define MAX_DELAY_REBOOT 100000 /* us */
 
+/* Standard addresses common across various ST chips */
+#define STM32_MAIN_MEMORY_ADDR		0x08000000
+#define STM32_SYSTEM_MEMORY_ADDR	0x1FFF0000
+
+#define STM32_UNIQUE_ID_SIZE_BYTES	12
+
+/*
+ * Device electronic signature contains factory-programmed identification
+ * and calibration data to automatically match the characteristics of the
+ * microcontroller.
+ */
+struct stm32_device_signature {
+	/*
+	 * Address of the Unique Device ID register. This register contains a
+	 * 96-bit value that is unique across all chips.
+	 * Zero means ignore/unknown.
+	 */
+	uint32_t unique_device_id_addr;
+	/*
+	 * Address of the Flash Size register. This 16-bit register contains the
+	 * flash size in KB.
+	 * Zero means ignore/unknown.
+	 */
+	uint32_t flash_size_addr;
+	/*
+	 * Address of the Package Data register. This 16-bit register contains a
+	 * value that differentiates between package types of a given chip.
+	 * Zero means ignore/unknown.
+	 */
+	uint32_t package_data_addr;
+};
+
+struct memory_info {
+	/* Zero means ignore/unknown/not-applicable */
+	uint32_t addr;
+	/* If addr is non-zero
+	 * - zero here means value is dynamic and will be read from bootloader.
+	 * If addr is zero,
+	 * - zero here means ignore/unknown/not-applicable.
+	 */
+	uint32_t size_bytes;
+};
+
+struct memory_layout {
+	struct memory_info main_memory;
+	struct memory_info system_memory;
+	struct memory_info otp_area;
+	struct memory_info option_bytes;
+};
+
 /* known STM32 SoC parameters */
 struct stm32_def {
 	uint16_t   id;
@@ -82,22 +135,67 @@ struct stm32_def {
 	uint32_t flash_size;
 	uint32_t page_size;
 	uint32_t cmds_len[2];
+	const struct memory_layout memory_layout;
+	const struct stm32_device_signature device_signature;
 } chip_defs[] = {
-	{0x416, "STM32L15xxB",   0x20000,   256, {13, 13} },
-	{0x429, "STM32L15xxB-A", 0x20000,   256, {13, 13} },
-	{0x427, "STM32L15xxC",   0x40000,   256, {13, 13} },
-	{0x435, "STM32L44xx",    0x40000,  2048, {13, 13} },
-	{0x420, "STM32F100xx",   0x20000,  1024, {13, 13} },
-	{0x410, "STM32F102R8",   0x10000,  1024, {13, 13} },
-	{0x440, "STM32F05x",     0x10000,  1024, {13, 13} },
-	{0x444, "STM32F03x",     0x08000,  1024, {13, 13} },
-	{0x448, "STM32F07xB",    0x20000,  2048, {13, 13} },
-	{0x432, "STM32F37xx",    0x40000,  2048, {13, 13} },
-	{0x442, "STM32F09x",     0x40000,  2048, {13, 13} },
-	{0x431, "STM32F411",     0x80000, 16384, {13, 19} },
-	{0x441, "STM32F412",     0x80000, 16384, {13, 19} },
-	{0x450, "STM32H74x",    0x200000, 131768, {13, 19} },
-	{0x451, "STM32F76x",    0x200000, 32768, {13, 19} },
+	{0x416, "STM32L15xxB",   0x20000,   256, {13, 13}, { { 0 } }, { 0 } },
+	{0x429, "STM32L15xxB-A", 0x20000,   256, {13, 13}, { { 0 } }, { 0 } },
+	{0x427, "STM32L15xxC",   0x40000,   256, {13, 13}, { { 0 } }, { 0 } },
+	{0x435, "STM32L44xx",    0x40000,  2048, {13, 13}, { { 0 } }, { 0 } },
+	{0x420, "STM32F100xx",   0x20000,  1024, {13, 13}, { { 0 } }, { 0 } },
+	{0x410, "STM32F102R8",   0x10000,  1024, {13, 13}, { { 0 } }, { 0 } },
+	{0x440, "STM32F05x",     0x10000,  1024, {13, 13}, { { 0 } }, { 0 } },
+	{0x444, "STM32F03x",     0x08000,  1024, {13, 13}, { { 0 } }, { 0 } },
+	{0x448, "STM32F07xB",    0x20000,  2048, {13, 13}, { { 0 } }, { 0 } },
+	{0x432, "STM32F37xx",    0x40000,  2048, {13, 13}, { { 0 } }, { 0 } },
+	{0x442, "STM32F09x",     0x40000,  2048, {13, 13}, { { 0 } }, { 0 } },
+	{0x431, "STM32F411",     0x80000, 16384, {13, 19}, { { 0 } }, { 0 } },
+	{
+		.id =		0x441,
+		.name =		"STM32F412",
+		.flash_size =	0x100000,
+		.page_size =	16384,
+		.cmds_len =	{13, 19},
+		/*
+		 * STM32F412:
+		 * See https://www.st.com/resource/en/reference_manual/dm00180369.pdf
+		 * Section 3.3 Table 5 Flash module organization
+		 */
+		.memory_layout = {
+			.main_memory = {
+				.addr = STM32_MAIN_MEMORY_ADDR,
+				.size_bytes = 0, /* set by flash reg read */
+			},
+			.system_memory = {
+				.addr = STM32_SYSTEM_MEMORY_ADDR,
+				.size_bytes = 30 * KBYTES_TO_BYTES,
+			},
+			.otp_area = {
+				.addr = 0x1FFF7800,
+				.size_bytes = 528,
+			},
+			.option_bytes = {
+				.addr = 0x1FFFC000,
+				.size_bytes = 16,
+			}
+		},
+		/*
+		 * STM32F412:
+		 * See https://www.st.com/resource/en/reference_manual/dm00180369.pdf
+		 * Section 31 Device electronic signature
+		 */
+		.device_signature = {
+			.unique_device_id_addr =	0x1FFF7A10,
+			.flash_size_addr =		0x1FFF7A22,
+			/*
+			 * Out of range for bootloader on this chip, so we don't
+			 * attempt to read.
+			 */
+			.package_data_addr =		0, /* 0x1FFF7BF0 */
+		}
+	},
+	{0x450, "STM32H74x",    0x200000, 131768, {13, 19}, { { 0 } }, { 0 } },
+	{0x451, "STM32F76x",    0x200000, 32768, {13, 19}, { { 0 } }, { 0 } },
 	{ 0 }
 };
 
@@ -899,6 +997,161 @@ int command_go(int fd, uint32_t address)
 	return 0;
 }
 
+/*
+ * The bootloader does not allow reading directly from the "device signature"
+ * registers. However, it does allow reading the OTP region, so this function
+ * starts a read from the last byte in that region and reads an additional
+ * number of bytes to read the requested register.
+ *
+ * Example:
+ *
+ * Given a chip with OTP region starting at address 0x1FFF7800 with a size of
+ * 528 bytes and a register that we want to read at address 0x1FFF7A10 with a
+ * size of 12 bytes:
+ *
+ * We start the read at the last byte in the OTP region:
+ *
+ * 0x1FFF7800 + 528 - 1 = 0x1FFF7A0F
+ *
+ * From 0x1FFF7A0F we perform a read of (12 + 1) = 13 bytes in order to read the
+ * 12 bytes starting at 0x1FFF7A10 (the actual register we care about).
+ *
+ * Returns zero on success, negative on failure.
+ */
+int read_device_signature_register(int fd, const struct stm32_def *chip,
+				   uint32_t addr, uint32_t size_bytes,
+				   uint8_t *out_buffer)
+{
+	int res;
+	uint8_t *buffer;
+	struct memory_info otp = chip->memory_layout.otp_area;
+	uint32_t otp_end_addr = otp.addr + otp.size_bytes - 1;
+	uint32_t offset = addr - otp_end_addr;
+	uint32_t read_size_bytes = offset + size_bytes;
+
+	if (!otp.addr) {
+		fprintf(stderr, "No otp_area.addr specified for given chip.\n");
+		return -EINVAL;
+	}
+
+	if (addr <= otp_end_addr) {
+		fprintf(stderr, "Attempting to read from invalid address: "
+				"%08X\n", addr);
+		return -EINVAL;
+	}
+
+	/*
+	 * The USART/SPI/I2C bootloader can only read at most 256 bytes in a
+	 * single read command (see AN4286 section 2.5 or AN3155 section 3.4).
+	 *
+	 * command_read_mem will correctly chunk larger requests, but the
+	 * subsequent reads will fail because the bootloader won't allow reads
+	 * from a starting address that is beyond the OTP region.
+	 */
+	if (read_size_bytes > PAGE_SIZE) {
+		fprintf(stderr,
+			"Requested register 0x%08X is outside read range.\n",
+			addr);
+		return -EINVAL;
+	}
+
+	buffer = malloc(read_size_bytes);
+	if (!buffer) {
+		fprintf(stderr, "Cannot allocate %" PRIu32 " bytes\n",
+			read_size_bytes);
+		return -ENOMEM;
+	}
+
+	res = command_read_mem(fd, otp_end_addr, read_size_bytes, buffer);
+	if (res == read_size_bytes)
+		memcpy(out_buffer, buffer + offset, size_bytes);
+	else
+		fprintf(stderr,
+			"Cannot read %" PRIu32 " bytes from address 0x%08X",
+			read_size_bytes, otp_end_addr);
+
+	free(buffer);
+	return (res < 0) ? res : 0;
+}
+
+/* Return zero on success, a negative error value on failures. */
+int read_flash_size_register(int fd, struct stm32_def *chip,
+			     uint16_t *flash_size_kbytes)
+{
+	int res;
+	uint32_t flash_size_addr = chip->device_signature.flash_size_addr;
+
+	if (!flash_size_addr)
+		return -EINVAL;
+
+	res = read_device_signature_register(fd, chip,
+		flash_size_addr, sizeof(*flash_size_kbytes),
+		(uint8_t *)flash_size_kbytes);
+
+	if (!res)
+		printf("Flash size: %" PRIu16 " KB\n", *flash_size_kbytes);
+	else
+		fprintf(stderr,
+			"Unable to read flash size register (0x%08X).\n",
+			flash_size_addr);
+
+	return res;
+}
+
+/* Return zero on success, a negative error value on failures. */
+int read_unique_device_id_register(int fd, struct stm32_def *chip,
+	uint8_t device_id[STM32_UNIQUE_ID_SIZE_BYTES])
+{
+	int i;
+	int res;
+	uint32_t unique_device_id_addr =
+		chip->device_signature.unique_device_id_addr;
+
+	if (!unique_device_id_addr)
+		return -EINVAL;
+
+	res = read_device_signature_register(fd, chip, unique_device_id_addr,
+		STM32_UNIQUE_ID_SIZE_BYTES, device_id);
+
+	if (!res) {
+		printf("Unique Device ID: 0x");
+		for (i = STM32_UNIQUE_ID_SIZE_BYTES - 1; i >= 0; i--)
+			printf("%02X", device_id[i]);
+		printf("\n");
+	} else {
+		fprintf(stderr,
+			"Unable to read unique device ID register (0x%08X). "
+			"Ignoring non-critical failure.\n",
+			unique_device_id_addr);
+	}
+
+	return res;
+}
+
+/* Return zero on success, a negative error value on failures. */
+int read_package_data_register(int fd, struct stm32_def *chip,
+			       uint16_t *package_data)
+{
+	int res;
+	uint32_t package_data_addr = chip->device_signature.package_data_addr;
+
+	if (!package_data_addr)
+		return -EINVAL;
+
+	res = read_device_signature_register(fd, chip, package_data_addr,
+					     sizeof(*package_data),
+					     (uint8_t *)package_data);
+
+	if (!res)
+		printf("Package data register: %04X\n", *package_data);
+	else
+		fprintf(stderr,
+			"Failed to read package data register (0x%08X). "
+			"Ignoring non-critical failure.\n", package_data_addr);
+
+	return res;
+}
+
 /* Return zero on success, a negative error value on failures. */
 int read_flash(int fd, struct stm32_def *chip, const char *filename,
 	       uint32_t offset, uint32_t size)
@@ -1150,6 +1403,9 @@ int main(int argc, char **argv)
 	struct stm32_def *chip;
 	int ret = 1;
 	int flags;
+	uint16_t flash_size_kbytes = 0;
+	uint8_t unique_device_id[STM32_UNIQUE_ID_SIZE_BYTES] = { 0 };
+	uint16_t package_data_reg = 0;
 
 	/* Parse command line options */
 	flags = parse_parameters(argc, argv);
@@ -1175,6 +1431,26 @@ int main(int argc, char **argv)
 	chip = command_get_id(ser);
 	if (!chip)
 		goto terminate;
+
+	/*
+	 * Use the actual size if we were able to read it since some chips
+	 * have the same chip ID, but different flash sizes based on the
+	 * package.
+	 */
+	if (!read_flash_size_register(ser, chip, &flash_size_kbytes))
+		chip->flash_size = flash_size_kbytes * KBYTES_TO_BYTES;
+
+	/*
+	 * This is simply informative at the moment, so we don't care about the
+	 * return value.
+	 */
+	(void)read_unique_device_id_register(ser, chip, unique_device_id);
+
+	/*
+	 * This is simply informative at the moment, so we don't care about the
+	 * return value.
+	 */
+	(void)read_package_data_register(ser, chip, &package_data_reg);
 
 	if (command_get_commands(ser, chip) < 0)
 		goto terminate;
