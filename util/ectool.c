@@ -4326,6 +4326,9 @@ static int cmd_motionsense(int argc, char **argv)
 		case MOTIONSENSE_TYPE_LIGHT:
 			printf("light\n");
 			break;
+		case MOTIONSENSE_TYPE_LIGHT_RGB:
+			printf("rgb light\n");
+			break;
 		case MOTIONSENSE_TYPE_PROX:
 			printf("proximity\n");
 			break;
