@@ -307,6 +307,16 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	if (out_size == 0 && in_size == 0)
 		return EC_SUCCESS;
 
+	if (port < 0 || port >= ISH_I2C_PORT_COUNT)
+		return EC_ERROR_INVAL;
+
+	/* Check for reserved I2C addresses, pg. 74 in DW_apb_i2c.pdf
+	 * Address cannot be any of the reserved address locations:
+	 * 0x00 to 0x07 or 0x78 to 0x7f.
+	 */
+	if (slave_addr <= 0x0F || (slave_addr >= 0xF0 && slave_addr <= 0xFF))
+		return EC_ERROR_INVAL;
+
 	/* assume that if both out_size and in_size are not zero,
 	 * then, it is 'repeated Start' condition. */
 	if (in_size != 0 && out_size != 0)
@@ -407,6 +417,9 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	}
 
 	i2c_mmio_write(ctx->base, IC_ENABLE, IC_ENABLE_DISABLE);
+
+	if (ctx->error_flag)
+		return EC_ERROR_INVAL;
 
 	return EC_SUCCESS;
 }
