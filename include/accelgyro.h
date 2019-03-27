@@ -152,6 +152,19 @@ struct accelgyro_saved_data_t {
 	uint16_t scale[3];
 };
 
+/* Calibration data */
+struct als_calibration_t {
+	/*
+	 * Scale, uscale, and offset are used to correct the raw 16 bit ALS
+	 * data and then to convert it to 32 bit using the following equations:
+	 * raw_value += offset;
+	 * adjusted_value = raw_value * scale + raw_value * uscale / 10000;
+	 */
+	uint16_t scale;
+	uint16_t uscale;
+	int16_t offset;
+};
+
 #define SENSOR_APPLY_SCALE(_input, _scale) \
 	(((_input) * (_scale)) / MOTION_SENSE_DEFAULT_SCALE)
 

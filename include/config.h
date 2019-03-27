@@ -257,6 +257,9 @@
 /* Check if the device revision is supported */
 #undef CONFIG_ALS_SI114X_CHECK_REVISION
 
+/* Define to include the clear channel driver for the tcs3400 light sensor */
+#undef CONFIG_ALS_TCS3400
+
 /*
  * Define the event to raise when a sensor interrupt triggers.
  * Must be within TASK_EVENT_MOTION_INTERRUPT_MASK.
@@ -265,6 +268,7 @@
 #undef CONFIG_ACCEL_LSM6DSM_INT_EVENT
 #undef CONFIG_ACCEL_LSM6DSO_INT_EVENT
 #undef CONFIG_ALS_SI114X_INT_EVENT
+#undef CONFIG_ALS_TCS3400_INT_EVENT
 
 /*
  * Enable Si114x to operate in polling mode. This config is used in conjunction
