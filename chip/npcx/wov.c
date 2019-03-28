@@ -171,7 +171,7 @@ struct wov_config wov_conf;
 static struct wov_cfifo_buf cfifo_buf;
 static wov_call_back_t callback_fun;
 
-const uint32_t voice_buffer[VOICE_BUF_SIZE] = {0};
+static uint32_t voice_buffer[VOICE_BUF_SIZE] = {0};
 
 #define WOV_RATE_ERROR_THRESH_MSEC 10
 #define WOV_RATE_ERROR_THRESH 5

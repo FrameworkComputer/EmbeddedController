@@ -101,7 +101,7 @@ void system_check_bbram_on_reset(void)
 		/*
 		 * npcx5/npcx7m6g/npcx7m6f:
 		 *   Clear IBBR bit
-		 * npcx7m6fb/npcx7m6fc/npcx7m7wb:
+		 * npcx7m6fb/npcx7m6fc/npcx7m7wb/npcx7m7wc:
 		 *   Clear IBBR/VSBY_STS/VCC1_STS bit
 		 */
 		NPCX_BKUP_STS = NPCX_BKUP_STS_ALL_MASK;
@@ -702,7 +702,7 @@ void system_pre_init(void)
 
 #if defined(CHIP_FAMILY_NPCX7)
 #if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M6FC) || \
-	defined(CHIP_VARIANT_NPCX7M7WB)
+	defined(CHIP_VARIANT_NPCX7M7WB) || defined(CHIP_VARIANT_NPCX7M7WC)
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0xE7;
 #else
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0x07;
@@ -817,6 +817,7 @@ const char *system_get_chip_name(void)
 	case 0x29:
 		return "NPCX796F";
 	case 0x24:
+	case 0x2C:
 		return "NPCX797W";
 #endif
 	default:
