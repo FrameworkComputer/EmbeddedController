@@ -16,7 +16,8 @@
 #if defined(CHIP_VARIANT_NPCX7M6G)
 #define BOARD_VERSION  1
 #elif defined(CHIP_VARIANT_NPCX7M6F) || defined(CHIP_VARIANT_NPCX7M6FB) || \
-	defined(CHIP_VARIANT_NPCX7M6FC) || defined(CHIP_VARIANT_NPCX7M7WB)
+	defined(CHIP_VARIANT_NPCX7M6FC) || defined(CHIP_VARIANT_NPCX7M7WB) || \
+	defined(CHIP_VARIANT_NPCX7M7WC)
 #define BOARD_VERSION  2
 #endif
 
@@ -62,7 +63,7 @@
 #define CONFIG_SPI_FLASH_PORT 0
 #define CONFIG_SPI_FLASH
 #define CONFIG_SPI_FLASH_REGS
-#if defined(CHIP_VARIANT_NPCX7M6FC)
+#if defined(CHIP_VARIANT_NPCX7M6FC) || defined(CHIP_VARIANT_NPCX7M7WC)
 #define CONFIG_SPI_FLASH_W25Q40 /* Internal spi flash type */
 #define CONFIG_FLASH_SIZE 0x00080000 /* 512 KB internal spi flash */
 #else
@@ -75,7 +76,7 @@
 #if (BOARD_VERSION == 2)
 #define CONFIG_HIBERNATE_PSL /* Use PSL (Power Switch Logic) for hibernate */
 #define CONFIG_CLOCK_SRC_EXTERNAL /* Use external 32kHz OSC as LFCLK source */
-#ifdef CHIP_VARIANT_NPCX7M7WB
+#if defined(CHIP_VARIANT_NPCX7M7WB) || defined(CHIP_VARIANT_NPCX7M7WC)
 #define CONFIG_WAKE_ON_VOICE /* Use Audio front-end for Wake-on-Voice */
 #endif
 #undef CONFIG_FANS /* Remove fan application */

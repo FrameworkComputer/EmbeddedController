@@ -14,6 +14,7 @@
 #    npcx7m6fb - for npcx7 ec with internal flash, enhanced features.
 #    npcx7m6fc - the same as npcx7m6fb but internal flash size is 512 Kbytes.
 #    npcx7m7wb - for npcx7 ec with internal flash, enhanced features + WOV.
+#    npcx7m7wc - the same as npcx7m7wb but internal flash size is 512 Kbytes.
 
 CHIP:=npcx
 CHIP_FAMILY:=npcx7
