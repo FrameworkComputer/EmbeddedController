@@ -617,7 +617,13 @@ enum host_event_code {
 	/* EC desires to change state of host-controlled USB mux */
 	EC_HOST_EVENT_USB_MUX = 28,
 
-	/* TABLET/LAPTOP mode or detachable base attach/detach event */
+	/*
+	 * The device has changed "modes". This can be one of the following:
+	 *
+	 * - TABLET/LAPTOP mode
+	 * - detachable base attach/detach event
+	 * - DisplayPort Alternate Mode entry
+	 */
 	EC_HOST_EVENT_MODE_CHANGE = 29,
 
 	/* Keyboard recovery combo with hardware reinitialization */

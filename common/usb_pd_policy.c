@@ -34,6 +34,23 @@
 
 static int rw_flash_changed = 1;
 
+#ifdef CONFIG_HOSTCMD_EVENTS
+void pd_notify_dp_alt_mode_entry(void)
+{
+	/*
+	 * Note: EC_HOST_EVENT_PD_MCU may be a more appropriate host event to
+	 * send, but we do not send that here because there are other cases
+	 * where we send EC_HOST_EVENT_PD_MCU such as charger insertion or
+	 * removal.  Currently, those do not wake the system up, but
+	 * EC_HOST_EVENT_MODE_CHANGE does.  If we made the system wake up on
+	 * EC_HOST_EVENT_PD_MCU, we would be turning the internal display on on
+	 * every charger insertion/removal, which is not desired.
+	 */
+	CPRINTS("Notifying AP of DP Alt Mode Entry...");
+	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
+}
+#endif /* CONFIG_HOSTCMD_EVENTS */
+
 int pd_check_requested_voltage(uint32_t rdo, const int port)
 {
 	int max_ma = rdo & 0x3FF;
