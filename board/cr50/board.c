@@ -944,7 +944,7 @@ void deassert_sys_rst(void)
 	gpio_set_level(GPIO_SYS_RST_L_OUT, 1);
 }
 
-int is_sys_rst_asserted(void)
+static int is_sys_rst_asserted(void)
 {
 	/*
 	 * SYS_RST_L is pseudo open drain. It is only an output when it's
