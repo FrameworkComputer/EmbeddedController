@@ -275,17 +275,7 @@ static inline void pd_config_init(int port, uint8_t power_role)
 
 }
 
-static inline int pd_adc_read(int port, int cc)
-{
-	int mv;
-
-	if (port == 0)
-		mv = adc_read_channel(cc ? ADC_CHG_CC2_PD : ADC_CHG_CC1_PD);
-	else
-		mv = adc_read_channel(cc ? ADC_DUT_CC2_PD : ADC_DUT_CC1_PD);
-
-	return mv;
-}
+int pd_adc_read(int port, int cc);
 
 #endif /* __CROS_EC_USB_PD_CONFIG_H */
 

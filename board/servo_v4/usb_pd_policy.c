@@ -61,6 +61,8 @@ static int active_charge_port = CHARGE_PORT_NONE;
 static enum charge_supplier active_charge_supplier;
 static uint8_t vbus_rp = TYPEC_RP_RESERVED;
 
+/* Flag to emulate detach, i.e. making both CC lines open. */
+static int disable_cc;
 /*
  * DTS mode: enabled connects resistors to both CC line to activate cr50,
  * disabled connects to one only as in the standard USBC cable.
@@ -93,6 +95,9 @@ static int pd_src_rd_threshold[TYPEC_RP_RESERVED] = {
 	PD_SRC_1_5_RD_THRESH_MV,
 	PD_SRC_3_0_RD_THRESH_MV,
 };
+
+/* Saved value for the duration of faking PD disconnect */
+static int fake_pd_disconnect_duration_us;
 
 /*
  * Set the USB PD max voltage to value appropriate for the board version.
@@ -308,6 +313,30 @@ int pd_tcpc_cc_ra(int port, int cc_volt, int cc_sel)
 	return ra;
 }
 
+int pd_adc_read(int port, int cc)
+{
+	int mv;
+
+	if (port == 0)
+		mv = adc_read_channel(cc ? ADC_CHG_CC2_PD : ADC_CHG_CC1_PD);
+	else if (!disable_cc)
+		mv = adc_read_channel(cc ? ADC_DUT_CC2_PD : ADC_DUT_CC1_PD);
+	else {
+		/*
+		 * When disable_cc, fake the voltage on CC to 0 to avoid
+		 * triggering some debounce logic.
+		 *
+		 * The servo v4 makes Rd/Rp open but the DUT may present Rd/Rp
+		 * alternatively that makes the voltage on CC falls into some
+		 * unexpected range and triggers the PD state machine switching
+		 * between SNK_DISCONNECTED and SNK_DISCONNECTED_DEBOUNCE.
+		 */
+		mv = 0;
+	}
+
+	return mv;
+}
+
 static int board_set_rp(int rp)
 {
 	if (disable_dts_mode) {
@@ -388,6 +417,10 @@ int pd_set_rp_rd(int port, int cc_pull, int rp_value)
 
 	if (port != 1)
 		return EC_ERROR_UNIMPLEMENTED;
+
+	/* CC is disabled for emulating detach. Don't change Rd/Rp. */
+	if (disable_cc)
+		return EC_SUCCESS;
 
 	/* By default disconnect all Rp/Rd resistors from both CC lines */
 	/* Set Rd for CC1/CC2 to High-Z. */
@@ -650,6 +683,7 @@ const int supported_modes_cnt = ARRAY_SIZE(supported_modes);
 static void print_cc_mode(void)
 {
 	/* Get current CCD status */
+	ccprintf("cc: %s\n", disable_cc ? "off" : "on");
 	ccprintf("dts mode: %s\n", disable_dts_mode ? "off" : "on");
 	ccprintf("chg mode: %s\n",
 		pd_get_dual_role(DUT) == PD_DRP_FORCE_SOURCE ?
@@ -658,44 +692,56 @@ static void print_cc_mode(void)
 }
 
 
-static void do_cc(int disable_dts_new, int allow_src_new)
+static void do_cc(int disable_cc_new, int disable_dts_new, int allow_src_new)
 {
 	int dualrole;
 
-	if ((disable_dts_new != disable_dts_mode) ||
+	if ((disable_cc_new != disable_cc) ||
+	    (disable_dts_new != disable_dts_mode) ||
 	    (allow_src_new != allow_src_mode)) {
-		/* Force detach */
-		pd_power_supply_reset(DUT);
-		/* Always set to 0 here so both CC lines are changed */
-		disable_dts_mode = 0;
-		allow_src_mode = 0;
+		if (!disable_cc) {
+			/* Force detach */
+			pd_power_supply_reset(DUT);
+			/* Always set to 0 here so both CC lines are changed */
+			disable_dts_mode = 0;
+			allow_src_mode = 0;
 
-		/* Remove Rp/Rd on both CC lines */
-		pd_comm_enable(DUT, 0);
-		pd_set_rp_rd(DUT, TYPEC_CC_RP, TYPEC_RP_RESERVED);
+			/* Remove Rp/Rd on both CC lines */
+			pd_comm_enable(DUT, 0);
+			pd_set_rp_rd(DUT, TYPEC_CC_RP, TYPEC_RP_RESERVED);
 
-		/* Some time for DUT to detach, use tErrorRecovery */
-		msleep(25);
+			/*
+			 * If just changing mode (cc keeps enabled), give some
+			 * time for DUT to detach, use tErrorRecovery.
+			 */
+			if (!disable_cc_new)
+				usleep(PD_T_ERROR_RECOVERY);
+		}
 
-		/* Accept new dts/src value */
+		/* Accept new cc/dts/src value */
+		disable_cc = disable_cc_new;
 		disable_dts_mode = disable_dts_new;
 		allow_src_mode = allow_src_new;
 
-		/* Can we charge? */
-		dualrole = allow_src_mode && charge_port_is_active();
-		pd_set_dual_role(DUT, dualrole ?
-			PD_DRP_FORCE_SOURCE : PD_DRP_FORCE_SINK);
+		if (!disable_cc) {
+			/* Can we charge? */
+			dualrole = allow_src_mode && charge_port_is_active();
+			pd_set_dual_role(DUT, dualrole ?
+				PD_DRP_FORCE_SOURCE : PD_DRP_FORCE_SINK);
 
-		/* Present Rp or Rd on CC1 and CC2 based on disable_dts_mode */
-		pd_config_init(DUT, dualrole);
-		pd_comm_enable(DUT, dualrole);
+			/*
+			 * Present Rp or Rd on CC1 and CC2 based on
+			 * disable_dts_mode
+			 */
+			pd_config_init(DUT, dualrole);
+			pd_comm_enable(DUT, dualrole);
+		}
 	}
-
-	print_cc_mode();
 }
 
 static int command_cc(int argc, char **argv)
 {
+	int disable_cc_new;
 	int disable_dts_new;
 	int allow_src_new;
 
@@ -704,28 +750,37 @@ static int command_cc(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 
-	if (!strcasecmp(argv[1], "src")) {
+	if (!strcasecmp(argv[1], "off")) {
+		disable_cc_new = 1;
+		disable_dts_new = 0;
+		allow_src_new = 0;
+	} else if (!strcasecmp(argv[1], "src")) {
+		disable_cc_new = 0;
 		disable_dts_new = 1;
 		allow_src_new = 1;
 	} else if (!strcasecmp(argv[1], "snk")) {
+		disable_cc_new = 0;
 		disable_dts_new = 1;
 		allow_src_new = 0;
 	} else if (!strcasecmp(argv[1], "srcdts")) {
+		disable_cc_new = 0;
 		disable_dts_new = 0;
 		allow_src_new = 1;
 	} else if (!strcasecmp(argv[1], "snkdts")) {
+		disable_cc_new = 0;
 		disable_dts_new = 0;
 		allow_src_new = 0;
 	} else {
-		ccprintf("Try one of src, snk, srcdts, snkdts\n");
+		ccprintf("Try one of off, src, snk, srcdts, snkdts\n");
 		return EC_ERROR_PARAM2;
 	}
-	do_cc(disable_dts_new, allow_src_new);
+	do_cc(disable_cc_new, disable_dts_new, allow_src_new);
+	print_cc_mode();
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(cc, command_cc,
-			"src|snk|srcdts|snkdts",
+			"off|src|snk|srcdts|snkdts",
 			"Servo_v4 DTS and CHG mode");
 
 
@@ -745,10 +800,58 @@ static int command_dts(int argc, char **argv)
 	disable_dts_new = val ^ 1;
 
 	/* Change dts without changing src. */
-	do_cc(disable_dts_new, allow_src_mode);
+	do_cc(disable_cc, disable_dts_new, allow_src_mode);
+	print_cc_mode();
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(dts, command_dts,
 			"off|on",
 			"Servo_v4 DTS mode on/off");
+
+static void fake_disconnect_end(void)
+{
+	/* Reenable CC lines with previous dts and src modes */
+	do_cc(0, disable_dts_mode, allow_src_mode);
+}
+DECLARE_DEFERRED(fake_disconnect_end);
+
+static void fake_disconnect_start(void)
+{
+	/* Disable CC lines */
+	do_cc(1, disable_dts_mode, allow_src_mode);
+
+	hook_call_deferred(&fake_disconnect_end_data,
+			   fake_pd_disconnect_duration_us);
+}
+DECLARE_DEFERRED(fake_disconnect_start);
+
+static int cmd_fake_disconnect(int argc, char *argv[])
+{
+	int delay_ms, duration_ms;
+	char *e;
+
+	if (argc < 3)
+		return EC_ERROR_PARAM_COUNT;
+
+	delay_ms = strtoi(argv[1], &e, 0);
+	if (*e || delay_ms < 0)
+		return EC_ERROR_PARAM1;
+	duration_ms = strtoi(argv[2], &e, 0);
+	if (*e || duration_ms < 0)
+		return EC_ERROR_PARAM2;
+
+	/* Cancel any pending function calls */
+	hook_call_deferred(&fake_disconnect_start_data, -1);
+	hook_call_deferred(&fake_disconnect_end_data, -1);
+
+	fake_pd_disconnect_duration_us = duration_ms * MSEC;
+	hook_call_deferred(&fake_disconnect_start_data, delay_ms * MSEC);
+
+	ccprintf("Fake disconnect for %d ms starting in %d ms.\n",
+		duration_ms, delay_ms);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(fakedisconnect, cmd_fake_disconnect,
+			"<delay_ms> <duration_ms>", NULL);
