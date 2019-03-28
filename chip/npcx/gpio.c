@@ -330,7 +330,7 @@ void gpio_set_level(enum gpio_signal signal, int value)
 		NPCX_PDOUT(gpio_list[signal].port) &= ~gpio_list[signal].mask;
 }
 
-#ifdef CONFIG_CMD_GPIO_EXTENDED
+#ifdef CONFIG_GPIO_GET_EXTENDED
 int gpio_get_flags_by_mask(uint32_t port, uint32_t mask)
 {
 	uint32_t flags = 0;

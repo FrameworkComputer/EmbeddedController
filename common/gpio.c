@@ -108,7 +108,7 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 	gpio_set_flags_by_mask(g->port, g->mask, flags);
 }
 
-#ifdef CONFIG_CMD_GPIO_EXTENDED
+#ifdef CONFIG_GPIO_GET_EXTENDED
 int gpio_get_flags(enum gpio_signal signal)
 {
 	const struct gpio_info *g = gpio_list + signal;

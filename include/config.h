@@ -1803,6 +1803,9 @@
  */
 #undef CONFIG_GPIO_INIT_POWER_ON_DELAY_MS
 
+/* Support getting gpio flags. */
+#undef CONFIG_GPIO_GET_EXTENDED
+
 /* Do we want to detect the lid angle? */
 #undef CONFIG_LID_ANGLE
 
