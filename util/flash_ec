@@ -203,7 +203,7 @@ function dut_control_get() {
 	# || statement is attached to avoid an exit if error exit is enabled.
 	DUT_GETVAL=$( "${ARGS[@]}" ) || RETVAL="$?"
 	if (( "${RETVAL}" )) ; then
-		error "${FUNCNAME[0]} failed: ${ARGS[*]} returned ${RETVAL}."
+		warn "${FUNCNAME[0]} failed: ${ARGS[*]} returned ${RETVAL}."
 		return "${RETVAL}"
 	fi
 	# Remove the shortest prefix ending ':'
@@ -329,7 +329,7 @@ case "${CHIP}" in
 		;;
 esac
 
-SERVO_TYPE="$(dut_control_get servo_type)"
+SERVO_TYPE="$(dut_control_get servo_type || :)"
 
 servo_has_warm_reset() {
 	dut_control -i warm_reset >/dev/null 2>&1
@@ -616,35 +616,34 @@ function servo_ec_uart() {
 
 # Not every control is supported on every servo type.  Therefore, define which
 # controls are supported by each servo type.
-servo_v2_VARS="jtag_buf_on_flex_en jtag_buf_en cold_reset spi1_vref"
-servo_micro_VARS="cold_reset spi1_vref"
-servo_v4_with_ccd_cr50_VARS="cold_reset"
+servo_v2_VARS=( "jtag_buf_on_flex_en" "jtag_buf_en" "cold_reset" "spi1_vref" )
+servo_micro_VARS=( "cold_reset" "spi1_vref" )
+servo_v4_with_ccd_cr50_VARS=( "cold_reset" )
 # Flashing an STM32 over the UART requires modifying the UART properties along
 # with the boot mode pin.
 if [ "${CHIP}" = "stm32" ] ; then
-	common_stm32_VARS=" ${MCU}_uart_parity"
-	common_stm32_VARS+=" ${MCU}_uart_baudrate"
-	servo_v2_VARS+=$common_stm32_VARS
-	servo_v2_VARS+=" ${MCU}_uart_en"
-	servo_micro_VARS+=$common_stm32_VARS
-	servo_micro_VARS+=" ${MCU}_uart_en"
-	servo_v4_with_ccd_cr50_VARS+=$common_stm32_VARS
+	common_stm32_VARS=( "${MCU}_uart_parity" )
+	common_stm32_VARS+=( "${MCU}_uart_baudrate" )
+	servo_v2_VARS+=( "${common_stm32_VARS[@]}" )
+	servo_v2_VARS+=( "${MCU}_uart_en" )
+	servo_micro_VARS+=( "${common_stm32_VARS[@]}" )
+	servo_micro_VARS+=( "${MCU}_uart_en" )
+	servo_v4_with_ccd_cr50_VARS+=( "${common_stm32_VARS[@]}" )
 fi
 if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
-	servo_v2_VARS+=" prog_en"
+	servo_v2_VARS+=( "prog_en" )
 fi
 if [ "${CHIP}" = "npcx_uut" ] ; then
-	servo_v4_with_ccd_cr50_VARS+=" ccd_keepalive_en"
+	servo_v4_with_ccd_cr50_VARS+=( "ccd_keepalive_en" )
 fi
-toad_VARS="${MCU}_uart_parity ${MCU}_uart_baudrate boot_mode"
-
 if [[ "${CHIP}" == "npcx_int_spi" ]]; then
-	servo_v2_VARS+=" fw_up"
-	servo_micro_VARS+=" fw_up"
+	servo_v2_VARS+=( "fw_up" )
+	servo_micro_VARS+=( "fw_up" )
 fi
 # Some servo boards use the same controls.
-servo_v3_VARS="${servo_v2_VARS}"
-servo_v4_with_servo_micro_VARS="${servo_micro_VARS}"
+servo_v3_VARS=( "${servo_v2_VARS[@]}" )
+servo_v4_with_servo_micro_VARS=( "${servo_micro_VARS[@]}" )
+toad_VARS=( "${MCU}_uart_parity" "${MCU}_uart_baudrate boot_mode" )
 
 function servo_save() {
 	if [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
@@ -652,7 +651,8 @@ function servo_save() {
 		dut_control i2c_mux:remote_adc
 	fi
 
-	SERVO_VARS_NAME=${SERVO_TYPE}_VARS
+	local SERVO_VARS_NAME
+	SERVO_VARS_NAME="${SERVO_TYPE}_VARS[@]"
 	if [[ -n "${!SERVO_VARS_NAME}" ]]; then
 		"${DUT_CONTROL_CMD[@]}" "${!SERVO_VARS_NAME}"
 	fi
@@ -901,9 +901,6 @@ function flash_flashrom() {
 	else
 		[[ -f "${L}" ]] && rm "${L}"
 	fi
-
-	# Do not save/restore servo settings
-	save=
 }
 
 function flash_stm32() {
@@ -1072,7 +1069,7 @@ function dut_i2c_dev() {
 
 	# TODO(b/79684405): This should just work once a dut-control dut_i2c_dev
 	# command is implemented.
-	local dut_i2c_dev="$($DUT_CONTROL_CMD dut_i2c_dev)" ||
+	local dut_i2c_dev="$("${DUT_CONTROL_CMD[@]}" dut_i2c_dev)" ||
 		die "dut-control dut_i2c_dev exited $? (non-zero)"
 	dut_i2c_dev="$(echo "$dut_i2c_dev" | sed -e 's/^dut_i2c_dev://')"
 	[ -e "$dut_i2c_dev" ] ||
