@@ -1065,6 +1065,12 @@ REG8(IT83XX_PMC_BASE + (ch > LPC_PM2 ? 5 : 8) + (ch << 4))
 #define IT83XX_PECI_AWFCSV      REG8(IT83XX_PECI_BASE+0x0D)
 #define IT83XX_PECI_PADCTLR     REG8(IT83XX_PECI_BASE+0x0E)
 
+/*
+ * The count number of the counter for 25 ms register.
+ * The 25 ms register is calculated by (count number *1.024 kHz).
+ */
+#define I2C_CLK_LOW_TIMEOUT  255 /* ~=249 ms */
+
 /* SMBus/I2C Interface (SMB/I2C) */
 #define IT83XX_SMB_BASE   0x00F01C00
 
@@ -1091,6 +1097,21 @@ REG8(IT83XX_PMC_BASE + (ch > LPC_PM2 ? 5 : 8) + (ch << 4))
 #define IT83XX_SMB_PECERC(ch)   REG8(IT83XX_SMB_BASE+0x47+(ch << 6))
 #define IT83XX_SMB_SMBPCTL(ch)  REG8(IT83XX_SMB_BASE+0x4A+(ch << 6))
 #define IT83XX_SMB_HOCTL2(ch)   REG8(IT83XX_SMB_BASE+0x50+(ch << 6))
+#define IT83XX_SMB_SLVEN        (1 << 5)
+#define IT83XX_SMB_RESLADR      REG8(IT83XX_SMB_BASE+0x48)
+#define IT83XX_SMB_SLDA         REG8(IT83XX_SMB_BASE+0x49)
+#define IT83XX_SMB_SLSTA        REG8(IT83XX_SMB_BASE+0x4B)
+#define IT83XX_SMB_SPDS         (1 << 5)
+#define IT83XX_SMB_RCS          (1 << 3)
+#define IT83XX_SMB_STS          (1 << 2)
+#define IT83XX_SMB_SDS          (1 << 1)
+#define IT83XX_SMB_SICR         REG8(IT83XX_SMB_BASE+0x4C)
+#define IT83XX_SMB_RESLADR2     REG8(IT83XX_SMB_BASE+0x51)
+#define IT83XX_SMB_ENADDR2      (1 << 7)
+#define IT83XX_SMB_SFFCTL       REG8(IT83XX_SMB_BASE+0x55)
+#define IT83XX_SMB_SAFE         (1 << 0)
+#define IT83XX_SMB_SFFSTA       REG8(IT83XX_SMB_BASE+0x56)
+#define IT83XX_SMB_SFFFULL      (1 << 6)
 
 /* BRAM */
 #define IT83XX_BRAM_BASE  0x00F02200
@@ -1159,11 +1180,36 @@ enum bram_indices {
 #define IT83XX_I2C_PSR(ch)           REG8(IT83XX_I2C_BASE+0x01+(ch << 7))
 #define IT83XX_I2C_HSPR(ch)          REG8(IT83XX_I2C_BASE+0x02+(ch << 7))
 #define IT83XX_I2C_STR(ch)           REG8(IT83XX_I2C_BASE+0x03+(ch << 7))
+#define IT83XX_I2C_BB                (1 << 5)
+#define IT83XX_I2C_TIME_OUT          (1 << 3)
+#define IT83XX_I2C_RW                (1 << 2)
+#define IT83XX_I2C_INTPEND           (1 << 1)
 #define IT83XX_I2C_DHTR(ch)          REG8(IT83XX_I2C_BASE+0x04+(ch << 7))
 #define IT83XX_I2C_TOR(ch)           REG8(IT83XX_I2C_BASE+0x05+(ch << 7))
 #define IT83XX_I2C_DTR(ch)           REG8(IT83XX_I2C_BASE+0x08+(ch << 7))
 #define IT83XX_I2C_CTR(ch)           REG8(IT83XX_I2C_BASE+0x09+(ch << 7))
+#define IT83XX_I2C_INTEN             (1 << 6)
+#define IT83XX_I2C_MODE              (1 << 5)
+#define IT83XX_I2C_STARST            (1 << 4)
+#define IT83XX_I2C_ACK               (1 << 3)
+#define IT83XX_I2C_HALT              (1 << 0)
 #define IT83XX_I2C_CTR1(ch)          REG8(IT83XX_I2C_BASE+0x0A+(ch << 7))
+#define IT83XX_I2C_COMQ_EN           (1 << 7)
+#define IT83XX_I2C_MDL_EN            (1 << 1)
+#define IT83XX_I2C_BYTE_CNT_L(ch)    REG8(IT83XX_I2C_BASE+0x0C+(ch << 7))
+#define IT83XX_I2C_IRQ_ST(ch)        REG8(IT83XX_I2C_BASE+0x0D+(ch << 7))
+#define IT83XX_I2C_IDW_CLR           (1 << 3)
+#define IT83XX_I2C_IDR_CLR           (1 << 2)
+#define IT83XX_I2C_SLVDATAFLG        (1 << 1)
+#define IT83XX_I2C_P_CLR             (1 << 0)
+#define IT83XX_I2C_IDR(ch)           REG8(IT83XX_I2C_BASE+0x06+(ch << 7))
+#define IT83XX_I2C_TOS(ch)           REG8(IT83XX_I2C_BASE+0x07+(ch << 7))
+#define IT83XX_I2C_CLK_STR           (1 << 7)
+#define IT83XX_I2C_IDR2(ch)          REG8(IT83XX_I2C_BASE+0x1F+(ch << 7))
+#define IT83XX_I2C_RAMHA(ch)         REG8(IT83XX_I2C_BASE+0x23+(ch << 7))
+#define IT83XX_I2C_RAMLA(ch)         REG8(IT83XX_I2C_BASE+0x24+(ch << 7))
+#define IT83XX_I2C_RAMHA2(ch)        REG8(IT83XX_I2C_BASE+0x2B+(ch << 7))
+#define IT83XX_I2C_RAMLA2(ch)        REG8(IT83XX_I2C_BASE+0x2C+(ch << 7))
 
 enum i2c_channels {
 	IT83XX_I2C_CH_A,  /* GPIO.B3/B4 */

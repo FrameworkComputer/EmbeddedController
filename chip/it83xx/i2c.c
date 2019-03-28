@@ -18,12 +18,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
-/*
- * The count number of the counter for 25 ms register.
- * The 25 ms register is calculated by (count number *1.024 kHz).
- */
-#define I2C_CLK_LOW_TIMEOUT  255 /* ~=249 ms */
-
 /* Default maximum time we allow for an I2C transfer */
 #define I2C_TIMEOUT_DEFAULT_US (100 * MSEC)
 

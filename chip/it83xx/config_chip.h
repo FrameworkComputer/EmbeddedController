@@ -27,6 +27,7 @@
  *          There are three i2c enhanced ports.
  */
 #define I2C_STANDARD_PORT_COUNT 3
+#define I2C_ENHANCED_PORT_COUNT 3
 
 /****************************************************************************/
 /* Memory mapping */

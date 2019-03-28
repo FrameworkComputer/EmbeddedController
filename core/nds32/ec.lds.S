@@ -21,7 +21,7 @@ MEMORY
 {
     FLASH (rx) : ORIGIN = FW_OFF(SECTION), LENGTH = FW_SIZE(SECTION)
     IRAM (rw)  : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
-#ifdef CONFIG_HOSTCMD_X86
+#if defined(CONFIG_HOSTCMD_X86) || defined(CONFIG_I2C_SLAVE)
     H2RAM (rw) : ORIGIN = CONFIG_H2RAM_BASE, LENGTH = CONFIG_H2RAM_SIZE
 #endif
 }
@@ -237,14 +237,21 @@ SECTIONS
 
     __image_size = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
 
-#ifdef CONFIG_HOSTCMD_X86
+#if defined(CONFIG_HOSTCMD_X86) || defined(CONFIG_I2C_SLAVE)
     .h2ram (NOLOAD) : {
         . += CONFIG_H2RAM_HOST_LPC_IO_BASE;
         *(.h2ram.pool.hostcmd)
         . = ALIGN(256);
         *(.h2ram.pool.acpiec)
+#ifdef CONFIG_I2C_SLAVE
+        . = ALIGN(256);
+        *(.h2ram.pool.i2cslv)
+#endif
+        __h2ram_end = .;
     } > H2RAM
 #endif
+    ASSERT((__h2ram_end) <= (CONFIG_H2RAM_BASE + CONFIG_H2RAM_SIZE),
+            "Not enough space for h2ram section.")
 
 #if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH))
     /DISCARD/ : {
