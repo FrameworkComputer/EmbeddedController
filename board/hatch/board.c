@@ -145,8 +145,8 @@ static const mat33_fp_t base_standard_ref = {
  * sure the rotaiton matrix for the lid sensor is correct.
  */
 static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
 	{ 0, FLOAT_TO_FP(-1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
