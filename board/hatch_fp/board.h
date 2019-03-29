@@ -113,11 +113,9 @@
 #define CONFIG_SPI_MASTER
 #define CONFIG_SPI_FP_PORT  0 /* SPI2: first master config */
 #ifdef SECTION_IS_RW
-/* TODO(b/124773209): Enable FP once rollback code has been fixed */
-#if 0
 #define CONFIG_FP_SENSOR_FPC1025
+/* TODO(b/130249462): remove for release */
 #define CONFIG_CMD_FPSENSOR_DEBUG
-#endif
 /*
  * Use the malloc code only in the RW section (for the private library),
  * we cannot enable it in RO since it is not compatible with the RW verification
