@@ -134,7 +134,7 @@ BOARDS_RAIDEN=(
 )
 
 DEFAULT_PORT="${SERVOD_PORT:-9999}"
-BITBANG_RATE="9600"  # Could be overwritten by a command line option.
+BITBANG_RATE="57600"  # Could be overwritten by a command line option.
 
 # Flags
 DEFINE_integer bitbang_rate "${BITBANG_RATE}" \
