@@ -116,7 +116,7 @@ void enable_ccd_factory_mode(int reset_required)
 {
 	delay_sleep_by(DISABLE_SLEEP_TIME);
 
-	reset_required_ = !!reset_required;
+	reset_required_ |= !!reset_required;
 	hook_call_deferred(&factory_enable_deferred_data,
 		TPM_PROCESSING_TIME);
 }
