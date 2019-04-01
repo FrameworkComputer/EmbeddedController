@@ -143,4 +143,4 @@ HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
 # $1: name of variable to set
 # $2: first default to use
 # $3: second default to use
-set-option = $(eval $1=$$(if $(2),$(2),$(3)))
+set-option = $(eval $1=$$(strip $$(if $(2),$(2),$(3))))
