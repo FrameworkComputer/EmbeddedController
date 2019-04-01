@@ -61,11 +61,11 @@ BOARDS_STM32=(
 	chocodile_bec
 	chocodile_vpdmcu
 	glados_pd
+	hatch_fp
 	jerry
 	minimuffin
 	nami_fp
 	nocturne_fp
-	hatch_fp
 	oak_pd
 	pit
 	plankton
