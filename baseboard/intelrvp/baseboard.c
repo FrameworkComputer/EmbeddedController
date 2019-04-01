@@ -168,6 +168,13 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_LAST);
 
+static void board_interrupts_init(void)
+{
+	/* DC Jack interrupt */
+	gpio_enable_interrupt(GPIO_DC_JACK_PRESENT);
+}
+DECLARE_HOOK(HOOK_INIT, board_interrupts_init, HOOK_PRIO_FIRST);
+
 int ioexpander_read_intelrvp_version(int *port0, int *port1)
 {
 	if (pca9555_read(I2C_PORT_PCA9555_BOARD_ID_GPIO,

@@ -20,7 +20,7 @@ static int board_charger_port_is_sourcing_vbus(int port)
 	int src_en;
 
 	/* DC Jack can't source VBUS */
-	if (port == DC_JACK_PORT_0 || port == CHARGE_PORT_NONE)
+	if (port == DEDICATED_CHARGE_PORT || port == CHARGE_PORT_NONE)
 		return 0;
 
 	src_en = gpio_get_level(tcpc_gpios[port].src.pin);
@@ -45,7 +45,7 @@ int pd_snk_is_vbus_provided(int port)
 {
 	int vbus_intr;
 
-	if (port == DC_JACK_PORT_0)
+	if (port == DEDICATED_CHARGE_PORT)
 		return 1;
 
 	vbus_intr = gpio_get_level(tcpc_gpios[port].vbus.pin);
@@ -95,9 +95,13 @@ static void board_dc_jack_handle(void)
 	}
 
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
-				DC_JACK_PORT_0, &charge_dc_jack);
+				DEDICATED_CHARGE_PORT, &charge_dc_jack);
 }
-DECLARE_HOOK(HOOK_AC_CHANGE, board_dc_jack_handle, HOOK_PRIO_FIRST);
+
+void board_dc_jack_interrupt(enum gpio_signal signal)
+{
+	board_dc_jack_handle();
+}
 
 static void board_charge_init(void)
 {
@@ -137,7 +141,7 @@ int board_set_active_charge_port(int port)
 	 * When the Type-C is active port, hardware circuit will
 	 * block DC jack from enabling +VADP_OUT.
 	 */
-	if (port != DC_JACK_PORT_0 && board_dc_jack_present()) {
+	if (port != DEDICATED_CHARGE_PORT && board_dc_jack_present()) {
 		CPRINTS("DC Jack present, Skip enable p%d", port);
 		return EC_ERROR_INVAL;
 	}
@@ -151,7 +155,7 @@ int board_set_active_charge_port(int port)
 	}
 
 	/* Enable charging port */
-	if (port != DC_JACK_PORT_0 && port != CHARGE_PORT_NONE)
+	if (port != DEDICATED_CHARGE_PORT && port != CHARGE_PORT_NONE)
 		board_charging_enable(port, 1);
 
 	CPRINTS("New chg p%d", port);

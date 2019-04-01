@@ -52,6 +52,8 @@ BOARDS_IT83XX=(
 	glkrvp_ite
 	it83xx_evb
 	reef_it8320
+	tglrvpu_ite
+	tglrvpy_ite
 )
 
 BOARDS_STM32=(
