@@ -28,7 +28,11 @@
 /* excludes non-base tasks for test build */
 #ifdef TEST_BUILD
 #define TASK_NOTEST(...)
+#ifdef TEST_TASK_EXTRA_ARGS
+#define TASK_TEST(...) TASK(__VA_ARGS__, TEST_TASK_EXTRA_ARGS)
+#else
 #define TASK_TEST TASK
+#endif
 #else
 #define TASK_NOTEST TASK
 #define CONFIG_TEST_TASK_LIST

@@ -5,6 +5,13 @@
 
 /* Task scheduling / events module for Chrome EC operating system */
 
+/*
+ * Needed before headers to support test builds since minute-ia defines 5
+ * parameters instead of the normal 4. This specifies a flag value of 0 for all
+ * tests tasks.
+ */
+#define TEST_TASK_EXTRA_ARGS 0
+
 #include "atomic.h"
 #include "common.h"
 #include "console.h"

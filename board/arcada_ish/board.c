@@ -132,6 +132,7 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+#ifdef HAS_TASK_CHIPSET
 /* TODO(b/122364080): replace when implement real chipset/power task */
 int chipset_in_state(int state_mask)
 {
@@ -150,6 +151,7 @@ int chipset_in_or_transitioning_to_state(int state_mask)
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 }
+#endif /* HAS_TASK_CHIPSET */
 
 /* TODO(b/122364080): remove when implement real chipset/power task */
 int board_idle_task(void *unused)
