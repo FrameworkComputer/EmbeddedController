@@ -75,6 +75,12 @@ static inline uint32_t scale_ticks2us(uint64_t ticks)
 	return quotient;
 }
 
+static inline void wait_while_settling(uint32_t mask)
+{
+	/* Do nothing on ISH3, only ISH4 and ISH5 need settling */
+	(void) mask;
+}
+
 #elif defined(CHIP_FAMILY_ISH4) || defined(CHIP_FAMILY_ISH5)
 #define CLOCK_SCALE_BITS 15
 BUILD_ASSERT(BIT(CLOCK_SCALE_BITS) == ISH_HPET_CLK_FREQ);
@@ -113,7 +119,23 @@ static inline uint32_t scale_ticks2us(uint64_t ticks)
 
 	return intermediate >> CLOCK_SCALE_BITS;
 }
-#endif /* CHIP_FAMILY_ISH4 || CHIP_FAMILY_ISH5 */
+
+/*
+ * HPET Control & Status register may indicate that a value which has
+ * been written still needs propogated by hardware. Before updating
+ * HPET_TIMER_CONF_CAP(N), be sure to wait on the value settling with
+ * the corresponding mask (see hpet.h).
+ */
+static inline void wait_while_settling(uint32_t mask)
+{
+	/* Wait for timer settings to settle ~ 150us */
+	while (HPET_CTRL_STATUS & mask)
+		continue;
+}
+
+#else
+#error "Must define CHIP_FAMILY_ISH(3|4|5)"
+#endif
 
 /*
  * The 64-bit read on a 32-bit chip can tear during the read. Ensure that the
@@ -152,20 +174,10 @@ void __hw_clock_event_set(uint32_t deadline)
 	 */
 	HPET_TIMER_COMP(1) = read_main_timer() + scale_us2ticks(remaining_us);
 
-	do {
-		/* Arm timer */
-		HPET_TIMER_CONF_CAP(1) |= HPET_Tn_INT_ENB_CNF;
+	wait_while_settling(HPET_T1_SETTLING);
 
-#if defined(CHIP_FAMILY_ISH4) || defined(CHIP_FAMILY_ISH5)
-		/* Wait for timer settings to settle ~ 150us */
-		while (HPET_CTRL_STATUS & HPET_T1_SETTLING)
-			continue;
-#endif
-	/*
-	 * TODO(b/124890290): Remove or update while loop that ensures timer is
-	 * armed once we have a better hardware understanding.
-	 */
-	} while (!(HPET_TIMER_CONF_CAP(1) & HPET_Tn_INT_ENB_CNF));
+	/* Arm timer */
+	HPET_TIMER_CONF_CAP(1) |= HPET_Tn_INT_ENB_CNF;
 }
 
 uint32_t __hw_clock_event_get(void)
@@ -175,6 +187,7 @@ uint32_t __hw_clock_event_get(void)
 
 void __hw_clock_event_clear(void)
 {
+	wait_while_settling(HPET_T1_SETTLING);
 	HPET_TIMER_CONF_CAP(1) &= ~HPET_Tn_INT_ENB_CNF;
 }
 
@@ -186,18 +199,13 @@ uint32_t __hw_clock_source_read(void)
 void __hw_clock_source_set(uint32_t ts)
 {
 	/* Reset both clock and overflow comparators */
-
+	wait_while_settling(HPET_ANY_SETTLING);
 	HPET_GENERAL_CONFIG &= ~HPET_ENABLE_CNF;
 
 	HPET_MAIN_COUNTER_64 = scale_us2ticks(ts);
 	HPET_TIMER0_COMP_64 = ROLLOVER_CMP_VAL;
 
-#if defined(CHIP_FAMILY_ISH4) || defined(CHIP_FAMILY_ISH5)
-	/* Wait for timer to settle. required for ISH 4 */
-	while (HPET_CTRL_STATUS & HPET_MAIN_COUNTER_SETTLING)
-		continue;
-#endif
-
+	wait_while_settling(HPET_ANY_SETTLING);
 	HPET_GENERAL_CONFIG |= HPET_ENABLE_CNF;
 }
 
@@ -227,7 +235,6 @@ DECLARE_IRQ(ISH_HPET_TIMER1_IRQ, __hw_clock_source_irq_1);
 
 int __hw_clock_source_init(uint32_t start_t)
 {
-
 	/*
 	 * The timer can only fire interrupt when its value reaches zero.
 	 * Therefore we need two timers:
@@ -239,8 +246,19 @@ int __hw_clock_source_init(uint32_t start_t)
 	uint32_t timer1_config = 0x00000000;
 
 	/* Disable HPET */
+	wait_while_settling(HPET_ANY_SETTLING);
 	HPET_GENERAL_CONFIG &= ~HPET_ENABLE_CNF;
+
+	/* Disable T0 and T1 until we get them set up (below) */
+	HPET_TIMER_CONF_CAP(0) &= ~HPET_Tn_INT_ENB_CNF;
+	HPET_TIMER_CONF_CAP(1) &= ~HPET_Tn_INT_ENB_CNF;
+
+	/* Initialize main counter */
 	HPET_MAIN_COUNTER_64 = scale_us2ticks(start_t);
+
+	/* Clear any interrupts from previously running image */
+	HPET_INTR_CLEAR = BIT(0);
+	HPET_INTR_CLEAR = BIT(1);
 
 	/* Set comparator value for Timer 0 and enable periodic mode */
 	HPET_TIMER0_COMP_64 = ROLLOVER_CMP_VAL;
@@ -252,7 +270,7 @@ int __hw_clock_source_init(uint32_t start_t)
 	/* Timer 1 - IRQ routing */
 	timer1_config &= ~HPET_Tn_INT_ROUTE_CNF_MASK;
 	timer1_config |= (ISH_HPET_TIMER1_IRQ <<
-				HPET_Tn_INT_ROUTE_CNF_SHIFT);
+			  HPET_Tn_INT_ROUTE_CNF_SHIFT);
 
 	/* Level triggered interrupt */
 	timer0_config |= HPET_Tn_INT_TYPE_CNF;
@@ -260,6 +278,9 @@ int __hw_clock_source_init(uint32_t start_t)
 
 	/* Enable interrupt */
 	timer0_config |= HPET_Tn_INT_ENB_CNF;
+
+	/* Before enabling, previous values must have settled */
+	wait_while_settling(HPET_ANY_SETTLING);
 
 	/* Unmask HPET IRQ in IOAPIC */
 	task_enable_irq(ISH_HPET_TIMER0_IRQ);
@@ -269,17 +290,8 @@ int __hw_clock_source_init(uint32_t start_t)
 	HPET_TIMER_CONF_CAP(0) |= timer0_config;
 	HPET_TIMER_CONF_CAP(1) |= timer1_config;
 
-#if defined(CHIP_FAMILY_ISH4) || defined(CHIP_FAMILY_ISH5)
-	/* Wait for timer to settle. required for ISH 4 */
-	while (HPET_CTRL_STATUS & HPET_MAIN_COUNTER_SETTLING)
-		continue;
-#endif
-
-	/*
-	 * LEGACY_RT_CNF for HPET1 interrupt routing
-	 * and enable overall HPET counter/interrupts.
-	 */
-	HPET_GENERAL_CONFIG |= (HPET_ENABLE_CNF | HPET_LEGACY_RT_CNF);
+	/* Enable HPET */
+	HPET_GENERAL_CONFIG |= HPET_ENABLE_CNF;
 
 	/* Return IRQ value for OS event timer */
 	return ISH_HPET_TIMER1_IRQ;
