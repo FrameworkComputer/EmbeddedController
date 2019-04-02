@@ -242,35 +242,11 @@ static int command_board_id(int argc, char **argv)
 		rv = write_board_id(&id, 0);
 	}
 #endif
-#ifdef CR50_RELAXED
-	else if (argc == 2) {
-		int clear_flags;
-
-		if (strcasecmp(argv[1], "force_pvt"))
-			return EC_ERROR_PARAM2;
-
-		clear_flags = 1;
-		rv = read_board_id(&id);
-		if (rv != EC_SUCCESS) {
-			CPRINTS("%s: error reading Board ID", __func__);
-			return rv;
-		}
-		if (board_id_is_blank(&id)) {
-			CPRINTS("%s: Board ID isn't set", __func__);
-			return EC_ERROR_INVAL;
-		}
-		id.flags = 0;
-		rv = write_board_id(&id, clear_flags);
-
-	}
-#endif
 	return rv;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(bid, command_board_id,
 #ifdef CR50_DEV
-			     "[force_pvt | bid flags]",
-#elif defined(CR50_RELAXED)
-			     "[force_pvt]",
+			     "[bid flags]",
 #else
 			     NULL,
 #endif

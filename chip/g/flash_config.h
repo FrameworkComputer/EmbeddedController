@@ -5,6 +5,8 @@
 #ifndef __EC_CHIP_G_FLASH_CONFIG_H
 #define __EC_CHIP_G_FLASH_CONFIG_H
 
+#include "stdint.h"
+
 #define FLASH_INFO_SIZE                      (2 * 1024)
 #define FLASH_INFO_MEMORY_BASE              0x28000
 /* INFO is a 2-KB flash page that consists of four regions.  The

@@ -8,6 +8,7 @@
 #define __EC_CHIP_G_BOARD_SPACE_H
 
 #include "compile_time_macros.h"
+#include "flash_config.h"
 #include "flash_info.h"
 #include "stdint.h"
 
@@ -46,6 +47,17 @@ struct info1_board_space {
 	uint8_t bid_padding[4];
 	struct sn_data sn;
 };
+
+/* Layout of the entire 2K INFO1 space. */
+struct info1_layout {
+	uint8_t ro_info_map[INFO_RO_MAP_SIZE];
+	uint8_t rw_info_map[INFO_RW_MAP_SIZE];
+	struct info1_board_space board_space;
+	uint8_t padding[FLASH_INFO_MANUFACTURE_STATE_OFFSET - INFO_RO_MAP_SIZE -
+			INFO_RW_MAP_SIZE - sizeof(struct info1_board_space)];
+	uint8_t manufacture_space[FLASH_INFO_MANUFACTURE_STATE_SIZE];
+};
+BUILD_ASSERT(sizeof(struct info1_layout) == FLASH_INFO_SIZE);
 
 #define INFO_BOARD_ID_SIZE		sizeof(struct board_id)
 #define INFO_BOARD_ID_OFFSET		(INFO_BOARD_SPACE_OFFSET + \
