@@ -2693,10 +2693,17 @@
 #undef CONFIG_PWM_DISPLIGHT
 
 /*
+ * Support keyboard backlight control
+ *
+ * You need to define board_kblight_init unless CONFIG_PWM_KBLIGHT is used.
+ * For example, lm3509 can be registered as a driver in board_kblight_init.
+ */
+#undef CONFIG_KEYBOARD_BACKLIGHT
+
+/*
  * Support PWM output to keyboard backlight
  *
- * Optionally, lm3509 can be used as a keyboard backlight controller.
- * TODO: Create CONFIG_KEYBOARD_BACKLIGHT to allow lm3509 is used without PWM.
+ * This implies CONFIG_KEYBOARD_BACKLIGHT.
  */
 #undef CONFIG_PWM_KBLIGHT
 
@@ -4389,6 +4396,10 @@
  */
 #ifndef CONFIG_SLEEP_TIMEOUT_MS
 #define CONFIG_SLEEP_TIMEOUT_MS 10000
+#endif
+
+#ifdef CONFIG_PWM_KBLIGHT
+#define CONFIG_KEYBOARD_BACKLIGHT
 #endif
 
 #endif  /* __CROS_EC_CONFIG_H */

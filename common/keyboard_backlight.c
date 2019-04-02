@@ -74,7 +74,9 @@ int kblight_register(const struct kblight_drv *drv)
 static void keyboard_backlight_init(void)
 {
 	/* Uses PWM by default. Can be customized by board_kblight_init */
+#ifdef CONFIG_PWM_KBLIGHT
 	kblight_register(&kblight_pwm);
+#endif
 	board_kblight_init();
 	if (kblight_init())
 		CPRINTS("kblight init failed");
