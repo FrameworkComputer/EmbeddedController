@@ -14,6 +14,9 @@
 #include "driver/accelgyro_bmi160.h"
 #include "driver/als_opt3001.h"
 #include "driver/ppc/sn5s330.h"
+#include "driver/tcpm/anx7447.h"
+#include "driver/tcpm/ps8xxx.h"
+#include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
 #include "extpower.h"
 #include "fan.h"
@@ -113,6 +116,34 @@ const struct pwm_t pwm_channels[] = {
 			.freq = 25000},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+/******************************************************************************/
+/* USB-C TPCP Configuration */
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+	[USB_PD_PORT_TCPC_0] = {
+		.i2c_host_port = I2C_PORT_TCPC0,
+		.i2c_slave_addr = AN7447_TCPC0_I2C_ADDR,
+		.drv = &anx7447_tcpm_drv,
+		.flags = TCPC_FLAGS_RESET_ACTIVE_HIGH,
+	},
+	[USB_PD_PORT_TCPC_1] = {
+		.i2c_host_port = I2C_PORT_TCPC1,
+		.i2c_slave_addr = PS8751_I2C_ADDR1,
+		.drv = &ps8xxx_tcpm_drv,
+		.flags = 0,
+	},
+};
+
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+	[USB_PD_PORT_TCPC_0] = {
+		.driver = &anx7447_usb_mux_driver,
+		.hpd_update = &anx7447_tcpc_update_hpd_status,
+	},
+	[USB_PD_PORT_TCPC_1] = {
+		.driver = &tcpci_tcpm_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	}
+};
 
 /******************************************************************************/
 /* Sensors */
