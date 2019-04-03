@@ -1377,10 +1377,19 @@ static uint32_t get_properties(void)
 	/*
 	 * Reached the end of the table and didn't find a matching config entry.
 	 * However, the SPI vs I2C determination can still be made as
-	 *get_strap_config() returned EC_SUCCESS.
+	 * get_strap_config() returned EC_SUCCESS.
 	 */
-	properties = config & 0xa ? BOARD_SLAVE_CONFIG_SPI :
-		BOARD_PROPERTIES_DEFAULT;
+	if (config & 0xa) {
+		properties = BOARD_SLAVE_CONFIG_SPI;
+		/*
+		 * Determine PLT_RST_L vs SYS_RST_L. Any board with a pullup on
+		 * DIOA9 uses PLT_RST_L.
+		 */
+		properties |= config & 0x8 ? BOARD_USE_PLT_RESET : 0;
+	} else {
+		/* All I2C boards use same default properties. */
+		properties = BOARD_PROPERTIES_DEFAULT;
+	}
 	CPRINTS("strap_cfg 0x%x has no table entry, prop = 0x%x",
 		config, properties);
 	return properties;
