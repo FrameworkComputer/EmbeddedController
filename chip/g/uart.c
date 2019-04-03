@@ -13,7 +13,7 @@
 #include "uartn.h"
 #include "util.h"
 
-static int done_uart_init_yet;
+static uint8_t done_uart_init_yet;
 
 #define USE_UART_INTERRUPTS (!(defined(CONFIG_CUSTOMIZED_RO) && \
 			       defined(SECTION_IS_RO)))
@@ -34,7 +34,6 @@ void uart_tx_start(void)
 void uart_tx_stop(void)
 {
 	uartn_tx_stop(UARTN);
-
 }
 
 int uart_tx_in_progress(void)
@@ -74,7 +73,7 @@ int uart_read_char(void)
 /**
  * Interrupt handlers for UART0
  */
-static void uart_ec_tx_interrupt(void)
+static void uart_console_tx_interrupt(void)
 {
 	/* Clear transmit interrupt status */
 	GR_UART_ISTATECLR(UARTN) = GC_UART_ISTATECLR_TX_MASK;
@@ -82,9 +81,9 @@ static void uart_ec_tx_interrupt(void)
 	/* Fill output FIFO */
 	uart_process_output();
 }
-DECLARE_IRQ(GC_IRQNUM_UART0_TXINT, uart_ec_tx_interrupt, 1);
+DECLARE_IRQ(GC_IRQNUM_UART0_TXINT, uart_console_tx_interrupt, 1);
 
-static void uart_ec_rx_interrupt(void)
+static void uart_console_rx_interrupt(void)
 {
 	/* Clear receive interrupt status */
 	GR_UART_ISTATECLR(UARTN) = GC_UART_ISTATECLR_RX_MASK;
@@ -92,7 +91,7 @@ static void uart_ec_rx_interrupt(void)
 	/* Read input FIFO until empty */
 	uart_process_input();
 }
-DECLARE_IRQ(GC_IRQNUM_UART0_RXINT, uart_ec_rx_interrupt, 1);
+DECLARE_IRQ(GC_IRQNUM_UART0_RXINT, uart_console_rx_interrupt, 1);
 #endif  /* USE_UART_INTERRUPTS */
 
 void uart_init(void)
