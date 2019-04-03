@@ -111,4 +111,22 @@ int get_temp_3v3_51k1_47k_4050b(int idx_adc, int *temp_ptr);
 int get_temp_6v0_51k1_47k_4050b(int idx_adc, int *temp_ptr);
 #endif
 
+#ifdef CONFIG_STEINHART_HART_3V0_22K6_47K_4050B
+/**
+ * Reads the specified ADC channel and uses a lookup table and interpolation to
+ * return a temperature in degrees K.
+ *
+ * The lookup table is based off of a resistor divider circuit on 3V with a
+ * 22.6K resistor in series with a thermistor with nominal value of 47K (at 25C)
+ * and a B (25/100) value of 4050.
+ *
+ * @param idx_adc	The idx value from the temp_sensor_t struct, which is
+ *			the ADC channel to read and convert to degrees K
+ * @param temp_ptr	Destination for temperature (in degrees K)
+ *
+ * @return EC_SUCCESS, or non-zero if error.
+ */
+int get_temp_3v0_22k6_47k_4050b(int idx_adc, int *temp_ptr);
+#endif
+
 #endif  /* __CROS_EC_TEMP_SENSOR_THERMISTOR_NCP15WB_H */

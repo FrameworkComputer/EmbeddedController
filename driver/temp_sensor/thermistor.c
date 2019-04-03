@@ -65,7 +65,8 @@ int thermistor_linear_interpolate(uint16_t mv,
 
 #if defined(CONFIG_STEINHART_HART_3V3_51K1_47K_4050B) || \
 	defined(CONFIG_STEINHART_HART_3V3_13K7_47K_4050B) || \
-	defined(CONFIG_STEINHART_HART_6V0_51K1_47K_4050B)
+	defined(CONFIG_STEINHART_HART_6V0_51K1_47K_4050B) || \
+	defined(CONFIG_STEINHART_HART_3V0_22K6_47K_4050B)
 static int thermistor_get_temperature(int idx_adc, int *temp_ptr,
 		const struct thermistor_info *info)
 {
@@ -196,3 +197,39 @@ int get_temp_6v0_51k1_47k_4050b(int idx_adc, int *temp_ptr)
 			&thermistor_info_6v0_51_47);
 }
 #endif /* CONFIG_STEINHART_HART_6V0_51K1_47K_4050B */
+
+#ifdef CONFIG_STEINHART_HART_3V0_22K6_47K_4050B
+/*
+ * Data derived from Steinhart-Hart equation in a resistor divider circuit with
+ * Vdd=3000mV, R = 22.6Kohm, and thermistor (B = 4050, T0 = 298.15 K, nominal
+ * resistance (R0) = 47Kohm).
+ */
+#define THERMISTOR_SCALING_FACTOR_22_47 11
+static const struct thermistor_data_pair thermistor_data_22_47[] = {
+	{ 2625 / THERMISTOR_SCALING_FACTOR_22_47, 0   },
+	{ 2425 / THERMISTOR_SCALING_FACTOR_22_47, 10  },
+	{ 2170 / THERMISTOR_SCALING_FACTOR_22_47, 20  },
+	{ 1875 / THERMISTOR_SCALING_FACTOR_22_47, 30  },
+	{ 1563 / THERMISTOR_SCALING_FACTOR_22_47, 40  },
+	{ 1263 / THERMISTOR_SCALING_FACTOR_22_47, 50  },
+	{  995 / THERMISTOR_SCALING_FACTOR_22_47, 60  },
+	{  770 / THERMISTOR_SCALING_FACTOR_22_47, 70  },
+	{  589 / THERMISTOR_SCALING_FACTOR_22_47, 80  },
+	{  514 / THERMISTOR_SCALING_FACTOR_22_47, 85  },
+	{  448 / THERMISTOR_SCALING_FACTOR_22_47, 90  },
+	{  391 / THERMISTOR_SCALING_FACTOR_22_47, 95  },
+	{  341 / THERMISTOR_SCALING_FACTOR_22_47, 100 },
+};
+
+static const struct thermistor_info thermistor_info_22_47 = {
+	.scaling_factor = THERMISTOR_SCALING_FACTOR_22_47,
+	.num_pairs = ARRAY_SIZE(thermistor_data_22_47),
+	.data = thermistor_data_22_47,
+};
+
+int get_temp_3v0_22k6_47k_4050b(int idx_adc, int *temp_ptr)
+{
+	return thermistor_get_temperature(idx_adc, temp_ptr,
+			&thermistor_info_22_47);
+}
+#endif /* CONFIG_STEINHART_HART_3V0_22K6_47K_4050B */
