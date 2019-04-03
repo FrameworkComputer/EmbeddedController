@@ -197,9 +197,15 @@ static void board_pogo_charge_init(void)
 DECLARE_HOOK(HOOK_INIT, board_pogo_charge_init,
 	     HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
 
+static int force_discharge;
+
 int board_set_active_charge_port(int charge_port)
 {
 	CPRINTS("New chg p%d", charge_port);
+
+	/* ignore all request when discharge mode is on */
+	if (force_discharge)
+		return EC_SUCCESS;
 
 	switch (charge_port) {
 	case CHARGE_PORT_USB_C:
@@ -240,7 +246,22 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 
 int board_discharge_on_ac(int enable)
 {
-	/* TODO(b:123268580): Implement POGO discharge logic. */
+	int ret, port;
+
+	if (enable) {
+		port = CHARGE_PORT_NONE;
+	} else {
+		/* restore the charge port state */
+		port = charge_manager_get_override();
+		if (port == OVERRIDE_OFF)
+			port = charge_manager_get_active_charge_port();
+	}
+
+	ret = board_set_active_charge_port(port);
+	if (ret)
+		return ret;
+	force_discharge = enable;
+
 	return charger_discharge_on_ac(enable);
 }
 
@@ -250,11 +271,14 @@ int extpower_is_present(void)
 	 * The charger will indicate VBUS presence if we're sourcing 5V,
 	 * so exclude such ports.
 	 */
-	/* TODO(b:127767432): Also need to check pogo_vbus_present. */
+	int usb_c_extpower_present;
+
 	if (board_vbus_source_enabled(CHARGE_PORT_USB_C))
-		return 0;
+		usb_c_extpower_present = 0;
 	else
-		return tcpm_get_vbus_level(CHARGE_PORT_USB_C);
+		usb_c_extpower_present = tcpm_get_vbus_level(CHARGE_PORT_USB_C);
+
+	return usb_c_extpower_present || gpio_get_level(GPIO_POGO_VBUS_PRESENT);
 }
 
 int pd_snk_is_vbus_provided(int port)
