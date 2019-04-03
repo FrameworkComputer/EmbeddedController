@@ -887,6 +887,7 @@ static int host_command_host_sleep_event(struct host_cmd_handler_args *args)
 	enum host_sleep_event state = p->sleep_event;
 
 	host_sleep_state = state;
+	ctx.sleep_transitions = 0;
 	switch (state) {
 	case HOST_SLEEP_EVENT_S3_SUSPEND:
 	case HOST_SLEEP_EVENT_S0IX_SUSPEND:
