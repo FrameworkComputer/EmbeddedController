@@ -1,27 +1,11 @@
 #!/bin/sh
 #
-# This attempts to build and install the i2c-pseudo Linux kernel module,
-# following the procedure documented in README.
+# This attempts to build and install the i2c-pseudo Linux kernel module.
 
 set -e
 
-if ! lsmod | grep -q '^i2c_dev\s'; then
-  sudo depmod -a
-  sudo modprobe -q i2c-dev
-fi
-
-if lsmod | grep -q '^i2c_pseudo\s'; then
-  echo "SUCCESS: i2c-dev module already loaded"
-  exit
-fi
-
-if sudo modprobe -q i2c-pseudo; then
-  echo "SUCCESS: loaded already-installed i2c-pseudo module"
-  exit
-fi
-
+make clean
 make
-
 ret=0
 sudo make modules_install || ret="$?"
 
