@@ -276,8 +276,6 @@ void __keep task_start_irq_handler(void *unused)
 	 * pre-empted.
 	 */
 	uint32_t t = get_time().le.lo;
-
-	/* ISR is occasionally zero, see b:128444630 */
 	uint32_t vector = get_current_interrupt_vector();
 	int irq = VEC_TO_IRQ(vector);
 

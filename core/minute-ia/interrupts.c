@@ -109,11 +109,9 @@ static const irq_desc_t system_irqs[] = {
  * exception_panic were pushed by the hardware when the exception was
  * called.
  *
- * This is done since the ISR appears to be zero when exceptions are
- * handled (b:128444630). A more ideal solution would be to use
- * get_current_interrupt_vector from exception_panic. A fix for this
- * *might* involve a closer investigation of the flags passed to
- * set_interrupt_gate.
+ * This is done since interrupt vectors 0-31 bypass the APIC ISR register
+ * and go directly to the CPU core, so get_current_interrupt_vector
+ * cannot be used.
  */
 #define DEFINE_EXN_HANDLER(vector)					\
 	void __keep exception_panic_##vector(void);			\
@@ -159,9 +157,11 @@ void set_interrupt_gate(uint8_t num, isr_handler_t func, uint8_t flags)
 }
 
 /**
- * This procedure gets the current interrupt vector number, and should
- * only be called from an interrupt vector context. Note that it may
- * fail under some cases (see b:128444630).
+ * This procedure gets the current interrupt vector number using the
+ * APIC ISR register, and should only be called from an interrupt
+ * vector context. Note that vectors 0-31, as well as software
+ * triggered interrupts (using "int n") bypass the APIC, and this
+ * routine will not work for that.
  *
  * Returns an integer in range 0-255 upon success, or 256 (0x100)
  * upon failure.
