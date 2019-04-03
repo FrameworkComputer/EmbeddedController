@@ -3046,16 +3046,23 @@
 /* Task config */
 
 /*
- * List of enabled tasks in ascending priority order.  This is normally
+ * List of enabled tasks in ascending priority order. This is normally
  * defined in each board's ec.tasklist file.
  *
  * For each task, use the macro TASK_ALWAYS(n, r, d, s) for base tasks and
  * TASK_NOTEST(n, r, d, s) for tasks that can be excluded in test binaries,
- * where :
+ * where:
  * 'n' is the name of the task
  * 'r' is the main routine of the task
  * 'd' is an opaque parameter passed to the routine at startup
  * 's' is the stack size in bytes; must be a multiple of 8
+ *
+ * Some cores use TASK_ALWAYS(n, r, d, s, f), where:
+ * 'f' is the bit flags for the platform specific information
+ *    - MIA_TASK_FLAG_USE_FPU : bit 0, task uses FPU H/W
+ *
+ * For USB PD tasks, IDs must be in consecutive order and correspond to
+ * the port which they are for. See TASK_ID_TO_PD_PORT() macro.
  */
 #undef CONFIG_TASK_LIST
 
