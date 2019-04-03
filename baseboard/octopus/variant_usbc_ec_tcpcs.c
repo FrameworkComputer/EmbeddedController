@@ -31,12 +31,14 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ITE_0] = {
 		/* TCPC is embedded within EC so no i2c config needed */
 		.drv = &it83xx_tcpm_drv,
-		.pol = TCPC_ALERT_ACTIVE_LOW,
+		/* Alert is active-low, push-pull */
+		.flags = 0,
 	},
 	[USB_PD_PORT_ITE_1] = {
 		/* TCPC is embedded within EC so no i2c config needed */
 		.drv = &it83xx_tcpm_drv,
-		.pol = TCPC_ALERT_ACTIVE_LOW,
+		/* Alert is active-low, push-pull */
+		.flags = 0,
 	},
 };
 

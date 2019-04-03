@@ -174,14 +174,16 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.i2c_host_port = I2C_PORT_TCPC0,
 		.i2c_slave_addr = I2C_ADDR_TCPC,
 		.drv = &ps8xxx_tcpm_drv,
-		.pol = TCPC_ALERT_ACTIVE_LOW
+		/* Alert is active-low, push-pull */
+		.flags = 0,
 	},
 	{
 		/* right port */
 		.i2c_host_port = I2C_PORT_TCPC1,
 		.i2c_slave_addr = I2C_ADDR_TCPC,
 		.drv = &ps8xxx_tcpm_drv,
-		.pol = TCPC_ALERT_ACTIVE_LOW
+		/* Alert is active-low, push-pull */
+		.flags = 0,
 	},
 };
 

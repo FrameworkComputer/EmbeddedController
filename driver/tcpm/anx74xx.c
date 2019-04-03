@@ -1045,17 +1045,16 @@ static int anx74xx_tcpm_init(int port)
 
 	/* Initialize interrupt open-drain */
 	rv |= tcpc_read(port, ANX74XX_REG_INTP_VCONN_CTRL, &reg);
-	if (tcpc_config[port].od == TCPC_ALERT_OPEN_DRAIN)
+	if (tcpc_config[port].flags & TCPC_FLAGS_ALERT_OD)
 		reg |= ANX74XX_REG_R_INTERRUPT_OPEN_DRAIN;
 	else
 		reg &= ~ANX74XX_REG_R_INTERRUPT_OPEN_DRAIN;
 	rv |= tcpc_write(port, ANX74XX_REG_INTP_VCONN_CTRL, reg);
 
 	/* Initialize interrupt polarity */
-	rv |= tcpc_write(port, ANX74XX_REG_IRQ_STATUS,
-			tcpc_config[port].pol == TCPC_ALERT_ACTIVE_LOW ?
-			ANX74XX_REG_IRQ_POL_LOW :
-			ANX74XX_REG_IRQ_POL_HIGH);
+	reg = tcpc_config[port].flags & TCPC_FLAGS_ALERT_ACTIVE_HIGH ?
+		ANX74XX_REG_IRQ_POL_HIGH : ANX74XX_REG_IRQ_POL_LOW;
+	rv |= tcpc_write(port, ANX74XX_REG_IRQ_STATUS, reg);
 
 	/* unmask interrupts */
 	rv |= tcpc_read(port, ANX74XX_REG_IRQ_EXT_MASK_1, &reg);

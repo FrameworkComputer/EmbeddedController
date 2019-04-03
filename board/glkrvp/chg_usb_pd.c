@@ -31,8 +31,10 @@ enum glkrvp_charge_ports {
 };
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{NPCX_I2C_PORT7_0, 0xA0, &tcpci_tcpm_drv, TCPC_ALERT_ACTIVE_LOW},
-	{NPCX_I2C_PORT7_0, 0xA4, &tcpci_tcpm_drv, TCPC_ALERT_ACTIVE_LOW},
+	/* Alert is active-low, push-pull */
+	{NPCX_I2C_PORT7_0, 0xA0, &tcpci_tcpm_drv, 0},
+	/* Alert is active-low, push-pull */
+	{NPCX_I2C_PORT7_0, 0xA4, &tcpci_tcpm_drv, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == CONFIG_USB_PD_PORT_COUNT);
 

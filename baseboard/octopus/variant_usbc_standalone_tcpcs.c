@@ -35,18 +35,21 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 #if defined(VARIANT_OCTOPUS_TCPC_0_PS8751)
 		.i2c_slave_addr = PS8751_I2C_ADDR1,
 		.drv = &ps8xxx_tcpm_drv,
-		.pol = TCPC_ALERT_ACTIVE_LOW
+		/* Alert is active-low, push-pull */
+		.flags = 0,
 #else
 		.i2c_slave_addr = AN7447_TCPC0_I2C_ADDR,
 		.drv = &anx7447_tcpm_drv,
-		.pol = TCPC_ALERT_ACTIVE_LOW,
+		/* Alert is active-low, push-pull */
+		.flags = 0,
 #endif
 	},
 	[USB_PD_PORT_TCPC_1] = {
 		.i2c_host_port = I2C_PORT_TCPC1,
 		.i2c_slave_addr = PS8751_I2C_ADDR1,
 		.drv = &ps8xxx_tcpm_drv,
-		.pol = TCPC_ALERT_ACTIVE_LOW,
+		/* Alert is active-low, push-pull */
+		.flags = 0,
 	},
 };
 

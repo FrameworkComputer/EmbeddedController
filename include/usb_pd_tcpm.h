@@ -265,22 +265,23 @@ struct tcpm_drv {
 #endif
 };
 
-enum tcpc_alert_polarity {
-	TCPC_ALERT_ACTIVE_LOW,
-	TCPC_ALERT_ACTIVE_HIGH,
-};
-
-enum tcpc_alert_open_drain {
-	TCPC_ALERT_PUSH_PULL = 0,
-	TCPC_ALERT_OPEN_DRAIN,
-};
+/*
+ * Macros for tcpc_config_t flags field.
+ *
+ * Bit 0 --> Polarity for TCPC alert. Set to 1 if alert is active high.
+ * Bit 1 --> Set to 1 if TCPC alert line is open-drain instead of push-pull.
+ * Bit 2 --> Polarity for TCPC reset. Set to 1 if reset line is active high.
+ */
+#define TCPC_FLAGS_ALERT_ACTIVE_HIGH	BIT(0)
+#define TCPC_FLAGS_ALERT_OD		BIT(1)
+#define TCPC_FLAGS_RESET_ACTIVE_HIGH	BIT(2)
 
 struct tcpc_config_t {
 	int i2c_host_port;
 	int i2c_slave_addr;
 	const struct tcpm_drv *drv;
-	enum tcpc_alert_polarity pol;
-	enum tcpc_alert_open_drain od;
+	/* See TCPC_FLAGS_* above */
+	uint32_t flags;
 };
 
 /**
