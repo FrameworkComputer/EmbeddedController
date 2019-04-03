@@ -347,6 +347,7 @@ DECLARE_HOST_COMMAND(EC_CMD_SET_CROS_BOARD_INFO,
 		     hc_cbi_set,
 		     EC_VER_MASK(0));
 
+#ifdef CONFIG_CMD_CBI
 static void dump_flash(void)
 {
 	uint8_t buf[16];
@@ -398,4 +399,6 @@ static int cc_cbi(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(cbi, cc_cbi, NULL, "Print Cros Board Info from flash");
+#endif /* CONFIG_CMD_CBI */
+
 #endif /* !HOST_TOOLS_BUILD */
