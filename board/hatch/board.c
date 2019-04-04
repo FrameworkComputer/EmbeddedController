@@ -386,3 +386,25 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	/* Note that the level is inverted because the pin is active low. */
 	gpio_set_level(GPIO_USB_C_OC_ODL, !is_overcurrented);
 }
+
+/* Called on AP S5 -> S3 transition */
+static void board_chipset_startup(void)
+{
+	gpio_set_level(GPIO_EC_INT_L, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
+	     HOOK_PRIO_DEFAULT);
+
+/* Called on AP S3 -> S5 transition */
+static void board_chipset_shutdown(void)
+{
+	/*
+	 * EC_INT_L is currently a push-pull pin and this causes leakage in G3
+	 * onto the PP3300_A_SOC rail. Pull this pin low when host enters S5 to
+	 * avoid the leakage. It will be pulled back high when host transitions
+	 * out of S5.
+	 */
+	gpio_set_level(GPIO_EC_INT_L, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown,
+	     HOOK_PRIO_DEFAULT);
