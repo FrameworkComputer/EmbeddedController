@@ -660,6 +660,8 @@ static void print_cc_mode(void)
 
 static void do_cc(int disable_dts_new, int allow_src_new)
 {
+	int dualrole;
+
 	if ((disable_dts_new != disable_dts_mode) ||
 	    (allow_src_new != allow_src_mode)) {
 		/* Force detach */
@@ -667,7 +669,9 @@ static void do_cc(int disable_dts_new, int allow_src_new)
 		/* Always set to 0 here so both CC lines are changed */
 		disable_dts_mode = 0;
 		allow_src_mode = 0;
+
 		/* Remove Rp/Rd on both CC lines */
+		pd_comm_enable(DUT, 0);
 		pd_set_rp_rd(DUT, TYPEC_CC_RP, TYPEC_RP_RESERVED);
 
 		/* Some time for DUT to detach, use tErrorRecovery */
@@ -676,14 +680,15 @@ static void do_cc(int disable_dts_new, int allow_src_new)
 		/* Accept new dts/src value */
 		disable_dts_mode = disable_dts_new;
 		allow_src_mode = allow_src_new;
+
 		/* Can we charge? */
-		pd_set_dual_role(DUT,
-			allow_src_mode && charge_port_is_active() ?
+		dualrole = allow_src_mode && charge_port_is_active();
+		pd_set_dual_role(DUT, dualrole ?
 			PD_DRP_FORCE_SOURCE : PD_DRP_FORCE_SINK);
 
 		/* Present Rp or Rd on CC1 and CC2 based on disable_dts_mode */
-		pd_config_init(DUT,
-			pd_get_dual_role(DUT) == PD_DRP_FORCE_SOURCE);
+		pd_config_init(DUT, dualrole);
+		pd_comm_enable(DUT, dualrole);
 	}
 
 	print_cc_mode();
