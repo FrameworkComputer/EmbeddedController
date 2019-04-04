@@ -550,6 +550,15 @@ int rt946x_cutoff_battery(void);
 /* Enable/Disable charge temination */
 int rt946x_enable_charge_termination(int en);
 
+struct rt946x_init_setting {
+	uint16_t eoc_current;
+	uint16_t mivr;
+	uint16_t ircmp_vclamp;
+	uint16_t ircmp_res;
+	uint16_t boost_voltage;
+	uint16_t boost_current;
+};
+
 #ifdef CONFIG_CHARGER_MT6370
 
 /*

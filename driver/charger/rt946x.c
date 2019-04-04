@@ -42,16 +42,7 @@ static const struct charger_info rt946x_charger_info = {
 	.input_current_step = INPUT_I_STEP,
 };
 
-struct charger_init_setting {
-	uint16_t eoc_current;
-	uint16_t mivr;
-	uint16_t ircmp_vclamp;
-	uint16_t ircmp_res;
-	uint16_t boost_voltage;
-	uint16_t boost_current;
-};
-
-static const struct charger_init_setting rt946x_charger_init_setting = {
+static const struct rt946x_init_setting default_init_setting = {
 	.eoc_current = 400,
 	.mivr = 4000,
 	.ircmp_vclamp = 32,
@@ -59,6 +50,12 @@ static const struct charger_init_setting rt946x_charger_init_setting = {
 	.boost_voltage = 5050,
 	.boost_current = 1500,
 };
+
+__attribute__((weak))
+const struct rt946x_init_setting *board_rt946x_init_setting(void)
+{
+	return &default_init_setting;
+}
 
 enum rt946x_ilmtsel {
 	RT946X_ILMTSEL_PSEL_OTG,
@@ -406,6 +403,7 @@ static int rt946x_init_setting(void)
 {
 	int rv = 0;
 	const struct battery_info *batt_info = battery_get_info();
+	const struct rt946x_init_setting *setting = board_rt946x_init_setting();
 
 #ifdef CONFIG_CHARGER_OTG
 	/*  Disable boost-mode output voltage */
@@ -433,24 +431,24 @@ static int rt946x_init_setting(void)
 	rv = rt946x_clr_bit(RT946X_REG_CHGCTRL12, RT946X_MASK_TMR_EN);
 	if (rv)
 		return rv;
-	rv = rt946x_set_mivr(rt946x_charger_init_setting.mivr);
+	rv = rt946x_set_mivr(setting->mivr);
 	if (rv)
 		return rv;
-	rv = rt946x_set_ieoc(rt946x_charger_init_setting.eoc_current);
+	rv = rt946x_set_ieoc(setting->eoc_current);
 	if (rv)
 		return rv;
 	rv = rt946x_set_boost_voltage(
-		rt946x_charger_init_setting.boost_voltage);
+		setting->boost_voltage);
 	if (rv)
 		return rv;
 	rv = rt946x_set_boost_current(
-		rt946x_charger_init_setting.boost_current);
+		setting->boost_current);
 	if (rv)
 		return rv;
-	rv = rt946x_set_ircmp_vclamp(rt946x_charger_init_setting.ircmp_vclamp);
+	rv = rt946x_set_ircmp_vclamp(setting->ircmp_vclamp);
 	if (rv)
 		return rv;
-	rv = rt946x_set_ircmp_res(rt946x_charger_init_setting.ircmp_res);
+	rv = rt946x_set_ircmp_res(setting->ircmp_res);
 	if (rv)
 		return rv;
 	rv = rt946x_set_vprec(batt_info->voltage_min);
@@ -1102,4 +1100,4 @@ int mt6370_led_set_pwm_frequency(enum mt6370_led_index index,
 			   freq << MT6370_SHIFT_RGBISNK_DIMFSEL);
 	return EC_SUCCESS;
 }
-#endif
+#endif /* CONFIG_CHARGER_MT6370 */
