@@ -291,8 +291,8 @@ tweak_manifest
 count=0
 for elf in ${elves[@]}; do
   if [[ -n "${do_prod}" ]]; then
-    if strings "${elf}" | grep -q "DBG/cr50"; then
-      echo "Will not sign debug image with prod keys" >&2
+    if strings "${elf}" | egrep -q "(DBG|SQA)/cr50"; then
+      echo "Will not sign debug or SQA image with prod keys" >&2
       exit 1
     fi
   fi
