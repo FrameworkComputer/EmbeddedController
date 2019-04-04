@@ -240,11 +240,21 @@ static uint32_t dp_status[CONFIG_USB_PD_PORT_COUNT];
 
 static void svdm_safe_dp_mode(int port)
 {
+	const char *dp_str, *usb_str;
+
 	/* make DP interface safe until configure */
 	dp_flags[port] = 0;
 	dp_status[port] = 0;
-	usb_mux_set(port, TYPEC_MUX_NONE,
-		USB_SWITCH_CONNECT, pd_get_polarity(port));
+
+	/* Don't disconnect USB when initializing DP. This avoids an unnecessary
+	 * disconnect if the result of DP negotiation is DOCK.
+	 */
+	if (usb_mux_get(port, &dp_str, &usb_str) && usb_str)
+		usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
+			    pd_get_polarity(port));
+	else
+		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_CONNECT,
+			    pd_get_polarity(port));
 }
 
 static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
