@@ -32,15 +32,9 @@
 #include "queue.h"
 #include "hooks.h"
 
-#ifdef IPC_HECI_DEBUG
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
 #define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_LPC, format, ## args)
-#else
-#define CPUTS(outstr)
-#define CPRINTS(format, args...)
-#define CPRINTF(format, args...)
-#endif
 
 /*
  * comminucation protocol is defined in Linux Documentation
@@ -354,9 +348,10 @@ static int ipc_get_protocol_data(const struct ipc_if_ctx *ctx,
 		CPRINTS("buffer is smaller than payload\n");
 		return -IPC_ERR_TOO_SMALL_BUFFER;
 	}
-
+#ifdef IPC_HECI_DEBUG
 	CPRINTF("ipc p=%d, db=0x%0x, payload_size=%d\n", protocol, drbl_val,
 		IPC_DB_MSG_LENGTH(drbl_val));
+#endif
 
 	switch (protocol) {
 	case IPC_PROTOCOL_HECI:

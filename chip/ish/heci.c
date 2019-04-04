@@ -13,15 +13,9 @@
 #include "task.h"
 #include "util.h"
 
-#ifdef DEBUG_IPC_HECI
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
 #define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_LPC, format, ## args)
-#else
-#define CPUTS(outstr)
-#define CPRINTS(format, args...)
-#define CPRINTF(format, args...)
-#endif
 
 struct heci_header {
 	uint8_t fw_addr;
