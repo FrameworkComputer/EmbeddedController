@@ -28,8 +28,8 @@ struct heci_header {
 #define HECI_MSG_IS_COMPLETED(length) \
 				(!!((length) & (0x01 << HECI_MSG_CMPL_SHIFT)))
 
-#define HECI_IPC_PAYLOAD_SIZE   \
-			(IPC_MAX_PAYLOAD_SIZE - sizeof(struct heci_header))
+BUILD_ASSERT(HECI_IPC_PAYLOAD_SIZE ==
+	     (IPC_MAX_PAYLOAD_SIZE - sizeof(struct heci_header)));
 
 struct heci_msg {
 	struct heci_header hdr;

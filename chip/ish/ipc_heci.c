@@ -276,9 +276,9 @@ static int ipc_write_raw(struct ipc_if_ctx *ctx, uint32_t drbl,
 		ipc_enable_pimr_clearing_interrupt(ctx);
 		goto write_unlock;
 	}
+	ctx->is_tx_ipc_busy = 1;
 	ipc_enable_pimr_clearing_interrupt(ctx);
 
-	ctx->is_tx_ipc_busy = 1;
 	write_payload_and_ring_drbl(ctx, drbl, payload, payload_size);
 
 write_unlock:

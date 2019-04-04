@@ -37,7 +37,7 @@ struct cros_ec_ishtp_msg_hdr {
 
 #define CROS_EC_ISHTP_MSG_HDR_SIZE sizeof(struct cros_ec_ishtp_msg_hdr)
 #define HECI_CROS_EC_RESPONSE_MAX \
-	(IPC_MAX_PAYLOAD_SIZE - CROS_EC_ISHTP_MSG_HDR_SIZE)
+	(HECI_IPC_PAYLOAD_SIZE - CROS_EC_ISHTP_MSG_HDR_SIZE)
 
 struct cros_ec_ishtp_msg {
 	struct cros_ec_ishtp_msg_hdr hdr;

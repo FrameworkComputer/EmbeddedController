@@ -14,6 +14,7 @@
 #define HECI_MAX_NUM_OF_CLIENTS			2
 
 #define HECI_MAX_MSG_SIZE			4960
+#define HECI_IPC_PAYLOAD_SIZE   (IPC_MAX_PAYLOAD_SIZE - 4)
 #define HECI_MAX_MSGS				3
 
 enum HECI_ERR {
