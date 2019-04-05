@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+# Copyright 2019 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import sys
+
+def chargen(modulo, max_chars):
+    """Generate a stream of characters on the console.
+
+    The stream is an ever incrementing pattern of characters from the
+    following set: 0..9A..Za..z.
+
+    Args:
+      modulo:    an int, restart the pattern every modulo characters, if
+                 modulo is non zero
+      max_chars: an int, stop printing after this number of characters if non
+                 zero, if zero - print indefinitely
+    """
+
+    base = '0'
+    c = base
+    counter = 0
+    while True:
+        sys.stdout.write(c)
+        counter = counter + 1
+
+        if (max_chars != 0) and (counter == max_chars):
+            sys.stdout.write('\n')
+            return
+
+        if modulo and ((counter % modulo) == 0):
+            c = base
+            continue
+
+        if c == 'z':
+            c = base
+        elif c == 'Z':
+            c = 'a'
+        elif c == '9':
+            c = 'A'
+        else:
+            c = '%c' % (ord(c) + 1)
+
+
+def main(args):
+    '''Process command line arguments and invoke chargen if args are valid'''
+
+    modulo = 0
+    max_chars = 0
+
+    try:
+        if len(args) > 0:
+            modulo = int(args[0])
+            if len(args) > 1:
+                max_chars = int(args[1])
+    except ValueError:
+        sys.stderr.write('usage %s:'
+                         "['seq_length' ['max_chars']]\n")
+        sys.exit(1)
+
+    try:
+        chargen(modulo, max_chars)
+    except KeyboardInterrupt:
+        print
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
+    sys.exit(0)

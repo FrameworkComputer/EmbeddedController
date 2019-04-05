@@ -41,6 +41,7 @@ common-$(CONFIG_CROS_BOARD_INFO)+=cbi.o
 common-$(CONFIG_CHARGE_MANAGER)+=charge_manager.o
 common-$(CONFIG_CHARGE_RAMP_HW)+=charge_ramp.o
 common-$(CONFIG_CHARGE_RAMP_SW)+=charge_ramp.o charge_ramp_sw.o
+common-$(CONFIG_CHARGEN) += chargen.o
 common-$(CONFIG_CHARGER)+=charger.o
 common-$(CONFIG_CHARGER_PROFILE_OVERRIDE_COMMON)+=charger_profile_override.o
 common-$(CONFIG_CHARGER_V2)+=charge_state_v2.o
