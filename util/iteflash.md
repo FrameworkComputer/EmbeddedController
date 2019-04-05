@@ -44,13 +44,13 @@ CR50 pre-PVT minimum firmware version: `0.4.15`
 
 Googlers, to upgrade CR50 firmware if needed see [How to use CCD on CR50](https://docs.google.com/document/d/1MqDAoBsmGTmrFi-WNOoC5R-UFeuQK37_9kaEdCFU8QE/preview).  That document is not public, do not request access if you lack it.
 
-The CR50 I2C CCD capability must be set to `always`.  To achieve this:
+The CR50 CCD capabilities must be set to `always`.  To achieve this:
 
 1. Open CCD.
     * root shell: `$ gsctool -o`
     * CR50 console: `ccd open`
-1. Set the I2C capability to `always`.
-    * CR50 console: `ccd set I2C always`
+1. Reset CCD to `factory` mode.
+    * CR50 console: `ccd reset factory`
 
 Reflashing with CR50 also requires the [i2c-pseudo kernel module](#i2c-pseudo), unless using the [CR50 CCD sans servod](#ccd-sans-servod) alternative method.
 
