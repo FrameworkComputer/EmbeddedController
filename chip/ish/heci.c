@@ -11,6 +11,7 @@
 #include "ipc_heci.h"
 #include "system_state.h"
 #include "task.h"
+#include "timer.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
@@ -52,7 +53,9 @@ struct heci_client_connect {
 	size_t  rx_msg_length;
 
 	uint32_t flow_ctrl_creds; /* flow control */
-	struct mutex lock; /* mutext for operation related with connection */
+	struct mutex lock; /* protects against 2 writers */
+	struct mutex cred_lock; /* protects flow ctrl */
+	int waiting_task;
 };
 
 struct heci_client_context {
@@ -262,6 +265,43 @@ void *heci_get_client_data(const heci_handle_t handle)
 	return cli_ctx->data;
 }
 
+/*
+ * Waits for flow control credit that allows TX transactions
+ *
+ * Returns true if credit was acquired, otherwise false
+ */
+static int wait_for_flow_ctrl_cred(struct heci_client_connect *connect)
+{
+	int need_to_wait;
+
+	do {
+		mutex_lock(&connect->cred_lock);
+		need_to_wait = !connect->flow_ctrl_creds;
+		if (need_to_wait) {
+			connect->waiting_task = task_get_current();
+		} else {
+			connect->flow_ctrl_creds = 0;
+			connect->waiting_task = 0;
+		}
+		mutex_unlock(&connect->cred_lock);
+		if (need_to_wait) {
+			/*
+			 * A second is more than enough, otherwise if will
+			 * probably never happen.
+			 */
+			int ev = task_wait_event_mask(TASK_EVENT_IPC_READY,
+						      SECOND);
+			if (ev & TASK_EVENT_TIMER) {
+				/* Return false, not able to get credit */
+				return 0;
+			}
+		}
+	} while (need_to_wait);
+
+	/* We successfully got flow control credit */
+	return 1;
+}
+
 int heci_send_msg(const heci_handle_t handle, uint8_t *buf,
 		  const size_t buf_size)
 {
@@ -284,7 +324,7 @@ int heci_send_msg(const heci_handle_t handle, uint8_t *buf,
 		goto err_locked;
 	}
 
-	if (!connect->flow_ctrl_creds) {
+	if (!wait_for_flow_ctrl_cred(connect)) {
 		CPRINTF("no cred\n");
 		ret = -HECI_ERR_NO_CRED_FROM_CLIENT_IN_HOST;
 		goto err_locked;
@@ -312,8 +352,6 @@ int heci_send_msg(const heci_handle_t handle, uint8_t *buf,
 		remain -= payload_size;
 		buf_offset += payload_size;
 	}
-
-	atomic_sub(&connect->flow_ctrl_creds, 1);
 	mutex_unlock(&connect->lock);
 
 	return buf_size;
@@ -358,7 +396,7 @@ int heci_send_msgs(const heci_handle_t handle,
 		goto err_locked;
 	}
 
-	if (!connect->flow_ctrl_creds) {
+	if (!wait_for_flow_ctrl_cred(connect)) {
 		CPRINTF("no cred\n");
 		total_size = -HECI_ERR_NO_CRED_FROM_CLIENT_IN_HOST;
 		goto err_locked;
@@ -425,8 +463,6 @@ int heci_send_msgs(const heci_handle_t handle,
 
 		heci_send_heci_msg(&msg);
 	}
-
-	atomic_sub(&connect->flow_ctrl_creds, 1);
 
 err_locked:
 	mutex_unlock(&connect->lock);
@@ -627,6 +663,7 @@ static int handle_client_connect_req(
 static int handle_flow_control_cmd(struct hbm_flow_control *flow_ctrl)
 {
 	struct heci_client_connect *connect;
+	int waiting_task;
 
 	if (!heci_is_valid_client_addr(flow_ctrl->fw_addr))
 		return -1;
@@ -635,7 +672,14 @@ static int handle_flow_control_cmd(struct hbm_flow_control *flow_ctrl)
 		return -1;
 
 	connect = heci_get_client_connect(flow_ctrl->fw_addr);
-	atomic_add(&connect->flow_ctrl_creds, 1);
+
+	mutex_lock(&connect->cred_lock);
+	connect->flow_ctrl_creds = 1;
+	waiting_task = connect->waiting_task;
+	mutex_unlock(&connect->cred_lock);
+
+	if (waiting_task)
+		task_set_event(waiting_task, TASK_EVENT_IPC_READY, 0);
 
 	return EC_SUCCESS;
 }

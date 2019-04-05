@@ -80,7 +80,14 @@ struct heci_msg_list {
 heci_handle_t heci_register_client(const struct heci_client *client);
 int heci_set_client_data(const heci_handle_t handle, void *data);
 void *heci_get_client_data(const heci_handle_t handle);
-/* send client msg */
+
+/*
+ * Send a client message. Note this function waits a short while for the HECI
+ * bus to become available for sending. This method blocks until either the heci
+ * message is sent or the message as been queued to send in the lower IPC layer.
+ *
+ * All callers that use the same underlying IPC channel will be serialized.
+ */
 int heci_send_msg(const heci_handle_t handle, uint8_t *buf,
 		  const size_t buf_size);
 /*

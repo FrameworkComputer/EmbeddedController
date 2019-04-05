@@ -14,7 +14,10 @@
 
 /* Task event bitmasks */
 /* Tasks may use the bits in TASK_EVENT_CUSTOM for their own events */
-#define TASK_EVENT_CUSTOM(x)	(x & 0x0003ffff)
+#define TASK_EVENT_CUSTOM(x)	(x & 0x0001ffff)
+
+/* Used to signal that IPC layer is available for sending new data */
+#define TASK_EVENT_IPC_READY	BIT(17)
 
 #define TASK_EVENT_PD_AWAKE	BIT(18)
 
