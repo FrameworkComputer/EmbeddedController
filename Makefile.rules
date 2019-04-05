@@ -753,6 +753,11 @@ ifneq ($(CONFIG_FW_INCLUDE_RO),)
 endif
 	$(call cmd_size,RW)
 
+# Print the smallest spaces in flash
+stats: build_boards
+	$(call cmd_stats,RO)
+	$(call cmd_stats,RW)
+
 .SECONDARY:
 
 -include $(deps)
