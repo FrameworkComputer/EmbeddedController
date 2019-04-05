@@ -1120,6 +1120,7 @@
 #undef  CONFIG_CMD_RTC_ALARM
 #define CONFIG_CMD_RW
 #undef  CONFIG_CMD_SCRATCHPAD
+#undef	CONFIG_CMD_SEVEN_SEG_DISPLAY
 #define CONFIG_CMD_SHMEM
 #undef  CONFIG_CMD_SLEEP
 #define CONFIG_CMD_SLEEPMASK
@@ -2649,6 +2650,9 @@
  * this is disabled.
  */
 #define CONFIG_PORT80_PRINT_IN_INT 0
+
+/* MAX695x 7 segment driver */
+#undef CONFIG_MAX695X_SEVEN_SEGMENT_DISPLAY
 
 /* Compile common code to support power button debouncing */
 #undef CONFIG_POWER_BUTTON
