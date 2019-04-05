@@ -699,6 +699,8 @@ static int handle_client_disconnect_req(
 	const struct heci_client_callbacks *cbs;
 	uint8_t fw_addr;
 
+	CPRINTS("Got HECI disconnect request");
+
 	heci_build_hbm_header(&heci_msg.hdr, sizeof(i2h->cmd) +
 					     sizeof(*client_disconnect_res));
 

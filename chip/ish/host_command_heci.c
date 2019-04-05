@@ -64,13 +64,16 @@ void heci_send_mkbp_event(void)
 
 static void heci_send_hostcmd_response(struct host_packet *pkt)
 {
+	int rv;
 	struct cros_ec_ishtp_msg *out =
 		(struct cros_ec_ishtp_msg *)response_buffer;
 
 	out->hdr.channel = CROS_EC_COMMAND;
 	out->hdr.status = 0;
-	heci_send_msg(heci_cros_ec_handle, (uint8_t *)out,
-		      pkt->response_size + CROS_EC_ISHTP_MSG_HDR_SIZE);
+	rv = heci_send_msg(heci_cros_ec_handle, (uint8_t *)out,
+			   pkt->response_size + CROS_EC_ISHTP_MSG_HDR_SIZE);
+	if (rv < 0)
+		CPRINTS("HC response failed %d", -rv);
 }
 
 static void cros_ec_ishtp_subsys_new_msg_received(const heci_handle_t handle,
@@ -136,11 +139,16 @@ static int cros_ec_ishtp_no_op(const heci_handle_t heci_handle)
 	return EC_SUCCESS;
 }
 
+static void cros_ec_ishtp_disconneted(const heci_handle_t heci_handle)
+{
+}
+
 static const struct heci_client_callbacks cros_ec_ishtp_subsys_heci_cbs = {
 	.initialize = cros_ec_ishtp_subsys_initialize,
 	.new_msg_received = cros_ec_ishtp_subsys_new_msg_received,
 	.suspend = cros_ec_ishtp_no_op,
 	.resume = cros_ec_ishtp_no_op,
+	.disconnected = cros_ec_ishtp_disconneted,
 };
 
 static const struct heci_client cros_ec_ishtp_heci_client = {
