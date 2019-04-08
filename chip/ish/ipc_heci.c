@@ -621,10 +621,7 @@ static void handle_mng_commands(const ipc_handle_t handle,
 
 		break;
 	case MNG_SYNC_FW_CLOCK:
-		/* TODO: if there's data to host requires timestamp
-		 * we need to implement this
-		 */
-		CPRINTS("sync fw clock");
+		/* Not supported currently, but kernel sends this about ~20s */
 		break;
 	}
 }
