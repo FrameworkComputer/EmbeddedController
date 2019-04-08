@@ -30,11 +30,15 @@ enum led_phase {
  * charge_percentage < led_charge_level_2.
  * STATE_CHARGING_FULL_CHARGE is when
  * led_charge_level_2 <= charge_percentage < 100.
+ *
+ * STATE_CHARGING_FULL_S5 is optional and state machine will fall back to
+ *	FULL_CHARGE if not defined
  */
 enum led_states {
 	STATE_CHARGING_LVL_1,
 	STATE_CHARGING_LVL_2,
 	STATE_CHARGING_FULL_CHARGE,
+	STATE_CHARGING_FULL_S5,
 	STATE_DISCHARGE_S0,
 	STATE_DISCHARGE_S0_BAT_LOW,
 	STATE_DISCHARGE_S3,
