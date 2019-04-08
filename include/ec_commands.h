@@ -55,13 +55,16 @@ extern "C"{
 /* Protocol version 2 */
 #define EC_LPC_ADDR_HOST_ARGS    0x800  /* And 0x801, 0x802, 0x803 */
 #define EC_LPC_ADDR_HOST_PARAM   0x804  /* For version 2 params; size is
-					 * EC_PROTO2_MAX_PARAM_SIZE */
+					 * EC_PROTO2_MAX_PARAM_SIZE
+					 */
 /* Protocol version 3 */
 #define EC_LPC_ADDR_HOST_PACKET  0x800  /* Offset of version 3 packet */
 #define EC_LPC_HOST_PACKET_SIZE  0x100  /* Max size of version 3 packet */
 
-/* The actual block is 0x800-0x8ff, but some BIOSes think it's 0x880-0x8ff
- * and they tell the kernel that so we have to think of it as two parts. */
+/*
+ * The actual block is 0x800-0x8ff, but some BIOSes think it's 0x880-0x8ff
+ * and they tell the kernel that so we have to think of it as two parts.
+ */
 #define EC_HOST_CMD_REGION0    0x800
 #define EC_HOST_CMD_REGION1    0x880
 #define EC_HOST_CMD_REGION_SIZE 0x80
@@ -517,7 +520,8 @@ extern "C"{
 #define EC_LPC_STATUS_BUSY_MASK \
 	(EC_LPC_STATUS_FROM_HOST | EC_LPC_STATUS_PROCESSING)
 
-/* Host command response codes (16-bit).  Note that response codes should be
+/*
+ * Host command response codes (16-bit).  Note that response codes should be
  * stored in a uint16_t rather than directly in a value of this type.
  */
 enum ec_status {
@@ -1995,7 +1999,7 @@ struct lightbar_params_v2_colors {
 	struct rgb_s color[8];			/* 0-3 are Google colors */
 } __ec_todo_packed;
 
-/* Lightbyte program. */
+/* Lightbar program. */
 #define EC_LB_PROG_LEN 192
 struct lightbar_program {
 	uint8_t size;
@@ -2450,7 +2454,7 @@ enum motionsensor_orientation {
 struct ec_response_motion_sensor_data {
 	/* Flags for each sensor. */
 	uint8_t flags;
-	/* sensor number the data comes from */
+	/* Sensor number the data comes from. */
 	uint8_t sensor_num;
 	/* Each sensor is up to 3-axis. */
 	union {
@@ -2555,7 +2559,7 @@ enum motionsense_spoof_mode {
 struct ec_params_motion_sense {
 	uint8_t cmd;
 	union {
-		/* Used for MOTIONSENSE_CMD_DUMP */
+		/* Used for MOTIONSENSE_CMD_DUMP. */
 		struct __ec_todo_unpacked {
 			/*
 			 * Maximal number of sensor the host is expecting.
@@ -2726,11 +2730,11 @@ struct ec_response_motion_sense {
 			/* Flags representing the motion sensor module. */
 			uint8_t module_flags;
 
-			/* Number of sensors managed directly by the EC */
+			/* Number of sensors managed directly by the EC. */
 			uint8_t sensor_count;
 
 			/*
-			 * sensor data is truncated if response_max is too small
+			 * Sensor data is truncated if response_max is too small
 			 * for holding all the data.
 			 */
 			struct ec_response_motion_sensor_data sensor[0];
@@ -3093,8 +3097,10 @@ struct ec_params_thermal_get_threshold_v1 {
 } __ec_align4;
 /* This returns a struct ec_thermal_config */
 
-/* Version 1 - set config for one sensor.
- * Use read-modify-write for best results! */
+/*
+ * Version 1 - set config for one sensor.
+ * Use read-modify-write for best results!
+ */
 struct ec_params_thermal_set_threshold_v1 {
 	uint32_t sensor_num;
 	struct ec_thermal_config cfg;
@@ -4615,7 +4621,6 @@ struct __ec_todo_packed ec_param_codec_i2s {
 
 
 /*****************************************************************************/
-
 /* System commands */
 
 /*
