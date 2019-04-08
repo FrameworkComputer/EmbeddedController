@@ -161,6 +161,48 @@ static int spi_master_initialize(int port)
 		if ((spi_devices[i].port == port) &&
 		    (div < spi_devices[i].div))
 			div = spi_devices[i].div;
+
+	/*
+	 * STM32F412
+	 * Section 26.3.5 Slave select (NSS) pin management and Figure 276
+	 * https://www.st.com/resource/en/reference_manual/dm00180369.pdf#page=817
+	 *
+	 * The documentation in this section is a bit confusing, so here's a
+	 * summary based on discussion with ST:
+	 *
+	 * Software NSS management (SSM = 1):
+	 *   - In master mode, the NSS output is deactivated. You need to use a
+	 *     GPIO in output mode for slave select. This is generally used for
+	 *     multi-slave operation, but you can also use it for single slave
+	 *     operation. In this case, you should make sure to configure a GPIO
+	 *     for NSS, but *not* activate the SPI alternate function on that
+	 *     same pin since that will enable hardware NSS management (see
+	 *     below).
+	 *   - In slave mode, the NSS input level is equal to the SSI bit value.
+	 *
+	 * Hardware NSS management (SSM = 0):
+	 *   - In slave mode, when NSS pin is detected low the slave (MCU) is
+	 *     selected.
+	 *   - In master mode, there are two configurations, depending on the
+	 *     SSOE bit in register SPIx_CR1.
+	 *       - NSS output enable (SSM=0, SSOE=1):
+	 *         The MCU (master) drives NSS low as soon as SPI is enabled
+	 *         (SPE=1) and releases it when SPI is disabled (SPE=0).
+	 *
+	 *       - NSS output disable (SSM=0, SSOE=0):
+	 *         Allows multimaster capability. The MCU (master) drives NSS
+	 *         low.  If another master tries to takes control of the bus and
+	 *         NSS is pulled low, a mode fault is generated and the MCU
+	 *         changes to slave mode.
+	 *
+	 *   - NSS output disable (SSM=0, SSOE=0): if the MCU is acting as
+	 *     master on the bus, this config allows multimaster capability. If
+	 *     the NSS pin is pulled low in this mode, the SPI enters master
+	 *     mode fault state and the device is automatically reconfigured in
+	 *     slave mode.  In slave mode, the NSS pin works as a standard "chip
+	 *     select" input and the slave is selected while NSS lin is at low
+	 *     level.
+	 */
 	spi->cr1 = STM32_SPI_CR1_MSTR | STM32_SPI_CR1_SSM | STM32_SPI_CR1_SSI |
 		(div << 3);
 
@@ -170,7 +212,14 @@ static int spi_master_initialize(int port)
 #endif
 	/*
 	 * Configure 8-bit datasize, set FRXTH, enable DMA,
-	 * and enable NSS output
+	 * and set data size (applies to STM32F0 only).
+	 *
+	 * STM32F412:
+	 * https://www.st.com/resource/en/reference_manual/dm00180369.pdf#page=852
+	 *
+	 *
+	 * STM32F0:
+	 * https://www.st.com/resource/en/reference_manual/dm00031936.pdf#page=803
 	 */
 	spi->cr2 = STM32_SPI_CR2_TXDMAEN | STM32_SPI_CR2_RXDMAEN |
 			STM32_SPI_CR2_FRXTH | STM32_SPI_CR2_DATASIZE(8);

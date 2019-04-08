@@ -27,5 +27,10 @@ UNIMPLEMENTED(ENTERING_RW)
 ALTERNATE(PIN_MASK(A, 0x0600), GPIO_ALT_USART,  MODULE_UART, GPIO_PULL_UP)
 /* SPI1 slave from the AP: PA4/5/6/7 */
 ALTERNATE(PIN_MASK(A, 0x00f0), GPIO_ALT_SPI, MODULE_SPI,  0)
-/* SPI2 master to sensor: PB12/13/14/15 */
-ALTERNATE(PIN_MASK(B, 0xf000), GPIO_ALT_SPI, MODULE_SPI_MASTER,  0)
+/*
+ * SPI2 master to sensor: PB13/14/15
+ * Note that we're not configuring NSS (PB12) here because we have already
+ * configured it as a GPIO above and the SPI_MASTER module expects to use it
+ * in software NSS management mode, not hardware management mode.
+ */
+ALTERNATE(PIN_MASK(B, 0xE000), GPIO_ALT_SPI, MODULE_SPI_MASTER,  0)
