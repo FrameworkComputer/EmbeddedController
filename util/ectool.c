@@ -1563,13 +1563,13 @@ int cmd_fp_mode(int argc, char *argv[])
 int cmd_fp_seed(int argc, char *argv[])
 {
 	struct ec_params_fp_seed p;
-	const char *seed = argv[1];
-	int rv;
+	char *seed;
 
-	if (argc == 1) {
-		printf("Missing seed argument.\n");
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <seed>\n", argv[0]);
 		return 1;
 	}
+	seed = argv[1];
 	if (strlen(seed) != FP_CONTEXT_TPM_BYTES) {
 		printf("Invalid seed '%s' is %zd bytes long instead of %d.\n",
 		       seed, strlen(seed), FP_CONTEXT_TPM_BYTES);
@@ -1579,8 +1579,7 @@ int cmd_fp_seed(int argc, char *argv[])
 	p.struct_version = FP_TEMPLATE_FORMAT_VERSION;
 	memcpy(p.seed, seed, FP_CONTEXT_TPM_BYTES);
 
-	rv = ec_command(EC_CMD_FP_SEED, 0, &p, sizeof(p), NULL, 0);
-	return rv;
+	return ec_command(EC_CMD_FP_SEED, 0, &p, sizeof(p), NULL, 0);
 }
 
 int cmd_fp_stats(int argc, char *argv[])
