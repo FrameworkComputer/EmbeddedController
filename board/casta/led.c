@@ -10,7 +10,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "led_common.h"
-#include "led_states.h"
+#include "led_onoff_states.h"
 
 #define LED_OFF_LVL	1
 #define LED_ON_LVL	0
