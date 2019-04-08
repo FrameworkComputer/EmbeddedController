@@ -1039,9 +1039,10 @@ function flash_stm32_dfu() {
 		$DFU_UTIL -a 0 -s ${ADDR}:${SIZE} -D "${IMG}"
 }
 
+# TODO(b/130165933): Implement a dut-control command to look up the correct
+# I2C adapter number, and use that here in place of the hack of looking at
+# I2C adapter names.
 function dut_i2c_dev() {
-	# TODO(b/79684405): Drop support for $DUT_I2C_DEV env var override
-	# as soon as dut-control dut_i2c_dev command is implemented.
 	if [ -n "$DUT_I2C_DEV" ]; then
 		[ -e "$DUT_I2C_DEV" ] ||
 			die "\$DUT_I2C_DEV is a non-existent path: $DUT_I2C_DEV"
@@ -1049,9 +1050,7 @@ function dut_i2c_dev() {
 		return
 	fi
 
-	# TODO(b/79684405): Drop this hack as soon as dut-control dut_i2c_dev
-	# command is implemented.
-	if (
+	if ! (
 		set -e
 		cd /sys/class/i2c-dev
 		# Sorting in reverse numerical order generally picks the correct
@@ -1065,18 +1064,9 @@ function dut_i2c_dev() {
 		done
 		false
 	); then
-		return
+		die "Could not find servo I2C adapter.  This could be because "\
+"the i2c-pseudo module was not loaded when servod was started."
 	fi
-
-	# TODO(b/79684405): This should just work once a dut-control dut_i2c_dev
-	# command is implemented.
-	local dut_i2c_dev="$("${DUT_CONTROL_CMD[@]}" dut_i2c_dev)" ||
-		die "dut-control dut_i2c_dev exited $? (non-zero)"
-	dut_i2c_dev="$(echo "$dut_i2c_dev" | sed -e 's/^dut_i2c_dev://')"
-	[ -e "$dut_i2c_dev" ] ||
-		die "dut-control dut_i2c_dev returned non-existent path: "\
-"$dut_i2c_dev"
-	echo "$dut_i2c_dev"
 }
 
 function flash_it83xx() {
