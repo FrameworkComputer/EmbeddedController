@@ -419,6 +419,13 @@ static void handle_busy_clear_interrupt(const uint32_t peer_id)
 	size_t head;
 
 	ctx = ipc_get_if_ctx(peer_id);
+
+	/*
+	 * Resetting interrupt status bit should be done
+	 * before sending an item in tx_queue.
+	 */
+	REG32(IPC_BUSY_CLEAR) = ctx->clr_busy_bit;
+
 	/*
 	 * No need to use sync mechanism here since the accesing the queue
 	 * happens only when either this IRQ is disabled or
@@ -434,8 +441,6 @@ static void handle_busy_clear_interrupt(const uint32_t peer_id)
 	} else {
 		ctx->is_tx_ipc_busy = 0;
 	}
-
-	REG32(IPC_BUSY_CLEAR) = ctx->clr_busy_bit;
 }
 
 /**
