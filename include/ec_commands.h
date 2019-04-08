@@ -16,12 +16,12 @@
 extern "C"{
 #endif
 
+#ifdef CHROMIUM_EC
 /*
  * Include common.h for CONFIG_HOSTCMD_ALIGNED, if it's defined. This
  * generates more efficient code for accessing request/response structures on
  * ARM Cortex-M if the structures are guaranteed 32-bit aligned.
  */
-#ifdef CHROMIUM_EC
 #include "common.h"
 #endif
 
@@ -401,6 +401,7 @@ extern "C"{
  */
 #ifndef __ACPI__
 
+#ifndef __KERNEL__
 /*
  * Define __packed if someone hasn't beat us to it.  Linux kernel style
  * checking prefers __packed over __attribute__((packed)).
@@ -412,6 +413,7 @@ extern "C"{
 #ifndef __aligned
 #define __aligned(x) __attribute__((aligned(x)))
 #endif
+#endif  /* __KERNEL__ */
 
 /*
  * Attributes for EC request and response packets.  Just defining __packed
