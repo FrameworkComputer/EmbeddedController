@@ -150,35 +150,19 @@ static const struct {
 	},
 };
 
-static struct {
-	enum battery_type type;
-	int expect_mv;
-} const batteries[] = {
+static const struct mv_to_id batteries[] = {
 	{ BATTERY_C18_ATL,       900 },  /* 100K  */
 	{ BATTERY_C19_ATL,       576 },  /* 47K   */
 };
 BUILD_ASSERT(ARRAY_SIZE(batteries) < BATTERY_COUNT);
 
-#define MARGIN_MV 56 /* Simply assume 1800/16/2 */
-
 static enum battery_type batt_type = BATTERY_UNKNOWN;
 
 static void board_get_battery_type(void)
 {
-	int mv;
-	int i;
-
-	mv = adc_read_channel(ADC_BATT_ID);
-	if (mv == ADC_READ_ERROR)
-		mv = adc_read_channel(ADC_BATT_ID);
-
-	for (i = 0; i < ARRAY_SIZE(batteries); i++) {
-		if (ABS(mv - batteries[i].expect_mv) < MARGIN_MV) {
-			batt_type = batteries[i].type;
-			break;
-		}
-	}
-
+	int id = board_read_id(ADC_BATT_ID, batteries, ARRAY_SIZE(batteries));
+	if (id != ADC_READ_ERROR)
+		batt_type = id;
 	CPRINTS("Battery Type: %d", batt_type);
 }
 DECLARE_HOOK(HOOK_INIT, board_get_battery_type, HOOK_PRIO_FIRST);

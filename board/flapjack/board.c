@@ -54,6 +54,22 @@ uint16_t board_version;
 uint8_t oem;
 uint32_t sku;
 
+int board_read_id(enum adc_channel ch, const struct mv_to_id *table, int size)
+{
+	int mv = adc_read_channel(ch);
+	int i;
+
+	if (mv == ADC_READ_ERROR)
+		mv = adc_read_channel(ch);
+
+	for (i = 0; i < size; i++) {
+		if (ABS(mv - table[i].median_mv) < ADC_MARGIN_MV)
+			return table[i].id;
+	}
+
+	return ADC_READ_ERROR;
+}
+
 static void board_setup_panel(void)
 {
 	uint8_t channel;

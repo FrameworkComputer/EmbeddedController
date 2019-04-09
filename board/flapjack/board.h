@@ -279,6 +279,15 @@ void emmc_cmd_interrupt(enum gpio_signal signal);
 
 void board_reset_pd_mcu(void);
 
+#define ADC_MARGIN_MV 56 /* Simply assume 1800/16/2 */
+
+struct mv_to_id {
+	int id;
+	int median_mv;
+};
+
+int board_read_id(enum adc_channel, const struct mv_to_id *table, int size);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
