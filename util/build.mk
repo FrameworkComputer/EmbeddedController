@@ -7,8 +7,8 @@
 #
 
 host-util-bin=ectool lbplay stm32mon ec_sb_firmware_update lbcc \
-	ec_parse_panicinfo cbi-util
-build-util-bin=ec_uartd iteflash
+	ec_parse_panicinfo cbi-util iteflash
+build-util-bin=ec_uartd
 build-util-art+=util/export_taskinfo.so
 ifeq ($(CHIP),npcx)
 build-util-bin+=ecst
