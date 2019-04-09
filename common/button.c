@@ -471,11 +471,13 @@ static int debug_button_pressed(int mask)
 	return debug_button_mask() == mask;
 }
 
+#ifdef CONFIG_LED_COMMON
 static int debug_mode_blink_led(void)
 {
 	return ((curr_debug_state != STATE_DEBUG_NONE) &&
 		(curr_debug_state != STATE_DEBUG_CHECK));
 }
+#endif
 
 static void debug_mode_transition(enum debug_state next_state)
 {
