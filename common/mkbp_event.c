@@ -11,49 +11,110 @@
 #include "host_command.h"
 #include "host_command_heci.h"
 #include "hwtimer.h"
+#include "timer.h"
 #include "link_defs.h"
 #include "mkbp_event.h"
 #include "power.h"
 #include "util.h"
 
-static uint32_t events;
+#define CPUTS(outstr) cputs(CC_COMMAND, outstr)
+#define CPRINTS(format, args...) cprints(CC_COMMAND, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ## args)
+
+/*
+ * Tracks the current state of the MKBP interrupt send from the EC to the AP.
+ *
+ * The inactive state is only valid when there are no events to set to the AP.
+ * If the AP is asleep, then some events are not worth waking the AP up, so the
+ * interrupt could remain in an inactive in that case.
+ *
+ * The transition state (INTERRUPT_INACTIVE_TO_ACTIVE) is used to track the
+ * sometimes lock transition for a "rising edge" for platforms that send the
+ * rising edge interrupt through a host communication layer
+ *
+ * The active state represents that a rising edge interrupt has already been
+ * sent to the AP, and the EC is waiting for the AP to call get next event
+ * host command to consume all of the events (at which point the state will
+ * move to inactive).
+ *
+ * The transition from ACTIVE -> INACTIVE is considerer to be simple meaning
+ * the operation can be performed within a blocking mutex (e.g. no-op or setting
+ * a gpio).
+ */
+enum interrupt_state {
+	INTERRUPT_INACTIVE,
+	INTERRUPT_INACTIVE_TO_ACTIVE, /* Transitioning */
+	INTERRUPT_ACTIVE,
+};
+
+struct mkbp_state {
+	struct mutex lock;
+	uint32_t events;
+	enum interrupt_state interrupt;
+	/*
+	 * Tracks unique transitions to INTERRUPT_INACTIVE_TO_ACTIVE allowing
+	 * only the most recent transition to finish the transition to a final
+	 * state -- either active or inactive depending on the result of the
+	 * operation.
+	 */
+	uint8_t interrupt_id;
+	/*
+	 * Tracks the number of consecutive failed attempts for the AP to poll
+	 * get_next_events in order to limit the retry logic.
+	 */
+	uint8_t failed_attempts;
+};
+
+static struct mkbp_state state;
 uint32_t mkbp_last_event_time;
 
-static void set_event(uint8_t event_type)
-{
-	atomic_or(&events, 1 << event_type);
-}
-
-static void clear_event(uint8_t event_type)
-{
-	atomic_clear(&events, 1 << event_type);
-}
-
-static int event_is_set(uint8_t event_type)
-{
-	return events & BIT(event_type);
-}
-
 #ifdef CONFIG_MKBP_USE_GPIO
-static void mkbp_set_host_active_via_gpio(int active)
+static int mkbp_set_host_active_via_gpio(int active, uint32_t *timestamp)
 {
+	/*
+	 * If we want to take a timestamp, then disable interrupts temporarily
+	 * to ensure that the timestamp is as close as possible to the setting
+	 * of the GPIO pin in hardware (i.e. we aren't interrupted between
+	 * taking the timestamp and setting the gpio)
+	 */
+	if (timestamp) {
+		interrupt_disable();
+		*timestamp = __hw_clock_source_read();
+	}
+
 	gpio_set_level(GPIO_EC_INT_L, !active);
+
+	if (timestamp)
+		interrupt_enable();
+
+	return EC_SUCCESS;
 }
 #endif
 
 #ifdef CONFIG_MKBP_USE_HOST_EVENT
-static void mkbp_set_host_active_via_event(int active)
+static int mkbp_set_host_active_via_event(int active, uint32_t *timestamp)
 {
+	/* This should be moved into host_set_single_event for more accuracy */
+	if (timestamp)
+		*timestamp = __hw_clock_source_read();
 	if (active)
 		host_set_single_event(EC_HOST_EVENT_MKBP);
+	return EC_SUCCESS;
 }
 #endif
 
 #ifdef CONFIG_MKBP_USE_HECI
-static void mkbp_set_host_active_via_heci(int active)
+static int mkbp_set_host_active_via_heci(int active, uint32_t *timestamp)
 {
+	/*
+	 * TODO change heci_send_mkbp_event declaration. Done in
+	 * child CL to decouple changes.
+	 */
+	if (timestamp)
+		*timestamp = __hw_clock_source_read();
 	if (active)
 		heci_send_mkbp_event();
+	return EC_SUCCESS;
 }
 #endif
 
@@ -61,49 +122,30 @@ static void mkbp_set_host_active_via_heci(int active)
  * This communicates to the AP whether an MKBP event is currently available
  * for processing.
  *
+ * NOTE: When active is 0 this function CANNOT de-schedule. It must be very
+ * simple like toggling a GPIO or no-op
+ *
  * @param active  1 if there is an event, 0 otherwise
+ * @param timestamp, if non-null this variable will be written as close to the
+ *			hardware interrupt from EC->AP as possible.
  */
-static void mkbp_set_host_active(int active)
+static int mkbp_set_host_active(int active, uint32_t *timestamp)
 {
 #if defined(CONFIG_MKBP_USE_CUSTOM)
-	mkbp_set_host_active_via_custom(active);
-#elif defined(CONFIG_MKBP_USE_HOST_EVENT)
-	mkbp_set_host_active_via_event(active);
-#elif defined(CONFIG_MKBP_USE_GPIO)
-	mkbp_set_host_active_via_gpio(active);
-#elif defined(CONFIG_MKBP_USE_HECI)
-	mkbp_set_host_active_via_heci(active);
-#endif
-}
-
-/**
- * Assert host keyboard interrupt line.
- */
-static void set_host_interrupt(int active)
-{
-	static int old_active;
 	/*
-	 * If we are going to perform a simple GPIO toggle, then pause
-	 * interrupts to let last_event_time marker have the best chance of
-	 * matching the time we toggle the GPIO pin.
-	 *
-	 * If we are passing mkbp events through host communication, then
-	 * pausing interrupts can have unintended consequences (say if that code
-	 * waits for a mutex and then de-schedules its tasks).
+	 * TODO change mkbp_set_host_active_via_custom declaration. Done in
+	 * child CL to decouple changes
 	 */
-#ifdef CONFIG_MKBP_USE_GPIO
-	interrupt_disable();
-#endif
-
-	if (old_active == 0 && active == 1)
-		mkbp_last_event_time = __hw_clock_source_read();
-
-	mkbp_set_host_active(active);
-
-	old_active = active;
-
-#ifdef CONFIG_MKBP_USE_GPIO
-	interrupt_enable();
+	if (timestamp)
+		*timestamp = __hw_clock_source_read();
+	mkbp_set_host_active_via_custom(active);
+	return EC_SUCCESS;
+#elif defined(CONFIG_MKBP_USE_HOST_EVENT)
+	return mkbp_set_host_active_via_event(active, timestamp);
+#elif defined(CONFIG_MKBP_USE_GPIO)
+	return mkbp_set_host_active_via_gpio(active, timestamp);
+#elif defined(CONFIG_MKBP_USE_HECI)
+	return mkbp_set_host_active_via_heci(active, timestamp);
 #endif
 }
 
@@ -126,22 +168,128 @@ static inline int host_is_sleeping(void)
 }
 #endif /* CONFIG_MKBP_WAKEUP_MASK */
 
-int mkbp_send_event(uint8_t event_type)
+/*
+ * This is the deferred function that ensures that we attempt to set the MKBP
+ * interrupt again if there was a failure in the system (EC or AP) and the AP
+ * never called get_next_event.
+ */
+static void force_mkbp_if_events(void);
+DECLARE_DEFERRED(force_mkbp_if_events);
+
+static void activate_mkbp_with_events(uint32_t events_to_add)
 {
-	set_event(event_type);
+	int interrupt_id = -1;
+	int skip_interrupt = 0;
+	int rv, schedule_deferred = 0;
 
 #ifdef CONFIG_MKBP_WAKEUP_MASK
 	/* Only assert interrupt for wake events if host is sleeping */
-	if (host_is_sleeping()) {
-		/* Skip host wake if this isn't a wake event */
-		if (!(host_get_events() & CONFIG_MKBP_WAKEUP_MASK) &&
-		      event_type != EC_MKBP_EVENT_KEY_MATRIX)
-			return 0;
-	}
+	skip_interrupt = host_is_sleeping() &&
+			 !(host_get_events() & CONFIG_MKBP_WAKEUP_MASK);
 #endif
 
-	set_host_interrupt(1);
+	mutex_lock(&state.lock);
+	state.events |= events_to_add;
+
+	/* To skip the interrupt, we cannot have the EC_MKBP_EVENT_KEY_MATRIX */
+	skip_interrupt = skip_interrupt &&
+			 !(state.events & BIT(EC_MKBP_EVENT_KEY_MATRIX));
+
+	if (state.events && state.interrupt == INTERRUPT_INACTIVE &&
+	    !skip_interrupt) {
+		state.interrupt = INTERRUPT_INACTIVE_TO_ACTIVE;
+		interrupt_id = ++state.interrupt_id;
+	}
+	mutex_unlock(&state.lock);
+
+	/* If we don't need to send an interrupt we are done */
+	if (interrupt_id < 0)
+		return;
+
+	/* Send a rising edge MKBP interrupt */
+	rv = mkbp_set_host_active(1, &mkbp_last_event_time);
+
+	/*
+	 * If this was the last interrupt to the AP, update state;
+	 * otherwise the latest interrupt should update state.
+	 */
+	mutex_lock(&state.lock);
+	if (state.interrupt == INTERRUPT_INACTIVE_TO_ACTIVE &&
+	    interrupt_id == state.interrupt_id) {
+		schedule_deferred = 1;
+		state.interrupt = rv == EC_SUCCESS ? INTERRUPT_ACTIVE
+						   : INTERRUPT_INACTIVE;
+	}
+	mutex_unlock(&state.lock);
+
+	if (schedule_deferred) {
+		hook_call_deferred(&force_mkbp_if_events_data, SECOND);
+		if (rv != EC_SUCCESS)
+			CPRINTS("Could not activate MKBP (%d). Deferring", rv);
+	}
+}
+
+/*
+ * This is the deferred function that ensures that we attempt to set the MKBP
+ * interrupt again if there was a failure in the system (EC or AP) and the AP
+ * never called get_next_event.
+ */
+static void force_mkbp_if_events(void)
+{
+	int toggled = 0;
+
+	mutex_lock(&state.lock);
+	if (state.interrupt == INTERRUPT_ACTIVE) {
+		if (++state.failed_attempts < 3) {
+			state.interrupt = INTERRUPT_INACTIVE;
+			toggled = 1;
+		}
+	}
+	mutex_unlock(&state.lock);
+
+	if (toggled)
+		CPRINTS("MKBP not cleared within threshold, toggling.");
+
+	activate_mkbp_with_events(0);
+}
+
+int mkbp_send_event(uint8_t event_type)
+{
+	activate_mkbp_with_events(BIT(event_type));
+
 	return 1;
+}
+
+static int set_inactive_if_no_events(void)
+{
+	int interrupt_cleared;
+
+	mutex_lock(&state.lock);
+	interrupt_cleared = !state.events;
+	if (interrupt_cleared) {
+		state.interrupt = INTERRUPT_INACTIVE;
+		state.failed_attempts = 0;
+		/* Only simple tasks (i.e. gpio set or no-op) allowed here */
+		mkbp_set_host_active(0, NULL);
+	}
+	mutex_unlock(&state.lock);
+
+	/* Cancel our safety net since the events were cleared. */
+	if (interrupt_cleared)
+		hook_call_deferred(&force_mkbp_if_events_data, -1);
+
+	return interrupt_cleared;
+}
+
+/* This can only be called when the state.lock mutex is held */
+static int take_event_if_set(uint8_t event_type)
+{
+	int taken;
+
+	taken = state.events & BIT(event_type);
+	state.events &= ~BIT(event_type);
+
+	return taken;
 }
 
 static int mkbp_get_next_event(struct host_cmd_handler_args *args)
@@ -156,23 +304,21 @@ static int mkbp_get_next_event(struct host_cmd_handler_args *args)
 		 * Find the next event to service.  We do this in a round-robin
 		 * way to make sure no event gets starved.
 		 */
+		mutex_lock(&state.lock);
 		for (i = 0; i < EC_MKBP_EVENT_COUNT; ++i)
-			if (event_is_set((last + i) % EC_MKBP_EVENT_COUNT))
+			if (take_event_if_set((last + i) % EC_MKBP_EVENT_COUNT))
 				break;
+		mutex_unlock(&state.lock);
 
 		if (i == EC_MKBP_EVENT_COUNT) {
-			set_host_interrupt(0);
-			return EC_RES_UNAVAILABLE;
+			if (set_inactive_if_no_events())
+				return EC_RES_UNAVAILABLE;
+			/* An event was set just now, restart loop. */
+			continue;
 		}
 
 		evt = (i + last) % EC_MKBP_EVENT_COUNT;
 		last = evt + 1;
-
-		/*
-		 * Clear the event before retrieving the event data in case the
-		 * event source wants to send the same event.
-		 */
-		clear_event(evt);
 
 		for (src = __mkbp_evt_srcs; src < __mkbp_evt_srcs_end; ++src)
 			if (src->event_type == evt)
@@ -192,13 +338,15 @@ static int mkbp_get_next_event(struct host_cmd_handler_args *args)
 		 * event first.
 		 */
 		data_size = src->get_data(resp + 1);
-		if (data_size == -EC_ERROR_BUSY)
-			set_event(evt);
+		if (data_size == -EC_ERROR_BUSY) {
+			mutex_lock(&state.lock);
+			state.events |= BIT(evt);
+			mutex_unlock(&state.lock);
+		}
 	} while (data_size == -EC_ERROR_BUSY);
 
-	if (!events)
-		set_host_interrupt(0);
-	else if (args->version >= 2)
+	/* If there are no more events and we support the "more" flag, set it */
+	if (!set_inactive_if_no_events() && args->version >= 2)
 		resp[0] |= EC_MKBP_HAS_MORE_EVENTS;
 
 	if (data_size < 0)
