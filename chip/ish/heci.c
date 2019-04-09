@@ -220,7 +220,8 @@ static void heci_build_fixed_client_header(struct heci_header *hdr,
 	hdr->length |=  (uint16_t)1 << HECI_MSG_CMPL_SHIFT; 
 }
 
-static int heci_send_heci_msg(struct heci_msg *msg)
+static int heci_send_heci_msg_timestamp(struct heci_msg *msg,
+					uint32_t *timestamp)
 {
 	int length, written;
 
@@ -228,7 +229,8 @@ static int heci_send_heci_msg(struct heci_msg *msg)
 		return -1;
 
 	length = sizeof(msg->hdr) + HECI_MSG_LENGTH(msg->hdr.length);
-	written = ipc_write(heci_bus_ctx.ipc_handle, msg, length);
+	written = ipc_write_timestamp(heci_bus_ctx.ipc_handle, msg, length,
+				      timestamp);
 
 	if (written != length) {
 		CPRINTF("%s error : len = %d err = %d\n", __func__,
@@ -237,6 +239,11 @@ static int heci_send_heci_msg(struct heci_msg *msg)
 	}
 
 	return EC_SUCCESS;
+}
+
+static int heci_send_heci_msg(struct heci_msg *msg)
+{
+	return heci_send_heci_msg_timestamp(msg, NULL);
 }
 
 int heci_set_client_data(const heci_handle_t handle, void *data)
@@ -302,8 +309,8 @@ static int wait_for_flow_ctrl_cred(struct heci_client_connect *connect)
 	return 1;
 }
 
-int heci_send_msg(const heci_handle_t handle, uint8_t *buf,
-		  const size_t buf_size)
+int heci_send_msg_timestamp(const heci_handle_t handle, uint8_t *buf,
+			    const size_t buf_size, uint32_t *timestamp)
 {
 	int buf_offset = 0, ret = 0, remain, payload_size;
 	struct heci_client_connect *connect;
@@ -347,7 +354,7 @@ int heci_send_msg(const heci_handle_t handle, uint8_t *buf,
 
 		memcpy(msg.payload, buf + buf_offset, payload_size);
 
-		heci_send_heci_msg(&msg);
+		heci_send_heci_msg_timestamp(&msg, timestamp);
 
 		remain -= payload_size;
 		buf_offset += payload_size;
@@ -361,6 +368,13 @@ err_locked:
 
 	return ret;
 }
+
+int heci_send_msg(const heci_handle_t handle, uint8_t *buf,
+		  const size_t buf_size)
+{
+	return heci_send_msg_timestamp(handle, buf, buf_size, NULL);
+}
+
 
 int heci_send_msgs(const heci_handle_t handle,
 		   const struct heci_msg_list *msg_list)

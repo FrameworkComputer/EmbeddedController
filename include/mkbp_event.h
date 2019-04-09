@@ -33,7 +33,7 @@ int mkbp_send_event(uint8_t event_type);
  *
  * This can be used if a board has a custom method.
  */
-void mkbp_set_host_active_via_custom(int active);
+int mkbp_set_host_active_via_custom(int active, uint32_t *timestamp);
 
 /*
  * The struct to store the event source definition.  The get_data routine is

@@ -106,14 +106,8 @@ static int mkbp_set_host_active_via_event(int active, uint32_t *timestamp)
 #ifdef CONFIG_MKBP_USE_HECI
 static int mkbp_set_host_active_via_heci(int active, uint32_t *timestamp)
 {
-	/*
-	 * TODO change heci_send_mkbp_event declaration. Done in
-	 * child CL to decouple changes.
-	 */
-	if (timestamp)
-		*timestamp = __hw_clock_source_read();
 	if (active)
-		heci_send_mkbp_event();
+		return heci_send_mkbp_event(timestamp);
 	return EC_SUCCESS;
 }
 #endif
@@ -132,14 +126,7 @@ static int mkbp_set_host_active_via_heci(int active, uint32_t *timestamp)
 static int mkbp_set_host_active(int active, uint32_t *timestamp)
 {
 #if defined(CONFIG_MKBP_USE_CUSTOM)
-	/*
-	 * TODO change mkbp_set_host_active_via_custom declaration. Done in
-	 * child CL to decouple changes
-	 */
-	if (timestamp)
-		*timestamp = __hw_clock_source_read();
-	mkbp_set_host_active_via_custom(active);
-	return EC_SUCCESS;
+	return mkbp_set_host_active_via_custom(active, timestamp);
 #elif defined(CONFIG_MKBP_USE_HOST_EVENT)
 	return mkbp_set_host_active_via_event(active, timestamp);
 #elif defined(CONFIG_MKBP_USE_GPIO)

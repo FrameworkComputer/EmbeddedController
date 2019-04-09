@@ -28,6 +28,7 @@
 #include "system.h"
 #include "task.h"
 #include "util.h"
+#include "hwtimer.h"
 
 #define CPRINTF(format, args...) cprintf(CC_IPI, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_IPI, format, ##args)
@@ -181,11 +182,18 @@ void ipi_inform_ap(void)
 
 #ifdef HAS_TASK_HOSTCMD
 #if defined(CONFIG_MKBP_USE_CUSTOM)
-void mkbp_set_host_active_via_custom(int active)
+int mkbp_set_host_active_via_custom(int active, uint32_t *timestamp)
 {
 	static const uint8_t hc_evt_obj = HOSTCMD_TYPE_HOSTEVENT;
+
+	/* This should be moved into ipi_send for more accuracy */
+	if (timestamp)
+		*timestamp = __hw_clock_source_read();
+
 	if (active)
-		ipi_send(IPI_HOST_COMMAND, &hc_evt_obj, sizeof(hc_evt_obj), 1);
+		return ipi_send(IPI_HOST_COMMAND, &hc_evt_obj,
+				sizeof(hc_evt_obj), 1);
+	return EC_SUCCESS;
 }
 #endif
 

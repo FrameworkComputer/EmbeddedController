@@ -77,7 +77,7 @@ int ipc_read(const ipc_handle_t handle, void *buf, const size_t buf_size,
              int timeout_us);
 
 /* Write message to ipc channel. */
-int ipc_write(const ipc_handle_t handle, const void *buf,
-	      const size_t buf_size);
+int ipc_write_timestamp(const ipc_handle_t handle, const void *buf,
+	      const size_t buf_size, uint32_t *timestamp);
 
 #endif /* __IPC_HECI_H */

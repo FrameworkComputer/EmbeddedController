@@ -31,6 +31,7 @@
 #include "ish_fwst.h"
 #include "queue.h"
 #include "hooks.h"
+#include "hwtimer.h"
 
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
 #define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
@@ -109,6 +110,7 @@
 
 struct ipc_msg {
 	uint32_t drbl;
+	uint32_t *timestamp_of_outgoing_doorbell;
 	uint8_t payload[IPC_MSG_MAX_SIZE];
 } __packed;
 
@@ -227,9 +229,9 @@ static void write_payload_and_ring_drbl(const struct ipc_if_ctx *ctx,
 	REG32(ctx->out_drbl_reg) = drbl;
 }
 
-
-static int ipc_write_raw(struct ipc_if_ctx *ctx, uint32_t drbl,
-			 const uint8_t *payload, size_t payload_size)
+static int ipc_write_raw_timestamp(struct ipc_if_ctx *ctx, uint32_t drbl,
+				   const uint8_t *payload, size_t payload_size,
+				   uint32_t *timestamp)
 {
 	struct queue *q = &ctx->tx_queue;
 	struct ipc_msg *msg;
@@ -245,6 +247,7 @@ static int ipc_write_raw(struct ipc_if_ctx *ctx, uint32_t drbl,
 			tail = q->state->tail & (q->buffer_units - 1);
 			msg = (struct ipc_msg *)q->buffer + tail;
 			msg->drbl = drbl;
+			msg->timestamp_of_outgoing_doorbell = timestamp;
 			memcpy(msg->payload, payload, payload_size);
 			queue_advance_tail(q, 1);
 		} else {
@@ -260,9 +263,19 @@ static int ipc_write_raw(struct ipc_if_ctx *ctx, uint32_t drbl,
 
 	write_payload_and_ring_drbl(ctx, drbl, payload, payload_size);
 
+	/* We wrote inline, take timestamp now */
+	if (timestamp)
+		*timestamp = __hw_clock_source_read();
+
 write_unlock:
 	mutex_unlock(&ctx->write_lock);
 	return res;
+}
+
+static int ipc_write_raw(struct ipc_if_ctx *ctx, uint32_t drbl,
+			 const uint8_t *payload, size_t payload_size)
+{
+	return ipc_write_raw_timestamp(ctx, drbl, payload, payload_size, NULL);
 }
 
 static int ipc_send_reset_notify(const ipc_handle_t handle)
@@ -416,6 +429,10 @@ static void handle_busy_clear_interrupt(const uint32_t peer_id)
 		msg = (struct ipc_msg *)(q->buffer + head * q->unit_bytes);
 		write_payload_and_ring_drbl(ctx, msg->drbl, msg->payload,
 					    IPC_DB_MSG_LENGTH(msg->drbl));
+		if (msg->timestamp_of_outgoing_doorbell)
+			*msg->timestamp_of_outgoing_doorbell =
+				__hw_clock_source_read();
+
 		queue_advance_head(q, 1);
 	} else {
 		ctx->is_tx_ipc_busy = 0;
@@ -477,7 +494,8 @@ static void ipc_host2ish_busy_clear_isr(void)
 }
 DECLARE_IRQ(ISH_IPC_ISH2HOST_CLR_IRQ, ipc_host2ish_busy_clear_isr);
 
-int ipc_write(const ipc_handle_t handle, const void *buf, const size_t buf_size)
+int ipc_write_timestamp(const ipc_handle_t handle, const void *buf,
+			const size_t buf_size, uint32_t *timestamp)
 {
 	int ret;
 	struct ipc_if_ctx *ctx;
@@ -526,7 +544,8 @@ int ipc_write(const ipc_handle_t handle, const void *buf, const size_t buf_size)
 		return -EC_ERROR_OVERFLOW;
 	}
 
-	ret = ipc_write_raw(ctx, drbl, payload, payload_size);
+	ret = ipc_write_raw_timestamp(ctx, drbl, payload, payload_size,
+				      timestamp);
 	if (ret)
 		return ret;
 

@@ -90,6 +90,8 @@ void *heci_get_client_data(const heci_handle_t handle);
  */
 int heci_send_msg(const heci_handle_t handle, uint8_t *buf,
 		  const size_t buf_size);
+int heci_send_msg_timestamp(const heci_handle_t handle, uint8_t *buf,
+		  const size_t buf_size, uint32_t *timestamp);
 /*
  * send client msgs(using list of buffer&size).
  * heci_msg_item with size == 0 is not acceptable.

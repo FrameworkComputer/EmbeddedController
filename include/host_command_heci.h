@@ -7,6 +7,6 @@
 #define __HOST_COMMAND_HECI_H
 
 /* send an event message to the ap */
-void heci_send_mkbp_event(void);
+int heci_send_mkbp_event(uint32_t *timestamp);
 
 #endif /* __HOST_COMMAND_HECI_H */
