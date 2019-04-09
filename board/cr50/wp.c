@@ -6,6 +6,7 @@
 #include "ccd_config.h"
 #include "console.h"
 #include "crc8.h"
+#include "ec_commands.h"
 #include "extension.h"
 #include "flash_log.h"
 #include "gpio.h"
@@ -281,7 +282,7 @@ void init_wp_state(void)
 	set_bp_follow_ccd_config();
 
 	/* Check system reset flags after CCD config is initially loaded */
-	if ((system_get_reset_flags() & RESET_FLAG_HIBERNATE) &&
+	if ((system_get_reset_flags() & EC_RESET_FLAG_HIBERNATE) &&
 	    !system_rollback_detected()) {
 		/*
 		 * Deep sleep resume without rollback, so reload the WP state

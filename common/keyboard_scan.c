@@ -626,7 +626,7 @@ static uint32_t check_boot_key(const uint8_t *state)
 		return BOOT_KEY_NONE;
 
 	/* If reset was not caused by reset pin, refresh must be held down */
-	if (!(system_get_reset_flags() & RESET_FLAG_RESET_PIN) &&
+	if (!(system_get_reset_flags() & EC_RESET_FLAG_RESET_PIN) &&
 	    !(state[KEYBOARD_COL_REFRESH] & KEYBOARD_MASK_REFRESH))
 		return BOOT_KEY_NONE;
 

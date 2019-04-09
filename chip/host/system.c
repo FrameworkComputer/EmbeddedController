@@ -6,6 +6,7 @@
 /* System module for emulator */
 
 #include "common.h"
+#include "ec_commands.h"
 #include "host_test.h"
 #include "panic.h"
 #include "persistence.h"
@@ -100,7 +101,7 @@ static uint32_t load_reset_flags(void)
 	uint32_t ret;
 
 	if (f == NULL)
-		return RESET_FLAG_POWER_ON;
+		return EC_RESET_FLAG_POWER_ON;
 	fread(&ret, sizeof(ret), 1, f);
 	release_persistent_storage(f);
 	remove_persistent_storage("reset_flags");
@@ -141,11 +142,11 @@ test_mockable void system_reset(int flags)
 {
 	uint32_t save_flags = 0;
 	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
-		save_flags = system_get_reset_flags() | RESET_FLAG_PRESERVED;
+		save_flags = system_get_reset_flags() | EC_RESET_FLAG_PRESERVED;
 	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
-		save_flags |= RESET_FLAG_AP_OFF;
+		save_flags |= EC_RESET_FLAG_AP_OFF;
 	if (flags & SYSTEM_RESET_HARD)
-		save_flags |= RESET_FLAG_HARD;
+		save_flags |= EC_RESET_FLAG_HARD;
 	if (save_flags)
 		save_reset_flags(save_flags);
 	emulator_reboot();
@@ -158,7 +159,7 @@ test_mockable void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	if (board_hibernate)
 		board_hibernate();
 
-	save_reset_flags(RESET_FLAG_HIBERNATE);
+	save_reset_flags(EC_RESET_FLAG_HIBERNATE);
 
 	if (!seconds && !microseconds)
 		exit(EXIT_CODE_HIBERNATE);

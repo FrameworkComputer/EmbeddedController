@@ -450,7 +450,7 @@ int flash_pre_init(void)
 	 * If we have already jumped between images, an earlier image could
 	 * have applied write protection. Nothing additional needs to be done.
 	 */
-	if (reset_flags & RESET_FLAG_SYSJUMP)
+	if (reset_flags & EC_RESET_FLAG_SYSJUMP)
 		return EC_SUCCESS;
 
 	if (prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED) {

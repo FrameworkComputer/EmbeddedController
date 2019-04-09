@@ -407,12 +407,12 @@ void test_init(void)
 	if (state & TEST_STATE_MASK(TEST_STATE_STEP_2)) {
 		/* Power-F3-ESC */
 		system_set_reset_flags(system_get_reset_flags() |
-				       RESET_FLAG_RESET_PIN);
+				       EC_RESET_FLAG_RESET_PIN);
 		mock_key(1, 1, 1);
 	} else if (state & TEST_STATE_MASK(TEST_STATE_STEP_3)) {
 		/* Power-F3-Down */
 		system_set_reset_flags(system_get_reset_flags() |
-				       RESET_FLAG_RESET_PIN);
+				       EC_RESET_FLAG_RESET_PIN);
 		mock_key(6, 11, 1);
 	}
 }

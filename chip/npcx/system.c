@@ -338,9 +338,9 @@ uint32_t chip_read_reset_flags(void)
 static void board_chipset_startup(void)
 {
 	uint32_t flags = bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
-	flags &= ~RESET_FLAG_AP_OFF;
+	flags &= ~EC_RESET_FLAG_AP_OFF;
 	chip_save_reset_flags(flags);
-	system_clear_reset_flags(RESET_FLAG_AP_OFF);
+	system_clear_reset_flags(EC_RESET_FLAG_AP_OFF);
 	CPRINTS("Cleared AP_OFF flag");
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
@@ -348,9 +348,9 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 static void board_chipset_shutdown(void)
 {
 	uint32_t flags = bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
-	flags |= RESET_FLAG_AP_OFF;
+	flags |= EC_RESET_FLAG_AP_OFF;
 	chip_save_reset_flags(flags);
-	system_set_reset_flags(RESET_FLAG_AP_OFF);
+	system_set_reset_flags(EC_RESET_FLAG_AP_OFF);
 	CPRINTS("Set AP_OFF flag");
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown,
@@ -367,7 +367,7 @@ static void check_reset_cause(void)
 	/* Clear saved reset flags in bbram */
 #ifdef CONFIG_POWER_BUTTON_INIT_IDLE
 	/* We'll clear AP_OFF on S5->S3 transition */
-	chip_save_reset_flags(flags & RESET_FLAG_AP_OFF);
+	chip_save_reset_flags(flags & EC_RESET_FLAG_AP_OFF);
 #else
 	chip_save_reset_flags(0);
 #endif
@@ -378,13 +378,13 @@ static void check_reset_cause(void)
 	if (!IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_SCRATCH)) {
 #ifdef CONFIG_BOARD_FORCE_RESET_PIN
 		/* Treat all resets as RESET_PIN */
-		flags |= RESET_FLAG_RESET_PIN;
+		flags |= EC_RESET_FLAG_RESET_PIN;
 #else
 		/* Check for VCC1 reset */
 		if (IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_STS))
-			flags |= RESET_FLAG_RESET_PIN;
+			flags |= EC_RESET_FLAG_RESET_PIN;
 		else
-			flags |= RESET_FLAG_POWER_ON;
+			flags |= EC_RESET_FLAG_POWER_ON;
 #endif
 	}
 
@@ -397,27 +397,27 @@ static void check_reset_cause(void)
 
 	/* Software debugger reset */
 	if (IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_DBGRST_STS)) {
-		flags |= RESET_FLAG_SOFT;
+		flags |= EC_RESET_FLAG_SOFT;
 		/* Clear debugger reset status initially*/
 		SET_BIT(NPCX_RSTCTL, NPCX_RSTCTL_DBGRST_STS);
 	}
 
 	/* Reset by hibernate */
 	if (hib_wake_flags & HIBERNATE_WAKE_PIN)
-		flags |= RESET_FLAG_WAKE_PIN | RESET_FLAG_HIBERNATE;
+		flags |= EC_RESET_FLAG_WAKE_PIN | EC_RESET_FLAG_HIBERNATE;
 	else if (hib_wake_flags & HIBERNATE_WAKE_MTC)
-		flags |= RESET_FLAG_RTC_ALARM | RESET_FLAG_HIBERNATE;
+		flags |= EC_RESET_FLAG_RTC_ALARM | EC_RESET_FLAG_HIBERNATE;
 
 	/* Watchdog Reset */
 	if (IS_BIT_SET(NPCX_T0CSR, NPCX_T0CSR_WDRST_STS)) {
 		/*
-		 * Don't set RESET_FLAG_WATCHDOG flag if watchdog is issued by
-		 * system_reset or hibernate in order to distinguish reset cause
-		 * is panic reason or not.
+		 * Don't set EC_RESET_FLAG_WATCHDOG flag if watchdog is issued
+		 * by system_reset or hibernate in order to distinguish reset
+		 * cause is panic reason or not.
 		 */
-		if (!(flags & (RESET_FLAG_SOFT | RESET_FLAG_HARD |
-				RESET_FLAG_HIBERNATE)))
-			flags |= RESET_FLAG_WATCHDOG;
+		if (!(flags & (EC_RESET_FLAG_SOFT | EC_RESET_FLAG_HARD |
+				EC_RESET_FLAG_HIBERNATE)))
+			flags |= EC_RESET_FLAG_WATCHDOG;
 
 		/* Clear watchdog reset status initially*/
 		SET_BIT(NPCX_T0CSR, NPCX_T0CSR_WDRST_STS);
@@ -925,12 +925,12 @@ int system_is_reboot_warm(void)
 	check_reset_cause();
 	reset_flags = system_get_reset_flags();
 
-	if ((reset_flags & RESET_FLAG_RESET_PIN) ||
-	    (reset_flags & RESET_FLAG_POWER_ON) ||
-	    (reset_flags & RESET_FLAG_WATCHDOG) ||
-	    (reset_flags & RESET_FLAG_HARD) ||
-	    (reset_flags & RESET_FLAG_SOFT) ||
-	    (reset_flags & RESET_FLAG_HIBERNATE))
+	if ((reset_flags & EC_RESET_FLAG_RESET_PIN) ||
+	    (reset_flags & EC_RESET_FLAG_POWER_ON) ||
+	    (reset_flags & EC_RESET_FLAG_WATCHDOG) ||
+	    (reset_flags & EC_RESET_FLAG_HARD) ||
+	    (reset_flags & EC_RESET_FLAG_SOFT) ||
+	    (reset_flags & EC_RESET_FLAG_HIBERNATE))
 		return 0;
 	else
 		return 1;

@@ -132,7 +132,7 @@ test_mockable __keep int main(void)
 	uart_init();
 
 	/* be less verbose if we boot for USB resume to meet spec timings */
-	if (!(system_get_reset_flags() & RESET_FLAG_USB_RESUME)) {
+	if (!(system_get_reset_flags() & EC_RESET_FLAG_USB_RESUME)) {
 		if (system_jumped_to_this_image()) {
 			CPRINTS("UART initialized after sysjump");
 		} else {
@@ -211,9 +211,9 @@ test_mockable __keep int main(void)
 		 * If system was reset by reset-pin, do not jump and wait for
 		 * command from host
 		 */
-		if (system_get_reset_flags() == RESET_FLAG_RESET_PIN) {
+		if (system_get_reset_flags() == EC_RESET_FLAG_RESET_PIN)
 			CPRINTS("Hard pin-reset detected, disable RW jump");
-		} else
+		else
 #endif
 		{
 			if (rwsig_check_signature())

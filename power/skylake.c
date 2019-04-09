@@ -158,18 +158,19 @@ void chipset_handle_reboot(void)
 	 * conditions are not met.
 	 */
 	if (!(flags &
-		(RESET_FLAG_WATCHDOG | RESET_FLAG_SOFT | RESET_FLAG_HARD)))
+		(EC_RESET_FLAG_WATCHDOG | EC_RESET_FLAG_SOFT |
+		 EC_RESET_FLAG_HARD)))
 		return;
 
 	/* Preserve AP off request. */
-	if (flags & RESET_FLAG_AP_OFF) {
+	if (flags & EC_RESET_FLAG_AP_OFF) {
 		/* Do not issue PMIC reset if board cannot save reset flags */
 		if (!board_has_working_reset_flags()) {
 			ccprintf("Skip PMIC reset due to board issue.\n");
 			cflush();
 			return;
 		}
-		chip_save_reset_flags(RESET_FLAG_AP_OFF);
+		chip_save_reset_flags(EC_RESET_FLAG_AP_OFF);
 	}
 
 #ifdef CONFIG_CHIP_PANIC_BACKUP

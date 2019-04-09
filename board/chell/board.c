@@ -411,7 +411,7 @@ void board_hibernate(void)
 
 /* Make the pmic re-sequence the power rails under these conditions. */
 #define PMIC_RESET_FLAGS \
-	(RESET_FLAG_WATCHDOG | RESET_FLAG_SOFT | RESET_FLAG_HARD)
+	(EC_RESET_FLAG_WATCHDOG | EC_RESET_FLAG_SOFT | EC_RESET_FLAG_HARD)
 static void board_handle_reboot(void)
 {
 	int flags;
@@ -426,8 +426,8 @@ static void board_handle_reboot(void)
 		return;
 
 	/* Preserve AP off request. */
-	if (flags & RESET_FLAG_AP_OFF)
-		chip_save_reset_flags(RESET_FLAG_AP_OFF);
+	if (flags & EC_RESET_FLAG_AP_OFF)
+		chip_save_reset_flags(EC_RESET_FLAG_AP_OFF);
 
 	ccprintf("Restarting system with PMIC.\n");
 	/* Flush console */

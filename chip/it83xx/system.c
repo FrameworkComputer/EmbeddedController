@@ -56,20 +56,20 @@ static void check_reset_cause(void)
 
 	/* Determine if watchdog reset or power on reset. */
 	if (raw_reset_cause & 0x02) {
-		flags |= RESET_FLAG_WATCHDOG;
+		flags |= EC_RESET_FLAG_WATCHDOG;
 	} else if (raw_reset_cause & 0x01) {
-		flags |= RESET_FLAG_POWER_ON;
+		flags |= EC_RESET_FLAG_POWER_ON;
 	} else {
 		if ((IT83XX_GCTRL_RSTS & 0xC0) == 0x80)
-			flags |= RESET_FLAG_POWER_ON;
+			flags |= EC_RESET_FLAG_POWER_ON;
 	}
 
 	if (raw_reset_cause2 & 0x04)
-		flags |= RESET_FLAG_RESET_PIN;
+		flags |= EC_RESET_FLAG_RESET_PIN;
 
 	/* watchdog module triggers these reset */
-	if (flags & (RESET_FLAG_HARD | RESET_FLAG_SOFT))
-		flags &= ~RESET_FLAG_WATCHDOG;
+	if (flags & (EC_RESET_FLAG_HARD | EC_RESET_FLAG_SOFT))
+		flags &= ~EC_RESET_FLAG_WATCHDOG;
 
 	/* Clear saved reset flags. */
 	BRAM_RESET_FLAGS0 = 0;
@@ -104,12 +104,12 @@ int system_is_reboot_warm(void)
 	check_reset_cause();
 	reset_flags = system_get_reset_flags();
 
-	if ((reset_flags & RESET_FLAG_RESET_PIN) ||
-	    (reset_flags & RESET_FLAG_POWER_ON) ||
-	    (reset_flags & RESET_FLAG_WATCHDOG) ||
-	    (reset_flags & RESET_FLAG_HARD) ||
-	    (reset_flags & RESET_FLAG_SOFT) ||
-	    (reset_flags & RESET_FLAG_HIBERNATE))
+	if ((reset_flags & EC_RESET_FLAG_RESET_PIN) ||
+	    (reset_flags & EC_RESET_FLAG_POWER_ON) ||
+	    (reset_flags & EC_RESET_FLAG_WATCHDOG) ||
+	    (reset_flags & EC_RESET_FLAG_HARD) ||
+	    (reset_flags & EC_RESET_FLAG_SOFT) ||
+	    (reset_flags & EC_RESET_FLAG_HIBERNATE))
 		return 0;
 	else
 		return 1;
@@ -165,7 +165,7 @@ void system_reset(int flags)
 	system_encode_save_flags(flags, &save_flags);
 
 	if (clock_ec_wake_from_sleep())
-		save_flags |= RESET_FLAG_HIBERNATE;
+		save_flags |= EC_RESET_FLAG_HIBERNATE;
 
 	/* Store flags to battery backed RAM. */
 	BRAM_RESET_FLAGS0 = save_flags >> 24;

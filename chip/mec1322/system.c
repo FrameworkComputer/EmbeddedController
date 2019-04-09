@@ -44,16 +44,16 @@ static void check_reset_cause(void)
 	* BIT[6] determine VCC1 reset
 	*/
 	if (rst_sts & MEC1322_PWR_RST_STS_VCC1)
-		flags |= RESET_FLAG_RESET_PIN;
+		flags |= EC_RESET_FLAG_RESET_PIN;
 
 
 	flags |= MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS);
 	MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = 0;
 
-	if ((status & MEC1322_VBAT_STS_WDT) && !(flags & (RESET_FLAG_SOFT |
-					    RESET_FLAG_HARD |
-					    RESET_FLAG_HIBERNATE)))
-		flags |= RESET_FLAG_WATCHDOG;
+	if ((status & MEC1322_VBAT_STS_WDT) && !(flags & (EC_RESET_FLAG_SOFT |
+					    EC_RESET_FLAG_HARD |
+					    EC_RESET_FLAG_HIBERNATE)))
+		flags |= EC_RESET_FLAG_WATCHDOG;
 
 	system_set_reset_flags(flags);
 }
@@ -68,12 +68,12 @@ int system_is_reboot_warm(void)
 	check_reset_cause();
 	reset_flags = system_get_reset_flags();
 
-	if ((reset_flags & RESET_FLAG_RESET_PIN) ||
-		(reset_flags & RESET_FLAG_POWER_ON) ||
-		(reset_flags & RESET_FLAG_WATCHDOG) ||
-		(reset_flags & RESET_FLAG_HARD) ||
-		(reset_flags & RESET_FLAG_SOFT) ||
-		(reset_flags & RESET_FLAG_HIBERNATE))
+	if ((reset_flags & EC_RESET_FLAG_RESET_PIN) ||
+		(reset_flags & EC_RESET_FLAG_POWER_ON) ||
+		(reset_flags & EC_RESET_FLAG_WATCHDOG) ||
+		(reset_flags & EC_RESET_FLAG_HARD) ||
+		(reset_flags & EC_RESET_FLAG_SOFT) ||
+		(reset_flags & EC_RESET_FLAG_HIBERNATE))
 		return 0;
 	else
 		return 1;
@@ -113,17 +113,17 @@ void _system_reset(int flags, int wake_from_hibernate)
 
 	/* Save current reset reasons if necessary */
 	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
-		save_flags = system_get_reset_flags() | RESET_FLAG_PRESERVED;
+		save_flags = system_get_reset_flags() | EC_RESET_FLAG_PRESERVED;
 
 	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
-		save_flags |= RESET_FLAG_AP_OFF;
+		save_flags |= EC_RESET_FLAG_AP_OFF;
 
 	if (wake_from_hibernate)
-		save_flags |= RESET_FLAG_HIBERNATE;
+		save_flags |= EC_RESET_FLAG_HIBERNATE;
 	else if (flags & SYSTEM_RESET_HARD)
-		save_flags |= RESET_FLAG_HARD;
+		save_flags |= EC_RESET_FLAG_HARD;
 	else
-		save_flags |= RESET_FLAG_SOFT;
+		save_flags |= EC_RESET_FLAG_SOFT;
 
 	chip_save_reset_flags(save_flags);
 

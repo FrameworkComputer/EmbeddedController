@@ -6,6 +6,7 @@
 #include "board_id.h"
 #include "console.h"
 #include "ccd_config.h"
+#include "ec_commands.h"
 #include "extension.h"
 #include "system.h"
 
@@ -73,7 +74,7 @@ static int inactive_image_is_guc_image(void)
  */
 int board_is_first_factory_boot(void)
 {
-	return (!(system_get_reset_flags() & RESET_FLAG_HIBERNATE) &&
+	return (!(system_get_reset_flags() & EC_RESET_FLAG_HIBERNATE) &&
 		inactive_image_is_guc_image() && board_id_is_erased());
 }
 

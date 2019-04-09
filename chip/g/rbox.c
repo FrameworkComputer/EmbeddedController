@@ -4,6 +4,7 @@
  */
 
 #include "clock.h"
+#include "ec_commands.h"
 #include "hooks.h"
 #include "rdd.h"
 #include "registers.h"
@@ -68,7 +69,7 @@ static void rbox_release_ec_reset(void)
 	 *
 	 * Release PINMUX HOLD, so the board can detect changes on TPM_RST_L.
 	 */
-	if (!(system_get_reset_flags() & RESET_FLAG_HIBERNATE) &&
+	if (!(system_get_reset_flags() & EC_RESET_FLAG_HIBERNATE) &&
 	    board_uses_closed_loop_reset()) {
 		return;
 	}
@@ -77,7 +78,7 @@ static void rbox_release_ec_reset(void)
 	 * After a POR, if the power button is held, then delay releasing
 	 * EC_RST_L.
 	 */
-	if ((system_get_reset_flags() & RESET_FLAG_POWER_ON) &&
+	if ((system_get_reset_flags() & EC_RESET_FLAG_POWER_ON) &&
 	    rbox_powerbtn_is_pressed()) {
 		hook_call_deferred(&rbox_check_rdd_data, RDD_WAIT_TIME);
 		return;

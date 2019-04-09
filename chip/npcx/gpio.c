@@ -511,7 +511,7 @@ void gpio_pre_init(void)
 	 *
 	 * Make sure to set up the timer before using udelay().
 	 */
-	if (system_get_reset_flags() & RESET_FLAG_POWER_ON) {
+	if (system_get_reset_flags() & EC_RESET_FLAG_POWER_ON) {
 		__hw_early_init_hwtimer(0);
 		udelay(CONFIG_GPIO_INIT_POWER_ON_DELAY_MS * MSEC);
 	}

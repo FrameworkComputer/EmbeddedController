@@ -188,25 +188,25 @@ static void check_reset_cause(void)
 		 * IWDG or WWDG, if the watchdog was not used as an hard reset
 		 * mechanism
 		 */
-		if (!(flags & RESET_FLAG_HARD))
-			flags |= RESET_FLAG_WATCHDOG;
+		if (!(flags & EC_RESET_FLAG_HARD))
+			flags |= EC_RESET_FLAG_WATCHDOG;
 	}
 
 	if (raw_cause & RESET_CAUSE_SFT)
-		flags |= RESET_FLAG_SOFT;
+		flags |= EC_RESET_FLAG_SOFT;
 
 	if (raw_cause & RESET_CAUSE_POR)
-		flags |= RESET_FLAG_POWER_ON;
+		flags |= EC_RESET_FLAG_POWER_ON;
 
 	if (raw_cause & RESET_CAUSE_PIN)
-		flags |= RESET_FLAG_RESET_PIN;
+		flags |= EC_RESET_FLAG_RESET_PIN;
 
 	if (pwr_status & RESET_CAUSE_SBF)
 		/* Hibernated and subsequently awakened */
-		flags |= RESET_FLAG_HIBERNATE;
+		flags |= EC_RESET_FLAG_HIBERNATE;
 
 	if (!flags && (raw_cause & RESET_CAUSE_OTHER))
-		flags |= RESET_FLAG_OTHER;
+		flags |= EC_RESET_FLAG_OTHER;
 
 	/*
 	 * WORKAROUND: as we cannot de-activate the watchdog during
@@ -215,8 +215,8 @@ static void check_reset_cause(void)
 	 * watchdog initialized this time.
 	 * The RTC deadline (if any) is already set.
 	 */
-	if ((flags & (RESET_FLAG_HIBERNATE | RESET_FLAG_WATCHDOG)) ==
-		     (RESET_FLAG_HIBERNATE | RESET_FLAG_WATCHDOG)) {
+	if ((flags & EC_RESET_FLAG_HIBERNATE) &&
+	    (flags & EC_RESET_FLAG_WATCHDOG)) {
 		__enter_hibernate(0, 0);
 	}
 
@@ -358,18 +358,18 @@ void system_reset(int flags)
 
 	/* Save current reset reasons if necessary */
 	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
-		save_flags = system_get_reset_flags() | RESET_FLAG_PRESERVED;
+		save_flags = system_get_reset_flags() | EC_RESET_FLAG_PRESERVED;
 
 	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
-		save_flags |= RESET_FLAG_AP_OFF;
+		save_flags |= EC_RESET_FLAG_AP_OFF;
 
 	/* Remember that the software asked us to hard reboot */
 	if (flags & SYSTEM_RESET_HARD)
-		save_flags |= RESET_FLAG_HARD;
+		save_flags |= EC_RESET_FLAG_HARD;
 
 #ifdef CONFIG_STM32_RESET_FLAGS_EXTENDED
 	if (flags & SYSTEM_RESET_AP_WATCHDOG)
-		save_flags |= RESET_FLAG_AP_WATCHDOG;
+		save_flags |= EC_RESET_FLAG_AP_WATCHDOG;
 
 	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags & 0xffff);
 	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS_2, save_flags >> 16);

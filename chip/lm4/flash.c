@@ -243,7 +243,7 @@ int flash_pre_init(void)
 	 * If we have already jumped between images, an earlier image could
 	 * have applied write protection.  Nothing additional needs to be done.
 	 */
-	if (reset_flags & RESET_FLAG_SYSJUMP)
+	if (reset_flags & EC_RESET_FLAG_SYSJUMP)
 		return EC_SUCCESS;
 
 	if (prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED) {
@@ -280,7 +280,7 @@ int flash_pre_init(void)
 	 * write-protect.  If it didn't, then the flash write protect registers
 	 * have been permanently committed and we can't fix that.
 	 */
-	if (reset_flags & RESET_FLAG_POWER_ON) {
+	if (reset_flags & EC_RESET_FLAG_POWER_ON) {
 		stuck_locked = 1;
 		return EC_ERROR_ACCESS_DENIED;
 	}

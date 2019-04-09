@@ -123,7 +123,7 @@ static void check_reset_cause(void)
 		 * Note that this is also triggered by hibernation, because
 		 * that de-powers the chip.
 		 */
-		flags |= RESET_FLAG_POWER_ON;
+		flags |= EC_RESET_FLAG_POWER_ON;
 	} else if (!flags && (raw_reset_cause & 0x01)) {
 		/*
 		 * LM4 signals the reset pin in RESC for all power-on resets,
@@ -131,42 +131,42 @@ static void check_reset_cause(void)
 		 * this flag mutually-exclusive with power on flag, so we can
 		 * use it to indicate a keyboard-triggered reset.
 		 */
-		flags |= RESET_FLAG_RESET_PIN;
+		flags |= EC_RESET_FLAG_RESET_PIN;
 	}
 
 	if (raw_reset_cause & 0x04)
-		flags |= RESET_FLAG_BROWNOUT;
+		flags |= EC_RESET_FLAG_BROWNOUT;
 
 	if (raw_reset_cause & 0x10)
-		flags |= RESET_FLAG_SOFT;
+		flags |= EC_RESET_FLAG_SOFT;
 
 	if (raw_reset_cause & 0x28) {
 		/* Watchdog timer 0 or 1 */
-		flags |= RESET_FLAG_WATCHDOG;
+		flags |= EC_RESET_FLAG_WATCHDOG;
 	}
 
 	/* Handle other raw reset causes */
 	if (raw_reset_cause && !flags)
-		flags |= RESET_FLAG_OTHER;
+		flags |= EC_RESET_FLAG_OTHER;
 
 
 	if ((hib_status & 0x09) &&
 	    (hib_wake_flags & HIBDATA_WAKE_HARD_RESET)) {
 		/* Hibernation caused by software-triggered hard reset */
-		flags |= RESET_FLAG_HARD;
+		flags |= EC_RESET_FLAG_HARD;
 
 		/* Consume the hibernate reasons so we don't see them below */
 		hib_status &= ~0x09;
 	}
 
 	if ((hib_status & 0x01) && (hib_wake_flags & HIBDATA_WAKE_RTC))
-		flags |= RESET_FLAG_RTC_ALARM;
+		flags |= EC_RESET_FLAG_RTC_ALARM;
 
 	if ((hib_status & 0x08) && (hib_wake_flags & HIBDATA_WAKE_PIN))
-		flags |= RESET_FLAG_WAKE_PIN;
+		flags |= EC_RESET_FLAG_WAKE_PIN;
 
 	if (hib_status & 0x04)
-		flags |= RESET_FLAG_LOW_BATTERY;
+		flags |= EC_RESET_FLAG_LOW_BATTERY;
 
 	/* Restore then clear saved reset flags */
 	flags |= hibdata_read(HIBDATA_INDEX_SAVED_RESET_FLAGS);
@@ -524,10 +524,10 @@ void system_reset(int flags)
 
 	/* Save current reset reasons if necessary */
 	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
-		save_flags = system_get_reset_flags() | RESET_FLAG_PRESERVED;
+		save_flags = system_get_reset_flags() | EC_RESET_FLAG_PRESERVED;
 
 	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
-		save_flags |= RESET_FLAG_AP_OFF;
+		save_flags |= EC_RESET_FLAG_AP_OFF;
 
 	hibdata_write(HIBDATA_INDEX_SAVED_RESET_FLAGS, save_flags);
 

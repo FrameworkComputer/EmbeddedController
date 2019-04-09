@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "ec_commands.h"
 #include "config.h"
 #include "hooks.h"
 #include "system.h"
@@ -13,7 +14,7 @@
 
 struct ish_persistent_data ish_persistent_data = {
 	.magic = PERSISTENT_DATA_MAGIC,
-	.reset_flags = RESET_FLAG_POWER_ON,
+	.reset_flags = EC_RESET_FLAG_POWER_ON,
 	.watchdog_counter = 0,
 	.panic_data = {0},
 };

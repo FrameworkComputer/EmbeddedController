@@ -4,6 +4,7 @@
  *
  * AP state machine
  */
+#include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
@@ -173,7 +174,7 @@ static void init_ap_detect(void)
 	 * complete.
 	 */
 	if (board_uses_closed_loop_reset() &&
-	    !(system_get_reset_flags() & RESET_FLAG_HIBERNATE)) {
+	    !(system_get_reset_flags() & EC_RESET_FLAG_HIBERNATE)) {
 		board_closed_loop_reset();
 	} else {
 		/*

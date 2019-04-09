@@ -1296,7 +1296,7 @@ void usb_init(void)
 	 * for some other reason, we just do a normal USB reset. The host
 	 * doesn't mind.
 	 */
-	resume = ((system_get_reset_flags() & RESET_FLAG_USB_RESUME) &&
+	resume = ((system_get_reset_flags() & EC_RESET_FLAG_USB_RESUME) &&
 		   (GR_USB_GINTSTS & GC_USB_GINTSTS_WKUPINT_MASK));
 
 	/* TODO(crosbug.com/p/46813): Clean this up. Do only what's needed, and

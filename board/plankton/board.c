@@ -741,7 +741,7 @@ static void board_init(void)
 	sn75dp130_redriver_init();
 
 	/* Initialize USB hub */
-	if (system_get_reset_flags() & RESET_FLAG_POWER_ON)
+	if (system_get_reset_flags() & EC_RESET_FLAG_POWER_ON)
 		hook_call_deferred(&board_usb_hub_reset_no_return_data,
 				   500 * MSEC);
 

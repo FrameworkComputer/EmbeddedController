@@ -178,7 +178,7 @@ static int is_recovery_boot(void)
 	if (system_jumped_to_this_image())
 		return 0;
 	if (!(system_get_reset_flags() &
-	    (RESET_FLAG_RESET_PIN | RESET_FLAG_POWER_ON)))
+	    (EC_RESET_FLAG_RESET_PIN | EC_RESET_FLAG_POWER_ON)))
 		return 0;
 	if (!is_recovery_button_pressed())
 		return 0;
@@ -203,7 +203,7 @@ void button_init(void)
 
 #ifdef CONFIG_BUTTON_TRIGGERED_RECOVERY
 	if (is_recovery_boot()) {
-		system_clear_reset_flags(RESET_FLAG_AP_OFF);
+		system_clear_reset_flags(EC_RESET_FLAG_AP_OFF);
 		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 		button_check_hw_reinit_required();
 	}

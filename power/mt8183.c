@@ -168,7 +168,7 @@ enum power_state power_chipset_init(void)
 			CPRINTS("already in S0");
 			return POWER_S0;
 		}
-	} else if (system_get_reset_flags() & RESET_FLAG_AP_OFF) {
+	} else if (system_get_reset_flags() & EC_RESET_FLAG_AP_OFF) {
 		/* Force shutdown from S5 if the PMIC is already up. */
 		if (power_get_signals() & IN_PGOOD_PMIC) {
 			forcing_shutdown = 1;

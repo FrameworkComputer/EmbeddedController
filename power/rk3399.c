@@ -241,7 +241,7 @@ enum power_state power_chipset_init(void)
 			CPRINTS("already in S0");
 			return POWER_S0;
 		}
-	} else if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF))
+	} else if (!(system_get_reset_flags() & EC_RESET_FLAG_AP_OFF))
 		/* Auto-power on */
 		chipset_exit_hard_off();
 

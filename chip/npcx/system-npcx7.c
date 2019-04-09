@@ -7,6 +7,7 @@
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
+#include "ec_commands.h"
 #include "hooks.h"
 #include "registers.h"
 #include "system.h"
@@ -165,7 +166,7 @@ void __hibernate_npcx_series(void)
 #if defined(CONFIG_HIBERNATE_PSL)
 static void report_psl_wake_source(void)
 {
-	if (!(system_get_reset_flags() & RESET_FLAG_HIBERNATE))
+	if (!(system_get_reset_flags() & EC_RESET_FLAG_HIBERNATE))
 		return;
 
 	CPRINTS("PSL_CTS: 0x%x", NPCX_GLUE_PSL_CTS & 0xf);

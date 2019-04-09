@@ -712,7 +712,7 @@ static void board_init(void)
 	 * Deep sleep resets should be considered valid and should not impact
 	 * the rolling reboot count.
 	 */
-	if (system_get_reset_flags() & RESET_FLAG_HIBERNATE)
+	if (system_get_reset_flags() & EC_RESET_FLAG_HIBERNATE)
 		system_decrement_retry_counter();
 	configure_board_specific_gpios();
 	init_pmu();
@@ -728,7 +728,7 @@ static void board_init(void)
 	 * If this was a low power wake and not a rollback, restore the ccd
 	 * state from the long-life register.
 	 */
-	if ((system_get_reset_flags() & RESET_FLAG_HIBERNATE) &&
+	if ((system_get_reset_flags() & EC_RESET_FLAG_HIBERNATE) &&
 	    !system_rollback_detected()) {
 		ccd_init_state = (GREG32(PMU, LONG_LIFE_SCRATCH1) &
 				  BOARD_CCD_STATE) >> BOARD_CCD_SHIFT;
@@ -1412,7 +1412,7 @@ static void init_board_properties(void)
 	 * update from a version not setting the register.
 	 */
 	if (!(properties & BOARD_ALL_PROPERTIES) || (system_get_reset_flags() &
-						     RESET_FLAG_HARD)) {
+						     EC_RESET_FLAG_HARD)) {
 		/*
 		 * Mask board properties because following hard reset, they
 		 * won't be cleared.

@@ -96,14 +96,14 @@ void system_reset(int flags)
 
 	/* Save current reset reasons if necessary */
 	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
-		save_flags = system_get_reset_flags() | RESET_FLAG_PRESERVED;
+		save_flags = system_get_reset_flags() | EC_RESET_FLAG_PRESERVED;
 
 	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
-		save_flags |= RESET_FLAG_AP_OFF;
+		save_flags |= EC_RESET_FLAG_AP_OFF;
 
 	/* Remember that the software asked us to hard reboot */
 	if (flags & SYSTEM_RESET_HARD)
-		save_flags |= RESET_FLAG_HARD;
+		save_flags |= EC_RESET_FLAG_HARD;
 
 	/* Reset flags are 32-bits, but save only 16 bits. */
 	ASSERT(!(save_flags >> 16));
@@ -141,14 +141,14 @@ static void check_reset_cause(void)
 	if ((raw_reset_cause & 0xffff0000) == PWRON_DEFAULT) {
 		/* Reboot */
 		if (raw_reset_cause & PWRON_WATCHDOG)
-			flags |= RESET_FLAG_WATCHDOG;
+			flags |= EC_RESET_FLAG_WATCHDOG;
 		else if (raw_reset_cause & PWRON_RESET)
-			flags |= RESET_FLAG_POWER_ON;
+			flags |= EC_RESET_FLAG_POWER_ON;
 		else
-			flags |= RESET_FLAG_OTHER;
+			flags |= EC_RESET_FLAG_OTHER;
 	} else {
 		/* Power lost restart */
-		flags |= RESET_FLAG_POWER_ON;
+		flags |= EC_RESET_FLAG_POWER_ON;
 	}
 	system_set_reset_flags(SCP_GPR[0] >> 16);
 	SCP_GPR[0] &= 0xffff;
@@ -157,12 +157,12 @@ static void check_reset_cause(void)
 int system_is_reboot_warm(void)
 {
 	const uint32_t cold_flags =
-		RESET_FLAG_RESET_PIN |
-		RESET_FLAG_POWER_ON  |
-		RESET_FLAG_WATCHDOG  |
-		RESET_FLAG_HARD      |
-		RESET_FLAG_SOFT      |
-		RESET_FLAG_HIBERNATE;
+		EC_RESET_FLAG_RESET_PIN |
+		EC_RESET_FLAG_POWER_ON  |
+		EC_RESET_FLAG_WATCHDOG  |
+		EC_RESET_FLAG_HARD      |
+		EC_RESET_FLAG_SOFT      |
+		EC_RESET_FLAG_HIBERNATE;
 
 	check_reset_cause();
 

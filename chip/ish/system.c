@@ -29,7 +29,7 @@
 int system_is_reboot_warm(void)
 {
 	return !(system_get_reset_flags() &
-		 (RESET_FLAG_POWER_ON | RESET_FLAG_HARD));
+		 (EC_RESET_FLAG_POWER_ON | EC_RESET_FLAG_HARD));
 }
 
 void system_pre_init(void)
@@ -87,7 +87,7 @@ void system_reset(int flags)
 	system_encode_save_flags(flags, &save_flags);
 
 	if (flags & SYSTEM_RESET_AP_WATCHDOG) {
-		save_flags |= RESET_FLAG_WATCHDOG;
+		save_flags |= EC_RESET_FLAG_WATCHDOG;
 		ish_persistent_data.watchdog_counter += 1;
 		if (ish_persistent_data.watchdog_counter
 		    >= CONFIG_WATCHDOG_MAX_RETRIES) {

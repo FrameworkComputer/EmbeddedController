@@ -251,7 +251,7 @@ int flash_physical_restore_state(void)
 	 * could have applied write protection. Nothing additional needs
 	 * to be done.
 	 */
-	if (reset_flags & RESET_FLAG_SYSJUMP) {
+	if (reset_flags & EC_RESET_FLAG_SYSJUMP) {
 		prev = (const struct flash_wp_state *)system_get_jump_tag(
 				FLASH_SYSJUMP_TAG, &version, &size);
 		if (prev && version == FLASH_HOOK_VERSION &&

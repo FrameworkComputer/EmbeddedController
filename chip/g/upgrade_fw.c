@@ -330,7 +330,7 @@ static int chunk_came_too_soon(uint32_t block_offset)
 	}
 
 	if (!prev_timestamp) {
-		int hard_reset = system_get_reset_flags() & RESET_FLAG_HARD;
+		int hard_reset = system_get_reset_flags() & EC_RESET_FLAG_HARD;
 
 		/*
 		 * If we just recovered from a hard reset, we have to wait until

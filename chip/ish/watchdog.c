@@ -20,6 +20,7 @@
  */
 
 #include "common.h"
+#include "ec_commands.h"
 #include "hooks.h"
 #include "ish_persistent_data.h"
 #include "task.h"
@@ -37,7 +38,7 @@ int watchdog_init(void)
 	 * Put reset counter back at zero if last reset was not caused
 	 * by watchdog
 	 */
-	if ((system_get_reset_flags() & RESET_FLAG_WATCHDOG) == 0)
+	if ((system_get_reset_flags() & EC_RESET_FLAG_WATCHDOG) == 0)
 		ish_persistent_data.watchdog_counter = 0;
 
 	/* Initialize WDT clock divider */

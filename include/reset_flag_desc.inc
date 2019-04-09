@@ -4,7 +4,7 @@
  */
 
 /*
- * Reset flag descriptions.  Must be in same order as bits of RESET_FLAG_
+ * Reset flag descriptions.  Must be in same order as bits of EC_RESET_FLAG_
  * constants.
  */
 "other",

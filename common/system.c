@@ -234,17 +234,18 @@ void system_encode_save_flags(int reset_flags, uint32_t *save_flags)
 
 	/* Save current reset reasons if necessary */
 	if (reset_flags & SYSTEM_RESET_PRESERVE_FLAGS)
-		*save_flags = system_get_reset_flags() | RESET_FLAG_PRESERVED;
+		*save_flags = system_get_reset_flags() |
+			      EC_RESET_FLAG_PRESERVED;
 
 	/* Add in AP off flag into saved flags. */
 	if (reset_flags & SYSTEM_RESET_LEAVE_AP_OFF)
-		*save_flags |= RESET_FLAG_AP_OFF;
+		*save_flags |= EC_RESET_FLAG_AP_OFF;
 
 	/* Save reset flag */
 	if (reset_flags & (SYSTEM_RESET_HARD | SYSTEM_RESET_WAIT_EXT))
-		*save_flags |= RESET_FLAG_HARD;
+		*save_flags |= EC_RESET_FLAG_HARD;
 	else
-		*save_flags |= RESET_FLAG_SOFT;
+		*save_flags |= EC_RESET_FLAG_SOFT;
 }
 
 uint32_t system_get_reset_flags(void)
@@ -782,7 +783,7 @@ void system_common_pre_init(void)
 	 * was not already logged. This must happen before calculating
 	 * jump_data address because it might change panic pointer.
 	 */
-	if (system_get_reset_flags() & RESET_FLAG_WATCHDOG) {
+	if (system_get_reset_flags() & EC_RESET_FLAG_WATCHDOG) {
 		uint32_t reason;
 		uint32_t info;
 		uint8_t exception;
@@ -818,7 +819,7 @@ void system_common_pre_init(void)
 		/* Yes, we jumped to this image */
 		jumped_to_image = 1;
 		/* Restore the reset flags */
-		reset_flags = jdata->reset_flags | RESET_FLAG_SYSJUMP;
+		reset_flags = jdata->reset_flags | EC_RESET_FLAG_SYSJUMP;
 
 		/*
 		 * If the jump data structure isn't the same size as the
@@ -904,8 +905,8 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 
 		if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE)) {
 			CPRINTS("Clearing AP_OFF");
-			chip_save_reset_flags(
-				chip_read_reset_flags() & ~RESET_FLAG_AP_OFF);
+			chip_save_reset_flags(chip_read_reset_flags() &
+					      ~EC_RESET_FLAG_AP_OFF);
 		}
 		/* Intentional fall-through */
 	case EC_REBOOT_HIBERNATE:

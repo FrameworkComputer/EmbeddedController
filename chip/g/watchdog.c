@@ -6,6 +6,7 @@
 /* Watchdog driver */
 
 #include "common.h"
+#include "ec_commands.h"
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
@@ -22,7 +23,7 @@
 void __attribute__((used)) trace_and_reset(uint32_t excep_lr, uint32_t excep_sp)
 {
 	watchdog_trace(excep_lr, excep_sp);
-	system_reset(RESET_FLAG_WATCHDOG);
+	system_reset(EC_RESET_FLAG_WATCHDOG);
 }
 
 /* Warning interrupt at the middle of the watchdog period */

@@ -410,7 +410,7 @@ enum power_state power_chipset_init(void)
 	 * Force the AP shutdown unless we are doing SYSJUMP. Otherwise,
 	 * the AP could stay in strange state.
 	 */
-	if (!(reset_flags & RESET_FLAG_SYSJUMP)) {
+	if (!(reset_flags & EC_RESET_FLAG_SYSJUMP)) {
 		CPRINTS("not sysjump; forcing AP shutdown");
 		chipset_turn_off_power_rails();
 
@@ -446,8 +446,8 @@ enum power_state power_chipset_init(void)
 	}
 
 	/* Leave power off only if requested by reset flags */
-	if (!(reset_flags & RESET_FLAG_AP_OFF) &&
-	    !(reset_flags & RESET_FLAG_SYSJUMP)) {
+	if (!(reset_flags & EC_RESET_FLAG_AP_OFF) &&
+	    !(reset_flags & EC_RESET_FLAG_SYSJUMP)) {
 		CPRINTS("reset_flag 0x%x", reset_flags);
 		auto_power_on = 1;
 	}
@@ -528,12 +528,12 @@ static int check_for_power_on_event(void)
 {
 	int ap_off_flag;
 
-	ap_off_flag = system_get_reset_flags() & RESET_FLAG_AP_OFF;
-	system_clear_reset_flags(RESET_FLAG_AP_OFF);
+	ap_off_flag = system_get_reset_flags() & EC_RESET_FLAG_AP_OFF;
+	system_clear_reset_flags(EC_RESET_FLAG_AP_OFF);
 	/* check if system is already ON */
 	if (is_power_good_asserted()) {
 		if (ap_off_flag) {
-			CPRINTS("system is on, but RESET_FLAG_AP_OFF is on");
+			CPRINTS("system is on, but EC_RESET_FLAG_AP_OFF is on");
 			return POWER_ON_CANCEL;
 		} else {
 			CPRINTS("system is on, thus clear " "auto_power_on");
@@ -543,7 +543,7 @@ static int check_for_power_on_event(void)
 		}
 	} else {
 		if (ap_off_flag) {
-			CPRINTS("RESET_FLAG_AP_OFF is on");
+			CPRINTS("EC_RESET_FLAG_AP_OFF is on");
 			power_off();
 			return POWER_ON_CANCEL;
 		}

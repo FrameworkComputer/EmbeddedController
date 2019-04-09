@@ -40,7 +40,7 @@ static void check_reset_cause(void)
 
 	if (g_rstsrc & GC_PMU_RSTSRC_POR_MASK) {
 		/* If power-on reset is true, that's the only thing */
-		system_set_reset_flags(RESET_FLAG_POWER_ON);
+		system_set_reset_flags(EC_RESET_FLAG_POWER_ON);
 		return;
 	}
 
@@ -49,39 +49,39 @@ static void check_reset_cause(void)
 		/* This register is cleared by reading it */
 		uint32_t g_exitpd = GR_PMU_EXITPD_SRC;
 
-		flags |= RESET_FLAG_HIBERNATE;
+		flags |= EC_RESET_FLAG_HIBERNATE;
 
 		if (g_exitpd & GC_PMU_EXITPD_SRC_PIN_PD_EXIT_MASK)
-			flags |= RESET_FLAG_WAKE_PIN;
+			flags |= EC_RESET_FLAG_WAKE_PIN;
 		if (g_exitpd & GC_PMU_EXITPD_SRC_UTMI_SUSPEND_N_MASK)
-			flags |= RESET_FLAG_USB_RESUME;
+			flags |= EC_RESET_FLAG_USB_RESUME;
 		if (g_exitpd & (GC_PMU_EXITPD_SRC_TIMELS0_PD_EXIT_TIMER0_MASK |
 				GC_PMU_EXITPD_SRC_TIMELS0_PD_EXIT_TIMER1_MASK))
-			flags |= RESET_FLAG_RTC_ALARM;
+			flags |= EC_RESET_FLAG_RTC_ALARM;
 		if (g_exitpd & GC_PMU_EXITPD_SRC_RDD0_PD_EXIT_TIMER_MASK)
-			flags |= RESET_FLAG_RDD;
+			flags |= EC_RESET_FLAG_RDD;
 		if (g_exitpd & GC_PMU_EXITPD_SRC_RBOX_WAKEUP_MASK)
-			flags |= RESET_FLAG_RBOX;
+			flags |= EC_RESET_FLAG_RBOX;
 	}
 
 	if (g_rstsrc & GC_PMU_RSTSRC_SOFTWARE_MASK)
-		flags |= RESET_FLAG_HARD;
+		flags |= EC_RESET_FLAG_HARD;
 
 	if (g_rstsrc & GC_PMU_RSTSRC_SYSRESET_MASK)
-		flags |= RESET_FLAG_SOFT;
+		flags |= EC_RESET_FLAG_SOFT;
 
 	if (g_rstsrc & GC_PMU_RSTSRC_FST_BRNOUT_MASK)
-		flags |= RESET_FLAG_BROWNOUT;
+		flags |= EC_RESET_FLAG_BROWNOUT;
 
 	/*
 	 * GC_PMU_RSTSRC_WDOG and GC_PMU_RSTSRC_LOCKUP are considered security
 	 * threats. They won't show up as a direct reset cause.
 	 */
 	if (g_rstsrc & GC_PMU_RSTSRC_SEC_THREAT_MASK)
-		flags |= RESET_FLAG_SECURITY;
+		flags |= EC_RESET_FLAG_SECURITY;
 
 	if (g_rstsrc && !flags)
-		flags |= RESET_FLAG_OTHER;
+		flags |= EC_RESET_FLAG_OTHER;
 
 	system_set_reset_flags(flags);
 }
