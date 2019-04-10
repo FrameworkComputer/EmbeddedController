@@ -33,9 +33,12 @@
 #endif
 
 #define BAT_LEVEL_PD_LIMIT 85
+#define IBAT_PD_LIMIT 1000
 
 #define BATTERY_SIMPLO_CHARGE_MIN_TEMP 0
 #define BATTERY_SIMPLO_CHARGE_MAX_TEMP 60
+
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 enum battery_type {
 	BATTERY_SIMPLO = 0,
@@ -131,6 +134,8 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 
 int charger_profile_override(struct charge_state_data *curr)
 {
+	static int previous_chg_limit_mv;
+	int chg_limit_mv;
 #ifdef CONFIG_BATTERY_MAX17055
 	/* battery temp in 0.1 deg C */
 	int bat_temp_c = curr->batt.temperature - 2731;
@@ -202,6 +207,22 @@ int charger_profile_override(struct charge_state_data *curr)
 	}
 #endif  /* CONFIG_BATTERY_MAX17055 */
 
+	/* Limit input (=VBUS) to 5V when soc > 85% and charge current < 1A. */
+	if (!(curr->batt.flags & BATT_FLAG_BAD_CURRENT) &&
+			charge_get_percent() > BAT_LEVEL_PD_LIMIT &&
+			curr->batt.current < 1000)
+		chg_limit_mv = 5500;
+	else
+		chg_limit_mv = PD_MAX_VOLTAGE_MV;
+
+	if (chg_limit_mv != previous_chg_limit_mv)
+		CPRINTS("VBUS limited to %dmV", chg_limit_mv);
+	previous_chg_limit_mv = chg_limit_mv;
+
+	/* Pull down VBUS */
+	if (pd_get_max_voltage() != chg_limit_mv)
+		pd_set_external_voltage_limit(0, chg_limit_mv);
+
 	/*
 	 * When the charger says it's done charging, even if fuel gauge says
 	 * SOC < BATTERY_LEVEL_NEAR_FULL, we'll overwrite SOC with
@@ -228,23 +249,6 @@ static void board_charge_termination(void)
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE,
 	     board_charge_termination,
 	     HOOK_PRIO_DEFAULT);
-
-static void pd_limit_5v(uint8_t en)
-{
-	int wanted_pd_voltage;
-
-	wanted_pd_voltage = en ? 5500 : PD_MAX_VOLTAGE_MV;
-
-	if (pd_get_max_voltage() != wanted_pd_voltage)
-		pd_set_external_voltage_limit(0, wanted_pd_voltage);
-}
-
-/* When battery level > BAT_LEVEL_PD_LIMIT, we limit PD voltage to 5V. */
-static void board_pd_voltage(void)
-{
-	pd_limit_5v(charge_get_percent() > BAT_LEVEL_PD_LIMIT);
-}
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, board_pd_voltage, HOOK_PRIO_DEFAULT);
 
 /* Customs options controllable by host command. */
 #define PARAM_FASTCHARGE (CS_PARAM_CUSTOM_PROFILE_MIN + 0)
