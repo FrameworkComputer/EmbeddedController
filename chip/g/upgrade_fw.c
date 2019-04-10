@@ -318,7 +318,7 @@ static int contents_allowed(uint32_t block_offset,
 			    size_t body_size, void *upgrade_data,
 			    uint8_t *error_code)
 {
-#ifdef CR50_RELAXED
+#ifndef CR50_RELAXED
 #ifdef CONFIG_BOARD_ID_SUPPORT
 	if (block_offset == valid_sections.rw_base_offset) {
 		/* This block is a rw header of the new image. */
