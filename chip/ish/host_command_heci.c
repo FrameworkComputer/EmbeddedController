@@ -32,7 +32,8 @@ static heci_handle_t heci_cros_ec_handle = HECI_INVALID_HANDLE;
 struct cros_ec_ishtp_msg_hdr {
 	uint8_t channel;
 	uint8_t status;
-	uint8_t reserved[2];
+	uint8_t id;	/* Pairs up request and responses */
+	uint8_t reserved;
 } __ec_align4;
 
 #define CROS_EC_ISHTP_MSG_HDR_SIZE sizeof(struct cros_ec_ishtp_msg_hdr)
@@ -70,6 +71,8 @@ static void heci_send_hostcmd_response(struct host_packet *pkt)
 
 	out->hdr.channel = CROS_EC_COMMAND;
 	out->hdr.status = 0;
+	/* id is already set in the receiving method */
+
 	rv = heci_send_msg(heci_cros_ec_handle, (uint8_t *)out,
 			   pkt->response_size + CROS_EC_ISHTP_MSG_HDR_SIZE);
 	if (rv < 0)
@@ -87,6 +90,9 @@ static void cros_ec_ishtp_subsys_new_msg_received(const heci_handle_t handle,
 		return;
 	}
 	memset(&heci_packet, 0, sizeof(heci_packet));
+
+	/* Copy over id from sender so they can pair up messages */
+	out->hdr.id = in->hdr.id;
 
 	heci_packet.send_response = heci_send_hostcmd_response;
 
