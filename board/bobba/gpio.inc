@@ -132,8 +132,8 @@ GPIO(BAT_LED_ORANGE_L,	 PIN(C, 3), GPIO_OUT_HIGH)	/* LED_1_L */
 GPIO(BAT_LED_BLUE_L,	 PIN(C, 4), GPIO_OUT_HIGH)	/* LED_2_L */
 GPIO(LED_3_L,		 PIN(D, 7), GPIO_OUT_HIGH)
 
-/* Keyboard Backlight */
-GPIO(KB_BL_PWR_EN, 	 PIN(6, 2), GPIO_OUT_LOW)
+/* Not implemented in hardware */
+UNIMPLEMENTED(KB_BL_PWR_EN)
 
 /* MKBP event synchronization */
 GPIO(EC_INT_L,		PIN(9, 4), GPIO_ODR_HIGH)

@@ -131,8 +131,8 @@ GPIO(USB_C1_HPD_1V8_ODL, PIN(C, 6), GPIO_INPUT |	/* C1 DP Hotplug Detect */
 GPIO(LED_1_PWR_WHITE_L,	 PIN(C, 3), GPIO_OUT_HIGH)
 GPIO(LED_2_CHG_AMBER_L,	 PIN(C, 4), GPIO_OUT_HIGH)
 
-/* Keyboard Backlight */
-GPIO(KB_BL_PWR_EN, 	 PIN(6, 2), GPIO_OUT_LOW)
+/* Not implemented in hardware */
+UNIMPLEMENTED(KB_BL_PWR_EN)
 
 /* Overcurrent event to host */
 GPIO(USB_C_OC,      PIN(3, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V)

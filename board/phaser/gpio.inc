@@ -135,8 +135,8 @@ GPIO(BAT_LED_RED_L,	 PIN(C, 3), GPIO_OUT_HIGH)	/* LED_1_L */
 GPIO(BAT_LED_GREEN_L,	 PIN(C, 4), GPIO_OUT_HIGH)	/* LED_2_L */
 GPIO(PWR_LED_WHITE_L,	 PIN(D, 7), GPIO_OUT_HIGH)	/* LED_3_L */
 
-/* Keyboard Backlight */
-GPIO(KB_BL_PWR_EN, 	 PIN(6, 2), GPIO_OUT_LOW)
+/* Not implemented in hardware */
+UNIMPLEMENTED(KB_BL_PWR_EN)
 
 /* Overcurrent event to host */
 GPIO(USB_C_OC,           PIN(3, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
