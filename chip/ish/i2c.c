@@ -416,6 +416,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		}
 	}
 
+	i2c_intr_switch(ctx->base, DISABLE_INT);
 	i2c_mmio_write(ctx->base, IC_ENABLE, IC_ENABLE_DISABLE);
 
 	if (ctx->error_flag)

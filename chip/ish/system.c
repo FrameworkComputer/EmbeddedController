@@ -34,6 +34,8 @@ int system_is_reboot_warm(void)
 
 void system_pre_init(void)
 {
+	task_enable_irq(ISH_FABRIC_IRQ);
+
 #ifdef CONFIG_LOW_POWER_IDLE
 	ish_pm_init();
 #endif
@@ -138,3 +140,16 @@ uint32_t system_get_lfw_address(void)
 void system_set_image_copy(enum system_image_copy_t copy)
 {
 }
+
+static void fabric_isr(void)
+{
+	/**
+	 * clear fabric error status, otherwise it will wakeup ISH immediately
+	 * when entered low power mode.
+	 * TODO(b:130740646): figure out why this issue happens.
+	 */
+	if (FABRIC_AGENT_STATUS & FABRIC_MIA_STATUS_BIT_ERR)
+		FABRIC_AGENT_STATUS = FABRIC_AGENT_STATUS;
+}
+
+DECLARE_IRQ(ISH_FABRIC_IRQ, fabric_isr);

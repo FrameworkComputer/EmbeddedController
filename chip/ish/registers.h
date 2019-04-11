@@ -51,6 +51,7 @@ enum ish_i2c_port {
 /* HW interrupt pins mapped to IOAPIC, from I/O sources */
 #define ISH_I2C0_IRQ               0
 #define ISH_I2C1_IRQ               1
+#define ISH_FABRIC_IRQ             5
 #define ISH_I2C2_IRQ               40
 #define ISH_WDT_IRQ                6
 #define ISH_GPIO_IRQ               7
@@ -115,6 +116,7 @@ enum ish_i2c_port {
 #define ISH_D3_FALL_VEC            IRQ_TO_VEC(ISH_D3_FALL_IRQ)
 #define ISH_BME_RISE_VEC           IRQ_TO_VEC(ISH_BME_RISE_IRQ)
 #define ISH_BME_FALL_VEC           IRQ_TO_VEC(ISH_BME_FALL_IRQ)
+#define ISH_FABRIC_VEC             IRQ_TO_VEC(ISH_FABRIC_IRQ)
 
 #ifdef CONFIG_ISH_UART_0
 #define ISH_DEBUG_UART       		UART_PORT_0
@@ -283,6 +285,15 @@ enum ish_i2c_port {
 #define CCU_WDT_RST	(1 << 1)  /* Used to indicate WDT reset */
 #define CCU_MIASS_RST	(1 << 2)  /* Used to indicate UIA shutdown reset */
 #define CCU_SRECC_RST	(1 << 3)  /* Used to indicate SRAM ECC reset */
+
+/* Fabric Agent Status register */
+#define FABRIC_AGENT_STATUS               REG32(ISH_OCP_BASE + 0x7828)
+#define FABRIC_INBAND_ERR_SECONDARY_BIT   BIT(29)
+#define FABRIC_INBAND_ERR_PRIMARY_BIT     BIT(28)
+#define FABRIC_M_ERR_BIT                  BIT(24)
+#define FABRIC_MIA_STATUS_BIT_ERR	(FABRIC_INBAND_ERR_SECONDARY_BIT | \
+					FABRIC_INBAND_ERR_PRIMARY_BIT | \
+					FABRIC_M_ERR_BIT)
 
 /* CSME Registers */
 #define ISH_RST_REG		REG32(ISH_IPC_BASE + 0x44)
