@@ -1991,7 +1991,13 @@
 #undef CONFIG_HOSTCMD_AP_SET_SKUID
 
 /* Command to issue AP reset */
-#undef  CONFIG_HOSTCMD_AP_RESET
+#undef CONFIG_HOSTCMD_AP_RESET
+
+/* Flash commands over PD */
+#define CONFIG_HOSTCMD_FLASHPD
+
+/* Set entry in PD MCU's device rw_hash table */
+#define CONFIG_HOSTCMD_RWHASHPD
 
 /* List of host commands whose debug output will be suppressed */
 #undef CONFIG_SUPPRESSED_HOST_COMMANDS

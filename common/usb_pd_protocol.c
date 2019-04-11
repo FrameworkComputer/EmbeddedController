@@ -5044,6 +5044,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_CONTROL,
 		     hc_usb_pd_control,
 		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
 
+#ifdef CONFIG_HOSTCMD_FLASHPD
 static int hc_remote_flash(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_fw_update *p = args->params;
@@ -5141,7 +5142,9 @@ static int hc_remote_flash(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
 		     hc_remote_flash,
 		     EC_VER_MASK(0));
+#endif /* CONFIG_HOSTCMD_FLASHPD */
 
+#ifdef CONFIG_HOSTCMD_RWHASHPD
 static int hc_remote_rw_hash_entry(struct host_cmd_handler_args *args)
 {
 	int i, idx = 0, found = 0;
@@ -5171,6 +5174,7 @@ static int hc_remote_rw_hash_entry(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_RW_HASH_ENTRY,
 		     hc_remote_rw_hash_entry,
 		     EC_VER_MASK(0));
+#endif /* CONFIG_HOSTCMD_RWHASHPD */
 
 static int hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
 {
@@ -5192,7 +5196,6 @@ static int hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }
-
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DEV_INFO,
 		     hc_remote_pd_dev_info,
 		     EC_VER_MASK(0));
