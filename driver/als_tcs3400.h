@@ -81,16 +81,39 @@ enum tcs3400_mode {
 #error "EC too slow for light sensor"
 #endif
 
-#define TCS3400_DRV_DATA(_s) ((struct tcs3400_drv_data_t *)(_s)->drv_data)
+/* Individual channel scale value between 0 and 2 to a 32-bit value */
+#define TCS3400_SCALE(x) (x << 15)
 
-/* Private tcs3400 driver data */
+#define TCS3400_DRV_DATA(_s) ((struct tcs3400_drv_data_t *)(_s)->drv_data)
+#define TCS3400_RGB_DRV_DATA(_s) \
+	((struct tcs3400_rgb_drv_data_t *)(_s)->drv_data)
+
+/* Private tcs3400 als driver data */
 struct tcs3400_drv_data_t {
-	int rate;        /* holds current sensor rate */
-	int last_value;  /* holds last als clear channel value */
-	struct als_calibration_t als_cal;	/* calibration data */
+	int rate;          /* holds current sensor rate */
+	int last_value;    /* holds last als clear channel value */
+	struct als_calibration_t als_cal;    /* calibration data */
+};
+
+/* Private tcs3400 rgb driver data */
+struct tcs3400_rgb_drv_data_t {
+	/*
+	 * device_scale and device_uscale are used to adjust raw rgb channel
+	 * values prior to applying any channel-specific scaling required.
+	 * raw_value += rgb_cal.offset;
+	 * adjusted_value = raw_value * device_scale +
+	 *                  raw_value * device_uscale / 10000;
+	 */
+	uint16_t device_scale;
+	uint16_t device_uscale;
+
+	int rate;          /* holds current sensor rate */
+	int last_value[3]; /* holds last RGB values */
+	struct rgb_calibration_t rgb_cal[3]; /* calibration data */
 };
 
 extern const struct accelgyro_drv tcs3400_drv;
+extern const struct accelgyro_drv tcs3400_rgb_drv;
 
 void tcs3400_interrupt(enum gpio_signal signal);
 #endif /* __CROS_EC_ALS_TCS3400_H */

@@ -165,6 +165,18 @@ struct als_calibration_t {
 	int16_t offset;
 };
 
+/* RGB ALS Calibration Data */
+struct rgb_calibration_t {
+	/*
+	 * Each channel has a scaling factor for normalization, representing
+	 * a value between 0 and 2 (1 is translated as 1 << 15)
+	 */
+	uint16_t scale;
+
+	/* Any offset to add to raw channel data */
+	int16_t offset;
+};
+
 #define SENSOR_APPLY_SCALE(_input, _scale) \
 	(((_input) * (_scale)) / MOTION_SENSE_DEFAULT_SCALE)
 
