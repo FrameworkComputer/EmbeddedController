@@ -128,8 +128,13 @@ enum ish_i2c_port {
 
 /* IPC_Registers */
 #define IPC_PISR                   (ISH_IPC_BASE + 0x0)
+#define IPC_PISR_HOST2ISH_BIT		BIT(0)
+
 #define IPC_PIMR                   (ISH_IPC_BASE + 0x4)
-#define IPC_PIMR_CSME_CSR_BIT      (0x1 << 23)
+#define IPC_PIMR_HOST2ISH_BIT		BIT(0)
+#define IPC_PIMR_ISH2HOST_CLR_BIT	BIT(11)
+#define IPC_PIMR_CSME_CSR_BIT		BIT(23)
+
 #define IPC_ISH2HOST_MSG_REGS      (ISH_IPC_BASE + 0x60)
 #define IPC_ISH_FWSTS              (ISH_IPC_BASE + 0x34)
 #define IPC_HOST2ISH_DOORBELL      (ISH_IPC_BASE + 0x48)
@@ -140,8 +145,11 @@ enum ish_i2c_port {
 #define IPC_ISH_RMP0               (ISH_IPC_BASE + 0x360)
 #define IPC_ISH_RMP1               (ISH_IPC_BASE + 0x364)
 #define IPC_ISH_RMP2               (ISH_IPC_BASE + 0x368)
-#define DMA_ENABLED_MASK           (0x1 << 0)
+#define DMA_ENABLED_MASK		BIT(0)
+
 #define IPC_BUSY_CLEAR             (ISH_IPC_BASE + 0x378)
+#define IPC_DB_CLR_STS_ISH2HOST_BIT	BIT(0)
+
 #define IPC_UMA_RANGE_LOWER_0      REG32(ISH_IPC_BASE + 0x380)
 #define IPC_UMA_RANGE_LOWER_1      REG32(ISH_IPC_BASE + 0x384)
 #define IPC_UMA_RANGE_UPPER_0      REG32(ISH_IPC_BASE + 0x388)

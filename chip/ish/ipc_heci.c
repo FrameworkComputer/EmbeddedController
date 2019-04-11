@@ -51,27 +51,6 @@
 #define MNG_SYNC_FW_CLOCK               5
 #define MNG_ILLEGAL_CMD                 0xFF
 
-/* Peripheral Interrupt Satus Register */
-#define IPC_PISR_HOST2ISH_BIT		BIT(0)
-#define IPC_PISR_PMC2ISH_BIT		BIT(1)
-#define IPC_PISR_CSME2ISH_BIT		BIT(2)
-
-/* Peripheral Interrupt Mask Register */
-#define IPC_PIMR_HOST2ISH_BIT		BIT(0)
-#define IPC_PIMR_PMC2ISH_BIT		BIT(1)
-#define IPC_PIMR_CSME2ISH_BIT		BIT(2)
-
-#define IPC_PIMR_ISH2HOST_CLR_BIT	BIT(11)
-#define IPC_PIMR_ISH2PMC_CLR_BIT	BIT(12)
-#define IPC_PIMR_ISH2CSME_CLR_BIT	BIT(13)
-
-/* Peripheral Interrupt DB(DoorBell) Clear Status Register */
-#define IPC_DB_CLR_STS_ISH2HOST_BIT	BIT(0)
-#define IPC_DB_CLR_STS_ISH2ISP_BIT	BIT(2)
-#define IPC_DB_CLR_STS_ISH2AUDIO_BIT	BIT(3)
-#define IPC_DB_CLR_STS_ISH2PMC_BIT	BIT(8)
-#define IPC_DB_CLR_STS_ISH2CSME_BIT	BIT(16)
-
 /* Doorbell */
 #define IPC_DB_MSG_LENGTH_FIELD		0x3FF
 #define IPC_DB_MSG_LENGTH_SHIFT		0
