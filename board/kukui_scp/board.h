@@ -59,9 +59,15 @@
 #define IPI_VDEC_VP9 3
 #define IPI_VENC_H264 4
 #define IPI_VENC_VP8 5
-#define IPI_MDP 6
-#define IPI_HOST_COMMAND 7
-#define IPI_COUNT 8
+#define IPI_MDP_INIT 6
+#define IPI_MDP_DEINIT 7
+#define IPI_MDP_FRAME 8
+#define IPI_DIP 9
+#define IPI_ISP_CMD 10
+#define IPI_ISP_FRAME 11
+#define IPI_FD_CMD 12
+#define IPI_HOST_COMMAND 13
+#define IPI_COUNT 14
 
 #define IPI_NS_SERVICE 0xFF
 
