@@ -761,6 +761,13 @@ int tcpci_tcpm_init(int port)
 	/* Update VBUS status */
 	tcpc_vbus[port] = power_status &
 			TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
+#if defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) && defined(CONFIG_USB_CHARGER)
+	/*
+	 * Set Vbus change now in case the TCPC doesn't send a power status
+	 * changed interrupt for it later.
+	 */
+	usb_charger_vbus_change(port, tcpc_vbus[port]);
+#endif
 	error = init_alert_mask(port);
 	if (error)
 		return error;
