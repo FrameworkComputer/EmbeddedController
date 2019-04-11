@@ -116,7 +116,7 @@ extern void *__dram_bss_start;
 extern void *__dram_bss_end;
 
 /* Helper for special chip-specific memory sections */
-#ifdef CONFIG_CHIP_MEMORY_REGIONS
+#if defined(CONFIG_CHIP_MEMORY_REGIONS) || defined(CONFIG_DRAM_BASE)
 #define __SECTION(name) __attribute__((section("." STRINGIFY(name) ".50_auto")))
 #define __SECTION_KEEP(name)                                                   \
 	__keep __attribute__((section("." STRINGIFY(name) ".keep.50_auto")))
