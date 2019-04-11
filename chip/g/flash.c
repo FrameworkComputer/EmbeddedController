@@ -551,7 +551,12 @@ static int command_erase_flash_info(int argc, char **argv)
 			}
 		}
 #endif
-		info1->board_space.bid.flags = flags;
+		if (board_id_is_blank(&info1->board_space.bid)) {
+			ccprintf("BID is erased. Not modifying flags\n");
+		} else {
+			ccprintf("setting BID flags to %x\n", flags);
+			info1->board_space.bid.flags = flags;
+		}
 		if (check_board_id_vs_header(&info1->board_space.bid,
 					     get_current_image_header())) {
 			ccprintf("Flags %x would lock out current image\n",
