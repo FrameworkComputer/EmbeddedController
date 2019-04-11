@@ -2264,17 +2264,23 @@ enum pd_dual_role_states pd_get_dual_role(int port)
 	return drp_state[port];
 }
 
+static inline __maybe_unused int get_battery_soc(void)
+{
+#if defined(CONFIG_CHARGER)
+	return charge_get_percent();
+#elif defined(CONFIG_BATTERY)
+	return board_get_battery_soc();
+#else
+	return 0;
+#endif
+}
+
 #ifdef CONFIG_USB_PD_TRY_SRC
 static void pd_update_try_source(void)
 {
 	int i;
 	int try_src = 0;
-
-#ifndef CONFIG_CHARGER
-	int batt_soc = board_get_battery_soc();
-#else
-	int batt_soc = charge_get_percent();
-#endif
+	int batt_soc = get_battery_soc();
 
 	try_src = 0;
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
@@ -2313,8 +2319,52 @@ static void pd_update_try_source(void)
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
 		pd[i].flags &= ~PD_FLAGS_TRY_SRC;
 }
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_update_try_source, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_USB_PD_TRY_SRC */
+
+#ifdef CONFIG_USB_PD_RESET_MIN_BATT_SOC
+static void pd_update_snk_reset(void)
+{
+	int i;
+	int batt_soc = get_battery_soc();
+
+	if (batt_soc < CONFIG_USB_PD_RESET_MIN_BATT_SOC)
+		return;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+		if (pd[i].flags & PD_FLAGS_SNK_WAITING_BATT) {
+			/*
+			 * Battery has gained sufficient charge to kick off PD
+			 * negotiation and withstand a hard reset.  Clear the
+			 * flag and let reset begin if task is waiting in
+			 * SNK_DISCOVERY.
+			 */
+			pd[i].flags &= ~PD_FLAGS_SNK_WAITING_BATT;
+
+			if (pd[i].task_state == PD_STATE_SNK_DISCOVERY) {
+				CPRINTS("C%d: Starting soft reset timer", i);
+				set_state_timeout(i,
+					get_time().val + PD_T_SINK_WAIT_CAP,
+					PD_STATE_SOFT_RESET);
+			}
+		}
+	}
+}
+#endif
+
+#if defined(CONFIG_USB_PD_TRY_SRC) || defined(CONFIG_USB_PD_RESET_MIN_BATT_SOC)
+static void pd_update_battery_soc_change(void)
+{
+#ifdef CONFIG_USB_PD_TRY_SRC
+	pd_update_try_source();
+#endif
+
+#ifdef CONFIG_USB_PD_RESET_MIN_BATT_SOC
+	pd_update_snk_reset();
+#endif
+}
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_update_battery_soc_change,
+	     HOOK_PRIO_DEFAULT);
+#endif /* CONFIG_USB_PD_TRY_SRC || CONFIG_USB_PD_RESET_MIN_BATT_SOC */
 
 static inline void pd_set_dual_role_no_wakeup(int port,
 					      enum pd_dual_role_states state)
@@ -4006,13 +4056,46 @@ void pd_task(void *u)
 			/* Wait for source cap expired only if we are enabled */
 			if ((pd[port].last_state != pd[port].task_state)
 			    && pd_comm_is_enabled(port)) {
+#ifdef CONFIG_USB_PD_RESET_MIN_BATT_SOC
+				/*
+				 * If the battery has not met a configured safe
+				 * level for hard resets, refrain from starting
+				 * reset timers as a hard reset could brown out
+				 * the board.  Note this may mean that
+				 * high-power chargers will stay at 15W until a
+				 * reset is sent, depending on boot timing.
+				 */
+				int batt_soc = get_battery_soc();
+
+				if (batt_soc < CONFIG_USB_PD_RESET_MIN_BATT_SOC)
+					pd[port].flags |=
+						    PD_FLAGS_SNK_WAITING_BATT;
+				else
+					pd[port].flags &=
+						    ~PD_FLAGS_SNK_WAITING_BATT;
+#endif
+
+				if (pd[port].flags &
+						    PD_FLAGS_SNK_WAITING_BATT) {
+#ifdef CONFIG_CHARGE_MANAGER
+					/*
+					 * Configure this port as dedicated for
+					 * now, so it won't be de-selected by
+					 * the charge manager leaving safe mode.
+					 */
+					charge_manager_update_dualrole(port,
+								CAP_DEDICATED);
+#endif
+					CPRINTS("C%d: Battery low. "
+						"Hold reset timer", port);
 				/*
 				 * If VBUS has never been low, and we timeout
 				 * waiting for source cap, try a soft reset
 				 * first, in case we were already in a stable
 				 * contract before this boot.
 				 */
-				if (pd[port].flags & PD_FLAGS_VBUS_NEVER_LOW)
+				} else if (pd[port].flags &
+						PD_FLAGS_VBUS_NEVER_LOW) {
 					set_state_timeout(port,
 						  get_time().val +
 						  PD_T_SINK_WAIT_CAP,
@@ -4022,17 +4105,19 @@ void pd_task(void *u)
 				 * start SinkWaitCapTimer, otherwise start
 				 * NoResponseTimer.
 				 */
-				else if (hard_reset_count < PD_HARD_RESET_COUNT)
+				} else if (hard_reset_count <
+						PD_HARD_RESET_COUNT) {
 					set_state_timeout(port,
 						  get_time().val +
 						  PD_T_SINK_WAIT_CAP,
 						  PD_STATE_HARD_RESET_SEND);
-				else if (pd_capable(port))
+				} else if (pd_capable(port)) {
 					/* ErrorRecovery */
 					set_state_timeout(port,
 						  get_time().val +
 						  PD_T_NO_RESPONSE,
 						  PD_STATE_SNK_DISCONNECTED);
+				}
 #if defined(CONFIG_CHARGE_MANAGER)
 				/*
 				 * If we didn't come from disconnected, must

@@ -3697,6 +3697,14 @@
 /* Set the default minimum battery percentage for Try.Src to be enabled */
 #define CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC 1
 
+/*
+ * Set the minimum battery percentage to allow a PD port to send resets as a
+ * sink (and risk a hard reset, losing Vbus).  Note this may cause a high-power
+ * charger to appear as only a low-power 15W charger until a reset is sent to
+ * re-start PD negotiation.
+ */
+#undef CONFIG_USB_PD_RESET_MIN_BATT_SOC
+
 /* Alternative configuration keeping only the TX part of PHY */
 #undef CONFIG_USB_PD_TX_PHY_ONLY
 
