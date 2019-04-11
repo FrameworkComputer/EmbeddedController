@@ -18,9 +18,6 @@
 /*
  * RW only, no flash
  * +-------------------- 0x0
- * | ptr to stack_top  0x0
- * | ptr to reset func 0x04
- * +-------------------- 0x00800
  * | ROM vectortable, .text, .rodata, .data LMA
  * +-------------------- 0x10000
  * | RAM .bss, .data
@@ -33,7 +30,7 @@
  * +-------------------- 0x80000
  */
 #define ICACHE_BASE 0x7C000
-#define CONFIG_ROM_BASE 0x00800
+#define CONFIG_ROM_BASE 0x0
 #define CONFIG_RAM_BASE 0x10000
 #define CONFIG_ROM_SIZE (CONFIG_RAM_BASE - CONFIG_ROM_BASE)
 #define CONFIG_RAM_SIZE (CONFIG_IPC_SHARED_OBJ_ADDR - CONFIG_RAM_BASE)

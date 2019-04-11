@@ -37,7 +37,6 @@
 #define CONFIG_RW_STORAGE_OFF 0
 #define CONFIG_PROGRAM_MEMORY_BASE 0
 #define CONFIG_MAPPED_STORAGE_BASE 0
-#define CONFIG_CHIP_MEMORY_REGIONS
 
 /* Unsupported features/commands */
 #undef CONFIG_CMD_FLASHINFO
