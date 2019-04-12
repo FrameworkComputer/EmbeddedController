@@ -99,8 +99,15 @@ tweak_manifest () {
     exit 1
   fi
 
-  # Convert board RLZ code from ASCII to hex
-  rlz="0x$(echo -n ${bid_params[0]} | hexdump -ve '/1 "%02x"')"
+  if [[ "${bid_params[0]}" == "0" ]] ; then
+    rlz="0"
+  elif [[ ${#bid_params[0]} == 4 ]] ; then
+    # Convert 4 char board RLZ code from ASCII to hex
+    rlz="0x$(echo -n ${bid_params[0]} | hexdump -ve '/1 "%02x"')"
+  else
+    echo "Invalid RLZ ${bid_params[0]}"
+    exit 1
+  fi
 
   # Prepare text of all three board ID related nodes
   sub="$(printf "\\\n\"board_id\": %s,\\\n" "${rlz}")"
