@@ -98,6 +98,9 @@ main() {
     (cr50)
       dir_list+=( ../../third_party/tpm2 ../../third_party/cryptoc )
       ;;
+    (*_fp)
+      dir_list+=( ./private )
+      ;;
   esac
 
   # Create a combined version string for all component directories.
