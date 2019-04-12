@@ -12,8 +12,6 @@ if [[ -e "/sys/class/gpio/${KBL_GPIOCHIP}" ]]; then
   # Nocturne configuration
 
   readonly SPIDEV="/dev/spidev32765.0"
-  # GSPI1 ACPI device for FP MCU
-  readonly SPIID="spi-PRP0001:02"
   # FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
   readonly GPIO_NRST=418
   # FPMCU BOOT0 is on GPP_C8 = 360 + 56 = 416
@@ -27,7 +25,6 @@ fi
 
 flash_fp_mcu_stm32 \
   "${SPIDEV}"      \
-  "${SPIID}"       \
   "${GPIO_NRST}"   \
   "${GPIO_BOOT0}"  \
   "${GPIO_PWREN}"  \

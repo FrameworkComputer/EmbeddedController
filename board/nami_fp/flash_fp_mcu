@@ -12,8 +12,6 @@ if [[ -e "/sys/class/gpio/${KBL_GPIOCHIP}" ]]; then
   # Ekko configuration
   echo "NOTE: For use with updating FP MCU on NAMI boards only"
   readonly SPIDEV="/dev/spidev32765.0"
-  # GSPI1 ACPI device for FP MCU
-  readonly SPIID="spi-PRP0001:02"
   # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
   readonly GPIO_NRST=417
   # FPMCU BOOT0 is on GPP_D5 = 360 + 77 = 437
@@ -27,7 +25,6 @@ fi
 
 flash_fp_mcu_stm32 \
   "${SPIDEV}"      \
-  "${SPIID}"       \
   "${GPIO_NRST}"   \
   "${GPIO_BOOT0}"  \
   "${GPIO_PWREN}"  \

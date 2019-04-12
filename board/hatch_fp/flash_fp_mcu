@@ -12,8 +12,6 @@ if [[ -e "/sys/class/gpio/${KBL_GPIOCHIP}" ]]; then
   # Hatch configuration
   echo "NOTE: For use with updating FP MCU on HATCH boards only"
   readonly SPIDEV="/dev/spidev1.1"
-  # GSPI1 ACPI device for FP MCU
-  readonly SPIID="spi-PRP0001:01"
   # FPMCU RST_ODL is on GPP_A12 = 200 + 12 = 212
   readonly GPIO_NRST=212
   # FPMCU BOOT0 is on GPP_A22 = 200 + 22 = 222
@@ -27,7 +25,6 @@ fi
 
 flash_fp_mcu_stm32 \
   "${SPIDEV}"      \
-  "${SPIID}"       \
   "${GPIO_NRST}"   \
   "${GPIO_BOOT0}"  \
   "${GPIO_PWREN}"  \

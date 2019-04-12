@@ -22,6 +22,8 @@ fi
 # /usr/bin installs
 echo "$(readlink -f "$0")"
 
+readonly CROS_EC_SPI_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-spi"
+
 check_hardware_write_protect_disabled() {
   if ectool gpioget EC_WP_L | grep -q '= 0'; then
     echo "Please make sure WP is deasserted."
@@ -29,13 +31,26 @@ check_hardware_write_protect_disabled() {
   fi
 }
 
+# Get the spiid for the fingerprint sensor based on the modalias
+# string: https://crbug.com/955117
+get_spiid() {
+  for dev in /sys/bus/spi/devices/*; do
+    if [[ "$(cat "${dev}/modalias")" == "${CROS_EC_SPI_MODALIAS_STR}" ]]; then
+      echo "$(basename "${dev}")"
+      exit 0
+    fi
+  done
+
+  exit 1
+}
+
 flash_fp_mcu_stm32() {
   local spidev="${1}"
-  local spiid="${2}"
-  local gpio_nrst="${3}"
-  local gpio_boot0="${4}"
-  local gpio_pwren="${5}"
-  local file="${6}"
+  local gpio_nrst="${2}"
+  local gpio_boot0="${3}"
+  local gpio_pwren="${4}"
+  local file="${5}"
+  local spiid
 
   local STM32MON_READ_FLAGS=" -U -u -p -s ${spidev} -r"
   local STM32MON_WRITE_FLAGS="-U -u -p -s ${spidev} -e -w"
@@ -56,6 +71,14 @@ flash_fp_mcu_stm32() {
   fi
 
   check_hardware_write_protect_disabled
+
+  spiid="$(get_spiid)"
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find FP sensor SPI device: ${CROS_EC_SPI_MODALIAS_STR}"
+    exit 1
+  fi
+
+  echo "Flashing SPI device ID: ${spiid}"
 
   # Ensure the ACPI is not cutting power when unloading cros-ec-spi
   if [[ -n "${gpio_pwren}" ]]; then
