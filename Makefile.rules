@@ -51,9 +51,9 @@ endif
 endif
 
 # commands to build all targets
-cmd_libec = $(LD) -r $^ -o $@.1.o && \
-	$(OBJCOPY) --localize-hidden $@.1.o $@.2.o && \
-	$(AR) scr $@ $@.2.o
+cmd_libec = $(LD) -r $^ -o $@.1.o ${silent_err} && \
+	$(OBJCOPY) --localize-hidden $@.1.o $@.2.o ${silent_err} && \
+	$(AR) scr $@ $@.2.o ${silent_err}
 cmd_lds = $(CPP) -P -C -MMD -MF $@.d -MT $@ $(CPPFLAGS) $< -o $@
 cmd_lds_b = $(cmd_lds) -DRW_B_LDS=$(EMPTY)
 # Allow obj_to_bin to be overridden by board or chip specific commands
