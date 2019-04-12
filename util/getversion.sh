@@ -131,6 +131,9 @@ main() {
   echo "/* Version string for ectool. */"
   echo "#define CROS_ECTOOL_VERSION \"${tool_ver}\""
 
+  echo "/* Version string for stm32mon. */"
+  echo "#define CROS_STM32MON_VERSION \"${tool_ver}\""
+
   echo "/* Sub-fields for use in Makefile.rules and to form build info string"
   echo " * in common/version.c. */"
   echo "#define VERSION \"${ver}\""
