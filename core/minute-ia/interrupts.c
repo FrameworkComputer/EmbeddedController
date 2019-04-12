@@ -6,13 +6,14 @@
  */
 
 #include "common.h"
-#include "util.h"
+#include "console.h"
+#include "hooks.h"
+#include "ia_structs.h"
 #include "interrupts.h"
+#include "irq_handler.h"
 #include "registers.h"
 #include "task_defs.h"
-#include "irq_handler.h"
-#include "console.h"
-#include "ia_structs.h"
+#include "util.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
@@ -294,13 +295,14 @@ void handle_lapic_lvt_error(void)
 
 	/* Ack LVT ERROR exception */
 	REG32(LAPIC_ESR_REG) = 0;
-	lapic_lvt_error_count++;
 
 	/*
 	 * When IOAPIC has more than 1 interrupts in remote IRR state,
 	 * LAPIC raises internal error.
 	 */
 	if (esr & LAPIC_ERR_RECV_ILLEGAL) {
+		lapic_lvt_error_count++;
+
 		/* Scan redirect table entries */
 		max_irq_entries = (read_ioapic_reg(IOAPIC_VERSION) >> 16) &
 				  0xff;
@@ -319,11 +321,14 @@ void handle_lapic_lvt_error(void)
 				}
 			}
 		}
+		CPRINTF("LAPIC error ESR:0x%02x,count:%u IOAPIC pending "
+			"count:%u\n",
+			esr, lapic_lvt_error_count, ioapic_pending_count);
 	}
 
-	CPRINTF("LAPIC error ESR:0x%02x,count:%u IOAPIC pending count:%u\n",
-		esr, lapic_lvt_error_count, ioapic_pending_count);
 }
+/* TODO(b/129937881): Remove periodic check once root cause is determined */
+DECLARE_HOOK(HOOK_TICK, handle_lapic_lvt_error, HOOK_PRIO_DEFAULT);
 
 /* LAPIC LVT error is not an IRQ and can not use DECLARE_IRQ() to call. */
 void _lapic_error_handler(void);
