@@ -18,6 +18,10 @@ if [[ "$#" -eq 0 ]]; then
   exit 1
 fi
 
+# print out canonical path to differentiate between /usr/local/bin and
+# /usr/bin installs
+echo "$(readlink -f "$0")"
+
 check_hardware_write_protect_disabled() {
   if ectool gpioget EC_WP_L | grep -q '= 0'; then
     echo "Please make sure WP is deasserted."
