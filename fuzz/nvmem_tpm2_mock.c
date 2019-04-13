@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 /* Stuff from tpm2 directory. */
+#define HIDE_EC_STDLIB
 #define NV_C
 #include "Global.h"
 #undef NV_C
