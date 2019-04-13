@@ -115,4 +115,65 @@ int audio_codec_dmic_set_gain_idx(uint8_t channel, uint8_t gain);
  */
 int audio_codec_dmic_get_gain_idx(uint8_t channel, uint8_t *gain);
 
+
+/*
+ * I2S RX abstract layer
+ */
+
+/*
+ * Enables I2S RX.
+ *
+ * Returns:
+ *   EC_SUCCESS if success.
+ *   EC_ERROR_UNKNOWN if internal error.
+ *   EC_ERROR_BUSY if has enabled.
+ */
+int audio_codec_i2s_rx_enable(void);
+
+/*
+ * Disables I2S RX.
+ *
+ * Returns:
+ *   EC_SUCCESS if success.
+ *   EC_ERROR_UNKNOWN if internal error.
+ *   EC_ERROR_BUSY if has not enabled.
+ */
+int audio_codec_i2s_rx_disable(void);
+
+/*
+ * Sets I2S RX sample depth.
+ *
+ * @depth is an integer from enum ec_codec_i2s_rx_sample_depth.
+ *
+ * Returns:
+ *   EC_SUCCESS if success.
+ *   EC_ERROR_UNKNOWN if internal error.
+ *   EC_ERROR_INVAL if depth does not look good.
+ */
+int audio_codec_i2s_rx_set_sample_depth(uint8_t depth);
+
+/*
+ * Sets I2S RX DAI format.
+ *
+ * @daifmt is an integer from enum ec_codec_i2s_rx_daifmt.
+ *
+ * Returns:
+ *   EC_SUCCESS if success.
+ *   EC_ERROR_UNKNOWN if internal error.
+ *   EC_ERROR_INVAL if daifmt does not look good.
+ */
+int audio_codec_i2s_rx_set_daifmt(uint8_t daifmt);
+
+/*
+ * Sets I2S RX BCLK.
+ *
+ * @bclk is an integer to represent the bit clock rate.
+ *
+ * Returns:
+ *   EC_SUCCESS if success.
+ *   EC_ERROR_UNKNOWN if internal error.
+ *   EC_ERROR_INVAL if bclk does not look good.
+ */
+int audio_codec_i2s_rx_set_bclk(uint32_t bclk);
+
 #endif
