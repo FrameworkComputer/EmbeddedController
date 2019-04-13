@@ -25,7 +25,7 @@ struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
 	[EC_LED_COLOR_BLUE]   = {   0,   0, 100 },
 	[EC_LED_COLOR_YELLOW] = {  55,  15,   0 },
 	[EC_LED_COLOR_WHITE]  = {  62, 100,  31 },
-	[EC_LED_COLOR_AMBER]  = { 100,  38,   0 },
+	[EC_LED_COLOR_AMBER]  = { 100,  31,   0 },
 };
 
 /*
