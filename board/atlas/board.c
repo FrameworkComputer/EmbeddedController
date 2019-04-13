@@ -545,14 +545,12 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 
 static void board_chipset_suspend(void)
 {
-	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
 	gpio_set_level(GPIO_KBD_BL_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 static void board_chipset_resume(void)
 {
-	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
 	gpio_set_level(GPIO_KBD_BL_EN, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);

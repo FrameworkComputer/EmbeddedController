@@ -60,7 +60,7 @@ GPIO(USB_PD_RST_L,		PIN(F, 1), GPIO_OUT_LOW)			/* C0,C1 PD Reset */
 GPIO(CCD_MODE_ODL,		PIN(E, 3), GPIO_INPUT)				/* Case Closed Debug Mode */
 GPIO(EC_BATT_PRES_L,		PIN(E, 5), GPIO_INPUT)				/* Battery Present */
 GPIO(EC_ENTERING_RW,		PIN(E, 1), GPIO_OUTPUT)				/* EC Entering RW */
-GPIO(EC_BL_DISABLE_L,		PIN(D, 3), GPIO_ODR_LOW)			/* Enable Backlight */
+GPIO(EC_BL_DISABLE_L,		PIN(D, 3), GPIO_INPUT)				/* Enable Backlight */
 GPIO(EC_BRD_ID1,		PIN(9, 6), GPIO_INPUT)				/* Board ID bit0 */
 GPIO(EC_BRD_ID2,		PIN(9, 3), GPIO_INPUT)				/* Board ID bit1 */
 GPIO(EC_BRD_ID3,		PIN(F, 0), GPIO_INPUT)				/* Board ID bit2 */
