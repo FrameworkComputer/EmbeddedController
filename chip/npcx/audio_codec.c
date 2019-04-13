@@ -11,6 +11,8 @@
 #include "host_command.h"
 #include "wov_chip.h"
 
+#define EC_WOV_I2S_SAMPLE_RATE 48000
+
 typedef int (*codec_i2s_func)(struct host_cmd_handler_args *args);
 
 static int codec_set_sample_depth(struct host_cmd_handler_args *args)
