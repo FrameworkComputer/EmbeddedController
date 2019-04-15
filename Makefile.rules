@@ -121,6 +121,8 @@ cmd_tp_hash = $(out)/util/gen_touchpad_hash \
 cmd_emmc_bootblock = $(out)/util/gen_emmc_transfer_data \
 		$(if $(BOOTBLOCK),-i $(BOOTBLOCK)) -o $@
 
+cmd_ipi_table = $(out)/util/gen_ipi_table $@
+
 # commands for RSA signature: rwsig does not need to sign the whole image
 # (it signs the RW part separately). usbpd1 type needs to sign the final image.
 ifeq ($(CONFIG_RWSIG_TYPE_RWSIG),)

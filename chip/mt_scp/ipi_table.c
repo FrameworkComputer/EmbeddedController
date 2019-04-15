@@ -53,35 +53,15 @@ const int ipi_wakeup_undefined;
 #endif /* PASS == 2 */
 
 /*
- * Table to hold all the IPI handler function pointer.
+ * Include generated IPI table (by util/gen_ipi_table). The contents originate
+ * from IPI_COUNT definition in board.h
  */
-table(ipi_handler_t, ipi_handler_table,
-	ipi_x_func(handler, ipi_arguments, 0)
-	ipi_x_func(handler, ipi_arguments, 1)
-	ipi_x_func(handler, ipi_arguments, 2)
-	ipi_x_func(handler, ipi_arguments, 3)
-	ipi_x_func(handler, ipi_arguments, 4)
-	ipi_x_func(handler, ipi_arguments, 5)
-	ipi_x_func(handler, ipi_arguments, 6)
-	ipi_x_func(handler, ipi_arguments, 7)
-);
-
-/*
- * Table to hold all the wake-up bool address.
- */
-table(int*, ipi_wakeup_table,
-	ipi_x_var(wakeup, 0)
-	ipi_x_var(wakeup, 1)
-	ipi_x_var(wakeup, 2)
-	ipi_x_var(wakeup, 3)
-	ipi_x_var(wakeup, 4)
-	ipi_x_var(wakeup, 5)
-	ipi_x_var(wakeup, 6)
-	ipi_x_var(wakeup, 7)
-);
+#include "ipi_table_gen.inc"
 
 #if PASS == 1
 #undef PASS
 #define PASS 2
 #include "ipi_table.c"
+BUILD_ASSERT(ARRAY_SIZE(ipi_handler_table) == IPI_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(ipi_wakeup_table) == IPI_COUNT);
 #endif

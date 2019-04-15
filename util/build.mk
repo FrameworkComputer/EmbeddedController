@@ -66,6 +66,14 @@ build-util-bin += gen_emmc_transfer_data
 $(out)/util/gen_emmc_transfer_data: BUILD_LDFLAGS += -DSECTION_IS_RO
 endif # CONFIG_BOOTBLOCK
 
+ifneq ($(CONFIG_IPI),)
+build-util-bin += gen_ipi_table
+
+$(out)/util/gen_ipi_table: board/$(BOARD)/board.h
+$(out)/ipi_table_gen.inc: $(out)/util/gen_ipi_table
+	$(call quiet,ipi_table,IPITBL )
+endif
+
 ifneq ($(CONFIG_TOUCHPAD_HASH_FW),)
 build-util-bin += gen_touchpad_hash
 
