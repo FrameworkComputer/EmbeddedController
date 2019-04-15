@@ -443,3 +443,51 @@ error:
 	return 0;
 }
 #endif /* CONFIG_CHARGE_RAMP_HW */
+
+#ifdef CONFIG_CMD_CHARGER_DUMP
+static int console_bq25710_dump_regs(int argc, char **argv)
+{
+	int i;
+	int val;
+
+	/* Dump all readable registers on bq25710. */
+	static const uint8_t regs[] = {
+		BQ25710_REG_CHARGE_OPTION_0,
+		BQ25710_REG_CHARGE_CURRENT,
+		BQ25710_REG_MAX_CHARGE_VOLTAGE,
+		BQ25710_REG_CHARGE_OPTION_1,
+		BQ25710_REG_CHARGE_OPTION_2,
+		BQ25710_REG_CHARGE_OPTION_3,
+		BQ25710_REG_PROCHOT_OPTION_0,
+		BQ25710_REG_PROCHOT_OPTION_1,
+		BQ25710_REG_ADC_OPTION,
+		BQ25710_REG_CHARGER_STATUS,
+		BQ25710_REG_PROCHOT_STATUS,
+		BQ25710_REG_IIN_DPM,
+		BQ25710_REG_ADC_VBUS_PSYS,
+		BQ25710_REG_ADC_IBAT,
+		BQ25710_REG_ADC_CMPIN_IIN,
+		BQ25710_REG_ADC_VSYS_VBAT,
+		BQ25710_REG_PROCHOT_OPTION_1,
+		BQ25710_REG_OTG_VOLTAGE,
+		BQ25710_REG_OTG_CURRENT,
+		BQ25710_REG_INPUT_VOLTAGE,
+		BQ25710_REG_MIN_SYSTEM_VOLTAGE,
+		BQ25710_REG_IIN_HOST,
+		BQ25710_REG_MANUFACTURER_ID,
+		BQ25710_REG_DEVICE_ADDRESS,
+	};
+
+	for (i = 0; i < ARRAY_SIZE(regs); ++i) {
+		if (raw_read16(regs[i], &val))
+			continue;
+		ccprintf("BQ25710 REG 0x%02x:  0x%04x\n", regs[i], val);
+	}
+
+	return 0;
+}
+DECLARE_CONSOLE_COMMAND(charger_dump, console_bq25710_dump_regs,
+			"",
+			"Dump all charger registers");
+
+#endif /* CONFIG_CMD_CHARGER_DUMP */
