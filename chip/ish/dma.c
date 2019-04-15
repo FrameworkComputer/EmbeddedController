@@ -110,7 +110,7 @@ int ish_dma_copy(uint32_t chan, uint32_t dst, uint32_t src, uint32_t length,
 	mode |= NON_SNOOP;
 	MISC_DMA_CTL_REG(chan) = mode; /* Set transfer direction */
 
-	DMA_CFG_REG = DMA_EN_MASK; /* Enable DMA module */
+	DMA_CFG_REG = DMA_ENABLE;  /* Enable DMA module */
 	DMA_LLP(chan_reg) = 0;     /* Linked lists are not used */
 	DMA_CTL_LOW(chan_reg) =
 		0 /* Set transfer parameters */ |

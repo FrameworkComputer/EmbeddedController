@@ -22,12 +22,12 @@
 /* the following "define"s and structures are from host driver
  * and they are slightly modified for look&feel purpose.
  */
-#define SYSTEM_STATE_SUBSCRIBE                  0x1
-#define SYSTEM_STATE_STATUS                     0x2
-#define SYSTEM_STATE_QUERY_SUBSCRIBERS          0x3
-#define SYSTEM_STATE_STATE_CHANGE_REQ           0x4
+#define SYSTEM_STATE_SUBSCRIBE		0x1
+#define SYSTEM_STATE_STATUS		0x2
+#define SYSTEM_STATE_QUERY_SUBSCRIBERS	0x3
+#define SYSTEM_STATE_STATE_CHANGE_REQ	0x4
 
-#define SUSPEND_STATE_BIT                       (1<<1) /* suspend/resume */
+#define SUSPEND_STATE_BIT		BIT(1) /* suspend/resume */
 
 /* Cached state of ISH's requested power rails when AP suspends */
 #ifdef CHIP_FAMILY_ISH5

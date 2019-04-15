@@ -15,9 +15,9 @@
 #define PAGING_CHAN 0
 #define KERNEL_CHAN 1
 
-#define DST_IS_DRAM (1 << 0)
-#define SRC_IS_DRAM (1 << 1)
-#define NON_SNOOP (1 << 2)
+#define DST_IS_DRAM BIT(0)
+#define SRC_IS_DRAM BIT(1)
+#define NON_SNOOP BIT(2)
 
 /* ISH5 and on */
 #define RS0 0x0

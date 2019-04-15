@@ -483,7 +483,8 @@ static void sram_power(int on)
 static void handle_d0i2(void)
 {
 	/* set main SRAM into retention mode*/
-	PMU_LDO_CTRL = PMU_LDO_BIT_RETENTION_ON | PMU_LDO_BIT_ON;
+	PMU_LDO_CTRL = PMU_LDO_ENABLE_BIT
+		| PMU_LDO_RETENTION_BIT;
 
 	/* delay some cycles before halt */
 	delay(SRAM_RETENTION_CYCLES_DELAY);
@@ -492,13 +493,13 @@ static void handle_d0i2(void)
 	/* wakeup from PMU interrupt */
 
 	/* set main SRAM intto normal mode */
-	PMU_LDO_CTRL = PMU_LDO_BIT_ON;
+	PMU_LDO_CTRL = PMU_LDO_ENABLE_BIT;
 
 	/**
 	 * poll LDO_READY status to make sure SRAM LDO is on
 	 * (exited retention mode)
 	 */
-	while (!(PMU_LDO_CTRL & PMU_LDO_BIT_READY))
+	while (!(PMU_LDO_CTRL & PMU_LDO_READY_BIT))
 		continue;
 }
 
