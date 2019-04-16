@@ -31,8 +31,8 @@
 #define CPRINTF(format, args...) cprintf(CC_TOUCHPAD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_TOUCHPAD, format, ## args)
 
-#define TASK_EVENT_POWER  TASK_EVENT_CUSTOM(1)
-#define TASK_EVENT_TP_UPDATED  TASK_EVENT_CUSTOM(2)
+#define TASK_EVENT_POWER  TASK_EVENT_CUSTOM_BIT(0)
+#define TASK_EVENT_TP_UPDATED  TASK_EVENT_CUSTOM_BIT(1)
 
 #define SPI (&(spi_devices[SPI_ST_TP_DEVICE_ID]))
 

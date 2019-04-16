@@ -418,7 +418,7 @@ static inline int cycle_010(uint8_t i)
  * the latest one. */
 static uint32_t pending_msg;
 /* And here's the task event that we use to trigger delivery. */
-#define PENDING_MSG TASK_EVENT_CUSTOM(BIT(0))
+#define PENDING_MSG TASK_EVENT_CUSTOM_BIT(0)
 
 /* Interruptible delay. */
 #define WAIT_OR_RET(A)                                                         \

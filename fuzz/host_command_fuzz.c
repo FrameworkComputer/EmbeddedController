@@ -20,8 +20,8 @@
 /* Only test requests with valid size and checksum (makes fuzzing faster) */
 #define VALID_REQUEST_ONLY
 
-#define TASK_EVENT_FUZZ TASK_EVENT_CUSTOM(1)
-#define TASK_EVENT_HOSTCMD_DONE TASK_EVENT_CUSTOM(2)
+#define TASK_EVENT_FUZZ TASK_EVENT_CUSTOM_BIT(0)
+#define TASK_EVENT_HOSTCMD_DONE TASK_EVENT_CUSTOM_BIT(1)
 
 /* Request/response buffer size (and maximum command length) */
 #define BUFFER_SIZE 128

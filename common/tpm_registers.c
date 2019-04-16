@@ -675,9 +675,9 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
  * Events used on the TPM task context. Make sure there is no collision with
  * event(s) defined in chip/g/dcrypto/dcrypto_runtime.c
  */
-#define TPM_EVENT_RESET TASK_EVENT_CUSTOM(BIT(1))
-#define TPM_EVENT_COMMIT TASK_EVENT_CUSTOM(BIT(2))
-#define TPM_EVENT_ALT_EXTENSION TASK_EVENT_CUSTOM(BIT(3))
+#define TPM_EVENT_RESET TASK_EVENT_CUSTOM_BIT(1)
+#define TPM_EVENT_COMMIT TASK_EVENT_CUSTOM_BIT(2)
+#define TPM_EVENT_ALT_EXTENSION TASK_EVENT_CUSTOM_BIT(3)
 
 /*
  * Result of executing of the TPM command on the alternative path, could have

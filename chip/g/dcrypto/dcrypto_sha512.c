@@ -702,7 +702,7 @@ static void run_sha512_cmd(void)
 		ccprintf("%02x", hw_digest[i]);
 	ccprintf("\n");
 
-	task_set_event(TASK_ID_CONSOLE, TASK_EVENT_CUSTOM(1), 0);
+	task_set_event(TASK_ID_CONSOLE, TASK_EVENT_CUSTOM_BIT(0), 0);
 }
 DECLARE_DEFERRED(run_sha512_cmd);
 
@@ -725,8 +725,8 @@ static int cmd_sha512_bench(int argc, char *argv[])
 	hook_call_deferred(&run_sha512_cmd_data, 0);
 	ccprintf("Will wait up to %d ms\n", (max_time + 500) / 1000);
 
-	events = task_wait_event_mask(TASK_EVENT_CUSTOM(1), max_time);
-	if (!(events & TASK_EVENT_CUSTOM(1))) {
+	events = task_wait_event_mask(TASK_EVENT_CUSTOM_BIT(0), max_time);
+	if (!(events & TASK_EVENT_CUSTOM_BIT(0))) {
 		ccprintf("Timed out, you might want to reboot...\n");
 		return EC_ERROR_TIMEOUT;
 	}
@@ -757,14 +757,14 @@ static void run_sha512_test(void)
 	}
 
 	ccprintf("sha512 self-test PASS!\n");
-	task_set_event(TASK_ID_CONSOLE, TASK_EVENT_CUSTOM(1), 0);
+	task_set_event(TASK_ID_CONSOLE, TASK_EVENT_CUSTOM_BIT(0), 0);
 }
 DECLARE_DEFERRED(run_sha512_test);
 
 static int cmd_sha512_test(int argc, char *argv[])
 {
 	hook_call_deferred(&run_sha512_test_data, 0);
-	task_wait_event_mask(TASK_EVENT_CUSTOM(1), 1000000);
+	task_wait_event_mask(TASK_EVENT_CUSTOM_BIT(0), 1000000);
 	return EC_SUCCESS;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(sha512_test, cmd_sha512_test, NULL, NULL);

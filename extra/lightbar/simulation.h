@@ -60,11 +60,11 @@ void cprints(int zero, const char *fmt, ...);
 #define strtoi strtol
 
 /* Task events */
-#define TASK_EVENT_CUSTOM(x)    (x & 0x0fffffff)
-#define TASK_EVENT_I2C_IDLE     0x10000000
-#define TASK_EVENT_WAKE         0x20000000
-#define TASK_EVENT_MUTEX        0x40000000
-#define TASK_EVENT_TIMER        0x80000000
+#define TASK_EVENT_CUSTOM_BIT(x) BUILD_CHECK_INLINE(BIT(x), BIT(x) & 0x0fffffff)
+#define TASK_EVENT_I2C_IDLE      0x10000000
+#define TASK_EVENT_WAKE          0x20000000
+#define TASK_EVENT_MUTEX         0x40000000
+#define TASK_EVENT_TIMER         0x80000000
 
 /* Time units in usecs */
 #define MSEC         1000

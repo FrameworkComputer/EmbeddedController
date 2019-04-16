@@ -74,7 +74,7 @@ void dcrypto_unlock(void)
  * When running on Cr50 this event belongs in the TPM task event space. Make
  * sure there is no collision with events defined in ./common/tpm_regsters.c.
  */
-#define TASK_EVENT_DCRYPTO_DONE  TASK_EVENT_CUSTOM(1)
+#define TASK_EVENT_DCRYPTO_DONE  TASK_EVENT_CUSTOM_BIT(0)
 
 uint32_t dcrypto_call(uint32_t adr)
 {

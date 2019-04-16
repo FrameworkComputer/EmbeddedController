@@ -38,19 +38,30 @@ enum pd_rx_errors {
 };
 
 /* Events for USB PD task */
-#define PD_EVENT_TX               (1<<3) /* Outgoing packet event */
-#define PD_EVENT_CC               (1<<4) /* CC line change event */
-#define PD_EVENT_TCPC_RESET       (1<<5) /* TCPC has reset */
-#define PD_EVENT_UPDATE_DUAL_ROLE (1<<6) /* DRP state has changed */
+
+/* Outgoing packet event */
+#define PD_EVENT_TX			TASK_EVENT_CUSTOM_BIT(3)
+/* CC line change event */
+#define PD_EVENT_CC			TASK_EVENT_CUSTOM_BIT(4)
+/* TCPC has reset */
+#define PD_EVENT_TCPC_RESET		TASK_EVENT_CUSTOM_BIT(5)
+/* DRP state has changed */
+#define PD_EVENT_UPDATE_DUAL_ROLE	TASK_EVENT_CUSTOM_BIT(6)
 /*
  * A task, other than the task owning the PD port, accessed the TCPC. The task
  * that owns the port does not send itself this event.
  */
-#define PD_EVENT_DEVICE_ACCESSED    (1<<7)
-#define PD_EVENT_POWER_STATE_CHANGE (1<<8) /* Chipset power state changed */
-#define PD_EVENT_SEND_HARD_RESET    (1<<9) /* Issue a Hard Reset. */
-#define PD_EVENT_SM                 (1<<10) /* PD State machine event */
-#define PD_EVENT_SYSJUMP	    (1<<11) /* Prepare for sysjump */
+#define PD_EVENT_DEVICE_ACCESSED	TASK_EVENT_CUSTOM_BIT(7)
+/* Chipset power state changed */
+#define PD_EVENT_POWER_STATE_CHANGE	TASK_EVENT_CUSTOM_BIT(8)
+/* Issue a Hard Reset. */
+#define PD_EVENT_SEND_HARD_RESET	TASK_EVENT_CUSTOM_BIT(9)
+/* PD State machine event */
+#define PD_EVENT_SM			TASK_EVENT_CUSTOM_BIT(10)
+/* Prepare for sysjump */
+#define PD_EVENT_SYSJUMP		TASK_EVENT_CUSTOM_BIT(11)
+/* First free event on PD task */
+#define PD_EVENT_FIRST_FREE_BIT		12
 
 /* Ensure TCPC is out of low power mode before handling these events. */
 #define PD_EXIT_LOW_POWER_EVENT_MASK \

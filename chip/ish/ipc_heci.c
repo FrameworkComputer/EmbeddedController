@@ -694,7 +694,7 @@ int ipc_read(const ipc_handle_t handle, void *buf, const size_t buf_size,
 }
 
 /* event flag for MNG msg */
-#define EVENT_FLAG_BIT_MNG_MSG			TASK_EVENT_CUSTOM(1)
+#define EVENT_FLAG_BIT_MNG_MSG			TASK_EVENT_CUSTOM_BIT(0)
 
 /*
  * This task handles MNG messages

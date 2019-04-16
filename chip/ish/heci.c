@@ -959,7 +959,7 @@ static void heci_handle_heci_msg(struct heci_msg *heci_msg, size_t msg_length)
 }
 
 /* event flag for HECI msg */
-#define EVENT_FLAG_BIT_HECI_MSG			TASK_EVENT_CUSTOM(1)
+#define EVENT_FLAG_BIT_HECI_MSG			TASK_EVENT_CUSTOM_BIT(0)
 
 void heci_rx_task(void)
 {

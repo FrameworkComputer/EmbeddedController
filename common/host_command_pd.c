@@ -22,8 +22,8 @@
 
 #define CPRINTS(format, args...) cprints(CC_PD_HOST_CMD, format, ## args)
 
-#define TASK_EVENT_EXCHANGE_PD_STATUS  TASK_EVENT_CUSTOM(1)
-#define TASK_EVENT_HIBERNATING         TASK_EVENT_CUSTOM(2)
+#define TASK_EVENT_EXCHANGE_PD_STATUS  TASK_EVENT_CUSTOM_BIT(0)
+#define TASK_EVENT_HIBERNATING         TASK_EVENT_CUSTOM_BIT(1)
 
 /* Define local option for if we are a TCPM with an off chip TCPC */
 #if defined(CONFIG_USB_POWER_DELIVERY) && !defined(CONFIG_USB_PD_TCPM_STUB)

@@ -23,7 +23,7 @@
 #define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ## args)
 
-#define TASK_EVENT_CMD_PENDING TASK_EVENT_CUSTOM(1)
+#define TASK_EVENT_CMD_PENDING TASK_EVENT_CUSTOM_BIT(0)
 
 /* Maximum delay to skip printing repeated host command debug output */
 #define HCDEBUG_MAX_REPEAT_DELAY (50 * MSEC)

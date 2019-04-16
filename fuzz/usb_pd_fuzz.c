@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TASK_EVENT_FUZZ TASK_EVENT_CUSTOM(1)
+#define TASK_EVENT_FUZZ TASK_EVENT_CUSTOM_BIT(0)
 
 #define PORT0	0
 

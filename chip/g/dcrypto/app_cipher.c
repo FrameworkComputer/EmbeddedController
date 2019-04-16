@@ -413,7 +413,7 @@ static void run_cipher_cmd(void)
 	if (info.p)
 		shared_mem_release(info.p);
 
-	task_set_event(TASK_ID_CONSOLE, TASK_EVENT_CUSTOM(1), 0);
+	task_set_event(TASK_ID_CONSOLE, TASK_EVENT_CUSTOM_BIT(0), 0);
 }
 DECLARE_DEFERRED(run_cipher_cmd);
 
@@ -440,8 +440,8 @@ static int cmd_cipher(int argc, char **argv)
 
 	ccprintf("Will wait up to %d ms\n", (max_time + 500)/1000);
 
-	events = task_wait_event_mask(TASK_EVENT_CUSTOM(1), max_time);
-	if (!(events & TASK_EVENT_CUSTOM(1))) {
+	events = task_wait_event_mask(TASK_EVENT_CUSTOM_BIT(0), max_time);
+	if (!(events & TASK_EVENT_CUSTOM_BIT(0))) {
 		ccprintf("Timed out, you might want to reboot...\n");
 		return EC_ERROR_TIMEOUT;
 	}

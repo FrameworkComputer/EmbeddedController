@@ -14,7 +14,7 @@
  */
 #define IT83XX_USBPD_CC_PIN_CONFIG 0x86
 
-#define TASK_EVENT_PHY_TX_DONE TASK_EVENT_CUSTOM(BIT(17))
+#define TASK_EVENT_PHY_TX_DONE TASK_EVENT_CUSTOM_BIT(PD_EVENT_FIRST_FREE_BIT)
 
 #define SET_MASK(reg, bit_mask)      ((reg) |= (bit_mask))
 #define CLEAR_MASK(reg, bit_mask)    ((reg) &= (~(bit_mask)))

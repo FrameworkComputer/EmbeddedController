@@ -25,7 +25,7 @@
 #define CPRINTF(format, args...) cprintf(CC_TOUCHPAD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_TOUCHPAD, format, ## args)
 
-#define TASK_EVENT_POWER  TASK_EVENT_CUSTOM(1)
+#define TASK_EVENT_POWER  TASK_EVENT_CUSTOM_BIT(0)
 
 /******************************************************************************/
 /* How to talk to the controller */
