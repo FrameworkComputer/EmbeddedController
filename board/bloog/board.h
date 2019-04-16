@@ -24,6 +24,8 @@
 #define CONFIG_LED_COMMON
 #define OCTOPUS_POWER_LED
 
+#define CONFIG_EC_FEATURE_BOARD_OVERRIDE
+
 /* Sensors */
 #define CONFIG_ACCEL_KX022		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
