@@ -330,6 +330,8 @@ extern uint8_t model;
 /* SKU_ID[24:31] are dedicated to OEM customization */
 #define CBI_SKU_CUSTOM_FIELD(val)	((val) >> 24)
 
+void ccd_mode_isr(enum gpio_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
