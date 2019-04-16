@@ -948,8 +948,12 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 		 * TCPCs while they reset.
 		 */
 #ifdef HAS_TASK_PD_C0
-		for (int port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++)
-			pd_set_suspend(port, 1);
+		{
+			int port;
+
+			for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++)
+				pd_set_suspend(port, 1);
+		}
 #endif
 		board_reset_pd_mcu();
 #endif
