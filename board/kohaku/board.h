@@ -61,10 +61,7 @@
 #define GPIO_VOLUME_UP_L GPIO_EC_VOLUP_BTN_ODL
 #define GPIO_VOLUME_DOWN_L GPIO_EC_VOLDN_BTN_ODL
 
-/* Fan features */
-#define CONFIG_FANS 1
-#undef CONFIG_FAN_INIT_SPEED
-#define CONFIG_FAN_INIT_SPEED 50
+/* Thermal features */
 #define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_EN_A_RAILS
 #define CONFIG_THERMISTOR
 #define CONFIG_THROTTLE_AP
@@ -118,20 +115,7 @@ enum sensor_id {
 
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
-	PWM_CH_FAN,
 	PWM_CH_COUNT
-};
-
-enum fan_channel {
-	FAN_CH_0 = 0,
-	/* Number of FAN channels */
-	FAN_CH_COUNT,
-};
-
-enum mft_channel {
-	MFT_CH_0 = 0,
-	/* Number of MFT channels */
-	MFT_CH_COUNT,
 };
 
 enum temp_sensor_id {

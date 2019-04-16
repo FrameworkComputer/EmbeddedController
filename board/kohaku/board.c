@@ -18,8 +18,6 @@
 #include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
 #include "extpower.h"
-#include "fan.h"
-#include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -111,8 +109,6 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT]   = { .channel = 3, .flags = 0, .freq = 10000 },
-	[PWM_CH_FAN] = {.channel = 5, .flags = PWM_CONFIG_OPEN_DRAIN,
-			.freq = 25000},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -281,34 +277,7 @@ const struct motion_sensor_t *motion_als_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 
-/******************************************************************************/
-/* Physical fans. These are logically separate from pwm_channels. */
-
-const struct fan_conf fan_conf_0 = {
-	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
-	.pgood_gpio = -1,
-	.enable_gpio = GPIO_EN_PP5000_FAN,
-};
-
-/* Default */
-const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 3100,
-	.rpm_start = 3100,
-	.rpm_max = 6900,
-};
-
-struct fan_t fans[FAN_CH_COUNT] = {
-	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
-};
-
-/******************************************************************************/
-/* MFT channels. These are logically separate from pwm_channels. */
-const struct mft_t mft_channels[] = {
-	[MFT_CH_0] = {NPCX_MFT_MODULE_1, TCKC_LFCLK, PWM_CH_FAN},
-};
-BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
-
+/**********************************************************************/
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_1] = {
@@ -332,35 +301,7 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-
-/* Hatch Temperature sensors */
-/*
- * TODO(b/124316213): These setting need to be reviewed and set appropriately
- * for Hatch. They matter when the EC is controlling the fan as opposed to DPTF
- * control.
- */
-const static struct ec_thermal_config thermal_a = {
-	.temp_host = {
-		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
-		[EC_TEMP_THRESH_HALT] = 0,
-	},
-	.temp_fan_off = C_TO_K(25),
-	.temp_fan_max = C_TO_K(50),
-};
-
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
-
-static void setup_fans(void)
-{
-	thermal_params[TEMP_SENSOR_1] = thermal_a;
-	thermal_params[TEMP_SENSOR_2] = thermal_a;
-}
 
 /* Sets the gpio flags correct taking into account warm resets */
 static void reset_gpio_flags(enum gpio_signal signal, int flags)
@@ -398,8 +339,6 @@ static void board_gpio_set_pp5000(void)
 
 static void board_init(void)
 {
-	/* Initialize Fans */
-	setup_fans();
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 	/* Select correct gpio signal for PP5000_A control */
