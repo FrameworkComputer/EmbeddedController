@@ -349,6 +349,11 @@ __asm__ (
 		"movl %esp, %eax\n"
 		"movl $stack_end, %esp\n"
 		"push %eax\n"
+#ifdef CONFIG_TASK_PROFILING
+		"push $" STRINGIFY(CONFIG_IRQ_COUNT) "\n"
+		"call task_start_irq_handler\n"
+		"addl $0x04, %esp\n"
+#endif
 		"call handle_lapic_lvt_error\n"
 		"pop %esp\n"
 		"movl $0x00, (0xFEE000B0)\n"	/* Set EOI for LAPIC */
@@ -369,6 +374,30 @@ void unhandled_vector(void)
 /* This needs to be moved to link_defs.h */
 extern const struct irq_data __irq_data[], __irq_data_end[];
 
+/**
+ * Called from SOFTIRQ_VECTOR when software is trigger an IRQ manually
+ *
+ * If IRQ is out of range, then no routine should be called
+ */
+void call_irq_service_routine(uint32_t irq)
+{
+	const struct irq_data *p = __irq_data;
+
+	/* If just rescheduling a task, we won't have a routine to call */
+	if (irq >= CONFIG_IRQ_COUNT)
+		return;
+
+	for (; p < __irq_data_end; p++) {
+		if (p->irq == irq) {
+			p->routine();
+			break;
+		}
+	}
+
+	if (p == __irq_data_end)
+		CPRINTS("IRQ %d routine not found!", irq);
+}
+
 void init_interrupts(void)
 {
 	unsigned entry;
@@ -378,7 +407,11 @@ void init_interrupts(void)
 
 	/* Setup gates for IRQs declared by drivers using DECLARE_IRQ */
 	for (; p < __irq_data_end; p++)
-		set_interrupt_gate(IRQ_TO_VEC(p->irq), p->routine, IDT_DESC_FLAGS);
+		set_interrupt_gate(IRQ_TO_VEC(p->irq), p->ioapic_routine,
+				   IDT_DESC_FLAGS);
+
+	/* Software generated IRQ */
+	set_interrupt_gate(SOFTIRQ_VECTOR, sw_irq_handler, IDT_DESC_FLAGS);
 
 	/* Setup gate for LAPIC_LVT_ERROR vector; clear any remnant error. */
 	REG32(LAPIC_ESR_REG) = 0;

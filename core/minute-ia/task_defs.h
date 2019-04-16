@@ -19,6 +19,10 @@
 
 #define USE_FPU_OFFSET_STR	STRINGIFY(USE_FPU_OFFSET)	/* "20" */
 #define FPU_CTX_OFFSET_STR	STRINGIFY(FPU_CTX_OFFSET)	/* "24" */
+
+asm (".equ USE_FPU_OFFSET, "USE_FPU_OFFSET_STR);
+asm (".equ FPU_CTX_OFFSET, "FPU_CTX_OFFSET_STR);
+
 #endif
 #endif /* CONFIG_FPU */
 
@@ -42,6 +46,7 @@ typedef union {
 
 int __task_start(int *start_called);
 void __switchto(void);
+void sw_irq_handler(void);
 
 /* Only the IF bit is set so tasks start with interrupts enabled. */
 #define INITIAL_EFLAGS		(0x200UL)

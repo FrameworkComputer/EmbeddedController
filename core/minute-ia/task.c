@@ -261,11 +261,9 @@ uint32_t switch_handler(int desched, task_id_t resched)
 
 void __schedule(int desched, int resched)
 {
-	__asm__ __volatile__ ("int %0"
-			:
-			: "i" (ISH_TS_VECTOR),
-			  "d" (desched), "c" (resched)
-			);
+	__asm__ __volatile__("int %0"
+			     :
+			     : "i"(ISH_TS_VECTOR), "d"(desched), "c"(resched));
 }
 
 #ifdef CONFIG_TASK_PROFILING
@@ -276,15 +274,14 @@ void __keep task_start_irq_handler(void *data)
 	 * pre-empted.
 	 */
 	uint32_t t = get_time().le.lo;
-	uint32_t vector = (uint32_t)data;
-	int irq = VEC_TO_IRQ(vector);
+	int irq = (uint32_t)data;
 
 	/*
 	 * Track IRQ distribution.  No need for atomic add, because an IRQ
 	 * can't pre-empt itself. If less than 0, then the vector did not map
 	 * to an IRQ but was for a synchronous exception instead (TS_VECTOR)
 	 */
-	if (irq > 0 && irq < ARRAY_SIZE(irq_dist))
+	if (irq < CONFIG_IRQ_COUNT)
 		irq_dist[irq]++;
 	else
 		/* Track total number of service calls */
@@ -420,11 +417,20 @@ void task_clear_pending_irq(int irq)
 
 void task_trigger_irq(int irq)
 {
-	/* Writing to Local APIC Interrupt Command Register (ICR) causes an
-	 * IPI (Inter-processor interrupt) on the APIC bus. Here we direct the
-	 * IPI to originating prccessor to generate self-interrupt
+	/* ISR should not be called before the first task is scheduled */
+	if (!task_start_called())
+		return;
+
+	/* we don't allow nested interrupt */
+	if (in_interrupt_context())
+		return;
+
+	/*
+	 * "int" instruction accepts vector only as immediate value.
+	 * so here, we use one vector(SOFTIRQ_VECTOR) and pass
+	 * the address of ISR of irq in ecx register.
 	 */
-	REG32(LAPIC_ICR_REG) = LAPIC_ICR_BITS | IRQ_TO_VEC(irq);
+	__asm__ __volatile__("int %0\n" : : "i"(SOFTIRQ_VECTOR), "c"(irq));
 }
 
 void mutex_lock(struct mutex *mtx)
