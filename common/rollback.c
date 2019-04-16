@@ -507,8 +507,6 @@ static int command_rollback_info(int argc, char **argv)
 	ccprintf("RW rollback version: %d\n", rw_rollback_version);
 
 	for (region = 0; region < ROLLBACK_REGIONS; region++) {
-		struct rollback_data data;
-
 		ret = read_rollback(region, &data);
 		if (ret)
 			goto failed;
