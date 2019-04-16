@@ -7,6 +7,7 @@
 #define __CROS_EC_CHARGE_MANAGER_H
 
 #include "common.h"
+#include "ec_commands.h"
 
 /* Charge port that indicates no active port */
 #define CHARGE_PORT_NONE -1
@@ -114,10 +115,29 @@ enum ceil_requestor {
 
 #define CHARGE_PORT_COUNT \
 		(CONFIG_USB_PD_PORT_COUNT + CONFIG_DEDICATED_CHARGE_PORT_COUNT)
-#if (CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0) && !defined(DEDICATED_CHARGE_PORT)
-#error "DEDICATED_CHARGE_PORT must be defined"
-#endif
+#if (CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0)
 
+/**
+ * By default, dedicated port has following properties:
+ *
+ * - dedicated port is sink only.
+ * - dedicated port is always connected.
+ * - dedicated port is given highest priority (supplier type is always
+ *   CHARGE_SUPPLIER_DEDICATED).
+ * - dualrole capability of dedicated port is always CAP_DEDICATED.
+ * - there's only one dedicated port, its number is larger than PD port number.
+ *
+ * Sink property can be customized by implementing board_charge_port_is_sink()
+ * and board_fill_source_power_info().
+ * Connected can be customized by implementing board_charge_port_is_connected().
+ */
+#if !defined(DEDICATED_CHARGE_PORT)
+#error "DEDICATED_CHARGE_PORT must be defined"
+#elif DEDICATED_CHARGE_PORT < CONFIG_USB_PD_PORT_COUNT
+#error "DEDICATED_CHARGE_PORT must larger than pd port numbers"
+#endif /* !defined(DEDICATED_CHARGE_PORT) */
+
+#endif /* CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0 */
 
 /**
  * Update charge ceiling for a given port. The ceiling can be set independently
@@ -249,5 +269,32 @@ int board_vbus_source_enabled(int port);
  */
 enum adc_channel board_get_vbus_adc(int port);
 #endif /* CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT */
+
+/**
+ * Board specific callback to check if the given port is sink.
+ *
+ * @param port	Dedicated charge port.
+ * @return 1 if the port is sink.
+ */
+int board_charge_port_is_sink(int port);
+
+/**
+ * Board specific callback to check if the given port is connected.
+ *
+ * @param port	Dedicated charge port.
+ * @return 1 if the port is connected.
+ */
+int board_charge_port_is_connected(int port);
+
+/**
+ * Board specific callback to fill passed power_info structure with current info
+ * about the passed dedicate port.
+ * This function is responsible for filling r->meas.* and r->max_power.
+ *
+ * @param port	Dedicated charge port.
+ * @param r	USB PD power info to be updated.
+ */
+void board_fill_source_power_info(int port,
+				  struct ec_response_usb_pd_power_info *r);
 
 #endif /* __CROS_EC_CHARGE_MANAGER_H */

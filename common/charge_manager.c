@@ -146,8 +146,8 @@ static int is_pd_port(int port)
 static int is_sink(int port)
 {
 	if (!is_pd_port(port))
-		/* Dedicated port is sink-only */
-		return 1;
+		return board_charge_port_is_sink(port);
+
 	return pd_get_role(port) == PD_ROLE_SINK;
 }
 
@@ -155,8 +155,8 @@ static int is_sink(int port)
 static int is_connected(int port)
 {
 	if (!is_pd_port(port))
-		/* Dedicated port is always connected */
-		return 1;
+		return board_charge_port_is_connected(port);
+
 	return pd_is_connected(port);
 }
 #endif /* !TEST_BUILD */
@@ -322,12 +322,18 @@ static void charge_manager_fill_power_info(int port,
 
 	if (sup == CHARGE_SUPPLIER_NONE ||
 	    r->role == USB_PD_PORT_POWER_SOURCE) {
-		r->type = USB_CHG_TYPE_NONE;
-		r->meas.voltage_max = 0;
-		r->meas.voltage_now = r->role == USB_PD_PORT_POWER_SOURCE ? 5000
-									  : 0;
-		r->meas.current_max = charge_manager_get_source_current(port);
-		r->max_power = 0;
+		if (is_pd_port(port)) {
+			r->type = USB_CHG_TYPE_NONE;
+			r->meas.voltage_max = 0;
+			r->meas.voltage_now =
+				r->role == USB_PD_PORT_POWER_SOURCE ? 5000 : 0;
+			r->meas.current_max =
+				charge_manager_get_source_current(port);
+			r->max_power = 0;
+		} else {
+			r->type = USB_CHG_TYPE_NONE;
+			board_fill_source_power_info(port, r);
+		}
 	} else {
 		int use_ramp_current;
 		switch (sup) {
@@ -976,6 +982,9 @@ void charge_manager_update_charge(int supplier,
 
 void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap)
 {
+	if (!is_pd_port(port))
+		return;
+
 	/* Ignore when capability is unchanged */
 	if (cap != dualrole_capability[port]) {
 		dualrole_capability[port] = cap;
@@ -1375,3 +1384,26 @@ static int charge_supplier_info(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(chgsup, charge_supplier_info,
 			NULL, "print chg supplier info");
 #endif
+
+__attribute__((weak))
+int board_charge_port_is_sink(int port)
+{
+	return 1;
+}
+
+__attribute__((weak))
+int board_charge_port_is_connected(int port)
+{
+	return 1;
+}
+
+__attribute__((weak))
+void board_fill_source_power_info(int port,
+				  struct ec_response_usb_pd_power_info *r)
+{
+	r->meas.voltage_now = 0;
+	r->meas.voltage_max = 0;
+	r->meas.current_max = 0;
+	r->meas.current_lim = 0;
+	r->max_power = 0;
+}
