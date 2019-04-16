@@ -12,6 +12,9 @@
 #include "console.h"
 #include "stack_trace.h"
 
+/* This allows tests to be easily commented out in run_test for debugging */
+#define test_static static __attribute__((unused))
+
 #define RUN_TEST(n) \
 	do { \
 		ccprintf("Running %s...", #n); \

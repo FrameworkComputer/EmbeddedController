@@ -11,7 +11,6 @@
 #include "timer.h"
 #include "util.h"
 
-
 static int get_seq(void)
 {
 	int rv;
@@ -53,7 +52,7 @@ static int set_seq(int s)
 	return EC_RES_SUCCESS;
 }
 
-static int test_double_oneshots(void)
+test_static int test_double_oneshots(void)
 {
 	/* Start in S0 */
 	TEST_ASSERT(set_seq(LIGHTBAR_S0) == EC_RES_SUCCESS);
@@ -125,7 +124,7 @@ static int test_double_oneshots(void)
 	return EC_SUCCESS;
 }
 
-static int test_oneshots_norm_msg(void)
+test_static int test_oneshots_norm_msg(void)
 {
 	/* Revert to the next state when interrupted with a normal message. */
 	enum lightbar_sequence seqs[] = {
@@ -154,7 +153,7 @@ static int test_oneshots_norm_msg(void)
 	return EC_SUCCESS;
 }
 
-static int test_stop_timeout(void)
+test_static int test_stop_timeout(void)
 {
 	int i;
 
@@ -188,7 +187,7 @@ static int test_stop_timeout(void)
 	return EC_SUCCESS;
 }
 
-static int test_oneshots_timeout(void)
+test_static int test_oneshots_timeout(void)
 {
 	/* These should revert to the previous state after running */
 	enum lightbar_sequence seqs[] = {
@@ -215,7 +214,7 @@ static int test_oneshots_timeout(void)
 	return EC_SUCCESS;
 }
 
-static int test_transition_states(void)
+test_static int test_transition_states(void)
 {
 	/* S5S3 */
 	TEST_ASSERT(set_seq(LIGHTBAR_S5S3) == EC_RES_SUCCESS);
@@ -240,7 +239,7 @@ static int test_transition_states(void)
 	return EC_SUCCESS;
 }
 
-static int test_stable_states(void)
+test_static int test_stable_states(void)
 {
 	int i;
 
@@ -301,7 +300,7 @@ int lid_is_open(void)
 	return 1;
 }
 
-static int test_als_lightbar(void)
+test_static int test_als_lightbar(void)
 {
 	int lux_data[] = { 500, 100, 35, 15, 30, 35, 55, 70, 55, 100 };
 	int exp_gcid[] = {   0,   0,  1,  2,  2,  2,  1,  0,  0,   0 };
@@ -322,6 +321,9 @@ static int test_als_lightbar(void)
 
 void run_test(void)
 {
+	/* Ensure tasks are started before running tests */
+	usleep(SECOND);
+
 	RUN_TEST(test_stable_states);
 	RUN_TEST(test_transition_states);
 	RUN_TEST(test_oneshots_timeout);
