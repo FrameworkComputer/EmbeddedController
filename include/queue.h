@@ -75,6 +75,7 @@ struct queue {
 	struct queue_policy const *policy;
 
 	size_t  buffer_units; /* size of buffer (in units) */
+	size_t  buffer_units_mask; /* size of buffer (in units) - 1*/
 	size_t  unit_bytes;   /* size of unit   (in byte) */
 	uint8_t *buffer;
 };
@@ -89,6 +90,7 @@ struct queue {
 		.state        = &((struct queue_state){}),	\
 		.policy       = &POLICY,			\
 		.buffer_units = SIZE,				\
+		.buffer_units_mask = SIZE - 1,			\
 		.unit_bytes   = sizeof(TYPE),			\
 		.buffer       = (uint8_t *) &((TYPE[SIZE]){}),	\
 	})

@@ -70,8 +70,8 @@ int queue_is_full(struct queue const *q)
 
 struct queue_chunk queue_get_write_chunk(struct queue const *q)
 {
-	size_t head = q->state->head & (q->buffer_units - 1);
-	size_t tail = q->state->tail & (q->buffer_units - 1);
+	size_t head = q->state->head & q->buffer_units_mask;
+	size_t tail = q->state->tail & q->buffer_units_mask;
 	size_t last = (queue_is_full(q) ? tail : /* Full           */
 		       ((tail < head) ? head :   /* Wrapped        */
 			q->buffer_units));       /* Normal | Empty */
@@ -84,8 +84,8 @@ struct queue_chunk queue_get_write_chunk(struct queue const *q)
 
 struct queue_chunk queue_get_read_chunk(struct queue const *q)
 {
-	size_t head = q->state->head & (q->buffer_units - 1);
-	size_t tail = q->state->tail & (q->buffer_units - 1);
+	size_t head = q->state->head & q->buffer_units_mask;
+	size_t tail = q->state->tail & q->buffer_units_mask;
 	size_t last = (queue_is_empty(q) ? head : /* Empty          */
 		       ((head < tail) ? tail :    /* Normal         */
 			q->buffer_units));        /* Wrapped | Full */
@@ -120,7 +120,7 @@ size_t queue_advance_tail(struct queue const *q, size_t count)
 
 size_t queue_add_unit(struct queue const *q, const void *src)
 {
-	size_t tail = q->state->tail & (q->buffer_units - 1);
+	size_t tail = q->state->tail & q->buffer_units_mask;
 
 	if (queue_space(q) == 0)
 		return 0;
@@ -146,7 +146,7 @@ size_t queue_add_memcpy(struct queue const *q,
 					size_t n))
 {
 	size_t transfer = MIN(count, queue_space(q));
-	size_t tail     = q->state->tail & (q->buffer_units - 1);
+	size_t tail     = q->state->tail & q->buffer_units_mask;
 	size_t first    = MIN(transfer, q->buffer_units - tail);
 
 	memcpy(q->buffer + tail * q->unit_bytes,
@@ -183,7 +183,7 @@ static void queue_read_safe(struct queue const *q,
 
 size_t queue_remove_unit(struct queue const *q, void *dest)
 {
-	size_t head = q->state->head & (q->buffer_units - 1);
+	size_t head = q->state->head & q->buffer_units_mask;
 
 	if (queue_count(q) == 0)
 		return 0;
@@ -209,7 +209,7 @@ size_t queue_remove_memcpy(struct queue const *q,
 					   size_t n))
 {
 	size_t transfer = MIN(count, queue_count(q));
-	size_t head     = q->state->head & (q->buffer_units - 1);
+	size_t head     = q->state->head & q->buffer_units_mask;
 
 	queue_read_safe(q, dest, head, transfer, memcpy);
 
@@ -236,7 +236,7 @@ size_t queue_peek_memcpy(struct queue const *q,
 	size_t transfer  = MIN(count, available - i);
 
 	if (i < available) {
-		size_t head = (q->state->head + i) & (q->buffer_units - 1);
+		size_t head = (q->state->head + i) & q->buffer_units_mask;
 
 		queue_read_safe(q, dest, head, transfer, memcpy);
 	}
