@@ -15,34 +15,38 @@
 
 #define CPRINTS(format, args...) cprints(CC_CCD, format, ## args)
 
-static uint8_t ccd_hook_active;
+static uint8_t wait_for_factory_ccd_change;
 static uint8_t reset_required_;
 
-static void ccd_config_changed(void)
+static void factory_config_saved(int saved)
 {
-	if (!ccd_hook_active)
-		return;
+	wait_for_factory_ccd_change = 0;
 
-	ccd_hook_active = 0;
+	CPRINTS("%s: %s%s", __func__, saved ? "done" : "failed",
+		reset_required_ ? ", rebooting" : "");
 
 	if (!reset_required_)
 		return;
 
-	CPRINTS("%s: saved, rebooting\n", __func__);
 	cflush();
 	system_reset(SYSTEM_RESET_HARD);
 }
+
+static void ccd_config_changed(void)
+{
+	if (!wait_for_factory_ccd_change)
+		return;
+
+	factory_config_saved(1);
+}
 DECLARE_HOOK(HOOK_CCD_CHANGE, ccd_config_changed, HOOK_PRIO_LAST);
 
-static void factory_enable_failed(void)
+static void force_system_reset(void)
 {
-	ccd_hook_active = 0;
-	CPRINTS("factory enable failed");
-
-	if (reset_required_)
-		reset_required_ = 0;
+	CPRINTS("%s: ccd hook didn't reset the system");
+	factory_config_saved(0);
 }
-DECLARE_DEFERRED(factory_enable_failed);
+DECLARE_DEFERRED(force_system_reset);
 
 /* The below time constants are way longer than should be required in practice:
  *
@@ -68,17 +72,18 @@ static void factory_enable_deferred(void)
 
 	CPRINTS("%s: TPM reset done, enabling factory mode", __func__);
 
-	ccd_hook_active = 1;
+	wait_for_factory_ccd_change = 1;
 	rv = ccd_reset_config(CCD_RESET_FACTORY);
 	if (rv != EC_SUCCESS)
-		factory_enable_failed();
+		factory_config_saved(0);
 
 	if (reset_required_) {
 		/*
 		 * Cr50 will reset once factory mode is enabled. If it hasn't in
-		 * TPM_RESET_TIME, declare factory enable failed.
+		 * TPM_RESET_TIME, declare factory enable failed and force the
+		 * reset.
 		 */
-		hook_call_deferred(&factory_enable_failed_data, TPM_RESET_TIME);
+		hook_call_deferred(&force_system_reset_data, TPM_RESET_TIME);
 	}
 }
 DECLARE_DEFERRED(factory_enable_deferred);
