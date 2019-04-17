@@ -151,7 +151,8 @@ static int show_charge_state(void)
 	if (chg_st == PWR_STATE_CHARGE) {
 		led_is_pulsing = 0;
 		set_led_color(CONFIG_LED_PWM_CHARGE_COLOR);
-	} else if (chg_st == PWR_STATE_CHARGE_NEAR_FULL) {
+	} else if (chg_st == PWR_STATE_CHARGE_NEAR_FULL ||
+		   chg_st == PWR_STATE_DISCHARGE_FULL) {
 		led_is_pulsing = 0;
 		set_led_color(CONFIG_LED_PWM_NEAR_FULL_COLOR);
 	} else if ((battery_is_present() != BP_YES) ||
