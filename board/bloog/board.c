@@ -210,9 +210,13 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
  */
 int board_is_convertible(void)
 {
-	/* Bloog: TBD */
-	/* Blooguard: TBD */
-	return sku_id == 255;
+	/*
+	 * Bloog: 33, 34, 35
+	 * Blooguard: 49, 50
+	 * Unprovisioned: 255
+	 */
+	return sku_id == 33 || sku_id == 34 || sku_id == 35 || sku_id == 49
+		|| sku_id == 50 || sku_id == 255;
 }
 
 static void board_update_sensor_config_from_sku(void)
