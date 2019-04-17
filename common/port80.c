@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "display_7seg.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "port80.h"
@@ -74,6 +75,7 @@ static void port80_dump_buffer(void)
 	int printed = 0;
 	int i;
 	int head, tail;
+	int last_e = 0;
 
 	/*
 	 * Print the port 80 writes so far, clipped to the length of our
@@ -107,9 +109,14 @@ static void port80_dump_buffer(void)
 				cflush();
 			}
 			ccprintf(" %02x", e);
+			last_e = e;
 		}
 	}
 	ccputs(" <--new\n");
+
+	/* Displaying last port80 msg on 7-segment if it is enabled */
+	if (IS_ENABLED(CONFIG_SEVEN_SEG_DISPLAY) && last_e)
+		display_7seg_write(SEVEN_SEG_PORT80_DISPLAY, last_e);
 }
 
 /*****************************************************************************/
