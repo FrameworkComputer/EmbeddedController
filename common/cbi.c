@@ -154,6 +154,12 @@ static int read_board_info(void)
 	return cached_read_result;
 }
 
+__attribute__((weak))
+int cbi_board_override(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size)
+{
+	return EC_SUCCESS;
+}
+
 int cbi_get_board_info(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size)
 {
 	const struct cbi_data *d;
@@ -174,7 +180,8 @@ int cbi_get_board_info(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size)
 	/* Copy the value */
 	memcpy(buf, d->value, d->size);
 	*size = d->size;
-	return EC_SUCCESS;
+
+	return cbi_board_override(tag, buf, size);
 }
 
 static void cbi_remove_tag(void *const cbi, struct cbi_data *const d)
