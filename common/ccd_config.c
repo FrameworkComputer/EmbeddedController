@@ -935,11 +935,10 @@ static enum vendor_cmd_rc ccd_open(struct vendor_cmd_params *p)
 		 */
 	} else {
 		/*
-		 * - Password not set
 		 * - Battery is present
 		 * - Either not in developer mode or the command came from USB
 		 */
-		why_denied = "nopwd";
+		why_denied = "open from AP in devmode or remove batt";
 		goto denied;
 	}
 
