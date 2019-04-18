@@ -76,11 +76,6 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(port);
 }
 
-static void hdmi_hpd_interrupt(enum gpio_signal signal)
-{
-	baseboard_mst_enable_control(MST_HDMI, gpio_get_level(signal));
-}
-
 static void bc12_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
