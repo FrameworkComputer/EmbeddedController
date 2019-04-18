@@ -21,7 +21,6 @@
 #include "util.h"
 
 extern enum chipset_state_mask sensor_active;
-extern unsigned motion_interval;
 
 /*
  * Period in us for the motion task period.
@@ -181,7 +180,6 @@ static int test_lid_angle(void)
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S5);
 	TEST_ASSERT(accel_get_data_rate(lid) == 0);
-	TEST_ASSERT(motion_interval == 0);
 
 	/* Go to S0 state */
 	hook_notify(HOOK_CHIPSET_SUSPEND);
@@ -189,7 +187,6 @@ static int test_lid_angle(void)
 	msleep(1000);
 	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S0);
 	TEST_ASSERT(accel_get_data_rate(lid) == 119000);
-	TEST_ASSERT(motion_interval == TEST_LID_EC_RATE);
 
 	/*
 	 * Set the base accelerometer as if it were sitting flat on a desk

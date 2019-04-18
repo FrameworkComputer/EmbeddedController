@@ -24,7 +24,6 @@
 #define TEST_LID_SAMPLE_SIZE (2 * 3)
 
 extern enum chipset_state_mask sensor_active;
-extern unsigned int motion_interval;
 
 extern struct motion_sensor_t motion_sensors[];
 extern const unsigned int motion_sensor_count;

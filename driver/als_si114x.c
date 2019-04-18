@@ -295,6 +295,7 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	case SI114X_NOT_READY:
 		ret = EC_ERROR_NOT_POWERED;
 	}
+#if 0 /* This code is incorrect https://crbug.com/956569 */
 	if (ret == EC_ERROR_ACCESS_DENIED &&
 	    s->type == MOTIONSENSE_TYPE_LIGHT) {
 		timestamp_t ts_now = get_time();
@@ -315,6 +316,7 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 			init(s);
 		}
 	}
+#endif
 	return ret;
 }
 

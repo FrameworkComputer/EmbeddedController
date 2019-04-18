@@ -41,7 +41,6 @@ static int test_lid_angle_less180(void)
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S5);
 	TEST_ASSERT(lid->drv->get_data_rate(lid) == 0);
-	TEST_ASSERT(motion_interval == 0);
 
 	/* Go to S0 state */
 	hook_notify(HOOK_CHIPSET_SUSPEND);
@@ -49,7 +48,6 @@ static int test_lid_angle_less180(void)
 	msleep(1000);
 	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S0);
 	TEST_ASSERT(lid->drv->get_data_rate(lid) == TEST_LID_FREQUENCY);
-	TEST_ASSERT(motion_interval == TEST_LID_EC_RATE);
 
 	/* Open lid, testing close to 180 degree. */
 	gpio_set_level(GPIO_LID_OPEN, 1);
