@@ -119,7 +119,6 @@
 
 /* BC 1.2 */
 #define CONFIG_USB_CHARGER
-#define CONFIG_BC12_DETECT_PI3USB9201
 
 /* Common Sensor Defines */
 #define CONFIG_TABLET_MODE

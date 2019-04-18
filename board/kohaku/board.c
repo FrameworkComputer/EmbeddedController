@@ -14,6 +14,7 @@
 #include "driver/accelgyro_bmi160.h"
 #include "driver/als_opt3001.h"
 #include "driver/ppc/sn5s330.h"
+#include "driver/bc12/max14637.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
@@ -133,6 +134,20 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	}
+};
+
+/* BC 1.2 chip Configuration */
+const struct max14637_config_t max14637_config[CONFIG_USB_PD_PORT_COUNT] = {
+	{
+		.chip_enable_pin = GPIO_USB_C0_BC12_VBUS_ON,
+		.chg_det_pin = GPIO_USB_C0_BC12_CHG_DET_L,
+		.flags = MAX14637_FLAGS_CHG_DET_ACTIVE_LOW,
+	},
+	{
+		.chip_enable_pin = GPIO_USB_C1_BC12_VBUS_ON,
+		.chg_det_pin = GPIO_USB_C1_BC12_CHG_DET_L,
+		.flags = MAX14637_FLAGS_CHG_DET_ACTIVE_LOW,
+	},
 };
 
 /******************************************************************************/

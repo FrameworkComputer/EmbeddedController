@@ -13,6 +13,7 @@
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/als_opt3001.h"
+#include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -148,6 +149,18 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	}
+};
+
+const struct pi3usb2901_config_t pi3usb2901_bc12_chips[] = {
+	[USB_PD_PORT_TCPC_0] = {
+		.i2c_port = I2C_PORT_PPC0,
+		.i2c_addr = PI3USB9201_I2C_ADDR_3,
+	},
+
+	[USB_PD_PORT_TCPC_1] = {
+		.i2c_port = I2C_PORT_TCPC1,
+		.i2c_addr = PI3USB9201_I2C_ADDR_3,
+	},
 };
 
 /******************************************************************************/
