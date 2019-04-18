@@ -219,6 +219,16 @@ static void __hw_clock_source_irq(int timer_id)
 	 * overflowed).
 	 */
 	process_timers(timer_id == 0);
+
+	/*
+	 * Clearing interrupt status before the main counter gets increased
+	 * generates an extra interrupt.
+	 * Here, we checks interrupt status register to prevent the extra
+	 * interrupt. It's safe to clear the interrupt again here since
+	 * there's at least MINIMUM_EVENT_DELAY_US delay for the next event
+	 */
+	while (HPET_INTR_CLEAR & BIT(timer_id))
+		HPET_INTR_CLEAR = BIT(timer_id);
 }
 
 void __hw_clock_source_irq_0(void)
