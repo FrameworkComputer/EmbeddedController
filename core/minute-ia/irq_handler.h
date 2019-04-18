@@ -29,9 +29,12 @@
 #endif
 
 #ifdef CONFIG_TASK_PROFILING
-#define task_start_irq_handler_call "call task_start_irq_handler\n"
+#define task_start_irq_handler_call(vector) \
+			"push $"#vector"\n"	\
+			"call task_start_irq_handler\n"	\
+			"addl $0x4, %esp\n"
 #else
-#define task_start_irq_handler_call
+#define task_start_irq_handler_call(vector)
 #endif
 
 
@@ -68,7 +71,7 @@ struct irq_data {
 			"movl %esp, %eax\n"                             \
 			"movl $stack_end, %esp\n"                       \
 			"push %eax\n"                                   \
-			task_start_irq_handler_call			\
+			task_start_irq_handler_call(vector)		\
 			"call "#routine"\n"				\
 			"push $0\n"					\
 			"push $0\n"					\

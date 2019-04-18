@@ -269,14 +269,14 @@ void __schedule(int desched, int resched)
 }
 
 #ifdef CONFIG_TASK_PROFILING
-void __keep task_start_irq_handler(void *unused)
+void __keep task_start_irq_handler(void *data)
 {
 	/*
 	 * Get time before checking depth, in case this handler is
 	 * pre-empted.
 	 */
 	uint32_t t = get_time().le.lo;
-	uint32_t vector = get_current_interrupt_vector();
+	uint32_t vector = (uint32_t)data;
 	int irq = VEC_TO_IRQ(vector);
 
 	/*

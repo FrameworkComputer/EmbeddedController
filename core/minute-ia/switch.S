@@ -9,12 +9,6 @@
 #include "registers.h"
 #include "task_defs.h"
 
-#ifdef CONFIG_TASK_PROFILING
-#define task_start_irq_handler_call call task_start_irq_handler
-#else
-#define task_start_irq_handler_call
-#endif
-
 .text
 
 .extern current_task
@@ -101,9 +95,11 @@ __switchto:
 	push %ecx
 	push %edx
 
-	# We don't push anything on the stack for start irq since the
-	# parameter is unused.
-	task_start_irq_handler_call
+#ifdef CONFIG_TASK_PROFILING
+	push $ISH_TS_VECTOR
+	call task_start_irq_handler
+	addl $0x4, %esp
+#endif
 
 	# Stack is already set up from previous pushes
 	call switch_handler
