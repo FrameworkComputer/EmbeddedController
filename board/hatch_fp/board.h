@@ -124,9 +124,13 @@
  * (shared_mem_init done too late).
  */
 #define CONFIG_MALLOC
-/* Special memory regions to store large arrays */
-#define FP_FRAME_SECTION    __SECTION(ahb4)
-#define FP_TEMPLATE_SECTION __SECTION(ahb)
+/*
+ * FP buffers are allocated in regular SRAM on STM32F4.
+ * TODO(b/124773209): Instead of defining to empty, #undef once all CLs that
+ * depend on FP_*_SECTION have landed. Also rename the variables to CONFIG_*.
+ */
+#define FP_FRAME_SECTION
+#define FP_TEMPLATE_SECTION
 
 #else /* SECTION_IS_RO */
 /* RO verifies the RW partition signature */
