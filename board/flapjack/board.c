@@ -50,6 +50,10 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+/* LCM_ID is embedded in SKU_ID bit[19-16] */
+#define SKU_ID_TO_LCM_ID(x)	(((x) >> PANEL_ID_BIT_POSITION) & 0xf)
+#define LCM_ID_TO_SKU_ID(x)	(((x) & 0xf) << PANEL_ID_BIT_POSITION)
+
 static const struct mv_to_id panels[] = {
 	{ PANEL_BOE_HIMAX8279D10P,	98 },
 	{ PANEL_BOE_HIMAX8279D8P,	280 },
@@ -58,7 +62,7 @@ BUILD_ASSERT(ARRAY_SIZE(panels) < PANEL_COUNT);
 
 uint16_t board_version;
 uint8_t oem;
-uint32_t sku;
+uint32_t sku = LCM_ID_TO_SKU_ID(PANEL_UNINITIALIZED);
 
 int board_read_id(enum adc_channel ch, const struct mv_to_id *table, int size)
 {
@@ -83,7 +87,7 @@ static void board_setup_panel(void)
 	int rv = 0;
 
 	if (board_version >= 3) {
-		switch ((sku >> PANEL_ID_BIT_POSITION) & 0xf) {
+		switch (SKU_ID_TO_LCM_ID(sku)) {
 		case PANEL_BOE_HIMAX8279D8P:
 			channel = 0xfa;
 			dim = 0xc8;
@@ -113,11 +117,36 @@ static void board_setup_panel(void)
 
 static enum panel_id board_get_panel_id(void)
 {
-	int id = board_read_id(ADC_LCM_ID, panels, ARRAY_SIZE(panels));
-	if (id == ADC_READ_ERROR)
+	enum panel_id id;
+	if (board_version < 3) {
 		id = PANEL_UNKNOWN;
+	} else {
+		id  = board_read_id(ADC_LCM_ID, panels, ARRAY_SIZE(panels));
+		if (id < PANEL_FIRST || PANEL_COUNT <= id)
+			id = PANEL_UNKNOWN;
+	}
 	CPRINTS("LCM ID: %d", id);
 	return id;
+}
+
+#define CBI_SKU_ID_SIZE 4
+
+int cbi_board_override(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size)
+{
+	switch (tag) {
+	case CBI_TAG_SKU_ID:
+		if (*size != CBI_SKU_ID_SIZE)
+			/* For old boards (board_version < 3) */
+			return EC_SUCCESS;
+		if (SKU_ID_TO_LCM_ID(sku) == PANEL_UNINITIALIZED)
+			/* Haven't read LCM_ID */
+			return EC_ERROR_BUSY;
+		buf[PANEL_ID_BIT_POSITION / 8] = SKU_ID_TO_LCM_ID(sku);
+		break;
+	default:
+		break;
+	}
+	return EC_SUCCESS;
 }
 
 static void cbi_init(void)
@@ -132,12 +161,10 @@ static void cbi_init(void)
 		oem = val;
 	CPRINTS("OEM: %d", oem);
 
+	sku = LCM_ID_TO_SKU_ID(board_get_panel_id());
+
 	if (cbi_get_sku_id(&val) == EC_SUCCESS)
 		sku = val;
-
-	if (board_version >= 3)
-		/* Embed LCM_ID in sku_id bit[19-16] */
-		sku |= ((board_get_panel_id() & 0xf) << PANEL_ID_BIT_POSITION);
 
 	CPRINTS("SKU: 0x%08x", sku);
 }

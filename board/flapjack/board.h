@@ -250,11 +250,13 @@ enum adc_channel {
 
 /* Refer to coreboot/src/mainboard/google/kukui/display.h */
 enum panel_id {
-	PANEL_KUKUI_INNOLUX = 0,
+	PANEL_FIRST = 0,
+	PANEL_KUKUI_INNOLUX = PANEL_FIRST,
 	PANEL_BOE_HIMAX8279D10P,
 	PANEL_BOE_HIMAX8279D8P,
 	PANEL_UNKNOWN,
 	PANEL_COUNT,
+	PANEL_UNINITIALIZED,
 };
 
 /* power signal definitions */
