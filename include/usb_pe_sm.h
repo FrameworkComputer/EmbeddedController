@@ -37,7 +37,7 @@ void pe_init(int port);
  * @param evt  system event, ie: PD_EVENT_RX
  * @param en   0 to disable the machine, 1 to enable the machine
  */
-void policy_engine(int port, int evt, int en);
+void usbc_policy_engine(int port, int evt, int en);
 
 /**
  * Informs the Policy Engine that a message was successfully sent

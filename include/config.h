@@ -3786,6 +3786,9 @@
 /* Type-C Charge Through VCONN Powered Device */
 #undef CONFIG_USB_TYPEC_CTVPD
 
+/* Type-C DRP with Accessory and Try.SRC */
+#undef CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
+
 /* USB Product ID. */
 #undef CONFIG_USB_PID
 

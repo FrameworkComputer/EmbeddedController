@@ -9,6 +9,9 @@
 #include "usb_sm.h"
 #include "usb_tc_sm.h"
 
+/* Port default state at startup */
+#define TC_DEFAULT_STATE(port) TC_UNATTACHED_SNK
+
 /**
  * This is the Type-C Port object that contains information needed to
  * implement a Charge Through VCONN Powered Device.

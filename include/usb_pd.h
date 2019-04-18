@@ -199,6 +199,8 @@ enum pd_rx_errors {
 #define PD_T_CHUNK_SENDER_RESPONSE (25*MSEC) /* 25ms */
 #define PD_T_CHUNK_SENDER_REQUEST  (25*MSEC) /* 25ms */
 #define PD_T_SWAP_SOURCE_START     (25*MSEC) /* Min of 20ms */
+#define PD_T_RP_VALUE_CHANGE       (20*MSEC) /* 20ms */
+#define PD_T_SRC_DISCONNECT        (15*MSEC) /* 15ms */
 
 /* number of edges and time window to detect CC line is not idle */
 #define PD_RX_TRANSITION_COUNT  3

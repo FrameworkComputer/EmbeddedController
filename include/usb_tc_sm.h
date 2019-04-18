@@ -11,37 +11,37 @@
 #include "usb_sm.h"
 
 enum typec_state_id {
-	DISABLED,
-	UNATTACHED_SNK,
-	ATTACH_WAIT_SNK,
-	ATTACHED_SNK,
+	TC_DISABLED,
+	TC_UNATTACHED_SNK,
+	TC_ATTACH_WAIT_SNK,
+	TC_ATTACHED_SNK,
 #if !defined(CONFIG_USB_TYPEC_VPD)
-	ERROR_RECOVERY,
-	UNATTACHED_SRC,
-	ATTACH_WAIT_SRC,
-	ATTACHED_SRC,
+	TC_ERROR_RECOVERY,
+	TC_UNATTACHED_SRC,
+	TC_ATTACH_WAIT_SRC,
+	TC_ATTACHED_SRC,
 #endif
 #if !defined(CONFIG_USB_TYPEC_CTVPD) && !defined(CONFIG_USB_TYPEC_VPD)
-	AUDIO_ACCESSORY,
-	ORIENTED_DEBUG_ACCESSORY_SRC,
-	UNORIENTED_DEBUG_ACCESSORY_SRC,
-	DEBUG_ACCESSORY_SNK,
-	TRY_SRC,
-	TRY_WAIT_SNK,
-	CTUNATTACHED_SNK,
-	CTATTACHED_SNK,
+	TC_AUDIO_ACCESSORY,
+	TC_ORIENTED_DEBUG_ACCESSORY_SRC,
+	TC_UNORIENTED_DEBUG_ACCESSORY_SRC,
+	TC_DEBUG_ACCESSORY_SNK,
+	TC_TRY_SRC,
+	TC_TRY_WAIT_SNK,
+	TC_CTUNATTACHED_SNK,
+	TC_CTATTACHED_SNK,
 #endif
 #if defined(CONFIG_USB_TYPEC_CTVPD)
-	CTTRY_SNK,
-	CTATTACHED_UNSUPPORTED,
-	CTATTACH_WAIT_UNSUPPORTED,
-	CTUNATTACHED_UNSUPPORTED,
-	CTUNATTACHED_VPD,
-	CTATTACH_WAIT_VPD,
-	CTATTACHED_VPD,
-	CTDISABLED_VPD,
-	TRY_SNK,
-	TRY_WAIT_SRC,
+	TC_CTTRY_SNK,
+	TC_CTATTACHED_UNSUPPORTED,
+	TC_CTATTACH_WAIT_UNSUPPORTED,
+	TC_CTUNATTACHED_UNSUPPORTED,
+	TC_CTUNATTACHED_VPD,
+	TC_CTATTACH_WAIT_VPD,
+	TC_CTATTACHED_VPD,
+	TC_CTDISABLED_VPD,
+	TC_TRY_SNK,
+	TC_TRY_WAIT_SRC,
 #endif
 	/* Number of states. Not an actual state. */
 	TC_STATE_COUNT,
@@ -99,6 +99,24 @@ int tc_get_data_role(int port);
 int tc_get_power_role(int port);
 
 /**
+ * Set the power role
+ *
+ * @param port USB-C port number
+ * @param role power role
+ */
+void tc_set_power_role(int port, int role);
+
+/**
+ * Sets the USB Mux depending on current data role
+ *   Mux is connected except when:
+ *     1) PD is disconnected
+ *     2) Current data role is UFP and we only support DFP
+ *
+ *  @param port USB-C port number
+ */
+void set_usb_mux_with_current_data_role(int port);
+
+/**
  * Set loop timeout value
  *
  * @param port USB-C port number
@@ -136,8 +154,12 @@ void set_polarity(int port, int polarity);
  * TypeC state machine
  *
  * @param port USB-C port number
+ * @param sm_state initial state of the state machine. Must be
+ *			UNATTACHED_SNK or UNATTACHED_SRC, any other
+ *			state id value will be interpreted as
+ *			UNATTACHED_SNK.
  */
-void tc_state_init(int port);
+void tc_state_init(int port, enum typec_state_id start_state);
 
 /**
  * Called by the state machine framework to handle events

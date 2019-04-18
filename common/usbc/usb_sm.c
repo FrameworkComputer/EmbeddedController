@@ -10,7 +10,7 @@
 #include "util.h"
 #include "console.h"
 
-void init_state(int port, struct sm_obj *obj, sm_state target)
+void sm_init_state(int port, struct sm_obj *obj, sm_state target)
 {
 #if (CONFIG_SM_NESTING_NUM > 0)
 	int i;
@@ -30,13 +30,13 @@ void init_state(int port, struct sm_obj *obj, sm_state target)
 	 * has no super state
 	 */
 	tmp_super[CONFIG_SM_NESTING_NUM - 1] =
-			(sm_state)(uintptr_t)target(port, SUPER_SIG);
+			(sm_state)(uintptr_t)target(port, SM_SUPER_SIG);
 
 	/* Get all super states of the target */
 	for (i = CONFIG_SM_NESTING_NUM - 1; i > 0; i--) {
 		if (tmp_super[i] != NULL)
 			tmp_super[i - 1] =
-			(sm_state)(uintptr_t)tmp_super[i](port, SUPER_SIG);
+			(sm_state)(uintptr_t)tmp_super[i](port, SM_SUPER_SIG);
 		else
 			tmp_super[i - 1] = NULL;
 	}
@@ -44,14 +44,14 @@ void init_state(int port, struct sm_obj *obj, sm_state target)
 	/* Execute all super state entry actions in forward order */
 	for (i = 0; i < CONFIG_SM_NESTING_NUM; i++)
 		if (tmp_super[i] != NULL)
-			tmp_super[i](port, ENTRY_SIG);
+			tmp_super[i](port, SM_ENTRY_SIG);
 #endif
 
 	/* Now execute the target entry action */
-	target(port, ENTRY_SIG);
+	target(port, SM_ENTRY_SIG);
 }
 
-int set_state(int port, struct sm_obj *obj, sm_state target)
+int sm_set_state(int port, struct sm_obj *obj, sm_state target)
 {
 #if (CONFIG_SM_NESTING_NUM > 0)
 	int i;
@@ -65,16 +65,16 @@ int set_state(int port, struct sm_obj *obj, sm_state target)
 	/* Execute all exit actions is reverse order */
 
 	/* Get target's super state */
-	target_super = (sm_state)(uintptr_t)target(port, SUPER_SIG);
+	target_super = (sm_state)(uintptr_t)target(port, SM_SUPER_SIG);
 	tmp_super[0] = obj->task_state;
 
 	do {
 		/* Execute exit action */
-		tmp_super[0](port, EXIT_SIG);
+		tmp_super[0](port, SM_EXIT_SIG);
 
 		/* Get super state */
 		tmp_super[0] =
-			(sm_state)(uintptr_t)tmp_super[0](port, SUPER_SIG);
+			(sm_state)(uintptr_t)tmp_super[0](port, SM_SUPER_SIG);
 		/*
 		 * No need to execute a super state's exit action that has
 		 * shared ancestry with the target.
@@ -87,13 +87,13 @@ int set_state(int port, struct sm_obj *obj, sm_state target)
 			}
 
 			/* Get target state next super state if it exists */
-			super = (sm_state)(uintptr_t)super(port, SUPER_SIG);
+			super = (sm_state)(uintptr_t)super(port, SM_SUPER_SIG);
 		}
 	} while (tmp_super[0] != NULL);
 
 	/* All done executing the exit actions */
 #else
-	obj->task_state(port, EXIT_SIG);
+	obj->task_state(port, SM_EXIT_SIG);
 #endif
 	/* update the state variables */
 	obj->last_state = obj->task_state;
@@ -103,19 +103,19 @@ int set_state(int port, struct sm_obj *obj, sm_state target)
 	/* Prepare to execute all entry actions of the target's super states */
 
 	tmp_super[CONFIG_SM_NESTING_NUM - 1] =
-				(sm_state)(uintptr_t)target(port, SUPER_SIG);
+				(sm_state)(uintptr_t)target(port, SM_SUPER_SIG);
 
 	/* Get all super states of the target */
 	for (i = CONFIG_SM_NESTING_NUM - 1; i > 0; i--) {
 		if (tmp_super[i] != NULL)
 			tmp_super[i - 1] =
-			(sm_state)(uintptr_t)tmp_super[i](port, SUPER_SIG);
+			(sm_state)(uintptr_t)tmp_super[i](port, SM_SUPER_SIG);
 		else
 			tmp_super[i - 1] = NULL;
 	}
 
 	/* Get super state of last state */
-	last_super = (sm_state)(uintptr_t)obj->last_state(port, SUPER_SIG);
+	last_super = (sm_state)(uintptr_t)obj->last_state(port, SM_SUPER_SIG);
 
 	/* Execute all super state entry actions in forward order */
 	for (i = 0; i < CONFIG_SM_NESTING_NUM; i++) {
@@ -137,22 +137,22 @@ int set_state(int port, struct sm_obj *obj, sm_state target)
 			}
 
 			/* Get last state's next super state if it exists */
-			super = (sm_state)(uintptr_t)super(port, SUPER_SIG);
+			super = (sm_state)(uintptr_t)super(port, SM_SUPER_SIG);
 		}
 
 		/* Execute super state's entry */
 		if (!no_execute)
-			tmp_super[i](port, ENTRY_SIG);
+			tmp_super[i](port, SM_ENTRY_SIG);
 	}
 #endif
 
 	/* Now execute the target entry action */
-	target(port, ENTRY_SIG);
+	target(port, SM_ENTRY_SIG);
 
 	return 0;
 }
 
-void exe_state(int port, struct sm_obj *obj, enum signal sig)
+void sm_run_state_machine(int port, struct sm_obj *obj, enum sm_signal sig)
 {
 #if (CONFIG_SM_NESTING_NUM > 0)
 	sm_state state = obj->task_state;
@@ -165,13 +165,13 @@ void exe_state(int port, struct sm_obj *obj, enum signal sig)
 #endif
 }
 
-unsigned int do_nothing_exit(int port)
+int sm_do_nothing(int port)
 {
 	return 0;
 }
 
-unsigned int get_super_state(int port)
+int sm_get_super_state(int port)
 {
-	return RUN_SUPER;
+	return SM_RUN_SUPER;
 }
 

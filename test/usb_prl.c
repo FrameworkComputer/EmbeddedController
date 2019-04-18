@@ -1255,7 +1255,7 @@ int pd_task(void *u)
 		evt = task_wait_event(-1);
 
 		tcpc_run(port, evt);
-		protocol_layer(port, evt, pd_port[port].pd_enable);
+		usbc_protocol_layer(port, evt, pd_port[port].pd_enable);
 	}
 
 	return EC_SUCCESS;

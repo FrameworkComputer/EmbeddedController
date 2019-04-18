@@ -130,7 +130,7 @@ enum sm_local_state prl_get_local_state(int port);
  * @param evt  system event, ie: PD_EVENT_RX
  * @param en   0 to disable the machine, 1 to enable the machine
  */
-void protocol_layer(int port, int evt, int en);
+void usbc_protocol_layer(int port, int evt, int en);
 
 /**
  * Set the PD revision

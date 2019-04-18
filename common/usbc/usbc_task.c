@@ -29,6 +29,7 @@
 #include "usb_prl_sm.h"
 #include "usb_sm.h"
 #include "usb_tc_sm.h"
+#include "usbc_ppc.h"
 #include "version.h"
 
 /* Include USB Type-C State Machine Header File */
@@ -36,6 +37,8 @@
 #include "usb_tc_ctvpd_sm.h"
 #elif defined(CONFIG_USB_TYPEC_VPD)
 #include "usb_tc_vpd_sm.h"
+#elif defined(CONFIG_USB_TYPEC_DRP_ACC_TRYSRC)
+#include "usb_tc_drp_acc_trysrc_sm.h"
 #else
 #error "A USB Type-C State Machine must be defined."
 #endif
@@ -98,6 +101,11 @@ int tc_get_data_role(int port)
 	return tc[port].data_role;
 }
 
+void tc_set_power_role(int port, int role)
+{
+	tc[port].power_role = role;
+}
+
 void tc_set_timeout(int port, uint64_t timeout)
 {
 	tc[port].evt_timeout = timeout;
@@ -139,16 +147,125 @@ int tc_restart_tcpc(int port)
 void set_polarity(int port, int polarity)
 {
 	tcpm_set_polarity(port, polarity);
-#ifdef CONFIG_USBC_PPC_POLARITY
-	ppc_set_polarity(port, polarity);
-#endif /* defined(CONFIG_USBC_PPC_POLARITY) */
+
+	if (IS_ENABLED(CONFIG_USBC_PPC_POLARITY))
+		ppc_set_polarity(port, polarity);
 }
+
+void set_usb_mux_with_current_data_role(int port)
+{
+#ifdef CONFIG_USBC_SS_MUX
+	/*
+	 * If the SoC is down, then we disconnect the MUX to save power since
+	 * no one cares about the data lines.
+	 */
+#ifdef CONFIG_POWER_COMMON
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
+		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
+			tc[port].polarity);
+		return;
+	}
+#endif /* CONFIG_POWER_COMMON */
+
+	/*
+	 * When PD stack is disconnected, then mux should be disconnected, which
+	 * is also what happens in the set_state disconnection code. Once the
+	 * PD state machine progresses out of disconnect, the MUX state will
+	 * be set correctly again.
+	 */
+	if (!pd_is_connected(port))
+		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
+			tc[port].polarity);
+	/*
+	 * If new data role isn't DFP and we only support DFP, also disconnect.
+	 */
+	else if (IS_ENABLED(CONFIG_USBC_SS_MUX_DFP_ONLY) &&
+			tc[port].data_role != PD_ROLE_DFP)
+		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
+			tc[port].polarity);
+	/*
+	 * Otherwise connect mux since we are in S3+
+	 */
+	else
+		usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
+			tc[port].polarity);
+#endif /* CONFIG_USBC_SS_MUX */
+}
+
+/* High-priority interrupt tasks implementations */
+#if     defined(HAS_TASK_PD_INT_C0) || defined(HAS_TASK_PD_INT_C1) || \
+	defined(HAS_TASK_PD_INT_C2)
+
+/* Used to conditionally compile code in main pd task. */
+#define HAS_DEFFERED_INTERRUPT_HANDLER
+
+/* Events for pd_interrupt_handler_task */
+#define PD_PROCESS_INTERRUPT  (1<<0)
+
+static uint8_t pd_int_task_id[CONFIG_USB_PD_PORT_COUNT];
+
+void schedule_deferred_pd_interrupt(const int port)
+{
+	task_set_event(pd_int_task_id[port], PD_PROCESS_INTERRUPT, 0);
+}
+
+/*
+ * Main task entry point that handles PD interrupts for a single port
+ *
+ * @param p The PD port number for which to handle interrupts (pointer is
+ * reinterpreted as an integer directly).
+ */
+void pd_interrupt_handler_task(void *p)
+{
+	const int port = (int) p;
+	const int port_mask = (PD_STATUS_TCPC_ALERT_0 << port);
+
+	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
+
+	pd_int_task_id[port] = task_get_current();
+
+	while (1) {
+		const int evt = task_wait_event(-1);
+
+		if (evt & PD_PROCESS_INTERRUPT) {
+			/*
+			 * While the interrupt signal is asserted; we have more
+			 * work to do. This effectively makes the interrupt a
+			 * level-interrupt instead of an edge-interrupt without
+			 * having to enable/disable a real level-interrupt in
+			 * multiple locations.
+			 *
+			 * Also, if the port is disabled do not process
+			 * interrupts. Upon existing suspend, we schedule a
+			 * PD_PROCESS_INTERRUPT to check if we missed anything.
+			 */
+			while ((tcpc_get_alert_status() & port_mask) &&
+					pd_is_port_enabled(port))
+				tcpc_alert(port);
+		}
+	}
+}
+#endif /* HAS_TASK_PD_INT_C0 || HAS_TASK_PD_INT_C1 || HAS_TASK_PD_INT_C2 */
 
 void pd_task(void *u)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
 
-	tc_state_init(port);
+	tc_state_init(port, TC_DEFAULT_STATE(port));
+
+	if (IS_ENABLED(CONFIG_USBC_PPC))
+		ppc_init(port);
+
+	/*
+	 * Since most boards configure the TCPC interrupt as edge
+	 * and it is possible that the interrupt line was asserted between init
+	 * and calling set_state, we need to process any pending interrupts now.
+	 * Otherwise future interrupts will never fire because another edge
+	 * never happens. Note this needs to happen after set_state() is called.
+	 */
+	if (IS_ENABLED(HAS_DEFFERED_INTERRUPT_HANDLER))
+		schedule_deferred_pd_interrupt(port);
+
 
 	while (1) {
 		/* wait for next event/packet or timeout expiration */
@@ -167,15 +284,15 @@ void pd_task(void *u)
 
 #ifdef CONFIG_USB_PE_SM
 		/* run policy engine state machine */
-		policy_engine(port, tc[port].evt, tc[port].pd_enable);
-#endif /* CONFIG_USB_PE_SM */
+		usbc_policy_engine(port, tc[port].evt, tc[port].pd_enable);
+#endif
 
 #ifdef CONFIG_USB_PRL_SM
 		/* run protocol state machine */
-		protocol_layer(port, tc[port].evt, tc[port].pd_enable);
-#endif /* CONFIG_USB_PRL_SM */
+		usbc_protocol_layer(port, tc[port].evt, tc[port].pd_enable);
+#endif
 
-		/* run state machine */
-		exe_state(port, TC_OBJ(port), RUN_SIG);
+		/* run typec state machine */
+		sm_run_state_machine(port, TC_OBJ(port), SM_RUN_SIG);
 	}
 }
