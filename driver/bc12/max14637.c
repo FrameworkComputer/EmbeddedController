@@ -29,6 +29,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+#if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
 /**
  * Returns true if the charger detect pin is activated.
  *
@@ -41,6 +42,7 @@ static int is_chg_det_activated(const struct max14637_config_t * const cfg)
 	return !!gpio_get_level(cfg->chg_det_pin) ^
 		!!(cfg->flags & MAX14637_FLAGS_CHG_DET_ACTIVE_LOW);
 }
+#endif
 
 /**
  * Activates the Chip Enable GPIO based on the enabled value.
