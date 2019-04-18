@@ -45,6 +45,11 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+/* GPIO to enable/disable the USB Type-A port. */
+const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
+	GPIO_EN_USB_A_5V,
+};
+
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {

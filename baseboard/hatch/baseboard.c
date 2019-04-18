@@ -170,13 +170,7 @@ const struct pi3usb2901_config_t pi3usb2901_bc12_chips[] = {
 	},
 };
 
-/* GPIO to enable/disable the USB Type-A port. */
-const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
-	GPIO_EN_USB_A_5V,
-};
-
 /* Power Delivery and charging functions */
-
 void baseboard_tcpc_init(void)
 {
 	/* Enable PPC interrupts. */
