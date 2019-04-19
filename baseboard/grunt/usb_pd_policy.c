@@ -238,32 +238,14 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 static int dp_flags[CONFIG_USB_PD_PORT_COUNT];
 static uint32_t dp_status[CONFIG_USB_PD_PORT_COUNT];
 
-static void svdm_safe_dp_mode(int port)
+static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 {
-	const char *dp_str, *usb_str;
-
-	/* make DP interface safe until configure */
 	dp_flags[port] = 0;
 	dp_status[port] = 0;
 
-	/* Don't disconnect USB when initializing DP. This avoids an unnecessary
-	 * disconnect if the result of DP negotiation is DOCK.
-	 */
-	if (usb_mux_get(port, &dp_str, &usb_str) && usb_str)
-		usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
-			    pd_get_polarity(port));
-	else
-		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_CONNECT,
-			    pd_get_polarity(port));
-}
-
-static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
-{
 	/* Only enter mode if device is DFP_D capable */
-	if (mode_caps & MODE_DP_SNK) {
-		svdm_safe_dp_mode(port);
+	if (mode_caps & MODE_DP_SNK)
 		return 0;
-	}
 
 	return -1;
 }
@@ -285,27 +267,42 @@ static int svdm_dp_status(int port, uint32_t *payload)
 	return 2;
 };
 
+static enum typec_mux svdm_dp_mux_mode(int port)
+{
+	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
+	int pin_mode = pd_dfp_dp_get_pin_mode(port, dp_status[port]);
+	/*
+	 * Multi-function operation is only allowed if that pin config is
+	 * supported.
+	 */
+	if ((pin_mode & MODE_DP_PIN_MF_MASK) && mf_pref)
+		return TYPEC_MUX_DOCK;
+	else
+		return TYPEC_MUX_DP;
+}
+
 static int svdm_dp_config(int port, uint32_t *payload)
 {
 	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
 	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
 	int pin_mode = pd_dfp_dp_get_pin_mode(port, dp_status[port]);
-	enum typec_mux mux_mode;
+	enum typec_mux mux_mode = svdm_dp_mux_mode(port);
 
 	if (!pin_mode)
 		return 0;
 
-	/*
-	 * Multi-function operation is only allowed if that pin config is
-	 * supported.
-	 */
-	mux_mode = ((pin_mode & MODE_DP_PIN_MF_MASK) && mf_pref) ?
-		TYPEC_MUX_DOCK : TYPEC_MUX_DP;
 	CPRINTS("pin_mode: %x, mf: %d, mux: %d", pin_mode, mf_pref, mux_mode);
 
-	/* Connect the SBU and USB lines to the connector. */
-	ppc_set_sbu(port, 1);
-	usb_mux_set(port, mux_mode, USB_SWITCH_CONNECT, pd_get_polarity(port));
+	/*
+	 * Place the USB Type-C pins that are to be re-configured to DisplayPort
+	 * Configuration into the Safe state. For TYPEC_MUX_DOCK, the superspeed
+	 * signals can remain connected. For TYPEC_MUX_DP, disconnect the
+	 * superspeed signals here, before the pins are re-configured to
+	 * DisplayPort (in svdm_dp_post_config, when we receive the config ack).
+	 */
+	if (mux_mode == TYPEC_MUX_DP)
+		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_CONNECT,
+			    pd_get_polarity(port));
 
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));
@@ -325,6 +322,11 @@ static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_COUNT];
 static void svdm_dp_post_config(int port)
 {
 	const struct usb_mux * const mux = &usb_muxes[port];
+
+	/* Connect the SBU and USB lines to the connector. */
+	ppc_set_sbu(port, 1);
+	usb_mux_set(port, svdm_dp_mux_mode(port), USB_SWITCH_CONNECT,
+		    pd_get_polarity(port));
 
 	dp_flags[port] |= DP_FLAGS_DP_ON;
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
@@ -388,7 +390,11 @@ static void svdm_exit_dp_mode(int port)
 {
 	const struct usb_mux * const mux = &usb_muxes[port];
 
-	svdm_safe_dp_mode(port);
+	dp_flags[port] = 0;
+	dp_status[port] = 0;
+
+	usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_CONNECT,
+		    pd_get_polarity(port));
 	gpio_set_level(PORT_TO_HPD(port), 0);
 	mux->hpd_update(port, 0, 0);
 }
