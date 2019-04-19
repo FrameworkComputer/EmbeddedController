@@ -46,8 +46,25 @@
 /* OPT3001 ALS */
 #define CONFIG_ALS
 #define ALS_COUNT 1
-#define CONFIG_ALS_OPT3001
-#define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
+#define CONFIG_ALS_BH1730
+/* Parameter to calculate LUX on Kohaku */
+/*
+ * TODO (b/130835790): These values are from Caroline. Do they need to be
+ * changed for Kohaku?
+ */
+#define CONFIG_ALS_BH1730_LUXTH_PARAMS
+#define BH1730_LUXTH1_1K                270
+#define BH1730_LUXTH1_D0_1K             4000
+#define BH1730_LUXTH1_D1_1K             6364
+#define BH1730_LUXTH2_1K                740
+#define BH1730_LUXTH2_D0_1K             3088
+#define BH1730_LUXTH2_D1_1K             3010
+#define BH1730_LUXTH3_1K                1030
+#define BH1730_LUXTH3_D0_1K             2056
+#define BH1730_LUXTH3_D1_1K             1608
+#define BH1730_LUXTH4_1K                3670
+#define BH1730_LUXTH4_D0_1K             550
+#define BH1730_LUXTH4_D1_1K             149
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_TCPM_PS8751
