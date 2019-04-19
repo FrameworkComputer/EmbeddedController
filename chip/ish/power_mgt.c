@@ -35,6 +35,16 @@ extern uint32_t __aon_ro_end;
 extern uint32_t __aon_rw_start;
 extern uint32_t __aon_rw_end;
 
+/**
+ * on ISH, uart interrupt can only wakeup ISH from low power state via
+ * CTS pin, but most ISH platforms only have Rx and Tx pins, no CTS pin
+ * exposed, so, we need block ISH enter low power state for a while when
+ * console is in use.
+ * fixed amount of time to keep the console in use flag true after boot in
+ * order to give a permanent window in which the low speed clock is not used.
+ */
+#define CONSOLE_IN_USE_ON_BOOT_TIME (15*SECOND)
+
 /* power management internal context data structure */
 struct pm_context {
 	/* aontask image valid flag */
@@ -43,12 +53,17 @@ struct pm_context {
 	struct ish_aon_share *aon_share;
 	/* TSS segment selector for task switching */
 	int aon_tss_selector[2];
+	/* console expire time */
+	timestamp_t console_expire_time;
+	/* console in use timeout */
+	int console_in_use_timeout_sec;
 } __packed;
 
 static struct pm_context pm_ctx = {
 	.aon_valid = 0,
 	/* aon shared data located in the start of aon memory */
-	.aon_share = (struct ish_aon_share *)CONFIG_ISH_AON_SRAM_BASE_START
+	.aon_share = (struct ish_aon_share *)CONFIG_ISH_AON_SRAM_BASE_START,
+	.console_in_use_timeout_sec = 60
 };
 
 /* D0ix statistics data, including each state's count and total stay time */
@@ -412,11 +427,22 @@ static void enter_d0i3(void)
 
 #endif
 
-static int d0ix_decide(uint32_t idle_us)
+static int d0ix_decide(timestamp_t cur_time, uint32_t idle_us)
 {
 	int pm_state = ISH_PM_STATE_D0I0;
 
 	if (DEEP_SLEEP_ALLOWED) {
+
+		/* check if the console use has expired. */
+		if (sleep_mask & SLEEP_MASK_CONSOLE) {
+			if (cur_time.val > pm_ctx.console_expire_time.val) {
+				enable_sleep(SLEEP_MASK_CONSOLE);
+				ccprints("Disabling console in deep sleep");
+			} else {
+				return pm_state;
+			}
+		}
+
 #ifdef CONFIG_ISH_PM_D0I1
 		pm_state = ISH_PM_STATE_D0I1;
 #endif
@@ -430,16 +456,17 @@ static int d0ix_decide(uint32_t idle_us)
 		if (idle_us >= CONFIG_ISH_D0I3_MIN_USEC && pm_ctx.aon_valid)
 			pm_state = ISH_PM_STATE_D0I3;
 #endif
+
 	}
 
 	return pm_state;
 }
 
-static void pm_process(uint32_t idle_us)
+static void pm_process(timestamp_t cur_time, uint32_t idle_us)
 {
 	int decide;
 
-	decide = d0ix_decide(idle_us);
+	decide = d0ix_decide(cur_time, idle_us);
 
 #ifdef CONFIG_WATCHDOG
 	watchdog_disable();
@@ -545,11 +572,19 @@ void __idle(void)
 	timestamp_t t0;
 	int next_delay = 0;
 
+	/**
+	 * initialize console in use to true and specify the console expire
+	 * time in order to give a fixed window on boot
+	 */
+	disable_sleep(SLEEP_MASK_CONSOLE);
+	pm_ctx.console_expire_time.val = get_time().val +
+					 CONSOLE_IN_USE_ON_BOOT_TIME;
+
 	while (1) {
 		t0 = get_time();
 		next_delay = __hw_clock_event_get() - t0.le.lo;
 
-		pm_process(next_delay);
+		pm_process(t0, next_delay);
 	}
 }
 
@@ -724,3 +759,13 @@ DECLARE_IRQ(ISH_BME_RISE_IRQ, bme_rise_isr);
 DECLARE_IRQ(ISH_BME_FALL_IRQ, bme_fall_isr);
 
 #endif
+
+void ish_pm_refresh_console_in_use(void)
+{
+	disable_sleep(SLEEP_MASK_CONSOLE);
+
+	/* Set console in use expire time. */
+	pm_ctx.console_expire_time = get_time();
+	pm_ctx.console_expire_time.val +=
+				pm_ctx.console_in_use_timeout_sec * SECOND;
+}

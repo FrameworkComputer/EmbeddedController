@@ -69,4 +69,9 @@ void ish_pm_init(void);
  */
 void ish_pm_reset(void) __attribute__((noreturn));
 
+/**
+ * notify the power management module that the UART for the console is in use.
+ */
+void ish_pm_refresh_console_in_use(void);
+
 #endif /* __CROS_EC_POWER_MGT_H */
