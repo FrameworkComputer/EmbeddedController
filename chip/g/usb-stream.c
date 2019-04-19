@@ -120,7 +120,7 @@ static inline int tx_fifo_is_ready(struct usb_stream_config const *config)
 	uint32_t status;
 	struct g_usb_desc *in_desc = config->in_desc;
 
-	if (!(in_desc->flags & DOEPDMA_LAST))
+	if (!(in_desc->flags & DIEPDMA_LAST))
 		++in_desc;
 
 	status = in_desc->flags & DIEPDMA_BS_MASK;
@@ -132,12 +132,6 @@ void tx_stream_handler(struct usb_stream_config const *config)
 {
 	size_t count;
 	struct queue const *tx_q = config->consumer.queue;
-
-	if (!*config->is_reset)
-		return;
-
-	if (!tx_fifo_is_ready(config))
-		return;
 
 	/* handle the completion of the previous transfer, if there was any. */
 	count = *(config->tx_handled);
@@ -194,21 +188,30 @@ void tx_stream_handler(struct usb_stream_config const *config)
 		 * descriptor as well if it is needed.
 		 */
 		usb_enable_tx(config, len);
+	} else {
+		/* USB TX transfer is not active. */
+		*config->tx_in_progress = 0;
 	}
 }
 
 /* Tx/IN interrupt handler */
 void usb_stream_tx(struct usb_stream_config const *config)
 {
-	/* Wake up the Tx FIFO handler */
-	hook_call_deferred(config->deferred_tx, 0);
-
-	/* clear the Tx/IN interrupts */
+	/* Clear the Tx/IN interrupts */
 	GR_USB_DIEPINT(config->endpoint) = 0xffffffff;
+
+	/* Call the Tx FIFO handler */
+	tx_stream_handler(config);
 }
 
 void usb_stream_reset(struct usb_stream_config const *config)
 {
+	/*
+	 * Mark USB TX transfer is in progress, because it shall be so at
+	 * the end of this function to flush any queued data.
+	 */
+	*config->tx_in_progress = 1;
+
 	config->out_desc->flags = DOEPDMA_RXBYTES(config->rx_size) |
 				  DOEPDMA_LAST | DOEPDMA_BS_HOST_RDY |
 				  DOEPDMA_IOC;
@@ -235,10 +238,8 @@ void usb_stream_reset(struct usb_stream_config const *config)
 	GR_USB_DAINTMSK |= DAINT_INEP(config->endpoint) |
 			   DAINT_OUTEP(config->endpoint);
 
-	*config->is_reset = 1;
-
 	/* Flush any queued data */
-	hook_call_deferred(config->deferred_tx, 0);
+	tx_stream_handler(config);
 	hook_call_deferred(config->deferred_rx, 0);
 }
 
@@ -250,12 +251,28 @@ static void usb_read(struct producer const *producer, size_t count)
 	hook_call_deferred(config->deferred_rx, 0);
 }
 
+/*
+ * NOTE: usb_written() should be called by IRQ handlers, so that
+ *       it can be non-preemptive.
+ */
 static void usb_written(struct consumer const *consumer, size_t count)
 {
 	struct usb_stream_config const *config =
 		DOWNCAST(consumer, struct usb_stream_config, consumer);
 
-	hook_call_deferred(config->deferred_tx, 0);
+	/* USB TX transfer is active. No need to activate it. */
+	if (*config->tx_in_progress)
+		return;
+
+	/*
+	 * if USB Endpoint has not been initialized nor in ready status,
+	 * then return.
+	 */
+	if (!tx_fifo_is_ready(config))
+		return;
+
+	*config->tx_in_progress = 1;
+	tx_stream_handler(config);
 }
 
 struct producer_ops const usb_stream_producer_ops = {
