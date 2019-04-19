@@ -17,7 +17,7 @@ CHIP_FAMILY:=npcx5
 endif
 
 # Required chip modules
-chip-y=header.o clock.o gpio.o hwtimer.o system.o uart.o uartn.o
+chip-y=header.o clock.o gpio.o hwtimer.o system.o uart.o uartn.o sib.o
 chip-y+=system-$(CHIP_FAMILY).o
 
 # Optional chip modules

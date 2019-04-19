@@ -30,6 +30,7 @@
 #define CONFIG_VBOOT_HASH
 #define CONFIG_PWM_KBLIGHT
 #define CONFIG_BOARD_VERSION_GPIO
+#define CONFIG_ENABLE_JTAG_SELECTION
 
 /* Optional features for test commands */
 #define CONFIG_CMD_TASKREADY

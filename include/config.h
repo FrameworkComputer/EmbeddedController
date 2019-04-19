@@ -2178,6 +2178,15 @@
 /* To define it, if I2C channel C and PECI used at the same time. */
 #undef CONFIG_IT83XX_SMCLK2_ON_GPC7
 
+/*
+ * If this is not defined, the firmware will revert the JTAG selection
+ * triggered by the hardware strap pin.
+ * Un-define this flag by default for all real platforms. see (b/129908668)
+ * If some boards (Ex:EVB) require JTAG function, they can define it in
+ * their board.h
+ */
+#undef CONFIG_ENABLE_JTAG_SELECTION
+
 /*****************************************************************************/
 /* Keyboard config */
 

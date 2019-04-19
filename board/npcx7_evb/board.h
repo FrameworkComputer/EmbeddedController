@@ -31,6 +31,7 @@
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS /* Use VW signals instead of GPIOs */
 
 /* Optional features */
+#define CONFIG_ENABLE_JTAG_SELECTION
 #define CONFIG_BOARD_VERSION_GPIO
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_I2C_MASTER
