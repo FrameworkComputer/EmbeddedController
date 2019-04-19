@@ -119,6 +119,8 @@
 #define IT83XX_INTC_GROUP_21_22_SUPPORT
 /* Enable detect type-c plug in interrupt. */
 #define IT83XX_INTC_PLUG_IN_SUPPORT
+/* Chip Dx transmit status bit of PD register is different from Bx. */
+#define IT83XX_PD_TX_ERROR_STATUS_BIT5
 #else
 #error "Unsupported chip variant!"
 #endif

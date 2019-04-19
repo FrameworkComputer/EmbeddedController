@@ -200,6 +200,9 @@ static enum tcpc_transmit_complete it83xx_tx_data(
 			 */
 			if (USBPD_IS_TX_DISCARD(port))
 				continue;
+			/*
+			 * Or port partner doesn't respond GoodCRC
+			 */
 			else
 				return TCPC_TX_COMPLETE_FAILED;
 		} else {
