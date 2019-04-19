@@ -57,8 +57,10 @@
 #define LCM_ID_TO_SKU_ID(x)	(((x) & 0xf) << PANEL_ID_BIT_POSITION)
 
 static const struct mv_to_id panels[] = {
-	{ PANEL_BOE_HIMAX8279D10P,	98 },
-	{ PANEL_BOE_HIMAX8279D8P,	280 },
+	{ PANEL_BOE_TV101WUM_NG0,	74 },
+	{ PANEL_BOE_TV080WUM_NG0,	212 },
+	{ PANEL_INX_OTA7290D10P,	1191 },
+	{ PANEL_AUO_NT51021D8P,		1027 },
 };
 BUILD_ASSERT(ARRAY_SIZE(panels) < PANEL_COUNT);
 BUILD_ASSERT(PANEL_COUNT <= PANEL_UNINITIALIZED);
@@ -91,11 +93,13 @@ static void board_setup_panel(void)
 
 	if (board_version >= 3) {
 		switch (SKU_ID_TO_LCM_ID(sku)) {
-		case PANEL_BOE_HIMAX8279D8P:
+		case PANEL_BOE_TV080WUM_NG0:
+		case PANEL_AUO_NT51021D8P:
 			channel = 0xfa;
 			dim = 0xc8;
 			break;
-		case PANEL_BOE_HIMAX8279D10P:
+		case PANEL_BOE_TV101WUM_NG0:
+		case PANEL_INX_OTA7290D10P:
 			channel = 0xfe;
 			dim = 0xc4;
 			break;
