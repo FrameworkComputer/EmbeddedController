@@ -50,22 +50,18 @@ uint32_t chip_read_reset_flags(void)
 	return 0;
 }
 
-void _system_reset(int flags, int wake_from_hibernate)
-{
-#ifdef CONFIG_LOW_POWER_IDLE
-	/**
-	 * ish_pm_reset() do more (poweroff main SRAM etc) than
-	 * ish_mia_reset() which just reset the ISH minute-ia cpu core
-	 */
-	ish_pm_reset();
-#else
-	ish_mia_reset();
-#endif
-}
-
 void system_reset(int flags)
 {
-	_system_reset(flags, 0);
+	/*
+	 * ish_pm_reset() does more (poweroff main SRAM, etc) than
+	 * ish_mia_reset() which just resets the ISH minute-ia cpu core
+	 */
+
+	if (!IS_ENABLED(CONFIG_LOW_POWER_IDLE) || flags & SYSTEM_RESET_HARD)
+		ish_mia_reset();
+	else
+		ish_pm_reset();
+
 	while(1)
 		;
 }

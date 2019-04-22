@@ -93,6 +93,14 @@ __attribute__ ((noreturn)) void __keep exception_panic(
 	uint32_t cs,
 	uint32_t eflags)
 {
+	/*
+	 * If a panic were to occur during the reset procedure, we want
+	 * to make sure that this panic will certainly cause a hard
+	 * reset, rather than aontaskfw reset. Track if paniced once
+	 * already.
+	 */
+	static int panic_once;
+
 	register uint32_t eax asm("eax");
 	register uint32_t ebx asm("ebx");
 	register uint32_t ecx asm("ecx");
@@ -121,10 +129,18 @@ __attribute__ ((noreturn)) void __keep exception_panic(
 	PANIC_DATA_PTR->magic = PANIC_DATA_MAGIC;
 
 	/* Display the panic and reset */
+	if (panic_once)
+		panic_printf("\nWhile resetting from a panic, another panic"
+			     " occurred!");
 	panic_data_print(PANIC_DATA_PTR);
-	system_reset(SYSTEM_RESET_HARD);
-	while (1)
-		continue;
+	if (panic_once) {
+		system_reset(SYSTEM_RESET_HARD);
+	} else {
+		panic_once = 1;
+		system_reset(0);
+	}
+
+	__builtin_unreachable();
 }
 
 #ifdef CONFIG_SOFTWARE_PANIC
