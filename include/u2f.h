@@ -151,6 +151,12 @@ typedef struct {
 #define G2F_ATTEST      0x80    // Fixed attestation key
 #define G2F_CONSUME     0x02    // Consume presence
 
+// The key handle format was changed when support for user secrets was added.
+// U2F_SIGN requests that specify this flag will first try to validate the
+// key handle as a new format key handle, and if that fails, will fall back
+// to treating it as a legacy key handle (without user secrets).
+#define SIGN_LEGACY_KH  0x40
+
 // U2F Attest format for U2F Register Response.
 #define U2F_ATTEST_FORMAT_REG_RESP      0
 

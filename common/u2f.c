@@ -472,6 +472,27 @@ static int verify_kh_owned(const uint8_t *user_secret, const uint8_t *app_id,
 	return safe_memcmp(recreated_kh, key_handle, KH_LEN) == 0;
 }
 
+static int verify_legacy_kh_owned(const uint8_t *app_id,
+				  const uint8_t *key_handle,
+				  uint8_t *origin_seed)
+{
+	uint8_t unwrapped_kh[KH_LEN];
+	uint8_t kh_app_id[U2F_APPID_SIZE];
+
+	p256_int app_id_p256;
+	p256_int kh_app_id_p256;
+
+	/* Unwrap key handle */
+	if (wrap_kh(app_id, key_handle, unwrapped_kh, DECRYPT_MODE))
+		return 0;
+	deinterleave64(unwrapped_kh, kh_app_id, origin_seed);
+
+	/* Return whether appId (i.e. origin) matches. */
+	p256_from_bin(app_id, &app_id_p256);
+	p256_from_bin(kh_app_id, &kh_app_id_p256);
+	return p256_cmp(&app_id_p256, &kh_app_id_p256) == 0;
+}
+
 /* Below, we depend on the response not being larger than than the request. */
 BUILD_ASSERT(sizeof(U2F_SIGN_RESP) <= sizeof(U2F_SIGN_REQ));
 
@@ -487,10 +508,14 @@ static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
 	struct drbg_ctx ctx;
 
 	/* Origin private key. */
+	uint8_t legacy_origin_seed[SHA256_DIGEST_SIZE];
 	p256_int origin_d;
 
 	/* Hash, and corresponding signature. */
 	p256_int h, r, s;
+
+	/* Whether the key handle uses the legacy key derivation scheme. */
+	int legacy_kh = 0;
 
 	/* Response is smaller than request, so no need to check this. */
 	*response_size = 0;
@@ -498,8 +523,21 @@ static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
 	if (input_size != sizeof(U2F_SIGN_REQ))
 		return VENDOR_RC_BOGUS_ARGS;
 
-	if (!verify_kh_owned(req->userSecret, req->appId, req->keyHandle))
-		return VENDOR_RC_PASSWORD_REQUIRED;
+	if (!verify_kh_owned(req->userSecret, req->appId, req->keyHandle)) {
+		if ((req->flags & SIGN_LEGACY_KH) == 0)
+			return VENDOR_RC_PASSWORD_REQUIRED;
+
+		/*
+		 * We have a key handle which is not valid for the new scheme,
+		 * but may be a valid legacy key handle, and we have been asked
+		 * to sign legacy key handles.
+		 */
+		if (verify_legacy_kh_owned(req->appId, req->keyHandle,
+					   legacy_origin_seed))
+			legacy_kh = 1;
+		else
+			return VENDOR_RC_PASSWORD_REQUIRED;
+	}
 
 	/* We might not actually need to sign anything. */
 	if (req->flags == U2F_AUTH_CHECK_ONLY)
@@ -510,9 +548,14 @@ static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
 		return VENDOR_RC_NOT_ALLOWED;
 
 	/* Re-create origin-specific key. */
-	if (u2f_origin_user_keypair(
-		req->keyHandle, &origin_d, NULL, NULL) != EC_SUCCESS)
-		return VENDOR_RC_INTERNAL_ERROR;
+	if (legacy_kh) {
+		if (u2f_origin_key(legacy_origin_seed, &origin_d) != EC_SUCCESS)
+			return VENDOR_RC_INTERNAL_ERROR;
+	} else {
+		if (u2f_origin_user_keypair(req->keyHandle, &origin_d, NULL,
+					    NULL) != EC_SUCCESS)
+			return VENDOR_RC_INTERNAL_ERROR;
+	}
 
 	/* Prepare hash to sign. */
 	p256_from_bin(req->hash, &h);
