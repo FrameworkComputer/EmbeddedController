@@ -127,16 +127,6 @@ __attribute__ ((noreturn)) void __keep exception_panic(
 		continue;
 }
 
-static int command_divzero(int argc, char **argv)
-{
-	volatile int x = 0;
-
-	x = 1 / x;
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(divzero, command_divzero, NULL,
-			"Divide by zero to trigger a processor exception");
-
 #ifdef CONFIG_SOFTWARE_PANIC
 void software_panic(uint32_t reason, uint32_t info)
 {
