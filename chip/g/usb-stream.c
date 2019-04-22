@@ -88,6 +88,8 @@ int rx_stream_handler(struct usb_stream_config const *config)
 	if (!rx_left) {
 		rx_handled = 0;
 		usb_enable_rx(config, config->rx_size);
+	} else {
+		hook_call_deferred(config->deferred_rx, 0);
 	}
 	return rx_handled;
 }

@@ -184,7 +184,7 @@ static void uart_written(struct consumer const *consumer, size_t count)
 	}
 #endif
 
-	if (uartn_tx_ready(config->uart), queue_count(consumer->queue))
+	if (uartn_tx_ready(config->uart) && queue_count(consumer->queue))
 		uartn_tx_start(config->uart);
 }
 

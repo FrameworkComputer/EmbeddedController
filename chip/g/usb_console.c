@@ -100,6 +100,9 @@ static inline int rx_fifo_is_ready(void)
 	return (ep_out_desc.flags & DOEPDMA_BS_MASK) == DOEPDMA_BS_DMA_DONE;
 }
 
+static void rx_fifo_handler(void);
+DECLARE_DEFERRED(rx_fifo_handler);
+
 /*
  * This function tries to shove new bytes from the USB host into the queue for
  * consumption elsewhere. It is invoked either by a HW interrupt (telling us we
@@ -160,9 +163,10 @@ static void rx_fifo_handler(void)
 	if (!rx_left) {
 		rx_handled = 0;
 		usb_enable_rx(USB_MAX_PACKET_SIZE);
+	} else {
+		hook_call_deferred(&rx_fifo_handler_data, 0);
 	}
 }
-DECLARE_DEFERRED(rx_fifo_handler);
 
 /* Rx/OUT interrupt handler */
 static void con_ep_rx(void)
