@@ -132,7 +132,8 @@ int battery_device_chemistry(char *dest, int size)
 
 int battery_serial_number(int *serial)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	*serial = 0xFFFFFFFF;
+	return EC_SUCCESS;
 }
 
 int battery_design_voltage(int *voltage)
