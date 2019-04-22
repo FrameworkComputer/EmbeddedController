@@ -22,6 +22,8 @@
 
 #define CONFIG_LED_COMMON
 
+#define CONFIG_EC_FEATURE_BOARD_OVERRIDE
+
 /* Sensors */
 #define CONFIG_ACCEL_KX022	/* Lid accel */
 #define CONFIG_ACCELGYRO_BMI160	/* Base accel */
@@ -51,6 +53,10 @@
 #define CONFIG_THERMISTOR
 #define CONFIG_STEINHART_HART_3V3_13K7_47K_4050B
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
+
+/* Keyboard backliht */
+#define CONFIG_PWM
+#define CONFIG_PWM_KBLIGHT
 
 #ifndef __ASSEMBLER__
 
