@@ -56,6 +56,9 @@
 #define CONFIG_WP_ALWAYS
 #define CONFIG_FLASH_READOUT_PROTECTION
 
+/* Inform VIF generator that this board is an Alt Mode Adapter */
+#define CONFIG_USB_ALT_MODE_ADAPTER
+
 #ifndef __ASSEMBLER__
 
 /* Timer selection */

@@ -3977,6 +3977,52 @@
 #undef CONFIG_USB_PD_PCIE_TUNNELING
 
 /*
+ * The following two macros are ASCII text strings that matches what appears
+ * in the USB-IF Product Registration form for this device. These macros are
+ * used during VIF generation and they form the product name in the
+ * USB Integrator’s List.
+ */
+#undef CONFIG_USB_PD_MODEL_PART_NUMBER
+#undef CONFIG_USB_PD_PRODUCT_REVISION
+
+/*
+ * Should be defined if the device is a TypeC Alt Mode Adapter. This macro
+ * is used during VIF generation.
+ */
+#undef CONFIG_USB_ALT_MODE_ADAPTER
+
+/*
+ * A text string, provided by the USB-IF. This macro is used during VIF
+ * generation.
+ */
+#undef CONFIG_USB_PD_TID
+
+/*
+ * An ASCII text string that must correspond with the port label given on the
+ * device picture submitted to USB-IF by the Vendor along with the VIF. This
+ * macro is used during VIF generation.
+ */
+#undef CONFIG_USB_PD_PORT_LABEL
+
+/*
+ * Define if Get_Manufacturer_Info request PD message is supported.
+ * Used during VIF generation.
+ */
+#undef CONFIG_USB_PD_MANUFACTURER_INFO
+
+/*
+ * Define if both Security_Request and Security_Response PD messages are
+ * supported. Used during VIF generation.
+ */
+#undef CONFIG_USB_PD_SECURITY_MSGS
+
+/*
+ * The number of non-removable batteries in the device. Used duing VIF
+ * generation.
+ */
+#undef CONFIG_NUM_FIXED_BATTERIES
+
+/*
  * Track VBUS level in TCPC module. This will only be needed if we're acting
  * as an external TCPC.
  */
@@ -4193,19 +4239,6 @@
 
 /* USB Device version of product */
 #undef CONFIG_USB_BCD_DEV
-
-/*
- * Used during generation of VIF for USB Type-C Compliance Testing.
- * Indicates whether the UUT can communicate with USB 2.0 or USB 3.1 as a host
- * or as the Downstream Facing Port of a hub.
- */
-#undef CONFIG_VIF_TYPE_C_CAN_ACT_AS_HOST
-
-/*
- * Used during generation of VIF for USB Type-C Compliance Testing.
- * Indicates whether the UUT has a captive cable.
- */
-#undef CONFIG_VIF_CAPTIVE_CABLE
 
 /*****************************************************************************/
 
