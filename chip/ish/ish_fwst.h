@@ -99,43 +99,43 @@ enum {
 /* get ISH FW status register */
 static inline uint32_t ish_fwst_get(void)
 {
-	return REG32(IPC_ISH_FWSTS);
+	return IPC_ISH_FWSTS;
 }
 
 /* set IPC link up */
 static inline void ish_fwst_set_ilup(void)
 {
-	REG32(IPC_ISH_FWSTS) |= (1<<IPC_ISH_FWSTS_ILUP_SHIFT);
+	IPC_ISH_FWSTS |= (1<<IPC_ISH_FWSTS_ILUP_SHIFT);
 }
 
 /* clear IPC link up */
 static inline void ish_fwst_clear_ilup(void)
 {
-	REG32(IPC_ISH_FWSTS) &= ~IPC_ISH_FWSTS_ILUP_MASK;
+	IPC_ISH_FWSTS &= ~IPC_ISH_FWSTS_ILUP_MASK;
 }
 
 /* return IPC link up state */
 static inline int ish_fwst_is_ilup_set(void)
 {
-	return !!(REG32(IPC_ISH_FWSTS) &= IPC_ISH_FWSTS_ILUP_MASK);
+	return !!(IPC_ISH_FWSTS &= IPC_ISH_FWSTS_ILUP_MASK);
 }
 
 /* set HECI up */
 static inline void ish_fwst_set_hup(void)
 {
-	REG32(IPC_ISH_FWSTS) |= (1<<IPC_ISH_FWSTS_HUP_SHIFT);
+	IPC_ISH_FWSTS |= (1<<IPC_ISH_FWSTS_HUP_SHIFT);
 }
 
 /* clear HECI up */
 static inline void ish_fwst_clear_hup(void)
 {
-	REG32(IPC_ISH_FWSTS) &= ~IPC_ISH_FWSTS_HUP_MASK;
+	IPC_ISH_FWSTS &= ~IPC_ISH_FWSTS_HUP_MASK;
 }
 
 /* get HECI up status */
 static inline int ish_fwst_is_hup_set(void)
 {
-	return !!(REG32(IPC_ISH_FWSTS) &= IPC_ISH_FWSTS_HUP_MASK);
+	return !!(IPC_ISH_FWSTS &= IPC_ISH_FWSTS_HUP_MASK);
 }
 
 /* set fw failure reason */
@@ -143,46 +143,46 @@ static inline void ish_fwst_set_fail_reason(uint32_t val)
 {
 	uint32_t fwst = REG32(IPC_ISH_FWSTS);
 
-	REG32(IPC_ISH_FWSTS) = (fwst & ~IPC_ISH_FWSTS_FAIL_REASON_MASK) |
-				    (val << IPC_ISH_FWSTS_FAIL_REASON_SHIFT);
+	IPC_ISH_FWSTS = (fwst & ~IPC_ISH_FWSTS_FAIL_REASON_MASK) |
+		(val << IPC_ISH_FWSTS_FAIL_REASON_SHIFT);
 }
 
 /* get fw failure reason */
 static inline uint32_t ish_fwst_get_fail_reason(void)
 {
-	return (REG32(IPC_ISH_FWSTS) & IPC_ISH_FWSTS_FAIL_REASON_MASK)
+	return (IPC_ISH_FWSTS & IPC_ISH_FWSTS_FAIL_REASON_MASK)
 		>> IPC_ISH_FWSTS_FAIL_REASON_SHIFT;
 }
 
 /* set reset id */
 static inline void ish_fwst_set_reset_id(uint32_t val)
 {
-	uint32_t fwst = REG32(IPC_ISH_FWSTS);
+	uint32_t fwst = IPC_ISH_FWSTS;
 
-	REG32(IPC_ISH_FWSTS) = (fwst & ~IPC_ISH_FWSTS_RESET_ID_MASK) |
-				    (val << IPC_ISH_FWSTS_RESET_ID_SHIFT);
+	IPC_ISH_FWSTS = (fwst & ~IPC_ISH_FWSTS_RESET_ID_MASK) |
+		(val << IPC_ISH_FWSTS_RESET_ID_SHIFT);
 }
 
 /* get reset id */
 static inline uint32_t ish_fwst_get_reset_id(void)
 {
-	return (REG32(IPC_ISH_FWSTS) & IPC_ISH_FWSTS_RESET_ID_MASK)
+	return (IPC_ISH_FWSTS & IPC_ISH_FWSTS_RESET_ID_MASK)
 		>> IPC_ISH_FWSTS_RESET_ID_SHIFT;
 }
 
 /* set general fw status */
 static inline void ish_fwst_set_fw_status(uint32_t val)
 {
-	uint32_t fwst = REG32(IPC_ISH_FWSTS);
+	uint32_t fwst = IPC_ISH_FWSTS;
 
-	REG32(IPC_ISH_FWSTS) = (fwst & ~IPC_ISH_FWSTS_FW_STATUS_MASK) |
-				    (val << IPC_ISH_FWSTS_FW_STATUS_SHIFT);
+	IPC_ISH_FWSTS = (fwst & ~IPC_ISH_FWSTS_FW_STATUS_MASK) |
+		(val << IPC_ISH_FWSTS_FW_STATUS_SHIFT);
 }
 
 /* get general fw status */
 static inline uint32_t ish_fwst_get_fw_status(void)
 {
-	return (REG32(IPC_ISH_FWSTS) & IPC_ISH_FWSTS_FW_STATUS_MASK)
+	return (IPC_ISH_FWSTS & IPC_ISH_FWSTS_FW_STATUS_MASK)
 		>> IPC_ISH_FWSTS_FW_STATUS_SHIFT;
 }
 

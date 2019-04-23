@@ -541,7 +541,7 @@ static void handle_d3(void)
 static void handle_reset(int pm_state)
 {
 	/* disable CSME CSR irq */
-	REG32(IPC_PIMR) &= ~IPC_PIMR_CSME_CSR_BIT;
+	IPC_PIMR &= ~IPC_PIMR_CSME_CSR_BIT;
 
 	/* power off main SRAM */
 	sram_power(0);
@@ -549,10 +549,10 @@ static void handle_reset(int pm_state)
 	while (1) {
 
 		/* check if host ish driver already set the DMA enable flag */
-		if (REG32(IPC_ISH_RMP2) & DMA_ENABLED_MASK) {
+		if (IPC_ISH_RMP2 & DMA_ENABLED_MASK) {
 
 			/* clear ISH2HOST doorbell register */
-			REG32(IPC_ISH2HOST_DOORBELL) = 0;
+			*IPC_ISH2HOST_DOORBELL_ADDR = 0;
 
 			/* clear error register in MISC space */
 			MISC_ISH_ECC_ERR_SRESP = 1;
