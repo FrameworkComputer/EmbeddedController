@@ -17,6 +17,9 @@
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 #define CONFIG_I2C
 
+/* Optional console commands */
+#define CONFIG_CMD_CHARGER_DUMP
+
 /* EC Defines */
 #define CONFIG_ADC
 #define CONFIG_BOARD_VERSION_CBI
