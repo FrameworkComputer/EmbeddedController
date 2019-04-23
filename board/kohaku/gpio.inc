@@ -22,6 +22,7 @@ GPIO_INT(SLP_S4_L,             PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
 GPIO_INT(PG_EC_RSMRST_L,       PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PP5000_A_PG_OD,       PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
 
 /* Sensor Interrupts */
 GPIO_INT(BASE_SIXAXIS_INT_L,   PIN(5, 6), GPIO_INT_FALLING, bmi160_interrupt)
@@ -49,7 +50,6 @@ GPIO(EN_A_RAILS,               PIN(A, 3), GPIO_OUT_LOW)
 GPIO(EC_PCH_RSMRST_L,          PIN(A, 6), GPIO_OUT_LOW)
 GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)
 GPIO(EC_PROCHOT_IN_OD,         PIN(3, 4), GPIO_INPUT)
-GPIO(PP5000_A_PG_OD,           PIN(D, 7), GPIO_INPUT)
 GPIO(EC_PCH_SYS_PWROK,         PIN(3, 7), GPIO_OUT_LOW)
 GPIO(CPU_C10_GATE_L,           PIN(6, 7), GPIO_INPUT)
 
