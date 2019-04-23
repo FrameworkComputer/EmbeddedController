@@ -90,10 +90,30 @@ static void set_led_color(int color)
 #endif /* CONFIG_LED_PWM_COUNT >= 2 */
 }
 
+static void set_pwm_led_enable(enum pwm_led_id id, int enable)
+{
+	if ((id >= CONFIG_LED_PWM_COUNT) || (id < 0))
+		return;
+
+	if (pwm_leds[id].ch0 != PWM_LED_NO_CHANNEL)
+		pwm_enable(pwm_leds[id].ch0, enable);
+	if (pwm_leds[id].ch1 != PWM_LED_NO_CHANNEL)
+		pwm_enable(pwm_leds[id].ch1, enable);
+	if (pwm_leds[id].ch2 != PWM_LED_NO_CHANNEL)
+		pwm_enable(pwm_leds[id].ch2, enable);
+}
+
 static void init_leds_off(void)
 {
-	/* Turn off LEDs such that they are in a known state. */
+	/* Turn off LEDs such that they are in a known state with zero duty. */
 	set_led_color(-1);
+
+	/* Enable pwm modules for each channels of LEDs */
+	set_pwm_led_enable(PWM_LED0, 1);
+
+#if CONFIG_LED_PWM_COUNT >= 2
+	set_pwm_led_enable(PWM_LED1, 1);
+#endif /* CONFIG_LED_PWM_COUNT >= 2 */
 }
 DECLARE_HOOK(HOOK_INIT, init_leds_off, HOOK_PRIO_INIT_PWM + 1);
 
