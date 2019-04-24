@@ -292,6 +292,14 @@ int main(int argc, char *argv[])
 	/* Verify Host and Device are synchronized */
 	DISPLAY_MSG(("Performing a Host/Device synchronization check...\n"));
 	sr = opr_check_sync(baudrate);
+
+	/*
+	 * If it fails, try it once more. There is an issue that the first
+	 * command after EC reset gets 0x00 byte response. Note b/126795953.
+	 */
+	if (sr != SR_OK)
+		sr = opr_check_sync(baudrate);
+
 	if (sr != SR_OK) {
 		display_color_msg(FAIL,
 			"Host/Device synchronization failed, error = %lu.\n",
