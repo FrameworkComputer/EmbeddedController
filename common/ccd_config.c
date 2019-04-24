@@ -564,6 +564,12 @@ static void ccd_open_done(int sync)
 {
 	int rv;
 
+	/*
+	 * Wiping the TPM may take a while. Delay sleep long enough for the
+	 * open process to finish.
+	 */
+	delay_sleep_by(DISABLE_SLEEP_TIME_TPM_WIPE);
+
 	if (!ccd_is_cap_enabled(CCD_CAP_OPEN_WITHOUT_TPM_WIPE)) {
 		/* Can't open unless wipe succeeds */
 		if (sync)

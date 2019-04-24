@@ -459,4 +459,19 @@ enum nvmem_users {
 #define CONFIG_USB_I2C_MAX_WRITE_COUNT 508
 #define CONFIG_USB_I2C_MAX_READ_COUNT 506
 
+/* The below time constants are way longer than should be required in practice:
+ *
+ * Time it takes to finish processing TPM command
+ */
+#define TPM_PROCESSING_TIME (1 * SECOND)
+
+/*
+ * Time it takse TPM reset function to wipe out the NVMEM and reboot the
+ * device.
+ */
+#define TPM_RESET_TIME (10 * SECOND)
+
+/* Total time deep sleep should not be allowed while wiping the TPM. */
+#define DISABLE_SLEEP_TIME_TPM_WIPE (TPM_PROCESSING_TIME + TPM_RESET_TIME)
+
 #endif /* __CROS_EC_BOARD_H */
