@@ -162,8 +162,6 @@ const struct i2c_port_t i2c_ports[]  = {
 	 GPIO_EC_I2C3_SENSOR_3V3_SCL, GPIO_EC_I2C3_SENSOR_3V3_SDA},
 	{"battery", I2C_PORT_BATTERY, 100,
 	 GPIO_EC_I2C4_BATTERY_SCL,    GPIO_EC_I2C4_BATTERY_SDA},
-	{"gyro",    I2C_PORT_GYRO,    100,
-	 GPIO_EC_I2C5_GYRO_SCL,       GPIO_EC_I2C5_GYRO_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -256,7 +254,6 @@ const struct temp_sensor_t temp_sensors[] = {
 	 BD99992GW_ADC_CHANNEL_SYSTHERM2, 4},
 	{"eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
 	 BD99992GW_ADC_CHANNEL_SYSTHERM3, 4},
-	{"gyro", TEMP_SENSOR_TYPE_BOARD, bmi160_get_sensor_temp, BASE_GYRO, 1},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -471,9 +468,6 @@ static void board_init(void)
 
 	/* Provide AC status to the PCH */
 	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
-
-	/* Enable interrupts from BMI160 sensor. */
-	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -583,10 +577,6 @@ int board_get_version(void)
 	return ver;
 }
 
-/* Base Sensor mutex */
-static struct mutex g_base_mutex;
-
-static struct bmi160_drv_data_t g_bmi160_data;
 static struct opt3001_drv_data_t g_opt3001_data = {
 	.scale = 1,
 	.uscale = 0,
@@ -601,38 +591,6 @@ const mat33_fp_t base_standard_ref = {
 };
 
 struct motion_sensor_t motion_sensors[] = {
-	[BASE_ACCEL] = {
-		.name = "Base Accel",
-		.active_mask = SENSOR_ACTIVE_S0_S3_S5,
-		.chip = MOTIONSENSE_CHIP_BMI160,
-		.type = MOTIONSENSE_TYPE_ACCEL,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi160_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi160_data,
-		.port = I2C_PORT_GYRO,
-		.addr = BMI160_ADDR0,
-		.rot_standard_ref = &base_standard_ref,
-		.default_range = 2,  /* g, enough for laptop. */
-		.min_frequency = BMI160_ACCEL_MIN_FREQ,
-		.max_frequency = BMI160_ACCEL_MAX_FREQ,
-	},
-	[BASE_GYRO] = {
-		.name = "Base Gyro",
-		.active_mask = SENSOR_ACTIVE_S0_S3_S5,
-		.chip = MOTIONSENSE_CHIP_BMI160,
-		.type = MOTIONSENSE_TYPE_GYRO,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi160_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi160_data,
-		.port = I2C_PORT_GYRO,
-		.addr = BMI160_ADDR0,
-		.default_range = 1000, /* dps */
-		.rot_standard_ref = &base_standard_ref,
-		.min_frequency = BMI160_GYRO_MIN_FREQ,
-		.max_frequency = BMI160_GYRO_MAX_FREQ,
-	},
 	[LID_ALS] = {
 		.name = "Light",
 		.active_mask = SENSOR_ACTIVE_S0,
