@@ -146,6 +146,9 @@ static inline uint64_t read_main_timer(void)
 	timestamp_t t;
 	uint32_t hi;
 
+	/* need check main counter if valid when exit low power TCG mode */
+	wait_while_settling(HPET_MAIN_COUNTER_VALID);
+
 	do {
 		t.le.hi = HPET_MAIN_COUNTER_64_HI;
 		t.le.lo = HPET_MAIN_COUNTER_64_LO;
@@ -172,6 +175,7 @@ void __hw_clock_event_set(uint32_t deadline)
 	 * of 12Mhz timer comparator value. Watchdog refresh happens at least
 	 * every 10 seconds.
 	 */
+	wait_while_settling(HPET_T1_CMP_SETTLING);
 	HPET_TIMER_COMP(1) = read_main_timer() + scale_us2ticks(remaining_us);
 
 	wait_while_settling(HPET_T1_SETTLING);
@@ -212,6 +216,7 @@ void __hw_clock_source_set(uint32_t ts)
 static void __hw_clock_source_irq(int timer_id)
 {
 	/* Clear interrupt */
+	wait_while_settling(HPET_INT_STATUS_SETTLING);
 	HPET_INTR_CLEAR = BIT(timer_id);
 
 	/*
@@ -219,16 +224,6 @@ static void __hw_clock_source_irq(int timer_id)
 	 * overflowed).
 	 */
 	process_timers(timer_id == 0);
-
-	/*
-	 * Clearing interrupt status before the main counter gets increased
-	 * generates an extra interrupt.
-	 * Here, we checks interrupt status register to prevent the extra
-	 * interrupt. It's safe to clear the interrupt again here since
-	 * there's at least MINIMUM_EVENT_DELAY_US delay for the next event
-	 */
-	while (HPET_INTR_CLEAR & BIT(timer_id))
-		HPET_INTR_CLEAR = BIT(timer_id);
 }
 
 void __hw_clock_source_irq_0(void)
