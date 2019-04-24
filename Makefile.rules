@@ -351,7 +351,8 @@ cmd_size=$(Q)awk '\
          print room_free > "$(out)/$(1)/space_free_flash.txt"; \
          printf ("%s bytes in flash and ", room_free);\
        } \
-       printf ("%s bytes in RAM still available on $(BOARD) ****\n", ram_free) \
+       printf ("%s bytes in RAM still available on $(BOARD) $(1) ****\n", \
+           ram_free) \
   }' $(out)/$(1)/$(PROJECT).$(1).map
 endif
 
