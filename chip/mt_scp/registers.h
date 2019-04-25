@@ -527,11 +527,9 @@
  * bit24-31: reserved
  */
 #define OSC_CALI_MSK			(0x3f << 0)
-#define OSC_CALI_BITS			6
 #define OSC_IBAND_MASK			(0x7f << 6)
 #define OSC_FBAND_MASK			(0x0f << 13)
 #define OSC_DIV_MASK			(0x1f << 17)
-#define OSC_DIV_BITS			5
 #define OSC_CP_EN			BIT(23)
 #define OSC_RESERVED_MASK		(0xff << 24)
 /* AP_ULPOSC_CON[1,3] */
