@@ -97,17 +97,26 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 	brightness_range[EC_LED_COLOR_BLUE] = max;
 }
 
+static void set_current_and_pwm_duty(uint8_t brightness,
+				     enum mt6370_led_index color)
+{
+	if (brightness) {
+		/* Current is fixed at 4mA. Brightness is controlled by duty. */
+		mt6370_led_set_brightness(color, 1);
+		mt6370_led_set_pwm_dim_duty(color, brightness);
+	} else {
+		/* off */
+		mt6370_led_set_brightness(color, 0);
+	}
+}
+
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
 	if (led_id != EC_LED_ID_BATTERY_LED)
 		return EC_ERROR_INVAL;
-	/* Current is fixed at 4mA. Brightness is controlled by duty only. */
-	mt6370_led_set_brightness(LED_RED, 1);
-	mt6370_led_set_brightness(LED_GRN, 1);
-	mt6370_led_set_brightness(LED_BLU, 1);
-	mt6370_led_set_pwm_dim_duty(LED_RED, brightness[EC_LED_COLOR_RED]);
-	mt6370_led_set_pwm_dim_duty(LED_GRN, brightness[EC_LED_COLOR_GREEN]);
-	mt6370_led_set_pwm_dim_duty(LED_BLU, brightness[EC_LED_COLOR_BLUE]);
+	set_current_and_pwm_duty(brightness[EC_LED_COLOR_RED], LED_RED);
+	set_current_and_pwm_duty(brightness[EC_LED_COLOR_GREEN], LED_GRN);
+	set_current_and_pwm_duty(brightness[EC_LED_COLOR_BLUE], LED_BLU);
 	return EC_SUCCESS;
 }
 
