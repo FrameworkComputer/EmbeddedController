@@ -616,15 +616,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.default_range = 2,  /* g, enough for laptop. */
 		.min_frequency = BMI160_ACCEL_MIN_FREQ,
 		.max_frequency = BMI160_ACCEL_MAX_FREQ,
-		.config = {
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-			},
-		},
 	},
 	[BASE_GYRO] = {
 		.name = "Base Gyro",
