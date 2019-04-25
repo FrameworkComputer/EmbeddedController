@@ -70,6 +70,8 @@ int initvars(void);
  * The val_len field in the passed in tuple indicates how much room is
  * available, the actual value size could be smaller.
  *
+ * Could block as it acquires the flash protection mutex before proceeding.
+ *
  * Return:
  *
  * EC_SUCCESS - if the key was found and there was enough room in the passed
@@ -98,6 +100,8 @@ const uint8_t *tuple_val(const struct tuple *);
 /*
  * Save the tuple in the RAM buffer. If val is NULL or val_len is 0, the
  * tuple is deleted (if it existed). Returns EC_SUCCESS or error code.
+ *
+ * Could block as it acquires the flash protection mutex before proceeding.
  */
 int setvar(const uint8_t *key, uint8_t key_len,
 	   const uint8_t *val, uint8_t val_len);

@@ -127,13 +127,14 @@ struct access_tracker {
 	uint8_t list_index;
 };
 
+/*
+ * New nvmem interface functions, each of them could be blocking because each
+ * of them acquires nvmem flash protectioin mutex before proceeding.
+ */
 enum ec_error_list new_nvmem_init(void);
 enum ec_error_list new_nvmem_migrate(unsigned int nvmem_act_partition);
 enum ec_error_list new_nvmem_save(void);
-
-enum ec_error_list get_next_object(struct access_tracker *at,
-				   struct nn_container *ch,
-				   int include_deleted);
+int nvmem_erase_tpm_data(void);
 
 #if defined(TEST_BUILD) && !defined(TEST_FUZZ)
 #define NVMEM_TEST_BUILD
@@ -145,11 +146,10 @@ int is_uninitialized(const void *p, size_t size);
 size_t init_object_offsets(uint16_t *offsets, size_t count);
 struct nn_page_header *list_element_to_ph(size_t el);
 void *evictable_offs_to_addr(uint16_t offset);
+enum ec_error_list get_next_object(struct access_tracker *at,
+				   struct nn_container *ch,
+				   int include_deleted);
 #endif
 
-/*
- * Clear tpm data from nvmem.
- */
-int nvmem_erase_tpm_data(void);
 
 #endif /* ! __TPM2_NVMEM_TEST_NEW_NVMEM_H */
