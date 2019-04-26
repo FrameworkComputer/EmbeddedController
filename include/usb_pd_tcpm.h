@@ -105,6 +105,14 @@ static inline int cc_is_at_least_one_rd(int cc1, int cc2)
 	return cc1 == TYPEC_CC_VOLT_RD || cc2 == TYPEC_CC_VOLT_RD;
 }
 
+/**
+ * Returns true if the port partner is presenting Rd on only one CC line.
+ */
+static inline int cc_is_only_one_rd(int cc1, int cc2)
+{
+	return cc_is_at_least_one_rd(cc1, cc2) && cc1 != cc2;
+}
+
 struct tcpm_drv {
 	/**
 	 * Initialize TCPM driver and wait for TCPC readiness.
