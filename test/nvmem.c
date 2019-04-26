@@ -627,10 +627,10 @@ static int test_nvmem_erase_tpm_data(void)
 	TEST_ASSERT(iterate_over_flash() == EC_SUCCESS);
 	TEST_ASSERT(test_result.deleted_obj_count == 0);
 	TEST_ASSERT(test_result.var_count == 3);
-	TEST_ASSERT(test_result.reserved_obj_count == 0);
+	TEST_ASSERT(test_result.reserved_obj_count == 38);
 	TEST_ASSERT(test_result.evictable_obj_count == 0);
 	TEST_ASSERT(test_result.unexpected_count == 0);
-	TEST_ASSERT(test_result.valid_data_size == 86);
+	TEST_ASSERT(test_result.valid_data_size == 1174);
 	TEST_ASSERT(test_result.erased_data_size == 0);
 
 	return EC_SUCCESS;
