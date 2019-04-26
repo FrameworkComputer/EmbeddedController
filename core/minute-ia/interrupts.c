@@ -26,19 +26,19 @@ extern struct idt_entry __idt[NUM_VECTORS];
 /* To count the interrupt nesting depth. Usually it is not nested */
 volatile uint32_t __in_isr;
 
-void write_ioapic_reg(const uint32_t reg, const uint32_t val)
+void write_ioapic_reg(const uint8_t reg, const uint32_t val)
 {
-	REG32(IOAPIC_IDX) = (uint8_t)reg;
-	REG32(IOAPIC_WDW) = val;
+	IOAPIC_IDX = reg;
+	IOAPIC_WDW = val;
 }
 
-uint32_t read_ioapic_reg(const uint32_t reg)
+uint32_t read_ioapic_reg(const uint8_t reg)
 {
-	REG32(IOAPIC_IDX) = (uint8_t)reg;
-	return REG32(IOAPIC_WDW);
+	IOAPIC_IDX = reg;
+	return IOAPIC_WDW;
 }
 
-void set_ioapic_redtbl_raw(const unsigned irq, const uint32_t val)
+void set_ioapic_redtbl_raw(const uint32_t irq, const uint32_t val)
 {
 	const uint32_t redtbl_lo = IOAPIC_IOREDTBL + 2 * irq;
 	const uint32_t redtbl_hi = redtbl_lo + 1;
@@ -272,12 +272,13 @@ DECLARE_DEFERRED(print_lpaic_lvt_error);
  * #define VEC_POS(v) ((v) & (32 - 1))
  * #define REG_POS(v) (((v) >> 5) << 4)
  */
-static inline unsigned int lapic_get_vector(uint32_t reg_base, uint32_t vector)
+static inline unsigned int lapic_get_vector(volatile uint32_t *reg_base,
+					    uint32_t vector)
 {
 	uint32_t reg_pos = (vector >> 5) << 4;
 	uint32_t vec_pos = vector & (32 - 1);
 
-	return REG32(reg_base + reg_pos) & BIT(vec_pos);
+	return reg_base[reg_pos] & BIT(vec_pos);
 }
 
 /*
@@ -298,12 +299,12 @@ static inline unsigned int lapic_get_vector(uint32_t reg_base, uint32_t vector)
  */
 void handle_lapic_lvt_error(void)
 {
-	uint32_t esr = REG32(LAPIC_ESR_REG);
+	uint32_t esr = LAPIC_ESR_REG;
 	uint32_t ioapic_redtbl, vec;
 	int irq, max_irq_entries;
 
 	/* Ack LVT ERROR exception */
-	REG32(LAPIC_ESR_REG) = 0;
+	LAPIC_ESR_REG = 0;
 
 	/*
 	 * When IOAPIC has more than 1 interrupts in remote IRR state,
@@ -323,9 +324,9 @@ void handle_lapic_lvt_error(void)
 			/* If pending interrupt is not in LAPIC, clear it. */
 			if (ioapic_redtbl & IOAPIC_REDTBL_IRR) {
 				vec = IRQ_TO_VEC(irq);
-				if (!lapic_get_vector(LAPIC_IRR_REG, vec)) {
+				if (!lapic_get_vector(&LAPIC_IRR_REG, vec)) {
 					/* End of interrupt */
-					REG32(IOAPIC_EOI_REG) = vec;
+					IOAPIC_EOI_REG = vec;
 					ioapic_pending_count++;
 				}
 			}
@@ -414,7 +415,7 @@ void init_interrupts(void)
 	set_interrupt_gate(SOFTIRQ_VECTOR, sw_irq_handler, IDT_DESC_FLAGS);
 
 	/* Setup gate for LAPIC_LVT_ERROR vector; clear any remnant error. */
-	REG32(LAPIC_ESR_REG) = 0;
+	LAPIC_ESR_REG = 0;
 	set_interrupt_gate(LAPIC_LVT_ERROR_VECTOR, _lapic_error_handler,
 			   IDT_DESC_FLAGS);
 

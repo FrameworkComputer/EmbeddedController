@@ -61,9 +61,9 @@ default_int_handler:
 	cmpl $LAPIC_SPURIOUS_INT_VECTOR, %eax
 	je 1f				# No EOI for LAPIC_SPURIOUS_INT_VECTOR
 
-	movl %eax, IOAPIC_EOI_REG	# Indicate completion of servicing the
+	movl %eax, IOAPIC_EOI_REG_ADDR	# Indicate completion of servicing the
 					# interrupt to IOAPIC first
-	movl $0x00, LAPIC_EOI_REG	# Indicate completion of servicing the
+	movl $0x00, LAPIC_EOI_REG_ADDR	# Indicate completion of servicing the
 					# interrupt to LAPIC next
 	1:
 	# Ensure we balance the __in_isr counter
@@ -85,7 +85,7 @@ sw_irq_handler:
 
 	# Indicate completion of servicing the interrupt to LAPIC.
 	# No IOAPIC EOI needed as this is SW triggered.
-	movl $0x00, LAPIC_EOI_REG
+	movl $0x00, LAPIC_EOI_REG_ADDR
 
 	# Decrement ISR counter and restore general purpose registers.
 	ASM_LOCK_PREFIX subl $1, __in_isr
@@ -110,7 +110,7 @@ __switchto:
 
 	# Indicate completion of servicing the interrupt to LAPIC.
 	# No IOAPIC EOI needed as this is SW triggered.
-	movl $0x00, LAPIC_EOI_REG
+	movl $0x00, LAPIC_EOI_REG_ADDR
 
 	# Decrement ISR counter and restore general purpose registers.
 	ASM_LOCK_PREFIX subl $1, __in_isr

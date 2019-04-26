@@ -35,24 +35,24 @@ struct irq_data {
  * Each irq has a irq_data structure placed in .rodata.irqs section,
  * to be used for dynamically setting up interrupt gates
  */
-#define DECLARE_IRQ_(irq, routine, vector)				       \
-	void __keep routine(void);					       \
-	void IRQ_HANDLER(irq)(void);					       \
-	__asm__ (".section .rodata.irqs\n");				       \
-	const struct irq_data __keep CONCAT4(__irq_, irq, _, routine)	       \
-	__attribute__((section(".rodata.irqs"))) = { routine,		       \
-						     IRQ_HANDLER(irq),	       \
-						     irq};		       \
-	__asm__ (							       \
-		".section .text._irq_"#irq"_handler\n"			       \
-		"_irq_"#irq"_handler:\n"				       \
-			"pusha\n"					       \
-			ASM_LOCK_PREFIX "addl  $1, __in_isr\n"		       \
-			"irq_handler_common $0 $0 $"#irq"\n"		       \
-			"movl $"#vector ", " STRINGIFY(IOAPIC_EOI_REG) "\n"    \
-			"movl $0x00, " STRINGIFY(LAPIC_EOI_REG) "\n"	       \
-			ASM_LOCK_PREFIX "subl  $1, __in_isr\n"		       \
-			"popa\n"					       \
-			"iret\n"					       \
+#define DECLARE_IRQ_(irq, routine, vector)				\
+	void __keep routine(void);					\
+	void IRQ_HANDLER(irq)(void);					\
+	__asm__ (".section .rodata.irqs\n");				\
+	const struct irq_data __keep CONCAT4(__irq_, irq, _, routine)	\
+		__attribute__((section(".rodata.irqs"))) = { routine,	\
+							     IRQ_HANDLER(irq), \
+							     irq};	\
+	__asm__ (							\
+		".section .text._irq_"#irq"_handler\n"			\
+		"_irq_"#irq"_handler:\n"				\
+		"pusha\n"						\
+		ASM_LOCK_PREFIX "addl  $1, __in_isr\n"			\
+		"irq_handler_common $0 $0 $"#irq"\n"			\
+		"movl $"#vector ", " STRINGIFY(IOAPIC_EOI_REG_ADDR) "\n" \
+		"movl $0x00, " STRINGIFY(LAPIC_EOI_REG_ADDR) "\n"	\
+		ASM_LOCK_PREFIX "subl  $1, __in_isr\n"			\
+		"popa\n"						\
+		"iret\n"						\
 		);
 #endif  /* __CROS_EC_IRQ_HANDLER_H */

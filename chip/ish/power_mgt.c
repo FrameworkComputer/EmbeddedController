@@ -676,8 +676,8 @@ static void reset_prep_isr(void)
 	 * Indicate completion of servicing the interrupt to IOAPIC first
 	 * then indicate completion of servicing the interrupt to LAPIC
 	 */
-	REG32(IOAPIC_EOI_REG) = ISH_RESET_PREP_VEC;
-	REG32(LAPIC_EOI_REG) = 0x0;
+	IOAPIC_EOI_REG = ISH_RESET_PREP_VEC;
+	LAPIC_EOI_REG = 0x0;
 
 	if (pm_ctx.aon_valid) {
 		handle_reset_in_aontask(ISH_PM_STATE_RESET_PREP);
@@ -708,8 +708,8 @@ static void handle_d3(uint32_t irq_vec)
 		 * first then indicate completion of servicing the interrupt
 		 * to LAPIC
 		 */
-		REG32(IOAPIC_EOI_REG) = irq_vec;
-		REG32(LAPIC_EOI_REG) = 0x0;
+		IOAPIC_EOI_REG = irq_vec;
+		LAPIC_EOI_REG = 0x0;
 
 		pm_ctx.aon_share->pm_state = ISH_PM_STATE_D3;
 

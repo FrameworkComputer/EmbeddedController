@@ -85,8 +85,8 @@ static void pmu_wakeup_isr(void)
 	 * Indicate completion of servicing the interrupt to IOAPIC first
 	 * then indicate completion of servicing the interrupt to LAPIC
 	 */
-	REG32(IOAPIC_EOI_REG) = ISH_PMU_WAKEUP_VEC;
-	REG32(LAPIC_EOI_REG) = 0x0;
+	IOAPIC_EOI_REG = ISH_PMU_WAKEUP_VEC;
+	LAPIC_EOI_REG = 0x0;
 
 	__asm__ volatile ("iret;");
 
@@ -105,8 +105,8 @@ static void reset_prep_isr(void)
 	 * Indicate completion of servicing the interrupt to IOAPIC first
 	 * then indicate completion of servicing the interrupt to LAPIC
 	 */
-	REG32(IOAPIC_EOI_REG) = ISH_RESET_PREP_VEC;
-	REG32(LAPIC_EOI_REG) = 0x0;
+	IOAPIC_EOI_REG = ISH_RESET_PREP_VEC;
+	LAPIC_EOI_REG = 0x0;
 
 	handle_reset(ISH_PM_STATE_RESET_PREP);
 
