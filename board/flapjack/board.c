@@ -61,6 +61,7 @@ static const struct mv_to_id panels[] = {
 	{ PANEL_BOE_HIMAX8279D8P,	280 },
 };
 BUILD_ASSERT(ARRAY_SIZE(panels) < PANEL_COUNT);
+BUILD_ASSERT(PANEL_COUNT <= PANEL_UNINITIALIZED);
 
 uint16_t board_version;
 uint8_t oem;

@@ -262,7 +262,7 @@ enum panel_id {
 	PANEL_BOE_HIMAX8279D10P,
 	PANEL_BOE_HIMAX8279D8P,
 	PANEL_COUNT,
-	PANEL_UNINITIALIZED = 0xff,
+	PANEL_UNINITIALIZED = 0xf,
 };
 
 /* power signal definitions */
