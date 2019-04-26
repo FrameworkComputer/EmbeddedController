@@ -3563,6 +3563,13 @@
 /* PPC needs to be informed of CC polarity */
 #undef CONFIG_USBC_PPC_POLARITY
 
+/*
+ * Disable charging from Default(USB) Rp as a type-c supplier. If your device
+ * can detect such a supplier by BC 1.2, define this to get more current
+ * from a BC 1.2 supplier.
+ */
+#undef CONFIG_USBC_DISABLE_CHARGE_FROM_RP_DEF
+
 /* USB Type-C Power Path Controllers (PPC) */
 #undef CONFIG_USBC_PPC_NX20P3481
 #undef CONFIG_USBC_PPC_NX20P3483
