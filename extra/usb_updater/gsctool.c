@@ -1107,17 +1107,36 @@ static void send_done(struct usb_endpoint *uep)
 static int transfer_image(struct transfer_descriptor *td,
 			       uint8_t *data, size_t data_len)
 {
-	size_t i;
+	size_t j;
 	int num_txed_sections = 0;
 
-	for (i = 0; i < ARRAY_SIZE(sections); i++)
-		if (sections[i].ustatus == needed) {
+	/*
+	 * In case both RO and RW updates are required, make sure the RW
+	 * section is updated before the RO. The array below keeps sections
+	 * offsets in the required order.
+	 */
+	const size_t update_order[] = {CONFIG_RW_MEM_OFF,
+				       CONFIG_RW_B_MEM_OFF,
+				       CONFIG_RO_MEM_OFF,
+				       CHIP_RO_B_MEM_OFF};
+
+	for (j = 0; j < ARRAY_SIZE(update_order); j++) {
+		size_t i;
+
+		for (i = 0; i < ARRAY_SIZE(sections); i++) {
+			if (sections[i].offset != update_order[j])
+				continue;
+
+			if (sections[i].ustatus != needed)
+				break;
+
 			transfer_section(td,
 					 data + sections[i].offset,
 					 sections[i].offset,
 					 sections[i].size);
 			num_txed_sections++;
 		}
+	}
 
 	if (!num_txed_sections)
 		printf("nothing to do\n");
