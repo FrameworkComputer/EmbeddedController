@@ -177,6 +177,7 @@ class Console(object):
     self.receiving_oobm_cmd = False
     self.pending_oobm_cmd = ''
     self.interrogation_mode = 'auto'
+    self.timestamp_enabled = True
     self.look_buffer = ''
 
   def __str__(self):
@@ -756,6 +757,12 @@ class Console(object):
         # Ignoring the request if an integer was not provided.
         self.PrintOOBMHelp()
 
+    elif cmd[0] == 'timestamp':
+      mode = cmd[1].lower()
+      self.timestamp_enabled = mode == 'on'
+      self.logger.info('%sabling uart timestamps.',
+                       'En' if self.timestamp_enabled else 'Dis')
+
     elif cmd[0] == 'interrogate' and len(cmd) >= 2:
       enhanced = False
       mode = cmd[1]
@@ -956,21 +963,23 @@ def StartLoop(console, command_active, shutdown_pipe=None):
                   ('u' if master_connected else '') +
                   ('i' if command_active.value else ''), data.strip())
             if master_connected:
-
-              # A timestamp is required at the beginning of this line
-              if tm_req is True:
-                now = datetime.now()
-                tm = now.strftime(HOST_STRFTIME)
-                os.write(console.master_pty, tm)
-                tm_req = False
-
-              # Insert timestamps into the middle where appropriate
-              # except if the last character is a newline
               end = len(data) - 1
-              nls_found = data.count('\n', 0, end)
-              now = datetime.now()
-              tm = now.strftime('\n' + HOST_STRFTIME)
-              data_tm = data.replace('\n', tm, nls_found)
+              if console.timestamp_enabled:
+                # A timestamp is required at the beginning of this line
+                if tm_req is True:
+                  now = datetime.now()
+                  tm = now.strftime(HOST_STRFTIME)
+                  os.write(console.master_pty, tm)
+                  tm_req = False
+
+                # Insert timestamps into the middle where appropriate
+                # except if the last character is a newline
+                nls_found = data.count('\n', 0, end)
+                now = datetime.now()
+                tm = now.strftime('\n' + HOST_STRFTIME)
+                data_tm = data.replace('\n', tm, nls_found)
+              else:
+                data_tm = data
 
               # timestamp required on next input
               if data[end] == '\n':
