@@ -9,9 +9,16 @@
 /* Memory Spaces Definitions */
 MEMORY
 {
-    VECTOR(r )  : ORIGIN =  0x100000, LENGTH = 24
-    SRAM (xrw)  : ORIGIN =  0x100018, LENGTH = 0xC00 - LENGTH(VECTOR)
+    VECTOR(r )  : ORIGIN =  0x100000, LENGTH = 0x18
+    SRAM (xrw)  : ORIGIN =  0x100018, LENGTH = 0xBE8
 }
+
+/*
+ * ld does not allow mathematical expressions in ORIGIN/LENGTH, so check the
+ * values here.
+ */
+ASSERT(ORIGIN(VECTOR) + LENGTH(VECTOR) == ORIGIN(SRAM), "Invalid SRAM origin.")
+ASSERT(LENGTH(VECTOR) + LENGTH(SRAM) == 0xC00, "Invalid VECTOR+SRAM length.")
 
 /*
  * The entry point is informative, for debuggers and simulators,
