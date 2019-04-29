@@ -19,6 +19,9 @@
 #define FW_SIZE_(section) CONFIG_##section##_SIZE
 #define FW_SIZE(section) FW_SIZE_(section)
 
+/* Indicates where .data LMA should reside. */
+#undef DATA_LMA_MEM_REGION
+
 OUTPUT_FORMAT(BFD_FORMAT, BFD_FORMAT, BFD_FORMAT)
 OUTPUT_ARCH(BFD_ARCH)
 ENTRY(reset)
@@ -266,10 +269,13 @@ SECTIONS
         . = ALIGN(4);
 #if !defined(CONFIG_FLASH_PHYSICAL)
     } > IROM
+#define DATA_LMA_MEM_REGION IROM
 #elif defined(CONFIG_EXTERNAL_STORAGE)
     } > CDRAM AT > FLASH
+#define DATA_LMA_MEM_REGION FLASH
 #else
     } > FLASH
+#define DATA_LMA_MEM_REGION FLASH
 #endif
 
     __data_lma_start = .;
@@ -328,11 +334,7 @@ SECTIONS
     } > IRAM
 #endif /* defined(CONFIG_REPLACE_LOADER_WITH_BSS_SLOW) */
 
-#ifdef CONFIG_EXTERNAL_STORAGE
-    .data : AT(LOADADDR(.rodata) + SIZEOF(.rodata)) {
-#else
-    .data : AT(ADDR(.rodata) + SIZEOF(.rodata)) {
-#endif
+    .data : {
         . = ALIGN(4);
         __data_start = .;
         *(.data.tasks)
@@ -374,7 +376,7 @@ SECTIONS
 	__shared_mem_buf = .;
 
 	/* NOTHING MAY GO AFTER THIS! */
-    } > IRAM
+    } > IRAM AT > DATA_LMA_MEM_REGION
 
     ASSERT((__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE) <=
                (CONFIG_RAM_BASE + CONFIG_RAM_SIZE),
