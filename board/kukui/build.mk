@@ -13,5 +13,6 @@ CHIP_VARIANT:=stm32f09x
 
 board-y=battery.o board.o usb_pd_policy.o led.o
 board-$(CONFIG_BOOTBLOCK)+=emmc.o
+board-$(BOARD_KRANE)+=base_detect_krane.o
 
 $(out)/RO/board/$(BOARD)/emmc.o: $(out)/bootblock_data.h

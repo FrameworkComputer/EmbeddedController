@@ -204,6 +204,13 @@ int pd_snk_is_vbus_provided(int port)
 	return rt946x_is_vbus_ready();
 }
 
+#ifdef BOARD_KUKUI
+/* dummy interrupt function for kukui */
+void pogo_adc_interrupt(enum gpio_signal signal)
+{
+}
+#endif
+
 static void board_init(void)
 {
 	/* If the reset cause is external, pulse PMIC force reset. */
@@ -235,6 +242,9 @@ static void board_init(void)
 
 	/* Enable gauge interrupt from max17055 */
 	gpio_enable_interrupt(GPIO_GAUGE_INT_ODL);
+
+	/* Enable pogo interrupt */
+	gpio_enable_interrupt(GPIO_POGO_ADC_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
