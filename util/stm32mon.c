@@ -697,7 +697,13 @@ int send_command_retry(int fd, uint8_t cmd, payload_t *loads,
 		while (res == STM32_ETIMEDOUT && ack_tries--) {
 			if (cmd == CMD_WRITEMEM) {
 				/* send garbage byte */
-				write_wrapper(fd, loads->data, 1);
+				res = write_wrapper(fd, loads->data, 1);
+				/* Don't care much since it is a  garbage
+				 * transfer to let the device not wait for
+				 * any missing data, if any.
+				 */
+				if (res < 0)
+					fprintf(stderr, "warn: write failed\n");
 			}
 			res = wait_for_ack(fd);
 		}
