@@ -31,3 +31,6 @@ core-y=cpu.o init.o interrupts.o
 core-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic.o
 core-$(CONFIG_COMMON_RUNTIME)+=switch.o task.o
 core-$(CONFIG_MPU)+=mpu.o
+
+# for 64bit division
+LDFLAGS_EXTRA+=-static-libgcc -lgcc
