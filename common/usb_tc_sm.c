@@ -118,15 +118,6 @@ enum typec_state_id get_typec_state_id(int port)
 
 /* Private Functions */
 
-/**
- * Returns whether the sink has detected a Rp resistor on the other side.
- */
-static inline int cc_is_rp(int cc)
-{
-	return (cc == TYPEC_CC_VOLT_RP_DEF) || (cc == TYPEC_CC_VOLT_RP_1_5) ||
-	       (cc == TYPEC_CC_VOLT_RP_3_0);
-}
-
 /*
  * CC values for regular sources and Debug sources (aka DTS)
  *

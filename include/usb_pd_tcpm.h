@@ -64,6 +64,47 @@ enum tcpc_transmit_complete {
 	TCPC_TX_COMPLETE_FAILED =    2,
 };
 
+/**
+ * Returns whether the sink has detected a Rp resistor on the other side.
+ */
+static inline int cc_is_rp(int cc)
+{
+	return (cc == TYPEC_CC_VOLT_RP_DEF) || (cc == TYPEC_CC_VOLT_RP_1_5) ||
+	       (cc == TYPEC_CC_VOLT_RP_3_0);
+}
+
+/**
+ * Returns true if both CC lines are completely open.
+ */
+static inline int cc_is_open(int cc1, int cc2)
+{
+	return cc1 == TYPEC_CC_VOLT_OPEN && cc2 == TYPEC_CC_VOLT_OPEN;
+}
+
+/**
+ * Returns true if we detect the port partner is a snk debug accessory.
+ */
+static inline int cc_is_snk_dbg_acc(int cc1, int cc2)
+{
+	return cc1 == TYPEC_CC_VOLT_RD && cc2 == TYPEC_CC_VOLT_RD;
+}
+
+/**
+ * Returns true if the port partner is an audio accessory.
+ */
+static inline int cc_is_audio_acc(int cc1, int cc2)
+{
+	return cc1 == TYPEC_CC_VOLT_RA && cc2 == TYPEC_CC_VOLT_RA;
+}
+
+/**
+ * Returns true if the port partner is presenting at least one Rd
+ */
+static inline int cc_is_at_least_one_rd(int cc1, int cc2)
+{
+	return cc1 == TYPEC_CC_VOLT_RD || cc2 == TYPEC_CC_VOLT_RD;
+}
+
 struct tcpm_drv {
 	/**
 	 * Initialize TCPM driver and wait for TCPC readiness.

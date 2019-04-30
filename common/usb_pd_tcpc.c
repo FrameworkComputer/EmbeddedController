@@ -954,9 +954,9 @@ int tcpc_run(int port, int evt)
 	 */
 	return (get_time().val >= pd[port].low_power_ts.val &&
 		pd[port].cc_pull == TYPEC_CC_RD &&
-		pd[port].cc_status[0] == TYPEC_CC_VOLT_OPEN &&
-		pd[port].cc_status[1] == TYPEC_CC_VOLT_OPEN) ? 200 * MSEC :
-							       10 * MSEC;
+		cc_is_open(pd[port].cc_status[0], pd[port].cc_status[1]))
+		       ? 200 * MSEC
+		       : 10 * MSEC;
 #else
 	return 10*MSEC;
 #endif

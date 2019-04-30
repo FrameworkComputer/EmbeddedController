@@ -1378,9 +1378,9 @@ static unsigned int tc_state_ct_attach_wait_unsupported_run(int port)
 	/* Check CT CC for connection */
 	vpd_ct_get_cc(&cc1, &cc2);
 
-	if (cc1 == TYPEC_CC_VOLT_RD || cc2 == TYPEC_CC_VOLT_RD)
+	if (cc_is_at_least_one_rd(cc1, cc2))
 		new_cc_state = PD_CC_DFP_ATTACHED;
-	else if (cc1 == TYPEC_CC_VOLT_RA && cc2 == TYPEC_CC_VOLT_RA)
+	else if (cc_is_audio_acc(cc1, cc2))
 		new_cc_state = PD_CC_AUDIO_ACC;
 	else /* (cc1 == TYPEC_CC_VOLT_OPEN or cc2 == TYPEC_CC_VOLT_OPEN */
 		new_cc_state = PD_CC_NONE;
@@ -1545,9 +1545,7 @@ static unsigned int tc_state_ct_unattached_unsupported_run(int port)
 	 * least one of the Charge-Through port’s CC pins or SRC.Ra state
 	 * on both the CC1 and CC2 pins.
 	 */
-	if ((cc1 == TYPEC_CC_VOLT_RD || cc2 == TYPEC_CC_VOLT_RD) ||
-			(cc1 == TYPEC_CC_VOLT_RA &&
-			cc2 == TYPEC_CC_VOLT_RA)) {
+	if (cc_is_at_least_one_rd(cc1, cc2) || cc_is_audio_acc(cc1, cc2)) {
 		set_state(port, TC_OBJ(port),
 				tc_state_ct_attach_wait_unsupported);
 		return 0;
