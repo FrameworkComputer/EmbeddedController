@@ -944,6 +944,11 @@ static enum ec_error_list save_object(const struct nn_container *cont)
 	size_t save_size = aligned_container_size(cont);
 	size_t top_room;
 
+#if defined(NVMEM_TEST_BUILD)
+	if (failure_mode == TEST_FAILED_HASH)
+		save_size -= sizeof(uint32_t);
+#endif
+
 	top_room = CONFIG_FLASH_BANK_SIZE - master_at.mt.data_offset;
 	if (save_size >= top_room) {
 

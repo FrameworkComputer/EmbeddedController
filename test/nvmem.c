@@ -828,6 +828,7 @@ static int test_nvmem_incomplete_transaction(void)
 	uint16_t offsets[MAX_OFFSETS];
 	size_t num_objects;
 	uint8_t buf[nvmem_user_sizes[NVMEM_TPM]];
+	uint8_t *p;
 
 	TEST_ASSERT(prepare_post_migration_nvmem() == EC_SUCCESS);
 	num_objects = fill_obj_offsets(offsets, ARRAY_SIZE(offsets));
@@ -858,6 +859,19 @@ static int test_nvmem_incomplete_transaction(void)
 	ccprintf("%s:%d\n", __func__, __LINE__);
 	num_objects = fill_obj_offsets(offsets, ARRAY_SIZE(offsets));
 	TEST_ASSERT(num_objects == 7);
+
+	/*
+	 * Now, let's modify an object and introduce corruption when saving
+	 * it.
+	 */
+	p = evictable_offs_to_addr(offsets[4]);
+	p[10] ^= 0x55;
+	failure_mode = TEST_FAILED_HASH;
+	new_nvmem_save();
+	failure_mode = TEST_NO_FAILURE;
+
+	/* And verify that nvmem can still successfully initialize. */
+	TEST_ASSERT(nvmem_init() == EC_SUCCESS);
 
 	return EC_SUCCESS;
 }
