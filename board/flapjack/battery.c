@@ -182,6 +182,18 @@ const struct max17055_alert_profile *max17055_get_alert_profile(void)
 	return &alert_profile[batt_type];
 }
 
+int get_battery_manufacturer_name(char *dest, int size)
+{
+	static const char * const name[] = {
+		[BATTERY_UNKNOWN] = "UNKNOWN",
+		[BATTERY_C18_ATL] = "C18_ATL",
+		[BATTERY_C19_ATL] = "C19_ATL",
+	};
+	ASSERT(dest);
+	strzcpy(dest, name[batt_type], size);
+	return EC_SUCCESS;
+}
+
 int board_cut_off_battery(void)
 {
 	/* The cut-off procedure is recommended by Richtek. b/116682788 */
