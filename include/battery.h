@@ -303,6 +303,17 @@ int battery_serial_number(int *serial);
 int battery_manufacturer_name(char *dest, int size);
 
 /**
+ * Read manufacturer name.
+ *
+ * This can be overridden to return a chip or board custom string.
+ *
+ * @param dest		Destination buffer.
+ * @param size		Length of destination buffer in chars.
+ * @return non-zero if error.
+ */
+int get_battery_manufacturer_name(char *dest, int size);
+
+/**
  * Read device name.
  *
  * @param dest		Destination buffer.

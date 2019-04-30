@@ -280,8 +280,7 @@ test_mockable int battery_manufacture_date(int *year, int *month, int *day)
 	return EC_SUCCESS;
 }
 
-/* Read manufacturer name */
-test_mockable int battery_manufacturer_name(char *dest, int size)
+int get_battery_manufacturer_name(char *dest, int size)
 {
 	return sb_read_string(SB_MANUFACTURER_NAME, dest, size);
 }

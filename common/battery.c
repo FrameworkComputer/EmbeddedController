@@ -608,3 +608,14 @@ void battery_compensate_params(struct batt_params *batt)
 	/* Rounding (instead of truncating) */
 	batt->display_charge = (numer + denom / 2) / denom;
 }
+
+__attribute__((weak)) int get_battery_manufacturer_name(char *dest, int size)
+{
+	strzcpy(dest, "<unkn>", size);
+	return EC_SUCCESS;
+}
+
+int battery_manufacturer_name(char *dest, int size)
+{
+	return get_battery_manufacturer_name(dest, size);
+}

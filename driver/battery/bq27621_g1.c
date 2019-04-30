@@ -474,11 +474,6 @@ int battery_time_at_rate(int rate, int *minutes)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-int battery_manufacturer_name(char *dest, int size)
-{
-	return EC_ERROR_UNIMPLEMENTED;
-}
-
 int battery_device_chemistry(char *dest, int size)
 {
 	uint32_t rv;

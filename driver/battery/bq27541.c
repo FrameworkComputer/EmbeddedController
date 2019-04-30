@@ -155,13 +155,6 @@ int battery_time_at_rate(int rate, int *minutes)
 	return bq27541_read(REG_AT_RATE_TIME_TO_EMPTY, minutes);
 }
 
-int battery_manufacturer_name(char *dest, int size)
-{
-	strzcpy(dest, "<unkn>", size);
-
-	return EC_SUCCESS;
-}
-
 int battery_device_chemistry(char *dest, int size)
 {
 	strzcpy(dest, "<unkn>", size);
