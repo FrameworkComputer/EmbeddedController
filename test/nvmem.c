@@ -1330,15 +1330,110 @@ static int test_tpm_nvmem_modify_evictable_objects(void)
 	return EC_SUCCESS;
 }
 
+static int test_nvmem_tuple_updates(void)
+{
+	size_t i;
+	const char *modified_var1 = "var one after";
+	const struct tuple *t;
+
+	const struct {
+		uint8_t *key;
+		uint8_t *value;
+	} kv_pairs[] = {
+		/* Use # as the delimiter to allow \0 in keys/values. */
+		{"key0", "var zero before"},
+		{"key1", "var one before"}
+	};
+
+	TEST_ASSERT(post_init_from_scratch(0xff) == EC_SUCCESS);
+
+	/* Save vars in the nvmem. */
+	for (i = 0; i < ARRAY_SIZE(kv_pairs); i++)
+		TEST_ASSERT(setvar(kv_pairs[i].key, strlen(kv_pairs[i].key),
+				   kv_pairs[i].value,
+				   strlen(kv_pairs[i].value)) == EC_SUCCESS);
+
+	TEST_ASSERT(nvmem_init() == EC_SUCCESS);
+	/* Verify the vars are still there. */
+	for (i = 0; i < ARRAY_SIZE(kv_pairs); i++) {
+		const struct tuple *t;
+
+		t = getvar(kv_pairs[i].key, strlen(kv_pairs[i].key));
+		TEST_ASSERT(t);
+		TEST_ASSERT(t->val_len == strlen(kv_pairs[i].value));
+		TEST_ASSERT(!memcmp(t->data_ + strlen(kv_pairs[i].key),
+				    kv_pairs[i].value, t->val_len));
+		freevar(t);
+	}
+
+	/*
+	 * Now, let's try updating variable 'key1' introducing various failure
+	 * modes.
+	 */
+	failure_mode = TEST_FAIL_SAVING_VAR;
+	TEST_ASSERT(setvar(kv_pairs[1].key, strlen(kv_pairs[1].key),
+			   modified_var1, strlen(modified_var1)) == EC_SUCCESS);
+	TEST_ASSERT(nvmem_init() == EC_SUCCESS);
+	/* No change should be seen. */
+	for (i = 0; i < ARRAY_SIZE(kv_pairs); i++) {
+		t = getvar(kv_pairs[i].key, strlen(kv_pairs[i].key));
+		TEST_ASSERT(t);
+		TEST_ASSERT(t->val_len == strlen(kv_pairs[i].value));
+		TEST_ASSERT(!memcmp(t->data_ + strlen(kv_pairs[i].key),
+				    kv_pairs[i].value, t->val_len));
+		freevar(t);
+	}
+	failure_mode = TEST_FAIL_FINALIZING_VAR;
+	TEST_ASSERT(setvar(kv_pairs[1].key, strlen(kv_pairs[1].key),
+			   modified_var1, strlen(modified_var1)) == EC_SUCCESS);
+	failure_mode = TEST_NO_FAILURE;
+	TEST_ASSERT(nvmem_init() == EC_SUCCESS);
+
+	/* First variable should be still unchanged. */
+	t = getvar(kv_pairs[0].key, strlen(kv_pairs[0].key));
+	TEST_ASSERT(t);
+	TEST_ASSERT(t->val_len == strlen(kv_pairs[0].value));
+	TEST_ASSERT(!memcmp(t->data_ + strlen(kv_pairs[0].key),
+			    kv_pairs[0].value, t->val_len));
+	freevar(t);
+
+	/* Second variable should be updated. */
+	t = getvar(kv_pairs[1].key, strlen(kv_pairs[1].key));
+	TEST_ASSERT(t);
+	TEST_ASSERT(t->val_len == strlen(modified_var1));
+	TEST_ASSERT(!memcmp(t->data_ + strlen(kv_pairs[1].key), modified_var1,
+			    t->val_len));
+	freevar(t);
+
+	/* A corrupted attempt to update second variable. */
+	failure_mode = TEST_FAIL_FINALIZING_VAR;
+	TEST_ASSERT(setvar(kv_pairs[1].key, strlen(kv_pairs[1].key),
+			   kv_pairs[1].value, strlen(kv_pairs[1].value))
+		    == EC_SUCCESS);
+	failure_mode = TEST_NO_FAILURE;
+	TEST_ASSERT(nvmem_init() == EC_SUCCESS);
+
+	/* Is there an instance of the second variable still in the flash. */
+	t = getvar(kv_pairs[1].key, strlen(kv_pairs[1].key));
+	TEST_ASSERT(t);
+	freevar(t);
+
+	/* Delete the remaining instance of the variable. */
+	TEST_ASSERT(setvar(kv_pairs[1].key, strlen(kv_pairs[1].key),
+			   NULL, 0) == EC_SUCCESS);
+
+	/* Verify that it is indeed deleted before and after re-init. */
+	TEST_ASSERT(!getvar(kv_pairs[1].key, strlen(kv_pairs[1].key)));
+	TEST_ASSERT(nvmem_init() == EC_SUCCESS);
+	TEST_ASSERT(!getvar(kv_pairs[1].key, strlen(kv_pairs[1].key)));
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	run_test_setup();
 
-	if (0) {
-		RUN_TEST(test_nvmem_incomplete_transaction);
-		test_print_result();
-		return;
-	}
 	RUN_TEST(test_migration);
 	RUN_TEST(test_corrupt_nvmem);
 	RUN_TEST(test_fully_erased_nvmem);
@@ -1351,6 +1446,7 @@ void run_test(void)
 	RUN_TEST(test_tpm_nvmem_modify_reserved_objects);
 	RUN_TEST(test_tpm_nvmem_modify_evictable_objects);
 	RUN_TEST(test_nvmem_incomplete_transaction);
+	RUN_TEST(test_nvmem_tuple_updates);
 	failure_mode = TEST_NO_FAILURE; /* In case the above test failed. */
 	RUN_TEST(test_nvmem_interrupted_compaction);
 	failure_mode = TEST_NO_FAILURE; /* In case the above test failed. */
