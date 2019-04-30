@@ -67,6 +67,7 @@
 /* This is not actually an EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
+#undef CONFIG_HIBERNATE
 
 /* Remove console commands / features for flash / RAM savings */
 #undef CONFIG_CONSOLE_CMDHELP
@@ -76,6 +77,8 @@
 #undef CONFIG_CMD_FASTCHARGE
 #undef CONFIG_CMD_GETTIME
 #undef CONFIG_CMD_MEM
+#undef CONFIG_CMD_SHMEM
+#undef CONFIG_CMD_WAITMS
 
 /* Enable control of I2C over USB */
 #define CONFIG_USB_I2C
