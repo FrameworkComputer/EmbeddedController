@@ -2266,14 +2266,8 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_ADC_CFGR2            REG32(STM32_ADC1_BASE + 0x10)
 /* Sampling time selection - 1.5 ADC cycles min, 239.5 cycles max */
 #define STM32_ADC_SMPR             REG32(STM32_ADC1_BASE + 0x14)
-#define STM32_ADC_SMPR_1_5_CY      0x0
-#define STM32_ADC_SMPR_7_5_CY      0x1
-#define STM32_ADC_SMPR_13_5_CY     0x2
-#define STM32_ADC_SMPR_28_5_CY     0x3
-#define STM32_ADC_SMPR_41_5_CY     0x4
-#define STM32_ADC_SMPR_55_5_CY     0x5
-#define STM32_ADC_SMPR_71_5_CY     0x6
-#define STM32_ADC_SMPR_239_5_CY    0x7
+/* Macro to convert enum stm32_adc_smpr to SMP bits of the ADC_SMPR register */
+#define STM32_ADC_SMPR_SMP(s)      ((s) - 1)
 #define STM32_ADC_TR               REG32(STM32_ADC1_BASE + 0x20)
 #define STM32_ADC_CHSELR           REG32(STM32_ADC1_BASE + 0x28)
 #define STM32_ADC_DR               REG32(STM32_ADC1_BASE + 0x40)

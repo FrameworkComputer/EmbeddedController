@@ -10,6 +10,19 @@
 
 #include "stdint.h"
 
+enum stm32_adc_smpr {
+	STM32_ADC_SMPR_DEFAULT = 0,
+	STM32_ADC_SMPR_1_5_CY,
+	STM32_ADC_SMPR_7_5_CY,
+	STM32_ADC_SMPR_13_5_CY,
+	STM32_ADC_SMPR_28_5_CY,
+	STM32_ADC_SMPR_41_5_CY,
+	STM32_ADC_SMPR_55_5_CY,
+	STM32_ADC_SMPR_71_5_CY,
+	STM32_ADC_SMPR_239_5_CY,
+	STM32_ADC_SMPR_COUNT,
+};
+
 /* Data structure to define ADC channels. */
 struct adc_t {
 	const char *name;
@@ -17,7 +30,9 @@ struct adc_t {
 	int factor_div;
 	int shift;
 	int channel;
-	uint32_t sample_rate;	/* Sampling Rate of the channel */
+#ifdef CHIP_FAMILY_STM32F0
+	enum stm32_adc_smpr sample_rate;  /* Sampling Rate of the channel */
+#endif
 };
 
 /*
