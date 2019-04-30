@@ -29,7 +29,7 @@ static void kukui_led_set_battery(void)
 {
 	static enum charge_state prv_chstate = PWR_STATE_UNCHANGE;
 	enum charge_state chstate;
-	uint8_t blue = 0, green = 0, red = 0;
+	uint8_t br[EC_LED_COLOR_COUNT] = { 0 };
 
 	chstate = charge_get_state();
 
@@ -41,25 +41,24 @@ static void kukui_led_set_battery(void)
 	switch (chstate) {
 	case PWR_STATE_CHARGE:
 		/* Always indicate when charging, even in suspend. */
-		blue = 1;
+		br[EC_LED_COLOR_BLUE] = 1;
 		break;
 	case PWR_STATE_DISCHARGE:
 		if (charge_get_percent() <= 10)
-			red = 1;
+			br[EC_LED_COLOR_RED] = 1;
 		break;
 	case PWR_STATE_ERROR:
-		red = 1;
+		br[EC_LED_COLOR_RED] = 1;
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
-		green = 1;
+		br[EC_LED_COLOR_GREEN] = 1;
 		break;
 	default:
 		/* Other states don't alter LED behavior */
 		return;
 	}
-	mt6370_led_set_brightness(LED_RED, red);
-	mt6370_led_set_brightness(LED_BLUE, blue);
-	mt6370_led_set_brightness(LED_GREEN, green);
+
+	led_set_brightness(EC_LED_ID_BATTERY_LED, br);
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
@@ -74,12 +73,23 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
+	uint8_t red, green, blue;
+
 	if (led_id != EC_LED_ID_BATTERY_LED)
 		return EC_ERROR_INVAL;
 
-	mt6370_led_set_brightness(LED_RED, brightness[EC_LED_COLOR_RED]);
-	mt6370_led_set_brightness(LED_GREEN, brightness[EC_LED_COLOR_GREEN]);
-	mt6370_led_set_brightness(LED_BLUE, brightness[EC_LED_COLOR_BLUE]);
+	red = brightness[EC_LED_COLOR_RED];
+	green = brightness[EC_LED_COLOR_GREEN];
+	blue = brightness[EC_LED_COLOR_BLUE];
+
+	mt6370_led_set_brightness(LED_RED, red);
+	mt6370_led_set_brightness(LED_GREEN, green);
+	mt6370_led_set_brightness(LED_BLUE, blue);
+
+	/* Enables LED sink power if necessary. */
+	mt6370_led_set_color((red ? LED_MASK_RED : 0) |
+			     (blue ? LED_MASK_BLUE : 0) |
+			     (green ? LED_MASK_GREEN : 0));
 	return EC_SUCCESS;
 }
 
@@ -90,13 +100,3 @@ static void led_second(void)
 		kukui_led_set_battery();
 }
 DECLARE_HOOK(HOOK_SECOND, led_second, HOOK_PRIO_DEFAULT);
-
-static void kukui_led_init(void)
-{
-	/* Enable all LEDs, and set brightness to 0. */
-	mt6370_led_set_brightness(LED_RED, 0);
-	mt6370_led_set_brightness(LED_GREEN, 0);
-	mt6370_led_set_brightness(LED_BLUE, 0);
-	mt6370_led_set_color(LED_MASK_RED | LED_MASK_GREEN | LED_MASK_BLUE);
-}
-DECLARE_HOOK(HOOK_INIT, kukui_led_init, HOOK_PRIO_DEFAULT);
