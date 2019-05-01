@@ -271,8 +271,17 @@ static void s0ix_transition_timeout(void)
 	/*
 	 * Wake up the AP so they don't just chill in a non-suspended state and
 	 * burn power. Overload a vaguely related event bit since event bits are
-	 * at a premium.
+	 * at a premium. If the system never entered S0ix, then manually set the
+	 * wake mask to pretend it did, so that the hang detect event wakes the
+	 * system.
 	 */
+	if (power_get_state() == POWER_S0) {
+		host_event_t s0ix_wake_mask;
+
+		get_lazy_wake_mask(POWER_S0ix, &s0ix_wake_mask);
+		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, s0ix_wake_mask);
+	}
+
 	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
 }
 
@@ -300,6 +309,13 @@ static void s0ix_complete_resume(struct host_sleep_event_context *ctx)
 {
 	hook_call_deferred(&s0ix_transition_timeout_data, -1);
 	ctx->sleep_transitions = slp_s0ix_transitions;
+
+	/*
+	 * If s0ix timed out and never transitioned, then the wake mask was
+	 * modified to its s0ix state, so that the event wakes the system.
+	 * Explicitly restore the wake mask to its S0 state now.
+	 */
+	power_update_wake_mask();
 }
 
 static void s0ix_reset_tracking(void)

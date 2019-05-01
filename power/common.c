@@ -221,29 +221,21 @@ enum power_state power_get_state(void)
 /* If host doesn't program s0ix lazy wake mask, use default s0ix mask */
 #define DEFAULT_WAKE_MASK_S0IX  (EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) | \
 				EC_HOST_EVENT_MASK(EC_HOST_EVENT_MODE_CHANGE))
+
  /*
-  * Set wake mask after power state has stabilized (5ms after power state
-  * change):
+  * Set the wake mask according to the current power state:
   * 1. On transition to S0, wake mask is reset.
   * 2. In non-S0 states, active mask set by host gets a higher preference.
   * 3. If host has not set any active mask, then check if a lazy mask exists
   *    for the current power state.
   * 4. If state is S0ix and no lazy or active wake mask is set, then use default
   *    S0ix mask to be compatible with older BIOS versions.
-  *
-  * Reason for making this a deferred call is to avoid race conditions occurring
-  * from S0ix periodic wakes on the SoC.
   */
 
-static void power_update_wake_mask_deferred(void);
-DECLARE_DEFERRED(power_update_wake_mask_deferred);
-
-static void power_update_wake_mask_deferred(void)
+void power_update_wake_mask(void)
 {
 	host_event_t wake_mask;
 	enum power_state state;
-
-	hook_call_deferred(&power_update_wake_mask_deferred_data, -1);
 
 	state = power_get_state();
 
@@ -259,6 +251,20 @@ static void power_update_wake_mask_deferred(void)
 #endif
 
 	lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, wake_mask);
+}
+ /*
+  * Set wake mask after power state has stabilized, 5ms after power state
+  * change. The reason for making this a deferred call is to avoid race
+  * conditions occurring from S0ix periodic wakes on the SoC.
+  */
+
+static void power_update_wake_mask_deferred(void);
+DECLARE_DEFERRED(power_update_wake_mask_deferred);
+
+static void power_update_wake_mask_deferred(void)
+{
+	hook_call_deferred(&power_update_wake_mask_deferred_data, -1);
+	power_update_wake_mask();
 }
 
 static void power_set_active_wake_mask(void)
