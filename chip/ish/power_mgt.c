@@ -62,7 +62,7 @@ struct pm_context {
 static struct pm_context pm_ctx = {
 	.aon_valid = 0,
 	/* aon shared data located in the start of aon memory */
-	.aon_share = (struct ish_aon_share *)CONFIG_ISH_AON_SRAM_BASE_START,
+	.aon_share = (struct ish_aon_share *)CONFIG_AON_RAM_BASE,
 	.console_in_use_timeout_sec = 60
 };
 

@@ -83,6 +83,19 @@
 #undef CONFIG_ACCELGYRO_LSM6DSM
 #undef CONFIG_ACCELGYRO_LSM6DSO
 
+/*
+ * Some chips have a portion of memory which will remain powered even
+ * during a reset.  This is called Always-On, or AON memory, and
+ * typically has a separate firmware to manage the memory.  These
+ * values can be used to configure the RAM layout for Always-On.
+ *
+ * See chip/ish/ for an example implementation.
+ */
+#undef CONFIG_AON_RAM_BASE
+#undef CONFIG_AON_RAM_SIZE
+#undef CONFIG_AON_ROM_BASE
+#undef CONFIG_AON_ROM_SIZE
+
 /* Add sensorhub function for LSM6DSM, required if 2nd device attached. */
 #undef CONFIG_SENSORHUB_LSM6DSM
 
@@ -2764,6 +2777,15 @@
 /* Support Real-Time Clock (RTC) */
 #undef CONFIG_RTC
 
+/* Size of each RAM bank in chip, default is CONFIG_RAM_SIZE */
+#undef CONFIG_RAM_BANK_SIZE
+
+/*
+ * Number of RAM banks in chip, default is
+ * CONFIG_RAM_SIZE / CONFIG_RAM_BANK_SIZE
+ */
+#undef CONFIG_RAM_BANKS
+
 /* Base address of RAM for the chip */
 #undef CONFIG_RAM_BASE
 
@@ -4037,6 +4059,16 @@
  */
 #ifndef CONFIG_DATA_RAM_SIZE
 #define CONFIG_DATA_RAM_SIZE CONFIG_RAM_SIZE
+#endif
+
+/* Automatic configuration of RAM banks **************************************/
+/* Assume one RAM bank if not specified, auto-compute number of banks        */
+#ifndef CONFIG_RAM_BANK_SIZE
+#define CONFIG_RAM_BANK_SIZE	CONFIG_RAM_SIZE
+#endif
+
+#ifndef CONFIG_RAM_BANKS
+#define CONFIG_RAM_BANKS	(CONFIG_RAM_SIZE / CONFIG_RAM_BANK_SIZE)
 #endif
 
 /******************************************************************************/

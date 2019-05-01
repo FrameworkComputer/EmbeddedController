@@ -26,45 +26,33 @@
 /* this macro causes 'pause' and reduces loop counts inside loop. */
 #define CPU_RELAX() asm volatile("rep; nop" ::: "memory")
 
-/****************************************************************************/
-/* Memory mapping */
-/****************************************************************************/
+/*****************************************************************************/
+/*                               Memory Layout                               */
+/*****************************************************************************/
 
-/* Define our SRAM layout. */
-#define CONFIG_ISH_SRAM_BASE_START	0xFF000000
-#define CONFIG_ISH_SRAM_BASE_END	0xFF0A0000
-#define CONFIG_ISH_SRAM_SIZE		(CONFIG_ISH_SRAM_BASE_END - \
-					CONFIG_ISH_SRAM_BASE_START)
+#define CONFIG_RAM_BASE		0xFF000000
+#define CONFIG_RAM_SIZE		0x000A0000
+#define CONFIG_RAM_BANK_SIZE		0x00008000
 
 #if defined(CHIP_FAMILY_ISH3)
-/* on ISH3, there is no seprated aon memory, using last 4KB of normal memory
- * without poweroff
- */
-#define CONFIG_ISH_AON_SRAM_BASE_START	0xFF09F000
-#define CONFIG_ISH_AON_SRAM_BASE_END	0xFF0A0000
+/* On ISH3, there is no separate AON memory; use last 4KB of SRAM */
+#define CONFIG_AON_RAM_BASE		0xFF09F000
+#define CONFIG_AON_RAM_SIZE		0x00001000
 #elif defined(CHIP_FAMILY_ISH4)
-#define CONFIG_ISH_AON_SRAM_BASE_START	0xFF800000
-#define CONFIG_ISH_AON_SRAM_BASE_END	0xFF801000
+#define CONFIG_AON_RAM_BASE		0xFF800000
+#define CONFIG_AON_RAM_SIZE		0x00001000
+#elif defined(CHIP_FAMILY_ISH5)
+#define CONFIG_AON_RAM_BASE		0xFF800000
+#define CONFIG_AON_RAM_SIZE		0x00002000
 #else
-#define CONFIG_ISH_AON_SRAM_BASE_START	0xFF800000
-#define CONFIG_ISH_AON_SRAM_BASE_END	0xFF802000
+#error "CHIP_FAMILY_ISH(3|4|5) must be defined"
 #endif
 
-#define CONFIG_ISH_AON_SRAM_SIZE	(CONFIG_ISH_AON_SRAM_BASE_END - \
-					CONFIG_ISH_AON_SRAM_BASE_START)
-
-/* reserve for readonly use in the last of AON memory */
-#define CONFIG_ISH_AON_SRAM_ROM_SIZE    0x80
-#define CONFIG_ISH_AON_SRAM_ROM_START   (CONFIG_ISH_AON_SRAM_BASE_END - \
-					CONFIG_ISH_AON_SRAM_ROM_SIZE)
-
-#define CONFIG_ISH_SRAM_BANK_SIZE	0x8000
-#define CONFIG_ISH_SRAM_BANKS		(CONFIG_ISH_SRAM_SIZE / \
-					CONFIG_ISH_SRAM_BANK_SIZE)
-
-/* Required for panic_output */
-#define CONFIG_RAM_SIZE			CONFIG_ISH_SRAM_SIZE
-#define CONFIG_RAM_BASE			CONFIG_ISH_SRAM_BASE_START
+/* The end of the AON memory is reserved for read-only use */
+#define CONFIG_AON_ROM_SIZE		0x80
+#define CONFIG_AON_ROM_BASE		(CONFIG_AON_RAM_BASE	\
+					 + CONFIG_AON_RAM_SIZE	\
+					 - CONFIG_AON_ROM_SIZE)
 
 /* System stack size */
 #define CONFIG_STACK_SIZE		1024

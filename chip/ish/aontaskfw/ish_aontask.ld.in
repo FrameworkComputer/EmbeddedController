@@ -7,8 +7,8 @@
 
 ENTRY(ish_aon_main);
 
-#define SRAM_START  CONFIG_ISH_AON_SRAM_BASE_START
-#define SRAM_RW_LEN (CONFIG_ISH_AON_SRAM_SIZE - CONFIG_ISH_AON_SRAM_ROM_SIZE)
+#define SRAM_START		CONFIG_AON_RAM_BASE
+#define SRAM_RW_LEN		(CONFIG_AON_RAM_SIZE - CONFIG_AON_ROM_SIZE)
 
 /* reserved stack size */
 #define STACK_SIZE  (256)
@@ -37,7 +37,7 @@ MEMORY
 SECTIONS
 {
     /* AON parts visible to FW are linked to the beginning of the AON area */
-    .data.aon_share : AT(CONFIG_ISH_AON_SRAM_BASE_START)
+    .data.aon_share : AT(SRAM_START)
     {
 	KEEP(*(.data.aon_share))
     } > RAM

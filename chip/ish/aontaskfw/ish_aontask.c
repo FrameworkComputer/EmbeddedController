@@ -172,7 +172,7 @@ void ish_aon_main(void);
 static struct tss_entry aon_tss = {
 	.prev_task_link = 0,
 	.reserved1 = 0,
-	.esp0 = (uint8_t *)(CONFIG_ISH_AON_SRAM_ROM_START - AON_SP_RESERVED),
+	.esp0 = (uint8_t *)(CONFIG_AON_ROM_BASE - AON_SP_RESERVED),
 	/* entry 1 in LDT for data segment */
 	.ss0 = 0xc,
 	.reserved2 = 0,
@@ -191,7 +191,7 @@ static struct tss_entry aon_tss = {
 	.edx = 0,
 	.ebx = 0,
 	/* set stack top pointer at the end of usable aon memory */
-	.esp = CONFIG_ISH_AON_SRAM_ROM_START - AON_SP_RESERVED,
+	.esp = CONFIG_AON_ROM_BASE - AON_SP_RESERVED,
 	.ebp = AON_SP_RESERVED,
 	.esi = 0,
 	.edi = 0,
@@ -295,20 +295,20 @@ static int store_main_fw(void)
 			SNOWBALL_FW_OFFSET +
 			ISH_FW_IMAGE_MANIFEST_HEADER_SIZE;
 
-	imr_fw_rw_addr = imr_fw_addr + aon_share.main_fw_rw_addr -
-			CONFIG_ISH_SRAM_BASE_START;
+	imr_fw_rw_addr = (imr_fw_addr
+			  + aon_share.main_fw_rw_addr
+			  - CONFIG_RAM_BASE);
 
 	/* disable BCG (Block Clock Gating) for DMA, DMA can be accessed now */
 	CCU_BCG_EN = CCU_BCG_EN & ~CCU_BCG_BIT_DMA;
 
 	/* store main FW's read and write data region to IMR/UMA DDR */
 	ret = ish_dma_copy(
-			PAGING_CHAN,
-			imr_fw_rw_addr,
-			aon_share.main_fw_rw_addr,
-			aon_share.main_fw_rw_size,
-			SRAM_TO_UMA
-			);
+		PAGING_CHAN,
+		imr_fw_rw_addr,
+		aon_share.main_fw_rw_addr,
+		aon_share.main_fw_rw_size,
+		SRAM_TO_UMA);
 
 	/* enable BCG for DMA, DMA can't be accessed now */
 	CCU_BCG_EN = CCU_BCG_EN | CCU_BCG_BIT_DMA;
@@ -336,23 +336,24 @@ static int restore_main_fw(void)
 			SNOWBALL_FW_OFFSET +
 			ISH_FW_IMAGE_MANIFEST_HEADER_SIZE;
 
-	imr_fw_ro_addr = imr_fw_addr + aon_share.main_fw_ro_addr -
-			CONFIG_ISH_SRAM_BASE_START;
+	imr_fw_ro_addr = (imr_fw_addr
+			  + aon_share.main_fw_ro_addr
+			  - CONFIG_RAM_BASE);
 
-	imr_fw_rw_addr = imr_fw_addr + aon_share.main_fw_rw_addr -
-			CONFIG_ISH_SRAM_BASE_START;
+	imr_fw_rw_addr = (imr_fw_addr
+			  + aon_share.main_fw_rw_addr
+			  - CONFIG_RAM_BASE);
 
 	/* disable BCG (Block Clock Gating) for DMA, DMA can be accessed now */
 	CCU_BCG_EN = CCU_BCG_EN & ~CCU_BCG_BIT_DMA;
 
 	/* restore main FW's read only code and data region from IMR/UMA DDR */
 	ret = ish_dma_copy(
-			PAGING_CHAN,
-			aon_share.main_fw_ro_addr,
-			imr_fw_ro_addr,
-			aon_share.main_fw_ro_size,
-			UMA_TO_SRAM
-			);
+		PAGING_CHAN,
+		aon_share.main_fw_ro_addr,
+		imr_fw_ro_addr,
+		aon_share.main_fw_ro_size,
+		UMA_TO_SRAM);
 
 	if (ret != DMA_RC_OK) {
 
@@ -388,12 +389,14 @@ static int restore_main_fw(void)
 	return AON_SUCCESS;
 }
 
-#ifdef CHIP_FAMILY_ISH3
-/* on ISH3, need reserve last SRAM bank for AON use */
-#define SRAM_POWER_OFF_BANKS	(CONFIG_ISH_SRAM_BANKS - 1)
+#if defined(CHIP_FAMILY_ISH3)
+/* on ISH3, the last SRAM bank is reserved for AON use */
+#define SRAM_POWER_OFF_BANKS	(CONFIG_RAM_BANKS - 1)
+#elif defined(CHIP_FAMILY_ISH4) || defined(CHIP_FAMILY_ISH5)
+/* ISH4 and ISH5 have separate AON memory, can power off entire main SRAM */
+#define SRAM_POWER_OFF_BANKS	CONFIG_RAM_BANKS
 #else
-/* from ISH4, has seprated AON memory, can power off entire main SRAM  */
-#define SRAM_POWER_OFF_BANKS	CONFIG_ISH_SRAM_BANKS
+#error "CHIP_FAMILY_ISH(3|4|5) must be defined"
 #endif
 
 /**
@@ -435,8 +438,8 @@ static void sram_power(int on)
 	uint32_t sram_addr;
 	uint32_t erase_cfg;
 
-	bank_size = CONFIG_ISH_SRAM_BANK_SIZE;
-	sram_addr = CONFIG_ISH_SRAM_BASE_START;
+	bank_size = CONFIG_RAM_BANK_SIZE;
+	sram_addr = CONFIG_RAM_BASE;
 
 	/**
 	 * set erase size as one bank, erase control register using DWORD as
