@@ -14,8 +14,7 @@ import errno
 import fcntl
 import os
 import pexpect
-import fdpexpect
-
+from pexpect import fdpexpect
 
 # Expecting a result in 3 seconds is plenty even for slow platforms.
 DEFAULT_UART_TIMEOUT = 3
