@@ -800,6 +800,13 @@ int dcrypto_p256_ecdsa_sign(struct drbg_ctx *drbg, const p256_int *key,
 	int i, result;
 	struct DMEM_ecc *pEcc =
 	    (struct DMEM_ecc *) GREG32_ADDR(CRYPTO, DMEM_DUMMY);
+	/*
+	 * We can't allow other functions to write directly into DMEM_ecc,
+	 * as p256_int is a packed struct so those functions may perform
+	 * byte (as opposed to word) writes (in case the ptr operand is
+	 * unaligned), which are not compatible with the peripheral.
+	 */
+	p256_int rnd, k;
 
 	dcrypto_init_and_lock();
 	dcrypto_ecc_init();
@@ -807,14 +814,16 @@ int dcrypto_p256_ecdsa_sign(struct drbg_ctx *drbg, const p256_int *key,
 
 	/* Pick uniform 0 < k < R */
 	do {
-		hmac_drbg_generate_p256(drbg, &pEcc->rnd);
-	} while (p256_cmp(&SECP256r1_nMin2, &pEcc->rnd) < 0);
+		hmac_drbg_generate_p256(drbg, &rnd);
+	} while (p256_cmp(&SECP256r1_nMin2, &rnd) < 0);
 	drbg_exit(drbg);
 
-	p256_add_d(&pEcc->rnd, 1, &pEcc->k);
+	p256_add_d(&rnd, 1, &k);
+
+	cp8w(&pEcc->k, &k);
 
 	for (i = 0; i < 8; ++i)
-		pEcc->rnd.a[i] = rand();
+		rnd.a[i] = k.a[i] = pEcc->rnd.a[i] = rand();
 
 	cp8w(&pEcc->msg, message);
 	cp8w(&pEcc->d, key);
