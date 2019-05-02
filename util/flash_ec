@@ -199,7 +199,7 @@ function dut_control_get() {
 	fi
 
 	local ARGS DUT_GETVAL RETVAL
-	ARGS=( "${DUT_CONTROL_CMD[@]}" "$1" )
+	ARGS=( "${DUT_CONTROL_CMD[@]}" "-o" "$1" )
 	RETVAL=0
 	# || statement is attached to avoid an exit if error exit is enabled.
 	DUT_GETVAL=$( "${ARGS[@]}" ) || RETVAL="$?"
@@ -207,8 +207,8 @@ function dut_control_get() {
 		warn "${FUNCNAME[0]} failed: ${ARGS[*]} returned ${RETVAL}."
 		return "${RETVAL}"
 	fi
-	# Remove the shortest prefix ending ':'
-	echo "${DUT_GETVAL#*:}"
+
+	echo "${DUT_GETVAL}"
 }
 
 BOARD=${FLAGS_board}
@@ -414,6 +414,8 @@ ec_switch_boot0() {
 	on_value=$1
 	# Enable programming GPIOs
 	if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
+		servo_save_add "prog_en"
+
 		dut_control prog_en:yes
 	fi
 	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
@@ -501,35 +503,21 @@ cleanup() {
 			dut_control ftdii2c_cmd:setclock
 		fi
 
-		# Reset the dut mux if it exists
-		if servo_has_dut_i2c_mux; then
-			# Turn off dut i2c mux
-			dut_control dut_i2c_mux:none
-		fi
-
 		# Let the AP boot back up.
 		if servo_has_warm_reset; then
 			dut_control warm_reset:off
 		fi
 	fi
 
-	if [ -n "${save}" ]; then
-		info "Restoring servo settings..."
-		servo_restore "$save"
-	fi
+	servo_restore
 
 	if [ "${CHIP}" = "stm32" -o "${CHIP}" = "npcx_uut" ]; then
-		# Reconnect the EC-3PO interpreter to the UART.
-		dut_control "${MCU}"_ec3po_interp_connect:on || \
-		    warn "hdctools cannot reconnect the EC-3PO interpreter to" \
-		    "the UART."
 		dut_control "${MCU}"_boot_mode:off
 	fi
 
 	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
 		dut_control ccd_ec_boot_mode_uut:off
 		dut_control ccd_ec_boot_mode_bitbang:off
-		dut_control "${MCU}"_uart_bitbang_en:off
 	fi
 
 	if ! on_raiden || servo_has_cold_reset; then
@@ -544,7 +532,6 @@ if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
 else
 	EC_FILE=ec.bin
 fi
-
 
 LOCAL_BUILD=
 if [[ -n "${EC_DIR}" ]]; then
@@ -617,57 +604,40 @@ function servo_ec_uart() {
 
 # Not every control is supported on every servo type.  Therefore, define which
 # controls are supported by each servo type.
-servo_v2_VARS=( "jtag_buf_on_flex_en" "jtag_buf_en" "cold_reset" "spi1_vref" )
-servo_micro_VARS=( "cold_reset" "spi1_vref" )
+servo_v2_VARS=( "cold_reset" )
+servo_micro_VARS=( "cold_reset" )
 servo_v4_with_ccd_cr50_VARS=( "cold_reset" )
-# Flashing an STM32 over the UART requires modifying the UART properties along
-# with the boot mode pin.
-if [ "${CHIP}" = "stm32" ] ; then
-	common_stm32_VARS=( "${MCU}_uart_parity" )
-	common_stm32_VARS+=( "${MCU}_uart_baudrate" )
-	servo_v2_VARS+=( "${common_stm32_VARS[@]}" )
-	servo_v2_VARS+=( "${MCU}_uart_en" )
-	servo_micro_VARS+=( "${common_stm32_VARS[@]}" )
-	servo_micro_VARS+=( "${MCU}_uart_en" )
-	servo_v4_with_ccd_cr50_VARS+=( "${common_stm32_VARS[@]}" )
-fi
-if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
-	servo_v2_VARS+=( "prog_en" )
-fi
-if [ "${CHIP}" = "npcx_uut" ] ; then
-	servo_v4_with_ccd_cr50_VARS+=( "ccd_keepalive_en" )
-fi
-if [[ "${CHIP}" == "npcx_int_spi" ]]; then
-	servo_v2_VARS+=( "fw_up" )
-	servo_micro_VARS+=( "fw_up" )
-fi
+
 # Some servo boards use the same controls.
 servo_v3_VARS=( "${servo_v2_VARS[@]}" )
 servo_v4_with_servo_micro_VARS=( "${servo_micro_VARS[@]}" )
-toad_VARS=( "${MCU}_uart_parity" "${MCU}_uart_baudrate boot_mode" )
+toad_VARS=( "boot_mode" )
+
+declare -a save
+function servo_save_add() {
+	save+=( "$( "${DUT_CONTROL_CMD[@]}" "$@" )" )
+}
 
 function servo_save() {
+	local SERVO_VARS_NAME="${SERVO_TYPE}_VARS[@]"
+	for ctrl in "${!SERVO_VARS_NAME}"; do
+		servo_save_add "${ctrl}"
+	done
+
 	if [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
+		servo_save_add "i2c_mux_en"
+		servo_save_add "i2c_mux"
+
 		dut_control i2c_mux_en:on
 		dut_control i2c_mux:remote_adc
-	fi
-
-	local SERVO_VARS_NAME
-	SERVO_VARS_NAME="${SERVO_TYPE}_VARS[@]"
-	if [[ -n "${!SERVO_VARS_NAME}" ]]; then
-		"${DUT_CONTROL_CMD[@]}" "${!SERVO_VARS_NAME}"
 	fi
 }
 
 function servo_restore() {
-	echo "$1" | while read line
-	do
-		dut_control "$line"
+	info "Restoring servo settings..."
+	for ctrl in "${save[@]}"; do
+		dut_control "$ctrl"
 	done
-
-	if [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
-		dut_control i2c_mux_en:off
-	fi
 }
 
 function claim_pty() {
@@ -683,6 +653,8 @@ function claim_pty() {
 
 	# Disconnect the EC-3PO interpreter from the UART since it will
 	# interfere with flashing.
+	servo_save_add "${MCU}_ec3po_interp_connect"
+
 	dut_control ${MCU}_ec3po_interp_connect:off || \
 	    warn "hdctools cannot disconnect the EC-3PO interpreter from" \
 	    "the UART."
@@ -736,6 +708,9 @@ function flash_openocd() {
 		OCD_PATH="${EC_DIR}/util/openocd"
 	fi
 
+	servo_save_add "jtag_buf_on_flex_en"
+	servo_save_add "jtag_buf_en"
+
 	dut_control jtag_buf_on_flex_en:on
 	dut_control jtag_buf_en:on
 
@@ -785,20 +760,28 @@ function flash_flashrom() {
 
 		# If spi flash is in npcx's ec, enable gang programer mode
 		if [[ "${CHIP}" == "npcx_int_spi" ]]; then
+			servo_save_add "fw_up"
+
 			# Set GP_SEL# as low then start ec
 			dut_control fw_up:on
 			sleep 0.1
 			dut_control cold_reset:off
 		fi
 
+		servo_save_add "spi1_vref"
+		servo_save_add "spi1_buf_en"
+
 		# Turn on SPI1 interface on servo for SPI Flash Chip
 		dut_control spi1_vref:${SPI_VOLTAGE} spi1_buf_en:on
 		if [[ ! "${SERVO_TYPE}" =~ "servo_micro" ]]; then
 			# Servo micro doesn't support this control.
+			servo_save_add "spi1_buf_on_flex_en"
 			dut_control spi1_buf_on_flex_en:on
 		fi
 	else
 		if [[ "${CHIP}" == "npcx_int_spi" ]]; then
+			servo_save_add "fw_up"
+
 			# Set GP_SEL# as low then start ec
 			dut_control cold_reset:on
 			dut_control fw_up:on
@@ -885,23 +868,9 @@ function flash_flashrom() {
 		sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			${FLASHROM_CMDLINE} -v "${T}"
 	fi
+
 	[[ -f "${T}" ]] && rm "${T}"
-
-	# Set GP_SEL# as default to disable GP mode when ec reboots
-	if [[ "${CHIP}" == "npcx_int_spi" ]]; then
-		dut_control fw_up:off
-	fi
-
-	if  ! on_raiden || [[ "${SERVO_TYPE}" =~ "servo_micro" ]] ; then
-		# Turn off SPI1 interface on servo
-		dut_control spi1_vref:off spi1_buf_en:off
-		if [[ ! "${SERVO_TYPE}" =~ "servo_micro" ]] ; then
-			dut_control spi1_buf_on_flex_en:off
-		fi
-
-	else
-		[[ -f "${L}" ]] && rm "${L}"
-	fi
+	[[ -f "${L}" ]] && rm "${L}"
 }
 
 function flash_stm32() {
@@ -931,8 +900,13 @@ function flash_stm32() {
 	ec_reset
 
 	if ! on_raiden && [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
+		servo_save_add "${MCU}_uart_en"
+
 		dut_control ${MCU}_uart_en:on
 	fi
+
+	servo_save_add "${MCU}_uart_parity"
+
 	dut_control ${MCU}_uart_parity:even
 
 	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
@@ -944,9 +918,15 @@ function flash_stm32() {
 			    ;;
 		esac
 		info "Programming at ${FLAGS_bitbang_rate} baud"
+
+		servo_save_add "${MCU}_uart_baudrate"
+		servo_save_add "${MCU}_uart_bitbang_en"
+
 		dut_control ${MCU}_uart_baudrate:"${FLAGS_bitbang_rate}"
 		dut_control ${MCU}_uart_bitbang_en:on
 	else
+		servo_save_add "${MCU}_uart_baudrate"
+
 		dut_control ${MCU}_uart_baudrate:115200
 	fi
 
@@ -1082,6 +1062,9 @@ function flash_it83xx() {
 	# there is a mux on the dut)
 	if servo_has_dut_i2c_mux; then
 		info "Switching DUT I2C Mux to ${CHIP}"
+
+		servo_save_add "dut_i2c_mux"
+
 		# TODO(b/126189871): Investigate about the timeout in CCD mode,
 		# and remove with this retry logic along with the fix.
 		local num_attempts=1
@@ -1230,6 +1213,7 @@ function flash_npcx_uut() {
 	claim_pty ${EC_UART}
 
 	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
+		servo_save_add ccd_keepalive_en
 		dut_control ccd_keepalive_en:on
 	fi
 
@@ -1308,7 +1292,7 @@ if [[ -z "${FLAGS_read}" ]]; then
 fi
 
 if [ "${NEED_SERVO}" != "no" ] ; then
-	save="$(servo_save)"
+	servo_save
 fi
 
 info "Flashing chip ${CHIP}."
