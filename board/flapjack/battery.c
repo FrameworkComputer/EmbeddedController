@@ -187,14 +187,14 @@ static const struct max17055_alert_profile alert_profile[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(alert_profile) == BATTERY_COUNT);
 
-enum {
+enum temp_zone {
 	TEMP_ZONE_0, /* t0 <= bat_temp_c < t1  */
 	TEMP_ZONE_1, /* t1 <= bat_temp_c < t2 */
 	TEMP_ZONE_2, /* t2 <= bat_temp_c < t3 */
 	TEMP_ZONE_3, /* t3 <= bat_temp_c < t4 */
 	TEMP_ZONE_COUNT,
 	TEMP_OUT_OF_RANGE = TEMP_ZONE_COUNT,
-} temp_zone;
+};
 
 static const struct {
 	int temp_min; /* 0.1 deg C */
@@ -203,43 +203,27 @@ static const struct {
 	int desired_voltage; /* mV */
 } temp_zones[BATTERY_COUNT][TEMP_ZONE_COUNT] = {
 	[BATTERY_C18_ATL] = {
-		/* TEMP_ZONE_0 */
 		{BATTERY_ATL_CHARGE_MIN_TEMP * 10, 10, 1170, 4400},
-		/* TEMP_ZONE_1 */
 		{100, 200, 1755, 4400},
-		/* TEMP_ZONE_2 */
 		{200, 450, 2925, 4400},
-		/* TEMP_ZONE_3 */
 		{450, BATTERY_ATL_CHARGE_MAX_TEMP * 10, 2925, 4100},
 	},
 	[BATTERY_C19_ATL] = {
-		/* TEMP_ZONE_0 */
 		{BATTERY_ATL_CHARGE_MIN_TEMP * 10, 10, 1300, 4400},
-		/* TEMP_ZONE_1 */
 		{100, 200, 1950, 4400},
-		/* TEMP_ZONE_2 */
 		{200, 450, 3250, 4400},
-		/* TEMP_ZONE_3 */
 		{450, BATTERY_ATL_CHARGE_MAX_TEMP * 10, 3250, 4100},
 	},
 	[BATTERY_C18_SUNWODA] = {
-		/* TEMP_ZONE_0 */
 		{BATTERY_SUNWODA_CHARGE_MIN_TEMP * 10, 100, 1170, 4400},
-		/* TEMP_ZONE_1 */
 		{100, 200, 1755, 4400},
-		/* TEMP_ZONE_2 */
 		{200, 450, 2925, 4400},
-		/* TEMP_ZONE_3 */
 		{450, BATTERY_SUNWODA_CHARGE_MAX_TEMP * 10, 2925, 4100},
 	},
 	[BATTERY_C19_SUNWODA] = {
-		/* TEMP_ZONE_0 */
 		{BATTERY_SUNWODA_CHARGE_MIN_TEMP * 10, 100, 1300, 4400},
-		/* TEMP_ZONE_1 */
 		{100, 200, 1950, 4400},
-		/* TEMP_ZONE_2 */
 		{200, 450, 3250, 4400},
-		/* TEMP_ZONE_3 */
 		{450, BATTERY_SUNWODA_CHARGE_MAX_TEMP * 10, 3250, 4100},
 	},
 };
@@ -312,33 +296,31 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 int charger_profile_override(struct charge_state_data *curr)
 {
 	/* battery temp in 0.1 deg C */
-	int bat_temp_c = curr->batt.temperature - 2731;
+	int temp = curr->batt.temperature - 2731;
+	enum temp_zone zone;
 
 	if (curr->state != ST_CHARGE)
 		return 0;
 
 	if ((curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE) ||
-	    (bat_temp_c < temp_zones[batt_type][0].temp_min) ||
-	    (bat_temp_c >= temp_zones[batt_type][TEMP_ZONE_COUNT - 1].temp_max))
-		temp_zone = TEMP_OUT_OF_RANGE;
-	else {
-		for (temp_zone = TEMP_ZONE_0; temp_zone < TEMP_ZONE_COUNT;
-		     temp_zone++) {
-			if (bat_temp_c <
-				temp_zones[batt_type][temp_zone].temp_max)
+	    (temp < temp_zones[batt_type][TEMP_ZONE_0].temp_min)) {
+		zone = TEMP_OUT_OF_RANGE;
+	} else {
+		for (zone = TEMP_ZONE_0; zone < TEMP_ZONE_COUNT; zone++) {
+			if (temp < temp_zones[batt_type][zone].temp_max)
 				break;
 		}
 	}
 
-	if (temp_zone == TEMP_OUT_OF_RANGE) {
+	if (zone == TEMP_OUT_OF_RANGE || zone >= TEMP_ZONE_COUNT) {
 		curr->requested_current = curr->requested_voltage = 0;
 		curr->batt.flags &= ~BATT_FLAG_WANT_CHARGE;
 		curr->state = ST_IDLE;
 	} else {
 		curr->requested_current =
-			temp_zones[batt_type][temp_zone].desired_current;
+			temp_zones[batt_type][zone].desired_current;
 		curr->requested_voltage =
-			temp_zones[batt_type][temp_zone].desired_voltage;
+			temp_zones[batt_type][zone].desired_voltage;
 	}
 
 	/*
