@@ -8,6 +8,14 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
+/*
+ * By default, enable all console messages excepted HC, ACPI and event:
+ * The sensor stack is generating a lot of activity.
+ */
+#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
+#undef CONFIG_HOSTCMD_DEBUG_MODE
+#define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
+
 /* NPCX7 config */
 #define NPCX7_PWM1_SEL    0  /* GPIO C2 is not used as PWM1. */
 #define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
