@@ -191,6 +191,12 @@ uint32_t __hw_clock_event_get(void)
 
 void __hw_clock_event_clear(void)
 {
+	/*
+	 * we get timer event at every new clksrc_high.
+	 * so when there's no event, last_dealine should be
+	 * the last value within current clksrc_high.
+	 */
+	last_deadline = 0xFFFFFFFF;
 	wait_while_settling(HPET_T1_SETTLING);
 	HPET_TIMER_CONF_CAP(1) &= ~HPET_Tn_INT_ENB_CNF;
 }
@@ -280,6 +286,9 @@ int __hw_clock_source_init(uint32_t start_t)
 	/* Level triggered interrupt */
 	timer0_config |= HPET_Tn_INT_TYPE_CNF;
 	timer1_config |= HPET_Tn_INT_TYPE_CNF;
+
+	/* no event until next timer 0 IRQ for clksrc_high++ */
+	last_deadline = 0xFFFFFFFF;
 
 	/* Enable interrupt */
 	timer0_config |= HPET_Tn_INT_ENB_CNF;
