@@ -2609,6 +2609,13 @@
 /* Support One Time Protection structure */
 #undef CONFIG_OTP
 
+/*
+ * Address to store persistent panic data at. By default, this will be
+ * at the end of RAM, and have a size of sizeof(struct panic_data)
+ */
+#undef CONFIG_PANIC_DATA_BASE
+#undef CONFIG_PANIC_DATA_SIZE
+
 /* Support PECI interface to x86 processor */
 #undef CONFIG_PECI
 
@@ -4069,6 +4076,23 @@
 
 #ifndef CONFIG_RAM_BANKS
 #define CONFIG_RAM_BANKS	(CONFIG_RAM_SIZE / CONFIG_RAM_BANK_SIZE)
+#endif
+
+/******************************************************************************/
+/*
+ * Store panic data at end of memory by default, unless otherwise
+ * configured.  This is safe because we don't context switch away from
+ * the panic handler before rebooting, and stacks and data start at
+ * the beginning of RAM.
+ */
+#ifndef CONFIG_PANIC_DATA_SIZE
+#define CONFIG_PANIC_DATA_SIZE	sizeof(struct panic_data)
+#endif
+
+#ifndef CONFIG_PANIC_DATA_BASE
+#define CONFIG_PANIC_DATA_BASE (CONFIG_RAM_BASE			\
+				+ CONFIG_RAM_SIZE			\
+				- CONFIG_PANIC_DATA_SIZE)
 #endif
 
 /******************************************************************************/
