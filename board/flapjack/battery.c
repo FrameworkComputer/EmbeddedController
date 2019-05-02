@@ -31,6 +31,9 @@
 #define BATTERY_ATL_CHARGE_MIN_TEMP 0
 #define BATTERY_ATL_CHARGE_MAX_TEMP 60
 
+#define BATTERY_SUNWODA_CHARGE_MIN_TEMP 0
+#define BATTERY_SUNWODA_CHARGE_MAX_TEMP 60
+
 static const struct battery_info info[] = {
 	[BATTERY_C18_ATL] = {
 		.voltage_max		= 4400,
@@ -45,6 +48,30 @@ static const struct battery_info info[] = {
 		.discharging_max_c	= 60,
 	},
 	[BATTERY_C19_ATL] = {
+		.voltage_max		= 4400,
+		.voltage_normal		= 3850,
+		.voltage_min		= 3000,
+		.precharge_current	= 327,
+		.start_charging_min_c	= 0,
+		.start_charging_max_c	= 45,
+		.charging_min_c		= 0,
+		.charging_max_c		= 60,
+		.discharging_min_c	= -20,
+		.discharging_max_c	= 60,
+	},
+	[BATTERY_C18_SUNWODA] = {
+		.voltage_max		= 4400,
+		.voltage_normal		= 3850,
+		.voltage_min		= 3000,
+		.precharge_current	= 294,
+		.start_charging_min_c	= 0,
+		.start_charging_max_c	= 45,
+		.charging_min_c		= 0,
+		.charging_max_c		= 60,
+		.discharging_min_c	= -20,
+		.discharging_max_c	= 60,
+	},
+	[BATTERY_C19_SUNWODA] = {
 		.voltage_max		= 4400,
 		.voltage_normal		= 3850,
 		.voltage_min		= 3000,
@@ -90,6 +117,36 @@ static const struct max17055_batt_profile batt_profile[] = {
 		.qr_table20		= 0x0d00,
 		.qr_table30		= 0x0b00,
 	},
+	[BATTERY_C18_SUNWODA] = {
+		.is_ez_config		= 0,
+		.design_cap		= 0x2fcc, /* 6118mAh */
+		.ichg_term		= 0x03c0, /* 150 mA */
+		/* Empty voltage = 3400mV, Recovery voltage = 4000mV */
+		.v_empty_detect		= 0xaa64,
+		.learn_cfg		= 0x4402,
+		.dpacc			= 0x0c7c,
+		.rcomp0			= 0x0024,
+		.tempco			= 0x0c1f,
+		.qr_table00		= 0x9f00,
+		.qr_table10		= 0x4480,
+		.qr_table20		= 0x1600,
+		.qr_table30		= 0x1400,
+	},
+	[BATTERY_C19_SUNWODA] = {
+		.is_ez_config		= 0,
+		.design_cap		= 0x34b1, /* 6744mAh */
+		.ichg_term		= 0x03c0, /* 150 mA */
+		/* Empty voltage = 3400mV, Recovery voltage = 4000mV */
+		.v_empty_detect		= 0xaa64,
+		.learn_cfg		= 0x4402,
+		.dpacc			= 0x0c80,
+		.rcomp0			= 0x001f,
+		.tempco			= 0x051f,
+		.qr_table00		= 0x9100,
+		.qr_table10		= 0x3d00,
+		.qr_table20		= 0x1200,
+		.qr_table30		= 0x1002,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(batt_profile) == BATTERY_COUNT);
 
@@ -110,6 +167,23 @@ static const struct max17055_alert_profile alert_profile[] = {
 		.s_alert_mxmn = SALRT_DISABLE,
 		.i_alert_mxmn = IALRT_DISABLE,
 	},
+	[BATTERY_C18_SUNWODA] = {
+		.v_alert_mxmn = VALRT_DISABLE,
+		.t_alert_mxmn = MAX17055_TALRTTH_REG(
+			BATTERY_SUNWODA_CHARGE_MIN_TEMP,
+			BATTERY_SUNWODA_CHARGE_MAX_TEMP),
+		.s_alert_mxmn = SALRT_DISABLE,
+		.i_alert_mxmn = IALRT_DISABLE,
+	},
+	[BATTERY_C19_SUNWODA] = {
+		.v_alert_mxmn = VALRT_DISABLE,
+		.t_alert_mxmn = MAX17055_TALRTTH_REG(
+			BATTERY_SUNWODA_CHARGE_MIN_TEMP,
+			BATTERY_SUNWODA_CHARGE_MAX_TEMP),
+		.s_alert_mxmn = SALRT_DISABLE,
+		.i_alert_mxmn = IALRT_DISABLE,
+	},
+
 };
 BUILD_ASSERT(ARRAY_SIZE(alert_profile) == BATTERY_COUNT);
 
@@ -148,11 +222,33 @@ static const struct {
 		/* TEMP_ZONE_3 */
 		{450, BATTERY_ATL_CHARGE_MAX_TEMP * 10, 3250, 4100},
 	},
+	[BATTERY_C18_SUNWODA] = {
+		/* TEMP_ZONE_0 */
+		{BATTERY_SUNWODA_CHARGE_MIN_TEMP * 10, 100, 1170, 4400},
+		/* TEMP_ZONE_1 */
+		{100, 200, 1755, 4400},
+		/* TEMP_ZONE_2 */
+		{200, 450, 2925, 4400},
+		/* TEMP_ZONE_3 */
+		{450, BATTERY_SUNWODA_CHARGE_MAX_TEMP * 10, 2925, 4100},
+	},
+	[BATTERY_C19_SUNWODA] = {
+		/* TEMP_ZONE_0 */
+		{BATTERY_SUNWODA_CHARGE_MIN_TEMP * 10, 100, 1300, 4400},
+		/* TEMP_ZONE_1 */
+		{100, 200, 1950, 4400},
+		/* TEMP_ZONE_2 */
+		{200, 450, 3250, 4400},
+		/* TEMP_ZONE_3 */
+		{450, BATTERY_SUNWODA_CHARGE_MAX_TEMP * 10, 3250, 4100},
+	},
 };
 
 static const struct mv_to_id batteries[] = {
-	{ BATTERY_C18_ATL,       900 },  /* 100K  */
-	{ BATTERY_C19_ATL,       576 },  /* 47K   */
+	{ BATTERY_C18_ATL,       900 },   /* 100K ohm */
+	{ BATTERY_C19_ATL,       576 },   /*  47K ohm */
+	{ BATTERY_C18_SUNWODA,  1484 },   /* 470K ohm */
+	{ BATTERY_C19_SUNWODA,  1200 },   /* 200K ohm */
 };
 BUILD_ASSERT(ARRAY_SIZE(batteries) < BATTERY_COUNT);
 
@@ -188,6 +284,8 @@ int get_battery_manufacturer_name(char *dest, int size)
 		[BATTERY_UNKNOWN] = "UNKNOWN",
 		[BATTERY_C18_ATL] = "C18_ATL",
 		[BATTERY_C19_ATL] = "C19_ATL",
+		[BATTERY_C18_SUNWODA] = "C18_SWD",
+		[BATTERY_C19_SUNWODA] = "C19_SWD",
 	};
 	ASSERT(dest);
 	strzcpy(dest, name[batt_type], size);
