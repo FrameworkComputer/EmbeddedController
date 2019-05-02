@@ -615,6 +615,13 @@ int rt946x_cutoff_battery(void);
 /* Enable/Disable charge temination */
 int rt946x_enable_charge_termination(int en);
 
+/**
+ * Toggle BC12 detection
+ *
+ * @return EC_SUCCESS or EC_ERROR_*
+ */
+int rt946x_toggle_bc12_detection(void);
+
 struct rt946x_init_setting {
 	uint16_t eoc_current;
 	uint16_t mivr;
