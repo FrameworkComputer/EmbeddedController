@@ -211,7 +211,6 @@ enum adc_channel {
 	ADC_EC_SKU_ID,
 	ADC_BATT_ID,
 	ADC_POGO_ADC_INT_L,
-	ADC_USBC_THERM,
 	ADC_CH_COUNT
 };
 

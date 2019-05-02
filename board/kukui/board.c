@@ -71,7 +71,6 @@ const struct adc_t adc_channels[] = {
 	[ADC_BOARD_ID] = {"BOARD_ID", 3300, 4096, 0, STM32_AIN(10)},
 	[ADC_EC_SKU_ID] = {"EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8)},
 	[ADC_BATT_ID] = {"BATT_ID", 3300, 4096, 0, STM32_AIN(7)},
-	[ADC_USBC_THERM] = {"USBC_THERM", 3300, 4096, 0, STM32_AIN(14)},
 	[ADC_POGO_ADC_INT_L] = {"POGO_ADC_INT_L", 3300, 4096, 0, STM32_AIN(6)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
@@ -242,9 +241,17 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 static void board_rev_init(void)
 {
 	/* Board revision specific configs. */
-	if (board_get_version() >= 2) {
-		gpio_set_flags(GPIO_USBC_THERM, GPIO_ANALOG);
+#ifdef BOARD_KUKUI
+	/*
+	 * It's a P1 pin BOOTBLOCK_MUX_OE, also a P2 pin BC12_DET_EN.
+	 * Keep this pin defaults to P1 setting since that eMMC enabled with
+	 * High-Z stat.
+	 */
+	if (board_get_version() == 1)
+		gpio_set_flags(GPIO_BC12_DET_EN, GPIO_ODR_HIGH);
+#endif
 
+	if (board_get_version() >= 2) {
 		/*
 		 * Enable MT6370 DB_POSVOUT/DB_NEGVOUT (controlled by _EN pins).
 		 */

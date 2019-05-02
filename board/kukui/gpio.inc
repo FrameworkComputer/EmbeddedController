@@ -87,14 +87,7 @@ GPIO(EN_PP3300_POGO,     PIN(A, 13), GPIO_OUT_LOW)
 GPIO(EN_POGO_CHARGE_L,   PIN(B, 6),  GPIO_OUT_HIGH)
 GPIO(EN_USBC_CHARGE_L,   PIN(C, 7),  GPIO_OUT_LOW)
 GPIO(EN_PP5000_USBC,     PIN(D, 2),  GPIO_OUT_LOW)
-
-/*
- * It's a P1 pin BOOTBLOCK_MUX_OE, also a P2 pin USBC_THERM (test poin).
- * Keep this pin defaults to P1 setting since that eMMC enabled with
- * High-Z stat.
- * TODO(b:122866184): Rename this pin as BC12_DET_EN.
- */
-GPIO(USBC_THERM,     PIN(C, 4),  GPIO_ODR_HIGH)
+GPIO(BC12_DET_EN,        PIN(C, 4),  GPIO_OUT_HIGH)
 
 /* USART1: PA9/PA10 */
 ALTERNATE(PIN_MASK(A, 0x0600), 1, MODULE_UART,       0)
