@@ -10,6 +10,7 @@
 
 #define MAX17055_ADDR               0x6c
 #define MAX17055_DEVICE_ID          0x4010
+#define MAX17055_OCV_TABLE_SIZE     48
 
 #define REG_STATUS                  0x00
 #define REG_VALRTTH                 0x01
@@ -22,6 +23,7 @@
 #define REG_VOLTAGE                 0x09
 #define REG_CURRENT                 0x0a
 #define REG_AVERAGE_CURRENT         0x0b
+#define REG_MIXCAP                  0x0f
 #define REG_FULL_CHARGE_CAPACITY    0x10
 #define REG_TIME_TO_EMPTY           0x11
 #define REG_QR_TABLE00              0x12
@@ -37,6 +39,7 @@
 #define REG_TIME_TO_FULL            0x20
 #define REG_DEVICE_NAME             0x21
 #define REG_QR_TABLE10              0x22
+#define REG_FULLCAPNOM              0x23
 #define REG_LEARNCFG                0x28
 #define REG_QR_TABLE20              0x32
 #define REG_RCOMP0                  0x38
@@ -47,12 +50,18 @@
 #define REG_QR_TABLE30              0x42
 #define REG_DQACC                   0x45
 #define REG_DPACC                   0x46
+#define REG_VFSOC0                  0x48
+#define REG_COMMAND                 0x60
+#define REG_LOCK1                   0x62
+#define REG_LOCK2                   0x63
+#define REG_OCV_TABLE_START         0x80
 #define REG_STATUS2                 0xb0
 #define REG_IALRTTH                 0xb4
 #define REG_HIBCFG                  0xba
 #define REG_CONFIG2                 0xbb
 #define REG_TIMERH                  0xbe
 #define REG_MODELCFG                0xdb
+#define REG_VFSOC                   0xff
 
 /* Status reg (0x00) flags */
 #define STATUS_POR                  BIT(1)
@@ -88,9 +97,12 @@
 #define FSTAT_DNR                   0x0001
 #define FSTAT_FQ                    0x0080
 
+/* Config2 reg (0xbb) flags */
+#define CONFIG2_LDMDL               BIT(5)
+
 /* ModelCfg reg (0xdb) flags */
-#define MODELCFG_REFRESH            0x8000
-#define MODELCFG_VCHG               0x0400
+#define MODELCFG_REFRESH            BIT(15)
+#define MODELCFG_VCHG               BIT(10)
 
 /* Smart battery status bits (sbs reg 0x16) */
 #define BATTERY_DISCHARGING         0x40
@@ -173,6 +185,9 @@ struct max17055_batt_profile {
 	 * and v_empty_detect to config max17055 (a.k.a. EZ-config).
 	 */
 	uint8_t is_ez_config;
+
+	/* Used only for full model */
+	const uint16_t *ocv_table;
 };
 
 /* Return the special battery parameters max17055 needs. */

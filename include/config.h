@@ -358,6 +358,12 @@
  */
 #undef CONFIG_BATTERY_MAX17055_ALERT
 
+/*
+ * Enable full model driver of MAX17055.
+ *
+ * It provides a better soc estimation. ocv_table needs to be supplied.
+ */
+#undef CONFIG_BATTERY_MAX17055_FULL_MODEL
 
 /* Compile mock battery support; used by tests. */
 #undef CONFIG_BATTERY_MOCK
