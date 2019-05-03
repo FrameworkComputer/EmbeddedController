@@ -37,7 +37,6 @@
 
 /* Store the state of our USB data switches so that they can be restored. */
 static int usb_switch_state[CONFIG_USB_PD_PORT_COUNT];
-static struct mutex usb_switch_lock[CONFIG_USB_PD_PORT_COUNT];
 
 static int pi3usb9281_reset(int port);
 static int pi3usb9281_get_interrupts(int port);
@@ -278,14 +277,10 @@ void usb_charger_set_switches(int port, enum usb_switch setting)
 	/* If switch is not changing then return */
 	if (setting == usb_switch_state[port])
 		return;
-
-	mutex_lock(&usb_switch_lock[port]);
 	if (setting != USB_SWITCH_RESTORE)
 		usb_switch_state[port] = setting;
-
-	pi3usb9281_set_switches(port, usb_switch_state[port]);
-
-	mutex_unlock(&usb_switch_lock[port]);
+	CPRINTS("USB MUX %d", usb_switch_state[port]);
+	task_set_event(TASK_ID_USB_CHG_P0 + port, USB_CHG_EVENT_MUX, 0);
 }
 
 static int pc3usb9281_read_interrupt(int port)
@@ -437,6 +432,9 @@ void usb_charger_task(void *u)
 					PI3USB9281_INT_ATTACH_DETACH)
 				evt = bc12_detect(port);
 		}
+
+		if (evt & USB_CHG_EVENT_MUX)
+			pi3usb9281_set_switches(port, usb_switch_state[port]);
 
 		/*
 		 * Re-enable interrupts on pericom charger detector since the

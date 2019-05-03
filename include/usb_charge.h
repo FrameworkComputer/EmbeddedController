@@ -55,6 +55,7 @@ int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode,
 #define USB_CHG_EVENT_DR_UFP	TASK_EVENT_CUSTOM_BIT(3)
 #define USB_CHG_EVENT_DR_DFP	TASK_EVENT_CUSTOM_BIT(4)
 #define USB_CHG_EVENT_CC_OPEN	TASK_EVENT_CUSTOM_BIT(5)
+#define USB_CHG_EVENT_MUX	TASK_EVENT_CUSTOM_BIT(6)
 #endif
 
 /*
