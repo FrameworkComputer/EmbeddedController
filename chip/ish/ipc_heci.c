@@ -378,7 +378,7 @@ static void handle_msg_recv_interrupt(const uint32_t peer_id)
 		task_set_event(ctx->msg_events[protocol].task_id,
 			       ctx->msg_events[protocol].event, 0);
 	} else {
-		CPRINTS("discard msg : %d\n", invalid_msg);
+		CPRINTS("discard msg (%d) : %d", protocol, invalid_msg);
 
 		*(ctx->in_drbl_reg) = 0;
 		set_pimr_and_send_rx_complete(ctx);
