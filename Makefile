@@ -308,8 +308,9 @@ rw-objs := $(sort $(rw-common-objs) $(rw-only-objs))
 ifeq ($(CONFIG_SHAREDLIB),y)
 ro-objs := $(filter-out %_sharedlib.o, $(ro-objs))
 endif
-ro-deps := $(ro-objs:%.o=%.o.d)
-rw-deps := $(rw-objs:%.o=%.o.d)
+ro-deps := $(addsuffix .d, $(ro-objs))
+rw-deps := $(addsuffix .d, $(rw-objs))
+
 deps := $(ro-deps) $(rw-deps) $(deps-y)
 
 .PHONY: ro rw

@@ -92,6 +92,8 @@ HOST_CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
 ifneq ($(BOARD),host)
 CPPFLAGS+=-ffreestanding -fno-builtin -nostdinc -nostdlib
 CPPFLAGS+=-Ibuiltin/
+else
+CPPFLAGS+=-Og
 endif
 CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(COMMON_WARN) $(CFLAGS_y)
 CFLAGS+= -ffunction-sections -fshort-wchar

@@ -236,29 +236,49 @@ enum ec_error_list {
 
 /*
  * Getting something that works in C and CPP for an arg that may or may
- * not be defined is tricky.  Here, if we have "#define CONFIG_BOOGER"
- * we match on the placeholder define, insert the "0," for arg1 and generate
- * the triplet (0, 1, 0).  Then the last step cherry picks the 2nd arg (a one).
- * When CONFIG_BOOGER is not defined, we generate a (... 1, 0) pair, and when
- * the last step cherry picks the 2nd arg, we get a zero.
+ * not be defined is tricky.  Here, if we have "#define CONFIG_FOO"
+ * we match on the placeholder define, insert the "_, 1," for arg1 and generate
+ * the triplet (_, 1, _, (...)).  Then the last step cherry picks the 2nd arg
+ * (a one).
+ * When CONFIG_FOO is not defined, we generate a (_, (...)) pair, and when
+ * the last step cherry picks the 2nd arg, we get a code block that verifies
+ * the value of the option. Since the preprocessor won't replace an unknown
+ * token, we compare the option name with the value string. If they are
+ * identical we assume that the value was undefined and return 0. If the value
+ * happens to be anything else we call an undefined method that will raise
+ * a compiler error. This technique requires that the optimizer be enabled so it
+ * can remove the undefined function call.
+ *
  */
-#define __ARG_PLACEHOLDER_ 0,
-#define config_enabled(cfg) _config_enabled(cfg)
-#define _config_enabled(value) __config_enabled(__ARG_PLACEHOLDER_##value)
-#define __config_enabled(arg1_or_junk) ___config_enabled(arg1_or_junk 1, 0, 0)
+#define __ARG_PLACEHOLDER_ _, 1,
+#define _config_enabled(cfg, value) \
+	__config_enabled(__ARG_PLACEHOLDER_##value, cfg, value)
+#define __config_enabled(arg1_or_junk, cfg, value) ___config_enabled( \
+	arg1_or_junk _,\
+	({ \
+		int __undefined = __builtin_strcmp(cfg, #value) == 0; \
+		extern int IS_ENABLED_BAD_ARGS(void) __attribute__(( \
+			error(cfg " must be <blank>, or not defined.")));\
+		if (!__undefined) \
+			IS_ENABLED_BAD_ARGS(); \
+		0; \
+	}))
 #define ___config_enabled(__ignored, val, ...) val
 
 /**
- * Checks if a config option is defined to an empty value.
+ * Checks if a config option is enabled or disabled
  *
- * IS_ENABLED(CONFIG_MY_OPTION) will return 1 in the following case:
- * #define CONFIG_MY_OPTION
+ * Enabled examples:
+ *     #define CONFIG_FOO
  *
- * Otherwise if the option has not been defined or defined with a value, it will
- * return 0.
+ * Disabled examples:
+ *     #undef CONFIG_FOO
  *
- * @param CONFIG_OPTION
+ * If the option is defined to any value a compiler error will be thrown.
+ *
+ * Note: This macro will only function inside a code block due to the way
+ * it checks for unknown values.
  */
-#define IS_ENABLED(option) config_enabled(option)
+#define IS_ENABLED(option) _config_enabled(#option, option)
 
 #endif  /* __CROS_EC_COMMON_H */

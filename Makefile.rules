@@ -94,7 +94,8 @@ cmd_cxx_to_host = $(HOSTCXX) -std=c++0x $(COMMON_WARN) $(HOST_CXXFLAGS)\
 cmd_o_to_a = $(AR) rcs $@ $^
 cmd_host_test = $(MAKE) --no-print-directory BOARD=host PROJECT=$* \
 	V=$(V) out=build/host/$* TEST_BUILD=y EMU_BUILD=y CROSS_COMPILE= \
-	$(TEST_FLAG) build/host/$*/$*.exe
+	$(if $(TEST_SCRIPT),TEST_SCRIPT=$(TEST_SCRIPT)) $(TEST_FLAG) \
+	build/host/$*/$*.exe
 cmd_run_host_test = ./util/run_host_test $* $(silent)
 # generate new version.h, compare if it changed and replace if so
 cmd_version = ./util/getversion.sh > $@.tmp && \
@@ -122,6 +123,7 @@ cmd_emmc_bootblock = $(out)/util/gen_emmc_transfer_data \
 		$(if $(BOOTBLOCK),-i $(BOOTBLOCK)) -o $@
 
 cmd_ipi_table = $(out)/util/gen_ipi_table $@
+cmd_cp_script = cp "$<" "$@" && chmod +x "$@"
 
 # commands for RSA signature: rwsig does not need to sign the whole image
 # (it signs the RW part separately). usbpd1 type needs to sign the final image.
@@ -471,11 +473,16 @@ $(out)/%.smap: $(out)/%.elf
 ifeq ($(TEST_FUZZ),y)
 $(out)/$(PROJECT).exe: $(rw-only-objs) $(out)/libec.a
 	$(call quiet,fuzz_exe,EXE    )
+else ifneq ($(TEST_SCRIPT),)
+$(out)/$(PROJECT).exe: test/$(TEST_SCRIPT) | $(ro-objs)
+	$(call quiet,cp_script,CP     )
 else
 $(out)/$(PROJECT).exe: $(ro-objs)
 	$(call quiet,exe,EXE    )
 endif
 
+$(out)/RO/%.o.cmd:%.c
+	$(file > $@,$(subst .o.cmd,.o,$(cmd_c_to_o)))
 $(out)/RO/%.o:%.c
 	$(call quiet,c_to_o,CC     )
 $(out)/RW/%.o:%.c
