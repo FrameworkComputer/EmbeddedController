@@ -13,6 +13,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "lid_switch.h"
 #include "motion_sense.h"
 #include "power.h"
 #include "tablet_mode.h"
