@@ -5,6 +5,8 @@
 
 #include <openssl/evp.h>
 
+#define HIDE_EC_STDLIB
+
 #include "dcrypto.h"
 #include "registers.h"
 
