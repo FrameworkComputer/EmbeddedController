@@ -20,7 +20,6 @@
  */
 
 #include "common.h"
-#include "console.h"
 #include "hooks.h"
 #include "task.h"
 #include "registers.h"
@@ -45,32 +44,6 @@ int watchdog_init(void)
 
 	return EC_SUCCESS;
 }
-
-/* Parameters are pushed by hardware, we only care about %EIP */
-__attribute__ ((noreturn))
-void watchdog_warning(uint32_t errorcode,
-		      uint32_t eip,
-		      uint32_t cs,
-		      uint32_t eflags)
-{
-	ccprintf("\nWDT Expired. EIP was 0x%08X. Resetting...\n", eip);
-	cflush();
-
-	system_reset(SYSTEM_RESET_AP_WATCHDOG);
-	__builtin_unreachable();
-}
-
-__attribute__ ((noreturn))
-void watchdog_warning_irq(void)
-{
-	/*
-	 * Parameters to watchdog_warning were pushed by hardware, use
-	 * asm here to re-use these parameters in the call.
-	 */
-	__asm__ ("call watchdog_warning\n");
-	__builtin_unreachable();
-}
-DECLARE_IRQ(ISH_WDT_IRQ, watchdog_warning_irq);
 
 void watchdog_reload(void)
 {

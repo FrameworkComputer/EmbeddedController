@@ -169,15 +169,19 @@ static const irq_desc_t system_irqs[] = {
  * and go directly to the CPU core, so get_current_interrupt_vector
  * cannot be used.
  */
-#define DEFINE_EXN_HANDLER(vector)					\
-	void __keep exception_panic_##vector(void);			\
-	__attribute__ ((noreturn)) void exception_panic_##vector(void)	\
-	{								\
-		__asm__ (						\
-			"push $" #vector "\n"				\
-			"call exception_panic\n");			\
-		while (1)						\
-			continue;					\
+#define DEFINE_EXN_HANDLER(vector)				\
+	_DEFINE_EXN_HANDLER(vector, exception_panic_##vector)
+#define _DEFINE_EXN_HANDLER(vector, name)	\
+	__DEFINE_EXN_HANDLER(vector, name)
+#define __DEFINE_EXN_HANDLER(vector, name)		\
+	void __keep name(void);			\
+	__attribute__ ((noreturn)) void name(void)	\
+	{						\
+		__asm__ (				\
+			"push $" #vector "\n"		\
+			"call exception_panic\n");	\
+		while (1)				\
+			continue;			\
 	}
 
 DEFINE_EXN_HANDLER(0);
@@ -200,6 +204,7 @@ DEFINE_EXN_HANDLER(17);
 DEFINE_EXN_HANDLER(18);
 DEFINE_EXN_HANDLER(19);
 DEFINE_EXN_HANDLER(20);
+_DEFINE_EXN_HANDLER(ISH_WDT_VEC, exception_panic_wdt);
 
 void set_interrupt_gate(uint8_t num, isr_handler_t func, uint8_t flags)
 {
@@ -456,6 +461,16 @@ void init_interrupts(void)
 	set_interrupt_gate(18, exception_panic_18, IDT_DESC_FLAGS);
 	set_interrupt_gate(19, exception_panic_19, IDT_DESC_FLAGS);
 	set_interrupt_gate(20, exception_panic_20, IDT_DESC_FLAGS);
+
+	/*
+	 * Set up watchdog expiration like a panic, that way we can
+	 * use the common panic handling code, and also properly
+	 * retrieve EIP.
+	 */
+	if (IS_ENABLED(CONFIG_WATCHDOG))
+		set_interrupt_gate(ISH_WDT_VEC,
+				   exception_panic_wdt,
+				   IDT_DESC_FLAGS);
 
 	/* Note: At reset, ID field is already set to 0 in APIC ID register */
 

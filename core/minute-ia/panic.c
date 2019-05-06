@@ -50,7 +50,9 @@ const static char *panic_reason[] = {
  */
 void panic_data_print(const struct panic_data *pdata)
 {
-	if (pdata->x86.vector <= 20)
+	if (pdata->x86.vector == ISH_WDT_VEC)
+		panic_printf("Reason: Watchdog Expiration\n");
+	else if (pdata->x86.vector <= 20)
 		panic_printf("Reason: %s\n", panic_reason[pdata->x86.vector]);
 	else
 		panic_printf("Interrupt vector number: 0x%08X (unknown)\n",
@@ -134,6 +136,9 @@ __attribute__ ((noreturn)) void __keep exception_panic(
 
 	if (panic_once) {
 		system_reset(SYSTEM_RESET_HARD);
+	} else if (vector == ISH_WDT_VEC) {
+		panic_once = 1;
+		system_reset(SYSTEM_RESET_AP_WATCHDOG);
 	} else {
 		panic_once = 1;
 		system_reset(0);
