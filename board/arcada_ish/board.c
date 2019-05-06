@@ -148,6 +148,17 @@ struct motion_sensor_t motion_sensors[] = {
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
+int board_sensor_at_360(void)
+{
+	/*
+	 * The 360 degree sensor is too sensitive and is active when the lid is
+	 * closed at 0 degrees. Ignore the hall sensor when the lid close is
+	 * also active.
+	 */
+	return gpio_get_level(GPIO_LID_OPEN) &&
+	       !gpio_get_level(HALL_SENSOR_GPIO_L);
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
