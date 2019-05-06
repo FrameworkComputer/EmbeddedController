@@ -11,6 +11,7 @@
 #include "cpu.h"
 #include "gpio.h"
 #include "host_command.h"
+#include "ish_fwst.h"
 #include "registers.h"
 #include "shared_mem.h"
 #include "system.h"
@@ -34,6 +35,8 @@ int system_is_reboot_warm(void)
 
 void system_pre_init(void)
 {
+	ish_fwst_set_fw_status(FWSTS_FW_IS_RUNNING);
+
 	task_enable_irq(ISH_FABRIC_IRQ);
 
 #ifdef CONFIG_LOW_POWER_IDLE
