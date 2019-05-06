@@ -3716,6 +3716,9 @@
 /* Enable USB serial console module. */
 #undef CONFIG_USB_CONSOLE
 
+/* USB serial console transmit buffer size in bytes. */
+#define CONFIG_USB_CONSOLE_TX_BUF_SIZE 2048
+
 /*
  * Enable USB serial console crc32 computation.
  * Also makes console output block on overrun.

@@ -8,6 +8,7 @@
 #include "console.h"
 #include "link_defs.h"
 #include "printf.h"
+#include "queue.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -18,14 +19,11 @@
 
 /* Console output macro */
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
-
 #define USB_CONSOLE_TIMEOUT_US (30 * MSEC)
-#define USB_CONSOLE_RX_BUF_SIZE 64
-#define RX_BUF_NEXT(i) (((i) + 1) & (USB_CONSOLE_RX_BUF_SIZE - 1))
 
-static volatile char rx_buf[USB_CONSOLE_RX_BUF_SIZE];
-static volatile int rx_buf_head;
-static volatile int rx_buf_tail;
+static struct queue const tx_q = QUEUE_NULL(CONFIG_USB_CONSOLE_TX_BUF_SIZE,
+					    uint8_t);
+static struct queue const rx_q = QUEUE_NULL(USB_MAX_PACKET_SIZE, uint8_t);
 
 static int last_tx_ok = 1;
 
@@ -65,23 +63,28 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_CONSOLE, 1) = {
 static usb_uint ep_buf_tx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
 static usb_uint ep_buf_rx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
 
+/* Forward declaraction */
+static void handle_output(void);
+
 static void con_ep_tx(void)
 {
 	/* clear IT */
 	STM32_TOGGLE_EP(USB_EP_CONSOLE, 0, 0, 0);
+
+	/* Check bytes in the FIFO needed to transmitted */
+	handle_output();
 }
 
 static void con_ep_rx(void)
 {
 	int i;
+
 	for (i = 0; i < (btable_ep[USB_EP_CONSOLE].rx_count & 0x3ff); i++) {
-		int rx_buf_next = RX_BUF_NEXT(rx_buf_head);
-		if (rx_buf_next != rx_buf_tail) {
-			rx_buf[rx_buf_head] = ((i & 1) ?
-					       (ep_buf_rx[i >> 1] >> 8) :
-					       (ep_buf_rx[i >> 1] & 0xff));
-			rx_buf_head = rx_buf_next;
-		}
+		int val = ((i & 1) ?
+			   (ep_buf_rx[i >> 1] >> 8) :
+			   (ep_buf_rx[i >> 1] & 0xff));
+
+		QUEUE_ADD_UNITS(&rx_q, &val, 1);
 	}
 
 	/* clear IT */
@@ -116,22 +119,12 @@ USB_DECLARE_EP(USB_EP_CONSOLE, con_ep_tx, con_ep_rx, ep_event);
 
 static int __tx_char(void *context, int c)
 {
-	usb_uint *buf = (usb_uint *)ep_buf_tx;
-	int *tx_idx = context;
-
 	/* Do newline to CRLF translation */
 	if (c == '\n' && __tx_char(context, '\r'))
 		return 1;
 
-	if (*tx_idx > 63)
-		return 1;
-	if (!(*tx_idx & 1))
-		buf[*tx_idx/2] = c;
-	else
-		buf[*tx_idx/2] |= c << 8;
-	(*tx_idx)++;
-
-	return 0;
+	/* Return 0 on success */
+	return !QUEUE_ADD_UNITS(&tx_q, &c, 1);
 }
 
 static void usb_enable_tx(int len)
@@ -167,8 +160,7 @@ static int usb_wait_console(void)
 	 */
 	if (last_tx_ok) {
 		while (usb_console_tx_valid() || !is_reset) {
-			if (timestamp_expired(deadline, NULL) ||
-			    in_interrupt_context()) {
+			if (timestamp_expired(deadline, NULL)) {
 				last_tx_ok = 0;
 				return EC_ERROR_TIMEOUT;
 			}
@@ -186,55 +178,79 @@ static int usb_wait_console(void)
 	}
 }
 
+/* Try to send some bytes from the Tx FIFO to the host */
+static void tx_fifo_handler(void)
+{
+	int ret;
+	size_t count;
+	usb_uint *buf = (usb_uint *)ep_buf_tx;
+
+	if (!is_reset)
+		return;
+
+	ret = usb_wait_console();
+	if (ret)
+		return;
+
+	count = 0;
+	while (count < USB_MAX_PACKET_SIZE) {
+		int val = 0;
+
+		if (!QUEUE_REMOVE_UNITS(&tx_q, &val, 1))
+			break;
+
+		if (!(count & 1))
+			buf[count/2] = val;
+		else
+			buf[count/2] |= val << 8;
+		count++;
+	}
+
+	if (count)
+		usb_enable_tx(count);
+}
+DECLARE_DEFERRED(tx_fifo_handler);
+
+static void handle_output(void)
+{
+	/* Wake up the Tx FIFO handler */
+	hook_call_deferred(&tx_fifo_handler_data, 0);
+}
+
 /*
  * Public USB console implementation below.
  */
 int usb_getc(void)
 {
-	int c;
-
-	if (rx_buf_tail == rx_buf_head)
-		return -1;
+	int c = 0;
 
 	if (!is_enabled)
 		return -1;
 
-	c = rx_buf[rx_buf_tail];
-	rx_buf_tail = RX_BUF_NEXT(rx_buf_tail);
+	if (!QUEUE_REMOVE_UNITS(&rx_q, &c, 1))
+		return -1;
+
 	return c;
 }
 
 int usb_putc(int c)
 {
 	int ret;
-	int tx_idx = 0;
 
-	ret = usb_wait_console();
-	if (ret)
-		return ret;
-
-	ret = __tx_char(&tx_idx, c);
-	usb_enable_tx(tx_idx);
+	ret = __tx_char(NULL, c);
+	handle_output();
 
 	return ret;
 }
 
 int usb_puts(const char *outstr)
 {
-	int ret;
-	int tx_idx = 0;
-
-	ret = usb_wait_console();
-	if (ret)
-		return ret;
-
 	/* Put all characters in the output buffer */
 	while (*outstr) {
-		if (__tx_char(&tx_idx, *outstr++) != 0)
+		if (__tx_char(NULL, *outstr++) != 0)
 			break;
 	}
-
-	usb_enable_tx(tx_idx);
+	handle_output();
 
 	/* Successful if we consumed all output */
 	return *outstr ? EC_ERROR_OVERFLOW : EC_SUCCESS;
@@ -243,15 +259,10 @@ int usb_puts(const char *outstr)
 int usb_vprintf(const char *format, va_list args)
 {
 	int ret;
-	int tx_idx = 0;
 
-	ret = usb_wait_console();
-	if (ret)
-		return ret;
+	ret = vfnprintf(__tx_char, NULL, format, args);
+	handle_output();
 
-	ret = vfnprintf(__tx_char, &tx_idx, format, args);
-
-	usb_enable_tx(tx_idx);
 	return ret;
 }
 
