@@ -3118,6 +3118,12 @@
 #undef CONFIG_HALL_SENSOR
 
 /*
+ * Board provides board_sensor_at_360 method instead of HALL_SENSOR_GPIO_L as
+ * the means for determining the state of the 360 hall sensor.
+ */
+#undef CONFIG_HALL_SENSOR_CUSTOM
+
+/*
  * Add a virtual switch to indicate when detachable device has
  * base attached.
  */

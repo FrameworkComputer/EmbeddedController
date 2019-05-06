@@ -28,4 +28,13 @@ void hall_sensor_isr(enum gpio_signal signal);
  */
 void hall_sensor_disable(void);
 
+/*
+ * This must be defined when CONFIG_HALL_SENSOR_CUSTOM is defined. This allows
+ * a board to override the default behavior that determines if the 360 sensor is
+ * active: !gpio_get_level(HALL_SENSOR_GPIO_L).
+ *
+ * Returns 1 if the 360 sensor is active; otherwise 0.
+ */
+int board_sensor_at_360(void);
+
 #endif
