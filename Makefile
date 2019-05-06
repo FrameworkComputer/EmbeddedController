@@ -304,7 +304,10 @@ deps := $(ro-deps) $(rw-deps) $(deps-y)
 $(config): $(out)/$(PROJECT).bin
 	@printf '%s=y\n' $(_tsk_cfg) $(_flag_cfg) > $@
 
-def_all_deps:=utils ro rw notice $(config) $(PROJECT_EXTRA) size
+def_all_deps:=$(config) $(PROJECT_EXTRA) notice rw size utils
+ifeq ($(CONFIG_FW_INCLUDE_RO),y)
+def_all_deps+=ro
+endif
 all_deps?=$(def_all_deps)
 all: $(all_deps)
 

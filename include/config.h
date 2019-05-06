@@ -1772,7 +1772,7 @@
 
 /*
  * Board Image ec.bin contains a RO firmware.  If not defined, the image will
- * only contain the RW firmware. The RO firmware comes from another board.
+ * only contain the RW firmware.
  */
 #define CONFIG_FW_INCLUDE_RO
 
