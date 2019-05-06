@@ -93,10 +93,11 @@ void chipset_pre_init_callback(void)
 	/* Turn on A (except PP5000_A) rails*/
 	gpio_set_level(GPIO_EN_A_RAILS, 1);
 
-	/* Ensure that PP5000_A rail is stable */
-	while (!gpio_get_level(GPIO_PP5000_A_PG_OD))
-		;
-
+	/*
+	 * The status of the 5000_A rail is verifed in the calling function via
+	 * power_wait_signals() as PP5000_A_PGOOD is included in the
+	 * CHIPSET_G3S5_POWERUP_SIGNAL macro.
+	 */
 }
 
 enum power_state power_handle_state(enum power_state state)
