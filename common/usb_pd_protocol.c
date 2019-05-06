@@ -3141,6 +3141,9 @@ void pd_task(void *u)
 				break;
 
 			/* Debounce complete */
+			if (IS_ENABLED(CONFIG_COMMON_RUNTIME))
+				hook_notify(HOOK_USB_PD_CONNECT);
+
 #ifdef CONFIG_USBC_PPC
 			/*
 			 * If the port is latched off, just continue to
@@ -3700,6 +3703,8 @@ void pd_task(void *u)
 			}
 
 			/* We are attached */
+			if (IS_ENABLED(CONFIG_COMMON_RUNTIME))
+				hook_notify(HOOK_USB_PD_CONNECT);
 			pd[port].polarity = get_snk_polarity(cc1, cc2);
 			set_polarity(port, pd[port].polarity);
 			/* reset message ID  on connection */
