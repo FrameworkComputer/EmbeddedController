@@ -141,7 +141,7 @@ static inline int ish_fwst_is_hup_set(void)
 /* set fw failure reason */
 static inline void ish_fwst_set_fail_reason(uint32_t val)
 {
-	uint32_t fwst = REG32(IPC_ISH_FWSTS);
+	uint32_t fwst = IPC_ISH_FWSTS;
 
 	IPC_ISH_FWSTS = (fwst & ~IPC_ISH_FWSTS_FAIL_REASON_MASK) |
 		(val << IPC_ISH_FWSTS_FAIL_REASON_SHIFT);
