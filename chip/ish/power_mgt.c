@@ -11,7 +11,6 @@
 #include "interrupts.h"
 #include "aontaskfw/ish_aon_share.h"
 #include "power_mgt.h"
-#include "watchdog.h"
 #include "ish_dma.h"
 
 #ifdef CONFIG_ISH_PM_DEBUG
@@ -22,11 +21,6 @@
 #define CPUTS(outstr)
 #define CPRINTS(format, args...)
 #define CPRINTF(format, args...)
-#endif
-
-#ifdef CONFIG_WATCHDOG
-extern void watchdog_enable(void);
-extern void watchdog_disable(void);
 #endif
 
 /* defined in link script: core/minute-ia/ec.lds.S */
@@ -468,10 +462,6 @@ static void pm_process(timestamp_t cur_time, uint32_t idle_us)
 
 	decide = d0ix_decide(cur_time, idle_us);
 
-#ifdef CONFIG_WATCHDOG
-	watchdog_disable();
-#endif
-
 	switch (decide) {
 #ifdef CONFIG_ISH_PM_D0I1
 	case ISH_PM_STATE_D0I1:
@@ -497,12 +487,6 @@ static void pm_process(timestamp_t cur_time, uint32_t idle_us)
 	if (decide == ISH_PM_STATE_D0I2 || decide == ISH_PM_STATE_D0I3)
 		check_aon_task_status();
 #endif
-
-#ifdef CONFIG_WATCHDOG
-	watchdog_enable();
-	watchdog_reload();
-#endif
-
 }
 
 void ish_pm_init(void)

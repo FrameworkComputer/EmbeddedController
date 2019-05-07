@@ -543,6 +543,9 @@ static void handle_d3(void)
 
 static void handle_reset(int pm_state)
 {
+	/* disable watch dog */
+	WDT_CONTROL &= ~WDT_CONTROL_ENABLE_BIT;
+
 	/* disable CSME CSR irq */
 	IPC_PIMR &= ~IPC_PIMR_CSME_CSR_BIT;
 
