@@ -95,13 +95,13 @@ static const int debug_level;
 #define PD_SNK_CAP_RETRIES 3
 
 /*
- * The time that we allow the source to send any messages after an explicit
- * contract is established.  200ms was chosen somewhat arbitrarily as it should
- * be long enough for sources to decide to send a message if they were going to,
- * but not so long that a "low power charger connected" notification would be
- * shown in the chrome OS UI.
+ * The time that we allow the port partner to send any messages after an
+ * explicit contract is established.  200ms was chosen somewhat arbitrarily as
+ * it should be long enough for sources to decide to send a message if they were
+ * going to, but not so long that a "low power charger connected" notification
+ * would be shown in the chrome OS UI.
  */
-#define SNK_READY_HOLD_OFF_US (200 * MSEC)
+#define READY_HOLD_OFF_US (200 * MSEC)
 
 enum vdm_states {
 	VDM_STATE_ERR_BUSY = -3,
@@ -249,12 +249,12 @@ static struct pd_protocol {
 	uint8_t rev;
 #endif
 	/*
-	 * Time at which the port acting as a sink can start to request for
-	 * higher power and interrogate the port partner.  Some port partners
-	 * are really chatty after the initial request so we allow this time for
-	 * the port partner to send any messages in order to avoid a collision.
+	 * Some port partners are really chatty after an explicit contract is
+	 * established.  Therefore, we allow this time for the port partner to
+	 * send any messages in order to avoid a collision of sending messages
+	 * of our own.
 	 */
-	uint64_t snk_ready_holdoff_timer;
+	uint64_t ready_state_holdoff_timer;
 } pd[CONFIG_USB_PD_PORT_COUNT];
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -711,8 +711,8 @@ static inline void set_state(int port, enum pd_states next_state)
 			ppc_clear_oc_event_counter(port);
 		}
 #endif /* CONFIG_USBC_PPC */
-		/* Clear the SNK_READY holdoff timer. */
-		pd[port].snk_ready_holdoff_timer = 0;
+		/* Clear the holdoff timer since the port is disconnected. */
+		pd[port].ready_state_holdoff_timer = 0;
 
 		/*
 		 * We should not clear any flags when transitioning back to the
@@ -1773,11 +1773,14 @@ static void handle_ctrl_request(int port, uint16_t head,
 		} else if (pd[port].power_role == PD_ROLE_SINK) {
 			/*
 			 * Give the source some time to send any messages before
-			 * we start our interrogation.
+			 * we start our interrogation.  Add some jitter of up to
+			 * 100ms, taken from the current system time, to prevent
+			 * multiple collisions.
 			 */
 			if (pd[port].task_state == PD_STATE_SNK_TRANSITION)
-				pd[port].snk_ready_holdoff_timer =
-					get_time().val + SNK_READY_HOLD_OFF_US;
+				pd[port].ready_state_holdoff_timer =
+					get_time().val + READY_HOLD_OFF_US
+					+ (get_time().le.lo % (100 * MSEC));
 
 			set_state(port, PD_STATE_SNK_READY);
 			pd_set_input_current_limit(port, pd[port].curr_limit,
@@ -3384,6 +3387,18 @@ void pd_task(void *u)
 			res = send_control(port, PD_CTRL_PS_RDY);
 			if (res >= 0) {
 				timeout = 10*MSEC;
+
+				/*
+				 * Give the sink some time to send any messages
+				 * before we may send messages of our own.  Add
+				 * some jitter of up to 100ms, taken from the
+				 * current system time, to prevent multiple
+				 * collisions.
+				 */
+				pd[port].ready_state_holdoff_timer =
+					get_time().val + READY_HOLD_OFF_US
+					+ (get_time().le.lo % (100 * MSEC));
+
 				/* it'a time to ping regularly the sink */
 				set_state(port, PD_STATE_SRC_READY);
 			} else {
@@ -3393,6 +3408,17 @@ void pd_task(void *u)
 			break;
 		case PD_STATE_SRC_READY:
 			timeout = PD_T_SOURCE_ACTIVITY;
+
+			/*
+			 * Don't send any traffic yet until our holdoff timer
+			 * has expired.  Some devices are chatty once we reach
+			 * the SRC_READY state and we may end up in a collision
+			 * of messages if we try to immediately send our
+			 * interrogations.
+			 */
+			if (get_time().val <=
+			    pd[port].ready_state_holdoff_timer)
+				break;
 
 			/*
 			 * Don't send any PD traffic if we woke up due to
@@ -3910,7 +3936,8 @@ void pd_task(void *u)
 			 * of messages if we try to immediately send our
 			 * interrogations.
 			 */
-			if (get_time().val <= pd[port].snk_ready_holdoff_timer)
+			if (get_time().val <=
+			    pd[port].ready_state_holdoff_timer)
 				break;
 
 			/*
