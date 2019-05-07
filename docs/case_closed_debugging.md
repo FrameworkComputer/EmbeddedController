@@ -93,9 +93,10 @@ not need to be a list of CCD capable device IDs anywhere.
 
 Basic CCD
 ---------
-Here's the basic information for how to use CCD. Cr50 has more complicated
-usage and setup instructions. See the cr50 specific CCD doc for more in depth
-instructions.
+Here's the basic information for how to use CCD. Cr50 restricts debugging
+features to try and ensure only the device owner can use CCD. For information on
+how to get access to Cr50 CCD see the
+[Cr50 specific CCD doc](case_closed_debugging_cr50.md).
 
 ### Consoles
 
