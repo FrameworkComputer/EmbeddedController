@@ -70,7 +70,7 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 	 * routine will only get called from ALS sensor driver.
 	 */
 	struct motion_sensor_t *rgb_s = s + 1;
-	struct tcs3400_drv_data_t *drv_data = TCS3400_DRV_DATA(s);
+	struct als_drv_data_t *drv_data = TCS3400_DRV_DATA(s);
 	struct tcs3400_rgb_drv_data_t *rgb_drv_data =
 			TCS3400_RGB_DRV_DATA(rgb_s);
 	struct ec_response_motion_sensor_data vector;
@@ -153,7 +153,7 @@ skip_clear_vector_load:
 
 		rgb_data[i] = ((light_data[index] << 8) | light_data[index-1]);
 		rgb_data[i] += rgb_drv_data->rgb_cal[i].offset;
-		rgb_data[i] *= rgb_drv_data->rgb_cal[i].scale / BIT(15);
+		rgb_data[i] *= rgb_drv_data->rgb_cal[i].scale >> 15;
 		rgb_data[i] = rgb_data[i] * rgb_drv_data->device_scale +
 			rgb_data[i] * rgb_drv_data->device_uscale / 10000;
 
@@ -194,7 +194,6 @@ skip_vector_load:
 		vector.sensor_num = rgb_s - motion_sensors;
 		motion_sense_fifo_add_data(&vector, rgb_s, 3, last_ts);
 	}
-
 	return EC_SUCCESS;
 }
 
@@ -235,7 +234,6 @@ static int tcs3400_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	if ((status & TCS_I2C_STATUS_RGBC_VALID) ||
 		((status & TCS_I2C_STATUS_ALS_IRQ) &&
 		(status & TCS_I2C_STATUS_ALS_VALID))) {
-
 		ret = tcs3400_post_events(s, last_interrupt_timestamp);
 		if (ret)
 			return ret;
@@ -401,26 +399,28 @@ static int tcs3400_init(const struct motion_sensor_t *s)
 {
 	/*
 	 * These are default power-on register values with two exceptions:
-	 * Set ATIME = 0x4 (700.88ms)
+	 * Set ATIME = 0 (712 ms)
 	 * Set AGAIN = 16 (0x10)  (AGAIN is in CONTROL register)
 	 */
 	const struct reg_data {
 		uint8_t reg;
 		uint8_t data;
-	} defaults[] = { { TCS_I2C_ENABLE, 0 },
-			 { TCS_I2C_ATIME, 0x4 },
-			 { TCS_I2C_WTIME, 0xFF },
-			 { TCS_I2C_AILTL, 0 },
-			 { TCS_I2C_AILTH, 0 },
-			 { TCS_I2C_AIHTL, 0 },
-			 { TCS_I2C_AIHTH, 0 },
-			 { TCS_I2C_PERS, 0 },
-			 { TCS_I2C_CONFIG, 0x40 },
-			 { TCS_I2C_CONTROL, 0x10 },
-			 { TCS_I2C_AUX, 0 },
-			 { TCS_I2C_IR, 0 },
-			 { TCS_I2C_CICLEAR, 0 },
-			 { TCS_I2C_AICLEAR, 0 } };
+	} defaults[] = {
+		{ TCS_I2C_ENABLE, 0 },
+		{ TCS_I2C_ATIME, TCS_DEFAULT_ATIME },
+		{ TCS_I2C_WTIME, 0xFF },
+		{ TCS_I2C_AILTL, 0 },
+		{ TCS_I2C_AILTH, 0 },
+		{ TCS_I2C_AIHTL, 0 },
+		{ TCS_I2C_AIHTH, 0 },
+		{ TCS_I2C_PERS, 0 },
+		{ TCS_I2C_CONFIG, 0x40 },
+		{ TCS_I2C_CONTROL, (TCS_DEFAULT_AGAIN & TCS_I2C_CONTROL_MASK)},
+		{ TCS_I2C_AUX, 0 },
+		{ TCS_I2C_IR, 0 },
+		{ TCS_I2C_CICLEAR, 0 },
+		{ TCS_I2C_AICLEAR, 0 }
+	};
 	int data = 0;
 	int ret;
 

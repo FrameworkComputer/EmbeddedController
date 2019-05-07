@@ -177,7 +177,17 @@ struct rgb_calibration_t {
 	int16_t offset;
 };
 
+/* als driver data */
+struct als_drv_data_t {
+	int rate;          /* holds current sensor rate */
+	int last_value;    /* holds last als clear channel value */
+	struct als_calibration_t als_cal;    /* calibration data */
+};
+
 #define SENSOR_APPLY_SCALE(_input, _scale) \
 	(((_input) * (_scale)) / MOTION_SENSE_DEFAULT_SCALE)
+
+/* Individual channel scale value between 0 and 2 represented in 16 bits */
+#define ALS_CHANNEL_SCALE(_x) ((_x) << 15)
 
 #endif /* __CROS_EC_ACCELGYRO_H */

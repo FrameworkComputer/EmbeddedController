@@ -417,7 +417,7 @@ static struct mutex g_lid_mutex;
 
 static struct bmi160_drv_data_t g_bmi160_data;
 
-static struct tcs3400_drv_data_t g_tcs3400_data = {
+static struct als_drv_data_t g_tcs3400_data = {
 	.als_cal.scale = 1,
 	.als_cal.uscale = 0,
 	.als_cal.offset = 0,
@@ -427,15 +427,15 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 	.device_scale = 1,
 	.device_uscale = 0,
 	.rgb_cal[X] = {
-		.scale = TCS3400_SCALE(1),
+		.scale = ALS_CHANNEL_SCALE(1),
 		.offset = 0,
 	},
 	.rgb_cal[Y] = {
-		.scale = TCS3400_SCALE(1),
+		.scale = ALS_CHANNEL_SCALE(1),
 		.offset = 0,
 	},
 	.rgb_cal[Z] = {
-		.scale = TCS3400_SCALE(1),
+		.scale = ALS_CHANNEL_SCALE(1),
 		.offset = 0,
 	},
 };
@@ -500,7 +500,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &tcs3400_drv,
 	 .drv_data = &g_tcs3400_data,
-	 .port = I2C_PORT_ACCEL,
+	 .port = I2C_PORT_ALS,
 	 .addr = TCS3400_I2C_ADDR,
 	 .rot_standard_ref = NULL,
 	 .default_range = 0x10000, /* scale = 1x, uscale = 0 */
@@ -521,8 +521,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &tcs3400_rgb_drv,
 	 .drv_data = &g_tcs3400_rgb_data,
-	 .port = 0,      /* set to 0 to generate an error if access by itself */
-	 .addr = TCS3400_I2C_ADDR,
+	 /*.port=I2C_PORT_ALS,*/ /* Unused. RGB channels read by CLEAR_ALS. */
 	 .rot_standard_ref = NULL,
 	 .default_range = 0x10000, /* scale = 1x, uscale = 0 */
 	 .min_frequency = 0, /* 0 indicates we should not use sensor directly */

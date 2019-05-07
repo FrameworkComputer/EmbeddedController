@@ -63,6 +63,7 @@ enum tcs3400_mode {
 				   TCS_I2C_ENABLE_INT_ENABLE),
 };
 
+#define TCS_I2C_CONTROL_MASK                0x03
 #define TCS_I2C_STATUS_RGBC_VALID           BIT(0)
 #define TCS_I2C_STATUS_ALS_IRQ              BIT(4)
 #define TCS_I2C_STATUS_ALS_VALID            BIT(7)
@@ -81,21 +82,20 @@ enum tcs3400_mode {
 #error "EC too slow for light sensor"
 #endif
 
-/* Individual channel scale value between 0 and 2 to a 32-bit value */
-#define TCS3400_SCALE(x) (x << 15)
-
-#define TCS3400_DRV_DATA(_s) ((struct tcs3400_drv_data_t *)(_s)->drv_data)
+#define TCS3400_DRV_DATA(_s) ((struct als_drv_data_t *)(_s)->drv_data)
 #define TCS3400_RGB_DRV_DATA(_s) \
 	((struct tcs3400_rgb_drv_data_t *)(_s)->drv_data)
 
-/* Private tcs3400 als driver data */
-struct tcs3400_drv_data_t {
-	int rate;          /* holds current sensor rate */
-	int last_value;    /* holds last als clear channel value */
-	struct als_calibration_t als_cal;    /* calibration data */
-};
+/* NOTE: The higher the ATIME value in reg, the shorter the accumulation time */
+#define TCS_MIN_ATIME           0x00            /* 712 ms */
+#define TCS_MAX_ATIME           0x70            /* 400 ms */
+#define TCS_DEFAULT_ATIME       TCS_MIN_ATIME   /* 712 ms */
 
-/* Private tcs3400 rgb driver data */
+#define TCS_MIN_AGAIN           0x00            /* 1x gain */
+#define TCS_MAX_AGAIN           0x03            /* 64x gain */
+#define TCS_DEFAULT_AGAIN       0x02            /* 16x gain */
+
+/* tcs3400 rgb als driver data */
 struct tcs3400_rgb_drv_data_t {
 	/*
 	 * device_scale and device_uscale are used to adjust raw rgb channel
