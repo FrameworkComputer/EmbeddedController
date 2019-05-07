@@ -26,19 +26,19 @@ extern struct idt_entry __idt[NUM_VECTORS];
 /* To count the interrupt nesting depth. Usually it is not nested */
 volatile uint32_t __in_isr;
 
-void write_ioapic_reg(const uint8_t reg, const uint32_t val)
+static void write_ioapic_reg(const uint32_t reg, const uint32_t val)
 {
 	IOAPIC_IDX = reg;
 	IOAPIC_WDW = val;
 }
 
-uint32_t read_ioapic_reg(const uint8_t reg)
+static uint32_t read_ioapic_reg(const uint32_t reg)
 {
 	IOAPIC_IDX = reg;
 	return IOAPIC_WDW;
 }
 
-void set_ioapic_redtbl_raw(const uint32_t irq, const uint32_t val)
+static void set_ioapic_redtbl_raw(const uint32_t irq, const uint32_t val)
 {
 	const uint32_t redtbl_lo = IOAPIC_IOREDTBL + 2 * irq;
 	const uint32_t redtbl_hi = redtbl_lo + 1;
@@ -280,7 +280,11 @@ DECLARE_DEFERRED(print_lpaic_lvt_error);
 static inline unsigned int lapic_get_vector(volatile uint32_t *reg_base,
 					    uint32_t vector)
 {
-	uint32_t reg_pos = (vector >> 5) << 4;
+	/*
+	 * Since we are using array indexing, we need to divide the vec_pos by
+	 * sizeof(uint32_t), i.e. shift to the right 2.
+	 */
+	uint32_t reg_pos = (vector >> 5) << 2;
 	uint32_t vec_pos = vector & (32 - 1);
 
 	return reg_base[reg_pos] & BIT(vec_pos);
