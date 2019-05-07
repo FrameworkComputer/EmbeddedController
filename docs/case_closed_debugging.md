@@ -61,10 +61,15 @@ closed debugging work because the SBU lines that are used to expose the PD
 MCU's USB interface are not orientation invariant.  Only one port on the DUT
 will support CCD.  Try using the other port if the CCD device doesn't appear.
 Suzy-Q should be connected to the Host with a Type-A (Host) to Micro Type-B
-(Suzy-Q) cable.
+(Suzy-Q) cable. Look for the device [vendor:product ID](#Troubleshooting) to
+confirm that your host sees the CCD device.
 
 ### Host
-The Udev rule file should be installed, it will generate useful symlinks in
+Depending on your kernel version the consoles may exist at `/dev/ttyUSB*`. If
+using those works for you, you don't need to install any drivers or Udev rules.
+
+If you want your host to generate useful symlinks for the different CCD
+consoles, install the Udev rule. It will generate symlinks in
 `/dev/google/<device name>/serial/<console name>` for each serial console that
 a device exports.  It will also mark the DUT as incompatible with ModemManager.
 This last part ensures that ModemManager doesn't attempt to open and manipulate
@@ -99,18 +104,23 @@ how to get access to Cr50 CCD see the
 [Cr50 specific CCD doc](case_closed_debugging_cr50.md).
 
 ### Consoles
-
 The serial consoles exposed by case closed debugging can be found in
-`/dev/google/<device name>/serial/<console name>` and can be opened with any
-program that you would normally use to open a TTY character device such as
-minicom or screen.  The `<device name>` field is generated from the DUT's USB
-descriptor `iProduct` field as well as the USB bus index and device path on
-that bus (the list of port numbers for the hub connections between the Host
-and DUT).  As such it is unique to a particular setup and won't change across
+`/dev/ttyUSB*` or `/dev/google/<device name>/serial/<console name>` if you
+installed the Udev rules. The consoles can be opened with any program that you
+would normally use to open a TTY character device such as minicom or screen.
+
+If you installed the Udev rules, the console path will be determined based on
+the device and USB bus. The `<device name>` field is generated from the DUT's
+USB descriptor `iProduct` field as well as the USB bus index and device path on
+that bus (the list of port numbers for the hub connections between the Host and
+DUT).  As such it is unique to a particular setup and won't change across
 reboots of either the Host or the DUT.  The `<console name>` field is just the
-`iInterface` USB descriptor field from the particular USB interface that is
-associated with this console device.  This allows a single DUT to expose
+`iInterface` USB descriptor field from the particular USB interface that
+is associated with this console device. This allows a single DUT to expose
 multiple serial consoles in a discoverable and consistent manner.
+
+If you're using the consoles at `/dev/ttyUSB*`, you can just check which console
+it is by running a few commands like `version`.
 
 ### Flash AP
 Programming the AP SPI flash with a new firmware image can be done with flashrom
@@ -123,7 +133,10 @@ host you will have to disambiguate the DUT with additional programmer parameters
 Flashrom will list all DUTs that are found along with programmer parameters that
 can be used to identify the intended DUT.  Flashrom programmer parameters are
 added to the programmer name (the -p argument) by appending a colon and then a
-comma separated list of key=value pairs.
+comma separated list of key=value pairs. The `serial` parameter is best for this
+
+`sudo /usr/sbin/flashrom -p raiden_debug_spi:serial=${SERIAL} -w
+/build/<board>/firmware/image.bin`
 
 Cr50 can be used to flash the AP or EC.  You will need to specify the AP as the
 target device, so cr50 knows to flash the AP.
