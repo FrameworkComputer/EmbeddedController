@@ -91,7 +91,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_SENSOR,
 		.addr = LSM6DSM_ADDR1,
 		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
-		.rot_standard_ref = NULL, /* TODO rotate correctly */
+		.rot_standard_ref = &lid_rot_ref,
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 	},
