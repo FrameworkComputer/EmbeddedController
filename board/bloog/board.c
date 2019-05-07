@@ -211,12 +211,13 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 int board_is_convertible(void)
 {
 	/*
-	 * Bloog: 33, 34, 35
-	 * Blooguard: 49, 50
+	 * Bloog: 33, 34, 35, 36
+	 * Blooguard: 49, 50, 51, 52
 	 * Unprovisioned: 255
 	 */
-	return sku_id == 33 || sku_id == 34 || sku_id == 35 || sku_id == 49
-		|| sku_id == 50 || sku_id == 255;
+	return sku_id == 33 || sku_id == 34 || sku_id == 35 || sku_id == 36
+		|| sku_id == 49 || sku_id == 50 || sku_id == 51 || sku_id == 52
+		|| sku_id == 255;
 }
 
 static void board_update_sensor_config_from_sku(void)
@@ -312,7 +313,7 @@ uint32_t board_override_feature_flags0(uint32_t flags0)
 	/*
 	 * Remove keyboard backlight feature for devices that don't support it.
 	 */
-	if (sku_id == 33)
+	if (sku_id == 33 || sku_id == 36 || sku_id == 51 || sku_id == 52)
 		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
 	else
 		return flags0;
