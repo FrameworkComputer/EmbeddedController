@@ -67,8 +67,10 @@ functionality.
 
 ### Basic Steps for CCD setup
 
-1.  Use instructions from the case\_closed\_debugging doc to connect to the cr50
-    console.
+1.  Use the general [setup](case_closed_debugging.md#Setup) instructions to
+    connect Suzy-Q and access the Cr50 console. The Cr50 console will be the
+    lowest `/dev/ttyUSB*` device created by Cr50 or
+    `/dev/google/<device name>/serial/Shell`
 
 2.  [Open CCD](#Open-CCD)
 
