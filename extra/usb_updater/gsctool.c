@@ -222,7 +222,7 @@ struct options_map {
 static int verbose_mode;
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "aBbcd:F:fhIikLMmO:oPpR:rS:stUuVvw";
+static char *short_opts = "aBbcd:F:fhIikLMmn:O:oPpR:rS:stUuVvw";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"any",		                0,   NULL, 'a'},
@@ -247,6 +247,7 @@ static const struct option long_opts[] = {
 	{"sn_bits",	                1,   NULL, 'S'},
 	{"sn_rma_inc",	                1,   NULL, 'R'},
 	{"systemdev",	                0,   NULL, 's'},
+	{"serial",	                1,   NULL, 'n'},
 	{"tpm_mode",                    2,   NULL, 'm'},
 	{"trunks_send",	                0,   NULL, 't'},
 	{"verbose",	                0,   NULL, 'V'},
@@ -570,6 +571,7 @@ static void usage(int errs)
 	       "Effective with -b, -f, -i, and -O.\n"
 	       "  -m,--tpm_mode [enable|disable]\n"
 	       "                           Change or query tpm_mode\n"
+	       "  -n,--serial SERIAL       Cr50 CCD serial number\n"
 	       "  -O,--openbox_rma <desc_file>\n"
 	       "                           Verify other device's RO integrity\n"
 	       "                           using information provided in "
@@ -2260,7 +2262,8 @@ int main(int argc, char *argv[])
 	int errorcnt;
 	uint8_t *data = 0;
 	size_t data_len = 0;
-	uint16_t vid = VID, pid = PID;
+	uint16_t vid = 0;
+	uint16_t pid = 0;
 	int i;
 	size_t j;
 	int transferred_sections = 0;
@@ -2289,6 +2292,7 @@ int main(int argc, char *argv[])
 	int factory_mode = 0;
 	char *factory_mode_arg;
 	char *tpm_mode_arg = NULL;
+	char *serial = NULL;
 	int sn_bits = 0;
 	uint8_t sn_bits_arg[SN_BITS_SIZE];
 	int sn_inc_rma = 0;
@@ -2395,6 +2399,9 @@ int main(int argc, char *argv[])
 				tpm_mode_arg = optarg;
 			}
 			break;
+		case 'n':
+			serial = optarg;
+			break;
 		case 'O':
 			openbox_desc_file = optarg;
 			break;
@@ -2482,6 +2489,15 @@ int main(int argc, char *argv[])
 	if (errorcnt)
 		usage(errorcnt);
 
+	/*
+	 * If no usb device information was given, default to the using cr50
+	 * vendor and product id to find the usb device.
+	 */
+	if (!serial && !vid && !pid) {
+		vid = VID;
+		pid = PID;
+	}
+
 	if ((bid_action == bid_none) &&
 	    !ccd_info &&
 	    !ccd_lock &&
@@ -2533,7 +2549,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (td.ep_type == usb_xfer) {
-		if (usb_findit(NULL, vid, pid, USB_SUBCLASS_GOOGLE_CR50,
+		if (usb_findit(serial, vid, pid, USB_SUBCLASS_GOOGLE_CR50,
 			       USB_PROTOCOL_GOOGLE_CR50_NON_HC_FW_UPDATE,
 			       &td.uep))
 			exit(update_error);
