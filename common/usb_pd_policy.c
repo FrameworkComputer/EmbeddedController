@@ -694,10 +694,12 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			func = svdm_rsp.enter_mode;
 			break;
 		case CMD_DP_STATUS:
-			func = svdm_rsp.amode->status;
+			if (svdm_rsp.amode)
+				func = svdm_rsp.amode->status;
 			break;
 		case CMD_DP_CONFIG:
-			func = svdm_rsp.amode->config;
+			if (svdm_rsp.amode)
+				func = svdm_rsp.amode->config;
 			break;
 		case CMD_EXIT_MODE:
 			func = svdm_rsp.exit_mode;
