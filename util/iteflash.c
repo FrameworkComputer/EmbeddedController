@@ -809,8 +809,9 @@ static int connect_to_ccd_i2c_bridge(struct common_hnd *chnd)
 {
 	int rv;
 
-	rv = usb_findit(NULL, chnd->conf.usb_vid, chnd->conf.usb_pid,
-			CR50_I2C_SUBCLASS, CR50_I2C_PROTOCOL, &chnd->uep);
+	rv = usb_findit(chnd->conf.usb_serial, chnd->conf.usb_vid,
+			chnd->conf.usb_pid, CR50_I2C_SUBCLASS,
+			CR50_I2C_PROTOCOL, &chnd->uep);
 
 	if (rv) {
 		fprintf(stderr, "%s: usb_findit returned error %d\n",
@@ -1662,15 +1663,9 @@ static int linux_i2c_interface_shutdown(struct common_hnd *chnd)
 
 static int ccd_i2c_interface_init(struct common_hnd *chnd)
 {
-	int ret;
 	chnd->conf.usb_vid = CR50_USB_VID;
 	chnd->conf.usb_pid = CR50_USB_PID;
-	ret = connect_to_ccd_i2c_bridge(chnd);
-	if (!ret) {
-		printf("Using CCD device%s\n",
-		       chnd->conf.usb_serial ? ", ignoring serial number" : "");
-	}
-	return ret;
+	return connect_to_ccd_i2c_bridge(chnd);
 }
 
 static int ccd_i2c_interface_shutdown(struct common_hnd *chnd)
