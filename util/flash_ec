@@ -614,8 +614,22 @@ servo_v4_with_servo_micro_VARS=( "${servo_micro_VARS[@]}" )
 toad_VARS=( "boot_mode" )
 
 declare -a save
+
+#######################################
+# Store DUT control value to restore.
+# Arguments:
+#   $1: Control name
+#   $2: (optional) Value to restore for the name at exit.
+#######################################
 function servo_save_add() {
-	save+=( "$( "${DUT_CONTROL_CMD[@]}" "$@" )" )
+	case $# in
+		1) save+=( "$( "${DUT_CONTROL_CMD[@]}" "$@" )" )
+		   ;;
+		2) save+=( "$1:$2" )
+		   ;;
+		*) die "${FUNCNAME[0]} failed: arguments error"
+		   ;;
+	esac
 }
 
 function servo_save() {
@@ -760,7 +774,7 @@ function flash_flashrom() {
 
 		# If spi flash is in npcx's ec, enable gang programer mode
 		if [[ "${CHIP}" == "npcx_int_spi" ]]; then
-			servo_save_add "fw_up"
+			servo_save_add "fw_up" "off"
 
 			# Set GP_SEL# as low then start ec
 			dut_control fw_up:on
@@ -768,19 +782,19 @@ function flash_flashrom() {
 			dut_control cold_reset:off
 		fi
 
-		servo_save_add "spi1_vref"
-		servo_save_add "spi1_buf_en"
+		servo_save_add "spi1_vref" "off"
+		servo_save_add "spi1_buf_en" "off"
 
 		# Turn on SPI1 interface on servo for SPI Flash Chip
 		dut_control spi1_vref:${SPI_VOLTAGE} spi1_buf_en:on
 		if [[ ! "${SERVO_TYPE}" =~ "servo_micro" ]]; then
 			# Servo micro doesn't support this control.
-			servo_save_add "spi1_buf_on_flex_en"
+			servo_save_add "spi1_buf_on_flex_en" "off"
 			dut_control spi1_buf_on_flex_en:on
 		fi
 	else
 		if [[ "${CHIP}" == "npcx_int_spi" ]]; then
-			servo_save_add "fw_up"
+			servo_save_add "fw_up" "off"
 
 			# Set GP_SEL# as low then start ec
 			dut_control cold_reset:on
