@@ -26,6 +26,8 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "keyboard_config.h"
+#include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
@@ -278,6 +280,27 @@ static void board_update_sensor_config_from_sku(void)
 	}
 }
 
+static int board_has_keypad(void)
+{
+	return sku_id == 41 || sku_id == 42 || sku_id == 43 || sku_id == 44;
+}
+
+static void board_update_no_keypad_config_from_sku(void)
+{
+	if (!board_has_keypad()) {
+#ifndef TEST_BUILD
+		/* Disable scanning KSO13 & 14 if keypad isn't present. */
+		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
+		keyscan_config.actual_key_mask[11] = 0xfa;
+		keyscan_config.actual_key_mask[12] = 0xca;
+
+		/* Search key is moved back to col=1,row=0 */
+		keyscan_config.actual_key_mask[0] = 0x14;
+		keyscan_config.actual_key_mask[1] = 0xff;
+#endif
+	}
+}
+
 /* Read CBI from i2c eeprom and initialize variables for board variants */
 static void cbi_init(void)
 {
@@ -289,6 +312,7 @@ static void cbi_init(void)
 	CPRINTSUSB("SKU: %d", sku_id);
 
 	board_update_sensor_config_from_sku();
+	board_update_no_keypad_config_from_sku();
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
