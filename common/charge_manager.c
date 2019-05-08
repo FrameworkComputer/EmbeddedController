@@ -28,7 +28,22 @@
 #define POWER_SWAP_TIMEOUT (PD_T_SRC_RECOVER_MAX + PD_T_SRC_TURN_ON + \
 			    PD_T_SAFE_0V + 500 * MSEC)
 
-/* Charge supplier priority: lower number indicates higher priority. */
+/*
+ * Charge supplier priority: lower number indicates higher priority.
+ *
+ * - Always pick dedicated charge if present since that is the best product
+ *   decision.
+ * - Pick PD negotiated chargers over everything else since they have the most
+ *   power potential and they may not currently be negotiated at a high power.
+ *   (and they can at least provide 15W)
+ * - Pick Type-C which supplier current >= 1.5A, which has higher prioirty
+ *   than the BC1.2 and Type-C with current under 1.5A. (USB-C spec 1.3
+ *   Table 4-17: TYPEC 3.0A, 1.5A > BC1.2 > TYPEC under 1.5A)
+ * - Then pick among the propreitary and BC1.2 chargers which ever has the
+ *   highest available power.
+ * - Last, pick one from the rest suppliers.  Also note that some boards assume
+ *   wireless suppliers as low priority.
+ */
 test_mockable const int supplier_priority[] = {
 #if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	[CHARGE_SUPPLIER_DEDICATED] = 0,
@@ -37,17 +52,18 @@ test_mockable const int supplier_priority[] = {
 	[CHARGE_SUPPLIER_TYPEC] = 2,
 	[CHARGE_SUPPLIER_TYPEC_DTS] = 2,
 #ifdef CHARGE_MANAGER_BC12
-	[CHARGE_SUPPLIER_PROPRIETARY] = 2,
+	[CHARGE_SUPPLIER_PROPRIETARY] = 3,
 	[CHARGE_SUPPLIER_BC12_DCP] = 3,
-	[CHARGE_SUPPLIER_BC12_CDP] = 4,
-	[CHARGE_SUPPLIER_BC12_SDP] = 5,
-	[CHARGE_SUPPLIER_OTHER] = 6,
-	[CHARGE_SUPPLIER_VBUS] = 7,
+	[CHARGE_SUPPLIER_BC12_CDP] = 3,
+	[CHARGE_SUPPLIER_BC12_SDP] = 3,
+	[CHARGE_SUPPLIER_TYPEC_UNDER_1_5A] = 4,
+	[CHARGE_SUPPLIER_OTHER] = 4,
+	[CHARGE_SUPPLIER_VBUS] = 4,
 #endif
 #ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
-	[CHARGE_SUPPLIER_WPC_BPP] = 6,
-	[CHARGE_SUPPLIER_WPC_EPP] = 6,
-	[CHARGE_SUPPLIER_WPC_GPP] = 6,
+	[CHARGE_SUPPLIER_WPC_BPP] = 5,
+	[CHARGE_SUPPLIER_WPC_EPP] = 5,
+	[CHARGE_SUPPLIER_WPC_GPP] = 5,
 #endif
 
 };
@@ -900,7 +916,16 @@ void typec_set_input_current_limit(int port, typec_current_t max_ma,
 				   uint32_t supply_voltage)
 {
 	struct charge_port_info charge;
+	int i;
+	int supplier;
 	int dts = !!(max_ma & TYPEC_CURRENT_DTS_MASK);
+	static const enum charge_supplier typec_suppliers[] = {
+		CHARGE_SUPPLIER_TYPEC,
+		CHARGE_SUPPLIER_TYPEC_DTS,
+#ifdef CHARGE_MANAGER_BC12
+		CHARGE_SUPPLIER_TYPEC_UNDER_1_5A,
+#endif /* CHARGE_MANAGER_BC12 */
+	};
 
 	charge.current = max_ma & TYPEC_CURRENT_ILIM_MASK;
 	charge.voltage = supply_voltage;
@@ -913,19 +938,30 @@ void typec_set_input_current_limit(int port, typec_current_t max_ma,
 	if (dts)
 		charge.current = MIN(charge.current, 500);
 #endif
-	charge_manager_update_charge(dts ? CHARGE_SUPPLIER_TYPEC_DTS :
-					   CHARGE_SUPPLIER_TYPEC,
-					   port, &charge);
+
+	supplier = dts ? CHARGE_SUPPLIER_TYPEC_DTS : CHARGE_SUPPLIER_TYPEC;
+
+#ifdef CHARGE_MANAGER_BC12
+	/*
+	 * According to USB-C spec 1.3 Table 4-17 "Precedence of power source
+	 * usage", the priority should be: USB-C 3.0A, 1.5A > BC1.2 > USB-C
+	 * under 1.5A.  Choosed the corresponding supplier type, according to
+	 * charge current, to update.
+	 */
+	if (charge.current < 1500)
+		supplier = CHARGE_SUPPLIER_TYPEC_UNDER_1_5A;
+#endif /* CHARGE_MANAGER_BC12 */
+
+	charge_manager_update_charge(supplier, port, &charge);
 
 	/*
-	 * Zero TYPEC / TYPEC-DTS when zero'ing the other, since they are
-	 * mutually exclusive and DTS status of port partner will no longer
-	 * be reflected on disconnect.
+	 * TYPEC / TYPEC-DTS / TYPEC-UNDER_1_5A should be mutually exclusive.
+	 * Zero'ing all the other suppliers.
 	 */
-	if (max_ma == 0 || supply_voltage == 0)
-		charge_manager_update_charge(dts ? CHARGE_SUPPLIER_TYPEC :
-						   CHARGE_SUPPLIER_TYPEC_DTS,
-						   port, &charge);
+	for (i = 0; i < ARRAY_SIZE(typec_suppliers); ++i)
+		if (supplier != typec_suppliers[i])
+			charge_manager_update_charge(typec_suppliers[i], port,
+						     NULL);
 }
 
 void charge_manager_update_charge(int supplier,
