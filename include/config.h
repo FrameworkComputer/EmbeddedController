@@ -3152,9 +3152,6 @@
 /* Allow the board to use a GPIO for the SCI# signal. */
 #undef CONFIG_SCI_GPIO
 
-/* Support computing SHA-1 hash */
-#undef CONFIG_SHA1
-
 /* Support computing of other hash sizes (without the VBOOT code) */
 #undef CONFIG_SHA256
 
