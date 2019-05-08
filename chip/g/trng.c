@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "common.h"
+#include "flash_log.h"
 #include "init_chip.h"
 #include "registers.h"
 #include "trng.h"
@@ -34,9 +36,12 @@ void init_trng(void)
 uint32_t rand(void)
 {
 	while (GREAD(TRNG, EMPTY)) {
-		if (GREAD_FIELD(TRNG, FSM_STATE, FSM_TIMEOUT)) {
+		if (GREAD_FIELD(TRNG, FSM_STATE, FSM_IDLE)) {
 			/* TRNG timed out, restart */
 			GWRITE(TRNG, STOP_WORK, 1);
+#if !defined(SECTION_IS_RO) && defined(CONFIG_FLASH_LOG)
+			flash_log_add_event(FE_LOG_TRNG_STALL, 0, NULL);
+#endif
 			GWRITE(TRNG, GO_EVENT, 1);
 		}
 	}
@@ -64,3 +69,66 @@ void rand_bytes(void *buffer, size_t len)
 			((random_togo-- - 1) * 8);
 	}
 }
+
+#if !defined(SECTION_IS_RO) && defined(TEST_TRNG)
+#include "console.h"
+#include "watchdog.h"
+
+static uint32_t histogram[256];
+static int command_rand(int argc, char **argv)
+{
+	int count = 1000; /* Default number of cycles. */
+	struct pair {
+		uint32_t value;
+		uint32_t count;
+	};
+	struct pair min;
+	struct pair max;
+
+	if (argc == 2)
+		count = strtoi(argv[1], NULL, 10);
+
+	memset(histogram, 0, sizeof(histogram));
+	ccprintf("Retrieving %d random words.\n", count);
+	while (count-- > 0) {
+		uint32_t rvalue;
+		int size;
+
+		rvalue = rand();
+		for (size = 0; size < sizeof(rvalue); size++)
+			histogram[((uint8_t *)&rvalue)[size]]++;
+
+		if (!(count % 10000))
+			watchdog_reload();
+	}
+
+	min.count = ~0;
+	max.count = 0;
+	for (count = 0; count < ARRAY_SIZE(histogram); count++) {
+		if (histogram[count] > max.count) {
+			max.count = histogram[count];
+			max.value = count;
+			continue;
+		}
+		if (histogram[count] >= min.count)
+			continue;
+
+		min.count = histogram[count];
+		min.value = count;
+	}
+
+	ccprintf("min %d(%d), max %d(%d)", min.count, min.value,
+		 max.count, max.value);
+
+	for (count = 0; count < ARRAY_SIZE(histogram); count++) {
+		if (!(count % 8)) {
+			ccprintf("\n");
+			cflush();
+		}
+		ccprintf(" %6d", histogram[count]);
+	}
+	ccprintf("\n");
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(rand, command_rand, NULL, NULL);
+#endif /* !defined(SECTION_IS_RO) && defined(TEST_TRNG) */
