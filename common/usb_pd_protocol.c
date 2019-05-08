@@ -2351,25 +2351,30 @@ static int pd_is_power_swapping(int port)
 static void pd_partner_port_reset(int port)
 {
 	uint64_t timeout;
-	int explicit_contract_in_place;
 	uint8_t flags;
 
-	pd_get_saved_port_flags(port, &flags);
-	explicit_contract_in_place = (flags & PD_BBRMFLG_EXPLICIT_CONTRACT);
+	/*
+	 * If there is no contract in place (or if we fail to read the BBRAM
+	 * flags), there is no need to reset the partner.
+	 */
+	if (pd_get_saved_port_flags(port, &flags) != EC_SUCCESS ||
+	    !(flags & PD_BBRMFLG_EXPLICIT_CONTRACT))
+		return;
 
 	/*
-	 * If an explicit contract is in place and PD communications are
-	 * allowed, don't apply Rp.  We'll issue a SoftReset later on and
-	 * renegotiate our contract.  This particular condition only applies to
-	 * unlocked RO images with an explicit contract in place.
+	 * If we reach here, an explicit contract is in place.
+	 *
+	 * If PD communications are allowed, don't apply Rp.  We'll issue a
+	 * SoftReset later on and renegotiate our contract.  This particular
+	 * condition only applies to unlocked RO images with an explicit
+	 * contract in place.
 	 */
-	if (explicit_contract_in_place && pd_comm_is_enabled(port))
+	if (pd_comm_is_enabled(port))
 		return;
 
 	/* If we just lost power, don't apply Rp. */
-	if (!explicit_contract_in_place ||
-	   system_get_reset_flags() &
-	   (RESET_FLAG_BROWNOUT | RESET_FLAG_POWER_ON))
+	if (system_get_reset_flags() &
+	    (RESET_FLAG_BROWNOUT | RESET_FLAG_POWER_ON))
 		return;
 
 	/*
