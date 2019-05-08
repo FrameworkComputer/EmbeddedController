@@ -558,8 +558,33 @@ static void handle_reset(int pm_state)
 	sram_power(0);
 
 	while (1) {
-
-		/* check if host ish driver already set the DMA enable flag */
+		/**
+		 * check if host ish driver already set the DMA enable flag
+		 *
+		 * ISH FW and ISH ipc host driver using IPC_ISH_RMP2 register
+		 * for synchronization during ISH boot.
+		 * ISH ipc host driver will set DMA_ENABLED_MASK bit when it
+		 * is loaded and starts, and clear this bit when it is removed.
+		 *
+		 * see: https://github.com/torvalds/linux/blob/master/drivers/
+		 *      hid/intel-ish-hid/ipc/ipc.c
+		 *
+		 * we have two kinds of reset situations need to handle here:
+		 * 1: reset ISH via uart console cmd or ectool host cmd
+		 * 2: S0 -> Sx (reset_prep interrupt)
+		 *
+		 * for #1, ISH ipc host driver no changed states,
+		 * DMA_ENABLED_MASK bit always set, so, will reset ISH directly
+		 *
+		 * for #2, ISH ipc host driver changed states, and cleared
+		 * DMA_ENABLED_MASK bit, then ISH FW received reset_prep
+		 * interrupt, ISH will stay in this while loop (most time in
+		 * halt state), waiting for DMA_ENABLED_MASK bit was set and
+		 * reset ISH then. Since ISH ROM have no power managment, stay
+		 * in aontask can save more power especially if system stay in
+		 * Sx for long time.
+		 *
+		 */
 		if (IPC_ISH_RMP2 & DMA_ENABLED_MASK) {
 
 			/* clear ISH2HOST doorbell register */
@@ -570,12 +595,13 @@ static void handle_reset(int pm_state)
 
 			/* reset ISH minute-ia cpu core, will goto ISH ROM */
 			ish_mia_reset();
+
+			__builtin_unreachable();
 		}
 
 		ish_mia_halt();
 	}
 
-	__builtin_unreachable();
 }
 
 static void handle_unknown_state(void)
