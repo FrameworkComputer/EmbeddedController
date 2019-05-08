@@ -8,6 +8,8 @@ third_party {
     value: "https://boringssl.googlesource.com/boringssl/"
   }
   version: "859679518d3433cdd0dd6cf534bd7bdb2a32dd60"
+  # TODO(crbug.com/884905): Refresh curve25519 to latest boringssl
+  # version_curve25519: "c034e2d3ce16df5f89134515bc113eb4f3a28e0e"
   last_upgrade_date { year: 2018 month: 07 day: 05 }
   license_type: NOTICE
   local_modifications: "Adapted code to work with EC codebase."
