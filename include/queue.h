@@ -89,7 +89,7 @@ struct queue {
 	((struct queue) {					\
 		.state        = &((struct queue_state){}),	\
 		.policy       = &POLICY,			\
-		.buffer_units = SIZE,				\
+		.buffer_units = BUILD_CHECK_INLINE(SIZE, POWER_OF_TWO(SIZE)), \
 		.buffer_units_mask = SIZE - 1,			\
 		.unit_bytes   = sizeof(TYPE),			\
 		.buffer       = (uint8_t *) &((TYPE[SIZE]){}),	\
