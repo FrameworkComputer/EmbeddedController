@@ -9,6 +9,7 @@
 #include "host_command.h"
 #include "host_command_heci.h"
 #include "ipc_heci.h"
+#include "ish_fwst.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
@@ -144,6 +145,7 @@ EC_VER_MASK(0));
 static int cros_ec_ishtp_subsys_initialize(const heci_handle_t heci_handle)
 {
 	heci_cros_ec_handle = heci_handle;
+	ish_fwst_set_fw_status(FWSTS_SENSOR_APP_RUNNING);
 	return EC_SUCCESS;
 }
 

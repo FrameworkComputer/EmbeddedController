@@ -728,5 +728,8 @@ void ipc_init(void)
 		ctx = ipc_get_if_ctx(i);
 		queue_init(&ctx->tx_queue);
 	}
+
+	/* inform host firmware is running */
+	ish_fwst_set_fw_status(FWSTS_FW_IS_RUNNING);
 }
 DECLARE_HOOK(HOOK_INIT, ipc_init, HOOK_PRIO_DEFAULT);
