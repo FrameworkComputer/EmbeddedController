@@ -546,6 +546,11 @@ static void handle_reset(int pm_state)
 	/* disable watch dog */
 	WDT_CONTROL &= ~WDT_CONTROL_ENABLE_BIT;
 
+	/* disable all gpio interrupts */
+	ISH_GPIO_GRER = 0;
+	ISH_GPIO_GFER = 0;
+	ISH_GPIO_GIMR = 0;
+
 	/* disable CSME CSR irq */
 	IPC_PIMR &= ~IPC_PIMR_CSME_CSR_BIT;
 
