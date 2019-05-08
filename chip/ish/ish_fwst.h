@@ -117,7 +117,7 @@ static inline void ish_fwst_clear_ilup(void)
 /* return IPC link up state */
 static inline int ish_fwst_is_ilup_set(void)
 {
-	return !!(IPC_ISH_FWSTS &= IPC_ISH_FWSTS_ILUP_MASK);
+	return !!(IPC_ISH_FWSTS & IPC_ISH_FWSTS_ILUP_MASK);
 }
 
 /* set HECI up */
@@ -135,7 +135,7 @@ static inline void ish_fwst_clear_hup(void)
 /* get HECI up status */
 static inline int ish_fwst_is_hup_set(void)
 {
-	return !!(IPC_ISH_FWSTS &= IPC_ISH_FWSTS_HUP_MASK);
+	return !!(IPC_ISH_FWSTS & IPC_ISH_FWSTS_HUP_MASK);
 }
 
 /* set fw failure reason */
