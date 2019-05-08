@@ -852,6 +852,34 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_I2C_PASSTHRU, i2c_command_passthru, EC_VER_MASK(0));
 
+static int i2c_command_lookup(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_i2c_lookup *params = args->params;
+	struct ec_response_i2c_lookup *resp = args->response;
+
+	switch (params->type) {
+	case I2C_LOOKUP_TYPE_CBI_EEPROM:
+#ifdef CONFIG_CROS_BOARD_INFO
+		resp->i2c_port = I2C_PORT_EEPROM;
+		/* Convert from 8-bit address to 7-bit address */
+		resp->i2c_addr = I2C_ADDR_EEPROM >> 1;
+#else
+		/* Lookup type is supported, but not present on system. */
+		return EC_RES_UNAVAILABLE;
+#endif /* CONFIG_CROS_BOARD_INFO */
+		break;
+	default:
+		/* The type was unrecognized */
+		return EC_RES_INVALID_PARAM;
+	}
+
+	args->response_size = sizeof(*resp);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_I2C_LOOKUP, i2c_command_lookup, EC_VER_MASK(0));
+/* If the params union expands in the future, need to bump EC_VER_MASK */
+BUILD_ASSERT(sizeof(struct ec_params_i2c_lookup) == 4);
+
 void i2c_passthru_protect_port(uint32_t port)
 {
 	if (port < I2C_PORT_COUNT)

@@ -6144,7 +6144,6 @@ int cmd_i2c_write(int argc, char *argv[])
 	return 0;
 }
 
-
 int cmd_i2c_xfer(int argc, char *argv[])
 {
 	unsigned int port, addr;
@@ -6218,6 +6217,58 @@ int cmd_i2c_xfer(int argc, char *argv[])
 		printf("Write successful.\n");
 	}
 
+	return 0;
+}
+
+static void cmd_i2c_lookup_help(const char *const cmd)
+{
+	fprintf(stderr,
+		"Usage: %s <type>\n"
+		"  <type> is one of:\n"
+		"    1: CBI_EEPROM\n",
+		cmd);
+}
+
+int cmd_i2c_lookup(int argc, char *argv[])
+{
+	struct ec_params_i2c_lookup p;
+	struct ec_response_i2c_lookup r;
+	char *e;
+	int rv;
+
+	if (argc != 2) {
+		cmd_i2c_lookup_help(argv[0]);
+		return -1;
+	}
+
+	p.type = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad type.\n");
+		cmd_i2c_lookup_help(argv[0]);
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_I2C_LOOKUP, 0, &p, sizeof(p), &r, sizeof(r));
+
+	if (rv == -EC_RES_INVALID_PARAM - EECRESULT) {
+		fprintf(stderr, "Lookup type %d not supported.\n", p.type);
+		return rv;
+	}
+
+	if (rv == -EC_RES_UNAVAILABLE - EECRESULT) {
+		fprintf(stderr, "Device not found\n");
+		return rv;
+	}
+
+	if (rv < 0)
+		return rv;
+
+	/*
+	 * Do not change the format of this print. firmware_ECCbiEeprom FAFT
+	 * test depends on this, and will silently start skipping tests.
+	 */
+	printf("Port: %d; Address: 0x%02x (7-bit format)\n", r.i2c_port,
+	       r.i2c_addr);
 	return 0;
 }
 
@@ -8586,6 +8637,7 @@ const struct command commands[] = {
 	{"hello", cmd_hello},
 	{"hibdelay", cmd_hibdelay},
 	{"hostsleepstate", cmd_hostsleepstate},
+	{"i2clookup", cmd_i2c_lookup},
 	{"i2cprotect", cmd_i2c_protect},
 	{"i2cread", cmd_i2c_read},
 	{"i2cwrite", cmd_i2c_write},
