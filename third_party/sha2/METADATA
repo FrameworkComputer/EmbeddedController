@@ -1,0 +1,16 @@
+name: "SHA-256 implementation"
+description:
+    "Fast software implementation in C of the FIPS 180-2 hash algorithms"
+    "SHA-224, SHA-256, SHA-384 and SHA-512"
+
+third_party {
+  url {
+    type: GIT
+    value: "https://github.com/ogay/sha2"
+  }
+  version: "79116b5d5d449311c27a24e16c99d8bccb4d1301"
+  last_upgrade_date { year: 2014 month: 04 day: 01 }
+  license_type: NOTICE
+  local_modifications: "See git log. "
+    "Created LICENSE file."
+}
