@@ -5,7 +5,7 @@
  * found in the LICENSE file.
  */
 
-GPIO_INT(ACCEL_GYRO_INT_L,	PIN(0), GPIO_INT_FALLING | GPIO_SEL_1P8V, lsm6dsm_interrupt)
+GPIO_INT(ACCEL_GYRO_INT_L,	PIN(0), GPIO_INT_FALLING, lsm6dsm_interrupt)
 GPIO_INT(LID_OPEN,              PIN(5), GPIO_INT_BOTH, lid_interrupt) /* LID_CL_NB_L */
 
 GPIO(NB_MODE_L,		PIN(4), GPIO_OUT_LOW)
