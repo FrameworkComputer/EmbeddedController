@@ -27,6 +27,7 @@
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
 /* Only chips with multi-port controllers will define I2C_CONTROLLER_COUNT */
 #ifndef I2C_CONTROLLER_COUNT
@@ -670,8 +671,10 @@ unwedge_done:
 /* Host commands */
 
 #ifdef CONFIG_I2C_DEBUG_PASSTHRU
-#define PTHRUPRINTF(format, args...) CPRINTS(format, ## args)
+#define PTHRUPRINTS(format, args...) CPRINTS("I2C_PTHRU " format, ## args)
+#define PTHRUPRINTF(format, args...) CPRINTF(format, ## args)
 #else
+#define PTHRUPRINTS(format, args...)
 #define PTHRUPRINTF(format, args...)
 #endif
 
@@ -690,15 +693,13 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	int msgnum;
 
 	if (args->params_size < sizeof(*params)) {
-		PTHRUPRINTF("i2c passthru no params, params_size=%d, "
-			    "need at least %d",
+		PTHRUPRINTS("no params, params_size=%d, need at least %d",
 			    args->params_size, sizeof(*params));
 		return EC_RES_INVALID_PARAM;
 	}
 	size = sizeof(*params) + params->num_msgs * sizeof(*msg);
 	if (args->params_size < size) {
-		PTHRUPRINTF("i2c passthru params_size=%d, "
-			    "need at least %d",
+		PTHRUPRINTS("params_size=%d, need at least %d",
 			    args->params_size, size);
 		return EC_RES_INVALID_PARAM;
 	}
@@ -708,8 +709,7 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	     msgnum++, msg++) {
 		unsigned int addr_flags = msg->addr_flags;
 
-		PTHRUPRINTF("i2c passthru port=%d, %s, addr=0x%02x, "
-			    "len=0x%02x",
+		PTHRUPRINTS("port=%d, %s, addr=0x%x, len=%d",
 			    params->port,
 			    addr_flags & EC_I2C_FLAG_READ ? "read" : "write",
 			    addr_flags & EC_I2C_ADDR_MASK,
@@ -724,13 +724,13 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	/* Check there is room for the data */
 	if (args->response_max <
 			sizeof(struct ec_response_i2c_passthru) + read_len) {
-		PTHRUPRINTF("i2c passthru overflow1");
+		PTHRUPRINTS("overflow1");
 		return EC_RES_INVALID_PARAM;
 	}
 
 	/* Must have bytes to write */
 	if (args->params_size < size + write_len) {
-		PTHRUPRINTF("i2c passthru overflow2");
+		PTHRUPRINTS("overflow2");
 		return EC_RES_INVALID_PARAM;
 	}
 
@@ -805,10 +805,14 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 		}
 #endif
 		/* Transfer next message */
-		PTHRUPRINTF("i2c passthru xfer port=%x, addr=%x, out=%p, "
-			    "write_len=%x, data=%p, read_len=%x, flags=%x",
-			    params->port, addr, out, write_len,
-			    &resp->data[in_len], read_len, xferflags);
+		PTHRUPRINTS("xfer port=%x addr=0x%x rlen=%d flags=0x%x",
+			    params->port, addr, read_len, xferflags);
+		if (write_len) {
+			PTHRUPRINTF("  out:");
+			for (i = 0; i < write_len; i++)
+				PTHRUPRINTF(" 0x%02x", out[i]);
+			PTHRUPRINTF("\n");
+		}
 		if (rv) {
 #ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
 			if (system_is_locked() &&
@@ -885,7 +889,7 @@ void i2c_passthru_protect_port(uint32_t port)
 	if (port < I2C_PORT_COUNT)
 		port_protected[port] = 1;
 	else
-		PTHRUPRINTF("Invalid I2C port %d to be protected\n", port);
+		PTHRUPRINTS("Invalid I2C port %d to be protected\n", port);
 }
 
 static int i2c_command_passthru_protect(struct host_cmd_handler_args *args)
@@ -894,23 +898,21 @@ static int i2c_command_passthru_protect(struct host_cmd_handler_args *args)
 	struct ec_response_i2c_passthru_protect *resp = args->response;
 
 	if (args->params_size < sizeof(*params)) {
-		PTHRUPRINTF("i2c passthru protect no params, params_size=%d, "
-			    "need at least %d",
-			    args->params_size, sizeof(*params));
+		PTHRUPRINTS("protect no params, params_size=%d, ",
+			    args->params_size);
 		return EC_RES_INVALID_PARAM;
 	}
 
 	if (!get_i2c_port(params->port)) {
-		PTHRUPRINTF("i2c passthru protect invalid port %d",
-			    params->port);
+		PTHRUPRINTS("protect invalid port %d", params->port);
 		return EC_RES_INVALID_PARAM;
 	}
 
 	if (params->subcmd == EC_CMD_I2C_PASSTHRU_PROTECT_STATUS) {
 		if (args->response_max < sizeof(*resp)) {
-			PTHRUPRINTF("i2c passthru protect no response, "
-				"response_max=%d, need at least %d",
-				args->response_max, sizeof(*resp));
+			PTHRUPRINTS("protect no response, "
+					"response_max=%d, need at least %d",
+					args->response_max, sizeof(*resp));
 			return EC_RES_INVALID_PARAM;
 		}
 
