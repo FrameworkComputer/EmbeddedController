@@ -1,0 +1,25 @@
+name: "uNaCl - Curve25519 for ARM Cortex-M0"
+description:
+    "μNaCl – The Networking and Cryptography library for microcontrollers"
+    "Standalone Curve25519 implementation for ARM Cortex-M0, optimized for"
+    "speed. About 3 times faster than compiled code from C."
+
+third_party {
+  url {
+    type: HOMEPAGE
+    value: "https://munacl.cryptojedi.org/curve25519-cortexm0.shtml"
+  }
+  url {
+    type: PACKAGE
+    value: "https://munacl.cryptojedi.org/data/curve25519-cortexm0-20150813.tar.bz2"
+  }
+  version: "20150813"
+  last_upgrade_date { year: 2017 month: 07 day: 20 }
+  license_type: UNENCUMBERED
+  local_modifications:
+    "1. LICENSE file has been created for compliance purposes. "
+    "CC0 1.0 included in original distribution, and added a note about most of "
+    "the code being public domain."
+    "2. Adapted the code for the EC codebase, see git log."
+}
+

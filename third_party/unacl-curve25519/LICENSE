@@ -1,3 +1,8 @@
+=== core/cortex-m0/curve25519/*.S
+
+public domain.
+
+=== core/cortex-m0/curve25519/scalarmult.c
 
 Creative Commons CC0 1.0 Universal
 
