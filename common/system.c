@@ -351,35 +351,6 @@ const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size)
 	return NULL;
 }
 
-#if defined(CONFIG_USB_POWER_DELIVERY) && !defined(CONFIG_USB_PD_TCPM_STUB) && \
-	defined(CONFIG_I2C_MASTER)
-
-static void system_protect_tcpc_i2c_ports(void)
-{
-	uint32_t locked = system_is_locked();
-	int i;
-
-	/*
-	 * If WP is not enabled i.e. system is not locked leave the tunnels open
-	 * so that factory line can do updates without a new RO BIOS.
-	 */
-	if (!locked) {
-		CPRINTS("System unlocked, TCPC I2C tunnels may be unprotected");
-		return;
-	}
-
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
-		i2c_passthru_protect_port(tcpc_config[i].i2c_host_port);
-}
-
-#else
-
-static void system_protect_tcpc_i2c_ports(void)
-{
-}
-
-#endif
-
 void system_disable_jump(void)
 {
 	disable_jump = 1;
@@ -962,7 +933,6 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 		/* That shouldn't return... */
 		return EC_ERROR_UNKNOWN;
 	case EC_REBOOT_DISABLE_JUMP:
-		system_protect_tcpc_i2c_ports();
 		system_disable_jump();
 		return EC_SUCCESS;
 #ifdef CONFIG_HIBERNATE
@@ -1217,7 +1187,6 @@ static int command_sysjump(int argc, char **argv)
 		return EC_ERROR_PARAM1;
 #endif
 	} else if (!strcasecmp(argv[1], "disable")) {
-		system_protect_tcpc_i2c_ports();
 		system_disable_jump();
 		return EC_SUCCESS;
 	}

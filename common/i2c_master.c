@@ -14,6 +14,7 @@
 #include "i2c.h"
 #include "system.h"
 #include "task.h"
+#include "usb_pd_tcpm.h"
 #include "util.h"
 #include "watchdog.h"
 #include "virtual_battery.h"
@@ -884,12 +885,35 @@ DECLARE_HOST_COMMAND(EC_CMD_I2C_LOOKUP, i2c_command_lookup, EC_VER_MASK(0));
 /* If the params union expands in the future, need to bump EC_VER_MASK */
 BUILD_ASSERT(sizeof(struct ec_params_i2c_lookup) == 4);
 
-void i2c_passthru_protect_port(uint32_t port)
+static void i2c_passthru_protect_port(uint32_t port)
 {
 	if (port < I2C_PORT_COUNT)
 		port_protected[port] = 1;
 	else
 		PTHRUPRINTS("Invalid I2C port %d to be protected\n", port);
+}
+
+static void i2c_passthru_protect_tcpc_ports(void)
+{
+#ifdef CONFIG_USB_PD_PORT_COUNT
+	int i;
+
+	/*
+	 * If WP is not enabled i.e. system is not locked leave the tunnels open
+	 * so that factory line can do updates without a new RO BIOS.
+	 */
+	if (!system_is_locked()) {
+		CPRINTS("System unlocked, TCPC I2C tunnels may be unprotected");
+		return;
+	}
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+		/* TCPC tunnel not configured. No need to protect anything */
+		if (!tcpc_config[i].i2c_slave_addr)
+			continue;
+		i2c_passthru_protect_port(tcpc_config[i].i2c_host_port);
+	}
+#endif
 }
 
 static int i2c_command_passthru_protect(struct host_cmd_handler_args *args)
@@ -920,6 +944,10 @@ static int i2c_command_passthru_protect(struct host_cmd_handler_args *args)
 		args->response_size = sizeof(*resp);
 	} else if (params->subcmd == EC_CMD_I2C_PASSTHRU_PROTECT_ENABLE) {
 		i2c_passthru_protect_port(params->port);
+	} else if (params->subcmd == EC_CMD_I2C_PASSTHRU_PROTECT_ENABLE_TCPCS) {
+		if (IS_ENABLED(CONFIG_USB_POWER_DELIVERY) &&
+				!IS_ENABLED(CONFIG_USB_PD_TCPM_STUB))
+			i2c_passthru_protect_tcpc_ports();
 	} else {
 		return EC_RES_INVALID_COMMAND;
 	}
