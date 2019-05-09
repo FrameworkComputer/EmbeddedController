@@ -68,6 +68,17 @@
 #endif
 
 /*
+ * __maybe_unused is equivalent to the Linux kernel definition, so we
+ * can follow the Kernel style guide more closely.
+ *
+ * An example use case is a function which is only used under certain
+ * CONFIG options.
+ */
+#ifndef __maybe_unused
+#define __maybe_unused __attribute__((unused))
+#endif
+
+/*
  * externally_visible is required by GCC to avoid kicking out memset.
  */
 #ifndef __visible
