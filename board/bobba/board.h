@@ -58,9 +58,6 @@
 #define CONFIG_PWM
 #define CONFIG_PWM_KBLIGHT
 
-/* keypad */
-#define CONFIG_KEYBOARD_KEYPAD
-
 #ifndef __ASSEMBLER__
 
 /* support factory keyboard test */
