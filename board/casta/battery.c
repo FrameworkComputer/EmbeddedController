@@ -93,6 +93,13 @@ int charger_profile_override(struct charge_state_data *curr)
 		TEMP_OUT_OF_RANGE = TEMP_ZONE_COUNT
 	} temp_zone;
 
+        /*
+         * Precharge must be executed when communication is failed on
+	 * dead battery.
+         */
+        if(!(curr->batt.flags & BATT_FLAG_RESPONSIVE))
+                return 0;
+
 	current = curr->requested_current;
 	voltage = curr->requested_voltage;
 	bat_temp_c = curr->batt.temperature - 2731;
