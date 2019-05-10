@@ -20,6 +20,16 @@
 #define CONFIG_LED_COMMON
 #define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
 
+/*
+ * Some fuel gagues will return 1% immediately, without the battery being
+ * charged to the point of being able to withstand Vbus loss, so re-set
+ * allowable Try.SRC level and reset level to 2%
+ */
+#undef CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC
+#define CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC 2
+
+#define CONFIG_USB_PD_RESET_MIN_BATT_SOC 2
+
 /* Sensors */
 #define CONFIG_ACCEL_LIS2DE		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
