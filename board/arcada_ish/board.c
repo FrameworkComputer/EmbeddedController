@@ -136,7 +136,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_SENSOR,
 		.addr = LIS2MDL_ADDR,
 		.default_range = 1 << 11,	/* 16LSB / uT, fixed  */
-		.rot_standard_ref = NULL,	/* TODO rotate correctly */
+		.rot_standard_ref = &lid_rot_ref,
 		.min_frequency = LIS2MDL_ODR_MIN_VAL,
 		.max_frequency = LIS2MDL_ODR_MAX_VAL,
 	},
