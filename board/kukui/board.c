@@ -50,8 +50,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define POGO_VBUS_DETECT_DEBOUNCE_US (20 * MSEC)
-
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	schedule_deferred_pd_interrupt(0 /* port */);
@@ -60,33 +58,6 @@ static void tcpc_alert_event(enum gpio_signal signal)
 static void gauge_interrupt(enum gpio_signal signal)
 {
 	task_wake(TASK_ID_CHARGER);
-}
-
-static void pogo_vbus_detect_deferred(void);
-DECLARE_DEFERRED(pogo_vbus_detect_deferred);
-
-static void pogo_vbus_detect_deferred(void)
-{
-	if (gpio_get_level(GPIO_POGO_VBUS_PRESENT)) {
-		struct charge_port_info info = {
-			.voltage = 5000, .current = 1500};
-		/*
-		 * Set supplier type to PD to have same priority as type c
-		 * port.
-		 */
-		charge_manager_update_charge(
-			CHARGE_SUPPLIER_DEDICATED, CHARGE_PORT_POGO, &info);
-	} else {
-		charge_manager_update_charge(
-			CHARGE_SUPPLIER_DEDICATED, CHARGE_PORT_POGO, NULL);
-	}
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
-}
-
-static void pogo_vbus_present(enum gpio_signal signal)
-{
-	hook_call_deferred(&pogo_vbus_detect_deferred_data,
-			   POGO_VBUS_DETECT_DEBOUNCE_US);
 }
 
 #include "gpio_list.h"
@@ -191,8 +162,6 @@ static void board_pogo_charge_init(void)
 	/* Initialize all charge suppliers to 0 */
 	for (i = 0; i < CHARGE_SUPPLIER_COUNT; i++)
 		charge_manager_update_charge(i, CHARGE_PORT_POGO, NULL);
-
-	hook_call_deferred(&pogo_vbus_detect_deferred_data, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_pogo_charge_init,
 	     HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
