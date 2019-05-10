@@ -30,7 +30,8 @@ enum hibdata_index {
 
 int system_is_reboot_warm(void)
 {
-	return 0;
+	return !(system_get_reset_flags() &
+		 (RESET_FLAG_POWER_ON | RESET_FLAG_HARD));
 }
 
 void system_pre_init(void)
@@ -39,34 +40,49 @@ void system_pre_init(void)
 
 	task_enable_irq(ISH_FABRIC_IRQ);
 
-#ifdef CONFIG_LOW_POWER_IDLE
-	ish_pm_init();
-#endif
+	if (IS_ENABLED(CONFIG_LOW_POWER_IDLE))
+		ish_pm_init();
+
+	system_set_reset_flags(chip_read_reset_flags());
 }
 
 void chip_save_reset_flags(int flags)
 {
+	ISH_RESET_FLAGS = flags;
 }
 
 uint32_t chip_read_reset_flags(void)
 {
-	return 0;
+	uint32_t flags = ISH_RESET_FLAGS;
+
+	if (flags)
+		return flags;
+
+	/* Flags are zero? Assume we came up from a cold reset */
+	return RESET_FLAG_POWER_ON;
 }
 
 void system_reset(int flags)
 {
+	uint32_t save_flags;
+
+	system_encode_save_flags(flags, &save_flags);
+
+	if (flags & SYSTEM_RESET_AP_WATCHDOG)
+		save_flags |= RESET_FLAG_WATCHDOG;
+
+	chip_save_reset_flags(save_flags);
+
 	/*
 	 * ish_pm_reset() does more (poweroff main SRAM, etc) than
 	 * ish_mia_reset() which just resets the ISH minute-ia cpu core
 	 */
-
 	if (!IS_ENABLED(CONFIG_LOW_POWER_IDLE) || flags & SYSTEM_RESET_HARD)
 		ish_mia_reset();
 	else
 		ish_pm_reset();
 
-	while(1)
-		;
+	__builtin_unreachable();
 }
 
 const char *system_get_chip_vendor(void)
