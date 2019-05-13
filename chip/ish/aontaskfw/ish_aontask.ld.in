@@ -23,9 +23,13 @@ ENTRY(ish_aon_main);
 
 /**
  *  AON memory layout
- * --------------+--------------+-------------------+-------------------+
- * |   RAM_LEN   |  STACK_SIZE  |  8 Bytes for GDB  |  ROM(128 Bytes)   |
- * --------------+--------------+-------------------+-------------------+
+ * +---------+------------+-----------------+-----------------+
+ * | RAM_LEN | STACK_SIZE | 8 Bytes for GDB | ROM (384 Bytes) |
+ * +---------+------------+-----------------+-----------------+
+ *
+ * The first 256 bytes of the AON ROM is reserved for ECOS use.
+ * The remaining 128 bytes of the AON ROM may be used by the shim
+ * loader.
  */
 
 MEMORY

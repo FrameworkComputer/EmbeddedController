@@ -343,7 +343,7 @@ enum ish_i2c_port {
 #define SNOWBALL_BASE			IPC_ISH2PMC_MSG_BASE
 #else
 /* from ISH4, used reserved rom part of AON memory */
-#define SNOWBALL_BASE			CONFIG_AON_ROM_BASE
+#define SNOWBALL_BASE			(CONFIG_AON_ROM_BASE + 256)
 #endif
 
 /**
