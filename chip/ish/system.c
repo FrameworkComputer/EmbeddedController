@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "interrupts.h"
 #include "ish_fwst.h"
 #include "ish_persistent_data.h"
 #include "power_mgt.h"
@@ -20,6 +21,10 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+
+#define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
 int system_is_reboot_warm(void)
 {
@@ -45,6 +50,27 @@ uint32_t chip_read_reset_flags(void)
 	return ish_persistent_data.reset_flags;
 }
 
+/*
+ * Kill the Minute-IA core and don't come back alive.
+ *
+ * Used when the watchdog timer exceeds max retries and we want to
+ * disable ISH completely.
+ */
+__attribute__((noreturn))
+static void system_halt(void)
+{
+	cflush();
+
+	while (1) {
+		disable_all_interrupts();
+		WDT_CONTROL = 0;
+		CCU_TCG_EN = 1;
+		__asm__ volatile (
+			"cli\n"
+			"hlt\n");
+	}
+}
+
 void system_reset(int flags)
 {
 	uint32_t save_flags;
@@ -60,8 +86,15 @@ void system_reset(int flags)
 
 	system_encode_save_flags(flags, &save_flags);
 
-	if (flags & SYSTEM_RESET_AP_WATCHDOG)
+	if (flags & SYSTEM_RESET_AP_WATCHDOG) {
 		save_flags |= RESET_FLAG_WATCHDOG;
+		ish_persistent_data.watchdog_counter += 1;
+		if (ish_persistent_data.watchdog_counter
+		    >= CONFIG_WATCHDOG_MAX_RETRIES) {
+			CPRINTS("Halting ISH due to max watchdog resets");
+			system_halt();
+		}
+	}
 
 	chip_save_reset_flags(save_flags);
 

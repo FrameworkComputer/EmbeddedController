@@ -3972,6 +3972,13 @@
  */
 #undef CONFIG_WATCHDOG_HELP
 
+/*
+ * The maximum number of times that the watchdog timer may reset
+ * before halting the system (or taking some sort of other
+ * chip-dependent corrective action).
+ */
+#define CONFIG_WATCHDOG_MAX_RETRIES 4
+
 /* Watchdog period in ms; see also AUX_TIMER_PERIOD_MS */
 #define CONFIG_WATCHDOG_PERIOD_MS 1600
 
