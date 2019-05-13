@@ -54,10 +54,13 @@
 					 + CONFIG_AON_RAM_SIZE	\
 					 - CONFIG_AON_ROM_SIZE)
 
-/* Store persistent panic data in AON memory */
-#define CONFIG_PANIC_DATA_SIZE		0xFF
-#define CONFIG_PANIC_DATA_BASE		(CONFIG_AON_ROM_BASE	\
-					 - CONFIG_PANIC_DATA_SIZE)
+/*
+ * Store persistent panic data in AON memory. There are 256 bytes
+ * available for ECOS use, and we need two software-defined REG32's at
+ * the end.
+ */
+#define CONFIG_PANIC_DATA_BASE		CONFIG_AON_ROM_BASE
+#define CONFIG_PANIC_DATA_SIZE		(256 - (2 * sizeof(uint32_t)))
 
 /* System stack size */
 #define CONFIG_STACK_SIZE		1024
