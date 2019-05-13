@@ -5,6 +5,7 @@
 
 #include "console.h"
 #include "extension.h"
+#include "endian.h"
 #include "flash_log.h"
 #include "util.h"
 
@@ -17,7 +18,7 @@ static enum vendor_cmd_rc vc_pop_log_entry(enum vendor_cmd_cc code, void *buf,
 
 	*response_size = 0; /* In case there is an error. */
 
-	if (input_size != sizeof(uint32_t))
+	if (input_size != sizeof(prev_timestamp))
 		return VENDOR_RC_BOGUS_ARGS;
 
 	memcpy(&prev_timestamp, buf, sizeof(prev_timestamp));
@@ -38,3 +39,36 @@ static enum vendor_cmd_rc vc_pop_log_entry(enum vendor_cmd_cc code, void *buf,
 	return VENDOR_RC_ERR;
 }
 DECLARE_VENDOR_COMMAND(VENDOR_CC_POP_LOG_ENTRY, vc_pop_log_entry);
+
+static enum vendor_cmd_rc vc_flog_tstamp(enum vendor_cmd_cc code, void *buf,
+					 size_t input_size,
+					 size_t *response_size)
+{
+	uint32_t tstamp;
+	enum ec_error_list rv;
+
+	if (!input_size) {
+		/* This is a request to report current flash log time. */
+		tstamp = htobe32(flash_log_get_tstamp());
+		memcpy(buf, &tstamp, sizeof(tstamp));
+		*response_size = sizeof(tstamp);
+		return VENDOR_RC_SUCCESS;
+	}
+
+	if (input_size != sizeof(tstamp))
+		return VENDOR_RC_BOGUS_ARGS;
+
+	memcpy(&tstamp, buf, sizeof(tstamp));
+	tstamp = be32toh(tstamp);
+	rv = flash_log_set_tstamp(tstamp);
+
+	if (rv == EC_SUCCESS) {
+		*response_size = 0;
+		return VENDOR_RC_SUCCESS;
+	}
+
+	*response_size = 1;
+	*((uint8_t *)buf) = (uint8_t)rv;
+	return VENDOR_RC_BOGUS_ARGS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_FLOG_TIMESTAMP, vc_flog_tstamp);
