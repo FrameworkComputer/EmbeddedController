@@ -132,10 +132,21 @@ int flash_log_dequeue_event(uint32_t event_after, void *buffer,
 void flash_log_register_flash_control_callback(
 	void (*flash_control)(int enable));
 
+/*
+ * Set log timestamp base. The argument is current epoch time in seconds.
+ * Return value of EC_ERROR_INVAL indicates attempt to set the timestamp base
+ * to a value below the latest log entry timestamp.
+ */
+enum ec_error_list flash_log_set_tstamp(uint32_t tstamp);
+
+/* Get current log timestamp value. */
+uint32_t flash_log_get_tstamp(void);
+
 #if defined(TEST_BUILD)
 void flash_log_init(void);
-extern uint8_t log_event_in_progress;
+extern uint32_t last_used_timestamp;
 extern uint32_t lock_failures_count;
+extern uint8_t log_event_in_progress;
 #endif
 
 #endif /* __CROS_EC_EVENT_LOG_H */

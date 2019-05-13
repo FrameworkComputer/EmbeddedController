@@ -10,6 +10,7 @@
 #include "common.h"
 #include "flash_log.h"
 #include "test_util.h"
+#include "timer.h"
 #include "util.h"
 
 struct log_stats {
@@ -25,6 +26,7 @@ static int verify_single_entry(uint8_t fill_byte, int expected_type)
 	uint8_t *log_base = (void *)CONFIG_FLASH_LOG_BASE;
 
 	memset(log_base, fill_byte, CONFIG_FLASH_LOG_SPACE);
+	last_used_timestamp = 0;
 	flash_log_init();
 
 	/* After initialization there should be a single log entry. */
@@ -204,6 +206,61 @@ static int test_lock_failure_reporting(void)
 	return EC_SUCCESS;
 }
 
+static int test_setting_base_timestamp(void)
+{
+	union entry_u eu;
+	uint32_t saved_stamp;
+	timestamp_t ts;
+	uint32_t delta_time;
+	/* Value collected on May 13 2019 */
+	uint32_t recent_seconds_since_epoch = 1557793625;
+
+	ts.val = 0;
+	force_time(ts);
+	TEST_ASSERT(verify_single_entry(0xff, FE_LOG_START) == EC_SUCCESS);
+	TEST_ASSERT(flash_log_dequeue_event(0, eu.entry, sizeof(eu)) > 0);
+
+	saved_stamp = eu.r.timestamp;
+
+	/* Let the next log timestamp be 1000 s later. */
+	delta_time = 1000;
+
+	/*
+	 * Move internal clock uptime of 1000 s (convert value to microseconds
+	 * first).
+	 */
+	ts.val = ((uint64_t)saved_stamp + delta_time) * 1000000;
+	force_time(ts);
+
+	/* Verify that the second event is within 1001 s from the first one. */
+	flash_log_add_event(FE_LOG_TEST, 0, NULL);
+	TEST_ASSERT(flash_log_dequeue_event(saved_stamp, eu.entry, sizeof(eu)) >
+		    0);
+	TEST_ASSERT((eu.r.timestamp - saved_stamp - delta_time) < 2);
+
+	/* Set timestamp base to current time. */
+	TEST_ASSERT(flash_log_set_tstamp(recent_seconds_since_epoch) ==
+		    EC_SUCCESS);
+
+	/* Create an entry with the latest timestamp. */
+	flash_log_add_event(FE_LOG_TEST, 0, NULL);
+
+	/* Verify that it has been logged with the correct timestamp. */
+	TEST_ASSERT(flash_log_dequeue_event(eu.r.timestamp, eu.entry,
+					    sizeof(eu)) > 0);
+	TEST_ASSERT((eu.r.timestamp - recent_seconds_since_epoch) < 2);
+
+	/* Verify that it is impossible to roll timestamps back. */
+	TEST_ASSERT(flash_log_set_tstamp(recent_seconds_since_epoch - 100) ==
+		    EC_ERROR_INVAL);
+
+	/* But is possible to roll further forward. */
+	TEST_ASSERT(flash_log_set_tstamp(recent_seconds_since_epoch + 100) ==
+		    EC_SUCCESS);
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -213,6 +270,7 @@ void run_test(void)
 	RUN_TEST(test_run_time_compaction);
 	RUN_TEST(test_init_time_compaction);
 	RUN_TEST(test_lock_failure_reporting);
+	RUN_TEST(test_setting_base_timestamp);
 
 	test_print_result();
 }

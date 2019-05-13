@@ -106,8 +106,19 @@ static struct {
 
 /* Location where next entry is going to be added. */
 static uint16_t log_write_cursor;
-/* Timestamp of the next entry (when real time is not available). */
-static uint32_t log_stamp;
+/*
+ * Base time in seconds, during init set to the time of the latest present log
+ * entry +1, expected be set by the host to current time. Log entries
+ * timestamps are set to this value plus uptime.
+ */
+static uint32_t log_tstamp_base;
+
+/*
+ * Keep track of the last used timestamp value to make sure there are no two
+ * entries with the same timestamp.
+ */
+test_mockable_static uint32_t last_used_timestamp;
+
 /* Set to True after log has been initialized. */
 static uint8_t log_inited;
 test_mockable_static uint8_t log_event_in_progress;
@@ -263,6 +274,7 @@ static enum ec_error_list flash_log_add_event_core(uint8_t type, uint8_t size,
 	size_t padded_entry_size;
 	size_t entry_size;
 	enum ec_error_list rv = EC_ERROR_INVAL;
+	uint32_t new_timestamp;
 
 	if (size > MAX_FLASH_LOG_PAYLOAD_SIZE)
 		return rv;
@@ -293,7 +305,18 @@ static enum ec_error_list flash_log_add_event_core(uint8_t type, uint8_t size,
 
 	entry_size = sizeof(e.r) + size;
 
-	e.r.timestamp = ++log_stamp;
+	new_timestamp = flash_log_get_tstamp();
+
+	/*
+	 * Avoid rolling back or logging more than one entry with the same
+	 * timestamp.
+	 */
+	if (last_used_timestamp >= new_timestamp)
+		last_used_timestamp += 1;
+	else
+		last_used_timestamp = new_timestamp;
+
+	e.r.timestamp = last_used_timestamp;
 	e.r.size = size;
 	e.r.type = type;
 	e.r.crc = 0;
@@ -425,10 +448,13 @@ test_export_static void flash_log_init(void)
 
 	r = log_offset_to_addr(read_cursor);
 	while (entry_is_valid(r)) {
-		log_stamp = r->timestamp + 1;
+		last_used_timestamp = r->timestamp;
 		read_cursor += FLASH_LOG_ENTRY_SIZE(r->size);
 		r = log_offset_to_addr(read_cursor);
 	}
+
+	/* Should be updated by the AP soon after booting. */
+	log_tstamp_base = last_used_timestamp + 1;
 
 	log_write_cursor = read_cursor;
 	log_inited = 1;
@@ -461,6 +487,21 @@ test_export_static void flash_log_init(void)
 	flash_log_write_disable();
 }
 DECLARE_HOOK(HOOK_INIT, flash_log_init, HOOK_PRIO_DEFAULT);
+
+uint32_t flash_log_get_tstamp(void)
+{
+	return log_tstamp_base + get_time().val/1000000;
+}
+
+enum ec_error_list flash_log_set_tstamp(uint32_t tstamp)
+{
+	if (tstamp <= last_used_timestamp)
+		return EC_ERROR_INVAL;
+
+	log_tstamp_base = tstamp - get_time().val/1000000;
+
+	return EC_SUCCESS;
+}
 
 #ifdef CONFIG_CMD_FLASH_LOG
 /*
@@ -499,10 +540,10 @@ static int command_flash_log(int argc, char **argv)
 						     sizeof(e))) > 0) {
 			size_t i;
 
-			ccprintf("%08x:%02x", e.r.timestamp, e.r.type);
+			ccprintf("%10u:%02x", e.r.timestamp, e.r.type);
 			for (i = 0; i < FLASH_LOG_PAYLOAD_SIZE(e.r.size); i++) {
 				if (i && !(i % 16)) {
-					ccprintf("\n           ");
+					ccprintf("\n          ");
 					cflush();
 				}
 				ccprintf(" %02x", e.r.payload[i]);
