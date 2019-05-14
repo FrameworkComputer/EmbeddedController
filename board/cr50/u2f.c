@@ -72,13 +72,19 @@ static uint32_t salt[8];
 static uint32_t salt_kek[8];
 static uint32_t salt_kh[8];
 static uint8_t u2f_mode = MODE_UNSET;
-static const uint8_t k_salt = NVMEM_VAR_U2F_SALT;
+static const uint8_t k_salt = NVMEM_VAR_G2F_SALT;
+static const uint8_t k_salt_deprecated = NVMEM_VAR_U2F_SALT;
 
 static int load_state(void)
 {
 	const struct tuple *t_salt = getvar(&k_salt, sizeof(k_salt));
 
 	if (!t_salt) {
+		/* Delete the old salt if present, no-op if not. */
+		if (setvar(&k_salt_deprecated, sizeof(k_salt_deprecated),
+			   NULL, 0))
+			return 0;
+
 		/* create random salt */
 		if (!DCRYPTO_ladder_random(salt))
 			return 0;
