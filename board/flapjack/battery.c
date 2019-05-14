@@ -278,24 +278,43 @@ static const struct {
 	},
 };
 
-static const struct mv_to_id batteries[] = {
-	{ BATTERY_C18_ATL,       900 },   /* 100K ohm */
-	{ BATTERY_C19_ATL,       576 },   /*  47K ohm */
-	{ BATTERY_C18_SUNWODA,  1484 },   /* 470K ohm */
-	{ BATTERY_C19_SUNWODA,  1200 },   /* 200K ohm */
+/* BOARD_VERSION < 5: Pull-up = 1800 mV. */
+static const struct mv_to_id batteries0[] = {
+	{ BATTERY_C18_ATL,	900 },   /* 100K ohm */
+	{ BATTERY_C19_ATL,	576 },   /*  47K ohm */
+	{ BATTERY_C18_SUNWODA,	1484 },   /* 470K ohm */
+	{ BATTERY_C19_SUNWODA,	1200 },   /* 200K ohm */
 };
-BUILD_ASSERT(ARRAY_SIZE(batteries) < BATTERY_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(batteries0) < BATTERY_COUNT);
+
+/* BOARD_VERSION >= 5: Pull-up = 3300 mV. */
+static const struct mv_to_id batteries1[] = {
+	{ BATTERY_C18_ATL,	1650 },   /* 100K ohm */
+	{ BATTERY_C19_ATL,	1055 },   /*  47K ohm */
+	{ BATTERY_C18_SUNWODA,	2721 },   /* 470K ohm */
+	{ BATTERY_C19_SUNWODA,	2200 },   /* 200K ohm */
+};
+BUILD_ASSERT(ARRAY_SIZE(batteries1) < BATTERY_COUNT);
 
 static enum battery_type batt_type = BATTERY_UNKNOWN;
 
 static void board_get_battery_type(void)
 {
-	int id = board_read_id(ADC_BATT_ID, batteries, ARRAY_SIZE(batteries));
+	const struct mv_to_id *table = batteries0;
+	int size = ARRAY_SIZE(batteries0);
+	int id;
+
+	if (board_version >= 5) {
+		table = batteries1;
+		size = ARRAY_SIZE(batteries1);
+	}
+	id = board_read_id(ADC_BATT_ID, table, size);
 	if (id != ADC_READ_ERROR)
 		batt_type = id;
 	CPRINTS("Battery Type: %d", batt_type);
 }
-DECLARE_HOOK(HOOK_INIT, board_get_battery_type, HOOK_PRIO_FIRST);
+/* It has to run after BOARD_VERSION is read */
+DECLARE_HOOK(HOOK_INIT, board_get_battery_type, HOOK_PRIO_INIT_I2C + 2);
 
 const struct battery_info *battery_get_info(void)
 {
