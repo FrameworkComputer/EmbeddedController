@@ -139,6 +139,11 @@ void gpio_pre_init(void)
 
 		gpio_set_flags_by_mask(g->port, g->mask, flags);
 	}
+
+	/* disable GPIO interrupts */
+	ISH_GPIO_GIMR = 0;
+	/* clear pending GPIO interrupts */
+	ISH_GPIO_GISR = 0xFFFFFFFF;
 }
 
 static void gpio_init(void)
