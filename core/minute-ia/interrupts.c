@@ -233,11 +233,11 @@ uint32_t get_current_interrupt_vector(void)
 	uint32_t vec;
 
 	/* In service register */
-	uint32_t *ioapic_icr_last = (uint32_t *)LAPIC_ISR_REG;
+	volatile uint32_t *ioapic_isr_last = &LAPIC_ISR_LAST_REG;
 
 	/* Scan ISRs from highest priority */
-	for (i = 7; i >= 0; i--, ioapic_icr_last -= 4) {
-		vec = *ioapic_icr_last;
+	for (i = 7; i >= 0; i--, ioapic_isr_last -= 4) {
+		vec = *ioapic_isr_last;
 		if (vec) {
 			return (32 * i) + __fls(vec);
 		}
