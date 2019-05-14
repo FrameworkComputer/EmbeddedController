@@ -150,7 +150,7 @@ int lis2mdl_thru_lsm6dsm_init(const struct motion_sensor_t *s)
 			LSM6DSM_MAIN_SENSOR(s),
 			CONFIG_ACCELGYRO_SEC_ADDR,
 			LIS2MDL_WHO_AM_I_REG, LIS2MDL_WHO_AM_I,
-			LIS2MDL_CFG_REG_A_ADDR, LIS2MDL_SW_RESET);
+			LIS2MDL_CFG_REG_A_ADDR, LIS2MDL_FLAG_SW_RESET);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
@@ -158,7 +158,7 @@ int lis2mdl_thru_lsm6dsm_init(const struct motion_sensor_t *s)
 			LSM6DSM_MAIN_SENSOR(s),
 			CONFIG_ACCELGYRO_SEC_ADDR,
 			LIS2MDL_CFG_REG_A_ADDR,
-			LIS2MDL_ODR_50HZ | LIS2MDL_CONT_MODE);
+			LIS2MDL_ODR_50HZ | LIS2MDL_MODE_CONT);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
