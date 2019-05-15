@@ -151,15 +151,15 @@ static void pi3usb9281_init(int port)
 		CPRINTS("PI3USB9281 invalid ID 0x%02x", dev_id);
 
 	pi3usb9281_reset(port);
-	pi3usb9281_set_interrupt_mask(port, 0xff);
 	pi3usb9281_enable_interrupts(port);
 }
 
 
 int pi3usb9281_enable_interrupts(int port)
 {
-	uint8_t ctrl = pi3usb9281_read(port, PI3USB9281_REG_CONTROL);
-
+	uint8_t ctrl;
+	pi3usb9281_set_interrupt_mask(port, PI3USB9281_INT_ATTACH_DETACH);
+	ctrl = pi3usb9281_read(port, PI3USB9281_REG_CONTROL);
 	if (ctrl == 0xee)
 		return EC_ERROR_UNKNOWN;
 
