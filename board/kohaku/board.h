@@ -78,6 +78,18 @@
 /* BC 1.2 */
 #define CONFIG_BC12_DETECT_MAX14637
 
+/* Charger features */
+/*
+ * The IDCHG current limit is set in 512 mA steps. The value set here is
+ * somewhat specific to the battery pack being currently used. The limit here
+ * was set via experimentation by finding how high it can be set and still boot
+ * the AP successfully, then backing off to provide margin.
+ *
+ * TODO(b/133444665): Revisit this threshold once peak power consumption tuning
+ * for the AP is completed.
+ */
+#define CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA 8192
+
 /* Volume Button feature */
 #define CONFIG_VOLUME_BUTTONS
 #define GPIO_VOLUME_UP_L GPIO_EC_VOLUP_BTN_ODL
