@@ -88,7 +88,11 @@ int tcpm_dequeue_message(const int port, uint32_t *const payload,
 
 	*header = m->header;
 
-	memcpy(payload, m->payload, m->cnt - 3);
+	/*
+	 * This mirrors what tcpci.c:tcpm_dequeue_message does: always copy the
+	 * whole payload to destination.
+	 */
+	memcpy(payload, m->payload, sizeof(m->payload));
 
 	pending--;
 	return EC_SUCCESS;

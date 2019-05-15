@@ -451,6 +451,8 @@ int tcpm_enqueue_message(const int port)
 		return EC_ERROR_OVERFLOW;
 	}
 
+	/* Blank any old message, just in case. */
+	memset(head, 0, sizeof(*head));
 	/* Call the raw driver without caching */
 	rv = tcpc_config[port].drv->get_message_raw(port, head->payload,
 						    &head->header);
