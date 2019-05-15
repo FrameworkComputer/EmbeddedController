@@ -135,14 +135,20 @@
 #define MT6370_REG_RGBCHRINDDIM		0x92
 #define MT6370_REG_RGBCHRINDCTRL	0x93
 
-/* Display bias */
-#define MT6370_REG_DBCTRL1		0XB0
-
-#define RT946X_REG_DPDMIRQ		0xC6
 /* backlight */
 #define MT6370_BACKLIGHT_BLEN		0xA0
 #define MT6370_BACKLIGHT_BLPWM		0xA2
 #define MT6370_BACKLIGHT_BLDIM		0xA5
+
+/* Display bias */
+#define MT6370_REG_DBCTRL1		0XB0
+#define MT6370_REG_DBCTRL2		0XB1
+#define MT6370_REG_DBVBST		0XB2
+#define MT6370_REG_DBVPOS		0XB3
+#define MT6370_REG_DBVNEG		0XB4
+
+#define RT946X_REG_DPDMIRQ		0xC6
+
 /* status event */
 #define MT6370_REG_CHGSTAT1		0xD0
 #define RT946X_REG_CHGSTATC		MT6370_REG_CHGSTAT1
@@ -493,6 +499,37 @@
 #define MT6370_MASK_DB_FREQ_PM		1
 #define MT6370_MASK_DB_PERIODIC_MODE	1
 
+/* ========== DBCTRL1 (mt6370) ============ */
+#define MT6370_MASK_DB_VNEG_DISC	BIT(2)
+#define MT6370_MASK_DB_VPOS_DISC	BIT(5)
+
+/* ========== DBVBST (mt6370) ============ */
+#define MT6370_SHIFT_DB_VBST		0
+
+#define MT6370_MASK_DB_VBST		0x3f
+
+#define MT6370_DB_VBST_MAX		6200
+#define MT6370_DB_VBST_MIN		4000
+#define MT6370_DB_VBST_STEP		50
+
+/* ========== DBVPOS (mt6370) ============ */
+#define MT6370_SHIFT_DB_VPOS		0
+
+#define MT6370_MASK_DB_VPOS		0x3f
+
+#define MT6370_DB_VPOS_MAX		6000
+#define MT6370_DB_VPOS_MIN		4000
+#define MT6370_DB_VPOS_STEP		50
+
+/* ========== DBVNEG (mt6370) ============ */
+#define MT6370_SHIFT_DB_VNEG		0
+
+#define MT6370_MASK_DB_VNEG		0x3f
+
+#define MT6370_DB_VNEG_MAX		6000
+#define MT6370_DB_VNEG_MIN		4000
+#define MT6370_DB_VNEG_STEP		50
+
 /* ========== BLEN 0xA0 (mt6370) ============ */
 #define MT6370_SHIFT_BLED_EXT_EN	7
 #define MT6370_SHIFT_BLED_EN		6
@@ -622,6 +659,18 @@ enum mt6370_led_pwm_freq {
 
 /* Enable display bias external pin control. */
 int mt6370_db_external_control(int en);
+
+/**
+ * MT6370 display bias voltage settings.
+ *
+ * Set disaply bias voltages for the panel.
+ *
+ * vbst: VBST config in mv.
+ * vpos: VPOS config in mv.
+ * vneg: VNEG config in mv.
+ * return: EC_SUCCESS on succes, and EC_ERROR_* otherwise.
+ */
+int mt6370_db_set_voltages(int vbst, int vpos, int vneg);
 
 /* Set LED brightness */
 int mt6370_led_set_brightness(enum mt6370_led_index index, uint8_t brightness);

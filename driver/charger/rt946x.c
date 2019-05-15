@@ -1059,6 +1059,37 @@ int mt6370_db_external_control(int en)
 				  en << MT6370_SHIFT_DB_EXT_EN);
 }
 
+int mt6370_db_set_voltages(int vbst, int vpos, int vneg)
+{
+	int rv;
+
+	/* set display bias VBST */
+	rv = rt946x_update_bits(MT6370_REG_DBVBST, MT6370_MASK_DB_VBST,
+				rt946x_closest_reg(MT6370_DB_VBST_MIN,
+						   MT6370_DB_VBST_MAX,
+						   MT6370_DB_VBST_STEP, vbst));
+
+	/* set display bias VPOS */
+	rv |= rt946x_update_bits(MT6370_REG_DBVPOS, MT6370_MASK_DB_VPOS,
+				 rt946x_closest_reg(MT6370_DB_VPOS_MIN,
+						    MT6370_DB_VPOS_MAX,
+						    MT6370_DB_VPOS_STEP, vpos));
+
+	/* set display bias VNEG */
+	rv |= rt946x_update_bits(MT6370_REG_DBVNEG, MT6370_MASK_DB_VNEG,
+				 rt946x_closest_reg(MT6370_DB_VNEG_MIN,
+						    MT6370_DB_VNEG_MAX,
+						    MT6370_DB_VNEG_STEP, vneg));
+
+	/* Enable VNEG/VPOS discharge when VNEG/VPOS rails disabled. */
+	rv |= rt946x_update_bits(
+		MT6370_REG_DBCTRL2,
+		MT6370_MASK_DB_VNEG_DISC | MT6370_MASK_DB_VPOS_DISC,
+		MT6370_MASK_DB_VNEG_DISC | MT6370_MASK_DB_VPOS_DISC);
+
+	return rv;
+}
+
 /* MT6370 RGB LED */
 
 int mt6370_led_set_dim_mode(enum mt6370_led_index index,
