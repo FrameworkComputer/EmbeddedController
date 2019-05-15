@@ -1202,18 +1202,25 @@ function flash_npcx_uut() {
 	NPCX_UUT=$(PATH="${TOOL_PATH}" which uartupdatetool)
 	EC_UART="$(servo_ec_uart)"
 
-	BUILD_PATH="${EC_DIR}/build/${BOARD}"
-	MONITOR_PATH="${BUILD_PATH}/chip/npcx/spiflashfw"
-	MON="${MONITOR_PATH}/npcx_monitor.bin"
-
-	if [[ ! -f "$MON" ]]; then
-		MON="$(dirname "$IMG")/npcx_monitor.bin"
-	fi
-
-	if [[ ! -f "$MON" ]]; then
+	# Look for npcx_monitor.bin in multiple directories, starting with
+	# the same path as the EC binary.
+	MON=""
+	for dir in \
+		"$(dirname "$IMG")" \
+		"${EC_DIR}/build/${BOARD}/chip/npcx/spiflashfw" \
+		"$(dirname "$LOCAL_BUILD")" \
+		"$(dirname "$EMERGE_BUILD")" ;
+	do
+		if [ -f "$dir/npcx_monitor.bin" ] ; then
+			MON="$dir/npcx_monitor.bin"
+			break
+		fi
+	done
+	if [ -z "${MON}" ] ; then
 		echo "Failed to find npcx_monitor.bin"
 		exit 1
 	fi
+	info "Using NPCX image : ${MON}"
 
 	# The start address to restore monitor firmware binary
 	MON_ADDR="0x200C3020"
