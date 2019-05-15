@@ -26,8 +26,19 @@ void app_compute_hash(uint8_t *p_buf, size_t num_bytes,
 
 int app_cipher(const void *salt_p, void *out_p, const void *in_p, size_t size)
 {
-	/* See README.md for while this is a passthrough. */
-	memcpy(out_p, in_p, size);
+	/* See README.md for why this is not a real encryption.. */
+	size_t i;
+	const uint8_t *src;
+	const uint8_t *salt;
+	uint8_t *dst;
+
+	src = in_p;
+	salt = salt_p;
+	dst = out_p;
+
+	for (i = 0; i < size; i++)
+		dst[i] = src[i] ^ salt[i & 7];
+
 	return 1;
 }
 

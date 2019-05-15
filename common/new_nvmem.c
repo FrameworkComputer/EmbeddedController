@@ -19,6 +19,7 @@
 #include "nvmem_vars.h"
 #include "shared_mem.h"
 #include "system.h"
+#include "system_chip.h"
 #include "task.h"
 #include "timer.h"
 
@@ -463,15 +464,27 @@ static STATE_CLEAR_DATA *get_scd(void)
 				    ri.offset);
 }
 
+/*
+ * Make sure page header hash is different between prod and other types of
+ * images.
+ */
+static uint32_t calculate_page_header_hash(struct nn_page_header *ph)
+{
+	uint32_t hash;
+	static const uint32_t salt[] = {1, 2, 3, 4};
+
+	BUILD_ASSERT(sizeof(hash) ==
+		     offsetof(struct nn_page_header, page_hash));
+
+	app_cipher(salt, &hash, ph, sizeof(hash));
+
+	return hash;
+}
+
 /* Veirify page header hash. */
 static int page_header_is_valid(struct nn_page_header *ph)
 {
-	uint32_t ph_hash;
-
-	app_compute_hash_wrapper(ph, offsetof(struct nn_page_header, page_hash),
-				 &ph_hash, sizeof(ph_hash));
-
-	return ph_hash == ph->page_hash;
+	return calculate_page_header_hash(ph) == ph->page_hash;
 }
 
 /* Convert flash page number in 0..255 range into actual flash address. */
@@ -631,10 +644,7 @@ static enum ec_error_list set_first_page_header(void)
 	struct nn_page_header *fph; /* Address in flash. */
 
 	ph.data_offset = sizeof(ph);
-	app_compute_hash_wrapper(&ph,
-				 offsetof(struct nn_page_header, page_hash),
-				 &ph.page_hash, sizeof(ph.page_hash));
-
+	ph.page_hash = calculate_page_header_hash(&ph);
 	fph = flash_index_to_ph(page_list[0]);
 	rv = write_to_flash(fph, &ph, sizeof(ph));
 
@@ -956,9 +966,7 @@ static void start_new_flash_page(size_t data_size)
 
 	ph.data_offset = sizeof(ph) + data_size;
 	ph.page_number = master_at.mt.ph->page_number + 1;
-	app_compute_hash_wrapper(&ph,
-				 offsetof(struct nn_page_header, page_hash),
-				 &ph.page_hash, sizeof(ph.page_hash));
+	ph.page_hash = calculate_page_header_hash(&ph);
 	master_at.list_index++;
 	if (master_at.list_index == ARRAY_SIZE(page_list))
 		report_no_payload_failure(NVMEMF_PAGE_LIST_OVERFLOW);
