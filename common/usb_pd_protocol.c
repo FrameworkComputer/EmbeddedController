@@ -2221,6 +2221,19 @@ static void exit_dp_mode(int port)
 }
 #endif /* CONFIG_POWER_COMMON */
 
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+static void notify_sysjump_ready(void)
+{
+	/*
+	 * If event was set from pd_prepare_sysjump, wake the
+	 * task waiting on us to complete.
+	 */
+	if (sysjump_task_waiting != TASK_ID_INVALID)
+		task_set_event(sysjump_task_waiting,
+			       TASK_EVENT_SYSJUMP_READY, 0);
+}
+#endif
+
 #ifdef CONFIG_POWER_COMMON
 static void handle_new_power_state(int port)
 {
@@ -2899,13 +2912,8 @@ void pd_task(void *u)
 #if defined(CONFIG_USB_PD_ALT_MODE_DFP)
 		if (evt & PD_EVENT_SYSJUMP) {
 			exit_dp_mode(port);
-			/*
-			 * If event was set from pd_prepare_sysjump, wake the
-			 * task waiting on us to complete.
-			 */
-			if (sysjump_task_waiting != TASK_ID_INVALID)
-				task_set_event(sysjump_task_waiting,
-					       TASK_EVENT_SYSJUMP_READY, 0);
+			notify_sysjump_ready();
+
 		}
 #endif
 
@@ -3617,8 +3625,17 @@ void pd_task(void *u)
 			tcpm_clear_pending_messages(port);
 
 			/* Wait for resume */
-			while (pd[port].task_state == PD_STATE_SUSPENDED)
+			while (pd[port].task_state == PD_STATE_SUSPENDED) {
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+				int evt = task_wait_event(-1);
+
+				if (evt & PD_EVENT_SYSJUMP)
+					/* Nothing to do for sysjump prep */
+					notify_sysjump_ready();
+#else
 				task_wait_event(-1);
+#endif
+			}
 #ifdef CONFIG_USB_PD_TCPC
 			pd_hw_init(port, PD_ROLE_DEFAULT(port));
 			CPRINTS("TCPC p%d resumed!", port);
@@ -4466,10 +4483,11 @@ void pd_prepare_sysjump(void)
 	/* Exit modes before sysjump so we can cleanly enter again later */
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 		/*
-		 * We can't be in an alternate mode if PD comm is disabled, so
-		 * no need to send the event
+		 * We can't be in an alternate mode if PD comm is disabled or
+		 * the port is suspended, so no need to send the event
 		 */
-		if (!pd_comm_is_enabled(i))
+		if (!pd_comm_is_enabled(i) ||
+				pd[i].task_state == PD_STATE_SUSPENDED)
 			continue;
 
 		sysjump_task_waiting = task_get_current();
