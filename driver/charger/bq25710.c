@@ -13,6 +13,7 @@
 #include "console.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "task.h"
 #include "timer.h"
 
 #ifndef CONFIG_CHARGER_NARROW_VDC
@@ -34,6 +35,16 @@
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+
+#ifdef CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA
+/*
+ * If this config option is defined, then the bq25710 needs to remain in
+ * performance mode when the AP is in S0. Performance mode is active whenever AC
+ * power is connected or when the EN_LWPWR bit in ChargeOption0 is clear.
+ */
+static uint32_t bq25710_perf_mode_req;
+static struct mutex bq25710_perf_mode_mutex;
+#endif
 
 /* Charger parameters */
 static const struct charger_info bq25710_charger_info = {
@@ -85,12 +96,30 @@ static int bq25710_set_low_power_mode(int enable)
 	if (rv)
 		return rv;
 
+#ifdef CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA
+	mutex_lock(&bq25710_perf_mode_mutex);
+	/*
+	 * Performance mode means not in low power mode. The bit that controls
+	 * this is EN_LWPWR in ChargeOption0. The 'enable' param in this
+	 * function is refeerring to low power mode, so enabling low power mode
+	 * means disabling performance mode and vice versa.
+	 */
+	if (enable)
+		bq25710_perf_mode_req &= ~(1 << task_get_current());
+	else
+		bq25710_perf_mode_req |= (1 << task_get_current());
+	enable = !bq25710_perf_mode_req;
+#endif
+
 	if (enable)
 		reg |= BQ25710_CHARGE_OPTION_0_LOW_POWER_MODE;
 	else
 		reg &= ~BQ25710_CHARGE_OPTION_0_LOW_POWER_MODE;
 
 	rv = raw_write16(BQ25710_REG_CHARGE_OPTION_0, reg);
+#ifdef CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA
+	mutex_unlock(&bq25710_perf_mode_mutex);
+#endif
 	if (rv)
 		return rv;
 
@@ -175,6 +204,21 @@ static void bq25710_init(void)
 		 * no battery is present prochot will continuosly be asserted.
 		 */
 		reg |= BQ25710_PROCHOT_PROFILE_VSYS;
+#ifdef CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA
+		/*
+		 * Set the IDCHG limit who's value is defined in the config
+		 * option in mA. Also, enable IDCHG trigger for prochot.
+		 */
+		reg &= ~BQ25710_PROCHOT_IDCHG_VTH_MASK;
+		/*
+		 * IDCHG limit is in 512 mA steps. Note there is a 128 mA offset
+		 * so the actual IDCHG limit will be the value stored in bits
+		 * 15:10 + 128 mA.
+		 */
+		reg |= ((CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA << 1) &
+			BQ25710_PROCHOT_IDCHG_VTH_MASK);
+		reg |= BQ25710_PROCHOT_PROFILE_IDCHG;
+#endif
 		raw_write16(BQ25710_REG_PROCHOT_OPTION_1, reg);
 	}
 
@@ -483,6 +527,25 @@ error:
 	return 0;
 }
 #endif /* CONFIG_CHARGE_RAMP_HW */
+
+#ifdef CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA
+/* Called on AP S5 -> S3  and S3/S0iX -> S0 transition */
+static void bq25710_chipset_startup(void)
+{
+	bq25710_set_low_power_mode(0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, bq25710_chipset_startup, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, bq25710_chipset_startup, HOOK_PRIO_DEFAULT);
+
+
+/* Called on AP S0 -> S0iX/S3 or S3 -> S5 transition */
+static void bq25710_chipset_suspend(void)
+{
+	bq25710_set_low_power_mode(1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, bq25710_chipset_suspend, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, bq25710_chipset_suspend, HOOK_PRIO_DEFAULT);
+#endif
 
 #ifdef CONFIG_CMD_CHARGER_DUMP
 static int console_bq25710_dump_regs(int argc, char **argv)

@@ -817,6 +817,16 @@
  */
 #undef CONFIG_CHARGER_INPUT_CURRENT
 
+/*
+ * This config option is used to enable IDCHG trigger for prochot. This macro
+ * should be set to the desired current limit to draw from the battery before
+ * triggering prochot. Note that is has a 512 mA granularity. The function that
+ * sets the limit will mask of the lower 10 bits. For this check to be active
+ * the bq25710 must be in performance mode and this config option is also used
+ * to keep the bq25710 in performance mode when the AP is in S0.
+ */
+#undef CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA
+
 /* Define to use Power Delivery State Machine Framework */
 #undef CONFIG_USB_SM_FRAMEWORK
 
