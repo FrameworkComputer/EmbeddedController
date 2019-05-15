@@ -361,7 +361,7 @@ static void ccd_measure_sbu(void)
 			gpio_set_level(GPIO_SBU_MUX_EN, 1);
 			msleep(10);
 			CPRINTS("CCD: connected %s",
-				polarity ? "noflip" : "flip");
+				polarity ? "flip" : "noflip");
 		}
 	}
 
