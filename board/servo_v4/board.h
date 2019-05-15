@@ -70,6 +70,7 @@
 
 /* Remove console commands / features for flash / RAM savings */
 #undef CONFIG_CONSOLE_CMDHELP
+#undef CONFIG_CONSOLE_HISTORY
 #undef CONFIG_CMD_CRASH
 #undef CONFIG_CMD_ACCELSPOOF
 #undef CONFIG_CMD_FASTCHARGE
