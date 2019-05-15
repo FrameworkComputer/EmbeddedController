@@ -567,12 +567,10 @@ static int command_erase_flash_info(int argc, char **argv)
 	}
 #else  /* CR50_SQA   ^^^^^^ defined    vvvvvvv Not defined. */
 	/*
-	 * This must be CR50_DEV=1 image, just erase the entire board and
-	 * manufacture spaces.
+	 * This must be CR50_DEV=1 image, just erase the board information
+	 * space.
 	 */
 	memset(&info1->board_space, 0xff, sizeof(info1->board_space));
-	memset(&info1->manufacture_space, 0xff,
-	       sizeof(info1->manufacture_space));
 #endif /* CR50_SQA Not defined. */
 
 	memset(info1->rw_info_map, 0xff, sizeof(info1->rw_info_map));

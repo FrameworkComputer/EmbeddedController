@@ -48,7 +48,15 @@ struct info1_board_space {
 	struct sn_data sn;
 };
 
-/* Layout of the entire 2K INFO1 space. */
+/*
+ * Layout of the entire 2K INFO1 space.
+ *
+ * - ro_info_map - maps controlling ro and rw images rollback protection.
+ * - rw_info_map
+ * - board_space - various objects used by Chrome OS applications
+ * - manufacture_space - seed used for generating and verification of
+ *                        endorsement certs.
+ */
 struct info1_layout {
 	uint8_t ro_info_map[INFO_RO_MAP_SIZE];
 	uint8_t rw_info_map[INFO_RW_MAP_SIZE];
