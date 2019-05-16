@@ -6230,55 +6230,79 @@ int cmd_i2c_xfer(int argc, char *argv[])
 	return 0;
 }
 
-static void cmd_i2c_lookup_help(const char *const cmd)
+static void cmd_locate_chip_help(const char *const cmd)
 {
 	fprintf(stderr,
-		"Usage: %s <type>\n"
+		"Usage: %s <type> <index>\n"
 		"  <type> is one of:\n"
-		"    1: CBI_EEPROM\n",
+		"    0: CBI_EEPROM\n"
+		"    1: TCPCs\n"
+		"  <index> instance # of <type>\n",
 		cmd);
 }
 
-int cmd_i2c_lookup(int argc, char *argv[])
+static const char *bus_type[] = {
+	"I2C",
+};
+
+int cmd_locate_chip(int argc, char *argv[])
 {
-	struct ec_params_i2c_lookup p;
-	struct ec_response_i2c_lookup r;
+	struct ec_params_locate_chip p;
+	struct ec_response_locate_chip r;
 	char *e;
 	int rv;
 
-	if (argc != 2) {
-		cmd_i2c_lookup_help(argv[0]);
+	if (argc != 3) {
+		cmd_locate_chip_help(argv[0]);
 		return -1;
 	}
 
 	p.type = strtol(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad type.\n");
-		cmd_i2c_lookup_help(argv[0]);
+		cmd_locate_chip_help(argv[0]);
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_I2C_LOOKUP, 0, &p, sizeof(p), &r, sizeof(r));
+	p.index = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad index.\n");
+		cmd_locate_chip_help(argv[0]);
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_LOCATE_CHIP, 0, &p, sizeof(p), &r, sizeof(r));
 
 	if (rv == -EC_RES_INVALID_PARAM - EECRESULT) {
-		fprintf(stderr, "Lookup type %d not supported.\n", p.type);
+		fprintf(stderr, "Bus type %d not supported.\n", p.type);
 		return rv;
 	}
 
 	if (rv == -EC_RES_UNAVAILABLE - EECRESULT) {
-		fprintf(stderr, "Device not found\n");
+		fprintf(stderr, "Chip not found\n");
+		return rv;
+	}
+
+	if (rv == -EC_RES_OVERFLOW - EECRESULT) {
+		fprintf(stderr, "Index too large\n");
 		return rv;
 	}
 
 	if (rv < 0)
 		return rv;
 
+	if (r.bus_type >= EC_BUS_TYPE_COUNT
+			|| r.bus_type >= ARRAY_SIZE(bus_type)) {
+		fprintf(stderr, "Unknown bus type (%d)\n", r.bus_type);
+		return -1;
+	}
+
 	/*
-	 * Do not change the format of this print. firmware_ECCbiEeprom FAFT
-	 * test depends on this, and will silently start skipping tests.
+	 * When changing the format of this print, make sure FAFT
+	 * (firmware_ECCbiEeprom) still passes. It may silently skip the test.
 	 */
-	printf("Port: %d; Address: 0x%02x (7-bit format)\n", r.i2c_port,
-	       r.i2c_addr);
+	printf("Bus: %s; Port: %d; Address: 0x%02x (7-bit format)\n",
+	       bus_type[r.bus_type], r.i2c_info.port, r.i2c_info.addr);
 	return 0;
 }
 
@@ -8648,7 +8672,7 @@ const struct command commands[] = {
 	{"hello", cmd_hello},
 	{"hibdelay", cmd_hibdelay},
 	{"hostsleepstate", cmd_hostsleepstate},
-	{"i2clookup", cmd_i2c_lookup},
+	{"locatechip", cmd_locate_chip},
 	{"i2cprotect", cmd_i2c_protect},
 	{"i2cread", cmd_i2c_read},
 	{"i2cwrite", cmd_i2c_write},

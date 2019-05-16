@@ -5370,33 +5370,50 @@ struct ec_response_rollback_info {
 #define EC_CMD_AP_RESET 0x0125
 
 /*****************************************************************************/
-/* I2C lookup command
+/* Locate peripheral chips
  *
  * Return values:
- * EC_RES_UNAVAILABLE: Lookup type is supported but not present on system.
- * EC_RES_INVALID_PARAM: The type was unrecognized.
+ * EC_RES_UNAVAILABLE: The chip type is supported but not found on system.
+ * EC_RES_INVALID_PARAM: The chip type was unrecognized.
+ * EC_RES_OVERFLOW: The index number exceeded the number of chip instances.
  */
+#define EC_CMD_LOCATE_CHIP 0x0126
 
-#define EC_CMD_I2C_LOOKUP 0x0126
-
-enum i2c_device_type {
-	I2C_LOOKUP_TYPE_CBI_EEPROM = 1,
-	I2C_LOOKUP_TYPE_COUNT,
-	I2C_LOOKUP_TYPE_MAX = 0xFFFF,
+enum ec_chip_type {
+	EC_CHIP_TYPE_CBI_EEPROM = 0,
+	EC_CHIP_TYPE_TCPC = 1,
+	EC_CHIP_TYPE_COUNT,
+	EC_CHIP_TYPE_MAX = 0xFF,
 };
 
-struct ec_params_i2c_lookup {
-	uint16_t type;		/* enum i2c_device_type */
+enum ec_bus_type {
+	EC_BUS_TYPE_I2C = 0,
+	EC_BUS_TYPE_COUNT,
+	EC_BUS_TYPE_MAX = 0xFF,
+};
+
+struct ec_i2c_info {
+	uint16_t port;	/* Physical port for device */
+	uint16_t addr;	/* 7-bit (or 10-bit) address */
+};
+
+struct ec_params_locate_chip {
+	uint8_t type;		/* enum ec_chip_type */
+	uint8_t index;		/* Specifies one instance of chip type */
 	/* Used for type specific parameters in future */
 	union {
-		uint16_t reseved;
+		uint16_t reserved;
 	};
 } __ec_align2;
 
-struct ec_response_i2c_lookup {
-	uint16_t i2c_port;	/* Physical port for device */
-	uint16_t i2c_addr;	/* 7-bit (or 10-bit) address */
-} __ec_align1;
+
+struct ec_response_locate_chip {
+	uint8_t bus_type;	/* enum ec_bus_type */
+	uint8_t reserved;	/* Aligning the following union to 2 bytes */
+	union {
+		struct ec_i2c_info i2c_info;
+	};
+} __ec_align2;
 
 /*****************************************************************************/
 /* The command range 0x200-0x2FF is reserved for Rotor. */
