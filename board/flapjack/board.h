@@ -322,6 +322,10 @@ struct mv_to_id {
 
 int board_read_id(enum adc_channel, const struct mv_to_id *table, int size);
 
+extern uint8_t board_version;
+extern uint8_t oem;
+extern uint32_t sku;
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

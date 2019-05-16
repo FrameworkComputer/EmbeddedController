@@ -65,7 +65,7 @@ static const struct mv_to_id panels[] = {
 BUILD_ASSERT(ARRAY_SIZE(panels) < PANEL_COUNT);
 BUILD_ASSERT(PANEL_COUNT <= PANEL_UNINITIALIZED);
 
-uint16_t board_version;
+uint8_t board_version;
 uint8_t oem;
 uint32_t sku = LCM_ID_TO_SKU_ID(PANEL_UNINITIALIZED);
 
@@ -174,9 +174,9 @@ static void cbi_init(void)
 {
 	uint32_t val;
 
-	if (cbi_get_board_version(&val) == EC_SUCCESS && val <= UINT16_MAX)
+	if (cbi_get_board_version(&val) == EC_SUCCESS && val <= UINT8_MAX)
 		board_version = val;
-	CPRINTS("Board Version: 0x%04x", board_version);
+	CPRINTS("Board Version: 0x%02x", board_version);
 
 	if (cbi_get_oem_id(&val) == EC_SUCCESS && val <= PROJECT_COUNT)
 		oem = val;
