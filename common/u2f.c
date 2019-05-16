@@ -16,6 +16,8 @@
 #include "u2f.h"
 #include "util.h"
 
+#define G2F_CERT_NAME "CrOS"
+
 #define CPRINTF(format, args...) cprintf(CC_EXTENSION, format, ##args)
 
 /* Crypto parameters */
@@ -79,7 +81,8 @@ static int individual_cert(const p256_int *d, const p256_int *pk_x,
 	if (system_get_chip_unique_id((uint8_t **)&serial) != P256_NBYTES)
 		return 0;
 
-	return DCRYPTO_x509_gen_u2f_cert(d, pk_x, pk_y, serial, cert, n);
+	return DCRYPTO_x509_gen_u2f_cert_name(d, pk_x, pk_y, serial,
+					      G2F_CERT_NAME, cert, n);
 }
 
 int g2f_attestation_cert(uint8_t *buf)

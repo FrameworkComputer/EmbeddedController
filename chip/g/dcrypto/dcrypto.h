@@ -278,6 +278,10 @@ int DCRYPTO_x509_verify(const uint8_t *cert, size_t len,
 int DCRYPTO_x509_gen_u2f_cert(const p256_int *d, const p256_int *pk_x,
 			const p256_int *pk_y, const p256_int *serial,
 			uint8_t *cert, const int n);
+int DCRYPTO_x509_gen_u2f_cert_name(const p256_int *d, const p256_int *pk_x,
+				   const p256_int *pk_y, const p256_int *serial,
+				   const char *name, uint8_t *cert,
+				   const int n);
 
 /*
  * Memory related functions.

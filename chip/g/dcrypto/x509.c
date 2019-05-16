@@ -405,10 +405,8 @@ int DCRYPTO_x509_verify(const uint8_t *cert, size_t len,
 
 /* ---- Certificate generation ---- */
 
-static void add_common_name(struct asn1 *ctx, int unique)
+static void add_common_name(struct asn1 *ctx, const char *cname)
 {
-	const char *cname = unique ? STRINGIFY(BOARD) : "U2F";
-
 	SEQ_START(*ctx, V_SEQ, SEQ_SMALL) {
 		SEQ_START(*ctx, V_SET, SEQ_SMALL) {
 			SEQ_START(*ctx, V_SEQ, SEQ_SMALL) {
@@ -422,9 +420,9 @@ static void add_common_name(struct asn1 *ctx, int unique)
 	SEQ_END(*ctx);
 }
 
-int DCRYPTO_x509_gen_u2f_cert(const p256_int *d, const p256_int *pk_x,
-			const p256_int *pk_y, const p256_int *serial,
-			uint8_t *cert, const int n)
+int DCRYPTO_x509_gen_u2f_cert_name(const p256_int *d, const p256_int *pk_x,
+				   const p256_int *pk_y, const p256_int *serial,
+				   const char *name, uint8_t *cert, const int n)
 {
 	struct asn1 ctx = {cert, 0};
 	HASH_CTX sha;
@@ -460,7 +458,7 @@ int DCRYPTO_x509_gen_u2f_cert(const p256_int *d, const p256_int *pk_x,
 		SEQ_END(ctx);
 
 		/* Issuer */
-		add_common_name(&ctx, !!serial);
+		add_common_name(&ctx, name);
 
 		/* Expiry */
 		SEQ_START(ctx, V_SEQ, SEQ_SMALL) {
@@ -470,7 +468,7 @@ int DCRYPTO_x509_gen_u2f_cert(const p256_int *d, const p256_int *pk_x,
 		SEQ_END(ctx);
 
 		/* Subject */
-		add_common_name(&ctx, !!serial);
+		add_common_name(&ctx, name);
 
 		/* Subject pk */
 		SEQ_START(ctx, V_SEQ, SEQ_SMALL) {
@@ -535,4 +533,13 @@ int DCRYPTO_x509_gen_u2f_cert(const p256_int *d, const p256_int *pk_x,
 	} SEQ_END(ctx); /* end of outer seq */
 
 	return ctx.n;
+}
+
+int DCRYPTO_x509_gen_u2f_cert(const p256_int *d, const p256_int *pk_x,
+			      const p256_int *pk_y, const p256_int *serial,
+			      uint8_t *cert, const int n)
+{
+	return DCRYPTO_x509_gen_u2f_cert_name(d, pk_x, pk_y, serial,
+					      serial ? STRINGIFY(BOARD) : "U2F",
+					      cert, n);
 }
