@@ -333,6 +333,12 @@ struct tcpc_config_t {
 	uint32_t flags;
 };
 
+#ifndef CONFIG_USB_PD_TCPC_RUNTIME_CONFIG
+extern const struct tcpc_config_t tcpc_config[];
+#else
+extern struct tcpc_config_t tcpc_config[];
+#endif
+
 /**
  * Returns the PD_STATUS_TCPC_ALERT_* mask corresponding to the TCPC ports
  * that are currently asserting ALERT.

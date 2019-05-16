@@ -22,11 +22,6 @@
 #endif
 
 #ifndef CONFIG_USB_PD_TCPC
-#ifndef CONFIG_USB_PD_TCPC_RUNTIME_CONFIG
-extern const struct tcpc_config_t tcpc_config[];
-#else
-extern struct tcpc_config_t tcpc_config[];
-#endif
 
 /* I2C wrapper functions - get I2C port / slave addr from config struct. */
 #ifndef CONFIG_USB_PD_TCPC_LOW_POWER

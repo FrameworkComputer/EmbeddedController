@@ -353,7 +353,6 @@ const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size)
 
 #if defined(CONFIG_USB_POWER_DELIVERY) && !defined(CONFIG_USB_PD_TCPM_STUB) && \
 	defined(CONFIG_I2C_MASTER)
-extern const struct tcpc_config_t tcpc_config[];
 
 static void system_protect_tcpc_i2c_ports(void)
 {
