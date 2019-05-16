@@ -46,7 +46,7 @@ void system_pre_init(void)
 	system_set_reset_flags(chip_read_reset_flags());
 }
 
-void chip_save_reset_flags(int flags)
+void chip_save_reset_flags(uint32_t flags)
 {
 	ISH_RESET_FLAGS = flags;
 }

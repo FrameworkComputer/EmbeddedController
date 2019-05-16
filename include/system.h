@@ -37,7 +37,7 @@
 #define RESET_FLAG_AP_WATCHDOG BIT(18)  /* AP experienced a watchdog reset */
 
 /* Per chip implementation to save/read raw RESET_FLAG_ flags. */
-void chip_save_reset_flags(int flags);
+void chip_save_reset_flags(uint32_t flags);
 uint32_t chip_read_reset_flags(void);
 
 /* System images */

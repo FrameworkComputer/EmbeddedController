@@ -199,7 +199,7 @@ void system_pre_init(void)
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 }
 
-void chip_save_reset_flags(int flags)
+void chip_save_reset_flags(uint32_t flags)
 {
 	MCHP_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = flags;
 }

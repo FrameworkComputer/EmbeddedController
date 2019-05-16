@@ -317,7 +317,7 @@ static void chip_panic_data_restore(void)
 }
 #endif /* CONFIG_CHIP_PANIC_BACKUP */
 
-void chip_save_reset_flags(int flags)
+void chip_save_reset_flags(uint32_t flags)
 {
 	bbram_data_write(BBRM_DATA_INDEX_SAVED_RESET_FLAGS, flags);
 }
