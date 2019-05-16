@@ -29,3 +29,8 @@ int app_cipher(const void *salt, void *out, const void *in, size_t size)
 {
 	return DCRYPTO_app_cipher(NVMEM, salt, out, in, size);
 }
+
+int crypto_enabled(void)
+{
+	return DCRYPTO_ladder_is_enabled();
+}

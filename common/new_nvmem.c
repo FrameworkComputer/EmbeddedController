@@ -1462,6 +1462,9 @@ enum ec_error_list new_nvmem_migrate(unsigned int act_partition)
 	int j;
 	struct nn_container *ch;
 
+	if (!crypto_enabled())
+		return EC_ERROR_INVAL;
+
 	/*
 	 * This is the first time we save using the new scheme, let's prepare
 	 * the flash space. First determine which half is the backup now and
@@ -2225,6 +2228,9 @@ enum ec_error_list new_nvmem_init(void)
 	enum ec_error_list rv;
 	timestamp_t start, init;
 
+	if (!crypto_enabled())
+		return EC_ERROR_INVAL;
+
 	total_var_space = 0;
 
 	/* Initialize NVMEM indices. */
@@ -2649,6 +2655,9 @@ enum ec_error_list new_nvmem_save(void)
 {
 	enum ec_error_list rv;
 
+	if (!crypto_enabled())
+		return EC_ERROR_INVAL;
+
 	lock_mutex(__LINE__);
 	rv = new_nvmem_save_();
 	unlock_mutex(__LINE__);
@@ -2697,6 +2706,9 @@ const struct tuple *getvar(const uint8_t *key, uint8_t key_len)
 {
 	const struct max_var_container *vc;
 	struct access_tracker at = {};
+
+	if (!crypto_enabled())
+		return NULL;
 
 	if (!key || !key_len)
 		return NULL;
@@ -2854,6 +2866,9 @@ int setvar(const uint8_t *key, uint8_t key_len, const uint8_t *val,
 {
 	int rv;
 
+	if (!crypto_enabled())
+		return EC_ERROR_INVAL;
+
 	lock_mutex(__LINE__);
 	rv = setvar_(key, key_len, val, val_len);
 	unlock_mutex(__LINE__);
@@ -2892,6 +2907,9 @@ int nvmem_erase_tpm_data(void)
 	struct access_tracker at = {};
 	uint8_t saved_list_index;
 	uint8_t key_len;
+
+	if (!crypto_enabled())
+		return EC_ERROR_INVAL;
 
 	ch = get_scratch_buffer(CONFIG_FLASH_BANK_SIZE);
 
@@ -2989,6 +3007,11 @@ test_export_static enum ec_error_list browse_flash_contents(int print)
 	size_t line_len = 0;
 	struct nn_container *ch;
 	struct access_tracker at = {};
+
+	if (!crypto_enabled()) {
+		ccprintf("Crypto services not available\n");
+		return EC_ERROR_INVAL;
+	}
 
 	ch = get_scratch_buffer(CONFIG_FLASH_BANK_SIZE);
 	lock_mutex(__LINE__);

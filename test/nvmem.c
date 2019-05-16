@@ -97,6 +97,11 @@ void app_compute_hash(uint8_t *p_buf, size_t num_bytes,
 	}
 }
 
+int crypto_enabled(void)
+{
+	return 1;
+}
+
 /* Used to allow/prevent Flash erase/write operations */
 int flash_pre_op(void)
 {

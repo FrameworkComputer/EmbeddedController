@@ -56,6 +56,11 @@ void app_compute_hash(uint8_t *p_buf, size_t num_bytes,
  */
 int app_cipher(const void *salt, void *out, const void *in, size_t size);
 
+/*
+ * Return a Boolean showing if crypto hardware is enabled.
+ */
+int crypto_enabled(void);
+
 #ifdef __cplusplus
 }
 #endif

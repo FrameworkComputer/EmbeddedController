@@ -31,3 +31,7 @@ int app_cipher(const void *salt_p, void *out_p, const void *in_p, size_t size)
 	return 1;
 }
 
+int crypto_enabled(void)
+{
+	return 1;
+}
