@@ -61,28 +61,31 @@ static struct pm_context pm_ctx = {
 };
 
 /* D0ix statistics data, including each state's count and total stay time */
+struct pm_stat {
+	uint64_t count;
+	uint64_t total_time_us;
+};
+
 struct pm_statistics {
-	uint64_t d0i0_cnt;
-	uint64_t d0i0_time_us;
-
-#ifdef CONFIG_ISH_PM_D0I1
-	uint64_t d0i1_cnt;
-	uint64_t d0i1_time_us;
-#endif
-
-#ifdef CONFIG_ISH_PM_D0I2
-	uint64_t d0i2_cnt;
-	uint64_t d0i2_time_us;
-#endif
-
-#ifdef CONFIG_ISH_PM_D0I3
-	uint64_t d0i3_cnt;
-	uint64_t d0i3_time_us;
-#endif
-
-} __packed;
+	struct pm_stat d0i0;
+	struct pm_stat d0i1;
+	struct pm_stat d0i2;
+	struct pm_stat d0i3;
+};
 
 static struct pm_statistics pm_stats;
+
+/*
+ * Log a new statistic
+ *
+ * t0: start time, in us
+ * t1: end time, in us
+ */
+static void log_pm_stat(struct pm_stat *stat, uint64_t t0, uint64_t t1)
+{
+	stat->total_time_us += t1 - t0;
+	stat->count++;
+}
 
 #ifdef CONFIG_ISH_PM_AONTASK
 
@@ -275,8 +278,7 @@ static void enter_d0i0(void)
 
 	t1 = __hw_clock_source_read();
 	pm_ctx.aon_share->pm_state = ISH_PM_STATE_D0;
-	pm_stats.d0i0_time_us += t1 - t0;
-	pm_stats.d0i0_cnt++;
+	log_pm_stat(&pm_stats.d0i0, t0, t1);
 }
 
 /**
@@ -359,8 +361,7 @@ static void enter_d0i1(void)
 
 	pm_ctx.aon_share->pm_state = ISH_PM_STATE_D0;
 	t1 = __hw_clock_source_read();
-	pm_stats.d0i1_time_us += t1 - t0;
-	pm_stats.d0i1_cnt++;
+	log_pm_stat(&pm_stats.d0i1, t0, t1);
 
 	/* restore interrupts */
 	task_disable_irq(ISH_PMU_WAKEUP_IRQ);
@@ -410,8 +411,7 @@ static void enter_d0i2(void)
 
 	t1 = __hw_clock_source_read();
 	pm_ctx.aon_share->pm_state = ISH_PM_STATE_D0;
-	pm_stats.d0i2_time_us += t1 - t0;
-	pm_stats.d0i2_cnt++;
+	log_pm_stat(&pm_stats.d0i2, t0, t1);
 
 	/* restore interrupts */
 	task_disable_irq(ISH_PMU_WAKEUP_IRQ);
@@ -461,8 +461,7 @@ static void enter_d0i3(void)
 
 	t1 = __hw_clock_source_read();
 	pm_ctx.aon_share->pm_state = ISH_PM_STATE_D0;
-	pm_stats.d0i3_time_us += t1 - t0;
-	pm_stats.d0i3_cnt++;
+	log_pm_stat(&pm_stats.d0i3, t0, t1);
 
 	/* restore interrupts */
 	task_disable_irq(ISH_PMU_WAKEUP_IRQ);
@@ -622,59 +621,46 @@ void __idle(void)
 	}
 }
 
+/*
+ * helper for command_idle_stats
+ */
+static void print_stats(const char *name, const struct pm_stat *stat)
+{
+	if (stat->count)
+		ccprintf("    %s:\n"
+			 "        counts: %lu\n"
+			 "        time:   %.6lus\n",
+			 name, stat->count, stat->total_time_us);
+}
+
 /**
  * Print low power idle statistics
  */
 static int command_idle_stats(int argc, char **argv)
 {
-#if defined(CONFIG_ISH_PM_D0I2) || defined(CONFIG_ISH_PM_D0I3)
 	struct ish_aon_share *aon_share = pm_ctx.aon_share;
-#endif
 
-	ccprintf("Aontask exist: %s\n", pm_ctx.aon_valid ? "Yes" : "No");
+	ccprintf("Aontask exists: %s\n", pm_ctx.aon_valid ? "Yes" : "No");
+	ccprintf("Total time on: %.6lus\n", get_time().val);
 	ccprintf("Idle sleep:\n");
-	ccprintf("    D0i0:\n");
-	ccprintf("        counts: %lu\n", pm_stats.d0i0_cnt);
-	ccprintf("        time:   %.6lus\n", pm_stats.d0i0_time_us);
+	print_stats("D0i0", &pm_stats.d0i0);
 
 	ccprintf("Deep sleep:\n");
-#ifdef CONFIG_ISH_PM_D0I1
-	ccprintf("    D0i1:\n");
-	ccprintf("        counts: %lu\n", pm_stats.d0i1_cnt);
-	ccprintf("        time:   %.6lus\n", pm_stats.d0i1_time_us);
-#endif
+	print_stats("D0i1", &pm_stats.d0i1);
+	print_stats("D0i2", &pm_stats.d0i2);
+	print_stats("D0i3", &pm_stats.d0i3);
 
-#ifdef CONFIG_ISH_PM_D0I2
-	if (pm_ctx.aon_valid) {
-		ccprintf("    D0i2:\n");
-		ccprintf("        counts: %lu\n", pm_stats.d0i2_cnt);
-		ccprintf("        time:   %.6lus\n", pm_stats.d0i2_time_us);
-	}
-#endif
-
-#ifdef CONFIG_ISH_PM_D0I3
-	if (pm_ctx.aon_valid) {
-		ccprintf("    D0i3:\n");
-		ccprintf("        counts: %lu\n", pm_stats.d0i3_cnt);
-		ccprintf("        time:   %.6lus\n", pm_stats.d0i3_time_us);
-	}
-#endif
-
-#if defined(CONFIG_ISH_PM_D0I2) || defined(CONFIG_ISH_PM_D0I3)
 	if (pm_ctx.aon_valid) {
 		ccprintf("    Aontask status:\n");
 		ccprintf("        last error:   %lu\n", aon_share->last_error);
 		ccprintf("        error counts: %lu\n", aon_share->error_count);
 	}
-#endif
-
-	ccprintf("Total time on: %.6lus\n", get_time().val);
 
 	return EC_SUCCESS;
 }
 
 DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats, "",
-			"Print last idle stats");
+			"Print power management statistics");
 
 
 #ifdef CONFIG_ISH_PM_D0I1
