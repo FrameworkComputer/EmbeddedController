@@ -352,6 +352,8 @@
 
 /* Support audio codec. */
 #undef CONFIG_AUDIO_CODEC
+/* Support audio codec on DMIC. */
+#undef CONFIG_AUDIO_CODEC_DMIC
 
 /* Allow proprietary communication protocols' extensions. */
 #undef CONFIG_EXTENSION_COMMAND
