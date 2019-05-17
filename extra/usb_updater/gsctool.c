@@ -195,6 +195,15 @@ struct options_map {
 };
 
 /*
+ * Structure used to combine option description used by getopt_long() and help
+ * text for the option.
+ */
+struct option_container {
+	struct option opt;
+	const char *help_text;
+};
+
+/*
  * This by far exceeds the largest vendor command response size we ever
  * expect.
  */
@@ -222,41 +231,95 @@ struct options_map {
 static int verbose_mode;
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "aBbcd:F:fhIikLMmn:O:oPpR:rS:stUuVvw";
-static const struct option long_opts[] = {
-	/* name    hasarg *flag val */
-	{"any",		                0,   NULL, 'a'},
-	{"background_update_supported", 0,   NULL, 'B'},
-	{"binvers",	                0,   NULL, 'b'},
-	{"board_id",                    2,   NULL, 'i'},
-	{"ccd_info",                    0,   NULL, 'I'},
-	{"ccd_lock",                    0,   NULL, 'k'},
-	{"ccd_open",                    0,   NULL, 'o'},
-	{"ccd_unlock",                  0,   NULL, 'U'},
-	{"corrupt",	                0,   NULL, 'c'},
-	{"device",	                1,   NULL, 'd'},
-	{"flog",	                0,   NULL, 'L'},
-	{"factory",	                1,   NULL, 'F'},
-	{"fwver",	                0,   NULL, 'f'},
-	{"help",	                0,   NULL, 'h'},
-	{"machine",	                0,   NULL, 'M'},
-	{"openbox_rma",                 1,   NULL, 'O'},
-	{"password",	                0,   NULL, 'P'},
-	{"post_reset",	                0,   NULL, 'p'},
-	{"rma_auth",	                2,   NULL, 'r'},
-	{"sn_bits",	                1,   NULL, 'S'},
-	{"sn_rma_inc",	                1,   NULL, 'R'},
-	{"systemdev",	                0,   NULL, 's'},
-	{"serial",	                1,   NULL, 'n'},
-	{"tpm_mode",                    2,   NULL, 'm'},
-	{"trunks_send",	                0,   NULL, 't'},
-	{"verbose",	                0,   NULL, 'V'},
-	{"version",	                0,   NULL, 'v'},
-	{"wp",		                0,   NULL, 'w'},
-	{"upstart",	                0,   NULL, 'u'},
-	{},
-};
 
+/* List of command line options, ***sorted by the short form***. */
+static const struct option_container cmd_line_options[] = {
+	/* name   has_arg    *flag  val */
+	{{"any", no_argument, NULL, 'a'},
+	 "  -a,--any                 Try any interfaces to find Cr50"
+	 " (-d, -s, -t are all ignored)"},
+	{{"background_update_supported", no_argument, NULL, 'B'},
+	 "  -B --background_update_supported\n"
+	 "                           Force background update mode (relevant "
+	 " only when interacting\n"
+	 "                           with Cr50 versions before 0.0.19)"},
+	{{"binvers", no_argument, NULL, 'b'},
+	 "  -b,--binvers             Report versions of Cr50 image's "
+	 "RW and RO headers, do not update"},
+	{{"corrupt", no_argument, NULL, 'c'},
+	 "  -c,--corrupt             Corrupt the inactive rw"},
+	{{"device", required_argument, NULL, 'd'},
+	 "  -d,--device  VID:PID     USB device (default 18d1:5014)"},
+	{{"fwver", no_argument, NULL, 'f'},
+	 "  -f,--fwver               "
+	 "Report running Cr50 firmware versions"},
+	{{"factory", required_argument, NULL, 'F'},
+	 "  -F,--factory [enable|disable]\n"
+	 "                           Control factory mode"},
+	{{"help", no_argument, NULL, 'h'},
+	 "  -h,--help                Show this message"},
+	{{"ccd_info", no_argument, NULL, 'I'},
+	 "  -I,--ccd_info            Get information about CCD state"},
+	{{"board_id", optional_argument, NULL, 'i'},
+	 "  -i,--board_id [ID[:FLAGS]]\n"
+	 "                           Get or set Info1 board ID fields\n"
+	 "                           ID could be 32 bit hex or 4 "
+	 "character string."},
+	{{"ccd_lock", no_argument, NULL, 'k'},
+	 "  -k,--ccd_lock            Lock CCD"},
+	{{"flog", optional_argument, NULL, 'L'},
+	 "  -L,--flog [prev entry]   Retrieve contents of the flash log"
+	 " (newer than <prev entry> if specified)"},
+	{{"machine", no_argument, NULL, 'M'},
+	 "  -M,--machine             Output in a machine-friendly way. "
+	 "Effective with -b, -f, -i, and -O."},
+	{{"tpm_mode", optional_argument, NULL, 'm'},
+	 "  -m,--tpm_mode [enable|disable]\n"
+	 "                           Change or query tpm_mode"},
+	{{"serial", required_argument, NULL, 'n'},
+	 "  -n,--serial SERIAL       Cr50 CCD serial number"},
+	{{"openbox_rma", required_argument, NULL, 'O'},
+	 "  -O,--openbox_rma <desc_file>\n"
+	 "                           Verify other device's RO integrity\n"
+	 "                           using information provided in "
+	 "<desc file>"},
+	{{"ccd_open", no_argument, NULL, 'o'},
+	 "  -o,--ccd_open            Start CCD open sequence"},
+	{{"password", no_argument, NULL, 'P'},
+	 "  -P,--password\n"
+	 "                           Set or clear CCD password. Use\n"
+	 "                           'clear:<cur password>' to clear it"},
+	{{"post_reset", no_argument, NULL, 'p'},
+	 "  -p,--post_reset          Request post reset after transfer"},
+	{{"sn_rma_inc", required_argument, NULL, 'R'},
+	 "  -R,--sn_rma_inc RMA_INC\n"
+	 "                           Increment SN RMA count by RMA_INC.\n"
+	 "                           RMA_INC should be 0-7."},
+	{{"rma_auth", optional_argument, NULL, 'r'},
+	 "  -r,--rma_auth [auth_code]\n"
+	 "                           Request RMA challenge, process "
+	 "RMA authentication code"},
+	{{"sn_bits", required_argument, NULL, 'S'},
+	 "  -S,--sn_bits SN_BITS\n"
+	 "                           Set Info1 SN bits fields.\n"
+	 "                           SN_BITS should be 96 bit hex."},
+	{{"systemdev", no_argument, NULL, 's'},
+	 "  -s,--systemdev           Use /dev/tpm0 (-d is ignored)"},
+	{{"trunks_send", no_argument, NULL, 't'},
+	 "  -t,--trunks_send         Use `trunks_send --raw' "
+	 "(-d is ignored)"},
+	{{"ccd_unlock", no_argument, NULL, 'U'},
+	 "  -U,--ccd_unlock          Start CCD unlock sequence"},
+	{{"upstart", no_argument, NULL, 'u'},
+	 "  -u,--upstart             "
+	 "Upstart mode (strict header checks)"},
+	{{"verbose", no_argument, NULL, 'V'},
+	 "  -V,--verbose             Enable debug messages"},
+	{{"version", no_argument, NULL, 'v'},
+	 "  -v,--version             Report this utility version"},
+	{{"wp", no_argument, NULL, 'w'},
+	 "  -w,--wp                  Get the current wp setting"}
+};
 
 /* Helper to print debug messages when verbose flag is specified. */
 static void debug(const char *fmt, ...)
@@ -536,6 +599,8 @@ static void shut_down(struct usb_endpoint *uep)
 
 static void usage(int errs)
 {
+	size_t i;
+
 	printf("\nUsage: %s [options] [<binary image>]\n"
 	       "\n"
 	       "This utility allows to update Cr50 RW firmware, configure\n"
@@ -546,61 +611,16 @@ static void usage(int errs)
 	       "A typical Chromebook use would expect -s -t options\n"
 	       "included in the command line.\n"
 	       "\n"
-	       "Options:\n"
-	       "\n"
-	       "  -a,--any                 Try any interfaces to find Cr50"
-	       " (-d, -s, -t are all ignored)\n"
-	       "  -b,--binvers             Report versions of Cr50 image's "
-				"RW and RO headers, do not update\n"
-	       "  -c,--corrupt             Corrupt the inactive rw\n"
-	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
-	       "  -f,--fwver               "
-	       "Report running Cr50 firmware versions\n"
-	       "  -F,--factory [enable|disable]\n"
-	       "                           Control factory mode\n"
-	       "  -h,--help                Show this message\n"
-	       "  -I,--ccd_info            Get information about CCD state\n"
-	       "  -i,--board_id [ID[:FLAGS]]\n"
-	       "                           Get or set Info1 board ID fields\n"
-	       "                           ID could be 32 bit hex or 4 "
-	       "character string.\n"
-	       "  -k,--ccd_lock            Lock CCD\n"
-	       "  -L,--flog [prev entry]   Retrieve contents of the flash log"
-	       " (newer than <prev entry> if specified)\n"
-	       "  -M,--machine             Output in a machine-friendly way. "
-	       "Effective with -b, -f, -i, and -O.\n"
-	       "  -m,--tpm_mode [enable|disable]\n"
-	       "                           Change or query tpm_mode\n"
-	       "  -n,--serial SERIAL       Cr50 CCD serial number\n"
-	       "  -O,--openbox_rma <desc_file>\n"
-	       "                           Verify other device's RO integrity\n"
-	       "                           using information provided in "
-	       "<desc file>\n"
-	       "  -o,--ccd_open            Start CCD open sequence\n"
-	       "  -P,--password\n"
-	       "                           Set or clear CCD password. Use\n"
-	       "                           'clear:<cur password>' to clear it\n"
-	       "  -p,--post_reset          Request post reset after transfer\n"
-	       "  -R,--sn_rma_inc RMA_INC\n"
-	       "                           Increment SN RMA count by RMA_INC.\n"
-	       "                           RMA_INC should be 0-7.\n"
-	       "  -r,--rma_auth [auth_code]\n"
-	       "                           Request RMA challenge, process "
-	       "RMA authentication code\n"
-	       "  -S,--sn_bits SN_BITS\n"
-	       "                           Set Info1 SN bits fields.\n"
-	       "                           SN_BITS should be 96 bit hex.\n"
-	       "  -s,--systemdev           Use /dev/tpm0 (-d is ignored)\n"
-	       "  -t,--trunks_send         Use `trunks_send --raw' "
-	       "(-d is ignored)\n"
-	       "  -U,--ccd_unlock          Start CCD unlock sequence\n"
-	       "  -u,--upstart             "
-			"Upstart mode (strict header checks)\n"
-	       "  -V,--verbose             Enable debug messages\n"
-	       "  -v,--version             Report this utility version\n"
-	       "  -w,--wp                  Get the current wp setting\n"
-	       "\n", progname, VID, PID);
+	       "Options:\n\n",
+	       progname);
 
+	for (i = 0; i < ARRAY_SIZE(cmd_line_options); i++) {
+		const char *help_text = cmd_line_options[i].help_text;
+
+		if (strlen(help_text))
+			printf("%s\n", help_text);
+	}
+	printf("\n");
 	exit(errs ? update_error : noop);
 }
 
@@ -2256,6 +2276,50 @@ static int check_boolean(const struct options_map *omap, char option)
 	return 0;
 }
 
+/*
+ * Set the long_opts table and short_opts string.
+ *
+ * This function allows to avoid maintaining two command line option
+ * descriptions, for short and long forms.
+ *
+ * The long_opts table is built based on the cmd_line_options table contents,
+ * and the short form is built based on the long_opts table contents.
+ *
+ * The 'required_argument' short options are followed by ':'.
+ *
+ * The passed in long_opts array and short_opts string are guaranteed to
+ * accommodate all necessary objects/characters.
+ */
+static void set_opt_descriptors(struct option *long_opts, char *short_opts)
+{
+	size_t i;
+	int j;
+
+	for (i = j = 0; i < ARRAY_SIZE(cmd_line_options); i++) {
+		long_opts[i] = cmd_line_options[i].opt;
+		short_opts[j++] = long_opts[i].val;
+		if (long_opts[i].has_arg == required_argument)
+			short_opts[j++] = ':';
+	}
+}
+
+/*
+ * Combine searching for command line parameters and optional arguments.
+ */
+static int getopt_all(int argc, char *argv[])
+{
+	static char short_opts[2 * ARRAY_SIZE(cmd_line_options)] = {};
+	static struct option long_opts[ARRAY_SIZE(cmd_line_options) + 1] = {};
+	int i;
+
+	if (!short_opts[0])
+		set_opt_descriptors(long_opts, short_opts);
+
+	i = getopt_long(argc, argv, short_opts, long_opts, NULL);
+
+	return i;
+}
+
 int main(int argc, char *argv[])
 {
 	struct transfer_descriptor td;
@@ -2340,7 +2404,8 @@ int main(int argc, char *argv[])
 	bid_action = bid_none;
 	errorcnt = 0;
 	opterr = 0;				/* quiet, you */
-	while ((i = getopt_long(argc, argv, short_opts, long_opts, 0)) != -1) {
+
+	while ((i = getopt_all(argc, argv)) != -1) {
 		if (check_boolean(omap, i))
 			continue;
 		switch (i) {
