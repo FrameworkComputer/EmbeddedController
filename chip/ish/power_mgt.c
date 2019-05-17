@@ -634,41 +634,41 @@ static int command_idle_stats(int argc, char **argv)
 	ccprintf("Aontask exist: %s\n", pm_ctx.aon_valid ? "Yes" : "No");
 	ccprintf("Idle sleep:\n");
 	ccprintf("    D0i0:\n");
-	ccprintf("        counts: %ld\n", pm_stats.d0i0_cnt);
-	ccprintf("        time:   %.6lds\n", pm_stats.d0i0_time_us);
+	ccprintf("        counts: %lu\n", pm_stats.d0i0_cnt);
+	ccprintf("        time:   %.6lus\n", pm_stats.d0i0_time_us);
 
 	ccprintf("Deep sleep:\n");
 #ifdef CONFIG_ISH_PM_D0I1
 	ccprintf("    D0i1:\n");
-	ccprintf("        counts: %ld\n", pm_stats.d0i1_cnt);
-	ccprintf("        time:   %.6lds\n", pm_stats.d0i1_time_us);
+	ccprintf("        counts: %lu\n", pm_stats.d0i1_cnt);
+	ccprintf("        time:   %.6lus\n", pm_stats.d0i1_time_us);
 #endif
 
 #ifdef CONFIG_ISH_PM_D0I2
 	if (pm_ctx.aon_valid) {
 		ccprintf("    D0i2:\n");
-		ccprintf("        counts: %ld\n", pm_stats.d0i2_cnt);
-		ccprintf("        time:   %.6lds\n", pm_stats.d0i2_time_us);
+		ccprintf("        counts: %lu\n", pm_stats.d0i2_cnt);
+		ccprintf("        time:   %.6lus\n", pm_stats.d0i2_time_us);
 	}
 #endif
 
 #ifdef CONFIG_ISH_PM_D0I3
 	if (pm_ctx.aon_valid) {
 		ccprintf("    D0i3:\n");
-		ccprintf("        counts: %ld\n", pm_stats.d0i3_cnt);
-		ccprintf("        time:   %.6lds\n", pm_stats.d0i3_time_us);
+		ccprintf("        counts: %lu\n", pm_stats.d0i3_cnt);
+		ccprintf("        time:   %.6lus\n", pm_stats.d0i3_time_us);
 	}
 #endif
 
 #if defined(CONFIG_ISH_PM_D0I2) || defined(CONFIG_ISH_PM_D0I3)
 	if (pm_ctx.aon_valid) {
 		ccprintf("    Aontask status:\n");
-		ccprintf("        last error:   %d\n", aon_share->last_error);
-		ccprintf("        error counts: %d\n", aon_share->error_count);
+		ccprintf("        last error:   %lu\n", aon_share->last_error);
+		ccprintf("        error counts: %lu\n", aon_share->error_count);
 	}
 #endif
 
-	ccprintf("Total time on: %.6lds\n", get_time().val);
+	ccprintf("Total time on: %.6lus\n", get_time().val);
 
 	return EC_SUCCESS;
 }
