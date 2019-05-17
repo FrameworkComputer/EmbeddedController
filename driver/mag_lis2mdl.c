@@ -257,6 +257,7 @@ int lis2mdl_read(const struct motion_sensor_t *s, intv3_t v)
 int lis2mdl_init(const struct motion_sensor_t *s)
 {
 	int ret = EC_ERROR_UNKNOWN, who_am_i, count = LIS2MDL_STARTUP_MS;
+	struct stprivate_data *data = s->drv_data;
 	struct mag_cal_t *cal = LIS2MDL_CAL(s);
 
 	/* Check who am I value */
@@ -293,7 +294,7 @@ int lis2mdl_init(const struct motion_sensor_t *s)
 
 	init_mag_cal(cal);
 	cal->radius = 0.0f;
-	LIS2MDL_ST_DATA(s)->base.odr = 0;
+	data->resol = LIS2DSL_RESOLUTION;
 	return sensor_init_done(s);
 
 lis2mdl_init_error:
@@ -321,7 +322,7 @@ int lis2mdl_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	int ret = EC_SUCCESS, normalized_rate = 0;
 	uint8_t reg_val = 0;
 	struct mag_cal_t *cal = LIS2MDL_CAL(s);
-	struct stprivate_data *data = LIS2MDL_ST_DATA(s);
+	struct stprivate_data *data = s->drv_data;
 
 	if (rate > 0) {
 		if (rnd)
@@ -375,11 +376,6 @@ int lis2mdl_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	return ret;
 }
 
-int get_data_rate(const struct motion_sensor_t *s)
-{
-	return LIS2MDL_ST_DATA(s)->base.odr;
-}
-
 #endif /* CONFIG_MAG_LIS2MDL */
 
 const struct accelgyro_drv lis2mdl_drv = {
@@ -387,15 +383,14 @@ const struct accelgyro_drv lis2mdl_drv = {
 	.init = lis2mdl_thru_lsm6dsm_init,
 	.read = lis2mdl_thru_lsm6dsm_read,
 	.set_data_rate = lsm6dsm_set_data_rate,
-	.get_data_rate = st_get_data_rate,
 #else /* CONFIG_MAG_LSM6DSM_LIS2MDL */
 	.init = lis2mdl_init,
 	.read = lis2mdl_read,
 	.set_data_rate = lis2mdl_set_data_rate,
-	.get_data_rate = get_data_rate,
 #endif /* !CONFIG_MAG_LSM6DSM_LIS2MDL */
 	.set_range = set_range,
 	.get_range = get_range,
+	.get_data_rate = st_get_data_rate,
 	.get_resolution = st_get_resolution,
 	.set_offset = set_offset,
 	.get_offset = get_offset,
