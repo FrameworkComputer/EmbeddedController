@@ -337,9 +337,6 @@
 /* Support AP Warm reset Interrupt. */
 #undef CONFIG_AP_WARM_RESET_INTERRUPT
 
-/* Support audio codec for WoV and I2S normal recording. */
-#undef CONFIG_AUDIO_CODEC
-
 /*
  * Enable support for CPU caches behaving according to the ARMv7-M ISA.
  * (so far, only the Cortex-M7 has such caches)
@@ -352,6 +349,9 @@
  * cores that lack native instructions.
  */
 #undef CONFIG_ASSEMBLY_MULA32
+
+/* Support audio codec. */
+#undef CONFIG_AUDIO_CODEC
 
 /* Allow proprietary communication protocols' extensions. */
 #undef CONFIG_EXTENSION_COMMAND

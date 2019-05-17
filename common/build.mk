@@ -29,6 +29,7 @@ common-$(CONFIG_AES_GCM)+=aes-gcm.o
 common-$(CONFIG_CMD_ADC)+=adc.o
 common-$(HAS_TASK_ALS)+=als.o
 common-$(CONFIG_AP_HANG_DETECT)+=ap_hang_detect.o
+common-$(CONFIG_AUDIO_CODEC)+=audio_codec.o
 common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o
 common-$(CONFIG_BASE32)+=base32.o
 common-$(CONFIG_DETACHABLE_BASE)+=base_state.o
