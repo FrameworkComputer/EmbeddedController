@@ -11,6 +11,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "fpsensor.h"
+#include "fpsensor_state.h"
 #include "gpio.h"
 #include "host_command.h"
 #include "link_defs.h"
@@ -30,55 +31,8 @@
 #error "fpsensor requires AES, AES_GCM, ROLLBACK_SECRET_SIZE and RNG"
 #endif
 
-#if defined(HAVE_PRIVATE) && !defined(TEST_BUILD)
-#define HAVE_FP_PRIVATE_DRIVER
-#define PRIV_HEADER(header) STRINGIFY(header)
-#include PRIV_HEADER(FP_SENSOR_PRIVATE)
-#else
-#define FP_SENSOR_IMAGE_SIZE 0
-#define FP_SENSOR_RES_X 0
-#define FP_SENSOR_RES_Y 0
-#define FP_ALGORITHM_TEMPLATE_SIZE 0
-#define FP_MAX_FINGER_COUNT 0
-#endif
-#define SBP_ENC_KEY_LEN 16
-#define FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE \
-	(FP_ALGORITHM_TEMPLATE_SIZE + \
-		sizeof(struct ec_fp_template_encryption_metadata))
-
-/* if no special memory regions are defined, fallback on regular SRAM */
-#ifndef FP_FRAME_SECTION
-#define FP_FRAME_SECTION
-#endif
-#ifndef FP_TEMPLATE_SECTION
-#define FP_TEMPLATE_SECTION
-#endif
-
-/* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
-static uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE] FP_FRAME_SECTION __aligned(4);
-/* Fingers templates for the current user */
-static uint8_t fp_template[FP_MAX_FINGER_COUNT][FP_ALGORITHM_TEMPLATE_SIZE]
-	FP_TEMPLATE_SECTION;
-/* Encryption/decryption buffer */
-/* TODO: On-the-fly encryption/decryption without a dedicated buffer */
-/*
- * Store the encryption metadata at the beginning of the buffer containing the
- * ciphered data.
- */
-static uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE]
-	FP_TEMPLATE_SECTION;
-/* Number of used templates */
-static uint32_t templ_valid;
-/* Bitmap of the templates with local modifications */
-static uint32_t templ_dirty;
-/* Current user ID */
-static uint32_t user_id[FP_CONTEXT_USERID_WORDS];
 /* Ready to encrypt a template. */
 static timestamp_t encryption_deadline;
-/* Part of the IKM used to derive encryption keys received from the TPM. */
-static uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
-/* Flag indicating whether the seed has been initialised or not. */
-static int fp_tpm_seed_is_set;
 
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
@@ -87,10 +41,6 @@ static int fp_tpm_seed_is_set;
 #ifndef FP_SENSOR_IMAGE_OFFSET
 #define FP_SENSOR_IMAGE_OFFSET 0
 #endif
-
-/* Events for the FPSENSOR task */
-#define TASK_EVENT_SENSOR_IRQ     TASK_EVENT_CUSTOM_BIT(0)
-#define TASK_EVENT_UPDATE_CONFIG  TASK_EVENT_CUSTOM_BIT(1)
 
 #define FP_MODE_ANY_CAPTURE (FP_MODE_CAPTURE | FP_MODE_ENROLL_IMAGE | \
 			     FP_MODE_MATCH)
@@ -101,9 +51,6 @@ static int fp_tpm_seed_is_set;
 /* Delay between 2 s of the sensor to detect finger removal */
 #define FINGER_POLLING_DELAY (100*MSEC)
 
-static uint32_t fp_events;
-static uint32_t sensor_mode;
-
 /* Timing statistics. */
 static uint32_t capture_time_us;
 static uint32_t matching_time_us;
@@ -111,9 +58,6 @@ static uint32_t overall_time_us;
 static timestamp_t overall_t0;
 static uint8_t timestamps_invalid;
 static int8_t template_matched;
-
-/* Forward declaration of static function */
-static void fp_clear_context(void);
 
 BUILD_ASSERT(sizeof(struct ec_fp_template_encryption_metadata) % 4 == 0);
 
@@ -363,7 +307,7 @@ static int derive_encryption_key(uint8_t *out_key, uint8_t *salt)
 	BUILD_ASSERT(SBP_ENC_KEY_LEN <= CONFIG_ROLLBACK_SECRET_SIZE);
 	BUILD_ASSERT(sizeof(user_id) == SHA256_DIGEST_SIZE);
 
-	if (!fp_tpm_seed_is_set) {
+	if (!fp_tpm_seed_is_set()) {
 		CPRINTS("Seed hasn't been set.");
 		return EC_RES_ERROR;
 	}
@@ -407,35 +351,6 @@ static int derive_encryption_key(uint8_t *out_key, uint8_t *salt)
 	return EC_RES_SUCCESS;
 }
 
-static void fp_clear_finger_context(int idx)
-{
-	memset(fp_template[idx], 0, sizeof(fp_template[0]));
-}
-
-static void fp_clear_context(void)
-{
-	int idx;
-
-	templ_valid = 0;
-	templ_dirty = 0;
-	memset(fp_buffer, 0, sizeof(fp_buffer));
-	memset(fp_enc_buffer, 0, sizeof(fp_enc_buffer));
-	memset(user_id, 0, sizeof(user_id));
-	for (idx = 0; idx < FP_MAX_FINGER_COUNT; idx++)
-		fp_clear_finger_context(idx);
-	/* TODO maybe shutdown and re-init the private libraries ? */
-}
-
-static int fp_get_next_event(uint8_t *out)
-{
-	uint32_t event_out = atomic_read_clear(&fp_events);
-
-	memcpy(out, &event_out, sizeof(event_out));
-
-	return sizeof(event_out);
-}
-DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_FINGERPRINT, fp_get_next_event);
-
 static int fp_command_passthru(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_passthru *params = args->params;
@@ -467,51 +382,6 @@ static int fp_command_passthru(struct host_cmd_handler_args *args)
 	return ret;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_PASSTHRU, fp_command_passthru, EC_VER_MASK(0));
-
-static int validate_fp_mode(const uint32_t mode)
-{
-	uint32_t capture_type = FP_CAPTURE_TYPE(mode);
-	uint32_t algo_mode = mode & ~FP_MODE_CAPTURE_TYPE_MASK;
-	uint32_t cur_mode = sensor_mode;
-
-	if (capture_type >= FP_CAPTURE_TYPE_MAX)
-		return EC_ERROR_INVAL;
-
-	if (algo_mode & ~FP_VALID_MODES)
-		return EC_ERROR_INVAL;
-
-	/* Don't allow sensor reset if any other mode is
-	 * set (including FP_MODE_RESET_SENSOR itself). */
-	if (mode & FP_MODE_RESET_SENSOR) {
-		if (cur_mode & FP_VALID_MODES)
-			return EC_ERROR_INVAL;
-	}
-
-	return EC_SUCCESS;
-}
-
-static int fp_command_mode(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_fp_mode *p = args->params;
-	struct ec_response_fp_mode *r = args->response;
-	int ret;
-
-	ret = validate_fp_mode(p->mode);
-	if (ret != EC_SUCCESS) {
-		CPRINTS("Invalid FP mode 0x%x", p->mode);
-		return EC_RES_INVALID_PARAM;
-	}
-
-	if (!(p->mode & FP_MODE_DONT_CHANGE)) {
-		sensor_mode = p->mode;
-		task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_UPDATE_CONFIG, 0);
-	}
-
-	r->mode = sensor_mode;
-	args->response_size = sizeof(*r);
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_FP_MODE, fp_command_mode, EC_VER_MASK(0));
 
 static int fp_command_info(struct host_cmd_handler_args *args)
 {
@@ -790,38 +660,6 @@ static int fp_command_template(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_TEMPLATE, fp_command_template, EC_VER_MASK(0));
-
-static int fp_command_context(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_fp_context *params = args->params;
-
-	fp_clear_context();
-
-	memcpy(user_id, params->userid, sizeof(user_id));
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_FP_CONTEXT, fp_command_context, EC_VER_MASK(0));
-
-static int fp_command_tpm_seed(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_fp_seed *params = args->params;
-
-	if (params->struct_version != FP_TEMPLATE_FORMAT_VERSION) {
-		CPRINTS("Invalid seed format %d", params->struct_version);
-		return EC_RES_INVALID_PARAM;
-	}
-
-	if (fp_tpm_seed_is_set) {
-		CPRINTS("Seed has already been set.");
-		return EC_RES_ACCESS_DENIED;
-	}
-	memcpy(tpm_seed, params->seed, sizeof(tpm_seed));
-	fp_tpm_seed_is_set = 1;
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_FP_SEED, fp_command_tpm_seed, EC_VER_MASK(0));
 
 #ifdef CONFIG_CMD_FPSENSOR_DEBUG
 /* --- Debug console commands --- */
