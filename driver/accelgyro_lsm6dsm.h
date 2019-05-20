@@ -291,6 +291,17 @@ struct lsm6dsm_fifo_data {
 };
 
 /*
+ * Structure used to maintain the load state per sensor. This will be used to
+ * properly spread values in case we have more than one reading for a given
+ * sensor in a single fifo read pass.
+ */
+struct load_fifo_sensor_state_t {
+	uint32_t int_timestamp;
+	uint8_t sample_count;
+	int sample_rate;
+};
+
+/*
  * lsm6dsm_data is used for accel gyro and the sensor connect to a LSM6DSM.
  *
  * +---- lsm6dsm_data ------------------------------------------------+
@@ -334,7 +345,8 @@ struct lsm6dsm_data {
 	 * initial samples with incorrect values
 	 */
 	unsigned int samples_to_discard[FIFO_DEV_NUM];
-#endif
+	struct load_fifo_sensor_state_t load_fifo_sensor_state[FIFO_DEV_NUM];
+#endif /* CONFIG_ACCEL_FIFO */
 #if defined(CONFIG_LSM6DSM_SEC_I2C) && defined(CONFIG_MAG_CALIBRATE)
 	union {
 #ifdef CONFIG_MAG_LSM6DSM_BMM150

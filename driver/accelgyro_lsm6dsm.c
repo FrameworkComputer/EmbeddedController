@@ -15,6 +15,7 @@
 #include "hwtimer.h"
 #include "mag_cal.h"
 #include "math_util.h"
+#include "queue.h"
 #include "task.h"
 #include "timer.h"
 
@@ -26,6 +27,73 @@
 
 #ifdef CONFIG_ACCEL_FIFO
 static volatile uint32_t last_interrupt_timestamp;
+
+/**
+ * A queue for holding data from the FIFO as we read it. This will be used to
+ * spread the timestamps if more than one entry is available. The allocated size
+ * is calculated by assuming that the motion sense read loop will never exceed
+ * 20ms. During this time, sensors running full tile (210Hz) will sample ~5
+ * times. At most, this driver supports 3 sensors, leaving us with 15 samples.
+ * Since the queue size needs to be a power of 2, and 16 is too close, 32 was
+ * chosen.
+ */
+static struct queue single_fifo_read_queue = QUEUE_NULL(32,
+		struct ec_response_motion_sensor_data);
+
+/**
+ * Resets the lsm6dsm load fifo sensor states to the given timestamp. This
+ * should be called at the start of the fifo read sequence.
+ *
+ * @param s Pointer to the first sensor in the lsm6dsm (accelerometer).
+ * @param ts The timestamp to use for the interrupt timestamp.
+ */
+static void reset_load_fifo_sensor_state(struct motion_sensor_t *s, uint32_t ts)
+{
+	int i;
+	struct lsm6dsm_data *data = LSM6DSM_GET_DATA(s);
+
+	for (i = 0; i < FIFO_DEV_NUM; i++) {
+		data->load_fifo_sensor_state[i].int_timestamp = ts;
+		data->load_fifo_sensor_state[i].sample_count = 0;
+	}
+}
+
+/**
+ * Gets the dev_fifo enum value for a given sensor.
+ *
+ * @param s Pointer to the sensor in question.
+ * @return the dev_fifo enum value corresponding to the sensor.
+ */
+static inline enum dev_fifo get_fifo_type(const struct motion_sensor_t *s)
+{
+	static enum dev_fifo map[] = {
+		FIFO_DEV_ACCEL,
+		FIFO_DEV_GYRO,
+#ifdef CONFIG_LSM6DSM_SEC_I2C
+		FIFO_DEV_MAG
+#endif /* CONFIG_LSM6DSM_SEC_I2C */
+	};
+	return map[s->type];
+}
+
+/**
+ * Gets the sensor type associated with the dev_fifo enum. This type can be used
+ * to get the sensor number by using it as an offset from the first sensor in
+ * the lsm6dsm (the accelerometer).
+ *
+ * @param fifo_type The dev_fifo enum in question.
+ * @return the type of sensor represented by the fifo type.
+ */
+static inline uint8_t get_sensor_type(enum dev_fifo fifo_type)
+{
+	static uint8_t map[] = {
+		MOTIONSENSE_TYPE_GYRO,
+		MOTIONSENSE_TYPE_ACCEL,
+		MOTIONSENSE_TYPE_MAG,
+	};
+	return map[fifo_type];
+}
+
 #endif
 
 /**
@@ -250,16 +318,10 @@ static int fifo_next(struct lsm6dsm_data *private)
  * push_fifo_data - Scan data pattern and push upside
  */
 static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
-			   uint16_t flen, uint32_t int_ts)
+			   uint16_t flen)
 {
 	struct motion_sensor_t *s;
 	struct lsm6dsm_data *private = LSM6DSM_GET_DATA(accel);
-	/* In FIFO sensors are mapped in a different way. */
-	uint8_t agm_maps[] = {
-		MOTIONSENSE_TYPE_GYRO,
-		MOTIONSENSE_TYPE_ACCEL,
-		MOTIONSENSE_TYPE_MAG,
-	};
 
 	while (flen > 0) {
 		struct ec_response_motion_sensor_data vect;
@@ -275,7 +337,7 @@ static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
 			return;
 		}
 
-		id = agm_maps[next_fifo];
+		id = get_sensor_type(next_fifo);
 		if (private->samples_to_discard[id] > 0) {
 			private->samples_to_discard[id]--;
 		} else {
@@ -300,7 +362,16 @@ static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
 
 			vect.flags = 0;
 			vect.sensor_num = s - motion_sensors;
-			motion_sense_fifo_add_data(&vect, s, 3, int_ts);
+			/*
+			 * queue_add_units will override old values in case of
+			 * an overflow. The sample count should still be
+			 * incremented as it might affect the computed sample
+			 * rate later on.
+			 */
+			queue_add_units(&single_fifo_read_queue, &vect, 1);
+			private->load_fifo_sensor_state[next_fifo]
+					.sample_count++;
+
 		}
 
 		fifo += OUT_XYZ_SIZE;
@@ -311,9 +382,16 @@ static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
 static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts,
 		     uint32_t *last_fifo_read_ts)
 {
-	uint32_t int_ts = last_interrupt_timestamp;
+	uint32_t interrupt_timestamp = last_interrupt_timestamp;
+	uint32_t fifo_read_start = *last_fifo_read_ts;
 	int err, left, length;
 	uint8_t fifo[FIFO_READ_LEN];
+	struct ec_response_motion_sensor_data data;
+	struct load_fifo_sensor_state_t *load_fifo_sensor_state =
+			LSM6DSM_GET_DATA(s)->load_fifo_sensor_state;
+
+	/* Reset the load_fifo_sensor_state so we can start a new read. */
+	reset_load_fifo_sensor_state(s, interrupt_timestamp);
 
 	/*
 	 * DIFF[11:0] are number of unread uint16 in FIFO
@@ -352,9 +430,43 @@ static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts,
 		 * where we empty the FIFO, and a new IRQ comes in between
 		 * reading the last sample and pushing it into the FIFO.
 		 */
-		push_fifo_data(s, fifo, length, int_ts);
+
+		push_fifo_data(s, fifo, length);
 		left -= length;
 	} while (left > 0);
+
+	/* Compute the window length (ns) between the interrupt and the read. */
+	length = time_until(interrupt_timestamp, fifo_read_start);
+
+	/* Get the event count. */
+	left = queue_count(&single_fifo_read_queue);
+
+	/*
+	 * Spread timestamps if we have more than one reading for a given
+	 * sensor.
+	 */
+	while (left-- > 0) {
+		struct motion_sensor_t *data_sensor;
+		struct load_fifo_sensor_state_t *state;
+
+		/*
+		 * Pop an entry off our read queue and get the pointers for the
+		 * sensor and the read state.
+		 */
+		queue_remove_unit(&single_fifo_read_queue, &data);
+		data_sensor = &motion_sensors[data.sensor_num];
+		state = &load_fifo_sensor_state[get_fifo_type(data_sensor)];
+
+		/*
+		 * Push the data to the motion sense fifo and increment the
+		 * timestamp in case we have another reading for this sensor
+		 * (spreading).
+		 */
+		motion_sense_fifo_add_data(&data, data_sensor, 3,
+				state->int_timestamp);
+		state->int_timestamp += MIN(state->sample_rate,
+				length / state->sample_count);
+	}
 
 	return EC_SUCCESS;
 }
@@ -579,6 +691,9 @@ int lsm6dsm_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 #ifdef CONFIG_ACCEL_FIFO
 		private->samples_to_discard[s->type] =
 			LSM6DSM_DISCARD_SAMPLES;
+		private->load_fifo_sensor_state[get_fifo_type(s)].sample_rate =
+				normalized_rate == 0 ? 0 : SECOND * 1000 /
+						normalized_rate;
 		ret = fifo_enable(accel);
 		if (ret != EC_SUCCESS)
 			CPRINTS("Failed to enable FIFO. Error: %d", ret);
