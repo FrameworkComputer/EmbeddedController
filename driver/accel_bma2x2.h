@@ -161,5 +161,5 @@ extern const struct accelgyro_drv bma2x2_accel_drv;
 /* Min and Max sampling frequency in mHz */
 #define BMA255_ACCEL_MIN_FREQ           7810
 #define BMA255_ACCEL_MAX_FREQ \
-	MOTION_MAX_SENSOR_FREQUENCY(1000000, 125000)
+	MOTION_MAX_SENSOR_FREQUENCY(1000000, 15625)
 #endif /* __CROS_EC_ACCEL_BMA2x2_H */
