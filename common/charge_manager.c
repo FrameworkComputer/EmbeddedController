@@ -79,6 +79,11 @@ __overridable const int supplier_priority[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
 
+const char *charge_supplier_name[] = {
+	CHARGE_SUPPLIER_NAME
+};
+BUILD_ASSERT(ARRAY_SIZE(charge_supplier_name) == CHARGE_SUPPLIER_COUNT);
+
 /* Keep track of available charge for each charge port. */
 static struct charge_port_info available_charge[CHARGE_SUPPLIER_COUNT]
 					       [CHARGE_PORT_COUNT];
@@ -1630,13 +1635,39 @@ DECLARE_CONSOLE_COMMAND(chglim, command_external_power_limit,
 #ifdef CONFIG_CMD_CHARGE_SUPPLIER_INFO
 static int charge_supplier_info(int argc, char **argv)
 {
-	ccprintf("port=%d, type=%d, cur=%dmA, vtg=%dmV, lsm=%d\n",
-			charge_manager_get_active_charge_port(),
-			charge_supplier,
-			charge_current,
-			charge_voltage,
-			left_safe_mode);
+	int p, s;
+	int port_printed;
 
+	ccprintf("\n");
+	ccprintf("Port --Supplier-- Prio -Available Power-\n");
+	for (p = 0; p < CHARGE_PORT_COUNT; p++) {
+		port_printed = 0;
+		for (s = 0; s < CHARGE_SUPPLIER_COUNT; s++) {
+			if (available_charge[s][p].current == 0 &&
+					available_charge[s][p].voltage == 0)
+				continue;
+			if (charge_manager_get_active_charge_port() == p &&
+					charge_manager_get_supplier() == s)
+				ccprintf("*");
+			else
+				ccprintf(" ");
+			if (!port_printed) {
+				ccprintf("P%d  ", p);
+				port_printed = 1;
+			} else {
+				ccprintf("    ");
+			}
+			ccprintf("%-10s  %4d  %5dmA %5dmV\n",
+				 charge_supplier_name[s],
+				 supplier_priority[s],
+				 available_charge[s][p].current,
+				 available_charge[s][p].voltage);
+		}
+	}
+	ccprintf("\n");
+	ccprintf("  %s safe mode\n", left_safe_mode ? "Left" : "In");
+	ccprintf("  Override port = P%d\n", charge_manager_get_override());
+	ccprintf("\n");
 	return 0;
 }
 DECLARE_CONSOLE_COMMAND(chgsup, charge_supplier_info,

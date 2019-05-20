@@ -30,7 +30,10 @@
  */
 #define CHARGE_DETECT_DELAY (2*SECOND)
 
-/* Commonly-used charge suppliers listed in no particular order */
+/*
+ * Commonly-used charge suppliers listed in no particular order.
+ * Don't forget to update CHARGE_SUPPLIER_NAME and supplier_priority.
+ */
 enum charge_supplier {
 	CHARGE_SUPPLIER_NONE = -1,
 	CHARGE_SUPPLIER_PD,
@@ -55,6 +58,41 @@ enum charge_supplier {
 #endif
 	CHARGE_SUPPLIER_COUNT
 };
+
+#ifdef CHARGE_MANAGER_BC12
+#define CHARGE_SUPPLIER_NAME_BC12 \
+	[CHARGE_SUPPLIER_BC12_DCP] = "BC12_DCP", \
+	[CHARGE_SUPPLIER_BC12_CDP] = "BC12_CDP", \
+	[CHARGE_SUPPLIER_BC12_SDP] = "BC12_SDP", \
+	[CHARGE_SUPPLIER_PROPRIETARY] = "BC12_PROP", \
+	[CHARGE_SUPPLIER_TYPEC_UNDER_1_5A] = "USBC_U1_5A", \
+	[CHARGE_SUPPLIER_OTHER] = "BC12_OTHER", \
+	[CHARGE_SUPPLIER_VBUS] = "VBUS",
+#else
+#define CHARGE_SUPPLIER_NAME_BC12
+#endif
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
+#define CHARGE_SUPPLIER_NAME_DEDICATED \
+	[CHARGE_SUPPLIER_DEDICATED] = "DEDICATED",
+#else
+#define CHARGE_SUPPLIER_NAME_DEDICATED
+#endif
+#ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
+#define CHARGE_SUPPLIER_NAME_QI \
+	[CHARGE_SUPPLIER_WPC_BPP] = "QI_BPP", \
+	[CHARGE_SUPPLIER_WPC_EPP] = "QI_EPP", \
+	[CHARGE_SUPPLIER_WPC_GPP] = "QI_GPP",
+#else
+#define CHARGE_SUPPLIER_NAME_QI
+#endif
+
+#define CHARGE_SUPPLIER_NAME \
+	[CHARGE_SUPPLIER_PD] = "PD", \
+	[CHARGE_SUPPLIER_TYPEC] = "USBC", \
+	[CHARGE_SUPPLIER_TYPEC_DTS] = "USBC_DTS", \
+	CHARGE_SUPPLIER_NAME_BC12 \
+	CHARGE_SUPPLIER_NAME_DEDICATED \
+	CHARGE_SUPPLIER_NAME_QI
 
 /*
  * Charge supplier priority: lower number indicates higher priority.
