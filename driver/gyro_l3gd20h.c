@@ -385,11 +385,6 @@ static int init(const struct motion_sensor_t *s)
 	if (ret)
 		return ret;
 
-	/* Config GYRO ODR */
-	ret = set_data_rate(s, s->default_range, 1);
-	if (ret)
-		return ret;
-
 	return sensor_init_done(s);
 }
 
