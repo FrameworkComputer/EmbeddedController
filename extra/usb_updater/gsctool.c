@@ -2304,10 +2304,46 @@ static void set_opt_descriptors(struct option *long_opts, char *short_opts)
 }
 
 /*
+ * Find the long_opts table index where .val field is set to the passed in
+ * short option value.
+ */
+static int get_longindex(int short_opt, const struct option *long_opts)
+{
+	int i;
+
+	for (i = 0; long_opts[i].name; i++)
+		if (long_opts[i].val == short_opt)
+			return i;
+
+	/*
+	 * We could never come here as the short options list is compiled
+	 * based on long options table.
+	 */
+	fprintf(stderr, "could not find long opt table index for %d\n",
+		short_opt);
+	exit(1);
+
+	return -1; /* Not reached. */
+}
+
+/*
  * Combine searching for command line parameters and optional arguments.
+ *
+ * The canonical short options description string does not allow to specify
+ * that a command line argument expects an optional parameter. but gsctool
+ * users expect to be able to use the following styles for optional
+ * parameters:
+ *
+ * a)   -x <param value>
+ * b)  --x_long <param_value>
+ * c)  --x_long=<param_value>
+ *
+ * Styles a) and b) are not supported standard getopt_long(), this function
+ * adds ability to handle cases a) and b).
  */
 static int getopt_all(int argc, char *argv[])
 {
+	int longindex = -1;
 	static char short_opts[2 * ARRAY_SIZE(cmd_line_options)] = {};
 	static struct option long_opts[ARRAY_SIZE(cmd_line_options) + 1] = {};
 	int i;
@@ -2315,7 +2351,29 @@ static int getopt_all(int argc, char *argv[])
 	if (!short_opts[0])
 		set_opt_descriptors(long_opts, short_opts);
 
-	i = getopt_long(argc, argv, short_opts, long_opts, NULL);
+	i = getopt_long(argc, argv, short_opts, long_opts, &longindex);
+	if (i != -1) {
+
+		if (longindex < 0) {
+			/*
+			 * longindex is not set, this must have been the short
+			 * option case, Find the long_opts table index based
+			 * on the short option value.
+			 */
+			longindex = get_longindex(i, long_opts);
+		}
+
+		if (long_opts[longindex].has_arg == optional_argument) {
+			/*
+			 * This command line option may include an argument,
+			 * let's check if it is there as the next token in the
+			 * command line.
+			 */
+			if (!optarg && argv[optind] && argv[optind][0] != '-')
+				/* Yes, it is. */
+				optarg = argv[optind++];
+		}
+	}
 
 	return i;
 }
@@ -2435,10 +2493,6 @@ int main(int argc, char *argv[])
 			usage(errorcnt);
 			break;
 		case 'i':
-			if (!optarg && argv[optind] && argv[optind][0] != '-')
-				/* optional argument present. */
-				optarg = argv[optind++];
-
 			if (!parse_bid(optarg, &bid, &bid_action)) {
 				fprintf(stderr,
 					"Invalid board id argument: \"%s\"\n",
@@ -2448,21 +2502,15 @@ int main(int argc, char *argv[])
 			break;
 		case 'L':
 			get_flog = 1;
-			if (!optarg && argv[optind] &&
-			    (argv[optind][0] != '-')) {
-				prev_log_entry =
-					strtoul(argv[optind++], NULL, 16);
-			}
+			if (optarg)
+				prev_log_entry = strtoul(optarg, NULL, 16);
 			break;
 		case 'M':
 			show_machine_output = true;
 			break;
 		case 'm':
 			tpm_mode = 1;
-			if (!optarg && argv[optind] && argv[optind][0] != '-') {
-				optarg = argv[optind++];
-				tpm_mode_arg = optarg;
-			}
+			tpm_mode_arg = optarg;
 			break;
 		case 'n':
 			serial = optarg;
@@ -2472,20 +2520,10 @@ int main(int argc, char *argv[])
 			break;
 		case 'r':
 			rma = 1;
-
-			if (!optarg && argv[optind] && argv[optind][0] != '-')
-				/* optional argument present. */
-				optarg = argv[optind++];
-
 			rma_auth_code = optarg;
 			break;
 		case 'R':
 			sn_inc_rma = 1;
-
-			if (!optarg && argv[optind] && argv[optind][0] != '-')
-				/* optional argument present. */
-				optarg = argv[optind++];
-
 			if (!parse_sn_inc_rma(optarg, &sn_inc_rma_arg)) {
 				fprintf(stderr,
 					"Invalid sn_rma_inc argument: \"%s\"\n",
@@ -2504,11 +2542,6 @@ int main(int argc, char *argv[])
 			break;
 		case 'S':
 			sn_bits = 1;
-
-			if (!optarg && argv[optind] && argv[optind][0] != '-')
-				/* optional argument present. */
-				optarg = argv[optind++];
-
 			if (!parse_sn_bits(optarg, sn_bits_arg)) {
 				fprintf(stderr,
 					"Invalid sn_bits argument: \"%s\"\n",
