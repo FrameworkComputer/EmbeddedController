@@ -293,7 +293,8 @@ buildfuzztests: $(fuzz-test-targets)
 
 .PHONY: hosttests runtests
 hosttests: $(host-test-targets)
-runtests: $(run-test-targets) $(run-fuzz-test-targets)
+# TODO(crbug.com/963768): Add back $(run-fuzz-test-targets)
+runtests: $(run-test-targets)
 
 # Automatically enumerate all suites.
 cts_excludes := common
