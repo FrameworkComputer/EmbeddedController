@@ -107,6 +107,12 @@ struct motion_data_t {
 	unsigned int ec_rate;
 };
 
+/*
+ * When set, spoof mode will allow the EC to report arbitrary values for any of
+ * the components.
+ */
+#define MOTIONSENSE_FLAG_IN_SPOOF_MODE	BIT(1)
+
 struct motion_sensor_t {
 	/* RO fields */
 	uint32_t active_mask;
@@ -125,10 +131,9 @@ struct motion_sensor_t {
 	uint8_t addr;
 
 	/*
-	 * When non-zero, spoof mode will allow the EC to report arbitrary
-	 * values for any of the components.
+	 * Various flags, see MOTIONSENSE_FLAG_*
 	 */
-	uint8_t in_spoof_mode;
+	uint32_t flags;
 
 	const mat33_fp_t *rot_standard_ref;
 

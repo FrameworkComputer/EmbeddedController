@@ -117,7 +117,7 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 		drv_data->last_value = data;
 		vector.flags = 0;
 #ifdef CONFIG_ACCEL_SPOOF_MODE
-		if (s->in_spoof_mode) {
+		if (s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE) {
 			for (i = 0; i < 3; i++)
 				vector.data[i] = v[i] = s->spoof_xyz[i];
 			goto skip_clear_vector_load;
@@ -139,7 +139,7 @@ skip_clear_vector_load:
 	}
 
 #ifdef CONFIG_ACCEL_SPOOF_MODE
-	if (s->in_spoof_mode) {
+	if (s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE) {
 		rgb_data[X] = s->spoof_xyz[X];
 		rgb_data[Y] = s->spoof_xyz[Y];
 		rgb_data[Z] = s->spoof_xyz[Z];
@@ -177,7 +177,7 @@ skip_rgb_load:
 		v = rgb_s->raw_xyz;
 		vector.flags = 0;
 #ifdef CONFIG_ACCEL_SPOOF_MODE
-		if (rgb_s->in_spoof_mode) {
+		if (rgb_s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE) {
 			for (i = 0; i < 3; i++)
 				vector.data[i] = v[i] = rgb_s->spoof_xyz[i];
 			goto skip_vector_load;
