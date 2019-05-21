@@ -54,7 +54,7 @@ int dptf_query_next_sensor_event(void)
 }
 
 /* Return true if any threshold transition occurs. */
-static int dpft_check_temp_threshold(int sensor_id, int temp)
+static int dptf_check_temp_threshold(int sensor_id, int temp)
 {
 	int tripped = 0;
 	int max, i;
@@ -129,7 +129,7 @@ static void thermal_control_dptf(void)
 		else
 			num_sensors_read++;
 		/* and check the dptf thresholds */
-		dptf_tripped |= dpft_check_temp_threshold(i, t);
+		dptf_tripped |= dptf_check_temp_threshold(i, t);
 	}
 
 	if (!num_sensors_read) {
