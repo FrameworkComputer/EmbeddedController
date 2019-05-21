@@ -401,7 +401,8 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_ACCEL_INT_ODL);
 
 	/* Enable interrupt for the TCS3400 color light sensor */
-	gpio_enable_interrupt(GPIO_TCS3400_INT_ODL);
+	if (board_version >= 5)
+		gpio_enable_interrupt(GPIO_TCS3400_INT_ODL);
 
 	/* Enable interrupt for the camera vsync. */
 	gpio_enable_interrupt(GPIO_SYNC_INT);
