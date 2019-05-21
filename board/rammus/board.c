@@ -475,7 +475,7 @@ static void usb_charge_mode_init(void)
 	 * the OS must send an event to EC to clear the
 	 * inhibit_charging_in_suspend.
 	 */
-	usb_charge_set_mode(0, USB_CHARGE_MODE_CDP,
+	usb_charge_set_mode(0, CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE,
 			USB_DISALLOW_SUSPEND_CHARGE);
 }
 DECLARE_HOOK(HOOK_INIT, usb_charge_mode_init, HOOK_PRIO_DEFAULT + 1);
