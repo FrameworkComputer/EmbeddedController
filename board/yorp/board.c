@@ -144,6 +144,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
 				MOTIONSENSE_TYPE_ACCEL),
+		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
+		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
 		.addr = LSM6DSM_ADDR0,
 		.rot_standard_ref = &base_standard_ref,
@@ -174,6 +176,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
 				MOTIONSENSE_TYPE_GYRO),
+		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
+		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
 		.addr = LSM6DSM_ADDR0,
 		.default_range = 1000 | ROUND_UP_FLAG, /* dps */

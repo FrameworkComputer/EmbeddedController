@@ -112,6 +112,7 @@ struct motion_data_t {
  * the components.
  */
 #define MOTIONSENSE_FLAG_IN_SPOOF_MODE	BIT(1)
+#define MOTIONSENSE_FLAG_INT_SIGNAL	BIT(2)
 
 struct motion_sensor_t {
 	/* RO fields */
@@ -124,6 +125,8 @@ struct motion_sensor_t {
 	/* One mutex per physical chip. */
 	struct mutex *mutex;
 	void *drv_data;
+	/* Only valid if flags & MOTIONSENSE_FLAG_INT_SIGNAL is true. */
+	enum gpio_signal int_signal;
 
 	/* i2c port */
 	uint8_t port;
