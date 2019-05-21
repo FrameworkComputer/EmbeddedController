@@ -54,9 +54,6 @@ enum {
 	CHARGE_SUPPLIER_TEST_COUNT
 };
 
-/* Custom charge_manager priority table is defined in test code */
-extern const int supplier_priority[];
-
 /* Standard-current Rp */
 #define PD_SRC_VNC           PD_SRC_DEF_VNC_MV
 #define PD_SRC_RD_THRESHOLD  PD_SRC_DEF_RD_THRESH_MV

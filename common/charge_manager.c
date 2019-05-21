@@ -29,7 +29,7 @@
 			    PD_T_SAFE_0V + 500 * MSEC)
 
 /*
- * Charge supplier priority: lower number indicates higher priority.
+ * Default charge supplier priority
  *
  * - Always pick dedicated charge if present since that is the best product
  *   decision.
@@ -44,7 +44,7 @@
  * - Last, pick one from the rest suppliers.  Also note that some boards assume
  *   wireless suppliers as low priority.
  */
-test_mockable const int supplier_priority[] = {
+__attribute__((weak)) const int supplier_priority[] = {
 #if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	[CHARGE_SUPPLIER_DEDICATED] = 0,
 #endif

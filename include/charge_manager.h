@@ -54,6 +54,12 @@ enum charge_supplier {
 	CHARGE_SUPPLIER_COUNT
 };
 
+/*
+ * Charge supplier priority: lower number indicates higher priority.
+ * Default priority is in charge_manager.c. It can be overridden by boards.
+ */
+extern const int supplier_priority[];
+
 /* Charge tasks report available current and voltage */
 struct charge_port_info {
 	int current;
