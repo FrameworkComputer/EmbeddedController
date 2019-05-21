@@ -9,33 +9,12 @@
 #define __CROS_EC_USB_CHARGE_H
 
 #include "common.h"
+#include "ec_commands.h"
 
 /* USB charger voltage */
 #define USB_CHARGER_VOLTAGE_MV  5000
 /* USB charger minimum current */
 #define USB_CHARGER_MIN_CURR_MA 500
-
-enum usb_charge_mode {
-	/* Disable USB port. */
-	USB_CHARGE_MODE_DISABLED,
-	/* Set USB port to Standard Downstream Port, USB 2.0 mode. */
-	USB_CHARGE_MODE_SDP2,
-	/* Set USB port to Charging Downstream Port, BC 1.2. */
-	USB_CHARGE_MODE_CDP,
-	/* Set USB port to Dedicated Charging Port, BC 1.2. */
-	USB_CHARGE_MODE_DCP_SHORT,
-	/* Enable USB port (for dumb ports). */
-	USB_CHARGE_MODE_ENABLED,
-
-	USB_CHARGE_MODE_COUNT
-};
-
-enum usb_suspend_charge {
-	/* Enable charging in suspend */
-	USB_ALLOW_SUSPEND_CHARGE,
-	/* Disable charging in suspend */
-	USB_DISALLOW_SUSPEND_CHARGE
-};
 
 /**
  * Set USB charge mode for the port.

@@ -2874,10 +2874,34 @@ struct ec_params_config_power_button {
 /* Set USB port charging mode */
 #define EC_CMD_USB_CHARGE_SET_MODE 0x0030
 
+enum usb_charge_mode {
+	/* Disable USB port. */
+	USB_CHARGE_MODE_DISABLED,
+	/* Set USB port to Standard Downstream Port, USB 2.0 mode. */
+	USB_CHARGE_MODE_SDP2,
+	/* Set USB port to Charging Downstream Port, BC 1.2. */
+	USB_CHARGE_MODE_CDP,
+	/* Set USB port to Dedicated Charging Port, BC 1.2. */
+	USB_CHARGE_MODE_DCP_SHORT,
+	/* Enable USB port (for dumb ports). */
+	USB_CHARGE_MODE_ENABLED,
+	/* Set USB port to CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE. */
+	USB_CHARGE_MODE_DEFAULT,
+
+	USB_CHARGE_MODE_COUNT
+};
+
+enum usb_suspend_charge {
+	/* Enable charging in suspend */
+	USB_ALLOW_SUSPEND_CHARGE,
+	/* Disable charging in suspend */
+	USB_DISALLOW_SUSPEND_CHARGE
+};
+
 struct ec_params_usb_charge_set_mode {
 	uint8_t usb_port_id;
-	uint8_t mode:7;
-	uint8_t inhibit_charge:1;
+	uint8_t mode:7;              /* enum usb_charge_mode */
+	uint8_t inhibit_charge:1;    /* enum usb_suspend_charge */
 } __ec_align1;
 
 /*****************************************************************************/
