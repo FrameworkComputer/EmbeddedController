@@ -1243,6 +1243,15 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 			port, PD_VDO_VID(payload[0]), payload[0] & 0xFFFF);
 }
 
+static __maybe_unused int pd_is_disconnected(int port)
+{
+	return pd[port].task_state == PD_STATE_SRC_DISCONNECTED
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	       || pd[port].task_state == PD_STATE_SNK_DISCONNECTED
+#endif
+		;
+}
+
 static void set_usb_mux_with_current_data_role(int port)
 {
 #ifdef CONFIG_USBC_SS_MUX
@@ -1258,21 +1267,29 @@ static void set_usb_mux_with_current_data_role(int port)
 	}
 #endif /* CONFIG_POWER_COMMON */
 
-#ifdef CONFIG_USBC_SS_MUX_DFP_ONLY
 	/*
-	 * Need to connect SS mux for if new data role is DFP.
-	 * If new data role is UFP, then disconnect the SS mux.
+	 * When PD stack is disconnected, then mux should be disconnected, which
+	 * is also what happens in the set_state disconnection code. Once the
+	 * PD state machine progresses out of disconnect, the MUX state will
+	 * be set correctly again.
 	 */
-	if (pd[port].data_role == PD_ROLE_DFP)
-		usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
-			    pd[port].polarity);
-	else
+	if (pd_is_disconnected(port))
 		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
 			    pd[port].polarity);
-#else
-	usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
-		    pd[port].polarity);
-#endif /* CONFIG_USBC_SS_MUX_DFP_ONLY */
+	/*
+	 * If new data role isn't DFP and we only support DFP, also disconnect.
+	 */
+	else if (IS_ENABLED(CONFIG_USBC_SS_MUX_DFP_ONLY) &&
+		 pd[port].data_role != PD_ROLE_DFP)
+		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
+			    pd[port].polarity);
+	/*
+	 * Otherwise connect mux since we are in S3+
+	 */
+	else
+		usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
+			    pd[port].polarity);
+
 #endif /* CONFIG_USBC_SS_MUX */
 }
 
