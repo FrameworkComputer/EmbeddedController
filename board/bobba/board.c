@@ -39,6 +39,7 @@
 #include "tcpci.h"
 #include "temp_sensor.h"
 #include "thermistor.h"
+#include "usb_charge.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
 #include "util.h"
@@ -300,6 +301,39 @@ static void board_update_no_keypad_config_from_sku(void)
 #endif
 	}
 }
+
+static void board_usb_charge_mode_init(void)
+{
+	int i;
+
+	/*
+	 * Only overriding the USB_DISALLOW_SUSPEND_CHARGE in RO is enough because
+	 * USB_SYSJUMP_TAG preserves the settings to RW. And we should honor to it.
+	 */
+	if (system_jumped_to_this_image())
+		return;
+
+	/* Currently only blorb and droid support this feature. */
+	if ((sku_id < 32 || sku_id > 39) && (sku_id < 40 || sku_id > 47))
+		return;
+
+	/*
+	 * By default, turn the charging off when system suspends.
+	 * If system power on with connecting a USB device,
+	 * the OS must send an event to EC to clear the
+	 * inhibit_charging_in_suspend.
+	 */
+	for (i = 0; i < CONFIG_USB_PORT_POWER_SMART_PORT_COUNT; i++)
+		usb_charge_set_mode(i, CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE,
+				USB_DISALLOW_SUSPEND_CHARGE);
+}
+/*
+ * usb_charge_init() is hooked in HOOK_PRIO_DEFAULT and set inhibit_charge to
+ * USB_ALLOW_SUSPEND_CHARGE. As a result, in order to override this default
+ * setting to USB_DISALLOW_SUSPEND_CHARGE this function should be hooked after
+ * calling usb_charge_init().
+ */
+DECLARE_HOOK(HOOK_INIT, board_usb_charge_mode_init, HOOK_PRIO_DEFAULT + 1);
 
 /* Read CBI from i2c eeprom and initialize variables for board variants */
 static void cbi_init(void)
