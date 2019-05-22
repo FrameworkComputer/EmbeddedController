@@ -164,3 +164,14 @@ void exe_state(int port, struct sm_obj *obj, enum signal sig)
 	obj->task_state(port, sig);
 #endif
 }
+
+unsigned int do_nothing_exit(int port)
+{
+	return 0;
+}
+
+unsigned int get_super_state(int port)
+{
+	return RUN_SUPER;
+}
+

@@ -153,292 +153,43 @@ struct extended_msg emsg[CONFIG_USB_PD_PORT_COUNT];
 /* Common Protocol Layer Message Transmission */
 static void  prl_tx_construct_message(int port);
 
-static unsigned int prl_tx_phy_layer_reset(int port, enum signal sig);
-static unsigned int prl_tx_phy_layer_reset_entry(int port);
-static unsigned int prl_tx_phy_layer_reset_run(int port);
-
-static unsigned int prl_tx_wait_for_message_request(int port, enum signal sig);
-static unsigned int prl_tx_wait_for_message_request_entry(int port);
-static unsigned int prl_tx_wait_for_message_request_run(int port);
-
-static unsigned int prl_tx_layer_reset_for_transmit(int port, enum signal sig);
-static unsigned int prl_tx_layer_reset_for_transmit_entry(int port);
-static unsigned int prl_tx_layer_reset_for_transmit_run(int port);
-
-static unsigned int prl_tx_wait_for_phy_response(int port, enum signal sig);
-static unsigned int prl_tx_wait_for_phy_response_entry(int port);
-static unsigned int prl_tx_wait_for_phy_response_run(int port);
-static unsigned int prl_tx_wait_for_phy_response_exit(int port);
-
-static unsigned int prl_tx_src_source_tx(int port, enum signal sig);
-static unsigned int prl_tx_src_source_tx_entry(int port);
-static unsigned int prl_tx_src_source_tx_run(int port);
-
-static unsigned int prl_tx_snk_start_ams(int port, enum signal sig);
-static unsigned int prl_tx_snk_start_ams_entry(int port);
-static unsigned int prl_tx_snk_start_ams_run(int port);
+DECLARE_STATE(prl, tx_phy_layer_reset, NOOP_EXIT);
+DECLARE_STATE(prl, tx_wait_for_message_request, NOOP_EXIT);
+DECLARE_STATE(prl, tx_layer_reset_for_transmit, NOOP_EXIT);
+DECLARE_STATE(prl, tx_wait_for_phy_response, WITH_EXIT);
+DECLARE_STATE(prl, tx_src_source_tx, NOOP_EXIT);
+DECLARE_STATE(prl, tx_snk_start_ams, NOOP_EXIT);
 
 /* Source Protocol Layser Message Transmission */
-static unsigned int prl_tx_src_pending(int port, enum signal sig);
-static unsigned int prl_tx_src_pending_entry(int port);
-static unsigned int prl_tx_src_pending_run(int port);
+DECLARE_STATE(prl, tx_src_pending, NOOP_EXIT);
 
 /* Sink Protocol Layer Message Transmission */
-static unsigned int prl_tx_snk_pending(int port, enum signal sig);
-static unsigned int prl_tx_snk_pending_entry(int port);
-static unsigned int prl_tx_snk_pending_run(int port);
-
-static unsigned int prl_tx_discard_message(int port, enum signal sig);
-static unsigned int prl_tx_discard_message_entry(int port);
-static unsigned int prl_tx_discard_message_run(int port);
+DECLARE_STATE(prl, tx_snk_pending, NOOP_EXIT);
+DECLARE_STATE(prl, tx_discard_message, NOOP_EXIT);
 
 /* Protocol Layer Message Reception */
 static unsigned int prl_rx_wait_for_phy_message(int port, int evt);
 
 /* Hard Reset Operation */
-static unsigned int prl_hr_wait_for_request(int port, enum signal sig);
-static unsigned int prl_hr_wait_for_request_entry(int port);
-static unsigned int prl_hr_wait_for_request_run(int port);
-
-static unsigned int prl_hr_reset_layer(int port, enum signal sig);
-static unsigned int prl_hr_reset_layer_entry(int port);
-static unsigned int prl_hr_reset_layer_run(int port);
-
-static unsigned int
-	prl_hr_wait_for_phy_hard_reset_complete(int port, enum signal sig);
-static unsigned int prl_hr_wait_for_phy_hard_reset_complete_entry(int port);
-static unsigned int prl_hr_wait_for_phy_hard_reset_complete_run(int port);
-
-static unsigned int
-	prl_hr_wait_for_pe_hard_reset_complete(int port, enum signal sig);
-static unsigned int prl_hr_wait_for_pe_hard_reset_complete_entry(int port);
-static unsigned int prl_hr_wait_for_pe_hard_reset_complete_run(int port);
-static unsigned int prl_hr_wait_for_pe_hard_reset_complete_exit(int port);
+DECLARE_STATE(prl, hr_wait_for_request, NOOP_EXIT);
+DECLARE_STATE(prl, hr_reset_layer, NOOP_EXIT);
+DECLARE_STATE(prl, hr_wait_for_phy_hard_reset_complete, NOOP_EXIT);
+DECLARE_STATE(prl, hr_wait_for_pe_hard_reset_complete, WITH_EXIT);
 
 /* Chunked Rx */
-static unsigned int
-	rch_wait_for_message_from_protocol_layer(int port, enum signal sig);
-static unsigned int rch_wait_for_message_from_protocol_layer_entry(int port);
-static unsigned int rch_wait_for_message_from_protocol_layer_run(int port);
-
-static unsigned int rch_processing_extended_message(int port, enum signal sig);
-static unsigned int rch_processing_extended_message_entry(int port);
-static unsigned int rch_processing_extended_message_run(int port);
-
-static unsigned int rch_requesting_chunk(int port, enum signal sig);
-static unsigned int rch_requesting_chunk_entry(int port);
-static unsigned int rch_requesting_chunk_run(int port);
-
-static unsigned int rch_waiting_chunk(int port, enum signal sig);
-static unsigned int rch_waiting_chunk_entry(int port);
-static unsigned int rch_waiting_chunk_run(int port);
-
-static unsigned int rch_report_error(int port, enum signal sig);
-static unsigned int rch_report_error_entry(int port);
-static unsigned int rch_report_error_run(int port);
+DECLARE_STATE(rch, wait_for_message_from_protocol_layer, NOOP_EXIT);
+DECLARE_STATE(rch, processing_extended_message, NOOP_EXIT);
+DECLARE_STATE(rch, requesting_chunk, NOOP_EXIT);
+DECLARE_STATE(rch, waiting_chunk, NOOP_EXIT);
+DECLARE_STATE(rch, report_error, NOOP_EXIT);
 
 /* Chunked Tx */
-static unsigned int
-	tch_wait_for_message_request_from_pe(int port, enum signal sig);
-static unsigned int tch_wait_for_message_request_from_pe_entry(int port);
-static unsigned int tch_wait_for_message_request_from_pe_run(int port);
-
-static unsigned int
-	tch_wait_for_transmission_complete(int port, enum signal sig);
-static unsigned int tch_wait_for_transmission_complete_entry(int port);
-static unsigned int tch_wait_for_transmission_complete_run(int port);
-
-static unsigned int tch_construct_chunked_message(int port, enum signal sig);
-static unsigned int tch_construct_chunked_message_entry(int port);
-static unsigned int tch_construct_chunked_message_run(int port);
-
-static unsigned int tch_sending_chunked_message(int port, enum signal sig);
-static unsigned int tch_sending_chunked_message_entry(int port);
-static unsigned int tch_sending_chunked_message_run(int port);
-
-static unsigned int tch_wait_chunk_request(int port, enum signal sig);
-static unsigned int tch_wait_chunk_request_entry(int port);
-static unsigned int tch_wait_chunk_request_run(int port);
-
-static unsigned int tch_message_received(int port, enum signal sig);
-static unsigned int tch_message_received_entry(int port);
-static unsigned int tch_message_received_run(int port);
-
-static unsigned int do_nothing_exit(int port);
-static unsigned int get_super_state(int port);
-
-static const state_sig prl_tx_phy_layer_reset_sig[] = {
-	prl_tx_phy_layer_reset_entry,
-	prl_tx_phy_layer_reset_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig prl_tx_wait_for_message_request_sig[] = {
-	prl_tx_wait_for_message_request_entry,
-	prl_tx_wait_for_message_request_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig prl_tx_layer_reset_for_transmit_sig[] = {
-	prl_tx_layer_reset_for_transmit_entry,
-	prl_tx_layer_reset_for_transmit_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig prl_tx_wait_for_phy_response_sig[] = {
-	prl_tx_wait_for_phy_response_entry,
-	prl_tx_wait_for_phy_response_run,
-	prl_tx_wait_for_phy_response_exit,
-	get_super_state
-};
-
-static const state_sig prl_tx_src_source_tx_sig[] = {
-	prl_tx_src_source_tx_entry,
-	prl_tx_src_source_tx_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig prl_tx_snk_start_ams_sig[] = {
-	prl_tx_snk_start_ams_entry,
-	prl_tx_snk_start_ams_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-/* Source Protocol Layser Message Transmission */
-static const state_sig prl_tx_src_pending_sig[] = {
-	prl_tx_src_pending_entry,
-	prl_tx_src_pending_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-/* Sink Protocol Layer Message Transmission */
-static const state_sig prl_tx_snk_pending_sig[] = {
-	prl_tx_snk_pending_entry,
-	prl_tx_snk_pending_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig prl_tx_discard_message_sig[] = {
-	prl_tx_discard_message_entry,
-	prl_tx_discard_message_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-/* Hard Reset Operation */
-static const state_sig prl_hr_wait_for_request_sig[] = {
-	prl_hr_wait_for_request_entry,
-	prl_hr_wait_for_request_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig prl_hr_reset_layer_sig[] = {
-	prl_hr_reset_layer_entry,
-	prl_hr_reset_layer_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig prl_hr_wait_for_phy_hard_reset_complete_sig[] = {
-	prl_hr_wait_for_phy_hard_reset_complete_entry,
-	prl_hr_wait_for_phy_hard_reset_complete_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig prl_hr_wait_for_pe_hard_reset_complete_sig[] = {
-	prl_hr_wait_for_pe_hard_reset_complete_entry,
-	prl_hr_wait_for_pe_hard_reset_complete_run,
-	prl_hr_wait_for_pe_hard_reset_complete_exit,
-	get_super_state
-};
-
-/* Chunked Rx */
-static const state_sig rch_wait_for_message_from_protocol_layer_sig[] = {
-	rch_wait_for_message_from_protocol_layer_entry,
-	rch_wait_for_message_from_protocol_layer_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig rch_processing_extended_message_sig[] = {
-	rch_processing_extended_message_entry,
-	rch_processing_extended_message_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig rch_requesting_chunk_sig[] = {
-	rch_requesting_chunk_entry,
-	rch_requesting_chunk_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig rch_waiting_chunk_sig[] = {
-	rch_waiting_chunk_entry,
-	rch_waiting_chunk_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig rch_report_error_sig[] = {
-	rch_report_error_entry,
-	rch_report_error_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-/* Chunked Tx */
-static const state_sig tch_wait_for_message_request_from_pe_sig[] = {
-	tch_wait_for_message_request_from_pe_entry,
-	tch_wait_for_message_request_from_pe_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig tch_wait_for_transmission_complete_sig[] = {
-	tch_wait_for_transmission_complete_entry,
-	tch_wait_for_transmission_complete_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig tch_construct_chunked_message_sig[] = {
-	tch_construct_chunked_message_entry,
-	tch_construct_chunked_message_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig tch_sending_chunked_message_sig[] = {
-	tch_sending_chunked_message_entry,
-	tch_sending_chunked_message_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig tch_wait_chunk_request_sig[] = {
-	tch_wait_chunk_request_entry,
-	tch_wait_chunk_request_run,
-	do_nothing_exit,
-	get_super_state
-};
-
-static const state_sig tch_message_received_sig[] = {
-	tch_message_received_entry,
-	tch_message_received_run,
-	do_nothing_exit,
-	get_super_state
-};
+DECLARE_STATE(tch, wait_for_message_request_from_pe, NOOP_EXIT);
+DECLARE_STATE(tch, wait_for_transmission_complete, NOOP_EXIT);
+DECLARE_STATE(tch, construct_chunked_message, NOOP_EXIT);
+DECLARE_STATE(tch, sending_chunked_message, NOOP_EXIT);
+DECLARE_STATE(tch, wait_chunk_request, NOOP_EXIT);
+DECLARE_STATE(tch, message_received, NOOP_EXIT);
 
 void pd_transmit_complete(int port, int status)
 {
@@ -2150,14 +1901,4 @@ static unsigned int prl_rx_wait_for_phy_message(int port, int evt)
 	}
 
 	return 0;
-}
-
-static unsigned int do_nothing_exit(int port)
-{
-	return 0;
-}
-
-static unsigned int get_super_state(int port)
-{
-	return RUN_SUPER;
 }

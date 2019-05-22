@@ -17,9 +17,6 @@
 
 /* USB Policy Engine Charge-Through VCONN Powered Device module */
 
-#ifndef __CROS_EC_USB_PE_CTVPD_H
-#define __CROS_EC_USB_PE_CTVPD_H
-
 /* Policy Engine Flags */
 #define PE_FLAGS_MSG_RECEIVED (1 << 0)
 
@@ -30,12 +27,6 @@ enum l_state {
 };
 
 static enum l_state local_state = PE_INIT;
-
-/*
- * PE_OBJ is a convenience macro to access struct sm_obj, which
- * must be the first member of struct policy_engine.
- */
-#define PE_OBJ(port)   (SM_OBJ(pe[port]))
 
 /**
  * This is the PE Port object that contains information needed to
@@ -52,19 +43,8 @@ static struct policy_engine {
 	uint32_t flags;
 } pe[CONFIG_USB_PD_PORT_COUNT];
 
-static unsigned int pe_request(int port, enum signal sig);
-static unsigned int pe_request_entry(int port);
-static unsigned int pe_request_run(int port);
-
-static unsigned int do_nothing_exit(int port);
-static unsigned int get_super_state(int port);
-
-static const state_sig pe_request_sig[] = {
-	pe_request_entry,
-	pe_request_run,
-	do_nothing_exit,
-	get_super_state
-};
+/* Policy Engine states */
+DECLARE_STATE(pe, request, NOOP_EXIT);
 
 void pe_init(int port)
 {
@@ -225,15 +205,3 @@ static unsigned int pe_request_run(int port)
 
 	return 0;
 }
-
-static unsigned int do_nothing_exit(int port)
-{
-	return 0;
-}
-
-static unsigned int get_super_state(int port)
-{
-	return RUN_SUPER;
-}
-
-#endif /* __CROS_EC_USB_PE_CTVPD_H */

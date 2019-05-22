@@ -138,7 +138,12 @@ else
 common-$(CONFIG_USB_SM_FRAMEWORK)+=usb_sm.o
 common-$(CONFIG_USB_TYPEC_SM)+=usb_tc_sm.o
 common-$(CONFIG_USB_PRL_SM)+=usb_prl_sm.o
-common-$(CONFIG_USB_PE_SM)+=usb_pe_sm.o
+ifneq ($(CONFIG_USB_PE_SM),)
+common-$(CONFIG_USB_TYPEC_VPD)+=usb_pe_ctvpd_sm.o
+common-$(CONFIG_USB_TYPEC_CTVPD)+=usb_pe_ctvpd_sm.o
+endif
+common-$(CONFIG_USB_TYPEC_VPD)+=usb_tc_vpd_sm.o
+common-$(CONFIG_USB_TYPEC_CTVPD)+=usb_tc_ctvpd_sm.o
 endif
 common-$(CONFIG_USB_PD_LOGGING)+=event_log.o pd_log.o
 common-$(CONFIG_USB_PD_TCPC)+=usb_pd_tcpc.o

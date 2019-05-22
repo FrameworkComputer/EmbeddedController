@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_USB_TC_H
 #define __CROS_EC_USB_TC_H
 
+#include "usb_sm.h"
+
 enum typec_state_id {
 	DISABLED,
 	UNATTACHED_SNK,
@@ -45,6 +47,34 @@ enum typec_state_id {
 	TC_STATE_COUNT,
 };
 
+extern const char * const tc_state_names[];
+
+#define TC_SET_FLAG(port, flag) atomic_or(&tc[port].flags, (flag))
+#define TC_CLR_FLAG(port, flag) atomic_clear(&tc[port].flags, (flag))
+#define TC_CHK_FLAG(port, flag) (tc[port].flags & (flag))
+
+/*
+ * TC_OBJ is a convenience macro to access struct sm_obj, which
+ * must be the first member of struct type_c.
+ */
+#define TC_OBJ(port)   (SM_OBJ(tc[port]))
+
+/*
+ * Type C supply voltage (mV)
+ *
+ * This is the maximum voltage a sink can request
+ * while charging.
+ */
+#define TYPE_C_VOLTAGE  5000 /* mV */
+
+/*
+ * Type C default sink current (mA)
+ *
+ * This is the maximum current a sink can draw if charging
+ * while in the Audio Accessory State.
+ */
+#define TYPE_C_AUDIO_ACC_CURRENT  500 /* mA */
+
 /**
  * Get the id of the current Type-C state
  *
@@ -75,6 +105,48 @@ int tc_get_power_role(int port);
  * @timeout time in ms
  */
 void tc_set_timeout(int port, uint64_t timeout);
+
+/**
+ * Returns the polarity of a Sink.
+ *
+ * @param cc1 value of CC1 set by tcpm_get_cc
+ * @param cc2 value of CC2 set by tcpm_get_cc
+ * @return 0 if cc1 is connected, else 1 for cc2
+ */
+enum pd_cc_polarity_type get_snk_polarity(int cc1, int cc2);
+
+/**
+ * Restarts the TCPC
+ *
+ * @param port USB-C port number
+ * @returns EC_SUCCESS on success
+ */
+int tc_restart_tcpc(int port);
+
+/**
+ * Sets the polarity of the port
+ *
+ * @param port USB-C port number
+ * @param polarity 0 for CC1, else 1 for CC2
+ */
+void set_polarity(int port, int polarity);
+
+/**
+ * Called by the state machine framework to initialize the
+ * TypeC state machine
+ *
+ * @param port USB-C port number
+ */
+void tc_state_init(int port);
+
+/**
+ * Called by the state machine framework to handle events
+ * that affect the state machine as a whole
+ *
+ * @param port USB-C port number
+ * @param evt event
+ */
+void tc_event_check(int port, int evt);
 
 #ifdef CONFIG_USB_TYPEC_CTVPD
 /**

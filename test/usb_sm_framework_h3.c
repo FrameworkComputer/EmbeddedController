@@ -200,8 +200,6 @@ static unsigned int sm_test_C_entry(int port);
 static unsigned int sm_test_C_run(int port);
 static unsigned int sm_test_C_exit(int port);
 
-static unsigned int get_super_state(int port);
-
 #if defined(TEST_USB_SM_FRAMEWORK_H3)
 static const state_sig sm_test_super_A1_sig[] = {
 	sm_test_super_A1_entry,
@@ -772,11 +770,6 @@ static unsigned int sm_test_B6_exit(int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_B6;
 	return 0;
-}
-
-static unsigned int get_super_state(int port)
-{
-	return RUN_SUPER;
 }
 
 static unsigned int sm_test_C(int port, enum signal sig)

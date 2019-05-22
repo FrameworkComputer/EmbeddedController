@@ -8,12 +8,20 @@
 #ifndef __CROS_EC_USB_PE_H
 #define __CROS_EC_USB_PE_H
 
+#include "usb_sm.h"
+
 enum pe_error {
 	ERR_RCH_CHUNKED,
 	ERR_RCH_MSG_REC,
 	ERR_TCH_CHUNKED,
 	ERR_TCH_XMIT,
 };
+
+/*
+ * PE_OBJ is a convenience macro to access struct sm_obj, which
+ * must be the first member of struct policy_engine.
+ */
+#define PE_OBJ(port)   (SM_OBJ(pe[port]))
 
 /**
  * Initialize the Policy Engine State Machine

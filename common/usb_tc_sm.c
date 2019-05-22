@@ -23,7 +23,6 @@
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
-#include "usb_pd_tcpm.h"
 #include "usb_prl_sm.h"
 #include "tcpm.h"
 #include "usb_pe_sm.h"
@@ -32,23 +31,25 @@
 #include "usb_tc_sm.h"
 #include "version.h"
 
+/* Include USB Type-C State Machine Header File */
+#if defined(CONFIG_USB_TYPEC_CTVPD)
+#include "usb_tc_ctvpd_sm.h"
+#elif defined(CONFIG_USB_TYPEC_VPD)
+#include "usb_tc_vpd_sm.h"
+#else
+#error "A USB Type-C State Machine must be defined."
+#endif
+
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_HOOK, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_HOOK, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 #else /* CONFIG_COMMON_RUNTIME */
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
 #endif
 
-/* Private Function Prototypes */
-
-static inline int cc_is_rp(int cc);
-static inline enum pd_cc_polarity_type get_snk_polarity(int cc1, int cc2);
-static int tc_restart_tcpc(int port);
-static void set_polarity(int port, int polarity);
-
 #ifdef CONFIG_COMMON_RUNTIME
-static const char * const tc_state_names[] = {
+const char * const tc_state_names[] = {
 	"Disabled",
 	"Unattached.SNK",
 	"AttachWait.SNK",
@@ -85,15 +86,6 @@ static const char * const tc_state_names[] = {
 BUILD_ASSERT(ARRAY_SIZE(tc_state_names) == TC_STATE_COUNT);
 #endif
 
-/* Include USB Type-C State Machine */
-#if defined(CONFIG_USB_TYPEC_CTVPD)
-#include "usb_tc_ctvpd_sm.h"
-#elif defined(CONFIG_USB_TYPEC_VPD)
-#include "usb_tc_vpd_sm.h"
-#else
-#error "A USB Type-C State Machine must be defined."
-#endif
-
 /* Public Functions */
 
 int tc_get_power_role(int port)
@@ -116,8 +108,6 @@ enum typec_state_id get_typec_state_id(int port)
 	return tc[port].state_id;
 }
 
-/* Private Functions */
-
 /*
  * CC values for regular sources and Debug sources (aka DTS)
  *
@@ -131,10 +121,7 @@ enum typec_state_id get_typec_state_id(int port)
  * DTS          USB-C @ 3 A         Rp3A0  RpUSB
  */
 
-/**
- * Returns the polarity of a Sink.
- */
-static inline enum pd_cc_polarity_type get_snk_polarity(int cc1, int cc2)
+inline enum pd_cc_polarity_type get_snk_polarity(int cc1, int cc2)
 {
 	/* the following assumes:
 	 * TYPEC_CC_VOLT_RP_3_0 > TYPEC_CC_VOLT_RP_1_5
@@ -144,12 +131,12 @@ static inline enum pd_cc_polarity_type get_snk_polarity(int cc1, int cc2)
 	return (cc2 > cc1) ? POLARITY_CC2 : POLARITY_CC1;
 }
 
-static int tc_restart_tcpc(int port)
+int tc_restart_tcpc(int port)
 {
 	return tcpm_init(port);
 }
 
-static void set_polarity(int port, int polarity)
+void set_polarity(int port, int polarity)
 {
 	tcpm_set_polarity(port, polarity);
 #ifdef CONFIG_USBC_PPC_POLARITY
