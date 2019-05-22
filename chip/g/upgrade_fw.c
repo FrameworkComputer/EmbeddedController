@@ -263,36 +263,88 @@ static int contents_allowed(uint32_t block_offset,
 	return 1;
 }
 
-
-static uint32_t prev_offset;
+/*
+ * Previously written offsets, index 0 is for the RO section, index 1 - for
+ * RW. Keeping track of the previously written offset and allowing only higher
+ * offsets for the following writes allows to prevent flash destroying attacks
+ * when the perpetrator keeps repetitively writing to the same flash area.
+ *
+ * Need to preset the value for RO to the negative number so that the first
+ * frame of the RO_A update which comes at offset zero does not get rejected.
+ */
+static int prev_offsets[2] = {-SIGNED_TRANSFER_SIZE};
 static uint64_t prev_timestamp;
 #define BACKOFF_TIME (60 * SECOND)
 
+/*
+ * Match the passed in offset of a chunk to be written into flash into the RO
+ * or RW space for using as the index in prev_offsets array.
+ *
+ * The passed in offset is guaranteed to be falling into either RW or RO space
+ * as defined by the valid_sections structure contents.
+ *
+ * The prev_offsets array uses index 0 for RO and index 1 for RW.
+ */
+static int offset_to_index(uint32_t block_offset)
+{
+	/*
+	 * Return index 1 if the offset falls into RW space, index 0
+	 * otherwise.
+	 */
+	return (block_offset >= valid_sections.rw_base_offset) &&
+	       (block_offset < valid_sections.rw_top_offset);
+}
+
 static int chunk_came_too_soon(uint32_t block_offset)
 {
-	int hard_reset = system_get_reset_flags() & RESET_FLAG_HARD;
-
 	/*
 	 * If it has been BACKOFF_TIME since the last time we wrote to a block
 	 * or since the last boot, the write is ok.
 	 */
-	if ((get_time().val - prev_timestamp) > BACKOFF_TIME)
+	if ((get_time().val - prev_timestamp) > BACKOFF_TIME) {
+		/*
+		 * The Cr50 firmware update utility, gsctool, makes sure that
+		 * in case both RW and RO need to be updated, the RW is
+		 * transferred first.
+		 *
+		 * This means that the RW offset in the prev_offsets array
+		 * does not have to be preset, it will be set by
+		 * new_chunk_written() below after the very first RW chunk is
+		 * processed.
+		 *
+		 * The RO offset in the prev_offset array is a different,
+		 * because the RO will be written after RW but before the
+		 * BACKOFF_TIME timeout expires, i.e. there will be no chance
+		 * for new_chunk_written() run for RO unconditionally.
+		 *
+		 * There also is a problem when just the RO_A is written - it
+		 * comes at offset zero, and would be rejected if prev_offsets
+		 * value for RO were set to zero.
+		 *
+		 * A simple fix for both issues is to preset the prev_offset
+		 * value for RO to the value which would allow any possible RO
+		 * offset to be accepted.
+		 */
+		prev_offsets[0] = -SIGNED_TRANSFER_SIZE;
 		return 0;
+	}
 
 	if (!prev_timestamp) {
+		int hard_reset = system_get_reset_flags() & RESET_FLAG_HARD;
+
 		/*
 		 * If we just recovered from a hard reset, we have to wait until
 		 * backoff time to accept an update. All other resets can accept
 		 * updates immediately.
 		 */
 		if (hard_reset)
-			CPRINTF("%s: rejecting a write after hard reset\n",
+			CPRINTF("%s: rejecting a write soon after hard reset\n",
 				__func__);
 		return hard_reset;
 	}
 
-	if (!prev_offset ||
-	    (block_offset >= (prev_offset + SIGNED_TRANSFER_SIZE)))
+	if ((int)block_offset >= (prev_offsets[offset_to_index(block_offset)] +
+				  SIGNED_TRANSFER_SIZE))
 		return 0;
 
 	CPRINTF("%s: rejecting a write to the same block\n", __func__);
@@ -302,7 +354,7 @@ static int chunk_came_too_soon(uint32_t block_offset)
 static void new_chunk_written(uint32_t block_offset)
 {
 	prev_timestamp = get_time().val;
-	prev_offset = block_offset;
+	prev_offsets[offset_to_index(block_offset)] = block_offset;
 }
 #else
 static int chunk_came_too_soon(uint32_t block_offset)
