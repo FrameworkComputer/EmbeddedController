@@ -119,8 +119,9 @@ void console_has_input(void);
  * Register a console command handler.
  *
  * @param name          Command name; must not be the beginning of another
- *                      existing command name.  Note this is NOT in quotes
- *                      so it can be concatenated to form a struct name.
+ *                      existing command name.  Must be less than 15 characters
+ *                      long (excluding null terminator).  Note this is NOT in
+ *                      quotes so it can be concatenated to form a struct name.
  * @param routine       Command handling routine, of the form
  *                      int handler(int argc, char **argv)
  * @param argdesc       String describing arguments to command; NULL if none.
@@ -156,8 +157,8 @@ void console_has_input(void);
 /* This macro takes all possible args and discards the ones we don't use */
 #define _DCL_CON_CMD_ALL(NAME, ROUTINE, ARGDESC, HELP, FLAGS)		\
 	static const char __con_cmd_label_##NAME[] = #NAME;		\
-	struct size_check##NAME {					\
-		int field[2 * (sizeof(__con_cmd_label_##NAME) < 16) - 1]; }; \
+	_Static_assert(sizeof(__con_cmd_label_##NAME) < 16,		\
+		       "command name '" #NAME "' is too long");		\
 	const struct console_command __keep __no_sanitize_address	\
 	__con_cmd_##NAME						\
 	__attribute__((section(".rodata.cmds." #NAME))) =		\
