@@ -65,6 +65,23 @@ CONFIG_TEST_TASK_LIST
 CONFIG_CTS_TASK_LIST
 #undef TASK
 
+/* usleep that uses OS functions, instead of emulated timer. */
+void _usleep(int usec)
+{
+	struct timespec req;
+
+	req.tv_sec = usec / 1000000;
+	req.tv_nsec = (usec % 1000000) * 1000;
+
+	nanosleep(&req, NULL);
+}
+
+/* msleep that uses OS functions, instead of emulated timer. */
+void _msleep(int msec)
+{
+	_usleep(1000 * msec);
+}
+
 /* Idle task */
 void __idle(void *d)
 {
@@ -156,7 +173,7 @@ void task_trigger_test_interrupt(void (*isr)(void))
 	/* Wait for ISR to complete */
 	sem_wait(&interrupt_sem);
 	while (in_interrupt)
-		;
+		_usleep(10);
 	pending_isr = NULL;
 
 	pthread_mutex_unlock(&interrupt_lock);
@@ -285,13 +302,16 @@ static void _wait_for_task_started(int can_sleep)
 
 	while (1) {
 		ok = 1;
-		for (i = 0; i < TASK_ID_COUNT - 1; ++i)
+		for (i = 0; i < TASK_ID_COUNT - 1; ++i) {
 			if (!tasks[i].started) {
 				if (can_sleep)
 					msleep(10);
+				else
+					_msleep(10);
 				ok = 0;
 				break;
 			}
+		}
 		if (ok)
 			return;
 	}
