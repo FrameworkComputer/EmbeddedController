@@ -67,6 +67,9 @@ extern uint32_t fp_events;
 
 extern uint32_t sensor_mode;
 
+/* Simulation for unit tests. */
+void fp_task_simulate(void);
+
 /*
  * Clear one fingerprint template.
  *

@@ -7,6 +7,7 @@
 # Note that this variable includes the trailing "/"
 _fpsensor_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 
-all-obj-$(HAS_TASK_FPSENSOR)+= \
-	$(_fpsensor_dir)/fpsensor.o \
-	$(_fpsensor_dir)/fpsensor_state.o
+all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)/fpsensor_state.o
+ifneq ($(CONFIG_SPI_FP_PORT),)
+all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)/fpsensor.o
+endif

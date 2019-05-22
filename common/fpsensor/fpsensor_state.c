@@ -36,12 +36,20 @@ uint32_t templ_dirty;
 uint32_t user_id[FP_CONTEXT_USERID_WORDS];
 /* Part of the IKM used to derive encryption keys received from the TPM. */
 uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
-/* Flag indicating whether the seed has been initialised or not. */
-static int fp_tpm_seed_set;
+/* Status of the FP encryption engine. */
+static uint32_t fp_encryption_status;
 
 uint32_t fp_events;
 
 uint32_t sensor_mode;
+
+void fp_task_simulate(void)
+{
+	int timeout_us = -1;
+
+	while (1)
+		task_wait_event(timeout_us);
+}
 
 void fp_clear_finger_context(int idx)
 {
@@ -81,12 +89,12 @@ static int fp_command_tpm_seed(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 	}
 
-	if (fp_tpm_seed_set) {
+	if (fp_encryption_status & FP_ENC_STATUS_SEED_SET) {
 		CPRINTS("Seed has already been set.");
 		return EC_RES_ACCESS_DENIED;
 	}
 	memcpy(tpm_seed, params->seed, sizeof(tpm_seed));
-	fp_tpm_seed_set = 1;
+	fp_encryption_status |= FP_ENC_STATUS_SEED_SET;
 
 	return EC_RES_SUCCESS;
 }
@@ -94,8 +102,21 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_SEED, fp_command_tpm_seed, EC_VER_MASK(0));
 
 int fp_tpm_seed_is_set(void)
 {
-	return fp_tpm_seed_set;
+	return fp_encryption_status & FP_ENC_STATUS_SEED_SET;
 }
+
+static int fp_command_encryption_status(struct host_cmd_handler_args *args)
+{
+	struct ec_response_fp_encryption_status *r = args->response;
+
+	r->valid_flags = FP_ENC_STATUS_SEED_SET;
+	r->status = fp_encryption_status;
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FP_ENC_STATUS, fp_command_encryption_status,
+		     EC_VER_MASK(0));
 
 static int validate_fp_mode(const uint32_t mode)
 {
