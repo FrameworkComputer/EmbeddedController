@@ -232,93 +232,91 @@ static int verbose_mode;
 static uint32_t protocol_version;
 static char *progname;
 
-/* List of command line options, ***sorted by the short form***. */
+/*
+ * List of command line options, ***sorted by the short form***.
+ *
+ * The help_text field does not include the short and long option strings,
+ * they are retrieved from the opt structure. In case the help text needs to
+ * have something printed immediately after the option strings (for example,
+ * an optional parameter), it should be included in the beginning of help_text
+ * string separated by the % character.
+ *
+ * usage() function which prints out the help message will concatenate the
+ * short and long options and the optional parameter, if present, and then
+ * print the rest of the text message at a fixed indentation.
+ */
 static const struct option_container cmd_line_options[] = {
 	/* name   has_arg    *flag  val */
 	{{"any", no_argument, NULL, 'a'},
-	 "  -a,--any                 Try any interfaces to find Cr50"
+	 "Try any interfaces to find Cr50"
 	 " (-d, -s, -t are all ignored)"},
 	{{"background_update_supported", no_argument, NULL, 'B'},
-	 "  -B --background_update_supported\n"
-	 "                           Force background update mode (relevant "
-	 " only when interacting\n"
-	 "                           with Cr50 versions before 0.0.19)"},
+	 "Force background update mode (relevant"
+	 " only when interacting"
+	 " with Cr50 versions before 0.0.19)"
+	},
 	{{"binvers", no_argument, NULL, 'b'},
-	 "  -b,--binvers             Report versions of Cr50 image's "
+	 "Report versions of Cr50 image's "
 	 "RW and RO headers, do not update"},
 	{{"corrupt", no_argument, NULL, 'c'},
-	 "  -c,--corrupt             Corrupt the inactive rw"},
+	 "Corrupt the inactive rw"},
 	{{"device", required_argument, NULL, 'd'},
-	 "  -d,--device  VID:PID     USB device (default 18d1:5014)"},
+	 " VID:PID%USB device (default 18d1:5014)"},
 	{{"fwver", no_argument, NULL, 'f'},
-	 "  -f,--fwver               "
 	 "Report running Cr50 firmware versions"},
 	{{"factory", required_argument, NULL, 'F'},
-	 "  -F,--factory [enable|disable]\n"
-	 "                           Control factory mode"},
+	 "[enable|disable]%Control factory mode"},
 	{{"help", no_argument, NULL, 'h'},
-	 "  -h,--help                Show this message"},
+	 "Show this message"},
 	{{"ccd_info", no_argument, NULL, 'I'},
-	 "  -I,--ccd_info            Get information about CCD state"},
+	 "Get information about CCD state"},
 	{{"board_id", optional_argument, NULL, 'i'},
-	 "  -i,--board_id [ID[:FLAGS]]\n"
-	 "                           Get or set Info1 board ID fields\n"
-	 "                           ID could be 32 bit hex or 4 "
-	 "character string."},
+	 "[ID[:FLAGS]]%Get or set Info1 board ID fields. ID could be 32 bit "
+	 "hex or 4 character string."},
 	{{"ccd_lock", no_argument, NULL, 'k'},
-	 "  -k,--ccd_lock            Lock CCD"},
+	 "Lock CCD"},
 	{{"flog", optional_argument, NULL, 'L'},
-	 "  -L,--flog [prev entry]   Retrieve contents of the flash log"
+	 "[prev entry]%Retrieve contents of the flash log"
 	 " (newer than <prev entry> if specified)"},
 	{{"machine", no_argument, NULL, 'M'},
-	 "  -M,--machine             Output in a machine-friendly way. "
+	 "Output in a machine-friendly way. "
 	 "Effective with -b, -f, -i, and -O."},
 	{{"tpm_mode", optional_argument, NULL, 'm'},
-	 "  -m,--tpm_mode [enable|disable]\n"
-	 "                           Change or query tpm_mode"},
+	 "[enable|disable]%Change or query tpm_mode"},
 	{{"serial", required_argument, NULL, 'n'},
-	 "  -n,--serial SERIAL       Cr50 CCD serial number"},
+	 "Cr50 CCD serial number"},
 	{{"openbox_rma", required_argument, NULL, 'O'},
-	 "  -O,--openbox_rma <desc_file>\n"
-	 "                           Verify other device's RO integrity\n"
-	 "                           using information provided in "
-	 "<desc file>"},
+	 "<desc_file>%Verify other device's RO integrity using information "
+	 "provided in <desc file>"},
 	{{"ccd_open", no_argument, NULL, 'o'},
-	 "  -o,--ccd_open            Start CCD open sequence"},
+	 "Start CCD open sequence"},
 	{{"password", no_argument, NULL, 'P'},
-	 "  -P,--password\n"
-	 "                           Set or clear CCD password. Use\n"
-	 "                           'clear:<cur password>' to clear it"},
+	 "Set or clear CCD password. Use 'clear:<cur password>' to clear it"},
 	{{"post_reset", no_argument, NULL, 'p'},
-	 "  -p,--post_reset          Request post reset after transfer"},
+	 "Request post reset after transfer"},
 	{{"sn_rma_inc", required_argument, NULL, 'R'},
-	 "  -R,--sn_rma_inc RMA_INC\n"
-	 "                           Increment SN RMA count by RMA_INC.\n"
-	 "                           RMA_INC should be 0-7."},
+	 "RMA_INC%Increment SN RMA count by RMA_INC. RMA_INC should be 0-7."},
 	{{"rma_auth", optional_argument, NULL, 'r'},
-	 "  -r,--rma_auth [auth_code]\n"
-	 "                           Request RMA challenge, process "
+	 "[auth_code]%Request RMA challenge, process "
 	 "RMA authentication code"},
 	{{"sn_bits", required_argument, NULL, 'S'},
-	 "  -S,--sn_bits SN_BITS\n"
-	 "                           Set Info1 SN bits fields.\n"
-	 "                           SN_BITS should be 96 bit hex."},
+	 "SN_BITS%Set Info1 SN bits fields. SN_BITS should be 96 bit hex."},
 	{{"systemdev", no_argument, NULL, 's'},
-	 "  -s,--systemdev           Use /dev/tpm0 (-d is ignored)"},
+	 "Use /dev/tpm0 (-d is ignored)"},
+	{{"tstamp", optional_argument, NULL, 'T'},
+	 "[<tstamp>]%Get or set flash log timestamp base"},
 	{{"trunks_send", no_argument, NULL, 't'},
-	 "  -t,--trunks_send         Use `trunks_send --raw' "
-	 "(-d is ignored)"},
+	 "Use `trunks_send --raw' (-d is ignored)"},
 	{{"ccd_unlock", no_argument, NULL, 'U'},
-	 "  -U,--ccd_unlock          Start CCD unlock sequence"},
+	 "Start CCD unlock sequence"},
 	{{"upstart", no_argument, NULL, 'u'},
-	 "  -u,--upstart             "
 	 "Upstart mode (strict header checks)"},
 	{{"verbose", no_argument, NULL, 'V'},
-	 "  -V,--verbose             Enable debug messages"},
+	 "Enable debug messages"},
 	{{"version", no_argument, NULL, 'v'},
-	 "  -v,--version             Report this utility version"},
+	 "Report this utility version"},
 	{{"wp", no_argument, NULL, 'w'},
-	 "  -w,--wp                  Get the current wp setting"}
+	 "Get the current wp setting"}
 };
 
 /* Helper to print debug messages when verbose flag is specified. */
@@ -600,25 +598,64 @@ static void shut_down(struct usb_endpoint *uep)
 static void usage(int errs)
 {
 	size_t i;
+	const int indent = 27; /* This is the size used by gsctool all along. */
 
 	printf("\nUsage: %s [options] [<binary image>]\n"
 	       "\n"
 	       "This utility allows to update Cr50 RW firmware, configure\n"
 	       "various aspects of Cr50 operation, analyze Cr50 binary\n"
-	       "images, etc.\n"
-	       "The required argument is the file name of a full RO+RW\n"
-	       "binary image.\n"
-	       "A typical Chromebook use would expect -s -t options\n"
-	       "included in the command line.\n"
+	       "images, etc.\n\n"
+	       "<binary image> is the file name of a full RO+RW binary image.\n"
 	       "\n"
 	       "Options:\n\n",
 	       progname);
 
 	for (i = 0; i < ARRAY_SIZE(cmd_line_options); i++) {
 		const char *help_text = cmd_line_options[i].help_text;
+		int printed_length;
+		const char *separator;
 
-		if (strlen(help_text))
-			printf("%s\n", help_text);
+		/*
+		 * First print the short and long forms of the command line
+		 * option.
+		 */
+		printed_length = printf(" -%c,--%s",
+					cmd_line_options[i].opt.val,
+					cmd_line_options[i].opt.name);
+
+		/*
+		 * If there is something to print immediately after the
+		 * options, print it.
+		 */
+		separator = strchr(help_text, '%');
+		if (separator) {
+			char buffer[80];
+			size_t extra_size;
+
+			extra_size = separator - help_text;
+			if (extra_size >= sizeof(buffer)) {
+				fprintf(stderr, "misformatted help text: %s\n",
+					help_text);
+				exit(-1);
+			}
+			memcpy(buffer, help_text, extra_size);
+			buffer[extra_size] = '\0';
+			printed_length += printf(" %s", buffer);
+			help_text = separator + 1;
+		}
+
+		/*
+		 * If printed length exceeds or is too close to indent, print
+		 * help text on the next line.
+		 */
+		if (printed_length >= (indent - 1)) {
+			printf("\n");
+			printed_length = 0;
+		}
+
+		while (printed_length++ < indent)
+			printf(" ");
+		printf("%s\n", help_text);
 	}
 	printf("\n");
 	exit(errs ? update_error : noop);
