@@ -25,10 +25,12 @@
 #define CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE USB_CHARGE_MODE_SDP2
 #endif
 
-static struct {
+struct charge_mode_t {
 	uint8_t mode:7;
 	uint8_t inhibit_charging_in_suspend:1;
-} charge_mode[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
+} __pack;
+
+static struct charge_mode_t charge_mode[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
 
 /* GPIOs to enable/disable USB ports. Board specific. */
 extern const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
@@ -215,10 +217,10 @@ DECLARE_HOOK(HOOK_SYSJUMP, usb_charge_preserve_state, HOOK_PRIO_DEFAULT);
 
 static void usb_charge_init(void)
 {
-	const uint8_t *prev;
+	const struct charge_mode_t *prev;
 	int version, size, i;
 
-	prev = (const uint8_t *)system_get_jump_tag(USB_SYSJUMP_TAG,
+	prev = (const struct charge_mode_t *)system_get_jump_tag(USB_SYSJUMP_TAG,
 						    &version, &size);
 
 	if (!prev || version != USB_HOOK_VERSION ||
@@ -228,7 +230,8 @@ static void usb_charge_init(void)
 	}
 
 	for (i = 0; i < CONFIG_USB_PORT_POWER_SMART_PORT_COUNT; i++)
-		usb_charge_set_mode(i, prev[i], USB_ALLOW_SUSPEND_CHARGE);
+		usb_charge_set_mode(i, prev[i].mode,
+			prev[i].inhibit_charging_in_suspend);
 }
 DECLARE_HOOK(HOOK_INIT, usb_charge_init, HOOK_PRIO_DEFAULT);
 
