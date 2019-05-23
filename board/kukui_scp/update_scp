@@ -20,9 +20,7 @@ INFILE="build/kukui_scp/ec.bin"
 case "$2" in
 bin)
   ;;
-"") # Default: flat binary (only allows for SRAM to be loaded)
-  ;;
-elf)
+elf|"") # Default
   # ec.obj is an elf file that has the right memory layout to be loaded
   # from the AP/kernel.
   INFILE="build/kukui_scp/ec.obj"
