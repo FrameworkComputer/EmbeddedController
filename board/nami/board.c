@@ -1031,6 +1031,12 @@ static void board_init(void)
 		 */
 		swap(scancode_set2[0][4], scancode_set2[7][2]);
 #endif
+
+	isl923x_set_ac_prochot(
+		/* set ac prochot currentto 3328mA 0xD00, default 3072mA*/
+		ISL923X_PROCHOT_CURRENT_256 |
+		ISL923X_PROCHOT_CURRENT_1024 |
+		ISL923X_PROCHOT_CURRENT_2048);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

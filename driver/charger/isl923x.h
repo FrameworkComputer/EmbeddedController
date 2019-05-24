@@ -61,6 +61,14 @@
 #define ISL9238_SYS_VOLTAGE_REG_MAX 18304
 #define ISL923X_SYS_VOLTAGE_REG_MIN 2048
 
+/* PROCHOT# adapter prochot current setting in mA */
+#define ISL923X_PROCHOT_CURRENT_128   BIT(7)
+#define ISL923X_PROCHOT_CURRENT_256   BIT(8)
+#define ISL923X_PROCHOT_CURRENT_512   BIT(9)
+#define ISL923X_PROCHOT_CURRENT_1024  BIT(10)
+#define ISL923X_PROCHOT_CURRENT_2048  BIT(11)
+#define ISL923X_PROCHOT_CURRENT_4096  BIT(12)
+
 /* PROCHOT# debounce time and duration time in micro seconds */
 #define ISL923X_PROCHOT_DURATION_10000  (0 << 6)
 #define ISL923X_PROCHOT_DURATION_20000  BIT(6)
@@ -298,3 +306,11 @@ enum isl9237_fsm_state {
 
 #define I2C_ADDR_CHARGER ISL923X_ADDR
 #endif /* __CROS_EC_ISL923X_H */
+
+/**
+ * Initialize ac prochot to reach better performance
+ *
+ * @param ac_prochot: ISL923X_PROCHOT_CURRENT_*
+ * @return enum ec_error_list
+ */
+int isl923x_set_ac_prochot(uint16_t ac_prochot);
