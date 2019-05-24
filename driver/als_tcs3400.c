@@ -9,6 +9,7 @@
 #include "common.h"
 #include "console.h"
 #include "driver/als_tcs3400.h"
+#include "hooks.h"
 #include "hwtimer.h"
 #include "i2c.h"
 #include "math_util.h"
@@ -32,12 +33,37 @@ static inline int tcs3400_i2c_write8(const struct motion_sensor_t *s,
 	return i2c_write8(s->port, s->addr, reg, data);
 }
 
+static void tcs3400_read_deferred(void)
+{
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ALS_TCS3400_INT_EVENT, 0);
+}
+DECLARE_DEFERRED(tcs3400_read_deferred);
+
+/* convert ATIME register to integration time, in microseconds */
+static int tcs3400_get_integration_time(int atime)
+{
+	return 2780 * (256 - atime);
+}
+
 static int tcs3400_read(const struct motion_sensor_t *s, intv3_t v)
 {
 	int ret;
 
 	/* Enable power, ADC, and interrupt to start cycle */
 	ret = tcs3400_i2c_write8(s, TCS_I2C_ENABLE, TCS3400_MODE_COLLECTING);
+	if (ret)
+		return ret;
+
+	if (IS_ENABLED(CONFIG_ALS_TCS3400_EMULATED_IRQ_EVENT)) {
+		int atime;
+
+		ret = tcs3400_i2c_read8(s, TCS_I2C_ATIME, &atime);
+		if (ret)
+			return ret;
+
+		hook_call_deferred(&tcs3400_read_deferred_data,
+				tcs3400_get_integration_time(atime));
+	}
 
 	/*
 	 * If write succeeded, we've started the read process, but can't
@@ -45,10 +71,7 @@ static int tcs3400_read(const struct motion_sensor_t *s, intv3_t v)
 	 * to inform upper level that read data process is under way and data
 	 * will be delivered when available.
 	 */
-	if (ret == EC_SUCCESS)
-		ret = EC_RES_IN_PROGRESS;
-
-	return ret;
+	return EC_RES_IN_PROGRESS;
 }
 
 static int tcs3400_rgb_read(const struct motion_sensor_t *s, intv3_t v)
@@ -223,8 +246,9 @@ static int tcs3400_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		return ret;
 
 	if ((status & TCS_I2C_STATUS_RGBC_VALID) ||
-		((status & TCS_I2C_STATUS_ALS_IRQ) &&
-		(status & TCS_I2C_STATUS_ALS_VALID))) {
+			((status & TCS_I2C_STATUS_ALS_IRQ) &&
+			(status & TCS_I2C_STATUS_ALS_VALID)) ||
+			IS_ENABLED(CONFIG_ALS_TCS3400_EMULATED_IRQ_EVENT)) {
 		ret = tcs3400_post_events(s, last_interrupt_timestamp);
 		if (ret)
 			return ret;
