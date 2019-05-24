@@ -4852,9 +4852,7 @@ static int command_pd(int argc, char **argv)
 	else if (!strncasecmp(argv[1], "trysrc", 6)) {
 		int enable;
 
-		if (argc < 2) {
-			return EC_ERROR_PARAM_COUNT;
-		} else if (argc >= 3) {
+		if (argc >= 3) {
 			enable = strtoi(argv[2], &e, 10);
 			if (*e)
 				return EC_ERROR_PARAM3;
