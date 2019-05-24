@@ -15,6 +15,7 @@
 #include "common.h"
 #include "console.h"
 #include "driver/accelgyro_bmi160.h"
+#include "driver/als_tcs3400.h"
 #include "driver/battery/max17055.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/rt946x.h"
@@ -80,6 +81,7 @@ const struct i2c_port_t i2c_ports[] = {
 	{"battery",   I2C_PORT_BATTERY,   400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 	{"accelgyro", I2C_PORT_ACCEL,     400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 	{"bc12",      I2C_PORT_BC12,      400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
+	{"als",       I2C_PORT_ALS,       400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -431,8 +433,32 @@ int board_get_version(void)
 /* Mutexes */
 #ifdef SECTION_IS_RW
 static struct mutex g_lid_mutex;
+static struct mutex g_als_mutex;
 
 static struct bmi160_drv_data_t g_bmi160_data;
+
+static struct als_drv_data_t g_tcs3400_data = {
+	.als_cal.scale = 1,
+	.als_cal.uscale = 0,
+	.als_cal.offset = 0,
+};
+
+static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
+	.device_scale = 1,
+	.device_uscale = 0,
+	.rgb_cal[X] = {
+		.scale = ALS_CHANNEL_SCALE(1),
+		.offset = 0,
+	},
+	.rgb_cal[Y] = {
+		.scale = ALS_CHANNEL_SCALE(1),
+		.offset = 0,
+	},
+	.rgb_cal[Z] = {
+		.scale = ALS_CHANNEL_SCALE(1),
+		.offset = 0,
+	},
+};
 
 #ifdef BOARD_KRANE
 /* Matrix to rotate accelerometer into standard reference frame */
@@ -522,6 +548,42 @@ struct motion_sensor_t motion_sensors[] = {
 	 .max_frequency = BMM150_MAG_MAX_FREQ(SPECIAL),
 	},
 #endif /* CONFIG_MAG_BMI160_BMM150 */
+	[CLEAR_ALS] = {
+	 .name = "Clear Light",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_TCS3400,
+	 .type = MOTIONSENSE_TYPE_LIGHT,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &tcs3400_drv,
+	 .drv_data = &g_tcs3400_data,
+	 .mutex = &g_als_mutex,
+	 .port = I2C_PORT_ALS,
+	 .addr = TCS3400_I2C_ADDR,
+	 .rot_standard_ref = NULL,
+	 .default_range = 0x10000, /* scale = 1x, uscale = 0 */
+	 .min_frequency = TCS3400_LIGHT_MIN_FREQ,
+	 .max_frequency = TCS3400_LIGHT_MAX_FREQ,
+	 .config = {
+		 /* Run ALS sensor in S0 */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 1000,
+		},
+	 },
+	},
+	[RGB_ALS] = {
+	.name = "RGB Light",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_TCS3400,
+	 .type = MOTIONSENSE_TYPE_LIGHT_RGB,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &tcs3400_rgb_drv,
+	 .drv_data = &g_tcs3400_rgb_data,
+	 /*.port = I2C_PORT_ALS,*/ /* Unused. RGB channels read by CLEAR_ALS. */
+	 .rot_standard_ref = NULL,
+	 .default_range = 0x10000, /* scale = 1x, uscale = 0 */
+	 .min_frequency = 0, /* 0 indicates we should not use sensor directly */
+	 .max_frequency = 0, /* 0 indicates we should not use sensor directly */
+	},
 	[VSYNC] = {
 	 .name = "Camera vsync",
 	 .active_mask = SENSOR_ACTIVE_S0,
@@ -535,6 +597,9 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+const struct motion_sensor_t *motion_als_sensors[] = {
+	&motion_sensors[CLEAR_ALS],
+};
 
 #endif /* SECTION_IS_RW */
 
