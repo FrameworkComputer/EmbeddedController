@@ -417,9 +417,6 @@ int allocate_mode(int port, uint16_t svid)
 
 	/* Allocate ...  if SVID == 0 enter default supported policy */
 	for (i = 0; i < supported_modes_cnt; i++) {
-		if (!&supported_modes[i])
-			continue;
-
 		for (j = 0; j < pe[port].svid_cnt; j++) {
 			struct svdm_svid_data *svidp = &pe[port].svids[j];
 			if ((svidp->svid != supported_modes[i].svid) ||
