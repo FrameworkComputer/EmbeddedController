@@ -512,8 +512,8 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 	int reg = TCPC_REG_TX_DATA;
 	int rv, cnt = 4*PD_HEADER_CNT(header);
 
-	/* TX_BYTE_CNT includes 2 bytes for message header */
-	rv = tcpc_write(port, TCPC_REG_TX_BYTE_CNT, cnt + 2);
+	/* TX_BYTE_CNT includes extra bytes for message header */
+	rv = tcpc_write(port, TCPC_REG_TX_BYTE_CNT, cnt + sizeof(header));
 
 	rv |= tcpc_write16(port, TCPC_REG_TX_HDR, header);
 
@@ -522,16 +522,14 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 		return rv;
 
 	if (cnt > 0) {
-		tcpc_write_block(port, reg, (const uint8_t *)data, cnt);
+		rv = tcpc_write_block(port, reg, (const uint8_t *)data, cnt);
+
+		/* If tcpc read fails, return error */
+		if (rv)
+			return rv;
 	}
 
-	/* If tcpc read fails, return error */
-	if (rv)
-		return rv;
-
-	rv = tcpc_write(port, TCPC_REG_TRANSMIT, TCPC_REG_TRANSMIT_SET(type));
-
-	return rv;
+	return tcpc_write(port, TCPC_REG_TRANSMIT, TCPC_REG_TRANSMIT_SET(type));
 }
 
 #ifndef CONFIG_USB_PD_TCPC_LOW_POWER
