@@ -41,6 +41,11 @@ endif
 
 PROJECT?=ec
 
+# An empty string.
+# "-DMACRO" leads to MACRO=1.  Define an empty string "-DMACRO=" to take
+# advantage of IS_ENABLED magic macro, which only allows an empty string.
+EMPTY=
+
 # Output directory for build objects
 ifdef CTS_MODULE
 # CTS builds need different directories per board per suite.
@@ -98,7 +103,7 @@ endif
 # Baseboard directory
 ifneq (,$(BASEBOARD))
 BASEDIR:=baseboard/$(BASEBOARD)
-CFLAGS_BASEBOARD=-DHAS_BASEBOARD -DBASEBOARD_$(UC_BASEBOARD)
+CFLAGS_BASEBOARD=-DHAS_BASEBOARD=$(EMPTY) -DBASEBOARD_$(UC_BASEBOARD)=$(EMPTY)
 include $(BASEDIR)/build.mk
 else
 # If BASEBOARD is not defined, then assign BASEDIR to BDIR. This avoids
@@ -130,8 +135,8 @@ includes+=cts/$(CTS_MODULE) cts
 endif
 ifeq "$(TEST_BUILD)" "y"
 	_tsk_lst_file:=ec.tasklist
-	_tsk_lst_flags:=$(if $(TEST_FUZZ),-Ifuzz,-Itest) -DTEST_BUILD -imacros \
-			$(PROJECT).tasklist
+	_tsk_lst_flags:=$(if $(TEST_FUZZ),-Ifuzz,-Itest) -DTEST_BUILD=$(EMPTY) \
+			-imacros $(PROJECT).tasklist
 else ifdef CTS_MODULE
 	_tsk_lst_file:=ec.tasklist
 	_tsk_lst_flags:=-I cts/$(CTS_MODULE) -Icts -DCTS_MODULE=$(CTS_MODULE) \
@@ -141,13 +146,13 @@ else
 	_tsk_lst_flags:=
 endif
 
-_tsk_lst_flags+=-I$(BDIR) -DBOARD_$(UC_BOARD) -I$(BASEDIR) \
-		-DBASEBOARD_$(UC_BASEBOARD) -D_MAKEFILE \
-		-imacros $(_tsk_lst_file)
+_tsk_lst_flags+=-I$(BDIR) -DBOARD_$(UC_BOARD)=$(EMPTY) -I$(BASEDIR) \
+		-DBASEBOARD_$(UC_BASEBOARD)=$(EMPTY) \
+		-D_MAKEFILE=$(EMPTY) -imacros $(_tsk_lst_file)
 
-_tsk_lst_ro:=$(shell $(CPP) -P -DSECTION_IS_RO \
+_tsk_lst_ro:=$(shell $(CPP) -P -DSECTION_IS_RO=$(EMPTY) \
 	$(_tsk_lst_flags) include/task_filter.h)
-_tsk_lst_rw:=$(shell $(CPP) -P -DSECTION_IS_RW \
+_tsk_lst_rw:=$(shell $(CPP) -P -DSECTION_IS_RW=$(EMPTY) \
 	$(_tsk_lst_flags) include/task_filter.h)
 
 _tsk_cfg_ro:=$(foreach t,$(_tsk_lst_ro) ,HAS_TASK_$(t))
@@ -157,22 +162,22 @@ _tsk_cfg:= $(filter $(_tsk_cfg_ro), $(_tsk_cfg_rw))
 _tsk_cfg_ro:= $(filter-out $(_tsk_cfg), $(_tsk_cfg_ro))
 _tsk_cfg_rw:= $(filter-out $(_tsk_cfg), $(_tsk_cfg_rw))
 
-CPPFLAGS_RO+=$(foreach t,$(_tsk_cfg_ro),-D$(t)) \
-		$(foreach t,$(_tsk_cfg_rw),-D$(t)_RW)
-CPPFLAGS_RW+=$(foreach t,$(_tsk_cfg_rw),-D$(t)) \
-		$(foreach t,$(_tsk_cfg_ro),-D$(t)_RO)
-CPPFLAGS+=$(foreach t,$(_tsk_cfg),-D$(t))
+CPPFLAGS_RO+=$(foreach t,$(_tsk_cfg_ro),-D$(t)=$(EMPTY)) \
+		$(foreach t,$(_tsk_cfg_rw),-D$(t)_RW=$(EMPTY))
+CPPFLAGS_RW+=$(foreach t,$(_tsk_cfg_rw),-D$(t)=$(EMPTY)) \
+		$(foreach t,$(_tsk_cfg_ro),-D$(t)_RO=$(EMPTY))
+CPPFLAGS+=$(foreach t,$(_tsk_cfg),-D$(t)=$(EMPTY))
 ifneq ($(ENV_VARS),)
-CPPFLAGS += -DINCLUDE_ENV_CONFIG
+CPPFLAGS += -DINCLUDE_ENV_CONFIG=$(EMPTY)
 CFLAGS += -I$(realpath $(out))
 endif
 # Get the CONFIG_ and VARIANT_ options that are defined for this target and make
 # them into variables available to this build script
 _flag_cfg_ro:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
-	-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RO include/config.h | \
+	-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RO=$(EMPTY) include/config.h | \
 	grep -o "\#define \(CONFIG\|VARIANT\)_[A-Z0-9_]*" | cut -c9- | sort)
 _flag_cfg_rw:=$(_tsk_cfg_rw) $(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
-	-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RW include/config.h | \
+	-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RW=$(EMPTY) include/config.h | \
 	grep -o "\#define \(CONFIG\|VARIANT\)_[A-Z0-9_]*" | cut -c9- | sort)
 
 _flag_cfg:= $(filter $(_flag_cfg_ro), $(_flag_cfg_rw))

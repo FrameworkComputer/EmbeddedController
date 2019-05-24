@@ -61,34 +61,38 @@ CXXFLAGS_WARN = $(COMMON_WARN)
 CFLAGS_DEBUG= -g
 CFLAGS_DEBUG+=$(CFLAGS_DEBUG_CHIP)
 CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) ) -I.
-CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD \
+CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD=$(EMPTY) \
                                -DTEST_TASKFILE=$(PROJECT).tasklist,) \
             $(if $(CTS_MODULE), $(CFLAGS_CTS)) \
-            $(if $(EMU_BUILD),-DEMU_BUILD) \
+            $(if $(EMU_BUILD),-DEMU_BUILD=$(EMPTY)) \
             $(if $($(PROJECT)-scale),-DTEST_TIME_SCALE=$($(PROJECT)-scale)) \
-            -DTEST_$(PROJECT) -DTEST_$(UC_PROJECT) \
+            -DTEST_$(PROJECT)=$(EMPTY) -DTEST_$(UC_PROJECT)=$(EMPTY) \
             $(if $(TEST_ASAN),-fsanitize=address) \
             $(if $(TEST_MSAN),-fsanitize=memory) \
             $(if $(TEST_UBSAN),$(UBSAN_FLAGS)) \
-            $(if $(TEST_FUZZ),-fsanitize=fuzzer-no-link -DTEST_FUZZ)
+            $(if $(TEST_FUZZ),-fsanitize=fuzzer-no-link -DTEST_FUZZ=$(EMPTY))
 CFLAGS_COVERAGE=$(if $(TEST_COVERAGE),-fprofile-arcs -ftest-coverage \
-				      -DTEST_COVERAGE,)
+				      -DTEST_COVERAGE=$(EMPTY),)
 CFLAGS_DEFINE=-DOUTDIR=$(out)/$(BLD) -DCHIP=$(CHIP) -DBOARD_TASKFILE=$(_tsk_lst_file) \
               -DBOARD=$(BOARD) -DCORE=$(CORE) -DPROJECT=$(PROJECT) \
               -DCHIP_VARIANT=$(CHIP_VARIANT) -DCHIP_FAMILY=$(CHIP_FAMILY) \
-              -DBOARD_$(UC_BOARD) -DCHIP_$(UC_CHIP) -DCORE_$(UC_CORE) \
-              -DCHIP_VARIANT_$(UC_CHIP_VARIANT) -DCHIP_FAMILY_$(UC_CHIP_FAMILY) \
-              -DFINAL_OUTDIR=$(out) -DPROTOBUF_MIN_PROTOC_VERSION=0 \
+              -DBOARD_$(UC_BOARD)=$(EMPTY) \
+	      -DCHIP_$(UC_CHIP)=$(EMPTY) \
+	      -DCORE_$(UC_CORE)=$(EMPTY) \
+              -DCHIP_VARIANT_$(UC_CHIP_VARIANT)=$(EMPTY) \
+	      -DCHIP_FAMILY_$(UC_CHIP_FAMILY)=$(EMPTY) \
+	      -DFINAL_OUTDIR=$(out) \
+	      -DPROTOBUF_MIN_PROTOC_VERSION=0 \
               $(CFLAGS_BASEBOARD)
 CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
 	 $(EXTRA_CFLAGS) $(CFLAGS_COVERAGE) $(LATE_CFLAGS_DEFINE) \
-	-DSECTION_IS_$(BLD) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
+	-DSECTION_IS_$(BLD)=$(EMPTY) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
 BUILD_CPPFLAGS=$(CFLAGS_DEFINE) -Icore/host $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
 	 $(EXTRA_CFLAGS) $(CFLAGS_COVERAGE) $(LATE_CFLAGS_DEFINE) \
-	 -DSECTION_IS_$(BLD) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
+	 -DSECTION_IS_$(BLD)=$(EMPTY) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
 HOST_CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
 	 $(EXTRA_CFLAGS) $(CFLAGS_COVERAGE) $(LATE_CFLAGS_DEFINE) \
-	 -DSECTION_IS_$(BLD) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
+	 -DSECTION_IS_$(BLD)=$(EMPTY) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
 ifneq ($(BOARD),host)
 CPPFLAGS+=-ffreestanding -fno-builtin -nostdinc -nostdlib
 CPPFLAGS+=-Ibuiltin/
@@ -101,7 +105,7 @@ CFLAGS+= -fno-delete-null-pointer-checks
 ifneq ($(cc-name),clang)
 CFLAGS+= -fconserve-stack
 endif
-CFLAGS+= -DCHROMIUM_EC
+CFLAGS+= -DCHROMIUM_EC=$(EMPTY)
 CXXFLAGS+=-DPROTOBUF_INLINE_NOT_IN_HEADERS=0
 
 FTDIVERSION:=$(shell $(PKG_CONFIG) --modversion libftdi1 2>/dev/null)
@@ -126,7 +130,8 @@ endif
 
 BUILD_CFLAGS = $(LIBFTDIUSB_CFLAGS) $(BUILD_CPPFLAGS) -O3 $(CFLAGS_DEBUG)
 BUILD_CFLAGS += $(CFLAGS_WARN)
-HOST_CFLAGS=$(HOST_CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN) -DHOST_TOOLS_BUILD
+HOST_CFLAGS=$(HOST_CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN) \
+	    -DHOST_TOOLS_BUILD=$(EMPTY)
 HOST_CFLAGS+=$(LIBFTDIUSB_CFLAGS)
 ifneq (${SYSROOT},)
   LDFLAGS_EXTRA+=--sysroot=${SYSROOT}

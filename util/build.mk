@@ -52,7 +52,7 @@ $(out)/util/genvif: $(genvif-pd-objs) board/$(BOARD)/board.h \
 $(out)/util/genvif: BUILD_LDFLAGS+=$(genvif-pd-objs) -flto
 
 STANDALONE_FLAGS=-ffreestanding -fno-builtin -nostdinc \
-			-Ibuiltin/ -D"__keep= " -DVIF_BUILD
+			-Ibuiltin/ -D"__keep= " -DVIF_BUILD=$(EMPTY)
 
 $(out)/util/%/usb_pd_policy.o: %/usb_pd_policy.c
 	-@ mkdir -p $(@D)
@@ -63,7 +63,7 @@ ifneq ($(CONFIG_BOOTBLOCK),)
 build-util-bin += gen_emmc_transfer_data
 
 # Bootblock is only packed in RO image.
-$(out)/util/gen_emmc_transfer_data: BUILD_LDFLAGS += -DSECTION_IS_RO
+$(out)/util/gen_emmc_transfer_data: BUILD_LDFLAGS += -DSECTION_IS_RO=$(EMPTY)
 endif # CONFIG_BOOTBLOCK
 
 ifneq ($(CONFIG_IPI),)
@@ -78,7 +78,7 @@ ifneq ($(CONFIG_TOUCHPAD_HASH_FW),)
 build-util-bin += gen_touchpad_hash
 
 # Assume RW section (touchpad FW must be identical for both RO+RW)
-$(out)/util/gen_touchpad_hash: BUILD_LDFLAGS += -DSECTION_IS_RW
+$(out)/util/gen_touchpad_hash: BUILD_LDFLAGS += -DSECTION_IS_RW=$(EMPTY)
 
 OPENSSL_CFLAGS := $(shell $(PKG_CONFIG) --libs openssl)
 OPENSSL_LDFLAGS := $(shell $(PKG_CONFIG) --libs openssl)

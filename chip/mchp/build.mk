@@ -80,7 +80,7 @@ objs_lfw += $(out)/RW/common/version.o
 dirs-y+=chip/$(CHIP)/lfw
 
 # objs with -lfw suffix are to include lfw's gpio
-$(out)/RW/%-lfw.o: private CC+=-I$(BDIR)/lfw -DLFW
+$(out)/RW/%-lfw.o: private CC+=-I$(BDIR)/lfw -DLFW=$(EMPTY)
 # Remove the lto flag for the loader.  It actually causes it to bloat in size.
 ifeq ($(CONFIG_LTO),y)
 $(out)/RW/%-lfw.o: private CFLAGS_CPU := $(filter-out -flto, $(CFLAGS_CPU))

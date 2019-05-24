@@ -68,7 +68,7 @@ board-y += wp.o
 board-$(CONFIG_U2F) += u2f.o
 
 ifneq ($(H1_RED_BOARD),)
-CPPFLAGS += -DH1_RED_BOARD
+CPPFLAGS += -DH1_RED_BOARD=$(EMPTY)
 endif
 
 # Build and link with an external library

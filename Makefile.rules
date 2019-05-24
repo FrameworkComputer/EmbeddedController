@@ -55,7 +55,7 @@ cmd_libec = $(LD) -r $^ -o $@.1.o && \
 	$(OBJCOPY) --localize-hidden $@.1.o $@.2.o && \
 	$(AR) scr $@ $@.2.o
 cmd_lds = $(CPP) -P -C -MMD -MF $@.d -MT $@ $(CPPFLAGS) $< -o $@
-cmd_lds_b = $(cmd_lds) -DRW_B_LDS
+cmd_lds_b = $(cmd_lds) -DRW_B_LDS=$(EMPTY)
 # Allow obj_to_bin to be overridden by board or chip specific commands
 cmd_obj_to_bin ?= $(OBJCOPY) --gap-fill=0xff -O binary $^ $(out)/$*.bin.tmp
 cmd_flat_to_obj = $(CC) -Wl,-T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
@@ -110,8 +110,8 @@ cmd_sharedlib_elf = $(CC) $(libsharedobjs_deps) \
 	-o $(out)/$(SHOBJLIB)/$(SHOBJLIB).elf \
 	-Wl,-Map,$(out)/$(SHOBJLIB)/$(SHOBJLIB).map
 cmd_c_to_taskinfo = $(BUILDCC) \
-	$(filter-out -DSECTION_IS_$(BLD),$(BUILD_CFLAGS)) -DSECTION_IS_$(3) \
-	-MMD -MF $@.d -c $< -flto -o $@
+	$(filter-out -DSECTION_IS_$(BLD)=$(EMPTY),$(BUILD_CFLAGS)) \
+	-DSECTION_IS_$(3)=$(EMPTY) -MMD -MF $@.d -c $< -flto -o $@
 cmd_link_taskinfo = $(BUILDCC) $(BUILD_CFLAGS) --shared -fPIC $^ \
 	$(BUILD_LDFLAGS) -flto -o $@
 cmd_proto_to_cxx = $(PROTOC) -I. --cpp_out=$(out)/gen $^
@@ -504,7 +504,7 @@ $(out)/gen/%.pb.cc:%.proto
 $(out)/gen/%.pb.h:%.proto
 	$(call quiet,proto_to_cxx,PROTOC )
 
-$(out)/$(SHOBJLIB)/%.o: override LATE_CFLAGS_DEFINE:=-DSHAREDLIB_IMAGE
+$(out)/$(SHOBJLIB)/%.o: override LATE_CFLAGS_DEFINE:=-DSHAREDLIB_IMAGE=$(EMPTY)
 $(out)/$(SHOBJLIB)/%.o:%.c
 	$(call quiet,c_to_o,CC     )
 
@@ -571,7 +571,7 @@ $(npcx-monitor-fw-bin):
 	-@ $(OBJCOPY) -O binary $(out)/$(npcx-monitor-fw).elf $@
 
 $(out)/$(npcx-monitor-hdr)_ro.o:$(npcx-monitor-hdr).c
-	-@ $(CC) $(CFLAGS) -D SECTION_IS_RO -MMD -c $(npcx-monitor-hdr).c -o $@
+	-@ $(CC) $(CFLAGS) -DSECTION_IS_RO=$(EMPTY) -MMD -c $(npcx-monitor-hdr).c -o $@
 
 $(npcx-monitor-hdr-ro-bin):$(out)/$(npcx-monitor-hdr)_ro.o
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
@@ -627,14 +627,14 @@ print-configs:
 	@echo "----------------------------------------------------------------"
 	@echo "| RO Config:                                                   |"
 	@echo "----------------------------------------------------------------"
-	@$(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
-		-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RO include/config.h | \
+	@$(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) -I$(BASEDIR) -I$(BDIR) \
+		-DSECTION_IS_RO=$(EMPTY) include/config.h | \
 		grep "#define CONFIG_" | cut -c9- | sort
 	@echo "----------------------------------------------------------------"
 	@echo "| RW Config:                                                   |"
 	@echo "----------------------------------------------------------------"
-	@$(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
-		-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RW include/config.h | \
+	@$(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) -I$(BASEDIR) -I$(BDIR) \
+		-DSECTION_IS_RW=$(EMPTY) include/config.h | \
 		grep "#define CONFIG_" | cut -c9- | sort
 
 .PHONY: print-chip-variant
