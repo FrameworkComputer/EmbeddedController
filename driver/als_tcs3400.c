@@ -35,16 +35,9 @@ static inline int tcs3400_i2c_write8(const struct motion_sensor_t *s,
 static int tcs3400_read(const struct motion_sensor_t *s, intv3_t v)
 {
 	int ret;
-	int data;
 
-	/* Enable the ADC to start cycle */
-	ret = tcs3400_i2c_read8(s, TCS_I2C_ENABLE, &data);
-	if (ret)
-		return ret;
-
-	/* mask value to assure writing 0 to reserved bits */
-	data = (data & ~TCS_I2C_ENABLE_MASK) | TCS3400_MODE_COLLECTING;
-	ret = tcs3400_i2c_write8(s, TCS_I2C_ENABLE, data);
+	/* Enable power, ADC, and interrupt to start cycle */
+	ret = tcs3400_i2c_write8(s, TCS_I2C_ENABLE, TCS3400_MODE_COLLECTING);
 
 	/*
 	 * If write succeeded, we've started the read process, but can't
@@ -225,12 +218,9 @@ static int tcs3400_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		return ret;
 
 	/* Disable future interrupts */
-	ret = tcs3400_i2c_read8(s, TCS_I2C_ENABLE, &status);
+	ret = tcs3400_i2c_write8(s, TCS_I2C_ENABLE, TCS3400_MODE_IDLE);
 	if (ret)
 		return ret;
-
-	ret = tcs3400_i2c_write8(s, TCS_I2C_ENABLE,
-			(status & ~TCS_I2C_ENABLE_INT_ENABLE));
 
 	if ((status & TCS_I2C_STATUS_RGBC_VALID) ||
 		((status & TCS_I2C_STATUS_ALS_IRQ) &&
@@ -240,7 +230,12 @@ static int tcs3400_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 			return ret;
 	}
 
-	ret = tcs3400_i2c_write8(s, TCS_I2C_AICLEAR, 0);
+	tcs3400_i2c_write8(s, TCS_I2C_AICLEAR, 0);
+
+	/* Disable ADC and turn off internal oscillator */
+	ret = tcs3400_i2c_write8(s, TCS_I2C_ENABLE, TCS3400_MODE_SUSPEND);
+	if (ret)
+		return ret;
 
 	return ret;
 }
