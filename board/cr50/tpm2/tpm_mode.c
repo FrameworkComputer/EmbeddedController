@@ -51,8 +51,11 @@ static enum vendor_cmd_rc process_tpm_mode(struct vendor_cmd_params *p)
 
 	buffer = (uint8_t *)p->buffer;
 	if (p->in_size == sizeof(uint8_t)) {
-		if (s_tpm_mode != TPM_MODE_ENABLED_TENTATIVE)
+
+		if (!board_tpm_mode_change_allowed() ||
+		    (s_tpm_mode != TPM_MODE_ENABLED_TENTATIVE))
 			return VENDOR_RC_NOT_ALLOWED;
+
 		mode_val = buffer[0];
 
 		switch (mode_val) {

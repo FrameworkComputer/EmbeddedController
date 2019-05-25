@@ -81,10 +81,16 @@
 #define BOARD_NO_INA_SUPPORT             BIT(19)
 
 /*
+ * The board allows commands to stop TPM (Wilco, Campfire, etc.)
+ */
+#define BOARD_ALLOW_CHANGE_TPM_MODE       BIT(20)
+
+/*
  * Macro to capture all properties related to board strapping pins. This must be
  * updated if additional strap related properties are added.
  */
 #define BOARD_ALL_PROPERTIES ( \
+	BOARD_ALLOW_CHANGE_TPM_MODE | \
 	BOARD_CLOSED_LOOP_RESET | \
 	BOARD_CLOSED_SOURCE_SET1 | \
 	BOARD_DEEP_SLEEP_DISABLED | \

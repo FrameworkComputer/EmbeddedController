@@ -175,6 +175,11 @@ int board_has_ina_support(void)
 	return !(board_properties & BOARD_NO_INA_SUPPORT);
 }
 
+int board_tpm_mode_change_allowed(void)
+{
+	return !!(board_properties & BOARD_ALLOW_CHANGE_TPM_MODE);
+}
+
 /* Get header address of the backup RW copy. */
 const struct SignedHeader *get_other_rw_addr(void)
 {
@@ -285,7 +290,8 @@ static struct board_cfg board_cfg_table[] = {
 		.strap_cfg = 0x70,
 		.board_properties = BOARD_SLAVE_CONFIG_I2C |
 			BOARD_USE_PLT_RESET | BOARD_WP_DISABLE_DELAY |
-			BOARD_CLOSED_SOURCE_SET1 | BOARD_NO_INA_SUPPORT,
+			BOARD_CLOSED_SOURCE_SET1 | BOARD_NO_INA_SUPPORT |
+			BOARD_ALLOW_CHANGE_TPM_MODE,
 	},
 
 };
