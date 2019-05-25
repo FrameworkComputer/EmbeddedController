@@ -29,14 +29,4 @@ void nvmem_wipe_cache(void)
 	memset(&gp.phProof, 0, sizeof(gp.phProof));
 	memset(&gp.shProof, 0, sizeof(gp.shProof));
 	memset(&gp.ehProof, 0, sizeof(gp.ehProof));
-
-	NvWriteReserved(NV_OWNER_AUTH, &gp.ownerAuth);
-	NvWriteReserved(NV_ENDORSEMENT_AUTH, &gp.endorsementAuth);
-	NvWriteReserved(NV_LOCKOUT_AUTH, &gp.lockoutAuth);
-	NvWriteReserved(NV_EP_SEED, &gp.EPSeed);
-	NvWriteReserved(NV_SP_SEED, &gp.SPSeed);
-	NvWriteReserved(NV_PP_SEED, &gp.PPSeed);
-	NvWriteReserved(NV_PH_PROOF, &gp.phProof);
-	NvWriteReserved(NV_SH_PROOF, &gp.shProof);
-	NvWriteReserved(NV_EH_PROOF, &gp.ehProof);
 }
