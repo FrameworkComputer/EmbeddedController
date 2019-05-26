@@ -140,7 +140,11 @@
 
 /* Battery parameters for max17055 ModelGauge m5 algorithm. */
 #define BATTERY_MAX17055_RSENSE             5     /* m-ohm */
+#ifdef BOARD_KRANE
+#define BATTERY_DESIRED_CHARGING_CURRENT    3500  /* mA */
+#else
 #define BATTERY_DESIRED_CHARGING_CURRENT    2000  /* mA */
+#endif
 
 #define PD_OPERATING_POWER_MW 15000
 #define PD_MAX_POWER_MW       ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
