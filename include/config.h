@@ -776,6 +776,14 @@
 #undef CONFIG_CHARGER_MT6370_BACKLIGHT
 
 /*
+ * MT6370 BC1.2 USB-PHY control.
+ * If defined, USB-PHY connection is controlled by GPIO_BC12_DET_EN.
+ * Assert GPIO_BC12_DET_EN to detect BC1.2 device, and deassert
+ * GPIO_BC12_DET_EN to mux USB-PHY back.
+ */
+#undef CONFIG_CHARGER_MT6370_BC12_GPIO
+
+/*
  * Enable/disable system power monitor PSYS function: this enables output
  * from charger chip to SoC.
  */
