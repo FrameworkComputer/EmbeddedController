@@ -10,7 +10,7 @@
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
-void oz554_board_init(void)
+__override void oz554_board_init(void)
 {
 	int pin_status = 0;
 

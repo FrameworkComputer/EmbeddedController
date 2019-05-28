@@ -9,8 +9,13 @@
 #define __CROS_EC_OZ554_H
 
 #include "gpio.h"
+#include "common.h"
 
-void oz554_board_init(void) __attribute__((weak));
+/*
+ * Overridable board initialization.  Should be overridden by a board
+ * specific function if the default is not appropriate
+ */
+__override_proto void oz554_board_init(void);
 
 /**
  * Update oz554 configuration array (oz554_conf).
