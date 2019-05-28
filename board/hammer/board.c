@@ -303,7 +303,7 @@ int board_get_entropy(void *buffer, int len)
 /*
  * Generate a USB serial number from unique chip ID.
  */
-const char *board_read_serial(void)
+__override const char *board_read_serial(void)
 {
 	static char str[CONFIG_SERIALNO_LEN];
 
@@ -322,7 +322,7 @@ const char *board_read_serial(void)
 	return str;
 }
 
-int board_write_serial(const char *serialno)
+__override int board_write_serial(const char *serialno)
 {
 	return 0;
 }
