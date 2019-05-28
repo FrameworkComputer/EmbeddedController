@@ -85,11 +85,6 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(port);
 }
 
-static void hdmi_hpd_interrupt(enum gpio_signal signal)
-{
-	baseboard_mst_enable_control(MST_HDMI, gpio_get_level(signal));
-}
-
 static void bc12_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -381,50 +376,12 @@ static void setup_fans(void)
 	thermal_params[TEMP_SENSOR_2] = thermal_a;
 }
 
-/* Sets the gpio flags correct taking into account warm resets */
-static void reset_gpio_flags(enum gpio_signal signal, int flags)
-{
-	/*
-	 * If the system was already on, we cannot set the value otherwise we
-	 * may change the value from the previous image which could cause a
-	 * brownout.
-	 */
-	if (system_is_reboot_warm() || system_jumped_to_this_image())
-		flags &= ~(GPIO_LOW | GPIO_HIGH);
-
-	gpio_set_flags(signal, flags);
-}
-
-/* Runtime GPIO defaults */
-enum gpio_signal gpio_en_pp5000_a = GPIO_EN_PP5000_A_V1;
-
-static void board_gpio_set_pp5000(void)
-{
-	uint32_t board_id = 0;
-
-	/* Errors will count as board_id 0 */
-	cbi_get_board_version(&board_id);
-
-	if (board_id == 0) {
-		reset_gpio_flags(GPIO_EN_PP5000_A_V0, GPIO_OUT_LOW);
-		/* Change runtime default for V0 */
-		gpio_en_pp5000_a = GPIO_EN_PP5000_A_V0;
-	} else if (board_id >= 1) {
-		reset_gpio_flags(GPIO_EN_PP5000_A_V1, GPIO_OUT_LOW);
-	}
-
-}
-
 static void board_init(void)
 {
 	/* Initialize Fans */
 	setup_fans();
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
-	/* Enable HDMI HPD interrupt. */
-	gpio_enable_interrupt(GPIO_HDMI_CONN_HPD);
-	/* Select correct gpio signal for PP5000_A control */
-	board_gpio_set_pp5000();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

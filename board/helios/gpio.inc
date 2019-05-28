@@ -16,7 +16,7 @@ GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, ex
 
 /* Power sequencing interrupts */
 GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SIGNALS
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
 GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_S4_L,             PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
@@ -35,8 +35,6 @@ GPIO_INT(USB_C1_TCPC_INT_ODL,  PIN(F, 5), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C0_BC12_INT_ODL,  PIN(9, 5), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C1_BC12_INT_ODL,  PIN(E, 4), GPIO_INT_FALLING, bc12_interrupt)
 
-GPIO_INT(HDMI_CONN_HPD,        PIN(7, 2), GPIO_INT_BOTH, hdmi_hpd_interrupt)
-
 /* Volume button interrupts */
 GPIO_INT(EC_VOLDN_BTN_ODL,     PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,     PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
@@ -47,8 +45,7 @@ GPIO(PCH_WAKE_L,               PIN(7, 4), GPIO_ODR_HIGH)        /* EC_PCH_WAKE_O
 GPIO(PCH_PWRBTN_L,             PIN(C, 1), GPIO_ODR_HIGH)        /* EC_PCH_PWR_BTN_ODL */
 
 /* Power Sequencing Signals */
-GPIO(EN_PP5000_A_V1,           PIN(A, 4), GPIO_DEFAULT)
-GPIO(EN_PP5000_A_V0,           PIN(7, 3), GPIO_DEFAULT)
+GPIO(EN_PP5000_A,              PIN(A, 4), GPIO_OUT_LOW)
 GPIO(EN_A_RAILS,               PIN(A, 3), GPIO_OUT_LOW)
 GPIO(EC_PCH_RSMRST_L,          PIN(A, 6), GPIO_OUT_LOW)
 GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)
@@ -70,11 +67,11 @@ GPIO(EC_BATT_PRES_ODL,         PIN(E, 1), GPIO_INPUT)
 GPIO(LED_1_L,                  PIN(C, 4), GPIO_OUT_HIGH)        /* Yellow (hatch) */
 GPIO(LED_2_L,                  PIN(C, 3), GPIO_OUT_HIGH)        /* White (hatch) */
 GPIO(LED_3_L,                  PIN(C, 2), GPIO_OUT_HIGH)
-GPIO(LED_4_L,                  PIN(6, 0), GPIO_OUT_HIGH)
 GPIO(EC_KB_BL_EN,              PIN(8, 6), GPIO_OUT_LOW)         /* Keyboard backlight */
 GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
-GPIO(EN_MST,                   PIN(9, 6), GPIO_OUT_LOW)
 
+/* TODO (b/133788856): this is a NC on Helios, but Hatch baseboard depends on this signal */
+GPIO(EN_MST,                   PIN(9, 6), GPIO_INPUT | GPIO_PULL_DOWN)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,                 PIN(B, 5), GPIO_INPUT |
@@ -99,8 +96,7 @@ ALTERNATE(PIN_MASK(3, 0x03), 0, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT)       /* KS
 ALTERNATE(PIN_MASK(2, 0xFC), 0, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT)       /* KSI_02-07 */
 ALTERNATE(PIN_MASK(2, 0x03), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)       /* KSO_00-01 */
 ALTERNATE(PIN_MASK(1, 0x7F), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)       /* KSO_03-09 */
-ALTERNATE(PIN_MASK(0, 0xF0), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)       /* KSO_10-13 */
-ALTERNATE(PIN_MASK(8, 0x04), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)       /* KSO_14 */
+ALTERNATE(PIN_MASK(0, 0xE0), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)       /* KSO_10-12 */
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(B, 0x30), 0, MODULE_I2C, (GPIO_INPUT | GPIO_SEL_1P8V))  /* I2C0 1.8V */
