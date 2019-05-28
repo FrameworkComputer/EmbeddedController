@@ -70,6 +70,8 @@ void cpu_invalidate_dcache(void)
 	SCP_CACHE_OP(CACHE_DCACHE) &= ~SCP_CACHE_OP_OP_MASK;
 	SCP_CACHE_OP(CACHE_DCACHE) |=
 		OP_INVALIDATE_ALL_LINES | SCP_CACHE_OP_EN;
+	/* Dummy read is necessary to confirm the invalidation finish. */
+	REG32(CACHE_TRANS_SCP_CACHE_ADDR);
 	asm volatile("dsb;");
 }
 
@@ -83,6 +85,8 @@ void cpu_invalidate_dcache_range(uintptr_t base, unsigned int length)
 		SCP_CACHE_OP(CACHE_DCACHE) = addr & SCP_CACHE_OP_TADDR_MASK;
 		SCP_CACHE_OP(CACHE_DCACHE) |=
 			OP_INVALIDATE_ONE_LINE_BY_ADDRESS | SCP_CACHE_OP_EN;
+		/* Dummy read necessary to confirm the invalidation finish. */
+		REG32(addr);
 	}
 	asm volatile("dsb;");
 }
@@ -95,6 +99,8 @@ void cpu_clean_invalidate_dcache(void)
 	SCP_CACHE_OP(CACHE_DCACHE) &= ~SCP_CACHE_OP_OP_MASK;
 	SCP_CACHE_OP(CACHE_DCACHE) |=
 		OP_INVALIDATE_ALL_LINES | SCP_CACHE_OP_EN;
+	/* Dummy read necessary to confirm the invalidation finish. */
+	REG32(CACHE_TRANS_SCP_CACHE_ADDR);
 	asm volatile("dsb;");
 }
 
@@ -111,6 +117,8 @@ void cpu_clean_invalidate_dcache_range(uintptr_t base, unsigned int length)
 		SCP_CACHE_OP(CACHE_DCACHE) = addr & SCP_CACHE_OP_TADDR_MASK;
 		SCP_CACHE_OP(CACHE_DCACHE) |=
 			OP_INVALIDATE_ONE_LINE_BY_ADDRESS | SCP_CACHE_OP_EN;
+		/* Dummy read necessary to confirm the invalidation finish. */
+		REG32(addr);
 	}
 	asm volatile("dsb;");
 }
@@ -164,11 +172,6 @@ static void scp_cache_init(void)
 	}
 
 	cpu_invalidate_icache();
-	/*
-	 * TODO(b/123205971): It seems like we need to call this twice, else the
-	 * cache keeps stale data.
-	 */
-	cpu_invalidate_dcache();
 	cpu_invalidate_dcache();
 }
 
