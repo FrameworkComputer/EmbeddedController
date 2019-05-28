@@ -44,6 +44,7 @@ enum dma_mode {
 void ish_dma_disable(void);
 /* Initialize  DMA engine */
 void ish_dma_init(void);
+
 /**
  * Main DMA transfer function
  *
@@ -64,16 +65,7 @@ int ish_dma_copy(uint32_t chan, uint32_t dst, uint32_t src, uint32_t length,
  * @param src_msb       Source DRAM upper 32 bits address
  */
 void ish_dma_set_msb(uint32_t chan, uint32_t dst_msb, uint32_t src_msb);
-/**
- * Page granularity transfer between SRAM and DRAM
- *
- * @param dst           Destination address
- * @param src           Source address
- * @param page_in       Is from DRAM to SRAM
- * @return DMA_RC_OK, or non-zero if error.
- */
-int ish_dma_page(uint32_t dst, uint32_t src,
-		 int page_in); /* API for page manager/d0i3 task */
+
 /**
  * Wait for DMA transfer finish
  *
@@ -81,6 +73,7 @@ int ish_dma_page(uint32_t dst, uint32_t src,
  * @return DMA_RC_OK, or non-zero if error.
  */
 int ish_wait_for_dma_done(uint32_t ch);
+
 /* Disable OCP (Open Core Protocol) fabric time out */
 void ish_dma_ocp_timeout_disable(void);
 #endif
