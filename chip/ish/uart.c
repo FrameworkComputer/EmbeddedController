@@ -73,8 +73,6 @@ void uart_tx_start(void)
 		disable_sleep(SLEEP_MASK_UART);
 
 		IER(ISH_DEBUG_UART) |= IER_TDRQ;
-
-		task_trigger_irq(ISH_DEBUG_UART_IRQ);
 	}
 }
 
@@ -98,7 +96,7 @@ void uart_tx_flush(void)
 
 int uart_tx_ready(void)
 {
-	return 1;
+	return LSR(ISH_DEBUG_UART) & LSR_TDRQ;
 }
 
 int uart_rx_available(void)
@@ -112,7 +110,7 @@ int uart_rx_available(void)
 void uart_write_char(char c)
 {
 	/* Wait till reciever is ready */
-	while ((LSR(ISH_DEBUG_UART) & LSR_TEMT) == 0)
+	while (!uart_tx_ready())
 		continue;
 
 	THR(ISH_DEBUG_UART) = c;
