@@ -1,0 +1,7 @@
+# Fingerprint Sensor
+
+# Don't inherit owners from elsewhere in the manifest
+set noparent
+
+norvez@chromium.org
+tomhughes@chromium.org
