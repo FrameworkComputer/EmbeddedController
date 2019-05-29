@@ -43,7 +43,10 @@ enum touch_state pop_check_presence(int consume)
 	int recent = ((last_press.val  > 0) &&
 		((get_time().val - last_press.val) < PRESENCE_TIMEOUT));
 
-	CPRINTS("Presence:%d", recent);
+#ifdef CR50_DEV
+	if (recent)
+		CPRINTS("User presence: consumed %d", consume);
+#endif
 	if (consume)
 		last_press.val = 0;
 
