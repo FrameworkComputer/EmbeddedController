@@ -2036,6 +2036,10 @@ int charge_prevent_power_on(int power_button_pressed)
 	defined(CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON_WITH_AC)
 		else if (charge_manager_get_power_limit_uw() >=
 		    CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT * 1000
+#ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
+		    && battery_get_disconnect_state() ==
+							BATTERY_NOT_DISCONNECTED
+#endif
 		    && (current_batt_params->state_of_charge >=
 			CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON_WITH_AC))
 			prevent_power_on = 0;
