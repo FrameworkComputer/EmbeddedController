@@ -3,30 +3,23 @@
  * found in the LICENSE file.
  */
 
-/* System module ISH (Not implemented) */
-
 #include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "ish_fwst.h"
+#include "ish_persistent_data.h"
+#include "power_mgt.h"
 #include "registers.h"
 #include "shared_mem.h"
+#include "spi.h"
 #include "system.h"
-#include "hooks.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "spi.h"
-#include "power_mgt.h"
-
-/* Indices for hibernate data registers (RAM backed by VBAT) */
-enum hibdata_index {
-	HIBDATA_INDEX_SCRATCHPAD = 0,    /* General-purpose scratchpad */
-	HIBDATA_INDEX_SAVED_RESET_FLAGS  /* Saved reset flags */
-};
 
 int system_is_reboot_warm(void)
 {
@@ -37,34 +30,33 @@ int system_is_reboot_warm(void)
 void system_pre_init(void)
 {
 	ish_fwst_set_fw_status(FWSTS_FW_IS_RUNNING);
-
 	task_enable_irq(ISH_FABRIC_IRQ);
-
-	if (IS_ENABLED(CONFIG_LOW_POWER_IDLE))
-		ish_pm_init();
-
-	system_set_reset_flags(chip_read_reset_flags());
+	ish_pm_init();
+	ish_persistent_data_init();
 }
 
 void chip_save_reset_flags(uint32_t flags)
 {
-	ISH_RESET_FLAGS = flags;
+	ish_persistent_data.reset_flags = flags;
 }
 
 uint32_t chip_read_reset_flags(void)
 {
-	uint32_t flags = ISH_RESET_FLAGS;
-
-	if (flags)
-		return flags;
-
-	/* Flags are zero? Assume we came up from a cold reset */
-	return RESET_FLAG_POWER_ON;
+	return ish_persistent_data.reset_flags;
 }
 
 void system_reset(int flags)
 {
 	uint32_t save_flags;
+
+	/*
+	 * We can't save any data when we do an ish_mia_reset(). Take
+	 * the quick path out.
+	 */
+	if (!IS_ENABLED(CONFIG_ISH_PM_AONTASK) || flags & SYSTEM_RESET_HARD) {
+		ish_mia_reset();
+		__builtin_unreachable();
+	}
 
 	system_encode_save_flags(flags, &save_flags);
 
@@ -73,15 +65,8 @@ void system_reset(int flags)
 
 	chip_save_reset_flags(save_flags);
 
-	/*
-	 * ish_pm_reset() does more (poweroff main SRAM, etc) than
-	 * ish_mia_reset() which just resets the ISH minute-ia cpu core
-	 */
-	if (!IS_ENABLED(CONFIG_LOW_POWER_IDLE) || flags & SYSTEM_RESET_HARD)
-		ish_mia_reset();
-	else
-		ish_pm_reset();
-
+	ish_persistent_data_commit();
+	ish_pm_reset();
 	__builtin_unreachable();
 }
 

@@ -9,6 +9,11 @@
 /* CPU core BFD configuration */
 #include "core/minute-ia/config_core.h"
 
+#ifndef __ASSEMBLER__
+/* Needed for PANIC_DATA_BASE */
+#include "ish_persistent_data.h"
+#endif
+
 /* Number of IRQ vectors on the ISH */
 #define CONFIG_IRQ_COUNT	(VEC_TO_IRQ(255) + 1)
 
@@ -54,13 +59,8 @@
 					 + CONFIG_AON_RAM_SIZE	\
 					 - CONFIG_AON_ROM_SIZE)
 
-/*
- * Store persistent panic data in AON memory. There are 256 bytes
- * available for ECOS use, and we need two software-defined REG32's at
- * the end.
- */
-#define CONFIG_PANIC_DATA_BASE		CONFIG_AON_ROM_BASE
-#define CONFIG_PANIC_DATA_SIZE		(256 - (2 * sizeof(uint32_t)))
+/* Store persistent panic data in AON memory. */
+#define CONFIG_PANIC_DATA_BASE		(&(ish_persistent_data.panic_data))
 
 /* System stack size */
 #define CONFIG_STACK_SIZE		1024

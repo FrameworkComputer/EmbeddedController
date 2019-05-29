@@ -337,12 +337,6 @@ enum ish_i2c_port {
 #define ISH_SRAM_CTRL_ERASE_ADDR	REG32(ISH_SRAM_CTRL_BASE + 0x10)
 #define ISH_SRAM_CTRL_BANK_STATUS	REG32(ISH_SRAM_CTRL_BASE + 0x2c)
 
-/* Software defined registers */
-
-/* Persistent reset flags - placed directly at end of panic data */
-#define ISH_RESET_FLAGS		REG32(CONFIG_PANIC_DATA_BASE	\
-					      + CONFIG_PANIC_DATA_SIZE)
-
 #if defined(CHIP_FAMILY_ISH3)
 /* on ISH3, reused ISH2PMC IPC message registers */
 #define SNOWBALL_BASE			IPC_ISH2PMC_MSG_BASE

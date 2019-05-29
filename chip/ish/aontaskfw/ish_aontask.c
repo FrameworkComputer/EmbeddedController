@@ -192,7 +192,7 @@ static struct tss_entry aon_tss = {
 	.ebx = 0,
 	/* set stack top pointer at the end of usable aon memory */
 	.esp = CONFIG_AON_ROM_BASE - AON_SP_RESERVED,
-	.ebp = AON_SP_RESERVED,
+	.ebp = CONFIG_AON_ROM_BASE - AON_SP_RESERVED,
 	.esi = 0,
 	.edi = 0,
 	/* entry 1 in LDT for data segment */

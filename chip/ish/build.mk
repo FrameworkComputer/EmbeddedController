@@ -17,7 +17,7 @@ include core/$(CORE)/build.mk
 endif
 
 # Required chip modules
-chip-y+=clock.o gpio.o system.o hwtimer.o uart.o flash.o
+chip-y+=clock.o gpio.o system.o hwtimer.o uart.o flash.o ish_persistent_data.o
 chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(CONFIG_HOSTCMD_HECI)+=host_command_heci.o

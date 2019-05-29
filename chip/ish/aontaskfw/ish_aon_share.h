@@ -6,6 +6,7 @@
 #ifndef __CROS_EC_ISH_AON_SHARE_H
 #define __CROS_EC_ISH_AON_SHARE_H
 
+#include "common.h"
 #include "ia_structs.h"
 
 /* magic ID for valid aontask image sanity check */
@@ -21,7 +22,6 @@
 struct ish_aon_share {
 	/* magic ID */
 	uint32_t magic_id;
-	/* last error */
 	/* error counter */
 	uint32_t error_count;
 	/* last error */
