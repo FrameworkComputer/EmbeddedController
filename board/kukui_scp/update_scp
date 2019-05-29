@@ -35,5 +35,6 @@ esac
 scp "$INFILE" "$KUKUI_IP":/lib/firmware/scp.img
 
 ssh "$KUKUI_IP" sh -x -c "'
+    sync;
     echo stop > /sys/class/remoteproc/remoteproc0/state;
     echo start > /sys/class/remoteproc/remoteproc0/state'"
