@@ -232,6 +232,33 @@ enum ec_error_list {
 #endif
 
 /*
+ * Weak symbol markers
+ *
+ * These macros are used to annotate weak definitions, their declarations, and
+ * overriding definitions.
+ *
+ * __override_proto: declarations
+ * __override: definitions which take precedence
+ * __overridable: default (weak) definitions
+ *
+ * For example, in foo.h:
+ *   __override_proto void foo(void);
+ *
+ * and in foo.c:
+ *   __overridable void foo(void) {
+ *     ...
+ *   }
+ *
+ * and in board.c:
+ *   __override void foo(void) {
+ *     ...
+ *   }
+ */
+#define __override_proto
+#define __override
+#define __overridable	__attribute__((weak))
+
+/*
  * Mark functions that collide with stdlib so they can be hidden when linking
  * against libraries that require stdlib. HIDE_EC_STDLIB should be defined
  * before including common.h from code that links to cstdlib.
