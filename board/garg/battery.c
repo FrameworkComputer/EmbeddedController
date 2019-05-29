@@ -32,8 +32,35 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* TODO(b/133125112): fill in after receiving datasheets */
+	/* Simplo 916Q2286H battery information */
+	[BATTERY_SIMPLO] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP-SDI3320",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0002,
+				.disconnect_val = 0x0,
+			},
+		},
+		.batt_info = {
+			.voltage_max = TARGET_WITH_MARGIN(13050, 5),	/* mV */
+			.voltage_normal = 11460,
+			.voltage_min = 9000,
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 60,
+			.discharging_min_c = -20,
+			.discharging_max_c = 60,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_TYPE_COUNT;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SIMPLO;
