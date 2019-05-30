@@ -182,9 +182,13 @@
 #define CONFIG_I2C_MASTER
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LED_COMMON
+
+#ifdef CONFIG_ACCEL_KX022
 #define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_SENSOR_BASE 0
-#define CONFIG_LID_ANGLE_SENSOR_LID 2
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#endif /* CONFIG_ACCEL_KX022 */
+
 #define CONFIG_LID_SWITCH
 /*
  * Enable MCHP Low Power Idle support
@@ -443,6 +447,15 @@ enum temp_sensor_id {
 /*	TEMP_SENSOR_WIFI, */
 
 	TEMP_SENSOR_COUNT
+};
+
+enum sensor_id {
+	BASE_ACCEL,
+	BASE_GYRO,
+#ifdef CONFIG_ACCEL_KX022
+	LID_ACCEL,
+#endif
+	SENSOR_COUNT,
 };
 
 /* Light sensors */

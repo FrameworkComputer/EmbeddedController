@@ -211,6 +211,7 @@ enum sensor_id {
 	LID_ACCEL = 0,
 	LID_GYRO,
 	VSYNC,
+	SENSOR_COUNT,
 };
 
 #include "gpio_signal.h"

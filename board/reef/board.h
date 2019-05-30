@@ -278,6 +278,7 @@ enum sensor_id {
 	BASE_MAG,
 	BASE_BARO,
 	LID_ALS,
+	SENSOR_COUNT,
 };
 
 enum reef_board_version {

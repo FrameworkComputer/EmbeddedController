@@ -19,8 +19,8 @@
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_SENSOR_BASE 0
-#define CONFIG_LID_ANGLE_SENSOR_LID 1
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 #define CONFIG_LID_ANGLE_UPDATE
 
 #define CONFIG_ADC
@@ -213,6 +213,12 @@ enum temp_sensor_id {
 	TEMP_SENSOR_BATTERY,
 
 	TEMP_SENSOR_COUNT
+};
+
+enum sensor_id {
+	BASE_ACCEL,
+	LID_ACCEL,
+	SENSOR_COUNT,
 };
 
 /* TODO: determine the following board specific type-C power constants */

@@ -207,6 +207,7 @@ enum pwm_channel {
 
 enum sensor_id {
 	LID_ALS,
+	SENSOR_COUNT,
 };
 
 /* LID_ALS needs to be polled */

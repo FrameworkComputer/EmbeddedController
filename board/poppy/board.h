@@ -232,6 +232,7 @@ enum sensor_id {
 	LID_GYRO,
 	LID_MAG,
 	LID_ALS,
+	SENSOR_COUNT,
 };
 
 enum adc_channel {

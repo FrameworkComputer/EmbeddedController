@@ -286,6 +286,7 @@ enum sensor_id {
 	BASE_MAG,
 	BASE_BARO,
 	LID_ALS,	/* firmware-reef-9042.B doesn't have this */
+	SENSOR_COUNT,
 };
 
 enum reef_board_version {

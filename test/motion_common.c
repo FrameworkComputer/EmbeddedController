@@ -60,7 +60,7 @@ const struct accelgyro_drv test_motion_sense = {
 };
 
 struct motion_sensor_t motion_sensors[] = {
-	{
+	[BASE] = {
 		.name = "base",
 		.active_mask = SENSOR_ACTIVE_S0_S3_S5,
 		.chip = MOTIONSENSE_CHIP_LSM6DS0,
@@ -76,7 +76,7 @@ struct motion_sensor_t motion_sensors[] = {
 			},
 		},
 	},
-	{
+	[LID] = {
 		.name = "lid",
 		.active_mask = SENSOR_ACTIVE_S0,
 		.chip = MOTIONSENSE_CHIP_KXCJ9,

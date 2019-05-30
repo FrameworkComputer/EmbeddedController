@@ -254,6 +254,7 @@ enum sensor_id {
 	LID_GYRO,
 	LID_ALS,
 	VSYNC,
+	SENSOR_COUNT,
 };
 
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ALS)

@@ -173,6 +173,13 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
+enum sensor_id {
+	BASE_ACCEL,
+	LID_ACCEL,
+	BASE_GYRO,
+	SENSOR_COUNT,
+};
+
 /* The number of TMP006 sensor chips on the board. */
 #define TMP006_COUNT 6
 
@@ -213,8 +220,8 @@ void set_pp5000_in_g3(int mask, int enable);
 #define CONFIG_GESTURE_TAP_MIN_INTERSTICE_T 120
 #define CONFIG_GESTURE_TAP_MAX_INTERSTICE_T 500
 
-#define CONFIG_LID_ANGLE_SENSOR_BASE 0
-#define CONFIG_LID_ANGLE_SENSOR_LID 1
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
 #endif /* !__ASSEMBLER__ */
 

@@ -90,65 +90,67 @@ const struct accelgyro_drv test_motion_sense = {
 };
 
 struct motion_sensor_t motion_sensors[] = {
-	{.name = "base",
-	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
-	 .chip = MOTIONSENSE_CHIP_LSM6DS0,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &test_motion_sense,
-	 .rot_standard_ref = NULL,
-	 .default_range = MOTION_SCALING_FACTOR / ONE_G_MEASURED,
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* EC use accel for angle detection */
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 119000 | ROUND_UP_FLAG,
-			 .ec_rate = TEST_LID_EC_RATE
-		 },
-		 /* Used for double tap */
-		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 119000 | ROUND_UP_FLAG,
-			 .ec_rate = TEST_LID_EC_RATE * 100,
-		 },
-		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-	 },
+	[BASE] = {
+		.name = "base",
+		.active_mask = SENSOR_ACTIVE_S0_S3_S5,
+		.chip = MOTIONSENSE_CHIP_LSM6DS0,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_BASE,
+		.drv = &test_motion_sense,
+		.rot_standard_ref = NULL,
+		.default_range = MOTION_SCALING_FACTOR / ONE_G_MEASURED,
+		.config = {
+			/* AP: by default shutdown all sensors */
+			[SENSOR_CONFIG_AP] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 119000 | ROUND_UP_FLAG,
+				.ec_rate = TEST_LID_EC_RATE
+			},
+			/* Used for double tap */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 119000 | ROUND_UP_FLAG,
+				.ec_rate = TEST_LID_EC_RATE * 100,
+			},
+			[SENSOR_CONFIG_EC_S5] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+		},
 	},
-	{.name = "lid",
-	 .active_mask = SENSOR_ACTIVE_S0,
-	 .chip = MOTIONSENSE_CHIP_KXCJ9,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &test_motion_sense,
-	 .rot_standard_ref = NULL,
-	 .default_range = MOTION_SCALING_FACTOR / ONE_G_MEASURED,
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* EC use accel for angle detection */
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 119000 | ROUND_UP_FLAG,
-			 .ec_rate = TEST_LID_EC_RATE,
-		 },
-		 /* Used for double tap */
-		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 200000 | ROUND_UP_FLAG,
-			 .ec_rate = TEST_LID_EC_RATE * 100,
-		 },
-		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-	 },
+	[LID] = {
+		.name = "lid",
+		.active_mask = SENSOR_ACTIVE_S0,
+		.chip = MOTIONSENSE_CHIP_KXCJ9,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &test_motion_sense,
+		.rot_standard_ref = NULL,
+		.default_range = MOTION_SCALING_FACTOR / ONE_G_MEASURED,
+		.config = {
+			/* AP: by default shutdown all sensors */
+			[SENSOR_CONFIG_AP] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 119000 | ROUND_UP_FLAG,
+				.ec_rate = TEST_LID_EC_RATE,
+			},
+			/* Used for double tap */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 200000 | ROUND_UP_FLAG,
+				.ec_rate = TEST_LID_EC_RATE * 100,
+			},
+			[SENSOR_CONFIG_EC_S5] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+		},
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
