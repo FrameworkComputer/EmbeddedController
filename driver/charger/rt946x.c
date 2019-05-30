@@ -1114,6 +1114,24 @@ int mt6370_db_set_voltages(int vbst, int vpos, int vneg)
 	return rv;
 }
 
+/* MT6370 BACKLIGHT LED */
+
+int mt6370_backlight_set_dim(uint16_t dim)
+{
+	int rv;
+
+	/* datasheet suggests that update BLDIM2 first then BLDIM */
+	rv = rt946x_write8(MT6370_BACKLIGHT_BLDIM2, dim & MT6370_MASK_BLDIM2);
+
+	if (rv)
+		return rv;
+
+	rv = rt946x_write8(MT6370_BACKLIGHT_BLDIM,
+			   (dim >> MT6370_SHIFT_BLDIM_MSB) & MT6370_MASK_BLDIM);
+
+	return rv;
+}
+
 /* MT6370 RGB LED */
 
 int mt6370_led_set_dim_mode(enum mt6370_led_index index,

@@ -138,6 +138,7 @@
 /* backlight */
 #define MT6370_BACKLIGHT_BLEN		0xA0
 #define MT6370_BACKLIGHT_BLPWM		0xA2
+#define MT6370_BACKLIGHT_BLDIM2		0xA4
 #define MT6370_BACKLIGHT_BLDIM		0xA5
 
 /* Display bias */
@@ -558,6 +559,15 @@
 
 #define MT6370_MASK_BLPWM_BLED_PWM	BIT(MT6370_SHIFT_BLPWM_BLED_PWM)
 
+/* ========== BLDIM2 0xA4 (mt6370) ============ */
+#define MT6370_MASK_BLDIM2		0x7
+
+/* ========== BLDIM 0xA5 (mt6370) ============ */
+#define MT6370_SHIFT_BLDIM_MSB		3
+#define MT6370_MASK_BLDIM		0xff
+
+#define MT6370_BLDIM_DEFAULT		0x7ff
+
 /* ========== CHGSTAT2 0xD1 (mt6370) ============ */
 #ifdef CONFIG_CHARGER_MT6370
 #define MT6370_SHIFT_CHG_VBUSOV_STAT	7
@@ -666,6 +676,14 @@ enum mt6370_led_pwm_freq {
 
 /* Enable display bias external pin control. */
 int mt6370_db_external_control(int en);
+
+/**
+ * Set backlight LED dim.
+ *
+ * dim: A value from 0 to 2047.
+ * return: EC_SUCCESS on success, and EC_ERROR_* otherwise.
+ */
+int mt6370_backlight_set_dim(uint16_t dim);
 
 /**
  * MT6370 display bias voltage settings.
