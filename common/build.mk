@@ -6,6 +6,9 @@
 # Common files build
 #
 
+# Note that this variable includes the trailing "/"
+_common_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
+
 common-y=util.o
 common-y+=version.o printf.o queue.o queue_policies.o
 
@@ -150,7 +153,6 @@ common-$(CONFIG_WIRELESS)+=wireless.o
 common-$(HAS_TASK_CHIPSET)+=chipset.o
 common-$(HAS_TASK_CONSOLE)+=console.o console_output.o uart_buffering.o
 common-$(CONFIG_CMD_MEM)+=memory_commands.o
-common-$(HAS_TASK_FPSENSOR)+=fpsensor.o fpsensor_state.o
 common-$(HAS_TASK_HOSTCMD)+=host_command.o ec_features.o
 common-$(HAS_TASK_PDCMD)+=host_command_pd.o
 common-$(HAS_TASK_KEYSCAN)+=keyboard_scan.o
@@ -239,3 +241,5 @@ $(out)/rma_key_from_blob.h: board/$(BOARD)/$(BLOB_FILE) util/bin2h.sh
 	$(Q)util/bin2h.sh RMA_KEY_BLOB $< $@
 
 endif
+
+include $(_common_dir)/fpsensor/build.mk
