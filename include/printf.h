@@ -55,6 +55,8 @@
  *           This does NOT use up any arguments.
  */
 
+#ifndef HIDE_EC_STDLIB
+
 /**
  * Print formatted output to a function, like vfprintf()
  *
@@ -68,8 +70,8 @@
  * @param args		Parameters
  * @return EC_SUCCESS, or non-zero if output was truncated.
  */
-int vfnprintf(int (*addchar)(void *context, int c), void *context,
-	      const char *format, va_list args);
+__stdlib_compat int vfnprintf(int (*addchar)(void *context, int c),
+			      void *context, const char *format, va_list args);
 
 /**
  * Print formatted outut to a string.
@@ -81,7 +83,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
  * @param format	Format string
  * @return EC_SUCCESS, or non-zero if output was truncated.
  */
-int snprintf(char *str, int size, const char *format, ...);
+__stdlib_compat int snprintf(char *str, int size, const char *format, ...);
 
 /**
  * Print formatted outut to a string.
@@ -94,6 +96,9 @@ int snprintf(char *str, int size, const char *format, ...);
  * @param args		Parameters
  * @return EC_SUCCESS, or non-zero if output was truncated.
  */
-int vsnprintf(char *str, int size, const char *format, va_list args);
+__stdlib_compat int vsnprintf(char *str, int size, const char *format,
+			      va_list args);
+
+#endif  /* !HIDE_EC_STDLIB */
 
 #endif  /* __CROS_EC_PRINTF_H */
