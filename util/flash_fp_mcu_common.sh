@@ -25,8 +25,10 @@ echo "$(readlink -f "$0")"
 readonly CROS_EC_SPI_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-spi"
 
 check_hardware_write_protect_disabled() {
-  if ectool gpioget EC_WP_L | grep -q '= 0'; then
-    echo "Please make sure WP is deasserted."
+  local hardware_write_protect_state="$(crossystem wpsw_cur)"
+  if [[ "${hardware_write_protect_state}" != "0" ]]; then
+    echo "Please make sure hardware write protect is disabled."
+    echo "See https://www.chromium.org/chromium-os/firmware-porting-guide/firmware-ec-write-protection"
     exit 1
   fi
 }
