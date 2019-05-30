@@ -112,26 +112,38 @@ int queue_is_full(struct queue const *q);
 
 /*
  * Chunk based queue access.  A queue_chunk is a contiguous region of queue
- * buffer bytes, not units.  It may represent either free space in the queue
- * or entries.
+ * buffer units.
  */
 struct queue_chunk {
-	size_t  length;
-	uint8_t *buffer;
+	size_t  count;
+	void *buffer;
 };
 
 /*
  * Return the largest contiguous block of free space from the tail of the
- * queue.  This may not be all of the available free space in the queue.  Once
- * some or all of the free space has been written to you must call
+ * queue + offset.  This may not be all of the available free space in the
+ * queue.  Once some or all of the free space has been written to you must call
  * queue_advance_tail to update the queue.  You do not need to fill all of the
  * free space returned before calling queue_advance_tail, and you may call
  * queue_advance tail multiple times for a single chunk.  But you must not
  * advance the tail more than the length of the chunk, or more than the actual
  * number of units that you have written to the free space represented by the
  * chunk.
+ *
+ * Since this function returns continuous space, offset will allow accessing
+ * writable memory that is wrapped. For example:
+ *
+ *  *: Used entry
+ *  -: Free space
+ *
+ *    H  T
+ * |--***---|
+ *
+ * A call to queue_get_write_chunk(&q, 0) will return 3 entries starting at T.
+ * To be able to also write the 2 leading writable indicies, we'll need to use
+ * queue_get_write_chunk(&q, 3), which will return 2 entries at queue index 0.
  */
-struct queue_chunk queue_get_write_chunk(struct queue const *q);
+struct queue_chunk queue_get_write_chunk(struct queue const *q, size_t offset);
 
 /*
  * Return the largest contiguous block of units from the head of the queue.

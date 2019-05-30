@@ -160,9 +160,9 @@ static int test_queue8_chunks(void)
 
 	queue_init(&test_queue8);
 
-	chunk = queue_get_write_chunk(&test_queue8);
+	chunk = queue_get_write_chunk(&test_queue8, 0);
 
-	TEST_ASSERT(chunk.length == 8);
+	TEST_ASSERT(chunk.count == 8);
 
 	memcpy(chunk.buffer, data, 3);
 
@@ -170,8 +170,8 @@ static int test_queue8_chunks(void)
 
 	chunk = queue_get_read_chunk(&test_queue8);
 
-	TEST_ASSERT(chunk.length == 3);
-	TEST_ASSERT_ARRAY_EQ(chunk.buffer, data, 3);
+	TEST_ASSERT(chunk.count == 3);
+	TEST_ASSERT_ARRAY_EQ((uint8_t *) chunk.buffer, data, 3);
 
 	TEST_ASSERT(queue_advance_head(&test_queue8, 3) == 3);
 	TEST_ASSERT(queue_is_empty(&test_queue8));
@@ -196,8 +196,8 @@ static int test_queue8_chunks_wrapped(void)
 	 * With a wrapped tail we should only be able to access the first two
 	 * elements for reading, but all five free elements for writing.
 	 */
-	TEST_ASSERT(queue_get_read_chunk(&test_queue8).length == 2);
-	TEST_ASSERT(queue_get_write_chunk(&test_queue8).length == 5);
+	TEST_ASSERT(queue_get_read_chunk(&test_queue8).count == 2);
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 0).count == 5);
 
 	/* Signal that we have read an element */
 	TEST_ASSERT(queue_advance_head(&test_queue8, 1) == 1);
@@ -206,8 +206,8 @@ static int test_queue8_chunks_wrapped(void)
 	 * Now we should only be able to see a single element for reading, but
 	 * all six free element.
 	 */
-	TEST_ASSERT(queue_get_read_chunk(&test_queue8).length == 1);
-	TEST_ASSERT(queue_get_write_chunk(&test_queue8).length == 6);
+	TEST_ASSERT(queue_get_read_chunk(&test_queue8).count == 1);
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 0).count == 6);
 
 	/* Signal that we have read the last two elements */
 	TEST_ASSERT(queue_advance_head(&test_queue8, 2) == 2);
@@ -217,8 +217,8 @@ static int test_queue8_chunks_wrapped(void)
 	 * seven, not eight elements available for writing.  This is because
 	 * the head/tail pointers now point to the second unit in the array.
 	 */
-	TEST_ASSERT(queue_get_read_chunk(&test_queue8).length == 0);
-	TEST_ASSERT(queue_get_write_chunk(&test_queue8).length == 7);
+	TEST_ASSERT(queue_get_read_chunk(&test_queue8).count == 0);
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 0).count == 7);
 
 	return EC_SUCCESS;
 }
@@ -238,13 +238,13 @@ static int test_queue8_chunks_full(void)
 	TEST_ASSERT(queue_add_units(&test_queue8, data, 8) == 8);
 
 	/* With a full queue we shouldn't be able to write */
-	TEST_ASSERT(queue_get_write_chunk(&test_queue8).length == 0);
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 0).count == 0);
 
 	/* But we should be able to read, though only two entries at first */
 	chunk = queue_get_read_chunk(&test_queue8);
 
-	TEST_ASSERT(chunk.length == 2);
-	TEST_ASSERT_ARRAY_EQ(chunk.buffer, data, 2);
+	TEST_ASSERT(chunk.count == 2);
+	TEST_ASSERT_ARRAY_EQ((uint8_t *) chunk.buffer, data, 2);
 
 	/* Signal that we have read both units */
 	TEST_ASSERT(queue_advance_head(&test_queue8, 2) == 2);
@@ -252,8 +252,8 @@ static int test_queue8_chunks_full(void)
 	/* Now we should only be able to see the rest */
 	chunk = queue_get_read_chunk(&test_queue8);
 
-	TEST_ASSERT(chunk.length == 6);
-	TEST_ASSERT_ARRAY_EQ(chunk.buffer, data + 2, 6);
+	TEST_ASSERT(chunk.count == 6);
+	TEST_ASSERT_ARRAY_EQ((uint8_t *) chunk.buffer, data + 2, 6);
 
 
 	return EC_SUCCESS;
@@ -264,10 +264,10 @@ static int test_queue8_chunks_empty(void)
 	queue_init(&test_queue8);
 
 	/* With an empty queue we shouldn't be able to read */
-	TEST_ASSERT(queue_get_read_chunk(&test_queue8).length == 0);
+	TEST_ASSERT(queue_get_read_chunk(&test_queue8).count == 0);
 
 	/* But we should be able to write, everything */
-	TEST_ASSERT(queue_get_write_chunk(&test_queue8).length == 8);
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 0).count == 8);
 
 	return EC_SUCCESS;
 }
@@ -300,6 +300,49 @@ static int test_queue8_chunks_advance(void)
 	return EC_SUCCESS;
 }
 
+static int test_queue8_chunks_offset(void)
+{
+	queue_init(&test_queue8);
+
+	/* Check offsetting by 1 */
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 1).count == 7);
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 1).buffer ==
+			test_queue8.buffer + 1);
+
+	/* Check offsetting by 4 */
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 4).count == 4);
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 4).buffer ==
+			test_queue8.buffer + 4);
+
+	/* Check offset wrapping around */
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 10).count == 0);
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 10).buffer == NULL);
+
+	/*
+	 * Check offsetting when used memory is in the middle:
+	 *    H T
+	 * |--xx----|
+	 */
+	TEST_ASSERT(queue_advance_tail(&test_queue8, 4) == 4);
+	TEST_ASSERT(queue_advance_head(&test_queue8, 2) == 2);
+
+	/* Get writable chunk to right of tail. */
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 2).count == 2);
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 2).buffer ==
+			test_queue8.buffer + 6);
+
+	/* Get writable chunk wrapped and before head. */
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 4).count == 2);
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 4).buffer ==
+			test_queue8.buffer);
+
+	/* Check offsetting into non-writable memory. */
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 6).count == 0);
+	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 6).buffer == NULL);
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -316,6 +359,7 @@ void run_test(void)
 	RUN_TEST(test_queue8_chunks_full);
 	RUN_TEST(test_queue8_chunks_empty);
 	RUN_TEST(test_queue8_chunks_advance);
+	RUN_TEST(test_queue8_chunks_offset);
 
 	test_print_result();
 }
