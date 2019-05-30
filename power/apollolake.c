@@ -5,7 +5,6 @@
 
 /* Apollolake chipset power control module for Chrome EC */
 
-#include "apollolake.h"
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
@@ -21,6 +20,53 @@
  * needs to be handled from within the chipset task.
  */
 static int force_shutdown;
+
+/* Power signals list. Must match order of enum power_signal. */
+const struct power_signal_info power_signal_list[] = {
+#ifdef CONFIG_POWER_S0IX
+	[X86_SLP_S0_N] = {
+		GPIO_PCH_SLP_S0_L,
+		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
+		"SLP_S0_DEASSERTED",
+	},
+#endif
+	[X86_SLP_S3_N] = {
+		GPIO_PCH_SLP_S3_L,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"SLP_S3_DEASSERTED",
+	},
+	[X86_SLP_S4_N] = {
+		GPIO_PCH_SLP_S4_L,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"SLP_S4_DEASSERTED",
+	},
+	[X86_SUSPWRDNACK] = {
+		GPIO_SUSPWRDNACK,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"SUSPWRDNACK_DEASSERTED",
+	},
+	[X86_ALL_SYS_PG] = {
+		GPIO_ALL_SYS_PGOOD,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"ALL_SYS_PGOOD",
+	},
+	[X86_RSMRST_N] = {
+		GPIO_RSMRST_L_PGOOD,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"RSMRST_L",
+	},
+	[X86_PGOOD_PP3300] = {
+		GPIO_PP3300_PG,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"PP3300_PG",
+	},
+	[X86_PGOOD_PP5000] = {
+		GPIO_PP5000_PG,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"PP5000_PG",
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 __attribute__((weak)) void chipset_do_shutdown(void)
 {

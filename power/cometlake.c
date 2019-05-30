@@ -5,7 +5,6 @@
 
 /* Cometlake chipset power control module for Chrome EC */
 
-#include "cometlake.h"
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
@@ -17,6 +16,41 @@
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+
+/* Power signals list. Must match order of enum power_signal. */
+const struct power_signal_info power_signal_list[] = {
+	[X86_SLP_S0_DEASSERTED] = {
+		GPIO_PCH_SLP_S0_L,
+		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
+		"SLP_S0_DEASSERTED",
+	},
+	[X86_SLP_S3_DEASSERTED] = {
+		SLP_S3_SIGNAL_L,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"SLP_S3_DEASSERTED",
+	},
+	[X86_SLP_S4_DEASSERTED] = {
+		SLP_S4_SIGNAL_L,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"SLP_S4_DEASSERTED",
+	},
+	[X86_RSMRST_L_PGOOD] = {
+		GPIO_RSMRST_L_PGOOD,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"RSMRST_L_PGOOD",
+	},
+	[PP5000_A_PGOOD] = {
+		GPIO_PP5000_A_PG_OD,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"PP5000_A_PGOOD",
+	},
+	[ALL_SYS_PGOOD] = {
+		GPIO_PG_EC_ALL_SYS_PWRGD,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"ALL_SYS_PWRGD",
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 static int forcing_shutdown;  /* Forced shutdown in progress? */
 

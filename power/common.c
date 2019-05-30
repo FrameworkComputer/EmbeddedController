@@ -11,17 +11,18 @@
 #include "common.h"
 #include "console.h"
 #include "display_7seg.h"
+#include "espi.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "intel_x86.h"
 #include "lpc.h"
 #include "power.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "espi.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)

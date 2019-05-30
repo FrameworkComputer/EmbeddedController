@@ -213,18 +213,6 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
-enum power_signal {
-#ifdef CONFIG_POWER_S0IX
-	X86_SLP_S0_DEASSERTED,
-#endif
-	X86_SLP_S3_DEASSERTED,
-	X86_SLP_S4_DEASSERTED,
-	X86_SLP_SUS_DEASSERTED,
-	X86_RSMRST_L_PGOOD,
-	X86_PMIC_DPWROK,
-	POWER_SIGNAL_COUNT
-};
-
 enum temp_sensor_id {
 	TEMP_SENSOR_BATTERY,	/* Smart Battery Temperature */
 	TEMP_SENSOR_AMBIENT,	/* BD99992GW SYSTHERM0 */

@@ -162,17 +162,6 @@
 
 #ifndef __ASSEMBLER__
 
-enum power_signal {
-	X86_SLP_S0_DEASSERTED,
-	X86_SLP_S3_DEASSERTED,
-	X86_SLP_S4_DEASSERTED,
-	X86_RSMRST_L_PGOOD,
-	PP5000_A_PGOOD,
-	ALL_SYS_PGOOD,
-	/* Number of X86 signals */
-	POWER_SIGNAL_COUNT
-};
-
 enum mst_source {
 	MST_TYPE_C0,
 	MST_TYPE_C1,

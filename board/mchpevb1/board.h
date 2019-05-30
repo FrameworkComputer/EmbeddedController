@@ -423,19 +423,6 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
-/* power signal definitions */
-enum power_signal {
-	X86_RSMRST_L_PWRGD = 0,
-	X86_SLP_S3_DEASSERTED,
-	X86_SLP_S4_DEASSERTED,
-	X86_SLP_SUS_DEASSERTED,
-	X86_PMIC_DPWROK,
-	X86_ALL_SYS_PWRGD,	/* MCHP mec1701_evb + SKL/KBL RVP3 */
-
-	/* Number of X86 signals */
-	POWER_SIGNAL_COUNT
-};
-
 enum temp_sensor_id {
 	TEMP_SENSOR_BATTERY,
 

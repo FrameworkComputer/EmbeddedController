@@ -5,7 +5,6 @@
 
 /* Icelake chipset power control module for Chrome EC */
 
-#include "icelake.h"
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
@@ -22,6 +21,41 @@
 #define IN_PCH_SLP_SUS_WAIT_TIME_USEC	(250 * MSEC)
 
 static int forcing_shutdown;  /* Forced shutdown in progress? */
+
+/* Power signals list. Must match order of enum power_signal. */
+const struct power_signal_info power_signal_list[] = {
+	[X86_SLP_S0_DEASSERTED] = {
+		GPIO_PCH_SLP_S0_L,
+		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
+		"SLP_S0_DEASSERTED",
+	},
+	[X86_SLP_S3_DEASSERTED] = {
+		SLP_S3_SIGNAL_L,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"SLP_S3_DEASSERTED",
+	},
+	[X86_SLP_S4_DEASSERTED] = {
+		SLP_S4_SIGNAL_L,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"SLP_S4_DEASSERTED",
+	},
+	[X86_SLP_SUS_DEASSERTED] = {
+		GPIO_SLP_SUS_L,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"SLP_SUS_DEASSERTED",
+	},
+	[X86_RSMRST_L_PGOOD] = {
+		GPIO_PG_EC_RSMRST_ODL,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"RSMRST_L_PGOOD",
+	},
+	[X86_DSW_DPWROK] = {
+		GPIO_PG_EC_DSW_PWROK,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"DSW_DPWROK",
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {

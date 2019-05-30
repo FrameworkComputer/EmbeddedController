@@ -112,19 +112,6 @@ const struct adc_t adc_channels[] = {
 	},
 };
 
-/* Power signal list.  Must match order of enum power_signal. */
-const struct power_signal_info power_signal_list[] = {
-	{GPIO_SLP_S0_L,
-	 POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
-	 "SLP_S0_DEASSERTED"},
-	{GPIO_SLP_S3_L,		POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
-	{GPIO_SLP_S4_L,		POWER_SIGNAL_ACTIVE_HIGH, "SLP_S4_DEASSERTED"},
-	{GPIO_PCH_SLP_SUS_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_SUS_DEASSERTED"},
-	{GPIO_RSMRST_L_PGOOD,	POWER_SIGNAL_ACTIVE_HIGH, "RSMRST_L_PGOOD"},
-	{GPIO_PMIC_DPWROK,	POWER_SIGNAL_ACTIVE_HIGH, "PMIC_DPWROK"},
-};
-BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_DB0_LED_RED] =   { 3, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,

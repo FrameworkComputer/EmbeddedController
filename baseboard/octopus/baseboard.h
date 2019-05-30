@@ -292,23 +292,6 @@
 
 #include "gpio_signal.h"
 
-enum power_signal {
-#ifdef CONFIG_POWER_S0IX
-	X86_SLP_S0_N,		/* PCH  -> SLP_S0_L */
-#endif
-	X86_SLP_S3_N,		/* PCH  -> SLP_S3_L */
-	X86_SLP_S4_N,		/* PCH  -> SLP_S4_L */
-	X86_SUSPWRDNACK,	/* PCH  -> SUSPWRDNACK */
-
-	X86_ALL_SYS_PG,		/* PMIC -> PMIC_EC_PWROK_OD */
-	X86_RSMRST_N,		/* PMIC -> PMIC_EC_RSMRST_ODL */
-	X86_PGOOD_PP3300,	/* PMIC -> PP3300_PG_OD */
-	X86_PGOOD_PP5000,	/* PMIC -> PP5000_PG_OD */
-
-	/* Number of X86 signals */
-	POWER_SIGNAL_COUNT
-};
-
 /* Forward declare common (within octopus) board-specific functions */
 void board_reset_pd_mcu(void);
 

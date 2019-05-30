@@ -160,23 +160,6 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
-enum power_signal {
-#ifdef CONFIG_POWER_S0IX
-	X86_SLP_S0_N,
-#endif
-	X86_RSMRST_N,
-	X86_SLP_S3_N,
-	X86_SLP_S4_N,
-	X86_SUSPWRDNACK,
-
-	X86_ALL_SYS_PG,		/* PMIC_EC_PWROK_OD */
-	X86_PGOOD_PP3300,	/* GPIO_PP3300_PG */
-	X86_PGOOD_PP5000,	/* GPIO_PP5000_PG */
-
-	/* Number of X86 signals */
-	POWER_SIGNAL_COUNT
-};
-
 enum temp_sensor_id {
 	TEMP_SENSOR_BATTERY = 0,
 	TEMP_SENSOR_AMBIENT,

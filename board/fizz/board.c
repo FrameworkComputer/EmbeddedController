@@ -117,22 +117,6 @@ void vbus0_evt(enum gpio_signal signal)
 
 #include "gpio_list.h"
 
-/* power signal list.  Must match order of enum power_signal. */
-const struct power_signal_info power_signal_list[] = {
-	{GPIO_PCH_SLP_S0_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_S0_DEASSERTED"},
-#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
-	{VW_SLP_S3_L,		POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
-	{VW_SLP_S4_L,		POWER_SIGNAL_ACTIVE_HIGH, "SLP_S4_DEASSERTED"},
-#else
-	{GPIO_PCH_SLP_S3_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
-	{GPIO_PCH_SLP_S4_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_S4_DEASSERTED"},
-#endif
-	{GPIO_PCH_SLP_SUS_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_SUS_DEASSERTED"},
-	{GPIO_RSMRST_L_PGOOD,	POWER_SIGNAL_ACTIVE_HIGH, "RSMRST_L_PGOOD"},
-	{GPIO_PMIC_DPWROK,	POWER_SIGNAL_ACTIVE_HIGH, "PMIC_DPWROK"},
-};
-BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
 /* Hibernate wake configuration */
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_POWER_BUTTON_L,

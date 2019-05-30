@@ -137,17 +137,6 @@
 
 #ifndef __ASSEMBLER__
 
-enum power_signal {
-	X86_SLP_S0_DEASSERTED,
-	X86_SLP_S3_DEASSERTED,
-	X86_SLP_S4_DEASSERTED,
-	X86_SLP_SUS_DEASSERTED,
-	X86_RSMRST_L_PGOOD,
-	X86_DSW_DPWROK,
-	/* Number of X86 signals */
-	POWER_SIGNAL_COUNT
-};
-
 /* Forward declare common (within DragonEgg) board-specific functions */
 void board_reset_pd_mcu(void);
 

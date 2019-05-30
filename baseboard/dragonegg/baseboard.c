@@ -79,31 +79,6 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-/* power signal list. */
-const struct power_signal_info power_signal_list[] = {
-	[X86_SLP_S0_DEASSERTED] = {GPIO_SLP_S0_L,
-		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
-		"SLP_S0_DEASSERTED"},
-#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
-	[X86_SLP_S3_DEASSERTED] = {VW_SLP_S3_L, POWER_SIGNAL_ACTIVE_HIGH,
-				   "SLP_S3_DEASSERTED"},
-	[X86_SLP_S4_DEASSERTED] = {VW_SLP_S4_L, POWER_SIGNAL_ACTIVE_HIGH,
-				   "SLP_S4_DEASSERTED"},
-#else
-	[X86_SLP_S3_DEASSERTED] = {GPIO_SLP_S3_L, POWER_SIGNAL_ACTIVE_HIGH,
-				   "SLP_S3_DEASSERTED"},
-	[X86_SLP_S4_DEASSERTED] = {GPIO_SLP_S4_L, POWER_SIGNAL_ACTIVE_HIGH,
-				   "SLP_S4_DEASSERTED"},
-#endif
-	[X86_SLP_SUS_DEASSERTED] = {GPIO_SLP_SUS_L, POWER_SIGNAL_ACTIVE_HIGH,
-				    "SLP_SUS_DEASSERTED"},
-	[X86_RSMRST_L_PGOOD] = {GPIO_PG_EC_RSMRST_ODL, POWER_SIGNAL_ACTIVE_HIGH,
-				"RSMRST_L_PGOOD"},
-	[X86_DSW_DPWROK] = {GPIO_PG_EC_DSW_PWROK, POWER_SIGNAL_ACTIVE_HIGH,
-			    "DSW_DPWROK"},
-};
-BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
 /******************************************************************************/
 /* Chipset callbacks/hooks */
 

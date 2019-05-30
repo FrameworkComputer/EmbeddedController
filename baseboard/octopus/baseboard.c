@@ -30,26 +30,6 @@
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 /******************************************************************************/
-/* Power signal list.  Must match order of enum power_signal. */
-const struct power_signal_info power_signal_list[] = {
-#ifdef CONFIG_POWER_S0IX
-	{GPIO_PCH_SLP_S0_L,
-		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
-		"SLP_S0_DEASSERTED"},
-#endif
-	{GPIO_PCH_SLP_S3_L,   POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
-	{GPIO_PCH_SLP_S4_L,   POWER_SIGNAL_ACTIVE_HIGH, "SLP_S4_DEASSERTED"},
-	{GPIO_SUSPWRDNACK,    POWER_SIGNAL_ACTIVE_HIGH,
-	 "SUSPWRDNACK_DEASSERTED"},
-
-	{GPIO_ALL_SYS_PGOOD,  POWER_SIGNAL_ACTIVE_HIGH, "ALL_SYS_PGOOD"},
-	{GPIO_RSMRST_L_PGOOD, POWER_SIGNAL_ACTIVE_HIGH, "RSMRST_L"},
-	{GPIO_PP3300_PG,      POWER_SIGNAL_ACTIVE_HIGH, "PP3300_PG"},
-	{GPIO_PP5000_PG,      POWER_SIGNAL_ACTIVE_HIGH, "PP5000_PG"},
-};
-BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
-/******************************************************************************/
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
 	/*

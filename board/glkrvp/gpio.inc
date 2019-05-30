@@ -13,7 +13,7 @@
  */
 
 /* Power sequencing interrupts */
-GPIO_INT(SUSPWRNACK,	PIN(0, 2), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(SUSPWRDNACK,	PIN(0, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(RSMRST_L_PGOOD,PIN(3, 6), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(ALL_SYS_PGOOD,	PIN(7, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S0_L,	PIN(8, 1), GPIO_INT_BOTH, power_signal_interrupt)
@@ -32,6 +32,9 @@ GPIO_INT(USB_C1_PD_INT_ODL,	PIN(6, 3), GPIO_INT_FALLING, tcpc_alert_event)
 
 GPIO_INT(AC_PRESENT,	PIN(D, 2), GPIO_INT_BOTH, extpower_interrupt)
 GPIO_INT(WP_L,		PIN(9, 3), GPIO_INT_BOTH | GPIO_SEL_1P8V, switch_interrupt)
+
+UNIMPLEMENTED(PP3300_PG)
+UNIMPLEMENTED(PP5000_PG)
 
 /* Power sequencing GPIOs */
 GPIO(SYS_RESET_L,	PIN(0, 0), GPIO_ODR_HIGH)

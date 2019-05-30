@@ -9,7 +9,31 @@
 #ifndef __CROS_EC_INTEL_X86_H
 #define __CROS_EC_INTEL_X86_H
 
+#include "espi.h"
 #include "power.h"
+
+/* Chipset specific header files */
+/* Geminilake and apollolake use same power sequencing. */
+#ifdef CONFIG_CHIPSET_APL_GLK
+#include "apollolake.h"
+#elif defined(CONFIG_CHIPSET_CANNONLAKE)
+#include "cannonlake.h"
+#elif defined(CONFIG_CHIPSET_COMETLAKE)
+#include "cometlake.h"
+#elif defined(CONFIG_CHIPSET_ICELAKE)
+#include "icelake.h"
+#elif defined(CONFIG_CHIPSET_SKYLAKE)
+#include "skylake.h"
+#endif
+
+/* GPIO for power signal */
+#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
+#define SLP_S3_SIGNAL_L VW_SLP_S3_L
+#define SLP_S4_SIGNAL_L VW_SLP_S4_L
+#else
+#define SLP_S3_SIGNAL_L GPIO_PCH_SLP_S3_L
+#define SLP_S4_SIGNAL_L GPIO_PCH_SLP_S4_L
+#endif
 
 /**
  * Handle RSMRST signal.

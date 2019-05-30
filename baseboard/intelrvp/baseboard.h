@@ -81,11 +81,11 @@
 #define CONFIG_USBC_SS_MUX
 
 /* SoC / PCH */
+#define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_HOSTCMD_ESPI
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HOST_EVENT
-#define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
@@ -142,24 +142,6 @@
 #include "gpio_signal.h"
 #include "registers.h"
 #include "usb_pd_tcpm.h"
-
-enum power_signal {
-	X86_SLP_S0_DEASSERTED,
-	X86_SLP_S3_DEASSERTED,
-	X86_SLP_S4_DEASSERTED,
-	X86_RSMRST_L_PGOOD,
-	X86_ALL_SYS_PWRGD,
-#if defined(CONFIG_CHIPSET_ICELAKE)
-	X86_SLP_SUS_DEASSERTED,
-	X86_DSW_DPWROK,
-#elif defined(CONFIG_CHIPSET_COMETLAKE)
-	PP5000_A_PGOOD,
-#else
-	#error "define Intel AP chipset variant"
-#endif
-	/* Number of X86 signals */
-	POWER_SIGNAL_COUNT
-};
 
 /* PWM channels */
 enum pwm_channel {

@@ -125,25 +125,6 @@ void tablet_mode_interrupt(enum gpio_signal signal)
 
 #include "gpio_list.h"
 
-/* power signal list.  Must match order of enum power_signal. */
-const struct power_signal_info power_signal_list[] = {
-#ifdef CONFIG_POWER_S0IX
-	{GPIO_PCH_SLP_S0_L,
-		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
-		"SLP_S0_DEASSERTED"},
-#endif
-	{GPIO_RSMRST_L_PGOOD, POWER_SIGNAL_ACTIVE_HIGH, "RSMRST_L"},
-	{GPIO_PCH_SLP_S3_L,   POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
-	{GPIO_PCH_SLP_S4_L,   POWER_SIGNAL_ACTIVE_HIGH, "SLP_S4_DEASSERTED"},
-	{GPIO_SUSPWRNACK,     POWER_SIGNAL_ACTIVE_HIGH,
-	 "SUSPWRNACK_DEASSERTED"},
-
-	{GPIO_ALL_SYS_PGOOD,  POWER_SIGNAL_ACTIVE_HIGH, "ALL_SYS_PGOOD"},
-	{GPIO_PP3300_PG,      POWER_SIGNAL_ACTIVE_HIGH, "PP3300_PG"},
-	{GPIO_PP5000_PG,      POWER_SIGNAL_ACTIVE_HIGH, "PP5000_PG"},
-};
-BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Vfs = Vref = 2.816V, 10-bit unsigned reading */

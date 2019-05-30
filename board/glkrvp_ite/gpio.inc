@@ -13,7 +13,7 @@
  */
 
 /* Power sequencing interrupts */
-GPIO_INT(SUSPWRNACK,	PIN(E, 1), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(SUSPWRDNACK,	PIN(E, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S0_L,	PIN(F, 0), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S3_L,	PIN(F, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S4_L,	PIN(F, 3), GPIO_INT_BOTH, power_signal_interrupt)
@@ -39,6 +39,8 @@ UNIMPLEMENTED(USB_C0_PD_INT_ODL)
 UNIMPLEMENTED(USB_C1_PD_INT_ODL)
 
 UNIMPLEMENTED(WP_L)
+UNIMPLEMENTED(PP3300_PG)
+UNIMPLEMENTED(PP5000_PG)
 
 /* Power sequencing GPIOs */
 UNIMPLEMENTED(SYS_RESET_L)

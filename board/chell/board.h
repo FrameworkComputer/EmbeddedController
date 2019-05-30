@@ -169,21 +169,6 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
-/* power signal definitions */
-enum power_signal {
-#ifdef CONFIG_POWER_S0IX
-	X86_SLP_S0_DEASSERTED,
-#endif
-	X86_RSMRST_L_PWRGD,
-	X86_SLP_S3_DEASSERTED,
-	X86_SLP_S4_DEASSERTED,
-	X86_SLP_SUS_DEASSERTED,
-	X86_PMIC_DPWROK,
-
-	/* Number of X86 signals */
-	POWER_SIGNAL_COUNT
-};
-
 enum temp_sensor_id {
 	TEMP_SENSOR_BATTERY,
 

@@ -215,17 +215,6 @@ void tablet_mode_interrupt(enum gpio_signal signal)
 
 #include "gpio_list.h"
 
-/* power signal list.  Must match order of enum power_signal. */
-const struct power_signal_info power_signal_list[] = {
-	{GPIO_RSMRST_L_PGOOD, POWER_SIGNAL_ACTIVE_HIGH, "RSMRST_N_PWRGD"},
-	{VW_SLP_S3_L, POWER_SIGNAL_ACTIVE_HIGH,	"SLP_S3_DEASSERTED"},
-	{VW_SLP_S4_L, POWER_SIGNAL_ACTIVE_HIGH, "SLP_S4_DEASSERTED"},
-	{GPIO_PCH_SLP_SUS_L, POWER_SIGNAL_ACTIVE_HIGH, "SLP_SUS_DEASSERTED"},
-	{GPIO_PMIC_DPWROK, POWER_SIGNAL_ACTIVE_HIGH, "PMIC_DPWROK"},
-	{GPIO_ALL_SYS_PWRGD, POWER_SIGNAL_ACTIVE_HIGH, "ALL_SYS_PWRGD"}
-};
-BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
 /* ADC channels
  * name, factor multiplier, factor divider, shift, channel
  */

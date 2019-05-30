@@ -33,6 +33,21 @@
 #define CHARGER_INITIALIZED_DELAY_MS 100
 #define CHARGER_INITIALIZED_TRIES 40
 
+/* Power signals list */
+enum power_signal {
+#ifdef CONFIG_POWER_S0IX
+	X86_SLP_S0_DEASSERTED,
+#endif
+	X86_SLP_S3_DEASSERTED,
+	X86_SLP_S4_DEASSERTED,
+	X86_SLP_SUS_DEASSERTED,
+	X86_RSMRST_L_PWRGD,
+	X86_PMIC_DPWROK,
+
+	/* Number of X86 signals */
+	POWER_SIGNAL_COUNT
+};
+
 /*
  * Board can define this function to indicate to the skylake
  * power code that it does not have working reset flags.

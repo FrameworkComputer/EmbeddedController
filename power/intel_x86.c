@@ -10,7 +10,6 @@
 #include "chipset.h"
 #include "console.h"
 #include "ec_commands.h"
-#include "espi.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "intel_x86.h"
@@ -22,20 +21,6 @@
 #include "util.h"
 #include "vboot.h"
 #include "wireless.h"
-
-/* Chipset specific header files */
-/* Geminilake and apollolake use same power sequencing. */
-#ifdef CONFIG_CHIPSET_APL_GLK
-#include "apollolake.h"
-#elif defined(CONFIG_CHIPSET_CANNONLAKE)
-#include "cannonlake.h"
-#elif defined(CONFIG_CHIPSET_COMETLAKE)
-#include "cometlake.h"
-#elif defined(CONFIG_CHIPSET_ICELAKE)
-#include "icelake.h"
-#elif defined(CONFIG_CHIPSET_SKYLAKE)
-#include "skylake.h"
-#endif
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
@@ -50,13 +35,8 @@ enum sys_sleep_state {
 };
 
 static const int sleep_sig[] = {
-#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
-	[SYS_SLEEP_S3] = VW_SLP_S3_L,
-	[SYS_SLEEP_S4] = VW_SLP_S4_L,
-#else
-	[SYS_SLEEP_S3] = GPIO_PCH_SLP_S3_L,
-	[SYS_SLEEP_S4] = GPIO_PCH_SLP_S4_L,
-#endif
+	[SYS_SLEEP_S3] = SLP_S3_SIGNAL_L,
+	[SYS_SLEEP_S4] = SLP_S4_SIGNAL_L,
 #ifdef CONFIG_POWER_S0IX
 	[SYS_SLEEP_S0IX] = GPIO_PCH_SLP_S0_L,
 #endif

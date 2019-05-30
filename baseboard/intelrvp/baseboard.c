@@ -16,63 +16,6 @@
 #include "temp_sensor.h"
 #include "thermistor.h"
 
-/* GPIO for power signal */
-#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
-#define SLP_S3_SIGNAL_L VW_SLP_S3_L
-#define SLP_S4_SIGNAL_L VW_SLP_S4_L
-#else
-#define SLP_S3_SIGNAL_L GPIO_PCH_SLP_S3_L
-#define SLP_S4_SIGNAL_L GPIO_PCH_SLP_S4_L
-#endif
-
-/* power signal list.  Must match order of enum power_signal. */
-const struct power_signal_info power_signal_list[] = {
-	[X86_SLP_S0_DEASSERTED] = {
-		GPIO_PCH_SLP_S0_L,
-		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
-		"SLP_S0_DEASSERTED",
-	},
-	[X86_SLP_S3_DEASSERTED] = {
-		SLP_S3_SIGNAL_L,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"SLP_S3_DEASSERTED",
-	},
-	[X86_SLP_S4_DEASSERTED] = {
-		SLP_S4_SIGNAL_L,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"SLP_S4_DEASSERTED",
-	},
-	[X86_RSMRST_L_PGOOD] = {
-		GPIO_RSMRST_L_PGOOD,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"RSMRST_L_PGOOD",
-	},
-	[X86_ALL_SYS_PWRGD] = {
-		GPIO_ALL_SYS_PWRGD,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"ALL_SYS_PWRGD",
-	},
-#if defined(CONFIG_CHIPSET_ICELAKE)
-	[X86_SLP_SUS_DEASSERTED] = {
-		GPIO_PCH_SLP_SUS_L,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"SLP_SUS_DEASSERTED",
-	},
-	[X86_DSW_DPWROK] = {
-		GPIO_DSW_DPWROK,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"DSW_DPWROK",
-	},
-#elif defined(CONFIG_CHIPSET_COMETLAKE)
-	[PP5000_A_PGOOD] = {
-		GPIO_PP5000_A_PG_OD,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"PP5000_A_PGOOD",
-	},
-#endif
-};
-BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_AC_PRESENT,

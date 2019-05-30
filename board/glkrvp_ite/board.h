@@ -126,19 +126,6 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
-enum power_signal {
-	X86_RSMRST_N = 0,
-	X86_SLP_S0_N,
-	X86_SLP_S3_N,
-	X86_SLP_S4_N,
-	X86_SUSPWRDNACK,
-
-	X86_ALL_SYS_PG,		/* PMIC_EC_PWROK_OD */
-
-	/* Number of X86 signals */
-	POWER_SIGNAL_COUNT
-};
-
 enum adc_channel {
 	ADC_VBUS,
 	ADC_CH_COUNT,
