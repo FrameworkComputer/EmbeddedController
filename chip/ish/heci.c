@@ -37,8 +37,15 @@ struct heci_msg {
 	uint8_t payload[HECI_IPC_PAYLOAD_SIZE];
 } __packed;
 
-/* address for Host Bus */
-#define HECI_HBM_ADDRESS				0
+/* HECI addresses */
+#define HECI_HBM_ADDRESS		0	/* HECI Bus Message */
+#define HECI_DYN_CLIENT_ADDR_START	0x20	/* Dynamic client start addr */
+
+/* A fw client has the same value for both handle and fw address */
+#define TO_FW_ADDR(handle)		((uintptr_t)(handle))
+#define TO_HECI_HANDLE(fw_addr)		((heci_handle_t)(uintptr_t)(fw_addr))
+/* convert client fw address to client context index */
+#define TO_CLIENT_CTX_IDX(fw_addr)	((fw_addr) - HECI_DYN_CLIENT_ADDR_START)
 
 /* should be less than HECI_INVALID_HANDLE - 1 */
 BUILD_ASSERT(HECI_MAX_NUM_OF_CLIENTS < 0x0FE);
@@ -78,11 +85,10 @@ struct heci_bus_context heci_bus_ctx = {
 		.ipc_handle = IPC_INVALID_HANDLE,
 };
 
-/* host generates client fw address starting from 1 */ 
 static inline struct heci_client_context *
 heci_get_client_context(const uint8_t fw_addr)
 {
-	return &heci_bus_ctx.client_ctxs[fw_addr - 1];
+	return &heci_bus_ctx.client_ctxs[TO_CLIENT_CTX_IDX(fw_addr)];
 }
 
 static inline struct heci_client_connect *
@@ -100,16 +106,15 @@ static inline int heci_is_client_connected(const uint8_t fw_addr)
 
 static inline int heci_is_valid_client_addr(const uint8_t fw_addr)
 {
-	return fw_addr > 0 && fw_addr <= heci_bus_ctx.num_of_clients;
+	uint8_t cli_idx = TO_CLIENT_CTX_IDX(fw_addr);
+
+	return cli_idx < heci_bus_ctx.num_of_clients;
 }
 
 static inline int heci_is_valid_handle(const heci_handle_t handle)
 {
 	return heci_is_valid_client_addr((uintptr_t)(handle));
 }
-
-#define TO_FW_ADDR(handle)		((uintptr_t)(handle))
-#define TO_HECI_HANDLE(fw_addr)		((heci_handle_t)(uintptr_t)(fw_addr))
 
 /* find heci device that contains this system state device in it */
 #define ss_device_to_heci_client_context(ss_dev) \
@@ -159,6 +164,7 @@ struct system_state_callbacks heci_ss_cbs = {
 heci_handle_t heci_register_client(const struct heci_client *client)
 {
 	int ret;
+	heci_handle_t handle;
 	struct heci_client_context *cli_ctx;
 
 	if (client == NULL || client->cbs == NULL)
@@ -178,14 +184,14 @@ heci_handle_t heci_register_client(const struct heci_client *client)
 	if (client->max_msg_size > HECI_MAX_MSG_SIZE)
 		return HECI_INVALID_HANDLE;
 
+	/* create handle with the same value of fw address */
+	handle = (heci_handle_t)(heci_bus_ctx.num_of_clients +
+				 HECI_DYN_CLIENT_ADDR_START);
 	cli_ctx = &heci_bus_ctx.client_ctxs[heci_bus_ctx.num_of_clients++];
-
 	cli_ctx->client = client;
 
 	if (client->cbs->initialize) {
-		ret = client->cbs->initialize(
-				(heci_handle_t)heci_bus_ctx.num_of_clients);
-
+		ret = client->cbs->initialize(handle);
 		if (ret) {
 			heci_bus_ctx.num_of_clients--;
 			return HECI_INVALID_HANDLE;
@@ -197,7 +203,7 @@ heci_handle_t heci_register_client(const struct heci_client *client)
 		ss_subsys_register_client(&cli_ctx->ss_device);
 	}
 
-	return (heci_handle_t)heci_bus_ctx.num_of_clients;
+	return handle;
 }
 
 static void heci_build_hbm_header(struct heci_header *hdr, uint32_t length)
@@ -206,7 +212,7 @@ static void heci_build_hbm_header(struct heci_header *hdr, uint32_t length)
 	hdr->host_addr = HECI_HBM_ADDRESS;
 	hdr->length = length;
 	/* payload of hbm is less than IPC payload */
-	hdr->length |=  (uint16_t)1 << HECI_MSG_CMPL_SHIFT; 
+	hdr->length |= (uint16_t)1 << HECI_MSG_CMPL_SHIFT;
 }
 
 static void heci_build_fixed_client_header(struct heci_header *hdr,
@@ -217,7 +223,7 @@ static void heci_build_fixed_client_header(struct heci_header *hdr,
 	hdr->host_addr = 0;
 	hdr->length = length;
 	/* Fixed client payload < IPC payload */
-	hdr->length |=  (uint16_t)1 << HECI_MSG_CMPL_SHIFT; 
+	hdr->length |= (uint16_t)1 << HECI_MSG_CMPL_SHIFT;
 }
 
 static int heci_send_heci_msg_timestamp(struct heci_msg *msg,
@@ -551,15 +557,16 @@ static int handle_enum_req(struct hbm_enum_req *enum_req)
 	memset(enum_res, 0, sizeof(*enum_res));
 
 	/*
-	 * current host driver implementation doesn't allow to use bit0
-	 * due to its fw address generation scheme.
+	 * fw address 0 is reserved for HECI Bus Message
+	 * fw address 1 ~ 0x1f are reserved for fixed clients
+	 * fw address 0x20 ~ 0xFF is for dynamic clients
 	 * bit-0 set -> fw address "0", bit-1 set -> fw address "1"
-	 * but fw address "0" is used for HECI bus management only.
-	 * so the bitmap should not use bit-0
 	 */
-	for (i = 0; i < heci_bus_ctx.num_of_clients; i++) {
-		enum_res->valid_addresses[(i + 1) / BITS_PER_ELEMENT] |=
-					1 << ((i + 1) & (BITS_PER_ELEMENT - 1));
+	for (i = HECI_DYN_CLIENT_ADDR_START;
+	     i < heci_bus_ctx.num_of_clients + HECI_DYN_CLIENT_ADDR_START;
+	     i++) {
+		enum_res->valid_addresses[i / BITS_PER_ELEMENT] |=
+			1 << (i & (BITS_PER_ELEMENT - 1));
 	}
 
 	heci_send_heci_msg(&heci_msg);
@@ -657,6 +664,9 @@ static int handle_client_connect_req(
 	if (!heci_is_valid_client_addr(client_connect_req->fw_addr)) {
 		client_connect_res->status =
 					HECI_CONNECT_STATUS_CLIENT_NOT_FOUND;
+	} else if (!client_connect_req->host_addr) {
+		client_connect_res->status =
+			HECI_CONNECT_STATUS_INVALID_PARAMETER;
 	} else {
 		connect = heci_get_client_connect(client_connect_req->fw_addr);
 		if (connect->is_connected) {
@@ -669,7 +679,10 @@ static int handle_client_connect_req(
 	}
 
 	heci_send_heci_msg(&heci_msg);
-	heci_send_flow_control(client_connect_req->fw_addr);
+
+	/* no error, send flow control */
+	if (!client_connect_res->status)
+		heci_send_flow_control(client_connect_req->fw_addr);
 
 	return EC_SUCCESS;
 }
@@ -755,7 +768,7 @@ static int handle_client_disconnect_req(
 	struct heci_client_context *cli_ctx;
 	struct heci_client_connect *connect;
 	const struct heci_client_callbacks *cbs;
-	uint8_t fw_addr;
+	uint8_t fw_addr, host_addr;
 
 	CPRINTS("Got HECI disconnect request");
 
@@ -769,23 +782,29 @@ static int handle_client_disconnect_req(
 	memset(client_disconnect_res, 0, sizeof(*client_disconnect_res));
 
 	fw_addr = client_disconnect_req->fw_addr;
+	host_addr = client_disconnect_req->host_addr;
 
 	client_disconnect_res->fw_addr = fw_addr;
-	client_disconnect_res->host_addr = client_disconnect_req->host_addr;
+	client_disconnect_res->host_addr = host_addr;
 	if (!heci_is_valid_client_addr(fw_addr) ||
 	    !heci_is_client_connected(fw_addr)) {
 		client_disconnect_res->status =
 					HECI_CONNECT_STATUS_CLIENT_NOT_FOUND;
 	} else {
 		connect = heci_get_client_connect(fw_addr);
-		cli_ctx = heci_get_client_context(fw_addr);
-		cbs = cli_ctx->client->cbs;
-		mutex_lock(&connect->lock);
-		if (connect->is_connected) {
-			cbs->disconnected(TO_HECI_HANDLE(fw_addr));
-			connect->is_connected = 0;
+		if (connect->host_addr != host_addr) {
+			client_disconnect_res->status =
+				HECI_CONNECT_STATUS_INVALID_PARAMETER;
+		} else {
+			cli_ctx = heci_get_client_context(fw_addr);
+			cbs = cli_ctx->client->cbs;
+			mutex_lock(&connect->lock);
+			if (connect->is_connected) {
+				cbs->disconnected(TO_HECI_HANDLE(fw_addr));
+				connect->is_connected = 0;
+			}
+			mutex_unlock(&connect->lock);
 		}
-		mutex_unlock(&connect->lock);
 	}
 
 	heci_send_heci_msg(&heci_msg);
@@ -944,17 +963,30 @@ static void heci_handle_hbm(struct hbm_h2i *h2i, size_t length)
 
 static void heci_handle_heci_msg(struct heci_msg *heci_msg, size_t msg_length)
 {
-	if (heci_msg->hdr.fw_addr) {
+	if (!heci_msg->hdr.host_addr) {
+		/*
+		 * message for HECI bus or a fixed client should fit
+		 * into one IPC message
+		 */
+		if (!HECI_MSG_IS_COMPLETED(heci_msg->hdr.length)) {
+			CPRINTS("message not completed");
+			return;
+		}
+
 		if (heci_msg->hdr.fw_addr == HECI_FIXED_SYSTEM_STATE_ADDR)
 			heci_handle_system_state_msg(
-				  heci_msg->payload,
-				  HECI_MSG_LENGTH(heci_msg->hdr.length)
-				  );
+				heci_msg->payload,
+				HECI_MSG_LENGTH(heci_msg->hdr.length));
+		else if (!heci_msg->hdr.fw_addr)
+			/* HECI Bus Message(fw_addr == 0 && host_addr == 0) */
+			heci_handle_hbm((struct hbm_h2i *)heci_msg->payload,
+					HECI_MSG_LENGTH(heci_msg->hdr.length));
 		else
-			heci_handle_client_msg(heci_msg, msg_length);
+			CPRINTS("not supported fixed client(%d)",
+				heci_msg->hdr.fw_addr);
 	} else {
-		heci_handle_hbm((struct hbm_h2i *)heci_msg->payload,
-				 HECI_MSG_LENGTH(heci_msg->hdr.length));
+		/* host_addr != 0 : Msg for Dynamic client */
+		heci_handle_client_msg(heci_msg, msg_length);
 	}
 }
 
