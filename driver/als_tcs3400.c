@@ -134,7 +134,7 @@ skip_clear_vector_load:
 
 #ifdef CONFIG_ACCEL_FIFO
 		vector.sensor_num = s - motion_sensors;
-		motion_sense_fifo_add_data(&vector, s, 3, last_ts);
+		motion_sense_fifo_stage_data(&vector, s, 3, last_ts);
 #endif
 	}
 
@@ -192,8 +192,9 @@ skip_rgb_load:
 skip_vector_load:
 #endif
 		vector.sensor_num = rgb_s - motion_sensors;
-		motion_sense_fifo_add_data(&vector, rgb_s, 3, last_ts);
+		motion_sense_fifo_stage_data(&vector, rgb_s, 3, last_ts);
 	}
+	motion_sense_fifo_commit_data();
 	return EC_SUCCESS;
 }
 
@@ -209,7 +210,7 @@ void tcs3400_interrupt(enum gpio_signal signal)
 /*
  * tcs3400_irq_handler - bottom half of the interrupt stack.
  * Ran from the motion_sense task, finds the events that raised the interrupt,
- * and posts those events via motion_sense_fifo_add_data()..
+ * and posts those events via motion_sense_fifo_stage_data()..
  */
 static int tcs3400_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {

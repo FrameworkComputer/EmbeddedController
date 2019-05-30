@@ -151,8 +151,9 @@ static int si114x_read_results(struct motion_sensor_t *s, int nb)
 	for (i = nb; i < 3; i++)
 		vector.data[i] = 0;
 	vector.sensor_num = s - motion_sensors;
-	motion_sense_fifo_add_data(&vector, s, nb,
+	motion_sense_fifo_stage_data(&vector, s, nb,
 				   __hw_clock_source_read());
+	motion_sense_fifo_commit_data();
 	/*
 	 * TODO: get time at a more accurate spot.
 	 * Like in si114x_interrupt

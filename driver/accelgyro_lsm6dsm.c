@@ -29,18 +29,6 @@
 static volatile uint32_t last_interrupt_timestamp;
 
 /**
- * A queue for holding data from the FIFO as we read it. This will be used to
- * spread the timestamps if more than one entry is available. The allocated size
- * is calculated by assuming that the motion sense read loop will never exceed
- * 20ms. During this time, sensors running full tile (210Hz) will sample ~5
- * times. At most, this driver supports 3 sensors, leaving us with 15 samples.
- * Since the queue size needs to be a power of 2, and 16 is too close, 32 was
- * chosen.
- */
-static struct queue single_fifo_read_queue = QUEUE_NULL(32,
-		struct ec_response_motion_sensor_data);
-
-/**
  * Resets the lsm6dsm load fifo sensor states to the given timestamp. This
  * should be called at the start of the fifo read sequence.
  *
@@ -318,7 +306,8 @@ static int fifo_next(struct lsm6dsm_data *private)
  * push_fifo_data - Scan data pattern and push upside
  */
 static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
-			   uint16_t flen)
+			   uint16_t flen,
+			   uint32_t timestamp)
 {
 	struct motion_sensor_t *s;
 	struct lsm6dsm_data *private = LSM6DSM_GET_DATA(accel);
@@ -362,16 +351,7 @@ static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
 
 			vect.flags = 0;
 			vect.sensor_num = s - motion_sensors;
-			/*
-			 * queue_add_units will override old values in case of
-			 * an overflow. The sample count should still be
-			 * incremented as it might affect the computed sample
-			 * rate later on.
-			 */
-			queue_add_units(&single_fifo_read_queue, &vect, 1);
-			private->load_fifo_sensor_state[next_fifo]
-					.sample_count++;
-
+			motion_sense_fifo_stage_data(&vect, s, 3, timestamp);
 		}
 
 		fifo += OUT_XYZ_SIZE;
@@ -383,12 +363,8 @@ static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts,
 		     uint32_t *last_fifo_read_ts)
 {
 	uint32_t interrupt_timestamp = last_interrupt_timestamp;
-	uint32_t fifo_read_start = *last_fifo_read_ts;
 	int err, left, length;
 	uint8_t fifo[FIFO_READ_LEN];
-	struct ec_response_motion_sensor_data data;
-	struct load_fifo_sensor_state_t *load_fifo_sensor_state =
-			LSM6DSM_GET_DATA(s)->load_fifo_sensor_state;
 
 	/* Reset the load_fifo_sensor_state so we can start a new read. */
 	reset_load_fifo_sensor_state(s, interrupt_timestamp);
@@ -431,42 +407,11 @@ static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts,
 		 * reading the last sample and pushing it into the FIFO.
 		 */
 
-		push_fifo_data(s, fifo, length);
+		push_fifo_data(s, fifo, length, interrupt_timestamp);
 		left -= length;
 	} while (left > 0);
 
-	/* Compute the window length (ns) between the interrupt and the read. */
-	length = time_until(interrupt_timestamp, fifo_read_start);
-
-	/* Get the event count. */
-	left = queue_count(&single_fifo_read_queue);
-
-	/*
-	 * Spread timestamps if we have more than one reading for a given
-	 * sensor.
-	 */
-	while (left-- > 0) {
-		struct motion_sensor_t *data_sensor;
-		struct load_fifo_sensor_state_t *state;
-
-		/*
-		 * Pop an entry off our read queue and get the pointers for the
-		 * sensor and the read state.
-		 */
-		queue_remove_unit(&single_fifo_read_queue, &data);
-		data_sensor = &motion_sensors[data.sensor_num];
-		state = &load_fifo_sensor_state[get_fifo_type(data_sensor)];
-
-		/*
-		 * Push the data to the motion sense fifo and increment the
-		 * timestamp in case we have another reading for this sensor
-		 * (spreading).
-		 */
-		motion_sense_fifo_add_data(&data, data_sensor, 3,
-				state->int_timestamp);
-		state->int_timestamp += MIN(state->sample_rate,
-				length / state->sample_count);
-	}
+	motion_sense_fifo_commit_data();
 
 	return EC_SUCCESS;
 }

@@ -842,7 +842,7 @@ static int bmi160_decode_header(struct motion_sensor_t *accel,
 				vector.data[Y] = v[Y];
 				vector.data[Z] = v[Z];
 				vector.sensor_num = s - motion_sensors;
-				motion_sense_fifo_add_data(&vector, s, 3,
+				motion_sense_fifo_stage_data(&vector, s, 3,
 						last_ts);
 				*bp += (i == MOTIONSENSE_TYPE_MAG ? 8 : 6);
 			}
@@ -994,6 +994,7 @@ static int load_fifo(struct motion_sensor_t *s, uint32_t last_ts)
 			state = FIFO_HEADER;
 		}
 	}
+	motion_sense_fifo_commit_data();
 	return EC_SUCCESS;
 }
 #endif  /* CONFIG_ACCEL_FIFO */

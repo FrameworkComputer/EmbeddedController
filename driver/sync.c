@@ -88,8 +88,10 @@ static int motion_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 
 	while (queue_remove_unit(&sync_event_queue, &sync_event)) {
 		vector.data[X] = sync_event.counter;
-		motion_sense_fifo_add_data(&vector, s, 1, sync_event.timestamp);
+		motion_sense_fifo_stage_data(
+			&vector, s, 1, sync_event.timestamp);
 	}
+	motion_sense_fifo_commit_data();
 
 	return EC_SUCCESS;
 }
