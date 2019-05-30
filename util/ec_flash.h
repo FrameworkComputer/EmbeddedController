@@ -49,4 +49,14 @@ int ec_flash_write(const uint8_t *buf, int offset, int size);
  */
 int ec_flash_erase(int offset, int size);
 
+/**
+ * Erase EC flash memory asynchronously
+ *
+ * @param offset	Offset in EC flash to erase
+ * @param size		Number of bytes to erase
+ *
+ * @return 0 if success, negative if error.
+ */
+int ec_flash_erase_async(int offset, int size);
+
 #endif

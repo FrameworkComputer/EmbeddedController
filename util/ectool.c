@@ -13,6 +13,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "anx74xx.h"
 #include "battery.h"
@@ -118,6 +119,8 @@ const char help_str[] =
 	"      Forces the fan PWM to a constant duty cycle\n"
 	"  flasherase <offset> <size>\n"
 	"      Erases EC flash\n"
+	"  flasheraseasync <offset> <size>\n"
+	"      Erases EC flash asynchronously\n"
 	"  flashinfo\n"
 	"      Prints information on the EC flash\n"
 	"  flashspiinfo\n"
@@ -1211,11 +1214,15 @@ int cmd_flash_erase(int argc, char *argv[])
 	int offset, size;
 	char *e;
 	int rv;
+	bool async = false;
 
 	if (argc < 3) {
 		fprintf(stderr, "Usage: %s <offset> <size>\n", argv[0]);
 		return -1;
 	}
+
+	if (strcmp(argv[0], "flasheraseasync") == 0)
+		async = true;
 
 	offset = strtol(argv[1], &e, 0);
 	if ((e && *e) || offset < 0 || offset > MAX_FLASH_SIZE) {
@@ -1230,7 +1237,10 @@ int cmd_flash_erase(int argc, char *argv[])
 	}
 
 	printf("Erasing %d bytes at offset %d...\n", size, offset);
-	rv = ec_flash_erase(offset, size);
+	if (async)
+		rv = ec_flash_erase_async(offset, size);
+	else
+		rv = ec_flash_erase(offset, size);
 	if (rv < 0)
 		return rv;
 
@@ -8618,6 +8628,7 @@ const struct command commands[] = {
 	{"extpwrlimit", cmd_ext_power_limit},
 	{"fanduty", cmd_fanduty},
 	{"flasherase", cmd_flash_erase},
+	{"flasheraseasync", cmd_flash_erase},
 	{"flashprotect", cmd_flash_protect},
 	{"flashread", cmd_flash_read},
 	{"flashwrite", cmd_flash_write},
