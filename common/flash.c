@@ -113,16 +113,42 @@ const uint32_t pstate_data __attribute__((section(".rodata.pstate"))) =
 #endif /* CONFIG_FLASH_PSTATE */
 
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
-int flash_bank_size(int bank)
+const struct ec_flash_bank *flash_bank_info(int bank)
 {
 	int i;
-
 	for (i = 0; i < ARRAY_SIZE(flash_bank_array); i++) {
 		if (bank < flash_bank_array[i].count)
-			return 1 << flash_bank_array[i].size_exp;
+			return &flash_bank_array[i];
 		bank -= flash_bank_array[i].count;
 	}
-	return -1;
+
+	return NULL;
+}
+
+int flash_bank_size(int bank)
+{
+	int rv;
+	const struct ec_flash_bank *info = flash_bank_info(bank);
+
+	if (!info)
+		return -1;
+
+	rv = BIT(info->size_exp);
+	ASSERT(rv > 0);
+	return rv;
+}
+
+int flash_bank_erase_size(int bank)
+{
+	int rv;
+	const struct ec_flash_bank *info = flash_bank_info(bank);
+
+	if (!info)
+		return -1;
+
+	rv = BIT(info->erase_size_exp);
+	ASSERT(rv > 0);
+	return rv;
 }
 
 int flash_bank_index(int offset)
@@ -155,6 +181,27 @@ int flash_bank_count(int offset, int size)
 		return -1;
 	return end - begin;
 }
+
+int flash_bank_start_offset(int bank)
+{
+	int i;
+	int offset;
+	int bank_size;
+
+	if (bank < 0)
+		return -1;
+
+	offset = 0;
+	for (i = 0; i < bank; i++) {
+		bank_size = flash_bank_size(i);
+		if (bank_size < 0)
+			return -1;
+		offset += bank_size;
+	}
+
+	return offset;
+}
+
 #endif  /* CONFIG_FLASH_MULTIPLE_REGION */
 
 static int flash_range_ok(int offset, int size_req, int align)
