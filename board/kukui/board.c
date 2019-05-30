@@ -483,19 +483,28 @@ struct motion_sensor_t motion_sensors[] = {
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
+#endif /* SECTION_IS_RW */
+
 #ifdef BOARD_KRANE
-static void fix_krane_ref(void)
+static void fix_krane(void)
 {
 	if (board_get_version() != 3)
 		return;
 
+	/*
+	 * Fix backlight led maximum current: tolerance 120mA * 0.75 = 90mA.
+	 * (b/133655155)
+	 */
+	mt6370_backlight_set_dim(MT6370_BLDIM_DEFAULT * 3 / 4);
+
+#ifdef SECTION_IS_RW
+	/* Fix reference point */
 	motion_sensors[LID_ACCEL].rot_standard_ref = &lid_standard_ref_rev3;
 	motion_sensors[LID_GYRO].rot_standard_ref = &lid_standard_ref_rev3;
-}
-DECLARE_HOOK(HOOK_INIT, fix_krane_ref, HOOK_PRIO_INIT_ADC + 1);
-#endif /* BOARD_KRANE */
-
 #endif /* SECTION_IS_RW */
+}
+DECLARE_HOOK(HOOK_INIT, fix_krane, HOOK_PRIO_INIT_ADC + 1);
+#endif /* BOARD_KRANE */
 
 int board_allow_i2c_passthru(int port)
 {
