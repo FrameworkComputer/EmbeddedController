@@ -106,7 +106,14 @@ const struct i2c_port_t i2c_ports[]  = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR, &tcpci_tcpm_drv},
+	{
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_TCPC,
+			.addr = CONFIG_TCPC_I2C_BASE_ADDR,
+		},
+		.drv = &tcpci_tcpm_drv,
+	},
 };
 
 /* SPI master ports */

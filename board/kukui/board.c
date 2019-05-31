@@ -123,7 +123,14 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC0, MT6370_TCPC_I2C_ADDR, &mt6370_tcpm_drv},
+	{
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_TCPC0,
+			.addr = MT6370_TCPC_I2C_ADDR,
+		},
+		.drv = &mt6370_tcpm_drv,
+	},
 };
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {

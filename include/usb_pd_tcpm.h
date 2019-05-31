@@ -9,6 +9,7 @@
 #define __CROS_EC_USB_PD_TCPM_H
 
 #include "ec_commands.h"
+#include "i2c.h"
 
 /* Default retry count for transmitting */
 #define PD_RETRY_COUNT 3
@@ -326,8 +327,10 @@ struct tcpm_drv {
 #define TCPC_FLAGS_RESET_ACTIVE_HIGH	BIT(2)
 
 struct tcpc_config_t {
-	int i2c_host_port;
-	int i2c_slave_addr;
+	enum ec_bus_type bus_type;	/* enum ec_bus_type */
+	union {
+		struct i2c_info_t i2c_info;
+	};
 	const struct tcpm_drv *drv;
 	/* See TCPC_FLAGS_* above */
 	uint32_t flags;

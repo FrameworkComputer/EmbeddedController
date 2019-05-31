@@ -257,10 +257,23 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 /* TCPC mux configuration */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	/* Alert is active-low, open-drain */
-	[USB_PD_PORT_ANX3429] = {I2C_PORT_TCPC0, 0x50, &anx74xx_tcpm_drv,
-				 TCPC_FLAGS_ALERT_OD},
-	/* Alert is active-low, push-pull */
-	[USB_PD_PORT_PS8751] = {I2C_PORT_TCPC1, 0x16, &ps8xxx_tcpm_drv, 0},
+	[USB_PD_PORT_ANX3429] = {
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_TCPC0,
+			.addr = 0x50,
+		},
+		.drv = &anx74xx_tcpm_drv,
+		.flags = TCPC_FLAGS_ALERT_OD,
+	},
+	[USB_PD_PORT_PS8751] = {
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_TCPC1,
+			.addr = 0x16,
+		},
+		.drv = &ps8xxx_tcpm_drv,
+	},
 };
 
 /*

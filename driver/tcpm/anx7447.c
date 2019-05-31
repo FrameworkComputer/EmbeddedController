@@ -68,7 +68,7 @@ const struct anx7447_i2c_addr anx7447_i2c_addrs[] = {
 
 static inline int anx7447_reg_write(int port, int reg, int val)
 {
-	int rv = i2c_write8(tcpc_config[port].i2c_host_port,
+	int rv = i2c_write8(tcpc_config[port].i2c_info.port,
 			  anx[port].i2c_slave_addr,
 			  reg, val);
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
@@ -79,7 +79,7 @@ static inline int anx7447_reg_write(int port, int reg, int val)
 
 static inline int anx7447_reg_read(int port, int reg, int *val)
 {
-	int rv = i2c_read8(tcpc_config[port].i2c_host_port,
+	int rv = i2c_read8(tcpc_config[port].i2c_info.port,
 			 anx[port].i2c_slave_addr,
 			 reg, val);
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
@@ -287,7 +287,7 @@ static int anx7447_init(int port)
 	 * specified TCPC slave address
 	 */
 	for (i = 0; i < ARRAY_SIZE(anx7447_i2c_addrs); i++) {
-		if (tcpc_config[port].i2c_slave_addr ==
+		if (tcpc_config[port].i2c_info.addr ==
 				anx7447_i2c_addrs[i].tcpc_slave_addr) {
 			anx[port].i2c_slave_addr =
 					anx7447_i2c_addrs[i].spi_slave_addr;
@@ -296,7 +296,7 @@ static int anx7447_init(int port)
 	}
 	if (!anx[port].i2c_slave_addr) {
 		ccprintf("TCPC I2C slave addr 0x%x is invalid for ANX7447\n",
-			  tcpc_config[port].i2c_slave_addr);
+			  tcpc_config[port].i2c_info.addr);
 		return EC_ERROR_UNKNOWN;
 	}
 

@@ -40,8 +40,8 @@ int tcpc_write(int port, int reg, int val)
 
 	pd_wait_exit_low_power(port);
 
-	rv = i2c_write8(tcpc_config[port].i2c_host_port,
-			tcpc_config[port].i2c_slave_addr, reg, val);
+	rv = i2c_write8(tcpc_config[port].i2c_info.port,
+			tcpc_config[port].i2c_info.addr, reg, val);
 
 	pd_device_accessed(port);
 	return rv;
@@ -53,8 +53,8 @@ int tcpc_write16(int port, int reg, int val)
 
 	pd_wait_exit_low_power(port);
 
-	rv = i2c_write16(tcpc_config[port].i2c_host_port,
-			 tcpc_config[port].i2c_slave_addr, reg, val);
+	rv = i2c_write16(tcpc_config[port].i2c_info.port,
+			 tcpc_config[port].i2c_info.addr, reg, val);
 
 	pd_device_accessed(port);
 	return rv;
@@ -66,8 +66,8 @@ int tcpc_read(int port, int reg, int *val)
 
 	pd_wait_exit_low_power(port);
 
-	rv = i2c_read8(tcpc_config[port].i2c_host_port,
-		       tcpc_config[port].i2c_slave_addr, reg, val);
+	rv = i2c_read8(tcpc_config[port].i2c_info.port,
+		       tcpc_config[port].i2c_info.addr, reg, val);
 
 	pd_device_accessed(port);
 	return rv;
@@ -79,8 +79,8 @@ int tcpc_read16(int port, int reg, int *val)
 
 	pd_wait_exit_low_power(port);
 
-	rv = i2c_read16(tcpc_config[port].i2c_host_port,
-			tcpc_config[port].i2c_slave_addr, reg, val);
+	rv = i2c_read16(tcpc_config[port].i2c_info.port,
+			tcpc_config[port].i2c_info.addr, reg, val);
 
 	pd_device_accessed(port);
 	return rv;
@@ -92,8 +92,8 @@ int tcpc_read_block(int port, int reg, uint8_t *in, int size)
 
 	pd_wait_exit_low_power(port);
 
-	rv = i2c_read_block(tcpc_config[port].i2c_host_port,
-			    tcpc_config[port].i2c_slave_addr, reg, in, size);
+	rv = i2c_read_block(tcpc_config[port].i2c_info.port,
+			    tcpc_config[port].i2c_info.addr, reg, in, size);
 
 	pd_device_accessed(port);
 	return rv;
@@ -105,8 +105,8 @@ int tcpc_write_block(int port, int reg, const uint8_t *out, int size)
 
 	pd_wait_exit_low_power(port);
 
-	rv = i2c_write_block(tcpc_config[port].i2c_host_port,
-			     tcpc_config[port].i2c_slave_addr, reg, out, size);
+	rv = i2c_write_block(tcpc_config[port].i2c_info.port,
+			     tcpc_config[port].i2c_info.addr, reg, out, size);
 
 	pd_device_accessed(port);
 	return rv;
@@ -131,8 +131,8 @@ int tcpc_xfer_unlocked(int port, const uint8_t *out, int out_size,
 
 	pd_wait_exit_low_power(port);
 
-	rv = i2c_xfer_unlocked(tcpc_config[port].i2c_host_port,
-				   tcpc_config[port].i2c_slave_addr, out,
+	rv = i2c_xfer_unlocked(tcpc_config[port].i2c_info.port,
+				   tcpc_config[port].i2c_info.addr, out,
 				   out_size, in, in_size, flags);
 
 	pd_device_accessed(port);

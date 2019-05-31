@@ -31,10 +31,22 @@ enum glkrvp_charge_ports {
 };
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	/* Alert is active-low, push-pull */
-	{IT83XX_I2C_CH_B, 0xA0, &tcpci_tcpm_drv, 0},
-	/* Alert is active-low, push-pull */
-	{IT83XX_I2C_CH_B, 0xA4, &tcpci_tcpm_drv, 0},
+	{
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = IT83XX_I2C_CH_B,
+			.addr = 0xa0,
+		},
+		.drv = &tcpci_tcpm_drv,
+	},
+	{
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = IT83XX_I2C_CH_B,
+			.addr = 0xa4,
+		},
+		.drv = &tcpci_tcpm_drv,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == CONFIG_USB_PD_PORT_COUNT);
 

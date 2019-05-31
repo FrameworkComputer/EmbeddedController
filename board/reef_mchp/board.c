@@ -361,18 +361,20 @@ const int i2c_test_dev_used = ARRAY_SIZE(i2c_stress_tests);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {
-		.i2c_host_port = MCHP_I2C_PORT0,
-		.i2c_slave_addr = 0x50,
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = MCHP_I2C_PORT0,
+			.addr = 0x50,
+		},
 		.drv = &anx74xx_tcpm_drv,
-		/* Alert is active-low, push-pull */
-		.flags = 0,
 	},
 	[USB_PD_PORT_PS8751] = {
-		.i2c_host_port = MCHP_I2C_PORT2,
-		.i2c_slave_addr = 0x16,
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = MCHP_I2C_PORT2,
+			.addr = 0x16,
+		},
 		.drv = &ps8xxx_tcpm_drv,
-		/* Alert is active-low, push-pull */
-		.flags = 0,
 	},
 };
 

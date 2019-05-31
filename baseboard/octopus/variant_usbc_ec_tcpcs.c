@@ -29,12 +29,14 @@
 /* USB-C TPCP Configuration */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ITE_0] = {
+		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		/* TCPC is embedded within EC so no i2c config needed */
 		.drv = &it83xx_tcpm_drv,
 		/* Alert is active-low, push-pull */
 		.flags = 0,
 	},
 	[USB_PD_PORT_ITE_1] = {
+		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		/* TCPC is embedded within EC so no i2c config needed */
 		.drv = &it83xx_tcpm_drv,
 		/* Alert is active-low, push-pull */

@@ -127,7 +127,14 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /******************************************************************************/
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC0, FUSB302_I2C_SLAVE_ADDR, &fusb302_tcpm_drv},
+	{
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_TCPC0,
+			.addr = FUSB302_I2C_SLAVE_ADDR,
+		},
+		.drv = &fusb302_tcpm_drv,
+	},
 };
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {

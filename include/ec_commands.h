@@ -5388,6 +5388,7 @@ enum ec_chip_type {
 
 enum ec_bus_type {
 	EC_BUS_TYPE_I2C = 0,
+	EC_BUS_TYPE_EMBEDDED = 1,
 	EC_BUS_TYPE_COUNT,
 	EC_BUS_TYPE_MAX = 0xFF,
 };

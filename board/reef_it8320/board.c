@@ -94,8 +94,14 @@ const struct i2c_port_t i2c_ports[]  = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{-1, -1, &it83xx_tcpm_drv, 0},
-	{-1, -1, &it83xx_tcpm_drv, 0},
+	{
+		.bus_type = EC_BUS_TYPE_EMBEDDED,
+		.drv = &it83xx_tcpm_drv
+	},
+	{
+		.bus_type = EC_BUS_TYPE_EMBEDDED,
+		.drv = &it83xx_tcpm_drv
+	},
 };
 
 void board_pd_vconn_ctrl(int port, int cc_pin, int enabled)

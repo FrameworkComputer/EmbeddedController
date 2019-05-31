@@ -164,6 +164,7 @@ void board_hibernate(void)
 /* USB-C TPCP Configuration */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ITE_0] = {
+		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		/* TCPC is embedded within EC so no i2c config needed */
 		.drv = &it83xx_tcpm_drv,
 		/* Alert is active-low, push-pull */
@@ -171,6 +172,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	},
 
 	[USB_PD_PORT_ITE_1] = {
+		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		/* TCPC is embedded within EC so no i2c config needed */
 		.drv = &it83xx_tcpm_drv,
 		/* Alert is active-low, push-pull */
@@ -178,8 +180,11 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	},
 
 	[USB_PD_PORT_TUSB422_2] = {
-		.i2c_host_port = I2C_PORT_USBC1C2,
-		.i2c_slave_addr = TUSB422_I2C_ADDR,
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_USBC1C2,
+			.addr = TUSB422_I2C_ADDR,
+		},
 		.drv = &tusb422_tcpm_drv,
 		/* Alert is active-low, push-pull */
 		.flags = 0,

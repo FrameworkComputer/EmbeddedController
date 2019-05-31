@@ -112,16 +112,20 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 /* USB-C TPCP Configuration */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
-		.i2c_host_port = I2C_PORT_TCPC0,
-		.i2c_slave_addr = PS8751_I2C_ADDR1,
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_TCPC0,
+			.addr = PS8751_I2C_ADDR1,
+		},
 		.drv = &ps8xxx_tcpm_drv,
-		.flags = 0,
 	},
 	[USB_PD_PORT_TCPC_1] = {
-		.i2c_host_port = I2C_PORT_TCPC1,
-		.i2c_slave_addr = PS8751_I2C_ADDR1,
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_TCPC1,
+			.addr = PS8751_I2C_ADDR1,
+		},
 		.drv = &ps8xxx_tcpm_drv,
-		.flags = 0,
 	},
 };
 

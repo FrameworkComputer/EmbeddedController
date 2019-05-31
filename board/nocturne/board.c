@@ -313,19 +313,20 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{
-		.i2c_host_port = I2C_PORT_USB_C0,
-		.i2c_slave_addr = PS8751_I2C_ADDR1,
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_USB_C0,
+			.addr = PS8751_I2C_ADDR1,
+		},
 		.drv = &tcpci_tcpm_drv,
-		/* Alert is active-low, push-pull */
-		.flags = 0,
 	},
-
 	{
-		.i2c_host_port = I2C_PORT_USB_C1,
-		.i2c_slave_addr = PS8751_I2C_ADDR1,
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_USB_C1,
+			.addr = PS8751_I2C_ADDR1,
+		},
 		.drv = &tcpci_tcpm_drv,
-		/* Alert is active-low, push-pull */
-		.flags = 0,
 	},
 };
 

@@ -9,6 +9,7 @@
 #define __CROS_EC_I2C_H
 
 #include "common.h"
+#include "gpio.h"
 #include "host_command.h"
 
 /* Flags for slave address field, in addition to the 8-bit address */
@@ -29,6 +30,11 @@ enum i2c_freq {
 	I2C_FREQ_400KHZ = 1,
 	I2C_FREQ_100KHZ = 2,
 	I2C_FREQ_COUNT,
+};
+
+struct i2c_info_t {
+	uint16_t port;	/* Physical port for device */
+	uint16_t addr;	/* 8-bit (or 11-bit) address */
 };
 
 /* Data structure to define I2C port configuration. */
