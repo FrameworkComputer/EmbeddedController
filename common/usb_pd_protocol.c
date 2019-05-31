@@ -2751,8 +2751,14 @@ void pd_task(void *u)
 	pd_init_tasks();
 #endif
 
-	/* Ensure the power supply is in the default state */
+	/*
+	 * Ensure the power supply is in the default state and ensure we are not
+	 * sourcing Vconn
+	 */
 	pd_power_supply_reset(port);
+#ifdef CONFIG_USBC_VCONN
+	set_vconn(port, 0);
+#endif
 
 	/* Initialize TCPM driver and wait for TCPC to be ready */
 	res = reset_device_and_notify(port);
