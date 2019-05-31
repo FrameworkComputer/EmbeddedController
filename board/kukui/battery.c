@@ -42,7 +42,7 @@
 
 enum battery_type {
 	BATTERY_SIMPLO = 0,
-	BATTERY_MITSUMI,
+	BATTERY_SCUD,
 	BATTERY_COUNT
 };
 
@@ -59,7 +59,7 @@ static const struct battery_info info[] = {
 		.discharging_min_c	= -20,
 		.discharging_max_c	= 60,
 	},
-	[BATTERY_MITSUMI] = {
+	[BATTERY_SCUD] = {
 		.voltage_max		= 4400,
 		.voltage_normal		= 3850,
 		.voltage_min		= 3400,
@@ -168,7 +168,7 @@ int charger_profile_override(struct charge_state_data *curr)
 			/* TEMP_ZONE_2 */
 			{450, BATTERY_SIMPLO_CHARGE_MAX_TEMP * 10, 3350, 4300},
 		},
-		[BATTERY_MITSUMI] = {
+		[BATTERY_SCUD] = {
 			/* unused */
 		},
 	};
