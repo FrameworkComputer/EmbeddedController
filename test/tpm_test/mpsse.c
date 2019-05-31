@@ -629,7 +629,7 @@ char *Transfer(struct mpsse_context *mpsse, char *data, int size)
 
 	while (n < size) {
 		/*
-		 * When sending and recieving, FTDI chips don't seem to like
+		 * When sending and receiving, FTDI chips don't seem to like
 		 * large data blocks. Limit the size of each block to
 		 * SPI_TRANSFER_SIZE
 		 */

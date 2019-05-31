@@ -82,7 +82,7 @@ uint32_t get_rtc_alarm(void);
 /* RTC init */
 void rtc_init(void);
 
-/* Init clock blocks and finctionality */
+/* Init clock blocks and functionality */
 void clock_init(void);
 
 /* Init high speed clock config */

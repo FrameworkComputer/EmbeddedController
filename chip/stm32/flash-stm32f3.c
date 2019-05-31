@@ -115,7 +115,7 @@ int flash_physical_protect_now(int all)
 		 * doing this.
 		 *
 		 * This incorrect key fault causes the flash to become
-		 * permanenlty locked until reset, a correct keyring write
+		 * permanently locked until reset, a correct keyring write
 		 * will not unlock it. In this way we can implement system
 		 * write protect.
 		 */

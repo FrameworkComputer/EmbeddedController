@@ -20,7 +20,7 @@
  */
 struct usart_state {
 	/*
-	 * Counter of bytes receieved and then dropped because of lack of space
+	 * Counter of bytes received and then dropped because of lack of space
 	 * in the RX queue.
 	 */
 	uint32_t rx_dropped;

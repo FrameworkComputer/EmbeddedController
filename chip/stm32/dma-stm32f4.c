@@ -112,7 +112,7 @@ static void prepare_stream(enum dma_channel stream, unsigned count,
 
 void dma_go(stm32_dma_stream_t *stream)
 {
-	/* Flush data in write buffer so that DMA can get the lastest data */
+	/* Flush data in write buffer so that DMA can get the latest data */
 	asm volatile("dsb;");
 
 	/* Fire it up */

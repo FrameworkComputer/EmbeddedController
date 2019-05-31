@@ -61,7 +61,7 @@ static void power_led_manual_off(void)
 
 	/*
 	 * Reconfigure GPIO as a floating input. Alternatively we could
-	 * configure it as an open-drain output and set it to high impedence,
+	 * configure it as an open-drain output and set it to high impedance,
 	 * but reconfiguring as an input had better results in testing.
 	 */
 	gpio_config_module(MODULE_POWER_LED, 0);

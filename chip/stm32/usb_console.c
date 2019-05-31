@@ -63,7 +63,7 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_CONSOLE, 1) = {
 static usb_uint ep_buf_tx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
 static usb_uint ep_buf_rx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
 
-/* Forward declaraction */
+/* Forward declaration */
 static void handle_output(void);
 
 static void con_ep_tx(void)

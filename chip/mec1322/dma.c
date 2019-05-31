@@ -81,7 +81,7 @@ static void prepare_channel(mec1322_dma_chan_t *chan, unsigned count,
 
 void dma_go(mec1322_dma_chan_t *chan)
 {
-	/* Flush data in write buffer so that DMA can get the lastest data */
+	/* Flush data in write buffer so that DMA can get the latest data */
 	asm volatile("dsb;");
 
 	/* Fire it up */

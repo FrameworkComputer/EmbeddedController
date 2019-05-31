@@ -73,7 +73,7 @@ static const struct dma_option dma_rx_option[I2C_PORT_COUNT] = {
 	 STM32_DMA_CCR_CHANNEL(STM32_FMPI2C4_RX_REQ_CH)},
 };
 
-/* Callabck for ISR to wake task on DMA complete. */
+/* Callback for ISR to wake task on DMA complete. */
 static inline void _i2c_dma_wake_callback(void *cb_data, int port)
 {
 	task_id_t id = (task_id_t)(int)cb_data;

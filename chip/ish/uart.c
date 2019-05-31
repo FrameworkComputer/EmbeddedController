@@ -109,7 +109,7 @@ int uart_rx_available(void)
 
 void uart_write_char(char c)
 {
-	/* Wait till reciever is ready */
+	/* Wait till receiver is ready */
 	while (!uart_tx_ready())
 		continue;
 

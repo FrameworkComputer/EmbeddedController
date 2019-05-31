@@ -273,7 +273,7 @@ static void reply(dma_chan_t *txdma,
  * Sends a byte over SPI without DMA
  *
  * This is mostly used when we want to relay status bytes to the AP while we're
- * recieving the message and we're thinking about it.
+ * receiving the message and we're thinking about it.
  *
  * @note It may be sent 0, 1, or >1 times, depending on whether the host clocks
  * the bus or not. Basically, the EC is saying "if you ask me what my status is,
@@ -349,7 +349,7 @@ static void setup_for_transaction(void)
 #endif
 }
 
-/* Forward declaraction */
+/* Forward declaration */
 static void spi_init(void);
 
 /*
@@ -459,7 +459,7 @@ static void spi_send_response_packet(struct host_packet *pkt)
  * Handle an event on the NSS pin
  *
  * A falling edge of NSS indicates that the master is starting a new
- * transaction. A rising edge indicates that we have finsihed
+ * transaction. A rising edge indicates that we have finished.
  *
  * @param signal	GPIO signal for the NSS pin
  */

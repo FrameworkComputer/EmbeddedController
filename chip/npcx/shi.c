@@ -191,7 +191,7 @@ struct shi_bus_parameters {
 #endif
 } shi_params;
 
-/* Forward declaraction */
+/* Forward declaration */
 static void shi_reset_prepare(void);
 static void shi_bad_received_data(void);
 static void shi_fill_out_status(uint8_t status);
