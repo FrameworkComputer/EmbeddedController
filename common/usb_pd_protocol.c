@@ -2811,8 +2811,10 @@ void pd_task(void *u)
 	 * still be valid.
 	 */
 	if (pd_comm_is_enabled(port) &&
-	    (pd_get_saved_port_flags(port, &saved_flgs) == EC_SUCCESS)) {
-		if (saved_flgs & PD_BBRMFLG_EXPLICIT_CONTRACT) {
+	    (pd_get_saved_port_flags(port, &saved_flgs) == EC_SUCCESS) &&
+	    (saved_flgs & PD_BBRMFLG_EXPLICIT_CONTRACT)) {
+		/* Only attempt to maintain previous sink contracts */
+		if ((saved_flgs & PD_BBRMFLG_POWER_ROLE) == PD_ROLE_SINK) {
 			pd_set_power_role(port,
 					  (saved_flgs & PD_BBRMFLG_POWER_ROLE) ?
 					  PD_ROLE_SOURCE : PD_ROLE_SINK);
@@ -2838,16 +2840,23 @@ void pd_task(void *u)
 			 * using with this port partner.
 			 */
 			pd[port].flags |= PD_FLAGS_CHECK_IDENTITY;
-
+		} else {
 			/*
-			 * Set the TCPC reset event such that we can set our CC
-			 * terminations, determine polarity, and enable RX so we
-			 * can hear back from our port partner.
+			 * Vbus was turned off during the power supply reset
+			 * earlier, so clear the contract flag and re-start as
+			 * default role
 			 */
-			task_set_event(task_get_current(),
-				       PD_EVENT_TCPC_RESET,
-				       0);
+			pd_update_saved_port_flags(port,
+					PD_BBRMFLG_EXPLICIT_CONTRACT, 0);
+
 		}
+		/*
+		 * Set the TCPC reset event such that we can set our CC
+		 * terminations, determine polarity, and enable RX so we
+		 * can hear back from our port partner if maintaining our old
+		 * connection.
+		 */
+		task_set_event(task_get_current(), PD_EVENT_TCPC_RESET, 0);
 	}
 #endif /* defined(CONFIG_USB_PD_DUAL_ROLE) */
 	/* Set the power role if we haven't already. */
