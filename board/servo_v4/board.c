@@ -12,7 +12,6 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "ina2xx.h"
 #include "queue_policies.h"
 #include "registers.h"
 #include "spi.h"
@@ -439,10 +438,6 @@ static void board_init(void)
 	 * DUT ports, so initially limit voltage to 5V.
 	 */
 	pd_set_max_voltage(PD_MIN_MV);
-
-	/* Calibrate INA0 (PP_DUT) and INA1 (PP_CHG) */
-	ina2xx_init(0, 0x8000 /* Reset */, INA2XX_CALIB_1MA(5 /* mOhm */));
-	ina2xx_init(1, 0x8000 /* Reset */, INA2XX_CALIB_1MA(5 /* mOhm */));
 
 	hook_call_deferred(&ccd_measure_sbu_data, 1000 * MSEC);
 
