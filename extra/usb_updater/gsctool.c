@@ -2267,30 +2267,51 @@ static int process_tpm_mode(struct transfer_descriptor *td,
 /*
  * Retrieve from H1 flash log entries which are newer than the passed in
  * timestamp.
+ *
+ * On error retry a few times just in case flash log is locked by a concurrent
+ * access.
  */
 static int process_get_flog(struct transfer_descriptor *td, uint32_t prev_stamp)
 {
 	int rv;
-	union entry_u entry;
-	size_t resp_size;
+	const int max_retries = 3;
+	int retries = max_retries;
 
-	resp_size = sizeof(entry);
-	while (((rv = send_vendor_command(td, VENDOR_CC_POP_LOG_ENTRY,
-					  &prev_stamp, sizeof(prev_stamp),
-					  &entry, &resp_size)) == 0) &&
-	       (resp_size > 0)) {
+	while (retries--) {
+		union entry_u entry;
+		size_t resp_size;
 		size_t i;
+
+		resp_size = sizeof(entry);
+		rv = send_vendor_command(td, VENDOR_CC_POP_LOG_ENTRY,
+					 &prev_stamp, sizeof(prev_stamp),
+					 &entry, &resp_size);
+
+		if (rv) {
+			/*
+			 * Flash log could be momentarily locked by a
+			 * concurrent access, let it settle and try again, 10
+			 * ms should be enough.
+			 */
+			usleep(10 * 1000);
+			continue;
+		}
+
+		if (resp_size == 0)
+			/* No more entries. */
+			return 0;
 
 		memcpy(&prev_stamp, &entry.r.timestamp, sizeof(prev_stamp));
 		printf("%10u:%02x", prev_stamp, entry.r.type);
 		for (i = 0; i < FLASH_LOG_PAYLOAD_SIZE(entry.r.size); i++)
 			printf(" %02x", entry.r.payload[i]);
 		printf("\n");
-
-		resp_size = sizeof(entry);
+		retries = max_retries;
 	}
 
-	return 0;
+	fprintf(stderr, "%s: error %d\n", __func__, rv);
+
+	return rv;
 }
 
 static int process_tstamp(struct transfer_descriptor *td,
@@ -2589,7 +2610,7 @@ int main(int argc, char *argv[])
 		case 'L':
 			get_flog = 1;
 			if (optarg)
-				prev_log_entry = strtoul(optarg, NULL, 16);
+				prev_log_entry = strtoul(optarg, NULL, 0);
 			break;
 		case 'M':
 			show_machine_output = true;
