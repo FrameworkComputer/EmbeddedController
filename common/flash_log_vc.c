@@ -36,7 +36,7 @@ static enum vendor_cmd_rc vc_pop_log_entry(enum vendor_cmd_cc code, void *buf,
 	*response_size = 1;
 	((uint8_t *)buf)[0] = -byte_size;
 
-	return VENDOR_RC_ERR;
+	return VENDOR_RC_INTERNAL_ERROR;
 }
 DECLARE_VENDOR_COMMAND(VENDOR_CC_POP_LOG_ENTRY, vc_pop_log_entry);
 
