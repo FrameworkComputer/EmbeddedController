@@ -497,16 +497,16 @@ static int tpm_send_pkt(struct transfer_descriptor *td, unsigned int digest,
 
 	out->length = htobe32(len);
 	memcpy(payload, data, size);
-#ifdef DEBUG
-	{
+
+	if (verbose_mode) {
 		int i;
 
 		debug("Writing %d bytes to TPM at %x\n", len, addr);
-		for (i = 0; i < 20; i++)
+		for (i = 0; i < MIN(len, 20); i++)
 			debug("%2.2x ", outbuf[i]);
 		debug("\n");
 	}
-#endif
+
 	switch (td->ep_type) {
 	case dev_xfer:
 		done = write(td->tpm_fd, out, len);
