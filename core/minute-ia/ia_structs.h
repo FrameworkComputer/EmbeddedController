@@ -8,7 +8,7 @@
 
 #ifndef __ASSEMBLER__
 
-#include <stdint.h>
+#include "common.h"
 
 
 /**

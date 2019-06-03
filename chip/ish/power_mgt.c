@@ -3,15 +3,16 @@
  * found in the LICENSE file.
  */
 
-#include <console.h>
-#include <task.h>
-#include <system.h>
-#include <hwtimer.h>
-#include <util.h>
-#include "interrupts.h"
 #include "aontaskfw/ish_aon_share.h"
-#include "power_mgt.h"
+#include "console.h"
+#include "hwtimer.h"
+#include "interrupts.h"
 #include "ish_dma.h"
+#include "power_mgt.h"
+#include "system.h"
+#include "task.h"
+#include "util.h"
+#include "watchdog.h"
 
 #ifdef CONFIG_ISH_PM_DEBUG
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
@@ -363,6 +364,9 @@ static void enter_d0i1(void)
 	t1 = __hw_clock_source_read();
 	log_pm_stat(&pm_stats.d0i1, t0, t1);
 
+	/* Reload watchdog before enabling interrupts again */
+	watchdog_reload();
+
 	/* restore interrupts */
 	task_disable_irq(ISH_PMU_WAKEUP_IRQ);
 	restore_interrupts(current_irq_map);
@@ -413,6 +417,9 @@ static void enter_d0i2(void)
 	pm_ctx.aon_share->pm_state = ISH_PM_STATE_D0;
 	log_pm_stat(&pm_stats.d0i2, t0, t1);
 
+	/* Reload watchdog before enabling interrupts again */
+	watchdog_reload();
+
 	/* restore interrupts */
 	task_disable_irq(ISH_PMU_WAKEUP_IRQ);
 	restore_interrupts(current_irq_map);
@@ -462,6 +469,9 @@ static void enter_d0i3(void)
 	t1 = __hw_clock_source_read();
 	pm_ctx.aon_share->pm_state = ISH_PM_STATE_D0;
 	log_pm_stat(&pm_stats.d0i3, t0, t1);
+
+	/* Reload watchdog before enabling interrupts again */
+	watchdog_reload();
 
 	/* restore interrupts */
 	task_disable_irq(ISH_PMU_WAKEUP_IRQ);

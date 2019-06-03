@@ -13,6 +13,7 @@
 #include "irq_handler.h"
 #include "registers.h"
 #include "task_defs.h"
+#include "task.h"
 #include "util.h"
 
 /* Console output macros */
@@ -81,10 +82,13 @@ void restore_interrupts(uint64_t irq_map)
 {
 	int i;
 
+	/* Disable interrupts until everything is unmasked */
+	interrupt_disable();
 	for (i = 0; i < ISH_MAX_IOAPIC_IRQS; i++) {
 		if (((uint64_t)0x1 << i) & irq_map)
 			unmask_interrupt(i);
 	}
+	interrupt_enable();
 }
 
 /*
