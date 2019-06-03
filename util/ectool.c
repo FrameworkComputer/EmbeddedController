@@ -6067,6 +6067,22 @@ int do_i2c_xfer(unsigned int port, unsigned int addr,
 	return 0;
 }
 
+static void cmd_i2c_help(void)
+{
+	fprintf(stderr,
+	"  Usage: i2cread <8 | 16> <port> <addr8> <offset>\n"
+	"  Usage: i2cwrite <8 | 16> <port> <addr8> <offset> <data>\n"
+	"  Usage: i2cxfer <port> <addr7> <read_count> [bytes...]\n"
+	"    <port> i2c port number\n"
+	"    <addr8> 8-bit i2c address\n"
+	"    <addr7> 7-bit i2c address\n"
+	"    <offset> offset to read from or write to\n"
+	"    <data> data to write\n"
+	"    <read_count> number of bytes to read\n"
+	"    [bytes ...] data to write\n"
+	);
+
+}
 
 int cmd_i2c_read(int argc, char *argv[])
 {
@@ -6078,8 +6094,7 @@ int cmd_i2c_read(int argc, char *argv[])
 	int rv;
 
 	if (argc != 5) {
-		fprintf(stderr, "Usage: %s <8 | 16> <port> <addr> <offset>\n",
-				argv[0]);
+		cmd_i2c_help();
 		return -1;
 	}
 
@@ -6131,9 +6146,7 @@ int cmd_i2c_write(int argc, char *argv[])
 	int rv;
 
 	if (argc != 6) {
-		fprintf(stderr,
-			"Usage: %s <8 | 16> <port> <addr> <offset> <data>\n",
-			argv[0]);
+		cmd_i2c_help();
 		return -1;
 	}
 
@@ -6191,9 +6204,7 @@ int cmd_i2c_xfer(int argc, char *argv[])
 	int rv, i;
 
 	if (argc < 4) {
-		fprintf(stderr,
-			"Usage: %s <port> <slave_addr> <read_count> "
-			"[write bytes...]\n", argv[0]);
+		cmd_i2c_help();
 		return -1;
 	}
 

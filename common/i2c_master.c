@@ -710,7 +710,7 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	     msgnum++, msg++) {
 		unsigned int addr_flags = msg->addr_flags;
 
-		PTHRUPRINTS("port=%d, %s, addr=0x%x, len=%d",
+		PTHRUPRINTS("port=%d, %s, addr=0x%x(7-bit), len=%d",
 			    params->port,
 			    addr_flags & EC_I2C_FLAG_READ ? "read" : "write",
 			    addr_flags & EC_I2C_ADDR_MASK,
