@@ -155,7 +155,7 @@ int board_sensor_at_360(void)
 	 * closed at 0 degrees. Ignore the hall sensor when the lid close is
 	 * also active.
 	 */
-	return gpio_get_level(GPIO_LID_OPEN) &&
+	return lid_is_open() &&
 	       !gpio_get_level(HALL_SENSOR_GPIO_L);
 }
 
