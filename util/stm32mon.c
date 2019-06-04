@@ -200,6 +200,50 @@ struct stm32_def {
 	},
 	{0x450, "STM32H74x",    0x200000, 131768, {13, 19}, { { 0 } }, { 0 } },
 	{0x451, "STM32F76x",    0x200000, 32768, {13, 19}, { { 0 } }, { 0 } },
+	{
+		.id =		0x460,
+		.name =		"STM32G071xx",
+		.flash_size =	0x20000,
+		.page_size =	2048,
+		.cmds_len =	{13, 13},
+		/*
+		 * STM32G0x1:
+		 * See https://www.st.com/resource/en/reference_manual/dm00371828.pdf
+		 * Section 3.3.1 Table 6 Flash module organization
+		 */
+		.memory_layout = {
+			.main_memory = {
+				.addr = STM32_MAIN_MEMORY_ADDR,
+				.size_bytes = 0, /* set by flash reg read */
+			},
+			.system_memory = {
+				.addr = STM32_SYSTEM_MEMORY_ADDR,
+				.size_bytes = 28 * KBYTES_TO_BYTES,
+			},
+			.otp_area = {
+				.addr = 0x1FFF7000,
+				.size_bytes = 1024,
+			},
+			.option_bytes = {
+				.addr = 0x1FFF7800,
+				.size_bytes = 128,
+			}
+		},
+		/*
+		 * STM32G0x1:
+		 * See https://www.st.com/resource/en/reference_manual/dm00371828.pdf
+		 * Section 38 Device electronic signature
+		 */
+		.device_signature = {
+			.unique_device_id_addr =	0x1FFF7590,
+			.flash_size_addr =		0x1FFF75E0,
+			/*
+			 * Datasheet litst as same address as e.g. STM32F412,
+			 * hence declaring as zero as for that other chip.
+			 */
+			.package_data_addr =		0, /* 0x1FFF7500 */
+		}
+	},
 	{ 0 }
 };
 
