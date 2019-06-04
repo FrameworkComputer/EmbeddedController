@@ -36,8 +36,24 @@ int rollback_get_secret(uint8_t *secret)
 	return EC_SUCCESS;
 }
 
-static int check_fp_enc_status_valid_flags(const uint32_t expected)
+static int check_seed_set_result(const int rv, const uint32_t expected,
+			const struct ec_response_fp_encryption_status *resp)
 {
+	const uint32_t actual = resp->status & FP_ENC_STATUS_SEED_SET;
+
+	if (rv != EC_RES_SUCCESS || expected != actual) {
+		ccprintf("%s:%s(): rv = %d, seed is set: %d\n", __FILE__,
+			 __func__, rv, actual);
+		return -1;
+	}
+
+	return EC_SUCCESS;
+}
+
+test_static int test_fp_enc_status_valid_flags(void)
+{
+	/* Putting expected value here because test_static should take void */
+	const uint32_t expected = FP_ENC_STATUS_SEED_SET;
 	int rv;
 	struct ec_response_fp_encryption_status resp = { 0 };
 
@@ -175,7 +191,7 @@ test_static int test_derive_encryption_key_failure_rollback_fail(void)
 	return EC_SUCCESS;
 }
 
-static int check_fp_tpm_seed_not_set(void)
+test_static int test_fp_tpm_seed_not_set(void)
 {
 	int rv;
 	struct ec_response_fp_encryption_status resp = { 0 };
@@ -184,22 +200,12 @@ static int check_fp_tpm_seed_not_set(void)
 	rv = test_send_host_command(EC_CMD_FP_ENC_STATUS, 0,
 				    NULL, 0,
 				    &resp, sizeof(resp));
-	if (rv != EC_RES_SUCCESS || resp.status & FP_ENC_STATUS_SEED_SET) {
-		ccprintf("%s:%s(): rv = %d, seed is set: %d\n", __FILE__,
-			 __func__, rv, resp.status & FP_ENC_STATUS_SEED_SET);
-		return -1;
-	}
 
-	return EC_RES_SUCCESS;
+	return check_seed_set_result(rv, 0, &resp);
 }
 
-static int set_fp_tpm_seed(void)
+test_static int test_set_fp_tpm_seed(void)
 {
-	/*
-	 * TODO(yichengli): test setting the seed twice:
-	 * the second time fails;
-	 * the seed is still set.
-	 */
 	int rv;
 	struct ec_params_fp_seed params;
 	struct ec_response_fp_encryption_status resp = { 0 };
@@ -220,23 +226,35 @@ static int set_fp_tpm_seed(void)
 	rv = test_send_host_command(EC_CMD_FP_ENC_STATUS, 0,
 				    NULL, 0,
 				    &resp, sizeof(resp));
-	if (rv != EC_RES_SUCCESS || !(resp.status & FP_ENC_STATUS_SEED_SET)) {
-		ccprintf("%s:%s(): rv = %d, seed is set: %d\n", __FILE__,
-			 __func__, rv, resp.status & FP_ENC_STATUS_SEED_SET);
+
+	return check_seed_set_result(rv, FP_ENC_STATUS_SEED_SET, &resp);
+}
+
+test_static int test_set_fp_tpm_seed_again(void)
+{
+	int rv;
+	struct ec_params_fp_seed params;
+	struct ec_response_fp_encryption_status resp = { 0 };
+
+	params.struct_version = FP_TEMPLATE_FORMAT_VERSION;
+	params.seed[0] = 0;
+
+	rv = test_send_host_command(EC_CMD_FP_SEED, 0,
+					&params, sizeof(params),
+					NULL, 0);
+	if (rv != EC_RES_ACCESS_DENIED) {
+		ccprintf("%s:%s(): rv = %d, setting seed the second time "
+		"should result in EC_RES_ACCESS_DENIED but did not.\n",
+			__FILE__, __func__, rv);
 		return -1;
 	}
 
-	return EC_RES_SUCCESS;
-}
+	/* Now seed should still be set. */
+	rv = test_send_host_command(EC_CMD_FP_ENC_STATUS, 0,
+					NULL, 0,
+					&resp, sizeof(resp));
 
-test_static int test_fpsensor_seed(void)
-{
-	TEST_ASSERT(check_fp_enc_status_valid_flags(FP_ENC_STATUS_SEED_SET) ==
-		    EC_RES_SUCCESS);
-	TEST_ASSERT(check_fp_tpm_seed_not_set() == EC_RES_SUCCESS);
-	TEST_ASSERT(set_fp_tpm_seed() == EC_RES_SUCCESS);
-
-	return EC_SUCCESS;
+	return check_seed_set_result(rv, FP_ENC_STATUS_SEED_SET, &resp);
 }
 
 test_static int test_fp_set_sensor_mode(void)
@@ -294,8 +312,11 @@ test_static int test_fp_set_sensor_mode(void)
 
 void run_test(void)
 {
+	RUN_TEST(test_fp_enc_status_valid_flags);
+	RUN_TEST(test_fp_tpm_seed_not_set);
 	RUN_TEST(test_derive_encryption_key_failure_seed_not_set);
-	RUN_TEST(test_fpsensor_seed);
+	RUN_TEST(test_set_fp_tpm_seed);
+	RUN_TEST(test_set_fp_tpm_seed_again);
 	RUN_TEST(test_derive_encryption_key);
 	RUN_TEST(test_derive_encryption_key_failure_rollback_fail);
 	RUN_TEST(test_fp_set_sensor_mode);
