@@ -187,9 +187,12 @@ static void set_tpm_state(enum tpm_states state)
 		/* Make sure FIFO is empty. */
 		tpm_.fifo_read_index = 0;
 		tpm_.fifo_write_index = 0;
-		tpm_.regs.sts &= ~data_avail;
-		/* Set burst size for the following write requests. */
-		tpm_.regs.sts &= ~(burst_count_mask << burst_count_shift);
+		/*
+		 * Set proper fields of the status register: FIFO depth 63,
+		 * not ready, no data available.
+		 */
+		tpm_.regs.sts &= ~((burst_count_mask << burst_count_shift) |
+				   command_ready | data_avail);
 		tpm_.regs.sts |= 63 << burst_count_shift;
 	}
 }
@@ -283,7 +286,6 @@ static void sts_reg_write_cr(void)
 	case tpm_state_executing_cmd:
 	case tpm_state_receiving_cmd:
 		set_tpm_state(tpm_state_idle);
-		tpm_.regs.sts &= ~command_ready;
 		break;
 	}
 }
