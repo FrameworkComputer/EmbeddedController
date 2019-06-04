@@ -33,7 +33,7 @@
 #define I8042_CMD_SET_A_KEY_T   0xfb
 #define I8042_CMD_SET_A_KEY_MR  0xfc
 #define I8042_CMD_SET_A_KEY_M   0xfd
-#define I8042_CMD_RESET_BAT     0xff
+#define I8042_CMD_RESET         0xff
 #define I8042_CMD_RESEND        0xfe
 
 /* port 0x64 */
@@ -66,7 +66,6 @@
 #define I8042_PULSE_END         0xff
 
 /* port 0x60 return value */
-#define I8042_RET_BAT           0xaa
 #define I8042_RET_EMUL0         0xe0
 #define I8042_RET_EMUL1         0xe1
 #define I8042_RET_ECHO          0xee
