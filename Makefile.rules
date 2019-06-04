@@ -291,9 +291,11 @@ $(FAILED_BOARDS_DIR):
 .PHONY: buildfuzztests
 buildfuzztests: $(fuzz-test-targets)
 
-.PHONY: hosttests runtests
+.PHONY: hosttests runhosttests runfuzztests runtests
 hosttests: $(host-test-targets)
-runtests: $(run-test-targets) $(run-fuzz-test-targets)
+runhosttests: $(run-test-targets)
+runfuzztests: $(run-fuzz-test-targets)
+runtests: runhosttests runfuzztests
 
 # Automatically enumerate all suites.
 cts_excludes := common
