@@ -87,6 +87,8 @@ class Susb(object):
     except usb.core.USBError:
       pass
 
+    self._dev = dev
+
     # Get an endpoint instance.
     cfg = dev.get_active_configuration()
     intf = usb.util.find_descriptor(cfg, bInterfaceNumber=self._interface)
@@ -108,3 +110,6 @@ class Susb(object):
     write_ep_number = intf.bInterfaceNumber + self.WRITE_ENDPOINT
     write_ep = usb.util.find_descriptor(intf, bEndpointAddress=write_ep_number)
     self._write_ep = write_ep
+
+  def close(self):
+    usb.util.dispose_resources(self._dev)

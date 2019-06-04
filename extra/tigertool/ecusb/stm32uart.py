@@ -73,6 +73,7 @@ class Suart(object):
     if self._tx_thread:
       self._tx_thread.join(2)
       self._tx_thread = None
+    self._susb.close()
 
   def run_rx_thread(self):
     """Background loop to pass data from USB to pty."""
