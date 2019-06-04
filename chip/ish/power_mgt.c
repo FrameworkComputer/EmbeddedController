@@ -585,7 +585,16 @@ void __idle(void)
 		t0 = get_time();
 		next_delay = __hw_clock_event_get() - t0.le.lo;
 
-		pm_process(t0, next_delay);
+		/*
+		 * Most of the time, 'next_delay' will be positive. But, due to
+		 * interrupt latency, it's possible that get_time() returns
+		 * the value bigger than the one from __hw_clock_event_get()
+		 * which is supposed to be updated by ISR before control reaches
+		 * to the get_time().
+		 *
+		 * Here, we handle the delayed update by changing negative to 0.
+		 */
+		pm_process(t0, MAX(0, next_delay));
 	}
 }
 

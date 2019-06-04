@@ -32,6 +32,14 @@ static uint32_t last_deadline;
  */
 #define MINIMUM_EVENT_DELAY_US 800
 
+/*
+ * ISH HPET timer HW has latency for interrupt, on ISH5, this latency is about
+ * 3 ticks, defined this configuration to calibrate the 'last_deadline' which is
+ * updated in event timer interrupt ISR. Without this calibration, we could
+ * get negative sleep time in idle task for low power sleep process.
+ */
+#define HPET_INT_LATENCY_TICKS 3
+
 /* Scaling helper methods for different ISH chip variants */
 #ifdef CHIP_FAMILY_ISH3
 #define CLOCK_FACTOR 12
@@ -161,26 +169,45 @@ static inline uint64_t read_main_timer(void)
 void __hw_clock_event_set(uint32_t deadline)
 {
 	uint32_t remaining_us;
+	uint32_t current_us;
+	uint64_t current_ticks;
 
-	last_deadline = deadline;
+	/* 'current_ticks' is the current absolute 64bit HW timer counter */
+	current_ticks = read_main_timer();
 
-	remaining_us = deadline - __hw_clock_source_read();
+	/*
+	 * 'current_us' is the low 32bit part of current time in 64bit micro
+	 * seconds format, it's can express 2^32 micro seconds in maximum.
+	 */
+	current_us = scale_ticks2us(current_ticks);
 
-	/* Ensure HW has enough time to react to new timer value */
+	/*
+	 * To ensure HW has enough time to react to the new timer value,
+	 * we make remaining time not less than 'MINIMUM_EVENT_DELAY_US'
+	 */
+	remaining_us = deadline - current_us;
 	remaining_us = MAX(remaining_us, MINIMUM_EVENT_DELAY_US);
 
 	/*
+	 * Set new 64bit absolute timeout ticks to Timer 1 comparator
+	 * register.
 	 * For ISH3, this assumes that remaining_us is less than 360 seconds
 	 * (2^32 us / 12Mhz), otherwise we would need to handle 32-bit rollover
 	 * of 12Mhz timer comparator value. Watchdog refresh happens at least
 	 * every 10 seconds.
 	 */
 	wait_while_settling(HPET_T1_CMP_SETTLING);
-	HPET_TIMER_COMP(1) = read_main_timer() + scale_us2ticks(remaining_us);
+	HPET_TIMER_COMP(1) = current_ticks + scale_us2ticks(remaining_us);
 
+	/*
+	 * Update 'last_deadline' and add calibrate delta due to HPET timer
+	 * interrupt latency.
+	 */
+	last_deadline = current_us + remaining_us;
+	last_deadline += scale_ticks2us(HPET_INT_LATENCY_TICKS);
+
+	/* Enable timer interrupt */
 	wait_while_settling(HPET_T1_SETTLING);
-
-	/* Arm timer */
 	HPET_TIMER_CONF_CAP(1) |= HPET_Tn_INT_ENB_CNF;
 }
 
