@@ -238,30 +238,12 @@ int DCRYPTO_ladder_random(void *output)
 {
 	int error = 1;
 	uint32_t tmp[8];
-	int i;
 
 	if (!dcrypto_grab_sha_hw())
 		goto fail;
 
 	rand_bytes(tmp, sizeof(tmp));
-	error = ladder_step(KEYMGR_CERT_28, tmp);
-	if (error)
-		goto fail;
-
-	if (!compute_certs(FRK2_CERTS_PREFIX, ARRAY_SIZE(FRK2_CERTS_PREFIX)))
-		goto fail;
-	/* USR generation requires running the key-ladder till
-	 * the end (version 0), plus one additional iteration.
-	 */
-	for (i = 0; i < MAX_MAJOR_FW_VERSION - 0 + 1; i++)
-		if (ladder_step(KEYMGR_CERT_25, NULL))
-			goto fail;
-	if (i != MAX_MAJOR_FW_VERSION - 0 + 1)
-		goto fail;
-	if (ladder_step(KEYMGR_CERT_34, ISR_SALT))
-		goto fail;
-
-	rand_bytes(tmp, sizeof(tmp));
+	/* Mix TRNG bytes with RSR entropy */
 	error = ladder_step(KEYMGR_CERT_27, tmp);
 	if (!error)
 		ladder_out(output);
