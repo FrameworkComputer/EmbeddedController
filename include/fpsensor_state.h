@@ -78,10 +78,11 @@ void fp_task_simulate(void);
  */
 void fp_clear_finger_context(int idx);
 
-/*
- * Clear all fingerprint templates associated with the current user id.
+/**
+ * Clear all fingerprint templates associated with the current user id and
+ * reset the sensor.
  */
-void fp_clear_context(void);
+void fp_reset_and_clear_context(void);
 
 /*
  * Get the next FP event.

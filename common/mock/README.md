@@ -43,7 +43,7 @@ Example `.mocklist`:
 
  #define CONFIG_TEST_MOCK_LIST \
 	MOCK(ROLLBACK)         \
-	MOCK(FP_SENSOR)
+	MOCK(FPSENSOR)
 ```
 
 If you need additional mock control functionality, you may need to include

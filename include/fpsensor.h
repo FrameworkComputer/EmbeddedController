@@ -28,6 +28,9 @@
 /* Initialize the connected sensor hardware and put it in a low power mode. */
 int fp_sensor_init(void);
 
+/* De-initialize the sensor hardware. */
+int fp_sensor_deinit(void);
+
 /*
  * Fill the 'ec_response_fp_info' buffer with the sensor information
  * as required by the EC_CMD_FP_INFO host command.

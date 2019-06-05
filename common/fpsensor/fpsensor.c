@@ -243,8 +243,7 @@ void fp_task(void)
 			if (mode & FP_MODE_ANY_WAIT_IRQ) {
 				gpio_enable_interrupt(GPIO_FPS_INT);
 			} else if (mode & FP_MODE_RESET_SENSOR) {
-				fp_clear_context();
-				fp_sensor_init();
+				fp_reset_and_clear_context();
 				sensor_mode &= ~FP_MODE_RESET_SENSOR;
 			} else {
 				fp_sensor_low_power();
@@ -602,7 +601,8 @@ static enum ec_error_list fp_console_action(uint32_t mode)
 	uint32_t mode_output = 0;
 	int rc = 0;
 
-	CPRINTS("Waiting for finger ...");
+	if (!(sensor_mode & FP_MODE_RESET_SENSOR))
+		CPRINTS("Waiting for finger ...");
 
 	rc = fp_set_sensor_mode(mode, &mode_output);
 
@@ -709,8 +709,18 @@ DECLARE_CONSOLE_COMMAND(fpmatch, command_fpmatch, NULL,
 
 int command_fpclear(int argc, char **argv)
 {
-	fp_clear_context();
-	return EC_SUCCESS;
+	/*
+	 * We intentionally run this on the fp_task so that we use the
+	 * same code path as host commands.
+	 */
+	enum ec_error_list rc = fp_console_action(FP_MODE_RESET_SENSOR);
+
+	if (rc < 0)
+		CPRINTS("Failed to clear fingerprint context: %d", rc);
+
+	atomic_read_clear(&fp_events);
+
+	return rc;
 }
 DECLARE_CONSOLE_COMMAND(fpclear, command_fpclear, NULL,
 			"Clear fingerprint sensor context");

@@ -3,6 +3,15 @@
  * found in the LICENSE file.
  */
 
- #define CONFIG_TEST_MOCK_LIST \
-        MOCK(FPSENSOR) \
-        MOCK(ROLLBACK)
+#include "common.h"
+
+/* No-op mocks */
+int fp_sensor_init(void)
+{
+	return EC_SUCCESS;
+}
+
+int fp_sensor_deinit(void)
+{
+	return EC_SUCCESS;
+}
