@@ -63,22 +63,28 @@ static int header_restored(uint32_t offset)
 /*
  * Try restoring inactive RO and RW headers, Return the number of restored
  * headers.
+ *
+ * Since the RO could come with new keys, we don't want create a situation
+ * where the RO is restored and the RW is not (say due to power failure or an
+ * exception, etc.). So, restore the RW first, and then the RO. In this case
+ * if restoring failed, the currently running RO is still guaranteed to boot
+ * and start the currently running RW, so the update could be attempted again.
  */
 static uint8_t headers_restored(void)
 {
 	uint8_t total_restored;
 
-	/* Examine the RO first. */
-	if (system_get_ro_image_copy() == SYSTEM_IMAGE_RO)
-		total_restored = header_restored(CHIP_RO_B_MEM_OFF);
-	else
-		total_restored = header_restored(CONFIG_RO_MEM_OFF);
-
-	/* Now the RW */
+	/* Examine the RW first. */
 	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
-		total_restored += header_restored(CONFIG_RW_B_MEM_OFF);
+		total_restored = header_restored(CONFIG_RW_B_MEM_OFF);
 	else
-		total_restored += header_restored(CONFIG_RW_MEM_OFF);
+		total_restored = header_restored(CONFIG_RW_MEM_OFF);
+
+	/* Now the RO */
+	if (system_get_ro_image_copy() == SYSTEM_IMAGE_RO)
+		total_restored += header_restored(CHIP_RO_B_MEM_OFF);
+	else
+		total_restored += header_restored(CONFIG_RO_MEM_OFF);
 
 	return total_restored;
 }
