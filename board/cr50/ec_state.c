@@ -61,6 +61,16 @@ static void set_state(enum device_state new_state)
  */
 static void set_ec_on(void)
 {
+	/* If we're already on, done */
+	if (state == DEVICE_STATE_ON)
+		return;
+
+	/* If we were debouncing ON->OFF, cancel it because we're still on */
+	if (state == DEVICE_STATE_DEBOUNCING) {
+		set_state(DEVICE_STATE_ON);
+		return;
+	}
+
 	if (state == DEVICE_STATE_INIT ||
 	    state == DEVICE_STATE_INIT_DEBOUNCING) {
 		/*
@@ -74,14 +84,6 @@ static void set_ec_on(void)
 		ccd_update_state();
 		return;
 	}
-
-	/* If we were debouncing ON->OFF, cancel it because we're still on */
-	if (state == DEVICE_STATE_DEBOUNCING)
-		set_state(DEVICE_STATE_ON);
-
-	/* If we're already on, done */
-	if (state == DEVICE_STATE_ON)
-		return;
 
 	/* We were previously off */
 	CPRINTS("EC on");
