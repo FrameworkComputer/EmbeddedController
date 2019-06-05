@@ -114,8 +114,7 @@ void usb_stream_rx(struct usb_stream_config const *config)
 	GR_USB_DOEPINT(config->endpoint) = 0xffffffff;
 }
 
-/* True if the Tx/IN FIFO can take some bytes from us. */
-static inline int tx_fifo_is_ready(struct usb_stream_config const *config)
+int tx_fifo_is_ready(struct usb_stream_config const *config)
 {
 	uint32_t status;
 	struct g_usb_desc *in_desc = config->in_desc;
@@ -265,3 +264,8 @@ struct producer_ops const usb_stream_producer_ops = {
 struct consumer_ops const usb_stream_consumer_ops = {
 	.written = usb_written,
 };
+
+int usb_stream_is_reset(struct usb_stream_config const *config)
+{
+	return !!(*config->is_reset);
+}
