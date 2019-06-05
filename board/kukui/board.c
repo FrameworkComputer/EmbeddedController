@@ -375,7 +375,7 @@ static struct bmi160_drv_data_t g_bmi160_data;
 
 #ifdef BOARD_KRANE
 /* Matrix to rotate accelerometer into standard reference frame */
-const mat33_fp_t lid_standard_ref_rev3 = {
+static const mat33_fp_t lid_standard_ref_rev3 = {
 	{0, FLOAT_TO_FP(-1), 0},
 	{FLOAT_TO_FP(1), 0, 0},
 	{0, 0, FLOAT_TO_FP(1)}
@@ -383,18 +383,20 @@ const mat33_fp_t lid_standard_ref_rev3 = {
 #endif /* BOARD_KRANE */
 
 /* Matrix to rotate accelerometer into standard reference frame */
-const mat33_fp_t lid_standard_ref = {
+static const mat33_fp_t lid_standard_ref = {
 	{FLOAT_TO_FP(1), 0, 0},
 	{0, FLOAT_TO_FP(1), 0},
 	{0, 0, FLOAT_TO_FP(1)}
 };
 
+#ifdef CONFIG_MAG_BMI160_BMM150
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t mag_standard_ref = {
+static const mat33_fp_t mag_standard_ref = {
 	{0, FLOAT_TO_FP(-1), 0},
 	{FLOAT_TO_FP(-1), 0, 0},
 	{0, 0, FLOAT_TO_FP(-1)}
 };
+#endif /* CONFIG_MAG_BMI160_BMM150 */
 
 struct motion_sensor_t motion_sensors[] = {
 	/*
@@ -441,6 +443,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
+#ifdef CONFIG_MAG_BMI160_BMM150
 	[LID_MAG] = {
 	 .name = "Lid Mag",
 	 .active_mask = SENSOR_ACTIVE_S0,
@@ -457,6 +460,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = BMM150_MAG_MIN_FREQ,
 	 .max_frequency = BMM150_MAG_MAX_FREQ(SPECIAL),
 	},
+#endif /* CONFIG_MAG_BMI160_BMM150 */
 	[VSYNC] = {
 	 .name = "Camera vsync",
 	 .active_mask = SENSOR_ACTIVE_S0,
