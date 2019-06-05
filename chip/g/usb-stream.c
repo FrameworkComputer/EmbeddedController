@@ -36,7 +36,7 @@ static inline int rx_fifo_is_ready(struct usb_stream_config const *config)
  * other end of the queue (telling us that there's now more room in the queue
  * if we still have bytes to shove in there).
  */
-int rx_stream_handler(struct usb_stream_config const *config)
+void rx_stream_handler(struct usb_stream_config const *config)
 {
 	/*
 	 * The HW FIFO buffer (rx_ram) is always filled from [0] by the
@@ -55,12 +55,13 @@ int rx_stream_handler(struct usb_stream_config const *config)
 	 * the next time this function is called we can try to shove the rest
 	 * of the HW FIFO bytes into the queue.
 	 */
-	static int rx_handled;
+	int rx_handled;
 
 	/* If the HW FIFO isn't ready, then we're waiting for more bytes */
 	if (!rx_fifo_is_ready(config))
-		return 0;
+		return;
 
+	rx_handled = *(config->rx_handled);
 	/*
 	 * How many of the HW FIFO bytes have we not yet handled? We need to
 	 * know both where we are in the buffer and how many bytes we haven't
@@ -91,7 +92,8 @@ int rx_stream_handler(struct usb_stream_config const *config)
 	} else {
 		hook_call_deferred(config->deferred_rx, 0);
 	}
-	return rx_handled;
+
+	*(config->rx_handled) = rx_handled;
 }
 
 /* Rx/OUT interrupt handler */
@@ -111,21 +113,20 @@ static inline int tx_fifo_is_ready(struct usb_stream_config const *config)
 }
 
 /* Try to send some bytes to the host */
-int tx_stream_handler(struct usb_stream_config const *config)
+void tx_stream_handler(struct usb_stream_config const *config)
 {
 	size_t count;
 
 	if (!*config->is_reset)
-		return 0;
+		return;
 
 	if (!tx_fifo_is_ready(config))
-		return 0;
+		return;
 
 	count = QUEUE_REMOVE_UNITS(config->consumer.queue, config->tx_ram,
 				   config->tx_size);
 	if (count)
 		usb_enable_tx(config, count);
-	return count;
 }
 
 /* Tx/IN interrupt handler */
