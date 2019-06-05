@@ -18,6 +18,13 @@
  */
 #define SCP_FW_VERSION_LEN 32
 
+/*
+ * Video decoder supported capability:
+ * BIT(4): 0 enable 4K
+ *         1 disable 4K
+ */
+#define VCODEC_CAPABILITY_4K_DISABLED BIT(4)
+
 #ifndef IPI_SCP_INIT
 #error If CONFIG_IPI is enabled, IPI_SCP_INIT must be defined.
 #endif

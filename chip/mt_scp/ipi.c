@@ -205,7 +205,7 @@ void ipi_inform_ap(void)
 	scp_run.signaled = 1;
 	strncpy(scp_run.fw_ver, system_get_version(SYSTEM_IMAGE_RW),
 		SCP_FW_VERSION_LEN);
-	scp_run.dec_capability = 0;
+	scp_run.dec_capability = VCODEC_CAPABILITY_4K_DISABLED;
 	scp_run.enc_capability = 0;
 
 	ret = ipi_send(IPI_SCP_INIT, (void *)&scp_run, sizeof(scp_run), 1);
