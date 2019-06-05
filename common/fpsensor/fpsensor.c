@@ -708,20 +708,20 @@ static void upload_pgm_image(uint8_t *frame)
 	uint8_t *ptr = frame;
 
 	/* fake Z-modem ZRQINIT signature */
-	ccprintf("#IGNORE for ZModem\r**\030B00");
+	CPRINTF("#IGNORE for ZModem\r**\030B00");
 	msleep(2000); /* let the download program start */
 	/* Print 8-bpp PGM ASCII header */
-	ccprintf("P2\n%d %d\n255\n", FP_SENSOR_RES_X, FP_SENSOR_RES_Y);
+	CPRINTF("P2\n%d %d\n255\n", FP_SENSOR_RES_X, FP_SENSOR_RES_Y);
 
 	for (y = 0; y < FP_SENSOR_RES_Y; y++) {
 		watchdog_reload();
 		for (x = 0; x < FP_SENSOR_RES_X; x++, ptr++)
-			ccprintf("%d ", *ptr);
-		ccputs("\n");
+			CPRINTF("%d ", *ptr);
+		CPRINTF("\n");
 		cflush();
 	}
 
-	ccprintf("\x04"); /* End Of Transmission */
+	CPRINTF("\x04"); /* End Of Transmission */
 }
 
 static int fp_console_action(uint32_t mode)
@@ -733,7 +733,7 @@ static int fp_console_action(uint32_t mode)
 
 	while (tries--) {
 		if (!(sensor_mode & FP_MODE_ANY_CAPTURE)) {
-			ccprintf("done (events:%x)\n", fp_events);
+			CPRINTS("done (events:%x)", fp_events);
 			return 0;
 		}
 		usleep(100 * MSEC);
@@ -788,8 +788,8 @@ int command_fpenroll(int argc, char **argv)
 			break;
 		event = atomic_read_clear(&fp_events);
 		percent = EC_MKBP_FP_ENROLL_PROGRESS(event);
-		ccprintf("Enroll capture: %s (%d%%)\n",
-			 enroll_str[EC_MKBP_FP_ERRCODE(event) & 3], percent);
+		CPRINTS("Enroll capture: %s (%d%%)",
+			enroll_str[EC_MKBP_FP_ERRCODE(event) & 3], percent);
 		/* wait for finger release between captures */
 		sensor_mode = FP_MODE_ENROLL_SESSION | FP_MODE_FINGER_UP;
 		task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_UPDATE_CONFIG, 0);
@@ -812,9 +812,9 @@ int command_fpmatch(int argc, char **argv)
 	if (rc == EC_SUCCESS && event & EC_MKBP_FP_MATCH) {
 		uint32_t errcode = EC_MKBP_FP_ERRCODE(event);
 
-		ccprintf("Match: %s (%d)\n",
-			 errcode & EC_MKBP_FP_ERR_MATCH_YES ? "YES" : "NO",
-			 errcode);
+		CPRINTS("Match: %s (%d)",
+			errcode & EC_MKBP_FP_ERR_MATCH_YES ? "YES" : "NO",
+			errcode);
 	}
 
 	return rc;
