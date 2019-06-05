@@ -8,6 +8,7 @@
 #include "cpu.h"
 #include "panic.h"
 #include "printf.h"
+#include "software_panic.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -78,18 +79,6 @@ static const char * const itype_exc_type[16] = {
 #endif /* CONFIG_DEBUG_EXCEPTIONS */
 
 #ifdef CONFIG_SOFTWARE_PANIC
-/* Software panic reasons */
-static const char * const panic_sw_reasons[8] = {
-	"PANIC_SW_DIV_ZERO",
-	"PANIC_SW_STACK_OVERFLOW",
-	"PANIC_SW_PD_CRASH",
-	"PANIC_SW_ASSERT",
-	"PANIC_SW_WATCHDOG",
-	NULL,
-	NULL,
-	NULL,
-};
-
 void software_panic(uint32_t reason, uint32_t info)
 {
 	asm volatile ("mov55  $r6, %0" : : "r"(reason));
@@ -163,10 +152,11 @@ static void print_panic_information(uint32_t *regs, uint32_t itype,
 
 #ifdef CONFIG_DEBUG_EXCEPTIONS
 	panic_printf("SWID of ITYPE: %x\n", ((itype >> 16) & 0x7fff));
-	if ((regs[SOFT_PANIC_GPR_REASON] & 0xfffffff0) == PANIC_SW_BASE) {
+	if (panic_sw_reason_is_valid(regs[SOFT_PANIC_GPR_REASON])) {
 #ifdef CONFIG_SOFTWARE_PANIC
 		panic_printf("Software panic reason %s\n",
-			panic_sw_reasons[(regs[SOFT_PANIC_GPR_REASON] & 0x7)]);
+			panic_sw_reasons[(regs[SOFT_PANIC_GPR_REASON] -
+					  PANIC_SW_BASE)]);
 		panic_printf("Software panic info 0x%x\n",
 			regs[SOFT_PANIC_GPR_INFO]);
 #endif

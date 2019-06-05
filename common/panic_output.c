@@ -10,6 +10,7 @@
 #include "host_command.h"
 #include "panic.h"
 #include "printf.h"
+#include "software_panic.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -18,6 +19,31 @@
 
 /* Panic data goes at the end of RAM. */
 static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
+
+/* Common SW Panic reasons strings */
+const char * const panic_sw_reasons[] = {
+#ifdef CONFIG_SOFTWARE_PANIC
+	"PANIC_SW_DIV_ZERO",
+	"PANIC_SW_STACK_OVERFLOW",
+	"PANIC_SW_PD_CRASH",
+	"PANIC_SW_ASSERT",
+	"PANIC_SW_WATCHDOG",
+	"PANIC_SW_RNG",
+	"PANIC_SW_PMIC_FAULT",
+#endif
+};
+
+/**
+ * Check an interrupt vector as being a valid software panic
+ * @param reason	Reason for panic
+ * @return 0 if not a valid software panic reason, otherwise non-zero.
+ */
+int panic_sw_reason_is_valid(uint32_t reason)
+{
+	return (IS_ENABLED(CONFIG_SOFTWARE_PANIC) &&
+		reason >= PANIC_SW_BASE &&
+		(reason - PANIC_SW_BASE) < ARRAY_SIZE(panic_sw_reasons));
+}
 
 /**
  * Add a character directly to the UART buffer.
