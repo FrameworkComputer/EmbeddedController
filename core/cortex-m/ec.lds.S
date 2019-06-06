@@ -455,7 +455,11 @@ SECTIONS
         __dram_data_end = .;
     } > DRAM
 
-    .dram.bss : {
+    /*
+     * ld assigns correct attribute for .bss, but not for other .*.bss, we need
+     * an explicltly NOLOAD.
+     */
+    .dram.bss(NOLOAD) : {
         . = ALIGN(4);
         __dram_bss_start = .;
         *(SORT(.dram.bss*))
