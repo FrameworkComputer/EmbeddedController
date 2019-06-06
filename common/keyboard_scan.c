@@ -86,8 +86,6 @@ uint8_t keyboard_cols = KEYBOARD_COLS_MAX;
 
 /* Debounced key matrix */
 static uint8_t __bss_slow debounced_state[KEYBOARD_COLS_MAX];
-/* Matrix from previous scan */
-static uint8_t __bss_slow prev_state[KEYBOARD_COLS_MAX];
 /* Mask of keys being debounced */
 static uint8_t __bss_slow debouncing[KEYBOARD_COLS_MAX];
 /* Keys simulated-pressed */
@@ -475,46 +473,27 @@ static int check_keys_changed(uint8_t *state)
 
 	/* Check for changes between previous scan and this one */
 	for (c = 0; c < keyboard_cols; c++) {
-		int diff = new_state[c] ^ prev_state[c];
+		int diff;
 
-		if (!diff)
-			continue;
-
-		for (i = 0; i < KEYBOARD_ROWS; i++) {
-			if (diff & BIT(i))
-				scan_edge_index[c][i] = scan_time_index;
-		}
-
-		debouncing[c] |= diff;
-		prev_state[c] = new_state[c];
-	}
-
-	/* Check for keys which are done debouncing */
-	for (c = 0; c < keyboard_cols; c++) {
-		int debc = debouncing[c];
-
-		if (!debc)
-			continue;
-
-		for (i = 0; i < KEYBOARD_ROWS; i++) {
-			int mask = 1 << i;
-			int new_mask = new_state[c] & mask;
-
-			/* Are we done debouncing this key? */
-			if (!(debc & mask))
-				continue;  /* Not debouncing this key */
+		/* Clear debouncing flag, if sufficient time has elapsed. */
+		for (i = 0; i < KEYBOARD_ROWS && debouncing[c]; i++) {
+			if (!(debouncing[c] & BIT(i)))
+				continue;
 			if (tnow - scan_time[scan_edge_index[c][i]] <
-			    (new_mask ? keyscan_config.debounce_down_us :
+			    (state[c] ? keyscan_config.debounce_down_us :
 					keyscan_config.debounce_up_us))
 				continue;  /* Not done debouncing */
+			debouncing[c] &= ~BIT(i);
+		}
 
-			debouncing[c] &= ~mask;
-
-			/* Did the key change from its previous state? */
-			if ((state[c] & mask) == new_mask)
-				continue;  /* No */
-
-			state[c] ^= mask;
+		/* Recognize change in state, unless debounce in effect. */
+		diff = (new_state[c] ^ state[c]) & ~debouncing[c];
+		if (!diff)
+			continue;
+		for (i = 0; i < KEYBOARD_ROWS; i++) {
+			if (!(diff & BIT(i)))
+				continue;
+			scan_edge_index[c][i] = scan_time_index;
 			any_change = 1;
 
 			/* Inform keyboard module if scanning is enabled */
@@ -522,9 +501,19 @@ static int check_keys_changed(uint8_t *state)
 				/* This is no-op for protocols that require a
 				 * full keyboard matrix (e.g., MKBP).
 				 */
-				keyboard_state_changed(i, c, new_mask ? 1 : 0);
+				keyboard_state_changed(
+					i, c, !!(new_state[c] & BIT(i)));
 			}
 		}
+
+		/* For any keyboard events just sent, turn on debouncing. */
+		debouncing[c] |= diff;
+		/*
+		 * Note: In order to "remember" what was last reported
+		 * (up or down), the state bits are only updated if the
+		 * edge was not suppressed due to debouncing.
+		 */
+		state[c] ^= diff;
 	}
 
 	if (any_change) {
@@ -681,7 +670,6 @@ void keyboard_scan_init(void)
 
 	/* Initialize raw state */
 	read_matrix(debounced_state);
-	memcpy(prev_state, debounced_state, sizeof(prev_state));
 
 #ifdef CONFIG_KEYBOARD_LANGUAGE_ID
 	/* Check keyboard ID state */
@@ -982,7 +970,6 @@ static int command_ksstate(int argc, char **argv)
 	}
 
 	print_state(debounced_state, "debounced ");
-	print_state(prev_state, "prev      ");
 	print_state(debouncing, "debouncing");
 
 	ccprintf("Keyboard scan disable mask: 0x%08x\n",

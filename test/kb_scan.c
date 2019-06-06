@@ -40,6 +40,15 @@ static int hibernated;
 static int reset_called;
 #endif
 
+/*
+ * Helper method to wake a given task, and provide immediate opportunity to run.
+ */
+static void task_wake_then_sleep_1ms(int task_id)
+{
+	task_wake(task_id);
+	msleep(1);
+}
+
 #ifdef CONFIG_LID_SWITCH
 int lid_is_open(void)
 {
@@ -195,59 +204,83 @@ static int deghost_test(void)
 static int debounce_test(void)
 {
 	int old_count = fifo_add_count;
-	mock_key(1, 1, 1);
-	task_wake(TASK_ID_KEYSCAN);
-	mock_key(1, 1, 0);
-	task_wake(TASK_ID_KEYSCAN);
-	CHECK_KEY_COUNT(old_count, 0);
+	int i;
 
+	/* One brief keypress is detected. */
+	msleep(40);
 	mock_key(1, 1, 1);
-	task_wake(TASK_ID_KEYSCAN);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
 	mock_key(1, 1, 0);
-	task_wake(TASK_ID_KEYSCAN);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	CHECK_KEY_COUNT(old_count, 2);
+
+	/* Brief bounce, followed by continuous press is detected as one. */
+	msleep(40);
 	mock_key(1, 1, 1);
-	task_wake(TASK_ID_KEYSCAN);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	mock_key(1, 1, 0);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	mock_key(1, 1, 1);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
 	CHECK_KEY_COUNT(old_count, 1);
 
+	/* Brief lifting, then re-presseing is detected as new keypress. */
+	msleep(40);
 	mock_key(1, 1, 0);
-	task_wake(TASK_ID_KEYSCAN);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
 	mock_key(1, 1, 1);
-	task_wake(TASK_ID_KEYSCAN);
-	CHECK_KEY_COUNT(old_count, 0);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	CHECK_KEY_COUNT(old_count, 2);
 
-	mock_key(2, 2, 1);
-	task_wake(TASK_ID_KEYSCAN);
-	mock_key(2, 2, 0);
-	task_wake(TASK_ID_KEYSCAN);
-	CHECK_KEY_COUNT(old_count, 0);
-
-	mock_key(2, 2, 1);
-	task_wake(TASK_ID_KEYSCAN);
-	mock_key(2, 2, 0);
-	task_wake(TASK_ID_KEYSCAN);
-	mock_key(2, 2, 1);
-	task_wake(TASK_ID_KEYSCAN);
-	CHECK_KEY_COUNT(old_count, 1);
-
+	/* One bouncy re-contact while lifting is ignored. */
+	msleep(40);
 	mock_key(1, 1, 0);
-	task_wake(TASK_ID_KEYSCAN);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
 	mock_key(1, 1, 1);
-	task_wake(TASK_ID_KEYSCAN);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
 	mock_key(1, 1, 0);
-	task_wake(TASK_ID_KEYSCAN);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
 	CHECK_KEY_COUNT(old_count, 1);
 
-	mock_key(2, 2, 0);
-	task_wake(TASK_ID_KEYSCAN);
-	mock_key(2, 2, 1);
-	task_wake(TASK_ID_KEYSCAN);
-	mock_key(2, 2, 0);
-	task_wake(TASK_ID_KEYSCAN);
-	mock_key(2, 2, 1);
-	task_wake(TASK_ID_KEYSCAN);
-	mock_key(2, 2, 0);
-	task_wake(TASK_ID_KEYSCAN);
+	/*
+	 * Debounce interval of first key is not affected by continued
+	 * activity of other keys.
+	 */
+	msleep(40);
+	/* Push the first key */
+	mock_key(0, 1, 0);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	/*
+	 * Push down each subsequent key, until all 8 are pressed, each
+	 * time bouncing the former one once.
+	 */
+	for (i = 1 ; i < 8; i++) {
+		mock_key(i, 1, 1);
+		task_wake(TASK_ID_KEYSCAN);
+		msleep(3);
+		mock_key(i - 1, 1, 0);
+		task_wake(TASK_ID_KEYSCAN);
+		msleep(1);
+		mock_key(i - 1, 1, 1);
+		task_wake(TASK_ID_KEYSCAN);
+		msleep(1);
+	}
+	/* Verify that the bounces were. ignored */
+	CHECK_KEY_COUNT(old_count, 8);
+	/*
+	 * Now briefly lift and re-press the first one, which should now be past
+	 * its debounce interval
+	 */
+	mock_key(0, 1, 0);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
 	CHECK_KEY_COUNT(old_count, 1);
+	mock_key(0, 1, 1);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	CHECK_KEY_COUNT(old_count, 1);
+	/* For good measure, release all keys before proceeding. */
+	for (i = 0; i < 8; i++)
+		mock_key(i, 1, 0);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
 
 	return EC_SUCCESS;
 }
@@ -256,12 +289,17 @@ static int simulate_key_test(void)
 {
 	int old_count;
 
+	task_wake(TASK_ID_KEYSCAN);
+	msleep(40); /* Wait for debouncing to settle */
+
 	old_count = fifo_add_count;
 	host_command_simulate(1, 1, 1);
 	TEST_ASSERT(fifo_add_count > old_count);
+	msleep(40);
 	old_count = fifo_add_count;
 	host_command_simulate(1, 1, 0);
 	TEST_ASSERT(fifo_add_count > old_count);
+	msleep(40);
 
 	return EC_SUCCESS;
 }
@@ -330,8 +368,11 @@ static int runtime_key_test(void)
 #ifdef CONFIG_LID_SWITCH
 static int lid_test(void)
 {
+	msleep(40); /* Allow debounce to settle */
+
 	lid_open = 0;
 	hook_notify(HOOK_LID_CHANGE);
+	msleep(1); /* Allow hooks to run */
 	mock_key(1, 1, 1);
 	TEST_ASSERT(expect_no_keychange() == EC_SUCCESS);
 	mock_key(1, 1, 0);
@@ -339,6 +380,7 @@ static int lid_test(void)
 
 	lid_open = 1;
 	hook_notify(HOOK_LID_CHANGE);
+	msleep(1); /* Allow hooks to run */
 	mock_key(1, 1, 1);
 	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 	mock_key(1, 1, 0);
