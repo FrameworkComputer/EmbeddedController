@@ -329,6 +329,23 @@ struct irq_priority {
 };
 
 /*
+ * Some cores may make use of this struct for mapping irqs to handlers
+ * for DECLARE_IRQ in a linker-script defined section.
+ */
+struct irq_def {
+	int irq;
+
+	/* The routine which was declared as an IRQ */
+	void (*routine)(void);
+
+	/*
+	 * The routine usually needs wrapped so the core can handle it
+	 * as an IRQ.
+	 */
+	void (*handler)(void);
+};
+
+/*
  * Implement the DECLARE_IRQ(irq, routine, priority) macro which is
  * a core specific helper macro to declare an interrupt handler "routine".
  */

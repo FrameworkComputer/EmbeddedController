@@ -11,9 +11,10 @@
 #include "ia_structs.h"
 #include "interrupts.h"
 #include "irq_handler.h"
+#include "link_defs.h"
 #include "registers.h"
-#include "task_defs.h"
 #include "task.h"
+#include "task_defs.h"
 #include "util.h"
 
 /* Console output macros */
@@ -385,9 +386,6 @@ void unhandled_vector(void)
 	asm("" : : "a" (vec));
 }
 
-/* This needs to be moved to link_defs.h */
-extern const struct irq_data __irq_data[], __irq_data_end[];
-
 /**
  * Called from SOFTIRQ_VECTOR when software is trigger an IRQ manually
  *
@@ -395,7 +393,7 @@ extern const struct irq_data __irq_data[], __irq_data_end[];
  */
 void call_irq_service_routine(uint32_t irq)
 {
-	const struct irq_data *p = __irq_data;
+	const struct irq_def *p = __irq_data;
 
 	/* If just rescheduling a task, we won't have a routine to call */
 	if (irq >= CONFIG_IRQ_COUNT)
@@ -415,13 +413,14 @@ void call_irq_service_routine(uint32_t irq)
 void init_interrupts(void)
 {
 	unsigned entry;
-	const struct irq_data *p = __irq_data;
+	const struct irq_def *p;
 	unsigned num_system_irqs = ARRAY_SIZE(system_irqs);
 	unsigned max_entries = (read_ioapic_reg(IOAPIC_VERSION) >> 16) & 0xff;
 
 	/* Setup gates for IRQs declared by drivers using DECLARE_IRQ */
-	for (; p < __irq_data_end; p++)
-		set_interrupt_gate(IRQ_TO_VEC(p->irq), p->ioapic_routine,
+	for (p = __irq_data; p < __irq_data_end; p++)
+		set_interrupt_gate(IRQ_TO_VEC(p->irq),
+				   p->handler,
 				   IDT_DESC_FLAGS);
 
 	/* Software generated IRQ */
