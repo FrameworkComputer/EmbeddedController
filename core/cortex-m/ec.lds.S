@@ -433,27 +433,60 @@ SECTIONS
 #endif /* CONFIG_CHIP_MEMORY_REGIONS */
 
 #ifdef CONFIG_DRAM_BASE
-    /*
-     * Allocate space for original copy of .data.dram (see .data_lma above).
-     * TODO(b:128269393): Remove .dram.data_lma sections to be compatible
-     * with clang.
-     */
-    .dram.data_lma : {
-        __dram_data_lma_start = .;
-        . += __dram_data_end - __dram_data_start;
-    } > DRAM
 
     /*
-     * TODO(b:122058243): Both .dram.data and .dram.bss do not actually
-     * need to be in the final image, as we have a second copy of the data
-     * (just above), and dram.bss is zeroed anyway.
+     * Sections in DRAM region are constructed as like in non-DRAM regions:
+     * .dram.data LMA is for preserving initialized data across resets.
+     * The only difference is that they are all in the DRAM region:
+     * .dram.text     | LOAD
+     * .dram.rodata   | LOAD
+     * .dram.data LMA | LOAD
+     * .dram.data VMA |
+     * .dram.bss      | NOLOAD
+     * TODO(b:123269246): Enable MPU protectable DRAM section.  This might
+     * introduce a RO-DRAM section for .dram.text, .dram.rodata and
+     * .dram.data LMA.
      */
-    .dram.data : AT(ADDR(.dram.data_lma)) {
+
+    .dram.text : {
+        . = ALIGN(4);
+        KEEP(*(SORT(.dram.text.keep.*)))
+        *(SORT(.dram.text.*))
+        . = ALIGN(4);
+    } > DRAM
+
+    .dram.rodata : {
+        . = ALIGN(4);
+        KEEP(*(SORT(.dram.rodata.keep.*)))
+        *(SORT(.dram.rodata.*))
+        . = ALIGN(4);
+    } > DRAM
+
+    __dram_data_lma_start = ADDR(.dram.rodata) + SIZEOF(.dram.rodata);
+
+    /* Place .dram.data LMA in between .dram.rodata and .dram.data VMA. */
+#ifdef __clang__
+    /*
+     * The evaluation timing for SIZEOF() and symbols are different in
+     * ld and lld.
+     */
+    .dram.data __dram_data_lma_start + SIZEOF(.dram.data) : {
+#else
+    .dram.data __dram_data_lma_start + (__dram_data_end - __dram_data_start) : {
+#endif /* __clang__ */
         . = ALIGN(4);
         __dram_data_start = .;
         *(.dram.data*)
+        . = ALIGN(4);
         __dram_data_end = .;
-    } > DRAM
+    /*
+     * Normally, '> DRAM AT > DRAM' should be the same as '> DRAM', and they
+     * will be at the same address.  However, if the address of VMA specified,
+     * LMA and VMA might have different addresses:
+     * '> DRAM' places VMA at the address where section declaration specified.
+     * 'AT > DRAM' places LMA at the location counter's address.
+     */
+    } > DRAM AT > DRAM
 
     /*
      * ld assigns correct attribute for .bss, but not for other .*.bss, we need
@@ -463,14 +496,8 @@ SECTIONS
         . = ALIGN(4);
         __dram_bss_start = .;
         *(SORT(.dram.bss*))
-        __dram_bss_end = .;
-    } > DRAM
-
-    /* Rest of DRAM sections, e.g. text. */
-    .dram : {
         . = ALIGN(4);
-        KEEP(*(SORT(.dram.keep.*)))
-        *(SORT(.dram.*))
+        __dram_bss_end = .;
     } > DRAM
 #endif
 
