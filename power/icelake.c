@@ -39,6 +39,13 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	/* Turn off DSW load switch. */
 	gpio_set_level(GPIO_EN_PP3300_A, 0);
 
+	/* Turn off PP5000 rail */
+#ifdef CONFIG_POWER_PP5000_CONTROL
+	power_5v_enable(task_get_current(), 0);
+#else
+	gpio_set_level(GPIO_EN_PP5000, 0);
+#endif
+
 	/*
 	 * TODO(b/111810925): Replace this wait with
 	 * power_wait_signals_timeout()
@@ -98,6 +105,13 @@ enum power_state power_handle_state(enum power_state state)
 	switch (state) {
 
 	case POWER_G3S5:
+		/* Turn on PP5000 rail */
+#ifdef CONFIG_POWER_PP5000_CONTROL
+		power_5v_enable(task_get_current(), 1);
+#else
+		gpio_set_level(GPIO_EN_PP5000, 1);
+#endif
+
 		/*
 		 * TODO(b/111121615): Should modify this to wait until the
 		 * common power state machine indicates that it's ok to try an
