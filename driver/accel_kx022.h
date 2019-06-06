@@ -135,7 +135,7 @@
 #define KX022_INC2_XNWUE	BIT(5)
 
 /* Min and Max sampling frequency in mHz */
-#define KX022_ACCEL_MIN_FREQ    781
+#define KX022_ACCEL_MIN_FREQ    12500
 #define KX022_ACCEL_MAX_FREQ    MOTION_MAX_SENSOR_FREQUENCY(1600000, 6250)
 
 #endif /* __CROS_EC_ACCEL_KX022_H */
