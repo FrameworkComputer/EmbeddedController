@@ -1268,7 +1268,7 @@ static uint16_t marshal_state_reset_data(STATE_RESET_DATA *srd, uint8_t *dst)
  */
 static enum ec_error_list migrate_tpm_reserved(struct nn_container *ch)
 {
-	STATE_CLEAR_DATA *scd;
+	STATE_CLEAR_DATA *scd = NULL;
 	STATE_RESET_DATA *srd;
 	size_t pcr_type_index;
 	uint8_t *p_tpm_nvmem = nvmem_cache_base(NVMEM_TPM);
