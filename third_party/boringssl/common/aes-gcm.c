@@ -304,14 +304,30 @@ void gcm_ghash_4bit_mmx(uint64_t Xi[2], const u128 Htable[16], const uint8_t *in
 #define GHASH_ASM_ARM
 #define GCM_FUNCREF_4BIT
 
+#if defined(OPENSSL_ARM_PMULL)
 static int pmull_capable(void) {
-  return 0;
+  return CRYPTO_is_ARMv8_PMULL_capable();
 }
 
 void gcm_init_v8(u128 Htable[16], const uint64_t Xi[2]);
 void gcm_gmult_v8(uint64_t Xi[2], const u128 Htable[16]);
 void gcm_ghash_v8(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp,
                   size_t len);
+#else
+static int pmull_capable(void) {
+  return 0;
+}
+static void gcm_init_v8(u128 Htable[16], const uint64_t Xi[2]) {
+
+}
+static void gcm_gmult_v8(uint64_t Xi[2], const u128 Htable[16]) {
+
+}
+static void gcm_ghash_v8(uint64_t Xi[2], const u128 Htable[16],
+                         const uint8_t *inp, size_t len) {
+
+}
+#endif
 
 #if defined(OPENSSL_ARM_NEON)
 // 32-bit ARM also has support for doing GCM with NEON instructions.
