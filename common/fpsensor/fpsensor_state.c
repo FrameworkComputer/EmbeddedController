@@ -6,14 +6,12 @@
 #include "common.h"
 #include "ec_commands.h"
 #include "fpsensor.h"
+#include "fpsensor_private.h"
 #include "fpsensor_state.h"
 #include "host_command.h"
 #include "system.h"
 #include "task.h"
 #include "util.h"
-
-#define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
 
 /* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
 uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE] FP_FRAME_SECTION __aligned(4);
