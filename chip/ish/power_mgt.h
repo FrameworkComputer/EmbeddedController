@@ -6,6 +6,7 @@
 #ifndef __CROS_EC_POWER_MGT_H
 #define __CROS_EC_POWER_MGT_H
 
+#include "common.h"
 #include "registers.h"
 
 /* power states for ISH */
