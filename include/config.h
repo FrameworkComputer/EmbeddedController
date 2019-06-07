@@ -850,7 +850,15 @@
  */
 #undef CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA
 
-/* Define to use Power Delivery State Machine Framework */
+/*
+ * Define to use Power Delivery State Machine Framework. Along with
+ * CONFIG_USB_SM_FRAMEWORK, you must ensure the follow options are defined to
+ * use the new statemachine for USB-C:
+ *
+ * CONFIG_USB_TYPEC_SM (defined by default)
+ * CONFIG_USB_PRL_SM (defined by default)
+ * One of CONFIG_USB_PE_* policy engine options.
+ */
 #undef CONFIG_USB_SM_FRAMEWORK
 
 /*

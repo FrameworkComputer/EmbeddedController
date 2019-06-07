@@ -14,6 +14,10 @@
 
 *   [USB Updater](./usb_updater.md)
 
+## USB-C
+
+*   [USB-C Power Delivery and Alternate Modes](./usb-c.md)
+
 ## Miscellaneous
 
 *   [Low Battery Startup](./low_battery_startup.md)
