@@ -103,6 +103,7 @@ CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(COMMON_WARN) $(CFLAGS_y)
 CFLAGS+= -ffunction-sections -fshort-wchar
 CFLAGS+= -fno-delete-null-pointer-checks
 ifneq ($(cc-name),clang)
+CFLAGS+= -ffat-lto-objects
 CFLAGS+= -fconserve-stack
 endif
 CFLAGS+= -DCHROMIUM_EC=$(EMPTY)
