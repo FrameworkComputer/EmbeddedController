@@ -41,12 +41,16 @@
 
 struct anx_state {
 	int i2c_slave_addr;
-	int mux_state;
+};
+
+struct anx_usb_mux {
+	int state;
 };
 
 static int anx7447_mux_set(int port, mux_state_t mux_state);
 
 static struct anx_state anx[CONFIG_USB_PD_PORT_COUNT];
+static struct anx_usb_mux mux[CONFIG_USB_PD_PORT_COUNT];
 
 /*
  * ANX7447 has two co-existence I2C slave addresses, TCPC slave address and
@@ -354,11 +358,6 @@ static int anx7447_init(int port)
 	reg |= ANX7447_REG_R_VCONN_PWR_PRT_INRUSH_TIME_2430US;
 	rv = tcpc_write(port, ANX7447_REG_ANALOG_CTRL_10, reg);
 
-	/* init hpd status */
-	anx7447_hpd_mode_en(port);
-	anx7447_set_hpd_level(port, 0);
-	anx7447_hpd_output_en(port);
-
 	return rv;
 }
 
@@ -480,6 +479,13 @@ void anx7447_tcpc_clear_hpd_status(int port)
 #ifdef CONFIG_USB_PD_TCPM_MUX
 static int anx7447_mux_init(int port)
 {
+	memset(&mux[port], 0, sizeof(struct anx_usb_mux));
+
+	/* init hpd status */
+	anx7447_hpd_mode_en(port);
+	anx7447_set_hpd_level(port, 0);
+	anx7447_hpd_output_en(port);
+
 	/*
 	 * ANX initializes its muxes to (MUX_USB_ENABLED | MUX_DP_ENABLED)
 	 * when reinitialized, we need to force initialize it to
@@ -545,7 +551,7 @@ static int anx7447_mux_set(int port, mux_state_t mux_state)
 	rv |= mux_write(port, ANX7447_REG_TCPC_SWITCH_1, sw_sel);
 	rv |= mux_write(port, ANX7447_REG_TCPC_AUX_SWITCH, aux_sw);
 
-	anx[port].mux_state = mux_state;
+	mux[port].state = mux_state;
 
 	return rv;
 }
@@ -553,7 +559,7 @@ static int anx7447_mux_set(int port, mux_state_t mux_state)
 /* current mux state */
 static int anx7447_mux_get(int port, mux_state_t *mux_state)
 {
-	*mux_state = anx[port].mux_state;
+	*mux_state = mux[port].state;
 
 	return EC_SUCCESS;
 }
