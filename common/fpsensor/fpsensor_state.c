@@ -128,6 +128,13 @@ static int validate_fp_mode(const uint32_t mode)
 	if (algo_mode & ~FP_VALID_MODES)
 		return EC_ERROR_INVAL;
 
+	if ((mode & FP_MODE_ENROLL_SESSION) &&
+	    templ_valid >= FP_MAX_FINGER_COUNT) {
+		CPRINTS("Maximum number of fingers already enrolled: %d",
+			FP_MAX_FINGER_COUNT);
+		return EC_ERROR_INVAL;
+	}
+
 	/* Don't allow sensor reset if any other mode is
 	 * set (including FP_MODE_RESET_SENSOR itself).
 	 */
