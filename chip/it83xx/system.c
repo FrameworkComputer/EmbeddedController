@@ -87,7 +87,7 @@ static void system_reset_cause_is_unknown(void)
 		/*
 		 * We decrease 4 or 2 for "ec_reset_lp" here, that depend on
 		 * which jump and link instruction has executed.
-		 * (jral5: LP=PC+2, jal: LP=PC+4)
+		 * eg: Andes core (jral5: LP=PC+2, jal: LP=PC+4)
 		 */
 		ccprintf("===Unknown reset! jump from %x or %x===\n",
 				ec_reset_lp - 4, ec_reset_lp - 2);
@@ -230,9 +230,14 @@ uint32_t system_get_scratchpad(void)
 	return value;
 }
 
-static uint16_t system_get_chip_id(void)
+static uint32_t system_get_chip_id(void)
 {
+#ifdef IT83XX_CHIP_ID_3BYTES
+	return (IT83XX_GCTRL_CHIPID1 << 16) | (IT83XX_GCTRL_CHIPID2 << 8) |
+		IT83XX_GCTRL_CHIPID3;
+#else
 	return (IT83XX_GCTRL_CHIPID1 << 8) | IT83XX_GCTRL_CHIPID2;
+#endif
 }
 
 static uint8_t system_get_chip_version(void)
@@ -255,16 +260,13 @@ const char *system_get_chip_vendor(void)
 
 const char *system_get_chip_name(void)
 {
-	static char buf[7];
-	uint16_t chip_id = system_get_chip_id();
+	static char buf[8] = {'i', 't'};
+	int num = (IS_ENABLED(IT83XX_CHIP_ID_3BYTES) ? 4 : 3);
+	uint32_t chip_id = system_get_chip_id();
 
-	buf[0] = 'i';
-	buf[1] = 't';
-	buf[2] = to_hex((chip_id >> 12) & 0xf);
-	buf[3] = to_hex((chip_id >> 8) & 0xf);
-	buf[4] = to_hex((chip_id >> 4) & 0xf);
-	buf[5] = to_hex(chip_id & 0xf);
-	buf[6] = '\0';
+	for (int n = 2; num >= 0; n++, num--)
+		buf[n] = to_hex(chip_id >> (num * 4) & 0xF);
+
 	return buf;
 }
 
@@ -323,12 +325,10 @@ BUILD_ASSERT(EC_VBNV_BLOCK_SIZE <= BRAM_NVCONTEXT_SIZE);
 
 uintptr_t system_get_fw_reset_vector(uintptr_t base)
 {
-	uintptr_t reset_vector, num;
-
-	num = *(uintptr_t *)base;
-	reset_vector = ((num>>24)&0xff) | ((num<<8)&0xff0000) |
-			((num>>8)&0xff00) | ((num<<24)&0xff000000);
-	reset_vector = ((reset_vector & 0xffffff) << 1) + base;
-
-	return reset_vector;
+	/*
+	 * Because our reset vector is at the beginning of image copy
+	 * (see init.S). So I just need to return 'base' here and EC will jump
+	 * to the reset vector.
+	 */
+	return base;
 }

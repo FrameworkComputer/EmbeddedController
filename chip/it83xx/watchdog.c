@@ -41,7 +41,11 @@ static void watchdog_set_warning_timer(int32_t ms, int init)
 void watchdog_warning_irq(void)
 {
 #ifdef CONFIG_SOFTWARE_PANIC
+#if defined(CHIP_CORE_NDS32)
 	pdata_ptr->nds_n8.ipc = get_ipc();
+#elif defined(CHIP_CORE_RISCV)
+	pdata_ptr->riscv.mepc = get_mepc();
+#endif
 #endif
 	/* clear interrupt status */
 	task_clear_pending_irq(et_ctrl_regs[WDT_EXT_TIMER].irq);
@@ -49,6 +53,7 @@ void watchdog_warning_irq(void)
 	/* Reset warning timer. */
 	IT83XX_ETWD_ETXCTRL(WDT_EXT_TIMER) = 0x03;
 
+#if defined(CHIP_CORE_NDS32)
 	/*
 	 * The IPC (Interruption Program Counter) is the shadow stack register
 	 * of the PC (Program Counter). It stores the return address of program
@@ -60,6 +65,10 @@ void watchdog_warning_irq(void)
 	 */
 	panic_printf("Pre-WDT warning! IPC:%08x LP:%08x TASK_ID:%d\n",
 		get_ipc(), ilp, task_get_current());
+#elif defined(CHIP_CORE_RISCV)
+	panic_printf("Pre-WDT warning! MEPC:%08x RA:%08x TASK_ID:%d\n",
+		get_mepc(), ira, task_get_current());
+#endif
 
 	if (!wdt_warning_fired++)
 		/*

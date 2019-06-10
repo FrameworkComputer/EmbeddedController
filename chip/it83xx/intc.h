@@ -8,6 +8,16 @@
 #ifndef __CROS_EC_INTC_H
 #define __CROS_EC_INTC_H
 
+/*
+ * The DSB instruction guarantees a modified architecture or hardware state
+ * can be seen by any following dependent data operations.
+ */
+static inline void data_serialization_barrier(void)
+{
+	if (IS_ENABLED(CHIP_CORE_NDS32))
+		asm volatile ("dsb");
+}
+
 int intc_get_ec_int(void);
 void pm1_ibf_interrupt(void);
 void pm2_ibf_interrupt(void);
@@ -30,6 +40,8 @@ void espi_interrupt(void);
 void espi_vw_interrupt(void);
 void espi_enable_pad(int enable);
 void espi_init(void);
+int chip_get_intc_group(int irq);
+void clock_cpu_standby(void);
 
 #if defined(CONFIG_HOSTCMD_X86) && defined(HAS_TASK_KEYPROTO)
 void lpc_kbc_ibf_interrupt(void);

@@ -1,0 +1,21 @@
+# -*- makefile -*-
+# Copyright 2019 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# RISC-V core OS files build
+#
+
+# TODO(b/133639441): Toolchain need to support 32-bit architecture or we
+# will get the following error message:
+# ABI is incompatible with that of the selected emulation:
+# target emulation `elf64-littleriscv' does not match `elf32-littleriscv'
+# Select RISC-V bare-metal toolchain
+$(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_riscv),\
+	/opt/coreboot-sdk/bin/riscv64-elf-)
+
+# CPU specific compilation flags
+CFLAGS_CPU+=-march=rv32imafc -mabi=ilp32f -Os
+LDFLAGS_EXTRA+=-mrelax
+
+core-y=cpu.o init.o panic.o task.o switch.o __builtin.o

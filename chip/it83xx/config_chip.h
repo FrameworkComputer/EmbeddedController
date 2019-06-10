@@ -6,8 +6,13 @@
 #ifndef __CROS_EC_CONFIG_CHIP_H
 #define __CROS_EC_CONFIG_CHIP_H
 
-/* CPU core BFD configuration */
-#include "core/nds32/config_core.h"
+#if defined(CHIP_FAMILY_IT8320)    /* N8 core */
+#include "config_chip_it8320.h"
+#elif defined(CHIP_FAMILY_IT8XXX2) /* RISCV core */
+#include "config_chip_it8xxx2.h"
+#else
+#error "Unsupported chip family!"
+#endif
 
 /* Number of IRQ vectors on the IVIC */
 #define CONFIG_IRQ_COUNT IT83XX_IRQ_COUNT
@@ -29,25 +34,18 @@
 #define I2C_STANDARD_PORT_COUNT 3
 #define I2C_ENHANCED_PORT_COUNT 3
 
-/****************************************************************************/
-/* Memory mapping */
-
-#define CONFIG_RAM_BASE             0x00080000
-#define CONFIG_RAM_SIZE             0x0000C000
-
 /* System stack size */
 #define CONFIG_STACK_SIZE           1024
 
 /* non-standard task stack sizes */
-#define SMALLER_TASK_STACK_SIZE     384
-#define IDLE_TASK_STACK_SIZE        512
-#define LARGER_TASK_STACK_SIZE      768
-#define VENTI_TASK_STACK_SIZE       896
+#define SMALLER_TASK_STACK_SIZE     (384 + CHIP_EXTRA_STACK_SPACE)
+#define IDLE_TASK_STACK_SIZE        (512 + CHIP_EXTRA_STACK_SPACE)
+#define LARGER_TASK_STACK_SIZE      (768 + CHIP_EXTRA_STACK_SPACE)
+#define VENTI_TASK_STACK_SIZE       (896 + CHIP_EXTRA_STACK_SPACE)
 
 /* Default task stack size */
-#define TASK_STACK_SIZE             512
+#define TASK_STACK_SIZE             (512 + CHIP_EXTRA_STACK_SPACE)
 
-#define CONFIG_PROGRAM_MEMORY_BASE  0x00000000
 #define CONFIG_FLASH_BANK_SIZE      0x00000800  /* protect bank size */
 #define CONFIG_FLASH_ERASE_SIZE     0x00000400  /* erase bank size */
 #define CONFIG_FLASH_WRITE_SIZE     0x00000004  /* minimum write size */
@@ -64,66 +62,6 @@
  * until write disable instruction.
  */
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE CONFIG_FLASH_ERASE_SIZE
-
-#if defined(CHIP_VARIANT_IT8320BX)
-/* This is the physical size of the flash on the chip. We'll reserve one bank
- * in order to emulate per-bank write-protection UNTIL REBOOT. The hardware
- * doesn't support a write-protect pin, and if we make the write-protection
- * permanent, it can't be undone easily enough to support RMA. */
-#define CONFIG_FLASH_SIZE  0x00040000
-/* For IT8320BX, we have to reload cc parameters after ec softreset. */
-#define IT83XX_USBPD_CC_PARAMETER_RELOAD
-/*
- * The voltage detector of CC1 and CC2 is enabled/disabled by different bit
- * of the control register (bit1 and bit5 at register IT83XX_USBPD_CCCSR).
- */
-#define IT83XX_USBPD_CC_VOLTAGE_DETECTOR_INDEPENDENT
-/* For IT8320BX, we have to write 0xff to clear pending bit.*/
-#define IT83XX_ESPI_VWCTRL1_WRITE_FF_CLEAR
-/* For IT8320BX, we have to read observation register of external timer two
- * times to get correct time.
- */
-#define IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
-#elif defined(CHIP_VARIANT_IT8320DX)
-#define CONFIG_FLASH_SIZE  0x00080000
-/*
- * Disable eSPI pad, then PLL change
- * (include EC clock frequency) is succeed even CS# is low.
- */
-#define IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED
-/* The slave frequency is adjustable (bit[2-0] at register IT83XX_ESPI_GCAC1) */
-#define IT83XX_ESPI_SLAVE_MAX_FREQ_CONFIGURABLE
-/*
- * TODO(b/111480168): eSPI HW reset can't be used because the DMA address
- * gets set incorrectly resulting in a memory access exception.
- */
-#define IT83XX_ESPI_RESET_MODULE_BY_FW
-/* Watchdog reset supports hardware reset. */
-/* TODO(b/111264984): watchdog hardware reset function failed. */
-#undef IT83XX_ETWD_HW_RESET_SUPPORT
-/*
- * (b/112452221):
- * Floating-point multiplication single-precision is failed on DX version,
- * so we use the formula "A/(1/B)" to replace a multiplication operation
- * (A*B = A/(1/B)).
- */
-#define IT83XX_FPU_MUL_BY_DIV
-/*
- * More GPIOs can be set as 1.8v input.
- * Please refer to gpio_1p8v_sel[] for 1.8v GPIOs.
- */
-#define IT83XX_GPIO_1P8V_PIN_EXTENDED
-/* All GPIOs support interrupt on rising, falling, and either edge. */
-#define IT83XX_GPIO_INT_FLEXIBLE
-/* Enable interrupts of group 21 and 22. */
-#define IT83XX_INTC_GROUP_21_22_SUPPORT
-/* Enable detect type-c plug in interrupt. */
-#define IT83XX_INTC_PLUG_IN_SUPPORT
-/* Chip Dx transmit status bit of PD register is different from Bx. */
-#define IT83XX_PD_TX_ERROR_STATUS_BIT5
-#else
-#error "Unsupported chip variant!"
-#endif
 
 /****************************************************************************/
 /* Define our flash layout. */
@@ -144,8 +82,11 @@
 /*
  * Only it839x series and IT838x DX support mapping LPC I/O cycle 800h ~ 9FFh
  * to 0x8D800h ~ 0x8D9FFh of DLM13.
+ *
+ * IT8xxx2 series support mapping LPC/eSPI I/O cycle 800h ~ 9FFh
+ * to 0x80081800 ~ 0x800819FF of DLM1.
  */
-#define CONFIG_H2RAM_BASE               0x0008D000
+#define CONFIG_H2RAM_BASE               (CHIP_H2RAM_BASE)
 #define CONFIG_H2RAM_SIZE               0x00001000
 #define CONFIG_H2RAM_HOST_LPC_IO_BASE   0x800
 

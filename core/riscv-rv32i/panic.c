@@ -1,0 +1,182 @@
+/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "common.h"
+#include "console.h"
+#include "cpu.h"
+#include "panic.h"
+#include "printf.h"
+#include "system.h"
+#include "task.h"
+#include "timer.h"
+#include "util.h"
+
+/* Panic data goes at the end of RAM. */
+static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
+
+#ifdef CONFIG_DEBUG_EXCEPTIONS
+/**
+ * bit[3-0] @ mcause, general exception type information.
+ */
+static const char * const exc_type[16] = {
+	"Instruction address misaligned",
+	"Instruction access fault",
+	"Illegal instruction",
+	"Breakpoint",
+	"Load address misaligned",
+	"Load access fault",
+	"Store/AMO address misaligned",
+	"Store/AMO access fault",
+
+	NULL,
+	NULL,
+	NULL,
+	"Environment call from M-mode",
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};
+#endif /* CONFIG_DEBUG_EXCEPTIONS */
+
+#ifdef CONFIG_SOFTWARE_PANIC
+/* General purpose register (s0) for saving software panic reason */
+#define SOFT_PANIC_GPR_REASON 11
+/* General purpose register (s1) for saving software panic information */
+#define SOFT_PANIC_GPR_INFO   10
+/* The size must be a power of 2 */
+#define SOFT_PANIC_REASON_SIZE 8
+#define SOFT_PANIC_REASON_MASK (SOFT_PANIC_REASON_SIZE - 1)
+/* Software panic reasons */
+static const char * const panic_sw_reasons[SOFT_PANIC_REASON_SIZE] = {
+	"PANIC_SW_DIV_ZERO",
+	"PANIC_SW_STACK_OVERFLOW",
+	"PANIC_SW_PD_CRASH",
+	"PANIC_SW_ASSERT",
+	"PANIC_SW_WATCHDOG",
+	"PANIC_SW_BAD_RNG",
+	"PANIC_SW_PMIC_FAULT",
+	NULL,
+};
+
+void software_panic(uint32_t reason, uint32_t info)
+{
+	asm volatile ("mv s0, %0" : : "r"(reason));
+	asm volatile ("mv s1, %0" : : "r"(info));
+	if (in_interrupt_context())
+		asm("j excep_handler");
+	else
+		asm("ebreak");
+	__builtin_unreachable();
+}
+
+void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
+{
+	uint32_t *regs = pdata_ptr->riscv.regs;
+	uint32_t warning_mepc;
+
+	/* Setup panic data structure */
+	if (reason != PANIC_SW_WATCHDOG) {
+		memset(pdata_ptr, 0, sizeof(*pdata_ptr));
+	} else {
+		warning_mepc = pdata_ptr->riscv.mepc;
+		memset(pdata_ptr, 0, sizeof(*pdata_ptr));
+		pdata_ptr->riscv.mepc = warning_mepc;
+	}
+	pdata_ptr->magic = PANIC_DATA_MAGIC;
+	pdata_ptr->struct_size = sizeof(*pdata_ptr);
+	pdata_ptr->struct_version = 2;
+	pdata_ptr->arch = PANIC_ARCH_RISCV_RV32I;
+
+	/* Log panic cause */
+	pdata_ptr->riscv.mcause = exception;
+	regs[SOFT_PANIC_GPR_REASON] = reason;
+	regs[SOFT_PANIC_GPR_INFO] = info;
+}
+
+void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
+{
+	uint32_t *regs = pdata_ptr->riscv.regs;
+
+	if (pdata_ptr->magic == PANIC_DATA_MAGIC &&
+	    pdata_ptr->struct_version == 2) {
+		*exception = pdata_ptr->riscv.mcause;
+		*reason = regs[SOFT_PANIC_GPR_REASON];
+		*info = regs[SOFT_PANIC_GPR_INFO];
+	} else {
+		*exception = *reason = *info = 0;
+	}
+}
+#endif /* CONFIG_SOFTWARE_PANIC */
+
+static void print_panic_information(uint32_t *regs, uint32_t mcause,
+					uint32_t mepc)
+{
+	panic_printf("=== EXCEPTION: MCAUSE=%x ===\n", mcause);
+	panic_printf("S11 %08x S10 %08x  S9 %08x  S8   %08x\n",
+		     regs[0], regs[1], regs[2], regs[3]);
+	panic_printf("S7  %08x S6  %08x  S5 %08x  S4   %08x\n",
+		     regs[4], regs[5], regs[6], regs[7]);
+	panic_printf("S3  %08x S2  %08x  S1 %08x  S0   %08x\n",
+		     regs[8], regs[9], regs[10], regs[11]);
+	panic_printf("T6  %08x T5  %08x  T4 %08x  T3   %08x\n",
+		     regs[12], regs[13], regs[14], regs[15]);
+	panic_printf("T2  %08x T1  %08x  T0 %08x  A7   %08x\n",
+		     regs[16], regs[17], regs[18], regs[19]);
+	panic_printf("A6  %08x A5  %08x  A4 %08x  A3   %08x\n",
+		     regs[20], regs[21], regs[22], regs[23]);
+	panic_printf("A2  %08x A1  %08x  A0 %08x  TP   %08x\n",
+		     regs[24], regs[25], regs[26], regs[27]);
+	panic_printf("GP  %08x RA  %08x  SP %08x  MEPC %08x\n",
+		     regs[28], regs[29], regs[30], mepc);
+
+#ifdef CONFIG_DEBUG_EXCEPTIONS
+	if ((regs[SOFT_PANIC_GPR_REASON] & 0xfffffff0) == PANIC_SW_BASE) {
+#ifdef CONFIG_SOFTWARE_PANIC
+		panic_printf("Software panic reason: %s\n",
+			panic_sw_reasons[(regs[SOFT_PANIC_GPR_REASON] &
+						SOFT_PANIC_REASON_MASK)]);
+		panic_printf("Software panic info:   %d\n",
+			regs[SOFT_PANIC_GPR_INFO]);
+#endif
+	} else {
+		panic_printf("Exception type: %s\n", exc_type[(mcause & 0xf)]);
+	}
+#endif
+}
+
+void report_panic(uint32_t *regs)
+{
+	uint32_t i, mcause, mepc;
+	struct panic_data *pdata = pdata_ptr;
+
+	mepc = get_mepc();
+	mcause = get_mcause();
+
+	pdata->magic = PANIC_DATA_MAGIC;
+	pdata->struct_size = sizeof(*pdata);
+	pdata->struct_version = 2;
+	pdata->arch = PANIC_ARCH_RISCV_RV32I;
+	pdata->flags = 0;
+	pdata->reserved = 0;
+
+	pdata->riscv.mcause = mcause;
+	pdata->riscv.mepc = mepc;
+	for (i = 0; i < 31; i++)
+		pdata->riscv.regs[i] = regs[i];
+
+	print_panic_information(regs, mcause, mepc);
+	panic_reboot();
+}
+
+void panic_data_print(const struct panic_data *pdata)
+{
+	uint32_t *regs, mcause, mepc;
+
+	regs = (uint32_t *)pdata->riscv.regs;
+	mcause = pdata->riscv.mcause;
+	mepc = pdata->riscv.mepc;
+	print_panic_information(regs, mcause, mepc);
+}

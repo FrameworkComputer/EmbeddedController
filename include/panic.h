@@ -41,6 +41,13 @@ struct nds32_n8_panic_data {
 	uint32_t ipsw;
 };
 
+/* RISC-V RV32I registers saved on panic */
+struct rv32i_panic_data {
+	uint32_t regs[31];        /* sp, ra, gp, tp, a0-a7, t0-t6 s0-s11 */
+	uint32_t mepc;            /* mepc */
+	uint32_t mcause;          /* mcause */
+};
+
 /* x86 registers saved on panic */
 struct x86_panic_data {
 	uint32_t vector;          /* Exception vector number */
@@ -72,6 +79,7 @@ struct panic_data {
 		struct cortex_panic_data cm;       /* Cortex-Mx registers */
 		struct nds32_n8_panic_data nds_n8; /* NDS32 N8 registers */
 		struct x86_panic_data x86;         /* Intel x86 */
+		struct rv32i_panic_data riscv;     /* RISC-V RV32I */
 	};
 
 	/*
@@ -87,6 +95,7 @@ enum panic_arch {
 	PANIC_ARCH_CORTEX_M = 1,     /* Cortex-M architecture */
 	PANIC_ARCH_NDS32_N8 = 2,     /* NDS32 N8 architecture */
 	PANIC_ARCH_X86 = 3,          /* Intel x86 */
+	PANIC_ARCH_RISCV_RV32I = 4,  /* RISC-V RV32I */
 };
 
 /* Use PANIC_DATA_PTR to refer to the persistent storage location */
