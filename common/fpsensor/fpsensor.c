@@ -628,7 +628,7 @@ int command_fpcapture(int argc, char **argv)
 	enum ec_error_list rc;
 
 	if (system_is_locked())
-		return EC_RES_ACCESS_DENIED;
+		return EC_ERROR_ACCESS_DENIED;
 
 	if (argc >= 2) {
 		char *e;
@@ -657,7 +657,7 @@ int command_fpenroll(int argc, char **argv)
 						  "Immobile", "Low Coverage"};
 
 	if (system_is_locked())
-		return EC_RES_ACCESS_DENIED;
+		return EC_ERROR_ACCESS_DENIED;
 
 	do {
 		int tries = 1000;
