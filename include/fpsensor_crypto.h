@@ -15,7 +15,7 @@
  * @param salt the salt to use in HKDF.
  * @return EC_RES_SUCCESS on success and EC_RES_ERROR otherwise.
  */
-int derive_encryption_key(uint8_t *out_key, uint8_t *salt);
+int derive_encryption_key(uint8_t *out_key, const uint8_t *salt);
 
 /**
  * Encrypt |plaintext| using AES-GCM128.

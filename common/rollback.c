@@ -137,7 +137,7 @@ int32_t rollback_get_minimum_version(void)
 }
 
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
-int rollback_get_secret(uint8_t *secret)
+test_mockable int rollback_get_secret(uint8_t *secret)
 {
 	struct rollback_data data;
 	uint8_t first;

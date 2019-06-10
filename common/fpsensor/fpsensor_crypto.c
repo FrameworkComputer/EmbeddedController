@@ -16,7 +16,7 @@
 #error "fpsensor requires AES, AES_GCM and ROLLBACK_SECRET_SIZE"
 #endif
 
-int derive_encryption_key(uint8_t *out_key, uint8_t *salt)
+int derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 {
 	int ret;
 	uint8_t key_buf[SHA256_DIGEST_SIZE];

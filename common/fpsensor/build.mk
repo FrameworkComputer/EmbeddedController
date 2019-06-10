@@ -8,7 +8,7 @@
 _fpsensor_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)/fpsensor_state.o
+all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)/fpsensor_crypto.o
 ifneq ($(CONFIG_SPI_FP_PORT),)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)/fpsensor.o
-all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)/fpsensor_crypto.o
 endif
