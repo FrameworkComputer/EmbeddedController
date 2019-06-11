@@ -139,6 +139,50 @@ int hkdf_expand(uint8_t *out_key, size_t L, const uint8_t *prk,
 #undef HASH_LEN
 }
 
+int derive_positive_match_secret(uint8_t *output,
+				 const uint8_t *input_positive_match_salt)
+{
+	int ret;
+	uint8_t ikm[CONFIG_ROLLBACK_SECRET_SIZE + sizeof(tpm_seed)];
+	uint8_t prk[SHA256_DIGEST_SIZE];
+	static const char info_prefix[] = "positive_match_secret for user ";
+	uint8_t info[sizeof(info_prefix) - 1 + sizeof(user_id)];
+
+	if (bytes_are_trivial(input_positive_match_salt,
+			      FP_POSITIVE_MATCH_SALT_BYTES)) {
+		CPRINTS("Failed to derive positive match secret: "
+			"salt bytes are trivial.");
+		return EC_ERROR_INVAL;
+	}
+
+	ret = get_ikm(ikm);
+	if (ret != EC_SUCCESS) {
+		CPRINTS("Failed to get IKM: %d", ret);
+		return ret;
+	}
+
+	/* "Extract" step of HKDF. */
+	hkdf_extract(prk, input_positive_match_salt,
+		     FP_POSITIVE_MATCH_SALT_BYTES, ikm, sizeof(ikm));
+	always_memset(ikm, 0, sizeof(ikm));
+
+	memcpy(info, info_prefix, strlen(info_prefix));
+	memcpy(info + strlen(info_prefix), user_id, sizeof(user_id));
+
+	/* "Expand" step of HKDF. */
+	ret = hkdf_expand(output, FP_POSITIVE_MATCH_SECRET_BYTES, prk,
+			  sizeof(prk), info, sizeof(info));
+	always_memset(prk, 0, sizeof(prk));
+
+	/* Check that secret is not full of 0x00 or 0xff. */
+	if (bytes_are_trivial(output, FP_POSITIVE_MATCH_SECRET_BYTES)) {
+		CPRINTS("Failed to derive positive match secret: "
+			"derived secret bytes are trivial.");
+		ret = EC_ERROR_HW_INTERNAL;
+	}
+	return ret;
+}
+
 int derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 {
 	int ret;

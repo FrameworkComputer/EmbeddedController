@@ -25,6 +25,90 @@ static const uint8_t fake_tpm_seed[] = {
 	0x82, 0xce, 0x06, 0x3f, 0xcc, 0x23, 0xb9, 0xe7,
 };
 
+static const uint8_t fake_positive_match_salt[] = {
+	0x04, 0x1f, 0x5a, 0xac, 0x5f, 0x79, 0x10, 0xaf,
+	0x04, 0x1d, 0x46, 0x3a, 0x5f, 0x08, 0xee, 0xcb,
+};
+
+static const uint8_t fake_user_id[] = {
+	0x28, 0xb5, 0x5a, 0x55, 0x57, 0x1b, 0x26, 0x88,
+	0xce, 0xc5, 0xd1, 0xfe, 0x1d, 0x58, 0x5b, 0x94,
+	0x51, 0xa2, 0x60, 0x49, 0x9f, 0xea, 0xb1, 0xea,
+	0xf7, 0x04, 0x2f, 0x0b, 0x20, 0xa5, 0x93, 0x64,
+};
+
+/*
+ * |expected_positive_match_secret| is obtained by running BoringSSL locally.
+ * From https://boringssl.googlesource.com/boringssl
+ * commit 365b7a0fcbf273b1fa704d151059e419abd6cfb8
+ *
+ * Steps to reproduce:
+ *
+ * Open boringssl/crypto/hkdf/hkdf_test.cc
+ * Add the following case to static const HKDFTestVector kTests[]
+ *
+ * // test positive match secret
+ * {
+ *   EVP_sha256,
+ *   {
+ *     // IKM:
+ *     // fake_rollback_secret
+ *     [ ***Copy 32 octets of fake_rollback_secret here*** ]
+ *     // fake_tpm_seed
+ *     [ ***Copy 32 octets of fake_tpm_seed here*** ]
+ *   }, 64,
+ *   {
+ *     // fake_positive_match_salt
+ *     [ ***Copy 16 octets of fake_positive_match_salt here*** ]
+ *   }, 16,
+ *   {
+ *     // Info:
+ *     // "positive_match_secret for user "
+ *     0x70, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x76, 0x65,
+ *     0x5f, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x5f, 0x73,
+ *     0x65, 0x63, 0x72, 0x65, 0x74, 0x20, 0x66, 0x6f,
+ *     0x72, 0x20, 0x75, 0x73, 0x65, 0x72, 0x20,
+ *     // user_id
+ *     [ ***Type 32 octets of 0x00 here*** ]
+ *   }, 63,
+ *   {  // Expected PRK:
+ *     0xc2, 0xff, 0x50, 0x2d, 0xb1, 0x7e, 0x87, 0xb1,
+ *     0x25, 0x36, 0x3a, 0x88, 0xe1, 0xdb, 0x4f, 0x98,
+ *     0x22, 0xb5, 0x66, 0x8c, 0xab, 0xb7, 0xc7, 0x5e,
+ *     0xd7, 0x56, 0xbe, 0xde, 0x82, 0x3f, 0xd0, 0x62,
+ *   }, 32,
+ *   32, { // 32 = L = FP_POSITIVE_MATCH_SECRET_BYTES
+ *     // Expected positive match secret:
+ *     [ ***Copy 32 octets of expected positive_match_secret here*** ]
+ *   }
+ * },
+ *
+ * Then from boringssl/ execute:
+ * mkdir build
+ * cd build
+ * cmake ..
+ * make
+ * cd ..
+ * go run util/all_tests.go
+ */
+static const uint8_t expected_positive_match_secret_for_empty_user_id[] = {
+	0x8d, 0xc4, 0x5b, 0xdf, 0x55, 0x1e, 0xa8, 0x72,
+	0xd6, 0xdd, 0xa1, 0x4c, 0xb8, 0xa1, 0x76, 0x2b,
+	0xde, 0x38, 0xd5, 0x03, 0xce, 0xe4, 0x74, 0x51,
+	0x63, 0x6c, 0x6a, 0x26, 0xa9, 0xb7, 0xfa, 0x68,
+};
+
+/*
+ * Same as |expected_positive_match_secret_for_empty_user_id| but use
+ * |fake_user_id| instead of all-zero user_id.
+ */
+static const uint8_t expected_positive_match_secret_for_fake_user_id[] = {
+	0x0d, 0xf5, 0xac, 0x7c, 0xad, 0x37, 0x0a, 0x66,
+	0x2f, 0x71, 0xf6, 0xc6, 0xca, 0x8a, 0x41, 0x69,
+	0x8a, 0xd3, 0xcf, 0x0b, 0xc4, 0x5a, 0x5f, 0x4d,
+	0x54, 0xeb, 0x7b, 0xad, 0x5d, 0x1b, 0xbe, 0x30,
+};
+
 static int rollback_should_fail;
 
 /* Mock the rollback for unit test. */
@@ -223,6 +307,9 @@ static int test_derive_encryption_key_raw(const uint32_t *user_id_,
 	TEST_ASSERT(rv == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(key, expected_key, sizeof(key));
 
+	/* Clear state to ensure test independence. */
+	memset(user_id, 0, sizeof(user_id));
+
 	return EC_SUCCESS;
 }
 
@@ -230,7 +317,7 @@ test_static int test_derive_encryption_key(void)
 {
 	/*
 	 * These vectors are obtained by choosing the salt and the user_id
-	 * (used as "info" in HKDF), and running boringSSL's HKDF
+	 * (used as "info" in HKDF), and running BoringSSL's HKDF
 	 * (https://boringssl.googlesource.com/boringssl/+/c0b4c72b6d4c6f4828a373ec454bd646390017d4/crypto/hkdf/)
 	 * locally to get the output key. The IKM used in the run is the
 	 * concatenation of |fake_rollback_secret| and |fake_tpm_seed|.
@@ -300,6 +387,95 @@ test_static int test_derive_encryption_key_failure_rollback_fail(void)
 	TEST_ASSERT(derive_encryption_key(unused_key, unused_salt) ==
 		EC_SUCCESS);
 
+	return EC_SUCCESS;
+}
+
+test_static int test_derive_new_pos_match_secret(void)
+{
+	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+	/* GIVEN that the encryption salt is not trivial. */
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
+				       sizeof(fake_positive_match_salt)));
+	/*
+	 * GIVEN that the TPM seed is set, and reading the rollback secret will
+	 * succeed.
+	 */
+	TEST_ASSERT(fp_tpm_seed_is_set() && !rollback_should_fail);
+
+	/* GIVEN that the salt is not trivial. */
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
+				       sizeof(fake_positive_match_salt)));
+
+	/* THEN the derivation will succeed. */
+	TEST_ASSERT(derive_positive_match_secret(output,
+						 fake_positive_match_salt)
+		== EC_SUCCESS);
+	TEST_ASSERT_ARRAY_EQ(
+		output,
+		expected_positive_match_secret_for_empty_user_id,
+		sizeof(expected_positive_match_secret_for_empty_user_id));
+
+	/* Now change the user_id to be non-trivial. */
+	memcpy(user_id, fake_user_id, sizeof(fake_user_id));
+	TEST_ASSERT(derive_positive_match_secret(output,
+						 fake_positive_match_salt)
+		== EC_SUCCESS);
+	TEST_ASSERT_ARRAY_EQ(
+		output,
+		expected_positive_match_secret_for_fake_user_id,
+		sizeof(expected_positive_match_secret_for_fake_user_id));
+	memset(user_id, 0, sizeof(user_id));
+
+	return EC_SUCCESS;
+}
+
+test_static int test_derive_positive_match_secret_fail_seed_not_set(void)
+{
+	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+
+	/* GIVEN that seed is not set. */
+	TEST_ASSERT(!fp_tpm_seed_is_set());
+	/* THEN EVEN IF the encryption salt is not trivial. */
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
+				       sizeof(fake_positive_match_salt)));
+
+	/* Deriving positive match secret will fail. */
+	TEST_ASSERT(derive_positive_match_secret(output,
+						 fake_positive_match_salt)
+		== EC_ERROR_ACCESS_DENIED);
+
+	return EC_SUCCESS;
+
+}
+
+test_static int test_derive_positive_match_secret_fail_rollback_fail(void)
+{
+	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+
+	/* GIVEN that reading secret from anti-rollback block will fail. */
+	rollback_should_fail = 1;
+	/* THEN EVEN IF the encryption salt is not trivial. */
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
+				       sizeof(fake_positive_match_salt)));
+
+	/* Deriving positive match secret will fail. */
+	TEST_ASSERT(derive_positive_match_secret(output,
+						 fake_positive_match_salt)
+		== EC_ERROR_HW_INTERNAL);
+	rollback_should_fail = 0;
+
+	return EC_SUCCESS;
+}
+
+test_static int test_derive_positive_match_secret_fail_salt_trivial(void)
+{
+	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+	/* GIVEN that the salt is trivial. */
+	static const uint8_t salt[FP_CONTEXT_SALT_BYTES] = { 0 };
+
+	/* THEN deriving positive match secret will fail. */
+	TEST_ASSERT(derive_positive_match_secret(output, salt)
+		== EC_ERROR_INVAL);
 	return EC_SUCCESS;
 }
 
@@ -419,20 +595,33 @@ test_static int test_fp_set_sensor_mode(void)
 	/* THEN sensor_mode is unchanged */
 	TEST_ASSERT(sensor_mode == 0);
 
+	/* Clear state to ensure test independence. */
+	templ_valid = 0;
+
 	return EC_SUCCESS;
 }
 
 void run_test(void)
 {
+	/* These are independent of global state. */
 	RUN_TEST(test_hkdf_expand);
+	RUN_TEST(test_fp_set_sensor_mode);
+
+	/* These must be run before tpm seed is set. */
 	RUN_TEST(test_fp_enc_status_valid_flags);
 	RUN_TEST(test_fp_tpm_seed_not_set);
 	RUN_TEST(test_derive_encryption_key_failure_seed_not_set);
+	RUN_TEST(test_derive_positive_match_secret_fail_seed_not_set);
+
 	RUN_TEST(test_set_fp_tpm_seed);
+
+	/* These must be run after tpm seed is set. */
 	RUN_TEST(test_set_fp_tpm_seed_again);
 	RUN_TEST(test_derive_encryption_key);
 	RUN_TEST(test_derive_encryption_key_failure_rollback_fail);
-	RUN_TEST(test_fp_set_sensor_mode);
+	RUN_TEST(test_derive_new_pos_match_secret);
+	RUN_TEST(test_derive_positive_match_secret_fail_rollback_fail);
+	RUN_TEST(test_derive_positive_match_secret_fail_salt_trivial);
 
 	test_print_result();
 }
