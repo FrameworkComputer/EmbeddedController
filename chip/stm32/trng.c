@@ -26,7 +26,7 @@ uint32_t rand(void)
 	return STM32_RNG_DR;
 }
 
-void rand_bytes(void *buffer, size_t len)
+test_mockable void rand_bytes(void *buffer, size_t len)
 {
 	while (len) {
 		uint32_t number = rand();
@@ -45,7 +45,7 @@ void rand_bytes(void *buffer, size_t len)
 	}
 }
 
-void init_trng(void)
+test_mockable void init_trng(void)
 {
 #ifdef CHIP_FAMILY_STM32L4
 	/* Enable the 48Mhz internal RC oscillator */
@@ -82,7 +82,7 @@ void init_trng(void)
 	STM32_RNG_CR |= STM32_RNG_CR_RNGEN;
 }
 
-void exit_trng(void)
+test_mockable void exit_trng(void)
 {
 	STM32_RNG_CR &= ~STM32_RNG_CR_RNGEN;
 	STM32_RCC_AHB2ENR &= ~STM32_RCC_AHB2ENR_RNGEN;
