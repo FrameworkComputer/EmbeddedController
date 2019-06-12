@@ -23,6 +23,7 @@
 #include "task.h"
 #include "timer.h"
 
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 /*
  * ==== Overview
  *
@@ -411,8 +412,7 @@ static void *get_scratch_buffer(size_t size)
 		rv = shared_mem_acquire(size, &buf);
 		if (rv == EC_SUCCESS) {
 			if (i)
-				ccprintf("%s: waited %d cycles!\n", __func__,
-					 i);
+				CPRINTS("%s: waited %d cycles!", __func__, i);
 			return buf;
 		}
 		usleep(100 * MSEC);
@@ -955,8 +955,8 @@ test_export_static enum ec_error_list compact_nvmem(void)
 	if (final_delimiter_needed)
 		add_final_delimiter();
 
-	ccprintf("Compaction done, went from %d to %d bytes\n", before,
-		 total_used_size());
+	CPRINTS("Compaction done, went from %d to %d bytes", before,
+		total_used_size());
 	return rv;
 }
 
@@ -1452,7 +1452,7 @@ static int erase_partition(unsigned int act_partition, int erase_backup)
 	rv = flash_physical_erase(flash_base, NVMEM_PARTITION_SIZE);
 
 	if (rv != EC_SUCCESS) {
-		ccprintf("%s: flash erase failed", __func__);
+		ccprintf("%s: flash erase failed\n", __func__);
 		return -rv;
 	}
 
@@ -1480,7 +1480,7 @@ enum ec_error_list new_nvmem_migrate(unsigned int act_partition)
 	 */
 	flash_base = erase_partition(act_partition, 1);
 	if (flash_base < 0) {
-		ccprintf("%s: backup partition erase failed", __func__);
+		ccprintf("%s: backup partition erase failed\n", __func__);
 		return -flash_base;
 	}
 
@@ -1510,8 +1510,8 @@ enum ec_error_list new_nvmem_migrate(unsigned int act_partition)
 		/* Never returns. */
 		report_no_payload_failure(NVMEMF_MIGRATION_FAILURE);
 
-	ccprintf("Migration success, used %d bytes of flash\n",
-		 total_used_size());
+	CPRINTS("Migration success, used %d bytes of flash",
+		total_used_size());
 
 	/*
 	 * Now we can erase the active partition and add its flash to the pool.
@@ -1539,8 +1539,7 @@ static void verify_empty_page(void *ph)
 
 	for (i = 0; i < (CONFIG_FLASH_BANK_SIZE / sizeof(*word_p)); i++) {
 		if (word_p[i] != (uint32_t)~0) {
-			ccprintf("%s: corrupted page at %p!\n", __func__,
-				 word_p);
+			CPRINTS("%s: corrupted page at %p!", __func__, word_p);
 			flash_physical_erase((uintptr_t)word_p -
 						     CONFIG_PROGRAM_MEMORY_BASE,
 					     CONFIG_FLASH_BANK_SIZE);
@@ -1619,7 +1618,7 @@ static void init_page_list(void)
 	}
 
 	if (!page_list_index) {
-		ccprintf("Init nvmem from scratch\n");
+		CPRINTS("Init nvmem from scratch");
 		set_first_page_header();
 		page_list_index++;
 	}
@@ -2256,7 +2255,7 @@ enum ec_error_list new_nvmem_init(void)
 
 	unlock_mutex(__LINE__);
 
-	ccprintf("init took %d\n", (uint32_t)(init.val - start.val));
+	CPRINTS("init took %d", (uint32_t)(init.val - start.val));
 
 	return rv;
 }
