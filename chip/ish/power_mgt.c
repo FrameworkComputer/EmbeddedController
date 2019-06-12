@@ -14,15 +14,9 @@
 #include "util.h"
 #include "watchdog.h"
 
-#ifdef CONFIG_ISH_PM_DEBUG
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
-#else
-#define CPUTS(outstr)
-#define CPRINTS(format, args...)
-#define CPRINTF(format, args...)
-#endif
 
 /* defined in link script: core/minute-ia/ec.lds.S */
 extern uint32_t __aon_ro_start;
@@ -250,9 +244,8 @@ static void handle_reset_in_aontask(int pm_state)
 	disable_all_interrupts();
 	task_enable_irq(ISH_PMU_WAKEUP_IRQ);
 
-#ifdef CONFIG_ISH_PM_RESET_PREP
-	task_enable_irq(ISH_RESET_PREP_IRQ);
-#endif
+	if (IS_ENABLED(CONFIG_ISH_PM_RESET_PREP))
+		task_enable_irq(ISH_RESET_PREP_IRQ);
 
 	/* enable Trunk Clock Gating (TCG) of ISH */
 	CCU_TCG_EN = 1;
@@ -292,7 +285,7 @@ static void enter_d0i0(void)
  * edge trigger that is opposite of its value, then restore the both-edge
  * trigger configuration immediately after exiting low power mode.
  */
-static uint32_t __unused convert_both_edge_gpio_to_single_edge(void)
+static uint32_t convert_both_edge_gpio_to_single_edge(void)
 {
 	uint32_t both_edge_pins = 0;
 	int i = 0;
@@ -322,13 +315,11 @@ static uint32_t __unused convert_both_edge_gpio_to_single_edge(void)
 	return both_edge_pins;
 }
 
-static void __unused restore_both_edge_gpio_config(uint32_t both_edge_pin_map)
+static void restore_both_edge_gpio_config(uint32_t both_edge_pin_map)
 {
 	ISH_GPIO_GRER |= both_edge_pin_map;
 	ISH_GPIO_GFER |= both_edge_pin_map;
 }
-
-#ifdef CONFIG_ISH_PM_D0I1
 
 static void enter_d0i1(void)
 {
@@ -340,9 +331,8 @@ static void enter_d0i1(void)
 	current_irq_map = disable_all_interrupts();
 	task_enable_irq(ISH_PMU_WAKEUP_IRQ);
 
-#ifdef CONFIG_ISH_PM_RESET_PREP
-	task_enable_irq(ISH_RESET_PREP_IRQ);
-#endif
+	if (IS_ENABLED(CONFIG_ISH_PM_RESET_PREP))
+		task_enable_irq(ISH_RESET_PREP_IRQ);
 
 	t0 = __hw_clock_source_read();
 	pm_ctx.aon_share->pm_state = ISH_PM_STATE_D0I1;
@@ -372,10 +362,6 @@ static void enter_d0i1(void)
 	restore_interrupts(current_irq_map);
 }
 
-#endif
-
-#ifdef CONFIG_ISH_PM_D0I2
-
 static void enter_d0i2(void)
 {
 	uint64_t current_irq_map;
@@ -386,9 +372,8 @@ static void enter_d0i2(void)
 	current_irq_map = disable_all_interrupts();
 	task_enable_irq(ISH_PMU_WAKEUP_IRQ);
 
-#ifdef CONFIG_ISH_PM_RESET_PREP
-	task_enable_irq(ISH_RESET_PREP_IRQ);
-#endif
+	if (IS_ENABLED(CONFIG_ISH_PM_RESET_PREP))
+		task_enable_irq(ISH_RESET_PREP_IRQ);
 
 	t0 = __hw_clock_source_read();
 	pm_ctx.aon_share->pm_state = ISH_PM_STATE_D0I2;
@@ -425,10 +410,6 @@ static void enter_d0i2(void)
 	restore_interrupts(current_irq_map);
 }
 
-#endif
-
-#ifdef CONFIG_ISH_PM_D0I3
-
 static void enter_d0i3(void)
 {
 	uint64_t current_irq_map;
@@ -439,9 +420,8 @@ static void enter_d0i3(void)
 	current_irq_map = disable_all_interrupts();
 	task_enable_irq(ISH_PMU_WAKEUP_IRQ);
 
-#ifdef CONFIG_ISH_PM_RESET_PREP
-	task_enable_irq(ISH_RESET_PREP_IRQ);
-#endif
+	if (IS_ENABLED(CONFIG_ISH_PM_RESET_PREP))
+		task_enable_irq(ISH_RESET_PREP_IRQ);
 
 	t0 = __hw_clock_source_read();
 	pm_ctx.aon_share->pm_state = ISH_PM_STATE_D0I3;
@@ -478,8 +458,6 @@ static void enter_d0i3(void)
 	restore_interrupts(current_irq_map);
 }
 
-#endif
-
 static int d0ix_decide(timestamp_t cur_time, uint32_t idle_us)
 {
 	int pm_state = ISH_PM_STATE_D0I0;
@@ -496,20 +474,18 @@ static int d0ix_decide(timestamp_t cur_time, uint32_t idle_us)
 			}
 		}
 
-#ifdef CONFIG_ISH_PM_D0I1
-		pm_state = ISH_PM_STATE_D0I1;
-#endif
-
-#ifdef CONFIG_ISH_PM_D0I2
-		if (idle_us >= CONFIG_ISH_D0I2_MIN_USEC && pm_ctx.aon_valid)
-			pm_state = ISH_PM_STATE_D0I2;
-#endif
-
-#ifdef CONFIG_ISH_PM_D0I3
-		if (idle_us >= CONFIG_ISH_D0I3_MIN_USEC && pm_ctx.aon_valid)
+		if (IS_ENABLED(CONFIG_ISH_PM_D0I3) &&
+		    idle_us >= CONFIG_ISH_D0I3_MIN_USEC &&
+		    pm_ctx.aon_valid)
 			pm_state = ISH_PM_STATE_D0I3;
-#endif
 
+		else if (IS_ENABLED(CONFIG_ISH_PM_D0I2) &&
+			 idle_us >= CONFIG_ISH_D0I2_MIN_USEC &&
+			 pm_ctx.aon_valid)
+			pm_state = ISH_PM_STATE_D0I2;
+
+		else if (IS_ENABLED(CONFIG_ISH_PM_D0I1))
+			pm_state = ISH_PM_STATE_D0I1;
 	}
 
 	return pm_state;
@@ -522,30 +498,21 @@ static void pm_process(timestamp_t cur_time, uint32_t idle_us)
 	decide = d0ix_decide(cur_time, idle_us);
 
 	switch (decide) {
-#ifdef CONFIG_ISH_PM_D0I1
 	case ISH_PM_STATE_D0I1:
 		enter_d0i1();
 		break;
-#endif
-#ifdef CONFIG_ISH_PM_D0I2
 	case ISH_PM_STATE_D0I2:
 		enter_d0i2();
+		check_aon_task_status();
 		break;
-#endif
-#ifdef CONFIG_ISH_PM_D0I3
 	case ISH_PM_STATE_D0I3:
 		enter_d0i3();
+		check_aon_task_status();
 		break;
-#endif
 	default:
 		enter_d0i0();
 		break;
 	}
-
-#if defined(CONFIG_ISH_PM_D0I2) || defined(CONFIG_ISH_PM_D0I3)
-	if (decide == ISH_PM_STATE_D0I2 || decide == ISH_PM_STATE_D0I3)
-		check_aon_task_status();
-#endif
 }
 
 void ish_pm_init(void)
@@ -560,52 +527,43 @@ void ish_pm_init(void)
 	CCU_TCG_EN = 0;
 	CCU_BCG_EN = 0;
 
-#ifdef CONFIG_ISH_PM_AONTASK
-	init_aon_task();
-#endif
+	if (IS_ENABLED(CONFIG_ISH_PM_AONTASK))
+		init_aon_task();
 
 	/* unmask all wake up events */
 	PMU_MASK_EVENT = ~PMU_MASK_EVENT_BIT_ALL;
 
-#ifdef CONFIG_ISH_PM_RESET_PREP
-	/* unmask reset prep avail interrupt */
-	PMU_RST_PREP = 0;
+	if (IS_ENABLED(CONFIG_ISH_PM_RESET_PREP)) {
+		/* unmask reset prep avail interrupt */
+		PMU_RST_PREP = 0;
 
-	task_enable_irq(ISH_RESET_PREP_IRQ);
-#endif
-
-#ifdef CONFIG_ISH_PM_D3
-
-	/* unmask D3 and BME interrupts */
-	PMU_D3_STATUS &= (PMU_D3_BIT_SET | PMU_BME_BIT_SET);
-
-	if ((!(PMU_D3_STATUS & PMU_D3_BIT_SET)) &&
-			(PMU_D3_STATUS & PMU_BME_BIT_SET)) {
-		PMU_D3_STATUS = PMU_D3_STATUS;
+		task_enable_irq(ISH_RESET_PREP_IRQ);
 	}
 
-	task_enable_irq(ISH_D3_RISE_IRQ);
-	task_enable_irq(ISH_D3_FALL_IRQ);
-	task_enable_irq(ISH_BME_RISE_IRQ);
-	task_enable_irq(ISH_BME_FALL_IRQ);
+	if (IS_ENABLED(CONFIG_ISH_PM_D3)) {
+		/* unmask D3 and BME interrupts */
+		PMU_D3_STATUS &= (PMU_D3_BIT_SET | PMU_BME_BIT_SET);
 
-#endif
+		if ((!(PMU_D3_STATUS & PMU_D3_BIT_SET)) &&
+		    (PMU_D3_STATUS & PMU_BME_BIT_SET))
+			PMU_D3_STATUS = PMU_D3_STATUS;
 
+		task_enable_irq(ISH_D3_RISE_IRQ);
+		task_enable_irq(ISH_D3_FALL_IRQ);
+		task_enable_irq(ISH_BME_RISE_IRQ);
+		task_enable_irq(ISH_BME_FALL_IRQ);
+	}
 }
 
 __attribute__ ((noreturn))
 void ish_pm_reset(void)
 {
-
-#ifdef CONFIG_ISH_PM_AONTASK
-	if (pm_ctx.aon_valid) {
+	if (IS_ENABLED(CONFIG_ISH_PM_AONTASK) &&
+	    pm_ctx.aon_valid) {
 		handle_reset_in_aontask(ISH_PM_STATE_RESET_PREP);
 	} else {
 		ish_mia_reset();
 	}
-#else
-	ish_mia_reset();
-#endif
 
 	__builtin_unreachable();
 }
@@ -673,22 +631,19 @@ DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats, "",
 			"Print power management statistics");
 
 
-#ifdef CONFIG_ISH_PM_D0I1
-
 /**
  * main FW only need handle PMU wakeup interrupt for D0i1 state, aontask will
  * handle PMU wakeup interrupt for other low power states
  */
+__maybe_unused
 static void pmu_wakeup_isr(void)
 {
 	/* at current nothing need to do */
 }
 
+#ifdef CONFIG_ISH_PM_D0I1
 DECLARE_IRQ(ISH_PMU_WAKEUP_IRQ, pmu_wakeup_isr);
-
 #endif
-
-#ifdef CONFIG_ISH_PM_RESET_PREP
 
 /**
  * from ISH5.0, when system doing S0->Sx transition, will receive reset prep
@@ -696,7 +651,7 @@ DECLARE_IRQ(ISH_PMU_WAKEUP_IRQ, pmu_wakeup_isr);
  *
  */
 
-__attribute__ ((noreturn))
+__maybe_unused __attribute__ ((noreturn))
 static void reset_prep_isr(void)
 {
 	/* mask reset prep avail interrupt */
@@ -718,12 +673,11 @@ static void reset_prep_isr(void)
 	__builtin_unreachable();
 }
 
+#ifdef CONFIG_ISH_PM_RESET_PREP
 DECLARE_IRQ(ISH_RESET_PREP_IRQ, reset_prep_isr);
-
 #endif
 
-#ifdef CONFIG_ISH_PM_D3
-
+__maybe_unused
 static void handle_d3(uint32_t irq_vec)
 {
 	PMU_D3_STATUS = PMU_D3_STATUS;
@@ -747,9 +701,8 @@ static void handle_d3(uint32_t irq_vec)
 		disable_all_interrupts();
 		task_enable_irq(ISH_PMU_WAKEUP_IRQ);
 
-#ifdef CONFIG_ISH_PM_RESET_PREP
-		task_enable_irq(ISH_RESET_PREP_IRQ);
-#endif
+		if (IS_ENABLED(CONFIG_ISH_PM_RESET_PREP))
+			task_enable_irq(ISH_RESET_PREP_IRQ);
 
 		/* enable Trunk Clock Gating (TCG) of ISH */
 		CCU_TCG_EN = 1;
@@ -763,31 +716,35 @@ static void handle_d3(uint32_t irq_vec)
 	}
 }
 
+__maybe_unused
 static void d3_rise_isr(void)
 {
 	handle_d3(ISH_D3_RISE_VEC);
 }
 
+__maybe_unused
 static void d3_fall_isr(void)
 {
 	handle_d3(ISH_D3_FALL_VEC);
 }
 
+__maybe_unused
 static void bme_rise_isr(void)
 {
 	handle_d3(ISH_BME_RISE_VEC);
 }
 
+__maybe_unused
 static void bme_fall_isr(void)
 {
 	handle_d3(ISH_BME_FALL_VEC);
 }
 
+#ifdef CONFIG_ISH_PM_D3
 DECLARE_IRQ(ISH_D3_RISE_IRQ, d3_rise_isr);
 DECLARE_IRQ(ISH_D3_FALL_IRQ, d3_fall_isr);
 DECLARE_IRQ(ISH_BME_RISE_IRQ, bme_rise_isr);
 DECLARE_IRQ(ISH_BME_FALL_IRQ, bme_fall_isr);
-
 #endif
 
 void ish_pm_refresh_console_in_use(void)

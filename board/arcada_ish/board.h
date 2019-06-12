@@ -18,7 +18,6 @@
 /* ISH specific*/
 #undef  CONFIG_DEBUG_ASSERT
 #define CONFIG_CLOCK_CRYSTAL
-#define CONFIG_ISH_UART_0
 /* EC */
 #define CONFIG_FLASH_SIZE 0x80000
 #define CONFIG_FPU

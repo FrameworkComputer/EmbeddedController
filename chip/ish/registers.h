@@ -119,15 +119,9 @@ enum ish_i2c_port {
 #define ISH_BME_FALL_VEC           IRQ_TO_VEC(ISH_BME_FALL_IRQ)
 #define ISH_FABRIC_VEC             IRQ_TO_VEC(ISH_FABRIC_IRQ)
 
-#ifdef CONFIG_ISH_UART_0
 #define ISH_DEBUG_UART			UART_PORT_0
 #define ISH_DEBUG_UART_IRQ		ISH_UART0_IRQ
 #define ISH_DEBUG_UART_VEC		ISH_UART0_VEC
-#else
-#define ISH_DEBUG_UART			UART_PORT_1
-#define ISH_DEBUG_UART_IRQ		ISH_UART1_IRQ
-#define ISH_DEBUG_UART_VEC		ISH_UART1_VEC
-#endif
 
 /* IPC_Registers */
 #define IPC_PISR			REG32(ISH_IPC_BASE + 0x0)

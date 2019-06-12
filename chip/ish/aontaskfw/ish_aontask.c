@@ -43,11 +43,11 @@
  *
  */
 
-#include <common.h>
-#include <ia_structs.h>
-#include "power_mgt.h"
-#include "ish_dma.h"
+#include "common.h"
+#include "ia_structs.h"
 #include "ish_aon_share.h"
+#include "ish_dma.h"
+#include "power_mgt.h"
 
 /**
  * ISH aontask only need handle PMU wakeup interrupt and reset prep interrupt
@@ -621,15 +621,20 @@ void ish_aon_main(void)
 
 	aon_idt[0].dword_up = GEN_IDT_DESC_UP(&pmu_wakeup_isr, 0x4,
 					IDT_DESC_FLAGS);
-#ifdef CONFIG_ISH_PM_RESET_PREP
 
-	/* set reset prep interrupt gate using LDT code segment selector(0x4) */
-	aon_idt[AON_IDT_ENTRY_VEC_LAST - AON_IDT_ENTRY_VEC_FIRST].dword_lo =
+	if (IS_ENABLED(CONFIG_ISH_PM_RESET_PREP)) {
+		/*
+		 * set reset prep interrupt gate using LDT code segment
+		 * selector(0x4)
+		 */
+		aon_idt[AON_IDT_ENTRY_VEC_LAST - AON_IDT_ENTRY_VEC_FIRST]
+			.dword_lo =
 			GEN_IDT_DESC_LO(&reset_prep_isr, 0x4, IDT_DESC_FLAGS);
 
-	aon_idt[AON_IDT_ENTRY_VEC_LAST - AON_IDT_ENTRY_VEC_FIRST].dword_up =
+		aon_idt[AON_IDT_ENTRY_VEC_LAST - AON_IDT_ENTRY_VEC_FIRST]
+			.dword_up =
 			GEN_IDT_DESC_UP(&reset_prep_isr, 0x4, IDT_DESC_FLAGS);
-#endif
+	}
 
 	while (1) {
 

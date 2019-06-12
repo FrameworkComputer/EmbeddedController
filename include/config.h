@@ -4092,6 +4092,37 @@
 
 /*****************************************************************************/
 /*
+ * ISH config defaults
+ */
+/*
+ * This will be automatically defined below if the board supports power
+ * modes that will require the AONTASK functionality.
+ */
+#undef CONFIG_ISH_PM_AONTASK
+
+/*
+ * Define the following if the power state support is required.
+ */
+#undef CONFIG_ISH_PM_D0I1
+#undef CONFIG_ISH_PM_D0I2
+#undef CONFIG_ISH_PM_D0I3
+#undef CONFIG_ISH_PM_D3
+
+/*
+ * Define the following to the number of uSeconds of elapsed time that is
+ * required to enter D0I2 and D0I3, if they are supported
+ */
+#undef CONFIG_ISH_D0I2_MIN_USEC
+#undef CONFIG_ISH_D0I3_MIN_USEC
+
+/*
+ * Define the following in order to perform power management reset
+ * prep IRQ setup when entering a new state
+ */
+#undef CONFIG_ISH_PM_RESET_PREP
+
+/*****************************************************************************/
+/*
  * Include board and core configs, since those hold the CONFIG_ constants for a
  * given configuration.  This guarantees they get included everywhere, and
  * fixes a fairly common bug where we gate out code with #ifndef
