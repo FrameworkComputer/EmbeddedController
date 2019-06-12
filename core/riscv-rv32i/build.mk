@@ -6,10 +6,6 @@
 # RISC-V core OS files build
 #
 
-# TODO(b/133639441): Toolchain need to support 32-bit architecture or we
-# will get the following error message:
-# ABI is incompatible with that of the selected emulation:
-# target emulation `elf64-littleriscv' does not match `elf32-littleriscv'
 # Select RISC-V bare-metal toolchain
 $(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_riscv),\
 	/opt/coreboot-sdk/bin/riscv64-elf-)
