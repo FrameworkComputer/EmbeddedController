@@ -267,6 +267,11 @@ static struct pd_protocol {
 	 * of our own.
 	 */
 	uint64_t ready_state_holdoff_timer;
+	/*
+	 * PD 2.0 spec, section 6.5.11.1
+	 * When we can give up on a HARD_RESET transmission.
+	 */
+	uint64_t hard_reset_complete_timer;
 } pd[CONFIG_USB_PD_PORT_COUNT];
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -4452,8 +4457,10 @@ void pd_task(void *u)
 			break;
 		case PD_STATE_HARD_RESET_SEND:
 			hard_reset_count++;
-			if (pd[port].last_state != pd[port].task_state)
+			if (pd[port].last_state != pd[port].task_state) {
 				hard_reset_sent = 0;
+				pd[port].hard_reset_complete_timer = 0;
+			}
 #ifdef CONFIG_CHARGE_MANAGER
 			if (pd[port].last_state == PD_STATE_SNK_DISCOVERY ||
 			    (pd[port].last_state == PD_STATE_SOFT_RESET &&
@@ -4473,29 +4480,52 @@ void pd_task(void *u)
 			}
 #endif
 
-			/* try sending hard reset until it succeeds */
-			if (!hard_reset_sent) {
-				if (pd_transmit(port, TCPC_TX_HARD_RESET,
-						0, NULL) < 0) {
-					timeout = 10*MSEC;
+			if (hard_reset_sent)
+				break;
+
+			if (pd_transmit(port, TCPC_TX_HARD_RESET, 0, NULL) <
+			    0) {
+				/*
+				 * likely a non-idle channel
+				 * TCPCI r2.0 v1.0 4.4.15:
+				 * the TCPC does not retry HARD_RESET
+				 * but we can try periodically until the timer
+				 * expires.
+				 */
+				now = get_time();
+				if (pd[port].hard_reset_complete_timer == 0) {
+					pd[port].hard_reset_complete_timer =
+						now.val +
+						PD_T_HARD_RESET_COMPLETE;
+					timeout = PD_T_HARD_RESET_RETRY;
 					break;
 				}
-
-				/* successfully sent hard reset */
-				hard_reset_sent = 1;
-				/*
-				 * If we are source, delay before cutting power
-				 * to allow sink time to get hard reset.
-				 */
-				if (pd[port].power_role == PD_ROLE_SOURCE) {
-					set_state_timeout(port,
-					  get_time().val + PD_T_PS_HARD_RESET,
-					  PD_STATE_HARD_RESET_EXECUTE);
-				} else {
-					set_state(port,
-						  PD_STATE_HARD_RESET_EXECUTE);
-					timeout = 10*MSEC;
+				if (now.val <
+				    pd[port].hard_reset_complete_timer) {
+					CPRINTS("C%d: Retrying hard reset",
+						port);
+					timeout = PD_T_HARD_RESET_RETRY;
+					break;
 				}
+				/*
+				 * PD 2.0 spec, section 6.5.11.1
+				 * Pretend TX_HARD_RESET succeeded after
+				 * timeout.
+				 */
+			}
+
+			hard_reset_sent = 1;
+			/*
+			 * If we are source, delay before cutting power
+			 * to allow sink time to get hard reset.
+			 */
+			if (pd[port].power_role == PD_ROLE_SOURCE) {
+				set_state_timeout(port,
+					get_time().val + PD_T_PS_HARD_RESET,
+						  PD_STATE_HARD_RESET_EXECUTE);
+			} else {
+				set_state(port, PD_STATE_HARD_RESET_EXECUTE);
+				timeout = 10 * MSEC;
 			}
 			break;
 		case PD_STATE_HARD_RESET_EXECUTE:

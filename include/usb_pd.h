@@ -181,19 +181,21 @@ enum pd_rx_errors {
 #define SVID_DISCOVERY_MAX 16
 
 /* Timers */
-#define PD_T_SINK_TX          (18*MSEC) /* between 16ms and 20 */
-#define PD_T_CHUNK_SENDER_RSP (24*MSEC) /* between 24ms and 30ms */
-#define PD_T_CHUNK_SENDER_REQ (24*MSEC) /* between 24ms and 30ms */
-#define PD_T_SEND_SOURCE_CAP  (100*MSEC) /* between 100ms and 200ms */
-#define PD_T_SINK_WAIT_CAP    (600*MSEC) /* between 310ms and 620ms */
-#define PD_T_SINK_TRANSITION   (35*MSEC) /* between 20ms and 35ms */
-#define PD_T_SOURCE_ACTIVITY   (45*MSEC) /* between 40ms and 50ms */
-#define PD_T_SENDER_RESPONSE   (30*MSEC) /* between 24ms and 30ms */
-#define PD_T_PS_TRANSITION    (500*MSEC) /* between 450ms and 550ms */
-#define PD_T_PS_SOURCE_ON     (480*MSEC) /* between 390ms and 480ms */
-#define PD_T_PS_SOURCE_OFF    (920*MSEC) /* between 750ms and 920ms */
-#define PD_T_PS_HARD_RESET     (25*MSEC) /* between 25ms and 35ms */
-#define PD_T_ERROR_RECOVERY    (25*MSEC) /* 25ms */
+#define PD_T_SINK_TX            (18*MSEC) /* between 16ms and 20 */
+#define PD_T_CHUNK_SENDER_RSP   (24*MSEC) /* between 24ms and 30ms */
+#define PD_T_CHUNK_SENDER_REQ   (24*MSEC) /* between 24ms and 30ms */
+#define PD_T_HARD_RESET_COMPLETE (5*MSEC) /* between 4ms and 5ms*/
+#define PD_T_HARD_RESET_RETRY    (1*MSEC) /* 1ms */
+#define PD_T_SEND_SOURCE_CAP   (100*MSEC) /* between 100ms and 200ms */
+#define PD_T_SINK_WAIT_CAP     (600*MSEC) /* between 310ms and 620ms */
+#define PD_T_SINK_TRANSITION    (35*MSEC) /* between 20ms and 35ms */
+#define PD_T_SOURCE_ACTIVITY    (45*MSEC) /* between 40ms and 50ms */
+#define PD_T_SENDER_RESPONSE    (30*MSEC) /* between 24ms and 30ms */
+#define PD_T_PS_TRANSITION     (500*MSEC) /* between 450ms and 550ms */
+#define PD_T_PS_SOURCE_ON      (480*MSEC) /* between 390ms and 480ms */
+#define PD_T_PS_SOURCE_OFF     (920*MSEC) /* between 750ms and 920ms */
+#define PD_T_PS_HARD_RESET      (25*MSEC) /* between 25ms and 35ms */
+#define PD_T_ERROR_RECOVERY     (25*MSEC) /* 25ms */
 #define PD_T_CC_DEBOUNCE       (100*MSEC) /* between 100ms and 200ms */
 /* DRP_SNK + DRP_SRC must be between 50ms and 100ms with 30%-70% duty cycle */
 #define PD_T_DRP_SNK           (40*MSEC) /* toggle time for sink DRP */
@@ -231,11 +233,11 @@ enum pd_rx_errors {
 #define PD_T_AME (1*SECOND) /* timeout from UFP attach to Alt Mode Entry */
 
 /* VDM Timers ( USB PD Spec Rev2.0 Table 6-30 )*/
-#define PD_T_VDM_BUSY         (100*MSEC) /* at least 100ms */
-#define PD_T_VDM_E_MODE        (25*MSEC) /* enter/exit the same max */
-#define PD_T_VDM_RCVR_RSP      (15*MSEC) /* max of 15ms */
-#define PD_T_VDM_SNDR_RSP      (30*MSEC) /* max of 30ms */
-#define PD_T_VDM_WAIT_MODE_E  (100*MSEC) /* enter/exit the same max */
+#define PD_T_VDM_BUSY          (100*MSEC) /* at least 100ms */
+#define PD_T_VDM_E_MODE         (25*MSEC) /* enter/exit the same max */
+#define PD_T_VDM_RCVR_RSP       (15*MSEC) /* max of 15ms */
+#define PD_T_VDM_SNDR_RSP       (30*MSEC) /* max of 30ms */
+#define PD_T_VDM_WAIT_MODE_E   (100*MSEC) /* enter/exit the same max */
 
 /* CTVPD Timers ( USB Type-C ECN Table 4-27 ) */
 #define PD_T_VPDDETACH        (20*MSEC) /* max of 20*MSEC */
