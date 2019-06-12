@@ -140,6 +140,11 @@ static int ps8xxx_get_chip_info(int port, int live,
 	if (rv)
 		return rv;
 
+	if (!live) {
+		(*chip_info)->vendor_id = PS8XXX_VENDOR_ID;
+		(*chip_info)->product_id = PS8XXX_PRODUCT_ID;
+	}
+
 	if ((*chip_info)->fw_version_number == 0 ||
 	    (*chip_info)->fw_version_number == -1 || live) {
 		rv = tcpc_read(port, FW_VER_REG, &val);
