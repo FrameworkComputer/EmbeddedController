@@ -8259,7 +8259,12 @@ int cmd_pd_chip_info(int argc, char *argv[])
 	int cmdver = 1;
 
 	if (argc < 2 || 3 < argc) {
-		fprintf(stderr, "Usage: %s <port> [renew(on/off)]\n", argv[0]);
+		fprintf(stderr, "Usage: %s <port> [<live>]\n"
+			"live parameter can take values 0 or 1\n"
+			"0 -> Return hard-coded value for VID/PID and\n"
+			"     cached value for Firmware Version\n"
+			"1 -> Return live chip value for VID/PID/FW Version\n",
+			argv[0]);
 		return -1;
 	}
 
@@ -8269,14 +8274,13 @@ int cmd_pd_chip_info(int argc, char *argv[])
 		return -1;
 	}
 
-	p.renew = 0;
+	p.live = 0;
 	if (argc == 3) {
-		int val;
-		if (!parse_bool(argv[2], &val)) {
+		p.live = strtol(argv[2], &e, 0);
+		if (e && *e) {
 			fprintf(stderr, "invalid arg \"%s\"\n", argv[2]);
 			return -1;
 		}
-		p.renew = val;
 	}
 
 	if (!ec_cmd_version_supported(EC_CMD_PD_CHIP_INFO, cmdver))

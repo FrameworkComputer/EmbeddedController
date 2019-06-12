@@ -270,12 +270,12 @@ struct tcpm_drv {
 	 * Get firmware version.
 	 *
 	 * @param port Type-C port number
-	 * @param renew Force renewal
+	 * @param live Fetch live chip info or hard-coded + cached info
 	 * @param info Pointer to pointer to PD chip info
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	int (*get_chip_info)(int port, int renew,
+	int (*get_chip_info)(int port, int live,
 			struct ec_response_pd_chip_info_v1 **info);
 
 #ifdef CONFIG_USBC_PPC

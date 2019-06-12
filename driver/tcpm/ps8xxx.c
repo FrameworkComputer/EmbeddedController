@@ -131,17 +131,17 @@ static int ps8xxx_tcpm_release(int port)
 	return tcpci_tcpm_release(port);
 }
 
-static int ps8xxx_get_chip_info(int port, int renew,
+static int ps8xxx_get_chip_info(int port, int live,
 			struct ec_response_pd_chip_info_v1 **chip_info)
 {
 	int val;
-	int rv = tcpci_get_chip_info(port, renew, chip_info);
+	int rv = tcpci_get_chip_info(port, live, chip_info);
 
 	if (rv)
 		return rv;
 
 	if ((*chip_info)->fw_version_number == 0 ||
-		(*chip_info)->fw_version_number == -1 || renew) {
+	    (*chip_info)->fw_version_number == -1 || live) {
 		rv = tcpc_read(port, FW_VER_REG, &val);
 
 		if (rv)

@@ -666,7 +666,7 @@ void tcpci_tcpc_alert(int port)
  * Once it's called, the chip info will be stored in cache, which can be
  * accessed by tcpm_get_chip_info without worrying about chip states.
  */
-int tcpci_get_chip_info(int port, int renew,
+int tcpci_get_chip_info(int port, int live,
 			struct ec_response_pd_chip_info_v1 **chip_info)
 {
 	static struct ec_response_pd_chip_info_v1
@@ -685,8 +685,8 @@ int tcpci_get_chip_info(int port, int renew,
 	if (chip_info)
 		*chip_info = i;
 
-	/* If already populated and renewal is not asked, return cache value */
-	if (i->vendor_id && !renew)
+	/* If already cached && live data is not asked, return cached value */
+	if (i->vendor_id && !live)
 		return EC_SUCCESS;
 
 	error = tcpc_read16(port, TCPC_REG_VENDOR_ID, &val);

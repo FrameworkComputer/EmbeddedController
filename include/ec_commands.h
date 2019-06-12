@@ -5171,7 +5171,12 @@ struct ec_response_usb_pd_mux_info {
 
 struct ec_params_pd_chip_info {
 	uint8_t port;	/* USB-C port number */
-	uint8_t renew;	/* Force renewal */
+	/*
+	 * Fetch the live chip info or hard-coded + cached chip info
+	 * 0: hardcoded value for VID/PID, cached value for FW version
+	 * 1: live chip value for VID/PID/FW Version
+	 */
+	uint8_t live;
 } __ec_align1;
 
 struct ec_response_pd_chip_info {

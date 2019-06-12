@@ -1099,17 +1099,17 @@ static int anx74xx_tcpm_init(int port)
 	return EC_SUCCESS;
 }
 
-static int anx74xx_get_chip_info(int port, int renew,
+static int anx74xx_get_chip_info(int port, int live,
 			struct ec_response_pd_chip_info_v1 **chip_info)
 {
-	int rv = tcpci_get_chip_info(port, renew, chip_info);
+	int rv = tcpci_get_chip_info(port, live, chip_info);
 	int val;
 
 	if (rv)
 		return rv;
 
 	if ((*chip_info)->fw_version_number == 0 ||
-		(*chip_info)->fw_version_number == -1 || renew) {
+	    (*chip_info)->fw_version_number == -1 || live) {
 		rv = tcpc_read(port, ANX74XX_REG_FW_VERSION, &val);
 
 		if (rv)

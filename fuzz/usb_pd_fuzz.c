@@ -39,7 +39,7 @@ static int mock_tcpm_set_rx_enable(int port, int enable) { return EC_SUCCESS; }
 static int mock_tcpm_transmit(int port, enum tcpm_transmit_type type,
 		uint16_t header, const uint32_t *data) { return EC_SUCCESS; }
 static void mock_tcpc_alert(int port) {}
-static int mock_tcpci_get_chip_info(int port, int renew,
+static int mock_tcpci_get_chip_info(int port, int live,
 		struct ec_response_pd_chip_info_v1 **info)
 {
 	return EC_ERROR_UNIMPLEMENTED;
