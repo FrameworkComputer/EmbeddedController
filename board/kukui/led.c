@@ -15,6 +15,8 @@ const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
+static enum charge_state prv_chstate = PWR_STATE_INIT;
+
 #define LED_OFF		MT6370_LED_ID_OFF
 #define LED_RED		MT6370_LED_ID1
 #define LED_GREEN	MT6370_LED_ID2
@@ -27,7 +29,6 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 static void kukui_led_set_battery(void)
 {
-	static enum charge_state prv_chstate = PWR_STATE_UNCHANGE;
 	enum charge_state chstate;
 	uint8_t br[EC_LED_COLOR_COUNT] = { 0 };
 
@@ -93,10 +94,21 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	return EC_SUCCESS;
 }
 
+/*
+ * Reset prv_chstate so that led can be updated immediately once
+ * auto-controlled.
+ */
+static void led_reset_auto_control(void)
+{
+	prv_chstate = PWR_STATE_INIT;
+}
+
 /* Called by hook task every 1 sec */
 static void led_second(void)
 {
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		kukui_led_set_battery();
+	else
+		led_reset_auto_control();
 }
 DECLARE_HOOK(HOOK_SECOND, led_second, HOOK_PRIO_DEFAULT);
