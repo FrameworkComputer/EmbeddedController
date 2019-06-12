@@ -13,8 +13,8 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ##args)
-#define CPRINTS(format, args...) cprints(CC_COMMAND, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /*
  * The NVMEM contents are stored in flash memory. At run time there is an SRAM
