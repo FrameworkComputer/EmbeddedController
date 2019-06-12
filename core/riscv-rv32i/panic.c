@@ -46,20 +46,6 @@ static const char * const exc_type[16] = {
 #define SOFT_PANIC_GPR_REASON 11
 /* General purpose register (s1) for saving software panic information */
 #define SOFT_PANIC_GPR_INFO   10
-/* The size must be a power of 2 */
-#define SOFT_PANIC_REASON_SIZE 8
-#define SOFT_PANIC_REASON_MASK (SOFT_PANIC_REASON_SIZE - 1)
-/* Software panic reasons */
-static const char * const panic_sw_reasons[SOFT_PANIC_REASON_SIZE] = {
-	"PANIC_SW_DIV_ZERO",
-	"PANIC_SW_STACK_OVERFLOW",
-	"PANIC_SW_PD_CRASH",
-	"PANIC_SW_ASSERT",
-	"PANIC_SW_WATCHDOG",
-	"PANIC_SW_BAD_RNG",
-	"PANIC_SW_PMIC_FAULT",
-	NULL,
-};
 
 void software_panic(uint32_t reason, uint32_t info)
 {
@@ -136,8 +122,8 @@ static void print_panic_information(uint32_t *regs, uint32_t mcause,
 	if ((regs[SOFT_PANIC_GPR_REASON] & 0xfffffff0) == PANIC_SW_BASE) {
 #ifdef CONFIG_SOFTWARE_PANIC
 		panic_printf("Software panic reason: %s\n",
-			panic_sw_reasons[(regs[SOFT_PANIC_GPR_REASON] &
-						SOFT_PANIC_REASON_MASK)]);
+			panic_sw_reasons[(regs[SOFT_PANIC_GPR_REASON] -
+						PANIC_SW_BASE)]);
 		panic_printf("Software panic info:   %d\n",
 			regs[SOFT_PANIC_GPR_INFO]);
 #endif
