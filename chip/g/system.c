@@ -16,6 +16,7 @@
 #include "task.h"
 #include "version.h"
 
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 /*
  * Value of the retry counter which, if exceeded, indicates that the currently
  * running RW image is not well and is rebooting before bringing the system
@@ -475,8 +476,8 @@ static int corrupt_header(volatile struct SignedHeader *header)
 	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, RD_EN, 1);
 	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, WR_EN, 1);
 
-	ccprintf("%s: RW fallback must have happened, magic at %p before: %x\n",
-		 __func__, &header->magic, header->magic);
+	CPRINTS("%s: RW fallback must have happened, magic at %p before: %x",
+		__func__, &header->magic, header->magic);
 
 	rv = flash_physical_write((intptr_t)&header->magic -
 			     CONFIG_PROGRAM_MEMORY_BASE,
@@ -484,8 +485,7 @@ static int corrupt_header(volatile struct SignedHeader *header)
 
 	/* Disable W access to the other header. */
 	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, WR_EN, 0);
-	ccprintf("%s: magic after: %x\n",
-		 __func__, header->magic);
+	CPRINTS("%s: magic after: %x", __func__, header->magic);
 
 	header_corrupted = !rv;
 	return rv;
@@ -528,7 +528,7 @@ int system_process_retry_counter(void)
 {
 	struct SignedHeader *newer_image;
 
-	ccprintf("%s: retry counter %d\n", __func__,
+	CPRINTS("%s: retry counter %d", __func__,
 		GREG32(PMU, LONG_LIFE_SCRATCH0));
 	system_clear_retry_counter();
 
@@ -536,14 +536,14 @@ int system_process_retry_counter(void)
 		return EC_SUCCESS;
 
 	if (current_image_is_newer(&newer_image)) {
-		ccprintf("%s: "
-			 "this is odd, I am newer, but retry counter indicates "
-			 "the system rolledback\n", __func__);
+		CPRINTS("%s: "
+			"this is odd, I am newer, but retry counter indicates "
+			"the system rolledback", __func__);
 		return EC_SUCCESS;
 	}
 
 	if (header_corrupted) {
-		ccprintf("%s: header already corrupted\n", __func__);
+		CPRINTS("%s: header already corrupted", __func__);
 		return EC_SUCCESS;
 	}
 
@@ -569,8 +569,8 @@ int system_rolling_reboot_suspected(void)
 		 * cleared. There must be something wrong going, the chip is
 		 * likely in rolling reboot.
 		 */
-		ccprintf("%s: Try powercycling to clear this condition.\n",
-			 __func__);
+		CPRINTS("%s: Try powercycling to clear this condition.",
+			__func__);
 		return 1;
 	}
 
@@ -618,8 +618,7 @@ static void update_rollback_mask(const struct SignedHeader *header_a,
 	 */
 	if (flash_info_read_enable(INFO_RW_MAP_OFFSET, INFO_RW_MAP_SIZE) !=
 	    EC_SUCCESS) {
-		ccprintf("%s: failed to enable read access to info\n",
-			 __func__);
+		CPRINTS("%s: failed to enable read access to info", __func__);
 		return;
 	}
 
@@ -665,7 +664,7 @@ static void update_rollback_mask(const struct SignedHeader *header_a,
 			 * adjacent at the LSB of the info mask field. Stop as
 			 * soon as a non-zeroed bit is encountered.
 			 */
-			ccprintf("%s: bailing out at bit %d\n", __func__, i);
+			CPRINTS("%s: bailing out at bit %d", __func__, i);
 			break;
 		}
 
@@ -673,7 +672,7 @@ static void update_rollback_mask(const struct SignedHeader *header_a,
 
 		if (flash_physical_info_read_word(byte_offset, &word) !=
 		    EC_SUCCESS) {
-			ccprintf("failed to read info mask word %d\n", i);
+			CPRINTS("failed to read info mask word %d", i);
 			continue;
 		}
 
@@ -684,8 +683,8 @@ static void update_rollback_mask(const struct SignedHeader *header_a,
 			if (flash_info_write_enable(
 				INFO_RW_MAP_OFFSET,
 				INFO_RW_MAP_SIZE) != EC_SUCCESS) {
-				ccprintf("%s: failed to enable write access to"
-					 " info\n", __func__);
+				CPRINTS("%s: failed to enable write access to"
+					 " info", __func__);
 				return;
 			}
 			write_enabled = 1;
@@ -696,7 +695,7 @@ static void update_rollback_mask(const struct SignedHeader *header_a,
 					      sizeof(word),
 					      (const char *) &word) !=
 		    EC_SUCCESS) {
-			ccprintf("failed to write info mask word %d\n", i);
+			CPRINTS("failed to write info mask word %d", i);
 			continue;
 		}
 		updated_words_count++;
@@ -706,7 +705,7 @@ static void update_rollback_mask(const struct SignedHeader *header_a,
 		return;
 
 	flash_info_write_disable();
-	ccprintf("updated %d info map words\n", updated_words_count);
+	CPRINTS("updated %d info map words", updated_words_count);
 #endif  /*  CR50_DEV ^^^^^^^^ NOT defined. */
 }
 
