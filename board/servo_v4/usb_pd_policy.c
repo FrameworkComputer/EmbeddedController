@@ -32,6 +32,28 @@
 
 #define VBUS_UNCHANGED(curr, pend, new) (curr == new && pend == new)
 
+/* Macros to config the PD role */
+#define CONFIG_SET_CLEAR(c, set, clear) ((c | (set)) & ~(clear))
+#define CONFIG_SRC(c) CONFIG_SET_CLEAR(c, \
+				CC_DISABLE_DTS | CC_ALLOW_SRC, \
+				CC_ENABLE_DRP)
+#define CONFIG_SNK(c) CONFIG_SET_CLEAR(c, \
+				CC_DISABLE_DTS, \
+				CC_ALLOW_SRC | CC_ENABLE_DRP)
+#define CONFIG_DRP(c) CONFIG_SET_CLEAR(c, \
+				CC_DISABLE_DTS | CC_ALLOW_SRC | CC_ENABLE_DRP, \
+				0)
+#define CONFIG_SRCDTS(c) CONFIG_SET_CLEAR(c, \
+				CC_ALLOW_SRC, \
+				CC_ENABLE_DRP | CC_DISABLE_DTS)
+#define CONFIG_SNKDTS(c) CONFIG_SET_CLEAR(c, \
+				0, \
+				CC_ALLOW_SRC | CC_ENABLE_DRP | CC_DISABLE_DTS)
+#define CONFIG_DRPDTS(c) CONFIG_SET_CLEAR(c, \
+				CC_ALLOW_SRC | CC_ENABLE_DRP, \
+				CC_DISABLE_DTS)
+
+
 /*
  * Dynamic PDO that reflects capabilities present on the CHG port. Allow for
  * multiple entries so that we can offer greater than 5V charging. The 1st
@@ -61,15 +83,7 @@ static int active_charge_port = CHARGE_PORT_NONE;
 static enum charge_supplier active_charge_supplier;
 static uint8_t vbus_rp = TYPEC_RP_RESERVED;
 
-/* Flag to emulate detach, i.e. making both CC lines open. */
-static int disable_cc;
-/*
- * DTS mode: enabled connects resistors to both CC line to activate cr50,
- * disabled connects to one only as in the standard USBC cable.
- */
-static int disable_dts_mode;
-/* Do we allow charge through by policy? */
-static int allow_src_mode = 1;
+static int cc_config = CC_ALLOW_SRC;
 
 /* Voltage thresholds for no connect in DTS mode */
 static int pd_src_vnc_dts[TYPEC_RP_RESERVED][2] = {
@@ -121,17 +135,35 @@ static int charge_port_is_active(void)
 	return active_charge_port == CHG && vbus[CHG].mv > 0;
 }
 
+static int is_charge_through_allowed(void)
+{
+	return charge_port_is_active() && cc_config & CC_ALLOW_SRC;
+}
+
+static int get_dual_role_of_src(void)
+{
+	return cc_config & CC_ENABLE_DRP ? PD_DRP_TOGGLE_ON :
+					   PD_DRP_FORCE_SOURCE;
+}
+
 static void dut_allow_charge(void)
 {
 	/*
 	 * Update to charge enable if charger still present and not
 	 * already charging.
 	 */
-	if (charge_port_is_active() && allow_src_mode &&
-	    pd_get_dual_role(DUT) != PD_DRP_FORCE_SOURCE) {
+	if (is_charge_through_allowed() &&
+	    pd_get_dual_role(DUT) != PD_DRP_FORCE_SOURCE &&
+	    pd_get_dual_role(DUT) != PD_DRP_TOGGLE_ON) {
 		CPRINTS("Enable DUT charge through");
-		pd_set_dual_role(DUT, PD_DRP_FORCE_SOURCE);
-		pd_set_host_mode(DUT, 1);
+		pd_set_dual_role(DUT, get_dual_role_of_src());
+		/*
+		 * If DRP role, don't set any CC pull resistor, the PD
+		 * state machine will toggle and set the pull resistors
+		 * when needed.
+		 */
+		if (!(cc_config & CC_ENABLE_DRP))
+			pd_set_host_mode(DUT, 1);
 		pd_update_contract(DUT);
 	}
 }
@@ -153,8 +185,8 @@ static void board_manage_dut_port(void)
 	allowed_role = PD_DRP_FORCE_SINK;
 
 	/* If VBUS charge through is available, mark as such. */
-	if (charge_port_is_active() && allow_src_mode)
-		allowed_role = PD_DRP_FORCE_SOURCE;
+	if (is_charge_through_allowed())
+		allowed_role = get_dual_role_of_src();
 
 	current_role = pd_get_dual_role(DUT);
 	if (current_role != allowed_role) {
@@ -283,7 +315,7 @@ int pd_tcpc_cc_nc(int port, int cc_volt, int cc_sel)
 		return 1;
 
 	/* Select the correct voltage threshold for current Rp and DTS mode */
-	if (disable_dts_mode)
+	if (cc_config & CC_DISABLE_DTS)
 		nc = cc_volt >= pd_src_vnc[rp_index];
 	else
 		nc = cc_volt >= pd_src_vnc_dts[rp_index][cc_sel];
@@ -309,7 +341,7 @@ int pd_tcpc_cc_ra(int port, int cc_volt, int cc_sel)
 		return 0;
 
 	/* Select the correct voltage threshold for current Rp and DTS mode */
-	if (disable_dts_mode)
+	if (cc_config & CC_DISABLE_DTS)
 		ra = cc_volt < pd_src_rd_threshold[rp_index];
 	else
 		ra = cc_volt < pd_src_rd_threshold_dts[rp_index][cc_sel];
@@ -323,7 +355,7 @@ int pd_adc_read(int port, int cc)
 
 	if (port == 0)
 		mv = adc_read_channel(cc ? ADC_CHG_CC2_PD : ADC_CHG_CC1_PD);
-	else if (!disable_cc) {
+	else if (!(cc_config & CC_DETACH)) {
 		/*
 		 * In servo v4 hardware logic, both CC lines are wired directly
 		 * to DUT. When servo v4 as a snk, DUT may source Vconn to CC2
@@ -338,15 +370,15 @@ int pd_adc_read(int port, int cc)
 		 * leaves CC2 open. Need change when it supports switching CC
 		 * polarity.
 		 */
-		if (disable_dts_mode && cc_pull_stored == TYPEC_CC_RD &&
-		    port == DUT && cc == 1)
+		if ((cc_config & CC_DISABLE_DTS) &&
+		    cc_pull_stored == TYPEC_CC_RD && port == DUT && cc == 1)
 			mv = 0;
 		else
 			mv = adc_read_channel(cc ? ADC_DUT_CC2_PD :
 						   ADC_DUT_CC1_PD);
 	} else {
 		/*
-		 * When disable_cc, fake the voltage on CC to 0 to avoid
+		 * When emulating detach, fake the voltage on CC to 0 to avoid
 		 * triggering some debounce logic.
 		 *
 		 * The servo v4 makes Rd/Rp open but the DUT may present Rd/Rp
@@ -362,7 +394,7 @@ int pd_adc_read(int port, int cc)
 
 static int board_set_rp(int rp)
 {
-	if (disable_dts_mode) {
+	if (cc_config & CC_DISABLE_DTS) {
 		/*
 		 * DTS mode is disabled, so only present the requested Rp value
 		 * on CC1 and leave all Rp/Rd resistors on CC2 disconnected.
@@ -438,7 +470,7 @@ int pd_set_rp_rd(int port, int cc_pull, int rp_value)
 		return EC_ERROR_UNIMPLEMENTED;
 
 	/* CC is disabled for emulating detach. Don't change Rd/Rp. */
-	if (disable_cc)
+	if (cc_config & CC_DETACH)
 		return EC_SUCCESS;
 
 	/* By default disconnect all Rp/Rd resistors from both CC lines */
@@ -467,7 +499,7 @@ int pd_set_rp_rd(int port, int cc_pull, int rp_value)
 		 * CC1.
 		 */
 		gpio_set_flags(GPIO_USB_DUT_CC1_RD, GPIO_OUT_LOW);
-		if (!disable_dts_mode)
+		if (!(cc_config & CC_DISABLE_DTS))
 			gpio_set_flags(GPIO_USB_DUT_CC2_RD, GPIO_OUT_LOW);
 	}
 
@@ -567,7 +599,7 @@ int pd_set_power_supply_ready(int port)
 
 		vbus[DUT].mv = vbus[CHG].mv;
 		vbus[DUT].ma = vbus[CHG].mv;
-		pd_set_dual_role(DUT, PD_DRP_FORCE_SOURCE);
+		pd_set_dual_role(DUT, get_dual_role_of_src());
 	} else {
 		vbus[DUT].mv = 0;
 		vbus[DUT].ma = 0;
@@ -710,28 +742,26 @@ const int supported_modes_cnt = ARRAY_SIZE(supported_modes);
 static void print_cc_mode(void)
 {
 	/* Get current CCD status */
-	ccprintf("cc: %s\n", disable_cc ? "off" : "on");
-	ccprintf("dts mode: %s\n", disable_dts_mode ? "off" : "on");
+	ccprintf("cc: %s\n", cc_config & CC_DETACH ? "off" : "on");
+	ccprintf("dts mode: %s\n", cc_config & CC_DISABLE_DTS ? "off" : "on");
 	ccprintf("chg mode: %s\n",
-		pd_get_dual_role(DUT) == PD_DRP_FORCE_SOURCE ?
-		"on" : "off");
-	ccprintf("chg allowed: %s\n", allow_src_mode ? "on" : "off");
+		 gpio_get_level(GPIO_DUT_CHG_EN) ? "on" : "off");
+	ccprintf("chg allowed: %s\n", cc_config & CC_ALLOW_SRC ? "on" : "off");
+	ccprintf("drp enabled: %s\n", cc_config & CC_ENABLE_DRP ? "on" : "off");
 }
 
 
-static void do_cc(int disable_cc_new, int disable_dts_new, int allow_src_new)
+static void do_cc(int cc_config_new)
 {
+	int chargeable;
 	int dualrole;
 
-	if ((disable_cc_new != disable_cc) ||
-	    (disable_dts_new != disable_dts_mode) ||
-	    (allow_src_new != allow_src_mode)) {
-		if (!disable_cc) {
+	if (cc_config_new != cc_config) {
+		if (!(cc_config & CC_DETACH)) {
 			/* Force detach */
 			pd_power_supply_reset(DUT);
 			/* Always set to 0 here so both CC lines are changed */
-			disable_dts_mode = 0;
-			allow_src_mode = 0;
+			cc_config &= ~(CC_DISABLE_DTS & CC_ALLOW_SRC);
 
 			/* Remove Rp/Rd on both CC lines */
 			pd_comm_enable(DUT, 0);
@@ -741,36 +771,37 @@ static void do_cc(int disable_cc_new, int disable_dts_new, int allow_src_new)
 			 * If just changing mode (cc keeps enabled), give some
 			 * time for DUT to detach, use tErrorRecovery.
 			 */
-			if (!disable_cc_new)
+			if (!(cc_config_new & CC_DETACH))
 				usleep(PD_T_ERROR_RECOVERY);
 		}
 
-		/* Accept new cc/dts/src value */
-		disable_cc = disable_cc_new;
-		disable_dts_mode = disable_dts_new;
-		allow_src_mode = allow_src_new;
+		/* Accept new cc_config value */
+		cc_config = cc_config_new;
 
-		if (!disable_cc) {
+		if (!(cc_config & CC_DETACH)) {
 			/* Can we source? */
-			dualrole = allow_src_mode && charge_port_is_active();
-			pd_set_dual_role(DUT, dualrole ?
-				PD_DRP_FORCE_SOURCE : PD_DRP_FORCE_SINK);
-
+			chargeable = is_charge_through_allowed();
+			dualrole = chargeable ? get_dual_role_of_src() :
+						PD_DRP_FORCE_SINK;
+			pd_set_dual_role(DUT, dualrole);
 			/*
-			 * Present Rp or Rd on CC1 and CC2 based on
-			 * whether we can source or not.
+			 * If force_source or force_sink role, explicitly set
+			 * the Rp or Rd resistors on CC lines.
+			 *
+			 * If DRP role, don't set any CC pull resistor, the PD
+			 * state machine will toggle and set the pull resistors
+			 * when needed.
 			 */
-			pd_set_host_mode(DUT, dualrole);
-			pd_comm_enable(DUT, dualrole);
+			if (dualrole != PD_DRP_TOGGLE_ON)
+				pd_set_host_mode(DUT, chargeable);
+			pd_comm_enable(DUT, chargeable);
 		}
 	}
 }
 
 static int command_cc(int argc, char **argv)
 {
-	int disable_cc_new;
-	int disable_dts_new;
-	int allow_src_new;
+	int cc_config_new = cc_config;
 
 	if (argc < 2) {
 		print_cc_mode();
@@ -778,49 +809,47 @@ static int command_cc(int argc, char **argv)
 	}
 
 	if (!strcasecmp(argv[1], "off")) {
-		disable_cc_new = 1;
-		disable_dts_new = 0;
-		allow_src_new = 0;
-	} else if (!strcasecmp(argv[1], "src")) {
-		disable_cc_new = 0;
-		disable_dts_new = 1;
-		allow_src_new = 1;
-	} else if (!strcasecmp(argv[1], "snk")) {
-		disable_cc_new = 0;
-		disable_dts_new = 1;
-		allow_src_new = 0;
-	} else if (!strcasecmp(argv[1], "srcdts")) {
-		disable_cc_new = 0;
-		disable_dts_new = 0;
-		allow_src_new = 1;
-	} else if (!strcasecmp(argv[1], "snkdts")) {
-		disable_cc_new = 0;
-		disable_dts_new = 0;
-		allow_src_new = 0;
+		cc_config_new |= CC_DETACH;
+	} else if (!strcasecmp(argv[1], "on")) {
+		cc_config_new &= ~CC_DETACH;
 	} else {
-		ccprintf("Try one of off, src, snk, srcdts, snkdts\n");
-		return EC_ERROR_PARAM2;
+		cc_config_new &= ~CC_DETACH;
+		if (!strcasecmp(argv[1], "src"))
+			cc_config_new = CONFIG_SRC(cc_config_new);
+		else if (!strcasecmp(argv[1], "snk"))
+			cc_config_new = CONFIG_SNK(cc_config_new);
+		else if (!strcasecmp(argv[1], "drp"))
+			cc_config_new = CONFIG_DRP(cc_config_new);
+		else if (!strcasecmp(argv[1], "srcdts"))
+			cc_config_new = CONFIG_SRCDTS(cc_config_new);
+		else if (!strcasecmp(argv[1], "snkdts"))
+			cc_config_new = CONFIG_SNKDTS(cc_config_new);
+		else if (!strcasecmp(argv[1], "drpdts"))
+			cc_config_new = CONFIG_DRPDTS(cc_config_new);
+		else
+			return EC_ERROR_PARAM2;
 	}
-	do_cc(disable_cc_new, disable_dts_new, allow_src_new);
+
+	do_cc(cc_config_new);
 	print_cc_mode();
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(cc, command_cc,
-			"off|src|snk|srcdts|snkdts",
+			"[off|on|src|snk|drp|srcdts|snkdts|drpdts]",
 			"Servo_v4 DTS and CHG mode");
 
 static void fake_disconnect_end(void)
 {
 	/* Reenable CC lines with previous dts and src modes */
-	do_cc(0, disable_dts_mode, allow_src_mode);
+	do_cc(cc_config & ~CC_DETACH);
 }
 DECLARE_DEFERRED(fake_disconnect_end);
 
 static void fake_disconnect_start(void)
 {
 	/* Disable CC lines */
-	do_cc(1, disable_dts_mode, allow_src_mode);
+	do_cc(cc_config | CC_DETACH);
 
 	hook_call_deferred(&fake_disconnect_end_data,
 			   fake_pd_disconnect_duration_us);
@@ -856,3 +885,24 @@ static int cmd_fake_disconnect(int argc, char *argv[])
 }
 DECLARE_CONSOLE_COMMAND(fakedisconnect, cmd_fake_disconnect,
 			"<delay_ms> <duration_ms>", NULL);
+
+static int cmd_usbc_action(int argc, char *argv[])
+{
+	if (argc != 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!strcasecmp(argv[1], "drp")) {
+		/* Toggle the DRP state, compatible with Plankton. */
+		do_cc(cc_config ^ CC_ENABLE_DRP);
+		CPRINTF("DRP = %d, host_mode = %d\n",
+			!!(cc_config & CC_ENABLE_DRP),
+			!!(cc_config & CC_ALLOW_SRC));
+	} else {
+		return EC_ERROR_PARAM1;
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(usbc_action, cmd_usbc_action,
+			"<drp>",
+			"Set Servo v4 type-C port state");
