@@ -47,14 +47,12 @@ endif
 _kernel_size_str=$(shell stat -L -c %s $(out)/RW/$(PROJECT).RW.flat)
 _kernel_size=$(shell echo "$$(($(_kernel_size_str)))")
 
-# location of the scripts and keys used to pack the SPI flash image
+# location of the scripts used to pack image
 SCRIPTDIR:=./chip/${CHIP}/util
 
-# Allow SPI size to be overridden by board specific size, default to 256KB.
-CHIP_SPI_SIZE_KB?=256
 
-# Commands to convert ec.RW.flat to $@.tmp - This will add the manifest header needed
-# to load the FW onto the ISH HW.
+# Commands to convert ec.RW.flat to $@.tmp - This will add the manifest header
+# needed to load the FW onto the ISH HW.
 
 ifeq ($(CONFIG_ISH_PM_AONTASK),y)
 cmd_obj_to_bin = ${SCRIPTDIR}/pack_ec.py -o $@.tmp \
