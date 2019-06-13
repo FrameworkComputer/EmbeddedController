@@ -99,6 +99,10 @@ static int pd_src_rd_threshold[TYPEC_RP_RESERVED] = {
 /* Saved value for the duration of faking PD disconnect */
 static int fake_pd_disconnect_duration_us;
 
+/* Shadow what would be in TCPC register state. */
+static int rp_value_stored = TYPEC_RP_USB;
+static int cc_pull_stored = TYPEC_CC_RD;
+
 /*
  * Set the USB PD max voltage to value appropriate for the board version.
  * The red/blue versions of servo_v4 have an ESD between VBUS and CC1/CC2
@@ -319,9 +323,28 @@ int pd_adc_read(int port, int cc)
 
 	if (port == 0)
 		mv = adc_read_channel(cc ? ADC_CHG_CC2_PD : ADC_CHG_CC1_PD);
-	else if (!disable_cc)
-		mv = adc_read_channel(cc ? ADC_DUT_CC2_PD : ADC_DUT_CC1_PD);
-	else {
+	else if (!disable_cc) {
+		/*
+		 * In servo v4 hardware logic, both CC lines are wired directly
+		 * to DUT. When servo v4 as a snk, DUT may source Vconn to CC2
+		 * and make the voltage high as vRd-3.0, which makes the PD
+		 * state mess up. As the PD state machine doesn't handle this
+		 * case. It assumes that CC2 is separated by a Type-C cable,
+		 * resulting a voltage lower than the max of vRa.
+		 *
+		 * It fakes the voltage within vRa.
+		 *
+		 * TODO(b/136014621): Servo v4 always applies Rd/Rp to CC1 and
+		 * leaves CC2 open. Need change when it supports switching CC
+		 * polarity.
+		 */
+		if (disable_dts_mode && cc_pull_stored == TYPEC_CC_RD &&
+		    port == DUT && cc == 1)
+			mv = 0;
+		else
+			mv = adc_read_channel(cc ? ADC_DUT_CC2_PD :
+						   ADC_DUT_CC1_PD);
+	} else {
 		/*
 		 * When disable_cc, fake the voltage on CC to 0 to avoid
 		 * triggering some debounce logic.
@@ -406,10 +429,6 @@ static int board_set_rp(int rp)
 
 	return EC_SUCCESS;
 }
-
-/* Shadow what would be in TCPC register state. */
-static int rp_value_stored = TYPEC_RP_USB;
-static int cc_pull_stored = TYPEC_CC_RD;
 
 int pd_set_rp_rd(int port, int cc_pull, int rp_value)
 {
