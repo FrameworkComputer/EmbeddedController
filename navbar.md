@@ -3,6 +3,6 @@
 [home]: /README.md
 
 * [Home][home]
-* [Sitemap](/docs)
+* [Sitemap](/docs/sitemap.md)
 * [Getting Started Quickly](/docs/getting_started_quickly.md)
 * [Chromium OS Docs](https://chromium.googlesource.com/chromiumos/docs/+/master/README.md)
