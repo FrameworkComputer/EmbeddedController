@@ -9,6 +9,14 @@
 #ifndef __CROS_EC_USB_PD_TCPM_NCT38XX_H
 #define __CROS_EC_USB_PD_TCPM_NCT38XX_H
 
+/* Chip variant ID (Part number)  */
+#define NCT38XX_VARIANT_MASK               0x1C
+#define NCT38XX_VARIANT_3807               0x0
+#define NCT38XX_VARIANT_3808               0x2
+
+#define NCT38XX_SUPPORT_GPIO_FLAGS (GPIO_OPEN_DRAIN | GPIO_INPUT | \
+		GPIO_OUTPUT | GPIO_LOW | GPIO_HIGH)
+
 /* I2C interface */
 #define NCT38xx_I2C_ADDR1_1_FLAGS          0x70
 #define NCT38xx_I2C_ADDR1_2_FLAGS          0x71
@@ -25,6 +33,15 @@
 #define NCT38XX_VENDOR_ID                  0x0416
 
 #define NCT38XX_PRODUCT_ID                 0xC301
+
+#define NCT38XXX_REG_GPIO_DATA_IN(n)       (0xC0 + ((n) * 8))
+#define NCT38XXX_REG_GPIO_DATA_OUT(n)      (0xC1 + ((n) * 8))
+#define NCT38XXX_REG_GPIO_DIR(n)           (0xC2 + ((n) * 8))
+#define NCT38XXX_REG_GPIO_OD_SEL(n)        (0xC3 + ((n) * 8))
+#define NCT38XXX_REG_MUX_CONTROL            0xD0
+
+/* NCT3808 only supports GPIO 2/3/4/6/7 */
+#define NCT38XXX_3808_VALID_GPIO_MASK            0xDC
 
 #define NCT38XX_REG_CTRL_OUT_EN            0xD2
 #define NCT38XX_REG_CTRL_OUT_EN_SRCEN      (1 << 0)

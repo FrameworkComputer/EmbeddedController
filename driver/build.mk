@@ -73,6 +73,8 @@ driver-$(CONFIG_CHARGER_SY21612)+=charger/sy21612.o
 
 # I/O expander
 driver-$(CONFIG_IO_EXPANDER_PCA9534)+=ioexpander_pca9534.o
+driver-$(CONFIG_IO_EXPANDER_NCT38XX)+=ioexpander_nct38xx.o
+
 
 # Current/Power monitor
 driver-$(CONFIG_INA219)$(CONFIG_INA231)+=ina2xx.o

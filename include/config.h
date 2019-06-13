@@ -2272,6 +2272,9 @@
 
 /******************************************************************************/
 
+/* Support Nuvoton NCT38xx I/O expander. */
+#undef CONFIG_IO_EXPANDER_NCT38XX
+
 /* Support NXP PCA9534 I/O expander. */
 #undef CONFIG_IO_EXPANDER_PCA9534
 
