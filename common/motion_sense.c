@@ -970,19 +970,21 @@ static inline void increment_sensor_collection(struct motion_sensor_t *sensor,
 {
 	sensor->next_collection += sensor->collection_rate;
 
-	while (time_after(ts->le.lo, sensor->next_collection)) {
+	if (time_after(ts->le.lo, sensor->next_collection)) {
 		/*
 		 * If we get here it means that we completely missed a sensor
-		 * collection time and we attempt to recover by incrementing
-		 * the next collection time until we recover. This should not
-		 * happen and if it does it means that the ec cannot handle the
-		 * requested data rate.
+		 * collection time and we attempt to recover by scheduling as
+		 * soon as possible. This should not happen and if it does it
+		 * means that the ec cannot handle the requested data rate.
 		 */
+		int missed_events =
+			time_until(sensor->next_collection, ts->le.lo) /
+			sensor->collection_rate;
 
-		CPRINTS("%s Missed data collection at %u - rate: %d",
-			sensor->name, sensor->next_collection,
+		CPRINTS("%s Missed %d data collections at %u - rate: %d",
+			sensor->name, missed_events, sensor->next_collection,
 			sensor->collection_rate);
-		sensor->next_collection += sensor->collection_rate;
+		sensor->next_collection = ts->le.lo + motion_min_interval;
 	}
 }
 
