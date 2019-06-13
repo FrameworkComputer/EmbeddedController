@@ -244,8 +244,8 @@
 #define SCP_CLK_SEL			REG32(SCP_CLK_BASE)
 #define   CLK_SEL_SYS_26M		0
 #define   CLK_SEL_32K			1
-#define   CLK_SEL_ULPOSC_1		2
-#define   CLK_SEL_ULPOSC_2		3
+#define   CLK_SEL_ULPOSC_2		2
+#define   CLK_SEL_ULPOSC_1		3
 
 #define SCP_CLK_EN			REG32(SCP_CLK_BASE + 0x04)
 #define   EN_CLK_SYS			BIT(0) /* System clock */
@@ -275,8 +275,8 @@
 #define   CKSW_SEL_SLOW_DIV_MASK	0x30
 #define   CKSW_SEL_SLOW_SYS_CLK		0
 #define   CKSW_SEL_SLOW_32K_CLK		1
-#define   CKSW_SEL_SLOW_ULPOSC1_CLK	2
-#define   CKSW_SEL_SLOW_ULPOSC2_CLK	3
+#define   CKSW_SEL_SLOW_ULPOSC2_CLK	2
+#define   CKSW_SEL_SLOW_ULPOSC1_CLK	3
 /*
  * Sleep mode control.
  * VREQ_COUNT[7:1] Number of cycles to wait when requesting PMIC to raise the
