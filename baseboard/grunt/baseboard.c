@@ -49,13 +49,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_LID_OPEN,
-	GPIO_AC_PRESENT,
-	GPIO_POWER_BUTTON_L,
-};
-const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
-
 const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_CHARGER] = {
 		"CHARGER", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0

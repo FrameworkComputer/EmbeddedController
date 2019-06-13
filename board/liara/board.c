@@ -81,6 +81,14 @@ static void ppc_interrupt(enum gpio_signal signal)
 
 #include "gpio_list.h"
 
+const enum gpio_signal hibernate_wake_pins[] = {
+	GPIO_LID_OPEN,
+	GPIO_AC_PRESENT,
+	GPIO_POWER_BUTTON_L,
+	GPIO_EC_RST_ODL,
+};
+const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
+
 /* I2C port map. */
 const struct i2c_port_t i2c_ports[] = {
 	{"power",   I2C_PORT_POWER,   100, GPIO_I2C0_SCL, GPIO_I2C0_SDA},

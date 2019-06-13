@@ -25,6 +25,9 @@ GPIO_INT(VOLUME_UP_L,		PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt
 GPIO_INT(USB_C0_CABLE_DET,	PIN(3, 7), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
 GPIO_INT(6AXIS_INT_L,		PIN(8, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V,	bmi160_interrupt)
 
+/* GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an interrupt handler. */
+GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
+
 GPIO(EN_PWR_A,			PIN(E, 2), GPIO_OUT_LOW)			/* Enable Power */
 GPIO(EN_PP1800_SENSOR,		PIN(6, 7), GPIO_OUT_LOW)			/* Enable Power */
 GPIO(ENABLE_BACKLIGHT_L,	PIN(D, 3), GPIO_OUT_HIGH)			/* Enable Backlight */
@@ -113,5 +116,7 @@ ALTERNATE(PIN_MASK(1, 0x7F), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)		/* KSO_03-
 ALTERNATE(PIN_MASK(0, 0xE0), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)		/* KSO_10-12 */
 
 /* Power Switch Logic (PSL) inputs */
-ALTERNATE(PIN_MASK(0, 0x03), 0, MODULE_PMU, 0)					/* GPIO00, GPIO01 */
-ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, 0)					/* GPIOD2 */
+ALTERNATE(PIN_MASK(0, 0x07), 0, MODULE_PMU, 0)					/* GPIO00 = AC_PRESENT,
+										   GPIO01 = POWER_BUTTON_L,
+										   GPIO02 = EC_RST_ODL */
+ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, 0)					/* GPIOD2 = LID_OPEN */
