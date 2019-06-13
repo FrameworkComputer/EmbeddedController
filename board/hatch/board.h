@@ -100,7 +100,7 @@
  * one Type C port. This will need to be chagned to support 2 Type C ports
  * connected to the same MST chip.
  */
-#define USB_PD_PORT_TCPC 1
+#define USB_PD_PORT_TCPC_MST USB_PD_PORT_TCPC_1
 
 /*
  * Macros for GPIO signals used in common code that don't match the

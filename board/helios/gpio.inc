@@ -70,9 +70,6 @@ GPIO(LED_3_L,                  PIN(C, 2), GPIO_OUT_HIGH)
 GPIO(EC_KB_BL_EN,              PIN(8, 6), GPIO_OUT_LOW)         /* Keyboard backlight */
 GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
 
-/* TODO (b/133788856): this is a NC on Helios, but Hatch baseboard depends on this signal */
-GPIO(EN_MST,                   PIN(9, 6), GPIO_INPUT | GPIO_PULL_DOWN)
-
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,                 PIN(B, 5), GPIO_INPUT |
                                           GPIO_SEL_1P8V)        /* EC_I2C_SENSOR_1V8_SCL */

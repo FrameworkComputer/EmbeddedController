@@ -82,14 +82,6 @@
 #define CONFIG_THROTTLE_AP
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 
-/* MST */
-/*
- * TDOD (b/124068003): This inherently assumes the MST chip is connected to only
- * one Type C port. This will need to be chagned to support 2 Type C ports
- * connected to the same MST chip.
- */
-#define USB_PD_PORT_TCPC 1
-
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are

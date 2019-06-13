@@ -71,7 +71,6 @@ GPIO(LED_1_L,                  PIN(C, 4), GPIO_OUT_HIGH)        /* Yellow (hatch
 GPIO(LED_2_L,                  PIN(C, 3), GPIO_OUT_HIGH)        /* White (hatch) */
 GPIO(LED_3_L,                  PIN(C, 2), GPIO_OUT_HIGH)
 GPIO(EC_KB_BL_EN,              PIN(8, 6), GPIO_OUT_LOW)         /* Keyboard backlight */
-GPIO(EN_MST,                   PIN(9, 6), GPIO_OUT_LOW)
 GPIO(LID_ACCEL_INT_L,          PIN(5, 0), GPIO_INPUT |          /* Lid accelerometer */
                                           GPIO_SEL_1P8V)
 
