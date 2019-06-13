@@ -31,6 +31,20 @@ and [video](http://youtu.be/Ie7LRGgCXC8) from the
     header) is highly recommended for serial console and JTAG access to the EC.
 1.  A sense of adventure!
 
+## Terminology
+
+### EC
+
+EC (aka Embedded Controller) can refer to many things in the Chrome OS
+documentation due to historical reasons. If you just see the term "EC", it
+probably refers to "the" EC (i.e. the first one that existed). Most Chrome OS
+devices have an MCU, known as "the EC" that controls lots of things (key
+presses, turning the AP on/off). The OS that was written for "the" EC is now
+running on several different MCUs on Chrome OS devices with various tweaks
+(e.g. the FPMCU, the touchpad one that can do palm rejection, etc.). It's quite
+confusing, so try to be specific and use terms like FPMCU to distinguish the
+fingerprint MCU from "the EC".
+
 ## Getting the EC code
 
 The code for the EC is open source and is included in the Chromium OS
@@ -554,176 +568,7 @@ addresses are offset.
 
 ## Write Protect
 
-The EC has read-only (RO) and read-write (RW) firmware. Coming out of reset, the
-EC boots into its RO firmware. The RO firmware boots the host and asks it verify
-a hash of the RW firmware (software sync). If the RW firmware is invalid, it is
-updated from a copy in the hosts RW firmware. Once the EC RW firmware is valid,
-the EC jumps to it (without rebooting). The RO firmware is locked in the factory
-and is never changed. The RW firmware can be updated later by pushing a new
-system firmware containing an updated EC RW region.
-
-Note that both the RO and RW firmware regions are normally protected once write
-protect has been turned on. The RW region is unprotected at EC boot until it has
-been verified by the host. The RW region is protected before the Linux kernel is
-loaded.
-
-### Hardware Write Protect
-
-A hardware-based mechanism is used to prevent the RO firmware from being
-changed. The most common design is to have an input grounded by a screw. When
-the screw is inserted, hardware write protect is enabled. This grounded signal
-can be read by the host chipset and EC. It is also routed to the “write protect”
-pin on any SPI flash chips containing firmware.
-
-### Software Write Protect
-
-Software-based write protect state stored in non-volatile memory. If hardware
-write protect is enabled, software write protect can be enabled but can’t be
-disabled. If hardware write protect is disabled, software write protect can be
-enabled or disabled (note that some implementations require an EC reset to
-disable software write protect).
-
-The underlying mechanism implementing software write protect may differ between
-EC chips. However the common requirements are that software write protect can
-only be disabled when hardware write protect is off and that the RO firmware
-must be protected before jumping to RW firmware if protection is enabled.
-
-### `ectool`
-
-`ectool` includes commands to enable and disable software write protect.
-
-#### `ectool flashprotect`
-
-Print out current flash protection state.
-
-```
-Flash protect flags: 0x0000000f wp_gpio_asserted ro_at_boot ro_now all_now
-Valid flags:         0x0000003f wp_gpio_asserted ro_at_boot ro_now all_now STUCK INCONSISTENT
-Writable flags:      0x00000000
-```
-
-`Flash protect flags` - Current flags that are set.
-
-`Valid flags` - All the options for flash protection.
-
-`Writable flags` - The flags that currently can be changed. (In this case, no
-flags can be changed).
-
-Flags:
-
-*   `wp_gpio_asserted` - Whether the hardware write protect GPIO is currently
-    asserted (read only).
-
-*   `ro_at_boot` - Whether the EC will write protect the RO firmware on the next
-    boot of the EC.
-
-*   `ro_now` - Protect the read-only portion of flash immediately. Requires
-    hardware WP be enabled.
-
-*   `all_now` - Protect the entire flash (including RW) immediately. Requires
-    hardware WP be enabled.
-
-*   `STUCK` - Flash protection settings have been fused and can’t be cleared
-    (should not happen during normal operation. Read only.)
-
-*   `INCONSISTENT` - One or more banks of flash is not protected when it should
-    be (should not happen during normal operation. Read only.).
-
-#### `ectool flashprotect enable`
-
-Set `ro_at_boot` flag. The next time the EC is reset it will protect the flash.
-Note that this requires a cold reset.
-
-#### `ectool flashprotect enable now`
-
-Set `ro_at_boot` `ro_now all_now` flags and immediately protect the flash. Note
-that this will fail if hardware write protect is disabled.
-
-#### `ectool flashprotect disable`
-
-Clear `ro_at_boot` flag. This can only be cleared if the EC booted without
-hardware write protect enabled.
-
-Note that you must reset the EC to clear write protect after removing the screw.
-If the `ro_at_boot` flag set and the EC resets with the HW gpio disabled, the EC
-will leave the flash unprotected (`ro_now` and `all_now` flags are not set) but
-leave `ro_at_boot` flag set.
-
-### Flashrom
-
-Flashrom can also be used to query and enable/disable
-[EC flash protection](http://dev.chromium.org/chromium-os/firmware-porting-guide/firmware-ec-write-protection).
-
-#### View the current state of flash protection
-
-```bash
-(chroot) $ flashrom -p ec --wp-status
-```
-
-```
-WP: status: 0x00
-WP: status.srp0: 0
-WP: write protect is disabled.
-WP: write protect range: start=0x00000000, len=0x00000000
-```
-
-#### Enable protection
-
-This is immediate. The protection range indicates the RO region of the firmware.
-
-```bash
-(chroot) $ flashrom -p ec --wp-enable
-```
-
-```
-SUCCESS
-```
-
-```bash
-(chroot) $ flashrom -p ec --wp-status
-```
-
-```
-WP: status: 0x80
-WP: status.srp0: 1
-WP: write protect is enabled.
-WP: write protect range: start=0x00000000, len=0x0001f800
-```
-
-#### Disable protection
-
-Disable can only be done with hardware write protect disabled.
-
-```bash
-(chroot) $ flashrom -p ec --wp-disable
-```
-
-```
-FAILED: RO_AT_BOOT is not clear.
-FAILED
-```
-
-Reboot with screw removed. Note that protection is still enabled but the
-protection range is zero.
-
-```bash
-(chroot) $ flashrom -p ec --wp-status
-```
-
-```
-WP: status: 0x80
-WP: status.srp0: 1
-WP: write protect is enabled.
-WP: write protect range: start=0x00000000, len=0x00000000
-```
-
-```bash
-(chroot) $ flashrom -p ec --wp-disable
-```
-
-```
-SUCCESS
-```
+See [Firmware Write Protection].
 
 ## EC Version Strings
 
@@ -787,3 +632,5 @@ passed as an environment variable `BOARD`:
 ```
 cheese_v1.1.1755-4da9520
 ```
+
+[Firmware Write Protection]: ./docs/write_protection.md
