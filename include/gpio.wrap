@@ -114,6 +114,10 @@
 #define UNIMPLEMENTED_RW(name) UNIMPLEMENTED(name)
 #endif
 
+#ifndef IOEX
+#define IOEX(name, expin, flags)
+#endif
+
 #include "gpio.inc"
 
 /*
@@ -131,3 +135,5 @@
 #undef UNIMPLEMENTED
 #undef UNIMPLEMENTED_RO
 #undef UNIMPLEMENTED_RW
+
+#undef IOEX

@@ -1260,6 +1260,22 @@
 #undef CONFIG_COMMON_GPIO_SHORTNAMES
 
 /*
+ * Control the IO pins of IO expander via IO Expander APIs
+ *
+ * If defined, declare the IOEX pin with macro IOEX. For example:
+ *     IOEX(IO_NAME, EXPIN(0, 0, 0), GPIO_OUT_HIGH)
+ * For more details, see gpio_list.h.
+ *
+ * WARNING: make sure none of IOEX IOs are accessed at interrupt level / with
+ * interrupts disabled. Doing so may hang the EC because IO expanders may rely
+ * on I2C interrupts.
+ *
+ * Some reasons that not unify the GPIO and IOEX APIs have been disscussed and
+ * filed in the crbug.com/985540.
+ */
+#undef CONFIG_IO_EXPANDER
+
+/*
  * EC's supporting powering down GPIO pins.
  * Add flag GPIO_POWER_DOWN and additional API's.
  */
@@ -2258,6 +2274,9 @@
 
 /* Support NXP PCA9534 I/O expander. */
 #undef CONFIG_IO_EXPANDER_PCA9534
+
+/* Number of IO Expander ports */
+#undef CONFIG_IO_EXPANDER_PORT_COUNT
 
 /*****************************************************************************/
 
