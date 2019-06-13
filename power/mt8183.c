@@ -386,8 +386,9 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S5G3:
 		/*
 		 * If PMIC is still not off, assert PMIC_FORCE_RESET_ODL.
-		 * This should not happen if PMIC is configured properly, and
-		 * shuts down upon receiving WATCHDOG.
+		 * This should only happen for forced shutdown where the AP is
+		 * not able to send a command to the PMIC. Also, PMIC will lose
+		 * RTC state, in that case.
 		 */
 		if (power_get_signals() & IN_PGOOD_PMIC) {
 			CPRINTS("Forcing PMIC off");
