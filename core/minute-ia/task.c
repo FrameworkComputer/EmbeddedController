@@ -90,7 +90,7 @@ static void task_exit_trap(void)
 {
 	int i = task_get_current();
 
-	cprints(CC_TASK, "Task %d (%s) exited!", i, task_names[i]);
+	cprints(CC_TASK, "Task %d (%s) exited!", i, task_get_name(i));
 	/* Exited tasks simply sleep forever */
 	while (1)
 		task_wait_event(-1);
@@ -187,6 +187,14 @@ task_id_t task_get_current(void)
 	return current_task - tasks;
 }
 
+const char *task_get_name(task_id_t tskid)
+{
+	if (tskid < ARRAY_SIZE(task_names))
+		return task_names[tskid];
+
+	return "<< unknown >>";
+}
+
 uint32_t *task_get_event_bitmap(task_id_t tskid)
 {
 	task_ *tsk = __task_id_to_ptr(tskid);
@@ -211,7 +219,7 @@ uint32_t switch_handler(int desched, task_id_t resched)
 #ifdef CONFIG_DEBUG_STACK_OVERFLOW
 	if (*current->stack != STACK_UNUSED_VALUE) {
 		panic_printf("\n\nStack overflow in %s task!\n",
-				task_names[current - tasks]);
+			     task_get_name(current - tasks));
 #ifdef CONFIG_SOFTWARE_PANIC
 		software_panic(PANIC_SW_STACK_OVERFLOW, current - tasks);
 #endif
@@ -512,11 +520,11 @@ void task_print_list(void)
 
 #ifdef CONFIG_FPU
 		ccprintf("%4d %c %-16s %08x %11.6ld  %3d/%3d %c\n", i, is_ready,
-			 task_names[i], tasks[i].events, tasks[i].runtime,
+			 task_get_name(i), tasks[i].events, tasks[i].runtime,
 			 stackused, tasks_init[i].stack_size, use_fpu);
 #else
 		ccprintf("%4d %c %-16s %08x %11.6ld  %3d/%3d\n", i, is_ready,
-			 task_names[i], tasks[i].events, tasks[i].runtime,
+			 task_get_name(i), tasks[i].events, tasks[i].runtime,
 			 stackused, tasks_init[i].stack_size);
 #endif
 

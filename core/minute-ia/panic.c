@@ -76,6 +76,7 @@ void panic_data_print(const struct panic_data *pdata)
 	panic_printf("EDX        = 0x%08X\n", pdata->x86.edx);
 	panic_printf("ESI        = 0x%08X\n", pdata->x86.esi);
 	panic_printf("EDI        = 0x%08X\n", pdata->x86.edi);
+	panic_printf("EC Task    = %s\n", task_get_name(pdata->x86.task_id));
 }
 
 /**
@@ -132,6 +133,9 @@ __attribute__((noreturn)) void __keep exception_panic(
 	PANIC_DATA_PTR->x86.eip = eip;
 	PANIC_DATA_PTR->x86.cs = cs;
 	PANIC_DATA_PTR->x86.eflags = eflags;
+
+	/* Save task information */
+	PANIC_DATA_PTR->x86.task_id = task_get_current();
 
 	/* Initialize panic data */
 	PANIC_DATA_PTR->arch = PANIC_ARCH_X86;

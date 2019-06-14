@@ -65,6 +65,9 @@ struct x86_panic_data {
 	uint32_t edx;
 	uint32_t esi;
 	uint32_t edi;
+
+	/* Task id at time of panic */
+	uint8_t task_id;
 };
 
 /* Data saved across reboots */
