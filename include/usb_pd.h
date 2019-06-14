@@ -596,6 +596,9 @@ struct pd_policy {
 #define MODE_DP_PIN_E 0x10
 #define MODE_DP_PIN_F 0x20
 
+#define MODE_DP_DFP_PIN_SHIFT 8
+#define MODE_DP_UFP_PIN_SHIFT 16
+
 /* Pin configs B/D/F support multi-function */
 #define MODE_DP_PIN_MF_MASK 0x2a
 /* Pin configs A/B support BR2 signaling levels */
@@ -628,6 +631,8 @@ struct pd_policy {
 	(((irq) & 1) << 8 | ((lvl) & 1) << 7 | ((amode) & 1) << 6	\
 	 | ((usbc) & 1) << 5 | ((mf) & 1) << 4 | ((en) & 1) << 3	\
 	 | ((lp) & 1) << 2 | ((conn & 0x3) << 0))
+
+#define PD_VDO_DPSTS_MF_MASK BIT(4)
 
 #define PD_VDO_DPSTS_HPD_IRQ(x) (((x) >> 8) & 1)
 #define PD_VDO_DPSTS_HPD_LVL(x) (((x) >> 7) & 1)
