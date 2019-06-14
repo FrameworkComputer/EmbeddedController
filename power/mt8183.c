@@ -241,14 +241,21 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S5:
-		if (forcing_shutdown || ap_shutdown) {
+		/*
+		 * If AP initiated shutdown, PMIC is off, and we can transition
+		 * to G3 immediately.
+		 */
+		if (ap_shutdown) {
 			ap_shutdown = 0;
 			return POWER_S5G3;
-		} else {
+		} else if (!forcing_shutdown) {
+			/* Powering up. */
 			s5s3_retry = 1;
 			return POWER_S5S3;
 		}
-		break;
+
+		/* Stay in S5, common code will drop to G3 after timeout. */
+		return POWER_S5;
 
 	case POWER_S3:
 		if (!power_has_signals(IN_PGOOD_S3) || forcing_shutdown)
@@ -409,9 +416,11 @@ enum power_state power_handle_state(enum power_state state)
 static void power_button_changed(void)
 {
 	if (power_button_is_pressed()) {
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 			/* Power up from off */
+			forcing_shutdown = 0;
 			chipset_exit_hard_off();
+		}
 
 		/* Delayed power down from S0/S3, cancel on PB release */
 		hook_call_deferred(&chipset_force_shutdown_button_data,
