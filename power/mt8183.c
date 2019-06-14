@@ -254,7 +254,23 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S5S3;
 		}
 
-		/* Stay in S5, common code will drop to G3 after timeout. */
+		/* Forcing shutdown */
+
+		/* Long press has worked, transition to G3. */
+		if (!(power_get_signals() & IN_PGOOD_PMIC))
+			return POWER_S5G3;
+
+		/*
+		 * Try to force PMIC shutdown with a long press. This takes 8s,
+		 * shorter than the common code S5->G3 timeout (10s).
+		 */
+		CPRINTS("Forcing shutdown with long press.");
+		gpio_set_level(GPIO_PMIC_EN_ODL, 0);
+
+		/*
+		 * Stay in S5, common code will drop to G3 after timeout
+		 * if the long press does not work.
+		 */
 		return POWER_S5;
 
 	case POWER_S3:
@@ -282,8 +298,15 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5S3:
+		/*
+		 * Release power button in case it was pressed by force shutdown
+		 * sequence.
+		 */
+		gpio_set_level(GPIO_PMIC_EN_ODL, 1);
+
 		/* If PMIC is off, switch it on by pulsing PMIC enable. */
 		if (!(power_get_signals() & IN_PGOOD_PMIC)) {
+			msleep(PMIC_EN_PULSE_MS);
 			gpio_set_level(GPIO_PMIC_EN_ODL, 0);
 			msleep(PMIC_EN_PULSE_MS);
 			gpio_set_level(GPIO_PMIC_EN_ODL, 1);
@@ -391,11 +414,16 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5G3:
+		/* Release the power button, in case it was long pressed. */
+		if (forcing_shutdown)
+			gpio_set_level(GPIO_PMIC_EN_ODL, 1);
+
 		/*
 		 * If PMIC is still not off, assert PMIC_FORCE_RESET_ODL.
 		 * This should only happen for forced shutdown where the AP is
-		 * not able to send a command to the PMIC. Also, PMIC will lose
-		 * RTC state, in that case.
+		 * not able to send a command to the PMIC, and where the long
+		 * power+home press did not work (if the PMIC is misconfigured).
+		 * Also, PMIC will lose RTC state, in that case.
 		 */
 		if (power_get_signals() & IN_PGOOD_PMIC) {
 			CPRINTS("Forcing PMIC off");
