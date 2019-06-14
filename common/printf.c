@@ -134,13 +134,14 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 		}
 
 		/* Count precision */
-		precision = 0;
+		precision = -1;
 		if (c == '.') {
 			c = *format++;
 			if (c == '*') {
 				precision = va_arg(args, int);
 				c = *format++;
 			} else {
+				precision = 0;
 				while (c >= '0' && c <= '9') {
 					precision = (10 * precision) + c - '0';
 					c = *format++;
@@ -161,16 +162,39 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			/* Hex dump output */
 			vstr = va_arg(args, char *);
 
-			if (!precision) {
+			if (precision < 0) {
 				/* Hex dump requires precision */
 				format = error_str;
 				continue;
 			}
 
+			/*
+			 * Divide pad_width instead of multiplying
+			 * precision to avoid overflow error
+			 * in the condition.
+			 * The "/2" and "2*" can be optimized by
+			 * the compiler.
+			 */
+			if ((pad_width/2) >= precision)
+				pad_width -= 2*precision;
+			else
+				pad_width = 0;
+
+			while (pad_width > 0 && !(flags & PF_LEFT)) {
+				if (addchar(context,
+					    flags & PF_PADZERO ? '0' : ' '))
+					return EC_ERROR_OVERFLOW;
+				pad_width--;
+			}
 			for (; precision; precision--, vstr++) {
 				if (addchar(context, hexdigit(*vstr >> 4)) ||
 				    addchar(context, hexdigit(*vstr)))
 					return EC_ERROR_OVERFLOW;
+			}
+			while (pad_width > 0 && (flags & PF_LEFT)) {
+				if (addchar(context, ' '))
+					return EC_ERROR_OVERFLOW;
+				pad_width--;
 			}
 
 			continue;
@@ -260,7 +284,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			 * Fixed-point precision must fit in our buffer.
 			 * Leave space for "0." and the terminating null.
 			 */
-			if (precision > sizeof(intbuf) - 3)
+			if (precision > (int)(sizeof(intbuf) - 3))
 				precision = sizeof(intbuf) - 3;
 
 			/*
@@ -269,7 +293,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			 */
 			for (vlen = 0; vlen < precision; vlen++)
 				*(--vstr) = '0' + divmod(&v, 10);
-			if (precision)
+			if (precision >= 0)
 				*(--vstr) = '.';
 
 			if (!v)
@@ -292,26 +316,32 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			 * Precision field was interpreted by fixed-point
 			 * logic, so clear it.
 			 */
-			precision = 0;
+			precision = -1;
 		}
 
-		/* Copy string (or stringified integer) */
-		vlen = strlen(vstr);
-
 		/* No padding strings to wider than the precision */
-		if (precision > 0 && pad_width > precision)
+		if (precision >= 0 && pad_width > precision)
 			pad_width = precision;
 
-		/* If precision is zero, print everything */
-		if (!precision)
+		if (precision < 0) {
+			/* If precision is unset, print everything */
+			vlen = strlen(vstr);
 			precision = MAX(vlen, pad_width);
+		} else {
+			/*
+			 * If precision is set, ensure that we do not
+			 * overrun it
+			 */
+			vlen = strnlen(vstr, precision);
+		}
+
 
 		while (vlen < pad_width && !(flags & PF_LEFT)) {
 			if (addchar(context, flags & PF_PADZERO ? '0' : ' '))
 				return EC_ERROR_OVERFLOW;
 			vlen++;
 		}
-		while (*vstr && --precision >= 0)
+		while (--precision >= 0 && *vstr)
 			if (addchar(context, *vstr++))
 				return EC_ERROR_OVERFLOW;
 		while (vlen < pad_width && flags & PF_LEFT) {
@@ -367,8 +397,8 @@ int vsnprintf(char *str, int size, const char *format, va_list args)
 	struct snprintf_context ctx;
 	int rv;
 
-	if (!str || !size)
-		return EC_ERROR_INVAL;
+	if (!str || !format || size <= 0)
+		return -EC_ERROR_INVAL;
 
 	ctx.str = str;
 	ctx.size = size - 1;  /* Reserve space for terminating '\0' */
