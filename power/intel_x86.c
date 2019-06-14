@@ -262,6 +262,7 @@ static void s0ix_transition_timeout(void)
 		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, s0ix_wake_mask);
 	}
 
+	CPRINTS("Warning: Detected S0ix hang! Waking host up!");
 	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
 }
 
