@@ -95,10 +95,6 @@ static inline void store_word_le(void *out, size_t v) {
     }                                                                 \
   } while (0)
 
-// kSizeTWithoutLower4Bits is a mask that can be used to zero the lower four
-// bits of a |size_t|.
-static const size_t kSizeTWithoutLower4Bits = (size_t) -16;
-
 static void gcm_init_4bit(u128 Htable[16], uint64_t H[2]) {
   u128 V;
 
@@ -374,6 +370,12 @@ void gcm_ghash_p8(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp,
 #undef GHASH
 #define GHASH(ctx, in, len) (*gcm_ghash_p)((ctx)->Xi.u, (ctx)->Htable, in, len)
 #endif
+#endif
+
+#ifdef GHASH
+// kSizeTWithoutLower4Bits is a mask that can be used to zero the lower four
+// bits of a |size_t|.
+static const size_t kSizeTWithoutLower4Bits = (size_t) -16;
 #endif
 
 static void CRYPTO_ghash_init(gmult_func *out_mult, ghash_func *out_hash,
