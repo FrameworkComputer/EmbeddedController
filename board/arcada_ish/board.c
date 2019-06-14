@@ -167,26 +167,27 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-/* TODO(b/122364080): replace when implement real chipset/power task */
+/*
+ * The only use for chipset state is sensors, so we hard code the AP state to on
+ * and make the sensor on in S0. The sensors are always on when the ISH is
+ * powered.
+ */
 int chipset_in_state(int state_mask)
 {
-	/* Until we know better, ISH assumes AP is always ON */
 	return state_mask & CHIPSET_STATE_ON;
 }
 
-/* TODO(b/122364080): replace when implement real chipset/power task */
 int chipset_in_or_transitioning_to_state(int state_mask)
 {
-	/* Until we know better, ISH assumes AP is always ON */
-	return state_mask & CHIPSET_STATE_ON;
+	return chipset_in_state(state_mask);
 }
 
-/* TODO(b/122364080): replace when implement real chipset/power task */
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
+	/* Required, but nothing to do */
 }
 
-/* TODO(b/122364080): remove when implement real chipset/power task */
+/* Needed for empty chipset task */
 int board_idle_task(void *unused)
 {
 	while (1)
