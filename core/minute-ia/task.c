@@ -180,10 +180,10 @@ inline int in_interrupt_context(void)
 
 task_id_t task_get_current(void)
 {
-#ifdef CONFIG_DEBUG_BRINGUP
 	/* If we haven't done a context switch then our task ID isn't valid */
-	ASSERT(task_start_called() != 1);
-#endif
+	if (IS_ENABLED(CONFIG_DEBUG_BRINGUP))
+		ASSERT(task_start_called() != 1);
+
 	return current_task - tasks;
 }
 
@@ -216,15 +216,15 @@ uint32_t switch_handler(int desched, task_id_t resched)
 
 	current = current_task;
 
-#ifdef CONFIG_DEBUG_STACK_OVERFLOW
-	if (*current->stack != STACK_UNUSED_VALUE) {
+	if (IS_ENABLED(CONFIG_DEBUG_STACK_OVERFLOW) &&
+	    *current->stack != STACK_UNUSED_VALUE) {
 		panic_printf("\n\nStack overflow in %s task!\n",
 			     task_get_name(current - tasks));
-#ifdef CONFIG_SOFTWARE_PANIC
-		software_panic(PANIC_SW_STACK_OVERFLOW, current - tasks);
-#endif
+
+		if (IS_ENABLED(CONFIG_SOFTWARE_PANIC))
+			software_panic(PANIC_SW_STACK_OVERFLOW,
+				       current - tasks);
 	}
-#endif
 
 	if (desched && !current->events) {
 		/*
@@ -238,29 +238,26 @@ uint32_t switch_handler(int desched, task_id_t resched)
 	ASSERT(tasks_ready & tasks_enabled);
 	next = __task_id_to_ptr(__fls(tasks_ready & tasks_enabled));
 
-#ifdef CONFIG_TASK_PROFILING
 	/* Only the first ISR on the (nested IRQ) stack calculates time */
-	if (__in_isr == 1) {
+	if (IS_ENABLED(CONFIG_TASK_PROFILING) &&
+	    __in_isr == 1) {
 		/* Track time in interrupts */
 		uint32_t t = get_time().le.lo;
 
 		exc_end_time = t;
 		exc_total_time += (t - exc_start_time);
 	}
-#endif
 
 	/* Nothing to do */
 	if (next == current)
 		return 0;
 
-#ifdef ISH_DEBUG
-	CPRINTF("[%d -> %d]\n", current - tasks, next - tasks);
-#endif
+	if (IS_ENABLED(ISH_DEBUG))
+		CPRINTF("[%d -> %d]\n", current - tasks, next - tasks);
 
 	/* Switch to new task */
-#ifdef CONFIG_TASK_PROFILING
-	task_switches++;
-#endif
+	if (IS_ENABLED(CONFIG_TASK_PROFILING))
+		task_switches++;
 	next_task = next;
 
 	/* TS required */
@@ -497,18 +494,15 @@ void task_print_list(void)
 {
 	int i;
 
-#ifdef CONFIG_FPU
-	ccputs("Task Ready Name         Events      Time (s)  "
-	       "  StkUsed UseFPU\n");
-#else
-	ccputs("Task Ready Name         Events      Time (s)  StkUsed\n");
-#endif
+	if (IS_ENABLED(CONFIG_FPU))
+		ccputs("Task Ready Name         Events      Time (s)  "
+		       "  StkUsed UseFPU\n");
+	else
+		ccputs("Task Ready Name         Events      Time (s)  "
+		       "StkUsed\n");
 
 	for (i = 0; i < TASK_ID_COUNT; i++) {
 		char is_ready = (tasks_ready & (1<<i)) ? 'R' : ' ';
-#ifdef CONFIG_FPU
-		char use_fpu = tasks[i].use_fpu ? 'Y' : 'N';
-#endif
 		uint32_t *sp;
 
 		int stackused = tasks_init[i].stack_size;
@@ -518,15 +512,19 @@ void task_print_list(void)
 		     sp++)
 			stackused -= sizeof(uint32_t);
 
-#ifdef CONFIG_FPU
-		ccprintf("%4d %c %-16s %08x %11.6ld  %3d/%3d %c\n", i, is_ready,
-			 task_get_name(i), tasks[i].events, tasks[i].runtime,
-			 stackused, tasks_init[i].stack_size, use_fpu);
-#else
-		ccprintf("%4d %c %-16s %08x %11.6ld  %3d/%3d\n", i, is_ready,
-			 task_get_name(i), tasks[i].events, tasks[i].runtime,
-			 stackused, tasks_init[i].stack_size);
-#endif
+		if (IS_ENABLED(CONFIG_FPU)) {
+			char use_fpu = tasks[i].use_fpu ? 'Y' : 'N';
+
+			ccprintf("%4d %c %-16s %08x %11.6ld  %3d/%3d %c\n",
+				 i, is_ready, task_get_name(i), tasks[i].events,
+				 tasks[i].runtime, stackused,
+				 tasks_init[i].stack_size, use_fpu);
+		} else {
+			ccprintf("%4d %c %-16s %08x %11.6ld  %3d/%3d\n",
+				 i, is_ready, task_get_name(i), tasks[i].events,
+				 tasks[i].runtime, stackused,
+				 tasks_init[i].stack_size);
+		}
 
 		cflush();
 	}
@@ -534,30 +532,29 @@ void task_print_list(void)
 
 int command_task_info(int argc, char **argv)
 {
-#ifdef CONFIG_TASK_PROFILING
-	int total = 0;
-	int i;
-#endif
-
 	task_print_list();
 
-#ifdef CONFIG_TASK_PROFILING
-	ccputs("IRQ counts by type:\n");
-	cflush();
-	for (i = 0; i < ARRAY_SIZE(irq_dist); i++) {
-		if (irq_dist[i]) {
-			ccprintf("%4d %8d\n", i, irq_dist[i]);
-			total += irq_dist[i];
+	if (IS_ENABLED(CONFIG_TASK_PROFILING)) {
+		int total = 0;
+		int i;
+
+		ccputs("IRQ counts by type:\n");
+		cflush();
+		for (i = 0; i < ARRAY_SIZE(irq_dist); i++) {
+			if (irq_dist[i]) {
+				ccprintf("%4d %8d\n", i, irq_dist[i]);
+				total += irq_dist[i];
+			}
 		}
+		ccprintf("Service calls:          %11d\n", svc_calls);
+		ccprintf("Total exceptions:       %11d\n", total + svc_calls);
+		ccprintf("Task switches:          %11d\n", task_switches);
+		ccprintf("Task switching started: %11.6ld s\n",
+			 task_start_time);
+		ccprintf("Time in tasks:          %11.6ld s\n",
+			 get_time().val - task_start_time);
+		ccprintf("Time in exceptions:     %11.6ld s\n", exc_total_time);
 	}
-	ccprintf("Service calls:          %11d\n", svc_calls);
-	ccprintf("Total exceptions:       %11d\n", total + svc_calls);
-	ccprintf("Task switches:          %11d\n", task_switches);
-	ccprintf("Task switching started: %11.6ld s\n", task_start_time);
-	ccprintf("Time in tasks:          %11.6ld s\n",
-		 get_time().val - task_start_time);
-	ccprintf("Time in exceptions:     %11.6ld s\n", exc_total_time);
-#endif
 
 	return EC_SUCCESS;
 }
@@ -565,7 +562,7 @@ DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info,
 			NULL,
 			"Print task info");
 
-#ifdef CONFIG_CMD_TASKREADY
+__maybe_unused
 static int command_task_ready(int argc, char **argv)
 {
 	if (argc < 2) {
@@ -578,6 +575,8 @@ static int command_task_ready(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
+
+#ifdef CONFIG_CMD_TASKREADY
 DECLARE_CONSOLE_COMMAND(taskready, command_task_ready,
 			"[setmask]",
 			"Print/set ready tasks");
@@ -587,16 +586,6 @@ void task_pre_init(void)
 {
 	int i, cs;
 	uint32_t *stack_next = (uint32_t *)task_stacks;
-
-#ifdef CONFIG_FPU
-	static uint8_t default_fp_ctx[] = { /* Initial FP state */
-		0x7f, 0x00, /* Control[0-15] */
-		0xff, 0xff, /* unused */
-		0x00, 0x00, /* Status[0-15] */
-		0xff, 0xff, /* unused */
-		0xff, 0xff, /* Tag[0-15] */
-		0xff, 0xff};/* unused */
-#endif
 
 	__asm__ __volatile__ ("movl %%cs, %0":"=r" (cs));
 
@@ -640,14 +629,24 @@ void task_pre_init(void)
 		sp[14] = 0x00;
 		sp[15] = 0x00;
 
-#ifdef CONFIG_FPU
-		/* Copy default x86 FPU state for each task */
-		memcpy(tasks[i].fp_ctx, default_fp_ctx,
-			sizeof(default_fp_ctx));
+		if (IS_ENABLED(CONFIG_FPU)) {
+			static uint8_t default_fp_ctx[] = {
+				/* Initial FP state */
+				0x7f, 0x00, /* Control[0-15] */
+				0xff, 0xff, /* unused */
+				0x00, 0x00, /* Status[0-15] */
+				0xff, 0xff, /* unused */
+				0xff, 0xff, /* Tag[0-15] */
+				0xff, 0xff};/* unused */
 
-		if (tasks_init[i].flags & MIA_TASK_FLAG_USE_FPU)
-			tasks[i].use_fpu = 1;
-#endif
+			/* Copy default x86 FPU state for each task */
+			memcpy(tasks[i].fp_ctx, default_fp_ctx,
+			       sizeof(default_fp_ctx));
+
+			if (tasks_init[i].flags & MIA_TASK_FLAG_USE_FPU)
+				tasks[i].use_fpu = 1;
+		}
+
 		/* Fill unused stack; also used to detect stack overflow. */
 		for (sp = stack_next; sp < (uint32_t *)tasks[i].sp; sp++)
 			*sp = STACK_UNUSED_VALUE;
@@ -667,8 +666,8 @@ void task_clear_fp_used(void)
 
 int task_start(void)
 {
-#ifdef CONFIG_TASK_PROFILING
-	task_start_time = exc_end_time = get_time().val;
-#endif
+	if (IS_ENABLED(CONFIG_TASK_PROFILING))
+		task_start_time = exc_end_time = get_time().val;
+
 	return __task_start(&start_called);
 }

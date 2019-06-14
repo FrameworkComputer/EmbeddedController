@@ -711,25 +711,21 @@ static void handle_d3(uint32_t irq_vec)
 	}
 }
 
-__maybe_unused
 static void d3_rise_isr(void)
 {
 	handle_d3(ISH_D3_RISE_VEC);
 }
 
-__maybe_unused
 static void d3_fall_isr(void)
 {
 	handle_d3(ISH_D3_FALL_VEC);
 }
 
-__maybe_unused
 static void bme_rise_isr(void)
 {
 	handle_d3(ISH_BME_RISE_VEC);
 }
 
-__maybe_unused
 static void bme_fall_isr(void)
 {
 	handle_d3(ISH_BME_FALL_VEC);

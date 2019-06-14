@@ -427,17 +427,21 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 
 static void i2c_interrupt_handler(struct i2c_context *ctx)
 {
-#ifdef INTR_DEBUG
 	uint32_t raw_intr;
-	raw_intr = 0x0000FFFF & i2c_mmio_read(ctx->base, IC_RAW_INTR_STAT);
-#endif
+
+	if (IS_ENABLED(INTR_DEBUG))
+		raw_intr = 0x0000FFFF & i2c_mmio_read(ctx->base,
+						      IC_RAW_INTR_STAT);
+
 	/* check interrupts */
 	ctx->interrupts = i2c_mmio_read(ctx->base, IC_INTR_STAT);
 	ctx->reason = (uint16_t) i2c_mmio_read(ctx->base, IC_TX_ABRT_SOURCE);
-#ifdef INTR_DEBUG
-	CPRINTS("INTR_STAT = 0x%04x, TX_ABORT_SRC = 0x%04x, RAW_INTR_STAT = 0x%04x\n",
+
+	if (IS_ENABLED(INTR_DEBUG))
+		CPRINTS("INTR_STAT = 0x%04x, TX_ABORT_SRC = 0x%04x, "
+			"RAW_INTR_STAT = 0x%04x\n",
 			ctx->interrupts, ctx->reason, raw_intr);
-#endif
+
 	/* disable interrupts */
 	i2c_intr_switch(ctx->base, DISABLE_INT);
 	task_set_event(ctx->wait_task_id, TASK_EVENT_I2C_IDLE, 0);

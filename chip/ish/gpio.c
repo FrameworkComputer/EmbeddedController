@@ -55,13 +55,12 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	}
 
 	/* ISH 3 can't support both rising and falling edge */
-#ifdef CHIP_FAMILY_ISH3
-	if ((flags & GPIO_INT_F_RISING) && (flags & GPIO_INT_F_FALLING)) {
+	if (IS_ENABLED(CHIP_FAMILY_ISH3) &&
+	    (flags & GPIO_INT_F_RISING) && (flags & GPIO_INT_F_FALLING)) {
 		ccprintf("\n\nISH 2/3 does not support both rising & falling "
 			 "edge for %d 0x%02x\n\n",
 			 port, mask);
 	}
-#endif
 
 	/* GPSR/GPCR Output high/low */
 	if (flags & GPIO_HIGH) /* Output high */
