@@ -423,23 +423,5 @@ enum nvmem_users { NVMEM_TPM = 0, NVMEM_CR50, NVMEM_NUM_USERS };
 #define CONFIG_CURVE25519
 #endif /* TEST_X25519 */
 
-#ifdef TEST_FUZZ
-/* Disable hibernate: We never want to exit while fuzzing. */
-#undef CONFIG_HIBERNATE
-#endif
-
-#ifdef TEST_HOST_COMMAND_FUZZ
-#undef CONFIG_HOSTCMD_DEBUG_MODE
-
-/* Defining this make fuzzing slower, but exercises additional code paths. */
-#define FUZZ_HOSTCMD_VERBOSE
-
-#ifdef FUZZ_HOSTCMD_VERBOSE
-#define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_PARAMS
-#else
-#define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
-#endif /* ! FUZZ_HOSTCMD_VERBOSE */
-#endif /* TEST_HOST_COMMAND_FUZZ */
-
 #endif  /* TEST_BUILD */
 #endif  /* __TEST_TEST_CONFIG_H */

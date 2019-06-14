@@ -109,4 +109,4 @@ enum nvmem_users {
 #endif /* TEST_USB_PD_FUZZ */
 
 #endif  /* TEST_FUZZ */
-#endif  /* __TEST_TEST_CONFIG_H */
+#endif  /* __FUZZ_FUZZ_CONFIG_H */
