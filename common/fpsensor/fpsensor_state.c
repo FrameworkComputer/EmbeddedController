@@ -7,6 +7,7 @@
 #include "cryptoc/util.h"
 #include "ec_commands.h"
 #include "fpsensor.h"
+#include "fpsensor_crypto.h"
 #include "fpsensor_private.h"
 #include "fpsensor_state.h"
 #include "host_command.h"
@@ -30,6 +31,13 @@ uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE]
 /* Salt used in derivation of positive match secret. */
 uint8_t fp_positive_match_salt
 	[FP_MAX_FINGER_COUNT][FP_POSITIVE_MATCH_SALT_BYTES];
+
+struct positive_match_secret_state positive_match_secret_state = {
+	.template_matched = FP_NO_SUCH_TEMPLATE,
+	.readable = false,
+	.deadline.val = 0,
+};
+
 /* Number of used templates */
 uint32_t templ_valid;
 /* Bitmap of the templates with local modifications */
@@ -74,6 +82,7 @@ static void _fp_clear_context(void)
 	always_memset(fp_buffer, 0, sizeof(fp_buffer));
 	always_memset(fp_enc_buffer, 0, sizeof(fp_enc_buffer));
 	always_memset(user_id, 0, sizeof(user_id));
+	fp_disable_positive_match_secret(&positive_match_secret_state);
 	for (idx = 0; idx < FP_MAX_FINGER_COUNT; idx++)
 		fp_clear_finger_context(idx);
 }
@@ -231,3 +240,72 @@ static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 	return EC_RES_INVALID_PARAM;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_CONTEXT, fp_command_context, EC_VER_MASK(1));
+
+int fp_enable_positive_match_secret(uint32_t fgr,
+				    struct positive_match_secret_state *state)
+{
+	timestamp_t now;
+
+	if (state->readable) {
+		CPRINTS("Error: positive match secret already readable.");
+		fp_disable_positive_match_secret(state);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	now = get_time();
+	state->template_matched = fgr;
+	state->readable = true;
+	state->deadline.val = now.val + (5 * SECOND);
+	return EC_SUCCESS;
+}
+
+void fp_disable_positive_match_secret(
+	struct positive_match_secret_state *state)
+{
+	state->template_matched = FP_NO_SUCH_TEMPLATE;
+	state->readable = false;
+	state->deadline.val = 0;
+}
+
+static enum ec_status fp_command_read_match_secret(
+	struct host_cmd_handler_args *args)
+{
+	const struct ec_params_fp_read_match_secret *params = args->params;
+	struct ec_response_fp_read_match_secret *response = args->response;
+	int8_t fgr = params->fgr;
+	timestamp_t now = get_time();
+	struct positive_match_secret_state state_copy
+		= positive_match_secret_state;
+
+	fp_disable_positive_match_secret(&positive_match_secret_state);
+
+	if (fgr < 0 || fgr >= FP_MAX_FINGER_COUNT) {
+		CPRINTS("Invalid finger number %d", fgr);
+		return EC_RES_INVALID_PARAM;
+	}
+	if (timestamp_expired(state_copy.deadline, &now)) {
+		CPRINTS("Reading positive match secret disallowed: "
+			"deadline has passed.");
+		return EC_RES_TIMEOUT;
+	}
+	if (fgr != state_copy.template_matched || !state_copy.readable) {
+		CPRINTS("Positive match secret for finger %d is not meant to "
+			"be read now.", fgr);
+		return EC_RES_ACCESS_DENIED;
+	}
+
+	if (derive_positive_match_secret(response->positive_match_secret,
+					 fp_positive_match_salt[fgr])
+		!= EC_SUCCESS) {
+		CPRINTS("Failed to derive positive match secret for finger %d",
+			fgr);
+		/* Keep the template and encryption salt. */
+		return EC_RES_ERROR;
+	}
+	CPRINTS("Derived positive match secret for finger %d", fgr);
+	args->response_size = sizeof(*response);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FP_READ_MATCH_SECRET, fp_command_read_match_secret,
+		     EC_VER_MASK(0));

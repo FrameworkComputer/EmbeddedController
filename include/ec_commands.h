@@ -6023,6 +6023,17 @@ struct ec_response_fp_encryption_status {
 	uint32_t status;
 } __ec_align4;
 
+#define EC_CMD_FP_READ_MATCH_SECRET 0x040A
+struct ec_params_fp_read_match_secret {
+	uint16_t fgr;
+} __ec_align4;
+
+/* The positive match secret has the length of the SHA256 digest. */
+#define FP_POSITIVE_MATCH_SECRET_BYTES 32
+struct ec_response_fp_read_match_secret {
+	uint8_t positive_match_secret[FP_POSITIVE_MATCH_SECRET_BYTES];
+} __ec_align4;
+
 /*****************************************************************************/
 /* Touchpad MCU commands: range 0x0500-0x05FF */
 

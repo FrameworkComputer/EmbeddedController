@@ -3,6 +3,16 @@
  * found in the LICENSE file.
  */
 
- #define CONFIG_TEST_MOCK_LIST \
-        MOCK(FPSENSOR)	       \
-	MOCK(TIMER)
+#include "mock/timer_mock.h"
+
+static timestamp_t now;
+
+void set_time(timestamp_t now_)
+{
+	now = now_;
+}
+
+timestamp_t get_time(void)
+{
+	return now;
+};
