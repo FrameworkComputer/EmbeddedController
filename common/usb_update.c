@@ -22,6 +22,7 @@
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
 /*
  * This file is an adaptation layer between the USB interface and the firmware
@@ -222,7 +223,7 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 
 		switch (subcommand) {
 		case UPDATE_EXTRA_CMD_IMMEDIATE_RESET:
-			CPRINTS("Rebooting!\n\n\n");
+			CPRINTF("[%T Rebooting!]\n\n\n");
 			cflush();
 			system_reset(SYSTEM_RESET_MANUALLY_TRIGGERED);
 			/* Unreachable, unless something bad happens. */
