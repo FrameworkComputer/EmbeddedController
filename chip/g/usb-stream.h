@@ -228,14 +228,4 @@ void usb_stream_tx(struct usb_stream_config const *config);
 void usb_stream_rx(struct usb_stream_config const *config);
 void usb_stream_reset(struct usb_stream_config const *config);
 
-/*
- * True if the USB Tx/IN FIFO is ready for the transfer.
- * False if it is busy transferring data.
- */
-int tx_fifo_is_ready(struct usb_stream_config const *config);
-
-/*
- * Return 1 if the USB stream is reset or 0 otherwise
- */
-int usb_stream_is_reset(struct usb_stream_config const *config);
 #endif /* __CROS_EC_USB_STREAM_H */
