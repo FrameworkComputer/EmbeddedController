@@ -454,7 +454,7 @@ struct motion_sensor_t motion_sensors[] = {
 #ifdef CONFIG_MAG_BMI160_BMM150
 	[LID_MAG] = {
 	 .name = "Lid Mag",
-	 .active_mask = SENSOR_ACTIVE_S0,
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_MAG,
 	 .location = MOTIONSENSE_LOC_LID,
