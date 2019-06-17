@@ -2632,6 +2632,9 @@
 /* Define clock input to MFT module. */
 #undef CONFIG_MFT_INPUT_LFCLK
 
+/* Minute-IA watchdog timer vector number. */
+#define CONFIG_MIA_WDT_VEC 0xFF
+
 /* Support MKBP event */
 #undef CONFIG_MKBP_EVENT
 

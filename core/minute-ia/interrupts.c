@@ -12,6 +12,7 @@
 #include "interrupts.h"
 #include "irq_handler.h"
 #include "link_defs.h"
+#include "mia_panic_internal.h"
 #include "registers.h"
 #include "task.h"
 #include "task_defs.h"
@@ -176,11 +177,9 @@ static const irq_desc_t system_irqs[] = {
  */
 #define DEFINE_EXN_HANDLER(vector)				\
 	_DEFINE_EXN_HANDLER(vector, exception_panic_##vector)
-#define _DEFINE_EXN_HANDLER(vector, name)	\
-	__DEFINE_EXN_HANDLER(vector, name)
-#define __DEFINE_EXN_HANDLER(vector, name)		\
+#define _DEFINE_EXN_HANDLER(vector, name)		\
 	void __keep name(void);			\
-	__attribute__ ((noreturn)) void name(void)	\
+	__attribute__((noreturn)) void name(void)	\
 	{						\
 		__asm__ (				\
 			"push $" #vector "\n"		\
@@ -209,7 +208,22 @@ DEFINE_EXN_HANDLER(17);
 DEFINE_EXN_HANDLER(18);
 DEFINE_EXN_HANDLER(19);
 DEFINE_EXN_HANDLER(20);
-_DEFINE_EXN_HANDLER(ISH_WDT_VEC, exception_panic_wdt);
+
+/**
+ * Use a similar approach for defining an optional handler for
+ * watchdog timer expiration. However, this time, hardware does not
+ * push errorcode, and we must account for that by pushing zero.
+ */
+__attribute__((noreturn)) __keep
+void exception_panic_wdt(uint32_t cs)
+{
+	exception_panic(
+		CONFIG_MIA_WDT_VEC,
+		0,
+		(uint32_t)__builtin_return_address(0),
+		cs,
+		0);
+}
 
 void set_interrupt_gate(uint8_t num, isr_handler_t func, uint8_t flags)
 {
@@ -475,8 +489,8 @@ void init_interrupts(void)
 	 * retrieve EIP.
 	 */
 	if (IS_ENABLED(CONFIG_WATCHDOG))
-		set_interrupt_gate(ISH_WDT_VEC,
-				   exception_panic_wdt,
+		set_interrupt_gate(CONFIG_MIA_WDT_VEC,
+				   (isr_handler_t)exception_panic_wdt,
 				   IDT_DESC_FLAGS);
 
 	/* Note: At reset, ID field is already set to 0 in APIC ID register */

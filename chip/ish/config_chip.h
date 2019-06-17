@@ -100,6 +100,10 @@
 #error "CHIP_FAMILY_ISH(3|4|5) must be defined"
 #endif
 
+/* Provide WDT vec number to Minute-IA core implementation */
+#undef CONFIG_MIA_WDT_VEC
+#define CONFIG_MIA_WDT_VEC	ISH_WDT_VEC
+
 /****************************************************************************/
 /* Customize the build */
 /* Optional features present on this chip */
