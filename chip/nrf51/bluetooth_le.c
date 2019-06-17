@@ -513,7 +513,7 @@ static int command_ble_adv_scan(int argc, char **argv)
 
 	CPRINTS("ADV Listen");
 	if (addr_lsbyte != -1)
-		CPRINTS("filtered (%x)\n", addr_lsbyte);
+		CPRINTS("filtered (%x)", addr_lsbyte);
 
 	for (i = 0; i < packets; i++) {
 		rv = ble_rx(&rcv_packet, 1000000, 1);

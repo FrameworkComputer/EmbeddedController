@@ -304,7 +304,7 @@ static void read_matrix_id(uint8_t *id)
 		/* Read the row state */
 		id[c] = keyboard_raw_read_rows();
 
-		CPRINTS("Keyboard ID%u: 0x%02x\n", c, id[c]);
+		CPRINTS("Keyboard ID%u: 0x%02x", c, id[c]);
 	}
 
 	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);

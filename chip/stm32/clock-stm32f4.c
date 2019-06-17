@@ -235,7 +235,7 @@ void clock_enable_module(enum module_id module, int enable)
 		return;
 	}
 
-	CPRINTS("Module %d is not supported for clock %s\n",
+	CPRINTS("Module %d is not supported for clock %s",
 		module, enable ? "enable" : "disable");
 }
 

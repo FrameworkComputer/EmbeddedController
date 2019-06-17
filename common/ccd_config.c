@@ -1447,7 +1447,7 @@ static enum vendor_cmd_rc ccd_vendor(struct vendor_cmd_params *p)
 		break;
 
 	default:
-		CPRINTS("%s:%d - unknown subcommand\n", __func__, __LINE__);
+		CPRINTS("%s:%d - unknown subcommand", __func__, __LINE__);
 		return VENDOR_RC_NO_SUCH_SUBCOMMAND;
 	}
 

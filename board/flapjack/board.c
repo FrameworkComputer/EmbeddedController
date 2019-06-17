@@ -145,7 +145,7 @@ static void board_setup_panel(void)
 	rv |= i2c_write8(I2C_PORT_CHARGER, RT946X_ADDR, MT6370_BACKLIGHT_BLPWM,
 		0xac);
 	if (rv)
-		CPRINTS("Board setup panel failed\n");
+		CPRINTS("Board setup panel failed");
 }
 
 static enum panel_id board_get_panel_id(void)

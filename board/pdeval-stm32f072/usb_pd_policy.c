@@ -301,7 +301,7 @@ static int svdm_dp_config(int port, uint32_t *payload)
 		mux_state |= MUX_POLARITY_INVERTED;
 #endif
 
-	CPRINTS("pin_mode = %d\n", pin_mode);
+	CPRINTS("pin_mode = %d", pin_mode);
 	if (!pin_mode)
 		return 0;
 
@@ -348,7 +348,7 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
 
-	CPRINTS("Attention: 0x%x\n", payload[1]);
+	CPRINTS("Attention: 0x%x", payload[1]);
 	anx7447_tcpc_update_hpd_status(port, lvl, irq);
 #endif
 	dp_status[port] = payload[1];

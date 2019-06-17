@@ -251,7 +251,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		return ret;
 
 	if (fsts.len & (LSM6DSO_FIFO_DATA_OVR | LSM6DSO_FIFO_FULL)) {
-		CPRINTS("%s FIFO Overrun: %04x\n", s->name, fsts.len);
+		CPRINTS("%s FIFO Overrun: %04x", s->name, fsts.len);
 	}
 
 	if (fsts.len & LSM6DSO_FIFO_DIFF_MASK)
@@ -480,7 +480,7 @@ static int init(const struct motion_sensor_t *s)
 
 err_unlock:
 	mutex_unlock(s->mutex);
-	CPRINTS("%s: MS Init type:0x%X Error\n", s->name, s->type);
+	CPRINTS("%s: MS Init type:0x%X Error", s->name, s->type);
 
 	return ret;
 }

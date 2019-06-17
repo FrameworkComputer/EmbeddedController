@@ -412,7 +412,7 @@ static int lock_enforced(const struct RollbackSpaceFwmp *fwmp)
 
 	/* Let's verify that the FWMP structure makes sense. */
 	if (fwmp->struct_size != sizeof(*fwmp)) {
-		CPRINTS("%s: fwmp size mismatch (%d)\n", __func__,
+		CPRINTS("%s: fwmp size mismatch (%d)", __func__,
 			fwmp->struct_size);
 		return 1;
 	}
@@ -420,7 +420,7 @@ static int lock_enforced(const struct RollbackSpaceFwmp *fwmp)
 	crc = crc8(&fwmp->struct_version, sizeof(struct RollbackSpaceFwmp) -
 		   offsetof(struct RollbackSpaceFwmp, struct_version));
 	if (fwmp->crc != crc) {
-		CPRINTS("%s: fwmp crc mismatch\n", __func__);
+		CPRINTS("%s: fwmp crc mismatch", __func__);
 		return 1;
 	}
 

@@ -89,7 +89,7 @@ void __hw_clock_event_set(uint32_t deadline)
 	 */
 	evt_cnt = FP_TO_INT((fp_inter_t)(evt_cnt_us) * inv_evt_tick);
 	if (evt_cnt > TICK_EVT_MAX_CNT) {
-		CPRINTS("Event overflow! 0x%08x, us is %d\r\n",
+		CPRINTS("Event overflow! 0x%08x, us is %d",
 				evt_cnt, evt_cnt_us);
 		evt_cnt = TICK_EVT_MAX_CNT;
 	}

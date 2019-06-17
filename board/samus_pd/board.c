@@ -338,7 +338,7 @@ int board_set_active_charge_port(int charge_port)
 		gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
 		charge_state = PD_CHARGE_NONE;
 		pd_status.active_charge_port = charge_port;
-		CPRINTS("Chg: None\n");
+		CPRINTS("Chg: None");
 		return EC_SUCCESS;
 	}
 

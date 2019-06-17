@@ -234,7 +234,7 @@ static int ipc_write_raw_timestamp(struct ipc_if_ctx *ctx, uint32_t drbl,
 			memcpy(msg->payload, payload, payload_size);
 			queue_advance_tail(q, 1);
 		} else {
-			CPRINTS("tx queue is full\n");
+			CPRINTS("tx queue is full");
 			res = -IPC_ERR_TX_QUEUE_FULL;
 		}
 
@@ -301,7 +301,7 @@ static int ipc_get_protocol_data(const struct ipc_if_ctx *ctx,
 	payload_size = IPC_DB_MSG_LENGTH(drbl_val);
 
 	if (payload_size > IPC_MAX_PAYLOAD_SIZE) {
-		CPRINTS("invalid msg : payload is too big\n");
+		CPRINTS("invalid msg : payload is too big");
 		return -IPC_ERR_INVALID_MSG;
 	}
 
@@ -315,12 +315,12 @@ static int ipc_get_protocol_data(const struct ipc_if_ctx *ctx,
 		len = payload_size + sizeof(drbl_val);
 		break;
 	default:
-		CPRINTS("protocol %d not supported yet\n", protocol);
+		CPRINTS("protocol %d not supported yet", protocol);
 		break;
 	}
 
 	if (len > buf_size) {
-		CPRINTS("buffer is smaller than payload\n");
+		CPRINTS("buffer is smaller than payload");
 		return -IPC_ERR_TOO_SMALL_BUFFER;
 	}
 
@@ -492,12 +492,12 @@ int ipc_write_timestamp(const ipc_handle_t handle, const void *buf,
 	ctx = ipc_handle_to_if_ctx(handle);
 
 	if (ctx->initialized == 0) {
-		CPRINTS("open_ipc() for the peer is never called\n");
+		CPRINTS("open_ipc() for the peer is never called");
 		return -EC_ERROR_INVAL;
 	}
 
 	if (!ctx->msg_events[protocol].enabled) {
-		CPRINTS("call open_ipc() for the protocol first\n");
+		CPRINTS("call open_ipc() for the protocol first");
 		return -EC_ERROR_INVAL;
 	}
 
@@ -587,7 +587,7 @@ static void handle_mng_commands(const ipc_handle_t handle,
 	case MNG_RX_CMPL_DISABLE:
 	case MNG_RX_CMPL_INDICATION:
 	case MNG_RESET_NOTIFY:
-		CPRINTS("msg not handled %d\n", IPC_DB_CMD(msg->drbl));
+		CPRINTS("msg not handled %d", IPC_DB_CMD(msg->drbl));
 		break;
 	case MNG_RESET_NOTIFY_ACK:
 		ipc_rst = (struct ipc_rst_payload *)msg->payload;
@@ -710,7 +710,7 @@ void ipc_mng_task(void)
 
 		/* allow doorbell with any payload */
 		if (payload_size < 0) {
-			CPRINTS("ipc_read error. discard msg\n");
+			CPRINTS("ipc_read error. discard msg");
 			continue; /* TODO: retry several and exit */
 		}
 

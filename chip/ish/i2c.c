@@ -439,7 +439,7 @@ static void i2c_interrupt_handler(struct i2c_context *ctx)
 
 	if (IS_ENABLED(INTR_DEBUG))
 		CPRINTS("INTR_STAT = 0x%04x, TX_ABORT_SRC = 0x%04x, "
-			"RAW_INTR_STAT = 0x%04x\n",
+			"RAW_INTR_STAT = 0x%04x",
 			ctx->interrupts, ctx->reason, raw_intr);
 
 	/* disable interrupts */

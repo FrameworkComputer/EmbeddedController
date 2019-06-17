@@ -354,7 +354,7 @@ static int battery_check_disconnect(void)
 
 	if (fuel_gauge == GAUGE_TYPE_UNKNOWN) {
 		fuel_gauge = get_gauge_ic();
-		CPRINTS("fuel_gauge=%d\n", fuel_gauge);
+		CPRINTS("fuel_gauge=%d", fuel_gauge);
 	}
 
 	switch (fuel_gauge) {

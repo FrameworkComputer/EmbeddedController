@@ -675,7 +675,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	/* Reset task ID */
 	p_status->task_waiting = TASK_ID_INVALID;
 
-	CPRINTS("-Err:0x%02x\n", p_status->err_code);
+	CPRINTS("-Err:0x%02x", p_status->err_code);
 
 	return (p_status->err_code == SMB_OK) ? EC_SUCCESS : EC_ERROR_UNKNOWN;
 }

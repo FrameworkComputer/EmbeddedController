@@ -68,7 +68,7 @@ int display_7seg_write(enum seven_seg_module_display module, uint16_t data)
 		buf[1] = 0x00;
 		break;
 	default:
-		CPRINTS("Unknown Module\n");
+		CPRINTS("Unknown Module");
 		return EC_ERROR_UNKNOWN;
 	}
 	/* Segment - 1 */

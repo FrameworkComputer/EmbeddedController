@@ -704,7 +704,7 @@ void power_signal_interrupt(enum gpio_signal signal)
 		if (power_signal_list[i].gpio == signal) {
 			if (power_signal_interrupt_count[i]++ ==
 			   CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD)
-				CPRINTS("Interrupt storm! Signal %d\n", i);
+				CPRINTS("Interrupt storm! Signal %d", i);
 			break;
 		}
 	}

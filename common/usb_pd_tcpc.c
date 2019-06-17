@@ -589,7 +589,7 @@ static inline int decode_short(int port, int off, uint16_t *val16)
 	end = pd_dequeue_bits(port, off, 20, &w);
 
 #if 0 /* DEBUG */
-	CPRINTS("%d-%d: %05x %x:%x:%x:%x\n",
+	CPRINTS("%d-%d: %05x %x:%x:%x:%x",
 		off, end, w,
 		dec4b5b[(w >> 15) & 0x1f], dec4b5b[(w >> 10) & 0x1f],
 		dec4b5b[(w >>  5) & 0x1f], dec4b5b[(w >>  0) & 0x1f]);

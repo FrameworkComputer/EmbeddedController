@@ -501,7 +501,7 @@ static int i2c_check_recover(int port, int controller)
 	if ((((reg & (STS_BER | STS_LAB)) || !(reg & STS_NBB)) ||
 			(lines != I2C_LINE_IDLE))) {
 		cdata[controller].flags |= (1ul << 16);
-		CPRINTS("I2C%d port%d recov status 0x%02x, SDA:SCL=0x%0x\n",
+		CPRINTS("I2C%d port%d recov status 0x%02x, SDA:SCL=0x%0x",
 			controller, port, reg, lines);
 		/* Attempt to unwedge the port. */
 		if (lines != I2C_LINE_IDLE)
