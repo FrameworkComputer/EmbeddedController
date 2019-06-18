@@ -466,21 +466,33 @@ static struct als_drv_data_t g_tcs3400_data = {
 
 static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 	.rgb_cal[X] = {
-		.offset = 0,
+		.offset = 15, /* 15.65956688 */
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-0.04592318),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0.06756278),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(-0.05885579),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0.12021096),
 		.scale = {
 			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kr */
 			.cover_scale = ALS_CHANNEL_SCALE(0.6)
 		}
 	},
 	.rgb_cal[Y] = {
-		.offset = 0,
+		.offset = 8, /* 8.75943638 */
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-0.07786953),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0.18940035),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(-0.0524428),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0.09092403),
 		.scale = {
 			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kg */
 			.cover_scale = ALS_CHANNEL_SCALE(1.0)
 		}
 	},
 	.rgb_cal[Z] = {
-		.offset = 0,
+		.offset = -21, /* -21.92665481 */
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-0.18981975),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0.5351057),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(-0.01858507),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(-0.01793189),
 		.scale = {
 			.k_channel_scale = ALS_CHANNEL_SCALE(1.0),   /* kb */
 			.cover_scale = ALS_CHANNEL_SCALE(1.5)
