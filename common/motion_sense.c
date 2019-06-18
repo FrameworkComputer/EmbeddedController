@@ -20,6 +20,7 @@
 #include "mkbp_event.h"
 #include "motion_sense.h"
 #include "motion_lid.h"
+#include "panic.h"
 #include "power.h"
 #include "queue.h"
 #include "tablet_mode.h"
@@ -114,7 +115,7 @@ static int motion_sense_fifo_lost;
  */
 struct fifo_staged {
 	uint32_t read_ts;
-	uint8_t count;
+	uint16_t count;
 	uint8_t sample_count[SENSOR_COUNT];
 	uint8_t requires_spreading;
 };
@@ -169,8 +170,11 @@ static void motion_sense_fifo_pop(void)
 	if (!is_timestamp(head))
 		motion_sensors[head->sensor_num].lost++;
 
-	/* Only continue if we removed from staged. */
-	if (!initial_count)
+	/*
+	 * We're done if the initial count was non-zero and we only advanced the
+	 * head. Else, decrement the staged count and update staged metadata.
+	 */
+	if (initial_count)
 		return;
 
 	fifo_staged.count--;
@@ -271,6 +275,9 @@ static void motion_sense_fifo_stage_unit(
 	chunk = queue_get_write_chunk(
 			&motion_sense_fifo, fifo_staged.count);
 
+	if (!chunk.buffer)
+		panic("Failed to get write chunk for new fifo data");
+
 	/*
 	 * Save the data to the writable block and increment count. This data
 	 * will now reside AFTER the tail of the queue and will not be visible
@@ -281,6 +288,7 @@ static void motion_sense_fifo_stage_unit(
 	 */
 	memcpy(chunk.buffer, data, motion_sense_fifo.unit_bytes);
 	fifo_staged.count++;
+
 	/*
 	 * If we're using tight timestamps, and the current entry isn't a
 	 * timestamp we'll increment the sample_count for the given sensor.
@@ -709,6 +717,7 @@ static inline int motion_sense_init(struct motion_sensor_t *sensor)
 		sensor->state = SENSOR_INITIALIZED;
 		motion_sense_set_data_rate(sensor);
 	}
+
 	return ret;
 }
 
