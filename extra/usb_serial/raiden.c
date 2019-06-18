@@ -2,7 +2,7 @@
  * USB Serial module for Raiden USB debug serial console forwarding.
  * SubClass and Protocol allocated in go/usb-ids
  *
- * Copyright (c) 2014 The Chromium OS Authors <chromium-os-dev@chromium.org>
+ * Copyright 2014 The Chromium OS Authors <chromium-os-dev@chromium.org>
  * Author: Anton Staaf <robotboy@chromium.org>
  *
  * This program is free software; you can redistribute it and/or modify

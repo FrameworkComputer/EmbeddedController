@@ -1,7 +1,7 @@
 /* Runtime ABI for the ARM Cortex-M0
  * ldivmod.S: signed 64 bit division (quotient and remainder)
  *
- * Copyright (c) 2012 Jörg Mische <bobbl@gmx.de>
+ * Copyright 2012 Jörg Mische <bobbl@gmx.de>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
