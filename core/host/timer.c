@@ -60,7 +60,7 @@ timestamp_t _get_time(void)
 	return ret;
 }
 
-timestamp_t get_time(void)
+test_mockable timestamp_t get_time(void)
 {
 	timestamp_t ret = _get_time();
 	ret.val -= boot_time.val;
