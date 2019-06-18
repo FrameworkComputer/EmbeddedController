@@ -7,8 +7,8 @@
 
 ENTRY(ish_aon_main);
 
-#define SRAM_START		CONFIG_AON_RAM_BASE
-#define SRAM_RW_LEN		(CONFIG_AON_RAM_SIZE - CONFIG_AON_ROM_SIZE)
+#define SRAM_START	CONFIG_AON_RAM_BASE
+#define SRAM_RW_LEN	(CONFIG_AON_RAM_SIZE - CONFIG_AON_PERSISTENT_SIZE)
 
 /* reserved stack size */
 #define STACK_SIZE  (256)
@@ -32,10 +32,23 @@ ENTRY(ish_aon_main);
  * loader.
  */
 
+/**
+ * Snowball data
+ */
+#if defined(CHIP_FAMILY_ISH3)
+/* on ISH3, reused ISH2PMC IPC message registers */
+#define SNOWBALL_BASE	IPC_ISH2PMC_MSG_BASE
+#else
+/* from ISH4, used reserved rom part of AON memory */
+#define SNOWBALL_BASE	(CONFIG_AON_PERSISTENT_BASE + 256)
+#endif
+#define SNOWBALL_LEN	(4*32)
+
 MEMORY
 {
     /* leave STACK_SIZE bytes in the end of memory for stack */
     RAM : ORIGIN = SRAM_START, LENGTH = RAM_LEN
+    SNOWBALL : ORIGIN = SNOWBALL_BASE, LENGTH = SNOWBALL_LEN
 }
 
 SECTIONS
@@ -45,6 +58,11 @@ SECTIONS
     {
 	KEEP(*(.data.aon_share))
     } > RAM
+
+    .data.snowball : AT(SNOWBALL_BASE)
+    {
+        KEEP(*(.data.snowball))
+    } > SNOWBALL
 
     .data :
     {

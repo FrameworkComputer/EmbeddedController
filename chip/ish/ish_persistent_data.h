@@ -38,4 +38,16 @@ void ish_persistent_data_init(void);
  */
 void ish_persistent_data_commit(void);
 
+/**
+ * SNOWBALL - registers about UMA/IMR DDR information and FW location
+ * in it.  ISH Bringup will set these register values at boot
+ */
+struct snowball_struct {
+	uint32_t reserved[28];
+	uint32_t uma_base_hi;
+	uint32_t uma_base_lo;
+	uint32_t uma_limit;
+	uint32_t fw_offset;
+};
+
 #endif /* __CROS_EC_ISH_PERSISTENT_DATA_H */

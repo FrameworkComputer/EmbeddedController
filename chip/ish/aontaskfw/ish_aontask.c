@@ -167,7 +167,7 @@ void ish_aon_main(void);
 static struct tss_entry aon_tss = {
 	.prev_task_link = 0,
 	.reserved1 = 0,
-	.esp0 = (uint8_t *)(CONFIG_AON_ROM_BASE - AON_SP_RESERVED),
+	.esp0 = (uint8_t *)(CONFIG_AON_PERSISTENT_BASE - AON_SP_RESERVED),
 	/* entry 1 in LDT for data segment */
 	.ss0 = 0xc,
 	.reserved2 = 0,
@@ -186,8 +186,8 @@ static struct tss_entry aon_tss = {
 	.edx = 0,
 	.ebx = 0,
 	/* set stack top pointer at the end of usable aon memory */
-	.esp = CONFIG_AON_ROM_BASE - AON_SP_RESERVED,
-	.ebp = CONFIG_AON_ROM_BASE - AON_SP_RESERVED,
+	.esp = CONFIG_AON_PERSISTENT_BASE - AON_SP_RESERVED,
+	.ebp = CONFIG_AON_PERSISTENT_BASE - AON_SP_RESERVED,
 	.esi = 0,
 	.edi = 0,
 	/* entry 1 in LDT for data segment */
@@ -269,6 +269,10 @@ struct ish_aon_share aon_share = {
 	.aon_ldt_size = sizeof(aon_ldt),
 };
 
+/* snowball structure */
+__attribute__((section(".data.snowball"))) volatile
+struct snowball_struct snowball;
+
 /* In IMR DDR, ISH FW image has a manifest header */
 #define ISH_FW_IMAGE_MANIFEST_HEADER_SIZE (0x1000)
 
@@ -285,10 +289,10 @@ static int store_main_fw(void)
 	uint64_t imr_fw_addr;
 	uint64_t imr_fw_rw_addr;
 
-	imr_fw_addr = ((uint64_t)SNOWBALL_UMA_BASE_HI << 32) +
-			SNOWBALL_UMA_BASE_LO +
-			SNOWBALL_FW_OFFSET +
-			ISH_FW_IMAGE_MANIFEST_HEADER_SIZE;
+	imr_fw_addr = (((uint64_t)snowball.uma_base_hi << 32) +
+		       snowball.uma_base_lo +
+		       snowball.fw_offset +
+		       ISH_FW_IMAGE_MANIFEST_HEADER_SIZE);
 
 	imr_fw_rw_addr = (imr_fw_addr
 			  + aon_share.main_fw_rw_addr
@@ -326,10 +330,10 @@ static int restore_main_fw(void)
 	uint64_t imr_fw_ro_addr;
 	uint64_t imr_fw_rw_addr;
 
-	imr_fw_addr = ((uint64_t)SNOWBALL_UMA_BASE_HI << 32) +
-			SNOWBALL_UMA_BASE_LO +
-			SNOWBALL_FW_OFFSET +
-			ISH_FW_IMAGE_MANIFEST_HEADER_SIZE;
+	imr_fw_addr = (((uint64_t)snowball.uma_base_hi << 32) +
+			snowball.uma_base_lo +
+			snowball.fw_offset +
+		       ISH_FW_IMAGE_MANIFEST_HEADER_SIZE);
 
 	imr_fw_ro_addr = (imr_fw_addr
 			  + aon_share.main_fw_ro_addr

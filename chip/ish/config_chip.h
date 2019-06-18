@@ -54,10 +54,10 @@
 #endif
 
 /* The end of the AON memory is reserved for read-only use */
-#define CONFIG_AON_ROM_SIZE		0x180
-#define CONFIG_AON_ROM_BASE		(CONFIG_AON_RAM_BASE	\
+#define CONFIG_AON_PERSISTENT_SIZE	0x180
+#define CONFIG_AON_PERSISTENT_BASE	(CONFIG_AON_RAM_BASE	\
 					 + CONFIG_AON_RAM_SIZE	\
-					 - CONFIG_AON_ROM_SIZE)
+					 - CONFIG_AON_PERSISTENT_SIZE)
 
 /* Store persistent panic data in AON memory. */
 #define CONFIG_PANIC_DATA_BASE		(&(ish_persistent_data.panic_data))

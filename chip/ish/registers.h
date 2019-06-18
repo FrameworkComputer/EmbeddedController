@@ -331,21 +331,4 @@ enum ish_i2c_port {
 #define ISH_SRAM_CTRL_ERASE_ADDR	REG32(ISH_SRAM_CTRL_BASE + 0x10)
 #define ISH_SRAM_CTRL_BANK_STATUS	REG32(ISH_SRAM_CTRL_BASE + 0x2c)
 
-#if defined(CHIP_FAMILY_ISH3)
-/* on ISH3, reused ISH2PMC IPC message registers */
-#define SNOWBALL_BASE			IPC_ISH2PMC_MSG_BASE
-#else
-/* from ISH4, used reserved rom part of AON memory */
-#define SNOWBALL_BASE			(CONFIG_AON_ROM_BASE + 256)
-#endif
-
-/**
- * registers about UMA/IMR DDR information and FW location in it
- * ISH Bringup will set these registers' value at boot
- */
-#define SNOWBALL_UMA_BASE_HI  REG32(SNOWBALL_BASE + (4 * 28))
-#define SNOWBALL_UMA_BASE_LO  REG32(SNOWBALL_BASE + (4 * 29))
-#define SNOWBALL_UMA_LIMIT    REG32(SNOWBALL_BASE + (4 * 30))
-#define SNOWBALL_FW_OFFSET    REG32(SNOWBALL_BASE + (4 * 31))
-
 #endif /* __CROS_EC_REGISTERS_H */
