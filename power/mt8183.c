@@ -157,13 +157,14 @@ void chipset_reset(enum chipset_reset_reason reason)
 
 enum power_state power_chipset_init(void)
 {
-	/* Enable reboot / watchdog / sleep control inputs from AP */
+	/* Enable reboot / sleep control inputs from AP */
 	gpio_enable_interrupt(GPIO_WARM_RESET_REQ);
 	gpio_enable_interrupt(GPIO_AP_IN_SLEEP_L);
 
 	if (system_jumped_to_this_image()) {
 		if ((power_get_signals() & IN_ALL_S0) == IN_ALL_S0) {
 			disable_sleep(SLEEP_MASK_AP_RUN);
+			gpio_enable_interrupt(GPIO_AP_EC_WATCHDOG_L);
 			CPRINTS("already in S0");
 			return POWER_S0;
 		}
