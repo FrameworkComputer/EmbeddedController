@@ -89,6 +89,11 @@ uint32_t power_get_signals(void);
 int power_signal_is_asserted(const struct power_signal_info *s);
 
 /**
+ * Get the level of provided input signal.
+ */
+int power_signal_get_level(enum gpio_signal signal);
+
+/**
  * Enable interrupt for provided input signal.
  */
 int power_signal_enable_interrupt(enum gpio_signal signal);

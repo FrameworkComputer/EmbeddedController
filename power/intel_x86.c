@@ -83,12 +83,7 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, power_up_inhibited_cb, HOOK_PRIO_DEFAULT);
 /* Get system sleep state through GPIOs or VWs */
 static inline int chipset_get_sleep_signal(enum sys_sleep_state state)
 {
-#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
-	if (espi_signal_is_vw(sleep_sig[state]))
-		return espi_vw_get_wire(sleep_sig[state]);
-	else
-#endif
-		return gpio_get_level(sleep_sig[state]);
+	return power_signal_get_level(sleep_sig[state]);
 }
 
 #ifdef CONFIG_BOARD_HAS_RTC_RESET

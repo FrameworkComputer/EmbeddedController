@@ -76,7 +76,7 @@ static uint32_t hibernate_delay = CONFIG_HIBERNATE_DELAY_SEC;
 static int pause_in_s5;
 #endif
 
-static int power_signal_get_level(enum gpio_signal signal)
+int power_signal_get_level(enum gpio_signal signal)
 {
 #ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
 	/* Check signal is from GPIOs or VWs */
