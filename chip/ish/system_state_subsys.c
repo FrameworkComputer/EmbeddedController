@@ -107,9 +107,6 @@ static int ss_subsys_suspend(void)
 	}
 
 	/*
-	 * TODO(b/122364080): Remove this code once proper power management is
-	 * in place for ISH.
-	 *
 	 * PMU_VNN_REQ is used by ISH FW to assert power requirements of ISH to
 	 * PMC. The system won't enter S0ix if ISH is requesting any power
 	 * rails. Setting a bit to 1 both sets and clears a requested value.
@@ -127,9 +124,6 @@ static int ss_subsys_resume(void)
 	int i;
 
 	/*
-	 * TODO(b/122364080): Remove this code once proper power management is
-	 * in place for ISH.
-	 *
 	 * Restore VNN power request from before suspend.
 	 */
 	if (IS_ENABLED(CHIP_FAMILY_ISH5) &&

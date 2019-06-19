@@ -448,10 +448,7 @@ static void ipc_host2ish_isr(void)
 	uint32_t pimr = IPC_PIMR;
 
 	/*
-	 * TODO(b/122364080): Remove this code once proper power management is
-	 * in place for ISH.
-	 *
-	 * Ensure that the host IPC power is requested after getting an
+	 * Ensure that the host IPC write power is requested after getting an
 	 * interrupt otherwise the resume message will never get delivered (via
 	 * host ipc communication). Resume is where we would like to restore all
 	 * power settings, but that is too late for this power request.
@@ -687,10 +684,7 @@ void ipc_mng_task(void)
 	ipc_handle_t handle;
 
 	/*
-	 * TODO(b/122364080): Remove this code once proper power management is
-	 * in place for ISH.
-	 *
-	 * Ensure that power for host IPCs is requested and ack'ed
+	 * Ensure that power for host IPC writes is requested and ack'ed
 	 */
 	if (IS_ENABLED(CHIP_FAMILY_ISH5)) {
 		PMU_VNN_REQ = VNN_REQ_IPC_HOST_WRITE & ~PMU_VNN_REQ;
