@@ -2111,6 +2111,16 @@
  */
 #undef CONFIG_HIBERNATE_PSL
 
+/*
+ * Chip supports a 64-bit hardware timer and implements
+ * __hw_clock_source_read64 and __hw_clock_source_set64.
+ *
+ * Chips with this config enabled may optionally define
+ * __hw_clock_source_read as a 32-bit set function for
+ * latency-sensitive situations.
+ */
+#undef CONFIG_HWTIMER_64BIT
+
 /* Use a hardware specific udelay(). */
 #undef CONFIG_HW_SPECIFIC_UDELAY
 
