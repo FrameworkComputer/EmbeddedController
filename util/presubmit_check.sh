@@ -23,6 +23,8 @@ changed=$(echo "${changed}" | grep -v util/flash_ec)
 changed=$(echo "${changed}" | grep -v util/uart_stress_tester.sh)
 # Filter out this file itself.
 changed=$(echo "${changed}" | grep -v util/presubmit_check.sh)
+# Filter out the OWNERS file.
+changed=$(echo "${changed}" | grep -v OWNERS)
 if [[ -n "${changed}" ]]; then
   echo "Files have changed since last time unit tests passed:"
   echo "${changed}" | sed -e 's/^/  /'
