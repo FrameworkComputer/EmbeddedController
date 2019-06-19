@@ -108,6 +108,9 @@
 /* Customize the build */
 /* Optional features present on this chip */
 
+/* ISH uses 64-bit hardware timer */
+#define CONFIG_HWTIMER_64BIT
+
 /* Macro used with gpio.inc, ISH only has port 0 */
 #define GPIO_PIN(index) 0, (1 << (index))
 #define GPIO_PIN_MASK(m) .port = 0, .mask = (m)
