@@ -15,6 +15,7 @@
 #include "driver/als_bh1730.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/bc12/max14637.h"
+#include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
@@ -279,6 +280,18 @@ struct motion_sensor_t motion_sensors[] = {
 			},
 		},
 	},
+
+	[VSYNC] = {
+		.name = "Camera VSYNC",
+		.active_mask = SENSOR_ACTIVE_S0,
+		.chip = MOTIONSENSE_CHIP_GPIO,
+		.type = MOTIONSENSE_TYPE_SYNC,
+		.location = MOTIONSENSE_LOC_CAMERA,
+		.drv = &sync_drv,
+		.default_range = 0,
+		.min_frequency = 0,
+		.max_frequency = 1,
+	},
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
@@ -320,6 +333,8 @@ static void board_init(void)
 {
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+	/* Enable gpio interrupt for camera vsync */
+	gpio_enable_interrupt(GPIO_WFCAM_VSYNC);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
