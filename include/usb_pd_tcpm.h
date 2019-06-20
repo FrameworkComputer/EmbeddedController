@@ -334,6 +334,13 @@ struct tcpc_config_t {
 	const struct tcpm_drv *drv;
 	/* See TCPC_FLAGS_* above */
 	uint32_t flags;
+#ifdef CONFIG_INTEL_VIRTUAL_MUX
+	/*
+	 * 0-3: Corresponding USB2 port number (1 ~ 15)
+	 * 4-7: Corresponding USB3 port number (1 ~ 15)
+	 */
+	uint8_t usb23;
+#endif
 };
 
 #ifndef CONFIG_USB_PD_TCPC_RUNTIME_CONFIG
