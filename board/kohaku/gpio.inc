@@ -27,6 +27,7 @@ GPIO_INT(PP5000_A_PG_OD,       PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
 /* Sensor Interrupts */
 GPIO_INT(BASE_SIXAXIS_INT_L,   PIN(5, 6), GPIO_INT_FALLING, bmi160_interrupt)
 GPIO_INT(WFCAM_VSYNC,          PIN(B, 7), GPIO_INT_RISING , sync_interrupt)
+GPIO_INT(TCS3400_INT_ODL,      PIN(7, 2), GPIO_INT_FALLING, tcs3400_interrupt)
 
 /* USB-C interrupts */
 GPIO_INT(USB_C0_PPC_INT_ODL,   PIN(E, 0), GPIO_INT_FALLING, ppc_interrupt)
@@ -105,7 +106,6 @@ GPIO(I2C7_SCL,                 PIN(B, 3), GPIO_INPUT)           /* EC_I2C_EEPROM
 GPIO(I2C7_SDA,                 PIN(B, 2), GPIO_INPUT)           /* EC_I2C_EEPROM_SDA */
 
 /* NC / TP */
-GPIO(TP62,                     PIN(7, 2), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(TP58,                     PIN(0, 4), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(TP73,                     PIN(8, 2), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(TP18,                     PIN(C, 0), GPIO_INPUT | GPIO_PULL_UP)

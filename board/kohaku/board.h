@@ -42,15 +42,23 @@
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 /* BMA253 Lid accel */
 #define CONFIG_ACCEL_BMA255
-#define CONFIG_ACCEL_FORCE_MODE_MASK (BIT(LID_ACCEL) | BIT(LID_ALS))
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 #define CONFIG_LID_ANGLE_UPDATE
-/* OPT3001 ALS */
+/* BH1730 and TCS3400 ALS */
 #define CONFIG_ALS
-#define ALS_COUNT 1
+#define ALS_COUNT 2
+#define I2C_PORT_ALS      I2C_PORT_SENSOR
 #define CONFIG_ALS_BH1730
+#define CONFIG_ALS_TCS3400
+#define CONFIG_ALS_TCS3400_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
+
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK \
+	(BIT(LID_ACCEL) | BIT(LID_ALS) | BIT(CLEAR_ALS))
+
 /* Parameter to calculate LUX on Kohaku */
 /*
  * TODO (b/130835790): These values are from Caroline. Do they need to be
@@ -140,6 +148,8 @@ enum sensor_id {
 	BASE_GYRO,
 	LID_ALS,
 	VSYNC,
+	CLEAR_ALS,
+	RGB_ALS,
 	SENSOR_COUNT,
 };
 
