@@ -106,7 +106,13 @@ struct accelgyro_drv {
 	int (*get_scale)(const struct motion_sensor_t *s,
 				uint16_t   *scale,
 				int16_t    *temp);
-	int (*perform_calib)(const struct motion_sensor_t *s);
+	/**
+	 * Request performing/entering calibration.
+	 * Either a one shot mode (enable is not used),
+	 * or enter/exit a calibration state.
+	 */
+	int (*perform_calib)(const struct motion_sensor_t *s,
+				int        enable);
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	/**
 	 * handler for interrupts triggered by the sensor: it runs in task and

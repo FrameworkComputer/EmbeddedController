@@ -637,10 +637,13 @@ int get_scale(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
-static int perform_calib(const struct motion_sensor_t *s)
+static int perform_calib(const struct motion_sensor_t *s, int enable)
 {
 	int ret, val, en_flag, status, rate;
 	timestamp_t deadline;
+
+	if (!enable)
+		return EC_SUCCESS;
 
 	rate = get_data_rate(s);
 	/*

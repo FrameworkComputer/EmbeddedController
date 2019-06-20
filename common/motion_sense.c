@@ -1636,20 +1636,21 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 	case MOTIONSENSE_CMD_PERFORM_CALIB:
 		/* Verify sensor number is valid. */
 		sensor = host_sensor_id_to_real_sensor(
-				in->sensor_offset.sensor_num);
+				in->perform_calib.sensor_num);
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
 		if (!sensor->drv->perform_calib)
 			return EC_RES_INVALID_COMMAND;
 
-		ret = sensor->drv->perform_calib(sensor);
+		ret = sensor->drv->perform_calib(
+				sensor, in->perform_calib.enable);
 		if (ret != EC_SUCCESS)
 			return ret;
-		ret = sensor->drv->get_offset(sensor, out->sensor_offset.offset,
-				&out->sensor_offset.temp);
+		ret = sensor->drv->get_offset(sensor, out->perform_calib.offset,
+				&out->perform_calib.temp);
 		if (ret != EC_SUCCESS)
 			return ret;
-		args->response_size = sizeof(out->sensor_offset);
+		args->response_size = sizeof(out->perform_calib);
 		break;
 
 #ifdef CONFIG_ACCEL_FIFO

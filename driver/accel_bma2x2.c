@@ -188,10 +188,13 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	return EC_SUCCESS;
 }
 
-static int perform_calib(const struct motion_sensor_t *s)
+static int perform_calib(const struct motion_sensor_t *s, int enable)
 {
 	int ret, val, status, rate, range, i;
 	timestamp_t deadline;
+
+	if (!enable)
+		return EC_SUCCESS;
 
 	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
 			BMA2x2_OFFSET_CTRL_ADDR, &val);
