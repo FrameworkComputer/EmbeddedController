@@ -36,8 +36,8 @@ for dir in $unittest_dirs; do
 done
 # Filter out flash_ec since it's not part of any unit tests.
 changed=$(echo "${changed}" | grep -v util/flash_ec)
-# Filter out uart_stress_tester.sh
-changed=$(echo "${changed}" | grep -v util/uart_stress_tester.sh)
+# Filter out uart_stress_tester
+changed=$(echo "${changed}" | grep -v util/uart_stress_tester.py)
 # Filter out this file itself.
 changed=$(echo "${changed}" | grep -v util/presubmit_check.sh)
 # Filter out the OWNERS file.
