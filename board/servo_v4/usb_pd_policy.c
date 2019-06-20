@@ -783,32 +783,6 @@ DECLARE_CONSOLE_COMMAND(cc, command_cc,
 			"off|src|snk|srcdts|snkdts",
 			"Servo_v4 DTS and CHG mode");
 
-
-static int command_dts(int argc, char **argv)
-{
-	int disable_dts_new;
-	int val;
-
-	if (argc < 2) {
-		print_cc_mode();
-		return EC_SUCCESS;
-	}
-
-	if (!parse_bool(argv[1], &val))
-		return EC_ERROR_PARAM2;
-
-	disable_dts_new = val ^ 1;
-
-	/* Change dts without changing src. */
-	do_cc(disable_cc, disable_dts_new, allow_src_mode);
-	print_cc_mode();
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(dts, command_dts,
-			"off|on",
-			"Servo_v4 DTS mode on/off");
-
 static void fake_disconnect_end(void)
 {
 	/* Reenable CC lines with previous dts and src modes */
