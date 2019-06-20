@@ -169,23 +169,34 @@ static const irq_desc_t system_irqs[] = {
  * of which will push their corresponding interrupt vector number to
  * the stack, and then call exception_panic. The remaining arguments to
  * exception_panic were pushed by the hardware when the exception was
- * called.
+ * called.  The errorcode is pushed to the stack by hardware for vectors
+ * 8, 10-14 and 17.  Make sure to push 0 for the other vectors
  *
  * This is done since interrupt vectors 0-31 bypass the APIC ISR register
  * and go directly to the CPU core, so get_current_interrupt_vector
  * cannot be used.
  */
-#define DEFINE_EXN_HANDLER(vector)				\
+#define DEFINE_EXN_HANDLER(vector)			\
 	_DEFINE_EXN_HANDLER(vector, exception_panic_##vector)
 #define _DEFINE_EXN_HANDLER(vector, name)		\
-	void __keep name(void);			\
+	void __keep name(void);				\
 	__attribute__((noreturn)) void name(void)	\
 	{						\
-		__asm__ (				\
-			"push $" #vector "\n"		\
-			"call exception_panic\n");	\
-		while (1)				\
-			continue;			\
+		__asm__ ("push $0\n"			\
+			 "push $" #vector "\n"		\
+			 "call exception_panic\n");	\
+		__builtin_unreachable();		\
+	}
+
+#define DEFINE_EXN_HANDLER_W_ERRORCODE(vector)		\
+	_DEFINE_EXN_HANDLER_W_ERRORCODE(vector, exception_panic_##vector)
+#define _DEFINE_EXN_HANDLER_W_ERRORCODE(vector, name)	\
+	void __keep name(void);				\
+	__attribute__((noreturn)) void name(void)	\
+	{						\
+		__asm__ ("push $" #vector "\n"		\
+			 "call exception_panic\n");	\
+		__builtin_unreachable();		\
 	}
 
 DEFINE_EXN_HANDLER(0);
@@ -196,15 +207,15 @@ DEFINE_EXN_HANDLER(4);
 DEFINE_EXN_HANDLER(5);
 DEFINE_EXN_HANDLER(6);
 DEFINE_EXN_HANDLER(7);
-DEFINE_EXN_HANDLER(8);
+DEFINE_EXN_HANDLER_W_ERRORCODE(8);
 DEFINE_EXN_HANDLER(9);
-DEFINE_EXN_HANDLER(10);
-DEFINE_EXN_HANDLER(11);
-DEFINE_EXN_HANDLER(12);
-DEFINE_EXN_HANDLER(13);
-DEFINE_EXN_HANDLER(14);
+DEFINE_EXN_HANDLER_W_ERRORCODE(10);
+DEFINE_EXN_HANDLER_W_ERRORCODE(11);
+DEFINE_EXN_HANDLER_W_ERRORCODE(12);
+DEFINE_EXN_HANDLER_W_ERRORCODE(13);
+DEFINE_EXN_HANDLER_W_ERRORCODE(14);
 DEFINE_EXN_HANDLER(16);
-DEFINE_EXN_HANDLER(17);
+DEFINE_EXN_HANDLER_W_ERRORCODE(17);
 DEFINE_EXN_HANDLER(18);
 DEFINE_EXN_HANDLER(19);
 DEFINE_EXN_HANDLER(20);
