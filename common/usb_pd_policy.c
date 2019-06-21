@@ -378,8 +378,22 @@ static void dfp_consume_identity(int port, int cnt, uint32_t *payload)
 
 static void dfp_consume_cable_response(int port, int cnt, uint32_t *payload)
 {
-	if (is_vdo_present(cnt, VDO_INDEX_IDH))
+	if (is_vdo_present(cnt, VDO_INDEX_IDH)) {
 		cable[port].type = PD_IDH_PTYPE(payload[VDO_INDEX_IDH]);
+		if (is_vdo_present(cnt, VDO_INDEX_PTYPE_CABLE1))
+			cable[port].attr.raw_value =
+					payload[VDO_INDEX_PTYPE_CABLE1];
+	}
+	/*
+	 * Ref USB PD Spec 3.0  Pg 145. For active cable there are two VDOs.
+	 * Hence storing the second VDO.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
+	    is_vdo_present(cnt, VDO_INDEX_PTYPE_CABLE2) &&
+	    cable[port].type == IDH_PTYPE_ACABLE) {
+		cable[port].rev = PD_REV30;
+		cable[port].attr2.raw_value = payload[VDO_INDEX_PTYPE_CABLE2];
+	}
 }
 
 static int dfp_discover_ident(int port, uint32_t *payload)
@@ -939,6 +953,116 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 }
 
 #endif /* CONFIG_USB_PD_ALT_MODE */
+
+#ifdef CONFIG_CMD_USB_PD_CABLE
+static const char * const cable_type[] = {
+	[IDH_PTYPE_PCABLE] = "Passive",
+	[IDH_PTYPE_ACABLE] = "Active",
+};
+
+static const char * const cable_curr[] = {
+	[CABLE_CURRENT_3A] = "3A",
+	[CABLE_CURRENT_5A] = "5A",
+};
+
+static const char * const cable_ss_support[] = {
+	[USB_SS_U2_ONLY] = "Not supported",
+	[USB_SS_U31_GEN1] = "Gen 1",
+	[USB_SS_U31_GEN2] = "Gen 1 and Gen 2",
+};
+
+static const char * const vbus_max[] = {
+	[CABLE_VBUS_20V] = "20V",
+	[CABLE_VBUS_30V] = "30V",
+	[CABLE_VBUS_40V] = "40V",
+	[CABLE_VBUS_50V] = "50V",
+};
+static const char * const conn_type[] = {
+	[CONNECTOR_ATYPE] = "Type A",
+	[CONNECTOR_BTYPE] = "Type B",
+	[CONNECTOR_CTYPE] = "Type C",
+	[CONNECTOR_CAPTIVE] = "Captive",
+};
+
+static int command_cable(int argc, char **argv)
+{
+	int port;
+	char *e;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+	port = strtoi(argv[1], &e, 0);
+	if (*e || port >= CONFIG_USB_PD_PORT_COUNT)
+		return EC_ERROR_PARAM2;
+
+	ccprintf("Cable Type: ");
+	if (cable[port].type != IDH_PTYPE_PCABLE &&
+	    cable[port].type != IDH_PTYPE_ACABLE) {
+		ccprintf("Not Emark Cable\n");
+		return EC_SUCCESS;
+	}
+	ccprintf("%s\n", cable_type[cable[port].type]);
+
+	/*
+	 * For rev 2.0, rev 3.0 active and passive cables have same bits for
+	 * connector type (Bit 19:18) and current handling capability bit 6:5
+	 */
+	ccprintf("Connector Type: %s\n",
+		cable[port].attr.rev20.connector > ARRAY_SIZE(conn_type) ?
+		      "Invalid" : conn_type[cable[port].attr.rev20.connector]);
+
+	if (cable[port].attr.rev20.current) {
+		ccprintf("Cable Current: %s\n",
+		      cable[port].attr.rev20.current > ARRAY_SIZE(cable_curr) ?
+		      "Invalid" : cable_curr[cable[port].attr.rev20.current]);
+	} else
+		ccprintf("Cable Current: Invalid\n");
+
+	/*
+	 * For Rev 3.0 passive cables and Rev 2.0 active and passive cables,
+	 * USB Superspeed Signaling support have same bits 2:0
+	 */
+	if (cable[port].type == IDH_PTYPE_PCABLE) {
+		ccprintf("USB Superspeed Signaling support: %s\n",
+			cable[port].attr.rev20.ss >
+				ARRAY_SIZE(cable_ss_support) ? "Invalid" :
+				cable_ss_support[cable[port].attr.p_rev30.ss]);
+	}
+
+	/*
+	 * For Rev 3.0 active cables and Rev 2.0 active and passive cables,
+	 * SOP" controller preset have same bit 3
+	 */
+	if (cable[port].type == IDH_PTYPE_ACABLE) {
+		ccprintf("SOP' ' Controller: %s present\n",
+			cable[port].attr.rev20.controller ? "" : "Not");
+	}
+
+	if (cable[port].rev == PD_REV30) {
+		/*
+		 * For Rev 3.0 active and passive cables, Max Vbus vtg have
+		 * same bits 10:9.
+		 */
+		ccprintf("Max vbus voltage: %s\n",
+			cable[port].attr.p_rev30.vbus_max >
+				ARRAY_SIZE(vbus_max) ? "Invaild" :
+				vbus_max[cable[port].attr.p_rev30.vbus_max]);
+
+		/* For Rev 3.0 Active cables */
+		if (cable[port].type == IDH_PTYPE_ACABLE) {
+			ccprintf("SS signaling: USB_SS_GEN%u\n",
+					cable[port].attr2.a2_rev30.sss ? 2 : 1);
+			ccprintf("Number of SS lanes supported: %u\n",
+					cable[port].attr2.a2_rev30.lanes);
+		}
+	}
+	return EC_SUCCESS;
+}
+
+DECLARE_CONSOLE_COMMAND(pdcable, command_cable,
+			"<port>",
+			"Cable Characteristics");
+#endif /* CONFIG_CMD_USB_PD_CABLE */
 
 static void pd_usb_billboard_deferred(void)
 {
