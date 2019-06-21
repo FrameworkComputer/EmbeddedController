@@ -13,7 +13,7 @@
 
 /* Default ULPOSC clock speed in MHz */
 #ifndef ULPOSC1_CLOCK_MHZ
-#define ULPOSC1_CLOCK_MHZ 250
+#define ULPOSC1_CLOCK_MHZ 248
 #endif
 #ifndef ULPOSC2_CLOCK_MHZ
 #define ULPOSC2_CLOCK_MHZ 330

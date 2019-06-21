@@ -7,11 +7,13 @@
  * High-res hardware timer
  *
  * SCP hardware 32bit count down timer can be configured to source clock from
- * 32KHz, 26MHz, BCLK or PCLK. This implementation selects 26MHz frequency
- * countdown and converts to micro second value matching common timer.
+ * 32KHz, 26MHz, BCLK or PCLK. This implementation selects BCLK (ULPOSC1/8) as a
+ * source, countdown mode and converts to micro second value matching common
+ * timer.
  */
 
 #include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
@@ -27,7 +29,9 @@
 #define TIMER_SYSTEM 5
 #define TIMER_EVENT 3
 
-#define TIMER_CLOCK_MHZ 26
+/* ULPOSC1 should be a multiple of 8. */
+BUILD_ASSERT((ULPOSC1_CLOCK_MHZ % 8) == 0);
+#define TIMER_CLOCK_MHZ (ULPOSC1_CLOCK_MHZ / 8)
 
 /* Common timer overflows at 0x100000000 micro seconds */
 #define OVERFLOW_TICKS (TIMER_CLOCK_MHZ * 0x100000000 - 1)
@@ -174,14 +178,16 @@ int __hw_clock_source_init(uint32_t start_t)
 	/* Turn on OS TIMER, tick at 13MHz */
 	SCP_OSTIMER_CON |= 1;
 
-	/* System timestamp timer */
-	timer_set_clock(TIMER_SYSTEM, TIMER_CLK_26M);
+	/* System timestamp timer from BCLK (sourced from ULPOSC) */
+	SCP_CLK_BCLK = CLK_BCLK_SEL_ULPOSC1_DIV8;
+
+	timer_set_clock(TIMER_SYSTEM, TIMER_CLK_BCLK);
 	sys_high = TIMER_CLOCK_MHZ-1;
 	timer_set_reset_value(TIMER_SYSTEM, 0xffffffff);
 	__hw_timer_enable_clock(TIMER_SYSTEM, 1);
 	task_enable_irq(IRQ_TIMER(TIMER_SYSTEM));
 	/* Event tick timer */
-	timer_set_clock(TIMER_EVENT, TIMER_CLK_26M);
+	timer_set_clock(TIMER_EVENT, TIMER_CLK_BCLK);
 	task_enable_irq(IRQ_TIMER(TIMER_EVENT));
 
 	return IRQ_TIMER(TIMER_SYSTEM);
