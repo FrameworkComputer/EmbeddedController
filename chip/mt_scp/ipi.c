@@ -86,13 +86,11 @@ int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 	if (!ipi_ready)
 		return EC_ERROR_BUSY;
 
-	/*
-	 * TODO(b:117917141): Evaluate if we can remove this once we have the
-	 * video/camera feature code base.
-	 */
-	if (wait && in_interrupt_context())
-		/* Prevent from infinity wait when be in ISR context. */
+	/* TODO(b:117917141): Remove this check completely. */
+	if (in_interrupt_context()) {
+		CPRINTS("Err: invoke %s() in ISR CTX", __func__);
 		return EC_ERROR_BUSY;
+	}
 
 	if (len > sizeof(scp_send_obj->buffer))
 		return EC_ERROR_INVAL;

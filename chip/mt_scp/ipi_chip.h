@@ -46,7 +46,7 @@ struct ipc_shared_obj {
 	uint8_t buffer[CONFIG_IPC_SHARED_OBJ_BUF_SIZE];
 };
 
-/* Send a IPI contents to AP. */
+/* Send a IPI contents to AP. This shouldn't be used in ISR context. */
 int ipi_send(int32_t id, const void *buf, uint32_t len, int wait);
 
 /* Size of the rpmsg device name, should sync across kernel and EC. */
