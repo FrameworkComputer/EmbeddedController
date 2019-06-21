@@ -244,7 +244,7 @@ static void ipi_hostcmd_handler(int32_t id, void *buf, uint32_t len)
 
 	host_packet_receive(&ipi_packet);
 }
-DECLARE_IPI(IPI_HOST_COMMAND, ipi_hostcmd_handler, 1);
+DECLARE_IPI(IPI_HOST_COMMAND, ipi_hostcmd_handler, 0);
 
 /*
  * Get protocol information
