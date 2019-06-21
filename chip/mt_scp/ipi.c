@@ -39,6 +39,8 @@
 #define HOSTCMD_TYPE_HOSTCMD 1
 #define HOSTCMD_TYPE_HOSTEVENT 2
 
+static volatile int16_t ipc0_enabled_count;
+static struct mutex ipc0_lock;
 static struct mutex ipi_lock;
 /* IPC0 shared objects, including send object and receive object. */
 static struct ipc_shared_obj *const scp_send_obj =
@@ -47,6 +49,7 @@ static struct ipc_shared_obj *const scp_recv_obj =
 	(struct ipc_shared_obj *)(CONFIG_IPC_SHARED_OBJ_ADDR +
 				  sizeof(struct ipc_shared_obj));
 static char ipi_ready;
+
 #ifdef HAS_TASK_HOSTCMD
 /*
  * hostcmd and hostevent share the same IPI ID, and use first byte type to
@@ -80,6 +83,34 @@ static inline void try_to_wakeup_ap(int32_t id)
 		SCP_SPM_INT = SPM_INT_A2SPM;
 }
 
+void ipi_disable_irq(int irq)
+{
+	/* Only support SCP_IRQ_IPC0 for now. */
+	if (irq != SCP_IRQ_IPC0)
+		return;
+
+	mutex_lock(&ipc0_lock);
+
+	if ((--ipc0_enabled_count) == 0)
+		task_disable_irq(irq);
+
+	mutex_unlock(&ipc0_lock);
+}
+
+void ipi_enable_irq(int irq)
+{
+	/* Only support SCP_IRQ_IPC0 for now. */
+	if (irq != SCP_IRQ_IPC0)
+		return;
+
+	mutex_lock(&ipc0_lock);
+
+	if ((++ipc0_enabled_count) == 1)
+		task_enable_irq(irq);
+
+	mutex_unlock(&ipc0_lock);
+}
+
 /* Send data from SCP to AP. */
 int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 {
@@ -95,7 +126,7 @@ int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 	if (len > sizeof(scp_send_obj->buffer))
 		return EC_ERROR_INVAL;
 
-	task_disable_irq(SCP_IRQ_IPC0);
+	ipi_disable_irq(SCP_IRQ_IPC0);
 	mutex_lock(&ipi_lock);
 
 	/* Check if there is already an IPI pending in AP. */
@@ -112,7 +143,7 @@ int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 		try_to_wakeup_ap(id);
 
 		mutex_unlock(&ipi_lock);
-		task_enable_irq(SCP_IRQ_IPC0);
+		ipi_enable_irq(SCP_IRQ_IPC0);
 
 		return EC_ERROR_BUSY;
 	}
@@ -130,7 +161,7 @@ int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 		;
 
 	mutex_unlock(&ipi_lock);
-	task_enable_irq(SCP_IRQ_IPC0);
+	ipi_enable_irq(SCP_IRQ_IPC0);
 
 	return EC_SUCCESS;
 }
@@ -273,7 +304,7 @@ static void ipi_enable_ipc0_deferred(void)
 
 	/* All tasks are up, we can safely enable IPC0 IRQ now. */
 	SCP_INTC_IRQ_ENABLE |= IPC0_IRQ_EN;
-	task_enable_irq(SCP_IRQ_IPC0);
+	ipi_enable_irq(SCP_IRQ_IPC0);
 
 	ipi_ready = 1;
 

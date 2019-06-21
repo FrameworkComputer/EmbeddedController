@@ -68,6 +68,19 @@ struct rpmsg_ns_msg {
  */
 void ipc_handler(void);
 
+/*
+ * An IPC IRQ could be shared across many IPI handlers.
+ * Those handlers would usually operate on disabling or enabling the IPC IRQ.
+ * This may disorder the actual timing to on/off the IRQ when there are many
+ * tasks try to operate on it.  As a result, any access to the SCP_IRQ_*
+ * should go through ipi_{en,dis}able_irq(), which support a counter to
+ * enable/disable the IRQ at correct timeing.
+ */
+/* Disable IPI IRQ. */
+void ipi_disable_irq(int irq);
+/* Enable IPI IRQ. */
+void ipi_enable_irq(int irq);
+
 /* IPI tables */
 extern void (*ipi_handler_table[])(int32_t, void *, uint32_t);
 extern int *ipi_wakeup_table[];
