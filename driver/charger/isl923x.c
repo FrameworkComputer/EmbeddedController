@@ -302,11 +302,18 @@ int charger_post_init(void)
 	return EC_SUCCESS;
 }
 
-int isl923x_set_ac_prochot(uint16_t ac_prochot)
+int isl923x_set_ac_prochot(uint16_t ma)
 {
-	int rv = raw_write16(ISL923X_REG_PROCHOT_AC, ac_prochot);
+	int rv;
+
+	if (ma > ISL923X_AC_PROCHOT_CURRENT_MAX) {
+		CPRINTF("%s: invalid current (%d mA)\n", __func__, ma);
+		return EC_ERROR_INVAL;
+	}
+
+	rv = raw_write16(ISL923X_REG_PROCHOT_AC, ma);
 	if (rv)
-		CPRINTF("%s failed\n", __func__);
+		CPRINTF("%s failed (%d)\n", __func__, rv);
 	return rv;
 }
 
