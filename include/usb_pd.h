@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_USB_PD_H
 #define __CROS_EC_USB_PD_H
 
+#include <stdbool.h>
 #include "common.h"
 #include "usb_pd_tcpm.h"
 
@@ -307,6 +308,7 @@ enum hpd_event {
 enum pd_alternate_modes {
 	PD_AMODE_GOOGLE,
 	PD_AMODE_DISPLAYPORT,
+	PD_AMODE_INTEL,
 	/* not a real mode */
 	PD_AMODE_COUNT,
 };
@@ -455,8 +457,9 @@ enum idh_ptype {
 	((usbh) << 31 | (usbd) << 30 | ((ptype) & 0x7) << 27	\
 	 | (is_modal) << 26 | ((vid) & 0xffff))
 
-#define PD_IDH_PTYPE(vdo) (((vdo) >> 27) & 0x7)
-#define PD_IDH_VID(vdo)   ((vdo) & 0xffff)
+#define PD_IDH_PTYPE(vdo)    (((vdo) >> 27) & 0x7)
+#define PD_IDH_IS_MODAL(vdo) (((vdo) >> 26) & 0x1)
+#define PD_IDH_VID(vdo)      ((vdo) & 0xffff)
 
 /*
  * Cert Stat VDO
@@ -716,6 +719,114 @@ struct active_cable_vdo2 {
 	};
 };
 
+/*
+ * Thunderbolt 3 Device Discover mode responses
+ * (Reference: USB Type-C cable and connector specification, Table F-13)
+ * -------------------------------------------------------------
+ * <31>    : Intel Control Vendor Specific B1 Support (0b == No, 1b == Yes)
+ * <30>    : Intel Control Vendor Specific B0 Support (0b == No, 1b == Yes)
+ * <29:27> : Reserved
+ * <26>    : Intel Specific B0 Support (0b == No, 1b == Yes)
+ * <25:17> : Reserved
+ * <16>    : TBT Adapter (0b == TBT2 Legacy, 1b == TBT3)
+ * <15:0>  : TBT Alternate Mode
+ */
+enum tbt_adapter_type {
+	TBT_ADAPTER_LEGACY,
+	TBT_ADAPTER_TBT3,
+};
+
+enum tbt_intel_b0_type {
+	TBT_INTEL_B0_NOT_SUPPORTED,
+	TBT_INTEL_B0_SUPPORTED,
+};
+
+enum tbt_vendor_b0_type {
+	TBT_VENDOR_B0_NOT_SUPPORTED,
+	TBT_VENDOR_B0_SUPPORTED,
+};
+
+enum tbt_vendor_b1_type {
+	TBT_VENDOR_B1_NOT_SUPPORTED,
+	TBT_VENDOR_B1_SUPPORTED,
+};
+
+/* TBT Alternate Mode */
+#define PD_VDO_RESP_MODE_INTEL_TBT(x)	(((x) & 0xff) == 0x0001)
+
+struct tbt_mode_resp_device {
+	union {
+		struct {
+			uint16_t tbt_alt_mode : 16;
+			enum tbt_adapter_type tbt_adapter : 1;
+			uint16_t reserved0 : 9;
+			enum tbt_intel_b0_type intel_spec_b0 : 1;
+			uint8_t reserved1 : 3;
+			enum tbt_vendor_b0_type vendor_spec_b0 : 1;
+			enum tbt_vendor_b1_type vendor_spec_b1 : 1;
+		};
+		uint32_t raw_value;
+	};
+};
+
+/*
+ * Thunderbolt 3 cable Discover mode responses
+ * (Reference: USB Type-C cable and connector specification, Table F-14)
+ * -------------------------------------------------------------
+ * <31:24> : Reserved
+ * <23>    : Active cable plug link training
+ *	     (0b == bi-directional, 1b == uni-directional)
+ * <22>    : Re-timer (0b == Not retimer, 1b == Retimer)
+ * <21>    : Cable type (0b == Non-optical, 1b == Optical)
+ * <20:19> : TBT Rounded Support (00b == 3rd Gen Non-Rounded TBT,
+ *           01b == 3rd & 4th Gen Rounded and Non-Rounded TBT,
+ *           10b...11b == Reserved)
+ * <18:16> : Cable Speed (001b = USB3.2 Gen 1,
+ *                        010b = USB3.2 Gen 1 and USB4 Gen 2
+ *                        011b = USB4 Gen 3)
+ * <15:0>  : TBT alternate mode
+ */
+enum tbt_compat_cable_speed {
+	USB3_GEN1 = 1,
+	USB3_GEN1_USB4_GEN2,
+	USB4_GEN3,
+};
+
+enum tbt_cable_type {
+	TBT_CABLE_ELECTRICAL,
+	TBT_CABLE_OPTICAL,
+};
+
+enum link_lsrx_comm {
+	BIDIR_LSRX_COMM,
+	UNIDIR_LSRX_COMM,
+};
+
+enum tbt_compat_rounded_support {
+	TBT_GEN3_NON_ROUNDED,
+	TBT_GEN3_GEN4_ROUNDED_NON_ROUNDED,
+};
+
+enum usb_retimer_type {
+	USB_REDRIVER,
+	USB_RETIMER,
+};
+
+struct tbt_mode_resp_cable {
+	union {
+		struct {
+			uint16_t tbt_alt_mode : 16;
+			enum tbt_compat_cable_speed tbt_cable_speed : 3;
+			enum tbt_compat_rounded_support tbt_rounded : 2;
+			enum tbt_cable_type tbt_cable : 1;
+			enum usb_retimer_type retimer_type : 1;
+			enum link_lsrx_comm lsrx_comm : 1;
+			uint8_t reserved0 : 8;
+		};
+		uint32_t raw_value;
+	};
+};
+
 /* Cable structure for storing cable attributes */
 struct pd_cable {
 	uint8_t is_identified;
@@ -729,10 +840,22 @@ struct pd_cable {
 	uint8_t rev;
 	/* For USB PD REV3, active cable has 2 VDOs */
 	struct active_cable_vdo2 attr2;
+	/* For storing Discover mode response from device */
+	struct tbt_mode_resp_device dev_mode_resp;
+	/* For storing Discover mode response from cable */
+	struct tbt_mode_resp_cable cable_mode_resp;
 };
 
 /* Flag for sending SOP Prime packet */
-#define CABLE_FLAGS_SOP_PRIME_ENABLE	BIT(0)
+#define CABLE_FLAGS_SOP_PRIME_ENABLE	   BIT(0)
+/* Flag for sending SOP Prime Prime packet */
+#define CABLE_FLAGS_SOP_PRIME_PRIME_ENABLE BIT(1)
+/* Check if Thunderbolt-compatible mode enabled */
+#define CABLE_FLAGS_TBT_COMPAT_ENABLE	   BIT(2)
+/* Check if Thunderbolt-compatible mode is ready */
+#define CABLE_FLAGS_TBT_COMPAT_READY       BIT(3)
+/* Flag to limit speed to TBT Gen 2 passive cable */
+#define CABLE_FLAGS_TBT_COMPAT_LIMIT_SPEED BIT(4)
 
 /*
  * AMA VDO
@@ -987,6 +1110,7 @@ struct pd_cable {
 #define USB_VID_APPLE  0x05ac
 #define USB_PID1_APPLE 0x1012
 #define USB_PID2_APPLE 0x1013
+#define USB_VID_INTEL  0x8087
 
 /* Timeout for message receive in microseconds */
 #define USB_PD_RX_TMOUT_US 1800
@@ -1815,6 +1939,13 @@ void reset_pd_cable(int port);
 enum idh_ptype get_usb_pd_mux_cable_type(int port);
 
 /**
+ * Update Mux on entering Thunderbolt-compatible mode
+ *
+ * @param port USB-C port number
+ */
+void set_tbt_compat_mode_ready(int port);
+
+/**
  * Store Device ID & RW hash of device
  *
  * @param port			USB-C port number
@@ -2497,4 +2628,49 @@ __override_proto int svdm_gfu_config(int port, uint32_t *payload);
  * @return The number of VDOs
  */
 __override_proto int svdm_gfu_attention(int port, uint32_t *payload);
+
+/* Thunderbolt-compatible Alternate Mode */
+/**
+ * Enter Thunderbolt-compatible Mode.
+ *
+ * @param port The PD port number
+ * @param mode_caps Unused
+ * @return 0 on success else -1
+ */
+__override_proto int svdm_tbt_compat_enter_mode(int port, uint32_t mode_caps);
+
+/**
+ * Exit Thunderbolt-compatible Mode.
+ *
+ * @param port The PD port number
+ */
+__override_proto void svdm_tbt_compat_exit_mode(int port);
+
+/**
+ * Called to get Thunderbolt-compatible mode status
+ *
+ * @param port The PD port number
+ * @param payload Unused
+ * @return 0 on success else -1
+ */
+__override_proto int svdm_tbt_compat_status(int port, uint32_t *payload);
+
+/**
+ * Called to configure Thunderbolt-compatible mode
+ *
+ * @param port The PD port number
+ * @param payload Unused
+ * @return 0 on success else -1
+ */
+__override_proto int svdm_tbt_compat_config(int port, uint32_t *payload);
+
+/**
+ * Called when Thunderbolt-compatible Attention Message is received
+ *
+ * @param port The PD port number
+ * @param payload Unusued
+ * @return 0 on success else -1
+ */
+__override_proto int svdm_tbt_compat_attention(int port, uint32_t *payload);
+
 #endif  /* __CROS_EC_USB_PD_H */

@@ -2240,7 +2240,7 @@ static void pd_vdm_send_state_machine(int port)
 			 * If there is no ack from the cable, its a non-emark
 			 * cable and since, the pd flow should continue
 			 * irrespective of cable response, sending
-			 * discover_svid so the pd flow remains intact.
+			 * discover_identity so the pd flow remains intact.
 			 */
 			if (res < 0) {
 				header = PD_HEADER(PD_DATA_VENDOR_DEF,
@@ -2811,6 +2811,15 @@ void pd_interrupt_handler_task(void *p)
 	}
 }
 #endif /* HAS_TASK_PD_INT_C0 || HAS_TASK_PD_INT_C1 || HAS_TASK_PD_INT_C2 */
+
+void set_tbt_compat_mode_ready(int port)
+{
+	if (IS_ENABLED(CONFIG_USBC_SS_MUX) &&
+	    IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE))
+		/* Set usb mux to Thunderbolt-compatible mode */
+		usb_mux_set(port, TYPEC_MUX_TBT_COMPAT, USB_SWITCH_CONNECT,
+			pd[port].polarity);
+}
 
 void pd_task(void *u)
 {

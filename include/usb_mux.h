@@ -29,8 +29,11 @@ typedef uint8_t mux_state_t;
 #define MUX_PORT(port) (usb_muxes[port].port_addr >> 8)
 #define MUX_ADDR(port) (usb_muxes[port].port_addr & 0xFF)
 
-/* Mux state attributes */
-/* TODO: Directly use USB_PD_MUX_* everywhere and remove these 3 defines */
+/*
+ * Mux state attributes
+ * TODO (b:145796172): Directly use USB_PD_MUX_* everywhere,
+ * remove the below defines and enum typec_mux.
+ */
 #define MUX_USB_ENABLED        USB_PD_MUX_USB_ENABLED
 #define MUX_DP_ENABLED         USB_PD_MUX_DP_ENABLED
 #define MUX_POLARITY_INVERTED  USB_PD_MUX_POLARITY_INVERTED
@@ -44,6 +47,8 @@ enum typec_mux {
 	TYPEC_MUX_DOCK = MUX_USB_ENABLED | /* Both USB and DP */
 			 MUX_DP_ENABLED,
 	TYPEC_MUX_SAFE = MUX_SAFE_MODE,    /* Safe mode */
+	/* Thunderbolt-compatible only */
+	TYPEC_MUX_TBT_COMPAT = USB_PD_MUX_TBT_COMPAT_ENABLED,
 };
 
 /* Mux driver function pointers */

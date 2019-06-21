@@ -3836,6 +3836,13 @@
 #undef CONFIG_USB_PD_DECODE_SOP
 
 /*
+ * The USB4 specification defines compatibility support for USB4 products to
+ * interact with existing Thunderbolt 3 products. Enable this config to enter
+ * into Thunderbolt-compatible mode between two port partners.
+ */
+#undef CONFIG_USB_PD_TBT_COMPAT_MODE
+
+/*
  * Track VBUS level in TCPC module. This will only be needed if we're acting
  * as an external TCPC.
  */
