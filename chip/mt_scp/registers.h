@@ -327,6 +327,16 @@
 #define   WAKE_CKSW_SEL_SLOW_MASK	0x30
 #define   WAKE_CKSW_SEL_SLOW_DEFAULT	0x10
 #define SCP_CLK_UART			REG32(SCP_CLK_BASE + 0x44)
+#define   CLK_UART_SEL_MASK		0x3
+#define   CLK_UART_SEL_26M		0x0
+#define   CLK_UART_SEL_32K		0x1
+/* This is named ulposc_div_to_26m in datasheet */
+#define   CLK_UART_SEL_ULPOSC1_DIV10	0x2
+#define   CLK_UART1_SEL_MASK		(0x3 << 16)
+#define   CLK_UART1_SEL_26M		(0x0 << 16)
+#define   CLK_UART1_SEL_32K		(0x1 << 16)
+/* This is named ulposc_div_to_26m in datasheet */
+#define   CLK_UART1_SEL_ULPOSC1_DIV10	(0x2 << 16)
 #define SCP_CLK_BCLK			REG32(SCP_CLK_BASE + 0x48)
 #define   CLK_BCLK_SEL_MASK		0x3
 #define   CLK_BCLK_SEL_SYS_DIV8		0x0
