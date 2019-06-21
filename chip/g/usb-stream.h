@@ -27,15 +27,18 @@ struct usb_stream_config {
 	/*
 	 * Endpoint index, and pointers to the USB packet RAM buffers.
 	 */
-	int endpoint;
+	uint16_t endpoint;
+	uint16_t is_uart_console;
 
 	/* USB TX transfer is in progress */
 	uint8_t *tx_in_progress;
+	uint8_t *kicker_running;
 
 	/*
 	 * Deferred function to call to handle USB and Queue request.
 	 */
 	const struct deferred_data *deferred_rx;
+	const struct deferred_data *tx_kicker;
 
 	int tx_size;
 	int rx_size;
@@ -62,6 +65,13 @@ struct usb_stream_config {
 extern struct consumer_ops const usb_stream_consumer_ops;
 extern struct producer_ops const usb_stream_producer_ops;
 
+/* Need to define these so that other than Cr50 boards compile cleanly. */
+#ifndef USB_EP_EC
+#define USB_EP_EC -1
+#endif
+#ifndef USB_EP_AP
+#define USB_EP_AP -1
+#endif
 
 /*
  * Convenience macro for defining USB streams and their associated state and
@@ -115,16 +125,23 @@ extern struct producer_ops const usb_stream_producer_ops;
 	static struct g_usb_desc CONCAT2(NAME, _in_desc_)[MAX_IN_DESC];	\
 	static uint8_t CONCAT2(NAME, _buf_rx_)[RX_SIZE];		\
 	static uint8_t CONCAT2(NAME, _tx_in_progress_);			\
+	static uint8_t CONCAT2(NAME, _kicker_running_);			\
 	static void CONCAT2(NAME, _deferred_rx_)(void);			\
+	static void CONCAT2(NAME, _tx_kicker_)(void);			\
 	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_rx_));			\
+	DECLARE_DEFERRED(CONCAT2(NAME, _tx_kicker_));			\
 	static int CONCAT2(NAME, _rx_handled);				\
 	static size_t CONCAT2(NAME, _tx_handled);			\
 	struct usb_stream_config const NAME = {				\
 		.endpoint     = ENDPOINT,				\
+		.is_uart_console = ((ENDPOINT == USB_EP_EC) ||		\
+				    (ENDPOINT == USB_EP_AP)),		\
 		.tx_in_progress = &CONCAT2(NAME, _tx_in_progress_),	\
+		.kicker_running = &CONCAT2(NAME, _kicker_running_),	\
 		.in_desc      = &CONCAT2(NAME, _in_desc_)[0],		\
 		.out_desc     = &CONCAT2(NAME, _out_desc_),		\
 		.deferred_rx  = &CONCAT2(NAME, _deferred_rx__data),	\
+		.tx_kicker    = &CONCAT2(NAME, _tx_kicker__data),	\
 		.tx_size      = TX_SIZE,				\
 		.rx_size      = RX_SIZE,				\
 		.rx_ram       = CONCAT2(NAME, _buf_rx_),		\
@@ -171,6 +188,8 @@ extern struct producer_ops const usb_stream_producer_ops;
 	};								\
 	static void CONCAT2(NAME, _deferred_rx_)(void)			\
 	{ rx_stream_handler(&NAME); }					\
+	static void CONCAT2(NAME, _tx_kicker_)(void)			\
+	{ tx_stream_kicker(&NAME); }					\
 	static void CONCAT2(NAME, _ep_tx)(void)				\
 	{								\
 		usb_stream_tx(&NAME);					\
@@ -213,6 +232,7 @@ extern struct producer_ops const usb_stream_producer_ops;
  * Handle USB and Queue request in a deferred callback.
  */
 void rx_stream_handler(struct usb_stream_config const *config);
+void tx_stream_kicker(struct usb_stream_config const *config);
 
 /*
  * These functions are used by the trampoline functions defined above to

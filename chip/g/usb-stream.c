@@ -4,6 +4,8 @@
  */
 
 #include "registers.h"
+#include "task.h"
+#include "timer.h"
 #include "usb-stream.h"
 
 /* Let the USB HW IN-to-host FIFO transmit some bytes */
@@ -128,79 +130,129 @@ static inline int tx_fifo_is_ready(struct usb_stream_config const *config)
 }
 
 /* Try to send some bytes to the host */
-void tx_stream_handler(struct usb_stream_config const *config)
+static void tx_stream_handler(struct usb_stream_config const *config)
 {
+	int len[MAX_IN_DESC];
 	size_t count;
+	size_t head;
 	struct queue const *tx_q = config->consumer.queue;
-
-	/* handle the completion of the previous transfer, if there was any. */
-	count = *(config->tx_handled);
-	if (count > 0) {
-		/*
-		 * Since tx completed, let's advance queue head  by the value of
-		 * 'count'.
-		 */
-		queue_advance_head(tx_q, count);
-		*(config->tx_handled) = 0;
-	}
 
 	/* setup to send bytes to the host */
 	count = MIN(queue_count(tx_q), config->tx_size);
-	if (count > 0) {
-		size_t head = tx_q->state->head & tx_q->buffer_units_mask;
-		int len[MAX_IN_DESC];
-
-		/*
-		 * If queue units are not physically continuous, then
-		 * setup transfer in two USB endpoint descriptors.
-		 *
-		 *      buffer                         buffer + buffer_units
-		 *      |     tail                head |
-		 *      |     |                   |    |
-		 *      V     V                   V    V
-		 * tx_q |xxxxxx___________________xxxxx|
-		 *       <---->                   <--->
-		 *      len[1]                    len[0]
-		 */
-		len[0] = MIN(count, tx_q->buffer_units - head);
-		len[1] = count - len[0];
-
-		/*
-		 * Store the amount to advance head when the transfer is done.
-		 * Note: 'tx byte' field in the endpoint descriptor decreases to
-		 *       zero as data get transferred. Need to store the
-		 *       transfer size, which is 'count', aside into *config->
-		 *       tx_handlered.
-		 */
-		*(config->tx_handled) = count;
-
-		/*
-		 * Setup the first endpoint descriptor with start memory address
-		 * No need to setup for the second endpoint, because it is
-		 * always the start address of the queue, and already setup in
-		 * usb_stream_reset().
-		 */
-		config->in_desc[0].addr = (void *)tx_q->buffer + head;
-
-		/*
-		 * Enable USB transfer. usb_enable_tx() will setup the transfer
-		 * size in the first endpoint descriptor, and the second
-		 * descriptor as well if it is needed.
-		 */
-		usb_enable_tx(config, len);
-	} else {
-		/* USB TX transfer is not active. */
+	if (!count) {
+		/* Report USB TX transfer is not active any more. */
 		*config->tx_in_progress = 0;
+		return;
 	}
+
+	head = tx_q->state->head & tx_q->buffer_units_mask;
+
+	if (config->is_uart_console) {
+		if (!*config->kicker_running &&
+		    (count < config->tx_size)) {
+		/*
+		 * Shipping less than full chunk (64 bytes) over usb is
+		 * wasteful in case there is a lot of data coming from the
+		 * stream source. Let's try collecting more bytes in case more
+		 * is coming.
+		 *
+		 * It takes 5.6 ms to transfer 64 bytes over UART at 115200
+		 * bps with one start and one stop bit. Let's set the deferred
+		 * function delay to 3 ms, it will take longer in reality as
+		 * background tasks will get a chance to run.
+		 */
+			hook_call_deferred(config->tx_kicker, 3 * MSEC);
+			*config->kicker_running = 1;
+			return;
+		}
+
+		if (*config->kicker_running) {
+			*config->kicker_running = 0;
+			hook_call_deferred(config->tx_kicker, -1);
+		}
+	}
+
+	/*
+	 * If queue units are not physically continuous, then setup transfer
+	 * in two USB endpoint descriptors.
+	 *
+	 *      buffer                         buffer + buffer_units
+	 *      |     tail                head |
+	 *      |     |                   |    |
+	 *      V     V                   V    V
+	 * tx_q |xxxxxx___________________xxxxx|
+	 *       <---->                   <--->
+	 *      len[1]                    len[0]
+	 */
+	len[0] = MIN(count, tx_q->buffer_units - head);
+	len[1] = count - len[0];
+
+	/*
+	 * Store the amount to advance head when the transfer is done.
+	 * Note: 'tx byte' field in the endpoint descriptor decreases to zero
+	 *       as data get transferred. Need to store the transfer size,
+	 *       which is 'count', aside into *config-> tx_handlered.
+	 */
+	*(config->tx_handled) = count;
+
+	/*
+	 * Setup the first endpoint descriptor with start memory address No
+	 * need to setup for the second endpoint, because it is always the
+	 * start address of the queue, and already setup in
+	 * usb_stream_reset().
+	 */
+	config->in_desc[0].addr = (void *)tx_q->buffer + head;
+
+	/*
+	 * Enable USB transfer. usb_enable_tx() will setup the transfer size
+	 * in the first endpoint descriptor, and the second descriptor as well
+	 * if it is needed.
+	 */
+	usb_enable_tx(config, len);
+}
+
+/*
+ * Deferred function which gets to run if a UART console does not supply
+ * enough data to fill a USB chunk (64 bytes).
+ */
+void tx_stream_kicker(struct usb_stream_config const *config)
+{
+	/*
+	 * By design this function must run on a task context, i.e. interrupts
+	 * are enabled.
+	 *
+	 * The not so elegant but simplest way to avoid concurrency issues
+	 * with the kicker function execution interrupted by a USB or UART
+	 * event is to invoke tx_stream_handler() with disabled interrupts.
+	 */
+	interrupt_disable();
+
+	if (*config->kicker_running)
+		tx_stream_handler(config);
+
+	interrupt_enable();
 }
 
 /* Tx/IN interrupt handler */
 void usb_stream_tx(struct usb_stream_config const *config)
 {
+	size_t *tx_handled;
+
 	/* Clear the Tx/IN interrupts */
 	GR_USB_DIEPINT(config->endpoint) = 0xffffffff;
 
-	/* Call the Tx FIFO handler */
+	/* Address of the size of the most recent chunk. */
+	tx_handled = config->tx_handled;
+
+	/*
+	 * Transfer completed, advance queue head by the number of bytes
+	 * transmitted in the most recent chunk.
+	 */
+	queue_advance_head(config->consumer.queue, *tx_handled);
+
+	*tx_handled = 0;
+
+	/* See if there is more to transmit. */
 	tx_stream_handler(config);
 }
 
@@ -261,8 +313,24 @@ static void usb_written(struct consumer const *consumer, size_t count)
 		DOWNCAST(consumer, struct usb_stream_config, consumer);
 
 	/* USB TX transfer is active. No need to activate it. */
-	if (*config->tx_in_progress)
-		return;
+	if (*config->tx_in_progress) {
+		struct queue const *tx_q;
+
+		if (!*config->kicker_running)
+			return;
+
+		/*
+		 * If kicker is running for too long and we already have a
+		 * certain amount of data accumulated in the buffer, let's
+		 * proceed even before the kicker had a chance to kick in.
+		 */
+		tx_q = config->consumer.queue;
+		if (queue_count(tx_q) < tx_q->buffer_units_mask)
+			return;
+
+		hook_call_deferred(config->tx_kicker, -1);
+		*config->kicker_running = 0;
+	}
 
 	/*
 	 * if USB Endpoint has not been initialized nor in ready status,
