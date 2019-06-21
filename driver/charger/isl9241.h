@@ -34,7 +34,12 @@
 #define ISL9241_REG_MAX_SYSTEM_VOLTAGE	0x15
 
 #define ISL9241_REG_CONTROL7		0x38
+
+/* Configures various charger options */
 #define ISL9241_REG_CONTROL0		0x39
+/* 2: Input Voltage Regulation (0 = Enable (default), 1 = Disable) */
+#define ISL9241_CONTROL0_INPUT_VTG_REGULATION	BIT(2)
+
 #define ISL9241_REG_INFORMATION1	0x3A
 #define ISL9241_REG_ADAPTER_CUR_LIMIT2	0x3B
 
@@ -71,6 +76,8 @@
 #define ISL9241_REG_DC_PROCHOT		0x48
 #define ISL9241_REG_OTG_VOLTAGE		0x49
 #define ISL9241_REG_OTG_CURRENT		0x4A
+
+/* VIN Voltage (ADP Min Voltage) (default 4.096V) */
 #define ISL9241_REG_VIN_VOLTAGE		0x4B
 
 /* Configures various charger options */
@@ -92,7 +99,10 @@
 #define ISL9241_REG_NTC_ADC_RESULTS	0x80
 #define ISL9241_REG_VBAT_ADC_RESULTS	0x81
 #define ISL9241_REG_TJ_ADC_RESULTS	0x82
+
+/* ADC result for adapter current measurements, LSB = 22.2mA */
 #define ISL9241_REG_IADP_ADC_RESULTS	0x83
+
 #define ISL9241_REG_DC_ADC_RESULTS	0x84
 #define ISL9241_REG_CC_ADC_RESULTS	0x85
 #define ISL9241_REG_VSYS_ADC_RESULTS	0x86

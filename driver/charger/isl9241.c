@@ -308,6 +308,14 @@ static void isl9241_init(void)
 		reg | ISL9241_CONTROL3_ACLIM_RELOAD))
 		goto init_fail;
 
+#ifndef CONFIG_CHARGE_RAMP_HW
+	if (isl9241_read(ISL9241_REG_CONTROL0, &reg))
+		goto init_fail;
+	if (isl9241_write(ISL9241_REG_CONTROL0,
+		reg | ISL9241_CONTROL0_INPUT_VTG_REGULATION))
+		goto init_fail;
+#endif
+
 	/*
 	 * No need to proceed with the rest of init if we sysjump'd to this
 	 * image as the input current limit has already been set.
@@ -325,6 +333,54 @@ init_fail:
 	CPRINTF("ISL9241_init failed!");
 }
 DECLARE_HOOK(HOOK_INIT, isl9241_init, HOOK_PRIO_INIT_I2C + 1);
+
+/*****************************************************************************/
+/* Hardware current ramping */
+
+#ifdef CONFIG_CHARGE_RAMP_HW
+int charger_set_hw_ramp(int enable)
+{
+	int rv, reg;
+
+	rv = isl9241_read(ISL9241_REG_CONTROL0, &reg);
+	if (rv)
+		return rv;
+
+	/* HW ramp is controlled by input voltage regulation reference bits */
+	if (enable)
+		reg &= ~ISL9241_CONTROL0_INPUT_VTG_REGULATION;
+	else
+		reg |= ISL9241_CONTROL0_INPUT_VTG_REGULATION;
+
+	return isl9241_write(ISL9241_REG_CONTROL0, reg);
+}
+
+int chg_ramp_is_stable(void)
+{
+	/*
+	 * Since ISL cannot read the current limit that the ramp has settled
+	 * on, then we can never consider the ramp stable, because we never
+	 * know what the stable limit is.
+	 */
+	return 0;
+}
+
+int chg_ramp_is_detected(void)
+{
+	return 1;
+}
+
+int chg_ramp_get_current_limit(void)
+{
+	int reg;
+
+	if (isl9241_read(ISL9241_REG_IADP_ADC_RESULTS, &reg))
+		return 0;
+
+	/* LSB value of register = 22.2mA */
+	return (reg * 222) / 10;
+}
+#endif /* CONFIG_CHARGE_RAMP_HW */
 
 /*****************************************************************************/
 #ifdef CONFIG_CMD_CHARGER_DUMP
