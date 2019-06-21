@@ -342,7 +342,10 @@ int lis2mdl_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		: reg_val == LIS2MDL_ODR_20HZ ? 20000
 		: 50000;
 
-	/* b/130417518 - verify why skipping init_mag_cal is needed here. */
+	/*
+	 * If no change is needed just bail. Not doing so will require a reset
+	 * of the chip which only leads to re-calibration and lost samples.
+	 */
 	if (normalized_rate == data->base.odr)
 		return ret;
 
