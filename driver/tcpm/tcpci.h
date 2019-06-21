@@ -116,8 +116,9 @@
 #define TCPC_REG_RX_DATA           0x34 /* through 0x4f */
 
 #define TCPC_REG_TRANSMIT          0x50
-#define TCPC_REG_TRANSMIT_SET(type) \
+#define TCPC_REG_TRANSMIT_SET_WITH_RETRY(type) \
 		(PD_RETRY_COUNT << 4 | (type))
+#define TCPC_REG_TRANSMIT_SET_WITHOUT_RETRY(type) (type)
 #define TCPC_REG_TRANSMIT_RETRY(reg) (((reg) & 0x30) >> 4)
 #define TCPC_REG_TRANSMIT_TYPE(reg)  ((reg) & 0x7)
 

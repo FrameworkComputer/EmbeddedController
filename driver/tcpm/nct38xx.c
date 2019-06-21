@@ -260,7 +260,8 @@ int tcpci_nct38xx_transmit(int port, enum tcpm_transmit_type type,
 	rv = tcpc_write_block(port, TCPC_REG_TX_BYTE_CNT,
 					(const uint8_t *)txBuf, txBuf[0] + 1);
 
-	rv = tcpc_write(port, TCPC_REG_TRANSMIT, TCPC_REG_TRANSMIT_SET(type));
+	rv = tcpc_write(port, TCPC_REG_TRANSMIT,
+			TCPC_REG_TRANSMIT_SET_WITH_RETRY(type));
 	return rv;
 }
 

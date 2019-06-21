@@ -288,11 +288,62 @@ int pd_charge_from_device(uint16_t vid, uint16_t pid)
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
+static struct pd_cable cable[CONFIG_USB_PD_PORT_COUNT];
+
+static uint8_t is_transmit_msg_sop_prime(int port)
+{
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
+		return !!(cable[port].flags & CABLE_FLAGS_SOP_PRIME_ENABLE);
+
+	return 0;
+}
+
+uint8_t is_sop_prime_ready(int port, uint8_t data_role, uint32_t pd_flags)
+{
+	/*
+	 * Ref: USB PD 3.0 sec 2.5.4: When an Explicit Contract is in place the
+	 * VCONN Source (either the DFP or the UFP) can communicate with the
+	 * Cable Plug(s) using SOP’/SOP’’ Packets
+	 *
+	 * Ref: USB PD 2.0 sec 2.4.4: When an Explicit Contract is in place the
+	 * DFP (either the Source or the Sink) can communicate with the
+	 * Cable Plug(s) using SOP’/SOP” Packets.
+	 * Sec 3.6.11 : Before communicating with a Cable Plug a Port Should
+	 * ensure that it is the Vconn Source
+	 */
+	if (pd_flags & PD_FLAGS_VCONN_ON && (IS_ENABLED(CONFIG_USB_PD_REV30) ||
+		data_role == PD_ROLE_DFP))
+		return is_transmit_msg_sop_prime(port);
+
+	return 0;
+}
+
+void reset_pd_cable(int port)
+{
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
+		memset(&cable[port], 0, sizeof(cable[port]));
+}
+
 #ifdef CONFIG_USB_PD_ALT_MODE
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 
 static struct pd_policy pe[CONFIG_USB_PD_PORT_COUNT];
+
+static int is_vdo_present(int cnt, int index)
+{
+	return cnt > index;
+}
+
+static void enable_transmit_sop_prime(int port)
+{
+	cable[port].flags |= CABLE_FLAGS_SOP_PRIME_ENABLE;
+}
+
+static void disable_transmit_sop_prime(int port)
+{
+	cable[port].flags &= ~CABLE_FLAGS_SOP_PRIME_ENABLE;
+}
 
 void pd_dfp_pe_init(int port)
 {
@@ -323,6 +374,18 @@ static void dfp_consume_identity(int port, int cnt, uint32_t *payload)
 	default:
 		break;
 	}
+}
+
+static void dfp_consume_cable_response(int port, int cnt, uint32_t *payload)
+{
+	if (is_vdo_present(cnt, VDO_INDEX_IDH))
+		cable[port].type = PD_IDH_PTYPE(payload[VDO_INDEX_IDH]);
+}
+
+static int dfp_discover_ident(int port, uint32_t *payload)
+{
+	payload[0] = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT);
+	return 1;
 }
 
 static int dfp_discover_svids(int port, uint32_t *payload)
@@ -754,8 +817,22 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		switch (cmd) {
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 		case CMD_DISCOVER_IDENT:
-			dfp_consume_identity(port, cnt, payload);
-			rsize = dfp_discover_svids(port, payload);
+			/* Received a SOP Prime Discover Ident msg */
+			if (is_transmit_msg_sop_prime(port)) {
+				/* Store cable type */
+				dfp_consume_cable_response(port, cnt, payload);
+				disable_transmit_sop_prime(port);
+				rsize = dfp_discover_svids(port, payload);
+			/* Received a SOP Discover Ident Message */
+			} else if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
+				dfp_consume_identity(port, cnt, payload);
+				rsize = dfp_discover_ident(port, payload);
+				/* Send SOP' Discover Ident message */
+				enable_transmit_sop_prime(port);
+			} else {
+				dfp_consume_identity(port, cnt, payload);
+				rsize = dfp_discover_svids(port, payload);
+			}
 #ifdef CONFIG_CHARGE_MANAGER
 			if (pd_charge_from_device(pd_get_identity_vid(port),
 						  pd_get_identity_pid(port)))
