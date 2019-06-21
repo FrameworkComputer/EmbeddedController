@@ -34,6 +34,7 @@
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 static int learn_mode;
 
@@ -307,13 +308,13 @@ int isl923x_set_ac_prochot(uint16_t ma)
 	int rv;
 
 	if (ma > ISL923X_AC_PROCHOT_CURRENT_MAX) {
-		CPRINTF("%s: invalid current (%d mA)\n", __func__, ma);
+		CPRINTS("%s: invalid current (%d mA)\n", __func__, ma);
 		return EC_ERROR_INVAL;
 	}
 
 	rv = raw_write16(ISL923X_REG_PROCHOT_AC, ma);
 	if (rv)
-		CPRINTF("%s failed (%d)\n", __func__, rv);
+		CPRINTS("%s failed (%d)", __func__, rv);
 	return rv;
 }
 
@@ -408,7 +409,7 @@ static void isl923x_init(void)
 
 	return;
 init_fail:
-	CPRINTF("isl923x_init failed!");
+	CPRINTS("%s failed!", __func__);
 }
 DECLARE_HOOK(HOOK_INIT, isl923x_init, HOOK_PRIO_INIT_I2C + 1);
 
