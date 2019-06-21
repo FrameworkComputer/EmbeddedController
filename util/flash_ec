@@ -889,8 +889,8 @@ function flash_flashrom() {
 			${FLASHROM_CMDLINE} -v "${T}"
 	fi
 
-	[[ -f "${T}" ]] && rm "${T}"
-	[[ -f "${L}" ]] && rm "${L}"
+	[[ -f "${T}" ]] && rm "${T}" || true
+	[[ -f "${L}" ]] && rm "${L}" || true
 }
 
 function flash_stm32() {
