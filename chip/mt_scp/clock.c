@@ -113,6 +113,7 @@ static inline void busy_udelay(int usec)
 static unsigned int scp_measure_ulposc_freq(int osc)
 {
 	unsigned int result = 0;
+	int cnt;
 
 	/* Before select meter clock input, bit[1:0] = b00 */
 	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_MODE_MASK) |
@@ -137,12 +138,17 @@ static unsigned int scp_measure_ulposc_freq(int osc)
 	 * Frequency meter counts cycles in 1 / (26 * 1000) second period.
 	 *   freq_in_hz = freq_counter * 26 * 1000
 	 *
-	 * The hardware takes 38us to count cycles. Delay 50us then check
-	 * METER_RUN flag.
+	 * The hardware takes 38us to count cycles. Delay up to 100us,
+	 * as busy_udelay may not be accurate when sysclk is not 26Mhz
+	 * (e.g. when recalibrating/measuring after boot).
 	 */
-	busy_udelay(50);
-	if (!(AP_SCP_CFG_0 & CFG_FREQ_METER_RUN))
-		result = CFG_FREQ_COUNTER(AP_SCP_CFG_1);
+	for (cnt = 100; cnt; cnt--) {
+		busy_udelay(1);
+		if (!(AP_SCP_CFG_0 & CFG_FREQ_METER_RUN)) {
+			result = CFG_FREQ_COUNTER(AP_SCP_CFG_1);
+			break;
+		}
+	}
 
 	/* Disable freq meter */
 	AP_SCP_CFG_0 &= ~CFG_FREQ_METER_ENABLE;
