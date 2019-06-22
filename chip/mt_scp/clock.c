@@ -127,8 +127,8 @@ static unsigned int scp_measure_ulposc_freq(int osc)
 	AP_SCP_CFG_0 |= CFG_FREQ_METER_RUN;
 
 	/*
-	 * Frequency meter counts cycles in 1 / (26 * 1000) second period.
-	 *   freq_in_hz = freq_counter * 26 * 1000
+	 * Frequency meter counts cycles in 1 / (26 * 1024) second period.
+	 *   freq_in_hz = freq_counter * 26 * 1024
 	 *
 	 * The hardware takes 38us to count cycles. Delay up to 100us,
 	 * as busy_udelay may not be accurate when sysclk is not 26Mhz
@@ -163,9 +163,9 @@ static int scp_ulposc_config_measure(int osc, int div, int cali)
 
 	scp_ulposc_config(osc, div, cali);
 	freq = scp_measure_ulposc_freq(osc);
-	CPRINTF("ULPOSC%d: %d %d %d (%dMHz)\n",
+	CPRINTF("ULPOSC%d: %d %d %d (%dkHz)\n",
 		osc + 1, div, cali, freq,
-		freq * 26 / 1000);
+		freq * 26 * 1000 / 1024);
 
 	return freq;
 }
@@ -180,7 +180,7 @@ static int scp_ulposc_config_measure(int osc, int div, int cali)
  */
 static int scp_calibrate_ulposc(int osc, int target_mhz)
 {
-	int target_freq = target_mhz * 1000 / 26;
+	int target_freq = DIV_ROUND_NEAREST(target_mhz * 1024, 26);
 	struct ulposc {
 		int div;        /* frequency divisor/multiplier */
 		int cali;       /* variable resistor calibrator */
@@ -338,11 +338,11 @@ int command_ulposc(int argc, char *argv[])
 		scp_calibrate_ulposc(1, ULPOSC2_CLOCK_MHZ);
 	}
 
-	/* SCP clock meter counts every (26MHz / 1000) tick */
-	ccprintf("ULPOSC1 frequency: %u MHz\n",
-		 scp_measure_ulposc_freq(0) * 26 / 1000);
-	ccprintf("ULPOSC2 frequency: %u MHz\n",
-		 scp_measure_ulposc_freq(1) * 26 / 1000);
+	/* SCP clock meter counts every (26MHz / 1024) tick */
+	ccprintf("ULPOSC1 frequency: %u kHz\n",
+		 scp_measure_ulposc_freq(0) * 26 * 1000 / 1024);
+	ccprintf("ULPOSC2 frequency: %u kHz\n",
+		 scp_measure_ulposc_freq(1) * 26 * 1000 / 1024);
 
 	return EC_SUCCESS;
 }
