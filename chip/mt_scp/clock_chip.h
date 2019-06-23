@@ -8,7 +8,16 @@
 #ifndef __CROS_EC_CLOCK_CHIP_H
 #define __CROS_EC_CLOCK_CHIP_H
 
+#include "common.h"
 #include "registers.h"
+
+/* Default ULPOSC clock speed in MHz */
+#ifndef ULPOSC1_CLOCK_MHZ
+#define ULPOSC1_CLOCK_MHZ 250
+#endif
+#ifndef ULPOSC2_CLOCK_MHZ
+#define ULPOSC2_CLOCK_MHZ 330
+#endif
 
 void scp_enable_clock(void);
 

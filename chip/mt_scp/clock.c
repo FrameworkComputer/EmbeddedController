@@ -16,14 +16,6 @@
 
 #define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ## args)
 
-/* Default ULPOSC clock speed in Hz */
-#ifndef ULPOSC1_CLOCK_HZ
-#define ULPOSC1_CLOCK_HZ 250000000
-#endif
-#ifndef ULPOSC2_CLOCK_HZ
-#define ULPOSC2_CLOCK_HZ 330000000
-#endif
-
 #define ULPOSC_DIV_MAX (1 << OSC_DIV_BITS)
 #define ULPOSC_CALI_MAX (1 << OSC_CALI_BITS)
 
@@ -182,13 +174,13 @@ static int scp_ulposc_config_measure(int osc, int div, int cali)
  * Calibrate ULPOSC to target frequency.
  *
  * @param osc           0:ULPOSC1, 1:ULPOSC2
- * @param target_hz     Target frequency to set
+ * @param target_mhz    Target frequency to set
  * @return              Frequency counter output
  *
  */
-static int scp_calibrate_ulposc(int osc, int target_hz)
+static int scp_calibrate_ulposc(int osc, int target_mhz)
 {
-	int target_freq = target_hz / (26 * 1000);
+	int target_freq = target_mhz * 1000 / 26;
 	struct ulposc {
 		int div;        /* frequency divisor/multiplier */
 		int cali;       /* variable resistor calibrator */
@@ -311,8 +303,8 @@ void scp_enable_clock(void)
 	scp_clock_high_enable(1); /* Turn on ULPOSC2 */
 
 	/* Calibrate ULPOSC */
-	scp_calibrate_ulposc(0, ULPOSC1_CLOCK_HZ);
-	scp_calibrate_ulposc(1, ULPOSC2_CLOCK_HZ);
+	scp_calibrate_ulposc(0, ULPOSC1_CLOCK_MHZ);
+	scp_calibrate_ulposc(1, ULPOSC2_CLOCK_MHZ);
 
 	/* Select ULPOSC2 high speed CPU clock */
 	SCP_CLK_SEL = CLK_SEL_ULPOSC_2;
@@ -342,8 +334,8 @@ DECLARE_IRQ(SCP_IRQ_CLOCK2, clock_fast_wakeup_irq, 3);
 int command_ulposc(int argc, char *argv[])
 {
 	if (argc > 1 && !strncmp(argv[1], "cal", 3)) {
-		scp_calibrate_ulposc(0, ULPOSC1_CLOCK_HZ);
-		scp_calibrate_ulposc(1, ULPOSC2_CLOCK_HZ);
+		scp_calibrate_ulposc(0, ULPOSC1_CLOCK_MHZ);
+		scp_calibrate_ulposc(1, ULPOSC2_CLOCK_MHZ);
 	}
 
 	/* SCP clock meter counts every (26MHz / 1000) tick */
