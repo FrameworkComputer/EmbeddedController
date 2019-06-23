@@ -198,8 +198,10 @@ static int scp_calibrate_ulposc(int osc, int target_mhz)
 	/*
 	 * In the loop below, linear search closest div value to get desired
 	 * frequency counter value. Then adjust cali to get a better result.
-	 * Note that this doesn't give optimal output frequency, and we prefer
-	 * a frequency slightly above our target.
+	 * Note that this doesn't give optimal output frequency, but it's
+	 * usually close enough.
+	 * TODO(b:120176040): See if we can efficiently calibrate the clock with
+	 * more precision by exploring more of the cali/div space.
 	 *
 	 * The frequency function follows. Note that f is positively correlated
 	 * with both div and cali:
@@ -215,11 +217,12 @@ static int scp_calibrate_ulposc(int osc, int target_mhz)
 
 		/*
 		 * If previous and current are on either side of the desired
-		 * frequency, pick the one above the desired frequency.
+		 * frequency, pick the closest one.
 		 */
 		if (prev.freq && signum(target_freq - curr.freq) !=
 				 signum(target_freq - prev.freq)) {
-			if (prev.freq > curr.freq)
+			if (abs(target_freq - prev.freq) <
+					abs(target_freq - curr.freq))
 				curr = prev;
 
 			if (stage == STAGE_CALI)
