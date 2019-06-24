@@ -11,7 +11,10 @@
 #include "util.h"
 #include "version.h"
 
-/* FMAP structs. See http://code.google.com/p/flashmap/wiki/FmapSpec */
+/*
+ * FMAP structs.
+ * See https://chromium.googlesource.com/chromiumos/third_party/flashmap/+/master/lib/fmap.h
+ */
 #define FMAP_NAMELEN 32
 #define FMAP_SIGNATURE "__FMAP__"
 #define FMAP_SIGNATURE_SIZE 8
