@@ -646,7 +646,8 @@ int command_fpcapture(int argc, char **argv)
 
 	return rc;
 }
-DECLARE_CONSOLE_COMMAND(fpcapture, command_fpcapture, "", "");
+DECLARE_CONSOLE_COMMAND(fpcapture, command_fpcapture, NULL,
+			"Capture fingerprint in PGM format");
 
 int command_fpenroll(int argc, char **argv)
 {
@@ -681,7 +682,8 @@ int command_fpenroll(int argc, char **argv)
 
 	return rc;
 }
-DECLARE_CONSOLE_COMMAND(fpenroll, command_fpenroll, "", "");
+DECLARE_CONSOLE_COMMAND(fpenroll, command_fpenroll, NULL,
+			"Enroll a new fingerprint");
 
 
 int command_fpmatch(int argc, char **argv)
@@ -699,13 +701,15 @@ int command_fpmatch(int argc, char **argv)
 
 	return rc;
 }
-DECLARE_CONSOLE_COMMAND(fpmatch, command_fpmatch, "", "");
+DECLARE_CONSOLE_COMMAND(fpmatch, command_fpmatch, NULL,
+			"Run match algorithm against finger");
 
 int command_fpclear(int argc, char **argv)
 {
 	fp_clear_context();
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(fpclear, command_fpclear, "", "");
+DECLARE_CONSOLE_COMMAND(fpclear, command_fpclear, NULL,
+			"Clear fingerprint sensor context");
 
 #endif /* CONFIG_CMD_FPSENSOR_DEBUG */
