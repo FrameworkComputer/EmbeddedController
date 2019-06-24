@@ -8,6 +8,7 @@
 #include "hwtimer.h"
 #include "interrupts.h"
 #include "ish_dma.h"
+#include "ish_persistent_data.h"
 #include "power_mgt.h"
 #include "system.h"
 #include "task.h"
@@ -236,7 +237,7 @@ static void switch_to_aontask(void)
 }
 
 __attribute__ ((noreturn))
-static void handle_reset_in_aontask(int pm_state)
+static void handle_reset_in_aontask(enum ish_pm_state pm_state)
 {
 	pm_ctx.aon_share->pm_state = pm_state;
 
@@ -556,11 +557,11 @@ void ish_pm_init(void)
 }
 
 __attribute__ ((noreturn))
-void ish_pm_reset(void)
+void ish_pm_reset(enum ish_pm_state pm_state)
 {
 	if (IS_ENABLED(CONFIG_ISH_PM_AONTASK) &&
 	    pm_ctx.aon_valid) {
-		handle_reset_in_aontask(ISH_PM_STATE_RESET_PREP);
+		handle_reset_in_aontask(pm_state);
 	} else {
 		ish_mia_reset();
 	}
@@ -687,11 +688,7 @@ static void handle_d3(uint32_t irq_vec)
 	PMU_D3_STATUS = PMU_D3_STATUS;
 
 	if (PMU_D3_STATUS & (PMU_D3_BIT_RISING_EDGE_STATUS | PMU_D3_BIT_SET)) {
-
-		if (!pm_ctx.aon_valid)
-			ish_mia_reset();
-
-		/**
+		/*
 		 * Indicate completion of servicing the interrupt to IOAPIC
 		 * first then indicate completion of servicing the interrupt
 		 * to LAPIC
@@ -699,24 +696,8 @@ static void handle_d3(uint32_t irq_vec)
 		IOAPIC_EOI_REG = irq_vec;
 		LAPIC_EOI_REG = 0x0;
 
-		pm_ctx.aon_share->pm_state = ISH_PM_STATE_D3;
-
-		/* only enable PMU wakeup interrupt */
-		disable_all_interrupts();
-		task_enable_irq(ISH_PMU_WAKEUP_IRQ);
-
-		if (IS_ENABLED(CONFIG_ISH_PM_RESET_PREP))
-			task_enable_irq(ISH_RESET_PREP_IRQ);
-
-		/* enable Trunk Clock Gating (TCG) of ISH */
-		CCU_TCG_EN = 1;
-
-		/* enable power gating of RF(Cache) and ROMs */
-		PMU_RF_ROM_PWR_CTRL = 1;
-
-		switch_to_aontask();
-
-		__builtin_unreachable();
+		ish_persistent_data_commit();
+		ish_pm_reset(ISH_PM_STATE_D3);
 	}
 }
 

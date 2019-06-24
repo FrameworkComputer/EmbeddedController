@@ -99,7 +99,7 @@ void system_reset(int flags)
 	chip_save_reset_flags(save_flags);
 
 	ish_persistent_data_commit();
-	ish_pm_reset();
+	ish_pm_reset(ISH_PM_STATE_RESET);
 	__builtin_unreachable();
 }
 

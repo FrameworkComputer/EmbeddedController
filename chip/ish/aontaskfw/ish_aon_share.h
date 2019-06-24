@@ -8,6 +8,7 @@
 
 #include "common.h"
 #include "ia_structs.h"
+#include "power_mgt.h"
 
 /* magic ID for valid aontask image sanity check */
 #define AON_MAGIC_ID			        0x544E4F41  /*"AONT"*/
@@ -33,7 +34,7 @@ struct ish_aon_share {
 	/* aontask's LDT's limit size */
 	uint32_t aon_ldt_size;
 	/* current power state, see chip/ish/power_mgt.h */
-	int pm_state;
+	enum ish_pm_state pm_state;
 	/* for store/restore main FW's IDT */
 	struct idt_header main_fw_idt_hdr;
 

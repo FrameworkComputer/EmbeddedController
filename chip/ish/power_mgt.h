@@ -10,7 +10,7 @@
 #include "registers.h"
 
 /* power states for ISH */
-enum {
+enum ish_pm_state {
 	/* D0 state: active mode */
 	ISH_PM_STATE_D0 = 0,
 	/* sleep state: cpu halt */
@@ -72,7 +72,7 @@ __maybe_unused static void ish_pm_init(void)
 /**
  * reset ISH (reset minute-ia cpu core, and power off main SRAM)
  */
-void ish_pm_reset(void) __attribute__((noreturn));
+void ish_pm_reset(enum ish_pm_state pm_state) __attribute__((noreturn));
 
 /**
  * notify the power management module that the UART for the console is in use.

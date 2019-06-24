@@ -76,7 +76,7 @@
 #define AON_IDT_ENTRY_VEC_LAST         ISH_PMU_WAKEUP_VEC
 #endif
 
-static void handle_reset(int pm_state);
+static void handle_reset(enum ish_pm_state pm_state);
 
 /* ISR for PMU wakeup interrupt */
 static void pmu_wakeup_isr(void)
@@ -540,7 +540,7 @@ static void handle_d3(void)
 	handle_reset(ISH_PM_STATE_RESET);
 }
 
-static void handle_reset(int pm_state)
+static void handle_reset(enum ish_pm_state pm_state)
 {
 	/* disable watch dog */
 	WDT_CONTROL &= ~WDT_CONTROL_ENABLE_BIT;
