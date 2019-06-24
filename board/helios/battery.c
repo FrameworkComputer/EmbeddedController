@@ -33,7 +33,7 @@
  */
 const struct board_batt_params board_battery_info[] = {
 	/* Simplo Battery Information */
-	[BATTERY_SIMPLO] = {
+	[BATTERY_SIMPLO_C424] = {
 		.fuel_gauge = {
 			.manuf_name = "AS2GVID3jB",
 			.ship_mode = {
@@ -41,9 +41,9 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x10, 0x10 },
 			},
 			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
+				.reg_addr = 0x44,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
 			}
 		},
 		.batt_info = {
@@ -55,11 +55,37 @@ const struct board_batt_params board_battery_info[] = {
 			.start_charging_max_c	= 45,
 			.charging_min_c		= 0,
 			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 60,
+		},
+	},
+	[BATTERY_SIMPLO_C436] = {
+		.fuel_gauge = {
+			.manuf_name = "AS2GVUb3jB",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x10, 0x10 },
+			},
+			.fet = {
+				.reg_addr = 0x44,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11550, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 256,   /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 45,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
 			.discharging_max_c	= 60,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SIMPLO;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SIMPLO_C424;
