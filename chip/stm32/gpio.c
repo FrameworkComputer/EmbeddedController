@@ -36,6 +36,9 @@ void gpio_pre_init(void)
 	/* Delay 1 APB clock cycle after the clock is enabled */
 	clock_wait_bus_cycles(BUS_APB, 1);
 
+	/* Disable all GPIO EXTINTs (EXTINT0..15) left enabled after sysjump. */
+	STM32_EXTI_IMR &= ~0xFFFF;
+
 	if (!is_warm)
 		gpio_enable_clocks();
 
