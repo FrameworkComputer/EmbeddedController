@@ -984,6 +984,9 @@
 /* Enable trickle charging */
 #undef CONFIG_TRICKLE_CHARGING
 
+/* Wireless chargers */
+#undef CONFIG_WIRELESS_CHARGER_P9221_R7
+
 /*****************************************************************************/
 
 /*
