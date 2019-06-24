@@ -96,7 +96,7 @@ void uart_tx_flush(void)
 
 int uart_tx_ready(void)
 {
-	return LSR(ISH_DEBUG_UART) & LSR_TDRQ;
+	return LSR(ISH_DEBUG_UART) & LSR_TEMT;
 }
 
 int uart_rx_available(void)
