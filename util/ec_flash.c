@@ -70,36 +70,94 @@ int ec_flash_verify(const uint8_t *buf, int offset, int size)
 	return 0;
 }
 
+/**
+ * @param info_response  pointer to response that will be filled on success
+ * @return Zero or positive on success, negative on failure
+ */
+static int get_flash_info_v2(struct ec_response_flash_info_2 *info_response)
+{
+	struct ec_params_flash_info_2 info_params = {
+		/*
+		 * By setting this to zero we indicate that we don't care
+		 * about getting the bank description in the response.
+		 */
+		.num_banks_desc = 0
+	};
+
+	return ec_command(EC_CMD_FLASH_INFO, 2, &info_params,
+			  sizeof(info_params), info_response,
+			  sizeof(*info_response));
+}
+
+/**
+ * @param info_response  pointer to response that will be filled on success
+ * @return Zero or positive on success, negative on failure
+ */
+static int get_flash_info_v0(struct ec_response_flash_info *info_response)
+{
+	return ec_command(EC_CMD_FLASH_INFO, 0, NULL, 0, info_response,
+			  sizeof(*info_response));
+}
+
+/**
+ * @return Write size on success, negative on failure
+ */
+static int get_flash_write_size(void)
+{
+	int rv = 0;
+	int write_size;
+	int flash_info_version = -1;
+	struct ec_response_flash_info info_response_v0 = { 0 };
+	struct ec_response_flash_info_2 info_response_v2 = { 0 };
+
+	if (ec_cmd_version_supported(EC_CMD_FLASH_INFO, 2))
+		flash_info_version = 2;
+	else if (ec_cmd_version_supported(EC_CMD_FLASH_INFO, 0))
+		flash_info_version = 0;
+
+	if (flash_info_version < 0)
+		return -1;
+
+	if (flash_info_version == 2) {
+		rv = get_flash_info_v2(&info_response_v2);
+		write_size = info_response_v2.write_ideal_size;
+	} else {
+		rv = get_flash_info_v0(&info_response_v0);
+		write_size = info_response_v0.write_block_size;
+	}
+
+	if (rv < 0)
+		return rv;
+
+	return write_size;
+}
+
 int ec_flash_write(const uint8_t *buf, int offset, int size)
 {
 	struct ec_params_flash_write *p =
 		(struct ec_params_flash_write *)ec_outbuf;
-	struct ec_response_flash_info info;
+	int write_size;
 	int pdata_max_size = (int)(ec_max_outsize - sizeof(*p));
 	int step;
 	int rv;
 	int i;
 
 	/*
-	 * Determine whether we can use version 1 of the command with more
-	 * data, or only version 0.
+	 * Determine whether we can use version 1 of the EC_CMD_FLASH_WRITE
+	 * command with more data, or only version 0.
 	 */
 	if (!ec_cmd_version_supported(EC_CMD_FLASH_WRITE, EC_VER_FLASH_WRITE))
 		pdata_max_size = EC_FLASH_WRITE_VER0_SIZE;
 
-	/*
-	 * Determine step size.  This must be a multiple of the write block
-	 * size, and must also fit into the host parameter buffer.
-	 */
-	rv = ec_command(EC_CMD_FLASH_INFO, 0, NULL, 0, &info, sizeof(info));
-	if (rv < 0)
-		return rv;
+	write_size = get_flash_write_size();
+	if (write_size < 0)
+		return write_size;
 
-	step = (pdata_max_size / info.write_block_size) * info.write_block_size;
+	step = (pdata_max_size / write_size) * write_size;
 
 	if (!step) {
 		fprintf(stderr, "Write block size %d > max param size %d\n",
-			info.write_block_size, pdata_max_size);
+			write_size, pdata_max_size);
 		return -1;
 	}
 
