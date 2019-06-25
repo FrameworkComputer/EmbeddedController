@@ -24,6 +24,7 @@ enum virtual_nv_index {
 	VIRTUAL_NV_INDEX_BOARD_ID = VIRTUAL_NV_INDEX_START,
 	VIRTUAL_NV_INDEX_SN_DATA,
 	VIRTUAL_NV_INDEX_G2F_CERT,
+	VIRTUAL_NV_INDEX_RSU_DEV_ID,
 	VIRTUAL_NV_INDEX_END,
 };
 /* Reserved space for future virtual indexes; this is the last valid index. */
@@ -35,5 +36,6 @@ enum virtual_nv_index {
 #define VIRTUAL_NV_INDEX_BOARD_ID_SIZE	12
 #define VIRTUAL_NV_INDEX_SN_DATA_SIZE	16
 #define VIRTUAL_NV_INDEX_G2F_CERT_SIZE	315
+#define VIRTUAL_NV_INDEX_RSU_DEV_ID_SIZE 32
 
 #endif /* __EC_BOARD_CR50_TPM2_VIRTUAL_NVMEM_H */

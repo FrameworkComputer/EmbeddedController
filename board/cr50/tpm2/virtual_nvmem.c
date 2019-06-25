@@ -9,7 +9,9 @@
 
 #include "board_id.h"
 #include "console.h"
+#include "cryptoc/sha256.h"
 #include "link_defs.h"
+#include "rma_auth.h"
 #include "sn_bits.h"
 #include "u2f_impl.h"
 #include "virtual_nvmem.h"
@@ -127,6 +129,14 @@ struct virtual_nv_index_cfg {
 #define REGISTER_DEPRECATED_CONFIG(r_index) \
 	REGISTER_CONFIG(r_index, 0, 0)
 
+
+/*
+ * The salt to be mixed in with RMA device ID to produce RSU device ID.
+ */
+#define RSU_SALT_SIZE 32
+const char kRsuSalt[] = "Wu8oGt0uu0H8uSGxfo75uSDrGcRk2BXh";
+BUILD_ASSERT(ARRAY_SIZE(kRsuSalt) == RSU_SALT_SIZE+1);
+
 /*
  * Registration of current virtual indexes.
  *
@@ -141,6 +151,7 @@ struct virtual_nv_index_cfg {
 static void GetBoardId(BYTE *to, size_t offset, size_t size);
 static void GetSnData(BYTE *to, size_t offset, size_t size);
 static void GetG2fCert(BYTE *to, size_t offset, size_t size);
+static void GetRSUDevID(BYTE *to, size_t offset, size_t size);
 
 static const struct virtual_nv_index_cfg index_config[] = {
 	REGISTER_CONFIG(VIRTUAL_NV_INDEX_BOARD_ID,
@@ -152,6 +163,9 @@ static const struct virtual_nv_index_cfg index_config[] = {
 	REGISTER_CONFIG(VIRTUAL_NV_INDEX_G2F_CERT,
 			VIRTUAL_NV_INDEX_G2F_CERT_SIZE,
 			GetG2fCert)
+	REGISTER_CONFIG(VIRTUAL_NV_INDEX_RSU_DEV_ID,
+			VIRTUAL_NV_INDEX_RSU_DEV_ID_SIZE,
+			GetRSUDevID)
 };
 
 /* Check sanity of above config. */
@@ -335,3 +349,21 @@ static void GetG2fCert(BYTE *to, size_t offset, size_t size)
 }
 BUILD_ASSERT(VIRTUAL_NV_INDEX_G2F_CERT_SIZE ==
 	     G2F_ATTESTATION_CERT_MAX_LEN);
+
+static void GetRSUDevID(BYTE *to, size_t offset, size_t size)
+{
+	LITE_SHA256_CTX ctx;
+	uint8_t rma_device_id[RMA_DEVICE_ID_SIZE];
+	const uint8_t *rsu_device_id;
+
+	get_rma_device_id(rma_device_id);
+
+	SHA256_init(&ctx);
+	HASH_update(&ctx, rma_device_id, sizeof(rma_device_id));
+	HASH_update(&ctx, kRsuSalt, RSU_SALT_SIZE);
+	rsu_device_id = HASH_final(&ctx);
+
+	memcpy(to, rsu_device_id + offset, size);
+}
+BUILD_ASSERT(VIRTUAL_NV_INDEX_RSU_DEV_ID_SIZE ==
+	     SHA256_DIGEST_SIZE);
