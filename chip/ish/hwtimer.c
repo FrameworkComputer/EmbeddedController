@@ -44,6 +44,12 @@ static inline uint64_t scale_us2ticks(uint64_t us)
 	return us * CLOCK_FACTOR;
 }
 
+static inline uint32_t scale_us2ticks_32(uint32_t us)
+{
+	/* no optimization for ISH3 */
+	return us * CLOCK_FACTOR;
+}
+
 static inline uint64_t scale_ticks2us(uint64_t ticks)
 {
 	return ticks / CLOCK_FACTOR;
@@ -58,10 +64,21 @@ static inline void wait_while_settling(uint32_t mask)
 #define CLOCK_SCALE_BITS 15
 BUILD_ASSERT(BIT(CLOCK_SCALE_BITS) == ISH_HPET_CLK_FREQ);
 
+/* Slow version, for 64-bit precision */
 static inline uint64_t scale_us2ticks(uint64_t us)
 {
 	/* ticks = us * ISH_HPET_CLK_FREQ / SECOND */
 
+	return (us << CLOCK_SCALE_BITS) / SECOND;
+}
+
+/* Fast version, for 32-bit precision */
+static inline uint32_t scale_us2ticks_32(uint32_t us)
+{
+	/*
+	 * GCC optimizes this shift/divide into multiplication by a
+	 * magic number
+	 */
 	return (us << CLOCK_SCALE_BITS) / SECOND;
 }
 
@@ -139,7 +156,7 @@ void __hw_clock_event_set(uint32_t deadline)
 	 * every 10 seconds.
 	 */
 	wait_while_settling(HPET_T1_CMP_SETTLING);
-	HPET_TIMER_COMP(1) = current_ticks + scale_us2ticks(remaining_us);
+	HPET_TIMER_COMP(1) = current_ticks + scale_us2ticks_32(remaining_us);
 
 	/*
 	 * Update 'last_deadline' and add calibrate delta due to HPET timer
