@@ -2902,7 +2902,7 @@
  *
  * CONFIG_ROM_SIZE indicates the size of ROM allocated by a linker script.  This
  * is only needed when no physical flash present (!CONFIG_FLASH_PHYSICAL).  The
- * ROM region will place common RO setions, e.g. .text, .rodata, .data LMA etc.
+ * ROM region will place common RO sections, e.g. .text, .rodata, .data LMA etc.
  */
 #undef CONFIG_CODE_RAM_SIZE
 #undef CONFIG_DATA_RAM_SIZE
@@ -3040,7 +3040,7 @@
  * Support SPI Slave interfaces. The first board supporting this is cr50 and
  * in its parlance SPI_SLAVE is called SPS. This convention might be
  * reconsidered later, and the use of "SPI" in different config options needs
- * to be cleand up. (crbug.com/512613).
+ * to be cleaned up. (crbug.com/512613).
  */
 #undef CONFIG_SPS
 
@@ -4065,7 +4065,7 @@
 
 /*
  * The write protect signal is always asserted,
- * independantly of the GPIO existence or current value.
+ * independently of the GPIO existence or current value.
  */
 #undef CONFIG_WP_ALWAYS
 
@@ -4080,7 +4080,7 @@
 /* Firmware updates using other than HC channel(s). */
 #undef CONFIG_NON_HC_FW_UPDATE
 #undef CONFIG_USB_FW_UPDATE
-/* A different config for the same update. TODO(vbendeb): dedup these */
+/* A different config for the same update. TODO(vbendeb): dedupe these */
 #undef CONFIG_USB_UPDATE
 
 /* Add support for pairing over the USB update interface. */
