@@ -318,9 +318,37 @@ static struct {
 	uint8_t pulse;
 } tick[2];
 
-static void config_tick(enum ec_led_id id, const struct led_pattern *pattern)
+static void tick_battery(void);
+DECLARE_DEFERRED(tick_battery);
+static void tick_power(void);
+DECLARE_DEFERRED(tick_power);
+static void cancel_tick(enum ec_led_id id)
 {
-	uint32_t stride = PULSE_INTERVAL(pattern->pulse);
+	if (id == EC_LED_ID_BATTERY_LED)
+		hook_call_deferred(&tick_battery_data, -1);
+	else
+		hook_call_deferred(&tick_power_data, -1);
+}
+
+static int config_tick(enum ec_led_id id, const struct led_pattern *pattern)
+{
+	static const struct led_pattern *patterns[2];
+	uint32_t stride;
+
+	if (pattern == patterns[id])
+		/* This pattern was already set */
+		return -1;
+
+	patterns[id] = pattern;
+
+	if (!pattern->pulse) {
+		/* This is a steady pattern. cancel the tick */
+		cancel_tick(id);
+		set_color(id, pattern->color, 100);
+		return 1;
+	}
+
+	stride = PULSE_INTERVAL(pattern->pulse);
 	if (IS_PULSING(pattern->pulse)) {
 		tick[id].interval = LED_PULSE_TICK_US;
 		tick[id].duty_inc = 100 / (stride / LED_PULSE_TICK_US);
@@ -332,6 +360,8 @@ static void config_tick(enum ec_led_id id, const struct led_pattern *pattern)
 	tick[id].duty = 0;
 	tick[id].alternate = 0;
 	tick[id].pulse = pattern->pulse;
+
+	return 0;
 }
 
 /*
@@ -372,37 +402,28 @@ static uint32_t tick_led(enum ec_led_id id)
 	return next > elapsed ? next - elapsed : 0;
 }
 
-static void tick_battery(void);
-DECLARE_DEFERRED(tick_battery);
 static void tick_battery(void)
 {
 	hook_call_deferred(&tick_battery_data, tick_led(EC_LED_ID_BATTERY_LED));
 }
 
-static void tick_power(void);
-DECLARE_DEFERRED(tick_power);
 static void tick_power(void)
 {
 	hook_call_deferred(&tick_power_data, tick_led(EC_LED_ID_POWER_LED));
 }
 
-static void cancel_tick(enum ec_led_id id)
-{
-	if (id == EC_LED_ID_BATTERY_LED)
-		hook_call_deferred(&tick_battery_data, -1);
-	else
-		hook_call_deferred(&tick_power_data, -1);
-}
-
 static void start_tick(enum ec_led_id id, const struct led_pattern *pattern)
 {
-	if (!pattern->pulse) {
-		cancel_tick(id);
-		set_color(id, pattern->color, 100);
+	if (config_tick(id, pattern))
+		/*
+		 * If this pattern is already active, ticking must have started
+		 * already. So, we don't re-start ticking to prevent LED from
+		 * blinking at every SOC change.
+		 *
+		 * If this pattern is static, we skip ticking as well.
+		 */
 		return;
-	}
 
-	config_tick(id, pattern);
 	if (id == EC_LED_ID_BATTERY_LED)
 		tick_battery();
 	else
