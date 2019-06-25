@@ -58,6 +58,12 @@
  */
 #define I2C_MAX_HOST_PACKET_SIZE 128
 
+/* The size of the header for a version 3 request packet sent over I2C. */
+#define I2C_REQUEST_HEADER_SIZE 1
+
+/* The size of the header for a version 3 response packet sent over I2C. */
+#define I2C_RESPONSE_HEADER_SIZE 2
+
 /*
  * Supported I2C CLK frequencies.
  * TODO(crbug.com/549286): Use this enum in i2c_port_t.

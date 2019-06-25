@@ -16,8 +16,10 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "comm-host.h"
+#include "i2c.h"
 
 #define EC_I2C_ADDR 0x1e
 
@@ -34,139 +36,163 @@
 
 static int i2c_fd = -1;
 
-/*
- * Sends a command to the EC (protocol v2).  Returns the command status code, or
- * -1 if other error.
- *
- * Returns >= 0 for success, or negative if error.
- *
- */
-static int ec_command_i2c(int command, int version,
-			  const void *outdata, int outsize,
-			  void *indata, int insize)
+static int sum_bytes(const void *data, int length)
 {
-	struct i2c_rdwr_ioctl_data data;
-	int ret = -1;
+	const uint8_t *bytes = (const uint8_t *)data;
+	int sum = 0;
 	int i;
-	int req_len;
+
+	for (i = 0; i < length; i++)
+		sum += bytes[i];
+	return sum;
+}
+
+static void dump_buffer(const uint8_t *data, int length)
+{
+	int i;
+
+	for (i = 0; i < length; i++)
+		fprintf(stderr, "%02X ", data[i]);
+	fprintf(stderr, "\n");
+}
+
+/*
+ * Sends a command to the EC (protocol v3). Returns the command status code
+ * (>= 0), or a negative EC_RES_* value on error.
+ */
+static int ec_command_i2c_3(int command, int version,
+			    const void *outdata, int outsize,
+			    void *indata, int insize)
+{
+	int ret = -EC_RES_ERROR;
+	int error;
+	int req_len, resp_len;
 	uint8_t *req_buf = NULL;
-	int resp_len;
 	uint8_t *resp_buf = NULL;
-	const uint8_t *c;
-	uint8_t *d;
-	uint8_t sum;
-	struct i2c_msg i2c_msg[2];
+	struct ec_host_request *req;
+	struct ec_host_response *resp;
+	uint8_t command_return_code;
+	struct i2c_msg i2c_msg;
+	struct i2c_rdwr_ioctl_data data;
 
-	if (version > 1) {
-		fprintf(stderr, "Command versions >1 unsupported.\n");
+	if (outsize > ec_max_outsize) {
+		fprintf(stderr, "Request is too large (%d > %d).\n", outsize,
+			ec_max_outsize);
 		return -EC_RES_ERROR;
 	}
-
-	if (i2c_fd < 0) {
-		fprintf(stderr, "i2c_fd is negative: %d\n", i2c_fd);
+	if (insize > ec_max_insize) {
+		fprintf(stderr, "Response would be too large (%d > %d).\n",
+			insize, ec_max_insize);
 		return -EC_RES_ERROR;
 	}
-
-	if (ioctl(i2c_fd, I2C_SLAVE, EC_I2C_ADDR) < 0) {
-		fprintf(stderr, "Cannot set I2C slave address\n");
-		return -EC_RES_ERROR;
-	}
-
-	i2c_msg[0].addr = EC_I2C_ADDR;
-	i2c_msg[0].flags = 0;
-	i2c_msg[1].addr = EC_I2C_ADDR;
-	i2c_msg[1].flags = I2C_M_RD;
-	data.msgs = i2c_msg;
-	data.nmsgs = 2;
-
-	/*
-	 * allocate larger packet
-	 * (version, command, size, ..., checksum)
-	 */
-	req_len = outsize + EC_PROTO2_REQUEST_OVERHEAD;
+	req_len = I2C_REQUEST_HEADER_SIZE + sizeof(struct ec_host_request)
+		+ outsize;
 	req_buf = calloc(1, req_len);
 	if (!req_buf)
 		goto done;
-	i2c_msg[0].len = req_len;
-	i2c_msg[0].buf = (char *)req_buf;
-	req_buf[0] = version + EC_CMD_VERSION0;
-	req_buf[1] = command;
-	req_buf[2] = outsize;
 
-	debug("i2c req %02x:", command);
-	sum = req_buf[0] + req_buf[1] + req_buf[2];
-	/* copy message payload and compute checksum */
-	for (i = 0, c = outdata; i < outsize; i++, c++) {
-		req_buf[i + 3] = *c;
-		sum += *c;
-		debug(" %02x", *c);
-	}
-	debug(", sum=%02x\n", sum);
-	req_buf[req_len - 1] = sum;
+	req_buf[0] = EC_COMMAND_PROTOCOL_3;
+	req = (struct ec_host_request *)&req_buf[1];
+	req->struct_version = EC_HOST_REQUEST_VERSION;
+	req->checksum = 0;
+	req->command = command;
+	req->command_version = version;
+	req->reserved = 0;
+	req->data_len = outsize;
 
-	/*
-	 * allocate larger packet
-	 * (result, size, ..., checksum)
-	 */
-	resp_len = insize + EC_PROTO2_RESPONSE_OVERHEAD;
+	memcpy(&req_buf[I2C_REQUEST_HEADER_SIZE
+			+ sizeof(struct ec_host_request)],
+	       outdata, outsize);
+
+	req->checksum =
+		(uint8_t)(-sum_bytes(&req_buf[I2C_REQUEST_HEADER_SIZE],
+				     req_len - I2C_REQUEST_HEADER_SIZE));
+
+	i2c_msg.addr = EC_I2C_ADDR;
+	i2c_msg.flags = 0;
+	i2c_msg.len = req_len;
+	i2c_msg.buf = (char *)req_buf;
+
+	resp_len = I2C_RESPONSE_HEADER_SIZE + sizeof(struct ec_host_response)
+		+ insize;
 	resp_buf = calloc(1, resp_len);
 	if (!resp_buf)
 		goto done;
-	i2c_msg[1].len = resp_len;
-	i2c_msg[1].buf = (char *)resp_buf;
+	memset(resp_buf, 0, resp_len);
 
-	/* send command to EC and read answer */
-	ret = ioctl(i2c_fd, I2C_RDWR, &data);
-	if (ret < 0) {
-		fprintf(stderr, "i2c transfer failed: %d (err: %d)\n",
-			ret, errno);
-		ret = -EC_RES_ERROR;
+	if (IS_ENABLED(DEBUG)) {
+		fprintf(stderr, "Sending: 0x");
+		dump_buffer(req_buf, req_len);
+	}
+
+	/*
+	 * Combining these two ioctls makes the write-read interval too short
+	 * for some chips (such as the MAX32660) to handle.
+	 */
+	data.msgs = &i2c_msg;
+	data.nmsgs = 1;
+	error = ioctl(i2c_fd, I2C_RDWR, &data);
+	if (error < 0) {
+		fprintf(stderr, "I2C write failed: %d (err: %d, %s)\n",
+			error, errno, strerror(errno));
 		goto done;
 	}
 
-	/* check response error code */
-	ret = resp_buf[0];
-
-	/* TODO(crosbug.com/p/23824): handle EC_RES_IN_PROGRESS case. */
-
-	resp_len = resp_buf[1];
-	if (resp_len > insize) {
-		fprintf(stderr, "response size is too large %d > %d\n",
-				resp_len, insize);
-		ret = -EC_RES_ERROR;
+	i2c_msg.addr = EC_I2C_ADDR;
+	i2c_msg.flags = I2C_M_RD;
+	i2c_msg.len = resp_len;
+	i2c_msg.buf = (char *)resp_buf;
+	error = ioctl(i2c_fd, I2C_RDWR, &data);
+	if (error < 0) {
+		fprintf(stderr, "I2C read failed: %d (err: %d, %s)\n",
+			error, errno, strerror(errno));
 		goto done;
 	}
 
-	if (ret) {
-		debug("command 0x%02x returned an error %d\n",
-			 command, i2c_msg[1].buf[0]);
-		/* Translate ERROR to -ERROR and offset */
-		ret = -EECRESULT - ret;
-	} else if (insize) {
-		debug("i2c resp  :");
-		/* copy response packet payload and compute checksum */
-		sum = resp_buf[0] + resp_buf[1];
-		for (i = 0, d = indata; i < resp_len; i++, d++) {
-			*d = resp_buf[i + 2];
-			sum += *d;
-			debug(" %02x", *d);
-		}
-		debug(", sum=%02x\n", sum);
-
-		if (sum != resp_buf[resp_len + 2]) {
-			fprintf(stderr, "bad packet checksum\n");
-			ret = -EC_RES_ERROR;
-			goto done;
-		}
-
-		/* Return output buffer size */
-		ret = resp_len;
+	if (IS_ENABLED(DEBUG)) {
+		fprintf(stderr, "Received: 0x");
+		dump_buffer(resp_buf, resp_len);
 	}
+
+	command_return_code = resp_buf[0];
+	if (command_return_code != EC_RES_SUCCESS) {
+		debug("command 0x%02x returned an error %d\n", command,
+		      command_return_code);
+		ret = -EECRESULT - command_return_code;
+		goto done;
+	}
+
+	if (resp_buf[1] > sizeof(struct ec_host_response) + insize) {
+		debug("EC returned too much data.\n");
+		ret = -EC_RES_RESPONSE_TOO_BIG;
+		goto done;
+	}
+
+	resp = (struct ec_host_response *)(&resp_buf[2]);
+	if (resp->struct_version != EC_HOST_RESPONSE_VERSION) {
+		debug("EC response version mismatch.\n");
+		ret = -EC_RES_INVALID_RESPONSE;
+		goto done;
+	}
+
+	if ((uint8_t)sum_bytes(&resp_buf[I2C_RESPONSE_HEADER_SIZE], resp_buf[1])
+			!= 0) {
+		debug("Bad checksum on EC response.\n");
+		ret = -EC_RES_INVALID_CHECKSUM;
+		goto done;
+	}
+
+	memcpy(indata, &resp_buf[I2C_RESPONSE_HEADER_SIZE
+				 + sizeof(struct ec_host_response)],
+	       insize);
+
+	ret = command_return_code;
 done:
-	if (resp_buf)
-		free(resp_buf);
 	if (req_buf)
 		free(req_buf);
+	if (resp_buf)
+		free(resp_buf);
+
 	return ret;
 }
 
@@ -208,8 +234,11 @@ int comm_init_i2c(void)
 
 	free(file_path);
 
-	ec_command_proto = ec_command_i2c;
-	ec_max_outsize = ec_max_insize = EC_PROTO2_MAX_PARAM_SIZE;
+	ec_command_proto = ec_command_i2c_3;
+	ec_max_outsize = I2C_MAX_HOST_PACKET_SIZE - I2C_REQUEST_HEADER_SIZE
+		- sizeof(struct ec_host_request);
+	ec_max_insize = I2C_MAX_HOST_PACKET_SIZE - I2C_RESPONSE_HEADER_SIZE
+		- sizeof(struct ec_host_response);
 
 	return 0;
 }
