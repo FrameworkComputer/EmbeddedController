@@ -21,7 +21,7 @@
 #define ANX7688_REG_HPD_IRQ     BIT(1)
 #define ANX7688_REG_HPD_ENABLE  BIT(2)
 
-#define ANX7688_USBC_ADDR		0x50
+#define ANX7688_USBC_ADDR__7bf		0x28
 #define ANX7688_REG_RAMCTRL		0xe7
 #define ANX7688_REG_RAMCTRL_BOOT_DONE	BIT(6)
 
@@ -39,7 +39,7 @@ static int anx7688_init(int port)
 	 * 100ms to follow cts.
 	 */
 	while (1) {
-		rv = i2c_read8(I2C_PORT_TCPC, ANX7688_USBC_ADDR,
+		rv = i2c_read8__7bf(I2C_PORT_TCPC, ANX7688_USBC_ADDR__7bf,
 			       ANX7688_REG_RAMCTRL, &mask);
 
 		if (rv == EC_SUCCESS && (mask & ANX7688_REG_RAMCTRL_BOOT_DONE))
@@ -174,7 +174,7 @@ static int anx7688_tcpm_get_vbus_level(int port)
 	 * Therefore, we use a proprietary register to read the unfiltered VBus
 	 * value. See crosbug.com/p/55221 .
 	 */
-	i2c_read8(I2C_PORT_TCPC, 0x50, 0x40, &reg);
+	i2c_read8__7bf(I2C_PORT_TCPC, 0x28, 0x40, &reg);
 	return ((reg & 0x10) ? 1 : 0);
 }
 #endif

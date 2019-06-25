@@ -4008,7 +4008,10 @@ struct ec_response_power_info {
 #define EC_I2C_STATUS_ERROR	(EC_I2C_STATUS_NAK | EC_I2C_STATUS_TIMEOUT)
 
 struct ec_params_i2c_passthru_msg {
-	uint16_t addr_flags;	/* I2C slave address (7 or 10 bits) and flags */
+	union {
+		uint16_t addr_flags;	/* I2C slave address and flags */
+		uint16_t addr_flags__7bf; /* remove before final merge */
+	};
 	uint16_t len;		/* Number of bytes to read or write */
 } __ec_align2;
 
@@ -5402,8 +5405,11 @@ enum ec_bus_type {
 };
 
 struct ec_i2c_info {
-	uint16_t port;	/* Physical port for device */
-	uint16_t addr;	/* 7-bit (or 10-bit) address */
+	uint16_t port;		/* Physical port for device */
+	union {
+		uint16_t addr_flags;	/* 7-bit (or 10-bit) address */
+		uint16_t addr__7bf;	/* remove before final merge */
+	};
 };
 
 struct ec_params_locate_chip {

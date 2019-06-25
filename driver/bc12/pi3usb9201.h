@@ -5,11 +5,11 @@
 
 /* PI3USB9201 USB BC 1.2 Charger Detector driver definitions */
 
-/* 8-bit I2C address */
-#define PI3USB9201_I2C_ADDR_0 0xB8
-#define PI3USB9201_I2C_ADDR_1 0xBA
-#define PI3USB9201_I2C_ADDR_2 0xBC
-#define PI3USB9201_I2C_ADDR_3 0xBE
+/* I2C address */
+#define PI3USB9201_I2C_ADDR_0__7bf 0x5C
+#define PI3USB9201_I2C_ADDR_1__7bf 0x5D
+#define PI3USB9201_I2C_ADDR_2__7bf 0x5E
+#define PI3USB9201_I2C_ADDR_3__7bf 0x5F
 
 #define PI3USB9201_REG_CTRL_1 0x0
 #define PI3USB9201_REG_CTRL_2 0x1
@@ -33,7 +33,7 @@
 
 struct pi3usb2901_config_t {
 	const int i2c_port;
-	const int i2c_addr;
+	const int i2c_addr__7bf;
 };
 
 enum pi3usb9201_mode {

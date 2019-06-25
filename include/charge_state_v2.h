@@ -14,7 +14,7 @@
 #define __CROS_EC_CHARGE_STATE_V2_H
 
 #if defined(CONFIG_I2C_VIRTUAL_BATTERY) && defined(CONFIG_BATTERY_SMART)
-#define VIRTUAL_BATTERY_ADDR BATTERY_ADDR
+#define VIRTUAL_BATTERY_ADDR__7bf BATTERY_ADDR__7bf
 #endif
 /*
  * The values exported by charge_get_state() and charge_get_flags() are used

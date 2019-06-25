@@ -23,8 +23,8 @@
 #define CPUTS(outstr) cputs(CC_USBCHARGE, outstr)
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
-/* 8-bit I2C address */
-#define PI3USB9281_I2C_ADDR (0x25 << 1)
+/* I2C address */
+#define PI3USB9281_I2C_ADDR__7bf (0x25)
 
 /* Delay values */
 #define PI3USB9281_SW_RESET_DELAY 20
@@ -69,7 +69,8 @@ static uint8_t pi3usb9281_do_read(int port, uint8_t reg, int with_lock)
 	if (with_lock)
 		select_chip(port);
 
-	res = i2c_read8(chip->i2c_port, PI3USB9281_I2C_ADDR, reg, &val);
+	res = i2c_read8__7bf(chip->i2c_port, PI3USB9281_I2C_ADDR__7bf,
+			reg, &val);
 
 	if (with_lock)
 		unselect_chip(port);
@@ -99,7 +100,8 @@ static int pi3usb9281_do_write(
 	if (with_lock)
 		select_chip(port);
 
-	res = i2c_write8(chip->i2c_port, PI3USB9281_I2C_ADDR, reg, val);
+	res = i2c_write8__7bf(chip->i2c_port, PI3USB9281_I2C_ADDR__7bf,
+			 reg, val);
 
 	if (with_lock)
 		unselect_chip(port);

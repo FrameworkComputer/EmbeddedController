@@ -159,7 +159,7 @@ static void allow_max_request(void)
 	int prochot_status;
 	if (charge_circuit_state == CHARGE_CIRCUIT_WEDGED) {
 		/* Read PROCHOT status register to clear it */
-		i2c_read8(I2C_PORT_CHARGER, BQ24773_ADDR,
+		i2c_read8__7bf(I2C_PORT_CHARGER, BQ24773_ADDR__7bf,
 			  BQ24773_PROCHOT_STATUS, &prochot_status);
 		charge_circuit_state = CHARGE_CIRCUIT_OK;
 	}
@@ -301,7 +301,7 @@ static void check_charge_wedged(void)
 
 	if (charge_circuit_state == CHARGE_CIRCUIT_OK) {
 		/* Check PROCHOT warning */
-		rv = i2c_read8(I2C_PORT_CHARGER, BQ24773_ADDR,
+		rv = i2c_read8__7bf(I2C_PORT_CHARGER, BQ24773_ADDR__7bf,
 				BQ24773_PROCHOT_STATUS, &prochot_status);
 		if (rv)
 			prochot_status = 0;

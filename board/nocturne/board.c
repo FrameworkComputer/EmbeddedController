@@ -190,7 +190,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_lid_mutex,
 		.drv_data = &g_bmi160_data,
 		.port = I2C_PORT_ALS_GYRO,
-		.addr = BMI160_ADDR0,
+		.i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
 		.rot_standard_ref = &lid_standard_ref,
 		.default_range = 4, /* g */
 		.min_frequency = BMI160_ACCEL_MIN_FREQ,
@@ -213,7 +213,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_lid_mutex,
 		.drv_data = &g_bmi160_data,
 		.port = I2C_PORT_ALS_GYRO,
-		.addr = BMI160_ADDR0,
+		.i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
 		.rot_standard_ref = &lid_standard_ref,
 		.default_range = 1000, /* dps */
 		.min_frequency = BMI160_GYRO_MIN_FREQ,
@@ -229,7 +229,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv = &opt3001_drv,
 		.drv_data = &g_opt3001_data,
 		.port = I2C_PORT_ALS_GYRO,
-		.addr = OPT3001_I2C_ADDR,
+		.i2c_spi_addr__7bf = OPT3001_I2C_ADDR__7bf,
 		.rot_standard_ref = NULL,
 		/* scale = 43.4513 http://b/111528815#comment14 */
 		.default_range = 0x2b11a1,
@@ -287,12 +287,12 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_sensor_irqs, HOOK_PRIO_DEFAULT);
 struct ppc_config_t ppc_chips[] = {
 	{
 		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr = SN5S330_ADDR0,
+		.i2c_addr__7bf = SN5S330_ADDR0__7bf,
 		.drv = &sn5s330_drv
 	},
 	{
 		.i2c_port = I2C_PORT_USB_C1,
-		.i2c_addr = SN5S330_ADDR0,
+		.i2c_addr__7bf = SN5S330_ADDR0__7bf,
 		.drv = &sn5s330_drv,
 	},
 };
@@ -303,7 +303,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C0,
-			.addr = PS8751_I2C_ADDR1,
+			.addr__7bf = PS8751_I2C_ADDR1__7bf,
 		},
 		.drv = &tcpci_tcpm_drv,
 	},
@@ -311,7 +311,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C1,
-			.addr = PS8751_I2C_ADDR1,
+			.addr__7bf = PS8751_I2C_ADDR1__7bf,
 		},
 		.drv = &tcpci_tcpm_drv,
 	},
@@ -342,7 +342,8 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 static void imvp8_tune_deferred(void)
 {
 	/* For the IMVP8, reduce the steps during decay from 3 to 1. */
-	if (i2c_write16(I2C_PORT_POWER, I2C_ADDR_MP2949, 0xFA, 0x0AC5))
+	if (i2c_write16__7bf(I2C_PORT_POWER, I2C_ADDR_MP2949__7bf,
+			0xFA, 0x0AC5))
 		CPRINTS("Failed to change step decay!");
 }
 DECLARE_DEFERRED(imvp8_tune_deferred);
@@ -400,7 +401,7 @@ void board_hibernate(void)
 	system_enter_psl_mode();
 
 	/* Cut off DSW power via the ROP PMIC. */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x49, 0x1);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x49, 0x1);
 
 	/* Wait for power to be cut. */
 	while (1)
@@ -450,7 +451,7 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10)  - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x3a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x30, 0x3a);
 
 	/*
 	 * V18ACNT:
@@ -459,7 +460,7 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x34, 0x2a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x34, 0x2a);
 
 	/*
 	 * V100ACNT:
@@ -468,7 +469,7 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x37, 0x1a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x37, 0x1a);
 
 	/*
 	 * V085ACNT:
@@ -477,7 +478,7 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x2a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x38, 0x2a);
 }
 
 static void board_pmic_enable_slp_s0_vr_decay(void)
@@ -489,7 +490,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10)  - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x7a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x30, 0x7a);
 
 	/*
 	 * V18ACNT:
@@ -498,7 +499,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x34, 0x6a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x34, 0x6a);
 
 	/*
 	 * V100ACNT:
@@ -507,7 +508,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x37, 0x5a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x37, 0x5a);
 
 	/*
 	 * V085ACNT:
@@ -516,7 +517,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x6a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x38, 0x6a);
 }
 
 void power_board_handle_host_sleep_event(enum host_sleep_event state)
@@ -532,15 +533,16 @@ static void board_pmic_init(void)
 	int pgmask1;
 
 	/* Mask V5A_DS3_PG from PMIC PGMASK1. */
-	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x18, &pgmask1))
+	if (i2c_read8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+		      0x18, &pgmask1))
 		return;
 	pgmask1 |= BIT(2);
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x18, pgmask1);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x18, pgmask1);
 
 	board_pmic_disable_slp_s0_vr_decay();
 
 	/* Enable active discharge (100 ohms) on V33A_PCH and V1.8A. */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3D, 0x5);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x3D, 0x5);
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
@@ -631,7 +633,7 @@ static void board_report_pmic_fault(const char *str)
 	uint32_t info;
 
 	/* RESETIRQ1 -- Bit 4: VRFAULT */
-	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x8, &vrfault)
+	if (i2c_read8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x8, &vrfault)
 	    != EC_SUCCESS)
 		return;
 
@@ -641,19 +643,19 @@ static void board_report_pmic_fault(const char *str)
 	/* VRFAULT has occurred, print VRFAULT status bits. */
 
 	/* PWRSTAT1 */
-	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x16, &pwrstat1);
+	i2c_read8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x16, &pwrstat1);
 
 	/* PWRSTAT2 */
-	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x17, &pwrstat2);
+	i2c_read8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x17, &pwrstat2);
 
 	CPRINTS("PMIC VRFAULT: %s", str);
 	CPRINTS("PMIC VRFAULT: PWRSTAT1=0x%02x PWRSTAT2=0x%02x", pwrstat1,
 		pwrstat2);
 
 	/* Clear all faults -- Write 1 to clear. */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x8, BIT(4));
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x16, pwrstat1);
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x17, pwrstat2);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x8, BIT(4));
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x16, pwrstat1);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x17, pwrstat2);
 
 	/*
 	 * Status of the fault registers can be checked in the OS by looking at

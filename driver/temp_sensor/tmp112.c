@@ -20,12 +20,14 @@ static int temp_val_local;
 
 static int raw_read16(const int offset, int *data_ptr)
 {
-	return i2c_read16(I2C_PORT_THERMAL, TMP112_I2C_ADDR, offset, data_ptr);
+	return i2c_read16__7bf(I2C_PORT_THERMAL, TMP112_I2C_ADDR__7bf,
+			  offset, data_ptr);
 }
 
 static int raw_write16(const int offset, int data)
 {
-	return i2c_write16(I2C_PORT_THERMAL, TMP112_I2C_ADDR, offset, data);
+	return i2c_write16__7bf(I2C_PORT_THERMAL, TMP112_I2C_ADDR__7bf,
+			   offset, data);
 }
 
 static int get_temp(int *temp_ptr)

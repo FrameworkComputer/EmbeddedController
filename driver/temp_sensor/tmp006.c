@@ -86,7 +86,7 @@ static void tmp006_poll_sensor(int sensor_id)
 {
 	struct tmp006_data_t *tdata = tmp006_data + sensor_id;
 	int t, v, rv;
-	int addr = tmp006_sensors[sensor_id].addr;
+	int addr__7bf = tmp006_sensors__7bf[sensor_id].addr__7bf;
 
 	/* Invalidate the filter history if there is any error */
 	if (tdata->fail) {
@@ -104,7 +104,8 @@ static void tmp006_poll_sensor(int sensor_id)
 	 * data ready; otherwise, we read garbage data.
 	 */
 	if (tdata->fail & (FAIL_POWER | FAIL_INIT)) {
-		rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr),
+		rv = i2c_read16__7bf(TMP006_PORT(addr__7bf),
+				TMP006_REG__7bf(addr__7bf),
 				TMP006_REG_CONFIG, &v);
 		if (rv) {
 			tdata->fail |= FAIL_I2C;
@@ -116,14 +117,16 @@ static void tmp006_poll_sensor(int sensor_id)
 		}
 	}
 
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr),
+	rv = i2c_read16__7bf(TMP006_PORT(addr__7bf),
+			TMP006_REG__7bf(addr__7bf),
 			TMP006_REG_TDIE, &t);
 	if (rv) {
 		tdata->fail |= FAIL_I2C;
 		return;
 	}
 
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr),
+	rv = i2c_read16__7bf(TMP006_PORT(addr__7bf),
+			TMP006_REG__7bf(addr__7bf),
 			TMP006_REG_VOBJ, &v);
 	if (rv) {
 		tdata->fail |= FAIL_I2C;
@@ -370,37 +373,42 @@ static int tmp006_print(int idx)
 	int traw, t;
 	int rv;
 	int d;
-	int addr = tmp006_sensors[idx].addr;
+	int addr__7bf = tmp006_sensors__7bf[idx].addr__7bf;
 
 
-	ccprintf("Debug data from %s:\n", tmp006_sensors[idx].name);
+	ccprintf("Debug data from %s:\n", tmp006_sensors__7bf[idx].name);
 
 	if (!tmp006_has_power(idx)) {
 		ccputs("Sensor powered off.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr),
+	rv = i2c_read16__7bf(TMP006_PORT(addr__7bf),
+			TMP006_REG__7bf(addr__7bf),
 			TMP006_REG_MANUFACTURER_ID, &d);
 	if (rv)
 		return rv;
 	ccprintf("  Manufacturer ID: 0x%04x\n", d);
 
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr),
+	rv = i2c_read16__7bf(TMP006_PORT(addr__7bf),
+			TMP006_REG__7bf(addr__7bf),
 			TMP006_REG_DEVICE_ID, &d);
 	ccprintf("  Device ID:       0x%04x\n", d);
 
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr),
+	rv = i2c_read16__7bf(TMP006_PORT(addr__7bf),
+			TMP006_REG__7bf(addr__7bf),
 			TMP006_REG_CONFIG, &d);
 	ccprintf("  Config:          0x%04x\n", d);
 
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr),
+	rv = i2c_read16__7bf(TMP006_PORT(addr__7bf),
+			TMP006_REG__7bf(addr__7bf),
 			TMP006_REG_VOBJ, &vraw);
 
 	v = ((int)vraw * 15625) / 100;
 	ccprintf("  Voltage:         0x%04x = %d nV\n", vraw, v);
 
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr),
+	rv = i2c_read16__7bf(TMP006_PORT(addr__7bf),
+			TMP006_REG__7bf(addr__7bf),
 			TMP006_REG_TDIE, &traw);
 	t = (int)traw;
 	ccprintf("  Temperature:     0x%04x = %d.%02d C\n",
@@ -455,7 +463,7 @@ static int command_t6cal(int argc, char **argv)
 			tdata = tmp006_data + i;
 			ccprintf("%d %-11s"
 				 "%7de-17 %7de-8 %7de-10 %7de-12\n",
-				 i, tmp006_sensors[i].name,
+				 i, tmp006_sensors__7bf[i].name,
 				 (int)(tdata->s0 * 1e17f),
 				 (int)(tdata->b0 * 1e8f),
 				 (int)(tdata->b1 * 1e10f),

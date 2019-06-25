@@ -8,8 +8,7 @@
 #ifndef __CROS_EC_LM3509_H
 #define __CROS_EC_LM3509_H
 
-/* 8-bit I2C address */
-#define LM3509_I2C_ADDR		0x6C
+#define LM3509_I2C_ADDR__7bf		0x36
 
 /*
  * General purpose register

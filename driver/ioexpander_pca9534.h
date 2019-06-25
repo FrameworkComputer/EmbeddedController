@@ -26,7 +26,8 @@
  *
  * @return EC_SUCCESS, or EC_ERROR_* on error.
  */
-int pca9534_get_level(int port, int addr, int pin, int *level);
+int pca9534_get_level__7bf(const int port, const uint16_t addr__7bf,
+		      int pin, int *level);
 
 /*
  * Set output level. This function has no effect if the pin is
@@ -39,7 +40,8 @@ int pca9534_get_level(int port, int addr, int pin, int *level);
  *
  * @return EC_SUCCESS, or EC_ERROR_* on error.
  */
-int pca9534_set_level(int port, int addr, int pin, int level);
+int pca9534_set_level__7bf(const int port, const uint16_t addr__7bf,
+		      int pin, int level);
 
 /*
  * Config a pin as input or output.
@@ -51,6 +53,7 @@ int pca9534_set_level(int port, int addr, int pin, int level);
  *
  * @return EC_SUCCESS, or EC_ERROR_* on error.
  */
-int pca9534_config_pin(int port, int addr, int pin, int is_input);
+int pca9534_config_pin__7bf(const int port, const uint16_t addr__7bf,
+		       int pin, int is_input);
 
 #endif  /* __CROS_EC_IOEXPANDER_PCA9534_H */

@@ -247,7 +247,7 @@ static int i2cm_poll_for_complete(int port)
 	return EC_ERROR_TIMEOUT;
 }
 
-static uint32_t i2cm_create_inst(int slave_addr, int is_write,
+static uint32_t i2cm_create_inst__7bf(int slave_addr__7bf, int is_write,
 				 size_t size, uint32_t flags)
 {
 	uint32_t inst = 0;
@@ -258,12 +258,7 @@ static uint32_t i2cm_create_inst(int slave_addr, int is_write,
 		 * to be included.
 		 */
 		inst |= INST_START;
-
-		/*
-		 * Calls to chip_i2c_xfer assume an 8 bit slave address. Need
-		 * to shift right by 1 bit.
-		 */
-		inst |= INST_DEVADDRVAL(slave_addr >> 1);
+		inst |= INST_DEVADDRVAL(I2C_GET_ADDR__7b(slave_addr__7bf));
 		inst |= INST_RWDEVADDR;
 	}
 
@@ -281,8 +276,9 @@ static uint32_t i2cm_create_inst(int slave_addr, int is_write,
 	return inst;
 }
 
-static int i2cm_execute_sequence(int port, int slave_addr, const uint8_t *out,
-				 int out_size, uint8_t *in, int in_size,
+static int i2cm_execute_sequence__7bf(int port, int slave_addr__7bf,
+				 const uint8_t *out, int out_size,
+				 uint8_t *in, int in_size,
 				 int flags)
 {
 	int rv;
@@ -313,7 +309,7 @@ static int i2cm_execute_sequence(int port, int slave_addr, const uint8_t *out,
 			seq_flags &= ~I2C_XFER_STOP;
 
 		/* Build sequence instruction */
-		inst = i2cm_create_inst(slave_addr, is_write,
+		inst = i2cm_create_inst__7bf(slave_addr__7bf, is_write,
 					batch_size, seq_flags);
 
 		/* If this is a write - copy data into the FIFO. */
@@ -357,7 +353,8 @@ static int i2cm_execute_sequence(int port, int slave_addr, const uint8_t *out,
 
 
 /* Perform an i2c transaction. */
-int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
+int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
+		  const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
 	int rv;
@@ -379,14 +376,14 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 
 	if (out_size) {
 		/* Process write before read. */
-		rv = i2cm_execute_sequence(port, slave_addr, out,
+		rv = i2cm_execute_sequence__7bf(port, slave_addr__7bf, out,
 					   out_size, NULL, 0, flags);
 		if (rv != EC_SUCCESS)
 			return rv;
 	}
 
 	if (in_size)
-		rv = i2cm_execute_sequence(port, slave_addr,
+		rv = i2cm_execute_sequence__7bf(port, slave_addr__7bf,
 					   NULL, 0, in, in_size, flags);
 
 	return rv;

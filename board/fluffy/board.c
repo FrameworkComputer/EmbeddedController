@@ -113,7 +113,7 @@ DECLARE_CONSOLE_COMMAND(ccflip, command_cc_flip,
 /*
  * Support tca6416 I2C ioexpander.
  */
-#define GPIOX_I2C_ADDR		0x40
+#define GPIOX_I2C_ADDR__7bf	0x20
 #define GPIOX_IN_PORT_A		0x0
 #define GPIOX_IN_PORT_B		0x1
 #define GPIOX_OUT_PORT_A	0x2
@@ -129,8 +129,10 @@ static void i2c_expander_init(void)
 	/*
 	 * Setup P00, P02, P04, P10, and P12 on the I/O expander as an output.
 	 */
-	i2c_write8(I2C_PORT_MASTER, GPIOX_I2C_ADDR, GPIOX_DIR_PORT_A, 0xea);
-	i2c_write8(I2C_PORT_MASTER, GPIOX_I2C_ADDR, GPIOX_DIR_PORT_B, 0xfa);
+	i2c_write8__7bf(I2C_PORT_MASTER, GPIOX_I2C_ADDR__7bf,
+		   GPIOX_DIR_PORT_A, 0xea);
+	i2c_write8__7bf(I2C_PORT_MASTER, GPIOX_I2C_ADDR__7bf,
+		   GPIOX_DIR_PORT_B, 0xfa);
 }
 DECLARE_HOOK(HOOK_INIT, i2c_expander_init, HOOK_PRIO_INIT_I2C+1);
 
@@ -140,15 +142,15 @@ static void write_ioexpander(int bank, int gpio, int reg, int val)
 	int tmp;
 
 	/* Read output port register */
-	i2c_read8(I2C_PORT_MASTER, GPIOX_I2C_ADDR, reg + bank,
-		  &tmp);
+	i2c_read8__7bf(I2C_PORT_MASTER, GPIOX_I2C_ADDR__7bf,
+		  reg + bank, &tmp);
 	if (val)
 		tmp |= BIT(gpio);
 	else
 		tmp &= ~BIT(gpio);
 	/* Write back modified output port register */
-	i2c_write8(I2C_PORT_MASTER, GPIOX_I2C_ADDR, reg + bank,
-		   tmp);
+	i2c_write8__7bf(I2C_PORT_MASTER, GPIOX_I2C_ADDR__7bf,
+		   reg + bank, tmp);
 }
 
 enum led_ch {

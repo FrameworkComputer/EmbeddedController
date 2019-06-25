@@ -16,17 +16,17 @@
 #define TMP006_REG_DEVICE_ID       0xff
 
 /* I2C address components */
-#define TMP006_ADDR(PORT,REG) ((PORT << 16) + REG)
-#define TMP006_PORT(ADDR) (ADDR >> 16)
-#define TMP006_REG(ADDR) (ADDR & 0xffff)
+#define TMP006_ADDR__7bf(PORT, REG) ((PORT << 16) + REG)
+#define TMP006_PORT(ADDR__7bf) (ADDR__7bf >> 16)
+#define TMP006_REG__7bf(ADDR__7bf) (ADDR__7bf & 0xffff)
 
 struct tmp006_t {
 	const char *name;
-	int addr;          /* I2C address formed by TMP006_ADDR macro. */
+	int addr__7bf;          /* I2C address formed by TMP006_ADDR macro. */
 };
 
 /* Names and addresses of the sensors we have */
-extern const struct tmp006_t tmp006_sensors[];
+extern const struct tmp006_t tmp006_sensors__7bf[];
 
 /**
  * Get the last polled value of a sensor.

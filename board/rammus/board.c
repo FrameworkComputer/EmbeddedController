@@ -151,7 +151,7 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC1,
-			.addr = PS8751_I2C_ADDR1,
+			.addr__7bf = PS8751_I2C_ADDR1__7bf,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 	},
@@ -159,7 +159,8 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr = AN7447_TCPC3_I2C_ADDR, /* Verified on v1.1 */
+			/* Verified on v1.1 */
+			.addr__7bf = AN7447_TCPC3_I2C_ADDR__7bf,
 		},
 		.drv = &anx7447_tcpm_drv,
 	},
@@ -297,7 +298,7 @@ static void board_report_pmic_fault(const char *str)
 	uint32_t info;
 
 	/* RESETIRQ1 -- Bit 4: VRFAULT */
-	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x8, &vrfault)
+	if (i2c_read8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x8, &vrfault)
 	    != EC_SUCCESS)
 		return;
 
@@ -307,19 +308,19 @@ static void board_report_pmic_fault(const char *str)
 	/* VRFAULT has occurred, print VRFAULT status bits. */
 
 	/* PWRSTAT1 */
-	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x16, &pwrstat1);
+	i2c_read8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x16, &pwrstat1);
 
 	/* PWRSTAT2 */
-	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x17, &pwrstat2);
+	i2c_read8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x17, &pwrstat2);
 
 	CPRINTS("PMIC VRFAULT: %s", str);
 	CPRINTS("PMIC VRFAULT: PWRSTAT1=0x%02x PWRSTAT2=0x%02x", pwrstat1,
 		pwrstat2);
 
 	/* Clear all faults -- Write 1 to clear. */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x8, BIT(4));
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x16, pwrstat1);
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x17, pwrstat2);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x8, BIT(4));
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x16, pwrstat1);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x17, pwrstat2);
 
 	/*
 	 * Status of the fault registers can be checked in the OS by looking at
@@ -338,7 +339,7 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10)  - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x3a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x30, 0x3a);
 
 	/*
 	 * V18ACNT:
@@ -347,7 +348,7 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x34, 0x2a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x34, 0x2a);
 
 	/*
 	 * V085ACNT:
@@ -356,7 +357,7 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x3a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x38, 0x3a);
 }
 
 static void board_pmic_enable_slp_s0_vr_decay(void)
@@ -368,7 +369,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10)  - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x7a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x30, 0x7a);
 
 	/*
 	 * V18ACNT:
@@ -377,7 +378,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x34, 0x6a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x34, 0x6a);
 
 	/*
 	 * V085ACNT:
@@ -386,7 +387,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x7a);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x38, 0x7a);
 }
 
 void power_board_handle_host_sleep_event(enum host_sleep_event state)
@@ -408,16 +409,16 @@ static void board_pmic_init(void)
 	 * DISCHGCNT2 - enable 100 ohm discharge on
 	 * V5A_DS3/V33A_DSW/V33A_PCH/V1.8A
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3d, 0x55);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x3d, 0x55);
 	/* DISCHGCNT3 - enable 100 ohm discharge on V1.8U_25U/V1.00A */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3e, 0x44);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x3e, 0x44);
 	/* DISCHGCNT4 - enable 100 ohm discharge on v1.8S */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3f, 0x04);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x3f, 0x04);
 
 	board_pmic_disable_slp_s0_vr_decay();
 
 	/* VRMODECTRL - disable low-power mode for all rails */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3b, 0x1f);
+	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x3b, 0x1f);
 }
 DECLARE_DEFERRED(board_pmic_init);
 
@@ -543,7 +544,7 @@ void board_hibernate(void)
 	uart_flush_output();
 
 	/* Trigger PMIC shutdown. */
-	if (i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x49, 0x01)) {
+	if (i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x49, 0x01)) {
 		/*
 		 * If we can't tell the PMIC to shutdown, instead reset
 		 * and don't start the AP. Hopefully we'll be able to
@@ -601,7 +602,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_lid_mutex,
 		.drv_data = &g_bma255_data,
 		.port = I2C_PORT_ACCEL,
-		.addr = BMA2x2_I2C_ADDR1,
+		.i2c_spi_addr__7bf = BMA2x2_I2C_ADDR1__7bf,
 		.rot_standard_ref = &lid_standard_ref,
 		.min_frequency = BMA255_ACCEL_MIN_FREQ,
 		.max_frequency = BMA255_ACCEL_MAX_FREQ,
@@ -629,7 +630,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = &g_bmi160_data,
 		.port = I2C_PORT_ACCEL,
-		.addr = BMI160_ADDR0,
+		.i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
 		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = BMI160_ACCEL_MIN_FREQ,
 		.max_frequency = BMI160_ACCEL_MAX_FREQ,
@@ -657,7 +658,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = &g_bmi160_data,
 		.port = I2C_PORT_ACCEL,
-		.addr = BMI160_ADDR0,
+		.i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
 		.default_range = 1000, /* dps */
 		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = BMI160_GYRO_MIN_FREQ,

@@ -16,8 +16,8 @@
  * 8-bit address is 0011 00XW b. Where 'X' is determined
  * by the voltage on the ADDR pin, and 'W' is read write bit
  */
-#define LIS2DH_ADDR0		0x30
-#define LIS2DH_ADDR1		0x32
+#define LIS2DH_ADDR0__7bf		0x18
+#define LIS2DH_ADDR1__7bf		0x19
 
 /*
  * LNG2DM:
@@ -25,8 +25,8 @@
  * 8-bit address is 0101 00XW b. Where 'X' is determined
  * by the voltage on the ADDR pin, and 'W' is read write bit
  */
-#define LNG2DM_ADDR0		0x50
-#define LNG2DM_ADDR1		0x52
+#define LNG2DM_ADDR0__7bf		0x28
+#define LNG2DM_ADDR1__7bf		0x29
 
 /* Who Am I  */
 #define LIS2DH_WHO_AM_I_REG	0x0f

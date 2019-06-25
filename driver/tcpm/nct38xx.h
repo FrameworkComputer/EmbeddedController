@@ -10,15 +10,15 @@
 #define __CROS_EC_USB_PD_TCPM_NCT38XX_H
 
 /* I2C interface */
-#define NCT38xx_I2C_ADDR1_1                0xE0
-#define NCT38xx_I2C_ADDR1_2                0xE2
-#define NCT38xx_I2C_ADDR1_3                0xE4
-#define NCT38xx_I2C_ADDR1_4                0xE6
+#define NCT38xx_I2C_ADDR1_1__7bf                0x70
+#define NCT38xx_I2C_ADDR1_2__7bf                0x71
+#define NCT38xx_I2C_ADDR1_3__7bf                0x72
+#define NCT38xx_I2C_ADDR1_4__7bf                0x73
 
-#define NCT38xx_I2C_ADDR2_1                0xE8
-#define NCT38xx_I2C_ADDR2_2                0xEA
-#define NCT38xx_I2C_ADDR2_3                0xEC
-#define NCT38xx_I2C_ADDR2_4                0xEE
+#define NCT38xx_I2C_ADDR2_1__7bf                0x74
+#define NCT38xx_I2C_ADDR2_2__7bf                0x75
+#define NCT38xx_I2C_ADDR2_3__7bf                0x76
+#define NCT38xx_I2C_ADDR2_4__7bf                0x77
 
 #define NCT38XX_REG_VENDOR_ID_L            0x00
 #define NCT38XX_REG_VENDOR_ID_H            0x01

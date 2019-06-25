@@ -14,8 +14,8 @@
  * 7-bit address is 000111Xb. Where 'X' is determined
  * by the voltage on the ADDR pin.
  */
-#define KXCJ9_ADDR0		0x1c
-#define KXCJ9_ADDR1		0x1e
+#define KXCJ9_ADDR0__7bf		0x0E
+#define KXCJ9_ADDR1__7bf		0x0D
 #define KXCJ9_WHO_AM_I_VAL	0x0A
 
 /* Chip-specific registers */

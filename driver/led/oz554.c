@@ -16,7 +16,7 @@
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
-#define I2C_ADDR_OZ554		0x62
+#define I2C_ADDR_OZ554__7bf		0x31
 
 struct oz554_value {
 	uint8_t offset;
@@ -80,7 +80,8 @@ static void set_oz554_reg(void)
 	int i;
 
 	for (i = 0; i < oz554_conf_size; ++i) {
-		int rv = i2c_write8(I2C_PORT_BACKLIGHT, I2C_ADDR_OZ554,
+		int rv = i2c_write8__7bf(I2C_PORT_BACKLIGHT,
+				    I2C_ADDR_OZ554__7bf,
 				    oz554_conf[i].offset, oz554_conf[i].data);
 		if (rv) {
 			CPRINTS("Write OZ554 register %d failed rv=%d" , i, rv);

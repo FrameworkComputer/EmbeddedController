@@ -210,8 +210,8 @@
 #define I2C_PORT_ALS		NPCX_I2C_PORT3
 
 /* I2C addresses */
-#define I2C_ADDR_MP2949		0x40
-#define I2C_ADDR_EEPROM		0xa0
+#define I2C_ADDR_MP2949__7bf		0x20
+#define I2C_ADDR_EEPROM__7bf		0x50
 
 #ifndef __ASSEMBLER__
 

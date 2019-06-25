@@ -22,7 +22,7 @@
 #ifndef __CROS_EC_ALS_SI114X_H
 #define __CROS_EC_ALS_SI114X_H
 
-#define SI114X_ADDR                     (0x5a << 1)
+#define SI114X_ADDR__7bf                     0x5a
 
 #define SI114X_REG_PART_ID		0x00
 #define SI114X_SI1141_ID                     0x41

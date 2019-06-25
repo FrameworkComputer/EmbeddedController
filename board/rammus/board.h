@@ -187,9 +187,9 @@
 #define I2C_PORT_THERMAL	I2C_PORT_PMIC
 
 /* I2C addresses */
-#define I2C_ADDR_BD99992	0x60
-#define I2C_ADDR_MP2949		0x40
-#define I2C_ADDR_EEPROM		0xa0
+#define I2C_ADDR_BD99992__7bf	0x30
+#define I2C_ADDR_MP2949__7bf		0x20
+#define I2C_ADDR_EEPROM__7bf		0x50
 
 /* Rename GPIOs */
 #define GPIO_PCH_SLP_S0_L	GPIO_SLP_S0_L

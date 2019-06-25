@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_MM8013_H
 #define __CROS_EC_MM8013_H
 
-#define MM8013_ADDR                 0xaa
+#define MM8013_ADDR__7bf                 0x55
 
 #define REG_TEMPERATURE             0x06
 #define REG_VOLTAGE                 0x08

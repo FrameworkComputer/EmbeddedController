@@ -11,7 +11,7 @@
 #ifndef __CROS_EC_SB_TSI_H
 #define __CROS_EC_SB_TSI_H
 
-#define SB_TSI_I2C_ADDR			0x98 /* 7-bit address is 0x4C */
+#define SB_TSI_I2C_ADDR__7bf			0x4C
 
 /* G781 register */
 #define SB_TSI_TEMP_H			0x01

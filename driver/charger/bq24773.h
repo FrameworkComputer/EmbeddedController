@@ -12,8 +12,8 @@
 #include "i2c.h"
 
 /* I2C address */
-#define BQ24770_ADDR (0x12)
-#define BQ24773_ADDR (0x6a << 1)
+#define BQ24770_ADDR__7bf	0x09
+#define BQ24773_ADDR__7bf	0x6a
 
 /* Chip specific commands */
 #define BQ24770_CHARGE_OPTION0          0x12
@@ -72,7 +72,7 @@
 
 #ifdef CONFIG_CHARGER_BQ24770
 	#define CHARGER_NAME		"bq24770"
-	#define I2C_ADDR_CHARGER	BQ24770_ADDR
+	#define I2C_ADDR_CHARGER__7bf	BQ24770_ADDR__7bf
 
 	#define REG_CHARGE_OPTION0	BQ24770_CHARGE_OPTION0
 	#define REG_CHARGE_OPTION1	BQ24770_CHARGE_OPTION1
@@ -88,7 +88,7 @@
 
 #elif defined(CONFIG_CHARGER_BQ24773)
 	#define CHARGER_NAME		"bq24773"
-	#define I2C_ADDR_CHARGER	BQ24773_ADDR
+	#define I2C_ADDR_CHARGER__7bf	BQ24773_ADDR__7bf
 
 	#define REG_CHARGE_OPTION0	BQ24773_CHARGE_OPTION0
 	#define REG_CHARGE_OPTION1	BQ24773_CHARGE_OPTION1
@@ -105,23 +105,27 @@
 #ifdef CONFIG_CHARGER_BQ24773
 static inline int raw_read8(int offset, int *value)
 {
-	return i2c_read8(I2C_PORT_CHARGER, I2C_ADDR_CHARGER, offset, value);
+	return i2c_read8__7bf(I2C_PORT_CHARGER, I2C_ADDR_CHARGER__7bf,
+			 offset, value);
 }
 
 static inline int raw_write8(int offset, int value)
 {
-	return i2c_write8(I2C_PORT_CHARGER, I2C_ADDR_CHARGER, offset, value);
+	return i2c_write8__7bf(I2C_PORT_CHARGER, I2C_ADDR_CHARGER__7bf,
+			  offset, value);
 }
 #endif
 
 static inline int raw_read16(int offset, int *value)
 {
-	return i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER, offset, value);
+	return i2c_read16__7bf(I2C_PORT_CHARGER, I2C_ADDR_CHARGER__7bf,
+			  offset, value);
 }
 
 static inline int raw_write16(int offset, int value)
 {
-	return i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER, offset, value);
+	return i2c_write16__7bf(I2C_PORT_CHARGER, I2C_ADDR_CHARGER__7bf,
+			   offset, value);
 }
 
 #endif /* __CROS_EC_BQ24773_H */

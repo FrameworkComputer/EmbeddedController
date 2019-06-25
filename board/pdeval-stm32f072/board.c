@@ -4,8 +4,8 @@
  */
 /* STM32F072-discovery board based USB PD evaluation configuration */
 
-#include "anx7447.h"
 #include "common.h"
+#include "anx7447.h"
 #include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -62,7 +62,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC,
-			.addr = AN7447_TCPC3_I2C_ADDR,
+			.addr__7bf = AN7447_TCPC3_I2C_ADDR__7bf,
 		},
 		.drv = &anx7447_tcpm_drv,
 	},

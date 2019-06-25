@@ -122,7 +122,8 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
 	int ret, tmp;
 
-	ret = st_raw_read8(s->port, s->addr, LIS2DH_STATUS_REG, &tmp);
+	ret = st_raw_read8__7bf(s->port, s->i2c_spi_addr__7bf,
+			   LIS2DH_STATUS_REG, &tmp);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("%s type:0x%X RS Error", s->name, s->type);
 		return ret;
@@ -154,8 +155,8 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	}
 
 	/* Read output data bytes starting at LIS2DH_OUT_X_L_ADDR */
-	ret = st_raw_read_n(s->port, s->addr, LIS2DH_OUT_X_L_ADDR, raw,
-			 OUT_XYZ_SIZE);
+	ret = st_raw_read_n__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LIS2DH_OUT_X_L_ADDR, raw, OUT_XYZ_SIZE);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("%s type:0x%X RD XYZ Error", s->name, s->type);
 		return ret;
@@ -180,7 +181,8 @@ static int init(const struct motion_sensor_t *s)
 	 * complete boot procedure.
 	 */
 	do {
-		ret = st_raw_read8(s->port, s->addr, LIS2DH_WHO_AM_I_REG, &tmp);
+		ret = st_raw_read8__7bf(s->port, s->i2c_spi_addr__7bf,
+				   LIS2DH_WHO_AM_I_REG, &tmp);
 		if (ret != EC_SUCCESS) {
 			udelay(10);
 			count--;
@@ -201,34 +203,34 @@ static int init(const struct motion_sensor_t *s)
 	 * register must be restored to it's default.
 	 */
 	/* Enable all accel axes data and clear old settings */
-	ret = st_raw_write8(s->port, s->addr, LIS2DH_CTRL1_ADDR,
-			 LIS2DH_ENABLE_ALL_AXES);
+	ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LIS2DH_CTRL1_ADDR, LIS2DH_ENABLE_ALL_AXES);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
-	ret = st_raw_write8(s->port, s->addr, LIS2DH_CTRL2_ADDR,
-			 LIS2DH_CTRL2_RESET_VAL);
+	ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LIS2DH_CTRL2_ADDR, LIS2DH_CTRL2_RESET_VAL);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
-	ret = st_raw_write8(s->port, s->addr, LIS2DH_CTRL3_ADDR,
-			 LIS2DH_CTRL3_RESET_VAL);
+	ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LIS2DH_CTRL3_ADDR, LIS2DH_CTRL3_RESET_VAL);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
 	/* Enable BDU */
-	ret = st_raw_write8(s->port, s->addr, LIS2DH_CTRL4_ADDR,
-			 LIS2DH_BDU_MASK);
+	ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LIS2DH_CTRL4_ADDR, LIS2DH_BDU_MASK);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
-	ret = st_raw_write8(s->port, s->addr, LIS2DH_CTRL5_ADDR,
-			 LIS2DH_CTRL5_RESET_VAL);
+	ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LIS2DH_CTRL5_ADDR, LIS2DH_CTRL5_RESET_VAL);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
-	ret = st_raw_write8(s->port, s->addr, LIS2DH_CTRL6_ADDR,
-			 LIS2DH_CTRL6_RESET_VAL);
+	ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LIS2DH_CTRL6_ADDR, LIS2DH_CTRL6_RESET_VAL);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 

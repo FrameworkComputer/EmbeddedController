@@ -20,7 +20,8 @@ static int8_t fake_temp[F75303_IDX_COUNT] = {-1, -1, -1};
  */
 static int raw_read8(const int offset, int *data)
 {
-	return i2c_read8(I2C_PORT_THERMAL, F75303_I2C_ADDR, offset, data);
+	return i2c_read8__7bf(I2C_PORT_THERMAL, F75303_I2C_ADDR__7bf,
+			 offset, data);
 }
 
 static int get_temp(const int offset, int *temp)

@@ -16,13 +16,13 @@
 
 /* I2C slave address varies by part number */
 /* FUSB302BUCX / FUSB302BMPX */
-#define FUSB302_I2C_SLAVE_ADDR 0x44
+#define FUSB302_I2C_SLAVE_ADDR__7bf 0x22
 /* FUSB302B01MPX */
-#define FUSB302_I2C_SLAVE_ADDR_B01 0x46
+#define FUSB302_I2C_SLAVE_ADDR_B01__7bf 0x23
 /* FUSB302B10MPX */
-#define FUSB302_I2C_SLAVE_ADDR_B10 0x48
+#define FUSB302_I2C_SLAVE_ADDR_B10__7bf 0x24
 /* FUSB302B11MPX */
-#define FUSB302_I2C_SLAVE_ADDR_B11 0x4A
+#define FUSB302_I2C_SLAVE_ADDR_B11__7bf 0x25
 
 /* Default retry count for transmitting */
 #define PD_RETRY_COUNT		3

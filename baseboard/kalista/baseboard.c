@@ -144,7 +144,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr = I2C_ADDR_TCPC0,
+			.addr__7bf = I2C_ADDR_TCPC0__7bf,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 	},
@@ -193,7 +193,7 @@ void board_tcpc_init(void)
 	 * TCPM_INIT will fail due to not able to access PS8751.
 	 * Note PS8751 A3 will wake on any I2C access.
 	 */
-	i2c_read8(I2C_PORT_TCPC0, I2C_ADDR_TCPC0, 0xA0, &reg);
+	i2c_read8__7bf(I2C_PORT_TCPC0, I2C_ADDR_TCPC0__7bf, 0xA0, &reg);
 
 	/* Enable TCPC interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
@@ -249,10 +249,10 @@ BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 /* Initialize PMIC */
 #define I2C_PMIC_READ(reg, data) \
-		i2c_read8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1, (reg), (data))
+	i2c_read8__7bf(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1__7bf, (reg), (data))
 
 #define I2C_PMIC_WRITE(reg, data) \
-		i2c_write8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1, (reg), (data))
+	i2c_write8__7bf(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1__7bf, (reg), (data))
 
 static void board_pmic_init(void)
 {

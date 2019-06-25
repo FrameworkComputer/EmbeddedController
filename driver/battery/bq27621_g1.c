@@ -13,7 +13,7 @@
 #include "util.h"
 #include "timer.h"
 
-#define BQ27621_ADDR                        0xaa
+#define BQ27621_ADDR__7bf                        0x55
 #define BQ27621_TYPE_ID                     0x0621
 
 #define REG_CTRL                            0x00

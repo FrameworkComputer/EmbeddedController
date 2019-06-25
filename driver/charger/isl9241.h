@@ -8,8 +8,8 @@
 #ifndef __CROS_EC_ISL9241_H
 #define __CROS_EC_ISL9241_H
 
-#define ISL9241_ADDR	0x12 /* 7bit address 0001001 */
-#define I2C_ADDR_CHARGER ISL9241_ADDR
+#define ISL9241_ADDR__7bf	0x09
+#define I2C_ADDR_CHARGER__7bf ISL9241_ADDR__7bf
 
 #define CHARGER_NAME	"ISL9241"
 #define CHARGE_V_MAX	18304

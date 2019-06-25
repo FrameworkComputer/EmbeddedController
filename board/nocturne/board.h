@@ -93,7 +93,7 @@
 #define CONFIG_ALS
 #define ALS_COUNT 1
 #define CONFIG_ALS_OPT3001
-#define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
+#define OPT3001_I2C_ADDR__7bf OPT3001_I2C_ADDR1__7bf
 #define CONFIG_ACCEL_FIFO 512 /* Must be a power of 2 */
 /* Depends on how fast the AP boots and typical ODRs */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
@@ -175,8 +175,8 @@
 #define GPIO_USB_C1_SCL GPIO_EC_I2C2_USB_C1_SCL
 #define GPIO_USB_C1_SDA GPIO_EC_I2C2_USB_C1_SDA
 
-#define I2C_ADDR_MP2949  0x40
-#define I2C_ADDR_BD99992 0x60
+#define I2C_ADDR_MP2949__7bf  0x20
+#define I2C_ADDR_BD99992__7bf 0x30
 
 /*
  * Remapping of schematic GPIO names to common GPIO names expected (hardcoded)

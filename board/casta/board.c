@@ -95,9 +95,10 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 #define BATTERY_FREE_MIN_DELTA_US               (5 * MSEC)
 static timestamp_t battery_last_i2c_time;
 
-static int is_battery_i2c(int port, int slave_addr)
+static int is_battery_i2c__7bf(const int port, const uint16_t slave_addr__7bf)
 {
-	return (port == I2C_PORT_BATTERY) && (slave_addr == BATTERY_ADDR);
+	return (port == I2C_PORT_BATTERY)
+		&& (slave_addr__7bf == BATTERY_ADDR__7bf);
 }
 
 static int is_battery_port(int port)
@@ -105,11 +106,11 @@ static int is_battery_port(int port)
 	return (port == I2C_PORT_BATTERY);
 }
 
-void i2c_start_xfer_notify(int port, int slave_addr)
+void i2c_start_xfer_notify__7bf(const int port, const uint16_t slave_addr__7bf)
 {
 	unsigned int time_delta_us;
 
-	if (!is_battery_i2c(port, slave_addr))
+	if (!is_battery_i2c__7bf(port, slave_addr__7bf))
 		return;
 
 	time_delta_us = time_since32(battery_last_i2c_time);
@@ -119,7 +120,7 @@ void i2c_start_xfer_notify(int port, int slave_addr)
 	usleep(BATTERY_FREE_MIN_DELTA_US - time_delta_us);
 }
 
-void i2c_end_xfer_notify(int port, int slave_addr)
+void i2c_end_xfer_notify__7bf(const int port, const uint16_t slave_addr__7bf)
 {
 	/*
 	 * The bus free time needs to be maintained from last transaction

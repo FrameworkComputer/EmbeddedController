@@ -211,7 +211,7 @@ int usb_i2c_board_is_enabled(void) { return 1; }
 /*
  * Support tca6416 I2C ioexpander.
  */
-#define GPIOX_I2C_ADDR		0x40
+#define GPIOX_I2C_ADDR__7bf		0x20
 #define GPIOX_IN_PORT_A		0x0
 #define GPIOX_IN_PORT_B		0x1
 #define GPIOX_OUT_PORT_A	0x2
@@ -226,13 +226,13 @@ static void write_ioexpander(int bank, int gpio, int val)
 	int tmp;
 
 	/* Read output port register */
-	i2c_read8(1, GPIOX_I2C_ADDR, GPIOX_OUT_PORT_A + bank, &tmp);
+	i2c_read8__7bf(1, GPIOX_I2C_ADDR__7bf, GPIOX_OUT_PORT_A + bank, &tmp);
 	if (val)
 		tmp |= BIT(gpio);
 	else
 		tmp &= ~BIT(gpio);
 	/* Write back modified output port register */
-	i2c_write8(1, GPIOX_I2C_ADDR, GPIOX_OUT_PORT_A + bank, tmp);
+	i2c_write8__7bf(1, GPIOX_I2C_ADDR__7bf, GPIOX_OUT_PORT_A + bank, tmp);
 }
 
 /* Read a single GPIO input on the tca6416 I2C ioexpander. */
@@ -242,7 +242,7 @@ static int read_ioexpander_bit(int bank, int bit)
 	int mask = 1 << bit;
 
 	/* Read input port register */
-	i2c_read8(1, GPIOX_I2C_ADDR, GPIOX_IN_PORT_A + bank, &tmp);
+	i2c_read8__7bf(1, GPIOX_I2C_ADDR__7bf, GPIOX_IN_PORT_A + bank, &tmp);
 
 	return (tmp & mask) >> bit;
 }
@@ -271,15 +271,15 @@ static void init_usb3_port(void)
 static void init_ioexpander(void)
 {
 	/* Write all GPIO to output 0 */
-	i2c_write8(1, GPIOX_I2C_ADDR, GPIOX_OUT_PORT_A, 0x0);
-	i2c_write8(1, GPIOX_I2C_ADDR, GPIOX_OUT_PORT_B, 0x0);
+	i2c_write8__7bf(1, GPIOX_I2C_ADDR__7bf, GPIOX_OUT_PORT_A, 0x0);
+	i2c_write8__7bf(1, GPIOX_I2C_ADDR__7bf, GPIOX_OUT_PORT_B, 0x0);
 
 	/*
 	 * Write GPIO direction: strap resistors to input,
 	 * all others to output.
 	 */
-	i2c_write8(1, GPIOX_I2C_ADDR, GPIOX_DIR_PORT_A, 0x0);
-	i2c_write8(1, GPIOX_I2C_ADDR, GPIOX_DIR_PORT_B, 0x18);
+	i2c_write8__7bf(1, GPIOX_I2C_ADDR__7bf, GPIOX_DIR_PORT_A, 0x0);
+	i2c_write8__7bf(1, GPIOX_I2C_ADDR__7bf, GPIOX_DIR_PORT_B, 0x18);
 }
 
 /*
@@ -429,7 +429,7 @@ static void board_init(void)
 	 * Write USB3 Mode to PS8742 USB/DP Mux.
 	 * 0x0:disable 0x20:enable.
 	 */
-	i2c_write8(1, 0x20, 0x0, 0x0);
+	i2c_write8__7bf(1, 0x10, 0x0, 0x0);
 
 	/* Enable uservo USB by default. */
 	init_ioexpander();

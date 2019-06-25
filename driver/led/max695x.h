@@ -9,8 +9,8 @@
 #define __CROS_EC_MAX656X_H
 
 /* I2C interface */
-#define MAX695X_I2C_ADDR1	(0x38 << 1)
-#define MAX695X_I2C_ADDR2	(0x39 << 1)
+#define MAX695X_I2C_ADDR1__7bf	(0x38)
+#define MAX695X_I2C_ADDR2__7bf	(0x39)
 
 /* Decode mode register */
 #define MAX695X_REG_DECODE_MODE		0x01

@@ -12,7 +12,7 @@
 #include "i2c.h"
 #include "util.h"
 
-#define BQ27541_ADDR                0xaa
+#define BQ27541_ADDR__7bf                0x55
 #define BQ27541_TYPE_ID             0x0541
 #define BQ27741_TYPE_ID             0x0741
 #define BQ27742_TYPE_ID             0x0742

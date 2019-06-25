@@ -55,8 +55,8 @@ static int config_interrupt(const struct motion_sensor_t *s)
 #ifdef CONFIG_ACCEL_FIFO
 	int int1_ctrl_val;
 
-	ret = st_raw_read8(s->port, s->addr, LSM6DSO_INT1_CTRL,
-			   &int1_ctrl_val);
+	ret = st_raw_read8__7bf(s->port, s->i2c_spi_addr__7bf,
+			   LSM6DSO_INT1_CTRL, &int1_ctrl_val);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -67,15 +67,16 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	 * number or samples still present in FIFO exceeds the configured
 	 * threshold.
 	 */
-	ret = st_raw_write8(s->port, s->addr, LSM6DSO_FIFO_CTRL1_ADDR, 1);
+	ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LSM6DSO_FIFO_CTRL1_ADDR, 1);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	int1_ctrl_val |= LSM6DSO_INT_FIFO_TH | LSM6DSO_INT_FIFO_OVR |
 		LSM6DSO_INT_FIFO_FULL;
 
-	ret = st_raw_write8(s->port, s->addr, LSM6DSO_INT1_CTRL,
-			    int1_ctrl_val);
+	ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LSM6DSO_INT1_CTRL, int1_ctrl_val);
 #endif /* CONFIG_ACCEL_FIFO */
 
 	return ret;
@@ -88,7 +89,8 @@ static int config_interrupt(const struct motion_sensor_t *s)
  */
 static int fifo_disable(const struct motion_sensor_t *s)
 {
-	return st_raw_write8(s->port, s->addr, LSM6DSO_FIFO_CTRL4_ADDR,
+	return st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			     LSM6DSO_FIFO_CTRL4_ADDR,
 			     LSM6DSO_FIFO_MODE_BYPASS_VAL);
 }
 
@@ -100,7 +102,8 @@ static int fifo_disable(const struct motion_sensor_t *s)
  */
 static int fifo_enable(const struct motion_sensor_t *s)
 {
-	return st_raw_write8(s->port, s->addr, LSM6DSO_FIFO_CTRL4_ADDR,
+	return st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			     LSM6DSO_FIFO_CTRL4_ADDR,
 			     LSM6DSO_FIFO_MODE_CONTINUOUS_VAL);
 }
 
@@ -168,7 +171,7 @@ static inline int load_fifo(struct motion_sensor_t *s,
 	fifo_len = fifo_depth * LSM6DSO_FIFO_SAMPLE_SIZE;
 	while (read_len < fifo_len) {
 		word_len = GENERIC_MIN(fifo_len - read_len, sizeof(fifo));
-		err = st_raw_read_n_noinc(s->port, s->addr,
+		err = st_raw_read_n_noinc__7bf(s->port, s->i2c_spi_addr__7bf,
 					  LSM6DSO_FIFO_DATA_ADDR_TAG,
 					  fifo, word_len);
 		if (err != EC_SUCCESS)
@@ -244,7 +247,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 
 #ifdef CONFIG_ACCEL_FIFO
 	/* Read how many data patterns on FIFO to read. */
-	ret = st_raw_read_n_noinc(s->port, s->addr,
+	ret = st_raw_read_n_noinc__7bf(s->port, s->i2c_spi_addr__7bf,
 				  LSM6DSO_FIFO_STS1_ADDR,
 				  (uint8_t *)&fsts, sizeof(fsts));
 	if (ret != EC_SUCCESS)
@@ -366,7 +369,8 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
 	int ret, tmp;
 
-	ret = st_raw_read8(s->port, s->addr, LSM6DSO_STATUS_REG, &tmp);
+	ret = st_raw_read8__7bf(s->port, s->i2c_spi_addr__7bf,
+			   LSM6DSO_STATUS_REG, &tmp);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("%s type:0x%X RS Error", s->name, s->type);
 
@@ -411,8 +415,8 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	xyz_reg = get_xyz_reg(s->type);
 
 	/* Read data bytes starting at xyz_reg. */
-	ret = st_raw_read_n_noinc(s->port, s->addr, xyz_reg, raw,
-				  OUT_XYZ_SIZE);
+	ret = st_raw_read_n_noinc__7bf(s->port, s->i2c_spi_addr__7bf,
+				  xyz_reg, raw, OUT_XYZ_SIZE);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -427,7 +431,8 @@ static int init(const struct motion_sensor_t *s)
 	int ret = 0, tmp;
 	struct stprivate_data *data = LSM6DSO_GET_DATA(s);
 
-	ret = st_raw_read8(s->port, s->addr, LSM6DSO_WHO_AM_I_REG, &tmp);
+	ret = st_raw_read8__7bf(s->port, s->i2c_spi_addr__7bf,
+			   LSM6DSO_WHO_AM_I_REG, &tmp);
 	if (ret != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 
@@ -445,8 +450,8 @@ static int init(const struct motion_sensor_t *s)
 		mutex_lock(s->mutex);
 
 		/* Software reset. */
-		ret = st_raw_write8(s->port, s->addr, LSM6DSO_CTRL3_ADDR,
-				    LSM6DSO_SW_RESET);
+		ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+				    LSM6DSO_CTRL3_ADDR, LSM6DSO_SW_RESET);
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
 
@@ -454,7 +459,8 @@ static int init(const struct motion_sensor_t *s)
 		 * Output data not updated until have been read.
 		 * Prefer interrupt to be active low.
 		 */
-		ret = st_raw_write8(s->port, s->addr, LSM6DSO_CTRL3_ADDR,
+		ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+				    LSM6DSO_CTRL3_ADDR,
 				    LSM6DSO_BDU | LSM6DSO_IF_INC);
 		if (ret != EC_SUCCESS)
 			goto err_unlock;

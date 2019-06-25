@@ -66,12 +66,14 @@ static int fake_state_of_charge = -1;
 
 static int max17055_read(int offset, int *data)
 {
-	return i2c_read16(I2C_PORT_BATTERY, MAX17055_ADDR, offset, data);
+	return i2c_read16__7bf(I2C_PORT_BATTERY, MAX17055_ADDR__7bf,
+			  offset, data);
 }
 
 static int max17055_write(int offset, int data)
 {
-	return i2c_write16(I2C_PORT_BATTERY, MAX17055_ADDR, offset, data);
+	return i2c_write16__7bf(I2C_PORT_BATTERY, MAX17055_ADDR__7bf,
+			   offset, data);
 }
 
 /* Return 1 if the device id is correct. */

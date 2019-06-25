@@ -25,6 +25,7 @@
 #include "ec_flash.h"
 #include "ec_version.h"
 #include "ectool.h"
+#include "i2c.h"
 #include "lightbar.h"
 #include "lock/gec_lock.h"
 #include "misc_util.h"
@@ -6341,7 +6342,8 @@ int cmd_locate_chip(int argc, char *argv[])
 	 * (firmware_ECCbiEeprom) still passes. It may silently skip the test.
 	 */
 	printf("Bus: %s; Port: %d; Address: 0x%02x (7-bit format)\n",
-	       bus_type[r.bus_type], r.i2c_info.port, r.i2c_info.addr);
+	       bus_type[r.bus_type], r.i2c_info.port,
+	       I2C_GET_ADDR(r.i2c_info.addr_flags));
 
 	printf("reserved: 0x%x\n", r.reserved);
 

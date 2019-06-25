@@ -1173,7 +1173,7 @@ struct i2c_stress_test_dev anx74xx_i2c_stress_test_dev = {
 		.read_val = ANX74XX_VENDOR_ID & 0xFF,
 		.write_reg = ANX74XX_REG_CC_SOFTWARE_CTRL,
 	},
-	.i2c_read = &tcpc_i2c_read,
-	.i2c_write = &tcpc_i2c_write,
+	.i2c_read__7bf = &tcpc_i2c_read__7bf,
+	.i2c_write__7bf = &tcpc_i2c_write__7bf,
 };
 #endif /* CONFIG_CMD_I2C_STRESS_TEST_TCPC */

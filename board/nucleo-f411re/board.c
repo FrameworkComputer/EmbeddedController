@@ -75,7 +75,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_ACCEL,
-	 .addr = BMI160_ADDR0,
+	 .i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
 	 .rot_standard_ref = NULL,
 	 .default_range = 2,  /* g, enough for laptop. */
 	 .config = {
@@ -102,7 +102,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_ACCEL,
-	 .addr = BMI160_ADDR0,
+	 .i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
 	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = NULL,
 	},

@@ -13,12 +13,16 @@
 
 static inline int ps874x_read(int port, uint8_t reg, int *val)
 {
-	return i2c_read8(I2C_PORT_USB_MUX, MUX_ADDR(port), reg, val);
+	return i2c_read8__7bf(I2C_PORT_USB_MUX,
+			 MUX_ADDR__7bf(port),
+			 reg, val);
 }
 
 static inline int ps874x_write(int port, uint8_t reg, uint8_t val)
 {
-	return i2c_write8(I2C_PORT_USB_MUX, MUX_ADDR(port), reg, val);
+	return i2c_write8__7bf(I2C_PORT_USB_MUX,
+			  MUX_ADDR__7bf(port),
+			  reg, val);
 }
 
 static int ps874x_init(int port)

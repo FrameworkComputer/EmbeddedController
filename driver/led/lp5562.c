@@ -11,8 +11,8 @@
 #include "timer.h"
 #include "util.h"
 
-/* 8-bit I2C address */
-#define LP5562_I2C_ADDR (0x30 << 1)
+/* I2C address */
+#define LP5562_I2C_ADDR__7bf (0x30)
 
 inline int lp5562_write(uint8_t reg, uint8_t val)
 {

@@ -9,7 +9,7 @@
 #define __CROS_EC_ALS_BH1730_H
 
 /* I2C interface */
-#define BH1730_I2C_ADDR		(0x29 << 1)
+#define BH1730_I2C_ADDR__7bf		0x29
 
 /* BH1730 registers */
 #define BH1730_CONTROL		0x80

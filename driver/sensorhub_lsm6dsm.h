@@ -24,8 +24,9 @@
  * @param val Value to be written into the external sensor register.
  * @return EC_SUCCESS on success, EC error codes on failure.
  */
-int sensorhub_config_ext_reg(const struct motion_sensor_t *s,
-				uint8_t slv_addr, uint8_t reg, uint8_t val);
+int sensorhub_config_ext_reg__7bf(const struct motion_sensor_t *s,
+			     const uint16_t slv_addr__7bf,
+			     uint8_t reg, uint8_t val);
 
 /**
  * Configure the sensor hub to read data from a specific register of an
@@ -37,8 +38,9 @@ int sensorhub_config_ext_reg(const struct motion_sensor_t *s,
  * @param len Length of data to be read.
  * @return EC_SUCCESS on success, EC error codes on failure.
  */
-int sensorhub_config_slv0_read(const struct motion_sensor_t *s,
-				uint8_t slv_addr, uint8_t reg, int len);
+int sensorhub_config_slv0_read__7bf(const struct motion_sensor_t *s,
+			       const uint16_t slv_addr__7bf,
+			       uint8_t reg, int len);
 
 /**
  * Reads the data from the register bank that is associated with the slave0
@@ -62,7 +64,8 @@ int sensorhub_slv0_data_read(const struct motion_sensor_t *s, uint8_t *raw);
  * @param rst_val Value to be written to the reset register.
  * @return EC_SUCCESS on success, EC error codes on failure.
  */
-int sensorhub_check_and_rst(const struct motion_sensor_t *s, uint8_t slv_addr,
-					uint8_t whoami_reg, uint8_t whoami_val,
-					uint8_t rst_reg, uint8_t rst_val);
+int sensorhub_check_and_rst__7bf(const struct motion_sensor_t *s,
+			    const uint16_t slv_addr__7bf,
+			    uint8_t whoami_reg, uint8_t whoami_val,
+			    uint8_t rst_reg, uint8_t rst_val);
 #endif /* __CROS_EC_SENSORHUB_LSM6DSM_H */

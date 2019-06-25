@@ -27,7 +27,7 @@
 /* Transmit timeout in microseconds */
 #define I2C_TX_TIMEOUT_MASTER	(10 * MSEC)
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
+#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF
 #if (I2C_PORT_EC == STM32_I2C1_PORT)
 #define IRQ_SLAVE STM32_IRQ_I2C1
 #else
@@ -146,7 +146,7 @@ static void i2c_init_port(const struct i2c_port_t *p)
 		STM32_RCC_APB1ENR |= 1 << (21 + port);
 
 	if (port == STM32_I2C1_PORT) {
-#if defined(CONFIG_HOSTCMD_I2C_SLAVE_ADDR) && \
+#if defined(CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF) && \
 defined(CONFIG_LOW_POWER_IDLE) && \
 (I2C_PORT_EC == STM32_I2C1_PORT)
 		/*
@@ -189,7 +189,7 @@ defined(CONFIG_LOW_POWER_IDLE) && \
 }
 
 /*****************************************************************************/
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
+#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF
 /* Host command slave */
 /*
  * Buffer for received host command packets (including prefix byte on request,
@@ -426,9 +426,11 @@ DECLARE_IRQ(IRQ_SLAVE, i2c2_event_interrupt, 2);
 /*****************************************************************************/
 /* Interface */
 
-int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
+int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
+		  const uint8_t *out, int out_bytes,
 		  uint8_t *in, int in_bytes, int flags)
 {
+	int addr__8b = I2C_GET_ADDR__7b(slave_addr__7bf) << 1;
 	int rv = EC_SUCCESS;
 	int i;
 	int xfer_start = flags & I2C_XFER_START;
@@ -436,7 +438,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 
 #if defined(CONFIG_I2C_SCL_GATE_ADDR) && defined(CONFIG_I2C_SCL_GATE_PORT)
 	if (port == CONFIG_I2C_SCL_GATE_PORT &&
-	    slave_addr == CONFIG_I2C_SCL_GATE_ADDR)
+	    slave_addr__7bf == CONFIG_I2C_SCL_GATE_ADDR__7BF)
 		gpio_set_level(CONFIG_I2C_SCL_GATE_GPIO, 1);
 #endif
 
@@ -457,7 +459,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 		 * NBYTES again. if we are starting, then set START bit.
 		 */
 		STM32_I2C_CR2(port) =  ((out_bytes & 0xFF) << 16)
-			| slave_addr
+			| addr__8b
 			| ((in_bytes == 0 && xfer_stop) ?
 				STM32_I2C_CR2_AUTOEND : 0)
 			| ((in_bytes == 0 && !xfer_stop) ?
@@ -486,7 +488,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 		 * set START bit to send (re)start and begin read transaction.
 		 */
 		STM32_I2C_CR2(port) = ((in_bytes & 0xFF) << 16)
-			| STM32_I2C_CR2_RD_WRN | slave_addr
+			| STM32_I2C_CR2_RD_WRN | addr__8b
 			| (xfer_stop ? STM32_I2C_CR2_AUTOEND : 0)
 			| (!xfer_stop ? STM32_I2C_CR2_RELOAD : 0)
 			| (out_bytes || xfer_start ? STM32_I2C_CR2_START : 0);
@@ -543,7 +545,7 @@ xfer_exit:
 
 #ifdef CONFIG_I2C_SCL_GATE_ADDR
 	if (port == CONFIG_I2C_SCL_GATE_PORT &&
-	    slave_addr == CONFIG_I2C_SCL_GATE_ADDR)
+	    slave_addr__7bf == CONFIG_I2C_SCL_GATE_ADDR__7BF)
 		gpio_set_level(CONFIG_I2C_SCL_GATE_GPIO, 0);
 #endif
 
@@ -586,7 +588,7 @@ static void i2c_init(void)
 	for (i = 0; i < i2c_ports_used; i++, p++)
 		i2c_init_port(p);
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
+#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_RXIE | STM32_I2C_CR1_ERRIE
 			| STM32_I2C_CR1_ADDRIE | STM32_I2C_CR1_STOPIE
 			| STM32_I2C_CR1_NACKIE;
@@ -598,13 +600,15 @@ static void i2c_init(void)
 	 */
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_WUPEN;
 #endif
-	STM32_I2C_OAR1(I2C_PORT_EC) = 0x8000 | CONFIG_HOSTCMD_I2C_SLAVE_ADDR;
+	STM32_I2C_OAR1(I2C_PORT_EC) = 0x8000
+		| (I2C_GET_ADDR__7b(CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF) << 1);
 #ifdef TCPCI_I2C_SLAVE
 	/*
 	 * Configure TCPC address with OA2[1] masked so that we respond
 	 * to CONFIG_TCPC_I2C_BASE_ADDR and CONFIG_TCPC_I2C_BASE_ADDR + 2.
 	 */
-	STM32_I2C_OAR2(I2C_PORT_EC) = 0x8100 | CONFIG_TCPC_I2C_BASE_ADDR;
+	STM32_I2C_OAR2(I2C_PORT_EC) = 0x8100
+		| (I2C_GET_ADDR__7b(CONFIG_TCPC_I2C_BASE_ADDR__7BF) << 1);
 #endif
 	task_enable_irq(IRQ_SLAVE);
 #endif

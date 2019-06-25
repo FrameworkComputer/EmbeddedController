@@ -35,7 +35,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = IT83XX_I2C_CH_B,
-			.addr = 0xa0,
+			.addr__7bf = 0x50,
 		},
 		.drv = &tcpci_tcpm_drv,
 	},
@@ -43,7 +43,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = IT83XX_I2C_CH_B,
-			.addr = 0xa4,
+			.addr__7bf = 0x52,
 		},
 		.drv = &tcpci_tcpm_drv,
 	},
@@ -52,11 +52,11 @@ BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == CONFIG_USB_PD_PORT_COUNT);
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
-		.port_addr = 0x20,
+		.port_addr = 0x10,
 		.driver = &ps874x_usb_mux_driver,
 	},
 	{
-		.port_addr = 0x22,
+		.port_addr = 0x11,
 		.driver = &ps874x_usb_mux_driver,
 	},
 };

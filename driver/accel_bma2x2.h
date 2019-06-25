@@ -22,16 +22,16 @@ extern const struct accelgyro_drv bma2x2_accel_drv;
 * BMA250E
 * BMA222E
 */
-#define BMA2x2_I2C_ADDR1                    0x30
-#define BMA2x2_I2C_ADDR2                    0x19
+#define BMA2x2_I2C_ADDR1__7bf                    0x18
+#define BMA2x2_I2C_ADDR2__7bf                    0x19
 
 /* The following definition of I2C address is used for the following sensors
 * BMC150
 * BMC056
 * BMC156
 */
-#define BMA2x2_I2C_ADDR3                    0x10
-#define BMA2x2_I2C_ADDR4                    0x11
+#define BMA2x2_I2C_ADDR3__7bf                    0x10
+#define BMA2x2_I2C_ADDR4__7bf                    0x11
 
 /*** Chip-specific registers ***/
 /* REGISTER ADDRESS DEFINITIONS */

@@ -16,8 +16,8 @@
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
-/* 8-bit I2C address */
-#define IR357x_I2C_ADDR (0x8 << 1)
+/* I2C address */
+#define IR357x_I2C_ADDR__7bf (0x8)
 
 struct ir_setting {
 	uint8_t reg;

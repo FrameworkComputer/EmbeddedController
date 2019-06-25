@@ -40,12 +40,14 @@ int sb_read(int cmd, int *param)
 	if (read_count >= fail_on_first && read_count <= fail_on_last)
 		return EC_ERROR_UNKNOWN;
 
-	return i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, param);
+	return i2c_read16__7bf(I2C_PORT_BATTERY, BATTERY_ADDR__7bf,
+			  cmd, param);
 }
 int sb_write(int cmd, int param)
 {
 	write_count++;
-	return i2c_write16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, param);
+	return i2c_write16__7bf(I2C_PORT_BATTERY, BATTERY_ADDR__7bf,
+			   cmd, param);
 }
 
 

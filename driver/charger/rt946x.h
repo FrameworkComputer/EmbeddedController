@@ -583,15 +583,15 @@
 #if defined(CONFIG_CHARGER_RT9466)
 	#define RT946X_CHARGER_NAME	"rt9466"
 	#define RT946X_VENDOR_ID	0x80
-	#define RT946X_ADDR		(0x53 << 1)
+	#define RT946X_ADDR__7bf		0x53
 #elif defined(CONFIG_CHARGER_RT9467)
 	#define RT946X_CHARGER_NAME	"rt9467"
 	#define RT946X_VENDOR_ID	0x90
-	#define RT946X_ADDR		(0x5B << 1)
+	#define RT946X_ADDR__7bf		0x5B
 #elif defined(CONFIG_CHARGER_MT6370)
 	#define RT946X_CHARGER_NAME	"mt6370"
 	#define RT946X_VENDOR_ID	0xE0
-	#define RT946X_ADDR		(0x34 << 1)
+	#define RT946X_ADDR__7bf		0x34
 #else
 	#error "No suitable charger option defined"
 #endif

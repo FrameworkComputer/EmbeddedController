@@ -9,10 +9,10 @@
 #define __CROS_EC_USB_PD_TCPM_PS8XXX_H
 
 /* I2C interface */
-#define PS8751_I2C_ADDR1 0x16
-#define PS8751_I2C_ADDR2 0x36
-#define PS8751_I2C_ADDR3 0x56
-#define PS8751_I2C_ADDR4 0x96
+#define PS8751_I2C_ADDR1__7bf (0x0B)
+#define PS8751_I2C_ADDR2__7bf (0x1B)
+#define PS8751_I2C_ADDR3__7bf (0x2B)
+#define PS8751_I2C_ADDR4__7bf (0x4B)
 
 /* Minimum Delay for reset assertion */
 #define PS8XXX_RESET_DELAY_MS 1

@@ -35,14 +35,14 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr = PS8751_I2C_ADDR1,
+			.addr__7bf = PS8751_I2C_ADDR1__7bf,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 #else
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr = AN7447_TCPC0_I2C_ADDR,
+			.addr__7bf = AN7447_TCPC0_I2C_ADDR__7bf,
 		},
 		.drv = &anx7447_tcpm_drv,
 #endif
@@ -51,7 +51,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC1,
-			.addr = PS8751_I2C_ADDR1,
+			.addr__7bf = PS8751_I2C_ADDR1__7bf,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 	},
@@ -91,12 +91,12 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
 		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr = NX20P3483_ADDR2,
+		.i2c_addr__7bf = NX20P3483_ADDR2__7bf,
 		.drv = &nx20p348x_drv,
 	},
 	[USB_PD_PORT_TCPC_1] = {
 		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr = NX20P3483_ADDR2,
+		.i2c_addr__7bf = NX20P3483_ADDR2__7bf,
 		.drv = &nx20p348x_drv,
 	},
 };

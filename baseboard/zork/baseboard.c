@@ -89,7 +89,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr = ANX74XX_I2C_ADDR1,
+			.addr__7bf = ANX74XX_I2C_ADDR1__7bf,
 		},
 		.drv = &anx74xx_tcpm_drv,
 		/* Alert is active-low, open-drain */
@@ -99,7 +99,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC1,
-			.addr = PS8751_I2C_ADDR1,
+			.addr__7bf = PS8751_I2C_ADDR1__7bf,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 		/* Alert is active-low, push-pull */
@@ -140,12 +140,12 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 struct ppc_config_t ppc_chips[] = {
 	{
 		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr = SN5S330_ADDR0,
+		.i2c_addr__7bf = SN5S330_ADDR0__7bf,
 		.drv = &sn5s330_drv
 	},
 	{
 		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr = SN5S330_ADDR0,
+		.i2c_addr__7bf = SN5S330_ADDR0__7bf,
 		.drv = &sn5s330_drv
 	},
 };
@@ -387,7 +387,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_kx022_data,
 	 .port = I2C_PORT_SENSOR,
-	 .addr = KX022_ADDR1,
+	 .i2c_spi_addr__7bf = KX022_ADDR1__7bf,
 	 .rot_standard_ref = (const mat33_fp_t *)&lid_standard_ref,
 	 .default_range = 2, /* g, enough for laptop. */
 	 .min_frequency = KX022_ACCEL_MIN_FREQ,
@@ -415,7 +415,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_SENSOR,
-	 .addr = BMI160_ADDR0,
+	 .i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
 	 .default_range = 2, /* g, enough for laptop */
 	 .rot_standard_ref = (const mat33_fp_t *)&zork_base_standard_ref,
 	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
@@ -443,7 +443,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_SENSOR,
-	 .addr = BMI160_ADDR0,
+	 .i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
 	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = (const mat33_fp_t *)&zork_base_standard_ref,
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,

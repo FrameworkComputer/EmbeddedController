@@ -97,7 +97,7 @@
 
 /* slave address for host commands */
 #ifdef HAS_TASK_HOSTCMD
-#define CONFIG_HOSTCMD_I2C_SLAVE_ADDR CONFIG_USB_PD_I2C_SLAVE_ADDR
+#define CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF CONFIG_USB_PD_I2C_SLAVE_ADDR__7BF
 #endif
 
 #ifndef __ASSEMBLER__

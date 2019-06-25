@@ -92,13 +92,14 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-int anx7688_passthru_allowed(const struct i2c_port_t *port, uint16_t address)
+int anx7688_passthru_allowed__7bf(const struct i2c_port_t *port,
+			     const uint16_t addr__7bf)
 {
 	/* Allow access to 0x2c (TCPC) */
-	if (address == 0x2c)
+	if (I2C_GET_ADDR__7b(addr__7bf) == 0x2c)
 		return 1;
 
-	CPRINTF("Passthru rejected on %x", address);
+	CPRINTF("Passthru rejected on %x", I2C_GET_ADDR__7b(addr__7bf));
 
 	return 0;
 }
@@ -107,7 +108,7 @@ int anx7688_passthru_allowed(const struct i2c_port_t *port, uint16_t address)
 const struct i2c_port_t i2c_ports[] = {
 	{"battery", I2C_PORT_BATTERY, 100,  GPIO_I2C0_SCL, GPIO_I2C0_SDA},
 	{"pd",      I2C_PORT_PD_MCU,  1000, GPIO_I2C1_SCL, GPIO_I2C1_SDA,
-		anx7688_passthru_allowed}
+		anx7688_passthru_allowed__7bf}
 };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
@@ -125,7 +126,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC,
-			.addr = CONFIG_TCPC_I2C_BASE_ADDR,
+			.addr__7bf = CONFIG_TCPC_I2C_BASE_ADDR__7BF,
 		},
 		.drv = &anx7688_tcpm_drv,
 	},
@@ -466,7 +467,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv = &kionix_accel_drv,
 		.mutex = &g_kx022_mutex[0],
 		.drv_data = &g_kx022_data[0],
-		.addr = 1, /* SPI, device ID 0 */
+		.i2c_spi_addr__7bf = SLAVE_MK_SPI_ADDR__7bf(0),
 		.rot_standard_ref = &base_standard_ref,
 		.default_range = 2, /* g, enough for laptop. */
 		.min_frequency = KX022_ACCEL_MIN_FREQ,
@@ -489,7 +490,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv = &kionix_accel_drv,
 		.mutex = &g_kx022_mutex[1],
 		.drv_data = &g_kx022_data[1],
-		.addr = 3, /* SPI, device ID 1 */
+		.i2c_spi_addr__7bf = SLAVE_MK_SPI_ADDR__7bf(1),
 		.rot_standard_ref = &lid_standard_ref,
 		.default_range = 2, /* g, enough for laptop. */
 		.min_frequency = KX022_ACCEL_MIN_FREQ,

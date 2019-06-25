@@ -236,7 +236,9 @@ static inline void push_in_buf(uint8_t **in, uint8_t val, int skip)
 	}
 }
 
-int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
+int chip_i2c_xfer__7bf(const int port,
+		  const uint16_t slave_addr__7bf,
+		  const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
 	int i;
@@ -284,7 +286,9 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 
 	if (out_size) {
 		if (send_start) {
-			MEC1322_I2C_DATA(controller) = (uint8_t)slave_addr;
+			MEC1322_I2C_DATA(controller) =
+				(uint8_t)(I2C_GET_ADDR__7b(slave_addr__7bf)
+					  << 1);
 
 			/* Clock out the slave address, sending START bit */
 			MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
@@ -327,8 +331,10 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 							       CTRL_ACK |
 							       CTRL_ENI;
 
-			MEC1322_I2C_DATA(controller) = (uint8_t)slave_addr
-						     | 0x01;
+			MEC1322_I2C_DATA(controller) =
+				(uint8_t)(I2C_GET_ADDR__7b(slave_addr__7bf)
+					  << 1)
+				| 0x01;
 
 			/* New transaction case, clock out slave address. */
 			if (cdata[controller].transaction_state ==

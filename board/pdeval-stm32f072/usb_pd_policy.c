@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "anx7447.h"
 #include "common.h"
+#include "anx7447.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"

@@ -14,13 +14,14 @@
 
 static uint16_t mock_smart_battery[SB_MANUFACTURER_DATA + 1];
 
-int sb_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
+int sb_i2c_xfer__7bf(int port, uint16_t slave_addr__7bf,
+		const uint8_t *out, int out_size,
 		uint8_t *in, int in_size, int flags)
 {
 	if (out_size == 0)
 		return EC_SUCCESS;
 
-	if (port != I2C_PORT_BATTERY || slave_addr != BATTERY_ADDR)
+	if (port != I2C_PORT_BATTERY || slave_addr__7bf != BATTERY_ADDR__7bf)
 		return EC_ERROR_INVAL;
 	if (out[0]  >= ARRAY_SIZE(mock_smart_battery))
 		return EC_ERROR_UNIMPLEMENTED;
@@ -41,7 +42,7 @@ int sb_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	}
 	return EC_SUCCESS;
 }
-DECLARE_TEST_I2C_XFER(sb_i2c_xfer);
+DECLARE_TEST_I2C_XFER(sb_i2c_xfer__7bf);
 
 int battery_time_at_rate(int rate, int *minutes)
 {

@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_MAX17055_H
 #define __CROS_EC_MAX17055_H
 
-#define MAX17055_ADDR               0x6c
+#define MAX17055_ADDR__7bf               0x36
 #define MAX17055_DEVICE_ID          0x4010
 #define MAX17055_OCV_TABLE_SIZE     48
 

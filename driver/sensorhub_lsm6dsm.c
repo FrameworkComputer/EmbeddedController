@@ -21,12 +21,12 @@ static int set_reg_bit_field(const struct motion_sensor_t *s,
 	int tmp;
 	int ret;
 
-	ret = st_raw_read8(s->port, s->addr, reg, &tmp);
+	ret = st_raw_read8__7bf(s->port, s->i2c_spi_addr__7bf, reg, &tmp);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	tmp |= bit_field;
-	return st_raw_write8(s->port, s->addr, reg, tmp);
+	return st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf, reg, tmp);
 }
 
 static int clear_reg_bit_field(const struct motion_sensor_t *s,
@@ -35,12 +35,12 @@ static int clear_reg_bit_field(const struct motion_sensor_t *s,
 	int tmp;
 	int ret;
 
-	ret = st_raw_read8(s->port, s->addr, reg, &tmp);
+	ret = st_raw_read8__7bf(s->port, s->i2c_spi_addr__7bf, reg, &tmp);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	tmp &= ~(bit_field);
-	return st_raw_write8(s->port, s->addr, reg, tmp);
+	return st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf, reg, tmp);
 }
 
 static inline int enable_sensorhub_func(const struct motion_sensor_t *s)
@@ -89,7 +89,8 @@ static inline int disable_aux_i2c_master(const struct motion_sensor_t *s)
 static inline int restore_master_cfg(const struct motion_sensor_t *s,
 								int cache)
 {
-	return st_raw_write8(s->port, s->addr, LSM6DSM_MASTER_CFG_ADDR, cache);
+	return st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			     LSM6DSM_MASTER_CFG_ADDR, cache);
 }
 
 static int enable_i2c_pass_through(const struct motion_sensor_t *s,
@@ -97,7 +98,8 @@ static int enable_i2c_pass_through(const struct motion_sensor_t *s,
 {
 	int ret;
 
-	ret = st_raw_read8(s->port, s->addr, LSM6DSM_MASTER_CFG_ADDR, cache);
+	ret = st_raw_read8__7bf(s->port, s->i2c_spi_addr__7bf,
+			   LSM6DSM_MASTER_CFG_ADDR, cache);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x MCR error ret: %d\n",
 			__func__, s->name, s->type, ret);
@@ -109,8 +111,9 @@ static int enable_i2c_pass_through(const struct motion_sensor_t *s,
 	 * Wait is for any pending bus activity(probably read) to settle down
 	 * so that there is no bus contention.
 	 */
-	ret = st_raw_write8(s->port, s->addr, LSM6DSM_MASTER_CFG_ADDR,
-					*cache | LSM6DSM_EXT_TRIGGER_EN);
+	ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LSM6DSM_MASTER_CFG_ADDR,
+			    *cache | LSM6DSM_EXT_TRIGGER_EN);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x MCETEN error ret: %d\n",
 			__func__, s->name, s->type, ret);
@@ -118,8 +121,10 @@ static int enable_i2c_pass_through(const struct motion_sensor_t *s,
 	}
 	msleep(10);
 
-	ret = st_raw_write8(s->port, s->addr, LSM6DSM_MASTER_CFG_ADDR,
-		*cache & ~(LSM6DSM_EXT_TRIGGER_EN | LSM6DSM_I2C_MASTER_ON));
+	ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LSM6DSM_MASTER_CFG_ADDR,
+				 *cache & ~(LSM6DSM_EXT_TRIGGER_EN
+					    | LSM6DSM_I2C_MASTER_ON));
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x MCC error ret: %d\n",
 			__func__, s->name, s->type, ret);
@@ -127,7 +132,7 @@ static int enable_i2c_pass_through(const struct motion_sensor_t *s,
 		return ret;
 	}
 
-	return st_raw_write8(s->port, s->addr,
+	return st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
 			LSM6DSM_MASTER_CFG_ADDR, LSM6DSM_I2C_PASS_THRU_MODE);
 }
 
@@ -136,37 +141,43 @@ static inline int power_down_accel(const struct motion_sensor_t *s,
 {
 	int ret;
 
-	ret = st_raw_read8(s->port, s->addr, LSM6DSM_CTRL1_ADDR, cache);
+	ret = st_raw_read8__7bf(s->port, s->i2c_spi_addr__7bf,
+			   LSM6DSM_CTRL1_ADDR, cache);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x CTRL1R error ret: %d\n",
 			__func__, s->name, s->type, ret);
 		return ret;
 	}
 
-	return st_raw_write8(s->port, s->addr, LSM6DSM_CTRL1_ADDR,
-					*cache & ~LSM6DSM_XL_ODR_MASK);
+	return st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			     LSM6DSM_CTRL1_ADDR,
+			     *cache & ~LSM6DSM_XL_ODR_MASK);
 }
 
 static inline int restore_ctrl1(const struct motion_sensor_t *s, int cache)
 {
-	return st_raw_write8(s->port, s->addr,
-				LSM6DSM_CTRL1_ADDR, cache);
+	return st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			     LSM6DSM_CTRL1_ADDR, cache);
 }
 
-static int config_slv0_read(const struct motion_sensor_t *s, uint8_t addr,
-						uint8_t reg, uint8_t len)
+static int config_slv0_read__7bf(const struct motion_sensor_t *s,
+			    const uint16_t slv_addr__7bf,
+			    uint16_t reg, uint8_t len)
 {
 	int ret;
+	uint16_t addr__8b = I2C_GET_ADDR__7b(slv_addr__7bf) << 1;
 
-	ret = st_raw_write8(s->port, s->addr, LSM6DSM_SLV0_ADD_ADDR,
-			(addr | LSM6DSM_SLV0_RD_BIT));
+	ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LSM6DSM_SLV0_ADD_ADDR,
+			    (addr__8b | LSM6DSM_SLV0_RD_BIT));
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x SA error ret: %d\n",
 			__func__, s->name, s->type, ret);
 		return ret;
 	}
 
-	ret = st_raw_write8(s->port, s->addr, LSM6DSM_SLV0_SUBADD_ADDR, reg);
+	ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LSM6DSM_SLV0_SUBADD_ADDR, reg);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x RA error ret: %d\n",
 			__func__, s->name, s->type, ret);
@@ -177,8 +188,9 @@ static int config_slv0_read(const struct motion_sensor_t *s, uint8_t addr,
 	 * No decimation for external sensor 0,
 	 * Number of sensors connected to external sensor hub 1
 	 */
-	ret = st_raw_write8(s->port, s->addr, LSM6DSM_SLV0_CONFIG_ADDR,
-					(len & LSM6DSM_SLV0_NUM_OPS_MASK));
+	ret = st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			    LSM6DSM_SLV0_CONFIG_ADDR,
+			    (len & LSM6DSM_SLV0_NUM_OPS_MASK));
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x CFG error ret: %d\n",
 			__func__, s->name, s->type, ret);
@@ -188,8 +200,9 @@ static int config_slv0_read(const struct motion_sensor_t *s, uint8_t addr,
 	return EC_SUCCESS;
 }
 
-int sensorhub_config_ext_reg(const struct motion_sensor_t *s,
-				uint8_t slv_addr, uint8_t reg, uint8_t val)
+int sensorhub_config_ext_reg__7bf(const struct motion_sensor_t *s,
+			     const uint16_t slv_addr__7bf,
+			     uint8_t reg, uint8_t val)
 {
 	int ret;
 	int tmp;
@@ -201,13 +214,13 @@ int sensorhub_config_ext_reg(const struct motion_sensor_t *s,
 		return ret;
 	}
 
-	ret = st_raw_write8(s->port, slv_addr, reg, val);
+	ret = st_raw_write8__7bf(s->port, slv_addr__7bf, reg, val);
 	restore_master_cfg(s, tmp);
 	return ret;
 }
 
-int sensorhub_config_slv0_read(const struct motion_sensor_t *s,
-			uint8_t slv_addr, uint8_t reg, int len)
+int sensorhub_config_slv0_read__7bf(const struct motion_sensor_t *s,
+			       uint16_t slv_addr__7bf, uint8_t reg, int len)
 {
 	int tmp_xl_cfg;
 	int ret;
@@ -232,7 +245,7 @@ int sensorhub_config_slv0_read(const struct motion_sensor_t *s,
 		goto out_restore_ctrl1;
 	}
 
-	ret = config_slv0_read(s, slv_addr, reg, len);
+	ret = config_slv0_read__7bf(s, slv_addr__7bf, reg, len);
 	disable_ereg_bank_acc(s);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x CS0R error ret: %d\n",
@@ -267,8 +280,9 @@ int sensorhub_slv0_data_read(const struct motion_sensor_t *s, uint8_t *raw)
 	 * register as soon as the accel is in power-up mode. So return the
 	 * contents of that register.
 	 */
-	ret = st_raw_read_n_noinc(s->port, s->addr, LSM6DSM_SENSORHUB1_REG,
-							raw, OUT_XYZ_SIZE);
+	ret = st_raw_read_n_noinc__7bf(s->port, s->i2c_spi_addr__7bf,
+				  LSM6DSM_SENSORHUB1_REG,
+				  raw, OUT_XYZ_SIZE);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x SH1R error ret: %d\n",
 			__func__, s->name, s->type, ret);
@@ -277,9 +291,10 @@ int sensorhub_slv0_data_read(const struct motion_sensor_t *s, uint8_t *raw)
 	return EC_SUCCESS;
 }
 
-int sensorhub_check_and_rst(const struct motion_sensor_t *s, uint8_t slv_addr,
-					uint8_t whoami_reg, uint8_t whoami_val,
-					uint8_t rst_reg, uint8_t rst_val)
+int sensorhub_check_and_rst__7bf(const struct motion_sensor_t *s,
+			    const uint16_t slv_addr__7bf,
+			    uint8_t whoami_reg, uint8_t whoami_val,
+			    uint8_t rst_reg, uint8_t rst_val)
 {
 	int ret, tmp;
 	int tmp_master_cfg;
@@ -291,7 +306,7 @@ int sensorhub_check_and_rst(const struct motion_sensor_t *s, uint8_t slv_addr,
 		return ret;
 	}
 
-	ret = st_raw_read8(s->port, slv_addr, whoami_reg, &tmp);
+	ret = st_raw_read8__7bf(s->port, slv_addr__7bf, whoami_reg, &tmp);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x WAIR error ret: %d\n",
 			__func__, s->name, s->type, ret);
@@ -305,7 +320,7 @@ int sensorhub_check_and_rst(const struct motion_sensor_t *s, uint8_t slv_addr,
 		goto err_restore_master_cfg;
 	}
 
-	ret = st_raw_write8(s->port, slv_addr, rst_reg, rst_val);
+	ret = st_raw_write8__7bf(s->port, slv_addr__7bf, rst_reg, rst_val);
 err_restore_master_cfg:
 	restore_master_cfg(s, tmp_master_cfg);
 	return ret;

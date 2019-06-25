@@ -150,22 +150,19 @@ static void i2c_intr_switch(uint32_t *base, int mode)
 	}
 }
 
-static void i2c_init_transaction(struct i2c_context *ctx,
-				 uint8_t slave_addr, uint8_t flags)
+static void i2c_init_transaction__7b(struct i2c_context *ctx,
+				 uint16_t slave_addr__7b, uint8_t flags)
 {
 	uint32_t con_value;
 	uint32_t *base = ctx->base;
 	struct i2c_bus_info *bus_info = &board_config[ctx->bus];
 	uint32_t clk_in_val = clk_in[bus_freq[ctx->bus]];
 
-	/* Convert 8-bit slave addrees to 7-bit for driver expectation*/
-	slave_addr >>= 1;
-
 	/* disable interrupts */
 	i2c_intr_switch(base, DISABLE_INT);
 
 	i2c_mmio_write(base, IC_ENABLE, IC_ENABLE_DISABLE);
-	i2c_mmio_write(base, IC_TAR, (slave_addr << IC_TAR_OFFSET) |
+	i2c_mmio_write(base, IC_TAR, (slave_addr__7b << IC_TAR_OFFSET) |
 			TAR_SPECIAL_VAL | IC_10BITADDR_MASTER_VAL);
 
 	/* set Clock SCL Count */
@@ -289,7 +286,8 @@ static void i2c_write_read_commands(uint32_t *base, uint8_t len, int more_data,
 	}
 }
 
-int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
+int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
+		  const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
 	int i;
@@ -297,7 +295,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	uint64_t expire_ts;
 	struct i2c_context *ctx;
 	ssize_t curr_index = 0;
-
+	uint16_t addr__7b = I2C_GET_ADDR__7b(slave_addr__7bf);
 	int begin_indx;
 	uint8_t repeat_start = 0;
 
@@ -311,7 +309,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	 * Address cannot be any of the reserved address locations:
 	 * 0x00 to 0x07 or 0x78 to 0x7f.
 	 */
-	if (slave_addr <= 0x0F || (slave_addr >= 0xF0 && slave_addr <= 0xFF))
+	if (addr__7b <= 0x07 || (addr__7b >= 0x78 && addr__7b <= 0x7F))
 		return EC_ERROR_INVAL;
 
 	/* assume that if both out_size and in_size are not zero,
@@ -325,7 +323,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 
 	total_len = in_size + out_size;
 
-	i2c_init_transaction(ctx, slave_addr, repeat_start);
+	i2c_init_transaction__7b(ctx, addr__7b, repeat_start);
 
 	/* Write W data */
 	if (out_size)

@@ -32,16 +32,16 @@ static uint8_t flags[CONFIG_USB_PD_PORT_COUNT];
 
 static int read_reg(uint8_t port, int reg, int *regval)
 {
-	return i2c_read8(ppc_chips[port].i2c_port,
-			 ppc_chips[port].i2c_addr,
+	return i2c_read8__7bf(ppc_chips[port].i2c_port,
+			 ppc_chips[port].i2c_addr__7bf,
 			 reg,
 			 regval);
 }
 
 static int write_reg(uint8_t port, int reg, int regval)
 {
-	return i2c_write8(ppc_chips[port].i2c_port,
-			  ppc_chips[port].i2c_addr,
+	return i2c_write8__7bf(ppc_chips[port].i2c_port,
+			  ppc_chips[port].i2c_addr__7bf,
 			  reg,
 			  regval);
 }

@@ -139,8 +139,8 @@
 #define I2C_PORT_THERMAL	NPCX_I2C_PORT3
 
 /* I2C addresses */
-#define I2C_ADDR_TCPC0		0x16
-#define I2C_ADDR_EEPROM		0xa0
+#define I2C_ADDR_TCPC0__7bf		0x0b
+#define I2C_ADDR_EEPROM__7bf		0x50
 
 /* Verify and jump to RW image on boot */
 #define CONFIG_VBOOT_EFS

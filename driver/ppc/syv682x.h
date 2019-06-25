@@ -8,11 +8,11 @@
 #ifndef __CROS_EC_SYV682X_H
 #define __CROS_EC_SYV682X_H
 
-/* 8 bit I2C addresses */
-#define SYV682X_ADDR0			0x80
-#define SYV682X_ADDR1			0x82
-#define SYV682X_ADDR2			0x84
-#define SYV682x_ADDR3			0x86
+/* I2C addresses */
+#define SYV682X_ADDR0__7bf			0x40
+#define SYV682X_ADDR1__7bf			0x41
+#define SYV682X_ADDR2__7bf			0x42
+#define SYV682x_ADDR3__7bf			0x43
 
 /* SYV682x register addresses */
 #define SYV682X_STATUS_REG		0x00

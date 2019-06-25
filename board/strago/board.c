@@ -110,7 +110,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC,
-			.addr = CONFIG_TCPC_I2C_BASE_ADDR,
+			.addr__7bf = CONFIG_TCPC_I2C_BASE_ADDR__7BF,
 		},
 		.drv = &tcpci_tcpm_drv,
 	},
@@ -141,7 +141,7 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
-		.port_addr = 0xaa,
+		.port_addr = 0x55,
 		.driver = &pi3usb30532_usb_mux_driver,
 	},
 };
@@ -213,7 +213,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_kxcj9_mutex[0],
 		.drv_data = &g_kxcj9_data[0],
 		.port = I2C_PORT_ACCEL,
-		.addr = KXCJ9_ADDR1,
+		.i2c_spi_addr__7bf = KXCJ9_ADDR1__7bf,
 		.rot_standard_ref = &base_standard_ref,
 		.default_range = 2,  /* g, enough for laptop. */
 		.min_frequency = KXCJ9_ACCEL_MIN_FREQ,
@@ -236,7 +236,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_kxcj9_mutex[1],
 		.drv_data = &g_kxcj9_data[1],
 		.port = I2C_PORT_ACCEL,
-		.addr = KXCJ9_ADDR0,
+		.i2c_spi_addr__7bf = KXCJ9_ADDR0__7bf,
 		.rot_standard_ref = &lid_standard_ref,
 		.default_range = 2,  /* g, enough for laptop. */
 		.min_frequency = KXCJ9_ACCEL_MIN_FREQ,

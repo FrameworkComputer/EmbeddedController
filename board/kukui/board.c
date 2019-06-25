@@ -80,7 +80,7 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-#define BC12_I2C_ADDR PI3USB9201_I2C_ADDR_3
+#define BC12_I2C_ADDR__7bf PI3USB9201_I2C_ADDR_3__7bf
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -101,7 +101,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr = MT6370_TCPC_I2C_ADDR,
+			.addr__7bf = MT6370_TCPC_I2C_ADDR__7bf,
 		},
 		.drv = &mt6370_tcpm_drv,
 	},
@@ -303,7 +303,7 @@ static void board_rev_init(void)
 
 	if (board_get_version() == 2) {
 		/* configure PI3USB9201 to USB Path ON Mode */
-		i2c_write8(I2C_PORT_BC12, BC12_I2C_ADDR,
+		i2c_write8__7bf(I2C_PORT_BC12, BC12_I2C_ADDR__7bf,
 			   PI3USB9201_REG_CTRL_1,
 			   (PI3USB9201_USB_PATH_ON <<
 			    PI3USB9201_REG_CTRL_1_MODE_SHIFT));
@@ -470,7 +470,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_ACCEL,
-	 .addr = BMI160_ADDR0,
+	 .i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
 	 .rot_standard_ref = &lid_standard_ref,
 	 .default_range = 4,  /* g */
 	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
@@ -493,7 +493,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_ACCEL,
-	 .addr = BMI160_ADDR0,
+	 .i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
 	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = &lid_standard_ref,
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
@@ -510,7 +510,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_ACCEL,
-	 .addr = BMI160_ADDR0,
+	 .i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
 	 .default_range = BIT(11), /* 16LSB / uT, fixed */
 	 .rot_standard_ref = &mag_standard_ref,
 	 .min_frequency = BMM150_MAG_MIN_FREQ,
@@ -526,7 +526,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &tcs3400_drv,
 	 .drv_data = &g_tcs3400_data,
 	 .port = I2C_PORT_ALS,
-	 .addr = TCS3400_I2C_ADDR,
+	 .i2c_spi_addr__7bf = TCS3400_I2C_ADDR__7bf,
 	 .rot_standard_ref = NULL,
 	 .default_range = 0x10000, /* scale = 1x, uscale = 0 */
 	 .min_frequency = TCS3400_LIGHT_MIN_FREQ,

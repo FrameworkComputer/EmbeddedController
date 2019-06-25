@@ -202,8 +202,8 @@ struct i2c_stress_test_dev ps8xxx_i2c_stress_test_dev = {
 		.read_val = PS8XXX_VENDOR_ID & 0xFF,
 		.write_reg = MUX_IN_HPD_ASSERTION_REG,
 	},
-	.i2c_read = &tcpc_i2c_read,
-	.i2c_write = &tcpc_i2c_write,
+	.i2c_read__7bf = &tcpc_i2c_read__7bf,
+	.i2c_write__7bf = &tcpc_i2c_write__7bf,
 };
 #endif /* CONFIG_CMD_I2C_STRESS_TEST_TCPC */
 

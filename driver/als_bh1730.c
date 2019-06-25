@@ -62,7 +62,8 @@ static int bh1730_read_lux(const struct motion_sensor_t *s, intv3_t v)
 	int data0_1;
 
 	/* read data0 and data1 from sensor */
-	ret = i2c_read32(s->port, s->addr, BH1730_DATA0LOW, &data0_1);
+	ret = i2c_read32__7bf(s->port, s->i2c_spi_addr__7bf,
+			 BH1730_DATA0LOW, &data0_1);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("bh1730_read_lux - fail %d\n", ret);
 		return ret;
@@ -136,9 +137,10 @@ static int bh1730_init(const struct motion_sensor_t *s)
 	int ret;
 
 	/* power and measurement bit high */
-	ret = i2c_write8(s->port, s->addr,
+	ret = i2c_write8__7bf(s->port, s->i2c_spi_addr__7bf,
 			BH1730_CONTROL,
-			BH1730_CONTROL_POWER_ENABLE|BH1730_CONTROL_ADC_EN_ENABLE);
+			BH1730_CONTROL_POWER_ENABLE
+			      | BH1730_CONTROL_ADC_EN_ENABLE);
 
 	if (ret != EC_SUCCESS) {
 		CPRINTF("bh1730_init_sensor - enable fail %d\n", ret);
@@ -146,13 +148,15 @@ static int bh1730_init(const struct motion_sensor_t *s)
 	}
 
 	/* set timing */
-	ret = i2c_write8(s->port, s->addr, BH1730_TIMING, BH1730_CONF_ITIME);
+	ret = i2c_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			 BH1730_TIMING, BH1730_CONF_ITIME);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("bh1730_init_sensor - time fail %d\n", ret);
 		return ret;
 	}
 	/* set ADC gain */
-	ret = i2c_write8(s->port, s->addr, BH1730_GAIN, BH1730_CONF_GAIN);
+	ret = i2c_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+			 BH1730_GAIN, BH1730_CONF_GAIN);
 
 	if (ret != EC_SUCCESS) {
 		CPRINTF("bh1730_init_sensor - gain fail %d\n", ret);

@@ -9,8 +9,8 @@
 #define __CROS_EC_IT5205_H
 
 /* I2C interface */
-#define IT5205_I2C_ADDR1 (0x48 << 1)
-#define IT5205_I2C_ADDR2 (0x58 << 1)
+#define IT5205_I2C_ADDR1__7bf (0x48)
+#define IT5205_I2C_ADDR2__7bf (0x58)
 
 /* Chip ID registers */
 #define IT5205_REG_CHIP_ID3 0x4

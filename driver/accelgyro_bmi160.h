@@ -22,14 +22,10 @@
  * |    SPI device ID              | 1 |
  * +-------------------------------+---+
  */
-#define BMI160_SET_SPI_ADDRESS(_addr) (((_addr) << 1) | 1)
-#define BMI160_IS_SPI(_addr)        ((_addr) & 1)
-#define BMI160_SPI_ADDRESS(_addr)   ((_addr) >> 1)
-#define BMI160_I2C_ADDRESS(_addr)   (_addr)
 
 /* I2C addresses */
-#define BMI160_ADDR0             0xd0
-#define BMI160_ADDR1             0xd2
+#define BMI160_ADDR0__7bf	0x68
+#define BMI160_ADDR1__7bf	0x69
 
 #define BMI160_CHIP_ID           0x00
 #define BMI160_CHIP_ID_MAJOR     0xd1
@@ -490,10 +486,10 @@ void bmi160_interrupt(enum gpio_signal signal);
 
 #ifdef CONFIG_BMI160_SEC_I2C
 /* Functions to access the secondary device through the accel/gyro. */
-int bmi160_sec_raw_read8(const int port, const int addr, const uint8_t reg,
-			 int *data_ptr);
-int bmi160_sec_raw_write8(const int port, const int addr, const uint8_t reg,
-			 int data);
+int bmi160_sec_raw_read8__7bf(const int port, const uint16_t addr__7bf,
+			 const uint8_t reg, int *data_ptr);
+int bmi160_sec_raw_write8__7bf(const int port, const uint16_t addr__7bf,
+			  const uint8_t reg, int data);
 #endif
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL

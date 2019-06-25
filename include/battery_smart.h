@@ -11,8 +11,8 @@
 #include "common.h"
 
 /* Smart battery and charger I2C address */
-#define BATTERY_ADDR 0x16
-#define CHARGER_ADDR 0x12
+#define BATTERY_ADDR__7bf	(0x0B)
+#define CHARGER_ADDR__7bf	(0x09)
 
 /* Charger functions */
 #define SB_CHARGER_SPEC_INFO            0x11

@@ -117,7 +117,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC,
-			.addr = CONFIG_TCPC_I2C_BASE_ADDR,
+			.addr__7bf = CONFIG_TCPC_I2C_BASE_ADDR__7BF,
 		},
 		.drv = &tcpci_tcpm_drv,
 	},
@@ -125,7 +125,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC,
-			.addr = CONFIG_TCPC_I2C_BASE_ADDR + 2,
+			.addr__7bf = CONFIG_TCPC_I2C_BASE_ADDR__7BF + 1,
 		},
 		.drv = &tcpci_tcpm_drv,
 	},
@@ -176,17 +176,17 @@ BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
-		.port_addr = 0x54 << 1,
+		.port_addr = 0x54,
 		.driver    = &pi3usb30532_usb_mux_driver,
 	},
 #if (BOARD_REV <= OAK_REV4)
 	{
-		.port_addr = 0x55 << 1,
+		.port_addr = 0x55,
 		.driver    = &pi3usb30532_usb_mux_driver,
 	},
 #else
 	{
-		.port_addr = 0x20,
+		.port_addr = 0x10,
 		.driver = &ps874x_usb_mux_driver,
 	},
 #endif
@@ -647,7 +647,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = &g_bmi160_data,
 		.port = I2C_PORT_ACCEL,
-		.addr = 1,
+		.i2c_spi_addr__7bf = SLAVE_MK_SPI_ADDR__7bf(0),
 		.rot_standard_ref = &base_standard_ref,
 		.default_range = 2,  /* g, enough for laptop. */
 		.min_frequency = BMI160_ACCEL_MIN_FREQ,
@@ -671,7 +671,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = &g_bmi160_data,
 		.port = I2C_PORT_ACCEL,
-		.addr = 1,
+		.i2c_spi_addr__7bf = SLAVE_MK_SPI_ADDR__7bf(0),
 		.default_range = 1000, /* dps */
 		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = BMI160_GYRO_MIN_FREQ,
@@ -689,7 +689,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_lid_mutex,
 		.drv_data = &g_kx022_data,
 		.port = I2C_PORT_ACCEL,
-		.addr = KX022_ADDR1,
+		.i2c_spi_addr__7bf = KX022_ADDR1__7bf,
 		.rot_standard_ref = NULL, /* Identity matrix. */
 		.default_range = 2, /* g, enough for laptop. */
 		.min_frequency = KX022_ACCEL_MIN_FREQ,

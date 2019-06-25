@@ -23,16 +23,17 @@ struct i2c_trace_range {
 
 static struct i2c_trace_range trace_entries[8];
 
-void i2c_trace_notify(int port, int slave_addr, int direction,
-		      const uint8_t *data, size_t size)
+void i2c_trace_notify__7bf(int port, uint16_t slave_addr__7bf,
+		      int direction, const uint8_t *data, size_t size)
 {
 	size_t i;
+	uint16_t addr__7b = I2C_GET_ADDR__7b(slave_addr__7bf);
 
 	for (i = 0; i < ARRAY_SIZE(trace_entries); i++)
 		if (trace_entries[i].enabled
 		    && trace_entries[i].port == port
-		    && trace_entries[i].slave_addr_lo <= slave_addr
-		    && trace_entries[i].slave_addr_hi >= slave_addr)
+		    && trace_entries[i].slave_addr_lo <= addr__7b
+		    && trace_entries[i].slave_addr_hi >= addr__7b)
 			goto trace_enabled;
 	return;
 
@@ -40,7 +41,7 @@ trace_enabled:
 	CPRINTF("i2c: %s %d:0x%X ",
 		direction ? "read" : "write",
 		port,
-		slave_addr);
+		addr__7b);
 	for (i = 0; i < size; i++)
 		CPRINTF("%02X ", data[i]);
 	CPRINTF("\n");

@@ -180,7 +180,7 @@ static int test_charge_state(void)
 
 	/* Detach battery, charging error */
 	ccprintf("[CHARGING TEST] Detach battery\n");
-	TEST_ASSERT(test_detach_i2c(I2C_PORT_BATTERY, BATTERY_ADDR) ==
+	TEST_ASSERT(test_detach_i2c__7bf(I2C_PORT_BATTERY, BATTERY_ADDR__7bf) ==
 		    EC_SUCCESS);
 	msleep(BATTERY_DETACH_DELAY);
 	state = wait_charging_state();
@@ -188,7 +188,7 @@ static int test_charge_state(void)
 
 	/* Attach battery again, charging */
 	ccprintf("[CHARGING TEST] Attach battery\n");
-	test_attach_i2c(I2C_PORT_BATTERY, BATTERY_ADDR);
+	test_attach_i2c__7bf(I2C_PORT_BATTERY, BATTERY_ADDR__7bf);
 	/* And changing full capacity should trigger a host event */
 	ev_clear(EC_HOST_EVENT_BATTERY);
 	sb_write(SB_FULL_CHARGE_CAPACITY, 0xeff0);

@@ -12,6 +12,7 @@
 #include "common.h"
 #include "ec_commands.h"
 #include "gpio.h"
+#include "i2c.h"
 #include "math_util.h"
 #include "queue.h"
 #include "timer.h"
@@ -81,6 +82,24 @@ enum sensor_config {
 #endif
 
 /*
+ * I2C/SPI Slave Address encoding for motion sensors
+ * - The generic defines, I2C_ADDR_MASK and I2C_IS_BIG_ENDIAN_MASK
+ *   are defined in i2c.h.
+ * - Motion sensors support some sensors on the SPI bus, so this
+ *   overloads the I2C Address to use a single bit to indicate
+ *   it is a SPI address instead of an I2C.  Since SPI does not
+ *   use slave addressing, it is up to the driver to use this
+ *   field as it sees fit
+ */
+#define SLAVE_MK_I2C_ADDR__7bf(x__7b)	(x__7b)
+#define SLAVE_MK_SPI_ADDR__7bf(x__7b)	((x__7b) | I2C_FLAG_ADDR_IS_SPI)
+
+#define SLAVE_GET_I2C_ADDR__7b(x__7bf)	(I2C_GET_ADDR__7b(x__7bf))
+#define SLAVE_GET_SPI_ADDR__7b(x__7bf)	((x__7bf) & I2C_ADDR_MASK)
+
+#define SLAVE_IS_SPI(x__7bf)		((x__7bf) & I2C_FLAG_ADDR_IS_SPI)
+
+/*
  * Define the frequency to use in max_frequency based on the maximal frequency
  * the sensor support and what the EC can provide.
  * Return a frequency the sensor supports.
@@ -131,7 +150,7 @@ struct motion_sensor_t {
 	/* i2c port */
 	uint8_t port;
 	/* i2c address or SPI slave logic GPIO. */
-	uint8_t addr;
+	uint16_t i2c_spi_addr__7bf;
 
 	/*
 	 * Various flags, see MOTIONSENSE_FLAG_*

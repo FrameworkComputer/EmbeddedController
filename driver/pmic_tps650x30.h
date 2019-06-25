@@ -9,9 +9,9 @@
 #define __CROS_EC_PMIC_TPS650X30_H
 
 /* I2C interface */
-#define TPS650X30_I2C_ADDR1		(0x30 << 1)
-#define TPS650X30_I2C_ADDR2		(0x32 << 1)
-#define TPS650X30_I2C_ADDR3		(0x34 << 1)
+#define TPS650X30_I2C_ADDR1__7bf		0x30
+#define TPS650X30_I2C_ADDR2__7bf		0x32
+#define TPS650X30_I2C_ADDR3__7bf		0x34
 
 /* TPS650X30 registers */
 #define TPS650X30_REG_VENDORID		0x00
