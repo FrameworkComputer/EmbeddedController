@@ -4,6 +4,7 @@
  */
 
 #include "atomic.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "dptf.h"
@@ -156,7 +157,8 @@ static void thermal_control_dptf(void)
 		 * bus to the sensors; forcing a shutdown in that case would
 		 * merely hamper board bringup.
 		 */
-		smi_sensor_failure_warning();
+		if (!chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			smi_sensor_failure_warning();
 	}
 
 	/* Don't forget to signal any DPTF thresholds */
