@@ -167,6 +167,26 @@ static void p256_get_pub_key_and_secret(uint8_t pub_key[P256_NBYTES],
 }
 #endif
 
+void get_rma_device_id(uint8_t rma_device_id[RMA_DEVICE_ID_SIZE])
+{
+	uint8_t *chip_unique_id;
+	int chip_unique_id_size = system_get_chip_unique_id(&chip_unique_id);
+
+	/* Smaller unique chip IDs will fill rma_device_id only partially. */
+	if (chip_unique_id_size <= RMA_DEVICE_ID_SIZE) {
+		/* The size matches, let's just copy it as is. */
+		memcpy(rma_device_id, chip_unique_id, chip_unique_id_size);
+	} else {
+		/*
+		 * The unique chip ID size exceeds space allotted in
+		 * rma_challenge:device_id, let's use first few bytes of
+		 * its hash.
+		 */
+		hash_buffer(rma_device_id, RMA_DEVICE_ID_SIZE,
+			    chip_unique_id, chip_unique_id_size);
+	}
+}
+
 /**
  * Create a new RMA challenge/response
  *
@@ -179,10 +199,8 @@ int rma_create_challenge(void)
 	uint8_t secret[32];
 	struct rma_challenge c;
 	struct board_id bid;
-	uint8_t *device_id;
 	uint8_t *cptr = (uint8_t *)&c;
 	uint64_t t;
-	int unique_device_id_size;
 
 	/* Clear the current challenge and authcode, if any */
 	memset(challenge, 0, sizeof(challenge));
@@ -202,22 +220,7 @@ int rma_create_challenge(void)
 		return EC_ERROR_UNKNOWN;
 
 	memcpy(c.board_id, &bid.type, sizeof(c.board_id));
-
-	unique_device_id_size = system_get_chip_unique_id(&device_id);
-
-	/* Smaller unique device IDs will fill c.device_id only partially. */
-	if (unique_device_id_size <= sizeof(c.device_id)) {
-		/* The size matches, let's just copy it as is. */
-		memcpy(c.device_id, device_id, unique_device_id_size);
-	} else {
-		/*
-		 * The unique device ID size exceeds space allotted in
-		 * rma_challenge:device_id, let's use first few bytes of
-		 * its hash.
-		 */
-		hash_buffer(c.device_id, sizeof(c.device_id),
-			    device_id, unique_device_id_size);
-	}
+	get_rma_device_id(c.device_id);
 
 	/* Calculate a new ephemeral key pair and the shared secret. */
 #ifdef CONFIG_RMA_AUTH_USE_P256

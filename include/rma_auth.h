@@ -21,6 +21,8 @@
 #define RMA_CHALLENGE_GET_VERSION(vkidbyte) ((vkidbyte) >> 6)
 #define RMA_CHALLENGE_GET_KEY_ID(vkidbyte) ((vkidbyte) & 0x3f)
 
+#define RMA_DEVICE_ID_SIZE 8
+
 struct __packed rma_challenge {
 	/* Top 2 bits are protocol version; bottom 6 are server KeyID */
 	uint8_t version_key_id;
@@ -32,7 +34,7 @@ struct __packed rma_challenge {
 	uint8_t board_id[4];
 
 	/* Device ID */
-	uint8_t device_id[8];
+	uint8_t device_id[RMA_DEVICE_ID_SIZE];
 };
 
 /* Size of encoded challenge and response, and buffer sizes to hold them */
@@ -67,5 +69,13 @@ const char *rma_get_challenge(void);
  * @return EC_SUCCESS if the response was correct, or non-zero error code.
  */
 int rma_try_authcode(const char *code);
+
+/**
+ * Get the device ID returned in RMA response.
+ *
+ * @param rma_device_id		Pointer to the buffer that will be filled with
+ * the ID. The buffer must be of size RMA_DEVICE_ID_SIZE.
+ */
+void get_rma_device_id(uint8_t rma_device_id[RMA_DEVICE_ID_SIZE]);
 
 #endif
