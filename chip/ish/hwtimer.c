@@ -177,9 +177,12 @@ uint32_t __hw_clock_event_get(void)
 
 void __hw_clock_event_clear(void)
 {
-	last_deadline = 0xFFFFFFFF;
-	wait_while_settling(HPET_T1_SETTLING);
-	HPET_TIMER_CONF_CAP(1) &= ~HPET_Tn_INT_ENB_CNF;
+	/*
+	 * We need to make sure that process_timers is called when the
+	 * event timer rolls over, set for deadline when
+	 * process_timers clears the event timer.
+	 */
+	__hw_clock_event_set(0xFFFFFFFF);
 }
 
 uint64_t __hw_clock_source_read64(void)
