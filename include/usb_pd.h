@@ -1939,6 +1939,22 @@ void reset_pd_cable(int port);
 enum idh_ptype get_usb_pd_mux_cable_type(int port);
 
 /**
+ * Return the response of discover mode SOP prime, with SVID = 0x8087
+ *
+ * @param port	USB-C port number
+ * @return	cable mode response vdo
+ */
+struct tbt_mode_resp_cable get_cable_tbt_vdo(int port);
+
+/**
+ * Return the response of discover mode SOP, with SVID = 0x8087
+ *
+ * @param port	USB-C port number
+ * @return	device mode response vdo
+ */
+struct tbt_mode_resp_device get_dev_tbt_vdo(int port);
+
+/**
  * Update Mux on entering Thunderbolt-compatible mode
  *
  * @param port USB-C port number

@@ -16,6 +16,9 @@
 #define BB_RETIMER_REG_SIZE	4
 #define BB_RETIMER_READ_SIZE	(BB_RETIMER_REG_SIZE + 1)
 #define BB_RETIMER_WRITE_SIZE	(BB_RETIMER_REG_SIZE + 2)
+#define BB_RETIMER_MUX_DATA_PRESENT (USB_PD_MUX_USB_ENABLED \
+				| USB_PD_MUX_DP_ENABLED \
+				| USB_PD_MUX_TBT_COMPAT_ENABLED)
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -110,14 +113,15 @@ static int retimer_set_state(int port, mux_state_t mux_state)
 {
 	uint32_t set_retimer_con = 0;
 	uint8_t dp_pin_mode;
+	struct tbt_mode_resp_cable cable_resp;
+	struct tbt_mode_resp_device dev_resp;
 
 	/*
 	 * Bit 0: DATA_CONNECTION_PRESENT
 	 * 0 - No connection present
 	 * 1 - Connection present
 	 */
-	if (mux_state & USB_PD_MUX_USB_ENABLED ||
-		mux_state & USB_PD_MUX_DP_ENABLED)
+	if (mux_state & BB_RETIMER_MUX_DATA_PRESENT)
 		set_retimer_con |= BB_RETIMER_DATA_CONNECTION_PRESENT;
 
 	/*
@@ -127,13 +131,6 @@ static int retimer_set_state(int port, mux_state_t mux_state)
 	 */
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		set_retimer_con |= BB_RETIMER_CONNECTION_ORIENTATION;
-
-	/*
-	 * TODO: b:129990370
-	 * Bit 2: ACTIVE_CABLE
-	 * 0 - Passive
-	 * 1 -TBT Active cable
-	 */
 
 	/*
 	 * Bit 5: USB_3_CONNECTION
@@ -161,7 +158,7 @@ static int retimer_set_state(int port, mux_state_t mux_state)
 		set_retimer_con |= BB_RETIMER_DP_CONNECTION;
 
 		/*
-		 * Bit 10-11: DP_PIN_ASSIGNMENT (ignored if BIT8 = 0)
+		 * Bit 11-10: DP_PIN_ASSIGNMENT (ignored if BIT8 = 0)
 		 * 00 – Pin assignments E/E’
 		 * 01 – Pin assignments C/C’/D/D’1,2
 		 * 10, 11 - reserved
@@ -196,6 +193,78 @@ static int retimer_set_state(int port, mux_state_t mux_state)
 	if (pd_is_debug_acc(port))
 		set_retimer_con |= BB_RETIMER_DEBUG_ACCESSORY_MODE;
 
+	if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED) {
+		cable_resp = get_cable_tbt_vdo(port);
+		dev_resp = get_dev_tbt_vdo(port);
+
+		/*
+		 * Bit 2: RE_TIMER_DRIVER
+		 * 0 - Re-driver
+		 * 1 - Re-timer
+		 */
+		if (cable_resp.retimer_type == USB_RETIMER)
+			set_retimer_con |= BB_RETIMER_RE_TIMER_DRIVER;
+
+		/*
+		 * Bit 16: TBT_CONNECTION
+		 * 0 - TBT not configured
+		 * 1 - TBT configured
+		 */
+		set_retimer_con |= BB_RETIMER_TBT_CONNECTION;
+
+		/*
+		 * Bit 17: TBT_TYPE
+		 * 0 - Type-C to Type-C Cable
+		 * 1 - Type-C Legacy TBT Adapter
+		 */
+		if (dev_resp.tbt_adapter == TBT_ADAPTER_LEGACY)
+			set_retimer_con |= BB_RETIMER_TBT_TYPE;
+
+		/*
+		 * Bit 18: CABLE_TYPE
+		 * 0 - Electrical cable
+		 * 1 - Optical cable
+		 */
+		if (cable_resp.tbt_cable == TBT_CABLE_OPTICAL)
+			set_retimer_con |= BB_RETIMER_TBT_CABLE_TYPE;
+
+		/*
+		 * Bit 20: TBT_ACTIVE_LINK_TRAINING
+		 * 0 - Active with bi-directional LSRX communication
+		 * 1 - Active with uni-directional LSRX communication
+		 * Set to "0" when passive cable plug
+		 */
+		if (cable_resp.lsrx_comm == UNIDIR_LSRX_COMM &&
+		   (get_usb_pd_mux_cable_type(port) & IDH_PTYPE_ACABLE))
+			set_retimer_con |= BB_RETIMER_TBT_ACTIVE_LINK_TRAINING;
+
+		/*
+		 * Bit 22: Active/Passive
+		 * 0 - Passive cable
+		 * 1 - Active cable
+		 */
+		if (get_usb_pd_mux_cable_type(port) == IDH_PTYPE_ACABLE)
+			set_retimer_con |= BB_RETIMER_ACTIVE_PASSIVE;
+
+		/*
+		 * Bits 27-25: TBT_CABLE_SPEED_SUPPORT
+		 * 000b - No Functionality
+		 * 001b - USB3.1 gen1 cable
+		 * 010b - 10Gb/s
+		 * 011b -10Gb/s and 20Gb/s
+		 */
+		set_retimer_con |= BB_RETIMER_TBT_CABLE_SPEED_SUPPORT(
+						cable_resp.tbt_cable_speed);
+
+		/*
+		 * Bits 29-28: TBT_GEN_SUPPORT
+		 * 00b - 3rd generation TBT (10.3125 and 20.625Gb/s)
+		 * 01b - 4th generation TBT (10.0, 10.3125, 20.0, 20.625)
+		 * 10..11b - Reserved
+		 */
+		set_retimer_con |= BB_RETIMER_TBT_CABLE_GENERATION(
+					       cable_resp.tbt_rounded);
+	}
 	/* Writing the register4 */
 	return bb_retimer_write(port, BB_RETIMER_REG_CONNECTION_STATE,
 			set_retimer_con);
