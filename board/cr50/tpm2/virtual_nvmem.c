@@ -138,47 +138,6 @@ const char kRsuSalt[] = "Wu8oGt0uu0H8uSGxfo75uSDrGcRk2BXh";
 BUILD_ASSERT(ARRAY_SIZE(kRsuSalt) == RSU_SALT_SIZE+1);
 
 /*
- * Registration of current virtual indexes.
- *
- * Indexes are declared in the virtual_nv_index enum in the header.
- *
- * Active entries of this enum must have a size and data function registered
- * with a REGISTER_CONFIG statement below.
- *
- * Deprecated indices should use the REGISTER_DEPRECATED_CONFIG variant.
- */
-
-static void GetBoardId(BYTE *to, size_t offset, size_t size);
-static void GetSnData(BYTE *to, size_t offset, size_t size);
-static void GetG2fCert(BYTE *to, size_t offset, size_t size);
-static void GetRSUDevID(BYTE *to, size_t offset, size_t size);
-
-static const struct virtual_nv_index_cfg index_config[] = {
-	REGISTER_CONFIG(VIRTUAL_NV_INDEX_BOARD_ID,
-			VIRTUAL_NV_INDEX_BOARD_ID_SIZE,
-			GetBoardId)
-	REGISTER_CONFIG(VIRTUAL_NV_INDEX_SN_DATA,
-			VIRTUAL_NV_INDEX_SN_DATA_SIZE,
-			GetSnData)
-	REGISTER_CONFIG(VIRTUAL_NV_INDEX_G2F_CERT,
-			VIRTUAL_NV_INDEX_G2F_CERT_SIZE,
-			GetG2fCert)
-	REGISTER_CONFIG(VIRTUAL_NV_INDEX_RSU_DEV_ID,
-			VIRTUAL_NV_INDEX_RSU_DEV_ID_SIZE,
-			GetRSUDevID)
-};
-
-/* Check sanity of above config. */
-BUILD_ASSERT(VIRTUAL_NV_INDEX_END <= (VIRTUAL_NV_INDEX_MAX + 1));
-BUILD_ASSERT((VIRTUAL_NV_INDEX_END - VIRTUAL_NV_INDEX_START) ==
-	     ARRAY_SIZE(index_config));
-/* Check we will never overrun the virtual address space. */
-BUILD_ASSERT((VIRTUAL_NV_INDEX_MAX - VIRTUAL_NV_INDEX_START + 1) *
-	     MAX_VIRTUAL_NV_INDEX_SLOT_SIZE <
-	     (VIRTUAL_NV_OFFSET_END - VIRTUAL_NV_OFFSET_START));
-
-
-/*
  * Helpers for dealing with NV indexes, associated configs and offsets.
  */
 
@@ -187,15 +146,7 @@ BUILD_ASSERT((VIRTUAL_NV_INDEX_MAX - VIRTUAL_NV_INDEX_START + 1) *
  * 'empty' config if the index is not defined.
  */
 static inline void GetNvIndexConfig(
-	enum virtual_nv_index index, struct virtual_nv_index_cfg *cfg)
-{
-	if (index >= VIRTUAL_NV_INDEX_START && index < VIRTUAL_NV_INDEX_END) {
-		*cfg = index_config[index - VIRTUAL_NV_INDEX_START];
-	} else {
-		cfg->size = 0;
-		cfg->get_data_fn = 0;
-	}
-}
+	enum virtual_nv_index index, struct virtual_nv_index_cfg *cfg);
 
 /* Converts a virtual NV index to the corresponding virtual offset. */
 static inline BOOL NvIndexToNvOffset(uint32_t index)
@@ -363,3 +314,49 @@ static void GetRSUDevID(BYTE *to, size_t offset, size_t size)
 	memcpy(to, rsu_device_id + offset, size);
 }
 BUILD_ASSERT(VIRTUAL_NV_INDEX_RSU_DEV_ID_SIZE == SHA256_DIGEST_SIZE);
+
+/*
+ * Registration of current virtual indexes.
+ *
+ * Indexes are declared in the virtual_nv_index enum in the header.
+ *
+ * Active entries of this enum must have a size and data function registered
+ * with a REGISTER_CONFIG statement below.
+ *
+ * Deprecated indices should use the REGISTER_DEPRECATED_CONFIG variant.
+ */
+
+static const struct virtual_nv_index_cfg index_config[] = {
+	REGISTER_CONFIG(VIRTUAL_NV_INDEX_BOARD_ID,
+			VIRTUAL_NV_INDEX_BOARD_ID_SIZE,
+			GetBoardId)
+	REGISTER_CONFIG(VIRTUAL_NV_INDEX_SN_DATA,
+			VIRTUAL_NV_INDEX_SN_DATA_SIZE,
+			GetSnData)
+	REGISTER_CONFIG(VIRTUAL_NV_INDEX_G2F_CERT,
+			VIRTUAL_NV_INDEX_G2F_CERT_SIZE,
+			GetG2fCert)
+	REGISTER_CONFIG(VIRTUAL_NV_INDEX_RSU_DEV_ID,
+			VIRTUAL_NV_INDEX_RSU_DEV_ID_SIZE,
+			GetRSUDevID)
+};
+
+/* Check sanity of above config. */
+BUILD_ASSERT(VIRTUAL_NV_INDEX_END <= (VIRTUAL_NV_INDEX_MAX + 1));
+BUILD_ASSERT((VIRTUAL_NV_INDEX_END - VIRTUAL_NV_INDEX_START) ==
+	     ARRAY_SIZE(index_config));
+/* Check we will never overrun the virtual address space. */
+BUILD_ASSERT((VIRTUAL_NV_INDEX_MAX - VIRTUAL_NV_INDEX_START + 1) *
+	     MAX_VIRTUAL_NV_INDEX_SLOT_SIZE <
+	     (VIRTUAL_NV_OFFSET_END - VIRTUAL_NV_OFFSET_START));
+
+static inline void GetNvIndexConfig(
+	enum virtual_nv_index index, struct virtual_nv_index_cfg *cfg)
+{
+	if (index >= VIRTUAL_NV_INDEX_START && index < VIRTUAL_NV_INDEX_END) {
+		*cfg = index_config[index - VIRTUAL_NV_INDEX_START];
+	} else {
+		cfg->size = 0;
+		cfg->get_data_fn = 0;
+	}
+}
