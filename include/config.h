@@ -270,6 +270,15 @@
 #undef CONFIG_ALS_TCS3400
 
 /*
+ * Define to use atime tables in anti-saturation algos in the tcs3400 driver.
+ * Defining this for a board makes the anti-saturation algorithm much more
+ * efficient, but requires the board to have it's lens cover scale and k_channel
+ * scales to be determined.  Define this for a board once it's added its
+ * cover_scale and k_channel scale factors.
+ */
+#undef CONFIG_TCS_USE_LUX_TABLE
+
+/*
  * Define the event to raise when a sensor interrupt triggers.
  * Must be within TASK_EVENT_MOTION_INTERRUPT_MASK.
  */

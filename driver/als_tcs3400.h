@@ -97,6 +97,11 @@ enum tcs3400_mode {
 #define TCS_CALIBRATION_ATIME   TCS_MIN_ATIME
 #define TCS_GAIN_UPSHIFT_ATIME  TCS_MAX_ATIME
 
+/* Number of different ranges supported for atime adjustment support */
+#define TCS_MAX_ATIME_RANGES    13
+#define TCS_GAIN_TABLE_MAX_LUX  12999
+#define TCS_ATIME_GAIN_FACTOR   100     /* table values are 100x actual value */
+
 #define TCS_MIN_AGAIN           0x00            /* 1x gain */
 #define TCS_MAX_AGAIN           0x03            /* 64x gain */
 #define TCS_CALIBRATION_AGAIN   0x02            /* 16x gain */

@@ -21,6 +21,51 @@
 static volatile uint32_t last_interrupt_timestamp;
 #endif
 
+#ifdef CONFIG_TCS_USE_LUX_TABLE
+/*
+ * Stores the number of atime increments/decrements needed to change light value
+ * by 1% of saturation for each gain setting for each predefined LUX range.
+ *
+ * Values in array are TCS_ATIME_GAIN_FACTOR (100x) times actual value to allow
+ * for fractions using integers.
+ */
+static const uint16_t
+range_atime[TCS_MAX_AGAIN - TCS_MIN_AGAIN + 1][TCS_MAX_ATIME_RANGES] = {
+{11200, 5600, 5600, 7200, 5500, 4500, 3800, 3800, 3300, 2900, 2575, 2275, 2075},
+{11200, 5100, 2700, 1840, 1400, 1133, 981, 963, 833, 728, 650, 577, 525},
+{250, 1225, 643, 441, 337, 276, 237, 235, 203, 176, 150, 0, 0},
+{790, 311, 163, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
+
+static void
+decrement_atime(struct tcs_saturation_t *sat_p, uint16_t cur_lux, int percent)
+{
+	int atime;
+	uint16_t steps;
+	int lux = MIN(cur_lux, TCS_GAIN_TABLE_MAX_LUX);
+
+	steps = percent * range_atime[sat_p->again][lux / 1000] /
+			TCS_ATIME_GAIN_FACTOR;
+	atime = MAX(sat_p->atime - steps, TCS_MIN_ATIME);
+	sat_p->atime = MIN(atime, TCS_MAX_ATIME);
+}
+
+#else
+
+static void
+decrement_atime(struct tcs_saturation_t *sat_p,
+		uint16_t __attribute__((unused)) cur_lux,
+		int __attribute__((unused)) percent)
+{
+	sat_p->atime = MAX(sat_p->atime - TCS_ATIME_DEC_STEP, TCS_MIN_ATIME);
+}
+
+#endif /* CONFIG_TCS_USE_LUX_TABLE */
+
+static void increment_atime(struct tcs_saturation_t *sat_p)
+{
+	sat_p->atime = MIN(sat_p->atime + TCS_ATIME_INC_STEP, TCS_MAX_ATIME);
+}
+
 static inline int tcs3400_i2c_read8(const struct motion_sensor_t *s,
 				    int reg, int *data)
 {
@@ -96,16 +141,6 @@ static int tcs3400_rgb_read(const struct motion_sensor_t *s, intv3_t v)
 	return EC_SUCCESS;
 }
 
-static void decrement_atime(struct tcs_saturation_t *sat_p)
-{
-	sat_p->atime = MAX(sat_p->atime - TCS_ATIME_DEC_STEP, TCS_MIN_ATIME);
-}
-
-static void increment_atime(struct tcs_saturation_t *sat_p)
-{
-	sat_p->atime = MIN(sat_p->atime + TCS_ATIME_INC_STEP, TCS_MAX_ATIME);
-}
-
 /*
  * tcs3400_adjust_sensor_for_saturation() tries to keep CRGB values as
  * close to saturation as possible without saturating by implementing
@@ -121,6 +156,7 @@ static void increment_atime(struct tcs_saturation_t *sat_p)
  */
 static int
 tcs3400_adjust_sensor_for_saturation(struct motion_sensor_t *s,
+				     uint16_t cur_lux,
 				     uint16_t *crgb_data)
 {
 	struct tcs_saturation_t *sat_p =
@@ -130,6 +166,7 @@ tcs3400_adjust_sensor_for_saturation(struct motion_sensor_t *s,
 	uint16_t max_val =  0;
 	int ret;
 	int status = 0;
+	int percent_left = 0;
 
 	/* Adjust for saturation if needed */
 	ret = tcs3400_i2c_read8(s, TCS_I2C_STATUS, &status);
@@ -153,19 +190,25 @@ tcs3400_adjust_sensor_for_saturation(struct motion_sensor_t *s,
 			increment_atime(sat_p);
 	} else if (max_val < TSC_SATURATION_LOW_BAND_LEVEL) {
 		/* value < 90% saturation, try to increase sensitivity */
-		/* increase AGAIN if we can without saturating */
 		if (max_val <= TCS_GAIN_SAT_LEVEL) {
-			if (sat_p->again < TCS_MAX_AGAIN)
+			if (sat_p->again < TCS_MAX_AGAIN) {
 				sat_p->again++;
-			else if (sat_p->atime > TCS_MIN_ATIME)
+			} else if (sat_p->atime > TCS_MIN_ATIME) {
 				/*
 				 * increase accumulation time by decrementing
 				 * ATIME register
 				 */
-				decrement_atime(sat_p);
+				percent_left = TSC_SATURATION_LOW_BAND_PERCENT -
+					(max_val * 100 / TCS_SATURATION_LEVEL);
+				decrement_atime(sat_p, cur_lux, percent_left);
+			}
 		} else if (sat_p->atime > TCS_MIN_ATIME) {
+			/* calculate percentage between current and desired */
+			percent_left = TSC_SATURATION_LOW_BAND_PERCENT -
+				(max_val * 100 / TCS_SATURATION_LEVEL);
+
 			/* increase accumulation time by decrementing ATIME */
-			decrement_atime(sat_p);
+			decrement_atime(sat_p, cur_lux, percent_left);
 		} else if (sat_p->again < TCS_MAX_AGAIN) {
 			/*
 			 * Although we're not at maximum gain yet, we
@@ -424,7 +467,8 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 #endif
 
 	if (!calibration_mode)
-		ret = tcs3400_adjust_sensor_for_saturation(s, raw_data);
+		ret = tcs3400_adjust_sensor_for_saturation(s, xyz_data[Y],
+							   raw_data);
 
 	return ret;
 }
