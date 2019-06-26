@@ -172,10 +172,16 @@ void get_rma_device_id(uint8_t rma_device_id[RMA_DEVICE_ID_SIZE])
 	uint8_t *chip_unique_id;
 	int chip_unique_id_size = system_get_chip_unique_id(&chip_unique_id);
 
+	if (chip_unique_id_size < 0)
+		chip_unique_id_size = 0;
 	/* Smaller unique chip IDs will fill rma_device_id only partially. */
 	if (chip_unique_id_size <= RMA_DEVICE_ID_SIZE) {
 		/* The size matches, let's just copy it as is. */
 		memcpy(rma_device_id, chip_unique_id, chip_unique_id_size);
+		if (chip_unique_id_size < RMA_DEVICE_ID_SIZE) {
+			memset(rma_device_id + chip_unique_id_size, 0,
+				RMA_DEVICE_ID_SIZE - chip_unique_id_size);
+		}
 	} else {
 		/*
 		 * The unique chip ID size exceeds space allotted in
