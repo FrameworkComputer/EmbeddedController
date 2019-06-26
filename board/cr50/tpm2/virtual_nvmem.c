@@ -325,8 +325,7 @@ static void GetBoardId(BYTE *to, size_t offset, size_t size)
 	read_board_id(&board_id_tmp);
 	memcpy(to, ((BYTE *) &board_id_tmp) + offset, size);
 }
-BUILD_ASSERT(VIRTUAL_NV_INDEX_BOARD_ID_SIZE ==
-	     sizeof(struct board_id));
+BUILD_ASSERT(VIRTUAL_NV_INDEX_BOARD_ID_SIZE == sizeof(struct board_id));
 
 static void GetSnData(BYTE *to, size_t offset, size_t size)
 {
@@ -335,8 +334,7 @@ static void GetSnData(BYTE *to, size_t offset, size_t size)
 	read_sn_data(&sn_data_tmp);
 	memcpy(to, ((BYTE *) &sn_data_tmp) + offset, size);
 }
-BUILD_ASSERT(VIRTUAL_NV_INDEX_SN_DATA_SIZE ==
-	     sizeof(struct sn_data));
+BUILD_ASSERT(VIRTUAL_NV_INDEX_SN_DATA_SIZE == sizeof(struct sn_data));
 
 static void GetG2fCert(BYTE *to, size_t offset, size_t size)
 {
@@ -347,8 +345,7 @@ static void GetG2fCert(BYTE *to, size_t offset, size_t size)
 
 	memcpy(to, ((BYTE *) cert) + offset, size);
 }
-BUILD_ASSERT(VIRTUAL_NV_INDEX_G2F_CERT_SIZE ==
-	     G2F_ATTESTATION_CERT_MAX_LEN);
+BUILD_ASSERT(VIRTUAL_NV_INDEX_G2F_CERT_SIZE == G2F_ATTESTATION_CERT_MAX_LEN);
 
 static void GetRSUDevID(BYTE *to, size_t offset, size_t size)
 {
@@ -365,5 +362,4 @@ static void GetRSUDevID(BYTE *to, size_t offset, size_t size)
 
 	memcpy(to, rsu_device_id + offset, size);
 }
-BUILD_ASSERT(VIRTUAL_NV_INDEX_RSU_DEV_ID_SIZE ==
-	     SHA256_DIGEST_SIZE);
+BUILD_ASSERT(VIRTUAL_NV_INDEX_RSU_DEV_ID_SIZE == SHA256_DIGEST_SIZE);
