@@ -1219,6 +1219,10 @@ enum bram_indices {
 #define IT83XX_I2C_RAMLA(ch)         REG8(IT83XX_I2C_BASE+0x24+(ch << 7))
 #define IT83XX_I2C_RAMHA2(ch)        REG8(IT83XX_I2C_BASE+0x2B+(ch << 7))
 #define IT83XX_I2C_RAMLA2(ch)        REG8(IT83XX_I2C_BASE+0x2C+(ch << 7))
+#define IT83XX_I2C_CMD_ADDH(ch)      REG8(IT83XX_I2C_BASE+0x25+(ch << 7))
+#define IT83XX_I2C_CMD_ADDL(ch)      REG8(IT83XX_I2C_BASE+0x26+(ch << 7))
+#define IT83XX_I2C_RAMH2A(ch)        REG8(IT83XX_I2C_BASE+0x50+(ch << 7))
+#define IT83XX_I2C_CMD_ADDH2(ch)     REG8(IT83XX_I2C_BASE+0x52+(ch << 7))
 
 enum i2c_channels {
 	IT83XX_I2C_CH_A,  /* GPIO.B3/B4 */
