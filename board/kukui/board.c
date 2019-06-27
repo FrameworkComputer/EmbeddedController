@@ -433,7 +433,6 @@ int board_get_version(void)
 /* Mutexes */
 #ifdef SECTION_IS_RW
 static struct mutex g_lid_mutex;
-static struct mutex g_als_mutex;
 
 static struct bmi160_drv_data_t g_bmi160_data;
 
@@ -556,7 +555,6 @@ struct motion_sensor_t motion_sensors[] = {
 	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &tcs3400_drv,
 	 .drv_data = &g_tcs3400_data,
-	 .mutex = &g_als_mutex,
 	 .port = I2C_PORT_ALS,
 	 .addr = TCS3400_I2C_ADDR,
 	 .rot_standard_ref = NULL,
