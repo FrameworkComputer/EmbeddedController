@@ -6281,12 +6281,13 @@ static void cmd_locate_chip_help(const char *const cmd)
 
 static const char *bus_type[] = {
 	"I2C",
+	"EMBEDDED"
 };
 
 int cmd_locate_chip(int argc, char *argv[])
 {
 	struct ec_params_locate_chip p;
-	struct ec_response_locate_chip r;
+	struct ec_response_locate_chip r = {0};
 	char *e;
 	int rv;
 
@@ -6341,6 +6342,9 @@ int cmd_locate_chip(int argc, char *argv[])
 	 */
 	printf("Bus: %s; Port: %d; Address: 0x%02x (7-bit format)\n",
 	       bus_type[r.bus_type], r.i2c_info.port, r.i2c_info.addr);
+
+	printf("reserved: 0x%x\n", r.reserved);
+
 	return 0;
 }
 
