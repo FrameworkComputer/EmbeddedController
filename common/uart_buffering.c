@@ -338,6 +338,11 @@ int uart_buffer_empty(void)
 	return tx_buf_head == tx_buf_tail;
 }
 
+int uart_buffer_full(void)
+{
+	return TX_BUF_NEXT(tx_buf_head) == tx_buf_tail;
+}
+
 #ifdef CONFIG_UART_RX_DMA
 static void uart_rx_dma_init(void)
 {
@@ -466,3 +471,4 @@ int uart_console_read_buffer(uint8_t type,
 
 	return EC_RES_SUCCESS;
 }
+

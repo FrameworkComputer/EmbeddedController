@@ -209,6 +209,11 @@ void uart_process_output(void);
 int uart_buffer_empty(void);
 
 /**
+ * Return boolean expressing whether UART buffer is full or not.
+ */
+int uart_buffer_full(void);
+
+/**
  * Disable the EC console UART and convert the UART RX pin to a generic GPIO
  * with an edge detect interrupt.
  */
