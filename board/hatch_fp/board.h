@@ -148,13 +148,10 @@
 /*
  * Add rollback protection
  */
-/*TODO(b/125506600): Support rollback protection */
-#if 0
 #define CONFIG_ROLLBACK
 #define CONFIG_ROLLBACK_SECRET_SIZE 32
-
+#define CONFIG_MPU
 #define CONFIG_ROLLBACK_MPU_PROTECT
-#endif
 
 /*
  * We do not use any "locally" generated entropy: this is normally used
