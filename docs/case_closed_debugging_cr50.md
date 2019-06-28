@@ -65,6 +65,43 @@ Cr50 CCD needs to be opened to access all CCD functionality or to modify
 capability settings so the device doesn't need to be open to access CCD
 functionality.
 
+### Prerequisites
+Cr50 needs to be newer than 0.3.9 or 0.4.9 to setup ccd. The 3 in the major
+version means it's a MP image and 0.4.X is a prePVT image. There aren't many
+differences between the MP and prePVT versions of images. It is just a little
+easier to CCD open prePVT images. You can't run prePVT images on MP devices,
+so if you're trying to update to .prepvt and it fails try using .prod.
+
+* Sync chroot to TOT (run repo sync in chromiumos directory) update servod and
+  gsctool in chroot
+
+        from chroot > sudo emerge hdctools ec-devutils servo-firmware
+	              chromeos-cr50 chromeos-cr50-scripts
+
+* Update servo v4 firmware
+
+        from chroot > sudo servo_updater -b servo_v4
+
+* Ensure cr50 firmware is up to date. You can run these gsctool commands from
+  the AP console or you can run them as root from inside the chroot if suzyq is
+  connected.
+	* If you're doing this from the AP, install a test image newer than M66.
+	* check the cr50 version
+
+                sudo gsctool -a -f
+
+	* If the RW version is greater than 0.(3|4).9 then you don't need to
+	  update cr50. If it's not, then you need to update cr50.
+	* Update cr50.
+
+                sudo gsctool -a /opt/google/cr50/firmware/cr50.bin.prod
+
+	* Check the cr50 version again to make sure it's now newer than 0.X.9
+
+* Ensure power isolation on servo v4
+	* Plug USB-C power into servo v4 for dut pass though
+	* Green LED will light up when plugged into DUT.
+
 ### Basic Steps for CCD setup
 
 1.  Use the general [setup](case_closed_debugging.md#Setup) instructions to
