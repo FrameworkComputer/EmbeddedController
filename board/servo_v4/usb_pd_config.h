@@ -265,8 +265,8 @@ static inline void pd_set_host_mode(int port, int enable)
 static inline void pd_config_init(int port, uint8_t power_role)
 {
 	/*
-	 * Set CC pull resistors, and charge_en and vbus_en GPIOs to match
-	 * the initial role.
+	 * Set CC pull resistors. The PD state machine will then transit and
+	 * enable VBUS after it detects valid voltages on CC lines.
 	 */
 	pd_set_host_mode(port, power_role);
 
