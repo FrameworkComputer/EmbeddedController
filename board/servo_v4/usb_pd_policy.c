@@ -39,6 +39,9 @@
 				CC_ENABLE_DRP)
 #define CONFIG_SNK(c) CONFIG_SET_CLEAR(c, \
 				CC_DISABLE_DTS, \
+				CC_ALLOW_SRC | CC_ENABLE_DRP | CC_SNK_WITH_PD)
+#define CONFIG_PDSNK(c) CONFIG_SET_CLEAR(c, \
+				CC_DISABLE_DTS | CC_SNK_WITH_PD, \
 				CC_ALLOW_SRC | CC_ENABLE_DRP)
 #define CONFIG_DRP(c) CONFIG_SET_CLEAR(c, \
 				CC_DISABLE_DTS | CC_ALLOW_SRC | CC_ENABLE_DRP, \
@@ -48,6 +51,10 @@
 				CC_ENABLE_DRP | CC_DISABLE_DTS)
 #define CONFIG_SNKDTS(c) CONFIG_SET_CLEAR(c, \
 				0, \
+				CC_ALLOW_SRC | CC_ENABLE_DRP | \
+				CC_DISABLE_DTS | CC_SNK_WITH_PD)
+#define CONFIG_PDSNKDTS(c) CONFIG_SET_CLEAR(c, \
+				CC_SNK_WITH_PD, \
 				CC_ALLOW_SRC | CC_ENABLE_DRP | CC_DISABLE_DTS)
 #define CONFIG_DRPDTS(c) CONFIG_SET_CLEAR(c, \
 				CC_ALLOW_SRC | CC_ENABLE_DRP, \
@@ -794,7 +801,17 @@ static void do_cc(int cc_config_new)
 			 */
 			if (dualrole != PD_DRP_TOGGLE_ON)
 				pd_set_host_mode(DUT, chargeable);
-			pd_comm_enable(DUT, chargeable);
+
+			/*
+			 * For the normal lab use, emulating a sink has no PD
+			 * comm, like a passive hub. For the PD FAFT use, we
+			 * need to validate some PD behavior, so a flag
+			 * CC_SNK_WITH_PD to force enabling PD comm.
+			 */
+			if (cc_config & CC_SNK_WITH_PD)
+				pd_comm_enable(DUT, 1);
+			else
+				pd_comm_enable(DUT, chargeable);
 		}
 	}
 }
@@ -818,12 +835,16 @@ static int command_cc(int argc, char **argv)
 			cc_config_new = CONFIG_SRC(cc_config_new);
 		else if (!strcasecmp(argv[1], "snk"))
 			cc_config_new = CONFIG_SNK(cc_config_new);
+		else if (!strcasecmp(argv[1], "pdsnk"))
+			cc_config_new = CONFIG_PDSNK(cc_config_new);
 		else if (!strcasecmp(argv[1], "drp"))
 			cc_config_new = CONFIG_DRP(cc_config_new);
 		else if (!strcasecmp(argv[1], "srcdts"))
 			cc_config_new = CONFIG_SRCDTS(cc_config_new);
 		else if (!strcasecmp(argv[1], "snkdts"))
 			cc_config_new = CONFIG_SNKDTS(cc_config_new);
+		else if (!strcasecmp(argv[1], "pdsnkdts"))
+			cc_config_new = CONFIG_PDSNKDTS(cc_config_new);
 		else if (!strcasecmp(argv[1], "drpdts"))
 			cc_config_new = CONFIG_DRPDTS(cc_config_new);
 		else
@@ -836,7 +857,8 @@ static int command_cc(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(cc, command_cc,
-			"[off|on|src|snk|drp|srcdts|snkdts|drpdts]",
+			"[off|on|src|snk|pdsnk|drp|srcdts|snkdts|pdsnkdts|"
+			"drpdts]",
 			"Servo_v4 DTS and CHG mode");
 
 static void fake_disconnect_end(void)

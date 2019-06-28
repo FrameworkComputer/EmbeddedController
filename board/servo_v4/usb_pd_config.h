@@ -60,6 +60,7 @@
 #define CC_DISABLE_DTS	(1 << 1)   /* Apply resistors to single or both CC? */
 #define CC_ALLOW_SRC	(1 << 2)   /* Allow charge through by policy? */
 #define CC_ENABLE_DRP	(1 << 3)   /* Enable dual-role port */
+#define CC_SNK_WITH_PD	(1 << 4)   /* Force enabling PD comm for sink role */
 
 /* TX uses SPI1 on PB3-4 for CHG port, SPI2 on PB 13-14 for DUT port */
 #define SPI_REGS(p) ((p) ? STM32_SPI2_REGS : STM32_SPI1_REGS)
