@@ -273,9 +273,17 @@ static void board_init(void)
 	/* Enable pogo interrupt */
 	gpio_enable_interrupt(GPIO_POGO_ADC_INT_L);
 
-	if (IS_ENABLED(BOARD_KRANE))
-		/* Display bias settings.  */
+	if (IS_ENABLED(BOARD_KRANE)) {
+		/* Display bias settings. */
 		mt6370_db_set_voltages(6000, 5800, 5800);
+
+		/*
+		 * Fix backlight led maximum current:
+		 * tolerance 120mA * 0.75 = 90mA.
+		 * (b/133655155)
+		 */
+		mt6370_backlight_set_dim(MT6370_BLDIM_DEFAULT * 3 / 4);
+	}
 
 	/* Enable pogo charging signal */
 	gpio_enable_interrupt(GPIO_POGO_VBUS_PRESENT);
@@ -576,12 +584,6 @@ static void fix_krane(void)
 {
 	if (board_get_version() != 3)
 		return;
-
-	/*
-	 * Fix backlight led maximum current: tolerance 120mA * 0.75 = 90mA.
-	 * (b/133655155)
-	 */
-	mt6370_backlight_set_dim(MT6370_BLDIM_DEFAULT * 3 / 4);
 
 #ifdef SECTION_IS_RW
 	/* Fix reference point */
