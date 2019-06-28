@@ -69,11 +69,20 @@ static size_t wov_fifo_level(void)
 int32_t audio_codec_wov_read(void *buf, uint32_t count)
 {
 	int16_t *out = buf;
+	uint8_t gain = 1;
+
+	if (IS_ENABLED(CONFIG_AUDIO_CODEC_DMIC_SOFTWARE_GAIN))
+		audio_codec_dmic_get_gain_idx(0, &gain);
 
 	count >>= 1;
 
-	while (count-- && wov_fifo_level())
-		*out++ = SCP_VIF_FIFO_DATA;
+	while (count-- && wov_fifo_level()) {
+		if (IS_ENABLED(CONFIG_AUDIO_CODEC_DMIC_SOFTWARE_GAIN))
+			*out++ = audio_codec_s16_scale_and_clip(
+					SCP_VIF_FIFO_DATA, gain);
+		else
+			*out++ = SCP_VIF_FIFO_DATA;
+	}
 
 	return (void *)out - buf;
 }

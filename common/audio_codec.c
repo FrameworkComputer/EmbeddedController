@@ -7,6 +7,7 @@
 #include "audio_codec.h"
 #include "console.h"
 #include "host_command.h"
+#include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ## args)
 
@@ -143,4 +144,14 @@ __attribute__((weak))
 int audio_codec_memmap_ap_to_ec(uintptr_t ap_addr, uintptr_t *ec_addr)
 {
 	return EC_ERROR_UNIMPLEMENTED;
+}
+
+int16_t audio_codec_s16_scale_and_clip(int16_t orig, uint8_t scalar)
+{
+	int32_t val;
+
+	val = (int32_t)orig * (int32_t)scalar;
+	val = MIN(val, (int32_t)INT16_MAX);
+	val = MAX(val, (int32_t)INT16_MIN);
+	return val;
 }

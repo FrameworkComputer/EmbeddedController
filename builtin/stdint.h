@@ -57,6 +57,9 @@ typedef int64_t            int_fast64_t;
 #ifndef INT16_MAX
 #define INT16_MAX (32767U)
 #endif
+#ifndef INT16_MIN
+#define INT16_MIN (-32768)
+#endif
 
 #ifndef UINT32_MAX
 #define UINT32_MAX (4294967295U)
