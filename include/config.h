@@ -354,6 +354,9 @@
 #undef CONFIG_AUDIO_CODEC
 /* Support audio codec on DMIC. */
 #undef CONFIG_AUDIO_CODEC_DMIC
+/* Support audio codec software gain on DMIC. */
+#undef CONFIG_AUDIO_CODEC_DMIC_SOFTWARE_GAIN
+#undef CONFIG_AUDIO_CODEC_DMIC_MAX_SOFTWARE_GAIN
 
 /* Allow proprietary communication protocols' extensions. */
 #undef CONFIG_EXTENSION_COMMAND
