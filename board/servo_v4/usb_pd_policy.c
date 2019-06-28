@@ -632,23 +632,32 @@ int pd_check_power_swap(int port)
 
 int pd_check_data_swap(int port, int data_role)
 {
-	/* Servo can allow data role swaps */
+	/*
+	 * Servo should allow data role swaps to let DUT see the USB hub, but
+	 * doing it on CHG port is a waste as its data lines is unconnected.
+	 */
+	if (port == CHG)
+		return 0;
+
 	return 1;
 }
 
 void pd_execute_data_swap(int port, int data_role)
 {
-	/* Should we do something here? */
+	/*
+	 * TODO(b/137887386): Turn on the fastboot/DFU path when data swap to
+	 * DFP?
+	 */
 }
 
 void pd_check_pr_role(int port, int pr_role, int flags)
 {
 	/*
-	 * TODO(crosbug.com/p/60792): CHG port can't do a power swap as it's SNK
-	 * only. DUT port should be able to support a power role swap, but VBUS
-	 * will need to be present. For now, don't allow swaps on either port.
+	 * Don't define any policy to initiate power role swap.
+	 *
+	 * CHG port is SNK only. DUT port requires a user to switch its
+	 * role by commands. So don't do anything implicitly.
 	 */
-
 }
 
 void pd_check_dr_role(int port, int dr_role, int flags)
@@ -656,9 +665,8 @@ void pd_check_dr_role(int port, int dr_role, int flags)
 	if (port == CHG)
 		return;
 
-	/* If DFP, try to switch to UFP */
-	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_DFP &&
-	    !disable_dts_mode)
+	/* If DFP, try to switch to UFP, to let DUT see the USB hub. */
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_DFP)
 		pd_request_data_swap(port);
 }
 
