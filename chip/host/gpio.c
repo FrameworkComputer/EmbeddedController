@@ -62,6 +62,12 @@ test_mockable int gpio_enable_interrupt(enum gpio_signal signal)
 	return EC_SUCCESS;
 }
 
+test_mockable int gpio_disable_interrupt(enum gpio_signal signal)
+{
+	gpio_interrupt_enabled[signal] = 0;
+	return EC_SUCCESS;
+}
+
 test_mockable int gpio_clear_pending_interrupt(enum gpio_signal signal)
 {
 	return EC_SUCCESS;

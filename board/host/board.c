@@ -14,6 +14,7 @@
 #include "motion_sense.h"
 #include "motion_lid.h"
 #include "power_button.h"
+#include "spi.h"
 #include "temp_sensor.h"
 #include "timer.h"
 #include "util.h"
@@ -56,6 +57,14 @@ const struct i2c_port_t i2c_ports[] = {
 };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+#endif
+
+#ifdef CONFIG_SPI_MASTER
+/* SPI devices */
+const struct spi_device_t spi_devices[] = {
+};
+
+const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 #endif
 
 #ifdef TEST_BUILD

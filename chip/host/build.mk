@@ -9,7 +9,7 @@
 CORE:=host
 
 chip-y=system.o gpio.o uart.o persistence.o flash.o lpc.o reboot.o i2c.o \
-	clock.o
+	clock.o spi_master.o trng.o
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 chip-$(CONFIG_USB_PD_TCPC)+=usb_pd_phy.o
 
