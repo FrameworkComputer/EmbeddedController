@@ -16,6 +16,11 @@
 extern "C"{
 #endif
 
+/*
+ * CHROMIUM_EC is defined by the Makefile system of Chromium EC repository.
+ * It is used to not include macros that may cause conflicts in foreign
+ * projects (refer to crbug.com/984623).
+ */
 #ifdef CHROMIUM_EC
 /*
  * Include common.h for CONFIG_HOSTCMD_ALIGNED, if it's defined. This
@@ -23,13 +28,21 @@ extern "C"{
  * ARM Cortex-M if the structures are guaranteed 32-bit aligned.
  */
 #include "common.h"
+#include "compile_time_macros.h"
+
+#else
+
+#define BUILD_ASSERT(_cond)
+
+#ifndef BIT
+#define BIT(nr)         (1UL << (nr))
 #endif
 
-#ifdef __KERNEL__
-#define BUILD_ASSERT(_cond)
-#else
-#include "compile_time_macros.h"
+#ifndef BIT_ULL
+#define BIT_ULL(nr)     (1ULL << (nr))
 #endif
+
+#endif  /* CHROMIUM_EC */
 
 /*
  * Current version of this protocol
