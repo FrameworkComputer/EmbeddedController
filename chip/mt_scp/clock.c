@@ -314,7 +314,13 @@ void scp_enable_clock(void)
 
 	/* Enable default clock gate */
 	SCP_CLK_GATE |= CG_DMA_CH3 | CG_DMA_CH2 | CG_DMA_CH1 | CG_DMA_CH0 |
-			CG_I2C_M | CG_MAD_M;
+			CG_I2C_M | CG_MAD_M | CG_AP2P_M;
+
+	/* Select pwrap_ulposc */
+	AP_CLK_CFG_5 = (AP_CLK_CFG_5 & ~PWRAP_ULPOSC_MASK) | OSC_D16;
+
+	/* Enable pwrap_ulposc clock gate */
+	AP_CLK_CFG_5_CLR = PWRAP_ULPOSC_CG;
 }
 
 void clock_control_irq(void)
