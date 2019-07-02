@@ -68,7 +68,7 @@
  * We want to prevent flash readout, and use it as indicator of protection
  * status.
  */
-/*TODO(b/125419658): enable CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE*/
+#define CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE
 
 /* the UART console is on USART1 */
 #undef CONFIG_UART_CONSOLE

@@ -5,10 +5,12 @@
 
 /* Common flash memory module for STM32F and STM32F0 */
 
+#include <stdbool.h>
 #include "battery.h"
 #include "console.h"
 #include "clock.h"
 #include "flash.h"
+#include "flash-f.h"
 #include "hooks.h"
 #include "registers.h"
 #include "panic.h"
@@ -17,6 +19,9 @@
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
+
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
 /*
  * Approximate number of CPU cycles per iteration of the loop when polling
@@ -34,6 +39,19 @@
 #define FLASH_WRITE_TIMEOUT_US 16000
 /* 20ms < tERASE < 40ms on F0/F3, for 1K / 2K sector size. */
 #define FLASH_ERASE_TIMEOUT_US 40000
+
+#if defined(CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE)
+#if !defined(CHIP_FAMILY_STM32F4)
+#error "CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE should work with all STM32F "
+"series chips, but has not been tested"
+#endif /* !CHIP_FAMILY_STM32F4 */
+#endif /* CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE */
+
+/* Forward declarations */
+#if defined(CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE)
+static enum flash_rdp_level flash_physical_get_rdp_level(void);
+static int flash_physical_set_rdp_level(enum flash_rdp_level level);
+#endif /* CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE */
 
 static inline int calculate_flash_timeout(void)
 {
@@ -248,6 +266,23 @@ static int write_optb(int byte, uint8_t value)
 }
 #endif
 
+#if defined(CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE)
+/**
+ * @return true if RDP (read protection) Level 1 or 2 enabled, false otherwise
+ */
+bool is_flash_rdp_enabled(void)
+{
+	enum flash_rdp_level level = flash_physical_get_rdp_level();
+
+	if (level == FLASH_RDP_LEVEL_INVALID) {
+		CPRINTS("ERROR: unable to read RDP level");
+		return false;
+	}
+
+	return level != FLASH_RDP_LEVEL_0;
+}
+#endif /* CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE */
+
 /*****************************************************************************/
 /* Physical layer APIs */
 
@@ -421,6 +456,28 @@ static int flash_physical_get_protect_at_boot(int block)
 	return !(STM32_OPTB_WP & STM32_OPTB_nWRP(block));
 }
 
+static int flash_physical_protect_at_boot_update_rdp_pstate(uint32_t new_flags)
+{
+#if defined(CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE)
+	int rv = EC_SUCCESS;
+
+	bool rdp_enable = (new_flags & EC_FLASH_PROTECT_RO_AT_BOOT) != 0;
+
+	/*
+	 * This is intentionally a one-way latch. Once we have enabled RDP
+	 * Level 1, we will only allow going back to Level 0 using the
+	 * bootloader (e.g., "stm32mon -U") since transitioning from Level 1 to
+	 * Level 0 triggers a mass erase.
+	 */
+	if (rdp_enable)
+		rv = flash_physical_set_rdp_level(FLASH_RDP_LEVEL_1);
+
+	return rv;
+#else
+	return EC_SUCCESS;
+#endif
+}
+
 int flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	int block;
@@ -452,7 +509,7 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
 	}
 
 
-	return EC_SUCCESS;
+	return flash_physical_protect_at_boot_update_rdp_pstate(new_flags);
 }
 
 static void unprotect_all_blocks(void)
@@ -544,6 +601,68 @@ static int registers_need_reset(void)
 			return 1;
 	return 0;
 }
+
+#if defined(CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE)
+/**
+ * Set Flash RDP (read protection) level.
+ *
+ * @note Does not take effect until reset.
+ *
+ * @param level new RDP (read protection) level to set
+ * @return EC_SUCCESS on success, other on failure
+ */
+int flash_physical_set_rdp_level(enum flash_rdp_level level)
+{
+	uint32_t reg_level;
+
+	switch (level) {
+	case FLASH_RDP_LEVEL_0:
+		/*
+		 * Asserting by default since we don't want to inadvertently
+		 * go from Level 1 to Level 0, which triggers a mass erase.
+		 * Remove assert if you want to use it.
+		 */
+		ASSERT(false);
+		reg_level = FLASH_OPTCR_RDP_LEVEL_0;
+		break;
+	case FLASH_RDP_LEVEL_1:
+		reg_level = FLASH_OPTCR_RDP_LEVEL_1;
+		break;
+	case FLASH_RDP_LEVEL_2:
+		/*
+		 * Asserting by default since it's permanent (there is no
+		 * way to reverse). Remove assert if you want to use it.
+		 */
+		ASSERT(false);
+		reg_level = FLASH_OPTCR_RDP_LEVEL_2;
+		break;
+	default:
+		return EC_ERROR_INVAL;
+	}
+
+	return write_optb(FLASH_OPTCR_RDP_MASK, reg_level);
+}
+
+/**
+ * @return On success, current flash read protection level.
+ *         On failure, FLASH_RDP_LEVEL_INVALID
+ */
+enum flash_rdp_level flash_physical_get_rdp_level(void)
+{
+	uint32_t level = (STM32_FLASH_OPTCR & FLASH_OPTCR_RDP_MASK);
+
+	switch (level) {
+	case FLASH_OPTCR_RDP_LEVEL_0:
+		return FLASH_RDP_LEVEL_0;
+	case FLASH_OPTCR_RDP_LEVEL_1:
+		return FLASH_RDP_LEVEL_1;
+	case FLASH_OPTCR_RDP_LEVEL_2:
+		return FLASH_RDP_LEVEL_2;
+	default:
+		return FLASH_RDP_LEVEL_INVALID;
+	}
+}
+#endif /* CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE */
 
 /*****************************************************************************/
 /* High-level APIs */

@@ -729,7 +729,12 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define  FLASH_OPTLOCK                  BIT(0)
 #define  FLASH_OPTSTRT                  BIT(1)
 #define STM32_FLASH_BOR_LEV_OFFSET      (2)
-#define STM32_FLASH_RDP_MASK            (0xFF << 8)
+#define  FLASH_OPTCR_RDP_SHIFT		(8)
+#define  FLASH_OPTCR_RDP_MASK		(0xFF << FLASH_OPTCR_RDP_SHIFT)
+#define  FLASH_OPTCR_RDP_LEVEL_0		(0xAA << FLASH_OPTCR_RDP_SHIFT)
+/* RDP Level 1: Anything but 0xAA/0xCC */
+#define  FLASH_OPTCR_RDP_LEVEL_1		(0x00 << FLASH_OPTCR_RDP_SHIFT)
+#define  FLASH_OPTCR_RDP_LEVEL_2		(0xCC << FLASH_OPTCR_RDP_SHIFT)
 #define STM32_FLASH_nWRP_OFFSET         (16)
 #define STM32_FLASH_nWRP(_bank)         BIT(_bank + STM32_FLASH_nWRP_OFFSET)
 #define STM32_FLASH_nWRP_ALL            (0xFF << STM32_FLASH_nWRP_OFFSET)

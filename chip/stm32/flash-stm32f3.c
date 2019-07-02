@@ -5,8 +5,10 @@
 
 /* Flash memory module for stm32f3 and stm32f4 */
 
+#include <stdbool.h>
 #include "common.h"
 #include "flash.h"
+#include "flash-f.h"
 #include "hooks.h"
 #include "registers.h"
 #include "system.h"
@@ -102,6 +104,11 @@ uint32_t flash_physical_get_protect_flags(void)
 	/* Read all-protected state from our shadow copy */
 	if (entire_flash_locked)
 		flags |= EC_FLASH_PROTECT_ALL_NOW;
+
+#if defined(CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE)
+	if (is_flash_rdp_enabled())
+		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
+#endif
 
 	return flags;
 }
