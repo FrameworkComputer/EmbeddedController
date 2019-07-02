@@ -622,7 +622,6 @@ enum host_event_code {
 	 *
 	 * - TABLET/LAPTOP mode
 	 * - detachable base attach/detach event
-	 * - DisplayPort Alternate Mode entry
 	 */
 	EC_HOST_EVENT_MODE_CHANGE = 29,
 
@@ -3471,6 +3470,9 @@ enum ec_mkbp_event {
 
 	/* Send an incoming CEC message to the AP */
 	EC_MKBP_EVENT_CEC_MESSAGE = 9,
+
+	/* We have entered DisplayPort Alternate Mode on a Type-C port. */
+	EC_MKBP_EVENT_DP_ALT_MODE_ENTERED = 10,
 
 	/* Number of MKBP events */
 	EC_MKBP_EVENT_COUNT,

@@ -7,10 +7,12 @@
 #include "charge_manager.h"
 #include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "mkbp_event.h"
 #include "registers.h"
 #include "rsa.h"
 #include "sha256.h"
@@ -34,22 +36,20 @@
 
 static int rw_flash_changed = 1;
 
-#ifdef CONFIG_HOSTCMD_EVENTS
+#ifdef CONFIG_MKBP_EVENT
+static int dp_alt_mode_entry_get_next_event(uint8_t *data)
+{
+	return EC_SUCCESS;
+}
+DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED,
+		     dp_alt_mode_entry_get_next_event);
+
 void pd_notify_dp_alt_mode_entry(void)
 {
-	/*
-	 * Note: EC_HOST_EVENT_PD_MCU may be a more appropriate host event to
-	 * send, but we do not send that here because there are other cases
-	 * where we send EC_HOST_EVENT_PD_MCU such as charger insertion or
-	 * removal.  Currently, those do not wake the system up, but
-	 * EC_HOST_EVENT_MODE_CHANGE does.  If we made the system wake up on
-	 * EC_HOST_EVENT_PD_MCU, we would be turning the internal display on on
-	 * every charger insertion/removal, which is not desired.
-	 */
 	CPRINTS("Notifying AP of DP Alt Mode Entry...");
-	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
+	mkbp_send_event(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED);
 }
-#endif /* CONFIG_HOSTCMD_EVENTS */
+#endif /* CONFIG_MKBP_EVENT */
 
 int pd_check_requested_voltage(uint32_t rdo, const int port)
 {
