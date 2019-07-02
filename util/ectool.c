@@ -13,6 +13,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <signal.h>
 #include <stdbool.h>
 
 #include "anx74xx.h"
@@ -35,6 +36,11 @@
 
 /* Maximum flash size (16 MB, conservative) */
 #define MAX_FLASH_SIZE 0x1000000
+
+/*
+ * Calculate the expected response for a hello ec command.
+ */
+#define HELLO_RESP(in_data) ((in_data) + 0x01020304)
 
 /* Command line options */
 enum {
@@ -259,6 +265,8 @@ const char help_str[] =
 	"      Run RW signature verification and get status.\n"
 	"  sertest\n"
 	"      Serial output test for COM2\n"
+	"  stress [reboot] [help]\n"
+	"      Stress test the ec host command interface.\n"
 	"  switches\n"
 	"      Prints current EC switch positions\n"
 	"  temps <sensorid>\n"
@@ -2173,6 +2181,163 @@ int cmd_port_80_flood(int argc, char *argv[])
 	return -1;
 }
 #endif
+
+/*
+ * This boolean variable and handler are used for
+ * catching signals that translate into a quit/shutdown
+ * of a runtime loop.
+ * This is used in cmd_stress_test.
+ */
+static bool sig_quit;
+static void sig_quit_handler(int sig)
+{
+	sig_quit = true;
+}
+
+int cmd_stress_test(int argc, char *argv[])
+{
+	int i;
+	bool reboot = false;
+	time_t now;
+	time_t start_time, last_update_time;
+	unsigned int rand_seed = 0;
+	uint64_t round = 1, attempt = 1;
+	uint64_t failures = 0;
+
+	const int max_sleep_usec = 1000; /* 1ms */
+	const int loop_update_interval = 10000;
+
+	for (i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "help") == 0) {
+			printf("Usage: %s [reboot] [help]\n", argv[0]);
+			printf("Stress tests the host command interface by"
+			       " repeatedly issuing common host commands.\n");
+			printf("The intent is to expose errors in kernel<->mcu"
+			       " communication, such as exceeding timeouts.\n");
+			printf("\n");
+			printf("reboot - Reboots the target before"
+			       " starting the stress test.\n");
+			printf("         This may force restart the host,"
+			       " if the main ec is the target.\n");
+			return 0;
+		} else if (strcmp(argv[i], "reboot") == 0) {
+			reboot = true;
+		} else {
+			fprintf(stderr, "Error - Unknown argument '%s'\n",
+				argv[i]);
+			return 1;
+		}
+	}
+
+	printf("Stress test tool version: %s %s %s\n",
+	       CROS_ECTOOL_VERSION, DATE, BUILDER);
+
+	start_time = time(NULL);
+	last_update_time = start_time;
+	printf("Start time: %s\n", ctime(&start_time));
+
+	if (reboot) {
+		printf("Issuing ec reboot. Expect a few early failed"
+		       " ioctl messages.\n");
+		ec_command(EC_CMD_REBOOT, 0, NULL, 0, NULL, 0);
+		sleep(2);
+	}
+
+	sig_quit = false;
+	signal(SIGINT, sig_quit_handler);
+	while (!sig_quit) {
+		int rv;
+		struct ec_response_get_version ver_r;
+		char *build_string = (char *)ec_inbuf;
+		struct ec_params_flash_protect flash_p;
+		struct ec_response_flash_protect flash_r;
+		struct ec_params_hello hello_p;
+		struct ec_response_hello hello_r;
+
+		/* Request EC Version Strings */
+		rv = ec_command(EC_CMD_GET_VERSION, 0,
+				NULL, 0, &ver_r, sizeof(ver_r));
+		if (rv < 0) {
+			failures++;
+			perror("ERROR: EC_CMD_GET_VERSION failed");
+		}
+		ver_r.version_string_ro[sizeof(ver_r.version_string_ro) - 1]
+			= '\0';
+		ver_r.version_string_rw[sizeof(ver_r.version_string_rw) - 1]
+			= '\0';
+		if (strlen(ver_r.version_string_ro) == 0) {
+			failures++;
+			fprintf(stderr, "RO version string is empty\n");
+		}
+		if (strlen(ver_r.version_string_rw) == 0) {
+			failures++;
+			fprintf(stderr, "RW version string is empty\n");
+		}
+
+		usleep(rand_r(&rand_seed) % max_sleep_usec);
+
+		/* Request EC Build String */
+		rv = ec_command(EC_CMD_GET_BUILD_INFO, 0,
+				NULL, 0, ec_inbuf, ec_max_insize);
+		if (rv < 0) {
+			failures++;
+			perror("ERROR: EC_CMD_GET_BUILD_INFO failed");
+		}
+		build_string[ec_max_insize - 1] = '\0';
+		if (strlen(build_string) == 0) {
+			failures++;
+			fprintf(stderr, "Build string is empty\n");
+		}
+
+		usleep(rand_r(&rand_seed) % max_sleep_usec);
+
+		/* Request Flash Protect Status */
+		rv = ec_command(EC_CMD_FLASH_PROTECT, EC_VER_FLASH_PROTECT,
+				&flash_p, sizeof(flash_p), &flash_r,
+				sizeof(flash_r));
+		if (rv < 0) {
+			failures++;
+			perror("ERROR: EC_CMD_FLASH_PROTECT failed");
+		}
+
+		usleep(rand_r(&rand_seed) % max_sleep_usec);
+
+		/* Request Hello */
+		hello_p.in_data = 0xa0b0c0d0;
+		rv = ec_command(EC_CMD_HELLO, 0, &hello_p, sizeof(hello_p),
+				&hello_r, sizeof(hello_r));
+		if (rv < 0) {
+			failures++;
+			perror("ERROR: EC_CMD_HELLO failed");
+		}
+		if (hello_r.out_data != HELLO_RESP(hello_p.in_data)) {
+			failures++;
+			fprintf(stderr, "Hello response was invalid.\n");
+		}
+
+		usleep(rand_r(&rand_seed) % max_sleep_usec);
+
+		if ((attempt % loop_update_interval) == 0) {
+			now = time(NULL);
+			printf("Update: attempt %" PRIu64 " round %" PRIu64
+			       " | took %.f seconds\n",
+			       attempt, round,
+			       difftime(now, last_update_time));
+			last_update_time = now;
+		}
+
+		if (attempt++ == UINT64_MAX)
+			round++;
+	}
+	printf("\n");
+
+	now = time(NULL);
+	printf("End time:        %s\n", ctime(&now));
+	printf("Total runtime:   %.f seconds\n",
+		difftime(time(NULL), start_time));
+	printf("Total failures:  %" PRIu64 "\n", failures);
+	return 0;
+}
 
 int read_mapped_temperature(int id)
 {
@@ -8842,6 +9007,7 @@ const struct command commands[] = {
 	{"rwsigaction", cmd_rwsig_action},
 	{"rwsigstatus", cmd_rwsig_status},
 	{"sertest", cmd_serial_test},
+	{"stress", cmd_stress_test},
 	{"port80flood", cmd_port_80_flood},
 	{"switches", cmd_switches},
 	{"temps", cmd_temperature},
