@@ -136,7 +136,7 @@ static int mkbp_set_host_active(int active, uint32_t *timestamp)
 #endif
 }
 
-#ifdef CONFIG_MKBP_WAKEUP_MASK
+#ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
 /**
  * Check if the host is sleeping. Check our power state in addition to the
  * self-reported sleep state of host (CONFIG_POWER_TRACK_HOST_SLEEP_STATE).
@@ -153,7 +153,7 @@ static inline int host_is_sleeping(void)
 #endif
 	return is_sleeping;
 }
-#endif /* CONFIG_MKBP_WAKEUP_MASK */
+#endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
 
 /*
  * This is the deferred function that ensures that we attempt to set the MKBP
@@ -169,11 +169,12 @@ static void activate_mkbp_with_events(uint32_t events_to_add)
 	int skip_interrupt = 0;
 	int rv, schedule_deferred = 0;
 
-#ifdef CONFIG_MKBP_WAKEUP_MASK
-	/* Only assert interrupt for wake events if host is sleeping */
+#ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
+	/* Check to see if this host event should wake the system. */
 	skip_interrupt = host_is_sleeping() &&
-			 !(host_get_events() & CONFIG_MKBP_WAKEUP_MASK);
-#endif
+			 !(host_get_events() &
+			   CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK);
+#endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
 
 	mutex_lock(&state.lock);
 	state.events |= events_to_add;
@@ -346,17 +347,19 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_NEXT_EVENT,
 		     mkbp_get_next_event,
 		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
 
-#ifdef CONFIG_MKBP_WAKEUP_MASK
-static int mkbp_get_wake_mask(struct host_cmd_handler_args *args)
+#ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
+#ifdef CONFIG_MKBP_USE_HOST_EVENT
+static int mkbp_get_host_event_wake_mask(struct host_cmd_handler_args *args)
 {
 	struct ec_response_host_event_mask *r = args->response;
 
-	r->mask = CONFIG_MKBP_WAKEUP_MASK;
+	r->mask = CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK;
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_GET_WAKE_MASK,
-		     mkbp_get_wake_mask,
+		     mkbp_get_host_event_wake_mask,
 		     EC_VER_MASK(0));
-#endif
+#endif /* CONFIG_MKBP_USE_HOST_EVENT */
+#endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */

@@ -166,8 +166,8 @@
 #define TIM_CLOCK32 2
 #define TIM_WATCHDOG 4
 
-/* Define the MKBP events which are allowed to wakeup AP in S3. */
-#define CONFIG_MKBP_WAKEUP_MASK \
+/* Define the host events which are allowed to wakeup AP in S3. */
+#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
 		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |\
 		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |\
 		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEY_PRESSED) |\

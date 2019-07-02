@@ -131,8 +131,8 @@
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
-/* Define the MKBP events which are allowed to wakeup AP in S3. */
-#define CONFIG_MKBP_WAKEUP_MASK \
+/* Define the host events which are allowed to wakeup AP in S3. */
+#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
 		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |\
 		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
 

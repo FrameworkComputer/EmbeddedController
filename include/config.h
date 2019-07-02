@@ -2680,10 +2680,10 @@
 #undef CONFIG_MKBP_USE_CUSTOM
 
 /*
- * With this option, we can define the MKBP wakeup events in this mask (as a
- * white list) in board level, those events allow to interrupt AP during S3.
+ * If using MKBP to send host events, with this option, we can define the host
+ * events that should wake the system in suspend.
  */
-#undef CONFIG_MKBP_WAKEUP_MASK
+#undef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
 
 /* Support memory protection unit (MPU) */
 #undef CONFIG_MPU
