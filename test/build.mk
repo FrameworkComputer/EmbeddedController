@@ -2,10 +2,8 @@
 # Copyright 2013 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-#
-# on-board test binaries build
-#
 
+# Device test binaries
 test-list-y ?= pingpong timer_calib timer_dos timer_jump mutex utils utils_str
 #disable: powerdemo
 

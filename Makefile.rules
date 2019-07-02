@@ -146,6 +146,14 @@ cmd_etags = etags -o $@ $(shell cat $<)
 cmd_ctags = ctags -o $@ $(shell cat $<)
 targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
 
+# If outputing to tty and column command exists, pipe into column.
+# Otherwise, print in newline format.
+cmd_pretty_print_list = @echo $(1) \
+				| tr ' ' '\n'                    \
+				| { [ -t 1 ]                     \
+				    && which column &>/dev/null  \
+				    && column || cat ; }         \
+
 # By default, the "build_boards" and "try_build_boards" targets will build all
 # of the boards listed in $(boards). However, the invoker can provide a
 # different list via the BOARDS variable. Providing an empty value for BOARDS
@@ -192,8 +200,10 @@ buildalltests: | $(FAILED_BOARDS_DIR)
 	$(MAKE) try_build_tests
 	@echo "$@ completed successfully!"
 
-showboards:
-	@echo $(sort $(boards))
+.PHONY: print-boards
+print-boards:
+	$(call cmd_pretty_print_list,\
+		$(sort $(boards)))
 
 # Print any important notices at the end of the build.
 .PHONY: notice
@@ -255,6 +265,11 @@ endif
 .PHONY: tests
 tests: $(test-targets)
 
+.PHONY: print-tests
+print-tests:
+	$(call cmd_pretty_print_list, \
+		$(sort $(test-targets)))
+
 # Emulator test executables
 host-test-targets=$(foreach t,$(test-list-host),host-$(t))
 run-test-targets=$(foreach t,$(test-list-host),run-$(t))
@@ -267,6 +282,11 @@ $(host-test-targets): host-%: | $(FAILED_BOARDS_DIR)
 $(run-test-targets): run-%: host-%
 	$(call quiet,run_host_test,TEST   )
 	@rm -f $(FAILED_BOARDS_DIR)/test-$*
+
+.PHONY: print-host-tests
+print-host-tests:
+	$(call cmd_pretty_print_list, \
+		$(sort $(host-test-targets) $(run-test-targets)))
 
 # Fuzzing tests
 
@@ -288,6 +308,11 @@ $(run-fuzz-test-targets): run-%: host-%
 
 $(FAILED_BOARDS_DIR):
 	@mkdir $(FAILED_BOARDS_DIR)
+
+.PHONY: print-host-fuzzers
+print-host-fuzzers:
+	$(call cmd_pretty_print_list, \
+		$(sort $(fuzz-test-targets) $(run-fuzz-test-targets)))
 
 .PHONY: buildfuzztests
 buildfuzztests: $(fuzz-test-targets)
@@ -650,6 +675,19 @@ help:
 	@echo "  proj-<boardname>     - Build a single board (similar to 'all BOARD=boardname')"
 	@echo "  savesizes            - Save the filesizes of currently built boards for comparison"
 	@echo "  newsizes             - Compare previously saved filesizes against new sizes"
+	@echo ""
+	@echo "  tests [BOARD=]       - Build all unit tests for a specific board"
+	@echo "  hosttests            - Build all host unit tests"
+	@echo "  runhosttests         - Build and run all host unit tests"
+	@echo "  buildfuzztests       - Build all host fuzzers"
+	@echo "  runfuzztests         - Build and run all host fuzzers for one round"
+	@echo ""
+	@echo "  print-tests          - Prints all device specific test targets"
+	@echo "  print-host-tests     - Prints all host test targets"
+	@echo "  print-host-fuzzers   - Prints all host fuzz targets"
+	@echo "  print-boards         - Prints all boards"
+	@echo "  print-chip-variant [BOARD=] - Print chip variant used for the target board"
+	@echo "  print-configs [BOARD=]      - Print CONFIG_* options for the target board"
 	@echo "Common Variables:"
 	@echo "  V=1                  - Show make output"
 	@echo "  BOARD=               - Set the board name to build (Default is $(BOARD))"

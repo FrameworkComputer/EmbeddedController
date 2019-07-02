@@ -77,9 +77,21 @@ I2C/onewire LED controllers, and I2C temperature sensors.
 **util** - Host utilities and scripts for flashing the EC. Also includes
 “ectool” used to query and send commands to the EC from userspace.
 
-**test** - Unit tests for the EC. Use “make tests -j $jobs BOARD=$board” to run
-them against your build target. Set $jobs to the number of cores in your build
-machine. Please contribute new tests if writing new functionality.
+**test** - Unit tests for EC components. These can be run locally in
+           a mock "host" environment or compiled for a target board.
+           If building for a target board, the test must be flashed and
+           run manually on the device.
+           All unit tests and fuzzers are build/run using the local
+           host environment during a `buildall`.
+           To run all unit tests locally, run `make runhosttests -j`.
+           To build a specific unit test for a specific board, run
+           `make test-<test_name> BOARD=<board_name>`.
+           Please contribute new tests if writing new functionality.
+           Please run `make help` for more detail.
+
+**fuzz** - Fuzzers for EC components. These fuzzers are expected to
+           run in the mock host environment. They follow the same rules
+           as unit tests, as thus use the same commands to build and run.
 
 ## Firmware Branches
 
