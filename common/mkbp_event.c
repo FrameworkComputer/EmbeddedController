@@ -136,7 +136,8 @@ static int mkbp_set_host_active(int active, uint32_t *timestamp)
 #endif
 }
 
-#ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
+#if defined(CONFIG_MKBP_EVENT_WAKEUP_MASK) || \
+	defined(CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK)
 /**
  * Check if the host is sleeping. Check our power state in addition to the
  * self-reported sleep state of host (CONFIG_POWER_TRACK_HOST_SLEEP_STATE).
@@ -148,12 +149,13 @@ static inline int host_is_sleeping(void)
 #ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 	enum host_sleep_event sleep_state = power_get_host_sleep_state();
 	is_sleeping |=
-		(sleep_state == HOST_SLEEP_EVENT_S3_SUSPEND ||
+		(sleep_state == HOST_SLEEP_EVENT_S0IX_SUSPEND ||
+		 sleep_state == HOST_SLEEP_EVENT_S3_SUSPEND ||
 		 sleep_state == HOST_SLEEP_EVENT_S3_WAKEABLE_SUSPEND);
 #endif
 	return is_sleeping;
 }
-#endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
+#endif /* CONFIG_MKBP_(HOST_EVENT_)?WAKEUP_MASK */
 
 /*
  * This is the deferred function that ensures that we attempt to set the MKBP
@@ -175,6 +177,13 @@ static void activate_mkbp_with_events(uint32_t events_to_add)
 			 !(host_get_events() &
 			   CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK);
 #endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
+
+#ifdef CONFIG_MKBP_EVENT_WAKEUP_MASK
+	/* Check to see if this MKBP event should wake the system. */
+	if (!skip_interrupt)
+		skip_interrupt = host_is_sleeping() &&
+			!(events_to_add & CONFIG_MKBP_EVENT_WAKEUP_MASK);
+#endif /* CONFIG_MKBP_EVENT_WAKEUP_MASK */
 
 	mutex_lock(&state.lock);
 	state.events |= events_to_add;

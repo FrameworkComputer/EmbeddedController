@@ -2682,9 +2682,26 @@
 
 /*
  * If using MKBP to send host events, with this option, we can define the host
- * events that should wake the system in suspend.
+ * events that should wake the system in suspend.  Some examples are:
+ *
+ *    EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN)
+ *    EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEY_PRESSED)
+ *
+ * The only things that should be in this mask are:
+ *    EC_HOST_EVENT_MASK(EC_HOST_EVENT_*)
  */
 #undef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
+
+/*
+ * Define which MKBP events should wakeup the system in suspend.  Some examples
+ * are:
+ *
+ *    EC_MKBP_EVENT_KEY_MATRIX
+ *    EC_MKBP_EVENT_SWITCH
+ *
+ * The only things that should be in this mask are EC_MKBP_EVENT_*.
+ */
+#undef CONFIG_MKBP_EVENT_WAKEUP_MASK
 
 /* Support memory protection unit (MPU) */
 #undef CONFIG_MPU
