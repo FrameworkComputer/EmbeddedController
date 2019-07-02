@@ -5,6 +5,19 @@
  * found in the LICENSE file.
  */
 
+/**
+ * @file gpio.wrap
+ * @brief Include the board specific *gpio.inc* file.
+ *
+ * This file is included in many different contexts.
+ * The macros defined outside of the file (before including)
+ * determine what parts of *gpio.inc* will be emitted.
+ *
+ * @see include/gpio_list.h
+ * @see common/gpio.c
+ * @see include/gpio_signal.h
+ */
+
 #ifndef GPIO_PIN
 #error "Your architecture must define GPIO_PIN and it did not."
 #endif
@@ -13,8 +26,9 @@
 #error "Your architecture must define GPIO_PIN_MASK and it did not."
 #endif
 
-/*
- * The GPIO macro is used to define a new GPIO pin name and function.
+/**
+ * @def GPIO
+ * @brief The GPIO macro is used to define a new GPIO pin name and function.
  *
  * The name is used to populate the gpio_signal enum by first
  * prepending GPIO_ to the name.  It is also used to construct the
@@ -27,8 +41,9 @@
 #define GPIO(name, pin, flags)
 #endif
 
-/*
- * The GPIO_INT macro is used to define a GPIOs that have an IRQ handler.
+/**
+ * @def GPIO_INT
+ * @brief The GPIO_INT macro is used to define a GPIOs that have an IRQ handler.
  *
  * The IRQ handler pointers are stored as elements in the gpio_irq_handlers
  * array.
@@ -37,8 +52,10 @@
 #define GPIO_INT(name, pin, flags, signal)
 #endif
 
-/*
- * The ALTERNATE macro is used associate a GPIO with an alternate function.
+/**
+ * @def ALTERNATE
+ * @brief The ALTERNATE macro is used associate a GPIO with an alternate
+ *        function.
  *
  * Alternate functions allow hardware peripherals access to GPIO pins.
  * Modules use gpio_config_module to enable and disable the alternate functions
@@ -54,8 +71,9 @@
 #define ALTERNATE(pinmask, function, module, flags)
 #endif
 
-/*
- * The UNIMPLEMENTED macro is used to define a GPIO that doesn't actually exist.
+/**
+ * @def UNIMPLEMENTED
+ * @brief The UNIMPLEMENTED macro is used to define a GPIO that doesn't actually exist.
  *
  * Some GPIO names are well known and used by generic code, ENTERING_RW and WP_L
  * are examples.  If a particular board doesn't have a GPIO assigned to such a
@@ -77,8 +95,8 @@
  * RO/RW pin macro.
  *
  * Some boards may have very different pin configurations between RO and RW, and
- * also may vary from revisions to revisions. The RO/RW pin macros can ease the
- * maintance effort.
+ * also may vary from revision to revision. The RO/RW pin macros can ease the
+ * maintenance effort.
  */
 
 #ifdef SECTION_IS_RO
