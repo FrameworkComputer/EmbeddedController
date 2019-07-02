@@ -68,7 +68,8 @@ struct mkbp_state {
 static struct mkbp_state state;
 uint32_t mkbp_last_event_time;
 
-#ifdef CONFIG_MKBP_USE_GPIO
+#if defined(CONFIG_MKBP_USE_GPIO) || \
+	defined(CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT)
 static int mkbp_set_host_active_via_gpio(int active, uint32_t *timestamp)
 {
 	/*
@@ -87,9 +88,20 @@ static int mkbp_set_host_active_via_gpio(int active, uint32_t *timestamp)
 	if (timestamp)
 		interrupt_enable();
 
+#ifdef CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT
+	/*
+	 * In case EC_INT_L is not a wake pin, make sure that we also attempt to
+	 * wake the AP via a host event.  If MKBP events are masked thru the
+	 * host event interface in S0, no ill effects should occur as the
+	 * notification will only be received via the GPIO.
+	 */
+	if (active)
+		host_set_single_event(EC_HOST_EVENT_MKBP);
+#endif /* CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT */
+
 	return EC_SUCCESS;
 }
-#endif
+#endif /* CONFIG_MKBP_USE_GPIO(_AND_HOST_EVENT)? */
 
 #ifdef CONFIG_MKBP_USE_HOST_EVENT
 static int mkbp_set_host_active_via_event(int active, uint32_t *timestamp)
@@ -129,7 +141,8 @@ static int mkbp_set_host_active(int active, uint32_t *timestamp)
 	return mkbp_set_host_active_via_custom(active, timestamp);
 #elif defined(CONFIG_MKBP_USE_HOST_EVENT)
 	return mkbp_set_host_active_via_event(active, timestamp);
-#elif defined(CONFIG_MKBP_USE_GPIO)
+#elif defined(CONFIG_MKBP_USE_GPIO) ||\
+	defined(CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT)
 	return mkbp_set_host_active_via_gpio(active, timestamp);
 #elif defined(CONFIG_MKBP_USE_HECI)
 	return mkbp_set_host_active_via_heci(active, timestamp);
