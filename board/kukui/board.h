@@ -52,6 +52,7 @@
 
 /* Required for FAFT */
 #define CONFIG_CMD_BUTTON
+#define CONFIG_CMD_CHARGEN
 
 /* By default, set hcdebug to off */
 #undef CONFIG_HOSTCMD_DEBUG_MODE
