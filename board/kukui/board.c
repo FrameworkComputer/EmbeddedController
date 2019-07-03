@@ -437,21 +437,20 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 	},
 };
 
-#ifdef BOARD_KRANE
 /* Matrix to rotate accelerometer into standard reference frame */
-static const mat33_fp_t lid_standard_ref_rev3 = {
-	{0, FLOAT_TO_FP(-1), 0},
-	{FLOAT_TO_FP(1), 0, 0},
-	{0, 0, FLOAT_TO_FP(1)}
-};
-#endif /* BOARD_KRANE */
-
-/* Matrix to rotate accelerometer into standard reference frame */
+#ifdef BOARD_KUKUI
 static const mat33_fp_t lid_standard_ref = {
 	{FLOAT_TO_FP(1), 0, 0},
 	{0, FLOAT_TO_FP(1), 0},
 	{0, 0, FLOAT_TO_FP(1)}
 };
+#else
+static const mat33_fp_t lid_standard_ref = {
+	{0, FLOAT_TO_FP(-1), 0},
+	{FLOAT_TO_FP(1), 0, 0},
+	{0, 0, FLOAT_TO_FP(1)}
+};
+#endif /* BOARD_KUKUI */
 
 #ifdef CONFIG_MAG_BMI160_BMM150
 /* Matrix to rotate accelrator into standard reference frame */
@@ -576,23 +575,7 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 const struct motion_sensor_t *motion_als_sensors[] = {
 	&motion_sensors[CLEAR_ALS],
 };
-
 #endif /* SECTION_IS_RW */
-
-#ifdef BOARD_KRANE
-static void fix_krane(void)
-{
-	if (board_get_version() != 3)
-		return;
-
-#ifdef SECTION_IS_RW
-	/* Fix reference point */
-	motion_sensors[LID_ACCEL].rot_standard_ref = &lid_standard_ref_rev3;
-	motion_sensors[LID_GYRO].rot_standard_ref = &lid_standard_ref_rev3;
-#endif /* SECTION_IS_RW */
-}
-DECLARE_HOOK(HOOK_INIT, fix_krane, HOOK_PRIO_INIT_ADC + 1);
-#endif /* BOARD_KRANE */
 
 int board_allow_i2c_passthru(int port)
 {
