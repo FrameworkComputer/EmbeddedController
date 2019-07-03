@@ -127,6 +127,9 @@
 #define CONFIG_CMD_PD_CONTROL
 #define CONFIG_CMD_PPC_DUMP
 
+/* Include CLI command needed to support CCD testing. */
+#define CONFIG_CMD_CHARGEN
+
 #define USB_PD_PORT_TCPC_0	0
 #define USB_PD_PORT_TCPC_1	1
 
