@@ -70,7 +70,8 @@ CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD=$(EMPTY) \
             $(if $(TEST_ASAN),-fsanitize=address) \
             $(if $(TEST_MSAN),-fsanitize=memory) \
             $(if $(TEST_UBSAN),$(UBSAN_FLAGS)) \
-            $(if $(TEST_FUZZ),-fsanitize=fuzzer-no-link -DTEST_FUZZ=$(EMPTY))
+            $(if $(TEST_FUZZ),-fsanitize=fuzzer-no-link \
+                       -fno-experimental-new-pass-manager -DTEST_FUZZ=$(EMPTY))
 CFLAGS_COVERAGE=$(if $(TEST_COVERAGE),-fprofile-arcs -ftest-coverage \
 				      -DTEST_COVERAGE=$(EMPTY),)
 CFLAGS_DEFINE=-DOUTDIR=$(out)/$(BLD) -DCHIP=$(CHIP) -DBOARD_TASKFILE=$(_tsk_lst_file) \
