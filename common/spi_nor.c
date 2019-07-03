@@ -17,10 +17,10 @@
 #include "watchdog.h"
 
 #ifdef CONFIG_SPI_NOR_DEBUG
-#define DEBUG_CPRINTS_DEVICE(spi_nor_device, string, args...) \
-	cprints(CC_SPI, "SPI NOR %s: " string, spi_nor_device->name, ## args)
+#define CPRINTS(dev, string, args...) \
+	cprints(CC_SPI, "SPI NOR %s: " string, (dev)->name, ## args)
 #else
-#define DEBUG_CPRINTS_DEVICE(spi_nor_device, string, args...)
+#define CPRINTS(dev, string, args...)
 #endif
 
 /* Time to sleep while serial NOR flash write is in progress. */
@@ -86,6 +86,62 @@ static int spi_nor_write_enable(const struct spi_nor_device_t *spi_nor_device)
 	if ((status_register_value & SPI_NOR_STATUS_REGISTER_WEL) == 0)
 		return EC_ERROR_UNKNOWN;  /* WEL not set but should be. */
 
+	return rv;
+}
+
+/**
+ * Read from the extended address register.
+ * @param  spi_nor_device The Serial NOR Flash device to use.
+ * @param  value          The value to read to.
+ * @return                ec_error_list (non-zero on error and timeout).
+ */
+static int spi_nor_read_ear(const struct spi_nor_device_t *spi_nor_device,
+			    uint8_t *value)
+{
+	uint8_t command = SPI_NOR_OPCODE_RDEAR;
+
+	return spi_transaction(&spi_devices[spi_nor_device->spi_master],
+			&command, sizeof(command), value, 1);
+}
+
+int spi_nor_write_ear(const struct spi_nor_device_t *spi_nor_device,
+		      const uint8_t value)
+{
+	uint8_t buf[2];
+	int rv;
+	uint8_t ear;
+
+	mutex_lock(&driver_mutex);
+
+	rv = spi_nor_write_enable(spi_nor_device);
+	if (rv) {
+		CPRINTS(spi_nor_device, "Failed to write enable");
+		goto err_free;
+	}
+
+	buf[0] = SPI_NOR_OPCODE_WREAR;
+	buf[1] = value;
+
+	rv = spi_transaction(&spi_devices[spi_nor_device->spi_master],
+			     buf, sizeof(buf), NULL, 0);
+	if (rv) {
+		CPRINTS(spi_nor_device, "Failed to write EAR, rv=%d", rv);
+		goto err_free;
+	}
+
+	rv = spi_nor_read_ear(spi_nor_device, &ear);
+	if (rv)
+		goto err_free;
+
+	if (ear != value) {
+		CPRINTS(spi_nor_device,
+			"Write EAR error: write=%d, read=%d", value, ear);
+		rv = EC_ERROR_UNKNOWN;  /* WEL not set but should be. */
+		goto err_free;
+	}
+
+err_free:
+	mutex_unlock(&driver_mutex);
 	return rv;
 }
 
@@ -232,7 +288,7 @@ static int locate_sfdp_basic_parameter_table(
 	 * compatible, older basic parameter tables which are compatible with
 	 * this driver in the parameter headers. */
 	if (!SFDP_HEADER_DW1_SFDP_SIGNATURE_VALID(dw1)) {
-		DEBUG_CPRINTS_DEVICE(spi_nor_device, "SFDP signature invalid");
+		CPRINTS(spi_nor_device, "SFDP signature invalid");
 		return EC_ERROR_UNKNOWN;
 	}
 
@@ -240,15 +296,14 @@ static int locate_sfdp_basic_parameter_table(
 		SFDP_GET_BITFIELD(SFDP_HEADER_DW2_SFDP_MAJOR, dw2);
 	*out_sfdp_minor_rev =
 		SFDP_GET_BITFIELD(SFDP_HEADER_DW2_SFDP_MINOR, dw2);
-	DEBUG_CPRINTS_DEVICE(spi_nor_device, "SFDP v%d.%d discovered",
-			     *out_sfdp_major_rev, *out_sfdp_minor_rev);
+	CPRINTS(spi_nor_device, "SFDP v%d.%d discovered",
+		*out_sfdp_major_rev, *out_sfdp_minor_rev);
 
 	/* NPH is 0-based, so add 1. */
 	number_parameter_headers =
 		SFDP_GET_BITFIELD(SFDP_HEADER_DW2_NPH, dw2) + 1;
-	DEBUG_CPRINTS_DEVICE(spi_nor_device,
-			     "There are %d SFDP parameter headers",
-			     number_parameter_headers);
+	CPRINTS(spi_nor_device, "There are %d SFDP parameter headers",
+		number_parameter_headers);
 
 	/* Search for the newest, compatible basic flash parameter table. */
 	*out_table_major_rev = 0;
@@ -302,15 +357,13 @@ static int locate_sfdp_basic_parameter_table(
 	}
 
 	if (!table_found) {
-		DEBUG_CPRINTS_DEVICE(
-			spi_nor_device,
+		CPRINTS(spi_nor_device,
 			"No compatible Basic Flash Parameter Table found");
 		return EC_ERROR_UNKNOWN;
 	}
 
-	DEBUG_CPRINTS_DEVICE(spi_nor_device,
-			     "Using Basic Flash Parameter Table v%d.%d",
-			     *out_sfdp_major_rev, *out_sfdp_minor_rev);
+	CPRINTS(spi_nor_device, "Using Basic Flash Parameter Table v%d.%d",
+		*out_sfdp_major_rev, *out_sfdp_minor_rev);
 
 	return EC_SUCCESS;
 }
@@ -489,8 +542,7 @@ int spi_nor_init(void)
 				mutex_lock(&driver_mutex);
 				spi_nor_device->capacity = capacity;
 				spi_nor_device->page_size = page_size;
-				DEBUG_CPRINTS_DEVICE(
-					spi_nor_device,
+				CPRINTS(spi_nor_device,
 					"Updated to SFDP params: %dKiB w/ %dB pages",
 					spi_nor_device->capacity >> 10,
 					spi_nor_device->page_size);
@@ -549,9 +601,8 @@ int spi_nor_set_4b_mode(struct spi_nor_device_t *spi_nor_device,
 			enter_4b_addressing_mode;
 	}
 
-	DEBUG_CPRINTS_DEVICE(spi_nor_device,
-			     "Entered %s Addressing Mode",
-			     enter_4b_addressing_mode ? "4-Byte" : "3-Byte");
+	CPRINTS(spi_nor_device, "Entered %s Addressing Mode",
+		enter_4b_addressing_mode ? "4-Byte" : "3-Byte");
 
 	/* Release the driver mutex. */
 	mutex_unlock(&driver_mutex);
@@ -681,10 +732,10 @@ int spi_nor_erase(const struct spi_nor_device_t *spi_nor_device,
 		}
 		if (!read_left) {
 			/* Sector/block already erased. */
-			DEBUG_CPRINTS_DEVICE(spi_nor_device,
-					     "Skipping erase [%x:%x] "
-					     "(already erased)",
-					     offset, erase_size);
+			CPRINTS(spi_nor_device,
+				"Skipping erase [%x:%x] "
+				"(already erased)",
+				offset, erase_size);
 			offset += erase_size;
 			size -= erase_size;
 			continue;

@@ -61,16 +61,18 @@ extern const unsigned int spi_nor_devices_used;
 
 /* Industry standard Serial NOR Flash opcodes. All other opcodes are part
  * specific and require SFDP discovery. */
-#define SPI_NOR_OPCODE_WRITE_STATUS 0x01   /* Write Status Register (1 Byte) */
-#define SPI_NOR_OPCODE_PAGE_PROGRAM 0x02   /* Page program */
-#define SPI_NOR_OPCODE_SLOW_READ 0x03      /* Read data (low frequency) */
+#define SPI_NOR_OPCODE_WRITE_STATUS  0x01 /* Write Status Register (1 Byte) */
+#define SPI_NOR_OPCODE_PAGE_PROGRAM  0x02 /* Page program */
+#define SPI_NOR_OPCODE_SLOW_READ     0x03 /* Read data (low frequency) */
 #define SPI_NOR_OPCODE_WRITE_DISABLE 0x04
-#define SPI_NOR_OPCODE_READ_STATUS 0x05    /* Read Status Register */
-#define SPI_NOR_OPCODE_WRITE_ENABLE 0x06
-#define SPI_NOR_OPCODE_FAST_READ 0x0b      /* Read data (high frequency) */
-#define SPI_NOR_OPCODE_SFDP 0x5a           /* Read JEDEC SFDP */
-#define SPI_NOR_OPCODE_JEDEC_ID 0x9f       /* Read JEDEC ID */
-#define SPI_NOR_OPCODE_CHIP_ERASE 0xc7     /* Erase whole flash chip */
+#define SPI_NOR_OPCODE_READ_STATUS   0x05 /* Read Status Register */
+#define SPI_NOR_OPCODE_WRITE_ENABLE  0x06
+#define SPI_NOR_OPCODE_FAST_READ     0x0b /* Read data (high frequency) */
+#define SPI_NOR_OPCODE_SFDP          0x5a /* Read JEDEC SFDP */
+#define SPI_NOR_OPCODE_JEDEC_ID      0x9f /* Read JEDEC ID */
+#define SPI_NOR_OPCODE_WREAR         0xc5 /* Write extended address register */
+#define SPI_NOR_OPCODE_CHIP_ERASE    0xc7 /* Erase whole flash chip */
+#define SPI_NOR_OPCODE_RDEAR         0xc8 /* Read extended address register */
 
 /* Flags for SPI_NOR_OPCODE_READ_STATUS */
 #define SPI_NOR_STATUS_REGISTER_WIP BIT(0)  /* Write in progres */
@@ -78,13 +80,13 @@ extern const unsigned int spi_nor_devices_used;
 
 /* If needed in the future this driver can be extended to discover SFDP
  * advertised erase sizes and opcodes for SFDP v1.0+. */
-#define SPI_NOR_DRIVER_SPECIFIED_OPCODE_4KIB_ERASE 0x20
+#define SPI_NOR_DRIVER_SPECIFIED_OPCODE_4KIB_ERASE  0x20
 #define SPI_NOR_DRIVER_SPECIFIED_OPCODE_64KIB_ERASE 0xd8
 
 /* If needed in the future this driver can be extended to discover 4B entry and
  * exit methods for SFDP v1.5+. */
 #define SPI_NOR_DRIVER_SPECIFIED_OPCODE_ENTER_4B 0xb7
-#define SPI_NOR_DRIVER_SPECIFIED_OPCODE_EXIT_4B 0xe9
+#define SPI_NOR_DRIVER_SPECIFIED_OPCODE_EXIT_4B  0xe9
 
 /* JEDEC JEP106AR specifies 9 Manufacturer ID banks, read 12 to be sure. */
 #define SPI_NOR_JEDEC_ID_BANKS 12
@@ -167,5 +169,15 @@ int spi_nor_erase(const struct spi_nor_device_t *spi_nor_device,
  */
 int spi_nor_write(const struct spi_nor_device_t *spi_nor_device,
 		  uint32_t offset, size_t size, const uint8_t *data);
+
+/**
+ * Write to the extended address register.
+ * @param  spi_nor_device The Serial NOR Flash device to use.
+ * @param  value          The value to write.
+ * @return                ec_error_list (non-zero on error and timeout).
+ */
+int spi_nor_write_ear(const struct spi_nor_device_t *spi_nor_device,
+		      const uint8_t value);
+
 
 #endif  /* __CROS_EC_SPI_NOR_H */
