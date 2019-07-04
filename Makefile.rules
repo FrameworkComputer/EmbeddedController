@@ -68,6 +68,7 @@ cmd_elf_to_signed ?= $(SIGNER) --key=util/signer/$(3) \
 	--b --input=$< --format=bin --output=$@.signed $(SIGNER_EXTRAS) \
 	&& sudo chown $(shell whoami) $@.signed && mv $@.signed $@
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
+cmd_elf_to_bin = $(OBJCOPY) -O binary $< $@
 cmd_elf_to_hex = $(OBJCOPY) -O ihex $< $@
 cmd_bin_to_hex = $(OBJCOPY) -I binary -O ihex \
 	--change-addresses $(_program_memory_base) $^ $@
@@ -585,22 +586,6 @@ $(out)/$(npcx-monitor-hdr)_rw.o:$(npcx-monitor-hdr).c
 $(npcx-monitor-hdr-rw-bin):$(out)/$(npcx-monitor-hdr)_rw.o
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
 	-@ $(OBJCOPY) -O binary $< $@
-
-# rules for building ISH aon task fw
-$(ish-aontask-fw-bin):$(out)/$(ish-aontask-fw).ld
-	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
-	-@ $(CC) $(CFLAGS) -MMD -MF $(out)/$(ish-aontask-fw).d -c $(ish-aontask-fw).c \
-		-o $(out)/$(ish-aontask-fw).o
-	-@ $(CC) $(CFLAGS) -MMD -MF $(out)/$(ish-aontask-dma).d -c $(ish-aontask-dma).c \
-		-o $(out)/$(ish-aontask-dma).o
-	-@ $(CC) $(out)/$(ish-aontask-fw).o $(out)/$(ish-aontask-dma).o $(LDFLAGS) \
-		-o $(out)/$(ish-aontask-fw).elf -Wl,-T,$(out)/$(ish-aontask-fw).ld \
-		-Wl,-Map,$(out)/$(ish-aontask-fw).map
-	-@ $(OBJCOPY) -O binary $(out)/$(ish-aontask-fw).elf $@
-
-$(out)/$(ish-aontask-fw).ld:$(ish-aontask-fw).ld.in
-	-@ mkdir -p $(@D)
-	@ $(CC) $(CFLAGS) -x assembler-with-cpp -E -P $< -o $@
 
 .PHONY: xrefs
 xrefs: $(call targ_if_prog,etags,$(out)/TAGS) \

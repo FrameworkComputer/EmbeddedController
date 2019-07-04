@@ -30,26 +30,50 @@ chip-$(CONFIG_LOW_POWER_IDLE)+=power_mgt.o
 # There is no framework for on-board tests in ISH. Do not specify any.
 test-list-y=
 
-ifeq ($(CONFIG_ISH_PM_AONTASK),y)
+# Build ish aon task fw
+ish-aon-name=ish_aontask
+ish-aon-$(CONFIG_ISH_PM_AONTASK)=aontaskfw/ish_aontask.o dma.o
 
-ish-aontask-fw=chip/ish/aontaskfw/ish_aontask
-ish-aontask-dma=chip/ish/dma
-ish-aontask-fw-bin=$(out)/$(ish-aontask-fw).bin
-PROJECT_EXTRA+=$(ish-aontask-fw-bin)
+# Rules for building ish aon task fw
+ish-aon-out=$(out)/aontaskfw
+ish-aon-bin-$(CONFIG_ISH_PM_AONTASK)=$(ish-aon-out)/$(ish-aon-name).bin
+ish-aon-elf-$(CONFIG_ISH_PM_AONTASK)=$(ish-aon-out)/$(ish-aon-name).elf
+ish-aon-lds-$(CONFIG_ISH_PM_AONTASK)=$(ish-aon-out)/$(ish-aon-name).lds
 
-_aon_size_str=$(shell stat -L -c %s $(ish-aontask-fw-bin))
+ish-aon-objs=$(call objs_from_dir,$(ish-aon-out)/chip/$(CHIP),ish-aon)
+ish-aon-deps+=$(addsuffix .d, $(ish-aon-objs)) $(ish-aon-lds-y).d
+
+cmd_ish_aon_elf = $(CC) $(ish-aon-objs) $(LDFLAGS) \
+	-o $@ -Wl,-T,$< -Wl,-Map,$(patsubst %.elf,%.map,$@)
+
+PROJECT_EXTRA+=$(ish-aon-bin-y)
+deps-$(CONFIG_ISH_PM_AONTASK)+=$(ish-aon-deps)
+
+$(out)/$(PROJECT).bin: $(ish-aon-bin-y) $(out)/RW/$(PROJECT).RW.flat
+
+$(ish-aon-bin-y): $(ish-aon-elf-y)
+	$(call quiet,elf_to_bin,EXTBIN )
+
+$(ish-aon-elf-y): $(ish-aon-lds-y) $(ish-aon-objs)
+	$(call quiet,ish_aon_elf,LD     )
+
+$(ish-aon-lds-y): chip/$(CHIP)/aontaskfw/ish_aontask.lds.S
+	-@ mkdir -p $(@D)
+	$(call quiet,lds,LDS    )
+
+$(ish-aon-out)/%.o: %.c
+	-@ mkdir -p $(@D)
+	$(call quiet,c_to_o,CC     )
+
+# Location of the scripts used to pack image
+SCRIPTDIR:=./chip/${CHIP}/util
+
+# Calculate aon binary file size and kernel binary file size
+_aon_size_str=$(shell stat -L -c %s $(ish-aon-bin-y))
 _aon_size=$(shell echo "$$(($(_aon_size_str)))")
-
-$(out)/$(PROJECT).bin: $(ish-aontask-fw-bin) $(out)/RW/$(PROJECT).RW.flat
-
-endif
 
 _kernel_size_str=$(shell stat -L -c %s $(out)/RW/$(PROJECT).RW.flat)
 _kernel_size=$(shell echo "$$(($(_kernel_size_str)))")
-
-# location of the scripts used to pack image
-SCRIPTDIR:=./chip/${CHIP}/util
-
 
 # Commands to convert ec.RW.flat to $@.tmp - This will add the manifest header
 # needed to load the FW onto the ISH HW.
@@ -58,7 +82,7 @@ ifeq ($(CONFIG_ISH_PM_AONTASK),y)
 cmd_obj_to_bin = ${SCRIPTDIR}/pack_ec.py -o $@.tmp \
 		 -k $(out)/RW/$(PROJECT).RW.flat \
 		 --kernel-size $(_kernel_size) \
-		 -a $(ish-aontask-fw-bin)  \
+		 -a $(ish-aon-bin-y)  \
 		 --aon-size $(_aon_size);
 else
 cmd_obj_to_bin = ${SCRIPTDIR}/pack_ec.py -o $@.tmp \
