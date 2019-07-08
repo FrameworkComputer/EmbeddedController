@@ -50,9 +50,6 @@ static uint16_t default_lcnt_scl_1000[] = {
 static uint16_t default_hcnt_scl_hs[] = { 160, 300, 160, 166, 175, 150, 162 };
 static uint16_t default_lcnt_scl_hs[] = { 320, 340, 320, 325, 325, 300, 297 };
 
-static uint8_t speed_val_arr[] = {
-	STD_SPEED_VAL, FAST_SPEED_VAL, FAST_PLUS_SPEED_VAL, HIGH_SPEED_VAL
-};
 
 static uint8_t bus_freq[ISH_I2C_PORT_COUNT] = {
 	I2C_FREQ_120, I2C_FREQ_120, I2C_FREQ_120
@@ -62,19 +59,19 @@ static struct i2c_context i2c_ctxs[ISH_I2C_PORT_COUNT] = {
 	{
 		.bus = 0,
 		.base = (uint32_t *) ISH_I2C0_BASE,
-		.speed = I2C_SPEED_FAST,
+		.speed = I2C_SPEED_400KHZ,
 		.int_pin = ISH_I2C0_IRQ,
 	},
 	{
 		.bus = 1,
 		.base = (uint32_t *) ISH_I2C1_BASE,
-		.speed = I2C_SPEED_FAST,
+		.speed = I2C_SPEED_400KHZ,
 		.int_pin = ISH_I2C1_IRQ,
 	},
 	{
 		.bus = 2,
 		.base = (uint32_t *) ISH_I2C2_BASE,
-		.speed = I2C_SPEED_FAST,
+		.speed = I2C_SPEED_400KHZ,
 		.int_pin = ISH_I2C2_IRQ,
 	},
 };
@@ -174,7 +171,7 @@ static void i2c_init_transaction(struct i2c_context *ctx,
 	/* set Clock SCL Count */
 	switch (ctx->speed) {
 
-	case I2C_SPEED_STD:
+	case I2C_SPEED_100KHZ:
 		i2c_mmio_write(base, IC_SS_SCL_HCNT,
 				NS_2_COUNTERS(bus_info->std_speed.hcnt,
 					     clk_in_val));
@@ -186,7 +183,7 @@ static void i2c_init_transaction(struct i2c_context *ctx,
 					     clk_in_val));
 		break;
 
-	case I2C_SPEED_FAST:
+	case I2C_SPEED_400KHZ:
 		i2c_mmio_write(base, IC_FS_SCL_HCNT,
 				NS_2_COUNTERS(bus_info->fast_speed.hcnt,
 					     clk_in_val));
@@ -198,7 +195,7 @@ static void i2c_init_transaction(struct i2c_context *ctx,
 					     clk_in_val));
 		break;
 
-	case I2C_SPEED_FAST_PLUS:
+	case I2C_SPEED_1MHZ:
 		i2c_mmio_write(base, IC_FS_SCL_HCNT,
 				NS_2_COUNTERS(bus_info->fast_plus_speed.hcnt,
 					     clk_in_val));
@@ -210,7 +207,7 @@ static void i2c_init_transaction(struct i2c_context *ctx,
 					     clk_in_val));
 		break;
 
-	case I2C_SPEED_HIGH:
+	case I2C_SPEED_3M4HZ:
 		i2c_mmio_write(base, IC_HS_SCL_HCNT,
 				NS_2_COUNTERS(bus_info->high_speed.hcnt,
 					     clk_in_val));
@@ -469,18 +466,25 @@ static void  i2c_config_speed(struct i2c_context *ctx, int kbps)
 {
 
 	if (kbps > 1000)
-		ctx->speed = I2C_SPEED_HIGH;
+		ctx->speed = I2C_SPEED_3M4HZ;
 	else if (kbps > 400)
-		ctx->speed = I2C_SPEED_FAST_PLUS;
+		ctx->speed = I2C_SPEED_1MHZ;
 	else if (kbps > 100)
-		ctx->speed = I2C_SPEED_FAST;
+		ctx->speed = I2C_SPEED_400KHZ;
 	else
-		ctx->speed = I2C_SPEED_STD;
+		ctx->speed = I2C_SPEED_100KHZ;
 
 }
 
 static void i2c_init_hardware(struct i2c_context *ctx)
 {
+	static const uint8_t speed_val_arr[] = {
+		[I2C_SPEED_100KHZ] = STD_SPEED_VAL,
+		[I2C_SPEED_400KHZ] = FAST_SPEED_VAL,
+		[I2C_SPEED_1MHZ]   = FAST_SPEED_VAL,
+		[I2C_SPEED_3M4HZ]  = HIGH_SPEED_VAL,
+	};
+
 	uint32_t *base = ctx->base;
 
 	/* disable interrupts */
