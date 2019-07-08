@@ -674,7 +674,7 @@ static void reset_prep_isr(void)
 	IOAPIC_EOI_REG = ISH_RESET_PREP_VEC;
 	LAPIC_EOI_REG = 0x0;
 
-	ish_mia_reset();
+	system_reset(0);
 	__builtin_unreachable();
 }
 
