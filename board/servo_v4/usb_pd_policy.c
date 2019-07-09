@@ -60,6 +60,28 @@
 				CC_ALLOW_SRC | CC_ENABLE_DRP, \
 				CC_DISABLE_DTS)
 
+/* Macros to apply Rd/Rp to CC lines */
+#define DUT_ACTIVE_CC_SET(r, flags) \
+	gpio_set_flags(cc_config & CC_POLARITY ? \
+				CONCAT2(GPIO_USB_DUT_CC2_, r) : \
+				CONCAT2(GPIO_USB_DUT_CC1_, r), \
+		       flags)
+#define DUT_INACTIVE_CC_SET(r, flags) \
+	gpio_set_flags(cc_config & CC_POLARITY ? \
+				CONCAT2(GPIO_USB_DUT_CC1_, r) : \
+				CONCAT2(GPIO_USB_DUT_CC2_, r), \
+		       flags)
+#define DUT_BOTH_CC_SET(r, flags) \
+	do { \
+		gpio_set_flags(CONCAT2(GPIO_USB_DUT_CC1_, r), flags); \
+		gpio_set_flags(CONCAT2(GPIO_USB_DUT_CC2_, r), flags); \
+	} while (0)
+
+#define DUT_ACTIVE_CC_PU(r) DUT_ACTIVE_CC_SET(r, GPIO_OUT_HIGH)
+#define DUT_INACTIVE_CC_PU(r) DUT_INACTIVE_CC_SET(r, GPIO_OUT_HIGH)
+#define DUT_ACTIVE_CC_PD(r) DUT_ACTIVE_CC_SET(r, GPIO_OUT_LOW)
+#define DUT_BOTH_CC_PD(r) DUT_BOTH_CC_SET(r, GPIO_OUT_LOW)
+#define DUT_BOTH_CC_OPEN(r) DUT_BOTH_CC_SET(r, GPIO_INPUT)
 
 /*
  * Dynamic PDO that reflects capabilities present on the CHG port. Allow for
@@ -372,19 +394,17 @@ int pd_adc_read(int port, int cc)
 		/*
 		 * In servo v4 hardware logic, both CC lines are wired directly
 		 * to DUT. When servo v4 as a snk, DUT may source Vconn to CC2
-		 * and make the voltage high as vRd-3.0, which makes the PD
-		 * state mess up. As the PD state machine doesn't handle this
-		 * case. It assumes that CC2 is separated by a Type-C cable,
-		 * resulting a voltage lower than the max of vRa.
+		 * (CC1 if polarity flip) and make the voltage high as vRd-3.0,
+		 * which makes the PD state mess up. As the PD state machine
+		 * doesn't handle this case. It assumes that CC2 (CC1 if
+		 * polarity flip) is separated by a Type-C cable, resulting a
+		 * voltage lower than the max of vRa.
 		 *
 		 * It fakes the voltage within vRa.
-		 *
-		 * TODO(b/136014621): Servo v4 always applies Rd/Rp to CC1 and
-		 * leaves CC2 open. Need change when it supports switching CC
-		 * polarity.
 		 */
 		if ((cc_config & CC_DISABLE_DTS) &&
-		    cc_pull_stored == TYPEC_CC_RD && port == DUT && cc == 1)
+		    cc_pull_stored == TYPEC_CC_RD && port == DUT &&
+		    cc == (cc_config & CC_POLARITY ? 0 : 1))
 			mv = 0;
 		else
 			mv = adc_read_channel(cc ? ADC_DUT_CC2_PD :
@@ -410,17 +430,18 @@ static int board_set_rp(int rp)
 	if (cc_config & CC_DISABLE_DTS) {
 		/*
 		 * DTS mode is disabled, so only present the requested Rp value
-		 * on CC1 and leave all Rp/Rd resistors on CC2 disconnected.
+		 * on CC1 (active) and leave all Rp/Rd resistors on CC2
+		 * (inactive) disconnected.
 		 */
 		switch (rp) {
 		case TYPEC_RP_USB:
-			gpio_set_flags(GPIO_USB_DUT_CC1_RPUSB, GPIO_OUT_HIGH);
+			DUT_ACTIVE_CC_PU(RPUSB);
 			break;
 		case TYPEC_RP_1A5:
-			gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_OUT_HIGH);
+			DUT_ACTIVE_CC_PU(RP1A5);
 			break;
 		case TYPEC_RP_3A0:
-			gpio_set_flags(GPIO_USB_DUT_CC1_RP3A0, GPIO_OUT_HIGH);
+			DUT_ACTIVE_CC_PU(RP3A0);
 			break;
 		case TYPEC_RP_RESERVED:
 			/*
@@ -447,16 +468,16 @@ static int board_set_rp(int rp)
 		 */
 		switch (rp) {
 		case TYPEC_RP_USB:
-			gpio_set_flags(GPIO_USB_DUT_CC1_RP3A0, GPIO_OUT_HIGH);
-			gpio_set_flags(GPIO_USB_DUT_CC2_RP1A5, GPIO_OUT_HIGH);
+			DUT_ACTIVE_CC_PU(RP3A0);
+			DUT_INACTIVE_CC_PU(RP1A5);
 			break;
 		case TYPEC_RP_1A5:
-			gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_OUT_HIGH);
-			gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_OUT_HIGH);
+			DUT_ACTIVE_CC_PU(RP1A5);
+			DUT_INACTIVE_CC_PU(RPUSB);
 			break;
 		case TYPEC_RP_3A0:
-			gpio_set_flags(GPIO_USB_DUT_CC1_RP3A0, GPIO_OUT_HIGH);
-			gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_OUT_HIGH);
+			DUT_ACTIVE_CC_PU(RP3A0);
+			DUT_INACTIVE_CC_PU(RPUSB);
 			break;
 		case TYPEC_RP_RESERVED:
 			/*
@@ -488,32 +509,28 @@ int pd_set_rp_rd(int port, int cc_pull, int rp_value)
 
 	/* By default disconnect all Rp/Rd resistors from both CC lines */
 	/* Set Rd for CC1/CC2 to High-Z. */
-	gpio_set_flags(GPIO_USB_DUT_CC1_RD, GPIO_INPUT);
-	gpio_set_flags(GPIO_USB_DUT_CC2_RD, GPIO_INPUT);
+	DUT_BOTH_CC_OPEN(RD);
 	/* Set Rp for CC1/CC2 to High-Z. */
-	gpio_set_flags(GPIO_USB_DUT_CC1_RP3A0, GPIO_INPUT);
-	gpio_set_flags(GPIO_USB_DUT_CC2_RP3A0, GPIO_INPUT);
-	gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_INPUT);
-	gpio_set_flags(GPIO_USB_DUT_CC2_RP1A5, GPIO_INPUT);
-	gpio_set_flags(GPIO_USB_DUT_CC1_RPUSB, GPIO_INPUT);
-	gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_INPUT);
-
+	DUT_BOTH_CC_OPEN(RP3A0);
+	DUT_BOTH_CC_OPEN(RP1A5);
+	DUT_BOTH_CC_OPEN(RPUSB);
 	/* Set TX Hi-Z */
-	gpio_set_flags(GPIO_USB_DUT_CC1_TX_DATA, GPIO_INPUT);
-	gpio_set_flags(GPIO_USB_DUT_CC2_TX_DATA, GPIO_INPUT);
+	DUT_BOTH_CC_OPEN(TX_DATA);
 
 	if (cc_pull == TYPEC_CC_RP) {
 		rv = board_set_rp(rp_value);
 	} else if (cc_pull == TYPEC_CC_RD) {
 		/*
-		 * The DUT port uses a captive cable. If can present Rd on both
+		 * The DUT port uses a captive cable. It can present Rd on both
 		 * CC1 and CC2. If DTS mode is enabled, then present Rd on both
 		 * CC lines. However, if DTS mode is disabled only present Rd on
-		 * CC1.
+		 * CC1 (active).
 		 */
-		gpio_set_flags(GPIO_USB_DUT_CC1_RD, GPIO_OUT_LOW);
-		if (!(cc_config & CC_DISABLE_DTS))
-			gpio_set_flags(GPIO_USB_DUT_CC2_RD, GPIO_OUT_LOW);
+		if (cc_config & CC_DISABLE_DTS)
+			DUT_ACTIVE_CC_PD(RD);
+		else
+			DUT_BOTH_CC_PD(RD);
+
 	}
 
 	rp_value_stored = rp_value;
@@ -761,6 +778,8 @@ static void print_cc_mode(void)
 		 gpio_get_level(GPIO_DUT_CHG_EN) ? "on" : "off");
 	ccprintf("chg allowed: %s\n", cc_config & CC_ALLOW_SRC ? "on" : "off");
 	ccprintf("drp enabled: %s\n", cc_config & CC_ENABLE_DRP ? "on" : "off");
+	ccprintf("cc polarity: %s\n", cc_config & CC_POLARITY ? "cc2" :
+								"cc1");
 }
 
 
@@ -857,6 +876,13 @@ static int command_cc(int argc, char **argv)
 			return EC_ERROR_PARAM2;
 	}
 
+	if (!strcasecmp(argv[2], "cc1"))
+		cc_config_new &= ~CC_POLARITY;
+	else if (!strcasecmp(argv[2], "cc2"))
+		cc_config_new |= CC_POLARITY;
+	else if (argc >= 3)
+		return EC_ERROR_PARAM3;
+
 	do_cc(cc_config_new);
 	print_cc_mode();
 
@@ -864,7 +890,7 @@ static int command_cc(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(cc, command_cc,
 			"[off|on|src|snk|pdsnk|drp|srcdts|snkdts|pdsnkdts|"
-			"drpdts]",
+			"drpdts] [cc1|cc2]",
 			"Servo_v4 DTS and CHG mode");
 
 static void fake_disconnect_end(void)
@@ -935,6 +961,10 @@ static int cmd_usbc_action(int argc, char *argv[])
 		/* Set the limit back to original */
 		user_limited_max_mv = 20000;
 		do_cc(CONFIG_PDSNK(cc_config));
+	} else if (!strcasecmp(argv[1], "pol0")) {
+		do_cc(cc_config & ~CC_POLARITY);
+	} else if (!strcasecmp(argv[1], "pol1")) {
+		do_cc(cc_config | CC_POLARITY);
 	} else if (!strcasecmp(argv[1], "drp")) {
 		/* Toggle the DRP state, compatible with Plankton. */
 		do_cc(cc_config ^ CC_ENABLE_DRP);
@@ -948,5 +978,5 @@ static int cmd_usbc_action(int argc, char *argv[])
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(usbc_action, cmd_usbc_action,
-			"5v|12v|20v|dev|drp",
+			"5v|12v|20v|dev|pol0|pol1|drp",
 			"Set Servo v4 type-C port state");
