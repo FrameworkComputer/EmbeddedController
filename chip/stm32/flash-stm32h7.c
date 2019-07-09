@@ -161,6 +161,9 @@ static void protect_blocks(uint32_t blocks)
  * If RDP is not defined, use the option bytes RSS1 bit.
  * TODO(crbug.com/888104): Validate that using RSS1 for this purpose is safe.
  */
+#ifndef CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE
+#error "crbug.com/888104: Using RSS1 for write protect PSTATE may not be safe."
+#endif
 static int is_wp_enabled(void)
 {
 #ifdef CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE
