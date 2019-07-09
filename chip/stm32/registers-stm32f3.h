@@ -1,9 +1,19 @@
 /* Copyright 2019 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Register map for STM32 processor
  */
+
+/**
+ * @file
+ * @brief Register map for the STM32F3 family of chips
+ *
+ * This header file should not be included directly.
+ * Please include registers.h instead.
+ */
+
+#ifndef __CROS_EC_REGISTERS_H
+#error "This header file should not be included directly."
+#endif
 
 /* --- IRQ numbers --- */
 #define STM32_IRQ_WWDG             0
@@ -585,7 +595,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define EXTI_RTC_ALR_EVENT BIT(17)
 
 /* --- ADC --- */
-#if defined(CHIP_VARIANT_STM32F373)
+#ifdef CHIP_VARIANT_STM32F373
 #define STM32_ADC_SR               REG32(STM32_ADC1_BASE + 0x00)
 #define STM32_ADC_CR1              REG32(STM32_ADC1_BASE + 0x04)
 #define STM32_ADC_CR2              REG32(STM32_ADC1_BASE + 0x08)
@@ -746,7 +756,7 @@ enum dma_channel {
 	STM32_DMAC_I2C1_RX = STM32_DMAC_CH7,
 	STM32_DMAC_PMSE_ROW = STM32_DMAC_CH6,
 	STM32_DMAC_PMSE_COL = STM32_DMAC_CH7,
-#if defined(CHIP_VARIANT_STM32F373)
+#ifdef CHIP_VARIANT_STM32F373
 	STM32_DMAC_SPI2_RX = STM32_DMAC_CH4,
 	STM32_DMAC_SPI2_TX = STM32_DMAC_CH5,
 	STM32_DMAC_SPI3_RX = STM32_DMAC_CH9,

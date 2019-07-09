@@ -1,9 +1,19 @@
 /* Copyright 2019 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Register map for STM32 processor
  */
+
+/**
+ * @file
+ * @brief Register map for the STM32F0 family of chips
+ *
+ * This header file should not be included directly.
+ * Please include registers.h instead.
+ */
+
+#ifndef __CROS_EC_REGISTERS_H
+#error "This header file should not be included directly."
+#endif
 
 /* --- IRQ numbers --- */
 #define STM32_IRQ_WWDG             0
@@ -730,7 +740,7 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 
 #define STM32_DMA_CCR_CHANNEL(channel)		 (0)
 
-#if defined(CHIP_VARIANT_STM32F09X)
+#ifdef CHIP_VARIANT_STM32F09X
 #define STM32_DMA2_REGS ((stm32_dma_regs_t *)STM32_DMA2_BASE)
 #define STM32_DMA_REGS(channel) \
 	((channel) < STM32_DMAC_PER_CTLR ? STM32_DMA1_REGS : STM32_DMA2_REGS)

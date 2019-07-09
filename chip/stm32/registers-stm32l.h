@@ -1,9 +1,19 @@
 /* Copyright 2019 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Register map for STM32 processor
  */
+
+/**
+ * @file
+ * @brief Register map for the STM32L family of chips
+ *
+ * This header file should not be included directly.
+ * Please include registers.h instead.
+ */
+
+#ifndef __CROS_EC_REGISTERS_H
+#error "This header file should not be included directly."
+#endif
 
 /* --- IRQ numbers --- */
 #define STM32_IRQ_WWDG             0

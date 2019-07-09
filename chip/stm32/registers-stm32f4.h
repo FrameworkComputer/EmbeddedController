@@ -1,9 +1,19 @@
 /* Copyright 2019 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Register map for STM32 processor
  */
+
+/**
+ * @file
+ * @brief Register map for the STM32F4 family of chips
+ *
+ * This header file should not be included directly.
+ * Please include registers.h instead.
+ */
+
+#ifndef __CROS_EC_REGISTERS_H
+#error "This header file should not be included directly."
+#endif
 
 /* --- IRQ numbers --- */
 #define STM32_IRQ_WWDG             0
@@ -231,7 +241,7 @@
 /* Register definitions */
 
 /* --- USART --- */
-#if defined(CHIP_VARIANT_STM32F76X)
+#ifdef CHIP_VARIANT_STM32F76X
 #define STM32_USART_CR1(base)      STM32_USART_REG(base, 0x00)
 #define STM32_USART_CR1_UE		BIT(0)
 #define STM32_USART_CR1_UESM            BIT(1)
@@ -271,8 +281,7 @@
 #define STM32_USART_SR_RXNE		BIT(5)
 #define STM32_USART_SR_TC		BIT(6)
 #define STM32_USART_SR_TXE		BIT(7)
-#else
-/* !CHIP_FAMILY_STM32F0 && !CHIP_FAMILY_STM32F3 && !CHIP_FAMILY_STM32L4 */
+#else /* !CHIP_VARIANT_STM32F76X */
 #define STM32_USART_SR(base)       STM32_USART_REG(base, 0x00)
 #define STM32_USART_SR_ORE		BIT(3)
 #define STM32_USART_SR_RXNE		BIT(5)
@@ -301,8 +310,7 @@
 /* register aliases */
 #define STM32_USART_TDR(base)      STM32_USART_DR(base)
 #define STM32_USART_RDR(base)      STM32_USART_DR(base)
-#endif
-/* !CHIP_FAMILY_STM32F0 && !CHIP_FAMILY_STM32F3 && !CHIP_FAMILY_STM32L4 */
+#endif /* !CHIP_VARIANT_STM32F76X*/
 
 /* --- GPIO --- */
 
@@ -590,11 +598,11 @@
 #define STM32_RCC_CSR_LSION		BIT(0)
 #define STM32_RCC_CSR_LSIRDY		BIT(1)
 
-#if defined(CHIP_FAMILY_STM32F4)
+#ifdef CHIP_FAMILY_STM32F4
 #define STM32_RCC_PB2_TIM9		BIT(16)
 #define STM32_RCC_PB2_TIM10		BIT(17)
 #define STM32_RCC_PB2_TIM11		BIT(18)
-#else /* !defined(CHIP_FAMILY_STM32F4) */
+#else /* !CHIP_FAMILY_STM32F4 */
 #define STM32_RCC_HB_DMA1		BIT(24)
 #define STM32_RCC_PB2_TIM9		BIT(2)
 #define STM32_RCC_PB2_TIM10		BIT(3)
