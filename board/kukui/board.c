@@ -21,7 +21,6 @@
 #include "driver/charger/rt946x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/mt6370.h"
-#include "driver/temp_sensor/tmp432.h"
 #include "ec_commands.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -35,13 +34,9 @@
 #include "pwm_chip.h"
 #include "registers.h"
 #include "spi.h"
-#include "switch.h"
 #include "system.h"
 #include "task.h"
 #include "tcpm.h"
-#include "temp_sensor.h"
-#include "temp_sensor_chip.h"
-#include "thermal.h"
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
@@ -93,30 +88,6 @@ const struct power_signal_info power_signal_list[] = {
 	{GPIO_PMIC_EC_RESETB,  POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
-#ifdef CONFIG_TEMP_SENSOR_TMP432
-/* Temperature sensors data; must be in same order as enum temp_sensor_id. */
-const struct temp_sensor_t temp_sensors[] = {
-	{"TMP432_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_LOCAL, 4},
-	{"TMP432_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_REMOTE1, 4},
-	{"TMP432_Sensor_2", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_REMOTE2, 4},
-};
-BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
-/*
- * Thermal limits for each temp sensor. All temps are in degrees K. Must be in
- * same order as enum temp_sensor_id. To always ignore any temp, use 0.
- */
-struct ec_thermal_config thermal_params[] = {
-	{{0, 0, 0}, 0, 0}, /* TMP432_Internal */
-	{{0, 0, 0}, 0, 0}, /* TMP432_Sensor_1 */
-	{{0, 0, 0}, 0, 0}, /* TMP432_Sensor_2 */
-};
-BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-#endif
 
 /******************************************************************************/
 /* SPI devices */
@@ -314,15 +285,14 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 static void board_rev_init(void)
 {
 	/* Board revision specific configs. */
-#ifdef BOARD_KUKUI
+
 	/*
 	 * It's a P1 pin BOOTBLOCK_MUX_OE, also a P2 pin BC12_DET_EN.
 	 * Keep this pin defaults to P1 setting since that eMMC enabled with
 	 * High-Z stat.
 	 */
-	if (board_get_version() == 1)
+	if (IS_ENABLED(BOARD_KUKUI) && board_get_version() == 1)
 		gpio_set_flags(GPIO_BC12_DET_EN, GPIO_ODR_HIGH);
-#endif
 
 	if (board_get_version() >= 2) {
 		/*

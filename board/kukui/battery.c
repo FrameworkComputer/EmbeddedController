@@ -262,9 +262,6 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE,
 	     board_charge_termination,
 	     HOOK_PRIO_DEFAULT);
 
-/* Customs options controllable by host command. */
-#define PARAM_FASTCHARGE (CS_PARAM_CUSTOM_PROFILE_MIN + 0)
-
 enum ec_status charger_profile_override_get_param(uint32_t param,
 						  uint32_t *value)
 {

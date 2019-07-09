@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include "atomic.h"
 #include "charger.h"
 #include "charge_manager.h"
 #include "common.h"
@@ -55,11 +54,10 @@ void pd_transition_voltage(int idx)
 
 static int board_get_polarity(int port)
 {
-#ifdef BOARD_KRANE
 	/* Krane's aux mux polarity is reversed. Workaround to flip it back. */
-	if (board_get_version() == 3)
+	if (IS_ENABLED(BOARD_KRANE) && board_get_version() == 3)
 		return !pd_get_polarity(port);
-#endif
+
 	return pd_get_polarity(port);
 }
 
