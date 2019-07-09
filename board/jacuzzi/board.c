@@ -18,6 +18,7 @@
 #include "driver/battery/max17055.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
+#include "driver/ioexpander_it8801.h"
 #include "driver/sync.h"
 #include "driver/tcpm/fusb302.h"
 #include "driver/usb_mux/it5205.h"
@@ -27,6 +28,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -78,6 +80,24 @@ const struct power_signal_info power_signal_list[] = {
 	{GPIO_PMIC_EC_RESETB,  POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+/* Keyboard scan setting */
+struct keyboard_scan_config keyscan_config = {
+	/*
+	 * TODO(b/133200075): Tune this once we have the final performance
+	 * out of the driver and the i2c bus.
+	 */
+	.output_settle_us = 35,
+	.debounce_down_us = 5 * MSEC,
+	.debounce_up_us = 40 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+	.actual_key_mask = {
+		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
+	},
+};
 
 /******************************************************************************/
 /* SPI devices */
