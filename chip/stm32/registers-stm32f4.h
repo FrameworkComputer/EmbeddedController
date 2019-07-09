@@ -231,9 +231,7 @@
 /* Register definitions */
 
 /* --- USART --- */
-#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
-	defined(CHIP_FAMILY_STM32L4) || defined(CHIP_VARIANT_STM32F76X) || \
-	defined(CHIP_FAMILY_STM32H7)
+#if defined(CHIP_VARIANT_STM32F76X)
 #define STM32_USART_CR1(base)      STM32_USART_REG(base, 0x00)
 #define STM32_USART_CR1_UE		BIT(0)
 #define STM32_USART_CR1_UESM            BIT(1)

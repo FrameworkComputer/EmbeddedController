@@ -680,7 +680,6 @@ enum dma_channel {
 	STM32_DMAC_I2C2_RX = STM32_DMAC_CH5,
 	STM32_DMAC_USART1_TX = STM32_DMAC_CH4,
 	STM32_DMAC_USART1_RX = STM32_DMAC_CH5,
-// TODO(hesling): The following sections will need some manual fixing.
 #if !defined(CHIP_VARIANT_STM32F03X) && !defined(CHIP_VARIANT_STM32F05X)
 	STM32_DMAC_USART2_RX = STM32_DMAC_CH6,
 	STM32_DMAC_USART2_TX = STM32_DMAC_CH7,
@@ -688,26 +687,11 @@ enum dma_channel {
 	STM32_DMAC_I2C1_RX = STM32_DMAC_CH7,
 	STM32_DMAC_PMSE_ROW = STM32_DMAC_CH6,
 	STM32_DMAC_PMSE_COL = STM32_DMAC_CH7,
-#ifdef CHIP_FAMILY_STM32L4
-	STM32_DMAC_SPI2_RX = STM32_DMAC_CH4,
-	STM32_DMAC_SPI2_TX = STM32_DMAC_CH5,
-	STM32_DMAC_SPI3_RX = STM32_DMAC_CH9,
-	STM32_DMAC_SPI3_TX = STM32_DMAC_CH10,
-	STM32_DMAC_COUNT = 14,
-#elif defined(CHIP_VARIANT_STM32F373)
-	STM32_DMAC_SPI2_RX = STM32_DMAC_CH4,
-	STM32_DMAC_SPI2_TX = STM32_DMAC_CH5,
-	STM32_DMAC_SPI3_RX = STM32_DMAC_CH9,
-	STM32_DMAC_SPI3_TX = STM32_DMAC_CH10,
-
-	STM32_DMAC_COUNT = 10,
-#else
 	STM32_DMAC_SPI2_RX = STM32_DMAC_CH6,
 	STM32_DMAC_SPI2_TX = STM32_DMAC_CH7,
 
 	/* Only DMA1 (with 7 channels) is present on STM32L151x */
 	STM32_DMAC_COUNT = 7,
-#endif
 
 #else /* stm32f03x and stm32f05x have only 5 channels */
 	STM32_DMAC_COUNT = 5,
@@ -746,9 +730,7 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 
 #define STM32_DMA_CCR_CHANNEL(channel)		 (0)
 
-// TODO(hesling): The following section will need some manual fixing.
-#if defined(CHIP_FAMILY_STM32F3) || defined(CHIP_FAMILY_STM32L4) || \
-	defined(CHIP_VARIANT_STM32F09X)
+#if defined(CHIP_VARIANT_STM32F09X)
 #define STM32_DMA2_REGS ((stm32_dma_regs_t *)STM32_DMA2_BASE)
 #define STM32_DMA_REGS(channel) \
 	((channel) < STM32_DMAC_PER_CTLR ? STM32_DMA1_REGS : STM32_DMA2_REGS)
