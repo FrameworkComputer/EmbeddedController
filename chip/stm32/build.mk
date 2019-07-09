@@ -55,7 +55,9 @@ chip-$(CONFIG_STREAM_USART)+=usart_rx_dma.o usart_tx_dma.o
 chip-$(CONFIG_CMD_USART_INFO)+=usart_info_command.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(HAS_TASK_CONSOLE)+=uart.o
+ifndef CONFIG_KEYBOARD_NOT_RAW
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
+endif
 chip-$(HAS_TASK_POWERLED)+=power_led.o
 chip-$(CONFIG_FLASH_PHYSICAL)+=flash-$(CHIP_FAMILY).o
 ifdef CONFIG_FLASH_PHYSICAL

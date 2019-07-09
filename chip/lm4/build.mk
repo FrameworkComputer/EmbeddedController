@@ -26,4 +26,6 @@ chip-$(CONFIG_PECI)+=peci.o
 chip-$(CONFIG_PWM)+=pwm.o fan.o
 chip-$(CONFIG_SPI)+=spi.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
+ifndef CONFIG_KEYBOARD_NOT_RAW
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
+endif
