@@ -417,6 +417,36 @@ void system_reset(int flags)
 		STM32_FLASH_OPTKEYR = FLASH_OPTKEYR_KEY2;
 		STM32_FLASH_CR |= FLASH_CR_OBL_LAUNCH;
 #else
+		/*
+		 * RM0433 Rev 6
+		 * Section 44.3.3
+		 * https://www.st.com/resource/en/reference_manual/dm00314099.pdf#page=1898
+		 *
+		 * When the window option is not used, the IWDG can be
+		 * configured as follows:
+		 *
+		 * 1. Enable the IWDG by writing 0x0000 CCCC in the Key
+		 *    register (IWDG_KR).
+		 * 2. Enable register access by writing 0x0000 5555 in the Key
+		 *    register (IWDG_KR).
+		 * 3. Write the prescaler by programming the Prescaler register
+		 *    (IWDG_PR) from 0 to 7.
+		 * 4. Write the Reload register (IWDG_RLR).
+		 * 5. Wait for the registers to be updated
+		 *    (IWDG_SR = 0x0000 0000).
+		 * 6. Refresh the counter value with IWDG_RLR
+		 *    (IWDG_KR = 0x0000 AAAA)
+		 */
+
+		/*
+		 * Enable IWDG, which shouldn't be necessary since the IWDG
+		 * only needs to be started once, but STM32F412 hangs unless
+		 * this is added.
+		 *
+		 * See http://b/137045370.
+		 */
+		STM32_IWDG_KR = STM32_IWDG_KR_START;
+
 		/* Ask the watchdog to trigger a hard reboot */
 		STM32_IWDG_KR = STM32_IWDG_KR_UNLOCK;
 		STM32_IWDG_RLR = 0x1;
