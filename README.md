@@ -8,11 +8,7 @@ The Chromium OS project includes open source software for embedded controllers
 (EC) used in recent ARM and x86 based Chromebooks. This software includes a
 lightweight, multitasking OS with modules for power sequencing, keyboard
 control, thermal control, battery charging, and verified boot. The EC software
-is written in C and currently supports two different ARM Cortex based
-controllers. Intel based designs, such as the Chromebook Pixel use the TI
-Stellaris LM4F (Cortex M4) while the Samsung Chromebook (XE303C12) and HP
-Chromebook 11 use an ST-Micro STM32F100 (Cortex M3). Some STM32L variants are
-also supported. Support for additional embedded controllers is ongoing.
+is written in C and supports [a variety of micro-controllers](https://chromium.googlesource.com/chromiumos/platform/ec/+/master/chip/).
 
 This document is a guide to help make you familiar with the EC code, current
 features, and the process for submitting code patches.
