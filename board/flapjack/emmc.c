@@ -1,1 +1,1 @@
-../kukui/emmc.c
+../../baseboard/kukui/emmc.c

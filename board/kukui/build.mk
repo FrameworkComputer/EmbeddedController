@@ -10,9 +10,7 @@
 CHIP:=stm32
 CHIP_FAMILY:=stm32f0
 CHIP_VARIANT:=stm32f09x
+BASEBOARD:=kukui
 
-board-y=battery.o board.o usb_pd_policy.o led.o
-board-$(CONFIG_BOOTBLOCK)+=emmc.o
+board-y=board.o led.o
 board-$(BOARD_KRANE)+=base_detect_krane.o
-
-$(out)/RO/board/$(BOARD)/emmc.o: $(out)/bootblock_data.h
