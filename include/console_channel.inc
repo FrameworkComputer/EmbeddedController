@@ -112,7 +112,4 @@ CONSOLE_CHANNEL(CC_USBCHARGE,    "usbcharge")
 CONSOLE_CHANNEL(CC_USBPD,        "usbpd")
 #endif
 CONSOLE_CHANNEL(CC_VBOOT,        "vboot")
-#ifdef CONFIG_WAKE_ON_VOICE
-CONSOLE_CHANNEL(CC_WOV,          "wov")
-#endif
 CONSOLE_CHANNEL(CC_HOOK,         "hook")
