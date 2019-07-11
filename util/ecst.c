@@ -71,7 +71,7 @@ static int splice_into_path(char *result, const char *path, int resultsz,
 			"\n\nfilename '%s' with prefix '%s' too long\n\n",
 			path, prefix);
 		my_printf(TINF,
-			"\n\n%d + %d + 1 needs to fit in %d bytes\n\n",
+			"\n\n%zu + %zu + 1 needs to fit in %d bytes\n\n",
 			strlen(path), strlen(prefix), resultsz);
 		return FALSE;
 	}
@@ -717,8 +717,7 @@ int main(int argc, char *argv[])
 				if ((main_temp & ADDR_16_BYTES_ALIGNED_MASK)
 									!= 0) {
 					my_printf(TERR,
-						 "\nFW Image address (0x%08X)");
-					my_printf(TERR,
+						  "\nFW Image address (0x%08X)"
 						  " isn't 16-bytes aligned !\n",
 						  main_temp);
 					main_status = FALSE;
@@ -1364,10 +1363,9 @@ int main_bin(struct tbinparams binary_params)
 	if (((int)binary_params.fw_hdr_offset < 0) ||
 		(binary_params.fw_hdr_offset > bin_file_size_bytes)) {
 		my_printf(TERR,
-			  "\nFW header offset 0x%08x (%d) should be in the",
-			  binary_params.fw_hdr_offset);
-		my_printf(TERR,
+			  "\nFW header offset 0x%08x (%d) should be in the"
 			  " range of 0 and file size (%d).\n",
+			  binary_params.fw_hdr_offset,
 			  binary_params.fw_hdr_offset,
 			  bin_file_size_bytes);
 		return FALSE;
@@ -1889,9 +1887,7 @@ int calc_header_crc_bin(unsigned int *p_cksum)
 		 */
 		if (g_verbose == SUPER_VERBOSE) {
 			if (i%line_print_size == 0)
-				my_printf(TDBG,
-					  "\n[%.4x]: ",
-					  g_header_array + i);
+				my_printf(TDBG, "\n[%.4x]: ", i);
 
 			my_printf(TDBG, "%.2x ", g_header_array[i]);
 		}
@@ -2101,11 +2097,9 @@ int main_hdr(void)
 				  ptr_fw_addr);
 		} else {
 			my_printf(TERR,
-				  "\n\nCouldn't write signature (%x) and ",
-				  tmp_long_val);
-			my_printf(TERR,
+				  "\n\nCouldn't write signature (%x) and "
 				  "pointer to BootLoader header file (%s)\n\n",
-				  ptr_fw_addr, tmp_file_name);
+				  tmp_long_val, tmp_file_name);
 			return FALSE;
 		}
 

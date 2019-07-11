@@ -269,6 +269,7 @@ int read_from_file(unsigned int offset,
 				   char *print_string);
 
 /* Nice Particular Printf - General */
+__attribute__((__format__(__printf__, 2, 3)))
 void my_printf(int error_level, char *fmt, ...);
 
 int str_cmp_no_case(const char *s1, const char *s2);
