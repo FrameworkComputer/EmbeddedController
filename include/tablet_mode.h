@@ -3,12 +3,21 @@
  * found in the LICENSE file.
  */
 
-/* Header for tablet_mode.c */
+#ifndef __CROS_EC_TABLET_MODE_H
+#define __CROS_EC_TABLET_MODE_H
 
-#ifdef CONFIG_TABLET_MODE
-
-/* Return 1 if in tablet mode, 0 otherwise */
+/**
+ * Get tablet mode state
+ *
+ * Return 1 if in tablet mode, 0 otherwise
+ */
 int tablet_get_mode(void);
+
+/**
+ * Set tablet mode state
+ *
+ * @param mode 1: tablet mode. 0 clamshell mode.
+ */
 void tablet_set_mode(int mode);
 
 /**
@@ -28,7 +37,7 @@ void hall_sensor_isr(enum gpio_signal signal);
  */
 void hall_sensor_disable(void);
 
-/*
+/**
  * This must be defined when CONFIG_HALL_SENSOR_CUSTOM is defined. This allows
  * a board to override the default behavior that determines if the 360 sensor is
  * active: !gpio_get_level(HALL_SENSOR_GPIO_L).
@@ -37,4 +46,4 @@ void hall_sensor_disable(void);
  */
 int board_sensor_at_360(void);
 
-#endif
+#endif  /* __CROS_EC_TABLET_MODE_H */
