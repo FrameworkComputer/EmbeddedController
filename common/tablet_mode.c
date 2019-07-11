@@ -59,6 +59,12 @@ void tablet_set_mode(int mode)
 #endif
 }
 
+void tablet_disable(void)
+{
+	tablet_mode = 0;
+	disabled = 1;
+}
+
 /* This ifdef can be removed once we clean up past projects which do own init */
 #ifdef CONFIG_HALL_SENSOR
 #ifndef HALL_SENSOR_GPIO_L
@@ -120,7 +126,6 @@ void hall_sensor_disable(void)
 	gpio_disable_interrupt(HALL_SENSOR_GPIO_L);
 	/* Cancel any pending debounce calls */
 	hook_call_deferred(&hall_sensor_interrupt_debounce_data, -1);
-	tablet_set_mode(0);
-	disabled = 1;
+	tablet_disable();
 }
 #endif

@@ -19,6 +19,7 @@
 #include "lid_switch.h"
 #include "switch.h"
 #include "system.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "timer.h"
 #include "usb_api.h"
@@ -690,6 +691,16 @@ void keyboard_scan_init(void)
 #ifdef CONFIG_HOSTCMD_EVENTS
 	if (boot_key_value & BOOT_KEY_ESC) {
 		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
+		/*
+		 * In recovery mode, we should force clamshell mode in order to
+		 * prevent the keyboard from being disabled unintentionally due
+		 * to unstable accel readings.
+		 *
+		 * You get the same effect if motion sensors or a motion sense
+		 * task are disabled in RO.
+		 */
+		if (IS_ENABLED(CONFIG_TABLET_MODE))
+			tablet_disable();
 		if (boot_key_value & BOOT_KEY_LEFT_SHIFT)
 			host_set_single_event(
 				EC_HOST_EVENT_KEYBOARD_RECOVERY_HW_REINIT);

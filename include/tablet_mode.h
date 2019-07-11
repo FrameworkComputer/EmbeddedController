@@ -21,6 +21,11 @@ int tablet_get_mode(void);
 void tablet_set_mode(int mode);
 
 /**
+ * Disable tablet mode
+ */
+void tablet_disable(void);
+
+/**
  * Interrupt service routine for hall sensor.
  *
  * HALL_SENSOR_GPIO_L must be defined.
