@@ -105,8 +105,20 @@ void ipi_enable_irq(int irq)
 
 	mutex_lock(&ipc0_lock);
 
-	if ((++ipc0_enabled_count) == 1)
+	if ((++ipc0_enabled_count) == 1) {
+		int pending_ipc = SCP_GIPC_IN & SCP_GPIC_IN_CLEAR_ALL;
+
 		task_enable_irq(irq);
+
+		if (pending_ipc)
+			/*
+			 * IPC may be triggered while SCP_IRQ_IPC0 was disabled.
+			 * AP will still updates SCP_GIPC_IN.
+			 * Trigger the IRQ handler if it has a
+			 * pending IPC.
+			 */
+			task_trigger_irq(irq);
+	}
 
 	mutex_unlock(&ipc0_lock);
 }
@@ -144,6 +156,7 @@ int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 
 		mutex_unlock(&ipi_lock);
 		ipi_enable_irq(SCP_IRQ_IPC0);
+		CPRINTS("Err: IPI Busy, %d", id);
 
 		return EC_ERROR_BUSY;
 	}
@@ -329,9 +342,11 @@ DECLARE_HOOK(HOOK_INIT, ipi_init, HOOK_PRIO_DEFAULT);
 void ipc_handler(void)
 {
 	/* TODO(b/117917141): We only support IPC_ID(0) for now. */
-	if (SCP_GIPC_IN & SCP_GIPC_IN_CLEAR_IPCN(0))
+	if (SCP_GIPC_IN & SCP_GIPC_IN_CLEAR_IPCN(0)) {
 		ipi_handler();
+		SCP_GIPC_IN &= SCP_GIPC_IN_CLEAR_IPCN(0);
+	}
 
-	SCP_GIPC_IN = SCP_GPIC_IN_CLEAR_ALL;
+	SCP_GIPC_IN &= (SCP_GPIC_IN_CLEAR_ALL & ~SCP_GIPC_IN_CLEAR_IPCN(0));
 }
 DECLARE_IRQ(SCP_IRQ_IPC0, ipc_handler, 4);
