@@ -5,7 +5,6 @@
 
 #include "charger.h"
 #include "console.h"
-#include "driver/charger/rt946x.h"
 #include "gpio.h"
 #include "system.h"
 #include "timer.h"
@@ -63,7 +62,7 @@ int board_vbus_source_enabled(int port)
 
 int board_is_sourcing_vbus(int port)
 {
-	if (board_get_version() <= 1)
+	if (IS_ENABLED(BOARD_KUKUI) && board_get_version() <= 1)
 		return charger_is_sourcing_otg_power(port);
 	else
 		return board_vbus_source_enabled(port);

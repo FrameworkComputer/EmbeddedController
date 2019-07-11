@@ -6,35 +6,16 @@
  */
 
 #include "battery.h"
-#include "battery_smart.h"
 #include "charge_state.h"
+#include "charger_mt6370.h"
 #include "console.h"
-#include "driver/charger/rt946x.h"
-#include "driver/tcpm/mt6370.h"
-#include "ec_commands.h"
-#include "extpower.h"
-#include "gpio.h"
-#include "hooks.h"
-#include "power.h"
-#include "usb_pd.h"
-#include "util.h"
-
-#if defined(CONFIG_BATTERY_MAX17055)
 #include "driver/battery/max17055.h"
-#elif defined(CONFIG_BATTERY_MM8013)
-#include "driver/battery/mm8013.h"
-#endif
+#include "ec_commands.h"
+#include "util.h"
 
 #define TEMP_OUT_OF_RANGE TEMP_ZONE_COUNT
 
-#if defined(BOARD_KRANE)
-#define BATT_ID 1
-#else
 #define BATT_ID 0
-#endif
-
-#define BAT_LEVEL_PD_LIMIT 85
-#define IBAT_PD_LIMIT 1000
 
 #define BATTERY_SIMPLO_CHARGE_MIN_TEMP 0
 #define BATTERY_SIMPLO_CHARGE_MAX_TEMP 60
@@ -43,7 +24,6 @@
 
 enum battery_type {
 	BATTERY_SIMPLO = 0,
-	BATTERY_SCUD,
 	BATTERY_COUNT
 };
 
@@ -60,25 +40,7 @@ static const struct battery_info info[] = {
 		.discharging_min_c	= -20,
 		.discharging_max_c	= 60,
 	},
-	[BATTERY_SCUD] = {
-		.voltage_max		= 4400,
-		.voltage_normal		= 3850,
-		.voltage_min		= 3400,
-		.precharge_current	= 256,
-		.start_charging_min_c	= 0,
-		.start_charging_max_c	= 45,
-		.charging_min_c		= 0,
-		.charging_max_c		= 50,
-		.discharging_min_c	= -20,
-		.discharging_max_c	= 60,
-	},
 };
-
-#ifdef CONFIG_BATTERY_MAX17055
-
-#if BATT_ID == 1
-#error "Battery profile for Mitsumi battery not available"
-#endif
 
 static const struct max17055_batt_profile batt_profile[] = {
 	[BATTERY_SIMPLO] = {
@@ -109,21 +71,10 @@ const struct max17055_alert_profile *max17055_get_alert_profile(void)
 {
 	return &alert_profile[BATT_ID];
 }
-#endif  /* CONFIG_BATTERY_MAX17055 */
 
 const struct battery_info *battery_get_info(void)
 {
 	return &info[BATT_ID];
-}
-
-int board_cut_off_battery(void)
-{
-	/* The cut-off procedure is recommended by Richtek. b/116682788 */
-	rt946x_por_reset();
-	mt6370_vconn_discharge(0);
-	rt946x_cutoff_battery();
-
-	return EC_SUCCESS;
 }
 
 enum battery_disconnect_state battery_get_disconnect_state(void)
@@ -135,9 +86,6 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 
 int charger_profile_override(struct charge_state_data *curr)
 {
-	static int previous_chg_limit_mv;
-	int chg_limit_mv;
-#ifdef CONFIG_BATTERY_MAX17055
 	/* battery temp in 0.1 deg C */
 	int bat_temp_c = curr->batt.temperature - 2731;
 
@@ -168,9 +116,6 @@ int charger_profile_override(struct charge_state_data *curr)
 			{150, 450, 4020, 4376},
 			/* TEMP_ZONE_2 */
 			{450, BATTERY_SIMPLO_CHARGE_MAX_TEMP * 10, 3350, 4300},
-		},
-		[BATTERY_SCUD] = {
-			/* unused */
 		},
 	};
 	BUILD_ASSERT(ARRAY_SIZE(temp_zones[0]) == TEMP_ZONE_COUNT);
@@ -206,61 +151,13 @@ int charger_profile_override(struct charge_state_data *curr)
 		curr->state = ST_IDLE;
 		break;
 	}
-#endif  /* CONFIG_BATTERY_MAX17055 */
-	/* TODO(b:131284131): Add battery configs for krane. */
 
-	/* Limit input (=VBUS) to 5V when soc > 85% and charge current < 1A. */
-	if (!(curr->batt.flags & BATT_FLAG_BAD_CURRENT) &&
-			charge_get_percent() > BAT_LEVEL_PD_LIMIT &&
-			curr->batt.current < 1000) {
-		chg_limit_mv = 5500;
-	} else if (IS_ENABLED(BOARD_KRANE) &&
-			board_get_version() == 3 &&
-			power_get_state() == POWER_S0) {
-		/*
-		 * TODO(b:134227872): limit power to 5V/2A in S0 to prevent
-		 * overheat
-		 */
-		chg_limit_mv = 5500;
-		curr->requested_current = 2000;
-	} else {
-		chg_limit_mv = PD_MAX_VOLTAGE_MV;
-	}
-
-	if (chg_limit_mv != previous_chg_limit_mv)
-		CPRINTS("VBUS limited to %dmV", chg_limit_mv);
-	previous_chg_limit_mv = chg_limit_mv;
-
-	/* Pull down VBUS */
-	if (pd_get_max_voltage() != chg_limit_mv)
-		pd_set_external_voltage_limit(0, chg_limit_mv);
-
-	/*
-	 * When the charger says it's done charging, even if fuel gauge says
-	 * SOC < BATTERY_LEVEL_NEAR_FULL, we'll overwrite SOC with
-	 * BATTERY_LEVEL_NEAR_FULL. So we can ensure both Chrome OS UI
-	 * and battery LED indicate full charge.
-	 */
-	if (rt946x_is_charge_done()) {
-		curr->batt.state_of_charge = MAX(BATTERY_LEVEL_NEAR_FULL,
-						 curr->batt.state_of_charge);
-	}
+#ifdef VARIANT_KUKUI_CHARGER_MT6370
+	mt6370_charger_profile_override(curr);
+#endif /* CONFIG_CHARGER_MT6370 */
 
 	return 0;
 }
-
-static void board_charge_termination(void)
-{
-	static uint8_t te;
-	/* Enable charge termination when we are sure battery is present. */
-	if (!te && battery_is_present() == BP_YES) {
-		if (!rt946x_enable_charge_termination(1))
-			te = 1;
-	}
-}
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE,
-	     board_charge_termination,
-	     HOOK_PRIO_DEFAULT);
 
 enum ec_status charger_profile_override_get_param(uint32_t param,
 						  uint32_t *value)
