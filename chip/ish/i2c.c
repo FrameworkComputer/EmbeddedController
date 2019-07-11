@@ -404,8 +404,9 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	/* do not disable device before master is idle */
 	expire_ts = __hw_clock_source_read() + I2C_TSC_TIMEOUT;
 
-	while (i2c_mmio_read(ctx->base, IC_STATUS) &
-	       BIT(IC_STATUS_MASTER_ACTIVITY)) {
+	while ((i2c_mmio_read(ctx->base, IC_STATUS) &
+		(BIT(IC_STATUS_MASTER_ACTIVITY) | BIT(IC_STATUS_TFE))) !=
+	       BIT(IC_STATUS_TFE)) {
 
 		if (__hw_clock_source_read() >= expire_ts) {
 			ctx->error_flag = 1;
