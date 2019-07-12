@@ -9,6 +9,9 @@
  *
  * This header file should not be included directly.
  * Please include registers.h instead.
+ *
+ * Known Chip Variants
+ * - STM32F373
  */
 
 #ifndef __CROS_EC_REGISTERS_H

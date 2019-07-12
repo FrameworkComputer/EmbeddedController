@@ -9,6 +9,10 @@
  *
  * This header file should not be included directly.
  * Please include registers.h instead.
+ *
+ * Known Chip Variants
+ * - STM32L100
+ * - STM32L15X
  */
 
 #ifndef __CROS_EC_REGISTERS_H

@@ -9,6 +9,13 @@
  *
  * This header file should not be included directly.
  * Please include registers.h instead.
+ *
+ * Known Chip Variants
+ * - STM32F03X
+ * - STM32F05X
+ * - STM32F070
+ * - STM32F07X
+ * - STM32F09X
  */
 
 #ifndef __CROS_EC_REGISTERS_H

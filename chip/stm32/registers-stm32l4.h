@@ -9,6 +9,10 @@
  *
  * This header file should not be included directly.
  * Please include registers.h instead.
+ *
+ * Known Chip Variants
+ * - STM32L442
+ * - STM32L476
  */
 
 #ifndef __CROS_EC_REGISTERS_H
