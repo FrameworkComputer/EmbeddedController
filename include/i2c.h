@@ -11,6 +11,7 @@
 #include "common.h"
 #include "gpio.h"
 #include "host_command.h"
+#include "stddef.h"
 
 /* Flags for slave address field, in addition to the 8-bit address */
 #define I2C_FLAG_BIG_ENDIAN 0x100  /* 16 byte values are MSB-first */
@@ -425,5 +426,19 @@ void i2c_start_xfer_notify(int port, int slave_addr);
  *
  */
 void i2c_end_xfer_notify(int port, int slave_addr);
+
+/**
+ * Defined in common/i2c_trace.c, used by i2c master to notify tracing
+ * funcionality of transactions.
+ *
+ * @param port: I2C port number
+ * @param slave_addr: slave device address
+ * @param direction: 0 for write,
+ *                   1 for read
+ * @param data: pointer to data read or written
+ * @param size: size of data read or written
+ */
+void i2c_trace_notify(int port, int slave_addr, int direction,
+		      const uint8_t *data, size_t size);
 
 #endif  /* __CROS_EC_I2C_H */

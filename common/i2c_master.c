@@ -76,16 +76,20 @@ static int chip_i2c_xfer_with_notify(int port, int slave_addr,
 {
 	int ret;
 
-#ifdef CONFIG_I2C_XFER_BOARD_CALLBACK
-	i2c_start_xfer_notify(port, slave_addr);
-#endif
+	if (IS_ENABLED(CONFIG_I2C_DEBUG))
+		i2c_trace_notify(port, slave_addr, 0, out, out_size);
+
+	if (IS_ENABLED(CONFIG_I2C_XFER_BOARD_CALLBACK))
+		i2c_start_xfer_notify(port, slave_addr);
 
 	ret = chip_i2c_xfer(port, slave_addr, out, out_size, in, in_size,
 			    flags);
 
-#ifdef CONFIG_I2C_XFER_BOARD_CALLBACK
-	i2c_end_xfer_notify(port, slave_addr);
-#endif
+	if (IS_ENABLED(CONFIG_I2C_XFER_BOARD_CALLBACK))
+		i2c_end_xfer_notify(port, slave_addr);
+
+	if (IS_ENABLED(CONFIG_I2C_DEBUG))
+		i2c_trace_notify(port, slave_addr, 1, in, in_size);
 
 	return ret;
 }
