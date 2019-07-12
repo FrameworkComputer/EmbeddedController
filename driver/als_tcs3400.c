@@ -104,9 +104,10 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 			return ret;
 		if (!(data & TCS_I2C_STATUS_RGBC_VALID)) {
 			retries--;
-			if (retries == 0)
+			if (retries == 0) {
+				CPRINTS("RGBC not valid (0x%x)", data);
 				return EC_ERROR_UNCHANGED;
-			CPRINTS("RGBC not valid (0x%x)", data);
+			}
 			msleep(20);
 		}
 	} while (!(data & TCS_I2C_STATUS_RGBC_VALID));
