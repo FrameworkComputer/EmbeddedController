@@ -467,8 +467,9 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #elif defined(CHIP_FAMILY_STM32F3)
 #include "registers-stm32f3.h"
 #elif defined(CHIP_FAMILY_STM32F4)
-/* This currently includes CHIP_VARIANT_STM32F76X */
 #include "registers-stm32f4.h"
+#elif defined(CHIP_FAMILY_STM32F7)
+#include "registers-stm32f7.h"
 #elif defined(CHIP_FAMILY_STM32H7)
 #include "registers-stm32h7.h"
 #elif defined(CHIP_FAMILY_STM32L)

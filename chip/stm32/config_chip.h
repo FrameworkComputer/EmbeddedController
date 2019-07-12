@@ -73,6 +73,7 @@
 #define CONFIG_MAPPED_STORAGE_BASE CONFIG_PROGRAM_MEMORY_BASE
 
 #if !defined(CHIP_FAMILY_STM32F4) && \
+	!defined(CHIP_FAMILY_STM32F7) && \
 	!defined(CHIP_FAMILY_STM32H7) && \
 	!defined(CHIP_VARIANT_STM32F09X)
 /* Compute the rest of the flash params from these */

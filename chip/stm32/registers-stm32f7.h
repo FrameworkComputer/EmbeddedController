@@ -5,16 +5,13 @@
 
 /**
  * @file
- * @brief Register map for the STM32F4 family of chips
+ * @brief Register map for the STM32F7 family of chips
  *
  * This header file should not be included directly.
  * Please include registers.h instead.
  *
  * Known Chip Variants
- * - STM32F411
- * - STM32F412
- * - STM32F41X
- * - STM32F446
+ * - STM32F76X
  */
 
 #ifndef __CROS_EC_REGISTERS_H
@@ -121,10 +118,6 @@
 #define STM32_IRQ_I2C1 STM32_IRQ_I2C1_EV
 #define STM32_IRQ_I2C2 STM32_IRQ_I2C2_EV
 #define STM32_IRQ_I2C3 STM32_IRQ_I2C3_EV
-
-#if defined(CHIP_VARIANT_STM32F411) || defined(CHIP_VARIANT_STM32F412)
-#define CHIP_VARIANT_STM32F41X
-#endif
 
 /*
  * STM32F4 introduces a concept of DMA stream to allow
@@ -247,14 +240,9 @@
 /* Register definitions */
 
 /* --- USART --- */
-#define STM32_USART_SR(base)       STM32_USART_REG(base, 0x00)
-#define STM32_USART_SR_ORE		BIT(3)
-#define STM32_USART_SR_RXNE		BIT(5)
-#define STM32_USART_SR_TC		BIT(6)
-#define STM32_USART_SR_TXE		BIT(7)
-#define STM32_USART_DR(base)       STM32_USART_REG(base, 0x04)
-#define STM32_USART_BRR(base)      STM32_USART_REG(base, 0x08)
-#define STM32_USART_CR1(base)      STM32_USART_REG(base, 0x0C)
+#define STM32_USART_CR1(base)      STM32_USART_REG(base, 0x00)
+#define STM32_USART_CR1_UE		BIT(0)
+#define STM32_USART_CR1_UESM            BIT(1)
 #define STM32_USART_CR1_RE		BIT(2)
 #define STM32_USART_CR1_TE		BIT(3)
 #define STM32_USART_CR1_RXNEIE		BIT(5)
@@ -263,18 +251,34 @@
 #define STM32_USART_CR1_PS		BIT(9)
 #define STM32_USART_CR1_PCE		BIT(10)
 #define STM32_USART_CR1_M		BIT(12)
-#define STM32_USART_CR1_UE		BIT(13)
-#define STM32_USART_CR1_OVER8		BIT(15) /* STM32L only */
-#define STM32_USART_CR2(base)      STM32_USART_REG(base, 0x10)
-#define STM32_USART_CR3(base)      STM32_USART_REG(base, 0x14)
+#define STM32_USART_CR1_OVER8		BIT(15)
+#define STM32_USART_CR2(base)      STM32_USART_REG(base, 0x04)
+#define STM32_USART_CR2_SWAP		BIT(15)
+#define STM32_USART_CR3(base)      STM32_USART_REG(base, 0x08)
 #define STM32_USART_CR3_EIE		BIT(0)
 #define STM32_USART_CR3_DMAR		BIT(6)
 #define STM32_USART_CR3_DMAT		BIT(7)
-#define STM32_USART_CR3_ONEBIT		BIT(11) /* STM32L only */
-#define STM32_USART_GTPR(base)     STM32_USART_REG(base, 0x18)
-/* register aliases */
-#define STM32_USART_TDR(base)      STM32_USART_DR(base)
-#define STM32_USART_RDR(base)      STM32_USART_DR(base)
+#define STM32_USART_CR3_ONEBIT		BIT(11)
+#define STM32_USART_CR3_OVRDIS		BIT(12)
+#define STM32_USART_CR3_WUS_START_BIT	(2 << 20)
+#define STM32_USART_CR3_WUFIE		BIT(22)
+#define STM32_USART_BRR(base)      STM32_USART_REG(base, 0x0C)
+#define STM32_USART_GTPR(base)     STM32_USART_REG(base, 0x10)
+#define STM32_USART_RTOR(base)     STM32_USART_REG(base, 0x14)
+#define STM32_USART_RQR(base)      STM32_USART_REG(base, 0x18)
+#define STM32_USART_ISR(base)      STM32_USART_REG(base, 0x1C)
+#define STM32_USART_ICR(base)      STM32_USART_REG(base, 0x20)
+#define STM32_USART_ICR_ORECF		BIT(3)
+#define STM32_USART_ICR_TCCF		BIT(6)
+#define STM32_USART_RDR(base)      STM32_USART_REG(base, 0x24)
+#define STM32_USART_TDR(base)      STM32_USART_REG(base, 0x28)
+#define STM32_USART_PRESC(base)    STM32_USART_REG(base, 0x2C)
+/* register alias */
+#define STM32_USART_SR(base)       STM32_USART_ISR(base)
+#define STM32_USART_SR_ORE		BIT(3)
+#define STM32_USART_SR_RXNE		BIT(5)
+#define STM32_USART_SR_TC		BIT(6)
+#define STM32_USART_SR_TXE		BIT(7)
 
 /* --- GPIO --- */
 #define STM32_GPIO_MODER(b)     REG32((b) + 0x00)
@@ -398,55 +402,7 @@
 #define STM32_RCC_CR_PLLON		BIT(24)
 #define STM32_RCC_CR_PLLRDY		BIT(25)
 
-#if defined(CHIP_VARIANT_STM32F446)
-/* Required or recommended clocks for stm32f446 */
-#define STM32F4_PLL_REQ 2000000
-#define STM32F4_RTC_REQ 1000000
-#define STM32F4_IO_CLOCK  42000000
-#define STM32F4_USB_REQ 48000000
-#define STM32F4_VCO_CLOCK 336000000
-#define STM32F4_HSI_CLOCK 16000000
-#define STM32F4_LSI_CLOCK 32000
-#define STM32F4_TIMER_CLOCK STM32F4_IO_CLOCK
-#define STM32F4_PLLP_DIV 4
-#define STM32F4_AHB_PRE 0x8
-#define STM32F4_APB1_PRE 0x0
-#define STM32F4_APB2_PRE 0x0
-#define STM32_FLASH_ACR_LATENCY     BIT(0)
-
-#elif defined(CHIP_VARIANT_STM32F412)
-/* Required or recommended clocks for stm32f412 */
-#define STM32F4_PLL_REQ 2000000
-#define STM32F4_RTC_REQ 1000000
-#define STM32F4_IO_CLOCK  48000000
-#define STM32F4_USB_REQ 48000000
-#define STM32F4_VCO_CLOCK 384000000
-#define STM32F4_HSI_CLOCK 16000000
-#define STM32F4_LSI_CLOCK 32000
-#define STM32F4_TIMER_CLOCK (STM32F4_IO_CLOCK * 2)
-#define STM32F4_PLLP_DIV 4
-#define STM32F4_AHB_PRE 0x0
-#define STM32F4_APB1_PRE 0x4
-#define STM32F4_APB2_PRE 0x4
-#define STM32_FLASH_ACR_LATENCY     (3 << 0)
-
-#elif defined(CHIP_VARIANT_STM32F411)
-/* Required or recommended clocks for stm32f411 */
-#define STM32F4_PLL_REQ 2000000
-#define STM32F4_RTC_REQ 1000000
-#define STM32F4_IO_CLOCK  48000000
-#define STM32F4_USB_REQ 48000000
-#define STM32F4_VCO_CLOCK 384000000
-#define STM32F4_HSI_CLOCK 16000000
-#define STM32F4_LSI_CLOCK 32000
-#define STM32F4_TIMER_CLOCK STM32F4_IO_CLOCK
-#define STM32F4_PLLP_DIV 4
-#define STM32F4_AHB_PRE 0x8
-#define STM32F4_APB1_PRE 0x0
-#define STM32F4_APB2_PRE 0x0
-#define STM32_FLASH_ACR_LATENCY     BIT(0)
-
-#elif defined(CHIP_VARIANT_STM32F76X)
+#ifdef CHIP_VARIANT_STM32F76X
 /* Required or recommended clocks for stm32f767/769 */
 #define STM32F4_PLL_REQ 2000000
 #define STM32F4_RTC_REQ 1000000
@@ -461,7 +417,6 @@
 #define STM32F4_APB1_PRE 0x5 /* APB1 = AHB /4 = 45 Mhz */
 #define STM32F4_APB2_PRE 0x5 /* APB2 = AHB /4 = 45 Mhz */
 #define STM32_FLASH_ACR_LATENCY     (5 << 0)
-
 #else
 #error "No valid clocks defined"
 #endif
@@ -828,35 +783,18 @@ enum dma_channel {
 	/* Legacy naming for uart.c */
 	STM32_DMAC_USART1_TX = STM32_DMAS_USART1_TX,
 	STM32_DMAC_USART1_RX = STM32_DMAS_USART1_RX,
-#ifdef CHIP_VARIANT_STM32F41X
 	STM32_DMAS_USART2_TX = STM32_DMA1_STREAM6,
 	STM32_DMAS_USART2_RX = STM32_DMA1_STREAM5,
 
 	/* Legacy naming for uart.c */
 	STM32_DMAC_USART2_TX = STM32_DMAS_USART2_TX,
 	STM32_DMAC_USART2_RX = STM32_DMAS_USART2_RX,
-#endif
-
-#ifdef CHIP_VARIANT_STM32F41X
 	STM32_DMAC_I2C1_TX = STM32_DMA1_STREAM1,
 	STM32_DMAC_I2C1_RX = STM32_DMA1_STREAM0,
-
 	STM32_DMAC_I2C2_TX = STM32_DMA1_STREAM7,
 	STM32_DMAC_I2C2_RX = STM32_DMA1_STREAM3,
-
 	STM32_DMAC_I2C3_TX = STM32_DMA1_STREAM4,
 	STM32_DMAC_I2C3_RX = STM32_DMA1_STREAM2,
-#else
-	STM32_DMAC_I2C1_TX = STM32_DMA1_STREAM6,
-	STM32_DMAC_I2C1_RX = STM32_DMA1_STREAM0,
-
-	STM32_DMAC_I2C2_TX = STM32_DMA1_STREAM7,
-	STM32_DMAC_I2C2_RX = STM32_DMA1_STREAM3,
-
-	STM32_DMAC_I2C3_TX = STM32_DMA1_STREAM4,
-	STM32_DMAC_I2C3_RX = STM32_DMA1_STREAM1,
-#endif
-
 	STM32_DMAC_FMPI2C4_TX = STM32_DMA1_STREAM5,
 	STM32_DMAC_FMPI2C4_RX = STM32_DMA1_STREAM2,
 
