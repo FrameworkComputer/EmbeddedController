@@ -114,9 +114,11 @@
 #define CONFIG_TABLET_MODE
 #define CONFIG_TABLET_MODE_SWITCH
 
+#ifdef SECTION_IS_RW
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO 256
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+#endif /* SECTION_IS_RW */
 
 /* Wireless Power Charger Config */
 #ifdef SECTION_IS_RW

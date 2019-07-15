@@ -9,6 +9,7 @@
 #define __CROS_EC_BOARD_H
 
 #define VARIANT_GRUNT_TCPC_0_ANX3429
+#define VARIANT_GRUNT_NO_SENSORS
 
 #include "baseboard.h"
 

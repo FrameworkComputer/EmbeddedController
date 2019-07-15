@@ -12,6 +12,10 @@
 #define VARIANT_KUKUI_CHARGER_MT6370
 #define VARIANT_KUKUI_DP_MUX_GPIO
 
+#ifndef SECTION_IS_RW
+#define VARIANT_KUKUI_NO_SENSORS
+#endif /* SECTION_IS_RW */
+
 #include "baseboard.h"
 
 #define CONFIG_VOLUME_BUTTONS

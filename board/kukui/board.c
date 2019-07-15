@@ -306,7 +306,7 @@ DECLARE_HOOK(HOOK_INIT, board_rev_init, HOOK_PRIO_INIT_ADC + 1);
 
 /* Motion sensors */
 /* Mutexes */
-#ifdef SECTION_IS_RW
+#ifndef VARIANT_KUKUI_NO_SENSORS
 static struct mutex g_lid_mutex;
 
 static struct bmi160_drv_data_t g_bmi160_data;
@@ -486,7 +486,7 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 const struct motion_sensor_t *motion_als_sensors[] = {
 	&motion_sensors[CLEAR_ALS],
 };
-#endif /* SECTION_IS_RW */
+#endif /* VARIANT_KUKUI_NO_SENSORS */
 
 void usb_charger_set_switches(int port, enum usb_switch setting)
 {

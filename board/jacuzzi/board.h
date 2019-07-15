@@ -11,6 +11,10 @@
 #define VARIANT_KUKUI_BATTERY_SMART
 #define VARIANT_KUKUI_CHARGER_ISL9238
 
+#ifndef SECTION_IS_RW
+#define VARIANT_KUKUI_NO_SENSORS
+#endif /* SECTION_IS_RW */
+
 #include "baseboard.h"
 
 /* TODO(b:135086465) led implementation */

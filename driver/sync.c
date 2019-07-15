@@ -12,6 +12,7 @@
 #include "console.h"
 #include "driver/sync.h"
 #include "hwtimer.h"
+#include "motion_sense_fifo.h"
 #include "queue.h"
 #include "task.h"
 #include "util.h"

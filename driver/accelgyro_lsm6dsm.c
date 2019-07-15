@@ -15,6 +15,7 @@
 #include "hwtimer.h"
 #include "mag_cal.h"
 #include "math_util.h"
+#include "motion_sense_fifo.h"
 #include "queue.h"
 #include "task.h"
 #include "timer.h"

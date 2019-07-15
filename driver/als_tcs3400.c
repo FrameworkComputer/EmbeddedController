@@ -12,6 +12,7 @@
 #include "hwtimer.h"
 #include "i2c.h"
 #include "math_util.h"
+#include "motion_sense_fifo.h"
 #include "task.h"
 #include "util.h"
 

@@ -227,6 +227,14 @@ struct motion_sensor_t {
 	uint32_t max_frequency;
 };
 
+/*
+ * Mutex to protect sensor values between host command task and
+ * motion sense task:
+ * When we process CMD_DUMP, we want to be sure the motion sense
+ * task is not updating the sensor values at the same time.
+ */
+extern struct mutex g_sensor_mutex;
+
 /* Defined at board level. */
 extern struct motion_sensor_t motion_sensors[];
 
@@ -248,32 +256,6 @@ extern unsigned int motion_min_interval;
  * hooks are scheduled properly.
  */
 #define MOTION_SENSE_HOOK_PRIO (HOOK_PRIO_DEFAULT)
-
-#ifdef CONFIG_ACCEL_FIFO
-extern struct queue motion_sense_fifo;
-
-/**
- * Stage data to the fifo, including a timestamp. This data will not be
- * available to the AP until motion_sense_fifo_commit_data is called.
- *
- * @param data data to insert in the FIFO
- * @param sensor sensor the data comes from
- * @param valid_data data should be copied into the public sensor vector
- * @param time accurate time (ideally measured in an interrupt) the sample
- *             was taken at
- */
-void motion_sense_fifo_stage_data(struct ec_response_motion_sensor_data *data,
-				  struct motion_sensor_t *sensor,
-				  int valid_data,
-				  uint32_t time);
-
-/**
- * Commits all staged data to the fifo. If multiple readings were placed using
- * the same timestamps, they will be spread out.
- */
-void motion_sense_fifo_commit_data(void);
-
-#endif
 
 /**
  * Take actions at end of sensor initialization:
