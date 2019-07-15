@@ -3603,6 +3603,57 @@ struct ec_response_keyboard_factory_test {
 #define EC_MKBP_FP_ERR_MATCH_YES_UPDATE_FAILED 5
 
 
+#define EC_CMD_MKBP_WAKE_MASK 0x0069
+enum ec_mkbp_event_mask_action {
+	/* Retrieve the value of a wake mask. */
+	GET_WAKE_MASK = 0,
+
+	/* Set the value of a wake mask. */
+	SET_WAKE_MASK,
+};
+
+enum ec_mkbp_mask_type {
+	/*
+	 * These are host events sent via MKBP.
+	 *
+	 * Some examples are:
+	 *    EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN)
+	 *    EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEY_PRESSED)
+	 *
+	 * The only things that should be in this mask are:
+	 *    EC_HOST_EVENT_MASK(EC_HOST_EVENT_*)
+	 */
+	EC_MKBP_HOST_EVENT_WAKE_MASK = 0,
+
+	/*
+	 * These are MKBP events. Some examples are:
+	 *
+	 *    EC_MKBP_EVENT_KEY_MATRIX
+	 *    EC_MKBP_EVENT_SWITCH
+	 *
+	 * The only things that should be in this mask are EC_MKBP_EVENT_*.
+	 */
+	EC_MKBP_EVENT_WAKE_MASK,
+};
+
+struct ec_params_mkbp_event_wake_mask {
+	/* One of enum ec_mkbp_event_mask_action */
+	uint8_t action;
+
+	/*
+	 * Which MKBP mask are you interested in acting upon?  This is one of
+	 * ec_mkbp_mask_type.
+	 */
+	uint8_t mask_type;
+
+	/* If setting a new wake mask, this contains the mask to set. */
+	uint32_t new_wake_mask;
+};
+
+struct ec_response_mkbp_event_wake_mask {
+	uint32_t wake_mask;
+};
+
 /*****************************************************************************/
 /* Temperature sensor commands */
 

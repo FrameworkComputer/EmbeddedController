@@ -68,6 +68,14 @@ struct mkbp_state {
 static struct mkbp_state state;
 uint32_t mkbp_last_event_time;
 
+#ifdef CONFIG_MKBP_EVENT_WAKEUP_MASK
+static uint32_t mkbp_event_wake_mask = CONFIG_MKBP_EVENT_WAKEUP_MASK;
+#endif /* CONFIG_MKBP_EVENT_WAKEUP_MASK */
+
+#ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
+static uint32_t mkbp_host_event_wake_mask = CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK;
+#endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
+
 #if defined(CONFIG_MKBP_USE_GPIO) || \
 	defined(CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT)
 static int mkbp_set_host_active_via_gpio(int active, uint32_t *timestamp)
@@ -188,14 +196,14 @@ static void activate_mkbp_with_events(uint32_t events_to_add)
 	/* Check to see if this host event should wake the system. */
 	skip_interrupt = host_is_sleeping() &&
 			 !(host_get_events() &
-			   CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK);
+			   mkbp_host_event_wake_mask);
 #endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
 
 #ifdef CONFIG_MKBP_EVENT_WAKEUP_MASK
 	/* Check to see if this MKBP event should wake the system. */
 	if (!skip_interrupt)
 		skip_interrupt = host_is_sleeping() &&
-			!(events_to_add & CONFIG_MKBP_EVENT_WAKEUP_MASK);
+			!(events_to_add & mkbp_event_wake_mask);
 #endif /* CONFIG_MKBP_EVENT_WAKEUP_MASK */
 
 	mutex_lock(&state.lock);
@@ -385,3 +393,112 @@ DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_GET_WAKE_MASK,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_MKBP_USE_HOST_EVENT */
 #endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
+
+static int hc_mkbp_wake_mask(struct host_cmd_handler_args *args)
+{
+	struct ec_response_mkbp_event_wake_mask *r = args->response;
+	const struct ec_params_mkbp_event_wake_mask *p = args->params;
+	enum ec_mkbp_event_mask_action action = p->action;
+
+	switch (action) {
+	case GET_WAKE_MASK:
+		switch (p->mask_type) {
+#ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
+		case EC_MKBP_HOST_EVENT_WAKE_MASK:
+			r->wake_mask = mkbp_host_event_wake_mask;
+			break;
+#endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
+
+#ifdef CONFIG_MKBP_EVENT_WAKEUP_MASK
+		case EC_MKBP_EVENT_WAKE_MASK:
+			r->wake_mask = mkbp_event_wake_mask;
+			break;
+#endif /* CONFIG_MKBP_EVENT_WAKEUP_MASK */
+
+		default:
+			/* Unknown mask, or mask is not in use. */
+			CPRINTF("%s: mask_type=%d is unknown or not used.\n",
+				__func__, p->mask_type);
+			return EC_RES_INVALID_PARAM;
+		}
+
+		args->response_size = sizeof(*r);
+		break;
+
+	case SET_WAKE_MASK:
+		args->response_size = 0;
+
+		switch (p->mask_type) {
+#ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
+		case EC_MKBP_HOST_EVENT_WAKE_MASK:
+			CPRINTF("MKBP hostevent mask updated to: 0x%08x "
+				"(was 0x%08x)\n",
+				p->new_wake_mask,
+				mkbp_host_event_wake_mask);
+			mkbp_host_event_wake_mask = p->new_wake_mask;
+			break;
+#endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
+
+#ifdef CONFIG_MKBP_EVENT_WAKEUP_MASK
+		case EC_MKBP_EVENT_WAKE_MASK:
+			mkbp_event_wake_mask = p->new_wake_mask;
+			CPRINTF("MKBP event mask updated to: 0x%08x\n",
+				mkbp_event_wake_mask);
+			break;
+#endif /* CONFIG_MKBP_EVENT_WAKEUP_MASK */
+
+		default:
+			/* Unknown mask, or mask is not in use. */
+			CPRINTF("%s: mask_type=%d is unknown or not used.\n",
+				__func__, p->mask_type);
+			return EC_RES_INVALID_PARAM;
+		}
+		break;
+
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_WAKE_MASK,
+		     hc_mkbp_wake_mask,
+		     EC_VER_MASK(0));
+
+#if defined(CONFIG_MKBP_EVENT_WAKEUP_MASK) ||	\
+	defined(CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK)
+static int command_mkbp_wake_mask(int argc, char **argv)
+{
+	if (argc == 3) {
+		char *e;
+		uint32_t new_mask = strtoul(argv[2], &e, 0);
+
+		if (*e)
+			return EC_ERROR_PARAM2;
+
+#ifdef CONFIG_MKBP_EVENT_WAKEUP_MASK
+		if (strncmp(argv[1], "event", 5) == 0)
+			mkbp_event_wake_mask = new_mask;
+#endif /* CONFIG_MKBP_EVENT_WAKEUP_MASK */
+
+#ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
+		if (strncmp(argv[1], "hostevent", 9) == 0)
+			mkbp_host_event_wake_mask = new_mask;
+#endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
+	} else if (argc != 1) {
+		return EC_ERROR_PARAM_COUNT;
+	}
+
+#ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
+	ccprintf("MKBP host event wake mask: 0x%08x\n",
+		 mkbp_host_event_wake_mask);
+#endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
+#ifdef CONFIG_MKBP_EVENT_WAKEUP_MASK
+	ccprintf("MKBP event wake mask: 0x%08x\n", mkbp_event_wake_mask);
+#endif /* CONFIG_MKBP_EVENT_WAKEUP_MASK */
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(mkbpwakemask, command_mkbp_wake_mask,
+			"[event | hostevent] [new_mask]",
+			"Show or set MKBP event/hostevent wake mask");
+#endif /* CONFIG_MKBP_(HOST)?EVENT_WAKEUP_MASK */

@@ -188,6 +188,8 @@ const char help_str[] =
 	"      Set the color of an LED or query brightness range\n"
 	"  lightbar [CMDS]\n"
 	"      Various lightbar control commands\n"
+	"  mkbpwakemask <get|set> <event|hostevent> [mask]\n"
+	"      Get or Set the MKBP event wake mask, or host event wake mask\n"
 	"  motionsense [CMDS]\n"
 	"      Various motion sense control commands\n"
 	"  panicinfo\n"
@@ -7718,6 +7720,75 @@ static int cmd_keyconfig(int argc, char *argv[])
 	return 0;
 }
 
+static int cmd_mkbp_wake_mask(int argc, char *argv[])
+{
+	struct ec_params_mkbp_event_wake_mask p;
+	struct ec_response_mkbp_event_wake_mask r;
+	int rv;
+
+	if (argc < 3) {
+		fprintf(stderr, "Usage: %s get <event|hostevent>\n"
+			"\t%s set <event|hostevent> <mask>\n", argv[0],
+			argv[0]);
+		return -1;
+	}
+
+	/* Determine if the user want to get or set the wake mask. */
+	if (strncmp(argv[1], "get", 3) == 0) {
+		p.action = GET_WAKE_MASK;
+	} else if (strncmp(argv[1], "set", 3) == 0) {
+		p.action = SET_WAKE_MASK;
+	} else {
+		fprintf(stderr, "Invalid param: '%s'\n", argv[1]);
+		return -1;
+	}
+
+	/* Determine which mask is of interest. */
+	if (strncmp(argv[2], "event", 5) == 0) {
+		p.mask_type = EC_MKBP_EVENT_WAKE_MASK;
+	} else if (strncmp(argv[2], "hostevent", 9) == 0) {
+		p.mask_type = EC_MKBP_HOST_EVENT_WAKE_MASK;
+	} else {
+		fprintf(stderr, "Invalid param: '%s'\n", argv[2]);
+		return -1;
+	}
+
+	if (p.action == SET_WAKE_MASK) {
+		char *e;
+
+		if (argc < 4) {
+			fprintf(stderr, "Missing mask value!");
+			return -1;
+		}
+
+		p.new_wake_mask = strtol(argv[3], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad mask: '%s'", argv[1]);
+			return -1;
+		}
+	}
+
+	rv = ec_command(EC_CMD_MKBP_WAKE_MASK, 0, &p, sizeof(p), &r,
+			sizeof(r));
+	if (rv < 0) {
+		if (rv == -EECRESULT-EC_RES_INVALID_PARAM) {
+			fprintf(stderr, "Unknown mask, or mask is not in use.  "
+				"You may need to enable the "
+				"CONFIG_MKBP_%s_WAKEUP_MASK option in the EC.\n"
+				, p.mask_type == EC_MKBP_EVENT_WAKE_MASK ?
+				"EVENT" : "HOSTEVENT");
+		}
+		return rv;
+	}
+
+	if (p.action == GET_WAKE_MASK)
+		printf("MBKP %s wake mask: 0x%08x\n", argv[2], r.wake_mask);
+	else if (p.action == SET_WAKE_MASK)
+		printf("MKBP %s wake mask set.\n", argv[2]);
+
+	return 0;
+}
+
 /* Index is already checked. argv[0] is first param value */
 static int cmd_tmp006cal_v0(int idx, int argc, char *argv[])
 {
@@ -8736,6 +8807,7 @@ const struct command commands[] = {
 	{"kbpress", cmd_kbpress},
 	{"keyconfig", cmd_keyconfig},
 	{"keyscan", cmd_keyscan},
+	{"mkbpwakemask", cmd_mkbp_wake_mask},
 	{"motionsense", cmd_motionsense},
 	{"nextevent", cmd_next_event},
 	{"panicinfo", cmd_panic_info},
