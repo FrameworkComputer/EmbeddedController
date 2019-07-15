@@ -13,8 +13,18 @@
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
+enum battery_present __attribute__((weak)) variant_battery_present(void)
+{
+	return BP_NOT_SURE;
+}
+
 enum battery_present battery_hw_present(void)
 {
+	enum battery_present bp = variant_battery_present();
+
+	if (bp != BP_NOT_SURE)
+		return bp;
+
 	return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES;
 }
 
