@@ -33,6 +33,12 @@ test_mockable void run_test(void) { }
 /* Default dummy test init */
 test_mockable void test_init(void) { }
 
+/* Default dummy before test */
+test_mockable void before_test(void) { }
+
+/* Default dummy after test */
+test_mockable void after_test(void) { }
+
 #ifdef TEST_COVERAGE
 extern void __gcov_flush(void);
 
