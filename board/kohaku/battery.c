@@ -7,6 +7,7 @@
 
 #include "battery_fuel_gauge.h"
 #include "common.h"
+#include "system.h"
 #include "util.h"
 
 /*
@@ -63,3 +64,17 @@ const struct board_batt_params board_battery_info[] = {
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_DYNA;
+
+enum battery_present variant_battery_present(void)
+{
+	if (system_get_board_version() != 1)
+		return BP_NOT_SURE;
+
+	/*
+	 * For board version 1, there is a known issue with battery present
+	 * signal. So, always return BP_YES indicating battery is
+	 * present. battery_status() later should fail to talk to the battery in
+	 * case the battery is not really present.
+	 */
+	return BP_YES;
+}
