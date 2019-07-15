@@ -632,68 +632,68 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 		ret = sensor->drv->irq_handler(sensor, event);
 	}
 #endif
-#ifdef CONFIG_ACCEL_FIFO
-	if (motion_sensor_in_forced_mode(sensor)) {
-		if (motion_sensor_time_to_read(ts, sensor)) {
-			struct ec_response_motion_sensor_data vector;
-			int *v = sensor->raw_xyz;
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		if (motion_sensor_in_forced_mode(sensor)) {
+			if (motion_sensor_time_to_read(ts, sensor)) {
+				struct ec_response_motion_sensor_data vector;
+				int *v = sensor->raw_xyz;
 
-			ret = motion_sense_read(sensor);
-			if (ret == EC_SUCCESS) {
-				vector.flags = 0;
-				vector.sensor_num = sensor - motion_sensors;
-#ifdef CONFIG_ACCEL_SPOOF_MODE
-				if (sensor->flags &
-				    MOTIONSENSE_FLAG_IN_SPOOF_MODE)
-					v = sensor->spoof_xyz;
-#endif /* defined(CONFIG_ACCEL_SPOOF_MODE) */
-				vector.data[X] = v[X];
-				vector.data[Y] = v[Y];
-				vector.data[Z] = v[Z];
-				motion_sense_fifo_stage_data(
-					&vector, sensor, 3,
-					__hw_clock_source_read());
-				motion_sense_fifo_commit_data();
+				ret = motion_sense_read(sensor);
+				if (ret == EC_SUCCESS) {
+					vector.flags = 0;
+					vector.sensor_num = sensor -
+						motion_sensors;
+					if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE)
+					    && sensor->flags &
+					    MOTIONSENSE_FLAG_IN_SPOOF_MODE)
+						v = sensor->spoof_xyz;
+					vector.data[X] = v[X];
+					vector.data[Y] = v[Y];
+					vector.data[Z] = v[Z];
+					motion_sense_fifo_stage_data(
+						&vector, sensor, 3,
+						__hw_clock_source_read());
+					motion_sense_fifo_commit_data();
+				}
+				increment_sensor_collection(sensor, ts);
+			} else {
+				ret = EC_ERROR_BUSY;
 			}
-			increment_sensor_collection(sensor, ts);
-		} else {
-			ret = EC_ERROR_BUSY;
 		}
-	}
-	if (*event & TASK_EVENT_MOTION_FLUSH_PENDING) {
-		int flush_pending = atomic_read_clear(&sensor->flush_pending);
+		if (*event & TASK_EVENT_MOTION_FLUSH_PENDING) {
+			int flush_pending = atomic_read_clear(
+				&sensor->flush_pending);
 
-		for (; flush_pending > 0; flush_pending--) {
-			motion_sense_insert_async_event(sensor,
-				ASYNC_EVENT_FLUSH);
+			for (; flush_pending > 0; flush_pending--) {
+				motion_sense_insert_async_event(sensor,
+					ASYNC_EVENT_FLUSH);
+			}
+		}
+	} else {
+		if (motion_sensor_in_forced_mode(sensor)) {
+			if (motion_sensor_time_to_read(ts, sensor)) {
+				/* Get latest data for local calculation */
+				ret = motion_sense_read(sensor);
+				increment_sensor_collection(sensor, ts);
+			} else {
+				ret = EC_ERROR_BUSY;
+			}
+			if (ret == EC_SUCCESS) {
+				mutex_lock(&g_sensor_mutex);
+				memcpy(sensor->xyz, sensor->raw_xyz,
+				       sizeof(sensor->xyz));
+				mutex_unlock(&g_sensor_mutex);
+			}
 		}
 	}
-#else
-	if (motion_sensor_in_forced_mode(sensor)) {
-		if (motion_sensor_time_to_read(ts, sensor)) {
-			/* Get latest data for local calculation */
-			ret = motion_sense_read(sensor);
-			increment_sensor_collection(sensor, ts);
-		} else {
-			ret = EC_ERROR_BUSY;
-		}
-		if (ret == EC_SUCCESS) {
-			mutex_lock(&g_sensor_mutex);
-			memcpy(sensor->xyz, sensor->raw_xyz,
-			       sizeof(sensor->xyz));
-			mutex_unlock(&g_sensor_mutex);
-		}
-	}
-#endif
 
 	/* ODR change was requested. */
 	if (is_odr_pending) {
 		motion_sense_set_data_rate(sensor);
 		motion_sense_set_motion_intervals();
-#ifdef CONFIG_ACCEL_FIFO
-		motion_sense_insert_async_event(sensor,
-				ASYNC_EVENT_ODR);
-#endif
+		if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+			motion_sense_insert_async_event(
+				sensor, ASYNC_EVENT_ODR);
 	}
 	return ret;
 }
@@ -831,9 +831,7 @@ void motion_sense_task(void *u)
 	const uint16_t lid_angle_sensors = (BIT(CONFIG_LID_ANGLE_SENSOR_BASE)|
 					    BIT(CONFIG_LID_ANGLE_SENSOR_LID));
 #endif
-#ifdef CONFIG_ACCEL_FIFO
 	timestamp_t ts_last_int;
-#endif
 #ifdef CONFIG_MOTION_FILL_LPC_SENSE_DATA
 	int sample_id = 0;
 	uint8_t *lpc_status;
@@ -842,9 +840,9 @@ void motion_sense_task(void *u)
 	set_present(lpc_status);
 #endif
 
-#ifdef CONFIG_ACCEL_FIFO
-	ts_last_int = get_time();
-#endif
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+		ts_last_int = get_time();
+
 	while (1) {
 		ts_begin_task = get_time();
 		ready_status = 0;
@@ -897,20 +895,19 @@ void motion_sense_task(void *u)
 		update_sense_data(lpc_status, &sample_id);
 #endif
 
-#ifdef CONFIG_ACCEL_FIFO
 		/*
 		 * Ask the host to flush the queue if
 		 * - a flush event has been queued.
 		 * - the queue is almost full,
 		 * - we haven't done it for a while.
 		 */
-		if (wake_up_needed ||
-		    event & (TASK_EVENT_MOTION_ODR_CHANGE |
-			     TASK_EVENT_MOTION_FLUSH_PENDING) ||
-		    queue_space(&motion_sense_fifo) < CONFIG_ACCEL_FIFO_THRES ||
-		    (ap_event_interval > 0 &&
-		     time_after(ts_begin_task.le.lo,
-				ts_last_int.le.lo + ap_event_interval))) {
+		if (IS_ENABLED(CONFIG_ACCEL_FIFO) &&
+		    (motion_sense_fifo_is_wake_up_needed() ||
+		     event & (TASK_EVENT_MOTION_ODR_CHANGE |
+			      TASK_EVENT_MOTION_FLUSH_PENDING) ||
+		     (ap_event_interval > 0 &&
+		      time_after(ts_begin_task.le.lo,
+				 ts_last_int.le.lo + ap_event_interval)))) {
 			if ((event & TASK_EVENT_MOTION_FLUSH_PENDING) == 0) {
 				motion_sense_fifo_stage_timestamp(
 					__hw_clock_source_read());
@@ -937,9 +934,8 @@ void motion_sense_task(void *u)
 				mkbp_send_event(EC_MKBP_EVENT_SENSOR_FIFO);
 				wake_up_needed = 0;
 			}
-#endif
+#endif /* CONFIG_MKBP_EVENT */
 		}
-#endif
 
 		ts_end_task = get_time();
 		wait_us = -1;
@@ -1248,8 +1244,9 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		args->response_size = sizeof(out->perform_calib);
 		break;
 
-#ifdef CONFIG_ACCEL_FIFO
 	case MOTIONSENSE_CMD_FIFO_FLUSH:
+		if (!IS_ENABLED(CONFIG_ACCEL_FIFO))
+			return EC_RES_INVALID_PARAM;
 		sensor = host_sensor_id_to_real_sensor(
 				in->sensor_odr.sensor_num);
 		if (sensor == NULL)
@@ -1261,6 +1258,15 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			       TASK_EVENT_MOTION_FLUSH_PENDING, 0);
 		/* pass-through */
 	case MOTIONSENSE_CMD_FIFO_INFO:
+		if (!IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+			/*
+			 * Only support the INFO command, to tell there is no
+			 * FIFO.
+			 */
+			memset(&out->fifo_info, 0, sizeof(out->fifo_info));
+			args->response_size = sizeof(out->fifo_info);
+			break;
+		}
 		motion_sense_get_fifo_info(&out->fifo_info);
 		for (i = 0; i < motion_sensor_count; i++) {
 			out->fifo_info.lost[i] = motion_sensors[i].lost;
@@ -1272,6 +1278,8 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		break;
 
 	case MOTIONSENSE_CMD_FIFO_READ:
+		if (!IS_ENABLED(CONFIG_ACCEL_FIFO))
+			return EC_RES_INVALID_PARAM;
 		mutex_lock(&g_sensor_mutex);
 		reported = MIN((args->response_max - sizeof(out->fifo_read)) /
 			       motion_sense_fifo.unit_bytes,
@@ -1285,6 +1293,8 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			motion_sense_fifo.unit_bytes;
 		break;
 	case MOTIONSENSE_CMD_FIFO_INT_ENABLE:
+		if (!IS_ENABLED(CONFIG_ACCEL_FIFO))
+			return EC_RES_INVALID_PARAM;
 		switch (in->fifo_int_enable.enable) {
 		case 0:
 		case 1:
@@ -1298,13 +1308,6 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			return EC_RES_INVALID_PARAM;
 		}
 		break;
-#else
-	case MOTIONSENSE_CMD_FIFO_INFO:
-		/* Only support the INFO command, to tell there is no FIFO. */
-		memset(&out->fifo_info, 0, sizeof(out->fifo_info));
-		args->response_size = sizeof(out->fifo_info);
-		break;
-#endif
 #ifdef CONFIG_GESTURE_HOST_DETECTION
 	case MOTIONSENSE_CMD_LIST_ACTIVITIES: {
 		uint32_t enabled, disabled, mask, i;

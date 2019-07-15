@@ -20,9 +20,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
-#ifdef CONFIG_ACCEL_FIFO
-static volatile uint32_t last_interrupt_timestamp;
-#endif /* CONFIG_ACCEL_FIFO */
+STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
 
 /*
  * When ODR change, the sensor filters need settling time;
@@ -51,12 +49,13 @@ static inline int get_xyz_reg(enum motionsensor_type type)
 static int config_interrupt(const struct motion_sensor_t *s)
 {
 	int ret = EC_SUCCESS;
-
-#ifdef CONFIG_ACCEL_FIFO
 	int int1_ctrl_val;
 
-	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
-			   LSM6DSO_INT1_CTRL, &int1_ctrl_val);
+	if (!IS_ENABLED(CONFIG_ACCEL_FIFO))
+		return ret;
+
+	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags, LSM6DSO_INT1_CTRL,
+			   &int1_ctrl_val);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -64,8 +63,8 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	 * Configure FIFO threshold to 1 sample: interrupt on watermark
 	 * will be generated every time a new data sample will be stored
 	 * in FIFO. The interrupr on watermark is cleared only when the
-	 * number or samples still present in FIFO exceeds the configured
-	 * threshold.
+	 * number or samples still present in FIFO exceeds the
+	 * configured threshold.
 	 */
 	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
 			    LSM6DSO_FIFO_CTRL1_ADDR, 1);
@@ -75,14 +74,12 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	int1_ctrl_val |= LSM6DSO_INT_FIFO_TH | LSM6DSO_INT_FIFO_OVR |
 		LSM6DSO_INT_FIFO_FULL;
 
-	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-			    LSM6DSO_INT1_CTRL, int1_ctrl_val);
-#endif /* CONFIG_ACCEL_FIFO */
+	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags, LSM6DSO_INT1_CTRL,
+			    int1_ctrl_val);
 
 	return ret;
 }
 
-#ifdef CONFIG_ACCEL_FIFO
 /**
  * fifo_disable - set fifo mode to LSM6DSO_FIFO_MODE_BYPASS_VAL
  * @s: Motion sensor pointer: must be MOTIONSENSE_TYPE_ACCEL.
@@ -217,16 +214,14 @@ static int accelgyro_config_fifo(const struct motion_sensor_t *s)
 
 	return fifo_enable(s);
 }
-#endif /* CONFIG_ACCEL_FIFO */
 
 /**
  * lsm6dso_interrupt - interrupt from int1 pin of sensor
  */
 void lsm6dso_interrupt(enum gpio_signal signal)
 {
-#ifdef CONFIG_ACCEL_FIFO
-	last_interrupt_timestamp = __hw_clock_source_read();
-#endif /* CONFIG_ACCEL_FIFO */
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+		last_interrupt_timestamp = __hw_clock_source_read();
 
 	task_set_event(TASK_ID_MOTIONSENSE,
 		       CONFIG_ACCEL_LSM6DSO_INT_EVENT, 0);
@@ -245,21 +240,20 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	    (!(*event & CONFIG_ACCEL_LSM6DSO_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
-#ifdef CONFIG_ACCEL_FIFO
-	/* Read how many data patterns on FIFO to read. */
-	ret = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
-				  LSM6DSO_FIFO_STS1_ADDR,
-				  (uint8_t *)&fsts, sizeof(fsts));
-	if (ret != EC_SUCCESS)
-		return ret;
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		/* Read how many data patterns on FIFO to read. */
+		ret = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
+					  LSM6DSO_FIFO_STS1_ADDR,
+					  (uint8_t *)&fsts, sizeof(fsts));
+		if (ret != EC_SUCCESS)
+			return ret;
 
-	if (fsts.len & (LSM6DSO_FIFO_DATA_OVR | LSM6DSO_FIFO_FULL)) {
-		CPRINTS("%s FIFO Overrun: %04x", s->name, fsts.len);
+		if (fsts.len & (LSM6DSO_FIFO_DATA_OVR | LSM6DSO_FIFO_FULL))
+			CPRINTS("%s FIFO Overrun: %04x", s->name, fsts.len);
+
+		if (fsts.len & LSM6DSO_FIFO_DIFF_MASK)
+			ret = load_fifo(s, &fsts, last_interrupt_timestamp);
 	}
-
-	if (fsts.len & LSM6DSO_FIFO_DIFF_MASK)
-		ret = load_fifo(s, &fsts, last_interrupt_timestamp);
-#endif /* CONFIG_ACCEL_FIFO */
 
 	return ret;
 }
@@ -355,9 +349,8 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	ret = st_write_data_with_mask(s, ctrl_reg, LSM6DSO_ODR_MASK, reg_val);
 	if (ret == EC_SUCCESS) {
 		data->base.odr = normalized_rate;
-#ifdef CONFIG_ACCEL_FIFO
-		accelgyro_config_fifo(s);
-#endif /* CONFIG_ACCEL_FIFO */
+		if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+			accelgyro_config_fifo(s);
 	}
 
 	mutex_unlock(s->mutex);
@@ -465,11 +458,11 @@ static int init(const struct motion_sensor_t *s)
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
 
-#ifdef CONFIG_ACCEL_FIFO
-		ret = fifo_disable(s);
-		if (ret != EC_SUCCESS)
-			goto err_unlock;
-#endif /* CONFIG_ACCEL_FIFO */
+		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+			ret = fifo_disable(s);
+			if (ret != EC_SUCCESS)
+				goto err_unlock;
+		}
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
 		ret = config_interrupt(s);

@@ -93,9 +93,6 @@ static int si114x_read_results(struct motion_sensor_t *s, int nb)
 	int i, ret, val;
 	struct si114x_drv_data_t *data = SI114X_GET_DATA(s);
 	struct si114x_typed_data_t *type_data = SI114X_GET_TYPED_DATA(s);
-#ifdef CONFIG_ACCEL_FIFO
-	struct ec_response_motion_sensor_data vector;
-#endif
 
 	/* Read ALX result */
 	for (i = 0; i < nb; i++) {
@@ -147,23 +144,24 @@ static int si114x_read_results(struct motion_sensor_t *s, int nb)
 	if (i == nb)
 		return EC_ERROR_UNCHANGED;
 
-#ifdef CONFIG_ACCEL_FIFO
-	vector.flags = 0;
-	for (i = 0; i < nb; i++)
-		vector.data[i] = s->raw_xyz[i];
-	for (i = nb; i < 3; i++)
-		vector.data[i] = 0;
-	vector.sensor_num = s - motion_sensors;
-	motion_sense_fifo_stage_data(&vector, s, nb,
-				   __hw_clock_source_read());
-	motion_sense_fifo_commit_data();
-	/*
-	 * TODO: get time at a more accurate spot.
-	 * Like in si114x_interrupt
-	 */
-#else
-	/* We need to copy raw_xyz into xyz with mutex */
-#endif
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		struct ec_response_motion_sensor_data vector;
+
+		vector.flags = 0;
+		for (i = 0; i < nb; i++)
+			vector.data[i] = s->raw_xyz[i];
+		for (i = nb; i < 3; i++)
+			vector.data[i] = 0;
+		vector.sensor_num = s - motion_sensors;
+		motion_sense_fifo_stage_data(&vector, s, nb,
+					     __hw_clock_source_read());
+		motion_sense_fifo_commit_data();
+		/*
+		 * TODO: get time at a more accurate spot.
+		 * Like in si114x_interrupt
+		 */
+	}
+	/* Otherwise, we need to copy raw_xyz into xyz with mutex */
 	return EC_SUCCESS;
 }
 

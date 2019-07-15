@@ -76,7 +76,7 @@ enum sensor_config {
 #define BASE_RANGE(_range) ((_range) & ~ROUND_UP_FLAG)
 
 #ifdef CONFIG_ACCEL_FIFO
-#define MAX_FIFO_EVENT_COUNT CONFIG_ACCEL_FIFO
+#define MAX_FIFO_EVENT_COUNT CONFIG_ACCEL_FIFO_SIZE
 #else
 #define MAX_FIFO_EVENT_COUNT 0
 #endif

@@ -133,11 +133,12 @@
 /* Lower maximal ODR to 100Hz */
 #define CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ 100000
 
+/* Enable sensor fifo, must also define the _SIZE and _THRES */
+#define CONFIG_ACCEL_FIFO
 /* FIFO size is in power of 2. */
-#define CONFIG_ACCEL_FIFO 512
-
+#define CONFIG_ACCEL_FIFO_SIZE 512
 /* Depends on how fast the AP boots and typical ODRs */
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
 #define CONFIG_TABLET_MODE
 #define CONFIG_TABLET_MODE_SWITCH

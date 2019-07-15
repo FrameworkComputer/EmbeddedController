@@ -99,8 +99,11 @@
 #define CONFIG_TABLET_MODE
 #define CONFIG_TABLET_MODE_SWITCH
 
+/* Enable sensor fifo, must also define the _SIZE and _THRES */
+#define CONFIG_ACCEL_FIFO
 /* FIFO size is in power of 2. */
-#define CONFIG_ACCEL_FIFO 256
+#define CONFIG_ACCEL_FIFO_SIZE 256
+/* Depends on how fast the AP boots and typical ODRs. */
 #define CONFIG_ACCEL_FIFO_THRES 10
 
 /* USB PD config */

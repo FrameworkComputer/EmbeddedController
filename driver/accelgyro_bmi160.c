@@ -27,9 +27,7 @@
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
-#ifdef CONFIG_ACCEL_FIFO
-static volatile uint32_t last_interrupt_timestamp;
-#endif
+STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
 
 /*
  * Struct for pairing an engineering value with the register value for a
@@ -304,7 +302,6 @@ int bmi160_sec_raw_write8(const int port,
 }
 #endif
 
-#ifdef CONFIG_ACCEL_FIFO
 static int enable_fifo(const struct motion_sensor_t *s, int enable)
 {
 	struct bmi160_drv_data_t *data = BMI160_GET_DATA(s);
@@ -333,7 +330,6 @@ static int enable_fifo(const struct motion_sensor_t *s, int enable)
 	}
 	return ret;
 }
-#endif
 
 static int set_range(const struct motion_sensor_t *s,
 				int range,
@@ -386,10 +382,10 @@ static int set_data_rate(const struct motion_sensor_t *s,
 #endif
 
 	if (rate == 0) {
-#ifdef CONFIG_ACCEL_FIFO
 		/* FIFO stop collecting events */
-		enable_fifo(s, 0);
-#endif
+		if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+			enable_fifo(s, 0);
+
 		/* go to suspend mode */
 		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
 				 BMI160_CMD_REG,
@@ -473,13 +469,12 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	}
 #endif
 
-#ifdef CONFIG_ACCEL_FIFO
 	/*
 	 * FIFO start collecting events.
 	 * They will be discarded if AP does not want them.
 	 */
-	enable_fifo(s, 1);
-#endif
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+		enable_fifo(s, 1);
 
 accel_cleanup:
 	mutex_unlock(s->mutex);
@@ -825,7 +820,6 @@ int list_activities(const struct motion_sensor_t *s,
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
 
-#ifdef CONFIG_ACCEL_FIFO
 enum fifo_state {
 	FIFO_HEADER,
 	FIFO_DATA_SKIP,
@@ -873,10 +867,9 @@ static int bmi160_decode_header(struct motion_sensor_t *accel,
 				int *v = s->raw_xyz;
 				vector.flags = 0;
 				normalize(s, v, *bp);
-#ifdef CONFIG_ACCEL_SPOOF_MODE
-				if (s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE)
+				if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) &&
+				    s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE)
 					v = s->spoof_xyz;
-#endif  /* defined(CONFIG_ACCEL_SPOOF_MODE) */
 				vector.data[X] = v[X];
 				vector.data[Y] = v[Y];
 				vector.data[Z] = v[Z];
@@ -1037,7 +1030,6 @@ static int load_fifo(struct motion_sensor_t *s, uint32_t last_ts)
 	motion_sense_fifo_commit_data();
 	return EC_SUCCESS;
 }
-#endif  /* CONFIG_ACCEL_FIFO */
 
 /**
  * bmi160_interrupt - called when the sensor activates the interrupt line.
@@ -1047,9 +1039,9 @@ static int load_fifo(struct motion_sensor_t *s, uint32_t last_ts)
  */
 void bmi160_interrupt(enum gpio_signal signal)
 {
-#ifdef CONFIG_ACCEL_FIFO
-	last_interrupt_timestamp = __hw_clock_source_read();
-#endif
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+		last_interrupt_timestamp = __hw_clock_source_read();
+
 	task_set_event(TASK_ID_MOTIONSENSE,
 		       CONFIG_ACCELGYRO_BMI160_INT_EVENT, 0);
 }
@@ -1119,34 +1111,37 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
 			 BMI160_INT_MAP_REG(1), tmp);
 
-#ifdef CONFIG_ACCEL_FIFO
-	/* map fifo water mark to int 1 */
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 BMI160_INT_FIFO_MAP,
-			 BMI160_INT_MAP(1, FWM) |
-			 BMI160_INT_MAP(1, FFULL));
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		/* map fifo water mark to int 1 */
+		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
+				 BMI160_INT_FIFO_MAP,
+				 BMI160_INT_MAP(1, FWM) |
+				 BMI160_INT_MAP(1, FFULL));
 
-	/* configure fifo watermark to int whenever there's any data in there */
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 BMI160_FIFO_CONFIG_0, 1);
+		/*
+		 * Configure fifo watermark to int whenever there's any data in
+		 * there
+		 */
+		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
+				 BMI160_FIFO_CONFIG_0, 1);
 #ifdef CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 BMI160_FIFO_CONFIG_1,
-			 BMI160_FIFO_HEADER_EN);
+		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
+				 BMI160_FIFO_CONFIG_1,
+				 BMI160_FIFO_HEADER_EN);
 #else
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 BMI160_FIFO_CONFIG_1,
-			 BMI160_FIFO_TAG_INT2_EN |
-			 BMI160_FIFO_HEADER_EN);
+		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
+				 BMI160_FIFO_CONFIG_1,
+				 BMI160_FIFO_TAG_INT2_EN |
+				 BMI160_FIFO_HEADER_EN);
 #endif
 
-	/* Set fifo*/
-	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
-			BMI160_INT_EN_1, &tmp);
-	tmp |= BMI160_INT_FWM_EN | BMI160_INT_FFUL_EN;
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 BMI160_INT_EN_1, tmp);
-#endif
+		/* Set fifo*/
+		ret = raw_read8(s->port, s->i2c_spi_addr_flags,
+				BMI160_INT_EN_1, &tmp);
+		tmp |= BMI160_INT_FWM_EN | BMI160_INT_FFUL_EN;
+		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
+				 BMI160_INT_EN_1, tmp);
+	}
 	mutex_unlock(s->mutex);
 	return ret;
 }
@@ -1222,10 +1217,9 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 			*event |= TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(
 					MOTIONSENSE_ACTIVITY_SIG_MOTION);
 #endif
-#ifdef CONFIG_ACCEL_FIFO
-		if (interrupt & (BMI160_FWM_INT | BMI160_FFULL_INT))
+		if (IS_ENABLED(CONFIG_ACCEL_FIFO) &&
+		    interrupt & (BMI160_FWM_INT | BMI160_FFULL_INT))
 			load_fifo(s, last_interrupt_timestamp);
-#endif
 #ifdef CONFIG_BMI160_ORIENTATION_SENSOR
 		irq_set_orientation(s, interrupt);
 #endif

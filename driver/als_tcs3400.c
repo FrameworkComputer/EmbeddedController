@@ -18,9 +18,7 @@
 
 #define CPRINTS(fmt, args...) cprints(CC_ACCEL, "%s "fmt, __func__, ## args)
 
-#ifdef CONFIG_ACCEL_FIFO
-static volatile uint32_t last_interrupt_timestamp;
-#endif
+STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
 
 #ifdef CONFIG_TCS_USE_LUX_TABLE
 /*
@@ -423,10 +421,10 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 		}
 #endif /* CONFIG_ACCEL_SPOOF_MODE */
 
-#ifdef CONFIG_ACCEL_FIFO
-		vector.sensor_num = s - motion_sensors;
-		motion_sense_fifo_stage_data(&vector, s, 3, last_ts);
-#endif
+		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+			vector.sensor_num = s - motion_sensors;
+			motion_sense_fifo_stage_data(&vector, s, 3, last_ts);
+		}
 	}
 
 	/*
@@ -476,9 +474,9 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 
 void tcs3400_interrupt(enum gpio_signal signal)
 {
-#ifdef CONFIG_ACCEL_FIFO
-	last_interrupt_timestamp = __hw_clock_source_read();
-#endif
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+		last_interrupt_timestamp = __hw_clock_source_read();
+
 	task_set_event(TASK_ID_MOTIONSENSE,
 		       CONFIG_ALS_TCS3400_INT_EVENT, 0);
 }

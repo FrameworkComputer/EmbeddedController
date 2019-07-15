@@ -72,10 +72,12 @@
 /* I2C_PORT_ACCEL needs to be defined for i2c transactions */
 #define I2C_PORT_ACCEL I2C_PORT_SENSOR
 
+/* Enable sensor fifo, must also define the _SIZE and _THRES */
+#define CONFIG_ACCEL_FIFO
 /* FIFO size is in power of 2. */
-#define CONFIG_ACCEL_FIFO 256
+#define CONFIG_ACCEL_FIFO_SIZE 256
 /* Depends on how fast the AP boots and typical ODRs */
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
 /* Sensor console commands */
 #define CONFIG_CMD_ACCELS

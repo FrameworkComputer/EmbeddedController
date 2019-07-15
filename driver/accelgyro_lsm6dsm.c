@@ -26,7 +26,6 @@
 
 #define IS_FSTS_EMPTY(s) ((s).len & LSM6DSM_FIFO_EMPTY)
 
-#ifdef CONFIG_ACCEL_FIFO
 static volatile uint32_t last_interrupt_timestamp;
 
 /**
@@ -83,8 +82,6 @@ static inline uint8_t get_sensor_type(enum dev_fifo fifo_type)
 	return map[fifo_type];
 }
 
-#endif
-
 /**
  * @return output base register for sensor
  */
@@ -112,23 +109,22 @@ static int config_interrupt(const struct motion_sensor_t *accel)
 	if (ret != EC_SUCCESS)
 		return ret;
 
-#ifdef CONFIG_ACCEL_FIFO
-	/* As soon as one sample is ready, trigger an interrupt. */
-	ret = st_raw_write8(accel->port, accel->i2c_spi_addr_flags,
-			    LSM6DSM_FIFO_CTRL1_ADDR,
-			    OUT_XYZ_SIZE / sizeof(uint16_t));
-	if (ret != EC_SUCCESS)
-		return ret;
-	int1_ctrl_val |= LSM6DSM_INT_FIFO_TH | LSM6DSM_INT_FIFO_OVR |
-		LSM6DSM_INT_FIFO_FULL;
-#endif /* CONFIG_ACCEL_FIFO */
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		/* As soon as one sample is ready, trigger an interrupt. */
+		ret = st_raw_write8(accel->port, accel->i2c_spi_addr_flags,
+				    LSM6DSM_FIFO_CTRL1_ADDR,
+				    OUT_XYZ_SIZE / sizeof(uint16_t));
+		if (ret != EC_SUCCESS)
+			return ret;
+		int1_ctrl_val |= LSM6DSM_INT_FIFO_TH | LSM6DSM_INT_FIFO_OVR |
+			LSM6DSM_INT_FIFO_FULL;
+	}
 
 	return st_raw_write8(accel->port, accel->i2c_spi_addr_flags,
 			     LSM6DSM_INT1_CTRL, int1_ctrl_val);
 }
 
 
-#ifdef CONFIG_ACCEL_FIFO
 /**
  * fifo_disable - set fifo mode
  * @accel: Motion sensor pointer: must be MOTIONSENSE_TYPE_ACCEL.
@@ -437,14 +433,11 @@ static int is_fifo_empty(struct motion_sensor_t *s, struct fstatus *fsts)
 	return IS_FSTS_EMPTY(*fsts);
 }
 
-#endif /* CONFIG_ACCEL_FIFO */
-
 static void handle_interrupt_for_fifo(uint32_t ts)
 {
-#ifdef CONFIG_ACCEL_FIFO
-	if (time_after(ts, last_interrupt_timestamp))
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO) &&
+	    time_after(ts, last_interrupt_timestamp))
 		last_interrupt_timestamp = ts;
-#endif
 	task_set_event(TASK_ID_MOTIONSENSE,
 		       CONFIG_ACCEL_LSM6DSM_INT_EVENT, 0);
 }
@@ -468,8 +461,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	    (!(*event & CONFIG_ACCEL_LSM6DSM_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
-#ifdef CONFIG_ACCEL_FIFO
-	{
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 		struct fstatus fsts;
 		uint32_t last_fifo_read_ts;
 		uint32_t triggering_interrupt_timestamp =
@@ -498,7 +490,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		    triggering_interrupt_timestamp == last_interrupt_timestamp)
 			handle_interrupt_for_fifo(last_fifo_read_ts);
 	}
-#endif
+
 	return ret;
 }
 #endif /* CONFIG_ACCEL_INTERRUPTS */
@@ -576,21 +568,22 @@ static int get_range(const struct motion_sensor_t *s)
 int lsm6dsm_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 {
 	struct stprivate_data *data = s->drv_data;
-#ifdef CONFIG_ACCEL_FIFO
-	const struct motion_sensor_t *accel = LSM6DSM_MAIN_SENSOR(s);
-	struct lsm6dsm_data *private = LSM6DSM_GET_DATA(accel);
-#endif
+	const struct motion_sensor_t *accel = IS_ENABLED(CONFIG_ACCEL_FIFO) ?
+		LSM6DSM_MAIN_SENSOR(s) : NULL;
+	struct lsm6dsm_data *private = IS_ENABLED(CONFIG_ACCEL_FIFO) ?
+		LSM6DSM_GET_DATA(accel) : NULL;
 	int ret = EC_SUCCESS, normalized_rate = 0;
 	uint8_t ctrl_reg, reg_val = 0;
 
-#ifdef CONFIG_ACCEL_FIFO
-	/* FIFO must be disabled before setting any ODR values */
-	ret = fifo_disable(accel);
-	if (ret != EC_SUCCESS) {
-		CPRINTS("Failed to disable FIFO. Error: %d", ret);
-		return ret;
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		/* FIFO must be disabled before setting any ODR values */
+		ret = fifo_disable(accel);
+		if (ret != EC_SUCCESS) {
+			CPRINTS("Failed to disable FIFO. Error: %d", ret);
+			return ret;
+		}
 	}
-#endif
+
 	if (rate > 0) {
 		reg_val = LSM6DSM_ODR_TO_REG(rate);
 		normalized_rate = LSM6DSM_REG_TO_ODR(reg_val);
@@ -636,16 +629,17 @@ int lsm6dsm_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	}
 	if (ret == EC_SUCCESS) {
 		data->base.odr = normalized_rate;
-#ifdef CONFIG_ACCEL_FIFO
-		private->samples_to_discard[s->type] =
-			LSM6DSM_DISCARD_SAMPLES;
-		private->load_fifo_sensor_state[get_fifo_type(s)].sample_rate =
-				normalized_rate == 0 ? 0 : SECOND * 1000 /
-						normalized_rate;
-		ret = fifo_enable(accel);
-		if (ret != EC_SUCCESS)
-			CPRINTS("Failed to enable FIFO. Error: %d", ret);
-#endif
+		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+			private->samples_to_discard[s->type] =
+				LSM6DSM_DISCARD_SAMPLES;
+			private->load_fifo_sensor_state[get_fifo_type(s)]
+				.sample_rate = normalized_rate == 0
+					? 0 : SECOND * 1000 / normalized_rate;
+			ret = fifo_enable(accel);
+			if (ret != EC_SUCCESS)
+				CPRINTS("Failed to enable FIFO. Error: %d",
+					ret);
+		}
 	}
 
 	mutex_unlock(s->mutex);
@@ -803,11 +797,11 @@ static int init(const struct motion_sensor_t *s)
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
 
-#ifdef CONFIG_ACCEL_FIFO
-		ret = fifo_disable(s);
-		if (ret != EC_SUCCESS)
-			goto err_unlock;
-#endif /* CONFIG_ACCEL_FIFO */
+		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+			ret = fifo_disable(s);
+			if (ret != EC_SUCCESS)
+				goto err_unlock;
+		}
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
 		ret = config_interrupt(s);

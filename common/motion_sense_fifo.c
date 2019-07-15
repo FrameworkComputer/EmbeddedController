@@ -26,7 +26,7 @@ int fifo_queue_count;
 int fifo_int_enabled;
 
 struct queue motion_sense_fifo = QUEUE_NULL(
-	CONFIG_ACCEL_FIFO, struct ec_response_motion_sensor_data);
+	CONFIG_ACCEL_FIFO_SIZE, struct ec_response_motion_sensor_data);
 int motion_sense_fifo_lost;
 
 /**
@@ -401,3 +401,8 @@ static int motion_sense_get_next_event(uint8_t *out)
 
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_SENSOR_FIFO, motion_sense_get_next_event);
 
+inline int motion_sense_fifo_is_wake_up_needed(void)
+{
+	return queue_space(&motion_sense_fifo) < CONFIG_ACCEL_FIFO_THRES ||
+		wake_up_needed;
+}

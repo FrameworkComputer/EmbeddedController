@@ -67,4 +67,11 @@ void motion_sense_fifo_stage_timestamp(uint32_t timestamp);
 void motion_sense_get_fifo_info(
 	struct ec_response_motion_sense_fifo_info *fifo_info);
 
+/**
+ * Checks if either the AP should be woken up due to the fifo.
+ *
+ * @return 1 if the AP should be woken up, 0 otherwise.
+ */
+int motion_sense_fifo_is_wake_up_needed(void);
+
 #endif /* __CROS_EC_MOTION_SENSE_FIFO_H */
