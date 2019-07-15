@@ -10,7 +10,7 @@
 #include "console.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/it83xx_pd.h"
-#include "driver/usb_mux_it5205.h"
+#include "driver/usb_mux/it5205.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"

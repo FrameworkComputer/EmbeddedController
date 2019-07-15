@@ -5,8 +5,8 @@
  * Parade PS874X USB Type-C Redriving Switch for USB Host / DisplayPort.
  */
 
-#ifndef __CROS_EC_USB_MUX_PS874X_H
-#define __CROS_EC_USB_MUX_PS874X_H
+#ifndef __CROS_EC_PS874X_H
+#define __CROS_EC_PS874X_H
 
 /* Mode register for setting mux */
 #define PS874X_REG_MODE 0x00
@@ -111,4 +111,4 @@
 
 int ps874x_tune_usb_eq(int i2c_addr, uint8_t tx, uint8_t rx);
 
-#endif /* __CROS_EC_USB_MUX_PS874X_H */
+#endif /* __CROS_EC_PS874X_H */

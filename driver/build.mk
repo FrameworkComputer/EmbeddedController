@@ -130,14 +130,14 @@ driver-$(CONFIG_USB_PD_TCPM_NCT38XX)+=tcpm/nct38xx.o
 driver-$(CONFIG_USB_PD_RETIMER_INTEL_BB)+=retimer/bb_retimer.o
 
 # USB mux high-level driver
-driver-$(CONFIG_USBC_SS_MUX)+=usb_mux.o
+driver-$(CONFIG_USBC_SS_MUX)+=usb_mux/usb_mux.o
 
 # USB muxes
-driver-$(CONFIG_USB_MUX_IT5205)+=usb_mux_it5205.o
-driver-$(CONFIG_USB_MUX_PI3USB30532)+=usb_mux_pi3usb30532.o
-driver-$(CONFIG_USB_MUX_PS8740)+=usb_mux_ps874x.o
-driver-$(CONFIG_USB_MUX_PS8743)+=usb_mux_ps874x.o
-driver-$(CONFIG_USB_MUX_VIRTUAL)+=usb_mux_virtual.o
+driver-$(CONFIG_USB_MUX_IT5205)+=usb_mux/it5205.o
+driver-$(CONFIG_USB_MUX_PI3USB30532)+=usb_mux/pi3usb30532.o
+driver-$(CONFIG_USB_MUX_PS8740)+=usb_mux/ps874x.o
+driver-$(CONFIG_USB_MUX_PS8743)+=usb_mux/ps874x.o
+driver-$(CONFIG_USB_MUX_VIRTUAL)+=usb_mux/virtual.o
 
 # Type-C Power Path Controllers (PPC)
 driver-$(CONFIG_USBC_PPC_SN5S330)+=ppc/sn5s330.o

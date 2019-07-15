@@ -34,7 +34,7 @@
 #include "uart.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
-#include "usb_mux_ps874x.h"
+#include "usb_mux/ps874x.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"

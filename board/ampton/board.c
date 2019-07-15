@@ -17,7 +17,7 @@
 #include "driver/sync.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/tcpm/ps8xxx.h"
-#include "driver/usb_mux_it5205.h"
+#include "driver/usb_mux/it5205.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"

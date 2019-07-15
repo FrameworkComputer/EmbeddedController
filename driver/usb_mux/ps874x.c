@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "i2c.h"
-#include "usb_mux_ps874x.h"
+#include "ps874x.h"
 #include "usb_mux.h"
 #include "util.h"
 

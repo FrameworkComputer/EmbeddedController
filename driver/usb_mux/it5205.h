@@ -5,8 +5,8 @@
  * ITE IT5205 Type-C USB alternate mode mux.
  */
 
-#ifndef __CROS_EC_USB_MUX_IT5205_H
-#define __CROS_EC_USB_MUX_IT5205_H
+#ifndef __CROS_EC_IT5205_H
+#define __CROS_EC_IT5205_H
 
 /* I2C interface */
 #define IT5205_I2C_ADDR1 (0x48 << 1)
@@ -31,4 +31,4 @@
 #define IT5205_DP_USB            0x03
 #define IT5205_USB               0x07
 
-#endif /* __CROS_EC_USB_MUX_IT5205_H */
+#endif /* __CROS_EC_IT5205_H */

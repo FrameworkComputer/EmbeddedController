@@ -8,8 +8,8 @@
 #include "common.h"
 #include "console.h"
 #include "i2c.h"
+#include "it5205.h"
 #include "usb_mux.h"
-#include "usb_mux_it5205.h"
 #include "util.h"
 
 #define MUX_STATE_DP_USB_MASK (MUX_USB_ENABLED | MUX_DP_ENABLED)
