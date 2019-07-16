@@ -37,13 +37,13 @@ static const struct charger_info bq24725_charger_info = {
 
 static inline int sbc_read(int cmd, int *param)
 {
-	return i2c_read16__7bf(I2C_PORT_CHARGER, CHARGER_ADDR__7bf,
+	return i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR_FLAGS,
 			  cmd, param);
 }
 
 static inline int sbc_write(int cmd, int param)
 {
-	return i2c_write16__7bf(I2C_PORT_CHARGER, CHARGER_ADDR__7bf,
+	return i2c_write16(I2C_PORT_CHARGER, CHARGER_ADDR_FLAGS,
 			   cmd, param);
 }
 

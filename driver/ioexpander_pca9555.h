@@ -28,18 +28,18 @@
 #define PCA9555_IO_6	BIT(6)
 #define PCA9555_IO_7	BIT(7)
 
-static inline int pca9555_read__7bf(const int port,
-			       const uint16_t i2c_addr__7bf,
+static inline int pca9555_read(const int port,
+			       const uint16_t i2c_addr_flags,
 			       int reg, int *data_ptr)
 {
-	return i2c_read8__7bf(port, i2c_addr__7bf, reg, data_ptr);
+	return i2c_read8(port, i2c_addr_flags, reg, data_ptr);
 }
 
-static inline int pca9555_write__7bf(const int port,
-				const uint16_t i2c_addr__7bf,
+static inline int pca9555_write(const int port,
+				const uint16_t i2c_addr_flags,
 				int reg, int data)
 {
-	return i2c_write8__7bf(port, i2c_addr__7bf, reg, data);
+	return i2c_write8(port, i2c_addr_flags, reg, data);
 }
 
 #endif /* __CROS_EC_IOEXPANDER_PCA9555_H */

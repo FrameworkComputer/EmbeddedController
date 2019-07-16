@@ -22,7 +22,7 @@ static int hc_locate_chip(struct host_cmd_handler_args *args)
 			return EC_RES_OVERFLOW;
 		resp->bus_type = EC_BUS_TYPE_I2C;
 		resp->i2c_info.port = I2C_PORT_EEPROM;
-		resp->i2c_info.addr__7bf = I2C_ADDR_EEPROM__7bf;
+		resp->i2c_info.addr_flags = I2C_ADDR_EEPROM_FLAGS;
 #else
 		/* Lookup type is supported, but not present on system. */
 		return EC_RES_UNAVAILABLE;
@@ -36,8 +36,8 @@ static int hc_locate_chip(struct host_cmd_handler_args *args)
 		if (resp->bus_type == EC_BUS_TYPE_I2C) {
 			resp->i2c_info.port =
 				tcpc_config[params->index].i2c_info.port;
-			resp->i2c_info.addr__7bf =
-				tcpc_config[params->index].i2c_info.addr__7bf;
+			resp->i2c_info.addr_flags =
+				tcpc_config[params->index].i2c_info.addr_flags;
 		}
 #ifdef CONFIG_INTEL_VIRTUAL_MUX
 		resp->reserved = tcpc_config[params->index].usb23;

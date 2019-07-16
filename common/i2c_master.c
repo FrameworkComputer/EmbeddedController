@@ -70,29 +70,27 @@ const struct i2c_port_t *get_i2c_port(const int port)
 	return NULL;
 }
 
-static int chip_i2c_xfer_with_notify__7bf(const int port,
-				     const uint16_t slave_addr__7bf,
+static int chip_i2c_xfer_with_notify(const int port,
+				     const uint16_t slave_addr_flags,
 				     const uint8_t *out, int out_size,
 				     uint8_t *in, int in_size, int flags)
 {
 	int ret;
 
 	if (IS_ENABLED(CONFIG_I2C_DEBUG))
-		i2c_trace_notify__7bf(port, slave_addr__7bf,
-				 0, out, out_size);
+		i2c_trace_notify(port, slave_addr_flags, 0, out, out_size);
 
 	if (IS_ENABLED(CONFIG_I2C_XFER_BOARD_CALLBACK))
-		i2c_start_xfer_notify__7bf(port, slave_addr__7bf);
+		i2c_start_xfer_notify(port, slave_addr_flags);
 
-	ret = chip_i2c_xfer__7bf(port, slave_addr__7bf,
+	ret = chip_i2c_xfer(port, slave_addr_flags,
 			    out, out_size, in, in_size, flags);
 
 	if (IS_ENABLED(CONFIG_I2C_XFER_BOARD_CALLBACK))
-		i2c_end_xfer_notify__7bf(port, slave_addr__7bf);
+		i2c_end_xfer_notify(port, slave_addr_flags);
 
 	if (IS_ENABLED(CONFIG_I2C_DEBUG))
-		i2c_trace_notify__7bf(port, slave_addr__7bf,
-				 1, in, in_size);
+		i2c_trace_notify(port, slave_addr_flags, 1, in, in_size);
 
 	return ret;
 }
@@ -102,8 +100,8 @@ static int chip_i2c_xfer_with_notify__7bf(const int port,
  * Internal function that splits reading into multiple chip_i2c_xfer() calls
  * if in_size exceeds CONFIG_I2C_CHIP_MAX_READ_SIZE.
  */
-static int i2c_xfer_no_retry__7bf(const int port,
-			     const uint16_t slave_addr__7bf,
+static int i2c_xfer_no_retry(const int port,
+			     const uint16_t slave_addr_flags,
 			     const uint8_t *out, int out_size,
 			     uint8_t *in, int in_size, int flags)
 {
@@ -113,14 +111,14 @@ static int i2c_xfer_no_retry__7bf(const int port,
 
 	in_size -= in_chunk_size;
 	out_flags |= !in_size ? (flags & I2C_XFER_STOP) : 0;
-	ret = chip_i2c_xfer_with_notify__7bf(port, slave_addr__7bf,
+	ret = chip_i2c_xfer_with_notify(port, slave_addr_flags,
 					out, out_size, in,
 					in_chunk_size, out_flags);
 	in += in_chunk_size;
 	while (in_size && ret == EC_SUCCESS) {
 		in_chunk_size = MIN(in_size, CONFIG_I2C_CHIP_MAX_READ_SIZE);
 		in_size -= in_chunk_size;
-		ret = chip_i2c_xfer_with_notify__7bf(port, slave_addr__7bf,
+		ret = chip_i2c_xfer_with_notify(port, slave_addr_flags,
 			NULL, 0, in,
 			in_chunk_size, !in_size ? (flags & I2C_XFER_STOP) : 0);
 		in += in_chunk_size;
@@ -129,8 +127,8 @@ static int i2c_xfer_no_retry__7bf(const int port,
 }
 #endif /* CONFIG_I2C_XFER_LARGE_READ */
 
-int i2c_xfer_unlocked__7bf(const int port,
-		      const uint16_t slave_addr__7bf,
+int i2c_xfer_unlocked(const int port,
+		      const uint16_t slave_addr_flags,
 		      const uint8_t *out, int out_size,
 		      uint8_t *in, int in_size, int flags)
 {
@@ -144,11 +142,11 @@ int i2c_xfer_unlocked__7bf(const int port,
 
 	for (i = 0; i <= CONFIG_I2C_NACK_RETRY_COUNT; i++) {
 #ifdef CONFIG_I2C_XFER_LARGE_READ
-		ret = i2c_xfer_no_retry__7bf(port, slave_addr__7bf,
+		ret = i2c_xfer_no_retry(port, slave_addr_flags,
 					    out, out_size, in,
 					    in_size, flags);
 #else
-		ret = chip_i2c_xfer_with_notify__7bf(port, slave_addr__7bf,
+		ret = chip_i2c_xfer_with_notify(port, slave_addr_flags,
 						    out, out_size,
 						    in, in_size, flags);
 #endif /* CONFIG_I2C_XFER_LARGE_READ */
@@ -158,15 +156,15 @@ int i2c_xfer_unlocked__7bf(const int port,
 	return ret;
 }
 
-int i2c_xfer__7bf(const int port,
-	     const uint16_t slave_addr__7bf,
+int i2c_xfer(const int port,
+	     const uint16_t slave_addr_flags,
 	     const uint8_t *out, int out_size,
 	     uint8_t *in, int in_size)
 {
 	int rv;
 
 	i2c_lock(port, 1);
-	rv = i2c_xfer_unlocked__7bf(port, slave_addr__7bf,
+	rv = i2c_xfer_unlocked(port, slave_addr_flags,
 			       out, out_size, in, in_size,
 			       I2C_XFER_SINGLE);
 	i2c_lock(port, 0);
@@ -217,8 +215,8 @@ void i2c_prepare_sysjump(void)
 		mutex_lock(port_mutex + i);
 }
 
-int i2c_read32__7bf(const int port,
-	       const uint16_t slave_addr__7bf,
+int i2c_read32(const int port,
+	       const uint16_t slave_addr_flags,
 	       int offset, int *data)
 {
 	int rv;
@@ -226,13 +224,13 @@ int i2c_read32__7bf(const int port,
 
 	reg = offset & 0xff;
 	/* I2C read 32-bit word: transmit 8-bit offset, and read 32bits */
-	rv = i2c_xfer__7bf(port, slave_addr__7bf,
+	rv = i2c_xfer(port, slave_addr_flags,
 		      &reg, 1, buf, sizeof(uint32_t));
 
 	if (rv)
 		return rv;
 
-	if (I2C_IS_BIG_ENDIAN(slave_addr__7bf))
+	if (I2C_IS_BIG_ENDIAN(slave_addr_flags))
 		*data = ((int)buf[0] << 24) | ((int)buf[1] << 16) |
 			((int)buf[0] << 8) | buf[1];
 	else
@@ -242,15 +240,15 @@ int i2c_read32__7bf(const int port,
 	return EC_SUCCESS;
 }
 
-int i2c_write32__7bf(const int port,
-		const uint16_t slave_addr__7bf,
+int i2c_write32(const int port,
+		const uint16_t slave_addr_flags,
 		int offset, int data)
 {
 	uint8_t buf[1 + sizeof(uint32_t)];
 
 	buf[0] = offset & 0xff;
 
-	if (I2C_IS_BIG_ENDIAN(slave_addr__7bf)) {
+	if (I2C_IS_BIG_ENDIAN(slave_addr_flags)) {
 		buf[1] = (data >> 24) & 0xff;
 		buf[2] = (data >> 16) & 0xff;
 		buf[3] = (data >> 8) & 0xff;
@@ -262,12 +260,12 @@ int i2c_write32__7bf(const int port,
 		buf[4] = (data >> 24) & 0xff;
 	}
 
-	return i2c_xfer__7bf(port, slave_addr__7bf,
+	return i2c_xfer(port, slave_addr_flags,
 			buf, sizeof(uint32_t) + 1, NULL, 0);
 }
 
-int i2c_read16__7bf(const int port,
-	       const uint16_t slave_addr__7bf,
+int i2c_read16(const int port,
+	       const uint16_t slave_addr_flags,
 	       int offset, int *data)
 {
 	int rv;
@@ -275,13 +273,13 @@ int i2c_read16__7bf(const int port,
 
 	reg = offset & 0xff;
 	/* I2C read 16-bit word: transmit 8-bit offset, and read 16bits */
-	rv = i2c_xfer__7bf(port, slave_addr__7bf,
+	rv = i2c_xfer(port, slave_addr_flags,
 		      &reg, 1, buf, sizeof(uint16_t));
 
 	if (rv)
 		return rv;
 
-	if (I2C_IS_BIG_ENDIAN(slave_addr__7bf))
+	if (I2C_IS_BIG_ENDIAN(slave_addr_flags))
 		*data = ((int)buf[0] << 8) | buf[1];
 	else
 		*data = ((int)buf[1] << 8) | buf[0];
@@ -289,15 +287,15 @@ int i2c_read16__7bf(const int port,
 	return EC_SUCCESS;
 }
 
-int i2c_write16__7bf(const int port,
-		const uint16_t slave_addr__7bf,
+int i2c_write16(const int port,
+		const uint16_t slave_addr_flags,
 		int offset, int data)
 {
 	uint8_t buf[1 + sizeof(uint16_t)];
 
 	buf[0] = offset & 0xff;
 
-	if (I2C_IS_BIG_ENDIAN(slave_addr__7bf)) {
+	if (I2C_IS_BIG_ENDIAN(slave_addr_flags)) {
 		buf[1] = (data >> 8) & 0xff;
 		buf[2] = data & 0xff;
 	} else {
@@ -305,12 +303,12 @@ int i2c_write16__7bf(const int port,
 		buf[2] = (data >> 8) & 0xff;
 	}
 
-	return i2c_xfer__7bf(port, slave_addr__7bf,
+	return i2c_xfer(port, slave_addr_flags,
 			buf, 1 + sizeof(uint16_t), NULL, 0);
 }
 
-int i2c_read8__7bf(const int port,
-	      const uint16_t slave_addr__7bf,
+int i2c_read8(const int port,
+	      const uint16_t slave_addr_flags,
 	      int offset, int *data)
 {
 	int rv;
@@ -319,15 +317,15 @@ int i2c_read8__7bf(const int port,
 
 	reg = offset;
 
-	rv = i2c_xfer__7bf(port, slave_addr__7bf, &reg, 1, &buf, 1);
+	rv = i2c_xfer(port, slave_addr_flags, &reg, 1, &buf, 1);
 	if (!rv)
 		*data = buf;
 
 	return rv;
 }
 
-int i2c_write8__7bf(const int port,
-	       const uint16_t slave_addr__7bf,
+int i2c_write8(const int port,
+	       const uint16_t slave_addr_flags,
 	       int offset, int data)
 {
 	uint8_t buf[2];
@@ -335,11 +333,11 @@ int i2c_write8__7bf(const int port,
 	buf[0] = offset;
 	buf[1] = data;
 
-	return i2c_xfer__7bf(port, slave_addr__7bf, buf, 2, 0, 0);
+	return i2c_xfer(port, slave_addr_flags, buf, 2, 0, 0);
 }
 
-int i2c_read_offset16__7bf(const int port,
-		      const uint16_t slave_addr__7bf,
+int i2c_read_offset16(const int port,
+		      const uint16_t slave_addr_flags,
 		      uint16_t offset, int *data, int len)
 {
 	int rv;
@@ -352,7 +350,7 @@ int i2c_read_offset16__7bf(const int port,
 	addr[1] = offset & 0xff;
 
 	/* I2C read 16-bit word: transmit 16-bit offset, and read buffer */
-	rv = i2c_xfer__7bf(port, slave_addr__7bf, addr, 2, buf, len);
+	rv = i2c_xfer(port, slave_addr_flags, addr, 2, buf, len);
 
 	if (rv)
 		return rv;
@@ -360,7 +358,7 @@ int i2c_read_offset16__7bf(const int port,
 	if (len == 1) {
 		*data = buf[0];
 	} else {
-		if (I2C_IS_BIG_ENDIAN(slave_addr__7bf))
+		if (I2C_IS_BIG_ENDIAN(slave_addr_flags))
 			*data = ((int)buf[0] << 8) | buf[1];
 		else
 			*data = ((int)buf[1] << 8) | buf[0];
@@ -369,8 +367,8 @@ int i2c_read_offset16__7bf(const int port,
 	return EC_SUCCESS;
 }
 
-int i2c_write_offset16__7bf(const int port,
-		       const uint16_t slave_addr__7bf,
+int i2c_write_offset16(const int port,
+		       const uint16_t slave_addr_flags,
 		       uint16_t offset, int data, int len)
 {
 	uint8_t buf[2 + sizeof(uint16_t)];
@@ -384,7 +382,7 @@ int i2c_write_offset16__7bf(const int port,
 	if (len == 1) {
 		buf[2] = data & 0xff;
 	} else {
-		if (I2C_IS_BIG_ENDIAN(slave_addr__7bf)) {
+		if (I2C_IS_BIG_ENDIAN(slave_addr_flags)) {
 			buf[2] = (data >> 8) & 0xff;
 			buf[3] = data & 0xff;
 		} else {
@@ -393,11 +391,11 @@ int i2c_write_offset16__7bf(const int port,
 		}
 	}
 
-	return i2c_xfer__7bf(port, slave_addr__7bf, buf, 2 + len, NULL, 0);
+	return i2c_xfer(port, slave_addr_flags, buf, 2 + len, NULL, 0);
 }
 
-int i2c_read_offset16_block__7bf(const int port,
-			    const uint16_t slave_addr__7bf,
+int i2c_read_offset16_block(const int port,
+			    const uint16_t slave_addr_flags,
 			    uint16_t offset, uint8_t *data, int len)
 {
 	uint8_t addr[sizeof(uint16_t)];
@@ -405,11 +403,11 @@ int i2c_read_offset16_block__7bf(const int port,
 	addr[0] = (offset >> 8) & 0xff;
 	addr[1] = offset & 0xff;
 
-	return i2c_xfer__7bf(port, slave_addr__7bf, addr, 2, data, len);
+	return i2c_xfer(port, slave_addr_flags, addr, 2, data, len);
 }
 
-int i2c_write_offset16_block__7bf(const int port,
-			     const uint16_t slave_addr__7bf,
+int i2c_write_offset16_block(const int port,
+			     const uint16_t slave_addr_flags,
 			     uint16_t offset, const uint8_t *data, int len)
 {
 	int rv;
@@ -423,18 +421,18 @@ int i2c_write_offset16_block__7bf(const int port,
 	 * appending the destination address with the data array.
 	 */
 	i2c_lock(port, 1);
-	rv = i2c_xfer_unlocked__7bf(port, slave_addr__7bf, addr, 2, NULL, 0,
+	rv = i2c_xfer_unlocked(port, slave_addr_flags, addr, 2, NULL, 0,
 			       I2C_XFER_START);
 	if (!rv)
-		rv = i2c_xfer_unlocked__7bf(port, slave_addr__7bf,
+		rv = i2c_xfer_unlocked(port, slave_addr_flags,
 				       data, len, NULL, 0, I2C_XFER_STOP);
 	i2c_lock(port, 0);
 
 	return rv;
 }
 
-int i2c_read_string__7bf(const int port,
-		    const uint16_t slave_addr__7bf,
+int i2c_read_string(const int port,
+		    const uint16_t slave_addr_flags,
 		    int offset, uint8_t *data, int len)
 {
 	int rv;
@@ -447,7 +445,7 @@ int i2c_read_string__7bf(const int port,
 	 * Send device reg space offset, and read back block length.  Keep this
 	 * session open without a stop.
 	 */
-	rv = i2c_xfer_unlocked__7bf(port, slave_addr__7bf,
+	rv = i2c_xfer_unlocked(port, slave_addr_flags,
 			       &reg, 1, &block_length, 1, I2C_XFER_START);
 	if (rv)
 		goto exit;
@@ -455,7 +453,7 @@ int i2c_read_string__7bf(const int port,
 	if (len && block_length > (len - 1))
 		block_length = len - 1;
 
-	rv = i2c_xfer_unlocked__7bf(port, slave_addr__7bf,
+	rv = i2c_xfer_unlocked(port, slave_addr_flags,
 			       0, 0, data, block_length, I2C_XFER_STOP);
 	data[block_length] = 0;
 
@@ -464,19 +462,19 @@ exit:
 	return rv;
 }
 
-int i2c_read_block__7bf(const int port,
-		   const uint16_t slave_addr__7bf,
+int i2c_read_block(const int port,
+		   const uint16_t slave_addr_flags,
 		   int offset, uint8_t *data, int len)
 {
 	int rv;
 	uint8_t reg_address = offset;
 
-	rv = i2c_xfer__7bf(port, slave_addr__7bf, &reg_address, 1, data, len);
+	rv = i2c_xfer(port, slave_addr_flags, &reg_address, 1, data, len);
 	return rv;
 }
 
-int i2c_write_block__7bf(const int port,
-		    const uint16_t slave_addr__7bf,
+int i2c_write_block(const int port,
+		    const uint16_t slave_addr_flags,
 		    int offset, const uint8_t *data, int len)
 {
 	int rv;
@@ -487,10 +485,10 @@ int i2c_write_block__7bf(const int port,
 	 * appending the destination address with the data array.
 	 */
 	i2c_lock(port, 1);
-	rv = i2c_xfer_unlocked__7bf(port, slave_addr__7bf,
+	rv = i2c_xfer_unlocked(port, slave_addr_flags,
 			       &reg_address, 1, NULL, 0, I2C_XFER_START);
 	if (!rv) {
-		rv = i2c_xfer_unlocked__7bf(port, slave_addr__7bf,
+		rv = i2c_xfer_unlocked(port, slave_addr_flags,
 				       data, len, NULL, 0, I2C_XFER_STOP);
 	}
 	i2c_lock(port, 0);
@@ -747,7 +745,7 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	/* Loop and process messages */;
 	for (msgnum = 0, msg = params->msg; msgnum < params->num_msgs;
 	     msgnum++, msg++) {
-		unsigned int addr_flags = msg->addr_flags__7bf;
+		unsigned int addr_flags = msg->addr_flags;
 
 		PTHRUPRINTS("port=%d, %s, addr=0x%x(7-bit), len=%d",
 			    params->port,
@@ -804,10 +802,10 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 	if (ret)
 		return ret;
 
-	if (port_protected[params->port] && i2c_port->passthru_allowed__7bf) {
+	if (port_protected[params->port] && i2c_port->passthru_allowed) {
 		for (i = 0; i < params->num_msgs; i++) {
-			if (!i2c_port->passthru_allowed__7bf(i2c_port,
-					params->msg[i].addr_flags__7bf))
+			if (!i2c_port->passthru_allowed(i2c_port,
+					params->msg[i].addr_flags))
 				return EC_RES_ACCESS_DENIED;
 		}
 	}
@@ -825,10 +823,10 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 		int rv = 1;
 
 		/* Have to remove the EC flags from the address flags */
-		uint16_t addr__7bf = msg->addr_flags__7bf & EC_I2C_ADDR_MASK;
+		uint16_t addr_flags = msg->addr_flags & EC_I2C_ADDR_MASK;
 
 
-		if (msg->addr_flags__7bf & EC_I2C_FLAG_READ)
+		if (msg->addr_flags & EC_I2C_FLAG_READ)
 			read_len = msg->len;
 		else
 			write_len = msg->len;
@@ -837,9 +835,9 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 		if (resp->num_msgs == params->num_msgs - 1)
 			xferflags |= I2C_XFER_STOP;
 
-#if defined(VIRTUAL_BATTERY_ADDR__7bf) && defined(I2C_PORT_VIRTUAL_BATTERY)
+#if defined(VIRTUAL_BATTERY_ADDR_FLAGS) && defined(I2C_PORT_VIRTUAL_BATTERY)
 		if (params->port == I2C_PORT_VIRTUAL_BATTERY &&
-		    VIRTUAL_BATTERY_ADDR__7bf == addr__7bf) {
+		    addr_flags == VIRTUAL_BATTERY_ADDR_FLAGS) {
 			if (virtual_battery_handler(resp, in_len, &rv,
 						xferflags, read_len,
 						write_len, out))
@@ -848,7 +846,7 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 #endif
 		/* Transfer next message */
 		PTHRUPRINTS("xfer port=%x addr=0x%x rlen=%d flags=0x%x",
-			    params->port, addr__7bf,
+			    params->port, addr_flags,
 			    read_len, xferflags);
 		if (write_len) {
 			PTHRUPRINTF("  out:");
@@ -867,8 +865,8 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 #endif
 			if (!port_is_locked)
 				i2c_lock(params->port, (port_is_locked = 1));
-			rv = i2c_xfer_unlocked__7bf(params->port,
-					       addr__7bf,
+			rv = i2c_xfer_unlocked(params->port,
+					       addr_flags,
 					       out, write_len,
 					       &resp->data[in_len], read_len,
 					       xferflags);
@@ -924,7 +922,7 @@ static void i2c_passthru_protect_tcpc_ports(void)
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 		/* TCPC tunnel not configured. No need to protect anything */
-		if (!I2C_GET_ADDR__7b(tcpc_config[i].i2c_info.addr__7bf))
+		if (!I2C_GET_ADDR(tcpc_config[i].i2c_info.addr_flags))
 			continue;
 		i2c_passthru_protect_port(tcpc_config[i].i2c_info.port);
 	}
@@ -1017,7 +1015,7 @@ static void scan_bus(int port, const char *desc)
 {
 	int level;
 	uint8_t tmp;
-	uint16_t addr__7bf;
+	uint16_t addr_flags;
 
 	ccprintf("Scanning %d %s", port, desc);
 
@@ -1032,14 +1030,14 @@ static void scan_bus(int port, const char *desc)
 		goto scan_bus_exit;
 	}
 
-	for (addr__7bf = 0; addr__7bf <= 0xEF; ++addr__7bf) {
+	for (addr_flags = 0; addr_flags <= 0xEF; ++addr_flags) {
 		watchdog_reload();  /* Otherwise a full scan trips watchdog */
 		ccputs(".");
 
 		/* Do a single read */
-		if (!i2c_xfer_unlocked__7bf(port, addr__7bf,
+		if (!i2c_xfer_unlocked(port, addr_flags,
 				       NULL, 0, &tmp, 1, I2C_XFER_SINGLE))
-			ccprintf("\n  0x%02x", addr__7bf);
+			ccprintf("\n  0x%02x", addr_flags);
 	}
 
 scan_bus_exit:
@@ -1075,7 +1073,7 @@ DECLARE_CONSOLE_COMMAND(i2cscan, command_scan,
 static int command_i2cxfer(int argc, char **argv)
 {
 	int port;
-	uint16_t addr__7bf;
+	uint16_t addr_flags;
 	uint16_t offset = 0;
 	uint8_t offset_size = 0;
 	int v = 0;
@@ -1090,7 +1088,7 @@ static int command_i2cxfer(int argc, char **argv)
 	if (*e)
 		return EC_ERROR_PARAM2;
 
-	addr__7bf = strtoi(argv[3], &e, 0);
+	addr_flags = strtoi(argv[3], &e, 0);
 	if (*e)
 		return EC_ERROR_PARAM3;
 
@@ -1109,10 +1107,10 @@ static int command_i2cxfer(int argc, char **argv)
 	if (strcasecmp(argv[1], "r") == 0) {
 		/* 8-bit read */
 		if (offset_size == 2)
-			rv = i2c_read_offset16__7bf(port, addr__7bf,
+			rv = i2c_read_offset16(port, addr_flags,
 					       offset, &v, 1);
 		else
-			rv = i2c_read8__7bf(port, addr__7bf,
+			rv = i2c_read8(port, addr_flags,
 				       offset, &v);
 		if (!rv)
 			ccprintf("0x%02x [%d]\n", v, v);
@@ -1120,10 +1118,10 @@ static int command_i2cxfer(int argc, char **argv)
 	} else if (strcasecmp(argv[1], "r16") == 0) {
 		/* 16-bit read */
 		if (offset_size == 2)
-			rv = i2c_read_offset16__7bf(port, addr__7bf,
+			rv = i2c_read_offset16(port, addr_flags,
 					       offset, &v, 2);
 		else
-			rv = i2c_read16__7bf(port, addr__7bf,
+			rv = i2c_read16(port, addr_flags,
 					offset, &v);
 		if (!rv)
 			ccprintf("0x%04x [%d]\n", v, v);
@@ -1133,7 +1131,7 @@ static int command_i2cxfer(int argc, char **argv)
 		if (argc < 6 || v < 0 || v > sizeof(data))
 			return EC_ERROR_PARAM5;
 
-		rv = i2c_xfer__7bf(port, addr__7bf,
+		rv = i2c_xfer(port, addr_flags,
 			      (uint8_t *)&offset, 1, data, v);
 
 		if (!rv)
@@ -1144,10 +1142,10 @@ static int command_i2cxfer(int argc, char **argv)
 		if (argc < 6)
 			return EC_ERROR_PARAM5;
 		if (offset_size == 2)
-			rv = i2c_write_offset16__7bf(port, addr__7bf,
+			rv = i2c_write_offset16(port, addr_flags,
 						offset, v, 1);
 		else
-			rv = i2c_write8__7bf(port, addr__7bf,
+			rv = i2c_write8(port, addr_flags,
 					offset, v);
 
 	} else if (strcasecmp(argv[1], "w16") == 0) {
@@ -1155,10 +1153,10 @@ static int command_i2cxfer(int argc, char **argv)
 		if (argc < 6)
 			return EC_ERROR_PARAM5;
 		if (offset_size == 2)
-			rv = i2c_write_offset16__7bf(port, addr__7bf,
+			rv = i2c_write_offset16(port, addr_flags,
 						offset, v, 2);
 		else
-			rv = i2c_write16__7bf(port, addr__7bf,
+			rv = i2c_write16(port, addr_flags,
 					 offset, v);
 
 	} else {
@@ -1227,7 +1225,7 @@ static int command_i2ctest(int argc, char **argv)
 
 	for (i = 0; i < count; i++) {
 		int port;
-		uint16_t addr__7bf;
+		uint16_t addr_flags;
 
 		if (!(i % 1000))
 			ccprintf("running test %d\n", i);
@@ -1238,7 +1236,7 @@ static int command_i2ctest(int argc, char **argv)
 		}
 
 		port = i2c_stress_tests[test_dev].port;
-		addr__7bf = i2c_stress_tests[test_dev].addr__7bf;
+		addr_flags = i2c_stress_tests[test_dev].addr_flags;
 		i2c_s_test = i2c_stress_tests[test_dev].i2c_test;
 		reg_s_info = &i2c_s_test->reg_info;
 		test_s_results = &i2c_s_test->test_results;
@@ -1246,8 +1244,8 @@ static int command_i2ctest(int argc, char **argv)
 		rand = get_time().val;
 		if (rand & 0x1) {
 			/* read */
-			rv = i2c_s_test->i2c_read__7bf ?
-				i2c_s_test->i2c_read__7bf(port, addr__7bf,
+			rv = i2c_s_test->i2c_read ?
+				i2c_s_test->i2c_read(port, addr_flags,
 					reg_s_info->read_reg, &data) :
 				i2c_s_test->i2c_read_dev(
 					reg_s_info->read_reg, &data);
@@ -1263,8 +1261,8 @@ static int command_i2ctest(int argc, char **argv)
 			 */
 
 			/* Read the write register */
-			rv = i2c_s_test->i2c_read__7bf ?
-				i2c_s_test->i2c_read__7bf(port, addr__7bf,
+			rv = i2c_s_test->i2c_read ?
+				i2c_s_test->i2c_read(port, addr_flags,
 					reg_s_info->read_reg, &data) :
 				i2c_s_test->i2c_read_dev(
 					reg_s_info->read_reg, &data);
@@ -1278,9 +1276,9 @@ static int command_i2ctest(int argc, char **argv)
 			j = I2C_STRESS_TEST_DATA_VERIFY_RETRY_COUNT;
 			do {
 				/* Write same value back */
-				rv = i2c_s_test->i2c_write__7bf ?
-					i2c_s_test->i2c_write__7bf(port,
-					addr__7bf,
+				rv = i2c_s_test->i2c_write ?
+					i2c_s_test->i2c_write(port,
+					addr_flags,
 					reg_s_info->write_reg, data) :
 					i2c_s_test->i2c_write_dev(
 					reg_s_info->write_reg, data);
@@ -1293,9 +1291,9 @@ static int command_i2ctest(int argc, char **argv)
 				test_s_results->write_success++;
 
 				/* Read back to verify the data */
-				rv = i2c_s_test->i2c_read__7bf ?
-					i2c_s_test->i2c_read__7bf(port,
-					addr__7bf,
+				rv = i2c_s_test->i2c_read ?
+					i2c_s_test->i2c_read(port,
+					addr_flags,
 					reg_s_info->read_reg, &data_verify) :
 					i2c_s_test->i2c_read_dev(
 					reg_s_info->read_reg, &data_verify);

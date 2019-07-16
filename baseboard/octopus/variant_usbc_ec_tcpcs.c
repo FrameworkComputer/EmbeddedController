@@ -68,14 +68,14 @@ static void board_it83xx_hpd_status(int port, int hpd_lvl, int hpd_irq)
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ITE_0] = {
 		/* Driver uses I2C_PORT_USB_MUX as I2C port */
-		.port_addr = IT5205_I2C_ADDR1__7bf,
+		.port_addr = IT5205_I2C_ADDR1_FLAGS,
 		.driver = &it5205_usb_mux_driver,
 		.hpd_update = &board_it83xx_hpd_status,
 	},
 	[USB_PD_PORT_ITE_1] = {
 		/* Use PS8751 as mux only */
 		.port_addr = MUX_PORT_AND_ADDR(
-			I2C_PORT_USBC1, PS8751_I2C_ADDR1__7bf),
+			I2C_PORT_USBC1, PS8751_I2C_ADDR1_FLAGS),
 		.flags = USB_MUX_FLAG_NOT_TCPC,
 		.driver = &ps8xxx_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
@@ -87,12 +87,12 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ITE_0] = {
 		.i2c_port = I2C_PORT_USBC0,
-		.i2c_addr__7bf = SN5S330_ADDR0__7bf,
+		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
 		.drv = &sn5s330_drv
 	},
 	[USB_PD_PORT_ITE_1] = {
 		.i2c_port = I2C_PORT_USBC1,
-		.i2c_addr__7bf = SN5S330_ADDR0__7bf,
+		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
 		.drv = &sn5s330_drv
 	},
 };

@@ -26,7 +26,7 @@
  *
  * @return EC_SUCCESS, or EC_ERROR_* on error.
  */
-int pca9534_get_level__7bf(const int port, const uint16_t addr__7bf,
+int pca9534_get_level(const int port, const uint16_t addr_flags,
 		      int pin, int *level);
 
 /*
@@ -40,7 +40,7 @@ int pca9534_get_level__7bf(const int port, const uint16_t addr__7bf,
  *
  * @return EC_SUCCESS, or EC_ERROR_* on error.
  */
-int pca9534_set_level__7bf(const int port, const uint16_t addr__7bf,
+int pca9534_set_level(const int port, const uint16_t addr_flags,
 		      int pin, int level);
 
 /*
@@ -53,7 +53,7 @@ int pca9534_set_level__7bf(const int port, const uint16_t addr__7bf,
  *
  * @return EC_SUCCESS, or EC_ERROR_* on error.
  */
-int pca9534_config_pin__7bf(const int port, const uint16_t addr__7bf,
+int pca9534_config_pin(const int port, const uint16_t addr_flags,
 		       int pin, int is_input);
 
 #endif  /* __CROS_EC_IOEXPANDER_PCA9534_H */

@@ -14,7 +14,7 @@
 
 struct i2c_dev {
 	int port;
-	uint16_t slave_addr__7bf;
+	uint16_t slave_addr_flags;
 	int valid;
 };
 
@@ -28,7 +28,7 @@ static void detach_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, detach_init, HOOK_PRIO_FIRST);
 
-int test_detach_i2c__7bf(const int port, const uint16_t slave_addr__7bf)
+int test_detach_i2c(const int port, const uint16_t slave_addr_flags)
 {
 	int i;
 
@@ -40,20 +40,20 @@ int test_detach_i2c__7bf(const int port, const uint16_t slave_addr__7bf)
 		return EC_ERROR_OVERFLOW;
 
 	detached_devs[i].port = port;
-	detached_devs[i].slave_addr__7bf = slave_addr__7bf;
+	detached_devs[i].slave_addr_flags = slave_addr_flags;
 	detached_devs[i].valid = 1;
 
 	return EC_SUCCESS;
 }
 
-int test_attach_i2c__7bf(const int port, const uint16_t slave_addr__7bf)
+int test_attach_i2c(const int port, const uint16_t slave_addr_flags)
 {
 	int i;
 
 	for (i = 0; i < MAX_DETACHED_DEV_COUNT; ++i)
 		if (detached_devs[i].valid &&
 		    detached_devs[i].port == port &&
-		    detached_devs[i].slave_addr__7bf == slave_addr__7bf)
+		    detached_devs[i].slave_addr_flags == slave_addr_flags)
 			break;
 
 	if (i == MAX_DETACHED_DEV_COUNT)
@@ -63,30 +63,30 @@ int test_attach_i2c__7bf(const int port, const uint16_t slave_addr__7bf)
 	return EC_SUCCESS;
 }
 
-static int test_check_detached__7bf(const int port,
-			       const uint16_t slave_addr__7bf)
+static int test_check_detached(const int port,
+			       const uint16_t slave_addr_flags)
 {
 	int i;
 
 	for (i = 0; i < MAX_DETACHED_DEV_COUNT; ++i)
 		if (detached_devs[i].valid &&
 		    detached_devs[i].port == port &&
-		    detached_devs[i].slave_addr__7bf == slave_addr__7bf)
+		    detached_devs[i].slave_addr_flags == slave_addr_flags)
 			return 1;
 	return 0;
 }
 
-int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
+int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 		  const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
 	const struct test_i2c_xfer *p;
 	int rv;
 
-	if (test_check_detached__7bf(port, slave_addr__7bf))
+	if (test_check_detached(port, slave_addr_flags))
 		return EC_ERROR_UNKNOWN;
 	for (p = __test_i2c_xfer; p < __test_i2c_xfer_end; ++p) {
-		rv = p->routine__7bf(port, slave_addr__7bf,
+		rv = p->routine(port, slave_addr_flags,
 				out, out_size,
 				in, in_size, flags);
 		if (rv != EC_ERROR_INVAL)

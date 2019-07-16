@@ -34,13 +34,13 @@ static int has_power(void)
 
 static int raw_read8(const int offset, int *data_ptr)
 {
-	return i2c_read8__7bf(I2C_PORT_THERMAL, ADT7481_I2C_ADDR__7bf,
+	return i2c_read8(I2C_PORT_THERMAL, ADT7481_I2C_ADDR_FLAGS,
 			 offset, data_ptr);
 }
 
 static int raw_write8(const int offset, int data)
 {
-	return i2c_write8__7bf(I2C_PORT_THERMAL, ADT7481_I2C_ADDR__7bf,
+	return i2c_write8(I2C_PORT_THERMAL, ADT7481_I2C_ADDR_FLAGS,
 			  offset, data);
 }
 

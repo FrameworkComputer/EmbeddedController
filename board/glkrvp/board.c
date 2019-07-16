@@ -29,19 +29,19 @@
 #include "gpio_list.h"
 
 #define I2C_PORT_PCA555_PMIC_GPIO	NPCX_I2C_PORT0_0
-#define I2C_ADDR_PCA555_PMIC_GPIO__7bf	0x21
+#define I2C_ADDR_PCA555_PMIC_GPIO_FLAGS	0x21
 #define PCA555_PMIC_GPIO_WRITE(reg, data) \
-		pca9555_write__7bf(I2C_PORT_PCA555_PMIC_GPIO, \
-			I2C_ADDR_PCA555_PMIC_GPIO__7bf, (reg), (data))
+		pca9555_write(I2C_PORT_PCA555_PMIC_GPIO, \
+			I2C_ADDR_PCA555_PMIC_GPIO_FLAGS, (reg), (data))
 #define PCA555_PMIC_GPIO_READ(reg, data) \
-		pca9555_read__7bf(I2C_PORT_PCA555_PMIC_GPIO, \
-			I2C_ADDR_PCA555_PMIC_GPIO__7bf, (reg), (data))
+		pca9555_read(I2C_PORT_PCA555_PMIC_GPIO, \
+			I2C_ADDR_PCA555_PMIC_GPIO_FLAGS, (reg), (data))
 
 #define I2C_PORT_PCA555_BOARD_ID_GPIO	NPCX_I2C_PORT0_0
-#define I2C_ADDR_PCA555_BOARD_ID_GPIO__7bf	0x20
+#define I2C_ADDR_PCA555_BOARD_ID_GPIO_FLAGS	0x20
 #define PCA555_BOARD_ID_GPIO_READ(reg, data) \
-		pca9555_read__7bf(I2C_PORT_PCA555_BOARD_ID_GPIO, \
-			I2C_ADDR_PCA555_BOARD_ID_GPIO__7bf, (reg), (data))
+		pca9555_read(I2C_PORT_PCA555_BOARD_ID_GPIO, \
+			I2C_ADDR_PCA555_BOARD_ID_GPIO_FLAGS, (reg), (data))
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {

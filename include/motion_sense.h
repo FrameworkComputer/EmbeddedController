@@ -91,13 +91,13 @@ enum sensor_config {
  *   use slave addressing, it is up to the driver to use this
  *   field as it sees fit
  */
-#define SLAVE_MK_I2C_ADDR__7bf(x__7b)	(x__7b)
-#define SLAVE_MK_SPI_ADDR__7bf(x__7b)	((x__7b) | I2C_FLAG_ADDR_IS_SPI)
+#define SLAVE_MK_I2C_ADDR_FLAGS(addr)	(addr)
+#define SLAVE_MK_SPI_ADDR_FLAGS(addr)	((addr) | I2C_FLAG_ADDR_IS_SPI)
 
-#define SLAVE_GET_I2C_ADDR__7b(x__7bf)	(I2C_GET_ADDR__7b(x__7bf))
-#define SLAVE_GET_SPI_ADDR__7b(x__7bf)	((x__7bf) & I2C_ADDR_MASK)
+#define SLAVE_GET_I2C_ADDR(addr_flags)	(I2C_GET_ADDR(addr_flags))
+#define SLAVE_GET_SPI_ADDR(addr_flags)	((addr_flags) & I2C_ADDR_MASK)
 
-#define SLAVE_IS_SPI(x__7bf)		((x__7bf) & I2C_FLAG_ADDR_IS_SPI)
+#define SLAVE_IS_SPI(addr_flags)	((addr_flags) & I2C_FLAG_ADDR_IS_SPI)
 
 /*
  * Define the frequency to use in max_frequency based on the maximal frequency
@@ -150,7 +150,7 @@ struct motion_sensor_t {
 	/* i2c port */
 	uint8_t port;
 	/* i2c address or SPI slave logic GPIO. */
-	uint16_t i2c_spi_addr__7bf;
+	uint16_t i2c_spi_addr_flags;
 
 	/*
 	 * Various flags, see MOTIONSENSE_FLAG_*

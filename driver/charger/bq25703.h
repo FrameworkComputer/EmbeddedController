@@ -9,7 +9,7 @@
 #define __CROS_EC_BQ25703_H
 
 /* I2C Interface */
-#define BQ25703_I2C_ADDR1__7bf 0x6B
+#define BQ25703_I2C_ADDR1_FLAGS 0x6B
 
 /*
  * BC1.2 minimum voltage threshold for BQ25703.

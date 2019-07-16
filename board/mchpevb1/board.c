@@ -66,14 +66,14 @@
 /* NOTE: MEC17xx EVB + SKL RVP3 does not use BD99992 PMIC.
  * RVP3 PMIC controlled by RVP3 logic.
  */
-#define I2C_ADDR_BD99992__7bf	0x30
+#define I2C_ADDR_BD99992_FLAGS	0x30
 
 /*
  * Maxim DS1624 I2C temperature sensor used for testing I2C.
  * DS1624 contains one internal temperature sensor
  * and EEPROM. It has no external temperature inputs.
  */
-#define DS1624_I2C_ADDR__7bf		(0x48 | I2C_FLAG_BIG_ENDIAN)
+#define DS1624_I2C_ADDR_FLAGS	(0x48 | I2C_FLAG_BIG_ENDIAN)
 #define DS1624_IDX_LOCAL	0
 #define DS1624_READ_TEMP16	0xAA	/* read 16-bit temperature */
 #define DS1624_ACCESS_CFG	0xAC	/* read/write 8-bit config */
@@ -265,11 +265,11 @@ int board_i2c_p2c(int port)
 #ifdef CONFIG_USB_POWER_DELIVERY
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{I2C_PORT_TCPC,
-	 CONFIG_TCPC_I2C_BASE_ADDR__7BF,
+	 CONFIG_TCPC_I2C_BASE_ADDR_FLAGS,
 	 &tcpci_tcpm_drv},
 
 	{I2C_PORT_TCPC,
-	 CONFIG_TCPC_I2C_BASE_ADDR__7BF + 1,
+	 CONFIG_TCPC_I2C_BASE_ADDR_FLAGS + 1,
 	 &tcpci_tcpm_drv},
 };
 #endif
@@ -510,14 +510,14 @@ static void board_pmic_init(void)
 
 	/* Config DS1624 temperature sensor for continuous conversion */
 	cfg = 0x66;
-	rv = i2c_read8__7bf(I2C_PORT_THERMAL, DS1624_I2C_ADDR__7bf,
-			DS1624_ACCESS_CFG, &cfg);
+	rv = i2c_read8(I2C_PORT_THERMAL, DS1624_I2C_ADDR_FLAGS,
+		       DS1624_ACCESS_CFG, &cfg);
 	trace2(0, BRD, 0, "Read DS1624 Config rv = %d  cfg = 0x%02X",
 	       rv, cfg);
 
 	if ((rv == EC_SUCCESS) && (cfg & (1u << 0))) {
 		/* one-shot mode switch to continuous */
-		rv = i2c_write8__7bf(I2C_PORT_THERMAL, DS1624_I2C_ADDR__7bf,
+		rv = i2c_write8(I2C_PORT_THERMAL, DS1624_I2C_ADDR_FLAGS,
 				DS1624_ACCESS_CFG, 0);
 		trace1(0, BRD, 0, "Write DS1624 Config to 0, rv = %d", rv);
 		/* writes to config require 10ms until next I2C command */
@@ -526,7 +526,7 @@ static void board_pmic_init(void)
 	}
 
 	/* Send start command */
-	rv = i2c_write8__7bf(I2C_PORT_THERMAL, DS1624_I2C_ADDR__7bf,
+	rv = i2c_write8(I2C_PORT_THERMAL, DS1624_I2C_ADDR_FLAGS,
 			DS1624_CMD_START, 1);
 	trace1(0, BRD, 0, "Send Start command to DS1624 rv = %d", rv);
 
@@ -869,7 +869,7 @@ static void ds1624_update(void)
 	int temp;
 	int rv __attribute__((unused));
 
-	rv = i2c_read16__7bf(I2C_PORT_THERMAL, DS1624_I2C_ADDR__7bf,
+	rv = i2c_read16(I2C_PORT_THERMAL, DS1624_I2C_ADDR_FLAGS,
 			DS1624_READ_TEMP16, &temp);
 
 	d = (temp & 0x7FFF) >> 8;
@@ -932,7 +932,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = &g_bmi160_data,
 		.port = CONFIG_SPI_ACCEL_PORT,
-		.i2c_spi_addr__7bf = SLAVE_MK_SPI_ADDR__7bf(
+		.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(
 			CONFIG_SPI_ACCEL_PORT),
 		.rot_standard_ref = NULL, /* Identity matrix. */
 		.default_range = 2,  /* g, enough for laptop. */
@@ -957,7 +957,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = &g_bmi160_data,
 		.port = CONFIG_SPI_ACCEL_PORT,
-		.i2c_spi_addr__7bf = SLAVE_MK_SPI_ADDR__7bf(
+		.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(
 			CONFIG_SPI_ACCEL_PORT),
 		.default_range = 1000, /* dps */
 		.rot_standard_ref = NULL, /* Identity Matrix. */
@@ -975,7 +975,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_lid_mutex,
 		.drv_data = &g_kx022_data,
 		.port = I2C_PORT_ACCEL,
-		.i2c_spi_addr__7bf = KX022_ADDR1__7bf,
+		.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
 		.rot_standard_ref = NULL, /* Identity matrix. */
 		.default_range = 2, /* g, enough for laptop. */
 		.min_frequency = KX022_ACCEL_MIN_FREQ,

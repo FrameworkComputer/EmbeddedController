@@ -47,7 +47,7 @@
 	#define I2C_PORT_EEPROM		NPCX_I2C_PORT3_0
 	#define I2C_PORT_CHARGER	NPCX_I2C_PORT4_1
 	#define I2C_PORT_SENSOR		NPCX_I2C_PORT7_0
-	#define I2C_ADDR_EEPROM__7bf		0x50
+	#define I2C_ADDR_EEPROM_FLAGS	0x50
 
 	/* Enable PSL hibernate mode. */
 	#define CONFIG_HIBERNATE_PSL
@@ -69,7 +69,7 @@
 	#define I2C_PORT_USBC1		IT83XX_I2C_CH_E
 	#define I2C_PORT_USB_MUX	I2C_PORT_USBC0	/* For MUX driver */
 	#define I2C_PORT_EEPROM		IT83XX_I2C_CH_F
-	#define I2C_ADDR_EEPROM__7bf		0x50
+	#define I2C_ADDR_EEPROM_FLAGS	0x50
 
 	/* EC variant determines USB-C variant */
 	#define VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS

@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_ISL923X_H
 #define __CROS_EC_ISL923X_H
 
-#define ISL923X_ADDR__7bf	(0x09)
+#define ISL923X_ADDR_FLAGS	(0x09)
 
 /* Registers */
 #define ISL923X_REG_CHG_CURRENT      0x14
@@ -304,7 +304,7 @@ enum isl9237_fsm_state {
 #define INPUT_I_MIN   4
 #define INPUT_I_STEP  4
 
-#define I2C_ADDR_CHARGER__7bf ISL923X_ADDR__7bf
+#define I2C_ADDR_CHARGER_FLAGS ISL923X_ADDR_FLAGS
 #endif /* __CROS_EC_ISL923X_H */
 
 /**

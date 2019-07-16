@@ -26,7 +26,7 @@
 /* Transmit timeout in microseconds */
 #define I2C_TX_TIMEOUT_MASTER	(10 * MSEC)
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF
+#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
 #define I2C_SLAVE_ERROR_CODE	0xec
 #if (I2C_PORT_EC == STM32_I2C1_PORT)
 #define IRQ_SLAVE STM32_IRQ_I2C1
@@ -177,7 +177,7 @@ static void i2c_init_port(const struct i2c_port_t *p)
 
 /*****************************************************************************/
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF
+#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
 
 static void i2c_event_handler(int port)
 {
@@ -303,11 +303,11 @@ DECLARE_IRQ(IRQ_SLAVE, i2c_event_interrupt, 2);
 /*****************************************************************************/
 /* Interface */
 
-int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
+int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 		  const uint8_t *out, int out_bytes,
 		  uint8_t *in, int in_bytes, int flags)
 {
-	int addr__8b = I2C_GET_ADDR__7b(slave_addr__7bf) << 1;
+	int addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
 	int rv = EC_SUCCESS;
 	int i;
 	int xfer_start = flags & I2C_XFER_START;
@@ -330,7 +330,7 @@ int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
 		 * NBYTES again. if we are starting, then set START bit.
 		 */
 		STM32_I2C_CR2(port) =  ((out_bytes & 0xFF) << 16)
-			| addr__8b
+			| addr_8bit
 			| ((in_bytes == 0 && xfer_stop) ?
 				STM32_I2C_CR2_AUTOEND : 0)
 			| ((in_bytes == 0 && !xfer_stop) ?
@@ -359,7 +359,7 @@ int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
 		 * set START bit to send (re)start and begin read transaction.
 		 */
 		STM32_I2C_CR2(port) = ((in_bytes & 0xFF) << 16)
-			| STM32_I2C_CR2_RD_WRN | addr__8b
+			| STM32_I2C_CR2_RD_WRN | addr_8bit
 			| (xfer_stop ? STM32_I2C_CR2_AUTOEND : 0)
 			| (!xfer_stop ? STM32_I2C_CR2_RELOAD : 0)
 			| (out_bytes || xfer_start ? STM32_I2C_CR2_START : 0);
@@ -453,12 +453,12 @@ static void i2c_init(void)
 	for (i = 0; i < i2c_ports_used; i++, p++)
 		i2c_init_port(p);
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF
+#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_RXIE | STM32_I2C_CR1_ERRIE
 			| STM32_I2C_CR1_ADDRIE | STM32_I2C_CR1_STOPIE
 			| STM32_I2C_CR1_NACKIE;
 	STM32_I2C_OAR1(I2C_PORT_EC) = 0x8000
-		| (I2C_GET_ADDR__7b(CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF) << 1);
+		| (I2C_GET_ADDR(CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS) << 1);
 	task_enable_irq(IRQ_SLAVE);
 #endif
 }

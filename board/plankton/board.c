@@ -467,7 +467,7 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* 8-bit address */
-#define SN75DP130_I2C_ADDR__7bf 0x2e
+#define SN75DP130_I2C_ADDR_FLAGS 0x2e
 /*
  * Pin number for active-high reset from PCA9534 to CMOS pull-down to
  * SN75DP130's RSTN (active-low)
@@ -476,7 +476,7 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 static int sn75dp130_i2c_write(uint8_t index, uint8_t value)
 {
-	return i2c_write8__7bf(I2C_PORT_MASTER, SN75DP130_I2C_ADDR__7bf,
+	return i2c_write8(I2C_PORT_MASTER, SN75DP130_I2C_ADDR_FLAGS,
 			  index, value);
 }
 
@@ -490,16 +490,16 @@ static int sn75dp130_reset(void)
 {
 	int rv;
 
-	rv = pca9534_config_pin__7bf(I2C_PORT_MASTER, 0x20,
+	rv = pca9534_config_pin(I2C_PORT_MASTER, 0x20,
 				REDRIVER_RST_PIN, PCA9534_OUTPUT);
 	/* Assert (its active high) */
-	rv |= pca9534_set_level__7bf(I2C_PORT_MASTER, 0x20,
+	rv |= pca9534_set_level(I2C_PORT_MASTER, 0x20,
 				REDRIVER_RST_PIN, 1);
 	/* datasheet recommends > 100usec */
 	usleep(200);
 
 	/* De-assert */
-	rv |= pca9534_set_level__7bf(I2C_PORT_MASTER, 0x20,
+	rv |= pca9534_set_level(I2C_PORT_MASTER, 0x20,
 				REDRIVER_RST_PIN, 0);
 	/* datasheet recommends > 400msec */
 	usleep(450 * MSEC);
@@ -596,11 +596,11 @@ int board_in_hub_mode(void)
 	int ret;
 	int level;
 
-	ret = pca9534_config_pin__7bf(I2C_PORT_MASTER, 0x20,
+	ret = pca9534_config_pin(I2C_PORT_MASTER, 0x20,
 				 6, PCA9534_INPUT);
 	if (ret)
 		return -1;
-	ret = pca9534_get_level__7bf(I2C_PORT_MASTER, 0x20,
+	ret = pca9534_get_level(I2C_PORT_MASTER, 0x20,
 				6, &level);
 	if (ret)
 		return -1;
@@ -611,16 +611,16 @@ static int board_usb_hub_reset(void)
 {
 	int ret;
 
-	ret = pca9534_config_pin__7bf(I2C_PORT_MASTER, 0x20,
+	ret = pca9534_config_pin(I2C_PORT_MASTER, 0x20,
 				 7, PCA9534_OUTPUT);
 	if (ret)
 		return ret;
-	ret = pca9534_set_level__7bf(I2C_PORT_MASTER, 0x20,
+	ret = pca9534_set_level(I2C_PORT_MASTER, 0x20,
 				7, 0);
 	if (ret)
 		return ret;
 	usleep(100 * MSEC);
-	return pca9534_set_level__7bf(I2C_PORT_MASTER, 0x20,
+	return pca9534_set_level(I2C_PORT_MASTER, 0x20,
 				 7, 1);
 }
 

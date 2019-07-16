@@ -119,13 +119,13 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, baseboard_chipset_shutdown,
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
 		.i2c_port = I2C_PORT_PPC0,
-		.i2c_addr__7bf = SN5S330_ADDR0__7bf,
+		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
 		.drv = &sn5s330_drv
 	},
 
 	[USB_PD_PORT_TCPC_1] = {
 		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr__7bf = SN5S330_ADDR0__7bf,
+		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
 		.drv = &sn5s330_drv
 	},
 };

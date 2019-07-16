@@ -181,8 +181,8 @@
 #define I2C_PORT_THERMAL	I2C_PORT_PMIC
 
 /* I2C addresses */
-#define I2C_ADDR_BD99992__7bf	0x30
-#define I2C_ADDR_MP2949__7bf		0x20
+#define I2C_ADDR_BD99992_FLAGS	0x30
+#define I2C_ADDR_MP2949_FLAGS	0x20
 
 #ifndef __ASSEMBLER__
 

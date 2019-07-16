@@ -34,37 +34,37 @@
 /**
  * Read single register
  */
-static inline int st_raw_read8__7bf(const int port,
-			       const uint16_t i2c_spi_addr__7bf,
+static inline int st_raw_read8(const int port,
+			       const uint16_t i2c_spi_addr_flags,
 			       const int reg, int *data_ptr)
 {
 	/* TODO: Implement SPI interface support */
-	return i2c_read8__7bf(port, i2c_spi_addr__7bf, reg, data_ptr);
+	return i2c_read8(port, i2c_spi_addr_flags, reg, data_ptr);
 }
 
 /**
  * Write single register
  */
-static inline int st_raw_write8__7bf(const int port,
-				const uint16_t i2c_spi_addr__7bf,
+static inline int st_raw_write8(const int port,
+				const uint16_t i2c_spi_addr_flags,
 				const int reg, int data)
 {
 	/* TODO: Implement SPI interface support */
-	return i2c_write8__7bf(port, i2c_spi_addr__7bf, reg, data);
+	return i2c_write8(port, i2c_spi_addr_flags, reg, data);
 }
 
 /**
  * st_raw_read_n - Read n bytes for read
  */
-int st_raw_read_n__7bf(const int port,
-		  const uint16_t i2c_spi_addr__7bf,
+int st_raw_read_n(const int port,
+		  const uint16_t i2c_spi_addr_flags,
 		  const uint8_t reg, uint8_t *data_ptr, const int len);
 
 /**
  * st_raw_read_n_noinc - Read n bytes for read (no auto inc address)
  */
-int st_raw_read_n_noinc__7bf(const int port,
-			const uint16_t i2c_spi_addr__7bf,
+int st_raw_read_n_noinc(const int port,
+			const uint16_t i2c_spi_addr_flags,
 			const uint8_t reg, uint8_t *data_ptr, const int len);
 
  /**

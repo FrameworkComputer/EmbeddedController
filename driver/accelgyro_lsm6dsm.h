@@ -17,8 +17,8 @@
  * 7-bit address is 110101xb. Where 'x' is determined
  * by the voltage on the ADDR pin
  */
-#define LSM6DSM_ADDR0__7bf			0x6a
-#define LSM6DSM_ADDR1__7bf			0x6b
+#define LSM6DSM_ADDR0_FLAGS		0x6a
+#define LSM6DSM_ADDR1_FLAGS		0x6b
 
 /* COMMON DEFINE FOR ACCEL-GYRO SENSORS */
 #define LSM6DSM_EN_BIT			0x01

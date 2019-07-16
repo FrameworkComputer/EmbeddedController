@@ -160,7 +160,7 @@
 #define CONFIG_SPI_ACCEL_PORT    0  /* First SPI master port (SPI2) */
 
 /* Ambient Light Sensor address */
-#define OPT3001_I2C_ADDR__7bf OPT3001_I2C_ADDR1__7bf
+#define OPT3001_I2C_ADDR_FLAGS OPT3001_I2C_ADDR1_FLAGS
 
 /* Timer selection */
 #define TIM_CLOCK32 2

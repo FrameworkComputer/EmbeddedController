@@ -111,7 +111,7 @@
 /* Since there's absolutely nothing we can do about it if an I2C access
  * isn't working, we're completely ignoring any failures. */
 
-static const uint16_t i2c_addr__7bf[] = { 0x2A, 0x2B };
+static const uint16_t i2c_addr_flags[] = { 0x2A, 0x2B };
 
 static inline void controller_write(int ctrl_num, uint8_t reg, uint8_t val)
 {
@@ -119,8 +119,8 @@ static inline void controller_write(int ctrl_num, uint8_t reg, uint8_t val)
 
 	buf[0] = reg;
 	buf[1] = val;
-	ctrl_num = ctrl_num % ARRAY_SIZE(i2c_addr__7bf);
-	i2c_xfer_unlocked__7bf(I2C_PORT_LIGHTBAR, i2c_addr__7bf[ctrl_num],
+	ctrl_num = ctrl_num % ARRAY_SIZE(i2c_addr_flags);
+	i2c_xfer_unlocked(I2C_PORT_LIGHTBAR, i2c_addr_flags[ctrl_num],
 			buf, 2, 0, 0,
 			I2C_XFER_SINGLE);
 }
@@ -130,8 +130,8 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
 	uint8_t buf[1];
 	int rv;
 
-	ctrl_num = ctrl_num % ARRAY_SIZE(i2c_addr__7bf);
-	rv = i2c_xfer_unlocked__7bf(I2C_PORT_LIGHTBAR, i2c_addr__7bf[ctrl_num],
+	ctrl_num = ctrl_num % ARRAY_SIZE(i2c_addr_flags);
+	rv = i2c_xfer_unlocked(I2C_PORT_LIGHTBAR, i2c_addr_flags[ctrl_num],
 			&reg, 1, buf, 1, I2C_XFER_SINGLE);
 	return rv ? 0 : buf[0];
 }

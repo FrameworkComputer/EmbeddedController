@@ -15,8 +15,8 @@
  * 7-bit address is 110101Xb. Where 'X' is determined
  * by the voltage on the ADDR pin.
  */
-#define L3GD20_ADDR0__7bf             0x6a
-#define L3GD20_ADDR1__7bf             0x6b
+#define L3GD20_ADDR0_FLAGS       0x6a
+#define L3GD20_ADDR1_FLAGS       0x6b
 
 /* who am I  */
 #define L3GD20_WHO_AM_I          0xd7

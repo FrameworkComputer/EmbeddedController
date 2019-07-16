@@ -151,19 +151,19 @@ static int get_engineering_val(const int reg_val,
 /**
  * Read register from accelerometer.
  */
-static inline int raw_read8__7bf(const int port, const uint16_t i2c_addr__7bf,
+static inline int raw_read8(const int port, const uint16_t i2c_addr_flags,
 			    const int reg, int *data_ptr)
 {
-	return i2c_read8__7bf(port, i2c_addr__7bf, reg, data_ptr);
+	return i2c_read8(port, i2c_addr_flags, reg, data_ptr);
 }
 
 /**
  * Write register from accelerometer.
  */
-static inline int raw_write8__7bf(const int port, const uint16_t i2c_addr__7bf,
+static inline int raw_write8(const int port, const uint16_t i2c_addr_flags,
 			     const int reg, int data)
 {
-	return i2c_write8__7bf(port, i2c_addr__7bf, reg, data);
+	return i2c_write8(port, i2c_addr_flags, reg, data);
 }
 
 static int set_range(const struct motion_sensor_t *s,
@@ -186,13 +186,13 @@ static int set_range(const struct motion_sensor_t *s,
 	 */
 	mutex_lock(s->mutex);
 
-	ret = raw_read8__7bf(s->port, s->i2c_spi_addr__7bf,
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
 			ctrl_reg, &ctrl_val);
 	if (ret != EC_SUCCESS)
 		goto accel_cleanup;
 
 	ctrl_val = (ctrl_val & ~LSM6DS0_RANGE_MASK) | reg_val;
-	ret = raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
 			 ctrl_reg, ctrl_val);
 
 	/* Now that we have set the range, update the driver's value. */
@@ -236,12 +236,12 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	 */
 	mutex_lock(s->mutex);
 
-	ret = raw_read8__7bf(s->port, s->i2c_spi_addr__7bf, ctrl_reg, &val);
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags, ctrl_reg, &val);
 	if (ret != EC_SUCCESS)
 		goto accel_cleanup;
 
 	val = (val & ~LSM6DS0_ODR_MASK) | reg_val;
-	ret = raw_write8__7bf(s->port, s->i2c_spi_addr__7bf, ctrl_reg, val);
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags, ctrl_reg, val);
 
 	/* Now that we have set the odr, update the driver's value. */
 	if (ret == EC_SUCCESS)
@@ -256,7 +256,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	 *       Table 48 Gyroscope high-pass filter cutoff frequency
 	 */
 	if (MOTIONSENSE_TYPE_GYRO == s->type) {
-		ret = raw_read8__7bf(s->port, s->i2c_spi_addr__7bf,
+		ret = raw_read8(s->port, s->i2c_spi_addr_flags,
 				LSM6DS0_CTRL_REG3_G, &val);
 		if (ret != EC_SUCCESS)
 			goto accel_cleanup;
@@ -264,7 +264,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 		val = (rate > 119000) ?
 			(val | (1<<7))   /* set high-power mode */ :
 			(val & ~(1<<7)); /* set low-power mode */
-		ret = raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
 				 LSM6DS0_CTRL_REG3_G, val);
 	}
 
@@ -308,7 +308,7 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
 	int ret, tmp;
 
-	ret = raw_read8__7bf(s->port, s->i2c_spi_addr__7bf,
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
 			LSM6DS0_STATUS_REG, &tmp);
 
 	if (ret != EC_SUCCESS) {
@@ -349,7 +349,7 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	xyz_reg = get_xyz_reg(s->type);
 
 	/* Read 6 bytes starting at xyz_reg */
-	ret = i2c_read_block__7bf(s->port, s->i2c_spi_addr__7bf,
+	ret = i2c_read_block(s->port, s->i2c_spi_addr_flags,
 			     xyz_reg, raw, 6);
 
 	if (ret != EC_SUCCESS) {
@@ -375,7 +375,7 @@ static int init(const struct motion_sensor_t *s)
 {
 	int ret = 0, tmp;
 
-	ret = raw_read8__7bf(s->port, s->i2c_spi_addr__7bf,
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
 			LSM6DS0_WHO_AM_I_REG, &tmp);
 	if (ret)
 		return EC_ERROR_UNKNOWN;
@@ -398,14 +398,14 @@ static int init(const struct motion_sensor_t *s)
 	if (MOTIONSENSE_TYPE_ACCEL == s->type) {
 
 		mutex_lock(s->mutex);
-		ret = raw_read8__7bf(s->port, s->i2c_spi_addr__7bf,
+		ret = raw_read8(s->port, s->i2c_spi_addr_flags,
 				LSM6DS0_CTRL_REG8, &tmp);
 		if (ret) {
 			mutex_unlock(s->mutex);
 			return EC_ERROR_UNKNOWN;
 		}
 		tmp |= (1 | LSM6DS0_BDU_ENABLE);
-		ret = raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
 				 LSM6DS0_CTRL_REG8, tmp);
 		mutex_unlock(s->mutex);
 
@@ -413,7 +413,7 @@ static int init(const struct motion_sensor_t *s)
 			return ret;
 
 		/* Power Down Gyro */
-		ret = raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
 				 LSM6DS0_CTRL_REG1_G, 0x0);
 		if (ret)
 			return ret;

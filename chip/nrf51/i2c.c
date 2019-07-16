@@ -141,13 +141,13 @@ static void handle_i2c_error(int port, int rv)
 	i2c_recover(port);
 }
 
-static int i2c_master_write__7bf(const int port, const uint16_t slave_addr__7bf,
+static int i2c_master_write(const int port, const uint16_t slave_addr_flags,
 			    const uint8_t *data, int size, int stop)
 {
 	int bytes_sent;
 	int timeout = I2C_TIMEOUT;
 
-	NRF51_TWI_ADDRESS__7b(port) = I2C_GET_ADDR__7b(slave_addr__7bf);
+	NRF51_TWI_ADDRESS(port) = I2C_GET_ADDR(slave_addr_flags);
 
 	/* Clear the sent bit */
 	NRF51_TWI_TXDSENT(port) = 0;
@@ -187,13 +187,13 @@ static int i2c_master_write__7bf(const int port, const uint16_t slave_addr__7bf,
 	return EC_SUCCESS;
 }
 
-static int i2c_master_read__7bf(const int port, const uint16_t slave__addr__7bf,
+static int i2c_master_read(const int port, const uint16_t slave_addr_flags,
 			   uint8_t *data, int size)
 {
 	int curr_byte;
 	int timeout = I2C_TIMEOUT;
 
-	NRF51_TWI_ADDRESS__7b(port) = I2C_GET_ADDR__7b(slave_addr__7bf);
+	NRF51_TWI_ADDRESS(port) = I2C_GET_ADDR(slave_addr_flags);
 
 	if (size == 1) /* Last byte: stop after this one. */
 		NRF51_PPI_TEP(i2c_ppi_chan[port]) =
@@ -253,7 +253,7 @@ static int i2c_master_read__7bf(const int port, const uint16_t slave__addr__7bf,
 	return EC_SUCCESS;
 }
 
-int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
+int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 		  const uint8_t *out, int out_bytes,
 		  uint8_t *in, int in_bytes, int flags)
 {
@@ -263,11 +263,11 @@ int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
 	ASSERT(in || !in_bytes);
 
 	if (out_bytes)
-		rv = i2c_master_write__7bf(port, slave_addr__7bf,
+		rv = i2c_master_write(port, slave_addr_flags,
 				      out, out_bytes,
 				      in_bytes ? 0 : 1);
 	if (rv == EC_SUCCESS && in_bytes)
-		rv = i2c_master_read__7bf(port, slave_addr__7bf,
+		rv = i2c_master_read(port, slave_addr_flags,
 				     in, in_bytes);
 
 	handle_i2c_error(port, rv);

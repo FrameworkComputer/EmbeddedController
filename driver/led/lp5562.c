@@ -12,16 +12,16 @@
 #include "util.h"
 
 /* I2C address */
-#define LP5562_I2C_ADDR__7bf (0x30)
+#define LP5562_I2C_ADDR_FLAGS 0x30
 
 inline int lp5562_write(uint8_t reg, uint8_t val)
 {
-	return i2c_write8(I2C_PORT_MASTER, LP5562_I2C_ADDR, reg, val);
+	return i2c_write8(I2C_PORT_MASTER, LP5562_I2C_ADDR_FLAGS, reg, val);
 }
 
 inline int lp5562_read(uint8_t reg, int *val)
 {
-	return i2c_read8(I2C_PORT_MASTER, LP5562_I2C_ADDR, reg, val);
+	return i2c_read8(I2C_PORT_MASTER, LP5562_I2C_ADDR_FLAGS, reg, val);
 }
 
 int lp5562_set_color(uint32_t rgb)

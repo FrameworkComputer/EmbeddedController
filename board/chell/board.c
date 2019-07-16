@@ -42,7 +42,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define I2C_ADDR_BD99992__7bf 0x30
+#define I2C_ADDR_BD99992_FLAGS 0x30
 
 /* Exchange status with PD MCU. */
 static void pd_mcu_interrupt(enum gpio_signal signal)
@@ -111,7 +111,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC,
-			.addr__7bf = CONFIG_TCPC_I2C_BASE_ADDR__7BF,
+			.addr_flags = CONFIG_TCPC_I2C_BASE_ADDR_FLAGS,
 		},
 		.drv = &tcpci_tcpm_drv,
 	},
@@ -119,7 +119,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC,
-			.addr__7bf = CONFIG_TCPC_I2C_BASE_ADDR__7BF + 1,
+			.addr_flags = CONFIG_TCPC_I2C_BASE_ADDR_FLAGS + 1,
 		},
 		.drv = &tcpci_tcpm_drv,
 
@@ -230,7 +230,7 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 static void board_pmic_init(void)
 {
 	/* DISCHGCNT3 - enable 100 ohm discharge on V1.00A */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x3e, 0x04);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x3e, 0x04);
 
 	/*
 	 * No need to re-init below settings since they are present on all MP
@@ -240,23 +240,23 @@ static void board_pmic_init(void)
 		return;
 
 	/* Set CSDECAYEN / VCCIO decays to 0V at assertion of SLP_S0# */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x30, 0x4a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x30, 0x4a);
 
 	/*
 	 * Set V100ACNT / V1.00A Control Register:
 	 * Nominal output = 1.0V.
 	 */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x37, 0x1a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x37, 0x1a);
 
 	/*
 	 * Set V085ACNT / V0.85A Control Register:
 	 * Lower power mode = 0.7V.
 	 * Nominal output = 1.0V.
 	 */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x38, 0x7a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x38, 0x7a);
 
 	/* VRMODECTRL - enable low-power mode for VCCIO and V0.85A */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x3b, 0x18);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x3b, 0x18);
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
@@ -394,7 +394,7 @@ void board_hibernate(void)
 	uart_flush_output();
 
 	/* Trigger PMIC shutdown. */
-	if (i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf, 0x49, 0x01)) {
+	if (i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x49, 0x01)) {
 		/*
 		 * If we can't tell the PMIC to shutdown, instead reset
 		 * and don't start the AP. Hopefully we'll be able to
@@ -466,7 +466,7 @@ void chipset_set_pmic_slp_sus_l(int level)
 		if (!level)
 			msleep(25);
 
-		i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+		i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 			   0x43, val);
 		previous_level = level;
 	}

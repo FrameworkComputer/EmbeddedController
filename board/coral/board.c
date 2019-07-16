@@ -174,7 +174,7 @@ struct i2c_stress_test i2c_stress_tests[] = {
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
 	{
 		.port = NPCX_I2C_PORT0_0,
-		.addr__7bf = ANX74XX_I2C_ADDR1__7bf,
+		.addr_flags = ANX74XX_I2C_ADDR1_FLAGS,
 		.i2c_test = &anx74xx_i2c_stress_test_dev,
 	},
 #endif
@@ -183,7 +183,7 @@ struct i2c_stress_test i2c_stress_tests[] = {
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
 	{
 		.port = NPCX_I2C_PORT0_1,
-		.addr__7bf = PS8751_I2C_ADDR1__7bf,
+		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		.i2c_test = &ps8xxx_i2c_stress_test_dev,
 	},
 #endif
@@ -192,7 +192,7 @@ struct i2c_stress_test i2c_stress_tests[] = {
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
 	{
 		.port = I2C_PORT_GYRO,
-		.addr__7bf = BMI160_ADDR0__7bf,
+		.addr_flags = BMI160_ADDR0_FLAGS,
 		.i2c_test = &bmi160_i2c_stress_test_dev,
 	},
 #endif
@@ -201,7 +201,7 @@ struct i2c_stress_test i2c_stress_tests[] = {
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
 	{
 		.port = I2C_PORT_LID_ACCEL,
-		.addr__7bf = KX022_ADDR1__7bf,
+		.addr_flags = KX022_ADDR1_FLAGS,
 		.i2c_test = &kionix_i2c_stress_test_dev,
 	},
 #endif
@@ -226,7 +226,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = NPCX_I2C_PORT0_0,
-			.addr__7bf = ANX74XX_I2C_ADDR1__7bf,
+			.addr_flags = ANX74XX_I2C_ADDR1_FLAGS,
 		},
 		.drv = &anx74xx_tcpm_drv,
 	},
@@ -234,7 +234,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = NPCX_I2C_PORT0_1,
-			.addr__7bf = PS8751_I2C_ADDR1__7bf,
+			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 	},
@@ -373,7 +373,7 @@ static void board_tcpc_init(void)
 	 *
 	 * NOTE: PS8751 A3 will wake on any I2C access.
 	 */
-	i2c_read8__7bf(NPCX_I2C_PORT0_1, 0x08, 0xA0, &reg);
+	i2c_read8(NPCX_I2C_PORT0_1, 0x08, 0xA0, &reg);
 
 	/* Enable TCPC0 interrupt */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
@@ -723,7 +723,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_kx022_data,
 	 .port = I2C_PORT_LID_ACCEL,
-	 .i2c_spi_addr__7bf = KX022_ADDR1__7bf,
+	 .i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
 	 .rot_standard_ref = NULL, /* Identity matrix. */
 	 .default_range = 2, /* g, enough for laptop. */
 	 .config = {
@@ -748,7 +748,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_GYRO,
-	 .i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
+	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	 .rot_standard_ref = &base_standard_ref,
 	 .default_range = 2,  /* g, enough for laptop. */
 	 .config = {
@@ -775,7 +775,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_GYRO,
-	 .i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
+	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = &base_standard_ref,
 	},

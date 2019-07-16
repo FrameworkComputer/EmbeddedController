@@ -400,7 +400,7 @@
 #endif
 
 /* Ambient Light Sensor address */
-#define OPT3001_I2C_ADDR__7bf	OPT3001_I2C_ADDR1__7bf
+#define OPT3001_I2C_ADDR_FLAGS	OPT3001_I2C_ADDR1_FLAGS
 
 /* Modules we want to exclude */
 #undef CONFIG_CMD_HASH

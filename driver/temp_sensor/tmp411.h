@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_TMP411_H
 #define __CROS_EC_TMP411_H
 
-#define TMP411_I2C_ADDR__7bf		0x4C
+#define TMP411_I2C_ADDR_FLAGS		0x4C
 
 #define TMP411_IDX_LOCAL	0
 #define TMP411_IDX_REMOTE1	1

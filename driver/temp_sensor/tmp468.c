@@ -27,13 +27,13 @@ static int has_power(void)
 
 static int raw_read16(const int offset, int *data_ptr)
 {
-	return i2c_read16__7bf(I2C_PORT_THERMAL, TMP468_I2C_ADDR__7bf,
+	return i2c_read16(I2C_PORT_THERMAL, TMP468_I2C_ADDR_FLAGS,
 			  offset, data_ptr);
 }
 
 static int raw_write16(const int offset, int data_ptr)
 {
-	return i2c_write16__7bf(I2C_PORT_THERMAL, TMP468_I2C_ADDR__7bf,
+	return i2c_write16(I2C_PORT_THERMAL, TMP468_I2C_ADDR_FLAGS,
 			   offset, data_ptr);
 }
 

@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_F75303_H
 #define __CROS_EC_F75303_H
 
-#define F75303_I2C_ADDR__7bf		0x4C
+#define F75303_I2C_ADDR_FLAGS		0x4C
 
 enum f75303_index {
 	F75303_IDX_LOCAL = 0,

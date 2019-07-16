@@ -8,15 +8,15 @@
 #ifndef __CROS_EC_NX20P348X_H
 #define __CROS_EC_NX20P348X_H
 
-#define NX20P3483_ADDR0__7bf (0x70)
-#define NX20P3483_ADDR1__7bf (0x71)
-#define NX20P3483_ADDR2__7bf (0x72)
-#define NX20P3483_ADDR3__7bf (0x73)
+#define NX20P3483_ADDR0_FLAGS 0x70
+#define NX20P3483_ADDR1_FLAGS 0x71
+#define NX20P3483_ADDR2_FLAGS 0x72
+#define NX20P3483_ADDR3_FLAGS 0x73
 
-#define NX20P3481_ADDR0__7bf (0x74)
-#define NX20P3481_ADDR1__7bf (0x75)
-#define NX20P3481_ADDR2__7bf (0x76)
-#define NX20P3481_ADDR3__7bf (0x77)
+#define NX20P3481_ADDR0_FLAGS 0x74
+#define NX20P3481_ADDR1_FLAGS 0x75
+#define NX20P3481_ADDR2_FLAGS 0x76
+#define NX20P3481_ADDR3_FLAGS 0x77
 
 /*
  * This PPC hard-codes the over voltage protect of Vbus at 6.8V in dead-battery

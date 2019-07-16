@@ -16,7 +16,7 @@
  * 8-bit address is 0011110Wb where the last bit represents whether the
  * operation is a read or a write.
  */
-#define LIS2MDL_ADDR__7bf			0x1e
+#define LIS2MDL_ADDR_FLAGS		0x1e
 
 #define LIS2MDL_STARTUP_MS		10
 

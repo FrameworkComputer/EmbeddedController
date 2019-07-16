@@ -12,13 +12,13 @@
 
 static inline int lm3509_write(uint8_t reg, uint8_t val)
 {
-	return i2c_write8__7bf(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR__7bf,
+	return i2c_write8(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR_FLAGS,
 			  reg, val);
 }
 
 static inline int lm3509_read(uint8_t reg, int *val)
 {
-	return i2c_read8__7bf(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR__7bf,
+	return i2c_read8(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR_FLAGS,
 			 reg, val);
 }
 

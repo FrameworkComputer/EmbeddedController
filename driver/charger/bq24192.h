@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_BQ24192_H
 #define __CROS_EC_BQ24192_H
 
-#define BQ24192_ADDR__7bf 0x6b
+#define BQ24192_ADDR_FLAGS 0x6b
 
 /* Registers */
 #define BQ24192_REG_INPUT_CTRL      0x0

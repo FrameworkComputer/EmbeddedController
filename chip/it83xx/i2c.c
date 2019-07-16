@@ -194,7 +194,7 @@ struct i2c_port_data {
 	int widx;            /* Index into output data */
 	int ridx;            /* Index into input data */
 	int err;             /* Error code, if any */
-	uint8_t addr__8b;        /* address of device */
+	uint8_t addr_8bit;   /* address of device */
 	uint32_t timeout_us; /* Transaction timeout, or 0 to use default */
 	uint8_t freq;        /* Frequency setting */
 
@@ -319,7 +319,7 @@ static int i2c_tran_write(int p)
 		 * bit0, Direction of the host transfer.
 		 * bit[1:7}, Address of the targeted slave.
 		 */
-		IT83XX_SMB_TRASLA(p) = pd->addr__8b;
+		IT83XX_SMB_TRASLA(p) = pd->addr_8bit;
 		/* Send first byte */
 		IT83XX_SMB_HOBDB(p) = *(pd->out++);
 		pd->widx++;
@@ -379,7 +379,7 @@ static int i2c_tran_read(int p)
 		 * bit0, Direction of the host transfer.
 		 * bit[1:7}, Address of the targeted slave.
 		 */
-		IT83XX_SMB_TRASLA(p) = pd->addr__8b | 0x01;
+		IT83XX_SMB_TRASLA(p) = pd->addr_8bit | 0x01;
 		/* clear start flag */
 		pd->flags &= ~I2C_XFER_START;
 		/*
@@ -468,7 +468,7 @@ static int enhanced_i2c_tran_write(int p)
 		pd->flags &= ~I2C_XFER_START;
 		enhanced_i2c_start(p);
 		/* Send ID */
-		i2c_pio_trans_data(p, TX_DIRECT, pd->addr__8b, 1);
+		i2c_pio_trans_data(p, TX_DIRECT, pd->addr_8bit, 1);
 	} else {
 		/* Host has completed the transmission of a byte */
 		if (pd->widx < pd->out_size) {
@@ -489,7 +489,7 @@ static int enhanced_i2c_tran_write(int p)
 				pd->i2ccs = I2C_CH_REPEAT_START;
 				/* Repeat Start */
 				i2c_pio_trans_data(p, RX_DIRECT,
-						   pd->addr__8b, 1);
+						   pd->addr_8bit, 1);
 			} else {
 				if (pd->flags & I2C_XFER_STOP) {
 					IT83XX_I2C_CTR(p_ch) = E_FINISH;
@@ -521,7 +521,7 @@ static int enhanced_i2c_tran_read(int p)
 		/* Direct read  */
 		pd->i2ccs = I2C_CH_WAIT_READ;
 		/* Send ID */
-		i2c_pio_trans_data(p, RX_DIRECT, pd->addr__8b, 1);
+		i2c_pio_trans_data(p, RX_DIRECT, pd->addr_8bit, 1);
 	} else {
 		if (pd->i2ccs) {
 			if (pd->i2ccs == I2C_CH_REPEAT_START) {
@@ -539,7 +539,7 @@ static int enhanced_i2c_tran_read(int p)
 				pd->i2ccs = I2C_CH_WAIT_READ;
 				/* Send ID */
 				i2c_pio_trans_data(p, RX_DIRECT,
-						   pd->addr__8b, 1);
+						   pd->addr_8bit, 1);
 				task_enable_irq(i2c_ctrl_regs[p].irq);
 			}
 		} else {
@@ -641,7 +641,7 @@ int i2c_is_busy(int port)
 	return (IT83XX_I2C_STR(p_ch) & E_HOSTA_BB);
 }
 
-int chip_i2c_xfer__7bf(int port, uint16_t slave_addr__7bf,
+int chip_i2c_xfer(int port, uint16_t slave_addr_flags,
 		  const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
@@ -665,7 +665,7 @@ int chip_i2c_xfer__7bf(int port, uint16_t slave_addr__7bf,
 	pd->widx = 0;
 	pd->ridx = 0;
 	pd->err = 0;
-	pd->addr__8b = I2C_GET_ADDR__7b(slave_addr__7bf) << 1;
+	pd->addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
 
 	/* Make sure we're in a good state to start */
 	if ((flags & I2C_XFER_START) && (i2c_is_busy(port)

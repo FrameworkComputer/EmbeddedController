@@ -25,7 +25,7 @@
 /* Transmit timeout in microseconds */
 #define I2C_TX_TIMEOUT_MASTER   (10 * MSEC)
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF
+#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
 #if (I2C_PORT_EC == STM32_I2C1_PORT)
 #define IRQ_SLAVE_EV STM32_IRQ_I2C1_EV
 #define IRQ_SLAVE_ER STM32_IRQ_I2C1_ER
@@ -171,7 +171,7 @@ static int wait_sr1(int port, int mask)
  *
  * @return Non-zero if error.
  */
-static int send_start__8b(const int port, const uint16_t slave_addr__8b)
+static int send_start(const int port, const uint16_t slave_addr_8bit)
 {
 	int rv;
 
@@ -182,7 +182,7 @@ static int send_start__8b(const int port, const uint16_t slave_addr__8b)
 		return I2C_ERROR_FAILED_START;
 
 	/* Write slave address */
-	STM32_I2C_DR(port) = slave_addr__8b;
+	STM32_I2C_DR(port) = slave_addr_8bit;
 	rv = wait_sr1_poll(port, STM32_I2C_SR1_ADDR, SET, 1);
 	if (rv)
 		return rv;
@@ -263,7 +263,7 @@ static int wait_fmpi2c_isr(int port, int mask)
  *
  * @return Non-zero if error.
  */
-static int send_fmpi2c_start__8b(const int port, const uint16_t slave_addr__8b,
+static int send_fmpi2c_start(const int port, const uint16_t slave_addr_8bit,
 			     int size, int is_read)
 {
 	uint32_t reg;
@@ -274,7 +274,7 @@ static int send_fmpi2c_start__8b(const int port, const uint16_t slave_addr__8b,
 		FMPI2C_CR2_RELOAD | FMPI2C_CR2_AUTOEND |
 		FMPI2C_CR2_RD_WRN | FMPI2C_CR2_START | FMPI2C_CR2_STOP);
 	reg |= FMPI2C_CR2_START | FMPI2C_CR2_AUTOEND |
-		slave_addr__8b | FMPI2C_CR2_SIZE(size) |
+		slave_addr_8bit | FMPI2C_CR2_SIZE(size) |
 		(is_read ? FMPI2C_CR2_RD_WRN : 0);
 	STM32_FMPI2C_CR2(port) = reg;
 
@@ -401,7 +401,7 @@ static void fmpi2c_clear_regs(int port)
  *
  * @return		EC_SUCCESS on success.
  */
-static int chip_fmpi2c_xfer__8b(const int port, const uint16_t slave_addr__8b,
+static int chip_fmpi2c_xfer(const int port, const uint16_t slave_addr_8bit,
 			    const uint8_t *out, int out_bytes,
 			    uint8_t *in, int in_bytes, int flags)
 {
@@ -422,8 +422,8 @@ static int chip_fmpi2c_xfer__8b(const int port, const uint16_t slave_addr__8b,
 
 	/* No out bytes and no in bytes means just check for active */
 	if (out_bytes || !in_bytes) {
-		rv = send_fmpi2c_start__8b(
-			port, slave_addr__8b, out_bytes, FMPI2C_WRITE);
+		rv = send_fmpi2c_start(
+			port, slave_addr_8bit, out_bytes, FMPI2C_WRITE);
 		if (rv)
 			goto xfer_exit;
 
@@ -448,8 +448,8 @@ static int chip_fmpi2c_xfer__8b(const int port, const uint16_t slave_addr__8b,
 		dma_start_rx(dma, in_bytes, in);
 		i2c_dma_enable_tc_interrupt(dma->channel, port);
 
-		rv_start = send_fmpi2c_start__8b(
-				port, slave_addr__8b, in_bytes, FMPI2C_READ);
+		rv_start = send_fmpi2c_start(
+				port, slave_addr_8bit, in_bytes, FMPI2C_READ);
 		if (rv_start)
 			goto xfer_exit;
 
@@ -553,11 +553,11 @@ static void i2c_clear_regs(int port)
  */
 
 /* Perform an i2c transaction. */
-int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
+int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 		  const uint8_t *out, int out_bytes,
 		  uint8_t *in, int in_bytes, int flags)
 {
-	int addr__8b = I2C_GET_ADDR__7b(slave_addr__7bf) << 1;
+	int addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
 	int started = (flags & I2C_XFER_START) ? 0 : 1;
 	int rv = EC_SUCCESS;
 	int i;
@@ -568,7 +568,7 @@ int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
 	ASSERT(!started);
 
 	if (p->port == STM32F4_FMPI2C_PORT) {
-		return chip_fmpi2c_xfer__8b(port, addr__8b,
+		return chip_fmpi2c_xfer(port, addr_8bit,
 					out, out_bytes,
 					in, in_bytes, flags);
 	}
@@ -577,7 +577,7 @@ int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
 
 	/* No out bytes and no in bytes means just check for active */
 	if (out_bytes || !in_bytes) {
-		rv = send_start__8b(port, addr__8b);
+		rv = send_start(port, addr_8bit);
 		if (rv)
 			goto xfer_exit;
 
@@ -616,7 +616,7 @@ int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
 		STM32_I2C_CR2(port) |= STM32_I2C_CR2_LAST;
 		STM32_I2C_CR2(port) |= STM32_I2C_CR2_DMAEN;
 
-		rv_start = send_start__8b(port, addr__8b | 0x01);
+		rv_start = send_start(port, addr_8bit | 0x01);
 
 		if ((in_bytes == 1) && (flags & I2C_XFER_STOP))
 			STM32_I2C_CR1(port) |= STM32_I2C_CR1_STOP;
@@ -760,7 +760,7 @@ DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_change_hook, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Slave */
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF
+#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
 /* Host command slave */
 /*
  * Buffer for received host command packets (including prefix byte on request,
@@ -839,7 +839,7 @@ static void i2c_process_command(void)
 	host_packet_receive(&i2c_packet);
 }
 
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR__7BF
+#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
 static void i2c_send_board_response(int len)
 {
 	/* host_buffer data range, beyond this length, will return 0xec */
@@ -863,7 +863,7 @@ static void i2c_event_handler(int port)
 	volatile uint32_t i2c_sr2;
 	volatile uint32_t i2c_sr1;
 	static int rx_pending, buf_idx;
-	static uint16_t addr__8b;
+	static uint16_t addr_8bit;
 
 	volatile uint32_t dummy __attribute__((unused));
 
@@ -888,15 +888,15 @@ static void i2c_event_handler(int port)
 
 	/* Transfer matched our slave address */
 	if (i2c_sr1 & STM32_I2C_SR1_ADDR) {
-		addr__8b = ((i2c_sr2 & STM32_I2C_SR2_DUALF) ?
+		addr_8bit = ((i2c_sr2 & STM32_I2C_SR2_DUALF) ?
 			STM32_I2C_OAR2(port) : STM32_I2C_OAR1(port)) & 0xfe;
 		if (i2c_sr2 & STM32_I2C_SR2_TRA) {
 			/* Transmitter slave */
 			i2c_sr1 |= STM32_I2C_SR1_TXE;
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR__7BF
+#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
 			if (!rx_pending && !tx_pending) {
 				tx_pending = 1;
-				i2c_process_board_command(1, addr__8b, 0);
+				i2c_process_board_command(1, addr_8bit, 0);
 			}
 #endif
 		} else {
@@ -931,11 +931,11 @@ static void i2c_event_handler(int port)
 				host_i2c_resp_port = port;
 				/* Disable buffer interrupt */
 				STM32_I2C_CR2(port) &= ~STM32_I2C_CR2_ITBUFEN;
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR__7BF
-				if ((addr__8b >> 1) ==
-				    I2C_GET_ADDR__7b(
-					    CONFIG_BOARD_I2C_SLAVE_ADDR__7BF))
-					i2c_process_board_command(1, addr__8b,
+#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
+				if ((addr_8bit >> 1) ==
+				    I2C_GET_ADDR(
+					    CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS))
+					i2c_process_board_command(1, addr_8bit,
 								  buf_idx);
 				else
 #endif
@@ -957,11 +957,11 @@ static void i2c_event_handler(int port)
 		/* Disable buffer interrupt */
 		STM32_I2C_CR2(port) &= ~STM32_I2C_CR2_ITBUFEN;
 
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR__7BF
+#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
 		if (rx_pending &&
-		    (addr__8b >> 1) ==
-		    I2C_GET_ADDR__7b(CONFIG_BOARD_I2C_SLAVE_ADDR__7BF))
-			i2c_process_board_command(0, addr__8b, buf_idx);
+		    (addr_8b >> 1) ==
+		    I2C_GET_ADDR(CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS))
+			i2c_process_board_command(0, addr_8bit, buf_idx);
 #endif
 		rx_pending = 0;
 		tx_pending = 0;
@@ -996,7 +996,7 @@ static void i2c_init(void)
 		i2c_init_port(p);
 
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF
+#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
 	/* Enable ACK */
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_ACK;
 	/* Enable interrupts */
@@ -1004,10 +1004,10 @@ static void i2c_init(void)
 			| STM32_I2C_CR2_ITERREN;
 	/* Setup host command slave */
 	STM32_I2C_OAR1(I2C_PORT_EC) = STM32_I2C_OAR1_B14
-		| (I2C_GET_ADDR__7b(CONFIG_HOSTCMD_I2C_SLAVE_ADDR__7BF) << 1);
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR__7BF
+		| (I2C_GET_ADDR(CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS) << 1);
+#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
 	STM32_I2C_OAR2(I2C_PORT_EC) = STM32_I2C_OAR2_ENDUAL
-		| (I2C_GET_ADDR__7b(CONFIG_BOARD_I2C_SLAVE_ADDR__7BF) << 1);
+		| (I2C_GET_ADDR(CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS) << 1);
 #endif
 	task_enable_irq(IRQ_SLAVE_EV);
 	task_enable_irq(IRQ_SLAVE_ER);

@@ -233,7 +233,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = NPCX_I2C_PORT0_0,
-			.addr__7bf = PS8751_I2C_ADDR1__7bf,
+			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 		/* Alert is active-low, push-pull */
@@ -243,7 +243,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = NPCX_I2C_PORT0_1,
-			.addr__7bf = AN7447_TCPC3_I2C_ADDR__7bf,
+			.addr_flags = AN7447_TCPC3_I2C_ADDR_FLAGS,
 		},
 		.drv = &anx7447_tcpm_drv,
 		/* Alert is active-low, push-pull */
@@ -487,10 +487,10 @@ const static struct ec_thermal_config thermal_d2 = {
 };
 
 #define I2C_PMIC_READ(reg, data) \
-		i2c_read8__7bf(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1__7bf,\
+		i2c_read8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1_FLAGS,\
 			  (reg), (data))
 #define I2C_PMIC_WRITE(reg, data) \
-		i2c_write8__7bf(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1__7bf,\
+		i2c_write8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1_FLAGS,\
 			   (reg), (data))
 
 static void board_pmic_init(void)
@@ -751,7 +751,7 @@ const struct motion_sensor_t lid_accel_1 = {
 	.mutex = &g_lid_mutex,
 	.drv_data = &g_kx022_data,
 	.port = I2C_PORT_ACCEL,
-	.i2c_spi_addr__7bf = KX022_ADDR1__7bf,
+	.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
 	.rot_standard_ref = &rotation_x180_z90,
 	.min_frequency = KX022_ACCEL_MIN_FREQ,
 	.max_frequency = KX022_ACCEL_MAX_FREQ,
@@ -779,7 +779,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_lid_mutex,
 		.drv_data = &g_bma255_data,
 		.port = I2C_PORT_ACCEL,
-		.i2c_spi_addr__7bf = BMA2x2_I2C_ADDR1__7bf,
+		.i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
 		.rot_standard_ref = &lid_standard_ref,
 		.min_frequency = BMA255_ACCEL_MIN_FREQ,
 		.max_frequency = BMA255_ACCEL_MAX_FREQ,
@@ -807,7 +807,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = &g_bmi160_data,
 		.port = I2C_PORT_ACCEL,
-		.i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
+		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = BMI160_ACCEL_MIN_FREQ,
 		.max_frequency = BMI160_ACCEL_MAX_FREQ,
@@ -835,7 +835,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = &g_bmi160_data,
 		.port = I2C_PORT_ACCEL,
-		.i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
+		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 		.default_range = 1000, /* dps */
 		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = BMI160_GYRO_MIN_FREQ,
@@ -991,10 +991,10 @@ static void board_init(void)
 	gpio_set_level(GPIO_PCH_ACPRESENT, extpower_is_present());
 
 	/* Reduce Buck-boost mode switching frequency to reduce heat */
-	if (i2c_read16__7bf(I2C_PORT_CHARGER, I2C_ADDR_CHARGER__7bf,
+	if (i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
 		       ISL9238_REG_CONTROL3, &reg) == EC_SUCCESS) {
 		reg |= ISL9238_C3_BB_SWITCHING_PERIOD;
-		if (i2c_write16__7bf(I2C_PORT_CHARGER, I2C_ADDR_CHARGER__7bf,
+		if (i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
 			    ISL9238_REG_CONTROL3, reg))
 			CPRINTF("Failed to set isl9238\n");
 	}

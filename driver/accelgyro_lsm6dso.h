@@ -14,8 +14,8 @@
  * 7-bit address is 110101xb. Where 'x' is determined
  * by the voltage on the ADDR pin
  */
-#define LSM6DSO_ADDR0__7bf			0x6a
-#define LSM6DSO_ADDR1__7bf			0x6b
+#define LSM6DSO_ADDR0_FLAGS		0x6a
+#define LSM6DSO_ADDR1_FLAGS		0x6b
 
 /* Access to embedded sensor hub register bank */
 #define LSM6DSO_FUNC_CFG_ACC_ADDR	0x01

@@ -9,7 +9,7 @@
 #define __CROS_EC_BQ25710_H
 
 /* SMBUS Interface */
-#define BQ25710_SMBUS_ADDR1__7bf 0x09
+#define BQ25710_SMBUS_ADDR1_FLAGS 0x09
 
 #define BQ25710_BC12_MIN_VOLTAGE_MV	1408
 

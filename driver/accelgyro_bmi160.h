@@ -13,19 +13,16 @@
 
 /*
  * The addr field of motion_sensor support both SPI and I2C:
- *
- * +-------------------------------+---+
- * |    7 bit i2c address          | 0 |
- * +-------------------------------+---+
- * Or
- * +-------------------------------+---+
- * |    SPI device ID              | 1 |
- * +-------------------------------+---+
+ * This is defined in include/i2c.h and is no longer an 8bit
+ * address. The 7/10 bit address starts at bit 0 and leaves
+ * room for a 10 bit address, although we don't currently
+ * have any 10 bit slaves.  I2C or SPI is indicated by a
+ * more significant bit
  */
 
 /* I2C addresses */
-#define BMI160_ADDR0__7bf	0x68
-#define BMI160_ADDR1__7bf	0x69
+#define BMI160_ADDR0_FLAGS	0x68
+#define BMI160_ADDR1_FLAGS	0x69
 
 #define BMI160_CHIP_ID           0x00
 #define BMI160_CHIP_ID_MAJOR     0xd1
@@ -486,9 +483,9 @@ void bmi160_interrupt(enum gpio_signal signal);
 
 #ifdef CONFIG_BMI160_SEC_I2C
 /* Functions to access the secondary device through the accel/gyro. */
-int bmi160_sec_raw_read8__7bf(const int port, const uint16_t addr__7bf,
+int bmi160_sec_raw_read8(const int port, const uint16_t addr_flags,
 			 const uint8_t reg, int *data_ptr);
-int bmi160_sec_raw_write8__7bf(const int port, const uint16_t addr__7bf,
+int bmi160_sec_raw_write8(const int port, const uint16_t addr_flags,
 			  const uint8_t reg, int data);
 #endif
 

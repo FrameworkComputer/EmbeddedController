@@ -23,16 +23,16 @@ static uint8_t flags[CONFIG_USB_PD_PORT_COUNT];
 
 static int read_reg(uint8_t port, int reg, int *regval)
 {
-	return i2c_read8__7bf(ppc_chips[port].i2c_port,
-			 ppc_chips[port].i2c_addr__7bf,
+	return i2c_read8(ppc_chips[port].i2c_port,
+			 ppc_chips[port].i2c_addr_flags,
 			 reg,
 			 regval);
 }
 
 static int write_reg(uint8_t port, int reg, int regval)
 {
-	return i2c_write8__7bf(ppc_chips[port].i2c_port,
-			  ppc_chips[port].i2c_addr__7bf,
+	return i2c_write8(ppc_chips[port].i2c_port,
+			  ppc_chips[port].i2c_addr_flags,
 			  reg,
 			  regval);
 }
@@ -258,11 +258,11 @@ static int syv682x_dump(int port)
 	int data;
 	int rv;
 	const int i2c_port = ppc_chips[port].i2c_port;
-	const int i2c_addr__7bf = ppc_chips[port].i2c_addr__7bf;
+	const int i2c_addr_flags = ppc_chips[port].i2c_addr_flags;
 
 	for (reg_addr = SYV682X_STATUS_REG; reg_addr <= SYV682X_CONTROL_4_REG;
 	     reg_addr++) {
-		rv = i2c_read8__7bf(i2c_port, i2c_addr__7bf, reg_addr, &data);
+		rv = i2c_read8(i2c_port, i2c_addr_flags, reg_addr, &data);
 		if (rv)
 			ccprintf("ppc_syv682[p%d]: Failed to read reg 0x%02x\n",
 				 port, reg_addr);

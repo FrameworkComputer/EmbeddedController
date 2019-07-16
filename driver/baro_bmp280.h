@@ -74,8 +74,8 @@
  * Bit 1 of 7-bit address: 0 - If SDO is connected to GND
  * Bit 1 of 7-bit address: 1 - If SDO is connected to Vddio
  */
-#define BMP280_I2C_ADDRESS1__7bf		0x76
-#define BMP280_I2C_ADDRESS2__7bf		0x77
+#define BMP280_I2C_ADDRESS1_FLAGS	0x76
+#define BMP280_I2C_ADDRESS2_FLAGS	0x77
 
 /*
  *     CHIP ID

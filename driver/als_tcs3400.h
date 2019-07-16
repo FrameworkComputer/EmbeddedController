@@ -9,7 +9,7 @@
 #define __CROS_EC_ALS_TCS3400_H
 
 /* I2C Interface */
-#define TCS3400_I2C_ADDR__7bf	0x39
+#define TCS3400_I2C_ADDR_FLAGS	0x39
 
 /* ID for TCS34001 and TCS34005 */
 #define TCS340015_DEVICE_ID	0x90

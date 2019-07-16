@@ -9,9 +9,9 @@
 #define __CROS_EC_ALS_AL3010_H
 
 /* I2C interface */
-#define AL3010_I2C_ADDR1__7bf		(0x1C)
-#define AL3010_I2C_ADDR2__7bf		(0x1D)
-#define AL3010_I2C_ADDR3__7bf		(0x1E)
+#define AL3010_I2C_ADDR1_FLAGS		0x1C
+#define AL3010_I2C_ADDR2_FLAGS		0x1D
+#define AL3010_I2C_ADDR3_FLAGS		0x1E
 
 /* AL3010 registers */
 #define AL3010_REG_SYSTEM		0x00

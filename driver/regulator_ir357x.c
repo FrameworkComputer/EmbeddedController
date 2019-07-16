@@ -17,7 +17,7 @@
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
 /* I2C address */
-#define IR357x_I2C_ADDR__7bf (0x8)
+#define IR357x_I2C_ADDR_FLAGS 0x08
 
 struct ir_setting {
 	uint8_t reg;

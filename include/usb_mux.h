@@ -27,7 +27,7 @@ typedef uint8_t mux_state_t;
  */
 #define MUX_PORT_AND_ADDR(port, addr) ((port << 8) | (addr & 0xFF))
 #define MUX_PORT(port) (usb_muxes[port].port_addr >> 8)
-#define MUX_ADDR__7bf(port) (usb_muxes[port].port_addr & 0xFF)
+#define MUX_ADDR(port) (usb_muxes[port].port_addr & 0xFF)
 
 /* Mux state attributes */
 /* TODO: Directly use USB_PD_MUX_* everywhere and remove these 3 defines */
@@ -143,21 +143,21 @@ extern struct usb_mux usb_muxes[];
 static inline int mux_write(int port, int reg, int val)
 {
 	return usb_muxes[port].flags & USB_MUX_FLAG_NOT_TCPC
-		? i2c_write8__7bf(MUX_PORT(port), MUX_ADDR__7bf(port), reg, val)
+		? i2c_write8(MUX_PORT(port), MUX_ADDR(port), reg, val)
 		: tcpc_write(port, reg, val);
 }
 
 static inline int mux_read(int port, int reg, int *val)
 {
 	return usb_muxes[port].flags & USB_MUX_FLAG_NOT_TCPC
-		? i2c_read8__7bf(MUX_PORT(port), MUX_ADDR__7bf(port), reg, val)
+		? i2c_read8(MUX_PORT(port), MUX_ADDR(port), reg, val)
 		: tcpc_read(port, reg, val);
 }
 
 static inline int mux_write16(int port, int reg, int val)
 {
 	return usb_muxes[port].flags & USB_MUX_FLAG_NOT_TCPC
-		? i2c_write16__7bf(MUX_PORT(port), MUX_ADDR__7bf(port),
+		? i2c_write16(MUX_PORT(port), MUX_ADDR(port),
 			      reg, val)
 		: tcpc_write16(port, reg, val);
 }
@@ -165,7 +165,7 @@ static inline int mux_write16(int port, int reg, int val)
 static inline int mux_read16(int port, int reg, int *val)
 {
 	return usb_muxes[port].flags & USB_MUX_FLAG_NOT_TCPC
-		? i2c_read16__7bf(MUX_PORT(port), MUX_ADDR__7bf(port),
+		? i2c_read16(MUX_PORT(port), MUX_ADDR(port),
 			     reg, val)
 		: tcpc_read16(port, reg, val);
 }

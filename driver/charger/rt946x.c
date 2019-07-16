@@ -145,17 +145,17 @@ static const uint16_t rt946x_boost_current[] = {
 
 static int rt946x_read8(int reg, int *val)
 {
-	return i2c_read8__7bf(I2C_PORT_CHARGER, RT946X_ADDR__7bf, reg, val);
+	return i2c_read8(I2C_PORT_CHARGER, RT946X_ADDR_FLAGS, reg, val);
 }
 
 static int rt946x_write8(int reg, int val)
 {
-	return i2c_write8__7bf(I2C_PORT_CHARGER, RT946X_ADDR__7bf, reg, val);
+	return i2c_write8(I2C_PORT_CHARGER, RT946X_ADDR_FLAGS, reg, val);
 }
 
 static int rt946x_block_write(int reg, const uint8_t *val, int len)
 {
-	return i2c_write_block__7bf(I2C_PORT_CHARGER, RT946X_ADDR__7bf,
+	return i2c_write_block(I2C_PORT_CHARGER, RT946X_ADDR_FLAGS,
 			       reg, val, len);
 }
 

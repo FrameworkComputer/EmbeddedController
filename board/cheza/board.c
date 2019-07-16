@@ -242,7 +242,7 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 struct ppc_config_t ppc_chips[] = {
 	{
 		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr__7bf = SN5S330_ADDR0__7bf,
+		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
 		.drv = &sn5s330_drv
 	},
 	/*
@@ -261,7 +261,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr__7bf = 0x28,
+			.addr_flags = 0x28,
 		},
 		.drv = &anx74xx_tcpm_drv,
 		.flags = TCPC_FLAGS_ALERT_OD,
@@ -270,7 +270,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC1,
-			.addr__7bf = 0x0B,
+			.addr_flags = 0x0B,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 	},
@@ -649,7 +649,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
+	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	 .rot_standard_ref = &base_standard_ref,
 	 .default_range = 4,  /* g */
 	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
@@ -670,7 +670,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
+	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = &base_standard_ref,
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
@@ -685,7 +685,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &opt3001_drv,
 	 .drv_data = &g_opt3001_data,
 	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr__7bf = OPT3001_I2C_ADDR__7bf,
+	 .i2c_spi_addr_flags = OPT3001_I2C_ADDR_FLAGS,
 	 .rot_standard_ref = NULL,
 	 .default_range = 0x10000, /* scale = 1; uscale = 0 */
 	 .min_frequency = OPT3001_LIGHT_MIN_FREQ,

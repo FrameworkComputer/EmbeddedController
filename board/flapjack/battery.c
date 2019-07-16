@@ -398,10 +398,10 @@ int charger_profile_override(struct charge_state_data *curr)
 	 * Pull down WPC VBUS. Need to use raw i2c APIs because RO
 	 * doesn't have p9221 driver. If WPC is off, this is a no-op.
 	 */
-	if (i2c_read_offset16__7bf(I2C_PORT_WPC, P9221_R7_ADDR__7bf,
+	if (i2c_read_offset16(I2C_PORT_WPC, P9221_R7_ADDR_FLAGS,
 			      P9221R7_VOUT_SET_REG, &val, 1) == EC_SUCCESS
 			&& val * 100 != wpc_mv)
-		i2c_write_offset16__7bf(I2C_PORT_WPC, P9221_R7_ADDR__7bf,
+		i2c_write_offset16(I2C_PORT_WPC, P9221_R7_ADDR_FLAGS,
 			      P9221R7_VOUT_SET_REG, wpc_mv / 100, 1);
 
 	if ((curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE) ||

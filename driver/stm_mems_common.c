@@ -11,24 +11,24 @@
 /**
  * st_raw_read_n - Read n bytes for read
  */
-int st_raw_read_n__7bf(const int port,
-		  const uint16_t i2c_addr__7bf,
+int st_raw_read_n(const int port,
+		  const uint16_t i2c_addr_flags,
 		  const uint8_t reg, uint8_t *data_ptr, const int len)
 {
 	/* TODO: Implement SPI interface support */
-	return i2c_read_block__7bf(port, i2c_addr__7bf,
+	return i2c_read_block(port, i2c_addr_flags,
 			      reg | 0x80, data_ptr, len);
 }
 
 /**
  * st_raw_read_n_noinc - Read n bytes for read (no auto inc address)
  */
-int st_raw_read_n_noinc__7bf(const int port,
-			const uint16_t i2c_addr__7bf,
+int st_raw_read_n_noinc(const int port,
+			const uint16_t i2c_addr_flags,
 			const uint8_t reg, uint8_t *data_ptr, const int len)
 {
 	/* TODO: Implement SPI interface support */
-	return i2c_read_block__7bf(port, i2c_addr__7bf,
+	return i2c_read_block(port, i2c_addr_flags,
 			      reg, data_ptr, len);
 }
 
@@ -45,7 +45,7 @@ int st_write_data_with_mask(const struct motion_sensor_t *s, int reg,
 	int err;
 	int new_data = 0x00, old_data = 0x00;
 
-	err = st_raw_read8__7bf(s->port, s->i2c_spi_addr__7bf,
+	err = st_raw_read8(s->port, s->i2c_spi_addr_flags,
 			   reg, &old_data);
 	if (err != EC_SUCCESS)
 		return err;
@@ -56,7 +56,7 @@ int st_write_data_with_mask(const struct motion_sensor_t *s, int reg,
 	if (new_data == old_data)
 		return EC_SUCCESS;
 
-	return st_raw_write8__7bf(s->port, s->i2c_spi_addr__7bf,
+	return st_raw_write8(s->port, s->i2c_spi_addr_flags,
 			     reg, new_data);
 }
 

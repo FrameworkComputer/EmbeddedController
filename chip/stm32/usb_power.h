@@ -138,7 +138,7 @@ struct usb_power_ina_cfg {
 	/* i2c bus. TODO(nsanders): specify what kind of index. */
 	int port;
 	/* 7-bit i2c addr */
-	uint16_t addr__7bf;
+	uint16_t addr_flags;
 
 	/* Base voltage. mV */
 	int mv;
@@ -243,7 +243,7 @@ struct __attribute__ ((__packed__)) usb_power_command_addina {
 	uint16_t command;
 	uint8_t port;
 	uint8_t type;
-	uint16_t addr__7bf;
+	uint16_t addr_flags;
 	uint8_t extra;
 	uint32_t rs;
 };

@@ -106,7 +106,7 @@ static void usb_i2c_execute(struct usb_i2c_config const *config)
 	/* Payload is ready to execute. */
 	uint32_t count      = usb_i2c_read_packet(config);
 	int portindex       = (config->buffer[0] >> 0) & 0xf;
-	uint16_t addr__7bf  = (config->buffer[0] >> 8) & 0x7f;
+	uint16_t addr_flags = (config->buffer[0] >> 8) & 0x7f;
 	int write_count     = ((config->buffer[0] << 4) & 0xf00) |
 		((config->buffer[1] >> 0) & 0xff);
 	int read_count      = (config->buffer[1] >> 8) & 0xff;
@@ -133,7 +133,7 @@ static void usb_i2c_execute(struct usb_i2c_config const *config)
 		config->buffer[0] = USB_I2C_READ_COUNT_INVALID;
 	} else if (portindex >= i2c_ports_used) {
 		config->buffer[0] = USB_I2C_PORT_INVALID;
-	} else if (addr__7bf == USB_I2C_CMD_ADDR__7bf) {
+	} else if (addr_flags == USB_I2C_CMD_ADDR_FLAGS) {
 		/*
 		 * This is a non-i2c command, invoke the handler if it has
 		 * been registered, if not - report the appropriate error.
@@ -154,11 +154,11 @@ static void usb_i2c_execute(struct usb_i2c_config const *config)
 		 * knows about.  It should behave closer to
 		 * EC_CMD_I2C_PASSTHRU, which can protect ports and ranges.
 		 */
-		ret = i2c_xfer__7bf(i2c_ports[portindex].port, addr__7bf,
-				 (uint8_t *)(config->buffer + 2) + offset,
-				 write_count,
-				 (uint8_t *)(config->buffer + 2),
-				 read_count);
+		ret = i2c_xfer(i2c_ports[portindex].port, addr_flags,
+			       (uint8_t *)(config->buffer + 2) + offset,
+			       write_count,
+			       (uint8_t *)(config->buffer + 2),
+			       read_count);
 		config->buffer[0] = usb_i2c_map_error(ret);
 	}
 	usb_i2c_write_packet(config, read_count + 4);

@@ -138,11 +138,11 @@ static void board_setup_panel(void)
 		dim = sku & SKU_ID_PANEL_SIZE_MASK ? 0xc4 : 0xc8;
 	}
 
-	rv |= i2c_write8__7bf(I2C_PORT_CHARGER, RT946X_ADDR__7bf,
+	rv |= i2c_write8(I2C_PORT_CHARGER, RT946X_ADDR_FLAGS,
 			 MT6370_BACKLIGHT_BLEN, channel);
-	rv |= i2c_write8__7bf(I2C_PORT_CHARGER, RT946X_ADDR__7bf,
+	rv |= i2c_write8(I2C_PORT_CHARGER, RT946X_ADDR_FLAGS,
 			 MT6370_BACKLIGHT_BLDIM, dim);
-	rv |= i2c_write8__7bf(I2C_PORT_CHARGER, RT946X_ADDR__7bf,
+	rv |= i2c_write8(I2C_PORT_CHARGER, RT946X_ADDR_FLAGS,
 			 MT6370_BACKLIGHT_BLPWM, 0xac);
 	if (rv)
 		CPRINTS("Board setup panel failed");
@@ -288,7 +288,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr__7bf = MT6370_TCPC_I2C_ADDR__7bf,
+			.addr_flags = MT6370_TCPC_I2C_ADDR_FLAGS,
 		},
 		.drv = &mt6370_tcpm_drv},
 };
@@ -500,7 +500,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_ACCEL,
-	 .i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
+	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	 .rot_standard_ref = &lid_standard_ref,
 	 .default_range = 4,  /* g */
 	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
@@ -523,7 +523,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_ACCEL,
-	 .i2c_spi_addr__7bf = BMI160_ADDR0__7bf,
+	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = &lid_standard_ref,
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
@@ -538,7 +538,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &tcs3400_drv,
 	 .drv_data = &g_tcs3400_data,
 	 .port = I2C_PORT_ALS,
-	 .i2c_spi_addr__7bf = TCS3400_I2C_ADDR__7bf,
+	 .i2c_spi_addr_flags = TCS3400_I2C_ADDR_FLAGS,
 	 .rot_standard_ref = NULL,
 	 .default_range = 0x10000, /* scale = 1x, uscale = 0 */
 	 .min_frequency = TCS3400_LIGHT_MIN_FREQ,

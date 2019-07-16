@@ -22,7 +22,7 @@ static int sy21612_clear_set_reg(int reg, int clear, int set)
 {
 	int val, old_val, rv;
 
-	rv = i2c_read8__7bf(I2C_PORT_SY21612, SY21612_ADDR__7bf, reg, &old_val);
+	rv = i2c_read8(I2C_PORT_SY21612, SY21612_ADDR_FLAGS, reg, &old_val);
 	if (rv)
 		return rv;
 
@@ -31,7 +31,7 @@ static int sy21612_clear_set_reg(int reg, int clear, int set)
 	val |= set;
 
 	if (val != old_val || clear || set)
-		rv = i2c_write8__7bf(I2C_PORT_SY21612, SY21612_ADDR__7bf,
+		rv = i2c_write8(I2C_PORT_SY21612, SY21612_ADDR_FLAGS,
 				reg, val);
 
 	return rv;
@@ -39,7 +39,7 @@ static int sy21612_clear_set_reg(int reg, int clear, int set)
 
 static int sy21612_read(int reg, int *val)
 {
-	return i2c_read8__7bf(I2C_PORT_SY21612, SY21612_ADDR__7bf, reg, val);
+	return i2c_read8(I2C_PORT_SY21612, SY21612_ADDR_FLAGS, reg, val);
 }
 
 int sy21612_enable_regulator(int enable)

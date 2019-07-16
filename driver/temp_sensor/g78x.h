@@ -12,7 +12,7 @@
 #error Cannot support both G781 and G782 together!
 #endif
 
-#define G78X_I2C_ADDR__7bf		0x4C
+#define G78X_I2C_ADDR_FLAGS		0x4C
 
 #define G78X_IDX_INTERNAL	0
 #define G78X_IDX_EXTERNAL1	1

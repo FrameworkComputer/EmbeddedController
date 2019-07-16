@@ -92,14 +92,16 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-int anx7688_passthru_allowed__7bf(const struct i2c_port_t *port,
-			     const uint16_t addr__7bf)
+int anx7688_passthru_allowed(const struct i2c_port_t *port,
+			     const uint16_t addr_flags)
 {
+	uint16_t addr = I2C_GET_ADDR(addr_flags);
+
 	/* Allow access to 0x2c (TCPC) */
-	if (I2C_GET_ADDR__7b(addr__7bf) == 0x2c)
+	if (addr == 0x2c)
 		return 1;
 
-	CPRINTF("Passthru rejected on %x", I2C_GET_ADDR__7b(addr__7bf));
+	CPRINTF("Passthru rejected on %x", addr);
 
 	return 0;
 }
@@ -108,7 +110,7 @@ int anx7688_passthru_allowed__7bf(const struct i2c_port_t *port,
 const struct i2c_port_t i2c_ports[] = {
 	{"battery", I2C_PORT_BATTERY, 100,  GPIO_I2C0_SCL, GPIO_I2C0_SDA},
 	{"pd",      I2C_PORT_PD_MCU,  1000, GPIO_I2C1_SCL, GPIO_I2C1_SDA,
-		anx7688_passthru_allowed__7bf}
+		anx7688_passthru_allowed}
 };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
@@ -126,7 +128,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC,
-			.addr__7bf = CONFIG_TCPC_I2C_BASE_ADDR__7BF,
+			.addr_flags = CONFIG_TCPC_I2C_BASE_ADDR_FLAGS,
 		},
 		.drv = &anx7688_tcpm_drv,
 	},
@@ -467,7 +469,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv = &kionix_accel_drv,
 		.mutex = &g_kx022_mutex[0],
 		.drv_data = &g_kx022_data[0],
-		.i2c_spi_addr__7bf = SLAVE_MK_SPI_ADDR__7bf(0),
+		.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(0),
 		.rot_standard_ref = &base_standard_ref,
 		.default_range = 2, /* g, enough for laptop. */
 		.min_frequency = KX022_ACCEL_MIN_FREQ,
@@ -490,7 +492,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv = &kionix_accel_drv,
 		.mutex = &g_kx022_mutex[1],
 		.drv_data = &g_kx022_data[1],
-		.i2c_spi_addr__7bf = SLAVE_MK_SPI_ADDR__7bf(1),
+		.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(1),
 		.rot_standard_ref = &lid_standard_ref,
 		.default_range = 2, /* g, enough for laptop. */
 		.min_frequency = KX022_ACCEL_MIN_FREQ,

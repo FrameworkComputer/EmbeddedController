@@ -159,7 +159,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr__7bf = I2C_ADDR_TCPC__7bf,
+			.addr_flags = I2C_ADDR_TCPC_FLAGS,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 		/* Alert is active-low, push-pull */
@@ -170,7 +170,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC1,
-			.addr__7bf = I2C_ADDR_TCPC__7bf,
+			.addr_flags = I2C_ADDR_TCPC_FLAGS,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 		/* Alert is active-low, push-pull */
@@ -262,7 +262,7 @@ static void board_report_pmic_fault(const char *str)
 	uint32_t info;
 
 	/* RESETIRQ1 -- Bit 4: VRFAULT */
-	if (i2c_read8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		      BD99992GW_REG_RESETIRQ1, &vrfault) != EC_SUCCESS)
 		return;
 
@@ -272,11 +272,11 @@ static void board_report_pmic_fault(const char *str)
 	/* VRFAULT has occurred, print VRFAULT status bits. */
 
 	/* PWRSTAT1 */
-	i2c_read8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		  BD99992GW_REG_PWRSTAT1, &pwrstat1);
 
 	/* PWRSTAT2 */
-	i2c_read8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		  BD99992GW_REG_PWRSTAT2, &pwrstat2);
 
 	CPRINTS("PMIC VRFAULT: %s", str);
@@ -284,11 +284,11 @@ static void board_report_pmic_fault(const char *str)
 		pwrstat2);
 
 	/* Clear all faults -- Write 1 to clear. */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_RESETIRQ1, BIT(4));
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_PWRSTAT1, pwrstat1);
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_PWRSTAT2, pwrstat2);
 
 	/*
@@ -308,7 +308,7 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10)  - VR set to AUTO operating mode
 	 */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_VCCIOCNT, 0x3a);
 
 	/*
@@ -318,7 +318,7 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_V18ACNT, 0x2a);
 
 	/*
@@ -328,7 +328,7 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_V085ACNT, 0x2a);
 }
 
@@ -341,7 +341,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10)  - VR set to AUTO operating mode
 	 */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_VCCIOCNT, 0x7a);
 
 	/*
@@ -351,7 +351,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_V18ACNT, 0x6a);
 
 	/*
@@ -361,7 +361,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_V085ACNT, 0x6a);
 }
 
@@ -378,25 +378,25 @@ static void board_pmic_init(void)
 	board_report_pmic_fault("SYSJUMP");
 
 	/* Clear power source events */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_PWRSRCINT, 0xff);
 
 	/* Disable power button shutdown timer */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_PBCONFIG, 0x00);
 
 	if (system_jumped_to_this_image())
 		return;
 
 	/* DISCHGCNT1 - enable 100 ohm discharge on VCCIO */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_DISCHGCNT1, 0x01);
 
 	/*
 	 * DISCHGCNT2 - enable 100 ohm discharge on
 	 * V5.0A, V3.3DSW, V3.3A and V1.8A
 	 */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_DISCHGCNT2, 0x55);
 
 	/*
@@ -405,19 +405,19 @@ static void board_pmic_init(void)
 	 * DISCHGCNT3 - enable 100 ohm discharge on
 	 * V12U, V1.00A, V0.85A
 	 */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_DISCHGCNT3, 0xd5);
 
 	/* DISCHGCNT4 - enable 100 ohm discharge on V33S, V18S, V100S */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_DISCHGCNT4, 0x15);
 
 	/* VRMODECTRL - disable low-power mode for all rails */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_VRMODECTRL, 0x1f);
 
 	/* V5ADS3CNT - boost V5A_DS3 by 2% */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_V5ADS3CNT, 0x1a);
 
 	board_pmic_disable_slp_s0_vr_decay();
@@ -440,7 +440,7 @@ void board_hibernate(void)
 	system_enter_psl_mode();
 
 	/* Cut off DSW power via the ROP PMIC. */
-	i2c_write8__7bf(I2C_PORT_PMIC, I2C_ADDR_BD99992__7bf,
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_SDWNCTRL, BD99992GW_SDWNCTRL_SWDN);
 
 	/* Wait for power to be cut. */
@@ -593,7 +593,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv = &opt3001_drv,
 		.drv_data = &g_opt3001_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr__7bf = OPT3001_I2C_ADDR__7bf,
+		.i2c_spi_addr_flags = OPT3001_I2C_ADDR_FLAGS,
 		.rot_standard_ref = NULL,
 		.default_range = 0x2b11a1, /* from nocturne */
 		.min_frequency = OPT3001_LIGHT_MIN_FREQ,

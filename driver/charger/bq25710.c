@@ -62,13 +62,13 @@ static const struct charger_info bq25710_charger_info = {
 
 static inline int raw_read16(int offset, int *value)
 {
-	return i2c_read16__7bf(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1__7bf,
+	return i2c_read16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
 			  offset, value);
 }
 
 static inline int raw_write16(int offset, int value)
 {
-	return i2c_write16__7bf(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1__7bf,
+	return i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
 			   offset, value);
 }
 

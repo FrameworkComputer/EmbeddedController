@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_TEMP_SENSOR_BD99992GW_H
 #define __CROS_EC_TEMP_SENSOR_BD99992GW_H
 
-#define BD99992GW_I2C_ADDR__7bf		0x30
+#define BD99992GW_I2C_ADDR_FLAGS	0x30
 
 /* ADC channels */
 enum bd99992gw_adc_channel {

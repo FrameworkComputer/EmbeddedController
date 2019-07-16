@@ -199,8 +199,8 @@ enum battery_present battery_hw_present(void)
 	int data;
 	int rv;
 
-	rv = pca9555_read__7bf(I2C_PORT_PCA555_PMIC_BATT_GPIO,
-			I2C_ADDR_PCA555_PMIC_BATT_GPIO__7bf,
+	rv = pca9555_read(I2C_PORT_PCA555_PMIC_BATT_GPIO,
+			I2C_ADDR_PCA555_PMIC_BATT_GPIO_FLAGS,
 			PCA9555_CMD_INPUT_PORT_0, &data);
 
 	/* GPIO is low when the battery is physically present */

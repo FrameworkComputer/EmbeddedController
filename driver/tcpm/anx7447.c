@@ -41,7 +41,7 @@
 		(((anx7447_get_vbus_voltage(port))) > vsafe0v_max)
 
 struct anx_state {
-	uint16_t i2c_slave_addr__7bf;
+	uint16_t i2c_slave_addr_flags;
 };
 
 struct anx_usb_mux {
@@ -64,17 +64,17 @@ static struct anx_usb_mux mux[CONFIG_USB_PD_PORT_COUNT];
  * anx7447_reg_write() and anx7447_reg_read() are implemented here to access
  * ANX7447 SPI slave address.
  */
-const struct anx7447_i2c_addr anx7447_i2c_addrs__7bf[] = {
-	{AN7447_TCPC0_I2C_ADDR__7bf, AN7447_SPI0_I2C_ADDR__7bf},
-	{AN7447_TCPC1_I2C_ADDR__7bf, AN7447_SPI1_I2C_ADDR__7bf},
-	{AN7447_TCPC2_I2C_ADDR__7bf, AN7447_SPI2_I2C_ADDR__7bf},
-	{AN7447_TCPC3_I2C_ADDR__7bf, AN7447_SPI3_I2C_ADDR__7bf}
+const struct anx7447_i2c_addr anx7447_i2c_addrs_flags[] = {
+	{AN7447_TCPC0_I2C_ADDR_FLAGS, AN7447_SPI0_I2C_ADDR_FLAGS},
+	{AN7447_TCPC1_I2C_ADDR_FLAGS, AN7447_SPI1_I2C_ADDR_FLAGS},
+	{AN7447_TCPC2_I2C_ADDR_FLAGS, AN7447_SPI2_I2C_ADDR_FLAGS},
+	{AN7447_TCPC3_I2C_ADDR_FLAGS, AN7447_SPI3_I2C_ADDR_FLAGS}
 };
 
 static inline int anx7447_reg_write(int port, int reg, int val)
 {
-	int rv = i2c_write8__7bf(tcpc_config[port].i2c_info.port,
-			    anx[port].i2c_slave_addr__7bf,
+	int rv = i2c_write8(tcpc_config[port].i2c_info.port,
+			    anx[port].i2c_slave_addr_flags,
 			    reg, val);
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	pd_device_accessed(port);
@@ -84,8 +84,8 @@ static inline int anx7447_reg_write(int port, int reg, int val)
 
 static inline int anx7447_reg_read(int port, int reg, int *val)
 {
-	int rv = i2c_read8__7bf(tcpc_config[port].i2c_info.port,
-			   anx[port].i2c_slave_addr__7bf,
+	int rv = i2c_read8(tcpc_config[port].i2c_info.port,
+			   anx[port].i2c_slave_addr_flags,
 			   reg, val);
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	pd_device_accessed(port);
@@ -291,20 +291,19 @@ static int anx7447_init(int port)
 	 * find corresponding anx7447 SPI slave address according to
 	 * specified TCPC slave address
 	 */
-	for (i = 0; i < ARRAY_SIZE(anx7447_i2c_addrs__7bf); i++) {
-		if (I2C_GET_ADDR__7b(
-			    tcpc_config[port].i2c_info.addr__7bf) ==
-		    I2C_GET_ADDR__7b(
-			    anx7447_i2c_addrs__7bf[i].tcpc_slave_addr__7bf)) {
-			anx[port].i2c_slave_addr__7bf =
-				anx7447_i2c_addrs__7bf[i].spi_slave_addr__7bf;
+	for (i = 0; i < ARRAY_SIZE(anx7447_i2c_addrs_flags); i++) {
+		if (I2C_GET_ADDR(tcpc_config[port].i2c_info.addr_flags) ==
+		    I2C_GET_ADDR(
+			    anx7447_i2c_addrs_flags[i].tcpc_slave_addr_flags)) {
+			anx[port].i2c_slave_addr_flags =
+				anx7447_i2c_addrs_flags[i].spi_slave_addr_flags;
 			break;
 		}
 	}
-	if (!I2C_GET_ADDR__7b(anx[port].i2c_slave_addr__7bf)) {
+	if (!I2C_GET_ADDR(anx[port].i2c_slave_addr_flags)) {
 		ccprintf("TCPC I2C slave addr 0x%x is invalid for ANX7447\n",
-			 I2C_GET_ADDR__7b(tcpc_config[port]
-				      .i2c_info.addr__7bf));
+			 I2C_GET_ADDR(tcpc_config[port]
+				      .i2c_info.addr_flags));
 		return EC_ERROR_UNKNOWN;
 	}
 

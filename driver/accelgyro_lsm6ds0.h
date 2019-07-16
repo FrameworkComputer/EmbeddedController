@@ -15,8 +15,8 @@
  * 7-bit address is 110101Xb. Where 'X' is determined
  * by the voltage on the ADDR pin.
  */
-#define LSM6DS0_ADDR0__7bf             0x6a
-#define LSM6DS0_ADDR1__7bf             0x6b
+#define LSM6DS0_ADDR0_FLAGS       0x6a
+#define LSM6DS0_ADDR1_FLAGS       0x6b
 
 /* who am I  */
 #define LSM6DS0_WHO_AM_I          0x68

@@ -165,7 +165,7 @@ int i2c_do_work(int port)
 	return 0;
 }
 
-int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
+int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 		  const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
@@ -193,7 +193,7 @@ int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
 
 		CPRINTS("I2C%d Addr:%02X bad status 0x%02x, SCL=%d, SDA=%d",
 			port,
-			I2C_GET_ADDR__7b(slave_addr__7bf),
+			I2C_GET_ADDR(slave_addr_flags),
 			reg_mcs,
 			i2c_get_line_levels(port) & I2C_LINE_SCL_HIGH,
 			i2c_get_line_levels(port) & I2C_LINE_SDA_HIGH);
@@ -219,7 +219,7 @@ int chip_i2c_xfer__7bf(const int port, const uint16_t slave_addr__7bf,
 	}
 
 	/* Set slave address for transmit */
-	LM4_I2C_MSA(port) = (I2C_GET_ADDR__7b(slave_addr__7bf) << 1) & 0xff;
+	LM4_I2C_MSA(port) = (I2C_GET_ADDR(slave_addr_flags) << 1) & 0xff;
 
 	/* Enable interrupts */
 	pd->task_waiting = task_get_current();

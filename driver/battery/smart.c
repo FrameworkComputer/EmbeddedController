@@ -31,7 +31,7 @@ test_mockable int sb_read(int cmd, int *param)
 		return EC_RES_ACCESS_DENIED;
 #endif
 
-	return i2c_read16__7bf(I2C_PORT_BATTERY, BATTERY_ADDR__7bf,
+	return i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
 			  cmd, param);
 }
 
@@ -45,7 +45,7 @@ test_mockable int sb_write(int cmd, int param)
 		return EC_RES_ACCESS_DENIED;
 #endif
 
-	return i2c_write16__7bf(I2C_PORT_BATTERY, BATTERY_ADDR__7bf,
+	return i2c_write16(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
 			   cmd, param);
 }
 
@@ -59,7 +59,7 @@ int sb_read_string(int offset, uint8_t *data, int len)
 		return EC_RES_ACCESS_DENIED;
 #endif
 
-	return i2c_read_string__7bf(I2C_PORT_BATTERY, BATTERY_ADDR__7bf,
+	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
 			       offset, data, len);
 }
 
@@ -104,7 +104,7 @@ int sb_write_block(int reg, const uint8_t *val, int len)
 #endif
 
 	/* TODO: implement smbus_write_block. */
-	return i2c_write_block__7bf(I2C_PORT_BATTERY, BATTERY_ADDR__7bf,
+	return i2c_write_block(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
 			       reg, val, len);
 }
 

@@ -12,17 +12,17 @@
 
 
 /* I2C address */
-#define LM3630A_I2C_ADDR__7bf 0x36
+#define LM3630A_I2C_ADDR_FLAGS 0x36
 
 static inline int lm3630a_write(uint8_t reg, uint8_t val)
 {
-	return i2c_write8__7bf(I2C_PORT_KBLIGHT, LM3630A_I2C_ADDR__7bf,
+	return i2c_write8(I2C_PORT_KBLIGHT, LM3630A_I2C_ADDR_FLAGS,
 			  reg, val);
 }
 
 static inline int lm3630a_read(uint8_t reg, int *val)
 {
-	return i2c_read8__7bf(I2C_PORT_KBLIGHT, LM3630A_I2C_ADDR__7bf,
+	return i2c_read8(I2C_PORT_KBLIGHT, LM3630A_I2C_ADDR_FLAGS,
 			 reg, val);
 }
 

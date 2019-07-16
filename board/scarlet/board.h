@@ -174,7 +174,7 @@
 #define I2C_PORT_TCPC0    1
 
 /* Route sbs host requests to virtual battery driver */
-#define VIRTUAL_BATTERY_ADDR__7bf 0x0B
+#define VIRTUAL_BATTERY_ADDR_FLAGS 0x0B
 
 /* Enable Accel over SPI */
 #define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI master port (SPI2) */

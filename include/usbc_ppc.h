@@ -141,7 +141,7 @@ struct ppc_drv {
 
 struct ppc_config_t {
 	int i2c_port;
-	uint16_t i2c_addr__7bf;
+	uint16_t i2c_addr_flags;
 	const struct ppc_drv *drv;
 };
 

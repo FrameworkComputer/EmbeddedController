@@ -99,13 +99,13 @@
 /* Variant-specific configuration */
 #if   defined(CONFIG_CHARGER_BQ25890)
 #define BQ2589X_DEVICE_ID    BQ25890_DEVICE_ID
-#define BQ2589X_ADDR__7bf         (0x6A)
+#define BQ2589X_ADDR_FLAGS          0x6A
 #elif defined(CONFIG_CHARGER_BQ25895)
 #define BQ2589X_DEVICE_ID    BQ25895_DEVICE_ID
-#define BQ2589X_ADDR__7bf         (0x6A)
+#define BQ2589X_ADDR_FLAGS          0x6A
 #elif defined(CONFIG_CHARGER_BQ25892)
 #define BQ2589X_DEVICE_ID    BQ25892_DEVICE_ID
-#define BQ2589X_ADDR__7bf         (0x6B)
+#define BQ2589X_ADDR_FLAGS          0x6B
 #else
 #error BQ2589X unknown variant
 #endif

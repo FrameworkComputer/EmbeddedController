@@ -88,7 +88,7 @@ static struct cbi_header * const head = (struct cbi_header *)cbi;
 
 static int read_eeprom(uint8_t offset, uint8_t *in, int in_size)
 {
-	return i2c_read_block__7bf(I2C_PORT_EEPROM, I2C_ADDR_EEPROM__7bf,
+	return i2c_read_block(I2C_PORT_EEPROM, I2C_ADDR_EEPROM_FLAGS,
 			      offset, in, in_size);
 }
 
@@ -244,7 +244,7 @@ static int write_board_info(void)
 	while (rest > 0) {
 		int size = MIN(EEPROM_PAGE_WRITE_SIZE, rest);
 		int rv;
-		rv = i2c_write_block__7bf(I2C_PORT_EEPROM, I2C_ADDR_EEPROM__7bf,
+		rv = i2c_write_block(I2C_PORT_EEPROM, I2C_ADDR_EEPROM_FLAGS,
 				     p - cbi, p, size);
 		if (rv) {
 			CPRINTS("Failed to write for %d", rv);

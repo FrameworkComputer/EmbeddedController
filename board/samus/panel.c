@@ -15,7 +15,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
-#define I2C_ADDR_BACKLIGHT__7bf (0x2C | I2C_FLAG_BIG_ENDIAN)
+#define I2C_ADDR_BACKLIGHT_FLAGS (0x2C | I2C_FLAG_BIG_ENDIAN)
 #define I2C_RETRIES 3
 #define I2C_RETRY_DELAY (5*MSEC)
 
@@ -61,8 +61,8 @@ static int lp8555_read_with_retry(int reg, int *data)
 	int i, rv;
 
 	for (i = 0; i < I2C_RETRIES; i++) {
-		rv = i2c_read8__7bf(I2C_PORT_BACKLIGHT,
-			       I2C_ADDR_BACKLIGHT__7bf,
+		rv = i2c_read8(I2C_PORT_BACKLIGHT,
+			       I2C_ADDR_BACKLIGHT_FLAGS,
 			       reg, data);
 		if (rv == EC_SUCCESS)
 			return EC_SUCCESS;
@@ -79,8 +79,8 @@ static int lp8555_write_with_retry(int reg, int data)
 	int i, rv;
 
 	for (i = 0; i < I2C_RETRIES; i++) {
-		rv = i2c_write8__7bf(I2C_PORT_BACKLIGHT,
-				I2C_ADDR_BACKLIGHT__7bf,
+		rv = i2c_write8(I2C_PORT_BACKLIGHT,
+				I2C_ADDR_BACKLIGHT_FLAGS,
 				reg, data);
 		if (rv == EC_SUCCESS)
 			return EC_SUCCESS;

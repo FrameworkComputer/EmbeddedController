@@ -19,7 +19,7 @@
 
 /* ========== Variant-specific configuration ============ */
 
-#define P9221_R7_ADDR__7bf			0x61
+#define P9221_R7_ADDR_FLAGS			0x61
 
 /*
  * P9221 common registers

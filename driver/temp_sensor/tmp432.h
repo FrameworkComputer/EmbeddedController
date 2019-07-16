@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_TMP432_H
 #define __CROS_EC_TMP432_H
 
-#define TMP432_I2C_ADDR__7bf		0x4C
+#define TMP432_I2C_ADDR_FLAGS		0x4C
 
 #define TMP432_IDX_LOCAL	0
 #define TMP432_IDX_REMOTE1	1

@@ -35,7 +35,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = IT83XX_I2C_CH_B,
-			.addr__7bf = 0x50,
+			.addr_flags = 0x50,
 		},
 		.drv = &tcpci_tcpm_drv,
 	},
@@ -43,7 +43,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = IT83XX_I2C_CH_B,
-			.addr__7bf = 0x52,
+			.addr_flags = 0x52,
 		},
 		.drv = &tcpci_tcpm_drv,
 	},

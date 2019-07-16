@@ -132,7 +132,7 @@ static struct {
 	uint32_t i2c_complete; /* ISR write */
 	uint32_t flags;
 	uint8_t port;
-	uint8_t slv_addr__8b;
+	uint8_t slv_addr_8bit;
 	uint8_t ctrl;
 	uint8_t hwsts;
 	uint8_t hwsts2;
@@ -545,7 +545,7 @@ static int i2c_mtx(int ctrl)
 	cdata[ctrl].flags |= (1ul << 1);
 	if (cdata[ctrl].xflags & I2C_XFER_START) {
 		cdata[ctrl].flags |= (1ul << 2);
-		MCHP_I2C_DATA(ctrl) = cdata[ctrl].slv_addr__8b;
+		MCHP_I2C_DATA(ctrl) = cdata[ctrl].slv_addr_8bit;
 		/* Clock out the slave address, sending START bit */
 		MCHP_I2C_CTRL(ctrl) = CTRL_PIN | CTRL_ESO | CTRL_ENI |
 			CTRL_ACK | CTRL_STA;
@@ -629,7 +629,7 @@ static int i2c_mrx_start(int ctrl)
 		/* Repeated-START then address */
 		MCHP_I2C_CTRL(ctrl) = u8;
 	}
-	MCHP_I2C_DATA(ctrl) = cdata[ctrl].slv_addr__8b | 0x01;
+	MCHP_I2C_DATA(ctrl) = cdata[ctrl].slv_addr_8bit | 0x01;
 	if (cdata[ctrl].transaction_state == I2C_TRANSACTION_STOPPED) {
 		cdata[ctrl].flags |= (1ul << 6);
 		/* address then START */
@@ -716,7 +716,7 @@ static int i2c_mrx_data(int ctrl)
 /*
  * Called from common/i2c_master
  */
-int chip_i2c_xfer__7bf(int port, uint16_t slave_addr__7bf,
+int chip_i2c_xfer(int port, uint16_t slave_addr_flags,
 		  const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
@@ -741,7 +741,7 @@ int chip_i2c_xfer__7bf(int port, uint16_t slave_addr__7bf,
 	cdata[ctrl].hwsts3 = 0;
 	cdata[ctrl].hwsts4 = 0;
 	cdata[ctrl].port = port & 0xff;
-	cdata[ctrl].slv_addr__8b = I2C_GET_ADDR__7b(slave_addr__7bf) << 1;
+	cdata[ctrl].slv_addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
 	cdata[ctrl].out_size = out_size;
 	cdata[ctrl].outp = out;
 	cdata[ctrl].in_size = in_size;

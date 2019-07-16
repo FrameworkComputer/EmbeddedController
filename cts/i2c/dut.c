@@ -13,11 +13,11 @@
 #include "uart.h"
 #include "watchdog.h"
 
-#define TH_ADDR__7bf 0x1e
+#define TH_ADDR_FLAGS 0x1e
 
 enum cts_rc write8_test(void)
 {
-	if (i2c_write8__7bf(i2c_ports[0].port, TH_ADDR__7bf,
+	if (i2c_write8(i2c_ports[0].port, TH_ADDR_FLAGS,
 		       WRITE8_OFF, WRITE8_DATA))
 		return CTS_RC_FAILURE;
 	return CTS_RC_SUCCESS;
@@ -25,7 +25,7 @@ enum cts_rc write8_test(void)
 
 enum cts_rc write16_test(void)
 {
-	if (i2c_write16__7bf(i2c_ports[0].port, TH_ADDR__7bf,
+	if (i2c_write16(i2c_ports[0].port, TH_ADDR_FLAGS,
 			WRITE16_OFF, WRITE16_DATA))
 		return CTS_RC_FAILURE;
 	return CTS_RC_SUCCESS;
@@ -33,7 +33,7 @@ enum cts_rc write16_test(void)
 
 enum cts_rc write32_test(void)
 {
-	if (i2c_write32__7bf(i2c_ports[0].port, TH_ADDR__7bf,
+	if (i2c_write32(i2c_ports[0].port, TH_ADDR_FLAGS,
 			WRITE32_OFF, WRITE32_DATA))
 		return CTS_RC_FAILURE;
 	return CTS_RC_SUCCESS;
@@ -43,7 +43,7 @@ enum cts_rc read8_test(void)
 {
 	int data;
 
-	if (i2c_read8__7bf(i2c_ports[0].port, TH_ADDR__7bf,
+	if (i2c_read8(i2c_ports[0].port, TH_ADDR_FLAGS,
 		      READ8_OFF, &data))
 		return CTS_RC_FAILURE;
 	if (data != READ8_DATA) {
@@ -58,7 +58,7 @@ enum cts_rc read16_test(void)
 {
 	int data;
 
-	if (i2c_read16__7bf(i2c_ports[0].port, TH_ADDR__7bf,
+	if (i2c_read16(i2c_ports[0].port, TH_ADDR_FLAGS,
 		       READ16_OFF, &data))
 		return CTS_RC_FAILURE;
 	if (data != READ16_DATA) {
@@ -73,7 +73,7 @@ enum cts_rc read32_test(void)
 {
 	int data;
 
-	if (i2c_read32__7bf(i2c_ports[0].port, TH_ADDR__7bf,
+	if (i2c_read32(i2c_ports[0].port, TH_ADDR_FLAGS,
 		       READ32_OFF, &data))
 		return CTS_RC_FAILURE;
 	if (data != READ32_DATA) {

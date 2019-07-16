@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_ADT7481_H
 #define __CROS_EC_ADT7481_H
 
-#define ADT7481_I2C_ADDR__7bf		0x4B
+#define ADT7481_I2C_ADDR_FLAGS		0x4B
 
 #define ADT7481_IDX_LOCAL	0
 #define ADT7481_IDX_REMOTE1	1
