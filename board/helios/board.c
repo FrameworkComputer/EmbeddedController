@@ -387,3 +387,10 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	/* Note that the level is inverted because the pin is active low. */
 	gpio_set_level(GPIO_USB_C_OC_ODL, !is_overcurrented);
 }
+
+int board_tcpc_post_init(int port)
+{
+	return port == USB_PD_PORT_TCPC_1 ?
+		tcpc_write(port, PS8XXX_REG_MUX_USB_C2SS_HS_THRESHOLD, 0x80) :
+		EC_SUCCESS;
+}
