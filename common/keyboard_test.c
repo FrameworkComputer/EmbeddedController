@@ -60,7 +60,7 @@ static const struct keyscan_item *keyscan_seq_get(void)
 		ksi++;
 	}
 
-	ccprintf("%T: keyscan_seq done, upto=%d\n", keyscan_seq_upto);
+	ccprints("keyscan_seq done, upto=%d", keyscan_seq_upto);
 	keyscan_seq_upto = -1;
 	keyscan_seq_cur = NULL;
 	return NULL;

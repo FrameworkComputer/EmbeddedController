@@ -818,7 +818,7 @@ int fan_percent_to_rpm(int fan, int pct)
 
 	if (fan_table[current_level].rpm !=
 		fan_get_rpm_target(FAN_CH(fan)))
-		cprintf(CC_THERMAL, "[%T Setting fan RPM to %d]\n",
+		cprints(CC_THERMAL, "Setting fan RPM to %d",
 			fan_table[current_level].rpm);
 
 	return fan_table[current_level].rpm;

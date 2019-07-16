@@ -146,7 +146,7 @@ static void button_test_init(void)
 {
 	int i;
 
-	ccprintf("[%T Setting button GPIOs to inactive state.]\n");
+	ccprints("Setting button GPIOs to inactive state");
 	for (i = 0; i < BUTTON_COUNT; i++)
 		gpio_set_level(buttons[i].gpio,
 			       !(buttons[i].flags & BUTTON_FLAG_ACTIVE_HIGH));

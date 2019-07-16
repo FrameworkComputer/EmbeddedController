@@ -305,9 +305,9 @@ static void pending_cutoff_deferred(void)
 	rv = board_cut_off_battery();
 
 	if (rv == EC_RES_SUCCESS)
-		CPRINTF("[%T Battery cut off succeeded.]\n");
+		CPRINTS("Battery cut off succeeded.");
 	else
-		CPRINTF("[%T Battery cut off failed!]\n");
+		CPRINTS("Battery cut off failed!");
 }
 DECLARE_DEFERRED(pending_cutoff_deferred);
 
@@ -373,7 +373,7 @@ static int command_cutoff(int argc, char **argv)
 
 	rv = board_cut_off_battery();
 	if (rv == EC_RES_SUCCESS) {
-		ccprintf("[%T Battery cut off]\n");
+		ccprints("Battery cut off");
 		battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
 		return EC_SUCCESS;
 	}

@@ -21,6 +21,7 @@
 #include "driver/stm_mems_common.h"
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 
 /**
@@ -123,7 +124,7 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 
 	ret = st_raw_read8(s->port, s->addr, LIS2DH_STATUS_REG, &tmp);
 	if (ret != EC_SUCCESS) {
-		CPRINTF("[%T %s type:0x%X RS Error]", s->name, s->type);
+		CPRINTS("%s type:0x%X RS Error", s->name, s->type);
 		return ret;
 	}
 
@@ -156,8 +157,7 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	ret = st_raw_read_n(s->port, s->addr, LIS2DH_OUT_X_L_ADDR, raw,
 			 OUT_XYZ_SIZE);
 	if (ret != EC_SUCCESS) {
-		CPRINTF("[%T %s type:0x%X RD XYZ Error]",
-			s->name, s->type);
+		CPRINTS("%s type:0x%X RD XYZ Error", s->name, s->type);
 		return ret;
 	}
 
@@ -241,7 +241,7 @@ static int init(const struct motion_sensor_t *s)
 
 err_unlock:
 	mutex_unlock(s->mutex);
-	CPRINTF("[%T %s: MS Init type:0x%X Error]\n", s->name, s->type);
+	CPRINTS("%s: MS Init type:0x%X Error", s->name, s->type);
 
 	return ret;
 }

@@ -223,7 +223,8 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 
 		switch (subcommand) {
 		case UPDATE_EXTRA_CMD_IMMEDIATE_RESET:
-			CPRINTF("[%T Rebooting!]\n\n\n");
+			CPRINTS("Rebooting!");
+			CPRINTF("\n\n");
 			cflush();
 			system_reset(SYSTEM_RESET_MANUALLY_TRIGGERED);
 			/* Unreachable, unless something bad happens. */

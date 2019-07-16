@@ -261,14 +261,15 @@ static int gesture_tap_for_battery(void)
 			CPRINTS("tap st %d->%d, error div by 0",
 				state_p, state);
 		else
-			CPRINTF("[%T tap st %d->%d, st_cnt %-3d ",
-				state_p, state, state_cnt);
-			CPRINTF("Z_in:Z_out %-3d, Z_in:XY_in %-3d ",
+			CPRINTS("tap st %d->%d, st_cnt %-3d "
+				"Z_in:Z_out %-3d, Z_in:XY_in %-3d "
+				"dZ_in %-8.3d, dZ_in_max %-8.3d, "
+				"dZ_out %-8.3d",
+				state_p, state, state_cnt,
 				delta_z_inner / delta_z_outer,
-				delta_z_inner / delta_xy_inner);
-			CPRINTF("dZ_in %-8.3d, dZ_in_max %-8.3d, "
-				"dZ_out %-8.3d]\n",
-				delta_z_inner, delta_z_inner_max,
+				delta_z_inner / delta_xy_inner,
+				delta_z_inner,
+				delta_z_inner_max,
 				delta_z_outer);
 	}
 

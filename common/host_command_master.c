@@ -16,6 +16,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_HOSTCMD, outstr)
+#define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ## args)
 
 /* Number of attempts for each PD host command */
@@ -86,7 +87,7 @@ static int pd_host_command_internal(int command, int version,
 	i2c_set_timeout(I2C_PORT_PD_MCU, 0);
 	if (ret) {
 		i2c_lock(I2C_PORT_PD_MCU, 0);
-		CPRINTF("[%T i2c transaction 1 failed: %d]\n", ret);
+		CPRINTS("i2c transaction 1 failed: %d", ret);
 		return -EC_RES_BUS_ERROR;
 	}
 
@@ -97,8 +98,8 @@ static int pd_host_command_internal(int command, int version,
 		i2c_xfer_unlocked(I2C_PORT_PD_MCU, CONFIG_USB_PD_I2C_SLAVE_ADDR,
 			0, 0, &resp_buf[2], 1, I2C_XFER_STOP);
 		i2c_lock(I2C_PORT_PD_MCU, 0);
-		CPRINTF("[%T response size is too large %d > %d]\n",
-				resp_len, insize + sizeof(rs));
+		CPRINTS("response size is too large %d > %d",
+			resp_len, insize + sizeof(rs));
 		return -EC_RES_RESPONSE_TOO_BIG;
 	}
 
@@ -108,15 +109,14 @@ static int pd_host_command_internal(int command, int version,
 			&resp_buf[2], resp_len, I2C_XFER_STOP);
 	i2c_lock(I2C_PORT_PD_MCU, 0);
 	if (ret) {
-		CPRINTF("[%T i2c transaction 2 failed: %d]\n", ret);
+		CPRINTS("i2c transaction 2 failed: %d", ret);
 		return -EC_RES_BUS_ERROR;
 	}
 
 	/* Check for host command error code */
 	ret = resp_buf[0];
 	if (ret) {
-		CPRINTF("[%T command 0x%02x returned error %d]\n", command,
-			ret);
+		CPRINTS("command 0x%02x returned error %d", command, ret);
 		return -ret;
 	}
 
@@ -128,17 +128,17 @@ static int pd_host_command_internal(int command, int version,
 	}
 
 	if (rs.struct_version != EC_HOST_RESPONSE_VERSION) {
-		CPRINTF("[%T PD response version mismatch]\n");
+		CPRINTS("PD response version mismatch");
 		return -EC_RES_INVALID_RESPONSE;
 	}
 
 	if (rs.reserved) {
-		CPRINTF("[%T PD response reserved != 0]\n");
+		CPRINTS("PD response reserved != 0");
 		return -EC_RES_INVALID_RESPONSE;
 	}
 
 	if (rs.data_len > insize) {
-		CPRINTF("[%T PD returned too much data]\n");
+		CPRINTS("PD returned too much data");
 		return -EC_RES_RESPONSE_TOO_BIG;
 	}
 
@@ -151,8 +151,8 @@ static int pd_host_command_internal(int command, int version,
 
 
 	if ((uint8_t)sum) {
-		CPRINTF("[%T command 0x%02x bad checksum returned: "
-			"%d]\n", command, sum);
+		CPRINTS("command 0x%02x bad checksum returned: %d",
+			command, sum);
 		return -EC_RES_INVALID_CHECKSUM;
 	}
 
