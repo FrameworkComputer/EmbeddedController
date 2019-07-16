@@ -326,7 +326,7 @@
 #define NPCX_UFTCTL_TEMPTY_LVL_SEL        FIELD(0, 5)
 #define NPCX_UFTCTL_TEMPTY_LVL_EN         5
 #define NPCX_UFTCTL_TEMPTY_EN             6
-#define NPCX_UFTCTL_NXIMPEN               7
+#define NPCX_UFTCTL_NXMIPEN               7
 
 #define NPCX_UFRCTL_RFULL_LVL_SEL         FIELD(0, 5)
 #define NPCX_UFRCTL_RFULL_LVL_EN          5

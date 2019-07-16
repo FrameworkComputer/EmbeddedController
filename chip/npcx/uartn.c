@@ -28,6 +28,13 @@
 /* True if the Tx FIFO is not completely full */
 #define NPCX_UART_TX_IS_READY(n)          \
 		(!(GET_FIELD(NPCX_UFTSTS(n), NPCX_UFTSTS_TEMPTY_LVL) == 0))
+
+/* Enable UART Tx "not" in transmission interrupt */
+#define NPCX_UART_TX_NXMIP_INT_EN(n)      \
+		(SET_BIT(NPCX_UFTCTL(n), NPCX_UFTCTL_NXMIPEN))
+/* Disable UART Tx "not" in transmission interrupt */
+#define NPCX_UART_TX_NXMIP_INT_DIS(n)      \
+		(CLEAR_BIT(NPCX_UFTCTL(n), NPCX_UFTCTL_NXMIPEN))
 /*
  * True if Tx is in progress
  * (i.e. FIFO is not empty or last byte in TSFT (Transmit Shift register)
@@ -114,6 +121,13 @@ void uartn_tx_start(uint8_t uart_num)
 	/* Do not allow deep sleep while transmit in progress */
 	disable_sleep(SLEEP_MASK_UART);
 
+#ifdef NPCX_UART_FIFO_SUPPORT
+	/*
+	 * For FIFO mode, enable the NXMIP interrupt. This generates an
+	 * interrupt when Tx (both FIFO and shift register) is empty
+	 */
+	NPCX_UART_TX_NXMIP_INT_EN(uart_num);
+#else
 	/*
 	 * Re-enable the transmit interrupt, then forcibly trigger the
 	 * interrupt.  This works around a hardware problem with the
@@ -121,9 +135,18 @@ void uartn_tx_start(uint8_t uart_num)
 	 * threshold is _crossed_, not just met.
 	 */
 	NPCX_UART_TX_EMPTY_INT_EN(uart_num);
+#endif
 
 	task_trigger_irq(uart_cfg[uart_num].irq);
 }
+
+#ifdef NPCX_UART_FIFO_SUPPORT
+void uartn_enable_tx_complete_int(uint8_t uart_num, uint8_t enable)
+{
+	enable ? NPCX_UART_TX_NXMIP_INT_EN(uart_num) :
+		NPCX_UART_TX_NXMIP_INT_DIS(uart_num);
+}
+#endif
 
 void uartn_tx_stop(uint8_t uart_num, uint8_t sleep_ena)
 {
@@ -190,7 +213,7 @@ static void uartn_set_fifo_mode(uint8_t uart_num)
 	/* Disable all Tx interrupts */
 	NPCX_UFTCTL(uart_num) &= ~(BIT(NPCX_UFTCTL_TEMPTY_LVL_EN) |
 					BIT(NPCX_UFTCTL_TEMPTY_EN) |
-					BIT(NPCX_UFTCTL_NXIMPEN));
+					BIT(NPCX_UFTCTL_NXMIPEN));
 }
 
 #endif
