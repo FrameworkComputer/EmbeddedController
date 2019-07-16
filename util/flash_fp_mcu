@@ -46,6 +46,63 @@ get_spiid() {
   exit 1
 }
 
+# Taken verbatim from
+# https://chromium.googlesource.com/chromiumos/docs/+/master/lsb-release.md#shell
+# This should not be used by anything except get_platform_name.
+# See https://crbug.com/98462.
+lsbval() {
+  local key="$1"
+  local lsbfile="${2:-/etc/lsb-release}"
+
+  if ! echo "${key}" | grep -Eq '^[a-zA-Z0-9_]+$'; then
+    return 1
+  fi
+
+  sed -E -n -e \
+    "/^[[:space:]]*${key}[[:space:]]*=/{
+      s:^[^=]+=[[:space:]]*::
+      s:[[:space:]]+$::
+      p
+    }" "${lsbfile}"
+}
+
+# Get the underlying board (reference design) that we're running on (not the
+# FPMCU or sensor).
+get_platform_name() {
+  # "-l" converts to lowercase
+  local -l platform_name="$(cros_config /identity platform-name)"
+
+  # If we don't get any result from cros_config, then we have to possible cases:
+  #
+  # 1) We're running on a non-unibuild device (the only one with FP is nocturne)
+  # 2) We're running on a proto device during bringup and the cros_config
+  #    settings haven't yet been setup.
+  #
+  # In either case we can fall back to /etc/lsb-release. It's not recommended
+  # to do this, but we don't have any other options in this case.
+  #
+  # TODO(https://crbug.com/984629): cros_config should handle reading
+  # /etc/lsb-release as backup for us.
+  if [[ -z "${platform_name}" ]]; then
+    echo "Getting platform name from cros_config failed." \
+         "Falling back to /etc/lsb-release." 1>&2
+    platform_name="$(lsbval "CHROMEOS_RELEASE_BOARD")"
+    if [[ -z "${platform_name}" ]]; then
+      exit 1
+    fi
+  fi
+
+  echo "${platform_name}"
+}
+
+check_gpio_chip_exists() {
+  local gpiochip="$1"
+  if [[ ! -e "/sys/class/gpio/${gpiochip}" ]]; then
+    echo "Cannot find GPIO chip: ${gpiochip}"
+    exit 1
+  fi
+}
+
 flash_fp_mcu_stm32() {
   local spidev="${1}"
   local gpio_nrst="${2}"
@@ -139,3 +196,70 @@ flash_fp_mcu_stm32() {
   # Test it
   ectool --name=cros_fp version
 }
+
+config_hatch() {
+  check_gpio_chip_exists "gpiochip200"
+
+  readonly SPIDEV="/dev/spidev1.1"
+  # FPMCU RST_ODL is on GPP_A12 = 200 + 12 = 212
+  readonly GPIO_NRST=212
+  # FPMCU BOOT0 is on GPP_A22 = 200 + 22 = 222
+  readonly GPIO_BOOT0=222
+  # No PWREN GPIO on Hatch, FPMCU is always on
+  readonly GPIO_PWREN=""
+}
+
+config_nami() {
+  check_gpio_chip_exists "gpiochip360"
+
+  readonly SPIDEV="/dev/spidev32765.0"
+  # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
+  readonly GPIO_NRST=417
+  # FPMCU BOOT0 is on GPP_D5 = 360 + 77 = 437
+  readonly GPIO_BOOT0=437
+  # FP_PWR_EN is on GPP_B11 = 360 + 35 = 395
+  readonly GPIO_PWREN=395
+}
+
+config_nocturne() {
+  check_gpio_chip_exists "gpiochip360"
+
+  readonly SPIDEV="/dev/spidev32765.0"
+  # FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
+  readonly GPIO_NRST=418
+  # FPMCU BOOT0 is on GPP_C8 = 360 + 56 = 416
+  readonly GPIO_BOOT0=416
+  # FP_PWR_EN is on GPP_A11 = 360 + 11 = 371
+  readonly GPIO_PWREN=371
+}
+
+# The "platform name" corresponds to the underlying board (reference design)
+# that we're running on (not the FPMCU or sensor). At the moment all of the
+# reference designs use the same GPIOs. If for some reason a design differs in
+# the future, we will want to add a nested check in the config_<platform_name>
+# function. Doing it in this manner allows us to reduce the number of
+# configurations that we have to maintain (and reduces the amount of testing
+# if we're only updating a specific config_<platform_name>).
+readonly PLATFORM_NAME="$(get_platform_name)"
+
+echo "Using config for ${PLATFORM_NAME}"
+
+# Check that the config function exists
+if [[ "$(type -t "config_${PLATFORM_NAME}")" != "function" ]]; then
+  echo "No config for platform ${PLATFORM_NAME}"
+  exit 1
+fi
+
+config_${PLATFORM_NAME}
+
+if [[ $? -ne 0 ]]; then
+  echo "Configuration failed for platform ${PLATFORM_NAME}"
+  exit 1
+fi
+
+flash_fp_mcu_stm32 \
+  "${SPIDEV}"      \
+  "${GPIO_NRST}"   \
+  "${GPIO_BOOT0}"  \
+  "${GPIO_PWREN}"  \
+  "${1}"
