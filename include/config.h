@@ -3054,7 +3054,22 @@
 #undef CONFIG_SOFTWARE_CTZ
 
 /* Support smbus interface */
-#undef CONFIG_SMBUS
+/*
+ * Deprecated in
+ * https://chromium-review.googlesource.com/c/chromiumos/platform/ec/+/1704279
+ *
+ * It hasn't been used in over 2 years
+ * https://chromium-review.googlesource.com/c/chromiumos/platform/ec/+/452459/
+ * and was only used by one board (pyro).
+ *
+ * I2C and SMBus are compatible at the physical layer. The data transfer
+ * paradigm is different. Some of our batteries are using SMbus style
+ * transfers now, they are just using i2cxfer directly to accomplish it.
+ *
+ * I doubt the SMBus code will get revived, but we do have it in revision
+ * history if we ever need it.
+ */
+/* #undef CONFIG_SMBUS */
 
 /* Support SPI interfaces */
 #undef CONFIG_SPI
