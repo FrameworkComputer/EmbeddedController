@@ -556,7 +556,14 @@
 
 #ifndef __ASSEMBLER__
 
-/* Cortex-M4 mod */
+/*
+ * Cortex-M4 mod
+ * Available power saving features:
+ * 1. FPU freeze - freeze FPU operand when FPU is not used
+ * 2. LSU gating - gate LSU clock when not LSU operation
+ * 3. Trace clk disable - gate trace clock
+ * 4. DCM for CPU stall - gate CPU clock when CPU stall
+ */
 #define CM4_MODIFICATION		REG32(0xE00FE000)
 #define CM4_DCM_FEATURE			REG32(0xE00FE004)
 /* UART, 16550 compatible */
