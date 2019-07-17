@@ -42,6 +42,8 @@ changed=$(echo "${changed}" | grep -v util/uart_stress_tester.py)
 changed=$(echo "${changed}" | grep -v util/presubmit_check.sh)
 # Filter out the OWNERS file.
 changed=$(echo "${changed}" | grep -v OWNERS)
+# Filter out markdown docs/ directory
+changed=$(echo "${changed}" | grep -v docs/)
 if [[ -n "${changed}" ]]; then
   echo "Files have changed since last time unit tests passed:"
   echo "${changed}" | sed -e 's/^/  /'
