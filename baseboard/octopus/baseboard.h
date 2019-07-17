@@ -270,6 +270,7 @@
 #undef  CONFIG_MOTION_SENSE_RESUME_DELAY_US
 #define CONFIG_MOTION_SENSE_RESUME_DELAY_US (10 * MSEC)
 
+#ifndef VARIANT_OCTOPUS_NO_SENSORS
 /*
  * Interrupt and fifo are only used for base accelerometer
  * and the lid sensor is polled real-time (in forced mode).
@@ -279,6 +280,7 @@
 #define CONFIG_ACCEL_FIFO 256
 /* Depends on how fast the AP boots and typical ODRs */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+#endif /* VARIANT_OCTOPUS_NO_SENSORS */
 
 /*
  * Sensor stack in EC/Kernel depends on a hardware interrupt pin from EC->AP, so
