@@ -119,6 +119,8 @@
 
 /* Sensor */
 #define CONFIG_MKBP_EVENT
+/* Don't wake up from suspend on any MKBP event. */
+#define CONFIG_MKBP_EVENT_WAKEUP_MASK 0
 #define CONFIG_MKBP_USE_HOST_EVENT
 #define CONFIG_ACCEL_KXCJ9
 #define CONFIG_ALS_SI114X 0x40
