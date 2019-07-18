@@ -167,6 +167,12 @@ static int ps8xxx_get_chip_info(int port, int live,
 	return rv;
 }
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+static int ps8xxx_enter_low_power_mode(int port)
+{
+	return EC_SUCCESS;
+}
+#endif
 
 const struct tcpm_drv ps8xxx_tcpm_drv = {
 	.init			= &tcpci_tcpm_init,
@@ -196,7 +202,7 @@ const struct tcpm_drv ps8xxx_tcpm_drv = {
 #endif
 	.get_chip_info		= &ps8xxx_get_chip_info,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
+	.enter_low_power_mode	= &ps8xxx_enter_low_power_mode,
 #endif
 };
 
