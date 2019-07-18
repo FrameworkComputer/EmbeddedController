@@ -270,8 +270,16 @@ struct ish_aon_share aon_share = {
 };
 
 /* snowball structure */
-__attribute__((section(".data.snowball"))) volatile
-struct snowball_struct snowball;
+#if defined(CHIP_FAMILY_ISH3)
+/* on ISH3, reused ISH2PMC IPC message registers */
+#define SNOWBALL_BASE	IPC_ISH2PMC_MSG_BASE
+#else
+/* from ISH4, used reserved rom part of AON memory */
+#define SNOWBALL_BASE	(CONFIG_AON_PERSISTENT_BASE + 256)
+#endif
+
+struct snowball_struct *snowball = (void *)SNOWBALL_BASE;
+
 
 /* In IMR DDR, ISH FW image has a manifest header */
 #define ISH_FW_IMAGE_MANIFEST_HEADER_SIZE (0x1000)
@@ -289,9 +297,9 @@ static int store_main_fw(void)
 	uint64_t imr_fw_addr;
 	uint64_t imr_fw_rw_addr;
 
-	imr_fw_addr = (((uint64_t)snowball.uma_base_hi << 32) +
-		       snowball.uma_base_lo +
-		       snowball.fw_offset +
+	imr_fw_addr = (((uint64_t)snowball->uma_base_hi << 32) +
+		       snowball->uma_base_lo +
+		       snowball->fw_offset +
 		       ISH_FW_IMAGE_MANIFEST_HEADER_SIZE);
 
 	imr_fw_rw_addr = (imr_fw_addr
@@ -330,9 +338,9 @@ static int restore_main_fw(void)
 	uint64_t imr_fw_ro_addr;
 	uint64_t imr_fw_rw_addr;
 
-	imr_fw_addr = (((uint64_t)snowball.uma_base_hi << 32) +
-			snowball.uma_base_lo +
-			snowball.fw_offset +
+	imr_fw_addr = (((uint64_t)snowball->uma_base_hi << 32) +
+		       snowball->uma_base_lo +
+		       snowball->fw_offset +
 		       ISH_FW_IMAGE_MANIFEST_HEADER_SIZE);
 
 	imr_fw_ro_addr = (imr_fw_addr

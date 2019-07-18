@@ -44,10 +44,10 @@ void ish_persistent_data_commit(void);
  */
 struct snowball_struct {
 	uint32_t reserved[28];
-	uint32_t uma_base_hi;
-	uint32_t uma_base_lo;
-	uint32_t uma_limit;
-	uint32_t fw_offset;
+	uint32_t volatile uma_base_hi;
+	uint32_t volatile uma_base_lo;
+	uint32_t volatile uma_limit;
+	uint32_t volatile fw_offset;
 };
 
 #endif /* __CROS_EC_ISH_PERSISTENT_DATA_H */
