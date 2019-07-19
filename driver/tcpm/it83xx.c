@@ -20,6 +20,7 @@
 
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) || \
 	defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) || \
+	defined(CONFIG_USB_PD_TCPC_LOW_POWER) || \
 	defined(CONFIG_USB_PD_DISCHARGE_TCPC)
 #error "Unsupported config options of IT83xx PD driver"
 #endif

@@ -18,6 +18,12 @@
 #include "usb_pd_tcpc.h"
 #include "util.h"
 
+#if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) || \
+	defined(CONFIG_USB_PD_TCPC_LOW_POWER) || \
+	defined(CONFIG_USB_PD_DISCHARGE_TCPC)
+#error "Unsupported config options of fusb302 PD driver"
+#endif
+
 #define PACKET_IS_GOOD_CRC(head) (PD_HEADER_TYPE(head) == PD_CTRL_GOOD_CRC && \
 				 PD_HEADER_CNT(head) == 0)
 

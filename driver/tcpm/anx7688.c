@@ -11,6 +11,12 @@
 #include "timer.h"
 #include "usb_mux.h"
 
+#if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) || \
+	defined(CONFIG_USB_PD_TCPC_LOW_POWER) || \
+	defined(CONFIG_USB_PD_DISCHARGE_TCPC)
+#error "Unsupported config options of anx7688 PD driver"
+#endif
+
 #define ANX7688_VENDOR_ALERT    BIT(15)
 
 #define ANX7688_REG_STATUS      0x82
