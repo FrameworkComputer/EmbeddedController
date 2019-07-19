@@ -52,7 +52,8 @@ static void capsense_change_deferred(void)
 
 	new_val = capsense_read_bitmask();
 	if (new_val != cur_val) {
-		CPRINTF("[%T capsense 0x%02x: ", new_val);
+		CPRINTF("[%pT capsense 0x%02x: ",
+			PRINTF_TIMESTAMP_NOW, new_val);
 		for (i = 0; i < CAPSENSE_MASK_BITS; i++) {
 			/* See what changed */
 			n = (new_val >> i) & 0x01;

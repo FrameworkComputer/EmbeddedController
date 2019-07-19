@@ -210,6 +210,8 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			v = va_arg(args, uint32_t);
 #else /* NO_UINT64_SUPPORT */
 			uint64_t v;
+			int ptrspec;
+			void *ptrval;
 
 			/* Handle length */
 			if (c == 'l') {
@@ -217,16 +219,37 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				c = *format++;
 			}
 
-			/* Special-case: %T = current time */
-			if (c == 'T') {
-				v = get_time().val;
-				flags |= PF_64BIT;
-#ifdef CONFIG_CONSOLE_VERBOSE
-				precision = 6;
-#else
-				precision = 3;
-				v /= 1000;
-#endif
+			if (c == 'p') {
+				ptrspec = *format++;
+				ptrval = va_arg(args, void *);
+				/* %pT - print a timestamp. */
+				if (ptrspec == 'T') {
+					flags |= PF_64BIT;
+					/* NULL uses the current time. */
+					if (ptrval == NULL)
+						v = get_time().val;
+					else
+						v = *(uint64_t *)ptrval;
+
+					if (IS_ENABLED(
+						CONFIG_CONSOLE_VERBOSE)) {
+						precision = 6;
+					} else {
+						precision = 3;
+						v /= 1000;
+					}
+
+				} else if (ptrspec == 'P') {
+					/* Print a raw pointer. */
+					v = (unsigned long)ptrval;
+					if (sizeof(unsigned long) ==
+					    sizeof(uint64_t))
+						flags |= PF_64BIT;
+
+				} else {
+					return EC_ERROR_INVAL;
+				}
+
 			} else if (flags & PF_64BIT) {
 				v = va_arg(args, uint64_t);
 			} else {

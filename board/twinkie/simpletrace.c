@@ -111,7 +111,7 @@ static void print_packet(int head, uint32_t *payload)
 	const char *prole;
 
 	if (trace_mode == TRACE_MODE_RAW) {
-		ccprintf("%T[%04x]", head);
+		ccprintf("%pT[%04x]", PRINTF_TIMESTAMP_NOW, head);
 		for (i = 0; i < cnt; i++)
 			ccprintf(" %08x", payload[i]);
 		ccputs("\n");
@@ -119,7 +119,8 @@ static void print_packet(int head, uint32_t *payload)
 	}
 	name = cnt ? data_msg_name[typ] : ctrl_msg_name[typ];
 	prole = head & (PD_ROLE_SOURCE << 8) ? "SRC" : "SNK";
-	ccprintf("%T %s/%d [%04x]%s", prole, id, head, name);
+	ccprintf("%pT %s/%d [%04x]%s",
+		 PRINTF_TIMESTAMP_NOW, prole, id, head, name);
 	if (!cnt) { /* Control message : we are done */
 		ccputs("\n");
 		return;
@@ -150,11 +151,11 @@ static void print_packet(int head, uint32_t *payload)
 static void print_error(enum pd_rx_errors err)
 {
 	if (err == PD_RX_ERR_INVAL)
-		ccprintf("%T TMOUT\n");
+		ccprintf("%pT TMOUT\n", PRINTF_TIMESTAMP_NOW);
 	else if (err == PD_RX_ERR_HARD_RESET)
-		ccprintf("%T HARD-RST\n");
+		ccprintf("%pT HARD-RST\n", PRINTF_TIMESTAMP_NOW);
 	else if (err == PD_RX_ERR_UNSUPPORTED_SOP)
-		ccprintf("%T SOP*\n");
+		ccprintf("%pT SOP*\n", PRINTF_TIMESTAMP_NOW);
 	else
 		ccprintf("ERR %d\n", err);
 }

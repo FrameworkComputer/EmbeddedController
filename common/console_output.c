@@ -89,7 +89,7 @@ int cprints(enum console_channel channel, const char *format, ...)
 		return EC_SUCCESS;
 #endif
 
-	rv = cprintf(channel, "[%T ");
+	rv = cprintf(channel, "[%pT ", PRINTF_TIMESTAMP_NOW);
 
 	va_start(args, format);
 	r = uart_vprintf(format, args);

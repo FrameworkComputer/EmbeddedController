@@ -151,7 +151,7 @@ static void print_state(const uint8_t *state, const char *msg)
 {
 	int c;
 
-	CPRINTF("[%T KB %s:", msg);
+	CPRINTF("[%pT KB %s:", PRINTF_TIMESTAMP_NOW, msg);
 	for (c = 0; c < keyboard_cols; c++) {
 		if (state[c])
 			CPRINTF(" %02x", state[c]);
@@ -529,7 +529,7 @@ static int check_keys_changed(uint8_t *state)
 
 #ifdef CONFIG_KEYBOARD_PRINT_SCAN_TIMES
 		/* Print delta times from now back to each previous scan */
-		CPRINTF("[%T kb deltaT");
+		CPRINTF("[%pT kb deltaT", PRINTF_TIMESTAMP_NOW);
 		for (i = 0; i < SCAN_TIME_COUNT; i++) {
 			int tnew = scan_time[
 				(SCAN_TIME_COUNT + scan_time_index - i) %

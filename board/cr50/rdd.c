@@ -304,7 +304,7 @@ static void ccd_state_change_hook(void)
 	if (flags_now == flags_want)
 		return;
 
-	CPRINTF("[%T CCD state:");
+	CPRINTF("[%pT CCD state:", PRINTF_TIMESTAMP_NOW);
 	print_state_flags(CC_USB, flags_want);
 	CPRINTF("]\n");
 

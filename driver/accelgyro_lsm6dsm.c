@@ -818,8 +818,7 @@ static int init(const struct motion_sensor_t *s)
 
 err_unlock:
 	mutex_unlock(s->mutex);
-	CPRINTF("[%T %s: MS Init type:0x%X Error]\n", s->name, s->type);
-
+	CPRINTS("%s: MS Init type:0x%X Error", s->name, s->type);
 	return ret;
 }
 

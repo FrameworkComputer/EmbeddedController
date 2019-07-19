@@ -52,8 +52,9 @@
  *   - 'b' - unsigned integer, print as binary
  *
  * Special format codes:
- *   - "%T" - current time in seconds - interpreted as "%.6T" for precision.
- *           This does NOT use up any arguments.
+ *   - "%pT" - current time in seconds - interpreted as "%.6T" for precision.
+ *           Supply PRINTF_TIMESTAMP_NOW to use the current time, or supply a
+ *           pointer to a 64-bit timestamp to print.
  */
 
 #ifndef HIDE_EC_STDLIB

@@ -877,7 +877,8 @@ void motion_sense_task(void *u)
 #endif
 #ifdef CONFIG_CMD_ACCEL_INFO
 		if (accel_disp) {
-			CPRINTF("[%T event 0x%08x ", event);
+			CPRINTF("[%pT event 0x%08x ",
+				PRINTF_TIMESTAMP_NOW, event);
 			for (i = 0; i < motion_sensor_count; ++i) {
 				sensor = &motion_sensors[i];
 				CPRINTF("%s=%-5d, %-5d, %-5d ", sensor->name,

@@ -313,7 +313,8 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			 * does a lot of keyboard backlights and it scrolls the
 			 * debug console.
 			 */
-			CPRINTF("\r[%T ACPI kblight %d]", data);
+			CPRINTF("\r[%pT ACPI kblight %d]",
+				PRINTF_TIMESTAMP_NOW, data);
 			kblight_set(data);
 			break;
 #endif

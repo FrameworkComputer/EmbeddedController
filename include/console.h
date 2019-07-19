@@ -10,6 +10,8 @@
 
 #include "common.h"
 
+#define PRINTF_TIMESTAMP_NOW NULL
+
 /* Console command; used by DECLARE_CONSOLE_COMMAND macro. */
 struct console_command {
 	/* Command name.  Case-insensitive. */
@@ -86,7 +88,7 @@ int cprintf(enum console_channel channel, const char *format, ...);
 
 /**
  * Print formatted output with timestamp. This is like:
- *   cprintf(channel, "[%T " + format + "]\n", ...)
+ *   cprintf(channel, "[%pT " + format + "]\n", PRINTF_TIMESTAMP_NOW, ...)
  *
  * @param channel	Output channel
  * @param format	Format string; see printf.h for valid formatting codes

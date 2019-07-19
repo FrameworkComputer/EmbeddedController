@@ -53,7 +53,8 @@ void port_80_write(int data)
 	 * coming from the host.
 	 */
 	if (print_in_int)
-		CPRINTF("%c[%T Port 80: 0x%02x]", scroll ? '\n' : '\r', data);
+		CPRINTF("%c[%pT Port 80: 0x%02x]",
+			scroll ? '\n' : '\r', PRINTF_TIMESTAMP_NOW, data);
 	else if (data < 0x100)
 		hook_call_deferred(&port80_dump_buffer_data, 4 * SECOND);
 

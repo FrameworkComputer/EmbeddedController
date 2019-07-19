@@ -288,7 +288,7 @@ void lb_init(int use_lock)
 {
 	int i;
 
-	CPRINTF("[%T LB_init_vals ");
+	CPRINTF("[%pT LB_init_vals ", PRINTF_TIMESTAMP_NOW);
 	for (i = 0; i < ARRAY_SIZE(init_vals); i++) {
 		CPRINTF("%c", '0' + i % 10);
 		if (use_lock)

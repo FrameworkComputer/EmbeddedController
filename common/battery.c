@@ -350,7 +350,7 @@ DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cutoff,
 static void check_pending_cutoff(void)
 {
 	if (battery_cutoff_state == BATTERY_CUTOFF_STATE_PENDING) {
-		CPRINTF("[%T Cutting off battery in %d second(s)]\n",
+		CPRINTS("Cutting off battery in %d second(s)",
 			CONFIG_BATTERY_CUTOFF_DELAY_US / SECOND);
 		hook_call_deferred(&pending_cutoff_deferred_data,
 				   CONFIG_BATTERY_CUTOFF_DELAY_US);
