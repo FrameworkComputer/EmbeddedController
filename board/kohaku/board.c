@@ -176,23 +176,48 @@ static struct als_drv_data_t g_tcs3400_data = {
 	.als_cal.scale = 1,
 	.als_cal.uscale = 0,
 	.als_cal.offset = 0,
+	.als_cal.channel_scale = {
+		.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kc from VPD */
+		.cover_scale = ALS_CHANNEL_SCALE(1.0),     /* CT */
+	},
 };
 
 static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
-	.device_scale = 1,
-	.device_uscale = 0,
 	.rgb_cal[X] = {
-		.scale = ALS_CHANNEL_SCALE(1),
-		.offset = 0,
+		.offset = 30, /* 30.38576102 */
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0.31818327),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0.28786817),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0.14603897),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(-0.12542082),
+		.scale = {
+			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kr */
+			.cover_scale = ALS_CHANNEL_SCALE(0.3507)
+		}
 	},
 	.rgb_cal[Y] = {
-		.scale = ALS_CHANNEL_SCALE(1),
-		.offset = 0,
+		.offset = 45, /* 45.0467605 */
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0.26764916),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0.26510278),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0.19007195),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(-0.12512564),
+		.scale = {
+			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kg */
+			.cover_scale = ALS_CHANNEL_SCALE(1.0)
+		},
 	},
 	.rgb_cal[Z] = {
-		.scale = ALS_CHANNEL_SCALE(1),
-		.offset = 0,
+		.offset = 22, /* 22.5644134 */
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-0.0682575),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0.15594184),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0.53616239),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(-0.13502391),
+		.scale = {
+			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kb */
+			.cover_scale = ALS_CHANNEL_SCALE(0.5759)
+		}
 	},
+	.saturation.again = TCS_DEFAULT_AGAIN,
+	.saturation.atime = TCS_DEFAULT_ATIME,
 };
 
 /* Matrix to rotate accelrator into standard reference frame */

@@ -458,23 +458,36 @@ static struct als_drv_data_t g_tcs3400_data = {
 	.als_cal.scale = 1,
 	.als_cal.uscale = 0,
 	.als_cal.offset = 0,
+	.als_cal.channel_scale = {
+		.k_channel_scale = ALS_CHANNEL_SCALE(1.0),   /* kc from VPD */
+		.cover_scale = ALS_CHANNEL_SCALE(0.9),       /* CT */
+	},
 };
 
 static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
-	.device_scale = 1,
-	.device_uscale = 0,
 	.rgb_cal[X] = {
-		.scale = ALS_CHANNEL_SCALE(1),
 		.offset = 0,
+		.scale = {
+			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kr */
+			.cover_scale = ALS_CHANNEL_SCALE(0.6)
+		}
 	},
 	.rgb_cal[Y] = {
-		.scale = ALS_CHANNEL_SCALE(1),
 		.offset = 0,
+		.scale = {
+			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kg */
+			.cover_scale = ALS_CHANNEL_SCALE(1.0)
+		}
 	},
 	.rgb_cal[Z] = {
-		.scale = ALS_CHANNEL_SCALE(1),
 		.offset = 0,
+		.scale = {
+			.k_channel_scale = ALS_CHANNEL_SCALE(1.0),   /* kb */
+			.cover_scale = ALS_CHANNEL_SCALE(1.5)
+		}
 	},
+	.saturation.again = TCS_DEFAULT_AGAIN,
+	.saturation.atime = TCS_DEFAULT_ATIME,
 };
 
 /* Matrix to rotate accelerometer into standard reference frame */
