@@ -110,7 +110,7 @@ void ipi_enable_irq(int irq)
 
 		task_enable_irq(irq);
 
-		if (pending_ipc)
+		if (ipi_ready && pending_ipc)
 			/*
 			 * IPC may be triggered while SCP_IRQ_IPC0 was disabled.
 			 * AP will still updates SCP_GIPC_IN.
