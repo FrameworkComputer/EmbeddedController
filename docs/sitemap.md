@@ -21,3 +21,4 @@
 ## Miscellaneous
 
 *   [Low Battery Startup](./low_battery_startup.md)
+*   [I2C tracing via console commands](./i2c-debugging.md)
