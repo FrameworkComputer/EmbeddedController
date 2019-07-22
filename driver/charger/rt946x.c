@@ -989,6 +989,7 @@ void usb_charger_task(void *u)
 			}
 
 			rt946x_enable_bc12_detection(0);
+			hook_notify(HOOK_AC_CHANGE);
 		}
 
 		/* VBUS detach event */
@@ -1001,6 +1002,8 @@ void usb_charger_task(void *u)
 
 			if (!IS_ENABLED(CONFIG_CHARGER_MT6370_BC12_GPIO))
 				rt946x_enable_bc12_detection(1);
+
+			hook_notify(HOOK_AC_CHANGE);
 		}
 
 		task_wait_event(-1);
