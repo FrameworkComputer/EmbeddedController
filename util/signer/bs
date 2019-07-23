@@ -16,7 +16,7 @@ progname=$(basename $0)
 OD="/usr/bin/od"
 
 tmpf="/tmp/bs_manifest.$$"
-trap "{ rm -rf [01].flat ${tmpf} ; }" EXIT
+trap "{ if [[ -f 1.flat ]]; then rm -rf [01].flat ${tmpf} ; fi; }" EXIT
 
 usage() {
   local rv="${1}"
@@ -307,9 +307,9 @@ for elf in ${elves[@]}; do
 
   # Make sure output file is not owned by root
   touch "${signed_file}"
-  if ! "${SIGNER}" ${signer_command_params[@]} \
-       -i ${elf} -o "${signed_file}"; then
-    echo "${progname}: ${SIGNER} failed" >&2
+  command="${SIGNER} ${signer_command_params[@]} -i ${elf} -o ${signed_file}"
+  if ! ${command}; then
+    echo "${progname}: \"${command}\" failed" >&2
     exit 1
   fi
 
