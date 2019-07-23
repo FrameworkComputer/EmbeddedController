@@ -383,7 +383,7 @@ static void report_no_payload_failure(enum nvmem_failure_type type)
 {
 	struct nvmem_failure_payload fp;
 
-	fp.failure_type = NVMEMF_INCONSISTENT_FLASH_CONTENTS;
+	fp.failure_type = type;
 	report_failure(&fp, 0);
 }
 
