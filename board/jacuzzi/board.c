@@ -14,11 +14,11 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/battery/max17055.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
-#include "driver/sync.h"
 #include "driver/tcpm/fusb302.h"
 #include "driver/usb_mux/it5205.h"
 #include "ec_commands.h"
@@ -101,8 +101,8 @@ struct keyboard_scan_config keyscan_config = {
 
 /******************************************************************************/
 /* SPI devices */
-/* TODO: to be added once sensors land via CL:1714436 */
 const struct spi_device_t spi_devices[] = {
+	{ CONFIG_SPI_ACCEL_PORT, 2, GPIO_EC_SENSOR_SPI_NSS },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
@@ -225,6 +225,41 @@ void bc12_interrupt(enum gpio_signal signal)
 	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
 }
 
+#ifndef VARIANT_KUKUI_NO_SENSORS
+static void board_spi_enable(void)
+{
+	cputs(CC_ACCEL, "board_spi_enable");
+	gpio_config_module(MODULE_SPI_MASTER, 1);
+
+	/* Enable clocks to SPI2 module */
+	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
+
+	/* Reset SPI2 */
+	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI2;
+	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
+
+	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
+	     board_spi_enable,
+	     MOTION_SENSE_HOOK_PRIO - 1);
+
+static void board_spi_disable(void)
+{
+	spi_enable(CONFIG_SPI_ACCEL_PORT, 0);
+
+	/* Disable clocks to SPI2 module */
+	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
+
+	gpio_config_module(MODULE_SPI_MASTER, 0);
+	gpio_set_flags(GPIO_EC_SENSOR_SPI_CK, GPIO_OUT_LOW);
+	gpio_set_level(GPIO_EC_SENSOR_SPI_CK, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
+	     board_spi_disable,
+	     MOTION_SENSE_HOOK_PRIO + 1);
+#endif /* !VARIANT_KUKUI_NO_SENSORS */
+
 static void board_init(void)
 {
 	/* If the reset cause is external, pulse PMIC force reset. */
@@ -237,10 +272,13 @@ static void board_init(void)
 	/* Enable TCPC alert interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
 
-#ifdef SECTION_IS_RW
+#ifndef VARIANT_KUKUI_NO_SENSORS
 	/* Enable interrupts from BMI160 sensor. */
 	gpio_enable_interrupt(GPIO_ACCEL_INT_ODL);
-#endif /* SECTION_IS_RW */
+
+	/* For some reason we have to do this again in case of sysjump */
+	board_spi_enable();
+#endif /* !VARIANT_KUKUI_NO_SENSORS */
 
 	/* Enable interrupt from PMIC. */
 	gpio_enable_interrupt(GPIO_PMIC_EC_RESETB);
@@ -250,15 +288,101 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+#ifndef VARIANT_KUKUI_NO_SENSORS
 /* Motion sensors */
 /* Mutexes */
-#ifdef SECTION_IS_RW
-/* TODO: to be added once sensors land via CL:1714436 */
+static struct mutex g_lid_mutex;
+static struct mutex g_base_mutex;
+
+/* Rotation matrixes */
+static const mat33_fp_t base_standard_ref = {
+	{0, FLOAT_TO_FP(1), 0},
+	{FLOAT_TO_FP(-1), 0, 0},
+	{0, 0, FLOAT_TO_FP(1)}
+};
+
+/* sensor private data */
+static struct kionix_accel_data g_kx022_data;
+static struct bmi160_drv_data_t g_bmi160_data;
+
 struct motion_sensor_t motion_sensors[] = {
+	[LID_ACCEL] = {
+	 .name = "Lid Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_KX022,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &kionix_accel_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_kx022_data,
+	 .port = I2C_PORT_SENSORS,
+	 .i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
+	 .rot_standard_ref = NULL, /* Identity matrix. */
+	 .default_range = 2, /* g, to meet CDD 7.3.1/C-1-4 reqs */
+	 .config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		 /* Sensor on for lid angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	 },
+	},
+	/*
+	 * Note: bmi160: supports accelerometer and gyro sensor
+	 * Requirement: accelerometer sensor must init before gyro sensor
+	 * DO NOT change the order of the following table.
+	 */
+	[BASE_ACCEL] = {
+	 .name = "Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_bmi160_data,
+	 .port = CONFIG_SPI_ACCEL_PORT,
+	 .i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
+	 .rot_standard_ref = &base_standard_ref,
+	 .default_range = 2,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
+	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
+	 .max_frequency = BMI160_ACCEL_MAX_FREQ,
+	 .config = {
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		 },
+		 /* Sensor on for angle detection */
+		 [SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		 },
+	 },
+	},
+	[BASE_GYRO] = {
+	 .name = "Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_bmi160_data,
+	 .port = CONFIG_SPI_ACCEL_PORT,
+	 .i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
+	 .default_range = 1000, /* dps */
+	 .rot_standard_ref = &base_standard_ref,
+	 .min_frequency = BMI160_GYRO_MIN_FREQ,
+	 .max_frequency = BMI160_GYRO_MAX_FREQ,
+	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-#endif /* SECTION_IS_RW */
+#endif /* !VARIANT_KUKUI_NO_SENSORS */
 
 /* TODO(b:138640167): config charger correctly */
 int charger_is_sourcing_otg_power(int port)
