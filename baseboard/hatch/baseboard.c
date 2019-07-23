@@ -114,6 +114,35 @@ static void baseboard_chipset_shutdown(void)
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, baseboard_chipset_shutdown,
 	     HOOK_PRIO_DEFAULT);
 
+void board_hibernate(void)
+{
+	int port;
+
+	/*
+	 * To support hibernate from ectool, keyboard, and console,
+	 * ensure that the AP is fully shutdown before hibernating.
+	 */
+#ifdef HAS_TASK_CHIPSET
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_BOARD_CUSTOM);
+#endif
+
+	/*
+	 * If VBUS is not being provided by any of the PD ports,
+	 * then enable the SNK FET to allow AC to pass through
+	 * if it is later connected to ensure that AC_PRESENT
+	 * will wake up the EC from this state
+	 */
+	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; ++port)
+		ppc_vbus_sink_enable(port, 1);
+
+	/*
+	 * This seems like a hack, but the AP chipset state machine
+	 * needs time to work through the transitions.  Also, it
+	 * works.
+	 */
+	msleep(300);
+}
+
 /******************************************************************************/
 /* USB-C PPC Configuration */
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
