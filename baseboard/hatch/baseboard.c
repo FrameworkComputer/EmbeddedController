@@ -273,6 +273,14 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
+int ppc_get_alert_status(int port)
+{
+	if (port == USB_PD_PORT_TCPC_0)
+		return gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0;
+	else
+		return gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
+}
+
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
