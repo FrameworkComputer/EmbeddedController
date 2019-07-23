@@ -306,10 +306,9 @@ int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 		return EC_ERROR_INVAL;
 
 	/* Check for reserved I2C addresses, pg. 74 in DW_apb_i2c.pdf
-	 * Address cannot be any of the reserved address locations:
-	 * 0x00 to 0x07 or 0x78 to 0x7f.
+	 * Address cannot be any of the reserved address locations
 	 */
-	if (addr <= 0x07 || (addr >= 0x78 && addr <= 0x7F))
+	if (addr < I2C_FIRST_VALID_ADDR || addr > I2C_LAST_VALID_ADDR)
 		return EC_ERROR_INVAL;
 
 	/* assume that if both out_size and in_size are not zero,

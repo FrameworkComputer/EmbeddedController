@@ -43,6 +43,16 @@
 #define I2C_IS_BIG_ENDIAN(addr_flags)	((addr_flags) & I2C_FLAG_BIG_ENDIAN)
 
 /*
+ * All 7-bit addresses in the following formats
+ *   0000 XXX
+ *   1111 XXX
+ * are reserved for various purposes. Valid 7-bit client adderesses start at
+ * 0x08 and end at 0x77 inclusive.
+ */
+#define I2C_FIRST_VALID_ADDR	0x08
+#define I2C_LAST_VALID_ADDR	0x77
+
+/*
  * Max data size for a version 3 request/response packet. This is
  * big enough for EC_CMD_GET_VERSION plus header info.
  */

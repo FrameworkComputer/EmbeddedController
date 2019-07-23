@@ -1029,8 +1029,13 @@ static void scan_bus(int port, const char *desc)
 			 (level & I2C_LINE_SCL_HIGH) ? 1 : 0);
 		goto scan_bus_exit;
 	}
-
-	for (addr_flags = 0; addr_flags <= 0xEF; ++addr_flags) {
+	/*
+	 * Only scan in the valid client device address range, otherwise some
+	 * client devices stretch the clock in weird ways that prevent the
+	 * discovery of other devices.
+	 */
+	for (addr_flags = I2C_FIRST_VALID_ADDR;
+	     addr_flags <= I2C_LAST_VALID_ADDR; ++addr_flags) {
 		watchdog_reload();  /* Otherwise a full scan trips watchdog */
 		ccputs(".");
 
