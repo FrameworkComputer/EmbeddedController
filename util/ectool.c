@@ -242,6 +242,8 @@ const char help_str[] =
 	"      Set keyboard backlight in percent\n"
 	"  pwmsetduty\n"
 	"      Set 16 bit duty cycle of given PWM\n"
+	"  rand <num_bytes>\n"
+	"      generate <num_bytes> of random numbers\n"
 	"  readtest <patternoffset> <size>\n"
 	"      Reads a pattern from the EC via LPC\n"
 	"  reboot_ec <RO|RW|cold|hibernate|hibernate-clear-ap-off|disable-jump>"
@@ -1107,6 +1109,53 @@ int cmd_flash_info(int argc, char *argv[])
 		/* Fields added in ver.1 available */
 		printf("WriteIdealSize %d\nFlags 0x%x\n",
 		       r.write_ideal_size, r.flags);
+	}
+
+	return 0;
+}
+
+int cmd_rand(int argc, char *argv[])
+{
+	struct ec_params_rand_num p;
+	struct ec_response_rand_num *r;
+	size_t r_size;
+	int64_t num_bytes;
+	int64_t i;
+	char *e;
+	int rv = 0;
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <num_bytes>\n", argv[0]);
+		return -1;
+	}
+
+	num_bytes = strtol(argv[1], &e, 0);
+	if ((e && *e) || (errno == ERANGE)) {
+		fprintf(stderr, "Invalid num_bytes argument\n");
+		return -1;
+	}
+
+	r = ec_inbuf;
+
+	for (i = 0; i < num_bytes; i += ec_max_insize) {
+		p.num_rand_bytes = ec_max_insize;
+		if (num_bytes - i < p.num_rand_bytes)
+			p.num_rand_bytes = num_bytes - i;
+
+		r_size = p.num_rand_bytes;
+
+		rv = ec_command(EC_CMD_RAND_NUM, EC_VER_RAND_NUM, &p, sizeof(p),
+				r, r_size);
+		if (rv < 0) {
+			fprintf(stderr, "Random number command failed\n");
+			return -1;
+		}
+
+		rv = write(STDOUT_FILENO, r->rand, r_size);
+		if (rv != r_size) {
+			fprintf(stderr, "Failed to write stdout\n");
+			return -1;
+		}
 	}
 
 	return 0;
@@ -9000,6 +9049,7 @@ const struct command commands[] = {
 	{"pwmsetfanrpm", cmd_pwm_set_fan_rpm},
 	{"pwmsetkblight", cmd_pwm_set_keyboard_backlight},
 	{"pwmsetduty", cmd_pwm_set_duty},
+	{"rand", cmd_rand},
 	{"readtest", cmd_read_test},
 	{"reboot_ec", cmd_reboot_ec},
 	{"rollbackinfo", cmd_rollback_info},

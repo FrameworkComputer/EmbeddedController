@@ -7,8 +7,10 @@
 
 #include "common.h"
 #include "console.h"
+#include "host_command.h"
 #include "panic.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "trng.h"
 #include "util.h"
@@ -95,7 +97,12 @@ test_mockable void exit_trng(void)
 #endif
 }
 
-#ifdef CONFIG_CMD_RAND
+#if defined(CONFIG_CMD_RAND)
+/*
+ * We want to avoid accidentally exposing debug commands in RO since we can't
+ * update RO once in production.
+ */
+#if defined(SECTION_IS_RW)
 static int command_rand(int argc, char **argv)
 {
 	uint8_t data[32];
@@ -110,4 +117,29 @@ static int command_rand(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(rand, command_rand,
 			NULL, "Output random bytes to console.");
-#endif
+
+static int host_command_rand(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_rand_num *p = args->params;
+	struct ec_response_rand_num *r = args->response;
+	uint16_t num_rand_bytes = p->num_rand_bytes;
+
+	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
+
+	if (num_rand_bytes > args->response_max)
+		return EC_RES_OVERFLOW;
+
+	init_trng();
+	rand_bytes(r->rand, num_rand_bytes);
+	exit_trng();
+
+	args->response_size = num_rand_bytes;
+
+	return EC_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_RAND_NUM, host_command_rand,
+		     EC_VER_MASK(EC_VER_RAND_NUM));
+#endif /* SECTION_IS_RW */
+#endif /* CONFIG_CMD_RAND */

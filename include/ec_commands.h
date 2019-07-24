@@ -1750,6 +1750,25 @@ struct ec_params_flash_select {
 } __ec_align4;
 
 
+/**
+ * Request random numbers to be generated and returned.
+ * Can be used to test the random number generator is truly random.
+ * See https://csrc.nist.gov/publications/detail/sp/800-22/rev-1a/final and
+ * https://webhome.phy.duke.edu/~rgb/General/dieharder.php.
+ */
+#define EC_CMD_RAND_NUM	0x001A
+#define EC_VER_RAND_NUM 0
+
+struct ec_params_rand_num {
+	uint16_t num_rand_bytes;	/**< num random bytes to generate */
+} __ec_align4;
+
+struct ec_response_rand_num {
+	uint8_t rand[0];		/**< generated random numbers */
+} __ec_align4;
+
+BUILD_ASSERT(sizeof(struct ec_response_rand_num) == 0);
+
 /*****************************************************************************/
 /* PWM commands */
 
