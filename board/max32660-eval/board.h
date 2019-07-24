@@ -10,6 +10,8 @@
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands */
+#define CONFIG_I2C
+#define CONFIG_I2C_MASTER
 
 #define CONFIG_FPU
 
@@ -17,9 +19,17 @@
 #undef CONFIG_LID_SWITCH
 #undef CONFIG_PECI
 #undef CONFIG_SWITCH
+#define CONFIG_CMD_HOSTCMD
 
-/* #define CONFIG_I2C_SLAVE */
-/* #define CONFIG_HOSTCMD_I2C_SLAVE_ADDR (0x51 << 1) */
+#undef CONFIG_HOSTCMD_EVENTS
+#define CONFIG_I2C
+
+#define CONFIG_I2C_SLAVE
+#define CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS (0x51) /* 7 bit right-aligned, bits 6 to 0 */
+
+/* Slave I2C port configuration */
+#define I2C_PORT_SLAVE 1
+#define I2C_PORT_EC I2C_PORT_SLAVE
 
 /* Write protect is active high */
 #define CONFIG_WP_ACTIVE_HIGH
