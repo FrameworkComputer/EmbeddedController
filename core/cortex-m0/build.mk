@@ -21,7 +21,7 @@ LDFLAGS_EXTRA+=-flto
 endif
 
 core-y=cpu.o init.o thumb_case.o div.o lmul.o ldivmod.o mula.o uldivmod.o
-core-y+=vecttable.o
+core-y+=vecttable.o __builtin.o
 core-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic.o
 core-$(CONFIG_COMMON_RUNTIME)+=switch.o task.o
 
