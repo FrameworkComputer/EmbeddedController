@@ -8,40 +8,29 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-#ifdef BOARD_KRANE
-#define VARIANT_KUKUI_BATTERY_MM8013
-#else
-#define VARIANT_KUKUI_BATTERY_MAX17055
-#endif
-
-#define VARIANT_KUKUI_CHARGER_MT6370
-#define VARIANT_KUKUI_DP_MUX_GPIO
+#define VARIANT_KUKUI_BATTERY_SMART
+#define VARIANT_KUKUI_CHARGER_ISL9238
 
 #include "baseboard.h"
 
-#define CONFIG_VOLUME_BUTTONS
+/* TODO(b:135086465) led implementation */
+#undef CONFIG_LED_COMMON
 
-/* Battery */
-#ifdef BOARD_KRANE
-#define BATTERY_DESIRED_CHARGING_CURRENT    3500  /* mA */
-#else
-#define BATTERY_DESIRED_CHARGING_CURRENT    2000  /* mA */
-#endif /* BOARD_KRANE */
+#define CONFIG_CHARGER_PSYS
 
-#ifdef BOARD_KRANE
-#define CONFIG_CHARGER_MT6370_BACKLIGHT
-#undef CONFIG_DEDICATED_CHARGE_PORT_COUNT
-#define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
-#define DEDICATED_CHARGE_PORT 1
-#endif /* BOARD_KRANE */
+#define CONFIG_BC12_DETECT_PI3USB9201
+
+#define CONFIG_USB_PD_TCPM_FUSB302
+#define CONFIG_USB_PD_DISCHARGE_GPIO
+#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
+
+#define CONFIG_USB_MUX_IT5205
 
 /* Motion Sensors */
 #ifdef SECTION_IS_RW
-#ifndef BOARD_KRANE
 #define CONFIG_MAG_BMI160_BMM150
 #define CONFIG_ACCELGYRO_SEC_ADDR_FLAGS BMM150_ADDR0_FLAGS
 #define CONFIG_MAG_CALIBRATE
-#endif /* !BOARD_KRANE */
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
@@ -55,26 +44,24 @@
 #define CONFIG_ALS_TCS3400_EMULATED_IRQ_EVENT
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(CLEAR_ALS)
 
-/* Camera VSYNC */
-#define CONFIG_SYNC
-#define CONFIG_SYNC_COMMAND
-#define CONFIG_SYNC_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 #endif /* SECTION_IS_RW */
 
 /* I2C ports */
-#define I2C_PORT_CHARGER  0
-#define I2C_PORT_TCPC0    0
-#define I2C_PORT_BATTERY  1
-#define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
-#define I2C_PORT_ACCEL    1
-#define I2C_PORT_BC12     1
-#define I2C_PORT_ALS      1
+#define I2C_PORT_BC12               0
+#define I2C_PORT_TCPC0              0
+#define I2C_PORT_USB_MUX            0
+#define I2C_PORT_CHARGER            1
+#define I2C_PORT_BATTERY            1
+#define I2C_PORT_VIRTUAL_BATTERY    1
+#define I2C_PORT_IO_EXPANDER_IT8801 1
 
-/* Route sbs host requests to virtual battery driver */
-#define VIRTUAL_BATTERY_ADDR_FLAGS 0x0B
+/* Enable Accel over SPI */
+#define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI master port (SPI2) */
 
-/* Define the host events which are allowed to wakeup AP in S3. */
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP
+#define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_USE_GPIO
+/* Define the MKBP events which are allowed to wakeup AP in S3. */
 #define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
 		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |\
 		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON))
@@ -86,7 +73,6 @@ enum adc_channel {
 	ADC_BOARD_ID = 0,
 	ADC_EC_SKU_ID,
 	ADC_BATT_ID,
-	ADC_POGO_ADC_INT_L,
 	ADC_CH_COUNT
 };
 
@@ -103,9 +89,7 @@ enum power_signal {
 enum sensor_id {
 	LID_ACCEL = 0,
 	LID_GYRO,
-#ifdef CONFIG_MAG_BMI160_BMM150
 	LID_MAG,
-#endif /* CONFIG_MAG_BMI160_BMM150 */
 	CLEAR_ALS,
 	RGB_ALS,
 	VSYNC,
@@ -114,10 +98,7 @@ enum sensor_id {
 
 enum charge_port {
 	CHARGE_PORT_USB_C,
-	CHARGE_PORT_POGO,
 };
-
-#include "ec_commands.h"
 #include "gpio_signal.h"
 #include "registers.h"
 
@@ -129,12 +110,6 @@ void emmc_cmd_interrupt(enum gpio_signal signal);
 void board_reset_pd_mcu(void);
 int board_get_version(void);
 int board_is_sourcing_vbus(int port);
-void pogo_adc_interrupt(enum gpio_signal signal);
-int board_discharge_on_ac(int enable);
-int board_charge_port_is_sink(int port);
-int board_charge_port_is_connected(int port);
-void board_fill_source_power_info(int port,
-				  struct ec_response_usb_pd_power_info *r);
 
 #endif /* !__ASSEMBLER__ */
 

@@ -317,8 +317,10 @@ static void svdm_dp_post_config(int port)
 		return;
 
 	gpio_set_level(GPIO_USB_C0_HPD_OD, 1);
+#ifdef VARIANT_KUKUI_DP_MUX_GPIO
 	gpio_set_level(GPIO_USB_C0_DP_OE_L, 0);
 	gpio_set_level(GPIO_USB_C0_DP_POLARITY, board_get_polarity(port));
+#endif
 
 	/* set the minimum time delay (2ms) for the next HPD IRQ */
 	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
@@ -354,9 +356,11 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
 		gpio_set_level(GPIO_USB_C0_HPD_OD, 1);
 
+#ifdef VARIANT_KUKUI_DP_MUX_GPIO
 		gpio_set_level(GPIO_USB_C0_DP_OE_L, 0);
 		gpio_set_level(GPIO_USB_C0_DP_POLARITY,
 			       board_get_polarity(port));
+#endif
 
 		/* set the minimum time delay (2ms) for the next HPD IRQ */
 		hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
@@ -365,9 +369,11 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 		return 0; /* nak */
 	} else {
 		gpio_set_level(GPIO_USB_C0_HPD_OD, lvl);
+#ifdef VARIANT_KUKUI_DP_MUX_GPIO
 		gpio_set_level(GPIO_USB_C0_DP_OE_L, !lvl);
 		gpio_set_level(GPIO_USB_C0_DP_POLARITY,
 			       board_get_polarity(port));
+#endif
 		/* set the minimum time delay (2ms) for the next HPD IRQ */
 		hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 	}
@@ -382,7 +388,9 @@ static void svdm_exit_dp_mode(int port)
 
 	svdm_safe_dp_mode(port);
 	gpio_set_level(GPIO_USB_C0_HPD_OD, 0);
+#ifdef VARIANT_KUKUI_DP_MUX_GPIO
 	gpio_set_level(GPIO_USB_C0_DP_OE_L, 1);
+#endif
 	mux->hpd_update(port, 0, 0);
 }
 
