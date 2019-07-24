@@ -117,7 +117,8 @@ struct iteflash_config {
 struct common_hnd {
 	struct iteflash_config conf;
 	int flash_size;
-	int is8320dx;  /* boolean */
+	int flash_cmd_v2;      /* boolean */
+	int dbgr_addr_3bytes;  /* boolean */
 	union {
 		int i2c_dev_fd;
 		struct usb_endpoint uep;
@@ -511,14 +512,29 @@ static int config_i2c_mux(struct common_hnd *chnd, uint8_t cmd)
 	return 0;
 }
 
+/* Get 3rd Byte Chip ID */
+static int get_3rd_chip_id_byte(struct common_hnd *chnd, uint8_t *chip_id)
+{
+	int ret = 0;
+
+	ret = i2c_write_byte(chnd, 0x80, 0xf0);
+	ret |= i2c_write_byte(chnd, 0x2f, 0x20);
+	ret |= i2c_write_byte(chnd, 0x2e, 0x85);
+	ret |= i2c_read_byte(chnd, 0x30, chip_id);
+
+	if (ret < 0)
+		fprintf(stderr, "Failed to get id of 3rd byte.");
+
+	return ret;
+}
+
 /* Fills in chnd->flash_size */
 static int check_chipid(struct common_hnd *chnd)
 {
 	int ret;
 	uint8_t ver = 0xff;
-	uint16_t id = 0xffff;
-	uint16_t DX[5] = {128, 192, 256, 384, 512};
-
+	uint32_t id = 0xffff;
+	uint16_t v2[5] = {128, 192, 256, 384, 512};
 	/*
 	 * Chip Version is mapping from bit 3-0
 	 * Flash size is mapping from bit 7-4
@@ -540,6 +556,13 @@ static int check_chipid(struct common_hnd *chnd)
 	 * 4:256KB
 	 * 6:384KB
 	 * 8:512KB
+	 *
+	 * flash size(bit 7-4) of it8xxx1 or it8xxx2 series
+	 * 0:128KB
+	 * 2:192KB
+	 * 4:256KB
+	 * 6:384KB
+	 * 8:512KB
 	 */
 
 	ret = i2c_read_byte(chnd, 0x00, (uint8_t *)&id + 1);
@@ -551,20 +574,35 @@ static int check_chipid(struct common_hnd *chnd)
 	ret = i2c_read_byte(chnd, 0x02, &ver);
 	if (ret < 0)
 		return ret;
+
 	if ((id & 0xff00) != (CHIP_ID & 0xff00)) {
-		fprintf(stderr, "Invalid chip id: %04x\n", id);
-		return -EINVAL;
+		id |= 0xff0000;
+		ret = get_3rd_chip_id_byte(chnd, (uint8_t *)&id+2);
+		if (ret < 0)
+			return ret;
+
+		if ((id & 0xf000f) == 0x80001 || (id & 0xf000f) == 0x80002) {
+			chnd->flash_cmd_v2 = 1;
+			chnd->dbgr_addr_3bytes = 1;
+		} else {
+			fprintf(stderr, "Invalid chip id: %05x\n", id);
+			return -EINVAL;
+		}
+	} else {
+		chnd->dbgr_addr_3bytes = 0;
+		if ((ver & 0x0f) >= 0x03)
+			chnd->flash_cmd_v2 = 1;
+		else
+			chnd->flash_cmd_v2 = 0;
 	}
 	/* compute embedded flash size from CHIPVER field */
-	if ((ver & 0x0f) == 0x03)  {
-		chnd->flash_size = DX[(ver & 0xF0)>>5] * 1024;
-		chnd->is8320dx = 1;
-	} else {
+	if (chnd->flash_cmd_v2)
+		chnd->flash_size = v2[(ver & 0xF0)>>5] * 1024;
+	else
 		chnd->flash_size = (128 + (ver & 0xF0)) * 1024;
-		chnd->is8320dx = 0;
-	}
-	printf("CHIPID %04x, CHIPVER %02x, Flash size %d kB\n", id, ver,
-			chnd->flash_size / 1024);
+
+	printf("CHIPID %05x, CHIPVER %02x, Flash size %d kB\n", id, ver,
+		chnd->flash_size / 1024);
 
 	return 0;
 }
@@ -575,6 +613,9 @@ static int dbgr_reset(struct common_hnd *chnd, unsigned char val)
 	int ret = 0;
 
 	/* Reset CPU only, and we keep power state until flashing is done. */
+	if (chnd->dbgr_addr_3bytes)
+		ret |= i2c_write_byte(chnd, 0x80, 0xf0);
+
 	ret |= i2c_write_byte(chnd, 0x2f, 0x20);
 	ret |= i2c_write_byte(chnd, 0x2e, 0x06);
 
@@ -594,6 +635,8 @@ static int dbgr_disable_watchdog(struct common_hnd *chnd)
 	int ret = 0;
 
 	printf("Disabling watchdog...\n");
+	if (chnd->dbgr_addr_3bytes)
+		ret |= i2c_write_byte(chnd, 0x80, 0xf0);
 
 	ret |= i2c_write_byte(chnd, 0x2f, 0x1f);
 	ret |= i2c_write_byte(chnd, 0x2e, 0x05);
@@ -611,6 +654,9 @@ static int dbgr_disable_protect_path(struct common_hnd *chnd)
 	int ret = 0, i;
 
 	printf("Disabling protect path...\n");
+
+	if (chnd->dbgr_addr_3bytes)
+		ret |= i2c_write_byte(chnd, 0x80, 0xf0);
 
 	ret |= i2c_write_byte(chnd, 0x2f, 0x20);
 	for (i = 0; i < 32; i++) {
@@ -2050,7 +2096,7 @@ int main(int argc, char **argv)
 	}
 
 	if (chnd.conf.erase) {
-		if (chnd.is8320dx)
+		if (chnd.flash_cmd_v2)
 			/* Do Normal Erase Function */
 			command_erase2(&chnd, chnd.flash_size, 0, 0);
 		else
@@ -2060,7 +2106,7 @@ int main(int argc, char **argv)
 	}
 
 	if (chnd.conf.output_filename) {
-		if (chnd.is8320dx)
+		if (chnd.flash_cmd_v2)
 			ret = write_flash2(&chnd, chnd.conf.output_filename, 0);
 		else
 			ret = write_flash(&chnd, chnd.conf.output_filename, 0);
