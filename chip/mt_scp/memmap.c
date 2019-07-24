@@ -126,11 +126,22 @@ void cpu_clean_invalidate_dcache_range(uintptr_t base, unsigned int length)
 static void scp_cache_init(void)
 {
 	int c;
+	const int region = 0;
 
 	/* First make sure all caches are disabled, and reset stats. */
 	for (c = 0; c < CACHE_COUNT; c++) {
+		/*
+		 * Changing cache-size config may change the SRAM logical
+		 * address in the mean time.  This may break the loaded
+		 * memory layout, and thus break the system.  Cache-size
+		 * should only be be configured in kernel driver before
+		 * laoding the firmware. b/137920815#comment18
+		 */
+		SCP_CACHE_CON(c) &= (SCP_CACHE_CON_CACHESIZE_MASK |
+				     SCP_CACHE_CON_WAYEN);
 		SCP_CACHE_REGION_EN(c) = 0;
-		SCP_CACHE_CON(c) = 0;
+		SCP_CACHE_ENTRY(c, region) = 0;
+		SCP_CACHE_END_ENTRY(c, region) = 0;
 
 		/* Reset statistics. */
 		SCP_CACHE_HCNT0U(c) = 0;
@@ -157,8 +168,6 @@ static void scp_cache_init(void)
 
 	/* Enable region 0 for both I-cache and D-cache. */
 	for (c = 0; c < CACHE_COUNT; c++) {
-		const int region = 0;
-
 		SCP_CACHE_ENTRY(c, region) = CACHE_TRANS_SCP_CACHE_ADDR;
 		SCP_CACHE_END_ENTRY(c, region) =
 			CACHE_TRANS_SCP_CACHE_ADDR + CACHE_TRANS_AP_SIZE;
@@ -166,9 +175,11 @@ static void scp_cache_init(void)
 
 		SCP_CACHE_REGION_EN(c) |= 1 << region;
 
-		/* Set cache to 8 kb, clear other registers */
-		SCP_CACHE_CON(c) = SCP_CACHE_CON_CACHESIZE_8KB |
-			SCP_CACHE_CON_MCEN | SCP_CACHE_CON_CNTEN0;
+		/*
+		 * Enable cache. Note that cache size setting should have been
+		 * done in kernel driver. b/137920815#comment18
+		 */
+		SCP_CACHE_CON(c) |= SCP_CACHE_CON_MCEN | SCP_CACHE_CON_CNTEN0;
 	}
 
 	cpu_invalidate_icache();
