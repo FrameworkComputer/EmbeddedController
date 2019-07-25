@@ -1035,6 +1035,23 @@ static void board_init(void)
 #endif
 
 	isl923x_set_ac_prochot(3328 /* mA */);
+
+	switch (oem) {
+	case PROJECT_VAYNE:
+		isl923x_set_dc_prochot(11008 /* mA */);
+		break;
+	case PROJECT_PANTHEON:
+		isl923x_set_dc_prochot(9984 /* mA */);
+		break;
+	case PROJECT_SONA:
+		isl923x_set_dc_prochot(5888 /* mA */);
+		break;
+	case PROJECT_NAMI:
+	case PROJECT_AKALI:
+	/* default 4096mA 0x1000 */
+	default:
+		break;
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
