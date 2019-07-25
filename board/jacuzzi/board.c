@@ -198,18 +198,6 @@ int board_discharge_on_ac(int enable)
 	return charger_discharge_on_ac(enable);
 }
 
-int extpower_is_present(void)
-{
-	/*
-	 * The charger will indicate VBUS presence if we're sourcing 5V,
-	 * so exclude such ports.
-	 */
-	if (board_vbus_source_enabled(0))
-		return 0;
-	else
-		return tcpm_get_vbus_level(0);
-}
-
 int pd_snk_is_vbus_provided(int port)
 {
 	/* TODO(b:138352732): read IT8801 GPIO EN_USBC_CHARGE_L */
