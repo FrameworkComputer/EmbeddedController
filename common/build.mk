@@ -241,3 +241,6 @@ endif
 
 include $(_common_dir)fpsensor/build.mk
 include $(_common_dir)usbc/build.mk
+
+include $(_common_dir)mock/build.mk
+common-y+=$(foreach m,$(mock-y),mock/$(m))

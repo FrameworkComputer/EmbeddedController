@@ -3334,6 +3334,20 @@
 #define CONFIG_TASK_PROFILING
 
 /*****************************************************************************/
+/* Mock config */
+
+/*
+ * List of mock implementations to pull into the build.
+ *
+ * This should contain a flat list of MOCK(the-mock-name) elements.
+ *
+ * This is defined in the following two files:
+ * test/{testname}.mocklist
+ * fuzz/{fuzzname}.mocklist
+ */
+#undef CONFIG_TEST_MOCK_LIST
+
+/*****************************************************************************/
 /* Temperature sensor config */
 
 /* Compile common code for temperature sensor support */

@@ -188,6 +188,29 @@ $(foreach c,$(_tsk_cfg_rw) $(_flag_cfg_rw),$(eval $(c)=rw))
 $(foreach c,$(_tsk_cfg_ro) $(_flag_cfg_ro),$(eval $(c)=ro))
 $(foreach c,$(_tsk_cfg) $(_flag_cfg),$(eval $(c)=y))
 
+# Fetch list of mocks from .mocklist files for tests and fuzzers.
+# The following will transform the the list of mocks into
+# HAS_MOCK_<NAME> for use in the build systems and CPP,
+# similar to task definitions.
+_mock_lst_flags := $(if $(TEST_FUZZ),-Ifuzz,-Itest) -DTEST_BUILD=$(EMPTY) \
+	-imacros $(PROJECT).mocklist                                      \
+	-I$(BDIR) -DBOARD_$(UC_BOARD)=$(EMPTY) -I$(BASEDIR)               \
+	-DBASEBOARD_$(UC_BASEBOARD)=$(EMPTY)                              \
+	-D_MAKEFILE=$(EMPTY)
+_mock_file := $(if $(TEST_FUZZ),fuzz,test)/$(PROJECT).mocklist
+
+# If test/fuzz build and mockfile exists, source the list of
+# mocks from mockfile.
+_mock_lst :=
+ifneq ($(and $(TEST_BUILD),$(wildcard $(_mock_file))),)
+	_mock_lst += $(shell $(CPP) -P $(_mock_lst_flags) \
+		include/mock_filter.h)
+endif
+
+_mock_cfg := $(foreach t,$(_mock_lst) ,HAS_MOCK_$(t))
+CPPFLAGS += $(foreach t,$(_mock_cfg),-D$(t)=$(EMPTY))
+$(foreach c,$(_mock_cfg),$(eval $(c)=y))
+
 ifneq "$(CONFIG_COMMON_RUNTIME)" "y"
 	_irq_list:=$(shell $(CPP) $(CPPFLAGS) -P -Ichip/$(CHIP) -I$(BASEDIR) \
 		-I$(BDIR) -D"ENABLE_IRQ(x)=EN_IRQ x" \
