@@ -37,6 +37,7 @@
 #define FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE \
 	(FP_ALGORITHM_TEMPLATE_SIZE + \
 		sizeof(struct ec_fp_template_encryption_metadata))
+#define FP_POSITIVE_MATCH_SALT_BYTES 16
 
 /* Events for the FPSENSOR task */
 #define TASK_EVENT_SENSOR_IRQ     TASK_EVENT_CUSTOM_BIT(0)
@@ -55,6 +56,9 @@ extern uint8_t fp_template[FP_MAX_FINGER_COUNT][FP_ALGORITHM_TEMPLATE_SIZE];
  * ciphered data.
  */
 extern uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE];
+/* Salt used in derivation of positive match secret. */
+extern uint8_t fp_positive_match_salt
+	[FP_MAX_FINGER_COUNT][FP_POSITIVE_MATCH_SALT_BYTES];
 /* Number of used templates */
 extern uint32_t templ_valid;
 /* Bitmap of the templates with local modifications */

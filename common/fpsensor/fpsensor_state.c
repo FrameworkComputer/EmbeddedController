@@ -27,6 +27,9 @@ uint8_t fp_template[FP_MAX_FINGER_COUNT][FP_ALGORITHM_TEMPLATE_SIZE]
  */
 uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE]
 	FP_TEMPLATE_SECTION;
+/* Salt used in derivation of positive match secret. */
+uint8_t fp_positive_match_salt
+	[FP_MAX_FINGER_COUNT][FP_POSITIVE_MATCH_SALT_BYTES];
 /* Number of used templates */
 uint32_t templ_valid;
 /* Bitmap of the templates with local modifications */
@@ -53,6 +56,8 @@ void fp_task_simulate(void)
 void fp_clear_finger_context(int idx)
 {
 	always_memset(fp_template[idx], 0, sizeof(fp_template[0]));
+	always_memset(fp_positive_match_salt[idx], 0,
+		      sizeof(fp_positive_match_salt[0]));
 }
 
 /**

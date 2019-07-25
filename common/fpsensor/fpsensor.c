@@ -109,10 +109,15 @@ static uint32_t fp_process_enroll(void)
 	templ_dirty |= BIT(templ_valid);
 	if (percent == 100) {
 		res = fp_enrollment_finish(fp_template[templ_valid]);
-		if (res)
+		if (res) {
 			res = EC_MKBP_FP_ERR_ENROLL_INTERNAL;
-		else
+		} else {
+			init_trng();
+			rand_bytes(fp_positive_match_salt[templ_valid],
+				   FP_POSITIVE_MATCH_SALT_BYTES);
+			exit_trng();
 			templ_valid++;
+		}
 		sensor_mode &= ~FP_MODE_ENROLL_SESSION;
 		enroll_session &= ~FP_MODE_ENROLL_SESSION;
 	}
