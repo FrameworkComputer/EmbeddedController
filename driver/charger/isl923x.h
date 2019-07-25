@@ -300,12 +300,17 @@ enum isl9237_fsm_state {
 #endif /* __CROS_EC_ISL923X_H */
 
 /**
- * Initialize AC prochot threshold
+ * Initialize AC & DC prochot threshold
  *
- * @param	Porchot threshold current in mA: multiple of 128 up to 6400 mA
+ * @param	AC Porchot threshold current in mA:
+ *			multiple of 128 up to 6400 mA
+ *			DC Porchot threshold current in mA:
+ *			multiple of 128 up to 12800 mA
  * 		Bits below 128mA are truncated (ignored).
  * @return enum ec_error_list
  */
 int isl923x_set_ac_prochot(uint16_t ma);
+int isl923x_set_dc_prochot(uint16_t ma);
 
 #define ISL923X_AC_PROCHOT_CURRENT_MAX	6400	/* mA */
+#define ISL923X_DC_PROCHOT_CURRENT_MAX	12800	/* mA */
