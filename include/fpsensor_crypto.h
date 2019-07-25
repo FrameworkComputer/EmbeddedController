@@ -13,7 +13,7 @@
  *
  * @param outkey the pointer to buffer holding the output key.
  * @param salt the salt to use in HKDF.
- * @return EC_RES_SUCCESS on success and EC_RES_ERROR otherwise.
+ * @return EC_SUCCESS on success and error code otherwise.
  */
 int derive_encryption_key(uint8_t *out_key, const uint8_t *salt);
 
@@ -29,7 +29,7 @@ int derive_encryption_key(uint8_t *out_key, const uint8_t *salt);
  * @param nonce_size the size of |nonce| in bytes.
  * @param tag the tag to hold the authenticator after encryption.
  * @param tag_size the size of |tag|.
- * @return EC_RES_SUCCESS on success and EC_RES_ERROR otherwise.
+ * @return EC_SUCCESS on success and error code otherwise.
  */
 int aes_gcm_encrypt(const uint8_t *key, int key_size,
 		    const uint8_t *plaintext,
@@ -49,7 +49,7 @@ int aes_gcm_encrypt(const uint8_t *key, int key_size,
  * @param nonce_size the size of |nonce| in bytes.
  * @param tag the tag to compare against when decryption finishes.
  * @param tag_size the length of tag to compare against.
- * @return EC_RES_SUCCESS on success and EC_RES_ERROR otherwise.
+ * @return EC_SUCCESS on success and error code otherwise.
  */
 int aes_gcm_decrypt(const uint8_t *key, int key_size, uint8_t *plaintext,
 		    const uint8_t *ciphertext, int text_size,

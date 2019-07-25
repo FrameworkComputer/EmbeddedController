@@ -22,7 +22,7 @@ static int get_ikm(uint8_t *ikm)
 
 	if (!fp_tpm_seed_is_set()) {
 		CPRINTS("Seed hasn't been set.");
-		return EC_RES_ERROR;
+		return EC_ERROR_ACCESS_DENIED;
 	}
 
 	/*
@@ -32,7 +32,7 @@ static int get_ikm(uint8_t *ikm)
 	ret = rollback_get_secret(ikm);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to read rollback secret: %d", ret);
-		return EC_RES_ERROR;
+		return EC_ERROR_HW_INTERNAL;
 	}
 	/*
 	 * IKM is the concatenation of the rollback secret and the seed from
@@ -40,7 +40,7 @@ static int get_ikm(uint8_t *ikm)
 	 */
 	memcpy(ikm + CONFIG_ROLLBACK_SECRET_SIZE, tpm_seed, sizeof(tpm_seed));
 
-	return EC_RES_SUCCESS;
+	return EC_SUCCESS;
 }
 
 static void hkdf_extract(uint8_t *prk, const uint8_t *salt, size_t salt_size,
@@ -63,12 +63,12 @@ static int hkdf_expand_one_step(uint8_t *out_key, size_t out_key_size,
 	if (out_key_size > SHA256_DIGEST_SIZE) {
 		CPRINTS("Deriving key material longer than SHA256_DIGEST_SIZE "
 			"requires more steps of HKDF expand.");
-		return EC_RES_ERROR;
+		return EC_ERROR_INVAL;
 	}
 
 	if (info_size > SHA256_DIGEST_SIZE) {
 		CPRINTS("Info size too big for HKDF.");
-		return EC_RES_ERROR;
+		return EC_ERROR_INVAL;
 	}
 
 	memcpy(message_buf, info, info_size);
@@ -79,7 +79,7 @@ static int hkdf_expand_one_step(uint8_t *out_key, size_t out_key_size,
 	memcpy(out_key, key_buf, out_key_size);
 	memset(key_buf, 0, sizeof(key_buf));
 
-	return EC_RES_SUCCESS;
+	return EC_SUCCESS;
 }
 
 int derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
@@ -93,9 +93,9 @@ int derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 	BUILD_ASSERT(sizeof(user_id) == SHA256_DIGEST_SIZE);
 
 	ret = get_ikm(ikm);
-	if (ret != EC_RES_SUCCESS) {
+	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to get IKM: %d", ret);
-		return EC_RES_ERROR;
+		return ret;
 	}
 
 	/* "Extract step of HKDF. */
@@ -126,13 +126,13 @@ int aes_gcm_encrypt(const uint8_t *key, int key_size,
 
 	if (nonce_size != FP_CONTEXT_NONCE_BYTES) {
 		CPRINTS("Invalid nonce size %d bytes", nonce_size);
-		return EC_RES_INVALID_PARAM;
+		return EC_ERROR_INVAL;
 	}
 
 	res = AES_set_encrypt_key(key, 8 * key_size, &aes_key);
 	if (res) {
 		CPRINTS("Failed to set encryption key: %d", res);
-		return EC_RES_ERROR;
+		return EC_ERROR_UNKNOWN;
 	}
 	CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f)AES_encrypt, 0);
 	CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
@@ -141,10 +141,10 @@ int aes_gcm_encrypt(const uint8_t *key, int key_size,
 				    text_size);
 	if (!res) {
 		CPRINTS("Failed to encrypt: %d", res);
-		return EC_RES_ERROR;
+		return EC_ERROR_UNKNOWN;
 	}
 	CRYPTO_gcm128_tag(&ctx, tag, tag_size);
-	return EC_RES_SUCCESS;
+	return EC_SUCCESS;
 }
 
 int aes_gcm_decrypt(const uint8_t *key, int key_size, uint8_t *plaintext,
@@ -158,13 +158,13 @@ int aes_gcm_decrypt(const uint8_t *key, int key_size, uint8_t *plaintext,
 
 	if (nonce_size != FP_CONTEXT_NONCE_BYTES) {
 		CPRINTS("Invalid nonce size %d bytes", nonce_size);
-		return EC_RES_INVALID_PARAM;
+		return EC_ERROR_INVAL;
 	}
 
 	res = AES_set_encrypt_key(key, 8 * key_size, &aes_key);
 	if (res) {
 		CPRINTS("Failed to set decryption key: %d", res);
-		return EC_RES_ERROR;
+		return EC_ERROR_UNKNOWN;
 	}
 	CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f)AES_encrypt, 0);
 	CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
@@ -173,12 +173,12 @@ int aes_gcm_decrypt(const uint8_t *key, int key_size, uint8_t *plaintext,
 				    text_size);
 	if (!res) {
 		CPRINTS("Failed to decrypt: %d", res);
-		return EC_RES_ERROR;
+		return EC_ERROR_UNKNOWN;
 	}
 	res = CRYPTO_gcm128_finish(&ctx, tag, tag_size);
 	if (!res) {
 		CPRINTS("Found incorrect tag: %d", res);
-		return EC_RES_ERROR;
+		return EC_ERROR_UNKNOWN;
 	}
-	return EC_RES_SUCCESS;
+	return EC_SUCCESS;
 }

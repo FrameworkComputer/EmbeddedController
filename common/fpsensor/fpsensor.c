@@ -419,7 +419,7 @@ static int fp_command_frame(struct host_cmd_handler_args *args)
 		exit_trng();
 
 		ret = derive_encryption_key(key, enc_info->salt);
-		if (ret != EC_RES_SUCCESS) {
+		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to derive key", fgr);
 			return EC_RES_UNAVAILABLE;
 		}
@@ -429,7 +429,7 @@ static int fp_command_frame(struct host_cmd_handler_args *args)
 				      sizeof(fp_template[0]),
 				      enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
 				      enc_info->tag, FP_CONTEXT_TAG_BYTES);
-		if (ret != EC_RES_SUCCESS) {
+		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to encrypt template", fgr);
 			return EC_RES_UNAVAILABLE;
 		}
@@ -507,7 +507,7 @@ static int fp_command_template(struct host_cmd_handler_args *args)
 			return EC_RES_INVALID_PARAM;
 		}
 		ret = derive_encryption_key(key, enc_info->salt);
-		if (ret != EC_RES_SUCCESS) {
+		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to derive key", idx);
 			return EC_RES_UNAVAILABLE;
 		}
@@ -517,7 +517,7 @@ static int fp_command_template(struct host_cmd_handler_args *args)
 				      sizeof(fp_template[0]),
 				      enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
 				      enc_info->tag, FP_CONTEXT_TAG_BYTES);
-		if (ret != EC_RES_SUCCESS) {
+		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to decipher template", idx);
 			/* Don't leave bad data in the template buffer */
 			fp_clear_finger_context(idx);

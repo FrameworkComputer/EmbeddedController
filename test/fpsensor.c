@@ -89,7 +89,7 @@ test_static int test_derive_encryption_key_failure_seed_not_set(void)
 
 	/* THEN derivation will fail. */
 	TEST_ASSERT(derive_encryption_key(unused_key, unused_salt) ==
-		EC_RES_ERROR);
+		EC_ERROR_ACCESS_DENIED);
 
 	return EC_SUCCESS;
 }
@@ -108,7 +108,7 @@ static int test_derive_encryption_key_raw(const uint32_t *user_id_,
 	memcpy(user_id, user_id_, sizeof(user_id));
 	rv = derive_encryption_key(key, salt);
 
-	TEST_ASSERT(rv == EC_RES_SUCCESS);
+	TEST_ASSERT(rv == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(key, expected_key, sizeof(key));
 
 	return EC_SUCCESS;
@@ -178,7 +178,7 @@ test_static int test_derive_encryption_key_failure_rollback_fail(void)
 	rollback_should_fail = 1;
 	/* THEN the derivation will fail. */
 	TEST_ASSERT(derive_encryption_key(unused_key, unused_salt) ==
-		EC_RES_ERROR);
+		EC_ERROR_HW_INTERNAL);
 
 	/* GIVEN that reading the rollback secret will succeed. */
 	rollback_should_fail = 0;
@@ -186,7 +186,7 @@ test_static int test_derive_encryption_key_failure_rollback_fail(void)
 	TEST_ASSERT(fp_tpm_seed_is_set());
 	/* THEN the derivation will succeed. */
 	TEST_ASSERT(derive_encryption_key(unused_key, unused_salt) ==
-		EC_RES_SUCCESS);
+		EC_SUCCESS);
 
 	return EC_SUCCESS;
 }
