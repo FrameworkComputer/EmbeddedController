@@ -188,7 +188,6 @@ enum mst_source {
 void board_reset_pd_mcu(void);
 void baseboard_mst_enable_control(enum mst_source, int level);
 
-
 /* Check with variant about battery presence. */
 enum battery_present variant_battery_present(void);
 

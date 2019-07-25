@@ -10,6 +10,7 @@
 #include "charge_state_v2.h"
 #include "chipset.h"
 #include "console.h"
+#include "cros_board_info.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -342,3 +343,26 @@ void lid_angle_peripheral_enable(int enable)
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
 #endif
+
+static uint8_t sku_id;
+
+uint8_t get_board_sku(void)
+{
+	return sku_id;
+}
+
+/* Read CBI from i2c eeprom and initialize variables for board variants */
+static void cbi_init(void)
+{
+	uint32_t val;
+
+	if (cbi_get_sku_id(&val) != EC_SUCCESS || val > UINT8_MAX) {
+		CPRINTS("Read SKU Error value :%d", val);
+		return;
+	}
+
+	sku_id = val;
+
+	CPRINTS("SKU: %d", sku_id);
+}
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
