@@ -111,40 +111,12 @@ int pd_is_valid_input_voltage(int mv)
 
 void pd_power_supply_reset(int port)
 {
-	int prev_en;
-
-	prev_en = ppc_is_sourcing_vbus(port);
-
-	/* Disable VBUS. */
-	ppc_vbus_source_enable(port, 0);
-
-	/* Enable discharge if we were previously sourcing 5V */
-	if (prev_en)
-		pd_set_vbus_discharge(port, 1);
-
-	/* Notify host of power info change. */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+	/* TODO */
 }
 
 int pd_set_power_supply_ready(int port)
 {
-	int rv;
-
-	/* Disable charging. */
-	rv = ppc_vbus_sink_enable(port, 0);
-	if (rv)
-		return rv;
-
-	pd_set_vbus_discharge(port, 0);
-
-	/* Provide Vbus. */
-	rv = ppc_vbus_source_enable(port, 1);
-	if (rv)
-		return rv;
-
-	/* Notify host of power info change. */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
-
+	/* TODO */
 	return EC_SUCCESS;
 }
 
@@ -155,12 +127,14 @@ void pd_transition_voltage(int idx)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	return ppc_is_vbus_present(port);
+	/* TODO */
+	return 0;
 }
 
 int board_vbus_source_enabled(int port)
 {
-	return ppc_is_sourcing_vbus(port);
+	/* TODO */
+	return 0;
 }
 
 /* ----------------- Vendor Defined Messages ------------------ */

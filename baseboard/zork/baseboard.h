@@ -3,10 +3,20 @@
  * found in the LICENSE file.
  */
 
-/* Zork family-specific configuration */
+/* Zork baseboard configuration */
 
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
+
+/*
+ * By default, enable all console messages excepted HC, ACPI and event:
+ * The sensor stack is generating a lot of activity.
+ */
+#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
+#define CONFIG_SUPPRESSED_HOST_COMMANDS \
+	EC_CMD_CONSOLE_SNAPSHOT, EC_CMD_CONSOLE_READ, EC_CMD_USB_PD_DISCOVERY,\
+	EC_CMD_USB_PD_POWER_INFO, EC_CMD_PD_GET_LOG_ENTRY, \
+	EC_CMD_MOTION_SENSE_CMD, EC_CMD_GET_NEXT_EVENT
 
 /* NPCX7 config */
 #define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
@@ -14,7 +24,6 @@
 #define NPCX7_PWM1_SEL    0  /* GPIO C2 is not used as PWM1. */
 
 /* Internal SPI flash on NPCX7 */
-/* Flash is 1MB but reserve half for future use. */
 #define CONFIG_FLASH_SIZE (512 * 1024)
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
@@ -29,14 +38,12 @@
 #define CONFIG_ADC
 #define CONFIG_BACKLIGHT_LID
 #define CONFIG_BACKLIGHT_LID_ACTIVE_LOW
-#define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_CMD_AP_RESET_LOG
 #define CONFIG_EC_FEATURE_BOARD_OVERRIDE
 #define CONFIG_HIBERNATE_PSL
 #define CONFIG_HOSTCMD_ESPI
 #define CONFIG_HOSTCMD_SKUID
 #define CONFIG_I2C
-#define CONFIG_I2C_BUS_MAY_BE_UNPOWERED
 #define CONFIG_I2C_MASTER
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_LOW_POWER_S0
@@ -48,41 +55,31 @@
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VOLUME_BUTTONS
 
+/* CBI EEPROM for board version and SKU ID */
+#define CONFIG_CROS_BOARD_INFO
+#define CONFIG_BOARD_VERSION_CBI
+#define I2C_ADDR_EEPROM_FLAGS	0x50
+#define CONFIG_CRC8
+
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_FUEL_GAUGE
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_EC_BATT_PRES_L
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_SMART
 
-#define CONFIG_BC12_DETECT_MAX14637
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_V2
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
-
-/*
- * This limit impairs compatibility with BC1.2 chargers that are not actually
- * capable of supplying 500 mA of current.  When the charger is paralleled with
- * the battery, raising this limit allows the power system to draw more current
- * from the charger during startup.  This improves compatibility with system
- * batteries that may become excessively imbalanced after extended periods of
- * rest.
- *
- * See also b/111214767
- */
 #define CONFIG_CHARGER_INPUT_CURRENT 512
 #define CONFIG_CHARGER_ISL9241
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
 #define CONFIG_CHARGE_RAMP_HW
-#define CONFIG_USB_CHARGER
 
 #define CONFIG_CHIPSET_STONEY
 #define CONFIG_CHIPSET_RESET_HOOK
-/*
- * ACOK from ISL9238 sometimes has a negative pulse after connecting
- * USB-C power. We want to ignore it. b/77455171
- */
+
 #undef  CONFIG_EXTPOWER_DEBOUNCE_MS
 #define CONFIG_EXTPOWER_DEBOUNCE_MS 200
 #define CONFIG_EXTPOWER_GPIO
@@ -90,6 +87,10 @@
 #define CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
+
+#define CONFIG_LED_COMMON
+#define CONFIG_CMD_LEDTEST
+#define CONFIG_LED_ONOFF_STATES
 
 /*
  * On power-on, H1 releases the EC from reset but then quickly asserts and
@@ -104,33 +105,16 @@
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 
+#define CONFIG_USB_CHARGER
 #define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_CMD_PD_CONTROL
-#define CONFIG_USB_PD_ALT_MODE
-#define CONFIG_USB_PD_ALT_MODE_DFP
-#define CONFIG_USB_PD_COMM_LOCKED
-#define CONFIG_USB_PD_DISCHARGE_PPC
 #define CONFIG_USB_PD_DUAL_ROLE
-#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-#define CONFIG_USB_PD_LOGGING
 #define CONFIG_USB_PD_PORT_COUNT 2
-#define CONFIG_USB_PD_TCPC_LOW_POWER
-#define CONFIG_USB_PD_TCPM_ANX3429
+#define CONFIG_USB_PD_VBUS_MEASURE_CHARGER
+#define CONFIG_USB_PD_5V_EN_CUSTOM
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TCPM_PS8751
 #define CONFIG_USB_PD_TCPM_TCPCI
-#define CONFIG_USB_PD_TRY_SRC
-#define CONFIG_USB_PD_VBUS_DETECT_PPC
-#define CONFIG_USBC_PPC_SN5S330
-#define CONFIG_USBC_PPC_DEDICATED_INT
 #define CONFIG_USBC_SS_MUX
-#define CONFIG_USBC_SS_MUX_DFP_ONLY
-#define CONFIG_USBC_VCONN
-#define CONFIG_USBC_VCONN_SWAP
-
-/* USB-A config */
-#define CONFIG_USB_PORT_POWER_DUMB
-#define USB_PORT_COUNT 2
 
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
@@ -159,15 +143,17 @@
 #undef CONFIG_PORT80_HISTORY_LEN
 #define CONFIG_PORT80_HISTORY_LEN 256
 
-#define I2C_PORT_BATTERY	I2C_PORT_POWER
-#define I2C_PORT_CHARGER	I2C_PORT_POWER
-#define I2C_PORT_POWER		NPCX_I2C_PORT0_0
-#define I2C_PORT_TCPC0		NPCX_I2C_PORT1_0
-#define I2C_PORT_TCPC1		NPCX_I2C_PORT2_0
-#define I2C_PORT_THERMAL	NPCX_I2C_PORT3_0
-#define I2C_PORT_SENSOR		NPCX_I2C_PORT7_0
-/* Accelerometer and Gyroscope are the same device. */
-#define I2C_PORT_ACCEL		I2C_PORT_SENSOR
+#define I2C_PORT_TCPC0		NPCX_I2C_PORT0_0
+#define I2C_PORT_TCPC1		NPCX_I2C_PORT1_0
+#define I2C_PORT_BATTERY	NPCX_I2C_PORT2_0
+#define I2C_PORT_CHARGER	NPCX_I2C_PORT2_0
+#define I2C_PORT_EEPROM		NPCX_I2C_PORT2_0
+#define I2C_PORT_MUX		NPCX_I2C_PORT3_0
+#define I2C_PORT_THERMAL	NPCX_I2C_PORT4_1
+#define I2C_PORT_SENSOR		NPCX_I2C_PORT5_0
+#define I2C_PORT_ACCEL		NPCX_I2C_PORT5_0
+#define I2C_PORT_AP_AUDIO	NPCX_I2C_PORT6_1
+#define I2C_PORT_AP_HDMI	NPCX_I2C_PORT7_0
 
 /* Sensors */
 #define CONFIG_MKBP_EVENT
@@ -182,9 +168,6 @@
 /* Depends on how fast the AP boots and typical ODRs. */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
 
-#define USB_PD_PORT_ANX74XX	0
-#define USB_PD_PORT_PS8751	1
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -194,9 +177,6 @@
 enum adc_channel {
 	ADC_TEMP_SENSOR_CHARGER,
 	ADC_TEMP_SENSOR_SOC,
-	ADC_VBUS,
-	ADC_SKU_ID1,
-	ADC_SKU_ID2,
 	ADC_CH_COUNT
 };
 
@@ -213,6 +193,11 @@ enum temp_sensor_id {
 	TEMP_SENSOR_SOC,
 	TEMP_SENSOR_CPU,
 	TEMP_SENSOR_COUNT
+};
+
+enum pwm_channel {
+	PWM_CH_KBLIGHT = 0,
+	PWM_CH_COUNT
 };
 
 enum sensor_id {
@@ -247,9 +232,9 @@ void board_reset_pd_mcu(void);
 /* Common definition for the USB PD interrupt handlers. */
 void tcpc_alert_event(enum gpio_signal signal);
 
-int board_get_version(void);
 int board_is_convertible(void);
 void board_update_sensor_config_from_sku(void);
+int board_is_sourcing_vbus(int port);
 
 #endif /* !__ASSEMBLER__ */
 

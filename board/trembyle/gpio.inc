@@ -8,101 +8,87 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
-GPIO_INT(USB_C0_PD_INT_ODL,	PIN(A, 0), GPIO_INT_FALLING,			tcpc_alert_event)
-GPIO_INT(USB_C1_PD_INT_ODL,	PIN(F, 5), GPIO_INT_FALLING,			tcpc_alert_event)
-GPIO_INT(USB_C0_SWCTL_INT_ODL,	PIN(0, 3), GPIO_INT_FALLING,			ppc_interrupt)
-GPIO_INT(USB_C1_SWCTL_INT_ODL,	PIN(D, 4), GPIO_INT_FALLING,			ppc_interrupt)
-GPIO_INT(PCH_SLP_S3_L,		PIN(A, 6), GPIO_INT_BOTH,			power_signal_interrupt)
-GPIO_INT(PCH_SLP_S5_L,		PIN(A, 3), GPIO_INT_BOTH,			power_signal_interrupt)
-GPIO_INT(S0_PGOOD,		PIN(F, 4), GPIO_INT_BOTH,			power_signal_interrupt)
-GPIO_INT(S5_PGOOD,		PIN(6, 3), GPIO_INT_BOTH | GPIO_PULL_UP,	power_signal_interrupt)
+GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(3, 4), GPIO_INT_FALLING,			tcpc_alert_event)
+GPIO_INT(USB_C1_TCPC_INT_ODL,	PIN(F, 1), GPIO_INT_FALLING,			tcpc_alert_event)
+GPIO_INT(USB_C0_PPC_INT_ODL,	PIN(6, 3), GPIO_INT_FALLING,			ppc_interrupt)
+GPIO_INT(USB_C1_PPC_INT_ODL,	PIN(D, 4), GPIO_INT_FALLING,			ppc_interrupt)
+GPIO_INT(PCH_SLP_S3_L,		PIN(7, 4), GPIO_INT_BOTH,			power_signal_interrupt)
+GPIO_INT(PCH_SLP_S5_L,		PIN(E, 0), GPIO_INT_BOTH,			power_signal_interrupt)
+GPIO_INT(S0_PGOOD,		PIN(5, 6), GPIO_INT_BOTH,			power_signal_interrupt)
+GPIO_INT(S5_PGOOD,		PIN(3, 7), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(POWER_BUTTON_L,	PIN(0, 1), GPIO_INT_BOTH,			power_button_interrupt)
-GPIO_INT(LID_OPEN,		PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH | GPIO_PULL_UP,	lid_interrupt)
+GPIO_INT(LID_OPEN,		PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	lid_interrupt)
 GPIO_INT(AC_PRESENT,		PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	extpower_interrupt)
-GPIO_INT(WP_L,			PIN(A, 1), GPIO_INT_BOTH,			switch_interrupt)
-GPIO_INT(VOLUME_DOWN_L,		PIN(7, 0), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
-GPIO_INT(VOLUME_UP_L,		PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
-GPIO_INT(USB_C0_CABLE_DET,	PIN(3, 7), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
-GPIO_INT(6AXIS_INT_L,		PIN(8, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V,	bmi160_interrupt)
+GPIO_INT(WP_L,			PIN(5, 0), GPIO_INT_BOTH,			switch_interrupt)
+GPIO_INT(VOLUME_DOWN_L,		PIN(A, 6), GPIO_INT_BOTH,			button_interrupt)
+GPIO_INT(VOLUME_UP_L,		PIN(9, 5), GPIO_INT_BOTH,			button_interrupt)
+GPIO_INT(6AXIS_INT_L,		PIN(A, 0), GPIO_INT_FALLING,			bmi160_interrupt)
 
-GPIO(EN_PWR_A,			PIN(E, 2), GPIO_OUT_LOW)			/* Enable Power */
-GPIO(EN_PP1800_SENSOR,		PIN(6, 7), GPIO_OUT_LOW)			/* Enable Power */
-GPIO(ENABLE_BACKLIGHT_L,	PIN(D, 3), GPIO_OUT_HIGH)			/* Enable Backlight */
-GPIO(PCH_RSMRST_L,		PIN(C, 2), GPIO_OUT_LOW)			/* RSMRST# to SOC */
-GPIO(PCH_PWRBTN_L,		PIN(C, 1), GPIO_OUT_HIGH)			/* Power Button to SOC */
-GPIO(PCH_WAKE_L,		PIN(7, 4), GPIO_OUT_HIGH)			/* Wake SOC */
-GPIO(SYS_RESET_L,		PIN(0, 2), GPIO_ODR_HIGH)			/* Cold Reset to SOC */
-GPIO(CCD_MODE_ODL,		PIN(E, 3), GPIO_INPUT)				/* Case Closed Debug Mode */
-GPIO(ENTERING_RW,		PIN(E, 1), GPIO_OUT_LOW)			/* EC Entering RW */
-GPIO(EC_BATT_PRES_L,		PIN(E, 5), GPIO_INPUT | GPIO_PULL_UP)		/* Battery Present */
-GPIO(PCH_SYS_PWROK,		PIN(D, 6), GPIO_OUT_LOW)			/* Power OK to SOC */
-GPIO(EC_APU_RST,		PIN(E, 4), GPIO_INPUT)				/* Reset to SOC */
-GPIO(CPU_PROCHOT,		PIN(3, 4), GPIO_INPUT | GPIO_SEL_1P8V)		/* PROCHOT to SOC */
-GPIO(APU_ALERT_L,		PIN(A, 2), GPIO_INPUT)				/* Alert to SOC */
-GPIO(3AXIS_INT_L,		PIN(5, 0), GPIO_INPUT | GPIO_SEL_1P8V)		/* 3 Axis Accel */
-GPIO(KB_BL_EN,			PIN(F, 2), GPIO_OUT_LOW)			/* Enable KB Backlight */
+/* GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an interrupt handler. */
+GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
 
-/* I2C pins - these will be reconfigured for alternate function below */
-GPIO(I2C0_SCL,			PIN(B, 5), GPIO_INPUT)				/* EC_I2C_POWER_SCL */
-GPIO(I2C0_SDA,			PIN(B, 4), GPIO_INPUT)				/* EC_I2C_POWER_SDA */
-GPIO(I2C1_SCL,			PIN(9, 0), GPIO_INPUT)				/* EC_I2C_USB_C0_PD_SCL */
-GPIO(I2C1_SDA,			PIN(8, 7), GPIO_INPUT)				/* EC_I2C_USB_C0_PD_SDA */
-GPIO(I2C2_SCL,			PIN(9, 2), GPIO_INPUT)				/* EC_I2C_USB_C1_PD_SCL */
-GPIO(I2C2_SDA,			PIN(9, 1), GPIO_INPUT)				/* EC_I2C_USB_C1_PD_SDA */
-GPIO(I2C3_SCL,			PIN(D, 1), GPIO_INPUT | GPIO_SEL_1P8V)		/* APU_SIC */
-GPIO(I2C3_SDA,			PIN(D, 0), GPIO_INPUT | GPIO_SEL_1P8V)		/* APU_SID */
-GPIO(I2C5_SCL,			PIN(3, 3), GPIO_INPUT)				/* EC_I2C_EEPROM_SCL and
-										   EC_I2C_KB_BL_SCL */
-GPIO(I2C5_SDA,			PIN(3, 6), GPIO_INPUT)				/* EC_I2C_EEPROM_SDA and
-										   EC_I2C_KB_BL_SDA */
-GPIO(I2C7_SCL,			PIN(B, 3), GPIO_INPUT | GPIO_SEL_1P8V)		/* EC_I2C_SENSOR_SCL */
-GPIO(I2C7_SDA,			PIN(B, 2), GPIO_INPUT | GPIO_SEL_1P8V)		/* EC_I2C_SENSOR_SDA */
+GPIO(3AXIS_INT_L,		PIN(9, 6), GPIO_INPUT)				/* 3 Axis Accel */
+GPIO(CCD_MODE_ODL,		PIN(C, 6), GPIO_INPUT)				/* Case Closed Debug Mode */
+GPIO(CPU_PROCHOT,		PIN(D, 5), GPIO_INPUT)				/* PROCHOT to SOC */
+GPIO(EC_BATT_PRES_L,		PIN(4, 1), GPIO_INPUT)				/* Battery Present */
+GPIO(EC_INT_L,			PIN(A, 3), GPIO_ODR_HIGH)			/* Sensor MKBP event to SOC */
+GPIO(EN_PWR_A,			PIN(B, 7), GPIO_OUT_LOW)			/* Enable Power */
+GPIO(ENABLE_BACKLIGHT_L,	PIN(A, 2), GPIO_OUT_HIGH)			/* Enable Backlight */
+GPIO(ENTERING_RW,		PIN(E, 5), GPIO_OUT_LOW)			/* EC Entering RW */
+GPIO(PCH_PWRBTN_L,		PIN(8, 6), GPIO_OUT_HIGH)			/* Power Button to SOC */
+GPIO(PCH_RSMRST_L,		PIN(A, 1), GPIO_OUT_LOW)			/* RSMRST# to SOC */
+GPIO(PCH_SYS_PWROK,		PIN(7, 5), GPIO_OUT_LOW)			/* Power OK to SOC */
+GPIO(PCH_WAKE_L,		PIN(0, 3), GPIO_OUT_HIGH)			/* Wake SOC */
+GPIO(SYS_RESET_L,		PIN(C, 7), GPIO_ODR_HIGH)			/* Cold Reset to SOC */
+GPIO(USB_C0_TCPC_RST_L,		PIN(E, 1), GPIO_OUT_HIGH)			/* C0 TCPC Reset */
+GPIO(USB_C1_TCPC_RST_L,		PIN(F, 0), GPIO_OUT_HIGH)			/* C1 TCPC Reset */
+
+GPIO(LED_FULL_L,		PIN(6, 0), GPIO_OUT_HIGH)
+GPIO(LED_CHRG_L,		PIN(C, 0), GPIO_OUT_HIGH)
+
+/* IOEX(EN_USB_A0_5V,		EXPIN(0, 1, 5), GPIO_OUT_LOW) */		/* Enable A0 5V Charging */
+/* IOEX(EN_USB_A1_5V,		EXPIN(1, 1, 6), GPIO_OUT_LOW) */		/* Enable A1 5V Charging */
+/* IOEX(KB_BL_EN,		EXPIN(0, 1, 3), GPIO_OUT_LOW) */		/* Enable KB Backlight */
 
 /*
- * The NPCX LPC driver configures and controls SCI and SMI,
- * so PCH_SCI_ODL [PIN(7, 6)] and PCH_SMI_ODL [PIN(C, 6)] are
- * not defined here as GPIOs.
+ * The NPCX LPC driver configures and controls SCI, so PCH_SCI_ODL [PIN(7, 6)]
+ * is not defined here as GPIO.
  */
-GPIO(PCH_SLP_S0_L,		PIN(A, 4), GPIO_INPUT)
 
-GPIO(EN_USB_A0_5V,		PIN(6, 1), GPIO_OUT_LOW)			/* Enable A0 5V Charging */
-GPIO(EN_USB_A1_5V,		PIN(C, 0), GPIO_OUT_LOW)			/* Enable A1 5V Charging */
-GPIO(EN_USB_C0_TCPC_PWR,	PIN(6, 0), GPIO_OUT_LOW)			/* Enable C0 TCPC Power */
-GPIO(USB_C0_OC_L,		PIN(7, 3), GPIO_OUT_HIGH)			/* C0 Over Current */
-GPIO(USB_C1_OC_L,		PIN(7, 2), GPIO_OUT_HIGH)			/* C1 Over Current */
-GPIO(USB_C0_PD_RST_L,		PIN(3, 2), GPIO_OUT_HIGH)			/* C0 PD Reset */
-GPIO(USB_C1_PD_RST_L,		PIN(D, 5), GPIO_OUT_HIGH)			/* C1 PD Reset */
-GPIO(USB_C0_BC12_VBUS_ON_L,	PIN(4, 0), GPIO_ODR_HIGH)			/* C0 BC1.2 Power */
-GPIO(USB_C1_BC12_VBUS_ON_L,	PIN(B, 1), GPIO_ODR_HIGH | GPIO_PULL_UP)	/* C1 BC1.2 Power */
-GPIO(USB_C0_BC12_CHG_DET,	PIN(6, 2), GPIO_INPUT)				/* C0 BC1.2 Detect */
-GPIO(USB_C1_BC12_CHG_DET,	PIN(8, 3), GPIO_INPUT | GPIO_PULL_DOWN)		/* C1 BC1.2 Detect */
-GPIO(USB_C0_DP_HPD,		PIN(9, 5), GPIO_OUT_LOW)			/* C0 DP Hotplug Detect */
-GPIO(USB_C1_DP_HPD,		PIN(9, 6), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
+/* I2C pins - these will be reconfigured for alternate function below */
+GPIO(I2C0_SCL,			PIN(B, 5), GPIO_INPUT)				/* EC_I2C_USB_A0_C0_SCL */
+GPIO(I2C0_SDA,			PIN(B, 4), GPIO_INPUT)				/* EC_I2C_USB_A0_C0_SDA */
+GPIO(I2C1_SCL,			PIN(9, 0), GPIO_INPUT)				/* EC_I2C_USB_A1_C1_SCL */
+GPIO(I2C1_SDA,			PIN(8, 7), GPIO_INPUT)				/* EC_I2C_USB_A1_C1_SDA */
+GPIO(I2C2_SCL,			PIN(9, 2), GPIO_INPUT)				/* EC_I2C_POWER_CBI_SCL */
+GPIO(I2C2_SDA,			PIN(9, 1), GPIO_INPUT)				/* EC_I2C_POWER_CBI_SDA */
+GPIO(I2C3_SCL,			PIN(D, 1), GPIO_INPUT)				/* EC_I2C_USBC_AP_MUX_SCL */
+GPIO(I2C3_SDA,			PIN(D, 0), GPIO_INPUT)				/* EC_I2C_USBC_AP_MUX_SDA */
+GPIO(I2C4_SCL,			PIN(F, 3), GPIO_INPUT)				/* FCH_SIC */
+GPIO(I2C4_SDA,			PIN(F, 2), GPIO_INPUT)				/* FCH_SID */
+GPIO(I2C5_SCL,			PIN(3, 3), GPIO_INPUT)				/* EC_I2C_SENSOR_SCL */
+GPIO(I2C5_SDA,			PIN(3, 6), GPIO_INPUT)				/* EC_I2C_SENSOR_SDA */
+GPIO(I2C6_SCL,			PIN(E, 4), GPIO_INPUT)				/* FCH_I2C_AUDIO_SCL */
+GPIO(I2C6_SDA,			PIN(E, 3), GPIO_INPUT)				/* FCH_I2C_AUDIO_SDA */
+GPIO(I2C7_SCL,			PIN(B, 3), GPIO_INPUT)				/* FCH_I2C_HDMI_HUB_3V3_SCL */
+GPIO(I2C7_SDA,			PIN(B, 2), GPIO_INPUT)				/* FCH_I2C_HDMI_HUB_3V3_SDA */
 
-/* Board ID */
-GPIO(BOARD_VERSION1,		PIN(C, 7), GPIO_INPUT)
-GPIO(BOARD_VERSION2,		PIN(9, 3), GPIO_INPUT)
-GPIO(BOARD_VERSION3,		PIN(8, 0), GPIO_INPUT)
-GPIO(SKU_ID1,			PIN(F, 0), GPIO_INPUT)
-GPIO(SKU_ID2,			PIN(4, 1), GPIO_INPUT)
+ALTERNATE(PIN_MASK(6, BIT(4) | BIT(5)), 0, MODULE_UART, 0) /* Cr50 requires no pullups. */
 
-/* Alternate functions GPIO definitions */
-/* Cr50 requires no pull-ups on UART pins. */
-ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)					/* UART from EC to Servo */
-ALTERNATE(PIN_MASK(B, 0x30), 0, MODULE_I2C, 0)					/* I2C0 */
-ALTERNATE(PIN_MASK(9, 0x07), 0, MODULE_I2C, 0)					/* I2C1 SCL / I2C2 */
-ALTERNATE(PIN_MASK(8, 0x80), 0, MODULE_I2C, 0)					/* I2C1 SDA */
-ALTERNATE(PIN_MASK(D, 0x03), 0, MODULE_I2C, 0)					/* I2C3 */
-ALTERNATE(PIN_MASK(3, 0x48), 0, MODULE_I2C, 0)					/* I2C5 */
-ALTERNATE(PIN_MASK(B, 0x0C), 0, MODULE_I2C, 0)					/* I2C7 */
-ALTERNATE(PIN_MASK(4, 0x30), 0, MODULE_ADC, 0)					/* ADC0-1 */
-ALTERNATE(PIN_MASK(4, 0x02), 0, MODULE_ADC, 0)					/* ADC4 */
-ALTERNATE(PIN_MASK(F, 0x02), 0, MODULE_ADC, 0)					/* ADC8 */
-ALTERNATE(PIN_MASK(F, 0x01), 0, MODULE_ADC, 0)					/* ADC9 */
-ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)					/* KB Backlight */
-ALTERNATE(PIN_MASK(C, 0x18), 0, MODULE_PWM, 0) 					/* LED 1 & 2 */
+ALTERNATE(PIN_MASK(B, BIT(4) | BIT(5)), 0, MODULE_I2C, 0)			/* I2C0 */
+ALTERNATE(PIN_MASK(9, BIT(0) | BIT(1) | BIT(2)), 0, MODULE_I2C, 0)		/* I2C1 SCL / I2C2 */
+ALTERNATE(PIN_MASK(8, BIT(7)), 0, MODULE_I2C, 0)				/* I2C1 SDA */
+ALTERNATE(PIN_MASK(D, BIT(0) | BIT(1)), 0, MODULE_I2C, 0)			/* I2C3 */
+ALTERNATE(PIN_MASK(F, BIT(2) | BIT(3)), 0, MODULE_I2C, 0)			/* I2C4 */
+ALTERNATE(PIN_MASK(3, BIT(3) | BIT(6)), 0, MODULE_I2C, 0)			/* I2C5 */
+ALTERNATE(PIN_MASK(E, BIT(3) | BIT(4)), 0, MODULE_I2C, 0)			/* I2C6 */
+ALTERNATE(PIN_MASK(B, BIT(2) | BIT(3)), 0, MODULE_I2C, 0)			/* I2C7 */
 
-/* Keyboard Pins */
+ALTERNATE(PIN_MASK(4, BIT(2) | BIT(3)), 0, MODULE_ADC, 0)			/* ADC2, ADC3 Temp Sensors */
+
+ALTERNATE(PIN_MASK(C, BIT(3)), 0, MODULE_PWM, 0)				/* PWM0 LED */
+ALTERNATE(PIN_MASK(8, BIT(0)), 0, MODULE_PWM, 0)				/* PWM3 KB Backlight */
+
 ALTERNATE(PIN_MASK(3, 0x03), 0, MODULE_KEYBOARD_SCAN, GPIO_INPUT)		/* KSI_00-01 */
 ALTERNATE(PIN_MASK(2, 0xFC), 0, MODULE_KEYBOARD_SCAN, GPIO_INPUT)		/* KSI_02-07 */
 ALTERNATE(PIN_MASK(2, 0x03), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)		/* KSO_00-01 */
@@ -111,5 +97,5 @@ ALTERNATE(PIN_MASK(1, 0x7F), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)		/* KSO_03-
 ALTERNATE(PIN_MASK(0, 0xE0), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)		/* KSO_10-12 */
 
 /* Power Switch Logic (PSL) inputs */
-ALTERNATE(PIN_MASK(0, 0x03), 0, MODULE_PMU, 0)					/* GPIO00, GPIO01 */
-ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, 0)					/* GPIOD2 */
+ALTERNATE(PIN_MASK(0, BIT(0) | BIT(1) | BIT(2)), 0, MODULE_PMU, 0)		/* AC_PRESENT, POWER_BUTTON_L, EC_RST_ODL */
+ALTERNATE(PIN_MASK(D, BIT(2)), 0, MODULE_PMU, 0)				/* LID_OPEN */
