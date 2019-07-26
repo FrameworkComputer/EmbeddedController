@@ -12,7 +12,6 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "lid_switch.h"
-#include "lpc.h"
 #include "power.h"
 #include "power_button.h"
 #include "system.h"
@@ -73,6 +72,11 @@ void chipset_throttle_cpu(int throttle)
 #endif /* CONFIG_CPU_PROCHOT_ACTIVE_LOW */
 	if (chipset_in_state(CHIPSET_STATE_ON))
 		gpio_set_level(GPIO_CPU_PROCHOT, throttle);
+}
+
+/* TODO: Create the real chipset_handle_espi_reset_assert function */
+void chipset_handle_espi_reset_assert(void)
+{
 }
 
 enum power_state power_chipset_init(void)
