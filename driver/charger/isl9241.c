@@ -60,12 +60,14 @@ static const struct charger_info isl9241_charger_info = {
 
 static inline int isl9241_read(int offset, int *value)
 {
-	return i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER, offset, value);
+	return i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
+			  offset, value);
 }
 
 static inline int isl9241_write(int offset, int value)
 {
-	return i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER, offset, value);
+	return i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
+			   offset, value);
 }
 
 /* chip specific interfaces */
