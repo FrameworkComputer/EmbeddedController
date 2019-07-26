@@ -256,3 +256,17 @@ int charger_is_sourcing_otg_power(int port)
 {
 	return 0;
 }
+
+/* Called on AP S5 -> S3 transition */
+static void board_chipset_startup(void)
+{
+	gpio_set_level(GPIO_EN_USBA_5V, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S3 -> S5 transition */
+static void board_chipset_shutdown(void)
+{
+	gpio_set_level(GPIO_EN_USBA_5V, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
