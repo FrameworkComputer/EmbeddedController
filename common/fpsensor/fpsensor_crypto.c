@@ -2,6 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include <stdbool.h>
 
 #include "aes.h"
 #include "aes-gcm.h"
@@ -10,7 +11,6 @@
 #include "fpsensor_private.h"
 #include "fpsensor_state.h"
 #include "rollback.h"
-#include "sha256.h"
 
 #if !defined(CONFIG_AES) || !defined(CONFIG_AES_GCM) || \
 	!defined(CONFIG_ROLLBACK_SECRET_SIZE)
@@ -81,6 +81,62 @@ static int hkdf_expand_one_step(uint8_t *out_key, size_t out_key_size,
 	always_memset(key_buf, 0, sizeof(key_buf));
 
 	return EC_SUCCESS;
+}
+
+int hkdf_expand(uint8_t *out_key, size_t L, const uint8_t *prk,
+		size_t prk_size, const uint8_t *info, size_t info_size)
+{
+	/*
+	 * "Expand" step of HKDF.
+	 * https://tools.ietf.org/html/rfc5869#section-2.3
+	 */
+#define HASH_LEN SHA256_DIGEST_SIZE
+	uint8_t count = 1;
+	const uint8_t *T = out_key;
+	size_t T_len = 0;
+	uint8_t T_buffer[HASH_LEN];
+	/* Number of blocks. */
+	const uint32_t N = DIV_ROUND_UP(L, HASH_LEN);
+	uint8_t info_buffer[HASH_LEN + HKDF_MAX_INFO_SIZE + sizeof(count)];
+	bool arguments_valid = false;
+
+	if (out_key == NULL || L == 0)
+		CPRINTS("HKDF expand: output buffer not valid.");
+	else if (prk == NULL)
+		CPRINTS("HKDF expand: prk is NULL.");
+	else if (info == NULL && info_size > 0)
+		CPRINTS("HKDF expand: info is NULL but info size is not zero.");
+	else if (info_size > HKDF_MAX_INFO_SIZE)
+		CPRINTF("HKDF expand: info size larger than %d bytes.\n",
+			HKDF_MAX_INFO_SIZE);
+	else if (N > HKDF_SHA256_MAX_BLOCK_COUNT)
+		CPRINTS("HKDF expand: output key size too large.");
+	else
+		arguments_valid = true;
+
+	if (!arguments_valid)
+		return EC_ERROR_INVAL;
+
+	while (L > 0) {
+		const size_t block_size = L < HASH_LEN ? L : HASH_LEN;
+
+		memcpy(info_buffer, T, T_len);
+		memcpy(info_buffer + T_len, info, info_size);
+		info_buffer[T_len + info_size] = count;
+		hmac_SHA256(T_buffer, prk, prk_size, info_buffer,
+			    T_len + info_size + sizeof(count));
+		memcpy(out_key, T_buffer, block_size);
+
+		T += T_len;
+		T_len = HASH_LEN;
+		count++;
+		out_key += block_size;
+		L -= block_size;
+	}
+	always_memset(T_buffer, 0, sizeof(T_buffer));
+	always_memset(info_buffer, 0, sizeof(info_buffer));
+	return EC_SUCCESS;
+#undef HASH_LEN
 }
 
 int derive_encryption_key(uint8_t *out_key, const uint8_t *salt)

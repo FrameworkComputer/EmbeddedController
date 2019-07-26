@@ -8,6 +8,29 @@
 #ifndef __CROS_EC_FPSENSOR_CRYPTO_H
 #define __CROS_EC_FPSENSOR_CRYPTO_H
 
+#include <stddef.h>
+
+#include "sha256.h"
+
+#define HKDF_MAX_INFO_SIZE 128
+#define HKDF_SHA256_MAX_BLOCK_COUNT 255
+
+/**
+ * Expand hkdf pseudorandom key |prk| to length |out_key_size|.
+ *
+ * @param out_key the buffer to hold output key material.
+ * @param out_key_size length of output key in bytes. Must be less than
+ * or equal to HKDF_SHA256_MAX_BLOCK_COUNT * SHA256_DIGEST_SIZE bytes.
+ * @param prk pseudorandom key.
+ * @param prk_size length of |prk| in bytes.
+ * @param info optional context.
+ * @param info_size size of |info| in bytes, must be less than or equal to
+ * HKDF_MAX_INFO_SIZE bytes.
+ * @return EC_SUCCESS on success and error code otherwise.
+ */
+int hkdf_expand(uint8_t *out_key, size_t out_key_size, const uint8_t *prk,
+		size_t prk_size, const uint8_t *info, size_t info_size);
+
 /**
  * Derive hardware encryption key from rollback secret and |salt|.
  *
