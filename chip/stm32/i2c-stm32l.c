@@ -169,7 +169,7 @@ int chip_i2c_xfer(const int port,
 		  const uint8_t *out, int out_bytes,
 		  uint8_t *in, int in_bytes, int flags)
 {
-	int addr_8bit == I2C_GET_ADDR(slave_addr_flags) << 1;
+	int addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
 	int started = (flags & I2C_XFER_START) ? 0 : 1;
 	int rv = EC_SUCCESS;
 	int i;
