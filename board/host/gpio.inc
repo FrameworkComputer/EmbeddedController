@@ -14,6 +14,8 @@ GPIO_INT(AC_PRESENT,           PIN(0, 2), GPIO_INT_BOTH, extpower_interrupt)
 GPIO_INT(VOLUME_DOWN_L,        PIN(0, 3), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(VOLUME_UP_L,          PIN(0, 4), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(CHARGE_DONE,          PIN(0, 5), GPIO_INT_BOTH, inductive_charging_interrupt)
+/* Fingerprint */
+GPIO_INT(FPS_INT,              PIN(0, 14), GPIO_INT_RISING, fps_event)
 
 GPIO(EC_INT_L,             PIN(0, 6), 0)
 GPIO(WP,                   PIN(0, 7), 0)
@@ -24,3 +26,6 @@ GPIO(ENABLE_BACKLIGHT,     PIN(0, 10), 0)
 /* Inductive charging */
 GPIO(CHARGE_EN,            PIN(0, 11), 0)
 GPIO(BASE_CHG_VDD_EN,      PIN(0, 12), 0)
+
+/* Fingerprint */
+GPIO(SPI1_NSS,              PIN(0, 13), GPIO_OUT_HIGH)

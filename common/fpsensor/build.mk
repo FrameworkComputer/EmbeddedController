@@ -9,9 +9,8 @@ _fpsensor_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)fpsensor_state.o
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)fpsensor_crypto.o
-ifneq ($(CONFIG_SPI_FP_PORT),)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)fpsensor.o
-endif
+
 ifeq ($(HAS_MOCK_FP_SENSOR),)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)fpsensor_stubs.o
 endif

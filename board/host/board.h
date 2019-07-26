@@ -73,4 +73,11 @@ enum {
 #define PD_MIN_CURRENT_MA     500
 #define PD_MIN_POWER_MW       7500
 
+/* Configuration for fake Fingerprint Sensor */
+#define CONFIG_SPI_MASTER
+#define CONFIG_SPI_FP_PORT    1 /* SPI1: third master config */
+
+#define CONFIG_RNG
+void fps_event(enum gpio_signal signal);
+
 #endif /* __CROS_EC_BOARD_H */

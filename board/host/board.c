@@ -44,7 +44,11 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 test_mockable void button_interrupt(enum gpio_signal signal)
 {
-};
+}
+
+test_mockable void fps_event(enum gpio_signal signal)
+{
+}
 
 #ifdef CONFIG_I2C
 /* I2C ports */
@@ -62,6 +66,8 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 #ifdef CONFIG_SPI_MASTER
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
+	/* Fingerprint sensor (SCLK at 4Mhz) */
+	{ CONFIG_SPI_FP_PORT, 3, GPIO_SPI1_NSS },
 };
 
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
