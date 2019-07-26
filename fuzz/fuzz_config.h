@@ -97,6 +97,13 @@ enum nvmem_users {
 #else
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 #endif /* ! FUZZ_HOSTCMD_VERBOSE */
+
+/* The following are for fpsensor host commands. */
+#define CONFIG_AES
+#define CONFIG_AES_GCM
+#define CONFIG_ROLLBACK_SECRET_SIZE 32
+#define CONFIG_SHA256
+
 #endif /* TEST_HOST_COMMAND_FUZZ */
 
 #if defined(TEST_USB_PD_FUZZ)
