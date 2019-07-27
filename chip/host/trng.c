@@ -10,6 +10,10 @@
  * as possible to allow reproducing unit tests and fuzzer crashes.
  */
 
+#ifndef TEST_BUILD
+#error "This fake trng driver must not be used in non-test builds."
+#endif
+
 #include <stdint.h>
 #include <stdlib.h> /* Only valid for host */
 
