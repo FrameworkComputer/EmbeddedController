@@ -417,8 +417,6 @@ static int hc_mkbp_wake_mask(struct host_cmd_handler_args *args)
 
 		default:
 			/* Unknown mask, or mask is not in use. */
-			CPRINTF("%s: mask_type=%d is unknown or not used.\n",
-				__func__, p->mask_type);
 			return EC_RES_INVALID_PARAM;
 		}
 
@@ -449,8 +447,6 @@ static int hc_mkbp_wake_mask(struct host_cmd_handler_args *args)
 
 		default:
 			/* Unknown mask, or mask is not in use. */
-			CPRINTF("%s: mask_type=%d is unknown or not used.\n",
-				__func__, p->mask_type);
 			return EC_RES_INVALID_PARAM;
 		}
 		break;
