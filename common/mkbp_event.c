@@ -394,6 +394,8 @@ DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_GET_WAKE_MASK,
 #endif /* CONFIG_MKBP_USE_HOST_EVENT */
 #endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
 
+#if defined(CONFIG_MKBP_EVENT_WAKEUP_MASK) ||	\
+	defined(CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK)
 static int hc_mkbp_wake_mask(struct host_cmd_handler_args *args)
 {
 	struct ec_response_mkbp_event_wake_mask *r = args->response;
@@ -461,8 +463,6 @@ DECLARE_HOST_COMMAND(EC_CMD_MKBP_WAKE_MASK,
 		     hc_mkbp_wake_mask,
 		     EC_VER_MASK(0));
 
-#if defined(CONFIG_MKBP_EVENT_WAKEUP_MASK) ||	\
-	defined(CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK)
 static int command_mkbp_wake_mask(int argc, char **argv)
 {
 	if (argc == 3) {
