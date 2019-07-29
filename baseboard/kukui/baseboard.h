@@ -130,7 +130,6 @@
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM
 #define CONFIG_USB_CHARGER
-#define CONFIG_USB_MUX_VIRTUAL
 
 /* Increase tx buffer size, as we'd like to stream EC log to AP. */
 #undef CONFIG_UART_TX_BUF_SIZE

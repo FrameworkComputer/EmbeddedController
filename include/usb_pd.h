@@ -825,6 +825,7 @@ struct pd_cable {
 #define MODE_DP_PIN_D 0x08
 #define MODE_DP_PIN_E 0x10
 #define MODE_DP_PIN_F 0x20
+#define MODE_DP_PIN_ALL 0x3f
 
 #define MODE_DP_DFP_PIN_SHIFT 8
 #define MODE_DP_UFP_PIN_SHIFT 16

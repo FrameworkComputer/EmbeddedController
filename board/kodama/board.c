@@ -91,11 +91,20 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	},
 };
 
+static void board_hpd_status(int port, int hpd_lvl, int hpd_irq)
+{
+	/*
+	 * svdm_dp_attention() did most of the work, we only need to notify
+	 * host here.
+	 */
+	host_set_single_event(EC_HOST_EVENT_USB_MUX);
+}
+
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = IT5205_I2C_ADDR1_FLAGS,
 		.driver = &it5205_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
+		.hpd_update = &board_hpd_status,
 	},
 };
 

@@ -107,15 +107,11 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 
 static void board_hpd_status(int port, int hpd_lvl, int hpd_irq)
 {
-	/* Invert HPD level since GPIOs are active low. */
-	hpd_lvl = !hpd_lvl;
-
-	gpio_set_level(GPIO_USB_C0_HPD_OD, hpd_lvl);
-	if (hpd_irq) {
-		gpio_set_level(GPIO_USB_C0_HPD_OD, 1);
-		msleep(1);
-		gpio_set_level(GPIO_USB_C0_HPD_OD, hpd_lvl);
-	}
+	/*
+	 * svdm_dp_attention() did most of the work, we only need to notify
+	 * host here.
+	 */
+	host_set_single_event(EC_HOST_EVENT_USB_MUX);
 }
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
