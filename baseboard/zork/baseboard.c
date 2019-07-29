@@ -55,37 +55,106 @@ const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
 
 const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_CHARGER] = {
-		"CHARGER", NPCX_ADC_CH2, ADC_MAX_VOLT, ADC_READ_MAX+1, 0
+		.name = "CHARGER",
+		.input_ch = NPCX_ADC_CH2,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
 	},
 	[ADC_TEMP_SENSOR_SOC] = {
-		"SOC", NPCX_ADC_CH3, ADC_MAX_VOLT, ADC_READ_MAX+1, 0
+		.name = "SOC",
+		.input_ch = NPCX_ADC_CH3,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-/* Power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_PCH_SLP_S3_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
-	{GPIO_PCH_SLP_S5_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_S5_DEASSERTED"},
-	{GPIO_S0_PGOOD,		POWER_SIGNAL_ACTIVE_HIGH, "S0_PGOOD"},
-	{GPIO_S5_PGOOD,		POWER_SIGNAL_ACTIVE_HIGH, "S5_PGOOD"},
+	[X86_SLP_S3_N] = {
+		.gpio = GPIO_PCH_SLP_S3_L,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "SLP_S3_DEASSERTED",
+	},
+	[X86_SLP_S5_N] = {
+		.gpio = GPIO_PCH_SLP_S5_L,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "SLP_S5_DEASSERTED",
+	},
+	[X86_S0_PGOOD] = {
+		.gpio = GPIO_S0_PGOOD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "S0_PGOOD",
+	},
+	[X86_S5_PGOOD] = {
+		.gpio = GPIO_S5_PGOOD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "S5_PGOOD",
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
-/* I2C port map. */
 const struct i2c_port_t i2c_ports[] = {
-	{"tcpc0",    I2C_PORT_TCPC0,    400, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
-	{"tcpc1",    I2C_PORT_TCPC1,    400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"power",    I2C_PORT_BATTERY,  100, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-	{"mux",      I2C_PORT_MUX,      400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
-	{"thermal",  I2C_PORT_THERMAL,  400, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
-	{"sensor",   I2C_PORT_SENSOR,   400, GPIO_I2C5_SCL, GPIO_I2C5_SDA},
-	{"ap_audio", I2C_PORT_AP_AUDIO, 400, GPIO_I2C6_SCL, GPIO_I2C6_SDA},
-	{"ap_hdmi",  I2C_PORT_AP_HDMI,  400, GPIO_I2C7_SCL, GPIO_I2C7_SDA},
+	{
+		.name = "tcpc0",
+		.port = I2C_PORT_TCPC0,
+		.kbps = 400,
+		.scl = GPIO_I2C0_SCL,
+		.sda = GPIO_I2C0_SDA,
+	},
+	{
+		.name = "tcpc1",
+		.port = I2C_PORT_TCPC1,
+		.kbps = 400,
+		.scl = GPIO_I2C1_SCL,
+		.sda = GPIO_I2C1_SDA,
+	},
+	{
+		.name = "power",
+		.port = I2C_PORT_BATTERY,
+		.kbps = 100,
+		.scl = GPIO_I2C2_SCL,
+		.sda = GPIO_I2C2_SDA,
+	},
+	{
+		.name = "mux",
+		.port = I2C_PORT_MUX,
+		.kbps = 400,
+		.scl = GPIO_I2C3_SCL,
+		.sda = GPIO_I2C3_SDA,
+	},
+	{
+		.name = "thermal",
+		.port = I2C_PORT_THERMAL,
+		.kbps = 400,
+		.scl = GPIO_I2C4_SCL,
+		.sda = GPIO_I2C4_SDA,
+	},
+	{
+		.name = "sensor",
+		.port = I2C_PORT_SENSOR,
+		.kbps = 400,
+		.scl = GPIO_I2C5_SCL,
+		.sda = GPIO_I2C5_SDA,
+	},
+	{
+		.name = "ap_audio",
+		.port = I2C_PORT_AP_AUDIO,
+		.kbps = 400,
+		.scl = GPIO_I2C6_SCL,
+		.sda = GPIO_I2C6_SDA,
+	},
+	{
+		.name = "ap_hdmi",
+		.port = I2C_PORT_AP_HDMI,
+		.kbps = 400,
+		.scl = GPIO_I2C7_SCL,
+		.sda = GPIO_I2C7_SDA,
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
@@ -106,7 +175,6 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		},
 		.drv = &ps8xxx_tcpm_drv,
-		.flags = TCPC_FLAGS_RESET_ACTIVE_HIGH,
 	},
 	[USB_PD_PORT_TCPC_1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -126,7 +194,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_TCPC_1] = {
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-	}
+	},
 };
 
 static void baseboard_chipset_suspend(void)
@@ -217,9 +285,27 @@ static int board_get_temp(int idx, int *temp_k)
 }
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 0, 1},
-	{"SOC", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 1, 5},
-	{"CPU", TEMP_SENSOR_TYPE_CPU, sb_tsi_get_val, 0, 4},
+	[TEMP_SENSOR_CHARGER] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = 0,
+		.action_delay_sec = 1,
+	},
+	[TEMP_SENSOR_SOC] = {
+		.name = "SOC",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = 1,
+		.action_delay_sec = 5,
+	},
+	[TEMP_SENSOR_CPU] = {
+		.name = "CPU",
+		.type = TEMP_SENSOR_TYPE_CPU,
+		.read = sb_tsi_get_val,
+		.idx = 0,
+		.action_delay_sec = 4,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
