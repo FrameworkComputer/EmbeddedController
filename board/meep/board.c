@@ -303,3 +303,23 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	/* Note that the level is inverted because the pin is active low. */
 	gpio_set_level(GPIO_USB_C_OC, !is_overcurrented);
 }
+
+uint32_t board_override_feature_flags0(uint32_t flags0)
+{
+	/*
+	 * We always compile in backlight support for Meep/Dorp, but only some
+	 * SKUs come with the hardware. Therefore, check if the current
+	 * device is one of them and return the default value - with backlight
+	 * here.
+	 */
+	if (sku_id == 34 || sku_id == 36)
+		return flags0;
+
+	/* Report that there is no keyboard backlight */
+	return (flags0 &= ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
+}
+
+uint32_t board_override_feature_flags1(uint32_t flags1)
+{
+	return flags1;
+}
