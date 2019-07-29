@@ -32,7 +32,7 @@ void exit_trng(void);
  * Not supported on all platforms.
  **/
 #ifndef HIDE_EC_STDLIB
-__stdlib_compat uint32_t rand(void);
+uint32_t rand(void);
 #endif
 
 /**

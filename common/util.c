@@ -5,10 +5,11 @@
 
 /* Utility functions for Chrome EC */
 
+#include "common.h"
 #include "console.h"
 #include "util.h"
 
-size_t strlen(const char *s)
+__stdlib_compat size_t strlen(const char *s)
 {
 	int len = 0;
 
@@ -19,7 +20,7 @@ size_t strlen(const char *s)
 }
 
 
-size_t strnlen(const char *s, size_t maxlen)
+__stdlib_compat size_t strnlen(const char *s, size_t maxlen)
 {
 	size_t len = 0;
 
@@ -31,40 +32,40 @@ size_t strnlen(const char *s, size_t maxlen)
 }
 
 
-int isspace(int c)
+__stdlib_compat int isspace(int c)
 {
 	return c == ' ' || c == '\t' || c == '\r' || c == '\n';
 }
 
 
-int isdigit(int c)
+__stdlib_compat int isdigit(int c)
 {
 	return c >= '0' && c <= '9';
 }
 
 
-int isalpha(int c)
+__stdlib_compat int isalpha(int c)
 {
 	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 }
 
-int isupper(int c)
+__stdlib_compat int isupper(int c)
 {
 	return c >= 'A' && c <= 'Z';
 }
 
-int isprint(int c)
+__stdlib_compat int isprint(int c)
 {
 	return c >= ' ' && c <= '~';
 }
 
-int tolower(int c)
+__stdlib_compat int tolower(int c)
 {
 	return c >= 'A' && c <= 'Z' ? c + 'a' - 'A' : c;
 }
 
 
-int strcasecmp(const char *s1, const char *s2)
+__stdlib_compat int strcasecmp(const char *s1, const char *s2)
 {
 	int diff;
 
@@ -77,7 +78,7 @@ int strcasecmp(const char *s1, const char *s2)
 }
 
 
-int strncasecmp(const char *s1, const char *s2, size_t size)
+__stdlib_compat int strncasecmp(const char *s1, const char *s2, size_t size)
 {
 	int diff;
 
@@ -93,7 +94,7 @@ int strncasecmp(const char *s1, const char *s2, size_t size)
 }
 
 
-int atoi(const char *nptr)
+__stdlib_compat int atoi(const char *nptr)
 {
 	int result = 0;
 	int neg = 0;
@@ -129,7 +130,7 @@ static int find_base(int base, int *c, const char **nptr) {
 
 
 /* Like strtol(), but for integers */
-int strtoi(const char *nptr, char **endptr, int base)
+__stdlib_compat int strtoi(const char *nptr, char **endptr, int base)
 {
 	int result = 0;
 	int neg = 0;
@@ -165,7 +166,7 @@ int strtoi(const char *nptr, char **endptr, int base)
 	return neg ? -result : result;
 }
 
-uint64_t strtoul(const char *nptr, char **endptr, int base)
+__stdlib_compat uint64_t strtoul(const char *nptr, char **endptr, int base)
 {
 	uint64_t result = 0;
 	int c = '\0';
@@ -201,7 +202,7 @@ uint64_t strtoul(const char *nptr, char **endptr, int base)
 	return result;
 }
 
-int parse_bool(const char *s, int *dest)
+__stdlib_compat int parse_bool(const char *s, int *dest)
 {
 	/* off, disable, false, no */
 	if (!strcasecmp(s, "off") || !strncasecmp(s, "dis", 3) ||
@@ -221,7 +222,7 @@ int parse_bool(const char *s, int *dest)
 	return 0;
 }
 
-int memcmp(const void *s1, const void *s2, size_t len)
+__stdlib_compat int memcmp(const void *s1, const void *s2, size_t len)
 {
 	const char *sa = s1;
 	const char *sb = s2;
@@ -256,7 +257,7 @@ int safe_memcmp(const void *s1, const void *s2, size_t size)
 	return result != 0;
 }
 
-void *memcpy(void *dest, const void *src, size_t len)
+__stdlib_compat void *memcpy(void *dest, const void *src, size_t len)
 {
 	char *d = (char *)dest;
 	const char *s = (const char *)src;
@@ -300,7 +301,7 @@ void *memcpy(void *dest, const void *src, size_t len)
 }
 
 
-void *memset(void *dest, int c, size_t len)
+__stdlib_compat __visible void *memset(void *dest, int c, size_t len)
 {
 	char *d = (char *)dest;
 	uint32_t cccc;
@@ -338,7 +339,7 @@ void *memset(void *dest, int c, size_t len)
 }
 
 
-void *memmove(void *dest, const void *src, size_t len)
+__stdlib_compat void *memmove(void *dest, const void *src, size_t len)
 {
 	if ((uintptr_t)dest <= (uintptr_t)src ||
 	    (uintptr_t)dest >= (uintptr_t)src + len) {
@@ -390,7 +391,7 @@ void *memmove(void *dest, const void *src, size_t len)
 }
 
 
-void *memchr(const void *buffer, int c, size_t n)
+__stdlib_compat void *memchr(const void *buffer, int c, size_t n)
 {
 	char *current = (char *)buffer;
 	char *end = current + n;
@@ -419,7 +420,7 @@ void reverse(void *dest, size_t len)
 }
 
 
-char *strzcpy(char *dest, const char *src, int len)
+__stdlib_compat char *strzcpy(char *dest, const char *src, int len)
 {
 	char *d = dest;
 	if (len <= 0)
@@ -433,7 +434,7 @@ char *strzcpy(char *dest, const char *src, int len)
 }
 
 
-char *strncpy(char *dest, const char *src, size_t n)
+__stdlib_compat char *strncpy(char *dest, const char *src, size_t n)
 {
 	char *d = dest;
 
@@ -447,7 +448,7 @@ char *strncpy(char *dest, const char *src, size_t n)
 }
 
 
-int strncmp(const char *s1, const char *s2, size_t n)
+__stdlib_compat int strncmp(const char *s1, const char *s2, size_t n)
 {
 	while (n--) {
 		if (*s1 != *s2)
