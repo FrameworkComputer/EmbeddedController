@@ -36,7 +36,7 @@
 #define CONFIG_SET_CLEAR(c, set, clear) ((c | (set)) & ~(clear))
 #define CONFIG_SRC(c) CONFIG_SET_CLEAR(c, \
 				CC_DISABLE_DTS | CC_ALLOW_SRC, \
-				CC_ENABLE_DRP)
+				CC_ENABLE_DRP | CC_SNK_WITH_PD)
 #define CONFIG_SNK(c) CONFIG_SET_CLEAR(c, \
 				CC_DISABLE_DTS, \
 				CC_ALLOW_SRC | CC_ENABLE_DRP | CC_SNK_WITH_PD)
@@ -45,10 +45,10 @@
 				CC_ALLOW_SRC | CC_ENABLE_DRP)
 #define CONFIG_DRP(c) CONFIG_SET_CLEAR(c, \
 				CC_DISABLE_DTS | CC_ALLOW_SRC | CC_ENABLE_DRP, \
-				0)
+				CC_SNK_WITH_PD)
 #define CONFIG_SRCDTS(c) CONFIG_SET_CLEAR(c, \
 				CC_ALLOW_SRC, \
-				CC_ENABLE_DRP | CC_DISABLE_DTS)
+				CC_ENABLE_DRP | CC_DISABLE_DTS | CC_SNK_WITH_PD)
 #define CONFIG_SNKDTS(c) CONFIG_SET_CLEAR(c, \
 				0, \
 				CC_ALLOW_SRC | CC_ENABLE_DRP | \
@@ -58,7 +58,7 @@
 				CC_ALLOW_SRC | CC_ENABLE_DRP | CC_DISABLE_DTS)
 #define CONFIG_DRPDTS(c) CONFIG_SET_CLEAR(c, \
 				CC_ALLOW_SRC | CC_ENABLE_DRP, \
-				CC_DISABLE_DTS)
+				CC_DISABLE_DTS | CC_SNK_WITH_PD)
 
 /* Macros to apply Rd/Rp to CC lines */
 #define DUT_ACTIVE_CC_SET(r, flags) \
@@ -198,6 +198,13 @@ static void dut_allow_charge(void)
 		 */
 		if (!(cc_config & CC_ENABLE_DRP))
 			pd_set_host_mode(DUT, 1);
+
+		/*
+		 * Enable PD comm. The PD comm may be disabled during
+		 * the power charge-through was detached.
+		 */
+		pd_comm_enable(DUT, 1);
+
 		pd_update_contract(DUT);
 	}
 }
@@ -232,6 +239,16 @@ static void board_manage_dut_port(void)
 			/* Mark as SNK only. */
 			pd_set_dual_role(DUT, PD_DRP_FORCE_SINK);
 			pd_set_host_mode(DUT, 0);
+
+			/*
+			 * Disable PD comm. It matches the user expectation that
+			 * unplugging the power charge-through makes servo v4 as
+			 * a passive hub, without any PD support.
+			 *
+			 * There is an exception that servo v4 is explicitly set
+			 * to have PD, like the "pnsnk" mode.
+			 */
+			pd_comm_enable(DUT, cc_config & CC_SNK_WITH_PD ? 1 : 0);
 		} else {
 			/* Allow charge through after PD negotiate. */
 			hook_call_deferred(&dut_allow_charge_data, 2000 * MSEC);
