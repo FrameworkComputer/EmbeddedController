@@ -50,9 +50,14 @@ GPIO(USB_C1_TCPC_RST_L,		PIN(F, 0), GPIO_OUT_HIGH)			/* C1 TCPC Reset */
 GPIO(LED_FULL_L,		PIN(6, 0), GPIO_OUT_HIGH)
 GPIO(LED_CHRG_L,		PIN(C, 0), GPIO_OUT_HIGH)
 
-/* IOEX(EN_USB_A0_5V,		EXPIN(0, 1, 5), GPIO_OUT_LOW) */		/* Enable A0 5V Charging */
-/* IOEX(EN_USB_A1_5V,		EXPIN(1, 1, 6), GPIO_OUT_LOW) */		/* Enable A1 5V Charging */
-/* IOEX(KB_BL_EN,		EXPIN(0, 1, 3), GPIO_OUT_LOW) */		/* Enable KB Backlight */
+IOEX(USB_C0_FAULT_ODL,		EXPIN(USBC_PORT_C0, 1, 1), GPIO_ODR_HIGH)	/* C0 Fault to SOC */
+IOEX(USB_C1_FAULT_ODL,		EXPIN(USBC_PORT_C0, 1, 2), GPIO_ODR_HIGH)	/* C1 Fault to SOC */
+IOEX(KB_BL_EN,			EXPIN(USBC_PORT_C0, 1, 3), GPIO_OUT_LOW)	/* KB Backlight Enable */
+IOEX(EN_USB_A0_5V,		EXPIN(USBC_PORT_C0, 1, 5), GPIO_OUT_LOW)	/* A0 5V Source Enable */
+IOEX(USB_A0_CHARGE_EN_L,	EXPIN(USBC_PORT_C0, 1, 6), GPIO_OUT_HIGH)	/* A0 5V High Current Enable */
+
+IOEX(EN_USB_A1_5V,		EXPIN(USBC_PORT_C1, 1, 6), GPIO_OUT_LOW)	/* A1 5V Source Enable */
+IOEX(USB_A1_CHARGE_EN_L,	EXPIN(USBC_PORT_C1, 1, 7), GPIO_OUT_HIGH)	/* A1 5V High Current Enable */
 
 /*
  * The NPCX LPC driver configures and controls SCI, so PCH_SCI_ODL [PIN(7, 6)]
