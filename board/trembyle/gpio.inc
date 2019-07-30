@@ -24,6 +24,10 @@ GPIO_INT(VOLUME_DOWN_L,		PIN(A, 6), GPIO_INT_BOTH,			button_interrupt)
 GPIO_INT(VOLUME_UP_L,		PIN(9, 5), GPIO_INT_BOTH,			button_interrupt)
 GPIO_INT(6AXIS_INT_L,		PIN(A, 0), GPIO_INT_FALLING,			bmi160_interrupt)
 
+/* USB-C interrupts */
+GPIO_INT(USB_C0_BC12_INT_ODL,	PIN(9, 3), GPIO_INT_FALLING,			bc12_interrupt)
+GPIO_INT(USB_C1_BC12_INT_ODL, 	PIN(A, 4), GPIO_INT_FALLING,			bc12_interrupt)
+
 /* GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an interrupt handler. */
 GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
 

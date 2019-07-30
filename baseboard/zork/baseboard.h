@@ -66,6 +66,8 @@
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_SMART
 
+#define CONFIG_BC12_DETECT_PI3USB9201
+
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_V2
 #define CONFIG_CHARGE_MANAGER
@@ -232,6 +234,7 @@ void board_reset_pd_mcu(void);
 
 /* Common definition for the USB PD interrupt handlers. */
 void tcpc_alert_event(enum gpio_signal signal);
+void bc12_interrupt(enum gpio_signal signal);
 
 int board_is_convertible(void);
 void board_update_sensor_config_from_sku(void);

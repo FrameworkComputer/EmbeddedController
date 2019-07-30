@@ -45,29 +45,7 @@ uint32_t system_get_sku_id(void)
 	return 0;
 }
 
-void usb_charger_set_switches(int port, enum usb_switch setting)
-{
-	/* TODO */
-}
-
 uint16_t tcpc_get_alert_status(void)
-{
-	/* TODO */
-	return 0;
-}
-
-void usb_charger_task(void *u)
-{
-	/* TODO */
-}
-
-int usb_charger_ramp_allowed(int supplier)
-{
-	/* TODO */
-	return 0;
-}
-
-int usb_charger_ramp_max(int supplier, int sup_curr)
 {
 	/* TODO */
 	return 0;

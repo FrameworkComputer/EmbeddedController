@@ -18,6 +18,7 @@
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
+#include "driver/bc12/pi3usb9201.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "ec_commands.h"
@@ -185,6 +186,34 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.drv = &ps8xxx_tcpm_drv,
 	},
 };
+
+const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
+	[USB_PD_PORT_TCPC_0] = {
+		.i2c_port = I2C_PORT_TCPC0,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+
+	[USB_PD_PORT_TCPC_1] = {
+		.i2c_port = I2C_PORT_TCPC1,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+};
+
+void bc12_interrupt(enum gpio_signal signal)
+{
+	switch (signal) {
+	case GPIO_USB_C0_BC12_INT_ODL:
+		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
+		break;
+
+	case GPIO_USB_C1_BC12_INT_ODL:
+		task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
+		break;
+
+	default:
+		break;
+	}
+}
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
