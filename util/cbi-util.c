@@ -348,11 +348,11 @@ static int cmd_create(int argc, char **argv)
 
 	/* Output image */
 	rv = write_file(filename, cbi, size);
+	free(cbi);
 	if (rv) {
 		fprintf(stderr, "Unable to write CBI image to %s\n", filename);
 		return rv;
 	}
-	free(cbi);
 
 	fprintf(stderr, "CBI image is created successfully\n");
 
@@ -447,11 +447,13 @@ static int cmd_show(int argc, char **argv)
 
 	if (memcmp(h->magic, cbi_magic, sizeof(cbi_magic))) {
 		fprintf(stderr, "Invalid Magic\n");
+		free(buf);
 		return -1;
 	}
 
 	if (cbi_crc8(h) != h->crc) {
 		fprintf(stderr, "Invalid CRC\n");
+		free(buf);
 		return -1;
 	}
 
