@@ -329,8 +329,8 @@ bool cmd_disp_write(uint8_t *resp_buf, uint32_t resp_size, uint32_t resp_num,
 {
 	if (resp_buf[0] == (uint8_t)(UFPP_WRITE_CMD)) {
 		display_color_msg(SUCCESS,
-			"\rTransmitted packet of size %lu bytes, packet "
-			"[%lu]out of [%lu]",
+			"\rTransmitted packet of size %u bytes, packet "
+			"[%u]out of [%u]",
 			resp_size, resp_num, total_size);
 		return true;
 	}
@@ -356,13 +356,13 @@ bool cmd_disp_read(uint8_t *resp_buf, uint32_t resp_size, uint32_t resp_num,
 {
 	if (resp_buf[0] == (uint8_t)(UFPP_READ_CMD)) {
 		display_color_msg(SUCCESS,
-			"\rReceived packet of size %lu bytes, packet [%lu] out "
-			"of [%lu]",
+			"\rReceived packet of size %u bytes, packet [%u] out "
+			"of [%u]",
 			resp_size, resp_num, total_size);
 		return true;
 	}
 
-	display_color_msg(FAIL, "\nRead packet [%lu] Failed\n", resp_num);
+	display_color_msg(FAIL, "\nRead packet [%u] Failed\n", resp_num);
 	return false;
 }
 
@@ -412,10 +412,10 @@ void cmd_disp_flash_erase_dev(uint8_t *resp_buf, uint32_t dev_num)
 {
 	if (resp_buf[0] == (uint8_t)(UFPP_WRITE_CMD)) {
 		display_color_msg(SUCCESS,
-			"Flash Erase of device [%lu] Passed\n", dev_num);
+			"Flash Erase of device [%u] Passed\n", dev_num);
 	} else {
 		display_color_msg(
-			FAIL, "Flash Erase of device [%lu] Failed\n", dev_num);
+			FAIL, "Flash Erase of device [%u] Failed\n", dev_num);
 	}
 }
 
