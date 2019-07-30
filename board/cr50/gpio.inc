@@ -44,6 +44,35 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
+/*
+ * A manually maintained tally of all GPIO ports configured in this file.
+ *
+ * GPIO0.0   int_ap_l
+ * GPIO0.1   ec_flash_select
+ * GPIO0.2   ap_flash_select
+ * GPIO0.4   sys_rst_l_out
+ * GPIO0.5   ccd_mode_l
+ * GPIO0.6   batt_pres_l
+ * GPIO0.7   spi_mosi
+ * GPIO0.8   spi_clk
+ * GPIO0.9   spi_cs_l
+ * GPIO0.10  diob4
+ * GPIO0.11  en_pp3300_ina
+ * GPIO0.12  i2c_scl_ina
+ * GPIO0.13  i2c_sda_ina
+ * GPIO0.14  i2cs_sda poll
+ * GPIO0.15  ec_tx_cr50_rx_out
+ * GPIO1.0   tpm_rst_l
+ * GPIO1.1   detect_ap_uart
+ * GPIO1.2   detect_ec_uart
+ * GPIO1.3   detect_servo
+ * GPIO1.4   detect_tpm_rst_asserted
+ * GPIO1.11  ec_tx_cr50_rx_in
+ * GPIO1.12  strap_a0
+ * GPIO1.13  strap_a1
+ * GPIO1.14  strap_b0
+ * GPIO1.15  strap_b1
+ */
 /*****************************************************************************/
 /* INTERRUPT GPIOs - interrupts processed in chip/g/gpio.c */
 /*
