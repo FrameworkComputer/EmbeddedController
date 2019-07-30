@@ -396,7 +396,7 @@ static void fixup_symbols(struct safe_lightbar_program *prog)
 				}
 			}
 			if (j >= EC_LB_PROG_LEN)
-				Error("Can't find label %s from line %d\n", j);
+				Error("Can't find label %s\n", reloc_label[i]);
 		}
 	}
 }
