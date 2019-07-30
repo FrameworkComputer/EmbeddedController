@@ -544,7 +544,7 @@ static uint32_t param_get_str_size(char *string)
 	/* Verify string is non-NULL */
 	if ((string == NULL) || (strlen(string) == 0)) {
 		display_color_msg(FAIL,
-			"ERROR: Zero length input string provided\n", string);
+			"ERROR: Zero length input string provided\n");
 		return 0;
 	}
 
