@@ -87,6 +87,10 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 		if (c == '%' || c == '\0') {
 			if (addchar(context, '%'))
 				return EC_ERROR_OVERFLOW;
+
+			if (c == '\0')
+				break;
+
 			continue;
 		}
 
