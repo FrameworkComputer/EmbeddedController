@@ -517,6 +517,7 @@ static int gen_vif(const char *name, const char *board,
 			pwr = write_pdo_to_buf(&buf, src_pdo[i], SRC, i+1);
 			if (pwr < 0) {
 				fprintf(stderr, "ERROR: Out of memory.\n");
+				fclose(vif);
 				return 1;
 			}
 
@@ -547,6 +548,7 @@ static int gen_vif(const char *name, const char *board,
 
 			if (pwr < 0) {
 				fprintf(stderr, "ERROR: Out of memory.\n");
+				fclose(vif);
 				return 1;
 			}
 
