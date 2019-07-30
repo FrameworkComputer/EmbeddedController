@@ -153,6 +153,13 @@ int ec_flash_write(const uint8_t *buf, int offset, int size)
 	if (write_size < 0)
 		return write_size;
 
+	/*
+	 * shouldn't ever happen, but report an error rather than a division
+	 * by zero in the next statement.
+	 */
+	if (write_size == 0)
+		return -1;
+
 	step = (pdata_max_size / write_size) * write_size;
 
 	if (!step) {
