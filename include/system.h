@@ -552,7 +552,6 @@ void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds);
  */
 void system_reset_rtc_alarm(void);
 
-#ifdef CONFIG_EXTERNAL_STORAGE
 /**
  * Return address of little FW to prepare for sysjump
  *
@@ -581,16 +580,12 @@ void system_set_image_copy(enum system_image_copy_t copy);
  */
 enum system_image_copy_t system_get_shrspi_image_copy(void);
 
-#endif
-
-#ifdef CONFIG_FW_RESET_VECTOR
 /**
  * Determine reset vector will be jumped to the assigned address.
  *
  * @return The address of the reset vector for RO/RW firmware image jump.
  */
 uintptr_t system_get_fw_reset_vector(uintptr_t base);
-#endif
 
 /**
  * Check if the EC is warm booting.

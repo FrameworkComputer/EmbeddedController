@@ -80,10 +80,10 @@ SECTIONS
     } > SHARED_LIB
 #endif
     .text : {
-#if defined(SECTION_IS_RO) && defined(CONFIG_RO_HEAD_ROOM)
+#ifdef SECTION_IS_RO
 	. = . +  CONFIG_RO_HEAD_ROOM;
 #endif
-#if defined(SECTION_IS_RW) && defined(CONFIG_RW_HEAD_ROOM)
+#ifdef SECTION_IS_RW
 	. = . +  CONFIG_RW_HEAD_ROOM;
 #endif
         *(.text.vecttable)

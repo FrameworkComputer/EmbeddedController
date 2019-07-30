@@ -598,30 +598,27 @@ test_mockable int system_run_image_copy(enum system_image_copy_t copy)
 	if (base == 0xffffffff)
 		return EC_ERROR_INVAL;
 
-#ifdef CONFIG_EXTERNAL_STORAGE
-	/* Jump to loader */
-	init_addr = system_get_lfw_address();
-	system_set_image_copy(copy);
-#else
-#ifdef CONFIG_FW_RESET_VECTOR
-	/* Get reset vector */
-	init_addr = system_get_fw_reset_vector(base);
-#else
-#if defined(CONFIG_RO_HEAD_ROOM)
-	/* Skip any head room in the RO image */
-	if (copy == SYSTEM_IMAGE_RO)
-		/* Don't change base, though! */
-		init_addr = *(uintptr_t *)(base + CONFIG_RO_HEAD_ROOM + 4);
-	else
-#endif
-	init_addr = *(uintptr_t *)(base + 4);
-#endif
-#ifndef EMU_BUILD
-	/* Make sure the reset vector is inside the destination image */
-	if (init_addr < base || init_addr >= base + get_size(copy))
-		return EC_ERROR_UNKNOWN;
-#endif
-#endif
+	if (IS_ENABLED(CONFIG_EXTERNAL_STORAGE)) {
+		/* Jump to loader */
+		init_addr = system_get_lfw_address();
+		system_set_image_copy(copy);
+	} else if (IS_ENABLED(CONFIG_FW_RESET_VECTOR)) {
+		/* Get reset vector */
+		init_addr = system_get_fw_reset_vector(base);
+	} else {
+		uintptr_t init = base + 4;
+
+		/* Skip any head room in the RO image */
+		if (copy == SYSTEM_IMAGE_RO)
+			init += CONFIG_RO_HEAD_ROOM;
+
+		init_addr = *(uintptr_t *)(init);
+
+		/* Make sure the reset vector is inside the destination image */
+		if (!IS_ENABLED(EMU_BUILD) &&
+		    (init_addr < base || init_addr >= base + get_size(copy)))
+			return EC_ERROR_UNKNOWN;
+	}
 
 	CPRINTS("Jumping to image %s", system_image_copy_t_to_string(copy));
 
