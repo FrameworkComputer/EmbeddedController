@@ -273,6 +273,18 @@ enum ec_error_list {
 #define __fls(n) (31 - __builtin_clz(n))
 
 /*
+ * Attribute for generating an error if a function is used.
+ *
+ * Clang does not have a function attribute to do this. Rely on linker
+ * errors. :(
+ */
+#ifdef __clang__
+#define __error(msg)
+#else
+#define __error(msg) __attribute__((error(msg)))
+#endif
+
+/*
  * Getting something that works in C and CPP for an arg that may or may
  * not be defined is tricky.  Here, if we have "#define CONFIG_FOO"
  * we match on the placeholder define, insert the "_, 1," for arg1 and generate
@@ -291,16 +303,16 @@ enum ec_error_list {
 #define __ARG_PLACEHOLDER_ _, 1,
 #define _config_enabled(cfg, value) \
 	__config_enabled(__ARG_PLACEHOLDER_##value, cfg, value)
-#define __config_enabled(arg1_or_junk, cfg, value) ___config_enabled( \
-	arg1_or_junk _,\
-	({ \
-		int __undefined = __builtin_strcmp(cfg, #value) == 0; \
-		extern int IS_ENABLED_BAD_ARGS(void) __attribute__(( \
-			error(cfg " must be <blank>, or not defined.")));\
-		if (!__undefined) \
-			IS_ENABLED_BAD_ARGS(); \
-		0; \
-	}))
+#define __config_enabled(arg1_or_junk, cfg, value)			      \
+	___config_enabled(						      \
+		arg1_or_junk _, ({					      \
+			int __undefined = __builtin_strcmp(cfg, #value) == 0; \
+			extern int IS_ENABLED_BAD_ARGS(void) __error(	      \
+				cfg " must be <blank>, or not defined.");     \
+			if (!__undefined)				      \
+				IS_ENABLED_BAD_ARGS();			      \
+			0;						      \
+		}))
 #define ___config_enabled(__ignored, val, ...) val
 
 /**
