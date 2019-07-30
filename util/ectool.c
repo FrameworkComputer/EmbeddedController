@@ -4897,8 +4897,12 @@ static int cmd_motionsense(int argc, char **argv)
 						 MOTIONSENSE_SENSOR_FLAG_FLUSH ?
 						 " - Flush" : ""));
 				} else {
-					printf("Sensor %d: %d\t%d\t%d\n",
+					printf("Sensor %d: %d\t%d\t%d "
+					       "(as uint16: %u\t%u\t%u)\n",
 						vector->sensor_num,
+						vector->data[0],
+						vector->data[1],
+						vector->data[2],
 						vector->data[0],
 						vector->data[1],
 						vector->data[2]);
