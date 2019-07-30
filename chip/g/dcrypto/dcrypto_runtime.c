@@ -2,10 +2,11 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include "internal.h"
 
-#include "task.h"
+#include "flash_log.h"
+#include "internal.h"
 #include "registers.h"
+#include "task.h"
 
 #define DMEM_NUM_WORDS 1024
 #define IMEM_NUM_WORDS 1024
@@ -95,6 +96,7 @@ void dcrypto_unlock(void)
 uint32_t dcrypto_call(uint32_t adr)
 {
 	uint32_t event;
+	uint32_t state = 0;
 
 	do {
 		/* Reset all the status bits. */
@@ -114,13 +116,19 @@ uint32_t dcrypto_call(uint32_t adr)
 		 * all other bits are indicative of error.
 		 * Except for MOD_OPERAND_OUT_OF_RANGE, which is noise.
 		 */
-		if ((GREG32(CRYPTO, INT_STATE) &
-			~(GC_CRYPTO_INT_STATE_MOD_OPERAND_OUT_OF_RANGE_MASK |
-			  GC_CRYPTO_INT_STATE_HOST_CMD_RECV_MASK)) == 0)
+		state = GREG32(CRYPTO, INT_STATE);
+		if ((state &
+		     ~(GC_CRYPTO_INT_STATE_MOD_OPERAND_OUT_OF_RANGE_MASK |
+		       GC_CRYPTO_INT_STATE_HOST_CMD_RECV_MASK)) == 0)
 			return 0;
 		/* fall through */
 	default:
 		dcrypto_reset_and_wipe();
+#ifdef CONFIG_FLASH_LOG
+		/* State value of zero indicates event timeout. */
+		flash_log_add_event(FE_LOG_DCRYPTO_FAILURE,
+				    sizeof(state), &state);
+#endif
 		return 1;
 	}
 }

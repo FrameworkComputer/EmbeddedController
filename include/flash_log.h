@@ -20,6 +20,7 @@ enum flash_event_type {
 	FE_LOG_NVMEM = 5,     /* NVMEM failure, variable structure. */
 	FE_LOG_TPM_WIPE_ERROR = 6,     /* Failed to wipe the TPM */
 	FE_LOG_TRNG_STALL = 7,     /* Stall while retrieving a random number. */
+	FE_LOG_DCRYPTO_FAILURE = 8, /* Dcrypto had to be reset. */
 
 	/*
 	 * Fixed padding value makes it easier to parse log space
