@@ -506,10 +506,6 @@ const char *system_image_copy_t_to_string(enum system_image_copy_t copy)
 static void jump_to_image(uintptr_t init_addr)
 {
 	void (*resetvec)(void);
-#ifdef CONFIG_REPLACE_LOADER_WITH_BSS_SLOW
-	uint8_t *buf;
-	int rv;
-#endif /* defined(CONFIG_REPLACE_LOADER_WITH_BSS_SLOW) */
 
 	/*
 	 * Jumping to any image asserts the signal to the Silego chip that that
@@ -547,32 +543,6 @@ static void jump_to_image(uintptr_t init_addr)
 
 	/* Call other hooks; these may add tags */
 	hook_notify(HOOK_SYSJUMP);
-
-#ifdef CONFIG_REPLACE_LOADER_WITH_BSS_SLOW
-	/*
-	 * We've used the region in which the loader resided as data space for
-	 * the .bss.slow section.  Therefore, we need to reload the loader from
-	 * the external storage back into program memory so that we can load a
-	 * different image.
-	 */
-	buf = (uint8_t *)(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_LOADER_MEM_OFF);
-	rv = flash_read((CONFIG_EC_PROTECTED_STORAGE_OFF +
-			 CONFIG_LOADER_STORAGE_OFF),
-			CONFIG_LOADER_SIZE, buf);
-	/*
-	 * If there's a problem with the flash_read, we might randomly crash in
-	 * the loader.  There's nothing we can really do at this point.  On
-	 * reset, we'll just load the loader from external flash again and boot
-	 * from RO.  Log a message to indicate what happened though.
-	 */
-	if (rv) {
-		CPRINTS("ldr fail!");
-		cflush();
-	}
-
-	/* Now that the lfw is loaded again, get the reset vector. */
-	init_addr = system_get_lfw_address();
-#endif /* defined(CONFIG_REPLACE_LOADER_WITH_BSS_SLOW) */
 
 	/* Disable interrupts before jump */
 	interrupt_disable();
@@ -629,10 +599,8 @@ test_mockable int system_run_image_copy(enum system_image_copy_t copy)
 		return EC_ERROR_INVAL;
 
 #ifdef CONFIG_EXTERNAL_STORAGE
-#ifndef CONFIG_REPLACE_LOADER_WITH_BSS_SLOW
 	/* Jump to loader */
 	init_addr = system_get_lfw_address();
-#endif /* !defined(CONFIG_REPLACE_LOADER_WITH_BSS_SLOW) */
 	system_set_image_copy(copy);
 #else
 #ifdef CONFIG_FW_RESET_VECTOR

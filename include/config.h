@@ -1772,12 +1772,6 @@
 #undef CONFIG_FW_PSTATE_SIZE
 
 /*
- * Reuse the space that was occupied in RAM by the little firmware (LFW) loader
- * with the section ".bss.slow" instead.
- */
-#undef CONFIG_REPLACE_LOADER_WITH_BSS_SLOW
-
-/*
  * Read-only / read-write image configuration.
  * Images may reside on storage (ex. external or internal SPI) at a different
  * offset than when copied to program memory. Hence, two sets of offsets,

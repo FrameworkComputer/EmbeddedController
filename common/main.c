@@ -39,15 +39,6 @@
 
 test_mockable __keep int main(void)
 {
-#ifdef CONFIG_REPLACE_LOADER_WITH_BSS_SLOW
-	/*
-	 * Now that we have started execution, we no longer need the loader.
-	 * Instead, variables placed in the .bss.slow section will use this
-	 * space.  Therefore, clear out this region now.
-	 */
-	memset((void *)(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_LOADER_MEM_OFF), 0,
-	       CONFIG_LOADER_SIZE);
-#endif /* defined(CONFIG_REPLACE_LOADER_WITH_BSS_SLOW) */
 	/*
 	 * Pre-initialization (pre-verified boot) stage.  Initialization at
 	 * this level should do as little as possible, because verified boot
