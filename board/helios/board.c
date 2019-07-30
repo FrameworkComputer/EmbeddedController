@@ -144,7 +144,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	}
 };
 
-const struct pi3usb2901_config_t pi3usb2901_bc12_chips[] = {
+const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	[USB_PD_PORT_TCPC_0] = {
 		.i2c_port = I2C_PORT_PPC0,
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,

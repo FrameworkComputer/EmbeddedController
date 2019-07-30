@@ -62,15 +62,15 @@ static const struct bc12_status bc12_chg_limits[] = {
 
 static inline int raw_read8(int port, int offset, int *value)
 {
-	return i2c_read8(pi3usb2901_bc12_chips[port].i2c_port,
-			 pi3usb2901_bc12_chips[port].i2c_addr_flags,
+	return i2c_read8(pi3usb9201_bc12_chips[port].i2c_port,
+			 pi3usb9201_bc12_chips[port].i2c_addr_flags,
 			 offset, value);
 }
 
 static inline int raw_write8(int port, int offset, int value)
 {
-	return i2c_write8(pi3usb2901_bc12_chips[port].i2c_port,
-			  pi3usb2901_bc12_chips[port].i2c_addr_flags,
+	return i2c_write8(pi3usb9201_bc12_chips[port].i2c_port,
+			  pi3usb9201_bc12_chips[port].i2c_addr_flags,
 			  offset, value);
 }
 

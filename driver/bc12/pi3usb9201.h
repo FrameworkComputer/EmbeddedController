@@ -31,7 +31,7 @@
 #define PI3USB9201_REG_HOST_STS_DEV_PLUG BIT(1)
 #define PI3USB9201_REG_HOST_STS_DEV_UNPLUG BIT(2)
 
-struct pi3usb2901_config_t {
+struct pi3usb9201_config_t {
 	const int i2c_port;
 	const int i2c_addr_flags;
 };
@@ -48,5 +48,5 @@ enum pi3usb9201_mode {
 };
 
 /* Configuration struct defined at board level */
-extern const struct pi3usb2901_config_t pi3usb2901_bc12_chips[];
+extern const struct pi3usb9201_config_t pi3usb9201_bc12_chips[];
 
