@@ -99,11 +99,14 @@ static int mkbp_set_host_active_via_gpio(int active, uint32_t *timestamp)
 #ifdef CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT
 	/*
 	 * In case EC_INT_L is not a wake pin, make sure that we also attempt to
-	 * wake the AP via a host event.  If MKBP events are masked thru the
-	 * host event interface in S0, no ill effects should occur as the
-	 * notification will only be received via the GPIO.
+	 * wake the AP via a host event.  Only use this second notification
+	 * interface in suspend since MKBP events are a part of the
+	 * HOST_EVENT_ALWAYS_REPORT_DEFAULT_MASK. This can cause an MKBP host
+	 * event to be set in S0, but not triggering an SCI since the event is
+	 * not in the SCI mask.  This would also cause the board to prematurely
+	 * wake up when suspending due to the lingering event.
 	 */
-	if (active)
+	if (active && chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
 		host_set_single_event(EC_HOST_EVENT_MKBP);
 #endif /* CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT */
 
