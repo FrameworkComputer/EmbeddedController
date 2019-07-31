@@ -174,8 +174,80 @@ static int ps8xxx_enter_low_power_mode(int port)
 }
 #endif
 
+/*
+ * DCI is enabled by default and burns about 40 mW when the port is in
+ * USB2 mode or when a C-to-A dongle is attached, so force it off.
+ */
+
+static int ps8xxx_addr_dci_disable(int port, int i2c_addr, int i2c_reg)
+{
+	int status;
+	int dci;
+
+	status = tcpc_addr_read(port, i2c_addr, i2c_reg, &dci);
+	if (status != EC_SUCCESS)
+		return status;
+	if ((dci & PS8XXX_REG_MUX_USB_DCI_CFG_MODE_MASK) !=
+	    PS8XXX_REG_MUX_USB_DCI_CFG_MODE_OFF) {
+		dci &= ~PS8XXX_REG_MUX_USB_DCI_CFG_MODE_MASK;
+		dci |= PS8XXX_REG_MUX_USB_DCI_CFG_MODE_OFF;
+		if (tcpc_addr_write(port, i2c_addr, i2c_reg, dci) != EC_SUCCESS)
+			return status;
+	}
+	return EC_SUCCESS;
+}
+
+#ifdef CONFIG_USB_PD_TCPM_PS8805
+static int ps8xxx_dci_disable(int port)
+{
+	int status, e;
+	int p1_addr;
+
+	status = tcpc_write(port, PS8XXX_REG_I2C_DEBUGGING_ENABLE,
+			    PS8XXX_REG_I2C_DEBUGGING_ENABLE_ON);
+	if (status != EC_SUCCESS)
+		return status;
+
+	p1_addr = tcpc_config[port].i2c_info.addr_flags -
+		(PS8751_I2C_ADDR1_FLAGS - PS8751_I2C_ADDR1_P1_FLAGS);
+	status = ps8xxx_addr_dci_disable(port, p1_addr,
+					 PS8805_P1_REG_MUX_USB_DCI_CFG);
+
+	e = tcpc_write(port, PS8XXX_REG_I2C_DEBUGGING_ENABLE,
+		       PS8XXX_REG_I2C_DEBUGGING_ENABLE_OFF);
+	if (e != EC_SUCCESS) {
+		if (status == EC_SUCCESS)
+			status = e;
+	}
+
+	return status;
+}
+#endif /* CONFIG_USB_PD_TCPM_PS8805 */
+
+#ifdef CONFIG_USB_PD_TCPM_PS8751
+static int ps8xxx_dci_disable(int port)
+{
+	int p3_addr;
+
+	p3_addr = tcpc_config[port].i2c_info.addr_flags;
+	return ps8xxx_addr_dci_disable(port, p3_addr,
+				       PS8751_REG_MUX_USB_DCI_CFG);
+}
+#endif /* CONFIG_USB_PD_TCPM_PS8751 */
+
+static int ps8xxx_tcpm_init(int port)
+{
+	int status;
+
+	status = tcpci_tcpm_init(port);
+	if (status != EC_SUCCESS)
+		return status;
+
+	return ps8xxx_dci_disable(port);
+}
+
 const struct tcpm_drv ps8xxx_tcpm_drv = {
-	.init			= &tcpci_tcpm_init,
+	.init			= &ps8xxx_tcpm_init,
 	.release		= &ps8xxx_tcpm_release,
 	.get_cc			= &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
