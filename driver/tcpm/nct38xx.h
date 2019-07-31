@@ -49,6 +49,9 @@
 #define NCT38XX_REG_CTRL_OUT_EN_SNKEN      (1 << 2)
 #define NCT38XX_REG_CTRL_OUT_EN_CONNDIREN  (1 << 6)
 
+#define NCT38XX_RESET_HOLD_DELAY_MS	1
+#define NCT38XX_RESET_POST_DELAY_MS	0
+
 extern const struct tcpm_drv nct38xx_tcpm_drv;
 
 #endif /* defined(__CROS_EC_USB_PD_TCPM_NCT38XX_H) */

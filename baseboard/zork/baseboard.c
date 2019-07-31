@@ -21,6 +21,7 @@
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
+#include "driver/tcpm/nct38xx.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "ec_commands.h"
 #include "extpower.h"
@@ -218,17 +219,17 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+			.addr_flags = NCT38xx_I2C_ADDR1_1_FLAGS,
 		},
-		.drv = &ps8xxx_tcpm_drv,
+		.drv = &nct38xx_tcpm_drv,
 	},
 	[USBC_PORT_C1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC1,
-			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+			.addr_flags = NCT38xx_I2C_ADDR1_1_FLAGS,
 		},
-		.drv = &ps8xxx_tcpm_drv,
+		.drv = &nct38xx_tcpm_drv,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
@@ -245,6 +246,84 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
+
+void baseboard_tcpc_init(void)
+{
+	/* Enable PPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+
+	/* Enable TCPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
+
+	/* Enable BC 1.2 interrupts */
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
+}
+DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
+
+static void reset_pd_port(int port, enum gpio_signal reset_gpio_l,
+			  int hold_delay, int finish_delay)
+{
+	gpio_set_level(reset_gpio_l, 0);
+	msleep(hold_delay);
+	gpio_set_level(reset_gpio_l, 1);
+	if (finish_delay)
+		msleep(finish_delay);
+}
+
+void board_reset_pd_mcu(void)
+{
+	/* Reset TCPC0 */
+	reset_pd_port(USBC_PORT_C0, GPIO_USB_C0_TCPC_RST_L,
+		      NCT38XX_RESET_HOLD_DELAY_MS,
+		      NCT38XX_RESET_POST_DELAY_MS);
+
+	/* Reset TCPC1 */
+	reset_pd_port(USBC_PORT_C1, GPIO_USB_C1_TCPC_RST_L,
+		      NCT38XX_RESET_HOLD_DELAY_MS,
+		      NCT38XX_RESET_POST_DELAY_MS);
+}
+
+uint16_t tcpc_get_alert_status(void)
+{
+	uint16_t status = 0;
+
+	/*
+	 * Check which port has the ALERT line set and ignore if that TCPC has
+	 * its reset line active.
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL)) {
+		if (gpio_get_level(GPIO_USB_C0_TCPC_RST_L) != 0)
+			status |= PD_STATUS_TCPC_ALERT_0;
+	}
+
+	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL)) {
+		if (gpio_get_level(GPIO_USB_C1_TCPC_RST_L) != 0)
+			status |= PD_STATUS_TCPC_ALERT_1;
+	}
+
+	return status;
+}
+
+void tcpc_alert_event(enum gpio_signal signal)
+{
+	int port = -1;
+
+	switch (signal) {
+	case GPIO_USB_C0_TCPC_INT_ODL:
+		port = 0;
+		break;
+	case GPIO_USB_C1_TCPC_INT_ODL:
+		port = 1;
+		break;
+	default:
+		return;
+	}
+
+	schedule_deferred_pd_interrupt(port);
+}
 
 void bc12_interrupt(enum gpio_signal signal)
 {
