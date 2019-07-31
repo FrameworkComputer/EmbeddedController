@@ -16,6 +16,8 @@
 /* TODO(b:135086465) led implementation */
 #undef CONFIG_LED_COMMON
 
+#define CONFIG_BATTERY_HW_PRESENT_CUSTOM
+
 #define CONFIG_CHARGER_PSYS
 
 #define CONFIG_BC12_DETECT_PI3USB9201
@@ -99,6 +101,12 @@ enum sensor_id {
 enum charge_port {
 	CHARGE_PORT_USB_C,
 };
+
+enum battery_type {
+	BATTERY_PANASONIC_AC15A3J,
+	BATTERY_TYPE_COUNT,
+};
+
 #include "gpio_signal.h"
 #include "registers.h"
 
