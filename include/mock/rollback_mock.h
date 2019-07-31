@@ -3,6 +3,11 @@
  * found in the LICENSE file.
  */
 
+/**
+ * @file
+ * @brief Controls for the mock rollback block library
+ */
+
 #ifndef __MOCK_ROLLBACK_MOCK_H
 #define __MOCK_ROLLBACK_MOCK_H
 

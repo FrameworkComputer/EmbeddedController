@@ -12,6 +12,6 @@ all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)fpsensor_crypto.o
 ifneq ($(CONFIG_SPI_FP_PORT),)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)fpsensor.o
 endif
-ifeq ($(HAS_MOCK_FPSENSOR),)
+ifeq ($(HAS_MOCK_FP_SENSOR),)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)fpsensor_stubs.o
 endif
