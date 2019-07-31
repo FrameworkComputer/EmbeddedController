@@ -1690,3 +1690,31 @@ void board_start_ite_sync(void)
 	/* Let the usb reply to make it to the host. */
 	hook_call_deferred(&deferred_ite_sync_reset_data, 10 * MSEC);
 }
+
+void board_unwedge_i2cs(void)
+{
+	/*
+	 * Create connection between i2cs_scl and the 'unwedge_scl' GPIO, and
+	 * generate the i2c stop sequence which will reset the i2cs FSM.
+	 *
+	 * First, disconnect the external pin from the i2cs_scl input.
+	 */
+	GWRITE(PINMUX, DIOA9_SEL, 0);
+
+	/* Connect the 'unwedge' GPIO to the i2cs_scl input. */
+	GWRITE(PINMUX, GPIO1_GPIO5_SEL, GC_PINMUX_I2CS0_SCL_SEL);
+
+	/* Generate a 'stop' condition. */
+	gpio_set_level(GPIO_UNWEDGE_I2CS_SCL, 1);
+	usleep(2);
+	GWRITE_FIELD(I2CS, CTRL_SDA_VAL, READ0_S, 1);
+	usleep(2);
+	GWRITE_FIELD(I2CS, CTRL_SDA_VAL, READ0_S, 0);
+	usleep(2);
+
+	/* Disconnect the 'unwedge' mode SCL. */
+	GWRITE(PINMUX, GPIO1_GPIO5_SEL, 0);
+
+	/* Restore external pin connection to the i2cs_scl. */
+	GWRITE(PINMUX, DIOA9_SEL, GC_PINMUX_I2CS0_SCL_SEL);
+}

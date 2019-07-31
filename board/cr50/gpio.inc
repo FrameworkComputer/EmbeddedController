@@ -67,6 +67,8 @@
  * GPIO1.2   detect_ec_uart
  * GPIO1.3   detect_servo
  * GPIO1.4   detect_tpm_rst_asserted
+ * GPIO1.5   unwedge_i2cs_scl
+ * GPIO1.6   monitor_i2cs_sda
  * GPIO1.11  ec_tx_cr50_rx_in
  * GPIO1.12  strap_a0
  * GPIO1.13  strap_a1
@@ -153,6 +155,14 @@ GPIO(STRAP_A1,        PIN(1, 13), GPIO_INPUT)
 GPIO(STRAP_B0,        PIN(1, 14), GPIO_INPUT)
 GPIO(STRAP_B1,        PIN(1, 15), GPIO_INPUT)
 
+GPIO(UNWEDGE_I2CS_SCL, PIN(1, 5), GPIO_OUT_HIGH)
+
+/*
+ * A GPIO to sample the current state of the I2CS SDA line, allowing to detect
+ * the 'wedged I2C bus' condition.
+ */
+GPIO(MONITOR_I2CS_SDA, PIN(1, 6), GPIO_INPUT)
+
 /*
  * If you change the names of EN_PP3300_INA_L, I2C_SCL_INA, or I2C_SDA_INA,
  * you also need to update the usage in closed_source_set1.c
@@ -198,6 +208,8 @@ PINMUX(GPIO(INT_AP_L),        A5, DIO_INPUT)	/* DIOB7 is p_digitial_od */
                                                 /* We can't pull it up */
 PINMUX(GPIO(EC_FLASH_SELECT), B2, DIO_INPUT)
 PINMUX(GPIO(AP_FLASH_SELECT), B3, DIO_INPUT)
+PINMUX(GPIO(MONITOR_I2CS_SDA), A1, GPIO_INPUT)
+
 /*
  * Update closed_source_set1.c if pinmux for EN_PP3300_INA_L is changed or
  * removed.

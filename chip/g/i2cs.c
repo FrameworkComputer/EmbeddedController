@@ -104,8 +104,21 @@ static uint16_t last_read_pointer;
 static uint16_t i2cs_read_recovery_count;
 static uint16_t i2cs_sda_low_count;
 
+static void check_i2cs_state(void)
+{
+	if (gpio_get_level(GPIO_MONITOR_I2CS_SDA))
+		return;
+
+	/*
+	 * The bus might be stuck;
+	 * Generate a stop sequence to unwedge.
+	 */
+	board_unwedge_i2cs();
+}
+
 static void i2cs_init(void)
 {
+
 	/* First decide if i2c is even needed for this platform. */
 	/* if (i2cs is not needed) return; */
 	if (!board_tpm_uses_i2c())
@@ -113,26 +126,21 @@ static void i2cs_init(void)
 
 	pmu_clock_en(PERIPH_I2CS);
 
-	/*
-	 * Toggle the reset register to make sure i2cs interface is in the
-	 * initial state even if it is mid transaction at this time.
-	 */
-	GWRITE_FIELD(PMU, RST0, DI2CS0, 1);
-
-	/*
-	 * This initialization is guraranteed to take way more than enough
-	 * time for the reset to kick in.
-	 */
 	memset(i2cs_buffer, 0, sizeof(i2cs_buffer));
+
+	i2cs_set_pinmux();
+
+	check_i2cs_state();
+
+	/* Reset read and write pointers. */
 	last_write_pointer = 0;
 	last_read_pointer = 0;
 	i2cs_sda_low_count = 0;
+	GWRITE(I2CS, READ_PTR, 0);
+	GWRITE(I2CS, WRITE_PTR, 0);
 
-	GWRITE_FIELD(PMU, RST0, DI2CS0, 0);
-
-
-	/* Set pinmux registers for I2CS interface */
-	i2cs_set_pinmux();
+	/* Just in case we were wedged and the master starts with a read. */
+	*GREG32_ADDR(I2CS, READ_BUFFER0) = ~0;
 
 	/* Enable I2CS interrupt */
 	GWRITE_FIELD(I2CS, INT_ENABLE, INTR_WRITE_COMPLETE, 1);

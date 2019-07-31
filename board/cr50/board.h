@@ -373,6 +373,13 @@ int chip_factory_mode(void);
  */
 void board_start_ite_sync(void);
 
+/*
+ * Board specific function (needs information about pinmux settings) which
+ * allows to take the i2cs controller out of the 'wedged' state where the
+ * master stopped i2c access mid transaction and the slave is holding SDA low,
+ */
+void board_unwedge_i2cs(void);
+
 #endif /* !__ASSEMBLER__ */
 
 /* USB interface indexes (use define rather than enum to expand them) */
