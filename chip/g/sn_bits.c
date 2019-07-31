@@ -26,14 +26,6 @@ int read_sn_data(struct sn_data *sn)
 
 	id_p = (uint32_t *)sn;
 
-	/* Make sure INFO1 sn bits space is readable */
-	if (flash_info_read_enable(INFO_SN_DATA_OFFSET,
-				   INFO_SN_DATA_PROTECT_SIZE) !=
-	    EC_SUCCESS) {
-		CPRINTS("%s: failed to enable read access to info", __func__);
-		return EC_ERROR_ACCESS_DENIED;
-	}
-
 	for (i = 0; i < sizeof(*sn); i += sizeof(uint32_t)) {
 		int rv;
 
@@ -54,12 +46,7 @@ static int write_sn_data(struct sn_data *sn_data, int header_only)
 	int rv = EC_SUCCESS;
 
 	/* Enable write access */
-	if (flash_info_write_enable(INFO_SN_DATA_OFFSET,
-				    INFO_SN_DATA_PROTECT_SIZE) !=
-	    EC_SUCCESS) {
-		CPRINTS("%s: failed to enable write access", __func__);
-		return EC_ERROR_ACCESS_DENIED;
-	}
+	flash_info_write_enable();
 
 	/* Write sn bits */
 	rv = flash_info_physical_write(INFO_SN_DATA_OFFSET,

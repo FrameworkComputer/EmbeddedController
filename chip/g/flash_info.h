@@ -30,9 +30,8 @@
 
 #define INFO_BOARD_SPACE_OFFSET (INFO_RW_MAP_OFFSET + INFO_RW_MAP_SIZE)
 
-int flash_info_read_enable(uint32_t offset, size_t size);
 /* This in fact enables both read and write. */
-int flash_info_write_enable(uint32_t offset, size_t size);
+void flash_info_write_enable(void);
 void flash_info_write_disable(void);
 int flash_info_physical_write(int byte_offset, int num_bytes, const char *data);
 int flash_physical_info_read_word(int byte_offset, uint32_t *dst);

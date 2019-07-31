@@ -614,15 +614,6 @@ static void update_rollback_mask(const struct SignedHeader *header_a,
 	uint32_t header_mask = 0;
 
 	/*
-	 * Make sure INFO1 RW map space is readable.
-	 */
-	if (flash_info_read_enable(INFO_RW_MAP_OFFSET, INFO_RW_MAP_SIZE) !=
-	    EC_SUCCESS) {
-		CPRINTS("%s: failed to enable read access to info", __func__);
-		return;
-	}
-
-	/*
 	 * The infomap field in the image header has a matching space in the
 	 * flash INFO1 section.
 	 *
@@ -680,13 +671,7 @@ static void update_rollback_mask(const struct SignedHeader *header_a,
 			continue; /* This word has been zeroed already. */
 
 		if (!write_enabled) {
-			if (flash_info_write_enable(
-				INFO_RW_MAP_OFFSET,
-				INFO_RW_MAP_SIZE) != EC_SUCCESS) {
-				CPRINTS("%s: failed to enable write access to"
-					 " info", __func__);
-				return;
-			}
+			flash_info_write_enable();
 			write_enabled = 1;
 		}
 
@@ -739,7 +724,6 @@ void system_get_rollback_bits(char *value, size_t value_size)
 		 get_program_memory_addr(SYSTEM_IMAGE_RW_B)},
 	};
 
-	flash_info_read_enable(INFO_RW_MAP_OFFSET, INFO_RW_MAP_SIZE);
 	for (i = 0; i < INFO_MAX; i++) {
 		uint32_t w;
 
