@@ -15,23 +15,12 @@
 #include "switch.h"
 #include "usb_charge.h"
 
-static void ppc_interrupt(enum gpio_signal signal)
-{
-	/* TODO */
-}
-
 #include "gpio_list.h"
 
 void board_update_sensor_config_from_sku(void)
 {
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
-}
-
-int board_is_sourcing_vbus(int port)
-{
-	/* TODO */
-	return 0;
 }
 
 void board_reset_pd_mcu(void)

@@ -114,11 +114,15 @@
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_PORT_COUNT 2
-#define CONFIG_USB_PD_VBUS_MEASURE_CHARGER
-#define CONFIG_USB_PD_5V_EN_CUSTOM
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TCPM_PS8751
 #define CONFIG_USB_PD_TCPM_TCPCI
+#define CONFIG_USB_PD_VBUS_MEASURE_CHARGER
+#define CONFIG_USBC_PPC
+#define CONFIG_USBC_PPC_DEDICATED_INT
+#define CONFIG_USBC_PPC_SBU
+#define CONFIG_USBC_PPC_SN5S330
+#define CONFIG_USBC_PPC_VCONN
 #define CONFIG_USBC_SS_MUX
 
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
@@ -245,10 +249,10 @@ void board_reset_pd_mcu(void);
 /* Common definition for the USB PD interrupt handlers. */
 void tcpc_alert_event(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
+void ppc_interrupt(enum gpio_signal signal);
 
 int board_is_convertible(void);
 void board_update_sensor_config_from_sku(void);
-int board_is_sourcing_vbus(int port);
 
 #endif /* !__ASSEMBLER__ */
 
