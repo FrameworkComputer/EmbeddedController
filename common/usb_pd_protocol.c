@@ -4513,10 +4513,13 @@ void pd_task(void *u)
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 			/*
-			 * Always stay in low power mode since we are waiting
-			 * for a connection.
+			 * The next state is not determined just by what is
+			 * attached, but also depends on DRP_STATE. Regardless
+			 * of next state, if nothing is attached, then always
+			 * request low power mode.
 			 */
-			pd[port].flags |= PD_FLAGS_LPM_REQUESTED;
+			if (cc_is_open(cc1, cc2))
+				pd[port].flags |= PD_FLAGS_LPM_REQUESTED;
 #endif
 
 			if (next_state == PD_STATE_SNK_DISCONNECTED) {
