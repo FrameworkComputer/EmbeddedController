@@ -22,7 +22,10 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
+#define CONFIG_EC_FEATURE_BOARD_OVERRIDE
+
 /* Keyboard features */
+#define CONFIG_PWM
 #define CONFIG_PWM_KBLIGHT
 
 /* Sensors */
