@@ -240,6 +240,22 @@ $(out)/rma_key_from_blob.h: board/$(BOARD)/$(BLOB_FILE) util/bin2h.sh
 
 endif
 
+ifeq ($(CONFIG_ALWAYS_MEMSET),y)
+CRYPTOCLIB := $(realpath ../../third_party/cryptoc)
+CPPFLAGS += -I$(abspath ./builtin)
+CPPFLAGS += -I$(CRYPTOCLIB)/include
+
+CRYPTOC_OBJS = $(shell find $(out)/cryptoc -name 'util.o')
+$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: LDFLAGS_EXTRA += $(CRYPTOC_OBJS)
+$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: cryptoc_objs
+
+# Force the external build each time, so it can look for changed sources.
+.PHONY: cryptoc_objs
+cryptoc_objs:
+	$(MAKE) obj=$(realpath $(out))/cryptoc SUPPORT_UNALIGNED=1 \
+		CONFIG_UPTO_SHA512=$(CONFIG_UPTO_SHA512) -C $(CRYPTOCLIB) objs
+endif
+
 include $(_common_dir)fpsensor/build.mk
 include $(_common_dir)usbc/build.mk
 
