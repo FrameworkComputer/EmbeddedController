@@ -7,6 +7,7 @@
 #include "clock.h"
 #include "common.h"
 #include "console.h"
+#include "cryptoc/util.h"
 #include "ec_commands.h"
 #include "fpsensor.h"
 #include "fpsensor_crypto.h"
@@ -429,6 +430,7 @@ static int fp_command_frame(struct host_cmd_handler_args *args)
 				      sizeof(fp_template[0]),
 				      enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
 				      enc_info->tag, FP_CONTEXT_TAG_BYTES);
+		always_memset(key, 0, sizeof(key));
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to encrypt template", fgr);
 			return EC_RES_UNAVAILABLE;
@@ -517,6 +519,7 @@ static int fp_command_template(struct host_cmd_handler_args *args)
 				      sizeof(fp_template[0]),
 				      enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
 				      enc_info->tag, FP_CONTEXT_TAG_BYTES);
+		always_memset(key, 0, sizeof(key));
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to decipher template", idx);
 			/* Don't leave bad data in the template buffer */

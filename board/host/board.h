@@ -21,6 +21,8 @@
 
 #define CONFIG_WP_ACTIVE_HIGH
 
+#define CONFIG_LIBCRYPTOC
+
 #include "gpio_signal.h"
 
 enum temp_sensor_id {
