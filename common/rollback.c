@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "cryptoc/util.h"
 #include "flash.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -93,6 +94,13 @@ static void unlock_rollback(void)
 #endif
 }
 
+static void clear_rollback(struct rollback_data *data)
+{
+#ifdef CONFIG_ROLLBACK_SECRET_SIZE
+	always_memset(data->secret, 0, sizeof(data->secret));
+#endif
+}
+
 static int read_rollback(int region, struct rollback_data *data)
 {
 	int offset;
@@ -119,15 +127,15 @@ static int read_rollback(int region, struct rollback_data *data)
  */
 static int get_latest_rollback(struct rollback_data *data)
 {
+	int ret = -1;
 	int region;
 	int min_region = -1;
 	int max_id = -1;
+	struct rollback_data tmp_data;
 
 	for (region = 0; region < ROLLBACK_REGIONS; region++) {
-		struct rollback_data tmp_data;
-
 		if (read_rollback(region, &tmp_data))
-			return -1;
+			goto failed;
 
 		/* Check if not initialized or invalid cookie. */
 		if (tmp_data.cookie != CROS_EC_ROLLBACK_COOKIE)
@@ -141,34 +149,42 @@ static int get_latest_rollback(struct rollback_data *data)
 
 	if (min_region >= 0) {
 		if (read_rollback(min_region, data))
-			return -1;
+			goto failed;
 	} else {
 		min_region = 0;
-		memset(data, 0, sizeof(*data));
+		clear_rollback(data);
 	}
+	ret = min_region;
 
-	return min_region;
+failed:
+	clear_rollback(&tmp_data);
+	return ret;
 }
 
 int32_t rollback_get_minimum_version(void)
 {
 	struct rollback_data data;
+	int32_t ret = -1;
 
 	if (get_latest_rollback(&data) < 0)
-		return -1;
+		goto failed;
+	ret = data.rollback_min_version;
 
-	return data.rollback_min_version;
+failed:
+	clear_rollback(&data);
+	return ret;
 }
 
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
 test_mockable int rollback_get_secret(uint8_t *secret)
 {
+	int ret = EC_ERROR_UNKNOWN;
 	struct rollback_data data;
 	uint8_t first;
 	int i = 0;
 
 	if (get_latest_rollback(&data) < 0)
-		return EC_ERROR_UNKNOWN;
+		goto failed;
 
 	/* Check that secret is not full of 0x00 or 0xff */
 	first = data.secret[0];
@@ -177,12 +193,15 @@ test_mockable int rollback_get_secret(uint8_t *secret)
 			if (data.secret[i] != first)
 				goto good;
 		}
-		return EC_ERROR_UNKNOWN;
+		goto failed;
 	}
 
 good:
 	memcpy(secret, data.secret, sizeof(data.secret));
-	return EC_SUCCESS;
+	ret = EC_SUCCESS;
+failed:
+	clear_rollback(&data);
+	return ret;
 }
 #endif
 
@@ -218,6 +237,7 @@ int rollback_lock(void)
 static int add_entropy(uint8_t *dst, const uint8_t *src,
 			uint8_t *add, unsigned int add_len)
 {
+	int ret = 0;
 #ifdef CONFIG_SHA256
 BUILD_ASSERT(SHA256_DIGEST_SIZE == CONFIG_ROLLBACK_SECRET_SIZE);
 	struct sha256_ctx ctx;
@@ -234,17 +254,23 @@ BUILD_ASSERT(SHA256_DIGEST_SIZE == CONFIG_ROLLBACK_SECRET_SIZE);
 	/* Add some locally produced entropy */
 	for (i = 0; i < CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE; i++) {
 		if (!board_get_entropy(&extra, 1))
-			return 0;
+			goto failed;
 		SHA256_update(&ctx, &extra, 1);
 	}
 #endif
 	hash = SHA256_final(&ctx);
 
 	memcpy(dst, hash, CONFIG_ROLLBACK_SECRET_SIZE);
+	ret = 1;
+
+#ifdef CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE
+failed:
+#endif
+	always_memset(&ctx, 0, sizeof(ctx));
 #else
 #error "Adding entropy to secret in rollback region requires SHA256."
 #endif
-	return 1;
+	return ret;
 }
 #endif /* CONFIG_ROLLBACK_SECRET_SIZE */
 
@@ -274,16 +300,20 @@ static int rollback_update(int32_t next_min_version,
 	BUILD_ASSERT(sizeof(block) >= sizeof(*data));
 	int erase_size, offset, region, ret;
 
-	if (flash_get_protect() & EC_FLASH_PROTECT_ROLLBACK_NOW)
-		return EC_ERROR_ACCESS_DENIED;
+	if (flash_get_protect() & EC_FLASH_PROTECT_ROLLBACK_NOW) {
+		ret = EC_ERROR_ACCESS_DENIED;
+		goto out;
+	}
 
 	/* Initialize the rest of the block. */
 	memset(&block[sizeof(*data)], 0xff, sizeof(block)-sizeof(*data));
 
 	region = get_latest_rollback(data);
 
-	if (region < 0)
-		return EC_ERROR_UNKNOWN;
+	if (region < 0) {
+		ret = EC_ERROR_UNKNOWN;
+		goto out;
+	}
 
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
 	if (entropy) {
@@ -294,12 +324,16 @@ static int rollback_update(int32_t next_min_version,
 #endif
 	{
 		/* Do not accept to decrease the value. */
-		if (next_min_version < data->rollback_min_version)
-			return EC_ERROR_INVAL;
+		if (next_min_version < data->rollback_min_version) {
+			ret = EC_ERROR_INVAL;
+			goto out;
+		}
 
 		/* No need to update if version is already correct. */
-		if (next_min_version == data->rollback_min_version)
-			return EC_SUCCESS;
+		if (next_min_version == data->rollback_min_version) {
+			ret = EC_SUCCESS;
+			goto out;
+		}
 	}
 
 	/* Use the other region. */
@@ -315,28 +349,38 @@ static int rollback_update(int32_t next_min_version,
 	 * data.secret is left untouched and written back to the other region.
 	 */
 	if (entropy) {
-		if (!add_entropy(data->secret, data->secret, entropy, length))
-			return EC_ERROR_UNCHANGED;
+		if (!add_entropy(data->secret, data->secret, entropy, length)) {
+			ret = EC_ERROR_UNCHANGED;
+			goto out;
+		}
 	}
 #endif
 	data->cookie = CROS_EC_ROLLBACK_COOKIE;
 
 	erase_size = get_rollback_erase_size_bytes(region);
 
-	if (erase_size < 0)
-		return EC_ERROR_UNKNOWN;
+	if (erase_size < 0) {
+		ret = EC_ERROR_UNKNOWN;
+		goto out;
+	}
 
 	/* Offset should never be part of active image. */
-	if (system_unsafe_to_overwrite(offset, erase_size))
-		return EC_ERROR_UNKNOWN;
+	if (system_unsafe_to_overwrite(offset, erase_size)) {
+		ret = EC_ERROR_UNKNOWN;
+		goto out;
+	}
 
-	if (flash_erase(offset, erase_size))
-		return EC_ERROR_UNKNOWN;
+	if (flash_erase(offset, erase_size)) {
+		ret = EC_ERROR_UNKNOWN;
+		goto out;
+	}
 
 	unlock_rollback();
 	ret = flash_write(offset, sizeof(block), block);
 	lock_rollback();
 
+out:
+	clear_rollback(data);
 	return ret;
 }
 
@@ -447,14 +491,15 @@ DECLARE_HOST_COMMAND(EC_CMD_ADD_ENTROPY,
 
 static int command_rollback_info(int argc, char **argv)
 {
-	int region, ret, min_region;
+	int ret = EC_ERROR_UNKNOWN;
+	int region, min_region;
 	int32_t rw_rollback_version;
 	struct rollback_data data;
 
 	min_region = get_latest_rollback(&data);
 
 	if (min_region < 0)
-		return EC_ERROR_UNKNOWN;
+		goto failed;
 
 	rw_rollback_version = system_get_rollback_version(SYSTEM_IMAGE_RW);
 
@@ -466,7 +511,7 @@ static int command_rollback_info(int argc, char **argv)
 
 		ret = read_rollback(region, &data);
 		if (ret)
-			return ret;
+			goto failed;
 
 		ccprintf("rollback %d: %08x %08x %08x",
 			region, data.id, data.rollback_min_version,
@@ -482,8 +527,11 @@ static int command_rollback_info(int argc, char **argv)
 			ccprintf(" *");
 		ccprintf("\n");
 	}
+	ret = EC_SUCCESS;
 
-	return EC_SUCCESS;
+failed:
+	clear_rollback(&data);
+	return ret;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(rollbackinfo, command_rollback_info,
 			     NULL,
@@ -491,6 +539,7 @@ DECLARE_SAFE_CONSOLE_COMMAND(rollbackinfo, command_rollback_info,
 
 static int host_command_rollback_info(struct host_cmd_handler_args *args)
 {
+	int ret = EC_RES_UNAVAILABLE;
 	struct ec_response_rollback_info *r = args->response;
 	int min_region;
 	struct rollback_data data;
@@ -498,15 +547,18 @@ static int host_command_rollback_info(struct host_cmd_handler_args *args)
 	min_region = get_latest_rollback(&data);
 
 	if (min_region < 0)
-		return EC_RES_UNAVAILABLE;
+		goto failed;
 
 	r->id = data.id;
 	r->rollback_min_version = data.rollback_min_version;
 	r->rw_rollback_version = system_get_rollback_version(SYSTEM_IMAGE_RW);
 
 	args->response_size = sizeof(*r);
+	ret = EC_RES_SUCCESS;
 
-	return EC_RES_SUCCESS;
+failed:
+	clear_rollback(&data);
+	return ret;
 }
 DECLARE_HOST_COMMAND(EC_CMD_ROLLBACK_INFO,
 		     host_command_rollback_info,

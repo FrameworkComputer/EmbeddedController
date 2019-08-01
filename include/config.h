@@ -4604,6 +4604,15 @@
 
 /*****************************************************************************/
 /*
+ * Define CONFIG_LIBCRYPTOC if a board needs to read secret data from the
+ * anti-rollback block.
+ */
+#ifdef CONFIG_ROLLBACK_SECRET_SIZE
+#define CONFIG_LIBCRYPTOC
+#endif
+
+/*****************************************************************************/
+/*
  * Handle task-dependent configs.
  *
  * This prevent sub-modules from being compiled when the task and parent module
