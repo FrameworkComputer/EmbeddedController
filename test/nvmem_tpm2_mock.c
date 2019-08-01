@@ -331,8 +331,8 @@ void drop_evictable_obj(void *obj)
 	obj_addr = (uintptr_t)obj - (uintptr_t)nvmem_cache_base(NVMEM_TPM);
 	read_from_cache(obj_addr - sizeof(next_addr), sizeof(next_addr),
 			&next_addr);
-	ccprintf("%s:%d dropping obj at cache addr %x, offset %x, addr %p next "
-		 "addr %x aka %x (off s_evictNvStart)\n",
+	ccprintf("%s:%d dropping obj at cache addr %x, offset %x, addr %pP "
+		 "next addr %x aka %x (off s_evictNvStart)\n",
 		 __func__, __LINE__, obj_addr - s_evictNvStart, obj_addr, obj,
 		 next_addr, next_addr - s_evictNvStart);
 

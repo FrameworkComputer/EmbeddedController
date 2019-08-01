@@ -190,7 +190,7 @@ void hook_task(void *u)
 		/* Handle deferred routines */
 		for (i = 0; i < DEFERRED_FUNCS_COUNT; i++) {
 			if (__deferred_until[i] && __deferred_until[i] < t) {
-				CPRINTS("hook call deferred 0x%p",
+				CPRINTS("hook call deferred 0x%pP",
 					__deferred_funcs[i].routine);
 				/*
 				 * Call deferred function.  Clear timer first,

@@ -147,16 +147,16 @@ static int command_read_word(int argc, char **argv)
 	if ((argc - argc_offs) < 3) {
 		switch (access_size) {
 		case 1:
-			ccprintf("read 0x%p = 0x%02x\n",
+			ccprintf("read 0x%pP = 0x%02x\n",
 				 address, *((uint8_t *)address));
 			break;
 		case 2:
-			ccprintf("read 0x%p = 0x%04x\n",
+			ccprintf("read 0x%pP = 0x%04x\n",
 				 address, *((uint16_t *)address));
 			break;
 
 		default:
-			ccprintf("read 0x%p = 0x%08x\n",  address, *address);
+			ccprintf("read 0x%pP = 0x%08x\n",  address, *address);
 			break;
 		}
 		return EC_SUCCESS;
@@ -169,17 +169,17 @@ static int command_read_word(int argc, char **argv)
 
 	switch (access_size) {
 	case 1:
-		ccprintf("write 0x%p = 0x%02x\n", address, (uint8_t)value);
+		ccprintf("write 0x%pP = 0x%02x\n", address, (uint8_t)value);
 		cflush();  /* Flush before writing in case this crashes */
 		*((uint8_t *)address) = (uint8_t)value;
 		break;
 	case 2:
-		ccprintf("write 0x%p = 0x%04x\n", address, (uint16_t)value);
+		ccprintf("write 0x%pP = 0x%04x\n", address, (uint16_t)value);
 		cflush();
 		*((uint16_t *)address) = (uint16_t)value;
 		break;
 	default:
-		ccprintf("write 0x%p = 0x%02x\n", address, value);
+		ccprintf("write 0x%pP = 0x%02x\n", address, value);
 		cflush();
 		*address = value;
 		break;

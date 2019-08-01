@@ -260,7 +260,7 @@ static int prepare_running(struct test_info *pinfo)
 	pinfo->test_blob_size |= 7;
 
 	ccprintf("running %d iterations\n", number_of_iterations);
-	ccprintf("blob size %d at %p\n", pinfo->test_blob_size, pinfo->p);
+	ccprintf("blob size %d at %pP\n", pinfo->test_blob_size, pinfo->p);
 
 	init_stats(&(pinfo->enc_stats));
 	init_stats(&(pinfo->dec_stats));

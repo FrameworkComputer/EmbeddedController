@@ -42,7 +42,8 @@
  *   - 's' - null-terminated ASCII string
  *   - 'h' - binary data, print as hex; precision is length of data in bytes.
  *           So "%.8h" prints 8 bytes of binary data
- *   - 'p' - pointer
+ *   - 'pP'- raw pointer. %p followed by another character represents a %p
+ *           extension.
  *   - 'd' - signed integer
  *   - 'i' - signed integer if CONFIG_PRINTF_LEGACY_LI_FORMAT is set (ignore l)
  *   - 'u' - unsigned integer

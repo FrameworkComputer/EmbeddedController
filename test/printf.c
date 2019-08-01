@@ -196,8 +196,20 @@ test_static int test_vsnprintf_pointers(void)
 {
 	void *ptr = (void *)0x55005E00;
 
-	T(expect_success("55005e00",  "%p",      ptr));
+	T(expect_success("55005e00",  "%pP",     ptr));
 	T(expect_success(err_str,     "%P",      ptr));
+	/* %p by itself is invalid */
+	T(expect(EC_ERROR_INVAL, NO_BYTES_TOUCHED,
+		 /* given -1 as output size limit */
+		 false, -1, "%p"));
+	/* %p with an unknown suffix is invalid */
+	T(expect(EC_ERROR_INVAL, NO_BYTES_TOUCHED,
+		 /* given -1 as output size limit */
+		 false, -1, "%p "));
+	/* %p with an unknown suffix is invalid */
+	T(expect(EC_ERROR_INVAL, NO_BYTES_TOUCHED,
+		 /* given -1 as output size limit */
+		 false, -1, "%pQ"));
 	return EC_SUCCESS;
 }
 

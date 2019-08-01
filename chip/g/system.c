@@ -476,7 +476,7 @@ static int corrupt_header(volatile struct SignedHeader *header)
 	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, RD_EN, 1);
 	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, WR_EN, 1);
 
-	CPRINTS("%s: RW fallback must have happened, magic at %p before: %x",
+	CPRINTS("%s: RW fallback must have happened, magic at %pP before: %x",
 		__func__, &header->magic, header->magic);
 
 	rv = flash_physical_write((intptr_t)&header->magic -

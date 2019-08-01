@@ -453,7 +453,7 @@ static int command_ble_adv(int argc, char **argv)
 	rv = ble_radio_init(BLE_ADV_ACCESS_ADDRESS, BLE_ADV_CRCINIT);
 
 
-		CPRINTS("ADV @%p", &adv_packet);
+		CPRINTS("ADV @%pP", &adv_packet);
 
 	((uint32_t *)&addr)[0] = 0xA3A2A1A0 | type;
 	((uint32_t *)&addr)[1] = BLE_RANDOM_ADDR_MSBS_STATIC << 8 | 0x5A4;
@@ -527,7 +527,7 @@ static int command_ble_adv_scan(int argc, char **argv)
 
 	rv = radio_disable();
 
-	CPRINTS("on_air payload rcvd %p", &rx_packet);
+	CPRINTS("on_air payload rcvd %pP", &rx_packet);
 
 	return rv;
 }

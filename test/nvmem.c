@@ -211,8 +211,8 @@ static int iterate_over_flash(void)
 			return EC_SUCCESS;
 		}
 	}
-	ccprintf("%s:%d bad delimiter location: ph %p, "
-		 "dt.ph %p, offset %d, delim offset %d\n",
+	ccprintf("%s:%d bad delimiter location: ph %pP, "
+		 "dt.ph %pP, offset %d, delim offset %d\n",
 		 __func__, __LINE__, at.mt.ph, at.dt.ph, at.mt.data_offset,
 		 at.dt.data_offset);
 
@@ -654,7 +654,7 @@ static size_t fill_obj_offsets(uint16_t *offsets, size_t max_objects)
 		uint32_t *op;
 
 		op = evictable_offs_to_addr(offsets[i]);
-		ccprintf("offs %04x:%08x:%08x:%08x addr %p size %d\n",
+		ccprintf("offs %04x:%08x:%08x:%08x addr %pP size %d\n",
 			 offsets[i], op[-1], op[0], op[1], op,
 			 (uintptr_t)nvmem_cache_base(NVMEM_TPM) + op[-1] -
 				 (uintptr_t)op);

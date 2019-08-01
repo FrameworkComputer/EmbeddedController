@@ -766,7 +766,7 @@ void bluetooth_ll_task(void)
 		case ADVERTISING:
 
 			if (deadline.val == 0) {
-				CPRINTS("ADV @%p", &ll_adv_pdu);
+				CPRINTS("ADV @%pP", &ll_adv_pdu);
 				deadline.val = get_time().val +
 					(uint32_t)ll_adv_timeout_us;
 				ll_adv_events = 0;

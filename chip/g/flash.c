@@ -270,7 +270,7 @@ static int do_flash_op(enum flash_op op, int is_info_bank,
 
 		if (errors && (errors != prev_error)) {
 			prev_error = errors;
-			CPRINTF("%s:%d errors %x fsh_pe_control %p\n",
+			CPRINTF("%s:%d errors %x fsh_pe_control %pP\n",
 				__func__, __LINE__, errors, fsh_pe_control);
 		}
 		/* Error status is self-clearing. Read it until it does

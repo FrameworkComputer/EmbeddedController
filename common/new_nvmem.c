@@ -1602,7 +1602,7 @@ static void verify_empty_page(void *ph)
 
 	for (i = 0; i < (CONFIG_FLASH_BANK_SIZE / sizeof(*word_p)); i++) {
 		if (word_p[i] != (uint32_t)~0) {
-			CPRINTS("%s: corrupted page at %p!", __func__, word_p);
+			CPRINTS("%s: corrupted page at %pP!", __func__, word_p);
 			flash_physical_erase((uintptr_t)word_p -
 						     CONFIG_PROGRAM_MEMORY_BASE,
 					     CONFIG_FLASH_BANK_SIZE);
