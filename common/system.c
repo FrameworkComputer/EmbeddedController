@@ -92,10 +92,8 @@ static int disable_jump;  /* Disable ALL jumps if system is locked */
 static int force_locked;  /* Force system locked even if WP isn't enabled */
 static enum ec_reboot_cmd reboot_at_shutdown;
 
-#ifdef CONFIG_HIBERNATE
-static uint32_t hibernate_seconds;
-static uint32_t hibernate_microseconds;
-#endif
+STATIC_IF(CONFIG_HIBERNATE) uint32_t hibernate_seconds;
+STATIC_IF(CONFIG_HIBERNATE) uint32_t hibernate_microseconds;
 
 /* On-going actions preventing going into deep-sleep mode */
 uint32_t sleep_mask;
@@ -900,20 +898,24 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 	case EC_REBOOT_DISABLE_JUMP:
 		system_disable_jump();
 		return EC_SUCCESS;
-#ifdef CONFIG_HIBERNATE
 	case EC_REBOOT_HIBERNATE_CLEAR_AP_OFF:
-#ifdef CONFIG_POWER_BUTTON_INIT_IDLE
-		CPRINTS("Clearing AP_OFF");
-		chip_save_reset_flags(
+		if (!IS_ENABLED(CONFIG_HIBERNATE))
+			return EC_ERROR_INVAL;
+
+		if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE)) {
+			CPRINTS("Clearing AP_OFF");
+			chip_save_reset_flags(
 				chip_read_reset_flags() & ~RESET_FLAG_AP_OFF);
-#endif
+		}
 		/* Intentional fall-through */
 	case EC_REBOOT_HIBERNATE:
+		if (!IS_ENABLED(CONFIG_HIBERNATE))
+			return EC_ERROR_INVAL;
+
 		CPRINTS("system hibernating");
 		system_hibernate(hibernate_seconds, hibernate_microseconds);
 		/* That shouldn't return... */
 		return EC_ERROR_UNKNOWN;
-#endif
 	default:
 		return EC_ERROR_INVAL;
 	}
@@ -984,8 +986,7 @@ DECLARE_CONSOLE_COMMAND(scratchpad, command_scratchpad,
 			"Get or set scratchpad value");
 #endif /* CONFIG_CMD_SCRATCHPAD */
 
-#ifdef CONFIG_HIBERNATE
-static int command_hibernate(int argc, char **argv)
+__maybe_unused static int command_hibernate(int argc, char **argv)
 {
 	int seconds = 0;
 	int microseconds = 0;
@@ -1017,6 +1018,7 @@ static int command_hibernate(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
+#ifdef CONFIG_HIBERNATE
 DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate,
 			"[sec] [usec]",
 			"Hibernate the EC");
