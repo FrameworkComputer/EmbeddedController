@@ -12,7 +12,6 @@
 #include "cros_board_info.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi160.h"
-#include "driver/als_opt3001.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx7447.h"
@@ -181,12 +180,6 @@ static struct bmi160_drv_data_t g_bmi160_data;
 /* BMA255 private data */
 static struct accelgyro_saved_data_t g_bma255_data;
 
-static struct opt3001_drv_data_t g_opt3001_data = {
-	.scale = 1,
-	.uscale = 0,
-	.offset = 0,
-};
-
 /* Matrix to rotate accelrator into standard reference frame */
 static const mat33_fp_t base_standard_ref = {
 	{ 0, FLOAT_TO_FP(1), 0},
@@ -275,36 +268,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.min_frequency = BMI160_GYRO_MIN_FREQ,
 		.max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
-
-	[LID_ALS] = {
-		.name = "Light",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_OPT3001,
-		.type = MOTIONSENSE_TYPE_LIGHT,
-		.location = MOTIONSENSE_LOC_LID,
-		.drv = &opt3001_drv,
-		.drv_data = &g_opt3001_data,
-		.port = I2C_PORT_ACCEL,
-		.i2c_spi_addr_flags = OPT3001_I2C_ADDR_FLAGS,
-		.rot_standard_ref = NULL,
-		.default_range = 0x2b11a1,
-		.min_frequency = OPT3001_LIGHT_MIN_FREQ,
-		.max_frequency = OPT3001_LIGHT_MAX_FREQ,
-		.config = {
-			/* Run ALS sensor in S0 */
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 1000,
-			},
-		},
-	},
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-
-/* ALS instances when LPC mapping is needed. Each entry directs to a sensor. */
-const struct motion_sensor_t *motion_als_sensors[] = {
-	&motion_sensors[LID_ALS],
-};
-BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 
 /******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */
