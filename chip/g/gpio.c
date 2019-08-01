@@ -412,7 +412,7 @@ static void print_periph(int sel)
 		ccprintf("UNDEF");
 }
 
-static void show_pinmux(const char *name, int i, int ofs)
+static void show_pinmux(const char name, int i, int ofs)
 {
 	uint32_t sel = DIO_SEL_REG(i * 8 + ofs);
 	uint32_t ctl = DIO_CTL_REG(i * 8 + ofs);
@@ -423,7 +423,7 @@ static void show_pinmux(const char *name, int i, int ofs)
 	if (!sel && !(ctl & (0xf << 2)) && !(GREG32(PINMUX, EXITEN0) & bitmask))
 		return;
 
-	ccprintf("%08x: %s%-2d  %2d %s%s%s%s  ",
+	ccprintf("%08x: DIO%c%-2d  %2d %3s%3s%3s%4s ",
 		 GC_PINMUX_BASE_ADDR + i * 8 + ofs,
 		 name, i, sel,
 		 (ctl & BIT(2)) ? " IN" : "",
@@ -476,15 +476,25 @@ static void show_pinmux_periph(int i)
 
 static int command_pinmux(int argc, char **argv)
 {
-	int i;
+	size_t i;
 
-	/* Pad sources */
-	for (i = 0; i <= 4; i++)
-		show_pinmux("DIOM", i, 0x00);
-	for (i = 0; i <= 14; i++)
-		show_pinmux("DIOA", i, 0x28);
-	for (i = 0; i <= 7; i++)
-		show_pinmux("DIOB", i, 0xa0);
+	const struct {
+		char name;
+		uint8_t count;
+		uint8_t base_offset;
+	} pads[] = {
+		{'M',  5,    0},
+		{'A', 15, 0x28},
+		{'B',  8, 0xa0},
+		{'V',  2, 0xe8},
+	};
+
+	for (i = 0; i < ARRAY_SIZE(pads); i++) {
+		uint8_t j;
+
+		for (j = 0; j < pads[i].count; j++)
+			show_pinmux(pads[i].name, j, pads[i].base_offset);
+	}
 
 	ccprintf("\n");
 
