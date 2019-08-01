@@ -14,8 +14,6 @@
 #include "common.h"
 #include "console.h"
 #include "driver/accelgyro_bmi160.h"
-#include "driver/als_tcs3400.h"
-#include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/rt946x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/mt6370.h"
@@ -48,11 +46,6 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(0 /* port */);
 }
 
-static void gauge_interrupt(enum gpio_signal signal)
-{
-	task_wake(TASK_ID_CHARGER);
-}
-
 #include "gpio_list.h"
 
 /******************************************************************************/
@@ -68,16 +61,10 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 /******************************************************************************/
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"charger",   I2C_PORT_CHARGER,   400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"tcpc0",     I2C_PORT_TCPC0,     400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"battery",   I2C_PORT_BATTERY,   400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-	{"accelgyro", I2C_PORT_ACCEL,     400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-	{"bc12",      I2C_PORT_BC12,      400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-	{"als",       I2C_PORT_ALS,       400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
+	{"typec", 0, 400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
+	{"other", 1, 100, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
-#define BC12_I2C_ADDR_FLAGS PI3USB9201_I2C_ADDR_3_FLAGS
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -121,17 +108,6 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-static void board_pogo_charge_init(void)
-{
-	int i;
-
-	/* Initialize all charge suppliers to 0 */
-	for (i = 0; i < CHARGE_SUPPLIER_COUNT; i++)
-		charge_manager_update_charge(i, CHARGE_PORT_POGO, NULL);
-}
-DECLARE_HOOK(HOOK_INIT, board_pogo_charge_init,
-	     HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
-
 static int force_discharge;
 
 int board_set_active_charge_port(int charge_port)
@@ -147,12 +123,6 @@ int board_set_active_charge_port(int charge_port)
 		/* Don't charge from a source port */
 		if (board_vbus_source_enabled(charge_port))
 			return -1;
-		gpio_set_level(GPIO_EN_POGO_CHARGE_L, 1);
-		gpio_set_level(GPIO_EN_USBC_CHARGE_L, 0);
-		break;
-	case CHARGE_PORT_POGO:
-		gpio_set_level(GPIO_EN_USBC_CHARGE_L, 1);
-		gpio_set_level(GPIO_EN_POGO_CHARGE_L, 0);
 		break;
 	case CHARGE_PORT_NONE:
 		/*
@@ -160,8 +130,6 @@ int board_set_active_charge_port(int charge_port)
 		 * even when battery is disconnected, keep VBAT rail on but
 		 * set the charging current to minimum.
 		 */
-		gpio_set_level(GPIO_EN_POGO_CHARGE_L, 1);
-		gpio_set_level(GPIO_EN_USBC_CHARGE_L, 1);
 		charger_set_current(0);
 		break;
 	default:
@@ -213,7 +181,7 @@ int extpower_is_present(void)
 	else
 		usb_c_extpower_present = tcpm_get_vbus_level(CHARGE_PORT_USB_C);
 
-	return usb_c_extpower_present || gpio_get_level(GPIO_POGO_VBUS_PRESENT);
+	return usb_c_extpower_present;
 }
 
 int pd_snk_is_vbus_provided(int port)
@@ -260,57 +228,20 @@ static void board_init(void)
 	/* Enable interrupt from PMIC. */
 	gpio_enable_interrupt(GPIO_PMIC_EC_RESETB);
 
-	/* Enable gauge interrupt from max17055 */
-	gpio_enable_interrupt(GPIO_GAUGE_INT_ODL);
-
 	/* Enable pogo interrupt */
 	gpio_enable_interrupt(GPIO_POGO_ADC_INT_L);
 
-	if (IS_ENABLED(BOARD_KRANE)) {
-		/* Display bias settings. */
-		mt6370_db_set_voltages(6000, 5800, 5800);
-
-		/*
-		 * Fix backlight led maximum current:
-		 * tolerance 120mA * 0.75 = 90mA.
-		 * (b/133655155)
-		 */
-		mt6370_backlight_set_dim(MT6370_BLDIM_DEFAULT * 3 / 4);
-	}
-
-	/* Enable pogo charging signal */
-	gpio_enable_interrupt(GPIO_POGO_VBUS_PRESENT);
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-static void board_rev_init(void)
-{
-	/* Board revision specific configs. */
+	/* Display bias settings. */
+	mt6370_db_set_voltages(6000, 5800, 5800);
 
 	/*
-	 * It's a P1 pin BOOTBLOCK_MUX_OE, also a P2 pin BC12_DET_EN.
-	 * Keep this pin defaults to P1 setting since that eMMC enabled with
-	 * High-Z stat.
+	 * Fix backlight led maximum current:
+	 * tolerance 120mA * 0.75 = 90mA.
+	 * (b/133655155)
 	 */
-	if (IS_ENABLED(BOARD_KUKUI) && board_get_version() == 1)
-		gpio_set_flags(GPIO_BC12_DET_EN, GPIO_ODR_HIGH);
-
-	if (board_get_version() >= 2) {
-		/*
-		 * Enable MT6370 DB_POSVOUT/DB_NEGVOUT (controlled by _EN pins).
-		 */
-		mt6370_db_external_control(1);
-	}
-
-	if (board_get_version() == 2) {
-		/* configure PI3USB9201 to USB Path ON Mode */
-		i2c_write8(I2C_PORT_BC12, BC12_I2C_ADDR_FLAGS,
-			   PI3USB9201_REG_CTRL_1,
-			   (PI3USB9201_USB_PATH_ON <<
-			    PI3USB9201_REG_CTRL_1_MODE_SHIFT));
-	}
+	mt6370_backlight_set_dim(MT6370_BLDIM_DEFAULT * 3 / 4);
 }
-DECLARE_HOOK(HOOK_INIT, board_rev_init, HOOK_PRIO_INIT_ADC + 1);
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 /* Motion sensors */
 /* Mutexes */
@@ -319,52 +250,12 @@ static struct mutex g_lid_mutex;
 
 static struct bmi160_drv_data_t g_bmi160_data;
 
-static struct als_drv_data_t g_tcs3400_data = {
-	.als_cal.scale = 1,
-	.als_cal.uscale = 0,
-	.als_cal.offset = 0,
-};
-
-static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
-	.device_scale = 1,
-	.device_uscale = 0,
-	.rgb_cal[X] = {
-		.scale = ALS_CHANNEL_SCALE(1),
-		.offset = 0,
-	},
-	.rgb_cal[Y] = {
-		.scale = ALS_CHANNEL_SCALE(1),
-		.offset = 0,
-	},
-	.rgb_cal[Z] = {
-		.scale = ALS_CHANNEL_SCALE(1),
-		.offset = 0,
-	},
-};
-
 /* Matrix to rotate accelerometer into standard reference frame */
-#ifdef BOARD_KUKUI
 static const mat33_fp_t lid_standard_ref = {
 	{FLOAT_TO_FP(1), 0, 0},
 	{0, FLOAT_TO_FP(1), 0},
 	{0, 0, FLOAT_TO_FP(1)}
 };
-#else
-static const mat33_fp_t lid_standard_ref = {
-	{0, FLOAT_TO_FP(-1), 0},
-	{FLOAT_TO_FP(1), 0, 0},
-	{0, 0, FLOAT_TO_FP(1)}
-};
-#endif /* BOARD_KUKUI */
-
-#ifdef CONFIG_MAG_BMI160_BMM150
-/* Matrix to rotate accelrator into standard reference frame */
-static const mat33_fp_t mag_standard_ref = {
-	{0, FLOAT_TO_FP(-1), 0},
-	{FLOAT_TO_FP(-1), 0, 0},
-	{0, 0, FLOAT_TO_FP(-1)}
-};
-#endif /* CONFIG_MAG_BMI160_BMM150 */
 
 struct motion_sensor_t motion_sensors[] = {
 	/*
@@ -411,59 +302,6 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
-#ifdef CONFIG_MAG_BMI160_BMM150
-	[LID_MAG] = {
-	 .name = "Lid Mag",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
-	 .type = MOTIONSENSE_TYPE_MAG,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &bmi160_drv,
-	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_ACCEL,
-	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	 .default_range = BIT(11), /* 16LSB / uT, fixed */
-	 .rot_standard_ref = &mag_standard_ref,
-	 .min_frequency = BMM150_MAG_MIN_FREQ,
-	 .max_frequency = BMM150_MAG_MAX_FREQ(SPECIAL),
-	},
-#endif /* CONFIG_MAG_BMI160_BMM150 */
-	[CLEAR_ALS] = {
-	 .name = "Clear Light",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_TCS3400,
-	 .type = MOTIONSENSE_TYPE_LIGHT,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &tcs3400_drv,
-	 .drv_data = &g_tcs3400_data,
-	 .port = I2C_PORT_ALS,
-	 .i2c_spi_addr_flags = TCS3400_I2C_ADDR_FLAGS,
-	 .rot_standard_ref = NULL,
-	 .default_range = 0x10000, /* scale = 1x, uscale = 0 */
-	 .min_frequency = TCS3400_LIGHT_MIN_FREQ,
-	 .max_frequency = TCS3400_LIGHT_MAX_FREQ,
-	 .config = {
-		 /* Run ALS sensor in S0 */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 1000,
-		},
-	 },
-	},
-	[RGB_ALS] = {
-	.name = "RGB Light",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_TCS3400,
-	 .type = MOTIONSENSE_TYPE_LIGHT_RGB,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &tcs3400_rgb_drv,
-	 .drv_data = &g_tcs3400_rgb_data,
-	 /*.port = I2C_PORT_ALS,*/ /* Unused. RGB channels read by CLEAR_ALS. */
-	 .rot_standard_ref = NULL,
-	 .default_range = 0x10000, /* scale = 1x, uscale = 0 */
-	 .min_frequency = 0, /* 0 indicates we should not use sensor directly */
-	 .max_frequency = 0, /* 0 indicates we should not use sensor directly */
-	},
 	[VSYNC] = {
 	 .name = "Camera vsync",
 	 .active_mask = SENSOR_ACTIVE_S0,
@@ -477,9 +315,6 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-const struct motion_sensor_t *motion_als_sensors[] = {
-	&motion_sensors[CLEAR_ALS],
-};
 #endif /* SECTION_IS_RW */
 
 void usb_charger_set_switches(int port, enum usb_switch setting)
