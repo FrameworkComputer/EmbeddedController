@@ -36,15 +36,12 @@ void mt6370_charger_profile_override(struct charge_state_data *curr)
 			charge_get_percent() > BAT_LEVEL_PD_LIMIT &&
 			curr->batt.current < 1000) {
 		chg_limit_mv = 5500;
-	} else if (IS_ENABLED(BOARD_KRANE) &&
-			board_get_version() == 3 &&
-			power_get_state() == POWER_S0) {
+	} else if (power_get_state() == POWER_S0) {
 		/*
-		 * TODO(b:134227872): limit power to 5V/2A in S0 to prevent
+		 * b/134227872: limit power to 5V/2A in S0 to prevent
 		 * overheat
 		 */
 		chg_limit_mv = 5500;
-		curr->requested_current = 2000;
 	} else {
 		chg_limit_mv = PD_MAX_VOLTAGE_MV;
 	}
