@@ -9,6 +9,7 @@
 #define __CROS_EC_COMMON_H
 
 #include <stdint.h>
+#include "compile_time_macros.h"
 
 /*
  * Macros to concatenate 2 - 4 tokens together to form a single token.
@@ -273,6 +274,41 @@ enum ec_error_list {
 #define __fls(n) (31 - __builtin_clz(n))
 
 /*
+ * __cfg_select(CONFIG_NAME, EMPTY, OTHERWISE) is a macro used for
+ * defining other macros which conditionally select code based on a
+ * config option. It will generate the argument passed as EMPTY
+ * when CONFIG_NAME was defined to the empty string, and OTHERWISE
+ * when the argument was not defined or defined to something
+ * non-empty.
+ *
+ * Generally speaking, macros which use this should make some sort of
+ * context-dependent assertion in OTHERWISE that CONFIG_NAME is
+ * undefined, rather than defined to something else. This usually
+ * involves tricks with __builtin_strcmp.
+ */
+#define __cfg_select(cfg, empty, otherwise)     \
+	__cfg_select_1(cfg, empty, otherwise)
+#define __cfg_select_placeholder_ _,
+#define __cfg_select_1(value, empty, otherwise)			  \
+	__cfg_select_2(__cfg_select_placeholder_##value, empty, otherwise)
+#define __cfg_select_2(arg1_or_junk, empty, otherwise)		\
+	__cfg_select_3(arg1_or_junk _, empty, otherwise)
+#define __cfg_select_3(_ignore1, _ignore2, select, ...) select
+
+/*
+ * This version concatenates a BUILD_ASSERT(...); before OTHERWISE,
+ * handling the __builtin_strcmp trickery where a BUILD_ASSERT is
+ * appropriate in the context.
+ */
+#define __cfg_select_build_assert(cfg, value, empty, undef)	\
+	__cfg_select(						\
+		value,						\
+		empty,						\
+		BUILD_ASSERT(					\
+			__builtin_strcmp(cfg, #value) == 0);	\
+		undef)
+
+/*
  * Attribute for generating an error if a function is used.
  *
  * Clang does not have a function attribute to do this. Rely on linker
@@ -286,26 +322,18 @@ enum ec_error_list {
 
 /*
  * Getting something that works in C and CPP for an arg that may or may
- * not be defined is tricky.  Here, if we have "#define CONFIG_FOO"
- * we match on the placeholder define, insert the "_, 1," for arg1 and generate
- * the triplet (_, 1, _, (...)).  Then the last step cherry picks the 2nd arg
- * (a one).
- * When CONFIG_FOO is not defined, we generate a (_, (...)) pair, and when
- * the last step cherry picks the 2nd arg, we get a code block that verifies
- * the value of the option. Since the preprocessor won't replace an unknown
- * token, we compare the option name with the value string. If they are
- * identical we assume that the value was undefined and return 0. If the value
- * happens to be anything else we call an undefined method that will raise
- * a compiler error. This technique requires that the optimizer be enabled so it
- * can remove the undefined function call.
+ * not be defined is tricky.
  *
+ * Compare the option name with the value string in the OTHERWISE to
+ * __cfg_select. If they are identical we assume that the value was
+ * undefined and return 0. If the value happens to be anything else we
+ * call an undefined method that will raise a compiler error. This
+ * technique requires that the optimizer be enabled so it can remove
+ * the undefined function call.
  */
-#define __ARG_PLACEHOLDER_ _, 1,
-#define _config_enabled(cfg, value) \
-	__config_enabled(__ARG_PLACEHOLDER_##value, cfg, value)
-#define __config_enabled(arg1_or_junk, cfg, value)			      \
-	___config_enabled(						      \
-		arg1_or_junk _, ({					      \
+#define __config_enabled(cfg, value)					      \
+	__cfg_select(							      \
+		value, 1, ({						      \
 			int __undefined = __builtin_strcmp(cfg, #value) == 0; \
 			extern int IS_ENABLED_BAD_ARGS(void) __error(	      \
 				cfg " must be <blank>, or not defined.");     \
@@ -313,7 +341,6 @@ enum ec_error_list {
 				IS_ENABLED_BAD_ARGS();			      \
 			0;						      \
 		}))
-#define ___config_enabled(__ignored, val, ...) val
 
 /**
  * Checks if a config option is enabled or disabled
@@ -329,6 +356,28 @@ enum ec_error_list {
  * Note: This macro will only function inside a code block due to the way
  * it checks for unknown values.
  */
-#define IS_ENABLED(option) _config_enabled(#option, option)
+#define IS_ENABLED(option) __config_enabled(#option, option)
+
+/**
+ * Makes a global variable static when a config option is enabled,
+ * extern otherwise (with the intention to cause linker errors if the
+ * variable is used outside of a config context, for example thru
+ * IS_ENABLED, that it should be).
+ *
+ * This follows the same constraints as IS_ENABLED, the config option
+ * should be defined to nothing or undefined.
+ */
+#define STATIC_IF(option)						\
+	__cfg_select_build_assert(#option, option, static, extern)
+
+/**
+ * STATIC_IF_NOT is just like STATIC_IF, but makes the variable static
+ * only if the config option is *not* defined, extern if it is.
+ *
+ * This is to assert that a variable will go unused with a certain
+ * config option.
+ */
+#define STATIC_IF_NOT(option)						\
+	__cfg_select_build_assert(#option, option, extern, static)
 
 #endif  /* __CROS_EC_COMMON_H */
