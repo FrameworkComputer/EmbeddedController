@@ -141,7 +141,7 @@ static void vboot_hash_next_chunk(void)
 	if (curr_pos >= data_size) {
 		/* Store the final hash */
 		hash = SHA256_final(&ctx);
-		CPRINTS("hash done %.*h", SHA256_PRINT_SIZE, hash);
+		CPRINTS("hash done %ph", HEX_BUF(hash, SHA256_PRINT_SIZE));
 
 		in_progress = 0;
 
@@ -331,7 +331,7 @@ static int command_hash(int argc, char **argv)
 		else if (in_progress)
 			ccprintf("(in progress)\n");
 		else if (hash)
-			ccprintf("%.*h\n", SHA256_DIGEST_SIZE, hash);
+			ccprintf("%ph\n", HEX_BUF(hash, SHA256_DIGEST_SIZE));
 		else
 			ccprintf("(invalid)\n");
 

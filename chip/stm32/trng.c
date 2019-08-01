@@ -111,7 +111,7 @@ static int command_rand(int argc, char **argv)
 	rand_bytes(data, sizeof(data));
 	exit_trng();
 
-	ccprintf("rand %.*h\n", sizeof(data), data);
+	ccprintf("rand %ph\n", HEX_BUF(data, sizeof(data)));
 
 	return EC_SUCCESS;
 }

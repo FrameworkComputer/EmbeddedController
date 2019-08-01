@@ -714,7 +714,7 @@ static int command_ccd_info(void)
 	ccprintf("Password: %s\n", raw_has_password() ? "set" : "none");
 	ccprintf("Flags: 0x%06x\n", raw_get_flags());
 
-	ccprintf("Capabilities: %.8h\n", config.capabilities);
+	ccprintf("Capabilities: %ph\n", HEX_BUF(config.capabilities, 8));
 	for (i = 0; i < CCD_CAP_COUNT; i++) {
 		int c = raw_get_cap(i, 0);
 

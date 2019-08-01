@@ -282,7 +282,7 @@ static int basic_check(struct test_info *pinfo)
 	int i;
 	uint32_t *p;
 
-	ccprintf("original data  %.16h\n", pinfo->p);
+	ccprintf("original data  %ph\n", HEX_BUF(pinfo->p, 16));
 
 	half = (pinfo->test_blob_size/2) & ~3;
 	if (!DCRYPTO_app_cipher(NVMEM, pinfo->p, pinfo->p,
@@ -301,7 +301,7 @@ static int basic_check(struct test_info *pinfo)
 			return EC_ERROR_UNKNOWN;
 		}
 
-	ccprintf("hashed data    %.16h\n", pinfo->p);
+	ccprintf("hashed data    %ph\n", HEX_BUF(pinfo->p, 16));
 
 	return EC_SUCCESS;
 }
@@ -407,7 +407,7 @@ static void run_cipher_cmd(void)
 		report_stats("Encryption", &info.enc_stats);
 		report_stats("Decryption", &info.dec_stats);
 	} else if (info.p) {
-		ccprintf("current data   %.16h\n", info.p);
+		ccprintf("current data   %ph\n", HEX_BUF(info.p, 16));
 	}
 
 	if (info.p)

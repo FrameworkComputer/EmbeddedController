@@ -40,10 +40,6 @@
  * Type may be:
  *   - 'c' - character
  *   - 's' - null-terminated ASCII string
- *   - 'h' - binary data, print as hex; precision is length of data in bytes.
- *           So "%.8h" prints 8 bytes of binary data
- *   - 'pP'- raw pointer. %p followed by another character represents a %p
- *           extension.
  *   - 'd' - signed integer
  *   - 'i' - signed integer if CONFIG_PRINTF_LEGACY_LI_FORMAT is set (ignore l)
  *   - 'u' - unsigned integer
@@ -52,6 +48,9 @@
  *   - 'b' - unsigned integer, print as binary
  *
  * Special format codes:
+ *   - '%ph' - binary data, print as hex; Use HEX_BUF(buffer, size) to encode
+ *             parameters.
+ *   - '%pP' - raw pointer.
  *   - "%pT" - current time in seconds - interpreted as "%.6T" for precision.
  *           Supply PRINTF_TIMESTAMP_NOW to use the current time, or supply a
  *           pointer to a 64-bit timestamp to print.

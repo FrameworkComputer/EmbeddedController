@@ -10,6 +10,22 @@
 
 #include "common.h"
 
+/*
+ * The EC code base has been using %h to print a hex buffer. Encode the
+ * parameters to do that in a pointer to a structure that's passed as the
+ * printf argument. This is done rather than something like %.123ph because
+ * the C standard doesn't allow flags, precision, and field width on %p.
+ */
+struct hex_buffer_params {
+	const void *buffer;
+	uint16_t size;
+};
+
+#define HEX_BUF(_buffer, _size) (&(const struct hex_buffer_params){ \
+	.buffer = (_buffer), \
+	.size = (_size) \
+})
+
 #define PRINTF_TIMESTAMP_NOW NULL
 
 /* Console command; used by DECLARE_CONSOLE_COMMAND macro. */

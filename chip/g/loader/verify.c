@@ -103,7 +103,7 @@ void LOADERKEY_verify(const uint32_t *key, const uint32_t *signature,
 	int i;
 
 	modpow3(key, signature, buf);
-	VERBOSE("sig %.384h\n", buf);
+	VERBOSE("sig %ph\n", HEX_BUF(buf, 384));
 
 	/*
 	 * If key was not 3Kb, assume 2Kb and expand for subsequent
@@ -142,12 +142,12 @@ void LOADERKEY_verify(const uint32_t *key, const uint32_t *signature,
 		offset = (offset + step) % SHA256_DIGEST_WORDS;
 	}
 
-	VERBOSE("\nsig^ %.384h\n\n", buf);
+	VERBOSE("\nsig^ %ph\n\n", HEX_BUF(buf, 384));
 
 	/* Hash resulting buffer. */
 	DCRYPTO_SHA256_hash((uint8_t *) buf, RSA_NUM_BYTES, (uint8_t *) hash);
 
-	VERBOSE("hash %.32h\n", hash);
+	VERBOSE("hash %ph\n", HEX_BUF(hash, 32));
 
 	/*
 	 * Write computed hash to unlock register to unlock execution, iff

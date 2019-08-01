@@ -79,7 +79,7 @@ void tryLaunch(uint32_t adr, size_t max_size)
 			hdr->image_size - offsetof(struct SignedHeader, tag),
 			(uint8_t *) hashes.img_hash);
 
-	VERBOSE("img_hash  : %.32h\n", hashes.img_hash);
+	VERBOSE("img_hash  : %ph\n", HEX_BUF(hashes.img_hash, 32));
 
 	/* Sense fuses into RAM array; hash array. */
 	/* TODO: is this glitch resistant enough? Certainly is simple.. */
@@ -104,7 +104,7 @@ void tryLaunch(uint32_t adr, size_t max_size)
 	DCRYPTO_SHA256_hash((uint8_t *) fuses, sizeof(fuses),
 			(uint8_t *) hashes.fuses_hash);
 
-	VERBOSE("fuses_hash: %.32h\n", hashes.fuses_hash);
+	VERBOSE("fuses_hash: %ph\n", HEX_BUF(hashes.fuses_hash, 32));
 
 	/* Sense info into RAM array; hash array. */
 	for (i = 0; i < INFO_MAX; ++i)
@@ -122,7 +122,7 @@ void tryLaunch(uint32_t adr, size_t max_size)
 
 	DCRYPTO_SHA256_hash((uint8_t *) info, sizeof(info),
 			(uint8_t *) hashes.info_hash);
-	VERBOSE("info_hash : %.32h\n", hashes.info_hash);
+	VERBOSE("info_hash : %ph\n", HEX_BUF(hashes.info_hash, 32));
 
 	/* Hash our set of hashes to get final hash. */
 	DCRYPTO_SHA256_hash((uint8_t *) &hashes, sizeof(hashes),

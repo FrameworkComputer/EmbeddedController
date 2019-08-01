@@ -666,8 +666,9 @@ static void host_command_debug_request(struct host_cmd_handler_args *args)
 	}
 
 	if (hcdebug >= HCDEBUG_PARAMS && args->params_size)
-		CPRINTS("HC 0x%02x.%d:%.*h", args->command,
-			args->version, args->params_size, args->params);
+		CPRINTS("HC 0x%02x.%d:%ph", args->command,
+			args->version,
+			HEX_BUF(args->params, args->params_size));
 	else
 		CPRINTS("HC 0x%02x", args->command);
 }
@@ -711,8 +712,8 @@ uint16_t host_command_process(struct host_cmd_handler_args *args)
 		CPRINTS("HC 0x%02x err %d", args->command, rv);
 
 	if (hcdebug >= HCDEBUG_PARAMS && args->response_size)
-		CPRINTS("HC resp:%.*h", args->response_size,
-			args->response);
+		CPRINTS("HC resp:%ph",
+			HEX_BUF(args->response, args->response_size));
 
 	return rv;
 }
@@ -892,7 +893,8 @@ static int command_host_command(int argc, char **argv)
 	if (res != EC_RES_SUCCESS)
 		ccprintf("Command returned %d\n", res);
 	else if (args.response_size)
-		ccprintf("Response: %.*h\n", args.response_size, cmd_params);
+		ccprintf("Response: %ph\n",
+			 HEX_BUF(cmd_params, args.response_size));
 	else
 		ccprintf("Command succeeded; no response.\n");
 

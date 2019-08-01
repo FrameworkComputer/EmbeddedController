@@ -253,11 +253,9 @@ test_static int test_vsnprintf_hexdump(void)
 {
 	const char bytes[] = {0x00, 0x5E};
 
-	T(expect_success(err_str,     "%h",      bytes));
-	T(expect_success("005e",      "%.*h",    2, bytes));
-	T(expect_success("",          "%.*h",    0, bytes));
-	T(expect_success(" 005e",     "%5.*h",   2, bytes));
-	T(expect_success("00",        "%0*.*h",  2, 0, bytes));
+	T(expect_success("005e",      "%ph",      HEX_BUF(bytes, 2)));
+	T(expect_success("",          "%ph",      HEX_BUF(bytes, 0)));
+	T(expect_success("00",        "%ph",      HEX_BUF(bytes, 1)));
 	return EC_SUCCESS;
 }
 

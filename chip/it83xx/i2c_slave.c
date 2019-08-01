@@ -173,8 +173,9 @@ void i2c_slave_read_write_data(int port)
 			 * TODO(b:129360157): Handle master write
 			 * data by "in_data" array.
 			 */
-					CPRINTS("WData: %.*h",
-					I2C_MAX_BUFFER_SIZE, in_data[idx]);
+					CPRINTS("WData: %ph",
+						HEX_BUF(in_data[idx],
+							I2C_MAX_BUFFER_SIZE));
 					wr_done[idx] = 0;
 				}
 			}

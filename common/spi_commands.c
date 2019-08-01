@@ -46,7 +46,7 @@ static int command_spixfer(int argc, char **argv)
 		rv = spi_transaction(&spi_devices[dev_id], &cmd, 1, data, v);
 
 		if (!rv)
-			ccprintf("Data: %.*h\n", v, data);
+			ccprintf("Data: %ph\n", HEX_BUF(data, v));
 
 	} else if (strcasecmp(argv[1], "w") == 0) {
 		/* 8-bit write */

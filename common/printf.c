@@ -5,6 +5,7 @@
 
 /* Printf-like functionality for Chrome EC */
 
+#include "console.h"
 #include "printf.h"
 #include "timer.h"
 #include "util.h"
@@ -18,6 +19,7 @@ static inline int divmod(uint64_t *n, int d)
 {
 	return uint64divmod(n, d);
 }
+
 #else /* CONFIG_DEBUG_PRINTF */
 /* if we are optimizing for size, remove the 64-bit support */
 #define NO_UINT64_SUPPORT
@@ -48,7 +50,55 @@ static int hexdigit(int c)
 #define PF_LEFT		BIT(0)  /* Left-justify */
 #define PF_PADZERO	BIT(1)  /* Pad with 0's not spaces */
 #define PF_SIGN		BIT(2)  /* Add sign (+) for a positive number */
+
+/* Deactivate the PF_64BIT flag is 64-bit support is disabled. */
+#ifdef NO_UINT64_SUPPORT
+#define PF_64BIT	0
+#else
 #define PF_64BIT	BIT(3)  /* Number is 64-bit */
+#endif
+
+/*
+ * Print the buffer as a string of bytes in hex.
+ * Returns 0 on success or an error on failure.
+ */
+static int print_hex_buffer(int (*addchar)(void *context, int c),
+			    void *context, const char *vstr, int precision,
+			    int pad_width, int flags)
+
+{
+
+	/*
+	 * Divide pad_width instead of multiplying precision to avoid overflow
+	 * error in the condition. The "/2" and "2*" can be optimized by
+	 * the compiler.
+	 */
+
+	if ((pad_width / 2) >= precision)
+		pad_width -= 2 * precision;
+	else
+		pad_width = 0;
+
+	while (pad_width > 0 && !(flags & PF_LEFT)) {
+		if (addchar(context, flags & PF_PADZERO ? '0' : ' '))
+			return EC_ERROR_OVERFLOW;
+		pad_width--;
+	}
+
+	for (; precision; precision--, vstr++) {
+		if (addchar(context, hexdigit(*vstr >> 4)) ||
+		    addchar(context, hexdigit(*vstr)))
+			return EC_ERROR_OVERFLOW;
+	}
+
+	while (pad_width > 0 && (flags & PF_LEFT)) {
+		if (addchar(context, ' '))
+			return EC_ERROR_OVERFLOW;
+		pad_width--;
+	}
+
+	return EC_SUCCESS;
+}
 
 int vfnprintf(int (*addchar)(void *context, int c), void *context,
 	      const char *format, va_list args)
@@ -162,54 +212,14 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			vstr = va_arg(args, char *);
 			if (vstr == NULL)
 				vstr = "(NULL)";
-		} else if (c == 'h') {
-			/* Hex dump output */
-			vstr = va_arg(args, char *);
 
-			if (precision < 0) {
-				/* Hex dump requires precision */
-				format = error_str;
-				continue;
-			}
-
-			/*
-			 * Divide pad_width instead of multiplying
-			 * precision to avoid overflow error
-			 * in the condition.
-			 * The "/2" and "2*" can be optimized by
-			 * the compiler.
-			 */
-			if ((pad_width/2) >= precision)
-				pad_width -= 2*precision;
-			else
-				pad_width = 0;
-
-			while (pad_width > 0 && !(flags & PF_LEFT)) {
-				if (addchar(context,
-					    flags & PF_PADZERO ? '0' : ' '))
-					return EC_ERROR_OVERFLOW;
-				pad_width--;
-			}
-			for (; precision; precision--, vstr++) {
-				if (addchar(context, hexdigit(*vstr >> 4)) ||
-				    addchar(context, hexdigit(*vstr)))
-					return EC_ERROR_OVERFLOW;
-			}
-			while (pad_width > 0 && (flags & PF_LEFT)) {
-				if (addchar(context, ' '))
-					return EC_ERROR_OVERFLOW;
-				pad_width--;
-			}
-
-			continue;
 		} else {
 			int base = 10;
 #ifdef NO_UINT64_SUPPORT
 			uint32_t v;
-
-			v = va_arg(args, uint32_t);
-#else /* NO_UINT64_SUPPORT */
+#else
 			uint64_t v;
+#endif
 			int ptrspec;
 			void *ptrval;
 
@@ -223,7 +233,8 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				ptrspec = *format++;
 				ptrval = va_arg(args, void *);
 				/* %pT - print a timestamp. */
-				if (ptrspec == 'T') {
+				if (ptrspec == 'T' &&
+				    !IS_ENABLED(NO_UINT64_SUPPORT)) {
 					flags |= PF_64BIT;
 					/* NULL uses the current time. */
 					if (ptrval == NULL)
@@ -239,8 +250,26 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 						v /= 1000;
 					}
 
+				} else if (ptrspec == 'h') {
+					/* %ph - Print a hex byte buffer. */
+					struct hex_buffer_params *hexbuf =
+						ptrval;
+					int rc;
+
+					rc = print_hex_buffer(addchar,
+							      context,
+							      hexbuf->buffer,
+							      hexbuf->size,
+							      0,
+							      0);
+
+					if (rc != EC_SUCCESS)
+						return rc;
+
+					continue;
+
 				} else if (ptrspec == 'P') {
-					/* Print a raw pointer. */
+					/* %pP - Print a raw pointer. */
 					v = (unsigned long)ptrval;
 					if (sizeof(unsigned long) ==
 					    sizeof(uint64_t))
@@ -255,7 +284,6 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			} else {
 				v = va_arg(args, uint32_t);
 			}
-#endif
 
 			switch (c) {
 #ifdef CONFIG_PRINTF_LEGACY_LI_FORMAT

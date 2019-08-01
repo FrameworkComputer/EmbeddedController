@@ -202,7 +202,7 @@ static int cmd_rfc6979(int argc, char **argv)
 	hmac_drbg_init_rfc6979(&drbg, x, &h1);
 	do {
 		hmac_drbg_generate_p256(&drbg, &k);
-		ccprintf("K = %.32h\n", &k);
+		ccprintf("K = %ph\n", HEX_BUF(&k, 32));
 	} while (p256_cmp(&SECP256r1_nMin2, &k) < 0);
 	drbg_exit(&drbg);
 	result = p256_cmp(&k, reference_k);
