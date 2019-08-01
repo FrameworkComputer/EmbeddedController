@@ -160,6 +160,18 @@ enum pd_rx_errors {
 
 #define BDO(mode, cnt)      ((mode) | ((cnt) & 0xFFFF))
 
+#define BIST_MODE(n)          ((n) >> 28)
+#define BIST_ERROR_COUNTER(n) ((n) & 0xffff)
+#define BIST_RECEIVER_MODE    0
+#define BIST_TRANSMIT_MODE    1
+#define BIST_RETURNED_COUNTER 2
+#define BIST_CARRIER_MODE_0   3
+#define BIST_CARRIER_MODE_1   4
+#define BIST_CARRIER_MODE_2   5
+#define BIST_CARRIER_MODE_3   6
+#define BIST_EYE_PATTERN      7
+#define BIST_TEST_DATA        8
+
 #define SVID_DISCOVERY_MAX 16
 
 /* Timers */
@@ -190,6 +202,7 @@ enum pd_rx_errors {
 #define PD_T_NO_RESPONSE     (5500*MSEC) /* between 4.5s and 5.5s */
 #define PD_T_BIST_TRANSMIT     (50*MSEC) /* 50ms (used for task_wait arg) */
 #define PD_T_BIST_RECEIVE      (60*MSEC) /* 60ms (max time to process bist) */
+#define PD_T_BIST_CONT_MODE    (60*MSEC) /* 30ms to 60ms */
 #define PD_T_VCONN_SOURCE_ON  (100*MSEC) /* 100ms */
 #define PD_T_DRP_TRY          (125*MSEC) /* btween 75 and 150ms(monitor Vbus) */
 #define PD_T_TRY_TIMEOUT      (550*MSEC) /* between 550ms and 1100ms */
@@ -201,6 +214,8 @@ enum pd_rx_errors {
 #define PD_T_SWAP_SOURCE_START     (25*MSEC) /* Min of 20ms */
 #define PD_T_RP_VALUE_CHANGE       (20*MSEC) /* 20ms */
 #define PD_T_SRC_DISCONNECT        (15*MSEC) /* 15ms */
+#define PD_T_VCONN_STABLE          (50*MSEC) /* 50ms */
+#define PD_T_DISCOVER_IDENTITY     (45*MSEC) /* between 40ms and 50ms */
 
 /* number of edges and time window to detect CC line is not idle */
 #define PD_RX_TRANSITION_COUNT  3
@@ -308,7 +323,7 @@ struct pd_policy {
  * VDO : Vendor Defined Message Object
  * VDM object is minimum of VDM header + 6 additional data objects.
  */
-
+#define VDO_HDR_SIZE 1
 #define VDO_MAX_SIZE 7
 
 #define VDM_VER10 0
@@ -784,6 +799,11 @@ struct pd_cable {
 #define PD_VDO_SVID_SVID0(vdo) ((vdo) >> 16)
 #define PD_VDO_SVID_SVID1(vdo) ((vdo) & 0xffff)
 
+#define VPD_VDO_MAX_VBUS(vdo) (((vdo) >> 15) & 0x3)
+#define VPD_VDO_VBUS_IMP(vdo) (((vdo) >> 7) & 0x3f)
+#define VPD_VDO_GND_IMP(vdo)  (((vdo) >> 1) & 0x3f)
+#define VPD_VDO_CTS(vdo)      ((vdo) & 1)
+
 /*
  * Google modes capabilities
  * <31:8> : reserved
@@ -936,6 +956,8 @@ struct pd_cable {
 
 /* Other Vendor IDs */
 #define USB_VID_APPLE  0x05ac
+#define USB_PID1_APPLE 0x1012
+#define USB_PID2_APPLE 0x1013
 
 /* Timeout for message receive in microseconds */
 #define USB_PD_RX_TMOUT_US 1800
@@ -1225,15 +1247,22 @@ enum pd_rev_type {
 };
 
 /* Power role */
-#define PD_ROLE_SINK   0
-#define PD_ROLE_SOURCE 1
+enum pd_power_role {
+	PD_ROLE_SINK,
+	PD_ROLE_SOURCE
+};
+
+/* Data role */
+enum pd_data_role {
+	PD_ROLE_UFP,
+	PD_ROLE_DFP,
+	PD_ROLE_DISCONNECTED
+};
+
 /* Cable plug */
 #define PD_PLUG_DFP_UFP   0
 #define PD_PLUG_CABLE_VPD 1
-/* Data role */
-#define PD_ROLE_UFP          0
-#define PD_ROLE_DFP          1
-#define PD_ROLE_DISCONNECTED 2
+
 /* Vconn role */
 #define PD_ROLE_VCONN_OFF 0
 #define PD_ROLE_VCONN_ON  1
@@ -1285,6 +1314,7 @@ enum pd_rev_type {
  */
 #define PD_HEADER_TYPE(header)  ((header) & 0x1F)
 #define PD_HEADER_ID(header)    (((header) >> 9) & 7)
+#define PD_HEADER_PROLE(header) (((header) >> 8) & 1)
 #define PD_HEADER_REV(header)   (((header) >> 6) & 3)
 #define PD_HEADER_DROLE(header) (((header) >> 5) & 1)
 
@@ -1369,17 +1399,6 @@ int pd_get_vdo_ver(int port);
 #define pd_get_rev(n)     PD_REV20
 #define pd_get_vdo_ver(n) VDM_VER10
 #endif
-/**
- * Decide which PDO to choose from the source capabilities.
- *
- * @param port USB-C port number
- * @param rdo  requested Request Data Object.
- * @param ma  selected current limit (stored on success)
- * @param mv  selected supply voltage (stored on success)
- * @param req_type request type
- */
-void pd_build_request(int port, uint32_t *rdo, uint32_t *ma, uint32_t *mv,
-		      enum pd_request_type req_type);
 
 /**
  * Check if max voltage request is allowed (only used if
@@ -1429,26 +1448,6 @@ void pd_prevent_low_power_mode(int port, int prevent);
  * @param src_caps Power Data Objects representing the source capabilities.
  */
 void pd_process_source_cap(int port, int cnt, uint32_t *src_caps);
-
-/**
- * Find PDO index that offers the most amount of power and stays within
- * max_mv voltage.
- *
- * @param port USB-C port number
- * @param max_mv maximum voltage (or -1 if no limit)
- * @param pdo raw pdo corresponding to index, or index 0 on error (output)
- * @return index of PDO within source cap packet
- */
-int pd_find_pdo_index(int port, int max_mv, uint32_t *pdo);
-
-/**
- * Extract power information out of a Power Data Object (PDO)
- *
- * @param pdo raw pdo to extract
- * @param ma current of the PDO (output)
- * @param mv voltage of the PDO (output)
- */
-void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *mv);
 
 /**
  * Reduce the sink power consumption to a minimum value.
@@ -2209,6 +2208,25 @@ int pd_ts_dts_plugged(int port);
  */
 int pd_capable(int port);
 
+/**
+ * Returns the source caps list
+ *
+ * @param port USB-C port number
+ */
+const uint32_t * const pd_get_src_caps(int port);
+
+/**
+ * Returns the number of source caps
+ *
+ * @param port USB-C port number
+ */
+uint8_t pd_get_src_cap_cnt(int port);
+
+/**
+ * Returns the maximum request voltage before receiving a source caps
+ *
+ */
+uint32_t get_max_request_mv(void);
 
 /**
  * Return true if partner port is capable of communication over USB data

@@ -4918,4 +4918,22 @@
 #endif
 #endif /* CONFIG_ACCEL_FIFO */
 
+/*
+ * If USB PD Discharge is enabled, verify that CONFIG_USB_PD_DISCHARGE_GPIO
+ * and CONFIG_USB_PD_PORT_COUNT, CONFIG_USB_PD_DISCHARGE_TCPC, or
+ * CONFIG_USB_PD_DISCHARGE_PPC is defined.
+ */
+#ifdef CONFIG_USB_PD_DISCHARGE
+#ifdef CONFIG_USB_PD_DISCHARGE_GPIO
+#if !defined(CONFIG_USB_PD_PORT_COUNT)
+#error "PD discharge port not defined"
+#endif
+#else
+#if !defined(CONFIG_USB_PD_DISCHARGE_TCPC) && \
+	!defined(CONFIG_USB_PD_DISCHARGE_PPC)
+#error "PD discharge implementation not defined"
+#endif
+#endif /* CONFIG_USB_PD_DISCHARGE_GPIO */
+#endif /* CONFIG_USB_PD_DISCHARGE */
+
 #endif  /* __CROS_EC_CONFIG_H */

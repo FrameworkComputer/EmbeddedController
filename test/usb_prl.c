@@ -102,7 +102,7 @@ static struct pd_prl {
 	int mock_pe_error;
 	int mock_pe_hard_reset_sent;
 	int mock_pe_got_hard_reset;
-	int mock_pe_pass_up_message;
+	int mock_pe_message_received;
 	int mock_got_soft_reset;
 } pd_port[CONFIG_USB_PD_PORT_COUNT];
 
@@ -114,6 +114,7 @@ static void init_port(int port, int rev)
 	pd_port[port].data_role = PD_ROLE_UFP;
 	pd_port[port].msg_tx_id = 0;
 	pd_port[port].msg_rx_id = 0;
+
 	tcpm_init(port);
 	tcpm_set_polarity(port, 0);
 	tcpm_set_rx_enable(port, 0);
@@ -224,7 +225,7 @@ static int verify_data_reception(int port, uint16_t header, int len)
 	if (pd_port[port].mock_pe_error >= 0)
 		return 0;
 
-	if (!pd_port[port].mock_pe_pass_up_message)
+	if (!pd_port[port].mock_pe_message_received)
 		return 0;
 
 	if (emsg[port].header != header)
@@ -255,7 +256,7 @@ static int verify_chunk_data_reception(int port, uint16_t header, int len)
 	if (pd_port[port].mock_got_soft_reset)
 		return 0;
 
-	if (!pd_port[port].mock_pe_pass_up_message)
+	if (!pd_port[port].mock_pe_message_received)
 		return 0;
 
 	if (pd_port[port].mock_pe_error >= 0)
@@ -282,7 +283,7 @@ static int simulate_receive_data(int port, enum pd_data_msg_type msg_type,
 		nw, pd_port[port].rev, 0);
 
 	pd_port[port].mock_pe_error = -1;
-	pd_port[port].mock_pe_pass_up_message = 0;
+	pd_port[port].mock_pe_message_received = 0;
 	emsg[port].header = 0;
 	emsg[port].len = 0;
 	memset(emsg[port].buf, 0, 260);
@@ -322,7 +323,7 @@ static int simulate_receive_extended_data(int port,
 	int req_timeout;
 
 	pd_port[port].mock_pe_error = -1;
-	pd_port[port].mock_pe_pass_up_message = 0;
+	pd_port[port].mock_pe_message_received = 0;
 	emsg[port].header = 0;
 	emsg[port].len = 0;
 	memset(emsg[port].buf, 0, 260);
@@ -354,7 +355,7 @@ static int simulate_receive_extended_data(int port,
 		if (pd_port[port].mock_pe_error >= 0)
 			return 0;
 
-		if (pd_port[port].mock_pe_pass_up_message)
+		if (pd_port[port].mock_pe_message_received)
 			return 0;
 
 		if (emsg[port].len != 0)
@@ -699,9 +700,9 @@ void pe_got_hard_reset(int port)
 	pd_port[port].mock_pe_got_hard_reset = 1;
 }
 
-void pe_pass_up_message(int port)
+void pe_message_received(int port)
 {
-	pd_port[port].mock_pe_pass_up_message = 1;
+	pd_port[port].mock_pe_message_received = 1;
 }
 
 void pe_message_sent(int port)
@@ -719,11 +720,13 @@ void pe_got_soft_reset(int port)
 	pd_port[port].mock_got_soft_reset = 1;
 }
 
-static int test_initial_states(void)
+static int test_prl_reset(void)
 {
 	int port = PORT0;
 
 	enable_prl(port, 1);
+
+	prl_reset(port);
 
 	TEST_ASSERT(prl_tx_get_state(port) ==
 				PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
@@ -733,6 +736,7 @@ static int test_initial_states(void)
 				TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
 	TEST_ASSERT(prl_hr_get_state(port) ==
 				PRL_HR_WAIT_FOR_REQUEST);
+	enable_prl(port, 0);
 
 	return EC_SUCCESS;
 }
@@ -1047,7 +1051,7 @@ static int test_receive_soft_reset_msg(void)
 
 	pd_port[port].mock_got_soft_reset = 0;
 	pd_port[port].mock_pe_error = -1;
-	pd_port[port].mock_pe_pass_up_message = 0;
+	pd_port[port].mock_pe_message_received = 0;
 
 	TEST_ASSERT(simulate_receive_ctrl_msg(port, PD_CTRL_SOFT_RESET));
 
@@ -1058,7 +1062,7 @@ static int test_receive_soft_reset_msg(void)
 
 	TEST_ASSERT(pd_port[port].mock_got_soft_reset);
 	TEST_ASSERT(pd_port[port].mock_pe_error < 0);
-	TEST_ASSERT(pd_port[port].mock_pe_pass_up_message);
+	TEST_ASSERT(pd_port[port].mock_pe_message_received);
 	TEST_ASSERT(expected_header == emsg[port].header);
 	TEST_ASSERT(emsg[port].len == 0);
 
@@ -1090,7 +1094,7 @@ static int test_receive_control_msg(void)
 
 	pd_port[port].mock_got_soft_reset = 0;
 	pd_port[port].mock_pe_error = -1;
-	pd_port[port].mock_pe_pass_up_message = 0;
+	pd_port[port].mock_pe_message_received = 0;
 
 	TEST_ASSERT(simulate_receive_ctrl_msg(port, PD_CTRL_DR_SWAP));
 
@@ -1101,7 +1105,7 @@ static int test_receive_control_msg(void)
 
 	TEST_ASSERT(!pd_port[port].mock_got_soft_reset);
 	TEST_ASSERT(pd_port[port].mock_pe_error < 0);
-	TEST_ASSERT(pd_port[port].mock_pe_pass_up_message);
+	TEST_ASSERT(pd_port[port].mock_pe_message_received);
 	TEST_ASSERT(expected_header == emsg[port].header);
 	TEST_ASSERT(emsg[port].len == 0);
 
@@ -1317,7 +1321,7 @@ void run_test(void)
 
 	/* Test PD 2.0 Protocol */
 	init_port(PORT0, PD_REV20);
-	RUN_TEST(test_initial_states);
+	RUN_TEST(test_prl_reset);
 	RUN_TEST(test_send_ctrl_msg);
 	RUN_TEST(test_send_ctrl_msg_with_retry_and_fail);
 	RUN_TEST(test_send_ctrl_msg_with_retry_and_success);
@@ -1334,7 +1338,7 @@ void run_test(void)
 
 	/* Test PD 3.0 Protocol */
 	init_port(PORT0, PD_REV30);
-	RUN_TEST(test_initial_states);
+	RUN_TEST(test_prl_reset);
 	RUN_TEST(test_send_ctrl_msg);
 	RUN_TEST(test_send_ctrl_msg_with_retry_and_fail);
 	RUN_TEST(test_send_ctrl_msg_with_retry_and_success);

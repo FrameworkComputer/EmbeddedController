@@ -17,6 +17,7 @@
 #include "tcpm.h"
 #include "timer.h"
 #include "util.h"
+#include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
@@ -287,8 +288,10 @@ static void update_ports(void)
 					break;
 
 				/* Find the 'best' PDO <= voltage */
-				pdo_index = pd_find_pdo_index(
-					CHG, pd_src_voltages_mv[i], &pdo);
+				pdo_index =
+				pd_find_pdo_index(pd_get_src_cap_cnt(CHG),
+					pd_get_src_caps(CHG),
+					pd_src_voltages_mv[i], &pdo);
 				/* Don't duplicate PDOs */
 				if (pdo_index == snk_index)
 					continue;

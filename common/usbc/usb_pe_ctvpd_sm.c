@@ -75,35 +75,42 @@ void pe_run(int port, int evt, int en)
 	}
 }
 
-void pe_pass_up_message(int port)
+void pe_message_received(int port)
 {
 	pe[port].flags |= PE_FLAGS_MSG_RECEIVED;
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
 }
 
+/**
+ * NOTE:
+ *	The Charge-Through Vconn Powered Device's Policy Engine is very
+ *	simple and no implementation is needed for the following functions
+ *	that might be called by the Protocol Layer.
+ */
+
 void pe_hard_reset_sent(int port)
 {
-	/* Do nothing */
+	/* No implementation needed by this policy engine */
 }
 
 void pe_got_hard_reset(int port)
 {
-	/* Do nothing */
+	/* No implementation needed by this policy engine */
 }
 
 void pe_report_error(int port, enum pe_error e)
 {
-	/* Do nothing */
+	/* No implementation needed by this policy engine */
 }
 
 void pe_got_soft_reset(int port)
 {
-	/* Do nothing */
+	/* No implementation needed by this policy engine */
 }
 
 void pe_message_sent(int port)
 {
-	/* Do nothing */
+	/* No implementation needed by this policy engine */
 }
 
 static void pe_request_run(const int port)

@@ -22,6 +22,7 @@
 #include "timer.h"
 #include "util.h"
 #include "usb_api.h"
+#include "usb_common.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "version.h"
@@ -104,144 +105,23 @@ static uint8_t pd_src_cap_cnt[CONFIG_USB_PD_PORT_COUNT];
 /* Cap on the max voltage requested as a sink (in millivolts) */
 static unsigned max_request_mv = PD_MAX_VOLTAGE_MV; /* no cap */
 
-int pd_find_pdo_index(int port, int max_mv, uint32_t *selected_pdo)
+const uint32_t * const pd_get_src_caps(int port)
 {
-	int i, uw, mv;
-	int ret = 0;
-	int __attribute__((unused)) cur_mv = 0;
-	int cur_uw = 0;
-	int prefer_cur;
-	const uint32_t *src_caps = pd_src_caps[port];
+	ASSERT(port < CONFIG_USB_PD_PORT_COUNT);
 
-	/* max voltage is always limited by this boards max request */
-	max_mv = MIN(max_mv, PD_MAX_VOLTAGE_MV);
-
-	/* Get max power that is under our max voltage input */
-	for (i = 0; i < pd_src_cap_cnt[port]; i++) {
-		/* its an unsupported Augmented PDO (PD3.0) */
-		if ((src_caps[i] & PDO_TYPE_MASK) == PDO_TYPE_AUGMENTED)
-			continue;
-
-		mv = ((src_caps[i] >> 10) & 0x3FF) * 50;
-		/* Skip invalid voltage */
-		if (!mv)
-			continue;
-		/* Skip any voltage not supported by this board */
-		if (!pd_is_valid_input_voltage(mv))
-			continue;
-
-		if ((src_caps[i] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
-			uw = 250000 * (src_caps[i] & 0x3FF);
-		} else {
-			int ma = (src_caps[i] & 0x3FF) * 10;
-			ma = MIN(ma, PD_MAX_CURRENT_MA);
-			uw = ma * mv;
-		}
-
-		if (mv > max_mv)
-			continue;
-		uw = MIN(uw, PD_MAX_POWER_MW * 1000);
-		prefer_cur = 0;
-
-		/* Apply special rules in case of 'tie' */
-#ifdef PD_PREFER_LOW_VOLTAGE
-		if (uw == cur_uw && mv < cur_mv)
-			prefer_cur = 1;
-#elif defined(PD_PREFER_HIGH_VOLTAGE)
-		if (uw == cur_uw && mv > cur_mv)
-			prefer_cur = 1;
-#endif
-		/* Prefer higher power, except for tiebreaker */
-		if (uw > cur_uw || prefer_cur) {
-			ret = i;
-			cur_uw = uw;
-			cur_mv = mv;
-		}
-	}
-
-	if (selected_pdo)
-		*selected_pdo = src_caps[ret];
-
-	return ret;
+	return pd_src_caps[port];
 }
 
-void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *mv)
+uint8_t pd_get_src_cap_cnt(int port)
 {
-	int max_ma, uw;
+	ASSERT(port < CONFIG_USB_PD_PORT_COUNT);
 
-	*mv = ((pdo >> 10) & 0x3FF) * 50;
-
-	if (*mv == 0) {
-		CPRINTF("ERR:PDO mv=0\n");
-		*ma = 0;
-		return;
-	}
-
-	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
-		uw = 250000 * (pdo & 0x3FF);
-		max_ma = 1000 * MIN(1000 * uw, PD_MAX_POWER_MW) / *mv;
-	} else {
-		max_ma = 10 * (pdo & 0x3FF);
-		max_ma = MIN(max_ma, PD_MAX_POWER_MW * 1000 / *mv);
-	}
-
-	*ma = MIN(max_ma, PD_MAX_CURRENT_MA);
+	return pd_src_cap_cnt[port];
 }
 
-void pd_build_request(int port, uint32_t *rdo, uint32_t *ma, uint32_t *mv,
-		      enum pd_request_type req_type)
+uint32_t get_max_request_mv(void)
 {
-	uint32_t pdo;
-	int pdo_index, flags = 0;
-	int uw;
-	int max_or_min_ma;
-	int max_or_min_mw;
-
-	if (req_type == PD_REQUEST_VSAFE5V) {
-		/* src cap 0 should be vSafe5V */
-		pdo_index = 0;
-		pdo = pd_src_caps[port][0];
-	} else {
-		/* find pdo index for max voltage we can request */
-		pdo_index = pd_find_pdo_index(port, max_request_mv, &pdo);
-	}
-
-	pd_extract_pdo_power(pdo, ma, mv);
-	uw = *ma * *mv;
-	/* Mismatch bit set if less power offered than the operating power */
-	if (uw < (1000 * PD_OPERATING_POWER_MW))
-		flags |= RDO_CAP_MISMATCH;
-
-#ifdef CONFIG_USB_PD_GIVE_BACK
-	/* Tell source we are give back capable. */
-	flags |= RDO_GIVE_BACK;
-
-	/*
-	 * BATTERY PDO: Inform the source that the sink will reduce
-	 * power to this minimum level on receipt of a GotoMin Request.
-	 */
-	max_or_min_mw = PD_MIN_POWER_MW;
-
-	/*
-	 * FIXED or VARIABLE PDO: Inform the source that the sink will reduce
-	 * current to this minimum level on receipt of a GotoMin Request.
-	 */
-	max_or_min_ma = PD_MIN_CURRENT_MA;
-#else
-	/*
-	 * Can't give back, so set maximum current and power to operating
-	 * level.
-	 */
-	max_or_min_ma = *ma;
-	max_or_min_mw = uw / 1000;
-#endif
-
-	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
-		int mw = uw / 1000;
-		*rdo = RDO_BATT(pdo_index + 1, mw, max_or_min_mw, flags);
-	} else {
-		*rdo = RDO_FIXED(pdo_index + 1, *ma, max_or_min_ma, flags);
-	}
+	return max_request_mv;
 }
 
 void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
@@ -257,7 +137,8 @@ void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
 
 #ifdef CONFIG_CHARGE_MANAGER
 	/* Get max power info that we could request */
-	pd_find_pdo_index(port, PD_MAX_VOLTAGE_MV, &pdo);
+	pd_find_pdo_index(pd_get_src_cap_cnt(port), pd_get_src_caps(port),
+						PD_MAX_VOLTAGE_MV, &pdo);
 	pd_extract_pdo_power(pdo, &ma, &mv);
 
 	/* Set max. limit, but apply 500mA ceiling */

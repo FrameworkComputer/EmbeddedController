@@ -32,6 +32,22 @@
 #define TYPE_C_AUDIO_ACC_CURRENT  500 /* mA */
 
 /**
+ * Returns true if TypeC State machine is in attached source state.
+ *
+ * @param port USB-C port number
+ * @return 1 if in attached source state, else 0
+ */
+int tc_is_attached_src(int port);
+
+/**
+ * Returns true if TypeC State machine is in attached sink state.
+ *
+ * @param port USB-C port number
+ * @return 1 if in attached source state, else 0
+ */
+int tc_is_attached_snk(int port);
+
+/**
  * Get current data role
  *
  * @param port USB-C port number
@@ -73,6 +89,14 @@ uint8_t tc_get_pd_enabled(int port);
 void tc_set_power_role(int port, int role);
 
 /**
+ * Set the data role
+ *
+ * @param port USB-C port number
+ * @param role data role
+ */
+void tc_set_data_role(int port, int role);
+
+/**
  * Sets the USB Mux depending on current data role
  *   Mux is connected except when:
  *     1) PD is disconnected
@@ -91,12 +115,171 @@ void set_usb_mux_with_current_data_role(int port);
 uint64_t tc_get_timeout(int port);
 
 /**
+ * Policy Engine informs the Type-C state machine if the port partner
+ * is dualrole power.
+ *
+ * @param port USB_C port number
+ * @param en   1 if port partner is dualrole power, else 0
+ */
+void tc_partner_dr_power(int port, int en);
+
+/**
+ * Policy Engine informs the Type-C state machine if the port partner
+ * has external power
+ *
+ * @param port USB_C port number
+ * @param en   1 if port partner has external power, else 0
+ */
+void tc_partner_extpower(int port, int en);
+
+/**
+ * Policy Engine informs the Type-C state machine if the port partner
+ * is USB comms.
+ *
+ * @param port USB_C port number
+ * @param en   1 if port partner is USB comms, else 0
+ */
+void tc_partner_usb_comm(int port, int en);
+
+/**
+ * Policy Engine informs the Type-C state machine if the port partner
+ * is dualrole data.
+ *
+ * @param port USB_C port number
+ * @param en   1 if port partner is dualrole data, else 0
+ */
+void tc_partner_dr_data(int port, int en);
+
+/**
+ * Policy Engine informs the Type-C state machine if the port partner
+ * had a previous pd connection
+ *
+ * @param port USB_C port number
+ * @param en   1 if port partner had a previous pd connection, else 0
+ */
+void tc_pd_connection(int port, int en);
+
+/**
  * Set loop timeout value
  *
  * @param port USB-C port number
  * @timeout time in ms
  */
 void tc_set_timeout(int port, uint64_t timeout);
+
+/**
+ * Initiates a Power Role Swap from Attached.SRC to Attached.SNK. This function
+ * has no effect if the current Type-C state is not Attached.SRC.
+ *
+ * @param port USB_C port number
+ */
+void tc_prs_src_snk_assert_rd(int port);
+
+/**
+ * Initiates a Power Role Swap from Attached.SNK to Attached.SRC. This function
+ * has no effect if the current Type-C state is not Attached.SNK.
+ *
+ * @param port USB_C port number
+ */
+void tc_prs_snk_src_assert_rp(int port);
+
+/**
+ * Informs the Type-C State Machine that a Power Role Swap is complete.
+ * This function is called from the Policy Engine.
+ *
+ * @param port USB_C port number
+ */
+void tc_pr_swap_complete(int port);
+
+/**
+ * Informs the Type-C State Machine that a Discover Identity is in progress.
+ * This function is called from the Policy Engine.
+ *
+ * @param port USB_C port number
+ */
+void tc_disc_ident_in_progress(int port);
+
+/**
+ * Informs the Type-C State Machine that a Discover Identity is complete.
+ * This function is called from the Policy Engine.
+ *
+ * @param port USB_C port number
+ */
+void tc_disc_ident_complete(int port);
+
+/**
+ * Instructs the Attached.SNK to stop drawing power. This function is called
+ * from the Policy Engine and only has effect if the current Type-C state
+ * Attached.SNK.
+ *
+ * @param port USB_C port number
+ */
+void tc_snk_power_off(int port);
+
+/**
+ * Instructs the Attached.SRC to stop supplying power. The function has
+ * no effect if the current Type-C state is not Attached.SRC.
+ *
+ * @param port USB_C port number
+ */
+void tc_src_power_off(int port);
+
+/**
+ * Instructs the Attached.SRC to start supplying power. The function has
+ * no effect if the current Type-C state is not Attached.SRC.
+ *
+ * @param port USB_C port number
+ */
+int tc_src_power_on(int port);
+
+/**
+ * Tests if a VCONN Swap is possible.
+ *
+ * @param port USB_C port number
+ * @return 1 if vconn swap is possible, else 0
+ */
+int tc_check_vconn_swap(int port);
+
+#ifdef CONFIG_USBC_VCONN
+/**
+ * Checks if VCONN is being sourced.
+ *
+ * @param port USB_C port number
+ * @return 1 if vconn is being sourced, 0 if it's not, and -1 if
+ *         can't answer at this time. -1 is returned if the current
+ *         Type-C state is not Attached.SRC or Attached.SNK.
+ */
+int tc_is_vconn_src(int port);
+
+/**
+ * Instructs the Attached.SRC or Attached.SNK to start sourcing VCONN.
+ * This function is called from the Policy Engine and only has effect
+ * if the current Type-C state Attached.SRC or Attached.SNK.
+ *
+ * @param port USB_C port number
+ */
+void pd_request_vconn_swap_on(int port);
+
+/**
+ * Instructs the Attached.SRC or Attached.SNK to stop sourcing VCONN.
+ * This function is called from the Policy Engine and only has effect
+ * if the current Type-C state Attached.SRC or Attached.SNK.
+ *
+ * @param port USB_C port number
+ */
+void pd_request_vconn_swap_off(int port);
+#endif
+
+
+/**
+ * Returns the polarity of a Sink.
+ *
+ * @param cc1 value of CC1 set by tcpm_get_cc
+ * @param cc2 value of CC2 set by tcpm_get_cc
+ * @return 0 if cc1 is connected, else 1 for cc2
+ */
+enum pd_cc_polarity_type get_snk_polarity(enum tcpc_cc_voltage_status cc1,
+	enum tcpc_cc_voltage_status cc2);
 
 /**
  * Restarts the TCPC
@@ -138,7 +321,29 @@ void tc_event_check(int port, int evt);
  */
 void tc_run(const int port);
 
+/**
+ * Attempt to activate VCONN
+ *
+ * @param port USB-C port number
+ */
+void tc_vconn_on(int port);
+
+/**
+ * Start error recovery
+ *
+ * @param port USB-C port number
+ */
+void tc_start_error_recovery(int port);
+
+/**
+ * Hard Reset the TypeC port
+ *
+ * @param port USB-C port number
+ */
+void tc_hard_reset(int port);
+
 #ifdef CONFIG_USB_TYPEC_CTVPD
+
 /**
  * Resets the charge-through support timer. This can be
  * called many times but the support timer will only
@@ -148,6 +353,12 @@ void tc_run(const int port);
  */
 void tc_reset_support_timer(int port);
 
+#else
+
+/**
+ *
+ */
+void tc_ctvpd_detected(int port);
 #endif /* CONFIG_USB_TYPEC_CTVPD */
 #endif /* __CROS_EC_USB_TC_H */
 
