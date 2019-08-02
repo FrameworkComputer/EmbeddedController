@@ -12,6 +12,10 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+/* Just want the .h file for PS8742 definitions, not the large object file. */
+#define CONFIG_USB_MUX_PS8742
+#include "ps8740.h"
+#undef CONFIG_USB_MUX_PS8742
 #include "queue_policies.h"
 #include "registers.h"
 #include "spi.h"
@@ -427,10 +431,9 @@ static void board_init(void)
 	gpio_set_flags(GPIO_DUT_HUB_USB_RESET_L, GPIO_OUT_HIGH);
 
 	/*
-	 * Write USB3 Mode to PS8742 USB/DP Mux.
-	 * 0x0:disable 0x20:enable.
+	 * Disable USB3 mode in PS8742 USB/DP Mux.
 	 */
-	i2c_write8(1, 0x10, 0x0, 0x0);
+	i2c_write8(I2C_PORT_MASTER, PS8740_I2C_ADDR0_FLAG, PS8740_REG_MODE, 0);
 
 	/* Enable uservo USB by default. */
 	init_ioexpander();

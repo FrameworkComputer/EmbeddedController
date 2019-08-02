@@ -11,6 +11,10 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+/* Just want the .h file for PS8742 definitions, not the large object file. */
+#define CONFIG_USB_MUX_PS8742
+#include "ps8740.h"
+#undef CONFIG_USB_MUX_PS8742
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -757,6 +761,201 @@ __override void pd_check_dr_role(int port,
 
 
 /* ----------------- Vendor Defined Messages ------------------ */
+const uint32_t vdo_idh = VDO_IDH(0, /* data caps as USB host */
+				 1, /* data caps as USB device */
+				 IDH_PTYPE_AMA, /* Alternate mode */
+				 1, /* supports alt modes */
+				 USB_VID_GOOGLE);
+
+const uint32_t vdo_product = VDO_PRODUCT(CONFIG_USB_PID, CONFIG_USB_BCD_DEV);
+
+const uint32_t vdo_ama = VDO_AMA(CONFIG_USB_PD_IDENTITY_HW_VERS,
+				 CONFIG_USB_PD_IDENTITY_SW_VERS,
+				 0, 0, 0, 0, /* SS[TR][12] */
+				 0, /* Vconn power */
+				 0, /* Vconn power required */
+				 0, /* Vbus power required */
+				 AMA_USBSS_U31_GEN1 /* USB SS support */);
+
+static int svdm_response_identity(int port, uint32_t *payload)
+{
+	/*
+	 * TODO(b/137219603): Make whether servo supports DP alt-mode
+	 * configurable, like through a console command.
+	 *
+	 * This version is to check if a monitor is plugged to the mini-DP port
+	 * to decide if DP alt-mode is supported or not. So no alt-mode
+	 * supported if no monitor is plugged before plugging the servo Type-C
+	 * cable to DUT. This way doesn't affect PD FAFT results.
+	 */
+	int dp_supported = gpio_get_level(GPIO_DP_HPD);
+
+	if (dp_supported) {
+		payload[VDO_I(IDH)] = vdo_idh;
+		payload[VDO_I(CSTAT)] = VDO_CSTAT(0);
+		payload[VDO_I(PRODUCT)] = vdo_product;
+		payload[VDO_I(AMA)] = vdo_ama;
+		return VDO_I(AMA) + 1;
+	} else {
+		return 0;
+	}
+}
+
+static int svdm_response_svids(int port, uint32_t *payload)
+{
+	payload[1] = VDO_SVID(USB_SID_DISPLAYPORT, 0);
+	return 2;
+}
+
+#define MODE_CNT 1
+#define OPOS 1
+
+/*
+ * The Type-C demux PS8742 supports pin assignment C, D, and E. Response the DP
+ * capabilities with supporting all of them.
+ *
+ * TODO(b/137219603): Make this pin assignment and plug/receptacle configurable
+ * by a console command that some tests can check different dongle behaviors.
+ */
+const uint32_t vdo_dp_mode[MODE_CNT] =  {
+	VDO_MODE_DP(0,             /* UFP pin cfg supported: none */
+		    MODE_DP_PIN_C | MODE_DP_PIN_D | MODE_DP_PIN_E, /* DFP pin */
+		    1,             /* no usb2.0 signalling in AMode */
+		    CABLE_PLUG,    /* Its a plug */
+		    MODE_DP_V13,   /* DPv1.3 Support, no Gen2 */
+		    MODE_DP_SNK)   /* Its a sink only */
+};
+
+static int svdm_response_modes(int port, uint32_t *payload)
+{
+	/* CCD uses the SBU lines; don't enable DP when dts-mode enabled */
+	if (!(cc_config & CC_DISABLE_DTS))
+		return 0; /* NAK */
+
+	if (PD_VDO_VID(payload[0]) != USB_SID_DISPLAYPORT)
+		return 0; /* NAK */
+
+	memcpy(payload + 1, vdo_dp_mode, sizeof(vdo_dp_mode));
+	return MODE_CNT + 1;
+}
+
+static int is_typec_dp_muxed(void)
+{
+	int value;
+
+	i2c_read8(I2C_PORT_MASTER, PS8740_I2C_ADDR0_FLAG, PS8740_REG_MODE,
+		  &value);
+	return value & PS8740_MODE_DP_ENABLED ? 1 : 0;
+}
+
+static void set_typec_mux(int pin_cfg)
+{
+	int value;
+
+	switch (pin_cfg) {
+	case 0:
+		value = 0;
+		CPRINTS("PinCfg:off");
+		break;
+	case MODE_DP_PIN_C:
+		value = PS8740_MODE_DP_ENABLED;
+		CPRINTS("PinCfg:C");
+		break;
+	case MODE_DP_PIN_D:
+		value = PS8740_MODE_DP_ENABLED | PS8740_MODE_USB_ENABLED;
+		CPRINTS("PinCfg:D");
+		break;
+	case MODE_DP_PIN_E:
+		value = PS8740_MODE_DP_ENABLED | PS8740_MODE_CE_DP_ENABLED;
+		CPRINTS("PinCfg:E");
+		break;
+	default:
+		CPRINTS("PinCfg not supported: %d", pin_cfg);
+		return;
+	}
+	if (value && cc_config & CC_POLARITY)
+		value |= PS8740_MODE_POLARITY_INVERTED;
+	i2c_write8(I2C_PORT_MASTER, PS8740_I2C_ADDR0_FLAG, PS8740_REG_MODE,
+		   value);
+}
+
+static int dp_status(int port, uint32_t *payload)
+{
+	int opos = PD_VDO_OPOS(payload[0]);
+	int hpd = gpio_get_level(GPIO_DP_HPD);
+
+	if (opos != OPOS)
+		return 0;  /* NAK */
+
+	/*
+	 * TODO(b/137219603): Make the Multi-Function Preferred bit
+	 * configurable by a console command.
+	 */
+	payload[1] = VDO_DP_STATUS(0,                /* IRQ_HPD */
+				   hpd,              /* HPD_HI|LOW */
+				   0,                /* request exit DP */
+				   0,                /* request exit USB */
+				   1,                /* MF pref */
+				   is_typec_dp_muxed(),
+				   0,                /* power low */
+				   0x2);
+	return 2;
+}
+
+static int dp_config(int port, uint32_t *payload)
+{
+	if (PD_DP_CFG_DPON(payload[1]))
+		set_typec_mux(PD_DP_CFG_PIN(payload[1]));
+
+	return 1;
+}
+
+/* Whether alternate mode has been entered or not */
+static int alt_mode;
+
+static int svdm_enter_mode(int port, uint32_t *payload)
+{
+	/* SID & mode request is valid */
+	if ((PD_VDO_VID(payload[0]) != USB_SID_DISPLAYPORT) ||
+	    (PD_VDO_OPOS(payload[0]) != OPOS))
+		return 0;  /* NAK */
+
+	alt_mode = OPOS;
+	return 1;
+}
+
+int pd_alt_mode(int port, uint16_t svid)
+{
+	if (svid == USB_SID_DISPLAYPORT)
+		return alt_mode;
+
+	return 0;
+}
+
+static int svdm_exit_mode(int port, uint32_t *payload)
+{
+	if (PD_VDO_VID(payload[0]) == USB_SID_DISPLAYPORT)
+		set_typec_mux(0);
+
+	alt_mode = 0;
+
+	return 1; /* Must return ACK */
+}
+
+static struct amode_fx dp_fx = {
+	.status = &dp_status,
+	.config = &dp_config,
+};
+
+const struct svdm_response svdm_rsp = {
+	.identity = &svdm_response_identity,
+	.svids = &svdm_response_svids,
+	.modes = &svdm_response_modes,
+	.enter_mode = &svdm_enter_mode,
+	.amode = &dp_fx,
+	.exit_mode = &svdm_exit_mode,
+};
+
 __override int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		  uint32_t **rpayload)
 {
@@ -780,11 +979,8 @@ __override int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	return 0;
 }
 
-
-
 __override const struct svdm_amode_fx supported_modes[] = {};
 __override const int supported_modes_cnt = ARRAY_SIZE(supported_modes);
-
 
 static void print_cc_mode(void)
 {
