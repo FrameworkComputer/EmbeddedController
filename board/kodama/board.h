@@ -8,12 +8,7 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-#ifdef BOARD_KRANE
-#define VARIANT_KUKUI_BATTERY_MM8013
-#else
-#define VARIANT_KUKUI_BATTERY_MAX17055
-#endif
-
+#define VARIANT_KUKUI_BATTERY_SMART
 #define VARIANT_KUKUI_CHARGER_MT6370
 #define VARIANT_KUKUI_DP_MUX_GPIO
 
@@ -25,6 +20,8 @@
 
 #define CONFIG_LED_ONOFF_STATES
 #define CONFIG_LED_POWER_LED
+
+#define CONFIG_BATTERY_HW_PRESENT_CUSTOM
 
 /* Battery */
 #ifdef BOARD_KRANE
@@ -57,9 +54,6 @@
 #define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
 #define I2C_PORT_ACCEL    1
 
-/* Route sbs host requests to virtual battery driver */
-#define VIRTUAL_BATTERY_ADDR_FLAGS 0x0B
-
 /* Define the host events which are allowed to wakeup AP in S3. */
 #define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
 		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |\
@@ -71,7 +65,6 @@ enum adc_channel {
 	/* Real ADC channels begin here */
 	ADC_BOARD_ID = 0,
 	ADC_EC_SKU_ID,
-	ADC_BATT_ID,
 	ADC_POGO_ADC_INT_L,
 	ADC_CH_COUNT
 };
@@ -95,6 +88,12 @@ enum sensor_id {
 
 enum charge_port {
 	CHARGE_PORT_USB_C,
+};
+
+enum battery_type {
+	BATTERY_SIMPLO,
+	BATTERY_CELXPERT,
+	BATTERY_TYPE_COUNT,
 };
 
 #include "gpio_signal.h"

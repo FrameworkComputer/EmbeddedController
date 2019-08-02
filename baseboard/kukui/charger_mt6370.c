@@ -16,6 +16,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
+#ifndef CONFIG_BATTERY_SMART
 int board_cut_off_battery(void)
 {
 	/* The cut-off procedure is recommended by Richtek. b/116682788 */
@@ -25,6 +26,7 @@ int board_cut_off_battery(void)
 
 	return EC_SUCCESS;
 }
+#endif
 
 void mt6370_charger_profile_override(struct charge_state_data *curr)
 {
@@ -79,4 +81,3 @@ static void board_charge_termination(void)
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE,
 	     board_charge_termination,
 	     HOOK_PRIO_DEFAULT);
-
