@@ -17,16 +17,8 @@
 
 #define TIMER_SYSJUMP_TAG 0x4d54  /* "TM" */
 
-/*
- * High word of the 64-bit timestamp counter. Not used if
- * CONFIG_HWTIMER_64BIT is enabled.
- */
-#ifdef CONFIG_HWTIMER_64BIT
-/* Declaring as extern will cause linker errors if used */
-extern uint32_t clksrc_high;
-#else
-static volatile uint32_t clksrc_high;
-#endif /* CONFIG_HWTIMER_64BIT */
+/* High 32-bits of the 64-bit timestamp counter. */
+STATIC_IF_NOT(CONFIG_HWTIMER_64BIT) uint32_t clksrc_high;
 
 /* Bitmap of currently running timers */
 static uint32_t timer_running;
