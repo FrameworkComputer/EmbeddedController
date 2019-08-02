@@ -18,15 +18,7 @@
 /* USB Policy Engine Charge-Through VCONN Powered Device module */
 
 /* Policy Engine Flags */
-#define PE_FLAGS_MSG_RECEIVED (1 << 0)
-
-enum l_state {
-	PE_INIT,
-	PE_RUN,
-	PE_PAUSED
-};
-
-static enum l_state local_state = PE_INIT;
+#define PE_FLAGS_MSG_RECEIVED BIT(0)
 
 /**
  * This is the PE Port object that contains information needed to
@@ -54,22 +46,27 @@ void pe_init(int port)
 
 void usbc_policy_engine(int port, int evt, int en)
 {
-	switch (local_state) {
-	case PE_INIT:
+	static enum sm_local_state local_state[CONFIG_USB_PD_PORT_COUNT];
+
+	switch (local_state[port]) {
+	case SM_INIT:
 		pe_init(port);
-		local_state = PE_RUN;
+		local_state[port] = SM_RUN;
 		/* fall through */
-	case PE_RUN:
+	case SM_RUN:
 		if (!en) {
-			local_state = PE_PAUSED;
+			local_state[port] = SM_PAUSED;
 			break;
 		}
 
 		sm_run_state_machine(port, PE_OBJ(port), SM_RUN_SIG);
 		break;
-	case PE_PAUSED:
-		if (en)
-			local_state = PE_INIT;
+	case SM_PAUSED:
+		if (en) {
+			/* Restart state machine right now. */
+			local_state[port] = SM_INIT;
+			usbc_policy_engine(port, evt, en);
+		}
 		break;
 	}
 }

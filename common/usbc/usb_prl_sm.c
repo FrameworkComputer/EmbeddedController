@@ -366,8 +366,10 @@ void usbc_protocol_layer(int port, int evt, int en)
 		sm_run_state_machine(port, PRL_HR_OBJ(port), SM_RUN_SIG);
 		break;
 	case SM_PAUSED:
-		if (en)
+		if (en) {
 			local_state[port] = SM_INIT;
+			usbc_protocol_layer(port, evt, en);
+		}
 		break;
 	}
 }
