@@ -154,9 +154,12 @@ void dma_start_rx(const struct dma_option *option, unsigned count,
 
 int dma_bytes_done(stm32_dma_chan_t *chan, int orig_count)
 {
-	if (!(chan->ccr & STM32_DMA_CCR_EN))
-		return 0;
 	return orig_count - chan->cndtr;
+}
+
+bool dma_is_enabled(stm32_dma_chan_t *chan)
+{
+	return (chan->ccr & STM32_DMA_CCR_EN);
 }
 
 #ifdef CONFIG_DMA_HELP

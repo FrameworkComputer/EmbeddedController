@@ -297,10 +297,9 @@ static int spi_dma_start(int port, const uint8_t *txdata,
 	return EC_SUCCESS;
 }
 
-static int dma_is_enabled(const struct dma_option *option)
+static bool dma_is_enabled_(const struct dma_option *option)
 {
-	/* dma_bytes_done() returns 0 if channel is not enabled */
-	return dma_bytes_done(dma_get_channel(option->channel), -1);
+	return dma_is_enabled(dma_get_channel(option->channel));
 }
 
 static int spi_dma_wait(int port)
@@ -308,7 +307,7 @@ static int spi_dma_wait(int port)
 	int rv = EC_SUCCESS;
 
 	/* Wait for DMA transmission to complete */
-	if (dma_is_enabled(&dma_tx_option[port])) {
+	if (dma_is_enabled_(&dma_tx_option[port])) {
 		/*
 		 * In TX mode, SPI only generates clock when we write to FIFO.
 		 * Therefore, even though `dma_wait` polls with interval 0.1ms,
@@ -322,7 +321,7 @@ static int spi_dma_wait(int port)
 	}
 
 	/* Wait for DMA reception to complete */
-	if (dma_is_enabled(&dma_rx_option[port])) {
+	if (dma_is_enabled_(&dma_rx_option[port])) {
 		/*
 		 * Because `dma_wait` polls with interval 0.1ms, we will read at
 		 * least ~100 bytes (with 8MHz clock).  If you don't want this

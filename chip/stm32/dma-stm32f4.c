@@ -15,6 +15,7 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_DMA, outstr)
 #define CPRINTF(format, args...) cprintf(CC_DMA, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_DMA, format, ## args)
 
 stm32_dma_regs_t *STM32_DMA_REGS[] = { STM32_DMA1_REGS, STM32_DMA2_REGS };
 
@@ -144,9 +145,27 @@ void dma_start_rx(const struct dma_option *option, unsigned count,
 
 int dma_bytes_done(stm32_dma_stream_t *stream, int orig_count)
 {
-	if (!(stream->scr & STM32_DMA_CCR_EN))
-		return 0;
+	/*
+	 * Note that we're intentionally not checking that DMA is enabled here
+	 * because there is a race when the hardware stops the transfer:
+	 *
+	 * From Section 9.3.14 DMA transfer completion in RM0402 Rev 5
+	 * https://www.st.com/resource/en/reference_manual/dm00180369.pdf:
+	 * If the stream is configured in non-circular mode, after the end of
+	 * the transfer (that is when the number of data to be transferred
+	 * reaches zero), the DMA is stopped (EN bit in DMA_SxCR register is
+	 * cleared by Hardware) and no DMA request is served unless the software
+	 * reprograms the stream and re-enables it (by setting the EN bit in the
+	 * DMA_SxCR register).
+	 *
+	 * See http://b/132444384 for full details.
+	 */
 	return orig_count - stream->sndtr;
+}
+
+bool dma_is_enabled(stm32_dma_stream_t *stream)
+{
+	return (stream->scr & STM32_DMA_CCR_EN);
 }
 
 #ifdef CONFIG_DMA_HELP

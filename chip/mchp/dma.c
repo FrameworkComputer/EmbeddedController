@@ -194,26 +194,30 @@ void dma_xfr_start_rx(const struct dma_option *option,
 
 /*
  * Return the number of bytes transferred.
- * The number of bytes transferred can be easily determinted
+ * The number of bytes transferred can be easily determined
  * from the difference in DMA memory start address register
  * and memory end address register. No need to look at DMA
  * transfer size field because the hardware increments memory
- * start address by unit size on each unit tranferred.
+ * start address by unit size on each unit transferred.
  * Why is a signed integer being used for a count value?
  */
 int dma_bytes_done(dma_chan_t *chan, int orig_count)
 {
-	int bcnt = 0;
+	int bcnt;
 
-	if (chan != NULL) {
-		if (chan->ctrl & MCHP_DMA_RUN) {
-			bcnt = (int)chan->mem_end;
-			bcnt -= (int)chan->mem_start;
-			bcnt = orig_count - bcnt;
-		}
-	}
+	if (chan == NULL)
+		return 0;
+
+	bcnt = (int)chan->mem_end;
+	bcnt -= (int)chan->mem_start;
+	bcnt = orig_count - bcnt;
 
 	return bcnt;
+}
+
+bool dma_is_enabled(dma_chan_t *chan)
+{
+	return (chan->ctrl & MCHP_DMA_RUN);
 }
 
 int dma_bytes_done_chan(enum dma_channel ch, uint32_t orig_count)

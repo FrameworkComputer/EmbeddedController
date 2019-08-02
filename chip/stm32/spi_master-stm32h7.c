@@ -211,10 +211,9 @@ static int spi_dma_start(int port, const uint8_t *txdata,
 	return EC_SUCCESS;
 }
 
-static inline int dma_is_enabled(const struct dma_option *option)
+static inline bool dma_is_enabled_(const struct dma_option *option)
 {
-	/* dma_bytes_done() returns 0 if channel is not enabled */
-	return dma_bytes_done(dma_get_channel(option->channel), -1);
+	return dma_is_enabled(dma_get_channel(option->channel));
 }
 
 static int spi_dma_wait(int port)
@@ -224,7 +223,7 @@ static int spi_dma_wait(int port)
 	int rv = EC_SUCCESS;
 
 	/* Wait for DMA transmission to complete */
-	if (dma_is_enabled(&dma_tx_option[port])) {
+	if (dma_is_enabled_(&dma_tx_option[port])) {
 		rv = dma_wait(dma_tx_option[port].channel);
 		if (rv)
 			return rv;
@@ -240,7 +239,7 @@ static int spi_dma_wait(int port)
 	}
 
 	/* Wait for DMA reception to complete */
-	if (dma_is_enabled(&dma_rx_option[port])) {
+	if (dma_is_enabled_(&dma_rx_option[port])) {
 		rv = dma_wait(dma_rx_option[port].channel);
 		if (rv)
 			return rv;

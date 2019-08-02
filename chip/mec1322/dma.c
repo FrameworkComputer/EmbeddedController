@@ -119,9 +119,12 @@ int dma_bytes_done(mec1322_dma_chan_t *chan, int orig_count)
 {
 	int xfer_size = (chan->ctrl >> 20) & 0x7;
 
-	if (!(chan->ctrl & MEC1322_DMA_RUN))
-		return 0;
 	return orig_count - (chan->mem_end - chan->mem_start) / xfer_size;
+}
+
+bool dma_is_enabled(mec1322_dma_chan_t *chan)
+{
+	return (chan->ctrl & MEC1322_DMA_RUN);
 }
 
 void dma_init(void)
