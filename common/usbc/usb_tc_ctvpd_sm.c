@@ -138,7 +138,6 @@ static int tc_disabled_exit(int port)
 	}
 #endif
 	CPRINTS("TCPC p%d resumed!", port);
-	sm_set_state(port, TC_OBJ(port), tc_unattached_snk);
 
 	return 0;
 }
