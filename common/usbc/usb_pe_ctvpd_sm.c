@@ -25,26 +25,32 @@
  * implement a VCONN and Charge-Through VCONN Powered Device.
  */
 static struct policy_engine {
-	/*
-	 * struct sm_obj must be first. This is the state machine
-	 * object that keeps track of the current and last state
-	 * of the state machine.
-	 */
-	struct sm_obj obj;
+	/* state machine context */
+	struct sm_ctx ctx;
 	/* port flags, see PE_FLAGS_* */
 	uint32_t flags;
 } pe[CONFIG_USB_PD_PORT_COUNT];
 
-/* Policy Engine states */
-DECLARE_STATE(pe, request, WITH_RUN, NOOP);
+/* List of all policy-engine-level states */
+enum usb_pe_state {
+	PE_REQUEST,
+};
+
+/* Forward declare the full list of states. This is indexed by usb_pe_states */
+static const struct usb_state pe_states[];
+
+static void set_state_pe(const int port, enum usb_pe_state new_state)
+{
+	set_state(port, &pe[port].ctx, &pe_states[new_state]);
+}
 
 void pe_init(int port)
 {
 	pe[port].flags = 0;
-	sm_init_state(port, PE_OBJ(port), pe_request);
+	set_state_pe(port, PE_REQUEST);
 }
 
-void usbc_policy_engine(int port, int evt, int en)
+void pe_run(int port, int evt, int en)
 {
 	static enum sm_local_state local_state[CONFIG_USB_PD_PORT_COUNT];
 
@@ -55,17 +61,19 @@ void usbc_policy_engine(int port, int evt, int en)
 		/* fall through */
 	case SM_RUN:
 		if (!en) {
+			/* Exit all states and pause state machine. */
+			set_state(port, &pe[port].ctx, NULL);
 			local_state[port] = SM_PAUSED;
 			break;
 		}
 
-		sm_run_state_machine(port, PE_OBJ(port), SM_RUN_SIG);
+		exe_state(port, &pe[port].ctx);
 		break;
 	case SM_PAUSED:
 		if (en) {
 			/* Restart state machine right now. */
 			local_state[port] = SM_INIT;
-			usbc_policy_engine(port, evt, en);
+			pe_run(port, evt, en);
 		}
 		break;
 	}
@@ -102,20 +110,7 @@ void pe_message_sent(int port)
 	/* Do nothing */
 }
 
-static int pe_request(int port, enum sm_signal sig)
-{
-	int ret;
-
-	ret = (*pe_request_sig[sig])(port);
-	return SM_SUPER(ret, sig, 0);
-}
-
-static int pe_request_entry(int port)
-{
-	return 0;
-}
-
-static int pe_request_run(int port)
+static void pe_request_run(const int port)
 {
 	uint32_t *payload = (uint32_t *)emsg[port].buf;
 	uint32_t header = emsg[port].header;
@@ -130,16 +125,16 @@ static int pe_request_run(int port)
 		 */
 
 		if (PD_HEADER_TYPE(header) != PD_DATA_VENDOR_DEF)
-			return 0;
+			return;
 
 		if (PD_HEADER_CNT(header) == 0)
-			return 0;
+			return;
 
 		if (!PD_VDO_SVDM(vdo))
-			return 0;
+			return;
 
 		if (PD_VDO_CMD(vdo) != CMD_DISCOVER_IDENT)
-			return 0;
+			return;
 
 #ifdef CONFIG_USB_TYPEC_CTVPD
 		/*
@@ -199,6 +194,11 @@ static int pe_request_run(int port)
 		prl_send_data_msg(port, TCPC_TX_SOP_PRIME,
 					PD_DATA_VENDOR_DEF);
 	}
-
-	return 0;
 }
+
+/* All policy-engine-level states. */
+static const struct usb_state pe_states[] = {
+	[PE_REQUEST] = {
+		.run    = pe_request_run,
+	},
+};

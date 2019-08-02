@@ -17,12 +17,6 @@ enum pe_error {
 	ERR_TCH_XMIT,
 };
 
-/*
- * PE_OBJ is a convenience macro to access struct sm_obj, which
- * must be the first member of struct policy_engine.
- */
-#define PE_OBJ(port)   (SM_OBJ(pe[port]))
-
 /**
  * Initialize the Policy Engine State Machine
  *
@@ -37,7 +31,7 @@ void pe_init(int port);
  * @param evt  system event, ie: PD_EVENT_RX
  * @param en   0 to disable the machine, 1 to enable the machine
  */
-void usbc_policy_engine(int port, int evt, int en);
+void pe_run(int port, int evt, int en);
 
 /**
  * Informs the Policy Engine that a message was successfully sent

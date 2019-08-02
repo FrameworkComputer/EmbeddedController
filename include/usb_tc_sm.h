@@ -11,54 +11,9 @@
 #include "usb_sm.h"
 #include "usb_pd_tcpm.h"
 
-enum typec_state_id {
-	TC_DISABLED,
-	TC_UNATTACHED_SNK,
-	TC_ATTACH_WAIT_SNK,
-	TC_ATTACHED_SNK,
-#if !defined(CONFIG_USB_TYPEC_VPD)
-	TC_ERROR_RECOVERY,
-	TC_UNATTACHED_SRC,
-	TC_ATTACH_WAIT_SRC,
-	TC_ATTACHED_SRC,
-#endif
-#if !defined(CONFIG_USB_TYPEC_CTVPD) && !defined(CONFIG_USB_TYPEC_VPD)
-	TC_AUDIO_ACCESSORY,
-	TC_ORIENTED_DEBUG_ACCESSORY_SRC,
-	TC_UNORIENTED_DEBUG_ACCESSORY_SRC,
-	TC_DEBUG_ACCESSORY_SNK,
-	TC_TRY_SRC,
-	TC_TRY_WAIT_SNK,
-	TC_CTUNATTACHED_SNK,
-	TC_CTATTACHED_SNK,
-#endif
-#if defined(CONFIG_USB_TYPEC_CTVPD)
-	TC_CTTRY_SNK,
-	TC_CTATTACHED_UNSUPPORTED,
-	TC_CTATTACH_WAIT_UNSUPPORTED,
-	TC_CTUNATTACHED_UNSUPPORTED,
-	TC_CTUNATTACHED_VPD,
-	TC_CTATTACH_WAIT_VPD,
-	TC_CTATTACHED_VPD,
-	TC_CTDISABLED_VPD,
-	TC_TRY_SNK,
-	TC_TRY_WAIT_SRC,
-#endif
-	/* Number of states. Not an actual state. */
-	TC_STATE_COUNT,
-};
-
-extern const char * const tc_state_names[];
-
 #define TC_SET_FLAG(port, flag) atomic_or(&tc[port].flags, (flag))
 #define TC_CLR_FLAG(port, flag) atomic_clear(&tc[port].flags, (flag))
 #define TC_CHK_FLAG(port, flag) (tc[port].flags & (flag))
-
-/*
- * TC_OBJ is a convenience macro to access struct sm_obj, which
- * must be the first member of struct type_c.
- */
-#define TC_OBJ(port)   (SM_OBJ(tc[port]))
 
 /*
  * Type C supply voltage (mV)
@@ -77,13 +32,6 @@ extern const char * const tc_state_names[];
 #define TYPE_C_AUDIO_ACC_CURRENT  500 /* mA */
 
 /**
- * Get the id of the current Type-C state
- *
- * @param port USB-C port number
- */
-enum typec_state_id get_typec_state_id(int port);
-
-/**
  * Get current data role
  *
  * @param port USB-C port number
@@ -98,6 +46,23 @@ int tc_get_data_role(int port);
  * @return 0 for sink, 1 for source or vpd
  */
 int tc_get_power_role(int port);
+
+/**
+ * Get current polarity
+ *
+ * @param port USB-C port number
+ * @return 0 for CC1 as primary, 1 for CC2 as primary
+ */
+uint8_t tc_get_polarity(int port);
+
+/**
+ * Get Power Deliever communication state. If disabled, both protocol and policy
+ * engine are disabled and should not run.
+ *
+ * @param port USB-C port number
+ * @return 0 if pd is disabled, 1 is pd is enabled
+ */
+uint8_t tc_get_pd_enabled(int port);
 
 /**
  * Set the power role
@@ -116,6 +81,14 @@ void tc_set_power_role(int port, int role);
  *  @param port USB-C port number
  */
 void set_usb_mux_with_current_data_role(int port);
+
+/**
+ * Get loop timeout value
+ *
+ * @param port USB-C port number
+ * @return time in ms
+ */
+uint64_t tc_get_timeout(int port);
 
 /**
  * Set loop timeout value
@@ -146,12 +119,8 @@ void set_polarity(int port, int polarity);
  * TypeC state machine
  *
  * @param port USB-C port number
- * @param sm_state initial state of the state machine. Must be
- *			UNATTACHED_SNK or UNATTACHED_SRC, any other
- *			state id value will be interpreted as
- *			UNATTACHED_SNK.
  */
-void tc_state_init(int port, enum typec_state_id start_state);
+void tc_state_init(int port);
 
 /**
  * Called by the state machine framework to handle events
@@ -161,6 +130,13 @@ void tc_state_init(int port, enum typec_state_id start_state);
  * @param evt event
  */
 void tc_event_check(int port, int evt);
+
+/**
+ * Runs the TypeC layer statemachine
+ *
+ * @param port USB-C port number
+ */
+void tc_run(const int port);
 
 #ifdef CONFIG_USB_TYPEC_CTVPD
 /**

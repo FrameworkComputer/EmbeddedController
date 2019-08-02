@@ -4,174 +4,191 @@
  */
 
 #include "common.h"
-#include "task.h"
+#include "console.h"
+#include "stdbool.h"
 #include "usb_pd.h"
 #include "usb_sm.h"
 #include "util.h"
-#include "console.h"
 
-void sm_init_state(int port, struct sm_obj *obj, sm_state target)
-{
-#if (CONFIG_SM_NESTING_NUM > 0)
-	int i;
-
-	sm_state tmp_super[CONFIG_SM_NESTING_NUM];
+#ifdef CONFIG_COMMON_RUNTIME
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
+#else /* CONFIG_COMMON_RUNTIME */
+#define CPRINTF(format, args...)
+#define CPRINTS(format, args...)
 #endif
 
-	obj->last_state = NULL;
-	obj->task_state = target;
+/* Private structure (to this file) used to track state machine context */
+struct internal_ctx {
+	usb_state_ptr last_entered;
+	uint32_t running : 1;
+	uint32_t enter	 : 1;
+	uint32_t exit	 : 1;
+};
+BUILD_ASSERT(sizeof(struct internal_ctx) ==
+	     member_size(struct sm_ctx, internal));
 
-#if (CONFIG_SM_NESTING_NUM > 0)
+/* Gets the first shared parent state between a and b (inclusive) */
+static usb_state_ptr shared_parent_state(usb_state_ptr a, usb_state_ptr b)
+{
+	const usb_state_ptr orig_b = b;
 
-	/* Prepare to execute all entry actions of the target's super states */
+	/* There are no common ancestors */
+	if (b == NULL)
+		return NULL;
+
+	/* This assumes that both A and B are NULL terminated without cycles */
+	while (a != NULL) {
+		/* We found a match return */
+		if (a == b)
+			return a;
+
+		/*
+		 * Otherwise, increment b down the list for comparison until we
+		 * run out, then increment a and start over on b for comparison
+		 */
+		if (b->parent == NULL) {
+			a = a->parent;
+			b = orig_b;
+		} else {
+			b = b->parent;
+		}
+	}
+
+	return NULL;
+}
+
+/*
+ * Call all entry functions of parents before children. If set_state is called
+ * during one of the entry functions, then do not call any remaining entry
+ * functions.
+ */
+static void call_entry_functions(const int port,
+			       struct internal_ctx *const internal,
+			       const usb_state_ptr stop,
+			       const usb_state_ptr current)
+{
+	if (current == stop)
+		return;
+
+	call_entry_functions(port, internal, stop, current->parent);
 
 	/*
-	 * Get targets super state. This will be NULL if the target
-	 * has no super state
+	 * If the previous entry function called set_state, then don't enter
+	 * remaining states.
 	 */
-	tmp_super[CONFIG_SM_NESTING_NUM - 1] =
-			(sm_state)(uintptr_t)target(port, SM_SUPER_SIG);
+	if (!internal->enter)
+		return;
 
-	/* Get all super states of the target */
-	for (i = CONFIG_SM_NESTING_NUM - 1; i > 0; i--) {
-		if (tmp_super[i] != NULL)
-			tmp_super[i - 1] =
-			(sm_state)(uintptr_t)tmp_super[i](port, SM_SUPER_SIG);
-		else
-			tmp_super[i - 1] = NULL;
+	/* Track the latest state that was entered, so we can exit properly. */
+	internal->last_entered = current;
+	if (current->entry)
+		current->entry(port);
+}
+
+/*
+ * Call all exit functions of children before parents. Note set_state is ignored
+ * during an exit function.
+ */
+static void call_exit_functions(const int port, const usb_state_ptr stop,
+			      const usb_state_ptr current)
+{
+	if (current == stop)
+		return;
+
+	if (current->exit)
+		current->exit(port);
+
+	call_exit_functions(port, stop, current->parent);
+}
+
+void set_state(const int port, struct sm_ctx *const ctx,
+	       const usb_state_ptr new_state)
+{
+	struct internal_ctx * const internal = (void *) ctx->internal;
+	usb_state_ptr last_state;
+	usb_state_ptr shared_parent;
+
+	/*
+	 * It does not make sense to call set_state in an exit phase of a state
+	 * since we are already in a transition; we would always ignore the
+	 * intended state to transition into.
+	 */
+	if (internal->exit) {
+		CPRINTF("C%d: Ignoring set state to 0x%08x within 0x%08x",
+			port, new_state, ctx->current);
+		return;
 	}
 
-	/* Execute all super state entry actions in forward order */
-	for (i = 0; i < CONFIG_SM_NESTING_NUM; i++)
-		if (tmp_super[i] != NULL)
-			tmp_super[i](port, SM_ENTRY_SIG);
-#endif
+	/*
+	 * Determine the last state that was entered. Normally it is current,
+	 * but we could have called set_state within an entry phase, so we
+	 * shouldn't exit any states that weren't fully entered.
+	 */
+	last_state = internal->enter ? internal->last_entered : ctx->current;
 
-	/* Now execute the target entry action */
-	target(port, SM_ENTRY_SIG);
+	/* We don't exit and re-enter shared parent states */
+	shared_parent = shared_parent_state(last_state, new_state);
+
+	/*
+	 * Exit all of the non-common states from the last state.
+	 */
+	internal->exit = true;
+	call_exit_functions(port, shared_parent, last_state);
+	internal->exit = false;
+
+	ctx->previous = ctx->current;
+	ctx->current = new_state;
+
+	/*
+	 * Enter all new non-common states. last_entered will contain the last
+	 * state that successfully entered before another set_state was called.
+	 */
+	internal->last_entered = NULL;
+	internal->enter = true;
+	call_entry_functions(port, internal, shared_parent, ctx->current);
+	/*
+	 * Setting enter to false ensures that all pending entry calls will be
+	 * skipped (in the case of a parent state calling set_state, which means
+	 * we should not enter any child states)
+	 */
+	internal->enter = false;
+
+	/*
+	 * If we set_state while we are running a child state, then stop running
+	 * any remaining parent states.
+	 */
+	internal->running = false;
 }
 
-int sm_set_state(int port, struct sm_obj *obj, sm_state target)
+/*
+ * Call all run functions of children before parents. If set_state is called
+ * during one of the entry functions, then do not call any remaining entry
+ * functions.
+ */
+static void call_run_functions(const int port,
+			     const struct internal_ctx *const internal,
+			     const usb_state_ptr current)
 {
-#if (CONFIG_SM_NESTING_NUM > 0)
-	int i;
-	int no_execute;
+	if (!current)
+		return;
 
-	sm_state tmp_super[CONFIG_SM_NESTING_NUM];
-	sm_state target_super;
-	sm_state last_super;
-	sm_state super;
+	/* If set_state is called during run, don't call remain functions. */
+	if (!internal->running)
+		return;
 
-	/* Execute all exit actions is reverse order */
+	if (current->run)
+		current->run(port);
 
-	/* Get target's super state */
-	target_super = (sm_state)(uintptr_t)target(port, SM_SUPER_SIG);
-	tmp_super[0] = obj->task_state;
-
-	do {
-		/* Execute exit action */
-		tmp_super[0](port, SM_EXIT_SIG);
-
-		/* Get super state */
-		tmp_super[0] =
-			(sm_state)(uintptr_t)tmp_super[0](port, SM_SUPER_SIG);
-		/*
-		 * No need to execute a super state's exit action that has
-		 * shared ancestry with the target.
-		 */
-		super = target_super;
-		while (super != NULL) {
-			if (tmp_super[0] == super) {
-				tmp_super[0] = NULL;
-				break;
-			}
-
-			/* Get target state next super state if it exists */
-			super = (sm_state)(uintptr_t)super(port, SM_SUPER_SIG);
-		}
-	} while (tmp_super[0] != NULL);
-
-	/* All done executing the exit actions */
-#else
-	obj->task_state(port, SM_EXIT_SIG);
-#endif
-	/* update the state variables */
-	obj->last_state = obj->task_state;
-	obj->task_state = target;
-
-#if (CONFIG_SM_NESTING_NUM > 0)
-	/* Prepare to execute all entry actions of the target's super states */
-
-	tmp_super[CONFIG_SM_NESTING_NUM - 1] =
-				(sm_state)(uintptr_t)target(port, SM_SUPER_SIG);
-
-	/* Get all super states of the target */
-	for (i = CONFIG_SM_NESTING_NUM - 1; i > 0; i--) {
-		if (tmp_super[i] != NULL)
-			tmp_super[i - 1] =
-			(sm_state)(uintptr_t)tmp_super[i](port, SM_SUPER_SIG);
-		else
-			tmp_super[i - 1] = NULL;
-	}
-
-	/* Get super state of last state */
-	last_super = (sm_state)(uintptr_t)obj->last_state(port, SM_SUPER_SIG);
-
-	/* Execute all super state entry actions in forward order */
-	for (i = 0; i < CONFIG_SM_NESTING_NUM; i++) {
-		/* No super state */
-		if (tmp_super[i] == NULL)
-			continue;
-
-		/*
-		 * We only want to execute the target state's super state entry
-		 * action if it doesn't share a super state with the previous
-		 * state.
-		 */
-		super = last_super;
-		no_execute = 0;
-		while (super != NULL) {
-			if (tmp_super[i] == super) {
-				no_execute = 1;
-				break;
-			}
-
-			/* Get last state's next super state if it exists */
-			super = (sm_state)(uintptr_t)super(port, SM_SUPER_SIG);
-		}
-
-		/* Execute super state's entry */
-		if (!no_execute)
-			tmp_super[i](port, SM_ENTRY_SIG);
-	}
-#endif
-
-	/* Now execute the target entry action */
-	target(port, SM_ENTRY_SIG);
-
-	return 0;
+	call_run_functions(port, internal, current->parent);
 }
 
-void sm_run_state_machine(int port, struct sm_obj *obj, enum sm_signal sig)
+void exe_state(const int port, struct sm_ctx *const ctx)
 {
-#if (CONFIG_SM_NESTING_NUM > 0)
-	sm_state state = obj->task_state;
+	struct internal_ctx * const internal = (void *) ctx->internal;
 
-	do {
-		state = (sm_state)(uintptr_t)state(port, sig);
-	} while (state != NULL);
-#else
-	obj->task_state(port, sig);
-#endif
-}
-
-int sm_do_nothing(int port)
-{
-	return 0;
-}
-
-int sm_get_super_state(int port)
-{
-	return SM_RUN_SUPER;
+	internal->running = true;
+	call_run_functions(port, internal, ctx->current);
+	internal->running = false;
 }
 

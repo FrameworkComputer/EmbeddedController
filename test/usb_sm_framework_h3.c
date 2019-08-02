@@ -113,41 +113,37 @@ enum state_id {
 };
 
 #define PORT0   0
-#define TSM_OBJ(port)   (SM_OBJ(sm[port]))
 
 struct sm_ {
 	/* struct sm_obj must be first */
-	struct sm_obj obj;
+	struct sm_ctx ctx;
 	int sv_tmp;
 	int idx;
-	int seq[55];
+	int seq[SEQUENCE_SIZE];
 } sm[1];
 
-#if defined(TEST_USB_SM_FRAMEWORK_H3)
-DECLARE_STATE(sm, test_super_A1, WITH_RUN, WITH_EXIT);
-DECLARE_STATE(sm, test_super_B1, WITH_RUN, WITH_EXIT);
-#endif
+enum state {
+	SM_TEST_SUPER_A1,
+	SM_TEST_SUPER_A2,
+	SM_TEST_SUPER_A3,
+	SM_TEST_SUPER_B1,
+	SM_TEST_SUPER_B2,
+	SM_TEST_SUPER_B3,
+	SM_TEST_A4,
+	SM_TEST_A5,
+	SM_TEST_A6,
+	SM_TEST_A7,
+	SM_TEST_B4,
+	SM_TEST_B5,
+	SM_TEST_B6,
+	SM_TEST_C,
+};
+static const struct usb_state states[];
 
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2)
-DECLARE_STATE(sm, test_super_A2, WITH_RUN, WITH_EXIT);
-DECLARE_STATE(sm, test_super_B2, WITH_RUN, WITH_EXIT);
-#endif
-
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2) || \
-	defined(TEST_USB_SM_FRAMEWORK_H1)
-DECLARE_STATE(sm, test_super_A3, WITH_RUN, WITH_EXIT);
-DECLARE_STATE(sm, test_super_B3, WITH_RUN, WITH_EXIT);
-#endif
-
-DECLARE_STATE(sm, test_A4, WITH_RUN, WITH_EXIT);
-DECLARE_STATE(sm, test_A5, WITH_RUN, WITH_EXIT);
-DECLARE_STATE(sm, test_A6, WITH_RUN, WITH_EXIT);
-DECLARE_STATE(sm, test_A7, WITH_RUN, WITH_EXIT);
-
-DECLARE_STATE(sm, test_B4, WITH_RUN, WITH_EXIT);
-DECLARE_STATE(sm, test_B5, WITH_RUN, WITH_EXIT);
-DECLARE_STATE(sm, test_B6, WITH_RUN, WITH_EXIT);
-DECLARE_STATE(sm, test_C, WITH_RUN, WITH_EXIT);
+static void set_state_sm(const int port, const enum state new_state)
+{
+	set_state(port, &sm[port].ctx, &states[new_state]);
+}
 
 static void clear_seq(int port)
 {
@@ -159,494 +155,267 @@ static void clear_seq(int port)
 		sm[port].seq[i] = 0;
 }
 
-#if defined(TEST_USB_SM_FRAMEWORK_H3)
-static int sm_test_super_A1(int port, enum sm_signal sig)
-{
-	int ret;
-
-	ret = (*sm_test_super_A1_sig[sig])(port);
-	return SM_SUPER(ret, sig, 0);
-}
-
-static int sm_test_super_A1_entry(int port)
+static void sm_test_super_A1_entry(const int port)
 {
 	sm[port].seq[sm[port].idx++] = ENTER_A1;
-	return 0;
 }
 
-static int sm_test_super_A1_run(int port)
+static void sm_test_super_A1_run(const int port)
 {
 	sm[port].seq[sm[port].idx++] = RUN_A1;
-	return 0;
 }
 
-static int sm_test_super_A1_exit(int port)
+static void sm_test_super_A1_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_A1;
-	return 0;
 }
 
-static int sm_test_super_B1(int port, enum sm_signal sig)
-{
-	int ret;
-
-	ret = (*sm_test_super_B1_sig[sig])(port);
-	return SM_SUPER(ret, sig, 0);
-}
-
-static int sm_test_super_B1_entry(int port)
+static void sm_test_super_B1_entry(const int port)
 {
 	sm[port].seq[sm[port].idx++] = ENTER_B1;
-	return 0;
 }
 
-static int sm_test_super_B1_run(int port)
+static void sm_test_super_B1_run(const int port)
 {
 	sm[port].seq[sm[port].idx++] = RUN_B1;
-	return 0;
 }
 
-static int sm_test_super_B1_exit(int port)
+static void sm_test_super_B1_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_B1;
-	return 0;
-}
-#endif
-
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2)
-static int sm_test_super_A2(int port, enum sm_signal sig)
-{
-	int ret;
-
-	ret = (*sm_test_super_A2_sig[sig])(port);
-#if defined(TEST_USB_SM_FRAMEWORK_H3)
-	return SM_SUPER(ret, sig, sm_test_super_A1);
-#else
-	return SM_SUPER(ret, sig, 0);
-#endif
 }
 
-static int sm_test_super_A2_entry(int port)
+static void sm_test_super_A2_entry(const int port)
 {
 	sm[port].seq[sm[port].idx++] = ENTER_A2;
-	return 0;
 }
 
-static int sm_test_super_A2_run(int port)
+static void sm_test_super_A2_run(const int port)
 {
 	sm[port].seq[sm[port].idx++] = RUN_A2;
-	return SM_RUN_SUPER;
 }
 
-static int sm_test_super_A2_exit(int port)
+static void sm_test_super_A2_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_A2;
-	return 0;
 }
 
-static int sm_test_super_B2(int port, enum sm_signal sig)
-{
-	int ret;
 
-	ret = (*sm_test_super_B2_sig[sig])(port);
-#if defined(TEST_USB_SM_FRAMEWORK_H3)
-	return SM_SUPER(ret, sig, sm_test_super_B1);
-#else
-	return SM_SUPER(ret, sig, 0);
-#endif
-}
-
-static int sm_test_super_B2_entry(int port)
+static void sm_test_super_B2_entry(const int port)
 {
 	sm[port].seq[sm[port].idx++] = ENTER_B2;
-	return 0;
 }
 
-static int sm_test_super_B2_run(int port)
+static void sm_test_super_B2_run(const int port)
 {
 	sm[port].seq[sm[port].idx++] = RUN_B2;
-	return SM_RUN_SUPER;
 }
 
-static int sm_test_super_B2_exit(int port)
+static void sm_test_super_B2_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_B2;
-	return 0;
-}
-#endif
-
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2) || \
-		defined(TEST_USB_SM_FRAMEWORK_H1)
-static int sm_test_super_A3(int port, enum sm_signal sig)
-{
-	int ret;
-
-	ret = (*sm_test_super_A3_sig[sig])(port);
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2)
-	return SM_SUPER(ret, sig, sm_test_super_A2);
-#else
-	return SM_SUPER(ret, sig, 0);
-#endif
 }
 
-static int sm_test_super_A3_entry(int port)
+static void sm_test_super_A3_entry(const int port)
 {
 	sm[port].seq[sm[port].idx++] = ENTER_A3;
-	return 0;
 }
 
-static int sm_test_super_A3_run(int port)
+static void sm_test_super_A3_run(const int port)
 {
 	sm[port].seq[sm[port].idx++] = RUN_A3;
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2)
-	return SM_RUN_SUPER;
-#else
-	return 0;
-#endif
 }
 
-static int sm_test_super_A3_exit(int port)
+static void sm_test_super_A3_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_A3;
-	return 0;
 }
 
-static int sm_test_super_B3(int port, enum sm_signal sig)
-{
-	int ret;
-
-	ret = (*sm_test_super_B3_sig[sig])(port);
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2)
-	return SM_SUPER(ret, sig, sm_test_super_B2);
-#else
-	return SM_SUPER(ret, sig, 0);
-#endif
-}
-
-static int sm_test_super_B3_entry(int port)
+static void sm_test_super_B3_entry(const int port)
 {
 	sm[port].seq[sm[port].idx++] = ENTER_B3;
-	return 0;
 }
 
-static int sm_test_super_B3_run(int port)
+static void sm_test_super_B3_run(const int port)
 {
 	sm[port].seq[sm[port].idx++] = RUN_B3;
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2)
-	return SM_RUN_SUPER;
-#else
-	return 0;
-#endif
 }
 
-static int sm_test_super_B3_exit(int port)
+static void sm_test_super_B3_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_B3;
-	return 0;
-}
-#endif
-
-
-static int sm_test_A4(int port, enum sm_signal sig)
-{
-	int ret;
-
-	ret = (*sm_test_A4_sig[sig])(port);
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2) || \
-		defined(TEST_USB_SM_FRAMEWORK_H1)
-	return SM_SUPER(ret, sig, sm_test_super_A3);
-#else
-	return SM_SUPER(ret, sig, 0);
-#endif
 }
 
-static int sm_test_A4_entry(int port)
+static void sm_test_A4_entry(const int port)
 {
 	sm[port].sv_tmp = 0;
 	sm[port].seq[sm[port].idx++] = ENTER_A4;
-	return 0;
 }
 
-static int sm_test_A4_run(int port)
+static void sm_test_A4_run(const int port)
 {
 	if (sm[port].sv_tmp == 0) {
 		sm[port].sv_tmp = 1;
 		sm[port].seq[sm[port].idx++] = RUN_A4;
 	} else {
-		sm_set_state(port, TSM_OBJ(port), sm_test_B4);
-		return 0;
+		set_state_sm(port, SM_TEST_B4);
 	}
-
-	return SM_RUN_SUPER;
 }
 
-static int sm_test_A4_exit(int port)
+static void sm_test_A4_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_A4;
-	return 0;
 }
 
-static int sm_test_A5(int port, enum sm_signal sig)
-{
-	int ret;
 
-	ret = (*sm_test_A5_sig[sig])(port);
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2) || \
-		defined(TEST_USB_SM_FRAMEWORK_H1)
-	return SM_SUPER(ret, sig, sm_test_super_A3);
-#else
-	return SM_SUPER(ret, sig, 0);
-#endif
-}
-
-static int sm_test_A5_entry(int port)
+static void sm_test_A5_entry(const int port)
 {
 	sm[port].sv_tmp = 0;
 	sm[port].seq[sm[port].idx++] = ENTER_A5;
-	return 0;
 }
 
-static int sm_test_A5_run(int port)
+static void sm_test_A5_run(const int port)
 {
 	if (sm[port].sv_tmp == 0) {
 		sm[port].sv_tmp = 1;
 		sm[port].seq[sm[port].idx++] = RUN_A5;
 	} else {
-		sm_set_state(port, TSM_OBJ(port), sm_test_A4);
-		return 0;
+		set_state_sm(port, SM_TEST_A4);
 	}
-
-	return SM_RUN_SUPER;
 }
 
-static int sm_test_A5_exit(int port)
+static void sm_test_A5_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_A5;
-	return 0;
 }
 
-static int sm_test_A6(int port, enum sm_signal sig)
-{
-	int ret;
 
-	ret = (*sm_test_A6_sig[sig])(port);
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2)
-	return SM_SUPER(ret, sig, sm_test_super_A2);
-#else
-	return SM_SUPER(ret, sig, 0);
-#endif
-}
-
-static int sm_test_A6_entry(int port)
+static void sm_test_A6_entry(const int port)
 {
 	sm[port].sv_tmp = 0;
 	sm[port].seq[sm[port].idx++] = ENTER_A6;
-	return 0;
 }
 
-static int sm_test_A6_run(int port)
+static void sm_test_A6_run(const int port)
 {
 	if (sm[port].sv_tmp == 0) {
 		sm[port].sv_tmp = 1;
 		sm[port].seq[sm[port].idx++] = RUN_A6;
 	} else {
-		sm_set_state(port, TSM_OBJ(port), sm_test_A5);
-		return 0;
+		set_state_sm(port, SM_TEST_A5);
 	}
-
-	return SM_RUN_SUPER;
 }
 
-static int sm_test_A6_exit(int port)
+static void sm_test_A6_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_A6;
-	return 0;
 }
 
-static int sm_test_A7(int port, enum sm_signal sig)
-{
-	int ret;
-
-	ret = (*sm_test_A7_sig[sig])(port);
-#if defined(TEST_USB_SM_FRAMEWORK_H3)
-	return SM_SUPER(ret, sig, sm_test_super_A1);
-#else
-	return SM_SUPER(ret, sig, 0);
-#endif
-}
-
-static int sm_test_A7_entry(int port)
+static void sm_test_A7_entry(const int port)
 {
 	sm[port].sv_tmp = 0;
 	sm[port].seq[sm[port].idx++] = ENTER_A7;
-	return 0;
 }
 
-static int sm_test_A7_run(int port)
+static void sm_test_A7_run(const int port)
 {
 	if (sm[port].sv_tmp == 0) {
 		sm[port].sv_tmp = 1;
 		sm[port].seq[sm[port].idx++] = RUN_A7;
 	} else {
-		sm_set_state(port, TSM_OBJ(port), sm_test_A6);
-		return 0;
+		set_state_sm(port, SM_TEST_A6);
 	}
-
-	return SM_RUN_SUPER;
 }
 
-static int sm_test_A7_exit(int port)
+static void sm_test_A7_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_A7;
-	return 0;
 }
 
-static int sm_test_B4(int port, enum sm_signal sig)
-{
-	int ret;
-
-	ret = (*sm_test_B4_sig[sig])(port);
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2) || \
-		defined(TEST_USB_SM_FRAMEWORK_H1)
-	return SM_SUPER(ret, sig, sm_test_super_B3);
-#else
-	return SM_SUPER(ret, sig, 0);
-#endif
-}
-
-static int sm_test_B4_entry(int port)
+static void sm_test_B4_entry(const int port)
 {
 	sm[port].sv_tmp = 0;
 	sm[port].seq[sm[port].idx++] = ENTER_B4;
-	return 0;
 }
 
-static int sm_test_B4_run(int port)
+static void sm_test_B4_run(const int port)
 {
 	if (sm[port].sv_tmp == 0) {
 		sm[port].seq[sm[port].idx++] = RUN_B4;
 		sm[port].sv_tmp = 1;
 	} else {
-		sm_set_state(port, TSM_OBJ(port), sm_test_B5);
-		return 0;
+		set_state_sm(port, SM_TEST_B5);
 	}
-
-	return SM_RUN_SUPER;
 }
 
-static int sm_test_B4_exit(int port)
+static void sm_test_B4_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_B4;
-	return 0;
 }
 
-static int sm_test_B5(int port, enum sm_signal sig)
-{
-	int ret;
 
-	ret = (*sm_test_B5_sig[sig])(port);
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2)
-	return SM_SUPER(ret, sig, sm_test_super_B2);
-#else
-	return SM_SUPER(ret, sig, 0);
-#endif
-}
-
-static int sm_test_B5_entry(int port)
+static void sm_test_B5_entry(const int port)
 {
 	sm[port].sv_tmp = 0;
 	sm[port].seq[sm[port].idx++] = ENTER_B5;
-	return 0;
 }
 
-static int sm_test_B5_run(int port)
+static void sm_test_B5_run(const int port)
 {
 	if (sm[port].sv_tmp == 0) {
 		sm[port].sv_tmp = 1;
 		sm[port].seq[sm[port].idx++] = RUN_B5;
 	} else {
-		sm_set_state(port, TSM_OBJ(port), sm_test_B6);
-		return 0;
+		set_state_sm(port, SM_TEST_B6);
 	}
-
-	return SM_RUN_SUPER;
 }
 
-static int sm_test_B5_exit(int port)
+static void sm_test_B5_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_B5;
-	return 0;
 }
 
-static int sm_test_B6(int port, enum sm_signal sig)
-{
-	int ret;
 
-	ret = (*sm_test_B6_sig[sig])(port);
-#if defined(TEST_USB_SM_FRAMEWORK_H3)
-	return SM_SUPER(ret, sig, sm_test_super_B1);
-#else
-	return SM_SUPER(ret, sig, 0);
-#endif
-}
-
-static int sm_test_B6_entry(int port)
+static void sm_test_B6_entry(const int port)
 {
 	sm[port].sv_tmp = 0;
 	sm[port].seq[sm[port].idx++] = ENTER_B6;
-	return 0;
 }
 
-static int sm_test_B6_run(int port)
+static void sm_test_B6_run(const int port)
 {
 	if (sm[port].sv_tmp == 0) {
 		sm[port].sv_tmp = 1;
 		sm[port].seq[sm[port].idx++] = RUN_B6;
 	} else {
-		sm_set_state(port, TSM_OBJ(port), sm_test_C);
-		return 0;
+		set_state_sm(port, SM_TEST_C);
 	}
-
-	return SM_RUN_SUPER;
 }
 
-static int sm_test_B6_exit(int port)
+static void sm_test_B6_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_B6;
-	return 0;
 }
 
-static int sm_test_C(int port, enum sm_signal sig)
-{
-	int ret;
-
-	ret = (*sm_test_C_sig[sig])(port);
-	return SM_SUPER(ret, sig, 0);
-}
-
-static int sm_test_C_entry(int port)
+static void sm_test_C_entry(const int port)
 {
 	sm[port].sv_tmp = 0;
 	sm[port].seq[sm[port].idx++] = ENTER_C;
-	return 0;
 }
 
-static int sm_test_C_run(int port)
+static void sm_test_C_run(const int port)
 {
 	if (sm[port].sv_tmp == 0) {
 		sm[port].seq[sm[port].idx++] = RUN_C;
 		sm[port].sv_tmp = 1;
 	} else {
-		sm_set_state(port, TSM_OBJ(port), sm_test_A7);
+		set_state_sm(port, SM_TEST_A7);
 	}
-
-	return 0;
 }
 
-static int sm_test_C_exit(int port)
+static void sm_test_C_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_C;
-	return 0;
 }
 
 static void run_sm(void)
@@ -655,14 +424,13 @@ static void run_sm(void)
 	task_wait_event(5 * MSEC);
 }
 
-#if defined(TEST_USB_SM_FRAMEWORK_H0)
-static int test_hierarchy_0(void)
+test_static int test_hierarchy_0(void)
 {
 	int port = PORT0;
 	int i = 0;
 
 	clear_seq(port);
-	sm_init_state(port, TSM_OBJ(port), sm_test_A4);
+	set_state_sm(port, SM_TEST_A4);
 
 	run_sm();
 	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d"); ++i;
@@ -728,17 +496,14 @@ static int test_hierarchy_0(void)
 
 	return EC_SUCCESS;
 }
-#endif
 
-
-#if defined(TEST_USB_SM_FRAMEWORK_H1)
-static int test_hierarchy_1(void)
+test_static int test_hierarchy_1(void)
 {
 	int port = PORT0;
 	int i = 0;
 
 	clear_seq(port);
-	sm_init_state(port, TSM_OBJ(port), sm_test_A4);
+	set_state_sm(port, SM_TEST_A4);
 
 	run_sm();
 	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d"); ++i;
@@ -812,18 +577,15 @@ static int test_hierarchy_1(void)
 
 	return EC_SUCCESS;
 }
-#endif
 
-
-#if defined(TEST_USB_SM_FRAMEWORK_H2)
-static int test_hierarchy_2(void)
+test_static int test_hierarchy_2(void)
 {
 
 	int port = PORT0;
 	int i = 0;
 
 	clear_seq(port);
-	sm_init_state(port, TSM_OBJ(port), sm_test_A4);
+	set_state_sm(port, SM_TEST_A4);
 
 	run_sm();
 	TEST_EQ(sm[port].seq[i], ENTER_A2, "%d"); ++i;
@@ -907,17 +669,15 @@ static int test_hierarchy_2(void)
 
 	return EC_SUCCESS;
 }
-#endif
 
-#if defined(TEST_USB_SM_FRAMEWORK_H3)
-static int test_hierarchy_3(void)
+test_static int test_hierarchy_3(void)
 {
 
 	int port = PORT0;
 	int i = 0;
 
 	clear_seq(port);
-	sm_init_state(port, TSM_OBJ(port), sm_test_A4);
+	set_state_sm(port, SM_TEST_A4);
 
 	run_sm();
 	TEST_EQ(sm[port].seq[i], ENTER_A1, "%d"); ++i;
@@ -1013,7 +773,125 @@ static int test_hierarchy_3(void)
 
 	return EC_SUCCESS;
 }
+
+
+#ifdef TEST_USB_SM_FRAMEWORK_H3
+#define TEST_AT_LEAST_3
 #endif
+
+#if defined(TEST_AT_LEAST_3) || defined(TEST_USB_SM_FRAMEWORK_H2)
+#define TEST_AT_LEAST_2
+#endif
+
+#if defined(TEST_AT_LEAST_2) || defined(TEST_USB_SM_FRAMEWORK_H1)
+#define TEST_AT_LEAST_1
+#endif
+
+static const struct usb_state states[] = {
+	[SM_TEST_SUPER_A1] = {
+		.entry  = sm_test_super_A1_entry,
+		.run    = sm_test_super_A1_run,
+		.exit   = sm_test_super_A1_exit,
+	},
+	[SM_TEST_SUPER_A2] = {
+		.entry  = sm_test_super_A2_entry,
+		.run    = sm_test_super_A2_run,
+		.exit   = sm_test_super_A2_exit,
+#ifdef TEST_AT_LEAST_3
+		.parent = &states[SM_TEST_SUPER_A1],
+#endif
+	},
+	[SM_TEST_SUPER_A3] = {
+		.entry  = sm_test_super_A3_entry,
+		.run    = sm_test_super_A3_run,
+		.exit   = sm_test_super_A3_exit,
+#ifdef TEST_AT_LEAST_2
+		.parent = &states[SM_TEST_SUPER_A2],
+#endif
+	},
+	[SM_TEST_SUPER_B1] = {
+		.entry  = sm_test_super_B1_entry,
+		.run    = sm_test_super_B1_run,
+		.exit   = sm_test_super_B1_exit,
+	},
+	[SM_TEST_SUPER_B2] = {
+		.entry  = sm_test_super_B2_entry,
+		.run    = sm_test_super_B2_run,
+		.exit   = sm_test_super_B2_exit,
+#ifdef TEST_AT_LEAST_3
+		.parent = &states[SM_TEST_SUPER_B1],
+#endif
+	},
+	[SM_TEST_SUPER_B3] = {
+		.entry  = sm_test_super_B3_entry,
+		.run    = sm_test_super_B3_run,
+		.exit   = sm_test_super_B3_exit,
+#ifdef TEST_AT_LEAST_2
+		.parent = &states[SM_TEST_SUPER_B2],
+#endif
+	},
+	[SM_TEST_A4] = {
+		.entry  = sm_test_A4_entry,
+		.run    = sm_test_A4_run,
+		.exit   = sm_test_A4_exit,
+#ifdef TEST_AT_LEAST_1
+		.parent = &states[SM_TEST_SUPER_A3],
+#endif
+	},
+	[SM_TEST_A5] = {
+		.entry  = sm_test_A5_entry,
+		.run    = sm_test_A5_run,
+		.exit   = sm_test_A5_exit,
+#ifdef TEST_AT_LEAST_1
+		.parent = &states[SM_TEST_SUPER_A3],
+#endif
+	},
+	[SM_TEST_A6] = {
+		.entry  = sm_test_A6_entry,
+		.run    = sm_test_A6_run,
+		.exit   = sm_test_A6_exit,
+#ifdef TEST_AT_LEAST_2
+		.parent = &states[SM_TEST_SUPER_A2],
+#endif
+	},
+	[SM_TEST_A7] = {
+		.entry  = sm_test_A7_entry,
+		.run    = sm_test_A7_run,
+		.exit   = sm_test_A7_exit,
+#ifdef TEST_AT_LEAST_3
+		.parent = &states[SM_TEST_SUPER_A1],
+#endif
+	},
+	[SM_TEST_B4] = {
+		.entry  = sm_test_B4_entry,
+		.run    = sm_test_B4_run,
+		.exit   = sm_test_B4_exit,
+#ifdef TEST_AT_LEAST_1
+		.parent = &states[SM_TEST_SUPER_B3],
+#endif
+	},
+	[SM_TEST_B5] = {
+		.entry  = sm_test_B5_entry,
+		.run    = sm_test_B5_run,
+		.exit   = sm_test_B5_exit,
+#ifdef TEST_AT_LEAST_2
+		.parent = &states[SM_TEST_SUPER_B2],
+#endif
+	},
+	[SM_TEST_B6] = {
+		.entry  = sm_test_B6_entry,
+		.run    = sm_test_B6_run,
+		.exit   = sm_test_B6_exit,
+#ifdef TEST_AT_LEAST_3
+		.parent = &states[SM_TEST_SUPER_B1],
+#endif
+	},
+	[SM_TEST_C] = {
+		.entry  = sm_test_C_entry,
+		.run    = sm_test_C_run,
+		.exit   = sm_test_C_exit,
+	},
+};
 
 int test_task(void *u)
 {
@@ -1023,7 +901,7 @@ int test_task(void *u)
 		/* wait for next event/packet or timeout expiration */
 		task_wait_event(-1);
 		/* run state machine */
-		sm_run_state_machine(port, TSM_OBJ(port), SM_RUN_SIG);
+		exe_state(port, &sm[port].ctx);
 	}
 
 	return EC_SUCCESS;

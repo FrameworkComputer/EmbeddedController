@@ -10,7 +10,7 @@
 #include "tcpm.h"
 #include "usb_pd.h"
 #include "usb_tc_sm.h"
-#include "usb_tc_vpd_sm.h"
+#include "usb_sm.h"
 #include "vpd_api.h"
 
 /* USB Type-C VCONN Powered Device module */
@@ -30,33 +30,68 @@
  * This is the Type-C Port object that contains information needed to
  * implement a VCONN Powered Device.
  */
-struct type_c tc[CONFIG_USB_PD_PORT_COUNT];
+static struct type_c {
+	/* state machine context */
+	struct sm_ctx ctx;
+	/* current port power role (VPD, SOURCE or SINK) */
+	uint8_t power_role;
+	/* current port data role (DFP or UFP) */
+	uint8_t data_role;
+	/* Higher-level power deliver state machines are enabled if true. */
+	uint8_t pd_enable;
+	/* event timeout */
+	uint64_t evt_timeout;
+	/* port flags, see TC_FLAGS_* */
+	uint32_t flags;
+	/* Time a port shall wait before it can determine it is attached */
+	uint64_t cc_debounce;
+	/* VPD host port cc state */
+	enum pd_cc_states host_cc_state;
+	uint8_t ct_cc;
+} tc[CONFIG_USB_PD_PORT_COUNT];
 
-/* Type-C states */
-DECLARE_STATE(tc, disabled, WITH_RUN, WITH_EXIT);
-DECLARE_STATE(tc, unattached_snk, WITH_RUN, NOOP);
-DECLARE_STATE(tc, attach_wait_snk, WITH_RUN, NOOP);
-DECLARE_STATE(tc, attached_snk, WITH_RUN, WITH_EXIT);
+/* List of all TypeC-level states */
+enum usb_tc_state {
+	/* Normal States */
+	TC_DISABLED,
+	TC_UNATTACHED_SNK,
+	TC_ATTACH_WAIT_SNK,
+	TC_ATTACHED_SNK,
+	/* Super States */
+	TC_VBUS_CC_ISO,
+	TC_HOST_RARD,
+	TC_HOST_OPEN,
+};
+/* Forward declare the full list of states. This is indexed by usb_tc_state */
+static const struct usb_state tc_states[];
 
-/* Super States */
-DECLARE_STATE(tc, host_rard, NOOP, NOOP);
-DECLARE_STATE(tc, host_open, NOOP, NOOP);
-DECLARE_STATE(tc, vbus_cc_iso, NOOP, NOOP);
+#ifdef CONFIG_COMMON_RUNTIME
+/* List of human readable state names for console debugging */
+static const char * const tc_state_names[] = {
+	[TC_DISABLED] = "Disabled",
+	[TC_UNATTACHED_SNK] = "Unattached.SNK",
+	[TC_ATTACH_WAIT_SNK] = "AttachWait.SNK",
+	[TC_ATTACHED_SNK] = "Attached.SNK",
+};
+#endif
 
-void tc_state_init(int port, enum typec_state_id start_state)
+/* Forward declare private, common functions */
+static void set_state_tc(const int port, enum usb_tc_state new_state);
+
+/* Public TypeC functions */
+
+void tc_state_init(int port)
 {
 	int res = 0;
-	sm_state this_state;
 
 	res = tc_restart_tcpc(port);
 
 	CPRINTS("TCPC p%d init %s", port, res ? "failed" : "ready");
-	this_state = res ? tc_disabled : tc_unattached_snk;
 
 	/* Disable TCPC RX until connection is established */
 	tcpm_set_rx_enable(port, 0);
 
-	sm_init_state(port, TC_OBJ(port), this_state);
+	set_state_tc(port, res ? TC_DISABLED : TC_UNATTACHED_SNK);
 
 	/* Disable pd state machines */
 	tc[port].pd_enable = 0;
@@ -66,9 +101,67 @@ void tc_state_init(int port, enum typec_state_id start_state)
 	tc[port].flags = 0;
 }
 
+
+int tc_get_power_role(int port)
+{
+	return tc[port].power_role;
+}
+
+int tc_get_data_role(int port)
+{
+	return tc[port].data_role;
+}
+
+uint8_t tc_get_polarity(int port)
+{
+	/* Does not track polarity yet */
+	return 0;
+}
+
+uint8_t tc_get_pd_enabled(int port)
+{
+	return tc[port].pd_enable;
+}
+
+void tc_set_power_role(int port, int role)
+{
+	tc[port].power_role = role;
+}
+
+uint64_t tc_get_timeout(int port)
+{
+	return tc[port].evt_timeout;
+}
+
+void tc_set_timeout(int port, uint64_t timeout)
+{
+	tc[port].evt_timeout = timeout;
+}
+
 void tc_event_check(int port, int evt)
 {
 	/* Do Nothing */
+}
+
+/*
+ * Private Functions
+ */
+
+/* Set the TypeC state machine to a new state. */
+static void set_state_tc(const int port, const enum usb_tc_state new_state)
+{
+	set_state(port, &tc[port].ctx, &tc_states[new_state]);
+}
+
+/* Get the current TypeC state. */
+test_export_static enum usb_tc_state get_state_tc(const int port)
+{
+	return tc[port].ctx.current - &tc_states[0];
+}
+
+static void print_current_state(const int port)
+{
+	CPRINTS("C%d: %s", port, tc_state_names[get_state_tc(port)]);
 }
 
 /**
@@ -78,40 +171,26 @@ void tc_event_check(int port, int evt)
  *   Enable mcu communication
  *   Remove the terminations from Host CC
  */
-static int tc_disabled(int port, enum sm_signal sig)
+static void tc_disabled_entry(const int port)
 {
-	int ret = 0;
-
-	ret = (*tc_disabled_sig[sig])(port);
-	return SM_SUPER(ret, sig, tc_host_open);
+	print_current_state(port);
 }
 
-static int tc_disabled_entry(int port)
-{
-	tc[port].state_id = TC_DISABLED;
-	CPRINTS("C%d: %s", port, tc_state_names[tc[port].state_id]);
-
-	return 0;
-}
-
-static int tc_disabled_run(int port)
+static void tc_disabled_run(const int port)
 {
 	task_wait_event(-1);
-
-	return SM_RUN_SUPER;
 }
 
-static int tc_disabled_exit(int port)
+static void tc_disabled_exit(const int port)
 {
-#ifndef CONFIG_USB_PD_TCPC
-	if (tc_restart_tcpc(port) != 0) {
-		CPRINTS("TCPC p%d restart failed!", port);
-		return 0;
+	if (!IS_ENABLED(CONFIG_USB_PD_TCPC)) {
+		if (tc_restart_tcpc(port) != 0) {
+			CPRINTS("TCPC p%d restart failed!", port);
+			return;
+		}
 	}
-#endif
-	CPRINTS("TCPC p%d resumed!", port);
 
-	return 0;
+	CPRINTS("TCPC p%d resumed!", port);
 }
 
 /**
@@ -121,23 +200,12 @@ static int tc_disabled_exit(int port)
  *   Enable mcu communication
  *   Place Ra on VCONN and Rd on Host CC
  */
-static int tc_unattached_snk(int port, enum sm_signal sig)
+static void tc_unattached_snk_entry(const int port)
 {
-	int ret;
-
-	ret = (*tc_unattached_snk_sig[sig])(port);
-	return SM_SUPER(ret, sig, tc_host_rard);
+	print_current_state(port);
 }
 
-static int tc_unattached_snk_entry(int port)
-{
-	tc[port].state_id = TC_UNATTACHED_SNK;
-	CPRINTS("C%d: %s", port, tc_state_names[tc[port].state_id]);
-
-	return 0;
-}
-
-static int tc_unattached_snk_run(int port)
+static void tc_unattached_snk_run(const int port)
 {
 	int host_cc;
 
@@ -150,9 +218,7 @@ static int tc_unattached_snk_run(int port)
 	 * port’s CC pin.
 	 */
 	if (cc_is_rp(host_cc))
-		return sm_set_state(port, TC_OBJ(port), tc_attach_wait_snk);
-
-	return SM_RUN_SUPER;
+		set_state_tc(port, TC_ATTACH_WAIT_SNK);
 }
 
 /**
@@ -162,24 +228,13 @@ static int tc_unattached_snk_run(int port)
  *   Enable mcu communication
  *   Place Ra on VCONN and Rd on Host CC
  */
-static int tc_attach_wait_snk(int port, enum sm_signal sig)
+static void tc_attach_wait_snk_entry(const int port)
 {
-	int ret = 0;
-
-	ret = (*tc_attach_wait_snk_sig[sig])(port);
-	return SM_SUPER(ret, sig, tc_host_rard);
-}
-
-static int tc_attach_wait_snk_entry(int port)
-{
-	tc[port].state_id = TC_ATTACH_WAIT_SNK;
-	CPRINTS("C%d: %s", port, tc_state_names[tc[port].state_id]);
+	print_current_state(port);
 	tc[port].host_cc_state = PD_CC_UNSET;
-
-	return 0;
 }
 
-static int tc_attach_wait_snk_run(int port)
+static void tc_attach_wait_snk_run(const int port)
 {
 	int host_new_cc_state;
 	int host_cc;
@@ -202,12 +257,12 @@ static int tc_attach_wait_snk_run(int port)
 			tc[port].cc_debounce = get_time().val +
 							PD_T_PD_DEBOUNCE;
 
-		return 0;
+		return;
 	}
 
 	/* Wait for Host CC debounce */
 	if (get_time().val < tc[port].cc_debounce)
-		return 0;
+		return;
 
 	/*
 	 * A VCONN-Powered USB Device shall transition to
@@ -220,41 +275,30 @@ static int tc_attach_wait_snk_run(int port)
 	 */
 	if (tc[port].host_cc_state == PD_CC_DFP_ATTACHED &&
 			(vpd_is_vconn_present() || vpd_is_host_vbus_present()))
-		sm_set_state(port, TC_OBJ(port), tc_attached_snk);
+		set_state_tc(port, TC_ATTACHED_SNK);
 	else if (tc[port].host_cc_state == PD_CC_NONE)
-		sm_set_state(port, TC_OBJ(port), tc_unattached_snk);
-
-	return 0;
+		set_state_tc(port, TC_UNATTACHED_SNK);
 }
 
 /**
  * Attached.SNK
  */
-static int tc_attached_snk(int port, enum sm_signal sig)
+static void tc_attached_snk_entry(const int port)
 {
-	int ret;
-
-	ret = (*tc_attached_snk_sig[sig])(port);
-	return SM_SUPER(ret, sig, 0);
-}
-
-static int tc_attached_snk_entry(int port)
-{
-	tc[port].state_id = TC_ATTACHED_SNK;
-	CPRINTS("C%d: %s", port, tc_state_names[tc[port].state_id]);
+	print_current_state(port);
 
 	/* Enable PD */
 	tc[port].pd_enable = 1;
 	set_polarity(port, 0);
-
-	return 0;
 }
 
-static int tc_attached_snk_run(int port)
+static void tc_attached_snk_run(const int port)
 {
 	/* Has host vbus and vconn been removed */
-	if (!vpd_is_host_vbus_present() && !vpd_is_vconn_present())
-		return sm_set_state(port, TC_OBJ(port), tc_unattached_snk);
+	if (!vpd_is_host_vbus_present() && !vpd_is_vconn_present()) {
+		set_state_tc(port, TC_UNATTACHED_SNK);
+		return;
+	}
 
 	if (vpd_is_vconn_present()) {
 		if (!(tc[port].flags & TC_FLAGS_VCONN_ON)) {
@@ -263,72 +307,94 @@ static int tc_attached_snk_run(int port)
 			tc[port].flags |= TC_FLAGS_VCONN_ON;
 		}
 	}
-
-	return 0;
 }
 
-static int tc_attached_snk_exit(int port)
+static void tc_attached_snk_exit(const int port)
 {
 	/* Disable PD */
 	tc[port].pd_enable = 0;
 	tc[port].flags &= ~TC_FLAGS_VCONN_ON;
-
-	return 0;
 }
 
 /**
  * Super State HOST_RARD
  */
-static int tc_host_rard(int port, enum sm_signal sig)
-{
-	int ret;
-
-	ret = (*tc_host_rard_sig[sig])(port);
-	return SM_SUPER(ret, sig, tc_vbus_cc_iso);
-}
-
-static int tc_host_rard_entry(int port)
+static void tc_host_rard_entry(const int port)
 {
 	/* Place Ra on VCONN and Rd on Host CC */
 	vpd_host_set_pull(TYPEC_CC_RA_RD, 0);
-
-	return 0;
 }
 
 /**
  * Super State HOST_OPEN
  */
-static int tc_host_open(int port, enum sm_signal sig)
-{
-	int ret;
-
-	ret = (*tc_host_open_sig[sig])(port);
-	return SM_SUPER(ret, sig, tc_vbus_cc_iso);
-}
-
-static int tc_host_open_entry(int port)
+static void tc_host_open_entry(const int port)
 {
 	/* Remove the terminations from Host CC */
 	vpd_host_set_pull(TYPEC_CC_OPEN, 0);
-
-	return 0;
 }
 
 /**
  * Super State VBUS_CC_ISO
  */
-static int tc_vbus_cc_iso(int port, enum sm_signal sig)
-{
-	int ret;
-
-	ret = (*tc_vbus_cc_iso_sig[sig])(port);
-	return SM_SUPER(ret, sig, 0);
-}
-
-static int tc_vbus_cc_iso_entry(int port)
+static void tc_vbus_cc_iso_entry(const int port)
 {
 	/* Enable mcu communication and cc */
 	vpd_mcu_cc_en(1);
-
-	return 0;
 }
+
+void tc_run(const int port)
+{
+	exe_state(port, &tc[port].ctx);
+}
+
+/*
+ * Type-C State Hierarchy (Sub-States are listed inside the boxes)
+ *
+ * | TC_VBUS_CC_ISO ----------------------------------------|
+ * |                                                        |
+ * |  | TC_HOST_RARD -----------| | TC_HOST_OPEN ---------| |
+ * |  |                         | |                       | |
+ * |  | TC_UNATTACHED_SNK       | | TC_DISABLED           | |
+ * |  | TC_ATTACH_WAIT_SNK      | |-----------------------| |
+ * |  |-------------------------|                           |
+ * |--------------------------------------------------------|
+ *
+ * TC_ATTACHED_SNK
+ */
+static const struct usb_state tc_states[] = {
+	/* Super States */
+	[TC_VBUS_CC_ISO] = {
+		.entry  = tc_vbus_cc_iso_entry,
+	},
+	[TC_HOST_RARD] = {
+		.entry  = tc_host_rard_entry,
+		.parent = &tc_states[TC_VBUS_CC_ISO],
+	},
+	[TC_HOST_OPEN] = {
+		.entry  = tc_host_open_entry,
+		.parent = &tc_states[TC_VBUS_CC_ISO],
+	},
+	/* Normal States */
+	[TC_DISABLED] = {
+		.entry  = tc_disabled_entry,
+		.run    = tc_disabled_run,
+		.exit   = tc_disabled_exit,
+		.parent = &tc_states[TC_HOST_OPEN],
+	},
+	[TC_UNATTACHED_SNK] = {
+		.entry  = tc_unattached_snk_entry,
+		.run    = tc_unattached_snk_run,
+		.parent = &tc_states[TC_HOST_RARD],
+	},
+	[TC_ATTACH_WAIT_SNK] = {
+		.entry  = tc_attach_wait_snk_entry,
+		.run    = tc_attach_wait_snk_run,
+		.parent = &tc_states[TC_HOST_RARD],
+	},
+	[TC_ATTACHED_SNK] = {
+		.entry  = tc_attached_snk_entry,
+		.run    = tc_attached_snk_run,
+		.exit   = tc_attached_snk_exit,
+	},
+};

@@ -24,6 +24,36 @@ enum vbus_type {VBUS_0 = 0, VBUS_5 = 5000};
 enum vconn_type {VCONN_0 = 0, VCONN_3 = 3000, VCONN_5 = 5000};
 enum snk_con_voltage_type {SRC_CON_DEF, SRC_CON_1_5, SRC_CON_3_0};
 
+/*
+ * These enum definitions are declared in usb_tc_*_sm and are private to that
+ * file. If those definitions are re-ordered, then we need to update these
+ * definitions (should be very rare).
+ */
+enum usb_tc_state {
+	/* Normal States */
+	TC_DISABLED,
+	TC_UNATTACHED_SNK,
+	TC_ATTACH_WAIT_SNK,
+	TC_ATTACHED_SNK,
+	TC_ERROR_RECOVERY,
+	TC_TRY_SNK,
+	TC_UNATTACHED_SRC,
+	TC_ATTACH_WAIT_SRC,
+	TC_TRY_WAIT_SRC,
+	TC_ATTACHED_SRC,
+	TC_CT_TRY_SNK,
+	TC_CT_ATTACH_WAIT_UNSUPPORTED,
+	TC_CT_ATTACHED_UNSUPPORTED,
+	TC_CT_UNATTACHED_UNSUPPORTED,
+	TC_CT_UNATTACHED_VPD,
+	TC_CT_DISABLED_VPD,
+	TC_CT_ATTACHED_VPD,
+	TC_CT_ATTACH_WAIT_VPD,
+};
+
+/* Defined in implementation */
+enum usb_tc_state get_state_tc(const int port);
+
 struct pd_port_t {
 	int host_mode;
 	int has_vbus;
@@ -39,13 +69,13 @@ uint64_t wait_for_state_change(int port, uint64_t timeout)
 {
 	uint64_t start;
 	uint64_t wait;
-	uint32_t state = get_typec_state_id(port);
+	enum usb_tc_state state = get_state_tc(port);
 
 	task_wake(PD_PORT_TO_TASK_ID(port));
 
 	wait = get_time().val + timeout;
 	start = get_time().val;
-	while (get_typec_state_id(port) == state && get_time().val < wait)
+	while (get_state_tc(port) == state && get_time().val < wait)
 		task_wait_event(5 * MSEC);
 
 	return get_time().val - start;
@@ -330,7 +360,7 @@ static int test_vpd_host_src_detection(void)
 	 * Host is configured properly and start state is UNATTACHED_SNK
 	 */
 	TEST_ASSERT(check_host_ra_rd());
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	/*
 	 * TEST:
@@ -342,7 +372,7 @@ static int test_vpd_host_src_detection(void)
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACH_WAIT_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACH_WAIT_SNK);
 
 	/*
 	 * TEST:
@@ -373,7 +403,7 @@ static int test_vpd_host_src_detection(void)
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	return EC_SUCCESS;
 }
@@ -394,7 +424,7 @@ static int test_vpd_host_src_detection_vbus(void)
 	 */
 
 	TEST_ASSERT(check_host_ra_rd());
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	/*
 	 * TEST:
@@ -406,7 +436,7 @@ static int test_vpd_host_src_detection_vbus(void)
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACH_WAIT_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACH_WAIT_SNK);
 
 	/*
 	 * TEST:
@@ -418,7 +448,7 @@ static int test_vpd_host_src_detection_vbus(void)
 
 	wait_for_state_change(port, PD_T_CC_DEBOUNCE + 10 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACHED_SNK);
 
 	/*
 	 * TEST:
@@ -429,7 +459,7 @@ static int test_vpd_host_src_detection_vbus(void)
 
 	wait_for_state_change(port, 10 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	return EC_SUCCESS;
 }
@@ -450,7 +480,7 @@ static int test_vpd_host_src_detection_vconn(void)
 	 */
 
 	TEST_ASSERT(check_host_ra_rd());
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	/*
 	 * TEST:
@@ -462,7 +492,7 @@ static int test_vpd_host_src_detection_vconn(void)
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACH_WAIT_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACH_WAIT_SNK);
 
 	/*
 	 * TEST:
@@ -474,7 +504,7 @@ static int test_vpd_host_src_detection_vconn(void)
 
 	wait_for_state_change(port, PD_T_CC_DEBOUNCE + 10 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACHED_SNK);
 
 	/* VCONN was detected. Make sure RA is removed */
 	task_wake(PD_PORT_TO_TASK_ID(port));
@@ -490,7 +520,7 @@ static int test_vpd_host_src_detection_vconn(void)
 
 	wait_for_state_change(port, 10 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	host_disconnect_source();
 
@@ -540,7 +570,7 @@ static int test_vpd_host_src_detection_message_reception(void)
 	 */
 
 	TEST_ASSERT(check_host_ra_rd());
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	/*
 	 * Transition to ATTACHED_SNK
@@ -550,11 +580,11 @@ static int test_vpd_host_src_detection_message_reception(void)
 
 	wait_for_state_change(port, 10 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACH_WAIT_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACH_WAIT_SNK);
 
 	wait_for_state_change(port, PD_T_CC_DEBOUNCE + 20 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACHED_SNK);
 
 	/* Run state machines to enable rx monitoring */
 	task_wake(PD_PORT_TO_TASK_ID(port));
@@ -606,7 +636,7 @@ static int test_vpd_host_src_detection_message_reception(void)
 
 	wait_for_state_change(port, 10 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	host_disconnect_source();
 
@@ -634,7 +664,7 @@ static int test_ctvpd_behavior_case1(void)
 	 */
 
 	/* 1. DRP and CTVPD are both in the unattached state */
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	/*
 	 *   a. DRP alternates between Unattached.SRC and Unattached.SNK
@@ -670,10 +700,10 @@ static int test_ctvpd_behavior_case1(void)
 	 *       Charge-Through port’s CC1 and CC2 pins
 	 */
 	wait_for_state_change(port, 40 * MSEC);
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACH_WAIT_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACH_WAIT_SNK);
 
 	wait_for_state_change(port, PD_T_CC_DEBOUNCE + 40 * MSEC);
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACHED_SNK);
 	TEST_ASSERT(check_ct_ccs_hz());
 
 	/*
@@ -702,7 +732,7 @@ static int test_ctvpd_behavior_case1(void)
 	 *    d. CTVPD apply Rd on its Charge-Through port’s CC1 and CC2 pins
 	 */
 	wait_for_state_change(port, 40 * MSEC);
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTUNATTACHED_VPD);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_VPD);
 
 	/*
 	 * 6. While the CTVPD in CTUnattached.VPD state and the DRP in
@@ -723,32 +753,32 @@ static int test_ctvpd_behavior_case1(void)
 	TEST_ASSERT(ct_connect_source(CC2, VBUS_0));
 
 	wait_for_state_change(port, 40 * MSEC);
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTATTACH_WAIT_VPD);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_ATTACH_WAIT_VPD);
 
 	/* Remove Power Source */
 	TEST_ASSERT(ct_disconnect_source());
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTUNATTACHED_VPD);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_VPD);
 
 	/* Attach Sink */
 	TEST_ASSERT(ct_connect_sink(CC1, SRC_CON_DEF));
 
 	wait_for_state_change(port, PD_T_DRP_SNK);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTUNATTACHED_UNSUPPORTED);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_UNSUPPORTED);
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTATTACH_WAIT_UNSUPPORTED);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_ATTACH_WAIT_UNSUPPORTED);
 
 	/* Remove VCONN (Host detach) */
 	mock_set_vconn(VCONN_0);
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	return EC_SUCCESS;
 }
@@ -780,25 +810,25 @@ static int test_ctvpd_behavior_case2(void)
 	 *       pins and Rp termination advertising 3.0 A on the Host-side
 	 *       port’s CC pin
 	 */
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	host_connect_source(VBUS_5);
 	mock_set_vconn(VCONN_3);
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACH_WAIT_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACH_WAIT_SNK);
 
 	wait_for_state_change(port, PD_T_CC_DEBOUNCE + 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACHED_SNK);
 
 	/* Remove Host CC */
 	mock_set_host_cc_source_voltage(0);
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTUNATTACHED_VPD);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_VPD);
 	TEST_ASSERT(check_ct_ccs_rd());
 	TEST_ASSERT(check_host_rp3a0());
 
@@ -836,11 +866,11 @@ static int test_ctvpd_behavior_case2(void)
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTATTACH_WAIT_VPD);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_ATTACH_WAIT_VPD);
 
 	wait_for_state_change(port, PD_T_CC_DEBOUNCE + 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTATTACHED_VPD);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_ATTACHED_VPD);
 	TEST_ASSERT(moch_get_ct_cl_sel() == CT_CC2);
 	TEST_ASSERT(check_host_cc_open());
 	TEST_ASSERT(check_ct_ccs_hz());
@@ -870,7 +900,7 @@ static int test_ctvpd_behavior_case2(void)
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTDISABLED_VPD);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_DISABLED_VPD);
 
 	return EC_SUCCESS;
 }
@@ -899,7 +929,7 @@ static int test_ctvpd_behavior_case3(void)
 	 *    a. CTVPD has applied Rd on the Charge-Through port’s CC1 and CC2
 	 *       pins and Rd on the Host-side port’s CC pin
 	 */
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	TEST_ASSERT(check_ct_ccs_rd());
 	TEST_ASSERT(check_host_ra_rd());
@@ -923,7 +953,7 @@ static int test_ctvpd_behavior_case3(void)
 	 *       between Unattached.SRC and Unattached.SNK
 	 */
 	wait_for_state_change(port, PD_T_CC_DEBOUNCE + 40 * MSEC);
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SRC);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SRC);
 
 	/*
 	 * 4. While the CTVPD alternates between Unattached.SRC and
@@ -942,14 +972,14 @@ static int test_ctvpd_behavior_case3(void)
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACH_WAIT_SRC);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACH_WAIT_SRC);
 
 	/* Remove VBUS */
 	TEST_ASSERT(ct_disconnect_source());
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	return EC_SUCCESS;
 }
@@ -1004,7 +1034,7 @@ static int test_ctvpd_behavior_case4(void)
 	 *    b. CTVPD has applied Rd on its Charge-Through port’s CC1 and CC2
 	 *       pins and Rd on the Host-side port’s CC pin
 	 */
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	TEST_ASSERT(check_ct_ccs_rd());
 	TEST_ASSERT(check_host_ra_rd());
@@ -1038,11 +1068,11 @@ static int test_ctvpd_behavior_case4(void)
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACH_WAIT_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACH_WAIT_SNK);
 
 	wait_for_state_change(port, PD_T_CC_DEBOUNCE + 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACHED_SNK);
 	TEST_ASSERT(check_ct_ccs_hz());
 
 	/*
@@ -1109,7 +1139,7 @@ static int test_ctvpd_behavior_case4(void)
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTUNATTACHED_VPD);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_VPD);
 	TEST_ASSERT(check_ct_ccs_rd());
 	TEST_ASSERT(check_host_rp3a0());
 
@@ -1119,16 +1149,16 @@ static int test_ctvpd_behavior_case4(void)
 	 */
 	wait_for_state_change(port, PD_T_DRP_SRC + 10 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTUNATTACHED_UNSUPPORTED);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_UNSUPPORTED);
 
 	wait_for_state_change(port, PD_T_DRP_SRC + 10 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTUNATTACHED_VPD);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_VPD);
 	TEST_ASSERT(ct_connect_source(CC2, VBUS_5));
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTATTACH_WAIT_VPD);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_ATTACH_WAIT_VPD);
 
 	return EC_SUCCESS;
 }
@@ -1159,7 +1189,7 @@ static int test_ctvpd_behavior_case5(void)
 	 *    b. CTVPD apply Rd on the Charge-Through port’s CC1 and CC2 pins
 	 *       and Rd on the Host-side port’s CC pin
 	 */
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	TEST_ASSERT(check_ct_ccs_rd());
 	TEST_ASSERT(check_host_ra_rd());
@@ -1184,7 +1214,7 @@ static int test_ctvpd_behavior_case5(void)
 	 */
 
 	wait_for_state_change(port, PD_T_CC_DEBOUNCE + 40 * MSEC);
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SRC);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SRC);
 
 	/* Connect Host With Dead Battery */
 	host_connect_sink(SRC_CON_DEF);
@@ -1204,11 +1234,11 @@ static int test_ctvpd_behavior_case5(void)
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACH_WAIT_SRC);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACH_WAIT_SRC);
 
 	wait_for_state_change(port, PD_T_CC_DEBOUNCE + 10 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_TRY_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_TRY_SNK);
 	TEST_ASSERT(check_host_ra_rd());
 
 	/* 5. DRP in dead battery condition remains in Unattached.SNK */
@@ -1230,12 +1260,12 @@ static int test_ctvpd_behavior_case5(void)
 	wait_for_state_change(port, PD_T_TRY_CC_DEBOUNCE +
 						PD_T_DRP_TRY + 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_TRY_WAIT_SRC);
+	TEST_ASSERT(get_state_tc(port) == TC_TRY_WAIT_SRC);
 	TEST_ASSERT(check_host_rpusb());
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACHED_SRC);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACHED_SRC);
 	TEST_ASSERT(mock_get_vbus_pass_en());
 
 	/*
@@ -1268,7 +1298,7 @@ static int test_ctvpd_behavior_case5(void)
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 
 	return EC_SUCCESS;
 }
@@ -1299,7 +1329,7 @@ static int test_ctvpd_behavior_case6(void)
 	 *    b. CTVPD has applied Rd on its Charge-Through port’s CC1 and CC2
 	 *       pins and Rd on the Host-side port’s CC pin
 	 */
-	TEST_ASSERT(get_typec_state_id(port) == TC_UNATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
 	TEST_ASSERT(check_ct_ccs_rd());
 	TEST_ASSERT(check_host_ra_rd());
 
@@ -1330,11 +1360,11 @@ static int test_ctvpd_behavior_case6(void)
 	 */
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACH_WAIT_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACH_WAIT_SNK);
 
 	wait_for_state_change(port, PD_T_CC_DEBOUNCE + 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_ATTACHED_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_ATTACHED_SNK);
 	TEST_ASSERT(check_ct_ccs_hz());
 
 	/*
@@ -1367,7 +1397,7 @@ static int test_ctvpd_behavior_case6(void)
 	 */
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTUNATTACHED_VPD);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_VPD);
 	TEST_ASSERT(check_host_rp3a0());
 	TEST_ASSERT(mock_get_vbus_pass_en() == 0);
 	TEST_ASSERT(check_ct_ccs_rd());
@@ -1382,15 +1412,15 @@ static int test_ctvpd_behavior_case6(void)
 	 */
 	wait_for_state_change(port, PD_T_DRP_SNK + 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTUNATTACHED_UNSUPPORTED);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_UNSUPPORTED);
 
 	wait_for_state_change(port, PD_T_DRP_SNK + 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTUNATTACHED_VPD);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_VPD);
 
 	wait_for_state_change(port, PD_T_DRP_SNK + 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTUNATTACHED_UNSUPPORTED);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_UNSUPPORTED);
 
 	/*
 	 * 7. CTVPD transitions from CTUnattached.Unsupported to CTTry.SNK
@@ -1409,11 +1439,11 @@ static int test_ctvpd_behavior_case6(void)
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTATTACH_WAIT_UNSUPPORTED);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_ATTACH_WAIT_UNSUPPORTED);
 
 	wait_for_state_change(port, PD_T_CC_DEBOUNCE + 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTTRY_SNK);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_TRY_SNK);
 	TEST_ASSERT(check_ct_ccs_rd());
 
 	/*
@@ -1426,7 +1456,7 @@ static int test_ctvpd_behavior_case6(void)
 
 	wait_for_state_change(port, PD_T_DRP_TRY + PD_T_TRY_WAIT + 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTATTACHED_UNSUPPORTED);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_ATTACHED_UNSUPPORTED);
 
 	/*
 	 * 9. While the CTVPD in CTAttached.Unsupported state, the DRP in
@@ -1455,7 +1485,7 @@ static int test_ctvpd_behavior_case6(void)
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_typec_state_id(port) == TC_CTUNATTACHED_VPD);
+	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_VPD);
 
 	return EC_SUCCESS;
 }

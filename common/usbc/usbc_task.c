@@ -32,90 +32,6 @@
 #include "usbc_ppc.h"
 #include "version.h"
 
-/* Include USB Type-C State Machine Header File */
-#if defined(CONFIG_USB_TYPEC_CTVPD)
-#include "usb_tc_ctvpd_sm.h"
-#elif defined(CONFIG_USB_TYPEC_VPD)
-#include "usb_tc_vpd_sm.h"
-#elif defined(CONFIG_USB_TYPEC_DRP_ACC_TRYSRC)
-#include "usb_tc_drp_acc_trysrc_sm.h"
-#else
-#error "A USB Type-C State Machine must be defined."
-#endif
-
-#ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
-#else /* CONFIG_COMMON_RUNTIME */
-#define CPRINTF(format, args...)
-#define CPRINTS(format, args...)
-#endif
-
-#ifdef CONFIG_COMMON_RUNTIME
-const char * const tc_state_names[] = {
-	"Disabled",
-	"Unattached.SNK",
-	"AttachWait.SNK",
-	"Attached.SNK",
-#if !defined(CONFIG_USB_TYPEC_VPD)
-	"ErrorRecovery",
-	"Unattached.SRC",
-	"AttachWait.SRC",
-	"Attached.SRC",
-#endif
-#if !defined(CONFIG_USB_TYPEC_CTVPD) && !defined(CONFIG_USB_TYPEC_VPD)
-	"AudioAccessory",
-	"OrientedDebugAccessory.SRC",
-	"UnorientedDebugAccessory.SRC",
-	"DebugAccessory.SNK",
-	"Try.SRC",
-	"TryWait.SNK",
-	"CTUnattached.SNK",
-	"CTAttached.SNK",
-#endif
-#if defined(CONFIG_USB_TYPEC_CTVPD)
-	"CTTry.SNK",
-	"CTAttached.Unsupported",
-	"CTAttachWait.Unsupported",
-	"CTUnattached.Unsupported",
-	"CTUnattached.VPD",
-	"CTAttachWait.VPD",
-	"CTAttached.VPD",
-	"CTDisabled.VPD",
-	"Try.SNK",
-	"TryWait.SRC"
-#endif
-};
-BUILD_ASSERT(ARRAY_SIZE(tc_state_names) == TC_STATE_COUNT);
-#endif
-
-/* Public Functions */
-
-int tc_get_power_role(int port)
-{
-	return tc[port].power_role;
-}
-
-int tc_get_data_role(int port)
-{
-	return tc[port].data_role;
-}
-
-void tc_set_power_role(int port, int role)
-{
-	tc[port].power_role = role;
-}
-
-void tc_set_timeout(int port, uint64_t timeout)
-{
-	tc[port].evt_timeout = timeout;
-}
-
-enum typec_state_id get_typec_state_id(int port)
-{
-	return tc[port].state_id;
-}
-
 int tc_restart_tcpc(int port)
 {
 	return tcpm_init(port);
@@ -139,7 +55,7 @@ void set_usb_mux_with_current_data_role(int port)
 #ifdef CONFIG_POWER_COMMON
 	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
 		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
-			tc[port].polarity);
+			tc_get_polarity(port));
 		return;
 	}
 #endif /* CONFIG_POWER_COMMON */
@@ -152,20 +68,20 @@ void set_usb_mux_with_current_data_role(int port)
 	 */
 	if (!pd_is_connected(port))
 		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
-			tc[port].polarity);
+			tc_get_polarity(port));
 	/*
 	 * If new data role isn't DFP and we only support DFP, also disconnect.
 	 */
 	else if (IS_ENABLED(CONFIG_USBC_SS_MUX_DFP_ONLY) &&
-			tc[port].data_role != PD_ROLE_DFP)
+			tc_get_data_role(port) != PD_ROLE_DFP)
 		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
-			tc[port].polarity);
+			tc_get_polarity(port));
 	/*
 	 * Otherwise connect mux since we are in S3+
 	 */
 	else
 		usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
-			tc[port].polarity);
+			tc_get_polarity(port));
 #endif /* CONFIG_USBC_SS_MUX */
 }
 
@@ -228,7 +144,7 @@ void pd_task(void *u)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
 
-	tc_state_init(port, TC_DEFAULT_STATE(port));
+	tc_state_init(port);
 
 	if (IS_ENABLED(CONFIG_USBC_PPC))
 		ppc_init(port);
@@ -246,30 +162,27 @@ void pd_task(void *u)
 
 	while (1) {
 		/* wait for next event/packet or timeout expiration */
-		tc[port].evt = task_wait_event(tc[port].evt_timeout);
+		const uint32_t evt = task_wait_event(tc_get_timeout(port));
 
 		/* handle events that affect the state machine as a whole */
-		tc_event_check(port, tc[port].evt);
+		tc_event_check(port, evt);
 
-#ifdef CONFIG_USB_PD_TCPC
 		/*
 		 * run port controller task to check CC and/or read incoming
 		 * messages
 		 */
-		tcpc_run(port, tc[port].evt);
-#endif
+		if (IS_ENABLED(CONFIG_USB_PD_TCPC))
+			tcpc_run(port, evt);
 
-#ifdef CONFIG_USB_PE_SM
-		/* run policy engine state machine */
-		usbc_policy_engine(port, tc[port].evt, tc[port].pd_enable);
-#endif
+		if (IS_ENABLED(CONFIG_USB_PE_SM))
+			/* Run policy engine state machine */
+			pe_run(port, evt, tc_get_pd_enabled(port));
 
-#ifdef CONFIG_USB_PRL_SM
-		/* run protocol state machine */
-		usbc_protocol_layer(port, tc[port].evt, tc[port].pd_enable);
-#endif
+		if (IS_ENABLED(CONFIG_USB_PRL_SM))
+			/* Run protocol state machine */
+			prl_run(port, evt, tc_get_pd_enabled(port));
 
-		/* run typec state machine */
-		sm_run_state_machine(port, TC_OBJ(port), SM_RUN_SIG);
+		/* Run TypeC state machine */
+		tc_run(port);
 	}
 }

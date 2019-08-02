@@ -236,8 +236,6 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #undef CONFIG_USB_PRL_SM
 #undef CONFIG_USB_PE_SM
 #undef CONFIG_USB_TYPEC_SM
-#undef  CONFIG_SM_NESTING_NUM
-#define CONFIG_SM_NESTING_NUM 3
 #define CONFIG_USB_SM_FRAMEWORK
 #endif
 
@@ -246,8 +244,6 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #undef CONFIG_USB_PRL_SM
 #undef CONFIG_USB_PE_SM
 #undef CONFIG_USB_TYPEC_SM
-#undef  CONFIG_SM_NESTING_NUM
-#define CONFIG_SM_NESTING_NUM 2
 #define CONFIG_USB_SM_FRAMEWORK
 #endif
 
@@ -256,8 +252,6 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #undef CONFIG_USB_PRL_SM
 #undef CONFIG_USB_PE_SM
 #undef CONFIG_USB_TYPEC_SM
-#undef  CONFIG_SM_NESTING_NUM
-#define CONFIG_SM_NESTING_NUM 1
 #define CONFIG_USB_SM_FRAMEWORK
 #endif
 
@@ -266,14 +260,10 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #undef CONFIG_USB_PRL_SM
 #undef CONFIG_USB_PE_SM
 #undef CONFIG_USB_TYPEC_SM
-#undef  CONFIG_SM_NESTING_NUM
-#define CONFIG_SM_NESTING_NUM 0
 #define CONFIG_USB_SM_FRAMEWORK
 #endif
 
 #if defined(TEST_USB_PRL)
-#undef  CONFIG_SM_NESTING_NUM
-#define CONFIG_SM_NESTING_NUM 3
 #define CONFIG_USB_PD_PORT_COUNT 2
 #define CONFIG_USB_SM_FRAMEWORK
 #undef CONFIG_USB_PE_SM
@@ -292,8 +282,6 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #else
 #define CONFIG_USB_TYPEC_CTVPD
 #endif
-#undef  CONFIG_SM_NESTING_NUM
-#define CONFIG_SM_NESTING_NUM 3
 
 #define CONFIG_USB_PID 0x5036
 #define VPD_HW_VERSION 0x0001

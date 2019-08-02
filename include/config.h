@@ -870,12 +870,6 @@
 #undef CONFIG_USB_SM_FRAMEWORK
 
 /*
- * This is the maximum number of levels in the hierarchical
- * state machine framework. Set to 0 for a flat state machine.
- */
-#define CONFIG_SM_NESTING_NUM 3
-
-/*
  * Define to enable Type-C State Machine. Must be enabled
  * with CONFIG_USB_SM_FRAMEWORK
  */
