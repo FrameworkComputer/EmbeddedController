@@ -114,7 +114,9 @@ enum sensor_id {
 
 enum charge_port {
 	CHARGE_PORT_USB_C,
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	CHARGE_PORT_POGO,
+#endif
 };
 
 #include "ec_commands.h"

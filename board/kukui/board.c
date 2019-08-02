@@ -117,17 +117,6 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-static void board_pogo_charge_init(void)
-{
-	int i;
-
-	/* Initialize all charge suppliers to 0 */
-	for (i = 0; i < CHARGE_SUPPLIER_COUNT; i++)
-		charge_manager_update_charge(i, CHARGE_PORT_POGO, NULL);
-}
-DECLARE_HOOK(HOOK_INIT, board_pogo_charge_init,
-	     HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
-
 static int force_discharge;
 
 int board_set_active_charge_port(int charge_port)
@@ -146,10 +135,12 @@ int board_set_active_charge_port(int charge_port)
 		gpio_set_level(GPIO_EN_POGO_CHARGE_L, 1);
 		gpio_set_level(GPIO_EN_USBC_CHARGE_L, 0);
 		break;
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	case CHARGE_PORT_POGO:
 		gpio_set_level(GPIO_EN_USBC_CHARGE_L, 1);
 		gpio_set_level(GPIO_EN_POGO_CHARGE_L, 0);
 		break;
+#endif
 	case CHARGE_PORT_NONE:
 		/*
 		 * To ensure the fuel gauge (max17055) is always powered
