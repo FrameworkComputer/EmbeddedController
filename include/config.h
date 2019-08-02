@@ -3525,6 +3525,15 @@
  */
 #undef CONFIG_UART_PAD_SWITCH
 
+/**
+ * This will only be used for Kukui and cortex-m0. Preserve EC reset logs and
+ * console logs on SRAM so that the logs will be preserved after EC shutting
+ * down or sysjumped. It will keep the contents across EC resets, so we have
+ * more information about system states. The contents on SRAM will be cleared
+ * when checksum or sanity check fails.
+ */
+#undef CONFIG_PRESERVE_LOGS
+
 /*
  * UART receive buffer size in bytes.  Must be a power of 2 for macros in
  * common/uart_buffering.c to work properly.  Must be larger than

@@ -134,3 +134,10 @@ extern void *__dram_bss_end;
 #endif
 
 #endif /* __CROS_EC_LINK_DEFS_H */
+
+#ifdef CONFIG_PRESERVE_LOGS
+#define __preserved_logs(name)                                                 \
+	__attribute__((section(".preserved_logs." STRINGIFY(name))))
+#else
+#define __preserved_logs(name)
+#endif

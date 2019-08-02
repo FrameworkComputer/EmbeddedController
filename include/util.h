@@ -55,6 +55,9 @@ extern "C" {
 /* True of x is a power of two */
 #define POWER_OF_TWO(x) ((x) && !((x) & ((x) - 1)))
 
+/* Macro to check if the value is in range */
+#define IN_RANGE(x, min, max) ((x) >= (min) && (x) < (max))
+
 /*
  * macros for integer division with various rounding variants
  * default integer division rounds down.

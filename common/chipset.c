@@ -10,6 +10,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "host_command.h"
+#include "link_defs.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -60,10 +61,29 @@ DECLARE_HOST_COMMAND(EC_CMD_AP_RESET,
 
 #ifdef CONFIG_CMD_AP_RESET_LOG
 static struct mutex reset_log_mutex;
-static int next_reset_log;
+static int next_reset_log __preserved_logs(next_reset_log);
 static uint32_t ap_resets_since_ec_boot;
 /* keep reset_logs size a power of 2 */
-static struct ap_reset_log_entry reset_logs[4];
+static struct ap_reset_log_entry
+		reset_logs[4] __preserved_logs(reset_logs);
+static int reset_log_checksum __preserved_logs(reset_log_checksum);
+
+/* Calculate reset log checksum */
+static int calc_reset_log_checksum(void)
+{
+	return next_reset_log ^ reset_logs[next_reset_log].reset_cause;
+}
+
+/* Initialize reset logs and next reset log */
+void init_reset_log(void)
+{
+	if (next_reset_log < 0 || next_reset_log >= ARRAY_SIZE(reset_logs) ||
+	    reset_log_checksum != calc_reset_log_checksum()) {
+		reset_log_checksum = 0;
+		next_reset_log = 0;
+		memset(&reset_logs, 0, sizeof(reset_logs));
+	}
+}
 
 void report_ap_reset(enum chipset_shutdown_reason reason)
 {
@@ -76,6 +96,9 @@ void report_ap_reset(enum chipset_shutdown_reason reason)
 	next_reset_log &= ARRAY_SIZE(reset_logs) - 1;
 	ap_resets_since_ec_boot++;
 	mutex_unlock(&reset_log_mutex);
+
+	/* Update checksum */
+	reset_log_checksum = calc_reset_log_checksum();
 }
 
 static int host_command_get_uptime_info(struct host_cmd_handler_args *args)

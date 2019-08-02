@@ -263,3 +263,8 @@ static inline void report_ap_reset(enum chipset_shutdown_reason reason) { }
 #endif /* !CONFIG_CMD_AP_RESET_LOG */
 
 #endif  /* __CROS_EC_CHIPSET_H */
+
+/**
+ * Initialize reset logs and next reset log.
+ */
+void init_reset_log(void);

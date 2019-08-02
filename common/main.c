@@ -39,6 +39,22 @@
 
 test_mockable __keep int main(void)
 {
+	if (IS_ENABLED(CONFIG_PRESERVE_LOGS)) {
+		/*
+		 * Initialize tx buffer head and tail. This needs to be done
+		 * before any updates of uart tx input because we need to
+		 * verify if the values remain the same after every EC reset.
+		 */
+		uart_init_buffer();
+
+		/*
+		 * Initialize reset logs. Needs to be done before any updates of
+		 * reset logs because we need to verify if the values remain
+		 * the same after every EC reset.
+		 */
+		init_reset_log();
+	}
+
 	/*
 	 * Pre-initialization (pre-verified boot) stage.  Initialization at
 	 * this level should do as little as possible, because verified boot
