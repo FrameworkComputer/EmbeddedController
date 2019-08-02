@@ -290,13 +290,13 @@ static int print_status(void)
 	ccprintf("\n");
 
 	if (raw_read8(TMP432_STATUS, &value) == EC_SUCCESS)
-		ccprintf("STATUS:  %08b\n", value);
+		ccprintf("STATUS:  %pb\n", BINARY_VALUE(value, 8));
 
 	if (raw_read8(TMP432_CONFIGURATION1_R, &value) == EC_SUCCESS)
-		ccprintf("CONFIG1: %08b\n", value);
+		ccprintf("CONFIG1: %pb\n", BINARY_VALUE(value, 8));
 
 	if (raw_read8(TMP432_CONFIGURATION2_R, &value) == EC_SUCCESS)
-		ccprintf("CONFIG2: %08b\n", value);
+		ccprintf("CONFIG2: %pb\n", BINARY_VALUE(value, 8));
 
 	return EC_SUCCESS;
 }
@@ -347,7 +347,8 @@ static int command_tmp432(int argc, char **argv)
 		rv = raw_read8(offset, &data);
 		if (rv < 0)
 			return rv;
-		ccprintf("Byte at offset 0x%02x is %08b\n", offset, data);
+		ccprintf("Byte at offset 0x%02x is %pb\n",
+			 offset, BINARY_VALUE(data, 8));
 		return rv;
 	}
 

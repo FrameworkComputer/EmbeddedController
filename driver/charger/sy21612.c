@@ -199,7 +199,7 @@ static int command_sy21612(int argc, char **argv)
 		if (rv)
 			ccprintf(" x (%d)\n", rv);
 		else
-			ccprintf("%02x - %08b\n", val, val);
+			ccprintf("%02x - %pb\n", val, BINARY_VALUE(val, 8));
 	}
 
 	ccprintf("vbat voltage: %d mV\n", sy21612_get_vbat_voltage());

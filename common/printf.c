@@ -230,6 +230,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			}
 
 			if (c == 'p') {
+				c = -1;
 				ptrspec = *format++;
 				ptrval = va_arg(args, void *);
 				/* %pT - print a timestamp. */
@@ -271,9 +272,20 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				} else if (ptrspec == 'P') {
 					/* %pP - Print a raw pointer. */
 					v = (unsigned long)ptrval;
+					base = 16;
 					if (sizeof(unsigned long) ==
 					    sizeof(uint64_t))
 						flags |= PF_64BIT;
+
+				} else if (ptrspec == 'b') {
+					/* %pb - Print a binary integer */
+					struct binary_print_params *binary =
+						ptrval;
+
+					v = binary->value;
+					pad_width = binary->count;
+					flags |= PF_PADZERO;
+					base = 2;
 
 				} else {
 					return EC_ERROR_INVAL;
@@ -316,11 +328,11 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				break;
 			case 'X':
 			case 'x':
-			case 'p':
 				base = 16;
 				break;
-			case 'b':
-				base = 2;
+
+			/* Int passthrough for pointers. */
+			case -1:
 				break;
 			default:
 				format = error_str;

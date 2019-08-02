@@ -26,6 +26,21 @@ struct hex_buffer_params {
 	.size = (_size) \
 })
 
+/*
+ * Define parameters to printing in binary: the value to print, and the number
+ * of digits to print.
+ */
+
+struct binary_print_params {
+	unsigned int value;
+	uint8_t count;
+};
+
+#define BINARY_VALUE(_value, _count) (&(const struct binary_print_params){ \
+	.value = (_value), \
+	.count = (_count) \
+})
+
 #define PRINTF_TIMESTAMP_NOW NULL
 
 /* Console command; used by DECLARE_CONSOLE_COMMAND macro. */

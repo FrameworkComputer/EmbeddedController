@@ -128,7 +128,7 @@ void print_charger_debug(void)
 	/* option */
 	print_item_name("Option:");
 	if (check_print_error(charger_get_option(&d)))
-		ccprintf("%016b (0x%04x)\n", d, d);
+		ccprintf("%pb (0x%04x)\n", BINARY_VALUE(d, 16), d);
 
 	/* manufacturer id */
 	print_item_name("Man id:");

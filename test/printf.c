@@ -186,30 +186,38 @@ test_static int test_vsnprintf_int(void)
 	T(expect_success("5e",        "%x",     0X5E));
 	T(expect_success("5E",        "%X",     0X5E));
 
-	T(expect_success("0",         "%b",     0));
-	T(expect_success("1011110",   "%b",     0X5E));
-
 	return EC_SUCCESS;
 }
 
 test_static int test_vsnprintf_pointers(void)
 {
 	void *ptr = (void *)0x55005E00;
+	unsigned int val = 0;
 
 	T(expect_success("55005e00",  "%pP",     ptr));
 	T(expect_success(err_str,     "%P",      ptr));
 	/* %p by itself is invalid */
 	T(expect(EC_ERROR_INVAL, NO_BYTES_TOUCHED,
-		 /* given -1 as output size limit */
 		 false, -1, "%p"));
 	/* %p with an unknown suffix is invalid */
 	T(expect(EC_ERROR_INVAL, NO_BYTES_TOUCHED,
-		 /* given -1 as output size limit */
 		 false, -1, "%p "));
 	/* %p with an unknown suffix is invalid */
 	T(expect(EC_ERROR_INVAL, NO_BYTES_TOUCHED,
-		 /* given -1 as output size limit */
 		 false, -1, "%pQ"));
+
+	/* Test %pb, binary format */
+	T(expect_success("0",         "%pb",     BINARY_VALUE(val, 0)));
+	val = 0x5E;
+	T(expect_success("1011110",   "%pb",     BINARY_VALUE(val, 0)));
+	T(expect_success("0000000001011110", "%pb", BINARY_VALUE(val, 16)));
+	val = 0x12345678;
+	T(expect_success("10010001101000101011001111000", "%pb",
+			 BINARY_VALUE(val, 0)));
+	val = 0xFEDCBA90;
+	/* Test a number that makes the longest string possible */
+	T(expect_success("11111110110111001011101010010000", "%pb",
+			 BINARY_VALUE(val, 0)));
 	return EC_SUCCESS;
 }
 
