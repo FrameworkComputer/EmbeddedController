@@ -591,10 +591,11 @@ void lid_angle_peripheral_enable(int enable)
 }
 #endif
 
+static uint32_t sku_id;
+
 static void cbi_init(void)
 {
 	uint32_t board_version = 0;
-	uint32_t sku_id = 0;
 	uint32_t val;
 
 	if (cbi_get_board_version(&val) == EC_SUCCESS)
@@ -611,6 +612,11 @@ static void cbi_init(void)
 
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
+
+uint32_t system_get_sku_id(void)
+{
+	return sku_id;
+}
 
 /*
  * Returns 1 for boards that are convertible into tablet mode, and zero for

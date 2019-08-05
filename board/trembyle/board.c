@@ -23,12 +23,6 @@ void board_update_sensor_config_from_sku(void)
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 }
 
-uint32_t system_get_sku_id(void)
-{
-	/* TODO */
-	return 0;
-}
-
 int charger_get_vbus_voltage(int port)
 {
 	/* TODO */
