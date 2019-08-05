@@ -28,9 +28,3 @@ int charger_get_vbus_voltage(int port)
 	/* TODO */
 	return 0;
 }
-
-int board_set_active_charge_port(int port)
-{
-	/* TODO */
-	return 0;
-}
