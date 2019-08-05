@@ -16,6 +16,7 @@ enum gpio_signal {
 };
 
 #define IOEX(name, expin, flags) IOEX_##name,
+#define IOEX_INT(name, expin, flags, signal) IOEX_##name,
 
 enum ioex_signal {
 	#include "gpio.wrap"

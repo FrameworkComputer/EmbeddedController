@@ -27,6 +27,8 @@ struct ioex_info {
 
 /* Signal information from board.c.  Must match order from enum ioex_signal. */
 extern const struct ioex_info ioex_list[];
+extern void (* const ioex_irq_handlers[])(enum ioex_signal signal);
+extern const int ioex_ih_count;
 
 struct ioexpander_drv {
 	/* Initialize IO expander chip/driver */
@@ -39,6 +41,8 @@ struct ioexpander_drv {
 	int (*get_flags_by_mask)(int ioex, int port, int mask, int *flags);
 	/* Set flags for the IOEX pin */
 	int (*set_flags_by_mask)(int ioex, int port, int mask, int flags);
+	/* Enable/disable interrupt for the IOEX pin */
+	int (*enable_interrupt)(int ioex, int port, int mask, int enable);
 };
 
 struct ioexpander_config_t {
@@ -59,6 +63,22 @@ struct ioexpander_config_t {
 };
 
 extern struct ioexpander_config_t ioex_config[];
+
+/*
+ * Enable the interrupt for the IOEX signal
+ *
+ * @param signal	IOEX signal to enable the interrupt
+ * @return			EC_SUCCESS if successful, non-zero if error.
+ */
+int ioex_enable_interrupt(enum ioex_signal signal);
+
+/*
+ * Disable the interrupt for the IOEX signal
+ *
+ * @param signal	IOEX signal to disable the interrupt
+ * @return			EC_SUCCESS if successful, non-zero if error.
+ */
+int ioex_disable_interrupt(enum ioex_signal signal);
 
 /*
  * Get flags for the IOEX pin by mask

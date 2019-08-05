@@ -54,6 +54,8 @@ const int gpio_ih_count = ARRAY_SIZE(gpio_irq_handlers);
 #include "gpio.wrap"
 
 #include "ioexpander.h"
+#define IOEX_EXPIN(ioex, port, index) (ioex), (port), BIT(index)
+
 /*
  *  Define the IO expander IO in gpio.inc by the format:
  *    IOEX(name, EXPIN(ioex_port, port, offset), flags)
@@ -66,9 +68,21 @@ const int gpio_ih_count = ARRAY_SIZE(gpio_irq_handlers);
  *      - flags: the same as the flags of GPIO.
  *
  */
-#define IOEX_EXPIN(ioex, port, index) (ioex), (port), BIT(index)
-
 #define IOEX(name, expin, flags) {#name, IOEX_##expin, flags},
+/*
+ *  Define the IO expander IO which supports interrupt in gpio.inc by
+ *  the format:
+ *    IOEX_INT(name, EXPIN(ioex_port, port, offset), flags, handler)
+ *      - name: the name of this IO pin
+ *      - EXPIN(ioex, port, offset)
+ *         - ioex: the IO expander port (defined in board.c) this IO
+ *                 pin belongs to.
+ *         - port: the port number in the IO expander chip.
+ *         - offset: the bit offset in the port above.
+ *      - flags: the same as the flags of GPIO.
+ *      - handler: the IOEX IO's interrupt handler.
+ */
+#define IOEX_INT(name, expin, flags, handler) IOEX(name, expin, flags)
 
 /* IO expander signal list. */
 const struct ioex_info ioex_list[] = {
@@ -76,7 +90,23 @@ const struct ioex_info ioex_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(ioex_list) == IOEX_COUNT);
 
+/* IO Expander Interrupt Handlers */
+#define IOEX_INT(name, expin, flags, handler) handler,
+void (* const ioex_irq_handlers[])(enum ioex_signal signal) = {
+	#include "gpio.wrap"
+};
+const int ioex_ih_count = ARRAY_SIZE(ioex_irq_handlers);
+/*
+ * All IOEX IOs with interrupt handlers must be declared at the top of the
+ * IOEX's declaration in the gpio.inc
+ * file.
+ */
+#define IOEX_INT(name, expin, flags, handler)	\
+	BUILD_ASSERT(IOEX_##name < ARRAY_SIZE(ioex_irq_handlers));
+#include "gpio.wrap"
+
 #define IOEX(name, expin, flags) expin
+#define IOEX_INT(name, expin, flags, handler) expin
 
 /* The compiler will complain if we use the same name twice or the controller
  * number declared is greater or equal to CONFIG_IO_EXPANDER_PORT_COUNT.
