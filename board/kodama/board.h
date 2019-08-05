@@ -23,6 +23,9 @@
 
 #define CONFIG_USB_MUX_IT5205
 
+#define CONFIG_LED_ONOFF_STATES
+#define CONFIG_LED_POWER_LED
+
 /* Battery */
 #ifdef BOARD_KRANE
 #define BATTERY_DESIRED_CHARGING_CURRENT    3500  /* mA */
