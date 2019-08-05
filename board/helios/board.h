@@ -11,9 +11,6 @@
 /* Baseboard features */
 #include "baseboard.h"
 
-/* Optional features */
-#define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
-
 #define CONFIG_POWER_BUTTON
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
@@ -51,6 +48,7 @@
 #define OPT3001_I2C_ADDR_FLAGS OPT3001_I2C_ADDR1_FLAGS
 
 /* USB Type C and USB PD defines */
+#define CONFIG_USB_PD_COMM_LOCKED
 #define CONFIG_USB_PD_TCPM_PS8751
 #define BOARD_TCPC_C0_RESET_HOLD_DELAY PS8XXX_RESET_DELAY_MS
 #define BOARD_TCPC_C0_RESET_POST_DELAY 0

@@ -11,9 +11,6 @@
 /* Baseboard features */
 #include "baseboard.h"
 
-/* Optional features */
-#define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
-
 #define CONFIG_POWER_BUTTON
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
@@ -52,6 +49,7 @@
 #define I2C_PORT_ALS      I2C_PORT_SENSOR
 
 /* USB Type C and USB PD defines */
+#define CONFIG_USB_PD_COMM_LOCKED
 #define CONFIG_USB_PD_TCPM_ANX7447
 #define CONFIG_USB_PD_TCPM_PS8751
 #define BOARD_TCPC_C0_RESET_HOLD_DELAY ANX74XX_RESET_HOLD_MS
