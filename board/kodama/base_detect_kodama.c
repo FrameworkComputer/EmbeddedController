@@ -30,8 +30,7 @@ enum kukui_pogo_device_type {
 	DEVICE_TYPE_ERROR = -2,
 	DEVICE_TYPE_UNKNOWN = -1,
 	DEVICE_TYPE_DETACHED = 0,
-	DEVICE_TYPE_DOCK = 1,
-	DEVICE_TYPE_KEYBOARD = 2,
+	DEVICE_TYPE_KEYBOARD = 1,
 	DEVICE_TYPE_COUNT,
 };
 
@@ -39,7 +38,6 @@ struct {
 	int mv_low, mv_high;
 } static const pogo_detect_table[] = {
 	[DEVICE_TYPE_DETACHED] = {2700, 3500}, /* 10K, NC, around 3.3V */
-	[DEVICE_TYPE_DOCK] = {141, 173},       /* 10K, 0.5K ohm */
 	[DEVICE_TYPE_KEYBOARD] = {270, 400},   /* 10K, 1K ohm */
 };
 BUILD_ASSERT(ARRAY_SIZE(pogo_detect_table) == DEVICE_TYPE_COUNT);
@@ -60,24 +58,6 @@ static enum kukui_pogo_device_type get_device_type(int mv)
 	}
 
 	return DEVICE_TYPE_UNKNOWN;
-}
-
-static void enable_charge(int enable)
-{
-	if (enable) {
-		struct charge_port_info info = {
-			.voltage = 5000, .current = 1500};
-		/*
-		 * Set supplier type to PD to have same priority as type c
-		 * port.
-		 */
-		charge_manager_update_charge(
-			CHARGE_SUPPLIER_DEDICATED, CHARGE_PORT_POGO, &info);
-	} else {
-		charge_manager_update_charge(
-			CHARGE_SUPPLIER_DEDICATED, CHARGE_PORT_POGO, NULL);
-	}
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 static void enable_power_supply(int enable)
@@ -123,16 +103,9 @@ static void base_detect_deferred(void)
 
 	case DEVICE_TYPE_DETACHED:
 		enable_power_supply(0);
-		enable_charge(0);
-		break;
-
-	case DEVICE_TYPE_DOCK:
-		enable_power_supply(0);
-		enable_charge(1);
 		break;
 
 	case DEVICE_TYPE_KEYBOARD:
-		enable_charge(0);
 		enable_power_supply(1);
 		break;
 

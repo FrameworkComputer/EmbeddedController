@@ -194,13 +194,6 @@ int pd_snk_is_vbus_provided(int port)
 	return rt946x_is_vbus_ready();
 }
 
-#if defined(BOARD_KUKUI) || defined(BOARD_KODAMA)
-/* dummy interrupt function for kukui */
-void pogo_adc_interrupt(enum gpio_signal signal)
-{
-}
-#endif
-
 static void board_init(void)
 {
 	/* If the reset cause is external, pulse PMIC force reset. */
