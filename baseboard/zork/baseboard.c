@@ -315,7 +315,7 @@ const struct tcpc_config_t tcpc_config[] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr_flags = NCT38xx_I2C_ADDR1_1_FLAGS,
+			.addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
 		},
 		.drv = &nct38xx_tcpm_drv,
 	},
@@ -323,7 +323,7 @@ const struct tcpc_config_t tcpc_config[] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC1,
-			.addr_flags = NCT38xx_I2C_ADDR1_1_FLAGS,
+			.addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
 		},
 		.drv = &nct38xx_tcpm_drv,
 	},
@@ -453,14 +453,12 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 struct ioexpander_config_t ioex_config[] = {
 	[USBC_PORT_C0] = {
 		.i2c_host_port = I2C_PORT_TCPC0,
-		.i2c_slave_addr = NCT38xx_I2C_ADDR1_1_FLAGS,
-		.chip_info = -1,
+		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
 		.drv = &nct38xx_ioexpander_drv,
 	},
 	[USBC_PORT_C1] = {
 		.i2c_host_port = I2C_PORT_TCPC1,
-		.i2c_slave_addr = NCT38xx_I2C_ADDR1_1_FLAGS,
-		.chip_info = -1,
+		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
 		.drv = &nct38xx_ioexpander_drv,
 	},
 };

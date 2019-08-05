@@ -14,19 +14,25 @@
 #define NCT38XX_VARIANT_3807               0x0
 #define NCT38XX_VARIANT_3808               0x2
 
+/* There are two IO ports in NCT3807 */
+#define NCT38XX_NCT3807_MAX_IO_PORT        2
+/* There is only one IO port in NCT3808 */
+#define NCT38XX_NCT3808_MAX_IO_PORT        1
+
 #define NCT38XX_SUPPORT_GPIO_FLAGS (GPIO_OPEN_DRAIN | GPIO_INPUT | \
-		GPIO_OUTPUT | GPIO_LOW | GPIO_HIGH)
+		GPIO_OUTPUT | GPIO_LOW | GPIO_HIGH | GPIO_INT_F_RISING | \
+		GPIO_INT_F_FALLING | GPIO_INT_F_HIGH | GPIO_INT_F_LOW)
 
 /* I2C interface */
-#define NCT38xx_I2C_ADDR1_1_FLAGS          0x70
-#define NCT38xx_I2C_ADDR1_2_FLAGS          0x71
-#define NCT38xx_I2C_ADDR1_3_FLAGS          0x72
-#define NCT38xx_I2C_ADDR1_4_FLAGS          0x73
+#define NCT38XX_I2C_ADDR1_1_FLAGS          0x70
+#define NCT38XX_I2C_ADDR1_2_FLAGS          0x71
+#define NCT38XX_I2C_ADDR1_3_FLAGS          0x72
+#define NCT38XX_I2C_ADDR1_4_FLAGS          0x73
 
-#define NCT38xx_I2C_ADDR2_1_FLAGS          0x74
-#define NCT38xx_I2C_ADDR2_2_FLAGS          0x75
-#define NCT38xx_I2C_ADDR2_3_FLAGS          0x76
-#define NCT38xx_I2C_ADDR2_4_FLAGS          0x77
+#define NCT38XX_I2C_ADDR2_1_FLAGS          0x74
+#define NCT38XX_I2C_ADDR2_2_FLAGS          0x75
+#define NCT38XX_I2C_ADDR2_3_FLAGS          0x76
+#define NCT38XX_I2C_ADDR2_4_FLAGS          0x77
 
 #define NCT38XX_REG_VENDOR_ID_L            0x00
 #define NCT38XX_REG_VENDOR_ID_H            0x01
@@ -34,11 +40,16 @@
 
 #define NCT38XX_PRODUCT_ID                 0xC301
 
-#define NCT38XXX_REG_GPIO_DATA_IN(n)       (0xC0 + ((n) * 8))
-#define NCT38XXX_REG_GPIO_DATA_OUT(n)      (0xC1 + ((n) * 8))
-#define NCT38XXX_REG_GPIO_DIR(n)           (0xC2 + ((n) * 8))
-#define NCT38XXX_REG_GPIO_OD_SEL(n)        (0xC3 + ((n) * 8))
-#define NCT38XXX_REG_MUX_CONTROL            0xD0
+#define NCT38XX_REG_GPIO_DATA_IN(n)       (0xC0 + ((n) * 8))
+#define NCT38XX_REG_GPIO_DATA_OUT(n)      (0xC1 + ((n) * 8))
+#define NCT38XX_REG_GPIO_DIR(n)           (0xC2 + ((n) * 8))
+#define NCT38XX_REG_GPIO_OD_SEL(n)        (0xC3 + ((n) * 8))
+#define NCT38XX_REG_GPIO_ALERT_RISE(n)    (0xC4 + ((n) * 8))
+#define NCT38XX_REG_GPIO_ALERT_FALL(n)    (0xC5 + ((n) * 8))
+#define NCT38XX_REG_GPIO_ALERT_LEVEL(n)   (0xC6 + ((n) * 8))
+#define NCT38XX_REG_GPIO_ALERT_MASK(n)    (0xC7 + ((n) * 8))
+#define NCT38XX_REG_MUX_CONTROL            0xD0
+#define NCT38XX_REG_GPIO_ALERT_STAT(n)    (0xD4 + (n))
 
 /* NCT3808 only supports GPIO 2/3/4/6/7 */
 #define NCT38XXX_3808_VALID_GPIO_MASK            0xDC

@@ -21,6 +21,7 @@
 #define TCPC_REG_ALERT             0x10
 
 #define TCPC_REG_ALERT_MASK_ALL     0xfff
+#define TCPC_REG_ALERT_VENDOR_DEF   (1<<15)
 #define TCPC_REG_ALERT_VBUS_DISCNCT (1<<11)
 #define TCPC_REG_ALERT_RX_BUF_OVF   (1<<10)
 #define TCPC_REG_ALERT_FAULT        (1<<9)

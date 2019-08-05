@@ -8,6 +8,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "ioexpander_nct38xx.h"
 #include "nct38xx.h"
 #include "tcpci.h"
 
@@ -75,6 +76,18 @@ static int nct38xx_tcpm_init(int port)
 	/* Start VBus monitor */
 	rv = tcpc_write(port, TCPC_REG_COMMAND,
 			TCPC_REG_COMMAND_ENABLE_VBUS_DETECT);
+
+	/*
+	 * Enable the Vendor Define alert event only when the IO expander
+	 * feature is defined
+	 */
+	if (IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX)) {
+		int mask;
+
+		rv |= tcpc_read16(port, TCPC_REG_ALERT_MASK, &mask);
+		mask |= TCPC_REG_ALERT_VENDOR_DEF;
+		rv |= tcpc_write16(port, TCPC_REG_ALERT_MASK, mask);
+	}
 	return rv;
 }
 
@@ -297,6 +310,30 @@ clear:
 	return rv;
 }
 
+static void nct38xx_tcpc_alert(int port)
+{
+	int alert, rv;
+
+	/*
+	 * If IO expander feature is defined, read the ALERT register first to
+	 * keep the status of Vendor Define bit. Otherwise, the status of ALERT
+	 * register will be cleared after tcpci_tcpc_alert() is executed.
+	 */
+	if (IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX))
+		rv = tcpc_read16(port, TCPC_REG_ALERT, &alert);
+
+	/* Process normal TCPC ALERT event and clear status */
+	tcpci_tcpc_alert(port);
+
+	/*
+	 * If IO expander feature is defined, check the Vendor Define bit to
+	 * handle the IOEX IO's interrupt event
+	 */
+	if (IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX))
+		if (!rv && (alert & TCPC_REG_ALERT_VENDOR_DEF))
+			nct38xx_ioex_event_handler(port);
+
+}
 const struct tcpm_drv nct38xx_tcpm_drv = {
 	.init			= &nct38xx_tcpm_init,
 	.release		= &tcpci_tcpm_release,
@@ -312,7 +349,7 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
 	.get_message_raw	= &tcpci_nct38xx_get_message_raw,
 	.transmit		= &tcpci_nct38xx_transmit,
-	.tcpc_alert		= &tcpci_tcpc_alert,
+	.tcpc_alert		= &nct38xx_tcpc_alert,
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
 #endif

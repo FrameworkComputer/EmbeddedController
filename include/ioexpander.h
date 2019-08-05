@@ -51,11 +51,6 @@ struct ioexpander_config_t {
 	/* I2C slave address */
 	int i2c_slave_addr;
 	/*
-	 * The extra variable used to store information which may be required
-	 * by the IO expander chip.
-	 */
-	int chip_info;
-	/*
 	 * Pointer to the specific IO expander chip's ops defined in
 	 * the struct ioexpander_drv.
 	 */
