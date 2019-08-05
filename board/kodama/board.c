@@ -13,7 +13,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "driver/accelgyro_bmi160.h"
+#include "driver/accelgyro_lsm6dsm.h"
 #include "driver/charger/rt946x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/mt6370.h"
@@ -242,40 +242,37 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 #ifdef SECTION_IS_RW
 static struct mutex g_lid_mutex;
 
-static struct bmi160_drv_data_t g_bmi160_data;
+static struct lsm6dsm_data lsm6dsm_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
 static const mat33_fp_t lid_standard_ref = {
-	{FLOAT_TO_FP(1), 0, 0},
-	{0, FLOAT_TO_FP(1), 0},
+	{FLOAT_TO_FP(-1), 0, 0},
+	{0, FLOAT_TO_FP(-1), 0},
 	{0, 0, FLOAT_TO_FP(1)}
 };
 
 struct motion_sensor_t motion_sensors[] = {
-	/*
-	 * Note: bmi160: supports accelerometer and gyro sensor
-	 * Requirement: accelerometer sensor must init before gyro sensor
-	 * DO NOT change the order of the following table.
-	 */
 	[LID_ACCEL] = {
 	 .name = "Accel",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .chip = MOTIONSENSE_CHIP_LSM6DSM,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &bmi160_drv,
+	 .drv = &lsm6dsm_drv,
 	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_bmi160_data,
+	 .drv_data = LSM6DSM_ST_DATA(lsm6dsm_data, MOTIONSENSE_TYPE_ACCEL),
+	 .int_signal = GPIO_ACCEL_INT_ODL,
+	 .flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 	 .port = I2C_PORT_ACCEL,
-	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
+	 .i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 	 .rot_standard_ref = &lid_standard_ref,
 	 .default_range = 4,  /* g */
-	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
-	 .max_frequency = BMI160_ACCEL_MAX_FREQ,
+	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
+	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
 	 .config = {
 		 /* Enable accel in S0 */
 		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 10000 | ROUND_UP_FLAG,
+			 .odr = 13000 | ROUND_UP_FLAG,
 			 .ec_rate = 100 * MSEC,
 		 },
 	 },
@@ -283,18 +280,18 @@ struct motion_sensor_t motion_sensors[] = {
 	[LID_GYRO] = {
 	 .name = "Gyro",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .chip = MOTIONSENSE_CHIP_LSM6DSM,
 	 .type = MOTIONSENSE_TYPE_GYRO,
 	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &bmi160_drv,
+	 .drv = &lsm6dsm_drv,
 	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_bmi160_data,
+	 .drv_data = LSM6DSM_ST_DATA(lsm6dsm_data, MOTIONSENSE_TYPE_GYRO),
 	 .port = I2C_PORT_ACCEL,
-	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	 .default_range = 1000, /* dps */
+	 .i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+	 .default_range = 1000 | ROUND_UP_FLAG, /* dps */
 	 .rot_standard_ref = &lid_standard_ref,
-	 .min_frequency = BMI160_GYRO_MIN_FREQ,
-	 .max_frequency = BMI160_GYRO_MAX_FREQ,
+	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
+	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
 	},
 	[VSYNC] = {
 	 .name = "Camera vsync",
