@@ -262,6 +262,8 @@ static const struct option_container cmd_line_options[] = {
 	 "Corrupt the inactive rw"},
 	{{"device", required_argument, NULL, 'd'},
 	 " VID:PID%USB device (default 18d1:5014)"},
+	{{"endorsement_seed", optional_argument, NULL, 'e'},
+	 "[state]%get/set the endorsement key seed"},
 	{{"fwver", no_argument, NULL, 'f'},
 	 "Report running Cr50 firmware versions"},
 	{{"factory", required_argument, NULL, 'F'},
@@ -2088,6 +2090,75 @@ static void process_sn_inc_rma(struct transfer_descriptor *td,
 	}
 }
 
+/* Get/Set the primary seed of the info1 manufacture state. */
+static int process_endorsement_seed(struct transfer_descriptor *td,
+				    const char *endorsement_seed_str)
+{
+	uint8_t endorsement_seed[32];
+	uint8_t response_seed[32];
+	size_t seed_size = sizeof(endorsement_seed);
+	size_t response_size = sizeof(response_seed);
+	size_t i;
+	int rv;
+
+	if (!endorsement_seed_str) {
+		rv = send_vendor_command(td, VENDOR_CC_ENDORSEMENT_SEED, NULL,
+					 0, response_seed, &response_size);
+		if (rv) {
+			fprintf(stderr, "Error sending vendor command %d\n",
+				rv);
+			return update_error;
+		}
+		printf("Endorsement key seed: ");
+		for (i = 0; i < response_size; i++)
+			printf("%02x", response_seed[i]);
+		printf("\n");
+		return 0;
+	}
+	if (seed_size * 2 != strlen(endorsement_seed_str)) {
+		printf("Invalid seed %s\n", endorsement_seed_str);
+		return update_error;
+	}
+
+	for (i = 0; i < seed_size; i++) {
+		int nibble;
+		char c;
+
+		c = endorsement_seed_str[2 * i];
+		nibble = from_hexascii(c);
+		if (nibble < 0) {
+			fprintf(stderr,	"Error: Non hex character in seed %c\n",
+				c);
+			return update_error;
+		}
+		endorsement_seed[i] = nibble << 4;
+
+		c = endorsement_seed_str[2 * i + 1];
+		nibble = from_hexascii(c);
+		if (nibble < 0) {
+			fprintf(stderr,	"Error: Non hex character in seed %c\n",
+				c);
+			return update_error;
+		}
+		endorsement_seed[i] |= nibble;
+	}
+
+	printf("Setting seed: %s\n", endorsement_seed_str);
+	rv = send_vendor_command(td, VENDOR_CC_ENDORSEMENT_SEED,
+				 endorsement_seed, seed_size,
+				 response_seed, &response_size);
+	if (rv == VENDOR_RC_NOT_ALLOWED) {
+		fprintf(stderr, "Seed already set\n");
+		return update_error;
+	}
+	if (rv) {
+		fprintf(stderr, "Error sending vendor command %d\n", rv);
+		return update_error;
+	}
+	printf("Updated endorsement key seed.\n");
+	return 0;
+}
+
 /*
  * Retrieve the RMA authentication challenge from the Cr50, print out the
  * challenge on the console, then prompt the user for the authentication code,
@@ -2498,6 +2569,8 @@ int main(int argc, char *argv[])
 	int show_fw_ver = 0;
 	int rma = 0;
 	const char *rma_auth_code;
+	int get_endorsement_seed = 0;
+	const char *endorsement_seed_str;
 	int corrupt_inactive_rw = 0;
 	struct board_id bid;
 	enum board_id_action bid_action;
@@ -2591,6 +2664,10 @@ int main(int argc, char *argv[])
 					optarg);
 				errorcnt++;
 			}
+			break;
+		case 'e':
+			get_endorsement_seed = 1;
+			endorsement_seed_str = optarg;
 			break;
 		case 'F':
 			factory_mode = 1;
@@ -2714,6 +2791,7 @@ int main(int argc, char *argv[])
 	    !ccd_unlock &&
 	    !corrupt_inactive_rw &&
 	    !get_flog &&
+	    !get_endorsement_seed &&
 	    !factory_mode &&
 	    !password &&
 	    !rma &&
@@ -2751,10 +2829,11 @@ int main(int argc, char *argv[])
 
 	if (((bid_action != bid_none) + !!rma + !!password + !!ccd_open +
 	     !!ccd_unlock + !!ccd_lock + !!ccd_info + !!get_flog +
-	     !!openbox_desc_file + !!factory_mode + !!wp) > 1) {
+	     !!openbox_desc_file + !!factory_mode + !!wp +
+	     !!get_endorsement_seed) > 1) {
 		fprintf(stderr,
-			"ERROR: "
-			"options -F, -I, -i, -k, -L, -O, -o, -P, -r, -U and -w "
+			"ERROR: options"
+			"-e, -F, -I, -i, -k, -L, -O, -o, -P, -r, -U and -w "
 			"are mutually exclusive\n");
 		exit(update_error);
 	}
@@ -2787,6 +2866,9 @@ int main(int argc, char *argv[])
 
 	if (bid_action != bid_none)
 		process_bid(&td, bid_action, &bid, show_machine_output);
+
+	if (get_endorsement_seed)
+		exit(process_endorsement_seed(&td, endorsement_seed_str));
 
 	if (rma)
 		process_rma(&td, rma_auth_code);
