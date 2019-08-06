@@ -50,8 +50,8 @@
 		} \
 	} while (0)
 
-#define TEST_EQ(a, b, fmt) TEST_OPERATOR(a, b, ==, fmt)
-#define TEST_NE(a, b, fmt) TEST_OPERATOR(a, b, !=, fmt)
+#define TEST_EQ(a, b) TEST_OPERATOR(a, b, ==, %d)
+#define TEST_NE(a, b) TEST_OPERATOR(a, b, !=, %d)
 #define TEST_BITS_SET(a, bits) TEST_OPERATOR(a & bits, bits, ==, %u)
 #define TEST_BITS_CLEARED(a, bits) TEST_OPERATOR(a & bits, 0, ==, %u)
 
