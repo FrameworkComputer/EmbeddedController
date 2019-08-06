@@ -140,19 +140,17 @@ enum state {
 };
 static const struct usb_state states[];
 
+static struct control {
+	usb_state_ptr a3_entry_to;
+	usb_state_ptr b3_run_to;
+	usb_state_ptr b6_entry_to;
+	usb_state_ptr c_entry_to;
+	usb_state_ptr c_exit_to;
+} test_control;
+
 static void set_state_sm(const int port, const enum state new_state)
 {
 	set_state(port, &sm[port].ctx, &states[new_state]);
-}
-
-static void clear_seq(int port)
-{
-	int i;
-
-	sm[port].idx = 0;
-
-	for (i = 0; i < 8; i++)
-		sm[port].seq[i] = 0;
 }
 
 static void sm_test_super_A1_entry(const int port)
@@ -219,6 +217,8 @@ static void sm_test_super_B2_exit(const int port)
 static void sm_test_super_A3_entry(const int port)
 {
 	sm[port].seq[sm[port].idx++] = ENTER_A3;
+	if (test_control.a3_entry_to)
+		set_state(port, &sm[port].ctx, test_control.a3_entry_to);
 }
 
 static void sm_test_super_A3_run(const int port)
@@ -239,6 +239,8 @@ static void sm_test_super_B3_entry(const int port)
 static void sm_test_super_B3_run(const int port)
 {
 	sm[port].seq[sm[port].idx++] = RUN_B3;
+	if (test_control.b3_run_to)
+		set_state(port, &sm[port].ctx, test_control.b3_run_to);
 }
 
 static void sm_test_super_B3_exit(const int port)
@@ -380,6 +382,8 @@ static void sm_test_B6_entry(const int port)
 {
 	sm[port].sv_tmp = 0;
 	sm[port].seq[sm[port].idx++] = ENTER_B6;
+	if (test_control.b6_entry_to)
+		set_state(port, &sm[port].ctx, test_control.b6_entry_to);
 }
 
 static void sm_test_B6_run(const int port)
@@ -401,6 +405,8 @@ static void sm_test_C_entry(const int port)
 {
 	sm[port].sv_tmp = 0;
 	sm[port].seq[sm[port].idx++] = ENTER_C;
+	if (test_control.c_entry_to)
+		set_state(port, &sm[port].ctx, test_control.c_entry_to);
 }
 
 static void sm_test_C_run(const int port)
@@ -416,6 +422,8 @@ static void sm_test_C_run(const int port)
 static void sm_test_C_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_C;
+	if (test_control.c_exit_to)
+		set_state(port, &sm[port].ctx, test_control.c_exit_to);
 }
 
 static void run_sm(void)
@@ -429,7 +437,6 @@ test_static int test_hierarchy_0(void)
 	int port = PORT0;
 	int i = 0;
 
-	clear_seq(port);
 	set_state_sm(port, SM_TEST_A4);
 
 	run_sm();
@@ -502,7 +509,6 @@ test_static int test_hierarchy_1(void)
 	int port = PORT0;
 	int i = 0;
 
-	clear_seq(port);
 	set_state_sm(port, SM_TEST_A4);
 
 	run_sm();
@@ -584,7 +590,6 @@ test_static int test_hierarchy_2(void)
 	int port = PORT0;
 	int i = 0;
 
-	clear_seq(port);
 	set_state_sm(port, SM_TEST_A4);
 
 	run_sm();
@@ -676,7 +681,6 @@ test_static int test_hierarchy_3(void)
 	int port = PORT0;
 	int i = 0;
 
-	clear_seq(port);
 	set_state_sm(port, SM_TEST_A4);
 
 	run_sm();
@@ -774,6 +778,72 @@ test_static int test_hierarchy_3(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_set_state_from_parents(void)
+{
+	int port = PORT0;
+	int i = 0;
+
+	/* Start state machine */
+	test_control.a3_entry_to = &states[SM_TEST_B4];
+	run_sm();
+	set_state_sm(port, SM_TEST_A4);
+	TEST_EQ(sm[port].seq[i], ENTER_A1, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A2, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d"); ++i;
+	/* Does not enter or exit A4 */
+	TEST_EQ(sm[port].seq[i], EXIT_A3, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A2, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A1, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B1, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B2, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B3, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B4, "%d"); ++i;
+	/* Ensure we didn't go further than above statements */
+	TEST_EQ(sm[port].seq[i], 0, "%d");
+
+	test_control.b3_run_to = &states[SM_TEST_B5];
+	run_sm();
+	TEST_EQ(sm[port].seq[i], RUN_B4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B3, "%d"); ++i;
+	/* Does not run b2 or b1 */
+	TEST_EQ(sm[port].seq[i], EXIT_B4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B3, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B5, "%d"); ++i;
+	/* Ensure we didn't go further than above statements */
+	TEST_EQ(sm[port].seq[i], 0, "%d");
+
+	run_sm();
+	TEST_EQ(sm[port].seq[i], RUN_B5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B2, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B1, "%d"); ++i;
+	/* Ensure we didn't go further than above statements */
+	TEST_EQ(sm[port].seq[i], 0, "%d");
+
+	/*
+	 * Ensure that multiple chains of parent entry works. Also ensure
+	 * that set states in exit are ignored.
+	 */
+	test_control.b6_entry_to = &states[SM_TEST_C];
+	test_control.c_entry_to = &states[SM_TEST_A7];
+	test_control.c_exit_to = &states[SM_TEST_A4];
+	run_sm();
+	TEST_EQ(sm[port].seq[i], EXIT_B5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B2, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B1, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_C, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_C, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A1, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A7, "%d"); ++i;
+	/* Ensure we didn't go further than above statements */
+	TEST_EQ(sm[port].seq[i], 0, "%d");
+
+	for (; i < SEQUENCE_SIZE; i++)
+		TEST_EQ(sm[port].seq[i], 0, "%d");
+
+	return EC_SUCCESS;
+}
 
 #ifdef TEST_USB_SM_FRAMEWORK_H3
 #define TEST_AT_LEAST_3
@@ -893,6 +963,14 @@ static const struct usb_state states[] = {
 	},
 };
 
+/* Run before each RUN_TEST line */
+void before_test(void)
+{
+	/* Rest test variables */
+	memset(&sm[PORT0], 0, sizeof(struct sm_));
+	memset(&test_control, 0, sizeof(struct control));
+}
+
 int test_task(void *u)
 {
 	int port = PORT0;
@@ -912,6 +990,7 @@ void run_test(void)
 	test_reset();
 #if defined(TEST_USB_SM_FRAMEWORK_H3)
 	RUN_TEST(test_hierarchy_3);
+	RUN_TEST(test_set_state_from_parents);
 #elif defined(TEST_USB_SM_FRAMEWORK_H2)
 	RUN_TEST(test_hierarchy_2);
 #elif defined(TEST_USB_SM_FRAMEWORK_H1)
