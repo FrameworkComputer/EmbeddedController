@@ -21,6 +21,7 @@
 /* Power and battery LEDs */
 #define CONFIG_LED_COMMON
 #define CONFIG_CMD_LEDTEST
+#define CONFIG_LED_POWER_LED
 
 #define CONFIG_LED_ONOFF_STATES
 

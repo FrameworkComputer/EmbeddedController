@@ -91,6 +91,7 @@ GPIO(SKU_ID2,			PIN(4, 1), GPIO_INPUT)
 /* LED */
 GPIO(BAT_LED_1_L,	 PIN(C, 3), GPIO_OUT_HIGH)
 GPIO(BAT_LED_2_L,	 PIN(C, 4), GPIO_OUT_HIGH)
+GPIO(POWER_LED_3_L,	 PIN(B, 7), GPIO_OUT_HIGH)
 
 /* Alternate functions GPIO definitions */
 /* Cr50 requires no pull-ups on UART pins. */
