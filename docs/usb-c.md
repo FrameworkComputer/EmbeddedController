@@ -25,10 +25,10 @@ Modes in the EC codebase.
 
 ## Glossary
 
-*   PD
+*   PD<a name="pd"></a>
     *   Power Delivery. Protocol over USB-C connector that allows up to 100W of
         power. Not supported on USB-A or USB-B connectors.
-*   TCPC
+*   TCPC<a name="tcpc"></a>
     *   Type-C Port Controller. Typically a separate IC connected through I2C,
         sometimes embedded within the EC as a hardware sub module. The TCPC
         interprets physical layer signals on CC lines and Vbus, and sends that
@@ -37,7 +37,7 @@ Modes in the EC codebase.
         that communicated with the main EC (also running this codebase), which
         acted as the TCPM. More info in the official
         [TCPC spec][USB TCPM Spec Id].
-*   TCPM
+*   TCPM<a name="tcpm"></a>
     *   Type-C Port Manager. Manages the state of the USB-C connection. Makes
         decisions about what state to transition to. This is the code running on
         the EC itself.
@@ -48,7 +48,7 @@ Modes in the EC codebase.
         available, such as Try.SRC
 *   TC
     *   Type-C physical layer.
-*   PPC
+*   PPC<a name="ppc"></a>
     *   Power Path Controller. An optional, separate IC that isolates various
         USB-C signals from each other and the rest of the board. This IC should
         prevent shorts and over current/voltage scenarios for Vbus. Some PPCs
