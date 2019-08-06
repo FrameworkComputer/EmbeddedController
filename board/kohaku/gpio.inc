@@ -141,7 +141,7 @@ ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)                            /* UA
 ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)                             /* PWM3 - Keyboard backlight */
 
 /* ADC */
-ALTERNATE(PIN_MASK(4, 0x30), 0, MODULE_ADC, 0)                             /* ADC0-1 */
+ALTERNATE(PIN_MASK(4, 0x3C), 0, MODULE_ADC, 0)                             /* ADC0-3 */
 
 /* Power Switch Logic (PSL) inputs */
 ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, 0)                             /* GPIOD2 = LID_OPEN */

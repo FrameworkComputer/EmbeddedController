@@ -372,6 +372,10 @@ const struct adc_t adc_channels[] = {
 		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 	[ADC_TEMP_SENSOR_2] = {
 		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_3] = {
+		"TEMP_IA", NPCX_ADC_CH2, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_4] = {
+		"TEMP_GT", NPCX_ADC_CH3, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -386,10 +390,47 @@ const struct temp_sensor_t temp_sensors[] = {
 				 .read = get_temp_3v3_30k9_47k_4050b,
 				 .idx = ADC_TEMP_SENSOR_2,
 				 .action_delay_sec = 1},
+	[TEMP_SENSOR_3] = {.name = "Temp3",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_30k9_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_3,
+				 .action_delay_sec = 1},
+	[TEMP_SENSOR_4] = {.name = "Temp4",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_30k9_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_4,
+				 .action_delay_sec = 1},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
+/* Kohaku Temperature sensors */
+/*
+ * TODO(b/138578073): These setting need to be reviewed and set appropriately
+ * for Kohaku. They matter when the EC is controlling the fan as opposed to DPTF
+ * control.
+ */
+const static struct ec_thermal_config thermal_a = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(25),
+	.temp_fan_max = C_TO_K(50),
+};
+
+struct ec_thermal_config thermal_params[] = {
+	[TEMP_SENSOR_1] = thermal_a,
+	[TEMP_SENSOR_2] = thermal_a,
+	[TEMP_SENSOR_3] = thermal_a,
+	[TEMP_SENSOR_4] = thermal_a,
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 enum gpio_signal gpio_en_pp5000_a = GPIO_EN_PP5000_A;
 
