@@ -42,7 +42,6 @@ GPIO(PCH_SYS_PWROK,		PIN(D, 6), GPIO_OUT_LOW)			/* Power OK to SOC */
 GPIO(CPU_PROCHOT,		PIN(3, 4), GPIO_INPUT | GPIO_SEL_1P8V)		/* PROCHOT to SOC */
 GPIO(APU_ALERT_L,		PIN(A, 2), GPIO_INPUT)				/* Alert to SOC */
 GPIO(3AXIS_INT_L,		PIN(5, 0), GPIO_INPUT | GPIO_SEL_1P8V)		/* 3 Axis Accel */
-GPIO(KB_BL_EN,			PIN(F, 2), GPIO_OUT_LOW)			/* Enable KB Backlight */
 GPIO(EC_INT_L,			PIN(A, 4), GPIO_ODR_HIGH)			/* Sensor MKBP event to SOC */
 
 /* I2C pins - these will be reconfigured for alternate function below */
@@ -106,7 +105,6 @@ ALTERNATE(PIN_MASK(4, 0x30), 0, MODULE_ADC, 0)					/* ADC0-1 */
 ALTERNATE(PIN_MASK(4, 0x02), 0, MODULE_ADC, 0)					/* ADC4 */
 ALTERNATE(PIN_MASK(F, 0x02), 0, MODULE_ADC, 0)					/* ADC8 */
 ALTERNATE(PIN_MASK(F, 0x01), 0, MODULE_ADC, 0)					/* ADC9 */
-ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)					/* KB Backlight */
 
 /* Keyboard Pins */
 ALTERNATE(PIN_MASK(3, 0x03), 0, MODULE_KEYBOARD_SCAN, GPIO_INPUT)		/* KSI_00-01 */

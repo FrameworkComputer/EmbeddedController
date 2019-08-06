@@ -15,7 +15,6 @@
 #include "compile_time_macros.h"
 #include "console.h"
 #include "driver/accelgyro_bmi160.h"
-#include "driver/led/lm3630a.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -97,20 +96,10 @@ const struct i2c_port_t i2c_ports[] = {
 	{"tcpc0",   I2C_PORT_TCPC0,   400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
 	{"tcpc1",   I2C_PORT_TCPC1,   400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 	{"thermal", I2C_PORT_THERMAL, 400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
-	{"kblight", I2C_PORT_KBLIGHT, 100, GPIO_I2C5_SCL, GPIO_I2C5_SDA},
 	{"sensor",  I2C_PORT_SENSOR,  400, GPIO_I2C7_SCL, GPIO_I2C7_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = {
-		.channel = 5,
-		.flags = PWM_CONFIG_DSLEEP,
-		.freq = 100,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 void board_update_sensor_config_from_sku(void)
 {
@@ -240,13 +229,3 @@ void board_reset_pd_mcu(void)
 	board_set_tcpc_power_mode(USB_PD_PORT_ANX74XX, 1);
 }
 
-static void board_kblight_init(void)
-{
-	/*
-	 * Enable keyboard backlight. This needs to be done here because
-	 * the chip doesn't have power until PP3300_S0 comes up.
-	 */
-	gpio_set_level(GPIO_KB_BL_EN, 1);
-	lm3630a_poweron();
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_kblight_init, HOOK_PRIO_DEFAULT);

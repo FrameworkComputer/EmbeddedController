@@ -25,10 +25,9 @@
 
 #define CONFIG_LED_ONOFF_STATES
 
-#define I2C_PORT_KBLIGHT NPCX_I2C_PORT5_0
-
-/* KB backlight driver */
-#define CONFIG_LED_DRIVER_LM3630A
+/*Disable KBLIGTH*/
+#undef CONFIG_PWM
+#undef CONFIG_PWM_KBLIGHT
 
 #define CONFIG_MKBP_USE_GPIO
 
@@ -53,10 +52,6 @@
 
 #ifndef __ASSEMBLER__
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT = 0,
-	PWM_CH_COUNT
-};
 
 enum battery_type {
 	BATTERY_PANASONIC,
