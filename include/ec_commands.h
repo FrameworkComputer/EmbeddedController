@@ -4941,6 +4941,10 @@ struct ec_response_usb_pd_control_v1 {
 #define USBC_PD_CC_UFP_ATTACHED	4 /* UFP attached to usbc */
 #define USBC_PD_CC_DFP_ATTACHED	5 /* DPF attached to usbc */
 
+#define USBC_CABLE_TYPE_UNDEF   0 /* Undefined */
+#define USBC_CABLE_TYPE_PASSIVE 3 /* Passive cable attached */
+#define USBC_CABLE_TYPE_ACTIVE  4 /* Active cable attached */
+
 struct ec_response_usb_pd_control_v2 {
 	uint8_t enabled;
 	uint8_t role;
@@ -4948,8 +4952,7 @@ struct ec_response_usb_pd_control_v2 {
 	char state[32];
 	uint8_t cc_state; /* USBC_PD_CC_*Encoded cc state */
 	uint8_t dp_mode;  /* Current DP pin mode (MODE_DP_PIN_[A-E]) */
-	/* CL:1500994 Current cable type */
-	uint8_t reserved_cable_type;
+	uint8_t cable_type; /* USBC_CABLE_TYPE_*cable_type */
 } __ec_align1;
 
 #define EC_CMD_USB_PD_PORTS 0x0102

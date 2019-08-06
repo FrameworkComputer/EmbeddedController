@@ -1781,6 +1781,14 @@ uint8_t is_sop_prime_ready(int port, uint8_t data_role, uint32_t pd_flags);
 void reset_pd_cable(int port);
 
 /**
+ * Return the type of cable attached
+ *
+ * @param port	USB-C port number
+ * @return	cable type
+ */
+uint8_t get_usb_pd_mux_cable_type(int port);
+
+/**
  * Store Device ID & RW hash of device
  *
  * @param port			USB-C port number

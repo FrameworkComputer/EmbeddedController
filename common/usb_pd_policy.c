@@ -324,6 +324,11 @@ void reset_pd_cable(int port)
 		memset(&cable[port], 0, sizeof(cable[port]));
 }
 
+uint8_t get_usb_pd_mux_cable_type(int port)
+{
+	return cable[port].type;
+}
+
 #ifdef CONFIG_USB_PD_ALT_MODE
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
