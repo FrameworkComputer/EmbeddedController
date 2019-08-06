@@ -109,7 +109,8 @@ static int fifo_data_avail(struct motion_sensor_t *s)
 	int ret, nsamples;
 
 	if (s->flags & MOTIONSENSE_FLAG_INT_SIGNAL)
-		return gpio_get_level(s->int_signal);
+		return gpio_get_level(s->int_signal) ==
+			!!(MOTIONSENSE_FLAG_INT_ACTIVE_HIGH & s->flags);
 
 	ret = lis2dw12_get_fifo_samples(s, &nsamples);
 	/* If we failed to read the FIFO size assume empty. */
@@ -387,11 +388,18 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		reg_val = LIS2DW12_ODR_12HZ_VAL;
 		normalized_rate = LIS2DW12_ODR_MIN_VAL;
 	}
+
+	/* lis2dwl supports 14 bit resolution only at high performance mode,
+	 * and it will always stay at high performance mode from initialization.
+	 * But lis2dw12 needs switch low power mode according to odr value.
+	 */
+#ifndef CONFIG_ACCEL_LIS2DWL
 	if (reg_val > LIS2DW12_ODR_200HZ_VAL)
 		ret = set_power_mode(s, LIS2DW12_HIGH_PERF, 0);
 	else
 		ret = set_power_mode(s, LIS2DW12_LOW_POWER,
 				     LIS2DW12_LOW_POWER_MODE_2);
+#endif
 
 	ret = st_write_data_with_mask(s, LIS2DW12_ACC_ODR_ADDR,
 				      LIS2DW12_ACC_ODR_MASK, reg_val);
@@ -508,8 +516,22 @@ static int init(const struct motion_sensor_t *s)
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
+	/* Interrupt trigger level of power-on-reset is HIGH */
+	if (!(MOTIONSENSE_FLAG_INT_ACTIVE_HIGH & s->flags)) {
+		ret = st_write_data_with_mask(s, LIS2DW12_H_ACTIVE_ADDR,
+						LIS2DW12_H_ACTIVE_MASK,
+						LIS2DW12_EN_BIT);
+		if (ret != EC_SUCCESS)
+			goto err_unlock;
+	}
+
+#ifdef CONFIG_ACCEL_LIS2DWL
+	/* lis2dwl supports 14 bit resolution only at high perfomance mode */
+	ret = set_power_mode(s, LIS2DW12_HIGH_PERF, 0);
+#else
 	/* Set default Mode and Low Power Mode. */
 	ret = set_power_mode(s, LIS2DW12_LOW_POWER, LIS2DW12_LOW_POWER_MODE_2);
+#endif
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 

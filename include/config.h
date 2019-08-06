@@ -84,7 +84,21 @@
 #undef CONFIG_ACCEL_LIS2DH
 #undef CONFIG_ACCEL_LNG2DM
 #undef CONFIG_ACCEL_LIS2D_COMMON
+
+/*
+ * lis2dw12 and lis2dwl have almost the same register interface.
+ * lis2dw12 supports 4 low power modes but lis2dwl only supports one. lis2dwl
+ * only supports 12 bit resolution under low power mode. But lis2dw12 can
+ * support 12 bit or 14 bit resolution at different low power modes. In order
+ * to get 14 bit resolution, lis2dwl does not use low power mode and lis2dw12
+ * only uses 3 of 4 low power modes.
+ *
+ * Use the define for your correct chip and the CONFIG_ACCEL_LIS2DW_COMMON will
+ * automatically get defined.
+ */
 #undef CONFIG_ACCEL_LIS2DW12
+#undef CONFIG_ACCEL_LIS2DWL
+#undef CONFIG_ACCEL_LIS2DW_COMMON
 
 #undef CONFIG_ACCELGYRO_BMI160
 #undef CONFIG_ACCELGYRO_LSM6DS0
@@ -4721,6 +4735,23 @@
 	defined(CONFIG_ACCEL_LIS2DE) || \
 	defined(CONFIG_ACCEL_LNG2DM)
 #define CONFIG_ACCEL_LIS2D_COMMON
+#endif
+
+/*
+ * Automatically define CONFIG_ACCEL_LIS2DW_COMMON if a child option is defined.
+ */
+#if defined(CONFIG_ACCEL_LIS2DW12) || \
+	defined(CONFIG_ACCEL_LIS2DWL)
+#define CONFIG_ACCEL_LIS2DW_COMMON
+#endif
+
+/*
+ * CONFIG_ACCEL_LIS2DW12 and CONFIG_ACCEL_LIS2DWL can't be defined at the same
+ * time.
+ */
+#if defined(CONFIG_ACCEL_LIS2DW12) && \
+	defined(CONFIG_ACCEL_LIS2DWL)
+#error "Define only one of CONFIG_ACCEL_LIS2DW12 and CONFIG_ACCEL_LIS2DWL"
 #endif
 
 /*****************************************************************************/

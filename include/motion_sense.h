@@ -130,8 +130,9 @@ struct motion_data_t {
  * When set, spoof mode will allow the EC to report arbitrary values for any of
  * the components.
  */
-#define MOTIONSENSE_FLAG_IN_SPOOF_MODE	BIT(1)
-#define MOTIONSENSE_FLAG_INT_SIGNAL	BIT(2)
+#define MOTIONSENSE_FLAG_IN_SPOOF_MODE		BIT(1)
+#define MOTIONSENSE_FLAG_INT_SIGNAL		BIT(2)
+#define MOTIONSENSE_FLAG_INT_ACTIVE_HIGH	BIT(3)
 
 struct motion_sensor_t {
 	/* RO fields */
