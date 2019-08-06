@@ -89,6 +89,10 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 
+#define CONFIG_FANS FAN_CH_COUNT
+#undef CONFIG_FAN_INIT_SPEED
+#define CONFIG_FAN_INIT_SPEED 50
+
 #define CONFIG_LED_COMMON
 #define CONFIG_CMD_LEDTEST
 #define CONFIG_LED_ONOFF_STATES
@@ -223,7 +227,20 @@ enum temp_sensor_id {
 
 enum pwm_channel {
 	PWM_CH_KBLIGHT = 0,
+	PWM_CH_FAN,
 	PWM_CH_COUNT
+};
+
+enum fan_channel {
+	FAN_CH_0 = 0,
+	/* Number of FAN channels */
+	FAN_CH_COUNT,
+};
+
+enum mft_channel {
+	MFT_CH_0 = 0,
+	/* Number of MFT channels */
+	MFT_CH_COUNT,
 };
 
 enum usbc_port {
