@@ -25,7 +25,7 @@ GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PP5000_A_PG_OD,       PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
 
 /* Sensor Interrupts */
-GPIO_INT(BASE_SIXAXIS_INT_L,   PIN(5, 6), GPIO_INT_FALLING, bmi160_interrupt)
+GPIO_INT(BASE_SIXAXIS_INT_L,   PIN(5, 6), GPIO_INT_FALLING, lsm6dsm_interrupt)
 GPIO_INT(TCS3400_INT_ODL,      PIN(F, 1), GPIO_INT_FALLING, tcs3400_interrupt)
 
 /* USB-C interrupts */
