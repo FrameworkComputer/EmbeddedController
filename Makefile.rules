@@ -649,10 +649,6 @@ print-configs:
 		-DSECTION_IS_RW=$(EMPTY) include/config.h | \
 		grep "#define CONFIG_" | cut -c9- | sort
 
-.PHONY: print-chip-variant
-print-chip-variant:
-	@echo "$(CHIP_VARIANT)"
-
 .PHONY: clean
 clean:
 	-rm -rf $(out)
@@ -686,7 +682,6 @@ help:
 	@echo "  print-host-tests     - Prints all host test targets"
 	@echo "  print-host-fuzzers   - Prints all host fuzz targets"
 	@echo "  print-boards         - Prints all boards"
-	@echo "  print-chip-variant [BOARD=] - Print chip variant used for the target board"
 	@echo "  print-configs [BOARD=]      - Print CONFIG_* options for the target board"
 	@echo "Common Variables:"
 	@echo "  V=1                  - Show make output"
