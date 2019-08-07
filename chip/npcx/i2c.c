@@ -758,9 +758,9 @@ static void i2c_freq_changed(void)
 		 * Set SCL frequency by formula:
 		 * tSCL = 4 * SCLFRQ * tCLK
 		 * fSCL = fCLK / (4*SCLFRQ)
-		 * SCLFRQ = fSCL/(4*fSCL)
+		 * SCLFRQ = ceil(fCLK/(4*fSCL))
 		 */
-		scl_freq = (freq/1000) / (bus_freq*4); /* bus_freq is KHz */
+		scl_freq = DIV_ROUND_UP(freq, bus_freq*4000); /* Unit in bps */
 
 		/* Normal mode if i2c freq is under 100kHz */
 		if (bus_freq <= 100) {
