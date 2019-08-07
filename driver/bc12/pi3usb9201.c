@@ -320,9 +320,11 @@ void usb_charger_task(void *u)
 			 */
 			bc12_power_up(port);
 			rv = pi3usb9201_get_mode(port, &mode);
-			if (!rv && (mode != PI3USB9201_CDP_HOST_MODE))
+			if (!rv && (mode != PI3USB9201_CDP_HOST_MODE)) {
+				CPRINTS("pi3usb9201[p%d]: CDP_HOST mode", port);
 				pi3usb9201_set_mode(port,
 						    PI3USB9201_CDP_HOST_MODE);
+			}
 		}
 
 		if (evt & USB_CHG_EVENT_CC_OPEN)
