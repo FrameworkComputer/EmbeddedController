@@ -17,6 +17,7 @@
 #include "driver/charger/rt946x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/mt6370.h"
+#include "driver/usb_mux/it5205.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -93,7 +94,8 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
-		.driver = &virtual_usb_mux_driver,
+		.port_addr = IT5205_I2C_ADDR1_FLAGS,
+		.driver = &it5205_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
 	},
 };

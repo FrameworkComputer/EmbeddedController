@@ -21,6 +21,8 @@
 
 #define CONFIG_VOLUME_BUTTONS
 
+#define CONFIG_USB_MUX_IT5205
+
 /* Battery */
 #ifdef BOARD_KRANE
 #define BATTERY_DESIRED_CHARGING_CURRENT    3500  /* mA */
@@ -47,6 +49,7 @@
 /* I2C ports */
 #define I2C_PORT_CHARGER  0
 #define I2C_PORT_TCPC0    0
+#define I2C_PORT_USB_MUX  0
 #define I2C_PORT_BATTERY  1
 #define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
 #define I2C_PORT_ACCEL    1
