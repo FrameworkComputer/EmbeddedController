@@ -2748,12 +2748,13 @@ int main(int argc, char *argv[])
 			printf("Ignoring binary image %s\n", argv[optind]);
 	}
 
+
 	if (((bid_action != bid_none) + !!rma + !!password + !!ccd_open +
 	     !!ccd_unlock + !!ccd_lock + !!ccd_info + !!get_flog +
-	     !!openbox_desc_file + !!factory_mode + !!wp) > 2) {
+	     !!openbox_desc_file + !!factory_mode + !!wp) > 1) {
 		fprintf(stderr,
 			"ERROR: "
-			"options -F, -I, -i, -k, -L, -O, -o, -P, -r, -u and -w "
+			"options -F, -I, -i, -k, -L, -O, -o, -P, -r, -U and -w "
 			"are mutually exclusive\n");
 		exit(update_error);
 	}
