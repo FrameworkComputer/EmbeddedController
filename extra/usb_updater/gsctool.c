@@ -1454,6 +1454,10 @@ static int show_headers_versions(const void *image, bool show_machine_output)
 	char ro_fw_ver[kNumSlots][MAX_FW_VER_LENGTH];
 	char rw_fw_ver[kNumSlots][MAX_FW_VER_LENGTH];
 
+	uint32_t dev_id0_[kNumSlots];
+	uint32_t dev_id1_[kNumSlots];
+	uint32_t print_devid = 0;
+
 	struct board_id {
 		uint32_t id;
 		uint32_t mask;
@@ -1494,6 +1498,11 @@ static int show_headers_versions(const void *image, bool show_machine_output)
 			h->board_id_type_mask ^ SIGNED_HEADER_PADDING;
 		bid[slot_idx].flags = h->board_id_flags ^ SIGNED_HEADER_PADDING;
 
+		dev_id0_[slot_idx] = h->dev_id0_;
+		dev_id1_[slot_idx] = h->dev_id1_;
+		/* Print the devid if any slot has a non-zero devid. */
+		print_devid |= h->dev_id0_ | h->dev_id1_;
+
 		/*
 		 * If board ID is a 4-uppercase-letter string (as it ought to
 		 * be), print it as 4 letters, otherwise print it as an 8-digit
@@ -1527,6 +1536,21 @@ static int show_headers_versions(const void *image, bool show_machine_output)
 		printf("RO_B:%s RW_B:%s[%s:%08x:%08x]\n",
 		       ro_fw_ver[1], rw_fw_ver[1],
 		       bid_string[1], bid[1].mask, bid[1].flags);
+
+		if (print_devid) {
+			printf("DEVID: 0x%08x 0x%08x", dev_id0_[0],
+			       dev_id1_[0]);
+			/*
+			 * Only print the second devid if it's different.
+			 * Separate the devids with tabs, so it's easier to
+			 * read.
+			 */
+			if (dev_id0_[0] != dev_id0_[1] ||
+			    dev_id1_[0] != dev_id1_[1])
+				printf("\t\t\t\tDEVID_B: 0x%08x 0x%08x",
+				       dev_id0_[1], dev_id1_[1]);
+			printf("\n");
+		}
 	}
 
 	return 0;
