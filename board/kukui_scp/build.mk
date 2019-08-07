@@ -19,3 +19,5 @@ board-$(HAS_TASK_FD_SERVICE)+=fd.o
 
 # ISP P2
 board-$(HAS_TASK_DIP_SERVICE)+=isp_p2_srv.o
+# MDP3
+board-$(HAS_TASK_MDP_SERVICE)+=mdp_ipi_message.o
