@@ -15,6 +15,7 @@
 #include "usb_pd.h"
 #include "usb_pd_test_util.h"
 #include "usb_prl_sm.h"
+#include "usb_sm_checks.h"
 #include "util.h"
 
 #define PORT0 0
@@ -1348,6 +1349,11 @@ void run_test(void)
 	RUN_TEST(test_phy_execute_hard_reset_msg);
 
 	/* TODO(shurst): More PD 3.0 Tests */
+
+	/* Do basic state machine sanity checks last. */
+	RUN_TEST(test_prl_no_parent_cycles);
+	RUN_TEST(test_prl_no_empty_state);
+	RUN_TEST(test_prl_all_states_named);
 
 	test_print_result();
 }

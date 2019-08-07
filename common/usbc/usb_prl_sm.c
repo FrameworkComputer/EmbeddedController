@@ -1628,3 +1628,26 @@ static const struct usb_state tch_states[] = {
 		.run    = tch_message_received_run,
 	},
 };
+
+#ifdef TEST_BUILD
+const struct test_sm_data test_prl_sm_data[] = {
+	{
+		.base = prl_tx_states,
+		.size = ARRAY_SIZE(prl_tx_states),
+	},
+	{
+		.base = prl_hr_states,
+		.size = ARRAY_SIZE(prl_hr_states),
+	},
+	{
+		.base = rch_states,
+		.size = ARRAY_SIZE(rch_states),
+	},
+	{
+		.base = tch_states,
+		.size = ARRAY_SIZE(tch_states),
+	},
+};
+const int test_prl_sm_data_size = ARRAY_SIZE(test_prl_sm_data);
+#endif
+

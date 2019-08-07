@@ -202,3 +202,13 @@ static const struct usb_state pe_states[] = {
 		.run    = pe_request_run,
 	},
 };
+
+#ifdef TEST_BUILD
+const struct test_sm_data test_pe_sm_data[] = {
+	{
+		.base = pe_states,
+		.size = ARRAY_SIZE(pe_states),
+	},
+};
+const int test_pe_sm_data_size = ARRAY_SIZE(test_pe_sm_data);
+#endif

@@ -231,7 +231,7 @@ static enum usb_tc_state get_last_state_tc(const int port)
 	return tc[port].ctx.previous - &tc_states[0];
 }
 
-static void print_current_state(const int port)
+test_mockable_static void print_current_state(const int port)
 {
 	CPRINTS("C%d: %s", port, tc_state_names[get_state_tc(port)]);
 }
@@ -1684,3 +1684,15 @@ static const struct usb_state tc_states[] = {
 		.parent = &tc_states[TC_HOST_RP3_CT_RD],
 	},
 };
+
+#ifdef TEST_BUILD
+const struct test_sm_data test_tc_sm_data[] = {
+	{
+		.base = tc_states,
+		.size = ARRAY_SIZE(tc_states),
+		.names = tc_state_names,
+		.names_size = ARRAY_SIZE(tc_state_names),
+	},
+};
+const int test_tc_sm_data_size = ARRAY_SIZE(test_tc_sm_data);
+#endif

@@ -65,4 +65,21 @@ void set_state(int port, struct sm_ctx *ctx, usb_state_ptr new_state);
  */
 void exe_state(int port, struct sm_ctx *ctx);
 
+#ifdef TEST_BUILD
+/*
+ * Struct for test builds that allow unit tests to easily iterate through
+ * state machines
+ */
+struct test_sm_data {
+	/* Base pointer of the state machine array */
+	const usb_state_ptr base;
+	/* Size fo the state machine array above */
+	const int size;
+	/* The array of names for states, can be NULL */
+	const char * const * const names;
+	/* The size of the above names array */
+	const int names_size;
+};
+#endif
+
 #endif /* __CROS_EC_USB_SM_H */
