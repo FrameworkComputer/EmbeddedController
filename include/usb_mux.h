@@ -34,6 +34,7 @@ typedef uint8_t mux_state_t;
 #define MUX_USB_ENABLED        USB_PD_MUX_USB_ENABLED
 #define MUX_DP_ENABLED         USB_PD_MUX_DP_ENABLED
 #define MUX_POLARITY_INVERTED  USB_PD_MUX_POLARITY_INVERTED
+#define MUX_SAFE_MODE          USB_PD_MUX_SAFE_MODE
 
 /* Mux modes, decoded to attributes */
 enum typec_mux {
@@ -42,6 +43,7 @@ enum typec_mux {
 	TYPEC_MUX_DP   = MUX_DP_ENABLED,   /* DP only */
 	TYPEC_MUX_DOCK = MUX_USB_ENABLED | /* Both USB and DP */
 			 MUX_DP_ENABLED,
+	TYPEC_MUX_SAFE = MUX_SAFE_MODE,    /* Safe mode */
 };
 
 /* Mux driver function pointers */
