@@ -48,15 +48,8 @@ int pd_board_checks(void)
 
 int pd_check_data_swap(int port, int data_role)
 {
-	/*
-	 * Allow data swap if we are a UFP, otherwise don't allow.
-	 *
-	 * When we are still in the Read-Only firmware, avoid swapping roles
-	 * so we don't jump in RW as a SNK/DFP and potentially confuse the
-	 * power supply by sending a soft-reset with wrong data role.
-	 */
-	return (data_role == PD_ROLE_UFP) &&
-	       (system_get_image_copy() != SYSTEM_IMAGE_RO) ? 1 : 0;
+	/* Allow data swap if we are a UFP, otherwise don't allow. */
+	return (data_role == PD_ROLE_UFP);
 }
 
 void pd_check_dr_role(int port, int dr_role, int flags)
