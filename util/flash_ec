@@ -62,6 +62,7 @@ BOARDS_STM32=(
 	glados_pd
 	hatch_fp
 	jerry
+	masterball
 	minimuffin
 	nami_fp
 	nocturne_fp

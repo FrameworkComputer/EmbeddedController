@@ -15,6 +15,8 @@
 /* USB ID */
 #ifdef BOARD_HAMMER
 #define CONFIG_USB_PID 0x5022
+#elif defined(BOARD_MASTERBALL)
+#define CONFIG_USB_PID 0x503c
 #elif defined(BOARD_STAFF)
 #define CONFIG_USB_PID 0x502b
 #elif defined(BOARD_WAND)
@@ -36,6 +38,15 @@
 #define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1018 /* tenth of mm */
 #define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 566 /* tenth of mm */
 #define CONFIG_TOUCHPAD_VIRTUAL_SIZE (48*1024)
+#elif defined(BOARD_MASTERBALL)
+#define HAS_I2C_TOUCHPAD
+/* TODO(b:138422450): Insert correct dimensions. */
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 3206
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1832
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_PRESSURE 511
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1017 /* tenth of mm */
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 581 /* tenth of mm */
+#define CONFIG_TOUCHPAD_VIRTUAL_SIZE (56*1024)
 #elif defined(BOARD_STAFF)
 #define HAS_I2C_TOUCHPAD
 #define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 3206
@@ -71,7 +82,7 @@
 #endif
 
 /* Hall sensor for tablet mode detection */
-#ifdef BOARD_WHISKERS
+#if defined(BOARD_MASTERBALL) || defined(BOARD_WHISKERS)
 #define CONFIG_HALL_SENSOR
 #endif
 
