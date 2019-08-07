@@ -12,6 +12,7 @@
 #include "sha256.h"
 #include "shared_mem.h"
 #include "task.h"
+#include "tablet_mode.h"
 #include "timer.h"
 #include "touchpad.h"
 #include "update_fw.h"
