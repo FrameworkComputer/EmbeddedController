@@ -4,6 +4,7 @@
  */
 
 #include "adc.h"
+#include "adc_chip.h"
 #include "gpio.h"
 #include "timer.h"
 
@@ -98,6 +99,15 @@ int board_get_version(void)
 			break;
 		}
 	}
+
+	/*
+	 * For devices without pogo, Disable ADC module after we detect the
+	 * board version, since this is the only thing ADC module needs to do
+	 * for this board.
+	 */
+	if (CONFIG_DEDICATED_CHARGE_PORT_COUNT == 0 &&
+			version != BOARD_VERSION_UNKNOWN)
+		adc_disable();
 
 	return version;
 }
