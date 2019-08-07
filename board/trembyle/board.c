@@ -22,9 +22,3 @@ void board_update_sensor_config_from_sku(void)
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 }
-
-int charger_get_vbus_voltage(int port)
-{
-	/* TODO */
-	return 0;
-}

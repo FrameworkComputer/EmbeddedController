@@ -232,6 +232,52 @@ int charger_set_voltage(int voltage)
 	return isl9241_write(ISL9241_REG_MAX_SYSTEM_VOLTAGE, voltage);
 }
 
+int charger_get_vbus_voltage(int port)
+{
+	int adc_val = 0;
+	int ctl3_val;
+	int rv;
+
+	/* Get current Control3 value */
+	rv = isl9241_read(ISL9241_REG_CONTROL3, &ctl3_val);
+	if (rv)
+		goto error;
+
+	/* Enable ADC */
+	if (!(ctl3_val & ISL9241_CONTROL3_ENABLE_ADC)) {
+		rv = isl9241_write(ISL9241_REG_CONTROL3,
+				   ctl3_val | ISL9241_CONTROL3_ENABLE_ADC);
+		if (rv)
+			goto error;
+	}
+
+	/* Read voltage ADC value */
+	rv = isl9241_read(ISL9241_REG_VIN_ADC_RESULTS, &adc_val);
+	if (rv)
+		goto error_restore_ctl3;
+
+	/*
+	 * Adjust adc_val
+	 *
+	 * raw adc_val has VIN_ADC in bits [13:6], so shift this down
+	 * this puts adc_val in the range of 0..255, which maps to 0..24.48V
+	 * each step in adc_val is 96mv
+	 */
+	adc_val >>= ISL9241_VIN_ADC_BIT_OFFSET;
+	adc_val *= ISL9241_VIN_ADC_STEP_MV;
+
+error_restore_ctl3:
+	/* Restore Control3 value */
+	if (!(ctl3_val & ISL9241_CONTROL3_ENABLE_ADC))
+		(void)isl9241_write(ISL9241_REG_CONTROL3, ctl3_val);
+
+error:
+	if (rv)
+		CPRINTF("Could not read VBUS ADC! Error: %d\n", rv);
+
+	return adc_val;
+}
+
 int charger_post_init(void)
 {
 	return EC_SUCCESS;

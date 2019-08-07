@@ -86,6 +86,8 @@
 #define ISL9241_CONTROL3_ACLIM_RELOAD	BIT(14)
 /* 2: Digital Reset (0 - Idle, 1 - Reset */
 #define ISL9241_CONTROL3_DIGITAL_RESET	BIT(2)
+/* 0: Enable ADC (0 - Active when charging, 1 - Active always) */
+#define ISL9241_CONTROL3_ENABLE_ADC	BIT(0)
 
 /* Indicates various charger status */
 #define ISL9241_REG_INFORMATION2	0x4D
@@ -111,5 +113,8 @@
 #define ISL9241_REG_INFORMATION4	0x91
 #define ISL9241_REG_MANUFACTURER_ID	0xFE
 #define ISL9241_REG_DEVICE_ID		0xFF
+
+#define ISL9241_VIN_ADC_BIT_OFFSET	6
+#define ISL9241_VIN_ADC_STEP_MV		96
 
 #endif /* __CROS_EC_ISL9241_H */
