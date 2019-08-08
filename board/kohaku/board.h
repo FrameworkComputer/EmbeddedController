@@ -54,7 +54,7 @@
 
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
-	(BIT(LID_ACCEL) | BIT(LID_ALS) | BIT(CLEAR_ALS))
+	(BIT(LID_ACCEL) | BIT(BASE_ALS) | BIT(CLEAR_ALS))
 
 /* Parameter to calculate LUX on Kohaku */
 /*
@@ -144,7 +144,7 @@ enum sensor_id {
 	LID_ACCEL = 0,
 	BASE_ACCEL,
 	BASE_GYRO,
-	LID_ALS,
+	BASE_ALS,
 	VSYNC,
 	CLEAR_ALS,
 	RGB_ALS,

@@ -284,12 +284,12 @@ struct motion_sensor_t motion_sensors[] = {
 		.max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
 
-	[LID_ALS] = {
+	[BASE_ALS] = {
 		.name = "Light",
 		.active_mask = SENSOR_ACTIVE_S0,
 		.chip = MOTIONSENSE_CHIP_BH1730,
 		.type = MOTIONSENSE_TYPE_LIGHT,
-		.location = MOTIONSENSE_LOC_LID,
+		.location = MOTIONSENSE_LOC_BASE,
 		.drv = &bh1730_drv,
 		.drv_data = &g_bh1730_data,
 		.port = I2C_PORT_ACCEL,
@@ -360,7 +360,7 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /* ALS instances when LPC mapping is needed. Each entry directs to a sensor. */
 const struct motion_sensor_t *motion_als_sensors[] = {
-	&motion_sensors[LID_ALS],
+	&motion_sensors[BASE_ALS],
 	&motion_sensors[CLEAR_ALS],
 };
 BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
