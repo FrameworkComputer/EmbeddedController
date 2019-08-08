@@ -11,7 +11,6 @@ EC_DIR="$(readlink -f "${SCRIPT_DIR}/..")"
 if [[ "$(basename "${EC_DIR}")" != "ec" ]]; then
 	EC_DIR=
 fi
-TEMP_DIR=""
 
 # Loads script libraries.
 . "/usr/share/misc/shflags" || exit 1
@@ -173,6 +172,11 @@ eval set -- "${FLAGS_ARGV}"
 if [[ $# -gt 0 ]]; then
 	die "invalid arguments: \"$*\""
 fi
+
+# Error messages
+MSG_PROGRAM_FAIL="Failed to flash EC firmware image"
+MSG_READ_FAIL="Failed to read EC firmware image"
+MSG_VERIFY_FAIL="Failed to verify EC firmware image."
 
 set -e
 
@@ -472,6 +476,8 @@ on_raiden() {
 	return 1
 }
 
+declare -a DELETE_LIST 	# Array of file/dir names to delete at exit
+
 # Put back the servo and the system in a clean state at exit
 FROZEN_PIDS=""
 cleanup() {
@@ -480,10 +486,12 @@ cleanup() {
 		kill -CONT "${pid}"
 	done
 
-	# If $TEMP_DIR exists, then delete it.
-	if [[ -d "${TEMP_DIR}" ]]; then
-		rm -rf "${TEMP_DIR}" > /dev/null 2>&1
-	fi
+	# Delete all files or directories in DELETE_LIST.
+	for item in "${DELETE_LIST[@]}"; do
+		if [[ -e "${item}" ]]; then
+			rm -rf "${item}" &> /dev/null
+		fi
+	done
 
 	if [ "${CHIP}" = "it83xx" ]; then
 		if [ "${SERVO_TYPE}" = "servo_v2" ]; then
@@ -815,6 +823,7 @@ function flash_flashrom() {
 
 		# Temp layout
 		L=/tmp/flash_spi_layout_$$
+		DELETE_LIST+=( "${L}" )
 
 		[[ -z "${FLAGS_read}" ]] && dump_fmap -F "${IMG}" > "${L}"
 
@@ -842,6 +851,7 @@ function flash_flashrom() {
 
 		# Temp image
 		T=/tmp/flash_spi_$$
+		DELETE_LIST+=( "${T}" )
 
 		if [[ "${CHIP}" =~ ^npcx(|_int)_spi$ ]] ; then
 		{	# Patch temp image up to SPI_SIZE
@@ -868,7 +878,8 @@ function flash_flashrom() {
 			echo " ${FLASHROM_WRITE} -w ${T}" 1>&2
 		fi
 		sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
-			${FLASHROM_WRITE} -w "${T}"
+			${FLASHROM_WRITE} -w "${T}" \
+			|| die "${MSG_PROGRAM_FAIL}"
 	else
 		# Read EC image.
 		info "Reading EC firmware image."
@@ -877,7 +888,8 @@ function flash_flashrom() {
 			echo " ${FLASHROM_CMDLINE} -r ${FLAGS_read}" 1>&2
 		fi
 		sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
-			${FLASHROM_CMDLINE} -r "${FLAGS_read}"
+			${FLASHROM_CMDLINE} -r "${FLAGS_read}" \
+			|| die "${MSG_READ_FAIL}"
 	fi
 	if [[ -z "${FLAGS_read}" && "${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
 		# Verify EC image.
@@ -887,11 +899,9 @@ function flash_flashrom() {
 			echo " ${FLASHROM_CMDLINE} -v ${T}" 1>&2
 		fi
 		sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
-			${FLASHROM_CMDLINE} -v "${T}"
+			${FLASHROM_CMDLINE} -v "${T}" \
+			|| die "${MSG_VERIFY_FAIL}"
 	fi
-
-	[[ -f "${T}" ]] && rm "${T}" || true
-	[[ -f "${L}" ]] && rm "${L}" || true
 }
 
 function flash_stm32() {
@@ -973,14 +983,17 @@ function flash_stm32() {
 			echo "${STM32MON_COMMAND} ${IMG}"
 		fi
 		timeout -k 10 -s 9 "${FLAGS_timeout}" \
-			${STM32MON_COMMAND} "${IMG}"
+			${STM32MON_COMMAND} "${IMG}" \
+			|| die "${MSG_PROGRAM_FAIL}"
 
 		# If it is a program-verify request, then make a temporary
 		# directory to store the image
 		if [[ "${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
 			local TEMP_SUFFIX=".$(basename ${SCRIPT}).${CHIP}"
-			TEMP_DIR="$(mktemp -d --suffix="${TEMP_SUFFIX}")"
+			local TEMP_DIR="$(mktemp -d --suffix="${TEMP_SUFFIX}")"
+
 			IMG_READ="${TEMP_DIR}/ec.read.bin"
+			DELETE_LIST+=( "${TEMP_DIR}" )
 		fi
 	fi
 
@@ -992,7 +1005,8 @@ function flash_stm32() {
 			echo "${STM32MON_READ_CMD} ${IMG_READ}"
 		fi
 		timeout -k 10 -s 9 "${FLAGS_timeout}" \
-			${STM32MON_READ_CMD} "${IMG_READ}"
+			${STM32MON_READ_CMD} "${IMG_READ}" \
+			|| die "${MSG_READ_FAIL}"
 	fi
 
 	# Verify the flash by comparing the source image to the read image,
@@ -1002,8 +1016,7 @@ function flash_stm32() {
 		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
 			echo "diff ${IMG} ${IMG_READ}"
 		fi
-		diff "${IMG}" "${IMG_READ}" > /dev/null 2>&1
-		[[ $? != 0 ]] && die "Failed to verify EC firmware image."
+		diff -q "${IMG}" "${IMG_READ}" || die "${MSG_VERIFY_FAIL}"
 	fi
 
 	# Remove the Application processor reset
@@ -1153,12 +1166,15 @@ function flash_it83xx() {
 		fi
 	fi
 
+	local ERROR_MSG
 	if [[ -n "${FLAGS_read}" ]]; then
 		ITEFLASH_ARGS+=( "--read=${FLAGS_read}" )
 		info "Reading EC firmware image using iteflash..."
+		ERROR_MSG="${MSG_READ_FAIL}"
 	else
 		ITEFLASH_ARGS+=( "--erase" "--write=${IMG}" )
 		info "Programming EC firmware image using iteflash..."
+		ERROR_MSG="${MSG_PROGRAM_FAIL}"
 	fi
 
 	if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
@@ -1166,7 +1182,7 @@ function flash_it83xx() {
 		echo "${ITEFLASH_ARGS[@]}"
 	fi
 
-	"${ITEFLASH_ARGS[@]}"
+	"${ITEFLASH_ARGS[@]}" || die "${ERROR_MSG}"
 }
 
 function flash_lm4() {
@@ -1273,7 +1289,7 @@ function flash_npcx_uut() {
 			--file ${IMG}
 	fi
 	${NPCX_UUT} ${UUT_ARGS} --auto --offset "${FLAGS_offset}" \
-		--file "${IMG}" || die "Failed to flash EC."
+		--file "${IMG}" || die "${MSG_PROGRAM_FAIL}"
 }
 
 function flash_npcx_5m5g_jtag() {
