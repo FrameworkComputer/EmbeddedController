@@ -47,7 +47,8 @@ int tcpm_init(int port)
 	return init_power_status_mask(port);
 }
 
-int tcpm_get_cc(int port, int *cc1, int *cc2)
+int tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+	enum tcpc_cc_voltage_status *cc2)
 {
 	return tcpc_get_cc(port, cc1, cc2);
 }

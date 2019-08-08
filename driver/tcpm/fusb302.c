@@ -164,7 +164,9 @@ static int measure_cc_pin_source(int port, int cc_measure)
 }
 
 /* Determine cc pin state for source when in manual detect mode */
-static void detect_cc_pin_source_manual(int port, int *cc1_lvl, int *cc2_lvl)
+static void detect_cc_pin_source_manual(int port,
+	enum tcpc_cc_voltage_status *cc1_lvl,
+	enum tcpc_cc_voltage_status *cc2_lvl)
 {
 	int cc1_measure = TCPC_REG_SWITCHES0_MEAS_CC1;
 	int cc2_measure = TCPC_REG_SWITCHES0_MEAS_CC2;
@@ -184,7 +186,8 @@ static void detect_cc_pin_source_manual(int port, int *cc1_lvl, int *cc2_lvl)
 }
 
 /* Determine cc pin state for sink */
-static void detect_cc_pin_sink(int port, int *cc1, int *cc2)
+static void detect_cc_pin_sink(int port, enum tcpc_cc_voltage_status *cc1,
+	enum tcpc_cc_voltage_status *cc2)
 {
 	int reg;
 	int orig_meas_cc1;
@@ -456,7 +459,8 @@ static int fusb302_tcpm_release(int port)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-static int fusb302_tcpm_get_cc(int port, int *cc1, int *cc2)
+static int fusb302_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+	enum tcpc_cc_voltage_status *cc2)
 {
 	if (state[port].pulling_up) {
 		/* Source mode? */

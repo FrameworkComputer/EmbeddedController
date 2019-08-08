@@ -190,7 +190,8 @@ static int clear_power_status_mask(int port)
 	return tcpc_write(port, TCPC_REG_POWER_STATUS_MASK, 0);
 }
 
-int tcpci_tcpm_get_cc(int port, int *cc1, int *cc2)
+int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+	enum tcpc_cc_voltage_status *cc2)
 {
 	int status;
 	int rv;

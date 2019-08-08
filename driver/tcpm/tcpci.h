@@ -10,6 +10,7 @@
 
 #include "tcpm.h"
 #include "usb_mux.h"
+#include "usb_pd_tcpm.h"
 
 #define TCPC_REG_VENDOR_ID         0x0
 #define TCPC_REG_PRODUCT_ID        0x2
@@ -135,7 +136,8 @@ extern const struct usb_mux_driver tcpci_tcpm_usb_mux_driver;
 
 void tcpci_tcpc_alert(int port);
 int tcpci_tcpm_init(int port);
-int tcpci_tcpm_get_cc(int port, int *cc1, int *cc2);
+int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+	enum tcpc_cc_voltage_status *cc2);
 int tcpci_tcpm_get_vbus_level(int port);
 int tcpci_tcpm_select_rp_value(int port, int rp);
 int tcpci_tcpm_set_cc(int port, int pull);

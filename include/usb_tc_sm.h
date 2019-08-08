@@ -9,6 +9,7 @@
 #define __CROS_EC_USB_TC_H
 
 #include "usb_sm.h"
+#include "usb_pd_tcpm.h"
 
 enum typec_state_id {
 	TC_DISABLED,
@@ -131,7 +132,8 @@ void tc_set_timeout(int port, uint64_t timeout);
  * @param cc2 value of CC2 set by tcpm_get_cc
  * @return 0 if cc1 is connected, else 1 for cc2
  */
-enum pd_cc_polarity_type get_snk_polarity(int cc1, int cc2);
+enum pd_cc_polarity_type get_snk_polarity(enum tcpc_cc_voltage_status cc1,
+	enum tcpc_cc_voltage_status cc2);
 
 /**
  * Restarts the TCPC

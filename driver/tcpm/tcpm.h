@@ -124,7 +124,8 @@ static inline int tcpm_release(int port)
 	return tcpc_config[port].drv->release(port);
 }
 
-static inline int tcpm_get_cc(int port, int *cc1, int *cc2)
+static inline int tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+	enum tcpc_cc_voltage_status *cc2)
 {
 	return tcpc_config[port].drv->get_cc(port, cc1, cc2);
 }
@@ -266,7 +267,8 @@ int tcpm_init(int port);
  *
  * @return EC_SUCCESS or error
  */
-int tcpm_get_cc(int port, int *cc1, int *cc2);
+int tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+	enum tcpc_cc_voltage_status *cc2);
 
 /**
  * Read VBUS

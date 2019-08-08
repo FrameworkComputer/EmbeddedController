@@ -48,7 +48,8 @@ void pd_vbus_evt_p1(enum gpio_signal signal);
 int tcpc_alert_status(int port, int *alert);
 int tcpc_alert_status_clear(int port, uint16_t mask);
 int tcpc_alert_mask_set(int port, uint16_t mask);
-int tcpc_get_cc(int port, int *cc1, int *cc2);
+int tcpc_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+	enum tcpc_cc_voltage_status *cc2);
 int tcpc_select_rp_value(int port, int rp);
 int tcpc_set_cc(int port, int pull);
 int tcpc_set_polarity(int port, int polarity);

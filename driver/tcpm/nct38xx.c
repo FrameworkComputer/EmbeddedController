@@ -167,7 +167,8 @@ static int tcpci_nct38xx_set_cc(int port, int pull)
 	return rv;
 }
 
-static int tcpci_nct38xx_get_cc(int port, int *cc1, int *cc2)
+static int tcpci_nct38xx_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+		enum tcpc_cc_voltage_status *cc2)
 {
 	int rv;
 	int rc;

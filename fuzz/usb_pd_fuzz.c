@@ -60,7 +60,8 @@ struct tcpc_state {
 
 static struct tcpc_state mock_tcpc_state[CONFIG_USB_PD_PORT_COUNT];
 
-static int mock_tcpm_get_cc(int port, int *cc1, int *cc2)
+static int mock_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+	enum tcpc_cc_voltage_status *cc2)
 {
 	*cc1 = mock_tcpc_state[port].cc1;
 	*cc2 = mock_tcpc_state[port].cc2;

@@ -640,7 +640,8 @@ static int anx74xx_check_cc_type(int cc_reg)
 	return cc;
 }
 
-static int anx74xx_tcpm_get_cc(int port, int *cc1, int *cc2)
+static int anx74xx_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+	enum tcpc_cc_voltage_status *cc2)
 {
 	int rv = EC_SUCCESS;
 	int reg = 0;

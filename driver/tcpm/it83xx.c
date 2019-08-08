@@ -438,7 +438,8 @@ static int it83xx_tcpm_release(int port)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-static int it83xx_tcpm_get_cc(int port, int *cc1, int *cc2)
+static int it83xx_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+	enum tcpc_cc_voltage_status *cc2)
 {
 	*cc2 = it83xx_get_cc(port, USBPD_CC_PIN_2);
 	*cc1 = it83xx_get_cc(port, USBPD_CC_PIN_1);

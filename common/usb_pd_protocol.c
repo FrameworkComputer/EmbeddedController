@@ -690,7 +690,7 @@ static inline void set_state(int port, enum pd_states next_state)
 	if (next_state == PD_STATE_SRC_DISCONNECTED ||
 	    next_state == PD_STATE_SNK_DISCONNECTED) {
 #ifdef CONFIG_USBC_PPC
-		int cc1, cc2;
+		enum tcpc_cc_voltage_status cc1, cc2;
 
 		tcpm_get_cc(port, &cc1, &cc2);
 		/*
@@ -874,8 +874,7 @@ static int pd_transmit(int port, enum tcpm_transmit_type type,
 			 */
 			sink_can_xmit(port, SINK_TX_NG);
 		} else if (type != TCPC_TX_HARD_RESET) {
-			int cc1;
-			int cc2;
+			enum tcpc_cc_voltage_status cc1, cc2;
 
 			tcpm_get_cc(port, &cc1, &cc2);
 			if (cc1 == TYPEC_CC_VOLT_RP_1_5 ||
@@ -924,8 +923,7 @@ static int pd_transmit(int port, enum tcpm_transmit_type type,
 #ifdef CONFIG_USB_PD_REV30
 static void pd_ca_send_pending(int port)
 {
-	int cc1;
-	int cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 
 	/* Check if a message has been buffered. */
 	if (!pd[port].ca_buffered)
@@ -2485,7 +2483,8 @@ static void pd_partner_port_reset(int port)
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-static enum pd_states drp_auto_toggle_next_state(int port, int cc1, int cc2)
+static enum pd_states drp_auto_toggle_next_state(int port,
+	enum tcpc_cc_voltage_status cc1, enum tcpc_cc_voltage_status cc2)
 {
 	enum pd_states next_state;
 
@@ -2617,7 +2616,8 @@ void pd_ping_enable(int port, int enable)
 /**
  * Returns the polarity of a Sink.
  */
-static inline int get_snk_polarity(int cc1, int cc2)
+static inline int get_snk_polarity(enum tcpc_cc_voltage_status cc1,
+	enum tcpc_cc_voltage_status cc2)
 {
 	/* the following assumes:
 	 * TYPEC_CC_VOLT_RP_3_0 > TYPEC_CC_VOLT_RP_1_5
@@ -2823,7 +2823,7 @@ void pd_task(void *u)
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
 	uint32_t payload[7];
 	int timeout = 10*MSEC;
-	int cc1, cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 	int res, incoming_packet = 0;
 	int hard_reset_count = 0;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -3081,7 +3081,7 @@ void pd_task(void *u)
 #endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 			if (pd[port].task_state == PD_STATE_SOFT_RESET) {
-				int cc1, cc2;
+				enum tcpc_cc_voltage_status cc1, cc2;
 
 				/*
 				 * Set the terminations to match our power

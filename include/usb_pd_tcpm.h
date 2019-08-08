@@ -10,6 +10,7 @@
 
 #include "ec_commands.h"
 #include "i2c.h"
+#include "usb_pd_tcpm.h"
 
 /* Default retry count for transmitting */
 #define PD_RETRY_COUNT 3
@@ -68,7 +69,7 @@ enum tcpc_transmit_complete {
 /**
  * Returns whether the sink has detected a Rp resistor on the other side.
  */
-static inline int cc_is_rp(int cc)
+static inline int cc_is_rp(enum tcpc_cc_voltage_status cc)
 {
 	return (cc == TYPEC_CC_VOLT_RP_DEF) || (cc == TYPEC_CC_VOLT_RP_1_5) ||
 	       (cc == TYPEC_CC_VOLT_RP_3_0);
@@ -77,7 +78,8 @@ static inline int cc_is_rp(int cc)
 /**
  * Returns true if both CC lines are completely open.
  */
-static inline int cc_is_open(int cc1, int cc2)
+static inline int cc_is_open(enum tcpc_cc_voltage_status cc1,
+	enum tcpc_cc_voltage_status cc2)
 {
 	return cc1 == TYPEC_CC_VOLT_OPEN && cc2 == TYPEC_CC_VOLT_OPEN;
 }
@@ -85,7 +87,8 @@ static inline int cc_is_open(int cc1, int cc2)
 /**
  * Returns true if we detect the port partner is a snk debug accessory.
  */
-static inline int cc_is_snk_dbg_acc(int cc1, int cc2)
+static inline int cc_is_snk_dbg_acc(enum tcpc_cc_voltage_status cc1,
+	enum tcpc_cc_voltage_status cc2)
 {
 	return cc1 == TYPEC_CC_VOLT_RD && cc2 == TYPEC_CC_VOLT_RD;
 }
@@ -93,7 +96,8 @@ static inline int cc_is_snk_dbg_acc(int cc1, int cc2)
 /**
  * Returns true if the port partner is an audio accessory.
  */
-static inline int cc_is_audio_acc(int cc1, int cc2)
+static inline int cc_is_audio_acc(enum tcpc_cc_voltage_status cc1,
+	enum tcpc_cc_voltage_status cc2)
 {
 	return cc1 == TYPEC_CC_VOLT_RA && cc2 == TYPEC_CC_VOLT_RA;
 }
@@ -101,7 +105,8 @@ static inline int cc_is_audio_acc(int cc1, int cc2)
 /**
  * Returns true if the port partner is presenting at least one Rd
  */
-static inline int cc_is_at_least_one_rd(int cc1, int cc2)
+static inline int cc_is_at_least_one_rd(enum tcpc_cc_voltage_status cc1,
+	enum tcpc_cc_voltage_status cc2)
 {
 	return cc1 == TYPEC_CC_VOLT_RD || cc2 == TYPEC_CC_VOLT_RD;
 }
@@ -109,7 +114,8 @@ static inline int cc_is_at_least_one_rd(int cc1, int cc2)
 /**
  * Returns true if the port partner is presenting Rd on only one CC line.
  */
-static inline int cc_is_only_one_rd(int cc1, int cc2)
+static inline int cc_is_only_one_rd(enum tcpc_cc_voltage_status cc1,
+	enum tcpc_cc_voltage_status cc2)
 {
 	return cc_is_at_least_one_rd(cc1, cc2) && cc1 != cc2;
 }
@@ -143,7 +149,8 @@ struct tcpm_drv {
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	int (*get_cc)(int port, int *cc1, int *cc2);
+	int (*get_cc)(int port, enum tcpc_cc_voltage_status *cc1,
+		enum tcpc_cc_voltage_status *cc2);
 
 	/**
 	 * Read VBUS

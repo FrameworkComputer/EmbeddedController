@@ -71,7 +71,8 @@ static int mt6370_init(int port)
 	return rv;
 }
 
-static int mt6370_get_cc(int port, int *cc1, int *cc2)
+static int mt6370_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+	enum tcpc_cc_voltage_status *cc2)
 {
 	int status;
 	int rv;

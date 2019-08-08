@@ -761,7 +761,7 @@ void pd_prevent_low_power_mode(int port, int prevent)
 
 static void sink_power_sub_states(int port)
 {
-	int cc1, cc2, cc;
+	enum tcpc_cc_voltage_status cc1, cc2, cc;
 	enum tcpc_cc_voltage_status new_cc_voltage;
 
 	tcpm_get_cc(port, &cc1, &cc2);
@@ -920,8 +920,7 @@ static int tc_unattached_snk_entry(int port)
 
 static int tc_unattached_snk_run(int port)
 {
-	int cc1;
-	int cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 
 	/*
 	 * TODO(b/137498392): Add wait before sampling the CC
@@ -978,8 +977,7 @@ static int tc_attach_wait_snk_entry(int port)
 
 static int tc_attach_wait_snk_run(int port)
 {
-	int cc1;
-	int cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 	enum pd_cc_states new_cc_state;
 
 	/* Check for connection */
@@ -1059,8 +1057,7 @@ static int tc_attached_snk(int port, enum sm_signal sig)
 
 static int tc_attached_snk_entry(int port)
 {
-	int cc1;
-	int cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 
 	tc[port].state_id = TC_ATTACHED_SNK;
 	CPRINTS("C%d: %s", port, tc_state_names[tc[port].state_id]);
@@ -1143,8 +1140,7 @@ static int tc_unoriented_dbg_acc_src_entry(int port)
 
 static int tc_unoriented_dbg_acc_src_run(int port)
 {
-	int cc1;
-	int cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 
 	/* Check for connection */
 	tcpm_get_cc(port, &cc1, &cc2);
@@ -1253,8 +1249,7 @@ static int tc_unattached_src_entry(int port)
 
 static int tc_unattached_src_run(int port)
 {
-	int cc1;
-	int cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 
 	/* Check for connection */
 	tcpm_get_cc(port, &cc1, &cc2);
@@ -1303,8 +1298,7 @@ static int tc_attach_wait_src_entry(int port)
 
 static int tc_attach_wait_src_run(int port)
 {
-	int cc1;
-	int cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 	enum pd_cc_states new_cc_state;
 
 	/* Check for connection */
@@ -1371,8 +1365,7 @@ static int tc_attached_src(int port, enum sm_signal sig)
 
 static int tc_attached_src_entry(int port)
 {
-	int cc1;
-	int cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 
 	tc[port].state_id = TC_ATTACHED_SRC;
 	CPRINTS("C%d: %s", port, tc_state_names[tc[port].state_id]);
@@ -1421,8 +1414,7 @@ static int tc_attached_src_entry(int port)
 
 static int tc_attached_src_run(int port)
 {
-	int cc1;
-	int cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 	enum pd_cc_states new_cc_state;
 
 	/* Check for connection */
@@ -1508,8 +1500,7 @@ static int tc_try_src_entry(int port)
 
 static int tc_try_src_run(int port)
 {
-	int cc1;
-	int cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 	enum pd_cc_states new_cc_state;
 
 	/* Check for connection */
@@ -1582,8 +1573,7 @@ static int tc_try_wait_snk_entry(int port)
 
 static int tc_try_wait_snk_run(int port)
 {
-	int cc1;
-	int cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 	enum pd_cc_states new_cc_state;
 
 	/* Check for connection */

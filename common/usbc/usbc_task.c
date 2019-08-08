@@ -129,7 +129,8 @@ enum typec_state_id get_typec_state_id(int port)
  * DTS          USB-C @ 3 A         Rp3A0  RpUSB
  */
 
-inline enum pd_cc_polarity_type get_snk_polarity(int cc1, int cc2)
+enum pd_cc_polarity_type get_snk_polarity(enum tcpc_cc_voltage_status cc1,
+	enum tcpc_cc_voltage_status cc2)
 {
 	/* the following assumes:
 	 * TYPEC_CC_VOLT_RP_3_0 > TYPEC_CC_VOLT_RP_1_5

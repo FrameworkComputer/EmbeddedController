@@ -811,8 +811,7 @@ static int prl_tx_snk_pending_entry(int port)
 
 static int prl_tx_snk_pending_run(int port)
 {
-	int cc1;
-	int cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 
 	tcpm_get_cc(port, &cc1, &cc2);
 	if (cc1 == TYPEC_CC_VOLT_RP_3_0 || cc2 == TYPEC_CC_VOLT_RP_3_0) {

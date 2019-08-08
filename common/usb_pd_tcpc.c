@@ -1071,7 +1071,8 @@ int tcpc_set_cc(int port, int pull)
 	return EC_SUCCESS;
 }
 
-int tcpc_get_cc(int port, int *cc1, int *cc2)
+int tcpc_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+	enum tcpc_cc_voltage_status *cc2)
 {
 	*cc2 = pd[port].cc_status[1];
 	*cc1 = pd[port].cc_status[0];
@@ -1317,7 +1318,7 @@ static void tcpc_i2c_write(int port, int reg, int len, uint8_t *payload)
 
 static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 {
-	int cc1, cc2;
+	enum tcpc_cc_voltage_status cc1, cc2;
 	int alert;
 
 	switch (reg) {
