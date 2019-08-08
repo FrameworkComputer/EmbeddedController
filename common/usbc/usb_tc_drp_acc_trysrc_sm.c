@@ -761,20 +761,18 @@ void pd_prevent_low_power_mode(int port, int prevent)
 
 static void sink_power_sub_states(int port)
 {
-	int cc1;
-	int cc2;
+	int cc1, cc2, cc;
 	enum tcpc_cc_voltage_status new_cc_voltage;
 
 	tcpm_get_cc(port, &cc1, &cc2);
 
-	if (tc[port].polarity)
-		cc1 = cc2;
+	cc = tc[port].polarity ? cc2 : cc1;
 
-	if (cc1 == TYPEC_CC_VOLT_RP_DEF)
+	if (cc == TYPEC_CC_VOLT_RP_DEF)
 		new_cc_voltage = TYPEC_CC_VOLT_RP_DEF;
-	else if (cc1 == TYPEC_CC_VOLT_RP_1_5)
+	else if (cc == TYPEC_CC_VOLT_RP_1_5)
 		new_cc_voltage = TYPEC_CC_VOLT_RP_1_5;
-	else if (cc1 == TYPEC_CC_VOLT_RP_3_0)
+	else if (cc == TYPEC_CC_VOLT_RP_3_0)
 		new_cc_voltage = TYPEC_CC_VOLT_RP_3_0;
 	else
 		new_cc_voltage = TYPEC_CC_VOLT_OPEN;
@@ -795,7 +793,7 @@ static void sink_power_sub_states(int port)
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
 		tc[port].typec_curr =
-			get_typec_current_limit(tc[port].polarity, cc1, cc1);
+			get_typec_current_limit(tc[port].polarity, cc1, cc2);
 
 		typec_set_input_current_limit(port,
 			tc[port].typec_curr, TYPE_C_VOLTAGE);
