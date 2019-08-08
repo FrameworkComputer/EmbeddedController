@@ -19,6 +19,11 @@
 
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 
+/* Only when configured as base accel sensor, fifo and interrupt
+ * are supported.
+ */
+#ifdef CONFIG_ACCEL_LIS2DW_AS_BASE
+
 #ifdef CONFIG_ACCEL_FIFO
 static volatile uint32_t last_interrupt_timestamp;
 
@@ -260,6 +265,8 @@ static int lis2dw12_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	return ret;
 }
 
+#endif /* CONFIG_ACCEL_LIS2DW_AS_BASE */
+
 /**
  * set_power_mode - set sensor power mode
  * @s: Motion sensor pointer
@@ -315,7 +322,7 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 	reg_val = LIS2DW12_FS_REG(newrange);
 
 	mutex_lock(s->mutex);
-#ifdef CONFIG_ACCEL_FIFO
+#if defined(CONFIG_ACCEL_FIFO) && defined(CONFIG_ACCEL_LIS2DW_AS_BASE)
 	/*
 	 * FIFO stop collecting events. Restart FIFO in Bypass mode.
 	 * If Range is changed all samples in FIFO must be discharged because
@@ -324,18 +331,18 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 	err = lis2dw12_enable_fifo(s, LIS2DW12_FIFO_BYPASS_MODE);
 	if (err != EC_SUCCESS)
 		goto unlock_rate;
-#endif /* CONFIG_ACCEL_FIFO */
+#endif /* CONFIG_ACCEL_FIFO && CONFIG_ACCEL_LIS2DW_AS_BASE */
 
 	err = st_write_data_with_mask(s, LIS2DW12_FS_ADDR, LIS2DW12_FS_MASK,
 				      reg_val);
 	if (err == EC_SUCCESS)
 		data->base.range = newrange;
-#ifdef CONFIG_ACCEL_FIFO
+#if defined(CONFIG_ACCEL_FIFO) && defined(CONFIG_ACCEL_LIS2DW_AS_BASE)
 	/* FIFO restart collecting events in Cont. mode. */
 	err = lis2dw12_enable_fifo(s, LIS2DW12_FIFO_CONT_MODE);
-#endif /* CONFIG_ACCEL_FIFO */
 
 unlock_rate:
+#endif /* CONFIG_ACCEL_FIFO && CONFIG_ACCEL_LIS2DW_AS_BASE */
 	mutex_unlock(s->mutex);
 
 	return err;
@@ -356,12 +363,12 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 
 	mutex_lock(s->mutex);
 
-#ifdef CONFIG_ACCEL_FIFO
+#if defined(CONFIG_ACCEL_FIFO) && defined(CONFIG_ACCEL_LIS2DW_AS_BASE)
 	/* FIFO stop collecting events. Restart FIFO in Bypass mode. */
 	ret = lis2dw12_enable_fifo(s, LIS2DW12_FIFO_BYPASS_MODE);
 	if (ret != EC_SUCCESS)
 		goto unlock_rate;
-#endif /* CONFIG_ACCEL_FIFO */
+#endif /* CONFIG_ACCEL_FIFO && CONFIG_ACCEL_LIS2DW_AS_BASE */
 
 	if (rate == 0) {
 		ret = st_write_data_with_mask(s, LIS2DW12_ACC_ODR_ADDR,
@@ -406,10 +413,10 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	if (ret == EC_SUCCESS)
 		data->base.odr = normalized_rate;
 
-#ifdef CONFIG_ACCEL_FIFO
+#if defined(CONFIG_ACCEL_FIFO) && defined(CONFIG_ACCEL_LIS2DW_AS_BASE)
 	/* FIFO restart collecting events in continuous mode. */
 	ret = lis2dw12_enable_fifo(s, LIS2DW12_FIFO_CONT_MODE);
-#endif /* CONFIG_ACCEL_FIFO */
+#endif /* CONFIG_ACCEL_FIFO && CONFIG_ACCEL_LIS2DW_AS_BASE */
 
 unlock_rate:
 	mutex_unlock(s->mutex);
@@ -516,6 +523,7 @@ static int init(const struct motion_sensor_t *s)
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
+#if defined(CONFIG_ACCEL_INTERRUPTS) && defined(CONFIG_ACCEL_LIS2DW_AS_BASE)
 	/* Interrupt trigger level of power-on-reset is HIGH */
 	if (!(MOTIONSENSE_FLAG_INT_ACTIVE_HIGH & s->flags)) {
 		ret = st_write_data_with_mask(s, LIS2DW12_H_ACTIVE_ADDR,
@@ -524,6 +532,7 @@ static int init(const struct motion_sensor_t *s)
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
 	}
+#endif
 
 #ifdef CONFIG_ACCEL_LIS2DWL
 	/* lis2dwl supports 14 bit resolution only at high perfomance mode */
@@ -535,11 +544,13 @@ static int init(const struct motion_sensor_t *s)
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
+#ifdef CONFIG_ACCEL_LIS2DW_AS_BASE
 	if (IS_ENABLED(CONFIG_ACCEL_INTERRUPTS)) {
 		ret = lis2dw12_config_interrupt(s);
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
 	}
+#endif
 	mutex_unlock(s->mutex);
 
 	/* Set default resolution. */
@@ -563,7 +574,7 @@ const struct accelgyro_drv lis2dw12_drv = {
 	.get_data_rate = st_get_data_rate,
 	.set_offset = st_set_offset,
 	.get_offset = st_get_offset,
-#ifdef CONFIG_ACCEL_INTERRUPTS
+#if defined(CONFIG_ACCEL_INTERRUPTS) && defined(CONFIG_ACCEL_LIS2DW_AS_BASE)
 	.irq_handler = lis2dw12_irq_handler,
-#endif /* CONFIG_ACCEL_INTERRUPTS */
+#endif /* CONFIG_ACCEL_INTERRUPTS && CONFIG_ACCEL_LIS2DW_AS_BASE */
 };
