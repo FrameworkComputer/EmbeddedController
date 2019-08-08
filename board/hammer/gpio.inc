@@ -9,7 +9,9 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 #ifdef SECTION_IS_RW
+#ifndef HAS_NO_TOUCHPAD
 GPIO_INT(TOUCHPAD_INT, PIN(B, 8), GPIO_INT_FALLING, touchpad_interrupt)
+#endif /* !HAS_NO_TOUCHPAD */
 #ifdef CONFIG_HALL_SENSOR
 GPIO_INT(TABLET_MODE_L, PIN(B, 11), GPIO_PULL_UP | GPIO_INT_BOTH, hall_sensor_isr)
 #endif /* CONFIG_HALL_SENSOR */
@@ -56,12 +58,14 @@ GPIO(KB_OUT12,			PIN(C, 13), GPIO_KB_OUTPUT)
 /* initialized. This will avoid driving the lines unintentionally.*/
 GPIO(MASTER_I2C_SCL,		PIN(B, 6), GPIO_INPUT)
 GPIO(MASTER_I2C_SDA,		PIN(B, 7), GPIO_INPUT)
+#ifndef HAS_NO_TOUCHPAD
 /* TODO(crosbug.com/p/59083): Disable trackpad when appropriate */
 #ifdef HAS_EN_PP3300_TP_ACTIVE_HIGH
 GPIO(EN_PP3300_TP,		PIN(A, 14), GPIO_OUT_HIGH)
 #else
 GPIO(EN_PP3300_TP_ODL,		PIN(A, 14), GPIO_OUT_LOW)
 #endif
+#endif /* !HAS_NO_TOUCHPAD */
 
 GPIO(KEYBOARD_BACKLIGHT,	PIN(B, 9), GPIO_INPUT)
 
@@ -97,6 +101,8 @@ ALTERNATE(PIN_MASK(B, 0x0c00), 1, MODULE_I2C, 0) /* I2C CHARGER: PB10/11  GPIO_O
 ALTERNATE(PIN_MASK(B, 0x0038), 0, MODULE_SPI_MASTER, 0) /* SPI MASTER:PB3/4/5 */
 #endif
 
+#ifdef CONFIG_I2C
 ALTERNATE(PIN_MASK(B, 0x00c0), 1, MODULE_I2C, 0) /* I2C TOUCHPAD: PB6/7 GPIO_ODR_HIGH */
+#endif
 
 ALTERNATE(PIN_MASK(B, 0x0200), 2, MODULE_PWM, GPIO_PULL_DOWN) /* PWM: PB9 */

@@ -112,6 +112,9 @@
 #ifdef SECTION_IS_RW
 #define USB_IFACE_HID_KEYBOARD	0
 #define USB_IFACE_UPDATE	1
+#ifdef HAS_NO_TOUCHPAD
+#define USB_IFACE_COUNT		2
+#else /* !HAS_NO_TOUCHPAD */
 #define USB_IFACE_HID_TOUCHPAD	2
 /* Can be either I2C or SPI passthrough, depending on the board. */
 #define USB_IFACE_I2C_SPI	3
@@ -121,6 +124,7 @@
 #else  /* !CONFIG_USB_ISOCHRONOUS */
 #define USB_IFACE_COUNT		4
 #endif  /* CONFIG_USB_ISOCHRONOUS */
+#endif /* !HAS_NO_TOUCHPAD */
 #else  /* !SECTION_IS_RW */
 #define USB_IFACE_UPDATE	0
 #define USB_IFACE_COUNT		1
@@ -131,6 +135,9 @@
 #define USB_EP_UPDATE		1
 #ifdef SECTION_IS_RW
 #define USB_EP_HID_KEYBOARD	2
+#ifdef HAS_NO_TOUCHPAD
+#define USB_EP_COUNT		3
+#else /* !HAS_NO_TOUCHPAD */
 #define USB_EP_HID_TOUCHPAD	3
 /* Can be either I2C or SPI passthrough, depending on the board. */
 #define USB_EP_I2C_SPI		4
@@ -141,6 +148,7 @@
 #else /* !CONFIG_USB_ISOCHRONOUS */
 #define USB_EP_COUNT		5
 #endif /* CONFIG_USB_ISOCHRONOUS */
+#endif /* !HAS_NO_TOUCHPAD */
 #else  /* !SECTION_IS_RW */
 #define USB_EP_COUNT		2
 #endif  /* SECTION_IS_RW */
@@ -181,6 +189,8 @@
 #define CONFIG_USB_HID
 #define CONFIG_USB_HID_KEYBOARD
 #define CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+
+#ifndef HAS_NO_TOUCHPAD
 #define CONFIG_USB_HID_TOUCHPAD
 
 /* Virtual address for touchpad FW in USB updater. */
@@ -188,6 +198,7 @@
 
 /* Include touchpad FW hashes in image */
 #define CONFIG_TOUCHPAD_HASH_FW
+#endif /* !HAS_NO_TOUCHPAD */
 
 #define CONFIG_KEYBOARD_DEBUG
 #undef CONFIG_KEYBOARD_BOOT_KEYS
@@ -195,11 +206,13 @@
 /* Keyboard output port list */
 #define KB_OUT_PORT_LIST GPIO_A, GPIO_B, GPIO_C, GPIO_F
 
+#if defined(HAS_I2C_TOUCHPAD) || defined(CONFIG_LED_DRIVER_LM3630A)
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 #define I2C_PORT_MASTER 0
 #define I2C_PORT_KBLIGHT 0
 #define I2C_PORT_CHARGER 1
+#endif
 
 /* Enable PWM */
 #define CONFIG_PWM

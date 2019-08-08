@@ -23,11 +23,17 @@
 	TASK_ALWAYS_RW(HEATMAP,  heatmap_task, NULL, TASK_STACK_SIZE) \
 	TASK_ALWAYS   (CONSOLE,  console_task, NULL, 1024) \
 	TASK_NOTEST_RW(KEYSCAN,  keyboard_scan_task, NULL, TASK_STACK_SIZE)
-#else
+#elif !defined(HAS_NO_TOUCHPAD)
 #define CONFIG_TASK_LIST \
 	TASK_ALWAYS_RO(RWSIG,    rwsig_task,   NULL, 1280) \
 	TASK_ALWAYS   (HOOKS,    hook_task,    NULL, 2048) \
 	TASK_ALWAYS_RW(TOUCHPAD, touchpad_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_ALWAYS   (CONSOLE,  console_task, NULL, 1024) \
+	TASK_NOTEST_RW(KEYSCAN,  keyboard_scan_task, NULL, TASK_STACK_SIZE)
+#else
+#define CONFIG_TASK_LIST \
+	TASK_ALWAYS_RO(RWSIG,    rwsig_task,   NULL, 1280) \
+	TASK_ALWAYS   (HOOKS,    hook_task,    NULL, 2048) \
 	TASK_ALWAYS   (CONSOLE,  console_task, NULL, 1024) \
 	TASK_NOTEST_RW(KEYSCAN,  keyboard_scan_task, NULL, TASK_STACK_SIZE)
 #endif
