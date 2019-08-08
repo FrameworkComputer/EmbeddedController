@@ -2,7 +2,7 @@
 
 ## Glossary
 
-*   **ACCEL - Accelerometer**<a name="accel"></a>
+*   **ACCEL - Accelerometer**{#accel}
 
     A sensor that measures acceleration, typically over 3-axis. Nominally
     provides information about the orientation of a device. On Chromebook 2-in-1
@@ -10,82 +10,82 @@
     the measurements from both accelerometers allows for a precise calculation
     of the lid angle, used to switch between tablet and laptop mode.
 
-*   **ACCELGYRO - Accelerometer/Gyroscope**<a name="accelgyro"></a>
+*   **ACCELGYRO - Accelerometer/Gyroscope**{#accelgyro}
 
     A combination [accelerometer](#accel) and [gyroscope](#gyro) sensor that
     provides more precise orientation information by measuring both linear and
     rotational motion.
 
-*   **ADC - Analog to Digital Converter**<a name="adc"></a>
+*   **ADC - Analog to Digital Converter**{#adc}
 
     A sensor that converts an analog voltage to a digital reading.
 
-*   **ALS - Ambient Light Sensor**<a name="als"></a>
+*   **ALS - Ambient Light Sensor**{#als}
 
     A sensor that measures the ambient light present. Used to automatically
     control the screen and keyboard backlight level.
 
-*   **AP - Application Processor**<a name="ap"></a>
+*   **AP - Application Processor**{#ap}
 
     The processor on the board that boots and runs ChromeOS.
 
-*   **BAR - Barometer**<a name="bar"></a>
+*   **BAR - Barometer**{#bar}
 
     A sensor that measures atmospheric pressure.
 
-*   **BC12 - Battery Charging**<a name="bc12"></a>
+*   **BC12 - Battery Charging**{#bc12}
 
     A device that implements the USB Battery Charging specification, version
     1.2. The complete [BC 1.2 Specification] is available from the USB
     Implementers Forum.
 
-*   **CBI - CROS Board Information**<a name="cbi"></a>
+*   **CBI - CROS Board Information**{#cbi}
 
     A collection of properties describing the board. This includes board
     version, SKU, model name, and other fields. More details are found in the
     [CrOS Board Info] documentation.
 
-*   **CEC - Consumer Electronics Control**<a name="cec"></a>
+*   **CEC - Consumer Electronics Control**{#cec}
 
     A one-wire bidirectional bus.  More details are on the [CEC Wikipedia page].
 
-*   **DPTF - Dynamic Power and Thermal Framework (Intel)**<a name="dptf"></a>
+*   **DPTF - Dynamic Power and Thermal Framework (Intel)**{#dptf}
 
     Intel's platform based power and thermal management. See the [DPTF Readme]
     for details on the implementation used in ChromeOS.
 
-*   **EC - Embedded Controller**<a name="ec"></a>
+*   **EC - Embedded Controller**{#ec}
 
     The [MCU](#mcu) used to control the keyboard, battery charging, USB port
     switching, sensor management, and other functions, offloading these tasks
     from the [AP](#ap).
 
-*   **eSPI - Enhanced Serial Peripheral Interface (Intel)**<a name="espi"></a>
+*   **eSPI - Enhanced Serial Peripheral Interface (Intel)**{#espi}
 
     Intel's synchronous communication interface between the [AP](#ap) and the
     [EC](#ec). Supports quad I/O mode and clock speeds up to 66 Mhz, providing
     bandwidth up to 264 Mbps. The full [eSPI Specification] is available from
     Intel.
 
-*   **GPIO - General Purpose Input/Output**<a name="gpio"></a>
+*   **GPIO - General Purpose Input/Output**{#gpio}
 
     An individual signal that can independently controlled and read.  GPIOs are
     used to enable/disable power rails, drive reset signals, and receive
     interrupts from devices connected to the EC.  GPIOs may also be connected
     to [I/O expanders](#ioexpander).
 
-*   **GYRO - Gyroscope**<a name="gyro"></a> <a name="gyro"></a>
+*   **GYRO - Gyroscope**{#gyro}
 
     A sensor that measures angular momentum, providing information about
     rotational motion of the device.
 
-*   **I/O Expander**<a name="ioexpander"></a>
+*   **I/O Expander**{#ioexpander}
 
     An [I2C](#i2c) slave device that provides additional GPIO signals (anywhere
     from 8 - 32 signals).  GPIOs behind an I/O expander are written and read
     using I2C register accesses from the I2C master.
 
-*   **I2C - Inter-Integrated Circuit**<a name="i2c"></a>
+*   **I2C - Inter-Integrated Circuit**{#i2c}
 
     A 2-wire synchronous communication bus, consisting of a clock signal and a
     bidirectional data signal. An I2C bus typically contains one master device
@@ -93,41 +93,41 @@
     of 100 KHz and 400 KHz. The full [I2C Specification] is available from NXP
     (formerly Phillips).
 
-*   **LPC - Low Pin Count bus**<a name="lpc"></a>
+*   **LPC - Low Pin Count bus**{#lpc}
 
     Legacy communication bus between the [AP](#ap) and [EC](#ec). Runs at 33
     MHz, providing a 133 Mbps bandwidth connection.  Replaced by the
     [eSPI](#espi) interface.
 
-*   **MAG - Magnetometer**<a name="mag"></a>
+*   **MAG - Magnetometer**{#mag}
 
     A digital compass sensor, providing orientation for navigation.
 
-*   **MCU - Microcontroller Unit**<a name="mcu"></a>
+*   **MCU - Microcontroller Unit**{#mcu}
 
     A small integrated chip containing a CPU core, on-chip ROM, on-chip RAM.
     Also contains multiple peripheral interfaces, including GPIO, I2C buses, SPI
     buses, ADC, PWM, etc.
 
-*   **PD - USB Power Delivery**<a name="pd"></a>
+*   **PD - USB Power Delivery**{#pd}
 
     See the [USB-C documentation](./usb-c.md#pd) for more details.
 
-*   **PMIC - Power Management IC**<a name="pmic"></a>
+*   **PMIC - Power Management IC**{#pmic}
 
     An integrated circuit used to turn power rails on and off.
 
-*   **PPC - USB Power Path Controller**<a name="ppc"></a>
+*   **PPC - USB Power Path Controller**{#ppc}
 
     See the [USB-C documentation](./usb-c.md#ppc) for more details.
 
-*   **PWM - Pulse Width Modulation**<a name="pwm"></a>
+*   **PWM - Pulse Width Modulation**{#pwm}
 
     Method of varying the duty cycle of a signal to control another device. A
     typical application is to control fan speeds or the brightness of a
     backlight.
 
-*   **SPI - Serial Peripheral Interconnect**<a name="spi"></a>
+*   **SPI - Serial Peripheral Interconnect**{#spi}
 
     A 4-wire synchronous communication bus consisting of the signals CLK
     (clock), MOSI (master-out-slave-in), MISO (master-in-slave-out), and CS
@@ -137,11 +137,11 @@
     more bytes on the MISO signal, and de-assertion of the chip select.  The
     contents of a SPI frame varies based on the SPI slave type.
 
-*   ***TCPC - USB Type-C Port Controller**<a name="tcpc"></a>
+*   **TCPC - USB Type-C Port Controller**{#tcpc}
 
     See the [USB-C documentation](./usb-c.md#tcpc) for more details.
 
-*   **UART - Universal Asynchronous Receiver Transceiver**<a name="uart"></a>
+*   **UART - Universal Asynchronous Receiver Transceiver**{#uart}
 
     Also known as a serial port.  An asynchronous communication channel between
     two devices with a dedicated receive pin, transmit pin, and ground. Optional
