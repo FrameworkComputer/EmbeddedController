@@ -11,6 +11,7 @@
 #include "system.h"
 #include "task.h"
 #include "tcpm.h"
+#include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_tc_drp_acc_trysrc_sm.h"
@@ -337,11 +338,7 @@ static void pd_update_try_source(void)
 	int i;
 	int try_src = 0;
 
-#ifndef CONFIG_CHARGER
-	int batt_soc = board_get_battery_soc();
-#else
-	int batt_soc = charge_get_percent();
-#endif
+	int batt_soc = usb_get_battery_soc();
 
 	try_src = 0;
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
@@ -390,37 +387,6 @@ static inline void pd_dev_dump_info(uint16_t dev_id, uint8_t *hash)
 	ccprintf("\n");
 }
 #endif /* CONFIG_CMD_PD_DEV_DUMP_INFO */
-
-#if defined(CONFIG_CHARGE_MANAGER)
-/*
- * TODO(b/137493121): Move this function to a separate file that's shared
- * between the this and the original stack.
- */
-
-/*
- * Returns type C current limit (mA) based upon cc_voltage (mV).
- */
-static typec_current_t get_typec_current_limit(int polarity, int cc1, int cc2)
-{
-	typec_current_t charge;
-	int cc = polarity ? cc2 : cc1;
-	int cc_alt = polarity ? cc1 : cc2;
-
-	if (cc == TYPEC_CC_VOLT_RP_3_0 && cc_alt != TYPEC_CC_VOLT_RP_1_5)
-		charge = 3000;
-	else if (cc == TYPEC_CC_VOLT_RP_1_5)
-		charge = 1500;
-	else if (cc == TYPEC_CC_VOLT_RP_DEF)
-		charge = 500;
-	else
-		charge = 0;
-
-	if (cc_is_rp(cc_alt))
-		charge |= TYPEC_CURRENT_DTS_MASK;
-
-	return charge;
-}
-#endif
 
 static void set_vconn(int port, int enable)
 {
@@ -792,8 +758,8 @@ static void sink_power_sub_states(int port)
 	tc[port].cc_debounce = 0;
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
-		tc[port].typec_curr =
-			get_typec_current_limit(tc[port].polarity, cc1, cc2);
+		tc[port].typec_curr = usb_get_typec_current_limit(
+			tc[port].polarity, cc1, cc2);
 
 		typec_set_input_current_limit(port,
 			tc[port].typec_curr, TYPE_C_VOLTAGE);
@@ -1074,8 +1040,8 @@ static int tc_attached_snk_entry(int port)
 	tc_set_data_role(port, PD_ROLE_UFP);
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
-		tc[port].typec_curr =
-			get_typec_current_limit(tc[port].polarity, cc1, cc2);
+		tc[port].typec_curr = usb_get_typec_current_limit(
+			tc[port].polarity, cc1, cc2);
 		typec_set_input_current_limit(port, tc[port].typec_curr,
 						TYPE_C_VOLTAGE);
 		charge_manager_update_dualrole(port, CAP_DEDICATED);

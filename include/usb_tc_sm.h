@@ -126,16 +126,6 @@ void set_usb_mux_with_current_data_role(int port);
 void tc_set_timeout(int port, uint64_t timeout);
 
 /**
- * Returns the polarity of a Sink.
- *
- * @param cc1 value of CC1 set by tcpm_get_cc
- * @param cc2 value of CC2 set by tcpm_get_cc
- * @return 0 if cc1 is connected, else 1 for cc2
- */
-enum pd_cc_polarity_type get_snk_polarity(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2);
-
-/**
  * Restarts the TCPC
  *
  * @param port USB-C port number

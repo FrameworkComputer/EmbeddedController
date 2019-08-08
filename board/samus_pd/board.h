@@ -144,9 +144,6 @@ enum pwm_channel {
 /* Map current in milli-amps to PWM duty cycle percentage */
 #define MA_TO_PWM(curr) (((curr) - PWM_0_MA) * 100 / (PWM_100_MA - PWM_0_MA))
 
-/* Get the last received battery level. */
-int board_get_battery_soc(void);
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

@@ -116,30 +116,6 @@ enum typec_state_id get_typec_state_id(int port)
 	return tc[port].state_id;
 }
 
-/*
- * CC values for regular sources and Debug sources (aka DTS)
- *
- * Source type  Mode of Operation   CC1    CC2
- * ---------------------------------------------
- * Regular      Default USB Power   RpUSB  Open
- * Regular      USB-C @ 1.5 A       Rp1A5  Open
- * Regular      USB-C @ 3 A         Rp3A0  Open
- * DTS          Default USB Power   Rp3A0  Rp1A5
- * DTS          USB-C @ 1.5 A       Rp1A5  RpUSB
- * DTS          USB-C @ 3 A         Rp3A0  RpUSB
- */
-
-enum pd_cc_polarity_type get_snk_polarity(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
-{
-	/* the following assumes:
-	 * TYPEC_CC_VOLT_RP_3_0 > TYPEC_CC_VOLT_RP_1_5
-	 * TYPEC_CC_VOLT_RP_1_5 > TYPEC_CC_VOLT_RP_DEF
-	 * TYPEC_CC_VOLT_RP_DEF > TYPEC_CC_VOLT_OPEN
-	 */
-	return (cc2 > cc1) ? POLARITY_CC2 : POLARITY_CC1;
-}
-
 int tc_restart_tcpc(int port)
 {
 	return tcpm_init(port);

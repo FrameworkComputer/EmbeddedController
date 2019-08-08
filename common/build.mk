@@ -135,6 +135,7 @@ common-$(CONFIG_USB_I2C)+=usb_i2c.o
 common-$(CONFIG_USB_CHARGER)+=usb_charger.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
+common-$(CONFIG_USB_POWER_DELIVERY)+=usb_common.o
 ifeq ($(CONFIG_USB_SM_FRAMEWORK),)
 common-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_protocol.o usb_pd_policy.o
 endif

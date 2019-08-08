@@ -86,10 +86,17 @@ int charge_keep_power_off(void);
  */
 uint32_t charge_get_flags(void);
 
+#if defined(CONFIG_CHARGER)
 /**
  * Return current battery charge percentage.
  */
 int charge_get_percent(void);
+#elif defined(CONFIG_BATTERY)
+/**
+ * Return current battery charge if not using charge manager sub-system.
+ */
+int board_get_battery_soc(void);
+#endif
 
 /**
  * Return current display charge in 10ths of a percent (e.g. 1000 = 100.0%)

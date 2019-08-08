@@ -107,7 +107,6 @@ enum adc_channel {
 /* delay to turn on/off vconn */
 #define PD_VCONN_SWAP_DELAY 5000 /* us */
 
-int board_get_battery_soc(void);
 void board_pd_vconn_ctrl(int port, int cc_pin, int enabled);
 void board_pd_vbus_ctrl(int port, int enabled);
 #endif
