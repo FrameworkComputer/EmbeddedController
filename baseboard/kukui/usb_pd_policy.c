@@ -364,7 +364,7 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 
 		/* set the minimum time delay (2ms) for the next HPD IRQ */
 		hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
-	} else if (irq & !cur_lvl) {
+	} else if (irq & !lvl) {
 		CPRINTF("ERR:HPD:IRQ&LOW\n");
 		return 0; /* nak */
 	} else {
