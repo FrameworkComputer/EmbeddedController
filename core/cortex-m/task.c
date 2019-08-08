@@ -493,6 +493,19 @@ void task_enable_all_tasks(void)
 	__schedule(0, 0);
 }
 
+void task_enable_task(task_id_t tskid)
+{
+	atomic_or(&tasks_enabled, BIT(tskid));
+}
+
+void task_disable_task(task_id_t tskid)
+{
+	atomic_clear(&tasks_enabled, BIT(tskid));
+
+	if (!in_interrupt_context() && tskid == task_get_current())
+		__schedule(0, 0);
+}
+
 void task_enable_irq(int irq)
 {
 	CPU_NVIC_EN(irq / 32) = 1 << (irq % 32);
