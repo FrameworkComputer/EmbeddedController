@@ -33,7 +33,7 @@ GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
 
 GPIO(3AXIS_INT_L,		PIN(9, 6), GPIO_INPUT)				/* 3 Axis Accel */
 GPIO(CCD_MODE_ODL,		PIN(C, 6), GPIO_INPUT)				/* Case Closed Debug Mode */
-GPIO(CPU_PROCHOT,		PIN(D, 5), GPIO_INPUT)				/* PROCHOT to SOC */
+GPIO(CPU_PROCHOT,		PIN(D, 5), GPIO_ODR_HIGH)			/* PROCHOT to SOC */
 GPIO(EC_BATT_PRES_L,		PIN(4, 1), GPIO_INPUT)				/* Battery Present */
 GPIO(EC_INT_L,			PIN(A, 3), GPIO_ODR_HIGH)			/* Sensor MKBP event to SOC */
 GPIO(EN_PWR_A,			PIN(B, 7), GPIO_OUT_LOW)			/* Enable Power */
