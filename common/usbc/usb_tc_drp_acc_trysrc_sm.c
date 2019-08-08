@@ -1706,3 +1706,15 @@ static const struct usb_state tc_states[] = {
 	},
 #endif /* CONFIG_USB_PD_TRY_SRC */
 };
+
+#ifdef TEST_BUILD
+const struct test_sm_data test_tc_sm_data[] = {
+	{
+		.base = tc_states,
+		.size = ARRAY_SIZE(tc_states),
+		.names = tc_state_names,
+		.names_size = ARRAY_SIZE(tc_state_names),
+	},
+};
+const int test_tc_sm_data_size = ARRAY_SIZE(test_tc_sm_data);
+#endif

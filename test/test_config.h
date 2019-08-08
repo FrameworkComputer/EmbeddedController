@@ -276,13 +276,10 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_SW_CRC
 #endif
 
-#if defined(TEST_USB_TYPEC_VPD) || defined(TEST_USB_TYPEC_CTVPD)
-#if defined(TEST_USB_TYPEC_VPD)
-#define CONFIG_USB_TYPEC_VPD
-#else
-#define CONFIG_USB_TYPEC_CTVPD
-#endif
-
+/* Common TypeC tests defines */
+#if defined(TEST_USB_TYPEC_VPD) || \
+	defined(TEST_USB_TYPEC_CTVPD) || \
+	defined(TEST_USB_TYPEC_DRP_ACC_TRYSRC)
 #define CONFIG_USB_PID 0x5036
 #define VPD_HW_VERSION 0x0001
 #define VPD_FW_VERSION 0x0001
@@ -302,9 +299,24 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
 #define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_SHA256
 #define CONFIG_SW_CRC
-#endif /* TEST_USB_TYPEC_VPD or TEST_USB_TYPEC_CTVPD */
+#endif /* Common TypeC test defines */
+
+#ifdef TEST_USB_TYPEC_VPD
+#define CONFIG_USB_TYPEC_VPD
+#endif
+
+#ifdef TEST_USB_TYPEC_CTVPD
+#define CONFIG_USB_TYPEC_CTVPD
+#endif
+
+#ifdef TEST_USB_TYPEC_DRP_ACC_TRYSRC
+#define CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_TRY_SRC
+#undef CONFIG_USB_PRL_SM
+#undef CONFIG_USB_PE_SM
+#endif
 
 #if defined(TEST_USB_PD) || defined(TEST_USB_PD_GIVEBACK) || \
 	defined(TEST_USB_PD_REV30)

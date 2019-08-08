@@ -73,6 +73,7 @@ test-list-host += usb_sm_framework_h1
 test-list-host += usb_sm_framework_h0
 test-list-host += usb_typec_vpd
 test-list-host += usb_typec_ctvpd
+test-list-host += usb_typec_drp_acc_trysrc
 test-list-host += usb_prl
 test-list-host += utils
 test-list-host += utils_str
@@ -145,6 +146,8 @@ usb_sm_framework_h1-y=usb_sm_framework_h3.o
 usb_sm_framework_h0-y=usb_sm_framework_h3.o
 usb_typec_vpd-y=usb_typec_ctvpd.o vpd_api.o usb_sm_checks.o
 usb_typec_ctvpd-y=usb_typec_ctvpd.o vpd_api.o usb_sm_checks.o
+usb_typec_drp_acc_trysrc-y=usb_typec_drp_acc_trysrc.o vpd_api.o \
+	usb_sm_checks.o
 usb_prl-y=usb_prl.o usb_sm_checks.o
 utils-y=utils.o
 utils_str-y=utils_str.o
