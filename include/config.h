@@ -3944,6 +3944,13 @@
 /* Enable USB serial console module. */
 #undef CONFIG_USB_CONSOLE
 
+/*
+ * Enable USB serial console module using usb stream config.
+ * NOTE: CONFIG_USB_CONSOLE and CONFIG_USB_CONSOLE_STREAM should be defined
+ * exclusively each other.
+ */
+#undef CONFIG_USB_CONSOLE_STREAM
+
 /* USB serial console transmit buffer size in bytes. */
 #define CONFIG_USB_CONSOLE_TX_BUF_SIZE 2048
 

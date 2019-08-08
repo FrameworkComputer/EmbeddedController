@@ -117,7 +117,7 @@ void usb_stream_rx(struct usb_stream_config const *config)
 }
 
 /* True if the Tx/IN FIFO can take some bytes from us. */
-static inline int tx_fifo_is_ready(struct usb_stream_config const *config)
+int tx_fifo_is_ready(struct usb_stream_config const *config)
 {
 	uint32_t status;
 	struct g_usb_desc *in_desc = config->in_desc;
@@ -289,6 +289,8 @@ void usb_stream_reset(struct usb_stream_config const *config)
 					   DXEPCTL_TXFNUM(config->endpoint);
 	GR_USB_DAINTMSK |= DAINT_INEP(config->endpoint) |
 			   DAINT_OUTEP(config->endpoint);
+
+	*config->is_reset = 1;
 
 	/* Flush any queued data */
 	tx_stream_handler(config);

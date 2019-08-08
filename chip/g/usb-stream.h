@@ -33,6 +33,7 @@ struct usb_stream_config {
 	/* USB TX transfer is in progress */
 	uint8_t *tx_in_progress;
 	uint8_t *kicker_running;
+	uint8_t *is_reset;
 
 	/*
 	 * Deferred function to call to handle USB and Queue request.
@@ -126,6 +127,7 @@ extern struct producer_ops const usb_stream_producer_ops;
 	static uint8_t CONCAT2(NAME, _buf_rx_)[RX_SIZE];		\
 	static uint8_t CONCAT2(NAME, _tx_in_progress_);			\
 	static uint8_t CONCAT2(NAME, _kicker_running_);			\
+	static uint8_t CONCAT2(NAME, _is_reset_);			\
 	static void CONCAT2(NAME, _deferred_rx_)(void);			\
 	static void CONCAT2(NAME, _tx_kicker_)(void);			\
 	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_rx_));			\
@@ -135,9 +137,11 @@ extern struct producer_ops const usb_stream_producer_ops;
 	struct usb_stream_config const NAME = {				\
 		.endpoint     = ENDPOINT,				\
 		.is_uart_console = ((ENDPOINT == USB_EP_EC) ||		\
+				    (ENDPOINT == USB_EP_CONSOLE) ||	\
 				    (ENDPOINT == USB_EP_AP)),		\
 		.tx_in_progress = &CONCAT2(NAME, _tx_in_progress_),	\
 		.kicker_running = &CONCAT2(NAME, _kicker_running_),	\
+		.is_reset     = &CONCAT2(NAME, _is_reset_),		\
 		.in_desc      = &CONCAT2(NAME, _in_desc_)[0],		\
 		.out_desc     = &CONCAT2(NAME, _out_desc_),		\
 		.deferred_rx  = &CONCAT2(NAME, _deferred_rx__data),	\
@@ -242,4 +246,8 @@ void usb_stream_tx(struct usb_stream_config const *config);
 void usb_stream_rx(struct usb_stream_config const *config);
 void usb_stream_reset(struct usb_stream_config const *config);
 
+/*
+ * Return non-zero if the USB stream is reset, or 0 otherwise
+ */
+int tx_fifo_is_ready(struct usb_stream_config const *config);
 #endif /* __CROS_EC_USB_STREAM_H */
