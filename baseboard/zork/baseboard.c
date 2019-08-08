@@ -209,7 +209,7 @@ const struct mft_t mft_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
-struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
+struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
 		.i2c_port = I2C_PORT_TCPC0,
 		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
@@ -222,6 +222,7 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
 		.drv = &sn5s330_drv
 	},
 };
+BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 void ppc_interrupt(enum gpio_signal signal)
@@ -308,7 +309,7 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+const struct tcpc_config_t tcpc_config[] = {
 	[USBC_PORT_C0] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
@@ -327,6 +328,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
+BUILD_ASSERT(CONFIG_USB_PD_PORT_COUNT == USBC_PORT_COUNT);
 
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	[USBC_PORT_C0] = {
@@ -435,7 +437,7 @@ void bc12_interrupt(enum gpio_signal signal)
 	}
 }
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
@@ -447,7 +449,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
-struct ioexpander_config_t ioex_config[CONFIG_IO_EXPANDER_PORT_COUNT] = {
+struct ioexpander_config_t ioex_config[] = {
 	[USBC_PORT_C0] = {
 		.i2c_host_port = I2C_PORT_TCPC0,
 		.i2c_slave_addr = NCT38xx_I2C_ADDR1_1_FLAGS,
@@ -462,6 +464,7 @@ struct ioexpander_config_t ioex_config[CONFIG_IO_EXPANDER_PORT_COUNT] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == USBC_PORT_COUNT);
+BUILD_ASSERT(CONFIG_IO_EXPANDER_PORT_COUNT == USBC_PORT_COUNT);
 
 static void baseboard_chipset_suspend(void)
 {
