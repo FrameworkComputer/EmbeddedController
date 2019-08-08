@@ -15,6 +15,7 @@
 ## Fingerprint MCU (FPMCU)
 
 *   [Fingerprint MCU (FPMCU)](./fingerprint/fingerprint.md)
+*   [FPMCU Development for Partners](./fingerprint/fingerprint-dev-for-partners.md)
 
 ## Updaters
 
