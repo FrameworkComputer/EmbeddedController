@@ -753,7 +753,9 @@ int board_is_convertible(void)
 {
 	/* Grunt: 6 */
 	/* Kasumi360: 82 */
-	return (sku_id == 6 || sku_id == 82);
+	/* Treeya360: a8-af */
+	return (sku_id == 6 || sku_id == 82 ||
+		((sku_id >= 0xa8) && (sku_id <= 0xaf)));
 }
 
 int board_is_lid_angle_tablet_mode(void)
@@ -765,10 +767,12 @@ uint32_t board_override_feature_flags0(uint32_t flags0)
 {
 	/*
 	 * Remove keyboard backlight feature for devices that don't support it.
+	 * All Treeya and Treeya360 models do not support keyboard backlight.
 	 */
 	if (sku_id == 16 || sku_id == 17 ||
 	    sku_id == 20 || sku_id == 21 ||
-	    sku_id == 32 || sku_id == 33)
+	    sku_id == 32 || sku_id == 33 ||
+	    ((sku_id >= 0xa0) && (sku_id <= 0xaf)))
 		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
 	else
 		return flags0;

@@ -52,6 +52,12 @@
 #undef  CONFIG_MOTION_SENSE_RESUME_DELAY_US
 #define CONFIG_MOTION_SENSE_RESUME_DELAY_US (10 * MSEC)
 
+/* Second set of sensor drivers */
+#define CONFIG_ACCELGYRO_LSM6DSM
+#define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+#define CONFIG_ACCEL_LIS2DWL
+
 #ifndef __ASSEMBLER__
 
 
@@ -61,6 +67,8 @@ enum battery_type {
 	BATTERY_MURATA_4013,
 	BATTERY_TYPE_COUNT,
 };
+
+void board_bmi160_lsm6dsm_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

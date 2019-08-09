@@ -6,15 +6,19 @@
 /* Treeya board-specific configuration */
 
 #include "button.h"
+#include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_bmi160.h"
+#include "driver/accelgyro_lsm6dsm.h"
 #include "extpower.h"
 #include "i2c.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
+#include "system.h"
 #include "switch.h"
 #include "tablet_mode.h"
+#include "task.h"
 
 #include "gpio_list.h"
 
@@ -36,10 +40,131 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+#ifdef HAS_TASK_MOTIONSENSE
 
+/* Motion sensors */
+static struct mutex g_lid_mutex_1;
+static struct mutex g_base_mutex_1;
+
+/* Lid accel private data */
+static struct stprivate_data g_lis2dwl_data;
+/* Base accel private data */
+static struct lsm6dsm_data g_lsm6dsm_data;
+
+
+/* Matrix to rotate accelrator into standard reference frame */
+static const mat33_fp_t lsm6dsm_base_standard_ref = {
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
+};
+
+/* just a placeholder, will revise when board is out */
+static const mat33_fp_t lis2dwl_lid_standard_ref = {
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+struct motion_sensor_t lid_accel_1 = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_LIS2DWL,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &lis2dw12_drv,
+	.mutex = &g_lid_mutex_1,
+	.drv_data = &g_lis2dwl_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = LIS2DWL_ADDR1_FLAGS,
+	.rot_standard_ref = &lis2dwl_lid_standard_ref,
+	.default_range = 4, /* g */
+	.min_frequency = LIS2DW12_ODR_MIN_VAL,
+	.max_frequency = LIS2DW12_ODR_MAX_VAL,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+		},
+		/* Sensor on for lid angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+
+struct motion_sensor_t base_accel_1 = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_LSM6DSM,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &lsm6dsm_drv,
+	.mutex = &g_base_mutex_1,
+	.drv_data = LSM6DSM_ST_DATA(g_lsm6dsm_data,
+			MOTIONSENSE_TYPE_ACCEL),
+	.int_signal = GPIO_6AXIS_INT_L,
+	.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+	.rot_standard_ref = &lsm6dsm_base_standard_ref,
+	.default_range = 4,  /* g */
+	.min_frequency = LSM6DSM_ODR_MIN_VAL,
+	.max_frequency = LSM6DSM_ODR_MAX_VAL,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 13000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* Sensor on for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+	},
+};
+
+struct motion_sensor_t base_gyro_1 = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_LSM6DSM,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &lsm6dsm_drv,
+	.mutex = &g_base_mutex_1,
+	.drv_data = LSM6DSM_ST_DATA(g_lsm6dsm_data,
+			MOTIONSENSE_TYPE_GYRO),
+	.int_signal = GPIO_6AXIS_INT_L,
+	.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+	.default_range = 1000 | ROUND_UP_FLAG, /* dps */
+	.rot_standard_ref = &lsm6dsm_base_standard_ref,
+	.min_frequency = LSM6DSM_ODR_MIN_VAL,
+	.max_frequency = LSM6DSM_ODR_MAX_VAL,
+};
+
+/* sku_id a8-a9 use ST sensors */
+static int board_use_st_sensor(void)
+{
+	uint32_t sku_id = system_get_sku_id();
+	return sku_id == 0xa8 || sku_id == 0xa9;
+}
+
+/* treeya board will use two sets of lid/base sensor, we need update
+ * sensors info according to sku id.
+ */
 void board_update_sensor_config_from_sku(void)
 {
 	if (board_is_convertible()) {
+		/* sku_id a8-a9 use ST sensors */
+		if (board_use_st_sensor()) {
+			motion_sensors[LID_ACCEL] = lid_accel_1;
+			motion_sensors[BASE_ACCEL] = base_accel_1;
+			motion_sensors[BASE_GYRO] = base_gyro_1;
+		}
+
 		/* Enable Gyro interrupts */
 		gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 	} else {
@@ -51,3 +176,14 @@ void board_update_sensor_config_from_sku(void)
 			       GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
+
+/* bmi160 or lsm6dsm need differenct interrupt function */
+void board_bmi160_lsm6dsm_interrupt(enum gpio_signal signal)
+{
+	if (board_use_st_sensor())
+		lsm6dsm_interrupt(signal);
+	else
+		bmi160_interrupt(signal);
+}
+
+#endif
