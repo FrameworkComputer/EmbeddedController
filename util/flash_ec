@@ -1096,24 +1096,8 @@ function flash_it83xx() {
 	# there is a mux on the dut)
 	if servo_has_dut_i2c_mux; then
 		info "Switching DUT I2C Mux to ${CHIP}"
-
 		servo_save_add "dut_i2c_mux"
-
-		# TODO(b/126189871): Investigate about the timeout in CCD mode,
-		# and remove with this retry logic along with the fix.
-		local num_attempts=1
-		if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
-			num_attempts=3
-		fi
-		while :; do
-			if dut_control dut_i2c_mux:ec_prog; then
-				break;
-			fi
-			if (( --num_attempts <= 0 )); then
-				die "dut_i2c_mux failed."
-			fi
-			sleep 5
-		done
+		dut_control dut_i2c_mux:ec_prog
 	fi
 
 	# Ensure that the AP is off while we are flashing the EC via:
