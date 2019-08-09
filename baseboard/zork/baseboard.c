@@ -19,6 +19,7 @@
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/bc12/pi3usb9201.h"
+#include "driver/ppc/nx20p348x.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/nct38xx.h"
@@ -218,8 +219,8 @@ struct ppc_config_t ppc_chips[] = {
 
 	[USBC_PORT_C1] = {
 		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
+		.i2c_addr_flags = NX20P3483_ADDR1_FLAGS,
+		.drv = &nx20p348x_drv
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
@@ -233,7 +234,7 @@ void ppc_interrupt(enum gpio_signal signal)
 		break;
 
 	case GPIO_USB_C1_PPC_INT_ODL:
-		sn5s330_interrupt(USBC_PORT_C1);
+		nx20p348x_interrupt(USBC_PORT_C1);
 		break;
 
 	default:
