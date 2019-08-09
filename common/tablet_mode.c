@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "acpi.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -70,12 +71,26 @@ void tablet_disable(void)
 #ifndef HALL_SENSOR_GPIO_L
 #error  HALL_SENSOR_GPIO_L must be defined
 #endif
+#ifdef CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR
+#error The board has GMR sensor
+#endif
 static void hall_sensor_interrupt_debounce(void)
 {
 	hall_sensor_at_360 = IS_ENABLED(CONFIG_HALL_SENSOR_CUSTOM)
 				     ? board_sensor_at_360()
 				     : !gpio_get_level(HALL_SENSOR_GPIO_L);
 
+	/*
+	 * DPTF table is updated only when the board enters/exits completely
+	 * flipped tablet mode. If the board has no GMR sensor, we determine
+	 * if the board is in completely-flipped tablet mode by lid angle
+	 * calculation and update DPTF table when lid angle > 300 degrees.
+	 */
+	if (IS_ENABLED(CONFIG_HOSTCMD_X86) && IS_ENABLED(CONFIG_DPTF)) {
+		acpi_dptf_set_profile_num(hall_sensor_at_360 ?
+					  DPTF_PROFILE_FLIPPED_360_MODE :
+					  DPTF_PROFILE_CLAMSHELL);
+	}
 	/*
 	 * 1. Peripherals are disabled only when lid reaches 360 position (It's
 	 * probably already disabled by motion_sense task). We deliberately do
