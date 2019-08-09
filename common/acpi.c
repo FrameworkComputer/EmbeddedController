@@ -111,9 +111,14 @@ int acpi_dptf_set_profile_num(int n)
 {
 	int ret = acpi_dptf_is_profile_valid(n);
 
-	if (ret == EC_SUCCESS)
+	if (ret == EC_SUCCESS) {
 		current_dptf_profile = n;
-
+		if (IS_ENABLED(CONFIG_DPTF_MULTI_PROFILE) &&
+		    IS_ENABLED(CONFIG_HOSTCMD_EVENTS)) {
+			/* Notify kernel to update DPTF profile */
+			host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
+		}
+	}
 	return ret;
 }
 
