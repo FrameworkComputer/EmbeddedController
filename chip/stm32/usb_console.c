@@ -271,3 +271,8 @@ void usb_console_enable(int enabled, int readonly)
 	is_enabled = enabled;
 	is_readonly = readonly;
 }
+
+int usb_console_tx_blocked(void)
+{
+	return is_enabled && usb_console_tx_valid();
+}

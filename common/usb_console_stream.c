@@ -231,3 +231,8 @@ void usb_console_enable(int enabled, int readonly)
 	is_enabled = enabled;
 	is_readonly = readonly;
 }
+
+int usb_console_tx_blocked(void)
+{
+	return is_enabled && (queue_space(&tx_q) < USB_MAX_PACKET_SIZE);
+}
