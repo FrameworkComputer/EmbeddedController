@@ -67,16 +67,29 @@ void chipset_reset(enum chipset_reset_reason reason)
 void chipset_throttle_cpu(int throttle)
 {
 	CPRINTS("%s(%d)", __func__, throttle);
-#ifdef CONFIG_CPU_PROCHOT_ACTIVE_LOW
-	throttle = !throttle;
-#endif /* CONFIG_CPU_PROCHOT_ACTIVE_LOW */
+	if (IS_ENABLED(CONFIG_CPU_PROCHOT_ACTIVE_LOW))
+		throttle = !throttle;
+
 	if (chipset_in_state(CHIPSET_STATE_ON))
 		gpio_set_level(GPIO_CPU_PROCHOT, throttle);
 }
 
-/* TODO: Create the real chipset_handle_espi_reset_assert function */
 void chipset_handle_espi_reset_assert(void)
 {
+	/*
+	 * eSPI_Reset# pin being asserted without RSMRST# being asserted
+	 * means there is an unexpected power loss (global reset event).
+	 * In this case, check if the shutdown is forced by the EC (due
+	 * to battery, thermal, or console command). The forced shutdown
+	 * initiates a power button press that we need to release.
+	 *
+	 * NOTE: S5_PGOOD input is passed through to the RSMRST# output to
+	 * the AP.
+	 */
+	if ((power_get_signals() & IN_S5_PGOOD) && forcing_shutdown) {
+		power_button_pch_release();
+		forcing_shutdown = 0;
+	}
 }
 
 enum power_state power_chipset_init(void)
@@ -157,13 +170,12 @@ enum power_state power_handle_state(enum power_state state)
 		/* Enable system power ("*_A" rails) in S5. */
 		gpio_set_level(GPIO_EN_PWR_A, 1);
 
-#ifdef CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
 		/*
 		 * Callback to do pre-initialization within the context of
 		 * chipset task.
 		 */
-		chipset_pre_init_callback();
-#endif
+		if (IS_ENABLED(CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK))
+			chipset_pre_init_callback();
 
 		if (power_wait_signals(IN_S5_PGOOD)) {
 			chipset_force_g3();
