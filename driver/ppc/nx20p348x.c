@@ -220,6 +220,7 @@ static int nx20p348x_init(int port)
 	int mask;
 	int mode;
 	int rv;
+	enum tcpc_rp_value initial_current_limit;
 
 	/* Mask interrupts for interrupt 2 register */
 	mask = ~NX20P348X_INT2_EN_ERR;
@@ -275,6 +276,14 @@ static int nx20p348x_init(int port)
 	 * done after dead battery mode is exited.
 	 */
 	nx20p348x_set_ovp_limit(port);
+
+	/* Set the Vbus current limit after dead battery mode exit */
+#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
+	initial_current_limit = CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT;
+#else
+	initial_current_limit = TYPEC_RP_1A5;
+#endif
+	nx20p348x_set_vbus_source_current_limit(port, initial_current_limit);
 
 	return EC_SUCCESS;
 }
