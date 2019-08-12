@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+#include "variants.h"
+
 /* TODO: Remove CONFIG_SYSTEM_UNLOCKED prior to building MP FW. */
 #define CONFIG_SYSTEM_UNLOCKED
 /* TODO(b:63378217): Define FLASH_PSTATE_LOCKED prior to building MP FW. */
@@ -85,17 +87,6 @@
 
 /* USB Configuration */
 #define CONFIG_USB
-#ifdef BOARD_HAMMER
-#define CONFIG_USB_PID 0x5022
-#elif defined(BOARD_STAFF)
-#define CONFIG_USB_PID 0x502b
-#elif defined(BOARD_WAND)
-#define CONFIG_USB_PID 0x502d
-#elif defined(BOARD_WHISKERS)
-#define CONFIG_USB_PID 0x5030
-#else
-#error "Invalid board"
-#endif
 #define CONFIG_STREAM_USB
 #define CONFIG_USB_UPDATE
 
@@ -117,11 +108,6 @@
 /* Replaced at runtime (board_read_serial) by chip unique-id-based number. */
 #define DEFAULT_SERIALNO ""
 
-#if defined(BOARD_WHISKERS) && defined(SECTION_IS_RW)
-/* Enable to send heatmap to AP */
-#define CONFIG_USB_ISOCHRONOUS
-#endif  /* !(BOARD_WHISKERS && SECTION_IS_RW) */
-
 /* USB interface indexes (use define rather than enum to expand them) */
 #ifdef SECTION_IS_RW
 #define USB_IFACE_HID_KEYBOARD	0
@@ -129,12 +115,12 @@
 #define USB_IFACE_HID_TOUCHPAD	2
 /* Can be either I2C or SPI passthrough, depending on the board. */
 #define USB_IFACE_I2C_SPI	3
-#if defined(BOARD_WHISKERS) && defined(CONFIG_USB_ISOCHRONOUS)
+#if defined(CONFIG_USB_ISOCHRONOUS)
 #define USB_IFACE_ST_TOUCHPAD	4
 #define USB_IFACE_COUNT		5
-#else  /* !(BOARD_WHISKERS && CONFIG_USB_ISOCHRONOUS) */
+#else  /* !CONFIG_USB_ISOCHRONOUS */
 #define USB_IFACE_COUNT		4
-#endif  /* BOARD_WHISKERS && CONFIG_USB_ISOCHRONOUS */
+#endif  /* CONFIG_USB_ISOCHRONOUS */
 #else  /* !SECTION_IS_RW */
 #define USB_IFACE_UPDATE	0
 #define USB_IFACE_COUNT		1
@@ -148,13 +134,13 @@
 #define USB_EP_HID_TOUCHPAD	3
 /* Can be either I2C or SPI passthrough, depending on the board. */
 #define USB_EP_I2C_SPI		4
-#if defined(BOARD_WHISKERS) && defined(CONFIG_USB_ISOCHRONOUS)
+#if defined(CONFIG_USB_ISOCHRONOUS)
 #define USB_EP_ST_TOUCHPAD	5
 #define USB_EP_ST_TOUCHPAD_INT	6
 #define USB_EP_COUNT		7
-#else /* !(BOARD_WHISKERS && CONFIG_USB_ISOCHRONOUS) */
+#else /* !CONFIG_USB_ISOCHRONOUS */
 #define USB_EP_COUNT		5
-#endif /* BOARD_WHISKERS && CONFIG_USB_ISOCHRONOUS */
+#endif /* CONFIG_USB_ISOCHRONOUS */
 #else  /* !SECTION_IS_RW */
 #define USB_EP_COUNT		2
 #endif  /* SECTION_IS_RW */
@@ -203,39 +189,9 @@
 /* Include touchpad FW hashes in image */
 #define CONFIG_TOUCHPAD_HASH_FW
 
-/* Touchpad firmware size and dimension difference */
-#if defined(BOARD_HAMMER) || defined(BOARD_WAND)
-#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 3207
-#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1783
-#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_PRESSURE 511
-#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1018 /* tenth of mm */
-#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 566 /* tenth of mm */
-#define CONFIG_TOUCHPAD_VIRTUAL_SIZE (48*1024)
-#elif defined(BOARD_STAFF)
-#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 3206
-#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1832
-#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_PRESSURE 511
-#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1017 /* tenth of mm */
-#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 581 /* tenth of mm */
-#define CONFIG_TOUCHPAD_VIRTUAL_SIZE (56*1024)
-#elif defined(BOARD_WHISKERS)
-#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 2160
-#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1573
-#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_PRESSURE 255
-#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1030 /* tenth of mm */
-#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 750 /* tenth of mm */
-#define CONFIG_TOUCHPAD_VIRTUAL_SIZE (CONFIG_UPDATE_PDU_SIZE + 128*1024)
-#else
-#error "No touchpad information for board."
-#endif
-
 #define CONFIG_KEYBOARD_DEBUG
 #undef CONFIG_KEYBOARD_BOOT_KEYS
 #undef CONFIG_KEYBOARD_RUNTIME_KEYS
-#if defined(BOARD_HAMMER) || defined(BOARD_WAND) || defined(BOARD_WHISKERS)
-#define CONFIG_KEYBOARD_BOARD_CONFIG
-#define CONFIG_KEYBOARD_ASSISTANT_KEY
-#endif
 /* Keyboard output port list */
 #define KB_OUT_PORT_LIST GPIO_A, GPIO_B, GPIO_C, GPIO_F
 
@@ -248,12 +204,13 @@
 /* Enable PWM */
 #define CONFIG_PWM
 
-#ifdef BOARD_WHISKERS
-#define CONFIG_LED_DRIVER_LM3630A
+#ifdef CONFIG_HALL_SENSOR
 #define CONFIG_TABLET_MODE
-#define CONFIG_HALL_SENSOR
 #define HALL_SENSOR_GPIO_L GPIO_TABLET_MODE_L
 #define CONFIG_KEYBOARD_TABLET_MODE_SWITCH
+#endif
+
+#ifdef HAS_SPI_TOUCHPAD
 /* Enable control of SPI over USB */
 #define CONFIG_USB_SPI
 #define CONFIG_SPI_MASTER
@@ -265,8 +222,7 @@
 #define CONFIG_CMD_SPI_XFER
 #define CONFIG_TOUCHPAD
 #define CONFIG_TOUCHPAD_ST
-
-#else  /* !BOARD_WHISKERS */
+#elif defined(HAS_I2C_TOUCHPAD) /* HAS_SPI_TOUCHPAD */
 /* Enable control of I2C over USB */
 #define CONFIG_USB_I2C
 #define USB_IFACE_I2C USB_IFACE_I2C_SPI
@@ -276,7 +232,7 @@
 #define CONFIG_TOUCHPAD_ELAN
 #define CONFIG_TOUCHPAD_I2C_PORT I2C_PORT_MASTER
 #define CONFIG_TOUCHPAD_I2C_ADDR_FLAGS 0x15
-#endif  /* BOARD_WHISKERS */
+#endif /* HAS_I2C_TOUCHPAD */
 
 #define CONFIG_CURVE25519
 

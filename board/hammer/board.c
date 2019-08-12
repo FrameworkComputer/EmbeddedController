@@ -72,7 +72,7 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
  */
 
 #ifdef SECTION_IS_RW
-#ifdef BOARD_WHISKERS
+#ifdef HAS_SPI_TOUCHPAD
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
 	[SPI_ST_TP_DEVICE_ID] = { CONFIG_SPI_TOUCHPAD_PORT, 2, GPIO_SPI1_NSS },
@@ -83,7 +83,7 @@ USB_SPI_CONFIG(usb_spi, USB_IFACE_I2C_SPI, USB_EP_I2C_SPI);
 /* SPI interface is always enabled, no need to do anything. */
 void usb_spi_board_enable(struct usb_spi_config const *config) {}
 void usb_spi_board_disable(struct usb_spi_config const *config) {}
-#endif  /* !BOARD_WHISKERS */
+#endif  /* !HAS_SPI_TOUCHPAD */
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
@@ -193,8 +193,11 @@ static void board_init(void)
 	usart_init(&ec_ec_usart);
 #endif /* BOARD_WAND */
 
-#ifdef BOARD_WHISKERS
+#ifdef CONFIG_LED_DRIVER_LM3630A
 	lm3630a_poweron();
+#endif
+
+#ifdef HAS_SPI_TOUCHPAD
 	spi_enable(CONFIG_SPI_TOUCHPAD_PORT, 0);
 
 	/* Disable SPI passthrough when the system is locked */
@@ -215,7 +218,7 @@ static void board_init(void)
 	/* Enable SPI for touchpad */
 	gpio_config_module(MODULE_SPI_MASTER, 1);
 	spi_enable(CONFIG_SPI_TOUCHPAD_PORT, 1);
-#endif /* BOARD_WHISKERS */
+#endif /* HAS_SPI_TOUCHPAD */
 #endif /* SECTION_IS_RW */
 }
 /* This needs to happen before PWM is initialized. */
@@ -243,7 +246,7 @@ int board_has_keyboard_backlight(void)
 /* Reset the touchpad, mainly used to recover it from malfunction. */
 void board_touchpad_reset(void)
 {
-#ifdef BOARD_WHISKERS
+#ifdef HAS_EN_PP3300_TP_ACTIVE_HIGH
 	gpio_set_level(GPIO_EN_PP3300_TP, 0);
 	msleep(100);
 	gpio_set_level(GPIO_EN_PP3300_TP, 1);
@@ -256,7 +259,7 @@ void board_touchpad_reset(void)
 #endif
 }
 
-#if defined(BOARD_WHISKERS) && defined(SECTION_IS_RW)
+#ifdef CONFIG_KEYBOARD_TABLET_MODE_SWITCH
 static void board_tablet_mode_change(void)
 {
 	/*
