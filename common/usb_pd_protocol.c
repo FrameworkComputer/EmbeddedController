@@ -2766,7 +2766,7 @@ void pd_interrupt_handler_task(void *p)
 	struct {
 		int count;
 		uint32_t time;
-	} storm_tracker[CONFIG_USB_PD_PORT_COUNT] = { 0 };
+	} storm_tracker[CONFIG_USB_PD_PORT_COUNT] = {};
 
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
 
