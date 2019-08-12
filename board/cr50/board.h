@@ -49,8 +49,7 @@
 
 #define CONFIG_CRC8
 
-/* Non-volatile counter storage for U2F */
-#define CONFIG_FLASH_NVCOUNTER
+/* Non-volatile counter storage for U2F (deprecated) */
 #define CONFIG_FLASH_NVCTR_SIZE CONFIG_FLASH_BANK_SIZE
 #define CONFIG_FLASH_NVCTR_BASE_A (CONFIG_PROGRAM_MEMORY_BASE + \
 				   CFG_TOP_A_OFF)

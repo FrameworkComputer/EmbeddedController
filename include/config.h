@@ -1752,8 +1752,6 @@
 #undef CONFIG_EC_WRITABLE_STORAGE_OFF
 #undef CONFIG_EC_WRITABLE_STORAGE_SIZE
 
-/* Enable robust non-volatile counter in flash */
-#undef CONFIG_FLASH_NVCOUNTER
 /* Address of start of the NVcounter flash page */
 #undef CONFIG_FLASH_NVCTR_BASE_A
 #undef CONFIG_FLASH_NVCTR_BASE_B
