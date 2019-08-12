@@ -188,6 +188,23 @@ unsigned u2f_custom_dispatch(uint8_t ins, struct apdu apdu,
 	return U2F_SW_INS_NOT_SUPPORTED;
 }
 
+static enum vendor_cmd_rc set_u2f_mode(enum vendor_cmd_cc code, void *buf,
+				       size_t input_size, size_t *response_size)
+{
+	uint8_t *mode = (uint8_t *)buf;
+
+	if (input_size != 1)
+		return VENDOR_RC_BOGUS_ARGS;
+
+	u2f_mode = *mode;
+
+	*mode = use_u2f() ? u2f_mode : 0;
+	*response_size = 1;
+
+	return VENDOR_RC_SUCCESS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_U2F_MODE, set_u2f_mode);
+
 /* ---- chip-specific U2F crypto ---- */
 
 static int _derive_key(enum dcrypto_appid appid, const uint32_t input[8],
