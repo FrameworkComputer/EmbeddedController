@@ -173,21 +173,6 @@ int use_g2f(void)
 	return use_u2f() && u2f_mode == MODE_U2F_EXTENDED;
 }
 
-unsigned u2f_custom_dispatch(uint8_t ins, struct apdu apdu,
-			     uint8_t *buf, unsigned *ret_len)
-{
-	if (ins == U2F_VENDOR_MODE) {
-		if (apdu.p1) { /* Set mode */
-			u2f_mode = apdu.p2;
-		}
-		/* return the current mode */
-		buf[0] = use_u2f() ? u2f_mode : 0;
-		*ret_len = 1;
-		return U2F_SW_NO_ERROR;
-	}
-	return U2F_SW_INS_NOT_SUPPORTED;
-}
-
 static enum vendor_cmd_rc set_u2f_mode(enum vendor_cmd_cc code, void *buf,
 				       size_t input_size, size_t *response_size)
 {
@@ -220,23 +205,6 @@ static int _derive_key(enum dcrypto_appid appid, const uint32_t input[8],
 
 	DCRYPTO_appkey_finish(&ctx);
 	return result;
-}
-
-int u2f_origin_keypair(uint8_t *seed, p256_int *d,
-		       p256_int *pk_x, p256_int *pk_y)
-{
-	uint32_t tmp[P256_NDIGITS];
-
-	do {
-		if (!DCRYPTO_ladder_random(seed))
-			return EC_ERROR_UNKNOWN;
-		memcpy(tmp, seed, sizeof(tmp));
-		if (!_derive_key(U2F_ORIGIN, tmp, tmp))
-			return EC_ERROR_UNKNOWN;
-	} while (
-	    !DCRYPTO_p256_key_from_bytes(pk_x, pk_y, d, (const uint8_t *)tmp));
-
-	return EC_SUCCESS;
 }
 
 int u2f_origin_key(const uint8_t *seed, p256_int *d)
@@ -341,27 +309,3 @@ int u2f_gen_kek_seed(int commit)
 
 	return EC_SUCCESS;
 }
-
-/* ---- Send/receive U2F APDU over TPM vendor commands ---- */
-
-static enum vendor_cmd_rc vc_u2f_apdu(enum vendor_cmd_cc code, void *body,
-			       size_t cmd_size, size_t *response_size)
-{
-	unsigned retlen;
-
-	if (!use_u2f()) { /* the feature is disabled */
-		uint8_t *cmd = body;
-		/* process it only if the host tries to enable the feature */
-		if (cmd_size < 2 || cmd[1] != U2F_VENDOR_MODE) {
-			*response_size = 0;
-			return VENDOR_RC_NO_SUCH_COMMAND;
-		}
-	}
-
-	/* Process U2F APDU */
-	retlen = u2f_apdu_rcv(body, cmd_size, *response_size);
-
-	*response_size = retlen;
-	return VENDOR_RC_SUCCESS;
-}
-DECLARE_VENDOR_COMMAND(VENDOR_CC_U2F_APDU, vc_u2f_apdu);

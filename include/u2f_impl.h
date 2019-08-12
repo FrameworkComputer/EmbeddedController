@@ -11,21 +11,6 @@
 #include "common.h"
 #include "cryptoc/p256.h"
 
-/* APDU fields to pass around */
-struct apdu {
-	uint8_t p1;
-	uint8_t p2;
-	uint16_t len;
-	const uint8_t *data;
-};
-
-/*
- * Parses an APDU-framed message according to the u2f protocol.
- *
- * @return 0 on failure, output buffer's byte count on success.
- */
-unsigned u2f_apdu_rcv(uint8_t *buffer, unsigned in_len, unsigned max_len);
-
 /* ---- Physical presence ---- */
 
 enum touch_state {
@@ -148,9 +133,5 @@ int g2f_attestation_cert(uint8_t *buf);
 
 /* Use non-standard extensions to the U2F protocol */
 int use_g2f(void);
-
-/* call extensions for unsupported U2F INS */
-unsigned u2f_custom_dispatch(uint8_t ins, struct apdu apdu, uint8_t *buf,
-			     unsigned *ret_len) __attribute__((weak));
 
 #endif /* __CROS_EC_U2F_IMPL_H */

@@ -44,55 +44,11 @@ typedef struct {
     uint8_t y[U2F_EC_KEY_SIZE];         // Y-value
 } U2F_EC_POINT;
 
-// U2F native commands
-
-#define U2F_REGISTER            0x01    // Registration command
-#define U2F_AUTHENTICATE        0x02    // Authenticate/sign command
-#define U2F_VERSION             0x03    // Read version string command
-
-#define U2F_VENDOR_FIRST        0x40    // First vendor defined command
-#define U2F_VENDOR_LAST         0xbf    // Last vendor defined command
-
-// U2F_CMD_REGISTER command defines
-
-#define U2F_REGISTER_ID         0x05    // Version 2 registration identifier
-#define U2F_REGISTER_HASH_ID    0x00    // Version 2 hash identintifier
-
-typedef struct {
-    uint8_t chal[U2F_CHAL_SIZE];        // Challenge
-    uint8_t appId[U2F_APPID_SIZE];      // Application id
-} U2F_REGISTER_REQ;
-
-typedef struct {
-    uint8_t registerId;                 // Registration identifier (U2F_REGISTER_ID_V2)
-    U2F_EC_POINT pubKey;                // Generated public key
-    uint8_t keyHandleLen;               // Length of key handle
-    uint8_t keyHandleCertSig[
-        U2F_MAX_KH_SIZE +               // Key handle
-        U2F_MAX_ATT_CERT_SIZE +         // Attestation certificate
-        U2F_MAX_EC_SIG_SIZE];           // Registration signature
-} U2F_REGISTER_RESP;
-
-// U2F_CMD_AUTHENTICATE command defines
-
-// Authentication control byte
+// Request Flags.
 
 #define U2F_AUTH_ENFORCE        0x03    // Enforce user presence and sign
 #define U2F_AUTH_CHECK_ONLY     0x07    // Check only
 #define U2F_AUTH_FLAG_TUP       0x01    // Test of user presence set
-
-typedef struct {
-    uint8_t chal[U2F_CHAL_SIZE];        // Challenge
-    uint8_t appId[U2F_APPID_SIZE];      // Application id
-    uint8_t keyHandleLen;               // Length of key handle
-    uint8_t keyHandle[U2F_MAX_KH_SIZE]; // Key handle
-} U2F_AUTHENTICATE_REQ;
-
-typedef struct {
-    uint8_t flags;                      // U2F_AUTH_FLAG_ values
-    uint8_t ctr[U2F_CTR_SIZE];          // Counter field (big-endian)
-    uint8_t sig[U2F_MAX_EC_SIG_SIZE];   // Signature
-} U2F_AUTHENTICATE_RESP;
 
 // TODO(louiscollard): Add Descriptions.
 
