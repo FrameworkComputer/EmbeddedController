@@ -155,16 +155,15 @@ DEFINE_integer port "${DEFAULT_PORT}" \
 	"Port to communicate to servo on."
 DEFINE_boolean raiden "${FLAGS_FALSE}" \
 	"Use raiden_debug_spi programmer"
-DEFINE_string read "" "Stm32, it83xx and npcx_(|int_)spi only:"\
-" pathname of the file to store EC firmware image."
+DEFINE_string read "" "Pathname of the file to store EC firmware image."
 DEFINE_boolean ro "${FLAGS_FALSE}" \
 	"Write only the read-only partition"
 DEFINE_integer timeout 600 \
 	"Timeout for flashing the EC, measured in seconds."
 DEFINE_boolean verbose "${FLAGS_FALSE}" \
 	"Verbose hw control logging"
-DEFINE_boolean verify "${FLAGS_FALSE}" "Stm32, it83xx and npcx_(int_)spi only:"\
-" verify EC firmware image after programming."
+DEFINE_boolean verify "${FLAGS_FALSE}" \
+	"Verify EC firmware image after programming."
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -321,7 +320,7 @@ case "${BOARD}" in
 esac
 
 case "${CHIP}" in
-	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx") ;;
+	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"npcx_uut") ;;
 	*)
 		if [[ -n "${FLAGS_read}" ]]; then
 			die "The flag is not yet supported on ${CHIP}."
@@ -1206,13 +1205,13 @@ function flash_npcx_jtag() {
 }
 
 function flash_npcx_uut() {
-	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
-	NPCX_UUT=$(PATH="${TOOL_PATH}" which uartupdatetool)
-	EC_UART="$(servo_ec_uart)"
+	local TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
+	local NPCX_UUT=$(PATH="${TOOL_PATH}" which uartupdatetool)
+	local EC_UART="$(servo_ec_uart)"
 
 	# Look for npcx_monitor.bin in multiple directories, starting with
 	# the same path as the EC binary.
-	MON=""
+	local MON=""
 	for dir in \
 		"$(dirname "$IMG")" \
 		"${EC_DIR}/build/${BOARD}/chip/npcx/spiflashfw" \
@@ -1231,7 +1230,10 @@ function flash_npcx_uut() {
 	info "Using NPCX image : ${MON}"
 
 	# The start address to restore monitor firmware binary
-	MON_ADDR="0x200C3020"
+	local MON_ADDR="0x200C3020"
+	local BASE_ADDR="0x64000000"		# The base flash memory address
+	local FLASH_SIZE=$(( $(dut_control_get ec_flash_size)*1024 ))
+						# EC Flash memory size
 
 	if [ ! -x "$NPCX_UUT" ]; then
 		die "no NPCX UART Update Tool found."
@@ -1258,23 +1260,72 @@ function flash_npcx_uut() {
 	sleep 0.1
 
 	# Remove the prefix "/dev/" because uartupdatetool will add it.
-	EC_UART=${EC_UART#/dev/}
-	UUT_ARGS="--port ${EC_UART} --baudrate 115200"
+	local UUT_ARGS=( "--port=${EC_UART#/dev/}" " --baudrate=115200" )
+	local IMG_READ="${FLAGS_read}"
 
-	# Load monitor binary to address 0x200C3020
-	if [[ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]]; then
-		echo ${NPCX_UUT} ${UUT_ARGS} --opr wr --addr ${MON_ADDR} \
-			--file ${MON}
-	fi
-	${NPCX_UUT} ${UUT_ARGS} --opr wr --addr "${MON_ADDR}" \
-		--file "${MON}" || die "Failed to load monitor binary."
+	# Program EC image.
+	if [[ -z "${IMG_READ}" ]]; then
+		info "Loading monitor binary."
+		local UUT_MON=( "${NPCX_UUT}" "${UUT_ARGS[@]}"  \
+				"--opr=wr" "--addr=${MON_ADDR}" \
+				"--file=${MON}" )
 
-	if [[ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]]; then
-		echo ${NPCX_UUT} ${UUT_ARGS} --auto --offset ${FLAGS_offset} \
-			--file ${IMG}
+		# Load monitor binary to address 0x200C3020
+		if [[ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]]; then
+			echo "${UUT_MON[*]}"
+		fi
+		timeout -k 10 -s 9 "${FLAGS_timeout}" \
+			"${UUT_MON[@]}" || die "Failed to load monitor binary."
+
+		info "Programming EC firmware image."
+		local UUT_WR=( "${NPCX_UUT}" "${UUT_ARGS[@]}"      \
+			       "--auto" "--offset=${FLAGS_offset}" \
+			       "--file=${IMG}" )
+		if [[ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]]; then
+			echo "${UUT_WR[*]}"
+		fi
+		timeout -k 10 -s 9 "${FLAGS_timeout}" \
+			"${UUT_WR[@]}" || die "${MSG_PROGRAM_FAIL}"
+
+		# If it is a program-verify request, then make a temporary
+		# directory to store the image.
+		if [[ "${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
+			local TEMP_SUFFIX=".$(basename ${SCRIPT}).${CHIP}.$$"
+			local TEMP_DIR="$(mktemp -d --suffix="${TEMP_SUFFIX}")"
+
+			IMG_READ="${TEMP_DIR}/ec.read.bin"
+			DELETE_LIST+=( "${TEMP_DIR}" )
+			FLASH_SIZE=$(stat -c %s "${IMG}")
+		fi
 	fi
-	${NPCX_UUT} ${UUT_ARGS} --auto --offset "${FLAGS_offset}" \
-		--file "${IMG}" || die "${MSG_PROGRAM_FAIL}"
+
+	# Read EC image.
+	if [[ -n "${IMG_READ}" ]]; then
+		info "Reading EC firmware image."
+
+		local UUT_RD=( "${NPCX_UUT}" "${UUT_ARGS[@]}"   \
+			      "--opr=rd" "--addr=${BASE_ADDR}" \
+			      "--size=${FLASH_SIZE}"
+			      "--file=${IMG_READ}" )
+
+		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+			echo "${UUT_RD[*]}"
+		fi
+		timeout -k 10 -s 9 "${FLAGS_timeout}" \
+			"${UUT_RD[@]}" || die "${MSG_READ_FAIL}"
+	fi
+
+	# Verify the flash by comparing the source image to the read image,
+	# only if it was a flash write request.
+	if [[ -z "${FLAGS_read}" && "${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
+		info "Verifying EC firmware image."
+
+		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+			echo "diff ${IMG} ${IMG_READ}"
+		fi
+
+		diff -q "${IMG}" "${IMG_READ}" || die "${MSG_VERIFY_FAIL}"
+	fi
 }
 
 function flash_npcx_5m5g_jtag() {
