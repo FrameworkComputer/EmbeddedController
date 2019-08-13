@@ -276,7 +276,7 @@ enum adc_channel board_get_vbus_adc(int port);
  * @param port	Dedicated charge port.
  * @return 1 if the port is sink.
  */
-int board_charge_port_is_sink(int port);
+__override_proto int board_charge_port_is_sink(int port);
 
 /**
  * Board specific callback to check if the given port is connected.
@@ -284,7 +284,7 @@ int board_charge_port_is_sink(int port);
  * @param port	Dedicated charge port.
  * @return 1 if the port is connected.
  */
-int board_charge_port_is_connected(int port);
+__override_proto int board_charge_port_is_connected(int port);
 
 /**
  * Board specific callback to fill passed power_info structure with current info
@@ -294,6 +294,7 @@ int board_charge_port_is_connected(int port);
  * @param port	Dedicated charge port.
  * @param r	USB PD power info to be updated.
  */
+__override_proto
 void board_fill_source_power_info(int port,
 				  struct ec_response_usb_pd_power_info *r);
 
