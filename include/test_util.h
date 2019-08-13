@@ -58,6 +58,8 @@
 #define TEST_GE(a, b, fmt) TEST_OPERATOR(a, b, >=, fmt)
 #define TEST_BITS_SET(a, bits) TEST_OPERATOR(a & (int)bits, (int)bits, ==, "%u")
 #define TEST_BITS_CLEARED(a, bits) TEST_OPERATOR(a & (int)bits, 0, ==, "%u")
+#define TEST_NEAR(a, b, epsilon, fmt) \
+	TEST_OPERATOR(ABS((a) - (b)), epsilon, <, fmt)
 
 #define __ABS(n) ((n) > 0 ? (n) : -(n))
 

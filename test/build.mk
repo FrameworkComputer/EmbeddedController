@@ -46,6 +46,7 @@ test-list-host += math_util
 test-list-host += motion_angle
 test-list-host += motion_angle_tablet
 test-list-host += motion_lid
+test-list-host += motion_sense_fifo
 test-list-host += mutex
 test-list-host += nvmem
 test-list-host += pingpong
@@ -87,7 +88,6 @@ test-list-host += vboot
 test-list-host += x25519
 endif
 
-
 aes-y=aes.o
 base32-y=base32.o
 battery_get_params_smart-y=battery_get_params_smart.o
@@ -120,6 +120,7 @@ math_util-y=math_util.o
 motion_angle-y=motion_angle.o motion_angle_data_literals.o motion_common.o
 motion_angle_tablet-y=motion_angle_tablet.o motion_angle_data_literals_tablet.o motion_common.o
 motion_lid-y=motion_lid.o
+motion_sense_fifo-y=motion_sense_fifo.o
 mutex-y=mutex.o
 nvmem-y=nvmem.o nvmem_tpm2_mock.o
 pingpong-y=pingpong.o

@@ -7,20 +7,43 @@
 #define __CROS_EC_MOTION_SENSE_FIFO_H
 
 #include "motion_sense.h"
-#include "task.h"
 
-extern struct queue motion_sense_fifo;
-extern int wake_up_needed;
-extern int fifo_int_enabled;
-extern int fifo_queue_count;
-extern int motion_sense_fifo_lost;
-
+/** Allowed async events. */
 enum motion_sense_async_event {
 	ASYNC_EVENT_FLUSH = MOTIONSENSE_SENSOR_FLAG_FLUSH |
 			    MOTIONSENSE_SENSOR_FLAG_TIMESTAMP,
 	ASYNC_EVENT_ODR =   MOTIONSENSE_SENSOR_FLAG_ODR |
 			    MOTIONSENSE_SENSOR_FLAG_TIMESTAMP,
 };
+
+/**
+ * Whether or not we need to wake up the AP.
+ *
+ * @return Non zero when a wake-up is needed.
+ */
+int motion_sense_fifo_wake_up_needed(void);
+
+/**
+ * Resets the flag for wake up needed.
+ */
+void motion_sense_fifo_reset_wake_up_needed(void);
+
+/**
+ * Insert an async event into the fifo.
+ *
+ * @param sensor The sensor that generated the async event.
+ * @param event The event to insert.
+ */
+void motion_sense_fifo_insert_async_event(
+	struct motion_sensor_t *sensor,
+	enum motion_sense_async_event event);
+
+/**
+ * Insert a timestamp into the fifo.
+ *
+ * @param timestamp The timestamp to insert.
+ */
+void motion_sense_fifo_add_timestamp(uint32_t timestamp);
 
 /**
  * Stage data to the fifo, including a timestamp. This data will not be
@@ -32,46 +55,51 @@ enum motion_sense_async_event {
  * @param time accurate time (ideally measured in an interrupt) the sample
  *             was taken at
  */
-void motion_sense_fifo_stage_data(struct ec_response_motion_sensor_data *data,
-				  struct motion_sensor_t *sensor,
-				  int valid_data,
-				  uint32_t time);
+void motion_sense_fifo_stage_data(
+	struct ec_response_motion_sensor_data *data,
+	struct motion_sensor_t *sensor,
+	int valid_data,
+	uint32_t time);
 
 /**
- * Commits all staged data to the fifo. If multiple readings were placed using
- * the same timestamps, they will be spread out.
+ * Commit all the currently staged data to the fifo. Doing so makes it readable
+ * to the AP.
  */
 void motion_sense_fifo_commit_data(void);
 
 /**
- * Insert an async event into the fifo.
- *
- * @param sensor Pointer to the sensor generating the event.
- * @param evt The event to insert.
- */
-void motion_sense_insert_async_event(struct motion_sensor_t *sensor,
-				     enum motion_sense_async_event evt);
-
-/**
- * Stage a timestamp into the fifo.
- *
- * @param timestamp The timestamp to stage.
- */
-void motion_sense_fifo_stage_timestamp(uint32_t timestamp);
-
-/**
  * Get information about the fifo.
  *
- * @param fifo_info The struct to store the info.
+ * @param fifo_info The struct to modify with the current information about the
+ *	  fifo.
+ * @param reset Whether or not to reset statistics after reading them.
  */
-void motion_sense_get_fifo_info(
-	struct ec_response_motion_sense_fifo_info *fifo_info);
+void motion_sense_fifo_get_info(
+	struct ec_response_motion_sense_fifo_info *fifo_info,
+	int reset);
 
 /**
- * Checks if either the AP should be woken up due to the fifo.
+ * Check whether or not the fifo has gone over its threshold.
  *
- * @return 1 if the AP should be woken up, 0 otherwise.
+ * @return 1 if yes, 0 for no.
  */
-int motion_sense_fifo_is_wake_up_needed(void);
+int motion_sense_fifo_over_thres(void);
 
-#endif /* __CROS_EC_MOTION_SENSE_FIFO_H */
+/**
+ * Read available committed entries from the fifo.
+ *
+ * @param capacity_bytes The number of bytes available to be written to `out`.
+ * @param max_count The maximum number of entries to be placed in `out`.
+ * @param out The target to copy the data into.
+ * @param out_size The number of bytes written to `out`.
+ * @return The number of entries written to `out`.
+ */
+int motion_sense_fifo_read(int capacity_bytes, int max_count, void *out,
+			   uint16_t *out_size);
+
+/**
+ * Reset the internal data structures of the motion sense fifo.
+ */
+__test_only void motion_sense_fifo_reset(void);
+
+#endif /*__CROS_EC_MOTION_SENSE_FIFO_H */
