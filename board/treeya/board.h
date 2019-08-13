@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+#define VARIANT_GRUNT_TCPC_0_ANX3447
+
 #include "baseboard.h"
 
 /*
@@ -25,7 +27,7 @@
 
 #define CONFIG_LED_ONOFF_STATES
 
-/*Disable KBLIGTH*/
+/* Disable keyboard backlight */
 #undef CONFIG_PWM
 #undef CONFIG_PWM_KBLIGHT
 

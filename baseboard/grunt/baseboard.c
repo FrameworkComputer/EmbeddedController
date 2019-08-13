@@ -20,6 +20,7 @@
 #include "driver/accelgyro_bmi160.h"
 #include "driver/bc12/max14637.h"
 #include "driver/ppc/sn5s330.h"
+#include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/temp_sensor/sb_tsi.h"
@@ -78,6 +79,7 @@ const struct power_signal_info power_signal_list[] = {
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+#ifdef VARIANT_GRUNT_TCPC_0_ANX3429
 	[USB_PD_PORT_ANX74XX] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
@@ -88,6 +90,18 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		/* Alert is active-low, open-drain */
 		.flags = TCPC_FLAGS_ALERT_OD,
 	},
+#elif defined(VARIANT_GRUNT_TCPC_0_ANX3447)
+	[USB_PD_PORT_ANX74XX] = {
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_TCPC0,
+			.addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
+		},
+		.drv = &anx7447_tcpm_drv,
+		/* Alert is active-low, push-pull */
+		.flags = 0,
+	},
+#endif
 	[USB_PD_PORT_PS8751] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
@@ -118,15 +132,166 @@ void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(port);
 }
 
+void board_tcpc_init(void)
+{
+	int port;
+
+	/* Only reset TCPC if not sysjump */
+	if (!system_jumped_to_this_image())
+		board_reset_pd_mcu();
+
+	/* Enable PPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_SWCTL_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_SWCTL_INT_ODL);
+
+	/* Enable TCPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
+
+#ifdef VARIANT_GRUNT_TCPC_0_ANX3429
+	/* Enable CABLE_DET interrupt for ANX3429 wake from standby */
+	gpio_enable_interrupt(GPIO_USB_C0_CABLE_DET);
+#endif
+	/*
+	 * Initialize HPD to low; after sysjump SOC needs to see
+	 * HPD pulse to enable video path
+	 */
+	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
+		const struct usb_mux *mux = &usb_muxes[port];
+
+		mux->hpd_update(port, 0, 0);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
+
+uint16_t tcpc_get_alert_status(void)
+{
+	uint16_t status = 0;
+
+	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL)) {
+#ifdef VARIANT_GRUNT_TCPC_0_ANX3429
+		if (gpio_get_level(GPIO_USB_C0_PD_RST_L))
+#elif defined(VARIANT_GRUNT_TCPC_0_ANX3447)
+		if (!gpio_get_level(GPIO_USB_C0_PD_RST))
+#endif
+			status |= PD_STATUS_TCPC_ALERT_0;
+	}
+
+	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL)) {
+		if (gpio_get_level(GPIO_USB_C1_PD_RST_L))
+			status |= PD_STATUS_TCPC_ALERT_1;
+	}
+
+	return status;
+}
+
+#ifdef VARIANT_GRUNT_TCPC_0_ANX3429
+static void anx74xx_cable_det_handler(void)
+{
+	int cable_det = gpio_get_level(GPIO_USB_C0_CABLE_DET);
+	int reset_n = gpio_get_level(GPIO_USB_C0_PD_RST_L);
+
+	/*
+	 * A cable_det low->high transition was detected. If following the
+	 * debounce time, cable_det is high, and reset_n is low, then ANX3429 is
+	 * currently in standby mode and needs to be woken up. Set the
+	 * TCPC_RESET event which will bring the ANX3429 out of standby
+	 * mode. Setting this event is gated on reset_n being low because the
+	 * ANX3429 will always set cable_det when transitioning to normal mode
+	 * and if in normal mode, then there is no need to trigger a tcpc reset.
+	 */
+	if (cable_det && !reset_n)
+		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET, 0);
+}
+DECLARE_DEFERRED(anx74xx_cable_det_handler);
+
+void anx74xx_cable_det_interrupt(enum gpio_signal signal)
+{
+	/* debounce for 2 msec */
+	hook_call_deferred(&anx74xx_cable_det_handler_data, (2 * MSEC));
+}
+
+/**
+ * Power on (or off) a single TCPC.
+ * minimum on/off delays are included.
+ *
+ * @param port	Port number of TCPC.
+ * @param mode	0: power off, 1: power on.
+ */
+void board_set_tcpc_power_mode(int port, int mode)
+{
+	if (port != USB_PD_PORT_ANX74XX)
+		return;
+
+	switch (mode) {
+	case ANX74XX_NORMAL_MODE:
+		gpio_set_level(GPIO_EN_USB_C0_TCPC_PWR, 1);
+		msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
+		gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
+		break;
+	case ANX74XX_STANDBY_MODE:
+		gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
+		msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
+		gpio_set_level(GPIO_EN_USB_C0_TCPC_PWR, 0);
+		msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
+		break;
+	default:
+		break;
+	}
+}
+#endif /* VARIANT_GRUNT_TCPC_0_ANX3429 */
+
+void board_reset_pd_mcu(void)
+{
+#ifdef VARIANT_GRUNT_TCPC_0_ANX3429
+	/* Assert reset to TCPC1 (ps8751) */
+	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
+
+	/* Assert reset to TCPC0 (anx3429) */
+	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
+
+	/* TCPC1 (ps8751) requires 1ms reset down assertion */
+	msleep(MAX(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
+
+	/* Deassert reset to TCPC1 */
+	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
+	/* Disable TCPC0 power */
+	gpio_set_level(GPIO_EN_USB_C0_TCPC_PWR, 0);
+
+	/*
+	 * anx3429 requires 10ms reset/power down assertion
+	 */
+	msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
+	board_set_tcpc_power_mode(USB_PD_PORT_ANX74XX, 1);
+#elif defined(VARIANT_GRUNT_TCPC_0_ANX3447)
+	/* Assert reset to TCPC0 (anx3447) */
+	gpio_set_level(GPIO_USB_C0_PD_RST, 1);
+	msleep(ANX74XX_RESET_HOLD_MS);
+	gpio_set_level(GPIO_USB_C0_PD_RST, 0);
+	msleep(ANX74XX_RESET_FINISH_MS);
+
+	/* Assert reset to TCPC1 (ps8751) */
+	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
+	msleep(PS8XXX_RESET_DELAY_MS);
+	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
+#endif
+}
+
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+#ifdef VARIANT_GRUNT_TCPC_0_ANX3429
 	[USB_PD_PORT_ANX74XX] = {
 		.driver = &anx74xx_tcpm_usb_mux_driver,
 		.hpd_update = &anx74xx_tcpc_update_hpd_status,
 	},
+#elif defined(VARIANT_GRUNT_TCPC_0_ANX3447)
+	[USB_PD_PORT_ANX74XX] = {
+		.driver = &anx7447_usb_mux_driver,
+		.hpd_update = &anx7447_tcpc_update_hpd_status,
+	},
+#endif
 	[USB_PD_PORT_PS8751] = {
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-		/* TODO(ecgh): ps8751_tune_mux needed? */
 	}
 };
 
@@ -144,6 +309,13 @@ struct ppc_config_t ppc_chips[] = {
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
+void ppc_interrupt(enum gpio_signal signal)
+{
+	int port = (signal == GPIO_USB_C0_SWCTL_INT_ODL) ? 0 : 1;
+
+	sn5s330_interrupt(port);
+}
+
 int ppc_get_alert_status(int port)
 {
 	if (port == 0)
@@ -152,6 +324,17 @@ int ppc_get_alert_status(int port)
 		return gpio_get_level(GPIO_USB_C1_SWCTL_INT_ODL) == 0;
 }
 
+void board_overcurrent_event(int port, int is_overcurrented)
+{
+	enum gpio_signal signal = (port == 0) ? GPIO_USB_C0_OC_L
+					      : GPIO_USB_C1_OC_L;
+	/* Note that the levels are inverted because the pin is active low. */
+	int lvl = is_overcurrented ? 0 : 1;
+
+	gpio_set_level(signal, lvl);
+
+	CPRINTS("p%d: overcurrent!", port);
+}
 
 /* BC 1.2 chip Configuration */
 const struct max14637_config_t max14637_config[CONFIG_USB_PD_PORT_COUNT] = {

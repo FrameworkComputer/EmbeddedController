@@ -22,7 +22,6 @@ GPIO_INT(AC_PRESENT,		PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	extpower_in
 GPIO_INT(WP_L,			PIN(A, 1), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(VOLUME_DOWN_L,		PIN(7, 0), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(VOLUME_UP_L,		PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
-GPIO_INT(USB_C0_CABLE_DET,	PIN(3, 7), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
 GPIO_INT(6AXIS_INT_L,		PIN(8, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V,	bmi160_interrupt)
 
 /* GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an interrupt handler. */
@@ -68,10 +67,9 @@ GPIO(I2C7_SDA,			PIN(B, 2), GPIO_INPUT | GPIO_SEL_1P8V)		/* EC_I2C_SENSOR_SDA */
 
 GPIO(EN_USB_A0_5V,		PIN(6, 1), GPIO_OUT_LOW)			/* Enable A0 5V Charging */
 GPIO(EN_USB_A1_5V,		PIN(C, 0), GPIO_OUT_LOW)			/* Enable A1 5V Charging */
-GPIO(EN_USB_C0_TCPC_PWR,	PIN(6, 0), GPIO_OUT_LOW)			/* Enable C0 TCPC Power */
 GPIO(USB_C0_OC_L,		PIN(7, 3), GPIO_OUT_HIGH)			/* C0 Over Current */
 GPIO(USB_C1_OC_L,		PIN(7, 2), GPIO_OUT_HIGH)			/* C1 Over Current */
-GPIO(USB_C0_PD_RST_L,		PIN(3, 2), GPIO_OUT_HIGH)			/* C0 PD Reset */
+GPIO(USB_C0_PD_RST,		PIN(3, 2), GPIO_OUT_HIGH)			/* C0 PD Reset */
 GPIO(USB_C1_PD_RST_L,		PIN(D, 5), GPIO_OUT_HIGH)			/* C1 PD Reset */
 GPIO(USB_C0_BC12_VBUS_ON_L,	PIN(4, 0), GPIO_ODR_HIGH)			/* C0 BC1.2 Power */
 GPIO(USB_C1_BC12_VBUS_ON_L,	PIN(B, 1), GPIO_ODR_HIGH | GPIO_PULL_UP)	/* C1 BC1.2 Power */

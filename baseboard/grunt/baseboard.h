@@ -8,6 +8,11 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
+#if (defined(VARIANT_GRUNT_TCPC_0_ANX3429) \
+	+ defined(VARIANT_GRUNT_TCPC_0_ANX3447)) != 1
+#error Must choose VARIANT_GRUNT_TCPC_0_ANX3429 or VARIANT_GRUNT_TCPC_0_ANX3447
+#endif
+
 /* NPCX7 config */
 #define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
 #define NPCX_TACH_SEL2    0  /* No tach. */
@@ -115,7 +120,11 @@
 #define CONFIG_USB_PD_LOGGING
 #define CONFIG_USB_PD_PORT_COUNT 2
 #define CONFIG_USB_PD_TCPC_LOW_POWER
+#ifdef VARIANT_GRUNT_TCPC_0_ANX3429
 #define CONFIG_USB_PD_TCPM_ANX3429
+#elif defined(VARIANT_GRUNT_TCPC_0_ANX3447)
+#define CONFIG_USB_PD_TCPM_ANX7447
+#endif
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TCPM_PS8751
 #define CONFIG_USB_PD_TCPM_TCPCI
@@ -246,6 +255,8 @@ void board_reset_pd_mcu(void);
 
 /* Common definition for the USB PD interrupt handlers. */
 void tcpc_alert_event(enum gpio_signal signal);
+void ppc_interrupt(enum gpio_signal signal);
+void anx74xx_cable_det_interrupt(enum gpio_signal signal);
 
 int board_get_version(void);
 int board_is_convertible(void);
