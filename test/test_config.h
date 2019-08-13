@@ -82,8 +82,14 @@
 #define CONFIG_SHA256
 #endif
 
+#ifdef TEST_MOTION_SENSE_FIFO
+#define CONFIG_ACCEL_FIFO
+#define CONFIG_ACCEL_FIFO_SIZE 256
+#define CONFIG_ACCEL_FIFO_THRES 10
+#endif
+
 #if defined(TEST_MOTION_LID) || defined(TEST_MOTION_ANGLE) || \
-	defined(TEST_MOTION_ANGLE_TABLET)
+	defined(TEST_MOTION_ANGLE_TABLET) || defined(TEST_MOTION_SENSE_FIFO)
 enum sensor_id {
 	BASE,
 	LID,

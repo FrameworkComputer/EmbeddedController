@@ -7,30 +7,14 @@
 #include "hwtimer.h"
 #include "mkbp_event.h"
 #include "motion_sense_fifo.h"
-#include "queue.h"
 #include "tablet_mode.h"
+#include "task.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
 
-static inline int is_timestamp(struct ec_response_motion_sensor_data *data)
-{
-	return data->flags & MOTIONSENSE_SENSOR_FLAG_TIMESTAMP;
-}
-
-/* Need to wake up the AP */
-int wake_up_needed;
-
-/* Number of element the AP should collect */
-int fifo_queue_count;
-int fifo_int_enabled;
-
-struct queue motion_sense_fifo = QUEUE_NULL(
-	CONFIG_ACCEL_FIFO_SIZE, struct ec_response_motion_sensor_data);
-int motion_sense_fifo_lost;
-
 /**
- * Staged metadata for the motion_sense_fifo.
+ * Staged metadata for the fifo queue.
  * @read_ts: The timestamp at which the staged data was read. This value will
  *	serve as the upper bound for spreading
  * @count: The total number of motion_sense_fifo entries that are currently
@@ -46,15 +30,39 @@ struct fifo_staged {
 	uint8_t sample_count[SENSOR_COUNT];
 	uint8_t requires_spreading;
 };
+
+/** Queue to hold the data to be sent to the AP. */
+struct queue fifo = QUEUE_NULL(CONFIG_ACCEL_FIFO_SIZE,
+			       struct ec_response_motion_sensor_data);
+/** Count of the number of entries lost due to a small queue. */
+static int fifo_lost;
+/** Metadata for the fifo, used for staging and spreading data. */
 static struct fifo_staged fifo_staged;
 
-static inline struct ec_response_motion_sensor_data *
-get_motion_sense_fifo_head(void)
+/** Need to wake up the AP. */
+int motion_sense_fifo_wake_up_needed;
+
+/**
+ * Check whether or not a give sensor data entry is a timestamp or not.
+ *
+ * @param data The data entry to check.
+ * @return 1 if the entry is a timestamp, 0 otherwise.
+ */
+static inline int is_timestamp(struct ec_response_motion_sensor_data *data)
 {
-	return ((struct ec_response_motion_sensor_data *)
-		motion_sense_fifo.buffer) +
-	       (motion_sense_fifo.state->head &
-		motion_sense_fifo.unit_bytes);
+	return data->flags & MOTIONSENSE_SENSOR_FLAG_TIMESTAMP;
+}
+
+/**
+ * Convinience function to get the head of the fifo. This function makes no
+ * guarantee on whether or not the entry is valid.
+ *
+ * @return Pointer to the head of the fifo.
+ */
+static inline struct ec_response_motion_sensor_data *get_fifo_head(void)
+{
+	return ((struct ec_response_motion_sensor_data *) fifo.buffer) +
+		(fifo.state->head & fifo.buffer_units_mask);
 }
 
 /**
@@ -69,11 +77,10 @@ get_motion_sense_fifo_head(void)
  * WARNING: This function MUST be called from within a locked context of
  * g_sensor_mutex.
  */
-static void motion_sense_fifo_pop(void)
+static void fifo_pop(void)
 {
-	struct ec_response_motion_sensor_data *head =
-		get_motion_sense_fifo_head();
-	const size_t initial_count = queue_count(&motion_sense_fifo);
+	struct ec_response_motion_sensor_data *head = get_fifo_head();
+	const size_t initial_count = queue_count(&fifo);
 
 	/* Check that we have something to pop. */
 	if (!initial_count && !fifo_staged.count)
@@ -85,13 +92,19 @@ static void motion_sense_fifo_pop(void)
 	 * staged data.
 	 */
 	if (!initial_count)
-		queue_advance_tail(&motion_sense_fifo, 1);
+		queue_advance_tail(&fifo, 1);
 
+	/*
+	 * If we're about to pop a wakeup flag, we should remember it as though
+	 * it was committed.
+	 */
+	if (head->flags & MOTIONSENSE_SENSOR_FLAG_WAKEUP)
+		motion_sense_fifo_wake_up_needed = 1;
 	/*
 	 * By not using queue_remove_unit we're avoiding an un-necessary memcpy.
 	 */
-	queue_advance_head(&motion_sense_fifo, 1);
-	motion_sense_fifo_lost++;
+	queue_advance_head(&fifo, 1);
+	fifo_lost++;
 
 	/* Increment lost counter if we have valid data. */
 	if (!is_timestamp(head))
@@ -127,10 +140,13 @@ static void motion_sense_fifo_pop(void)
 	}
 }
 
-static void motion_sense_fifo_ensure_space(void)
+/**
+ * Make sure that the fifo has at least 1 empty spot to stage data into.
+ */
+static void fifo_ensure_space(void)
 {
 	/* If we already have space just bail. */
-	if (queue_space(&motion_sense_fifo) > fifo_staged.count)
+	if (queue_space(&fifo) > fifo_staged.count)
 		return;
 
 	/*
@@ -145,17 +161,21 @@ static void motion_sense_fifo_ensure_space(void)
 	 * would assign a bad timestamp to it.
 	 */
 	do {
-		motion_sense_fifo_pop();
+		fifo_pop();
 	} while (IS_ENABLED(CONFIG_SENSOR_TIGHT_TIMESTAMPS) &&
-		 !is_timestamp(get_motion_sense_fifo_head()) &&
-		 queue_count(&motion_sense_fifo) + fifo_staged.count);
+		 !is_timestamp(get_fifo_head()) &&
+		 queue_count(&fifo) + fifo_staged.count);
 }
 
-/*
- * Do not use this function directly if you just want to add sensor data, use
- * motion_sense_fifo_stage_data instead to get a proper timestamp too.
+/**
+ * Stage a single data unit to the motion sense fifo. Note that for the AP to
+ * see this data, it must be committed.
+ *
+ * @param data The data to stage.
+ * @param sensor The sensor that generated the data
+ * @param valid_data The number of readable data entries in the data.
  */
-static void motion_sense_fifo_stage_unit(
+void fifo_stage_unit(
 	struct ec_response_motion_sensor_data *data,
 	struct motion_sensor_t *sensor,
 	int valid_data)
@@ -178,29 +198,26 @@ static void motion_sense_fifo_stage_unit(
 		}
 		removed = sensor->oversampling++;
 		sensor->oversampling %= sensor->oversampling_ratio;
-		if (removed != 0) {
+		if (removed) {
 			mutex_unlock(&g_sensor_mutex);
 			return;
 		}
 	}
 
 	/* Make sure we have room for the data */
-	motion_sense_fifo_ensure_space();
+	fifo_ensure_space();
 	mutex_unlock(&g_sensor_mutex);
 
-	if (data->flags & MOTIONSENSE_SENSOR_FLAG_WAKEUP)
-		wake_up_needed = 1;
 	if (IS_ENABLED(CONFIG_TABLET_MODE))
 		data->flags |= (tablet_get_mode() ?
-			MOTIONSENSE_SENSOR_FLAG_TABLET_MODE : 0);
+				MOTIONSENSE_SENSOR_FLAG_TABLET_MODE : 0);
 
 	/*
 	 * Get the next writable block in the fifo. We don't need to lock this
 	 * because it will always be past the tail and thus the AP will never
 	 * read this until motion_sense_fifo_commit_data() is called.
 	 */
-	chunk = queue_get_write_chunk(
-		&motion_sense_fifo, fifo_staged.count);
+	chunk = queue_get_write_chunk(&fifo, fifo_staged.count);
 
 	if (!chunk.buffer) {
 		/*
@@ -220,7 +237,7 @@ static void motion_sense_fifo_stage_unit(
 	 * be written to the next available block and this one will remain
 	 * staged.
 	 */
-	memcpy(chunk.buffer, data, motion_sense_fifo.unit_bytes);
+	memcpy(chunk.buffer, data, fifo.unit_bytes);
 	fifo_staged.count++;
 
 	/*
@@ -235,52 +252,68 @@ static void motion_sense_fifo_stage_unit(
 		fifo_staged.requires_spreading = 1;
 }
 
-void motion_sense_insert_async_event(struct motion_sensor_t *sensor,
-				     enum motion_sense_async_event evt)
-{
-	struct ec_response_motion_sensor_data vector;
-
-	vector.flags = evt;
-	vector.timestamp = __hw_clock_source_read();
-	vector.sensor_num = sensor - motion_sensors;
-
-	motion_sense_fifo_stage_unit(&vector, sensor, 0);
-	motion_sense_fifo_commit_data();
-}
-
-void motion_sense_fifo_stage_timestamp(uint32_t timestamp)
+/**
+ * Stage an entry representing a single timestamp.
+ *
+ * @param timestamp The timestamp to add to the fifo.
+ */
+static void fifo_stage_timestamp(uint32_t timestamp)
 {
 	struct ec_response_motion_sensor_data vector;
 
 	vector.flags = MOTIONSENSE_SENSOR_FLAG_TIMESTAMP;
 	vector.timestamp = timestamp;
 	vector.sensor_num = 0;
-	motion_sense_fifo_stage_unit(&vector, NULL, 0);
+	fifo_stage_unit(&vector, NULL, 0);
 }
 
-void motion_sense_fifo_stage_data(struct ec_response_motion_sensor_data *data,
-				  struct motion_sensor_t *sensor,
-				  int valid_data,
-				  uint32_t time)
+/**
+ * Peek into the staged data at a given offset. This function performs no bound
+ * checking and is purely for confinience.
+ *
+ * @param offset The offset into the staged data to peek into.
+ * @return Pointer to the entry at the given offset.
+ */
+static inline struct ec_response_motion_sensor_data *
+peek_fifo_staged(size_t offset)
+{
+	return (struct ec_response_motion_sensor_data *)
+		queue_get_write_chunk(&fifo, offset).buffer;
+}
+
+void motion_sense_fifo_insert_async_event(
+	struct motion_sensor_t *sensor,
+	enum motion_sense_async_event event)
+{
+	struct ec_response_motion_sensor_data vector;
+
+	vector.flags = event;
+	vector.timestamp = __hw_clock_source_read();
+	vector.sensor_num = sensor - motion_sensors;
+
+	fifo_stage_unit(&vector, sensor, 0);
+	motion_sense_fifo_commit_data();
+}
+
+inline void motion_sense_fifo_add_timestamp(uint32_t timestamp)
+{
+	fifo_stage_timestamp(timestamp);
+	motion_sense_fifo_commit_data();
+}
+
+void motion_sense_fifo_stage_data(
+	struct ec_response_motion_sensor_data *data,
+	struct motion_sensor_t *sensor,
+	int valid_data,
+	uint32_t time)
 {
 	if (IS_ENABLED(CONFIG_SENSOR_TIGHT_TIMESTAMPS)) {
 		/* First entry, save the time for spreading later. */
 		if (!fifo_staged.count)
 			fifo_staged.read_ts = __hw_clock_source_read();
-		motion_sense_fifo_stage_timestamp(time);
+		fifo_stage_timestamp(time);
 	}
-	motion_sense_fifo_stage_unit(data, sensor, valid_data);
-}
-
-/**
- * Peek into the staged data at a given offset. This function performs no bound
- * checking and is purely for convenience.
- */
-static inline struct ec_response_motion_sensor_data *
-motion_sense_peek_fifo_staged(size_t offset)
-{
-	return (struct ec_response_motion_sensor_data *)
-	       queue_get_write_chunk(&motion_sense_fifo, offset).buffer;
+	fifo_stage_unit(data, sensor, valid_data);
 }
 
 void motion_sense_fifo_commit_data(void)
@@ -291,6 +324,7 @@ void motion_sense_fifo_commit_data(void)
 	 */
 	static uint32_t data_periods[SENSOR_COUNT];
 	static uint32_t next_timestamp[SENSOR_COUNT];
+	static uint16_t next_timestamp_initialized;
 	struct ec_response_motion_sensor_data *data;
 	int i, window, sensor_num;
 
@@ -306,7 +340,7 @@ void motion_sense_fifo_commit_data(void)
 	if (!fifo_staged.requires_spreading)
 		goto flush_data_end;
 
-	data = motion_sense_peek_fifo_staged(0);
+	data = peek_fifo_staged(0);
 
 	/*
 	 * Spreading only makes sense if tight timestamps are used. In such case
@@ -316,6 +350,7 @@ void motion_sense_fifo_commit_data(void)
 	 */
 	if (!is_timestamp(data)) {
 		CPRINTS("Spreading skipped, first entry is not a timestamp");
+		fifo_staged.requires_spreading = 0;
 		goto flush_data_end;
 	}
 
@@ -334,14 +369,16 @@ void motion_sense_fifo_commit_data(void)
 		 * Clamp the sample period to the MIN of collection_rate and the
 		 * window length / sample counts.
 		 */
-		if (window)
-			period = MIN(period,
-				     window / fifo_staged.sample_count[i]);
+		if (window && fifo_staged.sample_count[i] > 1)
+			period = MIN(
+				period,
+				window / (fifo_staged.sample_count[i] - 1));
 		data_periods[i] = period;
 	}
 
+flush_data_end:
 	/*
-	 * Spread the timestamps.
+	 * Conditionally spread the timestamps.
 	 *
 	 * If we got this far that means that the tight timestamps config is
 	 * enabled. This means that we can expect the staged entries to have 1
@@ -349,45 +386,58 @@ void motion_sense_fifo_commit_data(void)
 	 * through the timestamps until we get to data. We only need to update
 	 * the timestamp right before it to keep things correct.
 	 */
+	next_timestamp_initialized = 0;
 	for (i = 0; i < fifo_staged.count; i++) {
-		data = motion_sense_peek_fifo_staged(i);
+		data = peek_fifo_staged(i);
+		if (data->flags & MOTIONSENSE_SENSOR_FLAG_WAKEUP)
+			motion_sense_fifo_wake_up_needed = 1;
 
 		/* Skip timestamp, we don't know the sensor number yet. */
-		if (is_timestamp(data))
+		if (is_timestamp(data) || !fifo_staged.requires_spreading)
 			continue;
 
 		/* Get the sensor number and point to the timestamp entry. */
 		sensor_num = data->sensor_num;
-		data = motion_sense_peek_fifo_staged(i - 1);
+		data = peek_fifo_staged(i - 1);
 
-		/* If the timestamp is after our computed next, skip ahead. */
-		if (time_after(data->timestamp, next_timestamp[sensor_num]))
+		/*
+		 * If this is the first time we're seeing a timestamp for this
+		 * sensor or the timestamp is after our computed next, skip
+		 * ahead.
+		 */
+		if (!(next_timestamp_initialized & BIT(sensor_num)) ||
+		    time_after(data->timestamp, next_timestamp[sensor_num])) {
 			next_timestamp[sensor_num] = data->timestamp;
+			next_timestamp_initialized |= BIT(sensor_num);
+		}
 
 		/* Spread the timestamp and compute the expected next. */
 		data->timestamp = next_timestamp[sensor_num];
 		next_timestamp[sensor_num] += data_periods[sensor_num];
 	}
 
-flush_data_end:
 	/* Advance the tail and clear the staged metadata. */
 	mutex_lock(&g_sensor_mutex);
-	queue_advance_tail(&motion_sense_fifo, fifo_staged.count);
+	queue_advance_tail(&fifo, fifo_staged.count);
 	mutex_unlock(&g_sensor_mutex);
 
 	/* Reset metadata for next staging cycle. */
 	memset(&fifo_staged, 0, sizeof(fifo_staged));
 }
 
-void motion_sense_get_fifo_info(
-	struct ec_response_motion_sense_fifo_info *fifo_info)
+void motion_sense_fifo_get_info(
+	struct ec_response_motion_sense_fifo_info *fifo_info,
+	int reset)
 {
-	fifo_info->size = motion_sense_fifo.buffer_units;
+	fifo_info->size = fifo.buffer_units;
 	mutex_lock(&g_sensor_mutex);
-	fifo_info->count = fifo_queue_count;
-	fifo_info->total_lost = motion_sense_fifo_lost;
+	fifo_info->count = queue_count(&fifo);
+	fifo_info->total_lost = fifo_lost;
 	mutex_unlock(&g_sensor_mutex);
 	fifo_info->timestamp = mkbp_last_event_time;
+
+	if (reset)
+		fifo_lost = 0;
 }
 
 static int motion_sense_get_next_event(uint8_t *out)
@@ -395,14 +445,28 @@ static int motion_sense_get_next_event(uint8_t *out)
 	union ec_response_get_next_data *data =
 		(union ec_response_get_next_data *)out;
 	/* out is not padded. It has one byte for the event type */
-	motion_sense_get_fifo_info(&data->sensor_fifo.info);
+	motion_sense_fifo_get_info(&data->sensor_fifo.info, 0);
 	return sizeof(data->sensor_fifo);
 }
 
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_SENSOR_FIFO, motion_sense_get_next_event);
 
-inline int motion_sense_fifo_is_wake_up_needed(void)
+inline int motion_sense_fifo_over_thres(void)
 {
-	return queue_space(&motion_sense_fifo) < CONFIG_ACCEL_FIFO_THRES ||
-		wake_up_needed;
+	return queue_space(&fifo) < CONFIG_ACCEL_FIFO_THRES;
+}
+
+int motion_sense_fifo_read(int capacity_bytes, int max_count, void *out,
+			   uint16_t *out_size)
+{
+	int count;
+
+	mutex_lock(&g_sensor_mutex);
+	count = MIN(capacity_bytes / fifo.unit_bytes,
+		    MIN(queue_count(&fifo), max_count));
+	count = queue_remove_units(&fifo, out, count);
+	mutex_unlock(&g_sensor_mutex);
+	*out_size = count * fifo.unit_bytes;
+
+	return count;
 }
