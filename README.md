@@ -45,6 +45,9 @@ running on several different MCUs on Chrome OS devices with various tweaks
 confusing, so try to be specific and use terms like FPMCU to distinguish the
 fingerprint MCU from "the EC".
 
+See the [EC Acronyms and Technologies](./docs/ec_terms.md) for a more complete
+glossary.
+
 ## Getting the EC code
 
 The code for the EC is open source and is included in the Chromium OS

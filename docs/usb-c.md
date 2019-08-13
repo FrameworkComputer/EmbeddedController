@@ -25,10 +25,12 @@ Modes in the EC codebase.
 
 ## Glossary
 
-*   PD{#pd}
+*   PD {#pd}
     *   Power Delivery. Protocol over USB-C connector that allows up to 100W of
-        power. Not supported on USB-A or USB-B connectors.
-*   TCPC{#tcpc}
+        power. Not supported on USB-A or USB-B connectors. A good overview of
+        USB PD is found in the [Introduction to USB Power Delivery] application
+        note.
+*   TCPC {#tcpc}
     *   Type-C Port Controller. Typically a separate IC connected through I2C,
         sometimes embedded within the EC as a hardware sub module. The TCPC
         interprets physical layer signals on CC lines and Vbus, and sends that
@@ -37,34 +39,39 @@ Modes in the EC codebase.
         that communicated with the main EC (also running this codebase), which
         acted as the TCPM. More info in the official
         [TCPC spec][USB TCPM Spec Id].
-*   TCPM{#tcpm}
+*   TCPM {#tcpm}
     *   Type-C Port Manager. Manages the state of the USB-C connection. Makes
         decisions about what state to transition to. This is the code running on
         the EC itself.
-*   PE
+*   PE {#pe}
     *   Policy Engine. According to the [TypeC spec][USB TC Spec Id], the policy
         engine is the state machine that decides how the USB-C connection
         progresses through different states and which USB-C PD features are
         available, such as Try.SRC
-*   TC
+*   TC {#tc}
     *   Type-C physical layer.
-*   PPC{#ppc}
+*   PPC {#ppc}
     *   Power Path Controller. An optional, separate IC that isolates various
         USB-C signals from each other and the rest of the board. This IC should
         prevent shorts and over current/voltage scenarios for Vbus. Some PPCs
         will protect signals other than Vbus as well.
-*   SSMUX
+*   SSMUX {#ssmux}
     *   SuperSpeed Mux. This is typically the same IC as the TCPC; it enables
         the mirrored orientation of the USB-C cable to go to the correct pins on
         SoC. Also, allows the SuperSpeed signal to be used for different
         purposes, such as USB data or DisplayPort.
-*   DRP
+*   SVDM {#svdm}
+    *   Structured Vendor Defined Messages are a class of [USB PD](#pd) messages
+        to enable non-power related communication between port partners. SVDMs
+        are used to negotiate and set the display port mode on a USB-C
+        connection.
+*   DRP {#drp}
     *   Dual Role Power Port. A USB-C port that can act as either a power Source
         or power Sink.
-*   UFP
+*   UFP {#ufp}
     *   Upstream Facing Port. The USB data role that is typical for a peripheral
         (e.g. HID keyboard).
-*   DFP
+*   DFP {#dfp}
     *   Downstream Facing Port. The USB Data role that is typical for a host
         machine (e.g. device running ChromeOS).
 
@@ -187,14 +194,15 @@ full descriptions see [config.h][config header link]
 
 ## Interactions with other tasks
 
-TODO(crbug.com/974302): mention `USB_CHG_P#` and `CHARGER`
+TODO(https://crbug.com/974302): mention `USB_CHG_P#` and `CHARGER`
 
 ## Upgrading FW for TCPCs
 
-TODO(crbug.com/974302): Mention how this works even though it is in depthcharge.
+TODO(https://crbug.com/974302): Mention how this works even though it is in depthcharge.
 Probing now. Need new driver in depthcharge
 
 [USB PD Spec Id]: https://www.usb.org/document-library/usb-power-delivery
+[Introduction to USB Power Delivery]: https://www.microchip.com/wwwAppNotes/AppNotes.aspx?appnote=en575003
 [USB TCPM Spec Id]: https://www.usb.org/document-library/usb-type-ctm-port-controller-interface-specification
 [USB TC Spec Id]: https://www.usb.org/document-library/usb-type-ctm-cable-and-connector-specification-revision-14-march-29-2019
 [config header link]: ../include/config.h

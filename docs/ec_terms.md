@@ -1,6 +1,10 @@
 # EC Acronyms and Technologies
 
 ## Glossary
+*   **8042 Interface**{#8042}
+
+    Interface for sending keyboard events to the [AP](#ap) and for receiving
+    commands from the AP. Only supported by x86 based APs.
 
 *   **ACCEL - Accelerometer**{#accel}
 
@@ -109,6 +113,20 @@
     Also contains multiple peripheral interfaces, including GPIO, I2C buses, SPI
     buses, ADC, PWM, etc.
 
+*   **MKBP - Matrix Keyboard Protocol**{#mkbp}
+
+    Message based protocol for communicating asynchronous events from the
+    [EC](#ec) to the [AP](#ap). Events are not limited to keyboard events with
+    the sensor subsystem as one of the main users. An EC board implementation
+    can be configured to send keyboard events through MKBP or using the [8042
+    interface](#8042). This is the [EC MKBP driver] implementation.
+
+*   **MST - Multi Stream Transport**{#mst}
+
+    Part of the Display Port 1.2 standard, used to drive multiple independent
+    video streams from a single display port. The EC code is typically
+    responsible for enabling and disabling the MST hub chipset.
+
 *   **PD - USB Power Delivery**{#pd}
 
     See the [USB-C documentation](./usb-c.md#pd) for more details.
@@ -137,6 +155,10 @@
     more bytes on the MISO signal, and de-assertion of the chip select.  The
     contents of a SPI frame varies based on the SPI slave type.
 
+*   **SVDM - Structured Vendor Defined Messages**{#svdm}
+
+    See the [USB-C documentation](./usb-c.md#svdm) for more details.
+
 *   **TCPC - USB Type-C Port Controller**{#tcpc}
 
     See the [USB-C documentation](./usb-c.md#tcpc) for more details.
@@ -157,3 +179,4 @@
 [eSPI Specification]: <https://www.intel.com/content/dam/support/us/en/documents/software/chipset-software/327432-004_espi_base_specification_rev1.0.pdf>
 [I2C Specification]: <https://www.nxp.com/docs/en/user-guide/UM10204.pdf>
 [RS-232]: <https://en.wikipedia.org/wiki/RS-232>
+[EC MKBP driver]: <https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/common/keyboard_mkbp.c>
