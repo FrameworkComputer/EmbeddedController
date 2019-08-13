@@ -43,21 +43,21 @@
 		if (!((a) op (b))) { \
 			ccprintf("%d: ASSERSION failed: %s " #op " %s\n", \
 				 __LINE__, #a, #b); \
-			ccprintf("\t\tEVAL: " #fmt " " #op " " #fmt "\n", \
+			ccprintf("\t\tEVAL: " fmt " " #op " " fmt "\n", \
 				 (a), (b)); \
 			task_dump_trace(); \
 			return EC_ERROR_UNKNOWN; \
 		} \
 	} while (0)
 
-#define TEST_EQ(a, b) TEST_OPERATOR(a, b, ==, %d)
-#define TEST_NE(a, b) TEST_OPERATOR(a, b, !=, %d)
-#define TEST_BITS_SET(a, bits) TEST_OPERATOR(a & bits, bits, ==, %u)
-#define TEST_BITS_CLEARED(a, bits) TEST_OPERATOR(a & bits, 0, ==, %u)
+#define TEST_EQ(a, b, fmt) TEST_OPERATOR(a, b, ==, fmt)
+#define TEST_NE(a, b, fmt) TEST_OPERATOR(a, b, !=, fmt)
+#define TEST_BITS_SET(a, bits) TEST_OPERATOR(a & bits, bits, ==, "%u")
+#define TEST_BITS_CLEARED(a, bits) TEST_OPERATOR(a & bits, 0, ==, "%u")
 
 #define __ABS(n) ((n) > 0 ? (n) : -(n))
 
-#define TEST_ASSERT_ABS_LESS(n, t) TEST_OPERATOR(__ABS(n), t, <, %d)
+#define TEST_ASSERT_ABS_LESS(n, t) TEST_OPERATOR(__ABS(n), t, <, "%d")
 
 #define TEST_ASSERT_ARRAY_EQ(s, d, n) \
 	do { \
