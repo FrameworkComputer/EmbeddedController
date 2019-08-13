@@ -73,6 +73,10 @@
 #define CONFIG_THROTTLE_AP
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
 
+/* DPTF */
+#define CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR
+#define CONFIG_DPTF_MULTI_PROFILE
+
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
