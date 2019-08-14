@@ -130,7 +130,7 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 	{
 		.name = "mux",
-		.port = I2C_PORT_MUX,
+		.port = I2C_PORT_USB_MUX,
 		.kbps = 400,
 		.scl = GPIO_EC_I2C_USBC_AP_MUX_SCL,
 		.sda = GPIO_EC_I2C_USBC_AP_MUX_SDA,
@@ -458,8 +458,7 @@ void bc12_interrupt(enum gpio_signal signal)
 
 struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.driver = &amd_fp5_usb_mux_driver,
 	},
 	[USBC_PORT_C1] = {
 		.driver = &tcpci_tcpm_usb_mux_driver,
