@@ -6,6 +6,7 @@
 /* Shared USB-C policy for Zork boards */
 
 #include "charge_manager.h"
+#include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
@@ -46,34 +47,31 @@ int pd_board_checks(void)
 
 int pd_check_data_swap(int port, int data_role)
 {
-	/*
-	 * Allow data swap if we are a UFP, otherwise don't allow.
-	 *
-	 * When we are still in the Read-Only firmware, avoid swapping roles
-	 * so we don't jump in RW as a SNK/DFP and potentially confuse the
-	 * power supply by sending a soft-reset with wrong data role.
-	 */
-	return (data_role == PD_ROLE_UFP) &&
-	       (system_get_image_copy() != SYSTEM_IMAGE_RO) ? 1 : 0;
+	/* Allow data swap if we are a UFP, otherwise don't allow. */
+	return (data_role == PD_ROLE_UFP);
 }
 
 void pd_check_dr_role(int port, int dr_role, int flags)
 {
 	/* If UFP, try to switch to DFP */
 	if ((flags & PD_FLAGS_PARTNER_DR_DATA) &&
-			dr_role == PD_ROLE_UFP &&
-			system_get_image_copy() != SYSTEM_IMAGE_RO)
+			dr_role == PD_ROLE_UFP)
 		pd_request_data_swap(port);
 }
 
 int pd_check_power_swap(int port)
 {
 	/*
-	 * Allow power swap as long as we are acting as a dual role device,
-	 * otherwise assume our role is fixed (not in S0 or console command
-	 * to fix our role).
+	 * Allow power swap if we are acting as a dual role device.  If we are
+	 * not acting as dual role (ex. suspended), then only allow power swap
+	 * if we are sourcing when we could be sinking.
 	 */
-	return pd_get_dual_role(port) == PD_DRP_TOGGLE_ON ? 1 : 0;
+	if (pd_get_dual_role(port) == PD_DRP_TOGGLE_ON)
+		return 1;
+	else if (pd_get_role(port) == PD_ROLE_SOURCE)
+		return 1;
+	else
+		return 0;
 }
 
 void pd_check_pr_role(int port, int pr_role, int flags)
@@ -261,6 +259,21 @@ static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 {
 	dp_flags[port] = 0;
 	dp_status[port] = 0;
+
+	/*
+	 * Don't enter the mode if the SoC is off.
+	 *
+	 * There's no need to enter the mode while the SoC is off; we'll
+	 * actually enter the mode on the chipset resume hook.  Entering DP Alt
+	 * Mode twice will confuse some monitors and require an unplug/replug
+	 * to get them to work again.  The DP Alt Mode on USB-C spec says that
+	 * if we don't need to maintain HPD connectivity info in a low power
+	 * mode, then we shall exit DP Alt Mode.  (This is why we don't enter
+	 * when the SoC is off as opposed to suspend where adding a display
+	 * could cause a wake up.)
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return -1;
 
 	/* Only enter mode if device is DFP_D capable */
 	if (mode_caps & MODE_DP_SNK)
