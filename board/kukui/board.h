@@ -35,6 +35,11 @@
 #define DEDICATED_CHARGE_PORT 1
 #endif /* BOARD_KRANE */
 
+#ifdef BOARD_KUKUI
+/* kukui doesn't have BC12_DET_EN pin */
+#undef CONFIG_CHARGER_MT6370_BC12_GPIO
+#endif
+
 /* Motion Sensors */
 #ifdef SECTION_IS_RW
 #ifndef BOARD_KRANE
