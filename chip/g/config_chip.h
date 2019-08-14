@@ -102,7 +102,7 @@
  * use these two areas for the same thing, it's just more convenient to make
  * them the same size.
  */
-#define CFG_TOP_SIZE  0x3800
+#define CFG_TOP_SIZE  0x3000
 #define CFG_TOP_A_OFF (CFG_FLASH_HALF - CFG_TOP_SIZE)
 #define CFG_TOP_B_OFF (CONFIG_FLASH_SIZE - CFG_TOP_SIZE)
 
