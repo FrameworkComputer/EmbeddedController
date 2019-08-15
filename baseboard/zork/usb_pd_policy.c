@@ -350,7 +350,7 @@ static int svdm_dp_config(int port, uint32_t *payload)
  */
 static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_COUNT];
 
-#define PORT_TO_HPD(port) ((port) ? GPIO_USB_C1_DP_HPD : GPIO_USB_C0_DP_HPD)
+#define PORT_TO_HPD(port) ((port) ? GPIO_DP2_HPD : GPIO_USB_C0_HPD)
 static void svdm_dp_post_config(int port)
 {
 	const struct usb_mux * const mux = &usb_muxes[port];
