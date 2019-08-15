@@ -188,6 +188,9 @@ static struct pd_protocol {
 	/* status of last transmit */
 	uint8_t tx_status;
 
+	/* Last received */
+	uint8_t last_msg_id;
+
 	/* last requested voltage PDO index */
 	int requested_idx;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -642,6 +645,48 @@ static void pd_update_saved_port_flags(int port, uint8_t flag, uint8_t val)
 #endif /* defined(CONFIG_USB_PD_DUAL_ROLE) */
 
 /**
+ * Invalidate last message received at the port when the port gets disconnected
+ * or reset(soft/hard). This is used to identify and handle the duplicate
+ * messages.
+ *
+ * @param port USB PD TCPC port number
+ */
+static void invalidate_last_message_id(int port)
+{
+	/*
+	 * Message id starts from 0 to 7. If last_msg_id is initialized to 0,
+	 * it will lead to repetitive message id with first received packet,
+	 * so initialize it with an invalid value 0xff.
+	 */
+	pd[port].last_msg_id = 0xff;
+}
+
+/**
+ * Identify and drop any duplicate messages received at the port.
+ *
+ * @param port USB PD TCPC port number
+ * @param msg_header Message Header containing the RX message ID
+ * @return 1 if the received message is a duplicate one, 0 otherwise.
+ */
+static int consume_repeat_message(int port, uint16_t msg_header)
+{
+	uint8_t msg_id = PD_HEADER_ID(msg_header);
+
+	/* If repeat message ignore, except softreset control request. */
+	if (PD_HEADER_TYPE(msg_header) == PD_CTRL_SOFT_RESET &&
+	    PD_HEADER_CNT(msg_header) == 0) {
+		return 0;
+	} else if (pd[port].last_msg_id != msg_id) {
+		pd[port].last_msg_id = msg_id;
+	} else if (pd[port].last_msg_id == msg_id) {
+		CPRINTF("C%d Repeat msg_id %d\n", port, msg_id);
+		return 1;
+	}
+
+	return 0;
+}
+
+/**
  * Returns true if the port is currently in the try src state.
  */
 static inline int is_try_src(int port)
@@ -778,14 +823,8 @@ static inline void set_state(int port, enum pd_states next_state)
 		/* Disable TCPC RX */
 		tcpm_set_rx_enable(port, 0);
 
-#ifdef CONFIG_USB_PD_TCPC
-		/*
-		 * Invalidate message IDs for PD_TCPC only, since off-board
-		 * TCPCs will automatically perform message id de-dup logic
-		 * without manual intervention.
-		 */
+		/* Invalidate message IDs. */
 		invalidate_last_message_id(port);
-#endif /* CONFIG_USB_PD_TCPC */
 #ifdef CONFIG_COMMON_RUNTIME
 		/* detect USB PD cc disconnect */
 		hook_notify(HOOK_USB_PD_DISCONNECT);
@@ -1336,6 +1375,7 @@ void pd_execute_hard_reset(int port)
 		CPRINTF("C%d HARD RST RX\n", port);
 
 	pd[port].msg_id = 0;
+	invalidate_last_message_id(port);
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 	pd_dfp_exit_mode(port, 0, 0);
 #endif
@@ -1400,6 +1440,7 @@ void pd_execute_hard_reset(int port)
 static void execute_soft_reset(int port)
 {
 	pd[port].msg_id = 0;
+	invalidate_last_message_id(port);
 	set_state(port, DUAL_ROLE_IF_ELSE(port, PD_STATE_SNK_DISCOVERY,
 						PD_STATE_SRC_DISCOVERY));
 	CPRINTF("C%d Soft Rst\n", port);
@@ -2843,6 +2884,7 @@ void pd_task(void *u)
 
 	/* Initialize TCPM driver and wait for TCPC to be ready */
 	res = reset_device_and_notify(port);
+	invalidate_last_message_id(port);
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	pd_partner_port_reset(port);
@@ -3121,16 +3163,10 @@ void pd_task(void *u)
 		/* process any potential incoming message */
 		incoming_packet = tcpm_has_pending_message(port);
 		if (incoming_packet) {
-			/*
-			 * Dequeue and consume duplicate message ID for PD_TCPC
-			 * only, since off-board TCPCs will automatically
-			 * perform this de-dup logic before notifying the EC.
-			 */
+			/* Dequeue and consume duplicate message ID. */
 			if (tcpm_dequeue_message(port, payload, &head) ==
 								EC_SUCCESS
-#ifdef CONFIG_USB_PD_TCPC
 			    && !consume_repeat_message(port, head)
-#endif
 			   )
 				handle_request(port, head, payload);
 
