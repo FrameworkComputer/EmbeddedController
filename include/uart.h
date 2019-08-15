@@ -48,13 +48,22 @@ int uart_putc(int c);
 int uart_puts(const char *outstr);
 
 /**
- * Put byte stream to the UART
+ * Put byte stream to the UART while translating '\n' to '\r\n'
  *
  * @param out		Pointer to data to send
  * @param len		Length of transfer in bytes
  * @return EC_SUCCESS, or non-zero if output was truncated.
  */
 int uart_put(const char *out, int len);
+
+/**
+ * Put raw byte stream to the UART
+ *
+ * @param out		Pointer to data to send
+ * @param len		Length of transfer in bytes
+ * @return EC_SUCCESS, or non-zero if output was truncated.
+ */
+int uart_put_raw(const char *out, int len);
 
 /**
  * Print formatted output to the UART, like printf().
