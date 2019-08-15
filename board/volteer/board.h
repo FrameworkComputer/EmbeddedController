@@ -14,9 +14,10 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
+#define CONFIG_POWER_BUTTON
+
 /* Config options automatically enabled by NPCX, re-enable once support added */
 #undef CONFIG_ADC
-#undef CONFIG_SWITCH
 
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
@@ -41,8 +42,13 @@
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
+#define GPIO_AC_PRESENT		GPIO_ACOK_OD
 #define GPIO_ENTERING_RW	GPIO_EC_ENTERING_RW
 #define GPIO_LID_OPEN		GPIO_EC_LID_OPEN
+#define GPIO_PCH_WAKE_L		GPIO_EC_PCH_WAKE_ODL
+#define GPIO_PCH_PWRBTN_L	GPIO_EC_PCH_PWR_BTN_ODL
+#define GPIO_POWER_BUTTON_L	GPIO_H1_EC_PWR_BTN_ODL
+#define GPIO_SYS_RESET_L	GPIO_EC_RST_ODL
 #define GPIO_WP_L		GPIO_EC_WP_L
 
 

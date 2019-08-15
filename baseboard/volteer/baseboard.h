@@ -25,8 +25,20 @@
 #define CONFIG_VSTORE_SLOT_COUNT 1
 
 /* Host communication */
+#define CONFIG_HOSTCMD_ESPI
 
 /* Chipset config */
+/* TODO - replace with TigerLake once the changes land */
+#define CONFIG_CHIPSET_ICELAKE
+#define CONFIG_CHIPSET_RESET_HOOK
+#define CONFIG_CPU_PROCHOT_ACTIVE_LOW
+#define CONFIG_EXTPOWER_GPIO
+#define CONFIG_POWER_BUTTON
+#define CONFIG_POWER_BUTTON_X86
+#define CONFIG_POWER_COMMON
+#define CONFIG_POWER_S0IX
+#define CONFIG_POWER_S0IX_FAILURE_DETECTION
+#define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 
 /* Common Keyboard Defines */
 

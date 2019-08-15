@@ -6,9 +6,11 @@
 /* Volteer board-specific configuration */
 
 #include "common.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "lid_switch.h"
+#include "power_button.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
