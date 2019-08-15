@@ -424,9 +424,6 @@ void tpm_register_put(uint32_t regaddr, const uint8_t *data, uint32_t data_size)
 {
 	uint32_t i;
 
-	if (reset_in_progress)
-		return;
-
 	CPRINTF("%s(0x%03x, %d,", __func__, regaddr, data_size);
 	for (i = 0; i < data_size && i < 4; i++)
 		CPRINTF(" %02x", data[i]);
@@ -497,6 +494,8 @@ static void fifo_reg_read(uint8_t *dest, uint32_t data_size)
 void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 {
 	int i;
+
+	reset_in_progress = 0;
 
 	CPRINTF("%s(0x%06x, %d)", __func__, regaddr, data_size);
 	switch (regaddr) {
@@ -889,8 +888,6 @@ static void tpm_reset_now(int wipe_first)
 	 * do not stay disabled for more than 3 seconds.
 	 */
 	hook_call_deferred(&reinstate_nvmem_commits_data, 3 * SECOND);
-
-	reset_in_progress = 0;
 
 	/*
 	 * In chip factory mode SPI idle byte sent on MISO is used for
