@@ -83,8 +83,11 @@ Right now platform/ec has two different implementations of USB-C PD stack.
     [`usb_pd_protocol.c`](../common/usb_pd_protocol.c)
 2.  The newer implementation is broken up into multiple different files and
     state machines
-    *   Policy engine state machine files, such as `usb_pe_*_sm.c`.
-    *   Type-C physical layer state machine: `usb_tc_sm.c`
+    *   Policy engine state machine files, `usb_pe_*_sm.c`.
+    *   Protocol engine state machine file, `usb_prl_sm.c`.
+    *   State machine manager file, `usb_sm.c`.
+    *   Type-C physical layer state machine files, `usb_tc_*_sm.c`.
+    *   USB-C PD Task file, `usbc_task.c`.
 
 The older implementation supports firmware for device types other than
 Chromebooks. For example, the older stack supports the Zinger, which is the
@@ -106,7 +109,7 @@ In both older and newer implementations, the following details apply:
     *   The `PD_C#` task runs the state machine (old or new) for the port and
         communicates with the TCPC, MUX, and PPC. This task needs a large task
         stack.
-    *   The `PD_INT_C#` tasks runs at a higher priority than the state machine
+    *   The `PD_INT_C#` tasks run at a higher priority than the state machine
         task, and its sole job is to receive interrupts from the TCPC as quickly
         as possible then send appropriate messages to other tasks (including
         `PD_C#`). This task shouldn't need much stack space, but the i2c
