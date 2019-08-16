@@ -28,6 +28,7 @@
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
 #define CONFIG_EXTPOWER_GPIO
+#define CONFIG_LTO
 
 /* All data won't fit in data RAM.  So, moving boundary slightly. */
 #undef CONFIG_RO_SIZE
