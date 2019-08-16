@@ -42,6 +42,10 @@ changed=$(echo "${changed}" | grep -v util/uart_stress_tester.py)
 changed=$(echo "${changed}" | grep -v util/presubmit_check.sh)
 # Filter out the OWNERS file.
 changed=$(echo "${changed}" | grep -v OWNERS)
+# Filter out the README.md file.
+changed=$(echo "${changed}" | grep -v README.md)
+# Filter out the navbar.md file.
+changed=$(echo "${changed}" | grep -v navbar.md)
 # Filter out markdown docs/ directory
 changed=$(echo "${changed}" | grep -v docs/)
 if [[ -n "${changed}" ]]; then
