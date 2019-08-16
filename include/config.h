@@ -3265,17 +3265,17 @@
 #undef CONFIG_TABLET_MODE_SWITCH
 
 /*
- * Config to identify what devices have hall sensor. If a board selects
- * this config, it also needs to provide HALL_SENSOR_GPIO_L and direct its
- * interrupt to hall_sensor_isr.
+ * Config to identify what devices use GMR sensor to detect tablet mode. If a
+ * board selects this config, it also needs to provide GMR_TABLET_MODE_GPIO_L
+ * and direct its interrupt to gmr_tablet_switch_isr.
  */
-#undef CONFIG_HALL_SENSOR
+#undef CONFIG_GMR_TABLET_MODE
 
 /*
- * Board provides board_sensor_at_360 method instead of HALL_SENSOR_GPIO_L as
- * the means for determining the state of the 360 hall sensor.
+ * Board provides board_sensor_at_360 method instead of GMR_TABLET_MODE_GPIO_L
+ * as the means for determining the state of the flipped-360-degree mode.
  */
-#undef CONFIG_HALL_SENSOR_CUSTOM
+#undef CONFIG_GMR_TABLET_MODE_CUSTOM
 
 /*
  * Add a virtual switch to indicate when detachable device has
@@ -3442,10 +3442,10 @@
 
 /*
  * If defined, this indicates to the motion lid driver that the board does not
- * have any hall sensor and hence DPTF profile selection is required to be done
+ * have any GMR sensor and hence DPTF profile selection is required to be done
  * based on lid angle.
  */
-#undef CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR
+#undef CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR
 
 /*
  * If defined, device supports multiple DPTF profiles depending upon device mode

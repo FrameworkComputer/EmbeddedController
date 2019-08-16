@@ -38,7 +38,7 @@ GPIO_INT(ESPI_RESET_L, 	 PIN(D, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, espi_reset
 #endif
 
 /* Other interrupts */
-GPIO_INT(TABLET_MODE_L,		PIN(H, 4), GPIO_INT_BOTH, hall_sensor_isr)
+GPIO_INT(TABLET_MODE_L,		PIN(H, 4), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 GPIO_INT(EC_VOLDN_BTN_ODL,	PIN(D, 6), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,	PIN(D, 5), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(BASE_SIXAXIS_INT_L,	PIN(J, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi160_interrupt)

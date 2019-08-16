@@ -267,7 +267,7 @@ remove:
 # Remove nonesense hook paths that come from the general hook_notify above (Note: these are not a comprehensive list, but a list of
 # paths that came up as longest during analysis
 # These functions do not call HOOK_INIT
-- [ [ s0ix_transition, charger_task, power_button_change_deferred, jump_to_image, tablet_set_mode, pd_set_suspend, set_state, extpower_deferred, lid_switch_open, lid_switch_close, espi_chipset_reset, lpc_chipset_reset ], hook_notify, [ usb_charger_init, baseboard_tcpc_init, motion_sense_startup, hall_sensor_init, powerbtn_x86_init, cbi_init  ] ]
+- [ [ s0ix_transition, charger_task, power_button_change_deferred, jump_to_image, tablet_set_mode, pd_set_suspend, set_state, extpower_deferred, lid_switch_open, lid_switch_close, espi_chipset_reset, lpc_chipset_reset ], hook_notify, [ usb_charger_init, baseboard_tcpc_init, motion_sense_startup, gmr_tablet_switch_init, powerbtn_x86_init, cbi_init  ] ]
 # These functions do not call HOOK_CHIPSET_SHUTDOWN
 - [ [ s0ix_transition, charger_task, power_button_change_deferred, jump_to_image, tablet_set_mode, pd_set_suspend, set_state, extpower_deferred, lid_switch_open, lid_switch_close, hook_task, espi_chipset_reset, lpc_chipset_reset ], hook_notify, [ system_common_shutdown, motion_sense_shutdown, board_disable_a1_redriver ] ]
 # These functions do not call HOOK_LID_CHANGE

@@ -207,7 +207,7 @@ static int lid_angle_set_tablet_mode_threshold(int angle, int hys)
 #endif /* CONFIG_TABLET_MODE */
 
 #if defined(CONFIG_DPTF_MULTI_PROFILE) && \
-	defined(CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR)
+	defined(CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR)
 
 /*
  * If CONFIG_DPTF_MULTI_PROFILE is defined by a board, then lid motion driver
@@ -264,7 +264,7 @@ static void motion_lid_set_dptf_profile(int reliable)
 	debounce_cnt = DPTF_MODE_DEBOUNCE_COUNT;
 }
 
-#endif /* CONFIG_DPTF_MULTI_PROFILE && CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR */
+#endif /* CONFIG_DPTF_MULTI_PROFILE && CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR */
 
 /**
  * Calculate the lid angle using two acceleration vectors, one recorded in
@@ -458,9 +458,9 @@ end_calculate_lid_angle:
 		motion_lid_set_tablet_mode(reliable);
 
 #if defined(CONFIG_DPTF_MULTI_PROFILE) && \
-	defined(CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR)
+	defined(CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR)
 	motion_lid_set_dptf_profile(reliable);
-#endif /* CONFIG_DPTF_MULTI_PROFILE && CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR */
+#endif /* CONFIG_DPTF_MULTI_PROFILE && CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR */
 
 #else    /* CONFIG_TABLET_MODE */
 end_calculate_lid_angle:

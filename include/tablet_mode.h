@@ -26,26 +26,26 @@ void tablet_set_mode(int mode);
 void tablet_disable(void);
 
 /**
- * Interrupt service routine for hall sensor.
+ * Interrupt service routine for gmr sensor.
  *
- * HALL_SENSOR_GPIO_L must be defined.
+ * GMR_TABLET_MODE_GPIO_L must be defined.
  *
  * @param signal: GPIO signal
  */
-void hall_sensor_isr(enum gpio_signal signal);
+void gmr_tablet_switch_isr(enum gpio_signal signal);
 
 /**
- * Disables the interrupt on GPIO connected to hall sensor. Additionally, it
- * disables the tablet mode switch sub-system and turns off tablet mode. This is
- * useful when the same firmware is shared between convertible and clamshell
- * devices to turn off hall sensor and tablet mode detection on clamshell.
+ * Disables the interrupt on GPIO connected to gmr sensor. Additionally, it
+ * disables the tablet mode switch sub-system and turns off tablet mode. This
+ * is useful when the same firmware is shared between convertible and clamshell
+ * devices to turn off gmr sensor's tablet mode detection on clamshell.
  */
-void hall_sensor_disable(void);
+void gmr_tablet_switch_disable(void);
 
 /**
- * This must be defined when CONFIG_HALL_SENSOR_CUSTOM is defined. This allows
- * a board to override the default behavior that determines if the 360 sensor is
- * active: !gpio_get_level(HALL_SENSOR_GPIO_L).
+ * This must be defined when CONFIG_GMR_TABLET_MODE_CUSTOM is defined. This
+ * allows a board to override the default behavior that determines if the
+ * 360 sensor is active: !gpio_get_level(GMR_TABLET_MODE_GPIO_L).
  *
  * Returns 1 if the 360 sensor is active; otherwise 0.
  */

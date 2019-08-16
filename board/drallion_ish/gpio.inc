@@ -7,7 +7,7 @@
 
 GPIO_INT(ACCEL_GYRO_INT_L,	PIN(0), GPIO_INT_FALLING, lsm6dsm_interrupt)
 GPIO_INT(LID_OPEN,		PIN(5), GPIO_INT_BOTH, lid_interrupt)   /* LID_CL_NB_L */
-GPIO_INT(TABLET_MODE_L,		PIN(6), GPIO_INT_BOTH, hall_sensor_isr) /* LID_CL_TAB_L */
+GPIO_INT(TABLET_MODE_L,		PIN(6), GPIO_INT_BOTH, gmr_tablet_switch_isr) /* LID_CL_TAB_L */
 
 GPIO(NB_MODE_L,			PIN(4), GPIO_OUT_LOW)
 

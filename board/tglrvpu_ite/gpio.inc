@@ -40,7 +40,7 @@ GPIO_INT(WP_L,		PIN(I, 4), GPIO_INT_BOTH, switch_interrupt)		/* EC_WP_ODL */
 GPIO_INT(ESPI_RESET_L,	PIN(D, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, espi_reset_pin_asserted_interrupt) /* eSPI_reset# */
 #endif
 
-GPIO_INT(TABLET_MODE_L,	PIN(K, 1), GPIO_INT_BOTH, hall_sensor_isr)
+GPIO_INT(TABLET_MODE_L,	PIN(K, 1), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 
 /* DC Jack presence coming from +VADP_OUT */
 GPIO_INT(DC_JACK_PRESENT,	PIN(J, 2), GPIO_INT_BOTH, board_dc_jack_interrupt)

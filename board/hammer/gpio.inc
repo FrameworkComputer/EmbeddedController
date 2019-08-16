@@ -12,9 +12,9 @@
 #ifndef HAS_NO_TOUCHPAD
 GPIO_INT(TOUCHPAD_INT, PIN(B, 8), GPIO_INT_FALLING, touchpad_interrupt)
 #endif /* !HAS_NO_TOUCHPAD */
-#ifdef CONFIG_HALL_SENSOR
-GPIO_INT(TABLET_MODE_L, PIN(B, 11), GPIO_PULL_UP | GPIO_INT_BOTH, hall_sensor_isr)
-#endif /* CONFIG_HALL_SENSOR */
+#ifdef CONFIG_GMR_TABLET_MODE
+GPIO_INT(TABLET_MODE_L, PIN(B, 11), GPIO_PULL_UP | GPIO_INT_BOTH, gmr_tablet_switch_isr)
+#endif /* CONFIG_GMR_TABLET_MODE */
 #endif /* SECTION_IS_RW */
 
 /* Keyboard inputs */

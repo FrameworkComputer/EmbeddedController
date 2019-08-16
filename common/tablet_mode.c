@@ -19,8 +19,8 @@
 static int tablet_mode = -1;
 static int forced_tablet_mode = -1;
 
-/* 1: hall sensor is reporting 360 degrees. */
-static int hall_sensor_at_360;
+/* 1: GMR sensor is reporting 360 degrees. */
+static int gmr_sensor_at_360;
 
 /*
  * 1: all calls to tablet_set_mode are ignored and tablet_mode if forced to 0
@@ -45,8 +45,9 @@ void tablet_set_mode(int mode)
 		return;
 	}
 
-	if (hall_sensor_at_360 && !mode) {
-		CPRINTS("Ignoring tablet mode exit while hall sensor active.");
+	if (gmr_sensor_at_360 && !mode) {
+		CPRINTS("Ignoring tablet mode exit while gmr sensor "
+			"reports 360-degree tablet mode.");
 		return;
 	}
 
@@ -86,18 +87,18 @@ void tablet_disable(void)
 }
 
 /* This ifdef can be removed once we clean up past projects which do own init */
-#ifdef CONFIG_HALL_SENSOR
-#ifndef HALL_SENSOR_GPIO_L
-#error  HALL_SENSOR_GPIO_L must be defined
+#ifdef CONFIG_GMR_TABLET_MODE
+#ifndef GMR_TABLET_MODE_GPIO_L
+#error  GMR_TABLET_MODE_GPIO_L must be defined
 #endif
-#ifdef CONFIG_DPTF_MOTION_LID_NO_HALL_SENSOR
+#ifdef CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR
 #error The board has GMR sensor
 #endif
-static void hall_sensor_interrupt_debounce(void)
+static void gmr_tablet_switch_interrupt_debounce(void)
 {
-	hall_sensor_at_360 = IS_ENABLED(CONFIG_HALL_SENSOR_CUSTOM)
+	gmr_sensor_at_360 = IS_ENABLED(CONFIG_GMR_TABLET_MODE_CUSTOM)
 				     ? board_sensor_at_360()
-				     : !gpio_get_level(HALL_SENSOR_GPIO_L);
+				     : !gpio_get_level(GMR_TABLET_MODE_GPIO_L);
 
 	/*
 	 * DPTF table is updated only when the board enters/exits completely
@@ -106,7 +107,7 @@ static void hall_sensor_interrupt_debounce(void)
 	 * calculation and update DPTF table when lid angle > 300 degrees.
 	 */
 	if (IS_ENABLED(CONFIG_HOSTCMD_X86) && IS_ENABLED(CONFIG_DPTF)) {
-		acpi_dptf_set_profile_num(hall_sensor_at_360 ?
+		acpi_dptf_set_profile_num(gmr_sensor_at_360 ?
 					  DPTF_PROFILE_FLIPPED_360_MODE :
 					  DPTF_PROFILE_CLAMSHELL);
 	}
@@ -123,43 +124,43 @@ static void hall_sensor_interrupt_debounce(void)
 	 * driver to clear it when lid goes into laptop zone.
 	 */
 
-	if (!IS_ENABLED(CONFIG_LID_ANGLE) || hall_sensor_at_360)
-		tablet_set_mode(hall_sensor_at_360);
+	if (!IS_ENABLED(CONFIG_LID_ANGLE) || gmr_sensor_at_360)
+		tablet_set_mode(gmr_sensor_at_360);
 
-	if (IS_ENABLED(CONFIG_LID_ANGLE_UPDATE) && hall_sensor_at_360)
+	if (IS_ENABLED(CONFIG_LID_ANGLE_UPDATE) && gmr_sensor_at_360)
 		lid_angle_peripheral_enable(0);
 }
-DECLARE_DEFERRED(hall_sensor_interrupt_debounce);
+DECLARE_DEFERRED(gmr_tablet_switch_interrupt_debounce);
 
-/* Debounce time for hall sensor interrupt */
-#define HALL_SENSOR_DEBOUNCE_US    (30 * MSEC)
+/* Debounce time for gmr sensor tablet mode interrupt */
+#define GMR_SENSOR_DEBOUNCE_US    (30 * MSEC)
 
-void hall_sensor_isr(enum gpio_signal signal)
+void gmr_tablet_switch_isr(enum gpio_signal signal)
 {
-	hook_call_deferred(&hall_sensor_interrupt_debounce_data,
-			   HALL_SENSOR_DEBOUNCE_US);
+	hook_call_deferred(&gmr_tablet_switch_interrupt_debounce_data,
+			   GMR_SENSOR_DEBOUNCE_US);
 }
 
-static void hall_sensor_init(void)
+static void gmr_tablet_switch_init(void)
 {
 	/* If this sub-system was disabled before initializing, honor that. */
 	if (disabled)
 		return;
 
-	gpio_enable_interrupt(HALL_SENSOR_GPIO_L);
+	gpio_enable_interrupt(GMR_TABLET_MODE_GPIO_L);
 	/*
 	 * Ensure tablet mode is initialized according to the hardware state
 	 * so that the cached state reflects reality.
 	 */
-	hall_sensor_interrupt_debounce();
+	gmr_tablet_switch_interrupt_debounce();
 }
-DECLARE_HOOK(HOOK_INIT, hall_sensor_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, gmr_tablet_switch_init, HOOK_PRIO_DEFAULT);
 
-void hall_sensor_disable(void)
+void gmr_tablet_switch_disable(void)
 {
-	gpio_disable_interrupt(HALL_SENSOR_GPIO_L);
+	gpio_disable_interrupt(GMR_TABLET_MODE_GPIO_L);
 	/* Cancel any pending debounce calls */
-	hook_call_deferred(&hall_sensor_interrupt_debounce_data, -1);
+	hook_call_deferred(&gmr_tablet_switch_interrupt_debounce_data, -1);
 	tablet_disable();
 }
 #endif
