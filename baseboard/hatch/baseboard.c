@@ -238,7 +238,7 @@ void board_reset_pd_mcu(void)
 		      BOARD_TCPC_C1_RESET_POST_DELAY);
 }
 
-void board_pd_vconn_ctrl(int port, int cc_pin, int enabled)
+void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 {
 	/*
 	 * We ignore the cc_pin because the polarity should already be set

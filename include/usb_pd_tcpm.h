@@ -20,6 +20,11 @@
 /* Number of valid Transmit Types */
 #define NUM_XMIT_TYPES (TCPC_TX_SOP_DEBUG_PRIME_PRIME + 1)
 
+enum usbpd_cc_pin {
+	USBPD_CC_PIN_1,
+	USBPD_CC_PIN_2,
+};
+
 /* Detected resistor values of port partner */
 enum tcpc_cc_voltage_status {
 	TYPEC_CC_VOLT_OPEN = 0,
@@ -411,6 +416,6 @@ int board_tcpc_post_init(int port) __attribute__((weak));
  * @param enabled 1: Enable VCONN, 0: Disable VCONN
  *
  */
-void board_pd_vconn_ctrl(int port, int cc_pin, int enabled);
+void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled);
 
 #endif /* __CROS_EC_USB_PD_TCPM_H */

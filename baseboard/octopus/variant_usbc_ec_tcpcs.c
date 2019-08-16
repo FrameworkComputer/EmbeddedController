@@ -142,7 +142,7 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
 }
 
-void board_pd_vconn_ctrl(int port, int cc_pin, int enabled)
+void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 {
 	/*
 	 * We ignore the cc_pin because the polarity should already be set

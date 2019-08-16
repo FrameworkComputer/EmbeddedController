@@ -21,4 +21,9 @@
 #define ADC_TEMP_SNS_SKIN_CHANNEL	CHIP_ADC_CH6
 #define ADC_TEMP_SNS_VR_CHANNEL		CHIP_ADC_CH1
 
+#ifdef CONFIG_USBC_VCONN
+	#define CONFIG_USBC_VCONN_SWAP
+	/* delay to turn on/off vconn */
+	#define PD_VCONN_SWAP_DELAY 5000 /* us */
+#endif
 #endif /* __CROS_EC_ITE_EC_H */

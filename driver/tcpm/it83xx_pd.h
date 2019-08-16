@@ -75,11 +75,6 @@
 	IS_MASK_SET(IT83XX_USBPD_TCDCR(port), USBPD_REG_PLUG_IN_OUT_DETECT_STAT)
 #endif //IT83XX_INTC_PLUG_IN_SUPPORT
 
-enum usbpd_cc_pin {
-	USBPD_CC_PIN_1,
-	USBPD_CC_PIN_2,
-};
-
 enum usbpd_ufp_volt_status {
 	USBPD_UFP_STATE_SNK_OPEN = 0,
 	USBPD_UFP_STATE_SNK_DEF  = 1,

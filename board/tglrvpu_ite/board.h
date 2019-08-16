@@ -11,6 +11,8 @@
 /* USB MUX */
 #define CONFIG_USB_MUX_VIRTUAL
 
+#define CONFIG_USBC_VCONN
+
 #include "baseboard.h"
 
 /* TODO: Chipset Tigerlake */
@@ -75,6 +77,9 @@
 #endif /* BOARD_TGLRVPU_ITE */
 #define USB_PORT0_BB_RETIMER_SHARED_NVM	BB_RETIMER_SHARED_NVM
 #define USB_PORT1_BB_RETIMER_SHARED_NVM	BB_RETIMER_SHARED_NVM
+
+/* Enabling SOP* communication */
+#define CONFIG_USB_PD_DECODE_SOP
 
 #ifndef __ASSEMBLER__
 
