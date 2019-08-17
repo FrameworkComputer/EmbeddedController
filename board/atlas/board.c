@@ -13,7 +13,6 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "console.h"
-#include "driver/accelgyro_bmi160.h"
 #include "driver/als_opt3001.h"
 #include "driver/pmic_bd99992gw.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -575,13 +574,6 @@ static struct opt3001_drv_data_t g_opt3001_data = {
 	.scale = 1,
 	.uscale = 0,
 	.offset = 0,
-};
-
-/* Matrix to rotate accelerometer into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0,  FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
 struct motion_sensor_t motion_sensors[] = {
