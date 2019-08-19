@@ -1030,7 +1030,7 @@ static void read_console(struct transfer_descriptor *td)
 				break;
 			/* make sure it's null-terminated. */
 			response[response_size - 1] = 0;
-			printf((const char *)response);
+			printf("%s", (const char *)response);
 		}
 		nanosleep(&sleep_duration, NULL);
 	}
