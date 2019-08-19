@@ -148,7 +148,6 @@
 #include "gpio_signal.h"
 #include "module_id.h"
 #include "registers.h"
-#include "usb_pd_tcpm.h"
 
 /* PWM channels */
 enum pwm_channel {
