@@ -711,7 +711,7 @@ int charger_get_vbus_voltage(int port)
 	 */
 	while (--retries) {
 		rt946x_read8(RT946X_REG_CHGSTAT, &val);
-		if (val & RT946X_MASK_ADC_STAT)
+		if (!(val & RT946X_MASK_ADC_STAT))
 			break;
 		msleep(5);
 	}
