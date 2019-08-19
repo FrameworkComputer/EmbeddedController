@@ -242,7 +242,7 @@ static void aes_command_handler(void *cmd_body,
 	 */
 	struct unaligned_buf {
 		uint8_t unused;
-		uint8_t b[128];
+		uint8_t b[255];
 	} __packed;
 
 	struct unaligned_buf out_local;
