@@ -201,8 +201,6 @@ enum reef_it8320_board_version {
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
 int board_get_version(void);
-/* Turn on/off vconn power switch. */
-void board_pd_vconn_ctrl(int port, int cc_pin, int enabled);
 
 #endif /* !__ASSEMBLER__ */
 

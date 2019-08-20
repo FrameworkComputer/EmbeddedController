@@ -403,4 +403,14 @@ int tcpc_run(int port, int evt);
  */
 int board_tcpc_post_init(int port) __attribute__((weak));
 
+/**
+ * Turn on/off VCONN power switch in board specific code.
+ *
+ * @param port Type-C port number
+ * @param cc_pin 0:CC pin 0, 1: CC pin 1
+ * @param enabled 1: Enable VCONN, 0: Disable VCONN
+ *
+ */
+void board_pd_vconn_ctrl(int port, int cc_pin, int enabled);
+
 #endif /* __CROS_EC_USB_PD_TCPM_H */

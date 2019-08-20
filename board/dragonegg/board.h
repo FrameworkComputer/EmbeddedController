@@ -79,8 +79,6 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
-void board_pd_vconn_ctrl(int port, int cc_pin, int enabled);
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

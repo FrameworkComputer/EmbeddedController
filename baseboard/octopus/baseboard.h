@@ -296,10 +296,6 @@
 /* Forward declare common (within octopus) board-specific functions */
 void board_reset_pd_mcu(void);
 
-#ifdef VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS
-void board_pd_vconn_ctrl(int port, int cc_pin, int enabled);
-#endif
-
 #ifdef VARIANT_OCTOPUS_USBC_STANDALONE_TCPCS
 void tcpc_alert_event(enum gpio_signal signal);
 #endif
