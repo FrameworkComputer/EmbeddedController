@@ -94,7 +94,6 @@
 #define CONFIG_CHARGER_NARROW_VDC
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
-#define CONFIG_CHARGER_V2
 /*
  * Don't allow the system to boot to S0 when the battery is low and unable to
  * communicate on locked systems (which haven't PD negotiated)

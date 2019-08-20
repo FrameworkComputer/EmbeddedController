@@ -146,8 +146,6 @@ const struct batt_params *charger_current_battery_params(void);
 
 
 /* Config Charger */
-#ifdef CONFIG_CHARGER_V2
 #include "charge_state_v2.h"
-#endif	/* CONFIG_CHARGER_V2 */
 
 #endif	/* __CROS_EC_CHARGE_STATE_H */

@@ -440,8 +440,7 @@ const struct temp_sensor_t temp_sensors[] = {
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 #else /* mec1701_evb test I2C and EC ADC */
 /*
- * battery charge_get_battery_temp requires CONFIG_CHARGER_V2 and
- * charger task running.
+ * battery charge_get_battery_temp requires charger task running.
  * OR can we call into driver/battery/smart.c
  * int sb_read(int cmd, int *param)
  * sb_read(SB_TEMPERATURE, &batt_new.temperature)

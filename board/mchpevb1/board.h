@@ -150,7 +150,6 @@
 
 
 /* #define CONFIG_CHARGER */
-/* #define CONFIG_CHARGER_V2 */
 
 /* #define CONFIG_CHARGER_DISCHARGE_ON_AC */
 /* #define CONFIG_CHARGER_ISL9237 */

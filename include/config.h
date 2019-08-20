@@ -747,9 +747,8 @@
 /*****************************************************************************/
 /* Charger config */
 
-/* Compile common charge state code. You must pick an implementation. */
+/* Compile common charge state code. */
 #undef CONFIG_CHARGER
-#undef CONFIG_CHARGER_V2
 
 /* Compile charger-specific code for these chargers (pick at most one) */
 #undef CONFIG_CHARGER_BD9995X
@@ -993,8 +992,6 @@
 /*
  * Charger should call battery_override_params() to limit/correct the voltage
  * and current requested by the battery pack before acting on the request.
- *
- * This is valid with CONFIG_CHARGER_V2 only.
  */
 #undef CONFIG_CHARGER_PROFILE_OVERRIDE
 

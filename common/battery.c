@@ -206,7 +206,7 @@ static void print_battery_info(void)
 		ccprintf("%d mAh (%d mAh with %d %% compensation)\n",
 			 value, value*batt_full_factor/100, batt_full_factor);
 
-#ifdef CONFIG_CHARGER_V2
+#ifdef CONFIG_CHARGER
 	print_item_name("Display:");
 	value = charge_get_display_charge();
 	ccprintf("%d.%d %%\n", value / 10, value % 10);
