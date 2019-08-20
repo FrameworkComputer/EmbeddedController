@@ -53,9 +53,11 @@
 #endif /* VARIANT_KUKUI_CHARGER */
 
 /*
- * Board controls dp mux via gpio pins USB_C0_DP_OE_L and USB_C0_DP_POLARITY.
+ * Define this flag if board controls dp mux via gpio pins USB_C0_DP_OE_L and
+ * USB_C0_DP_POLARITY.
+ *
+ * #define VARIANT_KUKUI_DP_MUX_GPIO
  */
-#undef VARIANT_KUKUI_DP_MUX_GPIO
 
 /* Optional modules */
 #define CONFIG_ADC
