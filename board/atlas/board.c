@@ -365,7 +365,8 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 		   BD99992GW_REG_V085ACNT, 0x6a);
 }
 
-void power_board_handle_host_sleep_event(enum host_sleep_event state)
+__override void power_board_handle_host_sleep_event(
+		enum host_sleep_event state)
 {
 	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND)
 		board_pmic_enable_slp_s0_vr_decay();

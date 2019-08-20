@@ -246,8 +246,8 @@ void chipset_watchdog_interrupt(enum gpio_signal signal);
  * @param now                Current time
  * @return Action to take
  */
-enum critical_shutdown board_system_is_idle(uint64_t last_shutdown_time,
-					    uint64_t *target, uint64_t now);
+__override_proto enum critical_shutdown board_system_is_idle(
+		uint64_t last_shutdown_time, uint64_t *target, uint64_t now);
 
 #ifdef CONFIG_CMD_AP_RESET_LOG
 

@@ -641,15 +641,15 @@ void common_intel_x86_handle_rsmrst(enum power_state state)
 
 #ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 
-void __attribute__((weak))
-power_board_handle_host_sleep_event(enum host_sleep_event state)
+__overridable void power_board_handle_host_sleep_event(
+		enum host_sleep_event state)
 {
 	/* Default weak implementation -- no action required. */
 }
 
-void
-power_chipset_handle_host_sleep_event(enum host_sleep_event state,
-				      struct host_sleep_event_context *ctx)
+__override void power_chipset_handle_host_sleep_event(
+		enum host_sleep_event state,
+		struct host_sleep_event_context *ctx)
 {
 	power_board_handle_host_sleep_event(state);
 

@@ -290,9 +290,8 @@ static void power_set_active_wake_mask(void)
 static void power_set_active_wake_mask(void) { }
 #endif
 
-__attribute__((weak))
-enum critical_shutdown board_system_is_idle(uint64_t last_shutdown_time,
-					    uint64_t *target, uint64_t now)
+__overridable enum critical_shutdown board_system_is_idle(
+		uint64_t last_shutdown_time, uint64_t *target, uint64_t now)
 {
 	return now > *target ?
 			CRITICAL_SHUTDOWN_HIBERNATE : CRITICAL_SHUTDOWN_IGNORE;
@@ -882,9 +881,8 @@ DECLARE_CONSOLE_COMMAND(pause_in_s5, command_pause_in_s5,
 /* Track last reported sleep event */
 static enum host_sleep_event host_sleep_state;
 
-void __attribute__((weak))
-power_chipset_handle_host_sleep_event(enum host_sleep_event state,
-				      struct host_sleep_event_context *ctx)
+__overridable void power_chipset_handle_host_sleep_event(
+	enum host_sleep_event state, struct host_sleep_event_context *ctx)
 {
 	/* Default weak implementation -- no action required. */
 }
@@ -955,7 +953,7 @@ void power_set_host_sleep_state(enum host_sleep_event state)
 static uint32_t pwr_5v_en_req;
 static struct mutex pwr_5v_ctl_mtx;
 
-void __attribute__((weak)) power_5v_enable(task_id_t tid, int enable)
+void power_5v_enable(task_id_t tid, int enable)
 {
 	mutex_lock(&pwr_5v_ctl_mtx);
 
