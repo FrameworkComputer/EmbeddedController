@@ -10,7 +10,6 @@
 
 #include "ec_commands.h"
 #include "i2c.h"
-#include "usb_pd_tcpm.h"
 
 /* Default retry count for transmitting */
 #define PD_RETRY_COUNT 3
