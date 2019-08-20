@@ -7,6 +7,9 @@
 *   [Write Protection](./write_protection.md)
 *   [EC Acronyms and Technologies](./ec_terms.md)
 
+## EC Bringup
+*   [New Board Checklist](./new_board_checklist.md)
+
 ## Case Closed Debugging (CCD)
 
 *   [Case Closed Debugging Overview](./case_closed_debugging.md)

@@ -61,7 +61,7 @@ Chromium OS development environment to build a binary.
 git clone https://chromium.googlesource.com/chromiumos/platform/ec
 ```
 
-The source code can also be broswed on the web at:
+The source code can also be browsed on the web at:
 
 https://chromium.googlesource.com/chromiumos/platform/ec/
 
@@ -69,6 +69,9 @@ https://chromium.googlesource.com/chromiumos/platform/ec/
 
 The following is a quick overview of the top-level directories in the EC
 repository:
+
+**baseboard** - Code and configuration details shared by a collection of board
+variants. Tightly linked with the `board` directory described below.
 
 **board** - Board specific code and configuration details. This includes the
 GPIO map, battery parameters, and set of tasks to run for the device.
