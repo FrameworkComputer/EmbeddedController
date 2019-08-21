@@ -11,6 +11,7 @@
 #include "console.h"
 #include "crc.h"
 #include "flash.h"
+#include "flash_log.h"
 #include "new_nvmem.h"
 #include "nvmem.h"
 #include "printf.h"
@@ -835,6 +836,7 @@ static int test_nvmem_incomplete_transaction(void)
 	uint8_t buf[nvmem_user_sizes[NVMEM_TPM]];
 	uint8_t *p;
 	size_t object_size;
+	union entry_u e;
 
 	TEST_ASSERT(prepare_post_migration_nvmem() == EC_SUCCESS);
 	num_objects = fill_obj_offsets(offsets, ARRAY_SIZE(offsets));
@@ -898,8 +900,19 @@ static int test_nvmem_incomplete_transaction(void)
 	failure_mode = TEST_SPANNING_PAGES;
 	new_nvmem_save();
 	failure_mode = TEST_NO_FAILURE;
+
+	/* Drain the event log. */
+	e.r.timestamp = 0;
+	while (flash_log_dequeue_event(e.r.timestamp, e.entry, sizeof(e)) > 0)
+		;
+
 	TEST_ASSERT(nvmem_init() == EC_SUCCESS);
 
+	/* Let's verify that a container mismatch event has been added. */
+	TEST_ASSERT(flash_log_dequeue_event(e.r.timestamp, e.entry, sizeof(e))
+		    > 0);
+	TEST_ASSERT(e.r.type == FE_LOG_NVMEM);
+	TEST_ASSERT(e.r.payload[0] == NVMEMF_CONTAINER_HASH_MISMATCH);
 	return EC_SUCCESS;
 }
 

@@ -316,7 +316,7 @@ static struct delete_candidates {
  */
 static uint8_t page_list[NEW_NVMEM_TOTAL_PAGES];
 static uint32_t next_evict_obj_base;
-
+static uint8_t init_in_progress;
 /*
  * Mutex to protect flash space containing NVMEM objects. All operations
  * modifying the flash contents or relying on its consistency (like searching
@@ -364,18 +364,41 @@ test_export_static struct access_tracker master_at;
 
 test_export_static enum ec_error_list browse_flash_contents(int print);
 static enum ec_error_list save_container(struct nn_container *nc);
+static void invalidate_nvmem_flash(void);
 
 /* Log NVMEM problem as per passed in payload and size, and reboot. */
 static void report_failure(struct nvmem_failure_payload *payload,
 			   size_t payload_union_size)
 {
-	flash_log_add_event(
-		FE_LOG_NVMEM,
-		payload_union_size +
-			offsetof(struct nvmem_failure_payload, size),
-		payload);
-	ccprintf("Logging failure %d\n", payload->failure_type);
+	if (init_in_progress) {
+		/*
+		 * This must be a rolling reboot, let's invalidate flash
+		 * storage to stop this.
+		 */
+		invalidate_nvmem_flash();
+	}
+
+	flash_log_add_event(FE_LOG_NVMEM,
+			    payload_union_size +
+				    offsetof(struct nvmem_failure_payload,
+					     size),
+			    payload);
+
+	ccprintf("Logging failure %d, will %sreinit\n", payload->failure_type,
+		 init_in_progress ? "" : "not ");
+
+	if (init_in_progress) {
+		struct nvmem_failure_payload fp;
+
+		fp.failure_type = NVMEMF_NVMEM_WIPE;
+
+		flash_log_add_event(
+			FE_LOG_NVMEM,
+			offsetof(struct nvmem_failure_payload, size), &fp);
+	}
+
 	cflush();
+
 	system_reset(SYSTEM_RESET_MANUALLY_TRIGGERED | SYSTEM_RESET_HARD);
 }
 
@@ -634,6 +657,26 @@ static enum ec_error_list write_to_flash(const void *flash_addr,
 }
 
 /*
+ * Corrupt headers of all active pages thus invalidating the entire NVMEM
+ * flash storage.
+ */
+static void invalidate_nvmem_flash(void)
+{
+	size_t i;
+	struct nn_page_header *ph;
+	struct nn_page_header bad_ph;
+
+	memset(&bad_ph, 0, sizeof(bad_ph));
+
+	for (i = 0; i < ARRAY_SIZE(page_list); i++) {
+		ph = list_element_to_ph(i);
+		if (!ph)
+			continue;
+		write_to_flash(ph, &bad_ph, sizeof(*ph));
+	}
+}
+
+/*
  * When initializing flash for the first time - set the proper first page
  * header.
  */
@@ -764,7 +807,21 @@ test_export_static enum ec_error_list get_next_object(struct access_tracker *at,
 
 		/* And calculate hash. */
 		if (!container_is_valid(ch)) {
-			ccprintf("%s: container hash mismatch!\n", __func__);
+			struct nvmem_failure_payload fp;
+
+			if (!init_in_progress)
+				report_no_payload_failure(
+					NVMEMF_CONTAINER_HASH_MISMATCH);
+			/*
+			 * During init there might be a way to deal with
+			 * this, let's just log this and continue.
+			 */
+			fp.failure_type = NVMEMF_CONTAINER_HASH_MISMATCH;
+			flash_log_add_event(
+				FE_LOG_NVMEM,
+				offsetof(struct nvmem_failure_payload, size),
+				&fp);
+
 			return EC_ERROR_INVAL;
 		}
 
@@ -2253,13 +2310,8 @@ static enum ec_error_list retrieve_nvmem_contents(void)
 			break;
 	}
 
-	if (rv != EC_SUCCESS) {
-		/*
-		 * Something is really messed up, need to wipe out and start
-		 * from scratch?
-		 */
-		ccprintf("%s:%d FAILURE!\n", __func__, __LINE__);
-	}
+	if (rv != EC_SUCCESS)
+		report_no_payload_failure(NVMEMF_UNRECOVERABLE_INIT);
 
 	rv = verify_reserved(res_bitmap, nc);
 
@@ -2275,6 +2327,8 @@ enum ec_error_list new_nvmem_init(void)
 
 	if (!crypto_enabled())
 		return EC_ERROR_INVAL;
+
+	init_in_progress = 1;
 
 	total_var_space = 0;
 
@@ -2292,6 +2346,8 @@ enum ec_error_list new_nvmem_init(void)
 	init = get_time();
 
 	unlock_mutex(__LINE__);
+
+	init_in_progress = 0;
 
 	CPRINTS("init took %d", (uint32_t)(init.val - start.val));
 
