@@ -243,17 +243,6 @@ void board_reset_pd_mcu(void)
 		      BOARD_TCPC_C1_RESET_POST_DELAY);
 }
 
-void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
-{
-	/*
-	 * We ignore the cc_pin because the polarity should already be set
-	 * correctly in the PPC driver via the pd state machine.
-	 */
-	if (ppc_set_vconn(port, enabled) != EC_SUCCESS)
-		cprints(CC_USBPD, "C%d: Failed %sabling vconn",
-			port, enabled ? "en" : "dis");
-}
-
 int board_set_active_charge_port(int port)
 {
 	int is_valid_port = (port >= 0 &&
