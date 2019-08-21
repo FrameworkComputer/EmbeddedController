@@ -156,6 +156,42 @@ bool opr_write_chunk(uint8_t *buffer, uint32_t addr, uint32_t size)
 			wr_cmd_buf.cmd, &wr_cmd_buf.cmd_size);
 	return opr_send_cmds(&wr_cmd_buf, 1);
 }
+
+/*----------------------------------------------------------------------------
+ * Function:	opr_read_chunk
+ *
+ * Parameters:
+ *      buffer  - Data read buffer.
+ *      addr    - Memory address to read from.
+ *      size    - Data size to read.
+ * Returns: true if successful, false in the case of an error.
+ * Side effects:
+ * Description:
+ *   Read data from RAM, starting from the given  address (addr).
+ *   Data size is limited to the max chunk size (256 bytes).
+ *---------------------------------------------------------------------------
+ */
+bool opr_read_chunk(uint8_t *buffer, uint32_t addr, uint32_t size)
+{
+	struct command_node rd_cmd_buf;
+
+	if (size > MAX_RW_DATA_SIZE) {
+		display_color_msg(FAIL,
+			"ERROR: Block cannot exceed %d\n", MAX_RW_DATA_SIZE);
+		return false;
+	}
+
+	cmd_create_read(addr, ((uint8_t)size - 1),
+					rd_cmd_buf.cmd, &rd_cmd_buf.cmd_size);
+	rd_cmd_buf.resp_size = size + 3;
+	if (opr_send_cmds(&rd_cmd_buf, 1)) {
+		if (resp_buf[0] == (uint8_t)(UFPP_READ_CMD)) {
+			memcpy(buffer, &resp_buf[1], size);
+			return true;
+		}
+	}
+	return false;
+}
 /*----------------------------------------------------------------------------
  * Function:	opr_write_mem
  *

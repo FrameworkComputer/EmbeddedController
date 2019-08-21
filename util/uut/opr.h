@@ -49,6 +49,7 @@ void opr_usage(void);
 bool opr_close_port(void);
 bool opr_open_port(const char *port_name, struct comport_fields port_cfg);
 bool opr_write_chunk(uint8_t *buffer, uint32_t addr, uint32_t size);
+bool opr_read_chunk(uint8_t *buffer, uint32_t addr, uint32_t size);
 void opr_write_mem(uint8_t *buffer, uint32_t addr, uint32_t size);
 void opr_read_mem(char *output, uint32_t addr, uint32_t size);
 void opr_execute_exit(uint32_t addr);
