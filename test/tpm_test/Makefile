@@ -37,6 +37,7 @@ CFLAGS += -Itestlib
 CFLAGS += -DLIBFTDI1=1
 CFLAGS += -c
 CFLAGS += -DCR50_NO_BN_ASM
+CFLAGS += -I../../fuzz
 TARGET = ftdi_spi_tpm
 
 .PRECIOUS: $(obj)/ftdi_spi_tpm_wrap.c
