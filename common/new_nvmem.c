@@ -1007,6 +1007,12 @@ static enum ec_error_list save_object(const struct nn_container *cont)
 		save_data = (const void *)((uintptr_t)save_data + top_room);
 		save_size -= top_room;
 		start_new_flash_page(save_size);
+#if defined(NVMEM_TEST_BUILD)
+		if (save_size && (failure_mode == TEST_SPANNING_PAGES)) {
+			ccprintf("%s:%d corrupting...\n", __func__, __LINE__);
+			return EC_SUCCESS;
+		}
+#endif
 	}
 
 	if (save_size) {
@@ -2134,8 +2140,10 @@ static enum ec_error_list verify_delimiter(struct nn_container *nc)
 		uint8_t i;
 
 		for (i = 0; i < master_at.list_index; i++)
-			if (list_element_to_ph(i) == dpt.mt.ph)
+			if (list_element_to_ph(i) == dpt.mt.ph) {
 				dpt.list_index = i;
+				break;
+			}
 	}
 
 	while ((rv = get_next_object(&dpt, nc, 0)) == EC_SUCCESS)
@@ -2150,8 +2158,35 @@ static enum ec_error_list verify_delimiter(struct nn_container *nc)
 		size_t remainder_size;
 		const void *p = page_cursor(&master_at.ct);
 
-		remainder_size =
-			CONFIG_FLASH_BANK_SIZE - master_at.ct.data_offset;
+		if (dpt.ct.ph != dpt.mt.ph) {
+			/*
+			 * The last retrieved object is spanning flash page
+			 * boundary.
+			 *
+			 * If this is not the last object in the flash, this
+			 * is an unrecoverable init failure.
+			 */
+			if ((dpt.mt.ph != master_at.mt.ph) ||
+			    (list_element_to_ph(dpt.list_index - 1) !=
+			     dpt.ct.ph))
+				report_no_payload_failure(
+					NVMEMF_CORRUPTED_INIT);
+			/*
+			 * Let's erase the page where the last object spilled
+			 * into.
+			 */
+			flash_physical_erase((uintptr_t)dpt.mt.ph -
+						     CONFIG_PROGRAM_MEMORY_BASE,
+					     CONFIG_FLASH_BANK_SIZE);
+			/*
+			 * And move it to the available pages part of the
+			 * pages list.
+			 */
+			master_at.list_index -= 1;
+			master_at.mt = dpt.ct;
+		}
+
+		remainder_size = CONFIG_FLASH_BANK_SIZE - dpt.ct.data_offset;
 		memset(nc, 0, remainder_size);
 		write_to_flash(p, nc, remainder_size);
 		/* Make sure compaction starts with the new page. */
@@ -2181,8 +2216,11 @@ static enum ec_error_list retrieve_nvmem_contents(void)
 	/* No saved object will exceed CONFIG_FLASH_BANK_SIZE in size. */
 	nc = get_scratch_buffer(CONFIG_FLASH_BANK_SIZE);
 
-	/* Depending on the state of flash, we might have to do this twice. */
-	for (tries = 0; tries < 2; tries++) {
+	/*
+	 * Depending on the state of flash, we might have to do this three
+	 * times.
+	 */
+	for (tries = 0; tries < 3; tries++) {
 		memset(&master_at, 0, sizeof(master_at));
 		memset(nvmem_cache_base(NVMEM_TPM), 0,
 		       nvmem_user_sizes[NVMEM_TPM]);

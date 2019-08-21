@@ -64,7 +64,8 @@ enum nvmem_failure_type {
 	NVMEMF_SECTION_VERIFY = 9,
 	NVMEMF_PRE_ERASE_MISMATCH = 10,
 	NVMEMF_PAGE_LIST_OVERFLOW = 11,
-	NVMEMF_CIPHER_ERROR = 12
+	NVMEMF_CIPHER_ERROR = 12,
+	NVMEMF_CORRUPTED_INIT = 13
 };
 
 /* Not all nvmem failures require payload. */

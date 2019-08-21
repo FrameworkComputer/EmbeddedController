@@ -834,6 +834,7 @@ static int test_nvmem_incomplete_transaction(void)
 	size_t num_objects;
 	uint8_t buf[nvmem_user_sizes[NVMEM_TPM]];
 	uint8_t *p;
+	size_t object_size;
 
 	TEST_ASSERT(prepare_post_migration_nvmem() == EC_SUCCESS);
 	num_objects = fill_obj_offsets(offsets, ARRAY_SIZE(offsets));
@@ -876,6 +877,27 @@ static int test_nvmem_incomplete_transaction(void)
 	failure_mode = TEST_NO_FAILURE;
 
 	/* And verify that nvmem can still successfully initialize. */
+	TEST_ASSERT(nvmem_init() == EC_SUCCESS);
+
+	/*
+	 * Now let's interrupt saving an object spanning two pages.
+	 *
+	 * First, fill up the current page to get close to the limit such that
+	 * the next save will have to span two flash pages.
+	 */
+	object_size = offsets[4] - offsets[3];
+	p = (uint8_t *)evictable_offs_to_addr(offsets[3]) + object_size - 10;
+	while ((master_at.mt.data_offset + object_size +
+		sizeof(struct nn_container)) <= CONFIG_FLASH_BANK_SIZE) {
+		(*p)++;
+		new_nvmem_save();
+	}
+
+	/* This will trigger spilling over the page boundary. */
+	(*p)++;
+	failure_mode = TEST_SPANNING_PAGES;
+	new_nvmem_save();
+	failure_mode = TEST_NO_FAILURE;
 	TEST_ASSERT(nvmem_init() == EC_SUCCESS);
 
 	return EC_SUCCESS;
