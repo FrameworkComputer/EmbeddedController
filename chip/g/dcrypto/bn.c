@@ -610,6 +610,7 @@ static int bn_div_ex(struct LITE_BIGNUM *q,
 
 		/* If borrowed, add one back and adjust estimate */
 		if (t < 0) {
+			k = 0;
 			qd = qd - 1;
 			for (i = 0; i < n; i++) {
 				t = (uint64_t)un[i + j] + vn[i] + k;
