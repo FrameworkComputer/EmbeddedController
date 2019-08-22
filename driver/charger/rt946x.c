@@ -922,7 +922,7 @@ static int rt946x_get_bc12_ilim(int charge_supplier)
 		if (IS_ENABLED(CONFIG_CHARGE_RAMP_SW) ||
 				IS_ENABLED(CONFIG_CHARGE_RAMP_HW))
 			/* A conservative value to prevent a bad charger. */
-			return 2000;
+			return RT946X_AICR_TYP2MAX(2000);
 		/* fallback */
 	case CHARGE_SUPPLIER_BC12_CDP:
 		return 1500;

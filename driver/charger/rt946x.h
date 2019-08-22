@@ -296,6 +296,13 @@
 #define RT946X_MASK_AICR	(0x3F << RT946X_SHIFT_AICR)
 #define RT946X_MASK_ILIMEN	BIT(RT946X_SHIFT_ILIMEN)
 
+/*
+ * The accuracy of AICR is 7%.  So if AICR = 2150,
+ * then Max=2150, Typ=2000, Min=1860. And plus 25 since the AICR
+ * is 50ma a step.
+ */
+#define RT946X_AICR_TYP2MAX(x)	((x) * 107 / 100 + 25)
+
 /* ========== RSTPASCODE2 0x04 (mt6370) ============ */
 #define MT6370_MASK_RSTPASCODE2	0x96
 
