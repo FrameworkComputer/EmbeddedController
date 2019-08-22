@@ -12,7 +12,6 @@
 #include "cros_board_info.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dsm.h"
-#include "driver/als_tcs3400.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx7447.h"
@@ -83,11 +82,6 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	}
 
 	schedule_deferred_pd_interrupt(port);
-}
-
-static void hdmi_hpd_interrupt(enum gpio_signal signal)
-{
-	baseboard_mst_enable_control(MST_HDMI, gpio_get_level(signal));
 }
 
 static void bc12_interrupt(enum gpio_signal signal)
@@ -178,43 +172,6 @@ static struct mutex g_lid_mutex;
 static struct stprivate_data g_lis2dwl_data;
 /* Base accel private data */
 static struct lsm6dsm_data lsm6dsm_data;
-
-/* ALS private data */
-static struct als_drv_data_t g_tcs3400_data = {
-	.als_cal.scale = 1,
-	.als_cal.uscale = 0,
-	.als_cal.offset = 0,
-	.als_cal.channel_scale = {
-		.k_channel_scale = ALS_CHANNEL_SCALE(1.0),   /* kc */
-		.cover_scale = ALS_CHANNEL_SCALE(1.0),
-	},
-};
-
-static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
-	.rgb_cal[X] = {
-		.offset = 0,
-		.scale = {
-			.k_channel_scale = ALS_CHANNEL_SCALE(1.0),   /* kr */
-			.cover_scale = ALS_CHANNEL_SCALE(1.0)
-		},
-	},
-	.rgb_cal[Y] = {
-		.offset = 0,
-		.scale = {
-			.k_channel_scale = ALS_CHANNEL_SCALE(1.0),   /* kg */
-			.cover_scale = ALS_CHANNEL_SCALE(1.0)
-		},
-	},
-	.rgb_cal[Z] = {
-		.offset = 0,
-		.scale = {
-			.k_channel_scale = ALS_CHANNEL_SCALE(1.0),   /* kb */
-			.cover_scale = ALS_CHANNEL_SCALE(1.0)
-		},
-	},
-	.saturation.again = TCS_DEFAULT_AGAIN,
-	.saturation.atime = TCS_DEFAULT_ATIME,
-};
 
 /* Matrix to rotate accelrator into standard reference frame */
 static const mat33_fp_t base_standard_ref = {
@@ -313,52 +270,9 @@ struct motion_sensor_t motion_sensors[] = {
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 	},
-
-	[CLEAR_ALS] = {
-		.name = "Clear Light",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_TCS3400,
-		.type = MOTIONSENSE_TYPE_LIGHT,
-		.location = MOTIONSENSE_LOC_LID,
-		.drv = &tcs3400_drv,
-		.drv_data = &g_tcs3400_data,
-		.port = I2C_PORT_ALS,
-		.i2c_spi_addr_flags = TCS3400_I2C_ADDR_FLAGS,
-		.rot_standard_ref = NULL,
-		.default_range = 0x10000, /* scale = 1x, uscale = 0 */
-		.min_frequency = TCS3400_LIGHT_MIN_FREQ,
-		.max_frequency = TCS3400_LIGHT_MAX_FREQ,
-		.config = {
-			/* Run ALS sensor in S0 */
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 1000,
-			},
-		},
-	},
-
-	[RGB_ALS] = {
-		/*
-		 * RGB channels read by CLEAR_ALS and so the i2c port and
-		 * address do not need to be defined for RGB_ALS.
-		 */
-		.name = "RGB Light",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_TCS3400,
-		.type = MOTIONSENSE_TYPE_LIGHT_RGB,
-		.location = MOTIONSENSE_LOC_LID,
-		.drv = &tcs3400_rgb_drv,
-		.drv_data = &g_tcs3400_rgb_data,
-		.rot_standard_ref = NULL,
-		.default_range = 0x10000, /* scale = 1x, uscale = 0 */
-	},
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-/* ALS instances when LPC mapping is needed. Each entry directs to a sensor. */
-const struct motion_sensor_t *motion_als_sensors[] = {
-	&motion_sensors[CLEAR_ALS],
-};
-BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 
 /******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */
@@ -481,10 +395,6 @@ static void board_init(void)
 	setup_fans();
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
-	/* Enable interrupt for the TCS3400 color light sensor */
-	gpio_enable_interrupt(GPIO_TCS3400_INT_ODL);
-	/* Enable HDMI HPD interrupt. */
-	gpio_enable_interrupt(GPIO_HDMI_CONN_HPD);
 	/* Select correct gpio signal for PP5000_A control */
 	board_gpio_set_pp5000();
 }

@@ -36,18 +36,11 @@
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 /* LIS2DWL Lid accel */
 #define CONFIG_ACCEL_LIS2DWL
-#define CONFIG_ACCEL_FORCE_MODE_MASK (BIT(LID_ACCEL)|BIT(CLEAR_ALS))
+#define CONFIG_ACCEL_FORCE_MODE_MASK (BIT(LID_ACCEL))
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 #define CONFIG_LID_ANGLE_UPDATE
-/* TC3400 ALS */
-#define CONFIG_ALS
-#define ALS_COUNT 1
-#define CONFIG_ALS_TCS3400
-#define CONFIG_ALS_TCS3400_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
-#define I2C_PORT_ALS      I2C_PORT_SENSOR
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_TCPM_ANX7447
@@ -94,14 +87,6 @@
 #define CONFIG_THROTTLE_AP
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 
-/* MST */
-/*
- * TDOD (b/124068003): This inherently assumes the MST chip is connected to only
- * one Type C port. This will need to be chagned to support 2 Type C ports
- * connected to the same MST chip.
- */
-#define USB_PD_PORT_TCPC_MST USB_PD_PORT_TCPC_1
-
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
@@ -136,8 +121,6 @@ enum sensor_id {
 	LID_ACCEL = 0,
 	BASE_ACCEL,
 	BASE_GYRO,
-	CLEAR_ALS,
-	RGB_ALS,
 	SENSOR_COUNT,
 };
 

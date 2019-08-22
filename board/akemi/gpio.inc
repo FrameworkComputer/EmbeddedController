@@ -26,7 +26,6 @@ GPIO_INT(PP5000_A_PG_OD,       PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
 
 /* Sensor Interrupts */
 GPIO_INT(BASE_SIXAXIS_INT_L,   PIN(5, 6), GPIO_INT_FALLING, lsm6dsm_interrupt)
-GPIO_INT(TCS3400_INT_ODL,      PIN(F, 1), GPIO_INT_FALLING, tcs3400_interrupt)
 
 /* USB-C interrupts */
 GPIO_INT(USB_C0_PPC_INT_ODL,   PIN(E, 0), GPIO_INT_FALLING, ppc_interrupt)
@@ -35,8 +34,6 @@ GPIO_INT(USB_C0_TCPC_INT_ODL,  PIN(6, 2), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C1_TCPC_INT_ODL,  PIN(F, 5), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C0_BC12_INT_ODL,  PIN(9, 5), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C1_BC12_INT_ODL,  PIN(E, 4), GPIO_INT_FALLING, bc12_interrupt)
-
-GPIO_INT(HDMI_CONN_HPD,        PIN(7, 2), GPIO_INT_BOTH, hdmi_hpd_interrupt)
 
 /* Volume button interrupts */
 GPIO_INT(EC_VOLDN_BTN_ODL,     PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
@@ -71,12 +68,9 @@ GPIO(EC_BATT_PRES_ODL,         PIN(E, 1), GPIO_INPUT)
 GPIO(LED_1_L,                  PIN(C, 4), GPIO_OUT_HIGH)        /* Yellow (hatch) */
 GPIO(LED_2_L,                  PIN(C, 3), GPIO_OUT_HIGH)        /* White (hatch) */
 GPIO(LED_3_L,                  PIN(C, 2), GPIO_OUT_HIGH)
-GPIO(LED_4_L,                  PIN(6, 0), GPIO_OUT_HIGH)
 GPIO(EC_KB_BL_EN,              PIN(8, 6), GPIO_OUT_LOW)         /* Keyboard backlight */
 GPIO(EDP_BKLTEN_OD,            PIN(D, 3), GPIO_ODR_HIGH)        /* Display backlight */
 GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
-GPIO(EN_MST,                   PIN(9, 6), GPIO_OUT_LOW)
-
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,                 PIN(B, 5), GPIO_INPUT |
