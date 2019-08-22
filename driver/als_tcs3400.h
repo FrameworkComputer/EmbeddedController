@@ -128,8 +128,10 @@ enum tcs3400_mode {
  */
 #define TCS_GAIN_ADJUST_FACTOR   5
 #define TCS_GAIN_SAT_LEVEL       (TCS_SATURATION_LEVEL / TCS_GAIN_ADJUST_FACTOR)
-#define TCS_UPSHIFT_FACTOR       3
-#define TCS_GAIN_SAT_UPSHIFT_LEVEL (TCS_SATURATION_LEVEL / TCS_UPSHIFT_FACTOR)
+#define TCS_UPSHIFT_FACTOR_N     25 /* upshift factor = 2.5 */
+#define TCS_UPSHIFT_FACTOR_D     10
+#define TCS_GAIN_UPSHIFT_LEVEL   (TCS_SATURATION_LEVEL * TCS_UPSHIFT_FACTOR_D \
+							/ TCS_UPSHIFT_FACTOR_N)
 
 /*
  * Percentage of saturation level that the auto-adjusting anti-saturation
