@@ -170,7 +170,7 @@ enum battery_present battery_is_present(void)
 	int temp;
 
 	if (mm8013_read16(REG_TEMPERATURE, &temp))
-		return BP_NOT_SURE;
+		return BP_NO;
 	return BP_YES;
 }
 
