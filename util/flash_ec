@@ -876,7 +876,6 @@ function flash_flashrom() {
 			die "Failed to determine chip size!"
 		[[ ${SPI_SIZE} -eq 0 ]] && die "Chip size is 0!"
 
-		IMG_SIZE=$(stat -c%s "${IMG}")
 		PATCH_SIZE=$((${SPI_SIZE} - ${IMG_SIZE}))
 
 		# Temp image
@@ -1044,9 +1043,10 @@ function flash_stm32() {
 	if [[ -z "${FLAGS_read}" && "${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
 		info "Verifying EC firmware image."
 		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
-			echo "diff ${IMG} ${IMG_READ}"
+			echo "cmp -n ${IMG_SIZE} ${IMG} ${IMG_READ}"
 		fi
-		diff -q "${IMG}" "${IMG_READ}" || die "${MSG_VERIFY_FAIL}"
+		cmp -s -n "${IMG_SIZE}" "${IMG}" "${IMG_READ}" \
+			|| die "${MSG_VERIFY_FAIL}"
 	fi
 
 	# Remove the Application processor reset
@@ -1261,11 +1261,6 @@ function flash_npcx_uut() {
 
 	# The start address to restore monitor firmware binary
 	local MON_ADDR="0x200C3020"
-	local BASE_ADDR="0x64000000"		# The base flash memory address
-	local FLASH_SIZE			# EC Flash memory size
-
-	FLASH_SIZE=$(dut_control_get ec_flash_size) \
-		&& FLASH_SIZE=$(( ${FLASH_SIZE}*1024 )) || true
 
 	if [ ! -x "$NPCX_UUT" ]; then
 		die "no NPCX UART Update Tool found."
@@ -1327,7 +1322,6 @@ function flash_npcx_uut() {
 
 			IMG_READ="${TEMP_DIR}/ec.read.bin"
 			DELETE_LIST+=( "${TEMP_DIR}" )
-			FLASH_SIZE=$(stat -c %s "${IMG}")
 		fi
 	fi
 
@@ -1336,9 +1330,7 @@ function flash_npcx_uut() {
 		info "Reading EC firmware image."
 
 		local UUT_RD=( "${NPCX_UUT}" "${UUT_ARGS[@]}"   \
-			      "--opr=rd" "--addr=${BASE_ADDR}" \
-			      "--size=${FLASH_SIZE}"
-			      "--file=${IMG_READ}" )
+			      "--read-flash" "--file=${IMG_READ}" )
 
 		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
 			echo "${UUT_RD[*]}"
@@ -1353,10 +1345,11 @@ function flash_npcx_uut() {
 		info "Verifying EC firmware image."
 
 		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
-			echo "diff ${IMG} ${IMG_READ}"
+			echo "cmp -n ${IMG_SIZE} ${IMG} ${IMG_READ}"
 		fi
 
-		diff -q "${IMG}" "${IMG_READ}" || die "${MSG_VERIFY_FAIL}"
+		cmp -s -n "${IMG_SIZE}" "${IMG}" "${IMG_READ}" \
+			|| die "${MSG_VERIFY_FAIL}"
 	fi
 }
 
@@ -1401,6 +1394,7 @@ info "Using ${SERVO_TYPE}."
 if [[ -z "${FLAGS_read}" ]]; then
 	IMG="$(ec_image)"
 	info "Using ${MCU} image : ${IMG}"
+	IMG_SIZE=$(stat -c%s "${IMG}")
 fi
 
 if [ "${NEED_SERVO}" != "no" ] ; then
