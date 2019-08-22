@@ -253,7 +253,6 @@ int main(int argc, char *argv[])
 	char aux_buf[MAX_FILE_NAME_SIZE];
 	uint32_t size = 0;
 	uint32_t addr = 0;
-	uint32_t strip_size;
 	enum sync_result sr;
 	uint8_t *buffer;
 	int sync_cnt;
@@ -318,14 +317,9 @@ int main(int argc, char *argv[])
 		if (!buffer)
 			exit_uart_app(EC_FILE_ERR);
 
-		/* Ignore the trailing white space to speed up writing */
-		strip_size = size;
-		while ((strip_size > 0) && (buffer[strip_size-1] == 0xFF))
-			strip_size--;
-
 		printf("Write file %s at %d with %d bytes\n",
-					file_name, flash_offset, strip_size);
-		if (image_auto_write(flash_offset, buffer, strip_size)) {
+					file_name, flash_offset, size);
+		if (image_auto_write(flash_offset, buffer, size)) {
 			printf("Flash Done.\n");
 			free(buffer);
 			exit_uart_app(EC_OK);
