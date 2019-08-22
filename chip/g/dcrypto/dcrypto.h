@@ -80,8 +80,8 @@ struct GCM_CTX {
 };
 
 /* Initialize the GCM context structure. */
-void DCRYPTO_gcm_init(struct GCM_CTX *ctx, const uint8_t *key,
-		const uint8_t *iv, size_t iv_len);
+void DCRYPTO_gcm_init(struct GCM_CTX *ctx, uint32_t key_bits,
+		const uint8_t *key, const uint8_t *iv, size_t iv_len);
 /* Additional authentication data to include in the tag calculation. */
 void DCRYPTO_gcm_aad(struct GCM_CTX *ctx, const uint8_t *aad_data, size_t len);
 /* Encrypt & decrypt return the number of bytes written to out

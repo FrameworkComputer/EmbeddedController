@@ -403,7 +403,8 @@ static void aes_command_handler(void *cmd_body,
 			size_t count;
 			struct GCM_CTX ctx;
 
-			DCRYPTO_gcm_init(&ctx, key_local.b, iv_local.b, iv_len);
+			DCRYPTO_gcm_init(&ctx, key_len, key_local.b,
+				iv_local.b, iv_len);
 			DCRYPTO_gcm_aad(&ctx, aad, aad_len);
 			count = DCRYPTO_gcm_decrypt(
 				&ctx, out_local.b, sizeof(out_local.b),
@@ -437,7 +438,8 @@ static void aes_command_handler(void *cmd_body,
 			size_t count;
 			struct GCM_CTX ctx;
 
-			DCRYPTO_gcm_init(&ctx, key_local.b, iv_local.b, iv_len);
+			DCRYPTO_gcm_init(&ctx, key_len, key_local.b,
+				iv_local.b, iv_len);
 			DCRYPTO_gcm_aad(&ctx, aad, aad_len);
 			count = DCRYPTO_gcm_encrypt(
 				&ctx, out_local.b, sizeof(out_local.b),
