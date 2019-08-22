@@ -82,8 +82,8 @@ enum ina2xx_conv_time {
 #define INA2XX_CALIB_1MA(rsense_mohm) (40960/(rsense_mohm))
 /* Bus voltage: mV per LSB */
 #define INA2XX_BUS_MV(reg) ((reg) / 2)
-/* Shunt voltage: uV per LSB */
-#define INA2XX_SHUNT_UV(reg) ((reg) * 2)
+/* Shunt voltage: uV */
+#define INA2XX_SHUNT_UV(reg) ((reg) * 10)
 /* Power LSB: mW per current LSB */
 #define INA2XX_POW_MW(reg) ((reg) * 20 * 1/*Current mA/LSB*/)
 
