@@ -16,8 +16,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
-#define BAT_LEVEL_PD_LIMIT 85
-
 const struct board_batt_params board_battery_info[] = {
 	[BATTERY_SIMPLO] = {
 		.fuel_gauge = {
@@ -88,6 +86,34 @@ int charger_profile_override(struct charge_state_data *curr)
 #ifdef VARIANT_KUKUI_CHARGER_MT6370
 	mt6370_charger_profile_override(curr);
 #endif /* CONFIG_CHARGER_MT6370 */
+
+	if (IS_ENABLED(CONFIG_CHARGER_MAINTAIN_VBAT)) {
+		/* Turn charger off if it's not needed */
+		if (curr->state == ST_IDLE || curr->state == ST_DISCHARGE) {
+			curr->requested_voltage = 0;
+			curr->requested_current = 0;
+		}
+
+		if (!curr->batt.is_present &&
+			curr->requested_voltage == 0 &&
+			curr->requested_current == 0) {
+			const struct battery_info *batt_info =
+					battery_get_info();
+
+			/*
+			 * b/138978212: With adapter plugged in S0, the system
+			 * will set charging current and voltage as 0V/0A once
+			 * removing battery. Vsys drop to lower voltage
+			 * (Vsys < 2.5V) since Vsys's loading, then system will
+			 * shutdown. Keep max charging voltage as 4.4V when
+			 * remove battery in S0 to not let the system to trigger
+			 * under voltage (Vsys < 2.5V).
+			 */
+			CPRINTS("battery disconnected");
+			curr->requested_voltage = batt_info->voltage_max;
+			curr->requested_current = 500;
+		}
+	}
 
 	return 0;
 }
