@@ -328,11 +328,8 @@
 /* Define which ALS sensor is used for dimming the lightbar when dark */
 #undef CONFIG_ALS_LIGHTBAR_DIMMING
 
-/*
- * Support always_memset() defined in third_party/cryptoc, which will not be
- * optimized out by compiler.
- */
-#undef CONFIG_ALWAYS_MEMSET
+/* Link against third_party/cryptoc. */
+#undef CONFIG_LIBCRYPTOC
 
 /* Support AP hang detection host command and state machine */
 #undef CONFIG_AP_HANG_DETECT

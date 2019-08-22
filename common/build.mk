@@ -241,20 +241,26 @@ $(out)/rma_key_from_blob.h: board/$(BOARD)/$(BLOB_FILE) util/bin2h.sh
 
 endif
 
-ifeq ($(CONFIG_ALWAYS_MEMSET),y)
+ifeq ($(CONFIG_LIBCRYPTOC),y)
 CRYPTOCLIB := $(realpath ../../third_party/cryptoc)
+ifneq ($(BOARD),host)
 CPPFLAGS += -I$(abspath ./builtin)
+endif
 CPPFLAGS += -I$(CRYPTOCLIB)/include
-
-CRYPTOC_OBJS = $(shell find $(out)/cryptoc -name 'util.o')
-$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: LDFLAGS_EXTRA += $(CRYPTOC_OBJS)
-$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: cryptoc_objs
+CRYPTOC_LDFLAGS := -L$(out)/cryptoc -lcryptoc
 
 # Force the external build each time, so it can look for changed sources.
-.PHONY: cryptoc_objs
-cryptoc_objs:
+.PHONY: $(out)/cryptoc/libcryptoc.a
+$(out)/cryptoc/libcryptoc.a:
 	$(MAKE) obj=$(realpath $(out))/cryptoc SUPPORT_UNALIGNED=1 \
-		CONFIG_UPTO_SHA512=$(CONFIG_UPTO_SHA512) -C $(CRYPTOCLIB) objs
+		CONFIG_UPTO_SHA512=$(CONFIG_UPTO_SHA512) -C $(CRYPTOCLIB)
+
+# Link RW against cryptoc.
+$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: LDFLAGS_EXTRA += $(CRYPTOC_LDFLAGS)
+$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: $(out)/cryptoc/libcryptoc.a
+# Host test executables (including fuzz tests).
+$(out)/$(PROJECT).exe: LDFLAGS_EXTRA += $(CRYPTOC_LDFLAGS)
+$(out)/$(PROJECT).exe: $(out)/cryptoc/libcryptoc.a
 endif
 
 include $(_common_dir)fpsensor/build.mk
