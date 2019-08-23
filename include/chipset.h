@@ -15,7 +15,9 @@
 
 #include "common.h"
 #include "compile_time_macros.h"
+#include "ec_commands.h"
 #include "gpio.h"
+#include "stddef.h"
 
 /*
  * Chipset state mask
@@ -256,9 +258,28 @@ __override_proto enum critical_shutdown board_system_is_idle(
  */
 void report_ap_reset(enum chipset_shutdown_reason reason);
 
+/**
+ * Get statistics about AP resets.
+ *
+ * @param reset_log_entries       Pointer to array of log entries.
+ * @param num_reset_log_entries   Number of items in reset_log_entries.
+ * @param resets_since_ec_boot    Number of AP resets since EC boot.
+ */
+test_mockable enum ec_error_list
+get_ap_reset_stats(struct ap_reset_log_entry *reset_log_entries,
+		   size_t num_reset_log_entries,
+		   uint32_t *resets_since_ec_boot);
+
 #else
 
 static inline void report_ap_reset(enum chipset_shutdown_reason reason) { }
+
+test_mockable_static_inline enum ec_error_list
+get_ap_reset_stats(struct ap_reset_log_entry *reset_log_entries,
+		   size_t num_reset_log_entries, uint32_t *resets_since_ec_boot)
+{
+	return EC_SUCCESS;
+}
 
 #endif /* !CONFIG_CMD_AP_RESET_LOG */
 

@@ -2127,6 +2127,9 @@
 #define CONFIG_HOSTCMD_LOCATE_CHIP
 #endif
 
+/* Command to get the EC uptime (and optionally AP reset stats) */
+#define CONFIG_HOSTCMD_GET_UPTIME_INFO
+
 /* List of host commands whose debug output will be suppressed */
 #undef CONFIG_SUPPRESSED_HOST_COMMANDS
 

@@ -101,45 +101,29 @@ void report_ap_reset(enum chipset_shutdown_reason reason)
 	reset_log_checksum = calc_reset_log_checksum();
 }
 
-static int host_command_get_uptime_info(struct host_cmd_handler_args *args)
+test_mockable enum ec_error_list
+get_ap_reset_stats(struct ap_reset_log_entry *reset_log_entries,
+		   size_t num_reset_log_entries, uint32_t *resets_since_ec_boot)
 {
-	/*
-	 * In the current implementation, not all terms are preserved across a
-	 * sysjump.  Future implementations may preserve additional information.
-	 *
-	 * time_since_ec_boot_ms:   preserved, but wraps at ~50 days
-	 * ec_reset_flags:          preserved, with 'sysjump' added
-	 * ap_resets_since_ec_boot: Not preserved
-	 * recent_ap_reset[*]:      Not preserved
-	 */
-	struct ec_response_uptime_info *r = args->response;
-	timestamp_t now = get_time();
-	uint32_t now_ms = (uint32_t)(now.val / MSEC);
-	size_t log_address = 0;
-	size_t i = 0;
+	size_t log_address;
+	size_t i;
 
-	r->time_since_ec_boot_ms = now_ms;
-	r->ec_reset_flags = system_get_reset_flags();
-
-	memset(r->recent_ap_reset, 0, sizeof(r->recent_ap_reset));
+	if (reset_log_entries == NULL || resets_since_ec_boot == NULL)
+		return EC_ERROR_INVAL;
 
 	mutex_lock(&reset_log_mutex);
-	r->ap_resets_since_ec_boot = ap_resets_since_ec_boot;
+	*resets_since_ec_boot = ap_resets_since_ec_boot;
 	for (i = 0;
-	     i != ARRAY_SIZE(reset_logs) && i != ARRAY_SIZE(r->recent_ap_reset);
+	     i != ARRAY_SIZE(reset_logs) && i != num_reset_log_entries;
 	     ++i) {
 		log_address = (next_reset_log + i) &
 			(ARRAY_SIZE(reset_logs) - 1);
-		r->recent_ap_reset[i] = reset_logs[log_address];
+		reset_log_entries[i] = reset_logs[log_address];
 	}
 	mutex_unlock(&reset_log_mutex);
 
-	args->response_size = sizeof(*r);
-	return EC_RES_SUCCESS;
+	return EC_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_UPTIME_INFO,
-		     host_command_get_uptime_info,
-		     EC_VER_MASK(0));
 
 #endif  /* !CONFIG_AP_RESET_LOG */
 
