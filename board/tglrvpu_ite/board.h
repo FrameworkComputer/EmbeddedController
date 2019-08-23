@@ -13,6 +13,14 @@
 
 #define CONFIG_USBC_VCONN
 
+/* FAN configs */
+#define CONFIG_FANS 1
+#define BOARD_FAN_MIN_RPM 3000
+#define BOARD_FAN_MAX_RPM 10000
+
+/* Temperature sensor */
+#define CONFIG_TEMP_SENSOR
+
 #include "baseboard.h"
 
 /* TODO: Chipset Tigerlake */

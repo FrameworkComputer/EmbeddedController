@@ -132,12 +132,6 @@
 #endif /* CONFIG_PECI */
 #endif /* CONFIG_TEMP_SENSOR */
 
-/* Fan features */
-#ifdef CONFIG_FANS
-	#undef CONFIG_FAN_INIT_SPEED
-	#define CONFIG_FAN_INIT_SPEED 50
-#endif
-
 /* I2C ports */
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER

@@ -119,9 +119,9 @@ const struct fan_conf fan_conf_0 = {
 
 /* Physical fan rpm config */
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 3100,
-	.rpm_start = 3100,
-	.rpm_max = 6900,
+	.rpm_min = BOARD_FAN_MIN_RPM,
+	.rpm_start = BOARD_FAN_MIN_RPM,
+	.rpm_max = BOARD_FAN_MAX_RPM,
 };
 
 /* FAN channels */

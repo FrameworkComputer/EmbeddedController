@@ -75,14 +75,54 @@ struct keyboard_scan_config keyscan_config = {
  * [TACH_CH_TACH1A | TACH_CH_TACH1B]
  */
 const struct fan_tach_t fan_tach[] = {
-	{TACH_CH_NULL,  -1, -1, -1},
-	{TACH_CH_NULL,  -1, -1, -1},
-	{TACH_CH_NULL,  -1, -1, -1},
-	{TACH_CH_NULL,  -1, -1, -1},
-	{TACH_CH_NULL,  -1, -1, -1},
-	{TACH_CH_NULL,  -1, -1, -1},
-	{TACH_CH_NULL,  -1, -1, -1},
-	{TACH_CH_TACH1A, 2, 50, 30},
+	[PWM_HW_CH_DCR0] = {
+		.ch_tach = TACH_CH_NULL,
+		.fan_p = -1,
+		.rpm_re = -1,
+		.s_duty = -1,
+	},
+	[PWM_HW_CH_DCR1] = {
+		.ch_tach = TACH_CH_NULL,
+		.fan_p = -1,
+		.rpm_re = -1,
+		.s_duty = -1,
+	},
+	[PWM_HW_CH_DCR2] = {
+		.ch_tach = TACH_CH_TACH1A,
+		.fan_p = 2,
+		.rpm_re = 1,
+		.s_duty = 1,
+	},
+	[PWM_HW_CH_DCR3] = {
+		.ch_tach = TACH_CH_NULL,
+		.fan_p = -1,
+		.rpm_re = -1,
+		.s_duty = -1,
+	},
+	[PWM_HW_CH_DCR4] = {
+		.ch_tach = TACH_CH_NULL,
+		.fan_p = -1,
+		.rpm_re = -1,
+		.s_duty = -1,
+	},
+	[PWM_HW_CH_DCR5] = {
+		.ch_tach = TACH_CH_NULL,
+		.fan_p = -1,
+		.rpm_re = -1,
+		.s_duty = -1,
+	},
+	[PWM_HW_CH_DCR6] = {
+		.ch_tach = TACH_CH_NULL,
+		.fan_p = -1,
+		.rpm_re = -1,
+		.s_duty = -1,
+	},
+	[PWM_HW_CH_DCR7] = {
+		.ch_tach = TACH_CH_NULL,
+		.fan_p = -1,
+		.rpm_re = -1,
+		.s_duty = -1,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(fan_tach) == PWM_HW_CH_TOTAL);
 
@@ -90,9 +130,9 @@ BUILD_ASSERT(ARRAY_SIZE(fan_tach) == PWM_HW_CH_TOTAL);
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_FAN] = {
 		.channel = PWM_HW_CH_DCR2,
-		.flags = PWM_CONFIG_ACTIVE_LOW,
+		.flags = PWM_CONFIG_HAS_RPM_MODE,
 		.freq_hz = 30000,
-		.pcfsr_sel = PWM_PRESCALER_C4,
+		.pcfsr_sel = PWM_PRESCALER_C7,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
