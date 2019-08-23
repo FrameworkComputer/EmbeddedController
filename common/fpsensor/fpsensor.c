@@ -505,10 +505,17 @@ static enum ec_status fp_command_stats(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_STATS, fp_command_stats, EC_VER_MASK(0));
 
+static bool template_needs_validation_value(
+	struct ec_fp_template_encryption_metadata *enc_info)
+{
+	return enc_info->struct_version == 3
+		&& FP_TEMPLATE_FORMAT_VERSION == 4;
+}
+
 static int validate_template_format(
 	struct ec_fp_template_encryption_metadata *enc_info)
 {
-	if (enc_info->struct_version == 3 && FP_TEMPLATE_FORMAT_VERSION == 4)
+	if (template_needs_validation_value(enc_info))
 		/* The host requested migration to v4. */
 		return EC_RES_SUCCESS;
 
@@ -549,8 +556,7 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 		/* Positive match salt is after the template. */
 		uint8_t *positive_match_salt =
 			encrypted_template + sizeof(fp_template[0]);
-		size_t encrypted_blob_size = sizeof(fp_template[0]) +
-					     sizeof(fp_positive_match_salt[0]);
+		size_t encrypted_blob_size;
 
 		/*
 		 * The complete encrypted template has been received, start
@@ -567,6 +573,15 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 			CPRINTS("fgr%d: Template format not supported", idx);
 			return EC_RES_INVALID_PARAM;
 		}
+
+		if (enc_info->struct_version <= 3) {
+			encrypted_blob_size = sizeof(fp_template[0]);
+		} else {
+			encrypted_blob_size =
+				sizeof(fp_template[0]) +
+				sizeof(fp_positive_match_salt[0]);
+		}
+
 		ret = derive_encryption_key(key, enc_info->encryption_salt);
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to derive key", idx);
@@ -586,11 +601,26 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 			fp_clear_finger_context(idx);
 			return EC_RES_UNAVAILABLE;
 		}
-		templ_valid++;
 		memcpy(fp_template[idx], encrypted_template,
 		       sizeof(fp_template[0]));
+		if (template_needs_validation_value(enc_info)) {
+			CPRINTS("fgr%d: Generating positive match salt.", idx);
+			init_trng();
+			rand_bytes(positive_match_salt,
+				   FP_POSITIVE_MATCH_SALT_BYTES);
+			exit_trng();
+		}
+		if (bytes_are_trivial(positive_match_salt,
+				      sizeof(fp_positive_match_salt[0]))) {
+			CPRINTS("fgr%d: Trivial positive match salt.", idx);
+			always_memset(fp_template[idx], 0,
+				      sizeof(fp_template[0]));
+			return EC_RES_INVALID_PARAM;
+		}
 		memcpy(fp_positive_match_salt[idx], positive_match_salt,
 		       sizeof(fp_positive_match_salt[0]));
+
+		templ_valid++;
 	}
 
 	return EC_RES_SUCCESS;
