@@ -557,56 +557,48 @@ static void pwm_fan_preserve_state(void)
 }
 DECLARE_HOOK(HOOK_SYSJUMP, pwm_fan_preserve_state, HOOK_PRIO_DEFAULT);
 
-static void pwm_fan_resume(void)
-{
-	int fan;
-	for (fan = 0; fan < fan_count; fan++) {
-		/* We don't enable or disable thermal control here.
-		 * It should be already enabled by pwm_fan_init on cold boot
-		 * or by pwm_fan_S3_S5 on warm reboot. If it needs
-		 * to be disabled, DPTF and host command will do so. */
-		fan_set_rpm_target(FAN_CH(fan),
-				   fan_percent_to_rpm(FAN_CH(fan),
-						      CONFIG_FAN_INIT_SPEED));
-		set_enabled(fan, 1);
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwm_fan_resume, HOOK_PRIO_DEFAULT);
-
-static void pwm_fan_startup(void)
-{
-	int fan;
-	/* Turn on fan control when the processor boots up (for BIOS screens) */
-	for (fan = 0; fan < fan_count; fan++)
-		set_thermal_control_enabled(fan, 1);
-}
-/* We need to cover cold boot and warm boot. */
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pwm_fan_startup, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_RESET, pwm_fan_startup, HOOK_PRIO_FIRST);
-
-static void pwm_fan_s3_s5(void)
+static void pwm_fan_control(int enable)
 {
 	int fan;
 
 	/* TODO(crosbug.com/p/23530): Still treating all fans as one. */
 	for (fan = 0; fan < fan_count; fan++) {
-		/*
-		 * There is no need to cool CPU in S3 or S5. We currently don't
-		 * have fans for battery or charger chip. Battery systems will
-		 * control charge current based on its own temperature readings.
-		 * Thus, we do not need to keep fans running in S3 or S5.
-		 *
-		 * Even with a fan on charging system, it's questionable to run
-		 * a fan in S3/S5. Under an extreme heat condition, spinning a
-		 * fan would create more heat as it draws current from a
-		 * battery and heat would come from ambient air instead of CPU.
-		 *
-		 * Thermal control may be already disabled if DPTF is used.
-		 */
-		set_thermal_control_enabled(fan, 0);
-		fan_set_rpm_target(FAN_CH(fan), 0);
-		set_enabled(fan, 0); /* crosbug.com/p/8097 */
+		set_thermal_control_enabled(fan, enable);
+		fan_set_rpm_target(FAN_CH(fan), enable ?
+			fan_percent_to_rpm(FAN_CH(fan), CONFIG_FAN_INIT_SPEED) :
+			0);
+		set_enabled(fan, enable);
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwm_fan_s3_s5, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pwm_fan_s3_s5, HOOK_PRIO_DEFAULT);
+
+static void pwm_fan_stop(void)
+{
+	/*
+	 * There is no need to cool CPU in S3 or S5. We currently don't
+	 * have fans for battery or charger chip. Battery systems will
+	 * control charge current based on its own temperature readings.
+	 * Thus, we do not need to keep fans running in S3 or S5.
+	 *
+	 * Even with a fan on charging system, it's questionable to run
+	 * a fan in S3/S5. Under an extreme heat condition, spinning a
+	 * fan would create more heat as it draws current from a
+	 * battery and heat would come from ambient air instead of CPU.
+	 *
+	 * Thermal control may be already disabled if DPTF is used.
+	 */
+	pwm_fan_control(0); /* crosbug.com/p/8097 */
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwm_fan_stop, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pwm_fan_stop, HOOK_PRIO_DEFAULT);
+
+static void pwm_fan_start(void)
+{
+	/*
+	 * Even if the DPTF is enabled, enable thermal control here.
+	 * Upon booting to S0, if needed AP will disable/throttle it using
+	 * host commands.
+	 */
+	pwm_fan_control(1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, pwm_fan_start, HOOK_PRIO_FIRST);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwm_fan_start, HOOK_PRIO_DEFAULT);
