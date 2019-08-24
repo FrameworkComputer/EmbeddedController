@@ -2883,9 +2883,6 @@
 /* Compile common code for AP power state machine */
 #undef CONFIG_POWER_COMMON
 
-/* Disable the power-on transition when the lid is opened */
-#undef CONFIG_POWER_IGNORE_LID_OPEN
-
 /* Enable a task-safe way to control the PP5000 rail. */
 #undef CONFIG_POWER_PP5000_CONTROL
 
