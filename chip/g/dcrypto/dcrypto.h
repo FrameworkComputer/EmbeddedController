@@ -24,10 +24,10 @@ extern "C" {
 #include "cryptoc/hmac.h"
 
 enum cipher_mode {
-	CIPHER_MODE_ECB = 0,
-	CIPHER_MODE_CTR = 1,
-	CIPHER_MODE_CBC = 2,
-	CIPHER_MODE_GCM = 3
+	CIPHER_MODE_ECB = 0, /* NIST SP 800-38A */
+	CIPHER_MODE_CTR = 1, /* NIST SP 800-38A */
+	CIPHER_MODE_CBC = 2, /* NIST SP 800-38A */
+	CIPHER_MODE_GCM = 3  /* NIST SP 800-38D */
 };
 
 enum encrypt_mode {
@@ -45,6 +45,7 @@ enum hashing_mode {
 
 /*
  * AES implementation, based on a hardware AES block.
+ * FIPS Publication 197, The Advanced Encryption Standard (AES)
  */
 #define AES256_BLOCK_CIPHER_KEY_SIZE       32
 
@@ -54,10 +55,19 @@ int DCRYPTO_aes_block(const uint8_t *in, uint8_t *out);
 
 void DCRYPTO_aes_write_iv(const uint8_t *iv);
 void DCRYPTO_aes_read_iv(uint8_t *iv);
+
+/* AES-CTR-128/192/256
+ * NIST Special Publication 800-38A
+ */
 int DCRYPTO_aes_ctr(uint8_t *out, const uint8_t *key, uint32_t key_bits,
 		const uint8_t *iv, const uint8_t *in, size_t in_len);
 
-/* AES-GCM-128 */
+/* AES-GCM-128/192/256
+ * NIST Special Publication 800-38D, IV is provided externally
+ * Caller should use IV length according to section 8.2 of SP 800-38D
+ * And choose appropriate IV construction method, constrain number
+ * of invocations according to section 8.3 of SP 800-38D
+ */
 struct GCM_CTX {
 	union {
 		uint32_t d[4];
@@ -99,8 +109,9 @@ int DCRYPTO_gcm_tag(struct GCM_CTX *ctx, uint8_t *tag, size_t tag_len);
 /* Cleanup secrets. */
 void DCRYPTO_gcm_finish(struct GCM_CTX *ctx);
 
-/* AES-CMAC-128 */
-/* K: 128-bit key, M: message, len: number of bytes in M
+/* AES-CMAC-128
+ * NIST Special Publication 800-38B, RFC 4493
+ * K: 128-bit key, M: message, len: number of bytes in M
  * Writes 128-bit tag to T; returns 0 if an error is encountered and 1
  * otherwise.
  */
@@ -123,6 +134,8 @@ int DCRYPTO_aes_cmac_verify(const uint8_t *key, const uint8_t *M, const int len,
  * this particular hashing session.
  */
 void DCRYPTO_SHA1_init(SHA_CTX *ctx, uint32_t sw_required);
+/*  SHA256/384/512 FIPS 180-4
+ */
 void DCRYPTO_SHA256_init(LITE_SHA256_CTX *ctx, uint32_t sw_required);
 void DCRYPTO_SHA384_init(LITE_SHA384_CTX *ctx);
 void DCRYPTO_SHA512_init(LITE_SHA512_CTX *ctx);
@@ -135,7 +148,7 @@ const uint8_t *DCRYPTO_SHA384_hash(const void *data, uint32_t n,
 const uint8_t *DCRYPTO_SHA512_hash(const void *data, uint32_t n,
 				   uint8_t *digest);
 /*
- *  HMAC.
+ *  HMAC. FIPS 198-1
  */
 void DCRYPTO_HMAC_SHA256_init(LITE_HMAC_CTX *ctx, const void *key,
 			unsigned int len);
@@ -181,24 +194,32 @@ enum padding_mode {
 	PADDING_MODE_NULL  = 3
 };
 
-/* Calculate r = m ^ e mod N */
+/* RSA support, FIPS PUB 186-4 *
+ * Calculate r = m ^ e mod N
+ */
 int DCRYPTO_rsa_encrypt(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 			const uint8_t *in, uint32_t in_len,
 			enum padding_mode padding, enum hashing_mode hashing,
 			const char *label);
 
-/* Calculate r = m ^ d mod N */
+/* Calculate r = m ^ d mod N
+ * return 0 if error
+ */
 int DCRYPTO_rsa_decrypt(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 			const uint8_t *in, const uint32_t in_len,
 			enum padding_mode padding, enum hashing_mode hashing,
 			const char *label);
 
-/* Calculate r = m ^ d mod N */
+/* Calculate r = m ^ d mod N
+ * return 0 if error
+ */
 int DCRYPTO_rsa_sign(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 		const uint8_t *in, const uint32_t in_len,
 		enum padding_mode padding, enum hashing_mode hashing);
 
-/* Calculate r = m ^ e mod N */
+/* Calculate r = m ^ e mod N
+ * return 0 if error
+ */
 int DCRYPTO_rsa_verify(const struct RSA *rsa, const uint8_t *digest,
 		uint32_t digest_len, const uint8_t *sig,
 		const uint32_t sig_len,	enum padding_mode padding,
@@ -212,22 +233,39 @@ int DCRYPTO_rsa_key_compute(struct LITE_BIGNUM *N, struct LITE_BIGNUM *d,
 /*
  *  EC.
  */
+
+/* DCRYPTO_p256_base_point_mul sets {out_x,out_y} = nG, where n is < the
+ * order of the group.
+ */
 int DCRYPTO_p256_base_point_mul(p256_int *out_x, p256_int *out_y,
 				const p256_int *n);
+
+/* DCRYPTO_p256_point_mul sets {out_x,out_y} = n*{in_x,in_y}, where n is <
+ * the order of the group.
+ */
 int DCRYPTO_p256_point_mul(p256_int *out_x, p256_int *out_y,
 			const p256_int *n, const p256_int *in_x,
 			const p256_int *in_y);
 /*
+ * Key selection based on FIPS-186-4, section B.4.2 (Key Pair
+ * Generation by Testing Candidates).
  * Produce uniform private key from seed.
  * If x or y is NULL, the public key part is not computed.
  * Returns !0 on success.
  */
 int DCRYPTO_p256_key_from_bytes(p256_int *x, p256_int *y, p256_int *d,
 				const uint8_t bytes[P256_NBYTES]);
-/* P256 based integration encryption (DH+AES128+SHA256). */
-/* Authenticated data may be provided, where the first auth_data_len
- * bytes of in will be authenticated but not encrypted. */
-/* Supports in-place encryption / decryption. */
+
+
+/* P256 based integration encryption (DH+AES128+SHA256).
+ * Not FIPS 140-2 compliant, not used other than for tests
+ * Authenticated data may be provided, where the first auth_data_len
+ * bytes of in will be authenticated but not encrypted. *
+ * Supports in-place encryption / decryption. *
+ * The output format is:
+ * 0x04 || PUBKEY || AUTH_DATA || AES128_CTR(PLAINTEXT) ||
+ *         HMAC_SHA256(AUTH_DATA || CIPHERTEXT)
+ */
 size_t DCRYPTO_ecies_encrypt(
 	void *out, size_t out_len, const void *in, size_t in_len,
 	size_t auth_data_len, const uint8_t *iv,
@@ -242,7 +280,10 @@ size_t DCRYPTO_ecies_decrypt(
 	const uint8_t *info, size_t info_len);
 
 /*
- *  HKDF.
+ * HKDF as per RFC 5869. Mentioned as conforming NIST SP 800-56C Rev.1
+ * [RFC 5869] specifies a version of the above extraction-then-expansion
+ * key-derivation procedure using HMAC for both the extraction and expansion
+ * steps.
  */
 int DCRYPTO_hkdf(uint8_t *OKM, size_t OKM_len,
 		const uint8_t *salt, size_t salt_len,
@@ -251,6 +292,10 @@ int DCRYPTO_hkdf(uint8_t *OKM, size_t OKM_len,
 
 /*
  *  BN.
+ */
+
+/* Apply Miller-Rabin test for prime candidate p.
+ * Returns 1 if test passed, 0 otherwise
  */
 int DCRYPTO_bn_generate_prime(struct LITE_BIGNUM *p);
 void DCRYPTO_bn_wrap(struct LITE_BIGNUM *b, void *buf, size_t len);
@@ -269,15 +314,55 @@ size_t DCRYPTO_asn1_pubp(uint8_t *buf, const p256_int *x, const p256_int *y);
 /*
  *  X509.
  */
+/* DCRYPTO_x509_verify verifies that the provided X509 certificate was issued
+ * by the specified certifcate authority.
+ *
+ * cert is a pointer to a DER encoded X509 certificate, as specified
+ * in https://tools.ietf.org/html/rfc5280#section-4.1.  In ASN.1
+ * notation, the certificate has the following structure:
+ *
+ *   Certificate  ::=  SEQUENCE  {
+ *        tbsCertificate       TBSCertificate,
+ *        signatureAlgorithm   AlgorithmIdentifier,
+ *        signatureValue       BIT STRING  }
+ *
+ *   TBSCertificate  ::=  SEQUENCE  { }
+ *   AlgorithmIdentifier  ::=  SEQUENCE  { }
+ *
+ * where signatureValue = SIGN(HASH(tbsCertificate)), with SIGN and
+ * HASH specified by signatureAlgorithm.
+ * Accepts only certs with OID: sha256WithRSAEncryption:
+ * 30 0d 06 09 2a 86 48 86 f7 0d 01 01 0b 05 00
+ */
 int DCRYPTO_x509_verify(const uint8_t *cert, size_t len,
 			const struct RSA *ca_pub_key);
-int DCRYPTO_x509_gen_u2f_cert(const p256_int *d, const p256_int *pk_x,
-			const p256_int *pk_y, const p256_int *serial,
-			uint8_t *cert, const int n);
+
+/* Generate U2F Certificate and sign it
+ * Use ECDSA with NIST P-256 curve, and SHA2-256 digest
+ * @param d: key handle, used for NIST SP 800-90A HMAC DRBG
+ * @param pk_x, pk_y: public key
+ * @param serial: serial number for certificate
+ * @param name: certificate issuer and subject
+ * @param cert: output buffer for certificate
+ * @param n: max size of cert
+ */
 int DCRYPTO_x509_gen_u2f_cert_name(const p256_int *d, const p256_int *pk_x,
 				   const p256_int *pk_y, const p256_int *serial,
 				   const char *name, uint8_t *cert,
 				   const int n);
+
+/* Generate U2F Certificate with DCRYPTO_x509_gen_u2f_cert_name
+ * Providing certificate issuer as BOARD or U2F
+ * @param d: key handle, used for NIST SP 800-90A HMAC DRBG
+ * @param pk_x, pk_y: public key
+ * @param serial: serial number for certificate
+ * @param name: certificate issuer and subject
+ * @param cert: output buffer for certificate
+ * @param n: max size of cert
+ */
+int DCRYPTO_x509_gen_u2f_cert(const p256_int *d, const p256_int *pk_x,
+			const p256_int *pk_y, const p256_int *serial,
+			uint8_t *cert, const int n);
 
 /*
  * Memory related functions.

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* AES-CMAC-128 implementation according to RFC4493 */
+/* AES-CMAC-128 implementation according to NIST SP 800-38B, RFC4493 */
 #include "console.h"
 #include "dcrypto.h"
 

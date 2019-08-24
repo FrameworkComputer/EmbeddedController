@@ -154,7 +154,7 @@ void hmac_drbg_generate_p256(struct drbg_ctx *ctx, p256_int *k_out);
 void drbg_exit(struct drbg_ctx *ctx);
 
 /*
- * Accelerated p256.
+ * Accelerated p256. FIPS PUB 186-4
  */
 int dcrypto_p256_ecdsa_sign(struct drbg_ctx *drbg, const p256_int *key,
 			    const p256_int *message, p256_int *r, p256_int *s)

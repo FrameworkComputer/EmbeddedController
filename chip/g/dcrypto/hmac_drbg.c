@@ -9,6 +9,8 @@
 #include "internal.h"
 #include "trng.h"
 
+/* HMAC_DRBG flow in NIST SP 800-90Ar1, 10.2, RFC 6979
+ */
 /* V = HMAC(K, V) */
 static void update_v(const uint32_t *k, uint32_t *v)
 {
