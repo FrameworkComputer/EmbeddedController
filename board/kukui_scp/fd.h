@@ -25,7 +25,7 @@ typedef void (*fd_msg_handler)(void *msg);
 
 struct fd_msg {
 	enum fd_msg_type type;
-	unsigned char msg[64];
+	unsigned char msg[110];
 };
 BUILD_ASSERT(member_size(struct fd_msg, msg) <= CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
 
