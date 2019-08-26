@@ -74,6 +74,7 @@ enum usb_prl_hr_state {
 /* Chunked Rx states (Section 6.11.2.1.2) */
 enum usb_rch_state {
 	RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER,
+	RCH_PASS_UP_MESSAGE,
 	RCH_PROCESSING_EXTENDED_MESSAGE,
 	RCH_REQUESTING_CHUNK,
 	RCH_WAITING_CHUNK,
@@ -880,10 +881,7 @@ static void rch_wait_for_message_from_protocol_layer_run(const int port)
 				      PRL_FLAGS_CHUNKING) && !chunked) {
 				/* Copy chunk to extended buffer */
 				copy_chunk_to_ext(port);
-				/* Pass Message to Policy Engine */
-				pe_pass_up_message(port);
-				/* Clear Abort flag and set Chunking */
-				rch_clear_abort_set_chunking(port);
+				set_state_rch(port, RCH_PASS_UP_MESSAGE);
 			}
 			/*
 			 * Chunked != Chunking
@@ -899,10 +897,7 @@ static void rch_wait_for_message_from_protocol_layer_run(const int port)
 		else if (!PD_HEADER_EXT(emsg[port].header)) {
 			/* Copy chunk to extended buffer */
 			copy_chunk_to_ext(port);
-			/* Pass Message to Policy Engine */
-			pe_pass_up_message(port);
-			/* Clear Abort flag and set Chunking */
-			rch_clear_abort_set_chunking(port);
+			set_state_rch(port, RCH_PASS_UP_MESSAGE);
 		}
 		/*
 		 * Received an Extended Message while communicating at a
@@ -913,6 +908,16 @@ static void rch_wait_for_message_from_protocol_layer_run(const int port)
 			return;
 		}
 	}
+}
+
+/*
+ * RchPassUpMessage
+ */
+static void rch_pass_up_message_entry(const int port)
+{
+	/* Pass Message to Policy Engine */
+	pe_pass_up_message(port);
+	set_state_rch(port, RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER);
 }
 
 /*
@@ -982,9 +987,7 @@ static void rch_processing_extended_message_run(const int port)
 		if (pdmsg[port].num_bytes_received >= data_size) {
 			emsg[port].len = pdmsg[port].num_bytes_received;
 			 /* Pass Message to Policy Engine */
-			pe_pass_up_message(port);
-			set_state_rch(port,
-				      RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER);
+			set_state_rch(port, RCH_PASS_UP_MESSAGE);
 		}
 		/*
 		 * Message not Complete
@@ -1584,6 +1587,9 @@ static const struct usb_state rch_states[] = {
 	[RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER] = {
 		.entry  = rch_wait_for_message_from_protocol_layer_entry,
 		.run    = rch_wait_for_message_from_protocol_layer_run,
+	},
+	[RCH_PASS_UP_MESSAGE] = {
+		.entry  = rch_pass_up_message_entry,
 	},
 	[RCH_PROCESSING_EXTENDED_MESSAGE] = {
 		.entry  = rch_processing_extended_message_entry,
