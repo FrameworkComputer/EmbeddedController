@@ -229,8 +229,11 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 static int board_is_convertible(void)
 {
-	/* Garg: TBD */
-	return sku_id == 255;
+	/*
+	 * Garg360: 37
+	 * Unprovisioned: 255
+	 */
+	return sku_id == 37 || sku_id == 255;
 }
 
 static int board_with_ar_cam(void)
