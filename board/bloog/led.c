@@ -129,9 +129,32 @@ static void set_active_port_color(enum led_color color)
 static void led_set_battery(void)
 {
 	static int battery_ticks;
+	static int power_ticks;
 	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
+
+	/*
+	 * Override battery LEDs for Blooglet, Blooglet is non-power LED
+	 * design, blinking both two side battery white LEDs to indicate
+	 * system suspend with non-charging state.
+	 */
+	if (!board_is_convertible()) {
+		if (chipset_in_state(CHIPSET_STATE_SUSPEND |
+					 CHIPSET_STATE_STANDBY) &&
+			charge_get_state() != PWR_STATE_CHARGE) {
+
+			power_ticks++;
+
+			led_set_color_battery(0, power_ticks & 0x4 ?
+						  LED_WHITE : LED_OFF);
+			led_set_color_battery(1, power_ticks & 0x4 ?
+						  LED_WHITE : LED_OFF);
+			return;
+		}
+	}
+
+	power_ticks = 0;
 
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
