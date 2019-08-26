@@ -64,6 +64,9 @@ PEM ?= $(BDIR)/dev_key.pem
 # If no bootblock is provided, just pack an empty file.
 BOOTBLOCK ?=
 
+# Port for flash_ec. Defaults to 9999.
+PORT ?= 9999
+
 # If CONFIG_TOUCHPAD_HASH_FW is set, include hashes of a touchpad firmware in
 # the EC image (if no touchpad firmware is provided, just output blank hashes).
 TOUCHPAD_FW ?=

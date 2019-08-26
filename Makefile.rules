@@ -624,7 +624,7 @@ flash: $(out)/ec.bin
 
 .PHONY: flash_ec
 flash_ec: $(out)/ec.bin
-	./util/flash_ec --board $(BOARD) --image $(out)/ec.bin
+	./util/flash_ec --board $(BOARD) --image $(out)/ec.bin --port $(PORT)
 
 .PHONY: flash_dfu
 flash_dfu: $(out)/ec.bin
