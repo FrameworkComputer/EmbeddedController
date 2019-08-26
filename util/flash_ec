@@ -57,10 +57,12 @@ BOARDS_IT83XX=(
 )
 
 BOARDS_STM32=(
+	bloonchipper
 	chell_pd
 	coffeecake
 	chocodile_bec
 	chocodile_vpdmcu
+	dartmonkey
 	glados_pd
 	hatch_fp
 	jerry
@@ -325,7 +327,7 @@ case "${BOARD}" in
 	chocodile_bec ) MCU="usbpd" ;;
 	oak_pd|samus_pd|strago_pd ) MCU="usbpd" ;;
 	chell_pd|glados_pd ) MCU="usbpd" ;;
-	hatch_fp|nami_fp|nocturne_fp ) MCU="usbpd" ;;
+	bloonchipper|dartmonkey|hatch_fp|nami_fp|nocturne_fp ) MCU="usbpd" ;;
 	dingdong|hoho|twinkie ) DUT_CONTROL_CMD=( "true" ); MCU="ec" ;;
 	*) MCU="ec" ;;
 esac
