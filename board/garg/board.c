@@ -17,7 +17,6 @@
 #include "driver/accelgyro_bmi160.h"
 #include "driver/charger/bd9995x.h"
 #include "driver/ppc/nx20p348x.h"
-#include "driver/sync.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -131,13 +130,6 @@ const mat33_fp_t base_standard_ref = {
 	{ 0, 0,  FLOAT_TO_FP(1)}
 };
 
-/* TODO: Tune the rot_standard_ref values after got mockup or system */
-const mat33_fp_t base_ar_cam_ref = {
-	{ 0, FLOAT_TO_FP(-0.96126), FLOAT_TO_FP(0.27564)},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(0.27564), FLOAT_TO_FP(0.96126)}
-};
-
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
 static struct bmi160_drv_data_t g_bmi160_data;
@@ -212,17 +204,6 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
-	[VSYNC] = {
-	.name = "Camera VSYNC",
-	.active_mask = SENSOR_ACTIVE_S0,
-	.chip = MOTIONSENSE_CHIP_GPIO,
-	.type = MOTIONSENSE_TYPE_SYNC,
-	.location = MOTIONSENSE_LOC_CAMERA,
-	.drv = &sync_drv,
-	.default_range = 0,
-	.min_frequency = 0,
-	.max_frequency = 1,
-	},
 };
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
@@ -234,12 +215,6 @@ static int board_is_convertible(void)
 	 * Unprovisioned: 255
 	 */
 	return sku_id == 37 || sku_id == 255;
-}
-
-static int board_with_ar_cam(void)
-{
-	/* SKU ID of Garg with AR Cam: TBD */
-	return 255;
 }
 
 static void board_update_sensor_config_from_sku(void)
@@ -254,18 +229,6 @@ static void board_update_sensor_config_from_sku(void)
 		/* Base accel is not stuffed, don't allow line to float */
 		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
 			       GPIO_INPUT | GPIO_PULL_DOWN);
-	}
-
-	/* TODO: Garg has AR camera? Remove it if not support */
-	if (board_with_ar_cam()) {
-		/* Enable interrupt from camera */
-		gpio_enable_interrupt(GPIO_WFCAM_VSYNC);
-
-		motion_sensors[BASE_ACCEL].rot_standard_ref = &base_ar_cam_ref;
-		motion_sensors[BASE_GYRO].rot_standard_ref = &base_ar_cam_ref;
-	} else {
-		/* Camera isn't stuffed, don't allow line to float */
-		gpio_set_flags(GPIO_WFCAM_VSYNC, GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
 
