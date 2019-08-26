@@ -1369,10 +1369,9 @@ static void pd_set_vconn_role(int port, int role)
 
 void pd_execute_hard_reset(int port)
 {
-	if (pd[port].last_state == PD_STATE_HARD_RESET_SEND)
-		CPRINTF("C%d HARD RST TX\n", port);
-	else
-		CPRINTF("C%d HARD RST RX\n", port);
+	int hard_rst_tx = pd[port].last_state == PD_STATE_HARD_RESET_SEND;
+
+	CPRINTF("C%d HARD RST %cX\n", port, hard_rst_tx ? 'T' : 'R');
 
 	pd[port].msg_id = 0;
 	invalidate_last_message_id(port);
@@ -1427,6 +1426,9 @@ void pd_execute_hard_reset(int port)
 		return;
 	}
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
+
+	if (!hard_rst_tx)
+		usleep(PD_T_PS_HARD_RESET);
 
 	/* We are a source, cut power */
 	pd_power_supply_reset(port);
