@@ -383,13 +383,14 @@ static void ccd_measure_sbu(void)
 	hook_call_deferred(&ccd_measure_sbu_data, 100 * MSEC);
 }
 
-
 void ccd_enable(int enable)
 {
-	/*
-	 * We may use this if displayport is ever enabled.
-	 * For now, CCD is always enabled on SBU.
-	 */
+	if (enable) {
+		hook_call_deferred(&ccd_measure_sbu_data, 0);
+	} else {
+		gpio_set_level(GPIO_SBU_MUX_EN, 0);
+		hook_call_deferred(&ccd_measure_sbu_data, -1);
+	}
 }
 
 int board_get_version(void)

@@ -658,10 +658,6 @@ int pd_set_power_supply_ready(int port)
 		return EC_ERROR_NOT_POWERED;
 	}
 
-	/* Enable CCD, if debuggable TS attached */
-	if (pd_ts_dts_plugged(DUT))
-		ccd_enable(1);
-
 	return EC_SUCCESS; /* we are ready */
 }
 
@@ -670,8 +666,6 @@ void pd_power_supply_reset(int port)
 	/* Port 0 can never provide vbus. */
 	if (port == CHG)
 		return;
-
-	ccd_enable(0);
 
 	/* Disable VBUS */
 	gpio_set_level(GPIO_DUT_CHG_EN, 0);
@@ -825,6 +819,14 @@ static void do_cc(int cc_config_new)
 			 */
 			if (!(cc_config_new & CC_DETACH))
 				usleep(PD_T_ERROR_RECOVERY);
+		}
+
+		if ((cc_config & ~cc_config_new) & CC_DISABLE_DTS) {
+			/* DTS-disabled -> DTS-enabled */
+			ccd_enable(1);
+		} else if ((cc_config_new & ~cc_config) & CC_DISABLE_DTS) {
+			/* DTS-enabled -> DTS-disabled */
+			ccd_enable(0);
 		}
 
 		/* Accept new cc_config value */
