@@ -53,6 +53,10 @@ static int i2c_port_is_locked(int port)
 	/* Test the controller, not the port */
 	port = i2c_port_to_controller(port);
 #endif
+	/* can't lock a non-existing port */
+	if (port < 0)
+		return 0;
+
 	return (i2c_port_active_list >> port) & 1;
 }
 
