@@ -595,7 +595,8 @@ void espi_vw_power_signal_interrupt(enum espi_vw_signal signal)
  */
 int espi_vw_set_wire(enum espi_vw_signal signal, uint8_t level)
 {
-	uint8_t tidx, ridx, src_num;
+	int tidx;
+	uint8_t ridx, src_num;
 
 	tidx = espi_vw_get_signal_index(signal);
 
@@ -671,8 +672,8 @@ static int espi_vw_s2m_set_w4m(uint32_t ridx, uint32_t src_num,
  */
 int espi_vw_pulse_wire(enum espi_vw_signal signal, int pulse_level)
 {
-	int rc;
-	uint8_t tidx, ridx, src_num, level;
+	int rc, tidx;
+	uint8_t ridx, src_num, level;
 
 	tidx = espi_vw_get_signal_index(signal);
 
@@ -720,8 +721,8 @@ int espi_vw_pulse_wire(enum espi_vw_signal signal, int pulse_level)
  */
 int espi_vw_get_wire(enum espi_vw_signal signal)
 {
-	int vw;
-	uint8_t tidx, ridx, src_num;
+	int vw, tidx;
+	uint8_t ridx, src_num;
 
 	vw = 0;
 	tidx = espi_vw_get_signal_index(signal);
@@ -749,7 +750,8 @@ int espi_vw_get_wire(enum espi_vw_signal signal)
  */
 int espi_vw_enable_wire_int(enum espi_vw_signal signal)
 {
-	uint8_t tidx, ridx, src_num, girq_num, bpos;
+	int tidx;
+	uint8_t ridx, src_num, girq_num, bpos;
 
 	tidx = espi_vw_get_signal_index(signal);
 
@@ -799,7 +801,8 @@ int espi_vw_enable_wire_int(enum espi_vw_signal signal)
  */
 int espi_vw_disable_wire_int(enum espi_vw_signal signal)
 {
-	uint8_t tidx, ridx, src_num, bpos;
+	int tidx;
+	uint8_t ridx, src_num, bpos;
 
 	tidx = espi_vw_get_signal_index(signal);
 
