@@ -8656,9 +8656,14 @@ int cmd_tp_frame_get(int argc, char* argv[])
 	data = malloc(ec_max_insize);
 	r = malloc(ec_max_insize);
 
+	if (data == NULL || r == NULL) {
+		fprintf(stderr, "Couldn't allocate memory.\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
 	rv = ec_command(EC_CMD_TP_FRAME_INFO, 0, NULL, 0, r, ec_max_insize);
 	if (rv < 0) {
-		fprintf(stderr, "Failed to get toucpad frame info.\n");
+		fprintf(stderr, "Failed to get touchpad frame info.\n");
 		goto err;
 	}
 
