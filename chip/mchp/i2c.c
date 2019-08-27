@@ -148,21 +148,21 @@ static const uint16_t i2c_controller_pcr[MCHP_I2C_CTRL_MAX] = {
 	MCHP_PCR_I2C3
 };
 
-static void i2c_ctrl_slp_en(int controller, int sleep_en)
-{
-	if ((controller < 0) || (controller > MCHP_I2C_CTRL_MAX))
-		return;
-	if (sleep_en)
-		MCHP_PCR_SLP_EN_DEV(i2c_controller_pcr[controller]);
-	else
-		MCHP_PCR_SLP_DIS_DEV(i2c_controller_pcr[controller]);
-}
-
 static int chip_i2c_is_controller_valid(int controller)
 {
 	if ((controller < 0) || (controller >= MCHP_I2C_CTRL_MAX))
 		return 0;
 	return 1;
+}
+
+static void i2c_ctrl_slp_en(int controller, int sleep_en)
+{
+	if (!chip_i2c_is_controller_valid(controller))
+		return;
+	if (sleep_en)
+		MCHP_PCR_SLP_EN_DEV(i2c_controller_pcr[controller]);
+	else
+		MCHP_PCR_SLP_DIS_DEV(i2c_controller_pcr[controller]);
 }
 
 uint32_t chip_i2c_get_ctx_flags(int port)
