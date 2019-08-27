@@ -935,6 +935,19 @@ static void rch_wait_for_message_from_protocol_layer_run(const int port)
 			 */
 			if ((RCH_CHK_FLAG(port, PRL_FLAGS_CHUNKING)) &&
 								chunked) {
+				/*
+				 * RCH_Processing_Extended_Message first chunk
+				 * entry processing embedded here
+				 *
+				 * This is the first chunk:
+				 * Set Chunk_number_expected = 0 and
+				 * Num_Bytes_Received = 0
+				 */
+				pdmsg[port].chunk_number_expected = 0;
+				pdmsg[port].num_bytes_received = 0;
+				pdmsg[port].msg_type =
+					PD_HEADER_TYPE(emsg[port].header);
+
 				set_state_rch(port,
 					      RCH_PROCESSING_EXTENDED_MESSAGE);
 			}
@@ -986,24 +999,6 @@ static void rch_pass_up_message_entry(const int port)
 /*
  * RchProcessingExtendedMessage
  */
-static void rch_processing_extended_message_entry(const int port)
-{
-	uint32_t header = emsg[port].header;
-	uint16_t exhdr = GET_EXT_HEADER(pdmsg[port].chk_buf[0]);
-	uint8_t chunk_num = PD_EXT_HEADER_CHUNK_NUM(exhdr);
-
-	/*
-	 * If first chunk:
-	 *   Set Chunk_number_expected = 0 and
-	 *   Num_Bytes_Received = 0
-	 */
-	if (chunk_num == 0) {
-		pdmsg[port].chunk_number_expected = 0;
-		pdmsg[port].num_bytes_received = 0;
-		pdmsg[port].msg_type = PD_HEADER_TYPE(header);
-	}
-}
-
 static void rch_processing_extended_message_run(const int port)
 {
 	uint16_t exhdr = GET_EXT_HEADER(pdmsg[port].chk_buf[0]);
@@ -1649,7 +1644,6 @@ static const struct usb_state rch_states[] = {
 		.entry  = rch_pass_up_message_entry,
 	},
 	[RCH_PROCESSING_EXTENDED_MESSAGE] = {
-		.entry  = rch_processing_extended_message_entry,
 		.run    = rch_processing_extended_message_run,
 	},
 	[RCH_REQUESTING_CHUNK] = {
