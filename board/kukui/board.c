@@ -21,6 +21,7 @@
 #include "driver/tcpm/mt6370.h"
 #include "driver/usb_mux/it5205.h"
 #include "extpower.h"
+#include "gesture.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -329,6 +330,11 @@ static void board_rev_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_rev_init, HOOK_PRIO_INIT_ADC + 1);
 
+void sensor_board_proc_double_tap(void)
+{
+	CPRINTS("Detect double tap");
+}
+
 /* Motion sensors */
 /* Mutexes */
 #ifndef VARIANT_KUKUI_NO_SENSORS
@@ -437,7 +443,12 @@ struct motion_sensor_t motion_sensors[] = {
 	 .config = {
 		 /* Enable accel in S0 */
 		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 10000 | ROUND_UP_FLAG,
+			 .odr = TAP_ODR,
+			 .ec_rate = 100 * MSEC,
+		 },
+		 /* For double tap detection */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = TAP_ODR,
 			 .ec_rate = 100 * MSEC,
 		 },
 	 },
