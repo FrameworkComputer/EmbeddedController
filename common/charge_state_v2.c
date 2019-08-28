@@ -1365,6 +1365,8 @@ static int shutdown_on_critical_battery(void)
 			break;
 		case CRITICAL_SHUTDOWN_CUTOFF:
 			CPRINTS("Cutoff due to critical battery");
+			/* Ensure logs are flushed. */
+			cflush();
 			board_cut_off_battery();
 			break;
 		case CRITICAL_SHUTDOWN_IGNORE:

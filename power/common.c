@@ -332,6 +332,8 @@ static enum power_state power_common_state(enum power_state state)
 #ifdef CONFIG_BATTERY_CUT_OFF
 			case CRITICAL_SHUTDOWN_CUTOFF:
 				CPRINTS("Cutoff due to G3 idle");
+				/* Ensure logs are flushed. */
+				cflush();
 				board_cut_off_battery();
 				break;
 #endif
