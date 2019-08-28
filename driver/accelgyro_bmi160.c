@@ -772,7 +772,7 @@ int manage_activity(const struct motion_sensor_t *s,
 		break;
 	}
 #endif
-#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+#ifdef CONFIG_GESTURE_DETECTION_MASK
 	case MOTIONSENSE_ACTIVITY_DOUBLE_TAP: {
 		int tmp;
 		/* Set double tap interrupt */
@@ -1059,7 +1059,7 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	raw_write8(s->port, s->i2c_spi_addr_flags,
 		   BMI160_CMD_REG, BMI160_CMD_INT_RESET);
 
-#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+#ifdef CONFIG_GESTURE_DETECTION_MASK
 	raw_write8(s->port, s->i2c_spi_addr_flags,
 		   BMI160_INT_TAP_0,
 		   BMI160_TAP_DUR(s, CONFIG_GESTURE_TAP_MAX_INTERSTICE_T));
@@ -1099,7 +1099,7 @@ static int config_interrupt(const struct motion_sensor_t *s)
 #ifdef CONFIG_GESTURE_SIGMO
 	tmp |= BMI160_INT_ANYMOTION;
 #endif
-#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+#ifdef CONFIG_GESTURE_DETECTION_MASK
 	tmp |= BMI160_INT_D_TAP;
 #endif
 #ifdef CONFIG_BMI160_ORIENTATION_SENSOR
@@ -1207,7 +1207,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		if (rv)
 			return rv;
 
-#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+#ifdef CONFIG_GESTURE_DETECTION_MASK
 		if (interrupt & BMI160_D_TAP_INT)
 			*event |= TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(
 					MOTIONSENSE_ACTIVITY_DOUBLE_TAP);
@@ -1311,7 +1311,7 @@ static int init(const struct motion_sensor_t *s)
 		data->disabled_activities |=
 			1 << MOTIONSENSE_ACTIVITY_SIG_MOTION;
 #endif
-#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+#ifdef CONFIG_GESTURE_DETECTION_MASK
 		data->disabled_activities |=
 			1 << MOTIONSENSE_ACTIVITY_DOUBLE_TAP;
 #endif

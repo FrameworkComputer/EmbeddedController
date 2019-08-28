@@ -1929,11 +1929,15 @@
 
 /* enable gesture host interface */
 #undef CONFIG_GESTURE_HOST_DETECTION
+
 /* Sensor sampling interval for gesture recognition */
 #undef CONFIG_GESTURE_SAMPLING_INTERVAL_MS
 
 /* Which sensor to look for battery tap recognition */
 #undef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+
+/* Which sensor to look for double tap recognition */
+#undef CONFIG_GESTURE_SENSOR_DOUBLE_TAP
 
 /*
  * Double tap detection parameters

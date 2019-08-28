@@ -727,7 +727,7 @@ static void check_and_queue_gestures(uint32_t *event)
 	/* Run gesture recognition engine */
 	gesture_calc(event);
 #endif
-#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+#ifdef CONFIG_GESTURE_DETECTION_MASK
 	if (*event & TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(
 				MOTIONSENSE_ACTIVITY_DOUBLE_TAP)) {
 #ifdef CONFIG_GESTURE_HOST_DETECTION
@@ -738,7 +738,11 @@ static void check_and_queue_gestures(uint32_t *event)
 		 * AP is ignoring double tap event, do no wake up and no
 		 * automatic disable.
 		 */
+#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
 		vector.flags = 0;
+#else
+		vector.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP;
+#endif
 		vector.activity = MOTIONSENSE_ACTIVITY_DOUBLE_TAP;
 		vector.state = 1; /* triggered */
 		vector.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID;
