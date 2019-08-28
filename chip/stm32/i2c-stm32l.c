@@ -402,7 +402,7 @@ static void i2c_freq_change_hook(void)
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_change_hook, HOOK_PRIO_DEFAULT);
 
-static void i2c_init(void)
+void i2c_init(void)
 {
 	const struct i2c_port_t *p = i2c_ports;
 	int i;
@@ -410,7 +410,6 @@ static void i2c_init(void)
 	for (i = 0; i < i2c_ports_used; i++, p++)
 		i2c_init_port(p);
 }
-DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
 
 /*****************************************************************************/
 /* Console commands */

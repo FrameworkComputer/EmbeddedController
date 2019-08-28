@@ -460,3 +460,12 @@ void i2cm_init(void)
 		i2cm_init_port(p);
 
 }
+
+void i2c_init(void)
+{
+	/*
+	 * Stub init function to be called at boot.
+	 * We only want this controller active in certain cases,
+	 * but we still need to let main.c call something.
+	 */
+}

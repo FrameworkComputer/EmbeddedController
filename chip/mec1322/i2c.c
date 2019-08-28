@@ -469,7 +469,7 @@ void i2c_set_timeout(int port, uint32_t timeout)
 		timeout ? timeout : I2C_TIMEOUT_DEFAULT_US;
 }
 
-static void i2c_init(void)
+void i2c_init(void)
 {
 	int i;
 	int controller;
@@ -500,7 +500,6 @@ static void i2c_init(void)
 		i2c_set_timeout(i2c_ports[i].port, 0);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
 
 static void handle_interrupt(int controller)
 {

@@ -21,7 +21,12 @@ enum hook_priority {
 	HOOK_PRIO_INIT_DMA = HOOK_PRIO_FIRST + 1,
 	/* LPC inits before modules which need memory-mapped I/O */
 	HOOK_PRIO_INIT_LPC = HOOK_PRIO_FIRST + 1,
-	/* I2C is needed before chipset inits (battery communications). */
+	/*
+	 * I2C dependents (battery, sensors, etc), everything but the
+	 * controllers. I2C controller is now initialized in main.c
+	 * TODO(b/138384267): Split this hook up and name the resulting
+	 * ones more semantically.
+	 */
 	HOOK_PRIO_INIT_I2C = HOOK_PRIO_FIRST + 2,
 	/* Chipset inits before modules which need to know its initial state. */
 	HOOK_PRIO_INIT_CHIPSET = HOOK_PRIO_FIRST + 3,

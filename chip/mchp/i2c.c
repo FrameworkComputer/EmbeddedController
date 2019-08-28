@@ -878,7 +878,7 @@ void i2c_set_timeout(int port, uint32_t timeout)
  * If multiple ports are mapped to the same controller choose the
  * lowest speed.
  */
-static void i2c_init(void)
+void i2c_init(void)
 {
 	int i, controller, kbps;
 	int controller_kbps[MCHP_I2C_CTRL_MAX];
@@ -923,7 +923,7 @@ static void i2c_init(void)
 		i2c_set_timeout(i2c_ports[i].port, 0);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
+
 /*
  * Handle I2C interrupts.
  * I2C controller is configured to fire interrupts on
