@@ -92,6 +92,9 @@
 #undef    UART0_PINMUX_11_12
 #undef    UART0_PINMUX_110_112
 
+/* Track AP power state */
+#define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+
 /* Debugging features */
 #define CONFIG_DEBUG_EXCEPTIONS
 #define CONFIG_DEBUG_STACK_OVERFLOW
