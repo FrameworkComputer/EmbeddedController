@@ -542,13 +542,12 @@ static int command_flash_log(int argc, char **argv)
 
 			ccprintf("%10u:%02x", e.r.timestamp, e.r.type);
 			for (i = 0; i < FLASH_LOG_PAYLOAD_SIZE(e.r.size); i++) {
-				if (i && !(i % 16)) {
+				if (i && !(i % 16))
 					ccprintf("\n          ");
-					cflush();
-				}
 				ccprintf(" %02x", e.r.payload[i]);
 			}
 			ccprintf("\n");
+			cflush();
 			stamp = e.r.timestamp;
 		}
 		if (rv)
