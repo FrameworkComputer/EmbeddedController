@@ -102,7 +102,15 @@ static const int debug_level;
  * going to, but not so long that a "low power charger connected" notification
  * would be shown in the chrome OS UI.
  */
-#define READY_HOLD_OFF_US (200 * MSEC)
+#define SNK_READY_HOLD_OFF_US (200 * MSEC)
+/*
+ * For the same purpose as SNK_READY_HOLD_OFF_US, but this delay can be longer
+ * since the concern over "low power charger" is not relevant when connected as
+ * a source and the additional delay avoids a race condition where the partner
+ * port sends a power role swap request close to when the VDM discover identity
+ * message gets sent.
+ */
+#define SRC_READY_HOLD_OFF_US (400 * MSEC)
 
 enum vdm_states {
 	VDM_STATE_ERR_BUSY = -3,
@@ -1842,7 +1850,7 @@ static void handle_ctrl_request(int port, uint16_t head,
 			 */
 			if (pd[port].task_state == PD_STATE_SNK_TRANSITION)
 				pd[port].ready_state_holdoff_timer =
-					get_time().val + READY_HOLD_OFF_US
+					get_time().val + SNK_READY_HOLD_OFF_US
 					+ (get_time().le.lo % (100 * MSEC));
 
 			set_state(port, PD_STATE_SNK_READY);
@@ -3577,10 +3585,14 @@ void pd_task(void *u)
 				 * before we may send messages of our own.  Add
 				 * some jitter of up to 100ms, taken from the
 				 * current system time, to prevent multiple
-				 * collisions.
+				 * collisions. This delay also allows the sink
+				 * device to request power role swap and allow
+				 * the the accept message to be sent prior to
+				 * CMD_DISCOVER_IDENT being sent in the
+				 * SRC_READY state.
 				 */
 				pd[port].ready_state_holdoff_timer =
-					get_time().val + READY_HOLD_OFF_US
+					get_time().val + SRC_READY_HOLD_OFF_US
 					+ (get_time().le.lo % (100 * MSEC));
 
 				/* it'a time to ping regularly the sink */
