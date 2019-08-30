@@ -1,5 +1,6 @@
 build/
 private*/
+*~
 *.swp
 *.pyc
 tags
