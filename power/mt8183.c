@@ -299,6 +299,8 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5S3:
+		hook_notify(HOOK_CHIPSET_PRE_INIT);
+
 		/*
 		 * Release power button in case it was pressed by force shutdown
 		 * sequence.
