@@ -64,12 +64,23 @@
     switching, sensor management, and other functions, offloading these tasks
     from the [AP](#ap).
 
+*   **E-Mark - Electronically Marked Cable** {#emark}
+
+    See the [USB-C documentation](./usb-c.md#emark) for more details.
+
 *   **eSPI - Enhanced Serial Peripheral Interface (Intel)**{#espi}
 
     Intel's synchronous communication interface between the [AP](#ap) and the
     [EC](#ec). Supports quad I/O mode and clock speeds up to 66 Mhz, providing
     bandwidth up to 264 Mbps. The full [eSPI Specification] is available from
     Intel.
+
+*   **GMR - Giant Magnetoresistance Sensor** {#gmr}
+
+    A sensor device that detects a magnetic field. These sensors differ from
+    [MAG](#mag) sensors, in that they only detect magnetic fields in close
+    proximity to the sensor. On Chromebooks, GMR sensors are used to detect when
+    the lid is opened.  On convertible Chromebooks, the GMR sensor also detects tablet mode when lid the is opened a full 360 degrees.
 
 *   **GPIO - General Purpose Input/Output**{#gpio}
 
@@ -96,6 +107,10 @@
     and one more slave devices. The I2C standard defines supported clock speeds
     of 100 KHz and 400 KHz. The full [I2C Specification] is available from NXP
     (formerly Phillips).
+
+*   **LED - Light Emitting Diode**{#led}
+
+    A Light Emitting Diode is a semiconductor that emits light when current flows through it.
 
 *   **LPC - Low Pin Count bus**{#lpc}
 
@@ -171,6 +186,11 @@
     devices. Standard transmission rates are slow (up to 115200 bits per
     second). Typical use is to provide a debug console to the EC. [RS-232] is
     the protocol standard used by UARTs.
+
+*   **VCONN - Connector Voltage** {#vconn}
+
+    See the [USB-C documentation](./usb-c.md#vconn) for more details.
+
 
 [BC 1.2 Specification]: <https://www.usb.org/document-library/battery-charging-v12-spec-and-adopters-agreement>
 [CrOS Board Info]: <https://chromium.googlesource.com/chromiumos/docs/+/master/design_docs/cros_board_info.md>
