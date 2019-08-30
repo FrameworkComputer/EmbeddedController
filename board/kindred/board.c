@@ -394,16 +394,46 @@ static void board_gpio_set_pp5000(void)
 
 }
 
+static bool board_is_convertible(void)
+{
+	uint8_t sku_id = get_board_sku();
+	/* SKU ID of Kled : 1, 2, 3, 4 */
+	return (sku_id >= 1) && (sku_id <= 4);
+}
+
+static void board_update_sensor_config_from_sku(void)
+{
+	/*
+	 * There are two possible sensor configurations. Clamshell device will
+	 * not have any of the motion sensors populated, while convertible
+	 * devices have the BMI160 Accel/Gryo lid acceleration sensor.
+	 * If a new SKU id is used that is not in the threshold, then the
+	 * number of motion sensors will remain as ARRAY_SIZE(motion_sensors).
+	 */
+	if (board_is_convertible()) {
+		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+		/* Enable gpio interrupt for base accelgyro sensor */
+		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+
+		CPRINTS("Motion Sensor Count = %d", motion_sensor_count);
+	} else {
+		motion_sensor_count = 0;
+		/* Base accel is not stuffed, don't allow line to float */
+		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
+	}
+}
+
 static void board_init(void)
 {
 	/* Initialize Fans */
 	setup_fans();
-	/* Enable gpio interrupt for base accelgyro sensor */
-	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 	/* Enable HDMI HPD interrupt. */
 	gpio_enable_interrupt(GPIO_HDMI_CONN_HPD);
 	/* Select correct gpio signal for PP5000_A control */
 	board_gpio_set_pp5000();
+	/* Use sku_id to set motion sensor count */
+	board_update_sensor_config_from_sku();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -420,7 +450,7 @@ void board_overcurrent_event(int port, int is_overcurrented)
 bool board_has_kb_backlight(void)
 {
 	uint8_t sku_id = get_board_sku();
-	/* SKU ID of Kled: 1,2,3,4 */
+	/* SKU ID of Kled with KB backlight: 1, 2, 3, 4 */
 	return (sku_id >= 1) && (sku_id <= 4);
 }
 
