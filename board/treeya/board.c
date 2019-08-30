@@ -54,16 +54,21 @@ static struct lsm6dsm_data g_lsm6dsm_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
 static const mat33_fp_t lsm6dsm_base_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
 	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
-/* just a placeholder, will revise when board is out */
 static const mat33_fp_t lis2dwl_lid_standard_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
+};
+
+static const mat33_fp_t treeya_standard_ref = {
 	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
 struct motion_sensor_t lid_accel_1 = {
@@ -145,10 +150,11 @@ struct motion_sensor_t base_gyro_1 = {
 	.max_frequency = LSM6DSM_ODR_MAX_VAL,
 };
 
-/* sku_id a8-a9 use ST sensors */
 static int board_use_st_sensor(void)
 {
+	/* sku_id 0xa8-0xa9 use ST sensors */
 	uint32_t sku_id = system_get_sku_id();
+
 	return sku_id == 0xa8 || sku_id == 0xa9;
 }
 
@@ -163,6 +169,11 @@ void board_update_sensor_config_from_sku(void)
 			motion_sensors[LID_ACCEL] = lid_accel_1;
 			motion_sensors[BASE_ACCEL] = base_accel_1;
 			motion_sensors[BASE_GYRO] = base_gyro_1;
+		} else{
+			/*Need to change matrix for treeya*/
+			motion_sensors[LID_ACCEL].rot_standard_ref = &treeya_standard_ref;
+			motion_sensors[BASE_ACCEL].rot_standard_ref = &treeya_standard_ref;
+			motion_sensors[BASE_GYRO].rot_standard_ref = &treeya_standard_ref;
 		}
 
 		/* Enable Gyro interrupts */
