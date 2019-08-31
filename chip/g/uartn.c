@@ -62,28 +62,16 @@ void uartn_tx_stop(int uart)
 int uartn_tx_in_progress(int uart)
 {
 	/* Transmit is in progress unless the TX FIFO is empty and idle. */
-	return !(GR_UART_STATE(uart) & (GC_UART_STATE_TXIDLE_MASK |
-				     GC_UART_STATE_TXEMPTY_MASK));
+	return (GR_UART_STATE(uart) & (GC_UART_STATE_TXIDLE_MASK |
+				       GC_UART_STATE_TXEMPTY_MASK)) !=
+		(GC_UART_STATE_TXIDLE_MASK | GC_UART_STATE_TXEMPTY_MASK);
 }
 
 void uartn_tx_flush(int uart)
 {
-	timestamp_t ts;
-	int i;
-
 	/* Wait until TX FIFO is idle. */
 	while (uartn_tx_in_progress(uart))
 		;
-	/*
-	 * Even when uartn_tx_in_progress() returns false, the chip seems to
-	 * be still trasmitting, resetting at this point results in an eaten
-	 * last symbol. Let's just wait some time (required to transmit 10
-	 * bits at 115200 baud).
-	 */
-	ts = get_time(); /* Start time. */
-	for (i = 0; i < 1000; i++) /* Limit it in case timer is not running. */
-		if ((get_time().val - ts.val) > ((1000000 * 10) / 115200))
-			return;
 }
 
 int uartn_tx_ready(int uart)
