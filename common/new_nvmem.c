@@ -3198,9 +3198,15 @@ test_export_static enum ec_error_list browse_flash_contents(int print)
 
 static int command_dump_nvmem(int argc, char **argv)
 {
+	int print = 1;
+
 	nvmem_disable_commits();
 
-	browse_flash_contents(1 + (argc > 1));
+#ifdef CR50_DEV
+	/* Allow dumping ecnrypted NVMEM contents only to DEV builds. */
+	print += (argc > 1);
+#endif
+	browse_flash_contents(print);
 
 	nvmem_enable_commits();
 
