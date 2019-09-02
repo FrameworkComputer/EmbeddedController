@@ -32,6 +32,7 @@
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "thermal.h"
@@ -93,6 +94,27 @@ static void bc12_interrupt(enum gpio_signal signal)
 	default:
 		break;
 	}
+}
+
+static void board_lid_interrupt(enum gpio_signal signal)
+{
+	static int board_id = -1;
+
+	if (board_id == -1) {
+		uint32_t val;
+
+		if (cbi_get_board_version(&val) == EC_SUCCESS)
+			board_id = val;
+	}
+
+	/*
+	 * This is a workaround with board version #1 where lid open can be
+	 * incorrectly triggered in 360-degree mode.
+	 */
+	if ((board_id == 1) && tablet_get_mode())
+		return;
+
+	lid_interrupt(signal);
 }
 
 #include "gpio_list.h" /* Must come after other header files. */
