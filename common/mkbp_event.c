@@ -316,9 +316,11 @@ static int take_event_if_set(uint8_t event_type)
 static int mkbp_get_next_event(struct host_cmd_handler_args *args)
 {
 	static int last;
-	int i, data_size, evt;
+	int i, evt;
 	uint8_t *resp = args->response;
 	const struct mkbp_event_source *src;
+
+	int data_size = -EC_ERROR_BUSY;
 
 	do {
 		/*
