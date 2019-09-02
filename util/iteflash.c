@@ -1502,6 +1502,7 @@ static int write_flash(struct common_hnd *chnd, const char *filename,
 		fprintf(stderr, "%s: Failed to read %d bytes from %s with "
 			"ferror() %d\n", __func__, size, filename, ferror(hnd));
 		free(buffer);
+		fclose(hnd);
 		return -EIO;
 	}
 	fclose(hnd);
