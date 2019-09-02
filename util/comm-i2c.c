@@ -174,11 +174,11 @@ int comm_init_i2c(void)
 {
 	char *file_path;
 	char buffer[64];
-	FILE *f;
 	int i;
 
 	/* find the device number based on the adapter name */
 	for (i = 0; i < I2C_MAX_ADAPTER; i++) {
+		FILE *f;
 		if (asprintf(&file_path, I2C_ADAPTER_NODE,
 			     i, i, EC_I2C_ADDR) < 0)
 			return -1;
@@ -187,6 +187,7 @@ int comm_init_i2c(void)
 			if (fgets(buffer, sizeof(buffer), f) &&
 			    !strncmp(buffer, I2C_ADAPTER_NAME, 6)) {
 				free(file_path);
+				fclose(f);
 				break;
 			}
 			fclose(f);
