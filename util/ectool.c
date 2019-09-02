@@ -8657,6 +8657,8 @@ int cmd_tp_frame_get(int argc, char* argv[])
 
 	if (data == NULL || r == NULL) {
 		fprintf(stderr, "Couldn't allocate memory.\n");
+		free(r);
+		free(data);
 		return EC_ERROR_UNKNOWN;
 	}
 
