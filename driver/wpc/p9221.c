@@ -586,14 +586,14 @@ done:
 
 static int p9221_get_charge_supplier(void)
 {
-	uint32_t tx_id;
-	int txmf_id;
-
 	if (!wpc->online)
 		return EC_ERROR_UNKNOWN;
 
 	if (p9221_is_epp()) {
+		uint32_t tx_id;
+		int txmf_id;
 		int ret;
+
 		wpc->charge_supplier = CHARGE_SUPPLIER_WPC_EPP;
 
 		ret = p9221_read16(P9221R7_EPP_TX_MFG_CODE_REG, &txmf_id);
@@ -608,12 +608,14 @@ static int p9221_get_charge_supplier(void)
 
 		if (tx_id & P9221R7_PROP_TX_ID_GPP_MASK)
 			wpc->charge_supplier = CHARGE_SUPPLIER_WPC_GPP;
+
+		CPRINTS("txmf_id=0x%04x tx_id=0x%08x supplier=%d",
+			txmf_id, tx_id, wpc->charge_supplier);
 	} else {
 		wpc->charge_supplier = CHARGE_SUPPLIER_WPC_BPP;
+		CPRINTS("supplier=%d", wpc->charge_supplier);
 	}
 
-	CPRINTS("txmf_id=0x%04x tx_id=0x%08x supplier=%d",
-		txmf_id, tx_id, wpc->charge_supplier);
 	return EC_SUCCESS;
 }
 
