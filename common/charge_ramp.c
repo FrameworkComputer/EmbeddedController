@@ -46,8 +46,8 @@ test_mockable int chg_ramp_max(int supplier, int sup_curr)
 #ifdef CONFIG_CHARGE_RAMP_HW
 	case CHARGE_SUPPLIER_PD:
 	case CHARGE_SUPPLIER_TYPEC:
-#endif
 		return sup_curr;
+#endif
 	/* default: fall through */
 	}
 
