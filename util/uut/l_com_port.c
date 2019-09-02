@@ -389,9 +389,9 @@ uint32_t com_port_read_bin(int device_id, uint8_t *buffer, uint32_t buf_size)
 
 	if (read_bytes == -1) {
 		display_color_msg(FAIL,
-			"com_port_read_bin() Error: %d Device number %lu was not "
+			"%s() Error: %d Device number %lu was not "
 			"opened, %s.\n",
-			errno, (uint32_t)device_id, strerror(errno));
+			__func__, errno, (uint32_t)device_id, strerror(errno));
 	}
 
 	return read_bytes;
@@ -423,8 +423,8 @@ uint32_t com_port_wait_read(int device_id)
 	ret_val = poll(&fds, 1, COMMAND_TIMEOUT);
 	if (ret_val < 0) {
 		display_color_msg(FAIL,
-			"com_port_wait_read() Error: %d Device number %lu %s\n",
-			errno, (uint32_t)device_id, strerror(errno));
+			"%s() Error: %d Device number %lu %s\n",
+			__func__, errno, (uint32_t)device_id, strerror(errno));
 		return 0;
 	}
 
