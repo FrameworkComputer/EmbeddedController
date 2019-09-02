@@ -102,7 +102,7 @@ void set_read_blocking(int dev_drv, bool block)
 	if (tcgetattr(dev_drv, &tty) != 0) {
 		display_color_msg(FAIL,
 			"set_read_blocking Error: %d Fail to get attribute "
-			"from Device number %lu.\n",
+			"from Device number %d.\n",
 			errno, dev_drv);
 		return;
 	}
@@ -113,7 +113,7 @@ void set_read_blocking(int dev_drv, bool block)
 	if (tcsetattr(dev_drv, TCSANOW, &tty) != 0) {
 		display_color_msg(FAIL,
 			"set_read_blocking Error: %d Fail to set attribute to "
-			"Device number %lu.\n",
+			"Device number %d.\n",
 			errno, dev_drv);
 	}
 }
@@ -147,7 +147,7 @@ bool com_config_uart(int h_dev_drv, struct comport_fields com_port_fields)
 	if (tcgetattr(h_dev_drv, &tty) != 0) {
 		display_color_msg(FAIL,
 			"com_config_uart Error: Fail to get attribute from "
-			"Device number %lu.\n",
+			"Device number %d.\n",
 			h_dev_drv);
 		return false;
 	}
@@ -389,7 +389,7 @@ uint32_t com_port_read_bin(int device_id, uint8_t *buffer, uint32_t buf_size)
 
 	if (read_bytes == -1) {
 		display_color_msg(FAIL,
-			"%s() Error: %d Device number %lu was not "
+			"%s() Error: %d Device number %u was not "
 			"opened, %s.\n",
 			__func__, errno, (uint32_t)device_id, strerror(errno));
 	}
@@ -423,7 +423,7 @@ uint32_t com_port_wait_read(int device_id)
 	ret_val = poll(&fds, 1, COMMAND_TIMEOUT);
 	if (ret_val < 0) {
 		display_color_msg(FAIL,
-			"%s() Error: %d Device number %lu %s\n",
+			"%s() Error: %d Device number %u %s\n",
 			__func__, errno, (uint32_t)device_id, strerror(errno));
 		return 0;
 	}
@@ -436,7 +436,7 @@ uint32_t com_port_wait_read(int device_id)
 		if (ioctl(device_id, FIONREAD, &bytes) < 0) {
 			display_color_msg(FAIL,
 				"com_port_wait_for_read() Error: %d Device number "
-				"%lu %s\n",
+				"%u %s\n",
 				errno, (uint32_t)device_id, strerror(errno));
 			return 0;
 		}

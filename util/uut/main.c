@@ -376,7 +376,7 @@ int main(int argc, char *argv[])
 		 * for timeout due to unstable data transfer yet.
 		 */
 		display_color_msg(FAIL,
-			"Host/Device synchronization failed, error = %lu,"
+			"Host/Device synchronization failed, error = %d,"
 			" fail count = %d\n", sr, sync_cnt);
 	}
 	if (sync_cnt > MAX_SYNC_RETRIES)
