@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "charge_manager.h"
 #include "console.h"
 #include "gpio.h"
 #include "system.h"
@@ -50,6 +51,9 @@ int pd_set_power_supply_ready(int port)
 	/* Provide VBUS */
 	board_vbus_enable(port, 1);
 
+	/* Ensure we advertise the proper available current quota */
+	charge_manager_source_port(port, 1);
+
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 
@@ -60,6 +64,9 @@ void pd_power_supply_reset(int port)
 {
 	/* Disable VBUS */
 	board_vbus_enable(port, 0);
+
+	/* Give back the current quota we are no longer using */
+	charge_manager_source_port(port, 0);
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -83,12 +90,13 @@ int pd_check_power_swap(int port)
 int pd_check_data_swap(int port, int data_role)
 {
 	/* Allow data swap if we are a UFP, otherwise don't allow */
-	return (data_role == PD_ROLE_UFP);
+	return data_role == PD_ROLE_UFP;
 }
 
 int pd_check_vconn_swap(int port)
 {
-	return 1;
+	/* Only allow vconn swap if PP5000 rail is enabled */
+	return gpio_get_level(GPIO_EN_PP5000);
 }
 
 void pd_execute_data_swap(int port, int data_role)
@@ -98,6 +106,8 @@ void pd_execute_data_swap(int port, int data_role)
 
 void pd_check_pr_role(int port, int pr_role, int flags)
 {
+	int partner_extpower;
+
 	/*
 	 * If partner is dual-role power and dualrole toggling is on, consider
 	 * if a power swap is necessary.
@@ -109,7 +119,7 @@ void pd_check_pr_role(int port, int pr_role, int flags)
 		 * swap to become a source. If we are source and partner is
 		 * externally powered, swap to become a sink.
 		 */
-		int partner_extpower = flags & PD_FLAGS_PARTNER_EXTPOWER;
+		partner_extpower = flags & PD_FLAGS_PARTNER_EXTPOWER;
 
 		if ((!partner_extpower && pr_role == PD_ROLE_SINK) ||
 			(partner_extpower && pr_role == PD_ROLE_SOURCE))
@@ -120,8 +130,14 @@ void pd_check_pr_role(int port, int pr_role, int flags)
 void pd_check_dr_role(int port, int dr_role, int flags)
 {
 	/* If UFP, try to switch to DFP */
-	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_UFP)
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_UFP &&
+		system_get_image_copy() != SYSTEM_IMAGE_RO)
 		pd_request_data_swap(port);
+}
+
+void typec_set_source_current_limit(int port, int rp)
+{
+	board_set_vbus_source_current_limit(port, rp);
 }
 
 /* ----------------- Vendor Defined Messages ------------------ */

@@ -219,6 +219,8 @@ struct tcpc_gpio_config_t {
 	/* Enable VCONN */
 	struct vconn_gpio_t vconn;
 #endif
+	/* Enable source ILIM */
+	struct tcpc_gpio_t src_ilim;
 };
 extern const struct tcpc_gpio_config_t tcpc_gpios[];
 
@@ -228,6 +230,7 @@ void vbus0_evt(enum gpio_signal signal);
 void vbus1_evt(enum gpio_signal signal);
 void board_charging_enable(int port, int enable);
 void board_vbus_enable(int port, int enable);
+void board_set_vbus_source_current_limit(int port, int rp);
 int ioexpander_read_intelrvp_version(int *port0, int *port1);
 void board_dc_jack_interrupt(enum gpio_signal signal);
 

@@ -42,6 +42,10 @@ const struct tcpc_gpio_config_t tcpc_gpios[] = {
 			.cc2_pin = GPIO_USB_C0_CC2_VCONN_EN,
 			.pin_pol = 1,
 		},
+		.src_ilim = {
+			.pin = GPIO_USB_C0_SRC_HI_ILIM,
+			.pin_pol = 1,
+		},
 	},
 	[TYPE_C_PORT_1] = {
 		.vbus = {
@@ -59,6 +63,10 @@ const struct tcpc_gpio_config_t tcpc_gpios[] = {
 		.vconn = {
 			.cc1_pin = GPIO_USB_C1_CC1_VCONN_EN,
 			.cc2_pin = GPIO_USB_C1_CC2_VCONN_EN,
+			.pin_pol = 1,
+		},
+		.src_ilim = {
+			.pin = GPIO_USB_C1_SRC_HI_ILIM,
 			.pin_pol = 1,
 		},
 	},

@@ -15,17 +15,40 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-static int board_charger_port_is_sourcing_vbus(int port)
+static inline int is_typec_port(int port)
 {
-	int src_en;
+	return !(port == DEDICATED_CHARGE_PORT || port == CHARGE_PORT_NONE);
+}
 
-	/* DC Jack can't source VBUS */
-	if (port == DEDICATED_CHARGE_PORT || port == CHARGE_PORT_NONE)
-		return 0;
 
-	src_en = gpio_get_level(tcpc_gpios[port].src.pin);
+int board_vbus_source_enabled(int port)
+{
+	int src_en = 0;
 
-	return tcpc_gpios[port].src.pin_pol ? src_en : !src_en;
+	/* Only Type-C ports can source VBUS */
+	if (is_typec_port(port)) {
+		src_en = gpio_get_level(tcpc_gpios[port].src.pin);
+
+		src_en = tcpc_gpios[port].src.pin_pol ? src_en : !src_en;
+	}
+
+	return src_en;
+}
+
+void board_set_vbus_source_current_limit(int port, int rp)
+{
+	int ilim_en;
+
+	/* Only Type-C ports can source VBUS */
+	if (is_typec_port(port)) {
+		/* Enable SRC ILIM if rp is MAX single source current */
+		ilim_en = (rp == CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT &&
+			board_vbus_source_enabled(port));
+
+		gpio_set_level(tcpc_gpios[port].src_ilim.pin,
+				tcpc_gpios[port].src_ilim.pin_pol ?
+				ilim_en : !ilim_en);
+	}
 }
 
 void board_charging_enable(int port, int enable)
@@ -129,7 +152,7 @@ int board_set_active_charge_port(int port)
 	int is_real_port = (port >= 0 &&
 			port < CHARGE_PORT_COUNT);
 	/* check if we are source vbus on that port */
-	int source = board_charger_port_is_sourcing_vbus(port);
+	int source = board_vbus_source_enabled(port);
 
 	if (is_real_port && source) {
 		CPRINTS("Skip enable p%d", port);
@@ -155,7 +178,7 @@ int board_set_active_charge_port(int port)
 	}
 
 	/* Enable charging port */
-	if (port != DEDICATED_CHARGE_PORT && port != CHARGE_PORT_NONE)
+	if (is_typec_port(port))
 		board_charging_enable(port, 1);
 
 	CPRINTS("New chg p%d", port);
