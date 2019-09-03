@@ -78,10 +78,6 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	/* Need to wait a min of 10 msec before check for power good */
 	msleep(10);
 
-	/*
-	 * TODO(b/122264541): Replace this wait with
-	 * power_wait_signals_timeout()
-	 */
 	/* Now wait for PP5000_A and RSMRST_L to go low */
 	while ((gpio_get_level(GPIO_PP5000_A_PG_OD) ||
 		power_has_signals(IN_PGOOD_ALL_CORE)) && (timeout_ms > 0)) {
