@@ -205,6 +205,35 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c = 60,
 		},
 	},
+
+	/* Simplo HIGHPOWER Battery Information */
+	[BATTERY_SIMPLO_HIGHPOWER] = {
+		.fuel_gauge = {
+			.manuf_name = "333-1D-DA-A",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
+			},
+		},
+		.batt_info = {
+			.voltage_max = 8800,	/* mV */
+			.voltage_normal = 7700,
+			.voltage_min = 6000,
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -10,
+			.discharging_max_c = 60,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
