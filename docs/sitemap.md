@@ -21,9 +21,10 @@
 
 *   [USB Updater](./usb_updater.md)
 
-## USB-C
+## USB
 
 *   [USB-C Power Delivery and Alternate Modes](./usb-c.md)
+*   [USB-A and USB-C Policies for Sourcing Power](./usb_power.md)
 
 ## Miscellaneous
 
