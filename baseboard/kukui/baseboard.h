@@ -56,6 +56,8 @@
  * Define this flag if board controls dp mux via gpio pins USB_C0_DP_OE_L and
  * USB_C0_DP_POLARITY.
  *
+ * board must provide function board_set_dp_mux_control(output_enable, polarity)
+ *
  * #define VARIANT_KUKUI_DP_MUX_GPIO
  */
 
@@ -218,5 +220,11 @@
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
+
+#ifndef __ASSEMBLER__
+#ifdef VARIANT_KUKUI_DP_MUX_GPIO
+void board_set_dp_mux_control(int output_enable, int polarity);
+#endif /* VARIANT_KUKUI_DP_MUX_GPIO */
+#endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BASEBOARD_H */

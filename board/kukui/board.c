@@ -19,6 +19,7 @@
 #include "driver/charger/rt946x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/mt6370.h"
+#include "driver/usb_mux/it5205.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -100,10 +101,30 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	},
 };
 
+void board_set_dp_mux_control(int output_enable, int polarity)
+{
+	if (board_get_version() >= 5)
+		return;
+
+	gpio_set_level(GPIO_USB_C0_DP_OE_L, !output_enable);
+	if (output_enable)
+		gpio_set_level(GPIO_USB_C0_DP_POLARITY, polarity);
+}
+
+static void board_hpd_update(int port, int hpd_lvl, int hpd_irq)
+{
+	/*
+	 * svdm_dp_attention() did most of the work, we only need to notify
+	 * host here.
+	 */
+	host_set_single_event(EC_HOST_EVENT_USB_MUX);
+}
+
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
-		.driver = &virtual_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
+		.port_addr = IT5205_I2C_ADDR1_FLAGS,
+		.driver = &it5205_usb_mux_driver,
+		.hpd_update = &board_hpd_update,
 	},
 };
 
@@ -300,6 +321,13 @@ static void board_rev_init(void)
 			   PI3USB9201_REG_CTRL_1,
 			   (PI3USB9201_USB_PATH_ON <<
 			    PI3USB9201_REG_CTRL_1_MODE_SHIFT));
+	}
+
+	if (board_get_version() < 5) {
+		gpio_set_flags(GPIO_USB_C0_DP_OE_L, GPIO_OUT_HIGH);
+		gpio_set_flags(GPIO_USB_C0_DP_POLARITY, GPIO_OUT_LOW);
+		usb_muxes[0].driver = &virtual_usb_mux_driver;
+		usb_muxes[0].hpd_update = &virtual_hpd_update;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_rev_init, HOOK_PRIO_INIT_ADC + 1);
