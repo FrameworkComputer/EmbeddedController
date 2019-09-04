@@ -98,6 +98,9 @@ static enum vendor_cmd_rc u2f_generate(enum vendor_cmd_cc code,
 	/* Key handle */
 	uint8_t kh[U2F_FIXED_KH_SIZE];
 
+	/* Whether keypair generation succeeded */
+	int generate_keypair_rc;
+
 	size_t response_buf_size = *response_size;
 
 	*response_size = 0;
@@ -116,12 +119,16 @@ static enum vendor_cmd_rc u2f_generate(enum vendor_cmd_cc code,
 		if (!DCRYPTO_ladder_random(&od_seed))
 			return VENDOR_RC_INTERNAL_ERROR;
 
-		u2f_origin_user_keyhandle(req->appId,
-					  req->userSecret,
-					  od_seed,
-					  kh);
-	} while (u2f_origin_user_keypair(kh, &od, &opk_x, &opk_y) !=
-		 EC_SUCCESS);
+		if (u2f_origin_user_keyhandle(req->appId, req->userSecret,
+					      od_seed, kh) != EC_SUCCESS)
+			return VENDOR_RC_INTERNAL_ERROR;
+
+		generate_keypair_rc =
+			u2f_origin_user_keypair(kh, &od, &opk_x, &opk_y);
+	} while (generate_keypair_rc == EC_ERROR_TRY_AGAIN);
+
+	if (generate_keypair_rc != EC_SUCCESS)
+		return VENDOR_RC_INTERNAL_ERROR;
 
 	/*
 	 * From this point: the request 'req' content is invalid as it is
@@ -145,8 +152,9 @@ static enum vendor_cmd_rc u2f_generate(enum vendor_cmd_cc code,
 DECLARE_VENDOR_COMMAND(VENDOR_CC_U2F_GENERATE, u2f_generate);
 
 static int verify_kh_owned(const uint8_t *user_secret, const uint8_t *app_id,
-			   const uint8_t *key_handle)
+			   const uint8_t *key_handle, int *owned)
 {
+	int rc;
 	/* Re-created key handle. */
 	uint8_t recreated_kh[KH_LEN];
 
@@ -155,12 +163,14 @@ static int verify_kh_owned(const uint8_t *user_secret, const uint8_t *app_id,
 	 * was provided. This allows us to verify that the key handle
 	 * is owned by this combination of device, current user and app_id.
 	 */
-	u2f_origin_user_keyhandle(app_id,
-				  user_secret,
-				  key_handle,
-				  recreated_kh);
 
-	return safe_memcmp(recreated_kh, key_handle, KH_LEN) == 0;
+	rc = u2f_origin_user_keyhandle(app_id, user_secret, key_handle,
+				       recreated_kh);
+
+	if (rc == EC_SUCCESS)
+		*owned = safe_memcmp(recreated_kh, key_handle, KH_LEN) == 0;
+
+	return rc;
 }
 
 static int verify_legacy_kh_owned(const uint8_t *app_id,
@@ -198,6 +208,9 @@ static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
 
 	struct drbg_ctx ctx;
 
+	/* Whether the key handle is owned by this device. */
+	int kh_owned;
+
 	/* Origin private key. */
 	uint8_t legacy_origin_seed[SHA256_DIGEST_SIZE];
 	p256_int origin_d;
@@ -214,7 +227,11 @@ static enum vendor_cmd_rc u2f_sign(enum vendor_cmd_cc code,
 	if (input_size != sizeof(U2F_SIGN_REQ))
 		return VENDOR_RC_BOGUS_ARGS;
 
-	if (!verify_kh_owned(req->userSecret, req->appId, req->keyHandle)) {
+	if (verify_kh_owned(req->userSecret, req->appId, req->keyHandle,
+			    &kh_owned) != EC_SUCCESS)
+		return VENDOR_RC_INTERNAL_ERROR;
+
+	if (!kh_owned) {
 		if ((req->flags & SIGN_LEGACY_KH) == 0)
 			return VENDOR_RC_PASSWORD_REQUIRED;
 
@@ -288,11 +305,16 @@ static inline int u2f_attest_verify_reg_resp(const uint8_t *user_secret,
 					     const uint8_t *data)
 {
 	struct G2F_REGISTER_MSG *msg = (void *) data;
+	int kh_owned;
 
 	if (data_size != sizeof(struct G2F_REGISTER_MSG))
 		return VENDOR_RC_NOT_ALLOWED;
 
-	if (!verify_kh_owned(user_secret, msg->app_id, msg->key_handle))
+	if (verify_kh_owned(user_secret, msg->app_id, msg->key_handle,
+			    &kh_owned) != EC_SUCCESS)
+		return VENDOR_RC_INTERNAL_ERROR;
+
+	if (!kh_owned)
 		return VENDOR_RC_NOT_ALLOWED;
 
 	return VENDOR_RC_SUCCESS;

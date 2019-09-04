@@ -71,14 +71,17 @@ enum u2f_mode {
 	MODE_U2F_EXTENDED = 3,
 };
 
-static uint32_t salt[8];
-static uint32_t salt_kek[8];
-static uint32_t salt_kh[8];
+struct u2f_state {
+	uint32_t salt[8];
+	uint32_t salt_kek[8];
+	uint32_t salt_kh[8];
+};
+
 static uint8_t u2f_mode = MODE_UNSET;
 static const uint8_t k_salt = NVMEM_VAR_G2F_SALT;
 static const uint8_t k_salt_deprecated = NVMEM_VAR_U2F_SALT;
 
-static int load_state(void)
+static int load_state(struct u2f_state *state)
 {
 	const struct tuple *t_salt = getvar(&k_salt, sizeof(k_salt));
 
@@ -89,18 +92,18 @@ static int load_state(void)
 			return 0;
 
 		/* create random salt */
-		if (!DCRYPTO_ladder_random(salt))
+		if (!DCRYPTO_ladder_random(state->salt))
 			return 0;
-		if (setvar(&k_salt, sizeof(k_salt), (const uint8_t *)salt,
-			   sizeof(salt)))
+		if (setvar(&k_salt, sizeof(k_salt),
+			   (const uint8_t *)state->salt, sizeof(state->salt)))
 			return 0;
 	} else {
-		memcpy(salt, tuple_val(t_salt), sizeof(salt));
+		memcpy(state->salt, tuple_val(t_salt), sizeof(state->salt));
 		freevar(t_salt);
 	}
 
-	if (read_tpm_nvmem_hidden(TPM_HIDDEN_U2F_KEK, sizeof(salt_kek),
-				  salt_kek) == tpm_read_not_found) {
+	if (read_tpm_nvmem_hidden(TPM_HIDDEN_U2F_KEK, sizeof(state->salt_kek),
+				  state->salt_kek) == tpm_read_not_found) {
 		/*
 		 * Not found means that we have not used u2f before,
 		 * or not used it with updated fw that resets kek seed
@@ -114,41 +117,52 @@ static int load_state(void)
 			 * seed as a one-off. It will be changed on
 			 * next TPM clear.
 			 */
-			memcpy(salt_kek, salt, sizeof(salt_kek));
+			memcpy(state->salt_kek, state->salt,
+			       sizeof(state->salt_kek));
 		} else {
 			/*
 			 * We have never used u2f before - generate
 			 * new seed.
 			 */
-			if (!DCRYPTO_ladder_random(salt_kek))
+			if (!DCRYPTO_ladder_random(state->salt_kek))
 				return 0;
 		}
-		if (write_tpm_nvmem_hidden(
-			TPM_HIDDEN_U2F_KEK,
-			sizeof(salt_kek), salt_kek, 1 /* commit */) !=
-		    tpm_write_created)
+		if (write_tpm_nvmem_hidden(TPM_HIDDEN_U2F_KEK,
+					   sizeof(state->salt_kek),
+					   state->salt_kek,
+					   1 /* commit */) != tpm_write_created)
 			return 0;
 	}
 
-	if (read_tpm_nvmem_hidden(
-		TPM_HIDDEN_U2F_KH_SALT,
-		sizeof(salt_kh), salt_kh) ==
-	    tpm_read_not_found) {
+	if (read_tpm_nvmem_hidden(TPM_HIDDEN_U2F_KH_SALT,
+				  sizeof(state->salt_kh),
+				  state->salt_kh) == tpm_read_not_found) {
 		/*
 		 * We have never used u2f before - generate
 		 * new seed.
 		 */
-		if (!DCRYPTO_ladder_random(salt_kh))
+		if (!DCRYPTO_ladder_random(state->salt_kh))
 			return 0;
 
-		if (write_tpm_nvmem_hidden(
-			TPM_HIDDEN_U2F_KH_SALT,
-			sizeof(salt_kh), salt_kh, 1 /* commit */) !=
-		    tpm_write_created)
+		if (write_tpm_nvmem_hidden(TPM_HIDDEN_U2F_KH_SALT,
+					   sizeof(state->salt_kh),
+					   state->salt_kh,
+					   1 /* commit */) != tpm_write_created)
 			return 0;
 	}
 
 	return 1;
+}
+
+static struct u2f_state *get_state(void)
+{
+	static int state_loaded;
+	static struct u2f_state state;
+
+	if (!state_loaded)
+		state_loaded = load_state(&state);
+
+	return state_loaded ? &state : NULL;
 }
 
 static int use_u2f(void)
@@ -160,7 +174,7 @@ static int use_u2f(void)
 	 */
 
 	if (u2f_mode == MODE_UNSET) {
-		if (load_state())
+		if (get_state())
 			/* Start without extension enabled, host will set it */
 			u2f_mode = MODE_U2F;
 	}
@@ -224,10 +238,14 @@ int u2f_origin_user_keyhandle(const uint8_t *origin,
 			      uint8_t *key_handle)
 {
 	LITE_HMAC_CTX ctx;
+	struct u2f_state *state = get_state();
+
+	if (!state)
+		return EC_ERROR_UNKNOWN;
 
 	memcpy(key_handle, origin_seed, P256_NBYTES);
 
-	DCRYPTO_HMAC_SHA256_init(&ctx, salt_kek, SHA256_DIGEST_SIZE);
+	DCRYPTO_HMAC_SHA256_init(&ctx, state->salt_kek, SHA256_DIGEST_SIZE);
 	HASH_update(&ctx.hash, origin, P256_NBYTES);
 	HASH_update(&ctx.hash, user, P256_NBYTES);
 	HASH_update(&ctx.hash, origin_seed, P256_NBYTES);
@@ -247,30 +265,39 @@ int u2f_origin_user_keypair(const uint8_t *key_handle,
 	uint8_t key_seed[P256_NBYTES];
 
 	struct drbg_ctx drbg;
+	struct u2f_state *state = get_state();
 
-	if (!_derive_key(U2F_ORIGIN, salt_kek, dev_salt))
+	if (!state)
 		return EC_ERROR_UNKNOWN;
 
-	hmac_drbg_init(&drbg,
-		       salt_kh, P256_NBYTES,
-		       dev_salt, P256_NBYTES,
-		       NULL, 0);
+	if (!_derive_key(U2F_ORIGIN, state->salt_kek, dev_salt))
+		return EC_ERROR_UNKNOWN;
+
+	hmac_drbg_init(&drbg, state->salt_kh, P256_NBYTES, dev_salt,
+		       P256_NBYTES, NULL, 0);
 
 	hmac_drbg_generate(&drbg,
 			   key_seed, sizeof(key_seed),
 			   key_handle, P256_NBYTES * 2);
 
-	return DCRYPTO_p256_key_from_bytes(
-	    pk_x, pk_y, d, key_seed) == 0;
+	if (!DCRYPTO_p256_key_from_bytes(pk_x, pk_y, d, key_seed))
+		return EC_ERROR_TRY_AGAIN;
+
+	return EC_SUCCESS;
 }
 
 int u2f_gen_kek(const uint8_t *origin, uint8_t *kek, size_t key_len)
 {
 	uint32_t buf[P256_NDIGITS];
 
+	struct u2f_state *state = get_state();
+
+	if (!state)
+		return EC_ERROR_UNKNOWN;
+
 	if (key_len != sizeof(buf))
 		return EC_ERROR_UNKNOWN;
-	if (!_derive_key(U2F_WRAP, salt_kek, buf))
+	if (!_derive_key(U2F_WRAP, state->salt_kek, buf))
 		return EC_ERROR_UNKNOWN;
 	memcpy(kek, buf, key_len);
 
@@ -281,8 +308,13 @@ int g2f_individual_keypair(p256_int *d, p256_int *pk_x, p256_int *pk_y)
 {
 	uint8_t buf[SHA256_DIGEST_SIZE];
 
+	struct u2f_state *state = get_state();
+
+	if (!state)
+		return EC_ERROR_UNKNOWN;
+
 	/* Incorporate HIK & diversification constant */
-	if (!_derive_key(U2F_ATTEST, salt, (uint32_t *)buf))
+	if (!_derive_key(U2F_ATTEST, state->salt, (uint32_t *)buf))
 		return EC_ERROR_UNKNOWN;
 
 	/* Generate unbiased private key */
@@ -299,12 +331,16 @@ int g2f_individual_keypair(p256_int *d, p256_int *pk_x, p256_int *pk_y)
 
 int u2f_gen_kek_seed(int commit)
 {
-	if (!DCRYPTO_ladder_random(salt_kek))
+	struct u2f_state *state = get_state();
+
+	if (!state)
+		return EC_ERROR_UNKNOWN;
+
+	if (!DCRYPTO_ladder_random(state->salt_kek))
 		return EC_ERROR_HW_INTERNAL;
 
-	if (write_tpm_nvmem_hidden(
-		TPM_HIDDEN_U2F_KEK, sizeof(salt_kek), salt_kek, commit) ==
-	    tpm_write_fail)
+	if (write_tpm_nvmem_hidden(TPM_HIDDEN_U2F_KEK, sizeof(state->salt_kek),
+				   state->salt_kek, commit) == tpm_write_fail)
 		return EC_ERROR_UNKNOWN;
 
 	return EC_SUCCESS;
