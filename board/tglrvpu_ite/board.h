@@ -23,8 +23,9 @@
 
 #include "baseboard.h"
 
-/* TODO: Chipset Tigerlake */
-#define CONFIG_CHIPSET_ICELAKE
+#define CONFIG_CHIPSET_TIGERLAKE
+#define GPIO_EC_PCH_RSMRST_L	GPIO_PCH_RSMRST_L
+#define GPIO_PG_EC_RSMRST_ODL	GPIO_RSMRST_L_PGOOD
 
 /* Charger */
 #define CONFIG_CHARGER_ISL9241

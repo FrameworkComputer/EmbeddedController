@@ -30,8 +30,7 @@
 #define CONFIG_HOSTCMD_ESPI
 
 /* Chipset config */
-/* TODO - replace with TigerLake once the changes land */
-#define CONFIG_CHIPSET_ICELAKE
+#define CONFIG_CHIPSET_TIGERLAKE
 #define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_CPU_PROCHOT_ACTIVE_LOW
 #define CONFIG_EXTPOWER_GPIO

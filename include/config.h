@@ -1075,9 +1075,11 @@
 #undef CONFIG_CHIPSET_SKYLAKE		/* Intel Skylake (x86) */
 #undef CONFIG_CHIPSET_SDM845            /* Qualcomm SDM845 */
 #undef CONFIG_CHIPSET_STONEY		/* AMD Stoney (x86)*/
+#undef CONFIG_CHIPSET_TIGERLAKE		/* Intel Tigerlake (x86) */
 
 /* Shared chipset support; automatically gets defined below. */
 #undef CONFIG_CHIPSET_APL_GLK		/* Apollolake & Geminilake */
+#undef CONFIG_CHIPSET_ICL_TGL		/* Icelake & Tigerlake */
 
 /* Support chipset throttling */
 #undef CONFIG_CHIPSET_CAN_THROTTLE
@@ -4634,6 +4636,7 @@
 #undef CONFIG_CHIPSET_SDM845
 #undef CONFIG_CHIPSET_SKYLAKE
 #undef CONFIG_CHIPSET_STONEY
+#undef CONFIG_CHIPSET_TIGERLAKE
 #undef CONFIG_POWER_COMMON
 #endif
 
@@ -4725,16 +4728,30 @@
 #define CONFIG_CHIPSET_APL_GLK
 #endif
 
+#if defined(CONFIG_CHIPSET_ICELAKE) || \
+	defined(CONFIG_CHIPSET_TIGERLAKE)
+#define CONFIG_CHIPSET_ICL_TGL
+#endif
+
 #if defined(CONFIG_CHIPSET_APL_GLK)
 #define CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
 #endif
 
-#if defined(CONFIG_CHIPSET_ICELAKE) || defined(CONFIG_CHIPSET_COMETLAKE)
+#if defined(CONFIG_CHIPSET_APOLLOLAKE) || \
+	defined(CONFIG_CHIPSET_BRASWELL) || \
+	defined(CONFIG_CHIPSET_CANNONLAKE) || \
+	defined(CONFIG_CHIPSET_COMETLAKE) || \
+	defined(CONFIG_CHIPSET_GEMINILAKE) || \
+	defined(CONFIG_CHIPSET_ICELAKE) || \
+	defined(CONFIG_CHIPSET_SKYLAKE) || \
+	defined(CONFIG_CHIPSET_TIGERLAKE)
 #define CONFIG_POWER_COMMON
 #endif
 
-#if defined(CONFIG_CHIPSET_SKYLAKE) || defined(CONFIG_CHIPSET_CANNONLAKE) \
-	|| defined(CONFIG_CHIPSET_ICELAKE)
+#if defined(CONFIG_CHIPSET_CANNONLAKE) || \
+	defined(CONFIG_CHIPSET_ICELAKE) || \
+	defined(CONFIG_CHIPSET_SKYLAKE) || \
+	defined(CONFIG_CHIPSET_TIGERLAKE)
 #define CONFIG_CHIPSET_X86_RSMRST_DELAY
 #endif
 
