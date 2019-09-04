@@ -19,6 +19,8 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+static int mt6370_polarity;
+
 /* i2c_write function which won't wake TCPC from low power mode. */
 static int mt6370_i2c_write8(int port, int reg, int val)
 {
@@ -71,6 +73,23 @@ static int mt6370_init(int port)
 	return rv;
 }
 
+static inline int mt6370_init_cc_params(int port, int cc_res)
+{
+	int rv, en, sel;
+
+	if (cc_res == TYPEC_CC_VOLT_RP_DEF) { /* RXCC threshold : 0.55V */
+		en = 1;
+		sel = MT6370_OCCTRL_600MA | MT6370_MASK_BMCIO_RXDZSEL;
+	} else { /* RD threshold : 0.4V & RP threshold : 0.7V */
+		en = 0;
+		sel = MT6370_OCCTRL_600MA;
+	}
+	rv = tcpc_write(port, MT6370_REG_BMCIO_RXDZEN, en);
+	if (!rv)
+		rv = tcpc_write(port, MT6370_REG_BMCIO_RXDZSEL, sel);
+	return rv;
+}
+
 static int mt6370_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	enum tcpc_cc_voltage_status *cc2)
 {
@@ -113,7 +132,15 @@ static int mt6370_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 			*cc2 |= 0x04;
 	}
 
+	rv = mt6370_init_cc_params(port, (int)mt6370_polarity ? *cc1 : *cc2);
 	return rv;
+}
+
+static int mt6370_set_cc(int port, int pull)
+{
+	if (pull == TYPEC_CC_RD)
+		mt6370_init_cc_params(port, TYPEC_CC_VOLT_RP_DEF);
+	return tcpci_tcpm_set_cc(port, pull);
 }
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
@@ -131,6 +158,15 @@ static int mt6370_enter_low_power_mode(int port)
 	return tcpci_enter_low_power_mode(port);
 }
 #endif
+
+static int mt6370_set_polarity(int port, int polarity)
+{
+	enum tcpc_cc_voltage_status cc1, cc2;
+
+	mt6370_polarity = polarity;
+	mt6370_get_cc(port, &cc1, &cc2);
+	return tcpci_tcpm_set_polarity(port, polarity);
+}
 
 int mt6370_vconn_discharge(int port)
 {
@@ -157,8 +193,8 @@ const struct tcpm_drv mt6370_tcpm_drv = {
 	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,
 #endif
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
-	.set_cc			= &tcpci_tcpm_set_cc,
-	.set_polarity		= &tcpci_tcpm_set_polarity,
+	.set_cc			= &mt6370_set_cc,
+	.set_polarity		= &mt6370_set_polarity,
 	.set_vconn		= &tcpci_tcpm_set_vconn,
 	.set_msg_header		= &tcpci_tcpm_set_msg_header,
 	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
