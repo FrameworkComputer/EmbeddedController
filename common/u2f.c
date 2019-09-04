@@ -71,9 +71,6 @@ int g2f_attestation_cert(uint8_t *buf)
 {
 	p256_int d, pk_x, pk_y;
 
-	if (!use_g2f())
-		return 0;
-
 	if (g2f_individual_keypair(&d, &pk_x, &pk_y))
 		return 0;
 

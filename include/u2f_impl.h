@@ -129,9 +129,4 @@ int u2f_gen_kek_seed(int commit);
  */
 int g2f_attestation_cert(uint8_t *buf);
 
-/* ---- protocol extensions ---- */
-
-/* Use non-standard extensions to the U2F protocol */
-int use_g2f(void);
-
 #endif /* __CROS_EC_U2F_IMPL_H */

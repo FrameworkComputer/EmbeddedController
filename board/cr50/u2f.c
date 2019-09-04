@@ -54,22 +54,7 @@ enum touch_state pop_check_presence(int consume)
 	return recent ? POP_TOUCH_YES : POP_TOUCH_NO;
 }
 
-/* ---- non-volatile U2F parameters ---- */
-
-/*
- * Current mode defining the behavior of the U2F feature.
- * Identical to the one defined on the host side by the enum U2fMode
- * in the chrome_device_policy.proto protobuf.
- */
-enum u2f_mode {
-	MODE_UNSET = 0,
-	/* Feature disabled */
-	MODE_DISABLED = 1,
-	/* U2F as defined by the FIDO Alliance specification */
-	MODE_U2F = 2,
-	/* U2F plus extensions for individual attestation certificate */
-	MODE_U2F_EXTENDED = 3,
-};
+/* ---- non-volatile U2F state ---- */
 
 struct u2f_state {
 	uint32_t salt[8];
@@ -77,7 +62,6 @@ struct u2f_state {
 	uint32_t salt_kh[8];
 };
 
-static uint8_t u2f_mode = MODE_UNSET;
 static const uint8_t k_salt = NVMEM_VAR_G2F_SALT;
 static const uint8_t k_salt_deprecated = NVMEM_VAR_U2F_SALT;
 
@@ -164,45 +148,6 @@ static struct u2f_state *get_state(void)
 
 	return state_loaded ? &state : NULL;
 }
-
-static int use_u2f(void)
-{
-	/*
-	 * TODO(b/62294740): Put board ID check here if needed
-	 * if (!board_id_we_want)
-	 *	return 0;
-	 */
-
-	if (u2f_mode == MODE_UNSET) {
-		if (get_state())
-			/* Start without extension enabled, host will set it */
-			u2f_mode = MODE_U2F;
-	}
-
-	return u2f_mode >= MODE_U2F;
-}
-
-int use_g2f(void)
-{
-	return use_u2f() && u2f_mode == MODE_U2F_EXTENDED;
-}
-
-static enum vendor_cmd_rc set_u2f_mode(enum vendor_cmd_cc code, void *buf,
-				       size_t input_size, size_t *response_size)
-{
-	uint8_t *mode = (uint8_t *)buf;
-
-	if (input_size != 1)
-		return VENDOR_RC_BOGUS_ARGS;
-
-	u2f_mode = *mode;
-
-	*mode = use_u2f() ? u2f_mode : 0;
-	*response_size = 1;
-
-	return VENDOR_RC_SUCCESS;
-}
-DECLARE_VENDOR_COMMAND(VENDOR_CC_U2F_MODE, set_u2f_mode);
 
 /* ---- chip-specific U2F crypto ---- */
 
