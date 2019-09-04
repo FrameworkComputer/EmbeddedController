@@ -264,6 +264,7 @@ void prl_execute_hard_reset(int port)
 static void prl_init(int port)
 {
 	int i;
+	const struct sm_ctx cleared = {};
 
 	prl_tx[port].flags = 0;
 	prl_tx[port].xmit_status = TCPC_TX_UNSET;
@@ -286,9 +287,17 @@ static void prl_init(int port)
 		prl_tx[port].msg_id_counter[i] = 0;
 	}
 
+	/* Clear state machines and set initial states */
+	prl_tx[port].ctx = cleared;
 	set_state_prl_tx(port, PRL_TX_PHY_LAYER_RESET);
+
+	rch[port].ctx = cleared;
 	set_state_rch(port, RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER);
+
+	tch[port].ctx = cleared;
 	set_state_tch(port, TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
+
+	prl_hr[port].ctx = cleared;
 	set_state_prl_hr(port, PRL_HR_WAIT_FOR_REQUEST);
 }
 
@@ -348,6 +357,10 @@ void prl_send_ext_data_msg(int port,
 void prl_run(int port, int evt, int en)
 {
 	switch (local_state[port]) {
+	case SM_PAUSED:
+		if (!en)
+			break;
+		/* fall through */
 	case SM_INIT:
 		prl_init(port);
 		local_state[port] = SM_RUN;
@@ -356,20 +369,13 @@ void prl_run(int port, int evt, int en)
 		/* If disabling, wait until message is sent. */
 		if (!en && tch_get_state(port) ==
 				   TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE) {
+
 			/* Disable RX */
-#if defined(CONFIG_USB_TYPEC_CTVPD) || defined(CONFIG_USB_TYPEC_VPD)
-			vpd_rx_enable(0);
-#else
-			tcpm_set_rx_enable(port, 0);
-#endif
-			/*
-			 * While we are paused, exit all states and wait until
-			 * initialized again.
-			 */
-			set_state(port, &prl_tx[port].ctx, NULL);
-			set_state(port, &rch[port].ctx, NULL);
-			set_state(port, &tch[port].ctx, NULL);
-			set_state(port, &prl_hr[port].ctx, NULL);
+			if (IS_ENABLED(CONFIG_USB_TYPEC_CTVPD) ||
+			    IS_ENABLED(CONFIG_USB_TYPEC_VPD))
+				vpd_rx_enable(0);
+			else
+				tcpm_set_rx_enable(port, 0);
 
 			local_state[port] = SM_PAUSED;
 			break;
@@ -389,12 +395,6 @@ void prl_run(int port, int evt, int en)
 
 		/* Run Protocol Layer Hard Reset state machine */
 		exe_state(port, &prl_hr[port].ctx);
-		break;
-	case SM_PAUSED:
-		if (en) {
-			local_state[port] = SM_INIT;
-			prl_run(port, evt, en);
-		}
 		break;
 	}
 }

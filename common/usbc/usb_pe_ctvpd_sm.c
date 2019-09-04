@@ -46,7 +46,10 @@ static void set_state_pe(const int port, enum usb_pe_state new_state)
 
 void pe_init(int port)
 {
+	const struct sm_ctx cleared = {};
+
 	pe[port].flags = 0;
+	pe[port].ctx = cleared;
 	set_state_pe(port, PE_REQUEST);
 }
 
@@ -55,26 +58,19 @@ void pe_run(int port, int evt, int en)
 	static enum sm_local_state local_state[CONFIG_USB_PD_PORT_COUNT];
 
 	switch (local_state[port]) {
+	case SM_PAUSED:
+		if (!en)
+			break;
+		/* fall through */
 	case SM_INIT:
 		pe_init(port);
 		local_state[port] = SM_RUN;
 		/* fall through */
 	case SM_RUN:
-		if (!en) {
-			/* Exit all states and pause state machine. */
-			set_state(port, &pe[port].ctx, NULL);
+		if (en)
+			exe_state(port, &pe[port].ctx);
+		else
 			local_state[port] = SM_PAUSED;
-			break;
-		}
-
-		exe_state(port, &pe[port].ctx);
-		break;
-	case SM_PAUSED:
-		if (en) {
-			/* Restart state machine right now. */
-			local_state[port] = SM_INIT;
-			pe_run(port, evt, en);
-		}
 		break;
 	}
 }
