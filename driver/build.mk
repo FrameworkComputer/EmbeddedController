@@ -108,6 +108,7 @@ driver-$(CONFIG_TEMP_SENSOR_TMP432)+=temp_sensor/tmp432.o
 driver-$(CONFIG_TEMP_SENSOR_TMP468)+=temp_sensor/tmp468.o
 
 # Touchpads
+driver-$(CONFIG_TOUCHPAD_GT7288)+=touchpad_gt7288.o
 driver-$(CONFIG_TOUCHPAD_ELAN)+=touchpad_elan.o
 driver-$(CONFIG_TOUCHPAD_ST)+=touchpad_st.o
 

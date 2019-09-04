@@ -127,6 +127,11 @@
 #endif
 #endif
 
+/* Macros for combining bytes into uint16s. */
+#define UINT16_FROM_BYTES(lsb, msb) ((lsb) | (msb) << 8)
+#define UINT16_FROM_BYTE_ARRAY_LE(data, lsb_index) \
+	UINT16_FROM_BYTES((data)[(lsb_index)], (data)[(lsb_index + 1)])
+
 /* There isn't really a better place for this */
 #define C_TO_K(temp_c) ((temp_c) + 273)
 #define K_TO_C(temp_c) ((temp_c) - 273)

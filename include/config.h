@@ -1190,6 +1190,7 @@
 #define CONFIG_CMD_GETTIME
 #undef  CONFIG_CMD_GPIO_EXTENDED
 #undef  CONFIG_CMD_GSV
+#undef  CONFIG_CMD_GT7288
 #define CONFIG_CMD_HASH
 #define CONFIG_CMD_HCDEBUG
 #undef  CONFIG_CMD_HOSTCMD
@@ -3468,6 +3469,9 @@
 
 /* Enable Elan driver */
 #undef CONFIG_TOUCHPAD_ELAN
+
+/* Enable Goodix GT7288 driver */
+#undef CONFIG_TOUCHPAD_GT7288
 
 /* Enable ST driver */
 #undef CONFIG_TOUCHPAD_ST
