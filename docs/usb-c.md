@@ -80,12 +80,13 @@ Modes in the EC codebase.
 Right now platform/ec has two different implementations of USB-C PD stack.
 
 1.  The older implementation is mainly contained within
-    [`usb_pd_protocol.c`](../common/usb_pd_protocol.c)
-2.  The newer implementation is broken up into multiple different files and
-    state machines
+    [`usb_pd_protocol.c`](../common/usb_pd_protocol.c) and
+    [`usb_pd_policy.c`](../common/usb_pd_policy.c)
+2.  The newer implementation is found under [`common/usbc`](../common/usbc) and
+    is broken up into multiple different files and state machines
     *   Policy engine state machine files, `usb_pe_*_sm.c`.
-    *   Protocol engine state machine file, `usb_prl_sm.c`.
-    *   State machine manager file, `usb_sm.c`.
+    *   Protocol engine state machine file, `usb_prl_*_sm.c`.
+    *   State machine framework file, `usb_sm.c`.
     *   Type-C physical layer state machine files, `usb_tc_*_sm.c`.
     *   USB-C PD Task file, `usbc_task.c`.
 
@@ -93,6 +94,9 @@ The older implementation supports firmware for device types other than
 Chromebooks. For example, the older stack supports the Zinger, which is the
 USB-C charging device that shipped with Samus, the Google Chromebook Pixel 2.
 The Zinger implements the charger only side of the USB PD protocol.
+
+To use the newer USB-C PD stack implementation, see `CONFIG_USB_SM_FRAMEWORK`
+description in [config.h][config header link].
 
 The newer implementation only supports Chromebooks at the moment. There are
 multiple policy engine definitions to choose from depending on the different
@@ -188,9 +192,6 @@ PPC IC.
 
 Many USB-C policies and features are gated by various `CONFIG_*` options that
 should be defined in `board.h` (or baseboard equivalent).
-
-To use the newer USB-C PD stack implementation, see `CONFIG_USB_SM_FRAMEWORK`
-description in [config.h][config header link].
 
 Most USB-C options will start with `CONFIG_USB_PD_` or `CONFIG_USBC_`. For their
 full descriptions see [config.h][config header link]
