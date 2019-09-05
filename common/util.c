@@ -539,6 +539,18 @@ int get_next_bit(uint32_t *mask)
 	return bit;
 }
 
+bool bytes_are_trivial(const uint8_t *buffer, size_t size)
+{
+	size_t i;
+	uint8_t result0 = 0;
+	uint8_t result1 = 0;
+
+	for (i = 0; i < size; i++) {
+		result0 |= buffer[i] ^ 0x00;
+		result1 |= buffer[i] ^ 0xff;
+	}
+	return (result0 == 0) || (result1 == 0);
+}
 
 /****************************************************************************/
 /* stateful conditional stuff */

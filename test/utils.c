@@ -405,6 +405,25 @@ static int test_swap(void)
 	return EC_SUCCESS;
 }
 
+static int test_bytes_are_trivial(void)
+{
+	static const uint8_t all0x00[] = { 0x00, 0x00, 0x00 };
+	static const uint8_t all0xff[] = { 0xff, 0xff, 0xff, 0xff };
+	static const uint8_t nontrivial1[] = { 0x00, 0x01, 0x02 };
+	static const uint8_t nontrivial2[] = { 0xdd, 0xee, 0xff };
+	static const uint8_t nontrivial3[] = { 0x00, 0x00, 0x00, 0xff };
+	static const uint8_t nontrivial4[] = { 0xff, 0x00, 0x00, 0x00 };
+
+	TEST_ASSERT(bytes_are_trivial(all0x00, sizeof(all0x00)));
+	TEST_ASSERT(bytes_are_trivial(all0xff, sizeof(all0xff)));
+	TEST_ASSERT(!bytes_are_trivial(nontrivial1, sizeof(nontrivial1)));
+	TEST_ASSERT(!bytes_are_trivial(nontrivial2, sizeof(nontrivial2)));
+	TEST_ASSERT(!bytes_are_trivial(nontrivial3, sizeof(nontrivial3)));
+	TEST_ASSERT(!bytes_are_trivial(nontrivial4, sizeof(nontrivial4)));
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -422,6 +441,7 @@ void run_test(void)
 	RUN_TEST(test_cond_t);
 	RUN_TEST(test_mula32);
 	RUN_TEST(test_swap);
+	RUN_TEST(test_bytes_are_trivial);
 
 	test_print_result();
 }

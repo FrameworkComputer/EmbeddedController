@@ -13,6 +13,7 @@
 #include "panic.h"
 
 #include "builtin/assert.h"         /* For ASSERT(). */
+#include <stdbool.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -161,6 +162,18 @@ int uint64divmod(uint64_t *v, int by);
  * @return bit position (0..31)
  */
 int get_next_bit(uint32_t *mask);
+
+/**
+ * Check if |buffer| is full of 0x00 or 0xff.
+ *
+ * This function runs in constant execution time and is not vulnerable to
+ * timing attacks.
+ *
+ * @param buffer the buffer to check.
+ * @param size the number of bytes to check.
+ * @return true if |buffer| is full of 0x00 or 0xff, false otherwise.
+ */
+bool bytes_are_trivial(const uint8_t *buffer, size_t size);
 
 /**
  * Reverse's the byte-order of the provided buffer.

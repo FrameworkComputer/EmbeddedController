@@ -180,23 +180,14 @@ test_mockable int rollback_get_secret(uint8_t *secret)
 {
 	int ret = EC_ERROR_UNKNOWN;
 	struct rollback_data data;
-	uint8_t first;
-	int i = 0;
 
 	if (get_latest_rollback(&data) < 0)
 		goto failed;
 
 	/* Check that secret is not full of 0x00 or 0xff */
-	first = data.secret[0];
-	if (first == 0x00 || first == 0xff) {
-		for (i = 1; i < sizeof(data.secret); i++) {
-			if (data.secret[i] != first)
-				goto good;
-		}
+	if (bytes_are_trivial(data.secret, sizeof(data.secret)))
 		goto failed;
-	}
 
-good:
 	memcpy(secret, data.secret, sizeof(data.secret));
 	ret = EC_SUCCESS;
 failed:
