@@ -6455,6 +6455,8 @@ int cmd_i2c_xfer(int argc, char *argv[])
 
 	if (write_len) {
 		write_buf = malloc(write_len);
+		if (write_buf == NULL)
+			return -1;
 		for (i = 0; i < write_len; i++) {
 			write_buf[i] = strtol(argv[i], &e, 0);
 			if (e && *e) {
