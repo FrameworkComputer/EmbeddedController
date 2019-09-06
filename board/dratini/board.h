@@ -39,13 +39,6 @@
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 #define CONFIG_LID_ANGLE_UPDATE
-/* TC3400 ALS */
-#define CONFIG_ALS
-#define ALS_COUNT 1
-#define CONFIG_ALS_TCS3400
-#define CONFIG_ALS_TCS3400_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
-#define I2C_PORT_ALS      I2C_PORT_SENSOR
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_COMM_LOCKED
@@ -120,10 +113,6 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
-
-/* GPIO signals updated base on board version. */
-#define GPIO_EN_PP5000_A gpio_en_pp5000_a
-extern enum gpio_signal gpio_en_pp5000_a;
 
 enum adc_channel {
 	ADC_TEMP_SENSOR_1,	/* ADC0 */
