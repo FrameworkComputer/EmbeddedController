@@ -6459,6 +6459,7 @@ int cmd_i2c_xfer(int argc, char *argv[])
 			write_buf[i] = strtol(argv[i], &e, 0);
 			if (e && *e) {
 				fprintf(stderr, "Bad write byte %d\n", i);
+				free(write_buf);
 				return -1;
 			}
 		}
