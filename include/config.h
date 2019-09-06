@@ -3468,11 +3468,14 @@
 /*****************************************************************************/
 /* Touchpad config */
 
-/* Enable touchpad, you must pick a driver (currently, only Elan exists) */
+/* Enable touchpad. (You must pick a driver from the options below.) */
 #undef CONFIG_TOUCHPAD
 
 /* Enable Elan driver */
 #undef CONFIG_TOUCHPAD_ELAN
+
+/* Enable ST driver */
+#undef CONFIG_TOUCHPAD_ST
 
 /* Set I2C port and address (7-bit) */
 #undef CONFIG_TOUCHPAD_I2C_PORT
