@@ -67,10 +67,11 @@ GPIO(EN_USB_A_LOW_PWR_OD,      PIN(9, 4), GPIO_OUT_LOW)
 
 /* Misc Signals */
 GPIO(EC_BATT_PRES_ODL,         PIN(E, 1), GPIO_INPUT)
-GPIO(LED_1_L,                  PIN(C, 4), GPIO_OUT_HIGH)        /* Yellow (hatch) */
-GPIO(LED_2_L,                  PIN(C, 3), GPIO_OUT_HIGH)        /* White (hatch) */
-GPIO(LED_3_L,                  PIN(C, 2), GPIO_OUT_HIGH)
-GPIO(LED_4_L,                  PIN(6, 0), GPIO_OUT_HIGH)
+GPIO(LED_AMBER_C0_L,           PIN(C, 4), GPIO_OUT_HIGH)        /* Amber C0 port */
+GPIO(LED_WHITE_C0_L,           PIN(C, 3), GPIO_OUT_HIGH)        /* White C0 port */
+GPIO(LED_AMBER_C1_L,           PIN(4, 2), GPIO_OUT_HIGH)        /* Amber C1 port */
+GPIO(LED_WHITE_C1_L,           PIN(C, 6), GPIO_OUT_HIGH)        /* White C1 port */
+GPIO(PWR_LED_WHITE_L,          PIN(6, 0), GPIO_OUT_HIGH)
 GPIO(EC_KB_BL_EN,              PIN(8, 6), GPIO_OUT_LOW)         /* Keyboard backlight */
 GPIO(EDP_BKLTEN_OD,            PIN(D, 3), GPIO_ODR_HIGH)        /* Display backlight */
 GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
