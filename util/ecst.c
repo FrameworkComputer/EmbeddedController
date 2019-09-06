@@ -2016,9 +2016,11 @@ int calc_firmware_csum_bin(unsigned int *p_cksum,
 int main_hdr(void)
 {
 	int result = 0;
-	char tmp_file_name[NAME_SIZE];
+	char tmp_file_name[NAME_SIZE + 1];
 	unsigned int tmp_long_val;
 	unsigned int bin_file_size_bytes;
+
+	tmp_file_name[NAME_SIZE] = '\0';
 
 	if (is_ptr_merge) {
 		if (strlen(input_file_name) == 0) {
@@ -2030,7 +2032,7 @@ int main_hdr(void)
 		if (strlen(output_file_name) == 0)
 			strncpy(tmp_file_name,
 				input_file_name,
-				sizeof(tmp_file_name));
+				sizeof(tmp_file_name) - 1);
 		else {
 			copy_file_to_file(output_file_name,
 					  input_file_name,
@@ -2038,7 +2040,7 @@ int main_hdr(void)
 					  SEEK_END);
 			strncpy(tmp_file_name,
 				output_file_name,
-				sizeof(tmp_file_name));
+				sizeof(tmp_file_name) - 1);
 		}
 
 		/* Open Header file */
@@ -2178,10 +2180,11 @@ int main_hdr(void)
  */
 int main_api(void)
 {
-	char tmp_file_name[NAME_SIZE];
+	char tmp_file_name[NAME_SIZE + 1];
 	int result = 0;
 	unsigned int crc_checksum;
 
+	tmp_file_name[NAME_SIZE] = '\0';
 	api_file_size_bytes = 0;
 
 	/* If API input file was not declared, then print error message. */
@@ -2197,7 +2200,8 @@ int main_api(void)
 			sizeof(tmp_file_name), "api_"))
 			return FALSE;
 	} else
-		strncpy(tmp_file_name, output_file_name, sizeof(tmp_file_name));
+		strncpy(tmp_file_name, output_file_name,
+			sizeof(tmp_file_name) - 1);
 
 	/* Make sure that new empty file is created. */
 	api_file_pointer = fopen(tmp_file_name, "w");
