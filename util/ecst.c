@@ -969,7 +969,7 @@ int copy_file_to_file(char *dst_file_name,
 		      int  origin)
 {
 
-	int index;
+	int index = 0;
 	int result = 0;
 	unsigned char local_val;
 	int src_file_size;
@@ -997,8 +997,10 @@ int copy_file_to_file(char *dst_file_name,
 
 	/* Point to the end of the destination file, and to the start */
 	/* of the source file. */
-	fseek(dst_file, offset, origin);
-	fseek(src_file, 0, SEEK_SET);
+	if (fseek(dst_file, offset, origin) < 0)
+		goto out;
+	if (fseek(src_file, 0, SEEK_SET) < 0)
+		goto out;
 
 	/* Loop over all destination file and write it to the source file.*/
 	for (index = 0; index < src_file_size; index++) {
@@ -1021,13 +1023,13 @@ int copy_file_to_file(char *dst_file_name,
 			break;
 	}
 
+out:
 	/* Close the files. */
 	fclose(dst_file);
 	fclose(src_file);
 
 	/* Copy ended, return with the number of bytes that were copied. */
 	return index;
-
 }
 
 /*
@@ -1057,8 +1059,8 @@ void my_printf(int error_level, char *fmt, ...)
  *--------------------------------------------------------------------------
  * Function:	 write_to_file
  * Parameters:	 TBD
- * Return:		 TBD
- * Description:	 Writes to ELF or BIN files - whateves is open
+ * Return:	 TRUE on successful write
+ * Description:	 Writes to ELF or BIN files - whatever is open
  *--------------------------------------------------------------------------
  */
 int write_to_file(unsigned int write_value,
@@ -1073,8 +1075,8 @@ int write_to_file(unsigned int write_value,
 	unsigned short localValue2;
 	unsigned char localValue1;
 
-	fseek(g_hfd_pointer, 0L, SEEK_SET);
-	fseek(g_hfd_pointer, offset, SEEK_SET);
+	if (fseek(g_hfd_pointer, offset, SEEK_SET) < 0)
+		return FALSE;
 
 	switch (num_of_bytes) {
 	case(1):
@@ -1128,7 +1130,7 @@ int write_to_file(unsigned int write_value,
  *--------------------------------------------------------------------------
  * Function:	 read_from_file
  * Parameters:	 TBD
- * Return : TBD
+ * Return:       TRUE on successful read
  * Description : Reads from open BIN file
  *--------------------------------------------------------------------------
  */
@@ -1142,8 +1144,8 @@ int read_from_file(unsigned int offset,
 	unsigned short localValue2;
 	unsigned char localValue1;
 
-	fseek(input_file_pointer, 0L, SEEK_SET);
-	fseek(input_file_pointer, offset, SEEK_SET);
+	if (fseek(input_file_pointer, offset, SEEK_SET) < 0)
+		return FALSE;
 
 	switch (size_to_read) {
 	case(1):
@@ -1275,26 +1277,29 @@ int str_cmp_no_case(const char *s1, const char *s2)
 
 /*
  *--------------------------------------------------------------------------
- * Function:	 get_file_lengt
- * Parameters:	 stream - Pointer to a FILE objec
- * Return:		 File length in bytes
+ * Function:	 get_file_length
+ * Parameters:	 stream - Pointer to a FILE object
+ * Return:		 File length in bytes or -1 on error
  * Description:	 Gets the file length in bytes.
  *--------------------------------------------------------------------------
  */
 int get_file_length(FILE *stream)
 {
-	int curent_position;
+	int current_position;
 	int file_len;
 
 	/* Store current position. */
-	curent_position = ftell(stream);
+	current_position = ftell(stream);
+	if (current_position < 0)
+		return -1;
 
 	/* End position of the file is its length. */
-	fseek(stream, 0, SEEK_END); /* seek to end of file */
+	if (fseek(stream, 0, SEEK_END) < 0)
+		return -1;
 	file_len = ftell(stream);
 
 	/* Restore the original position. */
-	fseek(stream, curent_position, SEEK_SET);
+	fseek(stream, current_position, SEEK_SET);
 
 	/* return file length. */
 	return file_len;
@@ -1957,8 +1962,9 @@ int calc_firmware_csum_bin(unsigned int *p_cksum,
 		else
 			calc_read_bytes = calc_num_of_bytes_to_read;
 
-		fseek(input_file_pointer, 0L, SEEK_SET);
-		fseek(input_file_pointer, calc_curr_position, SEEK_SET);
+		if (fseek(input_file_pointer,
+			calc_curr_position, SEEK_SET) < 0)
+			return 0;
 		if (fread(g_fw_array,
 			  calc_read_bytes,
 			  1,
@@ -2074,8 +2080,8 @@ int main_hdr(void)
 			return FALSE;
 		}
 
-		fseek(g_hdr_pointer, 0L, SEEK_SET);
-		fseek(g_hdr_pointer, fw_offset, SEEK_SET);
+		if (fseek(g_hdr_pointer, fw_offset, SEEK_SET) < 0)
+			return FALSE;
 
 		tmp_long_val = HDR_PTR_SIGNATURE;
 		result = (int)(fwrite(&tmp_long_val,
@@ -2225,6 +2231,8 @@ int main_api(void)
 	 * without any header.
 	 */
 	api_file_size_bytes = get_file_length(api_file_pointer);
+	if (api_file_size_bytes < 0)
+		return FALSE;
 	my_printf(TINF,
 		  "\nAPI file: %s, size: %d bytes (0x%x)\n",
 		  tmp_file_name,
@@ -2233,8 +2241,8 @@ int main_api(void)
 
 	crc_checksum = calc_api_csum_bin();
 
-	fseek(api_file_pointer, 0L, SEEK_SET);
-	fseek(api_file_pointer, api_file_size_bytes, SEEK_SET);
+	if (fseek(api_file_pointer, api_file_size_bytes, SEEK_SET) < 0)
+		return FALSE;
 
 	result = (int)(fwrite(&crc_checksum,
 			      4,
@@ -2304,8 +2312,9 @@ unsigned int calc_api_csum_bin(void)
 		else
 			calc_read_bytes = calc_num_of_bytes_to_read;
 
-		fseek(api_file_pointer, 0L, SEEK_SET);
-		fseek(api_file_pointer, calc_curr_position, SEEK_SET);
+		if (fseek(api_file_pointer,
+			calc_curr_position, SEEK_SET) < 0)
+			return 0;
 		if (fread(g_fw_array,
 			  calc_read_bytes,
 			  1,
