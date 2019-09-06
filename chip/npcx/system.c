@@ -44,9 +44,7 @@
 void system_watchdog_reset(void)
 {
 	/* Unlock & stop watchdog registers */
-	NPCX_WDSDM = 0x87;
-	NPCX_WDSDM = 0x61;
-	NPCX_WDSDM = 0x63;
+	watchdog_stop_and_unlock();
 
 	/* Reset TWCFG */
 	NPCX_TWCFG = 0;
@@ -500,9 +498,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	CLEAR_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN);
 
 	/* Unlock & stop watchdog */
-	NPCX_WDSDM = 0x87;
-	NPCX_WDSDM = 0x61;
-	NPCX_WDSDM = 0x63;
+	watchdog_stop_and_unlock();
 
 	/* Initialize watchdog */
 	NPCX_TWCFG = 0; /* Select T0IN clock as watchdog prescaler clock */

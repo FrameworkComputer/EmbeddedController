@@ -58,6 +58,27 @@ static uint8_t watchdog_count(void)
 	return cnt;
 }
 
+static timestamp_t last_watchdog_touch;
+void watchdog_stop_and_unlock(void)
+{
+	/*
+	 * Ensure we have waited at least 3 watchdog ticks since touching WD
+	 * timer. 3 / (32768 / 1024) HZ = 93.75ms
+	 */
+	while (time_since32(last_watchdog_touch) < (100 * MSEC))
+		continue;
+
+	NPCX_WDSDM = 0x87;
+	NPCX_WDSDM = 0x61;
+	NPCX_WDSDM = 0x63;
+}
+
+static void touch_watchdog_count(void)
+{
+	NPCX_WDSDM = 0x5C;
+	last_watchdog_touch = get_time();
+}
+
 void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
 	int  wd_cnt;
@@ -75,7 +96,8 @@ void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 		 * Touch watchdog to let UART have enough time
 		 * to print panic info
 		 */
-		NPCX_WDSDM = 0x5C;
+		touch_watchdog_count();
+
 		/* Print panic info */
 		watchdog_trace(excep_lr, excep_sp);
 		cflush();
@@ -112,7 +134,7 @@ void watchdog_reload(void)
 
 #if 1 /* mark this for testing watchdog */
 	/* Touch watchdog & reset software counter */
-	NPCX_WDSDM = 0x5C;
+	touch_watchdog_count();
 #endif
 
 	/* Enable watchdog interrupt */
@@ -125,7 +147,7 @@ int watchdog_init(void)
 #if SUPPORT_WDG
 	/* Touch watchdog before init if it is already running */
 	if (IS_BIT_SET(NPCX_T0CSR, NPCX_T0CSR_WD_RUN))
-		NPCX_WDSDM = 0x5C;
+		touch_watchdog_count();
 
 	/* Keep prescaler ratio timer0 clock to 1:1024 */
 	NPCX_TWCP = 0x0A;
