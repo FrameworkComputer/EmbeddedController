@@ -43,7 +43,12 @@ static const char * const meanings[] = {
 	"INVALID_HEADER",
 	"REQUEST_TRUNCATED",
 	"RESPONSE_TOO_BIG",
-	"BUS_ERROR"
+	"BUS_ERROR",
+	"BUSY",
+	"INVALID_HEADER_VERSION",
+	"INVALID_HEADER_CRC",
+	"INVALID_DATA_CRC",
+	"DUP_UNAVAILABLE",
 };
 
 static const char *strresult(int i)
