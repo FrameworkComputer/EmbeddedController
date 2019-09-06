@@ -199,12 +199,30 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_MODE, fp_command_mode, EC_VER_MASK(0));
 
 static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_context *params = args->params;
+	const struct ec_params_fp_context_v1 *p = args->params;
+	uint32_t mode_output;
 
-	fp_reset_and_clear_context();
+	switch (p->action) {
+	case FP_CONTEXT_ASYNC:
+		if (sensor_mode & FP_MODE_RESET_SENSOR)
+			return EC_RES_BUSY;
 
-	memcpy(user_id, params->userid, sizeof(user_id));
+		/**
+		 * Trigger a call to fp_reset_and_clear_context() by
+		 * requesting a reset. Since that function triggers a call to
+		 * fp_sensor_open(), this must be asynchronous because
+		 * fp_sensor_open() can take ~175 ms. See http://b/137288498.
+		 */
+		return fp_set_sensor_mode(FP_MODE_RESET_SENSOR, &mode_output);
 
-	return EC_RES_SUCCESS;
+	case FP_CONTEXT_GET_RESULT:
+		if (sensor_mode & FP_MODE_RESET_SENSOR)
+			return EC_RES_BUSY;
+
+		memcpy(user_id, p->userid, sizeof(user_id));
+		return EC_RES_SUCCESS;
+	}
+
+	return EC_RES_INVALID_PARAM;
 }
-DECLARE_HOST_COMMAND(EC_CMD_FP_CONTEXT, fp_command_context, EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_FP_CONTEXT, fp_command_context, EC_VER_MASK(1));

@@ -142,6 +142,8 @@ const char help_str[] =
 	"      Writes to EC flash from a file\n"
 	"  forcelidopen <enable>\n"
 	"      Forces the lid switch to open position\n"
+	"  fpcontext\n"
+	"      Sets the fingerprint sensor context\n"
 	"  fpencstatus\n"
 	"      Prints status of Fingerprint sensor encryption engine\n"
 	"  fpframe\n"
@@ -1724,6 +1726,58 @@ static void print_fp_enc_flags(const char *desc, uint32_t flags)
 	if (flags & FP_ENC_STATUS_SEED_SET)
 		printf(" FPTPM_seed_set");
 	printf("\n");
+}
+
+static int cmd_fp_context(int argc, char *argv[])
+{
+	struct ec_params_fp_context_v1 p;
+	int rv;
+	int tries = 20; /* Wait at most two seconds */
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <context>\n", argv[0]);
+		return -1;
+	}
+
+	/*
+	 * Note that we treat the resulting "userid" as raw byte array, so we
+	 * don't want to copy the NUL from the end of the string.
+	 */
+	if (strlen(argv[1]) != sizeof(p.userid)) {
+		fprintf(stderr, "Context must be exactly %zu bytes\n",
+			sizeof(p.userid));
+		return -1;
+	}
+
+	p.action = FP_CONTEXT_ASYNC;
+	memcpy(p.userid, argv[1], sizeof(p.userid));
+
+	rv = ec_command(EC_CMD_FP_CONTEXT, 1, &p, sizeof(p), NULL, 0);
+
+	if (rv != EC_RES_SUCCESS)
+		goto out;
+
+	while (tries--) {
+		usleep(100000);
+
+		p.action = FP_CONTEXT_GET_RESULT;
+		rv = ec_command(EC_CMD_FP_CONTEXT, 1, &p, sizeof(p), NULL, 0);
+
+		if (rv == EC_RES_SUCCESS) {
+			printf("Set context successfully\n");
+			return EC_RES_SUCCESS;
+		}
+
+		/* Abort if EC returns an error other than EC_RES_BUSY. */
+		if (rv <= -EECRESULT && rv != -EECRESULT - EC_RES_BUSY)
+			goto out;
+	}
+
+	rv = -EECRESULT - EC_RES_TIMEOUT;
+
+out:
+	fprintf(stderr, "Failed to reset context: %d\n", rv);
+	return rv;
 }
 
 int cmd_fp_enc_status(int argc, char *argv[])
@@ -9008,6 +9062,7 @@ const struct command commands[] = {
 	{"flashspiinfo", cmd_flash_spi_info},
 	{"flashpd", cmd_flash_pd},
 	{"forcelidopen", cmd_force_lid_open},
+	{"fpcontext", cmd_fp_context},
 	{"fpencstatus", cmd_fp_enc_status},
 	{"fpframe", cmd_fp_frame},
 	{"fpinfo", cmd_fp_info},

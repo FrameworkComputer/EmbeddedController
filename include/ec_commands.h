@@ -5917,6 +5917,18 @@ struct ec_params_fp_context {
 	uint32_t userid[FP_CONTEXT_USERID_WORDS];
 } __ec_align4;
 
+enum fp_context_action {
+	FP_CONTEXT_ASYNC = 0,
+	FP_CONTEXT_GET_RESULT = 1,
+};
+
+/* Version 1 of the command is "asynchronous". */
+struct ec_params_fp_context_v1 {
+	uint8_t action;		/**< enum fp_context_action */
+	uint8_t reserved[3];    /**< padding for alignment */
+	uint32_t userid[FP_CONTEXT_USERID_WORDS];
+} __ec_align4;
+
 #define EC_CMD_FP_STATS 0x0407
 
 #define FPSTATS_CAPTURE_INV  BIT(0)
