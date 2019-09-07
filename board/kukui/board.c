@@ -268,9 +268,6 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_POGO_ADC_INT_L);
 
 	if (IS_ENABLED(BOARD_KRANE)) {
-		/* Display bias settings. */
-		mt6370_db_set_voltages(6000, 5800, 5800);
-
 		/*
 		 * Fix backlight led maximum current:
 		 * tolerance 120mA * 0.75 = 90mA.
@@ -296,7 +293,10 @@ static void board_rev_init(void)
 	if (IS_ENABLED(BOARD_KUKUI) && board_get_version() == 1)
 		gpio_set_flags(GPIO_BC12_DET_EN, GPIO_ODR_HIGH);
 
-	if (board_get_version() >= 2) {
+	if (board_get_version() >= 2 && board_get_version() < 4) {
+		/* Display bias settings. */
+		mt6370_db_set_voltages(6000, 5800, 5800);
+
 		/*
 		 * Enable MT6370 DB_POSVOUT/DB_NEGVOUT (controlled by _EN pins).
 		 */
