@@ -1299,7 +1299,8 @@ int get_file_length(FILE *stream)
 	file_len = ftell(stream);
 
 	/* Restore the original position. */
-	fseek(stream, current_position, SEEK_SET);
+	if (fseek(stream, current_position, SEEK_SET) < 0)
+		return -1;
 
 	/* return file length. */
 	return file_len;
@@ -1877,7 +1878,9 @@ int calc_header_crc_bin(unsigned int *p_cksum)
 	init_calculation(&calc_header_checksum_crc);
 
 	/* Go thru the BIN File and calculate the Checksum */
-	fseek(g_hfd_pointer, 0x00000000, SEEK_SET);
+	if (fseek(g_hfd_pointer, 0x00000000, SEEK_SET) < 0)
+		return 0;
+
 	if (fread(g_header_array,
 		  HEADER_SIZE,
 		  1,
@@ -2128,7 +2131,8 @@ int main_hdr(void)
 			return FALSE;
 		}
 
-		fseek(g_hdr_pointer, 0L, SEEK_SET);
+		if (fseek(g_hdr_pointer, 0L, SEEK_SET) < 0)
+			return FALSE;
 
 		tmp_long_val = HDR_PTR_SIGNATURE;
 		result = (int)(fwrite(&tmp_long_val,
