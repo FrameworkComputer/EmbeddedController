@@ -458,15 +458,13 @@ static int chip_fmpi2c_xfer(const int port, const uint16_t slave_addr_8bit,
 			goto xfer_exit;
 		STM32_FMPI2C_CR1(port) |= FMPI2C_CR1_RXDMAEN;
 
-		if (!rv_start) {
-			rv = task_wait_event_mask(
-					TASK_EVENT_I2C_COMPLETION(port),
-					DMA_TRANSFER_TIMEOUT_US);
-			if (rv & TASK_EVENT_I2C_COMPLETION(port))
-				rv = EC_SUCCESS;
-			else
-				rv = EC_ERROR_TIMEOUT;
-		}
+		rv = task_wait_event_mask(
+				TASK_EVENT_I2C_COMPLETION(port),
+				DMA_TRANSFER_TIMEOUT_US);
+		if (rv & TASK_EVENT_I2C_COMPLETION(port))
+			rv = EC_SUCCESS;
+		else
+			rv = EC_ERROR_TIMEOUT;
 
 		dma_disable(dma->channel);
 		dma_disable_tc_interrupt(dma->channel);
@@ -476,9 +474,6 @@ static int chip_fmpi2c_xfer(const int port, const uint16_t slave_addr_8bit,
 			rv = wait_fmpi2c_isr(port, FMPI2C_ISR_STOPF);
 
 		STM32_FMPI2C_CR1(port) &= ~FMPI2C_CR1_RXDMAEN;
-
-		if (rv_start)
-			rv = rv_start;
 	}
 
  xfer_exit:
