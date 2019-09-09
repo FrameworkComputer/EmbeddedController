@@ -155,6 +155,9 @@ int flash_bank_index(int offset)
 {
 	int bank_offset = 0, i;
 
+	if (offset == 0)
+		return bank_offset;
+
 	for (i = 0; i < ARRAY_SIZE(flash_bank_array); i++) {
 		int all_sector_size = flash_bank_array[i].count <<
 			flash_bank_array[i].size_exp;
