@@ -117,7 +117,7 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 /******************************************************************************/
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT]   = { .channel = 3, .flags = 0, .freq = 10000 },
+	[PWM_CH_KBLIGHT]   = { .channel = 3, .flags = 0, .freq = 100 },
 	[PWM_CH_FAN] = {.channel = 5, .flags = PWM_CONFIG_OPEN_DRAIN,
 			.freq = 25000},
 };
