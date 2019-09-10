@@ -80,6 +80,7 @@
 #undef CONFIG_CMD_MEM
 #undef CONFIG_CMD_SHMEM
 #undef CONFIG_CMD_SYSLOCK
+#undef CONFIG_CMD_TIMERINFO
 #undef CONFIG_CMD_WAITMS
 
 /* Enable control of I2C over USB */
@@ -90,6 +91,7 @@
 
 /* PD features */
 #define CONFIG_ADC
+#undef  CONFIG_ADC_WATCHDOG
 #define CONFIG_BOARD_PRE_INIT
 /*
  * If task profiling is enabled then the rx falling edge detection interrupts
