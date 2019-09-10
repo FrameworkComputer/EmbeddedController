@@ -1864,7 +1864,7 @@ int main_bin(struct tbinparams binary_params)
  * Parameters:	unsigned short header checksum (O)
  *		unsigned int header offset from first byte in
  *		the binary (I)
- * Return:
+ * Return:	TRUE if successful
  * Description:	 Go thru bin file and calculate checksum
  *******************************************************************
  */
@@ -1879,13 +1879,13 @@ int calc_header_crc_bin(unsigned int *p_cksum)
 
 	/* Go thru the BIN File and calculate the Checksum */
 	if (fseek(g_hfd_pointer, 0x00000000, SEEK_SET) < 0)
-		return 0;
+		return FALSE;
 
 	if (fread(g_header_array,
 		  HEADER_SIZE,
 		  1,
 		  g_hfd_pointer) != 1)
-		return 0;
+		return FALSE;
 
 	for (i = 0; i < (HEADER_SIZE - HEADER_CRC_FIELDS_SIZE); i++) {
 
