@@ -209,14 +209,19 @@ struct motion_sensor_t motion_sensors[] = {
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /*
- * meep is convertible SKU (SKU ID is 1, 2, 3), mimrock is clamshell
- * SKU (SKU ID is 17, 18), vortininja is convertible SKU (SKU ID is 49,
- * 50, 51, 52) and default SKU is 255 for factory that enable all sensors.
+ * Returns 1 for boards that are convertible into tablet mode, and
+ * zero for clamshells.
  */
 int board_is_convertible(void)
 {
-	return sku_id == 1 || sku_id == 2 || sku_id == 3 || sku_id == 49 ||
-	       sku_id == 50 || sku_id == 51 || sku_id == 52 || sku_id == 255;
+	/*
+	 * Meep: 1, 2, 3, 4
+	 * Vortininja: 49, 50, 51, 52
+	 * Unprovisioned: 255
+	 */
+	return sku_id == 1 || sku_id == 2 || sku_id == 3 ||
+	       sku_id == 4 || sku_id == 49 || sku_id == 50 ||
+	       sku_id == 51 || sku_id == 52 || sku_id == 255;
 }
 
 static void board_update_sensor_config_from_sku(void)
