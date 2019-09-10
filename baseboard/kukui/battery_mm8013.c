@@ -34,6 +34,7 @@ static const struct battery_info info[] = {
 		.voltage_max		= 4400,
 		.voltage_normal		= 3850,
 		.voltage_min		= 3000,
+		.precharge_voltage	= 3400,
 		.precharge_current	= 256,
 		.start_charging_min_c	= 0,
 		.start_charging_max_c	= 45,

@@ -457,7 +457,8 @@ static int rt946x_init_setting(void)
 	rv = rt946x_set_ircmp_res(setting->ircmp_res);
 	if (rv)
 		return rv;
-	rv = rt946x_set_vprec(batt_info->voltage_min);
+	rv = rt946x_set_vprec(batt_info->precharge_voltage ?
+			batt_info->precharge_voltage : batt_info->voltage_min);
 	if (rv)
 		return rv;
 	rv = rt946x_set_iprec(batt_info->precharge_current);

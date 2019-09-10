@@ -339,8 +339,10 @@ static void isl923x_init(void)
 
 #ifdef CONFIG_TRICKLE_CHARGING
 	const struct battery_info *bi = battery_get_info();
+	int precharge_voltage = bi->precharge_voltage ?
+		bi->precharge_voltage : bi->voltage_min;
 
-	if (raw_write16(ISL923X_REG_SYS_VOLTAGE_MIN, bi->voltage_min))
+	if (raw_write16(ISL923X_REG_SYS_VOLTAGE_MIN, precharge_voltage))
 		goto init_fail;
 #endif
 
