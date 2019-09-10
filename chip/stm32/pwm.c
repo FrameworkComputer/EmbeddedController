@@ -6,6 +6,7 @@
 /* PWM control module for STM32 */
 
 #include "clock.h"
+#include "clock-f.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "hwtimer.h"
@@ -53,13 +54,13 @@ static void pwm_configure(enum pwm_channel ch)
 	tim->cr1 = 0x0000;
 
 	/*
-	 * CPU clock / PSC determines how fast the counter operates.
+	 * Timer clock / PSC determines how fast the counter operates.
 	 * ARR determines the wave period, CCRn determines duty cycle.
-	 * Thus, frequency = cpu_freq / PSC / ARR. so:
+	 * Thus, frequency = timer_freq / PSC / ARR. so:
 	 *
-	 *     frequency = cpu_freq / (cpu_freq/10000 + 1) / (99 + 1) = 100 Hz.
+	 * frequency = timer_freq / (timer_freq/10000 + 1) / (99 + 1) = 100 Hz.
 	 */
-	tim->psc = clock_get_freq() / (frequency * 100) - 1;
+	tim->psc = clock_get_timer_freq() / (frequency * 100) - 1;
 	tim->arr = 99;
 
 	if (pwm->channel <= 2) /* Channel ID starts from 1 */
