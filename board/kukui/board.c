@@ -180,18 +180,6 @@ int board_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
-{
-	/* b/134227872: Limit input current to 2A in S0 to prevent overheat */
-	if (power_get_state() == POWER_S0)
-		charge_set_input_current_limit(MIN(charge_ma, 2000), charge_mv);
-	else
-		charge_set_input_current_limit(
-				MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT),
-				charge_mv);
-}
-
 int board_discharge_on_ac(int enable)
 {
 	int ret, port;
