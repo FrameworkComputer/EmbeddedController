@@ -1298,13 +1298,6 @@ static void tch_wait_for_transmission_complete_run(const int port)
 		pe_report_error(port, ERR_TCH_XMIT);
 		set_state_tch(port, TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
 	}
-	/*
-	 * Any message received and not in state TCH_Wait_Chunk_Request
-	 */
-	else if (TCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED)) {
-		TCH_CLR_FLAG(port, PRL_FLAGS_MSG_RECEIVED);
-		set_state_tch(port, TCH_MESSAGE_RECEIVED);
-	}
 }
 
 /*
@@ -1563,7 +1556,8 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	 * Message (not Ping) Received from
 	 * Protocol Layer & Doing Tx Chunks
 	 */
-	else if (tch_get_state(port) != TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE) {
+	else if (tch_get_state(port) != TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE &&
+		tch_get_state(port) != TCH_WAIT_FOR_TRANSMISSION_COMPLETE) {
 		/* NOTE: RTR_TX_CHUNKS State embedded here. */
 		/*
 		 * Send Message to Tx Chunk
