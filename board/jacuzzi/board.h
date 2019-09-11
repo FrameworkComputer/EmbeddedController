@@ -62,7 +62,6 @@
 #define I2C_PORT_USB_MUX            0
 #define I2C_PORT_CHARGER            1
 #define I2C_PORT_BATTERY            1
-#define I2C_PORT_VIRTUAL_BATTERY    1
 #define I2C_PORT_IO_EXPANDER_IT8801 1
 
 /* Enable Accel over SPI */

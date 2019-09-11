@@ -54,7 +54,6 @@
 #define I2C_PORT_TCPC0    0
 #define I2C_PORT_USB_MUX  0
 #define I2C_PORT_BATTERY  1
-#define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
 #define I2C_PORT_ACCEL    1
 
 /* Define the host events which are allowed to wakeup AP in S3. */

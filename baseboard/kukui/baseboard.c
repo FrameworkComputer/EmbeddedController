@@ -112,7 +112,9 @@ int board_get_version(void)
 	return version;
 }
 
+#ifndef VARIANT_KUKUI_BATTERY_SMART
 int board_allow_i2c_passthru(int port)
 {
 	return (port == I2C_PORT_VIRTUAL_BATTERY);
 }
+#endif
