@@ -5580,8 +5580,38 @@ int cmd_usb_pd(int argc, char *argv[])
 					printf("UNKNOWN");
 				printf("\n");
 			}
-		}
 
+			printf("Adapter type:%s\n",
+				r_v2->control_flags & USB_PD_MUX_TBT_ADAPTER ?
+					"Legacy Thunderbolt" : "Type-C");
+
+			printf("Cable type:%sOptical\n",
+				r_v2->control_flags &
+				USB_PD_MUX_TBT_CABLE_TYPE ? "" : "Non-");
+
+			printf("Link LSRX Communication:%s-directional\n",
+				r_v2->control_flags & USB_PD_MUX_TBT_LINK ?
+					"Uni" : "Bi");
+
+			printf("Cable Speed:");
+			switch (r_v2->cable_speed) {
+			case USB3_GEN1:
+				printf("TBT Gen1");
+				break;
+			case USB3_GEN1_USB4_GEN2:
+				printf("TBT Gen1 and TBT Gen2");
+				break;
+			case USB4_GEN3:
+				printf("TBT Gen3");
+				break;
+			default:
+				printf("UNKNOWN");
+			}
+			printf("\n");
+
+			printf("Rounded support: 3rd Gen %srounded support\n",
+				r_v2->cable_gen ? "and 4th Gen " : "");
+		}
 		/* If connected to a PD device, then print port partner info */
 		if ((r_v1->enabled & PD_CTRL_RESP_ENABLED_CONNECTED) &&
 		    (r_v1->enabled & PD_CTRL_RESP_ENABLED_PD_CAPABLE))

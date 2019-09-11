@@ -5178,6 +5178,19 @@ enum pd_cc_states {
 #define USBC_CABLE_TYPE_PASSIVE 3 /* Passive cable attached */
 #define USBC_CABLE_TYPE_ACTIVE  4 /* Active cable attached */
 
+/* Active/Passive Cable */
+#define USB_PD_MUX_TBT_ACTIVE_CABLE BIT(0)
+/* Optical/Non-optical cable */
+#define USB_PD_MUX_TBT_CABLE_TYPE   BIT(1)
+/* 3rd Gen TBT device (or AMA)/2nd gen tbt Adapter */
+#define USB_PD_MUX_TBT_ADAPTER      BIT(2)
+/* Active Link enabled/disabled */
+#define USB_PD_MUX_TBT_LINK         BIT(3)
+
+/*
+ * Underdevelopement :
+ * Please remove this tag if using _v2 outside platform/ec
+ */
 struct ec_response_usb_pd_control_v2 {
 	uint8_t enabled;
 	uint8_t role;
@@ -5186,6 +5199,9 @@ struct ec_response_usb_pd_control_v2 {
 	uint8_t cc_state;	/* enum pd_cc_states representing cc state */
 	uint8_t dp_mode;	/* Current DP pin mode (MODE_DP_PIN_[A-E]) */
 	uint8_t cable_type;	/* USBC_CABLE_TYPE_*cable_type */
+	uint8_t control_flags;	/* USB_PD_MUX_*flags */
+	uint8_t cable_speed;
+	uint8_t cable_gen;	/* rounded_support */
 } __ec_align1;
 
 #define EC_CMD_USB_PD_PORTS 0x0102

@@ -221,6 +221,18 @@ struct tbt_mode_resp_device get_dev_tbt_vdo(int port)
 	return cable[port].dev_mode_resp;
 }
 
+enum tbt_compat_cable_speed get_tbt_cable_speed(int port)
+{
+	/* tbt_cable_speed is zero when uninitialized */
+	return cable[port].cable_mode_resp.tbt_cable_speed;
+}
+
+enum tbt_compat_rounded_support get_tbt_rounded_support(int port)
+{
+	/* tbt_rounded_support is zero when uninitialized */
+	return cable[port].cable_mode_resp.tbt_rounded;
+}
+
 #ifdef CONFIG_USB_PD_ALT_MODE
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
