@@ -884,6 +884,13 @@ static int pd_transmit(int port, enum tcpm_transmit_type type,
 	/* If comms are disabled, do not transmit, return error */
 	if (!pd_comm_is_enabled(port))
 		return -1;
+
+	 /* Don't try to transmit anything until we have processed
+	  * all RX messages.
+	  */
+	if (tcpm_has_pending_message(port))
+		return -1;
+
 #ifdef CONFIG_USB_PD_REV30
 	/* Source-coordinated collision avoidance */
 	/*
