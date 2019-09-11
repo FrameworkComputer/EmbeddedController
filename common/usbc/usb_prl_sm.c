@@ -294,6 +294,7 @@ static void prl_init(int port)
 	const struct sm_ctx cleared = {};
 
 	prl_tx[port].flags = 0;
+	prl_tx[port].sop = 0;
 	prl_tx[port].xmit_status = TCPC_TX_UNSET;
 
 	tch[port].flags = 0;
@@ -609,7 +610,7 @@ static void prl_tx_construct_message(int port)
 			tc_get_data_role(port),
 			prl_tx[port].msg_id_counter[pdmsg[port].xmit_type],
 			pdmsg[port].data_objs,
-			(prl_tx[port].sop == TCPC_TX_SOP) ?
+			(pdmsg[port].xmit_type == TCPC_TX_SOP) ?
 				pdmsg[port].rev : pdmsg[port].cable_rev,
 			pdmsg[port].ext);
 
