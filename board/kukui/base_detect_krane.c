@@ -9,6 +9,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "tablet_mode.h"
 #include "timer.h"
 #include "usb_pd.h"
 #include "util.h"
@@ -92,7 +93,7 @@ static void base_detect_deferred(void)
 {
 	uint64_t time_now = get_time().val;
 	int mv;
-	int device_type;
+	enum kukui_pogo_device_type device_type;
 
 	if (base_detect_debounce_time > time_now) {
 		hook_call_deferred(&base_detect_deferred_data,
@@ -124,16 +125,19 @@ static void base_detect_deferred(void)
 	case DEVICE_TYPE_DETACHED:
 		enable_power_supply(0);
 		enable_charge(0);
+		tablet_set_mode(1);
 		break;
 
 	case DEVICE_TYPE_DOCK:
 		enable_power_supply(0);
 		enable_charge(1);
+		tablet_set_mode(1);
 		break;
 
 	case DEVICE_TYPE_KEYBOARD:
 		enable_charge(0);
 		enable_power_supply(1);
+		tablet_set_mode(0);
 		break;
 
 	case DEVICE_TYPE_COUNT:
