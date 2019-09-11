@@ -155,7 +155,6 @@ uint8_t *host_get_memmap(int offset);
  */
 uint16_t host_command_process(struct host_cmd_handler_args *args);
 
-#ifdef CONFIG_HOSTCMD_EVENTS
 /**
  * Set a single host event.
  *
@@ -204,7 +203,6 @@ int get_lazy_wake_mask(enum power_state state, host_event_t *mask);
  * @return 1 if active wake mask set by host else return 0
  */
 uint8_t lpc_is_active_wm_set_by_host(void);
-#endif
 #endif
 
 /**
