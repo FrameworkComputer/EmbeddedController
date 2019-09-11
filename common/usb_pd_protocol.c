@@ -2311,19 +2311,6 @@ static void exit_dp_mode(int port)
 }
 #endif /* CONFIG_POWER_COMMON */
 
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static void notify_sysjump_ready(void)
-{
-	/*
-	 * If event was set from pd_prepare_sysjump, wake the
-	 * task waiting on us to complete.
-	 */
-	if (sysjump_task_waiting != TASK_ID_INVALID)
-		task_set_event(sysjump_task_waiting,
-			       TASK_EVENT_SYSJUMP_READY, 0);
-}
-#endif
-
 #ifdef CONFIG_POWER_COMMON
 static void handle_new_power_state(int port)
 {
@@ -3072,7 +3059,7 @@ void pd_task(void *u)
 #if defined(CONFIG_USB_PD_ALT_MODE_DFP)
 		if (evt & PD_EVENT_SYSJUMP) {
 			exit_dp_mode(port);
-			notify_sysjump_ready();
+			notify_sysjump_ready(&sysjump_task_waiting);
 
 		}
 #endif
@@ -3802,7 +3789,8 @@ void pd_task(void *u)
 
 				if (evt & PD_EVENT_SYSJUMP)
 					/* Nothing to do for sysjump prep */
-					notify_sysjump_ready();
+					notify_sysjump_ready(
+							&sysjump_task_waiting);
 #else
 				task_wait_event(-1);
 #endif

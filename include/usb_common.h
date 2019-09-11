@@ -72,4 +72,12 @@ void pd_build_request(uint32_t src_cap_cnt, const uint32_t * const src_caps,
 	int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma, uint32_t *mv,
 	enum pd_request_type req_type, uint32_t max_request_mv);
 
+/**
+ * Notifies a task that is waiting on a system jump, that it's complete.
+ *
+ * @param sysjump_task_waiting  indicates if the task is waiting on the
+ *				system jump.
+ */
+void notify_sysjump_ready(volatile const task_id_t * const
+	sysjump_task_waiting);
 #endif /* __CROS_EC_USB_COMMON_H */

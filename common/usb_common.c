@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "charge_state.h"
+#include "task.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
@@ -209,15 +210,12 @@ void pd_build_request(uint32_t src_cap_cnt, const uint32_t * const src_caps,
 		vpd_vbus_dcr = VPD_VDO_VBUS_IMP(vpd_vdo) << 1;
 		vpd_gnd_dcr = VPD_VDO_GND_IMP(vpd_vdo);
 
-		if (max_vbus > VPD_MAX_VBUS_50V)
-			max_vbus = VPD_MAX_VBUS_20V;
-
 		/*
 		 * Valid max_vbus values:
-		 *   20000 mV
-		 *   30000 mV
-		 *   40000 mV
-		 *   50000 mV
+		 *   00b - 20000 mV
+		 *   01b - 30000 mV
+		 *   10b - 40000 mV
+		 *   11b - 50000 mV
 		 */
 		max_vbus = 20000 + max_vbus * 10000;
 		if (*mv > max_vbus)
@@ -269,5 +267,18 @@ void pd_build_request(uint32_t src_cap_cnt, const uint32_t * const src_caps,
 	} else {
 		*rdo = RDO_FIXED(pdo_index + 1, *ma, max_or_min_ma, flags);
 	}
+}
+#endif
+
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+void notify_sysjump_ready(volatile const task_id_t * const sysjump_task_waiting)
+{
+	/*
+	 * If event was set from pd_prepare_sysjump, wake the
+	 * task waiting on us to complete.
+	 */
+	if (*sysjump_task_waiting != TASK_ID_INVALID)
+		task_set_event(*sysjump_task_waiting,
+						TASK_EVENT_SYSJUMP_READY, 0);
 }
 #endif

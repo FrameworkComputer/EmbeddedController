@@ -780,6 +780,13 @@ void tc_event_check(int port, int evt)
 			handle_new_power_state(port);
 	}
 
+	if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
+		if (evt & PD_EVENT_SYSJUMP) {
+			pe_exit_dp_mode(port);
+			notify_sysjump_ready(&sysjump_task_waiting);
+		}
+	}
+
 	if (evt & PD_EVENT_UPDATE_DUAL_ROLE)
 		pd_update_dual_role_config(port);
 #endif
