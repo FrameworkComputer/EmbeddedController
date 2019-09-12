@@ -590,27 +590,27 @@ $(out)/tags: $(out)/cscope.files
 # TODO: optional make rules for PROJECT_EXTRA
 $(npcx-monitor-fw-bin):
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
-	-@ mkdir -p $(@D)
-	-@ $(CC) $(CFLAGS) -MMD -MF $(out)/$(npcx-lfw).d -c $(npcx-monitor-fw).c \
+	$(Q)mkdir -p $(@D)
+	$(Q)$(CC) $(CFLAGS) -MMD -MF $(out)/$(npcx-lfw).d -c $(npcx-monitor-fw).c \
 		-o $(out)/$(npcx-monitor-fw).o
-	-@ $(CC) $(out)/$(npcx-monitor-fw).o $(LDFLAGS) \
+	$(Q)$(CC) $(out)/$(npcx-monitor-fw).o $(LDFLAGS) \
 		-o $(out)/$(npcx-monitor-fw).elf -Wl,-T,$(npcx-monitor-fw).ld \
 		-Wl,-Map,$(out)/$(npcx-monitor-fw).map
-	-@ $(OBJCOPY) -O binary $(out)/$(npcx-monitor-fw).elf $@
+	$(Q)$(OBJCOPY) -O binary $(out)/$(npcx-monitor-fw).elf $@
 
 $(out)/$(npcx-monitor-hdr)_ro.o:$(npcx-monitor-hdr).c
-	-@ $(CC) $(CFLAGS) -DSECTION_IS_RO=$(EMPTY) -MMD -c $(npcx-monitor-hdr).c -o $@
+	$(Q)$(CC) $(CFLAGS) -DSECTION_IS_RO=$(EMPTY) -MMD -c $(npcx-monitor-hdr).c -o $@
 
 $(npcx-monitor-hdr-ro-bin):$(out)/$(npcx-monitor-hdr)_ro.o
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
-	-@ $(OBJCOPY) -O binary $< $@
+	$(Q)$(OBJCOPY) -O binary $< $@
 
 $(out)/$(npcx-monitor-hdr)_rw.o:$(npcx-monitor-hdr).c
-	-@ $(CC) $(CFLAGS) -MMD -c $(npcx-monitor-hdr).c -o $@
+	$(Q)$(CC) $(CFLAGS) -MMD -c $(npcx-monitor-hdr).c -o $@
 
 $(npcx-monitor-hdr-rw-bin):$(out)/$(npcx-monitor-hdr)_rw.o
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
-	-@ $(OBJCOPY) -O binary $< $@
+	$(Q)$(OBJCOPY) -O binary $< $@
 
 .PHONY: xrefs
 xrefs: $(call targ_if_prog,etags,$(out)/TAGS) \
