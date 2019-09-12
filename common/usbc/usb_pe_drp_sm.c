@@ -613,9 +613,6 @@ void pe_message_sent(int port)
 void pe_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 						int count)
 {
-	/* This should only be called from the PD task */
-	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
-
 	pe[port].partner_type = PORT;
 
 	/* Copy VDM Header */
