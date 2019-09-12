@@ -257,7 +257,7 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 		return EC_ERROR_INVAL;
 
 	/* If it's not shared, use INT0-INT3, otherwise use PORT. */
-	if (!(g->flags && GPIO_INT_SHARED)) {
+	if (!(g->flags & GPIO_INT_SHARED)) {
 		for (i = 0; i < NRF51_GPIOTE_IN_COUNT; i++) {
 			/* Remove matching handler. */
 			if (gpio_ints[i] == g) {
