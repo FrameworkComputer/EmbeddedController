@@ -33,7 +33,7 @@ unsigned int fw_offset;
 int is_ptr_merge;
 unsigned int g_ram_start_address;
 unsigned int g_ram_size;
-unsigned int api_file_size_bytes;
+int api_file_size_bytes;
 int is_mrider15 = FALSE;
 
 /* Chips information, RAM start address and RAM size. */
@@ -2289,7 +2289,7 @@ unsigned int calc_api_csum_bin(void)
 
 	unsigned int i;
 	unsigned int calc_read_bytes;
-	unsigned int calc_num_of_bytes_to_read;
+	int calc_num_of_bytes_to_read;
 	unsigned int calc_curr_position;
 	unsigned int calc_fw_checksum_crc = 0;
 	unsigned char g_fw_array[BUFF_SIZE];
