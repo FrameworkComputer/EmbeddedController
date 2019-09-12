@@ -285,6 +285,8 @@ static int anx7447_init(int port)
 {
 	int rv, reg, i;
 
+	ASSERT(port < CONFIG_USB_PD_PORT_COUNT);
+
 	memset(&anx[port], 0, sizeof(struct anx_state));
 
 	/*
@@ -491,6 +493,8 @@ void anx7447_tcpc_clear_hpd_status(int port)
 #ifdef CONFIG_USB_PD_TCPM_MUX
 static int anx7447_mux_init(int port)
 {
+	ASSERT(port < CONFIG_USB_PD_PORT_COUNT);
+
 	memset(&mux[port], 0, sizeof(struct anx_usb_mux));
 
 	/* init hpd status */
