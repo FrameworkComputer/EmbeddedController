@@ -619,7 +619,7 @@ int ble_ll_adv(int chan)
 int ble_ll_adv_event(void)
 {
 	int chan_idx;
-	int rv;
+	int rv = EC_SUCCESS;
 
 	for (chan_idx = 0; chan_idx < 3; chan_idx++) {
 		if (ll_adv_params.advChannelMap & BIT(chan_idx)) {
