@@ -31,6 +31,8 @@ _dir_create := $(foreach d,$(dirs) $(dirs-y),\
 
 # V unset for normal output, V=1 for verbose output, V=0 for silent build
 # (warnings/errors only). Use echo thus: $(call echo,"stuff  to  echo")
+# Note: if cmd_* includes a $(MAKE) invocation, use the '+' prefix
+# to inherit parallel make execution: "+$(call quiet,...)"
 ifeq ($(V),0)
 Q := @
 echo = echo -n;
@@ -277,7 +279,7 @@ run-test-targets=$(foreach t,$(test-list-host),run-$(t))
 
 $(host-test-targets): host-%: | $(FAILED_BOARDS_DIR)
 	@touch $(FAILED_BOARDS_DIR)/test-$*
-	$(call quiet,host_test,BUILD  )
+	+$(call quiet,host_test,BUILD  )
 
 $(run-test-targets): run-%: host-%
 	$(call quiet,run_host_test,TEST   )
@@ -301,7 +303,7 @@ $(fuzz-test-targets): TEST_FLAG=TEST_FUZZ=y TEST_ASAN=$(TEST_ASAN) \
 		sed -e 's/[^-]*$$//')
 $(fuzz-test-targets): host-%: | $(FAILED_BOARDS_DIR)
 	@touch $(FAILED_BOARDS_DIR)/test-$*
-	$(call quiet,host_test,BUILD  )
+	+$(call quiet,host_test,BUILD  )
 $(run-fuzz-test-targets): run-%: host-%
 	$(call quiet,run_fuzz,TEST   )
 	@rm -f $(FAILED_BOARDS_DIR)/test-$*
