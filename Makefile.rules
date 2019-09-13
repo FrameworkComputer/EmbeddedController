@@ -43,7 +43,7 @@ else
 echo = echo $(1);
 ifeq ($(V),)
 Q := @
-quiet = @echo '  $(2)' $(subst $(out)/,,$@) ; $(cmd_$(1))
+quiet = @echo '  $(2)' $(patsubst $(out)/%,%,$@) ; $(cmd_$(1))
 silent = 1>/dev/null
 silent_err = 2>/dev/null
 else
