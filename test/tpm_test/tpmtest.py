@@ -55,10 +55,6 @@ class TPM(object):
     self._handle = ftdi_spi_tpm
     if not self._handle.FtdiSpiInit(freq, debug_mode):
       raise subcmd.TpmTestError('Failed to connect')
-    response = self.command(''.join('%c' % int('0x%s' % x, 16)
-                                    for x in self.STARTUP_CMD.split()))
-    if ' '.join('%2.2x' % ord(x) for x in response) not in self.STARTUP_RSP:
-      raise subcmd.TpmTestError('init failed')
 
   def validate(self, data_blob, response_mode=False):
     """Check if a data blob complies with TPM command/response header format."""
