@@ -13,4 +13,3 @@ CHIP_VARIANT:=stm32f09x
 BASEBOARD:=kukui
 
 board-y=board.o led.o
-board-$(BOARD_KRANE)+=base_detect_krane.o

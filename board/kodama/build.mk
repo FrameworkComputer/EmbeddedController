@@ -12,4 +12,4 @@ CHIP_FAMILY:=stm32f0
 CHIP_VARIANT:=stm32f09x
 BASEBOARD:=kukui
 
-board-y=base_detect_kodama.o battery.o board.o led.o
+board-y=battery.o board.o led.o

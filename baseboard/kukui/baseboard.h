@@ -58,6 +58,20 @@
 #endif /* VARIANT_KUKUI_CHARGER */
 
 /*
+ * Variant pogo defines, if pick, VARIANT_KUKUI_POGO_KEYBOARD is mandatory
+ * VARIANT_KUKUI_POGO_KEYBOARD
+ * VARIANT_KUKUI_POGO_DOCK
+ */
+#ifdef VARIANT_KUKUI_POGO_DOCK
+#ifndef VARIANT_KUKUI_POGO_KEYBOARD
+#error VARIANT_KUKUI_POGO_KEYBOARD is mandatory if use dock
+#endif /* !VARIANT_KUKUI_POGO_KEYBOARD */
+#undef CONFIG_DEDICATED_CHARGE_PORT_COUNT
+#define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
+#define DEDICATED_CHARGE_PORT 1
+#endif /* VARIANT_KUKUI_POGO_DOCK */
+
+/*
  * Define this flag if board controls dp mux via gpio pins USB_C0_DP_OE_L and
  * USB_C0_DP_POLARITY.
  *

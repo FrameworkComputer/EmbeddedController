@@ -16,4 +16,6 @@ baseboard-$(VARIANT_KUKUI_BATTERY_SMART)+=battery_smart.o
 
 baseboard-$(VARIANT_KUKUI_CHARGER_MT6370)+=charger_mt6370.o
 
+baseboard-$(VARIANT_KUKUI_POGO_KEYBOARD)+=base_detect_kukui.o
+
 $(out)/RO/baseboard/$(BASEBOARD)/emmc.o: $(out)/bootblock_data.h
