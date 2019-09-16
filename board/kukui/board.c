@@ -389,8 +389,8 @@ static const mat33_fp_t lid_standard_ref = {
 };
 #else
 static const mat33_fp_t lid_standard_ref = {
+	{FLOAT_TO_FP(-1), 0, 0},
 	{0, FLOAT_TO_FP(-1), 0},
-	{FLOAT_TO_FP(1), 0, 0},
 	{0, 0, FLOAT_TO_FP(1)}
 };
 #endif /* BOARD_KUKUI */
