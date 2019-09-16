@@ -4,12 +4,12 @@
  */
 
 #include "adc.h"
+#include "base_state.h"
 #include "board.h"
 #include "charge_manager.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "tablet_mode.h"
 #include "timer.h"
 #include "usb_pd.h"
 #include "util.h"
@@ -95,6 +95,41 @@ static void enable_power_supply(int enable)
 static void base_detect_deferred(void);
 DECLARE_DEFERRED(base_detect_deferred);
 
+static void base_set_device_type(enum kukui_pogo_device_type device_type)
+{
+	switch (device_type) {
+	case DEVICE_TYPE_ERROR:
+	case DEVICE_TYPE_UNKNOWN:
+		hook_call_deferred(&base_detect_deferred_data,
+				BASE_DETECT_RETRY_US);
+		break;
+
+	case DEVICE_TYPE_DETACHED:
+		enable_power_supply(0);
+		enable_charge(0);
+		base_set_state(0);
+		break;
+
+#ifdef VARIANT_KUKUI_POGO_DOCK
+	case DEVICE_TYPE_DOCK:
+		enable_power_supply(0);
+		enable_charge(1);
+		base_set_state(1);
+		break;
+#endif
+
+	case DEVICE_TYPE_KEYBOARD:
+		enable_charge(0);
+		enable_power_supply(1);
+		base_set_state(1);
+		break;
+
+	case DEVICE_TYPE_COUNT:
+		/* should not happen */
+		break;
+	}
+}
+
 static void base_detect_deferred(void)
 {
 	uint64_t time_now = get_time().val;
@@ -121,37 +156,7 @@ static void base_detect_deferred(void)
 	device_type = get_device_type(mv);
 	CPRINTS("POGO: adc=%d, device_type=%d", mv, device_type);
 
-	switch (device_type) {
-	case DEVICE_TYPE_ERROR:
-	case DEVICE_TYPE_UNKNOWN:
-		hook_call_deferred(&base_detect_deferred_data,
-				BASE_DETECT_RETRY_US);
-		break;
-
-	case DEVICE_TYPE_DETACHED:
-		enable_power_supply(0);
-		enable_charge(0);
-		tablet_set_mode(1);
-		break;
-
-#ifdef VARIANT_KUKUI_POGO_DOCK
-	case DEVICE_TYPE_DOCK:
-		enable_power_supply(0);
-		enable_charge(1);
-		tablet_set_mode(1);
-		break;
-#endif
-
-	case DEVICE_TYPE_KEYBOARD:
-		enable_charge(0);
-		enable_power_supply(1);
-		tablet_set_mode(0);
-		break;
-
-	case DEVICE_TYPE_COUNT:
-		/* should not happen */
-		break;
-	}
+	base_set_device_type(device_type);
 }
 
 void pogo_adc_interrupt(enum gpio_signal signal)
@@ -185,6 +190,20 @@ static void pogo_chipset_shutdown(void)
 	enable_power_supply(0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pogo_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
+void base_force_state(int state)
+{
+	if (state != 1 && state != 0) {
+		CPRINTS("BD forced reset");
+		pogo_chipset_startup();
+		return;
+	}
+
+	gpio_disable_interrupt(GPIO_POGO_ADC_INT_L);
+	base_set_device_type(state == 1 ? DEVICE_TYPE_KEYBOARD :
+					  DEVICE_TYPE_DETACHED);
+	CPRINTS("BD forced %sconnected", state == 1 ? "" : "dis");
+}
 
 #ifdef VARIANT_KUKUI_POGO_DOCK
 static void board_pogo_charge_init(void)
