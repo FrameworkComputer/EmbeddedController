@@ -708,6 +708,7 @@ struct active_cable_vdo2 {
 
 /* Cable structure for storing cable attributes */
 struct pd_cable {
+	uint8_t is_identified;
 	/* Type of cable */
 	enum idh_ptype type;
 	/* Cable flags. See CABLE_FLAGS_* */

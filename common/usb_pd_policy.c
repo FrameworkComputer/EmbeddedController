@@ -264,6 +264,9 @@ static void dfp_consume_identity(int port, int cnt, uint32_t *payload)
 
 static void dfp_consume_cable_response(int port, int cnt, uint32_t *payload)
 {
+	if (cable[port].is_identified)
+		return;
+
 	if (is_vdo_present(cnt, VDO_INDEX_IDH)) {
 		cable[port].type = PD_IDH_PTYPE(payload[VDO_INDEX_IDH]);
 		if (is_vdo_present(cnt, VDO_INDEX_PTYPE_CABLE1))
@@ -280,6 +283,7 @@ static void dfp_consume_cable_response(int port, int cnt, uint32_t *payload)
 		cable[port].rev = PD_REV30;
 		cable[port].attr2.raw_value = payload[VDO_INDEX_PTYPE_CABLE2];
 	}
+	cable[port].is_identified = 1;
 }
 
 static int dfp_discover_ident(uint32_t *payload)
@@ -726,9 +730,11 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			/* Received a SOP Discover Ident Message */
 			} else if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
 				dfp_consume_identity(port, cnt, payload);
-				rsize = dfp_discover_ident(payload);
 				/* Send SOP' Discover Ident message */
-				enable_transmit_sop_prime(port);
+				if (!cable[port].is_identified) {
+					rsize = dfp_discover_ident(payload);
+					enable_transmit_sop_prime(port);
+				}
 			} else {
 				dfp_consume_identity(port, cnt, payload);
 				rsize = dfp_discover_svids(payload);
@@ -820,8 +826,13 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			rsize = 0;
 		}
 	} else if (cmd_type == CMDT_RSP_NAK) {
-		/* nothing to do */
 		rsize = 0;
+		/* Send SOP' Discover Ident message, if not already received. */
+		if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP) &&
+		    !cable[port].is_identified && (cmd == CMD_DISCOVER_IDENT)) {
+			rsize = dfp_discover_ident(payload);
+			enable_transmit_sop_prime(port);
+		}
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 	} else {
 		CPRINTF("ERR:CMDT:%d\n", cmd);
@@ -880,6 +891,11 @@ static int command_cable(int argc, char **argv)
 	port = strtoi(argv[1], &e, 0);
 	if (*e || port >= CONFIG_USB_PD_PORT_COUNT)
 		return EC_ERROR_PARAM2;
+
+	if (!cable[port].is_identified) {
+		ccprintf("Cable not identified.\n");
+		return EC_SUCCESS;
+	}
 
 	ccprintf("Cable Type: ");
 	if (cable[port].type != IDH_PTYPE_PCABLE &&
