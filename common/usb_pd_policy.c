@@ -282,13 +282,13 @@ static void dfp_consume_cable_response(int port, int cnt, uint32_t *payload)
 	}
 }
 
-static int dfp_discover_ident(int port, uint32_t *payload)
+static int dfp_discover_ident(uint32_t *payload)
 {
 	payload[0] = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT);
 	return 1;
 }
 
-static int dfp_discover_svids(int port, uint32_t *payload)
+static int dfp_discover_svids(uint32_t *payload)
 {
 	payload[0] = VDO(USB_SID_PD, 1, CMD_DISCOVER_SVID);
 	return 1;
@@ -722,16 +722,16 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 				/* Store cable type */
 				dfp_consume_cable_response(port, cnt, payload);
 				disable_transmit_sop_prime(port);
-				rsize = dfp_discover_svids(port, payload);
+				rsize = dfp_discover_svids(payload);
 			/* Received a SOP Discover Ident Message */
 			} else if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
 				dfp_consume_identity(port, cnt, payload);
-				rsize = dfp_discover_ident(port, payload);
+				rsize = dfp_discover_ident(payload);
 				/* Send SOP' Discover Ident message */
 				enable_transmit_sop_prime(port);
 			} else {
 				dfp_consume_identity(port, cnt, payload);
-				rsize = dfp_discover_svids(port, payload);
+				rsize = dfp_discover_svids(payload);
 			}
 #ifdef CONFIG_CHARGE_MANAGER
 			if (pd_charge_from_device(pd_get_identity_vid(port),
