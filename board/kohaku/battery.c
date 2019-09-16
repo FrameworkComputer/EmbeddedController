@@ -85,7 +85,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_min_c         = 0,
 			.charging_max_c         = 55,
 			.discharging_min_c      = -20,
-			.discharging_max_c      = 60,
+			.discharging_max_c      = 70,
 		},
 	},
 };
