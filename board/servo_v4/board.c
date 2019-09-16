@@ -29,9 +29,13 @@
 #include "usb_gpio.h"
 #include "usb_i2c.h"
 #include "usb_pd.h"
+#include "usb_pd_config.h"
 #include "usb_spi.h"
 #include "usb-stream.h"
 #include "util.h"
+
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
 /******************************************************************************
  * GPIO interrupt handlers.
@@ -47,10 +51,88 @@ static void vbus1_evt(enum gpio_signal signal)
 	task_wake(TASK_ID_PD_C1);
 }
 
-#include "gpio_list.h"
+static volatile uint64_t hpd_prev_ts;
+static volatile int hpd_prev_level;
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+/**
+ * Hotplug detect deferred task
+ *
+ * Called after level change on hpd GPIO to evaluate (and debounce) what event
+ * has occurred.  There are 3 events that occur on HPD:
+ *    1. low  : downstream display sink is deattached
+ *    2. high : downstream display sink is attached
+ *    3. irq  : downstream display sink signalling an interrupt.
+ *
+ * The debounce times for these various events are:
+ *   HPD_USTREAM_DEBOUNCE_LVL : min pulse width of level value.
+ *   HPD_USTREAM_DEBOUNCE_IRQ : min pulse width of IRQ low pulse.
+ *
+ * lvl(n-2) lvl(n-1)  lvl   prev_delta  now_delta event
+ * ----------------------------------------------------
+ * 1        0         1     <IRQ        n/a       low glitch (ignore)
+ * 1        0         1     >IRQ        <LVL      irq
+ * x        0         1     n/a         >LVL      high
+ * 0        1         0     <LVL        n/a       high glitch (ignore)
+ * x        1         0     n/a         >LVL      low
+ */
+
+void hpd_irq_deferred(void)
+{
+	int dp_mode = pd_alt_mode(1, USB_SID_DISPLAYPORT);
+
+	if (dp_mode) {
+		pd_send_hpd(DUT, hpd_irq);
+		CPRINTS("HPD IRQ");
+	}
+}
+DECLARE_DEFERRED(hpd_irq_deferred);
+
+void hpd_lvl_deferred(void)
+{
+	int level = gpio_get_level(GPIO_DP_HPD);
+	int dp_mode = pd_alt_mode(1, USB_SID_DISPLAYPORT);
+
+	if (level != hpd_prev_level) {
+		/* It's a glitch while in deferred or canceled action */
+		return;
+	}
+
+	if (dp_mode) {
+		pd_send_hpd(DUT, level ? hpd_high : hpd_low);
+		CPRINTS("HPD: %d", level);
+	}
+}
+DECLARE_DEFERRED(hpd_lvl_deferred);
+
+void hpd_evt(enum gpio_signal signal)
+{
+	timestamp_t now = get_time();
+	int level = gpio_get_level(signal);
+	uint64_t cur_delta = now.val - hpd_prev_ts;
+
+	/* Store current time */
+	hpd_prev_ts = now.val;
+
+	/* All previous hpd level events need to be re-triggered */
+	hook_call_deferred(&hpd_lvl_deferred_data, -1);
+
+	/* It's a glitch.  Previous time moves but level is the same. */
+	if (cur_delta < HPD_USTREAM_DEBOUNCE_IRQ)
+		return;
+
+	if ((!hpd_prev_level && level) &&
+	    (cur_delta < HPD_USTREAM_DEBOUNCE_LVL)) {
+		/* It's an irq */
+		hook_call_deferred(&hpd_irq_deferred_data, 0);
+	} else if (cur_delta >= HPD_USTREAM_DEBOUNCE_LVL) {
+		hook_call_deferred(&hpd_lvl_deferred_data,
+				   HPD_USTREAM_DEBOUNCE_LVL);
+	}
+
+	hpd_prev_level = level;
+}
+
+#include "gpio_list.h"
 
 /******************************************************************************
  * Board pre-init function.
@@ -390,8 +472,15 @@ static void ccd_measure_sbu(void)
 void ccd_enable(int enable)
 {
 	if (enable) {
+		gpio_disable_interrupt(GPIO_DP_HPD);
 		hook_call_deferred(&ccd_measure_sbu_data, 0);
 	} else {
+		timestamp_t now = get_time();
+
+		hpd_prev_level = gpio_get_level(GPIO_DP_HPD);
+		hpd_prev_ts = now.val;
+		gpio_enable_interrupt(GPIO_DP_HPD);
+
 		gpio_set_level(GPIO_SBU_MUX_EN, 0);
 		hook_call_deferred(&ccd_measure_sbu_data, -1);
 	}
@@ -462,6 +551,5 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_DET_PP_DUT);
 
 	hook_call_deferred(&ccd_measure_sbu_data, 1000 * MSEC);
-
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
