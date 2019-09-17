@@ -73,7 +73,7 @@ const struct board_batt_params board_battery_info[] = {
 				.mfgacc_support = 1,
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
-				.disconnect_val = 0x0006,
+				.disconnect_val = 0x0,
 			},
 		},
 		.batt_info = {
