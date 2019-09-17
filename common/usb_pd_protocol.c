@@ -596,13 +596,10 @@ static int get_bbram_idx(int port)
 	switch (port) {
 	case 2:
 		return SYSTEM_BBRAM_IDX_PD2;
-
 	case 1:
 		return SYSTEM_BBRAM_IDX_PD1;
-
 	case 0:
 		return SYSTEM_BBRAM_IDX_PD0;
-
 	default:
 		return -1;
 	}

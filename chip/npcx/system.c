@@ -79,10 +79,9 @@ static int bbram_is_byte_access(enum bbram_data_index index)
 {
 	return (index >= BBRM_DATA_INDEX_VBNVCNTXT &&
 		index <  BBRM_DATA_INDEX_RAMLOG)
-#ifdef CONFIG_USB_PD_DUAL_ROLE
 		|| index == BBRM_DATA_INDEX_PD0
 		|| index == BBRM_DATA_INDEX_PD1
-#endif
+		|| index == BBRM_DATA_INDEX_PD2
 		|| index == BBRM_DATA_INDEX_PANIC_FLAGS
 	;
 }
@@ -183,20 +182,14 @@ static int bbram_idx_lookup(enum system_bbram_idx idx)
 	    idx <= SYSTEM_BBRAM_IDX_VBNVBLOCK15)
 		return BBRM_DATA_INDEX_VBNVCNTXT +
 		       idx - SYSTEM_BBRAM_IDX_VBNVBLOCK0;
-#ifdef CONFIG_USB_PD_DUAL_ROLE
 	if (idx == SYSTEM_BBRAM_IDX_PD0)
 		return BBRM_DATA_INDEX_PD0;
 	if (idx == SYSTEM_BBRAM_IDX_PD1)
 		return BBRM_DATA_INDEX_PD1;
-#if CONFIG_USB_PD_PORT_COUNT >= 3
 	if (idx == SYSTEM_BBRAM_IDX_PD2)
 		return BBRM_DATA_INDEX_PD2;
-#endif /* CONFIG_USB_PD_PORT_COUNT >= 3 */
-#endif /* defined(CONFIG_USB_PD_DUAL_ROLE) */
-#ifdef CONFIG_VBOOT_EFS
 	if (idx == SYSTEM_BBRAM_IDX_TRY_SLOT)
 		return BBRM_DATA_INDEX_TRY_SLOT;
-#endif
 	return -1;
 }
 

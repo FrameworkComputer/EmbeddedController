@@ -71,6 +71,7 @@ enum bkpdata_index {
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	BKPDATA_INDEX_PD0,		     /* USB-PD saved port0 state */
 	BKPDATA_INDEX_PD1,		     /* USB-PD saved port1 state */
+	BKPDATA_INDEX_PD2,		     /* USB-PD saved port2 state */
 #endif
 	BKPDATA_COUNT
 };
@@ -527,6 +528,8 @@ static int bkpdata_index_lookup(enum system_bbram_idx idx, int *msb)
 		return BKPDATA_INDEX_PD0;
 	if (idx == SYSTEM_BBRAM_IDX_PD1)
 		return BKPDATA_INDEX_PD1;
+	if (idx == SYSTEM_BBRAM_IDX_PD2)
+		return BKPDATA_INDEX_PD2;
 #endif
 	return -1;
 }

@@ -26,6 +26,7 @@ enum hibdata_index {
 	HIBDATA_INDEX_SAVED_RESET_FLAGS, /* Saved reset flags */
 	HIBDATA_INDEX_PD0,               /* USB-PD0 saved port state */
 	HIBDATA_INDEX_PD1,               /* USB-PD1 saved port state */
+	HIBDATA_INDEX_PD2,               /* USB-PD2 saved port state */
 };
 
 static void check_reset_cause(void)
@@ -177,12 +178,12 @@ const char *system_get_chip_revision(void)
 static int bbram_idx_lookup(enum system_bbram_idx idx)
 {
 	switch (idx) {
-#ifdef CONFIG_USB_PD_DUAL_ROLE
 	case SYSTEM_BBRAM_IDX_PD0:
 		return HIBDATA_INDEX_PD0;
 	case SYSTEM_BBRAM_IDX_PD1:
 		return HIBDATA_INDEX_PD1;
-#endif
+	case SYSTEM_BBRAM_IDX_PD2:
+		return HIBDATA_INDEX_PD2;
 	default:
 		return -1;
 	}
