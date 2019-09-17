@@ -166,11 +166,25 @@ void pogo_adc_interrupt(enum gpio_signal signal)
 	base_detect_debounce_time = time_now + BASE_DETECT_DEBOUNCE_US;
 }
 
-static void base_init(void)
+/* Called on AP S5 -> S3 transition */
+static void pogo_chipset_startup(void)
 {
+	/* Enable pogo interrupt */
+	gpio_enable_interrupt(GPIO_POGO_ADC_INT_L);
+
 	hook_call_deferred(&base_detect_deferred_data, 0);
 }
-DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_INIT_ADC + 1);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pogo_chipset_startup, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S3 -> S5 transition */
+static void pogo_chipset_shutdown(void)
+{
+	/* Disable pogo interrupt */
+	gpio_disable_interrupt(GPIO_POGO_ADC_INT_L);
+
+	enable_power_supply(0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pogo_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
 #ifdef VARIANT_KUKUI_POGO_DOCK
 static void board_pogo_charge_init(void)
