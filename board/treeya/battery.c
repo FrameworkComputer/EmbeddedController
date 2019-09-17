@@ -32,90 +32,88 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* Panasonic AP15O5L Battery Information */
-	[BATTERY_PANASONIC] = {
+	/* SMP 5B10Q13163 */
+	[BATTERY_SMP] = {
 		.fuel_gauge = {
-			.manuf_name = "PANASONIC",
+			.manuf_name = "SMP",
 			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
 			},
 			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x4000,
-				.disconnect_val = 0x0,
+				.reg_addr = 0x34,
+				.reg_mask = 0x0100,
+				.disconnect_val = 0x0100,
 			}
 		},
 		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
+			.voltage_max		= 13050, /* mV */
+			.voltage_normal		= 11250, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 186,	 /* mA */
 			.start_charging_min_c	= 0,
 			.start_charging_max_c	= 50,
 			.charging_min_c		= 0,
 			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
+			.discharging_min_c	= -20,
 			.discharging_max_c	= 60,
 		},
 	},
-
-	/* Murata AP18C4K Battery Information */
-	[BATTERY_MURATA_4012] = {
+	/* LGC 5B10Q13162  */
+	[BATTERY_LGC] = {
 		.fuel_gauge = {
-			.manuf_name = "Murata KT00304012",
+			.manuf_name = "LGC",
 			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
 			},
 			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
+				.reg_addr = 0x34,
+				.reg_mask = 0x0100,
+				.disconnect_val = 0x0100,
 			}
 		},
 		.batt_info = {
-			.voltage_max		= 13200,
+			.voltage_max		= 13050, /* mV */
 			.voltage_normal		= 11400, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 181,	 /* mA */
 			.start_charging_min_c	= 0,
 			.start_charging_max_c	= 50,
 			.charging_min_c		= 0,
 			.charging_max_c		= 60,
 			.discharging_min_c	= -20,
-			.discharging_max_c	= 75,
+			.discharging_max_c	= 73,
 		},
 	},
-
-	/* Murata AP18K4K Battery Information */
-	[BATTERY_MURATA_4013] = {
+	/* Sunwoda L18D3PG1  */
+	[BATTERY_SUNWODA] = {
 		.fuel_gauge = {
-			.manuf_name = "Murata KT00304013",
+			.manuf_name = "SUNWODA",
 			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
 			},
 			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
+				.reg_addr = 0x34,
+				.reg_mask = 0x0100,
+				.disconnect_val = 0x0100,
 			}
 		},
 		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11400, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
+			.voltage_max		= 13050, /* mV */
+			.voltage_normal		= 11250, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 200,	 /* mA */
 			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
+			.start_charging_max_c	= 60,
 			.charging_min_c		= 0,
 			.charging_max_c		= 60,
 			.discharging_min_c	= -20,
-			.discharging_max_c	= 75,
+			.discharging_max_c	= 60,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_PANASONIC;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SMP;
