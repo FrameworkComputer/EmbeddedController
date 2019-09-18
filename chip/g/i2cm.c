@@ -445,7 +445,7 @@ static void i2cm_init_port(const struct i2c_port_t *p)
 	/* Configure the transfer clocks and mode */
 	i2cm_config_xfer_mode(p->port, freq);
 
-	CPRINTS("Initalized I2C port %d, freq = %d kHz", p->port, p->kbps);
+	CPRINTS("Initialized I2C port %d, freq = %d kHz", p->port, p->kbps);
 }
 
 /**
