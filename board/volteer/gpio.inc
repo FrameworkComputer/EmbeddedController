@@ -24,11 +24,25 @@ GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, ex
 
 /* Volume button interrupts */
 
-/* AP Signals */
-GPIO(EC_RST_ODL,               PIN(0, 2), GPIO_ODR_HIGH)
-GPIO(EC_ENTERING_RW,           PIN(E, 3), GPIO_OUT_LOW)
-GPIO(EC_PCH_WAKE_ODL,          PIN(7, 4), GPIO_ODR_HIGH)
+/* Other wake sources */
+/*
+ * GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an
+ * interrupt handler because it is automatically handled by the PSL.
+ */
+GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
+
+/* AP/PCH Signals */
+GPIO(EC_PCH_SYS_PWROK,         PIN(3, 7), GPIO_OUT_LOW)  /* TODO - b/140556273 - implement support with power sequencing */
+GPIO(EC_PCH_RSMRST_ODL,        PIN(A, 6), GPIO_ODR_HIGH) /* TODO - b/140950085 - implement TGL sequencing requirement */
 GPIO(EC_PCH_PWR_BTN_ODL,       PIN(C, 1), GPIO_ODR_HIGH)
+GPIO(EC_PCH_RTCRST,            PIN(7, 6), GPIO_OUT_LOW)  /* TODO - b/141321096 - implement reset logic for RTC */
+GPIO(EC_PCH_WAKE_ODL,          PIN(7, 4), GPIO_ODR_HIGH)
+GPIO(EC_ENTERING_RW,           PIN(E, 3), GPIO_OUT_LOW)
+GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)
+GPIO(CPU_C10_GATE_L,           PIN(6, 7), GPIO_INPUT)    /* TODO - b/141322107 - implement if board power sequencing insufficient */
+GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
+
+GPIO(EC_PCH_INT_ODL,           PIN(D, 6), GPIO_ODR_HIGH) /* TODO - b/140557015 - implement with MKBD sensor events */
 
 /* USB and USBC Signals */
 
@@ -58,4 +72,10 @@ ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                       
 
 /* UART */
 ALTERNATE(PIN_MASK(6, BIT(5) | BIT(4)), 0, MODULE_UART, 0)                           /* UART from EC to Servo */
+
+/* Power Switch Logic (PSL) inputs */
+ALTERNATE(PIN_MASK(D, BIT(2)), 0, MODULE_PMU, 0)                    /* GPIOD2 = EC_LID_OPEN */
+ALTERNATE(PIN_MASK(0, BIT(0) | BIT(1) | BIT(2)), 0, MODULE_PMU, 0)  /* GPIO00 = ACOK_OD,
+                                                                       GPIO01 = H1_EC_PWR_BTN_ODL
+                                                                       GPIO02 = EC_RST_ODL */
 
