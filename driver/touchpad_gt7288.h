@@ -38,6 +38,8 @@ int gt7288_get_version_info(struct gt7288_version_info *info);
  * @id: a 4-bit ID that uniquely identifies the contact during its lifecycle.
  * @x: the absolute X coordinate.
  * @y: the absolute Y coordinate.
+ * @width: the width of the contact (with firmware version 0x0004 or greater).
+ * @height: the height of the contact (with firmware version 0x0004 or greater).
  * @tip: whether the fingertip is touching the pad. (Currently always true.)
  * @confidence: whether the controller considers the touch a finger (true) or
  *              palm (false).
@@ -46,6 +48,8 @@ struct gt7288_contact {
 	uint8_t id;
 	uint16_t x;
 	uint16_t y;
+	uint8_t width;
+	uint8_t height;
 	bool tip;
 	bool confidence;
 };

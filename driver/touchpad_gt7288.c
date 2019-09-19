@@ -87,6 +87,8 @@ static void gt7288_translate_contact(const uint8_t *data,
 	contact->confidence = data[3] & BIT(0);
 	contact->x = UINT16_FROM_BYTE_ARRAY_LE(data, 4);
 	contact->y = UINT16_FROM_BYTE_ARRAY_LE(data, 6);
+	contact->width = data[12];
+	contact->height = data[13];
 }
 
 static int gt7288_read(uint8_t *data, size_t max_length)
@@ -214,12 +216,13 @@ static int command_gt7288_report(int argc, char **argv)
 	if (report.num_contacts == 0)
 		return EC_SUCCESS;
 
-	ccprintf("ID,    X,    Y, tip, confidence\n");
+	ccprintf("ID,    X,    Y, width, height, tip, confidence\n");
 	for (i = 0; i < report.num_contacts; i++) {
 		struct gt7288_contact *contact = &report.contacts[i];
 
-		ccprintf("%2d, %4d, %4d, %3d, %10d\n", contact->id, contact->x,
-			 contact->y, contact->tip, contact->confidence);
+		ccprintf("%2d, %4d, %4d, %5d, %6d, %3d, %10d\n", contact->id,
+			 contact->x, contact->y, contact->width,
+			 contact->height, contact->tip, contact->confidence);
 	}
 
 	return EC_SUCCESS;
