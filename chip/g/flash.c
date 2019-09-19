@@ -260,6 +260,8 @@ static int do_flash_op(enum flash_op op, int is_info_bank,
 
 		/* Timed out waiting for control register to clear */
 		if (tmp) {
+			/* Stop the failed operation. */
+			*fsh_pe_control = 0;
 			CPRINTF("%s:%d\n", __func__, __LINE__);
 			return EC_ERROR_UNKNOWN;
 		}
