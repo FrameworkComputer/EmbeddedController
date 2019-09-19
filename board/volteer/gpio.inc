@@ -35,7 +35,7 @@ GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
 GPIO(EC_PCH_SYS_PWROK,         PIN(3, 7), GPIO_OUT_LOW)  /* TODO - b/140556273 - implement support with power sequencing */
 GPIO(EC_PCH_RSMRST_ODL,        PIN(A, 6), GPIO_ODR_HIGH) /* TODO - b/140950085 - implement TGL sequencing requirement */
 GPIO(EC_PCH_PWR_BTN_ODL,       PIN(C, 1), GPIO_ODR_HIGH)
-GPIO(EC_PCH_RTCRST,            PIN(7, 6), GPIO_OUT_LOW)  /* TODO - b/141321096 - implement reset logic for RTC */
+GPIO(EC_PCH_RTCRST,            PIN(7, 6), GPIO_OUT_LOW)
 GPIO(EC_PCH_WAKE_ODL,          PIN(7, 4), GPIO_ODR_HIGH)
 GPIO(EC_ENTERING_RW,           PIN(E, 3), GPIO_OUT_LOW)
 GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)

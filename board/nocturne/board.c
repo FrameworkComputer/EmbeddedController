@@ -685,14 +685,6 @@ void board_set_tcpc_power_mode(int port, int mode)
 	board_reset_pd_mcu();
 }
 
-void board_rtc_reset(void)
-{
-	cprints(CC_SYSTEM, "Asserting RTCRST# to PCH");
-	gpio_set_level(GPIO_EC_PCH_RTCRST, 1);
-	udelay(100);
-	gpio_set_level(GPIO_EC_PCH_RTCRST, 0);
-}
-
 int board_set_active_charge_port(int port)
 {
 	int is_real_port = (port >= 0 &&

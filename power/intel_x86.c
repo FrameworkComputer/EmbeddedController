@@ -87,6 +87,14 @@ static inline int chipset_get_sleep_signal(enum sys_sleep_state state)
 }
 
 #ifdef CONFIG_BOARD_HAS_RTC_RESET
+static void intel_x86_rtc_reset(void)
+{
+	CPRINTS("Asserting RTCRST# to PCH");
+	gpio_set_level(GPIO_PCH_RTCRST, 1);
+	udelay(100);
+	gpio_set_level(GPIO_PCH_RTCRST, 0);
+}
+
 static enum power_state power_wait_s5_rtc_reset(void)
 {
 	static int s5_exit_tries;
@@ -100,7 +108,7 @@ static enum power_state power_wait_s5_rtc_reset(void)
 			chipset_force_g3();
 
 			/* Assert RTCRST# and retry 5 times */
-			board_rtc_reset();
+			intel_x86_rtc_reset();
 
 			if (++s5_exit_tries > 4) {
 				s5_exit_tries = 0;
