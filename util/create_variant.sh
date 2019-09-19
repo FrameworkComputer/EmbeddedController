@@ -3,62 +3,61 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if [[ "$#" -ne 2 ]]; then
-  echo "Usage: $0 base_name variant_name"
-  echo "e.g. $0 hatch kohaku"
+if [[ "$#" -lt 2 ]]; then
+  echo "Usage: $0 base_name variant_name [bug_number]"
+  echo "e.g. $0 hatch kohaku b:140261109"
   echo "Creates the initial EC image as a copy of the base board's EC."
   exit 1
 fi
 
 # This is the name of the base board that we're cloning to make the variant.
-# ${var,,} converts to all lowercase
-base="${1,,}"
-# This is the name of the variant that is being cloned
-variant="${2,,}"
+# ${var,,} converts to all lowercase.
+BASE="${1,,}"
+# This is the name of the variant that is being cloned.
+VARIANT="${2,,}"
 
-# All of the necessary files are in the ../board directory:
+# Assign BUG= text, or "None" if that parameter wasn't specified.
+BUG=${3:-None}
+
+# All of the necessary files are in the ../board directory.
 pushd "${BASH_SOURCE%/*}/../board" || exit
 
-# Make sure that the base exists
-if [[ ! -e "${base}" ]]; then
-  echo "${base} does not exist; please specify a valid baseboard"
-  popd || exit
-  exit 2
+# Make sure that the base exists.
+if [[ ! -e "${BASE}" ]]; then
+  echo "${BASE} does not exist; please specify a valid baseboard"
+  exit 1
 fi
 
-# Make sure the variant doesn't already exist
-if [[ -e "${variant}" ]]; then
-  echo "${variant} already exists; have you already created this variant?"
-  popd || exit
-  exit 2
+# Make sure the variant doesn't already exist.
+if [[ -e "${VARIANT}" ]]; then
+  echo "${VARIANT} already exists; have you already created this variant?"
+  exit 1
 fi
 
 # Start a branch. Use YMD timestamp to avoid collisions.
 DATE=$(date +%Y%m%d)
-repo start "create_${variant}_${DATE}" || exit
+repo start "create_${VARIANT}_${DATE}" . || exit 1
 
-mkdir "${variant}"
-cp "${base}"/* "${variant}"
+mkdir "${VARIANT}"
+cp "${BASE}"/* "${VARIANT}"
 # TODO replace the base name with the variant name in the copied files,
-# TODO except for the BASEBOARD=${base^^} line in build.mk
+# TODO except for the BASEBOARD=${BASE^^} line in build.mk.
 
-# Build the code; exit if it fails
-pushd .. || exit
-make BOARD=${variant} || exit
-popd || exit
+# Build the code; exit if it fails.
+pushd .. || exit 1
+make BOARD=${VARIANT} || exit 1
+popd || exit 1
 
-git add "${variant}"/*
+git add "${VARIANT}"/*
 
-# Now commit the files
-git commit -sm "${variant}: Initial EC image
+# Now commit the files.
+git commit -sm "${VARIANT}: Initial EC image
 
-The starting point for the ${variant} EC image
+The starting point for the ${VARIANT} EC image
 
-BUG=none
+BUG=${BUG}
 BRANCH=none
-TEST=make BOARD=${variant}"
-
-popd || exit
+TEST=make BOARD=${VARIANT}"
 
 echo "Please check all the files (git show), make any changes you want,"
 echo "and then repo upload."
