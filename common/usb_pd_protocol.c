@@ -5293,7 +5293,7 @@ DECLARE_CONSOLE_COMMAND(pd, command_pd,
 
 #ifdef HAS_TASK_HOSTCMD
 
-static int hc_pd_ports(struct host_cmd_handler_args *args)
+static enum ec_status hc_pd_ports(struct host_cmd_handler_args *args)
 {
 	struct ec_response_usb_pd_ports *r = args->response;
 	r->num_ports = CONFIG_USB_PD_PORT_COUNT;
@@ -5330,7 +5330,7 @@ __attribute__((weak)) uint8_t board_get_dp_pin_mode(int port)
 	return 0;
 }
 
-static int hc_usb_pd_control(struct host_cmd_handler_args *args)
+static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_control *p = args->params;
 	struct ec_response_usb_pd_control_v2 *r_v2 = args->response;
@@ -5429,7 +5429,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_CONTROL,
 		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
 
 #ifdef CONFIG_HOSTCMD_FLASHPD
-static int hc_remote_flash(struct host_cmd_handler_args *args)
+static enum ec_status hc_remote_flash(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_fw_update *p = args->params;
 	int port = p->port;
@@ -5529,7 +5529,8 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
 #endif /* CONFIG_HOSTCMD_FLASHPD */
 
 #ifdef CONFIG_HOSTCMD_RWHASHPD
-static int hc_remote_rw_hash_entry(struct host_cmd_handler_args *args)
+static enum ec_status
+hc_remote_rw_hash_entry(struct host_cmd_handler_args *args)
 {
 	int i, idx = 0, found = 0;
 	const struct ec_params_usb_pd_rw_hash_entry *p = args->params;
@@ -5560,7 +5561,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_RW_HASH_ENTRY,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_HOSTCMD_RWHASHPD */
 
-static int hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
+static enum ec_status hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
 {
 	const uint8_t *port = args->params;
 	struct ec_params_usb_pd_rw_hash_entry *r = args->response;
@@ -5586,7 +5587,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DEV_INFO,
 
 #ifndef CONFIG_USB_PD_TCPC
 #ifdef CONFIG_EC_CMD_PD_CHIP_INFO
-static int hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
+static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pd_chip_info *p = args->params;
 	struct ec_response_pd_chip_info_v1 *info;
@@ -5616,7 +5617,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PD_CHIP_INFO,
 #endif
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static int hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
+static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_set_mode_request *p = args->params;
 
@@ -5652,7 +5653,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE,
 
 #ifdef CONFIG_CMD_PD_CONTROL
 
-static int pd_control(struct host_cmd_handler_args *args)
+static enum ec_status pd_control(struct host_cmd_handler_args *args)
 {
 	static int pd_control_disabled[CONFIG_USB_PD_PORT_COUNT];
 	const struct ec_params_pd_control *cmd = args->params;

@@ -157,7 +157,7 @@ static int keyscan_seq_collect(struct ec_params_keyscan_seq_ctrl *req,
 	return sizeof(*resp) + resp->collect.num_items;
 }
 
-static int keyscan_seq_ctrl(struct host_cmd_handler_args *args)
+static enum ec_status keyscan_seq_ctrl(struct host_cmd_handler_args *args)
 {
 	struct ec_params_keyscan_seq_ctrl req, *msg;
 	struct keyscan_item *ksi;

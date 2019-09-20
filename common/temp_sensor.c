@@ -142,7 +142,7 @@ DECLARE_CONSOLE_COMMAND(temps, command_temps,
 /*****************************************************************************/
 /* Host commands */
 
-int temp_sensor_command_get_info(struct host_cmd_handler_args *args)
+enum ec_status temp_sensor_command_get_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_temp_sensor_get_info *p = args->params;
 	struct ec_response_temp_sensor_get_info *r = args->response;

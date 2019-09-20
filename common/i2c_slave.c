@@ -9,7 +9,7 @@
 #include "i2c.h"
 #include "util.h"
 
-int i2c_get_protocol_info(struct host_cmd_handler_args *args)
+enum ec_status i2c_get_protocol_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_protocol_info *r = args->response;
 

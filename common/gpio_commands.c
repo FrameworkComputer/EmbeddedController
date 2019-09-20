@@ -207,7 +207,7 @@ DECLARE_CONSOLE_COMMAND(gpioset, command_gpio_set,
 /*****************************************************************************/
 /* Host commands */
 
-static int gpio_command_get(struct host_cmd_handler_args *args)
+static enum ec_status gpio_command_get(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_gpio_get_v1 *p_v1 = args->params;
 	struct ec_response_gpio_get_v1 *r_v1 = args->response;
@@ -260,7 +260,7 @@ static int gpio_command_get(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_GPIO_GET, gpio_command_get,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
-static int gpio_command_set(struct host_cmd_handler_args *args)
+static enum ec_status gpio_command_set(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_gpio_set *p = args->params;
 

@@ -102,7 +102,7 @@ DECLARE_CONSOLE_COMMAND(deviceevent, command_device_event,
 /*****************************************************************************/
 /* Host commands */
 
-static int device_event_cmd(struct host_cmd_handler_args *args)
+static enum ec_status device_event_cmd(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_device_event *p = args->params;
 	struct ec_response_device_event *r = args->response;

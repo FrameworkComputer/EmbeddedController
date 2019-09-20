@@ -1050,7 +1050,7 @@ DECLARE_HOOK(HOOK_INIT, shi_init, HOOK_PRIO_INIT_CHIPSET - 1);
 /**
  * Get protocol information
  */
-static int shi_get_protocol_info(struct host_cmd_handler_args *args)
+static enum ec_status shi_get_protocol_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_protocol_info *r = args->response;
 

@@ -38,7 +38,7 @@ BUILD_ASSERT(ARRAY_SIZE(vstore_slots) <= EC_VSTORE_SLOT_MAX);
 /*
  * vstore_info - Get slot count and mask of locked slots.
  */
-static int vstore_info(struct host_cmd_handler_args *args)
+static enum ec_status vstore_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_vstore_info *r = args->response;
 	int i;
@@ -60,7 +60,7 @@ DECLARE_HOST_COMMAND(EC_CMD_VSTORE_INFO, vstore_info, EC_VER_MASK(0));
  *
  * Response is EC_VSTORE_SLOT_SIZE bytes of data.
  */
-static int vstore_read(struct host_cmd_handler_args *args)
+static enum ec_status vstore_read(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_vstore_read *p = args->params;
 	struct ec_response_vstore_read *r = args->response;
@@ -79,7 +79,7 @@ DECLARE_HOST_COMMAND(EC_CMD_VSTORE_READ, vstore_read, EC_VER_MASK(0));
 /*
  * vstore_write - Write temporary secure storage slot and lock it.
  */
-static int vstore_write(struct host_cmd_handler_args *args)
+static enum ec_status vstore_write(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_vstore_write *p = args->params;
 	struct vstore_slot *slot;

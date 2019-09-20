@@ -740,7 +740,7 @@ void lpc_disable_acpi_interrupts(void)
 }
 
 /* Get protocol information */
-static int lpc_get_protocol_info(struct host_cmd_handler_args *args)
+static enum ec_status lpc_get_protocol_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_protocol_info *r = args->response;
 

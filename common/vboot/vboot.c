@@ -113,7 +113,7 @@ static int verify_slot(enum system_image_copy_t slot)
 	return EC_SUCCESS;
 }
 
-static int hc_verify_slot(struct host_cmd_handler_args *args)
+static enum ec_status hc_verify_slot(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_efs_verify *p = args->params;
 	enum system_image_copy_t slot;

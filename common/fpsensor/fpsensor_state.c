@@ -92,7 +92,7 @@ int fp_get_next_event(uint8_t *out)
 }
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_FINGERPRINT, fp_get_next_event);
 
-static int fp_command_tpm_seed(struct host_cmd_handler_args *args)
+static enum ec_status fp_command_tpm_seed(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_seed *params = args->params;
 
@@ -117,7 +117,8 @@ int fp_tpm_seed_is_set(void)
 	return fp_encryption_status & FP_ENC_STATUS_SEED_SET;
 }
 
-static int fp_command_encryption_status(struct host_cmd_handler_args *args)
+static enum ec_status
+fp_command_encryption_status(struct host_cmd_handler_args *args)
 {
 	struct ec_response_fp_encryption_status *r = args->response;
 
@@ -182,7 +183,7 @@ int fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output)
 	return EC_RES_SUCCESS;
 }
 
-static int fp_command_mode(struct host_cmd_handler_args *args)
+static enum ec_status fp_command_mode(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_mode *p = args->params;
 	struct ec_response_fp_mode *r = args->response;
@@ -196,7 +197,7 @@ static int fp_command_mode(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_MODE, fp_command_mode, EC_VER_MASK(0));
 
-static int fp_command_context(struct host_cmd_handler_args *args)
+static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_context *params = args->params;
 

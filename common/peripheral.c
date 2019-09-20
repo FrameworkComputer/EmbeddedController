@@ -10,7 +10,7 @@
 #include "usb_pd_tcpm.h"
 
 #ifdef CONFIG_HOSTCMD_LOCATE_CHIP
-static int hc_locate_chip(struct host_cmd_handler_args *args)
+static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_locate_chip *params = args->params;
 	struct ec_response_locate_chip *resp = args->response;

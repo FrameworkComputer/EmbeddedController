@@ -342,7 +342,8 @@ void dptf_set_fan_duty_target(int pct)
 /*****************************************************************************/
 /* Host commands */
 
-static int hc_pwm_get_fan_target_rpm(struct host_cmd_handler_args *args)
+static enum ec_status
+hc_pwm_get_fan_target_rpm(struct host_cmd_handler_args *args)
 {
 	struct ec_response_pwm_get_fan_rpm *r = args->response;
 
@@ -359,7 +360,8 @@ DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_FAN_TARGET_RPM,
 		     hc_pwm_get_fan_target_rpm,
 		     EC_VER_MASK(0));
 
-static int hc_pwm_set_fan_target_rpm(struct host_cmd_handler_args *args)
+static enum ec_status
+hc_pwm_set_fan_target_rpm(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pwm_set_fan_target_rpm_v1 *p_v1 = args->params;
 	const struct ec_params_pwm_set_fan_target_rpm_v0 *p_v0 = args->params;
@@ -395,7 +397,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_FAN_TARGET_RPM,
 		     hc_pwm_set_fan_target_rpm,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
-static int hc_pwm_set_fan_duty(struct host_cmd_handler_args *args)
+static enum ec_status hc_pwm_set_fan_duty(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pwm_set_fan_duty_v1 *p_v1 = args->params;
 	const struct ec_params_pwm_set_fan_duty_v0 *p_v0 = args->params;
@@ -420,7 +422,8 @@ DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_FAN_DUTY,
 		     hc_pwm_set_fan_duty,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
-static int hc_thermal_auto_fan_ctrl(struct host_cmd_handler_args *args)
+static enum ec_status
+hc_thermal_auto_fan_ctrl(struct host_cmd_handler_args *args)
 {
 	int fan;
 	const struct ec_params_auto_fan_ctrl_v1 *p_v1 = args->params;

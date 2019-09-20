@@ -438,7 +438,8 @@ static int host_start_hash(const struct ec_params_vboot_hash *p)
 		return EC_RES_ERROR;
 }
 
-static int host_command_vboot_hash(struct host_cmd_handler_args *args)
+static enum ec_status
+host_command_vboot_hash(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_vboot_hash *p = args->params;
 	struct ec_response_vboot_hash *r = args->response;

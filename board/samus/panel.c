@@ -144,7 +144,8 @@ DECLARE_DEFERRED(lp8555_enable_pwm_mode);
 /**
  * Host command to toggle backlight.
  */
-static int switch_command_enable_backlight(struct host_cmd_handler_args *args)
+static enum ec_status
+switch_command_enable_backlight(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_switch_enable_backlight *p = args->params;
 

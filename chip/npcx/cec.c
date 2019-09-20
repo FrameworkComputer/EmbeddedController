@@ -836,7 +836,7 @@ static int cec_send(const uint8_t *msg, uint8_t len)
 	return 0;
 }
 
-static int hc_cec_write(struct host_cmd_handler_args *args)
+static enum ec_status hc_cec_write(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_cec_write *params = args->params;
 
@@ -923,7 +923,7 @@ static int cec_set_logical_addr(uint8_t logical_addr)
 	return EC_RES_SUCCESS;
 }
 
-static int hc_cec_set(struct host_cmd_handler_args *args)
+static enum ec_status hc_cec_set(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_cec_set *params = args->params;
 
@@ -939,7 +939,7 @@ static int hc_cec_set(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_CEC_SET, hc_cec_set, EC_VER_MASK(0));
 
 
-static int hc_cec_get(struct host_cmd_handler_args *args)
+static enum ec_status hc_cec_get(struct host_cmd_handler_args *args)
 {
 	struct ec_response_cec_get *response = args->response;
 	const struct ec_params_cec_get *params = args->params;

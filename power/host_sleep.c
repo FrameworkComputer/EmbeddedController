@@ -17,7 +17,8 @@ __overridable void power_chipset_handle_host_sleep_event(
 	/* Default weak implementation -- no action required. */
 }
 
-static int host_command_host_sleep_event(struct host_cmd_handler_args *args)
+static enum ec_status
+host_command_host_sleep_event(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_host_sleep_event_v1 *p = args->params;
 	struct ec_response_host_sleep_event_v1 *r = args->response;

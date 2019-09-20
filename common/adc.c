@@ -66,7 +66,7 @@ DECLARE_CONSOLE_COMMAND(adc, command_adc,
 			"[name]",
 			"Print ADC channel(s)");
 
-static int hc_adc_read(struct host_cmd_handler_args *args)
+static enum ec_status hc_adc_read(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_adc_read *params = args->params;
 	struct ec_response_adc_read *resp = args->response;

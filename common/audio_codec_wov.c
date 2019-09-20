@@ -95,7 +95,7 @@ static int check_lang_buf(uint8_t *data, uint32_t len, const uint8_t *hash)
 }
 
 #ifdef CONFIG_AUDIO_CODEC_CAP_WOV_LANG_SHM
-static int wov_set_lang_shm(struct host_cmd_handler_args *args)
+static enum ec_status wov_set_lang_shm(struct host_cmd_handler_args *args)
 {
 	const struct ec_param_ec_codec_wov *p = args->params;
 	const struct ec_param_ec_codec_wov_set_lang_shm *pp =
@@ -118,7 +118,7 @@ static int wov_set_lang_shm(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 #else
-static int wov_set_lang(struct host_cmd_handler_args *args)
+static enum ec_status wov_set_lang(struct host_cmd_handler_args *args)
 {
 	const struct ec_param_ec_codec_wov *p = args->params;
 	const struct ec_param_ec_codec_wov_set_lang *pp = &p->set_lang_param;
@@ -156,7 +156,7 @@ static int wov_set_lang(struct host_cmd_handler_args *args)
 }
 #endif /* CONFIG_AUDIO_CODEC_CAP_WOV_LANG_SHM */
 
-static int wov_get_lang(struct host_cmd_handler_args *args)
+static enum ec_status wov_get_lang(struct host_cmd_handler_args *args)
 {
 	struct ec_response_ec_codec_wov_get_lang *r = args->response;
 
@@ -166,7 +166,7 @@ static int wov_get_lang(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int wov_enable(struct host_cmd_handler_args *args)
+static enum ec_status wov_enable(struct host_cmd_handler_args *args)
 {
 	if (wov_enabled)
 		return EC_RES_BUSY;
@@ -197,7 +197,7 @@ static int wov_enable(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int wov_disable(struct host_cmd_handler_args *args)
+static enum ec_status wov_disable(struct host_cmd_handler_args *args)
 {
 	if (!wov_enabled)
 		return EC_RES_BUSY;
@@ -216,7 +216,7 @@ static int wov_disable(struct host_cmd_handler_args *args)
 }
 
 #ifdef CONFIG_AUDIO_CODEC_CAP_WOV_AUDIO_SHM
-static int wov_read_audio_shm(struct host_cmd_handler_args *args)
+static enum ec_status wov_read_audio_shm(struct host_cmd_handler_args *args)
 {
 	struct ec_response_ec_codec_wov_read_audio_shm *r = args->response;
 
@@ -249,7 +249,7 @@ static int wov_read_audio_shm(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 #else
-static int wov_read_audio(struct host_cmd_handler_args *args)
+static enum ec_status wov_read_audio(struct host_cmd_handler_args *args)
 {
 	struct ec_response_ec_codec_wov_read_audio *r = args->response;
 	uint8_t *p;
@@ -327,7 +327,7 @@ static char *strcmd[] = {
 BUILD_ASSERT(ARRAY_SIZE(sub_cmds) == ARRAY_SIZE(strcmd));
 #endif
 
-static int wov_host_command(struct host_cmd_handler_args *args)
+static enum ec_status wov_host_command(struct host_cmd_handler_args *args)
 {
 	const struct ec_param_ec_codec_wov *p = args->params;
 

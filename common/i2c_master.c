@@ -779,7 +779,7 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int i2c_command_passthru(struct host_cmd_handler_args *args)
+static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_i2c_passthru *params = args->params;
 	const struct ec_params_i2c_passthru_msg *msg;
@@ -933,7 +933,8 @@ static void i2c_passthru_protect_tcpc_ports(void)
 #endif
 }
 
-static int i2c_command_passthru_protect(struct host_cmd_handler_args *args)
+static enum ec_status
+i2c_command_passthru_protect(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_i2c_passthru_protect *params = args->params;
 	struct ec_response_i2c_passthru_protect *resp = args->response;

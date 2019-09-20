@@ -126,7 +126,7 @@ static void cros_ec_ishtp_subsys_new_msg_received(const heci_handle_t handle,
 /**
  * Get protocol information
  */
-static int heci_get_protocol_info(struct host_cmd_handler_args *args)
+static enum ec_status heci_get_protocol_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_protocol_info *r = args->response;
 

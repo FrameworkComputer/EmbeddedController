@@ -1196,7 +1196,7 @@ int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port)
 #endif /* CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT */
 
 #ifndef TEST_BUILD
-static int hc_pd_power_info(struct host_cmd_handler_args *args)
+static enum ec_status hc_pd_power_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_power_info *p = args->params;
 	struct ec_response_usb_pd_power_info *r = args->response;
@@ -1219,7 +1219,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_POWER_INFO,
 		     EC_VER_MASK(0));
 #endif /* TEST_BUILD */
 
-static int hc_charge_port_count(struct host_cmd_handler_args *args)
+static enum ec_status hc_charge_port_count(struct host_cmd_handler_args *args)
 {
 	struct ec_response_charge_port_count *resp = args->response;
 
@@ -1232,7 +1232,8 @@ DECLARE_HOST_COMMAND(EC_CMD_CHARGE_PORT_COUNT,
 		     hc_charge_port_count,
 		     EC_VER_MASK(0));
 
-static int hc_charge_port_override(struct host_cmd_handler_args *args)
+static enum ec_status
+hc_charge_port_override(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_charge_port_override *p = args->params;
 	const int16_t override_port = p->override_port;
@@ -1249,7 +1250,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PD_CHARGE_PORT_OVERRIDE,
 		     EC_VER_MASK(0));
 
 #if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
-static int hc_override_dedicated_charger_limit(
+static enum ec_status hc_override_dedicated_charger_limit(
 		struct host_cmd_handler_args *args)
 {
 	const struct ec_params_dedicated_charger_limit *p = args->params;
@@ -1326,7 +1327,8 @@ static void charge_manager_external_power_limit_off(void)
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, charge_manager_external_power_limit_off,
 	     HOOK_PRIO_DEFAULT);
 
-static int hc_external_power_limit(struct host_cmd_handler_args *args)
+static enum ec_status
+hc_external_power_limit(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_external_power_limit_v1 *p = args->params;
 

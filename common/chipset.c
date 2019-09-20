@@ -47,7 +47,7 @@ DECLARE_CONSOLE_COMMAND(apshutdown, command_apshutdown,
 #endif
 
 #ifdef CONFIG_HOSTCMD_AP_RESET
-static int host_command_apreset(struct host_cmd_handler_args *args)
+static enum ec_status host_command_apreset(struct host_cmd_handler_args *args)
 {
 	/* Force the chipset to reset */
 	chipset_reset(CHIPSET_RESET_HOST_CMD);

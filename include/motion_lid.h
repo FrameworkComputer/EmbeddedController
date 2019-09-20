@@ -30,7 +30,7 @@
  */
 int motion_lid_get_angle(void);
 
-int host_cmd_motion_lid(struct host_cmd_handler_args *args);
+enum ec_status host_cmd_motion_lid(struct host_cmd_handler_args *args);
 
 void motion_lid_calc(void);
 

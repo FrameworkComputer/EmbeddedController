@@ -265,7 +265,8 @@ DECLARE_CONSOLE_COMMAND(thermalset, command_thermalset,
  * not version 0. Different structs, different meanings.
  */
 
-static int thermal_command_set_threshold(struct host_cmd_handler_args *args)
+static enum ec_status
+thermal_command_set_threshold(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_thermal_set_threshold_v1 *p = args->params;
 
@@ -280,7 +281,8 @@ DECLARE_HOST_COMMAND(EC_CMD_THERMAL_SET_THRESHOLD,
 		     thermal_command_set_threshold,
 		     EC_VER_MASK(1));
 
-static int thermal_command_get_threshold(struct host_cmd_handler_args *args)
+static enum ec_status
+thermal_command_get_threshold(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_thermal_get_threshold_v1 *p = args->params;
 	struct ec_thermal_config *r = args->response;

@@ -1105,7 +1105,7 @@ DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
 #define EC_FLASH_REGION_START MIN(CONFIG_EC_PROTECTED_STORAGE_OFF, \
 				  CONFIG_EC_WRITABLE_STORAGE_OFF)
 
-static int flash_command_get_info(struct host_cmd_handler_args *args)
+static enum ec_status flash_command_get_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_info_2 *p_2 = args->params;
 	struct ec_response_flash_info_2 *r_2 = args->response;
@@ -1200,7 +1200,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_INFO,
 		     flash_command_get_info, FLASH_INFO_VER);
 
 
-static int flash_command_read(struct host_cmd_handler_args *args)
+static enum ec_status flash_command_read(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_read *p = args->params;
 	uint32_t offset = p->offset + EC_FLASH_REGION_START;
@@ -1225,7 +1225,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_READ,
  * Version 0 and 1 are equivalent from the EC-side; the only difference is
  * that the host can only send 64 bytes of data at a time in version 0.
  */
-static int flash_command_write(struct host_cmd_handler_args *args)
+static enum ec_status flash_command_write(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_write *p = args->params;
 	uint32_t offset = p->offset + EC_FLASH_REGION_START;
@@ -1259,7 +1259,7 @@ BUILD_ASSERT(CONFIG_RO_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
 BUILD_ASSERT(CONFIG_RW_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
 #endif
 
-static int flash_command_erase(struct host_cmd_handler_args *args)
+static enum ec_status flash_command_erase(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_erase *p = args->params;
 	int rc = EC_RES_SUCCESS, cmd = FLASH_ERASE_SECTOR;
@@ -1328,7 +1328,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_ERASE, flash_command_erase,
 #endif
 		);
 
-static int flash_command_protect(struct host_cmd_handler_args *args)
+static enum ec_status flash_command_protect(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_protect *p = args->params;
 	struct ec_response_flash_protect *r = args->response;
@@ -1372,7 +1372,8 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_PROTECT,
 		     flash_command_protect,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
-static int flash_command_region_info(struct host_cmd_handler_args *args)
+static enum ec_status
+flash_command_region_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_region_info *p = args->params;
 	struct ec_response_flash_region_info *r = args->response;
@@ -1413,7 +1414,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_REGION_INFO,
 
 #ifdef CONFIG_FLASH_SELECT_REQUIRED
 
-static int flash_command_select(struct host_cmd_handler_args *args)
+static enum ec_status flash_command_select(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_select *p = args->params;
 

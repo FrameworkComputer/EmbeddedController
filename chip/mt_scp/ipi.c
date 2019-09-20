@@ -293,7 +293,7 @@ DECLARE_IPI(IPI_HOST_COMMAND, ipi_hostcmd_handler, 0);
 /*
  * Get protocol information
  */
-static int ipi_get_protocol_info(struct host_cmd_handler_args *args)
+static enum ec_status ipi_get_protocol_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_protocol_info *r = args->response;
 

@@ -107,7 +107,7 @@ uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size);
 	void fake_hook_##fn(void) { fn(); }
 
 #define DECLARE_HOST_COMMAND(X, fn, Y) \
-	int fake_hostcmd_##fn(struct host_cmd_handler_args *args) \
+	enum ec_status fake_hostcmd_##fn(struct host_cmd_handler_args *args) \
 	{ return fn(args); }
 
 #define DECLARE_CONSOLE_COMMAND(X, fn, Y...) \

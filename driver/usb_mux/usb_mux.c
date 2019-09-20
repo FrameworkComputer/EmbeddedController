@@ -227,7 +227,7 @@ DECLARE_CONSOLE_COMMAND(typec, command_typec,
 			"Control type-C connector muxing");
 #endif
 
-static int hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
+static enum ec_status hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_mux_info *p = args->params;
 	struct ec_response_usb_pd_mux_info *r = args->response;

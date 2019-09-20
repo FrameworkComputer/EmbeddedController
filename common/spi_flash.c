@@ -507,7 +507,7 @@ DECLARE_CONSOLE_COMMAND(spi_flashinfo, command_spi_flashinfo,
 	"Print SPI flash info");
 
 #ifdef CONFIG_HOSTCMD_FLASH_SPI_INFO
-static int flash_command_spi_info(struct host_cmd_handler_args *args)
+static enum ec_status flash_command_spi_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_flash_spi_info *r = args->response;
 

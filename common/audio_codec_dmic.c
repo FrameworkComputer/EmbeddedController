@@ -10,7 +10,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ## args)
 
-static int dmic_get_max_gain(struct host_cmd_handler_args *args)
+static enum ec_status dmic_get_max_gain(struct host_cmd_handler_args *args)
 {
 	struct ec_response_ec_codec_dmic_get_max_gain *r = args->response;
 
@@ -21,7 +21,7 @@ static int dmic_get_max_gain(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int dmic_set_gain_idx(struct host_cmd_handler_args *args)
+static enum ec_status dmic_set_gain_idx(struct host_cmd_handler_args *args)
 {
 	const struct ec_param_ec_codec_dmic *p = args->params;
 
@@ -33,7 +33,7 @@ static int dmic_set_gain_idx(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int dmic_get_gain_idx(struct host_cmd_handler_args *args)
+static enum ec_status dmic_get_gain_idx(struct host_cmd_handler_args *args)
 {
 	const struct ec_param_ec_codec_dmic *p = args->params;
 	struct ec_response_ec_codec_dmic_get_gain_idx *r = args->response;
@@ -61,7 +61,7 @@ static char *strcmd[] = {
 BUILD_ASSERT(ARRAY_SIZE(sub_cmds) == ARRAY_SIZE(strcmd));
 #endif
 
-static int dmic_host_command(struct host_cmd_handler_args *args)
+static enum ec_status dmic_host_command(struct host_cmd_handler_args *args)
 {
 	const struct ec_param_ec_codec_dmic *p = args->params;
 

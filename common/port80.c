@@ -153,7 +153,7 @@ DECLARE_CONSOLE_COMMAND(port80, command_port80,
 			"[scroll | intprint | flush]",
 			"Print port80 writes or toggle port80 scrolling");
 
-int port80_last_boot(struct host_cmd_handler_args *args)
+enum ec_status port80_last_boot(struct host_cmd_handler_args *args)
 {
 	struct ec_response_port80_last_boot *r = args->response;
 
@@ -163,7 +163,7 @@ int port80_last_boot(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-int port80_command_read(struct host_cmd_handler_args *args)
+enum ec_status port80_command_read(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_port80_read *p = args->params;
 	uint32_t offset = p->read_buffer.offset;

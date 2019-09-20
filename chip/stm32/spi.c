@@ -720,7 +720,7 @@ DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_INIT_SPI);
 /**
  * Get protocol information
  */
-static int spi_get_protocol_info(struct host_cmd_handler_args *args)
+static enum ec_status spi_get_protocol_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_protocol_info *r = args->response;
 
@@ -735,7 +735,7 @@ static int spi_get_protocol_info(struct host_cmd_handler_args *args)
 
 	args->response_size = sizeof(*r);
 
-	return EC_SUCCESS;
+	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
 		     spi_get_protocol_info,

@@ -126,7 +126,7 @@ DECLARE_CONSOLE_COMMAND(ecint, command_ec_int,
 			"",
 			"Toggle EC interrupt line");
 
-static int ec_status_host_cmd(struct host_cmd_handler_args *args)
+static enum ec_status ec_status_host_cmd(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pd_status *p = args->params;
 	struct ec_response_pd_status *r = args->response;

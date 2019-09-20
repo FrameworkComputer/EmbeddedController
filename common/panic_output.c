@@ -254,7 +254,7 @@ DECLARE_CONSOLE_COMMAND(panicinfo, command_panicinfo,
 /*****************************************************************************/
 /* Host commands */
 
-int host_command_panic_info(struct host_cmd_handler_args *args)
+enum ec_status host_command_panic_info(struct host_cmd_handler_args *args)
 {
 	if (pdata_ptr->magic == PANIC_DATA_MAGIC) {
 		ASSERT(pdata_ptr->struct_size <= args->response_max);

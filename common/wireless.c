@@ -110,7 +110,7 @@ void wireless_set_state(enum wireless_power_state state)
 	}
 }
 
-static int wireless_enable_cmd(struct host_cmd_handler_args *args)
+static enum ec_status wireless_enable_cmd(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_switch_enable_wireless_v1 *p = args->params;
 	struct ec_response_switch_enable_wireless_v1 *r = args->response;

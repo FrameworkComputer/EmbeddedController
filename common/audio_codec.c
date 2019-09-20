@@ -28,7 +28,7 @@ static struct {
 	uint32_t len;
 } shms[EC_CODEC_SHM_ID_LAST];
 
-static int get_capabilities(struct host_cmd_handler_args *args)
+static enum ec_status get_capabilities(struct host_cmd_handler_args *args)
 {
 	struct ec_response_ec_codec_get_capabilities *r = args->response;
 
@@ -38,7 +38,7 @@ static int get_capabilities(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int get_shm_addr(struct host_cmd_handler_args *args)
+static enum ec_status get_shm_addr(struct host_cmd_handler_args *args)
 {
 	const struct ec_param_ec_codec *p = args->params;
 	struct ec_response_ec_codec_get_shm_addr *r = args->response;
@@ -60,7 +60,7 @@ static int get_shm_addr(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int set_shm_addr(struct host_cmd_handler_args *args)
+static enum ec_status set_shm_addr(struct host_cmd_handler_args *args)
 {
 	const struct ec_param_ec_codec *p = args->params;
 	const uint8_t shm_id = p->set_shm_addr_param.shm_id;
@@ -99,7 +99,7 @@ static char *strcmd[] = {
 BUILD_ASSERT(ARRAY_SIZE(sub_cmds) == ARRAY_SIZE(strcmd));
 #endif
 
-static int host_command(struct host_cmd_handler_args *args)
+static enum ec_status host_command(struct host_cmd_handler_args *args)
 {
 	const struct ec_param_ec_codec *p = args->params;
 

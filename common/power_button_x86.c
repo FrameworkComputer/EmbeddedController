@@ -504,7 +504,7 @@ DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, powerbtn_x86_changed, HOOK_PRIO_DEFAULT);
 /**
  * Handle configuring the power button behavior through a host command
  */
-static int hc_config_powerbtn_x86(struct host_cmd_handler_args *args)
+static enum ec_status hc_config_powerbtn_x86(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_config_power_button *p = args->params;
 

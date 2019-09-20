@@ -2262,7 +2262,8 @@ int charge_set_input_current_limit(int ma, int mv)
 /*****************************************************************************/
 /* Host commands */
 
-static int charge_command_charge_control(struct host_cmd_handler_args *args)
+static enum ec_status
+charge_command_charge_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_charge_control *p = args->params;
 	int rv;
@@ -2293,7 +2294,8 @@ static void reset_current_limit(void)
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, reset_current_limit, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, reset_current_limit, HOOK_PRIO_DEFAULT);
 
-static int charge_command_current_limit(struct host_cmd_handler_args *args)
+static enum ec_status
+charge_command_current_limit(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_current_limit *p = args->params;
 
@@ -2304,7 +2306,8 @@ static int charge_command_current_limit(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_CHARGE_CURRENT_LIMIT, charge_command_current_limit,
 		     EC_VER_MASK(0));
 
-static int charge_command_charge_state(struct host_cmd_handler_args *args)
+static enum ec_status
+charge_command_charge_state(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_charge_state *in = args->params;
 	struct ec_response_charge_state *out = args->response;

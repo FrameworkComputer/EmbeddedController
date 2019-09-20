@@ -840,7 +840,8 @@ DECLARE_HOOK(HOOK_USB_PM_CHANGE, keyboard_usb_pm_change, HOOK_PRIO_DEFAULT);
 /*****************************************************************************/
 /* Host commands */
 
-static int mkbp_command_simulate_key(struct host_cmd_handler_args *args)
+static enum ec_status
+mkbp_command_simulate_key(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_mkbp_simulate_key *p = args->params;
 
@@ -923,7 +924,7 @@ done:
 	return shorted;
 }
 
-static int keyboard_factory_test(struct host_cmd_handler_args *args)
+static enum ec_status keyboard_factory_test(struct host_cmd_handler_args *args)
 {
 	struct ec_response_keyboard_factory_test *r = args->response;
 

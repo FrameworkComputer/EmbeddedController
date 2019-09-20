@@ -235,7 +235,8 @@ void pd_command_task(void *u)
  */
 static uint32_t pd_host_event_status __aligned(4);
 
-static int hc_pd_host_event_status(struct host_cmd_handler_args *args)
+static enum ec_status
+hc_pd_host_event_status(struct host_cmd_handler_args *args)
 {
 	struct ec_response_host_event_status *r = args->response;
 

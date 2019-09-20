@@ -13,9 +13,9 @@
 
 #define EC_WOV_I2S_SAMPLE_RATE 48000
 
-typedef int (*codec_i2s_func)(struct host_cmd_handler_args *args);
+typedef enum ec_status (*codec_i2s_func)(struct host_cmd_handler_args *args);
 
-static int codec_set_sample_depth(struct host_cmd_handler_args *args)
+static enum ec_status codec_set_sample_depth(struct host_cmd_handler_args *args)
 {
 	struct ec_param_codec_i2s *param =
 		(struct ec_param_codec_i2s *)args->params;
@@ -35,7 +35,7 @@ static int codec_set_sample_depth(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int codec_set_gain(struct host_cmd_handler_args *args)
+static enum ec_status codec_set_gain(struct host_cmd_handler_args *args)
 {
 	struct ec_param_codec_i2s *param =
 		(struct ec_param_codec_i2s *)args->params;
@@ -46,7 +46,7 @@ static int codec_set_gain(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int codec_get_gain(struct host_cmd_handler_args *args)
+static enum ec_status codec_get_gain(struct host_cmd_handler_args *args)
 {
 	struct ec_codec_i2s_gain *resp =
 		(struct ec_codec_i2s_gain *)args->response;
@@ -62,7 +62,7 @@ static int codec_get_gain(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int codec_i2s_enable(struct host_cmd_handler_args *args)
+static enum ec_status codec_i2s_enable(struct host_cmd_handler_args *args)
 {
 	struct ec_param_codec_i2s *param =
 		(struct ec_param_codec_i2s *)args->params;
@@ -93,7 +93,7 @@ static int codec_i2s_enable(struct host_cmd_handler_args *args)
 	return rv ? EC_RES_ERROR : EC_RES_SUCCESS;
 }
 
-static int codec_i2s_set_fmt(struct host_cmd_handler_args *args)
+static enum ec_status codec_i2s_set_fmt(struct host_cmd_handler_args *args)
 {
 	struct ec_param_codec_i2s *param =
 		(struct ec_param_codec_i2s *)args->params;
@@ -107,7 +107,8 @@ static int codec_i2s_set_fmt(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int codec_i2s_set_tdm_config(struct host_cmd_handler_args *args)
+static enum ec_status
+codec_i2s_set_tdm_config(struct host_cmd_handler_args *args)
 {
 	struct ec_param_codec_i2s *param =
 		(struct ec_param_codec_i2s *)args->params;
@@ -125,7 +126,7 @@ static int codec_i2s_set_tdm_config(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int codec_i2s_set_bclk(struct host_cmd_handler_args *args)
+static enum ec_status codec_i2s_set_bclk(struct host_cmd_handler_args *args)
 {
 	struct ec_param_codec_i2s *param =
 		(struct ec_param_codec_i2s *)args->params;
@@ -138,7 +139,7 @@ static int codec_i2s_set_bclk(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int codec_i2s(struct host_cmd_handler_args *args)
+static enum ec_status codec_i2s(struct host_cmd_handler_args *args)
 {
 	struct ec_param_codec_i2s *param =
 		(struct ec_param_codec_i2s *)args->params;

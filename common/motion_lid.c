@@ -497,7 +497,7 @@ void motion_lid_calc(void)
 /* Host commands */
 
 
-int host_cmd_motion_lid(struct host_cmd_handler_args *args)
+enum ec_status host_cmd_motion_lid(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_motion_sense *in = args->params;
 	struct ec_response_motion_sense *out = args->response;

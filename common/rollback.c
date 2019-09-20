@@ -460,7 +460,8 @@ out:
 }
 DECLARE_DEFERRED(add_entropy_deferred);
 
-static int hc_rollback_add_entropy(struct host_cmd_handler_args *args)
+static enum ec_status
+hc_rollback_add_entropy(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_rollback_add_entropy *p = args->params;
 
@@ -535,7 +536,8 @@ DECLARE_SAFE_CONSOLE_COMMAND(rollbackinfo, command_rollback_info,
 			     NULL,
 			     "Print rollback info");
 
-static int host_command_rollback_info(struct host_cmd_handler_args *args)
+static enum ec_status
+host_command_rollback_info(struct host_cmd_handler_args *args)
 {
 	int ret = EC_RES_UNAVAILABLE;
 	struct ec_response_rollback_info *r = args->response;

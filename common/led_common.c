@@ -47,7 +47,7 @@ int led_auto_control_is_enabled(enum ec_led_id led_id)
 	return (led_auto_control_flags & LED_AUTO_CONTROL_FLAG(led_id)) != 0;
 }
 
-static int led_command_control(struct host_cmd_handler_args *args)
+static enum ec_status led_command_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_led_control *p = args->params;
 	struct ec_response_led_control *r = args->response;

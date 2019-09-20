@@ -184,7 +184,8 @@ DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode,
 /*****************************************************************************/
 /* Host commands */
 
-static int usb_charge_command_set_mode(struct host_cmd_handler_args *args)
+static enum ec_status
+usb_charge_command_set_mode(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_charge_set_mode *p = args->params;
 

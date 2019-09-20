@@ -861,7 +861,7 @@ static void lpc_init(void)
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
 
 /* Get protocol information */
-static int lpc_get_protocol_info(struct host_cmd_handler_args *args)
+static enum ec_status lpc_get_protocol_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_protocol_info *r = args->response;
 

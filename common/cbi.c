@@ -283,7 +283,7 @@ int cbi_get_model_id(uint32_t *id)
 	return cbi_get_board_info(CBI_TAG_MODEL_ID, (uint8_t *)id, &size);
 }
 
-static int hc_cbi_get(struct host_cmd_handler_args *args)
+static enum ec_status hc_cbi_get(struct host_cmd_handler_args *args)
 {
 	const struct __ec_align4 ec_params_get_cbi *p = args->params;
 	uint8_t size = MIN(args->response_max, UINT8_MAX);
@@ -301,7 +301,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_CROS_BOARD_INFO,
 		     hc_cbi_get,
 		     EC_VER_MASK(0));
 
-static int hc_cbi_set(struct host_cmd_handler_args *args)
+static enum ec_status hc_cbi_set(struct host_cmd_handler_args *args)
 {
 	const struct __ec_align4 ec_params_set_cbi *p = args->params;
 

@@ -4682,7 +4682,7 @@ DECLARE_CONSOLE_COMMAND(pe, command_pe,
 			"USB PE");
 #endif /* CONFIG_CMD_USB_PD_PE */
 
-static int hc_remote_pd_discovery(struct host_cmd_handler_args *args)
+static enum ec_status hc_remote_pd_discovery(struct host_cmd_handler_args *args)
 {
 	const uint8_t *port = args->params;
 	struct ec_params_usb_pd_discovery_entry *r = args->response;
@@ -4704,7 +4704,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DISCOVERY,
 		hc_remote_pd_discovery,
 		EC_VER_MASK(0));
 
-static int hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
+static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
 {
 	struct svdm_amode_data *modep;
 	const struct ec_params_usb_pd_get_mode_request *p = args->params;

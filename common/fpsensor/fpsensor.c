@@ -289,7 +289,7 @@ void fp_task(void)
 #endif /* !HAVE_FP_PRIVATE_DRIVER */
 }
 
-static int fp_command_passthru(struct host_cmd_handler_args *args)
+static enum ec_status fp_command_passthru(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_passthru *params = args->params;
 	void *out = args->response;
@@ -321,7 +321,7 @@ static int fp_command_passthru(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_PASSTHRU, fp_command_passthru, EC_VER_MASK(0));
 
-static int fp_command_info(struct host_cmd_handler_args *args)
+static enum ec_status fp_command_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_fp_info *r = args->response;
 
@@ -355,7 +355,7 @@ static int validate_fp_buffer_offset(const uint32_t buffer_size,
 	return EC_SUCCESS;
 }
 
-static int fp_command_frame(struct host_cmd_handler_args *args)
+static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_frame *params = args->params;
 	void *out = args->response;
@@ -443,7 +443,7 @@ static int fp_command_frame(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_FRAME, fp_command_frame, EC_VER_MASK(0));
 
-static int fp_command_stats(struct host_cmd_handler_args *args)
+static enum ec_status fp_command_stats(struct host_cmd_handler_args *args)
 {
 	struct ec_response_fp_stats *r = args->response;
 
@@ -470,7 +470,7 @@ static int validate_template_format(
 	return EC_RES_SUCCESS;
 }
 
-static int fp_command_template(struct host_cmd_handler_args *args)
+static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_template *params = args->params;
 	uint32_t size = params->size & ~FP_TEMPLATE_COMMIT;

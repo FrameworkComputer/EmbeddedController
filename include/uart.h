@@ -325,7 +325,7 @@ void uart_default_pad_rx_interrupt(enum gpio_signal signal);
  *
  * @return result status (EC_RES_*)
  */
-int uart_console_read_buffer_init(void);
+enum ec_status uart_console_read_buffer_init(void);
 
 /**
  * Read from uart buffer.

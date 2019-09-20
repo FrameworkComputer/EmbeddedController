@@ -815,7 +815,7 @@ DECLARE_HOOK(HOOK_TICK, lpc_tick, HOOK_PRIO_DEFAULT);
 /**
  * Get protocol information
  */
-static int lpc_get_protocol_info(struct host_cmd_handler_args *args)
+static enum ec_status lpc_get_protocol_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_protocol_info *r = args->response;
 
