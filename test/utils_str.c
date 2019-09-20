@@ -27,6 +27,20 @@ static int test_isprint(void)
 		   isprint(' ') && !isprint('\0') && !isprint('\n'));
 }
 
+static int test_strstr(void)
+{
+	const char s1[] = "abcde";
+
+	TEST_ASSERT(strstr(s1, "ab") == s1);
+	TEST_ASSERT(strstr(s1, "") == NULL);
+	TEST_ASSERT(strstr("", "ab") == NULL);
+	TEST_ASSERT(strstr("", "x") == NULL);
+	TEST_ASSERT(strstr(s1, "de") == &s1[3]);
+	TEST_ASSERT(strstr(s1, "def") == NULL);
+
+	return EC_SUCCESS;
+}
+
 static int test_strtoi(void)
 {
 	char *e;
@@ -252,6 +266,7 @@ void run_test(void)
 
 	RUN_TEST(test_isalpha);
 	RUN_TEST(test_isprint);
+	RUN_TEST(test_strstr);
 	RUN_TEST(test_strtoi);
 	RUN_TEST(test_strtoul);
 	RUN_TEST(test_parse_bool);

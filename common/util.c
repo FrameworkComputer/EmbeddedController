@@ -94,6 +94,31 @@ __stdlib_compat int strncasecmp(const char *s1, const char *s2, size_t size)
 }
 
 
+__stdlib_compat char *strstr(const char *s1, const char *s2)
+{
+	const char *p, *q, *r;
+	size_t len1 = strlen(s1);
+	size_t len2 = strlen(s2);
+
+	if (len1 == 0 || len2 == 0 || len1 < len2)
+		return NULL;
+
+	r = s1 + len1 - len2 + 1;
+	for (; s1 < r; s1++) {
+		if (*s1 == *s2) {
+			p = s1 + 1;
+			q = s2 + 1;
+			for (; q < s2 + len2;) {
+				if (*p++ != *q++)
+					break;
+			}
+			if (*q == '\0')
+				return (char *)s1;
+		}
+	}
+	return NULL;
+}
+
 __stdlib_compat int atoi(const char *nptr)
 {
 	int result = 0;

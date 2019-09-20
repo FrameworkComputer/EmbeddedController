@@ -95,6 +95,16 @@ void *memmove(void *dest, const void *src, size_t len);
 void *memchr(const void *buffer, int c, size_t n);
 int strcasecmp(const char *s1, const char *s2);
 int strncasecmp(const char *s1, const char *s2, size_t size);
+
+/**
+ * Find the first occurrence of the substring <s2> in the string <s1>
+ *
+ * @param s1	String where <s2> is searched.
+ * @param s2	Substring to be located in <s1>
+ * @return	Pointer to the located substring or NULL if not found.
+ */
+char *strstr(const char *s1, const char *s2);
+
 size_t strlen(const char *s);
 size_t strnlen(const char *s, size_t maxlen);
 char *strncpy(char *dest, const char *src, size_t n);
