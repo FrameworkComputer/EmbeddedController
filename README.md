@@ -300,7 +300,7 @@ EC.
 Find the serial device of the ec console (on your workstation):
 
 ```bash
-(chroot) $ dut-control | grep ec_uart
+(chroot) $ dut-control ec_uart_pty
 ```
 
 Connect to the console:
