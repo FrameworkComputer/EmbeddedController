@@ -179,7 +179,7 @@ ifeq ($(H1_DEVIDS),)
 # Signing with non-secret test key.
 CR50_RW_KEY = loader-testkey-A.pem
 # Make sure manifset Key ID field matches the actual key.
-DUM := $(shell sed 's/1187158727/764428053/' $(MANIFEST) > $(SIGNER_MANIFEST))
+DUM := $(shell sed 's/860844255/-764428053/' $(MANIFEST) > $(SIGNER_MANIFEST))
 else
 # The private key comes from the sighing fob.
 CR50_RW_KEY = cr50_rom0-dev-blsign.pem.pub

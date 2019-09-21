@@ -33,7 +33,7 @@
   "tag": "00000000000000000000000000000000000000000000000000000000",
 
   // cros_loader uses b1-dev key as key to verify RW with
-  "keyid": -1187158727,  // b1-dev key
+  "keyid": 860844255,  // b1-dev, RO 0.0.11 key
 
   "p4cl": 177,  // P4 sync cl for XML we link against. 177 == 0xb1.
 
