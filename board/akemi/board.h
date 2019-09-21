@@ -108,10 +108,6 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
-/* GPIO signals updated base on board version. */
-#define GPIO_EN_PP5000_A gpio_en_pp5000_a
-extern enum gpio_signal gpio_en_pp5000_a;
-
 enum adc_channel {
 	ADC_TEMP_SENSOR_1,	/* ADC0 */
 	ADC_TEMP_SENSOR_2,	/* ADC1 */
