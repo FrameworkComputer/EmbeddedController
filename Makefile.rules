@@ -151,10 +151,10 @@ targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
 # If outputing to tty and column command exists, pipe into column.
 # Otherwise, print in newline format.
 cmd_pretty_print_list = @echo $(1) \
-				| tr ' ' '\n'                    \
-				| { [ -t 1 ]                     \
-				    && which column &>/dev/null  \
-				    && column || cat ; }         \
+				| tr ' ' '\n'                        \
+				| { [ -t 1 ]                         \
+				    && which column 1>/dev/null 2>&1 \
+				    && column || cat ; }
 
 # By default, the "build_boards" and "try_build_boards" targets will build all
 # of the boards listed in $(boards). However, the invoker can provide a
