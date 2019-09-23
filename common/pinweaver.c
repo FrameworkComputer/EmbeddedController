@@ -1329,14 +1329,14 @@ static enum vendor_cmd_rc pw_vendor_specific_command(enum vendor_cmd_cc code,
 	struct pw_response_t *response = buf;
 
 	if (input_size < sizeof(request->header)) {
-		ccprintf("PinWeaver: message smaller than a header (%d).\n",
+		ccprintf("PinWeaver: message smaller than a header (%zd).\n",
 			 input_size);
 		return VENDOR_RC_INTERNAL_ERROR;
 	}
 
 	if (input_size != request->header.data_length +
 			  sizeof(request->header)) {
-		ccprintf("PinWeaver: header size mismatch %d != %d.\n",
+		ccprintf("PinWeaver: header size mismatch %zd != %zd.\n",
 			 input_size, request->header.data_length +
 				     sizeof(request->header));
 		return VENDOR_RC_REQUEST_TOO_BIG;

@@ -119,8 +119,8 @@ static void dump_nvmem_state(const char *title,
 	ccprintf("deleted_obj_count: %d\n", tr->deleted_obj_count);
 	ccprintf("deimiter_count: %d\n", tr->delimiter_count);
 	ccprintf("unexpected_count: %d\n", tr->unexpected_count);
-	ccprintf("valid_data_size: %d\n", tr->valid_data_size);
-	ccprintf("erased_data_size: %d\n\n", tr->erased_data_size);
+	ccprintf("valid_data_size: %zd\n", tr->valid_data_size);
+	ccprintf("erased_data_size: %zd\n\n", tr->erased_data_size);
 }
 
 static void wipe_out_nvmem_cache(void)
@@ -398,7 +398,7 @@ static size_t get_free_nvmem_room(void)
 	free_room = (free_pages - 1) * (CONFIG_FLASH_BANK_SIZE -
 					sizeof(struct nn_page_header)) +
 		    CONFIG_FLASH_BANK_SIZE - master_at.mt.data_offset;
-	ccprintf("free pages %d, data offset 0x%x\n", free_pages,
+	ccprintf("free pages %zd, data offset 0x%x\n", free_pages,
 		 master_at.mt.data_offset);
 	return free_room;
 }
@@ -649,12 +649,12 @@ static size_t fill_obj_offsets(uint16_t *offsets, size_t max_objects)
 
 	obj_count = init_object_offsets(offsets, max_objects);
 
-	ccprintf("%d objects\n", obj_count);
+	ccprintf("%zd objects\n", obj_count);
 	for (i = 0; i < obj_count; i++) {
 		uint32_t *op;
 
 		op = evictable_offs_to_addr(offsets[i]);
-		ccprintf("offs %04x:%08x:%08x:%08x addr %pP size %d\n",
+		ccprintf("offs %04x:%08x:%08x:%08x addr %pP size %zd\n",
 			 offsets[i], op[-1], op[0], op[1], op,
 			 (uintptr_t)nvmem_cache_base(NVMEM_TPM) + op[-1] -
 				 (uintptr_t)op);
@@ -767,7 +767,7 @@ static int caches_match(const uint8_t *cache1, const uint8_t *cache2)
 			if (!memcmp(cache1 + offset, cache2 + offset, size))
 				continue;
 
-			ccprintf("%s:%d failed comparing %d:%d:\n", __func__,
+			ccprintf("%s:%d failed comparing %zd:%zd:\n", __func__,
 				 __LINE__, i, j);
 			for (k = offset; k < (offset + size); k++)
 				if (cache1[k] != cache2[k])
@@ -1248,7 +1248,7 @@ static int compare_object(uint16_t obj_offset, size_t obj_size, const void *obj)
 	       evictable_offs_to_addr(obj_offset - sizeof(next_addr)),
 	       sizeof(next_addr));
 
-	ccprintf("next_addr %x, sum %x size %d\n", next_addr,
+	ccprintf("next_addr %x, sum %zx size %zd\n", next_addr,
 		 (s_evictNvStart + obj_offset + obj_size), obj_size);
 	TEST_ASSERT(next_addr == (s_evictNvStart + obj_offset + obj_size));
 
@@ -1289,7 +1289,7 @@ static int test_tpm_nvmem_modify_evictable_objects(void)
 	for (i = 0; i < num_objects; i++) {
 		memcpy(handles + i, evictable_offs_to_addr(offsets[i]),
 		       sizeof(handles[i]));
-		ccprintf("obj %d handle %08x\n", i, handles[i]);
+		ccprintf("obj %zd handle %08x\n", i, handles[i]);
 	}
 	/*
 	 * Let's modify the object which currently is stored second in the

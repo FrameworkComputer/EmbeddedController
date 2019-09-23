@@ -35,6 +35,7 @@
  * useful for printing times, voltages, and currents.
  *
  * Length may be:
+ *   - 'z' = integer is sizeof(size_t)
  *   - 'l' = integer is 64-bit instead of native 32-bit
  *
  * Type may be:

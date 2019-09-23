@@ -26,7 +26,7 @@ int run(int expect_ret, const char *expect,
 	int rv;
 
 	ccprintf("\n");
-	ccprintf("size_limit=%-4d | format='%s'\n", size_limit, format);
+	ccprintf("size_limit=%-4zd | format='%s'\n", size_limit, format);
 	ccprintf("expect  ='%s'   | expect_status=%d\n",
 		 expect ? expect : "NO_BYTES_TOUCHED", expect_ret);
 

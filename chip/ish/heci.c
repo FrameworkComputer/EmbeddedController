@@ -891,8 +891,8 @@ static int is_hbm_validity(struct hbm_h2i *h2i, size_t length)
 	}
 
 	if (valid_msg_len != length) {
-		CPRINTF("invalid cmd(%d) valid : %d, cur : %d\n",
-			valid_msg_len, length);
+		CPRINTF("invalid cmd(%d) valid : %d, cur : %zd\n",
+			h2i->cmd, valid_msg_len, length);
 		/* TODO: invalid cmd. not sure to reply with error ? */
 		return 0;
 	}

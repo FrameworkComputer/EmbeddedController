@@ -990,7 +990,7 @@ static int load_fifo(struct motion_sensor_t *s, uint32_t last_ts)
 				state = FIFO_DATA_CONFIG;
 				break;
 			default:
-				CPRINTS("Unknown header: 0x%02x @ %d",
+				CPRINTS("Unknown header: 0x%02x @ %zd",
 						hdr, bp - bmi160_buffer);
 				raw_write8(s->port, s->i2c_spi_addr_flags,
 						BMI160_CMD_REG,
@@ -1000,13 +1000,13 @@ static int load_fifo(struct motion_sensor_t *s, uint32_t last_ts)
 			break;
 		}
 		case FIFO_DATA_SKIP:
-			CPRINTS("@ %d - %d, skipped %d frames",
+			CPRINTS("@ %zd - %d, skipped %d frames",
 					bp - bmi160_buffer, length, *bp);
 			bp++;
 			state = FIFO_HEADER;
 			break;
 		case FIFO_DATA_CONFIG:
-			CPRINTS("@ %d - %d, config change: 0x%02x",
+			CPRINTS("@ %zd - %d, config change: 0x%02x",
 					bp - bmi160_buffer, length, *bp);
 			bp++;
 			state = FIFO_HEADER;

@@ -986,7 +986,7 @@ static int check_dcrypto_mutex_usage(void)
 {
 	if (MOCK_DECRYPTO_init_counter == MOCK_DECRYPTO_release_counter)
 		return EC_SUCCESS;
-	ccprintf("ASSERTION failed: DCRYPTO init(%d) != DCRYPTO release(%d)\n",
+	ccprintf("ASSERTION failed: DCRYPTO init(%zd) != DCRYPTO release(%zd)\n",
 		 MOCK_DECRYPTO_init_counter, MOCK_DECRYPTO_release_counter);
 	return EC_ERROR_UNKNOWN;
 }

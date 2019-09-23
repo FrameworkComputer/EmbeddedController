@@ -302,7 +302,7 @@ size_t add_evictable_obj(void *obj, size_t obj_size)
 	next_addr = end_addr + sizeof(uint32_t) + obj_size;
 
 	if (next_addr >= s_evictNvEnd) {
-		ccprintf("%s: could not fit %d bytes!\n", __func__, obj_size);
+		ccprintf("%s: could not fit %zd bytes!\n", __func__, obj_size);
 		return 0;
 	}
 

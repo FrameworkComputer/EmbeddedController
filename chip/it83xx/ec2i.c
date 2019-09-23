@@ -284,7 +284,7 @@ static void pnpcfg_configure(const struct ec2i_t *settings, size_t entries)
 	for (i = 0; i < entries; i++) {
 		if (ec2i_write(settings[i].index_port, settings[i].data_port) ==
 		    EC2I_WRITE_ERROR) {
-			ccprints("Failed to apply %d", i);
+			ccprints("Failed to apply %zd", i);
 			break;
 		}
 	}
