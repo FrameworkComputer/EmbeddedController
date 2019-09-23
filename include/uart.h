@@ -63,6 +63,7 @@ int uart_put(const char *out, int len);
  *
  * @return EC_SUCCESS, or non-zero if output was truncated.
  */
+__attribute__((__format__(__printf__, 1, 2)))
 int uart_printf(const char *format, ...);
 
 /**

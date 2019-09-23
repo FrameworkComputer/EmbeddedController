@@ -274,6 +274,7 @@ static uint32_t bcddevice_sop(void)
 }
 
 /* Application exits on failure */
+__attribute__((__format__(__printf__, 2, 3)))
 static void append(char **buf, const char *fmt, ...)
 {
 	va_list ap1, ap2;

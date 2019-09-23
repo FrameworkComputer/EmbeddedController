@@ -5,6 +5,7 @@
 #ifndef __EC_CHIP_G_LOADER_DEBUG_PRINTF_H
 #define __EC_CHIP_G_LOADER_DEBUG_PRINTF_H
 
+__attribute__((__format__(__printf__, 1, 2)))
 void debug_printf(const char *format, ...);
 
 #ifdef DEBUG

@@ -130,6 +130,7 @@ static ssize_t vanprintf(char **out, ssize_t max_size, gfp_t gfp,
  *        ENOTRECOVERABLE: An unexpected condition occurred.  This may indicate
  *        a bug.
  */
+__attribute__((__format__(__printf__, 4, 5)))
 static ssize_t anprintf(char **out, ssize_t max_size, gfp_t gfp,
 	const char *fmt, ...)
 {

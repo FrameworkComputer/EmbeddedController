@@ -86,6 +86,7 @@ __stdlib_compat int vfnprintf(int (*addchar)(void *context, int c),
  * @param format	Format string
  * @return EC_SUCCESS, or EC_ERROR_OVERFLOW if the output was truncated.
  */
+__attribute__((__format__(__printf__, 3, 4)))
 __stdlib_compat int snprintf(char *str, int size, const char *format, ...);
 
 /**

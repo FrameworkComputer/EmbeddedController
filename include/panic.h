@@ -132,6 +132,7 @@ void panic_puts(const char *s);
  * @param format	printf-style format string
  * @param ...		Arguments to process
  */
+__attribute__((__format__(__printf__, 1, 2)))
 void panic_printf(const char *format, ...);
 
 /*
