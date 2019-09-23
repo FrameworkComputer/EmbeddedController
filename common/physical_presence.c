@@ -142,7 +142,7 @@ static void physical_detect_check_press(void)
 
 	mutex_lock(&pp_mutex);
 
-	CPRINTS("PP press dt=%.6ld", dt);
+	CPRINTS("PP press dt=%.6lld", dt);
 
 	/* If we no longer care about presses, ignore them */
 	if (!pp_detect_in_progress())

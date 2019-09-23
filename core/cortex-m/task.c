@@ -933,7 +933,7 @@ void task_print_list(void)
 		     sp++)
 			stackused -= sizeof(uint32_t);
 
-		ccprintf("%4d %c %-16s %08x %11.6ld  %3d/%3d\n", i, is_ready,
+		ccprintf("%4d %c %-16s %08x %11.6lld  %3d/%3d\n", i, is_ready,
 			 task_names[i], tasks[i].events, tasks[i].runtime,
 			 stackused, tasks_init[i].stack_size);
 		cflush();
@@ -961,10 +961,10 @@ int command_task_info(int argc, char **argv)
 	ccprintf("Service calls:          %11d\n", svc_calls);
 	ccprintf("Total exceptions:       %11d\n", total + svc_calls);
 	ccprintf("Task switches:          %11d\n", task_switches);
-	ccprintf("Task switching started: %11.6ld s\n", task_start_time);
-	ccprintf("Time in tasks:          %11.6ld s\n",
+	ccprintf("Task switching started: %11.6lld s\n", task_start_time);
+	ccprintf("Time in tasks:          %11.6lld s\n",
 		 get_time().val - task_start_time);
-	ccprintf("Time in exceptions:     %11.6ld s\n", exc_total_time);
+	ccprintf("Time in exceptions:     %11.6lld s\n", exc_total_time);
 #endif
 
 	return EC_SUCCESS;

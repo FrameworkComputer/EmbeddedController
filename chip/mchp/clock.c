@@ -697,9 +697,9 @@ static int command_idle_stats(int argc, char **argv)
 	ccprintf("Num idle calls that deep-sleep:      %d\n",
 			idle_dsleep_cnt);
 
-	ccprintf("Total Time spent in deep-sleep(sec): %.6ld(s)\n",
+	ccprintf("Total Time spent in deep-sleep(sec): %.6lld(s)\n",
 			total_idle_dsleep_time_us);
-	ccprintf("Total time on:                       %.6lds\n\n",
+	ccprintf("Total time on:                       %.6llds\n\n",
 			ts.val);
 
 #ifdef CONFIG_MCHP_DEEP_SLP_DEBUG

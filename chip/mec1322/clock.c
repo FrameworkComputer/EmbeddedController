@@ -426,9 +426,9 @@ static int command_idle_stats(int argc, char **argv)
 	ccprintf("Num idle calls that sleep:           %d\n", idle_sleep_cnt);
 	ccprintf("Num idle calls that deep-sleep:      %d\n", idle_dsleep_cnt);
 
-	ccprintf("Total Time spent in deep-sleep(sec): %.6ld(s)\n",
+	ccprintf("Total Time spent in deep-sleep(sec): %.6lld(s)\n",
 						total_idle_dsleep_time_us);
-	ccprintf("Total time on:                       %.6lds\n\n", ts.val);
+	ccprintf("Total time on:                       %.6llds\n\n", ts.val);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,

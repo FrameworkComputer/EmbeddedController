@@ -91,14 +91,14 @@ static enum cts_rc test_ticks(void)
 	error_pct = (interval - HOOK_TICK_INTERVAL) * 100 /
 		    HOOK_TICK_INTERVAL;
 	if (error_pct < -10 || 10 < error_pct) {
-		CPRINTS("tick error=%d%% interval=%ld", error_pct, interval);
+		CPRINTS("tick error=%d%% interval=%lld", error_pct, interval);
 		return CTS_RC_FAILURE;
 	}
 
 	interval = second_time[1].val - second_time[0].val;
 	error_pct = (interval - SECOND) * 100 / SECOND;
 	if (error_pct < -10 || 10 < error_pct) {
-		CPRINTS("second error=%d%% interval=%ld", error_pct, interval);
+		CPRINTS("second error=%d%% interval=%lld", error_pct, interval);
 		return CTS_RC_FAILURE;
 	}
 

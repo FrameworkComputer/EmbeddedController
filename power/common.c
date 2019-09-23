@@ -639,7 +639,7 @@ static void siglog_deferred(void)
 	for (i = 0; i < siglog_entries; i++) {
 		if (i)
 			tdiff.val = siglog[i].time.val - siglog[i-1].time.val;
-		CPRINTF("  %.6ld  +%.6ld  %s => %d\n",
+		CPRINTF("  %.6lld  +%.6lld  %s => %d\n",
 			siglog[i].time.val, tdiff.val,
 			power_signal_get_name(siglog[i].signal),
 			siglog[i].level);

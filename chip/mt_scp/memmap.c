@@ -197,8 +197,8 @@ static int command_cacheinfo(int argc, char **argv)
 		uint64_t access = ((uint64_t)SCP_CACHE_CCNT0U(c) << 32) |
 			SCP_CACHE_CCNT0L(c);
 
-		ccprintf("%ccache hit count:    %lu\n", cache_name[c], hit);
-		ccprintf("%ccache access count: %lu\n", cache_name[c], access);
+		ccprintf("%ccache hit count:    %llu\n", cache_name[c], hit);
+		ccprintf("%ccache access count: %llu\n", cache_name[c], access);
 	}
 
 	return EC_SUCCESS;

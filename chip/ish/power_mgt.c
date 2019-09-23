@@ -606,8 +606,8 @@ static void print_stats(const char *name, const struct pm_stat *stat)
 {
 	if (stat->count)
 		ccprintf("    %s:\n"
-			 "        counts: %lu\n"
-			 "        time:   %.6lus\n",
+			 "        counts: %llu\n"
+			 "        time:   %.6llus\n",
 			 name, stat->count, stat->total_time_us);
 }
 
@@ -619,7 +619,7 @@ static int command_idle_stats(int argc, char **argv)
 	struct ish_aon_share *aon_share = pm_ctx.aon_share;
 
 	ccprintf("Aontask exists: %s\n", pm_ctx.aon_valid ? "Yes" : "No");
-	ccprintf("Total time on: %.6lus\n", get_time().val);
+	ccprintf("Total time on: %.6llus\n", get_time().val);
 	ccprintf("Idle sleep:\n");
 	print_stats("D0i0", &pm_stats.d0i0);
 

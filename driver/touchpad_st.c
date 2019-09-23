@@ -544,8 +544,10 @@ static int st_tp_read_system_info(int reload)
 	ST_TP_SHOW(chip0_ver);
 	ST_TP_SHOW(scr_tx_len);
 	ST_TP_SHOW(scr_rx_len);
-	ST_TP_SHOW(release_info);
+#define ST_TP_SHOW64(attr) CPRINTS(#attr ": %04llx", system_info.attr)
+	ST_TP_SHOW64(release_info);
 #undef ST_TP_SHOW
+#undef ST_TP_SHOW64
 	return ret;
 }
 
@@ -1753,7 +1755,7 @@ static int st_tp_usb_set_interface(usb_uint alternate_setting,
 	if (alternate_setting == 1) {
 		if ((system_info.release_info & 0xFF) <
 		    ST_TP_MIN_HEATMAP_VERSION) {
-			CPRINTS("release version %04x doesn't support heatmap",
+			CPRINTS("release version %04llx doesn't support heatmap",
 				system_info.release_info);
 			/* Heatmap mode is not supported in this version. */
 			return -1;
