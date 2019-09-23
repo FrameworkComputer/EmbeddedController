@@ -232,7 +232,8 @@ int usb_write_ep(uint32_t ep_num, int len, void *data)
 	struct dwc_usb_ep *ep = usb_ctl.ep[ep_num];
 
 	if (GR_USB_DIEPCTL(ep_num) & DXEPCTL_EPENA) {
-		CPRINTS("usb_write_ep ep%d: FAIL: tx already in progress!");
+		CPRINTS("usb_write_ep ep%d: FAIL: tx already in progress!",
+			ep_num);
 		return 0;
 	}
 

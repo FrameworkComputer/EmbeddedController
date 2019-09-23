@@ -52,8 +52,8 @@
 
 #define TEST_EQ(a, b, fmt) TEST_OPERATOR(a, b, ==, fmt)
 #define TEST_NE(a, b, fmt) TEST_OPERATOR(a, b, !=, fmt)
-#define TEST_BITS_SET(a, bits) TEST_OPERATOR(a & bits, bits, ==, "%u")
-#define TEST_BITS_CLEARED(a, bits) TEST_OPERATOR(a & bits, 0, ==, "%u")
+#define TEST_BITS_SET(a, bits) TEST_OPERATOR(a & (int)bits, (int)bits, ==, "%u")
+#define TEST_BITS_CLEARED(a, bits) TEST_OPERATOR(a & (int)bits, 0, ==, "%u")
 
 #define __ABS(n) ((n) > 0 ? (n) : -(n))
 

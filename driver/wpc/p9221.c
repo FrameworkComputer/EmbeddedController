@@ -710,7 +710,7 @@ static void p9221_notifier_check_vbus(void)
 
 	wpc->p9221_check_vbus = false;
 
-	CPRINTS("%s online:%d vbus:%d is_online:%d", __func__, wpc->online,
+	CPRINTS("%s online:%d vbus:%d", __func__, wpc->online,
 		wpc->vbus_status);
 
 	/*

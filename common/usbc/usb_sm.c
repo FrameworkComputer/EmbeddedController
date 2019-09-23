@@ -115,8 +115,9 @@ void set_state(const int port, struct sm_ctx *const ctx,
 	 * intended state to transition into.
 	 */
 	if (internal->exit) {
-		CPRINTF("C%d: Ignoring set state to 0x%08x within 0x%08x",
-			port, new_state, ctx->current);
+		CPRINTF("C%d: Ignoring set state to 0x%08lx within 0x%08lx",
+			port, (unsigned long)new_state,
+			(unsigned long)ctx->current);
 		return;
 	}
 

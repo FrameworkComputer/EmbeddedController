@@ -155,11 +155,11 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 		return ret;
 
 #ifdef CONFIG_CONSOLE_VERBOSE
-	CPRINTS("%s ODR: %d - roundup %d from config %d [AP %d]",
+	CPRINTS("%s ODR: %d - roundup %d from config %d [AP %ld]",
 		sensor->name, odr, roundup, config_id,
 		BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr));
 #else
-	CPRINTS("%c%d ODR %d rup %d cfg %d AP %d",
+	CPRINTS("%c%d ODR %d rup %d cfg %d AP %ld",
 		sensor->name[0], sensor->type, odr, roundup, config_id,
 		BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr));
 #endif
@@ -1669,7 +1669,7 @@ static int command_display_accel_info(int argc, char **argv)
 		ccprintf("max_freq: %d\n", motion_sensors[i].max_frequency);
 		ccprintf("config:\n");
 		for (j = 0; j < SENSOR_CONFIG_MAX; j++) {
-			ccprintf("%d - odr: %umHz, ec_rate: %uus\n", j,
+			ccprintf("%d - odr: %lumHz, ec_rate: %uus\n", j,
 				motion_sensors[i].config[j].odr &
 				~ROUND_UP_FLAG,
 				motion_sensors[i].config[j].ec_rate);

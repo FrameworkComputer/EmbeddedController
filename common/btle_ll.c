@@ -846,7 +846,7 @@ void bluetooth_ll_task(void)
 
 			if (ll_state == STANDBY) {
 				CPRINTF("Exiting connection state/Entering "
-					"Standby state after %d connections ",
+					"Standby state after %d connections "
 					"events\n", ll_conn_events);
 				print_connection_state();
 			}

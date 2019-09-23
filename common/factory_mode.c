@@ -43,7 +43,7 @@ DECLARE_HOOK(HOOK_CCD_CHANGE, ccd_config_changed, HOOK_PRIO_LAST);
 
 static void force_system_reset(void)
 {
-	CPRINTS("%s: ccd hook didn't reset the system");
+	CPRINTS("ccd hook didn't reset the system");
 	factory_config_saved(0);
 }
 DECLARE_DEFERRED(force_system_reset);

@@ -630,8 +630,8 @@ static int command_idle_stats(int argc, char **argv)
 
 	if (pm_ctx.aon_valid) {
 		ccprintf("    Aontask status:\n");
-		ccprintf("        last error:   %lu\n", aon_share->last_error);
-		ccprintf("        error counts: %lu\n", aon_share->error_count);
+		ccprintf("        last error:   %u\n", aon_share->last_error);
+		ccprintf("        error counts: %u\n", aon_share->error_count);
 	}
 
 	return EC_SUCCESS;

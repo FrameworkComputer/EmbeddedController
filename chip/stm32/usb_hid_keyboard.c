@@ -543,8 +543,8 @@ static void keyboard_process_queue(void)
 	while (queue_count(&key_queue) > 0) {
 		queue_peek_units(&key_queue, &ev, 0, 1);
 		if (keyboard_debug)
-			CPRINTF(" =%02x/%d %d %d\n", ev.keycode, ev.pressed,
-				ev.time - now);
+			CPRINTF(" =%02x/%d %d %d\n", ev.keycode, ev.keycode,
+				ev.pressed, ev.time - now);
 
 		if ((now - ev.time) <= KEY_DISCARD_MAX_TIME &&
 		    (ev.time - first_key_time) >= COALESCE_INTERVAL)

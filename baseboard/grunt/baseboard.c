@@ -440,7 +440,7 @@ int board_set_active_charge_port(int port)
 
 	/* Enable requested charge port. */
 	if (ppc_vbus_sink_enable(port, 1)) {
-		CPRINTS("p%d: sink enable failed.");
+		CPRINTS("p%d: sink enable failed.", port);
 		return EC_ERROR_UNKNOWN;
 	}
 

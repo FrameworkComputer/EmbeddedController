@@ -742,7 +742,7 @@ int board_set_active_charge_port(int port)
 
 	/* Enable requested charge port. */
 	if (ppc_vbus_sink_enable(port, 1)) {
-		CPRINTS("p%d: sink path enable failed.");
+		CPRINTS("p%d: sink path enable failed.", port);
 		charger_discharge_on_ac(0);
 		return EC_ERROR_UNKNOWN;
 	}

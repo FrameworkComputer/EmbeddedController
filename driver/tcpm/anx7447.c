@@ -268,7 +268,8 @@ static int command_anx_ocm(int argc, char **argv)
 		rv = anx7447_flash_erase_internal(
 			port, 1 /* write to console if empty */);
 		if (rv)
-			ccprintf("C%d: Failed to erase OCM flash (%d)\n", rv);
+			ccprintf("C%d: Failed to erase OCM flash (%d)\n",
+				 port, rv);
 	}
 
 	ccprintf("C%d: OCM flash is %sempty.\n",

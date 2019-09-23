@@ -61,7 +61,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	int timeout_ms = 50;
 
-	CPRINTS("%s()", __func__, reason);
+	CPRINTS("%s() %d", __func__, reason);
 	report_ap_reset(reason);
 
 	/* Turn off RMSRST_L  to meet tPCH12 */

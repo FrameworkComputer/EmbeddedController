@@ -21,8 +21,8 @@ static int _flash_error(void)
 
 	retval = GREG32(FLASH, FSH_ERROR);
 	if (retval) {
-		debug_printf("ERROR: Read to FLASH_FSH_ERROR (%x) ");
-		debug_printf("did not clear it\n", retval);
+		debug_printf("ERROR: Read to FLASH_FSH_ERROR (%x) "
+			     "did not clear it\n", retval);
 	}
 
 	return retval;

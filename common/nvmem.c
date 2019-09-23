@@ -464,7 +464,7 @@ void nvmem_disable_commits(void)
 int nvmem_commit(void)
 {
 	if (nvmem_mutex.task == TASK_ID_COUNT) {
-		CPRINTF("%s: attempt to commit in unlocked state\n",
+		CPRINTF("%s: attempt to commit in unlocked state %d\n",
 			__func__, nvmem_mutex.task);
 		return EC_ERROR_OVERFLOW;  /* Noting to commit. */
 	}

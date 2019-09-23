@@ -429,7 +429,8 @@ static int sn5s330_init(int port)
 		status = i2c_write8(i2c_port, i2c_addr_flags,
 				    reg, 0xFF);
 		if (status) {
-			CPRINTS("ppc p%d: Failed to write reg 0x%2x!", port);
+			CPRINTS("ppc p%d: Failed to write reg 0x%2x!",
+				port, reg);
 			return status;
 		}
 	}

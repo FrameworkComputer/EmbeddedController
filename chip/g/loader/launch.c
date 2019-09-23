@@ -226,7 +226,8 @@ void tryLaunch(uint32_t adr, size_t max_size)
 	/* TODO: lock FLASH_REGION 1? */
 	disarmRAMGuards();
 
-	debug_printf("Valid image found at 0x%08x, jumping", hdr);
+	debug_printf("Valid image found at 0x%08lx, jumping",
+		     (unsigned long)hdr);
 	uart_tx_flush();
 
 	_jump_to_address(&hdr[1]);

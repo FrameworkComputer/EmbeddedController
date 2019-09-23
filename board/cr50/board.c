@@ -1364,7 +1364,7 @@ static uint32_t get_properties(void)
 		 * is no point in checking for a matching config table entry.
 		 * For this case use default properties.
 		 */
-		CPRINTS("Invalid strap pins! Default properties = 0x%x",
+		CPRINTS("Invalid strap pins! Default properties = 0x%lx",
 			BOARD_PROPERTIES_DEFAULT);
 		return BOARD_PROPERTIES_DEFAULT;
 	}

@@ -790,8 +790,9 @@ static void i2c_freq_changed(void)
 				/* Set value from formula */
 				NPCX_SMBSCLLT(ctrl) = scl_freq;
 				NPCX_SMBSCLHT(ctrl) = scl_freq;
-				cprints(CC_I2C, "Warning: Use 400K or 1MHz "
-					"for better timing of I2c %d", ctrl);
+				cprints(CC_I2C,
+					"Warning: Use 400K or 1MHz for better timing of I2c %d",
+					ctrl);
 				continue;
 			}
 
@@ -806,8 +807,9 @@ static void i2c_freq_changed(void)
 				}
 			}
 			if (j == i2c_timing_used)
-				cprints(CC_I2C, "Error: Please make sure src "
-					"clock of i2c %d is supported", ctrl);
+				cprints(CC_I2C,
+					"Error: Please make sure src clock of i2c %d is supported",
+					ctrl);
 		}
 	}
 }
