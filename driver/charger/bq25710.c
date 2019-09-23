@@ -5,6 +5,7 @@
  * TI bq25710 battery charger driver.
  */
 
+#include "battery.h"
 #include "battery_smart.h"
 #include "bq25710.h"
 #include "charge_ramp.h"
@@ -443,13 +444,20 @@ static void bq25710_chg_ramp_handle(void)
 
 	/*
 	 * Once the charge ramp is stable write back the stable ramp
-	 * current to input current register.
+	 * current to the host input current limit register
 	 */
+	ramp_curr = chg_ramp_get_current_limit();
 	if (chg_ramp_is_stable()) {
-		ramp_curr = chg_ramp_get_current_limit();
 		if (ramp_curr && !charger_set_input_current(ramp_curr))
-			CPRINTF("stable ramp current=%d\n", ramp_curr);
+			CPRINTF("bq25710: stable ramp current=%d\n", ramp_curr);
+	} else {
+		CPRINTF("bq25710: ICO stall, ramp current=%d\n", ramp_curr);
 	}
+	/*
+	 * Disable ICO mode. When ICO mode is active the input current limit is
+	 * given by the value in register IIN_DPM (0x22)
+	 */
+	charger_set_hw_ramp(0);
 }
 DECLARE_DEFERRED(bq25710_chg_ramp_handle);
 
@@ -465,6 +473,16 @@ int charger_set_hw_ramp(int enable)
 		return rv;
 
 	if (enable) {
+		/*
+		 * ICO mode can only be used when a battery is present. If there
+		 * is no battery, then enabling ICO mode will lead to VSYS
+		 * dropping out.
+		 */
+		if (!battery_is_present()) {
+			CPRINTF("bq25710: no battery, skip ICO enable\n");
+			return EC_ERROR_UNKNOWN;
+		}
+
 		/* Set InputVoltage register to BC1.2 minimum ramp voltage */
 		rv = raw_write16(BQ25710_REG_INPUT_VOLTAGE,
 			BQ25710_BC12_MIN_VOLTAGE_MV);
@@ -510,22 +528,15 @@ int chg_ramp_get_current_limit(void)
 {
 	int reg, rv;
 
-	rv = bq25710_adc_start(BQ25710_ADC_OPTION_EN_ADC_IIN);
-	if (rv)
-		goto error;
+	rv = raw_read16(BQ25710_REG_IIN_DPM, &reg);
+	if (rv) {
+		CPRINTF("Could not read iin_dpm current limit! Error: %d\n",
+			rv);
+		return 0;
+	}
 
-	/* Read ADC value */
-	rv = raw_read16(BQ25710_REG_ADC_CMPIN_IIN, &reg);
-	if (rv)
-		goto error;
-
-	/* LSB => 50mA */
-	return (reg >> BQ25710_ADC_IIN_STEP_BIT_OFFSET) *
-		BQ25710_ADC_IIN_STEP_MA;
-
-error:
-	CPRINTF("Could not read input current limit ADC! Error: %d\n", rv);
-	return 0;
+	return ((reg >> BQ25710_IIN_DPM_BIT_SHIFT) * BQ25710_IIN_DPM_STEP_MA +
+		BQ25710_IIN_DPM_STEP_MA);
 }
 #endif /* CONFIG_CHARGE_RAMP_HW */
 
