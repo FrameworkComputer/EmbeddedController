@@ -172,7 +172,7 @@ static void problem(enum problem_type p, int v)
 	if (last_prob_val[p] != v) {
 		t_now = get_time();
 		t_diff.val = t_now.val - last_prob_time[p].val;
-		CPRINTS("charge problem: %s, 0x%x -> 0x%x after %.6lds",
+		CPRINTS("charge problem: %s, 0x%x -> 0x%x after %.6" PRId64 "s",
 			 prob_text[p], last_prob_val[p], v, t_diff.val);
 		last_prob_val[p] = v;
 		last_prob_time[p] = t_now;

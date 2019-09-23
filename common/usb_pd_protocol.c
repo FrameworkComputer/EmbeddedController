@@ -2898,7 +2898,8 @@ void pd_task(void *u)
 
 		if (tcpm_get_chip_info(port, 0, &info) ==
 		    EC_SUCCESS) {
-			CPRINTS("TCPC p%d VID:0x%x PID:0x%x DID:0x%x FWV:0x%lx",
+			CPRINTS("TCPC p%d VID:0x%x PID:0x%x DID:0x%x "
+				"FWV:0x%" PRIx64,
 				port, info->vendor_id, info->product_id,
 				info->device_id, info->fw_version_number);
 		}

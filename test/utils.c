@@ -35,13 +35,13 @@ static int test_memmove(void)
 		memmove(buf + 101, buf, len);  /* unaligned */
 	t1 = get_time();
 	TEST_ASSERT_ARRAY_EQ(buf + 101, buf, len);
-	ccprintf(" (speed gain: %d ->", t1.val-t0.val);
+	ccprintf(" (speed gain: %" PRId64 " ->", t1.val-t0.val);
 
 	t2 = get_time();
 	for (i = 0; i < iteration; ++i)
 		memmove(buf + 100, buf, len);	  /* aligned */
 	t3 = get_time();
-	ccprintf(" %d us) ", t3.val-t2.val);
+	ccprintf(" %" PRId64 " us) ", t3.val-t2.val);
 	TEST_ASSERT_ARRAY_EQ(buf + 100, buf, len);
 
 	/* Expected about 4x speed gain. Use 3x because it fluctuates */
@@ -86,13 +86,13 @@ static int test_memcpy(void)
 		memcpy(buf + dest_offset + 1, buf, len);  /* unaligned */
 	t1 = get_time();
 	TEST_ASSERT_ARRAY_EQ(buf + dest_offset + 1, buf, len);
-	ccprintf(" (speed gain: %d ->", t1.val-t0.val);
+	ccprintf(" (speed gain: %" PRId64 " ->", t1.val-t0.val);
 
 	t2 = get_time();
 	for (i = 0; i < iteration; ++i)
 		memcpy(buf + dest_offset, buf, len);	  /* aligned */
 	t3 = get_time();
-	ccprintf(" %d us) ", t3.val-t2.val);
+	ccprintf(" %" PRId64 " us) ", t3.val-t2.val);
 	TEST_ASSERT_ARRAY_EQ(buf + dest_offset, buf, len);
 
 	/* Expected about 4x speed gain. Use 3x because it fluctuates */
@@ -148,14 +148,14 @@ static int test_memset(void)
 		dumb_memset(buf, 1, len);
 	t1 = get_time();
 	TEST_ASSERT_MEMSET(buf, (char)1, len);
-	ccprintf(" (speed gain: %d ->", t1.val-t0.val);
+	ccprintf(" (speed gain: %" PRId64 " ->", t1.val-t0.val);
 
 	t2 = get_time();
 	for (i = 0; i < iteration; ++i)
 		memset(buf, 1, len);
 	t3 = get_time();
 	TEST_ASSERT_MEMSET(buf, (char)1, len);
-	ccprintf(" %d us) ", t3.val-t2.val);
+	ccprintf(" %" PRId64 " us) ", t3.val-t2.val);
 
 	/* Expected about 4x speed gain. Use 3x because it fluctuates */
 #ifndef EMU_BUILD

@@ -9,6 +9,7 @@
 #define __CROS_EC_COMMON_H
 
 #include <stdint.h>
+#include <inttypes.h>
 #include "compile_time_macros.h"
 
 /*

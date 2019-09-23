@@ -916,8 +916,8 @@ static int command_typematic(int argc, char **argv)
 	ccprintf("From host:   0x%02x\n", typematic_value_from_host);
 	ccprintf("First delay: %3d ms\n", typematic_first_delay / 1000);
 	ccprintf("Inter delay: %3d ms\n", typematic_inter_delay / 1000);
-	ccprintf("Now:         %.6ld\n", get_time().val);
-	ccprintf("Deadline:    %.6ld\n", typematic_deadline.val);
+	ccprintf("Now:         %.6" PRId64 "\n", get_time().val);
+	ccprintf("Deadline:    %.6" PRId64 "\n", typematic_deadline.val);
 
 	ccputs("Repeat scan code: {");
 	for (i = 0; i < typematic_len; ++i)

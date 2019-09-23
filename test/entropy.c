@@ -51,7 +51,7 @@ void run_test(void)
 		}
 		t1 = get_time();
 		if (i == 0)
-			ccprintf("Got %d bytes in %ld us\n",
+			ccprintf("Got %zd bytes in %" PRId64 " us\n",
 				sizeof(buffer), t1.val - t0.val);
 
 		for (j = 0; j < sizeof(buffer); j++)
