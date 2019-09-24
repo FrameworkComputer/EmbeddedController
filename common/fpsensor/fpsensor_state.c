@@ -38,6 +38,8 @@ struct positive_match_secret_state positive_match_secret_state = {
 	.deadline.val = 0,
 };
 
+/* Index of the last enrolled but not retrieved template. */
+int8_t template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
 /* Number of used templates */
 uint32_t templ_valid;
 /* Bitmap of the templates with local modifications */

@@ -200,7 +200,8 @@ int derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 	}
 
 	/* "Extract step of HKDF. */
-	hkdf_extract(prk, salt, FP_CONTEXT_SALT_BYTES, ikm, sizeof(ikm));
+	hkdf_extract(prk, salt, FP_CONTEXT_ENCRYPTION_SALT_BYTES, ikm,
+		     sizeof(ikm));
 	always_memset(ikm, 0, sizeof(ikm));
 
 	/*

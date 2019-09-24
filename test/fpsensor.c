@@ -276,7 +276,7 @@ test_static int test_hkdf_expand(void)
 test_static int test_derive_encryption_key_failure_seed_not_set(void)
 {
 	static uint8_t unused_key[SBP_ENC_KEY_LEN];
-	static const uint8_t unused_salt[FP_CONTEXT_SALT_BYTES] = { 0 };
+	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES];
 
 	/* GIVEN that the TPM seed is not set. */
 	if (fp_tpm_seed_is_set()) {
@@ -373,7 +373,7 @@ test_static int test_derive_encryption_key(void)
 test_static int test_derive_encryption_key_failure_rollback_fail(void)
 {
 	static uint8_t unused_key[SBP_ENC_KEY_LEN];
-	static const uint8_t unused_salt[FP_CONTEXT_SALT_BYTES] = { 0 };
+	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES];
 
 	/* GIVEN that reading the rollback secret will fail. */
 	rollback_should_fail = 1;
@@ -473,7 +473,7 @@ test_static int test_derive_positive_match_secret_fail_salt_trivial(void)
 {
 	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
 	/* GIVEN that the salt is trivial. */
-	static const uint8_t salt[FP_CONTEXT_SALT_BYTES] = { 0 };
+	static const uint8_t salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = { 0 };
 
 	/* THEN deriving positive match secret will fail. */
 	TEST_ASSERT(derive_positive_match_secret(output, salt)

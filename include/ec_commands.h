@@ -5916,14 +5916,17 @@ struct ec_response_fp_info {
 #define FP_FRAME_OFFSET_MASK       0x0FFFFFFF
 
 /* Version of the format of the encrypted templates. */
-#define FP_TEMPLATE_FORMAT_VERSION 3
+#define FP_TEMPLATE_FORMAT_VERSION 4
 
 /* Constants for encryption parameters */
 #define FP_CONTEXT_NONCE_BYTES 12
 #define FP_CONTEXT_USERID_WORDS (32 / sizeof(uint32_t))
 #define FP_CONTEXT_TAG_BYTES 16
-#define FP_CONTEXT_SALT_BYTES 16
+#define FP_CONTEXT_ENCRYPTION_SALT_BYTES 16
 #define FP_CONTEXT_TPM_BYTES 32
+
+/* Constants for positive match parameters. */
+#define FP_POSITIVE_MATCH_SALT_BYTES 16
 
 struct ec_fp_template_encryption_metadata {
 	/*
@@ -5937,7 +5940,7 @@ struct ec_fp_template_encryption_metadata {
 	 * a different one is used for every message.
 	 */
 	uint8_t nonce[FP_CONTEXT_NONCE_BYTES];
-	uint8_t salt[FP_CONTEXT_SALT_BYTES];
+	uint8_t encryption_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES];
 	uint8_t tag[FP_CONTEXT_TAG_BYTES];
 };
 
