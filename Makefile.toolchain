@@ -45,13 +45,10 @@ HOSTCXX?=$(CCACHE) $(HOST_CROSS_COMPILE)g++
 PROTOC?=protoc
 
 C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
-COMMON_WARN = -Wall -Werror -Wundef -Wno-trigraphs -fno-strict-aliasing \
-	-fno-common -Werror-implicit-function-declaration \
-	-Wno-format-security -fno-strict-overflow
-ifeq ($(cc-name),clang)
-# clang is pickier when it comes to packed struct members alignment.
-C_WARN+= -Wno-address-of-packed-member
-endif
+COMMON_WARN = -Wall -Wundef -Werror -Werror-implicit-function-declaration \
+	-Wno-trigraphs -Wno-format-security -Wno-address-of-packed-member \
+	-fno-common -fno-strict-aliasing -fno-strict-overflow
+
 UBSAN_FLAGS=-fsanitize=array-bounds,vla-bound \
 	-fno-sanitize=vptr \
 	-fno-sanitize-recover=all
