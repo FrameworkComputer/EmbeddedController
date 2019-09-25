@@ -156,8 +156,8 @@ static struct protocol_layer_tx {
 	uint32_t flags;
 	/* protocol timer */
 	uint64_t sink_tx_timer;
-	/* tcpc transmit timeout */
-	uint64_t tcpc_tx_timeout;
+	/* GoodCRC receive timeout */
+	uint64_t crc_receive_timer;
 	/* Last SOP* we transmitted to */
 	uint8_t sop;
 	/* message id counters for all 6 port partners */
@@ -630,16 +630,12 @@ static void prl_tx_construct_message(int port)
 	PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
 
 	/* Pass message to PHY Layer */
-	tcpm_transmit(port, pdmsg[port].xmit_type, header,
-						pdmsg[port].chk_buf);
-}
-
-/*
- * PrlTxWaitForPhyResponse
- */
-static void prl_tx_wait_for_phy_response_entry(const int port)
-{
-	prl_tx[port].tcpc_tx_timeout = get_time().val + PD_T_TCPC_TX_TIMEOUT;
+	tcpm_transmit(port, pdmsg[port].xmit_type, header, pdmsg[port].chk_buf);
+	/*
+	 * tReceive is 0.9ms to 1.1ms, but we need to account for round trip
+	 * communication delay over I2C with the TCPC
+	 */
+	prl_tx[port].crc_receive_timer = get_time().val + (10 * MSEC);
 }
 
 static void prl_tx_wait_for_phy_response_run(const int port)
@@ -649,11 +645,11 @@ static void prl_tx_wait_for_phy_response_run(const int port)
 	/*
 	 * NOTE: The TCPC will set xmit_status to TCPC_TX_COMPLETE_DISCARDED
 	 *       when a GoodCRC containing an incorrect MessageID is received.
-	 *       This condition satifies the PRL_Tx_Match_MessageID state
+	 *       This condition satisfies the PRL_Tx_Match_MessageID state
 	 *       requirement.
 	 */
 
-	if (get_time().val > prl_tx[port].tcpc_tx_timeout ||
+	if (get_time().val > prl_tx[port].crc_receive_timer ||
 		prl_tx[port].xmit_status == TCPC_TX_COMPLETE_FAILED ||
 		prl_tx[port].xmit_status == TCPC_TX_COMPLETE_DISCARDED) {
 
@@ -1607,7 +1603,6 @@ static const struct usb_state prl_tx_states[] = {
 		.run    = prl_tx_layer_reset_for_transmit_run,
 	},
 	[PRL_TX_WAIT_FOR_PHY_RESPONSE] = {
-		.entry  = prl_tx_wait_for_phy_response_entry,
 		.run    = prl_tx_wait_for_phy_response_run,
 		.exit   = prl_tx_wait_for_phy_response_exit,
 	},
