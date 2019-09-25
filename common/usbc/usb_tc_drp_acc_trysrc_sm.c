@@ -1818,9 +1818,8 @@ static void tc_attached_snk_run(const int port)
 		 * the Port with the Rd resistor asserted to turn off
 		 * VCONN.
 		 */
-		if (IS_ENABLED(CONFIG_USBC_VCONN))
-			if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
-				set_vconn(port, 0);
+		if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
+			set_vconn(port, 0);
 
 		/*
 		 * Inform policy engine that power supply
@@ -1855,8 +1854,9 @@ static void tc_attached_snk_run(const int port)
 		 * Power Role Swap
 		 */
 		if (TC_CHK_FLAG(port, TC_FLAGS_DO_PR_SWAP)) {
-			TC_CLR_FLAG(port, TC_FLAGS_DO_PR_SWAP);
-			return set_state_tc(port, TC_ATTACHED_SRC);
+			/* Clear PR_SWAP flag in exit */
+			set_state_tc(port, TC_ATTACHED_SRC);
+			return;
 		}
 
 		/*
@@ -1919,20 +1919,16 @@ static void tc_attached_snk_run(const int port)
 
 static void tc_attached_snk_exit(const int port)
 {
-	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
-		TC_CLR_FLAG(port, TC_FLAGS_POWER_OFF_SNK);
+	/*
+	 * If supplying VCONN, the port shall cease to supply
+	 * it within tVCONNOFF of exiting Attached.SNK if not PR swapping.
+	 */
+	if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON) &&
+	    !TC_CHK_FLAG(port, TC_FLAGS_DO_PR_SWAP))
+		set_vconn(port, 0);
 
-		if (IS_ENABLED(CONFIG_USBC_VCONN)) {
-			/*
-			 * If supplying VCONN, the port shall cease to supply
-			 * it within tVCONNOFF of exiting Attached.SNK.
-			 */
-			if (!TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS) &&
-					TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON)) {
-				set_vconn(port, 0);
-			}
-		}
-	}
+	/* Clear flags after checking Vconn status */
+	TC_CLR_FLAG(port, TC_FLAGS_DO_PR_SWAP | TC_FLAGS_POWER_OFF_SNK);
 
 	/* Stop drawing power */
 	sink_stop_drawing_current(port);
@@ -2173,7 +2169,7 @@ static void tc_attached_src_entry(const int port)
 
 		tc[port].pd_enable = 0;
 		tc[port].timeout = get_time().val +
-			PD_POWER_SUPPLY_TURN_ON_DELAY + PD_T_VCONN_STABLE;
+			MAX(PD_POWER_SUPPLY_TURN_ON_DELAY, PD_T_VCONN_STABLE);
 	}
 
 	/* Inform PPC that a sink is connected. */
@@ -2209,7 +2205,7 @@ static void tc_attached_src_run(const int port)
 			tc_set_data_role(port, PD_ROLE_DFP);
 
 			/* Turn off VCONN */
-			if (IS_ENABLED(CONFIG_USBC_VCONN))
+			if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
 				set_vconn(port, 0);
 
 			/* Remove Rp */
@@ -2219,22 +2215,22 @@ static void tc_attached_src_run(const int port)
 			tc[port].timeout = get_time().val + PD_T_SRC_RECOVER;
 			return;
 		case PS_STATE1:
+			/* Turn VCONN on before Vbus to meet tVconnON */
+			if (IS_ENABLED(CONFIG_USBC_VCONN))
+				set_vconn(port, 1);
+
+			tc[port].ps_reset_state = PS_STATE2;
+			return;
+		case PS_STATE2:
 			/* Enable VBUS */
 			pd_set_power_supply_ready(port);
 
 			/* Apply Rp */
 			tcpm_set_cc(port, TYPEC_CC_RP);
 
-			tc[port].ps_reset_state = PS_STATE2;
+			tc[port].ps_reset_state = PS_STATE3;
 			tc[port].timeout = get_time().val +
 					PD_POWER_SUPPLY_TURN_ON_DELAY;
-			return;
-		case PS_STATE2:
-			/* Turn on VCONN */
-			if (IS_ENABLED(CONFIG_USBC_VCONN))
-				set_vconn(port, 1);
-
-			tc[port].ps_reset_state = PS_STATE3;
 			return;
 		case PS_STATE3:
 			/* Tell Policy Engine Hard Reset is complete */
@@ -2280,7 +2276,7 @@ static void tc_attached_src_run(const int port)
 		 * Power Role Swap Request
 		 */
 		if (TC_CHK_FLAG(port, TC_FLAGS_DO_PR_SWAP)) {
-			TC_CLR_FLAG(port, TC_FLAGS_DO_PR_SWAP);
+			/* Clear PR_SWAP flag in exit */
 			set_state_tc(port, TC_ATTACHED_SNK);
 			return;
 		}
@@ -2348,6 +2344,14 @@ static void tc_attached_src_exit(const int port)
 	 * Attached.SRC.
 	 */
 	tc_src_power_off(port);
+
+	/* Disable VCONN if not power role swapping */
+	if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON) &&
+	    !TC_CHK_FLAG(port, TC_FLAGS_DO_PR_SWAP))
+		set_vconn(port, 0);
+
+	/* Clear PR swap flag after checking for Vconn */
+	TC_CLR_FLAG(port, TC_FLAGS_DO_PR_SWAP);
 }
 
 /**
@@ -2552,10 +2556,6 @@ static void tc_ct_attached_snk_exit(int port)
  */
 static void tc_cc_rd_entry(const int port)
 {
-	/* Disable VCONN */
-	if (IS_ENABLED(CONFIG_USBC_VCONN))
-		set_vconn(port, 0);
-
 	/*
 	 * Both CC1 and CC2 pins shall be independently terminated to
 	 * ground through Rd. Reset last cc change time.
@@ -2574,10 +2574,6 @@ static void tc_cc_rd_entry(const int port)
  */
 static void tc_cc_rp_entry(const int port)
 {
-	/* Disable VCONN */
-	if (IS_ENABLED(CONFIG_USBC_VCONN))
-		set_vconn(port, 0);
-
 	/* Set power role to source */
 	tc_set_power_role(port, PD_ROLE_SOURCE);
 	tcpm_set_msg_header(port, tc[port].power_role, tc[port].data_role);
@@ -2600,7 +2596,7 @@ static void tc_cc_open_entry(const int port)
 	pd_power_supply_reset(port);
 
 	/* Disable VCONN */
-	if (IS_ENABLED(CONFIG_USBC_VCONN))
+	if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
 		set_vconn(port, 0);
 
 	/* Remove terminations from CC */
