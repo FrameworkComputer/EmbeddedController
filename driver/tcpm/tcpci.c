@@ -490,7 +490,7 @@ int tcpm_dequeue_message(const int port, uint32_t *const payload,
 		&q->buffer[q->tail & CACHE_DEPTH_MASK];
 
 	if (!tcpm_has_pending_message(port)) {
-		CPRINTS("C%d No message in RX buffer!");
+		CPRINTS("C%d No message in RX buffer!", port);
 		return EC_ERROR_BUSY;
 	}
 
