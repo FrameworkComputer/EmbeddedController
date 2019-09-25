@@ -342,6 +342,12 @@ static int sn5s330_init(int port)
 	clr_flags(port, SN5S330_INT_MASK_RISE_REG2, SN5S330_VCONN_ILIM);
 
 	/*
+	 * Unmask the CC1/CC2 OVP interrupt so we can print CC1/CC2 OVP events
+	 */
+	clr_flags(port, SN5S330_INT_MASK_RISE_REG2, SN5S330_CC1_CON);
+	clr_flags(port, SN5S330_INT_MASK_RISE_REG2, SN5S330_CC2_CON);
+
+	/*
 	 * Don't proceed with the rest of initialization if we're sysjumping.
 	 * We would have already done this before.
 	 */
@@ -400,6 +406,12 @@ static int sn5s330_init(int port)
 		CPRINTS("ppc p%d: Failed to write INT_MASK_FALL2!", port);
 		return status;
 	}
+
+	/*
+	 * Unmask the CC1/CC2 OVP interrupt so we can print CC1/CC2 OVP events
+	 */
+	clr_flags(port, SN5S330_INT_MASK_RISE_REG2, SN5S330_CC1_CON);
+	clr_flags(port, SN5S330_INT_MASK_RISE_REG2, SN5S330_CC2_CON);
 
 #if defined(CONFIG_USB_PD_VBUS_DETECT_PPC) && defined(CONFIG_USB_CHARGER)
 	/* If PPC is being used to detect VBUS, enable VBUS interrupts. */
@@ -628,6 +640,20 @@ static int sn5s330_vbus_source_enable(int port, int enable)
 	return sn5s330_pp_fet_enable(port, SN5S330_PP1, !!enable);
 }
 
+#ifdef CONFIG_USBC_PPC_SBU
+static int sn5s330_set_sbu(int port, int enable)
+{
+	int rv;
+
+	if (enable)
+		rv = set_flags(port, SN5S330_FUNC_SET2, SN5S330_SBU_EN);
+	else
+		rv = clr_flags(port, SN5S330_FUNC_SET2, SN5S330_SBU_EN);
+
+	return rv;
+}
+#endif /* CONFIG_USBC_PPC_SBU */
+
 static void sn5s330_handle_interrupt(int port)
 {
 	int attempt = 0;
@@ -642,6 +668,8 @@ static void sn5s330_handle_interrupt(int port)
 	{
 		int rise = 0;
 		int fall = 0;
+		int regval = 0;
+		int retries = 0;
 
 		attempt++;
 
@@ -690,25 +718,32 @@ static void sn5s330_handle_interrupt(int port)
 		if (rise & SN5S330_VCONN_ILIM)
 			CPRINTS("ppc p%d: VCONN OC!", port);
 
+		if (rise & SN5S330_CC1_CON || rise & SN5S330_CC2_CON) {
+			CPRINTS("ppc p%d: CC OVP!", port);
+			retries = 0;
+			do {
+				read_reg(port, SN5S330_INT_STATUS_REG3,
+					&regval);
+				if (regval & SN5S330_VBUS_GOOD) {
+					sn5s330_set_sbu(port, 1);
+					sn5s330_pp_fet_enable(port,
+							SN5S330_PP2, 1);
+					break;
+				}
+				retries++;
+				msleep(1);
+			} while (retries < 10);
+
+			if (retries == 10)
+				CPRINTS("ppc p%d: Fail to release cc OVP."
+					, port);
+		}
+
 		/* Clear the interrupt sources. */
 		write_reg(port, SN5S330_INT_TRIP_RISE_REG2, rise);
 		write_reg(port, SN5S330_INT_TRIP_FALL_REG2, fall);
 	}
 }
-
-#ifdef CONFIG_USBC_PPC_SBU
-static int sn5s330_set_sbu(int port, int enable)
-{
-	int rv;
-
-	if (enable)
-		rv = set_flags(port, SN5S330_FUNC_SET2, SN5S330_SBU_EN);
-	else
-		rv = clr_flags(port, SN5S330_FUNC_SET2, SN5S330_SBU_EN);
-
-	return rv;
-}
-#endif /* CONFIG_USBC_PPC_SBU */
 
 static void sn5s330_irq_deferred(void)
 {

@@ -144,6 +144,15 @@ enum sn5s330_pp_idx {
 #define SN5S330_VCONN_ILIM (1 << 1)
 
 /*
+ * INT_MASK_RISE/FALL_EDGE2
+ *
+ * The OV_CC1_CON/OV_CC2_CON bit indicates an over-voltage occurred on
+ * C_CC1/C_CC2.
+ */
+#define SN5S330_CC1_CON (1 << 2)
+#define SN5S330_CC2_CON (1 << 3)
+
+/*
  * INT_MASK_RISE/FALL_EDGE_3
  *
  * The VBUS_GOOD bit indicates VBUS has increased beyond a 4.0V threshold.
