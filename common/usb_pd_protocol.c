@@ -2541,7 +2541,7 @@ static void pd_partner_port_reset(int port)
 	pd_update_saved_port_flags(port, PD_BBRMFLG_EXPLICIT_CONTRACT, 0);
 
 	/* Provide Rp for 200 msec. or until we no longer have VBUS. */
-	CPRINTF("C%d Apply Rp!\n");
+	CPRINTF("C%d Apply Rp!\n", port);
 	cflush();
 	tcpm_set_cc(port, TYPEC_CC_RP);
 	timeout = get_time().val + 200 * MSEC;
