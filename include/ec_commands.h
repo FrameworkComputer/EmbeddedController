@@ -5102,13 +5102,19 @@ struct ec_response_usb_pd_control_v1 {
 	char state[32];
 } __ec_align1;
 
-/* Values representing usbc PD CC state */
-#define USBC_PD_CC_NONE		0 /* No accessory connected */
-#define USBC_PD_CC_NO_UFP	1 /* No UFP accessory connected */
-#define USBC_PD_CC_AUDIO_ACC	2 /* Audio accessory connected */
-#define USBC_PD_CC_DEBUG_ACC	3 /* Debug accessory connected */
-#define USBC_PD_CC_UFP_ATTACHED	4 /* UFP attached to usbc */
-#define USBC_PD_CC_DFP_ATTACHED	5 /* DPF attached to usbc */
+/* Possible port partner connections based on CC line states */
+enum pd_cc_states {
+	PD_CC_NONE = 0,			/* No port partner attached */
+
+	/* From DFP perspective */
+	PD_CC_UFP_AUDIO_ACC = 2,	/* UFP Audio accessory connected */
+	PD_CC_UFP_DEBUG_ACC = 3,	/* UFP Debug accessory connected */
+	PD_CC_UFP_ATTACHED = 4,		/* Plain UFP attached */
+
+	/* From UFP perspective */
+	PD_CC_DFP_DEBUG_ACC = 6,	/* DFP debug accessory connected */
+	PD_CC_DFP_ATTACHED = 5,		/* Plain DFP attached */
+};
 
 #define USBC_CABLE_TYPE_UNDEF   0 /* Undefined */
 #define USBC_CABLE_TYPE_PASSIVE 3 /* Passive cable attached */
@@ -5119,9 +5125,9 @@ struct ec_response_usb_pd_control_v2 {
 	uint8_t role;
 	uint8_t polarity;
 	char state[32];
-	uint8_t cc_state; /* USBC_PD_CC_*Encoded cc state */
-	uint8_t dp_mode;  /* Current DP pin mode (MODE_DP_PIN_[A-E]) */
-	uint8_t cable_type; /* USBC_CABLE_TYPE_*cable_type */
+	uint8_t cc_state;	/* enum pd_cc_states representing cc state */
+	uint8_t dp_mode;	/* Current DP pin mode (MODE_DP_PIN_[A-E]) */
+	uint8_t cable_type;	/* USBC_CABLE_TYPE_*cable_type */
 } __ec_align1;
 
 #define EC_CMD_USB_PD_PORTS 0x0102

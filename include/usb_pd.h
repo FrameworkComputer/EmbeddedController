@@ -1109,19 +1109,6 @@ enum pd_states {
 /* Initial value for CC debounce variable */
 #define PD_CC_UNSET -1
 
-enum pd_cc_states {
-	PD_CC_NONE,
-
-	/* From DFP perspective */
-	PD_CC_NO_UFP,
-	PD_CC_AUDIO_ACC,
-	PD_CC_DEBUG_ACC,
-	PD_CC_UFP_ATTACHED,
-
-	/* From UFP perspective */
-	PD_CC_DFP_ATTACHED
-};
-
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 enum pd_dual_role_states {
 	/* While disconnected, toggle between src and sink */

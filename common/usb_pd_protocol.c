@@ -388,7 +388,8 @@ int pd_is_ufp(int port)
 
 int pd_is_debug_acc(int port)
 {
-	return pd[port].cc_state == PD_CC_DEBUG_ACC;
+	return pd[port].cc_state == PD_CC_UFP_DEBUG_ACC ||
+	       pd[port].cc_state == PD_CC_DFP_DEBUG_ACC;
 }
 #endif
 
@@ -3308,13 +3309,13 @@ void pd_task(void *u)
 
 			if (cc_is_snk_dbg_acc(cc1, cc2)) {
 				/* Debug accessory */
-				new_cc_state = PD_CC_DEBUG_ACC;
+				new_cc_state = PD_CC_UFP_DEBUG_ACC;
 			} else if (cc_is_at_least_one_rd(cc1, cc2)) {
 				/* UFP attached */
 				new_cc_state = PD_CC_UFP_ATTACHED;
 			} else if (cc_is_audio_acc(cc1, cc2)) {
 				/* Audio accessory */
-				new_cc_state = PD_CC_AUDIO_ACC;
+				new_cc_state = PD_CC_UFP_AUDIO_ACC;
 			} else {
 				/* No UFP */
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
@@ -3351,7 +3352,7 @@ void pd_task(void *u)
 
 			/* UFP is attached */
 			if (new_cc_state == PD_CC_UFP_ATTACHED ||
-			    new_cc_state == PD_CC_DEBUG_ACC) {
+			    new_cc_state == PD_CC_UFP_DEBUG_ACC) {
 #ifdef CONFIG_USBC_PPC
 				/* Inform PPC that a sink is connected. */
 				ppc_sink_is_connected(port, 1);
@@ -3362,7 +3363,7 @@ void pd_task(void *u)
 				/* initial data role for source is DFP */
 				pd_set_data_role(port, PD_ROLE_DFP);
 
-				if (new_cc_state == PD_CC_DEBUG_ACC)
+				if (new_cc_state == PD_CC_UFP_DEBUG_ACC)
 					pd[port].flags |=
 						PD_FLAGS_TS_DTS_PARTNER;
 
@@ -3372,7 +3373,7 @@ void pd_task(void *u)
 				 * detected. Section 4.5.2.2.17.1 in USB spec
 				 * v1-3
 				 */
-				if (new_cc_state != PD_CC_DEBUG_ACC) {
+				if (new_cc_state != PD_CC_UFP_DEBUG_ACC) {
 					/*
 					 * Start sourcing Vconn before Vbus to
 					 * ensure we are within USB Type-C
@@ -3929,7 +3930,7 @@ void pd_task(void *u)
 
 			if (cc_is_rp(cc1) && cc_is_rp(cc2)) {
 				/* Debug accessory */
-				new_cc_state = PD_CC_DEBUG_ACC;
+				new_cc_state = PD_CC_DFP_DEBUG_ACC;
 			} else if (cc_is_rp(cc1) || cc_is_rp(cc2)) {
 				new_cc_state = PD_CC_DFP_ATTACHED;
 			} else {
@@ -3994,14 +3995,14 @@ void pd_task(void *u)
 
 			/* DFP is attached */
 			if (new_cc_state == PD_CC_DFP_ATTACHED ||
-			    new_cc_state == PD_CC_DEBUG_ACC) {
+			    new_cc_state == PD_CC_DFP_DEBUG_ACC) {
 				pd[port].flags |= PD_FLAGS_CHECK_PR_ROLE |
 						  PD_FLAGS_CHECK_DR_ROLE |
 						  PD_FLAGS_CHECK_IDENTITY;
 				/* Reset cable attributes and flags */
 				reset_pd_cable(port);
 
-				if (new_cc_state == PD_CC_DEBUG_ACC)
+				if (new_cc_state == PD_CC_DFP_DEBUG_ACC)
 					pd[port].flags |=
 						PD_FLAGS_TS_DTS_PARTNER;
 				set_state(port, PD_STATE_SNK_DISCOVERY);

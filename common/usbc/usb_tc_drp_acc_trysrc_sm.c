@@ -1753,7 +1753,7 @@ static void tc_attach_wait_snk_run(const int port)
 	tcpm_get_cc(port, &cc1, &cc2);
 
 	if (cc_is_rp(cc1) && cc_is_rp(cc2))
-		new_cc_state = PD_CC_DEBUG_ACC;
+		new_cc_state = PD_CC_DFP_DEBUG_ACC;
 	else if (cc_is_rp(cc1) || cc_is_rp(cc2))
 		new_cc_state = PD_CC_DFP_ATTACHED;
 	else
@@ -1810,7 +1810,7 @@ static void tc_attach_wait_snk_run(const int port)
 #endif
 				set_state_tc(port, TC_ATTACHED_SNK);
 		} else {
-			/* new_cc_state is PD_CC_DEBUG_ACC */
+			/* new_cc_state is PD_CC_DFP_DEBUG_ACC */
 			TC_SET_FLAG(port, TC_FLAGS_TS_DTS_PARTNER);
 			set_state_tc(port, TC_DBG_ACC_SNK);
 		}
@@ -2199,13 +2199,13 @@ static void tc_attach_wait_src_run(const int port)
 	/* Debug accessory */
 	if (cc_is_snk_dbg_acc(cc1, cc2)) {
 		/* Debug accessory */
-		new_cc_state = PD_CC_DEBUG_ACC;
+		new_cc_state = PD_CC_UFP_DEBUG_ACC;
 	} else if (cc_is_at_least_one_rd(cc1, cc2)) {
 		/* UFP attached */
 		new_cc_state = PD_CC_UFP_ATTACHED;
 	} else if (cc_is_audio_acc(cc1, cc2)) {
 		/* AUDIO Accessory not supported. Just ignore */
-		new_cc_state = PD_CC_AUDIO_ACC;
+		new_cc_state = PD_CC_UFP_AUDIO_ACC;
 	} else {
 		/* No UFP */
 		set_state_tc(port, TC_UNATTACHED_SNK);
@@ -2237,7 +2237,7 @@ static void tc_attach_wait_src_run(const int port)
 		if (new_cc_state == PD_CC_UFP_ATTACHED) {
 			set_state_tc(port, TC_ATTACHED_SRC);
 			return;
-		} else if (new_cc_state == PD_CC_DEBUG_ACC) {
+		} else if (new_cc_state == PD_CC_UFP_DEBUG_ACC) {
 			set_state_tc(port, TC_UNORIENTED_DBG_ACC_SRC);
 			return;
 		}
@@ -2428,9 +2428,9 @@ static void tc_attached_src_run(const int port)
 		cc1 = cc2;
 
 	if (cc1 == TYPEC_CC_VOLT_OPEN)
-		new_cc_state = PD_CC_NO_UFP;
-	else
 		new_cc_state = PD_CC_NONE;
+	else
+		new_cc_state = PD_CC_UFP_ATTACHED;
 
 	/* Debounce the cc state */
 	if (new_cc_state != tc[port].cc_state) {
@@ -2451,7 +2451,7 @@ static void tc_attached_src_run(const int port)
 	 * AttachWait.SNK shall enter TryWait.SNK for a Sink detach from
 	 * Attached.SRC.
 	 */
-	if (tc[port].cc_state == PD_CC_NO_UFP &&
+	if (tc[port].cc_state == PD_CC_NONE &&
 			!TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS) &&
 			!TC_CHK_FLAG(port, TC_FLAGS_DISC_IDENT_IN_PROGRESS)) {
 

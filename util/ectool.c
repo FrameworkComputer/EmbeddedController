@@ -5464,17 +5464,17 @@ int cmd_usb_pd(int argc, char *argv[])
 
 		if (cmdver == 2) {
 			printf("CC State:");
-			if (r_v2->cc_state == USBC_PD_CC_NONE)
+			if (r_v2->cc_state == PD_CC_NONE)
 				printf("None");
-			else if (r_v2->cc_state == USBC_PD_CC_NO_UFP)
-				printf("No UFP");
-			else if (r_v2->cc_state == USBC_PD_CC_AUDIO_ACC)
-				printf("Audio accessory");
-			else if (r_v2->cc_state == USBC_PD_CC_DEBUG_ACC)
-				printf("Debug accessory");
-			else if (r_v2->cc_state == USBC_PD_CC_UFP_ATTACHED)
+			else if (r_v2->cc_state == PD_CC_UFP_AUDIO_ACC)
+				printf("UFP Audio accessory");
+			else if (r_v2->cc_state == PD_CC_UFP_DEBUG_ACC)
+				printf("UFP Debug accessory");
+			else if (r_v2->cc_state == PD_CC_UFP_ATTACHED)
 				printf("UFP attached");
-			else if (r_v2->cc_state == USBC_PD_CC_DFP_ATTACHED)
+			else if (r_v2->cc_state == PD_CC_DFP_DEBUG_ACC)
+				printf("DFP Debug accessory");
+			else if (r_v2->cc_state == PD_CC_DFP_ATTACHED)
 				printf("DFP attached");
 			else
 				printf("UNKNOWN");

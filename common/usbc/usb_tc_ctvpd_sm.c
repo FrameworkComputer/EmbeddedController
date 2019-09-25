@@ -1009,9 +1009,9 @@ static void tc_ct_attach_wait_unsupported_run(const int port)
 	vpd_ct_get_cc(&cc1, &cc2);
 
 	if (cc_is_at_least_one_rd(cc1, cc2))
-		new_cc_state = PD_CC_DFP_ATTACHED;
+		new_cc_state = PD_CC_UFP_ATTACHED;
 	else if (cc_is_audio_acc(cc1, cc2))
-		new_cc_state = PD_CC_AUDIO_ACC;
+		new_cc_state = PD_CC_UFP_AUDIO_ACC;
 	else /* (cc1 == TYPEC_CC_VOLT_OPEN or cc2 == TYPEC_CC_VOLT_OPEN */
 		new_cc_state = PD_CC_NONE;
 
@@ -1047,7 +1047,7 @@ static void tc_ct_attach_wait_unsupported_run(const int port)
 	 */
 	if (new_cc_state == PD_CC_NONE)
 		set_state_tc(port, TC_CT_UNATTACHED_VPD);
-	else /* PD_CC_DFP_ATTACHED or PD_CC_AUDIO_ACC */
+	else /* PD_CC_UFP_ATTACHED or PD_CC_UFP_AUDIO_ACC */
 		set_state_tc(port, TC_CT_TRY_SNK);
 }
 
