@@ -71,7 +71,9 @@
 #define PE_FLAGS_RUN_SOURCE_START_TIMER         BIT(19)
 #define PE_FLAGS_VDM_REQUEST_BUSY               BIT(20)
 #define PE_FLAGS_VDM_REQUEST_NAKED              BIT(21)
-#define PE_FLAGS_FAST_ROLE_SWAP                 BIT(22)
+#define PE_FLAGS_FAST_ROLE_SWAP_PATH            BIT(22)/* FRS/PRS Exec Path */
+#define PE_FLAGS_FAST_ROLE_SWAP_ENABLED         BIT(23)/* FRS Listening State */
+#define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED        BIT(24)/* FRS PPC/TCPC Signal */
 
 /* 6.7.3 Hard Reset Counter */
 #define N_HARD_RESET_COUNT 2
@@ -146,6 +148,7 @@ enum usb_pe_state {
 	PE_HANDLE_CUSTOM_VDM_REQUEST,
 	PE_WAIT_FOR_ERROR_RECOVERY,
 	PE_BIST,
+	PE_DR_SNK_GET_SINK_CAP,
 
 	/* Super States */
 	PE_PRS_FRS_SHARED,
@@ -212,6 +215,7 @@ static const char * const pe_state_names[] = {
 	[PE_HANDLE_CUSTOM_VDM_REQUEST] = "PE_Handle_Custom_Vdm_Request",
 	[PE_WAIT_FOR_ERROR_RECOVERY] = "PE_Wait_For_Error_Recovery",
 	[PE_BIST] = "PE_Bist",
+	[PE_DR_SNK_GET_SINK_CAP] = "PE_DR_SNK_Get_Sink_Cap",
 };
 #endif
 
@@ -476,6 +480,18 @@ void pe_run(int port, int evt, int en)
 			break;
 		}
 
+		/*
+		 * Check for Fast Role Swap signal
+		 * This is not a typical pattern for adding state changes.
+		 * I added this here because FRS SIGNALED can happen at any
+		 * state once we are listening for the signal and we want to
+		 * make sure to handle it immediately.
+		 */
+		if (PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_SIGNALED)) {
+			PE_CLR_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_SIGNALED);
+			set_state_pe(port, PE_FRS_SNK_SRC_START_AMS);
+		}
+
 		/* Run state machine */
 		exe_state(port, &pe[port].ctx);
 		break;
@@ -519,6 +535,58 @@ void pe_got_hard_reset(int port)
 		set_state_pe(port, PE_SRC_HARD_RESET_RECEIVED);
 	else
 		set_state_pe(port, PE_SNK_TRANSITION_TO_DEFAULT);
+}
+
+/*
+ * pe_got_frs_signal
+ *
+ * Called by the handler that detects the FRS signal in order to
+ * switch PE states to complete the FRS that the hardware has
+ * started.
+ */
+void pe_got_frs_signal(int port)
+{
+	PE_SET_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_SIGNALED);
+}
+
+/*
+ * PE_Set_FRS_Enable
+ *
+ * This function should be called every time an explicit contract
+ * is disabled, to disable FRS.
+ *
+ * Enabling an explicit contract is not enough to enable FRS, it
+ * also requires a Sink Capability power requirement from a Source
+ * that supports FRS so we can determine if this is something we
+ * can handle.
+ */
+static void pe_set_frs_enable(int port, int enable)
+{
+	/* This should only be called from the PD task */
+	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
+
+	if (IS_ENABLED(CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP)) {
+		int current = PE_CHK_FLAG(port,
+					  PE_FLAGS_FAST_ROLE_SWAP_ENABLED);
+
+		/* Request an FRS change, only if the state has changed */
+		if (!!current != !!enable) {
+			tcpm_set_frs_enable(port, enable);
+
+			if (enable)
+				PE_SET_FLAG(port,
+					    PE_FLAGS_FAST_ROLE_SWAP_ENABLED);
+			else
+				PE_CLR_FLAG(port,
+					    PE_FLAGS_FAST_ROLE_SWAP_ENABLED);
+		}
+	}
+}
+
+static void pe_invalidate_explicit_contract(int port)
+{
+	pe_set_frs_enable(port, 0);
+	PE_CLR_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
 }
 
 void pe_report_error(int port, enum pe_error e)
@@ -681,7 +749,7 @@ static void print_current_state(const int port)
 {
 	const char *mode = "";
 
-	if (PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP))
+	if (PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH))
 		mode = " FRS-MODE";
 
 	CPRINTS("C%d: %s%s", port, pe_state_names[get_state_pe(port)], mode);
@@ -848,7 +916,7 @@ static void pe_src_startup_entry(int port)
 	pe[port].power_role = PD_ROLE_SOURCE;
 
 	/* Clear explicit contract. */
-	PE_CLR_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
+	pe_invalidate_explicit_contract(port);
 
 	pe[port].cable_discover_identity_count = 0;
 	pe[port].port_discover_identity_count = 0;
@@ -1614,7 +1682,7 @@ static void pe_snk_startup_entry(int port)
 	pe[port].power_role = PD_ROLE_SINK;
 
 	/* Clear explicit contract */
-	PE_CLR_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
+	pe_invalidate_explicit_contract(port);
 }
 
 static void pe_snk_startup_run(int port)
@@ -1789,6 +1857,12 @@ static void pe_snk_select_capability_run(int port)
 				/* explicit contract is now in place */
 				PE_SET_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
 				set_state_pe(port, PE_SNK_TRANSITION_SINK);
+
+				/*
+				 * Setup to get Device Policy Manager to
+				 * request Sink Capabilities for possible FRS
+				 */
+				pe_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
 				return;
 			}
 			/*
@@ -1967,12 +2041,10 @@ static void pe_snk_ready_run(int port)
 	 * Ignore source specific requests:
 	 *   DPM_REQUEST_GOTO_MIN
 	 *   DPM_REQUEST_SRC_CAP_CHANGE,
-	 *   DPM_REQUEST_GET_SNK_CAPS,
 	 *   DPM_REQUEST_SEND_PING
 	 */
 	PE_CLR_DPM_REQUEST(port, DPM_REQUEST_GOTO_MIN |
 				DPM_REQUEST_SRC_CAP_CHANGE |
-				DPM_REQUEST_GET_SNK_CAPS |
 				DPM_REQUEST_SEND_PING);
 
 	if (pe[port].dpm_request) {
@@ -1997,7 +2069,8 @@ static void pe_snk_ready_run(int port)
 			set_state_pe(port, PE_SNK_SELECT_CAPABILITY);
 		} else if (PE_CHK_DPM_REQUEST(port,
 					DPM_REQUEST_DISCOVER_IDENTITY)) {
-			PE_CLR_DPM_REQUEST(port, DPM_REQUEST_DISCOVER_IDENTITY);
+			PE_CLR_DPM_REQUEST(port,
+					   DPM_REQUEST_DISCOVER_IDENTITY);
 
 			pe[port].partner_type = CABLE;
 			pe[port].vdm_cmd = DISCOVER_IDENTITY;
@@ -2008,6 +2081,10 @@ static void pe_snk_ready_run(int port)
 			pe[port].vdm_cnt = 1;
 
 			set_state_pe(port, PE_VDM_REQUEST);
+		} else if (PE_CHK_DPM_REQUEST(port,
+					      DPM_REQUEST_GET_SNK_CAPS)) {
+			PE_CLR_DPM_REQUEST(port, DPM_REQUEST_GET_SNK_CAPS);
+			set_state_pe(port, PE_DR_SNK_GET_SINK_CAP);
 		}
 		return;
 	}
@@ -2743,7 +2820,7 @@ static void pe_prs_src_snk_transition_to_off_run(int port)
 	/* Wait until Rd is asserted */
 	if (tc_is_attached_snk(port)) {
 		/* Contract is invalid */
-		PE_CLR_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
+		pe_invalidate_explicit_contract(port);
 		set_state_pe(port, PE_PRS_SRC_SNK_WAIT_SOURCE_ON);
 	}
 }
@@ -2916,7 +2993,7 @@ static void pe_prs_snk_src_transition_to_off_entry(int port)
 {
 	print_current_state(port);
 
-	if (!PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP))
+	if (!PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH))
 		tc_snk_power_off(port);
 
 	pe[port].ps_source_timer = get_time().val + PD_T_PS_SOURCE_OFF;
@@ -2978,9 +3055,10 @@ static void pe_prs_snk_src_assert_rp_run(int port)
 {
 	/* Wait until TypeC is in the Attached.SRC state */
 	if (tc_is_attached_src(port)) {
-		if (!PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP))
+		if (!PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH)) {
 			/* Contract is invalid now */
-			PE_CLR_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
+			pe_invalidate_explicit_contract(port);
+		}
 
 		set_state_pe(port, PE_PRS_SNK_SRC_SOURCE_ON);
 	}
@@ -3058,7 +3136,7 @@ static void pe_prs_snk_src_send_swap_entry(int port)
 	 */
 	prl_send_ctrl_msg(port,
 		TCPC_TX_SOP,
-		PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP)
+		PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH)
 			? PD_CTRL_FR_SWAP
 			: PD_CTRL_PR_SWAP);
 
@@ -3080,7 +3158,7 @@ static void pe_prs_snk_src_send_swap_run(int port)
 	 */
 	if (get_time().val > pe[port].sender_response_timer)
 		set_state_pe(port,
-			     PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP)
+			     PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH)
 				? PE_WAIT_FOR_ERROR_RECOVERY
 				: PE_SNK_READY);
 
@@ -3108,7 +3186,7 @@ static void pe_prs_snk_src_send_swap_run(int port)
 						(type == PD_CTRL_WAIT))
 				set_state_pe(port,
 					PE_CHK_FLAG(port,
-						    PE_FLAGS_FAST_ROLE_SWAP)
+						PE_FLAGS_FAST_ROLE_SWAP_PATH)
 					   ? PE_WAIT_FOR_ERROR_RECOVERY
 					   : PE_SNK_READY);
 		}
@@ -3129,14 +3207,13 @@ static void pe_frs_snk_src_start_ams_entry(int port)
 	print_current_state(port);
 
 	/* Contract is invalid now */
-	PE_CLR_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
+	pe_invalidate_explicit_contract(port);
 
 	/* Inform Protocol Layer this is start of AMS */
 	prl_start_ams(port);
-	tc_set_timeout(port, 2 * MSEC);
 
 	/* Shared PRS/FRS code, indicate FRS path */
-	PE_SET_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP);
+	PE_SET_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH);
 	set_state_pe(port, PE_PRS_SNK_SRC_SEND_SWAP);
 }
 
@@ -3153,7 +3230,7 @@ static void pe_prs_frs_shared_entry(int port)
 	 * For FRS, PE_FRS_SNK_SRC_START_AMS entry will be called
 	 * after this and that will set for the FRS path.
 	 */
-	PE_CLR_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP);
+	PE_CLR_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH);
 }
 
 static void pe_prs_frs_shared_exit(int port)
@@ -3162,7 +3239,7 @@ static void pe_prs_frs_shared_exit(int port)
 	 * Shared PRS/FRS code, when not in shared path
 	 * indicate PRS path
 	 */
-	PE_CLR_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP);
+	PE_CLR_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH);
 }
 
 /**
@@ -4140,6 +4217,95 @@ static void pe_vcs_send_ps_rdy_swap_run(int port)
 	}
 }
 
+/*
+ * PE_DR_SNK_Get_Sink_Cap
+ */
+static void pe_dr_snk_get_sink_cap_entry(int port)
+{
+	print_current_state(port);
+
+	/* Send a Get Sink Cap Message */
+	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_GET_SINK_CAP);
+
+	/* Don't start the timer until message sent */
+	pe[port].sender_response_timer = 0;
+}
+
+static void pe_dr_snk_get_sink_cap_run(int port)
+{
+	int type;
+	int cnt;
+	int ext;
+	uint32_t payload;
+
+	/* Wait until message is sent */
+	if (pe[port].sender_response_timer == 0) {
+		if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+			PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+			/* start the SenderResponseTimer */
+			pe[port].sender_response_timer =
+					get_time().val + PD_T_SENDER_RESPONSE;
+		} else {
+			return;
+		}
+	}
+
+	/*
+	 * Determine if FRS is possible based on the returned Sink Caps
+	 * and transition to PE_SNK_Ready when:
+	 *   1) An Accept Message is received.
+	 *
+	 * Transition to PE_SNK_Ready state when:
+	 *   1) A Reject Message is received.
+	 *   2) Or a Wait Message is received.
+	 */
+	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+		type = PD_HEADER_TYPE(emsg[port].header);
+		cnt = PD_HEADER_CNT(emsg[port].header);
+		ext = PD_HEADER_EXT(emsg[port].header);
+		payload = *(uint32_t *)emsg[port].buf;
+
+		if ((ext == 0) && (cnt == 0)) {
+			if (type == PD_CTRL_ACCEPT) {
+				/*
+				 * Check message to see if we can handle
+				 * FRS for this connection.
+				 *
+				 * TODO(b/14191267): Make sure we can handle
+				 * the required current before we enable FRS.
+				 */
+				if (payload & PDO_FIXED_DUAL_ROLE) {
+					switch (payload &
+						PDO_FIXED_FRS_CURR_MASK) {
+					case PDO_FIXED_FRS_CURR_NOT_SUPPORTED:
+						break;
+					case PDO_FIXED_FRS_CURR_DFLT_USB_POWER:
+					case PDO_FIXED_FRS_CURR_1A5_AT_5V:
+					case PDO_FIXED_FRS_CURR_3A0_AT_5V:
+						pe_set_frs_enable(port, 1);
+						return;
+					}
+				}
+				set_state_pe(port, PE_SNK_READY);
+				return;
+			} else if ((type == PD_CTRL_REJECT) ||
+				   (type == PD_CTRL_WAIT)) {
+				set_state_pe(port, PE_SNK_READY);
+				return;
+			}
+		}
+	}
+
+	/*
+	 * Transition to PE_SNK_Ready state when:
+	 *   1) SenderResponseTimer times out.
+	 */
+	if (get_time().val > pe[port].sender_response_timer)
+		set_state_pe(port, PE_SNK_READY);
+}
+
 /* Policy Engine utility functions */
 int pd_check_requested_voltage(uint32_t rdo, const int port)
 {
@@ -4979,6 +5145,10 @@ static const struct usb_state pe_states[] = {
 	[PE_BIST] = {
 		.entry = pe_bist_entry,
 		.run   = pe_bist_run,
+	},
+	[PE_DR_SNK_GET_SINK_CAP] = {
+		.entry = pe_dr_snk_get_sink_cap_entry,
+		.run   = pe_dr_snk_get_sink_cap_run,
 	},
 };
 

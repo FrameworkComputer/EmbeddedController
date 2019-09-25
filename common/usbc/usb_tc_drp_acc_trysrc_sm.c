@@ -402,6 +402,11 @@ int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 	return 0;
 }
 
+void pd_got_frs_signal(int port)
+{
+	pe_got_frs_signal(port);
+}
+
 int tc_is_attached_src(int port)
 {
 	return get_state_tc(port) == TC_ATTACHED_SRC;

@@ -3858,6 +3858,9 @@
 /* Type-C DRP with Accessory and Try.SRC */
 #undef CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
 
+/* Type-C Fast Role Swap */
+#undef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
+
 /* USB Product ID. */
 #undef CONFIG_USB_PID
 

@@ -20,7 +20,7 @@
 #define TCPC_REG_PD_INT_REV        0xa
 #define TCPC_REG_ALERT             0x10
 
-#define TCPC_REG_ALERT_MASK_ALL     0xfff
+#define TCPC_REG_ALERT_MASK_ALL     0xffff
 #define TCPC_REG_ALERT_VENDOR_DEF   (1<<15)
 #define TCPC_REG_ALERT_VBUS_DISCNCT (1<<11)
 #define TCPC_REG_ALERT_RX_BUF_OVF   (1<<10)
@@ -42,7 +42,6 @@
 #define TCPC_REG_POWER_STATUS_MASK 0x14
 #define TCPC_REG_FAULT_STATUS_MASK 0x15
 #define TCPC_REG_CONFIG_STD_OUTPUT 0x18
-
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK          (3 << 2)
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_NONE          (0 << 2)
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB           BIT(2)

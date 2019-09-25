@@ -98,6 +98,11 @@ enum pd_rx_errors {
 #define PDO_FIXED_EXTERNAL  BIT(27) /* Externally powered */
 #define PDO_FIXED_COMM_CAP  BIT(26) /* USB Communications Capable */
 #define PDO_FIXED_DATA_SWAP BIT(25) /* Data role swap command supported */
+#define PDO_FIXED_FRS_CURR_MASK (3 << 23) /* [23..24] FRS current */
+#define PDO_FIXED_FRS_CURR_NOT_SUPPORTED  (0 << 23)
+#define PDO_FIXED_FRS_CURR_DFLT_USB_POWER (1 << 23)
+#define PDO_FIXED_FRS_CURR_1A5_AT_5V      (2 << 23)
+#define PDO_FIXED_FRS_CURR_3A0_AT_5V      (3 << 23)
 #define PDO_FIXED_PEAK_CURR () /* [21..20] Peak current */
 #define PDO_FIXED_VOLT(mv)  (((mv)/50) << 10) /* Voltage in 50mV units */
 #define PDO_FIXED_CURR(ma)  (((ma)/10) << 0)  /* Max current in 10mA units */
@@ -1786,6 +1791,13 @@ uint8_t get_usb_pd_mux_cable_type(int port);
  */
 int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 			 uint32_t ec_current_image);
+
+/**
+ * Fast Role Swap was detected
+ *
+ * @param port			USB-C port number
+ */
+void pd_got_frs_signal(int port);
 
 /**
  * Try to fetch one PD log entry from accessory

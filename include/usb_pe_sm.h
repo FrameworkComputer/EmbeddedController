@@ -98,6 +98,13 @@ void pe_got_soft_reset(int port);
 void pe_hard_reset_sent(int port);
 
 /**
+ * Informs the Policy Engine that a Fast Role Swap signal was detected
+ *
+ * @param port USB-C port number
+ */
+void pe_got_frs_signal(int port);
+
+/**
  * Exit DP mode
  *
  * @param port USB-C port number

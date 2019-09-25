@@ -396,4 +396,23 @@ int tcpm_has_pending_message(int port);
  */
 void tcpm_clear_pending_messages(int port);
 
+/**
+ * Enable/Disable TCPC Fast Role Swap detection
+ *
+ * @param port Type-C port number
+ * @param enable FRS enable (true) disable (false)
+ */
+static inline void tcpm_set_frs_enable(int port, int enable)
+{
+	const struct tcpm_drv *tcpc;
+
+	/*
+	 * set_frs_enable will be set to tcpci_tcp_fast_role_swap_enable
+	 * if it is handled by the tcpci for the tcpc chipset
+	 */
+	tcpc = tcpc_config[port].drv;
+	if (tcpc->set_frs_enable)
+		tcpc->set_frs_enable(port, enable);
+}
+
 #endif
