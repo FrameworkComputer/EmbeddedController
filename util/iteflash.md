@@ -6,7 +6,7 @@ First written: 2019-04-02
 <br>
 Last updated: 2019-04-03
 
-Familiarity with [Chromium OS](https://www.chromium.org/chromium-os) [Embedded Controller (EC) development](https://www.chromium.org/chromium-os/ec-development) is assumed.
+Familiarity with [Chromium OS](https://www.chromium.org/chromium-os) [Embedded Controller (EC) development](../README.md) is assumed.
 
 [TOC]
 
