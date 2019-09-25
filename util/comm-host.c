@@ -4,6 +4,7 @@
  */
 
 #include <errno.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,7 +32,7 @@ static int command_offset;
 
 int comm_init_dev(const char *device_name) __attribute__((weak));
 int comm_init_lpc(void) __attribute__((weak));
-int comm_init_i2c(void) __attribute__((weak));
+int comm_init_i2c(int i2c_bus) __attribute__((weak));
 int comm_init_servo_spi(const char *device_name) __attribute__((weak));
 
 static int fake_readmem(int offset, int bytes, void *dest)
@@ -82,8 +83,10 @@ int ec_command(int command, int version,
 				indata, insize);
 }
 
-int comm_init_alt(int interfaces, const char *device_name)
+int comm_init_alt(int interfaces, const char *device_name, int i2c_bus)
 {
+	bool dev_is_cros_ec;
+
 	/* Default memmap access */
 	ec_readmem = fake_readmem;
 
@@ -93,17 +96,17 @@ int comm_init_alt(int interfaces, const char *device_name)
 
 	/* Do not fallback to other communication methods if target is not a
 	 * cros_ec device */
-	if (!strcmp(CROS_EC_DEV_NAME, device_name)) {
-		/* Fallback to direct LPC on x86 */
-		if ((interfaces & COMM_LPC) &&
-				comm_init_lpc && !comm_init_lpc())
-			return 0;
+	dev_is_cros_ec = !strcmp(CROS_EC_DEV_NAME, device_name);
 
-		/* Fallback to direct i2c on ARM */
-		if ((interfaces & COMM_I2C) &&
-				comm_init_i2c && !comm_init_i2c())
-			return 0;
-	}
+	/* Fallback to direct LPC on x86 */
+	if (dev_is_cros_ec && (interfaces & COMM_LPC) &&
+			comm_init_lpc && !comm_init_lpc())
+		return 0;
+
+	/* Fallback to direct I2C */
+	if ((dev_is_cros_ec || i2c_bus != -1) && (interfaces & COMM_I2C) &&
+			comm_init_i2c && !comm_init_i2c(i2c_bus))
+		return 0;
 
 	/* Give up */
 	fprintf(stderr, "Unable to establish host communication\n");

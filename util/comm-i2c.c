@@ -196,33 +196,44 @@ done:
 	return ret;
 }
 
-int comm_init_i2c(void)
+int comm_init_i2c(int i2c_bus)
 {
 	char *file_path;
 	char buffer[64];
 	int i;
 
-	/* find the device number based on the adapter name */
-	for (i = 0; i < I2C_MAX_ADAPTER; i++) {
-		FILE *f;
-		if (asprintf(&file_path, I2C_ADAPTER_NODE,
-			     i, i, EC_I2C_ADDR) < 0)
+	if (i2c_bus != -1) {
+		i = i2c_bus;
+
+		if (i >= I2C_MAX_ADAPTER) {
+			fprintf(stderr, "Invalid I2C bus number %d. (The highest possible bus number is %d.)\n",
+				i, I2C_MAX_ADAPTER);
 			return -1;
-		f = fopen(file_path, "r");
-		if (f) {
-			if (fgets(buffer, sizeof(buffer), f) &&
-			    !strncmp(buffer, I2C_ADAPTER_NAME, 6)) {
-				free(file_path);
-				fclose(f);
-				break;
-			}
-			fclose(f);
 		}
-		free(file_path);
-	}
-	if (i == I2C_MAX_ADAPTER) {
-		fprintf(stderr, "Cannot find I2C adapter\n");
-		return -1;
+	} else {
+		/* find the device number based on the adapter name */
+		for (i = 0; i < I2C_MAX_ADAPTER; i++) {
+			FILE *f;
+
+			if (asprintf(&file_path, I2C_ADAPTER_NODE,
+				     i, i, EC_I2C_ADDR) < 0)
+				return -1;
+			f = fopen(file_path, "r");
+			if (f) {
+				if (fgets(buffer, sizeof(buffer), f) &&
+				    !strncmp(buffer, I2C_ADAPTER_NAME, 6)) {
+					free(file_path);
+					fclose(f);
+					break;
+				}
+				fclose(f);
+			}
+			free(file_path);
+		}
+		if (i == I2C_MAX_ADAPTER) {
+			fprintf(stderr, "Cannot find I2C adapter\n");
+			return -1;
+		}
 	}
 
 	if (asprintf(&file_path, I2C_NODE, i) < 0)

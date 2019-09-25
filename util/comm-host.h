@@ -39,9 +39,10 @@ enum comm_interface {
  *
  * @param interfaces	Interfaces to try; use COMM_ALL to try all of them.
  * @param device_name For DEV option, the device file to use.
+ * @param i2c_bus For I2C option, the bus number to use (or -1 to autodetect).
  * @return 0 in case of success, or error code.
  */
-int comm_init_alt(int interfaces, const char *device_name);
+int comm_init_alt(int interfaces, const char *device_name, int i2c_bus);
 
 /**
  * Initialize dev interface

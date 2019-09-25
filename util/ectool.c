@@ -48,6 +48,7 @@ enum {
 	OPT_INTERFACE,
 	OPT_NAME,
 	OPT_ASCII,
+	OPT_I2C_BUS,
 };
 
 static struct option long_opts[] = {
@@ -55,6 +56,7 @@ static struct option long_opts[] = {
 	{"interface", 1, 0, OPT_INTERFACE},
 	{"name", 1, 0, OPT_NAME},
 	{"ascii", 0, 0, OPT_ASCII},
+	{"i2c_bus", 1, 0, OPT_I2C_BUS},
 	{NULL, 0, 0, 0}
 };
 
@@ -352,9 +354,13 @@ int parse_bool(const char *s, int *dest)
 
 void print_help(const char *prog, int print_cmds)
 {
-	printf("Usage: %s [--dev=n] [--interface=dev|i2c|lpc] ", prog);
+	printf("Usage: %s [--dev=n] [--interface=dev|i2c|lpc] [--i2c_bus=n]",
+	       prog);
 	printf("[--name=cros_ec|cros_fp|cros_pd|cros_scp|cros_ish] [--ascii] ");
 	printf("<command> [params]\n\n");
+	printf("  --i2c_bus=n  Specifies the number of an I2C bus to use. For\n"
+	       "               example, to use /dev/i2c-7, pass --i2c_bus=7.\n"
+	       "               Implies --interface=i2c.\n\n");
 	if (print_cmds)
 		puts(help_str);
 	else
@@ -9156,6 +9162,7 @@ int main(int argc, char *argv[])
 	const struct command *cmd;
 	int dev = 0;
 	int interfaces = COMM_ALL;
+	int i2c_bus = -1;
 	char device_name[41] = CROS_EC_DEV_NAME;
 	int rv = 1;
 	int parse_error = 0;
@@ -9197,9 +9204,26 @@ int main(int argc, char *argv[])
 			strncpy(device_name, optarg, 40);
 			device_name[40] = '\0';
 			break;
+		case OPT_I2C_BUS:
+			i2c_bus = strtoul(optarg, &e, 0);
+			if (*optarg == '\0' || (e && *e != '\0')
+			    || i2c_bus < 0) {
+				fprintf(stderr, "Invalid --i2c_bus\n");
+				parse_error = 1;
+			}
+			break;
 		case OPT_ASCII:
 			ascii_mode = 1;
 			break;
+		}
+	}
+
+	if (i2c_bus != -1)  {
+		if (!(interfaces & COMM_I2C)) {
+			fprintf(stderr, "--i2c_bus is specified, but --interface is set to something other than I2C\n");
+			parse_error = 1;
+		} else {
+			interfaces = COMM_I2C;
 		}
 	}
 
@@ -9236,7 +9260,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Could not acquire GEC lock.\n");
 			exit(1);
 		}
-		if (comm_init_alt(interfaces, device_name)) {
+		if (comm_init_alt(interfaces, device_name, i2c_bus)) {
 			fprintf(stderr, "Couldn't find EC\n");
 			goto out;
 		}
