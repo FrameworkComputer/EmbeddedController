@@ -9,6 +9,7 @@
 #define __CROS_EC_USB_PD_H
 
 #include "common.h"
+#include "usb_pd_tcpm.h"
 
 /* PD Host command timeout */
 #define PD_HOST_COMMAND_TIMEOUT_US SECOND
@@ -1105,9 +1106,6 @@ enum pd_states {
 #define PD_BBRMFLG_POWER_ROLE        BIT(1)
 #define PD_BBRMFLG_DATA_ROLE         BIT(2)
 #define PD_BBRMFLG_VCONN_ROLE        BIT(3)
-
-/* Initial value for CC debounce variable */
-#define PD_CC_UNSET -1
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 enum pd_dual_role_states {
@@ -2260,6 +2258,13 @@ int pd_is_debug_acc(int port);
  * sets a DP_ALT_MODE_ENTERED MKBP event which may wake the AP.
  */
 void pd_notify_dp_alt_mode_entry(void);
+
+/*
+ * Determines the PD state of the port partner according to Table 4-10 in USB PD
+ * specification.
+ */
+enum pd_cc_states pd_get_cc_state(
+	enum tcpc_cc_voltage_status cc1, enum tcpc_cc_voltage_status cc2);
 
 /* ----- Logging ----- */
 #ifdef CONFIG_USB_PD_LOGGING

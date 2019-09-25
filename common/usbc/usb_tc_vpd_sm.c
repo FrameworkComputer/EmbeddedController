@@ -26,6 +26,9 @@
 /* Type-C Layer Flags */
 #define TC_FLAGS_VCONN_ON           BIT(0)
 
+/* Constant used to force an initial debounce cycle */
+#define PD_CC_UNSET -1
+
 /**
  * This is the Type-C Port object that contains information needed to
  * implement a VCONN Powered Device.

@@ -84,6 +84,30 @@ enum pd_cc_polarity_type get_snk_polarity(enum tcpc_cc_voltage_status cc1,
 	return cc2 > cc1;
 }
 
+enum pd_cc_states pd_get_cc_state(
+	enum tcpc_cc_voltage_status cc1, enum tcpc_cc_voltage_status cc2)
+{
+	/* Port partner is a SNK */
+	if (cc_is_snk_dbg_acc(cc1, cc2))
+		return PD_CC_UFP_DEBUG_ACC;
+	if (cc_is_at_least_one_rd(cc1, cc2))
+		return PD_CC_UFP_ATTACHED;
+	if (cc_is_audio_acc(cc1, cc2))
+		return PD_CC_UFP_AUDIO_ACC;
+
+	/* Port partner is a SRC */
+	if (cc_is_rp(cc1) && cc_is_rp(cc2))
+		return PD_CC_DFP_ATTACHED;
+	if (cc_is_rp(cc1) || cc_is_rp(cc2))
+		return PD_CC_DFP_ATTACHED;
+
+	/*
+	 * 1) Both lines are Vopen or
+	 * 2) Only an e-marked cabled without a partner on the other side
+	 */
+	return PD_CC_NONE;
+}
+
 /*
  * Zinger implements a board specific usb policy that does not define
  * PD_MAX_VOLTAGE_MV and PD_OPERATING_POWER_MW. And in turn, does not

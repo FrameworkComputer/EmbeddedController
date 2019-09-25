@@ -29,6 +29,9 @@
 #define SUPPORT_TIMER_RESET_REQUEST  1
 #define SUPPORT_TIMER_RESET_COMPLETE 2
 
+/* Constant used to force an initial debounce cycle */
+#define PD_CC_UNSET -1
+
 /**
  * This is the Type-C Port object that contains information needed to
  * implement a Charge Through VCONN Powered Device.
