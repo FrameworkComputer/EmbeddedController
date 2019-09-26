@@ -71,11 +71,6 @@
 #define DEDICATED_CHARGE_PORT 1
 #endif /* VARIANT_KUKUI_POGO_DOCK */
 
-#ifdef VARIANT_KUKUI_POGO_KEYBOARD
-#define CONFIG_DETACHABLE_BASE
-#define CONFIG_BASE_ATTACHED_SWITCH
-#endif
-
 /*
  * Define this flag if board controls dp mux via gpio pins USB_C0_DP_OE_L and
  * USB_C0_DP_POLARITY.
@@ -158,6 +153,7 @@
 
 /* To be able to indicate the device is in tablet mode. */
 #define CONFIG_TABLET_MODE
+#define CONFIG_TABLET_MODE_SWITCH
 #define GPIO_LID_OPEN GPIO_HALL_INT_L
 
 #ifndef VARIANT_KUKUI_NO_SENSORS
