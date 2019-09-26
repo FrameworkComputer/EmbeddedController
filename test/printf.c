@@ -257,6 +257,18 @@ test_static int test_vsnprintf_strings(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_vsnprintf_timestamps(void)
+{
+	uint64_t ts = 0;
+
+	T(expect_success("0.000000",       "%pT",      &ts));
+	ts = 123456;
+	T(expect_success("0.123456",       "%pT",      &ts));
+	ts = 9999999000000;
+	T(expect_success("9999999.000000", "%pT",      &ts));
+	return EC_SUCCESS;
+}
+
 test_static int test_vsnprintf_hexdump(void)
 {
 	const char bytes[] = {0x00, 0x5E};
@@ -283,6 +295,7 @@ void run_test(void)
 	RUN_TEST(test_vsnprintf_pointers);
 	RUN_TEST(test_vsnprintf_chars);
 	RUN_TEST(test_vsnprintf_strings);
+	RUN_TEST(test_vsnprintf_timestamps);
 	RUN_TEST(test_vsnprintf_hexdump);
 	RUN_TEST(test_vsnprintf_combined);
 
