@@ -8,6 +8,11 @@
 #ifndef __CROS_EC_PS874X_H
 #define __CROS_EC_PS874X_H
 
+#define PS874X_I2C_ADDR0_FLAG    0x10
+#define PS874X_I2C_ADDR1_FLAG    0x11
+#define PS874X_I2C_ADDR2_FLAG    0x19
+#define PS874X_I2C_ADDR3_FLAG    0x1a
+
 /* Mode register for setting mux */
 #define PS874X_REG_MODE 0x00
 #ifdef CONFIG_USB_MUX_PS8740
@@ -15,6 +20,13 @@
 	#define PS874X_MODE_USB_ENABLED       BIT(5)
 	#define PS874X_MODE_DP_ENABLED        BIT(6)
 	#define PS874X_MODE_POWER_DOWN        BIT(7)
+#elif defined(CONFIG_USB_MUX_PS8742)
+	#define PS874X_MODE_POLARITY_INVERTED BIT(4)
+	#define PS874X_MODE_USB_ENABLED       BIT(5)
+	#define PS874X_MODE_DP_ENABLED        BIT(6)
+	#define PS874X_MODE_CE_DP_ENABLED     BIT(7)
+	/* To reset the state machine to default */
+	#define PS874X_MODE_POWER_DOWN        0
 #elif defined(CONFIG_USB_MUX_PS8743)
 	#define PS874X_MODE_POLARITY_INVERTED BIT(2)
 	#define PS874X_MODE_FLIP_PIN_ENABLED  BIT(3)
@@ -44,6 +56,10 @@
 	#define PS874X_REVISION_ID2_0 0x0a
 	#define PS874X_REVISION_ID2_1 0x0b
 	#define PS874X_CHIP_ID1       0x40
+#elif defined(CONFIG_USB_MUX_PS8742)
+	#define PS874X_REVISION_ID1   0x01
+	#define PS874X_REVISION_ID2   0x0a
+	#define PS874X_CHIP_ID1       0x42
 #elif defined(CONFIG_USB_MUX_PS8743)
 	#define PS874X_REVISION_ID1_0 0x00
 	#define PS874X_REVISION_ID1_1 0x01
@@ -54,7 +70,7 @@
 
 /* USB equalization settings for Host to Mux */
 #define PS874X_REG_USB_EQ_TX     0x32
-#ifdef CONFIG_USB_MUX_PS8740
+#if defined(CONFIG_USB_MUX_PS8740) || defined(CONFIG_USB_MUX_PS8742)
 	#define PS874X_USB_EQ_TX_10_1_DB 0x00
 	#define PS874X_USB_EQ_TX_14_3_DB 0x20
 	#define PS874X_USB_EQ_TX_8_5_DB  0x40
@@ -76,7 +92,7 @@
 
 /* USB equalization settings for Connector to Mux */
 #define PS874X_REG_USB_EQ_RX     0x3b
-#ifdef CONFIG_USB_MUX_PS8740
+#if defined(CONFIG_USB_MUX_PS8740) || defined(CONFIG_USB_MUX_PS8742)
 	#define PS874X_USB_EQ_RX_4_4_DB  0x00
 	#define PS874X_USB_EQ_RX_7_0_DB  0x10
 	#define PS874X_USB_EQ_RX_8_2_DB  0x20

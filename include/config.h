@@ -4268,6 +4268,9 @@
 /* Support the Parade PS8740 Type-C Redriving Switch */
 #undef CONFIG_USB_MUX_PS8740
 
+/* Support the Parade PS8742 Type-C Redriving Switch */
+#undef CONFIG_USB_MUX_PS8742
+
 /* Support the Parade PS8743 Type-C Redriving Switch */
 #undef CONFIG_USB_MUX_PS8743
 
