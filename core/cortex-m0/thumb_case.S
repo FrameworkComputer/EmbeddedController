@@ -64,7 +64,6 @@ __gnu_thumb1_case_uhi:
 	pop     {r0, r1}
 	bx      lr
 
-
 .section .text.__gnu_thumb1_case_shi
 .global __gnu_thumb1_case_shi
 .thumb_func
@@ -79,3 +78,19 @@ __gnu_thumb1_case_shi:
 	add     lr, lr, r1
 	pop     {r0, r1}
 	bx      lr
+
+.section .text.__gnu_thumb1_case_si
+.global __gnu_thumb1_case_si
+.thumb_func
+__gnu_thumb1_case_si:
+	push	{r0, r1}
+	mov	r1, lr
+	adds.n	r1, r1, #2
+	lsrs	r1, r1, #2
+	lsls	r0, r0, #2
+	lsls	r1, r1, #2
+	ldr	r0, [r1, r0]
+	adds	r0, r0, r1
+	mov	lr, r0
+	pop	{r0, r1}
+	mov	pc, lr
