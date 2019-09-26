@@ -776,6 +776,7 @@ enum {
 #define NPCX_SMBTMR_EN(n)                 REG8(NPCX_SMB_BASE_ADDR(n) + 0x00B)
 #define NPCX_SMBADDR2(n)                  REG8(NPCX_SMB_BASE_ADDR(n) + 0x00C)
 #define NPCX_SMBCTL3(n)                   REG8(NPCX_SMB_BASE_ADDR(n) + 0x00E)
+/* SMB Registers in bank 0 */
 #define NPCX_SMBADDR3(n)                  REG8(NPCX_SMB_BASE_ADDR(n) + 0x010)
 #define NPCX_SMBADDR7(n)                  REG8(NPCX_SMB_BASE_ADDR(n) + 0x011)
 #define NPCX_SMBADDR4(n)                  REG8(NPCX_SMB_BASE_ADDR(n) + 0x012)
@@ -786,7 +787,20 @@ enum {
 #define NPCX_SMBCST3(n)                   REG8(NPCX_SMB_BASE_ADDR(n) + 0x019)
 #define NPCX_SMBCTL4(n)                   REG8(NPCX_SMB_BASE_ADDR(n) + 0x01A)
 #define NPCX_SMBSCLLT(n)                  REG8(NPCX_SMB_BASE_ADDR(n) + 0x01C)
+#define NPCX_SMBFIF_CTL(n)                REG8(NPCX_SMB_BASE_ADDR(n) + 0x01D)
 #define NPCX_SMBSCLHT(n)                  REG8(NPCX_SMB_BASE_ADDR(n) + 0x01E)
+/* SMB Registers in bank 1 */
+#define NPCX_SMBFIF_CTS(n)                REG8(NPCX_SMB_BASE_ADDR(n) + 0x010)
+#define NPCX_SMBTXF_CTL(n)                REG8(NPCX_SMB_BASE_ADDR(n) + 0x012)
+#define NPCX_SMB_T_OUT(n)                 REG8(NPCX_SMB_BASE_ADDR(n) + 0x014)
+/*
+ * These two registers are the same as in bank 0
+ * #define NPCX_SMBCST2(n)                REG8(NPCX_SMB_BASE_ADDR(n) + 0x018)
+ * #define NPCX_SMBCST3(n)                REG8(NPCX_SMB_BASE_ADDR(n) + 0x019)
+ */
+#define NPCX_SMBTXF_STS(n)                REG8(NPCX_SMB_BASE_ADDR(n) + 0x01A)
+#define NPCX_SMBRXF_STS(n)                REG8(NPCX_SMB_BASE_ADDR(n) + 0x01C)
+#define NPCX_SMBRXF_CTL(n)                REG8(NPCX_SMB_BASE_ADDR(n) + 0x01E)
 
 /* SMBus register fields */
 #define NPCX_SMBST_XMIT                  0
@@ -829,9 +843,11 @@ enum {
 #define NPCX_SMBCTL3_SCLFRQ2_FIELD       FIELD(0, 2)
 #define NPCX_SMBCTL3_IDL_START           3
 #define NPCX_SMBCTL3_400K                4
+#define NPCX_SMBCTL3_BNK_SEL             5
 #define NPCX_SMBCTL3_SDA_LVL             6
 #define NPCX_SMBCTL3_SCL_LVL             7
 #define NPCX_SMBCTL4_HLDT_FIELD          FIELD(0, 6)
+#define NPCX_SMBCTL4_LVL_WE              7
 #define NPCX_SMBADDR1_SAEN               7
 #define NPCX_SMBADDR2_SAEN               7
 #define NPCX_SMBADDR3_SAEN               7
@@ -847,6 +863,19 @@ enum {
 #define NPCX_SMBSEL_SMB5SEL              5
 #define NPCX_SMBSEL_SMB6SEL              6
 #endif
+#define NPCX_SMBFIF_CTS_RXF_TXE          1
+#define NPCX_SMBFIF_CTS_CLR_FIFO         6
+
+#define NPCX_SMBFIF_CTL_FIFO_EN          4
+
+#define NPCX_SMBRXF_STS_RX_THST          6
+
+/* RX FIFO threshold */
+#define NPCX_SMBRXF_CTL_RX_THR           FIELD(0, 6)
+/*
+ * In master receiving mode, last byte in FIFO should send ACK or NACK
+ */
+#define NPCX_SMBRXF_CTL_LAST             7
 /*
  * SMB enumeration
  * I2C port definitions.

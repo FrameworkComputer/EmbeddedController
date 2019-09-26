@@ -55,6 +55,8 @@
 #define I2C_PORT_COUNT 11
 #endif
 
+#define NPCX_I2C_FIFO_SUPPORT
+
 /* Use SHI module version 2 supported by npcx7 family */
 #define NPCX_SHI_V2
 
