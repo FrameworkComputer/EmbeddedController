@@ -73,7 +73,7 @@ Read Command: I2C_ADAPTER_NUM <num>
 Example: "I2C_ADAPTER_NUM 5\n"
 
 Details: This is read in response to the GET_ADAPTER_NUM command being written.
-The number is the I2C adapter number in decimal.  This is can only occur after
+The number is the I2C adapter number in decimal.  This can only occur after
 ADAPTER_START, because before that the number is not known and cannot be
 predicted reliably.
 
@@ -90,10 +90,10 @@ Example: "I2C_BEGIN_XFER\n"
 
 Details: This indicates the start of an I2C transaction request, in other words
 the start of the I2C messages from a single invocation of the I2C adapter's
-master_xfer() callback.  This should only ever be read after ADAPTER_START.
+master_xfer() callback.  This can only occur after ADAPTER_START.
 
 
-Read Command: I2C_XFER_REQ <xfer_id> <msg_id> <addr> <flags> <data_len> [<write_byte>, ...]
+Read Command: I2C_XFER_REQ <xfer_id> <msg_id> <addr> <flags> <data_len> [<write_byte>[:...]]
 Example: "I2C_XFER_REQ 3 0 0x0070 0x0000 2 AB:9F\n"
 Example: "I2C_XFER_REQ 3 1 0x0070 0x0001 4\n"
 
@@ -111,9 +111,9 @@ there can never be multiple outstanding transactions with the same ID, due to an
 internal limit in i2c-pseudo that will block master_xfer() calls when the
 controller is falling behind in its replies.
 
-The msg_id is a number representing the index of the I2C message within its
-transaction, in other words the index in master_xfer() *msgs array arg.  This
-starts at 0 after each I2C_BEGIN_XFER.  This is guaranteed to not wrap.
+The msg_id is a decimal number representing the index of the I2C message within
+its transaction, in other words the index in master_xfer() *msgs array arg.
+This starts at 0 after each I2C_BEGIN_XFER.  This is guaranteed to not wrap.
 
 The addr is the hexadecimal I2C address for this I2C message.
 
@@ -191,7 +191,7 @@ counter wraps.  I2C clients can use this to track specific instances of pseudo
 adapters, even when adapter numbers have been reused.
 
 
-Write Command: I2C_XFER_REPLY <xfer_id> <msg_id> <addr> <flags> <errno> [<read_byte>, ...]
+Write Command: I2C_XFER_REPLY <xfer_id> <msg_id> <addr> <flags> <errno> [<read_byte>[:...]]
 Example: "I2C_XFER_REPLY 3 0 0x0070 0x0000 0\n"
 Example: "I2C_XFER_REPLY 3 1 0x0070 0x0001 0 0B 29 02 D9\n"
 
@@ -225,10 +225,14 @@ perfectly valid to close the controller device fd without ever using this
 command.
 
 This commands unblocks any blocked controller I/O (reads, writes, or polls), and
-that is its main reason for existing.
+that is its main purpose.
 
 Any I2C transactions attempted by a device driver after this command will fail,
 and will not be passed on to the userspace controller.
+
+This DOES NOT delete the I2C adapter.  Only closing the fd will do that.  That
+MAY CHANGE in the future, such that this does delete the I2C adapter.  (However
+this will never be required, it will always be okay to simply close the fd.)
 
 
 
