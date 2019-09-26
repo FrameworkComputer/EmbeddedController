@@ -33,6 +33,7 @@
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "thermal.h"
@@ -418,6 +419,8 @@ static void board_update_sensor_config_from_sku(void)
 		CPRINTS("Motion Sensor Count = %d", motion_sensor_count);
 	} else {
 		motion_sensor_count = 0;
+		/* Device is clamshell only */
+		tablet_disable();
 		/* Base accel is not stuffed, don't allow line to float */
 		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
 			       GPIO_INPUT | GPIO_PULL_DOWN);
