@@ -186,7 +186,7 @@ static int ec_command_i2c_3(int command, int version,
 				 + sizeof(struct ec_host_response)],
 	       insize);
 
-	ret = command_return_code;
+	ret = resp->data_len;
 done:
 	if (req_buf)
 		free(req_buf);
