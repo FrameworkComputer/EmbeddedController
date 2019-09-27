@@ -23,6 +23,11 @@
  */
 #define PPC_OC_COOLDOWN_DELAY_US (2 * SECOND)
 
+/*
+ * NOTE: The pointers to functions in the ppc_drv structure can now be NULL
+ * which will indicate and return NOT_IMPLEMENTED from the main calling
+ * function
+ */
 struct ppc_drv {
 	/**
 	 * Initialize the PPC.
