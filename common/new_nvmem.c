@@ -2934,8 +2934,10 @@ static int setvar_(const uint8_t *key, uint8_t key_len, const uint8_t *val,
 
 	if ((old_var_space < new_var_space) &&
 	    ((total_var_space + new_var_space - old_var_space) >
-	     MAX_VAR_BODY_SPACE))
+	     MAX_VAR_BODY_SPACE)) {
+		shared_mem_release(vc);
 		return EC_ERROR_OVERFLOW;
+	}
 
 	/* Save the new instance first with the larger generation number. */
 	vc->c_header.generation++;
