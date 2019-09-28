@@ -277,6 +277,17 @@ void board_reset_pd_mcu(void)
 #endif
 }
 
+static uint32_t sku_id;
+
+static int ps8751_tune_mux(int port)
+{
+	/* Tune USB mux registers for treeya's port 1 Rx measurement */
+	if ((sku_id >= 0xa0) && (sku_id <= 0xaf))
+		mux_write(port, PS8XXX_REG_MUX_USB_C2SS_EQ, 0x40);
+
+	return EC_SUCCESS;
+}
+
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 #ifdef VARIANT_GRUNT_TCPC_0_ANX3429
 	[USB_PD_PORT_ANX74XX] = {
@@ -292,6 +303,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_PS8751] = {
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.board_init = &ps8751_tune_mux,
 	}
 };
 
@@ -700,7 +712,6 @@ static int board_get_gpio_board_version(void)
 }
 
 static int board_version;
-static uint32_t sku_id;
 
 static void cbi_init(void)
 {
