@@ -4,8 +4,13 @@
  */
 
 /* Volteer family-specific configuration */
+#include "baseboard.h"
+#include "battery.h"
+#include "charge_state.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 
 /******************************************************************************/
 /* Wake up pins */
@@ -66,3 +71,43 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_LED1_BLUE] = {
+		.channel = 2,
+		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+		.freq = 100,
+	},
+	[PWM_CH_LED2_GREEN] = {
+		.channel = 0,
+		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+		.freq = 100,
+	},
+	[PWM_CH_LED3_RED] = {
+		.channel = 1,
+		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+		.freq = 100,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+/* Stub out battery and charging functions to compile common LED code.
+ * TODO(b/140557020): Define these for real.
+ */
+#ifdef CONFIG_CHARGER
+#error "Write real definitions for charger and battery functions."
+#endif
+enum charge_state charge_get_state(void)
+{
+	return PWR_STATE_UNCHANGE;
+}
+
+enum battery_present battery_is_present(void)
+{
+	return BP_NOT_SURE;
+}
+
+int charge_get_percent(void)
+{
+	return 0;
+}

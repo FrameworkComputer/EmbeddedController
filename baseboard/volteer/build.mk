@@ -7,3 +7,4 @@
 #
 
 baseboard-y=baseboard.o
+baseboard-y+=led.o
