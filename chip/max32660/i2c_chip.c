@@ -144,7 +144,6 @@ struct i2c_req {
 };
 
 static i2c_req_state_t states[MXC_I2C_INSTANCES];
-static int slave_rx_remain = 0, slave_tx_remain = 0;
 
 /**
  * struct i2c_port_data
@@ -172,24 +171,22 @@ struct i2c_port_data {
 static struct i2c_port_data pdata[I2C_PORT_COUNT];
 
 /* **** Function Prototypes **** */
-static void i2c_free_callback(int i2c_num, int error);
-static void init_i2cs(int port);
 static int i2c_init_peripheral(mxc_i2c_regs_t *i2c, i2c_speed_t i2cspeed);
 static int i2c_master_write(mxc_i2c_regs_t *i2c, uint8_t addr, int start,
 			    int stop, const uint8_t *data, int len,
 			    int restart);
 static int i2c_master_read(mxc_i2c_regs_t *i2c, uint8_t addr, int start,
 			   int stop, uint8_t *data, int len, int restart);
+
+#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
+static void i2c_free_callback(int i2c_num, int error);
+static void init_i2cs(int port);
 static int i2c_slave_async(mxc_i2c_regs_t *i2c, i2c_req_t *req);
-static void i2c_handler(mxc_i2c_regs_t *i2c);
+static void i2c_slave_handler(mxc_i2c_regs_t *i2c);
+#endif /* CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS */
 
 /* Port address for each I2C */
 static mxc_i2c_regs_t *i2c_bus_ports[] = {MXC_I2C0, MXC_I2C1};
-
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
-/* IRQ for each I2C */
-static uint32_t i2c_bus_irqs[] = {EC_I2C0_IRQn, EC_I2C1_IRQn};
-#endif
 
 /**
  * chip_i2c_xfer() - Low Level function for I2C Master Reads and Writes.
@@ -291,6 +288,9 @@ DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
  */
 #ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
 
+/* IRQ for each I2C */
+static uint32_t i2c_bus_irqs[] = {EC_I2C0_IRQn, EC_I2C1_IRQn};
+
 /**
  * Buffer for received host command packets (including prefix byte on request,
  * and result/size on response).  After any protocol-specific headers, the
@@ -301,6 +301,7 @@ static uint8_t host_buffer_padded[I2C_MAX_HOST_PACKET_SIZE + 4 +
 static uint8_t *const host_buffer = host_buffer_padded + 2;
 static uint8_t params_copy[I2C_MAX_HOST_PACKET_SIZE] __aligned(4);
 static struct host_packet i2c_packet;
+static int slave_rx_remain, slave_tx_remain;
 
 static i2c_req_t req_slave;
 volatile int ec_pending_response = 0;
@@ -328,7 +329,7 @@ static void i2c_send_response_packet(struct host_packet *pkt)
 	req_slave.tx_len = size + 2;
 
 	/* Call the handler for transmition of response packet. */
-	i2c_handler(i2c_bus_ports[I2C_PORT_EC]);
+	i2c_slave_handler(i2c_bus_ports[I2C_PORT_EC]);
 }
 
 /**
@@ -395,7 +396,7 @@ void i2c_chip_callback(i2c_req_t *req, int error)
  */
 void I2C0_IRQHandler(void)
 {
-	i2c_handler(i2c_bus_ports[0]);
+	i2c_slave_handler(i2c_bus_ports[0]);
 }
 
 /**
@@ -403,11 +404,351 @@ void I2C0_IRQHandler(void)
  */
 void I2C1_IRQHandler(void)
 {
-	i2c_handler(i2c_bus_ports[1]);
+	i2c_slave_handler(i2c_bus_ports[1]);
 }
 
 DECLARE_IRQ(EC_I2C0_IRQn, I2C0_IRQHandler, 1);
 DECLARE_IRQ(EC_I2C1_IRQn, I2C1_IRQHandler, 1);
+
+/**
+ * i2c_slave_read() - Handles async read request from the I2c master.
+ * @i2c: I2C peripheral pointer.
+ * @req: Pointer to the request info.
+ * @int_flags: Current state of the interrupt flags for this request.
+ *
+ * Return EC_SUCCESS if successful, otherwise returns a common error code.
+ */
+static int i2c_slave_read(mxc_i2c_regs_t *i2c, i2c_req_t *req,
+			  uint32_t int_flags)
+{
+	int i2c_num;
+
+	i2c_num = MXC_I2C_GET_IDX(i2c);
+	req->direction = I2C_TRANSFER_DIRECTION_MASTER_READ;
+	if (slave_tx_remain != 0) {
+		/* Fill the FIFO */
+		while ((slave_tx_remain > 0) &&
+		       !(i2c->status & MXC_F_I2C_STATUS_TX_FULL)) {
+			i2c->fifo = *(req->tx_data)++;
+			states[i2c_num].num_wr++;
+			slave_tx_remain--;
+		}
+		/* Set the TX threshold interrupt level. */
+		if (slave_tx_remain >= (MXC_I2C_FIFO_DEPTH - 1)) {
+			i2c->tx_ctrl0 =
+				((i2c->tx_ctrl0 &
+				  ~(MXC_F_I2C_TX_CTRL0_TX_THRESH)) |
+				 (MXC_I2C_FIFO_DEPTH - 1)
+					 << MXC_F_I2C_TX_CTRL0_TX_THRESH_POS);
+
+		} else {
+			i2c->tx_ctrl0 =
+				((i2c->tx_ctrl0 &
+				  ~(MXC_F_I2C_TX_CTRL0_TX_THRESH)) |
+				 (slave_tx_remain)
+					 << MXC_F_I2C_TX_CTRL0_TX_THRESH_POS);
+		}
+		/* Enable TXTH interrupt and Error interrupts. */
+		i2c->int_en0 |= (MXC_F_I2C_INT_EN0_TX_THRESH | I2C_ERROR);
+		if (int_flags & I2C_ERROR) {
+			i2c->int_en0 = 0;
+			/* Calculate the number of bytes sent by the slave. */
+			req->tx_num =
+				states[i2c_num].num_wr -
+				((i2c->tx_ctrl1 & MXC_F_I2C_TX_CTRL1_TX_FIFO) >>
+				 MXC_F_I2C_TX_CTRL1_TX_FIFO_POS);
+			if (!req->sw_autoflush_disable) {
+				/* Manually clear the TXFIFO. */
+				i2c->tx_ctrl0 |= MXC_F_I2C_TX_CTRL0_TX_FLUSH;
+			}
+			states[i2c_num].num_wr = 0;
+			if (req->callback != NULL) {
+				/* Disable and clear interrupts. */
+				i2c->int_en0 = 0;
+				i2c->int_en1 = 0;
+				i2c->int_fl0 = i2c->int_fl0;
+				i2c->int_fl1 = i2c->int_fl1;
+				/* Cycle the I2C peripheral enable on error. */
+				i2c->ctrl = 0;
+				i2c->ctrl = MXC_F_I2C_CTRL_I2C_EN;
+				i2c_free_callback(i2c_num, EC_ERROR_UNKNOWN);
+			}
+			return EC_ERROR_UNKNOWN;
+		}
+	} else {
+		/**
+		 * If there is nothing to transmit to the EC HOST, then default
+		 * to clock stretching.
+		 */
+		if (req->tx_len == -1)
+			return EC_SUCCESS;
+		/**
+		 * The EC HOST is requesting more that we are able to transmit.
+		 * Fulfill the EC HOST reading of extra bytes by sending the
+		 * EC_PADDING_BYTE.
+		 */
+		if (!(i2c->status & MXC_F_I2C_STATUS_TX_FULL))
+			i2c->fifo = EC_PADDING_BYTE;
+		/* set tx threshold to zero */
+		i2c->tx_ctrl0 =
+			((i2c->tx_ctrl0 & ~(MXC_F_I2C_TX_CTRL0_TX_THRESH)) |
+			 (0) << MXC_F_I2C_TX_CTRL0_TX_THRESH_POS);
+		/* Enable TXTH interrupt and Error interrupts */
+		i2c->int_en0 |= (MXC_F_I2C_INT_EN0_TX_THRESH | I2C_ERROR);
+	}
+	return EC_SUCCESS;
+}
+
+/**
+ * i2c_slave_write() - Handles async write request from the I2c master.
+ * @i2c: I2C peripheral pointer.
+ * @req: Pointer to the request info.
+ * @int_flags: Current state of the interrupt flags for this request.
+ *
+ * Return EC_SUCCESS if successful, otherwise returns a common error code.
+ */
+static int i2c_slave_write(mxc_i2c_regs_t *i2c, i2c_req_t *req,
+			   uint32_t int_flags)
+{
+	int i2c_num;
+
+	/**
+	 * Master Write has been called and if there is a
+	 * rx_data buffer
+	 */
+	i2c_num = MXC_I2C_GET_IDX(i2c);
+	req->direction = I2C_TRANSFER_DIRECTION_MASTER_WRITE;
+	if (slave_rx_remain != 0) {
+		/* Read out any data in the RX FIFO. */
+		while ((slave_rx_remain > 0) &&
+		       !(i2c->status & MXC_F_I2C_STATUS_RX_EMPTY)) {
+			*(req->rx_data)++ = i2c->fifo;
+			req->rx_num++;
+			slave_rx_remain--;
+		}
+		/* Set the RX threshold interrupt level. */
+		if (slave_rx_remain >= (MXC_I2C_FIFO_DEPTH - 1)) {
+			i2c->rx_ctrl0 =
+				((i2c->rx_ctrl0 &
+				  ~(MXC_F_I2C_RX_CTRL0_RX_THRESH)) |
+				 (MXC_I2C_FIFO_DEPTH - 1)
+					 << MXC_F_I2C_RX_CTRL0_RX_THRESH_POS);
+		} else {
+			i2c->rx_ctrl0 =
+				((i2c->rx_ctrl0 &
+				  ~(MXC_F_I2C_RX_CTRL0_RX_THRESH)) |
+				 (slave_rx_remain)
+					 << MXC_F_I2C_RX_CTRL0_RX_THRESH_POS);
+		}
+		/* Enable RXTH interrupt and Error interrupts. */
+		i2c->int_en0 |= (MXC_F_I2C_INT_EN0_RX_THRESH | I2C_ERROR);
+		if (int_flags & I2C_ERROR) {
+			i2c->int_en0 = 0;
+			/**
+			 * Calculate the number of bytes sent
+			 * by the slave.
+			 */
+			req->tx_num =
+				states[i2c_num].num_wr -
+				((i2c->tx_ctrl1 & MXC_F_I2C_TX_CTRL1_TX_FIFO) >>
+				 MXC_F_I2C_TX_CTRL1_TX_FIFO_POS);
+
+			if (!req->sw_autoflush_disable) {
+				/* Manually clear the TXFIFO. */
+				i2c->tx_ctrl0 |= MXC_F_I2C_TX_CTRL0_TX_FLUSH;
+			}
+			states[i2c_num].num_wr = 0;
+			if (req->callback != NULL) {
+				/* Disable and clear interrupts. */
+				i2c->int_en0 = 0;
+				i2c->int_en1 = 0;
+				i2c->int_fl0 = i2c->int_fl0;
+				i2c->int_fl1 = i2c->int_fl1;
+				/* Cycle the I2C peripheral enable on error. */
+				i2c->ctrl = 0;
+				i2c->ctrl = MXC_F_I2C_CTRL_I2C_EN;
+				i2c_free_callback(i2c_num, EC_ERROR_UNKNOWN);
+			}
+			return EC_ERROR_UNKNOWN;
+		}
+	} else {
+		/* Disable RXTH interrupt. */
+		i2c->int_en0 &= ~(MXC_F_I2C_INT_EN0_RX_THRESH);
+		/* Flush any extra bytes in the RXFIFO */
+		i2c->rx_ctrl0 |= MXC_F_I2C_RX_CTRL0_RX_FLUSH;
+		/* Store the current state of the slave */
+		states[i2c_num].slave_state = I2C_SLAVE_READ_COMPLETE;
+	}
+	return EC_SUCCESS;
+}
+
+/**
+ * i2c_slave_handler() - I2C interrupt handler.
+ * @i2c: Base address of the I2C module.
+ *
+ * This function should be called by the application from the interrupt
+ * handler if I2C interrupts are enabled. Alternately, this function
+ * can be periodically called by the application if I2C interrupts are
+ * disabled.
+ */
+static void i2c_slave_handler(mxc_i2c_regs_t *i2c)
+{
+	uint32_t int_flags;
+	int i2c_num;
+	i2c_req_t *req;
+	int status;
+
+	i2c_num = MXC_I2C_GET_IDX(i2c);
+	req = states[i2c_num].req;
+
+	/* Check for an Address match */
+	if (i2c->int_fl0 & MXC_F_I2C_INT_FL0_ADDR_MATCH) {
+		/* Clear AMI and TXLOI */
+		i2c->int_fl0 |= MXC_F_I2C_INT_FL0_DONE;
+		i2c->int_fl0 |= MXC_F_I2C_INT_FL0_ADDR_MATCH;
+		i2c->int_fl0 |= MXC_F_I2C_INT_FL0_TX_LOCK_OUT;
+		/* Store the current state of the Slave */
+		states[i2c_num].slave_state = I2C_SLAVE_ADDR_MATCH;
+		/* Set the Done, Stop interrupt */
+		i2c->int_en0 |= MXC_F_I2C_INT_EN0_DONE | MXC_F_I2C_INT_EN0_STOP;
+		/* Inhibit sleep mode when addressed until STOPF flag is set */
+		disable_sleep(SLEEP_MASK_I2C_SLAVE);
+	}
+
+	/* Check for errors */
+	int_flags = i2c->int_fl0;
+	/* Clear the interrupts */
+	i2c->int_fl0 = int_flags;
+
+	if (int_flags & I2C_ERROR) {
+		i2c->int_en0 = 0;
+		/* Calculate the number of bytes sent by the slave */
+		req->tx_num = states[i2c_num].num_wr -
+			      ((i2c->tx_ctrl1 & MXC_F_I2C_TX_CTRL1_TX_FIFO) >>
+			       MXC_F_I2C_TX_CTRL1_TX_FIFO_POS);
+
+		if (!req->sw_autoflush_disable) {
+			/* Manually clear the TXFIFO */
+			i2c->tx_ctrl0 |= MXC_F_I2C_TX_CTRL0_TX_FLUSH;
+		}
+		states[i2c_num].num_wr = 0;
+		if (req->callback != NULL) {
+			/* Disable and clear interrupts */
+			i2c->int_en0 = 0;
+			i2c->int_en1 = 0;
+			i2c->int_fl0 = i2c->int_fl0;
+			i2c->int_fl1 = i2c->int_fl1;
+			/* Cycle the I2C peripheral enable on error. */
+			i2c->ctrl = 0;
+			i2c->ctrl = MXC_F_I2C_CTRL_I2C_EN;
+			i2c_free_callback(i2c_num, EC_ERROR_UNKNOWN);
+		}
+		return;
+	}
+
+	slave_rx_remain = req->rx_len - req->rx_num;
+	/* determine if there is any data ready to transmit to the EC HOST */
+	if (req->tx_len != -1)
+		slave_tx_remain = req->tx_len - states[i2c_num].num_wr;
+	else
+		slave_tx_remain = 0;
+
+	/* Check for Stop interrupt */
+	if (int_flags & MXC_F_I2C_INT_FL0_STOP) {
+		/* Disable all interrupts except address match. */
+		i2c->int_en1 = 0;
+		i2c->int_en0 = MXC_F_I2C_INT_EN0_ADDR_MATCH;
+		/* Clear all interrupts except a possible address match. */
+		i2c->int_fl0 = i2c->int_fl0 & ~MXC_F_I2C_INT_FL0_ADDR_MATCH;
+		i2c->int_fl1 = i2c->int_fl1;
+		if (req->direction == I2C_TRANSFER_DIRECTION_MASTER_WRITE) {
+			/* Read out any data in the RX FIFO */
+			while (!(i2c->status & MXC_F_I2C_STATUS_RX_EMPTY)) {
+				*(req->rx_data)++ = i2c->fifo;
+				req->rx_num++;
+			}
+		}
+
+		/* Calculate the number of bytes sent by the slave */
+		req->tx_num = states[i2c_num].num_wr -
+			      ((i2c->tx_ctrl1 & MXC_F_I2C_TX_CTRL1_TX_FIFO) >>
+			       MXC_F_I2C_TX_CTRL1_TX_FIFO_POS);
+		slave_rx_remain = 0;
+		slave_tx_remain = 0;
+		if (!req->sw_autoflush_disable) {
+			/* Manually clear the TXFIFO */
+			i2c->tx_ctrl0 |= MXC_F_I2C_TX_CTRL0_TX_FLUSH;
+		}
+		/* Callback to the EC request processor */
+		i2c_free_callback(i2c_num, EC_SUCCESS);
+		req->direction = I2C_TRANSFER_DIRECTION_NONE;
+		states[i2c_num].num_wr = 0;
+
+		/* Be ready to receive more data */
+		req->rx_len = 128;
+		/* Clear the byte counters */
+		req->tx_num = 0;
+		req->rx_num = 0;
+		req->tx_len = -1; /* Nothing to send. */
+
+		/* No longer inhibit deep sleep after stop condition */
+		enable_sleep(SLEEP_MASK_I2C_SLAVE);
+		return;
+	}
+
+	/* Check for DONE interrupt */
+	if (int_flags & MXC_F_I2C_INT_FL0_DONE) {
+		if (req->direction == I2C_TRANSFER_DIRECTION_MASTER_WRITE) {
+			/* Read out any data in the RX FIFO */
+			while (!(i2c->status & MXC_F_I2C_STATUS_RX_EMPTY)) {
+				*(req->rx_data)++ = i2c->fifo;
+				req->rx_num++;
+			}
+		}
+		/* Disable Done interrupt */
+		i2c->int_en0 &= ~(MXC_F_I2C_INT_EN0_DONE);
+		/* Calculate the number of bytes sent by the slave */
+		req->tx_num = states[i2c_num].num_wr -
+			      ((i2c->tx_ctrl1 & MXC_F_I2C_TX_CTRL1_TX_FIFO) >>
+			       MXC_F_I2C_TX_CTRL1_TX_FIFO_POS);
+		slave_rx_remain = 0;
+		slave_tx_remain = 0;
+		if (!req->sw_autoflush_disable) {
+			/* Manually clear the TXFIFO */
+			i2c->tx_ctrl0 |= MXC_F_I2C_TX_CTRL0_TX_FLUSH;
+		}
+		i2c_free_callback(i2c_num, EC_SUCCESS);
+		req->direction = I2C_TRANSFER_DIRECTION_NONE;
+		states[i2c_num].num_wr = 0;
+		return;
+	}
+
+	if (states[i2c_num].slave_state != I2C_SLAVE_ADDR_MATCH)
+		return;
+	/**
+	 * Check if Master Read has been called and if there is a
+	 * tx_data buffer
+	 */
+	if (i2c->ctrl & MXC_F_I2C_CTRL_READ) {
+		status = i2c_slave_read(i2c, req, int_flags);
+		if (status != EC_SUCCESS)
+			return;
+	} else {
+		status = i2c_slave_write(i2c, req, int_flags);
+		if (status != EC_SUCCESS)
+			return;
+	}
+}
+
+static void i2c_free_callback(int i2c_num, int error)
+{
+	/* Save the request */
+	i2c_req_t *temp_req = states[i2c_num].req;
+
+	/* Callback if not NULL */
+	if (temp_req->callback != NULL)
+		temp_req->callback(temp_req, error);
+}
 
 /**
  * init_i2cs() - Async Handler for I2C Slave driver.
@@ -417,8 +758,11 @@ void init_i2cs(int port)
 {
 	int error;
 
-	if ((error = i2c_init_peripheral(i2c_bus_ports[port], I2C_STD_MODE)) !=
-	    EC_SUCCESS) {
+	slave_rx_remain = 0;
+	slave_tx_remain = 0;
+
+	error = i2c_init_peripheral(i2c_bus_ports[port], I2C_STD_MODE);
+	if (error != EC_SUCCESS) {
 		while (1)
 			;
 	}
@@ -431,13 +775,48 @@ void init_i2cs(int port)
 	req_slave.restart = 0;
 	req_slave.callback = i2c_chip_callback;
 
-	if ((error = i2c_slave_async(i2c_bus_ports[port], &req_slave)) !=
-	    EC_SUCCESS) {
+	error = i2c_slave_async(i2c_bus_ports[port], &req_slave);
+	if (error != EC_SUCCESS) {
 		while (1)
 			;
 	}
 
 	task_enable_irq(i2c_bus_irqs[port]);
+}
+
+/**
+ * i2c_slave_async() - Slave Read and Write Asynchronous.
+ * @i2c:   Pointer to I2C regs.
+ * @req:   Request for an I2C transaction.
+ *
+ * Return EC_SUCCESS if successful, otherwise returns a common error code.
+ */
+static int i2c_slave_async(mxc_i2c_regs_t *i2c, i2c_req_t *req)
+{
+	/* Make sure the I2C has been initialized. */
+	if (!(i2c->ctrl & MXC_F_I2C_CTRL_I2C_EN))
+		return EC_ERROR_UNKNOWN;
+
+	states[MXC_I2C_GET_IDX(i2c)].req = req;
+
+	/* Disable master mode */
+	i2c->ctrl &= ~(MXC_F_I2C_CTRL_MST);
+	/* Set the Slave Address in the I2C peripheral register. */
+	i2c->slave_addr = req->addr;
+
+	/* Clear the byte counters */
+	req->tx_num = 0;
+	req->rx_num = 0;
+
+	/* Disable and clear the interrupts. */
+	i2c->int_en0 = 0;
+	i2c->int_en1 = 0;
+	i2c->int_fl0 = i2c->int_fl0;
+	i2c->int_fl1 = i2c->int_fl1;
+	/* Only enable the I2C Address match interrupt. */
+	i2c->int_en0 = MXC_F_I2C_INT_EN0_ADDR_MATCH;
+
+	return EC_SUCCESS;
 }
 
 #endif /* CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS */
@@ -845,391 +1224,4 @@ static int i2c_master_read(mxc_i2c_regs_t *i2c, uint8_t addr, int start,
 	}
 
 	return EC_SUCCESS;
-}
-
-/**
- * i2c_slave_async() - Slave Read and Write Asynchronous.
- * @i2c:   Pointer to I2C regs.
- * @req:   Request for an I2C transaction.
- *
- * Return EC_SUCCESS if successful, otherwise returns a common error code.
- */
-static int i2c_slave_async(mxc_i2c_regs_t *i2c, i2c_req_t *req)
-{
-	/* Make sure the I2C has been initialized. */
-	if (!(i2c->ctrl & MXC_F_I2C_CTRL_I2C_EN)) {
-		return EC_ERROR_UNKNOWN;
-	}
-
-	states[MXC_I2C_GET_IDX(i2c)].req = req;
-
-	/* Disable master mode */
-	i2c->ctrl &= ~(MXC_F_I2C_CTRL_MST);
-	/* Set the Slave Address in the I2C peripheral register. */
-	i2c->slave_addr = req->addr;
-
-	/* Clear the byte counters */
-	req->tx_num = 0;
-	req->rx_num = 0;
-
-	/* Disable and clear the interrupts. */
-	i2c->int_en0 = 0;
-	i2c->int_en1 = 0;
-	i2c->int_fl0 = i2c->int_fl0;
-	i2c->int_fl1 = i2c->int_fl1;
-	/* Only enable the I2C Address match interrupt. */
-	i2c->int_en0 = MXC_F_I2C_INT_EN0_ADDR_MATCH;
-
-	return EC_SUCCESS;
-}
-
-/**
- * i2c_slave_read() - Handles async read request from the I2c master.
- * @i2c: I2C peripheral pointer.
- * @req: Pointer to the request info.
- * @int_flags: Current state of the interrupt flags for this request.
- *
- * Return EC_SUCCESS if successful, otherwise returns a common error code.
- */
-static int i2c_slave_read(mxc_i2c_regs_t *i2c, i2c_req_t *req,
-			  uint32_t int_flags)
-{
-	int i2c_num;
-
-	i2c_num = MXC_I2C_GET_IDX(i2c);
-	req->direction = I2C_TRANSFER_DIRECTION_MASTER_READ;
-	if (slave_tx_remain != 0) {
-		/* Fill the FIFO */
-		while ((slave_tx_remain > 0) &&
-		       !(i2c->status & MXC_F_I2C_STATUS_TX_FULL)) {
-			i2c->fifo = *(req->tx_data)++;
-			states[i2c_num].num_wr++;
-			slave_tx_remain--;
-		}
-		/* Set the TX threshold interrupt level. */
-		if (slave_tx_remain >= (MXC_I2C_FIFO_DEPTH - 1)) {
-			i2c->tx_ctrl0 =
-				((i2c->tx_ctrl0 &
-				  ~(MXC_F_I2C_TX_CTRL0_TX_THRESH)) |
-				 (MXC_I2C_FIFO_DEPTH - 1)
-					 << MXC_F_I2C_TX_CTRL0_TX_THRESH_POS);
-
-		} else {
-			i2c->tx_ctrl0 =
-				((i2c->tx_ctrl0 &
-				  ~(MXC_F_I2C_TX_CTRL0_TX_THRESH)) |
-				 (slave_tx_remain)
-					 << MXC_F_I2C_TX_CTRL0_TX_THRESH_POS);
-		}
-		/* Enable TXTH interrupt and Error interrupts. */
-		i2c->int_en0 |= (MXC_F_I2C_INT_EN0_TX_THRESH | I2C_ERROR);
-		if (int_flags & I2C_ERROR) {
-			i2c->int_en0 = 0;
-			/* Calculate the number of bytes sent by the slave. */
-			req->tx_num =
-				states[i2c_num].num_wr -
-				((i2c->tx_ctrl1 & MXC_F_I2C_TX_CTRL1_TX_FIFO) >>
-				 MXC_F_I2C_TX_CTRL1_TX_FIFO_POS);
-			if (!req->sw_autoflush_disable) {
-				/* Manually clear the TXFIFO. */
-				i2c->tx_ctrl0 |= MXC_F_I2C_TX_CTRL0_TX_FLUSH;
-			}
-			states[i2c_num].num_wr = 0;
-			if (req->callback != NULL) {
-				/* Disable and clear interrupts. */
-				i2c->int_en0 = 0;
-				i2c->int_en1 = 0;
-				i2c->int_fl0 = i2c->int_fl0;
-				i2c->int_fl1 = i2c->int_fl1;
-				/* Cycle the I2C peripheral enable on error. */
-				i2c->ctrl = 0;
-				i2c->ctrl = MXC_F_I2C_CTRL_I2C_EN;
-				i2c_free_callback(i2c_num, EC_ERROR_UNKNOWN);
-			}
-			return EC_ERROR_UNKNOWN;
-		}
-	} else {
-		/**
-		 * If there is nothing to transmit to the EC HOST, then default
-		 * to clock stretching.
-		 */
-		if (req->tx_len == -1)
-			return EC_SUCCESS;
-		/**
-		 * The EC HOST is requesting more that we are able to transmit.
-		 * Fulfill the EC HOST reading of extra bytes by sending the
-		 * EC_PADDING_BYTE.
-		 */
-		if (!(i2c->status & MXC_F_I2C_STATUS_TX_FULL)) {
-			i2c->fifo = EC_PADDING_BYTE;
-		}
-		/* set tx threshold to zero */
-		i2c->tx_ctrl0 =
-			((i2c->tx_ctrl0 & ~(MXC_F_I2C_TX_CTRL0_TX_THRESH)) |
-			 (0) << MXC_F_I2C_TX_CTRL0_TX_THRESH_POS);
-		/* Enable TXTH interrupt and Error interrupts */
-		i2c->int_en0 |= (MXC_F_I2C_INT_EN0_TX_THRESH | I2C_ERROR);
-	}
-	return EC_SUCCESS;
-}
-
-/**
- * i2c_slave_write() - Handles async write request from the I2c master.
- * @i2c: I2C peripheral pointer.
- * @req: Pointer to the request info.
- * @int_flags: Current state of the interrupt flags for this request.
- *
- * Return EC_SUCCESS if successful, otherwise returns a common error code.
- */
-static int i2c_slave_write(mxc_i2c_regs_t *i2c, i2c_req_t *req,
-			   uint32_t int_flags)
-{
-	int i2c_num;
-
-	/**
-	 * Master Write has been called and if there is a
-	 * rx_data buffer
-	 */
-	i2c_num = MXC_I2C_GET_IDX(i2c);
-	req->direction = I2C_TRANSFER_DIRECTION_MASTER_WRITE;
-	if (slave_rx_remain != 0) {
-		/* Read out any data in the RX FIFO. */
-		while ((slave_rx_remain > 0) &&
-		       !(i2c->status & MXC_F_I2C_STATUS_RX_EMPTY)) {
-			*(req->rx_data)++ = i2c->fifo;
-			req->rx_num++;
-			slave_rx_remain--;
-		}
-		/* Set the RX threshold interrupt level. */
-		if (slave_rx_remain >= (MXC_I2C_FIFO_DEPTH - 1)) {
-			i2c->rx_ctrl0 =
-				((i2c->rx_ctrl0 &
-				  ~(MXC_F_I2C_RX_CTRL0_RX_THRESH)) |
-				 (MXC_I2C_FIFO_DEPTH - 1)
-					 << MXC_F_I2C_RX_CTRL0_RX_THRESH_POS);
-		} else {
-			i2c->rx_ctrl0 =
-				((i2c->rx_ctrl0 &
-				  ~(MXC_F_I2C_RX_CTRL0_RX_THRESH)) |
-				 (slave_rx_remain)
-					 << MXC_F_I2C_RX_CTRL0_RX_THRESH_POS);
-		}
-		/* Enable RXTH interrupt and Error interrupts. */
-		i2c->int_en0 |= (MXC_F_I2C_INT_EN0_RX_THRESH | I2C_ERROR);
-		if (int_flags & I2C_ERROR) {
-			i2c->int_en0 = 0;
-			/**
-			 * Calculate the number of bytes sent
-			 * by the slave.
-			 */
-			req->tx_num =
-				states[i2c_num].num_wr -
-				((i2c->tx_ctrl1 & MXC_F_I2C_TX_CTRL1_TX_FIFO) >>
-				 MXC_F_I2C_TX_CTRL1_TX_FIFO_POS);
-
-			if (!req->sw_autoflush_disable) {
-				/* Manually clear the TXFIFO. */
-				i2c->tx_ctrl0 |= MXC_F_I2C_TX_CTRL0_TX_FLUSH;
-			}
-			states[i2c_num].num_wr = 0;
-			if (req->callback != NULL) {
-				/* Disable and clear interrupts. */
-				i2c->int_en0 = 0;
-				i2c->int_en1 = 0;
-				i2c->int_fl0 = i2c->int_fl0;
-				i2c->int_fl1 = i2c->int_fl1;
-				/* Cycle the I2C peripheral enable on error. */
-				i2c->ctrl = 0;
-				i2c->ctrl = MXC_F_I2C_CTRL_I2C_EN;
-				i2c_free_callback(i2c_num, EC_ERROR_UNKNOWN);
-			}
-			return EC_ERROR_UNKNOWN;
-		}
-	} else {
-		/* Disable RXTH interrupt. */
-		i2c->int_en0 &= ~(MXC_F_I2C_INT_EN0_RX_THRESH);
-		/* Flush any extra bytes in the RXFIFO */
-		i2c->rx_ctrl0 |= MXC_F_I2C_RX_CTRL0_RX_FLUSH;
-		/* Store the current state of the slave */
-		states[i2c_num].slave_state = I2C_SLAVE_READ_COMPLETE;
-	}
-	return EC_SUCCESS;
-}
-
-static void i2c_slave_handler(mxc_i2c_regs_t *i2c)
-{
-	uint32_t int_flags;
-	int i2c_num;
-	i2c_req_t *req;
-	int status;
-
-	i2c_num = MXC_I2C_GET_IDX(i2c);
-	req = states[i2c_num].req;
-
-	/* Check for an Address match */
-	if (i2c->int_fl0 & MXC_F_I2C_INT_FL0_ADDR_MATCH) {
-		/* Clear AMI and TXLOI */
-		i2c->int_fl0 |= MXC_F_I2C_INT_FL0_DONE;
-		i2c->int_fl0 |= MXC_F_I2C_INT_FL0_ADDR_MATCH;
-		i2c->int_fl0 |= MXC_F_I2C_INT_FL0_TX_LOCK_OUT;
-		/* Store the current state of the Slave */
-		states[i2c_num].slave_state = I2C_SLAVE_ADDR_MATCH;
-		/* Set the Done, Stop interrupt */
-		i2c->int_en0 |= MXC_F_I2C_INT_EN0_DONE | MXC_F_I2C_INT_EN0_STOP;
-		/* Inhibit sleep mode when addressed until STOPF flag is set */
-		disable_sleep(SLEEP_MASK_I2C_SLAVE);
-	}
-
-	/* Check for errors */
-	int_flags = i2c->int_fl0;
-	/* Clear the interrupts */
-	i2c->int_fl0 = int_flags;
-
-	if (int_flags & I2C_ERROR) {
-		i2c->int_en0 = 0;
-		/* Calculate the number of bytes sent by the slave */
-		req->tx_num = states[i2c_num].num_wr -
-			      ((i2c->tx_ctrl1 & MXC_F_I2C_TX_CTRL1_TX_FIFO) >>
-			       MXC_F_I2C_TX_CTRL1_TX_FIFO_POS);
-
-		if (!req->sw_autoflush_disable) {
-			/* Manually clear the TXFIFO */
-			i2c->tx_ctrl0 |= MXC_F_I2C_TX_CTRL0_TX_FLUSH;
-		}
-		states[i2c_num].num_wr = 0;
-		if (req->callback != NULL) {
-			/* Disable and clear interrupts */
-			i2c->int_en0 = 0;
-			i2c->int_en1 = 0;
-			i2c->int_fl0 = i2c->int_fl0;
-			i2c->int_fl1 = i2c->int_fl1;
-			/* Cycle the I2C peripheral enable on error. */
-			i2c->ctrl = 0;
-			i2c->ctrl = MXC_F_I2C_CTRL_I2C_EN;
-			i2c_free_callback(i2c_num, EC_ERROR_UNKNOWN);
-		}
-		return;
-	}
-
-	slave_rx_remain = req->rx_len - req->rx_num;
-	/* determine if there is any data ready to transmit to the EC HOST */
-	if (req->tx_len != -1) {
-		slave_tx_remain = req->tx_len - states[i2c_num].num_wr;
-	} else {
-		slave_tx_remain = 0;
-	}
-
-	/* Check for Stop interrupt */
-	if (int_flags & MXC_F_I2C_INT_FL0_STOP) {
-		/* Disable all interrupts except address match. */
-		i2c->int_en1 = 0;
-		i2c->int_en0 = MXC_F_I2C_INT_EN0_ADDR_MATCH;
-		/* Clear all interrupts except a possible address match. */
-		i2c->int_fl0 = i2c->int_fl0 & ~MXC_F_I2C_INT_FL0_ADDR_MATCH;
-		i2c->int_fl1 = i2c->int_fl1;
-		if (req->direction == I2C_TRANSFER_DIRECTION_MASTER_WRITE) {
-			/* Read out any data in the RX FIFO */
-			while (!(i2c->status & MXC_F_I2C_STATUS_RX_EMPTY)) {
-				*(req->rx_data)++ = i2c->fifo;
-				req->rx_num++;
-			}
-		}
-
-		/* Calculate the number of bytes sent by the slave */
-		req->tx_num = states[i2c_num].num_wr -
-			      ((i2c->tx_ctrl1 & MXC_F_I2C_TX_CTRL1_TX_FIFO) >>
-			       MXC_F_I2C_TX_CTRL1_TX_FIFO_POS);
-		slave_rx_remain = 0;
-		slave_tx_remain = 0;
-		if (!req->sw_autoflush_disable) {
-			/* Manually clear the TXFIFO */
-			i2c->tx_ctrl0 |= MXC_F_I2C_TX_CTRL0_TX_FLUSH;
-		}
-		/* Callback to the EC request processor */
-		i2c_free_callback(i2c_num, EC_SUCCESS);
-		req->direction = I2C_TRANSFER_DIRECTION_NONE;
-		states[i2c_num].num_wr = 0;
-
-		/* Be ready to receive more data */
-		req->rx_len = 128;
-		/* Clear the byte counters */
-		req->tx_num = 0;
-		req->rx_num = 0;
-		req->tx_len = -1; /* Nothing to send. */
-
-		/* No longer inhibit deep sleep after stop condition */
-		enable_sleep(SLEEP_MASK_I2C_SLAVE);
-		return;
-	}
-
-	/* Check for DONE interrupt */
-	if (int_flags & MXC_F_I2C_INT_FL0_DONE) {
-		if (req->direction == I2C_TRANSFER_DIRECTION_MASTER_WRITE) {
-			/* Read out any data in the RX FIFO */
-			while (!(i2c->status & MXC_F_I2C_STATUS_RX_EMPTY)) {
-				*(req->rx_data)++ = i2c->fifo;
-				req->rx_num++;
-			}
-		}
-		/* Disable Done interrupt */
-		i2c->int_en0 &= ~(MXC_F_I2C_INT_EN0_DONE);
-		/* Calculate the number of bytes sent by the slave */
-		req->tx_num = states[i2c_num].num_wr -
-			      ((i2c->tx_ctrl1 & MXC_F_I2C_TX_CTRL1_TX_FIFO) >>
-			       MXC_F_I2C_TX_CTRL1_TX_FIFO_POS);
-		slave_rx_remain = 0;
-		slave_tx_remain = 0;
-		if (!req->sw_autoflush_disable) {
-			/* Manually clear the TXFIFO */
-			i2c->tx_ctrl0 |= MXC_F_I2C_TX_CTRL0_TX_FLUSH;
-		}
-		i2c_free_callback(i2c_num, EC_SUCCESS);
-		req->direction = I2C_TRANSFER_DIRECTION_NONE;
-		states[i2c_num].num_wr = 0;
-		return;
-	}
-
-	if (states[i2c_num].slave_state != I2C_SLAVE_ADDR_MATCH) {
-		return;
-	}
-	/**
-	 * Check if Master Read has been called and if there is a
-	 * tx_data buffer
-	 */
-	if (i2c->ctrl & MXC_F_I2C_CTRL_READ) {
-		status = i2c_slave_read(i2c, req, int_flags);
-		if (status != EC_SUCCESS) {
-			return;
-		}
-	} else {
-		status = i2c_slave_write(i2c, req, int_flags);
-		if (status != EC_SUCCESS) {
-			return;
-		}
-	}
-}
-
-/**
- * i2c_handler() - I2C interrupt handler.
- * @i2c: Base address of the I2C module.
- *
- * This function should be called by the application from the interrupt
- * handler if I2C interrupts are enabled. Alternately, this function
- * can be periodically called by the application if I2C interrupts are
- * disabled.
- */
-static void i2c_handler(mxc_i2c_regs_t *i2c)
-{
-	i2c_slave_handler(i2c);
-}
-
-static void i2c_free_callback(int i2c_num, int error)
-{
-	/* Save the request */
-	i2c_req_t *temp_req = states[i2c_num].req;
-
-	/* Callback if not NULL */
-	if (temp_req->callback != NULL) {
-		temp_req->callback(temp_req, error);
-	}
 }
