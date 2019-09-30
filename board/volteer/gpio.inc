@@ -47,6 +47,10 @@ GPIO(EC_PCH_INT_ODL,           PIN(D, 6), GPIO_ODR_HIGH) /* TODO - b/140557015 -
 /* USB and USBC Signals */
 
 /* Misc Signals */
+/* This selects between an LED module on the motherboard and one on the daughter
+ * board, to be controlled by LED{1,2,3}. Select the one on the motherboard by
+ * default. */
+GPIO(LED_SIDESEL_4_L,          PIN(6, 0), GPIO_OUT_LOW)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(EC_I2C0_SENSOR_SCL,       PIN(B, 5), GPIO_INPUT | GPIO_SEL_1P8V)
@@ -69,6 +73,8 @@ ALTERNATE(PIN_MASK(8, BIT(7)), 0, MODULE_I2C, 0)                                
 ALTERNATE(PIN_MASK(D, BIT(1) | BIT(0)), 0, MODULE_I2C, 0)                            /* I2C3 */
 ALTERNATE(PIN_MASK(3, BIT(3) | BIT(6)), 0, MODULE_I2C, 0)                            /* I2C5 */
 ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                            /* I2C7 */
+
+ALTERNATE(PIN_MASK(C, BIT(2) | BIT(3) | BIT(4)), 0, MODULE_PWM, 0)                   /* LED{3,2,1}_L */
 
 /* UART */
 ALTERNATE(PIN_MASK(6, BIT(5) | BIT(4)), 0, MODULE_UART, 0)                           /* UART from EC to Servo */
