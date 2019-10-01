@@ -144,6 +144,7 @@ driver-$(CONFIG_USB_MUX_PS8743)+=usb_mux/ps874x.o
 driver-$(CONFIG_USB_MUX_VIRTUAL)+=usb_mux/virtual.o
 
 # Type-C Power Path Controllers (PPC)
+driver-$(CONFIG_USBC_PPC_AOZ1380)+=ppc/aoz1380.o
 driver-$(CONFIG_USBC_PPC_SN5S330)+=ppc/sn5s330.o
 ifeq ($(CONFIG_USBC_PPC_NX20P3481)$(CONFIG_USBC_PPC_NX20P3483),y)
 driver-y += ppc/nx20p348x.o

@@ -3872,6 +3872,7 @@
 #undef CONFIG_USBC_DISABLE_CHARGE_FROM_RP_DEF
 
 /* USB Type-C Power Path Controllers (PPC) */
+#undef CONFIG_USBC_PPC_AOZ1380
 #undef CONFIG_USBC_PPC_NX20P3481
 #undef CONFIG_USBC_PPC_NX20P3483
 #undef CONFIG_USBC_PPC_SN5S330
@@ -4526,7 +4527,9 @@
 
 /*****************************************************************************/
 /* Define CONFIG_USBC_PPC if board has a USB Type-C Power Path Controller. */
-#if defined(CONFIG_USBC_PPC_SN5S330) || defined(CONFIG_USBC_PPC_NX20P3483)
+#if defined(CONFIG_USBC_PPC_AOZ1380) || \
+	defined(CONFIG_USBC_PPC_NX20P3483) || \
+	defined(CONFIG_USBC_PPC_SN5S330)
 #define CONFIG_USBC_PPC
 #endif /* "has a PPC" */
 
