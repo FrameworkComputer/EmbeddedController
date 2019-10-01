@@ -119,6 +119,7 @@ common-$(CONFIG_ROLLBACK)+=rollback.o
 common-$(CONFIG_RWSIG)+=rwsig.o vboot/common.o
 common-$(CONFIG_RWSIG_TYPE_RWSIG)+=vboot/vb21_lib.o
 common-$(CONFIG_MATH_UTIL)+=math_util.o
+common-$(CONFIG_ONLINE_CALIB)+=stillness_detector.o
 common-$(CONFIG_SHA1)+= sha1.o
 common-$(CONFIG_SHA256)+=sha256.o
 common-$(CONFIG_SOFTWARE_CLZ)+=clz.o
