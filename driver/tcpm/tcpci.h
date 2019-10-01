@@ -18,22 +18,23 @@
 #define TCPC_REG_TC_REV            0x6
 #define TCPC_REG_PD_REV            0x8
 #define TCPC_REG_PD_INT_REV        0xa
-#define TCPC_REG_ALERT             0x10
 
+#define TCPC_REG_ALERT             0x10
 #define TCPC_REG_ALERT_MASK_ALL     0xffff
-#define TCPC_REG_ALERT_VENDOR_DEF   (1<<15)
-#define TCPC_REG_ALERT_VBUS_DISCNCT (1<<11)
-#define TCPC_REG_ALERT_RX_BUF_OVF   (1<<10)
-#define TCPC_REG_ALERT_FAULT        (1<<9)
-#define TCPC_REG_ALERT_V_ALARM_LO   (1<<8)
-#define TCPC_REG_ALERT_V_ALARM_HI   (1<<7)
-#define TCPC_REG_ALERT_TX_SUCCESS   (1<<6)
-#define TCPC_REG_ALERT_TX_DISCARDED (1<<5)
-#define TCPC_REG_ALERT_TX_FAILED    (1<<4)
-#define TCPC_REG_ALERT_RX_HARD_RST  (1<<3)
-#define TCPC_REG_ALERT_RX_STATUS    (1<<2)
-#define TCPC_REG_ALERT_POWER_STATUS (1<<1)
-#define TCPC_REG_ALERT_CC_STATUS    (1<<0)
+#define TCPC_REG_ALERT_VENDOR_DEF   BIT(15)
+#define TCPC_REG_ALERT_ALERT_EXT    BIT(14)
+#define TCPC_REG_ALERT_VBUS_DISCNCT BIT(11)
+#define TCPC_REG_ALERT_RX_BUF_OVF   BIT(10)
+#define TCPC_REG_ALERT_FAULT        BIT(9)
+#define TCPC_REG_ALERT_V_ALARM_LO   BIT(8)
+#define TCPC_REG_ALERT_V_ALARM_HI   BIT(7)
+#define TCPC_REG_ALERT_TX_SUCCESS   BIT(6)
+#define TCPC_REG_ALERT_TX_DISCARDED BIT(5)
+#define TCPC_REG_ALERT_TX_FAILED    BIT(4)
+#define TCPC_REG_ALERT_RX_HARD_RST  BIT(3)
+#define TCPC_REG_ALERT_RX_STATUS    BIT(2)
+#define TCPC_REG_ALERT_POWER_STATUS BIT(1)
+#define TCPC_REG_ALERT_CC_STATUS    BIT(0)
 #define TCPC_REG_ALERT_TX_COMPLETE  (TCPC_REG_ALERT_TX_SUCCESS | \
 				      TCPC_REG_ALERT_TX_DISCARDED | \
 				      TCPC_REG_ALERT_TX_FAILED)
@@ -41,6 +42,7 @@
 #define TCPC_REG_ALERT_MASK        0x12
 #define TCPC_REG_POWER_STATUS_MASK 0x14
 #define TCPC_REG_FAULT_STATUS_MASK 0x15
+
 #define TCPC_REG_CONFIG_STD_OUTPUT 0x18
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK          (3 << 2)
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_NONE          (0 << 2)
@@ -65,9 +67,10 @@
 #define TCPC_REG_FAULT_CTRL_VBUS_OVP_FAULT_DIS         BIT(1)
 
 #define TCPC_REG_POWER_CTRL        0x1c
-#define TCPC_REG_POWER_CTRL_FORCE_DISCHARGE            BIT(2)
-#define TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT  BIT(4)
+#define TCPC_REG_POWER_CTRL_FRS_ENABLE                 BIT(7)
 #define TCPC_REG_POWER_CTRL_VBUS_VOL_MONITOR_DIS       BIT(6)
+#define TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT  BIT(4)
+#define TCPC_REG_POWER_CTRL_FORCE_DISCHARGE            BIT(2)
 #define TCPC_REG_POWER_CTRL_SET(vconn) (vconn)
 #define TCPC_REG_POWER_CTRL_VCONN(reg)    ((reg) & 0x1)
 
@@ -81,10 +84,16 @@
 
 #define TCPC_REG_POWER_STATUS      0x1e
 #define TCPC_REG_POWER_STATUS_MASK_ALL  0xff
-#define TCPC_REG_POWER_STATUS_VBUS_PRES (1<<2)
-#define TCPC_REG_POWER_STATUS_VBUS_DET  (1<<3)
-#define TCPC_REG_POWER_STATUS_UNINIT    (1<<6)
+#define TCPC_REG_POWER_STATUS_UNINIT    BIT(6)
+#define TCPC_REG_POWER_STATUS_VBUS_DET  BIT(3)
+#define TCPC_REG_POWER_STATUS_VBUS_PRES BIT(2)
+
 #define TCPC_REG_FAULT_STATUS      0x1f
+
+#define TCPC_REG_ALERT_EXT         0x21
+#define TCPC_REG_ALERT_EXT_TIMER_EXPIRED        BIT(2)
+#define TCPC_REG_ALERT_EXT_SRC_FRS              BIT(1)
+#define TCPC_REG_ALERT_EXT_SNK_FRS              BIT(0)
 
 #define TCPC_REG_COMMAND           0x23
 #define TCPC_REG_COMMAND_ENABLE_VBUS_DETECT      0x33
@@ -96,9 +105,15 @@
 #define TCPC_REG_COMMAND_I2CIDLE                 0xFF
 
 #define TCPC_REG_DEV_CAP_1         0x24
+
 #define TCPC_REG_DEV_CAP_2         0x26
+#define TCPC_REG_DEV_CAP_2_SNK_FR_SWAP           BIT(9)
+
 #define TCPC_REG_STD_INPUT_CAP     0x28
 #define TCPC_REG_STD_OUTPUT_CAP    0x29
+
+#define TCPC_REG_CONFIG_EXT_1      0x2A
+#define TCPC_REG_CONFIG_EXT_1_FR_SWAP_SNK_DIR	BIT(1)
 
 #define TCPC_REG_MSG_HDR_INFO      0x2e
 #define TCPC_REG_MSG_HDR_INFO_SET(drole, prole) \
@@ -170,5 +185,7 @@ int tcpci_get_chip_info(int port, int live,
 int tcpci_tcpm_set_snk_ctrl(int port, int enable);
 int tcpci_tcpm_set_src_ctrl(int port, int enable);
 #endif
+
+void tcpci_tcpc_fast_role_swap_enable(int port, int enable);
 
 #endif /* __CROS_EC_USB_PD_TCPM_TCPCI_H */

@@ -146,6 +146,7 @@ int tcpc_xfer_unlocked(int port, const uint8_t *out, int out_size,
 
 static int init_alert_mask(int port)
 {
+	int rv;
 	uint16_t mask;
 
 	/*
@@ -160,7 +161,17 @@ static int init_alert_mask(int port)
 #endif
 		;
 	/* Set the alert mask in TCPC */
-	return tcpc_write16(port, TCPC_REG_ALERT_MASK, mask);
+	rv = tcpc_write16(port, TCPC_REG_ALERT_MASK, mask);
+
+	if (IS_ENABLED(CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP)) {
+		if (rv)
+			return rv;
+
+		/* Sink FRS allowed */
+		mask = TCPC_REG_ALERT_EXT_SNK_FRS;
+		rv = tcpc_write(port, TCPC_REG_ALERT_EXT, mask);
+	}
+	return rv;
 }
 
 static int clear_alert_mask(int port)
@@ -345,6 +356,12 @@ static int tcpm_alert_status(int port, int *alert)
 	return tcpc_read16(port, TCPC_REG_ALERT, alert);
 }
 
+static int tcpm_alert_ext_status(int port, int *alert_ext)
+{
+	/* Read TCPC Extended Alert register */
+	return tcpc_read(port, TCPC_REG_ALERT_EXT, alert_ext);
+}
+
 int tcpci_tcpm_set_rx_enable(int port, int enable)
 {
 	int detect_sop_en = 0;
@@ -370,6 +387,23 @@ int tcpci_tcpm_set_rx_enable(int port, int enable)
 	/* If enable, then set RX detect for SOP and HRST */
 	return tcpc_write(port, TCPC_REG_RX_DETECT, detect_sop_en);
 }
+
+#ifdef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
+void tcpci_tcpc_fast_role_swap_enable(int port, int enable)
+{
+	int reg;
+
+	if (tcpc_read(port, TCPC_REG_POWER_CTRL, &reg))
+		return;
+
+	if (enable)
+		reg |= TCPC_REG_POWER_CTRL_FRS_ENABLE;
+	else
+		reg &= ~TCPC_REG_POWER_CTRL_FRS_ENABLE;
+
+	tcpc_write(port, TCPC_REG_POWER_CTRL, reg);
+}
+#endif
 
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 int tcpci_tcpm_get_vbus_level(int port)
@@ -579,11 +613,16 @@ static int register_mask_reset(int port)
 void tcpci_tcpc_alert(int port)
 {
 	int status = 0;
+	int alert_ext = 0;
 	int failed_attempts;
 	uint32_t pd_event = 0;
 
 	/* Read the Alert register from the TCPC */
 	tcpm_alert_status(port, &status);
+
+	/* Get Extended Alert register if needed */
+	if (status & TCPC_REG_ALERT_ALERT_EXT)
+		tcpm_alert_ext_status(port, &alert_ext);
 
 	/*
 	 * Check for TX complete first b/c PD state machine waits on TX
@@ -644,6 +683,10 @@ void tcpci_tcpc_alert(int port)
 		pd_execute_hard_reset(port);
 		pd_event |= TASK_EVENT_WAKE;
 	}
+
+	if (IS_ENABLED(CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP)
+	    && (alert_ext & TCPC_REG_ALERT_EXT_SNK_FRS))
+		pd_got_frs_signal(port);
 
 #ifndef CONFIG_USB_PD_TCPC_LOW_POWER
 	/*
