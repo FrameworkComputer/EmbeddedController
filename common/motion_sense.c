@@ -1075,13 +1075,20 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 		out->info.location = sensor->location;
 		out->info.chip = sensor->chip;
+		if (args->version < 3)
+			args->response_size = sizeof(out->info);
 		if (args->version >= 3) {
 			out->info_3.min_frequency = sensor->min_frequency;
 			out->info_3.max_frequency = sensor->max_frequency;
 			out->info_3.fifo_max_event_count = MAX_FIFO_EVENT_COUNT;
 			args->response_size = sizeof(out->info_3);
-		} else {
-			args->response_size = sizeof(out->info);
+		}
+		if (args->version >= 4) {
+			if (IS_ENABLED(CONFIG_ONLINE_CALIB) &&
+			    sensor->drv->read_temp)
+				out->info_4.flags |=
+					MOTION_SENSE_CMD_INFO_FLAG_ONLINE_CALIB;
+			args->response_size = sizeof(out->info_4);
 		}
 		break;
 
@@ -1414,9 +1421,9 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-DECLARE_HOST_COMMAND(EC_CMD_MOTION_SENSE_CMD,
-		     host_cmd_motion_sense,
-		     EC_VER_MASK(1) | EC_VER_MASK(2) | EC_VER_MASK(3));
+DECLARE_HOST_COMMAND(EC_CMD_MOTION_SENSE_CMD, host_cmd_motion_sense,
+		     EC_VER_MASK(1) | EC_VER_MASK(2) | EC_VER_MASK(3) |
+			     EC_VER_MASK(4));
 
 /*****************************************************************************/
 /* Console commands */

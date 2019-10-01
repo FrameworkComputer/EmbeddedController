@@ -2775,6 +2775,11 @@ struct ec_params_motion_sense {
 	};
 } __ec_todo_packed;
 
+enum motion_sense_cmd_info_flags {
+	/* The sensor supports online calibration */
+	MOTION_SENSE_CMD_INFO_FLAG_ONLINE_CALIB = BIT(0),
+};
+
 struct ec_response_motion_sense {
 	union {
 		/* Used for MOTIONSENSE_CMD_DUMP */
@@ -2824,6 +2829,33 @@ struct ec_response_motion_sense {
 			/* Max number of sensor events that could be in fifo */
 			uint32_t fifo_max_event_count;
 		} info_3;
+
+		/* Used for MOTIONSENSE_CMD_INFO version 4 */
+		struct __ec_align4 {
+			/* Should be element of enum motionsensor_type. */
+			uint8_t type;
+
+			/* Should be element of enum motionsensor_location. */
+			uint8_t location;
+
+			/* Should be element of enum motionsensor_chip. */
+			uint8_t chip;
+
+			/* Minimum sensor sampling frequency */
+			uint32_t min_frequency;
+
+			/* Maximum sensor sampling frequency */
+			uint32_t max_frequency;
+
+			/* Max number of sensor events that could be in fifo */
+			uint32_t fifo_max_event_count;
+
+			/*
+			 * Should be elements of
+			 * enum motion_sense_cmd_info_flags
+			 */
+			uint32_t flags;
+		} info_4;
 
 		/* Used for MOTIONSENSE_CMD_DATA */
 		struct ec_response_motion_sensor_data data;

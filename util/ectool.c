@@ -4756,11 +4756,15 @@ static int cmd_motionsense(int argc, char **argv)
 
 		if (version >= 3) {
 			printf("Min Frequency:              %d mHz\n",
-					resp->info_3.min_frequency);
+				resp->info_3.min_frequency);
 			printf("Max Frequency:              %d mHz\n",
-					resp->info_3.max_frequency);
+				resp->info_3.max_frequency);
 			printf("FIFO Max Event Count:       %d\n",
-					resp->info_3.fifo_max_event_count);
+				resp->info_3.fifo_max_event_count);
+		}
+		if (version >= 4) {
+			printf("Flags:                      %d\n",
+			       resp->info_4.flags);
 		}
 		return 0;
 	}
