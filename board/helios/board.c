@@ -117,6 +117,18 @@ static void board_lid_interrupt(enum gpio_signal signal)
 	lid_interrupt(signal);
 }
 
+static void board_gmr_tablet_switch_isr(enum gpio_signal signal)
+{
+	/*
+	 * For board version more than 2, the DUT support GMR sensor.
+	 * Else, blocked tablet_mode interrupt.
+	 */
+	if (get_board_id() < 2)
+		return;
+
+	gmr_tablet_switch_isr(signal);
+}
+
 #include "gpio_list.h" /* Must come after other header files. */
 
 /******************************************************************************/
