@@ -231,7 +231,7 @@ static int nx20p348x_init(int port)
 	/* Mask interrupts for interrupt 1 register */
 	mask = ~(NX20P348X_INT1_OC_5VSRC | NX20P348X_INT1_SC_5VSRC |
 		 NX20P348X_INT1_RCP_5VSRC | NX20P348X_INT1_DBEXIT_ERR);
-#ifdef CONFIG_USBC_PPC_NX20P3481
+#if defined(CONFIG_USBC_PPC_NX20P3481) || defined(CONFIG_USBC_PPC_NX20P3483)
 	/* Unmask Fast Role Swap detect interrupt */
 	mask &= ~NX20P348X_INT1_FRS_DET;
 #endif
