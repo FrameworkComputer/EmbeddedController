@@ -44,6 +44,7 @@ struct nvmem_test_result {
 	int unexpected_count;
 	size_t valid_data_size;
 	size_t erased_data_size;
+	size_t tuple_data_size;
 };
 
 static struct nvmem_test_result test_result;
@@ -120,6 +121,7 @@ static void dump_nvmem_state(const char *title,
 	ccprintf("deimiter_count: %d\n", tr->delimiter_count);
 	ccprintf("unexpected_count: %d\n", tr->unexpected_count);
 	ccprintf("valid_data_size: %zd\n", tr->valid_data_size);
+	ccprintf("tuple_data_size: %zd\n", tr->tuple_data_size);
 	ccprintf("erased_data_size: %zd\n\n", tr->erased_data_size);
 }
 
@@ -169,6 +171,8 @@ static int iterate_over_flash(void)
 		case NN_OBJ_TUPLE:
 			test_result.var_count++;
 			test_result.valid_data_size += ch->size;
+			test_result.tuple_data_size += ch->size -
+				sizeof(struct tuple);
 			break;
 
 		case NN_OBJ_TPM_RESERVED:
@@ -362,9 +366,11 @@ static int test_nvmem_save(void)
 	TEST_ASSERT(iterate_over_flash() == EC_SUCCESS);
 
 	/* Remove changes caused by the new var addition. */
-	test_result.var_count -= 1;
 	test_result.delimiter_count -= 1;
 	test_result.valid_data_size -= total_var_size;
+	test_result.tuple_data_size -= total_var_size -
+		sizeof(struct tuple) * test_result.var_count;
+	test_result.var_count -= 1;
 
 	TEST_ASSERT(memcmp(&test_result, &old_result, sizeof(test_result)) ==
 		    0);
@@ -622,6 +628,53 @@ static int test_var_read_write_delete(void)
 
 	return EC_SUCCESS;
 }
+
+static int test_nvmem_tuple_capacity(void)
+{
+	char key[5];
+	char value[18];
+	int rv;
+
+	/* Does not matter, but for consistency let's init key and value. */
+	memset(key, 0, sizeof(key));
+	memset(value, 0, sizeof(value));
+
+	TEST_ASSERT(post_init_from_scratch(0xff) == EC_SUCCESS);
+
+	/* Fill up var space until it is full. */
+	while (1) {
+		rv = setvar(key, sizeof(key), value, sizeof(value) - 1);
+		if (rv != EC_SUCCESS)
+			break;
+		key[0]++;
+	}
+	TEST_ASSERT(rv == EC_ERROR_OVERFLOW);
+	iterate_over_flash();
+
+	/*
+	 * Verify that total variable size is as expected. We know that the
+	 * allotted space will not exactly fit a number of tuples, so the
+	 * check is that the total tuple data size is smaller than the space.
+	 *
+	 * If some parameters change in the future such that this assumption
+	 * becomes wrong, the test in the next line would fail.
+	 */
+	TEST_ASSERT(test_result.tuple_data_size < MAX_VAR_TOTAL_SPACE);
+	TEST_ASSERT((MAX_VAR_TOTAL_SPACE - test_result.tuple_data_size) <
+		    (sizeof(key) + sizeof(value) - 1));
+
+	/*
+	 * Verify that it is still possible to modify a variable when storage
+	 * is almost full and the new value is larger than the old value.
+	 */
+	key[0]--;
+	value[0]++;
+	TEST_ASSERT(setvar(key, sizeof(key),
+			   value, sizeof(value)) == EC_SUCCESS);
+
+	return EC_SUCCESS;
+}
+
 /* Verify that nvmem_erase_user_data only erases the given user's data. */
 static int test_nvmem_erase_tpm_data(void)
 {
@@ -1502,6 +1555,7 @@ void run_test(void)
 	RUN_TEST(test_nvmem_incomplete_transaction);
 	RUN_TEST(test_nvmem_tuple_updates);
 	failure_mode = TEST_NO_FAILURE; /* In case the above test failed. */
+	RUN_TEST(test_nvmem_tuple_capacity);
 	RUN_TEST(test_nvmem_interrupted_compaction);
 	failure_mode = TEST_NO_FAILURE; /* In case the above test failed. */
 
