@@ -147,7 +147,7 @@ static int command_ch(int argc, char **argv)
 	/* Print the list of channels */
 	ccputs(" # Mask     E Channel\n");
 	for (i = 0; i < CC_CHANNEL_COUNT; i++) {
-		ccprintf("%2d %08lx %c %s\n",
+		ccprintf("%2d %08x %c %s\n",
 			 i, CC_MASK(i),
 			 (channel_mask & CC_MASK(i)) ? '*' : ' ',
 			 channel_names[i]);

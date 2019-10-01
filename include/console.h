@@ -92,10 +92,10 @@ enum console_channel {
 };
 
 /* Mask in channel_mask for a particular channel */
-#define CC_MASK(channel)	(1UL << (channel))
+#define CC_MASK(channel)	(1U << (channel))
 
 /* Mask to use to enable all channels */
-#define CC_ALL			0xffffffffUL
+#define CC_ALL			0xffffffffU
 
 /**
  * Put a string to the console channel.
