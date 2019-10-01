@@ -230,17 +230,6 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			 * %z - size_t
 			 */
 			if (c == 'l') {
-
-				/*
-				 * For just this commit, allow both %l and %ll
-				 * to be 64-bit. This is obviously wrong, but
-				 * enables this change to be cherry-picked
-				 * into firmware branches without changing
-				 * semantics for any existing printf calls.
-				 * This is removed in the subsequent commit on
-				 * master.
-				 */
-				flags |= PF_64BIT;
 				if (sizeof(long) == sizeof(uint64_t))
 					flags |= PF_64BIT;
 

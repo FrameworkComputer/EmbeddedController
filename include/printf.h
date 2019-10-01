@@ -35,7 +35,7 @@
  * useful for printing times, voltages, and currents.
  *
  * Length may be:
- *   - 'l'  = integer is 64-bit instead of native 32-bit
+ *   - 'l'  = integer is sizeof(long) (still 32 bits on 32-bit ECs)
  *   - 'll' = integer is 64-bit
  *   - 'z'  = integer is sizeof(size_t)
  *
