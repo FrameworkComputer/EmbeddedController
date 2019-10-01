@@ -265,7 +265,7 @@ int chip_i2c_xfer(const int port,
 	    (((reg & (STS_BER | STS_LAB)) || !(reg & STS_NBB)) ||
 			    (get_line_level(controller)
 			    != I2C_LINE_IDLE))) {
-		CPRINTS("i2c%s bad status 0x%02x, SCL=%ld, SDA=%ld",
+		CPRINTS("i2c%s bad status 0x%02x, SCL=%d, SDA=%d",
 			i2c_port_names[port], reg,
 			get_line_level(controller) & I2C_LINE_SCL_HIGH,
 			get_line_level(controller) & I2C_LINE_SDA_HIGH);
