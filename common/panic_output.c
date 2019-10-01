@@ -194,12 +194,12 @@ static int command_crash(int argc, char **argv)
 		volatile int zero = 0;
 
 		cflush();
-		ccprintf("%08lx", (long)1 / zero);
+		ccprintf("%08x", 1 / zero);
 	} else if (!strcasecmp(argv[1], "udivzero")) {
 		volatile int zero = 0;
 
 		cflush();
-		ccprintf("%08lx", (unsigned long)1 / zero);
+		ccprintf("%08x", 1 / zero);
 #ifdef CONFIG_CMD_STACKOVERFLOW
 	} else if (!strcasecmp(argv[1], "stack")) {
 		stack_overflow_recurse(1);

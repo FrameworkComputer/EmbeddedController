@@ -174,12 +174,9 @@ test_static int test_vsnprintf_int(void)
 	T(expect_success("  0.00123", "%9.5d",   123));
 	T(expect_success(" +0.00123", "%+9.5d",  123));
 
-	T(expect_success("-1",        "%ld",    (int64_t)-1));
-	T(expect_success("4294967295", "%ld",   (uint32_t)-1));
-
 	T(expect_success("123",        "%u",    123));
 	T(expect_success("4294967295", "%u",   -1));
-	T(expect_success("18446744073709551615", "%lu", (uint64_t)-1));
+	T(expect_success("18446744073709551615", "%llu", (uint64_t)-1));
 
 	T(expect_success("0",         "%x",     0));
 	T(expect_success("0",         "%X",     0));

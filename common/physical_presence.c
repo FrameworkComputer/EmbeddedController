@@ -298,7 +298,7 @@ static void pp_test_callback(void)
 static int command_ppresence(int argc, char **argv)
 {
 	/* Print current status */
-	ccprintf("PP state: %d, %d/%d, dt=%.6ld\n",
+	ccprintf("PP state: %d, %d/%d, dt=%.6lld\n",
 		 pp_detect_state, pp_press_count, pp_press_count_needed,
 		 get_time().val - pp_last_press);
 

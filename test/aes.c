@@ -382,7 +382,7 @@ static void test_aes_gcm_speed(void)
 		CRYPTO_gcm128_tag(&ctx, tag, tag_size);
 	}
 	t1 = get_time();
-	ccprintf("AES-GCM duration %ld us\n", t1.val - t0.val);
+	ccprintf("AES-GCM duration %lld us\n", (long long)(t1.val - t0.val));
 }
 
 static int test_aes_raw(const uint8_t *key, int key_size,
@@ -494,7 +494,7 @@ static void test_aes_speed(void)
 	for (i = 0; i < 1000; i++)
 		AES_encrypt(block, block, &aes_key);
 	t1 = get_time();
-	ccprintf("AES duration %ld us\n", t1.val - t0.val);
+	ccprintf("AES duration %lld us\n", (long long)(t1.val - t0.val));
 }
 
 void run_test(void)

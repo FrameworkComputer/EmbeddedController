@@ -177,7 +177,7 @@ static void test_x25519_speed(void)
 	t0 = get_time();
 	X25519(out, scalar1, point1);
 	t1 = get_time();
-	ccprintf("X25519 duration %ld us\n", t1.val - t0.val);
+	ccprintf("X25519 duration %lld us\n", (long long)(t1.val - t0.val));
 }
 
 void run_test(void)

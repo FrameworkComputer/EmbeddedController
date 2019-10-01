@@ -1709,7 +1709,7 @@ static int motion_sense_read_fifo(int argc, char **argv)
 			       MOTIONSENSE_SENSOR_FLAG_FLUSH)) {
 			uint64_t timestamp;
 			memcpy(&timestamp, v.data, sizeof(v.data));
-			ccprintf("Timestamp: 0x%016lx%s\n", timestamp,
+			ccprintf("Timestamp: 0x%016llx%s\n", timestamp,
 				 (v.flags & MOTIONSENSE_SENSOR_FLAG_FLUSH ?
 				  " - Flush" : ""));
 		} else {

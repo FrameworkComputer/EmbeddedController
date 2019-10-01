@@ -90,7 +90,7 @@ static void do_print_later(void)
 			 copy_of_overflow);
 
 	while (lines_per_loop && stuff_out != copy_of_stuff_in) {
-		ccprintf("at %.6ld: ", stuff_to_print[stuff_out].t);
+		ccprintf("at %.6lld: ", stuff_to_print[stuff_out].t);
 		ccprintf(stuff_to_print[stuff_out].fmt,
 			 stuff_to_print[stuff_out].a0,
 			 stuff_to_print[stuff_out].a1,

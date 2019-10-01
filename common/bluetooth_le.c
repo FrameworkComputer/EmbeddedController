@@ -139,7 +139,7 @@ static void mem_dump(uint8_t *mem, int len)
 	for (i = 0; i < len; i++) {
 		value = mem[i];
 		if (i % 8 == 0)
-			CPRINTF("\n%08lx: %02x", (unsigned long)&mem[i], value);
+			CPRINTF("\n%pP: %02x", &mem[i], value);
 		else
 			CPRINTF(" %02x", value);
 	}

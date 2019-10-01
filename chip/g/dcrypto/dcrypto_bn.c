@@ -1486,7 +1486,8 @@ static int command_genp(int argc, char **argv)
 	if (result == EC_SUCCESS) {
 		ccprintf("prime: %ph (lsb first)\n",
 			 HEX_BUF(prime_buf, sizeof(prime_buf));
-		ccprintf("μs   : %lu\n", genp_end.val - genp_start.val);
+		ccprintf("μs   : %llu\n",
+			 (long long)(genp_end.val - genp_start.val));
 	}
 
 	return result;
