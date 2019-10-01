@@ -23,7 +23,8 @@
 
 /* Macros for last 32K ram block */
 #define LAST_RAM_BLK ((NPCX_RAM_SIZE / (32 * 1024)) - 1)
-#define RAM_PD_MASK  (BIT(LAST_RAM_BLK) - 1)
+/* Higher bits are reserved and need to be masked */
+#define RAM_PD_MASK  (~BIT(LAST_RAM_BLK))
 
 /*****************************************************************************/
 /* IC specific low-level driver depends on chip series */
@@ -112,7 +113,7 @@ __enter_hibernate_in_last_block(void)
 	 * for better power consumption.
 	 */
 	NPCX_RAM_PD(0) = RAM_PD_MASK & 0xFF;
-	NPCX_RAM_PD(1) = RAM_PD_MASK >> 8;
+	NPCX_RAM_PD(1) = (RAM_PD_MASK >> 8) & 0x0F;
 
 	/* Set deep idle mode */
 	NPCX_PMCSR = 0x6;
