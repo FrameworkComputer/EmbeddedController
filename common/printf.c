@@ -225,7 +225,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 
 			/*
 			 * Handle length:
-			 * %l - long
+			 * %l - DEPRECATED (see below)
 			 * %ll - long long
 			 * %z - size_t
 			 */
@@ -239,6 +239,22 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 					c = *format++;
 				}
 
+				/*
+				 * %l on 32-bit systems is deliberately
+				 * deprecated. It was originally used as
+				 * shorthand for 64-bit values. When
+				 * compile-time printf format checking was
+				 * enabled, it had to be cleaned up to be
+				 * sizeof(long), which is 32 bits on today's
+				 * ECs. This presents a mismatch which can be
+				 * dangerous if a new-style printf call is
+				 * cherry-picked into an old firmware branch.
+				 * See crbug.com/984041 for more context.
+				 */
+				if (!(flags & PF_64BIT)) {
+					format = error_str;
+					continue;
+				}
 			} else if (c == 'z') {
 				if (sizeof(size_t) == sizeof(uint64_t))
 					flags |= PF_64BIT;

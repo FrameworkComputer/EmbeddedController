@@ -183,6 +183,20 @@ test_static int test_vsnprintf_int(void)
 	T(expect_success("5e",        "%x",     0X5E));
 	T(expect_success("5E",        "%X",     0X5E));
 
+	/*
+	 * %l is deprecated on 32-bit systems (see crbug.com/984041), but is
+	 * is still functional on 64-bit systems.
+	 */
+	if (sizeof(long) == sizeof(uint32_t)) {
+		T(expect_success(err_str,     "%lx",    0x7b));
+		T(expect_success(err_str,     "%08lu",  0x7b));
+		T(expect_success("13ERROR",   "%d%lu", 13, 14));
+	} else {
+		T(expect_success("7b",        "%lx",    0x7b));
+		T(expect_success("00000123",  "%08lu",  123));
+		T(expect_success("131415",    "%d%lu%d", 13, 14L, 15));
+	}
+
 	return EC_SUCCESS;
 }
 
