@@ -19,8 +19,8 @@
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/bc12/pi3usb9201.h"
+#include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
-#include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/temp_sensor/sb_tsi.h"
@@ -212,9 +212,8 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
+		/* Device does not talk I2C */
+		.drv = &aoz1380_drv
 	},
 
 	[USBC_PORT_C1] = {
@@ -229,8 +228,8 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
-	case GPIO_USB_C0_PPC_INT_ODL:
-		sn5s330_interrupt(USBC_PORT_C0);
+	case GPIO_USB_C0_PPC_FAULT_ODL:
+		aoz1380_interrupt(USBC_PORT_C0);
 		break;
 
 	case GPIO_USB_C1_PPC_INT_ODL:
@@ -239,20 +238,6 @@ void ppc_interrupt(enum gpio_signal signal)
 
 	default:
 		break;
-	}
-}
-
-int ppc_get_alert_status(int port)
-{
-	switch (port) {
-	case USBC_PORT_C0:
-		return gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0;
-
-	case USBC_PORT_C1:
-		return gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
-
-	default:
-		return 0;
 	}
 }
 
@@ -347,7 +332,7 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
 void baseboard_tcpc_init(void)
 {
 	/* Enable PPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C0_PPC_FAULT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
 
 	/* Enable TCPC interrupts. */
@@ -359,6 +344,23 @@ void baseboard_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
+
+/*
+ * In the AOZ1380 PPC, there are no programmable features.  We use
+ * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
+ * current limits.
+ */
+int board_aoz1380_set_vbus_source_current_limit(int port,
+						enum tcpc_rp_value rp)
+{
+	int rv;
+
+	/* Use the TCPC to set the current limit */
+	rv = ioex_set_level(IOEX_USB_C0_PPC_ILIM_3A_EN,
+			    (rp == TYPEC_RP_3A0) ? 1 : 0);
+
+	return rv;
+}
 
 static void reset_pd_port(int port, enum gpio_signal reset_gpio_l,
 			  int hold_delay, int finish_delay)
