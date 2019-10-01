@@ -98,17 +98,13 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 #endif
 
-#ifdef BOARD_STAFF
-#define KBLIGHT_PWM_FREQ 100 /* Hz */
-#else
-#define KBLIGHT_PWM_FREQ 50000 /* Hz */
-#endif
-
+#ifdef HAS_BACKLIGHT
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
 	{STM32_TIM(TIM_KBLIGHT), STM32_TIM_CH(1), 0, KBLIGHT_PWM_FREQ},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+#endif /* HAS_BACKLIGHT */
 
 int usb_i2c_board_is_enabled(void)
 {
@@ -163,29 +159,16 @@ static struct usart_config const ec_ec_usart =
  */
 static int has_keyboard_backlight;
 
+#ifdef SECTION_IS_RW
 static void board_init(void)
 {
+#ifdef HAS_BACKLIGHT
 	/* Detect keyboard backlight: pull-down means it is present. */
 	has_keyboard_backlight = !gpio_get_level(GPIO_KEYBOARD_BACKLIGHT);
 
 	CPRINTS("Backlight%s present", has_keyboard_backlight ? "" : " not");
+#endif /* HAS_BACKLIGHT */
 
-#ifdef BOARD_STAFF
-	if (!has_keyboard_backlight) {
-		/*
-		 * Earlier staff boards have both PU and PD stuffed, and end up
-		 * being detected as not have keyboard backlight. However, we
-		 * need to enable internal PD on the pin, otherwise backlight
-		 * will always be on.
-		 * TODO(b:67722756): Remove this hack when old boards are
-		 * deprecated.
-		 */
-		gpio_set_flags(GPIO_KEYBOARD_BACKLIGHT,
-			       GPIO_PULL_DOWN | GPIO_INPUT);
-	}
-#endif /* BOARD_STAFF */
-
-#ifdef SECTION_IS_RW
 #ifdef BOARD_WAND
 	/* USB to serial queues */
 	queue_init(&ec_ec_comm_slave_input);
@@ -221,10 +204,10 @@ static void board_init(void)
 	gpio_config_module(MODULE_SPI_MASTER, 1);
 	spi_enable(CONFIG_SPI_TOUCHPAD_PORT, 1);
 #endif /* HAS_SPI_TOUCHPAD */
-#endif /* SECTION_IS_RW */
 }
 /* This needs to happen before PWM is initialized. */
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_INIT_PWM - 1);
+#endif /* SECTION_IS_RW */
 
 void board_config_pre_init(void)
 {

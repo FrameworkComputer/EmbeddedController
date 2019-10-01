@@ -80,10 +80,26 @@
 #define CONFIG_KEYBOARD_ASSISTANT_KEY
 #endif
 
-/* Backlight driver */
+/* Backlight */
+#if defined(BOARD_HAMMER) || defined(BOARD_STAFF) || \
+    defined(BOARD_WAND) || defined(BOARD_WHISKERS)
+/*
+ * Even with this option, we detect the backlight presence using a PU/PD on the
+ * PWM pin. Not defining this totally disables support.
+ */
+#define HAS_BACKLIGHT
+
 #ifdef BOARD_WHISKERS
 #define CONFIG_LED_DRIVER_LM3630A
 #endif
+
+#ifdef BOARD_STAFF
+#define KBLIGHT_PWM_FREQ 100 /* Hz */
+#else
+#define KBLIGHT_PWM_FREQ 50000 /* Hz */
+#endif
+
+#endif /* BOARD_HAMMER/WAND/WHISKERS */
 
 /* GMR sensor for tablet mode detection */
 #if defined(BOARD_MASTERBALL) || defined(BOARD_WHISKERS)

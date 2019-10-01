@@ -188,7 +188,9 @@
 #ifdef SECTION_IS_RW
 #define CONFIG_USB_HID
 #define CONFIG_USB_HID_KEYBOARD
+#ifdef HAS_BACKLIGHT
 #define CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+#endif
 
 #ifndef HAS_NO_TOUCHPAD
 #define CONFIG_USB_HID_TOUCHPAD
@@ -215,7 +217,9 @@
 #endif
 
 /* Enable PWM */
+#ifdef HAS_BACKLIGHT
 #define CONFIG_PWM
+#endif
 
 #ifdef CONFIG_GMR_TABLET_MODE
 #define CONFIG_TABLET_MODE
@@ -336,17 +340,19 @@ enum usb_strings {
 };
 
 #ifdef SECTION_IS_RW
+#ifdef HAS_BACKLIGHT
 enum pwm_channel {
 	PWM_CH_KBLIGHT = 0,
 	/* Number of PWM channels */
 	PWM_CH_COUNT
 };
+#endif /* HAS_BACKLIGHT */
 
 enum adc_channel {
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
-#endif
+#endif /* SECTION_IS_RW */
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */
