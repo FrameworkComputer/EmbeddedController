@@ -57,6 +57,7 @@ SECTIONS
         . = ALIGN(IT83XX_ILM_BLOCK_SIZE);
         __flash_text_start = .;
         *(.text*)
+        . = ALIGN(4);
     } > ILM AT>FLASH
 
     . = ALIGN(4);
@@ -204,9 +205,9 @@ SECTIONS
         __bss_start = .;
         *(.bss.tasks)
         . = ALIGN(16);
-        *(.bss.task_scratchpad)
-        . = ALIGN(16);
         *(.bss.system_stack)
+        . = ALIGN(16);
+        *(.bss.task_scratchpad)
         . = ALIGN(16);
         __global_pointer$ = .;
         *(.sbss)

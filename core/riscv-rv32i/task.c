@@ -181,14 +181,14 @@ static inline task_ *__task_id_to_ptr(task_id_t id)
 	return tasks + id;
 }
 
-void interrupt_disable(void)
+void __ram_code interrupt_disable(void)
 {
 	/* bit11: disable MEIE */
 	asm volatile ("li t0, 0x800");
 	asm volatile ("csrc mie, t0");
 }
 
-void interrupt_enable(void)
+void __ram_code interrupt_enable(void)
 {
 	/* bit11: enable MEIE */
 	asm volatile ("li t0, 0x800");
@@ -200,7 +200,7 @@ inline int in_interrupt_context(void)
 	return in_interrupt;
 }
 
-task_id_t task_get_current(void)
+task_id_t __ram_code task_get_current(void)
 {
 #ifdef CONFIG_DEBUG_BRINGUP
 	/* If we haven't done a context switch then our task ID isn't valid */
@@ -209,7 +209,7 @@ task_id_t task_get_current(void)
 	return current_task - tasks;
 }
 
-uint32_t *task_get_event_bitmap(task_id_t tskid)
+uint32_t * __ram_code task_get_event_bitmap(task_id_t tskid)
 {
 	task_ *tsk = __task_id_to_ptr(tskid);
 
@@ -221,7 +221,7 @@ int task_start_called(void)
 	return start_called;
 }
 
-int get_sw_int(void)
+int __ram_code get_sw_int(void)
 {
 	/* If this is a SW interrupt */
 	if (get_mcause() == 11)
@@ -234,7 +234,8 @@ int get_sw_int(void)
  *
  * Also includes emulation of software triggering interrupt vector
  */
-void __keep syscall_handler(int desched, task_id_t resched, int swirq)
+void __ram_code __keep syscall_handler(int desched, task_id_t resched,
+								int swirq)
 {
 	/* are we emulating an interrupt ? */
 	if (swirq) {
@@ -266,16 +267,14 @@ void __keep syscall_handler(int desched, task_id_t resched, int swirq)
 	set_mepc(get_mepc() + 4);
 }
 
-task_ *next_sched_task(void)
+task_ * __ram_code next_sched_task(void)
 {
 	task_ *new_task = __task_id_to_ptr(__fls(tasks_ready & tasks_enabled));
 
 #ifdef CONFIG_TASK_PROFILING
 	if (current_task != new_task) {
-		if ((current_task - tasks) < TASK_ID_COUNT) {
-			current_task->runtime +=
+		current_task->runtime +=
 				(exc_start_time - exc_end_time - exc_sub_time);
-		}
 		task_will_switch = 1;
 	}
 #endif
@@ -284,13 +283,10 @@ task_ *next_sched_task(void)
 	if (*current_task->stack != STACK_UNUSED_VALUE) {
 		int i = task_get_current();
 
-		if (i < TASK_ID_COUNT) {
-			panic_printf("\n\nStack overflow in %s task!\n",
-				task_names[i]);
+		panic_printf("\n\nStack overflow in %s task!\n", task_names[i]);
 #ifdef CONFIG_SOFTWARE_PANIC
 		software_panic(PANIC_SW_STACK_OVERFLOW, i);
 #endif
-		}
 	}
 #endif
 
@@ -306,7 +302,7 @@ static inline void __schedule(int desched, int resched, int swirq)
 	asm("ecall" : : "r"(p0), "r"(p1), "r"(p2));
 }
 
-void update_exc_start_time(void)
+void __ram_code update_exc_start_time(void)
 {
 #ifdef CONFIG_TASK_PROFILING
 	exc_start_time = get_time().val;
@@ -314,13 +310,13 @@ void update_exc_start_time(void)
 }
 
 #ifdef CHIP_FAMILY_IT83XX
-int intc_get_ec_int(void)
+int __ram_code intc_get_ec_int(void)
 {
 	return ec_int;
 }
 #endif
 
-void start_irq_handler(void)
+void __ram_code start_irq_handler(void)
 {
 	/* save a0, a1, and a2 for syscall */
 	asm volatile ("addi sp, sp, -4*3");
@@ -361,7 +357,7 @@ void start_irq_handler(void)
 	asm volatile ("addi sp, sp, 4*3");
 }
 
-void end_irq_handler(void)
+void __ram_code end_irq_handler(void)
 {
 #ifdef CONFIG_TASK_PROFILING
 	uint64_t t, p;
@@ -381,7 +377,7 @@ void end_irq_handler(void)
 	in_interrupt = 0;
 }
 
-static uint32_t __wait_evt(int timeout_us, task_id_t resched)
+static uint32_t __ram_code __wait_evt(int timeout_us, task_id_t resched)
 {
 	task_ *tsk = current_task;
 	task_id_t me = tsk - tasks;
@@ -410,7 +406,7 @@ static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 	return evt;
 }
 
-uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
+uint32_t __ram_code task_set_event(task_id_t tskid, uint32_t event, int wait)
 {
 	task_ *receiver = __task_id_to_ptr(tskid);
 
@@ -435,12 +431,12 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 	return 0;
 }
 
-uint32_t task_wait_event(int timeout_us)
+uint32_t __ram_code task_wait_event(int timeout_us)
 {
 	return __wait_evt(timeout_us, TASK_ID_IDLE);
 }
 
-uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
+uint32_t __ram_code task_wait_event_mask(uint32_t event_mask, int timeout_us)
 {
 	uint64_t deadline = get_time().val + timeout_us;
 	uint32_t events = 0;
@@ -468,7 +464,7 @@ uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
 	return events & event_mask;
 }
 
-uint32_t get_int_mask(void)
+uint32_t __ram_code get_int_mask(void)
 {
 	uint32_t ret;
 
@@ -476,7 +472,7 @@ uint32_t get_int_mask(void)
 	return ret;
 }
 
-void set_int_mask(uint32_t val)
+void __ram_code set_int_mask(uint32_t val)
 {
 	asm volatile ("csrw mie, %0" : : "r"(val));
 }
@@ -502,7 +498,7 @@ void task_disable_task(task_id_t tskid)
 		__schedule(0, 0, 0);
 }
 
-void task_enable_irq(int irq)
+void __ram_code task_enable_irq(int irq)
 {
 	uint32_t int_mask = get_int_mask();
 
@@ -511,7 +507,7 @@ void task_enable_irq(int irq)
 	set_int_mask(int_mask);
 }
 
-void task_disable_irq(int irq)
+void __ram_code task_disable_irq(int irq)
 {
 	uint32_t int_mask = get_int_mask();
 
@@ -520,12 +516,12 @@ void task_disable_irq(int irq)
 	set_int_mask(int_mask);
 }
 
-void task_clear_pending_irq(int irq)
+void __ram_code task_clear_pending_irq(int irq)
 {
 	chip_clear_pending_irq(irq);
 }
 
-void task_trigger_irq(int irq)
+void __ram_code task_trigger_irq(int irq)
 {
 	int cpu_int = chip_trigger_irq(irq);
 
@@ -551,7 +547,7 @@ static void ivic_init_irqs(void)
 	interrupt_enable();
 }
 
-void mutex_lock(struct mutex *mtx)
+void __ram_code mutex_lock(struct mutex *mtx)
 {
 	uint32_t locked;
 	uint32_t id = 1 << task_get_current();
@@ -577,7 +573,7 @@ void mutex_lock(struct mutex *mtx)
 	atomic_clear(&mtx->waiters, id);
 }
 
-void mutex_unlock(struct mutex *mtx)
+void __ram_code mutex_unlock(struct mutex *mtx)
 {
 	uint32_t waiters;
 	task_ *tsk = current_task;
