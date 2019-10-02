@@ -1014,11 +1014,13 @@ static void pe_src_discovery_run(int port)
 	 *   3) And CapsCounter > nCapsCount.
 	 */
 	if (get_time().val > pe[port].source_cap_timer) {
-		if (pe[port].caps_counter <= N_CAPS_COUNT)
+		if (pe[port].caps_counter <= N_CAPS_COUNT) {
 			set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
-		else if (!PE_CHK_FLAG(port, PE_FLAGS_PD_CONNECTION))
+			return;
+		} else if (!PE_CHK_FLAG(port, PE_FLAGS_PD_CONNECTION)) {
 			set_state_pe(port, PE_SRC_DISABLED);
-		return;
+			return;
+		}
 	}
 
 	/*
