@@ -279,6 +279,18 @@ SECTIONS
 
     __data_lma_start = .;
 
+#ifdef CONFIG_PRESERVE_LOGS
+    .preserve_logs(NOLOAD) : {
+	. = ALIGN(8);
+	*(SORT(.preserved_logs.*))
+	. = ALIGN(8);
+	__preserved_logs_end = .;
+    } > IRAM
+
+    ASSERT((SIZEOF(.preserve_logs) + CONFIG_RAM_BASE) ==
+	__preserved_logs_end, "preserve_logs must be at CONFIG_RAM_BASE.")
+#endif
+
     .bss : {
 	/*
 	 * Align to 512 bytes. This is convenient when some memory block

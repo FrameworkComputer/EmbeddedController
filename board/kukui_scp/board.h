@@ -15,6 +15,7 @@
 /* Sent MKBP event via IPI. */
 #define CONFIG_MKBP_USE_CUSTOM
 #define CONFIG_FPU
+#define CONFIG_PRESERVE_LOGS
 
 /*
  * RW only, no flash
