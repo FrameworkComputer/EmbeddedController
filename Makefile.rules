@@ -21,8 +21,8 @@ skip_boards = OWNERS host kevin gru
 boards := $(filter-out $(skip_boards),$(notdir $(wildcard board/* private*/board/*)))
 
 # Create output directories if necessary
-_common_dir_create := $(foreach d,$(common_dirs),$(shell [ -d $(out)/$(d) ] || \
-	    mkdir -p $(out)/$(d)))
+_common_dir_create := $(foreach d,$(common_dirs) $(common-dirs-y),\
+	$(shell [ -d $(out)/$(d) ] || mkdir -p $(out)/$(d)))
 _sharedlib_dir_create := $(foreach d,$(dirs),$(shell \
 	[ -d $(out)/$(SHOBJLIB)/$(d) ] || mkdir -p $(out)/$(SHOBJLIB)/$(d)))
 _dir_create := $(foreach d,$(dirs) $(dirs-y),\

@@ -22,6 +22,12 @@ ifeq ($(BOARD),nocturne_fp)
 build-util-bin+=ectool_servo
 endif
 
+# If the util/ directory in the private repo is symlinked into util/private,
+# we want to build host-side tools from it, too.
+ifneq ("$(wildcard util/private/build.mk)","")
+include util/private/build.mk
+endif
+
 comm-objs=$(util-lock-objs:%=lock/%) comm-host.o comm-dev.o
 comm-objs+=comm-lpc.o comm-i2c.o misc_util.o
 
