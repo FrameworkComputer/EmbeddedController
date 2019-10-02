@@ -1160,9 +1160,10 @@ static void pe_src_send_capabilities_run(int port)
 	 *  3) And the HardResetCounter > nHardResetCount.
 	 */
 	if (pe[port].no_response_timer > 0 &&
-			get_time().val > pe[port].no_response_timer &&
-			pe[port].hard_reset_counter > N_HARD_RESET_COUNT) {
-		if (PE_CHK_FLAG(port, PE_FLAGS_PD_CONNECTION))
+			get_time().val > pe[port].no_response_timer) {
+		if (pe[port].hard_reset_counter <= N_HARD_RESET_COUNT)
+			set_state_pe(port, PE_SRC_HARD_RESET);
+		else if (PE_CHK_FLAG(port, PE_FLAGS_PD_CONNECTION))
 			set_state_pe(port, PE_WAIT_FOR_ERROR_RECOVERY);
 		else
 			set_state_pe(port, PE_SRC_DISABLED);
