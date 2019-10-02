@@ -122,6 +122,7 @@ enum battery_type {
 void emmc_cmd_interrupt(enum gpio_signal signal);
 #endif
 
+void bc12_interrupt(enum gpio_signal signal);
 void board_reset_pd_mcu(void);
 int board_get_version(void);
 int board_is_sourcing_vbus(int port);

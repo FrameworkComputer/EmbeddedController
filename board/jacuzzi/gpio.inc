@@ -31,10 +31,11 @@ GPIO_INT(LID_OPEN,          PIN(C, 5),  GPIO_INT_BOTH,
          lid_interrupt)
 GPIO_INT(AC_PRESENT,        PIN(A, 6),  GPIO_INT_BOTH,
          extpower_interrupt) /* ACOK_OD */
+GPIO_INT(BC12_EC_INT_ODL,   PIN(C, 9),  GPIO_INT_FALLING,
+         bc12_interrupt)
 
 /* Unimplemented interrupts */
 GPIO(KB_INT_ODL,           PIN(A, 8),  GPIO_INPUT)
-GPIO(BC12_EC_INT_ODL,      PIN(C, 9),  GPIO_INPUT)
 GPIO(ALS_RGB_INT_ODL,      PIN(C, 10), GPIO_INPUT)
 GPIO(TABLET_MODE_L,        PIN(B, 11), GPIO_INPUT)
 GPIO(LID_ACCEL_INT_ODL,    PIN(A, 14), GPIO_INPUT)

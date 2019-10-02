@@ -200,6 +200,11 @@ int pd_snk_is_vbus_provided(int port)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
+void bc12_interrupt(enum gpio_signal signal)
+{
+	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
+}
+
 static void board_init(void)
 {
 	/* If the reset cause is external, pulse PMIC force reset. */
@@ -222,6 +227,9 @@ static void board_init(void)
 
 	/* Enable interrupt from PMIC. */
 	gpio_enable_interrupt(GPIO_PMIC_EC_RESETB);
+
+	/* Enable BC12 interrupt */
+	gpio_enable_interrupt(GPIO_BC12_EC_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
