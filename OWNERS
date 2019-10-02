@@ -1,8 +1,5 @@
-# Chromium EC owners
-aaboagye@chromium.org
-dnojiri@chromium.org
-jettrink@chromium.org
-rspangler@chromium.org
+# GWSQ enabled alias to assign reviews. See code_reviews.md.
+cros-ec-reviewers@google.com
 
 # Allow anyone to approve changes.
 *
