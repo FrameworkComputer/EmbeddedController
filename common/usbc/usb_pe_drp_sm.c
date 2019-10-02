@@ -283,6 +283,8 @@ static struct policy_engine {
 	enum sub_state sub;
 
 	/* VDO */
+
+	/* PD_VDO_INVALID is used when there is an invalid VDO */
 	int32_t active_cable_vdo1;
 	int32_t active_cable_vdo2;
 	int32_t passive_cable_vdo;
@@ -903,11 +905,11 @@ static void pe_src_startup_entry(int port)
 	print_current_state(port);
 
 	/* Initialize VDOs to default values */
-	pe[port].active_cable_vdo1 = -1;
-	pe[port].active_cable_vdo2 = -1;
-	pe[port].passive_cable_vdo = -1;
-	pe[port].ama_vdo = -1;
-	pe[port].vpd_vdo = -1;
+	pe[port].active_cable_vdo1 = PD_VDO_INVALID;
+	pe[port].active_cable_vdo2 = PD_VDO_INVALID;
+	pe[port].passive_cable_vdo = PD_VDO_INVALID;
+	pe[port].ama_vdo = PD_VDO_INVALID;
+	pe[port].vpd_vdo = PD_VDO_INVALID;
 
 	/* Reset CapsCounter */
 	pe[port].caps_counter = 0;
@@ -3630,6 +3632,16 @@ static void pe_vdm_request_run(int port)
 static void pe_vdm_request_exit(int port)
 {
 	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
+}
+
+enum idh_ptype get_usb_pd_mux_cable_type(int port)
+{
+	if (pe[port].passive_cable_vdo != PD_VDO_INVALID)
+		return IDH_PTYPE_PCABLE;
+	else if (pe[port].active_cable_vdo1 != PD_VDO_INVALID)
+		return IDH_PTYPE_ACABLE;
+	else
+		return IDH_PTYPE_UNDEF;
 }
 
 /**

@@ -396,7 +396,10 @@ int pd_is_vbus_present(int port)
 #ifdef CONFIG_USB_PD_RETIMER
 int pd_is_ufp(int port)
 {
-	return pd[port].cc_state == PD_CC_UFP_ATTACHED;
+	/* Returns true if port partner is UFP */
+	return pd[port].cc_state == PD_CC_UFP_ATTACHED ||
+	       pd[port].cc_state == PD_CC_UFP_DEBUG_ACC ||
+	       pd[port].cc_state == PD_CC_UFP_AUDIO_ACC;
 }
 
 int pd_is_debug_acc(int port)

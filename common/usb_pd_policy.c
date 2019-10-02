@@ -200,7 +200,7 @@ void reset_pd_cable(int port)
 		memset(&cable[port], 0, sizeof(cable[port]));
 }
 
-uint8_t get_usb_pd_mux_cable_type(int port)
+enum idh_ptype get_usb_pd_mux_cable_type(int port)
 {
 	return cable[port].type;
 }

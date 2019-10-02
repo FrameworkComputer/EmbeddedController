@@ -5560,6 +5560,16 @@ int cmd_usb_pd(int argc, char *argv[])
 					printf("UNKNOWN");
 				printf("\n");
 			}
+			if (r_v2->cable_type) {
+				printf("Cable type:");
+				if (r_v2->cable_type == IDH_PTYPE_ACABLE)
+					printf("Active");
+				else if (r_v2->cable_type == IDH_PTYPE_PCABLE)
+					printf("Passive");
+				else
+					printf("UNKNOWN");
+				printf("\n");
+			}
 		}
 
 		/* If connected to a PD device, then print port partner info */

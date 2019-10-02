@@ -337,6 +337,8 @@ struct pd_policy {
 #define VDM_VER10 0
 #define VDM_VER20 1
 
+#define PD_VDO_INVALID -1
+
 /*
  * VDM header
  * ----------
@@ -1789,7 +1791,7 @@ void reset_pd_cable(int port);
  * @param port	USB-C port number
  * @return	cable type
  */
-uint8_t get_usb_pd_mux_cable_type(int port);
+enum idh_ptype get_usb_pd_mux_cable_type(int port);
 
 /**
  * Store Device ID & RW hash of device
