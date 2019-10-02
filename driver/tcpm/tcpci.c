@@ -402,6 +402,8 @@ void tcpci_tcpc_fast_role_swap_enable(int port, int enable)
 		reg &= ~TCPC_REG_POWER_CTRL_FRS_ENABLE;
 
 	tcpc_write(port, TCPC_REG_POWER_CTRL, reg);
+
+	board_tcpc_fast_role_swap_enable(port, enable);
 }
 #endif
 

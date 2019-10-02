@@ -111,6 +111,7 @@
 #define CONFIG_USB_SM_FRAMEWORK
 #define CONFIG_USB_TYPEC_SM
 #define CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
+#define CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
 #endif
 
 #define CONFIG_CMD_PD_CONTROL
@@ -283,6 +284,10 @@ void ppc_interrupt(enum gpio_signal signal);
 
 int board_is_convertible(void);
 void board_update_sensor_config_from_sku(void);
+
+#ifdef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
+int board_tcpc_fast_role_swap_enable(int port, int enable);
+#endif
 
 #endif /* !__ASSEMBLER__ */
 
