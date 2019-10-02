@@ -38,7 +38,7 @@ int board_get_battery_soc(void)
 	return 100;
 }
 
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{-1, -1, &it83xx_tcpm_drv},
 	{-1, -1, &it83xx_tcpm_drv},
 };

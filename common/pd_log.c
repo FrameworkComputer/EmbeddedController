@@ -68,7 +68,7 @@ dequeue_retry:
 	if (r->type == PD_EVENT_NO_ENTRY) {
 		int i, res;
 		incoming_logs = 0;
-		for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i) {
+		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
 			/* only accessories who knows Google logging format */
 			if (pd_get_identity_vid(i) != USB_VID_GOOGLE)
 				continue;
@@ -96,7 +96,7 @@ static enum ec_status hc_pd_write_log_entry(struct host_cmd_handler_args *args)
 
 	if (type < PD_EVENT_MCU_BASE || type >= PD_EVENT_ACC_BASE)
 		return EC_RES_INVALID_PARAM;
-	if (port > 0 && port >= CONFIG_USB_PD_PORT_COUNT)
+	if (port > 0 && port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	switch (type) {

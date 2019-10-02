@@ -3738,7 +3738,7 @@
 #undef CONFIG_USB_PD_LOW_POWER_IDLE_WHEN_CONNECTED
 
 /* Number of USB PD ports */
-#undef CONFIG_USB_PD_PORT_COUNT
+#undef CONFIG_USB_PD_PORT_MAX_COUNT
 
 /* Simple DFP, such as power adapter, will not send discovery VDM on connect */
 #undef CONFIG_USB_PD_SIMPLE_DFP
@@ -4973,12 +4973,12 @@
 
 /*
  * If USB PD Discharge is enabled, verify that CONFIG_USB_PD_DISCHARGE_GPIO
- * and CONFIG_USB_PD_PORT_COUNT, CONFIG_USB_PD_DISCHARGE_TCPC, or
+ * and CONFIG_USB_PD_PORT_MAX_COUNT, CONFIG_USB_PD_DISCHARGE_TCPC, or
  * CONFIG_USB_PD_DISCHARGE_PPC is defined.
  */
 #ifdef CONFIG_USB_PD_DISCHARGE
 #ifdef CONFIG_USB_PD_DISCHARGE_GPIO
-#if !defined(CONFIG_USB_PD_PORT_COUNT)
+#if !defined(CONFIG_USB_PD_PORT_MAX_COUNT)
 #error "PD discharge port not defined"
 #endif
 #else

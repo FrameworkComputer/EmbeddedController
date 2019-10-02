@@ -292,20 +292,20 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	if (board_hibernate_late)
 		board_hibernate_late();
 
-#ifdef CONFIG_USB_PD_PORT_COUNT
+#ifdef CONFIG_USB_PD_PORT_MAX_COUNT
 	/*
 	 * Leave USB-C charging enabled in hibernate, in order to
 	 * allow wake-on-plug. 5V enable must be pulled low.
 	 */
-#if CONFIG_USB_PD_PORT_COUNT > 0
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 0
 	gpio_set_flags(GPIO_USB_C0_5V_EN, GPIO_PULL_DOWN | GPIO_INPUT);
 	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 0);
 #endif
-#if CONFIG_USB_PD_PORT_COUNT > 1
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	gpio_set_flags(GPIO_USB_C1_5V_EN, GPIO_PULL_DOWN | GPIO_INPUT);
 	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 0);
 #endif
-#endif /* CONFIG_USB_PD_PORT_COUNT */
+#endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
 
 	if (hibernate_wake_pins_used > 0) {
 		for (i = 0; i < hibernate_wake_pins_used; ++i) {

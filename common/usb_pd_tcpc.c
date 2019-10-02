@@ -263,7 +263,7 @@ static struct pd_port_controller {
 	uint16_t tx_head;
 	uint32_t tx_payload[7];
 	const uint32_t *tx_data;
-} pd[CONFIG_USB_PD_PORT_COUNT];
+} pd[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int rx_buf_is_full(int port)
 {
@@ -1111,11 +1111,11 @@ int tcpc_set_rx_enable(int port, int enable)
 
 #if defined(CONFIG_LOW_POWER_IDLE) && !defined(CONFIG_USB_POWER_DELIVERY)
 	/* If any PD port is connected, then disable deep sleep */
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i)
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i)
 		if (pd[i].rx_enabled)
 			break;
 
-	if (i == CONFIG_USB_PD_PORT_COUNT)
+	if (i == CONFIG_USB_PD_PORT_MAX_COUNT)
 		enable_sleep(SLEEP_MASK_USB_PD);
 	else
 		disable_sleep(SLEEP_MASK_USB_PD);
@@ -1163,7 +1163,7 @@ void tcpc_pre_init(void)
 	int i;
 
 	/* Mark as uninitialized */
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
 		pd[i].power_status |= TCPC_REG_POWER_STATUS_UNINIT |
 				      TCPC_REG_POWER_STATUS_VBUS_DET;
 }
@@ -1194,13 +1194,13 @@ void tcpc_init(int port)
 	}
 
 #ifdef CONFIG_USB_PD_TCPC_TRACK_VBUS
-#if CONFIG_USB_PD_PORT_COUNT >= 2
+#if CONFIG_USB_PD_PORT_MAX_COUNT >= 2
 	tcpc_set_power_status(port, !gpio_get_level(port ?
 			      GPIO_USB_C1_VBUS_WAKE_L :
 			      GPIO_USB_C0_VBUS_WAKE_L));
 #else
 	tcpc_set_power_status(port, !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
-#endif /* CONFIG_USB_PD_PORT_COUNT >= 2 */
+#endif /* CONFIG_USB_PD_PORT_MAX_COUNT >= 2 */
 #endif /* CONFIG_USB_PD_TCPC_TRACK_VBUS */
 
 	/* set default alert and power mask register values */
@@ -1219,7 +1219,7 @@ void pd_vbus_evt_p0(enum gpio_signal signal)
 	task_wake(TASK_ID_PD_C0);
 }
 
-#if CONFIG_USB_PD_PORT_COUNT >= 2
+#if CONFIG_USB_PD_PORT_MAX_COUNT >= 2
 void pd_vbus_evt_p1(enum gpio_signal signal)
 {
 	tcpc_set_power_status(TASK_ID_TO_PD_PORT(TASK_ID_PD_C1),
@@ -1423,7 +1423,7 @@ static int command_tcpc(int argc, char **argv)
 	port = strtoi(argv[1], &e, 10);
 	if (argc < 3)
 		return EC_ERROR_PARAM_COUNT;
-	if (*e || port >= CONFIG_USB_PD_PORT_COUNT)
+	if (*e || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return EC_ERROR_PARAM2;
 
 	if (!strcasecmp(argv[2], "clock")) {

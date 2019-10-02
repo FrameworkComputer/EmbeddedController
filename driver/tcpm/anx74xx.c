@@ -43,14 +43,14 @@ struct anx_state {
 			reg | 0x01); \
 	} while (0)
 
-static struct anx_state anx[CONFIG_USB_PD_PORT_COUNT];
+static struct anx_state anx[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Save the selected rp value */
-static int selected_rp[CONFIG_USB_PD_PORT_COUNT];
+static int selected_rp[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #ifdef CONFIG_USB_PD_DECODE_SOP
 /* Save the message address */
-static int msg_sop[CONFIG_USB_PD_PORT_COUNT];
+static int msg_sop[CONFIG_USB_PD_PORT_MAX_COUNT];
 #endif
 
 static int anx74xx_tcpm_init(int port);
@@ -227,7 +227,7 @@ static void anx74xx_tcpc_discharge_vbus(int port, int enable)
  * timestamp of the next possible toggle to ensure the 2-ms spacing
  * between IRQ_HPD.
  */
-static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_COUNT];
+static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void anx74xx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
 {

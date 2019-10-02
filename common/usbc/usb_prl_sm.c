@@ -68,7 +68,7 @@
 /* PD counter definitions */
 #define PD_MESSAGE_ID_COUNT 7
 
-static enum sm_local_state local_state[CONFIG_USB_PD_PORT_COUNT];
+static enum sm_local_state local_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Protocol Transmit States (Section 6.11.2.2) */
 enum usb_prl_tx_state {
@@ -128,7 +128,7 @@ static struct rx_chunked {
 	uint32_t flags;
 	/* protocol timer */
 	uint64_t chunk_sender_response_timer;
-} rch[CONFIG_USB_PD_PORT_COUNT];
+} rch[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Chunked Tx State Machine Object */
 static struct tx_chunked {
@@ -140,13 +140,13 @@ static struct tx_chunked {
 	uint64_t chunk_sender_request_timer;
 	/* error to report when moving to tch_report_error state */
 	enum pe_error error;
-} tch[CONFIG_USB_PD_PORT_COUNT];
+} tch[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Message Reception State Machine Object */
 static struct protocol_layer_rx {
 	/* message ids for all valid port partners */
 	int msg_id[NUM_SOP_STAR_TYPES];
-} prl_rx[CONFIG_USB_PD_PORT_COUNT];
+} prl_rx[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Message Transmission State Machine Object */
 static struct protocol_layer_tx {
@@ -166,7 +166,7 @@ static struct protocol_layer_tx {
 	uint32_t retry_counter;
 	/* transmit status */
 	int xmit_status;
-} prl_tx[CONFIG_USB_PD_PORT_COUNT];
+} prl_tx[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Hard Reset State Machine Object */
 static struct protocol_hard_reset {
@@ -176,7 +176,7 @@ static struct protocol_hard_reset {
 	uint32_t flags;
 	/* protocol timer */
 	uint64_t hard_reset_complete_timer;
-} prl_hr[CONFIG_USB_PD_PORT_COUNT];
+} prl_hr[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Chunking Message Object */
 static struct pd_message {
@@ -200,9 +200,9 @@ static struct pd_message {
 	uint32_t num_bytes_received;
 	uint32_t chunk_number_to_send;
 	uint32_t send_offset;
-} pdmsg[CONFIG_USB_PD_PORT_COUNT];
+} pdmsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-struct extended_msg emsg[CONFIG_USB_PD_PORT_COUNT];
+struct extended_msg emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Common Protocol Layer Message Transmission */
 static void prl_tx_construct_message(int port);

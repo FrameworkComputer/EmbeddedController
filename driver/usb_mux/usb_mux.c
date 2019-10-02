@@ -21,7 +21,7 @@ static int enable_debug_prints;
  * Flags will reset to 0 after sysjump; This works for current flags as LPM will
  * get reset in the init method which is called during PD task startup.
  */
-static uint8_t flags[CONFIG_USB_PD_PORT_COUNT];
+static uint8_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define USB_MUX_FLAG_IN_LPM BIT(0) /* Device is in low power mode. */
 
@@ -60,7 +60,7 @@ void usb_mux_init(int port)
 	const struct usb_mux *mux = &usb_muxes[port];
 	int res;
 
-	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
+	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 
 	res = mux->driver->init(port);
 	if (res) {
@@ -195,7 +195,7 @@ static int command_typec(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	port = strtoi(argv[1], &e, 10);
-	if (*e || port >= CONFIG_USB_PD_PORT_COUNT)
+	if (*e || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return EC_ERROR_PARAM1;
 
 	if (argc < 3) {
@@ -234,7 +234,7 @@ static enum ec_status hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
 	int port = p->port;
 	const struct usb_mux *mux;
 
-	if (port >= CONFIG_USB_PD_PORT_COUNT)
+	if (port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	mux = &usb_muxes[port];

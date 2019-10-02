@@ -72,7 +72,7 @@ static struct type_c {
 	/* The cc state */
 	enum pd_cc_states cc_state;
 	uint64_t next_role_swap;
-} tc[CONFIG_USB_PD_PORT_COUNT];
+} tc[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* List of all TypeC-level states */
 enum usb_tc_state {

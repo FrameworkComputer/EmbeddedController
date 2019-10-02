@@ -439,7 +439,7 @@ static void eve_led_set_power_battery(void)
 	/* Get active charge port which maps directly to left/right LED */
 	side = charge_manager_get_active_charge_port();
 	/* Ensure that side can be safely used as an index */
-	if (side < 0 || side >= CONFIG_USB_PD_PORT_COUNT)
+	if (side < 0 || side >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		side = LED_BOTH;
 
 	/* Get percent charge */

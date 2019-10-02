@@ -26,7 +26,7 @@
  * occurred.  This table is cleared after detecting a physical disconnect of the
  * sink.
  */
-static uint8_t oc_event_cnt_tbl[CONFIG_USB_PD_PORT_COUNT];
+static uint8_t oc_event_cnt_tbl[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static uint32_t connected_ports;
 

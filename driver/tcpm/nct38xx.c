@@ -24,11 +24,11 @@
 #define POLARITY_FLIPPED   1
 #define POLARITY_NONE      3
 
-static int cable_polarity[CONFIG_USB_PD_PORT_COUNT];
+static int cable_polarity[CONFIG_USB_PD_PORT_MAX_COUNT];
 static unsigned char txBuf[33];
 static unsigned char rxBuf[33];
 /* Save the selected rp value */
-static int selected_rp[CONFIG_USB_PD_PORT_COUNT];
+static int selected_rp[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int nct38xx_tcpm_init(int port)
 {

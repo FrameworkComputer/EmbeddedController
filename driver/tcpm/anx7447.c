@@ -50,8 +50,8 @@ struct anx_usb_mux {
 
 static int anx7447_mux_set(int port, mux_state_t mux_state);
 
-static struct anx_state anx[CONFIG_USB_PD_PORT_COUNT];
-static struct anx_usb_mux mux[CONFIG_USB_PD_PORT_COUNT];
+static struct anx_state anx[CONFIG_USB_PD_PORT_MAX_COUNT];
+static struct anx_usb_mux mux[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /*
  * ANX7447 has two co-existence I2C slave addresses, TCPC slave address and
@@ -286,7 +286,7 @@ static int anx7447_init(int port)
 {
 	int rv, reg, i;
 
-	ASSERT(port < CONFIG_USB_PD_PORT_COUNT);
+	ASSERT(port < CONFIG_USB_PD_PORT_MAX_COUNT);
 
 	memset(&anx[port], 0, sizeof(struct anx_state));
 
@@ -451,7 +451,7 @@ static void anx7447_tcpc_alert(int port)
  * timestamp of the next possible toggle to ensure the 2-ms spacing
  * between IRQ_HPD.
  */
-static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_COUNT];
+static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void anx7447_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
 {
@@ -494,7 +494,7 @@ void anx7447_tcpc_clear_hpd_status(int port)
 #ifdef CONFIG_USB_PD_TCPM_MUX
 static int anx7447_mux_init(int port)
 {
-	ASSERT(port < CONFIG_USB_PD_PORT_COUNT);
+	ASSERT(port < CONFIG_USB_PD_PORT_MAX_COUNT);
 
 	memset(&mux[port], 0, sizeof(struct anx_usb_mux));
 

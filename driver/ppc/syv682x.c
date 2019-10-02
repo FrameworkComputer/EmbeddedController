@@ -17,7 +17,7 @@
 /* 0 -> CC1, 1 -> CC2 */
 #define SYV682X_FLAGS_CC_POLARITY BIT(1)
 #define SYV682X_FLAGS_VBUS_PRESENT BIT(2)
-static uint8_t flags[CONFIG_USB_PD_PORT_COUNT];
+static uint8_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define SYV682X_VBUS_DET_THRESH_MV 4000
 

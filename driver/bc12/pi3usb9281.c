@@ -36,7 +36,7 @@
 #define PI3USB9281_RESET_STARTUP_DELAY_INTERVAL_MS	40
 
 /* Store the state of our USB data switches so that they can be restored. */
-static int usb_switch_state[CONFIG_USB_PD_PORT_COUNT];
+static int usb_switch_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int pi3usb9281_reset(int port);
 static int pi3usb9281_get_interrupts(int port);

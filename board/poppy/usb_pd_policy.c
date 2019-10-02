@@ -55,8 +55,9 @@ void pd_transition_voltage(int idx)
 	/* No-operation: we are always 5V */
 }
 
-static uint8_t vbus_en[CONFIG_USB_PD_PORT_COUNT];
-static uint8_t vbus_rp[CONFIG_USB_PD_PORT_COUNT] = {TYPEC_RP_1A5, TYPEC_RP_1A5};
+static uint8_t vbus_en[CONFIG_USB_PD_PORT_MAX_COUNT];
+static uint8_t vbus_rp[CONFIG_USB_PD_PORT_MAX_COUNT] = {TYPEC_RP_1A5,
+							TYPEC_RP_1A5};
 
 int board_vbus_source_enabled(int port)
 {
@@ -301,8 +302,8 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 }
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static int dp_flags[CONFIG_USB_PD_PORT_COUNT];
-static uint32_t dp_status[CONFIG_USB_PD_PORT_COUNT];
+static int dp_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+static uint32_t dp_status[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static void svdm_safe_dp_mode(int port)
 {

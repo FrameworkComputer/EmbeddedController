@@ -38,7 +38,7 @@ struct bc12_status {
 };
 
 /* Used to store last BC1.2 detection result */
-static enum charge_supplier bc12_supplier[CONFIG_USB_PD_PORT_COUNT];
+static enum charge_supplier bc12_supplier[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static const struct bc12_status bc12_chg_limits[] = {
 	[CHG_OTHER] = {CHARGE_SUPPLIER_OTHER, 500},
@@ -244,7 +244,7 @@ void usb_charger_task(void *u)
 	 * Set most recent bc1.2 detection supplier result to
 	 * CHARGE_SUPPLIER_NONE for all ports.
 	 */
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
 		bc12_supplier[port] = CHARGE_SUPPLIER_NONE;
 
 	/*

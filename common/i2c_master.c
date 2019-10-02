@@ -912,7 +912,7 @@ static void i2c_passthru_protect_port(uint32_t port)
 
 static void i2c_passthru_protect_tcpc_ports(void)
 {
-#ifdef CONFIG_USB_PD_PORT_COUNT
+#ifdef CONFIG_USB_PD_PORT_MAX_COUNT
 	int i;
 
 	/*
@@ -924,7 +924,7 @@ static void i2c_passthru_protect_tcpc_ports(void)
 		return;
 	}
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		/* TCPC tunnel not configured. No need to protect anything */
 		if (!I2C_GET_ADDR(tcpc_config[i].i2c_info.addr_flags))
 			continue;

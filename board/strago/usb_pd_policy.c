@@ -245,7 +245,7 @@ static int svdm_dp_config(int port, uint32_t *payload)
  * timestamp of the next possible toggle to ensure the 2-ms spacing
  * between IRQ_HPD.
  */
-static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_COUNT];
+static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static void svdm_dp_post_config(int port)
 {

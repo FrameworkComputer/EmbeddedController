@@ -68,7 +68,7 @@ int ppc_get_alert_status(int port)
 
 static int tune_mux(int port);
 
-struct usb_mux ampton_usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+struct usb_mux ampton_usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_ITE_0] = {
 		/* Use PS8751 as mux only */
 		.port_addr = MUX_PORT_AND_ADDR(

@@ -27,7 +27,7 @@
 static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 
 #define AOZ1380_FLAGS_SOURCE_ENABLED    BIT(0)
-static uint8_t flags[CONFIG_USB_PD_PORT_COUNT];
+static uint8_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int aoz1380_init(int port)
 {
@@ -93,7 +93,7 @@ static void aoz1380_irq_deferred(void)
 	int i;
 	uint32_t pending = atomic_read_clear(&irq_pending);
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
 		if (BIT(i) & pending)
 			aoz1380_handle_interrupt(i);
 }

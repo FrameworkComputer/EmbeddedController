@@ -142,7 +142,7 @@ void board_hibernate(void)
 	 * if it is later connected to ensure that AC_PRESENT
 	 * will wake up the EC from this state
 	 */
-	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; ++port)
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
 		ppc_vbus_sink_enable(port, 1);
 
 	/*
@@ -155,7 +155,7 @@ void board_hibernate(void)
 
 /******************************************************************************/
 /* USB-C PPC Configuration */
-struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
+struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
 		.i2c_port = I2C_PORT_PPC0,
 		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
@@ -254,7 +254,7 @@ void board_reset_pd_mcu(void)
 int board_set_active_charge_port(int port)
 {
 	int is_valid_port = (port >= 0 &&
-			    port < CONFIG_USB_PD_PORT_COUNT);
+			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 
 	if (!is_valid_port && port != CHARGE_PORT_NONE)

@@ -29,8 +29,8 @@ static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 #endif /* CONFIG_CROS_BOARD_INFO */
 		break;
 	case EC_CHIP_TYPE_TCPC:
-#if defined(CONFIG_USB_PD_PORT_COUNT) && !defined(CONFIG_USB_PD_TCPC)
-		if (params->index >= CONFIG_USB_PD_PORT_COUNT)
+#if defined(CONFIG_USB_PD_PORT_MAX_COUNT) && !defined(CONFIG_USB_PD_TCPC)
+		if (params->index >= CONFIG_USB_PD_PORT_MAX_COUNT)
 			return EC_RES_OVERFLOW;
 		resp->bus_type = tcpc_config[params->index].bus_type;
 		if (resp->bus_type == EC_BUS_TYPE_I2C) {
@@ -44,7 +44,7 @@ static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 #endif
 #else
 		return EC_RES_UNAVAILABLE;
-#endif /* CONFIG_USB_PD_PORT_COUNT */
+#endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
 		break;
 	default:
 		/* The type was unrecognized */

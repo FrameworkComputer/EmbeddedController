@@ -108,7 +108,7 @@ struct vbus_prop {
 	int mv;
 	int ma;
 };
-static struct vbus_prop vbus[CONFIG_USB_PD_PORT_COUNT];
+static struct vbus_prop vbus[CONFIG_USB_PD_PORT_MAX_COUNT];
 static int active_charge_port = CHARGE_PORT_NONE;
 static enum charge_supplier active_charge_supplier;
 static uint8_t vbus_rp = TYPEC_RP_RESERVED;

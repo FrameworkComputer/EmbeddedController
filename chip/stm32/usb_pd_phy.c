@@ -70,14 +70,15 @@ static struct pd_physical {
 	/* Pointers to timer register for each port */
 	timer_ctlr_t *tim_tx;
 	timer_ctlr_t *tim_rx;
-} pd_phy[CONFIG_USB_PD_PORT_COUNT];
+} pd_phy[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* keep track of RX edge timing in order to trigger receive */
-static timestamp_t rx_edge_ts[CONFIG_USB_PD_PORT_COUNT][PD_RX_TRANSITION_COUNT];
-static int rx_edge_ts_idx[CONFIG_USB_PD_PORT_COUNT];
+static timestamp_t
+	rx_edge_ts[CONFIG_USB_PD_PORT_MAX_COUNT][PD_RX_TRANSITION_COUNT];
+static int rx_edge_ts_idx[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* keep track of transmit polarity for DMA interrupt */
-static int tx_dma_polarities[CONFIG_USB_PD_PORT_COUNT];
+static int tx_dma_polarities[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void pd_init_dequeue(int port)
 {
@@ -462,7 +463,7 @@ void pd_rx_handler(void)
 	}
 #endif
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		if (pending & EXTI_COMP_MASK(i)) {
 			rx_edge_ts[i][rx_edge_ts_idx[i]].val = get_time().val;
 			next_idx = (rx_edge_ts_idx[i] ==

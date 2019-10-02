@@ -34,7 +34,7 @@ static struct fusb302_chip_state {
 	int rx_enable;
 	uint8_t mdac_vnc;
 	uint8_t mdac_rd;
-} state[CONFIG_USB_PD_PORT_COUNT];
+} state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /*
  * Bring the FUSB302 out of reset after Hard Reset signaling. This will

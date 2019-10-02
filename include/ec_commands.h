@@ -5301,7 +5301,7 @@ struct ec_params_usb_pd_discovery_entry {
 enum usb_pd_override_ports {
 	OVERRIDE_DONT_CHARGE = -2,
 	OVERRIDE_OFF = -1,
-	/* [0, CONFIG_USB_PD_PORT_COUNT): Port# */
+	/* [0, CONFIG_USB_PD_PORT_MAX_COUNT): Port# */
 };
 
 struct ec_params_charge_port_override {

@@ -35,7 +35,7 @@ then document the new `CONFIG_USB_PD_TCPM_` variable in the [include/config.h](.
 
 ### Board configuration
 
-In [board/pdeval-stm32f072/board.h](board.h), you can update `CONFIG_USB_PD_PORT_COUNT` to the actual number of ports on your board.
+In [board/pdeval-stm32f072/board.h](board.h), you can update `CONFIG_USB_PD_PORT_MAX_COUNT` to the actual number of ports on your board.
 You also need to create/delete the corresponding `PD_Cx` tasks in [board/pdeval-stm32f072/ec.tasklist](ec.tasklist).
 
 By default, the firmware is using I2C1 with SCL/SDA on pins PB6 and PB7, running with a 100kHz clock, and tries to talk to TCPCs at i2c slave addresses 0x9c and 0x9e.

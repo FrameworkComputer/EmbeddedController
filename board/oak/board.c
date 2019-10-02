@@ -112,7 +112,7 @@ const struct spi_device_t spi_devices[] = {
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 #endif
 
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
@@ -174,7 +174,7 @@ struct als_t als[] = {
 BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 #endif
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.port_addr = 0x54,
 		.driver    = &pi3usb30532_usb_mux_driver,
@@ -290,7 +290,7 @@ int board_set_active_charge_port(int charge_port)
 {
 	/* charge port is a physical port */
 	int is_real_port = (charge_port >= 0 &&
-			    charge_port < CONFIG_USB_PD_PORT_COUNT);
+			    charge_port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	/* check if we are source VBUS on the port */
 	int source = gpio_get_level(charge_port == 0 ? GPIO_USB_C0_5V_EN :
 						       GPIO_USB_C1_5V_EN);
@@ -338,7 +338,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
  * timestamp of the next possible toggle to ensure the 2-ms spacing
  * between IRQ_HPD.
  */
-static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_COUNT];
+static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static void board_typec_set_dp_hpd(int port, int level)
 {
@@ -479,11 +479,11 @@ void vbus_task(void)
 		uint8_t device_type;
 		uint8_t charger_status;
 		uint8_t vbus;
-	} bc12[CONFIG_USB_PD_PORT_COUNT];
+	} bc12[CONFIG_USB_PD_PORT_MAX_COUNT];
 	uint8_t port, vbus, reg, wake;
 
 	while (1) {
-		for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
+		for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
 #if BOARD_REV == OAK_REV3
 			vbus = !gpio_get_level(port ? GPIO_USB_C1_VBUS_WAKE_L :
 						      GPIO_USB_C0_VBUS_WAKE_L);

@@ -152,7 +152,7 @@ void usb_charger_task(void *u)
 	const int port = (intptr_t)u;
 	uint32_t evt;
 
-	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
+	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 
 	detect_or_power_down_ic(port);
 

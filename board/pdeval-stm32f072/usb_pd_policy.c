@@ -36,7 +36,7 @@ const uint32_t pd_snk_pdo[] = {
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
 #if defined(CONFIG_USB_PD_TCPM_MUX) && defined(CONFIG_USB_PD_TCPM_ANX7447)
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.driver    = &anx7447_usb_mux_driver,
 	},
@@ -253,8 +253,8 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 }
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static int dp_flags[CONFIG_USB_PD_PORT_COUNT];
-static uint32_t dp_status[CONFIG_USB_PD_PORT_COUNT];
+static int dp_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+static uint32_t dp_status[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static void svdm_safe_dp_mode(int port)
 {

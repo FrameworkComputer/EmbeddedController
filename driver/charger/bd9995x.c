@@ -345,7 +345,7 @@ static int bd9995x_get_charger_op_status(int *status)
 }
 
 #ifdef HAS_TASK_USB_CHG
-static int bc12_detected_type[CONFIG_USB_PD_PORT_COUNT];
+static int bc12_detected_type[CONFIG_USB_PD_PORT_MAX_COUNT];
 /* Mutex for UCD_SET regsiters, lock before read / mask / write. */
 static struct mutex ucd_set_mutex[BD9995X_CHARGE_PORT_COUNT];
 
@@ -1263,7 +1263,7 @@ void usb_charger_task(void *u)
 	static int initialized;
 	int changed, port, interrupts;
 	int sleep_usec;
-	uint64_t bc12_det_mark[CONFIG_USB_PD_PORT_COUNT];
+	uint64_t bc12_det_mark[CONFIG_USB_PD_PORT_MAX_COUNT];
 #ifdef CONFIG_USB_PD_DISCHARGE
 	int vbus_reg, voltage;
 #endif
@@ -1273,7 +1273,7 @@ void usb_charger_task(void *u)
 	vbus_voltage = 0;
 #endif
 
-	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
 		bc12_detected_type[port] = CHARGE_SUPPLIER_NONE;
 		bd9995x_enable_vbus_detect_interrupts(port, 1);
 		bc12_det_mark[port] = 0;
@@ -1282,7 +1282,7 @@ void usb_charger_task(void *u)
 	while (1) {
 		sleep_usec = -1;
 		changed = 0;
-		for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
+		for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
 			/* Get port interrupts */
 			interrupts = bd9995x_get_interrupts(port);
 			if (interrupts & BD9995X_CMD_INT_VBUS_DET ||

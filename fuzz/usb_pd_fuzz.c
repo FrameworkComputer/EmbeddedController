@@ -58,7 +58,7 @@ struct tcpc_state {
 	struct message message;
 };
 
-static struct tcpc_state mock_tcpc_state[CONFIG_USB_PD_PORT_COUNT];
+static struct tcpc_state mock_tcpc_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int mock_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	enum tcpc_cc_voltage_status *cc2)
@@ -133,7 +133,7 @@ static const struct tcpm_drv mock_tcpm_drv = {
 };
 
 /* TCPC mux configuration */
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.drv = &mock_tcpm_drv,
 	},

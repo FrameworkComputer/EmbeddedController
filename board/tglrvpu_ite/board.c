@@ -71,7 +71,7 @@ const struct tcpc_gpio_config_t tcpc_gpios[] = {
 		},
 	},
 };
-BUILD_ASSERT(ARRAY_SIZE(tcpc_gpios) == CONFIG_USB_PD_PORT_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(tcpc_gpios) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {

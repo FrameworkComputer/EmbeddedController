@@ -28,4 +28,5 @@ struct max14637_config_t {
 /*
  * Array that contains boards-specific configuration for BC 1.2 charging chips.
  */
-extern const struct max14637_config_t max14637_config[CONFIG_USB_PD_PORT_COUNT];
+extern const struct max14637_config_t
+				max14637_config[CONFIG_USB_PD_PORT_MAX_COUNT];

@@ -64,7 +64,7 @@ struct pd_port_t {
 	int partner_role; /* -1 for none */
 	int partner_polarity;
 	int rev;
-} pd_port[CONFIG_USB_PD_PORT_COUNT];
+} pd_port[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 uint64_t wait_for_state_change(int port, uint64_t timeout)
 {

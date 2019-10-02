@@ -25,13 +25,13 @@
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 #ifdef CONFIG_USB_PD_DECODE_SOP
-static int vconn_en[CONFIG_USB_PD_PORT_COUNT];
-static int rx_en[CONFIG_USB_PD_PORT_COUNT];
+static int vconn_en[CONFIG_USB_PD_PORT_MAX_COUNT];
+static int rx_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 #endif
-static int tcpc_vbus[CONFIG_USB_PD_PORT_COUNT];
+static int tcpc_vbus[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Save the selected rp value */
-static int selected_rp[CONFIG_USB_PD_PORT_COUNT];
+static int selected_rp[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
@@ -483,7 +483,7 @@ struct queue {
 	uint32_t tail;
 	struct cached_tcpm_message buffer[CACHE_DEPTH];
 };
-static struct queue cached_messages[CONFIG_USB_PD_PORT_COUNT];
+static struct queue cached_messages[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Note this method can be called from an interrupt context. */
 int tcpm_enqueue_message(const int port)
@@ -739,12 +739,12 @@ int tcpci_get_chip_info(int port, int live,
 			struct ec_response_pd_chip_info_v1 **chip_info)
 {
 	static struct ec_response_pd_chip_info_v1
-		info[CONFIG_USB_PD_PORT_COUNT];
+		info[CONFIG_USB_PD_PORT_MAX_COUNT];
 	struct ec_response_pd_chip_info_v1 *i;
 	int error;
 	int val;
 
-	if (port >= CONFIG_USB_PD_PORT_COUNT)
+	if (port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return EC_ERROR_INVAL;
 
 	i = &info[port];

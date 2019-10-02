@@ -139,7 +139,7 @@ static void pd_service_tcpc_ports(uint16_t port_status)
 {
 	int i;
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		if ((port_status & (PD_STATUS_TCPC_ALERT_0 << i)) &&
 		    pd_is_port_enabled(i))
 			tcpc_alert(i);

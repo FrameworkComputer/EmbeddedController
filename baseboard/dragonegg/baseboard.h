@@ -86,7 +86,7 @@
  * on the MLB for now. In addition, this config option will likely move to
  * board.h as it likely board dependent and not same across all follower boards.
  */
-#define CONFIG_USB_PD_PORT_COUNT 3
+#define CONFIG_USB_PD_PORT_MAX_COUNT 3
 #define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT TYPEC_RP_3A0
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_LOGGING

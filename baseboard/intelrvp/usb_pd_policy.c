@@ -213,8 +213,8 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 }
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static int dp_flags[CONFIG_USB_PD_PORT_COUNT];
-static uint32_t dp_status[CONFIG_USB_PD_PORT_COUNT];
+static int dp_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+static uint32_t dp_status[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static void svdm_safe_dp_mode(int port)
 {

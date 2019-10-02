@@ -252,8 +252,8 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 }
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static int dp_flags[CONFIG_USB_PD_PORT_COUNT];
-static uint32_t dp_status[CONFIG_USB_PD_PORT_COUNT];
+static int dp_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+static uint32_t dp_status[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 {
@@ -348,7 +348,7 @@ static int svdm_dp_config(int port, uint32_t *payload)
  * timestamp of the next possible toggle to ensure the 2-ms spacing
  * between IRQ_HPD.
  */
-static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_COUNT];
+static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define PORT_TO_HPD(port) ((port) ? GPIO_DP2_HPD : GPIO_USB_C0_HPD)
 static void svdm_dp_post_config(int port)

@@ -29,7 +29,7 @@ static struct policy_engine {
 	struct sm_ctx ctx;
 	/* port flags, see PE_FLAGS_* */
 	uint32_t flags;
-} pe[CONFIG_USB_PD_PORT_COUNT];
+} pe[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* List of all policy-engine-level states */
 enum usb_pe_state {
@@ -55,7 +55,7 @@ static void pe_init(int port)
 
 void pe_run(int port, int evt, int en)
 {
-	static enum sm_local_state local_state[CONFIG_USB_PD_PORT_COUNT];
+	static enum sm_local_state local_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 	switch (local_state[port]) {
 	case SM_PAUSED:

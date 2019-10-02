@@ -42,7 +42,7 @@ static struct type_c {
 	/* VPD host port cc state */
 	enum pd_cc_states host_cc_state;
 	uint8_t ct_cc;
-} tc[CONFIG_USB_PD_PORT_COUNT];
+} tc[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* List of all TypeC-level states */
 enum usb_tc_state {

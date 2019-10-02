@@ -35,7 +35,7 @@
 #define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
 
 /* USB ports */
-#define CONFIG_USB_PD_PORT_COUNT 2
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define DEDICATED_CHARGE_PORT 2
 
 /* USB-C port's USB2 & USB3 port numbers */

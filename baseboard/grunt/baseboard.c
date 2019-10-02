@@ -78,7 +78,7 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 #ifdef VARIANT_GRUNT_TCPC_0_ANX3429
 	[USB_PD_PORT_ANX74XX] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -156,7 +156,7 @@ void board_tcpc_init(void)
 	 * Initialize HPD to low; after sysjump SOC needs to see
 	 * HPD pulse to enable video path
 	 */
-	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
 		const struct usb_mux *mux = &usb_muxes[port];
 
 		mux->hpd_update(port, 0, 0);
@@ -288,7 +288,7 @@ static int ps8751_tune_mux(int port)
 	return EC_SUCCESS;
 }
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 #ifdef VARIANT_GRUNT_TCPC_0_ANX3429
 	[USB_PD_PORT_ANX74XX] = {
 		.driver = &anx74xx_tcpm_usb_mux_driver,
@@ -349,7 +349,7 @@ void board_overcurrent_event(int port, int is_overcurrented)
 }
 
 /* BC 1.2 chip Configuration */
-const struct max14637_config_t max14637_config[CONFIG_USB_PD_PORT_COUNT] = {
+const struct max14637_config_t max14637_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {
 		.chip_enable_pin = GPIO_USB_C0_BC12_VBUS_ON_L,
 		.chg_det_pin = GPIO_USB_C0_BC12_CHG_DET,

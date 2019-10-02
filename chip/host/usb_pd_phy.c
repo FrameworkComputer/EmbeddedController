@@ -35,7 +35,7 @@ static struct pd_physical {
 	int last_edge_written;
 	uint8_t out_msg[PD_BIT_LEN / 5];
 	int verified_idx;
-} pd_phy[CONFIG_USB_PD_PORT_COUNT];
+} pd_phy[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static const uint16_t enc4b5b[] = {
 	0x1E, 0x09, 0x14, 0x15, 0x0A, 0x0B, 0x0E, 0x0F, 0x12, 0x13, 0x16,

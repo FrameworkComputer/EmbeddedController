@@ -37,7 +37,7 @@ static const struct usb_port_mux mux_gpios[] = {
 		.ss2_dp_mode = GPIO_USB_C1_SS2_DP_MODE,
 	},
 };
-BUILD_ASSERT(ARRAY_SIZE(mux_gpios) == CONFIG_USB_PD_PORT_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(mux_gpios) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
 
 static int board_init_usb_mux(int port)
@@ -105,7 +105,7 @@ const struct usb_mux_driver board_custom_usb_mux_driver = {
 	.get = board_get_usb_mux,
 };
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.driver = &board_custom_usb_mux_driver,
 	},

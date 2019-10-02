@@ -263,7 +263,7 @@ int board_i2c_p2c(int port)
 }
 
 #ifdef CONFIG_USB_POWER_DELIVERY
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{I2C_PORT_TCPC,
 	 CONFIG_TCPC_I2C_BASE_ADDR_FLAGS,
 	 &tcpci_tcpm_drv},
@@ -387,7 +387,7 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.port_addr = 0x54,
 		.driver = &pi3usb30532_usb_mux_driver,
@@ -593,7 +593,7 @@ int board_set_active_charge_port(int charge_port)
 {
 	/* charge port is a realy physical port */
 	int is_real_port = (charge_port >= 0 &&
-			    charge_port < CONFIG_USB_PD_PORT_COUNT);
+			    charge_port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	/* check if we are source vbus on that port */
 	int source = gpio_get_level(charge_port == 0 ? GPIO_USB_C0_5V_EN :
 						       GPIO_USB_C1_5V_EN);
@@ -748,20 +748,20 @@ void board_hibernate_late(void)
 	 */
 	gpio_set_level(GPIO_USB_PD_WAKE, 0);
 
-#ifdef CONFIG_USB_PD_PORT_COUNT
+#ifdef CONFIG_USB_PD_PORT_MAX_COUNT
 	/*
 	 * Leave USB-C charging enabled in hibernate, in order to
 	 * allow wake-on-plug. 5V enable must be pulled low.
 	 */
-#if CONFIG_USB_PD_PORT_COUNT > 0
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 0
 	gpio_set_flags(GPIO_USB_C0_5V_EN, GPIO_PULL_DOWN | GPIO_INPUT);
 	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 0);
 #endif
-#if CONFIG_USB_PD_PORT_COUNT > 1
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	gpio_set_flags(GPIO_USB_C1_5V_EN, GPIO_PULL_DOWN | GPIO_INPUT);
 	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 0);
 #endif
-#endif /* CONFIG_USB_PD_PORT_COUNT */
+#endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
 }
 
 /* Any glados boards post version 2 should have ROP_LDO_EN stuffed. */

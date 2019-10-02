@@ -25,10 +25,10 @@
 static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 
 #define NX20P348X_DB_EXIT_FAIL_THRESHOLD 10
-static int db_exit_fail_count[CONFIG_USB_PD_PORT_COUNT];
+static int db_exit_fail_count[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define NX20P348X_FLAGS_SOURCE_ENABLED BIT(0)
-static uint8_t flags[CONFIG_USB_PD_PORT_COUNT];
+static uint8_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int read_reg(uint8_t port, int reg, int *regval)
 {
@@ -384,7 +384,7 @@ static void nx20p348x_irq_deferred(void)
 	int i;
 	uint32_t pending = atomic_read_clear(&irq_pending);
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
 		if (BIT(i) & pending)
 			nx20p348x_handle_interrupt(i);
 }

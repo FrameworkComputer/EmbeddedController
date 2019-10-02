@@ -31,7 +31,7 @@ struct pd_port_t {
 	int partner_role; /* -1 for none */
 	int partner_polarity;
 	int rev;
-} pd_port[CONFIG_USB_PD_PORT_COUNT];
+} pd_port[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int give_back_called;
 
@@ -147,7 +147,7 @@ static void init_ports(void)
 {
 	int i;
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i) {
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
 		pd_port[i].host_mode = 0;
 		pd_port[i].partner_role = -1;
 		pd_port[i].has_vbus = 0;

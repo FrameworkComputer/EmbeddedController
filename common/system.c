@@ -857,7 +857,8 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 		{
 			int port;
 
-			for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++)
+			for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT;
+			     port++)
 				pd_set_suspend(port, 1);
 		}
 #endif

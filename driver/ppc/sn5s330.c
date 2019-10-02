@@ -27,7 +27,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
-static int source_enabled[CONFIG_USB_PD_PORT_COUNT];
+static int source_enabled[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int read_reg(uint8_t port, int reg, int *regval)
 {
@@ -750,7 +750,7 @@ static void sn5s330_irq_deferred(void)
 	int i;
 	uint32_t pending = atomic_read_clear(&irq_pending);
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
 		if (BIT(i) & pending)
 			sn5s330_handle_interrupt(i);
 }

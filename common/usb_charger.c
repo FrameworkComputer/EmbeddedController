@@ -52,7 +52,7 @@ int usb_charger_port_is_sourcing_vbus(int port)
 {
 	if (port == 0)
 		return USB_5V_EN(0);
-#if CONFIG_USB_PD_PORT_COUNT >= 2
+#if CONFIG_USB_PD_PORT_MAX_COUNT >= 2
 	else if (port == 1)
 		return USB_5V_EN(1);
 #endif
@@ -111,7 +111,7 @@ void usb_charger_reset_charge(int port)
 static void usb_charger_init(void)
 {
 	int i;
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		usb_charger_reset_charge(i);
 		/* Initialize VBUS supplier based on whether VBUS is present. */
 		update_vbus_supplier(i, pd_is_vbus_present(i));

@@ -97,7 +97,7 @@ void set_usb_mux_with_current_data_role(int port)
 /* Events for pd_interrupt_handler_task */
 #define PD_PROCESS_INTERRUPT  (1<<0)
 
-static uint8_t pd_int_task_id[CONFIG_USB_PD_PORT_COUNT];
+static uint8_t pd_int_task_id[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void schedule_deferred_pd_interrupt(const int port)
 {
@@ -115,7 +115,7 @@ void pd_interrupt_handler_task(void *p)
 	const int port = (int) p;
 	const int port_mask = (PD_STATUS_TCPC_ALERT_0 << port);
 
-	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
+	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 
 	pd_int_task_id[port] = task_get_current();
 

@@ -30,7 +30,7 @@ enum glkrvp_charge_ports {
 	DC_JACK_PORT_0 = DEDICATED_CHARGE_PORT,
 };
 
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
@@ -48,9 +48,9 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.drv = &tcpci_tcpm_drv,
 	},
 };
-BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == CONFIG_USB_PD_PORT_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.port_addr = 0x10,
 		.driver = &ps874x_usb_mux_driver,
@@ -200,7 +200,7 @@ DECLARE_HOOK(HOOK_INIT, board_charge_init, HOOK_PRIO_DEFAULT);
 int board_set_active_charge_port(int port)
 {
 	/* if it's a PD port and sourcing VBUS, don't enable */
-	if (port >= 0 && port < CONFIG_USB_PD_PORT_COUNT)
+	if (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT)
 		if (board_charger_port_is_sourcing_vbus(port)) {
 			CPRINTS("Skip enable p%d", port);
 			return EC_ERROR_INVAL;

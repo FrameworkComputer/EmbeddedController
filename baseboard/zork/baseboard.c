@@ -244,7 +244,7 @@ void ppc_interrupt(enum gpio_signal signal)
 int board_set_active_charge_port(int port)
 {
 	int is_valid_port = (port >= 0 &&
-			     port < CONFIG_USB_PD_PORT_COUNT);
+			     port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 
 	if (port == CHARGE_PORT_NONE) {
@@ -314,7 +314,7 @@ const struct tcpc_config_t tcpc_config[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
-BUILD_ASSERT(CONFIG_USB_PD_PORT_COUNT == USBC_PORT_COUNT);
+BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	[USBC_PORT_C0] = {

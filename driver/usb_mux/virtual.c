@@ -22,7 +22,7 @@
 			USB_PD_MUX_DP_ENABLED | USB_PD_MUX_POLARITY_INVERTED | \
 			USB_PD_MUX_SAFE_MODE)
 
-static mux_state_t virtual_mux_state[CONFIG_USB_PD_PORT_COUNT];
+static mux_state_t virtual_mux_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static inline void virtual_mux_update_state(int port, mux_state_t mux_state)
 {

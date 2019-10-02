@@ -251,7 +251,7 @@ enum sub_state {
 	PE_SUB2
 };
 
-static enum sm_local_state local_state[CONFIG_USB_PD_PORT_COUNT];
+static enum sm_local_state local_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /*
  * Policy Engine State Machine Object
@@ -415,7 +415,7 @@ static struct policy_engine {
 	uint32_t src_caps[PDO_MAX_OBJECTS];
 	int src_cap_cnt;
 
-} pe[CONFIG_USB_PD_PORT_COUNT];
+} pe[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /*
  * As a sink, this is the max voltage (in millivolts) we can request
@@ -4395,19 +4395,19 @@ int pd_charge_from_device(uint16_t vid, uint16_t pid)
 #ifdef CONFIG_USB_PD_DISCHARGE
 void pd_set_vbus_discharge(int port, int enable)
 {
-	static struct mutex discharge_lock[CONFIG_USB_PD_PORT_COUNT];
+	static struct mutex discharge_lock[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 	mutex_lock(&discharge_lock[port]);
 	enable &= !board_vbus_source_enabled(port);
 
 #ifdef CONFIG_USB_PD_DISCHARGE_GPIO
-#if CONFIG_USB_PD_PORT_COUNT == 0
+#if CONFIG_USB_PD_PORT_MAX_COUNT == 0
 	gpio_set_level(GPIO_USB_C0_DISCHARGE, enable);
-#elif CONFIG_USB_PD_PORT_COUNT == 1
+#elif CONFIG_USB_PD_PORT_MAX_COUNT == 1
 	gpio_set_level(GPIO_USB_C1_DISCHARGE, enable);
-#elif CONFIG_USB_PD_PORT_COUNT == 2
+#elif CONFIG_USB_PD_PORT_MAX_COUNT == 2
 	gpio_set_level(GPIO_USB_C2_DISCHARGE, enable);
-#elif CONFIG_USB_PD_PORT_COUNT == 3
+#elif CONFIG_USB_PD_PORT_MAX_COUNT == 3
 	gpio_set_level(GPIO_USB_C3_DISCHARGE, enable);
 #endif
 #else
@@ -4838,7 +4838,7 @@ static int command_pe(int argc, char **argv)
 
 	/* command: pe <port> <subcmd> <args> */
 	port = strtoi(argv[1], &e, 10);
-	if (*e || port >= CONFIG_USB_PD_PORT_COUNT)
+	if (*e || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return EC_ERROR_PARAM2;
 	if (!strncasecmp(argv[2], "dump", 4))
 		dump_pe(port);
@@ -4856,7 +4856,7 @@ static enum ec_status hc_remote_pd_discovery(struct host_cmd_handler_args *args)
 	const uint8_t *port = args->params;
 	struct ec_params_usb_pd_discovery_entry *r = args->response;
 
-	if (*port >= CONFIG_USB_PD_PORT_COUNT)
+	if (*port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	r->vid = pd_get_identity_vid(*port);
@@ -4879,7 +4879,7 @@ static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
 	const struct ec_params_usb_pd_get_mode_request *p = args->params;
 	struct ec_params_usb_pd_get_mode_response *r = args->response;
 
-	if (p->port >= CONFIG_USB_PD_PORT_COUNT)
+	if (p->port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	/* no more to send */

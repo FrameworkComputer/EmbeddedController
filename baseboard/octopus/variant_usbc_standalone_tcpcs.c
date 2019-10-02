@@ -29,7 +29,7 @@
 
 /******************************************************************************/
 /* USB-C TPCP Configuration */
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
 #if defined(VARIANT_OCTOPUS_TCPC_0_PS8751)
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -69,7 +69,7 @@ static int ps8751_tune_mux(int port)
 }
 #endif
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
 #if defined(VARIANT_OCTOPUS_TCPC_0_PS8751)
 		.driver = &tcpci_tcpm_usb_mux_driver,
@@ -88,7 +88,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 
 /******************************************************************************/
 /* USB-C PPC Configuration */
-struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
+struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
 		.i2c_port = I2C_PORT_TCPC0,
 		.i2c_addr_flags = NX20P3483_ADDR2_FLAGS,

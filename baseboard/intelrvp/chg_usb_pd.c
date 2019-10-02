@@ -93,7 +93,7 @@ void board_tcpc_init(void)
 		board_reset_pd_mcu();
 
 	/* Enable TCPCx interrupt */
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
 		gpio_enable_interrupt(tcpc_gpios[i].vbus.pin);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
@@ -170,7 +170,7 @@ int board_set_active_charge_port(int port)
 	}
 
 	/* Make sure non-charging ports are disabled */
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		if (i == port)
 			continue;
 

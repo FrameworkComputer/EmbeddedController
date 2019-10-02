@@ -11,7 +11,7 @@
 
 /* USB Retimers configuration */
 #ifdef CONFIG_USB_PD_RETIMER_INTEL_BB
-struct bb_retimer bb_retimers[CONFIG_USB_PD_PORT_COUNT] = {
+struct bb_retimer bb_retimers[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[TYPE_C_PORT_0] = {
 		.i2c_port = I2C_PORT0_BB_RETIMER,
 		.i2c_addr = I2C_PORT0_BB_RETIMER_ADDR,
@@ -31,5 +31,5 @@ struct bb_retimer bb_retimers[CONFIG_USB_PD_PORT_COUNT] = {
 	},
 #endif /* HAS_TASK_PD_C1 */
 };
-BUILD_ASSERT(ARRAY_SIZE(bb_retimers) == CONFIG_USB_PD_PORT_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(bb_retimers) == CONFIG_USB_PD_PORT_MAX_COUNT);
 #endif /* CONFIG_USB_PD_RETIMER_INTEL_BB */

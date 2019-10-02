@@ -106,7 +106,7 @@ static struct pd_prl {
 	int mock_pe_got_hard_reset;
 	int mock_pe_message_received;
 	int mock_got_soft_reset;
-} pd_port[CONFIG_USB_PD_PORT_COUNT];
+} pd_port[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static void init_port(int port, int rev)
 {

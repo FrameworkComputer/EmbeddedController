@@ -159,12 +159,12 @@ static struct type_c {
 	uint16_t dev_id;
 	uint32_t dev_rw_hash[PD_RW_HASH_SIZE/4];
 	enum ec_current_image current_image;
-} tc[CONFIG_USB_PD_PORT_COUNT];
+} tc[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Port dual-role state */
 static __maybe_unused
-enum pd_dual_role_states drp_state[CONFIG_USB_PD_PORT_COUNT] = {
-	[0 ... (CONFIG_USB_PD_PORT_COUNT - 1)] =
+enum pd_dual_role_states drp_state[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	[0 ... (CONFIG_USB_PD_PORT_MAX_COUNT - 1)] =
 		CONFIG_USB_PD_INITIAL_DRP_STATE};
 
 #ifdef CONFIG_USBC_VCONN
@@ -602,7 +602,7 @@ void pd_prepare_sysjump(void)
 		 * Exit modes before sysjump so we can cleanly enter again
 		 * later
 		 */
-		for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 			/*
 			 * We can't be in an alternate mode if PD comm is
 			 * disabled, so no need to send the event
@@ -832,7 +832,7 @@ static void pd_update_try_source(void)
 	int batt_soc = usb_get_battery_soc();
 
 	try_src = 0;
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
 		try_src |= drp_state[i] == PD_DRP_TOGGLE_ON;
 
 	/*
@@ -977,7 +977,7 @@ static enum ec_status hc_pd_ports(struct host_cmd_handler_args *args)
 {
 	struct ec_response_usb_pd_ports *r = args->response;
 
-	r->num_ports = CONFIG_USB_PD_PORT_COUNT;
+	r->num_ports = CONFIG_USB_PD_PORT_MAX_COUNT;
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
@@ -1018,7 +1018,7 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 	struct ec_response_usb_pd_control_v2 *r_v2 = args->response;
 	struct ec_response_usb_pd_control *r = args->response;
 
-	if (p->port >= CONFIG_USB_PD_PORT_COUNT)
+	if (p->port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	if (p->role >= USB_PD_CTRL_ROLE_COUNT ||
@@ -1113,7 +1113,7 @@ static enum ec_status hc_remote_flash(struct host_cmd_handler_args *args)
 	const uint32_t *data = &(p->size) + 1;
 	int i, size;
 
-	if (port >= CONFIG_USB_PD_PORT_COUNT)
+	if (port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	if (p->size + sizeof(*p) > args->params_size)
@@ -1210,7 +1210,7 @@ static enum ec_status hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
 	const uint8_t *port = args->params;
 	struct ec_params_usb_pd_rw_hash_entry *r = args->response;
 
-	if (*port >= CONFIG_USB_PD_PORT_COUNT)
+	if (*port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	r->dev_id = tc[*port].dev_id;
@@ -1235,7 +1235,7 @@ static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 	const struct ec_params_pd_chip_info *p = args->params;
 	struct ec_response_pd_chip_info_v1 *info;
 
-	if (p->port >= CONFIG_USB_PD_PORT_COUNT)
+	if (p->port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	if (tcpm_get_chip_info(p->port, p->live, &info))
@@ -1281,7 +1281,8 @@ static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_set_mode_request *p = args->params;
 
-	if ((p->port >= CONFIG_USB_PD_PORT_COUNT) || (!p->svid) || (!p->opos))
+	if ((p->port >= CONFIG_USB_PD_PORT_MAX_COUNT) ||
+	    (!p->svid) || (!p->opos))
 		return EC_RES_INVALID_PARAM;
 
 	switch (p->cmd) {
