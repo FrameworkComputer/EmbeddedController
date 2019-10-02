@@ -111,7 +111,7 @@ void usb_charger_reset_charge(int port)
 static void usb_charger_init(void)
 {
 	int i;
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		usb_charger_reset_charge(i);
 		/* Initialize VBUS supplier based on whether VBUS is present. */
 		update_vbus_supplier(i, pd_is_vbus_present(i));

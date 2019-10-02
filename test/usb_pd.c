@@ -147,7 +147,7 @@ static void init_ports(void)
 {
 	int i;
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
+	for (i = 0; i < board_get_usb_pd_port_count(); ++i) {
 		pd_port[i].host_mode = 0;
 		pd_port[i].partner_role = -1;
 		pd_port[i].has_vbus = 0;

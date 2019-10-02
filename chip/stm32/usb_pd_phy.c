@@ -463,7 +463,7 @@ void pd_rx_handler(void)
 	}
 #endif
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		if (pending & EXTI_COMP_MASK(i)) {
 			rx_edge_ts[i][rx_edge_ts_idx[i]].val = get_time().val;
 			next_idx = (rx_edge_ts_idx[i] ==

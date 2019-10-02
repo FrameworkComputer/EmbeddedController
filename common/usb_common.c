@@ -305,3 +305,8 @@ void notify_sysjump_ready(volatile const task_id_t * const sysjump_task_waiting)
 						TASK_EVENT_SYSJUMP_READY, 0);
 }
 #endif
+
+__attribute__((weak)) uint8_t board_get_usb_pd_port_count(void)
+{
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
+}

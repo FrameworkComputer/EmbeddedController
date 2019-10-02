@@ -1111,11 +1111,11 @@ int tcpc_set_rx_enable(int port, int enable)
 
 #if defined(CONFIG_LOW_POWER_IDLE) && !defined(CONFIG_USB_POWER_DELIVERY)
 	/* If any PD port is connected, then disable deep sleep */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i)
+	for (i = 0; i < board_get_usb_pd_port_count(); ++i)
 		if (pd[i].rx_enabled)
 			break;
 
-	if (i == CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (i == board_get_usb_pd_port_count())
 		enable_sleep(SLEEP_MASK_USB_PD);
 	else
 		disable_sleep(SLEEP_MASK_USB_PD);
@@ -1163,7 +1163,7 @@ void tcpc_pre_init(void)
 	int i;
 
 	/* Mark as uninitialized */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		pd[i].power_status |= TCPC_REG_POWER_STATUS_UNINIT |
 				      TCPC_REG_POWER_STATUS_VBUS_DET;
 }
@@ -1173,6 +1173,9 @@ DECLARE_HOOK(HOOK_INIT, tcpc_pre_init, HOOK_PRIO_INIT_I2C - 1);
 void tcpc_init(int port)
 {
 	int i;
+
+	if (port >= board_get_usb_pd_port_count())
+		return;
 
 	/* Initialize physical layer */
 	pd_hw_init(port, PD_ROLE_DEFAULT(port));
@@ -1222,6 +1225,9 @@ void pd_vbus_evt_p0(enum gpio_signal signal)
 #if CONFIG_USB_PD_PORT_MAX_COUNT >= 2
 void pd_vbus_evt_p1(enum gpio_signal signal)
 {
+	if (board_get_usb_pd_port_count() == 1)
+		return;
+
 	tcpc_set_power_status(TASK_ID_TO_PD_PORT(TASK_ID_PD_C1),
 				 !gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L));
 	task_wake(TASK_ID_PD_C1);
@@ -1423,7 +1429,7 @@ static int command_tcpc(int argc, char **argv)
 	port = strtoi(argv[1], &e, 10);
 	if (argc < 3)
 		return EC_ERROR_PARAM_COUNT;
-	if (*e || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (*e || port >= board_get_usb_pd_port_count())
 		return EC_ERROR_PARAM2;
 
 	if (!strcasecmp(argv[2], "clock")) {

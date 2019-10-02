@@ -244,7 +244,7 @@ void usb_charger_task(void *u)
 	 * Set most recent bc1.2 detection supplier result to
 	 * CHARGE_SUPPLIER_NONE for all ports.
 	 */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		bc12_supplier[port] = CHARGE_SUPPLIER_NONE;
 
 	/*

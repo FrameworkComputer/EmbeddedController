@@ -7,6 +7,7 @@
 #include "compile_time_macros.h"
 #include "ec_commands.h"
 #include "host_command.h"
+#include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
 #ifdef CONFIG_HOSTCMD_LOCATE_CHIP
@@ -30,7 +31,7 @@ static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 		break;
 	case EC_CHIP_TYPE_TCPC:
 #if defined(CONFIG_USB_PD_PORT_MAX_COUNT) && !defined(CONFIG_USB_PD_TCPC)
-		if (params->index >= CONFIG_USB_PD_PORT_MAX_COUNT)
+		if (params->index >= board_get_usb_pd_port_count())
 			return EC_RES_OVERFLOW;
 		resp->bus_type = tcpc_config[params->index].bus_type;
 		if (resp->bus_type == EC_BUS_TYPE_I2C) {

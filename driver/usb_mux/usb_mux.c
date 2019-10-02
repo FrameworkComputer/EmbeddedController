@@ -195,7 +195,7 @@ static int command_typec(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	port = strtoi(argv[1], &e, 10);
-	if (*e || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (*e || port >= board_get_usb_pd_port_count())
 		return EC_ERROR_PARAM1;
 
 	if (argc < 3) {
@@ -234,7 +234,7 @@ static enum ec_status hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
 	int port = p->port;
 	const struct usb_mux *mux;
 
-	if (port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (port >= board_get_usb_pd_port_count())
 		return EC_RES_INVALID_PARAM;
 
 	mux = &usb_muxes[port];

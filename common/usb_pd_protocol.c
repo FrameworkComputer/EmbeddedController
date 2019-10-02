@@ -851,11 +851,11 @@ static inline void set_state(int port, enum pd_states next_state)
 
 #ifdef CONFIG_LOW_POWER_IDLE
 	/* If a PD device is attached then disable deep sleep */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		if (pd_capable(i))
 			break;
 	}
-	if (i == CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (i == board_get_usb_pd_port_count())
 		enable_sleep(SLEEP_MASK_USB_PD);
 	else
 		disable_sleep(SLEEP_MASK_USB_PD);
@@ -1477,7 +1477,7 @@ void pd_soft_reset(void)
 {
 	int i;
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i)
+	for (i = 0; i < board_get_usb_pd_port_count(); ++i)
 		if (pd_is_connected(i)) {
 			set_state(i, PD_STATE_SOFT_RESET);
 			task_wake(PD_PORT_TO_TASK_ID(i));
@@ -2378,7 +2378,7 @@ static void pd_update_try_source(void)
 	int batt_soc = usb_get_battery_soc();
 
 	try_src = 0;
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		try_src |= drp_state[i] == PD_DRP_TOGGLE_ON;
 
 	/*
@@ -2411,7 +2411,7 @@ static void pd_update_try_source(void)
 	 * mode went from enabled to disabled and trying_source
 	 * was active at that time.
 	 */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		pd[i].flags &= ~PD_FLAGS_TRY_SRC;
 }
 #endif /* CONFIG_USB_PD_TRY_SRC */
@@ -2425,7 +2425,7 @@ static void pd_update_snk_reset(void)
 	if (batt_soc < CONFIG_USB_PD_RESET_MIN_BATT_SOC)
 		return;
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		if (pd[i].flags & PD_FLAGS_SNK_WAITING_BATT) {
 			/*
 			 * Battery has gained sufficient charge to kick off PD
@@ -2744,13 +2744,13 @@ static void pd_init_tasks(void)
 #if defined(HAS_TASK_CHIPSET) && defined(CONFIG_USB_PD_DUAL_ROLE)
 	/* Set dual-role state based on chipset power state */
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+		for (i = 0; i < board_get_usb_pd_port_count(); i++)
 			drp_state[i] = PD_DRP_FORCE_SINK;
 	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
-		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+		for (i = 0; i < board_get_usb_pd_port_count(); i++)
 			drp_state[i] = PD_DRP_TOGGLE_OFF;
 	else /* CHIPSET_STATE_ON */
-		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+		for (i = 0; i < board_get_usb_pd_port_count(); i++)
 			drp_state[i] = PD_DRP_TOGGLE_ON;
 #endif
 
@@ -2765,7 +2765,7 @@ static void pd_init_tasks(void)
 		enable = 1;
 #endif
 #endif
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		pd_comm_enabled[i] = enable;
 	CPRINTS("PD comm %sabled", enable ? "en" : "dis");
 
@@ -4759,7 +4759,7 @@ static void pd_chipset_resume(void)
 {
 	int i;
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 #ifdef CONFIG_CHARGE_MANAGER
 		if (charge_manager_get_active_charge_port() != i)
 #endif
@@ -4776,7 +4776,7 @@ static void pd_chipset_suspend(void)
 {
 	int i;
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		pd_set_dual_role(i, PD_DRP_TOGGLE_OFF);
 	CPRINTS("PD:S0->S3");
 }
@@ -4786,7 +4786,7 @@ static void pd_chipset_startup(void)
 {
 	int i;
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		pd_set_dual_role_no_wakeup(i, PD_DRP_TOGGLE_OFF);
 		pd[i].flags |= PD_FLAGS_CHECK_IDENTITY;
 		/* Reset cable attributes and flags */
@@ -4804,7 +4804,7 @@ static void pd_chipset_shutdown(void)
 {
 	int i;
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		pd_set_dual_role_no_wakeup(i, PD_DRP_FORCE_SINK);
 		task_set_event(PD_PORT_TO_TASK_ID(i),
 			       PD_EVENT_POWER_STATE_CHANGE |
@@ -4823,7 +4823,7 @@ void pd_prepare_sysjump(void)
 	int i;
 
 	/* Exit modes before sysjump so we can cleanly enter again later */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		/*
 		 * We can't be in an alternate mode if PD comm is disabled or
 		 * the port is suspended, so no need to send the event
@@ -4956,7 +4956,7 @@ static int remote_flashing(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	port = strtoi(argv[1], &e, 10);
-	if (*e || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (*e || port >= board_get_usb_pd_port_count())
 		return EC_ERROR_PARAM2;
 
 	cnt = 0;
@@ -5197,7 +5197,7 @@ static int command_pd(int argc, char **argv)
 	port = strtoi(argv[1], &e, 10);
 	if (argc < 3)
 		return EC_ERROR_PARAM_COUNT;
-	if (*e || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (*e || port >= board_get_usb_pd_port_count())
 		return EC_ERROR_PARAM2;
 #if defined(CONFIG_CMD_PD) && defined(CONFIG_USB_PD_DUAL_ROLE)
 
@@ -5386,7 +5386,7 @@ DECLARE_CONSOLE_COMMAND(pd, command_pd,
 static enum ec_status hc_pd_ports(struct host_cmd_handler_args *args)
 {
 	struct ec_response_usb_pd_ports *r = args->response;
-	r->num_ports = CONFIG_USB_PD_PORT_MAX_COUNT;
+	r->num_ports = board_get_usb_pd_port_count();
 
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
@@ -5427,7 +5427,7 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 	struct ec_response_usb_pd_control_v1 *r_v1 = args->response;
 	struct ec_response_usb_pd_control *r = args->response;
 
-	if (p->port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (p->port >= board_get_usb_pd_port_count())
 		return EC_RES_INVALID_PARAM;
 
 	if (p->role >= USB_PD_CTRL_ROLE_COUNT ||
@@ -5527,7 +5527,7 @@ static enum ec_status hc_remote_flash(struct host_cmd_handler_args *args)
 	int i, size, rv = EC_RES_SUCCESS;
 	timestamp_t timeout;
 
-	if (port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (port >= board_get_usb_pd_port_count())
 		return EC_RES_INVALID_PARAM;
 
 	if (p->size + sizeof(*p) > args->params_size)
@@ -5656,7 +5656,7 @@ static enum ec_status hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
 	const uint8_t *port = args->params;
 	struct ec_params_usb_pd_rw_hash_entry *r = args->response;
 
-	if (*port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (*port >= board_get_usb_pd_port_count())
 		return EC_RES_INVALID_PARAM;
 
 	r->dev_id = pd[*port].dev_id;
@@ -5682,7 +5682,7 @@ static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 	const struct ec_params_pd_chip_info *p = args->params;
 	struct ec_response_pd_chip_info_v1 *info;
 
-	if (p->port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (p->port >= board_get_usb_pd_port_count())
 		return EC_RES_INVALID_PARAM;
 
 	if (tcpm_get_chip_info(p->port, p->live, &info))
@@ -5711,7 +5711,7 @@ static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_set_mode_request *p = args->params;
 
-	if ((p->port >= CONFIG_USB_PD_PORT_MAX_COUNT) ||
+	if ((p->port >= board_get_usb_pd_port_count()) ||
 	    (!p->svid) || (!p->opos))
 		return EC_RES_INVALID_PARAM;
 
@@ -5750,7 +5750,7 @@ static enum ec_status pd_control(struct host_cmd_handler_args *args)
 	const struct ec_params_pd_control *cmd = args->params;
 	int enable = 0;
 
-	if (cmd->chip >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (cmd->chip >= board_get_usb_pd_port_count())
 		return EC_RES_INVALID_PARAM;
 
 	/* Always allow disable command */

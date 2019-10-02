@@ -17,6 +17,7 @@
 #include "hooks.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_pd.h"
 #include "util.h"
 #include "spi.h"
 
@@ -297,14 +298,27 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	 * Leave USB-C charging enabled in hibernate, in order to
 	 * allow wake-on-plug. 5V enable must be pulled low.
 	 */
-#if CONFIG_USB_PD_PORT_MAX_COUNT > 0
-	gpio_set_flags(GPIO_USB_C0_5V_EN, GPIO_PULL_DOWN | GPIO_INPUT);
-	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 0);
+	switch (board_get_usb_pd_port_count()) {
+#if CONFIG_USB_PD_PORT_MAX_COUNT >= 2
+	case 2:
+		gpio_set_flags(GPIO_USB_C1_5V_EN, GPIO_PULL_DOWN | GPIO_INPUT);
+		gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 0);
+		/* Fall through */
 #endif
-#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
-	gpio_set_flags(GPIO_USB_C1_5V_EN, GPIO_PULL_DOWN | GPIO_INPUT);
-	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 0);
+#if CONFIG_USB_PD_PORT_MAX_COUNT >= 1
+	case 1:
+		gpio_set_flags(GPIO_USB_C0_5V_EN, GPIO_PULL_DOWN | GPIO_INPUT);
+		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 0);
+		/* Fall through */
 #endif
+	case 0:
+		/* Nothing to do but break */
+		break;
+	default:
+		/* More ports needs to be defined */
+		ASSERT(false);
+		break;
+	}
 #endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
 
 	if (hibernate_wake_pins_used > 0) {

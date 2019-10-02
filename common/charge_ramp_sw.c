@@ -157,7 +157,7 @@ void chg_ramp_task(void *u)
 	int active_icl_new;
 
 	/* Clear last OCP supplier to guarantee we ramp on first connect */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		oc_info[i][0].sup = CHARGE_SUPPLIER_NONE;
 
 	/*
@@ -364,7 +364,7 @@ static int command_chgramp(int argc, char **argv)
 	ccprintf("Chg Ramp:\nState: %d\nMin ICL: %d\nActive ICL: %d\n",
 		 ramp_st, min_icl, active_icl);
 
-	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
+	for (port = 0; port < board_get_usb_pd_port_count(); port++) {
 		ccprintf("Port %d:\n", port);
 		ccprintf("  OC idx:%d\n", oc_info_idx[port]);
 		for (i = 0; i < RAMP_COUNT; i++) {

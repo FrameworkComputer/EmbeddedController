@@ -235,7 +235,7 @@ static int console_command_bb_retimer(int argc, char **argv)
 
 	/* Get port number */
 	port = strtoi(argv[1], &e, 0);
-	if (*e || port < 0 || port > CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (*e || port < 0 || port > board_get_usb_pd_port_count())
 		return EC_ERROR_PARAM1;
 
 	/* Validate r/w selection */
