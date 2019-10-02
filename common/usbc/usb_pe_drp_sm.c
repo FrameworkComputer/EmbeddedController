@@ -84,6 +84,8 @@
 /* 6.7.5 Discover Identity Counter */
 #define N_DISCOVER_IDENTITY_COUNT 20
 
+#define TIMER_DISABLED 0xffffffffffffffff /* Unreachable time in future */
+
 /*
  * Function pointer to a Structured Vendor Defined Message (SVDM) response
  * function defined in the board's usb_pd_policy.c file.
@@ -441,8 +443,8 @@ void pe_init(int port)
 {
 	pe[port].flags = 0;
 	pe[port].dpm_request = 0;
-	pe[port].source_cap_timer = 0;
-	pe[port].no_response_timer = 0;
+	pe[port].source_cap_timer = TIMER_DISABLED;
+	pe[port].no_response_timer = TIMER_DISABLED;
 	pe[port].data_role = tc_get_data_role(port);
 
 	tc_pd_connection(port, 0);
@@ -923,11 +925,17 @@ static void pe_src_startup_entry(int port)
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_RUN_SOURCE_START_TIMER)) {
 		PE_CLR_FLAG(port, PE_FLAGS_RUN_SOURCE_START_TIMER);
+
 		/* Start SwapSourceStartTimer */
-		pe[port].swap_source_start_timer =
-			get_time().val + PD_T_SWAP_SOURCE_START;
+		pe[port].swap_source_start_timer = get_time().val +
+			PD_T_SWAP_SOURCE_START;
 	} else {
-		pe[port].swap_source_start_timer = 0;
+		/*
+		 * SwapSourceStartTimer delay is not needed, so trigger now.
+		 * We can't use set_state_pe here, since we need to ensure that
+		 * the protocol layer is running again (done in run function).
+		 */
+		pe[port].swap_source_start_timer = get_time().val;
 	}
 }
 
@@ -937,8 +945,7 @@ static void pe_src_startup_run(int port)
 	if (!prl_is_running(port))
 		return;
 
-	if (pe[port].swap_source_start_timer == 0 ||
-			get_time().val > pe[port].swap_source_start_timer)
+	if (get_time().val > pe[port].swap_source_start_timer)
 		set_state_pe(port, PE_SRC_VDM_IDENTITY_REQUEST);
 }
 
@@ -1030,7 +1037,6 @@ static void pe_src_discovery_run(int port)
 	 *   3) And the HardResetCounter > nHardResetCount.
 	 */
 	if (!PE_CHK_FLAG(port, PE_FLAGS_PD_CONNECTION) &&
-			pe[port].no_response_timer > 0 &&
 			get_time().val > pe[port].no_response_timer &&
 			pe[port].hard_reset_counter > N_HARD_RESET_COUNT) {
 		set_state_pe(port, PE_SRC_DISABLED);
@@ -1060,7 +1066,7 @@ static void pe_src_send_capabilities_entry(int port)
 	pe[port].caps_counter++;
 
 	/* Stop sender response timer */
-	pe[port].sender_response_timer = 0;
+	pe[port].sender_response_timer = TIMER_DISABLED;
 
 	/*
 	 * Clear PE_FLAGS_INTERRUPTIBLE_AMS flag if it was set
@@ -1077,12 +1083,11 @@ static void pe_src_send_capabilities_run(int port)
 	 *  2) Reset the HardResetCounter and CapsCounter to zero.
 	 *  3) Initialize and run the SenderResponseTimer.
 	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE) &&
-				pe[port].sender_response_timer == 0) {
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
 		/* Stop the NoResponseTimer */
-		pe[port].no_response_timer = 0;
+		pe[port].no_response_timer = TIMER_DISABLED;
 
 		/* Reset the HardResetCounter to zero */
 		pe[port].hard_reset_counter = 0;
@@ -1099,8 +1104,7 @@ static void pe_src_send_capabilities_run(int port)
 	 * Transition to the PE_SRC_Negotiate_Capability state when:
 	 *  1) A Request Message is received from the Sink
 	 */
-	if (pe[port].sender_response_timer != 0 &&
-			PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
 		/*
@@ -1161,8 +1165,7 @@ static void pe_src_send_capabilities_run(int port)
 	 *  2) The NoResponseTimer times out
 	 *  3) And the HardResetCounter > nHardResetCount.
 	 */
-	if (pe[port].no_response_timer > 0 &&
-			get_time().val > pe[port].no_response_timer) {
+	if (get_time().val > pe[port].no_response_timer) {
 		if (pe[port].hard_reset_counter <= N_HARD_RESET_COUNT)
 			set_state_pe(port, PE_SRC_HARD_RESET);
 		else if (PE_CHK_FLAG(port, PE_FLAGS_PD_CONNECTION))
@@ -1176,9 +1179,9 @@ static void pe_src_send_capabilities_run(int port)
 	 * Transition to the PE_SRC_Hard_Reset state when:
 	 *  1) The SenderResponseTimer times out.
 	 */
-	if ((pe[port].sender_response_timer > 0) &&
-			get_time().val > pe[port].sender_response_timer) {
+	if (get_time().val > pe[port].sender_response_timer) {
 		set_state_pe(port, PE_SRC_HARD_RESET);
+		return;
 	}
 }
 
@@ -1317,7 +1320,7 @@ static void pe_src_ready_entry(int port)
 				get_time().val + PD_T_DISCOVER_IDENTITY;
 	} else {
 		PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
-		pe[port].discover_identity_timer = 0;
+		pe[port].discover_identity_timer = TIMER_DISABLED;
 	}
 
 	/* NOTE: PPS Implementation should be added here. */
@@ -1336,8 +1339,7 @@ static void pe_src_ready_run(int port)
 	 * Start Port Discovery when:
 	 *   1) The DiscoverIdentityTimer times out.
 	 */
-	if (pe[port].discover_identity_timer > 0 &&
-			get_time().val > pe[port].discover_identity_timer) {
+	if (get_time().val > pe[port].discover_identity_timer) {
 		pe[port].port_discover_identity_count++;
 		pe[port].vdm_cmd = DO_PORT_DISCOVERY_START;
 		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED |
@@ -1805,7 +1807,7 @@ static void pe_snk_select_capability_entry(int port)
 {
 	print_current_state(port);
 
-	pe[port].sender_response_timer = 0;
+	pe[port].sender_response_timer = TIMER_DISABLED;
 	/* Send Request */
 	pe_send_request_msg(port);
 }
@@ -1816,17 +1818,13 @@ static void pe_snk_select_capability_run(int port)
 	uint8_t cnt;
 
 	/* Wait until message is sent */
-	if (pe[port].sender_response_timer == 0 &&
-			(PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE))) {
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
 		/* Initialize and run SenderResponseTimer */
 		pe[port].sender_response_timer =
 					get_time().val + PD_T_SENDER_RESPONSE;
 	}
-
-	if (pe[port].sender_response_timer == 0)
-		return;
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
@@ -1983,7 +1981,7 @@ static void pe_snk_ready_entry(int port)
 		pe[port].sink_request_timer =
 					get_time().val + PD_T_SINK_REQUEST;
 	} else {
-		pe[port].sink_request_timer = 0;
+		pe[port].sink_request_timer = TIMER_DISABLED;
 	}
 
 	/*
@@ -1997,7 +1995,7 @@ static void pe_snk_ready_entry(int port)
 			get_time().val + PD_T_DISCOVER_IDENTITY;
 	} else {
 		PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
-		pe[port].discover_identity_timer = 0;
+		pe[port].discover_identity_timer = TIMER_DISABLED;
 	}
 
 	/*
@@ -2017,8 +2015,7 @@ static void pe_snk_ready_run(int port)
 	uint8_t cnt;
 	uint8_t ext;
 
-	if (pe[port].sink_request_timer > 0 &&
-				get_time().val > pe[port].sink_request_timer) {
+	if (get_time().val > pe[port].sink_request_timer) {
 		set_state_pe(port, PE_SNK_SELECT_CAPABILITY);
 		return;
 	}
@@ -2027,8 +2024,7 @@ static void pe_snk_ready_run(int port)
 	 * Start Port Discovery when:
 	 *   1) The DiscoverIdentityTimer times out.
 	 */
-	if (pe[port].discover_identity_timer > 0 &&
-			get_time().val > pe[port].discover_identity_timer) {
+	if (get_time().val > pe[port].discover_identity_timer) {
 		pe[port].port_discover_identity_count++;
 		pe[port].vdm_cmd = DO_PORT_DISCOVERY_START;
 		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED |
@@ -2298,7 +2294,7 @@ static void pe_send_soft_reset_entry(int port)
 	/* Reset Protocol Layer */
 	prl_reset(port);
 
-	pe[port].sender_response_timer = 0;
+	pe[port].sender_response_timer = TIMER_DISABLED;
 }
 
 static void pe_send_soft_reset_run(int port)
@@ -2311,7 +2307,7 @@ static void pe_send_soft_reset_run(int port)
 	if (!prl_is_running(port))
 		return;
 
-	if (pe[port].sender_response_timer == 0) {
+	if (pe[port].sender_response_timer == TIMER_DISABLED) {
 		/* Send Soft Reset message */
 		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_SOFT_RESET);
 
@@ -2372,17 +2368,13 @@ static void pe_soft_reset_entry(int port)
 {
 	print_current_state(port);
 
-	pe[port].sender_response_timer = 0;
+	pe[port].sender_response_timer = TIMER_DISABLED;
+
+	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
 }
 
 static void  pe_soft_reset_run(int port)
 {
-	if (pe[port].sender_response_timer == 0) {
-		/* Send Accept message */
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
-		pe[port].sender_response_timer++;
-	}
-
 	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
@@ -2701,7 +2693,7 @@ static void pe_drs_send_swap_entry(int port)
 	/* Request the Protocol Layer to send a DR_Swap Message */
 	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_DR_SWAP);
 
-	pe[port].sender_response_timer = 0;
+	pe[port].sender_response_timer = TIMER_DISABLED;
 }
 
 static void pe_drs_send_swap_run(int port)
@@ -2711,27 +2703,11 @@ static void pe_drs_send_swap_run(int port)
 	int ext;
 
 	/* Wait until message is sent */
-	if (pe[port].sender_response_timer == 0 &&
-			PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 		/* start the SenderResponseTimer */
 		pe[port].sender_response_timer =
 				get_time().val + PD_T_SENDER_RESPONSE;
-	}
-
-	if (pe[port].sender_response_timer == 0)
-		return;
-
-	/*
-	 * Transition to PE_SRC_Ready or PE_SNK_Ready state when:
-	 *   1) Or the SenderResponseTimer times out.
-	 */
-	if (get_time().val > pe[port].sender_response_timer) {
-		if (pe[port].power_role == PD_ROLE_SINK)
-			set_state_pe(port, PE_SNK_READY);
-		else
-			set_state_pe(port, PE_SRC_READY);
-		return;
 	}
 
 	/*
@@ -2752,14 +2728,28 @@ static void pe_drs_send_swap_run(int port)
 		if ((ext == 0) && (cnt == 0)) {
 			if (type == PD_CTRL_ACCEPT) {
 				set_state_pe(port, PE_DRS_CHANGE);
+				return;
 			} else if ((type == PD_CTRL_REJECT) ||
 						(type == PD_CTRL_WAIT)) {
 				if (pe[port].power_role == PD_ROLE_SINK)
 					set_state_pe(port, PE_SNK_READY);
 				else
 					set_state_pe(port, PE_SRC_READY);
+				return;
 			}
 		}
+	}
+
+	/*
+	 * Transition to PE_SRC_Ready or PE_SNK_Ready state when:
+	 *   1) the SenderResponseTimer times out.
+	 */
+	if (get_time().val > pe[port].sender_response_timer) {
+		if (pe[port].power_role == PD_ROLE_SINK)
+			set_state_pe(port, PE_SNK_READY);
+		else
+			set_state_pe(port, PE_SRC_READY);
+		return;
 	}
 }
 
@@ -2835,7 +2825,7 @@ static void pe_prs_src_snk_wait_source_on_entry(int port)
 {
 	print_current_state(port);
 	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
-	pe[port].ps_source_timer = 0;
+	pe[port].ps_source_timer = TIMER_DISABLED;
 }
 
 static void pe_prs_src_snk_wait_source_on_run(int port)
@@ -2856,8 +2846,7 @@ static void pe_prs_src_snk_wait_source_on_run(int port)
 	 * Transition to PE_SNK_Startup when:
 	 *   1) An PS_RDY Message is received.
 	 */
-	if (pe[port].ps_source_timer > 0 &&
-				PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
 		type = PD_HEADER_TYPE(emsg[port].header);
@@ -2866,7 +2855,7 @@ static void pe_prs_src_snk_wait_source_on_run(int port)
 
 		if ((ext == 0) && (cnt == 0) && (type == PD_CTRL_PS_RDY)) {
 			tc_pr_swap_complete(port);
-			pe[port].ps_source_timer = 0;
+			pe[port].ps_source_timer = TIMER_DISABLED;
 			set_state_pe(port, PE_SNK_STARTUP);
 			return;
 		}
@@ -2877,9 +2866,8 @@ static void pe_prs_src_snk_wait_source_on_run(int port)
 	 *   1) The PSSourceOnTimer times out.
 	 *   2) PS_RDY not sent after retries.
 	 */
-	if ((pe[port].ps_source_timer > 0 &&
-			get_time().val > pe[port].ps_source_timer) ||
-			PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
+	if (get_time().val > pe[port].ps_source_timer ||
+	    PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 
 		set_state_pe(port, PE_WAIT_FOR_ERROR_RECOVERY);
@@ -3096,7 +3084,7 @@ static void pe_prs_snk_src_source_on_run(int port)
 		pe[port].power_role = tc_get_power_role(port);
 		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
 		/* reset timer so PD_CTRL_PS_RDY isn't sent again */
-		pe[port].ps_source_timer = 0;
+		pe[port].ps_source_timer = TIMER_DISABLED;
 	}
 
 	/*
@@ -3275,13 +3263,12 @@ static void pe_bist_entry(int port)
 	 * Messages.
 	 */
 	else if (mode == BIST_TEST_DATA)
-		pe[port].bist_cont_mode_timer = 0;
+		pe[port].bist_cont_mode_timer = TIMER_DISABLED;
 }
 
 static void pe_bist_run(int port)
 {
-	if (pe[port].bist_cont_mode_timer > 0 &&
-			get_time().val > pe[port].bist_cont_mode_timer) {
+	if (get_time().val > pe[port].bist_cont_mode_timer) {
 
 		if (pe[port].power_role == PD_ROLE_SOURCE)
 			set_state_pe(port, PE_SRC_TRANSITION_TO_DEFAULT);
@@ -3527,13 +3514,12 @@ static void pe_vdm_request_entry(int port)
 		prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
 	}
 
-	pe[port].vdm_response_timer = 0;
+	pe[port].vdm_response_timer = TIMER_DISABLED;
 }
 
 static void pe_vdm_request_run(int port)
 {
-	if (pe[port].vdm_response_timer == 0 &&
-				PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
 		/* Message was sent */
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
@@ -3546,26 +3532,6 @@ static void pe_vdm_request_run(int port)
 		/* Start no response timer */
 		pe[port].vdm_response_timer =
 			get_time().val + PD_T_VDM_SNDR_RSP;
-	} else if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
-		/* Message not sent and we received a protocol error */
-		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
-
-		if (pe[port].partner_type) {
-			/* Restore power and data roles */
-			tc_set_power_role(port, pe[port].saved_power_role);
-			tc_set_data_role(port, pe[port].saved_data_role);
-		}
-
-		/* Fake busy response so we try to send command again */
-		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_BUSY);
-		if (get_last_state_pe(port) == PE_DO_PORT_DISCOVERY)
-			set_state_pe(port, PE_DO_PORT_DISCOVERY);
-		else if (get_last_state_pe(port) == PE_SRC_VDM_IDENTITY_REQUEST)
-			set_state_pe(port, PE_SRC_VDM_IDENTITY_REQUEST);
-		else if (pe[port].power_role == PD_ROLE_SOURCE)
-			set_state_pe(port, PE_SRC_READY);
-		else
-			set_state_pe(port, PE_SNK_READY);
 	}
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
@@ -3616,23 +3582,42 @@ static void pe_vdm_request_run(int port)
 		}
 	}
 
-	if (pe[port].vdm_response_timer > 0 &&
-				get_time().val > pe[port].vdm_response_timer) {
+
+
+	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
+		/* Message not sent and we received a protocol error */
+		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
+
+		if (pe[port].partner_type) {
+			/* Restore power and data roles */
+			tc_set_power_role(port, pe[port].saved_power_role);
+			tc_set_data_role(port, pe[port].saved_data_role);
+		}
+
+		/* Fake busy response so we try to send command again */
+		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_BUSY);
+	} else if (get_time().val > pe[port].vdm_response_timer) {
 		CPRINTF("VDM %s Response Timeout\n",
 				pe[port].partner_type ? "Cable" : "Port");
 
 		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED);
-
-		/* Return to previous state */
-		if (get_last_state_pe(port) == PE_DO_PORT_DISCOVERY)
-			set_state_pe(port, PE_DO_PORT_DISCOVERY);
-		else if (get_last_state_pe(port) == PE_SRC_VDM_IDENTITY_REQUEST)
-			set_state_pe(port, PE_SRC_VDM_IDENTITY_REQUEST);
-		else if (pe[port].power_role == PD_ROLE_SOURCE)
-			set_state_pe(port, PE_SRC_READY);
-		else
-			set_state_pe(port, PE_SNK_READY);
+	} else {
+		/* No error yet, keep looping */
+		return;
 	}
+
+	/*
+	 * We errored out, we may need to return to the previous state or the
+	 * default state for the power role.
+	 */
+	if (get_last_state_pe(port) == PE_DO_PORT_DISCOVERY)
+		set_state_pe(port, PE_DO_PORT_DISCOVERY);
+	else if (get_last_state_pe(port) == PE_SRC_VDM_IDENTITY_REQUEST)
+		set_state_pe(port, PE_SRC_VDM_IDENTITY_REQUEST);
+	else if (pe[port].power_role == PD_ROLE_SOURCE)
+		set_state_pe(port, PE_SRC_READY);
+	else
+		set_state_pe(port, PE_SNK_READY);
 }
 
 static void pe_vdm_request_exit(int port)
@@ -3991,7 +3976,7 @@ static void pe_vcs_send_swap_entry(int port)
 	/* Send a VCONN_Swap Message */
 	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_VCONN_SWAP);
 
-	pe[port].sender_response_timer = 0;
+	pe[port].sender_response_timer = TIMER_DISABLED;
 }
 
 static void pe_vcs_send_swap_run(int port)
@@ -4000,16 +3985,12 @@ static void pe_vcs_send_swap_run(int port)
 	uint8_t cnt;
 
 	/* Wait until message is sent */
-	if (pe[port].sender_response_timer == 0 &&
-			PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 		/* Start the SenderResponseTimer */
 		pe[port].sender_response_timer = get_time().val +
 						PD_T_SENDER_RESPONSE;
 	}
-
-	if (pe[port].sender_response_timer == 0)
-		return;
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
