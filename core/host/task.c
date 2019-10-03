@@ -206,6 +206,11 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 	return 0;
 }
 
+uint32_t *task_get_event_bitmap(task_id_t tskid)
+{
+	return &tasks[tskid].event;
+}
+
 uint32_t task_wait_event(int timeout_us)
 {
 	int tid = task_get_current();

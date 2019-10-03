@@ -76,8 +76,10 @@ uint64_t wait_for_state_change(int port, uint64_t timeout)
 
 	wait = get_time().val + timeout;
 	start = get_time().val;
-	while (get_state_tc(port) == state && get_time().val < wait)
+	while (get_state_tc(port) == state && get_time().val < wait) {
+		task_wake(PD_PORT_TO_TASK_ID(port));
 		task_wait_event(5 * MSEC);
+	}
 
 	return get_time().val - start;
 }
@@ -635,9 +637,9 @@ static int test_vpd_host_src_detection_message_reception(void)
 
 	host_connect_source(VBUS_0);
 
-	wait_for_state_change(port, 10 * MSEC);
+	wait_for_state_change(port, 100 * MSEC);
 
-	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
+	TEST_EQ(get_state_tc(port), TC_UNATTACHED_SNK, "%d");
 
 	host_disconnect_source();
 
