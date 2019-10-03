@@ -7,6 +7,7 @@
 #define __CROS_EC_ACCELGYRO_H
 
 #include "motion_sense.h"
+#include "math_util.h"
 
 /* Header file for accelerometer / gyro drivers. */
 
@@ -36,6 +37,15 @@ struct accelgyro_drv {
 	 * @return EC_SUCCESS if successful, non-zero if error.
 	 */
 	int (*read)(const struct motion_sensor_t *s, intv3_t v);
+
+	/**
+	 * Read the sensor's current internal temperature.
+	 *
+	 * @param s Pointer to sensor data.
+	 * @param temp Pointer to store temperature in degrees Kelvin.
+	 * @return EC_SUCCESS if successful, non-zero if error.
+	 */
+	int (*read_temp)(const struct motion_sensor_t *s, int *temp);
 
 	/**
 	 * Setter and getter methods for the sensor range. The sensor range
