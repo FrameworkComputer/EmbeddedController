@@ -344,10 +344,16 @@ void lid_angle_peripheral_enable(int enable)
 #endif
 
 static uint8_t sku_id;
+static uint8_t board_id;
 
 uint8_t get_board_sku(void)
 {
 	return sku_id;
+}
+
+uint8_t get_board_id(void)
+{
+	return board_id;
 }
 
 /* Read CBI from i2c eeprom and initialize variables for board variants */
@@ -355,6 +361,7 @@ static void cbi_init(void)
 {
 	uint32_t val;
 
+	/* SKU ID */
 	if (cbi_get_sku_id(&val) != EC_SUCCESS || val > UINT8_MAX) {
 		CPRINTS("Read SKU Error value :%d", val);
 		return;
@@ -363,5 +370,14 @@ static void cbi_init(void)
 	sku_id = val;
 
 	CPRINTS("SKU: %d", sku_id);
+
+	/* Board ID */
+	if (cbi_get_board_version(&val) != EC_SUCCESS || val > UINT8_MAX) {
+		CPRINTS("Read Board ID Error (%d)", val);
+	}
+
+	board_id = val;
+
+	CPRINTS("Board ID: %d", board_id);
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
