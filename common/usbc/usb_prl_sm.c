@@ -1084,23 +1084,23 @@ static void rch_requesting_chunk_entry(const int port)
 static void rch_requesting_chunk_run(const int port)
 {
 	/*
+	 * Message Transmitted received from Protocol Layer
+	 */
+	if (PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_COMPLETE)) {
+		PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
+		set_state_rch(port, RCH_WAITING_CHUNK);
+	}
+	/*
 	 * Transmission Error from Protocol Layer or
 	 * Message Received From Protocol Layer
 	 */
-	if (RCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED) ||
+	else if (RCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED) ||
 			PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_ERROR)) {
 		/*
 		 * Leave PRL_FLAGS_MSG_RECEIVED flag set. It'll be
 		 * cleared in rch_report_error state
 		 */
 		set_state_rch(port, RCH_REPORT_ERROR);
-	}
-	/*
-	 * Message Transmitted received from Protocol Layer
-	 */
-	else if (PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_COMPLETE)) {
-		PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
-		set_state_rch(port, RCH_WAITING_CHUNK);
 	}
 }
 
