@@ -84,7 +84,7 @@ static enum ec_status i2s_rx_set_bclk(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int (*sub_cmds[])(struct host_cmd_handler_args *) = {
+static enum ec_status (*sub_cmds[])(struct host_cmd_handler_args *) = {
 	[EC_CODEC_I2S_RX_ENABLE] = i2s_rx_enable,
 	[EC_CODEC_I2S_RX_DISABLE] = i2s_rx_disable,
 	[EC_CODEC_I2S_RX_SET_SAMPLE_DEPTH] = i2s_rx_set_sample_depth,

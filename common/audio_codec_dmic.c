@@ -46,7 +46,7 @@ static enum ec_status dmic_get_gain_idx(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int (*sub_cmds[])(struct host_cmd_handler_args *) = {
+static enum ec_status (*sub_cmds[])(struct host_cmd_handler_args *) = {
 	[EC_CODEC_DMIC_GET_MAX_GAIN] = dmic_get_max_gain,
 	[EC_CODEC_DMIC_SET_GAIN_IDX] = dmic_set_gain_idx,
 	[EC_CODEC_DMIC_GET_GAIN_IDX] = dmic_get_gain_idx,

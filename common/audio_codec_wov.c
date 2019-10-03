@@ -292,7 +292,7 @@ static enum ec_status wov_read_audio(struct host_cmd_handler_args *args)
 }
 #endif /* CONFIG_AUDIO_CODEC_CAP_WOV_AUDIO_SHM */
 
-static int (*sub_cmds[])(struct host_cmd_handler_args *) = {
+static enum ec_status (*sub_cmds[])(struct host_cmd_handler_args *) = {
 #ifdef CONFIG_AUDIO_CODEC_CAP_WOV_LANG_SHM
 	[EC_CODEC_WOV_SET_LANG_SHM] = wov_set_lang_shm,
 #else

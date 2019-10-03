@@ -84,7 +84,7 @@ static enum ec_status set_shm_addr(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-static int (*sub_cmds[])(struct host_cmd_handler_args *) = {
+static enum ec_status (*sub_cmds[])(struct host_cmd_handler_args *) = {
 	[EC_CODEC_GET_CAPABILITIES] = get_capabilities,
 	[EC_CODEC_GET_SHM_ADDR] = get_shm_addr,
 	[EC_CODEC_SET_SHM_ADDR] = set_shm_addr,
