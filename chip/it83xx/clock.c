@@ -193,10 +193,6 @@ static void clock_set_pll(enum pll_freq_idx idx)
 {
 	int pll;
 
-	/* TODO(b/134542199): fix me... Changing PLL failed on it83202/ax */
-	if (IS_ENABLED(CHIP_VARIANT_IT83202AX))
-		return;
-
 	pll_div_fnd  = clock_pll_ctrl[idx].div_fnd;
 	pll_div_ec   = clock_pll_ctrl[idx].div_ec;
 	pll_div_jtag = clock_pll_ctrl[idx].div_jtag;
@@ -425,13 +421,11 @@ void clock_cpu_standby(void)
 		asm("standby wake_grant");
 	} else if (IS_ENABLED(CHIP_CORE_RISCV)) {
 		/*
-		 * An interrupt is not able to wake EC up from low power mode.
-		 * (AX bug)
+		 * TODO(b:142029177): we have to enable interrupts before
+		 * standby instruction on IT8xxx2 series.
 		 */
-		if (IS_ENABLED(CHIP_VARIANT_IT83202AX))
-			asm("nop");
-		else
-			asm("wfi");
+		interrupt_enable();
+		asm("wfi");
 	}
 }
 
