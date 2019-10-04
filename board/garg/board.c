@@ -301,3 +301,11 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	/* Note that the level is inverted because the pin is active low. */
 	gpio_set_level(GPIO_USB_C_OC, !is_overcurrented);
 }
+
+uint8_t board_get_usb_pd_port_count(void)
+{
+	/* HDMI SKU has one USB PD port */
+	if (sku_id == 9)
+		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
+}
