@@ -6,6 +6,8 @@ Chromebooks. The document assumes that you're using Linux to do the development;
 preferably a recent version of Ubuntu or Debian. Some partners have had success
 developing in a VM, but please note that we don't test that configuration.
 
+See the [FPMCU documentation] for additional development information.
+
 [TOC]
 
 ## Hardware Required for Standalone Development (no Chromebook)
@@ -25,16 +27,21 @@ The Fingerprint MCU (FPMCU) board has the MCU that handles all
 fingerprint-related functionality (matching, encryption, etc). The fingerprint
 sensor itself connects to the FPMCU board.
 
-This FPMCU board is the DragonClaw Rev 0.1. |
-------------------------------------------- |
-![DragonClaw board]                         |
+This FPMCU board is the Bloonchipper Rev 0.1. |
+--------------------------------------------- |
+![Bloonchipper board]                         |
 
 *** note
 NOTE: Some FPMCU boards need a rework in order to work properly with
 servo. This fix is visible in the green box above.
 
-See the [Dragonclaw Servo Fix](#dragonclaw-servo-fix) section for more detail.
+See the [Bloonchipper Servo Fix](#bloonchipper-servo-fix) section for more
+detail.
 ***
+
+This FPMCU board is the Dartmonkey Rev 0.1. |
+------------------------------------------- |
+![Dartmonkey board]                         |
 
 ### Servo
 
@@ -64,7 +71,7 @@ interface with the FPMCU board.
 As you can see below, one end connects to the FPMCU board and the other connect
 to the developer's computer over micro USB.
 
-![Servo Micro with DragonClaw]
+![Servo Micro with Bloonchipper]
 
 *** note
 For more information about Servo Micro, see [Servo Micro Info].
@@ -144,7 +151,7 @@ development machine.
 *   Create and [enter the `chroot`].
     *   You can stop after the `enter the chroot` step.
 
-### Build the [EC](embedded controller) codebase
+### Build the [EC] (embedded controller) codebase
 
 Open **two** terminals and enter the chroot in each:
 
@@ -168,10 +175,15 @@ Build and install `servod` in the chroot:
 (chroot) $ sudo emerge hdctools
 ```
 
+*** note
+In all of the following commands, replace `<BOARD>` in the command with
+`bloonchipper` or `dartmonkey` depending on the development board you are using.
+***
+
 Run `servod`:
 
 ```bash
-(chroot) $ sudo servod --board=bloonchipper --config bloonchipper_rev0.1.xml
+(chroot) $ sudo servod --board=<BOARD> --config <BOARD>_rev0.1.xml
 ```
 
 You should see something like this. Leave it running:
@@ -255,15 +267,15 @@ Navigate to the EC source:
 Build the firmware:
 
 ```bash
-(chroot) $ make BOARD=bloonchipper -j
+(chroot) $ make BOARD=<BOARD> -j
 ```
 
-The resulting file will be in `build/bloonchipper/ec.bin`
+The resulting file will be in `build/<BOARD>/ec.bin`
 
 Flash the firmware file:
 
 ```bash
-(chroot) $ ./util/flash_ec --board=bloonchipper --image=./build/bloonchipper/ec.bin
+(chroot) $ ./util/flash_ec --board=<BOARD> --image=./build/<BOARD>/ec.bin
 ```
 
 Connect to the UART pty:
@@ -302,8 +314,8 @@ Start a fingerprint enrollment:
 > fpenroll
 ```
 
-The DragonClaw reference board has an onboard INA that monitors the voltage and
-power draw of the MCU and FP Sensor independently.
+The Bloonchipper reference board has an onboard INA that monitors the voltage
+and power draw of the MCU and FP Sensor independently.
 
 Signal Name   | Description
 ------------- | -------------------------------------
@@ -360,9 +372,9 @@ to access the necessary repo.
 
 ## Working with Chromebooks
 
-Chromebooks have an FPMCU (e.g., DragonClaw) board attached to the motherboard.
-You can use the device to run `ectool` commands and test the fingerprint sensor
-from the UI.
+Chromebooks have an FPMCU (e.g., Bloonchipper) board attached to the
+motherboard. You can use the device to run `ectool` commands and test the
+fingerprint sensor from the UI.
 
 ### Developer Mode and Write Protection
 
@@ -416,9 +428,9 @@ From the DUT, flash the firmware you copied:
 
 ## Troubleshooting
 
-### Dragonclaw Servo Fix
+### Bloonchipper Servo Fix
 
-DragonClaw Rev 0.1 has a known issue with UART and JTAG. Most notably, this
+Bloonchipper Rev 0.1 has a known issue with UART and JTAG. Most notably, this
 issue causes servo micro to fail to program the FPMCU over UART.
 
 This issue can be fixed with the following rework steps:
@@ -426,7 +438,7 @@ This issue can be fixed with the following rework steps:
 *   Connect servo header pin 13 to pin 18
 *   Connect servo header pin 13 to pin 29
 
-![DragonClaw servo fix diagram]
+![Bloonchipper servo fix diagram]
 
 ### Verify that servo and debugger are connected to USB {#servo-connected}
 
@@ -498,19 +510,21 @@ https://crbug.com/992082.
 [PNM]: https://en.wikipedia.org/wiki/Netpbm_format
 [Git and Gerrit Intro for Chromium OS]: https://chromium.googlesource.com/chromiumos/docs/+/master/git_and_gerrit_intro.md
 [Installing Chromium]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#installing-chromium-os-on-your-device
+[FPMCU documentation]: ./fingerprint.md
 
 <!-- Images -->
 
 [Servo Micro]: ../images/servo_micro.jpg
-[Servo Micro with DragonClaw]: ../images/servomicro_dragonclaw.jpg
+[Servo Micro with Bloonchipper]: ../images/servomicro_dragonclaw.jpg
 [Servo v2]: ../images/servo_v2.jpg
 [Standard Yoshi Flex]: ../images/yoshi_flex.jpg
 [Yoshi Flex Reworked to Support SWD]: ../images/yoshi_flex_swd_rework.jpg
-[DragonClaw board]: ../images/dragonclaw_withfix.jpg
-[DragonClaw servo fix diagram]: ../images/dragonclaw_servo_fix.jpg
+[Bloonchipper board]: ../images/dragonclaw_withfix.jpg
+[Bloonchipper servo fix diagram]: ../images/dragonclaw_servo_fix.jpg
 [Connect USB to Servo]: ../images/servo_v2_with_micro_usb.jpg
 [Connect Yoshi Flex]: ../images/servo_v2_with_yoshi_flex.jpg
 [Another Yoshi Flex image]: ../images/servo_v2_with_yoshi_flex2.jpg
 [Connect Yoshi Flex to FPMCU board]: ../images/dragonclaw_yoshi_flex_header.jpg
 [Another image]: ../images/dragonclaw_yoshi_flex_header2.jpg
 [Connect SWD Debugger]: ../images/servo_v2_jtag_header.jpg
+[Dartmonkey board]: ../images/dartmonkey.jpg

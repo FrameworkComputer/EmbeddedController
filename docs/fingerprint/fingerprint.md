@@ -23,10 +23,12 @@ The main source code for fingerprint sensor functionality lives in the
 The following "boards" (specified by the `BOARD` environment variable when
 building the EC code) are for fingerprint:
 
-*   [`nocturne_fp`] aka [`nami_fp`] aka [`dartmonkey`] (STM32H743)
-*   [`hatch_fp`] aka [`bloonchipper`] (STM32F412)
-    * Support for the STM32F412 for the FPMCU is not yet fully complete, but it
-    is functional enough for testing.
+*   [`nocturne_fp`] aka [`nami_fp`] aka [`dartmonkey`]
+    *   Based on [STM32H743] (Cortex-M7).
+*   [`hatch_fp`] aka [`bloonchipper`]
+    *   Based on [STM32F412] (Cortex-M4).
+    *   Support for the STM32F412 for the FPMCU is not yet fully complete,
+        but it is functional enough for testing.
 
 ## Building FPMCU Firmware Locally
 
@@ -222,3 +224,5 @@ This would make it a lot easier during both development and testing.
 [`fp_updater.sh`]: http://go/cros-fp-updater-nocturne-source
 [`bio_fw_updater`]: https://chromium.googlesource.com/chromiumos/platform2/+/refs/heads/master/biod/tools
 [`flashrom`]: https://chromium.googlesource.com/chromiumos/third_party/flashrom/
+[STM32F412]: https://www.st.com/resource/en/reference_manual/dm00180369.pdf
+[STM32H743]: https://www.st.com/resource/en/reference_manual/dm00314099.pdf
