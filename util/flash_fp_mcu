@@ -227,12 +227,19 @@ config_hatch() {
   check_gpio_chip_exists "gpiochip200"
 
   readonly SPIDEV="/dev/spidev1.1"
+
+  # See
+  # third_party/coreboot/src/soc/intel/cannonlake/include/soc/gpio_soc_defs.h
+  # for pin name to number mapping.
+  # Examine `cat /sys/kernel/debug/pinctrl/INT34BB:00/gpio-ranges` on a hatch
+  # device to determine gpio number from pin number.
+
   # FPMCU RST_ODL is on GPP_A12 = 200 + 12 = 212
   readonly GPIO_NRST=212
   # FPMCU BOOT0 is on GPP_A22 = 200 + 22 = 222
   readonly GPIO_BOOT0=222
-  # No PWREN GPIO on Hatch, FPMCU is always on
-  readonly GPIO_PWREN=""
+  # FP_PWR_EN is on GPP_C11 = 456 + (192 - 181) = 456 + 11 = 467
+  readonly GPIO_PWREN=467
 }
 
 config_nami() {
