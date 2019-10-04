@@ -783,7 +783,7 @@ function flash_openocd() {
 
 # helper function for using servo with flashrom
 function flash_flashrom() {
-	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:/usr/sbin/:$PATH"
+	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH:/usr/sbin"
 	FLASHROM=$(PATH="${TOOL_PATH}" which flashrom)
 
 	if on_servov3; then
