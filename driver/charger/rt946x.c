@@ -258,11 +258,20 @@ static int rt946x_reset_to_zero(void)
 static int rt946x_enable_bc12_detection(int en)
 {
 #if defined(CONFIG_CHARGER_RT9467) || defined(CONFIG_CHARGER_MT6370)
+	int rv;
+
+	if (en) {
 #ifdef CONFIG_CHARGER_MT6370_BC12_GPIO
-	gpio_set_level(GPIO_BC12_DET_EN, en);
+		gpio_set_level(GPIO_BC12_DET_EN, 1);
 #endif /* CONFIG_CHARGER_MT6370_BC12_GPIO */
-	return (en ? rt946x_set_bit : rt946x_clr_bit)
-		(RT946X_REG_DPDM1, RT946X_MASK_USBCHGEN);
+		return rt946x_set_bit(RT946X_REG_DPDM1, RT946X_MASK_USBCHGEN);
+	}
+
+	rv = rt946x_clr_bit(RT946X_REG_DPDM1, RT946X_MASK_USBCHGEN);
+#ifdef CONFIG_CHARGER_MT6370_BC12_GPIO
+	gpio_set_level(GPIO_BC12_DET_EN, 0);
+#endif /* CONFIG_CHARGER_MT6370_BC12_GPIO */
+	return rv;
 #endif
 	return 0;
 }
