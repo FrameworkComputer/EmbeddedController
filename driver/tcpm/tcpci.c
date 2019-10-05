@@ -7,6 +7,7 @@
 
 #include "atomic.h"
 #include "anx74xx.h"
+#include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "ps8xxx.h"
@@ -414,6 +415,11 @@ int tcpci_tcpm_get_vbus_level(int port)
 }
 #endif
 
+struct cached_tcpm_message {
+	uint32_t header;
+	uint32_t payload[7];
+};
+
 int tcpci_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
 {
 	int rv, cnt, reg = TCPC_REG_RX_DATA;
@@ -428,6 +434,12 @@ int tcpci_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
 		rv = EC_ERROR_UNKNOWN;
 		goto clear;
 	}
+	cnt -= 3;
+	if (cnt > member_size(struct cached_tcpm_message, payload)) {
+		rv = EC_ERROR_UNKNOWN;
+		goto clear;
+	}
+
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	rv = tcpc_read(port, TCPC_REG_RX_BUF_FRAME_TYPE, &frm);
 	if (rv != EC_SUCCESS) {
@@ -443,7 +455,6 @@ int tcpci_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
 	*head &= 0x0000ffff;
 	*head |= PD_HEADER_SOP(frm & 7);
 #endif
-	cnt = cnt - 3;
 	if (rv == EC_SUCCESS && cnt > 0) {
 		tcpc_read_block(port, reg, (uint8_t *)payload, cnt);
 	}
@@ -454,11 +465,6 @@ clear:
 
 	return rv;
 }
-
-struct cached_tcpm_message {
-	uint32_t header;
-	uint32_t payload[7];
-};
 
 /* Cache depth needs to be power of 2 */
 #define CACHE_DEPTH BIT(2)
