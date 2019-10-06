@@ -18,6 +18,10 @@ host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) $(wil
 
 # Don't do a build test on the following boards:
 skip_boards = OWNERS host kevin gru
+
+# crbug.com/1011621: jerry is out of RO space, temporarily disable
+skip_boards += jerry
+
 boards := $(filter-out $(skip_boards),$(notdir $(wildcard board/* private*/board/*)))
 
 # Create output directories if necessary
