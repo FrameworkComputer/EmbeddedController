@@ -97,7 +97,7 @@ enum pd_cc_states pd_get_cc_state(
 
 	/* Port partner is a SRC */
 	if (cc_is_rp(cc1) && cc_is_rp(cc2))
-		return PD_CC_DFP_ATTACHED;
+		return PD_CC_DFP_DEBUG_ACC;
 	if (cc_is_rp(cc1) || cc_is_rp(cc2))
 		return PD_CC_DFP_ATTACHED;
 

@@ -230,6 +230,15 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_ALS_LIGHTBAR_DIMMING 0
 #endif
 
+#ifdef TEST_USB_COMMON
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_PORT_COUNT 1
+#define CONFIG_USB_PD_TCPC
+#define CONFIG_USB_PD_TCPM_STUB
+#define CONFIG_SHA256
+#define CONFIG_SW_CRC
+#endif
+
 #if defined(TEST_USB_SM_FRAMEWORK_H3)
 #define CONFIG_USB_PD_PORT_COUNT 1
 #undef CONFIG_USB_PRL_SM

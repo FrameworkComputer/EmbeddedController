@@ -8,6 +8,7 @@
 /* Functions that are shared between old and new PD stacks */
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "task_id.h"
 
 /* Returns the battery percentage [0-100] of the system. */
 int usb_get_battery_soc(void);
