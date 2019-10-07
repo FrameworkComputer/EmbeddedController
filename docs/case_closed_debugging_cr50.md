@@ -563,21 +563,42 @@ wp setting is reset to `follow_batt_pres`
 
     cr50 > wp follow_batt_pres atboot
 
-#### HW WP quirks
+### HW WP Issues
 
-##### Chromeboxes
+#### Chromeboxes
 
 Chromeboxes do not have batteries, so cr50 can't use battery presence for write
 protect. They use a write protect screw. You need to remove the write protect
 screw to disable write protect if cr50 is set to `follow_batt_pres`.
 
-##### Bob
+#### Bob
 
 Bob's have a write protect screw in addition to battery presence. The write
 protect screw will force enable write protect until it's removed. If cr50 is set
 to `follow_batt_pres`, you need to remove the write protect screw and disconnect
 the battery to disable write protect. If you run `wp disable`, you will also
 need to remove the screw.
+
+#### AP Off
+
+Cr50 puts the device in reset to flash the AP. Due to hardware limitiations Cr50
+may not be able to disable write protect while the device is in reset. If you
+want to reflash RO firmware using CCD and your board has issues disabling HW WP,
+you may need to disable SW write protect.
+
+Check if your board has this issue
+
+1.  Disable write protect using the cr50 console command
+
+2.  Check it's still disabled when the AP is off. This command should show write
+    protect is disabled. If it shows it's enabled, then cr50 can't disable WP
+    when the AP is off. You should disable SW WP to flash RO firmware using ccd.
+
+		chroot > sudo flashrom -p raiden_debug_spi:target=AP --wp-status
+
+Disable SW WP if the ccd flashrom command doesn't show write protect disabled.
+
+    from AP > flashrom -p host --wp-disable
 
 # CCD as a Servo replacement
 

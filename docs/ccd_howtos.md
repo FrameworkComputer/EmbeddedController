@@ -199,7 +199,13 @@ It goes into a lot more detail.
                 Cr50 > ccd set OpenNoDevMode Always
                 Cr50 > ccd set OpenFromUSB Always
 
+6.  **(recommended) [Disable SW WP]** to flash RO firmware if your board has
+    issues disabling HW WP with the AP off.
+
+                AP > flashrom -p host --wp-disable
+
 [Setup CCD]: ./case_closed_debugging_cr50.md#CCD-Setup
 [sparkfun]: https://www.sparkfun.com/products/14746
 [SuzyQ]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/refs/heads/master/docs/ccd.md#suzyq-suzyqable
 [wp console command]: ./case_closed_debugging_cr50.md#WP-control
+[Disable SW WP]: ./case_closed_debugging_cr50.md#AP-Off
