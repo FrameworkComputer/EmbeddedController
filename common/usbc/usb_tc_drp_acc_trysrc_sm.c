@@ -1694,7 +1694,8 @@ static void tc_unattached_snk_run(const int port)
 	 * after the state of both CC pins is SNK.Open for
 	 * tDRP − dcSRC.DRP ∙ tDRP.
 	 */
-	if (cc_is_rp(tc[port].cc1) || cc_is_rp(tc[port].cc2))
+	if (tc[port].cc_state == PD_CC_DFP_DEBUG_ACC ||
+	    tc[port].cc_state == PD_CC_DFP_ATTACHED)
 		/* Connection Detected */
 		set_state_tc(port, TC_ATTACH_WAIT_SNK);
 	else if (get_time().val > tc[port].next_role_swap)
