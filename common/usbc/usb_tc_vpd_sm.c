@@ -26,9 +26,6 @@
 /* Type-C Layer Flags */
 #define TC_FLAGS_VCONN_ON           BIT(0)
 
-/* Constant used to force an initial debounce cycle */
-#define PD_CC_UNSET -1
-
 /**
  * This is the Type-C Port object that contains information needed to
  * implement a VCONN Powered Device.
@@ -234,7 +231,9 @@ static void tc_unattached_snk_run(const int port)
 static void tc_attach_wait_snk_entry(const int port)
 {
 	print_current_state(port);
-	tc[port].host_cc_state = PD_CC_UNSET;
+
+	/* Forces an initial debounce in run function */
+	tc[port].host_cc_state = -1;
 }
 
 static void tc_attach_wait_snk_run(const int port)
