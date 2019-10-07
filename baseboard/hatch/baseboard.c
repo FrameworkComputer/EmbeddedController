@@ -23,6 +23,7 @@
 #include "keyboard_scan.h"
 #include "power.h"
 #include "stdbool.h"
+#include "system.h"
 #include "tcpci.h"
 #include "timer.h"
 #include "usbc_ppc.h"
@@ -169,6 +170,10 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 /* Power Delivery and charging functions */
 void baseboard_tcpc_init(void)
 {
+	/* Only reset TCPC if not sysjump */
+	if (!system_jumped_to_this_image())
+		board_reset_pd_mcu();
+
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
