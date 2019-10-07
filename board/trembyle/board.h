@@ -65,7 +65,7 @@
 #ifndef __ASSEMBLER__
 
 enum battery_type {
-	BATTERY_PANASONIC,
+	BATTERY_AP18F4M,
 	BATTERY_TYPE_COUNT,
 };
 
