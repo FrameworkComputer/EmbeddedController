@@ -233,6 +233,9 @@ static void espi_enable_vw_int(const struct host_wui_item *vwire_int)
 		/* enable Any Edge */
 		SET_BIT(NPCX_WKAEDG(table, group), num);
 
+	/* Clear the pending bit */
+	NPCX_WKPCL(table, group) = BIT(num);
+
 	/* Enable wake-up input sources */
 	SET_BIT(NPCX_WKEN(table, group), num);
 }
