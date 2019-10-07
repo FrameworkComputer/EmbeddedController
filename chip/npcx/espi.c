@@ -260,8 +260,9 @@ static int espi_vw_get_signal_index(enum espi_vw_signal event)
 /* The ISRs of VW signals which used for power sequences */
 void espi_vw_power_signal_interrupt(enum espi_vw_signal signal)
 {
-	/* TODO: Add VW handler in power/common.c */
-	power_signal_interrupt((enum gpio_signal) signal);
+	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS))
+		/* TODO: Add VW handler in power/common.c */
+		power_signal_interrupt((enum gpio_signal) signal);
 }
 
 /*****************************************************************************/
