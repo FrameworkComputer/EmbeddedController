@@ -198,6 +198,8 @@ const char help_str[] =
 	"      Set the color of an LED or query brightness range\n"
 	"  lightbar [CMDS]\n"
 	"      Various lightbar control commands\n"
+	"  mkbpget <buttons|switches>\n"
+	"      Get MKBP buttons/switches supported mask and current state\n"
 	"  mkbpwakemask <get|set> <event|hostevent> [mask]\n"
 	"      Get or Set the MKBP event wake mask, or host event wake mask\n"
 	"  motionsense [CMDS]\n"
@@ -8022,6 +8024,86 @@ static int cmd_keyconfig(int argc, char *argv[])
 	return 0;
 }
 
+static const char * const mkbp_button_strings[] = {
+	[EC_MKBP_POWER_BUTTON] = "Power",
+	[EC_MKBP_VOL_UP] = "Volume up",
+	[EC_MKBP_VOL_DOWN] = "Volume down",
+	[EC_MKBP_RECOVERY] = "Recovery",
+};
+
+static const char * const mkbp_switch_strings[] = {
+	[EC_MKBP_LID_OPEN] = "Lid open",
+	[EC_MKBP_TABLET_MODE] = "Tablet mode",
+	[EC_MKBP_BASE_ATTACHED] = "Base attached",
+};
+
+static int cmd_mkbp_get(int argc, char *argv[])
+{
+	struct ec_params_mkbp_info p;
+	union ec_response_get_next_data r;
+	int rv;
+	int i;
+	uint32_t supported;
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <buttons|switches>\n", argv[0]);
+		return -1;
+	}
+
+	if (strncmp(argv[1], "button", 6) == 0) {
+		p.event_type = EC_MKBP_EVENT_BUTTON;
+	} else if (strncmp(argv[1], "switch", 6) == 0) {
+		p.event_type = EC_MKBP_EVENT_SWITCH;
+	} else {
+		fprintf(stderr, "Invalid param: '%s'\n", argv[1]);
+		return -1;
+	}
+
+	p.info_type = EC_MKBP_INFO_SUPPORTED;
+	rv = ec_command(EC_CMD_MKBP_INFO, 0, &p, sizeof(p), &r,
+			sizeof(r));
+	if (rv < 0)
+		return rv;
+	if (p.event_type == EC_MKBP_EVENT_BUTTON)
+		supported = r.buttons;
+	else if (p.event_type == EC_MKBP_EVENT_SWITCH)
+		supported = r.switches;
+
+	p.info_type = EC_MKBP_INFO_CURRENT;
+	rv = ec_command(EC_CMD_MKBP_INFO, 0, &p, sizeof(p), &r,
+			sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	if (p.event_type == EC_MKBP_EVENT_BUTTON) {
+		printf("MKBP buttons state: 0x%04x (supported: 0x%04x)\n",
+		       r.buttons, supported);
+		for (i = 0; i < ARRAY_SIZE(mkbp_button_strings); i++) {
+			if (supported & BIT(i) && mkbp_button_strings[i]) {
+				printf("%s: %s\n", mkbp_button_strings[i],
+				       r.buttons & BIT(i) ? "ON" : "OFF");
+				supported &= ~BIT(i);
+			}
+		}
+		if (supported)
+			printf("Unknown buttons: 0x%04x\n", supported);
+	} else if (p.event_type == EC_MKBP_EVENT_SWITCH) {
+		printf("MKBP switches state: 0x%04x (supported: 0x%04x)\n",
+		       r.switches, supported);
+		for (i = 0; i < ARRAY_SIZE(mkbp_switch_strings); i++) {
+			if (supported & BIT(i) && mkbp_switch_strings[i]) {
+				printf("%s: %s\n", mkbp_switch_strings[i],
+				       r.switches & BIT(i) ? "ON" : "OFF");
+				supported &= ~BIT(i);
+			}
+		}
+		if (supported)
+			printf("Unknown switches: 0x%04x\n", supported);
+	}
+
+	return 0;
+}
+
 static int cmd_mkbp_wake_mask(int argc, char *argv[])
 {
 	struct ec_params_mkbp_event_wake_mask p;
@@ -9112,6 +9194,7 @@ const struct command commands[] = {
 	{"kbpress", cmd_kbpress},
 	{"keyconfig", cmd_keyconfig},
 	{"keyscan", cmd_keyscan},
+	{"mkbpget", cmd_mkbp_get},
 	{"mkbpwakemask", cmd_mkbp_wake_mask},
 	{"motionsense", cmd_motionsense},
 	{"nextevent", cmd_next_event},
