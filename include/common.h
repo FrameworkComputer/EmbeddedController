@@ -128,10 +128,24 @@
 #endif
 #endif
 
-/* Macros for combining bytes into uint16s. */
+/*
+ * Macros for combining bytes into larger integers. _LE and _BE signify little
+ * and big endian versions respectively.
+ */
 #define UINT16_FROM_BYTES(lsb, msb) ((lsb) | (msb) << 8)
 #define UINT16_FROM_BYTE_ARRAY_LE(data, lsb_index) \
-	UINT16_FROM_BYTES((data)[(lsb_index)], (data)[(lsb_index + 1)])
+	UINT16_FROM_BYTES((data)[(lsb_index)], (data)[(lsb_index) + 1])
+#define UINT16_FROM_BYTE_ARRAY_BE(data, msb_index) \
+	UINT16_FROM_BYTES((data)[(msb_index) + 1], (data)[(msb_index)])
+
+#define UINT32_FROM_BYTES(lsb, byte1, byte2, msb) \
+	((lsb) | (byte1) << 8 | (byte2) << 16 | (msb) << 24)
+#define UINT32_FROM_BYTE_ARRAY_LE(data, lsb_index) \
+	UINT32_FROM_BYTES((data)[(lsb_index)], (data)[(lsb_index) + 1], \
+			  (data)[(lsb_index) + 2], (data)[(lsb_index) + 3])
+#define UINT32_FROM_BYTE_ARRAY_BE(data, msb_index) \
+	UINT32_FROM_BYTES((data)[(msb_index) + 3], (data)[(msb_index) + 2], \
+			  (data)[(msb_index) + 1], (data)[(msb_index)])
 
 /* There isn't really a better place for this */
 #define C_TO_K(temp_c) ((temp_c) + 273)
