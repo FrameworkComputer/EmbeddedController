@@ -24,7 +24,6 @@
 #include "baseboard.h"
 
 #define CONFIG_CHIPSET_TIGERLAKE
-#define GPIO_EC_PCH_RSMRST_L	GPIO_PCH_RSMRST_L
 #define GPIO_PG_EC_RSMRST_ODL	GPIO_RSMRST_L_PGOOD
 
 /* Charger */

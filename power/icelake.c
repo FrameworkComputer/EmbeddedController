@@ -65,7 +65,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	report_ap_reset(reason);
 
 	/* Turn off RMSRST_L  to meet tPCH12 */
-	gpio_set_level(GPIO_EC_PCH_RSMRST_L, 0);
+	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 
 	/* Turn off DSW_PWROK to meet tPCH14 */
 	gpio_set_level(GPIO_EC_PCH_DSW_PWROK, 0);
