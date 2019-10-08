@@ -18,12 +18,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_TOUCHPAD, format, ## args)
 
-#define RETURN_ERROR(fn) do { \
-	int error = (fn); \
-	if (error != EC_SUCCESS) \
-		return error; \
-} while (0)
-
 #define GT7288_SLAVE_ADDRESS 0x14
 
 #define GT7288_REPORT_ID_PTP 0x04

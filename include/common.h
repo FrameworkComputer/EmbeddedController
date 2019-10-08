@@ -145,6 +145,13 @@
 #define TARGET_WITH_MARGIN(target, tenths_percent) \
 	(((target) * 1000) / (1000 + (tenths_percent)))
 
+/* Call a function, and return the error value unless it returns EC_SUCCESS. */
+#define RETURN_ERROR(fn) do { \
+	int error = (fn); \
+	if (error != EC_SUCCESS) \
+		return error; \
+} while (0)
+
 /* Include top-level configuration file */
 #include "config.h"
 
