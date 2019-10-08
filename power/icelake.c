@@ -68,7 +68,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 
 	/* Turn off DSW_PWROK to meet tPCH14 */
-	gpio_set_level(GPIO_EC_PCH_DSW_PWROK, 0);
+	gpio_set_level(GPIO_PCH_DSW_PWROK, 0);
 
 	/* Turn off DSW load switch. */
 	gpio_set_level(GPIO_EN_PP3300_A, 0);
@@ -130,7 +130,7 @@ enum power_state power_handle_state(enum power_state state)
 		 * stable and the DSW_PWROK signal being passed to the PCH.
 		 */
 		msleep(10);
-		gpio_set_level(GPIO_EC_PCH_DSW_PWROK, dswpwrok_in);
+		gpio_set_level(GPIO_PCH_DSW_PWROK, dswpwrok_in);
 		dswpwrok_out = dswpwrok_in;
 	}
 
@@ -164,7 +164,7 @@ enum power_state power_handle_state(enum power_state state)
 		 * stable and the DSW_PWROK signal being passed to the PCH.
 		 */
 		msleep(10);
-		gpio_set_level(GPIO_EC_PCH_DSW_PWROK, dswpwrok_in);
+		gpio_set_level(GPIO_PCH_DSW_PWROK, dswpwrok_in);
 		CPRINTS("Pass thru GPIO_DSW_PWROK: %d", dswpwrok_in);
 		dswpwrok_out = dswpwrok_in;
 
