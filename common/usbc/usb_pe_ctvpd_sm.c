@@ -44,7 +44,7 @@ static void set_state_pe(const int port, enum usb_pe_state new_state)
 	set_state(port, &pe[port].ctx, &pe_states[new_state]);
 }
 
-void pe_init(int port)
+static void pe_init(int port)
 {
 	const struct sm_ctx cleared = {};
 

@@ -38,13 +38,6 @@ enum pe_dpm_request {
 };
 
 /**
- * Initialize the Policy Engine State Machine
- *
- * @param port USB-C port number
- */
-void pe_init(int port);
-
-/**
  * Runs the Policy Engine State Machine
  *
  * @param port USB-C port number

@@ -439,7 +439,7 @@ static struct svdm_amode_data *get_modep(int port, uint16_t svid);
 test_export_static enum usb_pe_state get_state_pe(const int port);
 static void set_state_pe(const int port, const enum usb_pe_state new_state);
 
-void pe_init(int port)
+static void pe_init(int port)
 {
 	pe[port].flags = 0;
 	pe[port].dpm_request = 0;
