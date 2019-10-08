@@ -334,7 +334,7 @@ static void tc_vbus_cc_iso_entry(const int port)
 
 void tc_run(const int port)
 {
-	exe_state(port, &tc[port].ctx);
+	run_state(port, &tc[port].ctx);
 }
 
 /*

@@ -423,16 +423,16 @@ void prl_run(int port, int evt, int en)
 		prl_rx_wait_for_phy_message(port, evt);
 
 		/* Run RX Chunked state machine */
-		exe_state(port, &rch[port].ctx);
+		run_state(port, &rch[port].ctx);
 
 		/* Run TX Chunked state machine */
-		exe_state(port, &tch[port].ctx);
+		run_state(port, &tch[port].ctx);
 
 		/* Run Protocol Layer Message Transmission state machine */
-		exe_state(port, &prl_tx[port].ctx);
+		run_state(port, &prl_tx[port].ctx);
 
 		/* Run Protocol Layer Hard Reset state machine */
-		exe_state(port, &prl_hr[port].ctx);
+		run_state(port, &prl_hr[port].ctx);
 		break;
 	}
 }

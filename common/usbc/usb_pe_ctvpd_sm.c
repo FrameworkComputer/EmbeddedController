@@ -68,7 +68,7 @@ void pe_run(int port, int evt, int en)
 		/* fall through */
 	case SM_RUN:
 		if (en)
-			exe_state(port, &pe[port].ctx);
+			run_state(port, &pe[port].ctx);
 		else
 			local_state[port] = SM_PAUSED;
 		break;

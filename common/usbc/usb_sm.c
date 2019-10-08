@@ -183,7 +183,7 @@ static void call_run_functions(const int port,
 	call_run_functions(port, internal, current->parent);
 }
 
-void exe_state(const int port, struct sm_ctx *const ctx)
+void run_state(const int port, struct sm_ctx *const ctx)
 {
 	struct internal_ctx * const internal = (void *) ctx->internal;
 

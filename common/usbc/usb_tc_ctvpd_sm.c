@@ -198,7 +198,7 @@ void tc_event_check(int port, int evt)
 
 void tc_run(const int port)
 {
-	exe_state(port, &tc[port].ctx);
+	run_state(port, &tc[port].ctx);
 }
 
 /* Internal Functions */

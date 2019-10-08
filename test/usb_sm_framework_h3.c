@@ -979,7 +979,7 @@ int test_task(void *u)
 		/* wait for next event/packet or timeout expiration */
 		task_wait_event(-1);
 		/* run state machine */
-		exe_state(port, &sm[port].ctx);
+		run_state(port, &sm[port].ctx);
 	}
 
 	return EC_SUCCESS;

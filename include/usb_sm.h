@@ -63,7 +63,7 @@ void set_state(int port, struct sm_ctx *ctx, usb_state_ptr new_state);
  * @param port USB-C port number
  * @param ctx  State machine context
  */
-void exe_state(int port, struct sm_ctx *ctx);
+void run_state(int port, struct sm_ctx *ctx);
 
 #ifdef TEST_BUILD
 /*
