@@ -11,6 +11,7 @@
 
 *   [Case Closed Debugging Overview](./case_closed_debugging.md)
 *   [Google Security Chip Case Closed Debugging](./case_closed_debugging_cr50.md)
+*   [Tutorials](./ccd_howtos.md)
 
 ## Fingerprint MCU (FPMCU)
 
