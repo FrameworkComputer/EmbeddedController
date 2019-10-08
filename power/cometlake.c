@@ -166,17 +166,17 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0:
 		/*
-		 * Check value of PG_EC_ALL_SYS_PWRGD to see if EC_PCH_SYS_PWROK
+		 * Check value of PG_EC_ALL_SYS_PWRGD to see if PCH_SYS_PWROK
 		 * needs to be changed. If it's low->high transition, requires a
 		 * 2msec delay.
 		 */
 		all_sys_pwrgd_in = gpio_get_level(GPIO_PG_EC_ALL_SYS_PWRGD);
-		all_sys_pwrgd_out = gpio_get_level(GPIO_EC_PCH_SYS_PWROK);
+		all_sys_pwrgd_out = gpio_get_level(GPIO_PCH_SYS_PWROK);
 
 		if (all_sys_pwrgd_in != all_sys_pwrgd_out) {
 			if (all_sys_pwrgd_in)
 				msleep(2);
-			gpio_set_level(GPIO_EC_PCH_SYS_PWROK, all_sys_pwrgd_in);
+			gpio_set_level(GPIO_PCH_SYS_PWROK, all_sys_pwrgd_in);
 		}
 		break;
 
