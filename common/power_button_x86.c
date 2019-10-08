@@ -321,33 +321,32 @@ static void state_machine(uint64_t tnow)
 		pwrbtn_state = PWRBTN_STATE_IDLE;
 		break;
 	case PWRBTN_STATE_INIT_ON:
-		/*
-		 * Before attempting to power the system on, we need to wait for
-		 * charger and battery to be ready to supply sufficient power.
-		 * Check every 100 milliseconds, and give up
-		 * CONFIG_POWER_BUTTON_INIT_TIMEOUT seconds after the PB task
-		 * was started. Here, it is important to check the current time
-		 * against PB task start time to prevent unnecessary timeouts
-		 * happening in recovery case where the tasks could start as
-		 * late as 30 seconds after EC reset.
-		 */
-		if (tnow >
-		    (tpb_task_start +
-		     CONFIG_POWER_BUTTON_INIT_TIMEOUT * SECOND)) {
-			pwrbtn_state = PWRBTN_STATE_IDLE;
-			break;
-		}
 
-#ifdef CONFIG_CHARGER
 		/*
-		 * If not able to power on, try again later, to allow time for
-		 * charger, battery and USB-C PD initialization.
+		 * Before attempting to power the system on, we need to allow
+		 * time for charger, battery and USB-C PD initialization to be
+		 * ready to supply sufficient power. Check every 100
+		 * milliseconds, and give up CONFIG_POWER_BUTTON_INIT_TIMEOUT
+		 * seconds after the PB task was started. Here, it is
+		 * important to check the current time against PB task start
+		 * time to prevent unnecessary timeouts happening in recovery
+		 * case where the tasks could start as late as 30 seconds
+		 * after EC reset.
 		 */
-		if (charge_prevent_power_on(0)) {
-			tnext_state = tnow + 100 * MSEC;
-			break;
+
+		if (!IS_ENABLED(CONFIG_CHARGER) || charge_prevent_power_on(0)) {
+			if (tnow >
+				(tpb_task_start +
+				 CONFIG_POWER_BUTTON_INIT_TIMEOUT * SECOND)) {
+				pwrbtn_state = PWRBTN_STATE_IDLE;
+				break;
+			}
+
+			if (IS_ENABLED(CONFIG_CHARGER)) {
+				tnext_state = tnow + 100 * MSEC;
+				break;
+			}
 		}
-#endif
 
 		/*
 		 * Power the system on if possible.  Gating due to insufficient
