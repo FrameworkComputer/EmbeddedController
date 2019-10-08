@@ -1839,13 +1839,14 @@ static void tc_attached_snk_run(const int port)
 	 * want to trigger a disconnect
 	 */
 	if (!TC_CHK_FLAG(port, TC_FLAGS_POWER_OFF_SNK) &&
-			!TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
+	    !TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
 		/* Detach detection */
 		if (!pd_is_vbus_present(port)) {
 			if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
 				pd_dfp_exit_mode(port, 0, 0);
 
-			return set_state_tc(port, TC_UNATTACHED_SNK);
+			set_state_tc(port, TC_UNATTACHED_SNK);
+			return;
 		}
 
 		if (!pe_is_explicit_contract(port))
@@ -1915,8 +1916,10 @@ static void tc_attached_snk_run(const int port)
 #else /* CONFIG_USB_PE_SM */
 
 	/* Detach detection */
-	if (!pd_is_vbus_present(port))
-		return set_state_tc(port, TC_UNATTACHED_SNK);
+	if (!pd_is_vbus_present(port)) {
+		set_state_tc(port, TC_UNATTACHED_SNK);
+		return;
+	}
 
 	/* Run Sink Power Sub-State */
 	sink_power_sub_states(port);
