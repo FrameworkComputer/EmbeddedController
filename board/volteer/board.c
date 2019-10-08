@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "lid_switch.h"
+#include "power.h"
 #include "power_button.h"
 #include "switch.h"
 #include "system.h"

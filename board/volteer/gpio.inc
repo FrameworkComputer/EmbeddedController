@@ -15,6 +15,17 @@ GPIO_INT(H1_EC_PWR_BTN_ODL,    PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)
 GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
 
 /* Power sequencing interrupts */
+GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
+GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
+#endif
+GPIO_INT(SLP_SUS_L,            PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
+/* TODO(b/139553375): Consider using intel_x86_rsmrst_signal_interrupt. */
+GPIO_INT(PG_EC_RSMRST_ODL,     PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(DSW_PWROK,            PIN(C, 7), GPIO_INT_BOTH, power_signal_interrupt)
+/* TODO(b/139553375): This signal is virtual; need to change code to support
+ * virtual S4 with physical S3. */
+UNIMPLEMENTED(SLP_S4_L)
 
 /* Sensor Interrupts */
 
@@ -23,6 +34,12 @@ GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, ex
 /* HDMI interrupts */
 
 /* Volume button interrupts */
+
+/* Power Sequencing Signals */
+GPIO(EN_PP3300_A,              PIN(A, 3), GPIO_OUT_LOW)
+GPIO(EN_PP5000_A,              PIN(A, 4), GPIO_OUT_LOW)
+/* The EC does not buffer this signal on Volteer. */
+UNIMPLEMENTED(PCH_DSW_PWROK)
 
 /* Other wake sources */
 /*
