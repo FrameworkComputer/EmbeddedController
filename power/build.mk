@@ -17,6 +17,7 @@ power-$(CONFIG_CHIPSET_MT817X)+=mt817x.o
 power-$(CONFIG_CHIPSET_MT8183)+=mt8183.o
 power-$(CONFIG_CHIPSET_RK3288)+=rk3288.o
 power-$(CONFIG_CHIPSET_RK3399)+=rk3399.o
+power-$(CONFIG_CHIPSET_SC7180)+=sc7180.o
 power-$(CONFIG_CHIPSET_SDM845)+=sdm845.o
 power-$(CONFIG_CHIPSET_SKYLAKE)+=skylake.o intel_x86.o
 power-$(CONFIG_CHIPSET_STONEY)+=stoney.o

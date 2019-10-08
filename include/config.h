@@ -1094,6 +1094,7 @@
 #undef CONFIG_CHIPSET_RK3288		/* Rockchip rk3288 */
 #undef CONFIG_CHIPSET_RK3399		/* Rockchip rk3399 */
 #undef CONFIG_CHIPSET_SKYLAKE		/* Intel Skylake (x86) */
+#undef CONFIG_CHIPSET_SC7180            /* Qualcomm SC7180 */
 #undef CONFIG_CHIPSET_SDM845            /* Qualcomm SDM845 */
 #undef CONFIG_CHIPSET_STONEY		/* AMD Stoney (x86)*/
 #undef CONFIG_CHIPSET_TIGERLAKE		/* Intel Tigerlake (x86) */
