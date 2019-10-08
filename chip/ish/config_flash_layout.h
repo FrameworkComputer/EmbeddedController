@@ -12,7 +12,11 @@
 #undef  CONFIG_FLASH_PSTATE
 #undef CONFIG_SPI_FLASH
 
+#ifdef CHIP_VARIANT_ISH5P4
+#define CONFIG_ISH_BOOT_START		0xFF200000
+#else
 #define CONFIG_ISH_BOOT_START		0xFF000000
+#endif
 
 /*****************************************************************************/
 /* The following macros are not applicable for ISH, however the build fails if

@@ -17,6 +17,7 @@
 /* HPET_GENERAL_CONFIG settings  */
 #define HPET_GENERAL_CONFIG		REG32(ISH_HPET_BASE + 0x10)
 #define HPET_ENABLE_CNF		BIT(0)
+#define HPET_LEGACY_RT_CNF	BIT(1)
 
 /* Interrupt status acknowledge register */
 #define HPET_INTR_CLEAR		REG32(ISH_HPET_BASE + 0x20)

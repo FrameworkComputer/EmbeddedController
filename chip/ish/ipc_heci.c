@@ -459,7 +459,9 @@ static void ipc_host2ish_isr(void)
 	if ((pisr & IPC_PISR_HOST2ISH_BIT) && (pimr & IPC_PIMR_HOST2ISH_BIT))
 		handle_msg_recv_interrupt(IPC_PEER_ID_HOST);
 }
+#ifndef CONFIG_ISH_HOST2ISH_COMBINED_ISR
 DECLARE_IRQ(ISH_IPC_HOST2ISH_IRQ, ipc_host2ish_isr);
+#endif
 
 static void ipc_host2ish_busy_clear_isr(void)
 {
@@ -470,7 +472,18 @@ static void ipc_host2ish_busy_clear_isr(void)
 	    (pimr & IPC_PIMR_ISH2HOST_CLR_BIT))
 		handle_busy_clear_interrupt(IPC_PEER_ID_HOST);
 }
+#ifndef CONFIG_ISH_HOST2ISH_COMBINED_ISR
 DECLARE_IRQ(ISH_IPC_ISH2HOST_CLR_IRQ, ipc_host2ish_busy_clear_isr);
+#endif
+
+static __maybe_unused void ipc_host2ish_combined_isr(void)
+{
+	ipc_host2ish_isr();
+	ipc_host2ish_busy_clear_isr();
+}
+#ifdef CONFIG_ISH_HOST2ISH_COMBINED_ISR
+DECLARE_IRQ(ISH_IPC_HOST2ISH_IRQ, ipc_host2ish_combined_isr);
+#endif
 
 int ipc_write_timestamp(const ipc_handle_t handle, const void *buf,
 			const size_t buf_size, uint32_t *timestamp)
@@ -558,7 +571,8 @@ ipc_handle_t ipc_open(const enum ipc_peer_id peer_id,
 
 	if (ctx->initialized == 0) {
 		task_enable_irq(ctx->irq_in);
-		task_enable_irq(ctx->irq_clr);
+		if (!IS_ENABLED(CONFIG_ISH_HOST2ISH_COMBINED_ISR))
+			task_enable_irq(ctx->irq_clr);
 
 		ipc_enable_pimr_db_interrupt(ctx);
 		ipc_enable_pimr_clearing_interrupt(ctx);

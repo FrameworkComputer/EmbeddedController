@@ -35,7 +35,11 @@
 /*                               Memory Layout                               */
 /*****************************************************************************/
 
+#ifdef CHIP_VARIANT_ISH5P4
+#define CONFIG_RAM_BASE		0xFF200000
+#else
 #define CONFIG_RAM_BASE		0xFF000000
+#endif
 #define CONFIG_RAM_SIZE		0x000A0000
 #define CONFIG_RAM_BANK_SIZE		0x00008000
 
@@ -114,5 +118,15 @@
 /* Macro used with gpio.inc, ISH only has port 0 */
 #define GPIO_PIN(index) 0, (1 << (index))
 #define GPIO_PIN_MASK(m) .port = 0, .mask = (m)
+
+#ifdef CHIP_VARIANT_ISH5P4
+/* Use combined ISR for ipc communication between host and ISH */
+#define CONFIG_ISH_HOST2ISH_COMBINED_ISR
+/* Use Synopsys Designware uart */
+#define CONFIG_ISH_DW_UART
+#else
+/* Need to clear ISH fabric error */
+#define CONFIG_ISH_CLEAR_FABRIC_ERRORS
+#endif
 
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

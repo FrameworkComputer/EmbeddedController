@@ -5,6 +5,7 @@
 
 /* UART module for ISH */
 #include "common.h"
+#include "math_util.h"
 #include "console.h"
 #include "uart_defs.h"
 #include "atomic.h"
@@ -149,18 +150,25 @@ static void uart_hw_init(enum UART_PORT id)
 	uint8_t mcr = 0;
 	uint8_t fcr = 0;
 	struct uart_ctx *ctx = &uart_ctx[id];
+	uint8_t fraction;
 
 	/* Calculate baud rate divisor */
 	divisor = (ctx->input_freq / ctx->baud_rate) >> 4;
-
-	MUL(ctx->id) = (divisor * ctx->baud_rate);
-	DIV(ctx->id) = (ctx->input_freq / 16);
-	PS(ctx->id) = 16;
+	if (IS_ENABLED(CONFIG_ISH_DW_UART)) {
+		/* calculate the fractional part */
+		fraction = ceil_for(ctx->input_freq, ctx->baud_rate) - (divisor << 4);
+	} else {
+		MUL(ctx->id) = (divisor * ctx->baud_rate);
+		DIV(ctx->id) = (ctx->input_freq / 16);
+		PS(ctx->id) = 16;
+	}
 
 	/* Set the DLAB to access the baud rate divisor registers */
 	LCR(ctx->id) = LCR_DLAB;
 	DLL(ctx->id) = (divisor & 0xff);
 	DLH(ctx->id) = ((divisor >> 8) & 0xff);
+	if (IS_ENABLED(CONFIG_ISH_DW_UART))
+		DLF(ctx->id) = fraction;
 
 	/* 8 data bits, 1 stop bit, no parity, clear DLAB */
 	LCR(ctx->id) = LCR_8BIT_CHR;
@@ -169,19 +177,24 @@ static void uart_hw_init(enum UART_PORT id)
 		mcr = MCR_AUTO_FLOW_EN;
 
 	/* needs to be set regardless of flow control */
-	mcr |= MCR_INTR_ENABLE;
+	if (!IS_ENABLED(CONFIG_ISH_DW_UART))
+		mcr |= MCR_INTR_ENABLE;
 
 	mcr |= (MCR_RTS | MCR_DTR);
 	MCR(ctx->id) = mcr;
 
-	fcr = FCR_FIFO_SIZE_64 | FCR_ITL_FIFO_64_BYTES_1;
+	if (IS_ENABLED(CONFIG_ISH_DW_UART))
+		fcr = FCR_TET_EMPTY | FCR_RT_1CHAR;
+	else
+		fcr = FCR_FIFO_SIZE_64 | FCR_ITL_FIFO_64_BYTES_1;
 
 	/* configure FIFOs */
 	FCR(ctx->id) = (fcr | FCR_FIFO_ENABLE
 			| FCR_RESET_RX | FCR_RESET_TX);
 
-	/* enable UART unit */
-	ABR(ctx->id) = ABR_UUE;
+	if (!IS_ENABLED(CONFIG_ISH_DW_UART))
+		/* enable UART unit */
+		ABR(ctx->id) = ABR_UUE;
 
 	/* clear the port */
 	RBR(ctx->id);
@@ -197,13 +210,15 @@ static void uart_stop_hw(enum UART_PORT id)
 	int i;
 	uint32_t fifo_len;
 
-	/* Manually clearing the fifo from possible noise.
-	 * Entering D0i3 when fifo is not cleared may result in a hang.
-	 */
-	fifo_len = (FOR(id) & FOR_OCCUPANCY_MASK) >> FOR_OCCUPANCY_OFFS;
+	if (!IS_ENABLED(CONFIG_ISH_DW_UART)) {
+		/* Manually clearing the fifo from possible noise.
+	 	 * Entering D0i3 when fifo is not cleared may result in a hang.
+	 	 */
+		fifo_len = (FOR(id) & FOR_OCCUPANCY_MASK) >> FOR_OCCUPANCY_OFFS;
 
-	for (i = 0; i < fifo_len; i++)
-		(void)RBR(id);
+		for (i = 0; i < fifo_len; i++)
+			(void)RBR(id);
+	}
 
 	/* No interrupts are enabled */
 	IER(id) = 0;
@@ -212,8 +227,9 @@ static void uart_stop_hw(enum UART_PORT id)
 	/* Clear and disable FIFOs */
 	FCR(id) = (FCR_RESET_RX | FCR_RESET_TX);
 
-	/* Disable uart unit */
-	ABR(id) = 0;
+	if (!IS_ENABLED(CONFIG_ISH_DW_UART))
+		/* Disable uart unit */
+		ABR(id) = 0;
 }
 
 static int uart_client_init(enum UART_PORT id, uint32_t baud_rate_id, int flags)
@@ -245,11 +261,12 @@ static void uart_drv_init(void)
 	for (i = 0; i < UART_DEVICES; i++)
 		uart_stop_hw(i);
 
-	/* Enable HSU global interrupts (DMA/U0/U1) and set PMEN bit
-	 * to allow PMU to clock gate ISH
-	 */
-	HSU_REG_GIEN = (GIEN_DMA_EN | GIEN_UART0_EN
-			| GIEN_UART1_EN | GIEN_PWR_MGMT);
+	if (!IS_ENABLED(CONFIG_ISH_DW_UART))
+		/* Enable HSU global interrupts (DMA/U0/U1) and set PMEN bit
+	 	 * to allow PMU to clock gate ISH
+	 	 */
+		HSU_REG_GIEN = (GIEN_DMA_EN | GIEN_UART0_EN
+				| GIEN_UART1_EN | GIEN_PWR_MGMT);
 
 	task_enable_irq(ISH_DEBUG_UART_IRQ);
 }

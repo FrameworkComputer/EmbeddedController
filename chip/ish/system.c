@@ -35,7 +35,8 @@ int system_is_reboot_warm(void)
 void system_pre_init(void)
 {
 	ish_fwst_set_fw_status(FWSTS_FW_IS_RUNNING);
-	task_enable_irq(ISH_FABRIC_IRQ);
+	if (IS_ENABLED(CONFIG_ISH_CLEAR_FABRIC_ERRORS))
+		task_enable_irq(ISH_FABRIC_IRQ);
 	ish_pm_init();
 	ish_persistent_data_init();
 }
@@ -174,7 +175,7 @@ void system_set_image_copy(enum system_image_copy_t copy)
 {
 }
 
-static void fabric_isr(void)
+static __maybe_unused void fabric_isr(void)
 {
 	/**
 	 * clear fabric error status, otherwise it will wakeup ISH immediately
@@ -184,5 +185,6 @@ static void fabric_isr(void)
 	if (FABRIC_AGENT_STATUS & FABRIC_MIA_STATUS_BIT_ERR)
 		FABRIC_AGENT_STATUS = FABRIC_AGENT_STATUS;
 }
-
+#ifdef CONFIG_ISH_CLEAR_FABRIC_ERRORS
 DECLARE_IRQ(ISH_FABRIC_IRQ, fabric_isr);
+#endif

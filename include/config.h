@@ -4339,6 +4339,22 @@
 #undef CONFIG_ISH_PM_RESET_PREP
 
 /*
+ * Define the following if combined ISR is required for ipc communication
+ * between host and ISH.
+ */
+#undef CONFIG_ISH_HOST2ISH_COMBINED_ISR
+
+/*
+ * Define the following if there is need to clear ISH fabric error.
+ */
+#undef CONFIG_ISH_CLEAR_FABRIC_ERRORS
+
+/*
+ * Define the following if the version of ISH uses Synopsys Designware uart.
+ */
+#undef CONFIG_ISH_DW_UART
+
+/*
  * On Intel devices EC's USB-C port numbers may not be physically equal to
  * AP's USB3 & USB2 port number. Because there can be MAX 15 USB2 ports on
  * PCH and MAX 15 USB3 ports on SOC, based on the complexity of the physical

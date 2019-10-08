@@ -258,7 +258,7 @@ int __hw_clock_source_init64(uint64_t start_t)
 	HPET_TIMER_CONF_CAP(1) |= timer1_config;
 
 	/* Enable HPET */
-	HPET_GENERAL_CONFIG |= HPET_ENABLE_CNF;
+	HPET_GENERAL_CONFIG |= (HPET_ENABLE_CNF | HPET_LEGACY_RT_CNF);
 
 	/* Return IRQ value for OS event timer */
 	return ISH_HPET_TIMER1_IRQ;
