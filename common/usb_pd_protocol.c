@@ -1491,7 +1491,7 @@ static int pd_send_request_msg(int port, int always_send_request)
 		&rdo, &curr_limit, &supply_voltage,
 		charging && max_request_allowed ?
 		PD_REQUEST_MAX : PD_REQUEST_VSAFE5V,
-		get_max_request_mv());
+		pd_get_max_voltage());
 
 	if (!always_send_request) {
 		/* Don't re-request the same voltage */

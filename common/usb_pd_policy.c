@@ -119,11 +119,6 @@ uint8_t pd_get_src_cap_cnt(int port)
 	return pd_src_cap_cnt[port];
 }
 
-uint32_t get_max_request_mv(void)
-{
-	return max_request_mv;
-}
-
 void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
 {
 #ifdef CONFIG_CHARGE_MANAGER

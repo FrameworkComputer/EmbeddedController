@@ -2221,12 +2221,6 @@ const uint32_t * const pd_get_src_caps(int port);
 uint8_t pd_get_src_cap_cnt(int port);
 
 /**
- * Returns the maximum request voltage before receiving a source caps
- *
- */
-uint32_t get_max_request_mv(void);
-
-/**
  * Return true if partner port is capable of communication over USB data
  * lines.
  *
