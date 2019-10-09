@@ -513,7 +513,7 @@ static int transfer_block(struct usb_endpoint *uep,
 	/* Now get the reply. */
 	r = libusb_bulk_transfer(uep->devh, uep->ep_num | 0x80,
 				 (void *) &reply, sizeof(reply),
-				 &actual, 1000);
+				 &actual, 5000);
 	if (r) {
 		if (r == -7) {
 			fprintf(stderr, "Timeout!\n");

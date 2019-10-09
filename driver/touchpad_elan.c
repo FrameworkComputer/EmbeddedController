@@ -413,6 +413,7 @@ static int elan_get_ic_page_count(void)
 	case 0x0D:
 		return 896;
 	case 0x00:
+	case 0x10:
 		return 1024;
 	}
 	return -1;
@@ -531,9 +532,10 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 		rv = touchpad_update_page(data + addr - offset);
 		if (rv)
 			return rv;
-		CPRINTS("%s: page %d updated.", __func__, addr / FW_PAGE_SIZE);
+		CPRINTF("/p%d", addr / FW_PAGE_SIZE);
 		watchdog_reload();
 	}
+	CPRINTF("\n");
 
 	if (offset + size == FW_SIZE) {
 		CPRINTS("%s: End update, wait for reset.", __func__);
