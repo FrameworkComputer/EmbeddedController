@@ -32,7 +32,13 @@
  * with /4 prescaler (2^2): period 125 us, full range ~8s
  */
 #define LPTIM_PRESCALER_LOG2 2
-#define LPTIM_PRESCALER BIT(LPTIM_PRESCALER_LOG2)
+/*
+ * LPTIM_PRESCALER and LPTIM_PERIOD_US have to be signed, because we compare
+ * them to an int to decide whether to go to deep sleep. Simply using BIT()
+ * makes them unsigned, which causes a bug in deep sleep behavior.
+ * TODO(b/140538084): Explain exactly what the bug is.
+ */
+#define LPTIM_PRESCALER ((int)BIT(LPTIM_PRESCALER_LOG2))
 #define LPTIM_PERIOD_US (SECOND / (STM32_LSI_CLOCK / LPTIM_PRESCALER))
 
 /*
