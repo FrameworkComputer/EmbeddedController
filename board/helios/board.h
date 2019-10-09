@@ -101,6 +101,7 @@ enum adc_channel {
 	ADC_TEMP_SENSOR_1,	/* ADC0 */
 	ADC_TEMP_SENSOR_2,	/* ADC1 */
 	ADC_TEMP_SENSOR_3,	/* ADC3 */
+	ADC_TEMP_SENSOR_4,	/* ADC2 */
 	ADC_CH_COUNT
 };
 
@@ -134,6 +135,7 @@ enum temp_sensor_id {
 	TEMP_SENSOR_1,
 	TEMP_SENSOR_2,
 	TEMP_SENSOR_3,
+	TEMP_SENSOR_4,
 	TEMP_SENSOR_COUNT
 };
 

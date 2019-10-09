@@ -346,6 +346,8 @@ const struct adc_t adc_channels[] = {
 		"TEMP_5V_REG", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 	[ADC_TEMP_SENSOR_3] = {
 		"TEMP_AMB", NPCX_ADC_CH3, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_4] = {
+		"TEMP_CPU", NPCX_ADC_CH2, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -364,6 +366,11 @@ const struct temp_sensor_t temp_sensors[] = {
 				 .type = TEMP_SENSOR_TYPE_BOARD,
 				 .read = get_temp_3v3_30k9_47k_4050b,
 				 .idx = ADC_TEMP_SENSOR_3,
+				 .action_delay_sec = 1},
+	[TEMP_SENSOR_4] = {.name = "Temp4",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_30k9_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_4,
 				 .action_delay_sec = 1},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
