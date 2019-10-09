@@ -11,6 +11,7 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+#define CONFIG_EC_FEATURE_BOARD_OVERRIDE
 #define CONFIG_POWER_BUTTON
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
