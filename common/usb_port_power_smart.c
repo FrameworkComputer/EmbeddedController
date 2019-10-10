@@ -50,16 +50,16 @@ static void usb_charge_set_control_mode(int port_id, int mode)
 	 * port wins.  Also, only CTL1 can be set; the other pins are
 	 * hard-wired.
 	 */
-	gpio_set_level(GPIO_USB_CTL1, mode & 0x4);
+	gpio_or_ioex_set_level(GPIO_USB_CTL1, mode & 0x4);
 #else
 	if (port_id == 0) {
-		gpio_set_level(GPIO_USB1_CTL1, mode & 0x4);
-		gpio_set_level(GPIO_USB1_CTL2, mode & 0x2);
-		gpio_set_level(GPIO_USB1_CTL3, mode & 0x1);
+		gpio_or_ioex_set_level(GPIO_USB1_CTL1, mode & 0x4);
+		gpio_or_ioex_set_level(GPIO_USB1_CTL2, mode & 0x2);
+		gpio_or_ioex_set_level(GPIO_USB1_CTL3, mode & 0x1);
 	} else {
-		gpio_set_level(GPIO_USB2_CTL1, mode & 0x4);
-		gpio_set_level(GPIO_USB2_CTL2, mode & 0x2);
-		gpio_set_level(GPIO_USB2_CTL3, mode & 0x1);
+		gpio_or_ioex_set_level(GPIO_USB2_CTL1, mode & 0x4);
+		gpio_or_ioex_set_level(GPIO_USB2_CTL2, mode & 0x2);
+		gpio_or_ioex_set_level(GPIO_USB2_CTL3, mode & 0x1);
 	}
 #endif /* defined(CONFIG_USB_PORT_POWER_SMART_SIMPLE) */
 }
@@ -68,12 +68,12 @@ static void usb_charge_set_control_mode(int port_id, int mode)
 static void usb_charge_set_enabled(int port_id, int en)
 {
 	ASSERT(port_id < CONFIG_USB_PORT_POWER_SMART_PORT_COUNT);
-	gpio_set_level(usb_port_enable[port_id], en);
+	gpio_or_ioex_set_level(usb_port_enable[port_id], en);
 }
 
 static void usb_charge_set_ilim(int port_id, int sel)
 {
-	enum gpio_signal ilim_sel;
+	int ilim_sel;
 
 #if defined(CONFIG_USB_PORT_POWER_SMART_SIMPLE) ||	\
 	defined(CONFIG_USB_PORT_POWER_SMART_INVERTED)
@@ -88,7 +88,7 @@ static void usb_charge_set_ilim(int port_id, int sel)
 		ilim_sel = GPIO_USB2_ILIM_SEL;
 #endif
 
-	gpio_set_level(ilim_sel, sel);
+	gpio_or_ioex_set_level(ilim_sel, sel);
 }
 
 static void usb_charge_all_ports_ctrl(enum usb_charge_mode mode)

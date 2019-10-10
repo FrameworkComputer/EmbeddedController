@@ -195,8 +195,18 @@ int gpio_get_default_flags(enum gpio_signal signal);
  * Set the value of a signal.
  *
  * @param signal	Signal to set
- * @param value		New value for signal (0 = low, != high */
+ * @param value		New value for signal (0 = low, 1 = high)
+ */
 void gpio_set_level(enum gpio_signal signal, int value);
+
+/**
+ * Set the value of a signal that could be either a local GPIO or an IO
+ * expander GPIO.
+ *
+ * @param signal	GPIO_* or IOEX_* signal to set
+ * @param value		New value for signal (0 = low, 1 = high)
+ */
+void gpio_or_ioex_set_level(int signal, int value);
 
 /**
  * Reset the GPIO flags and alternate function state

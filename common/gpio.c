@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "gpio.h"
+#include "ioexpander.h"
 #include "registers.h"
 #include "timer.h"
 #include "util.h"
@@ -194,5 +195,13 @@ int gpio_power_down_module(enum module_id id)
 	return rv;
 }
 #endif /* #ifdef CONFIG_GPIO_POWER_DOWN */
+
+void gpio_or_ioex_set_level(int signal, int value)
+{
+	if (IS_ENABLED(CONFIG_IO_EXPANDER) && signal_is_ioex(signal))
+		ioex_set_level(signal, value);
+	else
+		gpio_set_level(signal, value);
+}
 
 /*****************************************************************************/
