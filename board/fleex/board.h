@@ -52,6 +52,17 @@
 #define CONFIG_STEINHART_HART_3V3_13K7_47K_4050B
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 
+/* TI gauge IC 500ms WDT timeout setting under battery sleep mode
+ * induced battery cut-off, under the following conditions:
+ * 1. SMBus communication on FC is once per minute which allows
+ * battery entering sleep mode;
+ * 2. System load < 10mA and accumulate 5 hours will trigger battery
+ * simulation and result in a 500ms WDT timeout. So change charge
+ * max sleep time from once/minute to once/10 seconds to prevent
+ * battery entering sleep mode. See b/133375756.
+ */
+#define CHARGE_MAX_SLEEP_USEC (10 * SECOND)
+
 #define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 #ifndef __ASSEMBLER__
