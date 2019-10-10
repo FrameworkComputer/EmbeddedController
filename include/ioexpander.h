@@ -148,5 +148,13 @@ int ioex_init(int ioex);
  * @returns name of the given IOEX signal
  */
 const char *ioex_get_name(enum ioex_signal signal);
-#endif /* __CROS_EC_IOEXPANDER_H */
 
+/*
+ * Check if signal is an IO expander signal or GPIO signal.
+ *
+ * @param signal	GPIO or IOEX signal
+ * @return		1 if signal is IOEX else return 0
+ */
+int signal_is_ioex(int signal);
+
+#endif /* __CROS_EC_IOEXPANDER_H */

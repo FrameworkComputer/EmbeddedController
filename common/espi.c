@@ -44,13 +44,8 @@ BUILD_ASSERT(ARRAY_SIZE(espi_vw_names) == VW_SIGNAL_COUNT);
 
 const char *espi_vw_get_wire_name(enum espi_vw_signal signal)
 {
-	int idx;
-
-	if ((uint32_t)signal > VW_SIGNAL_BASE) {
-		idx = (uint32_t)signal - (VW_SIGNAL_BASE + 1);
-		if (idx < ARRAY_SIZE(espi_vw_names))
-			return espi_vw_names[idx];
-	}
+	if (espi_signal_is_vw(signal))
+		return espi_vw_names[signal - VW_SIGNAL_START];
 
 	return NULL;
 }
@@ -58,10 +53,5 @@ const char *espi_vw_get_wire_name(enum espi_vw_signal signal)
 
 int espi_signal_is_vw(int signal)
 {
-	enum espi_vw_signal sig = (enum espi_vw_signal)signal;
-
-	if ((sig > VW_SIGNAL_BASE) && (sig < VW_SIGNAL_BASE_END))
-		return 1;
-
-	return 0;
+	return ((signal >= VW_SIGNAL_START) && (signal < VW_SIGNAL_END));
 }

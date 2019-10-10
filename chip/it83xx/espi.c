@@ -59,7 +59,7 @@ static const struct vw_channel_t vw_host_startup_setting[] = {
 };
 
 #define VW_CHAN(name, idx, level, valid) \
-	[(name - VW_SIGNAL_BASE)] = {idx, level, valid}
+	[(name - VW_SIGNAL_START)] = {idx, level, valid}
 
 /* VW signals used in eSPI (NOTE: must match order of enum espi_vw_signal). */
 static const struct vw_channel_t vw_channel_list[] = {
@@ -165,13 +165,12 @@ static const struct vw_channel_t vw_channel_list[] = {
 		VW_LEVEL_FIELD(VW_IDX_42_SLP_WLAN),
 		VW_VALID_FIELD(VW_IDX_42_SLP_WLAN)),
 };
-BUILD_ASSERT(ARRAY_SIZE(vw_channel_list) ==
-		(VW_SIGNAL_BASE_END - VW_SIGNAL_BASE));
+BUILD_ASSERT(ARRAY_SIZE(vw_channel_list) == VW_SIGNAL_COUNT);
 
 /* Get vw index & value information by signal */
 static int espi_vw_get_signal_index(enum espi_vw_signal event)
 {
-	uint32_t i = event - VW_SIGNAL_BASE;
+	uint32_t i = event - VW_SIGNAL_START;
 
 	return (i < ARRAY_SIZE(vw_channel_list)) ? i : -1;
 }

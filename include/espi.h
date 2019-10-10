@@ -12,8 +12,9 @@
 
 /* Signal through VW */
 enum espi_vw_signal {
-	VW_SIGNAL_BASE = GPIO_COUNT,
-	VW_SLP_S3_L,			/* index 02h (In)  */
+	/* The first valid VW signal is 0x2000 */
+	VW_SIGNAL_START = IOEX_LIMIT + 1,
+	VW_SLP_S3_L = VW_SIGNAL_START,	/* index 02h (In)  */
 	VW_SLP_S4_L,
 	VW_SLP_S5_L,
 	VW_SUS_STAT_L,			/* index 03h (In)  */
@@ -37,10 +38,12 @@ enum espi_vw_signal {
 	VW_SLP_A_L,
 	VW_SLP_LAN,                     /* index 42h (In)  */
 	VW_SLP_WLAN,
-	VW_SIGNAL_BASE_END,
+	VW_SIGNAL_END,
+	VW_LIMIT = 0x2FFF
 };
+BUILD_ASSERT(VW_SIGNAL_END < VW_LIMIT);
 
-#define VW_SIGNAL_COUNT (VW_SIGNAL_BASE_END - VW_SIGNAL_BASE - 1)
+#define VW_SIGNAL_COUNT (VW_SIGNAL_END - VW_SIGNAL_START)
 
 /**
  * Set eSPI Virtual-Wire signal to Host
