@@ -27,6 +27,12 @@ if [ $# -ne 2 ]; then
   exit 1
 fi
 
+if [ ! -d "${CROS_WORKON_SRCROOT}" ]; then
+  printf "Not in Chrome OS chroot!\n\n"
+  usage
+  exit 0
+fi
+
 out_dir="$(dirname "${out}")"
 mkdir -p "${out_dir}"
 tmp="$(mktemp -p "${out_dir}" cros_ec_XXX.h)"
