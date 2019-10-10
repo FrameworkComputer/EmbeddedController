@@ -513,7 +513,7 @@ void delay_sleep_by(uint32_t us);
 
 /*
  **
- * Funtctions to control deep sleep behavior. When disabled - the device never
+ * Functions to control deep sleep behavior. When disabled - the device never
  * falls into deep sleep (the lowest power consumption state exit of which
  * usually happens through the regular reset vector with just a few bits of
  * state preserved).
