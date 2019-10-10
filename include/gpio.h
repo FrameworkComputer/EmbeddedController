@@ -293,4 +293,13 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func);
 int gpio_power_down_module(enum module_id id);
 #endif
 
+/*
+ * Check if signal is a valid GPIO signal, and not IO expander (enum
+ * ioex_signal) or eSPI virtual wire (enum espi_vw_signal).
+ *
+ * @param signal	GPIO or IOEX or VW signal
+ * @return		1 if signal is GPIO else return 0
+ */
+int signal_is_gpio(int signal);
+
 #endif  /* __CROS_EC_GPIO_H */

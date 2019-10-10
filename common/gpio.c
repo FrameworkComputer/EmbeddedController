@@ -204,4 +204,10 @@ void gpio_or_ioex_set_level(int signal, int value)
 		gpio_set_level(signal, value);
 }
 
+int signal_is_gpio(int signal)
+{
+	return ((signal >= GPIO_SIGNAL_START)
+		&& (signal < GPIO_SIGNAL_START + GPIO_COUNT));
+}
+
 /*****************************************************************************/
