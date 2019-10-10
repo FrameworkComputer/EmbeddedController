@@ -9,9 +9,10 @@
 #ifndef __CROS_EC_PANIC_H
 #define __CROS_EC_PANIC_H
 
-#include "software_panic.h"
-
 #include <stdarg.h>
+#include <stdint.h>
+
+#include "software_panic.h"
 
 #ifdef __cplusplus
 extern "C" {
