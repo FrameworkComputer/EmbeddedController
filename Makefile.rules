@@ -453,10 +453,10 @@ $(out)/RW/%.hex: $(out)/RW/%.elf $(out)/RW/%.smap
 	$(call quiet,elf_to_hex,OBJCOPY)
 
 ifeq ($(SIGNED_IMAGES),)
-$(out)/%.flat: $(out)/%.elf $(out)/%.smap utils-build
+$(out)/%.flat: $(out)/%.elf $(out)/%.smap $(build-utils)
 	$(call quiet,ec_elf_to_flat,OBJCOPY)
 
-$(out)/%.flat.dram: $(out)/%.elf $(out)/%.smap utils-build
+$(out)/%.flat.dram: $(out)/%.elf $(out)/%.smap $(build-utils)
 	$(call quiet,ec_elf_to_flat_dram,OBJCOPY)
 
 $(out)/RO/%.hex: $(out)/RO/%.elf $(out)/RO/%.smap
