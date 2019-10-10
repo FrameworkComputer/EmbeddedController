@@ -5766,6 +5766,18 @@ struct ec_response_locate_chip {
 	};
 } __ec_align2;
 
+/*
+ * Reboot AP on G3
+ *
+ * This command is used for validation purpose, where the AP needs to be
+ * returned back to S0 state from G3 state without using the servo to trigger
+ * wake events.For this,there is no request or response struct.
+ *
+ * Order of command usage:
+ * ectool reboot_ap_on_g3 && shutdown -h now
+ */
+#define EC_CMD_REBOOT_AP_ON_G3 0x0127
+
 /*****************************************************************************/
 /* The command range 0x200-0x2FF is reserved for Rotor. */
 

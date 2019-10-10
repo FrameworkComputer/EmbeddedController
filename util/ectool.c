@@ -255,6 +255,9 @@ const char help_str[] =
 	"  reboot_ec <RO|RW|cold|hibernate|hibernate-clear-ap-off|disable-jump>"
 			" [at-shutdown|switch-slot]\n"
 	"      Reboot EC to RO or RW\n"
+	"  reboot_ap_on_g3\n"
+	"      Requests that the EC will automatically reboot the AP the next time\n"
+	"      we enter the G3 power state.\n"
 	"  rollbackinfo\n"
 	"      Print rollback block information\n"
 	"  rtcget\n"
@@ -1090,6 +1093,13 @@ int cmd_reboot_ec(int argc, char *argv[])
 	return (rv < 0 ? rv : 0);
 }
 
+int cmd_reboot_ap_on_g3(int argc, char *argv[])
+{
+	int rv;
+
+	rv = ec_command(EC_CMD_REBOOT_AP_ON_G3, 0, NULL, 0, NULL, 0);
+	return (rv < 0 ? rv : 0);
+}
 
 int cmd_flash_info(int argc, char *argv[])
 {
@@ -9262,6 +9272,7 @@ const struct command commands[] = {
 	{"version", cmd_version},
 	{"waitevent", cmd_wait_event},
 	{"wireless", cmd_wireless},
+	{"reboot_ap_on_g3", cmd_reboot_ap_on_g3},
 	{NULL, NULL}
 };
 

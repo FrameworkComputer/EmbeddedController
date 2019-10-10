@@ -76,6 +76,20 @@ static uint32_t hibernate_delay = CONFIG_HIBERNATE_DELAY_SEC;
 static int pause_in_s5;
 #endif
 
+static bool want_reboot_ap_at_g3;/* Want to reboot AP from G3? */
+
+static enum ec_status
+host_command_reboot_ap_on_g3(struct host_cmd_handler_args *args)
+{
+	/* Store request for processing at g3 */
+	want_reboot_ap_at_g3 = true;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_REBOOT_AP_ON_G3,
+		     host_command_reboot_ap_on_g3,
+		     EC_VER_MASK(0));
+
 int power_signal_get_level(enum gpio_signal signal)
 {
 	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
@@ -307,8 +321,10 @@ static enum power_state power_common_state(enum power_state state)
 {
 	switch (state) {
 	case POWER_G3:
-		if (want_g3_exit) {
+		if (want_g3_exit || want_reboot_ap_at_g3) {
 			want_g3_exit = 0;
+			want_reboot_ap_at_g3 = false;
+
 			return POWER_G3S5;
 		}
 
