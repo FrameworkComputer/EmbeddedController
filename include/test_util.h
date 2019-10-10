@@ -52,6 +52,10 @@
 
 #define TEST_EQ(a, b, fmt) TEST_OPERATOR(a, b, ==, fmt)
 #define TEST_NE(a, b, fmt) TEST_OPERATOR(a, b, !=, fmt)
+#define TEST_LT(a, b, fmt) TEST_OPERATOR(a, b, <, fmt)
+#define TEST_LE(a, b, fmt) TEST_OPERATOR(a, b, <=, fmt)
+#define TEST_GT(a, b, fmt) TEST_OPERATOR(a, b, >, fmt)
+#define TEST_GE(a, b, fmt) TEST_OPERATOR(a, b, >=, fmt)
 #define TEST_BITS_SET(a, bits) TEST_OPERATOR(a & (int)bits, (int)bits, ==, "%u")
 #define TEST_BITS_CLEARED(a, bits) TEST_OPERATOR(a & (int)bits, 0, ==, "%u")
 
