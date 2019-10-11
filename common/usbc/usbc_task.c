@@ -32,6 +32,8 @@
 #include "usbc_ppc.h"
 #include "version.h"
 
+#define USBC_EVENT_TIMEOUT (5 * MSEC)
+
 int tc_restart_tcpc(int port)
 {
 	return tcpm_init(port);
@@ -162,7 +164,7 @@ void pd_task(void *u)
 
 	while (1) {
 		/* wait for next event/packet or timeout expiration */
-		const uint32_t evt = task_wait_event(tc_get_timeout(port));
+		const uint32_t evt = task_wait_event(USBC_EVENT_TIMEOUT);
 
 		/* handle events that affect the state machine as a whole */
 		tc_event_check(port, evt);

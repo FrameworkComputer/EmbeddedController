@@ -45,8 +45,6 @@ static struct type_c {
 	uint8_t data_role;
 	/* Higher-level power deliver state machines are enabled if true. */
 	uint8_t pd_enable;
-	/* event timeout */
-	uint64_t evt_timeout;
 	/* port flags, see TC_FLAGS_* */
 	uint32_t flags;
 	/*
@@ -169,16 +167,6 @@ void tc_set_power_role(int port, int role)
 	tc[port].power_role = role;
 }
 
-uint64_t tc_get_timeout(int port)
-{
-	return tc[port].evt_timeout;
-}
-
-void tc_set_timeout(int port, uint64_t timeout)
-{
-	tc[port].evt_timeout = timeout;
-}
-
 void tc_reset_support_timer(int port)
 {
 	tc[port].support_timer_reset |= SUPPORT_TIMER_RESET_REQUEST;
@@ -197,7 +185,6 @@ void tc_state_init(int port)
 
 	/* Disable pd state machines */
 	tc[port].pd_enable = 0;
-	tc[port].evt_timeout = 10*MSEC;
 	tc[port].power_role = PD_PLUG_CABLE_VPD;
 	tc[port].data_role = 0; /* Reserved for VPD */
 	tc[port].billboard_presented = 0;
@@ -450,9 +437,6 @@ static void tc_attached_snk_entry(const int port)
 	/* Start Charge-Through support timer */
 	tc[port].support_timer_reset = SUPPORT_TIMER_RESET_INIT;
 	tc[port].support_timer = get_time().val + PD_T_AME;
-
-	/* Sample host CC every 2ms */
-	tc_set_timeout(port, 2*MSEC);
 }
 
 static void tc_attached_snk_run(const int port)
@@ -528,8 +512,6 @@ static void tc_attached_snk_run(const int port)
 
 static void tc_attached_snk_exit(const int port)
 {
-	/* Reset timeout value to 10ms */
-	tc_set_timeout(port, 10*MSEC);
 	tc[port].billboard_presented = 0;
 	vpd_present_billboard(BB_NONE);
 }
@@ -1405,9 +1387,6 @@ static void tc_ct_attach_wait_vpd_entry(const int port)
 	set_polarity(port, 0);
 
 	tc[port].cc_state = PD_CC_UNSET;
-
-	/* Sample CCs every 2ms */
-	tc_set_timeout(port, 2 * MSEC);
 }
 
 static void tc_ct_attach_wait_vpd_run(const int port)
@@ -1478,9 +1457,6 @@ static void tc_ct_attach_wait_vpd_exit(const int port)
 {
 	/* Disable PD */
 	tc[port].pd_enable = 0;
-
-	/* Reset timeout value to 10ms */
-	tc_set_timeout(port, 10 * MSEC);
 }
 
 /**

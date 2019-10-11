@@ -107,14 +107,6 @@ void tc_set_data_role(int port, int role);
 void set_usb_mux_with_current_data_role(int port);
 
 /**
- * Get loop timeout value
- *
- * @param port USB-C port number
- * @return time in ms
- */
-uint64_t tc_get_timeout(int port);
-
-/**
  * Policy Engine informs the Type-C state machine if the port partner
  * is dualrole power.
  *
@@ -158,14 +150,6 @@ void tc_partner_dr_data(int port, int en);
  * @param en   1 if port partner had a previous pd connection, else 0
  */
 void tc_pd_connection(int port, int en);
-
-/**
- * Set loop timeout value
- *
- * @param port USB-C port number
- * @timeout time in ms
- */
-void tc_set_timeout(int port, uint64_t timeout);
 
 /**
  * Initiates a Power Role Swap from Attached.SRC to Attached.SNK. This function

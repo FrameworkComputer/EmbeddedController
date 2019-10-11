@@ -39,8 +39,6 @@ static struct type_c {
 	uint8_t data_role;
 	/* Higher-level power deliver state machines are enabled if true. */
 	uint8_t pd_enable;
-	/* event timeout */
-	uint64_t evt_timeout;
 	/* port flags, see TC_FLAGS_* */
 	uint32_t flags;
 	/* Time a port shall wait before it can determine it is attached */
@@ -95,7 +93,6 @@ void tc_state_init(int port)
 
 	/* Disable pd state machines */
 	tc[port].pd_enable = 0;
-	tc[port].evt_timeout = 10*MSEC;
 	tc[port].power_role = PD_PLUG_CABLE_VPD;
 	tc[port].data_role = 0; /* Reserved for VPD */
 	tc[port].flags = 0;
@@ -126,16 +123,6 @@ uint8_t tc_get_pd_enabled(int port)
 void tc_set_power_role(int port, int role)
 {
 	tc[port].power_role = role;
-}
-
-uint64_t tc_get_timeout(int port)
-{
-	return tc[port].evt_timeout;
-}
-
-void tc_set_timeout(int port, uint64_t timeout)
-{
-	tc[port].evt_timeout = timeout;
 }
 
 void tc_event_check(int port, int evt)

@@ -134,8 +134,6 @@ static struct type_c {
 	uint8_t polarity;
 	/* port flags, see TC_FLAGS_* */
 	uint32_t flags;
-	/* event timeout */
-	uint64_t evt_timeout;
 	/* Role toggle timer */
 	uint64_t next_role_swap;
 	/* Generic timer */
@@ -668,7 +666,6 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 	}
 
 	tc[port].flags = 0;
-	tc[port].evt_timeout = 5*MSEC;
 
 #ifdef CONFIG_USB_PE_SM
 	tc[port].pd_enable = 0;
@@ -705,16 +702,6 @@ uint8_t tc_get_pd_enabled(int port)
 void tc_set_power_role(int port, int role)
 {
 	tc[port].power_role = role;
-}
-
-uint64_t tc_get_timeout(int port)
-{
-	return tc[port].evt_timeout;
-}
-
-void tc_set_timeout(int port, uint64_t timeout)
-{
-	tc[port].evt_timeout = timeout;
 }
 
 /*
