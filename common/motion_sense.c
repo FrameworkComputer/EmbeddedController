@@ -610,6 +610,38 @@ static inline void increment_sensor_collection(struct motion_sensor_t *sensor,
 	}
 }
 
+/**
+ * Commit the data in a sensor's raw_xyz vector. This operation might have
+ * different meanings depending on the CONFIG_ACCEL_FIFO flag.
+ *
+ * @param s Pointer to the sensor.
+ */
+static void motion_sense_push_raw_xyz(struct motion_sensor_t *s)
+{
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		struct ec_response_motion_sensor_data vector;
+		int *v = s->raw_xyz;
+
+		vector.flags = 0;
+		vector.sensor_num = s - motion_sensors;
+		if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) &&
+		    s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE)
+			v = s->spoof_xyz;
+		mutex_lock(&g_sensor_mutex);
+		vector.data[X] = v[X];
+		vector.data[Y] = v[Y];
+		vector.data[Z] = v[Z];
+		mutex_unlock(&g_sensor_mutex);
+		motion_sense_fifo_stage_data(&vector, s, 3,
+					     __hw_clock_source_read());
+		motion_sense_fifo_commit_data();
+	} else {
+		mutex_lock(&g_sensor_mutex);
+		memcpy(s->xyz, s->raw_xyz, sizeof(s->xyz));
+		mutex_unlock(&g_sensor_mutex);
+	}
+}
+
 static int motion_sense_process(struct motion_sensor_t *sensor,
 				uint32_t *event,
 				const timestamp_t *ts)
@@ -632,58 +664,24 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 		ret = sensor->drv->irq_handler(sensor, event);
 	}
 #endif
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
-		if (motion_sensor_in_forced_mode(sensor)) {
-			if (motion_sensor_time_to_read(ts, sensor)) {
-				struct ec_response_motion_sensor_data vector;
-				int *v = sensor->raw_xyz;
-
-				ret = motion_sense_read(sensor);
-				if (ret == EC_SUCCESS) {
-					vector.flags = 0;
-					vector.sensor_num = sensor -
-						motion_sensors;
-					if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE)
-					    && sensor->flags &
-					    MOTIONSENSE_FLAG_IN_SPOOF_MODE)
-						v = sensor->spoof_xyz;
-					vector.data[X] = v[X];
-					vector.data[Y] = v[Y];
-					vector.data[Z] = v[Z];
-					motion_sense_fifo_stage_data(
-						&vector, sensor, 3,
-						__hw_clock_source_read());
-					motion_sense_fifo_commit_data();
-				}
-				increment_sensor_collection(sensor, ts);
-			} else {
-				ret = EC_ERROR_BUSY;
-			}
+	if (motion_sensor_in_forced_mode(sensor)) {
+		if (motion_sensor_time_to_read(ts, sensor)) {
+			ret = motion_sense_read(sensor);
+			increment_sensor_collection(sensor, ts);
+		} else {
+			ret = EC_ERROR_BUSY;
 		}
-		if (*event & TASK_EVENT_MOTION_FLUSH_PENDING) {
-			int flush_pending = atomic_read_clear(
-				&sensor->flush_pending);
 
-			for (; flush_pending > 0; flush_pending--) {
-				motion_sense_insert_async_event(sensor,
-					ASYNC_EVENT_FLUSH);
-			}
-		}
-	} else {
-		if (motion_sensor_in_forced_mode(sensor)) {
-			if (motion_sensor_time_to_read(ts, sensor)) {
-				/* Get latest data for local calculation */
-				ret = motion_sense_read(sensor);
-				increment_sensor_collection(sensor, ts);
-			} else {
-				ret = EC_ERROR_BUSY;
-			}
-			if (ret == EC_SUCCESS) {
-				mutex_lock(&g_sensor_mutex);
-				memcpy(sensor->xyz, sensor->raw_xyz,
-				       sizeof(sensor->xyz));
-				mutex_unlock(&g_sensor_mutex);
-			}
+		if (ret == EC_SUCCESS)
+			motion_sense_push_raw_xyz(sensor);
+	}
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO) &&
+	    *event & TASK_EVENT_MOTION_FLUSH_PENDING) {
+		int flush_pending = atomic_read_clear(&sensor->flush_pending);
+
+		for (; flush_pending > 0; flush_pending--) {
+			motion_sense_insert_async_event(
+				sensor, ASYNC_EVENT_FLUSH);
 		}
 	}
 
