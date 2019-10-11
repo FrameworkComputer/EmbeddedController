@@ -1027,7 +1027,6 @@ static int load_fifo(struct motion_sensor_t *s, uint32_t last_ts)
 			state = FIFO_HEADER;
 		}
 	}
-	motion_sense_fifo_commit_data();
 	return EC_SUCCESS;
 }
 
@@ -1192,6 +1191,7 @@ static void irq_set_orientation(struct motion_sensor_t *s,
 static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
 	uint32_t interrupt;
+	int8_t has_read_fifo = 0;
 	int rv;
 
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
@@ -1218,12 +1218,17 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 					MOTIONSENSE_ACTIVITY_SIG_MOTION);
 #endif
 		if (IS_ENABLED(CONFIG_ACCEL_FIFO) &&
-		    interrupt & (BMI160_FWM_INT | BMI160_FFULL_INT))
+		    interrupt & (BMI160_FWM_INT | BMI160_FFULL_INT)) {
 			load_fifo(s, last_interrupt_timestamp);
+			has_read_fifo = 1;
+		}
 #ifdef CONFIG_BMI160_ORIENTATION_SENSOR
 		irq_set_orientation(s, interrupt);
 #endif
 	} while (interrupt != 0);
+
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO) && has_read_fifo)
+		motion_sense_fifo_commit_data();
 
 	return EC_SUCCESS;
 }
