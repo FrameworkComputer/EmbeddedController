@@ -49,6 +49,13 @@ void system_pre_init(void);
 void system_common_pre_init(void);
 
 /**
+ * System common re-initialization; called to reset persistent state
+ * left by system_common_pre_init().  This is useful for testing
+ * scenarios calling system_common_pre_init() multiple times.
+ */
+__test_only void system_common_reset_state(void);
+
+/**
  * Set up flags that should be saved to battery backed RAM.
  *
  * @param reset_flags - flags passed into system_reset
