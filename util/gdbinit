@@ -1,0 +1,172 @@
+# Copyright 2019 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# This file is intended to be used as a .gdbinit for an EC debugging session.
+# It defines some useful functions for analyzing the EC state.
+#
+# Setup Automatic Import:
+# ln -s util/gdbinit .gdbinit
+#
+# Environment Variables:
+# BOARD=[nocturne_fp|bloonchipper|...]
+# GDBSERVER=[segger|openocd]
+# GDBPORT=[gdb-server-port-number]
+#
+# Warning, this is a working collection that is not guaranteed to function
+# properly on all platforms. The ec-tasks functions is a good example of a
+# function that works well on most simple platforms, but may have issues on
+# platforms with data cache enabled.
+#
+# Note, this file must maintain space indention to allow easy copy/paste
+# while in active debugging. Using tabs interferes with the embedded python
+# during copy/paste.
+
+#####################################################################
+# Environment Setup and Initialization                              #
+#####################################################################
+
+# Setup environment and pull in object files for the particular BOARD.
+# This requires setting the environment variables mentioned above.
+python
+import os
+
+BOARD = os.getenv('BOARD', '')
+GDBSERVER = os.getenv('GDBSERVER', 'openocd')
+GDBPORT = os.getenv('GDBPORT', '3333')
+gdb.execute('set $BOARD = "%s"'%BOARD)
+gdb.execute('set $GDBSERVER = "%s"'%GDBSERVER)
+gdb.execute('set $GDBPORT = "%s"'%GDBPORT)
+
+build = 'build/' + BOARD
+if BOARD != "":
+    if not os.path.isdir(build):
+        print('Error - Build path "' + build + '" doesn\'t exist. Aborting.')
+        gdb.execute('quit')
+
+    gdb.execute('file ' + build + '/ec.obj')
+    gdb.execute('add-symbol-file ' + build + '/RO/ec.RO.elf')
+    gdb.execute('add-symbol-file ' + build + '/RW/ec.RW.elf')
+
+if GDBSERVER == "openocd":
+    gdb.execute('set $GDBSERVER_OPENOCD = 1')
+    gdb.execute('set $GDBSERVER_SEGGER = 0')
+elif GDBSERVER == "segger":
+    gdb.execute('set $GDBSERVER_OPENOCD = 0')
+    gdb.execute('set $GDBSERVER_SEGGER = 1')
+else:
+    print('Error - GDBSERVER="' + GDBSERVER + '" is invalid.')
+    gdb.execute('quit')
+end
+
+# OpenOCD specific config
+if $GDBSERVER_OPENOCD
+    # Don't auto choose hw/sw breakpoints from memory-map
+    set breakpoint auto-hw off
+end
+
+# Segger specific config
+if $GDBSERVER_SEGGER
+    # If enabled, disable flash breakpoints.
+    #monitor flash breakpoints = 0
+end
+
+# If enabled, force breakpoints to be inserted at all times.
+# They will not be reinserted on reconnects.
+#set breakpoint always-inserted on
+
+#####################################################################
+# Helper Functions                                                  #
+#####################################################################
+
+# Usage: reg32 <address> [offset]
+# Read a 32 bit register
+define reg32
+    set $a = $arg0
+    if $argc > 1
+        set $a += $arg1
+    end
+    set $v = *((uint32_t *)$a)
+    print $v
+    print /x $v
+    print /t $v
+end
+
+# Usage: ec-connect
+# Issue the overly long target connect command using the
+# specified gdb server port.
+define ec-connect
+python
+    # May want to only use "target remote".
+    gdb.execute('target extended-remote :%d'%GDBPORT)
+end
+end
+alias connect = ec-connect
+
+# Usage: ec-reset
+# Issue the reset sequence for the debugger to halt on boot.
+define ec-reset
+    if $GDBSERVER_OPENOCD
+        monitor halt
+        monitor reset halt
+    else
+        monitor halt
+        monitor reset
+    end
+end
+alias reset = ec-reset
+
+# Usage: ec-tasks
+# Prints out information about current EC task set and tries to determine
+# if the task's stack has been overrun.
+# This function may not work properly if MCU data cache is enabled.
+define ec-tasks
+    set $taskid_cur = current_task - tasks
+    set $id = 0
+    set $taskcount = sizeof(tasks)/sizeof(tasks[0])
+    printf "Task Ready Name         Events      Time (s)  StkUsed\n"
+    while $id < $taskcount
+        set $is_ready = (tasks_ready & (1<<$id)) ? 'R' : ' '
+        set $unused = (uint32_t)0xdeadd00d
+        set $stacksize = tasks_init[$id].stack_size
+        set $stackused = $stacksize
+        set $s = tasks[$id].stack
+        while $s < (uint32_t *)tasks[$id].sp && *$s == $unused
+            set $stackused -= sizeof(uint32_t)
+            set $s++
+        end
+        printf "%4d %-5c %-16s %08x %11.6ld  %3d/%3d", $id, $is_ready,  task_names[$id], tasks[$id].events, tasks[$id].runtime, $stackused, tasks_init[$id].stack_size
+        if $stackused == $stacksize
+            printf "\t [overrun]"
+        end
+        if $id == $taskid_cur
+            printf "\t*"
+        end
+        printf "\n"
+        set $id++
+    end
+    if $taskid_cur == scratchpad
+        printf "Current task is set to scratchpad\n"
+    end
+end
+
+# Usage: ec-stayro
+# Adds magic breakpoint that changes the outcome of the RW signature
+# validation step that forces the MCU to stay in the RO section.
+# This function needs improvements to not be dependent on line numbers.
+define ec-stayro
+    break common/rwsig.c:282
+    commands
+        set evt = 1
+        printf "Continuing as RO\n"
+        continue
+    end
+end
+
+# Usage: ec-brexception
+# Set breakpoints on EC exception handlers.
+define ec-brexception
+    break exception_panic
+    break bus_fault_handler
+    break panic_assert_fail
+end
