@@ -74,6 +74,9 @@ const struct i2c_port_t i2c_ports[] = {
 	{"ppc0",    I2C_PORT_PPC0,    100, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
 	{"tcpc1",   I2C_PORT_TCPC1,   100, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 	{"tcpc0",   I2C_PORT_TCPC0,   100, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
+#ifdef BOARD_AKEMI
+	{"thermal", I2C_PORT_THERMAL, 400, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
+#endif
 	{"power",   I2C_PORT_POWER,   100, GPIO_I2C5_SCL, GPIO_I2C5_SDA},
 	{"eeprom",  I2C_PORT_EEPROM,  100, GPIO_I2C7_SCL, GPIO_I2C7_SDA},
 };

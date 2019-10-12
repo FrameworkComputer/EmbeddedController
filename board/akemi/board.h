@@ -87,6 +87,7 @@
 #define CONFIG_THERMISTOR
 #define CONFIG_THROTTLE_AP
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
+#define CONFIG_TEMP_SENSOR_G753
 
 /*
  * Macros for GPIO signals used in common code that don't match the
@@ -143,6 +144,7 @@ enum mft_channel {
 enum temp_sensor_id {
 	TEMP_SENSOR_1,
 	TEMP_SENSOR_2,
+	TEMP_SENSOR_3,
 	TEMP_SENSOR_COUNT
 };
 
