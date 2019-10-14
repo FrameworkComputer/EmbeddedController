@@ -52,12 +52,16 @@ void usleep(unsigned us)
 
 timestamp_t _get_time(void)
 {
-	struct timespec ts;
-	timestamp_t ret;
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-	ret.val = (1000000000 * (uint64_t)ts.tv_sec + ts.tv_nsec) *
-		  TEST_TIME_SCALE / 1000 / TEST_TIME_SLOW_DOWN;
-	return ret;
+	static timestamp_t time;
+
+	/*
+	 * We just monotonically increase the microsecond every time we check
+	 * the time. Do not depend on host system time as this introduces
+	 * flakyness in tests. The time is periodically fast forwarded with
+	 * force_time() during the host's task scheduler implementation.
+	 */
+	++time.val;
+	return time;
 }
 
 test_mockable timestamp_t get_time(void)
