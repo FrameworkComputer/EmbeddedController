@@ -46,8 +46,13 @@
 /* Default task stack size */
 #define TASK_STACK_SIZE             (512 + CHIP_EXTRA_STACK_SPACE)
 
+#ifdef IT83XX_CHIP_FLASH_IS_KGD
+#define CONFIG_FLASH_BANK_SIZE      0x00001000  /* protect bank size */
+#define CONFIG_FLASH_ERASE_SIZE     0x00001000  /* erase bank size */
+#else
 #define CONFIG_FLASH_BANK_SIZE      0x00000800  /* protect bank size */
 #define CONFIG_FLASH_ERASE_SIZE     0x00000400  /* erase bank size */
+#endif
 #define CONFIG_FLASH_WRITE_SIZE     0x00000004  /* minimum write size */
 
 /*
@@ -57,11 +62,19 @@
  */
 #define IT83XX_ILM_BLOCK_SIZE       0x00001000
 
+#ifdef IT83XX_CHIP_FLASH_IS_KGD
+/*
+ * One page program instruction allows maximum 256 bytes (a page) of data
+ * to be programmed.
+ */
+#define CONFIG_FLASH_WRITE_IDEAL_SIZE 256
+#else
 /*
  * The AAI program instruction allows continue write flash
  * until write disable instruction.
  */
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE CONFIG_FLASH_ERASE_SIZE
+#endif
 
 /****************************************************************************/
 /* Define our flash layout. */

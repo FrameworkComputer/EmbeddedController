@@ -33,6 +33,8 @@
 #if defined(CHIP_VARIANT_IT83202BX)
 /* TODO(b/133460224): enable properly chip config option. */
 #define CONFIG_FLASH_SIZE           0x00080000
+/* Embedded flash is KGD */
+#define IT83XX_CHIP_FLASH_IS_KGD
 /* chip id is 3 bytes */
 #define IT83XX_CHIP_ID_3BYTES
 /*
