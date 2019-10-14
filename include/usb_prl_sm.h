@@ -121,5 +121,12 @@ void prl_start_ams(int port);
  */
 void prl_end_ams(int port);
 
+#ifdef TEST_BUILD
+/**
+ * Fake to track the last sent control message
+ */
+enum pd_ctrl_msg_type fake_prl_get_last_sent_ctrl_msg(int port);
+#endif
+
 #endif /* __CROS_EC_USB_PRL_H */
 

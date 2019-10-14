@@ -925,6 +925,12 @@
 #define CONFIG_USB_PE_SM
 
 /*
+ * Define to enable Policy Engine State Machine. This is an override
+ * that is used to just pull in PE for unit testing.
+ */
+#undef CONFIG_TEST_USB_PE_SM
+
+/*
  * Board specific maximum input current limit, in mA.
  */
 #undef CONFIG_CHARGER_MAX_INPUT_CURRENT
