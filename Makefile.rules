@@ -589,26 +589,29 @@ $(out)/TAGS: $(out)/cscope.files
 $(out)/tags: $(out)/cscope.files
 	$(call quiet,ctags,CTAGS  )
 
+.PHONY: npx-monitor-dir
+npx-monitor-dir:
+	$(Q)mkdir -p ${out}/chip/npcx/spiflashfw
+
 # TODO: optional make rules for PROJECT_EXTRA
-$(npcx-monitor-fw-bin):
+$(npcx-monitor-fw-bin):$(npcx-monitor-fw).c npx-monitor-dir
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
-	$(Q)mkdir -p $(@D)
-	$(Q)$(CC) $(CFLAGS) -MMD -MF $(out)/$(npcx-lfw).d -c $(npcx-monitor-fw).c \
+	$(Q)$(CC) $(CFLAGS) -MMD -MF $(out)/$(npcx-lfw).d -c $< \
 		-o $(out)/$(npcx-monitor-fw).o
 	$(Q)$(CC) $(out)/$(npcx-monitor-fw).o $(LDFLAGS) \
 		-o $(out)/$(npcx-monitor-fw).elf -Wl,-T,$(npcx-monitor-fw).ld \
 		-Wl,-Map,$(out)/$(npcx-monitor-fw).map
 	$(Q)$(OBJCOPY) -O binary $(out)/$(npcx-monitor-fw).elf $@
 
-$(out)/$(npcx-monitor-hdr)_ro.o:$(npcx-monitor-hdr).c
-	$(Q)$(CC) $(CFLAGS) -DSECTION_IS_RO=$(EMPTY) -MMD -c $(npcx-monitor-hdr).c -o $@
+$(out)/$(npcx-monitor-hdr)_ro.o:$(npcx-monitor-hdr).c npx-monitor-dir
+	$(Q)$(CC) $(CFLAGS) -DSECTION_IS_RO=$(EMPTY) -MMD -c $< -o $@
 
 $(npcx-monitor-hdr-ro-bin):$(out)/$(npcx-monitor-hdr)_ro.o
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
 	$(Q)$(OBJCOPY) -O binary $< $@
 
-$(out)/$(npcx-monitor-hdr)_rw.o:$(npcx-monitor-hdr).c
-	$(Q)$(CC) $(CFLAGS) -MMD -c $(npcx-monitor-hdr).c -o $@
+$(out)/$(npcx-monitor-hdr)_rw.o:$(npcx-monitor-hdr).c npx-monitor-dir
+	$(Q)$(CC) $(CFLAGS) -MMD -c $< -o $@
 
 $(npcx-monitor-hdr-rw-bin):$(out)/$(npcx-monitor-hdr)_rw.o
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
