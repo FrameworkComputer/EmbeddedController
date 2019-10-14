@@ -8432,11 +8432,6 @@ int cmd_port80_read(int argc, char *argv[])
 	return 0;
 }
 
-struct command {
-	const char *name;
-	int (*handler)(int argc, char *argv[]);
-};
-
 int cmd_force_lid_open(int argc, char *argv[])
 {
 	struct ec_params_force_lid_open p;

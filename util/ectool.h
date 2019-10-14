@@ -3,6 +3,22 @@
  * found in the LICENSE file.
  */
 
+/** @brief A handler for an `ectool` command.  */
+struct command {
+	/** The name of the command. */
+	const char *name;
+
+	/**
+	 * The function to handle the command.
+	 *
+	 * @param argc The length of `argv`
+	 * @param argv The arguments passed, including the command itself but
+	 *             not 'ectool'.
+	 * @return 0 if successful, or a negative `enum ec_status` value.
+	 */
+	int (*handler)(int argc, char *argv[]);
+};
+
 /**
  * Test low-level key scanning
  *
@@ -22,9 +38,5 @@
  * <keys_pressed> is a (possibly empty) list of ASCII keys
  *
  * The key matrix is read from the fdt.
- *
- * @param argc	Number of arguments (excluding 'ectool')
- * @param argv	List of arguments
- * @return 0 if ok, -1 on error
  */
 int cmd_keyscan(int argc, char *argv[]);
