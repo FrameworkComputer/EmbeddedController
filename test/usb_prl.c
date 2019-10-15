@@ -184,12 +184,6 @@ static void cycle_through_state_machine(int port, uint32_t num, uint32_t time)
 	for (i = 0; i < num; i++) {
 		task_wake(PD_PORT_TO_TASK_ID(port));
 		task_wait_event(time);
-		/*
-		 * Ensure that the PD task actually ran otherwise loop again.
-		 * This can happen for slow/overloaded cpus (e.g. cq machine).
-		 */
-		if (TASK_EVENT_WAKE & pending_pd_task_events(port))
-			--i;
 	}
 }
 
