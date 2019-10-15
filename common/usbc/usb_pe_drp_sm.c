@@ -3069,15 +3069,14 @@ static void pe_prs_snk_src_source_on_entry(int port)
 static void pe_prs_snk_src_source_on_run(int port)
 {
 	/* Wait until power supply turns on */
-	if (get_time().val < pe[port].ps_source_timer)
-		return;
-
-	if (pe[port].ps_source_timer != 0) {
-		/* update pe power role */
-		pe[port].power_role = tc_get_power_role(port);
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
-		/* reset timer so PD_CTRL_PS_RDY isn't sent again */
-		pe[port].ps_source_timer = TIMER_DISABLED;
+	if (pe[port].ps_source_timer != TIMER_DISABLED) {
+		if (get_time().val >= pe[port].ps_source_timer) {
+			/* update pe power role */
+			pe[port].power_role = tc_get_power_role(port);
+			prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
+			/* reset timer so PD_CTRL_PS_RDY isn't sent again */
+			pe[port].ps_source_timer = TIMER_DISABLED;
+		}
 	}
 
 	/*
