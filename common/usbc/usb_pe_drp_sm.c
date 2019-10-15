@@ -625,10 +625,12 @@ void pe_report_error(int port, enum pe_error e)
 	 * The PE_Send_Soft_Reset state shall be entered from
 	 * any state when a Protocol Error is detected by
 	 * Protocol Layer during a Non-Interruptible AMS or when
-	 * Message has not been sent after retries.
+	 * Message has not been sent after retries. When an explicit
+	 * contract is not in effect.  Otherwise go to PE_Snk/Src_Ready
 	 */
-	if (!PE_CHK_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS) ||
-					(e == ERR_TCH_XMIT)) {
+	if (!PE_CHK_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT) &&
+			(!PE_CHK_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS)
+			 || (e == ERR_TCH_XMIT))) {
 		set_state_pe(port, PE_SEND_SOFT_RESET);
 	}
 	/*
@@ -1135,8 +1137,18 @@ static void pe_src_send_capabilities_run(int port)
 			return;
 		}
 
-		/* We have a Protocol Error. Send Soft Reset Message */
-		set_state_pe(port, PE_SEND_SOFT_RESET);
+		/*
+		 * We have a Protocol Error.
+		 *	PE_SNK/SRC_READY if explicit contract
+		 *	PE_SEND_SOFT_RESET otherwise
+		 */
+		if (PE_CHK_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT))
+			if (pe[port].power_role == PD_ROLE_SINK)
+				set_state_pe(port, PE_SNK_READY);
+			else
+				set_state_pe(port, PE_SRC_READY);
+		else
+			set_state_pe(port, PE_SEND_SOFT_RESET);
 		return;
 	}
 
