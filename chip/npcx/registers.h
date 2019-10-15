@@ -1541,7 +1541,7 @@ enum ITIM16_MODULE_T {
 #define NPCX_FLASHTXWRHEAD          REG32(NPCX_ESPI_BASE_ADDR + 0X2C)
 #define NPCX_FLASHCFG               REG32(NPCX_ESPI_BASE_ADDR + 0X34)
 #define NPCX_FLASHCTL               REG32(NPCX_ESPI_BASE_ADDR + 0X38)
-#define NPCX_ESPIIERR               REG32(NPCX_ESPI_BASE_ADDR + 0X3C)
+#define NPCX_ESPIERR                REG32(NPCX_ESPI_BASE_ADDR + 0X3C)
 
 /* eSPI Virtual Wire channel registers */
 #define NPCX_VWEVSM(n)              REG32(NPCX_ESPI_BASE_ADDR + 0x100 + (4*(n)))
@@ -1553,8 +1553,8 @@ enum ITIM16_MODULE_T {
 #define NPCX_ESPICFG_VWCHANEN            1
 #define NPCX_ESPICFG_OOBCHANEN           2
 #define NPCX_ESPICFG_FLASHCHANEN         3
-#define NPCX_ESPICFG_IOMODE_FILED        FIELD(8, 9)
-#define NPCX_ESPICFG_MAXFREQ_FILED       FIELD(10, 12)
+#define NPCX_ESPICFG_IOMODE_FIELD        FIELD(8, 9)
+#define NPCX_ESPICFG_MAXFREQ_FIELD       FIELD(10, 12)
 #define NPCX_ESPICFG_PCCHN_SUPP          24
 #define NPCX_ESPICFG_VWCHN_SUPP          25
 #define NPCX_ESPICFG_OOBCHN_SUPP         26
@@ -1688,7 +1688,7 @@ enum ITIM16_MODULE_T {
 				 (i >= 128 && i <= 255) ? ESPI_VW_TYPE_GPIO : \
 							ESPI_VW_TYPE_NONE)
 
-/* Bit filed manipulation for VWEVMS Value */
+/* Bit field manipulation for VWEVMS Value */
 #define VWEVMS_INX(i)                ((i<<8)  & 0x00007F00)
 #define VWEVMS_INX_EN(n)             ((n<<15) & 0x00008000)
 #define VWEVMS_PLTRST_EN(p)          ((p<<17) & 0x00020000)
@@ -1705,7 +1705,7 @@ enum ITIM16_MODULE_T {
 				VWEVMS_ESPIRST_EN(r))
 #define VWEVMS_IDX_GET(reg)          (((reg & 0x00007F00)>>8))
 
-/* Bit filed manipulation for VWEVSM Value */
+/* Bit field manipulation for VWEVSM Value */
 #define VWEVSM_VALID_N(v)            ((v<<4)  & 0x000000F0)
 #define VWEVSM_INX(i)                ((i<<8)  & 0x00007F00)
 #define VWEVSM_INX_EN(n)             ((n<<15) & 0x00008000)
@@ -1722,7 +1722,7 @@ enum ITIM16_MODULE_T {
 #define SMI_STATUS_MASK    ((uint8_t) (NPCX_VWEVSM(2) & 0x00000002))
 /*
  * Read SCI VWire status from VWEVSM(offset 2) register.
- * Left shift 2 to meet the SCIB filed in HIPMIC register.
+ * Left shift 2 to meet the SCIB field in HIPMIC register.
  */
 #define SCI_STATUS_MASK    (((uint8_t) (NPCX_VWEVSM(2) & 0x00000001)) << 2)
 #define SCIB_MASK(v)       (v << NPCX_HIPMIC_SCIB)
