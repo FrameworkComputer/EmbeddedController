@@ -4607,6 +4607,9 @@ struct ec_response_sb_fw_update {
  * Entering Verified Boot Mode Command
  * Default mode is VBOOT_MODE_NORMAL if EC did not receive this command.
  * Valid Modes are: normal, developer, and recovery.
+ *
+ * EC no longer needs to know what mode vboot has entered,
+ * so this command is deprecated.  (See chromium:1014379.)
  */
 #define EC_CMD_ENTERING_MODE 0x00B6
 

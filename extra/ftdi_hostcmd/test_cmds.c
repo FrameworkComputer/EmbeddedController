@@ -483,7 +483,6 @@ static struct lookup cmd_table[] = {
 	{0xb3, "EC_CMD_SB_WRITE_BLOCK"},
 	{0xb4, "EC_CMD_BATTERY_VENDOR_PARAM"},
 	{0xb5, "EC_CMD_SB_FW_UPDATE"},
-	{0xb6, "EC_CMD_ENTERING_MODE"},
 	{0xd2, "EC_CMD_REBOOT_EC"},
 	{0xd3, "EC_CMD_GET_PANIC_INFO"},
 	{0xd1, "EC_CMD_REBOOT"},
