@@ -21,24 +21,28 @@ extern "C" {
 #ifdef CONFIG_DEBUG_ASSERT_BRIEF
 extern void panic_assert_fail(const char *fname, int linenum)
 	__attribute__((noreturn));
-#define ASSERT(cond) do {					\
-		if (!(cond))					\
-			panic_assert_fail(__FILE__, __LINE__);	\
+#define ASSERT(cond)                                           \
+	do {                                                   \
+		if (!(cond))                                   \
+			panic_assert_fail(__FILE__, __LINE__); \
 	} while (0)
 #else
 extern void panic_assert_fail(const char *msg, const char *func,
-		const char *fname, int linenum) __attribute__((noreturn));
-#define ASSERT(cond) do {					     \
-		if (!(cond))					     \
+			      const char *fname, int linenum)
+	__attribute__((noreturn));
+#define ASSERT(cond)                                                 \
+	do {                                                         \
+		if (!(cond))                                         \
 			panic_assert_fail(#cond, __func__, __FILE__, \
-					__LINE__);		     \
+					  __LINE__);                 \
 	} while (0)
 #endif
 #else
-#define ASSERT(cond) do {			\
-		if (!(cond))			\
-			__asm("bkpt");		\
-			__builtin_unreachable();\
+#define ASSERT(cond)                     \
+	do {                             \
+		if (!(cond))             \
+			__asm("bkpt");   \
+		__builtin_unreachable(); \
 	} while (0)
 #endif
 #else
