@@ -1268,6 +1268,11 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	return EC_SUCCESS;
 }
 
+static int read_temp(const struct motion_sensor_t *s, int *temp_ptr)
+{
+	return bmi160_get_sensor_temp(s - motion_sensors, temp_ptr);
+}
+
 static int init(const struct motion_sensor_t *s)
 {
 	int ret = 0, tmp, i;
@@ -1449,6 +1454,7 @@ const struct accelgyro_drv bmi160_drv = {
 	.set_scale = set_scale,
 	.get_offset = get_offset,
 	.perform_calib = perform_calib,
+	.read_temp = read_temp,
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	.irq_handler = irq_handler,
 #endif
