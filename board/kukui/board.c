@@ -38,6 +38,7 @@
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
+#include "usb_pd_policy.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
@@ -562,4 +563,9 @@ void board_fill_source_power_info(int port,
 	r->meas.current_max = 1500;
 	r->meas.current_lim = 1500;
 	r->max_power = r->meas.voltage_now * r->meas.current_max;
+}
+
+__override int board_has_virtual_mux(void)
+{
+	return board_get_version() < 5;
 }

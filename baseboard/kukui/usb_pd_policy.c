@@ -10,6 +10,7 @@
 #include "timer.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_policy.h"
 #include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
@@ -239,6 +240,11 @@ static int dp_flags[CONFIG_USB_PD_PORT_COUNT];
 /* DP Status VDM as returned by UFP */
 static uint32_t dp_status[CONFIG_USB_PD_PORT_COUNT];
 
+__overridable int board_has_virtual_mux(void)
+{
+	return IS_ENABLED(CONFIG_USB_MUX_VIRTUAL);
+}
+
 static void svdm_safe_dp_mode(int port)
 {
 	/* make DP interface safe until configure */
@@ -251,7 +257,7 @@ static void svdm_safe_dp_mode(int port)
 static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 {
 	/* Kukui/Krane doesn't support superspeed lanes. */
-	const uint32_t support_pin_mode = IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) ?
+	const uint32_t support_pin_mode = board_has_virtual_mux() ?
 		(MODE_DP_PIN_C | MODE_DP_PIN_E) : MODE_DP_PIN_ALL;
 
 	/**
@@ -293,7 +299,7 @@ static int svdm_dp_config(int port, uint32_t *payload)
 	int pin_mode;
 
 	/* Kukui doesn't support multi-function mode, mask it out. */
-	if (IS_ENABLED(CONFIG_USB_MUX_VIRTUAL))
+	if (board_has_virtual_mux())
 		status &= ~PD_VDO_DPSTS_MF_MASK;
 
 	pin_mode = pd_dfp_dp_get_pin_mode(port, status);
@@ -301,7 +307,7 @@ static int svdm_dp_config(int port, uint32_t *payload)
 	if (!pin_mode)
 		return 0;
 
-	if (IS_ENABLED(CONFIG_USB_MUX_VIRTUAL))
+	if (board_has_virtual_mux())
 		usb_mux_set(port, TYPEC_MUX_DP, USB_SWITCH_CONNECT,
 			    board_get_polarity(port));
 	else
