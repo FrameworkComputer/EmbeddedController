@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "accelgyro.h"
 #include "console.h"
 #include "hwtimer.h"
 #include "mkbp_event.h"
@@ -10,6 +11,7 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "util.h"
+#include "math_util.h"
 
 #define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
 
@@ -48,6 +50,20 @@ static struct queue fifo = QUEUE_NULL(CONFIG_ACCEL_FIFO_SIZE,
 static int fifo_lost;
 /** Metadata for the fifo, used for staging and spreading data. */
 static struct fifo_staged fifo_staged;
+
+/**
+ * Entry of the temperature cache
+ * @temp: The temperature that's cached (-1 if invalid)
+ * @timestamp: The timestamp at which the temperature was cached
+ */
+struct temp_cache_entry {
+	int temp;
+	uint32_t timestamp;
+};
+
+/** Cache for internal sensor temperatures. */
+STATIC_IF(CONFIG_ONLINE_CALIB)
+	struct temp_cache_entry sensor_temp_cache[SENSOR_COUNT];
 
 /**
  * Cached expected timestamp per sensor. If a sensor's timestamp pre-dates this
@@ -301,6 +317,15 @@ peek_fifo_staged(size_t offset)
 		queue_get_write_chunk(&fifo, offset).buffer;
 }
 
+void motion_sense_fifo_init(void)
+{
+	size_t i;
+
+	if (IS_ENABLED(CONFIG_ONLINE_CALIB))
+		for (i = 0; i < ARRAY_SIZE(sensor_temp_cache); i++)
+			sensor_temp_cache[i].temp = -1;
+}
+
 int motion_sense_fifo_wake_up_needed(void)
 {
 	int res;
@@ -349,6 +374,23 @@ void motion_sense_fifo_stage_data(
 		if (!fifo_staged.count)
 			fifo_staged.read_ts = __hw_clock_source_read();
 		fifo_stage_timestamp(time);
+	}
+	if (IS_ENABLED(CONFIG_ONLINE_CALIB) && sensor->drv->read_temp) {
+		struct temp_cache_entry *entry =
+			&sensor_temp_cache[motion_sensors - sensor];
+		uint32_t now = __hw_clock_source_read();
+
+		if (entry->temp < 0 ||
+		    time_until(entry->timestamp, now) >
+		    CONFIG_TEMP_CACHE_STALE_THRES) {
+			int temp;
+			int rc = sensor->drv->read_temp(sensor, &temp);
+
+			if (rc == EC_SUCCESS) {
+				entry->temp = temp;
+				entry->timestamp = now;
+			}
+		}
 	}
 	fifo_stage_unit(data, sensor, valid_data);
 }
@@ -521,5 +563,6 @@ void motion_sense_fifo_reset(void)
 {
 	next_timestamp_initialized = 0;
 	memset(&fifo_staged, 0, sizeof(fifo_staged));
+	motion_sense_fifo_init();
 	queue_init(&fifo);
 }

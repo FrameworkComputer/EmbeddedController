@@ -10,10 +10,50 @@
 #include "test_util.h"
 #include "util.h"
 #include "hwtimer.h"
+#include "timer.h"
+#include "accelgyro.h"
+#include <sys/types.h>
+
+struct mock_read_temp_result {
+	void *s;
+	int temp;
+	int ret;
+	int used_count;
+	struct mock_read_temp_result *next;
+};
+
+static struct mock_read_temp_result *mock_read_temp_results;
+
+static int mock_read_temp(const struct motion_sensor_t *s, int *temp)
+{
+	struct mock_read_temp_result *ptr = mock_read_temp_results;
+
+	while (ptr) {
+		if (ptr->s == s) {
+			if (ptr->ret == EC_SUCCESS)
+				*temp = ptr->temp;
+			ptr->used_count++;
+			return ptr->ret;
+		}
+		ptr = ptr->next;
+	}
+
+	return EC_ERROR_UNKNOWN;
+}
+
+static struct accelgyro_drv mock_sensor_driver = {
+	.read_temp = mock_read_temp,
+};
+
+static struct accelgyro_drv empty_sensor_driver = {};
 
 struct motion_sensor_t motion_sensors[] = {
-	[BASE] = {},
-	[LID] = {},
+	[BASE] = {
+		.drv = &mock_sensor_driver,
+	},
+	[LID] = {
+		.drv = &empty_sensor_driver,
+	},
 };
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
@@ -32,12 +72,10 @@ static int test_insert_async_event(void)
 					     ASYNC_EVENT_ODR);
 
 	read_count = motion_sense_fifo_read(
-		sizeof(data), CONFIG_ACCEL_FIFO_SIZE,
-		data, &data_bytes_read);
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, 2, "%d");
 	TEST_EQ(data_bytes_read,
-		(int) (2 * sizeof(struct ec_response_motion_sensor_data)),
-		"%d");
+		(int)(2 * sizeof(struct ec_response_motion_sensor_data)), "%d");
 
 	TEST_BITS_SET(data[0].flags, ASYNC_EVENT_FLUSH);
 	TEST_BITS_CLEARED(data[0].flags, MOTIONSENSE_SENSOR_FLAG_ODR);
@@ -90,8 +128,7 @@ static int test_adding_timestamp(void)
 
 	motion_sense_fifo_add_timestamp(100);
 	read_count = motion_sense_fifo_read(
-		sizeof(data), CONFIG_ACCEL_FIFO_SIZE,
-		data, &data_bytes_read);
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 
 	TEST_EQ(read_count, 1, "%d");
 	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
@@ -133,8 +170,7 @@ static int test_stage_data_removed_oversample(void)
 	motion_sense_fifo_commit_data();
 
 	read_count = motion_sense_fifo_read(
-		sizeof(data), CONFIG_ACCEL_FIFO_SIZE,
-		data, &data_bytes_read);
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, 3, "%d");
 	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
 	TEST_EQ(data[0].timestamp, 100, "%u");
@@ -166,8 +202,7 @@ static int test_stage_data_remove_all_oversampling(void)
 	motion_sense_fifo_commit_data();
 
 	read_count = motion_sense_fifo_read(
-		sizeof(data), CONFIG_ACCEL_FIFO_SIZE,
-		data, &data_bytes_read);
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, 2, "%d");
 	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
 	TEST_EQ(data[0].timestamp, 100, "%u");
@@ -184,14 +219,12 @@ static int test_stage_data_evicts_data_with_timestamp(void)
 	/* Fill the fifo */
 	motion_sensors->oversampling_ratio = 1;
 	for (i = 0; i < CONFIG_ACCEL_FIFO_SIZE / 2; i++)
-		motion_sense_fifo_stage_data(data, motion_sensors,
-					     3, i * 100);
+		motion_sense_fifo_stage_data(data, motion_sensors, 3, i * 100);
 
 	/* Add a single entry (should evict 2) */
 	motion_sense_fifo_add_timestamp(CONFIG_ACCEL_FIFO_SIZE * 100);
 	read_count = motion_sense_fifo_read(
-		sizeof(data), CONFIG_ACCEL_FIFO_SIZE,
-		data, &data_bytes_read);
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, CONFIG_ACCEL_FIFO_SIZE - 1, "%d");
 	TEST_BITS_SET(data->flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
 	TEST_EQ(data->timestamp, 100, "%u");
@@ -216,8 +249,7 @@ static int test_add_data_no_spreading_when_different_sensors(void)
 	motion_sense_fifo_commit_data();
 
 	read_count = motion_sense_fifo_read(
-		sizeof(data), CONFIG_ACCEL_FIFO_SIZE,
-		data, &data_bytes_read);
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, 4, "%d");
 	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
 	TEST_EQ(data[0].timestamp, now, "%u");
@@ -238,8 +270,7 @@ static int test_add_data_no_spreading_different_timestamps(void)
 	motion_sense_fifo_commit_data();
 
 	read_count = motion_sense_fifo_read(
-		sizeof(data), CONFIG_ACCEL_FIFO_SIZE,
-		data, &data_bytes_read);
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, 4, "%d");
 	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
 	TEST_EQ(data[0].timestamp, 100, "%u");
@@ -258,14 +289,11 @@ static int test_spread_data_in_window(void)
 	motion_sensors[0].collection_rate = 20000; /* ns */
 	now = __hw_clock_source_read();
 
-	motion_sense_fifo_stage_data(data, motion_sensors, 3,
-				     now - 18000);
-	motion_sense_fifo_stage_data(data, motion_sensors, 3,
-				     now - 18000);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 18000);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 18000);
 	motion_sense_fifo_commit_data();
 	read_count = motion_sense_fifo_read(
-		sizeof(data), CONFIG_ACCEL_FIFO_SIZE,
-		data, &data_bytes_read);
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, 4, "%d");
 	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
 	TEST_EQ(data[0].timestamp, now - 18000, "%u");
@@ -285,14 +313,11 @@ static int test_spread_data_by_collection_rate(void)
 
 	motion_sensors[0].oversampling_ratio = 1;
 	motion_sensors[0].collection_rate = 20000; /* ns */
-	motion_sense_fifo_stage_data(data, motion_sensors, 3,
-				     now - 20500);
-	motion_sense_fifo_stage_data(data, motion_sensors, 3,
-				     now - 20500);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 20500);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 20500);
 	motion_sense_fifo_commit_data();
 	read_count = motion_sense_fifo_read(
-		sizeof(data), CONFIG_ACCEL_FIFO_SIZE,
-		data, &data_bytes_read);
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, 4, "%d");
 	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
 	TEST_EQ(data[0].timestamp, now - 20500, "%u");
@@ -309,22 +334,72 @@ static int test_spread_double_commit_same_timestamp(void)
 
 	motion_sensors[0].oversampling_ratio = 1;
 	motion_sensors[0].collection_rate = 20000; /* ns */
-	motion_sense_fifo_stage_data(data, motion_sensors, 3,
-				     now - 20500);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 20500);
 	motion_sense_fifo_commit_data();
-	motion_sense_fifo_stage_data(data, motion_sensors, 3,
-				     now - 20500);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 20500);
 	motion_sense_fifo_commit_data();
 
 	read_count = motion_sense_fifo_read(
-		sizeof(data), CONFIG_ACCEL_FIFO_SIZE,
-		data, &data_bytes_read);
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, 4, "%d");
 	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
 	TEST_EQ(data[0].timestamp, now - 20500, "%u");
 	TEST_BITS_SET(data[2].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
 	TEST_GT(time_until(now - 20500, data[2].timestamp), 10000, "%u");
 	TEST_LE(time_until(now - 20500, data[2].timestamp), 20000, "%u");
+
+	return EC_SUCCESS;
+}
+
+static int test_read_temp_on_stage(void)
+{
+	struct mock_read_temp_result expected = { &motion_sensors[BASE], 200,
+						  EC_SUCCESS, 0, NULL };
+
+	mock_read_temp_results = &expected;
+	motion_sensors[0].oversampling_ratio = 1;
+	motion_sensors[0].collection_rate = 20000; /* ns */
+	motion_sense_fifo_stage_data(data, motion_sensors, 3,
+				     __hw_clock_source_read() - 10000);
+
+	TEST_EQ(expected.used_count, 1, "%d");
+
+	return EC_SUCCESS;
+}
+
+static int test_read_temp_from_cache_on_stage(void)
+{
+	struct mock_read_temp_result expected = { &motion_sensors[BASE], 200,
+						  EC_SUCCESS, 0, NULL };
+
+	mock_read_temp_results = &expected;
+	motion_sensors[0].oversampling_ratio = 1;
+	motion_sensors[0].collection_rate = 20000; /* ns */
+	motion_sense_fifo_stage_data(data, motion_sensors, 3,
+				     __hw_clock_source_read() - 10000);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3,
+				     __hw_clock_source_read() - 5000);
+
+	TEST_EQ(expected.used_count, 1, "%d");
+
+	return EC_SUCCESS;
+}
+
+static int test_read_temp_twice_after_cache_stale(void)
+{
+	struct mock_read_temp_result expected = { &motion_sensors[BASE], 200,
+						  EC_SUCCESS, 0, NULL };
+
+	mock_read_temp_results = &expected;
+	motion_sensors[0].oversampling_ratio = 1;
+	motion_sensors[0].collection_rate = 20000; /* ns */
+	motion_sense_fifo_stage_data(data, motion_sensors, 3,
+				     __hw_clock_source_read() - 10000);
+	sleep(2);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3,
+				     __hw_clock_source_read() - 5000);
+
+	TEST_EQ(expected.used_count, 2, "%d");
 
 	return EC_SUCCESS;
 }
@@ -337,12 +412,13 @@ void before_test(void)
 	motion_sense_fifo_reset_wake_up_needed();
 	memset(data, 0, sizeof(data));
 	motion_sense_fifo_reset();
+	mock_read_temp_results = NULL;
 }
 
 void run_test(void)
 {
 	test_reset();
-
+	motion_sense_fifo_init();
 	RUN_TEST(test_insert_async_event);
 	RUN_TEST(test_wake_up_needed);
 	RUN_TEST(test_wake_up_needed_overflow);
@@ -356,7 +432,9 @@ void run_test(void)
 	RUN_TEST(test_spread_data_in_window);
 	RUN_TEST(test_spread_data_by_collection_rate);
 	RUN_TEST(test_spread_double_commit_same_timestamp);
+	RUN_TEST(test_read_temp_on_stage);
+	RUN_TEST(test_read_temp_from_cache_on_stage);
+	RUN_TEST(test_read_temp_twice_after_cache_stale);
 
 	test_print_result();
 }
-

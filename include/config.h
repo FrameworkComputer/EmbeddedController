@@ -2776,6 +2776,12 @@
 /* Include sensor online calibration (requires CONFIG_FPU) */
 #undef CONFIG_ONLINE_CALIB
 
+/*
+ * Duration after which an entry in the temperature cache is considered stale.
+ * Defaults to 5 minutes if not set.
+ */
+#undef CONFIG_TEMP_CACHE_STALE_THRES
+
 /* Include code to do online compass calibration */
 #undef CONFIG_MAG_CALIBRATE
 
@@ -5159,7 +5165,25 @@
 #if !defined(CONFIG_ACCEL_FIFO_SIZE) || !defined(CONFIG_ACCEL_FIFO_THRES)
 #error "Using CONFIG_ACCEL_FIFO, must define _SIZE and _THRES"
 #endif
+
+#ifndef CONFIG_TEMP_CACHE_STALE_THRES
+#ifdef CONFIG_ONLINE_CALIB
+/*
+ * Boards may choose to leave this to default and just turn on online
+ * calibration, in which case we'll set the threshold to 5 minutes.
+ */
+#define CONFIG_TEMP_CACHE_STALE_THRES (5 * MINUTE)
+#else
+/*
+ * Boards that use the FIFO and not the online calibration can just leave this
+ * at 0.
+ */
+#define CONFIG_TEMP_CACHE_STALE_THRES 0
+#endif /* CONFIG_ONLINE_CALIB */
+#endif /* !CONFIG_TEMP_CACHE_STALE_THRES */
+
 #endif /* CONFIG_ACCEL_FIFO */
+
 
 /*
  * If USB PD Discharge is enabled, verify that CONFIG_USB_PD_DISCHARGE_GPIO

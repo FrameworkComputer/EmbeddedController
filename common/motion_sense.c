@@ -845,8 +845,10 @@ void motion_sense_task(void *u)
 	set_present(lpc_status);
 #endif
 
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		motion_sense_fifo_init();
 		ts_last_int = get_time();
+	}
 
 	while (1) {
 		ts_begin_task = get_time();

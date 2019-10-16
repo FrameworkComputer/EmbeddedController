@@ -17,6 +17,11 @@ enum motion_sense_async_event {
 };
 
 /**
+ * Initialize the motion sense fifo. This function should only be called once.
+ */
+void motion_sense_fifo_init(void);
+
+/**
  * Whether or not we need to wake up the AP.
  *
  * @return Non zero when a wake-up is needed.
