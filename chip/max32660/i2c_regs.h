@@ -832,6 +832,23 @@ typedef struct {
 							  INT_FL0_TX_LOCK_OUT  \
 							  Mask */
 
+#define MXC_F_I2C_INT_FL0_MAMI_POS 16 /**< INT_FL0_MAMI Position */
+/* INT_FL0_MAMI Mask */
+#define MXC_F_I2C_INT_FL0_MAMI_MASK \
+	((uint32_t)(0xFUL << MXC_F_I2C_INT_FL0_MAMI_POS))
+/* INT_FL0_MAMI Address Match 0 */
+#define MXC_F_I2C_INT_FL0_MAMI_MATCH_0 \
+	((uint32_t)(0x1UL << MXC_F_I2C_INT_FL0_MAMI_POS))
+/* INT_FL0_MAMI Address Match 1 */
+#define MXC_F_I2C_INT_FL0_MAMI_MATCH_1 \
+	((uint32_t)(0x2UL << MXC_F_I2C_INT_FL0_MAMI_POS))
+/* INT_FL0_MAMI Address Match 2 */
+#define MXC_F_I2C_INT_FL0_MAMI_MATCH_2 \
+	((uint32_t)(0x4UL << MXC_F_I2C_INT_FL0_MAMI_POS))
+/* INT_FL0_MAMI Address Match 3 */
+#define MXC_F_I2C_INT_FL0_MAMI_MATCH_3 \
+	((uint32_t)(0x8UL << MXC_F_I2C_INT_FL0_MAMI_POS)) 
+
 /**
  * Interrupt Enable Register.
  */
