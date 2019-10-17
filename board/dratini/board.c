@@ -348,14 +348,41 @@ static void setup_fans(void)
 	thermal_params[TEMP_SENSOR_2] = thermal_a;
 }
 
+/*
+ * Returns true for boards that are convertible into tablet mode, and
+ * false for clamshells.
+ */
+static bool board_is_convertible(void)
+{
+	uint8_t sku_id = get_board_sku();
+
+	/* Dragonair (SKU 21 and 22) is a convertible. Dratini is not. */
+	return sku_id == 21 || sku_id == 22;
+}
+
+static void board_update_sensor_config_from_sku(void)
+{
+	if (board_is_convertible()) {
+		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+		/* Enable gpio interrupt for base accelgyro sensor */
+		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+	} else {
+		motion_sensor_count = 0;
+		gmr_tablet_switch_disable();
+		/* Base accel is not stuffed, don't allow line to float */
+		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
+	}
+}
+
 static void board_init(void)
 {
 	/* Initialize Fans */
 	setup_fans();
-	/* Enable gpio interrupt for base accelgyro sensor */
-	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 	/* Enable HDMI HPD interrupt. */
 	gpio_enable_interrupt(GPIO_HDMI_CONN_HPD);
+
+	board_update_sensor_config_from_sku();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
