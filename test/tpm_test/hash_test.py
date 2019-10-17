@@ -28,6 +28,8 @@ EMPTY_RESPONSE = ''.join('%c' % x for x in (0x80, 0x01, 0x00, 0x00, 0x00, 0x0c,
                                             0x00, 0x00, 0x00, 0x00, 0x00, 0x01))
 test_inputs = (
   # SHA mode  cmd mode handle                text
+  (MODE_SHA1, 'single', 0, ''),
+  (MODE_SHA256, 'single', 0, ''),
   (MODE_SHA1, 'single', 0, 'anything really will work here'),
   (MODE_SHA256, 'single', 0, 'some more text, this time for sha256'),
   (MODE_SHA256, 'start',  1, 'some more text, this time for sha256'),

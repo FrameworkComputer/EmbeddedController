@@ -352,8 +352,6 @@ static void hash_command_handler(void *cmd_body,
 		break;
 
 	case 3: /* Process a buffer in a single shot. */
-		if (!text_len)
-			break;
 		/*
 		 * Error responses are just 1 byte in size, valid responses
 		 * are of various hash sizes.
