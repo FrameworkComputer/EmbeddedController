@@ -615,7 +615,7 @@ static int test_vpd_host_src_detection_message_reception(void)
 	/* Test Discover Identity Ack */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop_prime(port));
 	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_VENDOR_DEF, PD_PLUG_CABLE_VPD, 0,
+			PD_HEADER(PD_DATA_VENDOR_DEF, PD_PLUG_FROM_CABLE, 0,
 			pd_port[port].msg_tx_id, 5, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_vdm_header));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_vdo_id_header));
@@ -1113,7 +1113,7 @@ static int test_ctvpd_behavior_case4(void)
 	/* Test Discover Identity Ack */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop_prime(port));
 	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_VENDOR_DEF, PD_PLUG_CABLE_VPD, 0,
+			PD_HEADER(PD_DATA_VENDOR_DEF, PD_PLUG_FROM_CABLE, 0,
 			pd_port[port].msg_tx_id, 5, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_vdm_header));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_vdo_id_header));

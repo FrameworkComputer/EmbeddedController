@@ -33,10 +33,6 @@
 static struct type_c {
 	/* state machine context */
 	struct sm_ctx ctx;
-	/* current port power role (VPD, SOURCE or SINK) */
-	enum pd_power_role power_role;
-	/* current port data role (DFP or UFP) */
-	enum pd_data_role data_role;
 	/* Higher-level power deliver state machines are enabled if true. */
 	uint8_t pd_enable;
 	/* port flags, see TC_FLAGS_* */
@@ -93,21 +89,28 @@ void tc_state_init(int port)
 
 	/* Disable pd state machines */
 	tc[port].pd_enable = 0;
-	tc[port].power_role = PD_PLUG_CABLE_VPD;
-	tc[port].data_role = 0; /* Reserved for VPD */
 	tc[port].flags = 0;
 }
 
-
 enum pd_power_role tc_get_power_role(int port)
 {
-	return tc[port].power_role;
+	/* Vconn power device is always the sink */
+	return PD_ROLE_SINK;
+}
+
+enum pd_cable_plug tc_get_cable_plug(int port)
+{
+	/* Vconn power device is always the cable */
+	return PD_PLUG_FROM_CABLE;
 }
 
 enum pd_data_role tc_get_data_role(int port)
 {
-	return tc[port].data_role;
+	/* Vconn power device doesn't have a data role, but UFP match SNK */
+	return PD_ROLE_UFP;
 }
+
+/* Note tc_set_power_role and tc_set_data_role are unimplemented */
 
 uint8_t tc_get_polarity(int port)
 {
@@ -118,11 +121,6 @@ uint8_t tc_get_polarity(int port)
 uint8_t tc_get_pd_enabled(int port)
 {
 	return tc[port].pd_enable;
-}
-
-void tc_set_power_role(int port, enum pd_power_role role)
-{
-	tc[port].power_role = role;
 }
 
 void tc_event_check(int port, int evt)

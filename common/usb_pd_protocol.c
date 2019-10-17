@@ -2212,10 +2212,14 @@ static void pd_vdm_send_state_machine(int port)
 		if (is_sop_prime_ready(port, pd[port].data_role,
 				pd[port].flags)) {
 			/* Prepare SOP'/SOP'' header and send VDM */
-			header = PD_HEADER(PD_DATA_VENDOR_DEF, PD_PLUG_DFP_UFP,
-					   0, pd[port].msg_id,
-					   (int)pd[port].vdo_count,
-					   pd_get_rev(port), 0);
+			header = PD_HEADER(
+				PD_DATA_VENDOR_DEF,
+				PD_PLUG_FROM_DFP_UFP,
+				0,
+				pd[port].msg_id,
+				(int)pd[port].vdo_count,
+				pd_get_rev(port),
+				0);
 			res = pd_transmit(port, TCPC_TX_SOP_PRIME, header,
 					  pd[port].vdo_data);
 			/*

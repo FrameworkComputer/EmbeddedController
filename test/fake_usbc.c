@@ -46,6 +46,11 @@ void tc_set_power_role(int port, enum pd_power_role role)
 	power_role = role;
 }
 
+enum pd_cable_plug tc_get_cable_plug(int port)
+{
+	return PD_PLUG_FROM_DFP_UFP;
+}
+
 int tc_check_vconn_swap(int port)
 {
 	return 0;

@@ -612,13 +612,18 @@ static void prl_tx_layer_reset_for_transmit_run(const int port)
 
 static uint32_t get_sop_star_header(const int port)
 {
+	const int is_sop_packet = pdmsg[port].xmit_type == TCPC_TX_SOP;
+
+	/* SOP vs SOP'/SOP" headers are different. Replace fields as needed */
 	return PD_HEADER(
 		pdmsg[port].msg_type,
-		tc_get_power_role(port),
-		tc_get_data_role(port),
+		is_sop_packet ?
+			tc_get_power_role(port) : tc_get_cable_plug(port),
+		is_sop_packet ?
+			tc_get_data_role(port) : 0,
 		prl_tx[port].msg_id_counter[pdmsg[port].xmit_type],
 		pdmsg[port].data_objs,
-		(pdmsg[port].xmit_type == TCPC_TX_SOP) ?
+		is_sop_packet ?
 			pdmsg[port].rev : pdmsg[port].cable_rev,
 		pdmsg[port].ext);
 }
@@ -1518,7 +1523,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	if (!IS_ENABLED(CONFIG_USB_TYPEC_CTVPD) &&
 	    !IS_ENABLED(CONFIG_USB_TYPEC_VPD) &&
 	    PD_HEADER_GET_SOP(header) != PD_MSG_SOP &&
-	    PD_HEADER_PROLE(header) == PD_PLUG_DFP_UFP)
+	    PD_HEADER_PROLE(header) == PD_PLUG_FROM_DFP_UFP)
 		return;
 
 	if (cnt == 0 && type == PD_CTRL_SOFT_RESET) {

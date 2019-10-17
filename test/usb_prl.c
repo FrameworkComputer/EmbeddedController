@@ -733,6 +733,11 @@ enum pd_data_role tc_get_data_role(int port)
 	return pd_port[port].data_role;
 }
 
+enum pd_cable_plug tc_get_cable_plug(int port)
+{
+	return PD_PLUG_FROM_DFP_UFP;
+}
+
 void pe_report_error(int port, enum pe_error e)
 {
 	pd_port[port].mock_pe_error = e;

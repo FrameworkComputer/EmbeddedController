@@ -1237,21 +1237,32 @@ enum pd_rev_type {
 	PD_REV30
 };
 
-/* Power role */
+/*
+ * Power role. See 6.2.1.1.4 Port Power Role. Only applies to SOP packets.
+ * Replaced by pd_cable_plug for SOP' and SOP" packets.
+ */
 enum pd_power_role {
-	PD_ROLE_SINK,
-	PD_ROLE_SOURCE
+	PD_ROLE_SINK = 0,
+	PD_ROLE_SOURCE = 1
 };
 
-/* Data role */
+/*
+ * Data role. See 6.2.1.1.6 Port Data Role. Only applies to SOP.
+ * Replaced by reserved field for SOP' and SOP" packets.
+ */
 enum pd_data_role {
-	PD_ROLE_UFP,
-	PD_ROLE_DFP,
+	PD_ROLE_UFP = 0,
+	PD_ROLE_DFP = 1
 };
 
-/* Cable plug */
-#define PD_PLUG_DFP_UFP   0
-#define PD_PLUG_CABLE_VPD 1
+/*
+ * Cable plug. See 6.2.1.1.7 Cable Plug. Only applies to SOP' and SOP".
+ * Replaced by pd_power_role for SOP packets.
+ */
+enum pd_cable_plug {
+	PD_PLUG_FROM_DFP_UFP = 0,
+	PD_PLUG_FROM_CABLE = 1
+};
 
 /* Vconn role */
 #define PD_ROLE_VCONN_OFF 0

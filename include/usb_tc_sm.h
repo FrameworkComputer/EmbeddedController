@@ -64,6 +64,15 @@ enum pd_data_role tc_get_data_role(int port);
 enum pd_power_role tc_get_power_role(int port);
 
 /**
+ * Get cable plug setting. This should be constant per build. This replaces
+ * the power role bit in PD header for SOP' and SOP" packets.
+ *
+ * @param port USB-C port number
+ * @return PD cable plug setting
+ */
+enum pd_cable_plug tc_get_cable_plug(int port);
+
+/**
  * Get current polarity
  *
  * @param port USB-C port number
