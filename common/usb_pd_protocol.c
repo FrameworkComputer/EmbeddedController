@@ -818,10 +818,11 @@ static inline void set_state(int port, enum pd_states next_state)
 		pd_dfp_exit_mode(port, 0, 0);
 #endif
 		/*
-		 * Indicate that the port is disconnected so the board
-		 * can restore state from any previous data swap.
+		 * Indicate that the port is disconnected by setting role to
+		 * DFP as SoCs have special signals when they are the UFP ports
+		 * (e.g. OTG signals)
 		 */
-		pd_execute_data_swap(port, PD_ROLE_DISCONNECTED);
+		pd_execute_data_swap(port, PD_ROLE_DFP);
 #ifdef CONFIG_USBC_SS_MUX
 		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
 			    pd[port].polarity);

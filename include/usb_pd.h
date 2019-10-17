@@ -1247,7 +1247,6 @@ enum pd_power_role {
 enum pd_data_role {
 	PD_ROLE_UFP,
 	PD_ROLE_DFP,
-	PD_ROLE_DISCONNECTED
 };
 
 /* Cable plug */
