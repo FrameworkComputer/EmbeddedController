@@ -10,7 +10,3 @@ _fpsensor_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)fpsensor_state.o
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)fpsensor_crypto.o
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)fpsensor.o
-
-ifeq ($(HAS_MOCK_FP_SENSOR),)
-all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_dir)fpsensor_stubs.o
-endif

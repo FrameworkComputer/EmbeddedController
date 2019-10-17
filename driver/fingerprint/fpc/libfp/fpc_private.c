@@ -1,0 +1,317 @@
+/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <stddef.h>
+#include "common.h"
+#include "console.h"
+#include "endian.h"
+#include "fpc_bio_algorithm.h"
+#include "fpc_private.h"
+#include "fpsensor.h"
+#include "gpio.h"
+#include "link_defs.h"
+#include "spi.h"
+#include "system.h"
+#include "timer.h"
+#include "util.h"
+
+#include STRINGIFY(FP_SENSOR_PRIVATE)
+
+#define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
+
+#define FP_SENSOR_NAME STRINGIFY(FP_SENSOR_CONFIG)
+
+/* Minimum reset duration */
+#define FP_SENSOR_RESET_DURATION_US (10 * MSEC)
+/* Maximum delay for the interrupt to be asserted after the sensor is reset */
+#define FP_SENSOR_IRQ_MAX_DELAY_US (5 * MSEC)
+/* Maximum number of attempts to initialise the sensor */
+#define FP_SENSOR_MAX_INIT_ATTEMPTS 10
+/* Delay between failed attempts of fp_sensor_open() */
+#define FP_SENSOR_OPEN_DELAY_US (500 * MSEC)
+
+/* Decode internal error codes from FPC's sensor library */
+#define FPC_GET_INTERNAL_CODE(res) (((res) & 0x000fc000) >> 14)
+/* There was a finger on the sensor when calibrating finger detect */
+#define FPC_INTERNAL_FINGER_DFD FPC_ERROR_INTERNAL_38
+
+/*
+ * The sensor context is uncached as it contains the SPI buffers,
+ * the binary library assumes that it is aligned.
+ */
+static uint8_t ctx[FP_SENSOR_CONTEXT_SIZE] __uncached __aligned(4);
+static bio_sensor_t bio_sensor;
+static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE];
+
+/* recorded error flags */
+static uint16_t errors;
+
+/* Sensor description */
+static struct ec_response_fp_info fpc1145_info = {
+	/* Sensor identification */
+	.vendor_id = FOURCC('F', 'P', 'C', ' '),
+	.product_id = 9,
+	.model_id = 1,
+	.version = 1,
+	/* Image frame characteristics */
+	.frame_size = FP_SENSOR_IMAGE_SIZE,
+	.pixel_format = V4L2_PIX_FMT_GREY,
+	.width = FP_SENSOR_RES_X,
+	.height = FP_SENSOR_RES_Y,
+	.bpp = FP_SENSOR_RES_BPP,
+};
+
+/* Sensor IC commands */
+enum fpc_cmd {
+	FPC_CMD_STATUS            = 0x14,
+	FPC_CMD_INT_STS           = 0x18,
+	FPC_CMD_INT_CLR           = 0x1C,
+	FPC_CMD_FINGER_QUERY      = 0x20,
+	FPC_CMD_SLEEP             = 0x28,
+	FPC_CMD_DEEPSLEEP         = 0x2C,
+	FPC_CMD_SOFT_RESET        = 0xF8,
+	FPC_CMD_HW_ID             = 0xFC,
+};
+
+/* Maximum size of a sensor command SPI transfer */
+#define MAX_CMD_SPI_TRANSFER_SIZE 3
+
+/* Uncached memory for the SPI transfer buffer */
+static uint8_t spi_buf[MAX_CMD_SPI_TRANSFER_SIZE] __uncached;
+
+static int fpc_send_cmd(const uint8_t cmd)
+{
+	spi_buf[0] = cmd;
+	return spi_transaction(SPI_FP_DEVICE, spi_buf, 1, spi_buf,
+			       SPI_READBACK_ALL);
+}
+
+void fp_sensor_low_power(void)
+{
+	/*
+	 * TODO(b/117620462): verify that sleep mode is WAI (no increased
+	 * latency, expected power consumption).
+	 */
+	if (0)
+		fpc_send_cmd(FPC_CMD_SLEEP);
+}
+
+static int fpc_check_hwid(void)
+{
+	uint16_t id;
+	int rc;
+
+	/* Clear previous occurences of relevant |errors| flags. */
+	errors &= (~FP_ERROR_SPI_COMM & ~FP_ERROR_BAD_HWID);
+
+	spi_buf[0] = FPC_CMD_HW_ID;
+	rc = spi_transaction(SPI_FP_DEVICE, spi_buf, 3, spi_buf,
+			     SPI_READBACK_ALL);
+	if (rc) {
+		CPRINTS("FPC ID read failed %d", rc);
+		errors |= FP_ERROR_SPI_COMM;
+		return EC_ERROR_HW_INTERNAL;
+	}
+	id = (spi_buf[1] << 8) | spi_buf[2];
+	if ((id >> 4) != FP_SENSOR_HWID) {
+		CPRINTS("FPC unknown silicon 0x%04x", id);
+		errors |= FP_ERROR_BAD_HWID;
+		return EC_ERROR_HW_INTERNAL;
+	}
+	CPRINTS(FP_SENSOR_NAME " id 0x%04x", id);
+
+	return EC_SUCCESS;
+}
+
+static uint8_t fpc_read_clear_int(void)
+{
+	spi_buf[0] = FPC_CMD_INT_CLR;
+	spi_buf[1] = 0xff;
+	if (spi_transaction(SPI_FP_DEVICE, spi_buf, 2, spi_buf,
+			    SPI_READBACK_ALL))
+		return 0xff;
+	return spi_buf[1];
+}
+
+/*
+ * Toggle the h/w reset pins and clear any pending IRQs before initializing the
+ * sensor contexts.
+ * Returns:
+ * - EC_SUCCESS on success.
+ * - EC_ERROR_HW_INTERNAL on failure (and |errors| variable is updated where
+ *   appropriate).
+ */
+static int fpc_pulse_hw_reset(void)
+{
+	int ret;
+	int rc = EC_SUCCESS;
+	/* Clear previous occurrence of possible error flags. */
+	errors &= ~FP_ERROR_NO_IRQ;
+
+	/* Ensure we pulse reset low to initiate the startup */
+	gpio_set_level(GPIO_FP_RST_ODL, 0);
+	usleep(FP_SENSOR_RESET_DURATION_US);
+	gpio_set_level(GPIO_FP_RST_ODL, 1);
+	/* the IRQ line should be set high by the sensor */
+	usleep(FP_SENSOR_IRQ_MAX_DELAY_US);
+	if (!gpio_get_level(GPIO_FPS_INT)) {
+		CPRINTS("Sensor IRQ not ready");
+		errors |= FP_ERROR_NO_IRQ;
+		rc = EC_ERROR_HW_INTERNAL;
+	}
+
+	/* Check the Hardware ID */
+	ret = fpc_check_hwid();
+	if (ret != EC_SUCCESS) {
+		CPRINTS("Failed to verify HW ID");
+		rc = EC_ERROR_HW_INTERNAL;
+	}
+
+	/* clear the pending 'ready' IRQ before enabling interrupts */
+	fpc_read_clear_int();
+
+	return rc;
+}
+
+/* Reset and initialize the sensor IC */
+int fp_sensor_init(void)
+{
+	int res;
+	int attempt;
+
+	errors = FP_ERROR_DEAD_PIXELS_UNKNOWN;
+
+	/* Release any previously held resources from earlier iterations */
+	res = bio_sensor_destroy(bio_sensor);
+	if (res)
+		CPRINTS("FPC Sensor resources release failed: %d", res);
+	bio_sensor = NULL;
+
+	res = bio_algorithm_exit();
+	if (res)
+		CPRINTS("FPC Algorithm resources release failed: %d", res);
+
+	/* Print the binary libfpsensor.a library version */
+	CPRINTF("FPC libfpsensor.a v%s\n", fp_sensor_get_version());
+	cflush();
+
+	attempt = 0;
+	do {
+		attempt++;
+
+		res = fpc_pulse_hw_reset();
+		if (res != EC_SUCCESS) {
+			/* In case of failure, retry after a delay. */
+			CPRINTS("H/W sensor reset failed, error flags: 0x%x",
+				errors);
+			cflush();
+			usleep(FP_SENSOR_OPEN_DELAY_US);
+			continue;
+		}
+
+		/*
+		 * Ensure that any previous context data is obliterated in case
+		 * of a sensor reset.
+		 */
+		memset(ctx, 0, FP_SENSOR_CONTEXT_SIZE);
+
+		res = fp_sensor_open(ctx, FP_SENSOR_CONTEXT_SIZE);
+		/* Flush messages from the PAL if any */
+		cflush();
+		CPRINTS("Sensor init (attempt %d): 0x%x", attempt, res);
+		/*
+		 * Retry on failure. This typically happens if the user has left
+		 * their finger on the sensor after powering up the device, DFD
+		 * will fail in that case. We've seen other error modes in the
+		 * field, retry in all cases to be more resilient.
+		 */
+		if (!res)
+			break;
+		usleep(FP_SENSOR_OPEN_DELAY_US);
+	} while (attempt < FP_SENSOR_MAX_INIT_ATTEMPTS);
+	if (res)
+		errors |= FP_ERROR_INIT_FAIL;
+
+	res = bio_algorithm_init();
+	/* the PAL might have spewed a lot of traces, ensure they are visible */
+	cflush();
+	CPRINTS("Algorithm init: 0x%x", res);
+	if (res < 0)
+		errors |= FP_ERROR_INIT_FAIL;
+	res = bio_sensor_create(&bio_sensor);
+	CPRINTS("Sensor create: 0x%x", res);
+	if (res < 0)
+		errors |= FP_ERROR_INIT_FAIL;
+
+	/* Go back to low power */
+	fp_sensor_low_power();
+
+	return EC_SUCCESS;
+}
+
+/* Deinitialize the sensor IC */
+int fp_sensor_deinit(void)
+{
+	/*
+	 * TODO(tomhughes): libfp doesn't have fp_sensor_close like BEP does.
+	 * We'll need FPC to either add it or verify that we don't have the same
+	 * problem with the libfp library as described in:
+	 * b/124773209#comment46
+	 */
+	return EC_SUCCESS;
+}
+
+int fp_sensor_get_info(struct ec_response_fp_info *resp)
+{
+	int rc;
+
+	memcpy(resp, &fpc1145_info, sizeof(*resp));
+
+	spi_buf[0] = FPC_CMD_HW_ID;
+	rc = spi_transaction(SPI_FP_DEVICE, spi_buf, 3, spi_buf,
+			     SPI_READBACK_ALL);
+	if (rc)
+		return EC_RES_ERROR;
+	resp->model_id = (spi_buf[1] << 8) | spi_buf[2];
+	resp->errors = errors;
+
+	return EC_SUCCESS;
+}
+
+int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
+		    int32_t *match_index, uint32_t *update_bitmap)
+{
+	return bio_template_image_match_list(templ, templ_count, image,
+					     match_index, update_bitmap);
+}
+
+int fp_enrollment_begin(void)
+{
+	int rc;
+	bio_enrollment_t p = enroll_ctx;
+
+	rc = bio_enrollment_begin(bio_sensor, &p);
+	if (rc < 0)
+		CPRINTS("begin failed %d", rc);
+	return rc;
+}
+
+int fp_enrollment_finish(void *templ)
+{
+	bio_template_t pt = templ;
+
+	return bio_enrollment_finish(enroll_ctx, templ ? &pt : NULL);
+}
+
+int fp_finger_enroll(uint8_t *image, int *completion)
+{
+	int rc = bio_enrollment_add_image(enroll_ctx, image);
+
+	if (rc < 0)
+		return rc;
+	*completion = bio_enrollment_get_percent_complete(enroll_ctx);
+	return rc;
+}

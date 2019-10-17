@@ -6,6 +6,9 @@
 # Drivers for off-chip devices
 #
 
+# Note that this variable includes the trailing "/"
+_driver_cur_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
+
 # Accelerometers
 driver-$(CONFIG_ACCEL_BMA255)+=accel_bma2x2.o
 driver-$(CONFIG_ACCEL_KXCJ9)+=accel_kionix.o
@@ -71,6 +74,9 @@ driver-$(CONFIG_CHARGER_MT6370)+=charger/rt946x.o
 driver-$(CONFIG_CHARGER_RT9466)+=charger/rt946x.o
 driver-$(CONFIG_CHARGER_RT9467)+=charger/rt946x.o
 driver-$(CONFIG_CHARGER_SY21612)+=charger/sy21612.o
+
+# Fingerprint Sensors
+include $(_driver_cur_dir)fingerprint/build.mk
 
 # I/O expander
 driver-$(CONFIG_IO_EXPANDER_PCA9534)+=ioexpander_pca9534.o
