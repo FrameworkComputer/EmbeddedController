@@ -61,8 +61,10 @@ void mt6370_charger_profile_override(struct charge_state_data *curr)
 	 * SOC < BATTERY_LEVEL_NEAR_FULL, we'll overwrite SOC with
 	 * BATTERY_LEVEL_NEAR_FULL. So we can ensure both Chrome OS UI
 	 * and battery LED indicate full charge.
+	 *
+	 * Enable this hack on on-board gauge only (b/142097561)
 	 */
-	if (rt946x_is_charge_done()) {
+	if (IS_ENABLED(CONFIG_BATTERY_MAX17055) && rt946x_is_charge_done()) {
 		curr->batt.state_of_charge = MAX(BATTERY_LEVEL_NEAR_FULL,
 						 curr->batt.state_of_charge);
 	}
