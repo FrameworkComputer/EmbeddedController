@@ -87,6 +87,7 @@ enum usb_tc_state {
 	TC_CC_OPEN,
 	TC_CC_RD,
 	TC_CC_RP,
+	TC_UNATTACHED,
 };
 /* Forward declare the full list of states. This is indexed by usb_tc_state */
 static const struct usb_state tc_states[];
@@ -708,12 +709,6 @@ test_export_static enum usb_tc_state get_state_tc(const int port)
 	return tc[port].ctx.current - &tc_states[0];
 }
 
-/* Get the previous TypeC state. */
-static enum usb_tc_state get_last_state_tc(const int port)
-{
-	return tc[port].ctx.previous - &tc_states[0];
-}
-
 static void print_current_state(const int port)
 {
 	CPRINTS("C%d: %s", port, tc_state_names[get_state_tc(port)]);
@@ -793,6 +788,12 @@ void tc_set_data_role(int port, int role)
 
 	if (IS_ENABLED(CONFIG_USBC_SS_MUX))
 		set_usb_mux_with_current_data_role(port);
+
+	/*
+	 * Run any board-specific code for role swap (e.g. setting OTG signals
+	 * to SoC).
+	 */
+	pd_execute_data_swap(port, role);
 
 	/* Notify TCPC of role update */
 	tcpm_set_msg_header(port, tc[port].power_role, tc[port].data_role);
@@ -1630,29 +1631,34 @@ static void tc_error_recovery_run(const int port)
 	}
 }
 
+/* Set the CC resistors to Rd and update the TCPC power role header */
+static void set_rd(const int port)
+{
+	/*
+	 * Both CC1 and CC2 pins shall be independently terminated to
+	 * ground through Rd. Reset last cc change time.
+	 */
+	tcpm_set_cc(port, TYPEC_CC_RD);
+	tc[port].cc_last_change = get_time().val;
+
+	/* Set power role to sink */
+	tc_set_power_role(port, PD_ROLE_SINK);
+	tcpm_set_msg_header(port, tc[port].power_role, tc[port].data_role);
+}
+
 /**
  * Unattached.SNK
  *
- * Super State Entry Actions:
- *   Vconn Off
- *   Place Rd on CC
- *   Set power role to SINK
+ * Super State is Unattached state
  */
 static void tc_unattached_snk_entry(const int port)
 {
-	if (get_last_state_tc(port) != TC_UNATTACHED_SRC)
-		print_current_state(port);
+	/* Set Rd since we are not in the Rd superstate */
+	set_rd(port);
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 
-	/*
-	 * Indicate that the port is disconnected so the board
-	 * can restore state from any previous data swap.
-	 *
-	 * NOTE: This is no-op change. This is cleaned up further in a child CL
-	 */
-	pd_execute_data_swap(port, PD_ROLE_DFP);
 	tc[port].next_role_swap = get_time().val + PD_T_DRP_SNK;
 
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
@@ -2002,18 +2008,31 @@ static void tc_dbg_acc_snk_run(const int port)
 	}
 }
 
+/* Set the CC resistors to Rp and update the TCPC power role header */
+static void set_rp(const int port)
+{
+	/*
+	 * Both CC1 and CC2 pins shall be independently pulled
+	 * up through Rp. Reset last cc change time.
+	 */
+	tcpm_select_rp_value(port, CONFIG_USB_PD_PULLUP);
+	tcpm_set_cc(port, TYPEC_CC_RP);
+	tc[port].cc_last_change = get_time().val;
+
+	/* Set power role to source */
+	tc_set_power_role(port, PD_ROLE_SOURCE);
+	tcpm_set_msg_header(port, tc[port].power_role, tc[port].data_role);
+}
+
 /**
  * Unattached.SRC
  *
- * Super State Entry Actions:
- *   Vconn Off
- *   Place Rp on CC
- *   Set power role to SOURCE
+ * Super State is Unattached state
  */
 static void tc_unattached_src_entry(const int port)
 {
-	if (get_last_state_tc(port) != TC_UNATTACHED_SNK)
-		print_current_state(port);
+	/* Set Rd since we are not in the Rd superstate */
+	set_rp(port);
 
 	if (IS_ENABLED(CONFIG_USBC_PPC)) {
 		/* There is no sink connected. */
@@ -2028,16 +2047,6 @@ static void tc_unattached_src_entry(const int port)
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
-
-	tc_set_data_role(port, PD_ROLE_DFP);
-
-	/*
-	 * Indicate that the port is disconnected so the board
-	 * can restore state from any previous data swap.
-	 *
-	 * NOTE: This is no-op change. This is cleaned up further in a child CL
-	 */
-	pd_execute_data_swap(port, PD_ROLE_DFP);
 
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
 		tc[port].flags = 0;
@@ -2557,42 +2566,6 @@ static void tc_ct_attached_snk_exit(int port)
 #endif /* CONFIG_USB_PE_SM */
 
 /**
- * Super State CC_RD
- */
-static void tc_cc_rd_entry(const int port)
-{
-	/*
-	 * Both CC1 and CC2 pins shall be independently terminated to
-	 * ground through Rd. Reset last cc change time.
-	 */
-	tcpm_set_cc(port, TYPEC_CC_RD);
-	tc[port].cc_last_change = get_time().val;
-
-	/* Set power role to sink */
-	tc_set_power_role(port, PD_ROLE_SINK);
-	tcpm_set_msg_header(port, tc[port].power_role, tc[port].data_role);
-}
-
-
-/**
- * Super State CC_RP
- */
-static void tc_cc_rp_entry(const int port)
-{
-	/* Set power role to source */
-	tc_set_power_role(port, PD_ROLE_SOURCE);
-	tcpm_set_msg_header(port, tc[port].power_role, tc[port].data_role);
-
-	/*
-	 * Both CC1 and CC2 pins shall be independently pulled
-	 * up through Rp. Reset last cc change time.
-	 */
-	tcpm_select_rp_value(port, CONFIG_USB_PD_PULLUP);
-	tcpm_set_cc(port, TYPEC_CC_RP);
-	tc[port].cc_last_change = get_time().val;
-}
-
-/**
  * Super State CC_OPEN
  */
 static void tc_cc_open_entry(const int port)
@@ -2619,6 +2592,38 @@ static void tc_cc_open_entry(const int port)
 	}
 }
 
+/**
+ * Super State CC_RD
+ */
+static void tc_cc_rd_entry(const int port)
+{
+	set_rd(port);
+}
+
+/**
+ * Super State CC_RP
+ */
+static void tc_cc_rp_entry(const int port)
+{
+	set_rp(port);
+}
+
+/**
+ * Super State Unattached
+ *
+ * Ensures that any time we unattached we can perform an action without
+ * repeating it during DRP toggle
+ */
+static void tc_unattached_entry(const int port)
+{
+	/* This only prints the first time we enter a unattached state */
+	print_current_state(port);
+
+	/* This disables the mux when we disconnect on a port */
+	if (IS_ENABLED(CONFIG_USBC_SS_MUX))
+		set_usb_mux_with_current_data_role(port);
+}
+
 void tc_run(const int port)
 {
 	run_state(port, &tc[port].ctx);
@@ -2627,9 +2632,14 @@ void tc_run(const int port)
 /*
  * Type-C State Hierarchy (Sub-States are listed inside the boxes)
  *
+ * |TC_UNATTACHED ---------|
+ * |                       |
+ * |    TC_UNATTACHED_SNK  |
+ * |    TC_UNATTACHED_SRC  |
+ * |-----------------------|
+ *
  * |TC_CC_RD --------------|	|TC_CC_RP ------------------------|
  * |			   |	|				  |
- * |	TC_UNATTACHED_SNK  |	|	TC_UNATTACHED_SRC         |
  * |	TC_ATTACH_WAIT_SNK |	|	TC_ATTACH_WAIT_SRC        |
  * |	TC_TRY_WAIT_SNK    |	|	TC_TRY_SRC                |
  * |	TC_DBG_ACC_SNK     |	|	TC_UNORIENTED_DBG_ACC_SRC |
@@ -2654,6 +2664,9 @@ static const struct usb_state tc_states[] = {
 	[TC_CC_RP] = {
 		.entry	= tc_cc_rp_entry,
 	},
+	[TC_UNATTACHED] = {
+		.entry	= tc_unattached_entry,
+	},
 	/* Normal States */
 	[TC_DISABLED] = {
 		.entry	= tc_disabled_entry,
@@ -2669,7 +2682,7 @@ static const struct usb_state tc_states[] = {
 	[TC_UNATTACHED_SNK] = {
 		.entry	= tc_unattached_snk_entry,
 		.run	= tc_unattached_snk_run,
-		.parent = &tc_states[TC_CC_RD],
+		.parent = &tc_states[TC_UNATTACHED],
 	},
 	[TC_ATTACH_WAIT_SNK] = {
 		.entry	= tc_attach_wait_snk_entry,
@@ -2695,7 +2708,7 @@ static const struct usb_state tc_states[] = {
 	[TC_UNATTACHED_SRC] = {
 		.entry	= tc_unattached_src_entry,
 		.run	= tc_unattached_src_run,
-		.parent = &tc_states[TC_CC_RP],
+		.parent = &tc_states[TC_UNATTACHED],
 	},
 	[TC_ATTACH_WAIT_SRC] = {
 		.entry	= tc_attach_wait_src_entry,

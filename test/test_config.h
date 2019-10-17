@@ -299,8 +299,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 
 /* Common TypeC tests defines */
 #if defined(TEST_USB_TYPEC_VPD) || \
-	defined(TEST_USB_TYPEC_CTVPD) || \
-	defined(TEST_USB_TYPEC_DRP_ACC_TRYSRC)
+	defined(TEST_USB_TYPEC_CTVPD)
 #define CONFIG_USB_PID 0x5036
 #define VPD_HW_VERSION 0x0001
 #define VPD_FW_VERSION 0x0001
@@ -335,6 +334,12 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_TRY_SRC
+#define CONFIG_USB_TYPEC_SM
+#define CONFIG_USB_SM_FRAMEWORK
+#define CONFIG_USB_PD_PORT_COUNT 1
+#define CONFIG_USBC_SS_MUX
+#define CONFIG_USB_PD_VBUS_DETECT_TCPC
+#define CONFIG_USB_POWER_DELIVERY
 #undef CONFIG_USB_PRL_SM
 #undef CONFIG_USB_PE_SM
 #endif
