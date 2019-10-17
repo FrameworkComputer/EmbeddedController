@@ -51,17 +51,17 @@ int tc_is_attached_snk(int port);
  * Get current data role
  *
  * @param port USB-C port number
- * @return 0 for ufp, 1 for dfp, 2 for disconnected
+ * @return PD data role
  */
-int tc_get_data_role(int port);
+enum pd_data_role tc_get_data_role(int port);
 
 /**
  * Get current power role
  *
  * @param port USB-C port number
- * @return 0 for sink, 1 for source or vpd
+ * @return PD power role
  */
-int tc_get_power_role(int port);
+enum pd_power_role tc_get_power_role(int port);
 
 /**
  * Get current polarity
@@ -86,7 +86,7 @@ uint8_t tc_get_pd_enabled(int port);
  * @param port USB-C port number
  * @param role power role
  */
-void tc_set_power_role(int port, int role);
+void tc_set_power_role(int port, enum pd_power_role role);
 
 /**
  * Set the data role
@@ -94,7 +94,7 @@ void tc_set_power_role(int port, int role);
  * @param port USB-C port number
  * @param role data role
  */
-void tc_set_data_role(int port, int role);
+void tc_set_data_role(int port, enum pd_data_role role);
 
 /**
  * Sets the USB Mux depending on current data role

@@ -34,9 +34,9 @@ static struct type_c {
 	/* state machine context */
 	struct sm_ctx ctx;
 	/* current port power role (VPD, SOURCE or SINK) */
-	uint8_t power_role;
+	enum pd_power_role power_role;
 	/* current port data role (DFP or UFP) */
-	uint8_t data_role;
+	enum pd_data_role data_role;
 	/* Higher-level power deliver state machines are enabled if true. */
 	uint8_t pd_enable;
 	/* port flags, see TC_FLAGS_* */
@@ -99,12 +99,12 @@ void tc_state_init(int port)
 }
 
 
-int tc_get_power_role(int port)
+enum pd_power_role tc_get_power_role(int port)
 {
 	return tc[port].power_role;
 }
 
-int tc_get_data_role(int port)
+enum pd_data_role tc_get_data_role(int port)
 {
 	return tc[port].data_role;
 }
@@ -120,7 +120,7 @@ uint8_t tc_get_pd_enabled(int port)
 	return tc[port].pd_enable;
 }
 
-void tc_set_power_role(int port, int role)
+void tc_set_power_role(int port, enum pd_power_role role)
 {
 	tc[port].power_role = role;
 }

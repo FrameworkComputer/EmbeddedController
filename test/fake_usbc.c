@@ -6,6 +6,7 @@
  */
 #include "common.h"
 #include "usb_tc_sm.h"
+#include "usb_pd.h"
 
 int pd_is_vbus_present(int port)
 {
@@ -25,22 +26,22 @@ void pd_request_vconn_swap_on(int port)
 {}
 
 
-static int data_role;
-int tc_get_data_role(int port)
+static enum pd_data_role data_role;
+enum pd_data_role tc_get_data_role(int port)
 {
 	return data_role;
 }
-void tc_set_data_role(int port, int role)
+void tc_set_data_role(int port, enum pd_data_role role)
 {
 	data_role = role;
 }
 
-static int power_role;
-int tc_get_power_role(int port)
+static enum pd_power_role power_role;
+enum pd_power_role tc_get_power_role(int port)
 {
 	return power_role;
 }
-void tc_set_power_role(int port, int role)
+void tc_set_power_role(int port, enum pd_power_role role)
 {
 	power_role = role;
 }

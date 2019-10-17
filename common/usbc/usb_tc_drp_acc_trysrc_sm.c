@@ -122,9 +122,9 @@ static struct type_c {
 	/* state machine context */
 	struct sm_ctx ctx;
 	/* current port power role (SOURCE or SINK) */
-	uint8_t power_role;
+	enum pd_power_role power_role;
 	/* current port data role (DFP or UFP) */
-	uint8_t data_role;
+	enum pd_data_role data_role;
 	/* Higher-level power deliver state machines are enabled if true. */
 	uint8_t pd_enable;
 #ifdef CONFIG_USB_PE_SM
@@ -668,12 +668,12 @@ void tc_state_init(int port)
 	restart_tc_sm(port, TC_UNATTACHED_SNK);
 }
 
-int tc_get_power_role(int port)
+enum pd_power_role tc_get_power_role(int port)
 {
 	return tc[port].power_role;
 }
 
-int tc_get_data_role(int port)
+enum pd_data_role tc_get_data_role(int port)
 {
 	return tc[port].data_role;
 }
@@ -688,7 +688,7 @@ uint8_t tc_get_pd_enabled(int port)
 	return tc[port].pd_enable;
 }
 
-void tc_set_power_role(int port, int role)
+void tc_set_power_role(int port, enum pd_power_role role)
 {
 	tc[port].power_role = role;
 }
@@ -782,7 +782,7 @@ void tc_event_check(int port, int evt)
  * DTS          USB-C @ 3 A         Rp3A0  RpUSB
  */
 
-void tc_set_data_role(int port, int role)
+void tc_set_data_role(int port, enum pd_data_role role)
 {
 	tc[port].data_role = role;
 
@@ -1871,7 +1871,9 @@ static void tc_attached_snk_run(const int port)
 			TC_CLR_FLAG(port, TC_FLAGS_REQUEST_DR_SWAP);
 
 			/* Perform Data Role Swap */
-			tc_set_data_role(port, !tc[port].data_role);
+			tc_set_data_role(port,
+				tc[port].data_role == PD_ROLE_UFP ?
+					PD_ROLE_DFP : PD_ROLE_UFP);
 		}
 
 #ifdef CONFIG_USBC_VCONN
@@ -2302,7 +2304,9 @@ static void tc_attached_src_run(const int port)
 			TC_CLR_FLAG(port, TC_FLAGS_REQUEST_DR_SWAP);
 
 			/* Perform Data Role Swap */
-			tc_set_data_role(port, !tc[port].data_role);
+			tc_set_data_role(port,
+				tc[port].data_role == PD_ROLE_DFP ?
+					PD_ROLE_UFP : PD_ROLE_DFP);
 		}
 
 		if (IS_ENABLED(CONFIG_USBC_VCONN)) {

@@ -95,8 +95,8 @@ static uint32_t test_data[] = {
 static struct pd_prl {
 	int rev;
 	int pd_enable;
-	int power_role;
-	int data_role;
+	enum pd_power_role power_role;
+	enum pd_data_role data_role;
 	int msg_tx_id;
 	int msg_rx_id;
 
@@ -723,12 +723,12 @@ static void enable_prl(int port, int en)
 	prl_set_rev(port, pd_port[port].rev);
 }
 
-int tc_get_power_role(int port)
+enum pd_power_role tc_get_power_role(int port)
 {
 	return pd_port[port].power_role;
 }
 
-int tc_get_data_role(int port)
+enum pd_data_role tc_get_data_role(int port)
 {
 	return pd_port[port].data_role;
 }
