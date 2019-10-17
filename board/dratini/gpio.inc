@@ -10,6 +10,7 @@
 
 /* Wake Source interrupts */
 GPIO_INT(LID_OPEN,             PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)
+GPIO_INT(TABLET_MODE_L,        PIN(C, 7), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 GPIO_INT(WP_L,                 PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)              /* EC_WP_ODL */
 GPIO_INT(POWER_BUTTON_L,       PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)        /* MECH_PWR_BTN_ODL */
 GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
