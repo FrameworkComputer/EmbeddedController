@@ -447,8 +447,25 @@ int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 
 	/* Clear status */
 	if (xfer_start) {
+		uint32_t cr2 = STM32_I2C_CR2(port);
+
 		STM32_I2C_ICR(port) = STM32_I2C_ICR_ALL;
 		STM32_I2C_CR2(port) = 0;
+		if (cr2 & STM32_I2C_CR2_RELOAD) {
+			/*
+			 * If I2C_XFER_START flag is on and we've set RELOAD=1
+			 * in previous chip_i2c_xfer() call. Then we are
+			 * probably in the middle of an i2c transaction.
+			 *
+			 * In this case, we need to clear the RELOAD bit and
+			 * wait for Transfer Complete (TC) flag, to make sure
+			 * the chip is not expecting another NBYTES data, And
+			 * send repeated-start correctly.
+			 */
+			rv = wait_isr(port, STM32_I2C_ISR_TC);
+			if (rv)
+				goto xfer_exit;
+		}
 	}
 
 	if (out_bytes || !in_bytes) {
