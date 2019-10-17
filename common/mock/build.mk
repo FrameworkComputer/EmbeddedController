@@ -6,4 +6,6 @@
 
 mock-$(HAS_MOCK_FPSENSOR) += fpsensor_mock.o
 mock-$(HAS_MOCK_ROLLBACK) += rollback_mock.o
+mock-$(HAS_MOCK_TCPC) += tcpc_mock.o
 mock-$(HAS_MOCK_TIMER) += timer_mock.o
+mock-$(HAS_MOCK_USB_MUX) += usb_mux_mock.o
