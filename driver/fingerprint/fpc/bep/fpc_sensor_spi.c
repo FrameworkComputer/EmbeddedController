@@ -16,7 +16,7 @@
 #include "spi.h"
 #include "util.h"
 
-#include STRINGIFY(FP_SENSOR_PRIVATE)
+#include "driver/fingerprint/fpc/fpc_sensor.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)

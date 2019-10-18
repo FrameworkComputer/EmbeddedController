@@ -12,7 +12,7 @@
 #include "system.h"
 #include "util.h"
 
-#include STRINGIFY(FP_SENSOR_PRIVATE)
+#include "driver/fingerprint/fpc/fpc_sensor.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
@@ -55,7 +55,7 @@ typedef struct {
 	uint32_t image_buffer_size;
 } fpc_sensor_info_t;
 
-#if defined(FP_SENSOR_CONFIG_FPC1025)
+#if defined(CONFIG_FP_SENSOR_FPC1025)
 
 extern const fpc_bep_sensor_t fpc_bep_sensor_1025;
 extern const fpc_bep_algorithm_t fpc_bep_algorithm_pfe_1025;
@@ -70,7 +70,7 @@ const fpc_bio_info_t fpc_bio_info = {
 	.template_size = FP_ALGORITHM_TEMPLATE_SIZE,
 };
 
-#elif defined(FP_SENSOR_CONFIG_FPC1035)
+#elif defined(CONFIG_FP_SENSOR_FPC1035)
 
 extern const fpc_bep_sensor_t fpc_bep_sensor_1035;
 extern const fpc_bep_algorithm_t fpc_bep_algorithm_pfe_1035;

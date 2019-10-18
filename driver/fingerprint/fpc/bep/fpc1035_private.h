@@ -6,9 +6,6 @@
 #ifndef __CROS_EC_FPC1035_PRIVATE_H
 #define __CROS_EC_FPC1035_PRIVATE_H
 
-/* Define sensor type */
-#define FP_SENSOR_CONFIG_FPC1035
-
 /* The 16-bit hardware ID is 0x011y */
 #define FP_SENSOR_HWID 0x011
 

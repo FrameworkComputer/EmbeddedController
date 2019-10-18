@@ -1768,6 +1768,12 @@
 #undef CONFIG_FLASH_NVCTR_BASE_B
 
 /*****************************************************************************/
+/* Fingerprint Sensor Configuration */
+#undef CONFIG_FP_SENSOR_FPC1025
+#undef CONFIG_FP_SENSOR_FPC1035
+#undef CONFIG_FP_SENSOR_FPC1145
+
+/*****************************************************************************/
 /* NvMem Configuration */
 /* Enable NV Memory module within flash */
 #undef CONFIG_FLASH_NVMEM

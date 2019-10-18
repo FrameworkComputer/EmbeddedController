@@ -17,12 +17,10 @@
 #include "timer.h"
 #include "util.h"
 
-#include STRINGIFY(FP_SENSOR_PRIVATE)
+#include "driver/fingerprint/fpc/fpc_sensor.h"
 
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
-
-#define FP_SENSOR_NAME STRINGIFY(FP_SENSOR_CONFIG)
 
 /* Minimum reset duration */
 #define FP_SENSOR_RESET_DURATION_US (10 * MSEC)

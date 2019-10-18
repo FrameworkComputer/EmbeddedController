@@ -11,6 +11,9 @@
 /* The 16-bit hardware ID is 0x140y */
 #define FP_SENSOR_HWID 0x140
 
+/* Sensor type name */
+#define FP_SENSOR_NAME "FPC1145"
+
 /* Sensor pixel resolution */
 #define FP_SENSOR_RES_Y        192
 #define FP_SENSOR_RES_X        56
