@@ -19,7 +19,3 @@ int pd_check_vconn_swap(int port)
 {
 	return 1;
 }
-
-void charge_manager_set_ceil(int port, enum ceil_requestor requestor, int ceil)
-{
-}

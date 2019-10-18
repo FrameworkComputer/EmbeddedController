@@ -2217,11 +2217,10 @@ static void pe_snk_hard_reset_entry(int port)
 		/* Transition Sink's power supply to the new power level */
 		pd_set_input_current_limit(port, pe[port].curr_limit,
 						pe[port].supply_voltage);
-#ifdef CONFIG_CHARGE_MANAGER
-		/* Set ceiling based on what's negotiated */
-		charge_manager_set_ceil(port, CEIL_REQUESTOR_PD,
+		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
+			/* Set ceiling based on what's negotiated */
+			charge_manager_set_ceil(port, CEIL_REQUESTOR_PD,
 							pe[port].curr_limit);
-#endif
 	}
 }
 

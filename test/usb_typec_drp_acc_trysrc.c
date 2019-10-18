@@ -10,11 +10,6 @@
 #include "usb_sm_checks.h"
 #include "charge_manager.h"
 
-void charge_manager_set_ceil(int port, enum ceil_requestor requestor, int ceil)
-{
-	/* Do Nothing, but needed for linking */
-}
-
 void run_test(void)
 {
 	test_reset();

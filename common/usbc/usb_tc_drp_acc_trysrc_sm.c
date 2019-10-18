@@ -530,10 +530,9 @@ void tc_src_power_off(int port)
 		/* Remove VBUS */
 		pd_power_supply_reset(port);
 
-		if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
+		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 			charge_manager_set_ceil(port, CEIL_REQUESTOR_PD,
 						CHARGE_CEIL_NONE);
-		}
 	}
 }
 
@@ -1962,7 +1961,9 @@ static void tc_unoriented_dbg_acc_src_run(const int port)
 	    tc[port].cc2 == TYPEC_CC_VOLT_OPEN) {
 		/* Remove VBUS */
 		pd_power_supply_reset(port);
-		charge_manager_set_ceil(port, CEIL_REQUESTOR_PD,
+
+		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
+			charge_manager_set_ceil(port, CEIL_REQUESTOR_PD,
 							CHARGE_CEIL_NONE);
 
 		set_state_tc(port, TC_UNATTACHED_SNK);
