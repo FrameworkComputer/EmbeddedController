@@ -279,9 +279,6 @@ static void board_init(void)
 	/* Enable gauge interrupt from max17055 */
 	gpio_enable_interrupt(GPIO_GAUGE_INT_ODL);
 
-	/* Enable pogo interrupt */
-	gpio_enable_interrupt(GPIO_POGO_ADC_INT_L);
-
 	if (IS_ENABLED(BOARD_KRANE)) {
 		/*
 		 * Fix backlight led maximum current:

@@ -171,15 +171,14 @@ void pogo_adc_interrupt(enum gpio_signal signal)
 	base_detect_debounce_time = time_now + BASE_DETECT_DEBOUNCE_US;
 }
 
-/* Called on AP S5 -> S3 transition */
-static void pogo_chipset_startup(void)
+static void pogo_chipset_init(void)
 {
 	/* Enable pogo interrupt */
 	gpio_enable_interrupt(GPIO_POGO_ADC_INT_L);
 
 	hook_call_deferred(&base_detect_deferred_data, 0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pogo_chipset_startup, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, pogo_chipset_init, HOOK_PRIO_DEFAULT);
 
 /* Called on AP S3 -> S5 transition */
 static void pogo_chipset_shutdown(void)
@@ -195,7 +194,7 @@ void base_force_state(int state)
 {
 	if (state != 1 && state != 0) {
 		CPRINTS("BD forced reset");
-		pogo_chipset_startup();
+		pogo_chipset_init();
 		return;
 	}
 
