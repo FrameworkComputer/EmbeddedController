@@ -84,8 +84,13 @@ GPIO(EC_BATT_PRES_L, 	 PIN(E, 5), GPIO_INPUT)
  * being asserted. Also, it should be fine to have the EC in hibernate when H1
  * or servo wants to hold the EC in reset since VCC1 will be down and so entire
  * EC logic (except PSL) as well as AP will be in reset.
+ *
+ * We need to lock the setting so this gpio can't be reconfigured to overdrive
+ * the real reset signal. (This is the PSL input pin not the real reset pin).
  */
-GPIO(EC_RST_ODL,	PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
+GPIO(EC_RST_ODL,	PIN(0, 2), GPIO_INT_BOTH |
+				   GPIO_HIB_WAKE_HIGH |
+				   GPIO_LOCKED)
 
 /*
  * PCH_PROCHOT_ODL is primarily for monitoring the PROCHOT# signal which is
