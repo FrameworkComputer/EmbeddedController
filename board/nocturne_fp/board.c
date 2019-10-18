@@ -14,6 +14,16 @@
 #include "task.h"
 #include "util.h"
 
+/**
+ * Disable restricted commands when the system is locked.
+ *
+ * @see console.h system.c
+ */
+int console_is_restricted(void)
+{
+	return system_is_locked();
+}
+
 #ifndef HAS_TASK_FPSENSOR
 void fps_event(enum gpio_signal signal)
 {

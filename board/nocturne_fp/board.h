@@ -15,6 +15,15 @@
 #define CONFIG_SYSTEM_UNLOCKED
 
 /*
+ * These allow console commands to be flagged as restricted.
+ * Restricted commands will only be permitted to run when
+ * console_is_restricted() returns false.
+ * See console_is_restricted's definition in board.c.
+ */
+#define CONFIG_CONSOLE_COMMAND_FLAGS
+#define CONFIG_RESTRICTED_CONSOLE_COMMANDS
+
+/*
  * Flash layout: we redefine the sections offsets and sizes as we want to
  * include a rollback region, and will use RO/RW regions of different sizes.
  */
