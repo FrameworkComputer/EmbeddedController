@@ -106,9 +106,11 @@ static int command_mem_dump(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-DECLARE_CONSOLE_COMMAND(md, command_mem_dump,
-			"[.b|.h|.s] addr [count]",
-			"dump memory values, optionally specifying the format");
+DECLARE_CONSOLE_COMMAND_FLAGS
+	(md, command_mem_dump,
+	 "[.b|.h|.s] addr [count]",
+	 "dump memory values, optionally specifying the format",
+	 CMD_FLAG_RESTRICTED);
 #endif /* CONFIG_CMD_MD */
 
 #ifdef CONFIG_CMD_RW
@@ -188,8 +190,9 @@ static int command_read_word(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-DECLARE_CONSOLE_COMMAND
+DECLARE_CONSOLE_COMMAND_FLAGS
 	(rw, command_read_word,
 	 "[.b|.h] addr [value]",
-	 "Read or write a word in memory optionally specifying the size");
+	 "Read or write a word in memory optionally specifying the size",
+	 CMD_FLAG_RESTRICTED);
 #endif	/* CONFIG_CMD_RW */
