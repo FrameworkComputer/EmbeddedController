@@ -290,3 +290,59 @@ int u2f_gen_kek_seed(int commit)
 
 	return EC_SUCCESS;
 }
+
+/*
+ * We need to keep a dummy version of this function around, as u2fd on M77 will
+ * call it and not start up or send commands unless it receives a success
+ * response. cr50 has been updated to no longer require the commands being sent,
+ * so we don't need to do anything other than return a valid success response.
+ */
+static enum vendor_cmd_rc vc_u2f_apdu_dummy(enum vendor_cmd_cc code, void *body,
+					    size_t cmd_size,
+					    size_t *response_size)
+{
+	uint8_t *cmd = body;
+
+	if (cmd_size < 3)
+		return VENDOR_RC_BOGUS_ARGS;
+
+	/*
+	 * The incoming APDUs are in the following format:
+	 *
+	 *   CLA INS   P1  P2  Le
+	 *   00  <ins> ??  ??  ??
+	 */
+
+	if (cmd[1] == 0xbf /* U2F_VENDOR_MODE */) {
+		/*
+		 * The u2fd code that call this command expects confirmation
+		 * that the mode was correctly set in the return message.
+		 *
+		 * The incoming APDU is in the following format:
+		 *
+		 *   CLA INS P1  P2      Le
+		 *   00  bf  01  <mode>  00
+		 */
+		cmd[0] = cmd[3];
+	} else if (cmd[1] == 0x03 /* U2F_VERSION */) {
+		/*
+		 * The returned value for U2F_VERSION is not checked; return
+		 * a known string just to be safe.
+		 */
+		cmd[0] = '2';
+	} else {
+		/* We're not expecting any other commands. */
+		*response_size = 0;
+		return VENDOR_RC_NO_SUCH_SUBCOMMAND;
+	}
+
+	/*
+	 * Return U2F_SW_NO_ERROR status.
+	 */
+	cmd[1] = 0x90;
+	cmd[2] = 0x00;
+	*response_size = 3;
+
+	return VENDOR_RC_SUCCESS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_U2F_APDU, vc_u2f_apdu_dummy);
