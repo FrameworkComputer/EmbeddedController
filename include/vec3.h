@@ -13,6 +13,13 @@ typedef float floatv3_t[3];
 typedef fp_t fpv3_t[3];
 
 /**
+ * Initialized a vector to all 0.0f.
+ *
+ * @param v Pointer to the vector that will be initialized.
+ */
+void fpv3_zero(fpv3_t v);
+
+/**
  * Initialize a vector.
  *
  * @param v Pointer to the vector that will be initialized.

@@ -9,6 +9,15 @@
 #include "vec3.h"
 #include "util.h"
 
+static fpv3_t zero_initialized_vector = {
+	FLOAT_TO_FP(0.0f), FLOAT_TO_FP(0.0f), FLOAT_TO_FP(0.0f)
+};
+
+void fpv3_zero(fpv3_t v)
+{
+	memcpy(v, zero_initialized_vector, sizeof(fpv3_t));
+}
+
 void fpv3_init(fpv3_t v, fp_t x, fp_t y, fp_t z)
 {
 	v[X] = x;
