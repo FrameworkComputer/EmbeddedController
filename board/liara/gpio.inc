@@ -25,7 +25,7 @@ GPIO_INT(VOLUME_UP_L,		PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt
 GPIO_INT(USB_C0_CABLE_DET,	PIN(3, 7), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
 
 /* GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an interrupt handler. */
-GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
+GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH | GPIO_LOCKED)
 
 GPIO(EN_PWR_A,			PIN(E, 2), GPIO_OUT_LOW)			/* Enable Power */
 GPIO(EN_PP1800_SENSOR,		PIN(6, 7), GPIO_OUT_LOW)			/* Enable Power */
