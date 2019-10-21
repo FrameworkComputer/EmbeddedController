@@ -55,9 +55,7 @@ enum ish_i2c_port {
 #define ISH_I2C2_IRQ               40
 #define ISH_WDT_IRQ                6
 #define ISH_GPIO_IRQ               7
-#define ISH_HPET_TIMER0_IRQ        55
 #define ISH_HPET_TIMER1_IRQ        8
-#define ISH_HPET_TIMER2_IRQ        11
 #define ISH_IPC_HOST2ISH_IRQ       12
 #define ISH_PMU_WAKEUP_IRQ         18
 #define ISH_D3_RISE_IRQ            19
@@ -104,9 +102,7 @@ enum ish_i2c_port {
 #define ISH_I2C2_VEC               IRQ_TO_VEC(ISH_I2C2_IRQ)
 #define ISH_WDT_VEC                IRQ_TO_VEC(ISH_WDT_IRQ)
 #define ISH_GPIO_VEC               IRQ_TO_VEC(ISH_GPIO_IRQ)
-#define ISH_HPET_TIMER0_VEC        IRQ_TO_VEC(ISH_HPET_TIMER0_IRQ)
 #define ISH_HPET_TIMER1_VEC        IRQ_TO_VEC(ISH_HPET_TIMER1_IRQ)
-#define ISH_HPET_TIMER2_VEC        IRQ_TO_VEC(ISH_HPET_TIMER2_IRQ)
 #define ISH_IPC_ISH2HOST_CLR_VEC   IRQ_TO_VEC(ISH_IPC_ISH2HOST_CLR_IRQ)
 #define ISH_UART0_VEC              IRQ_TO_VEC(ISH_UART0_IRQ)
 #define ISH_UART1_VEC              IRQ_TO_VEC(ISH_UART1_IRQ)
