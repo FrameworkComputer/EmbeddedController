@@ -13,5 +13,6 @@ $(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_riscv),\
 # CPU specific compilation flags
 CFLAGS_CPU+=-march=rv32imafc -mabi=ilp32f -Os
 LDFLAGS_EXTRA+=-mrelax
+LDFLAGS_EXTRA+=-static-libgcc -lgcc
 
 core-y=cpu.o init.o panic.o task.o switch.o __builtin.o math.o
