@@ -145,7 +145,7 @@ static struct tx_chunked {
 /* Message Reception State Machine Object */
 static struct protocol_layer_rx {
 	/* message ids for all valid port partners */
-	int msg_id[NUM_XMIT_TYPES];
+	int msg_id[NUM_SOP_STAR_TYPES];
 } prl_rx[CONFIG_USB_PD_PORT_COUNT];
 
 /* Message Transmission State Machine Object */
@@ -158,10 +158,10 @@ static struct protocol_layer_tx {
 	uint64_t sink_tx_timer;
 	/* GoodCRC receive timeout */
 	uint64_t crc_receive_timer;
-	/* Last SOP* we transmitted to */
-	uint8_t sop;
-	/* message id counters for all 6 port partners */
-	uint32_t msg_id_counter[NUM_XMIT_TYPES];
+	/* last message type we transmitted */
+	enum tcpm_transmit_type last_xmit_type;
+	/* message id counters for all 6 SOP* message types */
+	uint32_t msg_id_counter[NUM_SOP_STAR_TYPES];
 	/* message retry counter */
 	uint32_t retry_counter;
 	/* transmit status */
@@ -298,7 +298,7 @@ static void prl_init(int port)
 	const struct sm_ctx cleared = {};
 
 	prl_tx[port].flags = 0;
-	prl_tx[port].sop = 0;
+	prl_tx[port].last_xmit_type = TCPC_TX_SOP;
 	prl_tx[port].xmit_status = TCPC_TX_UNSET;
 
 	tch[port].flags = 0;
@@ -315,7 +315,7 @@ static void prl_init(int port)
 
 	prl_hr[port].flags = 0;
 
-	for (i = 0; i < NUM_XMIT_TYPES; i++) {
+	for (i = 0; i < NUM_SOP_STAR_TYPES; i++) {
 		prl_rx[port].msg_id[i] = -1;
 		prl_tx[port].msg_id_counter[i] = 0;
 	}
@@ -541,8 +541,12 @@ static void prl_tx_wait_for_message_request_run(const int port)
 
 static void increment_msgid_counter(int port)
 {
-	prl_tx[port].msg_id_counter[prl_tx[port].sop] =
-		(prl_tx[port].msg_id_counter[prl_tx[port].sop] + 1) &
+	/* If the last message wasn't an SOP* message, no need to increment */
+	if (prl_tx[port].last_xmit_type >= NUM_SOP_STAR_TYPES)
+		return;
+
+	prl_tx[port].msg_id_counter[prl_tx[port].last_xmit_type] =
+		(prl_tx[port].msg_id_counter[prl_tx[port].last_xmit_type] + 1) &
 		PD_MESSAGE_ID_COUNT;
 }
 
@@ -595,7 +599,7 @@ static void prl_tx_layer_reset_for_transmit_entry(const int port)
 	int i;
 
 	/* Reset MessageIdCounters */
-	for (i = 0; i < NUM_XMIT_TYPES; i++)
+	for (i = 0; i < NUM_SOP_STAR_TYPES; i++)
 		prl_tx[port].msg_id_counter[i] = 0;
 }
 
@@ -606,20 +610,27 @@ static void prl_tx_layer_reset_for_transmit_run(const int port)
 	set_state_prl_tx(port, PRL_TX_WAIT_FOR_PHY_RESPONSE);
 }
 
-static void prl_tx_construct_message(int port)
+static uint32_t get_sop_star_header(const int port)
 {
-	uint32_t header = PD_HEADER(
-			pdmsg[port].msg_type,
-			tc_get_power_role(port),
-			tc_get_data_role(port),
-			prl_tx[port].msg_id_counter[pdmsg[port].xmit_type],
-			pdmsg[port].data_objs,
-			(pdmsg[port].xmit_type == TCPC_TX_SOP) ?
-				pdmsg[port].rev : pdmsg[port].cable_rev,
-			pdmsg[port].ext);
+	return PD_HEADER(
+		pdmsg[port].msg_type,
+		tc_get_power_role(port),
+		tc_get_data_role(port),
+		prl_tx[port].msg_id_counter[pdmsg[port].xmit_type],
+		pdmsg[port].data_objs,
+		(pdmsg[port].xmit_type == TCPC_TX_SOP) ?
+			pdmsg[port].rev : pdmsg[port].cable_rev,
+		pdmsg[port].ext);
+}
+
+static void prl_tx_construct_message(const int port)
+{
+	/* The header is unused for hard reset, etc. */
+	const uint32_t header = pdmsg[port].xmit_type < NUM_SOP_STAR_TYPES ?
+		get_sop_star_header(port) : 0;
 
 	/* Save SOP* so the correct msg_id_counter can be incremented */
-	prl_tx[port].sop = pdmsg[port].xmit_type;
+	prl_tx[port].last_xmit_type = pdmsg[port].xmit_type;
 
 	/*
 	 * These flags could be set if this function is called before the
@@ -789,7 +800,7 @@ static void prl_hr_reset_layer_entry(const int port)
 	int i;
 
 	/* reset messageIDCounters */
-	for (i = 0; i < NUM_XMIT_TYPES; i++)
+	for (i = 0; i < NUM_SOP_STAR_TYPES; i++)
 		prl_tx[port].msg_id_counter[i] = 0;
 	/*
 	 * Protocol Layer message transmission transitions to
@@ -802,7 +813,7 @@ static void prl_hr_reset_layer_entry(const int port)
 	pdmsg[port].flags = 0;
 
 	/* Reset message ids */
-	for (i = 0; i < NUM_XMIT_TYPES; i++) {
+	for (i = 0; i < NUM_SOP_STAR_TYPES; i++) {
 		prl_rx[port].msg_id[i] = -1;
 		prl_tx[port].msg_id_counter[i] = 0;
 	}
@@ -1513,7 +1524,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	if (cnt == 0 && type == PD_CTRL_SOFT_RESET) {
 		int i;
 
-		for (i = 0; i < NUM_XMIT_TYPES; i++) {
+		for (i = 0; i < NUM_SOP_STAR_TYPES; i++) {
 			/* Clear MessageIdCounter */
 			prl_tx[port].msg_id_counter[i] = 0;
 			/* Clear stored MessageID value */

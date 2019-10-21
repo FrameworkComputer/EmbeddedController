@@ -17,9 +17,6 @@
 /* Time to wait for TCPC to complete transmit */
 #define PD_T_TCPC_TX_TIMEOUT  (100*MSEC)
 
-/* Number of valid Transmit Types */
-#define NUM_XMIT_TYPES (TCPC_TX_SOP_DEBUG_PRIME_PRIME + 1)
-
 enum usbpd_cc_pin {
 	USBPD_CC_PIN_1,
 	USBPD_CC_PIN_2,
@@ -62,6 +59,9 @@ enum tcpm_transmit_type {
 	TCPC_TX_CABLE_RESET = 6,
 	TCPC_TX_BIST_MODE_2 = 7
 };
+
+/* Number of valid Transmit Types */
+#define NUM_SOP_STAR_TYPES (TCPC_TX_SOP_DEBUG_PRIME_PRIME + 1)
 
 enum tcpc_transmit_complete {
 	TCPC_TX_UNSET = -1,
