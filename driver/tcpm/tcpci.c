@@ -559,6 +559,16 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 	int reg = TCPC_REG_TX_DATA;
 	int rv, cnt = 4*PD_HEADER_CNT(header);
 
+	/* If not SOP* transmission, just write to the transmit register */
+	if (type >= NUM_SOP_STAR_TYPES) {
+		/*
+		 * Per TCPCI spec, do not specify retry (although the TCPC
+		 * should ignore retry field for these 3 types).
+		 */
+		return tcpc_write(port, TCPC_REG_TRANSMIT,
+			TCPC_REG_TRANSMIT_SET_WITHOUT_RETRY(type));
+	}
+
 	/* TX_BYTE_CNT includes extra bytes for message header */
 	rv = tcpc_write(port, TCPC_REG_TX_BYTE_CNT, cnt + sizeof(header));
 
