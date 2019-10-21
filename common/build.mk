@@ -155,6 +155,7 @@ common-$(CONFIG_USB_PD_TCPC)+=usb_pd_tcpc.o
 common-$(CONFIG_USB_UPDATE)+=usb_update.o update_fw.o
 common-$(CONFIG_USBC_PPC)+=usbc_ppc.o
 common-$(CONFIG_VBOOT_EFS)+=vboot/vboot.o
+common-$(CONFIG_VBOOT_EFS2)+=vboot/efs2.o
 common-$(CONFIG_VBOOT_HASH)+=sha256.o vboot_hash.o
 common-$(CONFIG_VOLUME_BUTTONS)+=button.o
 common-$(CONFIG_VSTORE)+=vstore.o

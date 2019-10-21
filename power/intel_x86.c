@@ -737,7 +737,7 @@ enum ec_error_list intel_x86_wait_power_up_ok(void)
 	power_up_inhibited = 0;
 #endif
 
-#ifdef CONFIG_VBOOT_EFS
+#if defined(CONFIG_VBOOT_EFS) || defined(CONFIG_VBOOT_EFS2)
 	/*
 	 * We have to test power readiness here (instead of S5->S3)
 	 * because when entering S5, EC enables EC_ROP_SLP_SUS pin

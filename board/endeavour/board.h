@@ -148,7 +148,7 @@ enum OEM_ID {
 
 /* Board specific handlers */
 void led_alert(int enable);
-void led_critical(void);
+void show_critical_error(void);
 
 #endif /* !__ASSEMBLER__ */
 

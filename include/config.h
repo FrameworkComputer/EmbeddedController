@@ -4335,8 +4335,14 @@
 
 /*****************************************************************************/
 
-/* Support early firmware selection */
+/*
+ * Support early firmware selection
+ *
+ * EFS1 is being deprecated. EFS2 is faster, doesn't need two slots, and
+ * supports rollback protection.
+ */
 #undef CONFIG_VBOOT_EFS
+#undef CONFIG_VBOOT_EFS2
 
 /* Offset of RW-A image in writable storage when using EFS. */
 #undef CONFIG_RW_A_STORAGE_OFF

@@ -17,6 +17,7 @@
 #include "host_command.h"
 #include "rsa.h"
 #include "rwsig.h"
+#include "stdbool.h"
 #include "sha256.h"
 #include "shared_mem.h"
 #include "system.h"
@@ -28,20 +29,6 @@
 #define CPRINTF(format, args...) cprintf(CC_VBOOT,"VB " format, ## args)
 
 static int has_matrix_keyboard(void)
-{
-	return 0;
-}
-
-static int is_efs_supported(void)
-{
-#ifdef CONFIG_VBOOT_EFS
-	return 1;
-#else
-	return 0;
-#endif
-}
-
-static int is_low_power_ap_boot_supported(void)
 {
 	return 0;
 }
@@ -168,15 +155,14 @@ static int verify_and_jump(void)
 }
 
 /* Request more power: charging battery or more powerful AC adapter */
-static void request_power(void)
+__overridable void show_power_shortage(void)
 {
 	CPRINTS("%s", __func__);
 }
 
-static void request_recovery(void)
+__overridable void show_critical_error(void)
 {
 	CPRINTS("%s", __func__);
-	led_critical();
 }
 
 static int is_manual_recovery(void)
@@ -184,9 +170,9 @@ static int is_manual_recovery(void)
 	return host_is_event_set(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 }
 
-static int pd_comm_enabled;
+static bool pd_comm_enabled;
 
-int vboot_need_pd_comm(void)
+bool vboot_allow_usb_pd(void)
 {
 	return pd_comm_enabled;
 }
@@ -202,7 +188,7 @@ void vboot_main(void)
 		 * provide enough power.
 		 */
 		CPRINTS("Already in RW. Wait for power...");
-		request_power();
+		show_power_shortage();
 		return;
 	}
 
@@ -214,14 +200,14 @@ void vboot_main(void)
 		 * though PD communication is enabled.
 		 */
 		CPRINTS("HW-WP not asserted.");
-		request_power();
+		show_power_shortage();
 		return;
 	}
 
 	if (is_manual_recovery()) {
 		CPRINTS("Manual recovery");
 		if (battery_is_present() || has_matrix_keyboard()) {
-			request_power();
+			show_power_shortage();
 			return;
 		}
 		/* We don't request_power because we don't want to assume all
@@ -230,17 +216,7 @@ void vboot_main(void)
 		 * don't gain meaningful advantage on devices without a matrix
 		 * keyboard */
 		CPRINTS("Enable PD comm");
-		pd_comm_enabled = 1;
-		return;
-	}
-
-	if (!is_efs_supported()) {
-		if (is_low_power_ap_boot_supported())
-			/* If a device supports this feature, AP's boot power
-			 * threshold should be set low. That will let EC-RO
-			 * boot AP and softsync take care of RW verification. */
-			return;
-		request_power();
+		pd_comm_enabled = true;
 		return;
 	}
 
@@ -250,5 +226,5 @@ void vboot_main(void)
 	clock_enable_module(MODULE_FAST_CPU, 0);
 
 	/* Failed to jump. Need recovery. */
-	request_recovery();
+	show_critical_error();
 }

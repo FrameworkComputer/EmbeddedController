@@ -174,7 +174,7 @@ void led_alert(int enable)
 	}
 }
 
-void led_critical(void)
+void show_critical_error(void)
 {
 	hook_call_deferred(&led_tick_data, -1);
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
@@ -202,7 +202,7 @@ static int command_led(int argc, char **argv)
 	} else if (!strcasecmp(argv[1], "alert")) {
 		led_alert(1);
 	} else if (!strcasecmp(argv[1], "crit")) {
-		led_critical();
+		show_critical_error();
 	} else {
 		return EC_ERROR_PARAM1;
 	}

@@ -612,7 +612,7 @@ enum system_image_copy_t system_get_active_copy(void)
 
 enum system_image_copy_t system_get_update_copy(void)
 {
-#ifdef CONFIG_VBOOT_EFS
+#ifdef CONFIG_VBOOT_EFS		/* Not needed for EFS2, which is single-slot. */
 	return system_get_active_copy() == SYSTEM_IMAGE_RW_A ?
 			SYSTEM_IMAGE_RW_B : SYSTEM_IMAGE_RW_A;
 #else

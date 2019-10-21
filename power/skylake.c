@@ -187,7 +187,8 @@ void chipset_handle_reboot(void)
 	while (1)
 		; /* wait here */
 }
-#ifndef CONFIG_VBOOT_EFS
+#if !defined(CONFIG_VBOOT_EFS) || !defined(CONFIG_VBOOT_EFS2)
+/* This is run in main for EFS1 & EFS2 */
 DECLARE_HOOK(HOOK_INIT, chipset_handle_reboot, HOOK_PRIO_FIRST);
 #endif
 #endif /* CONFIG_CHIPSET_HAS_PLATFORM_RESET */

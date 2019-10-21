@@ -2813,13 +2813,10 @@ static void pd_init_tasks(void)
 #if defined(CONFIG_USB_PD_COMM_DISABLED)
 	enable = 0;
 #elif defined(CONFIG_USB_PD_COMM_LOCKED)
-	/* Disable PD communication at init if we're in RO and locked. */
-	if (!system_is_in_rw() && system_is_locked())
+	/* Disable PD communication if we're in RO, WP is enabled, and EFS
+	 * didn't register NO_BOOT. */
+	if (!system_is_in_rw() && system_is_locked() && !vboot_allow_usb_pd())
 		enable = 0;
-#ifdef CONFIG_VBOOT_EFS
-	if (vboot_need_pd_comm())
-		enable = 1;
-#endif
 #endif
 	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		pd_comm_enabled[i] = enable;

@@ -195,12 +195,13 @@ test_mockable __keep int main(void)
 	button_init();
 #endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON | CONFIG_VOLUME_BUTTONS) */
 
-#if defined(CONFIG_VBOOT_EFS)
+#if defined(CONFIG_VBOOT_EFS) || defined(CONFIG_VBOOT_EFS2)
 	/*
 	 * Execute PMIC reset in case we're here after watchdog reset to unwedge
 	 * AP. This has to be done here because vboot_main may jump to RW.
 	 */
-	chipset_handle_reboot();
+	if (IS_ENABLED(CONFIG_CHIPSET_HAS_PLATFORM_PMIC_RESET))
+		chipset_handle_reboot();
 	/*
 	 * For RO, it behaves as follows:
 	 *   In recovery, it enables PD communication and returns.

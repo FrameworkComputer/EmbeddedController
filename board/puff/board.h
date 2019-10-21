@@ -264,7 +264,7 @@ enum temp_sensor_id {
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
 void led_alert(int enable);
-void led_critical(void);
+void show_critical_error(void);
 
 #endif /* !__ASSEMBLER__ */
 

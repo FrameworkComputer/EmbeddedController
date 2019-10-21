@@ -15,6 +15,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "hooks.h"
+#include "stdbool.h"
 #include "host_command.h"
 #include "system.h"
 #include "task.h"
@@ -766,4 +767,9 @@ __overridable int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	}
 
 	return 0;
+}
+
+__overridable bool vboot_allow_usb_pd(void)
+{
+	return false;
 }
