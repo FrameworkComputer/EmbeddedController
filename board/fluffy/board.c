@@ -366,13 +366,14 @@ DECLARE_CONSOLE_COMMAND(status, command_status, NULL, "show current status");
  */
 void show_output_voltage_on_leds(void)
 {
-	int vbus_mv = adc_read_channel(ADC_PPVAR_VBUS_DUT);
+	int read = adc_read_channel(ADC_PPVAR_VBUS_DUT);
+	uint32_t vbus_mv = (uint32_t)read;
 	static int prev_vbus_mv;
 	int i;
 	int act;
 	enum led_ch max_on_exclusive = LED_5V;
 
-	if (vbus_mv != ADC_READ_ERROR) {
+	if (read != ADC_READ_ERROR) {
 		if (vbus_mv >= 2405)
 			max_on_exclusive = LED_COUNT;
 		else if (vbus_mv >= 1788)
@@ -387,7 +388,7 @@ void show_output_voltage_on_leds(void)
 		for (i = 0; i < LED_COUNT; i++)
 			set_led(i, i < max_on_exclusive);
 
-		act = (vbus_mv * 7692) / 1000;
+		act = (vbus_mv * 76667) / 10000;
 		if ((vbus_mv > prev_vbus_mv+2) || (vbus_mv < prev_vbus_mv-2)) {
 			CPRINTS("PPVAR_VBUS_DUT: %d mV (raw: %d)", act,
 				vbus_mv);
