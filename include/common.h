@@ -344,7 +344,7 @@ enum ec_error_list {
  * errors. :(
  */
 #ifdef __clang__
-#define __error(msg)
+#define __error(msg) __attribute__((section("/DISCARD/")))
 #else
 #define __error(msg) __attribute__((error(msg)))
 #endif
