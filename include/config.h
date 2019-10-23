@@ -2307,6 +2307,18 @@
 #undef CONFIG_I2C_MULTI_PORT_CONTROLLER
 
 /*
+ * Enable I2C bitbang driver.
+ *
+ * If defined, the board must define array i2c_bitbang_ports[] and
+ * i2c_bitbang_ports_count (same as i2c_ports/i2c_ports_count), but with
+ * port number starting from I2C_PORT_COUNT, and .drv=&bitbang_drv.
+ *
+ * For example:
+ * {"battery", 2, 100, GPIO_I2C3_SCL, GPIO_I2C3_SDA, .drv = &bitbang_drv},
+ */
+#undef CONFIG_I2C_BITBANG
+
+/*
  * Packet error checking support for SMBus.
  *
  * If defined, adds error checking support for i2c_readN, i2c_writeN,

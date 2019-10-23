@@ -13,6 +13,7 @@
 #include "host_command.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "i2c_bitbang.h"
 #include "system.h"
 #include "task.h"
 #include "usb_pd.h"
@@ -37,11 +38,15 @@
 #define I2C_CONTROLLER_COUNT I2C_PORT_COUNT
 #endif
 
-static struct mutex port_mutex[I2C_CONTROLLER_COUNT];
+#ifndef CONFIG_I2C_BITBANG
+#define I2C_BITBANG_PORT_COUNT 0
+#endif
+
+static struct mutex port_mutex[I2C_CONTROLLER_COUNT + I2C_BITBANG_PORT_COUNT];
 /* A bitmap of the controllers which are currently servicing a request. */
 static uint32_t i2c_port_active_list;
-BUILD_ASSERT(I2C_CONTROLLER_COUNT < 32);
-static uint8_t port_protected[I2C_PORT_COUNT];
+BUILD_ASSERT(ARRAY_SIZE(port_mutex) < 32);
+static uint8_t port_protected[I2C_PORT_COUNT + I2C_BITBANG_PORT_COUNT];
 
 /**
  * Non-deterministically test the lock status of the port.  If another task
@@ -73,6 +78,13 @@ const struct i2c_port_t *get_i2c_port(const int port)
 			return &i2c_ports[i];
 	}
 
+	if (IS_ENABLED(CONFIG_I2C_BITBANG)) {
+		for (i = 0; i < i2c_bitbang_ports_used; i++) {
+			if (i2c_bitbang_ports[i].port == port)
+				return &i2c_bitbang_ports[i];
+		}
+	}
+
 	return NULL;
 }
 
@@ -83,6 +95,7 @@ static int chip_i2c_xfer_with_notify(const int port,
 {
 	int ret;
 	uint16_t addr_flags = slave_addr_flags;
+	const struct i2c_port_t *i2c_port = get_i2c_port(port);
 
 	if (IS_ENABLED(CONFIG_I2C_DEBUG))
 		i2c_trace_notify(port, slave_addr_flags, 0, out, out_size);
@@ -96,8 +109,12 @@ static int chip_i2c_xfer_with_notify(const int port,
 		 * remove the flag so it won't confuse chip driver.
 		 */
 		addr_flags &= ~I2C_FLAG_PEC;
-	ret = chip_i2c_xfer(port, addr_flags, out, out_size, in, in_size,
-			    flags);
+	if (i2c_port->drv)
+		ret = i2c_port->drv->xfer(i2c_port, addr_flags,
+					  out, out_size, in, in_size, flags);
+	else
+		ret = chip_i2c_xfer(port, addr_flags,
+				    out, out_size, in, in_size, flags);
 
 	if (IS_ENABLED(CONFIG_I2C_XFER_BOARD_CALLBACK))
 		i2c_end_xfer_notify(port, slave_addr_flags);
@@ -226,7 +243,7 @@ void i2c_prepare_sysjump(void)
 	int i;
 
 	/* Lock all i2c controllers */
-	for (i = 0; i < I2C_CONTROLLER_COUNT; ++i)
+	for (i = 0; i < ARRAY_SIZE(port_mutex); ++i)
 		mutex_lock(port_mutex + i);
 }
 
@@ -1163,7 +1180,7 @@ DECLARE_HOST_COMMAND(EC_CMD_I2C_PASSTHRU, i2c_command_passthru, EC_VER_MASK(0));
 
 static void i2c_passthru_protect_port(uint32_t port)
 {
-	if (port < I2C_PORT_COUNT)
+	if (port < ARRAY_SIZE(port_protected))
 		port_protected[port] = 1;
 	else
 		PTHRUPRINTS("Invalid I2C port %d to be protected\n", port);
@@ -1322,6 +1339,12 @@ static int command_scan(int argc, char **argv)
 	if (argc == 1) {
 		for (port = 0; port < i2c_ports_used; port++)
 			scan_bus(i2c_ports[port].port, i2c_ports[port].name);
+
+		if (IS_ENABLED(CONFIG_I2C_BITBANG))
+			for (port = 0; port < i2c_bitbang_ports_used; port++)
+				scan_bus(i2c_bitbang_ports[port].port,
+					 i2c_bitbang_ports[port].name);
+
 		return EC_SUCCESS;
 	}
 

@@ -92,6 +92,15 @@ struct i2c_info_t {
 	uint16_t addr_flags;
 };
 
+struct i2c_port_t; /* forward declaration */
+
+struct i2c_drv {
+	int (*xfer)(const struct i2c_port_t *i2c_port,
+		    const uint16_t slave_addr_flags,
+		    const uint8_t *out, int out_size,
+		    uint8_t *in, int in_size, int flags);
+};
+
 /* Data structure to define I2C port configuration. */
 struct i2c_port_t {
 	const char *name;     /* Port name */
@@ -103,6 +112,7 @@ struct i2c_port_t {
 	 * If the function is not defined, the default value is true. */
 	int (*passthru_allowed)(const struct i2c_port_t *port,
 				uint16_t addr_flags);
+	const struct i2c_drv *drv;
 };
 
 extern const struct i2c_port_t i2c_ports[];

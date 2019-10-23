@@ -475,5 +475,12 @@ enum nvmem_users { NVMEM_TPM = 0, NVMEM_CR50, NVMEM_NUM_USERS };
 #define CONFIG_CURVE25519
 #endif /* TEST_X25519 */
 
+#ifdef TEST_I2C_BITBANG
+#define CONFIG_I2C
+#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_BITBANG
+#define I2C_BITBANG_PORT_COUNT 1
+#endif
+
 #endif  /* TEST_BUILD */
 #endif  /* __TEST_TEST_CONFIG_H */

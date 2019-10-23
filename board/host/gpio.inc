@@ -31,3 +31,6 @@ GPIO(BASE_CHG_VDD_EN,      PIN(0, 12), 0)
 GPIO(SPI1_NSS,              PIN(0, 13), GPIO_OUT_HIGH)
 
 GPIO(USB_C0_DISCHARGE,     PIN(0, 15), 0)
+
+GPIO(I2C_SCL,             PIN(0, 16),  GPIO_INPUT)
+GPIO(I2C_SDA,             PIN(0, 17),  GPIO_INPUT)
