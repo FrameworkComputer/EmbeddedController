@@ -27,6 +27,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "i2c_bitbang.h"
 #include "it8801.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
@@ -68,9 +69,18 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
 	{"typec", 0, 400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
+#ifdef BOARD_JACUZZI
 	{"other", 1, 100, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
+#else /* Juniper */
+	{"other", 1, 400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
+#endif
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+const struct i2c_port_t i2c_bitbang_ports[] = {
+	{"battery", 2, 100, GPIO_I2C3_SCL, GPIO_I2C3_SDA, .drv = &bitbang_drv},
+};
+const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);
 
 #define BC12_I2C_ADDR PI3USB9201_I2C_ADDR_3
 
@@ -284,4 +294,9 @@ int board_get_charger_i2c(void)
 {
 	/* TODO(b:138415463): confirm the bus allocation for future builds */
 	return board_get_version() == 1 ? 2 : 1;
+}
+
+int board_get_battery_i2c(void)
+{
+	return board_get_version() >= 1 ? 2 : 1;
 }
