@@ -3162,6 +3162,9 @@ void pd_task(void *u)
 				pd_set_power_role(port, PD_ROLE_DEFAULT(port));
 				pd[port].vdm_state = VDM_STATE_DONE;
 				set_state(port, PD_DEFAULT_STATE(port));
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+				pd_update_dual_role_config(port);
+#endif
 			}
 		}
 #endif
