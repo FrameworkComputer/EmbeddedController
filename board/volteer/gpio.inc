@@ -45,8 +45,13 @@ UNIMPLEMENTED(PCH_DSW_PWROK)
 /*
  * GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an
  * interrupt handler because it is automatically handled by the PSL.
+ *
+ * We need to lock the setting so this gpio can't be reconfigured to overdrive
+ * the real reset signal. (This is the PSL input pin not the real reset pin).
  */
-GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
+GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH |
+					   GPIO_HIB_WAKE_HIGH |
+					   GPIO_LOCKED)
 
 /* AP/PCH Signals */
 GPIO(EC_PCH_SYS_PWROK,         PIN(3, 7), GPIO_OUT_LOW)  /* TODO - b/140556273 - implement support with power sequencing */
