@@ -65,6 +65,168 @@ This goes through the steps to connect SuzyQ and start using CCD.
         console is a good enough sign that your Suzyq setup is ok.
 
 ---
+## Setup CCD for FAFT
+
+These are the most generic instructions.
+
+There are other ways to open ccd that may be faster, but they don't work for all
+devices. You can see the other open methods in the ccd setup doc to find other
+ways if this way doesn't work for you.
+
+The entering dev mode instructions will be for clamshell devices. If your device
+is not a clamshell, check out the [full dev mode instructions].
+
+#### Requirements
+
+*   A [Type-C Servo V4]. FAFT needs the ethernet and usb key to run. You can't
+    run with suzyq.
+*   A micro usb cable.
+*   A chromeos PD charger.
+*   A ChromeOS device that supports CCD.
+*   Access to the AP console.
+*   The device needs to be able to boot.
+*   The GBB\_FLAG\_FORCE\_DEV\_SWITCH\_ON GBB flag is cleared.
+
+### Steps
+
+
+1.  **Charge your chromebook.** Servo V4 can charge your device, but it's good
+    to charge it before setting up ccd. Servo v4 may encounter different issues
+    if your device isn't charged.
+
+2.  **Connect the type A side of the micro usb cable to your workstation.**
+
+3.  **Connect the micro usb of your cable to "HOST" port of servo v4.**
+
+4.  **Update Servo V4 from the chroot.**
+
+                chroot > sudo emerge servo-firmware
+                chroot > sudo servo_updater -b servo_v4
+
+5.  **Connect the PD charger to the "DUT POWER" port of servo v4.**
+
+6.  **Connect the type C part of the Servo V4 to your chromebook.** The DUT
+    should now be charging through servo v4. Check that the green light in
+    the corner of servo v4 lights up.
+
+7.  **Verify the CCD device exists.**
+
+    *   **Look for a device with the right vid:pid.** Cr50 vid:pid is 18d1:5014.
+        You can use lsusb to check that it shows up.
+
+                > lsusb -vd 18d1:5014
+
+    *   **Debug connection issues**.
+
+        *   **Port:** The DUT only supports CCD on one type C port. Try the
+            other port if CCD doesn't show up.
+
+        *   **Orientation:** Orientation shouldn't matter with Servo V4. If it
+            does, please file a bug.
+
+        *   **Charge State:** Make sure the the green light in the corner of
+	    servo v4 is lit.
+
+8.  **Connect to the Cr50 console**. After the CCD device shows up, the cr50, ec,
+    and ap consoles should show up in /dev/ttyUSB\*
+
+    *   Search for console names.
+
+                > ls /dev/ttyUSB*
+
+    *   If you run the `ls` command before and after connecting the Servo V4
+        type C cable to the DUT, then the new devices should be the CCD
+	consoles. The consoles are ordered. Cr50 should be the lowest ttyUSB
+	device, then AP, and EC should have the highest number. Running `ver`
+	on all of them could also let you know which one is which if you don't
+	want to remember the order.
+	**Servo V4 has it's own console. It might be useful to do this step to
+	find the device consoles**
+
+    *   Open the console.
+
+                > minicom -D /dev/ttyUSB1
+
+    *   Make sure `version` shows some version information.
+
+9.  **Open CCD.** Here's the most generic way to open ccd. For the full open
+    options see [Setup CCD].
+
+    *   **[Enter dev mode](case_closed_debugging_cr50.md#enter-dev-mode).**
+        These are clamshell instructions for other types of chromeOS devices
+        refer to the full setup doc.
+
+        *   Boot into recovery by pressing the power button, refresh, and
+            escape.
+
+        *   At the recovery screen press Ctrl+D and enter.
+
+    *   **Use gsctool to open Cr50 from the AP. Press the power button when
+        prompted.** This will take ~5 minutes.
+
+                AP > gsctool -a -o
+
+10.  **Set all capabilities to Always** and confirm they're Always.
+
+                cr50 > ccd reset factory
+                cr50 > ccd
+
+11.  **Enable Testlab Mode.** Tap the power button when prompted. This will
+     take a couple of seconds.
+
+                cr50 > ccd testlab enable
+
+
+12.  **Start servod and make sure the EC console works.**
+
+
+    * enter chroot with `cros_sdk --no-ns-pid`
+
+    * start servod
+
+                chroot > sudo servod -b $BOARD
+
+    * Check EC uart works.
+
+                chroot > dut-control ec_board
+
+13. **Debug Setup**
+
+
+    *   **Cr50 capabilities:** EC uart capability needs to always be accessible.
+        **Make sure UartGscTxECRx and all other capabilities are always.**
+
+            cr50 > ccd
+
+    *   **Make sure servod started using the CCD device**. Verify the ccd
+        serialname has the right format. Cr50 serialname should have the
+        format [0-9a-f]{8}-[0-9a-f]{8}
+
+            chroot > dut-control ccd_serialname
+
+        If the control doesn't exist or the serianame is wrong try to find
+        ccd serialname and start servod explicitly selecting it.
+
+        find serialname and use it to restart servod.
+
+            chroot > lsusb -vd 18d1:5014 | grep iSerial
+            chroot > sudo servod -b $BOARD -s $SERIALNAME
+
+
+### Final Checks
+
+ * All capabilities are Always
+
+                cr50 > ccd
+
+ * Testlab mode is enabled
+
+                cr50 > ccd testlab
+
+ * EC uart works
+
+                chroot > dut-control  ec_board
+---
 ## I Just Want to Disable Write Protect
 Cr50 has a couple of ways to remove write protect. The biggest difference in the
 process is whether or not you want to open the case and whether or not you need
@@ -204,8 +366,11 @@ It goes into a lot more detail.
 
                 AP > flashrom -p host --wp-disable
 
-[Setup CCD]: ./case_closed_debugging_cr50.md#CCD-Setup
-[sparkfun]: https://www.sparkfun.com/products/14746
-[SuzyQ]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/refs/heads/master/docs/ccd.md#suzyq-suzyqable
-[wp console command]: ./case_closed_debugging_cr50.md#WP-control
 [Disable SW WP]: ./case_closed_debugging_cr50.md#AP-Off
+[enter dev mode]: ./case_closed_debugging_cr50.md#enter-dev-mode
+[sparkfun]: https://www.sparkfun.com/products/14746
+[Setup CCD]: ./case_closed_debugging_cr50.md#CCD-Setup
+[SuzyQ]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/refs/heads/master/docs/ccd.md#suzyq-suzyqable
+[Type-C Servo V4]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/refs/heads/master/docs/servo_v4.md
+[wp console command]: ./case_closed_debugging_cr50.md#WP-control
+
