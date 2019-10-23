@@ -6,6 +6,7 @@
  */
 #include "charge_state.h"
 #include "driver/charger/rt946x.h"
+#include "hooks.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
 #include "ec_commands.h"
@@ -18,9 +19,6 @@
 #define LED_MASK_RED	MT6370_MASK_RGB_ISNK1DIM_EN
 #define LED_MASK_GREEN	MT6370_MASK_RGB_ISNK2DIM_EN
 #define LED_MASK_WHITE	MT6370_MASK_RGB_ISNK3DIM_EN
-
-#define LED_ON_LVL 0
-#define LED_OFF_LVL 1
 
 const int led_charge_lvl_1 = 5;
 const int led_charge_lvl_2 = 97;
@@ -65,12 +63,6 @@ static void led_set_color(int mask)
 	else
 		new_mask = mask;
 
-	mt6370_led_set_brightness(LED_MASK_RED, (mask & LED_MASK_RED) ?
-			LED_ON_LVL : LED_OFF_LVL);
-	mt6370_led_set_brightness(LED_MASK_GREEN, (mask & LED_MASK_GREEN) ?
-			LED_ON_LVL : LED_OFF_LVL);
-	mt6370_led_set_brightness(LED_MASK_WHITE, (mask & LED_MASK_WHITE) ?
-			LED_ON_LVL : LED_OFF_LVL);
 	mt6370_led_set_color(led_mask);
 }
 
@@ -139,3 +131,24 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 	return EC_SUCCESS;
 }
+
+static void kodama_led_init(void)
+{
+	const enum mt6370_led_dim_mode dim = MT6370_LED_DIM_MODE_PWM;
+	const enum mt6370_led_pwm_freq freq = MT6370_LED_PWM_FREQ1000;
+
+	mt6370_led_set_color(LED_MASK_RED | LED_MASK_GREEN | LED_MASK_WHITE);
+	mt6370_led_set_dim_mode(LED_RED, dim);
+	mt6370_led_set_dim_mode(LED_GREEN, dim);
+	mt6370_led_set_dim_mode(LED_WHITE, dim);
+	mt6370_led_set_pwm_frequency(LED_RED, freq);
+	mt6370_led_set_pwm_frequency(LED_GREEN, freq);
+	mt6370_led_set_pwm_frequency(LED_WHITE, freq);
+	mt6370_led_set_pwm_dim_duty(LED_RED, 12);
+	mt6370_led_set_pwm_dim_duty(LED_GREEN, 31);
+	mt6370_led_set_pwm_dim_duty(LED_WHITE, 12);
+	mt6370_led_set_brightness(LED_MASK_RED, 7);
+	mt6370_led_set_brightness(LED_MASK_GREEN, 7);
+	mt6370_led_set_brightness(LED_MASK_WHITE, 7);
+}
+DECLARE_HOOK(HOOK_INIT, kodama_led_init, HOOK_PRIO_DEFAULT);
