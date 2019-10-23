@@ -280,9 +280,9 @@ const struct fan_conf fan_conf_0 = {
 
 /* Default */
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 3100,
-	.rpm_start = 3100,
-	.rpm_max = 6900,
+	.rpm_min = 3200,
+	.rpm_start = 3200,
+	.rpm_max = 6500,
 };
 
 struct fan_t fans[FAN_CH_COUNT] = {
@@ -336,16 +336,16 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 const static struct ec_thermal_config thermal_a = {
 	.temp_host = {
 		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(75),
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(55),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
 	.temp_fan_off = C_TO_K(25),
-	.temp_fan_max = C_TO_K(50),
+	.temp_fan_max = C_TO_K(55),
 };
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
