@@ -385,7 +385,8 @@ int pd_tcpc_cc_nc(int port, int cc_volt, int cc_sel)
 	if (cc_config & CC_DISABLE_DTS)
 		nc = cc_volt >= pd_src_vnc[rp_index];
 	else
-		nc = cc_volt >= pd_src_vnc_dts[rp_index][cc_sel];
+		nc = cc_volt >= pd_src_vnc_dts[rp_index][
+				cc_config & CC_POLARITY ? !cc_sel : cc_sel];
 
 	return nc;
 }
@@ -411,7 +412,8 @@ int pd_tcpc_cc_ra(int port, int cc_volt, int cc_sel)
 	if (cc_config & CC_DISABLE_DTS)
 		ra = cc_volt < pd_src_rd_threshold[rp_index];
 	else
-		ra = cc_volt < pd_src_rd_threshold_dts[rp_index][cc_sel];
+		ra = cc_volt < pd_src_rd_threshold_dts[rp_index][
+				cc_config & CC_POLARITY ? !cc_sel : cc_sel];
 
 	return ra;
 }
