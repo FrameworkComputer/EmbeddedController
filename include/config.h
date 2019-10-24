@@ -2765,6 +2765,22 @@
  */
 #undef CONFIG_TEMP_CACHE_STALE_THRES
 
+/* Set minimum temperature for accelerometer calibration. */
+#undef CONFIG_ACCEL_CAL_MIN_TEMP
+
+/* Set maximum temperature for accelerometer calibration. */
+#undef CONFIG_ACCEL_CAL_MAX_TEMP
+
+/* Set threshold radius for using the Kasa algorithm in accelerometer bias
+ * calculation (g).
+ */
+#undef CONFIG_ACCEL_CAL_KASA_RADIUS_THRES
+
+/* Set threshold radius for using the Newton fit algorithm in accelerometer
+ * bias calculation (g).
+ */
+#undef CONFIG_ACCEL_CAL_NEWTON_RADIUS_THRES
+
 /* Include code to do online compass calibration */
 #undef CONFIG_MAG_CALIBRATE
 
@@ -5250,5 +5266,24 @@
 #if defined(CONFIG_ONLINE_CALIB) && !defined(CONFIG_FPU)
 #error "Online calibration requires CONFIG_FPU"
 #endif
+
+/* Set default values for accelerometer calibration if not defined. */
+#ifdef CONFIG_ONLINE_CALIB
+#ifndef CONFIG_ACCEL_CAL_MIN_TEMP
+#define CONFIG_ACCEL_CAL_MIN_TEMP 0.0f
+#endif
+
+#ifndef CONFIG_ACCEL_CAL_MAX_TEMP
+#define CONFIG_ACCEL_CAL_MAX_TEMP 45.0f
+#endif
+
+#ifndef CONFIG_ACCEL_CAL_KASA_RADIUS_THRES
+#define CONFIG_ACCEL_CAL_KASA_RADIUS_THRES 0.001f
+#endif
+
+#ifndef CONFIG_ACCEL_CAL_NEWTON_RADIUS_THRES
+#define CONFIG_ACCEL_CAL_NEWTON_RADIUS_THRES 0.001f
+#endif
+#endif /* CONFIG_ONLINE_CALIB */
 
 #endif  /* __CROS_EC_CONFIG_H */
