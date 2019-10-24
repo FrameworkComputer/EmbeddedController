@@ -465,7 +465,7 @@ static struct als_drv_data_t g_tcs3400_data = {
 };
 
 static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
-	.rgb_cal[X] = {
+	.calibration.rgb_cal[X] = {
 		.offset = 15, /* 15.65956688 */
 		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-0.04592318),
 		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0.06756278),
@@ -476,7 +476,7 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 			.cover_scale = ALS_CHANNEL_SCALE(0.6)
 		}
 	},
-	.rgb_cal[Y] = {
+	.calibration.rgb_cal[Y] = {
 		.offset = 8, /* 8.75943638 */
 		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-0.07786953),
 		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0.18940035),
@@ -487,7 +487,7 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 			.cover_scale = ALS_CHANNEL_SCALE(1.0)
 		}
 	},
-	.rgb_cal[Z] = {
+	.calibration.rgb_cal[Z] = {
 		.offset = -21, /* -21.92665481 */
 		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-0.18981975),
 		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0.5351057),
@@ -498,6 +498,7 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 			.cover_scale = ALS_CHANNEL_SCALE(1.5)
 		}
 	},
+	.calibration.irt = INT_TO_FP(1),
 	.saturation.again = TCS_DEFAULT_AGAIN,
 	.saturation.atime = TCS_DEFAULT_ATIME,
 };

@@ -192,27 +192,28 @@ static struct als_drv_data_t g_tcs3400_data = {
 };
 
 static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
-	.rgb_cal[X] = {
+	.calibration.rgb_cal[X] = {
 		.offset = 0,
 		.scale = {
 			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kr */
 			.cover_scale = ALS_CHANNEL_SCALE(1.0)
 		},
 	},
-	.rgb_cal[Y] = {
+	.calibration.rgb_cal[Y] = {
 		.offset = 0,
 		.scale = {
 			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kg */
 			.cover_scale = ALS_CHANNEL_SCALE(1.0)
 		},
 	},
-	.rgb_cal[Z] = {
+	.calibration.rgb_cal[Z] = {
 		.offset = 0,
 		.scale = {
 			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kb */
 			.cover_scale = ALS_CHANNEL_SCALE(1.0)
 		},
 	},
+	.calibration.irt = INT_TO_FP(1),
 	.saturation.again = TCS_DEFAULT_AGAIN,
 	.saturation.atime = TCS_DEFAULT_ATIME,
 };
