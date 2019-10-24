@@ -211,19 +211,23 @@ void lpc_s3_resume_clear_masks(void)
 
 /*
  * Clear events that are not part of SCI/SMI mask so as to prevent
- * premature wakes on next suspend. This is needed because A.P only queries
- * SCI events after resume. We do not clear SCI/SMI events as they help
- * kernel identify the wake reason on resume.
- * For events that are not set in SCI mask but are part of WAKE(S0ix/S3)
- * masks, kernel drivers should have other ways (physical/virtual interrupt)
- * pin to identify when they trigger wakes.
+ * premature wakes on next suspend(S0ix). This is not needed on
+ * suspending to S3 as coreboot clears all events on path to suspend.
+ *
+ * We preserve events that are part of SCI/SMI mask to help kernel
+ * identify the wake reason on resume. For events that are not set
+ * in SCI mask but are part of S0iX WAKE masks, kernel drivers should
+ * have other ways (physical/virtual interrupt) pin to identify when
+ * they trigger wakes.
  */
+#ifdef CONFIG_POWER_S0IX
 void clear_non_sci_events(void)
 {
 	host_clear_events(~lpc_get_host_event_mask(LPC_HOST_EVENT_SCI) &
 			  ~lpc_get_host_event_mask(LPC_HOST_EVENT_SMI));
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, clear_non_sci_events, HOOK_PRIO_DEFAULT);
+#endif
 
 #endif
 
