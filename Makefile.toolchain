@@ -62,7 +62,6 @@ CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD=$(EMPTY) \
                                -DTEST_TASKFILE=$(PROJECT).tasklist,) \
             $(if $(CTS_MODULE), $(CFLAGS_CTS)) \
             $(if $(EMU_BUILD),-DEMU_BUILD=$(EMPTY)) \
-            $(if $($(PROJECT)-scale),-DTEST_TIME_SCALE=$($(PROJECT)-scale)) \
             -DTEST_$(PROJECT)=$(EMPTY) -DTEST_$(UC_PROJECT)=$(EMPTY) \
             $(if $(TEST_ASAN),-fsanitize=address) \
             $(if $(TEST_MSAN),-fsanitize=memory) \

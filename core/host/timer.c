@@ -7,32 +7,11 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <time.h>
 
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
-
-/*
- * For test that need to test for longer than the default time limit,
- * adjust its time scale in test/build.mk by specifying
- * <test_name>-scale=<new scale>.
- */
-#ifndef TEST_TIME_SCALE
-#define TEST_TIME_SCALE 1
-#endif
-
-/*
- * To increase the stability of timing sensitive unit tests, slow
- * down the time by 10x. This only affects active run time (including
- * udelay() calls). To an unit test, the only effect is increased code
- * execution speed. However, this comes at the cost of prolonged test
- * run time for tests that use udelay(). Fortunately, most of our tests
- * use usleep/msleep, and for tests that use udelay(), we can scale
- * the time as mentioned above.
- */
-#define TEST_TIME_SLOW_DOWN 10
 
 static timestamp_t boot_time;
 static int time_set;

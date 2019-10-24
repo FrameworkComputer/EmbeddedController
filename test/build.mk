@@ -109,7 +109,6 @@ fpsensor-y=fpsensor.o
 hooks-y=hooks.o
 host_command-y=host_command.o
 inductive_charging-y=inductive_charging.o
-interrupt-scale=10
 interrupt-y=interrupt.o
 is_enabled-y=is_enabled.o
 kb_8042-y=kb_8042.o
