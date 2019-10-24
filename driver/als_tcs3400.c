@@ -273,7 +273,10 @@ static void tcs3400_translate_to_xyz(struct motion_sensor_t *s,
 	int i;
 
 	/* IR removal */
-	ir = (crgb_data[1] + crgb_data[2] + crgb_data[3] - crgb_data[0]) / 2;
+	ir = FP_TO_INT(fp_mul(INT_TO_FP(crgb_data[1] + crgb_data[2] +
+			      crgb_data[3] - crgb_data[0]),
+			      rgb_drv_data->calibration.irt) / 2);
+
 	for (i = 0; i < ARRAY_SIZE(crgb_prime); i++) {
 		if (crgb_data[i] < ir)
 			crgb_prime[i] = 0;
@@ -287,7 +290,8 @@ static void tcs3400_translate_to_xyz(struct motion_sensor_t *s,
 
 	/* regression fit to XYZ space */
 	for (i = 0; i < 3; i++) {
-		const struct rgb_calibration_t *p = &rgb_drv_data->rgb_cal[i];
+		const struct rgb_channel_calibration_t *p =
+				&rgb_drv_data->calibration.rgb_cal[i];
 
 		xyz_data[i] = p->offset + FP_TO_INT(
 			(fp_inter_t)p->coeff[RED_CRGB_IDX] *
@@ -332,7 +336,7 @@ static void tcs3400_process_raw_data(struct motion_sensor_t *s,
 		/* rgb data at index 1, 2, and 3 owned by rgb driver, not ALS */
 		if (i > 0) {
 			struct als_channel_scale_t *csp =
-				&rgb_drv_data->rgb_cal[i-1].scale;
+				&rgb_drv_data->calibration.rgb_cal[i-1].scale;
 			k_channel_scale = csp->k_channel_scale;
 			cover_scale = csp->cover_scale;
 		}
@@ -531,7 +535,8 @@ static int tcs3400_rgb_get_scale(const struct motion_sensor_t *s,
 				 uint16_t *scale,
 				 int16_t *temp)
 {
-	struct rgb_calibration_t *rgb_cal = TCS3400_RGB_DRV_DATA(s)->rgb_cal;
+	struct rgb_channel_calibration_t *rgb_cal =
+			TCS3400_RGB_DRV_DATA(s)->calibration.rgb_cal;
 
 	scale[X] = rgb_cal[RED_RGB_IDX].scale.k_channel_scale;
 	scale[Y] = rgb_cal[GREEN_RGB_IDX].scale.k_channel_scale;
@@ -544,7 +549,8 @@ static int tcs3400_rgb_set_scale(const struct motion_sensor_t *s,
 				 const uint16_t *scale,
 				 int16_t temp)
 {
-	struct rgb_calibration_t *rgb_cal = TCS3400_RGB_DRV_DATA(s)->rgb_cal;
+	struct rgb_channel_calibration_t *rgb_cal =
+			TCS3400_RGB_DRV_DATA(s)->calibration.rgb_cal;
 
 	rgb_cal[RED_RGB_IDX].scale.k_channel_scale = scale[X];
 	rgb_cal[GREEN_RGB_IDX].scale.k_channel_scale = scale[Y];
@@ -556,9 +562,9 @@ static int tcs3400_rgb_get_offset(const struct motion_sensor_t *s,
 				  int16_t *offset,
 				  int16_t *temp)
 {
-	offset[X] = TCS3400_RGB_DRV_DATA(s)->rgb_cal[X].offset;
-	offset[Y] = TCS3400_RGB_DRV_DATA(s)->rgb_cal[Y].offset;
-	offset[Z] = TCS3400_RGB_DRV_DATA(s)->rgb_cal[Z].offset;
+	offset[X] = TCS3400_RGB_DRV_DATA(s)->calibration.rgb_cal[X].offset;
+	offset[Y] = TCS3400_RGB_DRV_DATA(s)->calibration.rgb_cal[Y].offset;
+	offset[Z] = TCS3400_RGB_DRV_DATA(s)->calibration.rgb_cal[Z].offset;
 	*temp = EC_MOTION_SENSE_INVALID_CALIB_TEMP;
 	return EC_SUCCESS;
 }
