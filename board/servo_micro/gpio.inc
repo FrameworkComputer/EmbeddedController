@@ -28,8 +28,6 @@ GPIO(JTAG_BUFIN_EN_L,		PIN(F, 1), GPIO_OUT_LOW)
 
 /* Inputs */
 GPIO(SERVO_JTAG_TMS,		PIN(A, 4), GPIO_INPUT)
-GPIO(UART3_TX_SERVO_JTAG_TCK,	PIN(A, 0), GPIO_ALTERNATE)
-GPIO(UART3_RX_JTAG_BUFFER_TO_SERVO_TDO,		PIN(A, 1), GPIO_ALTERNATE)
 GPIO(SERVO_JTAG_TDO_BUFFER_EN,	PIN(A, 6), GPIO_OUT_HIGH)
 GPIO(SERVO_JTAG_TDI,		PIN(A, 7), GPIO_INPUT)
 
@@ -45,6 +43,18 @@ GPIO(SPI_MOSI,			PIN(B, 15), GPIO_INPUT)
 /* initialized. This will avoid driving the lines unintentionally.*/
 GPIO(MASTER_I2C_SCL,		PIN(B, 8), GPIO_INPUT)
 GPIO(MASTER_I2C_SDA,		PIN(B, 9), GPIO_INPUT)
+
+/* These pins are used for USART and are set to alternate mode below */
+GPIO(USART2_SERVO_TX_DUT_RX,    PIN(A, 2),  GPIO_INPUT)
+GPIO(USART2_SERVO_RX_DUT_TX,    PIN(A, 3),  GPIO_INPUT)
+GPIO(USART3_SERVO_TX_DUT_RX,    PIN(B, 10), GPIO_INPUT)
+GPIO(USART3_SERVO_RX_DUT_TX,    PIN(B, 11), GPIO_INPUT)
+/*
+ * The USART4 (UART3) names are already in use by dut-controls, so they can't
+ * be easily updated. They are aliased in board.h though.
+ */
+GPIO(UART3_TX_SERVO_JTAG_TCK,              PIN(A, 0),  GPIO_INPUT)
+GPIO(UART3_RX_JTAG_BUFFER_TO_SERVO_TDO,    PIN(A, 1),  GPIO_INPUT)
 
 /* Unimplemented signals since we are not an EC */
 UNIMPLEMENTED(ENTERING_RW)

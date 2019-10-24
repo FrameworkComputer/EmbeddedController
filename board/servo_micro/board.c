@@ -236,6 +236,95 @@ DECLARE_CONSOLE_COMMAND(baud, command_uart_baud,
 			"Set baud rate on uart");
 
 /******************************************************************************
+ * Hold the usart pins low while disabling it, or return it to normal.
+ */
+static int command_hold_usart_low(int argc, char **argv)
+{
+	/* Each bit represents if that port is being held low */
+	static int usart_status;
+
+	const struct usart_config *usart;
+	int usart_mask;
+	enum gpio_signal tx, rx;
+
+	if (argc > 3 || argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!strcasecmp(argv[1], "usart2")) {
+		usart = &usart2;
+		usart_mask = 1 << 2;
+		tx = GPIO_USART2_SERVO_TX_DUT_RX;
+		rx = GPIO_USART2_SERVO_RX_DUT_TX;
+	} else if (!strcasecmp(argv[1], "usart3")) {
+		usart = &usart3;
+		usart_mask = 1 << 3;
+		tx = GPIO_USART3_SERVO_TX_DUT_RX;
+		rx = GPIO_USART3_SERVO_RX_DUT_TX;
+	} else if (!strcasecmp(argv[1], "usart4")) {
+		usart = &usart4;
+		usart_mask = 1 << 4;
+		tx = GPIO_USART4_SERVO_TX_DUT_RX;
+		rx = GPIO_USART4_SERVO_RX_DUT_TX;
+	} else {
+		return EC_ERROR_PARAM1;
+	}
+
+	/* Updating the status of this port */
+	if (argc == 3) {
+		char *e;
+		const int hold_low = strtoi(argv[2], &e, 0);
+
+		if (*e || (hold_low < 0) || (hold_low > 1))
+			return EC_ERROR_PARAM2;
+
+		if (!!(usart_status & usart_mask) == hold_low) {
+			/* Do nothing since there is no change */
+		} else if (hold_low) {
+			/*
+			 * Only one USART can be held low at a time, because
+			 * re-initializing one USART will pull all of the USART
+			 * GPIO pins back into alternate mode.
+			 */
+			if (usart_status)
+				return EC_ERROR_BUSY;
+
+			/*
+			 * Shutdown the USB uart,
+			 * turn off alternate mode, then set the RX line
+			 * pin to output low to enter UART programming mode.
+			 */
+			usart_shutdown(usart);
+			gpio_config_pin(MODULE_USART, rx, 0);
+			gpio_config_pin(MODULE_USART, tx, 0);
+			gpio_set_flags(rx, GPIO_OUT_LOW);
+
+			usart_status |= usart_mask;
+		} else {
+			/*
+			 * This will reset the alternate mode of the
+			 * GPIO pins appropriately and restart USB UART
+			 */
+			usart_init(usart);
+
+			/*
+			 * Since only one USART can be held low at a time, the
+			 * uart_status will always be 0 after this call.
+			 */
+			usart_status = 0;
+		}
+	}
+
+	/* Print status for get and set case. */
+	ccprintf("USART status: %s\n",
+			usart_status & usart_mask ? "held low" : "normal");
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(hold_usart_low, command_hold_usart_low,
+			"usart[2|3|4] [0|1]?",
+			"Get/set the hold-low state for usart port");
+
+/******************************************************************************
  * Commands for sending the magic non-I2C handshake over I2C bus wires to an
  * ITE IT8320 EC chip to enable direct firmware update (DFU) over I2C mode.
  */
@@ -643,7 +732,5 @@ static void board_init(void)
 	gpio_set_level(GPIO_JTAG_BUFIN_EN_L, 0);
 	gpio_set_level(GPIO_SERVO_JTAG_TDO_BUFFER_EN, 1);
 	gpio_set_level(GPIO_SERVO_JTAG_TDO_SEL, 1);
-	gpio_set_flags(GPIO_UART3_RX_JTAG_BUFFER_TO_SERVO_TDO, GPIO_ALTERNATE);
-	gpio_set_flags(GPIO_UART3_TX_SERVO_JTAG_TCK, GPIO_ALTERNATE);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
