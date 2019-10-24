@@ -178,14 +178,6 @@ enum lis2dw12_odr {
 #define LIS2DW12_ODR_MIN_VAL		12500
 #define LIS2DW12_ODR_MAX_VAL		1600000
 
-/* ODR reg value from selected data rate in mHz. */
-#define LIS2DW12_ODR_TO_REG(_odr) \
-	(__fls(_odr / LIS2DW12_ODR_MIN_VAL) + LIS2DW12_ODR_12HZ_VAL)
-
-/* Normalized ODR value from selected data rate in mHz. */
-#define LIS2DW12_ODR_TO_NORMALIZE(_odr) \
-	(LIS2DW12_ODR_MIN_VAL << (__fls(_odr / LIS2DW12_ODR_MIN_VAL)))
-
 /* Full scale range registers. */
 #define LIS2DW12_FS_ADDR		LIS2DW12_CTRL6_ADDR
 #define LIS2DW12_FS_MASK		0x30

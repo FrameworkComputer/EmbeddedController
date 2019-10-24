@@ -356,6 +356,28 @@ static int get_range(const struct motion_sensor_t *s)
 	return data->base.range;
 }
 
+/**
+ * ODR reg value from selected data rate in mHz.
+ */
+static uint8_t odr_to_reg(int odr)
+{
+	if (odr <= LIS2DW12_ODR_MIN_VAL)
+		return LIS2DW12_ODR_12HZ_VAL;
+
+	return (__fls(odr / LIS2DW12_ODR_MIN_VAL) + LIS2DW12_ODR_12HZ_VAL);
+}
+
+/**
+ * Normalized ODR value from selected data rate in mHz.
+ */
+static int odr_to_normalize(int odr)
+{
+	if (odr <= LIS2DW12_ODR_MIN_VAL)
+		return LIS2DW12_ODR_MIN_VAL;
+
+	return (LIS2DW12_ODR_MIN_VAL << (__fls(odr / LIS2DW12_ODR_MIN_VAL)));
+}
+
 static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 {
 	int ret, normalized_rate;
@@ -381,8 +403,8 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		goto unlock_rate;
 	}
 
-	reg_val = LIS2DW12_ODR_TO_REG(rate);
-	normalized_rate = LIS2DW12_ODR_TO_NORMALIZE(rate);
+	reg_val = odr_to_reg(rate);
+	normalized_rate = odr_to_normalize(rate);
 
 	if (rnd && (normalized_rate < rate)) {
 		reg_val++;
