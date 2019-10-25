@@ -44,11 +44,6 @@ GPIO_INT(VOLUME_UP_L,      PIN(I, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_inter
 GPIO_INT(ESPI_RESET_L,    PIN(D, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, espi_reset_pin_asserted_interrupt) /* eSPI_reset# */
 #endif
 
-#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
-GPIO(SLP_S3_L,            PIN(I, 4), GPIO_INPUT)
-GPIO(SLP_S4_L,            PIN(I, 5), GPIO_INPUT)
-#endif
-
 GPIO(SYS_RESET_L,         PIN(D, 1), GPIO_ODR_HIGH)  /* SYS_RST_ODL */
 GPIO(PCH_WAKE_L,          PIN(D, 5), GPIO_ODR_HIGH)  /* EC_PCH_WAKE_ODL */
 GPIO(PCH_PWRBTN_L,        PIN(B, 6), GPIO_ODR_HIGH)  /* EC_PCH_PWR_BTN_ODL */

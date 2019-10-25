@@ -159,12 +159,6 @@ GPIO(NC_PMIC_EN,		PIN(H, 3), GPIO_INPUT)
 /* Used if Base EC is present */
 GPIO(NC_EC_BASE_DET,		PIN(I, 3), GPIO_INPUT)
 
-/* Used based on configs */
-#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
-GPIO(SLP_S3_L,	PIN(F, 2), GPIO_INPUT)
-GPIO(SLP_S4_L,	PIN(F, 3), GPIO_INPUT)
-#endif
-
 #ifndef CONFIG_HOSTCMD_ESPI
 GPIO_INT(ESPI_RESET_L,	PIN(D, 2), GPIO_INPUT)
 #endif
