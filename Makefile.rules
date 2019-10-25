@@ -676,6 +676,7 @@ help:
 	@echo "  proj-<boardname>     - Build a single board (similar to 'all BOARD=boardname')"
 	@echo "  savesizes            - Save the filesizes of currently built boards for comparison"
 	@echo "  newsizes             - Compare previously saved filesizes against new sizes"
+	@echo "  utils                - Build all host utilities"
 	@echo ""
 	@echo "  tests [BOARD=]       - Build all unit tests for a specific board"
 	@echo "  hosttests            - Build all host unit tests"
