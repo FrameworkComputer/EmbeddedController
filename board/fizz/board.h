@@ -68,12 +68,8 @@
 #define CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
 #define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_HOSTCMD_ESPI
-/*
- * Eve and Poppy all have wires from GPIO to PCH but
- * CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS is defined. So, those GPIOs are not used
- * by EC.
- */
-#define CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
+#define CONFIG_HOSTCMD_ESPI_VW_SLP_S3
+#define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 
 /* Charger */
 #define CONFIG_CHARGE_MANAGER

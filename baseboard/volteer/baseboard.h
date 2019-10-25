@@ -38,6 +38,7 @@
 
 /* Host communication */
 #define CONFIG_HOSTCMD_ESPI
+#define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 
 /* Chipset config */
 #define CONFIG_CHIPSET_TIGERLAKE

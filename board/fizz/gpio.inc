@@ -13,9 +13,10 @@ GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH,			extpower_interrupt)
 GPIO_INT(POWER_BUTTON_L,	PIN(0, 4), GPIO_INT_BOTH | GPIO_PULL_UP,	power_button_interrupt)	/* MECH_PWR_BTN_ODL */
 
 GPIO_INT(PCH_SLP_S0_L,		PIN(7, 5), GPIO_INT_BOTH,			power_signal_interrupt)
-/* Use VW signals instead of GPIOs */
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
 GPIO_INT(PCH_SLP_S3_L,		PIN(7, 3), GPIO_INT_BOTH,			power_signal_interrupt)
+#endif
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 GPIO_INT(PCH_SLP_S4_L,		PIN(8, 6), GPIO_INT_BOTH,			power_signal_interrupt)
 #endif
 GPIO_INT(PCH_SLP_SUS_L,		PIN(6, 2), GPIO_INT_BOTH,			power_signal_interrupt)

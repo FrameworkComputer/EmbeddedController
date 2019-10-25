@@ -18,8 +18,10 @@ GPIO_INT(SLP_SUS_L,		PIN(C, 3), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(ALL_SYS_PWRGD,		PIN(F, 0), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(RSMRST_L_PGOOD,	PIN(F, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S0_L,		PIN(G, 6), GPIO_INT_BOTH, power_signal_interrupt)
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
 GPIO_INT(PCH_SLP_S3_L,		PIN(F, 2), GPIO_INT_BOTH, power_signal_interrupt)
+#endif
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 GPIO_INT(PCH_SLP_S4_L,		PIN(F, 3), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
 

@@ -28,7 +28,8 @@
 #define CONFIG_I2C
 /* Features of eSPI */
 #define CONFIG_HOSTCMD_ESPI
-#define CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS /* Use VW signals instead of GPIOs */
+#define CONFIG_HOSTCMD_ESPI_VW_SLP_S3
+#define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 
 /* Optional features */
 #define CONFIG_ENABLE_JTAG_SELECTION

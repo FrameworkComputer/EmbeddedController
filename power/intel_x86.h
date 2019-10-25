@@ -27,11 +27,14 @@
 #endif
 
 /* GPIO for power signal */
-#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
+#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
 #define SLP_S3_SIGNAL_L VW_SLP_S3_L
-#define SLP_S4_SIGNAL_L VW_SLP_S4_L
 #else
 #define SLP_S3_SIGNAL_L GPIO_PCH_SLP_S3_L
+#endif
+#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S4
+#define SLP_S4_SIGNAL_L VW_SLP_S4_L
+#else
 #define SLP_S4_SIGNAL_L GPIO_PCH_SLP_S4_L
 #endif
 

@@ -20,8 +20,10 @@ GPIO_INT(UART1_RX,        PIN(B, 0), GPIO_INT_BOTH, uart_deepsleep_interrupt) /*
 
 /* Power sequencing interrupts */
 GPIO_INT(SLP_S0_L,        PIN(E, 4), GPIO_INT_BOTH, power_signal_interrupt)
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
 GPIO_INT(SLP_S3_L,        PIN(I, 4), GPIO_INT_BOTH, power_signal_interrupt)
+#endif
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 GPIO_INT(SLP_S4_L,        PIN(I, 5), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
 GPIO_INT(SLP_SUS_L,       PIN(G, 2), GPIO_INT_BOTH, power_signal_interrupt)
