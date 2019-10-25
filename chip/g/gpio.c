@@ -123,7 +123,8 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	/* No way to trigger on both rising and falling edges, darn it. */
 }
 
-void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
+void gpio_set_alternate_function(uint32_t port, uint32_t mask,
+				enum gpio_alternate_func func)
 {
 	/* This HW feature is not present in the Cr50 ARM core */
 }

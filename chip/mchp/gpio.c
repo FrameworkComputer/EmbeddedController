@@ -49,7 +49,8 @@ static const struct gpio_int_mapping int_map[6] = {
  * NOTE: GCC __builtin_ffs(val) returns (index + 1) of least significant
  * 1-bit of val or if val == 0 returns 0
  */
-void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
+void gpio_set_alternate_function(uint32_t port, uint32_t mask,
+				enum gpio_alternate_func func)
 {
 	int i;
 	uint32_t val;
@@ -58,8 +59,8 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 		i = __builtin_ffs(mask) - 1;
 		val = MCHP_GPIO_CTL(port, i);
 		val &= ~(BIT(12) | BIT(13));
-		/* mux_control = 0 indicates GPIO */
-		if (func > 0)
+		/* mux_control = DEFAULT, indicates GPIO */
+		if (func > GPIO_ALT_FUNC_DEFAULT)
 			val |= (func & 0x3) << 12;
 		MCHP_GPIO_CTL(port, i) = val;
 		mask &= ~BIT(i);
@@ -325,7 +326,8 @@ void gpio_pre_init(void)
 		gpio_set_flags_by_mask(g->port, g->mask, flags);
 
 		/* Use as GPIO, not alternate function */
-		gpio_set_alternate_function(g->port, g->mask, -1);
+		gpio_set_alternate_function(g->port, g->mask,
+					GPIO_ALT_FUNC_NONE);
 	}
 }
 

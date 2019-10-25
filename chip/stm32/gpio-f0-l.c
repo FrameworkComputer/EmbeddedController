@@ -132,14 +132,18 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	/* Interrupt is enabled by gpio_enable_interrupt() */
 }
 
-void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
+void gpio_set_alternate_function(uint32_t port, uint32_t mask,
+				enum gpio_alternate_func func)
 {
+	/* Ensure that the func parameter isn't overflowed */
+	BUILD_ASSERT((int) MODULE_COUNT <= (int) GPIO_ALT_FUNC_MAX);
+
 	int bit;
 	uint32_t half;
 	uint32_t afr;
 	uint32_t moder = STM32_GPIO_MODER(port);
 
-	if (func < 0) {
+	if (func == GPIO_ALT_FUNC_NONE) {
 		/* Return to normal GPIO function, defaulting to input. */
 		while (mask) {
 			bit = get_next_bit(&mask);

@@ -882,7 +882,8 @@ int keyboard_factory_test_scan(void)
 		port = keyboard_factory_scan_pins[i][0];
 		id = keyboard_factory_scan_pins[i][1];
 
-		gpio_set_alternate_function(port, 1 << id, -1);
+		gpio_set_alternate_function(port, 1 << id,
+					GPIO_ALT_FUNC_NONE);
 		gpio_set_flags_by_mask(port, 1 << id,
 			GPIO_INPUT | GPIO_PULL_UP);
 	}

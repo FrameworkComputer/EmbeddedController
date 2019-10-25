@@ -368,21 +368,28 @@ static void gpio_1p8v_3p3v_sel_by_pin(uint8_t port, uint8_t pin, int sel_1p8v)
 		*reg_1p8v &= ~sel;
 }
 
-void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
+static inline void it83xx_set_alt_func(uint32_t port, uint32_t pin,
+				enum gpio_alternate_func func)
+{
+	/*
+	 * If func is not ALT_FUNC_NONE, set for alternate function.
+	 * Otherwise, turn the pin into an input as it's default.
+	 */
+	if (func != GPIO_ALT_FUNC_NONE)
+		IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) &= ~0xc0;
+	else
+		IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) =
+			(IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) | 0x80) & ~0x40;
+}
+void gpio_set_alternate_function(uint32_t port, uint32_t mask,
+				enum gpio_alternate_func func)
 {
 	uint32_t pin = 0;
 
 	/* For each bit high in the mask, set that pin to use alt. func. */
 	while (mask > 0) {
-		/*
-		 * If func is non-negative, set for alternate function.
-		 * Otherwise, turn the pin into an input as it's default.
-		 */
-		if ((mask & 1) && func >= 0)
-			IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) &= ~0xc0;
-		else if ((mask & 1) && func < 0)
-			IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) =
-			(IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) | 0x80) & ~0x40;
+		if (mask & 1)
+			it83xx_set_alt_func(port, pin, func);
 
 		pin++;
 		mask >>= 1;

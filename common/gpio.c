@@ -18,7 +18,7 @@ struct gpio_alt_func {
 	uint8_t module_id;
 
 	/* Alternate function number */
-	uint8_t func;
+	enum gpio_alternate_func func;
 
 	/* Port base address */
 	uint32_t port;
@@ -75,8 +75,8 @@ static int gpio_config_pins(enum module_id id, uint32_t port, uint32_t pin_mask,
 					af->port, (af->mask & pin_mask),
 					enable ? af->flags : GPIO_INPUT);
 			gpio_set_alternate_function(af->port,
-						    (af->mask & pin_mask),
-						    enable ? af->func : -1);
+				    (af->mask & pin_mask),
+				    enable ? af->func : GPIO_ALT_FUNC_NONE);
 			rv = EC_SUCCESS;
 			/* We're done here if we were just setting one port. */
 			if (port != GPIO_CONFIG_ALL_PORTS)
@@ -128,7 +128,7 @@ void gpio_reset(enum gpio_signal signal)
 	const struct gpio_info *g = gpio_list + signal;
 
 	gpio_set_flags_by_mask(g->port, g->mask, g->flags);
-	gpio_set_alternate_function(g->port, g->mask, -1);
+	gpio_set_alternate_function(g->port, g->mask, GPIO_ALT_FUNC_NONE);
 }
 
 const char *gpio_get_name(enum gpio_signal signal)

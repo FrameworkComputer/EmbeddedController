@@ -113,7 +113,8 @@ static uint8_t gpio_is_alt_sel(uint8_t port, uint8_t bit)
 }
 #endif
 
-static int gpio_alt_sel(uint8_t port, uint8_t bit, int8_t func)
+static int gpio_alt_sel(uint8_t port, uint8_t bit,
+			enum gpio_alternate_func func)
 {
 	struct gpio_alt_map const *map;
 
@@ -124,10 +125,10 @@ static int gpio_alt_sel(uint8_t port, uint8_t bit, int8_t func)
 			uint8_t alt_mask = 1 << map->alt.bit;
 
 			/*
-			 * func < 0          -> GPIO functionality
+			 * func < GPIO_ALT_FUNC_DEFAULT -> GPIO functionality
 			 * map->alt.inverted -> Set DEVALT bit for GPIO
 			 */
-			if ((func < 0) ^ map->alt.inverted)
+			if ((func < GPIO_ALT_FUNC_DEFAULT) ^ map->alt.inverted)
 				NPCX_DEVALT(map->alt.group) &= ~alt_mask;
 			else
 				NPCX_DEVALT(map->alt.group) |=  alt_mask;
@@ -136,7 +137,7 @@ static int gpio_alt_sel(uint8_t port, uint8_t bit, int8_t func)
 		}
 	}
 
-	if (func > 0)
+	if (func > GPIO_ALT_FUNC_DEFAULT)
 		CPRINTS("Warn! No alter func in port%d, pin%d", port, bit);
 
 	return -1;
@@ -306,7 +307,8 @@ BUILD_ASSERT(ARRAY_SIZE(gpio_lvol_table[0].lvol_gpio) == 8);
 /*****************************************************************************/
 /* IC specific low-level driver */
 
-void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
+void gpio_set_alternate_function(uint32_t port, uint32_t mask,
+				enum gpio_alternate_func func)
 {
 	/* Enable alternative pins by func*/
 	int pin;
@@ -583,7 +585,8 @@ void gpio_pre_init(void)
 		 * configured as a GPIO, and not left in its default state,
 		 * which may or may not be as a GPIO.
 		 */
-		gpio_set_alternate_function(g->port, g->mask, -1);
+		gpio_set_alternate_function(g->port, g->mask,
+					GPIO_ALT_FUNC_NONE);
 	}
 
 	/* The bypass of low voltage IOs for better power consumption */

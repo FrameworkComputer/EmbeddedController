@@ -23,20 +23,21 @@
 /* 0-terminated list of GPIO base addresses */
 static mxc_gpio_regs_t *gpio_bases[] = {MXC_GPIO0, 0};
 
-void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
+void gpio_set_alternate_function(uint32_t port, uint32_t mask,
+			enum gpio_alternate_func func)
 {
 	mxc_gpio_regs_t *gpio = MXC_GPIO_GET_GPIO(port);
 
 	switch (func) {
-	case 1:
+	case GPIO_ALT_FUNC_1:
 		gpio->en_clr = mask;
 		gpio->en1_clr = mask;
 		break;
-	case 2:
+	case GPIO_ALT_FUNC_2:
 		gpio->en_clr = mask;
 		gpio->en1_set = mask;
 		break;
-	case 3:
+	case GPIO_ALT_FUNC_3:
 		gpio->en_set = mask;
 		gpio->en1_set = mask;
 		break;
@@ -167,7 +168,8 @@ void gpio_pre_init(void)
 			continue;
 
 		/* Use as GPIO, not alternate function */
-		gpio_set_alternate_function(g->port, g->mask, -1);
+		gpio_set_alternate_function(g->port, g->mask,
+					GPIO_ALT_FUNC_NONE);
 
 		/* Set up GPIO based on flags */
 		gpio_set_flags_by_mask(g->port, g->mask, flags);

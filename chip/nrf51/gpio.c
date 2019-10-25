@@ -53,7 +53,8 @@ volatile uint32_t * const nrf51_alt_funcs[] = {
 const unsigned int nrf51_alt_func_count = ARRAY_SIZE(nrf51_alt_funcs);
 
 /* Make sure the function table and defines stay in sync */
-BUILD_ASSERT(NRF51_MAX_ALT_FUNCS == ARRAY_SIZE(nrf51_alt_funcs));
+BUILD_ASSERT(ARRAY_SIZE(nrf51_alt_funcs) == NRF51_MAX_ALT_FUNCS &&
+	NRF51_MAX_ALT_FUNCS <= GPIO_ALT_FUNC_MAX);
 
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
@@ -160,16 +161,18 @@ void gpio_pre_init(void)
  * NRF51 doesn't have an alternate function table.
  * Use the pin select registers in place of the function number.
  */
-void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
+void gpio_set_alternate_function(uint32_t port, uint32_t mask,
+				enum gpio_alternate_func func)
 {
 	uint32_t bit = GPIO_MASK_TO_NUM(mask);
 
 	ASSERT((~mask & BIT(bit)) == 0); /* Only one bit set. */
 	ASSERT(port == GPIO_0);
-	ASSERT((func >= 0 && func < nrf51_alt_func_count) || func == -1);
+	ASSERT((func >= GPIO_ALT_FUNC_DEFAULT && func < nrf51_alt_func_count) ||
+		func == GPIO_ALT_FUNC_NONE);
 
 	/* Remove the previous setting(s) */
-	if (func == -1) {
+	if (func == GPIO_ALT_FUNC_NONE) {
 		int i;
 		for (i = 0; i < nrf51_alt_func_count; i++) {
 			if (*(nrf51_alt_funcs[i]) == bit)
