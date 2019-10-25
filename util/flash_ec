@@ -163,6 +163,8 @@ DEFINE_boolean raiden "${FLAGS_FALSE}" \
 DEFINE_string read "" "Pathname of the file to store EC firmware image."
 DEFINE_boolean ro "${FLAGS_FALSE}" \
 	"Write only the read-only partition"
+DEFINE_boolean servo_micro_uart_rx_rework "${FLAGS_FALSE}" \
+	"The servo micro for flashing has b/143163043#comment3 rework"
 DEFINE_integer timeout 600 \
 	"Timeout for flashing the EC, measured in seconds."
 DEFINE_boolean verbose "${FLAGS_FALSE}" \
@@ -431,6 +433,29 @@ ccd_ec_boot0() {
 	dut_control ccd_ec_boot_mode_$2:$1
 }
 
+servo_micro_ec_boot0() {
+	# Some devices (e.g. hatch) control the RX UART pin via an on-board
+	# circuit that is controlled by the EC_FLASH_ODL pin. For those boards,
+	# we want to continue to drive the EC_FLASH_ODL if they do not have the
+	# servo micro rework listed below.
+	if [[ "${FLAGS_servo_micro_uart_rx_rework}" == ${FLAGS_TRUE} ]]; then
+		info "Servo micro $2 mode: $1 (using rx_rework)"
+
+		# Setting the test point allows the EC_TX_SERVO_RX line
+		# to be driven by the servo for 'on' value. 'off' value
+		# lets the EC drive the EC_TX_SERVO_RX net.
+		#
+		# HW Rework (b/143163043#comment3):
+		#   - Disconnect U45.1 from ground
+		#   - Connected U45.1 to TP1 pad
+		dut_control tp1:$1
+		dut_control servo_micro_ec_boot_mode_$2:$1
+	else
+		info "Servo micro $2 mode: $1 (using FW_UP_L)"
+		dut-control ec_boot_mode:$1
+	fi
+}
+
 servo_ec_boot0() {
 	dut_control ec_boot_mode:$1
 }
@@ -453,6 +478,8 @@ ec_switch_boot0() {
 	fi
 	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
 		stype=ccd
+	elif [[ "${SERVO_TYPE}" =~ "servo_micro" ]] ; then
+		stype=servo_micro
 	elif [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
 		stype=servo
 	else
