@@ -8,6 +8,7 @@
 #define __CROS_EC_QUEUE_H
 
 #include "common.h"
+#include "util.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -109,6 +110,33 @@ size_t queue_space(struct queue const *q);
 
 /* Return TRUE if the queue is full. */
 int queue_is_full(struct queue const *q);
+
+struct queue_iterator_state {
+	size_t offset;
+	size_t head;
+	size_t tail;
+};
+
+struct queue_iterator {
+	void *ptr;
+	struct queue_iterator_state _state;
+};
+
+/**
+ * Get a pointer to the first element (the head).
+ *
+ * @param q Pointer to the queue.
+ * @param it Pointer to an Iterator that will point to the first element.
+ */
+void queue_begin(struct queue const *q, struct queue_iterator *it);
+
+/**
+ * Get a pointer to the next element in the queue given a current iterator.
+ *
+ * @param q Pointer to a constant queue to query.
+ * @param it The iterator to move forward.
+ */
+void queue_next(struct queue const *q, struct queue_iterator *it);
 
 /*
  * Chunk based queue access.  A queue_chunk is a contiguous region of queue

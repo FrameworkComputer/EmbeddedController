@@ -4,8 +4,11 @@
  *
  * Queue data structure implementation.
  */
+#include "console.h"
 #include "queue.h"
 #include "util.h"
+
+#define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
 
 static void queue_action_null(struct queue_policy const *policy, size_t count)
 {
@@ -247,4 +250,47 @@ size_t queue_peek_memcpy(struct queue const *q,
 	}
 
 	return transfer;
+}
+
+void queue_begin(struct queue const *q, struct queue_iterator *it)
+{
+	if (queue_is_empty(q))
+		it->ptr = NULL;
+	else
+		it->ptr = q->buffer + (q->state->head & q->buffer_units_mask) *
+			q->unit_bytes;
+	it->_state.offset = 0;
+	it->_state.head = q->state->head;
+	it->_state.tail = q->state->tail;
+}
+
+void queue_next(struct queue const *q, struct queue_iterator *it)
+{
+	uint8_t *ptr = (uint8_t *)it->ptr;
+
+	/* Check if anything changed since the iterator was created. */
+	if (it->_state.head != q->state->head ||
+	    it->_state.tail != q->state->tail) {
+		CPRINTS("Concurrent modification error, queue has changed while"
+			" iterating. The iterator is now invalid.");
+		it->ptr = NULL;
+		return;
+	}
+
+	/* Check if iterator is already at end. */
+	if (ptr == NULL ||
+	    it->_state.head + it->_state.offset == it->_state.tail)
+		return;
+
+	it->_state.offset++;
+	/* Check if we've reached the end. */
+	if (it->_state.head + it->_state.offset == it->_state.tail) {
+		it->ptr = NULL;
+		return;
+	}
+
+	ptr = q->buffer +
+	      (((it->_state.head + it->_state.offset) & q->buffer_units_mask) *
+	       q->unit_bytes);
+	it->ptr = (void *)ptr;
 }

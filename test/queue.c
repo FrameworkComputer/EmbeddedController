@@ -11,6 +11,7 @@
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
+#include <stdio.h>
 
 static struct queue const test_queue8 = QUEUE_NULL(8, char);
 static struct queue const test_queue2 = QUEUE_NULL(2, int16_t);
@@ -19,7 +20,6 @@ static int test_queue8_empty(void)
 {
 	char dummy = 1;
 
-	queue_init(&test_queue8);
 	TEST_ASSERT(queue_is_empty(&test_queue8));
 	TEST_ASSERT(!queue_remove_units(&test_queue8, &dummy, 1));
 	TEST_ASSERT(queue_add_units(&test_queue8, &dummy, 1) == 1);
@@ -32,7 +32,6 @@ static int test_queue8_init(void)
 {
 	char dummy = 1;
 
-	queue_init(&test_queue8);
 	TEST_ASSERT(queue_add_units(&test_queue8, &dummy, 1) == 1);
 	queue_init(&test_queue8);
 	TEST_ASSERT(queue_is_empty(&test_queue8));
@@ -44,8 +43,6 @@ static int test_queue8_fifo(void)
 {
 	char buf1[3] = {1, 2, 3};
 	char buf2[3];
-
-	queue_init(&test_queue8);
 
 	TEST_ASSERT(queue_add_units(&test_queue8, buf1 + 0, 1) == 1);
 	TEST_ASSERT(queue_add_units(&test_queue8, buf1 + 1, 1) == 1);
@@ -62,7 +59,6 @@ static int test_queue8_multiple_units_add(void)
 	char buf1[5] = {1, 2, 3, 4, 5};
 	char buf2[5];
 
-	queue_init(&test_queue8);
 	TEST_ASSERT(queue_space(&test_queue8) >= 5);
 	TEST_ASSERT(queue_add_units(&test_queue8, buf1, 5) == 5);
 	TEST_ASSERT(queue_remove_units(&test_queue8, buf2, 5) == 5);
@@ -76,7 +72,6 @@ static int test_queue8_removal(void)
 	char buf1[5] = {1, 2, 3, 4, 5};
 	char buf2[5];
 
-	queue_init(&test_queue8);
 	TEST_ASSERT(queue_add_units(&test_queue8, buf1, 5) == 5);
 	/* 1, 2, 3, 4, 5 */
 	TEST_ASSERT(queue_remove_units(&test_queue8, buf2, 3) == 3);
@@ -114,7 +109,6 @@ static int test_queue8_peek(void)
 	char buf1[5] = {1, 2, 3, 4, 5};
 	char buf2[5];
 
-	queue_init(&test_queue8);
 	TEST_ASSERT(queue_add_units(&test_queue8, buf1, 5) == 5);
 	/* 1, 2, 3, 4, 5 */
 	TEST_ASSERT(queue_count(&test_queue8) == 5);
@@ -132,7 +126,6 @@ static int test_queue2_odd_even(void)
 	uint16_t buf1[3] = {1, 2, 3};
 	uint16_t buf2[3];
 
-	queue_init(&test_queue2);
 	TEST_ASSERT(queue_add_units(&test_queue2, buf1, 1) == 1);
 	/* 1 */
 	TEST_ASSERT(queue_space(&test_queue2) == 1);
@@ -158,8 +151,6 @@ static int test_queue8_chunks(void)
 	static uint8_t const data[3] = {1, 2, 3};
 	struct queue_chunk chunk;
 
-	queue_init(&test_queue8);
-
 	chunk = queue_get_write_chunk(&test_queue8, 0);
 
 	TEST_ASSERT(chunk.count == 8);
@@ -182,8 +173,6 @@ static int test_queue8_chunks(void)
 static int test_queue8_chunks_wrapped(void)
 {
 	static uint8_t const data[3] = {1, 2, 3};
-
-	queue_init(&test_queue8);
 
 	/* Move near the end of the queue */
 	TEST_ASSERT(queue_advance_tail(&test_queue8, 6) == 6);
@@ -228,8 +217,6 @@ static int test_queue8_chunks_full(void)
 	static uint8_t const data[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 	struct queue_chunk chunk;
 
-	queue_init(&test_queue8);
-
 	/* Move near the end of the queue */
 	TEST_ASSERT(queue_advance_tail(&test_queue8, 6) == 6);
 	TEST_ASSERT(queue_advance_head(&test_queue8, 6) == 6);
@@ -261,8 +248,6 @@ static int test_queue8_chunks_full(void)
 
 static int test_queue8_chunks_empty(void)
 {
-	queue_init(&test_queue8);
-
 	/* With an empty queue we shouldn't be able to read */
 	TEST_ASSERT(queue_get_read_chunk(&test_queue8).count == 0);
 
@@ -274,8 +259,6 @@ static int test_queue8_chunks_empty(void)
 
 static int test_queue8_chunks_advance(void)
 {
-	queue_init(&test_queue8);
-
 	/*
 	 * We should only be able to advance the tail (add units) as many
 	 * units as there are in an empty queue.
@@ -302,8 +285,6 @@ static int test_queue8_chunks_advance(void)
 
 static int test_queue8_chunks_offset(void)
 {
-	queue_init(&test_queue8);
-
 	/* Check offsetting by 1 */
 	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 1).count == 7);
 	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 1).buffer ==
@@ -343,6 +324,98 @@ static int test_queue8_chunks_offset(void)
 	return EC_SUCCESS;
 }
 
+static int test_queue8_iterate_begin(void)
+{
+	struct queue const *q = &test_queue8;
+	char data[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+	struct queue_iterator it;
+
+	queue_begin(q, &it);
+	TEST_EQ(it.ptr, NULL, "%p");
+
+	queue_add_units(q, data, 4);
+	queue_begin(q, &it);
+	TEST_EQ(*((char *)it.ptr), 0, "%d");
+
+	return EC_SUCCESS;
+}
+
+static int test_queue8_iterate_next(void)
+{
+	struct queue const *q = &test_queue8;
+	char data[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+	struct queue_iterator it;
+
+	queue_add_units(q, data, 4);
+	queue_begin(q, &it);
+	TEST_EQ(*((char *)it.ptr), 0, "%d");
+
+	queue_next(q, &it);
+	TEST_NE(it.ptr, NULL, "%p");
+	TEST_EQ(*((char *)it.ptr), 1, "%d");
+
+	queue_next(q, &it);
+	TEST_NE(it.ptr, NULL, "%p");
+	TEST_EQ(*((char *)it.ptr), 2, "%d");
+
+	queue_next(q, &it);
+	TEST_NE(it.ptr, NULL, "%p");
+	TEST_EQ(*((char *)it.ptr), 3, "%d");
+
+	queue_next(q, &it);
+	TEST_EQ(it.ptr, NULL, "%p");
+
+	return EC_SUCCESS;
+}
+
+static int test_queue2_iterate_next_full(void)
+{
+	struct queue const *q = &test_queue2;
+	int16_t data[2] = { 523, -788 };
+	struct queue_iterator it;
+
+	queue_add_units(q, data, 2);
+	queue_begin(q, &it);
+	TEST_EQ(*((int16_t *)it.ptr), 523, "%d");
+
+	queue_next(q, &it);
+	TEST_NE(it.ptr, NULL, "%p");
+	TEST_EQ(*((int16_t *)it.ptr), -788, "%d");
+
+	queue_next(q, &it);
+	TEST_EQ(it.ptr, NULL, "%p");
+
+	return EC_SUCCESS;
+}
+
+static int test_queue8_iterate_next_reset_on_change(void)
+{
+	struct queue const *q = &test_queue8;
+	char data[8] = { -88, -37, -5, -1, 3, 16, 56, 100 };
+	struct queue_iterator it;
+
+	queue_add_units(q, data, 4);
+	queue_begin(q, &it);
+	TEST_NE(it.ptr, NULL, "%p");
+	queue_add_units(q, data + 4, 4);
+	queue_next(q, &it);
+	TEST_EQ(it.ptr, NULL, "%p");
+
+	queue_begin(q, &it);
+	TEST_NE(it.ptr, NULL, "%p");
+	queue_advance_head(q, 3);
+	queue_next(q, &it);
+	TEST_EQ(it.ptr, NULL, "%p");
+
+	return EC_SUCCESS;
+}
+
+void before_test(void)
+{
+	queue_init(&test_queue2);
+	queue_init(&test_queue8);
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -360,6 +433,10 @@ void run_test(void)
 	RUN_TEST(test_queue8_chunks_empty);
 	RUN_TEST(test_queue8_chunks_advance);
 	RUN_TEST(test_queue8_chunks_offset);
+	RUN_TEST(test_queue8_iterate_begin);
+	RUN_TEST(test_queue8_iterate_next);
+	RUN_TEST(test_queue2_iterate_next_full);
+	RUN_TEST(test_queue8_iterate_next_reset_on_change);
 
 	test_print_result();
 }
