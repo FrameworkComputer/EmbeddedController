@@ -10,7 +10,9 @@ from unit tests and fuzzers' `.mocklist` file.
 * Add the mock source to [common/mock](/common/mock) and the
   optional header file to [include/mock](/include/mock).
   Header files are only necessary if you want to expose additional
-  mock control functions/variables.
+  [mock control](#mock-controls) functions/variables.
+  See the [Design Patterns](#design-patterns) section
+  for more detail on design patterns.
 * Add an new entry in [common/mock/build.mk](build.mk)
   that is conditioned on your mock's name.
 
@@ -46,15 +48,40 @@ Example `.mocklist`:
 	MOCK(FP_SENSOR)
 ```
 
-If you need additional mock control functionality, you may need to include
-the mock's header file, which is prepended with `mock/`.
+If you need additional [mock control](#mock-controls) functionality,
+you may need to include the mock's header file, which is prepended
+with `mock/` in the include line.
 
 For example, to control the return values of the rollback mock:
 
 ```c
 #include "mock/rollback_mock.h"
 
-void somefunc() {
+void yourfunction() {
 	mock_ctrl_rollback.get_secret_fail = true;
 }
 ```
+
+## Mock Controls
+Mocks can change their behavior by exposing "mock controls".
+
+We do this, most commonly, by exposing an additional global struct
+per mock that acts as the settings for the mock implementation.
+The mock user can then modify fields of the struct to change the mock's behavior.
+For example, the `fp_sensor_init_return` field may control what value
+the mocked `fp_sensor_init` function returns.
+
+The declaration for these controls are specified in the mock's header file,
+which resides in [include/mock](/include/mock).
+
+## Design Patterns
+* When creating mock controls, consider placing all your mock parameters in
+  one externally facing struct, like in
+  [fp_sensor_mock.h](/include/mock/fp_sensor_mock.h).
+  The primary reason for this is to allow the mock to be easily used
+  by a fuzzer (write random bytes into the struct with memcpy).
+* When following the above pattern, please provide a macro for resetting
+  default values for this struct, like in
+  [fp_sensor_mock.h](/include/mock/fp_sensor_mock.h).
+  This allows unit tests to quickly reset the mock state/parameters
+  before each unrelated unit test.
