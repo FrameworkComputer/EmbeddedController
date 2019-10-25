@@ -1071,28 +1071,22 @@ void assert_ec_rst(void)
 		task_disable_irq(bitbang_config.rx_irq);
 
 	wait_ec_rst(1);
+
+	/*
+	 * On closed source set1, the EC requires a minimum 30 ms pulse to
+	 * properly reset. Ensure EC reset is always asserted for more than
+	 * this time.
+	 */
+	if (board_uses_closed_source_set1())
+		msleep(30);
 }
 
-static void deassert_ec_rst_now(void)
+void deassert_ec_rst(void)
 {
 	wait_ec_rst(0);
 
 	if (uart_bitbang_is_enabled())
 		task_enable_irq(bitbang_config.rx_irq);
-}
-DECLARE_DEFERRED(deassert_ec_rst_now);
-
-void deassert_ec_rst(void)
-{
-	/*
-	 * On closed source set1, the EC requires a minimum 30 ms pulse to
-	 * properly reset.  Ensure EC reset is never de-asesrted for less
-	 * than this time.
-	 */
-	if (board_uses_closed_source_set1())
-		hook_call_deferred(&deassert_ec_rst_now_data, 30 * MSEC);
-	else
-		deassert_ec_rst_now();
 }
 
 int is_ec_rst_asserted(void)
