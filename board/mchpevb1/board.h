@@ -121,12 +121,6 @@
  */
 #define CONFIG_HOSTCMD_ESPI_EC_CHAN_BITMAP	0x0F
 
-/*
- * MEC17xx EVB + KBL RVP3 board uses eSPI default of
- * Platform Reset being a virtual wire.
- */
-#define CONFIG_HOSTCMD_ESPI_PLTRST_IS_VWIRE
-
 #define CONFIG_MCHP_ESPI_VW_SAVE_ON_SLEEP
 
 /*

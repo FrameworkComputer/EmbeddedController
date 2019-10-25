@@ -20,7 +20,7 @@ GPIO_INT(PCH_SLP_S0_L,		PIN(B, 7), GPIO_INT_BOTH, power_signal_interrupt)				/* 
 #endif
 GPIO_INT(SUSPWRDNACK,		PIN(E, 1), GPIO_INT_BOTH, power_signal_interrupt)	/* SUSPWRNACK */
 GPIO_INT(LID_OPEN,		PIN(E, 2), GPIO_INT_BOTH, lid_interrupt)		/* LID_OPEN */
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_SIGNALS
+#ifndef CONFIG_HOSTCMD_ESPI
 GPIO_INT(PCH_PLTRST_L,   	PIN(E, 3), GPIO_INT_BOTH | GPIO_PULL_UP,  lpcrst_interrupt)	/* PLT_RST_L */
 #endif
 GPIO_INT(POWER_BUTTON_L,	PIN(E, 4), GPIO_INT_BOTH, power_button_interrupt)	/* MECH_PWR_BTN_ODL */

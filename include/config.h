@@ -2684,9 +2684,6 @@
  */
 #undef CONFIG_HOSTCMD_ESPI_EC_CHAN_BITMAP
 
-/* Use Virtual Wire for Platform Reset instead of a sideband signal */
-#undef CONFIG_HOSTCMD_ESPI_PLTRST_IS_VWIRE
-
 /* Base address of low power RAM. */
 #undef CONFIG_LPRAM_BASE
 
