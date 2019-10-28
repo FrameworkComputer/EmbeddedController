@@ -83,6 +83,16 @@ enum battery_present battery_hw_present(void)
 
 int charger_profile_override(struct charge_state_data *curr)
 {
+	/* battery temp in 0.1 deg C */
+	int bat_temp_c = curr->batt.temperature - 2731;
+
+	/*
+	 * When smart battery temperature is more than 45 deg C, the max
+	 * charging voltage is 4100mV.
+	 */
+	if (curr->state == ST_CHARGE && bat_temp_c >= 450)
+		curr->requested_voltage	= 4100;
+
 #ifdef VARIANT_KUKUI_CHARGER_MT6370
 	mt6370_charger_profile_override(curr);
 #endif /* CONFIG_CHARGER_MT6370 */
