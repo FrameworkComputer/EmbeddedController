@@ -19,7 +19,6 @@
 #include "util.h"
 
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) || \
-	defined(CONFIG_USB_PD_TCPC_LOW_POWER) || \
 	defined(CONFIG_USB_PD_DISCHARGE_TCPC)
 #error "Unsupported config options of fusb302 PD driver"
 #endif
@@ -1008,6 +1007,13 @@ void tcpm_set_bist_test_data(int port)
 	tcpc_write(port, TCPC_REG_CONTROL3, reg);
 }
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+static int fusb302_tcpm_enter_low_power_mode(int port)
+{
+	return tcpc_write(port, TCPC_REG_POWER, TCPC_REG_POWER_PWR_LOW);
+}
+#endif
+
 const struct tcpm_drv fusb302_tcpm_drv = {
 	.init			= &fusb302_tcpm_init,
 	.release		= &fusb302_tcpm_release,
@@ -1024,4 +1030,7 @@ const struct tcpm_drv fusb302_tcpm_drv = {
 	.get_message_raw	= &fusb302_tcpm_get_message_raw,
 	.transmit		= &fusb302_tcpm_transmit,
 	.tcpc_alert		= &fusb302_tcpc_alert,
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	.enter_low_power_mode	= &fusb302_tcpm_enter_low_power_mode,
+#endif
 };
