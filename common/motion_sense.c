@@ -322,6 +322,8 @@ static inline int motion_sense_init(struct motion_sensor_t *sensor)
 {
 	int ret, cnt = 3;
 
+	BUILD_ASSERT(SENSOR_COUNT < 32);
+
 	/* Initialize accelerometers. */
 	do {
 		ret = sensor->drv->init(sensor);

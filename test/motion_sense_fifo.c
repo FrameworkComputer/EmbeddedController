@@ -14,46 +14,9 @@
 #include "accelgyro.h"
 #include <sys/types.h>
 
-struct mock_read_temp_result {
-	void *s;
-	int temp;
-	int ret;
-	int used_count;
-	struct mock_read_temp_result *next;
-};
-
-static struct mock_read_temp_result *mock_read_temp_results;
-
-static int mock_read_temp(const struct motion_sensor_t *s, int *temp)
-{
-	struct mock_read_temp_result *ptr = mock_read_temp_results;
-
-	while (ptr) {
-		if (ptr->s == s) {
-			if (ptr->ret == EC_SUCCESS)
-				*temp = ptr->temp;
-			ptr->used_count++;
-			return ptr->ret;
-		}
-		ptr = ptr->next;
-	}
-
-	return EC_ERROR_UNKNOWN;
-}
-
-static struct accelgyro_drv mock_sensor_driver = {
-	.read_temp = mock_read_temp,
-};
-
-static struct accelgyro_drv empty_sensor_driver = {};
-
 struct motion_sensor_t motion_sensors[] = {
-	[BASE] = {
-		.drv = &mock_sensor_driver,
-	},
-	[LID] = {
-		.drv = &empty_sensor_driver,
-	},
+	[BASE] = {},
+	[LID] = {},
 };
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
@@ -351,59 +314,6 @@ static int test_spread_double_commit_same_timestamp(void)
 	return EC_SUCCESS;
 }
 
-static int test_read_temp_on_stage(void)
-{
-	struct mock_read_temp_result expected = { &motion_sensors[BASE], 200,
-						  EC_SUCCESS, 0, NULL };
-
-	mock_read_temp_results = &expected;
-	motion_sensors[0].oversampling_ratio = 1;
-	motion_sensors[0].collection_rate = 20000; /* ns */
-	motion_sense_fifo_stage_data(data, motion_sensors, 3,
-				     __hw_clock_source_read() - 10000);
-
-	TEST_EQ(expected.used_count, 1, "%d");
-
-	return EC_SUCCESS;
-}
-
-static int test_read_temp_from_cache_on_stage(void)
-{
-	struct mock_read_temp_result expected = { &motion_sensors[BASE], 200,
-						  EC_SUCCESS, 0, NULL };
-
-	mock_read_temp_results = &expected;
-	motion_sensors[0].oversampling_ratio = 1;
-	motion_sensors[0].collection_rate = 20000; /* ns */
-	motion_sense_fifo_stage_data(data, motion_sensors, 3,
-				     __hw_clock_source_read() - 10000);
-	motion_sense_fifo_stage_data(data, motion_sensors, 3,
-				     __hw_clock_source_read() - 5000);
-
-	TEST_EQ(expected.used_count, 1, "%d");
-
-	return EC_SUCCESS;
-}
-
-static int test_read_temp_twice_after_cache_stale(void)
-{
-	struct mock_read_temp_result expected = { &motion_sensors[BASE], 200,
-						  EC_SUCCESS, 0, NULL };
-
-	mock_read_temp_results = &expected;
-	motion_sensors[0].oversampling_ratio = 1;
-	motion_sensors[0].collection_rate = 20000; /* ns */
-	motion_sense_fifo_stage_data(data, motion_sensors, 3,
-				     __hw_clock_source_read() - 10000);
-	sleep(2);
-	motion_sense_fifo_stage_data(data, motion_sensors, 3,
-				     __hw_clock_source_read() - 5000);
-
-	TEST_EQ(expected.used_count, 2, "%d");
-
-	return EC_SUCCESS;
-}
-
 void before_test(void)
 {
 	motion_sense_fifo_commit_data();
@@ -412,13 +322,13 @@ void before_test(void)
 	motion_sense_fifo_reset_wake_up_needed();
 	memset(data, 0, sizeof(data));
 	motion_sense_fifo_reset();
-	mock_read_temp_results = NULL;
 }
 
 void run_test(void)
 {
 	test_reset();
 	motion_sense_fifo_init();
+
 	RUN_TEST(test_insert_async_event);
 	RUN_TEST(test_wake_up_needed);
 	RUN_TEST(test_wake_up_needed_overflow);
@@ -432,9 +342,6 @@ void run_test(void)
 	RUN_TEST(test_spread_data_in_window);
 	RUN_TEST(test_spread_data_by_collection_rate);
 	RUN_TEST(test_spread_double_commit_same_timestamp);
-	RUN_TEST(test_read_temp_on_stage);
-	RUN_TEST(test_read_temp_from_cache_on_stage);
-	RUN_TEST(test_read_temp_twice_after_cache_stale);
 
 	test_print_result();
 }
