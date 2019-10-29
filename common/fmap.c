@@ -111,14 +111,17 @@ const struct _ec_fmap {
 	/* RO Firmware */
 		{
 			/*
-			 * Range of RO firmware to be updated. Verified in
-			 * factory finalization by hash. Should not have
+			 * Range of RO firmware to be updated. EC_RO
+			 * section includes the bootloader section
+			 * because it may need to be updated/paired
+			 * with a different RO.  Verified in factory
+			 * finalization by hash. Should not have
 			 * volatile data (ex, calibration results).
 			 */
 			.area_name = "EC_RO",
 			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
-				FMAP_REGION_START + CONFIG_RO_STORAGE_OFF,
-			.area_size = CONFIG_RO_SIZE,
+				FMAP_REGION_START,
+			.area_size = CONFIG_RO_SIZE + CONFIG_RO_STORAGE_OFF,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
