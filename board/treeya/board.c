@@ -171,7 +171,6 @@ void board_update_sensor_config_from_sku(void)
 			motion_sensors[BASE_GYRO] = base_gyro_1;
 		} else{
 			/*Need to change matrix for treeya*/
-			motion_sensors[LID_ACCEL].rot_standard_ref = &treeya_standard_ref;
 			motion_sensors[BASE_ACCEL].rot_standard_ref = &treeya_standard_ref;
 			motion_sensors[BASE_GYRO].rot_standard_ref = &treeya_standard_ref;
 		}
