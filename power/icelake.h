@@ -34,6 +34,7 @@ enum power_signal {
 	X86_SLP_SUS_DEASSERTED,
 	X86_RSMRST_L_PGOOD,
 	X86_DSW_DPWROK,
+	X86_ALL_SYS_PGOOD,
 
 	/* Number of X86 signals */
 	POWER_SIGNAL_COUNT

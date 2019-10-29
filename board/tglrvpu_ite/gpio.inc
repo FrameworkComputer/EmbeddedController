@@ -63,10 +63,24 @@ GPIO(SYS_RESET_L,	PIN(B, 6), GPIO_ODR_HIGH)
 GPIO(PCH_RSMRST_L,	PIN(C, 6), GPIO_OUT_LOW)
 GPIO(PCH_PWRBTN_L,	PIN(D, 0), GPIO_ODR_HIGH)
 GPIO(EC_SPI_OE_N,	PIN(I, 2), GPIO_OUT_LOW)
-GPIO(PCH_SYS_PWROK,	PIN(K, 4), GPIO_INPUT)	/* Driven by Silego chip on RVP */
+/*
+ * PCH_SYS_PWROK is an input, driven by the Silego chip. The common x86
+ * power sequencing expects that PCH_SYS_PWROK is an output and will drive
+ * this signal if GPIO_PCH_SYS_PWROK is configured. Map this pin as no-connect
+ * so that state can be monitored using the console.
+ */
+GPIO(NC_PCH_SYS_PWROK,	PIN(K, 4), GPIO_INPUT)
 GPIO(EN_PP5000,		PIN(L, 4), GPIO_OUT_LOW)
 GPIO(EN_PP3300_A,	PIN(K, 2), GPIO_OUT_LOW)
 GPIO(EC_PCH_DSW_PWROK,	PIN(L, 6), GPIO_OUT_LOW)
+
+/*
+ * SYS_PWROK driven directly to AP by Silego, EC not needed for generation.
+ * PCH_SYS_PWROK is routed to EC, but mark unimplemented to prevent common
+ * Ice Lake code from driving signal.
+ */
+UNIMPLEMENTED(PG_EC_ALL_SYS_PWRGD)
+UNIMPLEMENTED(PCH_SYS_PWROK)
 
 /* Host communication GPIOs */
 GPIO(PCH_WAKE_L,	PIN(J, 0), GPIO_ODR_HIGH)
