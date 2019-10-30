@@ -643,7 +643,7 @@ size_t tpm_get_burst_size(void)
 /* Recognize both original extension and new vendor-specific command codes */
 #define IS_CUSTOM_CODE(code)					\
 	((code == CONFIG_EXTENSION_COMMAND) ||			\
-	 (code & TPM_CC_VENDOR_BIT_MASK))
+	 (code == TPM_CC_VENDOR_BIT_MASK))
 
 static void call_extension_command(struct tpm_cmd_header *tpmh,
 				   size_t *total_size,
