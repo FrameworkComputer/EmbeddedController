@@ -18,7 +18,8 @@
 #define BB_RETIMER_WRITE_SIZE	(BB_RETIMER_REG_SIZE + 2)
 #define BB_RETIMER_MUX_DATA_PRESENT (USB_PD_MUX_USB_ENABLED \
 				| USB_PD_MUX_DP_ENABLED \
-				| USB_PD_MUX_TBT_COMPAT_ENABLED)
+				| USB_PD_MUX_TBT_COMPAT_ENABLED \
+				| USB_PD_MUX_USB4_ENABLED)
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -193,7 +194,8 @@ static int retimer_set_state(int port, mux_state_t mux_state)
 	if (pd_is_debug_acc(port))
 		set_retimer_con |= BB_RETIMER_DEBUG_ACCESSORY_MODE;
 
-	if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED) {
+	if (mux_state & (USB_PD_MUX_TBT_COMPAT_ENABLED |
+			 USB_PD_MUX_USB4_ENABLED)) {
 		cable_resp = get_cable_tbt_vdo(port);
 		dev_resp = get_dev_tbt_vdo(port);
 
@@ -210,15 +212,27 @@ static int retimer_set_state(int port, mux_state_t mux_state)
 		 * 0 - TBT not configured
 		 * 1 - TBT configured
 		 */
-		set_retimer_con |= BB_RETIMER_TBT_CONNECTION;
+		if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED) {
+			set_retimer_con |= BB_RETIMER_TBT_CONNECTION;
 
-		/*
-		 * Bit 17: TBT_TYPE
-		 * 0 - Type-C to Type-C Cable
-		 * 1 - Type-C Legacy TBT Adapter
-		 */
-		if (dev_resp.tbt_adapter == TBT_ADAPTER_TBT2_LEGACY)
-			set_retimer_con |= BB_RETIMER_TBT_TYPE;
+			/*
+			 * Bit 17: TBT_TYPE
+			 * 0 - Type-C to Type-C Cable
+			 * 1 - Type-C Legacy TBT Adapter
+			 */
+			if (dev_resp.tbt_adapter == TBT_ADAPTER_TBT2_LEGACY)
+				set_retimer_con |= BB_RETIMER_TBT_TYPE;
+
+			/*
+			 * Bits 29-28: TBT_GEN_SUPPORT
+			 * 00b - 3rd generation TBT (10.3125 and 20.625Gb/s)
+			 * 01b - 4th generation TBT (10.00005Gb/s, 10.3125Gb/s,
+			 *                           20.0625Gb/s, 20.000Gb/s)
+			 * 10..11b - Reserved
+			 */
+			set_retimer_con |= BB_RETIMER_TBT_CABLE_GENERATION(
+					       cable_resp.tbt_rounded);
+		}
 
 		/*
 		 * Bit 18: CABLE_TYPE
@@ -247,23 +261,23 @@ static int retimer_set_state(int port, mux_state_t mux_state)
 		}
 
 		/*
-		 * Bits 27-25: TBT_CABLE_SPEED_SUPPORT
-		 * 000b - No Functionality
-		 * 001b - USB3.1 gen1 cable
+		 * Bit 23: USB4 Connection
+		 * 0 - USB4 not configured
+		 * 1 - USB4 Configured
+		 */
+		if (mux_state & USB_PD_MUX_USB4_ENABLED)
+			set_retimer_con |= BB_RETIMER_USB4_ENABLED;
+
+		/*
+		 * Bit 27-25: TBT/USB4 Cable speed
+		 * 000b - No functionality
+		 * 001b - USB3.1 Gen1 Cable
 		 * 010b - 10Gb/s
-		 * 011b -10Gb/s and 20Gb/s
+		 * 011b - 10Gb/s and 20Gb/s
+		 * 10..11b - Reserved
 		 */
 		set_retimer_con |= BB_RETIMER_TBT_CABLE_SPEED_SUPPORT(
 						cable_resp.tbt_cable_speed);
-
-		/*
-		 * Bits 29-28: TBT_GEN_SUPPORT
-		 * 00b - 3rd generation TBT (10.3125 and 20.625Gb/s)
-		 * 01b - 4th generation TBT (10.0, 10.3125, 20.0, 20.625)
-		 * 10..11b - Reserved
-		 */
-		set_retimer_con |= BB_RETIMER_TBT_CABLE_GENERATION(
-					       cable_resp.tbt_rounded);
 	}
 	/* Writing the register4 */
 	return bb_retimer_write(port, BB_RETIMER_REG_CONNECTION_STATE,
