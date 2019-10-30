@@ -352,6 +352,18 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	update_ports();
 }
 
+__override uint8_t board_get_src_dts_polarity(int port)
+{
+	/*
+	 * When servo configured as srcdts, the CC polarity is based
+	 * on the flags.
+	 */
+	if (port == DUT)
+		return !!(cc_config & CC_POLARITY);
+
+	return 0;
+}
+
 int pd_tcpc_cc_nc(int port, int cc_volt, int cc_sel)
 {
 	int rp_index;

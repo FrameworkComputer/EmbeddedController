@@ -2286,6 +2286,17 @@ void pd_notify_dp_alt_mode_entry(void);
 enum pd_cc_states pd_get_cc_state(
 	enum tcpc_cc_voltage_status cc1, enum tcpc_cc_voltage_status cc2);
 
+/*
+ * Optional, get the board-specific SRC DTS polarity.
+ *
+ * This function is used for SRC DTS mode. The polarity is predetermined as a
+ * board-specific setting, i.e. what Rp impedance the CC lines are pulled.
+ *
+ * @param port USB-C port number
+ * @return port polarity (0=CC1, 1=CC2)
+ */
+__override_proto uint8_t board_get_src_dts_polarity(int port);
+
 /* ----- Logging ----- */
 #ifdef CONFIG_USB_PD_LOGGING
 /**

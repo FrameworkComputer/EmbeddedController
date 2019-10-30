@@ -2697,6 +2697,16 @@ void pd_ping_enable(int port, int enable)
 		pd[port].flags &= ~PD_FLAGS_PING_ENABLED;
 }
 
+__overridable uint8_t board_get_src_dts_polarity(int port)
+{
+	/*
+	 * If the port in SRC DTS, the polarity is determined by the board,
+	 * i.e. what Rp impedance the CC lines are pulled. If this function
+	 * is not overridden, assume CC1 is primary.
+	 */
+	return 0;
+}
+
 #if defined(CONFIG_CHARGE_MANAGER)
 
 /**
@@ -3143,6 +3153,10 @@ void pd_task(void *u)
 				if (pd[port].power_role == PD_ROLE_SINK) {
 					pd[port].polarity =
 						get_snk_polarity(cc1, cc2);
+				} else if (cc_is_snk_dbg_acc(cc1, cc2)) {
+					pd[port].polarity =
+						board_get_src_dts_polarity(
+								port);
 				} else {
 					pd[port].polarity =
 						(cc1 != TYPEC_CC_VOLT_RD);
@@ -3386,7 +3400,14 @@ void pd_task(void *u)
 				/* Inform PPC that a sink is connected. */
 				ppc_sink_is_connected(port, 1);
 #endif /* CONFIG_USBC_PPC */
-				pd[port].polarity = (cc1 != TYPEC_CC_VOLT_RD);
+				if (new_cc_state == PD_CC_UFP_DEBUG_ACC) {
+					pd[port].polarity =
+						board_get_src_dts_polarity(
+							port);
+				} else {
+					pd[port].polarity =
+						(cc1 != TYPEC_CC_VOLT_RD);
+				}
 				set_polarity(port, pd[port].polarity);
 
 				/* initial data role for source is DFP */
