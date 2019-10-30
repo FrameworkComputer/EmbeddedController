@@ -22,9 +22,6 @@
 #define CONFIG_CHIPSET_POWER_SEQ_VERSION 1
 #endif
 
-/* TODO(b:135086465) led implementation */
-#undef CONFIG_LED_COMMON
-
 #define CONFIG_BATTERY_HW_PRESENT_CUSTOM
 
 #define CONFIG_CHARGER_PSYS
@@ -89,6 +86,11 @@
 
 #define PD_OPERATING_POWER_MW 30000
 
+#define CONFIG_LED_PWM
+#define CONFIG_LED_PWM_CHARGE_STATE_ONLY
+#define CONFIG_IO_EXPANDER_IT8801_PWM
+#define CONFIG_LED_PWM_COUNT 1
+
 #ifndef __ASSEMBLER__
 
 enum adc_channel {
@@ -124,6 +126,13 @@ enum battery_type {
 	BATTERY_PANASONIC_AC15A3J,
 	BATTERY_PANASONIC_AC16L5J,
 	BATTERY_TYPE_COUNT,
+};
+
+enum pwm_channel {
+	PWM_CH_LED_RED,
+	PWM_CH_LED_GREEN,
+	PWM_CH_LED_BLUE,
+	PWM_CH_COUNT
 };
 
 #include "gpio_signal.h"

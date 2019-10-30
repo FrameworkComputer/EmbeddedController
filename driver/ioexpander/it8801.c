@@ -6,13 +6,13 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
-#include "hooks.h"
 #include "i2c.h"
 #include "it8801.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "registers.h"
 #include "task.h"
+#include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_KEYSCAN, format, ## args)
 
@@ -225,3 +225,87 @@ static int it8801_dump(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(it8801_dump, it8801_dump, "NULL",
 			"Dumps IT8801 registers");
+
+#ifdef CONFIG_IO_EXPANDER_IT8801_PWM
+
+struct it8801_pwm_gpio_map {
+	int port;
+	int mask;
+};
+
+const static struct it8801_pwm_gpio_map it8801_pwm_gpio_map[] = {
+	[1] = {.port = 1, .mask = BIT(2)},
+	[2] = {.port = 1, .mask = BIT(3)},
+	[3] = {.port = 1, .mask = BIT(4)},
+	[4] = {.port = 1, .mask = BIT(5)},
+	[7] = {.port = 2, .mask = BIT(0)},
+	[8] = {.port = 2, .mask = BIT(3)},
+	[9] = {.port = 2, .mask = BIT(2)},
+};
+
+void it8801_pwm_enable(enum pwm_channel ch, int enabled)
+{
+	int port, mask, val, index;
+
+	index = it8801_pwm_channels[ch].index;
+	if (index < 0 || index >= ARRAY_SIZE(it8801_pwm_gpio_map))
+		return;
+	port = it8801_pwm_gpio_map[index].port;
+	mask = it8801_pwm_gpio_map[index].mask;
+	if (port == 0 && mask == 0)
+		return;
+
+	/*
+	 * PWM1~4,7: alt func 1
+	 * PWM8,9: alt func 2
+	 */
+	if (it8801_pwm_channels[ch].index <= 7)
+		it8801_write(IT8801_REG_GPIO_CR(port, mask),
+				0x1 << IT8801_GPIOAFS_SHIFT);
+	else
+		it8801_write(IT8801_REG_GPIO_CR(port, mask),
+				0x2 << IT8801_GPIOAFS_SHIFT);
+
+	it8801_read(IT8801_REG_PWMMCR(it8801_pwm_channels[ch].index), &val);
+	val &= (~IT8801_PWMMCR_MCR_MASK);
+	if (enabled)
+		val |= IT8801_PWMMCR_MCR_BLINKING;
+	it8801_write(IT8801_REG_PWMMCR(it8801_pwm_channels[ch].index), val);
+}
+
+int it88801_pwm_get_enabled(enum pwm_channel ch)
+{
+	int val;
+
+	if (it8801_read(IT8801_REG_PWMMCR(it8801_pwm_channels[ch].index), &val))
+		return 0;
+	return (val & IT8801_PWMMCR_MCR_MASK) == IT8801_PWMMCR_MCR_BLINKING;
+}
+
+void it8801_pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty)
+{
+	duty = MIN(duty, 255);
+	duty = MAX(duty, 0);
+	it8801_write(IT8801_REG_PWMDCR(it8801_pwm_channels[ch].index), duty);
+}
+
+uint16_t it8801_pwm_get_raw_duty(enum pwm_channel ch)
+{
+	int val;
+
+	if (it8801_read(IT8801_REG_PWMDCR(it8801_pwm_channels[ch].index), &val))
+		return 0;
+	return val;
+}
+
+void it8801_pwm_set_duty(enum pwm_channel ch, int percent)
+{
+	return it8801_pwm_set_raw_duty(ch, (100 - percent) * 255 / 100);
+}
+
+int it8801_pwm_get_duty(enum pwm_channel ch)
+{
+	return 100 - it8801_pwm_get_raw_duty(ch) * 100 / 255;
+}
+
+#endif  /* CONFIG_IO_EXPANDER_IT8801_PWM */

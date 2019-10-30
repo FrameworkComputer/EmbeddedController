@@ -32,8 +32,6 @@
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
-#include "pwm.h"
-#include "pwm_chip.h"
 #include "registers.h"
 #include "spi.h"
 #include "system.h"
@@ -112,6 +110,14 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 	},
 };
+
+/******************************************************************************/
+const struct it8801_pwm_t it8801_pwm_channels[] = {
+	[PWM_CH_LED_RED] = { 1 },
+	[PWM_CH_LED_GREEN] = { 2 },
+	[PWM_CH_LED_BLUE] = { 3 },
+};
+BUILD_ASSERT(ARRAY_SIZE(it8801_pwm_channels) == PWM_CH_COUNT);
 
 /******************************************************************************/
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
