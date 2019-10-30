@@ -91,13 +91,6 @@
 #define STATUS_TERMINATE_CHARGE_ALARM   BIT(14)
 #define STATUS_OVERCHARGED_ALARM        BIT(15)
 
-/* Battery Spec Info */
-#define BATTERY_SPEC_VERSION(INFO)      ((INFO >> 4) & 0xF)
-/* Smart battery version info */
-#define BATTERY_SPEC_VER_1_0            1
-#define BATTERY_SPEC_VER_1_1            2
-#define BATTERY_SPEC_VER_1_1_WITH_PEC   3
-
 /* Charger alarm warning */
 #define ALARM_OVER_CHARGED              0x8000
 #define ALARM_TERMINATE_CHARGE          0x4000

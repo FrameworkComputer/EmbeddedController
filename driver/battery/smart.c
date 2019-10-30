@@ -21,32 +21,8 @@
 
 static int fake_state_of_charge = -1;
 
-static int battery_supports_pec(void)
-{
-	static int supports_pec = -1;
-
-	if (!IS_ENABLED(CONFIG_SMBUS_PEC))
-		return 0;
-
-	if (supports_pec < 0) {
-		int spec_info;
-		int rv = i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
-				    SB_SPECIFICATION_INFO, &spec_info);
-		/* failed, assuming not support and try again later */
-		if (rv)
-			return 0;
-
-		supports_pec = (BATTERY_SPEC_VERSION(spec_info) ==
-				BATTERY_SPEC_VER_1_1_WITH_PEC);
-		CPRINTS("battery supports pec: %d", supports_pec);
-	}
-	return supports_pec;
-}
-
 test_mockable int sb_read(int cmd, int *param)
 {
-	uint16_t addr_flags = BATTERY_ADDR_FLAGS;
-
 #ifdef CONFIG_BATTERY_CUT_OFF
 	/*
 	 * Some batteries would wake up after cut-off if we talk to it.
@@ -54,16 +30,13 @@ test_mockable int sb_read(int cmd, int *param)
 	if (battery_is_cut_off())
 		return EC_RES_ACCESS_DENIED;
 #endif
-	if (battery_supports_pec())
-		addr_flags |= I2C_FLAG_PEC;
 
-	return i2c_read16(I2C_PORT_BATTERY, addr_flags, cmd, param);
+	return i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
+			  cmd, param);
 }
 
 test_mockable int sb_write(int cmd, int param)
 {
-	uint16_t addr_flags = BATTERY_ADDR_FLAGS;
-
 #ifdef CONFIG_BATTERY_CUT_OFF
 	/*
 	 * Some batteries would wake up after cut-off if we talk to it.
@@ -71,16 +44,13 @@ test_mockable int sb_write(int cmd, int param)
 	if (battery_is_cut_off())
 		return EC_RES_ACCESS_DENIED;
 #endif
-	if (battery_supports_pec())
-		addr_flags |= I2C_FLAG_PEC;
 
-	return i2c_write16(I2C_PORT_BATTERY, addr_flags, cmd, param);
+	return i2c_write16(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
+			   cmd, param);
 }
 
 int sb_read_string(int offset, uint8_t *data, int len)
 {
-	uint16_t addr_flags = BATTERY_ADDR_FLAGS;
-
 #ifdef CONFIG_BATTERY_CUT_OFF
 	/*
 	 * Some batteries would wake up after cut-off if we talk to it.
@@ -88,10 +58,9 @@ int sb_read_string(int offset, uint8_t *data, int len)
 	if (battery_is_cut_off())
 		return EC_RES_ACCESS_DENIED;
 #endif
-	if (battery_supports_pec())
-		addr_flags |= I2C_FLAG_PEC;
 
-	return i2c_read_string(I2C_PORT_BATTERY, addr_flags, offset, data, len);
+	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
+			       offset, data, len);
 }
 
 int sb_read_mfgacc(int cmd, int block, uint8_t *data, int len)
@@ -126,8 +95,6 @@ int sb_read_mfgacc(int cmd, int block, uint8_t *data, int len)
 
 int sb_write_block(int reg, const uint8_t *val, int len)
 {
-	uint16_t addr_flags = BATTERY_ADDR_FLAGS;
-
 #ifdef CONFIG_BATTERY_CUT_OFF
 	/*
 	 * Some batteries would wake up after cut-off if we talk to it.
@@ -136,11 +103,9 @@ int sb_write_block(int reg, const uint8_t *val, int len)
 		return EC_RES_ACCESS_DENIED;
 #endif
 
-	if (battery_supports_pec())
-		addr_flags |= I2C_FLAG_PEC;
-
 	/* TODO: implement smbus_write_block. */
-	return i2c_write_block(I2C_PORT_BATTERY, addr_flags, reg, val, len);
+	return i2c_write_block(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
+			       reg, val, len);
 }
 
 int battery_get_mode(int *mode)
