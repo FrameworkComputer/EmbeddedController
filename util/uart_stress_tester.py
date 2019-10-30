@@ -93,7 +93,8 @@ class UartSerial(object):
   )
 
   def __init__(self, port, duration, timeout=1,
-               baudrate=BAUDRATE, cr50_workload=False):
+               baudrate=BAUDRATE, cr50_workload=False,
+               usb_output=False):
     """Initialize UartSerial
 
     Args:
@@ -102,11 +103,13 @@ class UartSerial(object):
       timeout: Read timeout value.
       baudrate: Baud rate such as 9600 or 115200.
       cr50_workload: True if a workload should be generated on cr50
+      usb_output: True if a workload should be generated to USB channel
 
     Attributes:
       char_loss_occurrences: Number that character loss happens
       cleanup_cli: Command list to perform before the test exits
       cr50_workload: True if cr50 should be stressed, or False otherwise
+      usb_output: True if output should be generated to USB channel
       dev_prof: Dictionary of device profile
       duration: Time to keep chargen running
       eol: Characters to add at the end of input
@@ -126,6 +129,7 @@ class UartSerial(object):
 
     self.duration = duration
     self.cr50_workload = cr50_workload
+    self.usb_output = usb_output
 
     self.logger = logging.getLogger(type(self).__name__ + '| ' + port)
     self.test_thread = threading.Thread(target=self.stress_test_thread)
@@ -232,10 +236,19 @@ class UartSerial(object):
       self.run_command(self.dev_prof['prepare_cmd'], delay=2)
       self.cleanup_cli += self.dev_prof['cleanup_cmd']
 
+      # 'chargen' of AP does not have option for USB output.
+      # Force it work on UART.
+      if self.dev_prof['device_type'] == 'AP':
+        self.usb_output=False
+
       # Check whether the command 'chargen' is available in the device.
       # 'chargen 1 4' is supposed to print '0000'
       self.get_output()      # drain data
-      self.run_command(['chargen 1 4'])
+
+      chargen_cmd='chargen 1 4'
+      if self.usb_output:
+        chargen_cmd+=' usb'
+      self.run_command([chargen_cmd])
       tmp_txt = self.get_output()
 
       # Check whether chargen command is available.
@@ -244,7 +257,10 @@ class UartSerial(object):
                                (self.dev_prof['device_type'], tmp_txt))
 
       self.num_ch_exp = int(self.serial.baudrate * self.duration / 10)
-      self.test_cli = ['chargen %d %d' % (CHARGEN_TXT_LEN, self.num_ch_exp)]
+      chargen_cmd='chargen ' + str(CHARGEN_TXT_LEN) + ' ' + str(self.num_ch_exp)
+      if self.usb_output:
+        chargen_cmd+=' usb'
+      self.test_cli = [chargen_cmd]
 
       self.logger.info('Ready to test')
     finally:
@@ -267,6 +283,7 @@ class UartSerial(object):
         self.logger.debug('run TPM job while %s exists', FLAG_FILENAME)
 
       # Run the command 'chargen', one time
+      self.run_command([''])  # Give a line feed
       self.get_output()    # Drain the output
       self.run_command(self.test_cli)
       self.serial.readline()    # Drain the echoed command line.
@@ -374,15 +391,13 @@ class ChargenTest(object):
   """UART stress tester
 
   Attributes:
-    cr50_workload: True if cr50 should be stressed, or False otherwise
-    duration: Time to keep testing in seconds
     logger: logging object
-    ports: List of Uart device filename
     serials: Dictionary where key is filename of UART device, and the value is
              UartSerial object
   """
 
-  def __init__(self, ports, duration, cr50_workload=False):
+  def __init__(self, ports, duration, cr50_workload=False,
+                usb_output=False):
     """Initialize UART stress tester
 
     Args:
@@ -395,7 +410,6 @@ class ChargenTest(object):
     """
 
     # Save the arguments
-    self.ports = ports
     for port in ports:
       try:
         mode = os.stat(port).st_mode
@@ -406,18 +420,16 @@ class ChargenTest(object):
 
     if duration <= 0:
       raise ChargenTestError('Input error: duration is not positive.')
-    self.duration = duration
-
-    self.cr50_workload = cr50_workload
 
     # Initialize logging object
     self.logger = logging.getLogger(type(self).__name__)
 
     # Create an UartSerial object per UART port
     self.serials = {}     # UartSerial objects
-    for port in self.ports:
-      self.serials[port] = UartSerial(port=port, duration=self.duration,
-                                      cr50_workload=self.cr50_workload)
+    for port in ports:
+      self.serials[port] = UartSerial(port=port, duration=duration,
+                                      cr50_workload=cr50_workload,
+                                      usb_output=usb_output)
 
   def prepare(self):
     """Prepare the test for each UART port"""
@@ -504,6 +516,8 @@ Examples:
                       help='enable debug messages')
   parser.add_argument('-t', '--time', type=int,
                       help='Test duration in second', default=300)
+  parser.add_argument('-u', '--usb', action='store_true', default=False,
+                      help='Generate output to USB channel instead')
   return parser.parse_known_args(cmdline)
 
 
@@ -526,7 +540,9 @@ def main():
                         datefmt=date_format)
 
     # Create a ChargenTest object
-    utest = ChargenTest(options.port, options.time, options.cr50)
+    utest = ChargenTest(options.port, options.time,
+                        cr50_workload=options.cr50,
+                        usb_output=options.usb)
     utest.run()    # Run
 
   except KeyboardInterrupt:
