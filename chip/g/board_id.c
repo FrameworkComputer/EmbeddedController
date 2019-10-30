@@ -192,7 +192,10 @@ static enum vendor_cmd_rc vc_set_board_id(enum vendor_cmd_cc code,
 
 	memcpy(&id.type, pbuf, sizeof(id.type));
 	id.type = be32toh(id.type);
-	id.type_inv = ~id.type;
+	if (id.type == BLANK_FIELD)
+		id.type_inv = BLANK_FIELD;
+	else
+		id.type_inv = ~id.type;
 
 	memcpy(&id.flags, pbuf + sizeof(id.type), sizeof(id.flags));
 	id.flags = be32toh(id.flags);
