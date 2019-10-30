@@ -561,17 +561,45 @@ static const struct thermistor_info thermistor_info = {
 
 static int board_get_temp(int idx, int *temp_k)
 {
-	/* idx is the sensor index set below in temp_sensors[] */
-	int mv = adc_read_channel(
-		idx ? ADC_TEMP_SENSOR_SOC : ADC_TEMP_SENSOR_CHARGER);
+	int mv;
 	int temp_c;
+	enum adc_channel channel;
 
+	/* idx is the sensor index set below in temp_sensors[] */
+	switch (idx) {
+	case TEMP_SENSOR_CHARGER:
+		/* TODO: b/143598098
+		 * Revision 1.6 of the schematic will put this
+		 * thermistor on power rail EC_A instead of
+		 * PP3300_A.  This will make the charger circuit
+		 * temperature available even when the AP is not
+		 * powered and the check will no longer be needed
+		 */
+
+		/* thermistor is not powered in G3 */
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			return EC_ERROR_NOT_POWERED;
+
+		channel = ADC_TEMP_SENSOR_CHARGER;
+		break;
+	case TEMP_SENSOR_SOC:
+		/* thermistor is not powered in G3 */
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			return EC_ERROR_NOT_POWERED;
+
+		channel = ADC_TEMP_SENSOR_SOC;
+		break;
+	default:
+		return EC_ERROR_INVAL;
+	}
+
+	mv = adc_read_channel(channel);
 	if (mv < 0)
-		return -1;
+		return EC_ERROR_INVAL;
 
 	temp_c = thermistor_linear_interpolate(mv, &thermistor_info);
 	*temp_k = C_TO_K(temp_c);
-	return 0;
+	return EC_SUCCESS;
 }
 
 const struct temp_sensor_t temp_sensors[] = {
@@ -579,14 +607,14 @@ const struct temp_sensor_t temp_sensors[] = {
 		.name = "Charger",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = board_get_temp,
-		.idx = 0,
+		.idx = TEMP_SENSOR_CHARGER,
 		.action_delay_sec = 1,
 	},
 	[TEMP_SENSOR_SOC] = {
 		.name = "SOC",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = board_get_temp,
-		.idx = 1,
+		.idx = TEMP_SENSOR_SOC,
 		.action_delay_sec = 5,
 	},
 	[TEMP_SENSOR_CPU] = {
@@ -599,10 +627,22 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-const static struct ec_thermal_config thermal_a = {
+const static struct ec_thermal_config thermal_thermistor = {
 	.temp_host = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
 		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+	.temp_fan_off = C_TO_K(25),
+	.temp_fan_max = C_TO_K(50),
+};
+
+const static struct ec_thermal_config thermal_cpu = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(95),
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
@@ -615,9 +655,9 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 
 static void setup_fans(void)
 {
-	thermal_params[TEMP_SENSOR_CHARGER] = thermal_a;
-	thermal_params[TEMP_SENSOR_SOC] = thermal_a;
-	thermal_params[TEMP_SENSOR_CPU] = thermal_a;
+	thermal_params[TEMP_SENSOR_CHARGER] = thermal_thermistor;
+	thermal_params[TEMP_SENSOR_SOC] = thermal_thermistor;
+	thermal_params[TEMP_SENSOR_CPU] = thermal_cpu;
 }
 
 #ifdef HAS_TASK_MOTIONSENSE
