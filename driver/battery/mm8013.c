@@ -212,11 +212,11 @@ void battery_get_params(struct batt_params *batt)
 	if (battery_full_charge_capacity(&batt_new.full_capacity))
 		batt_new.flags |= BATT_FLAG_BAD_FULL_CAPACITY;
 
-	if (battery_flag(&flag) && (flag & MM8013_FLAG_CHG))
-		batt_new.flags |= BATT_FLAG_WANT_CHARGE;
-
 	if (battery_status(&batt_new.status))
 		batt_new.flags |= BATT_FLAG_BAD_STATUS;
+
+	if (!battery_flag(&flag) && (flag & MM8013_FLAG_CHG))
+		batt_new.flags |= BATT_FLAG_WANT_CHARGE;
 
 batt_out:
 	/* Update visible battery parameters */
