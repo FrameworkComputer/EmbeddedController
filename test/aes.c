@@ -1,4 +1,6 @@
 /* Copyright 2018 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,30 +26,175 @@
 /* Temporary buffer, to avoid using too much stack space. */
 static uint8_t tmp[512];
 
-static int test_aes_gcm_raw(const uint8_t *key, int key_size,
-	const uint8_t *plaintext, const uint8_t *ciphertext, int plaintext_size,
-	const uint8_t *nonce, int nonce_size,
-	const uint8_t *tag, int tag_size) {
-
-	uint8_t *out = tmp;
+/*
+ * Do encryption, put result in |result|, and compare with |ciphertext|.
+ */
+static int test_aes_gcm_encrypt(uint8_t *result,
+				const uint8_t *key,
+				int key_size,
+				const uint8_t *plaintext,
+				const uint8_t *ciphertext,
+				int plaintext_size,
+				const uint8_t *nonce,
+				int nonce_size,
+				const uint8_t *tag,
+				int tag_size)
+{
 	static AES_KEY aes_key;
 	static GCM128_CONTEXT ctx;
 
-	TEST_ASSERT(plaintext_size <= sizeof(tmp));
+	TEST_ASSERT(AES_set_encrypt_key(key, 8 * key_size, &aes_key) == 0);
+
+	CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f) AES_encrypt, 0);
+	CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
+	TEST_ASSERT(CRYPTO_gcm128_encrypt(&ctx, &aes_key, plaintext, result,
+					  plaintext_size));
+	TEST_ASSERT(CRYPTO_gcm128_finish(&ctx, tag, tag_size));
+	TEST_ASSERT_ARRAY_EQ(ciphertext, result, plaintext_size);
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Do decryption, put result in |result|, and compare with |plaintext|.
+ */
+static int test_aes_gcm_decrypt(uint8_t *result,
+				const uint8_t *key,
+				int key_size,
+				const uint8_t *plaintext,
+				const uint8_t *ciphertext,
+				int plaintext_size,
+				const uint8_t *nonce,
+				int nonce_size,
+				const uint8_t *tag,
+				int tag_size)
+{
+	static AES_KEY aes_key;
+	static GCM128_CONTEXT ctx;
 
 	TEST_ASSERT(AES_set_encrypt_key(key, 8 * key_size, &aes_key) == 0);
 
-	CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f)AES_encrypt, 0);
+	CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f) AES_encrypt, 0);
 	CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
-	CRYPTO_gcm128_encrypt(&ctx, &aes_key, plaintext, out, plaintext_size);
+	TEST_ASSERT(CRYPTO_gcm128_decrypt(&ctx, &aes_key, ciphertext, result,
+					  plaintext_size));
 	TEST_ASSERT(CRYPTO_gcm128_finish(&ctx, tag, tag_size));
-	TEST_ASSERT_ARRAY_EQ(ciphertext, out, plaintext_size);
+	TEST_ASSERT_ARRAY_EQ(plaintext, result, plaintext_size);
 
-	CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
-	memset(out, 0, plaintext_size);
-	CRYPTO_gcm128_decrypt(&ctx, &aes_key, ciphertext, out, plaintext_size);
-	TEST_ASSERT(CRYPTO_gcm128_finish(&ctx, tag, tag_size));
-	TEST_ASSERT_ARRAY_EQ(plaintext, out, plaintext_size);
+	return EC_SUCCESS;
+}
+
+static int test_aes_gcm_raw_inplace(const uint8_t *key,
+				    int key_size,
+				    const uint8_t *plaintext,
+				    const uint8_t *ciphertext,
+				    int plaintext_size,
+				    const uint8_t *nonce,
+				    int nonce_size,
+				    const uint8_t *tag,
+				    int tag_size)
+{
+
+	/*
+	 * Make copies that will be clobbered during in-place encryption or
+	 * decryption.
+	 */
+	uint8_t plaintext_copy[plaintext_size];
+	uint8_t ciphertext_copy[plaintext_size];
+
+	memcpy(plaintext_copy, plaintext, plaintext_size);
+	memcpy(ciphertext_copy, ciphertext, plaintext_size);
+
+	TEST_ASSERT(test_aes_gcm_encrypt(plaintext_copy,
+					 key,
+					 key_size,
+					 plaintext_copy,
+					 ciphertext,
+					 plaintext_size,
+					 nonce,
+					 nonce_size,
+					 tag,
+					 tag_size) == EC_SUCCESS);
+
+	TEST_ASSERT(test_aes_gcm_decrypt(ciphertext_copy,
+					 key,
+					 key_size,
+					 plaintext,
+					 ciphertext_copy,
+					 plaintext_size,
+					 nonce,
+					 nonce_size,
+					 tag,
+					 tag_size) == EC_SUCCESS);
+
+	return EC_SUCCESS;
+}
+
+static int test_aes_gcm_raw_non_inplace(const uint8_t *key,
+					int key_size,
+					const uint8_t *plaintext,
+					const uint8_t *ciphertext,
+					int plaintext_size,
+					const uint8_t *nonce,
+					int nonce_size,
+					const uint8_t *tag,
+					int tag_size)
+{
+	TEST_ASSERT(test_aes_gcm_encrypt(tmp,
+					 key,
+					 key_size,
+					 plaintext,
+					 ciphertext,
+					 plaintext_size,
+					 nonce,
+					 nonce_size,
+					 tag,
+					 tag_size) == EC_SUCCESS);
+
+	TEST_ASSERT(test_aes_gcm_decrypt(tmp,
+					 key,
+					 key_size,
+					 plaintext,
+					 ciphertext,
+					 plaintext_size,
+					 nonce,
+					 nonce_size,
+					 tag,
+					 tag_size) == EC_SUCCESS);
+
+	return EC_SUCCESS;
+}
+
+static int test_aes_gcm_raw(const uint8_t *key,
+			    int key_size,
+			    const uint8_t *plaintext,
+			    const uint8_t *ciphertext,
+			    int plaintext_size,
+			    const uint8_t *nonce,
+			    int nonce_size,
+			    const uint8_t *tag,
+			    int tag_size)
+{
+	TEST_ASSERT(plaintext_size <= sizeof(tmp));
+
+	TEST_ASSERT(test_aes_gcm_raw_non_inplace(key,
+						 key_size,
+						 plaintext,
+						 ciphertext,
+						 plaintext_size,
+						 nonce,
+						 nonce_size,
+						 tag,
+						 tag_size) == EC_SUCCESS);
+	TEST_ASSERT(test_aes_gcm_raw_inplace(key,
+					     key_size,
+					     plaintext,
+					     ciphertext,
+					     plaintext_size,
+					     nonce,
+					     nonce_size,
+					     tag,
+					     tag_size) == EC_SUCCESS);
 
 	return EC_SUCCESS;
 }
