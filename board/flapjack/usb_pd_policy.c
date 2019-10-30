@@ -93,7 +93,7 @@ void pd_power_supply_reset(int port)
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
-void typec_set_source_current_limit(int port, int rp)
+void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	/* No-operation */
 }

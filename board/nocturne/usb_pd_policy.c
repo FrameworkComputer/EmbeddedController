@@ -174,7 +174,7 @@ void pd_transition_voltage(int idx)
 	/* No-operation: we are always 5V */
 }
 
-void typec_set_source_current_limit(int p, int rp)
+void typec_set_source_current_limit(int p, enum tcpc_rp_value rp)
 {
 	ppc_set_vbus_source_current_limit(p, rp);
 }

@@ -1584,7 +1584,7 @@ void typec_set_input_current_limit(int port, typec_current_t max_ma,
  * @param port USB-C port number
  * @param rp One of enum tcpc_rp_value (eg TYPEC_RP_3A0) defining the limit.
  */
-void typec_set_source_current_limit(int port, int rp);
+void typec_set_source_current_limit(int port, enum tcpc_rp_value rp);
 
 /**
  * Verify board specific health status : current, voltages...

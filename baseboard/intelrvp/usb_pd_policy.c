@@ -135,7 +135,7 @@ void pd_check_dr_role(int port, int dr_role, int flags)
 		pd_request_data_swap(port);
 }
 
-void typec_set_source_current_limit(int port, int rp)
+void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	board_set_vbus_source_current_limit(port, rp);
 }

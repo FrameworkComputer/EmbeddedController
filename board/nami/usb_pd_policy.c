@@ -71,7 +71,7 @@ static void board_vbus_update_source_current(int port)
 		       vbus_en[port]);
 }
 
-void typec_set_source_current_limit(int port, int rp)
+void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	vbus_rp[port] = rp;
 

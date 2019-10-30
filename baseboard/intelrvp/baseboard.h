@@ -144,6 +144,8 @@
 #include "module_id.h"
 #include "registers.h"
 
+enum tcpc_rp_value;
+
 /* PWM channels */
 enum pwm_channel {
 	PWM_CH_FAN,
@@ -230,7 +232,7 @@ void vbus0_evt(enum gpio_signal signal);
 void vbus1_evt(enum gpio_signal signal);
 void board_charging_enable(int port, int enable);
 void board_vbus_enable(int port, int enable);
-void board_set_vbus_source_current_limit(int port, int rp);
+void board_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp);
 int ioexpander_read_intelrvp_version(int *port0, int *port1);
 void board_dc_jack_interrupt(enum gpio_signal signal);
 

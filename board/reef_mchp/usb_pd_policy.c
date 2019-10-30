@@ -83,7 +83,7 @@ static void board_vbus_update_source_current(int port)
 	gpio_set_flags(gpio, flags);
 }
 
-void typec_set_source_current_limit(int port, int rp)
+void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	vbus_rp[port] = rp;
 

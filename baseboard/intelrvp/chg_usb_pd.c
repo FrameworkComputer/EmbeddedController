@@ -35,7 +35,7 @@ int board_vbus_source_enabled(int port)
 	return src_en;
 }
 
-void board_set_vbus_source_current_limit(int port, int rp)
+void board_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	int ilim_en;
 

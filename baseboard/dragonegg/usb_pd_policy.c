@@ -194,7 +194,7 @@ int pd_snk_is_vbus_provided(int port)
 }
 #endif
 
-void typec_set_source_current_limit(int port, int rp)
+void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	ppc_set_vbus_source_current_limit(port, rp);
 }
