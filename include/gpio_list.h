@@ -23,6 +23,14 @@ const struct gpio_info gpio_list[] = {
 
 BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
+#define UNUSED(pin) {GPIO_##pin},
+/* Unconnected pin list. */
+const struct unused_pin_info unused_pin_list[] = {
+	#include "gpio.wrap"
+};
+
+const int unused_pin_count = ARRAY_SIZE(unused_pin_list);
+
 /* GPIO Interrupt Handlers */
 #define GPIO_INT(name, pin, flags, signal) signal,
 void (* const gpio_irq_handlers[])(enum gpio_signal signal) = {
@@ -45,7 +53,9 @@ const int gpio_ih_count = ARRAY_SIZE(gpio_irq_handlers);
  */
 #define GPIO(name, pin, flags) pin
 #define GPIO_INT(name, pin, flags, signal) pin
+#define UNUSED(pin) pin
 /*
+ * Check at build time that pin/ports are only defined once.
  * The compiler will complain if we use the same name twice. The linker ignores
  * anything that gets by.
  */
