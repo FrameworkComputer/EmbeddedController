@@ -14,6 +14,8 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
+#define BLANK_FIELD 0xffffffff
+
 /**
  * Return the image header for the current image copy
  */
@@ -23,9 +25,19 @@ const struct SignedHeader *get_current_image_header(void)
 			get_program_memory_addr(system_get_image_copy());
 }
 
+static int board_id_type_is_blank(const struct board_id *id)
+{
+	return (id->type & id->type_inv) == BLANK_FIELD;
+}
+
+static int board_id_flags_are_blank(const struct board_id *id)
+{
+	return id->flags == BLANK_FIELD;
+}
+
 int board_id_is_blank(const struct board_id *id)
 {
-	return ~(id->type & id->type_inv & id->flags) == 0;
+	return board_id_type_is_blank(id) && board_id_flags_are_blank(id);
 }
 
 uint32_t check_board_id_vs_header(const struct board_id *id,
@@ -45,20 +57,20 @@ uint32_t check_board_id_vs_header(const struct board_id *id,
 	header_board_id_flags = SIGNED_HEADER_PADDING ^ h->board_id_flags;
 
 	/*
-	 * Masked bits in header Board ID type must match type and inverse from
-	 * flash.
-	 */
-	mismatch = header_board_id_type ^ id->type;
-	mismatch |= header_board_id_type ^ ~id->type_inv;
-	mismatch &= header_board_id_mask;
-
-	/*
 	 * All 1-bits in header Board ID flags must be present in flags from
 	 * flash
 	 */
-	mismatch |=
+	mismatch =
 		((header_board_id_flags & id->flags) != header_board_id_flags);
-
+	/*
+	 * Masked bits in header Board ID type must match type and inverse from
+	 * flash.
+	 */
+	if (!mismatch && !board_id_type_is_blank(id)) {
+		mismatch = header_board_id_type ^ id->type;
+		mismatch |= header_board_id_type ^ ~id->type_inv;
+		mismatch &= header_board_id_mask;
+	}
 	return mismatch;
 }
 
