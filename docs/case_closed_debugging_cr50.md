@@ -65,7 +65,7 @@ Cr50 CCD needs to be opened to access all CCD functionality or to modify
 capability settings so the device doesn't need to be open to access CCD
 functionality.
 
-### Prerequisites
+## Prerequisites
 Cr50 needs to be newer than 0.3.9 or 0.4.9 to setup ccd. The 3 in the major
 version means it's a MP image and 0.4.X is a prePVT image. There aren't many
 differences between the MP and prePVT versions of images. It is just a little
@@ -102,7 +102,7 @@ so if you're trying to update to .prepvt and it fails try using .prod.
 	* Plug USB-C power into servo v4 for dut pass though
 	* Green LED will light up when plugged into DUT.
 
-### Basic Steps for CCD setup
+## Basic Steps for CCD setup
 
 1.  Use the general [setup](case_closed_debugging.md#Setup) instructions to
     connect Suzy-Q and access the Cr50 console. The Cr50 console will be the
@@ -120,7 +120,7 @@ so if you're trying to update to .prepvt and it fails try using .prod.
 
 4.  Use CCD
 
-### Open CCD
+## Open CCD
 
 The first cr50 image with CCD support was 0.3.9. If you are not running 0.3.9,
 you need to download the image and update cr50 from the AP or using Suzy-Q.
@@ -136,12 +136,12 @@ after cr50 reboot. If you don’t want to have to reopen cr50, you may want to
 setup the ccd capabilities so you can use them without needing cr50 to be
 open.**
 
-#### Standard Process (Requires Booting to Kernel)
+### Standard Process (Requires Booting to Kernel)
 
 If your device can boot, you can open Cr50 by entering dev mode and then sending
 the ccd open command from the kernel.
 
-##### Enter dev mode
+#### Enter dev mode
 
 Entering dev mode has to be done manually. Using the gbb flags to force dev mode
 will not work.
@@ -215,7 +215,7 @@ will not work.
           Use 'ccd help' to print subcommands
 ```
 
-##### Run ccd open
+#### Run ccd open
 
 You can start the open process from the AP. Once you start the process, you will
 need to press the power button when prompted open cr50.
@@ -243,7 +243,7 @@ capabilities to Always.
 If you want to be able to open cr50 without the AP, set OpenNoDevMode and
 OpenFromUSB to Always.
 
-#### CCD Open Without Booting the Device
+### CCD Open Without Booting the Device
 
 If you can’t boot the device, you won’t be able to enter dev mode and send the
 open command from the AP. You will need to follow some non-standard methods to
@@ -251,7 +251,7 @@ open the device. If you have enabled ccd before, cr50 may be configured in a way
 that you can still open cr50. If you haven't setup CCD before, you will need to
 remove the battery to enable CCD.
 
-##### Can remove the Battery
+#### Can remove the Battery
 
 If you can remove the battery, you can bypass the AP command/dev mode
 requirements. `ccd open` is allowed from the console if FWMP doesn’t disable ccd
@@ -264,7 +264,7 @@ correctly before flashing the AP/EC.
 
 2.  Send ‘ccd open’ from the cr50 console.
 
-##### CCD testlab is enabled
+#### CCD testlab is enabled
 
 You can check if testlab is enabled cr50 from the console.
 
@@ -275,20 +275,20 @@ If it’s enabled, you can open cr50 from the console without physical presence.
 
     cr50 > ccd testlab open
 
-##### OpenNoDevMode and OpenFromUSB are set to Always
+#### OpenNoDevMode and OpenFromUSB are set to Always
 
 This requires >=0.3.10. If these capabilities are set, you will be able to open
 cr50 from the console without dev mode.
 
     cr50 > ccd open
 
-##### CCD Password is Set
+#### CCD Password is Set
 
 You can run ccd open with the password to open from the console.
 
     cr50 > ccd open $PASSWORD
 
-### Configure CCD
+## Configure CCD
 
 Cr50 capabilities allow you to configure CCD to restrict or open the device as
 much as you want. You can use the `ccd` command to check and modify the
@@ -340,7 +340,7 @@ To reset capabilities to Default run
 
     > ccd reset
 
-#### Enable Open Without Requiring Device to Boot
+### Enable Open Without Requiring Device to Boot
 
 By default Cr50 requires enabling dev mode before you can open the device and
 the open command has to be sent from the AP. You can change the capabilities to
@@ -349,7 +349,7 @@ from booting. You can also set the ccd password to get around these
 requirements. These options offer different pros and cons. You can decide which
 is best for you.
 
-##### Set Capabilities
+#### Set Capabilities
 
 After opening cr50, you can set these capabilities to reduce the restrictions
 required to open cr50.
@@ -357,14 +357,14 @@ required to open cr50.
     > ccd set OpenFromUSB Always
     > ccd set OpenNoDevMode Always
 
-##### CCD Password
+#### CCD Password
 
 A ccd password can also be used to get around the open restrictions. The
 password will be required to reopen or unlock cr50, so keep track of the
 password. It can't be reset unless cr50 is open, so if you forget it, nothing
 can be done to reopen cr50.
 
-###### Set Password
+##### Set Password
 
 Run the gsctool command and enter the password when prompted. It will prompt
 for the password twice.
@@ -378,7 +378,7 @@ You can use the ccd command to check if the password is set.
            Password: [none|set]
            ...
 
-###### Clear Password
+##### Clear Password
 
 You can clear the password by opening cr50 and then running the gsctool command
 agatin. When prompted for the password enter `clear:$PASSWORD` at both prompts.
@@ -386,7 +386,7 @@ agatin. When prompted for the password enter `clear:$PASSWORD` at both prompts.
 You can also use the cr50 `ccd reset` command when cr50 is open. This will clear
 the password and reset all ccd capabilities to default.
 
-###### Use Password
+##### Use Password
 
 After the password has been set you can use it to run ccd commands from the cr50
 console.
