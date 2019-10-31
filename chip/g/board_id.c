@@ -225,7 +225,7 @@ static int command_board_id(int argc, char **argv)
 		if (board_id_is_blank(&id))
 			return rv; /* The space is not initialized. */
 
-		if (id.type != ~id.type_inv)
+		if (!board_id_type_is_blank(&id) && id.type != ~id.type_inv)
 			ccprintf("Inv Type Mismatch (%08x instead of %08x)!\n",
 				 id.type_inv, ~id.type);
 	}
