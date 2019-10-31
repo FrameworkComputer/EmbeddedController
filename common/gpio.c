@@ -196,6 +196,14 @@ int gpio_power_down_module(enum module_id id)
 }
 #endif /* #ifdef CONFIG_GPIO_POWER_DOWN */
 
+void gpio_set_level_verbose(enum console_channel channel,
+			    enum gpio_signal signal, int value)
+{
+	ASSERT(signal_is_gpio(signal));
+	cprints(channel, "Set %s: %d", gpio_get_name(signal), value);
+	gpio_set_level(signal, value);
+}
+
 void gpio_or_ioex_set_level(int signal, int value)
 {
 	if (IS_ENABLED(CONFIG_IO_EXPANDER) && signal_is_ioex(signal))
