@@ -121,7 +121,7 @@ uint32_t board_id_mismatch(const struct SignedHeader *sh)
  * @return EC_SUCCESS or an error code in cases of various failures to read or
  *              if the space has been already initialized.
  */
-static int write_board_id(const struct board_id *id, int clear_flags)
+static int write_board_id(const struct board_id *id)
 {
 	struct board_id id_test;
 	uint32_t rv;
@@ -143,7 +143,7 @@ static int write_board_id(const struct board_id *id, int clear_flags)
 		return rv;
 	}
 
-	if (!clear_flags && !board_id_is_blank(&id_test)) {
+	if (!board_id_is_blank(&id_test)) {
 		CPRINTS("%s: Board ID already programmed", __func__);
 		return EC_ERROR_ACCESS_DENIED;
 	}
@@ -186,7 +186,7 @@ static enum vendor_cmd_rc vc_set_board_id(enum vendor_cmd_cc code,
 	id.flags = be32toh(id.flags);
 
 	/* We care about the LSB only. */
-	*pbuf = write_board_id(&id, 0);
+	*pbuf = write_board_id(&id);
 
 	return *pbuf;
 }
@@ -204,7 +204,8 @@ static int command_board_id(int argc, char **argv)
 			ccprintf("Failed to read board ID space\n");
 			return rv;
 		}
-		ccprintf("Board ID: %08x, flags %08x\n", id.type, id.flags);
+		ccprintf("Board ID: %08x:%08x, flags %08x\n", id.type,
+			 id.type_inv, id.flags);
 
 		if (board_id_is_blank(&id))
 			return rv; /* The space is not initialized. */
@@ -224,7 +225,7 @@ static int command_board_id(int argc, char **argv)
 		id.flags = strtoi(argv[2], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM2;
-		rv = write_board_id(&id, 0);
+		rv = write_board_id(&id);
 	}
 #endif
 	return rv;
