@@ -14,6 +14,11 @@ GPIO_INT(EC_WP_L,              PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(H1_EC_PWR_BTN_ODL,    PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)
 GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
 
+/* Optional power sequencing interrupts */
+#ifdef VOLTEER_POWER_SEQUENCE
+GPIO_INT(CPU_C10_GATE_L,       PIN(6, 7), GPIO_INT_BOTH, c10_gate_change)
+#endif
+
 /* Power sequencing interrupts */
 GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
 #ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
@@ -38,6 +43,19 @@ GPIO(EN_PP5000_A,              PIN(A, 4), GPIO_OUT_LOW)
 /* The EC does not buffer this signal on Volteer. */
 UNIMPLEMENTED(PCH_DSW_PWROK)
 
+#ifdef VOLTEER_POWER_SEQUENCE
+/* Optional power sequencing signals that are not stuffed by default */
+GPIO(EN_DRAM_VDDQ,		PIN(F, 2), GPIO_OUT_LOW)
+GPIO(EN_PP1050_STG,		PIN(C, 0), GPIO_OUT_LOW)
+GPIO(EN_PP5000_USB_AG,		PIN(A, 7), GPIO_OUT_LOW)
+GPIO(EN_PP1800_A,		PIN(8, 3), GPIO_OUT_LOW)
+GPIO(EN_PPVAR_VCCIN_AUX,	PIN(8, 1), GPIO_OUT_LOW)
+GPIO(EN_PP1050_ST_S0,		PIN(3, 4), GPIO_OUT_LOW)
+GPIO(EN_VNN_BYPASS,		PIN(B, 0), GPIO_OUT_LOW)
+GPIO(EN_PP1050_BYPASS,		PIN(9, 7), GPIO_OUT_LOW)
+GPIO(EN_DRAM_VDD1,		PIN(9, 6), GPIO_OUT_LOW)
+#endif
+
 /* Other wake sources */
 /*
  * GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an
@@ -58,7 +76,6 @@ GPIO(EC_PCH_RTCRST,            PIN(7, 6), GPIO_OUT_LOW)
 GPIO(EC_PCH_WAKE_ODL,          PIN(7, 4), GPIO_ODR_HIGH)
 GPIO(EC_ENTERING_RW,           PIN(E, 3), GPIO_OUT_LOW)
 GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)
-GPIO(CPU_C10_GATE_L,           PIN(6, 7), GPIO_INPUT)    /* TODO - b/141322107 - implement if board power sequencing insufficient */
 GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
 
 GPIO(EC_PCH_INT_ODL,           PIN(D, 6), GPIO_ODR_HIGH) /* TODO - b/140557015 - implement with MKBD sensor events */

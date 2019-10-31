@@ -74,6 +74,8 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
+/* TODO: b/143375057 - Remove this code after power on. */
+void c10_gate_change(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 
