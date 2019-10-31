@@ -133,20 +133,10 @@ uint32_t board_id_mismatch(const struct SignedHeader *sh)
  * @return EC_SUCCESS or an error code in cases of various failures to read or
  *              if the space has been already initialized.
  */
-static int write_board_id(const struct board_id *id)
+static int write_board_id(struct board_id *id)
 {
 	struct board_id id_test;
 	uint32_t rv;
-
-	/*
-	 * Make sure the current header will still validate against the
-	 * proposed values.  If it doesn't, then programming these values
-	 * would cause the next boot to fail.
-	 */
-	if (check_board_id_vs_header(id, get_current_image_header()) != 0) {
-		CPRINTS("%s: Board ID wouldn't allow current header", __func__);
-		return EC_ERROR_INVAL;
-	}
 
 	/* Fail if Board ID is already programmed */
 	rv = read_board_id(&id_test);
@@ -156,8 +146,22 @@ static int write_board_id(const struct board_id *id)
 	}
 
 	if (!board_id_is_blank(&id_test)) {
-		CPRINTS("%s: Board ID already programmed", __func__);
-		return EC_ERROR_ACCESS_DENIED;
+		if (!board_id_type_is_blank(&id_test)) {
+			CPRINTS("%s: Board ID already programmed", __func__);
+			return EC_ERROR_ACCESS_DENIED;
+		}
+		CPRINTS("%s: using old flags.", __func__);
+		id->flags = id_test.flags;
+	}
+
+	/*
+	 * Make sure the current header will still validate against the
+	 * proposed values.  If it doesn't, then programming these values
+	 * would cause the next boot to fail.
+	 */
+	if (check_board_id_vs_header(id, get_current_image_header()) != 0) {
+		CPRINTS("%s: Board ID wouldn't allow current header", __func__);
+		return EC_ERROR_INVAL;
 	}
 
 	flash_info_write_enable();
