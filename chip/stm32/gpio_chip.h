@@ -13,4 +13,10 @@
  */
 void gpio_enable_clocks(void);
 
+/**
+ * Return gpio port clocks that are necessary to support
+ * the pins in gpio.inc.
+ */
+int gpio_required_clocks(void);
+
 #endif  /* __CROS_EC_CHIP_STM32_GPIO_CHIP_H */
