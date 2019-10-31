@@ -149,11 +149,6 @@ struct motion_sensor_t motion_sensors[] = {
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-int board_sensor_at_360(void)
-{
-	return lid_is_open();
-}
-
 /* Initialize board. */
 static void board_init(void)
 {
