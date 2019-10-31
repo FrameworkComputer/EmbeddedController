@@ -4839,6 +4839,23 @@ void pd_prepare_sysjump(void)
 
 #ifdef CONFIG_COMMON_RUNTIME
 
+static void pd_control_resume(int port)
+{
+	if (pd[port].task_state != PD_STATE_SUSPENDED)
+		return;
+
+	set_state(port, PD_DEFAULT_STATE(port));
+	/*
+	 * Since we did not service interrupts while we were suspended,
+	 * see if there is a waiting interrupt to be serviced. If the
+	 * interrupt line isn't asserted, we won't communicate with the
+	 * TCPC.
+	 */
+	if (IS_ENABLED(HAS_TASK_PD_INT_C0))
+		schedule_deferred_pd_interrupt(port);
+	task_wake(PD_PORT_TO_TASK_ID(port));
+}
+
 /*
  * (enable=1) request pd_task transition to the suspended state.  hang
  * around for a while until we observe the state change.  this can
@@ -4864,20 +4881,7 @@ void pd_set_suspend(int port, int enable)
 		if (!tries)
 			CPRINTS("TCPC p%d set_suspend failed!", port);
 	} else {
-		if (pd[port].task_state != PD_STATE_SUSPENDED)
-			CPRINTS("TCPC p%d suspend disable request "
-				"while not suspended!", port);
-		set_state(port, PD_DEFAULT_STATE(port));
-		/*
-		 * Since we did not service interrupts while we were suspended,
-		 * see if there is a waiting interrupt to be serviced. If the
-		 * interrupt line isn't asserted, we won't communicate with the
-		 * TCPC.
-		 */
-#ifdef HAS_TASK_PD_INT_C0
-		schedule_deferred_pd_interrupt(port);
-#endif
-		task_wake(PD_PORT_TO_TASK_ID(port));
+		pd_control_resume(port);
 	}
 }
 
