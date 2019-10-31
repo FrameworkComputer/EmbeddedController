@@ -59,4 +59,13 @@ uint32_t board_id_mismatch(const struct SignedHeader *h);
  * @return True if the board id is all 0xffffffff.
  */
 int board_id_is_blank(const struct board_id *id);
+
+/**
+ * Check if the board id type and type_inv are 0xffffffff.
+ *
+ * @param id	Pointer to a Board ID structure
+ *
+ * @return True if the board id type and type_inv are 0xffffffff.
+ */
+int board_id_type_is_blank(const struct board_id *id);
 #endif  /* ! __EC_CHIP_G_BOARD_ID_H */

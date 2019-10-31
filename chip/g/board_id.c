@@ -25,7 +25,7 @@ const struct SignedHeader *get_current_image_header(void)
 			get_program_memory_addr(system_get_image_copy());
 }
 
-static int board_id_type_is_blank(const struct board_id *id)
+int board_id_type_is_blank(const struct board_id *id)
 {
 	return (id->type & id->type_inv) == BLANK_FIELD;
 }
