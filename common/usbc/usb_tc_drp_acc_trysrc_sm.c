@@ -2672,9 +2672,12 @@ void tc_run(const int port)
 	run_state(port, &tc[port].ctx);
 }
 
-int pd_is_ufp(int port)
+/**
+ * This function checks the current CC status of the port partner
+ * and returns true if the attached partner is UFP.
+ */
+int pd_partner_is_ufp(int port)
 {
-	/* Returns true if port partner is UFP */
 	return tc[port].cc_state == PD_CC_UFP_ATTACHED ||
 	       tc[port].cc_state == PD_CC_UFP_DEBUG_ACC ||
 	       tc[port].cc_state == PD_CC_UFP_AUDIO_ACC;

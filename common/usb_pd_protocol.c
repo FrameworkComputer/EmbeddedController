@@ -394,9 +394,12 @@ int pd_is_vbus_present(int port)
 }
 
 #ifdef CONFIG_USB_PD_RETIMER
-int pd_is_ufp(int port)
+/**
+ * This function checks the current CC status of the port partner
+ * and returns true if the attached partner is UFP.
+ */
+int pd_partner_is_ufp(int port)
 {
-	/* Returns true if port partner is UFP */
 	return pd[port].cc_state == PD_CC_UFP_ATTACHED ||
 	       pd[port].cc_state == PD_CC_UFP_DEBUG_ACC ||
 	       pd[port].cc_state == PD_CC_UFP_AUDIO_ACC;

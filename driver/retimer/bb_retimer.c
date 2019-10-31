@@ -142,7 +142,7 @@ int retimer_set_state(int port, mux_state_t mux_state)
 		 * 0 - DFP
 		 * 1 - UPF
 		 */
-		if (pd_is_ufp(port))
+		if (pd_partner_is_ufp(port))
 			set_retimer_con |= BB_RETIMER_USB_DATA_ROLE;
 	}
 

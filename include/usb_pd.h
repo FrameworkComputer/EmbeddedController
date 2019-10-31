@@ -2259,11 +2259,11 @@ uint8_t board_get_dp_pin_mode(int port);
 
 #ifdef CONFIG_USB_PD_RETIMER
 /**
- * Return true if specified PD port is UFP.
+ * Return true if specified PD port partner is UFP.
  *
  * @param port USB-C port number
  */
-int pd_is_ufp(int port);
+int pd_partner_is_ufp(int port);
 
 /**
  * Return true if specified PD port is debug accessory.
