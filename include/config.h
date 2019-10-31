@@ -732,7 +732,7 @@
  * If defined, the board must define a macro DEDICATED_CHARGE_PORT indicates
  * the dedicated port number.
  *
- * See include/charger_manager.h for more details about dedicated port.
+ * See include/charge_manager.h for more details about dedicated port.
  */
 #define CONFIG_DEDICATED_CHARGE_PORT_COUNT 0
 
