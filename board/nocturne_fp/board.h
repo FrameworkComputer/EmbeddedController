@@ -3,7 +3,15 @@
  * found in the LICENSE file.
  */
 
-/* Meowth Fingerprint MCU configuration */
+/*
+ * STM32H743 + FPC 1145 Fingerprint MCU configuration
+ *
+ * Alternate names that share this same board file:
+ *   nocturne_fp
+ *   nami_fp
+ *   dartmonkey
+ *   dragontalon
+ */
 
 #ifndef __BOARD_H
 #define __BOARD_H

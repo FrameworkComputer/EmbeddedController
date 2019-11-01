@@ -3,7 +3,14 @@
  * found in the LICENSE file.
  */
 
-/* Hatch Fingerprint MCU configuration */
+/*
+ * STM32F412 + FPC 1025 Fingerprint MCU configuration
+ *
+ * Alternate names that share this same board file:
+ *   hatch_fp
+ *   bloonchipper
+ *   dragonclaw
+ */
 
 #ifndef __BOARD_H
 #define __BOARD_H
