@@ -38,7 +38,11 @@ struct fan_t {
 #define FAN_USE_FAST_START BIT(1)
 
 /* The list of fans is instantiated in board.c. */
+#ifdef CONFIG_FAN_DYNAMIC
 extern struct fan_t fans[];
+#else
+extern const struct fan_t fans[];
+#endif
 
 /* For convenience */
 #define FAN_CH(fan)	fans[fan].conf->ch

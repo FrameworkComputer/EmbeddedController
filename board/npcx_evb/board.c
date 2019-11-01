@@ -81,7 +81,7 @@ const struct fan_rpm fan_rpm_1 = {
 	.rpm_max = 4300,
 };
 
-struct fan_t fans[] = {
+const struct fan_t fans[] = {
 	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
 #if (CONFIG_FANS == 2)
 	[FAN_CH_1] = { .conf = &fan_conf_1, .rpm = &fan_rpm_1, },

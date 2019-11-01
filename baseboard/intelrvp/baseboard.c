@@ -125,7 +125,7 @@ const struct fan_rpm fan_rpm_0 = {
 };
 
 /* FAN channels */
-struct fan_t fans[] = {
+const struct fan_t fans[] = {
 	[FAN_CH_0] = {
 		.conf = &fan_conf_0,
 		.rpm = &fan_rpm_0,

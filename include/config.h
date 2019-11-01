@@ -1629,6 +1629,11 @@
 #undef CONFIG_FAN_DSLEEP
 
 /*
+ * Fans have non-const configuration.
+ */
+#undef CONFIG_FAN_DYNAMIC
+
+/*
  * Replace the default fan_percent_to_rpm() function with a board-specific
  * implementation in board.c
  */
