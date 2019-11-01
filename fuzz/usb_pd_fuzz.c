@@ -186,6 +186,11 @@ void run_test(void)
 	}
 }
 
+int board_vbus_source_enabled(int port)
+{
+	return 0;
+}
+
 int test_fuzz_one_input(const uint8_t *data, unsigned int size)
 {
 	int i;

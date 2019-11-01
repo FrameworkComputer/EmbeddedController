@@ -25,6 +25,11 @@ const struct svdm_response svdm_rsp = {
 	.modes = NULL,
 };
 
+int board_vbus_source_enabled(int port)
+{
+	return 0;
+}
+
 /**
  * Test section
  */
@@ -120,11 +125,23 @@ static int test_pe_frs(void)
 	return EC_SUCCESS;
 }
 
+static int test_vbus_gpio_discharge(void)
+{
+	pd_set_vbus_discharge(PORT0, 1);
+	TEST_EQ(gpio_get_level(GPIO_USB_C0_DISCHARGE), 1, "%d");
+
+	pd_set_vbus_discharge(PORT0, 0);
+	TEST_EQ(gpio_get_level(GPIO_USB_C0_DISCHARGE), 0, "%d");
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
 
 	RUN_TEST(test_pe_frs);
+	RUN_TEST(test_vbus_gpio_discharge);
 
 	/* Do basic state machine sanity checks last. */
 	RUN_TEST(test_pe_no_parent_cycles);

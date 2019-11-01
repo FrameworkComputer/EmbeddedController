@@ -29,3 +29,5 @@ GPIO(BASE_CHG_VDD_EN,      PIN(0, 12), 0)
 
 /* Fingerprint */
 GPIO(SPI1_NSS,              PIN(0, 13), GPIO_OUT_HIGH)
+
+GPIO(USB_C0_DISCHARGE,     PIN(0, 15), 0)
