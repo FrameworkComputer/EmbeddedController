@@ -8,12 +8,22 @@
 #include "console.h"
 
 #include "common.h"
+#include "console.h"
 #include "gpio.h"
 #include "timer.h"
 #include "util.h"
 
 static int gpio_values[GPIO_COUNT];
 static int gpio_interrupt_enabled[GPIO_COUNT];
+
+/* Create a dictionary of names for debug console print */
+#define GPIO_INT(name, pin, flags, signal) #name,
+#define GPIO(name, pin, flags) #name,
+const char * gpio_names[GPIO_COUNT] = {
+	#include "gpio.wrap"
+};
+#undef GPIO
+#undef GPIO_INT
 
 test_mockable void gpio_pre_init(void)
 {
@@ -46,6 +56,8 @@ test_mockable void gpio_set_level(enum gpio_signal signal, int value)
 	void (*ih)(enum gpio_signal signal);
 
 	gpio_values[signal] = value;
+
+	ccprints("Setting GPIO_%s to %d", gpio_names[signal], value);
 
 	if (signal >= GPIO_IH_COUNT || !gpio_interrupt_enabled[signal])
 		return;
