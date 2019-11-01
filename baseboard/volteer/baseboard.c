@@ -4,7 +4,7 @@
  */
 
 /* Volteer family-specific configuration */
-#include "baseboard.h"
+#include "adc_chip.h"
 #include "battery.h"
 #include "charge_state.h"
 #include "gpio.h"
@@ -12,6 +12,40 @@
 #include "keyboard_scan.h"
 #include "pwm.h"
 #include "pwm_chip.h"
+
+/******************************************************************************/
+/* ADC configuration */
+const struct adc_t adc_channels[] = {
+	[ADC_TEMP_SENSOR_1_CHARGER] = {
+		.name = "TEMP_CHARGER",
+		.input_ch = NPCX_ADC_CH0,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_2_PP3300_REGULATOR] = {
+		.name = "TEMP_PP3300_REGULATOR",
+		.input_ch = NPCX_ADC_CH1,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_3_DDR_SOC] = {
+		.name = "TEMP_DDR_SOC",
+		.input_ch = NPCX_ADC_CH8,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_4_FAN] = {
+		.name = "TEMP_FAN",
+		.input_ch = NPCX_ADC_CH3,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************/
 /* Wake up pins */

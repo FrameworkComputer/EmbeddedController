@@ -22,9 +22,6 @@
 
 #define CONFIG_POWER_BUTTON
 
-/* Config options automatically enabled by NPCX, re-enable once support added */
-#undef CONFIG_ADC
-
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
