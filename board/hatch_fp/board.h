@@ -8,7 +8,7 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
-#define CONFIG_SYSTEM_UNLOCKED
+#undef CONFIG_SYSTEM_UNLOCKED
 
 /*
  * These allow console commands to be flagged as restricted.

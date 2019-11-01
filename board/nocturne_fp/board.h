@@ -8,11 +8,7 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
-/*
- * TODO(b/73337313) remove this config,
- * once the write-protection scheme is decided and validated.
- */
-#define CONFIG_SYSTEM_UNLOCKED
+#undef CONFIG_SYSTEM_UNLOCKED
 
 /*
  * These allow console commands to be flagged as restricted.
