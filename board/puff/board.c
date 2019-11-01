@@ -72,6 +72,64 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+const struct adc_t adc_channels[] = {
+	[ADC_SNS_PP3300] = {  /* 9/11 voltage divider */
+		.name = "SNS_PP3300",
+		.input_ch = NPCX_ADC_CH2,
+		.factor_mul = ADC_MAX_VOLT * 11,
+		.factor_div = (ADC_READ_MAX + 1) * 9,
+	},
+	[ADC_SNS_PP1050] = {
+		.name = "SNS_PP1050",
+		.input_ch = NPCX_ADC_CH7,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+	},
+	[ADC_VBUS] = {  /* 5/39 voltage divider */
+		.name = "VBUS",
+		.input_ch = NPCX_ADC_CH4,
+		.factor_mul = ADC_MAX_VOLT * 39,
+		.factor_div = (ADC_READ_MAX + 1) / 5,
+	},
+	[ADC_PPVAR_IMON] = {  /* 500 mV/A */
+		.name = "PPVAR_IMON",
+		.input_ch = NPCX_ADC_CH9,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+	},
+	[ADC_TEMP_SENSOR_1] = {
+		.name = "TEMP_SENSOR_1",
+		.input_ch = NPCX_ADC_CH0,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+	},
+	[ADC_TEMP_SENSOR_2] = {
+		.name = "TEMP_SENSOR_2",
+		.input_ch = NPCX_ADC_CH1,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_PP3300] = {
+		.name = "PP3300",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_1,
+		.action_delay_sec = 1,
+	},
+	[TEMP_SENSOR_PP5000] = {
+		.name = "PP5000",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_2,
+		.action_delay_sec = 1,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
 /******************************************************************************/
 /* Wake up pins */
 const enum gpio_signal hibernate_wake_pins[] = {
@@ -79,7 +137,7 @@ const enum gpio_signal hibernate_wake_pins[] = {
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /******************************************************************************/
-/* Physical fan. This are logically separate from pwm_channels. */
+/* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
 	.ch = MFT_CH_0,	/* Use MFT id to control fan */
@@ -105,28 +163,31 @@ const struct mft_t mft_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
-/* ADC channels */
-const struct adc_t adc_channels[] = {
-	[ADC_VBUS] = {
-		"VBUS", NPCX_ADC_CH4, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+/******************************************************************************/
+/* Thermal control; drive fan based on temperature sensors. */
+const static struct ec_thermal_config thermal_a = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(25),
+	.temp_fan_max = C_TO_K(50),
 };
-BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-const struct temp_sensor_t temp_sensors[] = {
+struct ec_thermal_config thermal_params[] = {
+	[TEMP_SENSOR_PP3300] = thermal_a,
+	[TEMP_SENSOR_PP5000] = thermal_a,
 };
-BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
-
-struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
-
-static void setup_fans(void)
-{
-}
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 static void board_init(void)
 {
-	/* Initialize Fans */
-	setup_fans();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
