@@ -8,3 +8,4 @@
 
 baseboard-y=baseboard.o
 baseboard-y+=led.o
+baseboard-y+=battery_presence.o

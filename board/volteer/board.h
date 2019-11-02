@@ -71,6 +71,11 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
+enum battery_type {
+	BATTERY_LGC011,
+	BATTERY_TYPE_COUNT,
+};
+
 /* TODO: b/143375057 - Remove this code after power on. */
 void c10_gate_change(enum gpio_signal signal);
 

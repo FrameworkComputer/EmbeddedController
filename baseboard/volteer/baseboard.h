@@ -66,6 +66,10 @@
 /* Common charger defines */
 
 /* Common battery defines */
+#define CONFIG_BATTERY_SMART
+#define CONFIG_BATTERY_FUEL_GAUGE
+/* TODO: b/143809318 enable cut off */
+/* #define CONFIG_BATTERY_CUT_OFF */
 
 /* USB Type C and USB PD defines */
 
@@ -79,6 +83,9 @@
 #define I2C_PORT_USB_1_MIX	NPCX_I2C_PORT3_0
 #define I2C_PORT_POWER		NPCX_I2C_PORT5_0
 #define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
+
+#define I2C_PORT_BATTERY	I2C_PORT_POWER
+
 #define I2C_ADDR_EEPROM_FLAGS	0x50
 #define CONFIG_I2C_MASTER
 

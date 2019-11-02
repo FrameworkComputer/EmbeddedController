@@ -5,7 +5,6 @@
 
 /* Volteer family-specific configuration */
 #include "adc_chip.h"
-#include "battery.h"
 #include "charge_state.h"
 #include "gpio.h"
 #include "i2c.h"
@@ -152,11 +151,6 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 enum charge_state charge_get_state(void)
 {
 	return PWR_STATE_UNCHANGE;
-}
-
-enum battery_present battery_is_present(void)
-{
-	return BP_NOT_SURE;
 }
 
 int charge_get_percent(void)
