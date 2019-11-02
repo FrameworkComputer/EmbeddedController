@@ -141,19 +141,3 @@ const struct pwm_t pwm_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
-/* Stub out battery and charging functions to compile common LED code.
- * TODO(b/140557020): Define these for real.
- */
-#ifdef CONFIG_CHARGER
-#error "Write real definitions for charger and battery functions."
-#endif
-enum charge_state charge_get_state(void)
-{
-	return PWR_STATE_UNCHANGE;
-}
-
-int charge_get_percent(void)
-{
-	return 0;
-}
