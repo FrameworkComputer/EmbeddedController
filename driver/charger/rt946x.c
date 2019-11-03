@@ -1198,6 +1198,12 @@ int rt946x_enable_charge_termination(int en)
 		(RT946X_REG_CHGCTRL2, RT946X_MASK_TE);
 }
 
+int rt946x_enable_charge_eoc(int en)
+{
+	return (en ? rt946x_set_bit : rt946x_clr_bit)
+		(RT946X_REG_CHGCTRL9, RT946X_MASK_EOC);
+}
+
 #ifdef CONFIG_CHARGER_MT6370
 /* MT6370 LDO */
 

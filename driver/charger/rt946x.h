@@ -335,8 +335,10 @@
 #define RT946X_MASK_IPREC	(0xF << RT946X_SHIFT_IPREC)
 
 /* ========== CHGCTRL9 0x09 ============ */
+#define RT946X_SHIFT_EOC	3
 #define RT946X_SHIFT_IEOC	4
 
+#define RT946X_MASK_EOC		BIT(RT946X_SHIFT_EOC)
 #define RT946X_MASK_IEOC	(0xF << RT946X_SHIFT_IEOC)
 
 /* ========== CHGCTRL10 0x0A ============ */
@@ -662,6 +664,9 @@ int rt946x_cutoff_battery(void);
 
 /* Enable/Disable charge temination */
 int rt946x_enable_charge_termination(int en);
+
+/* Enable/Disable charge EOC */
+int rt946x_enable_charge_eoc(int en);
 
 /**
  * Toggle BC12 detection
