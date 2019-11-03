@@ -32,6 +32,8 @@ GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4),  GPIO_INT_BOTH, power_signal_interrupt
 /* Sensor Interrupts */
 
 /* USB-C interrupts */
+GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(E, 0), GPIO_INT_BOTH, tcpc_alert_event)
+GPIO_INT(USB_C0_PPC_INT_ODL,	PIN(6, 2), GPIO_INT_BOTH, ppc_interrupt)
 
 /* HDMI interrupts */
 
@@ -81,6 +83,7 @@ GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
 GPIO(EC_PCH_INT_ODL,           PIN(D, 6), GPIO_ODR_HIGH) /* TODO - b/140557015 - implement with MKBD sensor events */
 
 /* USB and USBC Signals */
+GPIO(EN_PP3300_AG,		PIN(8, 5), GPIO_OUT_LOW)
 
 /* Misc Signals */
 /* This selects between an LED module on the motherboard and one on the daughter

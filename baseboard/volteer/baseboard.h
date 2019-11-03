@@ -8,7 +8,6 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
-
 /* NPCX7 config */
 #define NPCX7_PWM1_SEL    0  /* GPIO C2 is not used as PWM1. */
 #define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
@@ -64,6 +63,7 @@
 /* Sensors */
 
 /* Common charger defines */
+#define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_INPUT_CURRENT		512
@@ -78,8 +78,54 @@
 /* #define CONFIG_BATTERY_CUT_OFF */
 
 /* USB Type C and USB PD defines */
+/* Enable the new USB-C PD stack */
+#define CONFIG_USB_SM_FRAMEWORK
+#define CONFIG_USB_TYPEC_SM
+#define CONFIG_USB_PRL_SM
+#define CONFIG_USB_PE_SM
+#define CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
 
-/* BC 1.2 */
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_DISCHARGE_PPC
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT		TYPEC_RP_3A0
+#define CONFIG_USB_PD_PORT_MAX_COUNT			1
+#define CONFIG_USB_PD_TCPC_LOW_POWER
+#define CONFIG_USB_PD_TCPM_TCPCI
+#define CONFIG_USB_PD_TCPM_TUSB422	/* USBC port C0 */
+#define CONFIG_USB_PD_TRY_SRC
+#define CONFIG_USB_PD_VBUS_DETECT_PPC
+#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
+
+#define CONFIG_USBC_PPC
+#define CONFIG_CMD_PPC_DUMP
+/* Note - SN5S330 support automatically adds
+ * CONFIG_USBC_PPC_POLARITY
+ * CONFIG_USBC_PPC_SBU
+ * CONFIG_USBC_PPC_VCONN
+ */
+#define CONFIG_USBC_PPC_SN5S330		/* USBC port C0 */
+
+#define CONFIG_USBC_SS_MUX
+#define CONFIG_USB_MUX_VIRTUAL
+
+#define CONFIG_USBC_VCONN
+#define CONFIG_USBC_VCONN_SWAP
+
+/* TODO: b/144165680 - measure and check these values on Volteer */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
+#define PD_VCONN_SWAP_DELAY		5000 /* us */
+
+/*
+ * SN5S30 PPC supports up to 24V VBUS source and sink, however passive USB-C
+ * cables only support up to 60W.
+ */
+#define PD_OPERATING_POWER_MW	15000
+#define PD_MAX_POWER_MW		60000
+#define PD_MAX_CURRENT_MA	3000
+#define PD_MAX_VOLTAGE_MV	20000
+
 
 /* I2C Bus Configuration */
 #define CONFIG_I2C
@@ -99,6 +145,9 @@
 
 #ifndef __ASSEMBLER__
 
+#include "gpio_signal.h"
+
+
 enum adc_channel {
 	ADC_TEMP_SENSOR_1_CHARGER,
 	ADC_TEMP_SENSOR_2_PP3300_REGULATOR,
@@ -113,6 +162,17 @@ enum pwm_channel {
 	PWM_CH_LED3_RED,
 	PWM_CH_COUNT
 };
+
+enum usbc_port {
+	USBC_PORT_C0 = 0,
+	USBC_PORT_COUNT
+};
+
+void board_reset_pd_mcu(void);
+
+/* Common definition for the USB PD interrupt handlers. */
+void ppc_interrupt(enum gpio_signal signal);
+void tcpc_alert_event(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 
