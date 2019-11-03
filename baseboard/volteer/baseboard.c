@@ -7,6 +7,7 @@
 #include "adc_chip.h"
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/tusb422.h"
 #include "gpio.h"
@@ -60,6 +61,16 @@ const struct adc_t adc_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+/******************************************************************************/
+/* BC1.2 charger detect configuration */
+const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
+	[USBC_PORT_C0] = {
+		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
 
 /******************************************************************************/
 /* Wake up pins */
