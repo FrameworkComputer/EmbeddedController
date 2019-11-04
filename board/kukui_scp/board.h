@@ -17,6 +17,8 @@
 #define CONFIG_FPU
 #define CONFIG_PRESERVE_LOGS
 
+#define CONFIG_HOSTCMD_ALIGNED
+
 /*
  * RW only, no flash
  * +-------------------- 0x0
