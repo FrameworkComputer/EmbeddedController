@@ -52,6 +52,8 @@
 #undef  CONFIG_MOTION_SENSE_RESUME_DELAY_US
 #define CONFIG_MOTION_SENSE_RESUME_DELAY_US (10 * MSEC)
 
+#define CONFIG_KEYBOARD_FACTORY_TEST
+
 #ifndef __ASSEMBLER__
 
 enum pwm_channel {
@@ -65,6 +67,11 @@ enum battery_type {
 	BATTERY_MURATA_4013,
 	BATTERY_TYPE_COUNT,
 };
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
 
 #endif /* !__ASSEMBLER__ */
 
