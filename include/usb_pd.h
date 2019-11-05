@@ -1116,6 +1116,9 @@ enum pd_states {
 #define PD_BBRMFLG_DATA_ROLE         BIT(2)
 #define PD_BBRMFLG_VCONN_ROLE        BIT(3)
 
+/* Initial value for CC debounce variable */
+#define PD_CC_UNSET -1
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 enum pd_dual_role_states {
 	/* While disconnected, toggle between src and sink */
@@ -1256,7 +1259,8 @@ enum pd_power_role {
  */
 enum pd_data_role {
 	PD_ROLE_UFP = 0,
-	PD_ROLE_DFP = 1
+	PD_ROLE_DFP = 1,
+	PD_ROLE_DISCONNECTED = 2,
 };
 
 /*
@@ -2285,17 +2289,6 @@ void pd_notify_dp_alt_mode_entry(void);
  */
 enum pd_cc_states pd_get_cc_state(
 	enum tcpc_cc_voltage_status cc1, enum tcpc_cc_voltage_status cc2);
-
-/*
- * Optional, get the board-specific SRC DTS polarity.
- *
- * This function is used for SRC DTS mode. The polarity is predetermined as a
- * board-specific setting, i.e. what Rp impedance the CC lines are pulled.
- *
- * @param port USB-C port number
- * @return port polarity (0=CC1, 1=CC2)
- */
-__override_proto uint8_t board_get_src_dts_polarity(int port);
 
 /* ----- Logging ----- */
 #ifdef CONFIG_USB_PD_LOGGING

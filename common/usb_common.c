@@ -107,7 +107,6 @@ enum pd_cc_states pd_get_cc_state(
 	 */
 	return PD_CC_NONE;
 }
-
 /*
  * Zinger implements a board specific usb policy that does not define
  * PD_MAX_VOLTAGE_MV and PD_OPERATING_POWER_MW. And in turn, does not
