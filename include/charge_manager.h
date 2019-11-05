@@ -206,6 +206,13 @@ int charge_manager_get_charger_current(void);
  */
 int charge_manager_get_charger_voltage(void);
 
+/**
+ * Get the charger supplier.
+ *
+ * @return	enum charge_supplier
+ */
+enum charge_supplier charge_manager_get_supplier(void);
+
 #ifdef CONFIG_USB_PD_LOGGING
 /* Save power state log entry for the given port */
 void charge_manager_save_log(int port);

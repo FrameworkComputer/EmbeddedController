@@ -27,6 +27,8 @@
 #include "task.h"
 #include "throttle_ap.h"
 #include "timer.h"
+#include "usb_common.h"
+#include "usb_pd.h"
 #include "util.h"
 
 /* Console output macros */
@@ -89,6 +91,25 @@ static int manual_current;  /* Manual current override (-1 = no override) */
 static unsigned int user_current_limit = -1U;
 test_export_static timestamp_t shutdown_target_time;
 static timestamp_t precharge_start_time;
+
+/*
+ * The timestamp when the battery charging current becomes stable.
+ * When a new charging status happens, charger needs several seconds to
+ * stabilize the battery charging current.
+ * stable_current should be evaluated when stable_ts expired.
+ * stable_ts should be reset if the charger input voltage/current changes,
+ * or a new battery charging voltage/request happened.
+ * By evaluating stable_current, we can evaluate the battery's desired charging
+ * power desired_mw. This allow us to have a better charging efficiency by
+ * negotiating the most fit PDO, i.e. the PDO provides the power just enough for
+ * the system and battery, or the PDO with preferred voltage.
+ */
+STATIC_IF(CONFIG_USB_PD_PREFER_MV) timestamp_t stable_ts;
+/* battery charging current evaluated after stable_ts expired */
+STATIC_IF(CONFIG_USB_PD_PREFER_MV) int stable_current;
+/* battery desired power in mW. This is used to negotiate the suitable PDO */
+STATIC_IF(CONFIG_USB_PD_PREFER_MV) int desired_mw;
+STATIC_IF_NOT(CONFIG_USB_PD_PREFER_MV) struct pd_pref_config_t pd_pref_config;
 
 #ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
 static int base_connected;
@@ -1225,12 +1246,17 @@ static int charge_request(int voltage, int current)
 	/*
 	 * Only update if the request worked, so we'll keep trying on failures.
 	 */
-	if (!r1 && !r2) {
-		prev_volt = voltage;
-		prev_curr = current;
-	}
+	if (r1 || r2)
+		return r1 ? r1 : r2;
 
-	return r1 ? r1 : r2;
+	if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV) &&
+	    (prev_volt != voltage || prev_curr != current))
+		charge_reset_stable_current();
+
+	prev_volt = voltage;
+	prev_curr = current;
+
+	return EC_SUCCESS;
 }
 
 void chgstate_set_manual_current(int curr_ma)
@@ -1570,6 +1596,7 @@ void charger_task(void *u)
 	int battery_critical;
 	int need_static = 1;
 	const struct charger_info * const info = charger_get_info();
+	int prev_plt_and_desired_mw;
 
 	/* Get the battery-specific values */
 	batt_info = battery_get_info();
@@ -1594,6 +1621,18 @@ void charger_task(void *u)
 	prev_bp = BP_NOT_INIT;
 	curr.desired_input_current = get_desired_input_current(
 			curr.batt.is_present, info);
+
+	if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV)) {
+		/* init battery desired power */
+		desired_mw =
+			curr.batt.desired_current * curr.batt.desired_voltage;
+		/*
+		 * Battery charging current needs time to be stable when a
+		 * new charge happens. Start the timer so we can evaluate the
+		 * stable current when timeout.
+		 */
+		charge_reset_stable_current();
+	}
 
 	battery_level_shutdown = board_set_battery_level_shutdown();
 
@@ -1692,6 +1731,11 @@ void charger_task(void *u)
 		}
 
 		notify_host_of_over_current(&curr.batt);
+
+		/* battery current stable now, saves the current. */
+		if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV) &&
+		    get_time().val > stable_ts.val && curr.batt.current >= 0)
+			stable_current = curr.batt.current;
 
 		/*
 		 * Now decide what we want to do about it. We'll normally just
@@ -2000,6 +2044,54 @@ wait_for_it:
 			}
 		}
 
+		if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV)) {
+			int is_pd_supply = charge_manager_get_supplier() ==
+					   CHARGE_SUPPLIER_PD;
+			int port = charge_manager_get_active_charge_port();
+			int bat_spec_desired_mw = curr.batt.desired_current *
+						  curr.batt.desired_voltage /
+						  1000;
+
+			/*
+			 * save the previous plt_and_desired_mw, since it
+			 * will be updated below
+			 */
+			prev_plt_and_desired_mw =
+				charge_get_plt_plus_bat_desired_mw();
+
+			/*
+			 * Update desired power by the following rules:
+			 * 1. If the battery is not charging with PD, we reset
+			 * the desired_mw to the battery spec. The actual
+			 * desired_mw will be evaluated when it starts charging
+			 * with PD again.
+			 * 2. If the battery SoC under battery's constant
+			 * voltage percent (this is a rough value that can be
+			 * applied to most batteries), the battery can fully
+			 * sink the power, the desired power should be the
+			 * same as the battery spec, and we don't need to use
+			 * evaluated value stable_current.
+			 * 3. If the battery SoC is above battery's constant
+			 * voltage percent, the real battery desired charging
+			 * power will decrease slowly and so does the charging
+			 * current. We can evaluate the battery desired power
+			 * by the product of stable_current and battery voltage.
+			 */
+			if (!is_pd_supply)
+				desired_mw = bat_spec_desired_mw;
+			else if (curr.batt.state_of_charge < pd_pref_config.cv)
+				desired_mw = bat_spec_desired_mw;
+			else if (stable_current != CHARGE_CURRENT_UNINITIALIZED)
+				desired_mw = curr.batt.voltage *
+					     stable_current / 1000;
+
+			/* if the plt_and_desired_mw changes, re-evaluate PDO */
+			if (is_pd_supply &&
+			    prev_plt_and_desired_mw !=
+				    charge_get_plt_plus_bat_desired_mw())
+				pd_set_new_power_request(port);
+		}
+
 		/* Adjust for time spent in this loop */
 		sleep_usec -= (int)(get_time().val - curr.ts.val);
 		if (sleep_usec < CHARGE_MIN_SLEEP_USEC)
@@ -2303,6 +2395,44 @@ int charge_set_input_current_limit(int ma, int mv)
 #endif
 }
 
+#ifndef TEST_BUILD
+int charge_get_plt_plus_bat_desired_mw(void)
+{
+	/*
+	 * Ideally, the system consuming power could be evaluated by
+	 * "IBus * VBus - battery charging power". But in practice,
+	 * most charger drivers don't implement IBUS ADC reading,
+	 * so we use system PLT instead as an alterntaive approach.
+	 */
+	return pd_pref_config.plt_mw + desired_mw;
+}
+
+int charge_get_stable_current(void)
+{
+	return stable_current;
+}
+
+void charge_set_stable_current(int ma)
+{
+	stable_current = ma;
+}
+
+void charge_reset_stable_current_us(uint64_t us)
+{
+	timestamp_t now = get_time();
+
+	if (stable_ts.val < now.val + us)
+		stable_ts.val = now.val + us;
+
+	stable_current = CHARGE_CURRENT_UNINITIALIZED;
+}
+
+void charge_reset_stable_current(void)
+{
+	/* it takes 8 to 10 seconds to stabilize battery current in practice */
+	charge_reset_stable_current_us(10 * SECOND);
+}
+#endif
 /*****************************************************************************/
 /* Host commands */
 

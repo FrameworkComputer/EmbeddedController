@@ -8,6 +8,7 @@
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
+#include "charge_state_v2.h"
 #include "charger.h"
 #include "console.h"
 #include "gpio.h"
@@ -949,6 +950,9 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 {
 	struct charge_port_info charge;
 
+	if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV))
+		charge_reset_stable_current();
+
 	charge.current = max_ma;
 	charge.voltage = supply_voltage;
 	charge_manager_update_charge(CHARGE_SUPPLIER_PD, port, &charge);
@@ -1132,6 +1136,11 @@ int charge_manager_get_charger_current(void)
 int charge_manager_get_charger_voltage(void)
 {
 	return charge_voltage;
+}
+
+enum charge_supplier charge_manager_get_supplier(void)
+{
+	return charge_supplier;
 }
 
 int charge_manager_get_power_limit_uw(void)
