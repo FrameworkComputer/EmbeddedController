@@ -10,6 +10,7 @@
 #include "button.h"
 #include "common.h"
 #include "cros_board_info.h"
+#include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -40,6 +41,18 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+static void ppc_interrupt(enum gpio_signal signal)
+{
+	if (signal == GPIO_USB_C0_TCPPC_INT_ODL)
+		sn5s330_interrupt(0);
+}
+
+static void tcpc_alert_event(enum gpio_signal signal)
+{
+	if (signal == GPIO_USB_C0_TCPC_INT_ODL)
+		schedule_deferred_pd_interrupt(0);
+}
 
 #include "gpio_list.h" /* Must come after other header files. */
 
@@ -239,4 +252,11 @@ int ppc_get_alert_status(int port)
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
+}
+
+void board_overcurrent_event(int port, int is_overcurrented)
+{
+	/* Sanity check the port. */
+	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_MAX_COUNT))
+		return;
 }
