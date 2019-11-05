@@ -27,6 +27,8 @@
 /* Keyboard features */
 #define CONFIG_PWM
 #define CONFIG_PWM_KBLIGHT
+/* support factory keyboard test */
+#define CONFIG_KEYBOARD_FACTORY_TEST
 
 /* Sensors */
 /* BMI160 Base accel/gyro */
@@ -115,7 +117,6 @@
 #define GPIO_EN_PP5000		GPIO_EN_PP5000_A
 
 #ifndef __ASSEMBLER__
-
 #include "gpio_signal.h"
 #include "registers.h"
 
@@ -171,6 +172,9 @@ enum battery_type {
 
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
+
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
 
 #endif /* !__ASSEMBLER__ */
 
