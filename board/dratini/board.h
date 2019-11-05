@@ -26,6 +26,7 @@
 
 /* Keyboard features */
 #define CONFIG_PWM_KBLIGHT
+#define CONFIG_KEYBOARD_FACTORY_TEST
 
 /* Sensors */
 /* BMI160 Base accel/gyro */
@@ -164,6 +165,11 @@ enum battery_type {
 	BATTERY_LGC,
 	BATTERY_TYPE_COUNT,
 };
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
 
 #endif /* !__ASSEMBLER__ */
 
