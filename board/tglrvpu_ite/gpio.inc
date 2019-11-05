@@ -79,7 +79,6 @@ GPIO(EC_PCH_DSW_PWROK,	PIN(L, 6), GPIO_OUT_LOW)
  * PCH_SYS_PWROK is routed to EC, but mark unimplemented to prevent common
  * Ice Lake code from driving signal.
  */
-UNIMPLEMENTED(PG_EC_ALL_SYS_PWRGD)
 UNIMPLEMENTED(PCH_SYS_PWROK)
 
 /* Host communication GPIOs */
