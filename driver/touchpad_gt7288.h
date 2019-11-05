@@ -15,65 +15,69 @@
 #define GT7288_MAX_CONTACTS 5
 
 /**
- * struct gt7288_version_info - version information for the chip.
- * @product_id: HID product ID (0x01F0 for touchpads, 0x01F1 for touchscreens).
- * @version_id: the firmware version. For touchpads equipped with a fingerprint
- *              sensor, the MSB will be 1.
+ * Version information for the chip.
  */
 struct gt7288_version_info {
+	/** HID product ID (0x01F0 for touchpads, 0x01F1 for touchscreens). */
 	uint16_t product_id;
+	/**
+	 * The firmware version. For touchpads equipped with a fingerprint
+	 * sensor, the MSB will be 1.
+	 */
 	uint16_t version_id;
 };
 
 /**
- * gt7288_get_version_info() - Reads version information from the GT7288.
- * @info: the version information.
+ * Reads version information from the GT7288.
  *
- * Return: EC_SUCCESS or an error code.
+ * @param[out] info The version information.
+ *
+ * @return EC_SUCCESS or an error code.
  */
 int gt7288_get_version_info(struct gt7288_version_info *info);
 
 /**
- * struct gt7288_contact - data describing a single contact.
- * @id: a 4-bit ID that uniquely identifies the contact during its lifecycle.
- * @x: the absolute X coordinate.
- * @y: the absolute Y coordinate.
- * @width: the width of the contact (with firmware version 0x0004 or greater).
- * @height: the height of the contact (with firmware version 0x0004 or greater).
- * @tip: whether the fingertip is touching the pad. (Currently always true.)
- * @confidence: whether the controller considers the touch a finger (true) or
- *              palm (false).
+ * Data describing a single contact.
  */
 struct gt7288_contact {
+	/**
+	 * A 4-bit ID that uniquely identifies the contact during its lifecycle.
+	 */
 	uint8_t id;
+	/** The absolute X coordinate. */
 	uint16_t x;
+	/** The absolute Y coordinate. */
 	uint16_t y;
+	/** The width of the contact (with firmware version 4 or greater). */
 	uint8_t width;
+	/** The height of the contact (with firmware version 4 or greater). */
 	uint8_t height;
+	/** Whether the finger is touching the pad. (Currently always true.) */
 	bool tip;
+	/** Whether the touch is a finger (true) or palm (false). */
 	bool confidence;
 };
 
 /**
- * struct gt7288_report - data from a complete report in PTP mode.
- * @timestamp: a relative timestamp, in units of 100µs.
- * @num_contacts: the number of contacts on the pad.
- * @button_down: whether the button is pressed.
- * @contacts: an array of structs describing the individual contacts.
+ * Data from a complete report in PTP mode.
  */
 struct gt7288_ptp_report {
+	/** A relative timestamp, in units of 100µs. */
 	uint16_t timestamp;
+	/** The number of contacts on the pad. */
 	size_t num_contacts;
+	/** Whether the button is pressed. */
 	bool button_down;
+	/** An array of structs describing the individual contacts. */
 	struct gt7288_contact contacts[GT7288_MAX_CONTACTS];
 };
 
 /**
- * gt7288_read_ptp_report() - Reads a complete report, when the GT7288 is in PTP
- *                            mode.
- * @report: the report that is read.
+ * Reads a complete report, when the GT7288 is in PTP mode.
  *
- * Return: EC_SUCCESS or an error code.
+ * @param[out] report The report that is read.
+ *
+ * @return EC_SUCCESS or an error code.
  */
 int gt7288_read_ptp_report(struct gt7288_ptp_report *report);
 

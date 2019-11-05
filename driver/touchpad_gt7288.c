@@ -33,12 +33,13 @@
 #define GT7288_REPORT_LENGTH 16
 
 /**
- * gt7288_read_desc() - Read a descriptor using the Conventional Read Mode.
- * @register_id: the register containing the descriptor to read.
- * @data: the data that is read.
- * @max_length: the maximum length of data.
+ * Reads a descriptor using the Conventional Read Mode.
  *
- * Return: EC_SUCCESS or an error code.
+ * @param[in]  register_id The register containing the descriptor to read.
+ * @param[out] data The data that is read.
+ * @param[in]  max_length The maximum length of data.
+ *
+ * @return EC_SUCCESS or an error code.
  */
 static int gt7288_read_desc(uint16_t register_id, uint8_t *data,
 			    size_t max_length)
