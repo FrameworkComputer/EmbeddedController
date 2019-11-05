@@ -139,6 +139,62 @@ void virtual_hpd_update(int port, int hpd_lvl, int hpd_irq);
 extern struct usb_mux usb_muxes[];
 
 /*
+ * Retimer driver function pointers
+ *
+ * The retimer driver is driven by calls to the MUX API.  These are not
+ * called directly anywhere else in the code.
+ */
+struct usb_retimer_driver {
+	/**
+	 * Initialize USB retimer. This is called every time the MUX is
+	 * access after being put in a fully disconnected state (low power
+	 * mode).
+	 *
+	 * @param port usb port of redriver (not port_addr)
+	 * @return EC_SUCCESS on success, non-zero error code on failure.
+	 */
+	int (*init)(int port);
+
+	/**
+	 * Set USB retimer state.
+	 *
+	 * @param port usb port of retimer (not port_addr)
+	 * @param mux_state State to set retimer mode to.
+	 * @return EC_SUCCESS on success, non-zero error code on failure.
+	 */
+	int (*set)(int port, mux_state_t mux_state);
+};
+
+/* Describes a USB retimer present in the system */
+struct usb_retimer {
+	/*
+	 * All of the fields are provided on an as needed basis.
+	 * If your retimer does not perform I2C operations, then
+	 * values would not be set.  This includes the driver
+	 * field, which would indicate no retimer driver is to
+	 * be called.  Values that are not specifically popuplated
+	 * shall be 0/NULL.
+	 */
+
+	/* I2C port and slave address */
+	const int i2c_port;
+	const uint16_t i2c_addr_flags;
+
+	/* GPIOs for enabling the retimer and DP mode */
+	const int gpio_enable;
+	const int gpio_dp_enable;
+
+	/* Driver interfaces for this retimer */
+	const struct usb_retimer_driver *driver;
+};
+
+/*
+ * USB retimers present in system, ordered by PD port #, defined at
+ * board-level
+ */
+extern struct usb_retimer usb_retimers[];
+
+/*
  * Helper methods that either use tcpc communication or direct i2c
  * communication depending on how the TCPC/MUX device is configured.
  */

@@ -68,6 +68,19 @@ void usb_mux_init(int port)
 		return;
 	}
 
+	if (IS_ENABLED(CONFIG_USBC_MUX_RETIMER)) {
+		const struct usb_retimer *retimer = &usb_retimers[port];
+
+		if (retimer->driver && retimer->driver->init) {
+			res = retimer->driver->init(port);
+			if (res) {
+				CPRINTS("Err: init retimer port(%d): %d",
+					port, res);
+				return;
+			}
+		}
+	}
+
 	/* Device is always out of LPM after initialization. */
 	flags[port] &= ~USB_MUX_FLAG_IN_LPM;
 
@@ -93,10 +106,9 @@ void usb_mux_set(int port, enum typec_mux mux_mode,
 	const int should_enter_low_power_mode =
 		mux_mode == TYPEC_MUX_NONE && usb_mode == USB_SWITCH_DISCONNECT;
 
-#ifdef CONFIG_USB_CHARGER
 	/* Configure USB2.0 */
-	usb_charger_set_switches(port, usb_mode);
-#endif
+	if (IS_ENABLED(CONFIG_USB_CHARGER))
+		usb_charger_set_switches(port, usb_mode);
 
 	/*
 	 * Don't wake device up just to put it back to sleep. Low power mode
@@ -114,6 +126,19 @@ void usb_mux_set(int port, enum typec_mux mux_mode,
 	if (res) {
 		CPRINTS("Err: set mux port(%d): %d", port, res);
 		return;
+	}
+
+	if (IS_ENABLED(CONFIG_USBC_MUX_RETIMER)) {
+		const struct usb_retimer *retimer = &usb_retimers[port];
+
+		if (retimer->driver && retimer->driver->set) {
+			res = retimer->driver->set(port, mux_state);
+			if (res) {
+				CPRINTS("Err: set retimer port(%d): %d",
+					port, res);
+				return;
+			}
+		}
 	}
 
 	if (enable_debug_prints)
@@ -241,12 +266,11 @@ static enum ec_status hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
 	if (mux->driver->get(port, &r->flags) != EC_SUCCESS)
 		return EC_RES_ERROR;
 
-#ifdef CONFIG_USB_MUX_VIRTUAL
 	/* Clear HPD IRQ event since we're about to inform host of it. */
-	if ((r->flags & USB_PD_MUX_HPD_IRQ) &&
-	    mux->hpd_update == &virtual_hpd_update)
+	if (IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) &&
+	    (r->flags & USB_PD_MUX_HPD_IRQ) &&
+	    (mux->hpd_update == &virtual_hpd_update))
 		mux->hpd_update(port, r->flags & USB_PD_MUX_HPD_LVL, 0);
-#endif
 
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;

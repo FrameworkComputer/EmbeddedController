@@ -3808,9 +3808,10 @@
 #undef CONFIG_USBC_MUX_RETIMER
 
 /*
- * Type-C retimer drivers to be used in on-board applications.
+ * Type-C retimer drivers to be used.
  */
 #undef CONFIG_USBC_RETIMER_INTEL_BB
+#undef CONFIG_USBC_RETIMER_PI3DPX1207
 
 /*
  * Adds an EC console command to erase the ANX7447 OCM flash.
@@ -4696,6 +4697,10 @@
  */
 #ifdef CONFIG_USBC_RETIMER_INTEL_BB
 #define CONFIG_USBC_VIRTUAL_MUX_RETIMER
+#endif
+
+#ifdef CONFIG_USBC_RETIMER_PI3DPX1207
+#define CONFIG_USBC_MUX_RETIMER
 #endif
 
 /*****************************************************************************/
