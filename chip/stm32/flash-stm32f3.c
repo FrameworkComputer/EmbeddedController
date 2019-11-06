@@ -45,7 +45,14 @@ struct ec_flash_bank const flash_bank_array[] = {
 };
 #elif defined(CHIP_FAMILY_STM32F4)
 /*
- * 8 "erase" sectors : 16KB/16KB/16KB/16KB/64KB/128KB/128KB/128KB
+ * STM32F412xE has 512 KB flash
+ *   8 "erase" sectors (512 KB) : 16KB/16KB/16KB/16KB/64KB/128KB/128KB/128KB
+ *
+ * STM32F412xG has 1 MB flash
+ *   12 "erase" sectors (1024 KB) :
+ *           16KB/16KB/16KB/16KB/64KB/128KB/128KB/128KB/128KB/128KB/128KB/128KB
+ *
+ * https://www.st.com/resource/en/datasheet/stm32f412cg.pdf
  */
 struct ec_flash_bank const flash_bank_array[] = {
 	{
