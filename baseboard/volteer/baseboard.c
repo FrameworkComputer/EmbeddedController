@@ -109,7 +109,7 @@ const struct i2c_port_t i2c_ports[] = {
 	{
 		.name = "power",
 		.port = I2C_PORT_POWER,
-		.kbps = 400,
+		.kbps = 100,
 		.scl = GPIO_EC_I2C5_POWER_SCL,
 		.sda = GPIO_EC_I2C5_POWER_SDA,
 	},
