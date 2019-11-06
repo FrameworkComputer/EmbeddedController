@@ -20,7 +20,10 @@ static const HASH_VTAB HW_SHA1_VTAB = {
 	dcrypto_sha_update,
 	dcrypto_sha1_final,
 	DCRYPTO_SHA1_hash,
-	SHA_DIGEST_SIZE
+	SHA_DIGEST_SIZE,
+#ifdef SHA512_SUPPORT
+	SHA_BLOCK_SIZE,
+#endif
 };
 
 /* Requires dcrypto_grab_sha_hw() to be called first. */

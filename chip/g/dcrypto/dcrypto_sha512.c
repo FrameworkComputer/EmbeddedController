@@ -646,8 +646,8 @@ const uint8_t *DCRYPTO_SHA512_hash(const void *data, size_t len,
 }
 
 static const HASH_VTAB dcrypto_SHA512_VTAB = {
-    DCRYPTO_SHA512_init, dcrypto_SHA512_update, dcrypto_SHA512_final,
-    DCRYPTO_SHA512_hash, SHA512_DIGEST_SIZE};
+	DCRYPTO_SHA512_init, dcrypto_SHA512_update, dcrypto_SHA512_final,
+	DCRYPTO_SHA512_hash, SHA512_DIGEST_SIZE, SHA512_BLOCK_SIZE};
 
 void DCRYPTO_SHA512_init(LITE_SHA512_CTX *ctx)
 {

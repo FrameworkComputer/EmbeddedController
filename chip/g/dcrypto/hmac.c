@@ -17,9 +17,10 @@ static void HMAC_init(LITE_HMAC_CTX *ctx, const void *key, unsigned int len)
 	unsigned int i;
 
 	memset(&ctx->opad[0], 0, sizeof(ctx->opad));
+	/* Initialize the hash context */
+	DCRYPTO_SHA256_init(&ctx->hash, 0);
 
-	if (len > sizeof(ctx->opad)) {
-		DCRYPTO_SHA256_init(&ctx->hash, 0);
+	if (len > HASH_block_size(&ctx->hash)) {
 		HASH_update(&ctx->hash, key, len);
 		memcpy(&ctx->opad[0], HASH_final(&ctx->hash),
 			HASH_size(&ctx->hash));
@@ -27,14 +28,14 @@ static void HMAC_init(LITE_HMAC_CTX *ctx, const void *key, unsigned int len)
 		memcpy(&ctx->opad[0], key, len);
 	}
 
-	for (i = 0; i < sizeof(ctx->opad); ++i)
+	for (i = 0; i < HASH_block_size(&ctx->hash); ++i)
 		ctx->opad[i] ^= 0x36;
 
 	DCRYPTO_SHA256_init(&ctx->hash, 0);
 	/* hash ipad */
-	HASH_update(&ctx->hash, ctx->opad, sizeof(ctx->opad));
+	HASH_update(&ctx->hash, ctx->opad, HASH_block_size(&ctx->hash));
 
-	for (i = 0; i < sizeof(ctx->opad); ++i)
+	for (i = 0; i < HASH_block_size(&ctx->hash); ++i)
 		ctx->opad[i] ^= (0x36 ^ 0x5c);
 }
 
@@ -52,8 +53,9 @@ const uint8_t *DCRYPTO_HMAC_final(LITE_HMAC_CTX *ctx)
 		(HASH_size(&ctx->hash) <= sizeof(digest) ?
 			HASH_size(&ctx->hash) : sizeof(digest)));
 	DCRYPTO_SHA256_init(&ctx->hash, 0);
-	HASH_update(&ctx->hash, ctx->opad, sizeof(ctx->opad));
+	HASH_update(&ctx->hash, ctx->opad, HASH_block_size(&ctx->hash));
 	HASH_update(&ctx->hash, digest, HASH_size(&ctx->hash));
-	always_memset(&ctx->opad[0], 0, sizeof(ctx->opad));  /* wipe key */
+	/* wipe key */
+	always_memset(&ctx->opad[0], 0, HASH_block_size(&ctx->hash));
 	return HASH_final(&ctx->hash);
 }

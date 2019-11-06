@@ -79,7 +79,10 @@ static const HASH_VTAB HW_SHA256_VTAB = {
 	dcrypto_sha_update,
 	dcrypto_sha256_final,
 	DCRYPTO_SHA256_hash,
-	SHA256_DIGEST_SIZE
+	SHA256_DIGEST_SIZE,
+#ifdef SHA512_SUPPORT
+	SHA256_BLOCK_SIZE,
+#endif
 };
 
 void dcrypto_sha_hash(enum sha_mode mode, const uint8_t *data, uint32_t n,
