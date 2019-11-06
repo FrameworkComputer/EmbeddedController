@@ -10,6 +10,7 @@
 #include "charge_ramp.h"
 #include "charge_state.h"
 #include "charger.h"
+#include "charger_mt6370.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -101,6 +102,11 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		},
 		.drv = &mt6370_tcpm_drv,
 	},
+};
+
+struct mt6370_thermal_bound thermal_bound = {
+	.target = 80,
+	.err = 4,
 };
 
 void board_set_dp_mux_control(int output_enable, int polarity)

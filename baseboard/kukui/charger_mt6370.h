@@ -10,4 +10,12 @@
 
 void mt6370_charger_profile_override(struct charge_state_data *curr);
 
+struct mt6370_thermal_bound {
+	/* mt6370 junction's thermal target in Celsius degree */
+	int target;
+	/* mt6370 junction's thermal evaluation error in Celsius degree */
+	int err;
+};
+
+extern struct mt6370_thermal_bound thermal_bound;
 #endif

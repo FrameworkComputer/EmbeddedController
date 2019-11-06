@@ -4,12 +4,14 @@
  */
 
 #include "charge_manager.h"
+#include "charge_state_v2.h"
 #include "charger_mt6370.h"
 #include "console.h"
-#include "driver/tcpm/mt6370.h"
 #include "driver/charger/rt946x.h"
+#include "driver/tcpm/mt6370.h"
 #include "hooks.h"
 #include "power.h"
+#include "timer.h"
 #include "usb_common.h"
 #include "usb_pd.h"
 #include "util.h"
@@ -51,6 +53,15 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, update_plt_resume, HOOK_PRIO_DEFAULT);
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
+/* wait time to evaluate charger thermal status */
+static timestamp_t thermal_wait_until;
+/* input current bound when charger throttled */
+static int throttled_ma = PD_MAX_CURRENT_MA;
+/* charge_ma in last board_set_charge_limit call */
+static int prev_charge_ma;
+/* charge_mv in last board_set_charge_limit call */
+static int prev_charge_mv;
+
 #ifndef CONFIG_BATTERY_SMART
 int board_cut_off_battery(void)
 {
@@ -62,6 +73,91 @@ int board_cut_off_battery(void)
 	return EC_SUCCESS;
 }
 #endif
+
+static void board_set_charge_limit_throttle(int charge_ma, int charge_mv)
+{
+	charge_set_input_current_limit(
+		MIN(throttled_ma, MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT)),
+		charge_mv);
+}
+
+static void battery_thermal_control(struct charge_state_data *curr)
+{
+	int input_current, jc_temp;
+	static int skip_reset;
+	/*
+	 * mt6370's input current setting is 50mA step, use 50 as well for
+	 * easy value mapping.
+	 */
+	const int k_p = 50;
+
+	if (charge_manager_get_charger_voltage() == 5000 ||
+	    curr->state != ST_CHARGE) {
+		/* We already set the charge limit, do not reset it again. */
+		if (skip_reset)
+			return;
+		skip_reset = 1;
+		thermal_wait_until.val = 0;
+		throttled_ma = PD_MAX_CURRENT_MA;
+		board_set_charge_limit_throttle(prev_charge_ma, prev_charge_mv);
+		return;
+	}
+
+	skip_reset = 0;
+
+	if (thermal_wait_until.val == 0)
+		goto thermal_exit;
+
+	if (get_time().val < thermal_wait_until.val)
+		return;
+
+	/* If we fail to read adc, skip for this cycle. */
+	if (rt946x_get_adc(MT6370_ADC_TEMP_JC, &jc_temp))
+		return;
+
+	/* If we fail to read input curr limit, skip for this cycle. */
+	if (charger_get_input_current(&input_current))
+		return;
+
+	/*
+	 * If input current limit is maximum, and we are under thermal budget,
+	 * just skip.
+	 */
+	if (input_current == PD_MAX_CURRENT_MA &&
+	    jc_temp < thermal_bound.target + thermal_bound.err)
+		return;
+
+	/* If the temp is within +- err, thermal is under control */
+	if (jc_temp < thermal_bound.target + thermal_bound.err &&
+	    jc_temp > thermal_bound.target - thermal_bound.err)
+		return;
+
+	/*
+	 * PID algorithm (https://en.wikipedia.org/wiki/PID_controller),
+	 * and operates on only P value.
+	 */
+	throttled_ma =
+		MIN(PD_MAX_CURRENT_MA,
+		    input_current + k_p * (thermal_bound.target - jc_temp));
+	board_set_charge_limit_throttle(throttled_ma, prev_charge_mv);
+
+thermal_exit:
+	thermal_wait_until.val = get_time().val + (3 * SECOND);
+}
+
+int command_jc(int argc, char **argv)
+{
+	static int prev_jc_temp;
+	int jc_temp;
+
+	if (rt946x_get_adc(MT6370_ADC_TEMP_JC, &jc_temp))
+		jc_temp = prev_jc_temp;
+
+	ccprintf("JC Temp: %d\n", jc_temp);
+	prev_jc_temp = jc_temp;
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(jc, command_jc, "", "mt6370 junction temp");
 
 /*
  * b/143318064: A workwround for mt6370 bad buck efficiency.
@@ -121,6 +217,12 @@ static void battery_desired_curr_dynamic(struct charge_state_data *curr)
 		charge_reset_stable_current_us(5 * MINUTE);
 		/* Rewrite the stable current to re-evalute desired watt */
 		charge_set_stable_current(prev_stable_current);
+
+		/*
+		 * do not alter current by thermal if we just raising PD
+		 * voltage
+		 */
+		thermal_wait_until.val = get_time().val + (10 * SECOND);
 	} else {
 		pd_pref_config.mv = DEFAULT_PREFER_MV;
 		/*
@@ -147,6 +249,8 @@ void mt6370_charger_profile_override(struct charge_state_data *curr)
 	int chg_limit_mv = pd_get_max_voltage();
 
 	battery_desired_curr_dynamic(curr);
+
+	battery_thermal_control(curr);
 
 	/* Limit input (=VBUS) to 5V when soc > 85% and charge current < 1A. */
 	if (!(curr->batt.flags & BATT_FLAG_BAD_CURRENT) &&
@@ -195,6 +299,7 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE,
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	prev_charge_ma = charge_ma;
+	prev_charge_mv = charge_mv;
+	board_set_charge_limit_throttle(charge_ma, charge_mv);
 }
