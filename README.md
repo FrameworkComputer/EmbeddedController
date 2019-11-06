@@ -333,7 +333,7 @@ levels of detail (see include/ec_commands.h for the data structures).
 ## Host commands
 
 The way in which messages are exchanged between the AP and EC is
-[documented separately](http://dev.chromium.org/chromium-os/ec-development/ap-ec-communication).
+[documented separately](./docs/ap-ec-comm.md).
 
 ## Software Features
 
