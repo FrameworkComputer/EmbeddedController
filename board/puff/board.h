@@ -113,7 +113,6 @@
 
 /* Fan and temp. */
 #define CONFIG_FANS 1
-/* #define CONFIG_DPTF */
 #undef CONFIG_FAN_INIT_SPEED
 #define CONFIG_FAN_INIT_SPEED 50
 #define CONFIG_TEMP_SENSOR
@@ -191,13 +190,13 @@ enum pwm_channel {
 enum fan_channel {
 	FAN_CH_0,
 	/* Number of FAN channels */
-		FAN_CH_COUNT
+	FAN_CH_COUNT
 };
 
 enum mft_channel {
 	MFT_CH_0 = 0,
 	/* Number of MFT channels */
-		MFT_CH_COUNT,
+	MFT_CH_COUNT,
 };
 
 enum temp_sensor_id {
