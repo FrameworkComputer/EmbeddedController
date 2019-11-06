@@ -16,12 +16,8 @@
 #include "cros_board_info.h"
 #include "driver/pmic_tps650x30.h"
 #include "driver/temp_sensor/tmp432.h"
-#include "driver/tcpm/ps8xxx.h"
-#include "driver/tcpm/tcpci.h"
-#include "driver/tcpm/tcpm.h"
 #include "espi.h"
 #include "extpower.h"
-#include "espi.h"
 #include "fan.h"
 #include "fan_chip.h"
 #include "gpio.h"
@@ -29,7 +25,6 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "math_util.h"
-#include "oz554.h"
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
@@ -42,10 +37,6 @@
 #include "temp_sensor.h"
 #include "timer.h"
 #include "uart.h"
-#include "usb_charge.h"
-#include "usb_mux.h"
-#include "usb_pd.h"
-#include "usb_pd_tcpm.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -54,39 +45,6 @@
 static uint8_t board_version;
 static uint32_t oem;
 static uint32_t sku;
-
-enum bj_adapter {
-	BJ_90W_19V,
-	BJ_135W_19V,
-};
-
-/*
- * Bit masks to map SKU ID to BJ adapter wattage. 1:135W 0:90W
- * KBL-R i7 8550U	4	135
- * KBL-R i5 8250U	5	135
- * KBL-R i3 8130U	6	135
- * KBL-U i7 7600	3	135
- * KBL-U i5 7500	2	135
- * KBL-U i3 7100	1	90
- * KBL-U Celeron 3965	7	90
- * KBL-U Celeron 3865	0	90
- */
-#define BJ_ADAPTER_135W_MASK (1 << 4 | 1 << 5 | 1 << 6 | 1 << 3 | 1 << 2)
-
-static void tcpc_alert_event(enum gpio_signal signal)
-{
-	if (!gpio_get_level(GPIO_USB_C0_PD_RST_ODL))
-		return;
-#ifdef HAS_TASK_PDCMD
-	/* Exchange status with TCPCs */
-	host_command_pd_send_status(PD_CHARGE_NO_CHANGE);
-#endif
-}
-
-void vbus0_evt(enum gpio_signal signal)
-{
-	task_wake(TASK_ID_PD_C0);
-}
 
 #include "gpio_list.h"
 
@@ -128,93 +86,19 @@ const struct mft_t mft_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 const struct i2c_port_t i2c_ports[]  = {
-	{"tcpc", I2C_PORT_TCPC0, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
+	{"poe", I2C_PORT_POE, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
 	{"eeprom", I2C_PORT_EEPROM, 400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
-	{"backlight", I2C_PORT_BACKLIGHT, 100, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
 	{"pmic", I2C_PORT_PMIC, 400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 	{"thermal", I2C_PORT_THERMAL, 400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-/* TCPC mux configuration */
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	/* Alert is active-low, push-pull */
-	{
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_TCPC0,
-			.addr_flags = I2C_ADDR_TCPC0_FLAGS,
-		},
-		.drv = &ps8xxx_tcpm_drv,
-	},
-};
-
-static int ps8751_tune_mux(int port)
-{
-	/* 0x98 sets lower EQ of DP port (4.5db) */
-	mux_write(port, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
-	return EC_SUCCESS;
-}
-
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-		.board_init = &ps8751_tune_mux,
-	}
-};
-
 const int usb_port_enable[USB_PORT_COUNT] = {
-	GPIO_USB1_ENABLE,
-	GPIO_USB2_ENABLE,
-	GPIO_USB3_ENABLE,
-	GPIO_USB4_ENABLE,
+	GPIO_USB_C0_5V_EN,
+	GPIO_USB_FP0_5V_EN,
+	GPIO_USB_FP1_5V_EN,
+	GPIO_USB_FP3_5V_EN,
 };
-
-void board_reset_pd_mcu(void)
-{
-	gpio_set_level(GPIO_USB_C0_PD_RST_ODL, 0);
-	msleep(1);
-	gpio_set_level(GPIO_USB_C0_PD_RST_ODL, 1);
-}
-
-void board_tcpc_init(void)
-{
-	int port, reg;
-
-	/* This needs to be executed only once per boot. It could be run by RO
-	 * if we boot in recovery mode. It could be run by RW if we boot in
-	 * normal or dev mode. Note EFS makes RO jump to RW before HOOK_INIT. */
-	board_reset_pd_mcu();
-
-	/*
-	 * Wake up PS8751. If PS8751 remains in low power mode after sysjump,
-	 * TCPM_INIT will fail due to not able to access PS8751.
-	 * Note PS8751 A3 will wake on any I2C access.
-	 */
-	i2c_read8(I2C_PORT_TCPC0, I2C_ADDR_TCPC0_FLAGS, 0xA0, &reg);
-
-	/* Enable TCPC interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
-
-	/*
-	 * Initialize HPD to low; after sysjump SOC needs to see
-	 * HPD pulse to enable video path
-	 */
-	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
-		const struct usb_mux *mux = &usb_muxes[port];
-		mux->hpd_update(port, 0, 0);
-	}
-}
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
-
-uint16_t tcpc_get_alert_status(void)
-{
-	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL) &&
-			gpio_get_level(GPIO_USB_C0_PD_RST_ODL))
-		return PD_STATUS_TCPC_ALERT_0;
-	return 0;
-}
 
 /*
  * TMP431 has one local and one remote sensor.
@@ -462,20 +346,9 @@ static void cbi_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
-static void setup_bj(void)
-{
-	enum bj_adapter bj = (BJ_ADAPTER_135W_MASK & (1 << sku)) ?
-			BJ_135W_19V : BJ_90W_19V;
-	gpio_set_level(GPIO_U22_90W, bj == BJ_90W_19V);
-}
-
 static void board_init(void)
 {
-	setup_bj();
-
 	board_extpower();
-
-	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -518,28 +391,4 @@ int fan_percent_to_rpm(int fan, int pct)
 			fan_table[current_level].rpm);
 
 	return fan_table[current_level].rpm;
-}
-
-__override void oz554_board_init(void)
-{
-	int pin_status = 0;
-
-	pin_status |= gpio_get_level(GPIO_PANEL_ID_0) << 0;
-	pin_status |= gpio_get_level(GPIO_PANEL_ID_1) << 1;
-	pin_status |= gpio_get_level(GPIO_PANEL_ID_2) << 2;
-
-	switch (pin_status) {
-	case 0x04:
-		CPRINTS("PANEL_LM_SSE2");
-		break;
-	case 0x05:
-		CPRINTS("PANEL_LM_SSK1");
-		/* Reigster 0x02: Setting LED current: 55(mA) */
-		if (oz554_set_config(2, 0x55))
-			CPRINTS("oz554 config failed");
-		break;
-	default:
-		CPRINTS("PANEL_UNKNOWN");
-		break;
-	}
 }

@@ -20,7 +20,6 @@
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_BOARD_HAS_RTC_RESET
 #define CONFIG_CRC8
-#define CONFIG_CEC
 #define CONFIG_CROS_BOARD_INFO
 #define CONFIG_DEDICATED_RECOVERY_BUTTON
 #define CONFIG_EMULATED_SYSRQ
@@ -45,10 +44,6 @@
 	(EC_WIRELESS_SWITCH_WLAN | EC_WIRELESS_SWITCH_WLAN_POWER)
 #define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
 #define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_DX_WLAN
-#define WIRELESS_GPIO_WWAN GPIO_PP3300_DX_LTE
-#define CEC_GPIO_OUT GPIO_CEC_OUT
-#define CEC_GPIO_IN  GPIO_CEC_IN
-#define CEC_GPIO_PULL_UP GPIO_CEC_PULL_UP
 #define CONFIG_FANS 1
 #define CONFIG_FAN_RPM_CUSTOM
 #define CONFIG_THROTTLE_AP
@@ -69,7 +64,6 @@
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_S3
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 
-#define CONFIG_CMD_PD_CONTROL
 #define CONFIG_EXTPOWER_GPIO
 #undef  CONFIG_EXTPOWER_DEBOUNCE_MS
 #define CONFIG_EXTPOWER_DEBOUNCE_MS 1000
@@ -84,21 +78,6 @@
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_TMP432
 
-/* USB */
-#define CONFIG_USB_PD_ALT_MODE
-#define CONFIG_USB_PD_ALT_MODE_DFP
-#define CONFIG_USB_PD_DISCHARGE_TCPC
-#define CONFIG_USB_PD_LOGGING
-#define CONFIG_USB_PD_PORT_MAX_COUNT 1
-#define CONFIG_USB_PD_VBUS_DETECT_GPIO
-#define CONFIG_USB_PD_TCPM_MUX
-#define CONFIG_USB_PD_TCPM_TCPCI
-#define CONFIG_USB_PD_TCPM_PS8751
-#define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USBC_SS_MUX
-#define CONFIG_USBC_SS_MUX_DFP_ONLY
-#define CONFIG_USBC_VCONN
-
 /* USB-A config */
 #define CONFIG_USB_PORT_POWER_DUMB
 #define USB_PORT_COUNT 4
@@ -109,26 +88,18 @@
 #define NPCX_TACH_SEL2		1 /* 0:GPIO40/73 1:GPIO93/A6 as TACH */
 
 /* I2C ports */
-#define I2C_PORT_TCPC0		NPCX_I2C_PORT0_0
+#define I2C_PORT_POE		NPCX_I2C_PORT0_0
 #define I2C_PORT_EEPROM		NPCX_I2C_PORT0_1
-#define I2C_PORT_BACKLIGHT	NPCX_I2C_PORT1
 #define I2C_PORT_PMIC		NPCX_I2C_PORT2
 #define I2C_PORT_THERMAL	NPCX_I2C_PORT3
 
 /* I2C addresses */
-#define I2C_ADDR_TCPC0_FLAGS	0x0b
 #define I2C_ADDR_EEPROM_FLAGS	0x50
 
 /* Verify and jump to RW image on boot */
-#define CONFIG_VBOOT_EFS
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
-
-/*
- * LED backlight controller
- */
-#define CONFIG_LED_DRIVER_OZ554
 
 /*
  * Flash layout. Since config_flash_layout.h is included before board.h,
@@ -171,7 +142,6 @@
 #include "registers.h"
 
 enum charge_port {
-	CHARGE_PORT_TYPEC0,
 	CHARGE_PORT_BARRELJACK,
 };
 
@@ -207,25 +177,12 @@ enum mft_channel {
 };
 
 enum OEM_ID {
-	OEM_KARMA = 7,
+	OEM_ENDEAVOUR = 9,
 	/* Number of OEM IDs */
 	OEM_COUNT
 };
 
-/* TODO(crosbug.com/p/61098): Verify the numbers below. */
-/*
- * delay to turn on the power supply max is ~16ms.
- * delay to turn off the power supply max is about ~180ms.
- */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000  /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY	250000 /* us */
-
-/* delay to turn on/off vconn */
-#define PD_VCONN_SWAP_DELAY		5000   /* us */
-
 /* Board specific handlers */
-void board_reset_pd_mcu(void);
-void board_set_tcpc_power_mode(int port, int mode);
 void led_alert(int enable);
 void led_critical(void);
 
