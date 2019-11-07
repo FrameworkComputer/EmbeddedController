@@ -65,12 +65,21 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 /******************************************************************************/
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_FAN] = {.channel = 5, .flags = PWM_CONFIG_OPEN_DRAIN,
-			.freq = 25000},
+	[PWM_CH_FAN]        = { .channel = 5,
+				.flags = PWM_CONFIG_OPEN_DRAIN,
+				.freq = 25000},
+	[PWM_CH_LED_RED]    = { .channel = 0,
+				.flags = PWM_CONFIG_ACTIVE_LOW |
+					 PWM_CONFIG_DSLEEP,
+				.freq = 2000 },
+	[PWM_CH_LED_GREEN]  = { .channel = 2,
+				.flags = PWM_CONFIG_ACTIVE_LOW |
+					 PWM_CONFIG_DSLEEP,
+				.freq = 2000 },
 };
 
 /******************************************************************************/
-/* USB-C TPCP Configuration */
+/* USB-C TCPC Configuration */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {

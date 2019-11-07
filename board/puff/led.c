@@ -2,7 +2,11 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Power and battery LED control for Puff
+ * Power LED control for Puff.
+ * Solid green - active power
+ * Green flashing - suspended
+ * Red flashing - alert
+ * Solid red - critical
  */
 
 #include "chipset.h"
