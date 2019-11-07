@@ -366,8 +366,11 @@ static bool board_is_convertible(void)
 {
 	uint8_t sku_id = get_board_sku();
 
-	/* Dragonair (SKU 21 and 22) is a convertible. Dratini is not. */
-	return sku_id == 21 || sku_id == 22;
+	/*
+	 * Dragonair (SKU 21 ,22 and 23) is a convertible. Dratini is not.
+	 * Unprovisioned SKU 255.
+	 */
+	return sku_id == 21 || sku_id == 22 || sku_id == 23 || sku_id == 255;
 }
 
 static void board_update_sensor_config_from_sku(void)
@@ -413,8 +416,9 @@ bool board_has_kb_backlight(void)
 	 * SKUs have keyboard backlight.
 	 * Dratini: 2, 3
 	 * Dragonair: 22
+	 * Unprovisioned: 255
 	 */
-	return sku_id == 2 || sku_id == 3 || sku_id == 22;
+	return sku_id == 2 || sku_id == 3 || sku_id == 22 || sku_id == 255;
 }
 
 uint32_t board_override_feature_flags0(uint32_t flags0)
