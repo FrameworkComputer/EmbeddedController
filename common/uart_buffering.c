@@ -28,6 +28,10 @@
 #define TX_BUF_DIFF(i, j) (((i) - (j)) & (CONFIG_UART_TX_BUF_SIZE - 1))
 #define RX_BUF_DIFF(i, j) (((i) - (j)) & (CONFIG_UART_RX_BUF_SIZE - 1))
 
+/* Check if both UART TX/RX buffer sizes are power of two. */
+BUILD_ASSERT((CONFIG_UART_TX_BUF_SIZE & (CONFIG_UART_TX_BUF_SIZE - 1)) == 0);
+BUILD_ASSERT((CONFIG_UART_RX_BUF_SIZE & (CONFIG_UART_RX_BUF_SIZE - 1)) == 0);
+
 /*
  * Interval between rechecking the receive DMA head pointer, after a character
  * of input has been detected by the normal tick task.  There will be
@@ -500,4 +504,3 @@ int uart_console_read_buffer(uint8_t type,
 
 	return EC_RES_SUCCESS;
 }
-
