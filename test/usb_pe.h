@@ -64,8 +64,6 @@
 #define PE_FLAGS_FAST_ROLE_SWAP_PATH         BIT(20)/* FRS/PRS Exec Path */
 #define PE_FLAGS_FAST_ROLE_SWAP_ENABLED      BIT(21)/* FRS Listening State */
 #define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(22)/* FRS PPC/TCPC Signal */
-/* When set, no more discover identity messages are sent to SOP' */
-#define PE_FLAGS_DISCOVER_VDM_IDENTITY_DONE  BIT(23)
 
 /* List of all Policy Engine level states */
 enum usb_pe_state {
@@ -81,7 +79,6 @@ enum usb_pe_state {
 	PE_SRC_HARD_RESET,
 	PE_SRC_HARD_RESET_RECEIVED,
 	PE_SRC_TRANSITION_TO_DEFAULT,
-	PE_SRC_VDM_IDENTITY_REQUEST,
 	PE_SNK_STARTUP,
 	PE_SNK_DISCOVERY,
 	PE_SNK_WAIT_FOR_CAPABILITIES,

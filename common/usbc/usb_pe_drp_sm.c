@@ -85,8 +85,6 @@
 #define PE_FLAGS_FAST_ROLE_SWAP_PATH         BIT(20)/* FRS/PRS Exec Path */
 #define PE_FLAGS_FAST_ROLE_SWAP_ENABLED      BIT(21)/* FRS Listening State */
 #define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(22)/* FRS PPC/TCPC Signal */
-/* When set, no more discover identity messages are sent to SOP' */
-#define PE_FLAGS_DISCOVER_VDM_IDENTITY_DONE  BIT(23)
 
 /* 6.7.3 Hard Reset Counter */
 #define N_HARD_RESET_COUNT 2
@@ -119,7 +117,6 @@ enum usb_pe_state {
 	PE_SRC_HARD_RESET,
 	PE_SRC_HARD_RESET_RECEIVED,
 	PE_SRC_TRANSITION_TO_DEFAULT,
-	PE_SRC_VDM_IDENTITY_REQUEST,
 	PE_SNK_STARTUP,
 	PE_SNK_DISCOVERY,
 	PE_SNK_WAIT_FOR_CAPABILITIES,
@@ -186,7 +183,6 @@ static const char * const pe_state_names[] = {
 	[PE_SRC_HARD_RESET] = "PE_SRC_Hard_Reset",
 	[PE_SRC_HARD_RESET_RECEIVED] = "PE_SRC_Hard_Reset_Received",
 	[PE_SRC_TRANSITION_TO_DEFAULT] = "PE_SRC_Transition_to_default",
-	[PE_SRC_VDM_IDENTITY_REQUEST] = "PE_SRC_Vdm_Identity_Request",
 	[PE_SNK_STARTUP] = "PE_SNK_Startup",
 	[PE_SNK_DISCOVERY] = "PE_SNK_Discovery",
 	[PE_SNK_WAIT_FOR_CAPABILITIES] = "PE_SNK_Wait_for_Capabilities",
@@ -965,38 +961,7 @@ static void pe_src_startup_run(int port)
 		return;
 
 	if (get_time().val > pe[port].swap_source_start_timer)
-		set_state_pe(port, PE_SRC_VDM_IDENTITY_REQUEST);
-}
-
-/**
- * PE_SRC_VDM_Identity_Request
- */
-static void pe_src_vdm_identity_request_entry(int port)
-{
-	print_current_state(port);
-}
-
-static void pe_src_vdm_identity_request_run(int port)
-{
-	/*
-	 * Discover identity of the Cable Plug
-	 */
-	if (!PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_VDM_IDENTITY_DONE) &&
-			tc_is_vconn_src(port) &&
-			pe[port].cable_discover_identity_count <
-						N_DISCOVER_IDENTITY_COUNT) {
-		pe[port].cable_discover_identity_count++;
-
-		pe[port].partner_type = CABLE;
-		pe[port].vdm_cmd = DISCOVER_IDENTITY;
-		pe[port].vdm_data[0] = VDO(USB_SID_PD, 1, /* structured */
-			VDO_SVDM_VERS(1) | DISCOVER_IDENTITY);
-		pe[port].vdm_cnt = 1;
-
-		set_state_pe(port, PE_VDM_REQUEST);
-	} else {
 		set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
-	}
 }
 
 /**
@@ -1010,7 +975,7 @@ static void pe_src_discovery_entry(int port)
 	 * Initialize and run the SourceCapabilityTimer in order
 	 * to trigger sending a Source_Capabilities Message.
 	 *
-	 * The SourceCapabilityTimer Shall continue to run during cable
+	 * The SourceCapabilityTimer Shall continue to run during
 	 * identity discover and Shall Not be initialized on re-entry
 	 * to PE_SRC_Discovery.
 	 */
@@ -1021,14 +986,6 @@ static void pe_src_discovery_entry(int port)
 
 static void pe_src_discovery_run(int port)
 {
-	/*
-	 * A VCONN or Charge-Through VCONN Powered Device was detected.
-	 */
-	if (pe[port].vpd_vdo >= 0 && VPD_VDO_CTS(pe[port].vpd_vdo)) {
-		set_state_pe(port, PE_SRC_DISABLED);
-		return;
-	}
-
 	/*
 	 * Transition to the PE_SRC_Send_Capabilities state when:
 	 *   1) The SourceCapabilityTimer times out and
@@ -1060,14 +1017,6 @@ static void pe_src_discovery_run(int port)
 			pe[port].hard_reset_counter > N_HARD_RESET_COUNT) {
 		set_state_pe(port, PE_SRC_DISABLED);
 		return;
-	}
-
-	/*
-	 * Discover identity of the Cable Plug
-	 */
-	if (!PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_VDM_IDENTITY_DONE) &&
-	pe[port].cable_discover_identity_count < N_DISCOVER_IDENTITY_COUNT) {
-		set_state_pe(port, PE_SRC_VDM_IDENTITY_REQUEST);
 	}
 }
 
@@ -3575,9 +3524,10 @@ static void pe_vdm_request_run(int port)
 
 		if ((sop == TCPC_TX_SOP || sop == TCPC_TX_SOP_PRIME) &&
 			type == PD_DATA_VENDOR_DEF && cnt > 0 && ext == 0) {
-			if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK)
-				return  set_state_pe(port, PE_VDM_ACKED);
-			else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK ||
+			if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK) {
+				set_state_pe(port, PE_VDM_ACKED);
+				return;
+			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK ||
 				PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
 				if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK)
 					PE_SET_FLAG(port,
@@ -3585,36 +3535,13 @@ static void pe_vdm_request_run(int port)
 				else
 					PE_SET_FLAG(port,
 						PE_FLAGS_VDM_REQUEST_BUSY);
-
-				/* Return to previous state */
-				if (get_last_state_pe(port) ==
-							PE_DO_PORT_DISCOVERY)
-					set_state_pe(port,
-							PE_DO_PORT_DISCOVERY);
-				else if (get_last_state_pe(port) ==
-						PE_SRC_VDM_IDENTITY_REQUEST)
-					set_state_pe(port,
-						PE_SRC_VDM_IDENTITY_REQUEST);
-				else if (pe[port].power_role == PD_ROLE_SOURCE)
-					set_state_pe(port, PE_SRC_READY);
-				else
-					set_state_pe(port, PE_SNK_READY);
-				return;
 			}
 		}
 	}
 
-
-
 	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 		/* Message not sent and we received a protocol error */
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
-
-		if (pe[port].partner_type) {
-			/* Restore power and data roles */
-			tc_set_power_role(port, pe[port].saved_power_role);
-			tc_set_data_role(port, pe[port].saved_data_role);
-		}
 
 		/* Fake busy response so we try to send command again */
 		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_BUSY);
@@ -3623,23 +3550,18 @@ static void pe_vdm_request_run(int port)
 				pe[port].partner_type ? "Cable" : "Port");
 
 		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED);
-	} else {
-		/* No error yet, keep looping */
-		return;
 	}
 
-	/*
-	 * We errored out, we may need to return to the previous state or the
-	 * default state for the power role.
-	 */
-	if (get_last_state_pe(port) == PE_DO_PORT_DISCOVERY)
-		set_state_pe(port, PE_DO_PORT_DISCOVERY);
-	else if (get_last_state_pe(port) == PE_SRC_VDM_IDENTITY_REQUEST)
-		set_state_pe(port, PE_SRC_VDM_IDENTITY_REQUEST);
-	else if (pe[port].power_role == PD_ROLE_SOURCE)
-		set_state_pe(port, PE_SRC_READY);
-	else
-		set_state_pe(port, PE_SNK_READY);
+	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED |
+					PE_FLAGS_VDM_REQUEST_BUSY)) {
+		/* Return to previous state */
+		if (get_last_state_pe(port) == PE_DO_PORT_DISCOVERY)
+			set_state_pe(port, PE_DO_PORT_DISCOVERY);
+		else if (pe[port].power_role == PD_ROLE_SOURCE)
+			set_state_pe(port, PE_SRC_READY);
+		else
+			set_state_pe(port, PE_SNK_READY);
+	}
 }
 
 static void pe_vdm_request_exit(int port)
@@ -3673,69 +3595,7 @@ static void pe_vdm_acked_entry(int port)
 	vdo_cmd = PD_VDO_CMD(payload[0]);
 	sop = PD_HEADER_GET_SOP(emsg[port].header);
 
-	if (sop == TCPC_TX_SOP_PRIME) {
-		/*
-		 * Handle Message From Cable Plug
-		 */
-
-		uint32_t vdm_header = payload[0];
-		uint32_t id_header = payload[1];
-		uint8_t ptype_ufp;
-
-		if (PD_VDO_CMD(vdm_header) == CMD_DISCOVER_IDENT &&
-				PD_VDO_SVDM(vdm_header) &&
-				PD_HEADER_CNT(emsg[port].header) == 5) {
-			ptype_ufp = PD_IDH_PTYPE(id_header);
-
-			switch (ptype_ufp) {
-			case IDH_PTYPE_UNDEF:
-				break;
-			case IDH_PTYPE_HUB:
-				break;
-			case IDH_PTYPE_PERIPH:
-				break;
-			case IDH_PTYPE_PCABLE:
-				/* Passive Cable Detected */
-				pe[port].passive_cable_vdo =
-						payload[4];
-				break;
-			case IDH_PTYPE_ACABLE:
-				/* Active Cable Detected */
-				pe[port].active_cable_vdo1 =
-						payload[4];
-				pe[port].active_cable_vdo2 =
-						payload[5];
-				break;
-			case IDH_PTYPE_AMA:
-				/*
-				 * Alternate Mode Adapter
-				 * Detected
-				 */
-				pe[port].ama_vdo = payload[4];
-				break;
-			case IDH_PTYPE_VPD:
-				/*
-				 * VCONN Powered Device
-				 * Detected
-				 */
-				pe[port].vpd_vdo = payload[4];
-
-				/*
-				 * If a CTVPD device was not discovered, inform
-				 * the Device Policy Manager that the Discover
-				 * Identity is done.
-				 *
-				 * If a CTVPD device is discovered, the Device
-				 * Policy Manager will clear the DISC_IDENT flag
-				 * set by tc_disc_ident_in_progress.
-				 */
-				if (pe[port].vpd_vdo < 0 ||
-						!VPD_VDO_CTS(pe[port].vpd_vdo))
-					tc_disc_ident_complete(port);
-				break;
-			}
-		}
-	} else {
+	if (sop == TCPC_TX_SOP) {
 		/*
 		 * Handle Message From Port Partner
 		 */
@@ -3790,10 +3650,7 @@ static void pe_vdm_acked_entry(int port)
 		}
 	}
 
-	if (!PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_VDM_IDENTITY_DONE)) {
-		PE_SET_FLAG(port, PE_FLAGS_DISCOVER_VDM_IDENTITY_DONE);
-		set_state_pe(port, PE_SRC_VDM_IDENTITY_REQUEST);
-	} else if (!PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE)) {
+	if (!PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE)) {
 		set_state_pe(port, PE_DO_PORT_DISCOVERY);
 	} else if (pe[port].power_role == PD_ROLE_SOURCE) {
 		set_state_pe(port, PE_SRC_READY);
@@ -4978,10 +4835,6 @@ static const struct usb_state pe_states[] = {
 	[PE_SRC_TRANSITION_TO_DEFAULT] = {
 		.entry = pe_src_transition_to_default_entry,
 		.run = pe_src_transition_to_default_run,
-	},
-	[PE_SRC_VDM_IDENTITY_REQUEST] = {
-		.entry = pe_src_vdm_identity_request_entry,
-		.run = pe_src_vdm_identity_request_run,
 	},
 	[PE_SNK_STARTUP] = {
 		.entry = pe_snk_startup_entry,
