@@ -15,6 +15,7 @@
 #include "hooks.h"
 #include "hwtimer.h"
 #include "math_util.h"
+#include "motion_sense_fifo.h"
 #include "task.h"
 #include "timer.h"
 
@@ -153,7 +154,7 @@ static void push_fifo_data(struct motion_sensor_t *main_s, uint8_t *fifo,
 
 	vect.flags = 0;
 	vect.sensor_num = sensor - motion_sensors;
-	motion_sense_fifo_add_data(&vect, sensor, 3, saved_ts);
+	motion_sense_fifo_stage_data(&vect, sensor, 3, saved_ts);
 }
 
 static inline int load_fifo(struct motion_sensor_t *s,
@@ -253,6 +254,9 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 
 		if (fsts.len & LSM6DSO_FIFO_DIFF_MASK)
 			ret = load_fifo(s, &fsts, last_interrupt_timestamp);
+
+		if (IS_ENABLED(CONFIG_ACCEL_FIFO) && ret > 0)
+			motion_sense_fifo_commit_data();
 	}
 
 	return ret;
