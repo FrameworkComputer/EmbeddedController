@@ -536,8 +536,7 @@ extern "C" {
 	(EC_LPC_STATUS_FROM_HOST | EC_LPC_STATUS_PROCESSING)
 
 /*
- * Host command response codes (16-bit).  Note that response codes should be
- * stored in a uint16_t rather than directly in a value of this type.
+ * Host command response codes (16-bit).
  */
 enum ec_status {
 	EC_RES_SUCCESS = 0,
@@ -561,7 +560,10 @@ enum ec_status {
 	EC_RES_INVALID_HEADER_CRC = 18,      /* Header CRC invalid */
 	EC_RES_INVALID_DATA_CRC = 19,        /* Data CRC invalid */
 	EC_RES_DUP_UNAVAILABLE = 20,         /* Can't resend response */
-};
+
+	EC_RES_MAX = UINT16_MAX		/**< Force enum to be 16 bits */
+} __packed;
+BUILD_ASSERT(sizeof(enum ec_status) == sizeof(uint16_t));
 
 /*
  * Host event codes.  Note these are 1-based, not 0-based, because ACPI query
