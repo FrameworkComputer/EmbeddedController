@@ -34,28 +34,28 @@
 #endif
 
 /* Type-C Layer Flags */
-#define TC_FLAGS_VCONN_ON                 BIT(0)
-#define TC_FLAGS_TS_DTS_PARTNER           BIT(1)
-#define TC_FLAGS_VBUS_NEVER_LOW           BIT(2)
-#define TC_FLAGS_LPM_TRANSITION           BIT(3)
-#define TC_FLAGS_LPM_ENGAGED              BIT(4)
-#define TC_FLAGS_LPM_REQUESTED            BIT(5)
-#define TC_FLAGS_CTVPD_DETECTED           BIT(6)
-#define TC_FLAGS_REQUEST_VC_SWAP_ON       BIT(7)
-#define TC_FLAGS_REQUEST_VC_SWAP_OFF      BIT(8)
-#define TC_FLAGS_REJECT_VCONN_SWAP        BIT(9)
-#define TC_FLAGS_REQUEST_PR_SWAP          BIT(10)
-#define TC_FLAGS_REQUEST_DR_SWAP          BIT(11)
-#define TC_FLAGS_POWER_OFF_SNK            BIT(12)
-#define TC_FLAGS_PARTNER_EXTPOWER         BIT(13)
-#define TC_FLAGS_PARTNER_DR_DATA          BIT(14)
-#define TC_FLAGS_PARTNER_DR_POWER         BIT(15)
-#define TC_FLAGS_PARTNER_PD_CAPABLE         BIT(16)
-#define TC_FLAGS_HARD_RESET               BIT(17)
-#define TC_FLAGS_PARTNER_USB_COMM         BIT(18)
-#define TC_FLAGS_PR_SWAP_IN_PROGRESS      BIT(19)
-#define TC_FLAGS_DO_PR_SWAP               BIT(20)
-#define TC_FLAGS_DISC_IDENT_IN_PROGRESS   BIT(21)
+#define TC_FLAGS_VCONN_ON               BIT(0) /* VCONN is being sourced */
+#define TC_FLAGS_TS_DTS_PARTNER         BIT(1) /* Partner has rp/rp or rd/rd */
+#define TC_FLAGS_VBUS_NEVER_LOW         BIT(2) /* VBUS input never been low */
+#define TC_FLAGS_LPM_TRANSITION         BIT(3) /* Tracks HW LPM transition */
+#define TC_FLAGS_LPM_ENGAGED            BIT(4) /* Tracks HW LPM state */
+#define TC_FLAGS_LPM_REQUESTED          BIT(5) /* Tracks SW LPM state */
+#define TC_FLAGS_CTVPD_DETECTED         BIT(6) /* CTVPD has been detected */
+#define TC_FLAGS_REQUEST_VC_SWAP_ON     BIT(7) /* Requests swap to VCONN on */
+#define TC_FLAGS_REQUEST_VC_SWAP_OFF    BIT(8) /* Requests swap to VCONN off */
+#define TC_FLAGS_REJECT_VCONN_SWAP      BIT(9) /* Rejects VCONN swap */
+#define TC_FLAGS_REQUEST_PR_SWAP        BIT(10)/* Requests a power role swap */
+#define TC_FLAGS_REQUEST_DR_SWAP        BIT(11)/* Requests a data role swap */
+#define TC_FLAGS_POWER_OFF_SNK          BIT(12)/* Powers off the sink */
+#define TC_FLAGS_PARTNER_EXTPOWER       BIT(13)/* Port partner has ext. PWR */
+#define TC_FLAGS_PARTNER_DR_DATA        BIT(14)/* Port partner is DR data */
+#define TC_FLAGS_PARTNER_DR_POWER       BIT(15)/* Port partner is DR power */
+#define TC_FLAGS_PARTNER_PD_CAPABLE     BIT(16)/* Port partner is PD capable */
+#define TC_FLAGS_HARD_RESET             BIT(17)/* Triggers a hard reset */
+#define TC_FLAGS_PARTNER_USB_COMM       BIT(18)/* port partner is USB comms */
+#define TC_FLAGS_PR_SWAP_IN_PROGRESS    BIT(19)/* PR swap in progress */
+#define TC_FLAGS_DO_PR_SWAP             BIT(20)/* Triggers a PR swap */
+#define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(21)/* Discover Ident. in progress */
 
 enum ps_reset_sequence {
 	PS_STATE0,

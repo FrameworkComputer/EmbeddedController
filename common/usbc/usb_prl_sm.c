@@ -53,17 +53,23 @@
 #define PDMSG_CHK_FLAG(port, flag) (pdmsg[port].flags & (flag))
 
 /* Protocol Layer Flags */
-#define PRL_FLAGS_TX_COMPLETE             BIT(0)
-#define PRL_FLAGS_START_AMS               BIT(1)
-#define PRL_FLAGS_END_AMS                 BIT(2)
-#define PRL_FLAGS_TX_ERROR                BIT(3)
-#define PRL_FLAGS_PE_HARD_RESET           BIT(4)
-#define PRL_FLAGS_HARD_RESET_COMPLETE     BIT(5)
-#define PRL_FLAGS_PORT_PARTNER_HARD_RESET BIT(6)
+/*
+ * NOTE:
+ *	These flags are used in multiple state machines and could have
+ *	different meanings in each state machine.
+ */
+#define PRL_FLAGS_TX_COMPLETE             BIT(0) /* Transmit complete */
+#define PRL_FLAGS_START_AMS               BIT(1) /* Start AMS */
+#define PRL_FLAGS_END_AMS                 BIT(2) /* End AMS */
+#define PRL_FLAGS_TX_ERROR                BIT(3) /* TX error occurred */
+#define PRL_FLAGS_PE_HARD_RESET           BIT(4) /* PE triggered Hard Reset */
+#define PRL_FLAGS_HARD_RESET_COMPLETE     BIT(5) /* Hard reset complete */
+#define PRL_FLAGS_PORT_PARTNER_HARD_RESET BIT(6) /* Partner sent hard reset */
+/* Triggers a message transmission */
 #define PRL_FLAGS_MSG_XMIT                BIT(7)
-#define PRL_FLAGS_MSG_RECEIVED            BIT(8)
-#define PRL_FLAGS_ABORT                   BIT(9)
-#define PRL_FLAGS_CHUNKING                BIT(10)
+#define PRL_FLAGS_MSG_RECEIVED            BIT(8) /* Message was received */
+#define PRL_FLAGS_ABORT                   BIT(9) /* Abort sending message */
+#define PRL_FLAGS_CHUNKING                BIT(10)/* Use message chunking */
 
 /* PD counter definitions */
 #define PD_MESSAGE_ID_COUNT 7
