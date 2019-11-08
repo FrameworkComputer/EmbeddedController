@@ -85,6 +85,7 @@ driver-$(CONFIG_IO_EXPANDER_NCT38XX)+=ioexpander_nct38xx.o
 
 # Current/Power monitor
 driver-$(CONFIG_INA219)$(CONFIG_INA231)+=ina2xx.o
+driver-$(CONFIG_INA3221)+=ina3221.o
 
 # LED drivers
 driver-$(CONFIG_LED_DRIVER_DS2413)+=led/ds2413.o
