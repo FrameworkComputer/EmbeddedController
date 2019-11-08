@@ -196,10 +196,16 @@ static void activate_mkbp_with_events(uint32_t events_to_add)
 	int rv, schedule_deferred = 0;
 
 #ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
-	/* Check to see if this host event should wake the system. */
-	skip_interrupt = host_is_sleeping() &&
-			 !(host_get_events() &
-			   mkbp_host_event_wake_mask);
+	/*
+	 * Check to see if this host event should wake the system.
+	 * Use == instead of & here since we don't want to apply the host event
+	 * skipping logic if we are adding a host event and something else.
+	 */
+	if (events_to_add == BIT(EC_MKBP_EVENT_HOST_EVENT) ||
+	    events_to_add == BIT(EC_MKBP_EVENT_HOST_EVENT64))
+		skip_interrupt = host_is_sleeping() &&
+				!(host_get_events() &
+				mkbp_host_event_wake_mask);
 #endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
 
 #ifdef CONFIG_MKBP_EVENT_WAKEUP_MASK
