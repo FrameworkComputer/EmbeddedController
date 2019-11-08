@@ -270,8 +270,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				if (ptrspec == 'T' &&
 				    !IS_ENABLED(NO_UINT64_SUPPORT)) {
 					flags |= PF_64BIT;
-					/* NULL uses the current time. */
-					if (ptrval == NULL)
+					if (ptrval == PRINTF_TIMESTAMP_NOW)
 						v = get_time().val;
 					else
 						v = *(uint64_t *)ptrval;
