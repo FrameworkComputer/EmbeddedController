@@ -38,6 +38,11 @@
 /* Long power key press to force shutdown in S0. go/crosdebug */
 #define FORCED_SHUTDOWN_DELAY	(10 * SECOND)
 
+/* Long power key press to boot from S5/G3 state. */
+#ifndef POWERBTN_BOOT_DELAY
+#define POWERBTN_BOOT_DELAY	(1 * SECOND)
+#endif
+
 #define CHARGER_INITIALIZED_DELAY_MS 100
 #define CHARGER_INITIALIZED_TRIES 40
 
@@ -135,6 +140,14 @@ void chipset_force_shutdown_button(void)
 	chipset_force_shutdown(CHIPSET_SHUTDOWN_BUTTON);
 }
 DECLARE_DEFERRED(chipset_force_shutdown_button);
+
+void chipset_exit_hard_off_button(void)
+{
+	/* Power up from off */
+	forcing_shutdown = 0;
+	chipset_exit_hard_off();
+}
+DECLARE_DEFERRED(chipset_exit_hard_off_button);
 
 /* If chipset needs to be reset, EC also reboots to RO. */
 void chipset_reset(enum chipset_reset_reason reason)
@@ -447,17 +460,16 @@ enum power_state power_handle_state(enum power_state state)
 static void power_button_changed(void)
 {
 	if (power_button_is_pressed()) {
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-			/* Power up from off */
-			forcing_shutdown = 0;
-			chipset_exit_hard_off();
-		}
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			hook_call_deferred(&chipset_exit_hard_off_button_data,
+					   POWERBTN_BOOT_DELAY);
 
 		/* Delayed power down from S0/S3, cancel on PB release */
 		hook_call_deferred(&chipset_force_shutdown_button_data,
 				   FORCED_SHUTDOWN_DELAY);
 	} else {
-		/* Power button released, cancel deferred shutdown */
+		/* Power button released, cancel deferred shutdown/boot */
+		hook_call_deferred(&chipset_exit_hard_off_button_data, -1);
 		hook_call_deferred(&chipset_force_shutdown_button_data, -1);
 	}
 }
