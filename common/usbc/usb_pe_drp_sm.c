@@ -2188,7 +2188,7 @@ static void pe_snk_hard_reset_entry(int port)
 	 * PSTransistionTimer timeout occurred.
 	 */
 	if (PE_CHK_FLAG(port, PE_FLAGS_PS_TRANSITION_TIMEOUT)) {
-		PE_SET_FLAG(port, PE_FLAGS_PS_TRANSITION_TIMEOUT);
+		PE_CLR_FLAG(port, PE_FLAGS_PS_TRANSITION_TIMEOUT);
 
 		/* Transition Sink's power supply to the new power level */
 		pd_set_input_current_limit(port, pe[port].curr_limit,
