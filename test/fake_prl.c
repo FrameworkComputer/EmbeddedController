@@ -16,7 +16,7 @@ void prl_end_ams(int port)
 void prl_execute_hard_reset(int port)
 {}
 
-enum pd_rev_type prl_get_rev(int port)
+enum pd_rev_type prl_get_rev(int port, enum tcpm_transmit_type partner)
 {
 	return PD_REV30;
 }
@@ -47,7 +47,8 @@ void prl_send_ext_data_msg(int port, enum tcpm_transmit_type type,
 	enum pd_ext_msg_type msg)
 {}
 
-void prl_set_rev(int port, enum pd_rev_type rev)
+void prl_set_rev(int port, enum tcpm_transmit_type partner,
+	enum pd_rev_type rev)
 {}
 
 void prl_start_ams(int port)

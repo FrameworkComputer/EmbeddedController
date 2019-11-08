@@ -190,9 +190,9 @@ static void pe_request_run(const int port)
 		emsg[port].len = 20;
 
 		/* Set to highest revision supported by both ports. */
-		prl_set_rev(port, (PD_HEADER_REV(header) > PD_REV30) ?
+		prl_set_rev(port, TCPC_TX_SOP_PRIME,
+					(PD_HEADER_REV(header) > PD_REV30) ?
 					PD_REV30 : PD_HEADER_REV(header));
-
 		/* Send the ACK */
 		prl_send_data_msg(port, TCPC_TX_SOP_PRIME,
 					PD_DATA_VENDOR_DEF);

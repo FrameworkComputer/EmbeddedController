@@ -714,7 +714,7 @@ static void enable_prl(int port, int en)
 	/* Init PRL */
 	cycle_through_state_machine(port, 10, MSEC);
 
-	prl_set_rev(port, pd_port[port].rev);
+	prl_set_rev(port, TCPC_TX_SOP, pd_port[port].rev);
 }
 
 enum pd_power_role tc_get_power_role(int port)

@@ -45,17 +45,20 @@ void prl_run(int port, int evt, int en);
  * Set the PD revision
  *
  * @param port USB-C port number
+ * @param type port address
  * @param rev revision
  */
-void prl_set_rev(int port, enum pd_rev_type rev);
+void prl_set_rev(int port, enum tcpm_transmit_type type,
+					enum pd_rev_type rev);
 
 /**
  * Get the PD revision
  *
  * @param port USB-C port number
+ * @param type port address
  * @return pd rev
  */
-enum pd_rev_type prl_get_rev(int port);
+enum pd_rev_type prl_get_rev(int port, enum tcpm_transmit_type type);
 
 /**
  * Sends a PD control message

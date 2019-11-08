@@ -101,8 +101,10 @@
 #define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(22)
 /* For PD2.0, triggers a DR SWAP from UFP to DFP before sending a DiscID msg */
 #define PE_FLAGS_DR_SWAP_TO_DFP              BIT(23)
+/* Flag to trigger a message resend after receiving a WAIT from port partner */
+#define PE_FLAGS_WAITING_DR_SWAP             BIT(24)
 /* FLAG to track if port partner is dualrole capable */
-#define PE_FLAGS_PORT_PARTNER_IS_DUALROLE    BIT(24)
+#define PE_FLAGS_PORT_PARTNER_IS_DUALROLE    BIT(25)
 
 /* 6.7.3 Hard Reset Counter */
 #define N_HARD_RESET_COUNT 2
@@ -111,7 +113,19 @@
 #define N_CAPS_COUNT 25
 
 /* 6.7.5 Discover Identity Counter */
-#define N_DISCOVER_IDENTITY_COUNT 20
+/*
+ * NOTE: The Protocol Layer tries to send a message 4 time before giving up,
+ * so a Discover Identity message will be sent 4*5 = 20 times.
+ */
+#define N_DISCOVER_IDENTITY_COUNT 5
+/*
+ * ChromeOS policy:
+ *   For PD2.0, We must be DFP before sending Discover Identity message
+ *   to the port partner. Attempt to DR SWAP from UFP to DFP
+ *   N_DR_SWAP_ATTEMPT_COUNT times before giving up on sending a
+ *   Discover Identity message.
+ */
+#define N_DR_SWAP_ATTEMPT_COUNT 5
 
 #define TIMER_DISABLED 0xffffffffffffffff /* Unreachable time in future */
 
@@ -358,9 +372,9 @@ static struct policy_engine {
 
 	/*
 	 * This timer is used during an Explicit Contract when discovering
-	 * whether a Cable Plug is PD Capable using SOP’.
+	 * whether a Port Partner is PD Capable using SOP.
 	 */
-	uint64_t discover_identity_timer;
+	uint64_t discover_port_identity_timer;
 
 	/*
 	 * This timer is used in a Source to ensure that the Sink has had
@@ -432,11 +446,16 @@ static struct policy_engine {
 	uint32_t caps_counter;
 
 	/*
-	 * These counter maintain a count of Messages sent to a Port and
-	 * Cable Plug, respectively.
+	 * This counter maintains a count of Discover Identity Messages sent
+	 * to a port partner.
 	 */
-	uint32_t port_discover_identity_count;
-	uint32_t cable_discover_identity_count;
+	uint32_t discover_port_identity_counter;
+	/*
+	 * For PD2.0, we need to be a DFP before sending a discovery identity
+	 * messaage to our port partner. This counter keeps track of how
+	 * many attempts to DR SWAP from UFP to DFP.
+	 */
+	uint32_t dr_swap_attempt_counter;
 
 	/* Last received source cap */
 	uint32_t src_caps[PDO_MAX_OBJECTS];
@@ -932,6 +951,85 @@ static void pe_prl_execute_hard_reset(int port)
 	prl_execute_hard_reset(port);
 }
 
+/*
+ * This function must only be called from the PE_SNK_READY entry and
+ * PE_SRC_READY entry State.
+ */
+static void pe_attempt_port_discovery(int port)
+{
+	if (!PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION |
+				PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE) &&
+				pe[port].discover_port_identity_counter <=
+						N_DISCOVER_IDENTITY_COUNT) {
+		/*
+		 * If we are operating as PD2.0 version, make sure we are
+		 * DFP before sending Discover Identity message.
+		 */
+		if (prl_get_rev(port, TCPC_TX_SOP) == PD_REV20 &&
+					pe[port].data_role == PD_ROLE_UFP) {
+			/*
+			 * If we are UFP and DR SWAP fails
+			 * N_DR_SWAP_ATTEMPT_COUNT number of times, give up
+			 * port discovery. Also give up if the Port Partner
+			 * rejected the DR_SWAP.
+			 */
+			if ((pe[port].dr_swap_attempt_counter >=
+						N_DR_SWAP_ATTEMPT_COUNT) ||
+				(pe[port].dr_swap_attempt_counter > 0 &&
+				!PE_CHK_FLAG(port, PE_FLAGS_WAITING_DR_SWAP))) {
+				PE_SET_FLAG(port,
+					PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+				pe[port].discover_port_identity_timer =
+					TIMER_DISABLED;
+			} else {
+				PE_SET_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
+				pe[port].discover_port_identity_timer =
+					get_time().val + PD_T_DISCOVER_IDENTITY;
+			}
+		} else {
+			pe[port].discover_port_identity_timer =
+					get_time().val + PD_T_DISCOVER_IDENTITY;
+		}
+	} else {
+		PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+		pe[port].discover_port_identity_timer = TIMER_DISABLED;
+	}
+
+	/*
+	 * For PD2.0, add some jitter of up to 100ms before sending a message.
+	 * Some devices are chatty once we reach the SRC_READY state and we may
+	 * end up in a collision of messages if we try to immediately send our
+	 * interrogations.
+	 */
+	if (prl_get_rev(port, TCPC_TX_SOP) == PD_REV20) {
+		if (pe[port].discover_port_identity_timer != TIMER_DISABLED)
+			pe[port].discover_port_identity_timer +=
+					(get_time().le.lo % (100 * MSEC));
+	}
+
+	/* Clear the PE_FLAGS_WAITING_DR_SWAP flag if it was set. */
+	PE_CLR_FLAG(port, PE_FLAGS_WAITING_DR_SWAP);
+}
+
+/*
+ * This function must only be called from the PE_SNK_READY run and
+ * PE_SRC_READY run State.
+ */
+static void pe_start_port_discovery(int port)
+{
+	if (PE_CHK_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP)) {
+		PE_CLR_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
+		pe[port].dr_swap_attempt_counter++;
+		set_state_pe(port, PE_DRS_SEND_SWAP);
+	} else {
+		pe[port].discover_port_identity_counter++;
+		pe[port].vdm_cmd = DO_PORT_DISCOVERY_START;
+		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED |
+					PE_FLAGS_VDM_REQUEST_BUSY);
+		set_state_pe(port, PE_DO_PORT_DISCOVERY);
+	}
+}
+
 /**
  * PE_SRC_Startup
  */
@@ -961,8 +1059,12 @@ static void pe_src_startup_entry(int port)
 	/* Clear explicit contract. */
 	pe_invalidate_explicit_contract(port);
 
-	pe[port].cable_discover_identity_count = 0;
-	pe[port].port_discover_identity_count = 0;
+	/* Clear port discovery flags */
+	PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+	pe[port].discover_port_identity_counter = 0;
+
+	/* Reset dr swap attempt counter */
+	pe[port].dr_swap_attempt_counter = 0;
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_RUN_SOURCE_START_TIMER)) {
 		PE_CLR_FLAG(port, PE_FLAGS_RUN_SOURCE_START_TIMER);
@@ -1111,7 +1213,7 @@ static void pe_src_send_capabilities_run(int port)
 			 * Set to highest revision supported by both
 			 * ports.
 			 */
-			prl_set_rev(port,
+			prl_set_rev(port, TCPC_TX_SOP,
 				(PD_HEADER_REV(emsg[port].header) > PD_REV30) ?
 				PD_REV30 : PD_HEADER_REV(emsg[port].header));
 
@@ -1315,20 +1417,11 @@ static void pe_src_ready_entry(int port)
 
 	/*
 	 * Do port partner discovery
+	 *
+	 * This function modifies state variables that are used in the run
+	 * part of this state. See pe_attempt_port_discovery for details.
 	 */
-	if (!PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION |
-				PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE) &&
-				pe[port].port_discover_identity_count <=
-						N_DISCOVER_IDENTITY_COUNT) {
-		pe[port].discover_identity_timer =
-				get_time().val + PD_T_DISCOVER_IDENTITY;
-	} else {
-		PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
-		pe[port].discover_identity_timer = TIMER_DISABLED;
-	}
-
-	/* NOTE: PPS Implementation should be added here. */
-
+	pe_attempt_port_discovery(port);
 }
 
 static void pe_src_ready_run(int port)
@@ -1342,12 +1435,8 @@ static void pe_src_ready_run(int port)
 	 * Start Port Discovery when:
 	 *   1) The DiscoverIdentityTimer times out.
 	 */
-	if (get_time().val > pe[port].discover_identity_timer) {
-		pe[port].port_discover_identity_count++;
-		pe[port].vdm_cmd = DO_PORT_DISCOVERY_START;
-		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED |
-						PE_FLAGS_VDM_REQUEST_BUSY);
-		set_state_pe(port, PE_DO_PORT_DISCOVERY);
+	if (get_time().val > pe[port].discover_port_identity_timer) {
+		pe_start_port_discovery(port);
 		return;
 	}
 
@@ -1691,6 +1780,13 @@ static void pe_snk_startup_entry(int port)
 
 	/* Clear explicit contract */
 	pe_invalidate_explicit_contract(port);
+
+	/* Clear port discovery flags */
+	PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+	pe[port].discover_port_identity_counter = 0;
+
+	/* Reset dr swap attempt counter */
+	pe[port].dr_swap_attempt_counter = 0;
 }
 
 static void pe_snk_startup_run(int port)
@@ -1781,7 +1877,7 @@ static void pe_snk_evaluate_capability_entry(int port)
 	pe[port].hard_reset_counter = 0;
 
 	/* Set to highest revision supported by both ports. */
-	prl_set_rev(port, (PD_HEADER_REV(header) > PD_REV30) ?
+	prl_set_rev(port, TCPC_TX_SOP, (PD_HEADER_REV(header) > PD_REV30) ?
 					PD_REV30 : PD_HEADER_REV(header));
 
 	pe[port].src_cap_cnt = num;
@@ -1964,6 +2060,7 @@ static void pe_snk_transition_sink_exit(int port)
 				CEIL_REQUESTOR_PD, pe[port].curr_limit);
 }
 
+
 /**
  * PE_SNK_Ready State
  */
@@ -1989,24 +2086,11 @@ static void pe_snk_ready_entry(int port)
 
 	/*
 	 * Do port partner discovery
+	 *
+	 * This function modifies state variables that are used in the run
+	 * part of this state. See pe_attempt_port_discovery for details.
 	 */
-	if (!PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION |
-				PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE) &&
-				pe[port].port_discover_identity_count <=
-						N_DISCOVER_IDENTITY_COUNT) {
-		pe[port].discover_identity_timer =
-			get_time().val + PD_T_DISCOVER_IDENTITY;
-	} else {
-		PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
-		pe[port].discover_identity_timer = TIMER_DISABLED;
-	}
-
-	/*
-	 * On entry to the PE_SNK_Ready state if the current Explicit Contract
-	 * is for a PPS APDO, then do the following:
-	 *  1) Initialize and run the SinkPPSPeriodicTimer.
-	 *  NOTE: PPS Implementation should be added here.
-	 */
+	pe_attempt_port_discovery(port);
 }
 
 static void pe_snk_ready_run(int port)
@@ -2023,14 +2107,10 @@ static void pe_snk_ready_run(int port)
 
 	/*
 	 * Start Port Discovery when:
-	 *   1) The DiscoverIdentityTimer times out.
+	 *   1) The PortDiscoverIdentityTimer times out.
 	 */
-	if (get_time().val > pe[port].discover_identity_timer) {
-		pe[port].port_discover_identity_count++;
-		pe[port].vdm_cmd = DO_PORT_DISCOVERY_START;
-		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED |
-						PE_FLAGS_VDM_REQUEST_BUSY);
-		set_state_pe(port, PE_DO_PORT_DISCOVERY);
+	if (get_time().val > pe[port].discover_port_identity_timer) {
+		pe_start_port_discovery(port);
 		return;
 	}
 
@@ -2400,7 +2480,7 @@ static void pe_send_not_supported_entry(int port)
 	print_current_state(port);
 
 	/* Request the Protocol Layer to send a Not_Supported Message. */
-	if (prl_get_rev(port) > PD_REV20)
+	if (prl_get_rev(port, TCPC_TX_SOP) > PD_REV20)
 		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_NOT_SUPPORTED);
 	else
 		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
@@ -2673,6 +2753,9 @@ static void pe_drs_change_run(int port)
 	/* Update the data role */
 	pe[port].data_role = tc_get_data_role(port);
 
+	if (pe[port].data_role == PD_ROLE_DFP)
+		PE_CLR_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
+
 	/*
 	 * Port changed. Transition back to PE_SRC_Ready or
 	 * PE_SNK_Ready.
@@ -2735,6 +2818,10 @@ static void pe_drs_send_swap_run(int port)
 				return;
 			} else if ((type == PD_CTRL_REJECT) ||
 						(type == PD_CTRL_WAIT)) {
+				if (type == PD_CTRL_WAIT)
+					PE_SET_FLAG(port,
+						PE_FLAGS_WAITING_DR_SWAP);
+
 				if (pe[port].power_role == PD_ROLE_SINK)
 					set_state_pe(port, PE_SNK_READY);
 				else
@@ -4059,8 +4146,8 @@ static void pe_vcs_turn_off_vconn_swap_run(int port)
 		 * A VCONN Swap Shall reset the DiscoverIdentityCounter
 		 * to zero
 		 */
-		pe[port].cable_discover_identity_count = 0;
-		pe[port].port_discover_identity_count = 0;
+		pe[port].discover_port_identity_counter = 0;
+		pe[port].dr_swap_attempt_counter = 0;
 
 		if (pe[port].power_role == PD_ROLE_SOURCE)
 			set_state_pe(port, PE_SRC_READY);
@@ -4108,8 +4195,8 @@ static void pe_vcs_send_ps_rdy_swap_run(int port)
 				 * A VCONN Swap Shall reset the
 				 * DiscoverIdentityCounter to zero
 				 */
-				pe[port].cable_discover_identity_count = 0;
-				pe[port].port_discover_identity_count = 0;
+				pe[port].discover_port_identity_counter = 0;
+				pe[port].dr_swap_attempt_counter = 0;
 
 				if (pe[port].power_role == PD_ROLE_SOURCE)
 					set_state_pe(port, PE_SRC_READY);
