@@ -34,28 +34,51 @@
 #endif
 
 /* Type-C Layer Flags */
-#define TC_FLAGS_VCONN_ON               BIT(0) /* VCONN is being sourced */
-#define TC_FLAGS_TS_DTS_PARTNER         BIT(1) /* Partner has rp/rp or rd/rd */
-#define TC_FLAGS_VBUS_NEVER_LOW         BIT(2) /* VBUS input never been low */
-#define TC_FLAGS_LPM_TRANSITION         BIT(3) /* Tracks HW LPM transition */
-#define TC_FLAGS_LPM_ENGAGED            BIT(4) /* Tracks HW LPM state */
-#define TC_FLAGS_LPM_REQUESTED          BIT(5) /* Tracks SW LPM state */
-#define TC_FLAGS_CTVPD_DETECTED         BIT(6) /* CTVPD has been detected */
-#define TC_FLAGS_REQUEST_VC_SWAP_ON     BIT(7) /* Requests swap to VCONN on */
-#define TC_FLAGS_REQUEST_VC_SWAP_OFF    BIT(8) /* Requests swap to VCONN off */
-#define TC_FLAGS_REJECT_VCONN_SWAP      BIT(9) /* Rejects VCONN swap */
-#define TC_FLAGS_REQUEST_PR_SWAP        BIT(10)/* Requests a power role swap */
-#define TC_FLAGS_REQUEST_DR_SWAP        BIT(11)/* Requests a data role swap */
-#define TC_FLAGS_POWER_OFF_SNK          BIT(12)/* Powers off the sink */
-#define TC_FLAGS_PARTNER_EXTPOWER       BIT(13)/* Port partner has ext. PWR */
-#define TC_FLAGS_PARTNER_DR_DATA        BIT(14)/* Port partner is DR data */
-#define TC_FLAGS_PARTNER_DR_POWER       BIT(15)/* Port partner is DR power */
-#define TC_FLAGS_PARTNER_PD_CAPABLE     BIT(16)/* Port partner is PD capable */
-#define TC_FLAGS_HARD_RESET             BIT(17)/* Triggers a hard reset */
-#define TC_FLAGS_PARTNER_USB_COMM       BIT(18)/* port partner is USB comms */
-#define TC_FLAGS_PR_SWAP_IN_PROGRESS    BIT(19)/* PR swap in progress */
-#define TC_FLAGS_DO_PR_SWAP             BIT(20)/* Triggers a PR swap */
-#define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(21)/* Discover Ident. in progress */
+
+/* Flag to note we are sourcing VCONN */
+#define TC_FLAGS_VCONN_ON               BIT(0)
+/* Flag to note port partner has Rp/Rp or Rd/Rd */
+#define TC_FLAGS_TS_DTS_PARTNER         BIT(1)
+/* Flag to note VBus input has never been low */
+#define TC_FLAGS_VBUS_NEVER_LOW         BIT(2)
+/* Flag to note Low Power Mode transition is currently happening */
+#define TC_FLAGS_LPM_TRANSITION         BIT(3)
+/* Flag to note Low Power Mode is currently on */
+#define TC_FLAGS_LPM_ENGAGED            BIT(4)
+/* Flag to note Low Power Mode is requested. Not currently used */
+#define TC_FLAGS_LPM_REQUESTED          BIT(5)
+/* Flag to note CVTPD has been detected */
+#define TC_FLAGS_CTVPD_DETECTED         BIT(6)
+/* Flag to note request to swap to VCONN on */
+#define TC_FLAGS_REQUEST_VC_SWAP_ON     BIT(7)
+/* Flag to note request to swap to VCONN off */
+#define TC_FLAGS_REQUEST_VC_SWAP_OFF    BIT(8)
+/* Flag to note request to swap VCONN is being rejected */
+#define TC_FLAGS_REJECT_VCONN_SWAP      BIT(9)
+/* Flag to note request to power role swap */
+#define TC_FLAGS_REQUEST_PR_SWAP        BIT(10)
+/* Flag to note request to data role swap */
+#define TC_FLAGS_REQUEST_DR_SWAP        BIT(11)
+/* Flag to note request to power off sink */
+#define TC_FLAGS_POWER_OFF_SNK          BIT(12)
+/* Flag to note port partner has external power */
+#define TC_FLAGS_PARTNER_EXTPOWER       BIT(13)
+/* Flag to note port partner is Dual Role Data */
+#define TC_FLAGS_PARTNER_DR_DATA        BIT(14)
+/* Flag to note port partner is Dual Role Power */
+#define TC_FLAGS_PARTNER_DR_POWER       BIT(15)
+/* Flag to note port partner is Power Delivery capable */
+#define TC_FLAGS_PARTNER_PD_CAPABLE     BIT(16)
+/* Flag to note hard reset has been triggered */
+#define TC_FLAGS_HARD_RESET             BIT(17)
+/* Flag to note port partner is USB comms capable */
+#define TC_FLAGS_PARTNER_USB_COMM       BIT(18)
+/* Flag to note we are currently performing PR Swap */
+#define TC_FLAGS_PR_SWAP_IN_PROGRESS    BIT(19)
+/* Flag to note we need to perform PR Swap */
+#define TC_FLAGS_DO_PR_SWAP             BIT(20)
+/* Flag to note we are performing Discover Identity */
+#define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(21)
 
 enum ps_reset_sequence {
 	PS_STATE0,

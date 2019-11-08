@@ -31,39 +31,56 @@
  * be changed here as well.
  */
 
-/* Policy Engine Layer Flags */
+/*
+ * Policy Engine Layer Flags
+ */
+
 /* At least one successful PD communication packet received from port partner */
 #define PE_FLAGS_PD_CONNECTION               BIT(0)
-#define PE_FLAGS_ACCEPT                      BIT(1) /* Got accept message */
-#define PE_FLAGS_PS_READY                    BIT(2) /* Power Supply Ready */
-#define PE_FLAGS_PROTOCOL_ERROR              BIT(3) /* Received Protocol Err */
-#define PE_FLAGS_MODAL_OPERATION             BIT(4) /* Modal operation set */
-#define PE_FLAGS_TX_COMPLETE                 BIT(5) /* Transmit complete */
-#define PE_FLAGS_MSG_RECEIVED                BIT(6) /* Messaged Received */
-#define PE_FLAGS_HARD_RESET_PENDING          BIT(7) /* Hard reset pending */
-#define PE_FLAGS_WAIT                        BIT(8) /* Wait before msg resend */
-#define PE_FLAGS_EXPLICIT_CONTRACT           BIT(9) /* PD contract in place */
-#define PE_FLAGS_SNK_WAIT_CAP_TIMEOUT        BIT(10)/* Snk caps timeout */
-/* Power Supply transition timeout */
+/* Accept message received from port partner */
+#define PE_FLAGS_ACCEPT                      BIT(1)
+/* Power Supply Ready message received from port partner */
+#define PE_FLAGS_PS_READY                    BIT(2)
+/* Protocol Error was determined based on error recovery current state */
+#define PE_FLAGS_PROTOCOL_ERROR              BIT(3)
+/* Set if we are in Modal Operation */
+#define PE_FLAGS_MODAL_OPERATION             BIT(4)
+/* A message we requested to be sent has been transmitted */
+#define PE_FLAGS_TX_COMPLETE                 BIT(5)
+/* A message sent by a port partner has been received */
+#define PE_FLAGS_MSG_RECEIVED                BIT(6)
+/* A hard reset has been requested but has not been sent, not currently used */
+#define PE_FLAGS_HARD_RESET_PENDING          BIT(7)
+/* Port partner sent a Wait message. Wait before we resend our message */
+#define PE_FLAGS_WAIT                        BIT(8)
+/* An explicit contract is in place with our port partner */
+#define PE_FLAGS_EXPLICIT_CONTRACT           BIT(9)
+/* Waiting for Sink Capabailities timed out.  Used for retry error handling */
+#define PE_FLAGS_SNK_WAIT_CAP_TIMEOUT        BIT(10)
+/* Power Supply voltage/current transition timed out */
 #define PE_FLAGS_PS_TRANSITION_TIMEOUT       BIT(11)
-/* Interruptible Atomic Message Sequence */
+/* Flag to note current Atomic Message Sequence is interruptible */
 #define PE_FLAGS_INTERRUPTIBLE_AMS           BIT(12)
-/* Power Supply reset complete */
+/* Flag to note Power Supply reset has completed */
 #define PE_FLAGS_PS_RESET_COMPLETE           BIT(13)
-/* When set, triggers a Structured Vendor Defined Message transmission */
+/* Flag to note a Structured Vendor Defined Message should be sent */
 #define PE_FLAGS_SEND_SVDM                   BIT(14)
-#define PE_FLAGS_VCONN_SWAP_COMPLETE         BIT(15)/* VCONN Swap complete */
-/* When set, no more discover identity messages are sent to the port partner */
+/* VCONN swap operation has completed */
+#define PE_FLAGS_VCONN_SWAP_COMPLETE         BIT(15)
+/* Flag to note no more discover identity messages are sent to port partner */
 #define PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE BIT(16)
-/* Starts the Swap Source Start timer when set */
+/* Flag to note Swap Source Start timer should be set at PE_SRC_Startup entry */
 #define PE_FLAGS_RUN_SOURCE_START_TIMER      BIT(17)
-/* Set during the port discovery if the port partner replied with busy */
+/* Flag to note Port Discovery port partner replied with BUSY */
 #define PE_FLAGS_VDM_REQUEST_BUSY            BIT(18)
-/* Set during the port discovery if the port partner replied with nak */
+/* Flag to note Port Discovery port partner replied with NAK */
 #define PE_FLAGS_VDM_REQUEST_NAKED           BIT(19)
-#define PE_FLAGS_FAST_ROLE_SWAP_PATH         BIT(20)/* FRS/PRS Exec Path */
-#define PE_FLAGS_FAST_ROLE_SWAP_ENABLED      BIT(21)/* FRS Listening State */
-#define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(22)/* FRS PPC/TCPC Signal */
+/* Flag to note FRS/PRS context in shared state machine path */
+#define PE_FLAGS_FAST_ROLE_SWAP_PATH         BIT(20)
+/* Flag to note if FRS listening is enabled */
+#define PE_FLAGS_FAST_ROLE_SWAP_ENABLED      BIT(21)
+/* Flag to note TCPC passed on FRS signal from port partner */
+#define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(22)
 
 /* List of all Policy Engine level states */
 enum usb_pe_state {

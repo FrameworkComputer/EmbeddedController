@@ -58,18 +58,28 @@
  *	These flags are used in multiple state machines and could have
  *	different meanings in each state machine.
  */
-#define PRL_FLAGS_TX_COMPLETE             BIT(0) /* Transmit complete */
-#define PRL_FLAGS_START_AMS               BIT(1) /* Start AMS */
-#define PRL_FLAGS_END_AMS                 BIT(2) /* End AMS */
-#define PRL_FLAGS_TX_ERROR                BIT(3) /* TX error occurred */
-#define PRL_FLAGS_PE_HARD_RESET           BIT(4) /* PE triggered Hard Reset */
-#define PRL_FLAGS_HARD_RESET_COMPLETE     BIT(5) /* Hard reset complete */
-#define PRL_FLAGS_PORT_PARTNER_HARD_RESET BIT(6) /* Partner sent hard reset */
-/* Triggers a message transmission */
+/* Flag to note message transmission completed */
+#define PRL_FLAGS_TX_COMPLETE             BIT(0)
+/* Flag to note an AMS is being started by PE */
+#define PRL_FLAGS_START_AMS               BIT(1)
+/* Flag to note an AMS is being stopped by PE */
+#define PRL_FLAGS_END_AMS                 BIT(2)
+/* Flag to note transmission error occurred */
+#define PRL_FLAGS_TX_ERROR                BIT(3)
+/* Flag to note PE triggered a hard reset */
+#define PRL_FLAGS_PE_HARD_RESET           BIT(4)
+/* Flag to note hard reset has completed */
+#define PRL_FLAGS_HARD_RESET_COMPLETE     BIT(5)
+/* Flag to note port partner sent a hard reset */
+#define PRL_FLAGS_PORT_PARTNER_HARD_RESET BIT(6)
+/* Flag to note a message transmission has been requested */
 #define PRL_FLAGS_MSG_XMIT                BIT(7)
-#define PRL_FLAGS_MSG_RECEIVED            BIT(8) /* Message was received */
-#define PRL_FLAGS_ABORT                   BIT(9) /* Abort sending message */
-#define PRL_FLAGS_CHUNKING                BIT(10)/* Use message chunking */
+/* Flag to note a message was received */
+#define PRL_FLAGS_MSG_RECEIVED            BIT(8)
+/* Flag to note aborting current TX message, not currently set */
+#define PRL_FLAGS_ABORT                   BIT(9)
+/* Flag to note current TX message uses chunking */
+#define PRL_FLAGS_CHUNKING                BIT(10)
 
 /* PD counter definitions */
 #define PD_MESSAGE_ID_COUNT 7
