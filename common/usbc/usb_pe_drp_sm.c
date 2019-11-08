@@ -99,6 +99,10 @@
 #define PE_FLAGS_FAST_ROLE_SWAP_ENABLED      BIT(21)
 /* Flag to note TCPC passed on FRS signal from port partner */
 #define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(22)
+/* For PD2.0, triggers a DR SWAP from UFP to DFP before sending a DiscID msg */
+#define PE_FLAGS_DR_SWAP_TO_DFP              BIT(23)
+/* FLAG to track if port partner is dualrole capable */
+#define PE_FLAGS_PORT_PARTNER_IS_DUALROLE    BIT(24)
 
 /* 6.7.3 Hard Reset Counter */
 #define N_HARD_RESET_COUNT 2
@@ -899,11 +903,19 @@ static void pe_update_pdo_flags(int port, uint32_t pdo)
 	 * charging white-list.
 	 */
 	if (!(pdo & PDO_FIXED_DUAL_ROLE) || (pdo & PDO_FIXED_EXTERNAL) ||
-		charge_whitelisted)
+		charge_whitelisted) {
+		PE_CLR_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
 		charge_manager_update_dualrole(port, CAP_DEDICATED);
-	else
+	} else {
+		PE_SET_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
 		charge_manager_update_dualrole(port, CAP_DUALROLE);
+	}
 #endif
+}
+
+int pd_is_port_partner_dualrole(int port)
+{
+	return PE_CHK_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
 }
 
 int pd_board_check_request(uint32_t rdo, int pdo_cnt)

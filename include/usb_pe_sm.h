@@ -163,5 +163,12 @@ int pe_is_explicit_contract(int port);
  */
 void pe_dpm_request(int port, enum pe_dpm_request req);
 
+/*
+ * Return true if port partner is dualrole capable
+ *
+ * @param port  USB-C port number
+ */
+int pd_is_port_partner_dualrole(int port);
+
 #endif /* __CROS_EC_USB_PE_H */
 
