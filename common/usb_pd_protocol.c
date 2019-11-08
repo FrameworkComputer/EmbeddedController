@@ -2578,82 +2578,6 @@ static void pd_partner_port_reset(int port)
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-static enum pd_states drp_auto_toggle_next_state(int port,
-	enum tcpc_cc_voltage_status cc1, enum tcpc_cc_voltage_status cc2)
-{
-	enum pd_states next_state;
-
-	/* Set to appropriate port state */
-	if (cc_is_open(cc1, cc2)) {
-		/*
-		 * If nothing is attached then use drp_state to determine next
-		 * state. If DRP auto toggle is still on, then remain in the
-		 * DRP_AUTO_TOGGLE state. Otherwise, stop dual role toggling
-		 * and go to a disconnected state.
-		 */
-		switch (drp_state[port]) {
-		case PD_DRP_TOGGLE_OFF:
-			next_state = PD_DEFAULT_STATE(port);
-			break;
-
-		case PD_DRP_FREEZE:
-			if (pd[port].power_role == PD_ROLE_SINK)
-				next_state = PD_STATE_SNK_DISCONNECTED;
-			else
-				next_state = PD_STATE_SRC_DISCONNECTED;
-			break;
-
-		case PD_DRP_FORCE_SINK:
-			next_state = PD_STATE_SNK_DISCONNECTED;
-			break;
-
-		case PD_DRP_FORCE_SOURCE:
-			next_state = PD_STATE_SRC_DISCONNECTED;
-			break;
-
-		case PD_DRP_TOGGLE_ON:
-		default:
-			next_state = PD_STATE_DRP_AUTO_TOGGLE;
-			break;
-		}
-	} else if ((cc_is_rp(cc1) || cc_is_rp(cc2)) &&
-		 drp_state[port] != PD_DRP_FORCE_SOURCE) {
-		/* SNK allowed unless ForceSRC */
-		next_state = PD_STATE_SNK_DISCONNECTED;
-	} else if (cc_is_at_least_one_rd(cc1, cc2) ||
-		   cc_is_audio_acc(cc1, cc2)) {
-		/*
-		 * SRC allowed unless ForceSNK or Toggle Off
-		 *
-		 * Ideally we wouldn't use auto-toggle when drp_state is
-		 * TOGGLE_OFF/FORCE_SINK, but for some TCPCs, auto-toggle can't
-		 * be prevented in low power mode. Try being a sink in case the
-		 * connected device is dual-role (this ensures reliable charging
-		 * from a hub, b/72007056). 100 ms is enough time for a
-		 * dual-role partner to switch from sink to source. If the
-		 * connected device is sink-only, then we will attempt
-		 * SNK_DISCONNECTED twice (due to debounce time), then return to
-		 * low power mode (and stay there). After 200 ms, reset ready
-		 * for a new connection.
-		 */
-		if (drp_state[port] == PD_DRP_TOGGLE_OFF ||
-		    drp_state[port] == PD_DRP_FORCE_SINK) {
-			if (get_time().val > pd[port].drp_sink_time + 200*MSEC)
-				pd[port].drp_sink_time = get_time().val;
-			if (get_time().val < pd[port].drp_sink_time + 100*MSEC)
-				next_state = PD_STATE_SNK_DISCONNECTED;
-			else
-				next_state = PD_STATE_DRP_AUTO_TOGGLE;
-		} else
-			next_state = PD_STATE_SRC_DISCONNECTED;
-	} else
-		/* Anything else, keep toggling */
-		next_state = PD_STATE_DRP_AUTO_TOGGLE;
-	return next_state;
-}
-#endif /* CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE */
-
 int pd_get_polarity(int port)
 {
 	return pd[port].polarity;
@@ -4593,7 +4517,7 @@ void pd_task(void *u)
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 		case PD_STATE_DRP_AUTO_TOGGLE:
 		{
-			enum pd_states next_state;
+			enum pd_drp_next_states next_state;
 
 			assert(auto_toggle_supported);
 
@@ -4611,7 +4535,11 @@ void pd_task(void *u)
 			/* Check for connection */
 			tcpm_get_cc(port, &cc1, &cc2);
 
-			next_state = drp_auto_toggle_next_state(port, cc1, cc2);
+			next_state = drp_auto_toggle_next_state(
+						&pd[port].drp_sink_time,
+						pd[port].power_role,
+						drp_state[port],
+						cc1, cc2);
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 			/*
@@ -4623,15 +4551,24 @@ void pd_task(void *u)
 			if (cc_is_open(cc1, cc2))
 				pd[port].flags |= PD_FLAGS_LPM_REQUESTED;
 #endif
+			if (next_state == DRP_TC_DEFAULT) {
+				if (PD_DEFAULT_STATE(port) ==
+						PD_STATE_SNK_DISCONNECTED)
+					next_state = DRP_TC_UNATTACHED_SNK;
+				else
+					next_state = DRP_TC_UNATTACHED_SRC;
+			}
 
-			if (next_state == PD_STATE_SNK_DISCONNECTED) {
+			if (next_state == DRP_TC_UNATTACHED_SNK) {
 				tcpm_set_cc(port, TYPEC_CC_RD);
 				pd_set_power_role(port, PD_ROLE_SINK);
 				timeout = 2*MSEC;
-			} else if (next_state == PD_STATE_SRC_DISCONNECTED) {
+				set_state(port, PD_STATE_SNK_DISCONNECTED);
+			} else if (next_state == DRP_TC_UNATTACHED_SRC) {
 				tcpm_set_cc(port, TYPEC_CC_RP);
 				pd_set_power_role(port, PD_ROLE_SOURCE);
 				timeout = 2*MSEC;
+				set_state(port, PD_STATE_SRC_DISCONNECTED);
 			} else {
 				/*
 				 * We are staying in PD_STATE_DRP_AUTO_TOGGLE,
@@ -4640,8 +4577,8 @@ void pd_task(void *u)
 				tcpm_enable_drp_toggle(port);
 				pd[port].flags |= PD_FLAGS_TCPC_DRP_TOGGLE;
 				timeout = -1;
+				set_state(port, PD_STATE_DRP_AUTO_TOGGLE);
 			}
-			set_state(port, next_state);
 
 			break;
 		}

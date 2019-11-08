@@ -34,9 +34,22 @@
 
 #define USBC_EVENT_TIMEOUT (5 * MSEC)
 
+static uint8_t paused;
+
 int tc_restart_tcpc(int port)
 {
 	return tcpm_init(port);
+}
+
+void tc_pause_event_loop(int port)
+{
+	paused = 1;
+}
+
+void tc_start_event_loop(int port)
+{
+	paused = 0;
+	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE, 0);
 }
 
 void set_polarity(int port, int polarity)
@@ -164,7 +177,8 @@ void pd_task(void *u)
 
 	while (1) {
 		/* wait for next event/packet or timeout expiration */
-		const uint32_t evt = task_wait_event(USBC_EVENT_TIMEOUT);
+		const uint32_t evt =
+			task_wait_event(paused ? -1 : USBC_EVENT_TIMEOUT);
 
 		/* handle events that affect the state machine as a whole */
 		tc_event_check(port, evt);

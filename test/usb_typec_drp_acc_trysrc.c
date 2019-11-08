@@ -40,6 +40,7 @@ __maybe_unused static int test_mux_con_dis_as_src(void)
 	mock_tcpc.cc1 = TYPEC_CC_VOLT_RD;
 	mock_tcpc.cc2 = TYPEC_CC_VOLT_OPEN;
 	task_set_event(TASK_ID_PD_C0, PD_EVENT_CC, 0);
+	pd_set_dual_role(0, PD_DRP_TOGGLE_ON);
 
 	/* This wait trainsitions through AttachWait.SRC then Attached.SRC */
 	task_wait_event(SECOND);

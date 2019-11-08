@@ -335,6 +335,20 @@ void tc_start_error_recovery(int port);
  */
 void tc_hard_reset(int port);
 
+/**
+ * Start the state machine event loop
+ *
+ * @param port USB-C port number
+ */
+void tc_start_event_loop(int port);
+
+/**
+ * Pauses the state machine event loop
+ *
+ * @param port USB-C port number
+ */
+void tc_pause_event_loop(int port);
+
 #ifdef CONFIG_USB_TYPEC_CTVPD
 
 /**

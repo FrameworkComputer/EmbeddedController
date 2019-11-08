@@ -34,7 +34,6 @@
 #endif
 
 /* Type-C Layer Flags */
-
 /* Flag to note we are sourcing VCONN */
 #define TC_FLAGS_VCONN_ON               BIT(0)
 /* Flag to note port partner has Rp/Rp or Rd/Rd */
@@ -79,6 +78,25 @@
 #define TC_FLAGS_DO_PR_SWAP             BIT(20)
 /* Flag to note we are performing Discover Identity */
 #define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(21)
+/* Flag to note we should wake from LPM */
+#define TC_FLAGS_WAKE_FROM_LPM          BIT(22)
+/* Flag to note a chipset power state has changed */
+#define TC_FLAGS_POWER_STATE_CHANGE     BIT(23)
+/* Flag to note the TCPM supports auto toggle */
+#define TC_FLAGS_AUTO_TOGGLE_SUPPORTED  BIT(24)
+
+/*
+ * Clear all flags except TC_FLAGS_AUTO_TOGGLE_SUPPORTED,
+ * TC_FLAGS_LPM_REQUESTED, and TC_FLAGS_LPM_ENGAGED if
+ * they are set.
+ */
+#define CLR_ALL_BUT_LPM_FLAGS(port) (tc[port].flags &= \
+	(TC_FLAGS_AUTO_TOGGLE_SUPPORTED | \
+	TC_FLAGS_LPM_REQUESTED | \
+	TC_FLAGS_LPM_ENGAGED))
+
+/* 100 ms is enough time for any TCPC transaction to complete. */
+#define PD_LPM_DEBOUNCE_US (100 * MSEC)
 
 enum ps_reset_sequence {
 	PS_STATE0,
@@ -102,6 +120,12 @@ enum usb_tc_state {
 	TC_ATTACHED_SRC,
 	TC_TRY_SRC,
 	TC_TRY_WAIT_SNK,
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	TC_DRP_AUTO_TOGGLE,
+#endif
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	TC_LOW_POWER_MODE,
+#endif
 #ifdef CONFIG_USB_PE_SM
 	TC_CT_UNATTACHED_SNK,
 	TC_CT_ATTACHED_SNK,
@@ -130,6 +154,17 @@ static const char * const tc_state_names[] = {
 	[TC_ATTACHED_SRC] = "Attached.SRC",
 	[TC_TRY_SRC] = "Try.SRC",
 	[TC_TRY_WAIT_SNK] = "TryWait.SNK",
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	[TC_DRP_AUTO_TOGGLE] = "DRPAutoToggle",
+#endif
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	[TC_LOW_POWER_MODE] = "LowPowerMode",
+#endif
+#ifdef CONFIG_USB_PE_SM
+	[TC_CT_UNATTACHED_SNK] =  "CTUnattached.SNK",
+	[TC_CT_ATTACHED_SNK] = "CTAttached.SNK",
+#endif
+
 };
 #endif
 
@@ -148,6 +183,11 @@ static struct type_c {
 	enum pd_data_role data_role;
 	/* Higher-level power deliver state machines are enabled if true. */
 	uint8_t pd_enable;
+	/*
+	 * Timer for handling TOGGLE_OFF/FORCE_SINK mode when auto-toggle
+	 * enabled. See drp_auto_toggle_next_state() for details.
+	 */
+	uint64_t drp_sink_time;
 #ifdef CONFIG_USB_PE_SM
 	/* Power supply reset sequence during a hard reset */
 	enum ps_reset_sequence ps_reset_state;
@@ -179,14 +219,12 @@ static struct type_c {
 	uint64_t next_role_swap;
 	/* Generic timer */
 	uint64_t timeout;
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	/* Time to enter low power mode */
 	uint64_t low_power_time;
 	/* Tasks to notify after TCPC has been reset */
 	int tasks_waiting_on_reset;
 	/* Tasks preventing TCPC from entering low power mode */
 	int tasks_preventing_lpm;
-#endif
 	/* Voltage on CC pin */
 	enum tcpc_cc_voltage_status cc_voltage;
 	/* Type-C current */
@@ -200,6 +238,7 @@ static struct type_c {
 } tc[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Port dual-role state */
+static volatile __maybe_unused
 enum pd_dual_role_states drp_state[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[0 ... (CONFIG_USB_PD_PORT_MAX_COUNT - 1)] =
 		CONFIG_USB_PD_INITIAL_DRP_STATE};
@@ -224,17 +263,11 @@ static struct ec_params_usb_pd_rw_hash_entry rw_hash_table[RW_HASH_ENTRIES];
 #endif
 
 /* Forward declare common, private functions */
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-static void exit_low_power_mode(int port);
-static void handle_device_access(int port);
-static int pd_device_in_low_power(int port);
-static void pd_wait_for_wakeup(int port);
-static int reset_device_and_notify(int port);
-#endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
+static __maybe_unused int reset_device_and_notify(int port);
 
 #ifdef CONFIG_POWER_COMMON
 static void handle_new_power_state(int port);
-#endif
+#endif /* CONFIG_POWER_COMMON */
 
 static void pd_update_dual_role_config(int port);
 #endif /* CONFIG_USB_PE_SM */
@@ -347,8 +380,8 @@ void pd_request_power_swap(int port)
 	}
 }
 
-#ifdef CONFIG_USB_PE_SM
-void pd_set_dual_role(int port, enum pd_dual_role_states state)
+static inline void pd_set_dual_role_no_wakeup(int port,
+				enum pd_dual_role_states state)
 {
 	drp_state[port] = state;
 
@@ -356,6 +389,16 @@ void pd_set_dual_role(int port, enum pd_dual_role_states state)
 		pd_update_try_source();
 }
 
+void pd_set_dual_role(int port, enum pd_dual_role_states state)
+{
+	pd_set_dual_role_no_wakeup(port, state);
+
+	/* Wake task up to process change */
+	task_set_event(PD_PORT_TO_TASK_ID(port),
+			PD_EVENT_UPDATE_DUAL_ROLE, 0);
+}
+
+#ifdef CONFIG_USB_PE_SM
 int pd_get_partner_data_swap_capable(int port)
 {
 	/* return data swap capable status of port partner */
@@ -703,6 +746,15 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 
 	tc[port].flags = 0;
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	/*
+	 * Some TCPCs may not support DRP Auto Toggle, so query the
+	 * query the TCPC for DRP Auto toggle support.
+	 */
+	if (tcpm_auto_toggle_supported(port))
+		TC_SET_FLAG(port, TC_FLAGS_AUTO_TOGGLE_SUPPORTED);
+#endif
+
 #ifdef CONFIG_USB_PE_SM
 	tc[port].pd_enable = 0;
 	tc[port].ps_reset_state = PS_STATE0;
@@ -713,6 +765,12 @@ void tc_state_init(int port)
 {
 	/* Unattached.SNK is the default starting state. */
 	restart_tc_sm(port, TC_UNATTACHED_SNK);
+
+	/*
+	 * If the TCPC isn't accessed, it will enter low power mode
+	 * after PD_LPM_DEBOUNCE_US.
+	 */
+	tc[port].low_power_time = get_time().val + PD_LPM_DEBOUNCE_US;
 }
 
 enum pd_power_role tc_get_power_role(int port)
@@ -777,20 +835,10 @@ static void print_current_state(const int port)
 }
 
 #ifdef CONFIG_USB_PE_SM
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-/* This is only called from the PD tasks that owns the port. */
-static void exit_low_power_mode(int port)
+static void handle_device_access(int port)
 {
-	if (!IS_ENABLED(CONFIG_USB_PE_SM) &&
-	    !IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER))
-		return;
-
-	if (TC_CHK_FLAG(port, TC_FLAGS_LPM_ENGAGED))
-		reset_device_and_notify(port);
-	else
-		TC_CLR_FLAG(port, TC_FLAGS_LPM_REQUESTED);
+	tc[port].low_power_time = get_time().val + PD_LPM_DEBOUNCE_US;
 }
-#endif
 #endif
 
 void tc_event_check(int port, int evt)
@@ -798,19 +846,23 @@ void tc_event_check(int port, int evt)
 #ifdef CONFIG_USB_PE_SM
 	if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER)) {
 		if (evt & PD_EXIT_LOW_POWER_EVENT_MASK)
-			exit_low_power_mode(port);
-
+			TC_SET_FLAG(port, TC_FLAGS_WAKE_FROM_LPM);
 		if (evt & PD_EVENT_DEVICE_ACCESSED)
 			handle_device_access(port);
 	}
 
+	/* if TCPC has reset, then need to initialize it again */
+	if (evt & PD_EVENT_TCPC_RESET)
+		reset_device_and_notify(port);
+
 #ifdef CONFIG_POWER_COMMON
 	if (IS_ENABLED(CONFIG_POWER_COMMON)) {
-		if (evt & PD_EVENT_POWER_STATE_CHANGE)
+		if (evt & PD_EVENT_POWER_STATE_CHANGE) {
+			TC_SET_FLAG(port, TC_FLAGS_POWER_STATE_CHANGE);
 			handle_new_power_state(port);
+		}
 	}
-#endif
-
+#endif /* CONFIG_POWER_COMMON */
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 	if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
 		if (evt & PD_EVENT_SYSJUMP) {
@@ -867,20 +919,24 @@ static void sink_stop_drawing_current(int port)
 }
 
 #ifdef CONFIG_USB_PD_TRY_SRC
-/*
- * TODO(b/137493121): Move this function to a separate file that's shared
- * between the this and the original stack.
- */
 static void pd_update_try_source(void)
 {
 	int i;
 	int try_src = 0;
+	static struct mutex pd_try_src_enable_lock;
 
 	int batt_soc = usb_get_battery_soc();
 
 	try_src = 0;
 	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		try_src |= drp_state[i] == PD_DRP_TOGGLE_ON;
+
+	/*
+	 * This function is called from this PD task and the hooks tasks.
+	 * A lock is added here to serialize access to the
+	 * pd_try_source_enable variable.
+	 */
+	mutex_lock(&pd_try_src_enable_lock);
 
 	/*
 	 * Enable try source when dual-role toggling AND battery is present
@@ -907,6 +963,7 @@ static void pd_update_try_source(void)
 	pd_try_src_enable &= (battery_is_present() == BP_YES);
 #endif /* CONFIG_BATTERY_PRESENT_[CUSTOM|GPIO] */
 
+	mutex_unlock(&pd_try_src_enable_lock);
 }
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_update_try_source, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_USB_PD_TRY_SRC */
@@ -972,7 +1029,6 @@ void pd_deferred_resume(int port)
 #endif  /* CONFIG_USB_PD_DEFERRED_RESUME */
 
 #ifdef CONFIG_USB_PE_SM
-
 /* This must only be called from the PD task */
 static void pd_update_dual_role_config(int port)
 {
@@ -1469,64 +1525,15 @@ void pd_handle_overcurrent(int port)
 #endif /* defined(CONFIG_USBC_PPC) */
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-/* 10 ms is enough time for any TCPC transaction to complete. */
-#define PD_LPM_DEBOUNCE_US (10 * MSEC)
-
-/* This is only called from the PD tasks that owns the port. */
-static void handle_device_access(int port)
-{
-	if (!IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER))
-		return;
-
-	/* This should only be called from the PD task */
-	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
-
-	tc[port].low_power_time = get_time().val + PD_LPM_DEBOUNCE_US;
-	if (TC_CHK_FLAG(port, TC_FLAGS_LPM_ENGAGED)) {
-		CPRINTS("TCPC p%d Exit Low Power Mode", port);
-		TC_CLR_FLAG(port, TC_FLAGS_LPM_ENGAGED |
-						TC_FLAGS_LPM_REQUESTED);
-		/*
-		 * Wake to ensure we make another pass through the main task
-		 * loop after clearing the flags.
-		 */
-		task_wake(PD_PORT_TO_TASK_ID(port));
-	}
-}
-
-static int pd_device_in_low_power(int port)
-{
-	if (!IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER))
-		return 0;
-	/*
-	 * If we are actively waking the device up in the PD task, do not
-	 * let TCPC operation wait or retry because we are in low power mode.
-	 */
-	if (port == TASK_ID_TO_PD_PORT(task_get_current()) &&
-				TC_CHK_FLAG(port, TC_FLAGS_LPM_TRANSITION))
-		return 0;
-
-	return TC_CHK_FLAG(port, TC_FLAGS_LPM_ENGAGED);
-}
-
-/*
- * TODO(b/137493121): Move this function to a separate file that's shared
- * between the this and the original stack.
- */
 static int reset_device_and_notify(int port)
 {
 	int rv;
 	int task, waiting_tasks;
 
-	if (!IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER))
-		return 0;
-
 	/* This should only be called from the PD task */
 	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
 
-	TC_SET_FLAG(port, TC_FLAGS_LPM_TRANSITION);
-	rv = tcpm_init(port);
-	TC_CLR_FLAG(port, TC_FLAGS_LPM_TRANSITION);
+	rv = tc_restart_tcpc(port);
 
 	if (rv == EC_SUCCESS)
 		CPRINTS("TCPC p%d init ready", port);
@@ -1549,15 +1556,6 @@ static int reset_device_and_notify(int port)
 
 	waiting_tasks = atomic_read_clear(&tc[port].tasks_waiting_on_reset);
 
-	/*
-	 * Now that we are done waking up the device, handle device access
-	 * manually because we ignored it while waking up device.
-	 */
-	handle_device_access(port);
-
-	/* Clear SW LPM state; the state machine will set it again if needed */
-	TC_CLR_FLAG(port, TC_FLAGS_LPM_REQUESTED);
-
 	/* Wake up all waiting tasks. */
 	while (waiting_tasks) {
 		task = __fls(waiting_tasks);
@@ -1568,69 +1566,45 @@ static int reset_device_and_notify(int port)
 	return rv;
 }
 
-/*
- * TODO(b/137493121): Move this function to a separate file that's shared
- * between the this and the original stack.
- */
-static void pd_wait_for_wakeup(int port)
+void pd_wait_exit_low_power(int port)
 {
-	if (!IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER))
-		return;
+	if (TC_CHK_FLAG(port, TC_FLAGS_LPM_ENGAGED)) {
+		TC_SET_FLAG(port, TC_FLAGS_WAKE_FROM_LPM);
 
-	if (port == TASK_ID_TO_PD_PORT(task_get_current())) {
-		/* If we are in the PD task, we can directly reset */
-		reset_device_and_notify(port);
-	} else {
-		/* Otherwise, we need to wait for the TCPC reset to complete */
-		atomic_or(&tc[port].tasks_waiting_on_reset,
-			1 << task_get_current());
-		/*
-		 * NOTE: We could be sending the PD task the reset event while
-		 * it is already processing the reset event. If that occurs,
-		 * then we will reset the TCPC multiple times, which is
-		 * undesirable but most likely benign. Empirically, this doesn't
-		 * happen much, but it if starts occurring, we can add a guard
-		 * to prevent/reduce it.
-		 */
-		task_set_event(PD_PORT_TO_TASK_ID(port),
-			       PD_EVENT_TCPC_RESET, 0);
-		task_wait_event_mask(TASK_EVENT_PD_AWAKE, -1);
+		if (port != TASK_ID_TO_PD_PORT(task_get_current())) {
+			/*
+			 * Otherwise, we need to wait for the TCPC reset to
+			 * complete
+			 */
+			atomic_or(&tc[port].tasks_waiting_on_reset,
+				1 << task_get_current());
+			/*
+			 * NOTE: We could be sending the PD task the reset
+			 * event while it is already processing the reset event.
+			 * If that occurs, then we will reset the TCPC multiple
+			 * times, which is undesirable but most likely benign.
+			 * Empirically, this doesn't happen much, but it if
+			 * starts occurring, we can add a guard to
+			 * prevent/reduce it.
+			 */
+			task_set_event(PD_PORT_TO_TASK_ID(port),
+					PD_EVENT_TCPC_RESET, 0);
+			task_wait_event_mask(TASK_EVENT_PD_AWAKE, -1);
+		}
 	}
 }
 
-/*
- * TODO(b/137493121): Move this function to a separate file that's shared
- * between the this and the original stack.
- */
-void pd_wait_exit_low_power(int port)
-{
-	if (pd_device_in_low_power(port))
-		pd_wait_for_wakeup(port);
-}
-
-/*
- * TODO(b/137493121): Move this function to a separate file that's shared
- * between the this and the original stack.
- */
 /*
  * This can be called from any task. If we are in the PD task, we can handle
  * immediately. Otherwise, we need to notify the PD task via event.
  */
 void pd_device_accessed(int port)
 {
-	if (!IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER))
-		return;
-
-	if (port == TASK_ID_TO_PD_PORT(task_get_current())) {
-		/* Ignore any access to device while it is waking up */
-		if (TC_CHK_FLAG(port, TC_FLAGS_LPM_TRANSITION))
-			return;
-
+	if (port == TASK_ID_TO_PD_PORT(task_get_current()))
 		handle_device_access(port);
-	} else {
+	else
 		task_set_event(PD_PORT_TO_TASK_ID(port),
 			PD_EVENT_DEVICE_ACCESSED, 0);
-	}
 }
 
 /*
@@ -1774,7 +1748,7 @@ static void tc_unattached_snk_entry(const int port)
 			USB_SWITCH_DISCONNECT, tc[port].polarity);
 
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
-		tc[port].flags = 0;
+		CLR_ALL_BUT_LPM_FLAGS(port);
 		tc[port].pd_enable = 0;
 	}
 }
@@ -1800,6 +1774,19 @@ static void tc_unattached_snk_run(const int port)
 	/* Check for connection */
 	tcpm_get_cc(port, &cc1, &cc2);
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	/*
+	 * Attempt TCPC auto DRP toggle if it is
+	 * not already auto toggling.
+	 */
+	if (drp_state[port] == PD_DRP_TOGGLE_ON &&
+		TC_CHK_FLAG(port, TC_FLAGS_AUTO_TOGGLE_SUPPORTED) &&
+		cc_is_open(cc1, cc2)) {
+		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
+		return;
+	}
+#endif
+
 	/*
 	 * The port shall transition to AttachWait.SNK when a Source
 	 * connection is detected, as indicated by the SNK.Rp state
@@ -1812,12 +1799,18 @@ static void tc_unattached_snk_run(const int port)
 	if (cc_is_rp(cc1) || cc_is_rp(cc2)) {
 		/* Connection Detected */
 		set_state_tc(port, TC_ATTACH_WAIT_SNK);
-	} else if (get_time().val > tc[port].next_role_swap) {
+	} else if (get_time().val > tc[port].next_role_swap &&
+		drp_state[port] == PD_DRP_TOGGLE_ON) {
 		/* DRP Toggle */
 		set_state_tc(port, TC_UNATTACHED_SRC);
 	}
 
-	return;
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	else if (drp_state[port] == PD_DRP_FORCE_SINK ||
+		drp_state[port] == PD_DRP_TOGGLE_OFF) {
+		set_state_tc(port, TC_LOW_POWER_MODE);
+	}
+#endif
 }
 
 /**
@@ -1922,6 +1915,9 @@ static void tc_attached_snk_entry(const int port)
 	enum tcpc_cc_voltage_status cc1, cc2;
 
 	print_current_state(port);
+
+	/* Clear Low Power Mode Request */
+	TC_CLR_FLAG(port, TC_FLAGS_LPM_REQUESTED);
 
 #ifdef CONFIG_USB_PE_SM
 	if (TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
@@ -2209,7 +2205,7 @@ static void tc_unattached_src_entry(const int port)
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
-		tc[port].flags = 0;
+		CLR_ALL_BUT_LPM_FLAGS(port);
 		tc[port].pd_enable = 0;
 	}
 
@@ -2251,8 +2247,27 @@ static void tc_unattached_src_run(const int port)
 	 */
 	if (cc_is_at_least_one_rd(cc1, cc2) || cc_is_audio_acc(cc1, cc2))
 		set_state_tc(port, TC_ATTACH_WAIT_SRC);
-	else if (get_time().val > tc[port].next_role_swap)
+	else if (get_time().val > tc[port].next_role_swap &&
+			drp_state[port] != PD_DRP_FORCE_SOURCE &&
+			drp_state[port] != PD_DRP_FREEZE)
 		set_state_tc(port, TC_UNATTACHED_SNK);
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	/*
+	 * Attempt TCPC auto DRP toggle
+	 */
+	else if (drp_state[port] == PD_DRP_TOGGLE_ON &&
+		TC_CHK_FLAG(port, TC_FLAGS_AUTO_TOGGLE_SUPPORTED) &&
+		cc_is_open(cc1, cc2)) {
+		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
+	}
+#endif
+
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	else if (drp_state[port] == PD_DRP_FORCE_SOURCE ||
+		drp_state[port] == PD_DRP_TOGGLE_OFF) {
+		set_state_tc(port, TC_LOW_POWER_MODE);
+	}
+#endif
 }
 
 /**
@@ -2324,7 +2339,6 @@ static void tc_attach_wait_src_run(const int port)
 			return;
 		}
 	}
-
 }
 
 /**
@@ -2336,13 +2350,18 @@ static void tc_attached_src_entry(const int port)
 
 	print_current_state(port);
 
+	/* Run function relies on timeout being 0 or meaningful */
+	tc[port].timeout = 0;
+
+	/* Clear Low Power Mode Request */
+	TC_CLR_FLAG(port, TC_FLAGS_LPM_REQUESTED);
+
 #if defined(CONFIG_USB_PE_SM)
 	if (TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
 		/* Change role to source */
 		tc_set_power_role(port, PD_ROLE_SOURCE);
 		tcpm_set_msg_header(port,
 				tc[port].power_role, tc[port].data_role);
-
 		/*
 		 * Both CC1 and CC2 pins shall be independently terminated to
 		 * ground through Rp.
@@ -2357,6 +2376,17 @@ static void tc_attached_src_entry(const int port)
 		 * data role / usb mux connections.
 		 */
 	} else {
+		/* Get connector orientation */
+		tcpm_get_cc(port, &cc1, &cc2);
+		tc[port].polarity = (cc1 != TYPEC_CC_VOLT_RD);
+		set_polarity(port, tc[port].polarity);
+
+		/*
+		 * Initial data role for sink is DFP
+		 * This also sets the usb mux
+		 */
+		tc_set_data_role(port, PD_ROLE_DFP);
+
 		/*
 		 * Start sourcing Vconn before Vbus to ensure
 		 * we are within USB Type-C Spec 1.4 tVconnON
@@ -2374,17 +2404,6 @@ static void tc_attached_src_entry(const int port)
 				usb_mux_set(port, TYPEC_MUX_NONE,
 				USB_SWITCH_DISCONNECT, tc[port].polarity);
 		}
-
-		/* Get connector orientation */
-		tcpm_get_cc(port, &cc1, &cc2);
-		tc[port].polarity = (cc1 != TYPEC_CC_VOLT_RD);
-		set_polarity(port, tc[port].polarity);
-
-		/*
-		 * Initial data role for sink is DFP
-		 * This also sets the usb mux
-		 */
-		tc_set_data_role(port, PD_ROLE_DFP);
 
 		tc[port].pd_enable = 0;
 		tc[port].timeout = get_time().val +
@@ -2420,12 +2439,6 @@ static void tc_attached_src_entry(const int port)
 			USB_SWITCH_DISCONNECT, tc[port].polarity);
 	}
 #endif /* CONFIG_USB_PE_SM */
-
-	/* Apply Rp */
-	tcpm_set_cc(port, TYPEC_CC_RP);
-
-	tc[port].cc_debounce = 0;
-	tc[port].cc_state = PD_CC_NONE;
 
 	/* Inform PPC that a sink is connected. */
 	if (IS_ENABLED(CONFIG_USBC_PPC))
@@ -2633,6 +2646,117 @@ static void tc_attached_src_exit(const int port)
 	/* Clear PR swap flag after checking for Vconn */
 	TC_CLR_FLAG(port, TC_FLAGS_DO_PR_SWAP);
 }
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+/**
+ * DrpAutoToggle
+ */
+static void tc_drp_auto_toggle_entry(const int port)
+{
+	print_current_state(port);
+
+	/*
+	 * The PD_EXIT_LOW_POWER_EVENT_MASK flag may have been set
+	 * due to a CC event. Clear it now since we haven't engaged
+	 * low power mode.
+	 */
+	atomic_clear(task_get_event_bitmap(task_get_current()),
+		PD_EXIT_LOW_POWER_EVENT_MASK);
+
+	if (drp_state[port] == PD_DRP_TOGGLE_ON)
+		tcpm_enable_drp_toggle(port);
+}
+
+static void tc_drp_auto_toggle_run(const int port)
+{
+	enum pd_drp_next_states next_state;
+	enum tcpc_cc_voltage_status cc1, cc2;
+
+	/*
+	 * If SW decided we should be in a low power state and
+	 * the CC lines did not change, then don't talk with the
+	 * TCPC otherwise we might wake it up.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER)) {
+		if (TC_CHK_FLAG(port, TC_FLAGS_LPM_REQUESTED) &&
+				!TC_CHK_FLAG(port, TC_FLAGS_WAKE_FROM_LPM)) {
+			if (get_time().val > tc[port].low_power_time)
+				set_state_tc(port, TC_LOW_POWER_MODE);
+			return;
+		}
+	}
+
+	/* Check for connection */
+	tcpm_get_cc(port, &cc1, &cc2);
+
+	tc[port].drp_sink_time = get_time().val;
+	next_state = drp_auto_toggle_next_state(&tc[port].drp_sink_time,
+		tc[port].power_role, drp_state[port], cc1, cc2);
+
+	/*
+	 * The next state is not determined just by what is
+	 * attached, but also depends on DRP_STATE. Regardless
+	 * of next state, if nothing is attached, then always
+	 * request low power mode.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER)) {
+		if (cc1 == TYPEC_CC_VOLT_OPEN && cc2 == TYPEC_CC_VOLT_OPEN &&
+					!tc[port].tasks_preventing_lpm) {
+			TC_SET_FLAG(port, TC_FLAGS_LPM_REQUESTED);
+			TC_CLR_FLAG(port, TC_FLAGS_WAKE_FROM_LPM);
+		}
+	}
+
+	switch (next_state) {
+	case DRP_TC_DEFAULT:
+		set_state_tc(port, PD_DEFAULT_STATE(port));
+		break;
+	case DRP_TC_UNATTACHED_SNK:
+		set_state_tc(port, TC_UNATTACHED_SNK);
+		break;
+	case DRP_TC_UNATTACHED_SRC:
+		set_state_tc(port, TC_UNATTACHED_SRC);
+		break;
+	case DRP_TC_DRP_AUTO_TOGGLE:
+		/*
+		 * We are staying in PD_STATE_DRP_AUTO_TOGGLE
+		 */
+		break;
+	}
+}
+#endif /* CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE */
+
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+static void tc_low_power_mode_entry(const int port)
+{
+	print_current_state(port);
+	CPRINTS("TCPC p%d Enter Low Power Mode", port);
+	tcpm_enter_low_power_mode(port);
+	TC_SET_FLAG(port, TC_FLAGS_LPM_ENGAGED);
+}
+
+static void tc_low_power_mode_run(const int port)
+{
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	if (TC_CHK_FLAG(port, TC_FLAGS_WAKE_FROM_LPM |
+					TC_FLAGS_POWER_STATE_CHANGE)) {
+		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
+		return;
+	}
+#endif
+	tc_pause_event_loop(port);
+}
+
+static void tc_low_power_mode_exit(const int port)
+{
+	CPRINTS("TCPC p%d Exit Low Power Mode", port);
+	TC_CLR_FLAG(port, TC_FLAGS_LPM_REQUESTED | TC_FLAGS_LPM_ENGAGED |
+		TC_FLAGS_WAKE_FROM_LPM | TC_FLAGS_POWER_STATE_CHANGE);
+	reset_device_and_notify(port);
+	tc_start_event_loop(port);
+}
+#endif
+
 
 /**
  * Try.SRC
@@ -2906,15 +3030,17 @@ static void tc_cc_rd_entry(const int port)
 	if (IS_ENABLED(CONFIG_USBC_VCONN))
 		set_vconn(port, 0);
 
+	/* Set power role to sink */
+	tc_set_power_role(port, PD_ROLE_SINK);
+	tcpm_set_msg_header(port, tc[port].power_role, tc[port].data_role);
+
 	/*
 	 * Both CC1 and CC2 pins shall be independently terminated to
 	 * ground through Rd.
 	 */
 	tcpm_set_cc(port, TYPEC_CC_RD);
 
-	/* Set power role to sink */
-	tc_set_power_role(port, PD_ROLE_SINK);
-	tcpm_set_msg_header(port, tc[port].power_role, tc[port].data_role);
+
 }
 
 
@@ -2988,6 +3114,67 @@ int pd_is_debug_acc(int port)
 	       tc[port].cc_state == PD_CC_DFP_DEBUG_ACC;
 }
 
+static void pd_chipset_resume(void)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		pd_set_dual_role(i, PD_DRP_TOGGLE_ON);
+		task_set_event(PD_PORT_TO_TASK_ID(i),
+				PD_EVENT_POWER_STATE_CHANGE, 0);
+	}
+
+	CPRINTS("PD:S3->S0");
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, pd_chipset_resume, HOOK_PRIO_DEFAULT);
+
+static void pd_chipset_suspend(void)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		pd_set_dual_role(i, PD_DRP_TOGGLE_OFF);
+		task_set_event(PD_PORT_TO_TASK_ID(i),
+			PD_EVENT_POWER_STATE_CHANGE, 0);
+	}
+
+	CPRINTS("PD:S0->S3");
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pd_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+static void pd_chipset_startup(void)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		pd_set_dual_role_no_wakeup(i, PD_DRP_TOGGLE_OFF);
+		task_set_event(PD_PORT_TO_TASK_ID(i),
+				PD_EVENT_POWER_STATE_CHANGE |
+				PD_EVENT_UPDATE_DUAL_ROLE,
+				0);
+	}
+
+	CPRINTS("PD:S5->S3");
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pd_chipset_startup, HOOK_PRIO_DEFAULT);
+
+static void pd_chipset_shutdown(void)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		pd_set_dual_role_no_wakeup(i, PD_DRP_FORCE_SINK);
+		task_set_event(PD_PORT_TO_TASK_ID(i),
+				PD_EVENT_POWER_STATE_CHANGE |
+				PD_EVENT_UPDATE_DUAL_ROLE,
+				0);
+	}
+
+	CPRINTS("PD:S3->S5");
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pd_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
+
 /*
  * Type-C State Hierarchy (Sub-States are listed inside the boxes)
  *
@@ -3010,7 +3197,7 @@ int pd_is_debug_acc(int port)
  * |	TC_ERROR_RECOVERY |
  * |----------------------|
  *
- * TC_ATTACHED_SNK		TC_ATTACHED_SRC
+ * TC_ATTACHED_SNK    TC_ATTACHED_SRC    TC_DRP_AUTO_TOGGLE    TC_LOW_POWER_MODE
  *
  */
 static const struct usb_state tc_states[] = {
@@ -3088,6 +3275,19 @@ static const struct usb_state tc_states[] = {
 		.parent = &tc_states[TC_CC_RD],
 	},
 #endif /* CONFIG_USB_PD_TRY_SRC */
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	[TC_DRP_AUTO_TOGGLE] = {
+		.entry = tc_drp_auto_toggle_entry,
+		.run   = tc_drp_auto_toggle_run,
+	},
+#endif /* CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE */
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	[TC_LOW_POWER_MODE] = {
+		.entry = tc_low_power_mode_entry,
+		.run   = tc_low_power_mode_run,
+		.exit  = tc_low_power_mode_exit,
+	},
+#endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
 #ifdef CONFIG_USB_PE_SM
 	[TC_CT_UNATTACHED_SNK] = {
 		.entry = tc_ct_unattached_snk_entry,
