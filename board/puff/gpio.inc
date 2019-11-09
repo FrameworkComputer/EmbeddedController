@@ -90,8 +90,6 @@ GPIO(I2C1_SCL,                 PIN(9, 0), GPIO_INPUT)           /* EC_I2C_USB_C0
 GPIO(I2C1_SDA,                 PIN(8, 7), GPIO_INPUT)           /* EC_I2C_USB_C0_TCPPC_SDA */
 GPIO(I2C3_SCL,                 PIN(D, 1), GPIO_INPUT)           /* EC_I2C_USB_C0_TCPC_SCL */
 GPIO(I2C3_SDA,                 PIN(D, 0), GPIO_INPUT)           /* EC_I2C_USB_C0_TCPC_SDA */
-GPIO(I2C4_SCL,                 PIN(F, 3), GPIO_INPUT)           /* EC_I2C_RFU_SCL */
-GPIO(I2C4_SDA,                 PIN(F, 2), GPIO_INPUT)           /* EC_I2C_RFU_SDA */
 GPIO(I2C5_SCL,                 PIN(3, 3), GPIO_INPUT)           /* EC_I2C_IMVP8_SCL */
 GPIO(I2C5_SDA,                 PIN(3, 6), GPIO_INPUT)           /* EC_I2C_IMVP8_SDA */
 GPIO(I2C7_SCL,                 PIN(B, 3), GPIO_INPUT)           /* EC_I2C_EEPROM_SCL */
@@ -99,21 +97,17 @@ GPIO(I2C7_SDA,                 PIN(B, 2), GPIO_INPUT)           /* EC_I2C_EEPROM
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(B, 0x30), 0, MODULE_I2C, 0)                  /* I2C0 */
-ALTERNATE(PIN_MASK(9, 0x07), 0, MODULE_I2C, 0)                  /* I2C1 SCL / I2C2 */
+ALTERNATE(PIN_MASK(9, 0x01), 0, MODULE_I2C, 0)                  /* I2C1 SCL */
 ALTERNATE(PIN_MASK(8, 0x80), 0, MODULE_I2C, 0)                  /* I2C1 SDA */
 ALTERNATE(PIN_MASK(D, 0x03), 0, MODULE_I2C, 0)                  /* I2C3 */
-ALTERNATE(PIN_MASK(F, 0x0C), 0, MODULE_I2C, 0)                  /* I2C4 */
 ALTERNATE(PIN_MASK(3, 0x48), 0, MODULE_I2C, 0)                  /* I2C5 */
 ALTERNATE(PIN_MASK(B, 0x0C), 0, MODULE_I2C, 0)                  /* I2C7 */
 
 /* PWM */
 ALTERNATE(PIN_MASK(C, 0x08), 0, MODULE_PWM, 0)                  /* PWM0 - Red Led */
 ALTERNATE(PIN_MASK(C, 0x10), 0, MODULE_PWM, 0)                  /* PWM2 - Green Led */
-ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)                  /* PWM3 - Blue Led - NC */
 ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)                  /* PWM5 - Fan 1 */
 ALTERNATE(PIN_MASK(4, 0x01), 0, MODULE_PWM, 0)                  /* TA1 - Fan Tachometer */
-ALTERNATE(PIN_MASK(C, 0x01), 0, MODULE_PWM, 0)                  /* PWM6 - Fan 2 - NC */
-ALTERNATE(PIN_MASK(7, 0x08), 0, MODULE_PWM, 0)                  /* TA2 - Fan Tachometer - NC */
 
 /* ADC */
 ALTERNATE(PIN_MASK(4, 0x3E), 0, MODULE_ADC, 0)                  /* ADC0-4 */
@@ -122,3 +116,37 @@ ALTERNATE(PIN_MASK(F, 0x01), 0, MODULE_ADC, 0)                  /* ADC9 */
 
 /* UART */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)                 /* UART from EC to Servo */
+
+/* Unused pins */
+UNUSED(PIN(1, 3))						/* EC_GP_SEL1_ODL */
+UNUSED(PIN(F, 2))						/* EC_I2C_RFU_SDA */
+UNUSED(PIN(F, 3))						/* EC_I2C_RFU_SCL */
+UNUSED(PIN(C, 0))						/* FAN_PWM_2 */
+UNUSED(PIN(7, 3))						/* FAN_SPEED_TACH_2 */
+UNUSED(PIN(8, 0))						/* LED_BLUE_L */
+UNUSED(PIN(4, 2))						/* TEMP_SENSOR_3 */
+UNUSED(PIN(9, 2))						/* K8  NC */
+UNUSED(PIN(9, 1))						/* L8  NC */
+UNUSED(PIN(1, 2))						/* C6  NC */
+UNUSED(PIN(6, 1))						/* L3  NC */
+UNUSED(PIN(C, 7))						/* B9  NC */
+UNUSED(PIN(6, 6))						/* H4  NC */
+UNUSED(PIN(8, 1))						/* L6  NC */
+UNUSED(PIN(C, 6))						/* B11 NC */
+UNUSED(PIN(E, 2))						/* B8  NC */
+UNUSED(PIN(8, 5))						/* L7  NC */
+UNUSED(PIN(0, 0))						/* D11 NC */
+UNUSED(PIN(3, 2))						/* E5  NC */
+UNUSED(PIN(D, 6))						/* F6  NC */
+UNUSED(PIN(3, 5))						/* F5  NC */
+UNUSED(PIN(5, 6))						/* M2  NC */
+UNUSED(PIN(5, 0))						/* G4  NC */
+UNUSED(PIN(D, 2))						/* C11 NC */
+UNUSED(PIN(D, 3))						/* E9  NC */
+UNUSED(PIN(8, 6))						/* J8  NC */
+UNUSED(PIN(7, 5))						/* J6  NC */
+UNUSED(PIN(C, 2))						/* A12 NC */
+UNUSED(PIN(6, 0))						/* G5  NC */
+UNUSED(PIN(9, 3))						/* M11 NC */
+UNUSED(PIN(7, 2))						/* H6  NC */
+UNUSED(PIN(F, 1))						/* G3  NC */
