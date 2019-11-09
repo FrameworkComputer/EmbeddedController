@@ -761,6 +761,38 @@ __override void pd_check_dr_role(int port,
 
 
 /* ----------------- Vendor Defined Messages ------------------ */
+/*
+ * DP alt-mode config, user configurable.
+ * Default is the mode disabled, supporting the C and D pin assignment,
+ * multi-function preferred, and a plug.
+ */
+static int alt_dp_config = (ALT_DP_PIN_C | ALT_DP_PIN_D | ALT_DP_MF_PREF |
+			    ALT_DP_PLUG);
+
+/**
+ * Get the pins based on the user config.
+ */
+static int alt_dp_config_pins(void)
+{
+	int pins = 0;
+
+	if (alt_dp_config & ALT_DP_PIN_C)
+		pins |= MODE_DP_PIN_C;
+	if (alt_dp_config & ALT_DP_PIN_D)
+		pins |= MODE_DP_PIN_D;
+	if (alt_dp_config & ALT_DP_PIN_E)
+		pins |= MODE_DP_PIN_E;
+	return pins;
+}
+
+/**
+ * Get the cable outlet value (plug or receptacle) based on the user config.
+ */
+static int alt_dp_config_cable(void)
+{
+	return (alt_dp_config & ALT_DP_PLUG) ? CABLE_PLUG : CABLE_RECEPTACLE;
+}
+
 const uint32_t vdo_idh = VDO_IDH(0, /* data caps as USB host */
 				 1, /* data caps as USB device */
 				 IDH_PTYPE_AMA, /* Alternate mode */
@@ -779,16 +811,7 @@ const uint32_t vdo_ama = VDO_AMA(CONFIG_USB_PD_IDENTITY_HW_VERS,
 
 static int svdm_response_identity(int port, uint32_t *payload)
 {
-	/*
-	 * TODO(b/137219603): Make whether servo supports DP alt-mode
-	 * configurable, like through a console command.
-	 *
-	 * This version is to check if a monitor is plugged to the mini-DP port
-	 * to decide if DP alt-mode is supported or not. So no alt-mode
-	 * supported if no monitor is plugged before plugging the servo Type-C
-	 * cable to DUT. This way doesn't affect PD FAFT results.
-	 */
-	int dp_supported = gpio_get_level(GPIO_DP_HPD);
+	int dp_supported = (alt_dp_config & ALT_DP_ENABLE) != 0;
 
 	if (dp_supported) {
 		payload[VDO_I(IDH)] = vdo_idh;
@@ -813,21 +836,19 @@ static int svdm_response_svids(int port, uint32_t *payload)
 /*
  * The Type-C demux PS8742 supports pin assignment C, D, and E. Response the DP
  * capabilities with supporting all of them.
- *
- * TODO(b/137219603): Make this pin assignment and plug/receptacle configurable
- * by a console command that some tests can check different dongle behaviors.
  */
-const uint32_t vdo_dp_mode[MODE_CNT] =  {
-	VDO_MODE_DP(0,             /* UFP pin cfg supported: none */
-		    MODE_DP_PIN_C | MODE_DP_PIN_D | MODE_DP_PIN_E, /* DFP pin */
-		    1,             /* no usb2.0 signalling in AMode */
-		    CABLE_PLUG,    /* Its a plug */
-		    MODE_DP_V13,   /* DPv1.3 Support, no Gen2 */
-		    MODE_DP_SNK)   /* Its a sink only */
-};
+uint32_t vdo_dp_mode[MODE_CNT];
 
 static int svdm_response_modes(int port, uint32_t *payload)
 {
+	vdo_dp_mode[0] =
+		VDO_MODE_DP(0,             /* UFP pin cfg supported: none */
+			    alt_dp_config_pins(),  /* DFP pin */
+			    1,             /* no usb2.0 signalling in AMode */
+			    alt_dp_config_cable(), /* plug or receptacle */
+			    MODE_DP_V13,   /* DPv1.3 Support, no Gen2 */
+			    MODE_DP_SNK);  /* Its a sink only */
+
 	/* CCD uses the SBU lines; don't enable DP when dts-mode enabled */
 	if (!(cc_config & CC_DISABLE_DTS))
 		return 0; /* NAK */
@@ -887,18 +908,15 @@ static int dp_status(int port, uint32_t *payload)
 	if (opos != OPOS)
 		return 0;  /* NAK */
 
-	/*
-	 * TODO(b/137219603): Make the Multi-Function Preferred bit
-	 * configurable by a console command.
-	 */
-	payload[1] = VDO_DP_STATUS(0,                /* IRQ_HPD */
-				   hpd,              /* HPD_HI|LOW */
-				   0,                /* request exit DP */
-				   0,                /* request exit USB */
-				   1,                /* MF pref */
-				   is_typec_dp_muxed(),
-				   0,                /* power low */
-				   0x2);
+	payload[1] = VDO_DP_STATUS(
+		0,                /* IRQ_HPD */
+		hpd,              /* HPD_HI|LOW */
+		0,                /* request exit DP */
+		0,                /* request exit USB */
+		(alt_dp_config & ALT_DP_MF_PREF) != 0,  /* MF pref */
+		is_typec_dp_muxed(),
+		0,                /* power low */
+		hpd ? 0x2 : 0);
 	return 2;
 }
 
@@ -1180,8 +1198,86 @@ DECLARE_CONSOLE_COMMAND(ada_srccaps, cmd_ada_srccaps,
 			"",
 			"Print adapter SrcCap");
 
+static int cmd_dp_action(int argc, char *argv[])
+{
+	int i;
+	char *e;
+
+	if (argc < 1)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (argc == 1) {
+		CPRINTS("DP alt-mode: %s",
+			(alt_dp_config & ALT_DP_ENABLE) ? "enable" : "disable");
+	}
+
+	if (!strcasecmp(argv[1], "enable")) {
+		alt_dp_config |= ALT_DP_ENABLE;
+	} else if (!strcasecmp(argv[1], "disable")) {
+		alt_dp_config &= ~ALT_DP_ENABLE;
+	} else if (!strcasecmp(argv[1], "pins")) {
+		if (argc >= 3) {
+			alt_dp_config &= ~(ALT_DP_PIN_C | ALT_DP_PIN_D |
+					   ALT_DP_PIN_E);
+			for (i = 0; i < 3; i++) {
+				if (!argv[2][i])
+					break;
+
+				switch (argv[2][i]) {
+				case 'c':
+				case 'C':
+					alt_dp_config |= ALT_DP_PIN_C;
+					break;
+				case 'd':
+				case 'D':
+					alt_dp_config |= ALT_DP_PIN_D;
+					break;
+				case 'e':
+				case 'E':
+					alt_dp_config |= ALT_DP_PIN_E;
+					break;
+				}
+			}
+		}
+		CPRINTS("Pins: %s%s%s",
+			(alt_dp_config & ALT_DP_PIN_C) ? "C" : "",
+			(alt_dp_config & ALT_DP_PIN_D) ? "D" : "",
+			(alt_dp_config & ALT_DP_PIN_E) ? "E" : "");
+	} else if (!strcasecmp(argv[1], "mf")) {
+		if (argc >= 3) {
+			i = strtoi(argv[2], &e, 10);
+			if (*e)
+				return EC_ERROR_PARAM3;
+			if (i)
+				alt_dp_config |= ALT_DP_MF_PREF;
+			else
+				alt_dp_config &= ~ALT_DP_MF_PREF;
+		}
+		CPRINTS("MF pref: %d", (alt_dp_config & ALT_DP_MF_PREF) != 0);
+	} else if (!strcasecmp(argv[1], "plug")) {
+		if (argc >= 3) {
+			i = strtoi(argv[2], &e, 10);
+			if (*e)
+				return EC_ERROR_PARAM3;
+			if (i)
+				alt_dp_config |= ALT_DP_PLUG;
+			else
+				alt_dp_config &= ~ALT_DP_PLUG;
+		}
+		CPRINTS("Plug or receptacle: %d",
+			(alt_dp_config & ALT_DP_PLUG) != 0);
+	} else if (!strcasecmp(argv[1], "help")) {
+		CPRINTS("Usage: usbc_action dp [enable|disable|mf|pins|plug]");
+	}
+
+	return EC_SUCCESS;
+}
+
 static int cmd_usbc_action(int argc, char *argv[])
 {
+	if (argc >= 2 && !strcasecmp(argv[1], "dp"))
+		return cmd_dp_action(argc - 1, &argv[1]);
+
 	if (argc != 2 && argc != 3)
 		return EC_ERROR_PARAM_COUNT;
 
@@ -1238,5 +1334,5 @@ static int cmd_usbc_action(int argc, char *argv[])
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(usbc_action, cmd_usbc_action,
-			"5v|12v|20v|dev|pol0|pol1|drp|chg x(x=voltage)",
+			"5v|12v|20v|dev|pol0|pol1|drp|dp|chg x(x=voltage)",
 			"Set Servo v4 type-C port state");

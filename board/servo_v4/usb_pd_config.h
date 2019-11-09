@@ -56,12 +56,20 @@
 #define CONFIG_HW_CRC
 
 /* Servo v4 CC configuration */
-#define CC_DETACH	(1 << 0)   /* Emulate detach: both CC open */
-#define CC_DISABLE_DTS	(1 << 1)   /* Apply resistors to single or both CC? */
-#define CC_ALLOW_SRC	(1 << 2)   /* Allow charge through by policy? */
-#define CC_ENABLE_DRP	(1 << 3)   /* Enable dual-role port */
-#define CC_SNK_WITH_PD	(1 << 4)   /* Force enabling PD comm for sink role */
-#define CC_POLARITY	(1 << 5)   /* CC polarity */
+#define CC_DETACH	BIT(0)   /* Emulate detach: both CC open */
+#define CC_DISABLE_DTS	BIT(1)   /* Apply resistors to single or both CC? */
+#define CC_ALLOW_SRC	BIT(2)   /* Allow charge through by policy? */
+#define CC_ENABLE_DRP	BIT(3)   /* Enable dual-role port */
+#define CC_SNK_WITH_PD	BIT(4)   /* Force enabling PD comm for sink role */
+#define CC_POLARITY	BIT(5)   /* CC polarity */
+
+/* Servo v4 DP alt-mode configuration */
+#define ALT_DP_ENABLE	BIT(0)   /* Enable DP alt-mode or not */
+#define ALT_DP_PIN_C	BIT(1)   /* Pin assignment C supported */
+#define ALT_DP_PIN_D	BIT(2)   /* Pin assignment D supported */
+#define ALT_DP_PIN_E	BIT(3)   /* Pin assignment E supported */
+#define ALT_DP_MF_PREF	BIT(4)   /* Multi-Function preferred */
+#define ALT_DP_PLUG	BIT(5)   /* Plug or receptacle */
 
 /* TX uses SPI1 on PB3-4 for CHG port, SPI2 on PB 13-14 for DUT port */
 #define SPI_REGS(p) ((p) ? STM32_SPI2_REGS : STM32_SPI1_REGS)
