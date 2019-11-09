@@ -472,6 +472,7 @@ static void prl_tx_phy_layer_reset_entry(const int port)
 		vpd_rx_enable(1);
 	} else {
 		tcpm_init(port);
+		tcpm_clear_pending_messages(port);
 		tcpm_set_rx_enable(port, 1);
 	}
 }
@@ -489,28 +490,9 @@ static void prl_tx_wait_for_message_request_entry(const int port)
 
 static void prl_tx_wait_for_message_request_run(const int port)
 {
-	if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
-		PRL_TX_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
-		/*
-		 * Soft Reset Message Message pending
-		 */
-		if ((pdmsg[port].msg_type == PD_CTRL_SOFT_RESET) &&
-							(emsg[port].len == 0)) {
-			set_state_prl_tx(port, PRL_TX_LAYER_RESET_FOR_TRANSMIT);
-		}
-		/*
-		 * Message pending (except Soft Reset)
-		 */
-		else {
-			/* NOTE: PRL_TX_Construct_Message State embedded here */
-			prl_tx_construct_message(port);
-			set_state_prl_tx(port, PRL_TX_WAIT_FOR_PHY_RESPONSE);
-		}
-
-		return;
-	} else if ((prl_get_rev(port, pdmsg[port].xmit_type) == PD_REV30) &&
-			PRL_TX_CHK_FLAG(port, (PRL_FLAGS_START_AMS |
-							PRL_FLAGS_END_AMS))) {
+	if ((prl_get_rev(port, pdmsg[port].xmit_type) == PD_REV30) &&
+			PRL_TX_CHK_FLAG(port,
+				(PRL_FLAGS_START_AMS | PRL_FLAGS_END_AMS))) {
 		if (tc_get_power_role(port) == PD_ROLE_SOURCE) {
 			/*
 			 * Start of AMS notification received from
@@ -544,6 +526,25 @@ static void prl_tx_wait_for_message_request_run(const int port)
 				return;
 			}
 		}
+	} else if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
+		PRL_TX_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
+		/*
+		 * Soft Reset Message Message pending
+		 */
+		if ((pdmsg[port].msg_type == PD_CTRL_SOFT_RESET) &&
+							(emsg[port].len == 0)) {
+			set_state_prl_tx(port, PRL_TX_LAYER_RESET_FOR_TRANSMIT);
+		}
+		/*
+		 * Message pending (except Soft Reset)
+		 */
+		else {
+			/* NOTE: PRL_TX_Construct_Message State embedded here */
+			prl_tx_construct_message(port);
+			set_state_prl_tx(port, PRL_TX_WAIT_FOR_PHY_RESPONSE);
+		}
+
+		return;
 	}
 }
 
@@ -722,6 +723,11 @@ static void prl_tx_wait_for_phy_response_run(const int port)
 		increment_msgid_counter(port);
 		/* Inform Policy Engine Message was sent */
 		PDMSG_SET_FLAG(port, PRL_FLAGS_TX_COMPLETE);
+		/*
+		 * This event reduces the time of informing the policy engine of
+		 * the transmission by one state machine cycle
+		 */
+		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
 		set_state_prl_tx(port, PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
 	}
 }
