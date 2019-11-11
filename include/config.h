@@ -3919,7 +3919,14 @@
 /* Type-C Fast Role Swap */
 #undef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
 
-/* USB Product ID. */
+/*
+ * USB Product ID. Each platform (e.g. baseboard set) should have a single
+ * VID/PID combination. If there is a big enough change within a platform,
+ * then we can differentiate USB topologies by varying the HW version field
+ * in the Sink and Source Capabilities Extended messages.
+ *
+ * To reserve a new PID, use go/usb.
+ */
 #undef CONFIG_USB_PID
 
 /* PPC needs to be informed of CC polarity */
