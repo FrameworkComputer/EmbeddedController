@@ -14,13 +14,22 @@ GPIO_INT(EC_WP_ODL,            PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(H1_EC_PWR_BTN_ODL,    PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)
 
 /* Power sequencing interrupts */
-GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
-GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
-#endif
+GPIO_INT(PG_PP5000_A_OD,       PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_PP1800_A_OD,       PIN(3, 1), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_VPRIM_CORE_A_OD,   PIN(2, 3), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_PP1050_A_OD,       PIN(2, 2), GPIO_INT_BOTH, power_signal_interrupt)
 #ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 GPIO_INT(SLP_S4_L,             PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
+GPIO_INT(PG_PP2500_DRAM_U_OD,  PIN(2, 0), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_PP1200_U_OD,       PIN(2, 1), GPIO_INT_BOTH, power_signal_interrupt)
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
+GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
+#endif
+GPIO_INT(PG_PP950_VCCIO_OD,    PIN(1, 7), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(CPU_C10_GATE_L,       PIN(6, 7), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(IMVP8_VRRDY_OD,       PIN(1, 6), GPIO_INT_BOTH, power_signal_interrupt)
 
 /* Other interrupts */
 GPIO_INT(USB_C0_TCPPC_INT_ODL, PIN(E, 0), GPIO_INT_FALLING, ppc_interrupt)
@@ -35,18 +44,7 @@ GPIO(EC_PCH_RTCRST,            PIN(7, 6), GPIO_ODR_HIGH)
 GPIO(EC_PCH_WAKE_ODL,          PIN(7, 4), GPIO_ODR_HIGH)
 GPIO(EC_PROCHOT_IN_OD,         PIN(3, 4), GPIO_INPUT)
 GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)
-GPIO(CPU_C10_GATE_L,           PIN(6, 7), GPIO_INPUT)
 GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
-
-/* Power inputs - these may need to be interrupts */
-GPIO(PG_VPRIM_CORE_A_OD,       PIN(2, 3), GPIO_INPUT)
-GPIO(IMVP8_VRRDY_OD,           PIN(1, 6), GPIO_INPUT)
-GPIO(PG_PP5000_A_OD,           PIN(D, 7), GPIO_INPUT)
-GPIO(PG_PP2500_DRAM_U_OD,      PIN(2, 0), GPIO_INPUT)
-GPIO(PG_PP1800_A_OD,           PIN(3, 1), GPIO_INPUT)
-GPIO(PG_PP1200_U_OD,           PIN(2, 1), GPIO_INPUT)
-GPIO(PG_PP1050_A_OD,           PIN(2, 2), GPIO_INPUT)
-GPIO(PG_PP950_VCCIO_OD,        PIN(1, 7), GPIO_INPUT)
 
 /* Power control outputs */
 GPIO(EN_PP5000_A,              PIN(A, 4), GPIO_OUT_LOW)
@@ -56,7 +54,6 @@ GPIO(VCCST_PG_OD,              PIN(1, 4), GPIO_ODR_HIGH)
 GPIO(EN_S0_RAILS,              PIN(1, 1), GPIO_OUT_LOW)
 GPIO(EN_ROA_RAILS,             PIN(A, 3), GPIO_OUT_LOW)
 GPIO(EN_PP950_VCCIO,           PIN(1, 0), GPIO_OUT_LOW)
-
 GPIO(EC_IMVP8_PE,              PIN(A, 7), GPIO_OUT_LOW)
 GPIO(EN_IMVP8_VR,              PIN(F, 4), GPIO_OUT_LOW)
 
