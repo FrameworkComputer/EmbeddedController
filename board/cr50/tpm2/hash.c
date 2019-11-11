@@ -302,8 +302,8 @@ static void hash_command_handler(void *cmd_body,
 	 * field     |    size  |                  note
 	 * ===================================================================
 	 * mode      |    1     | 0 - start, 1 - cont., 2 - finish, 3 - single
-	 * hash_mode |    1     | 0 - sha1, 1 - sha256
-	 * handle    |    1     | seassion handle, ignored in 'single' mode
+	 * hash_mode |    1     | 0 - sha1, 1 - sha256, 2 - sha384, 3 - sha512
+	 * handle    |    1     | session handle, ignored in 'single' mode
 	 * text_len  |    2     | size of the text to process, big endian
 	 * text      | text_len | text to hash
 	 */
@@ -321,7 +321,14 @@ static void hash_command_handler(void *cmd_body,
 	case 1:
 		alg = TPM_ALG_SHA256;
 		break;
-
+#ifdef SHA512_SUPPORT
+	case 2:
+		alg = TPM_ALG_SHA384;
+		break;
+	case 3:
+		alg = TPM_ALG_SHA512;
+		break;
+#endif
 	default:
 		return;
 	}
