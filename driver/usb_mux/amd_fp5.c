@@ -6,6 +6,7 @@
  */
 
 #include "amd_fp5.h"
+#include "chipset.h"
 #include "common.h"
 #include "i2c.h"
 #include "usb_mux.h"
@@ -40,6 +41,17 @@ static int amd_fp5_set_mux(int port, mux_state_t mux_state)
 {
 	uint8_t val = 0;
 
+	/*
+	 * This MUX is on the FP5 SoC.  If that device is not powered then
+	 * we either have to complain that it is not powered or if we were
+	 * setting the state to OFF, then go ahead and report that we did
+	 * it because a powered down MUX is off.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		return (mux_state == TYPEC_MUX_NONE)
+			? EC_SUCCESS
+			: EC_ERROR_NOT_POWERED;
+
 	if ((mux_state & MUX_USB_ENABLED) && (mux_state & MUX_DP_ENABLED))
 		val = (mux_state & MUX_POLARITY_INVERTED)
 			? AMD_FP5_MUX_DOCK_INVERTED : AMD_FP5_MUX_DOCK;
@@ -55,12 +67,21 @@ static int amd_fp5_set_mux(int port, mux_state_t mux_state)
 
 static int amd_fp5_get_mux(int port, mux_state_t *mux_state)
 {
-	uint8_t val = 0;
-	int rv;
+	uint8_t val = AMD_FP5_MUX_SAFE;
 
-	rv = amd_fp5_mux_read(port, &val);
-	if (rv)
-		return rv;
+	/*
+	 * This MUX is on the FP5 SoC.  Only access the device if we
+	 * have power.  If that device is not powered then claim the
+	 * state to be NONE, which is SAFE.
+	 */
+	if (!chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
+		int rv;
+
+		rv = amd_fp5_mux_read(port, &val);
+		if (rv)
+			return rv;
+	}
+
 
 	switch (val) {
 	case AMD_FP5_MUX_USB:
@@ -82,8 +103,9 @@ static int amd_fp5_get_mux(int port, mux_state_t *mux_state)
 	case AMD_FP5_MUX_DP_INVERTED:
 		*mux_state = MUX_DP_ENABLED | MUX_POLARITY_INVERTED;
 		break;
+	case AMD_FP5_MUX_SAFE:
 	default:
-		*mux_state = 0;
+		*mux_state = TYPEC_MUX_NONE;
 		break;
 	}
 
