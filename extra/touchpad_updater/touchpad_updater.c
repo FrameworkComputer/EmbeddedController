@@ -321,20 +321,22 @@ static int libusb_single_write_and_read(
 		tx_buf[3] = read_length;
 	}
 
+	/*
+	 * TODO: This loop is probably not required as we write the whole block
+	 * in one transaction.
+	 */
 	while (sent_bytes < (offset + write_length)) {
 		tx_ready = remains = (offset + write_length) - sent_bytes;
-		if (tx_ready > MAX_USB_PACKET_SIZE)
-			tx_ready = MAX_USB_PACKET_SIZE;
 
 		r = libusb_bulk_transfer(devh,
 				(ep_num | LIBUSB_ENDPOINT_OUT),
 				tx_buf + sent_bytes, tx_ready,
-				&actual_length, 0);
+				&actual_length, 5000);
 		if (r == 0 && actual_length == tx_ready) {
 			r = libusb_bulk_transfer(devh,
 					(ep_num | LIBUSB_ENDPOINT_IN),
 					rx_buf, sizeof(rx_buf),
-					&actual_length, 0);
+					&actual_length, 5000);
 		}
 		r = check_read_status(
 				r, (remains == tx_ready) ? read_length : 0,
@@ -400,9 +402,10 @@ static int elan_get_ic_page_count(void)
 	case 0x0D:
 		return 896;
 	case 0x00:
+	case 0x10:
 		return 1024;
 	default:
-		request_exit("The IC type is not supported .\n");
+		request_exit("The IC type is not supported.\n");
 	}
 	return -1;
 }
@@ -456,6 +459,8 @@ static int elan_in_main_mode(void)
 
 static void elan_prepare_for_update(void)
 {
+	printf("%s\n", __func__);
+
 	int initial_mode = elan_in_main_mode();
 	if (!initial_mode) {
 		printf("In IAP mode, reset IC.\n");
@@ -535,15 +540,18 @@ static uint16_t elan_update_firmware(void)
 	uint16_t checksum = 0, block_checksum;
 	int rv;
 
+	printf("%s\n", __func__);
+
 	for (int i = elan_get_iap_addr(); i < fw_size; i += FW_PAGE_SIZE) {
+		printf("\rUpdating page %3d...", i / FW_PAGE_SIZE);
+		fflush(stdout);
 		block_checksum = elan_calc_checksum(fw_data + i, FW_PAGE_SIZE);
 		rv = elan_write_fw_block(fw_data + i, block_checksum);
-		checksum += block_checksum;
-		printf("\rPage %3d is updated, checksum: %d",
-			i / FW_PAGE_SIZE, checksum);
-		fflush(stdout);
 		if (rv)
 			request_exit("Failed to update.");
+		checksum += block_checksum;
+		printf(" Updated, checksum: %d", checksum);
+		fflush(stdout);
 	}
 	return checksum;
 }

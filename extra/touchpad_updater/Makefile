@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+CC ?= gcc
+PKG_CONFIG ?= pkg-config
 PROGRAM := touchpad_updater
 SOURCE  := $(PROGRAM).c
 LIBS    :=
@@ -22,11 +24,11 @@ CFLAGS  := -std=gnu99 \
 #
 # Add libusb-1.0 required flags
 #
-LIBS    += $(shell pkg-config --libs   libusb-1.0)
-CFLAGS  += $(shell pkg-config --cflags libusb-1.0)
+LIBS    += $(shell $(PKG_CONFIG) --libs   libusb-1.0)
+CFLAGS  += $(shell $(PKG_CONFIG) --cflags libusb-1.0)
 
 $(PROGRAM): $(SOURCE) Makefile
-	gcc $(CFLAGS) $(SOURCE) $(LFLAGS) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(SOURCE) $(LFLAGS) $(LIBS) -o $@
 
 .PHONY: clean
 
