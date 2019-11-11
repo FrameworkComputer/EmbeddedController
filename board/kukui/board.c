@@ -217,6 +217,13 @@ int board_discharge_on_ac(int enable)
 	return charger_discharge_on_ac(enable);
 }
 
+#ifndef VARIANT_KUKUI_POGO_KEYBOARD
+int kukui_pogo_extpower_present(void)
+{
+	return 0;
+}
+#endif
+
 int extpower_is_present(void)
 {
 	/*
@@ -230,7 +237,7 @@ int extpower_is_present(void)
 	else
 		usb_c_extpower_present = tcpm_get_vbus_level(CHARGE_PORT_USB_C);
 
-	return usb_c_extpower_present || gpio_get_level(GPIO_POGO_VBUS_PRESENT);
+	return usb_c_extpower_present || kukui_pogo_extpower_present();
 }
 
 int pd_snk_is_vbus_provided(int port)

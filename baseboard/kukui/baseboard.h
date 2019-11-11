@@ -249,6 +249,10 @@
 #ifdef VARIANT_KUKUI_DP_MUX_GPIO
 void board_set_dp_mux_control(int output_enable, int polarity);
 #endif /* VARIANT_KUKUI_DP_MUX_GPIO */
+
+/* If POGO pin is providing power. */
+int kukui_pogo_extpower_present(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BASEBOARD_H */

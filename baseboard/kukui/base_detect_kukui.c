@@ -50,6 +50,17 @@ struct {
 BUILD_ASSERT(ARRAY_SIZE(pogo_detect_table) == DEVICE_TYPE_COUNT);
 
 static uint64_t base_detect_debounce_time;
+static enum kukui_pogo_device_type pogo_type;
+
+int kukui_pogo_extpower_present(void)
+{
+#ifdef VARIANT_KUKUI_POGO_DOCK
+	return pogo_type == DEVICE_TYPE_DOCK &&
+	       gpio_get_level(GPIO_POGO_VBUS_PRESENT);
+#else
+	return 0;
+#endif
+}
 
 static enum kukui_pogo_device_type get_device_type(int mv)
 {
@@ -134,7 +145,6 @@ static void base_detect_deferred(void)
 {
 	uint64_t time_now = get_time().val;
 	int mv;
-	enum kukui_pogo_device_type device_type;
 
 	if (base_detect_debounce_time > time_now) {
 		hook_call_deferred(&base_detect_deferred_data,
@@ -153,10 +163,10 @@ static void base_detect_deferred(void)
 	gpio_set_flags(GPIO_POGO_ADC_INT_L, GPIO_INT_BOTH);
 	gpio_enable_interrupt(GPIO_POGO_ADC_INT_L);
 
-	device_type = get_device_type(mv);
-	CPRINTS("POGO: adc=%d, device_type=%d", mv, device_type);
+	pogo_type = get_device_type(mv);
+	CPRINTS("POGO: adc=%d, type=%d", mv, pogo_type);
 
-	base_set_device_type(device_type);
+	base_set_device_type(pogo_type);
 }
 
 void pogo_adc_interrupt(enum gpio_signal signal)
@@ -199,6 +209,7 @@ void base_force_state(int state)
 	}
 
 	gpio_disable_interrupt(GPIO_POGO_ADC_INT_L);
+	pogo_type = (state == 1 ? DEVICE_TYPE_KEYBOARD : DEVICE_TYPE_DETACHED);
 	base_set_device_type(state == 1 ? DEVICE_TYPE_KEYBOARD :
 					  DEVICE_TYPE_DETACHED);
 	CPRINTS("BD forced %sconnected", state == 1 ? "" : "dis");
