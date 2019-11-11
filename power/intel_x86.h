@@ -20,6 +20,8 @@
 #include "cannonlake.h"
 #elif defined(CONFIG_CHIPSET_COMETLAKE)
 #include "cometlake.h"
+#elif defined(CONFIG_CHIPSET_COMETLAKE_DISCRETE)
+#include "cometlake-discrete.h"
 #elif defined(CONFIG_CHIPSET_ICL_TGL)
 #include "icelake.h"
 #elif defined(CONFIG_CHIPSET_SKYLAKE)

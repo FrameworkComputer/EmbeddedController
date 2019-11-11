@@ -10,6 +10,7 @@ power-$(CONFIG_CHIPSET_APL_GLK)+=apollolake.o intel_x86.o
 power-$(CONFIG_CHIPSET_BRASWELL)+=braswell.o
 power-$(CONFIG_CHIPSET_CANNONLAKE)+=cannonlake.o intel_x86.o
 power-$(CONFIG_CHIPSET_COMETLAKE)+=cometlake.o intel_x86.o
+power-$(CONFIG_CHIPSET_COMETLAKE_DISCRETE)+=cometlake-discrete.o intel_x86.o
 power-$(CONFIG_CHIPSET_ECDRIVEN)+=ec_driven.o
 power-$(CONFIG_CHIPSET_ICL_TGL)+=icelake.o intel_x86.o
 power-$(CONFIG_CHIPSET_MT817X)+=mt817x.o
