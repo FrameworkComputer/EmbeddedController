@@ -143,7 +143,9 @@
 #define CONFIG_USBC_VCONN_SWAP
 
 /* USB Type A Features */
-/* TODO: (b/143190102) Finish USB A config */
+#define CONFIG_USB_PORT_POWER_DUMB
+/* There are five ports, but power enable is ganged across all of them. */
+#define USB_PORT_COUNT 1
 
 /* I2C Bus Configuration */
 #define CONFIG_I2C

@@ -55,6 +55,61 @@ static void tcpc_alert_event(enum gpio_signal signal)
 		schedule_deferred_pd_interrupt(0);
 }
 
+#include "port-sm.c"
+
+static bool usbc_overcurrent;
+/*
+ * Update USB port power limits based on current state.
+ *
+ * Port power consumption is assumed to be negligible if not overcurrent,
+ * and we have two knobs: the front port power limit, and the USB-C power limit.
+ * Either one of the front ports may run at high power (one at a time) or we
+ * can limit both to low power. On USB-C we can similarly limit the port power,
+ * but there's only one port.
+ */
+void update_port_limits(void)
+{
+	struct port_states state = {
+		.bitfield = (!gpio_get_level(GPIO_USB_A0_OC_ODL)
+			     << PORTMASK_FRONT_A0) |
+			    (!gpio_get_level(GPIO_USB_A1_OC_ODL)
+			     << PORTMASK_FRONT_A1) |
+			    (!gpio_get_level(GPIO_USB_A2_OC_ODL)
+			     << PORTMASK_REAR_A0) |
+			    (!gpio_get_level(GPIO_USB_A3_OC_ODL)
+			     << PORTMASK_REAR_A1) |
+			    (!gpio_get_level(GPIO_USB_A4_OC_ODL)
+			     << PORTMASK_REAR_A2) |
+			    (!gpio_get_level(GPIO_HDMI_CONN0_OC_ODL)
+			     << PORTMASK_HDMI0) |
+			    (!gpio_get_level(GPIO_HDMI_CONN1_OC_ODL)
+			     << PORTMASK_HDMI1) |
+			    ((ppc_is_sourcing_vbus(0) && usbc_overcurrent)
+			     << PORTMASK_TYPEC),
+		.front_a_limited = gpio_get_level(GPIO_USB_A_LOW_PWR_OD),
+		/* Assume high-power; there's no way to poll this. */
+		/*
+		 * TODO(b/143190102) add a way to poll port power limit so we
+		 * can detect when it can be increased again if the port is
+		 * already active.
+		 */
+		.c_low_power = 0,
+	};
+
+	update_port_state(&state);
+
+	ppc_set_vbus_source_current_limit(0,
+		state.c_low_power ? TYPEC_RP_1A5 : TYPEC_RP_3A0);
+	/* Output high limits power */
+	gpio_set_level(GPIO_USB_A_LOW_PWR_OD, state.front_a_limited);
+}
+DECLARE_DEFERRED(update_port_limits);
+
+static void port_ocp_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&update_port_limits_data, 0);
+}
+
 #include "gpio_list.h" /* Must come after other header files. */
 
 /******************************************************************************/
@@ -227,6 +282,7 @@ const unsigned int ina3221_count = ARRAY_SIZE(ina3221);
 
 static void board_init(void)
 {
+	update_port_limits();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -235,6 +291,11 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+
+/* USB-A port control */
+const int usb_port_enable[USB_PORT_COUNT] = {
+	GPIO_EN_PP5000_USB_VBUS,
+};
 
 /* Power Delivery and charging functions */
 void baseboard_tcpc_init(void)
@@ -283,4 +344,5 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	/* Sanity check the port. */
 	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_MAX_COUNT))
 		return;
+	usbc_overcurrent = is_overcurrented;
 }

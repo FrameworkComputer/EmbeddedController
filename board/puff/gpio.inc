@@ -36,6 +36,15 @@ GPIO_INT(USB_C0_TCPPC_INT_ODL, PIN(E, 0), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C0_TCPC_INT_ODL,  PIN(6, 2), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(H1_EC_RECOVERY_BTN_ODL, PIN(2, 4), GPIO_INT_BOTH, button_interrupt)
 
+/* Port power control interrupts */
+GPIO_INT(HDMI_CONN0_OC_ODL,    PIN(0, 7), GPIO_INT_BOTH, port_ocp_interrupt)
+GPIO_INT(HDMI_CONN1_OC_ODL,    PIN(0, 6), GPIO_INT_BOTH, port_ocp_interrupt)
+GPIO_INT(USB_A0_OC_ODL,        PIN(E, 4), GPIO_ODR_HIGH, port_ocp_interrupt)
+GPIO_INT(USB_A1_OC_ODL,        PIN(A, 2), GPIO_ODR_HIGH, port_ocp_interrupt)
+GPIO_INT(USB_A2_OC_ODL,        PIN(F, 5), GPIO_ODR_HIGH, port_ocp_interrupt)
+GPIO_INT(USB_A3_OC_ODL,        PIN(0, 3), GPIO_ODR_HIGH, port_ocp_interrupt)
+GPIO_INT(USB_A4_OC_ODL,        PIN(B, 0), GPIO_ODR_HIGH, port_ocp_interrupt)
+
 /* PCH/CPU signals */
 GPIO(EC_PCH_SYS_PWROK,         PIN(3, 7), GPIO_OUT_LOW)
 GPIO(EC_PCH_RSMRST_L,          PIN(A, 6), GPIO_OUT_LOW)
@@ -63,12 +72,7 @@ GPIO(BJ_ADP_PRESENT_L,         PIN(8, 2), GPIO_INPUT)
 
 /* USB type A */
 GPIO(EN_PP5000_USB_VBUS,       PIN(8, 3), GPIO_OUT_LOW)
-GPIO(USB_A_LOW_PWR_OD,         PIN(9, 4), GPIO_ODR_HIGH)
-GPIO(USB_A0_OC_ODL,            PIN(E, 4), GPIO_ODR_HIGH)
-GPIO(USB_A1_OC_ODL,            PIN(A, 2), GPIO_ODR_HIGH)
-GPIO(USB_A2_OC_ODL,            PIN(F, 5), GPIO_ODR_HIGH)
-GPIO(USB_A3_OC_ODL,            PIN(0, 3), GPIO_ODR_HIGH)
-GPIO(USB_A4_OC_ODL,            PIN(B, 0), GPIO_ODR_HIGH)
+GPIO(USB_A_LOW_PWR_OD,         PIN(9, 4), GPIO_ODR_LOW)
 
 /* USB type C */
 GPIO(USB_C0_TCPC_RST,          PIN(9, 7), GPIO_OUT_LOW)
@@ -77,8 +81,6 @@ GPIO(USB_C0_TCPC_RST,          PIN(9, 7), GPIO_OUT_LOW)
 GPIO(M2_SSD_PLN,               PIN(A, 0), GPIO_INPUT)
 GPIO(EC_ENTERING_RW,           PIN(E, 3), GPIO_OUT_LOW)
 GPIO(CCD_MODE_ODL,             PIN(E, 5), GPIO_ODR_HIGH)
-GPIO(HDMI_CONN0_OC_ODL,        PIN(0, 7), GPIO_ODR_HIGH)
-GPIO(HDMI_CONN1_OC_ODL,        PIN(0, 6), GPIO_ODR_HIGH)
 GPIO(EN_PP_MST_OD,             PIN(9, 6), GPIO_ODR_LOW)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
