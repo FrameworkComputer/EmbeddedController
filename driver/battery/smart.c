@@ -20,6 +20,7 @@
 #define BATTERY_NO_RESPONSE_TIMEOUT	(1000*MSEC)
 
 static int fake_state_of_charge = -1;
+static int fake_temperature = -1;
 
 test_mockable int sb_read(int cmd, int *param)
 {
@@ -311,8 +312,13 @@ void battery_get_params(struct batt_params *batt)
 	struct batt_params batt_new = {0};
 	int v;
 
-	if (sb_read(SB_TEMPERATURE, &batt_new.temperature))
+	if (sb_read(SB_TEMPERATURE, &batt_new.temperature)
+			&& fake_temperature < 0)
 		batt_new.flags |= BATT_FLAG_BAD_TEMPERATURE;
+
+	/* If temperature is faked, override with faked data */
+	if (fake_temperature >= 0)
+		batt_new.temperature = fake_temperature;
 
 	if (sb_read(SB_RELATIVE_STATE_OF_CHARGE, &batt_new.state_of_charge)
 	    && fake_state_of_charge < 0)
@@ -448,6 +454,29 @@ static int command_battfake(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(battfake, command_battfake,
 			"percent (-1 = use real level)",
 			"Set fake battery level");
+
+static int command_batttempfake(int argc, char **argv)
+{
+	char *e;
+	int t;
+
+	if (argc == 2) {
+		t = strtoi(argv[1], &e, 0);
+		if (*e || t < -1 || t > 5000)
+			return EC_ERROR_PARAM1;
+
+		fake_temperature = t;
+	}
+
+	if (fake_temperature >= 0)
+		ccprintf("Fake batt temperature %d.%d K\n",
+			 fake_temperature / 10, fake_temperature % 10);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(batttempfake, command_batttempfake,
+			"temperature (-1 = use real temperature)",
+			"Set fake battery temperature in deciKelvin (2731 = 273.1 K = 0 deg C)");
 #endif
 
 #ifdef CONFIG_CMD_BATT_MFG_ACCESS
