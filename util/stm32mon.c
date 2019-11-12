@@ -247,6 +247,7 @@ struct stm32_def {
 	{ 0 }
 };
 
+#define DEFAULT_CONNECT_RETRIES 5
 #define DEFAULT_TIMEOUT 4 /* seconds */
 #define EXT_ERASE_TIMEOUT 20 /* seconds */
 #define DEFAULT_BAUDRATE B38400
@@ -269,6 +270,7 @@ enum interface_mode {
 
 /* store custom parameters */
 speed_t baudrate = DEFAULT_BAUDRATE;
+int connect_retries = DEFAULT_CONNECT_RETRIES;
 int i2c_adapter = INVALID_I2C_ADAPTER;
 const char *spi_adapter;
 int i2c_slave_address = DEFAULT_I2C_SLAVE_ADDRESS;
@@ -786,6 +788,7 @@ struct stm32_def *command_get_id(int fd)
 int init_monitor(int fd)
 {
 	int res;
+	int attempts = connect_retries + 1;
 	uint8_t init = mode == MODE_SPI ? SOF : CMD_INIT;
 
 	/* Skip in i2c mode */
@@ -795,7 +798,7 @@ int init_monitor(int fd)
 	printf("Waiting for the monitor startup ...");
 	fflush(stdout);
 
-	while (1) {
+	while (connect_retries < 0 || attempts--) {
 		/* Send the command index */
 		res = write_wrapper(fd, &init, 1);
 		if (res <= 0) {
@@ -819,6 +822,12 @@ int init_monitor(int fd)
 			return res;
 		fflush(stdout);
 	}
+
+	if (IS_STM32_ERROR(res)) {
+		printf("Giving up after %d attempts.\n", connect_retries + 1);
+		return res;
+	}
+
 	printf("Done.\n");
 
 	/* read trailing chars */
@@ -1090,7 +1099,7 @@ int command_read_unprotect(int fd)
 	 * before the actual reset depending on the bootloader.
 	 */
 	usleep(MAX_DELAY_REBOOT);
-	if (init_monitor(fd) < 0) {
+	if (IS_STM32_ERROR(init_monitor(fd))) {
 		fprintf(stderr, "Cannot recover after RU reset\n");
 		return STM32_EIO;
 	}
@@ -1120,7 +1129,7 @@ int command_write_unprotect(int fd)
 	 * before the actual reset depending on the bootloader.
 	 */
 	usleep(MAX_DELAY_REBOOT);
-	if (init_monitor(fd) < 0) {
+	if (IS_STM32_ERROR(init_monitor(fd))) {
 		fprintf(stderr, "Cannot recover after WP reset\n");
 		return STM32_EIO;
 	}
@@ -1405,6 +1414,7 @@ static const struct option longopts[] = {
 	{"offset", 1, 0, 'o'},
 	{"progressbar", 0, 0, 'p'},
 	{"read", 1, 0, 'r'},
+	{"retries", 1, 0, 'R'},
 	{"spi", 1, 0, 's'},
 	{"unprotect", 0, 0, 'u'},
 	{"version", 0, 0, 'v'},
@@ -1442,6 +1452,7 @@ void display_usage(char *program)
 	fprintf(stderr, "--g[o] : jump to execute flash entrypoint\n");
 	fprintf(stderr, "--p[rogressbar] : use a progress bar instead of "
 			"the spinner\n");
+	fprintf(stderr, "--R[etries] <num> : limit connect retries to num\n");
 	fprintf(stderr, "-L[ogfile] <file> : save all communications exchange "
 		"in a log file\n");
 	fprintf(stderr, "-c[r50_mode] : consider device to be a Cr50 interface,"
@@ -1485,7 +1496,7 @@ int parse_parameters(int argc, char **argv)
 	int flags = 0;
 	const char *log_file_name = NULL;
 
-	while ((opt = getopt_long(argc, argv, "a:l:b:cd:eghL:n:o:pr:s:w:uUv?",
+	while ((opt = getopt_long(argc, argv, "a:l:b:cd:eghL:n:o:pr:R:s:w:uUv?",
 				  longopts, &idx)) != -1) {
 		switch (opt) {
 		case 'a':
@@ -1529,6 +1540,9 @@ int parse_parameters(int argc, char **argv)
 			break;
 		case 'r':
 			input_filename = optarg;
+			break;
+		case 'R':
+			connect_retries = atoi(optarg);
 			break;
 		case 's':
 			spi_adapter = optarg;
@@ -1606,7 +1620,8 @@ int main(int argc, char **argv)
 	if (ser < 0)
 		return 1;
 	/* Trigger embedded monitor detection */
-	if (init_monitor(ser) < 0)
+	res = init_monitor(ser);
+	if (IS_STM32_ERROR(res))
 		goto terminate;
 
 	chip = command_get_id(ser);
