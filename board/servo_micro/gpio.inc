@@ -52,9 +52,13 @@ GPIO(USART3_SERVO_RX_DUT_TX,    PIN(B, 11), GPIO_INPUT)
 /*
  * The USART4 (UART3) names are already in use by dut-controls, so they can't
  * be easily updated. They are aliased in board.h though.
+ *
+ * Also, these need to be GPIO_ALTERNATE until all servo micro RO images have
+ * the board_jump USART shutdown. After ~2020/06/01 they can move to GPIO_INPUT.
+ * See b/144356961 for more background.
  */
-GPIO(UART3_TX_SERVO_JTAG_TCK,              PIN(A, 0),  GPIO_INPUT)
-GPIO(UART3_RX_JTAG_BUFFER_TO_SERVO_TDO,    PIN(A, 1),  GPIO_INPUT)
+GPIO(UART3_TX_SERVO_JTAG_TCK,              PIN(A, 0),  GPIO_ALTERNATE)
+GPIO(UART3_RX_JTAG_BUFFER_TO_SERVO_TDO,    PIN(A, 1),  GPIO_ALTERNATE)
 
 /* Unimplemented signals since we are not an EC */
 UNIMPLEMENTED(ENTERING_RW)

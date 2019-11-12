@@ -734,3 +734,25 @@ static void board_init(void)
 	gpio_set_level(GPIO_SERVO_JTAG_TDO_SEL, 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+/******************************************************************************
+ * Turn down USART before jumping to RW.
+ */
+static void board_jump(void)
+{
+	/*
+	 * If we don't shutdown the USARTs before jumping to RW, then when early
+	 * RW tries to set the GPIOs to input (or anything other than alternate)
+	 * the jump fail on some servo micros.
+	 *
+	 * It also make sense to shut them down since RW will reinitialize them
+	 * in board_init above.
+	 */
+	usart_shutdown(&usart2);
+	usart_shutdown(&usart3);
+	usart_shutdown(&usart4);
+
+	/* Shutdown other hardware modules and let RW reinitialize them */
+	usb_spi_enable(&usb_spi, 0);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, board_jump, HOOK_PRIO_DEFAULT);
