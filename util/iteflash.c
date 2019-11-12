@@ -59,9 +59,6 @@
 /* Embedded flash block write size for different programming modes. */
 #define FTDI_BLOCK_WRITE_SIZE	(1<<16)
 
-/* Embedded flash number of pages in a sector erase */
-#define SECTOR_ERASE_PAGES	4
-
 /* JEDEC SPI Flash commands */
 #define SPI_CMD_PAGE_PROGRAM	0x02
 #define SPI_CMD_WRITE_DISABLE	0x04
@@ -69,10 +66,12 @@
 #define SPI_CMD_WRITE_ENABLE	0x06
 #define SPI_CMD_FAST_READ	0x0B
 #define SPI_CMD_CHIP_ERASE	0x60
-#define SPI_CMD_SECTOR_ERASE	0xD7
+#define SPI_CMD_SECTOR_ERASE_1K	0xD7
+#define SPI_CMD_SECTOR_ERASE_4K	0x20
 #define SPI_CMD_WORD_PROGRAM	0xAD
 #define SPI_CMD_EWSR		0x50 /* Enable Write Status Register */
 #define SPI_CMD_WRSR		0x01 /* Write Status Register */
+#define SPI_CMD_RDID		0x9F /* Read Flash ID */
 
 /* Size for FTDI outgoing buffer */
 #define FTDI_CMD_BUF_SIZE (1<<12)
@@ -88,6 +87,18 @@
 #define I2C_MUX_CMD_NONE		0x00
 #define I2C_MUX_CMD_INAS		0x01
 #define I2C_MUX_CMD_EC			0x02
+
+/* Eflash Type*/
+#define EFLASH_TYPE_8315	0x01
+#define EFLASH_TYPE_KGD		0x02
+#define EFLASH_TYPE_NONE	0xFF
+
+uint8_t eflash_type;
+uint8_t spi_cmd_sector_erase;
+
+/* Embedded flash number of pages in a sector erase */
+uint8_t sector_erase_pages;
+
 
 static volatile sig_atomic_t exit_requested;
 
@@ -126,6 +137,11 @@ struct common_hnd {
 	};
 };
 
+struct cmds {
+	uint8_t addr;
+	uint8_t cmd;
+};
+
 /* For all callback return values, zero indicates success, non-zero failure. */
 struct i2c_interface {
 	/* Optional, may be NULL. */
@@ -144,6 +160,9 @@ struct i2c_interface {
 	/* Required, must be positive. */
 	int default_block_write_size;
 };
+
+static int spi_flash_command_short(struct common_hnd *chnd,
+				   uint8_t cmd, char *desc);
 
 static void null_and_free(void **ptr)
 {
@@ -520,13 +539,57 @@ static int get_3rd_chip_id_byte(struct common_hnd *chnd, uint8_t *chip_id)
 	return ret;
 }
 
+static int check_flashid(struct common_hnd *chnd)
+{
+	int ret = 0;
+	uint8_t id[16], i;
+	struct cmds commands[] = {
+		{0x07, 0x7f},
+		{0x06, 0xff},
+		{0x04, 0x00},
+		{0x05, 0xfe},
+		{0x08, 0x00},
+		{0x05, 0xfd},
+		{0x08, 0x9f}
+	};
+
+	for (i = 0; i < ARRAY_SIZE(commands); i++) {
+		ret = i2c_write_byte(chnd, commands[i].addr, commands[i].cmd);
+		if (ret) {
+			fprintf(stderr, "Flash ID Failed : cmd %x ,data %x\n",
+			commands[i].addr, commands[i].cmd);
+			return ret;
+		}
+	}
+
+	ret = i2c_byte_transfer(chnd, I2C_DATA_ADDR, id, 0, 16);
+
+	if (ret < 0)
+		fprintf(stderr, "Check Flash ID FAILED\n");
+
+	if ((id[0] == 0xFF) && (id[1] == 0xFF) && (id[2] == 0xFE)) {
+		printf("EFLASH TYPE = 8315\n\r");
+		eflash_type = EFLASH_TYPE_8315;
+	} else if ((id[0] == 0xC8) || (id[0] == 0xEF)) {
+		printf("EFLASH TYPE = KGD\n\r");
+		eflash_type = EFLASH_TYPE_KGD;
+	} else {
+		printf("Invalid EFLASH TYPE : ");
+		printf("FLASH ID = %02x %02x %02x\n\r", id[0], id[1], id[2]);
+		eflash_type = EFLASH_TYPE_NONE;
+		ret = -EINVAL;
+	}
+
+	return ret;
+}
+
 /* Fills in chnd->flash_size */
 static int check_chipid(struct common_hnd *chnd)
 {
 	int ret;
 	uint8_t ver = 0xff;
 	uint32_t id = 0xffff;
-	uint16_t v2[5] = {128, 192, 256, 384, 512};
+	uint16_t v2[7] = {128, 192, 256, 384, 512, 0, 1024};
 	/*
 	 * Chip Version is mapping from bit 3-0
 	 * Flash size is mapping from bit 7-4
@@ -551,10 +614,9 @@ static int check_chipid(struct common_hnd *chnd)
 	 *
 	 * flash size(bit 7-4) of it8xxx1 or it8xxx2 series
 	 * 0:128KB
-	 * 2:192KB
 	 * 4:256KB
-	 * 6:384KB
 	 * 8:512KB
+	 * C:1024KB
 	 */
 
 	ret = i2c_read_byte(chnd, 0x00, (uint8_t *)&id + 1);
@@ -592,6 +654,11 @@ static int check_chipid(struct common_hnd *chnd)
 		chnd->flash_size = v2[(ver & 0xF0)>>5] * 1024;
 	else
 		chnd->flash_size = (128 + (ver & 0xF0)) * 1024;
+
+	if (chnd->flash_size == 0) {
+		fprintf(stderr, "Invalid Flash Size");
+		return -EINVAL;
+	}
 
 	printf("CHIPID %05x, CHIPVER %02x, Flash size %d kB\n", id, ver,
 		chnd->flash_size / 1024);
@@ -1250,6 +1317,79 @@ failed_write:
 	return res;
 }
 
+/*
+ * Test for spi page program command
+ */
+static int command_write_pages3(struct common_hnd *chnd, uint32_t address,
+				uint32_t size, uint8_t *buffer,
+				int block_write_size)
+{
+	int ret = 0;
+	uint8_t addr_H, addr_M, addr_L;
+	uint8_t cmd_tmp, i;
+
+	struct cmds commands[] = {
+		{0x07, 0x7f},
+		{0x06, 0xff},
+		{0x04, 0xff},
+		{0x05, 0xfe},
+		{0x08, 0x00},
+		{0x05, 0xfd},
+		{0x08, 0x01},
+		{0x08, 0x00}
+	};
+
+	for (i = 0; i < ARRAY_SIZE(commands); i++) {
+		ret = i2c_write_byte(chnd, commands[i].addr, commands[i].cmd);
+		if (ret) {
+			fprintf(stderr, "Page Program Failed: cmd %x ,data %x\n"
+			, commands[i].addr, commands[i].cmd);
+			return ret;
+		}
+	}
+
+	/* SMB_SPI_Flash_Write_Enable */
+	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_ENABLE,
+		"SPI Command Write Enable") < 0) {
+		ret = -EIO;
+		goto failed_write;
+	}
+
+	if (spi_flash_command_short(chnd, SPI_CMD_PAGE_PROGRAM,
+		"SPI_CMD_PAGE_PROGRAM") < 0) {
+		ret = -EIO;
+		goto failed_write;
+	}
+
+	addr_H = (address >> 16) & 0xFF;
+	addr_M = (address >> 8) & 0xFF;
+	addr_L = address & 0xFF;
+
+	ret = i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_H, 1, 1);
+	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_M, 1, 1);
+	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_L, 1, 1);
+
+	cmd_tmp = 0x0A;
+	ret = i2c_byte_transfer(chnd, I2C_CMD_ADDR, &cmd_tmp, 1, 1);
+
+	ret = i2c_byte_transfer(chnd, I2C_BLOCK_ADDR, buffer, 1,
+		256);
+
+	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
+		"write disable exit page program") < 0)
+		ret = -EIO;
+	/* Wait until not busy */
+	if (spi_poll_busy(chnd, "Page Program") < 0)
+		goto failed_write;
+
+	/* No error so far */
+failed_write:
+
+	return ret;
+}
+
+
+
 static int command_erase(struct common_hnd *chnd, uint32_t len, uint32_t off)
 {
 	int res = -EIO;
@@ -1285,7 +1425,7 @@ static int command_erase(struct common_hnd *chnd, uint32_t len, uint32_t off)
 		}
 
 		/* do sector erase */
-		if (spi_flash_command_short(chnd, SPI_CMD_SECTOR_ERASE,
+		if (spi_flash_command_short(chnd, spi_cmd_sector_erase,
 			"sector erase") < 0)
 			goto failed_erase;
 
@@ -1304,8 +1444,8 @@ wait_busy_cleared:
 			remaining = 0;
 			draw_spinner(remaining, len);
 		} else {
-			page += SECTOR_ERASE_PAGES;
-			remaining -= SECTOR_ERASE_PAGES * PAGE_SIZE;
+			page += sector_erase_pages;
+			remaining -= sector_erase_pages * PAGE_SIZE;
 		}
 	}
 
@@ -1366,7 +1506,7 @@ static int command_erase2(struct common_hnd *chnd, uint32_t len,
 			goto failed_erase;
 
 		/* do sector erase */
-		if (spi_flash_command_short(chnd, SPI_CMD_SECTOR_ERASE,
+		if (spi_flash_command_short(chnd, spi_cmd_sector_erase,
 			"sector erase") < 0)
 			goto failed_erase;
 
@@ -1385,8 +1525,8 @@ static int command_erase2(struct common_hnd *chnd, uint32_t len,
 			break;
 		}
 
-		page += SECTOR_ERASE_PAGES;
-		remaining -= SECTOR_ERASE_PAGES * PAGE_SIZE;
+		page += sector_erase_pages;
+		remaining -= sector_erase_pages * PAGE_SIZE;
 		draw_spinner(remaining, len);
 
 	}
@@ -1577,6 +1717,74 @@ failed_write:
 
 	return 0;
 }
+
+/*
+ * Return zero on success, a negative error value on failures.
+ *
+ * Change the program command to match the ITE Download
+ * The original flow may not work on the DX chip.
+ *
+ */
+static int write_flash3(struct common_hnd *chnd, const char *filename,
+			uint32_t offset)
+{
+	int res, written;
+	int block_write_size = chnd->conf.block_write_size;
+	FILE *hnd;
+	int size = chnd->flash_size;
+	int cnt;
+	uint8_t *buffer = malloc(size);
+
+	if (!buffer) {
+		fprintf(stderr, "%s: Cannot allocate %d bytes\n", __func__,
+			size);
+		return -ENOMEM;
+	}
+
+	hnd = fopen(filename, "r");
+	if (!hnd) {
+		fprintf(stderr, "%s: Cannot open file %s for reading\n",
+			__func__, filename);
+		free(buffer);
+		return -EIO;
+	}
+	res = fread(buffer, 1, size, hnd);
+	if (res <= 0) {
+		fprintf(stderr, "%s: Failed to read %d bytes from %s with "
+			"ferror() %d\n", __func__, size, filename, ferror(hnd));
+		fclose(hnd);
+		free(buffer);
+		return -EIO;
+	}
+	fclose(hnd);
+
+	offset = 0;
+	printf("Writing %d bytes at 0x%08x.......\n", res, offset);
+	while (res) {
+		cnt = (res > 256) ? 256 : res;
+		written = command_write_pages3(chnd, offset, cnt,
+			&buffer[offset], block_write_size);
+		if (written == -EIO)
+			goto failed_write;
+
+		res -= cnt;
+		offset += cnt;
+		draw_spinner(res, res + offset);
+	}
+
+	if (written != res) {
+failed_write:
+		fprintf(stderr, "%s: Error writing to flash\n", __func__);
+		free(buffer);
+		return -EIO;
+	}
+	printf("\n\rWriting Done.\n");
+	free(buffer);
+
+	return 0;
+}
+
+
 
 /* Return zero on success, a non-zero value on failures. */
 static int verify_flash(struct common_hnd *chnd, const char *filename,
@@ -2078,6 +2286,8 @@ int main(int argc, char **argv)
 		}
 	}
 
+	check_flashid(&chnd);
+
 	ret = post_waveform_work(&chnd);
 	if (ret)
 		goto return_after_init;
@@ -2087,6 +2297,24 @@ int main(int argc, char **argv)
 		if (ret)
 			goto return_after_init;
 	}
+
+	switch (eflash_type) {
+	case EFLASH_TYPE_8315:
+		sector_erase_pages = 4;
+		spi_cmd_sector_erase = SPI_CMD_SECTOR_ERASE_1K;
+		break;
+	case EFLASH_TYPE_KGD:
+		sector_erase_pages = 16;
+		spi_cmd_sector_erase = SPI_CMD_SECTOR_ERASE_4K;
+		break;
+	default:
+		printf("Invalid EFLASH TYPE!");
+		ret = -EINVAL;
+		break;
+	}
+
+	if (ret)
+		goto return_after_init;
 
 	if (chnd.conf.erase) {
 		if (chnd.flash_cmd_v2)
@@ -2100,7 +2328,20 @@ int main(int argc, char **argv)
 
 	if (chnd.conf.output_filename) {
 		if (chnd.flash_cmd_v2)
-			ret = write_flash2(&chnd, chnd.conf.output_filename, 0);
+			switch (eflash_type) {
+			case EFLASH_TYPE_8315:
+				ret = write_flash2(&chnd,
+					chnd.conf.output_filename, 0);
+				break;
+			case EFLASH_TYPE_KGD:
+				ret = write_flash3(&chnd,
+					chnd.conf.output_filename, 0);
+				break;
+			default:
+				printf("Invalid EFLASH TYPE!");
+				ret = -EINVAL;
+				break;
+			}
 		else
 			ret = write_flash(&chnd, chnd.conf.output_filename, 0);
 		if (ret)
