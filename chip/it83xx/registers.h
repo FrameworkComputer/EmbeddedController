@@ -9,6 +9,7 @@
 #define __CROS_EC_REGISTERS_H
 
 #include "common.h"
+#include "compile_time_macros.h"
 
 #define __ram_code __attribute__((section(".ram_code")))
 
@@ -79,6 +80,7 @@
 #define IT83XX_IRQ_RTCT_ALARM1    56
 #define IT83XX_IRQ_RTCT_ALARM2    57
 #define IT83XX_IRQ_EXT_TIMER2     58
+#define IT83XX_IRQ_DEFERRED_SPI   59
 #define IT83XX_IRQ_TMR_A0         60
 #define IT83XX_IRQ_TMR_A1         61
 #define IT83XX_IRQ_TMR_B0         62
@@ -197,6 +199,7 @@
 #define IT83XX_IRQ_USBPD0         165
 #define IT83XX_IRQ_USBPD1         166
 /* Group 21 */
+#if defined(CHIP_FAMILY_IT8320)
 #define IT83XX_IRQ_WKO40          168
 #define IT83XX_IRQ_WKO45          169
 #define IT83XX_IRQ_WKO46          170
@@ -210,6 +213,65 @@
 #define IT83XX_IRQ_WKO150         177
 
 #define IT83XX_IRQ_COUNT          178
+#elif defined(CHIP_FAMILY_IT8XXX1) || defined(CHIP_FAMILY_IT8XXX2)
+/* Group 21 */
+#define IT83XX_IRQ_AUDIO_IF       170
+#define IT83XX_IRQ_SPI_SLAVE      171
+#define IT83XX_IRQ_DSP_ENGINE     172
+#define IT83XX_IRQ_NN_ENGINE      173
+#define IT83XX_IRQ_USBPD2         174
+#define IT83XX_IRQ_CRYPTO         175
+/* Group 22 */
+#define IT83XX_IRQ_WKO40          176
+#define IT83XX_IRQ_WKO45          177
+#define IT83XX_IRQ_WKO46          178
+#define IT83XX_IRQ_WKO144         179
+#define IT83XX_IRQ_WKO145         180
+#define IT83XX_IRQ_WKO146         181
+#define IT83XX_IRQ_WKO147         182
+#define IT83XX_IRQ_WKO148         183
+/* Group 23 */
+#define IT83XX_IRQ_WKO149         184
+#define IT83XX_IRQ_WKO150         185
+#define IT83XX_IRQ_SSPI1          191
+/* Group 24 */
+#define IT83XX_IRQ_XLPIN0         192
+#define IT83XX_IRQ_XLPIN1         193
+#define IT83XX_IRQ_XLPIN2         194
+#define IT83XX_IRQ_XLPIN3         195
+#define IT83XX_IRQ_XLPIN4         196
+#define IT83XX_IRQ_XLPIN5         197
+#define IT83XX_IRQ_WEEK_ALARM     199
+/* Group 25 */
+#define IT83XX_IRQ_GPO0           200
+#define IT83XX_IRQ_GPO1           201
+#define IT83XX_IRQ_GPO2           202
+#define IT83XX_IRQ_GPO3           203
+/* Group 26 */
+#define IT83XX_IRQ_GPP0           208
+#define IT83XX_IRQ_GPP1           209
+#define IT83XX_IRQ_GPP2           210
+#define IT83XX_IRQ_GPP3           211
+#define IT83XX_IRQ_GPP4           212
+#define IT83XX_IRQ_GPP5           213
+#define IT83XX_IRQ_GPP6           214
+/* Group 27 */
+#define IT83XX_IRQ_GPQ0           216
+#define IT83XX_IRQ_GPQ1           217
+#define IT83XX_IRQ_GPQ2           218
+#define IT83XX_IRQ_GPQ3           219
+#define IT83XX_IRQ_GPQ4           220
+#define IT83XX_IRQ_GPQ5           221
+/* Group 28 */
+#define IT83XX_IRQ_GPR0           224
+#define IT83XX_IRQ_GPR1           225
+#define IT83XX_IRQ_GPR2           226
+#define IT83XX_IRQ_GPR3           227
+#define IT83XX_IRQ_GPR4           228
+#define IT83XX_IRQ_GPR5           229
+
+#define IT83XX_IRQ_COUNT          230
+#endif /* !defined(CHIP_FAMILY_IT8320) */
 
 /* IRQ dispatching to CPU INT vectors */
 #define IT83XX_CPU_INT_IRQ_1       2
@@ -270,6 +332,7 @@
 #define IT83XX_CPU_INT_IRQ_56     10
 #define IT83XX_CPU_INT_IRQ_57     10
 #define IT83XX_CPU_INT_IRQ_58      3
+#define IT83XX_CPU_INT_IRQ_59     12
 #define IT83XX_CPU_INT_IRQ_60      3
 #define IT83XX_CPU_INT_IRQ_61      3
 #define IT83XX_CPU_INT_IRQ_62      3
@@ -377,14 +440,62 @@
 #define IT83XX_CPU_INT_IRQ_167    12
 #define IT83XX_CPU_INT_IRQ_168     2
 #define IT83XX_CPU_INT_IRQ_169     2
+#if defined(CHIP_FAMILY_IT8320)
 #define IT83XX_CPU_INT_IRQ_170     2
 #define IT83XX_CPU_INT_IRQ_171     2
 #define IT83XX_CPU_INT_IRQ_172     2
 #define IT83XX_CPU_INT_IRQ_173     2
 #define IT83XX_CPU_INT_IRQ_174     2
 #define IT83XX_CPU_INT_IRQ_175     2
+#elif defined(CHIP_FAMILY_IT8XXX1) || defined(CHIP_FAMILY_IT8XXX2)
+#define IT83XX_CPU_INT_IRQ_170    12
+#define IT83XX_CPU_INT_IRQ_171    12
+#define IT83XX_CPU_INT_IRQ_172    12
+#define IT83XX_CPU_INT_IRQ_173    12
+#define IT83XX_CPU_INT_IRQ_174    12
+#define IT83XX_CPU_INT_IRQ_175    12
+#endif
 #define IT83XX_CPU_INT_IRQ_176     2
 #define IT83XX_CPU_INT_IRQ_177     2
+#define IT83XX_CPU_INT_IRQ_178     2
+#define IT83XX_CPU_INT_IRQ_179     2
+#define IT83XX_CPU_INT_IRQ_180     2
+#define IT83XX_CPU_INT_IRQ_181     2
+#define IT83XX_CPU_INT_IRQ_182     2
+#define IT83XX_CPU_INT_IRQ_183     2
+#define IT83XX_CPU_INT_IRQ_184     2
+#define IT83XX_CPU_INT_IRQ_185     2
+#define IT83XX_CPU_INT_IRQ_191     2
+#define IT83XX_CPU_INT_IRQ_192     2
+#define IT83XX_CPU_INT_IRQ_193     2
+#define IT83XX_CPU_INT_IRQ_194     2
+#define IT83XX_CPU_INT_IRQ_195     2
+#define IT83XX_CPU_INT_IRQ_196     2
+#define IT83XX_CPU_INT_IRQ_197     2
+#define IT83XX_CPU_INT_IRQ_199     2
+#define IT83XX_CPU_INT_IRQ_200     2
+#define IT83XX_CPU_INT_IRQ_201     2
+#define IT83XX_CPU_INT_IRQ_202     2
+#define IT83XX_CPU_INT_IRQ_203     2
+#define IT83XX_CPU_INT_IRQ_208     2
+#define IT83XX_CPU_INT_IRQ_209     2
+#define IT83XX_CPU_INT_IRQ_210     2
+#define IT83XX_CPU_INT_IRQ_211     2
+#define IT83XX_CPU_INT_IRQ_212     2
+#define IT83XX_CPU_INT_IRQ_213     2
+#define IT83XX_CPU_INT_IRQ_214     2
+#define IT83XX_CPU_INT_IRQ_216     2
+#define IT83XX_CPU_INT_IRQ_217     2
+#define IT83XX_CPU_INT_IRQ_218     2
+#define IT83XX_CPU_INT_IRQ_219     2
+#define IT83XX_CPU_INT_IRQ_220     2
+#define IT83XX_CPU_INT_IRQ_221     2
+#define IT83XX_CPU_INT_IRQ_224     2
+#define IT83XX_CPU_INT_IRQ_225     2
+#define IT83XX_CPU_INT_IRQ_226     2
+#define IT83XX_CPU_INT_IRQ_227     2
+#define IT83XX_CPU_INT_IRQ_228     2
+#define IT83XX_CPU_INT_IRQ_229     2
 
 /* "Fake" IRQ to declare in readable fashion all WKO IRQ routed to INT#2 */
 #define CPU_INT_2_ALL_GPIOS      255
@@ -443,6 +554,12 @@
 #define IT83XX_INTC_IER20   REG8(IT83XX_INTC_BASE+0x55)
 #define IT83XX_INTC_IER21   REG8(IT83XX_INTC_BASE+0x59)
 #define IT83XX_INTC_IER22   REG8(IT83XX_INTC_BASE+0x5d)
+#define IT83XX_INTC_IER23   REG8(IT83XX_INTC_BASE+0x91)
+#define IT83XX_INTC_IER24   REG8(IT83XX_INTC_BASE+0x95)
+#define IT83XX_INTC_IER25   REG8(IT83XX_INTC_BASE+0x99)
+#define IT83XX_INTC_IER26   REG8(IT83XX_INTC_BASE+0x9d)
+#define IT83XX_INTC_IER27   REG8(IT83XX_INTC_BASE+0xa1)
+#define IT83XX_INTC_IER28   REG8(IT83XX_INTC_BASE+0xa5)
 
 #define IT83XX_INTC_ISR0    REG8(IT83XX_INTC_BASE+0x00)
 #define IT83XX_INTC_ISR1    REG8(IT83XX_INTC_BASE+0x01)
@@ -467,6 +584,12 @@
 #define IT83XX_INTC_ISR20   REG8(IT83XX_INTC_BASE+0x54)
 #define IT83XX_INTC_ISR21   REG8(IT83XX_INTC_BASE+0x58)
 #define IT83XX_INTC_ISR22   REG8(IT83XX_INTC_BASE+0x5c)
+#define IT83XX_INTC_ISR23   REG8(IT83XX_INTC_BASE+0x90)
+#define IT83XX_INTC_ISR24   REG8(IT83XX_INTC_BASE+0x94)
+#define IT83XX_INTC_ISR25   REG8(IT83XX_INTC_BASE+0x98)
+#define IT83XX_INTC_ISR26   REG8(IT83XX_INTC_BASE+0x9c)
+#define IT83XX_INTC_ISR27   REG8(IT83XX_INTC_BASE+0xa0)
+#define IT83XX_INTC_ISR28   REG8(IT83XX_INTC_BASE+0xa4)
 
 #define IT83XX_INTC_IELMR10 REG8(IT83XX_INTC_BASE+0x2E)
 #define IT83XX_INTC_IPOLR10 REG8(IT83XX_INTC_BASE+0x2F)
@@ -536,6 +659,7 @@
 /* --- GPIO --- */
 
 #define IT83XX_GPIO_BASE  0x00F01600
+#define IT83XX_GPIO2_BASE 0x00F03E00
 
 #define IT83XX_GPIO_GCR         REG8(IT83XX_GPIO_BASE+0x00)
 #define IT83XX_GPIO_GCR_LPC_RST_B7      0x1
@@ -645,11 +769,15 @@
 #define IT83XX_GPIO_GCR26       REG8(IT83XX_GPIO_BASE+0xD2)
 #define IT83XX_GPIO_GCR27       REG8(IT83XX_GPIO_BASE+0xD3)
 #define IT83XX_GPIO_GCR28       REG8(IT83XX_GPIO_BASE+0xD4)
+#define IT83XX_GPIO_GCR30       REG8(IT83XX_GPIO_BASE+0xED)
+#define IT83XX_GPIO_GCR31       REG8(IT83XX_GPIO_BASE+0xD5)
+#define IT83XX_GPIO_GCR32       REG8(IT83XX_GPIO_BASE+0xD6)
 
-#define IT83XX_GPIO_DATA_BASE        (IT83XX_GPIO_BASE + 0x00)
-#define IT83XX_GPIO_OUTPUT_TYPE_BASE (IT83XX_GPIO_BASE + 0x70)
+#define IT83XX_VBATPC_BGPOPSCR  REG8(IT83XX_GPIO2_BASE+0xF0)
+#define IT83XX_VBATPC_XLPIER    REG8(IT83XX_GPIO2_BASE+0xF5)
 
 enum {
+	/* GPIO group index */
 	GPIO_A = 0x1,
 	GPIO_B = 0x2,
 	GPIO_C = 0x3,
@@ -663,23 +791,74 @@ enum {
 	GPIO_K = 0xb,
 	GPIO_L = 0xc,
 	GPIO_M = 0xd,
+#if defined(CHIP_FAMILY_IT8XXX1) || defined(CHIP_FAMILY_IT8XXX2)
+	GPIO_O = 0xe,
+	GPIO_P = 0xf,
+	GPIO_Q = 0x10,
+	GPIO_R = 0x11,
+#endif
 	GPIO_PORT_COUNT,
 
 	/* NOTE: Support GPIO input only if KSO/KSI pins are used as GPIO. */
-	GPIO_KBS_OFF = 0x700,
 	/* KSI[7-0]  GPIO data mirror register. */
-	GPIO_KSI     = GPIO_KBS_OFF + 0x9,
+	GPIO_KSI,
 	/* KSO[15-8] GPIO data mirror register. */
-	GPIO_KSO_H   = GPIO_KBS_OFF + 0xc,
+	GPIO_KSO_H,
 	/* KSO[7-0]  GPIO data mirror register. */
-	GPIO_KSO_L   = GPIO_KBS_OFF + 0xf,
+	GPIO_KSO_L,
+	/* Compiler check COUNT and gpio_group_to_reg member cnt match or not */
+	COUNT,
 };
+
+struct gpio_reg_t {
+	/* GPIO port data register (bit mapping to pin) */
+	uint32_t reg_gpdr;
+	/* GPIO port output type register (bit mapping to pin) */
+	uint32_t reg_gpotr;
+	/* GPIO port control register (byte mapping to pin) */
+	uint32_t reg_gpcr;
+};
+
+/* GPIO group index convert to GPIO data/output type/ctrl group address */
+static const struct gpio_reg_t gpio_group_to_reg[] = {
+	/*               GPDR,       GPOTR,      GPCR      */
+	[GPIO_A]     = { 0x00F01601, 0x00F01671, 0x00F01610 },
+	[GPIO_B]     = { 0x00F01602, 0x00F01672, 0x00F01618 },
+	[GPIO_C]     = { 0x00F01603, 0x00F01673, 0x00F01620 },
+	[GPIO_D]     = { 0x00F01604, 0x00F01674, 0x00F01628 },
+	[GPIO_E]     = { 0x00F01605, 0x00F01675, 0x00F01630 },
+	[GPIO_F]     = { 0x00F01606, 0x00F01676, 0x00F01638 },
+	[GPIO_G]     = { 0x00F01607, 0x00F01677, 0x00F01640 },
+	[GPIO_H]     = { 0x00F01608, 0x00F01678, 0x00F01648 },
+	[GPIO_I]     = { 0x00F01609, 0x00F01679, 0x00F01650 },
+	[GPIO_J]     = { 0x00F0160a, 0x00F0167a, 0x00F01658 },
+	[GPIO_K]     = { 0x00F0160b, 0x00F0167b, 0x00F01690 },
+	[GPIO_L]     = { 0x00F0160c, 0x00F0167c, 0x00F01698 },
+	[GPIO_M]     = { 0x00F0160d, 0x00F0167d, 0x00F016a0 },
+#if defined(CHIP_FAMILY_IT8XXX1) || defined(CHIP_FAMILY_IT8XXX2)
+	[GPIO_O]     = { 0x00F03E01, 0x00F03E71, 0x00F03E10 },
+	[GPIO_P]     = { 0x00F03E02, 0x00F03E72, 0x00F03E18 },
+	[GPIO_Q]     = { 0x00F03E03, 0x00F03E73, 0x00F03E20 },
+	[GPIO_R]     = { 0x00F03E04, 0x00F03E74, 0x00F03E28 },
+#endif
+	[GPIO_KSI]   = { 0x00F01D09,         -1,         -1 },
+	[GPIO_KSO_H] = { 0x00F01D0C,         -1,         -1 },
+	[GPIO_KSO_L] = { 0x00F01D0F,         -1,         -1 },
+};
+BUILD_ASSERT(ARRAY_SIZE(gpio_group_to_reg) == (COUNT));
+
 #define DUMMY_GPIO_BANK GPIO_A
 
-#define IT83XX_GPIO_DATA(port)     REG8(IT83XX_GPIO_DATA_BASE + port)
-#define IT83XX_GPIO_GPOT(port)     REG8(IT83XX_GPIO_OUTPUT_TYPE_BASE + port)
-#define IT83XX_GPIO_CTRL(port_offset, pin_offset) \
-	REG8(IT83XX_GPIO_BASE + port_offset + pin_offset)
+#define IT83XX_GPIO_DATA(port)                 \
+	REG8(gpio_group_to_reg[port].reg_gpdr)
+#define IT83XX_GPIO_GPOT(port)                 \
+	REG8(gpio_group_to_reg[port].reg_gpotr)
+#define IT83XX_GPIO_CTRL(port, pin_offset)     \
+	REG8(gpio_group_to_reg[port].reg_gpcr + pin_offset)
+#define GPCR_PORT_PIN_MODE_INPUT          BIT(7)
+#define GPCR_PORT_PIN_MODE_OUTPUT         BIT(6)
+#define GPCR_PORT_PIN_MODE_PULLUP         BIT(2)
+#define GPCR_PORT_PIN_MODE_PULLDOWN       BIT(1)
 
 /* --- Clock and Power Management (ECPM) --- */
 

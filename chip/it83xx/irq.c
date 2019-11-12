@@ -19,7 +19,7 @@ static const struct {
 	uint8_t isr_off;
 	uint8_t ier_off;
 	uint8_t cpu_int[8];
-} irq_groups[23] = {
+} irq_groups[] = {
 	IRQ_GROUP(0,  {-1,  2,  5,  4,  6,  2,  2,  4}),
 	IRQ_GROUP(1,  { 7,  6,  6,  5,  2,  2,  2,  8}),
 	IRQ_GROUP(2,  { 6,  2,  8,  8,  8,  2, 12, 12}),
@@ -27,7 +27,7 @@ static const struct {
 	IRQ_GROUP(4,  {11, 11, 11, 11,  8,  9,  9,  9}),
 	IRQ_GROUP(5,  { 2,  2,  2,  2,  2,  2,  2,  2}),
 	IRQ_GROUP(6,  { 2,  2,  2,  2,  2,  2,  2,  2}),
-	IRQ_GROUP(7,  {10, 10,  3, -1,  3,  3,  3,  3}),
+	IRQ_GROUP(7,  {10, 10,  3, 12,  3,  3,  3,  3}),
 	IRQ_GROUP(8,  { 4,  4,  4,  4,  4,  4, -1, 12}),
 	IRQ_GROUP(9,  { 2,  2,  2,  2,  2,  2,  2,  2}),
 	IRQ_GROUP(10, { 3,  6, 12, 12,  5,  2,  2,  2}),
@@ -41,13 +41,22 @@ static const struct {
 	IRQ_GROUP(18, { 2,  2,  2,  2, -1,  4,  4,  7}),
 	IRQ_GROUP(19, { 6,  6, 12,  3,  3,  3,  3,  3}),
 	IRQ_GROUP(20, {12, 12, 12, 12, 12, 12, 12, -1}),
-#ifdef IT83XX_INTC_GROUP_21_22_SUPPORT
+#if defined(IT83XX_INTC_GROUP_21_22_SUPPORT)
 	IRQ_GROUP(21, { 2,  2,  2,  2,  2,  2,  2,  2}),
 	IRQ_GROUP(22, { 2,  2, -1, -1, -1, -1, -1, -1}),
+#elif defined(CHIP_FAMILY_IT8XXX1) || defined(CHIP_FAMILY_IT8XXX2)
+	IRQ_GROUP(21, {-1, -1, 12, 12, 12, 12, 12, 12}),
+	IRQ_GROUP(22, { 2,  2,  2,  2,  2,  2,  2,  2}),
 #else
 	IRQ_GROUP(21, {-1, -1, -1, -1, -1, -1, -1, -1}),
 	IRQ_GROUP(22, {-1, -1, -1, -1, -1, -1, -1, -1}),
 #endif
+	IRQ_GROUP(23, { 2,  2, -1, -1, -1, -1, -1,  2}),
+	IRQ_GROUP(24, { 2,  2,  2,  2,  2,  2, -1,  2}),
+	IRQ_GROUP(25, { 2,  2,  2,  2, -1, -1, -1, -1}),
+	IRQ_GROUP(26, { 2,  2,  2,  2,  2,  2,  2, -1}),
+	IRQ_GROUP(27, { 2,  2,  2,  2,  2,  2, -1, -1}),
+	IRQ_GROUP(28, { 2,  2,  2,  2,  2,  2, -1, -1}),
 };
 
 int chip_get_intc_group(int irq)

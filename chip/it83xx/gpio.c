@@ -18,12 +18,6 @@
 #include "timer.h"
 #include "util.h"
 
-/*
- * Converts port (ie GPIO A) to base address offset of the control register
- * (GPCRx0) for that port.
- */
-#define CTRL_BASE(port) ((port)*8 + ((port) < GPIO_K ? 8 : 56))
-
 /**
  * Convert wake-up controller (WUC) group to the corresponding wake-up edge
  * sense register (WUESR). Return pointer to the register.
@@ -189,6 +183,7 @@ static const struct {
 	[IT83XX_IRQ_WKO131] =   {GPIO_J, BIT(3),        14, BIT(3)},
 	[IT83XX_IRQ_WKO132] =   {GPIO_J, BIT(4),        14, BIT(4)},
 	[IT83XX_IRQ_WKO133] =   {GPIO_J, BIT(5),        14, BIT(5)},
+	[IT83XX_IRQ_WKO134] =   {GPIO_J, BIT(6),        14, BIT(6)},
 	[IT83XX_IRQ_WKO136] =   {GPIO_L, BIT(0),        15, BIT(0)},
 	[IT83XX_IRQ_WKO137] =   {GPIO_L, BIT(1),        15, BIT(1)},
 	[IT83XX_IRQ_WKO138] =   {GPIO_L, BIT(2),        15, BIT(2)},
@@ -206,9 +201,34 @@ static const struct {
 	[IT83XX_IRQ_WKO149] =   {GPIO_M, BIT(5),        16, BIT(5)},
 	[IT83XX_IRQ_WKO150] =   {GPIO_M, BIT(6),        16, BIT(6)},
 #endif
-	[IT83XX_IRQ_COUNT-1] =  {0,           0,         0,      0},
+#if defined(CHIP_FAMILY_IT8XXX1) || defined(CHIP_FAMILY_IT8XXX2)
+	[IT83XX_IRQ_GPO0]   =   {GPIO_O, BIT(0),        19, BIT(0)},
+	[IT83XX_IRQ_GPO1]   =   {GPIO_O, BIT(1),        19, BIT(1)},
+	[IT83XX_IRQ_GPO2]   =   {GPIO_O, BIT(2),        19, BIT(2)},
+	[IT83XX_IRQ_GPO3]   =   {GPIO_O, BIT(3),        19, BIT(3)},
+	[IT83XX_IRQ_GPP0]   =   {GPIO_P, BIT(0),        20, BIT(0)},
+	[IT83XX_IRQ_GPP1]   =   {GPIO_P, BIT(1),        20, BIT(1)},
+	[IT83XX_IRQ_GPP2]   =   {GPIO_P, BIT(2),        20, BIT(2)},
+	[IT83XX_IRQ_GPP3]   =   {GPIO_P, BIT(3),        20, BIT(3)},
+	[IT83XX_IRQ_GPP4]   =   {GPIO_P, BIT(4),        20, BIT(4)},
+	[IT83XX_IRQ_GPP5]   =   {GPIO_P, BIT(5),        20, BIT(5)},
+	[IT83XX_IRQ_GPP6]   =   {GPIO_P, BIT(6),        20, BIT(6)},
+	[IT83XX_IRQ_GPQ0]   =   {GPIO_Q, BIT(0),        21, BIT(0)},
+	[IT83XX_IRQ_GPQ1]   =   {GPIO_Q, BIT(1),        21, BIT(1)},
+	[IT83XX_IRQ_GPQ2]   =   {GPIO_Q, BIT(2),        21, BIT(2)},
+	[IT83XX_IRQ_GPQ3]   =   {GPIO_Q, BIT(3),        21, BIT(3)},
+	[IT83XX_IRQ_GPQ4]   =   {GPIO_Q, BIT(4),        21, BIT(4)},
+	[IT83XX_IRQ_GPQ5]   =   {GPIO_Q, BIT(5),        21, BIT(5)},
+	[IT83XX_IRQ_GPR0]   =   {GPIO_R, BIT(0),        22, BIT(0)},
+	[IT83XX_IRQ_GPR1]   =   {GPIO_R, BIT(1),        22, BIT(1)},
+	[IT83XX_IRQ_GPR2]   =   {GPIO_R, BIT(2),        22, BIT(2)},
+	[IT83XX_IRQ_GPR3]   =   {GPIO_R, BIT(3),        22, BIT(3)},
+	[IT83XX_IRQ_GPR4]   =   {GPIO_R, BIT(4),        22, BIT(4)},
+	[IT83XX_IRQ_GPR5]   =   {GPIO_R, BIT(5),        22, BIT(5)},
+#endif
+	[IT83XX_IRQ_COUNT]  =   {     0,      0,         0,      0},
 };
-BUILD_ASSERT(ARRAY_SIZE(gpio_irqs) == IT83XX_IRQ_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(gpio_irqs) == IT83XX_IRQ_COUNT + 1);
 
 /**
  * Given a GPIO port and mask, find the corresponding WKO interrupt number.
@@ -316,6 +336,19 @@ static const struct gpio_1p8v_t gpio_1p8v_sel[GPIO_PORT_COUNT][8] = {
 		     [5] = {&IT83XX_GPIO_GCR25, BIT(5)},
 		     [6] = {&IT83XX_GPIO_GCR25, BIT(6)},
 		     [7] = {&IT83XX_GPIO_GCR25, BIT(7)} },
+#if defined(CHIP_FAMILY_IT8XXX1) || defined(CHIP_FAMILY_IT8XXX2)
+	[GPIO_O] = { [0] = {&IT83XX_GPIO_GCR31, BIT(0)},
+		     [1] = {&IT83XX_GPIO_GCR31, BIT(1)},
+		     [2] = {&IT83XX_GPIO_GCR31, BIT(2)},
+		     [3] = {&IT83XX_GPIO_GCR31, BIT(3)} },
+	[GPIO_P] = { [0] = {&IT83XX_GPIO_GCR32, BIT(0)},
+		     [1] = {&IT83XX_GPIO_GCR32, BIT(1)},
+		     [2] = {&IT83XX_GPIO_GCR32, BIT(2)},
+		     [3] = {&IT83XX_GPIO_GCR32, BIT(3)},
+		     [4] = {&IT83XX_GPIO_GCR32, BIT(4)},
+		     [5] = {&IT83XX_GPIO_GCR32, BIT(5)},
+		     [6] = {&IT83XX_GPIO_GCR32, BIT(6)} },
+#endif
 #else
 	[GPIO_A] = { [4] = {&IT83XX_GPIO_GRC24, BIT(0)},
 		     [5] = {&IT83XX_GPIO_GRC24, BIT(1)} },
@@ -376,11 +409,14 @@ static inline void it83xx_set_alt_func(uint32_t port, uint32_t pin,
 	 * Otherwise, turn the pin into an input as it's default.
 	 */
 	if (func != GPIO_ALT_FUNC_NONE)
-		IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) &= ~0xc0;
+		IT83XX_GPIO_CTRL(port, pin) &= ~(GPCR_PORT_PIN_MODE_OUTPUT |
+			GPCR_PORT_PIN_MODE_INPUT);
 	else
-		IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) =
-			(IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) | 0x80) & ~0x40;
+		IT83XX_GPIO_CTRL(port, pin) =
+			(IT83XX_GPIO_CTRL(port, pin) | GPCR_PORT_PIN_MODE_INPUT)
+			& ~GPCR_PORT_PIN_MODE_OUTPUT;
 }
+
 void gpio_set_alternate_function(uint32_t port, uint32_t mask,
 				enum gpio_alternate_func func)
 {
@@ -390,7 +426,6 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask,
 	while (mask > 0) {
 		if (mask & 1)
 			it83xx_set_alt_func(port, pin, func);
-
 		pin++;
 		mask >>= 1;
 	}
@@ -458,7 +493,7 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	uint32_t pin = 0;
 	uint32_t mask_copy = mask;
 
-	if (port > GPIO_KBS_OFF) {
+	if (port > GPIO_PORT_COUNT) {
 		/* set up GPIO of KSO/KSI pins (support input only). */
 		gpio_kbs_pin_gpio_mode(port, mask, flags);
 		return;
@@ -486,26 +521,32 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		if (mask_copy & 1) {
 			/* Set input or output. */
 			if (flags & GPIO_OUTPUT)
-				IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) =
-				(IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) | 0x40)
-				& ~0x80;
+				IT83XX_GPIO_CTRL(port, pin) =
+				(IT83XX_GPIO_CTRL(port, pin) |
+				 GPCR_PORT_PIN_MODE_OUTPUT) &
+				~GPCR_PORT_PIN_MODE_INPUT;
 			else
-				IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) =
-				(IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) | 0x80)
-				& ~0x40;
+				IT83XX_GPIO_CTRL(port, pin) =
+				(IT83XX_GPIO_CTRL(port, pin) |
+				 GPCR_PORT_PIN_MODE_INPUT) &
+				~GPCR_PORT_PIN_MODE_OUTPUT;
 
 			/* Handle pullup / pulldown */
 			if (flags & GPIO_PULL_UP) {
-				IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) =
-				(IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) | 0x04)
-				& ~0x02;
+				IT83XX_GPIO_CTRL(port, pin) =
+				(IT83XX_GPIO_CTRL(port, pin) |
+				 GPCR_PORT_PIN_MODE_PULLUP) &
+				~GPCR_PORT_PIN_MODE_PULLDOWN;
 			} else if (flags & GPIO_PULL_DOWN) {
-				IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) =
-				(IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) | 0x02)
-				& ~0x04;
+				IT83XX_GPIO_CTRL(port, pin) =
+				(IT83XX_GPIO_CTRL(port, pin) |
+				 GPCR_PORT_PIN_MODE_PULLDOWN) &
+				~GPCR_PORT_PIN_MODE_PULLUP;
 			} else {
 				/* No pull up/down */
-				IT83XX_GPIO_CTRL(CTRL_BASE(port), pin) &= ~0x06;
+				IT83XX_GPIO_CTRL(port, pin) &=
+					~(GPCR_PORT_PIN_MODE_PULLUP |
+					  GPCR_PORT_PIN_MODE_PULLDOWN);
 			}
 
 			/* To select 1.8v or 3.3v support. */
@@ -629,6 +670,20 @@ void gpio_pre_init(void)
 	 * don't use this module.
 	 */
 	IT83XX_USB_P0MCR &= ~USB_DP_DM_PULL_DOWN_EN;
+#endif
+
+#if defined(CHIP_FAMILY_IT8XXX1) || defined(CHIP_FAMILY_IT8XXX2)
+	/* Q group pins are default GPI mode, clear alternate setting. */
+	IT83XX_VBATPC_XLPIER = 0x0;
+	/*
+	 * R group pins are default alternate output low, we clear alternate
+	 * setting (sink power switch from VBAT to VSTBY) to become GPO output
+	 * low.
+	 * NOTE: GPR0~5 pins are output low by default. It should consider
+	 *       that if output low signal effect external circuit or not,
+	 *       until we reconfig these pins in gpio.inc.
+	 */
+	IT83XX_VBATPC_BGPOPSCR = 0x0;
 #endif
 
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
