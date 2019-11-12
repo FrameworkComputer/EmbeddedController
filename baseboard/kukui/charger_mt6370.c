@@ -9,10 +9,31 @@
 #include "driver/charger/rt946x.h"
 #include "hooks.h"
 #include "power.h"
+#include "usb_common.h"
 #include "usb_pd.h"
 #include "util.h"
 
 #define BAT_LEVEL_PD_LIMIT 85
+#define SYSTEM_PLT_MW 3500
+
+struct pd_pref_config_t pd_pref_config = {
+	.mv = 5000,
+	.cv = 70,
+	.plt_mw = SYSTEM_PLT_MW,
+	.type = PD_PREFER_BUCK,
+};
+
+static void update_plt_suspend(void)
+{
+	pd_pref_config.plt_mw = 0;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, update_plt_suspend, HOOK_PRIO_DEFAULT);
+
+static void update_plt_resume(void)
+{
+	pd_pref_config.plt_mw = SYSTEM_PLT_MW;
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, update_plt_resume, HOOK_PRIO_DEFAULT);
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
