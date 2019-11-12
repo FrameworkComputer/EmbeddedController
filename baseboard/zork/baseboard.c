@@ -21,6 +21,7 @@
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
+#include "driver/retimer/pi3dpx1207.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/temp_sensor/sb_tsi.h"
@@ -466,6 +467,18 @@ struct usb_mux usb_muxes[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
+
+struct usb_retimer usb_retimers[USBC_PORT_COUNT] = {
+	[USBC_PORT_C0] = {
+		.driver = &pi3dpx1207_usb_retimer,
+		.i2c_port = I2C_PORT_TCPC0,
+		.i2c_addr_flags = PI3DPX1207_I2C_ADDR_FLAGS,
+		.gpio_enable = IOEX_USB_C0_DATA_EN,
+		.gpio_dp_enable = GPIO_USB_C0_IN_HPD,
+	},
+	[USBC_PORT_C1] = {
+	},
+};
 
 struct ioexpander_config_t ioex_config[] = {
 	[USBC_PORT_C0] = {
