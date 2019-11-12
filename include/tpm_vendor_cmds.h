@@ -136,6 +136,11 @@ enum vendor_cmd_cc {
 
 	VENDOR_CC_U2F_MODE = 49,
 
+	/*
+	 * HMAC-SHA256 DRBG invocation for ACVP tests
+	 */
+	VENDOR_CC_DRBG_TEST = 50,
+
 	VENDOR_CC_TRNG_TEST = 51,
 
 	LAST_VENDOR_COMMAND = 65535,

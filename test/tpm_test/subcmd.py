@@ -5,7 +5,7 @@
 
 """Subcommand codes that specify the crypto module."""
 
-# Keep these codes in sync with include/extension.h.
+# Keep these codes in sync with include/tpm_vendor_cmds.h
 AES = 0
 HASH = 1
 RSA = 2
@@ -13,7 +13,7 @@ ECC = 3
 FW_UPGRADE = 4
 HKDF = 5
 ECIES = 6
-
+DRBG_TEST = 50
 # The same exception class used by all tpmtest modules.
 class TpmTestError(Exception):
   pass

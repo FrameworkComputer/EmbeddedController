@@ -20,6 +20,7 @@ root_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
 sys.path.append(os.path.join(root_dir, '..', '..', 'build', 'tpm_test'))
 
 import crypto_test
+import drbg_test
 import ecc_test
 import ecies_test
 import ftdi_spi_tpm
@@ -71,17 +72,18 @@ class TPM(object):
     if size > 4096:
       raise subcmd.TpmTestError(prefix + 'invalid size %d' % size)
     if response_mode:
-      # Startup response code or extension command response code
-      if cmd_code == 0x100 or cmd_code == 0:
+      # Startup response code, extension or vendor command response code
+      if cmd_code == 0x100 or cmd_code == 0 or cmd_code == 0x500:
         return
       else:
         raise subcmd.TpmTestError(
-          prefix + 'invalid command code 0x%x' % cmd_code)
+          prefix + 'invalid response code 0x%x' % cmd_code)
     if cmd_code >= 0x11f and cmd_code <= 0x18f:
       return  # This is a valid command
     if cmd_code == EXT_CMD:
       return  # This is an extension command
-
+    if cmd_code >= 0x20000000 and cmd_code <= 0x200001ff:
+      return  # this is vendor command
     raise subcmd.TpmTestError(prefix + 'invalid command code 0x%x' % cmd_code)
 
   def command(self, cmd_data):
@@ -162,6 +164,7 @@ if __name__ == '__main__':
       trng_test.trng_test(t)
       sys.exit(1)
     crypto_test.crypto_tests(t, os.path.join(root_dir, 'crypto_test.xml'))
+    drbg_test.drbg_test(t)
     ecc_test.ecc_test(t)
     ecies_test.ecies_test(t)
     hash_test.hash_test(t)

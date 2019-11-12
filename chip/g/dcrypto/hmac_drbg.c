@@ -6,6 +6,7 @@
 #include "console.h"
 #include "cryptoc/util.h"
 #include "dcrypto.h"
+#include "extension.h"
 #include "internal.h"
 #include "trng.h"
 
@@ -356,4 +357,120 @@ static int cmd_hmac_drbg_rand(int argc, char **argv)
 	return 0;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(hmac_drbg_rand, cmd_hmac_drbg_rand, NULL, NULL);
+
+enum drbg_command {
+	DRBG_INIT = 0,
+	DRBG_RESEED = 1,
+	DRBG_GENERATE = 2
+};
+
+/*
+ * DRBG_TEST command structure:
+ *
+ * field       |    size  |              note
+ * ==========================================================================
+ * mode        |    1     | 0 - DRBG_INIT, 1 - DRBG_RESEED, 2 - DRBG_GENERATE
+ * p0_len      |    2     | size of first input in bytes
+ * p0          |  p0_len  | entropy for INIT & SEED, input for GENERATE
+ * p1_len      |    2     | size of second input in bytes (for INIT & RESEED)
+ *             |          | or size of expected output for GENERATE
+ * p1          |  p1_len  | nonce for INIT & SEED
+ * p2_len      |    2     | size of third input in bytes for DRBG_INIT
+ * p2          |  p2_len  | personalization for INIT & SEED
+ *
+ * DRBG_INIT (entropy, nonce, perso)
+ * DRBG_RESEED (entropy, additional input 1, additional input 2)
+ * DRBG_INIT and DRBG_RESEED returns empty response
+ * DRBG_GENERATE (p0_len, p0 - additional input 1, p1_len - size of output)
+ * DRBG_GENERATE returns p1_len bytes of generated data
+ * (up to a maximum of 128 bytes)
+ */
+static enum vendor_cmd_rc drbg_test(enum vendor_cmd_cc code, void *buf,
+				    size_t input_size, size_t *response_size)
+{
+	static struct drbg_ctx drbg_ctx;
+	static uint8_t output[128];
+	uint8_t *p0 = NULL, *p1 = NULL, *p2 = NULL;
+	uint16_t p0_len = 0, p1_len = 0, p2_len = 0;
+	uint8_t *cmd = (uint8_t *)buf;
+	size_t max_out_len = *response_size;
+	enum drbg_command drbg_op;
+
+	*response_size = 0;
+	/* there is always op + first parameter, even if zero length */
+	if (input_size < sizeof(p0_len) + 1)
+		return VENDOR_RC_BOGUS_ARGS;
+	drbg_op = *cmd++;
+	p0_len = *cmd++;
+	p0_len = p0_len * 256 + *cmd++;
+	input_size -= 3;
+	if (p0_len > input_size)
+		return VENDOR_RC_BOGUS_ARGS;
+	input_size -= p0_len;
+	if (p0_len)
+		p0 = cmd;
+	cmd += p0_len;
+
+	/* there should be enough space for p1_len */
+	if (input_size && input_size < sizeof(p1_len))
+		return VENDOR_RC_BOGUS_ARGS;
+
+	/* DRBG_GENERATE should just have p1_len defined */
+	if (drbg_op == DRBG_GENERATE && input_size != sizeof(p1_len))
+		return VENDOR_RC_BOGUS_ARGS;
+
+	if (input_size) {
+		p1_len = *cmd++;
+		p1_len = p1_len * 256 + *cmd++;
+		input_size -= 2;
+
+		if (drbg_op != DRBG_GENERATE) {
+			if (p1_len > input_size)
+				return VENDOR_RC_BOGUS_ARGS;
+			input_size -= p1_len;
+			if (p1_len)
+				p1 = cmd;
+			cmd += p1_len;
+		}
+	}
+
+	if (input_size) {
+		if (drbg_op == DRBG_GENERATE)
+			return VENDOR_RC_BOGUS_ARGS;
+		p2_len = *cmd++;
+		p2_len = p2_len * 256 + *cmd++;
+		input_size -= 2;
+		if (p2_len > input_size)
+			return VENDOR_RC_BOGUS_ARGS;
+		if (p2_len)
+			p2 = cmd;
+	}
+
+	switch (drbg_op) {
+	case DRBG_INIT: {
+		hmac_drbg_init(&drbg_ctx, p0, p0_len, p1, p1_len, p2, p2_len);
+		break;
+	}
+	case DRBG_RESEED: {
+		hmac_drbg_reseed(&drbg_ctx, p0, p0_len, p1, p1_len, p2, p2_len);
+		break;
+	}
+	case DRBG_GENERATE: {
+		if (p1_len > sizeof(output) || max_out_len < p1_len)
+			return VENDOR_RC_BOGUS_ARGS;
+
+		hmac_drbg_generate(&drbg_ctx, output, p1_len, p0, p0_len);
+
+		memcpy(buf, output, p1_len);
+		*response_size = p1_len;
+		break;
+	}
+	default:
+		return VENDOR_RC_BOGUS_ARGS;
+	}
+
+	return VENDOR_RC_SUCCESS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_DRBG_TEST, drbg_test);
+
 #endif /* CRYPTO_TEST_SETUP */
