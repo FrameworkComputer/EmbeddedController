@@ -3025,6 +3025,14 @@
  */
 #undef CONFIG_CPU_PROCHOT_ACTIVE_LOW
 
+/*
+ * Define this option to enable programmable voltage detector which will
+ * trigger an interrupt when the voltage drops below a threshold specified
+ * by the PVD_THRESHOLD which is a chip specific voltage threshold that
+ * must be defined in board.h.
+ */
+#undef CONFIG_PVD
+
 /*****************************************************************************/
 /* Support PWM control */
 #undef CONFIG_PWM

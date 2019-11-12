@@ -178,6 +178,38 @@ void chip_pre_init(void)
 		STM32_DBGMCU_APB2FZ |= apb2fz_reg;
 }
 
+#ifdef CONFIG_PVD
+/* Configures the programmable voltage detector to monitor for brown out conditions. */
+static void configure_pvd(void)
+{
+	/* Clear Interrupt Enable Mask Register. */
+	STM32_EXTI_IMR &= ~EXTI_PVD_EVENT;
+
+	/* Clear Rising and Falling Trigger Selection Registers. */
+	STM32_EXTI_RTSR &= ~EXTI_PVD_EVENT;
+	STM32_EXTI_FTSR &= ~EXTI_PVD_EVENT;
+
+	/* Clear the value of the PVD Level Selection. */
+	STM32_PWR_CR &= ~STM32_PWD_PVD_LS_MASK;
+
+	/* Set the new value of the PVD Level Selection. */
+	STM32_PWR_CR |= STM32_PWD_PVD_LS(PVD_THRESHOLD);
+
+	/* Enable Power Clock. */
+	STM32_RCC_APB1ENR |= STM32_RCC_PB1_PWREN;
+
+	/* Configure the NVIC for PVD. */
+	task_enable_irq(STM32_IRQ_PVD);
+
+	/* Configure interrupt mode. */
+	STM32_EXTI_IMR |= EXTI_PVD_EVENT;
+	STM32_EXTI_RTSR |= EXTI_PVD_EVENT;
+
+	/* Enable the PVD Output. */
+	STM32_PWR_CR |= STM32_PWR_PVDE;
+}
+#endif
+
 void system_pre_init(void)
 {
 #ifdef CONFIG_SOFTWARE_PANIC
@@ -255,6 +287,10 @@ void system_pre_init(void)
 		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_INFO, 0);
 		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_EXCEPTION, 0);
 	}
+#endif
+
+#ifdef CONFIG_PVD
+	configure_pvd();
 #endif
 }
 

@@ -229,6 +229,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_PB1_USART3		BIT(18)
 #define STM32_RCC_PB1_USART4		BIT(19)
 #define STM32_RCC_PB1_USART5		BIT(20)
+#define STM32_RCC_PB1_PWREN		BIT(28)
 #define STM32_RCC_PB2_SPI1		BIT(12)
 /* Reset causes definitions */
 

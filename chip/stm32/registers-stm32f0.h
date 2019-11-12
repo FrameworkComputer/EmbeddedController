@@ -277,6 +277,11 @@
 
 
 /* --- Power / Reset / Clocks --- */
+#define STM32_PWR_CR                REG32(STM32_PWR_BASE + 0x00)
+#define STM32_PWD_PVD_LS_MASK       (0x07 << 5)
+#define STM32_PWD_PVD_LS(n)         ((n & 0x07) << 5)
+#define STM32_PWR_PVDE              BIT(4)
+
 #define STM32_PWR_CSR               REG32(STM32_PWR_BASE + 0x04)
 
 #define STM32_PWR_CSR_EWUP1         BIT(8)
@@ -382,8 +387,8 @@
 #define  RESET_CAUSE_OTHER              0xfe000000
 #define  RESET_CAUSE_RMVF               0x01000000
 /* Power cause in PWR CSR register */
-#define STM32_PWR_RESET_CAUSE STM32_PWR_CSR
-#define STM32_PWR_RESET_CAUSE_CLR STM32_PWR_CR
+#define STM32_PWR_RESET_CAUSE           STM32_PWR_CSR
+#define STM32_PWR_RESET_CAUSE_CLR       STM32_PWR_CR
 #define  RESET_CAUSE_SBF                0x00000002
 #define  RESET_CAUSE_SBF_CLR            0x00000004
 
@@ -528,8 +533,9 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_EXTI_SWIER            REG32(STM32_EXTI_BASE + 0x10)
 #define STM32_EXTI_PR               REG32(STM32_EXTI_BASE + 0x14)
 
-#define EXTI_RTC_ALR_EVENT		BIT(17)
-#define EXTI_COMP2_EVENT		BIT(22)
+#define EXTI_PVD_EVENT              BIT(16)
+#define EXTI_RTC_ALR_EVENT          BIT(17)
+#define EXTI_COMP2_EVENT            BIT(22)
 
 /* --- ADC --- */
 #define STM32_ADC_ISR              REG32(STM32_ADC1_BASE + 0x00)

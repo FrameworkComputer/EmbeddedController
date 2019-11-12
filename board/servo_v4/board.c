@@ -410,6 +410,15 @@ int board_get_version(void)
 	return ver;
 }
 
+void pvd_interrupt(void) {
+	/* Clear Pending Register */
+	STM32_EXTI_PR = EXTI_PVD_EVENT;
+	/* Handle recovery by rebooting the system */
+	system_reset(0);
+}
+
+DECLARE_IRQ(STM32_IRQ_PVD, pvd_interrupt, HOOK_PRIO_FIRST);
+
 static void board_init(void)
 {
 	/* USB to serial queues */
