@@ -28,6 +28,7 @@ CFLAGS += -I../../../../third_party/cryptoc/include
 CFLAGS += -I../../board/cr50
 CFLAGS += -I../../chip/g
 CFLAGS += -I../../chip/g/dcrypto
+CFLAGS += -I../../fuzz
 CFLAGS += -I../../include
 CFLAGS += -I..
 CFLAGS += -I../..
