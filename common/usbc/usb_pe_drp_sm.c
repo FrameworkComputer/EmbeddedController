@@ -105,6 +105,8 @@
 #define PE_FLAGS_WAITING_DR_SWAP             BIT(24)
 /* FLAG to track if port partner is dualrole capable */
 #define PE_FLAGS_PORT_PARTNER_IS_DUALROLE    BIT(25)
+/* FLAG is set when an AMS is initiated locally. ie. AP requested a PR_SWAP */
+#define PE_FLAGS_LOCALLY_INITIATED_AMS       BIT(26)
 
 /* 6.7.3 Hard Reset Counter */
 #define N_HARD_RESET_COUNT 2
@@ -304,9 +306,6 @@ static struct policy_engine {
 	enum pd_power_role power_role;
 	/* current port data role (DFP or UFP) */
 	enum pd_data_role data_role;
-	/* saved data and power roles while communicating with a cable plug */
-	enum pd_data_role saved_data_role;
-	enum pd_power_role saved_power_role;
 	/* state machine flags */
 	uint32_t flags;
 	/* Device Policy Manager Request */
@@ -1163,12 +1162,6 @@ static void pe_src_send_capabilities_entry(int port)
 
 	/* Stop sender response timer */
 	pe[port].sender_response_timer = TIMER_DISABLED;
-
-	/*
-	 * Clear PE_FLAGS_INTERRUPTIBLE_AMS flag if it was set
-	 * in the src_discovery state
-	 */
-	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 }
 
 static void pe_src_send_capabilities_run(int port)
@@ -1404,6 +1397,8 @@ static void pe_src_ready_entry(int port)
 {
 	print_current_state(port);
 
+	PE_CLR_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
+
 	/*
 	 * If the transition into PE_SRC_Ready is the result of Protocol Error
 	 * that has not caused a Soft Reset (see Section 8.3.3.4.1) then the
@@ -1413,7 +1408,6 @@ static void pe_src_ready_entry(int port)
 	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 	} else {
-		PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 		prl_end_ams(port);
 	}
 
@@ -1491,6 +1485,8 @@ static void pe_src_ready_run(int port)
 			pe[port].vdm_cnt = 1;
 			set_state_pe(port, PE_VDM_REQUEST);
 		}
+
+		PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 		return;
 	}
 
@@ -1595,8 +1591,9 @@ static void pe_src_ready_exit(int port)
 	 * notify the Protocol Layer that the first Message in an AMS will
 	 * follow.
 	 */
-	if (!PE_CHK_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS))
+	if (PE_CHK_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS))
 		prl_start_ams(port);
+
 }
 
 /**
@@ -2089,7 +2086,7 @@ static void pe_snk_ready_entry(int port)
 {
 	print_current_state(port);
 
-	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
+	PE_CLR_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 	prl_end_ams(port);
 
 	/*
@@ -2187,6 +2184,7 @@ static void pe_snk_ready_run(int port)
 			PE_CLR_DPM_REQUEST(port, DPM_REQUEST_GET_SNK_CAPS);
 			set_state_pe(port, PE_DR_SNK_GET_SINK_CAP);
 		}
+		PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 		return;
 	}
 
@@ -2285,7 +2283,11 @@ static void pe_snk_ready_run(int port)
 
 static void pe_snk_ready_exit(int port)
 {
-	if (!PE_CHK_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS))
+	/*
+	 * If the Sink is initiating an AMS then notify the Protocol Layer
+	 * that the first Message in the AMS will follow
+	 */
+	if (PE_CHK_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS))
 		prl_start_ams(port);
 }
 
@@ -2962,7 +2964,7 @@ static void pe_prs_src_snk_wait_source_on_run(int port)
 	int cnt;
 	int ext;
 
-	if (pe[port].ps_source_timer != TIMER_DISABLED &&
+	if (pe[port].ps_source_timer == TIMER_DISABLED &&
 			PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
@@ -2975,7 +2977,8 @@ static void pe_prs_src_snk_wait_source_on_run(int port)
 	 * Transition to PE_SNK_Startup when:
 	 *   1) An PS_RDY Message is received.
 	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+	if (pe[port].ps_source_timer != TIMER_DISABLED &&
+			PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
 		type = PD_HEADER_TYPE(emsg[port].header);
@@ -3494,6 +3497,11 @@ static void pe_handle_custom_vdm_request_run(int port)
 	}
 }
 
+static void pe_handle_custom_vdm_request_exit(int port)
+{
+	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
+}
+
 /**
  * PE_DO_PORT_Discovery
  *
@@ -3635,15 +3643,7 @@ static void pe_vdm_request_entry(int port)
 		emsg[port].len = pe[port].vdm_cnt * 4;
 	}
 
-	if (pe[port].partner_type) {
-		/* Save power and data roles */
-		pe[port].saved_power_role = tc_get_power_role(port);
-		pe[port].saved_data_role = tc_get_data_role(port);
-
-		prl_send_data_msg(port, TCPC_TX_SOP_PRIME, PD_DATA_VENDOR_DEF);
-	} else {
-		prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
-	}
+	prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
 
 	pe[port].vdm_response_timer = TIMER_DISABLED;
 }
@@ -3838,6 +3838,9 @@ static void pe_vdm_response_entry(int port)
 
 	print_current_state(port);
 
+	/* This is an Interruptible AMS */
+	PE_SET_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
+
 	/* Get the message */
 	payload = (uint32_t *)emsg[port].buf;
 	vdo_cmd = PD_VDO_CMD(payload[0]);
@@ -3950,6 +3953,11 @@ static void pe_vdm_response_run(int port)
 		else
 			set_state_pe(port, PE_SNK_READY);
 	}
+}
+
+static void pe_vdm_response_exit(int port)
+{
+	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 }
 
 /*
@@ -5191,10 +5199,12 @@ static const struct usb_state pe_states[] = {
 	[PE_VDM_RESPONSE] = {
 		.entry = pe_vdm_response_entry,
 		.run   = pe_vdm_response_run,
+		.exit  = pe_vdm_response_exit,
 	},
 	[PE_HANDLE_CUSTOM_VDM_REQUEST] = {
 		.entry = pe_handle_custom_vdm_request_entry,
-		.run   = pe_handle_custom_vdm_request_run
+		.run   = pe_handle_custom_vdm_request_run,
+		.exit  = pe_handle_custom_vdm_request_exit,
 	},
 	[PE_WAIT_FOR_ERROR_RECOVERY] = {
 		.entry = pe_wait_for_error_recovery_entry,
