@@ -150,7 +150,7 @@ static int lis2dw12_config_interrupt(const struct motion_sensor_t *s)
 		return ret;
 #endif /* CONFIG_ACCEL_FIFO */
 
-#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+#ifdef CONFIG_GESTURE_SENSOR_DOUBLE_TAP
 	/*
 	 * Configure D-TAP event detection on 3 axis.
 	 * For more details please refer to AN5038.
@@ -186,7 +186,7 @@ static int lis2dw12_config_interrupt(const struct motion_sensor_t *s)
 	ret = st_write_data_with_mask(s, LIS2DW12_INT1_TAP_ADDR,
 				      LIS2DW12_INT1_DTAP_MASK,
 				      LIS2DW12_EN_BIT);
-#endif /* CONFIG_GESTURE_SENSOR_BATTERY_TAP */
+#endif /* CONFIG_GESTURE_SENSOR_DOUBLE_TAP */
 	return ret;
 }
 
@@ -221,7 +221,7 @@ static int lis2dw12_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		return EC_ERROR_NOT_HANDLED;
 	}
 
-#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+#ifdef CONFIG_GESTURE_SENSOR_DOUBLE_TAP
 	{
 		int status = 0;
 
@@ -231,7 +231,7 @@ static int lis2dw12_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		if (status & LIS2DW12_DOUBLE_TAP)
 			*event |= CONFIG_GESTURE_TAP_EVENT;
 	}
-#endif /* CONFIG_GESTURE_SENSOR_BATTERY_TAP */
+#endif /* CONFIG_GESTURE_SENSOR_DOUBLE_TAP */
 
 #ifdef CONFIG_ACCEL_FIFO
 	{
