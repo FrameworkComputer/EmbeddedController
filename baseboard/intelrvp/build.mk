@@ -22,7 +22,7 @@ baseboard-$(CONFIG_BC12_DETECT_MAX14637)+=bc12.o
 baseboard-$(CONFIG_USB_MUX_VIRTUAL)+=usb_mux.o
 
 #USB Retimer specific files
-baseboard-$(CONFIG_USB_PD_RETIMER_INTEL_BB)+=retimer.o
+baseboard-$(CONFIG_USBC_RETIMER_INTEL_BB)+=retimer.o
 
 #VBUS detection specific files
 baseboard-$(CONFIG_USB_PD_VBUS_DETECT_GPIO)+=vbus.o

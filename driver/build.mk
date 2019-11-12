@@ -138,7 +138,7 @@ driver-$(CONFIG_USB_PD_TCPM_TUSB422)+=tcpm/tusb422.o
 driver-$(CONFIG_USB_PD_TCPM_NCT38XX)+=tcpm/nct38xx.o
 
 # Type-C Retimer drivers
-driver-$(CONFIG_USB_PD_RETIMER_INTEL_BB)+=retimer/bb_retimer.o
+driver-$(CONFIG_USBC_RETIMER_INTEL_BB)+=retimer/bb_retimer.o
 
 # USB mux high-level driver
 driver-$(CONFIG_USBC_SS_MUX)+=usb_mux/usb_mux.o

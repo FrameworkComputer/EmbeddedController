@@ -3794,14 +3794,23 @@
 #undef CONFIG_USB_PD_TCPM_TUSB422
 
 /*
- * Type-C multi-protocol retimer is present.
+ * Type-C retimer mux configuration tends to be set on a specific
+ * driver's need basis.  After including the board/baseboard.h files
+ * the drivers will be checked and if one of these are needed it will
+ * automatically be included.  This does not stop a board/basebord.h
+ * configration from defining these as well.
  */
-#undef CONFIG_USB_PD_RETIMER
+
+/* Type-C retimer used with virtual mux */
+#undef CONFIG_USBC_VIRTUAL_MUX_RETIMER
+
+/* Type-C retimer used with real mux */
+#undef CONFIG_USBC_MUX_RETIMER
 
 /*
- * Type-C multi-protocol retimer to be used in on-board applications.
+ * Type-C retimer drivers to be used in on-board applications.
  */
-#undef CONFIG_USB_PD_RETIMER_INTEL_BB
+#undef CONFIG_USBC_RETIMER_INTEL_BB
 
 /*
  * Adds an EC console command to erase the ANX7447 OCM flash.
@@ -4680,9 +4689,13 @@
 #endif
 
 /*****************************************************************************/
-/* Define derived config options for Retimer chips */
-#ifdef CONFIG_USB_PD_RETIMER_INTEL_BB
-#define CONFIG_USB_PD_RETIMER
+/*
+ * Define derived config options for Retimer chips.  There are
+ * for convenience. Any retimer driver that also needs USBC MUX Retimers
+ * will not have to include it in their own board/baseboard.h file.
+ */
+#ifdef CONFIG_USBC_RETIMER_INTEL_BB
+#define CONFIG_USBC_VIRTUAL_MUX_RETIMER
 #endif
 
 /*****************************************************************************/

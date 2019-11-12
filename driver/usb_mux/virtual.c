@@ -28,21 +28,19 @@ static inline void virtual_mux_update_state(int port, mux_state_t mux_state)
 {
 	if (virtual_mux_state[port] != mux_state) {
 		virtual_mux_state[port] = mux_state;
-#ifdef CONFIG_USB_PD_RETIMER
-		if (retimer_set_state(port, mux_state))
+		if (IS_ENABLED(CONFIG_USBC_VIRTUAL_MUX_RETIMER) &&
+		    retimer_set_state(port, mux_state))
 			return;
-#endif
 		host_set_single_event(EC_HOST_EVENT_USB_MUX);
 	}
 }
 
 static int virtual_init(int port)
 {
-#ifdef CONFIG_USB_PD_RETIMER
-	return retimer_init(port);
-#else
-	return EC_SUCCESS;
-#endif
+	if (IS_ENABLED(CONFIG_USBC_VIRTUAL_MUX_RETIMER))
+		return retimer_init(port);
+	else
+		return EC_SUCCESS;
 }
 
 /*
@@ -86,7 +84,7 @@ const struct usb_mux_driver virtual_usb_mux_driver = {
 	.init = virtual_init,
 	.set = virtual_set_mux,
 	.get = virtual_get_mux,
-#ifdef CONFIG_USB_PD_RETIMER
+#ifdef CONFIG_USBC_VIRTUAL_MUX_RETIMER
 	.enter_low_power_mode = retimer_low_power_mode,
 #endif
 };

@@ -56,7 +56,7 @@
 
 
 /* Config BB retimer */
-#define CONFIG_USB_PD_RETIMER_INTEL_BB
+#define CONFIG_USBC_RETIMER_INTEL_BB
 
 /* Thermal configs */
 

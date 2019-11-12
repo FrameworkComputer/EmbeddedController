@@ -2278,7 +2278,7 @@ static inline uint8_t board_get_usb_pd_port_count(void)
 #endif /* CONFIG_USB_POWER_DELIVERY */
 #endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
 
-#ifdef CONFIG_USB_PD_RETIMER
+#ifdef CONFIG_USBC_VIRTUAL_MUX_RETIMER
 /**
  * Return true if specified PD port partner is UFP.
  *

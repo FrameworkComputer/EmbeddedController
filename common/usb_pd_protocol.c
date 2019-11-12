@@ -393,7 +393,7 @@ int pd_is_vbus_present(int port)
 #endif
 }
 
-#ifdef CONFIG_USB_PD_RETIMER
+#ifdef CONFIG_USBC_VIRTUAL_MUX_RETIMER
 /**
  * This function checks the current CC status of the port partner
  * and returns true if the attached partner is UFP.

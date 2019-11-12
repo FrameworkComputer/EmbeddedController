@@ -49,7 +49,7 @@ struct bb_retimer {
 
 /*
  * USB Retimers in system, ordered by PD port #, defined at board-level
- * CONFIG_USB_PD_RETIMER_INTEL_BB need to be defind at board-level.
+ * CONFIG_USBC_RETIMER_INTEL_BB need to be defind at board-level.
  */
 extern struct bb_retimer bb_retimers[];
 
