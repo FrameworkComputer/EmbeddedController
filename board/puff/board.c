@@ -8,6 +8,8 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "button.h"
+#include "charge_manager.h"
+#include "charge_state_v2.h"
 #include "common.h"
 #include "cros_board_info.h"
 #include "driver/ina3221.h"
@@ -53,6 +55,38 @@ static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if (signal == GPIO_USB_C0_TCPC_INT_ODL)
 		schedule_deferred_pd_interrupt(0);
+}
+
+uint16_t tcpc_get_alert_status(void)
+{
+	uint16_t status = 0;
+	int level;
+
+	/*
+	 * Check which port has the ALERT line set and ignore if that TCPC has
+	 * its reset line active.
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL)) {
+		level = !!(tcpc_config[USB_PD_PORT_TCPC_0].flags &
+			   TCPC_FLAGS_RESET_ACTIVE_HIGH);
+		if (gpio_get_level(GPIO_USB_C0_TCPC_RST) != level)
+			status |= PD_STATUS_TCPC_ALERT_0;
+	}
+
+	return status;
+}
+
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+			    int max_ma, int charge_mv)
+{
+	charge_set_input_current_limit(MAX(charge_ma,
+					   CONFIG_CHARGER_INPUT_CURRENT),
+				       charge_mv);
+}
+
+int charge_set_input_current_limit(int ma, int mv)
+{
+	return EC_SUCCESS;
 }
 
 #include "port-sm.c"
@@ -137,8 +171,21 @@ const struct pwm_t pwm_channels[] = {
 /******************************************************************************/
 /* USB-C TCPC Configuration */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	[USB_PD_PORT_TCPC_0] = {
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_TCPC0,
+			.addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
+		},
+		.drv = &anx7447_tcpm_drv,
+		.flags = TCPC_FLAGS_RESET_ACTIVE_HIGH,
+	},
 };
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	[USB_PD_PORT_TCPC_0] = {
+		.driver = &anx7447_usb_mux_driver,
+		.hpd_update = &anx7447_tcpc_update_hpd_status,
+	},
 };
 
 /******************************************************************************/
@@ -289,6 +336,11 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 /******************************************************************************/
 /* USB-C PPC Configuration */
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	[USB_PD_PORT_TCPC_0] = {
+		.i2c_port = I2C_PORT_PPC0,
+		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+		.drv = &sn5s330_drv
+	},
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
@@ -298,14 +350,14 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 };
 
 /* Power Delivery and charging functions */
-void baseboard_tcpc_init(void)
+static void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
 	if (!system_jumped_to_this_image())
 		board_reset_pd_mcu();
 
 }
-DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
 int64_t get_time_dsw_pwrok(void)
 {
@@ -313,30 +365,23 @@ int64_t get_time_dsw_pwrok(void)
 	return -20 * MSEC;
 }
 
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-
-	return status;
-}
-
 void board_reset_pd_mcu(void)
 {
+	/* Maybe should only reset if we are powered off barreljack */
+	int level = !!(tcpc_config[USB_PD_PORT_TCPC_0].flags &
+		       TCPC_FLAGS_RESET_ACTIVE_HIGH);
+
+	gpio_set_level(GPIO_USB_C0_TCPC_RST, level);
+	msleep(BOARD_TCPC_C0_RESET_HOLD_DELAY);
+	gpio_set_level(GPIO_USB_C0_TCPC_RST, !level);
+	if (BOARD_TCPC_C0_RESET_POST_DELAY)
+		msleep(BOARD_TCPC_C0_RESET_POST_DELAY);
 }
 
+/* TODO: set the active charge port */
 int board_set_active_charge_port(int port)
 {
 	return EC_SUCCESS;
-}
-
-int ppc_get_alert_status(int port)
-{
-	return 0;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
-{
 }
 
 void board_overcurrent_event(int port, int is_overcurrented)
