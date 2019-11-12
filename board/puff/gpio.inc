@@ -71,6 +71,7 @@ GPIO(USB_A0_OC_ODL,            PIN(E, 4), GPIO_ODR_HIGH)
 GPIO(USB_A1_OC_ODL,            PIN(A, 2), GPIO_ODR_HIGH)
 GPIO(USB_A2_OC_ODL,            PIN(F, 5), GPIO_ODR_HIGH)
 GPIO(USB_A3_OC_ODL,            PIN(0, 3), GPIO_ODR_HIGH)
+GPIO(USB_A4_OC_ODL,            PIN(B, 0), GPIO_ODR_HIGH)
 
 /* USB type C */
 GPIO(USB_C0_TCPC_RST,          PIN(9, 7), GPIO_OUT_LOW)
