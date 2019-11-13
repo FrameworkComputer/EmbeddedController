@@ -21,13 +21,6 @@
 #define CONFIG_CRC8
 #define CONFIG_CROS_BOARD_INFO
 #define CONFIG_HIBERNATE_PSL
-#define CONFIG_LED_COMMON
-/* TODO(b/140557020): Define CONFIG_LED_ONOFF_STATES and
- * CONFIG_LED_ONOFF_STATES_BAT_LOW when CONFIG_CHARGER is defined.
- */
-#define CONFIG_LED_PWM
-/* Although there are 2 LEDs, they are both controlled by the same lines. */
-#define CONFIG_LED_PWM_COUNT 1
 #define CONFIG_PWM
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VSTORE
@@ -77,6 +70,12 @@
 #define CONFIG_BATTERY_FUEL_GAUGE
 /* TODO: b/143809318 enable cut off */
 /* #define CONFIG_BATTERY_CUT_OFF */
+
+/* Common LED defines */
+#define CONFIG_LED_COMMON
+#define CONFIG_LED_PWM
+/* Although there are 2 LEDs, they are both controlled by the same lines. */
+#define CONFIG_LED_PWM_COUNT 1
 
 /* USB Type C and USB PD defines */
 /* Enable the new USB-C PD stack */
