@@ -11,7 +11,7 @@
 #include "led_pwm.h"
 
 const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED,
+	EC_LED_ID_POWER_LED,
 };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -49,7 +49,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	enum pwm_led_id pwm_id;
 
 	/* Convert ec_led_id to pwm_led_id. */
-	if (led_id == EC_LED_ID_BATTERY_LED)
+	if (led_id == EC_LED_ID_POWER_LED)
 		pwm_id = PWM_LED0;
 	else
 		return EC_ERROR_UNKNOWN;
