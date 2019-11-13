@@ -496,6 +496,9 @@
 /* Perform a battery cut-off when we reach the battery critical level */
 #undef CONFIG_BATTERY_CRITICAL_SHUTDOWN_CUT_OFF
 
+/* If the battery is too hot or too cold, stop charging */
+#undef CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
+
 /*
  * Support battery cut-off as host command and console command.
  *

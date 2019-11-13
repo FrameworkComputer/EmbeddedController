@@ -1476,6 +1476,25 @@ const struct batt_params *charger_current_battery_params(void)
 	return &curr.batt;
 }
 
+#ifdef CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
+/* Determine if the battery is outside of allowable temperature range */
+static int battery_outside_charging_temperature(void)
+{
+	const struct battery_info *batt_info = battery_get_info();
+	/* battery temp in 0.1 deg C */
+	int batt_temp_c = DECI_KELVIN_TO_CELSIUS(curr.batt.temperature);
+
+	if (curr.batt.flags & BATT_FLAG_BAD_TEMPERATURE)
+		return 0;
+
+	if ((batt_temp_c > batt_info->charging_max_c) ||
+		 (batt_temp_c < batt_info->charging_min_c)) {
+		return 1;
+	}
+	return 0;
+}
+#endif
+
 /*****************************************************************************/
 /* Hooks */
 void charger_init(void)
@@ -1806,6 +1825,16 @@ wait_for_it:
 			sleep_usec = charger_profile_override(&curr);
 			if (sleep_usec < 0)
 				problem(PR_CUSTOM, sleep_usec);
+		}
+#endif
+
+#ifdef CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
+		if (battery_outside_charging_temperature()) {
+			curr.requested_current = 0;
+			curr.requested_voltage = 0;
+			curr.batt.flags &= ~BATT_FLAG_WANT_CHARGE;
+			if (curr.state != ST_DISCHARGE)
+				curr.state = ST_IDLE;
 		}
 #endif
 
