@@ -17,6 +17,14 @@
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
+#ifdef CONFIG_BRINGUP
+#define GPIO_SET_LEVEL(signal, value) \
+	gpio_set_level_verbose(CC_CHIPSET, signal, value)
+#else
+#define GPIO_SET_LEVEL(signal, value) \
+	gpio_set_level(signal, value)
+#endif
+
 /* The wait time is ~150 msec, allow for safety margin. */
 #define IN_PCH_SLP_SUS_WAIT_TIME_USEC	(250 * MSEC)
 
@@ -71,19 +79,19 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	report_ap_reset(reason);
 
 	/* Turn off RMSRST_L  to meet tPCH12 */
-	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
+	GPIO_SET_LEVEL(GPIO_PCH_RSMRST_L, 0);
 
 	/* Turn off DSW_PWROK to meet tPCH14 */
-	gpio_set_level(GPIO_PCH_DSW_PWROK, 0);
+	GPIO_SET_LEVEL(GPIO_PCH_DSW_PWROK, 0);
 
 	/* Turn off DSW load switch. */
-	gpio_set_level(GPIO_EN_PP3300_A, 0);
+	GPIO_SET_LEVEL(GPIO_EN_PP3300_A, 0);
 
 	/* Turn off PP5000 rail */
 #ifdef CONFIG_POWER_PP5000_CONTROL
 	power_5v_enable(task_get_current(), 0);
 #else
-	gpio_set_level(GPIO_EN_PP5000, 0);
+	GPIO_SET_LEVEL(GPIO_EN_PP5000, 0);
 #endif
 
 	/*
@@ -148,7 +156,7 @@ enum power_state power_handle_state(enum power_state state)
 		 * stable and the DSW_PWROK signal being passed to the PCH.
 		 */
 		msleep(10);
-		gpio_set_level(GPIO_PCH_DSW_PWROK, dswpwrok_in);
+		GPIO_SET_LEVEL(GPIO_PCH_DSW_PWROK, dswpwrok_in);
 		dswpwrok_out = dswpwrok_in;
 	}
 
@@ -171,7 +179,7 @@ enum power_state power_handle_state(enum power_state state)
 		 * be done using chipset_pre_init_callback()
 		 */
 		/* Turn on the PP3300_DSW rail. */
-		gpio_set_level(GPIO_EN_PP3300_A, 1);
+		GPIO_SET_LEVEL(GPIO_EN_PP3300_A, 1);
 		if (power_wait_signals(IN_PGOOD_ALL_CORE))
 			break;
 
@@ -182,7 +190,7 @@ enum power_state power_handle_state(enum power_state state)
 		 * stable and the DSW_PWROK signal being passed to the PCH.
 		 */
 		msleep(10);
-		gpio_set_level(GPIO_PCH_DSW_PWROK, dswpwrok_in);
+		GPIO_SET_LEVEL(GPIO_PCH_DSW_PWROK, dswpwrok_in);
 		CPRINTS("Pass thru GPIO_DSW_PWROK: %d", dswpwrok_in);
 		dswpwrok_out = dswpwrok_in;
 
@@ -219,7 +227,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (all_sys_pwrgd_in != all_sys_pwrgd_out) {
 			if (all_sys_pwrgd_in)
 				board_icl_tgl_all_sys_pwrgood();
-			gpio_set_level(GPIO_PCH_SYS_PWROK, all_sys_pwrgd_in);
+			GPIO_SET_LEVEL(GPIO_PCH_SYS_PWROK, all_sys_pwrgd_in);
 		}
 		break;
 
