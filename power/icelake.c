@@ -88,11 +88,10 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	GPIO_SET_LEVEL(GPIO_EN_PP3300_A, 0);
 
 	/* Turn off PP5000 rail */
-#ifdef CONFIG_POWER_PP5000_CONTROL
-	power_5v_enable(task_get_current(), 0);
-#else
-	GPIO_SET_LEVEL(GPIO_EN_PP5000, 0);
-#endif
+	if (IS_ENABLED(CONFIG_POWER_PP5000_CONTROL))
+		power_5v_enable(task_get_current(), 0);
+	else
+		GPIO_SET_LEVEL(GPIO_EN_PP5000, 0);
 
 	/*
 	 * TODO(b/111810925): Replace this wait with
@@ -141,6 +140,15 @@ __overridable void board_icl_tgl_all_sys_pwrgood(void)
 
 }
 
+static void enable_pp5000_rail(void)
+{
+	if (IS_ENABLED(CONFIG_POWER_PP5000_CONTROL))
+		power_5v_enable(task_get_current(), 1);
+	else
+		GPIO_SET_LEVEL(GPIO_EN_PP5000, 1);
+
+}
+
 enum power_state power_handle_state(enum power_state state)
 {
 	int dswpwrok_in = gpio_get_level(GPIO_PG_EC_DSW_PWROK);
@@ -165,12 +173,9 @@ enum power_state power_handle_state(enum power_state state)
 	switch (state) {
 
 	case POWER_G3S5:
-		/* Turn on PP5000 rail */
-#ifdef CONFIG_POWER_PP5000_CONTROL
-		power_5v_enable(task_get_current(), 1);
-#else
-		gpio_set_level(GPIO_EN_PP5000, 1);
-#endif
+		/* Default behavior - turn on PP5000 rail first */
+		if (!IS_ENABLED(CONFIG_CHIPSET_PP3300_RAIL_FIRST))
+			enable_pp5000_rail();
 
 		/*
 		 * TODO(b/111121615): Should modify this to wait until the
@@ -193,6 +198,10 @@ enum power_state power_handle_state(enum power_state state)
 		GPIO_SET_LEVEL(GPIO_PCH_DSW_PWROK, dswpwrok_in);
 		CPRINTS("Pass thru GPIO_DSW_PWROK: %d", dswpwrok_in);
 		dswpwrok_out = dswpwrok_in;
+
+		/* Turn on PP5000 after PP3300 and DSW PWROK when enabled */
+		if (IS_ENABLED(CONFIG_CHIPSET_PP3300_RAIL_FIRST))
+			enable_pp5000_rail();
 
 		/*
 		 * Now wait for SLP_SUS_L to go high based on tPCH32. If this

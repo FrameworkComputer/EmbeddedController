@@ -1106,6 +1106,13 @@
 #undef CONFIG_CHIPSET_RESET_HOOK
 
 /*
+ * Enable turning on PP3300_A rail before PP5000_A rail on the Ice Lake
+ * and Tiger Lake chipsets. Enable this option if there is leakage from PP5000_A
+ * resources into PP3300_A resources.
+ */
+#undef CONFIG_CHIPSET_PP3300_RAIL_FIRST
+
+/*
  * Enable if chipset requires delay between power signals going high
  * and deasserting RSMRST to PCH.
  */
