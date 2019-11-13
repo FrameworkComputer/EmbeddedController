@@ -22,6 +22,8 @@ CMD_SINGLE = 3
 # Hash modes
 MODE_SHA1 = 0
 MODE_SHA256 = 1
+MODE_SHA384 = 2
+MODE_SHA512 = 3
 
 # A standard empty response to HASH extended commands.
 EMPTY_RESPONSE = ''.join('%c' % x for x in (0x80, 0x01, 0x00, 0x00, 0x00, 0x0c,
@@ -30,8 +32,13 @@ test_inputs = (
   # SHA mode  cmd mode handle                text
   (MODE_SHA1, 'single', 0, ''),
   (MODE_SHA256, 'single', 0, ''),
+  (MODE_SHA384, 'single', 0, ''),
+  (MODE_SHA512, 'single', 0, ''),
+
   (MODE_SHA1, 'single', 0, 'anything really will work here'),
   (MODE_SHA256, 'single', 0, 'some more text, this time for sha256'),
+  (MODE_SHA384, 'single', 0, 'some more text, this time for sha384'),
+  (MODE_SHA512, 'single', 0, 'some more text, this time for sha512'),
   (MODE_SHA256, 'start',  1, 'some more text, this time for sha256'),
   (MODE_SHA256, 'cont',   1, 'some more text, this time for sha256'),
   (MODE_SHA256, 'start',  2, 'this could be anything, we just need to'),
@@ -44,6 +51,30 @@ test_inputs = (
   (MODE_SHA1, 'cont',   3, 'with two active sha256 calculations'),
   (MODE_SHA1, 'finish', 3, 'this should be enough'),
   (MODE_SHA256, 'finish', 2, 'it does not really matter what'),
+  (MODE_SHA384, 'start',  1, 'some more text, this time for sha384'),
+  (MODE_SHA384, 'cont',   1, 'some more text, this time for sha384'),
+  (MODE_SHA384, 'start',  2, 'this could be anything, we just need to'),
+  (MODE_SHA512, 'single',  3, 'interleave a SHA512 single calculation'),
+  (MODE_SHA384, 'single',  3, 'interleave a SHA384 single calculation'),
+  (MODE_SHA512, 'start',  3, 'let\'s interleave a sha512 calculation'),
+  (MODE_SHA384, 'cont',   2, 'fill up a second context with something'),
+  (MODE_SHA384, 'cont',   1, 'let\'s feed some more into context 1'),
+  (MODE_SHA384, 'finish', 1, 'some more text, this time for sha384'),
+  (MODE_SHA512, 'cont',   3, 'with two active sha384 calculations'),
+  (MODE_SHA512, 'finish', 3, 'this should be enough'),
+  (MODE_SHA384, 'finish', 2, 'it does not really matter what'),
+  (MODE_SHA512, 'start',  1, 'some more text, this time for sha512'),
+  (MODE_SHA512, 'cont',   1, 'some more text, this time for sha512'),
+  (MODE_SHA512, 'start',  2, 'this could be anything, we just need to'),
+  (MODE_SHA256, 'single',  3, 'interleave a SHA256 single calculation'),
+  (MODE_SHA512, 'single',  3, 'interleave a SHA512 single calculation'),
+  (MODE_SHA256, 'start',  3, 'let\'s interleave a sha256 calculation'),
+  (MODE_SHA512, 'cont',   2, 'fill up a second context with something'),
+  (MODE_SHA512, 'cont',   1, 'let\'s feed some more into context 1'),
+  (MODE_SHA512, 'finish', 1, 'some more text, this time for sha512'),
+  (MODE_SHA256, 'cont',   3, 'with two active sha512 calculations'),
+  (MODE_SHA256, 'finish', 3, 'this should be enough'),
+  (MODE_SHA512, 'finish', 2, 'it does not really matter what'),
 )
 def hash_test(tpm):
   """Exercise multiple hash threads simultaneously.
@@ -69,7 +100,9 @@ def hash_test(tpm):
 
   function_map = {
     MODE_SHA1: ('sha1', hashlib.sha1),
-    MODE_SHA256: ('sha256', hashlib.sha256)
+    MODE_SHA256: ('sha256', hashlib.sha256),
+    MODE_SHA384: ('sha384', hashlib.sha384),
+    MODE_SHA512: ('sha512', hashlib.sha512)
   }
 
   cmd_map = {
