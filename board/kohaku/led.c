@@ -53,14 +53,14 @@ void led_set_color_power(enum ec_led_colors color)
 {
 	/* Don't set led if led_auto_control is disabled. */
 	if (!led_auto_control_is_enabled(EC_LED_ID_POWER_LED) ||
-                !led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
+		!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
 		return;
-        }
+	}
 
 	if (color == EC_LED_COLOR_BLUE)
 	{
-                gpio_set_level(GPIO_BAT_LED_RED_L, LED_OFF_LVL);
-                gpio_set_level(GPIO_BAT_LED_GREEN_L, LED_OFF_LVL);
+		gpio_set_level(GPIO_BAT_LED_RED_L, LED_OFF_LVL);
+		gpio_set_level(GPIO_BAT_LED_GREEN_L, LED_OFF_LVL);
 		gpio_set_level(GPIO_PWR_LED_BLUE_L, LED_ON_LVL);
 	} else {
 		/* LED_OFF and unsupported colors */
@@ -72,9 +72,9 @@ void led_set_color_battery(enum ec_led_colors color)
 {
 	/* Don't set led if led_auto_control is disabled. */
 	if (!led_auto_control_is_enabled(EC_LED_ID_POWER_LED) ||
-                !led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
+		!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
 		return;
-        }
+	}
 
 	/* Battery leds must be turn off when blue led is on
 	 * because kohaku has 3-in-1 led.
@@ -82,7 +82,7 @@ void led_set_color_battery(enum ec_led_colors color)
 	if(!gpio_get_level(GPIO_PWR_LED_BLUE_L))
 	{
 		gpio_set_level(GPIO_BAT_LED_RED_L, LED_OFF_LVL);
-                gpio_set_level(GPIO_BAT_LED_GREEN_L, LED_OFF_LVL);
+		gpio_set_level(GPIO_BAT_LED_GREEN_L, LED_OFF_LVL);
 		return;
 	}
 
