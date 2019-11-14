@@ -18,6 +18,9 @@
 /* Stack space is limited, so put the buffer somewhere else */
 static uint8_t buf[PI3DPX1207_NUM_REGISTERS];
 
+/**
+ * Local utility functions
+ */
 static int pi3dpx1207_i2c_write(int i2c_port,
 				uint16_t addr_flags,
 				uint8_t offset,
@@ -60,6 +63,32 @@ static int pi3dpx1207_i2c_write(int i2c_port,
 	return rv;
 }
 
+static void pi3dpx1207_shutoff_power(int port)
+{
+	const int gpio_enable		= usb_retimers[port].gpio_enable;
+	const int gpio_dp_enable	= usb_retimers[port].gpio_dp_enable;
+
+	gpio_or_ioex_set_level(gpio_enable, 0);
+	gpio_or_ioex_set_level(gpio_dp_enable, 0);
+}
+
+/**
+ * Driver interface code
+ */
+static int pi3dpx1207_init(int port)
+{
+	const int gpio_enable		= usb_retimers[port].gpio_enable;
+
+	gpio_or_ioex_set_level(gpio_enable, 1);
+	return EC_SUCCESS;
+}
+
+static int pi3dpx1207_enter_low_power_mode(int port)
+{
+	pi3dpx1207_shutoff_power(port);
+	return EC_SUCCESS;
+}
+
 static int pi3dpx1207_set_mux(int port, mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
@@ -98,8 +127,7 @@ static int pi3dpx1207_set_mux(int port, mux_state_t mux_state)
 	}
 	/* Nothing enabled, power down the retimer */
 	else {
-		gpio_or_ioex_set_level(gpio_enable, 0);
-		gpio_or_ioex_set_level(gpio_dp_enable, 0);
+		pi3dpx1207_shutoff_power(port);
 		return EC_SUCCESS;
 	}
 
@@ -111,5 +139,7 @@ static int pi3dpx1207_set_mux(int port, mux_state_t mux_state)
 }
 
 const struct usb_retimer_driver pi3dpx1207_usb_retimer = {
+	.init = pi3dpx1207_init,
 	.set = pi3dpx1207_set_mux,
+	.enter_low_power_mode = pi3dpx1207_enter_low_power_mode,
 };

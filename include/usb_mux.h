@@ -156,6 +156,15 @@ struct usb_retimer_driver {
 	int (*init)(int port);
 
 	/**
+	 * Put USB retimer in low power mode. This is called when the MUX
+	 * is put into low power mode).
+	 *
+	 * @param port usb port of redriver (not port_addr)
+	 * @return EC_SUCCESS on success, non-zero error code on failure.
+	 */
+	int (*enter_low_power_mode)(int port);
+
+	/**
 	 * Set USB retimer state.
 	 *
 	 * @param port usb port of retimer (not port_addr)

@@ -41,10 +41,24 @@ static void enter_low_power_mode(int port)
 	/* Apply any low power customization if present */
 	if (mux->driver->enter_low_power_mode) {
 		res = mux->driver->enter_low_power_mode(port);
+		if (res) {
+			CPRINTS("Err: %s mux port(%d): %d",
+				__func__, port, res);
+			return;
+		}
+	}
 
-		if (res)
-			CPRINTS("Err: enter_low_power_mode mux port(%d): %d",
-				port, res);
+	if (IS_ENABLED(CONFIG_USBC_MUX_RETIMER)) {
+		const struct usb_retimer *retimer = &usb_retimers[port];
+
+		if (retimer->driver && retimer->driver->enter_low_power_mode) {
+			res = retimer->driver->enter_low_power_mode(port);
+			if (res) {
+				CPRINTS("Err: %s retimer port(%d): %d",
+					__func__, port, res);
+				return;
+			}
+		}
 	}
 }
 
@@ -121,7 +135,10 @@ void usb_mux_set(int port, enum typec_mux mux_mode,
 	exit_low_power_mode(port);
 
 	/* Configure superspeed lanes */
-	mux_state = polarity ? mux_mode | MUX_POLARITY_INVERTED : mux_mode;
+	mux_state = ((mux_mode != TYPEC_MUX_NONE) && polarity)
+			? mux_mode | MUX_POLARITY_INVERTED
+			: mux_mode;
+
 	res = mux->driver->set(port, mux_state);
 	if (res) {
 		CPRINTS("Err: set mux port(%d): %d", port, res);
