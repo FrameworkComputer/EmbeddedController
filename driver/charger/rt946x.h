@@ -718,6 +718,24 @@ int rt946x_enable_charge_termination(int en);
 /* Enable/Disable charge EOC */
 int rt946x_enable_charge_eoc(int en);
 
+enum rt946x_adc_in_sel {
+	RT946X_ADC_VBUS_DIV5 = 1,
+	RT946X_ADC_VBUS_DIV2,
+	MT6370_ADC_TS_BAT = 6,
+	MT6370_ADC_IBUS = 8,
+	MT6370_ADC_TEMP_JC = 12,
+	MT6370_ADC_MAX,
+};
+
+/**
+ * Read ADC channels
+ *
+ * @param adc_sel The ADC channel
+ * @param adc_val The read value
+ * @return EC_SUCCESS or EC_ERROR_*
+ */
+int rt946x_get_adc(enum rt946x_adc_in_sel adc_sel, int *adc_val);
+
 /**
  * Toggle BC12 detection
  *
