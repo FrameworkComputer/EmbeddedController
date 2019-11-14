@@ -16,7 +16,7 @@ struct mock_ctrl_mkbp_events {
 };
 
 #define MOCK_CTRL_DEFAULT_MKBP_EVENTS          \
-{                                              \
+(struct mock_ctrl_mkbp_events) {               \
 	.mkbp_send_event_return = 1,           \
 }
 

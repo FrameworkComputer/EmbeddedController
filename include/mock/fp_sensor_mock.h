@@ -28,7 +28,7 @@ struct mock_ctrl_fp_sensor {
 };
 
 #define MOCK_CTRL_DEFAULT_FP_SENSOR                                    \
-{                                                                      \
+(struct mock_ctrl_fp_sensor) {                                         \
 	.fp_sensor_init_return                       = EC_SUCCESS,     \
 	.fp_sensor_deinit_return                     = EC_SUCCESS,     \
 	.fp_sensor_get_info_return                   = EC_SUCCESS,     \

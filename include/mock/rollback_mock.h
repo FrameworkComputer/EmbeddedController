@@ -18,7 +18,7 @@ struct mock_ctrl_rollback {
 };
 
 #define MOCK_CTRL_DEFAULT_ROLLBACK             \
-{                                              \
+(struct mock_ctrl_rollback) {                  \
 	.get_secret_fail = false,              \
 }
 
