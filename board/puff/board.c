@@ -10,6 +10,7 @@
 #include "button.h"
 #include "common.h"
 #include "cros_board_info.h"
+#include "driver/ina3221.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -209,6 +210,14 @@ struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_PP5000] = thermal_a,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
+
+/* Power sensors */
+const struct ina3221_t ina3221[] = {
+	{ I2C_PORT_INA, 0x40, { "PP3300_G", "PP5000_A", "PP3300_WLAN" } },
+	{ I2C_PORT_INA, 0x42, { "PP3300_A", "PP3300_SSD", "PP3300_LAN" } },
+	{ I2C_PORT_INA, 0x43, { NULL, "PP1200_U", "PP2500_DRAM" } }
+};
+const unsigned int ina3221_count = ARRAY_SIZE(ina3221);
 
 static void board_init(void)
 {
