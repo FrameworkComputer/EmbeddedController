@@ -91,6 +91,13 @@ GPIO(EN_PP3300_AG,		PIN(8, 5), GPIO_OUT_LOW)
  * default. */
 GPIO(LED_SIDESEL_4_L,          PIN(6, 0), GPIO_OUT_LOW)
 
+/*
+ * eDP backlight - both PCH and EC have enable pins that must be high
+ * for the backlight to turn on. Default state is high, and can be turned
+ * off during sleep states.
+ */
+GPIO(EC_EDP_BL_EN,             PIN(D, 3), GPIO_OUT_HIGH)
+
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(EC_I2C0_SENSOR_SCL,       PIN(B, 5), GPIO_INPUT | GPIO_SEL_1P8V)
 GPIO(EC_I2C0_SENSOR_SDA,       PIN(B, 4), GPIO_INPUT | GPIO_SEL_1P8V)
