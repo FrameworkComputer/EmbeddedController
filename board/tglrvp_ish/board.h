@@ -32,20 +32,7 @@
 #define CONFIG_I2C_MASTER
 
 #define CONFIG_ACCELGYRO_LSM6DSM	/* For LSM6DS3 */
-#define CONFIG_ACCEL_INTERRUPTS
-/* Enable sensor fifo, must also define the _SIZE and _THRES */
-#define CONFIG_ACCEL_FIFO
-/* FIFO size is a power of 2. */
-#define CONFIG_ACCEL_FIFO_SIZE 256
-/* Depends on how fast the AP boots and typical ODRs. */
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(BASE_ACCEL)
-
-#define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-
-#define CONFIG_MKBP_EVENT
-#define CONFIG_MKBP_USE_HECI
 
 /* Host command over HECI */
 #define CONFIG_HOSTCMD_HECI
@@ -87,10 +74,7 @@
 
 /* Motion sensors */
 enum sensor_id {
-	LID_ACCEL,
-	LID_GYRO,
 	BASE_ACCEL,
-	LID_MAG,
 	SENSOR_COUNT
 };
 
