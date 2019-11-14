@@ -91,6 +91,7 @@ uint32_t nvmem_user_sizes[NVMEM_NUM_USERS] = {
 /*  Board specific configuration settings */
 static uint32_t board_properties; /* Mainly used as a cache for strap config. */
 static uint8_t reboot_request_posted;
+static uint8_t in_prod_mode;
 
 /* Which UARTs we'd like to be able to bitbang. */
 struct uart_bitbang_properties bitbang_config = {
@@ -720,6 +721,14 @@ static void board_init(void)
 	init_trng();
 	maybe_trigger_ite_sync();
 	init_jittery_clock(1);
+
+	/*
+	 * Need to cache this, because key manager registers are not available
+	 * after run level is lowered.
+	 */
+	in_prod_mode = (GREG32(KEYMGR, HKEY_FWR7) == 0) &&
+		(GREG32(KEYMGR, HKEY_RWR7) == 0xaa66150f);
+
 	init_runlevel(PERMISSION_MEDIUM);
 	/* Initialize NvMem partitions */
 	nvmem_init();
@@ -1458,15 +1467,6 @@ void i2cs_set_pinmux(void)
 	GWRITE_FIELD(PINMUX, EXITEN0, DIOA1, 1);   /* enable powerdown exit */
 }
 
-/* Determine key type based on the key ID. */
-static const char *key_type(const struct SignedHeader *h)
-{
-	if (G_SIGNED_FOR_PROD(h))
-		return "prod";
-	else
-		return "dev";
-}
-
 static int command_sysinfo(int argc, char **argv)
 {
 	enum system_image_copy_t active;
@@ -1489,12 +1489,12 @@ static int command_sysinfo(int argc, char **argv)
 	active = system_get_ro_image_copy();
 	vaddr = get_program_memory_addr(active);
 	h = (const struct SignedHeader *)vaddr;
-	ccprintf("RO keyid:    0x%08x(%s)\n", h->keyid, key_type(h));
+	ccprintf("RO keyid:    0x%08x\n", h->keyid);
 
 	active = system_get_image_copy();
 	vaddr = get_program_memory_addr(active);
 	h = (const struct SignedHeader *)vaddr;
-	ccprintf("RW keyid:    0x%08x(%s)\n", h->keyid, key_type(h));
+	ccprintf("RW keyid:    0x%08x\n", h->keyid);
 
 	ccprintf("DEV_ID:      0x%08x 0x%08x\n",
 		 GREG32(FUSE, DEV_ID0), GREG32(FUSE, DEV_ID1));
@@ -1507,7 +1507,8 @@ static int command_sysinfo(int argc, char **argv)
 		(tpm_mode == TPM_MODE_DISABLED) ? "disabled" : "enabled",
 		tpm_mode);
 	ccprintf("Key Ladder:  %s\n",
-		DCRYPTO_ladder_is_enabled() ? "enabled" : "disabled");
+		DCRYPTO_ladder_is_enabled() ?
+		 (board_in_prod_mode() ? "prod" : "dev") : "disabled");
 
 	return EC_SUCCESS;
 }
@@ -1711,4 +1712,9 @@ void board_unwedge_i2cs(void)
 
 	/* Restore external pin connection to the i2cs_scl. */
 	GWRITE(PINMUX, DIOA9_SEL, GC_PINMUX_I2CS0_SCL_SEL);
+}
+
+int board_in_prod_mode(void)
+{
+	return in_prod_mode;
 }

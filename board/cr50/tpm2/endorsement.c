@@ -599,7 +599,6 @@ enum manufacturing_status tpm_endorse(void)
 		HASH_update(&hmac.hash, p, RO_CERTS_REGION_SIZE - 32);
 		if (!DCRYPTO_equals(p + RO_CERTS_REGION_SIZE - 32,
 				   DCRYPTO_HMAC_final(&hmac), 32)) {
-			const struct SignedHeader *h;
 
 			CPRINTF("%s: bad cert region hmac;", __func__);
 #ifdef CR50_INCLUDE_FALLBACK_CERT
@@ -620,10 +619,7 @@ enum manufacturing_status tpm_endorse(void)
 				break;
 			}
 #else
-			h = (const struct SignedHeader *)
-				get_program_memory_addr
-				(system_get_image_copy());
-			if (G_SIGNED_FOR_PROD(h)) {
+			if (board_in_prod_mode()) {
 
 				/* TODO(ngm): is this state considered
 				 * endorsement failure?

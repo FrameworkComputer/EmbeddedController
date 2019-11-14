@@ -375,6 +375,8 @@ void board_start_ite_sync(void);
  */
 void board_unwedge_i2cs(void);
 
+int board_in_prod_mode(void);
+
 #endif /* !__ASSEMBLER__ */
 
 /* USB interface indexes (use define rather than enum to expand them) */
