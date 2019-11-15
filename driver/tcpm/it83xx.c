@@ -525,7 +525,14 @@ static int it83xx_tcpm_set_vconn(int port, int enable)
 
 static int it83xx_tcpm_set_msg_header(int port, int power_role, int data_role)
 {
-	it83xx_set_power_role(port, power_role);
+	/* PD_ROLE_SINK 0, PD_ROLE_SOURCE 1 */
+	if (power_role == PD_ROLE_SOURCE)
+		/* bit0: source */
+		SET_MASK(IT83XX_USBPD_PDMSR(port), BIT(0));
+	else
+		/* bit0: sink */
+		CLEAR_MASK(IT83XX_USBPD_PDMSR(port), BIT(0));
+
 	it83xx_set_data_role(port, data_role);
 
 	return EC_SUCCESS;
