@@ -8,6 +8,11 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
+/*
+ * By default, enable all console messages excepted HC
+ */
+#define CC_DEFAULT     (CC_ALL & ~(BIT(CC_HOSTCMD)))
+
 /* NPCX7 config */
 #define NPCX7_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
 #define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */

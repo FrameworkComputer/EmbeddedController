@@ -14,12 +14,6 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
-/*
- * Prevent the EC from powering up the AP by default for initial board bringup
- * TODO: b/142409811 remove this once AP power sequencing is good.
- */
-#define CONFIG_BRINGUP
-
 #define CONFIG_POWER_BUTTON
 
 /*
