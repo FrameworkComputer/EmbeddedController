@@ -132,3 +132,39 @@ static int command_rand(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(rand, command_rand, NULL, NULL);
 #endif /* !defined(SECTION_IS_RO) && defined(TEST_TRNG) */
+
+#ifdef CRYPTO_TEST_SETUP
+#include "extension.h"
+/*
+ * This extension command is similar to TPM2_GetRandom, but made
+ * available for CRYPTO_TEST = 1 which disables TPM
+ * Command structure, shared out of band with the test driver running
+ * on the host:
+ *
+ * field     |    size  |                  note
+ * ===================================================================
+ * text_len  |    2     | size of the text to process, big endian
+ */
+static enum vendor_cmd_rc trng_test(enum vendor_cmd_cc code, void *buf,
+				    size_t input_size, size_t *response_size)
+{
+	uint16_t text_len;
+	uint8_t *cmd;
+	size_t response_room = *response_size;
+
+	if (input_size != sizeof(text_len)) {
+		*response_size = 0;
+		return VENDOR_RC_BOGUS_ARGS;
+	}
+	cmd = buf;
+	text_len = *cmd++;
+	text_len = text_len * 256 + *cmd++;
+	text_len = MIN(text_len, response_room);
+	rand_bytes(buf, text_len);
+	*response_size = text_len;
+	return VENDOR_RC_SUCCESS;
+}
+
+DECLARE_VENDOR_COMMAND(VENDOR_CC_TRNG_TEST, trng_test);
+
+#endif   /* CRYPTO_TEST_SETUP */
