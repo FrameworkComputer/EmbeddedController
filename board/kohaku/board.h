@@ -113,6 +113,7 @@
  * for the AP is completed.
  */
 #define CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA 8192
+#define CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
 
 /* Volume Button feature */
 #define CONFIG_VOLUME_BUTTONS
