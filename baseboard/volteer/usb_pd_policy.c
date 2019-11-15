@@ -24,18 +24,20 @@
 const uint32_t pd_src_pdo[] = {
 	PDO_FIXED(5000, 1500, PDO_FIXED_FLAGS),
 };
+const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
+
 const uint32_t pd_src_pdo_max[] = {
 	PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_max_cnt = ARRAY_SIZE(pd_src_pdo_max);
 
-const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 const uint32_t pd_snk_pdo[] = {
 	PDO_FIXED(5000, 500, PDO_FIXED_FLAGS),
 	PDO_BATT(4750, 21000, 15000),
 	PDO_VAR(4750, 21000, 3000),
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
+
 int pd_check_data_swap(int port, int data_role)
 {
 	/* Allow data swap if we are a UFP, otherwise don't allow. */
@@ -44,30 +46,41 @@ int pd_check_data_swap(int port, int data_role)
 
 int pd_check_power_swap(int port)
 {
-	/* TODO - check correct operation for Volteer */
-
 	/*
 	 * Allow power swap if we are acting as a dual role device.  If we are
 	 * not acting as dual role (ex. suspended), then only allow power swap
 	 * if we are sourcing when we could be sinking.
 	 */
-	if (pd_get_dual_role(port) == PD_DRP_TOGGLE_ON)
-		return 1;
-	else if (pd_get_role(port) == PD_ROLE_SOURCE)
-		return 1;
-	else
-		return 0;
+	return (pd_get_dual_role(port) == PD_DRP_TOGGLE_ON ||
+		pd_get_role(port) == PD_ROLE_SOURCE);
 }
 
 int pd_check_vconn_swap(int port)
 {
-	/* TODO - check correct operation for Volteer */
-	return 0;
+	/* Only allow vconn swap if pp5000_A rail is enabled */
+	return gpio_get_level(GPIO_EN_PP5000_A);
 }
 
 void pd_power_supply_reset(int port)
 {
-	/* TODO - check correct operation for Volteer */
+	int prev_en;
+
+	prev_en = ppc_is_sourcing_vbus(port);
+
+	/* Disable VBUS. */
+	ppc_vbus_source_enable(port, 0);
+
+	/* Enable discharge if we were previously sourcing 5V */
+	if (prev_en)
+		pd_set_vbus_discharge(port, 1);
+
+#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
+	/* Give back the current quota we are no longer using */
+	charge_manager_source_port(port, 0);
+#endif /* defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) */
+
+	/* Notify host of power info change. */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 void pd_execute_data_swap(int port, int data_role)
@@ -207,4 +220,156 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	return 0;
 }
 
+/* CONFIG_USB_PD_ALT_MODE_DFP */
+static int dp_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+static uint32_t dp_status[CONFIG_USB_PD_PORT_MAX_COUNT];
 
+static void svdm_safe_dp_mode(int port)
+{
+	/* make DP interface safe until configure */
+	dp_flags[port] = 0;
+	dp_status[port] = 0;
+
+	usb_mux_set(port, TYPEC_MUX_SAFE,
+		USB_SWITCH_CONNECT, pd_get_polarity(port));
+}
+
+static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
+{
+	/* Only enter mode if device is DFP_D capable */
+	if (mode_caps & MODE_DP_SNK) {
+		svdm_safe_dp_mode(port);
+		return 0;
+	}
+
+	return -1;
+}
+
+static int svdm_dp_status(int port, uint32_t *payload)
+{
+	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+
+	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
+			 CMD_DP_STATUS | VDO_OPOS(opos));
+	payload[1] = VDO_DP_STATUS(0, /* HPD IRQ  ... not applicable */
+				   0, /* HPD level ... not applicable */
+				   0, /* exit DP? ... no */
+				   0, /* usb mode? ... no */
+				   0, /* multi-function ... no */
+				   (!!(dp_flags[port] & DP_FLAGS_DP_ON)),
+				   0, /* power low? ... no */
+				   (!!(dp_flags[port] & DP_FLAGS_DP_ON)));
+	return 2;
+};
+
+uint8_t board_get_dp_pin_mode(int port)
+{
+	return (uint8_t) pd_dfp_dp_get_pin_mode(port, dp_status[port]);
+}
+
+static int svdm_dp_config(int port, uint32_t *payload)
+{
+	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
+	uint8_t pin_mode = board_get_dp_pin_mode(port);
+
+	if (!pin_mode)
+		return 0;
+
+	usb_mux_set(port, mf_pref ? TYPEC_MUX_DOCK : TYPEC_MUX_DP,
+		    USB_SWITCH_CONNECT, pd_get_polarity(port));
+
+	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
+			 CMD_DP_CONFIG | VDO_OPOS(opos));
+	payload[1] = VDO_DP_CFG(pin_mode,      /* pin mode */
+				1,             /* DPv1.3 signaling */
+				2);            /* UFP connected */
+	return 2;
+};
+
+static void svdm_dp_post_config(int port)
+{
+	const struct usb_mux *mux = &usb_muxes[port];
+
+	dp_flags[port] |= DP_FLAGS_DP_ON;
+	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
+		return;
+	mux->hpd_update(port, 1, 0);
+}
+
+static int svdm_dp_attention(int port, uint32_t *payload)
+{
+	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
+	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
+	const struct usb_mux *mux = &usb_muxes[port];
+
+	dp_status[port] = payload[1];
+	if (!(dp_flags[port] & DP_FLAGS_DP_ON)) {
+		if (lvl)
+			dp_flags[port] |= DP_FLAGS_HPD_HI_PENDING;
+		return 1;
+	}
+	mux->hpd_update(port, lvl, irq);
+
+	/* ack */
+	return 1;
+}
+
+static void svdm_exit_dp_mode(int port)
+{
+	const struct usb_mux *mux = &usb_muxes[port];
+
+	svdm_safe_dp_mode(port);
+	mux->hpd_update(port, 0, 0);
+}
+
+static int svdm_enter_gfu_mode(int port, uint32_t mode_caps)
+{
+	/* Always enter GFU mode */
+	return 0;
+}
+
+static void svdm_exit_gfu_mode(int port)
+{
+}
+
+static int svdm_gfu_status(int port, uint32_t *payload)
+{
+	/*
+	 * This is called after enter mode is successful, send unstructured
+	 * VDM to read info.
+	 */
+	pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_READ_INFO, NULL, 0);
+	return 0;
+}
+
+static int svdm_gfu_config(int port, uint32_t *payload)
+{
+	return 0;
+}
+
+static int svdm_gfu_attention(int port, uint32_t *payload)
+{
+	return 0;
+}
+
+const struct svdm_amode_fx supported_modes[] = {
+	{
+		.svid = USB_SID_DISPLAYPORT,
+		.enter = &svdm_enter_dp_mode,
+		.status = &svdm_dp_status,
+		.config = &svdm_dp_config,
+		.post_config = &svdm_dp_post_config,
+		.attention = &svdm_dp_attention,
+		.exit = &svdm_exit_dp_mode,
+	},
+	{
+		.svid = USB_VID_GOOGLE,
+		.enter = &svdm_enter_gfu_mode,
+		.status = &svdm_gfu_status,
+		.config = &svdm_gfu_config,
+		.attention = &svdm_gfu_attention,
+		.exit = &svdm_exit_gfu_mode,
+	}
+};
+const int supported_modes_cnt = ARRAY_SIZE(supported_modes);

@@ -184,6 +184,7 @@ const struct tcpc_config_t tcpc_config[] = {
 			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
 		},
 		.drv = &tusb422_tcpm_drv,
+		.usb23 = USBC_PORT_0_USB2_NUM | (USBC_PORT_0_USB3_NUM << 4),
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
@@ -206,6 +207,7 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.driver = &virtual_usb_mux_driver,
+		.hpd_update = &virtual_hpd_update,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
