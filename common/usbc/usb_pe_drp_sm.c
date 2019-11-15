@@ -1405,12 +1405,14 @@ static void pe_src_ready_run(int port)
 		/* Extended Message Requests */
 		if (ext > 0) {
 			switch (type) {
+#ifdef CONFIG_BATTERY
 			case PD_EXT_GET_BATTERY_CAP:
 				set_state_pe(port, PE_GIVE_BATTERY_CAP);
 				break;
 			case PD_EXT_GET_BATTERY_STATUS:
 				set_state_pe(port, PE_GIVE_BATTERY_STATUS);
 				break;
+#endif
 			default:
 				set_state_pe(port, PE_SEND_NOT_SUPPORTED);
 			}
@@ -2089,12 +2091,14 @@ static void pe_snk_ready_run(int port)
 		/* Extended Message Request */
 		if (ext > 0) {
 			switch (type) {
+#ifdef CONFIG_BATTERY
 			case PD_EXT_GET_BATTERY_CAP:
 				set_state_pe(port, PE_GIVE_BATTERY_CAP);
 				break;
 			case PD_EXT_GET_BATTERY_STATUS:
 				set_state_pe(port, PE_GIVE_BATTERY_STATUS);
 				break;
+#endif
 			default:
 				set_state_pe(port, PE_SEND_NOT_SUPPORTED);
 			}
@@ -2427,6 +2431,8 @@ static void pe_give_battery_cap_entry(int port)
 	uint32_t payload = *(uint32_t *)(&emsg[port].buf);
 	uint16_t *msg = (uint16_t *)emsg[port].buf;
 
+	if (!IS_ENABLED(CONFIG_BATTERY))
+		return;
 	print_current_state(port);
 
 	/* msg[0] - extended header is set by Protocol Layer */
@@ -2519,6 +2525,8 @@ static void pe_give_battery_status_entry(int port)
 	uint32_t payload = *(uint32_t *)(&emsg[port].buf);
 	uint32_t *msg = (uint32_t *)emsg[port].buf;
 
+	if (!IS_ENABLED(CONFIG_BATTERY))
+		return;
 	print_current_state(port);
 
 	if (battery_is_present()) {
