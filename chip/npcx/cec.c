@@ -1006,6 +1006,9 @@ static void cec_init(void)
 	/* If RO doesn't set it, RW needs to set it explicitly. */
 	gpio_set_level(CEC_GPIO_PULL_UP, 1);
 
+	/* Ensure the CEC bus is not pulled low by default on startup. */
+	gpio_set_level(CEC_GPIO_OUT, 1);
+
 	CPRINTS("CEC initialized");
 }
 DECLARE_HOOK(HOOK_INIT, cec_init, HOOK_PRIO_LAST);
