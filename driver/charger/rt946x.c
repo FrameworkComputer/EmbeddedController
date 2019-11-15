@@ -1597,12 +1597,45 @@ int rt946x_is_charge_done(void)
 
 int rt946x_cutoff_battery(void)
 {
-	int val = RT946X_MASK_SHIP_MODE;
-
 #ifdef CONFIG_CHARGER_MT6370
-	val |= RT946X_MASK_TE | RT946X_MASK_CFO_EN | RT946X_MASK_CHG_EN;
+/*
+ * We should lock ADC usage to prevent from using ADC while
+ * cut-off. Or this might cause the ADC power not turning off.
+ */
+
+	int rv;
+
+	mutex_lock(&adc_access_lock);
+	rv = rt946x_write8(MT6370_REG_RSTPASCODE1, MT6370_MASK_RSTPASCODE1);
+	if (rv)
+		goto out;
+
+	rv = rt946x_write8(MT6370_REG_RSTPASCODE2, MT6370_MASK_RSTPASCODE2);
+	if (rv)
+		goto out;
+
+	/* reset all chg/fled/ldo/rgb/bl/db reg and logic */
+	rv = rt946x_write8(RT946X_REG_CORECTRL2, 0x7F);
+	if (rv)
+		goto out;
+
+	/* disable chg auto sensing */
+	mt6370_enable_hidden_mode(1);
+	rv = rt946x_clr_bit(MT6370_REG_CHGHIDDENCTRL15,
+				MT6370_MASK_ADC_TS_AUTO);
+	mt6370_enable_hidden_mode(0);
+	if (rv)
+		goto out;
+	msleep(50);
+	/* enter shipping mode */
+	rv = rt946x_set_bit(RT946X_REG_CHGCTRL2, RT946X_MASK_SHIP_MODE);
+
+out:
+	mutex_unlock(&adc_access_lock);
+	return rv;
 #endif
-	return rt946x_set_bit(RT946X_REG_CHGCTRL2, val);
+	/* enter shipping mode */
+	return rt946x_set_bit(RT946X_REG_CHGCTRL2, RT946X_MASK_SHIP_MODE);
 }
 
 int rt946x_enable_charge_termination(int en)
