@@ -115,9 +115,10 @@ in the field (can’t by design).
 ***
 
 [`flash_fp_mcu`] enables spidev and toggles some GPIOs to put the FPMCU (STM32)
-into bootloader mode. At that point it uses `stm32mon` to rewrite the entire
-flash (both RO and RW). This will only work if [hardware write protection] is
-disabled.
+into bootloader mode. At that point it uses [`stm32mon`] to rewrite the entire
+flash (both RO and RW). The FPMCU can only be put into bootloader mode when
+[hardware write protection] is disabled, which means [`flash_fp_mcu`] can only
+be used when [hardware write protection] is disabled.
 
 ### `stm32mon`
 
