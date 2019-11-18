@@ -691,6 +691,11 @@ int spi_nor_erase(const struct spi_nor_device_t *spi_nor_device,
 		erase_opcode = SPI_NOR_DRIVER_SPECIFIED_OPCODE_4KIB_ERASE;
 		erase_size = 4096;
 
+		/* Wait for the previous operation to finish. */
+		rv = spi_nor_wait(spi_nor_device);
+		if (rv)
+			goto err_free;
+
 #ifdef CONFIG_SPI_NOR_BLOCK_ERASE
 		if (!(offset % 65536) && size >= 65536) {
 			erase_opcode =
@@ -710,6 +715,13 @@ int spi_nor_erase(const struct spi_nor_device_t *spi_nor_device,
 			assert(read_size >= 4 && (read_size % 4) == 0);
 			rv = spi_nor_read_internal(spi_nor_device, read_offset,
 						   read_size, buffer);
+
+			/* Note: the return value here is lost below
+			 * at the write enable, this is not a problem,
+			 * as this code is only an optimisation, if it
+			 * fails, the full erase functionality still
+			 * gets done, and the error from that returned
+			 */
 			if (rv != EC_SUCCESS)
 				break;
 			/* Aligned word verify reduced the overall (read +
@@ -741,11 +753,6 @@ int spi_nor_erase(const struct spi_nor_device_t *spi_nor_device,
 			continue;
 		}
 #endif
-		/* Wait for the previous operation to finish. */
-		rv = spi_nor_wait(spi_nor_device);
-		if (rv)
-			goto err_free;
-
 		/* Enable writing to serial NOR flash. */
 		rv = spi_nor_write_enable(spi_nor_device);
 		if (rv)
