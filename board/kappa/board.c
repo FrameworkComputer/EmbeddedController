@@ -140,7 +140,7 @@ int board_set_active_charge_port(int charge_port)
 	CPRINTS("New chg p%d", charge_port);
 
 	/* ignore all request when discharge mode is on */
-	if (force_discharge)
+	if (force_discharge && charge_port != CHARGE_PORT_NONE)
 		return EC_SUCCESS;
 
 	switch (charge_port) {
@@ -186,12 +186,12 @@ int board_discharge_on_ac(int enable)
 			port = charge_manager_get_active_charge_port();
 	}
 
-	ret = board_set_active_charge_port(port);
+	ret = charger_discharge_on_ac(enable);
 	if (ret)
 		return ret;
 	force_discharge = enable;
 
-	return charger_discharge_on_ac(enable);
+	return board_set_active_charge_port(port);
 }
 
 int pd_snk_is_vbus_provided(int port)
