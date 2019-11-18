@@ -121,33 +121,33 @@ flash_fp_mcu_stm32() {
   local file="${5}"
   local spiid
 
-  local STM32MON_READ_FLAGS=" -p -s ${spidev} -r"
-  local STM32MON_WRITE_FLAGS="-p -s ${spidev} -e -w"
-  local stm32mon_flags="--retries ${STM32MON_CONNECT_RETRIES}"
+
+  local stm32mon_flags="-p --retries ${STM32MON_CONNECT_RETRIES} -s ${spidev}"
 
   if [[ "${FLAGS_remove_flash_write_protect}" -eq "${FLAGS_TRUE}" ]]; then
-    STM32MON_READ_FLAGS=" -u ${STM32MON_READ_FLAGS}"
-    STM32MON_WRITE_FLAGS="-u ${STM32MON_WRITE_FLAGS}"
+    stm32mon_flags+=" -u"
   fi
 
   if [[ "${FLAGS_remove_flash_read_protect}" -eq "${FLAGS_TRUE}" ]]; then
-    STM32MON_READ_FLAGS=" -U ${STM32MON_READ_FLAGS}"
-    STM32MON_WRITE_FLAGS="-U ${STM32MON_WRITE_FLAGS}"
+    stm32mon_flags+=" -U"
   fi
 
   if [[ "${FLAGS_read}" -eq "${FLAGS_TRUE}" ]]; then
+    # Read from FPMCU to file
     if [[ -e "${file}" ]]; then
       echo "Output file already exists: ${file}"
       exit 1
     fi
-    stm32mon_flags+=" ${STM32MON_READ_FLAGS}"
+    stm32mon_flags+=" -r ${file}"
   else
+    # Write to FPMCU from file
     if [[ ! -f "${file}" ]]; then
       echo "Invalid image file: ${file}"
       exit 1
     fi
-    stm32mon_flags+=" ${STM32MON_WRITE_FLAGS}"
+    stm32mon_flags+=" -e -w ${file}"
   fi
+
 
   check_hardware_write_protect_disabled
 
@@ -189,7 +189,7 @@ flash_fp_mcu_stm32() {
 
   local attempt=0
   local cmd_exit_status=1
-  local cmd="stm32mon ${stm32mon_flags} ${file}"
+  local cmd="stm32mon ${stm32mon_flags}"
 
   for attempt in $(seq ${FLAGS_retries}); do
     # Reset sequence to enter bootloader mode
