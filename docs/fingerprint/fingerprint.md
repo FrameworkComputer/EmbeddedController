@@ -128,15 +128,27 @@ for development (through `flash_fp_mcu`) to erase and flash the entire chip.
 ## Keys
 
 The `RO` section of the fingerprint firmware contains the public portion of the
-key used to sign the RW firmware. It uses the public key to validate the
-signature of the RW firmware before jumping to it. It is not possible to
-update the public key stored in the RO firmware once a device has been shipped
-(i.e., once the hardware write protect is enabled).
+key used to sign the RW firmware. The RO firmware uses the public key to
+validate the signature of the RW firmware before jumping to it. It is not
+possible to update the public key stored in the RO firmware once a device has
+been shipped (i.e., once [hardware write protection] is enabled).
 
-*** promo
-TODO(tomhughes): Add details about different types of keys (`dev`, `premp`,
-`mp`, etc).
-***
+Different keys are used to sign the firmware during development and production.
+The `dev` key is used for local builds and development and is not private; it
+is called `dev_key.pem` and located in the "board" directory for the given
+FPMCU (e.g., [`board/nocturne_fp/dev_key.pem`]). After doing a build, the
+`ec.bin` in the `build` directory (e.g., `build/nocturne_fp/ec.bin`) will be
+signed with the `dev` key.
+
+The two other types of keys are `premp` and `mp`, which stand for
+"pre-mass production" and "mass production", respectively. Both the `premp` and
+`mp` keys are only available to the buildbots as part of the official build.
+The `premp` is typically used during bringup of new hardware to validate the
+signing flow of the buildbots, while the `mp` key is used for PVT and production
+devices.
+
+Switching keys is only possible when the `RO` firmware is not write protected,
+since the public portion of the keypair is stored in the `RO` firmware.
 
 ### Resources
 
@@ -227,3 +239,4 @@ This would make it a lot easier during both development and testing.
 [`flashrom`]: https://chromium.googlesource.com/chromiumos/third_party/flashrom/
 [STM32F412]: https://www.st.com/resource/en/reference_manual/dm00180369.pdf
 [STM32H743]: https://www.st.com/resource/en/reference_manual/dm00314099.pdf
+[`board/nocturne_fp/dev_key.pem`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/board/nocturne_fp/dev_key.pem
