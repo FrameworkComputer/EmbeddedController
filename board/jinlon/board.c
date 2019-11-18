@@ -15,7 +15,6 @@
 #include "driver/als_tcs3400.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/sn5s330.h"
-#include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
@@ -131,10 +130,9 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
+			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		},
-		.drv = &anx7447_tcpm_drv,
-		.flags = TCPC_FLAGS_RESET_ACTIVE_HIGH,
+		.drv = &ps8xxx_tcpm_drv,
 	},
 	[USB_PD_PORT_TCPC_1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -148,8 +146,8 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
-		.driver = &anx7447_usb_mux_driver,
-		.hpd_update = &anx7447_tcpc_update_hpd_status,
+		.driver = &tcpci_tcpm_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
 	[USB_PD_PORT_TCPC_1] = {
 		.driver = &tcpci_tcpm_usb_mux_driver,
