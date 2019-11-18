@@ -554,6 +554,13 @@
 #undef CONFIG_BATTERY_V2
 
 /*
+ * Some fuel gauges in battery take some time to return valid battery params
+ * when wake form dead battery.
+ * It need to do precharge to take valid battery params.
+ */
+#undef CONFIG_BATTERY_DEAD_UNTIL_VALUE
+
+/*
  * Number of batteries, only matters when CONFIG_BATTERY_V2 is used.
  */
 #undef CONFIG_BATTERY_COUNT
