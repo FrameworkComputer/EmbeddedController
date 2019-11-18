@@ -16,13 +16,14 @@ DEFINE_boolean 'remove_flash_read_protect' "${FLAGS_TRUE}" \
 DEFINE_boolean 'remove_flash_write_protect' "${FLAGS_TRUE}" \
   'Remove flash write protection while performing command' 'u'
 DEFINE_integer 'retries' "${DEFAULT_RETRIES}" 'Specify number of retries' 'R'
+DEFINE_boolean 'hello' "${FLAGS_FALSE}" 'Only ping the bootloader' 'H'
 FLAGS_HELP="Usage: ${0} [flags] ec.bin"
 
 # Process commandline flags
 FLAGS "${@}" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
-if [[ "$#" -eq 0 ]]; then
+if [[ "$#" -eq 0 ]] && [[ "${FLAGS_hello}" -eq "${FLAGS_FALSE}" ]]; then
   echo "Missing filename"
   flags_help
   exit 1
@@ -124,28 +125,30 @@ flash_fp_mcu_stm32() {
 
   local stm32mon_flags="-p --retries ${STM32MON_CONNECT_RETRIES} -s ${spidev}"
 
-  if [[ "${FLAGS_remove_flash_write_protect}" -eq "${FLAGS_TRUE}" ]]; then
-    stm32mon_flags+=" -u"
-  fi
-
-  if [[ "${FLAGS_remove_flash_read_protect}" -eq "${FLAGS_TRUE}" ]]; then
-    stm32mon_flags+=" -U"
-  fi
-
-  if [[ "${FLAGS_read}" -eq "${FLAGS_TRUE}" ]]; then
-    # Read from FPMCU to file
-    if [[ -e "${file}" ]]; then
-      echo "Output file already exists: ${file}"
-      exit 1
+  if [[ "${FLAGS_hello}" -eq "${FLAGS_FALSE}" ]]; then
+    if [[ "${FLAGS_remove_flash_write_protect}" -eq "${FLAGS_TRUE}" ]]; then
+      stm32mon_flags+=" -u"
     fi
-    stm32mon_flags+=" -r ${file}"
-  else
-    # Write to FPMCU from file
-    if [[ ! -f "${file}" ]]; then
-      echo "Invalid image file: ${file}"
-      exit 1
+
+    if [[ "${FLAGS_remove_flash_read_protect}" -eq "${FLAGS_TRUE}" ]]; then
+      stm32mon_flags+=" -U"
     fi
-    stm32mon_flags+=" -e -w ${file}"
+
+    if [[ "${FLAGS_read}" -eq "${FLAGS_TRUE}" ]]; then
+      # Read from FPMCU to file
+      if [[ -e "${file}" ]]; then
+        echo "Output file already exists: ${file}"
+        exit 1
+      fi
+      stm32mon_flags+=" -r ${file}"
+    else
+      # Write to FPMCU from file
+      if [[ ! -f "${file}" ]]; then
+        echo "Invalid image file: ${file}"
+        exit 1
+      fi
+      stm32mon_flags+=" -e -w ${file}"
+    fi
   fi
 
 
