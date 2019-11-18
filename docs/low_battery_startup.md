@@ -156,7 +156,7 @@ It does this by polling via the:
 When the EC returns 0, power draw by the AP is unlimited and depthcharge resumes
 the boot.  If the EC fails to return 0 in three seconds, depthcharge shuts down.
 
-See also VbExEcVbootDone() in Depthcharge, and option
+See also vb2ex_ec_vboot_done() in Depthcharge, and option
 `CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW` in the EC.  By default, this option
 is not set, and the EC immediately allows the boot to proceed.
 
