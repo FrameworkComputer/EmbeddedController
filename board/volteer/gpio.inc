@@ -91,6 +91,8 @@ GPIO(EN_PP3300_AG,		PIN(8, 5), GPIO_OUT_LOW)
  * default. */
 GPIO(LED_SIDESEL_4_L,          PIN(6, 0), GPIO_OUT_LOW)
 
+GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
+
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
  * for the backlight to turn on. Default state is high, and can be turned

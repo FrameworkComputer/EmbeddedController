@@ -343,3 +343,19 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	/* TODO: b/140561826 - check correct operation for Volteer */
 }
 
+/*
+ * Enable fan for 100% speed when AP is powered on.
+ * TODO: b/ remove this once PWM control is working.
+ */
+static void board_chipset_startup(void)
+{
+	gpio_set_level_verbose(CC_SYSTEM, GPIO_EN_PP5000_FAN, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
+
+static void board_chipset_shutdown(void)
+{
+	gpio_set_level_verbose(CC_SYSTEM, GPIO_EN_PP5000_FAN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
