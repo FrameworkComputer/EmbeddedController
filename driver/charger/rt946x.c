@@ -885,6 +885,10 @@ int charger_post_init(void)
 	rv = rt946x_select_ilmt(RT946X_ILMTSEL_AICR);
 	if (rv)
 		return rv;
+
+	/* Need 5ms to ramp after choose current limit source */
+	msleep(5);
+
 	/* Disable ILIM pin */
 	rv = rt946x_enable_ilim_pin(0);
 	if (rv)
