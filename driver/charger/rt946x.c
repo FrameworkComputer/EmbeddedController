@@ -312,6 +312,53 @@ out:
 	mutex_unlock(&hidden_mode_lock);
 	return rv;
 }
+
+/*
+ * Vsys short protection:
+ * When the system is charging at 500mA, and if Isys > 3600mA, the
+ * power path will be turned off and cause the system shutdown.
+ * When Ichg < 400mA, then power path is roughly 1/8 of the original.
+ * When Isys > 3600mA, this cause the voltage between Vbat and Vsys too
+ * huge (Vbat - Vsys > Vsys short portection) and turns off the power
+ * path.
+ * To workaround this,
+ * 1. disable Vsys short protection when Ichg is set below 900mA
+ * 2. forbids Ichg <= 400mA (this is done natually on mt6370, since mt6370's
+ *    minimum current is 512)
+ */
+static int mt6370_ichg_workaround(int new_ichg)
+{
+	int rv = EC_SUCCESS;
+	int curr_ichg;
+
+	/*
+	 * TODO(b:144532905): The workaround should be applied to rt9466 as
+	 * well. But this needs rt9466's hidden register datasheet. Enable
+	 * this if we need it in the future.
+	 */
+	if (!IS_ENABLED(CONFIG_CHARGER_MT6370))
+		return EC_SUCCESS;
+
+	rv = charger_get_current(&curr_ichg);
+	if (rv)
+		return rv;
+
+	mt6370_enable_hidden_mode(1);
+
+	/* disable Vsys protect if if the new ichg is below 900mA */
+	if (curr_ichg >= 900 && new_ichg < 900)
+		rv = rt946x_update_bits(RT946X_REG_CHGHIDDENCTRL7,
+					RT946X_MASK_HIDDENCTRL7_VSYS_PROTECT,
+					0);
+	/* enable Vsys protect if the new ichg is above 900mA */
+	else if (new_ichg >= 900 && curr_ichg < 900)
+		rv = rt946x_update_bits(RT946X_REG_CHGHIDDENCTRL7,
+					RT946X_MASK_HIDDENCTRL7_VSYS_PROTECT,
+					RT946X_ENABLE_VSYS_PROTECT);
+
+	mt6370_enable_hidden_mode(0);
+	return rv;
+}
 #endif /* CONFIG_CHARGER_MT6370 */
 
 static int rt946x_chip_rev(int *chip_rev)
@@ -782,6 +829,11 @@ int charger_set_current(int current)
 	if (IS_ENABLED(CONFIG_CHARGER_MT6370))
 		current = MAX(500, current);
 
+#ifdef CONFIG_CHARGER_MT6370
+	rv = mt6370_ichg_workaround(current);
+	if (rv)
+		return rv;
+#endif
 
 	reg_icc = rt946x_closest_reg(info->current_min, info->current_max,
 				     info->current_step, current);
