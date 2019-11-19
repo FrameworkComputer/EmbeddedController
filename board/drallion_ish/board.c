@@ -38,7 +38,7 @@ static struct mutex g_lid_mag_mutex;
 static struct mutex g_base_mutex;
 
 /* sensor private data */
-static struct lsm6dsm_data lsm6dsm_a_data;
+static struct lsm6dsm_data lsm6dsm_a_data = LSM6DSM_DATA;
 static struct stprivate_data g_lis2dh_data;
 static struct lis2mdl_private_data lis2mdl_a_data;
 

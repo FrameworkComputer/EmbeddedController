@@ -172,7 +172,7 @@ static struct mutex g_lid_mutex;
 /* Lid accel private data */
 static struct stprivate_data g_lis2dwl_data;
 /* Base accel private data */
-static struct lsm6dsm_data lsm6dsm_data;
+static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
 /* Matrix to rotate accelrator into standard reference frame */
 static const mat33_fp_t base_standard_ref = {

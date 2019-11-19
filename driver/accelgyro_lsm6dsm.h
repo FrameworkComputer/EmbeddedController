@@ -299,6 +299,22 @@ struct load_fifo_sensor_state_t {
 	int sample_rate;
 };
 
+/**
+ * Structure used to hold fifo state. This struct should only be used if
+ * CONFIG_ACCEL_FIFO is defined.
+ */
+struct lsm6dsm_accel_fifo_state {
+	struct lsm6dsm_fifo_data config;
+	struct lsm6dsm_fifo_data current;
+	int next_in_pattern;
+	/*
+	 * After an ODR change, the sensor filters need settling time; discard
+	 * initial samples with incorrect values
+	 */
+	unsigned int samples_to_discard[FIFO_DEV_NUM];
+	struct load_fifo_sensor_state_t load_fifo_sensor_state[FIFO_DEV_NUM];
+};
+
 /*
  * lsm6dsm_data is used for accel gyro and the sensor connect to a LSM6DSM.
  *
@@ -334,17 +350,7 @@ struct lsm6dsm_data {
 	/* BMM150 doesn't use st_mems_common; no stprivate_data */
 	struct stprivate_data st_data[2];
 #endif
-#ifdef CONFIG_ACCEL_FIFO
-	struct lsm6dsm_fifo_data config;
-	struct lsm6dsm_fifo_data current;
-	int next_in_patten;
-	/*
-	 * After an ODR change, the sensor filters need settling time; discard
-	 * initial samples with incorrect values
-	 */
-	unsigned int samples_to_discard[FIFO_DEV_NUM];
-	struct load_fifo_sensor_state_t load_fifo_sensor_state[FIFO_DEV_NUM];
-#endif /* CONFIG_ACCEL_FIFO */
+	struct lsm6dsm_accel_fifo_state *accel_fifo_state;
 #if defined(CONFIG_LSM6DSM_SEC_I2C) && defined(CONFIG_MAG_CALIBRATE)
 	union {
 #ifdef CONFIG_MAG_LSM6DSM_BMM150
@@ -357,6 +363,17 @@ struct lsm6dsm_data {
 	};
 #endif  /* CONFIG_MAG_CALIBRATE */
 };
+
+#ifdef CONFIG_ACCEL_FIFO
+#define LSM6DSM_ACCEL_FIFO_STATE (&((struct lsm6dsm_accel_fifo_state) {}))
+#else
+#define LSM6DSM_ACCEL_FIFO_STATE NULL
+#endif
+
+#define LSM6DSM_DATA \
+	((struct lsm6dsm_data) { \
+		.accel_fifo_state = LSM6DSM_ACCEL_FIFO_STATE, \
+	})
 
 /*
  * Note: The specific number of samples to discard depends on the filters

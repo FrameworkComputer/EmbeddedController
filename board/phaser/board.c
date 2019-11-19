@@ -106,7 +106,7 @@ const mat33_fp_t standard_rot_ref = {
 
 /* sensor private data */
 static struct stprivate_data g_lis2dh_data;
-static struct lsm6dsm_data lsm6dsm_data;
+static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {

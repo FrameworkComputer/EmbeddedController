@@ -241,7 +241,7 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 #ifdef SECTION_IS_RW
 static struct mutex g_lid_mutex;
 
-static struct lsm6dsm_data lsm6dsm_data;
+static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
 /* Matrix to rotate accelerometer into standard reference frame */
 static const mat33_fp_t lid_standard_ref = {

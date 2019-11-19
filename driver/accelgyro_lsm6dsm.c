@@ -26,6 +26,14 @@
 
 #define IS_FSTS_EMPTY(s) ((s).len & LSM6DSM_FIFO_EMPTY)
 
+#ifndef FIFO_READ_LEN
+#define FIFO_READ_LEN 0
+#endif
+
+#ifndef CONFIG_ACCEL_LSM6DSM_INT_EVENT
+#define CONFIG_ACCEL_LSM6DSM_INT_EVENT 0
+#endif
+
 static volatile uint32_t last_interrupt_timestamp;
 
 /**
@@ -35,14 +43,16 @@ static volatile uint32_t last_interrupt_timestamp;
  * @param s Pointer to the first sensor in the lsm6dsm (accelerometer).
  * @param ts The timestamp to use for the interrupt timestamp.
  */
-static void reset_load_fifo_sensor_state(struct motion_sensor_t *s, uint32_t ts)
+__maybe_unused static void reset_load_fifo_sensor_state(
+	struct motion_sensor_t *s, uint32_t ts)
 {
 	int i;
-	struct lsm6dsm_data *data = LSM6DSM_GET_DATA(s);
+	struct lsm6dsm_accel_fifo_state *fifo_state =
+		LSM6DSM_GET_DATA(s)->accel_fifo_state;
 
 	for (i = 0; i < FIFO_DEV_NUM; i++) {
-		data->load_fifo_sensor_state[i].int_timestamp = ts;
-		data->load_fifo_sensor_state[i].sample_count = 0;
+		fifo_state->load_fifo_sensor_state[i].int_timestamp = ts;
+		fifo_state->load_fifo_sensor_state[i].sample_count = 0;
 	}
 }
 
@@ -91,7 +101,6 @@ static inline int get_xyz_reg(enum motionsensor_type type)
 		(LSM6DSM_ACCEL_OUT_X_L_ADDR - LSM6DSM_GYRO_OUT_X_L_ADDR) * type;
 }
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
 /**
  * Configure interrupt int 1 to fire handler for:
  *
@@ -99,7 +108,7 @@ static inline int get_xyz_reg(enum motionsensor_type type)
  *
  * @accel: Motion sensor pointer to accelerometer.
  */
-static int config_interrupt(const struct motion_sensor_t *accel)
+__maybe_unused static int config_interrupt(const struct motion_sensor_t *accel)
 {
 	int ret = EC_SUCCESS;
 	int int1_ctrl_val;
@@ -142,9 +151,10 @@ static int fifo_disable(const struct motion_sensor_t *accel)
 static void fifo_reset_pattern(struct lsm6dsm_data *private)
 {
 	/* The fifo is ready to run. */
-	memcpy(&private->current, &private->config,
+	memcpy(&private->accel_fifo_state->current,
+	       &private->accel_fifo_state->config,
 	       sizeof(struct lsm6dsm_fifo_data));
-	private->next_in_patten = FIFO_DEV_INVALID;
+	private->accel_fifo_state->next_in_pattern = FIFO_DEV_INVALID;
 }
 
 /**
@@ -164,6 +174,7 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 	unsigned int max_odr = 0;
 	uint8_t odr_reg_val;
 	struct lsm6dsm_data *private = LSM6DSM_GET_DATA(accel);
+	struct lsm6dsm_accel_fifo_state *fifo_state = private->accel_fifo_state;
 	/* In FIFO sensors are mapped in a different way. */
 	uint8_t agm_maps[] = {
 		MOTIONSENSE_TYPE_GYRO,
@@ -196,18 +207,18 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 			    LSM6DSM_FIFO_CTRL5_ADDR, odr_reg_val);
 
 	/* Scan all sensors configuration to calculate FIFO decimator. */
-	private->config.total_samples_in_pattern = 0;
+	fifo_state->config.total_samples_in_pattern = 0;
 	for (i = FIFO_DEV_GYRO; i < FIFO_DEV_NUM; i++) {
 		if (odrs[i] > 0) {
-			private->config.samples_in_pattern[i] =
+			fifo_state->config.samples_in_pattern[i] =
 				odrs[i] / min_odr;
 			decimators[i] =
 				LSM6DSM_FIFO_DECIMATOR(max_odr / odrs[i]);
-			private->config.total_samples_in_pattern +=
-				private->config.samples_in_pattern[i];
+			fifo_state->config.total_samples_in_pattern +=
+				fifo_state->config.samples_in_pattern[i];
 		} else {
 			/* Not in FIFO if sensor disabled. */
-			private->config.samples_in_pattern[i] = 0;
+			fifo_state->config.samples_in_pattern[i] = 0;
 		}
 	}
 	st_raw_write8(accel->port, accel->i2c_spi_addr_flags,
@@ -276,11 +287,12 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 static int fifo_next(struct lsm6dsm_data *private)
 {
 	int next_id;
+	struct lsm6dsm_accel_fifo_state *fifo_state = private->accel_fifo_state;
 
-	if (private->current.total_samples_in_pattern == 0)
+	if (fifo_state->current.total_samples_in_pattern == 0)
 		fifo_reset_pattern(private);
 
-	if (private->current.total_samples_in_pattern == 0) {
+	if (fifo_state->current.total_samples_in_pattern == 0) {
 		/*
 		 * Not expected we are supposed to be called to process FIFO
 		 * data.
@@ -289,13 +301,13 @@ static int fifo_next(struct lsm6dsm_data *private)
 		return FIFO_DEV_INVALID;
 	}
 
-	for (next_id = private->next_in_patten + 1; 1; next_id++) {
+	for (next_id = fifo_state->next_in_pattern + 1; 1; next_id++) {
 		if (next_id == FIFO_DEV_NUM)
 			next_id = FIFO_DEV_GYRO;
-		if (private->current.samples_in_pattern[next_id] != 0) {
-			private->current.samples_in_pattern[next_id]--;
-			private->current.total_samples_in_pattern--;
-			private->next_in_patten = next_id;
+		if (fifo_state->current.samples_in_pattern[next_id] != 0) {
+			fifo_state->current.samples_in_pattern[next_id]--;
+			fifo_state->current.total_samples_in_pattern--;
+			fifo_state->next_in_pattern = next_id;
 			return next_id;
 		}
 	}
@@ -328,8 +340,8 @@ static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
 		}
 
 		id = get_sensor_type(next_fifo);
-		if (private->samples_to_discard[id] > 0) {
-			private->samples_to_discard[id]--;
+		if (private->accel_fifo_state->samples_to_discard[id] > 0) {
+			private->accel_fifo_state->samples_to_discard[id]--;
 		} else {
 			s = accel + id;
 			axis = s->raw_xyz;
@@ -453,7 +465,8 @@ void lsm6dsm_interrupt(enum gpio_signal signal)
 /**
  * irq_handler - bottom half of the interrupt stack
  */
-static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
+__maybe_unused static int irq_handler(
+	struct motion_sensor_t *s, uint32_t *event)
 {
 	int ret = EC_SUCCESS;
 
@@ -493,7 +506,6 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 
 	return ret;
 }
-#endif /* CONFIG_ACCEL_INTERRUPTS */
 
 /**
  * set_range - set full scale range
@@ -630,9 +642,11 @@ int lsm6dsm_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	if (ret == EC_SUCCESS) {
 		data->base.odr = normalized_rate;
 		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
-			private->samples_to_discard[s->type] =
+			struct lsm6dsm_accel_fifo_state *fifo_state =
+				private->accel_fifo_state;
+			fifo_state->samples_to_discard[s->type] =
 				LSM6DSM_DISCARD_SAMPLES;
-			private->load_fifo_sensor_state[get_fifo_type(s)]
+			fifo_state->load_fifo_sensor_state[get_fifo_type(s)]
 				.sample_rate = normalized_rate == 0
 					? 0 : SECOND * 1000 / normalized_rate;
 			ret = fifo_enable(accel);
