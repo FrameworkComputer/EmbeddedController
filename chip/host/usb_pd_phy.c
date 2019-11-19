@@ -343,7 +343,13 @@ void pd_rx_enable_monitoring(int port)
 
 void pd_rx_disable_monitoring(int port)
 {
-	ASSERT(pd_phy[port].hw_init_done);
+	/*
+	 * We disabled RX monitoring in TCPMv1 in set_state when
+	 * transitioning from suspended to disconnected, but we only
+	 * reinitialize after we have fully transitioned to disconnected. Don't
+	 * assert that hw_init_done here since we have "valid" code that
+	 * requires hw_init_done to be false when a port is suspended.
+	 */
 	pd_phy[port].rx_monitoring = 0;
 }
 
