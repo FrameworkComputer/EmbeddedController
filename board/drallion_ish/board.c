@@ -44,7 +44,7 @@ static struct lis2mdl_private_data lis2mdl_a_data;
 
 /* Matrix to rotate lid sensor into standard reference frame */
 const mat33_fp_t lid_rot_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
+	{ FLOAT_TO_FP(1), 0, 0},
 	{ 0, FLOAT_TO_FP(1), 0},
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
