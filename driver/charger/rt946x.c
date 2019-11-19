@@ -263,6 +263,21 @@ static inline uint8_t rt946x_closest_reg(uint16_t min, uint16_t max,
 	return (target - min) / step;
 }
 
+static int rt946x_get_ieoc(uint32_t *ieoc)
+{
+	int ret, reg_ieoc;
+
+	ret = rt946x_read8(RT946X_REG_CHGCTRL9, &reg_ieoc);
+	if (ret)
+		return ret;
+
+	*ieoc = RT946X_IEOC_MIN +
+		RT946X_IEOC_STEP *
+			((reg_ieoc & RT946X_MASK_IEOC) >> RT946X_SHIFT_IEOC);
+
+	return EC_SUCCESS;
+}
+
 #ifdef CONFIG_CHARGER_MT6370
 static int mt6370_enable_hidden_mode(int en)
 {
@@ -382,15 +397,15 @@ static int rt946x_enable_bc12_detection(int en)
 
 static int rt946x_set_ieoc(unsigned int ieoc)
 {
-	uint8_t reg_ieoc = 0;
+	uint8_t reg_ieoc;
 
 	reg_ieoc = rt946x_closest_reg(RT946X_IEOC_MIN, RT946X_IEOC_MAX,
-		RT946X_IEOC_STEP, ieoc);
+				      RT946X_IEOC_STEP, ieoc);
 
 	CPRINTF("%s ieoc = %d(0x%02X)\n", __func__, ieoc, reg_ieoc);
 
 	return rt946x_update_bits(RT946X_REG_CHGCTRL9, RT946X_MASK_IEOC,
-		reg_ieoc << RT946X_SHIFT_IEOC);
+				reg_ieoc << RT946X_SHIFT_IEOC);
 }
 
 static int rt946x_set_mivr(unsigned int mivr)
@@ -757,14 +772,54 @@ int charger_get_current(int *current)
 
 int charger_set_current(int current)
 {
-	uint8_t reg_icc = 0;
-	const struct charger_info * const info = charger_get_info();
+	int rv;
+	uint8_t reg_icc;
+	static int workaround;
+	const struct charger_info *const info = charger_get_info();
+
+	/*
+	 * mt6370's minimun regulated current is 500mA REG17[7:2] 0b100,
+	 * values below 0b100 are preserved.
+	 */
+	if (IS_ENABLED(CONFIG_CHARGER_MT6370))
+		current = MAX(500, current);
+
 
 	reg_icc = rt946x_closest_reg(info->current_min, info->current_max,
-		info->current_step, current);
+				     info->current_step, current);
 
-	return rt946x_update_bits(RT946X_REG_CHGCTRL7, RT946X_MASK_ICHG,
-		reg_icc << RT946X_SHIFT_ICHG);
+	rv = rt946x_update_bits(RT946X_REG_CHGCTRL7, RT946X_MASK_ICHG,
+				reg_icc << RT946X_SHIFT_ICHG);
+	if (rv)
+		return rv;
+
+	if (IS_ENABLED(CONFIG_CHARGER_RT9466) ||
+	    IS_ENABLED(CONFIG_CHARGER_MT6370)) {
+		uint32_t curr_ieoc;
+
+		/*
+		 * workaround to make IEOC accurate:
+		 * witht normal charging (ICC >= 900mA), the power path is fully
+		 * turned on. But at low charging current state (ICC < 900mA),
+		 * the power path will only be partially turned on. So under
+		 * such situation, the IEOC is inaccurate.
+		 */
+		rv = rt946x_get_ieoc(&curr_ieoc);
+		if (rv)
+			return rv;
+
+		if (current < 900 && !workaround) {
+			/* raise IEOC if charge current is under 900 */
+			rv = rt946x_set_ieoc(curr_ieoc + 100);
+			workaround = 1;
+		} else if (current >= 900 && workaround) {
+			/* reset IEOC if charge current is above 900 */
+			workaround = 0;
+			rv = rt946x_set_ieoc(curr_ieoc - 100);
+		}
+	}
+
+	return rv;
 }
 
 int charger_get_voltage(int *voltage)
