@@ -16,7 +16,7 @@ struct mock_tcpc_ctrl {
 	enum pd_data_role data_role;
 	int num_calls_to_set_header;
 	int should_print_header_changes;
-	};
+};
 
 /* Reset this TCPC mock */
 void mock_tcpc_reset(void);
