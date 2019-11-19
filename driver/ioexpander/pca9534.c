@@ -6,7 +6,7 @@
  */
 
 #include "i2c.h"
-#include "ioexpander_pca9534.h"
+#include "pca9534.h"
 
 static int pca9534_pin_read(const int port, const uint16_t addr_flags,
 			    int reg, int pin, int *val)

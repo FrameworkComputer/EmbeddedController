@@ -10,7 +10,7 @@
 #include "espi.h"
 #include "fan.h"
 #include "hooks.h"
-#include "ioexpander_pca9555.h"
+#include "pca9555.h"
 #include "peci.h"
 #include "power.h"
 #include "temp_sensor.h"

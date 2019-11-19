@@ -8,7 +8,7 @@
 #include "battery.h"
 #include "charger_profile_override.h"
 #include "console.h"
-#include "ioexpander_pca9555.h"
+#include "pca9555.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)

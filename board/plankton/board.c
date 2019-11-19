@@ -12,7 +12,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "ina2xx.h"
-#include "ioexpander_pca9534.h"
+#include "pca9534.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"

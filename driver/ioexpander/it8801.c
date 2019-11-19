@@ -5,10 +5,10 @@
 
 #include "common.h"
 #include "console.h"
-#include "driver/ioexpander_it8801.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "it8801.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "registers.h"
