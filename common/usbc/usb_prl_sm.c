@@ -421,10 +421,7 @@ void prl_run(int port, int evt, int en)
 		local_state[port] = SM_RUN;
 		/* fall through */
 	case SM_RUN:
-		/* If disabling, wait until message is sent. */
-		if (!en && tch_get_state(port) ==
-				   TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE) {
-
+		if (!en) {
 			/* Disable RX */
 			if (IS_ENABLED(CONFIG_USB_TYPEC_CTVPD) ||
 			    IS_ENABLED(CONFIG_USB_TYPEC_VPD))
