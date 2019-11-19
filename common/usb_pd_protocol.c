@@ -2744,7 +2744,7 @@ void pd_interrupt_handler_task(void *p)
 	const int port_mask = (PD_STATUS_TCPC_ALERT_0 << port);
 	struct {
 		int count;
-		uint32_t time;
+		timestamp_t time;
 	} storm_tracker[CONFIG_USB_PD_PORT_MAX_COUNT] = {};
 
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
@@ -2768,14 +2768,17 @@ void pd_interrupt_handler_task(void *p)
 			 */
 			while ((tcpc_get_alert_status() & port_mask) &&
 			       pd_is_port_enabled(port)) {
-				uint32_t now;
+				timestamp_t now;
 
 				tcpc_alert(port);
 
-				now = get_time().le.lo;
-				if (time_after(now, storm_tracker[port].time)) {
-					storm_tracker[port].time =
-						now + ALERT_STORM_INTERVAL;
+				now = get_time();
+				if (timestamp_expired(
+					storm_tracker[port].time, &now)) {
+					/* Reset timer into future */
+					storm_tracker[port].time.val =
+						now.val + ALERT_STORM_INTERVAL;
+
 					/*
 					 * Start at 1 since we are processing
 					 * an interrupt now
