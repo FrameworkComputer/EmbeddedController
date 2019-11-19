@@ -1857,13 +1857,12 @@ static void handle_ctrl_request(int port, uint16_t head,
 			/*
 			 * Give the source some time to send any messages before
 			 * we start our interrogation.  Add some jitter of up to
-			 * 100ms, taken from the current system time, to prevent
-			 * multiple collisions.
+			 * ~192ms to prevent multiple collisions.
 			 */
 			if (pd[port].task_state == PD_STATE_SNK_TRANSITION)
 				pd[port].ready_state_holdoff_timer =
 					get_time().val + SNK_READY_HOLD_OFF_US
-					+ (get_time().le.lo % (100 * MSEC));
+					+ (get_time().le.lo & 0xf) * 12 * MSEC;
 
 			set_state(port, PD_STATE_SNK_READY);
 			pd_set_input_current_limit(port, pd[port].curr_limit,
@@ -3620,19 +3619,18 @@ void pd_task(void *u)
 				/*
 				 * Give the sink some time to send any messages
 				 * before we may send messages of our own.  Add
-				 * some jitter of up to 100ms, taken from the
-				 * current system time, to prevent multiple
-				 * collisions. This delay also allows the sink
-				 * device to request power role swap and allow
-				 * the the accept message to be sent prior to
-				 * CMD_DISCOVER_IDENT being sent in the
+				 * some jitter of up to ~192ms, to prevent
+				 * multiple collisions. This delay also allows
+				 * the sink device to request power role swap
+				 * and allow the the accept message to be sent
+				 * prior to CMD_DISCOVER_IDENT being sent in the
 				 * SRC_READY state.
 				 */
 				pd[port].ready_state_holdoff_timer =
 					get_time().val + SRC_READY_HOLD_OFF_US
-					+ (get_time().le.lo % (100 * MSEC));
+					+ (get_time().le.lo & 0xf) * 12 * MSEC;
 
-				/* it'a time to ping regularly the sink */
+				/* it's time to ping regularly the sink */
 				set_state(port, PD_STATE_SRC_READY);
 			} else {
 				/* The sink did not ack, cut the power... */
