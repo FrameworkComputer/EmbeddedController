@@ -90,14 +90,14 @@ int spi_enable(int port, int enable)
 		else
 			IT83XX_GPIO_GRC1 |= 0x10;
 
-		gpio_config_module(MODULE_SPI, 1);
+		gpio_config_module(MODULE_SPI_MASTER, 1);
 	} else {
 		if (port == SSPI_CH_CS1)
 			IT83XX_GPIO_GRC1 &= ~0x20;
 		else
 			IT83XX_GPIO_GRC1 &= ~0x10;
 
-		gpio_config_module(MODULE_SPI, 0);
+		gpio_config_module(MODULE_SPI_MASTER, 0);
 	}
 
 	return EC_SUCCESS;
