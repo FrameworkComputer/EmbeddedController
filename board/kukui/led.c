@@ -118,7 +118,7 @@ static void krane_led_init(void)
 {
 	const enum mt6370_led_dim_mode dim = MT6370_LED_DIM_MODE_PWM;
 	const enum mt6370_led_pwm_freq freq = MT6370_LED_PWM_FREQ1000;
-	mt6370_led_set_color(LED_MASK_RED | LED_MASK_GREEN | LED_MASK_BLUE);
+	mt6370_led_set_color(0);
 	mt6370_led_set_dim_mode(LED_RED, dim);
 	mt6370_led_set_dim_mode(LED_GREEN, dim);
 	mt6370_led_set_dim_mode(LED_BLUE, dim);
