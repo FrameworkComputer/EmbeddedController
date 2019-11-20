@@ -110,6 +110,7 @@ driver-$(CONFIG_TEMP_SENSOR_F75303)+=temp_sensor/f75303.o
 driver-$(CONFIG_TEMP_SENSOR_G753)+=temp_sensor/g753.o
 driver-$(CONFIG_TEMP_SENSOR_G781)+=temp_sensor/g78x.o
 driver-$(CONFIG_TEMP_SENSOR_G782)+=temp_sensor/g78x.o
+driver-$(CONFIG_TEMP_SENSOR_OTI502)+=temp_sensor/oti502.o
 driver-$(CONFIG_TEMP_SENSOR_SB_TSI)+=temp_sensor/sb_tsi.o
 driver-$(CONFIG_TEMP_SENSOR_TMP006)+=temp_sensor/tmp006.o
 driver-$(CONFIG_TEMP_SENSOR_TMP112)+=temp_sensor/tmp112.o
