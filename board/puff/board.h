@@ -66,7 +66,6 @@
 #define CONFIG_CHIPSET_COMETLAKE_DISCRETE
 /* check */
 #define CONFIG_CHIPSET_CAN_THROTTLE
-#define CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
 #define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_CPU_PROCHOT_ACTIVE_LOW
 
@@ -231,10 +230,12 @@ void led_critical(void);
 #define GPIO_PCH_SLP_S0_L	GPIO_SLP_S0_L
 #define GPIO_PCH_SLP_S3_L	GPIO_SLP_S3_L
 #define GPIO_PCH_SLP_S4_L	GPIO_SLP_S4_L
-/* No equivalent signals for these pins, need to refactor the power handling */
-#define GPIO_RSMRST_L_PGOOD	GPIO_PG_VPRIM_CORE_A_OD
-#define GPIO_PG_EC_ALL_SYS_PWRGD	GPIO_PG_VPRIM_CORE_A_OD
-#define GPIO_EN_A_RAILS		GPIO_EN_ROA_RAILS
 #define GPIO_AC_PRESENT		GPIO_BJ_ADP_PRESENT_L
+
+/*
+ * There is no RSMRST input, so alias it to the output. This short-circuits
+ * common_intel_x86_handle_rsmrst.
+ */
+#define GPIO_RSMRST_L_PGOOD	GPIO_PCH_RSMRST_L
 
 #endif /* __CROS_EC_BOARD_H */

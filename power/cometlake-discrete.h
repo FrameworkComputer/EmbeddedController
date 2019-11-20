@@ -3,7 +3,8 @@
  * found in the LICENSE file.
  */
 
-/* Chrome EC chipset power control for Cometlake with platform-controlled
+/*
+ * Chrome EC chipset power control for Cometlake with platform-controlled
  * discrete sequencing.
  */
 
@@ -17,18 +18,50 @@
 #define IN_ALL_PM_SLP_DEASSERTED \
 	(IN_PCH_SLP_S3_DEASSERTED | IN_PCH_SLP_S4_DEASSERTED)
 
-/* TODO(b/143188569) RSMRST_L is an EC output, can't use POWER_SIGNAL_MASK */
-#define IN_PGOOD_ALL_CORE \
-	POWER_SIGNAL_MASK(/*X86_RSMRST_L_PGOOD*/ POWER_SIGNAL_COUNT)
+/*
+ * Power mask used by intel_x86 to check that S5 is ready.
+ *
+ * This driver controls RSMRST in the G3->S5 transition so this check has nearly
+ * no use, but letting the common Intel code read RSMRST allows us to avoid
+ * duplicating the common code (introducing a little redundancy instead).
+ *
+ * PP3300 monitoring is analog-only: power_handle_state enforces that it's good
+ * before continuing to common_intel_x86_power_handle_state. This means we can't
+ * detect dropouts on that rail, however.
+ *
+ * Polling analog inputs as a signal for the common code would require
+ * modification to support non-power signals as inputs and incurs a minimum 12
+ * microsecond time penalty on NPCX7 to do an ADC conversion. Running the ADC
+ * in repetitive scan mode and enabling threshold detection on the relevant
+ * channels would permit immediate readings (that might be up to 100
+ * microseconds old) but is not currently supported by the ADC driver.
+ * TODO(b/143188569) try to implement analog watchdogs
+ */
+#define CHIPSET_G3S5_POWERUP_SIGNAL          \
+	(POWER_SIGNAL_MASK(PP5000_A_PGOOD) | \
+	 POWER_SIGNAL_MASK(PP1800_A_PGOOD) | \
+	 POWER_SIGNAL_MASK(PP1050_A_PGOOD) | \
+	 POWER_SIGNAL_MASK(OUT_PCH_RSMRST_DEASSERTED))
 
+/*
+ * Power mask used by intel_x86 to check that S3 is ready.
+ *
+ * Transition S5->S3 only involves turning on the DRAM power rails which are
+ * controlled directly from the PCH, so this condition doesn't require any
+ * special code- just check that the DRAM rails are good.
+ */
+#define IN_PGOOD_ALL_CORE                                                     \
+	(CHIPSET_G3S5_POWERUP_SIGNAL | POWER_SIGNAL_MASK(PP2500_DRAM_PGOOD) | \
+	 POWER_SIGNAL_MASK(PP1200_DRAM_PGOOD))
+
+/*
+ * intel_x86 power mask for S0 all-OK.
+ *
+ * This is only used on power task init to check whether the system is powered
+ * up and already in S0, to correctly handle switching from RO to RW firmware.
+ */
 #define IN_ALL_S0                                       \
-	(IN_PGOOD_ALL_CORE | IN_ALL_PM_SLP_DEASSERTED | \
-	 PP5000_PGOOD_POWER_SIGNAL_MASK)
-
-/* TODO(b/143188569) RSMRST_L is an EC output, can't use POWER_SIGNAL_MASK */
-#define CHIPSET_G3S5_POWERUP_SIGNAL                                     \
-	(POWER_SIGNAL_MASK(/*X86_RSMRST_L_PGOOD*/ POWER_SIGNAL_COUNT) | \
-	 POWER_SIGNAL_MASK(PP5000_A_PGOOD))
+	(IN_PGOOD_ALL_CORE | IN_ALL_PM_SLP_DEASSERTED)
 
 #define CHARGER_INITIALIZED_DELAY_MS 100
 #define CHARGER_INITIALIZED_TRIES 40
@@ -40,6 +73,7 @@ enum power_signal {
 	PP1800_A_PGOOD,
 	VPRIM_CORE_A_PGOOD,
 	PP1050_A_PGOOD,
+	OUT_PCH_RSMRST_DEASSERTED,
 	/* S5 ready */
 	X86_SLP_S4_DEASSERTED,
 	PP2500_DRAM_PGOOD,

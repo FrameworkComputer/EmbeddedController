@@ -18,6 +18,8 @@ GPIO_INT(PG_PP5000_A_OD,       PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_PP1800_A_OD,       PIN(3, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_VPRIM_CORE_A_OD,   PIN(2, 3), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_PP1050_A_OD,       PIN(2, 2), GPIO_INT_BOTH, power_signal_interrupt)
+/* EC output, but also interrupt so this can be polled as a power signal */
+GPIO_INT(EC_PCH_RSMRST_L,      PIN(A, 6), GPIO_OUTPUT | GPIO_INT_F_RISING | GPIO_INT_F_FALLING, power_signal_interrupt)
 #ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 GPIO_INT(SLP_S4_L,             PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
@@ -46,8 +48,8 @@ GPIO_INT(USB_A3_OC_ODL,        PIN(0, 3), GPIO_ODR_HIGH, port_ocp_interrupt)
 GPIO_INT(USB_A4_OC_ODL,        PIN(B, 0), GPIO_ODR_HIGH, port_ocp_interrupt)
 
 /* PCH/CPU signals */
+GPIO(EC_PCH_PWROK,             PIN(0, 5), GPIO_OUT_LOW)
 GPIO(EC_PCH_SYS_PWROK,         PIN(3, 7), GPIO_OUT_LOW)
-GPIO(EC_PCH_RSMRST_L,          PIN(A, 6), GPIO_OUT_LOW)
 GPIO(EC_PCH_PWR_BTN_ODL,       PIN(C, 1), GPIO_ODR_HIGH)
 GPIO(EC_PCH_RTCRST,            PIN(7, 6), GPIO_ODR_HIGH)
 GPIO(EC_PCH_WAKE_ODL,          PIN(7, 4), GPIO_ODR_HIGH)
