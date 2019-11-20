@@ -2403,6 +2403,15 @@ static void pd_update_try_source(void)
 	pd_try_src_enable &= (battery_is_present() == BP_YES);
 #endif /* CONFIG_BATTERY_PRESENT_[CUSTOM|GPIO] */
 
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
+	/*
+	 * Since a dedicated charge port can source power allow PD
+	 * trying as source.
+	 */
+	pd_try_src_enable |= (charge_manager_get_active_charge_port() ==
+			     CHARGE_SUPPLIER_DEDICATED);
+#endif /* CONFIG_DEDICATED_CHARGE_PORT_COUNT */
+
 	/*
 	 * Clear this flag to cover case where a TrySrc
 	 * mode went from enabled to disabled and trying_source
