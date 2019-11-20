@@ -255,9 +255,10 @@ SECTIONS
 #endif
         __h2ram_end = .;
     } > H2RAM
-#endif
+
     ASSERT((__h2ram_end) <= (CONFIG_H2RAM_BASE + CONFIG_H2RAM_SIZE),
             "Not enough space for h2ram section.")
+#endif
 
 #if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH))
     /DISCARD/ : {
