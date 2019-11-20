@@ -464,6 +464,10 @@ servo_usbpd_boot0() {
 	dut_control usbpd_boot_mode:$1
 }
 
+servo_micro_usbpd_boot0() {
+	servo_usbpd_boot0 "$@"
+}
+
 servo_sh_boot0() {
 	dut_control sh_boot_mode:$1
 }
