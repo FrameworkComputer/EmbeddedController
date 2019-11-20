@@ -111,7 +111,6 @@
 /* Optional features present on this chip */
 #define CHIP_FAMILY_IT83XX
 #define CONFIG_ADC
-#define CONFIG_HOSTCMD_X86
 #define CONFIG_SWITCH
 
 /* Chip needs to do custom pre-init */
