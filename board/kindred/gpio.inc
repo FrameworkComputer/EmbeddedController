@@ -43,7 +43,7 @@ GPIO_INT(HDMI_CONN_HPD,        PIN(7, 2), GPIO_INT_BOTH, hdmi_hpd_interrupt)
 GPIO_INT(EC_VOLDN_BTN_ODL,     PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,     PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
-GPIO(SYS_RESET_L,              PIN(0, 2), GPIO_ODR_HIGH)        /* SYS_RST_ODL */
+GPIO(SYS_RESET_L,              PIN(C, 5), GPIO_ODR_HIGH)        /* SYS_RST_ODL */
 GPIO(ENTERING_RW,              PIN(E, 3), GPIO_OUT_LOW)         /* EC_ENTERING_RW */
 GPIO(PCH_WAKE_L,               PIN(7, 4), GPIO_ODR_HIGH)        /* EC_PCH_WAKE_ODL */
 GPIO(PCH_PWRBTN_L,             PIN(C, 1), GPIO_ODR_HIGH)        /* EC_PCH_PWR_BTN_ODL */
