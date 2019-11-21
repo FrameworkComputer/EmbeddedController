@@ -366,7 +366,7 @@ void pd_set_new_power_request(int port)
 	}
 }
 
-void pd_request_power_swap(int port)
+void tc_request_power_swap(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
 		/*

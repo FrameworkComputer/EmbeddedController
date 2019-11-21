@@ -16,9 +16,6 @@ int pd_is_vbus_present(int port)
 void pd_request_data_swap(int port)
 {}
 
-void pd_request_power_swap(int port)
-{}
-
 void pd_request_vconn_swap_off(int port)
 {}
 

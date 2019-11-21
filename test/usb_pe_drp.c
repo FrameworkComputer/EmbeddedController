@@ -29,6 +29,10 @@ int board_vbus_source_enabled(int port)
 {
 	return 0;
 }
+void tc_request_power_swap(int port)
+{
+	/* Do nothing */
+}
 
 /**
  * Test section

@@ -177,6 +177,14 @@ void tc_prs_src_snk_assert_rd(int port);
 void tc_prs_snk_src_assert_rp(int port);
 
 /**
+ * Informs the Type-C State Machine that a Power Role Swap is starting.
+ * This function is called from the Policy Engine.
+ *
+ * @parm port USB_C port number
+ */
+void tc_request_power_swap(int port);
+
+/**
  * Informs the Type-C State Machine that a Power Role Swap is complete.
  * This function is called from the Policy Engine.
  *
