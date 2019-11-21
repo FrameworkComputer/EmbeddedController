@@ -273,41 +273,12 @@ static void board_chipset_startup(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
-static void disable_pp1800_s5_deferred(void);
-DECLARE_DEFERRED(disable_pp1800_s5_deferred);
-
-static void disable_pp1800_s5_deferred(void)
-{
-	if (power_get_state() == POWER_G3)
-		gpio_set_level(GPIO_EN_PP1800_S5_L, 1);
-	else if (power_get_state() == POWER_S5G3 ||
-			power_get_state() == POWER_S3S5 ||
-			power_get_state() == POWER_S5)
-		/* pmic is still on, wait a few seconds and try again */
-		hook_call_deferred(&disable_pp1800_s5_deferred_data,
-			SECOND);
-}
-
 /* Called on AP S3 -> S5 transition */
 static void board_chipset_shutdown(void)
 {
 	gpio_set_level(GPIO_EN_USBA_5V, 0);
-	if (board_get_version() >= 1)
-		/*
-		 * use deferred to make sure pp1800_s5 is turned off after pmic
-		 * off.
-		 */
-		hook_call_deferred(&disable_pp1800_s5_deferred_data,
-			SECOND);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
-
-void board_chipset_pre_init(void)
-{
-	if (board_get_version() >= 1)
-		gpio_set_level(GPIO_EN_PP1800_S5_L, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_chipset_pre_init, HOOK_PRIO_DEFAULT);
 
 int board_get_charger_i2c(void)
 {

@@ -17,6 +17,9 @@
 
 #include "baseboard.h"
 
+#undef CONFIG_CHIPSET_POWER_SEQ_VERSION
+#define CONFIG_CHIPSET_POWER_SEQ_VERSION 1
+
 /* TODO(b:135086465) led implementation */
 #undef CONFIG_LED_COMMON
 
