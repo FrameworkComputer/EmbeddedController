@@ -178,20 +178,23 @@ struct usb_retimer_driver {
 struct usb_retimer {
 	/*
 	 * All of the fields are provided on an as needed basis.
-	 * If your retimer does not perform I2C operations, then
-	 * values would not be set.  This includes the driver
-	 * field, which would indicate no retimer driver is to
-	 * be called.  Values that are not specifically popuplated
-	 * shall be 0/NULL.
+	 * If your retimer does not use the provided machanism then
+	 * values would not be set (defaulted to 0/NULL).  This
+	 * defaulting includes the driver field, which would indicate
+	 * no retimer driver is to be called.
 	 */
 
 	/* I2C port and slave address */
 	const int i2c_port;
 	const uint16_t i2c_addr_flags;
 
-	/* GPIOs for enabling the retimer and DP mode */
-	const int gpio_enable;
-	const int gpio_dp_enable;
+	/* Retimer control GPIOs */
+	const enum gpio_signal gpio_enable;     /* Retimer enable */
+	const enum gpio_signal gpio_dp_enable;  /* DP Mode enable */
+
+	const enum gpio_signal usb_ls_en_gpio;  /* Load switch enable */
+	const enum gpio_signal retimer_rst_gpio;/* Retimer reset */
+	const enum gpio_signal force_power_gpio;/* Force power (active/low) */
 
 	/* Driver interfaces for this retimer */
 	const struct usb_retimer_driver *driver;

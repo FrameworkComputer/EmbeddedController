@@ -393,7 +393,6 @@ int pd_is_vbus_present(int port)
 #endif
 }
 
-#ifdef CONFIG_USBC_VIRTUAL_MUX_RETIMER
 /**
  * This function checks the current CC status of the port partner
  * and returns true if the attached partner is UFP.
@@ -410,7 +409,6 @@ int pd_is_debug_acc(int port)
 	return pd[port].cc_state == PD_CC_UFP_DEBUG_ACC ||
 	       pd[port].cc_state == PD_CC_DFP_DEBUG_ACC;
 }
-#endif
 
 static void set_polarity(int port, int polarity)
 {

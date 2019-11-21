@@ -9,6 +9,7 @@
 #define __CROS_EC_BB_RETIMER_H
 
 #include "gpio.h"
+#include "usb_mux.h"
 
 /* Burnside Bridge I2C Configuration Space */
 #define BB_RETIMER_REG_VENDOR_ID	0
@@ -30,27 +31,7 @@
 #define BB_RETIMER_IRQ_HPD			BIT(14)
 #define BB_RETIMER_HPD_LVL			BIT(15)
 
-/* Describes a USB Retimer present in the system */
-struct bb_retimer {
-	/* USB Retimer I2C port */
-	const int i2c_port;
-
-	/* USB Retimer I2C address */
-	const int i2c_addr;
-
-	/* NVM flag if shared with multiple BB-retimers */
-	uint8_t shared_nvm;
-
-	/* Retimer control GPIOs */
-	enum gpio_signal usb_ls_en_gpio;	/* Load switch enable */
-	enum gpio_signal retimer_rst_gpio;	/* Retimer reset */
-	enum gpio_signal force_power_gpio;	/* Force power (active/low) */
-};
-
-/*
- * USB Retimers in system, ordered by PD port #, defined at board-level
- * CONFIG_USBC_RETIMER_INTEL_BB need to be defind at board-level.
- */
-extern struct bb_retimer bb_retimers[];
+/* Supported USB retimer drivers */
+extern const struct usb_retimer_driver bb_usb_retimer;
 
 #endif /* __CROS_EC_BB_RETIMER_H */

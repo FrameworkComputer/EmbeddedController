@@ -11,7 +11,6 @@
 #include "i2c.h"
 #include "timer.h"
 #include "usb_pd.h"
-#include "usb_retimer.h"
 #include "util.h"
 
 #define BB_RETIMER_REG_SIZE	4
@@ -21,6 +20,9 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+/**
+ * Utility functions
+ */
 static int bb_retimer_read(int port, const uint8_t offset, uint32_t *data)
 {
 	int rv;
@@ -33,8 +35,9 @@ static int bb_retimer_read(int port, const uint8_t offset, uint32_t *data)
 	 * byte[1:4] : Data [LSB -> MSB]
 	 * Stop
 	 */
-	rv = i2c_xfer(bb_retimers[port].i2c_port, bb_retimers[port].i2c_addr,
-			&offset, 1, buf, BB_RETIMER_READ_SIZE);
+	rv = i2c_xfer(usb_retimers[port].i2c_port,
+		      usb_retimers[port].i2c_addr_flags,
+		      &offset, 1, buf, BB_RETIMER_READ_SIZE);
 	if (rv)
 		return rv;
 	if (buf[0] != BB_RETIMER_REG_SIZE)
@@ -64,16 +67,16 @@ static int bb_retimer_write(int port, const uint8_t offset, uint32_t data)
 	buf[4] = (data >> 16) & 0xFF;
 	buf[5] = (data >> 24) & 0xFF;
 
-	return i2c_xfer(bb_retimers[port].i2c_port, bb_retimers[port].i2c_addr,
+	return i2c_xfer(usb_retimers[port].i2c_port,
+			usb_retimers[port].i2c_addr_flags,
 			buf, BB_RETIMER_WRITE_SIZE, NULL, 0);
 }
 
 static void bb_retimer_power_handle(int port, int on_off)
 {
-	struct bb_retimer *retimer;
+	const struct usb_retimer * const retimer = &usb_retimers[port];
 
 	/* handle retimer's power domain */
-	retimer = &bb_retimers[port];
 
 	if (on_off) {
 		gpio_set_level(retimer->usb_ls_en_gpio, 1);
@@ -87,7 +90,10 @@ static void bb_retimer_power_handle(int port, int on_off)
 		 * time for both retimers to be initialized. Else allow 20ms
 		 * to initialize.
 		 */
-		if (retimer->shared_nvm)
+		if ((USB_PORT0_BB_RETIMER_SHARED_NVM &&
+				(port == TYPE_C_PORT_0)) ||
+		    (USB_PORT1_BB_RETIMER_SHARED_NVM &&
+				(port == TYPE_C_PORT_1)))
 			msleep(40);
 		else
 			msleep(20);
@@ -100,7 +106,10 @@ static void bb_retimer_power_handle(int port, int on_off)
 	}
 }
 
-int retimer_set_state(int port, mux_state_t mux_state)
+/**
+ * Driver interface functions
+ */
+static int retimer_set_state(int port, mux_state_t mux_state)
 {
 	uint32_t set_retimer_con = 0;
 	uint8_t dp_pin_mode;
@@ -195,13 +204,13 @@ int retimer_set_state(int port, mux_state_t mux_state)
 			set_retimer_con);
 }
 
-int retimer_low_power_mode(int port)
+static int retimer_low_power_mode(int port)
 {
 	bb_retimer_power_handle(port, 0);
 	return EC_SUCCESS;
 }
 
-int retimer_init(int port)
+static int retimer_init(int port)
 {
 	int rv;
 	uint32_t data;
@@ -223,6 +232,12 @@ int retimer_init(int port)
 
 	return EC_SUCCESS;
 }
+
+const struct usb_retimer_driver bb_usb_retimer = {
+	.init = retimer_init,
+	.set = retimer_set_state,
+	.enter_low_power_mode = retimer_low_power_mode,
+};
 
 #ifdef CONFIG_CMD_RETIMER
 static int console_command_bb_retimer(int argc, char **argv)
