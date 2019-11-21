@@ -1882,7 +1882,7 @@ static void pe_snk_evaluate_capability_entry(int port)
 	pe[port].src_cap_cnt = num;
 
 	for (i = 0; i < num; i++)
-		pe[port].src_caps[i] = *pdo++;
+		pe[port].src_caps[i] = pdo[i];
 
 	/* src cap 0 should be fixed PDO */
 	pe_update_pdo_flags(port, pdo[0]);
