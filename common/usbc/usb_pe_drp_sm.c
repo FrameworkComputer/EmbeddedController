@@ -3693,11 +3693,17 @@ static void pe_vdm_request_run(int port)
 						PE_FLAGS_VDM_REQUEST_BUSY);
 			}
 		} else {
+			/* Unexpected Message Received. */
+
 			/*
-			 * Unexpected Message Received.
-			 * Return to Src.Ready or Snk.Ready to
-			 * handle it.
+			 * Reset PE_FLAGS_MSG_RECEIVED so Src.Ready or Snk.Ready
+			 * can handle it.
 			 */
+			PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+			/* Port Disc. was interrupted. So don't try again. */
+			PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+
 			if (pe[port].power_role == PD_ROLE_SOURCE)
 				set_state_pe(port, PE_SRC_READY);
 			else
