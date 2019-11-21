@@ -60,6 +60,17 @@ GPIO(CPU_C10_GATE_L,           PIN(6, 7), GPIO_INPUT)
 /* MKBP event synchronization */
 GPIO(EC_INT_L,                 PIN(7, 0), GPIO_ODR_HIGH)
 
+/*
+ * GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an
+ * interrupt handler because it is automatically handled by the PSL.
+ *
+ * We need to lock the setting so this gpio can't be reconfigured to overdrive
+ * the real reset signal. (This is the PSL input pin not the real reset pin).
+ */
+GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH |
+					   GPIO_HIB_WAKE_HIGH |
+					   GPIO_LOCKED)
+
 /* USB and USBC Signals */
 GPIO(USB_C_OC_ODL,             PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(USB_C0_TCPC_RST_ODL,      PIN(9, 7), GPIO_ODR_HIGH)
