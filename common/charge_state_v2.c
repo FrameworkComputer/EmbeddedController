@@ -1483,12 +1483,23 @@ static int battery_outside_charging_temperature(void)
 	const struct battery_info *batt_info = battery_get_info();
 	/* battery temp in 0.1 deg C */
 	int batt_temp_c = DECI_KELVIN_TO_CELSIUS(curr.batt.temperature);
+	int max_c, min_c;
 
 	if (curr.batt.flags & BATT_FLAG_BAD_TEMPERATURE)
 		return 0;
 
-	if ((batt_temp_c > batt_info->charging_max_c) ||
-		 (batt_temp_c < batt_info->charging_min_c)) {
+	if((curr.batt.desired_voltage == 0) &&
+		(curr.batt.desired_current == 0)){
+		max_c = batt_info->start_charging_max_c;
+		min_c = batt_info->start_charging_min_c;
+	} else {
+		max_c = batt_info->charging_max_c;
+		min_c = batt_info->charging_min_c;
+	}
+
+
+	if ((batt_temp_c >= max_c) ||
+		 (batt_temp_c <= min_c)) {
 		return 1;
 	}
 	return 0;
