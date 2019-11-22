@@ -65,6 +65,10 @@
 #define CONFIG_MATH_UTIL
 #endif
 
+#ifdef TEST_MAG_CAL
+#define CONFIG_MAG_CALIBRATE
+#endif
+
 #ifdef TEST_STILLNESS_DETECTOR
 #define CONFIG_FPU
 #define CONFIG_ONLINE_CALIB

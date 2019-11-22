@@ -101,7 +101,8 @@ common-$(CONFIG_LID_ANGLE)+=motion_lid.o math_util.o
 common-$(CONFIG_LID_ANGLE_UPDATE)+=lid_angle.o
 common-$(CONFIG_LID_SWITCH)+=lid_switch.o
 common-$(CONFIG_HOSTCMD_X86)+=acpi.o port80.o ec_features.o
-common-$(CONFIG_MAG_CALIBRATE)+= mag_cal.o math_util.o vec3.o mat33.o mat44.o
+common-$(CONFIG_MAG_CALIBRATE)+= mag_cal.o math_util.o vec3.o mat33.o mat44.o \
+	kasa.o
 common-$(CONFIG_MKBP_EVENT)+=mkbp_event.o
 common-$(CONFIG_ONEWIRE)+=onewire.o
 common-$(CONFIG_PECI_COMMON)+=peci.o
