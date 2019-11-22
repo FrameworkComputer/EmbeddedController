@@ -91,8 +91,6 @@ GPIO(EN_PP3300_AG,		PIN(8, 5), GPIO_OUT_LOW)
  * default. */
 GPIO(LED_SIDESEL_4_L,          PIN(6, 0), GPIO_OUT_LOW)
 
-GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
-
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
  * for the backlight to turn on. Default state is high, and can be turned
@@ -130,6 +128,11 @@ ALTERNATE(PIN_MASK(3, BIT(3) | BIT(6)), 0, MODULE_I2C, 0)                       
 ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                            /* I2C7 */
 
 ALTERNATE(PIN_MASK(C, BIT(2) | BIT(3) | BIT(4)), 0, MODULE_PWM, 0)                   /* LED{3,2,1}_L */
+
+/* Fan signals */
+GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
+ALTERNATE(PIN_MASK(B, BIT(7)), 0, MODULE_PWM, 0)	/* FAN_PWM */
+ALTERNATE(PIN_MASK(4, BIT(0)), 0, MODULE_PWM, 0)	/* FAN_SPEED_TACH */
 
 /* Keyboard pins */
 #define GPIO_KB_INPUT (GPIO_INPUT | GPIO_PULL_UP)

@@ -60,6 +60,14 @@
 
 /* Sensors */
 
+/* Thermal features */
+#define CONFIG_FANS			FAN_CH_COUNT
+#define CONFIG_TEMP_SENSOR
+#define CONFIG_TEMP_SENSOR_POWER_GPIO	GPIO_EN_PP3300_A
+#define CONFIG_THERMISTOR
+#define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
+#define CONFIG_THROTTLE_AP
+
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER
@@ -170,7 +178,28 @@ enum pwm_channel {
 	PWM_CH_LED1_BLUE = 0,
 	PWM_CH_LED2_GREEN,
 	PWM_CH_LED3_RED,
+	PWM_CH_FAN,
 	PWM_CH_COUNT
+};
+
+enum fan_channel {
+	FAN_CH_0 = 0,
+	/* Number of FAN channels */
+	FAN_CH_COUNT,
+};
+
+enum mft_channel {
+	MFT_CH_0 = 0,
+	/* Number of MFT channels */
+	MFT_CH_COUNT,
+};
+
+enum temp_sensor_id {
+	TEMP_SENSOR_1_CHARGER,
+	TEMP_SENSOR_2_PP3300_REGULATOR,
+	TEMP_SENSOR_3_DDR_SOC,
+	TEMP_SENSOR_4_FAN,
+	TEMP_SENSOR_COUNT
 };
 
 enum usbc_port {
