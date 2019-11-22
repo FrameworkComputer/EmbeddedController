@@ -82,11 +82,7 @@ GPIO(USB_C0_PD_RST_L,       PIN(F, 1), GPIO_OUT_HIGH)  /* Port-0 TCPC chip reset
 GPIO(USB_C1_PD_RST_ODL,     PIN(E, 4), GPIO_ODR_HIGH)  /* Port-1 TCPC chip reset */
 GPIO(DP_MUX_OE_L,           PIN(9, 6), GPIO_OUT_HIGH)  /* DP mux enable */
 GPIO(DP_MUX_SEL,            PIN(4, 5), GPIO_OUT_HIGH)  /* DP mux selection: L:C0, H:C1 */
-/*
- * TODO(waihong): Implement regenerating HPD through this GPIO to signal AP, if
- * the virtual USB mux (over EC host event) not work.
- */
-GPIO(DP_HOT_PLUG_DET,       PIN(9, 5), GPIO_INPUT)     /* DP HPD to AP */
+GPIO(DP_HOT_PLUG_DET,       PIN(9, 5), GPIO_OUT_LOW)   /* DP HPD to AP */
 /* TODO(waihong): Remove it from schematic. No use. */
 GPIO(USBC_MUX_CONF0,        PIN(5, 1), GPIO_INPUT)
 
