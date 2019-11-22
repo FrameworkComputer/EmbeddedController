@@ -83,6 +83,8 @@
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_COL2_INVERTED
 
+#define PD_OPERATING_POWER_MW 30000
+
 #ifndef __ASSEMBLER__
 
 enum adc_channel {

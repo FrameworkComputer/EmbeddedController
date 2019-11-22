@@ -24,14 +24,16 @@ const uint32_t pd_src_pdo[] = {
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 
+#ifdef VARIANT_KUKUI_CHARGER_MT6370
+#define MAX_VOLTAGE (int)(PD_MAX_VOLTAGE_MV * 1.05)
+#else
+#define MAX_VOLTAGE PD_MAX_VOLTAGE_MV
+#endif
+
 const uint32_t pd_snk_pdo[] = {
 		PDO_FIXED(5000, 500, PDO_FIXED_FLAGS),
-		PDO_BATT(4750,
-			 (int)(PD_MAX_VOLTAGE_MV * 1.05),
-			 PD_OPERATING_POWER_MW),
-		PDO_VAR(4750,
-			(int)(PD_MAX_VOLTAGE_MV * 1.05),
-			PD_MAX_CURRENT_MA),
+		PDO_BATT(4750, MAX_VOLTAGE, PD_OPERATING_POWER_MW),
+		PDO_VAR(4750, MAX_VOLTAGE, PD_MAX_CURRENT_MA),
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 

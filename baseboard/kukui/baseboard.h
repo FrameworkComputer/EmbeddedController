@@ -47,12 +47,18 @@
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 #define CONFIG_USB_PD_DISCHARGE_TCPC
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+/*
+ * The Maximum input voltage is 13.5V, need another 5% tolerance.
+ * 12.85V * 1.05 = 13.5V
+ */
+#define PD_MAX_VOLTAGE_MV 12850
 #elif defined(VARIANT_KUKUI_CHARGER_ISL9238)
 #define CONFIG_CHARGER_ISL9238
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20 /* BOARD_RS1 */
 #define CONFIG_CHARGER_SENSE_RESISTOR 10 /* BOARD_RS2 */
 #define CONFIG_CHARGER_OTG
 #define CONFIG_CHARGE_RAMP_HW
+#define PD_MAX_VOLTAGE_MV 20000
 #else
 #error Must define a VARIANT_KUKUI_CHARGER
 #endif /* VARIANT_KUKUI_CHARGER */
@@ -192,15 +198,8 @@
 #define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 
-#define PD_OPERATING_POWER_MW 15000
 #define PD_MAX_POWER_MW       ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
 #define PD_MAX_CURRENT_MA     3000
-
-/*
- * The Maximum input voltage is 13.5V, need another 5% tolerance.
- * 12.85V * 1.05 = 13.5V
- */
-#define PD_MAX_VOLTAGE_MV     12850
 
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000  /* us */
