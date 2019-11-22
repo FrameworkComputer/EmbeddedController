@@ -105,9 +105,6 @@ int charger_profile_override(struct charge_state_data *curr)
 		}
 	}
 
-	if (curr->state != ST_CHARGE)
-		return 0;
-
 	switch (temp_zone) {
 	case TEMP_ZONE_0:
 	case TEMP_ZONE_1:
