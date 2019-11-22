@@ -681,6 +681,20 @@ uint16_t host_command_process(struct host_cmd_handler_args *args)
 	if (hcdebug)
 		host_command_debug_request(args);
 
+	/*
+	 * Pre-emptively clear the entire response buffer so we do not
+	 * have any left over contents from previous host commands.
+	 * For example, this prevents the last portion of a char array buffer
+	 * from containing data from the last host command if the string does
+	 * not take the entire width of the char array buffer.
+	 *
+	 * Note that if request and response buffers pointed to the same memory
+	 * location, then the chip implementation already needed to provide a
+	 * request_temp buffer in which the request data was already copied
+	 * by this point (see host_packet_receive function).
+	 */
+	memset(args->response, 0, args->response_max);
+
 #ifdef CONFIG_HOSTCMD_PD
 	if (args->command >= EC_CMD_PASSTHRU_OFFSET(1) &&
 	    args->command <= EC_CMD_PASSTHRU_MAX(1)) {

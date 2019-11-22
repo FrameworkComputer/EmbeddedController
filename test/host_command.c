@@ -24,6 +24,8 @@ struct ec_params_hello *p = (struct ec_params_hello *)(req_buf + sizeof(*req));
 struct ec_host_response *resp = (struct ec_host_response *)resp_buf;
 struct ec_response_hello *r =
 	(struct ec_response_hello *)(resp_buf + sizeof(*resp));
+struct ec_response_get_chip_info *chip_info_r =
+	(struct ec_response_get_chip_info *)(resp_buf + sizeof(*resp));
 
 static void hostcmd_respond(struct host_packet *pkt)
 {
@@ -58,9 +60,9 @@ static void hostcmd_fill_in_default(void)
 	req->data_len = 4;
 	p->in_data = 0x11223344;
 
-	pkt.request_size = 0;
 	pkt.send_response = hostcmd_respond;
 	pkt.request = (const void *)req_buf;
+	pkt.request_temp = NULL;
 	pkt.request_max = BUFFER_SIZE;
 	pkt.request_size = sizeof(*req) + sizeof(*p);
 	pkt.response = (void *)resp_buf;
@@ -170,6 +172,134 @@ static int test_hostcmd_invalid_checksum(void)
 	return EC_SUCCESS;
 }
 
+static int test_hostcmd_reuse_response_buffer(void)
+{
+	struct ec_host_request *h = (struct ec_host_request *)resp_buf;
+	struct ec_params_hello *d =
+		(struct ec_params_hello *)(resp_buf + sizeof(*h));
+
+	h->struct_version = 3;
+	h->checksum = 0;
+	h->command = EC_CMD_HELLO;
+	h->command_version = 0;
+	h->reserved = 0;
+	h->data_len = 4;
+	d->in_data = 0x11223344;
+
+	pkt.send_response = hostcmd_respond;
+	/*
+	 * The original request buffer is shared with the response and the
+	 * request buffer is used as the temporary buffer
+	 */
+	pkt.request = (const void *)resp_buf;
+	pkt.request_temp = req_buf;
+	pkt.request_max = BUFFER_SIZE;
+	pkt.request_size = sizeof(*h) + sizeof(*d);
+	pkt.response = (void *)resp_buf;
+	pkt.response_max = BUFFER_SIZE;
+	pkt.driver_result = 0;
+
+	h->checksum = calculate_checksum(resp_buf, pkt.request_size);
+
+	ccprintf("\nBuffer contents before process 0x%ph\n",
+			HEX_BUF(resp_buf, BUFFER_SIZE));
+	host_packet_receive(&pkt);
+	task_wait_event(-1);
+
+	ccprintf("\nBuffer contents after process 0x%ph\n",
+			HEX_BUF(resp_buf, BUFFER_SIZE));
+
+	TEST_EQ(calculate_checksum(resp_buf,
+				sizeof(*resp) + resp->data_len), 0, "%d");
+	TEST_EQ(resp->result, EC_RES_SUCCESS, "%d");
+	TEST_EQ(r->out_data, 0x12243648, "0x%x");
+
+	return EC_SUCCESS;
+}
+
+static void hostcmd_fill_chip_info(void)
+{
+	req->struct_version = 3;
+	req->checksum = 0;
+	req->command = EC_CMD_GET_CHIP_INFO;
+	req->command_version = 0;
+	req->reserved = 0;
+	req->data_len = 0;
+
+	pkt.send_response = hostcmd_respond;
+	pkt.request = (const void *)req_buf;
+	pkt.request_temp = NULL;
+	pkt.request_max = BUFFER_SIZE;
+	pkt.request_size = sizeof(*req);
+	pkt.response = (void *)resp_buf;
+	pkt.response_max = BUFFER_SIZE;
+	pkt.driver_result = 0;
+}
+
+static int test_hostcmd_clears_unused_data(void)
+{
+	int i, found_null;
+
+	/* Set the buffer to junk and ensure that is gets cleared */
+	memset(resp_buf, 0xAA, BUFFER_SIZE);
+	hostcmd_fill_chip_info();
+
+	hostcmd_send();
+
+	ccprintf("\nBuffer contents 0x%ph\n",
+			HEX_BUF(resp_buf, BUFFER_SIZE));
+
+	TEST_EQ(calculate_checksum(resp_buf,
+				sizeof(*resp) + resp->data_len), 0, "%d");
+	TEST_EQ(resp->result, EC_RES_SUCCESS, "%d");
+
+	/* Ensure partial strings have 0s after the NULL byte */
+	found_null = 0;
+	for (i = 0; i < sizeof(chip_info_r->name); ++i) {
+		if (!chip_info_r->name[i])
+			found_null = 1;
+
+		if (found_null) {
+			if (chip_info_r->name[i])
+				ccprintf("\nByte %d is not zero!\n", i);
+			TEST_EQ(chip_info_r->name[i], 0, "0x%x");
+		}
+	}
+
+	found_null = 0;
+	for (i = 0; i < sizeof(chip_info_r->revision); ++i) {
+		if (!chip_info_r->revision[i])
+			found_null = 1;
+
+		if (found_null) {
+			if (chip_info_r->revision[i])
+				ccprintf("\nByte %d is not zero!\n", i);
+			TEST_EQ(chip_info_r->revision[i], 0, "0x%x");
+		}
+	}
+
+	found_null = 0;
+	for (i = 0; i < sizeof(chip_info_r->vendor); ++i) {
+		if (!chip_info_r->vendor[i])
+			found_null = 1;
+
+		if (found_null) {
+			if (chip_info_r->vendor[i])
+				ccprintf("\nByte %d is not zero!\n", i);
+			TEST_EQ(chip_info_r->vendor[i], 0, "0x%x");
+		}
+	}
+
+	/* Ensure rest of buffer after valid response is also 0 */
+	for (i = resp->data_len + sizeof(*resp) + 1; i < BUFFER_SIZE; ++i) {
+		if (resp_buf[i])
+			ccprintf("\nByte %d is not zero!\n", i);
+		TEST_EQ(resp_buf[i], 0, "0x%x");
+	}
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	wait_for_task_started();
@@ -183,6 +313,8 @@ void run_test(void)
 	RUN_TEST(test_hostcmd_wrong_command_version);
 	RUN_TEST(test_hostcmd_wrong_struct_version);
 	RUN_TEST(test_hostcmd_invalid_checksum);
+	RUN_TEST(test_hostcmd_reuse_response_buffer);
+	RUN_TEST(test_hostcmd_clears_unused_data);
 
 	test_print_result();
 }

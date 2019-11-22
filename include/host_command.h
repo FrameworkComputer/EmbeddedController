@@ -67,7 +67,12 @@ struct host_packet {
 	 */
 	void (*send_response)(struct host_packet *pkt);
 
-	/* Input request data */
+	/*
+	 * Input request data. If request and response buffers overlap,
+	 * then request_temp must be non-null and be large enough to store the
+	 * entire request buffer. The request_temp buffer will then be used
+	 * as the buffer passed into the command handlers.
+	 */
 	const void *request;
 
 	/*
