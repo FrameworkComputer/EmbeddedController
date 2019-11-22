@@ -215,9 +215,6 @@ static uint32_t dp_status[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static void svdm_safe_dp_mode(int port)
 {
-	const char *dp_str, *usb_str;
-	enum typec_mux typec_mux_setting;
-
 	/* make DP interface safe until configure */
 	dp_flags[port] = 0;
 	dp_status[port] = 0;
@@ -228,9 +225,8 @@ static void svdm_safe_dp_mode(int port)
 	 * To avoid broken the SS connection,
 	 * keep the current setting if SS connection is enabled already.
 	 */
-	typec_mux_setting = (usb_mux_get(port, &dp_str, &usb_str) && usb_str) ?
-			    TYPEC_MUX_USB : TYPEC_MUX_NONE;
-	usb_mux_set(port, typec_mux_setting,
+	usb_mux_set(port, usb_mux_get(port) & USB_PD_MUX_USB_ENABLED ?
+		    TYPEC_MUX_USB : TYPEC_MUX_NONE,
 		    USB_SWITCH_CONNECT, pd_get_polarity(port));
 }
 

@@ -329,12 +329,10 @@ static void svdm_dp_post_config(int port)
 static int is_dp_muxable(int port)
 {
 	int i;
-	const char *dp_str, *usb_str;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
 		if (i != port) {
-			usb_mux_get(i, &dp_str, &usb_str);
-			if (dp_str)
+			if (usb_mux_get(i) & USB_PD_MUX_DP_ENABLED)
 				return 0;
 		}
 

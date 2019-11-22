@@ -171,12 +171,11 @@ void usb_mux_set(int port, enum typec_mux mux_mode,
 		enter_low_power_mode(port);
 }
 
-int usb_mux_get(int port, const char **dp_str, const char **usb_str)
+mux_state_t usb_mux_get(int port)
 {
 	const struct usb_mux *mux = &usb_muxes[port];
 	int res;
 	mux_state_t mux_state;
-	const char *dp, *usb;
 
 	exit_low_power_mode(port);
 
@@ -186,13 +185,7 @@ int usb_mux_get(int port, const char **dp_str, const char **usb_str)
 		return 0;
 	}
 
-	dp = mux_state & MUX_POLARITY_INVERTED ? "DP2" : "DP1";
-	usb = mux_state & MUX_POLARITY_INVERTED ? "USB2" : "USB1";
-
-	*dp_str = mux_state & MUX_DP_ENABLED ? dp : NULL;
-	*usb_str = mux_state & MUX_USB_ENABLED ? usb : NULL;
-
-	return *dp_str || *usb_str;
+	return mux_state;
 }
 
 void usb_mux_flip(int port)
@@ -241,16 +234,18 @@ static int command_typec(int argc, char **argv)
 		return EC_ERROR_PARAM1;
 
 	if (argc < 3) {
-		const char *dp_str, *usb_str;
-		ccprintf("Port C%d: polarity:CC%d\n",
-			port, pd_get_polarity(port) + 1);
-		if (usb_mux_get(port, &dp_str, &usb_str))
-			ccprintf("Superspeed %s%s%s\n",
-				 dp_str ? dp_str : "",
-				 dp_str && usb_str ? "+" : "",
-				 usb_str ? usb_str : "");
-		else
-			ccprintf("No Superspeed connection\n");
+		mux_state_t mux_state;
+
+		mux_state = usb_mux_get(port);
+		ccprintf("Port %d: USB=%d DP=%d POLARITY=%s HPD_IRQ=%d "
+			"HPD_LVL=%d SAFE=%d\n", port,
+			!!(mux_state & USB_PD_MUX_USB_ENABLED),
+			!!(mux_state & USB_PD_MUX_DP_ENABLED),
+			mux_state & USB_PD_MUX_POLARITY_INVERTED ?
+				"INVERTED" : "NORMAL",
+			!!(mux_state & USB_PD_MUX_HPD_IRQ),
+			!!(mux_state & USB_PD_MUX_HPD_LVL),
+			!!(mux_state & USB_PD_MUX_SAFE_MODE));
 
 		return EC_SUCCESS;
 	}
