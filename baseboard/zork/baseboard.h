@@ -103,6 +103,14 @@
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 
+/*
+ * USB ID
+ *
+ * This is allocated specifically for Zork
+ * http://google3/hardware/standards/usb/
+ */
+#define CONFIG_USB_PID 0x5040
+
 /* TODO(b/142284905): Enable new PD stack */
 #if 0
 /* Enable the new USB-C PD stack */

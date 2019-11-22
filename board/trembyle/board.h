@@ -20,14 +20,6 @@
 
 #define CONFIG_MKBP_USE_GPIO
 
-/*
- * USB ID
- *
- * This is allocated specifically for Zork:Trembyle
- * http://google3/hardware/standards/usb/
- */
-#define CONFIG_USB_PID 0x503E
-
 /* Motion sensing drivers */
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
