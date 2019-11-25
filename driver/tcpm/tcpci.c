@@ -642,6 +642,28 @@ void tcpci_tcpc_alert(int port)
 	if (status & TCPC_REG_ALERT_ALERT_EXT)
 		tcpm_alert_ext_status(port, &alert_ext);
 
+	/* Clear any pending faults */
+	if (status & TCPC_REG_ALERT_FAULT) {
+		int fault;
+		int fault_rv;
+
+		fault_rv = tcpc_read(port, TCPC_REG_FAULT_STATUS, &fault);
+		if (!fault_rv) {
+			CPRINTS("C%d FAULT=0x%02X", port, fault);
+
+			/* Clear any faults that are set */
+			fault_rv = tcpc_write(port,
+					      TCPC_REG_FAULT_STATUS,
+					      fault);
+			if (fault_rv)
+				CPRINTS("C%d Writing FAULT failed, rv=%d",
+					port, fault_rv);
+		} else {
+			CPRINTS("C%d Reading FAULT failed, rv=%d",
+				port, fault_rv);
+		}
+	}
+
 	/*
 	 * Check for TX complete first b/c PD state machine waits on TX
 	 * completion events. This will send an event to the PD tasks
