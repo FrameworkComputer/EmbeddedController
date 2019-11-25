@@ -452,7 +452,7 @@ servo_micro_ec_boot0() {
 		dut_control servo_micro_ec_boot_mode_$2:$1
 	else
 		info "Servo micro $2 mode: $1 (using FW_UP_L)"
-		dut-control ec_boot_mode:$1
+		dut_control ec_boot_mode:$1
 	fi
 }
 
