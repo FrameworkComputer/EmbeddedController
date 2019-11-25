@@ -98,11 +98,17 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct adc_t adc_channels[] = {
-	[ADC_SNS_PP3300] = {  /* 9/11 voltage divider */
+	[ADC_SNS_PP3300] = {
+		/*
+		 * 4700/5631 voltage divider: can take the value out of range
+		 * for 32-bit signed integers, so truncate to 470/563 yielding
+		 * <0.1% error and a maximum intermediate value of 1623457792,
+		 * which comfortably fits in int32.
+		 */
 		.name = "SNS_PP3300",
 		.input_ch = NPCX_ADC_CH2,
-		.factor_mul = ADC_MAX_VOLT * 11,
-		.factor_div = (ADC_READ_MAX + 1) * 9,
+		.factor_mul = ADC_MAX_VOLT * 563,
+		.factor_div = (ADC_READ_MAX + 1) * 470,
 	},
 	[ADC_SNS_PP1050] = {
 		.name = "SNS_PP1050",
