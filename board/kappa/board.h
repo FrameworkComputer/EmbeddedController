@@ -64,6 +64,7 @@
 #define I2C_PORT_BATTERY            1
 #define I2C_PORT_CHARGER            board_get_charger_i2c()
 #define I2C_PORT_IO_EXPANDER_IT8801 1
+#define I2C_PORT_VIRTUAL_BATTERY    I2C_PORT_BATTERY
 
 /* Enable Accel over SPI */
 #define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI master port (SPI2) */
