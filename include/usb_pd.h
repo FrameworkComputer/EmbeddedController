@@ -847,8 +847,6 @@ struct pd_cable {
 	(((snkp) & 0xff) << 16 | ((srcp) & 0xff) << 8			\
 	 | ((usb) & 1) << 7 | ((gdr) & 1) << 6 | ((sign) & 0xF) << 2	\
 	 | ((sdir) & 0x3))
-#define PD_DP_PIN_CAPS(x) ((((x) >> 6) & 0x1) ? (((x) >> 16) & 0x3f)	\
-			   : (((x) >> 8) & 0x3f))
 
 #define MODE_DP_PIN_A 0x01
 #define MODE_DP_PIN_B 0x02
@@ -867,6 +865,8 @@ struct pd_cable {
 #define MODE_DP_PIN_BR2_MASK 0x3
 /* Pin configs C/D/E/F support DP signaling levels */
 #define MODE_DP_PIN_DP_MASK 0x3c
+/* Pin configs A/B/C/D/E/F */
+#define MODE_DP_PIN_CAPS_MASK 0x3f
 
 #define MODE_DP_V13  0x1
 #define MODE_DP_GEN2 0x2
@@ -874,6 +874,24 @@ struct pd_cable {
 #define MODE_DP_SNK  0x1
 #define MODE_DP_SRC  0x2
 #define MODE_DP_BOTH 0x3
+
+#define MODE_DP_CABLE_SHIFT 6
+
+/*
+ * Determine which pin assignments are valid for DP
+ *
+ * Based on whether the DP adapter identifies itself as a plug (permanently
+ * attached cable) or a receptacle, the pin assignments may be in the DFP_D
+ * field or the UFP_D field.
+ *
+ * Refer to DisplayPort Alt Mode On USB Type-C Standard version 1.0, table 5-2
+ * depending on state of receptacle bit, use pins for DFP_D (if receptacle==0)
+ * or UFP_D (if receptacle==1)
+ * Also refer to DisplayPort Alt Mode Capabilities Clarification (4/30/2015)
+ */
+#define PD_DP_PIN_CAPS(x) ((((x) >> MODE_DP_CABLE_SHIFT) & 0x1) \
+	? (((x) >> MODE_DP_UFP_PIN_SHIFT) & MODE_DP_PIN_CAPS_MASK) \
+	: (((x) >> MODE_DP_DFP_PIN_SHIFT) & MODE_DP_PIN_CAPS_MASK))
 
 /*
  * DisplayPort Status VDO
