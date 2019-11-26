@@ -19,8 +19,10 @@
 #include "driver/wpc/p9221.h"
 #include "rt946x.h"
 #include "task.h"
+#include "tcpm.h"
 #include "timer.h"
 #include "usb_charge.h"
+#include "usb_pd.h"
 #include "util.h"
 
 /* Console output macros */
@@ -545,12 +547,8 @@ static int rt946x_init_setting(void)
 	if (rv)
 		return rv;
 #endif
-	/* Enable/Disable BC 1.2 detection */
-#ifdef HAS_TASK_USB_CHG
-	rv = rt946x_enable_bc12_detection(1);
-#else
+	/* Disable BC 1.2 detection by default. It will be enabled on demand */
 	rv = rt946x_enable_bc12_detection(0);
-#endif
 	if (rv)
 		return rv;
 	/* Disable WDT */
@@ -1190,13 +1188,47 @@ int rt946x_toggle_bc12_detection(void)
 	return rt946x_enable_bc12_detection(1);
 }
 
-#ifdef CONFIG_CHARGER_MT6370_BC12_GPIO
-static void usb_pd_connect(void)
+static void check_pd_capable(void)
 {
-	rt946x_toggle_bc12_detection();
+	const int port = TASK_ID_TO_USB_CHG_PORT(TASK_ID_USB_CHG);
+
+	if (!pd_capable(port)) {
+		enum tcpc_cc_voltage_status cc1, cc2;
+
+		tcpm_get_cc(port, &cc1, &cc2);
+		/* if CC is not changed. */
+		if (cc_is_rp(cc1) || cc_is_rp(cc2))
+			rt946x_toggle_bc12_detection();
+	}
 }
-DECLARE_HOOK(HOOK_USB_PD_CONNECT, usb_pd_connect, HOOK_PRIO_DEFAULT);
-#endif
+DECLARE_DEFERRED(check_pd_capable);
+
+static void rt946x_usb_connect(void)
+{
+	const int port = TASK_ID_TO_USB_CHG_PORT(TASK_ID_USB_CHG);
+	enum tcpc_cc_voltage_status cc1, cc2;
+
+	tcpm_get_cc(port, &cc1, &cc2);
+
+	/*
+	 * Only detect BC1.2 device when USB-C device recognition is
+	 * finished to prevent a potential race condition with USB enumeration.
+	 * If CC exists RP, then it might be a BC12 or a PD capable device.
+	 * Check this later to ensure it's not PD capable.
+	 */
+	if (cc_is_rp(cc1) || cc_is_rp(cc2))
+		/* delay extra 50 ms to ensure SrcCap received */
+		hook_call_deferred(&check_pd_capable_data,
+				   PD_T_SINK_WAIT_CAP + 50 * MSEC);
+}
+DECLARE_HOOK(HOOK_USB_PD_CONNECT, rt946x_usb_connect, HOOK_PRIO_DEFAULT);
+
+static void rt946x_pd_disconnect(void)
+{
+	/* Type-C disconnected, disable deferred check. */
+	hook_call_deferred(&check_pd_capable_data, -1);
+}
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, rt946x_pd_disconnect, HOOK_PRIO_DEFAULT);
 
 static int rt946x_get_adc(enum rt946x_adc_in_sel adc_sel, int *adc_val)
 {
@@ -1457,7 +1489,6 @@ void usb_charger_task(void *u)
 			charge_manager_update_charge(bc12_type, 0, &chg);
 bc12_none:
 			rt946x_enable_bc12_detection(0);
-			hook_notify(HOOK_AC_CHANGE);
 		}
 
 		/* VBUS detach event */
@@ -1468,11 +1499,6 @@ bc12_none:
 			p9221_notify_vbus_change(0);
 #endif
 			charge_manager_update_charge(bc12_type, 0, NULL);
-
-			if (!IS_ENABLED(CONFIG_CHARGER_MT6370_BC12_GPIO))
-				rt946x_enable_bc12_detection(1);
-
-			hook_notify(HOOK_AC_CHANGE);
 		}
 
 wait_event:
