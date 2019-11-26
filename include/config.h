@@ -1626,6 +1626,9 @@
 /* Percentage to which all fans are set at initiation */
 #define CONFIG_FAN_INIT_SPEED 100
 
+/* Allow board custom fan control */
+#undef CONFIG_CUSTOM_FAN_CONTROL
+
 /* Support fan control while in low-power idle */
 #undef CONFIG_FAN_DSLEEP
 
