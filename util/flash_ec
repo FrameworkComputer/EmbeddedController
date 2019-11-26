@@ -899,7 +899,7 @@ function flash_flashrom() {
 	if [[ -z "${FLAGS_read}" ]]; then
 		# Program EC image.
 		# flashrom should report the image size at the end of the output.
-		local FLASHROM_GETSIZE="sudo ${FLASHROM_CMDLINE} --get-size"
+		local FLASHROM_GETSIZE="sudo ${FLASHROM_CMDLINE} --flash-size"
 		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
 			info "Running flashrom:" 1>&2
 			echo " ${FLASHROM_GETSIZE}" 1>&2
