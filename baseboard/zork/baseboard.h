@@ -188,6 +188,10 @@
 #undef CONFIG_PORT80_HISTORY_LEN
 #define CONFIG_PORT80_HISTORY_LEN 256
 
+/* Increase console output buffer since we have the RAM available. */
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 4096
+
 #define I2C_PORT_TCPC0		NPCX_I2C_PORT0_0
 #define I2C_PORT_TCPC1		NPCX_I2C_PORT1_0
 #define I2C_PORT_BATTERY	NPCX_I2C_PORT2_0
