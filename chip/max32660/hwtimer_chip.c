@@ -159,7 +159,11 @@ static void __timer_event_isr(void)
 		process_timers(NOT_ROLLOVER_EVENT);
 	}
 }
-DECLARE_IRQ(EC_TMR1_IRQn, __timer_event_isr, 1);
+/*
+ * Declare the EC Timer lower in priority than the I2C interrupt. This
+ * allows the I2C driver to process time sensitive interrupts.
+ */
+DECLARE_IRQ(EC_TMR1_IRQn, __timer_event_isr, 2);
 
 static void init_timer(mxc_tmr_regs_t *timer, enum tmr_pres prescaler,
 		       enum tmr_mode mode, uint32_t count)

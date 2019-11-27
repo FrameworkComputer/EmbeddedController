@@ -11,6 +11,7 @@
 #include "config_chip.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "stdbool.h"
 #include "system.h"
 #include "task.h"
 #include "registers.h"
@@ -108,13 +109,20 @@ typedef struct {
  *             value is -1 if should clock stretch, 0 if start
  *             sending EC_PADDING_BYTE.  Any other values in this
  *             field will transmit data to the Master.
+ * @state: I2C slave state that indicates address match, read and
+ *         write status.
  * @restart: Restart or stop bit indicator.
  *           0 to send a stop bit at the end of the transaction
  *           Non-zero to send a restart at end of the transaction
  *           Only used for Master transactions.
- * @callback: Callback for asynchronous request.
- *            First argument is to the transaction request.
- *            Second argument is the error code.
+ * @response_pending: Indicates that a response to the I2C master
+ *           is pending.
+ * @expecting_done: Indicates if an I2C done flag is expected. This
+ *           is used by the driver to determine the order to process
+ *           the flags.
+ * @expecting_start: Indicates if an I2C start flag is expected. This
+ *           is used by the driver to determine the order to process
+ *           the flags.
  */
 struct i2c_req {
 	uint8_t addr;
@@ -125,6 +133,9 @@ struct i2c_req {
 	volatile int tx_remain;
 	volatile i2c_slave_state_t state;
 	volatile int restart;
+	volatile bool response_pending;
+	volatile bool expecting_done;
+	volatile bool expecting_start;
 };
 
 static i2c_req_state_t states[MXC_I2C_INSTANCES];
@@ -331,6 +342,7 @@ static void i2c_send_response_packet(struct host_packet *pkt)
 
 	/* Host_buffer data range. */
 	req_slave.tx_remain = size + 2;
+	req_slave.response_pending = true;
 
 	/* Call the handler to send the response packet. */
 	i2c_slave_handler(i2c_bus_ports[I2C_PORT_EC]);
@@ -379,15 +391,19 @@ void i2c_slave_service(i2c_req_t *req)
 	/* Check if there was a host command (I2C master write). */
 	if (req->state == I2C_SLAVE_ADDR_MATCH_WRITE) {
 		req->state = I2C_SLAVE_WRITE_COMPLETE;
-
+		/* A response to this write is pending. */
+		/* Assume that there is nothing to send back to the HOST. */
+		req->tx_remain = -1;
 #ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
 		if (req->addr_match_flag != 0x1) {
 			i2c_process_board_command(
-				1, CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS,
+				0, CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS,
 				req->received_count);
 		} else
 #endif /* CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS */
+		{
 			i2c_process_command();
+		}
 	}
 }
 
@@ -417,14 +433,15 @@ DECLARE_IRQ(EC_I2C1_IRQn, I2C1_IRQHandler, 1);
  */
 static void i2c_slave_service_read(mxc_i2c_regs_t *i2c, i2c_req_t *req)
 {
-	/* Clear the RX Threshold interrupt if set. */
-	i2c->int_fl0 = i2c->int_fl0;
+	/*
+	 * Clear the RX Threshold interrupt if set. Make sure and preserve
+	 * a possible done bit, address match, or multiple slave address
+	 * flags.
+	 */
+	i2c->int_fl0 = i2c->int_fl0 & ~(MXC_F_I2C_INT_FL0_ADDR_MATCH |
+		MXC_F_I2C_INT_FL0_MAMI_MASK | MXC_F_I2C_INT_FL0_DONE);
 	i2c->int_fl1 = i2c->int_fl1;
-	/* Clear the TX Threshold interrupt if set. */
-	if (i2c->int_fl0 & MXC_F_I2C_INT_FL0_TX_THRESH) {
-		i2c->int_fl0 = MXC_F_I2C_INT_FL0_TX_THRESH;
-	}
-	/**
+	/*
 	 * If there is nothing to transmit to the EC HOST, then default
 	 * to clock stretching.
 	 */
@@ -433,6 +450,8 @@ static void i2c_slave_service_read(mxc_i2c_regs_t *i2c, i2c_req_t *req)
 	}
 	/* If there is data to send to the Master then fill the TX FIFO. */
 	if (req->tx_remain != 0) {
+		/* There is no longer a response pending from the slave to the master. */
+		req->response_pending = false;
 		/* Fill the FIFO with data to transimit to the I2C Master. */
 		while ((req->tx_remain > 0) &&
 			!(i2c->status & MXC_F_I2C_STATUS_TX_FULL)) {
@@ -445,17 +464,18 @@ static void i2c_slave_service_read(mxc_i2c_regs_t *i2c, i2c_req_t *req)
 	 * then send padding byte.
 	 */
 	if (req->tx_remain == 0) {
+		/* Tx response is fulfilled. */
 		/* Fill the FIFO with the EC padding byte. */
 		while (!(i2c->status & MXC_F_I2C_STATUS_TX_FULL)) {
 			i2c->fifo = EC_PADDING_BYTE;
 		}
 	}
 	/* Set the threshold for TX, the threshold is a four bit field. */
-	i2c->tx_ctrl1 = ((i2c->tx_ctrl1 & ~(MXC_F_I2C_TX_CTRL0_TX_THRESH)) |
+	i2c->tx_ctrl0 = ((i2c->tx_ctrl0 & ~(MXC_F_I2C_TX_CTRL0_TX_THRESH)) |
 			(2 << MXC_F_I2C_TX_CTRL0_TX_THRESH_POS));
-	/* Enable TX Threshold, Done and Error interrupts. */
+	/* Enable interrupts of interest. */
 	i2c->int_en0 = MXC_F_I2C_INT_EN0_TX_THRESH | MXC_F_I2C_INT_EN0_DONE |
-			I2C_ERROR;
+			I2C_ERROR | MXC_F_I2C_INT_EN0_ADDR_MATCH;
 }
 
 /**
@@ -465,8 +485,9 @@ static void i2c_slave_service_read(mxc_i2c_regs_t *i2c, i2c_req_t *req)
  */
 static void i2c_slave_service_write(mxc_i2c_regs_t *i2c, i2c_req_t *req)
 {
-	/* Clear the RX Threshold interrupt if set. */
-	i2c->int_fl0 = i2c->int_fl0;
+	/* Clear all flags except address matching and done. */
+	i2c->int_fl0 = i2c->int_fl0 & ~(MXC_F_I2C_INT_FL0_ADDR_MATCH |
+		MXC_F_I2C_INT_FL0_MAMI_MASK | MXC_F_I2C_INT_FL0_DONE);
 	i2c->int_fl1 = i2c->int_fl1;
 	/* Read out any data in the RX FIFO. */
 	while (!(i2c->status & MXC_F_I2C_STATUS_RX_EMPTY)) {
@@ -478,8 +499,9 @@ static void i2c_slave_service_write(mxc_i2c_regs_t *i2c, i2c_req_t *req)
 			~(MXC_F_I2C_RX_CTRL0_RX_THRESH)) |
 			(MXC_I2C_FIFO_DEPTH - 1)
 				<< MXC_F_I2C_RX_CTRL0_RX_THRESH_POS);
-	/* Enable RXTH interrupt and Error interrupts. */
-	i2c->int_en0 = MXC_F_I2C_INT_EN0_RX_THRESH | MXC_F_I2C_INT_EN0_DONE | I2C_ERROR;
+	/* Enable interrupts of interest. */
+	i2c->int_en0 = MXC_F_I2C_INT_EN0_RX_THRESH | MXC_F_I2C_INT_EN0_DONE |
+			I2C_ERROR | MXC_F_I2C_INT_EN0_ADDR_MATCH;
 }
 
 /**
@@ -498,42 +520,26 @@ static void i2c_slave_handler(mxc_i2c_regs_t *i2c)
 	/* Get the request context for this interrupt. */
 	req = states[MXC_I2C_GET_IDX(i2c)].req;
 
-	/* Check for DONE interrupt. */
-	if (i2c->int_fl0 & MXC_F_I2C_INT_FL0_DONE) {
-		/* Clear all interrupts except a possible address match. */
-		i2c->int_fl0 = i2c->int_fl0 & ~MXC_F_I2C_INT_FL0_ADDR_MATCH;
-		i2c->int_fl1 = i2c->int_fl1;
 
-		/* Disable all interrupts except address match. */
-		i2c->int_en1 = 0;
-		i2c->int_en0 = MXC_F_I2C_INT_EN0_ADDR_MATCH;
-
-		if (req->state == I2C_SLAVE_ADDR_MATCH_WRITE) {
-			/* Read out any data in the RX FIFO. */
-			while (!(i2c->status & MXC_F_I2C_STATUS_RX_EMPTY)) {
-				*(req->rx_data)++ = i2c->fifo;
-				req->received_count++;
-			}
-		}
-		/* Manually clear the TXFIFO. */
-		i2c->tx_ctrl0 |= MXC_F_I2C_TX_CTRL0_TX_FLUSH;
-
-		/* Process the Master write that just finished. */
-		i2c_slave_service(req);
-
-		/* No longer inhibit deep sleep after done. */
-		enable_sleep(SLEEP_MASK_I2C_SLAVE);
-	}
-
-	/* Check for an address match. */
-	if (i2c->int_fl0 & MXC_F_I2C_INT_FL0_ADDR_MATCH) {
+	/* Check for an address match flag. */
+	if ((req->expecting_start) && (i2c->int_fl0 & MXC_F_I2C_INT_FL0_ADDR_MATCH)) {
+		req->expecting_done = true;
+		req->expecting_start = false;
 		/*
-		 * Save the address match index to identify
-		 * targeted slave address.
-		 */
+		* Save the address match index to identify
+		* targeted slave address.
+		*/
 		req->addr_match_flag =
 			(i2c->int_fl0 & MXC_F_I2C_INT_FL0_MAMI_MASK) >>
 			MXC_F_I2C_INT_FL0_MAMI_POS;
+
+		/* Clear all interrupt flags except a done interrupt. */
+		i2c->int_fl0 = i2c->int_fl0 & ~(MXC_F_I2C_INT_FL0_DONE);
+		i2c->int_fl1 = i2c->int_fl1;
+
+		/* Only enable done, error and address match interrupts. */
+		i2c->int_en0 = MXC_F_I2C_INT_EN0_DONE |
+			I2C_ERROR | MXC_F_I2C_INT_EN0_ADDR_MATCH;
 
 		/* Check if Master is writing to the slave. */
 		if (!(i2c->ctrl & MXC_F_I2C_CTRL_READ)) {
@@ -544,23 +550,75 @@ static void i2c_slave_handler(mxc_i2c_regs_t *i2c)
 			/* Clear the RX (receive from I2C Master) byte counter. */
 			req->received_count = 0;
 			req->state = I2C_SLAVE_ADDR_MATCH_WRITE;
+			/* The Master is writing, there can not be a response pending yet. */
+			req->response_pending = false;
+			/* Set the RX threshold interrupt level. */
+			i2c->rx_ctrl0 = ((i2c->rx_ctrl0 &
+					~(MXC_F_I2C_RX_CTRL0_RX_THRESH)) |
+					(MXC_I2C_FIFO_DEPTH - 2)
+						<< MXC_F_I2C_RX_CTRL0_RX_THRESH_POS);
 		} else {
 			/* The Master is reading from the slave. */
 			/* Start transmitting to the Master from the start of buffer. */
 			req->tx_data = host_buffer;
 			req->state = I2C_SLAVE_ADDR_MATCH_READ;
+			/* Set the threshold for TX, the threshold is a four bit field. */
+			i2c->tx_ctrl0 = ((i2c->tx_ctrl0 & ~(MXC_F_I2C_TX_CTRL0_TX_THRESH)) |
+				(2 << MXC_F_I2C_TX_CTRL0_TX_THRESH_POS));
+#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
+			/*
+			* If this is a board address match and there is not
+			* already a pending response to the I2C Master then
+			* fulfill this board read request.
+			*/
+			if ((req->response_pending == 0) &&
+				(req->addr_match_flag != 0x1)) {
+				i2c_process_board_command(
+					1, CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS, 0);
+			}
+#endif /* CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS */
 		}
-
-		/* Clear all interrupt flags. */
-		i2c->int_fl0 = i2c->int_fl0;
-		i2c->int_fl1 = i2c->int_fl1;
-
-		/* Respond to the DONE interrupt. */
-		i2c->int_en0 = MXC_F_I2C_INT_EN0_DONE;
+		/* Only enable done, error and address match interrupts. */
+		i2c->int_en0 = MXC_F_I2C_INT_EN0_DONE |
+			I2C_ERROR | MXC_F_I2C_INT_EN0_ADDR_MATCH;
 		/* Inhibit sleep mode when addressed until STOPF flag is set. */
 		disable_sleep(SLEEP_MASK_I2C_SLAVE);
 	}
 
+	/* Check for DONE interrupt. */
+	if ((req->expecting_done) && (i2c->int_fl0 & MXC_F_I2C_INT_FL0_DONE)) {
+		req->expecting_start = true;
+		req->expecting_done = false;
+		/* Clear all interrupts except a possible address match. */
+		i2c->int_fl0 = i2c->int_fl0 & ~(MXC_F_I2C_INT_FL0_ADDR_MATCH |
+			MXC_F_I2C_INT_FL0_MAMI_MASK);
+		i2c->int_fl1 = i2c->int_fl1;
+
+		/* Only enable done, error and address match interrupts. */
+		i2c->int_en0 = MXC_F_I2C_INT_EN0_DONE |
+			I2C_ERROR | MXC_F_I2C_INT_EN0_ADDR_MATCH;
+		i2c->int_en1 = 0;
+		/* If this was a DONE after a write then read the fifo until empty. */
+		if (req->state == I2C_SLAVE_ADDR_MATCH_WRITE) {
+			/* Read out any data in the RX FIFO. */
+			while (!(i2c->status & MXC_F_I2C_STATUS_RX_EMPTY)) {
+				*(req->rx_data)++ = i2c->fifo;
+				req->received_count++;
+			}
+		}
+		/* Manually clear the RX FIFO. */
+		i2c->rx_ctrl0 |= MXC_F_I2C_RX_CTRL0_RX_FLUSH;
+		/* Manually clear the TX FIFO. */
+		i2c->tx_ctrl0 |= MXC_F_I2C_TX_CTRL0_TX_FLUSH;
+
+		/* Process the Master write that just finished. */
+		i2c_slave_service(req);
+
+		/* No longer inhibit deep sleep after done. */
+		enable_sleep(SLEEP_MASK_I2C_SLAVE);
+	}
+
+	/* Check for an I2C Master Read or Write. */
 	if (i2c->int_fl0 & I2C_ERROR) {
 		/* Clear the error interrupt. */
 		i2c->int_fl0 = I2C_ERROR;
@@ -575,20 +633,14 @@ static void i2c_slave_handler(mxc_i2c_regs_t *i2c)
 		/* Cycle the I2C peripheral enable on error. */
 		i2c->ctrl = 0;
 		i2c->ctrl = MXC_F_I2C_CTRL_I2C_EN;
-		return;
-	}
-
-	/* Check for an I2C Master Read or Write. */
-	if (req->state == I2C_SLAVE_ADDR_MATCH_READ) {
+	} else if (req->state == I2C_SLAVE_ADDR_MATCH_READ) {
 		/* Service a read request from the I2C Master. */
 		i2c_slave_service_read(i2c, req);
-		return;
-	}
-	if (req->state == I2C_SLAVE_ADDR_MATCH_WRITE) {
+	} else if (req->state == I2C_SLAVE_ADDR_MATCH_WRITE) {
 		/* Service a write request from the I2C Master. */
 		i2c_slave_service_write(i2c, req);
-		return;
 	}
+
 }
 
 /**
@@ -610,13 +662,15 @@ void init_i2cs(int port)
 	req_slave.tx_remain = -1;
 	req_slave.rx_data = host_buffer; /* Received from host. */
 	req_slave.restart = 0;
+	req_slave.response_pending = false;
 	states[port].req = &req_slave;
 	error = i2c_slave_async(i2c_bus_ports[port], &req_slave);
 	if (error != EC_SUCCESS) {
 		while (1)
 			;
 	}
-
+	states[port].req->expecting_done = false;
+	states[port].req->expecting_start = true;
 	task_enable_irq(i2c_bus_irqs[port]);
 }
 
@@ -643,6 +697,13 @@ static int i2c_slave_async(mxc_i2c_regs_t *i2c, i2c_req_t *req)
 	i2c->int_en1 = 0;
 	i2c->int_fl0 = i2c->int_fl0;
 	i2c->int_fl1 = i2c->int_fl1;
+
+	/* Set the RX threshold interrupt level. */
+	i2c->rx_ctrl0 = ((i2c->rx_ctrl0 &
+			~(MXC_F_I2C_RX_CTRL0_RX_THRESH)) |
+			(MXC_I2C_FIFO_DEPTH - 2)
+				<< MXC_F_I2C_RX_CTRL0_RX_THRESH_POS);
+
 	/* Only enable the I2C Address match interrupt. */
 	i2c->int_en0 = MXC_F_I2C_INT_EN0_ADDR_MATCH;
 
@@ -655,9 +716,8 @@ static void i2c_send_board_response(int len)
 {
 	/* Set the number of bytes to send to the I2C master. */
 	req_slave.tx_remain = len;
-
-	/* Call the handler for transmition of response packet. */
-	i2c_slave_handler(i2c_bus_ports[I2C_PORT_EC]);
+	/* Indicate that there is a response pending from the slave. */
+	req_slave.response_pending = true;
 }
 
 
