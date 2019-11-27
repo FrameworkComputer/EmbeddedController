@@ -1567,8 +1567,11 @@ static void tc_error_recovery_run(const int port)
  */
 static void tc_unattached_snk_entry(const int port)
 {
-	if (get_last_state_tc(port) != TC_UNATTACHED_SRC)
+	if (get_last_state_tc(port) != TC_UNATTACHED_SRC) {
+		/* Detect USB PD cc disconnect */
+		hook_notify(HOOK_USB_PD_DISCONNECT);
 		print_current_state(port);
+	}
 
 	tc[port].data_role = PD_ROLE_DISCONNECTED;
 
@@ -2251,8 +2254,11 @@ static void tc_dbg_acc_snk_exit(const int port)
  */
 static void tc_unattached_src_entry(const int port)
 {
-	if (get_last_state_tc(port) != TC_UNATTACHED_SNK)
+	if (get_last_state_tc(port) != TC_UNATTACHED_SNK) {
+		/* Detect USB PD cc disconnect */
+		hook_notify(HOOK_USB_PD_DISCONNECT);
 		print_current_state(port);
+	}
 
 	tc[port].data_role = PD_ROLE_DISCONNECTED;
 
