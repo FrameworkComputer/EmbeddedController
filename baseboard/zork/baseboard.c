@@ -126,8 +126,8 @@ const struct i2c_port_t i2c_ports[] = {
 		.name = "power",
 		.port = I2C_PORT_BATTERY,
 		.kbps = 100,
-		.scl = GPIO_EC_I2C_POWER_CBI_SCL,
-		.sda = GPIO_EC_I2C_POWER_CBI_SDA,
+		.scl = GPIO_EC_I2C_POWER_SCL,
+		.sda = GPIO_EC_I2C_POWER_SDA,
 	},
 	{
 		.name = "mux",
@@ -147,8 +147,8 @@ const struct i2c_port_t i2c_ports[] = {
 		.name = "sensor",
 		.port = I2C_PORT_SENSOR,
 		.kbps = 400,
-		.scl = GPIO_EC_I2C_SENSOR_SCL,
-		.sda = GPIO_EC_I2C_SENSOR_SDA,
+		.scl = GPIO_EC_I2C_SENSOR_CBI_SCL,
+		.sda = GPIO_EC_I2C_SENSOR_CBI_SDA,
 	},
 	{
 		.name = "ap_audio",
