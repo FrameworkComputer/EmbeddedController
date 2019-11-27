@@ -266,6 +266,15 @@ struct tcpm_drv {
 	 */
 	void (*tcpc_discharge_vbus)(int port, int enable);
 
+	/**
+	 * Connection State Change
+	 *
+	 * @param port Type-C port number
+	 * @param connected Connection state
+	 */
+	void (*tcpc_connect_state_change)(int port,
+					  int connected);
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	/**
 	 * Enable TCPC auto DRP toggling.

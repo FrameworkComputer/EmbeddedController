@@ -183,6 +183,8 @@ int tcpci_enter_low_power_mode(int port);
 void tcpci_tcpc_discharge_vbus(int port, int enable);
 #endif
 
+void tcpci_tcpc_connect_state_change(int port, int connected);
+
 int tcpci_tcpm_mux_init(int i2c_addr);
 int tcpci_tcpm_mux_set(int i2c_addr, mux_state_t mux_state);
 int tcpci_tcpm_mux_get(int i2c_addr, mux_state_t *mux_state);

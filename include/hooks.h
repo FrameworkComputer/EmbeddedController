@@ -216,6 +216,8 @@ enum hook_type {
 
 	/*
 	 * USB PD cc connection event.
+	 *
+	 * CC lines and VBus are stable when this hook is called.
 	 */
 	HOOK_USB_PD_CONNECT,
 };
