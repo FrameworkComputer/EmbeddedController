@@ -53,6 +53,13 @@
 #define GPIO_USB_C0_TCPC_RST GPIO_USB_C0_TCPC_RST_ODL
 #define GPIO_USB_C1_TCPC_RST GPIO_USB_C1_TCPC_RST_ODL
 
+/*
+ * Helios' battery takes several seconds to come back out of its disconnect
+ * state (~4.2 seconds on the unit I have, so give it a little more for margin).
+ */
+#undef  CONFIG_POWER_BUTTON_INIT_TIMEOUT
+#define CONFIG_POWER_BUTTON_INIT_TIMEOUT 6
+
 /* BC 1.2 */
 #define CONFIG_BC12_DETECT_PI3USB9201
 
