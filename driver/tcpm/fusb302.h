@@ -76,7 +76,7 @@
 
 #define TCPC_REG_CONTROL2	0x08
 /* two-bit field, valid values below */
-#define TCPC_REG_CONTROL2_MODE		(1<<1)
+#define TCPC_REG_CONTROL2_MODE_MASK	(0x3<<TCPC_REG_CONTROL2_MODE_POS)
 #define TCPC_REG_CONTROL2_MODE_DFP	(0x3)
 #define TCPC_REG_CONTROL2_MODE_UFP	(0x2)
 #define TCPC_REG_CONTROL2_MODE_DRP	(0x1)

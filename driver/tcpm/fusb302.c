@@ -434,7 +434,6 @@ static int fusb302_tcpm_init(int port)
 	tcpm_set_polarity(port, 0);
 	tcpm_set_vconn(port, 0);
 
-	/* Turn on the power! */
 	/* TODO: Reduce power consumption */
 	tcpc_write(port, TCPC_REG_POWER, TCPC_REG_POWER_PWR_ALL);
 
@@ -1008,9 +1007,73 @@ void tcpm_set_bist_test_data(int port)
 }
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+static int fusb302_set_toggle_mode(int port, int mode)
+{
+	int reg, rv;
+
+	rv = i2c_read8(tcpc_config[port].i2c_info.port,
+		tcpc_config[port].i2c_info.addr_flags,
+		TCPC_REG_CONTROL2, &reg);
+	if (rv)
+		return rv;
+
+	reg &= ~TCPC_REG_CONTROL2_MODE_MASK;
+	reg |= mode << TCPC_REG_CONTROL2_MODE_POS;
+	return i2c_write8(tcpc_config[port].i2c_info.port,
+		tcpc_config[port].i2c_info.addr_flags,
+		TCPC_REG_CONTROL2, reg);
+}
+
 static int fusb302_tcpm_enter_low_power_mode(int port)
 {
-	return tcpc_write(port, TCPC_REG_POWER, TCPC_REG_POWER_PWR_LOW);
+	int reg, rv, mode = TCPC_REG_CONTROL2_MODE_DRP;
+
+	/**
+	 * vendor's suggested LPM flow:
+	 * - enable low power mode and set up other things
+	 * - sleep 250 us
+	 * - start toggling
+	 */
+	rv = i2c_write8(tcpc_config[port].i2c_info.port,
+			  tcpc_config[port].i2c_info.addr_flags,
+			  TCPC_REG_POWER, TCPC_REG_POWER_PWR_LOW);
+	if (rv)
+		return rv;
+
+	switch (pd_get_dual_role(port)) {
+	case PD_DRP_TOGGLE_ON:
+		mode = TCPC_REG_CONTROL2_MODE_DRP;
+		break;
+	case PD_DRP_TOGGLE_OFF:
+		mode = TCPC_REG_CONTROL2_MODE_UFP;
+		break;
+	case PD_DRP_FREEZE:
+		mode = pd_get_role(port) == PD_ROLE_SINK ?
+			TCPC_REG_CONTROL2_MODE_UFP :
+			TCPC_REG_CONTROL2_MODE_DFP;
+		break;
+	case PD_DRP_FORCE_SINK:
+		mode = TCPC_REG_CONTROL2_MODE_UFP;
+		break;
+	case PD_DRP_FORCE_SOURCE:
+		mode = TCPC_REG_CONTROL2_MODE_DFP;
+		break;
+	}
+	rv = fusb302_set_toggle_mode(port, mode);
+	if (rv)
+		return rv;
+
+	usleep(250);
+
+	rv = i2c_read8(tcpc_config[port].i2c_info.port,
+		tcpc_config[port].i2c_info.addr_flags,
+		TCPC_REG_CONTROL2, &reg);
+	if (rv)
+		return rv;
+	reg |= TCPC_REG_CONTROL2_TOGGLE;
+	return i2c_write8(tcpc_config[port].i2c_info.port,
+		tcpc_config[port].i2c_info.addr_flags,
+		TCPC_REG_CONTROL2, reg);
 }
 #endif
 
