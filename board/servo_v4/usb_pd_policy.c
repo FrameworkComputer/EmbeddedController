@@ -606,13 +606,7 @@ int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port)
 	return pdo_cnt;
 }
 
-int pd_is_valid_input_voltage(int mv)
-{
-	/* Any voltage less than the max is allowed */
-	return 1;
-}
-
-void pd_transition_voltage(int idx)
+__override void pd_transition_voltage(int idx)
 {
 	timestamp_t deadline;
 	uint32_t ma, mv;
@@ -695,12 +689,7 @@ int pd_snk_is_vbus_provided(int port)
 				     GPIO_USB_DET_PP_CHG);
 }
 
-int pd_board_checks(void)
-{
-	return EC_SUCCESS;
-}
-
-int pd_check_power_swap(int port)
+__override int pd_check_power_swap(int port)
 {
 	/*
 	 * When only host VBUS is available, then servo_v4 is not setting
@@ -720,7 +709,7 @@ int pd_check_power_swap(int port)
 	return 0;
 }
 
-int pd_check_data_swap(int port, int data_role)
+__override int pd_check_data_swap(int port, int data_role)
 {
 	/*
 	 * Servo should allow data role swaps to let DUT see the USB hub, but
@@ -732,7 +721,7 @@ int pd_check_data_swap(int port, int data_role)
 	return 1;
 }
 
-void pd_execute_data_swap(int port, int data_role)
+__override void pd_execute_data_swap(int port, int data_role)
 {
 	/*
 	 * TODO(b/137887386): Turn on the fastboot/DFU path when data swap to
@@ -740,7 +729,7 @@ void pd_execute_data_swap(int port, int data_role)
 	 */
 }
 
-void pd_check_pr_role(int port, int pr_role, int flags)
+__override void pd_check_pr_role(int port, int pr_role, int flags)
 {
 	/*
 	 * Don't define any policy to initiate power role swap.
@@ -750,7 +739,7 @@ void pd_check_pr_role(int port, int pr_role, int flags)
 	 */
 }
 
-void pd_check_dr_role(int port, int dr_role, int flags)
+__override void pd_check_dr_role(int port, int dr_role, int flags)
 {
 	if (port == CHG)
 		return;
@@ -762,13 +751,7 @@ void pd_check_dr_role(int port, int dr_role, int flags)
 
 
 /* ----------------- Vendor Defined Messages ------------------ */
-const struct svdm_response svdm_rsp = {
-	.identity = NULL,
-	.svids = NULL,
-	.modes = NULL,
-};
-
-int pd_custom_vdm(int port, int cnt, uint32_t *payload,
+__override int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		  uint32_t **rpayload)
 {
 	int cmd = PD_VDO_CMD(payload[0]);
@@ -793,8 +776,8 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 
 
 
-const struct svdm_amode_fx supported_modes[] = {};
-const int supported_modes_cnt = ARRAY_SIZE(supported_modes);
+__override const struct svdm_amode_fx supported_modes[] = {};
+__override const int supported_modes_cnt = ARRAY_SIZE(supported_modes);
 
 
 static void print_cc_mode(void)

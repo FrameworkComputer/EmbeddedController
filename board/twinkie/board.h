@@ -21,6 +21,7 @@
 #define CONFIG_WEBUSB_URL "storage.googleapis.com/webtwinkie.org/tool.html"
 
 #define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_CUSTOM_PDO
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_INTERNAL_COMP
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1

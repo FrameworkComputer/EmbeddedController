@@ -3679,11 +3679,28 @@
 /* Support for USB PD alternate mode of Downward Facing Port */
 #undef CONFIG_USB_PD_ALT_MODE_DFP
 
+/* HPD is sent to the GPU from the EC via a GPIO */
+#undef CONFIG_USB_PD_DP_HPD_GPIO
+
 /* Check if max voltage request is allowed before each request */
 #undef CONFIG_USB_PD_CHECK_MAX_REQUEST_ALLOWED
 
 /* Default state of PD communication disabled flag */
 #undef CONFIG_USB_PD_COMM_DISABLED
+
+/*
+ * Define this if a board needs custom SNK and/or SRC PDOs.
+ *
+ * The default SRC PDO is a fixed 5V/1.5A with PDO_FIXED_FLAGS indicating
+ * Dual-Role power, USB Communication Capable, and Dual-Role data.
+ *
+ * The default SNK PDOs are:
+ * - Fixed 5V/500mA with the same PDO_FIXED_FLAGS
+ * - Variable (non-battery) min 4.75V, max PD_MAX_VOLTAGE_MV, operational
+ *   current 3A
+ * - Battery min 4.75V, max PD_MAX_VOLTAGE_MV, operational power 15W
+ */
+#undef CONFIG_USB_PD_CUSTOM_PDO
 
 /*
  * Do not enable PD communication in RO as a security measure.

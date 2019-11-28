@@ -8,12 +8,15 @@
 #include "usb_tc_sm.h"
 #include "usb_pd.h"
 
-int pd_is_vbus_present(int port)
+__overridable int pd_is_vbus_present(int port)
 {
 	return 0;
 }
 
-void pd_request_data_swap(int port)
+__overridable void pd_request_data_swap(int port)
+{}
+
+__overridable void pd_request_power_swap(int port)
 {}
 
 void pd_request_vconn_swap_off(int port)
@@ -24,26 +27,26 @@ void pd_request_vconn_swap_on(int port)
 
 
 static enum pd_data_role data_role;
-enum pd_data_role tc_get_data_role(int port)
+__overridable enum pd_data_role tc_get_data_role(int port)
 {
 	return data_role;
 }
-void tc_set_data_role(int port, enum pd_data_role role)
+__overridable void tc_set_data_role(int port, enum pd_data_role role)
 {
 	data_role = role;
 }
 
 static enum pd_power_role power_role;
-enum pd_power_role tc_get_power_role(int port)
+__overridable enum pd_power_role tc_get_power_role(int port)
 {
 	return power_role;
 }
-void tc_set_power_role(int port, enum pd_power_role role)
+__overridable void tc_set_power_role(int port, enum pd_power_role role)
 {
 	power_role = role;
 }
 
-enum pd_cable_plug tc_get_cable_plug(int port)
+__overridable enum pd_cable_plug tc_get_cable_plug(int port)
 {
 	return PD_PLUG_FROM_DFP_UFP;
 }
@@ -112,8 +115,24 @@ void tc_prs_src_snk_assert_rd(int port)
 void tc_set_timeout(int port, uint64_t timeout)
 {}
 
-void tc_start_error_recovery(int port)
+__overridable void tc_start_error_recovery(int port)
 {}
 
-void tc_snk_power_off(int port)
+__overridable void tc_snk_power_off(int port)
 {}
+
+int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
+			 uint32_t ec_current_image)
+{
+	return 0;
+}
+
+enum pd_dual_role_states pd_get_dual_role(int port)
+{
+	return PD_DRP_TOGGLE_ON;
+}
+
+__overridable int pd_get_role(int port)
+{
+	return PD_ROLE_SINK;
+}

@@ -31,7 +31,7 @@ const uint32_t pd_src_pdo[] = {
 		PDO_FIXED(12000, 3000, PDO_FIXED_FLAGS),
 		PDO_FIXED(20000, 3000, PDO_FIXED_FLAGS),
 };
-static const int pd_src_pdo_cnts[3] = {
+static const int pd_src_pdo_cnts[] = {
 		[SRC_CAP_5V] = 1,
 		[SRC_CAP_12V] = 2,
 		[SRC_CAP_20V] = 3,
@@ -68,12 +68,6 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 	return;
 }
 
-int pd_is_valid_input_voltage(int mv)
-{
-	/* Any voltage less than the max is allowed */
-	return 1;
-}
-
 int pd_board_check_request(uint32_t rdo, int pdo_cnt)
 {
 	int idx = RDO_POS(rdo);
@@ -83,7 +77,7 @@ int pd_board_check_request(uint32_t rdo, int pdo_cnt)
 		EC_ERROR_INVAL : EC_SUCCESS;
 }
 
-void pd_transition_voltage(int idx)
+__override void pd_transition_voltage(int idx)
 {
 	gpio_set_level(GPIO_USBC_VSEL_0, idx >= 2);
 	gpio_set_level(GPIO_USBC_VSEL_1, idx >= 3);
@@ -110,7 +104,7 @@ int pd_snk_is_vbus_provided(int port)
 	return gpio_get_level(GPIO_VBUS_WAKE);
 }
 
-int pd_board_checks(void)
+__override int pd_board_checks(void)
 {
 	static int was_connected = -1;
 	if (was_connected != 1 && pd_is_connected(0))
@@ -119,28 +113,23 @@ int pd_board_checks(void)
 	return EC_SUCCESS;
 }
 
-int pd_check_power_swap(int port)
+__override int pd_check_power_swap(int port)
 {
 	/* Always allow power swap */
 	return 1;
 }
 
-int pd_check_data_swap(int port, int data_role)
+__override int pd_check_data_swap(int port, int data_role)
 {
 	/* Always allow data swap */
 	return 1;
 }
 
-void pd_execute_data_swap(int port, int data_role)
-{
-	/* Do nothing */
-}
-
-void pd_check_pr_role(int port, int pr_role, int flags)
+__override void pd_check_pr_role(int port, int pr_role, int flags)
 {
 }
 
-void pd_check_dr_role(int port, int dr_role, int flags)
+__override void pd_check_dr_role(int port, int dr_role, int flags)
 {
 	/* If Plankton is in USB hub mode, always act as UFP */
 	if (board_in_hub_mode() && dr_role == PD_ROLE_DFP &&
@@ -233,7 +222,7 @@ static int dp_config(int port, uint32_t *payload)
 	return 1;
 }
 
-static int svdm_enter_mode(int port, uint32_t *payload)
+int svdm_enter_mode(int port, uint32_t *payload)
 {
 	int usb_mode = gpio_get_level(GPIO_USBC_SS_USB_MODE);
 
@@ -271,7 +260,7 @@ static struct amode_fx dp_fx = {
 	.config = &dp_config,
 };
 
-const struct svdm_response svdm_rsp = {
+__override const struct svdm_response svdm_rsp = {
 	.identity = &svdm_response_identity,
 	.svids = &svdm_response_svids,
 	.modes = &svdm_response_modes,
@@ -280,7 +269,8 @@ const struct svdm_response svdm_rsp = {
 	.exit_mode = &svdm_exit_mode,
 };
 
-int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
+__override int pd_custom_vdm(int port, int cnt, uint32_t *payload,
+			     uint32_t **rpayload)
 {
 	int cmd = PD_VDO_CMD(payload[0]);
 	int rsize = 1;

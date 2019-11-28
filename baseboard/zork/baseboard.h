@@ -128,6 +128,7 @@
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_COMM_LOCKED
 #define CONFIG_USB_PD_DISCHARGE_PPC
+#define CONFIG_USB_PD_DP_HPD_GPIO
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 #define CONFIG_USB_PD_LOGGING
@@ -310,6 +311,8 @@ void board_update_sensor_config_from_sku(void);
 #ifdef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
 int board_tcpc_fast_role_swap_enable(int port, int enable);
 #endif
+
+#define PORT_TO_HPD(port) ((port) ? GPIO_DP2_HPD : GPIO_USB_C0_HPD)
 
 #endif /* !__ASSEMBLER__ */
 

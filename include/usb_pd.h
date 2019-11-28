@@ -1500,7 +1500,7 @@ unsigned pd_get_max_voltage(void);
  * @mv input voltage
  * @return 1 if voltage supported, 0 if not
  */
-int pd_is_valid_input_voltage(int mv);
+__override_proto int pd_is_valid_input_voltage(int mv);
 
 /**
  * Request a new operating voltage.
@@ -1525,7 +1525,7 @@ int pd_board_check_request(uint32_t rdo, int pdo_cnt);
  *
  * param idx index of the new voltage in the source PDO table.
  */
-void pd_transition_voltage(int idx);
+__override_proto void pd_transition_voltage(int idx);
 
 /**
  * Go back to the default/safe state of the power supply
@@ -1598,8 +1598,9 @@ typedef uint32_t typec_current_t;
  * @param max_ma Maximum current limit
  * @param supply_voltage Voltage at which current limit is applied
  */
-void typec_set_input_current_limit(int port, typec_current_t max_ma,
-				   uint32_t supply_voltage);
+__override_proto void typec_set_input_current_limit(int port,
+						    typec_current_t max_ma,
+						    uint32_t supply_voltage);
 
 /**
  * Set the type-C current limit when sourcing current..
@@ -1614,7 +1615,7 @@ void typec_set_source_current_limit(int port, enum tcpc_rp_value rp);
  *
  * @return EC_SUCCESS if the board is good, <0 else.
  */
-int pd_board_checks(void);
+__override_proto int pd_board_checks(void);
 
 /**
  * Return if VBUS is detected on type-C port
@@ -1637,7 +1638,7 @@ void pd_vbus_low(int port);
  * @param port USB-C port number
  * @return True if power swap is allowed, False otherwise
  */
-int pd_check_power_swap(int port);
+__override_proto int pd_check_power_swap(int port);
 
 /**
  * Check if data swap is allowed.
@@ -1646,7 +1647,7 @@ int pd_check_power_swap(int port);
  * @param data_role current data role
  * @return True if data swap is allowed, False otherwise
  */
-int pd_check_data_swap(int port, int data_role);
+__override_proto int pd_check_data_swap(int port, int data_role);
 
 /**
  * Check if vconn swap is allowed.
@@ -1664,7 +1665,7 @@ int pd_check_vconn_swap(int port);
  * @param pr_role Our power role
  * @param flags PD flags
  */
-void pd_check_pr_role(int port, int pr_role, int flags);
+__override_proto void pd_check_pr_role(int port, int pr_role, int flags);
 
 /**
  * Check current data role for potential data swap
@@ -1673,7 +1674,7 @@ void pd_check_pr_role(int port, int pr_role, int flags);
  * @param dr_role Our data role
  * @param flags PD flags
  */
-void pd_check_dr_role(int port, int dr_role, int flags);
+__override_proto void pd_check_dr_role(int port, int dr_role, int flags);
 
 /**
  * Check if we should charge from this device. This is
@@ -1692,7 +1693,7 @@ int pd_charge_from_device(uint16_t vid, uint16_t pid);
  * @param port USB-C port number
  * @param data_role new data role
  */
-void pd_execute_data_swap(int port, int data_role);
+__override_proto void pd_execute_data_swap(int port, int data_role);
 
 /**
  * Get PD device info used for VDO_CMD_SEND_INFO / VDO_CMD_READ_INFO
@@ -1710,7 +1711,8 @@ void pd_get_info(uint32_t *info_data);
  * @param rpayload pointer to the data to send back.
  * @return if >0, number of VDOs to send back.
  */
-int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
+__override_proto int pd_custom_vdm(int port, int cnt, uint32_t *payload,
+				   uint32_t **rpayload);
 
 /**
  * Handle Structured Vendor Defined Messages
@@ -1862,7 +1864,7 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 		 int count);
 
 /* Power Data Objects for the source and the sink */
-extern const uint32_t pd_src_pdo[];
+__override_proto extern const uint32_t pd_src_pdo[];
 extern const int pd_src_pdo_cnt;
 extern const uint32_t pd_src_pdo_max[];
 extern const int pd_src_pdo_max_cnt;
@@ -2366,4 +2368,122 @@ static inline int pd_vdm_get_log_entry(uint32_t *payload) { return 0; }
 void pd_prepare_sysjump(void);
 #endif
 
+/* ----- SVDM handlers ----- */
+
+/* DisplayPort Alternate Mode */
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+extern int dp_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+extern uint32_t dp_status[CONFIG_USB_PD_PORT_MAX_COUNT];
+#endif /* CONFIG_USB_PD_ALT_MODE_DFP */
+/**
+ * Configure the pins used for DisplayPort Alternate Mode into safe state.
+ *
+ * @param port The PD port number
+ */
+__override_proto void svdm_safe_dp_mode(int port);
+
+/**
+ * Enter DisplayPort Alternate Mode.
+ *
+ * The default implementation will only enter DP Alt Mode if the SoC is on.
+ * Also, it may notify the AP that the mode was entered.
+ *
+ * @param port The PD port number
+ * @param mode_caps Bitmask indicating DisplayPort mode capabilities
+ * @return 0 if mode is entered, -1 otherwise.
+ */
+__override_proto int svdm_enter_dp_mode(int port, uint32_t mode_caps);
+
+/**
+ * Construct a DP status response.
+ *
+ * @param port The PD port number
+ * @param payload Pointer to the PDO payload which is filled with the DPStatus
+ *                information.
+ * @return number of VDOs
+ */
+__override_proto int svdm_dp_status(int port, uint32_t *payload);
+
+/**
+ * Configure the pins used for DisplayPort Alternate Mode.
+ *
+ * @param port The PD port number
+ * @payload payload Pointer to the PDO payload which is filled with the
+ *                  DPConfigure response message
+ * @return number of VDOs
+ */
+__override_proto int svdm_dp_config(int port, uint32_t *payload);
+
+/**
+ * Perform any other work required after configuring the pins for DP Alt Mode.
+ *
+ * Typically, this involves sending the HPD signal from either the EC or TCPC to
+ * the GPU.
+ * @param port The PD port number
+ */
+__override_proto void svdm_dp_post_config(int port);
+
+/**
+ * Called when a DisplayPort Attention command is received
+ *
+ * The default implementation will parse the Attention message and indicate the
+ * HPD level to the GPU.
+ *
+ * @param port The PD port number
+ * @param payload Pointer to the payload received from the attention command
+ * @return 0 for NAK, 1 for ACK
+ */
+__override_proto int svdm_dp_attention(int port, uint32_t *payload);
+
+/**
+ * Exit DisplayPort Alternate Mode.
+ *
+ * @param port The PD port number
+ */
+__override_proto void svdm_exit_dp_mode(int port);
+
+/* Google Firmware Update Alternate Mode */
+/**
+ * Enter Google Firmware Update (GFU) Mode.
+ *
+ * @param port The PD port number
+ * @param mode_caps Unused for GFU
+ * @return 0 to enter the mode, -1 otherwise
+ */
+__override_proto int svdm_enter_gfu_mode(int port, uint32_t mode_caps);
+
+/**
+ * Exit Google Firmware Update Mode.
+ *
+ * @param port The PD port number
+ */
+__override_proto void svdm_exit_gfu_mode(int port);
+
+/**
+ * Called after successful entry into GFU Mode
+ *
+ * The default implementation sends VDO_CMD_READ_INFO.
+ * @param port The PD port number
+ * @param payload Unused for GFU
+ * @return The number of VDOs
+ */
+__override_proto int svdm_gfu_status(int port, uint32_t *payload);
+
+/**
+ * Configure any pins needed for GFU Mode
+ *
+ * @param port The PD port number
+ * @param payload Unused for GFU
+ * @return The number of VDOs
+ */
+__override_proto int svdm_gfu_config(int port, uint32_t *payload);
+
+/**
+ * Called when an Attention Message is received
+ *
+ * @param port The PD port number
+ * @param payload Unusued for GFU
+ * @return The number of VDOs
+ */
+__override_proto int svdm_gfu_attention(int port, uint32_t *payload);
 #endif  /* __CROS_EC_USB_PD_H */
