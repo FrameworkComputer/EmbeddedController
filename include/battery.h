@@ -445,4 +445,9 @@ extern struct i2c_stress_test_dev battery_i2c_stress_test_dev;
  */
 void battery_compensate_params(struct batt_params *batt);
 
+/**
+ * board-specific battery_compensate_params
+ */
+__override_proto void board_battery_compensate_params(struct batt_params *batt);
+
 #endif /* __CROS_EC_BATTERY_H */

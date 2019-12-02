@@ -615,6 +615,10 @@ void battery_compensate_params(struct batt_params *batt)
 		batt->display_charge = 0;
 }
 
+__overridable void board_battery_compensate_params(struct batt_params *batt)
+{
+}
+
 __attribute__((weak)) int get_battery_manufacturer_name(char *dest, int size)
 {
 	strzcpy(dest, "<unkn>", size);
