@@ -112,7 +112,7 @@
 
     A Light Emitting Diode is a semiconductor that emits light when current flows through it.
 
-*   **LPC - Low Pin Count bus**{#lpc}
+*   **LPC - [Low Pin Count bus]**{#lpc}
 
     Legacy communication bus between the [AP](#ap) and [EC](#ec). Runs at 33
     MHz, providing a 133 Mbps bandwidth connection.  Replaced by the
@@ -200,3 +200,4 @@
 [I2C Specification]: <https://www.nxp.com/docs/en/user-guide/UM10204.pdf>
 [RS-232]: <https://en.wikipedia.org/wiki/RS-232>
 [EC MKBP driver]: <https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/common/keyboard_mkbp.c>
+[Low Pin Count bus]: https://en.wikipedia.org/wiki/Low_Pin_Count
