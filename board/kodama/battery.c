@@ -95,59 +95,47 @@ int charger_profile_override(struct charge_state_data *curr)
 	 * be turned off. Disable EOC and TE when battery stays over discharge
 	 * state, otherwise enable EOC and TE.
 	 */
-	if (curr->batt.voltage < batt_info->voltage_min) {
-		normal_charge_lock = 0;
+	if (!(curr->batt.flags & BATT_FLAG_BAD_VOLTAGE)) {
+		if (curr->batt.voltage < batt_info->voltage_min) {
+			normal_charge_lock = 0;
 
-		if (!over_discharge_lock && curr->state == ST_CHARGE) {
-			over_discharge_lock = 1;
-			rt946x_enable_charge_eoc(0);
-			rt946x_enable_charge_termination(0);
-		}
-	} else {
-		over_discharge_lock = 0;
+			if (!over_discharge_lock && curr->state == ST_CHARGE) {
+				over_discharge_lock = 1;
+				rt946x_enable_charge_eoc(0);
+				rt946x_enable_charge_termination(0);
+			}
+		} else {
+			over_discharge_lock = 0;
 
-		if (!normal_charge_lock) {
-			normal_charge_lock = 1;
-			rt946x_enable_charge_eoc(1);
-			rt946x_enable_charge_termination(1);
+			if (!normal_charge_lock) {
+				normal_charge_lock = 1;
+				rt946x_enable_charge_eoc(1);
+				rt946x_enable_charge_termination(1);
+			}
 		}
 	}
-
-	/*
-	 * When smart battery temperature is more than 45 deg C, the max
-	 * charging voltage is 4100mV.
-	 */
-	if (curr->state == ST_CHARGE && bat_temp_c >= 450)
-		curr->requested_voltage	= 4100;
 
 #ifdef VARIANT_KUKUI_CHARGER_MT6370
 	mt6370_charger_profile_override(curr);
 #endif /* CONFIG_CHARGER_MT6370 */
 
-	if (IS_ENABLED(CONFIG_CHARGER_MAINTAIN_VBAT)) {
-		/* Turn charger off if it's not needed */
-		if (curr->state == ST_IDLE || curr->state == ST_DISCHARGE) {
-			curr->requested_voltage = 0;
-			curr->requested_current = 0;
-		}
+	/*
+	 * When smart battery temperature is more than 45 deg C, the max
+	 * charging voltage is 4100mV.
+	 */
+	if (curr->state == ST_CHARGE && bat_temp_c >= 450
+		&& !(curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE))
+		curr->requested_voltage	= 4100;
+	else
+		curr->requested_voltage = batt_info->voltage_max;
 
-		if (!curr->batt.is_present &&
-			curr->requested_voltage == 0 &&
-			curr->requested_current == 0) {
-			/*
-			 * b/138978212: With adapter plugged in S0, the system
-			 * will set charging current and voltage as 0V/0A once
-			 * removing battery. Vsys drop to lower voltage
-			 * (Vsys < 2.5V) since Vsys's loading, then system will
-			 * shutdown. Keep max charging voltage as 4.4V when
-			 * remove battery in S0 to not let the system to trigger
-			 * under voltage (Vsys < 2.5V).
-			 */
-			CPRINTS("battery disconnected");
-			curr->requested_voltage = batt_info->voltage_max;
-			curr->requested_current = 500;
-		}
-	}
+	/*
+	 * mt6370's minimum regulated current is 500mA REG17[7:2] 0b100,
+	 * values below 0b100 are preserved. In the other hand, it makes sure
+	 * mt6370's VOREG set as 4400mV and minimum value of mt6370's ICHG
+	 * is limited as 500mA.
+	 */
+	curr->requested_current = MAX(500, curr->requested_current);
 
 	return 0;
 }

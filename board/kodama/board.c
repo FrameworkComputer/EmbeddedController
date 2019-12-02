@@ -100,6 +100,21 @@ static void board_hpd_status(int port, int hpd_lvl, int hpd_irq)
 	host_set_single_event(EC_HOST_EVENT_USB_MUX);
 }
 
+
+__override const struct rt946x_init_setting *board_rt946x_init_setting(void)
+{
+	static const struct rt946x_init_setting battery_init_setting = {
+		.eoc_current = 150,
+		.mivr = 4000,
+		.ircmp_vclamp = 32,
+		.ircmp_res = 25,
+		.boost_voltage = 5050,
+		.boost_current = 1500,
+	};
+
+	return &battery_init_setting;
+}
+
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.port_addr = IT5205_I2C_ADDR1_FLAGS,
