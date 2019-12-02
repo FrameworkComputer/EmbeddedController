@@ -9,6 +9,7 @@
 #include "charge_state.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/sn5s330.h"
+#include "driver/ppc/syv682x.h"
 #include "driver/tcpm/tusb422.h"
 #include "driver/temp_sensor/thermistor.h"
 #include "fan.h"
@@ -71,6 +72,10 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	[USBC_PORT_C0] = {
 		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+	[USBC_PORT_C1] = {
+		.i2c_port = I2C_PORT_USB_C1,
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 	},
 };
@@ -312,6 +317,15 @@ const struct tcpc_config_t tcpc_config[] = {
 		.drv = &tusb422_tcpm_drv,
 		.usb23 = USBC_PORT_0_USB2_NUM | (USBC_PORT_0_USB3_NUM << 4),
 	},
+	[USBC_PORT_C1] = {
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_USB_C1,
+			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
+		},
+		.drv = &tusb422_tcpm_drv,
+		.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
@@ -322,7 +336,12 @@ struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
 		.i2c_port = I2C_PORT_USB_C0,
 		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
+		.drv = &sn5s330_drv,
+	},
+	[USBC_PORT_C1] = {
+		.i2c_port = I2C_PORT_USB_C1,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.drv = &syv682x_drv,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
@@ -335,6 +354,10 @@ struct usb_mux usb_muxes[] = {
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
 	},
+	[USBC_PORT_C1] = {
+		.driver = &virtual_usb_mux_driver,
+		.hpd_update = &virtual_hpd_update,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
@@ -343,9 +366,11 @@ static void baseboard_tcpc_init(void)
 {
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
 
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -379,6 +404,8 @@ uint16_t tcpc_get_alert_status(void)
 	 */
 	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL))
 		status |= PD_STATUS_TCPC_ALERT_0;
+	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL))
+		status |= PD_STATUS_TCPC_ALERT_1;
 
 	return status;
 }
@@ -391,7 +418,10 @@ void tcpc_alert_event(enum gpio_signal signal)
 
 	switch (signal) {
 	case GPIO_USB_C0_TCPC_INT_ODL:
-		port = 0;
+		port = USBC_PORT_C0;
+		break;
+	case GPIO_USB_C1_TCPC_INT_ODL:
+		port = USBC_PORT_C1;
 		break;
 	default:
 		return;
