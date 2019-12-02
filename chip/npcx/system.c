@@ -483,15 +483,15 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	/* Disable interrupt */
 	interrupt_disable();
 
+	/* Unlock & stop watchdog */
+	watchdog_stop_and_unlock();
+
 	/* ITIM event module disable */
 	CLEAR_BIT(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN);
 	/* ITIM time module disable */
 	CLEAR_BIT(NPCX_ITCTS(ITIM32), NPCX_ITCTS_ITEN);
 	/* ITIM watchdog warn module disable */
 	CLEAR_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN);
-
-	/* Unlock & stop watchdog */
-	watchdog_stop_and_unlock();
 
 	/* Initialize watchdog */
 	NPCX_TWCFG = 0; /* Select T0IN clock as watchdog prescaler clock */
