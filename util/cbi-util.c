@@ -81,9 +81,7 @@ const char help_create[] =
 	"  --board_version <value>    Board version\n"
 	"  --sku_id <value>           SKU ID\n"
 	"  --size <size>              Size of output file in bytes\n"
-	"<value> must be a positive integer <= 0XFFFFFFFF and field size can\n"
-	"be optionally specified by <value:size> notation: e.g. 0xabcd:4.\n"
-	"<size> must be a positive integer <= 0XFFFF.\n"
+	"\n"
 	"Optional ARGS are:\n"
 	"  --dram_part_num <string>   DRAM PART NUM\n"
 	"  --oem_id <value>           OEM ID\n"
@@ -91,6 +89,10 @@ const char help_create[] =
 	"  --erase_byte <uint8>       Byte used for empty space. Default:0xff\n"
 	"  --format_version <uint16>  Data format version\n"
 	"  --model_id <value>         Model ID\n"
+	"\n"
+	"<value> must be a positive integer <= 0XFFFFFFFF and field size can\n"
+	"    be optionally specified by <value:size> notation: e.g. 0xabcd:4.\n"
+	"<size> must be a positive integer <= 0XFFFF.\n"
 	"<string> is a string\n"
 	"\n";
 
