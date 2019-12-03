@@ -86,14 +86,11 @@ static void bb_retimer_power_handle(int port, int on_off)
 		gpio_set_level(retimer->force_power_gpio, 1);
 
 		/*
-		 * If BB retimer NVM is shared between two ports allow 40ms
-		 * time for both retimers to be initialized. Else allow 20ms
-		 * to initialize.
+		 * If BB retimer NVM is shared between multiple ports, allow
+		 * 40ms time for all the retimers to be initialized.
+		 * Else allow 20ms to initialize.
 		 */
-		if ((USB_PORT0_BB_RETIMER_SHARED_NVM &&
-				(port == TYPE_C_PORT_0)) ||
-		    (USB_PORT1_BB_RETIMER_SHARED_NVM &&
-				(port == TYPE_C_PORT_1)))
+		if (retimer->shared_nvm)
 			msleep(40);
 		else
 			msleep(20);
@@ -250,7 +247,8 @@ static int console_command_bb_retimer(int argc, char **argv)
 
 	/* Get port number */
 	port = strtoi(argv[1], &e, 0);
-	if (*e || port < 0 || port > board_get_usb_pd_port_count())
+	if (*e || port < 0 || port > board_get_usb_pd_port_count() ||
+		!usb_retimers[port].driver)
 		return EC_ERROR_PARAM1;
 
 	/* Validate r/w selection */

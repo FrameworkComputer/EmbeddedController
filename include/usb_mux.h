@@ -188,6 +188,9 @@ struct usb_retimer {
 	const int i2c_port;
 	const uint16_t i2c_addr_flags;
 
+	/* NVM flag if shared with multiple retimers */
+	const bool shared_nvm;
+
 	/* Retimer control GPIOs */
 	const enum gpio_signal gpio_enable;     /* Retimer enable */
 	const enum gpio_signal gpio_dp_enable;  /* DP Mode enable */
