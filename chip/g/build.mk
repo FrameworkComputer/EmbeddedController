@@ -9,12 +9,10 @@ CFLAGS_CPU+=-march=armv7-m -mcpu=cortex-m3
 
 ifeq ($(CONFIG_DCRYPTO),y)
 INCLUDE_ROOT := $(abspath ./include)
-CRYPTOCLIB := $(realpath ../../third_party/cryptoc)
 CPPFLAGS += -I$(abspath .)
 CPPFLAGS += -I$(abspath ./builtin)
 CPPFLAGS += -I$(abspath ./chip/$(CHIP))
 CPPFLAGS += -I$(INCLUDE_ROOT)
-CPPFLAGS += -I$(CRYPTOCLIB)/include
 endif
 
 # Required chip modules
@@ -229,19 +227,5 @@ endif  # H1_DEVIDS defined
 ifneq ($(CHIP_MK_INCLUDED_ONCE),)
 $(out)/RW/ec.RW_B.flat: $(out)/RW/ec.RW.flat
 $(out)/RW/ec.RW.flat $(out)/RW/ec.RW_B.flat: SIGNER_EXTRAS = $(RW_SIGNER_EXTRAS)
-
-ifeq ($(CONFIG_DCRYPTO),y)
-
-CRYPTOC_OBJS = $(shell find $(out)/cryptoc -name '*.o')
-$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: LDFLAGS_EXTRA += $(CRYPTOC_OBJS)
-$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: cryptoc_objs
-
-
-# Force the external build each time, so it can look for changed sources.
-.PHONY: cryptoc_objs
-cryptoc_objs:
-	$(MAKE) obj=$(realpath $(out))/cryptoc SUPPORT_UNALIGNED=1 \
-		CONFIG_UPTO_SHA512=$(CONFIG_UPTO_SHA512) -C $(CRYPTOCLIB) objs
-endif   # end CONFIG_DCRYPTO
 
 endif   # CHIP_MK_INCLUDED_ONCE is nonempty

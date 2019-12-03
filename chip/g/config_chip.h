@@ -159,4 +159,7 @@
 #define CONFIG_FLASH_LOG_BASE                                                  \
 	(CONFIG_PROGRAM_MEMORY_BASE + CHIP_RO_B_MEM_OFF + CONFIG_RO_SIZE -     \
 	 CONFIG_FLASH_LOG_SPACE)
+
+/* Use software crypto (libcryptoc). */
+#define CONFIG_LIBCRYPTOC
 #endif /* __CROS_EC_CONFIG_CHIP_H */

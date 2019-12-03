@@ -250,6 +250,7 @@ $(out)/rma_key_from_blob.h: board/$(BOARD)/$(BLOB_FILE) util/bin2h.sh
 
 endif
 
+# Build and link against libcryptoc.
 ifeq ($(CONFIG_LIBCRYPTOC),y)
 CRYPTOCLIB := $(realpath ../../third_party/cryptoc)
 ifneq ($(BOARD),host)

@@ -28,15 +28,3 @@ chip-$(CONFIG_DCRYPTO)+= dcrypto/sha256.o
 
 # Object files that can be shared with the Cr50 dcrypto implementation
 chip-$(CONFIG_DCRYPTO)+= ../g/dcrypto/hmac.o
-
-ifeq ($(CONFIG_DCRYPTO),y)
-CRYPTOCLIB := $(realpath ../../third_party/cryptoc)
-
-# Force the external build each time, so it can look for changed sources.
-.PHONY: $(out)/cryptoc/libcryptoc.a
-$(out)/cryptoc/libcryptoc.a:
-	$(MAKE) obj=$(realpath $(out))/cryptoc SUPPORT_UNALIGNED=1 \
-		CONFIG_UPTO_SHA512=$(CONFIG_UPTO_SHA512) -C $(CRYPTOCLIB)
-
-CPPFLAGS += -I$(CRYPTOCLIB)/include
-endif   # end CONFIG_DCRYPTO
