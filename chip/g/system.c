@@ -604,14 +604,19 @@ const char *system_get_build_info(void)
  * header address is passed (the other one is set to zero), only the valid
  * header is considered when updating INFO1.
  */
-static void update_rollback_mask(const struct SignedHeader *header_a,
-				 const struct SignedHeader *header_b)
+static void update_rollback_mask(uint32_t addr_a, uint32_t addr_b,
+				 uint32_t info_base_offset)
 {
 #ifndef CR50_DEV
+	const struct SignedHeader *header_a;
+	const struct SignedHeader *header_b;
 	int updated_words_count = 0;
 	int i;
 	int write_enabled = 0;
 	uint32_t header_mask = 0;
+
+	header_a = (const struct SignedHeader *)addr_a;
+	header_b = (const struct SignedHeader *)addr_b;
 
 	/*
 	 * The infomap field in the image header has a matching space in the
@@ -659,7 +664,7 @@ static void update_rollback_mask(const struct SignedHeader *header_a,
 			break;
 		}
 
-		byte_offset = (INFO_MAX + i) * sizeof(uint32_t);
+		byte_offset = info_base_offset + i * sizeof(uint32_t);
 
 		if (flash_physical_info_read_word(byte_offset, &word) !=
 		    EC_SUCCESS) {
@@ -696,17 +701,21 @@ static void update_rollback_mask(const struct SignedHeader *header_a,
 
 void system_update_rollback_mask_with_active_img(void)
 {
-	update_rollback_mask((const struct SignedHeader *)
-			     get_program_memory_addr(system_get_image_copy()),
-			     0);
+	update_rollback_mask(
+		get_program_memory_addr(system_get_ro_image_copy()), 0,
+		INFO_RO_MAP_OFFSET);
+	update_rollback_mask(get_program_memory_addr(system_get_image_copy()),
+			     0, INFO_RW_MAP_OFFSET);
 }
 
 void system_update_rollback_mask_with_both_imgs(void)
 {
-	update_rollback_mask((const struct SignedHeader *)
-			     get_program_memory_addr(SYSTEM_IMAGE_RW),
-			     (const struct SignedHeader *)
-			     get_program_memory_addr(SYSTEM_IMAGE_RW_B));
+	update_rollback_mask(get_program_memory_addr(SYSTEM_IMAGE_RO),
+			     get_program_memory_addr(SYSTEM_IMAGE_RO_B),
+			     INFO_RO_MAP_OFFSET);
+	update_rollback_mask(get_program_memory_addr(SYSTEM_IMAGE_RW),
+			     get_program_memory_addr(SYSTEM_IMAGE_RW_B),
+			     INFO_RW_MAP_OFFSET);
 }
 
 void system_get_rollback_bits(char *value, size_t value_size)
