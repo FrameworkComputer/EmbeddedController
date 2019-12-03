@@ -36,6 +36,8 @@ static struct fusb302_chip_state {
 	uint8_t mdac_rd;
 } state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
+static struct mutex measure_lock;
+
 /*
  * Bring the FUSB302 out of reset after Hard Reset signaling. This will
  * automatically flush both the Rx and Tx FIFOs.
@@ -112,6 +114,8 @@ static int measure_cc_pin_source(int port, int cc_measure)
 	int reg;
 	int cc_lvl;
 
+	mutex_lock(&measure_lock);
+
 	/* Read status register */
 	tcpc_read(port, TCPC_REG_SWITCHES0, &reg);
 	/* Save current value */
@@ -159,6 +163,8 @@ static int measure_cc_pin_source(int port, int cc_measure)
 	/* Restore SWITCHES0 register to its value prior */
 	tcpc_write(port, TCPC_REG_SWITCHES0, switches0_reg);
 
+	mutex_unlock(&measure_lock);
+
 	return cc_lvl;
 }
 
@@ -193,6 +199,8 @@ static void detect_cc_pin_sink(int port, enum tcpc_cc_voltage_status *cc1,
 	int orig_meas_cc2;
 	int bc_lvl_cc1;
 	int bc_lvl_cc2;
+
+	mutex_lock(&measure_lock);
 
 	/*
 	 * Measure CC1 first.
@@ -264,6 +272,8 @@ static void detect_cc_pin_sink(int port, enum tcpc_cc_voltage_status *cc1,
 		reg &= ~TCPC_REG_SWITCHES0_MEAS_CC2;
 
 	tcpc_write(port, TCPC_REG_SWITCHES0, reg);
+
+	mutex_unlock(&measure_lock);
 }
 
 /* Parse header bytes for the size of packet */
@@ -1076,6 +1086,57 @@ static int fusb302_tcpm_enter_low_power_mode(int port)
 		TCPC_REG_CONTROL2, reg);
 }
 #endif
+
+/*
+ * Compare VBUS voltage with given mdac reference voltage.
+ * returns non-zero if VBUS voltage >= (mdac + 1) * 420 mV
+ */
+static int fusb302_compare_mdac(int port, int mdac)
+{
+	int orig_reg, status0;
+
+	mutex_lock(&measure_lock);
+
+	/* backup REG_MEASURE */
+	tcpc_read(port, TCPC_REG_MEASURE, &orig_reg);
+	/* set reg_measure bit 0~5 to mdac, and bit6 to 1(measure vbus) */
+	tcpc_write(port, TCPC_REG_MEASURE,
+		(mdac & TCPC_REG_MEASURE_MDAC_MASK) | TCPC_REG_MEASURE_VBUS);
+
+	/* Wait on measurement */
+	usleep(350);
+
+	/*
+	 * Read status register, if STATUS0_COMP=1 then vbus is higher than
+	 * (mdac + 1) * 0.42V
+	 */
+	tcpc_read(port, TCPC_REG_STATUS0, &status0);
+	/* write back original value */
+	tcpc_write(port, TCPC_REG_MEASURE, orig_reg);
+
+	mutex_unlock(&measure_lock);
+
+	return status0 & TCPC_REG_STATUS0_COMP;
+}
+
+int tcpc_get_vbus_voltage(int port)
+{
+	int mdac = 0, i;
+
+	/*
+	 * Implement by comparing VBUS with MDAC reference voltage, and binary
+	 * search the value of MDAC.
+	 *
+	 * MDAC register has 6 bits, so we can simply search 1 bit per
+	 * iteration, from MSB to LSB.
+	 */
+	for (i = 5; i >= 0; i--) {
+		if (fusb302_compare_mdac(port, mdac | BIT(i)))
+			mdac |= BIT(i);
+	}
+
+	return (mdac + 1) * 420;
+}
 
 const struct tcpm_drv fusb302_tcpm_drv = {
 	.init			= &fusb302_tcpm_init,

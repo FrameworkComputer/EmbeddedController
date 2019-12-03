@@ -3901,6 +3901,12 @@
 /* Define if the there is no hardware to measure Vbus voltage */
 #undef CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
 
+/* Define if charger on the board supports VBUS measurement */
+#undef CONFIG_USB_PD_VBUS_MEASURE_CHARGER
+
+/* Define if tcpc on the board supports VBUS measurement */
+#undef CONFIG_USB_PD_VBUS_MEASURE_TCPC
+
 /* Define the type-c port controller I2C base address. */
 #define CONFIG_TCPC_I2C_BASE_ADDR_FLAGS 0x4E
 
@@ -4680,6 +4686,15 @@
 	defined(CONFIG_CHARGER_BQ25710) || \
 	defined(CONFIG_CHARGER_ISL9241)
 #define CONFIG_USB_PD_VBUS_MEASURE_CHARGER
+#endif
+
+/*****************************************************************************/
+/*
+ * Define CONFIG_USB_PD_VBUS_MEASURE_TCPC if the tcpc on the board supports
+ * VBUS measurement.
+ */
+#if defined(CONFIG_USB_PD_TCPM_FUSB302)
+#define CONFIG_USB_PD_VBUS_MEASURE_TCPC
 #endif
 
 /*****************************************************************************/
