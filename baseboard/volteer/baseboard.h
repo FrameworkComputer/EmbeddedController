@@ -94,11 +94,14 @@
 
 /* USB Type C and USB PD defines */
 /* Enable the new USB-C PD stack */
+/* TODO: b/145756626 - re-enable once all blocking issues resolved */
+#if 0
 #define CONFIG_USB_SM_FRAMEWORK
 #define CONFIG_USB_TYPEC_SM
 #define CONFIG_USB_PRL_SM
 #define CONFIG_USB_PE_SM
 #define CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
+#endif
 
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_ALT_MODE

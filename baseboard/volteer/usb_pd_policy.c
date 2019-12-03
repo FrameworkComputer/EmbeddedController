@@ -38,6 +38,42 @@ const uint32_t pd_snk_pdo[] = {
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
+#ifndef CONFIG_USB_SM_FRAMEWORK
+int pd_board_checks(void)
+{
+	return EC_SUCCESS;
+}
+
+void pd_check_dr_role(int port, int dr_role, int flags)
+{
+	/* If UFP, try to switch to DFP */
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) &&
+			dr_role == PD_ROLE_UFP)
+		pd_request_data_swap(port);
+}
+
+void pd_check_pr_role(int port, int pr_role, int flags)
+{
+	/*
+	 * If partner is dual-role power and dualrole toggling is on, consider
+	 * if a power swap is necessary.
+	 */
+	if ((flags & PD_FLAGS_PARTNER_DR_POWER) &&
+	    pd_get_dual_role(port) == PD_DRP_TOGGLE_ON) {
+		/*
+		 * If we are a sink and partner is not externally powered, then
+		 * swap to become a source. If we are source and partner is
+		 * externally powered, swap to become a sink.
+		 */
+		int partner_extpower = flags & PD_FLAGS_PARTNER_EXTPOWER;
+
+		if ((!partner_extpower && pr_role == PD_ROLE_SINK) ||
+		     (partner_extpower && pr_role == PD_ROLE_SOURCE))
+			pd_request_power_swap(port);
+	}
+}
+#endif
+
 int pd_check_data_swap(int port, int data_role)
 {
 	/* Allow data swap if we are a UFP, otherwise don't allow. */
