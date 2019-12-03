@@ -296,6 +296,8 @@ static const struct option_container cmd_line_options[] = {
 	 "Set or clear CCD password. Use 'clear:<cur password>' to clear it"},
 	{{"post_reset", no_argument, NULL, 'p'},
 	 "Request post reset after transfer"},
+	{{"force_ro", no_argument, NULL, 'q'},
+	 "Force inactive RO update"},
 	{{"sn_rma_inc", required_argument, NULL, 'R'},
 	 "RMA_INC%Increment SN RMA count by RMA_INC. RMA_INC should be 0-7."},
 	{{"rma_auth", optional_argument, NULL, 'r'},
@@ -1013,7 +1015,8 @@ static void pick_sections(struct transfer_descriptor *td)
 		 * Is it newer in the new image than the running RO section on
 		 * the device?
 		 */
-		if (a_newer_than_b(&sections[i].shv, &targ.shv[0]))
+		if (a_newer_than_b(&sections[i].shv, &targ.shv[0]) ||
+		    td->force_ro)
 			sections[i].ustatus = needed;
 	}
 }
@@ -2760,6 +2763,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'O':
 			openbox_desc_file = optarg;
+			break;
+		case 'q':
+			td.force_ro = 1;
 			break;
 		case 'r':
 			rma = 1;

@@ -32,7 +32,11 @@ struct transfer_descriptor {
 	 * the cr50 versioning scheme.
 	 */
 	int background_update_supported;
-
+	/*
+	 * Unconditionally update the inactive RO, helps to make sure both RO
+	 * sections are at the same level.
+	 */
+	int force_ro;
 	/*
 	 * offsets of RO and WR sections available for update (not currently
 	 * active).
