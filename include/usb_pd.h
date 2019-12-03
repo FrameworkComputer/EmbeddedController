@@ -2170,6 +2170,13 @@ int pd_get_partner_data_swap_capable(int port);
 void pd_handle_overcurrent(int port);
 
 /**
+ * Handle a CC overvoltage protection event.
+ *
+ * @param port: USB-C port number.
+ */
+void pd_handle_cc_overvoltage(int port);
+
+/**
  * Request power swap command to be issued
  *
  * @param port USB-C port number

@@ -336,18 +336,6 @@ static int sn5s330_init(int port)
 	}
 
 	/*
-	 * Unmask the VCONN ILIM interrupt so we can print VCONN overcurrent
-	 * events.
-	 */
-	clr_flags(port, SN5S330_INT_MASK_RISE_REG2, SN5S330_VCONN_ILIM);
-
-	/*
-	 * Unmask the CC1/CC2 OVP interrupt so we can print CC1/CC2 OVP events
-	 */
-	clr_flags(port, SN5S330_INT_MASK_RISE_REG2, SN5S330_CC1_CON);
-	clr_flags(port, SN5S330_INT_MASK_RISE_REG2, SN5S330_CC2_CON);
-
-	/*
 	 * Don't proceed with the rest of initialization if we're sysjumping.
 	 * We would have already done this before.
 	 */
@@ -368,15 +356,14 @@ static int sn5s330_init(int port)
 	}
 
 	/*
-	 * Before turning on the PP2 FET, let's mask off all interrupts except
-	 * for the PP1 overcurrent condition and then clear all pending
-	 * interrupts. If PPC is being used to detect VBUS, then also enable
-	 * interrupts for VBUS presence.
+	 * Before turning on the PP2 FET, mask off all unwanted interrupts and
+	 * then clear all pending interrupts.
 	 *
 	 * TODO(aaboagye): Unmask fast-role swap events once fast-role swap is
 	 * implemented in the PD stack.
 	 */
 
+	/* Enable PP1 overcurrent interrupts. */
 	regval = ~SN5S330_ILIM_PP1_MASK;
 	status = i2c_write8(i2c_port, i2c_addr_flags,
 			    SN5S330_INT_MASK_RISE_REG1, regval);
@@ -386,15 +373,16 @@ static int sn5s330_init(int port)
 	}
 
 	status = i2c_write8(i2c_port, i2c_addr_flags,
-			    SN5S330_INT_MASK_FALL_REG1, regval);
+			    SN5S330_INT_MASK_FALL_REG1, 0xFF);
 	if (status) {
 		CPRINTS("ppc p%d: Failed to write INT_MASK_FALL1!", port);
 		return status;
 	}
 
-	/* Now mask all the other interrupts. */
+	/* Enable VCONN overcurrent and CC1/CC2 overvoltage interrupts. */
+	regval = ~(SN5S330_VCONN_ILIM | SN5S330_CC1_CON | SN5S330_CC2_CON);
 	status = i2c_write8(i2c_port, i2c_addr_flags,
-			    SN5S330_INT_MASK_RISE_REG2, 0xFF);
+			    SN5S330_INT_MASK_RISE_REG2, regval);
 	if (status) {
 		CPRINTS("ppc p%d: Failed to write INT_MASK_RISE2!", port);
 		return status;
@@ -406,12 +394,6 @@ static int sn5s330_init(int port)
 		CPRINTS("ppc p%d: Failed to write INT_MASK_FALL2!", port);
 		return status;
 	}
-
-	/*
-	 * Unmask the CC1/CC2 OVP interrupt so we can print CC1/CC2 OVP events
-	 */
-	clr_flags(port, SN5S330_INT_MASK_RISE_REG2, SN5S330_CC1_CON);
-	clr_flags(port, SN5S330_INT_MASK_RISE_REG2, SN5S330_CC2_CON);
 
 #if defined(CONFIG_USB_PD_VBUS_DETECT_PPC) && defined(CONFIG_USB_CHARGER)
 	/* If PPC is being used to detect VBUS, enable VBUS interrupts. */
@@ -668,8 +650,6 @@ static void sn5s330_handle_interrupt(int port)
 	{
 		int rise = 0;
 		int fall = 0;
-		int regval = 0;
-		int retries = 0;
 
 		attempt++;
 
@@ -677,11 +657,6 @@ static void sn5s330_handle_interrupt(int port)
 			CPRINTS("ppc p%d: Could not clear interrupts on first "
 				"try, retrying", port);
 
-		/*
-		 * The only interrupts that should be enabled are the PP1
-		 * overcurrent condition, and for VBUS_GOOD if PPC is being
-		 * used to detect VBUS.
-		 */
 		read_reg(port, SN5S330_INT_TRIP_RISE_REG1, &rise);
 		read_reg(port, SN5S330_INT_TRIP_FALL_REG1, &fall);
 
@@ -692,6 +667,26 @@ static void sn5s330_handle_interrupt(int port)
 		/* Clear the interrupt sources. */
 		write_reg(port, SN5S330_INT_TRIP_RISE_REG1, rise);
 		write_reg(port, SN5S330_INT_TRIP_FALL_REG1, fall);
+
+		read_reg(port, SN5S330_INT_TRIP_RISE_REG2, &rise);
+		read_reg(port, SN5S330_INT_TRIP_FALL_REG2, &fall);
+
+		/*
+		 * VCONN may be latched off due to an overcurrent.  Indicate
+		 * when the VCONN overcurrent happens.
+		 */
+		if (rise & SN5S330_VCONN_ILIM)
+			CPRINTS("ppc p%d: VCONN OC!", port);
+
+		/* Notify the system about the CC overvoltage event. */
+		if (rise & SN5S330_CC1_CON || rise & SN5S330_CC2_CON) {
+			CPRINTS("ppc p%d: CC OV!", port);
+			pd_handle_cc_overvoltage(port);
+		}
+
+		/* Clear the interrupt sources. */
+		write_reg(port, SN5S330_INT_TRIP_RISE_REG2, rise);
+		write_reg(port, SN5S330_INT_TRIP_FALL_REG2, fall);
 
 #if defined(CONFIG_USB_PD_VBUS_DETECT_PPC) && defined(CONFIG_USB_CHARGER)
 		read_reg(port, SN5S330_INT_TRIP_RISE_REG3, &rise);
@@ -708,40 +703,6 @@ static void sn5s330_handle_interrupt(int port)
 		write_reg(port, SN5S330_INT_TRIP_FALL_REG3, fall);
 #endif  /* CONFIG_USB_PD_VBUS_DETECT_PPC && CONFIG_USB_CHARGER */
 
-		/*
-		 * VCONN may be latched off due to an overcurrent.  Indicate
-		 * when the VCONN overcurrent happens.
-		 */
-		read_reg(port, SN5S330_INT_TRIP_RISE_REG2, &rise);
-		read_reg(port, SN5S330_INT_TRIP_FALL_REG2, &fall);
-
-		if (rise & SN5S330_VCONN_ILIM)
-			CPRINTS("ppc p%d: VCONN OC!", port);
-
-		if (rise & SN5S330_CC1_CON || rise & SN5S330_CC2_CON) {
-			CPRINTS("ppc p%d: CC OVP!", port);
-			retries = 0;
-			do {
-				read_reg(port, SN5S330_INT_STATUS_REG3,
-					&regval);
-				if (regval & SN5S330_VBUS_GOOD) {
-					sn5s330_set_sbu(port, 1);
-					sn5s330_pp_fet_enable(port,
-							SN5S330_PP2, 1);
-					break;
-				}
-				retries++;
-				msleep(1);
-			} while (retries < 10);
-
-			if (retries == 10)
-				CPRINTS("ppc p%d: Fail to release cc OVP."
-					, port);
-		}
-
-		/* Clear the interrupt sources. */
-		write_reg(port, SN5S330_INT_TRIP_RISE_REG2, rise);
-		write_reg(port, SN5S330_INT_TRIP_FALL_REG2, fall);
 	}
 }
 

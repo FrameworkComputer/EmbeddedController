@@ -440,4 +440,9 @@ void pd_handle_overcurrent(int port)
 	hook_call_deferred(&re_enable_ports_data, SECOND);
 }
 
+void pd_handle_cc_overvoltage(int port)
+{
+	pd_send_hard_reset(port);
+}
+
 #endif /* CONFIG_USBC_PPC */
