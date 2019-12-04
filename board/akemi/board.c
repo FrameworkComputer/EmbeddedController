@@ -374,3 +374,23 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	/* Note that the level is inverted because the pin is active low. */
 	gpio_set_level(GPIO_USB_C_OC_ODL, !is_overcurrented);
 }
+
+uint32_t board_override_feature_flags0(uint32_t flags0)
+{
+	uint8_t sku = get_board_sku();
+	/*
+	 * Check if the current sku id does not support keyboard backlight
+	 * and return the feature flag without EC_FEATURE_PWM_KEYB
+	 * sku_id = 1/2 - without keyboard backlight
+	 * sku_id = 3/4 - with keyboard backlight
+	 */
+	if (sku == 1 || sku == 2)
+		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
+	else
+		return flags0;
+}
+
+uint32_t board_override_feature_flags1(uint32_t flags1)
+{
+	return flags1;
+}

@@ -29,6 +29,8 @@
 /* Keyboard features */
 #define CONFIG_PWM_KBLIGHT
 
+#define CONFIG_EC_FEATURE_BOARD_OVERRIDE
+
 /* Sensors */
 /* LSM6DS3TR-C Base accel/gyro */
 #define CONFIG_ACCEL_INTERRUPTS
