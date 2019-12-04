@@ -18,6 +18,7 @@
 *   [Fingerprint MCU (FPMCU)](./fingerprint/fingerprint.md)
 *   [FPMCU Development for Partners](./fingerprint/fingerprint-dev-for-partners.md)
 *   [Fingerprint Authentication Design Doc](./fingerprint/fingerprint-authentication-design-doc.md)
+*   [Fingerprint Factory Requirements](./fingerprint/fingerprint-factory-requirements.md)
 
 ## Updaters
 
