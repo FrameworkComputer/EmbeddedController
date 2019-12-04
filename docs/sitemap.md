@@ -29,6 +29,11 @@
 *   [USB-C Power Delivery and Alternate Modes](./usb-c.md)
 *   [USB-A and USB-C Policies for Sourcing Power](./usb_power.md)
 
+## EC-3PO
+
+*   [EC-3PO overview](./ec-3po.md)
+*   [EC-3PO design doc](./ec-3po-design.md)
+
 ## Miscellaneous
 
 *   [Low Battery Startup](./low_battery_startup.md)

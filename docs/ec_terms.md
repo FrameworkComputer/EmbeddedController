@@ -64,6 +64,11 @@
     switching, sensor management, and other functions, offloading these tasks
     from the [AP](#ap).
 
+*   **EC-3PO**{#ec-3po}
+
+    A replacement of the current UART-based console which moves much of the code
+    off the EC into a host tool, reducing the amount of flash space required.
+
 *   **E-Mark - Electronically Marked Cable** {#emark}
 
     See the [USB-C documentation](./usb-c.md#emark) for more details.
@@ -74,6 +79,13 @@
     [EC](#ec). Supports quad I/O mode and clock speeds up to 66 Mhz, providing
     bandwidth up to 264 Mbps. The full [eSPI Specification] is available from
     Intel.
+
+*   **FAFT - Fully Automated Firmware Tests**{#faft}
+
+    A collection of tests and related infrastructure that exercise and verify
+    capabilities of Chrome OS. See the [FAFT design doc] and [chromium.org
+    documentation](https://www.chromium.org/for-testers/faft) for more details.
+    Replaced [SAFT](#saft).
 
 *   **GMR - Giant Magnetoresistance Sensor** {#gmr}
 
@@ -142,6 +154,12 @@
     video streams from a single display port. The EC code is typically
     responsible for enabling and disabling the MST hub chipset.
 
+*   **OOBM - Out of Band Management**{#oobm}
+
+    A command in the [EC-3PO protocol](#ec-3po) that allows commands to be
+    entered to alter the behaviour of the console and interpreter during
+    runtime.
+
 *   **PD - USB Power Delivery**{#pd}
 
     See the [USB-C documentation](./usb-c.md#pd) for more details.
@@ -159,6 +177,12 @@
     Method of varying the duty cycle of a signal to control another device. A
     typical application is to control fan speeds or the brightness of a
     backlight.
+
+*   **SAFT - Semi-Automated Firmware Tests**{#saft}
+
+    A suite of tests for firmware, succeeded by [FAFT](#faft). See the
+    [chromium.org documentation](https://www.chromium.org/for-testers/saft) for
+    more details.
 
 *   **SPI - Serial Peripheral Interconnect**{#spi}
 
@@ -197,6 +221,7 @@
 [CEC Wikipedia page]: <https://en.wikipedia.org/wiki/Consumer_Electronics_Control>
 [DPTF Readme]: <https://github.com/intel/dptf/blob/master/README.txt>
 [eSPI Specification]: <https://www.intel.com/content/dam/support/us/en/documents/software/chipset-software/327432-004_espi_base_specification_rev1.0.pdf>
+[FAFT design doc]: <https://chromium.googlesource.com/chromiumos/third_party/autotest/+/refs/heads/master/docs/faft-design-doc.md>
 [I2C Specification]: <https://www.nxp.com/docs/en/user-guide/UM10204.pdf>
 [RS-232]: <https://en.wikipedia.org/wiki/RS-232>
 [EC MKBP driver]: <https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/common/keyboard_mkbp.c>
