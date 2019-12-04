@@ -9,11 +9,11 @@
 #define __CROS_EC_COMPILE_TIME_MACROS_H
 
 /* Test an important condition at compile time, not run time */
-#define _BA1_(cond, line) \
-	extern int __build_assertion_ ## line[1 - 2*!(cond)] \
-	__attribute__ ((unused))
-#define _BA0_(c, x) _BA1_(c, x)
-#define BUILD_ASSERT(cond) _BA0_(cond, __LINE__)
+#define _BA1_(cond, file, line, msg) \
+	_Static_assert(cond, file ":" #line ": " msg)
+#define _BA0_(c, f, l, msg) _BA1_(c, f, l, msg)
+/* Pass in an option message to display after condition */
+#define BUILD_ASSERT(cond, ...) _BA0_(cond, __FILE__, __LINE__, __VA_ARGS__)
 
 /*
  * Test an important condition inside code path at run time, taking advantage of
