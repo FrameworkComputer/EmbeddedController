@@ -370,11 +370,12 @@ int board_wipe_tpm(int reset_required)
 
 /*
  * These definitions and the structure layout were manually copied from
- * src/platform/vboot_reference/firmware/lib/include/rollback_index.h. at
- * git sha c7282f6.
+ * src/platform/vboot_reference/firmware/2lib/include/2secdata.h. at
+ * git sha 38d7d1c.
  */
 #define FWMP_HASH_SIZE		    32
 #define FWMP_DEV_DISABLE_CCD_UNLOCK BIT(6)
+#define FWMP_DEV_FIPS_MODE	    BIT(7)
 #define FIRMWARE_FLAG_DEV_MODE      0x02
 
 struct RollbackSpaceFirmware {
@@ -458,6 +459,19 @@ int board_fwmp_allows_unlock(void)
 
 	return allows_unlock;
 #endif
+}
+
+int board_fwmp_fips_mode_enabled(void)
+{
+	struct RollbackSpaceFirmware fw;
+
+	if (tpm_read_success ==
+	    read_tpm_nvmem(FIRMWARE_NV_INDEX, sizeof(fw), &fw)) {
+		return !!(fw.flags & FWMP_DEV_FIPS_MODE);
+	}
+
+	/* If not found or other error, assume fips mode is disabled */
+	return 0;
 }
 
 int board_vboot_dev_mode_enabled(void)
