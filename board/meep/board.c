@@ -312,7 +312,7 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	gpio_set_level(GPIO_USB_C_OC, !is_overcurrented);
 }
 
-uint32_t board_override_feature_flags0(uint32_t flags0)
+__override uint32_t board_override_feature_flags0(uint32_t flags0)
 {
 	/*
 	 * We always compile in backlight support for Meep/Dorp, but only some
@@ -325,9 +325,4 @@ uint32_t board_override_feature_flags0(uint32_t flags0)
 
 	/* Report that there is no keyboard backlight */
 	return (flags0 &= ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
-}
-
-uint32_t board_override_feature_flags1(uint32_t flags1)
-{
-	return flags1;
 }

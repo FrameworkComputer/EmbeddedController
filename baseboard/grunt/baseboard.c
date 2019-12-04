@@ -774,7 +774,7 @@ int board_is_lid_angle_tablet_mode(void)
 	return board_is_convertible();
 }
 
-uint32_t board_override_feature_flags0(uint32_t flags0)
+__override uint32_t board_override_feature_flags0(uint32_t flags0)
 {
 	/*
 	 * Remove keyboard backlight feature for devices that don't support it.
@@ -788,11 +788,6 @@ uint32_t board_override_feature_flags0(uint32_t flags0)
 		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
 	else
 		return flags0;
-}
-
-uint32_t board_override_feature_flags1(uint32_t flags1)
-{
-	return flags1;
 }
 
 void board_hibernate(void)

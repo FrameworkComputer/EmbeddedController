@@ -1001,7 +1001,7 @@ struct keyboard_scan_config keyscan_config = {
 	},
 };
 
-uint32_t board_override_feature_flags0(uint32_t flags0)
+__override uint32_t board_override_feature_flags0(uint32_t flags0)
 {
 	uint32_t sku = system_get_sku_id();
 
@@ -1018,9 +1018,4 @@ uint32_t board_override_feature_flags0(uint32_t flags0)
 	flags0 &= ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB);
 
 	return flags0;
-}
-
-uint32_t board_override_feature_flags1(uint32_t flags1)
-{
-	return flags1;
 }

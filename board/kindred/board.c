@@ -470,15 +470,10 @@ bool board_has_kb_backlight(void)
 	return (sku_id >= 1) && (sku_id <= 4);
 }
 
-uint32_t board_override_feature_flags0(uint32_t flags0)
+__override uint32_t board_override_feature_flags0(uint32_t flags0)
 {
 	if (board_has_kb_backlight())
 		return flags0;
 	else
 		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
-}
-
-uint32_t board_override_feature_flags1(uint32_t flags1)
-{
-	return flags1;
 }

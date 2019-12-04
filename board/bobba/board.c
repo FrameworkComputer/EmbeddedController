@@ -352,7 +352,7 @@ static void cbi_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
-uint32_t board_override_feature_flags0(uint32_t flags0)
+__override uint32_t board_override_feature_flags0(uint32_t flags0)
 {
 	/*
 	 * Remove keyboard backlight feature for devices that don't support it.
@@ -361,11 +361,6 @@ uint32_t board_override_feature_flags0(uint32_t flags0)
 		return flags0;
 	else
 		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
-}
-
-uint32_t board_override_feature_flags1(uint32_t flags1)
-{
-	return flags1;
 }
 
 void board_hibernate_late(void) {

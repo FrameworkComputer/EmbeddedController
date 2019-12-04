@@ -107,10 +107,7 @@ uint32_t get_feature_flags0(void)
 		| EC_FEATURE_MASK_0(EC_FEATURE_DEVICE_EVENT)
 #endif
 		;
-#ifdef CONFIG_EC_FEATURE_BOARD_OVERRIDE
-	result = board_override_feature_flags0(result);
-#endif
-	return result;
+	return board_override_feature_flags0(result);
 }
 
 uint32_t get_feature_flags1(void)
@@ -138,8 +135,15 @@ uint32_t get_feature_flags1(void)
 		| EC_FEATURE_MASK_1(EC_FEATURE_ISH)
 #endif
 		;
-#ifdef CONFIG_EC_FEATURE_BOARD_OVERRIDE
-	result = board_override_feature_flags1(result);
-#endif
-	return result;
+	return board_override_feature_flags1(result);
+}
+
+__overridable uint32_t board_override_feature_flags0(uint32_t flags0)
+{
+	return flags0;
+}
+
+__overridable uint32_t board_override_feature_flags1(uint32_t flags1)
+{
+	return flags1;
 }

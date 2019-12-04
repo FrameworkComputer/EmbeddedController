@@ -825,16 +825,6 @@ int board_is_lid_angle_tablet_mode(void)
 	return board_is_convertible();
 }
 
-uint32_t board_override_feature_flags0(uint32_t flags0)
-{
-	return flags0;
-}
-
-uint32_t board_override_feature_flags1(uint32_t flags1)
-{
-	return flags1;
-}
-
 void board_overcurrent_event(int port, int is_overcurrented)
 {
 	switch (port) {
