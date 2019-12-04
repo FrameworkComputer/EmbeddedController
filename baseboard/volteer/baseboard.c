@@ -21,6 +21,7 @@
 #include "keyboard_scan.h"
 #include "pwm.h"
 #include "pwm_chip.h"
+#include "task.h"
 #include "temp_sensor.h"
 #include "usbc_ppc.h"
 #include "usb_mux.h"
@@ -387,6 +388,10 @@ static void baseboard_tcpc_init(void)
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
+
+	/* Enable BC1.2 interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -444,6 +449,22 @@ void tcpc_alert_event(enum gpio_signal signal)
 	}
 
 	schedule_deferred_pd_interrupt(port);
+}
+
+void bc12_interrupt(enum gpio_signal signal)
+{
+	switch (signal) {
+	case GPIO_USB_C0_BC12_INT_ODL:
+		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
+		break;
+
+	case GPIO_USB_C1_BC12_INT_ODL:
+		task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
+		break;
+
+	default:
+		break;
+	}
 }
 
 int board_set_active_charge_port(int port)

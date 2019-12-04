@@ -70,6 +70,7 @@
 
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
+#define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_INPUT_CURRENT		512
@@ -223,6 +224,7 @@ void board_reset_pd_mcu(void);
 /* Common definition for the USB PD interrupt handlers. */
 void ppc_interrupt(enum gpio_signal signal);
 void tcpc_alert_event(enum gpio_signal signal);
+void bc12_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

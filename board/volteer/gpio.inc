@@ -38,6 +38,9 @@ GPIO_INT(USB_C1_TCPC_INT_ODL,	PIN(A, 2), GPIO_INT_BOTH, tcpc_alert_event)
 GPIO_INT(USB_C0_PPC_INT_ODL,	PIN(6, 2), GPIO_INT_BOTH, ppc_interrupt)
 GPIO_INT(USB_C1_PPC_INT_ODL,	PIN(F, 5), GPIO_INT_BOTH, ppc_interrupt)
 
+GPIO_INT(USB_C0_BC12_INT_ODL,	PIN(E, 4), GPIO_INT_BOTH, bc12_interrupt)
+GPIO_INT(USB_C1_MIX_INT_ODL,	PIN(0, 3), GPIO_INT_BOTH, bc12_interrupt)
+
 /* HDMI interrupts */
 
 /* Volume button interrupts */
