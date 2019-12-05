@@ -756,7 +756,13 @@ The log file is `/var/log/cros_fp.log`.
 
 <!-- Images -->
 
-[Decryption Flowchart]: https://docs.google.com/drawings/d/1-JUWTF7sUTND29BfhDvIudzX_S6g-iwoxG1InPedmVw/export/png
-[Encryption Flowchart]: https://docs.google.com/drawings/d/1uUprgLsTUZZ2G2QWRYcRn6zBAh6ejvJagVRD7eZQv-k/export/png
-[Fingerprint Architecture]: https://docs.google.com/drawings/d/1DFEdxfDXEtYY3LNOOJFAxVw2A7rKouH98tnb1yiXLAA/export/png
+<!-- If you make changes to the docs below make sure to regenerate the PNGs by
+     appending "export/png" to the Google Drive link. -->
+
+<!-- https://docs.google.com/drawings/d/1-JUWTF7sUTND29BfhDvIudzX_S6g-iwoxG1InPedmVw -->
+[Decryption Flowchart]: ../images/cros_fingerprint_decryption_flowchart.png
+<!-- https://drive.google.com/open?id=1uUprgLsTUZZ2G2QWRYcRn6zBAh6ejvJagVRD7eZQv-k -->
+[Encryption Flowchart]: ../images/cros_fingerprint_encryption_flowchart.png
+<!-- https://docs.google.com/drawings/d/1DFEdxfDXEtYY3LNOOJFAxVw2A7rKouH98tnb1yiXLAA -->
+[Fingerprint Architecture]: ../images/cros_fingerprint_architecture_diagram.png
 
