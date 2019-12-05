@@ -144,6 +144,38 @@ int tcpc_xfer_unlocked(int port, const uint8_t *out, int out_size,
 	pd_device_accessed(port);
 	return rv;
 }
+
+int tcpc_update8(int port, int reg,
+		 uint8_t mask,
+		 enum mask_update_action action)
+{
+	int rv;
+
+	pd_wait_exit_low_power(port);
+
+	rv = i2c_update8(tcpc_config[port].i2c_info.port,
+			 tcpc_config[port].i2c_info.addr_flags,
+			 reg, mask, action);
+
+	pd_device_accessed(port);
+	return rv;
+}
+int tcpc_update16(int port, int reg,
+		  uint16_t mask,
+		  enum mask_update_action action)
+{
+	int rv;
+
+	pd_wait_exit_low_power(port);
+
+	rv = i2c_update16(tcpc_config[port].i2c_info.port,
+			  tcpc_config[port].i2c_info.addr_flags,
+			  reg, mask, action);
+
+	pd_device_accessed(port);
+	return rv;
+}
+
 #endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
 
 static int init_alert_mask(int port)
@@ -244,17 +276,10 @@ int tcpci_tcpm_select_rp_value(int port, int rp)
 
 void tcpci_tcpc_discharge_vbus(int port, int enable)
 {
-	int reg;
-
-	if (tcpc_read(port, TCPC_REG_POWER_CTRL, &reg))
-		return;
-
-	if (enable)
-		reg |= TCPC_REG_POWER_CTRL_FORCE_DISCHARGE;
-	else
-		reg &= ~TCPC_REG_POWER_CTRL_FORCE_DISCHARGE;
-
-	tcpc_write(port, TCPC_REG_POWER_CTRL, reg);
+	tcpc_update8(port,
+		     TCPC_REG_POWER_CTRL,
+		     TCPC_REG_POWER_CTRL_FORCE_DISCHARGE,
+		     (enable) ? MASK_SET : MASK_CLR);
 }
 
 /*
@@ -263,26 +288,10 @@ void tcpci_tcpc_discharge_vbus(int port, int enable)
  */
 void tcpci_tcpc_connect_state_change(int port, int connected)
 {
-	int reg, oldreg, rv;
-
-	rv = tcpc_read(port, TCPC_REG_POWER_CTRL, &oldreg);
-	if (rv) {
-		/* CPRINTS("%s: failed read POWER_CTRL", __func__); */
-		return;
-	}
-
-	if (connected)
-		reg = oldreg | TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT;
-	else
-		reg = oldreg & ~TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT;
-
-	if (reg != oldreg) {
-		rv = tcpc_write(port, TCPC_REG_POWER_CTRL, reg);
-		if (rv) {
-			/* CPRINTS("%s: failed write POWER_CTRL", __func__); */
-			return;
-		}
-	}
+	tcpc_update8(port,
+		     TCPC_REG_POWER_CTRL,
+		     TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT,
+		     (connected) ? MASK_SET : MASK_CLR);
 }
 
 static void connect_state_change(int port, int connected)
@@ -441,17 +450,10 @@ int tcpci_tcpm_set_rx_enable(int port, int enable)
 #ifdef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
 void tcpci_tcpc_fast_role_swap_enable(int port, int enable)
 {
-	int reg;
-
-	if (tcpc_read(port, TCPC_REG_POWER_CTRL, &reg))
-		return;
-
-	if (enable)
-		reg |= TCPC_REG_POWER_CTRL_FRS_ENABLE;
-	else
-		reg &= ~TCPC_REG_POWER_CTRL_FRS_ENABLE;
-
-	tcpc_write(port, TCPC_REG_POWER_CTRL, reg);
+	tcpc_update8(port,
+		     TCPC_REG_POWER_CTRL,
+		     TCPC_REG_POWER_CTRL_FRS_ENABLE,
+		     (enable) ? MASK_SET : MASK_CLR);
 
 	board_tcpc_fast_role_swap_enable(port, enable);
 }
@@ -673,13 +675,7 @@ static int register_mask_reset(int port)
 
 static int tcpci_get_fault(int port, int *fault)
 {
-	int rv;
-
-	rv = tcpc_read(port, TCPC_REG_FAULT_STATUS, fault);
-	if (rv)
-		CPRINTS("C%d Reading FAULT failed, rv=%d", port, rv);
-
-	return rv;
+	return tcpc_read(port, TCPC_REG_FAULT_STATUS, fault);
 }
 
 static int tcpci_handle_fault(int port, int fault)
@@ -690,13 +686,7 @@ static int tcpci_handle_fault(int port, int fault)
 
 static int tcpci_clear_fault(int port, int fault)
 {
-	int rv;
-
-	rv = tcpc_write(port, TCPC_REG_FAULT_STATUS, fault);
-	if (rv)
-		CPRINTS("C%d Writing FAULT failed, rv=%d", port, rv);
-
-	return rv;
+	return tcpc_write(port, TCPC_REG_FAULT_STATUS, fault);
 }
 
 /*
