@@ -1046,6 +1046,95 @@ const struct usb_mux_driver tcpci_tcpm_usb_mux_driver = {
 
 #endif /* CONFIG_USB_PD_TCPM_MUX */
 
+#ifdef CONFIG_CMD_TCPCI_DUMP
+struct tcpci_reg {
+	const char	*name;
+	uint8_t		size;
+};
+
+#define TCPCI_REG(reg_name, reg_size)	\
+	[reg_name] = { .name = #reg_name, .size = (reg_size) }
+
+static const struct tcpci_reg tcpci_regs[] = {
+	TCPCI_REG(TCPC_REG_VENDOR_ID, 2),
+	TCPCI_REG(TCPC_REG_PRODUCT_ID, 2),
+	TCPCI_REG(TCPC_REG_BCD_DEV, 2),
+	TCPCI_REG(TCPC_REG_TC_REV, 2),
+	TCPCI_REG(TCPC_REG_PD_REV, 2),
+	TCPCI_REG(TCPC_REG_PD_INT_REV, 2),
+	TCPCI_REG(TCPC_REG_ALERT, 2),
+	TCPCI_REG(TCPC_REG_ALERT_MASK, 2),
+	TCPCI_REG(TCPC_REG_CONFIG_STD_OUTPUT, 1),
+	TCPCI_REG(TCPC_REG_TCPC_CTRL, 1),
+	TCPCI_REG(TCPC_REG_ROLE_CTRL, 1),
+	TCPCI_REG(TCPC_REG_FAULT_CTRL, 1),
+	TCPCI_REG(TCPC_REG_POWER_CTRL, 1),
+	TCPCI_REG(TCPC_REG_CC_STATUS, 1),
+	TCPCI_REG(TCPC_REG_POWER_STATUS, 1),
+	TCPCI_REG(TCPC_REG_FAULT_STATUS, 1),
+	TCPCI_REG(TCPC_REG_ALERT_EXT, 1),
+	TCPCI_REG(TCPC_REG_DEV_CAP_1, 2),
+	TCPCI_REG(TCPC_REG_DEV_CAP_2, 2),
+	TCPCI_REG(TCPC_REG_STD_INPUT_CAP, 1),
+	TCPCI_REG(TCPC_REG_STD_OUTPUT_CAP, 1),
+	TCPCI_REG(TCPC_REG_CONFIG_EXT_1, 1),
+	TCPCI_REG(TCPC_REG_MSG_HDR_INFO, 1),
+	TCPCI_REG(TCPC_REG_RX_DETECT, 1),
+	TCPCI_REG(TCPC_REG_RX_BYTE_CNT, 1),
+	TCPCI_REG(TCPC_REG_RX_BUF_FRAME_TYPE, 1),
+	TCPCI_REG(TCPC_REG_TRANSMIT, 1),
+	TCPCI_REG(TCPC_REG_VBUS_VOLTAGE, 2),
+	TCPCI_REG(TCPC_REG_VBUS_SINK_DISCONNECT_THRESH, 2),
+	TCPCI_REG(TCPC_REG_VBUS_STOP_DISCHARGE_THRESH, 2),
+	TCPCI_REG(TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG, 2),
+	TCPCI_REG(TCPC_REG_VBUS_VOLTAGE_ALARM_LO_CFG, 2),
+};
+
+static int command_tcpci_dump(int argc, char **argv)
+{
+	int port;
+	int i;
+	int val;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	port = atoi(argv[1]);
+	if ((port < 0) || (port >= board_get_usb_pd_port_count())) {
+		CPRINTS("%s(%d) Invalid port!", __func__, port);
+		return EC_ERROR_INVAL;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(tcpci_regs); i++) {
+		switch (tcpci_regs[i].size) {
+		case 1:
+			tcpc_read(port, i, &val);
+			ccprintf("  %-38s(0x%02x) =   0x%02x\n",
+				tcpci_regs[i].name, i, (uint8_t)val);
+			break;
+		case 2:
+			tcpc_read16(port, i, &val);
+			ccprintf("  %-38s(0x%02x) = 0x%04x\n",
+				tcpci_regs[i].name, i, (uint16_t)val);
+			break;
+		default:
+			/*
+			 * The tcpci_regs[] array is indexed by the register
+			 * offset. Unused registers are zero initialized so we
+			 * skip any entries that have the size field set to
+			 * zero.
+			 */
+			break;
+		}
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(tcpci_dump, command_tcpci_dump, "<Type-C port>",
+			"dump the TCPCI regs");
+#endif /* defined(CONFIG_CMD_TCPCI_DUMP) */
+
+
 const struct tcpm_drv tcpci_tcpm_drv = {
 	.init			= &tcpci_tcpm_init,
 	.release		= &tcpci_tcpm_release,
