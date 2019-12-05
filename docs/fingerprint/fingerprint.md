@@ -187,6 +187,13 @@ devices.
 Switching keys is only possible when the `RO` firmware is not write protected,
 since the public portion of the keypair is stored in the `RO` firmware.
 
+### Generate Key
+
+For testing, you can generate a new key by using the following openssl command:
+```bash
+openssl genrsa -3 -out board/$BOARD/dev_key.pem 3072
+```
+
 ### Resources
 
 *   https://sites.google.com/a/google.com/chromeos/resources/engineering/releng/signer-documentation
