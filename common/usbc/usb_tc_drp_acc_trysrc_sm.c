@@ -2749,7 +2749,7 @@ static void tc_attached_src_run(const int port)
 		 * Power Role Swap Request
 		 */
 		if (TC_CHK_FLAG(port, TC_FLAGS_DO_PR_SWAP)) {
-			TC_CLR_FLAG(port, TC_FLAGS_DO_PR_SWAP);
+			/* Clear TC_FLAGS_DO_PR_SWAP on exit */
 			return set_state_tc(port, TC_ATTACHED_SNK);
 		}
 
