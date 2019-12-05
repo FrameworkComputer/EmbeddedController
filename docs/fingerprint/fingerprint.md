@@ -16,7 +16,8 @@ build/<board>` or `make clobber` to prevent compilation errors.
 ## Software
 
 The main source code for fingerprint sensor functionality lives in the
-[`common/fpsensor`] directory.
+[`common/fpsensor`] directory. The driver code for specific sensors lives in the
+[`driver/fingerprint`] directory.
 
 ## Hardware
 
@@ -86,6 +87,42 @@ prevent you from uploading.
 
 ```bash
 (chroot) ~/trunk/src/platform/ec $ make BOARD=nocturne_fp run-host_command_fuzz
+```
+
+## Logs
+
+[`timberslide`] is a simple daemon that collects logs from the FPMCU and writes
+them to disk. [`timberslide`] reads from sysfs, where the kernel driver
+[periodically dumps the FPMCU console output][cros_ec_debugfs]. [`timberslide`]
+writes the resulting logs to `/var/log/cros_fp.log`. There are multiple
+instances of [`timberslide`] that run; one for each MCU running the EC
+codebase.
+
+### Starting timberslide
+
+```bash
+(dut)$ start timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
+```
+
+### Stopping timberslide
+
+```bash
+(dut)$ stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
+```
+
+### Manually running timberslide
+
+```bash
+(dut)$ timberslide --device_log=/sys/kernel/debug/cros_fp/console_log
+```
+
+### Reading logs from kernel
+
+If [`timberslide`] is not running you can just `cat` the logs directly from the
+kernel:
+
+```bash
+(dut)$ cat /sys/kernel/debug/cros_fp/console_log
 ```
 
 ## Production Updates
@@ -220,7 +257,8 @@ Signature verification succeeded.
 about adding an EC command to show the Key ID (fingerprint) from the RO version.
 This would make it a lot easier during both development and testing.
 
-[`common/fpsensor`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/common/fpsensor/
+[`common/fpsensor`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/common/fpsensor/
+[`driver/fingerprint`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/driver/fingerprint
 [`nocturne_fp`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/board/nocturne_fp/
 [`nami_fp`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/board/nami_fp/
 [`hatch_fp`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/board/hatch_fp/
@@ -240,3 +278,5 @@ This would make it a lot easier during both development and testing.
 [STM32F412]: https://www.st.com/resource/en/reference_manual/dm00180369.pdf
 [STM32H743]: https://www.st.com/resource/en/reference_manual/dm00314099.pdf
 [`board/nocturne_fp/dev_key.pem`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/board/nocturne_fp/dev_key.pem
+[`timberslide`]: https://chromium.googlesource.com/chromiumos/platform2/+/master/timberslide
+[cros_ec_debugfs]: https://chromium.googlesource.com/chromiumos/third_party/kernel/+/9db44685934a2e4bc9180ea2de87a6c429672395/drivers/platform/chrome/cros_ec_debugfs.c
