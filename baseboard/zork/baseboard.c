@@ -462,8 +462,7 @@ struct usb_mux usb_muxes[] = {
 		.driver = &amd_fp5_usb_mux_driver,
 	},
 	[USBC_PORT_C1] = {
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.driver = &amd_fp5_usb_mux_driver,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
