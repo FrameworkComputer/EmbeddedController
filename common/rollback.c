@@ -7,7 +7,9 @@
 
 #include "common.h"
 #include "console.h"
+#ifdef CONFIG_LIBCRYPTOC
 #include "cryptoc/util.h"
+#endif
 #include "flash.h"
 #include "hooks.h"
 #include "host_command.h"
