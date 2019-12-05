@@ -75,7 +75,7 @@ GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH |
 
 /* AP/PCH Signals */
 GPIO(EC_PCH_SYS_PWROK,         PIN(3, 7), GPIO_OUT_LOW)
-GPIO(EC_PCH_RSMRST_ODL,        PIN(A, 6), GPIO_ODR_HIGH) /* TODO - b/140950085 - implement TGL sequencing requirement */
+GPIO(EC_PCH_RSMRST_ODL,        PIN(A, 6), GPIO_ODR_LOW) /* TODO - b/140950085 - implement TGL sequencing requirement */
 GPIO(EC_PCH_PWR_BTN_ODL,       PIN(C, 1), GPIO_ODR_HIGH)
 GPIO(EC_PCH_RTCRST,            PIN(7, 6), GPIO_OUT_LOW)
 GPIO(EC_PCH_WAKE_ODL,          PIN(7, 4), GPIO_ODR_HIGH)
