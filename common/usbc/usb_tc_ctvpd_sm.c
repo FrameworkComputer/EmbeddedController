@@ -15,8 +15,8 @@
 /* USB Type-C CTVPD module */
 
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_HOOK, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_HOOK, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 #else /* CONFIG_COMMON_RUNTIME */
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)

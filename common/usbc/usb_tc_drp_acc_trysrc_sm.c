@@ -26,8 +26,8 @@
  */
 
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_HOOK, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_HOOK, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 #else /* CONFIG_COMMON_RUNTIME */
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
@@ -1540,58 +1540,6 @@ int tc_is_vconn_src(int port)
 		return -1;
 }
 #endif
-
-#ifdef CONFIG_USBC_PPC
-static void pd_send_hard_reset(int port)
-{
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SEND_HARD_RESET, 0);
-}
-
-static uint32_t port_oc_reset_req;
-
-static void re_enable_ports(void)
-{
-	uint32_t ports = atomic_read_clear(&port_oc_reset_req);
-
-	while (ports) {
-		int port = __fls(ports);
-
-		ports &= ~BIT(port);
-
-		/*
-		 * Let the board know that the overcurrent is
-		 * over since we're going to attempt re-enabling
-		 * the port.
-		 */
-		board_overcurrent_event(port, 0);
-
-		pd_send_hard_reset(port);
-		/*
-		 * TODO(b/117854867): PD3.0 to send an alert message
-		 * indicating OCP after explicit contract.
-		 */
-	}
-}
-DECLARE_DEFERRED(re_enable_ports);
-
-void pd_handle_overcurrent(int port)
-{
-	/* Keep track of the overcurrent events. */
-	CPRINTS("C%d: overcurrent!", port);
-
-	if (IS_ENABLED(CONFIG_USB_PD_LOGGING))
-		pd_log_event(PD_EVENT_PS_FAULT, PD_LOG_PORT_SIZE(port, 0),
-			PS_FAULT_OCP, NULL);
-
-	ppc_add_oc_event(port);
-	/* Let the board specific code know about the OC event. */
-	board_overcurrent_event(port, 1);
-
-	/* Wait 1s before trying to re-enable the port. */
-	atomic_or(&port_oc_reset_req, BIT(port));
-	hook_call_deferred(&re_enable_ports_data, SECOND);
-}
-#endif /* defined(CONFIG_USBC_PPC) */
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 static int reset_device_and_notify(int port)
