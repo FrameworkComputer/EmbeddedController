@@ -621,11 +621,14 @@ $(npcx-monitor-hdr-rw-bin):$(out)/$(npcx-monitor-hdr)_rw.o
 xrefs: $(call targ_if_prog,etags,$(out)/TAGS) \
 	$(call targ_if_prog,ctags,$(out)/tags)
 
+openocd-cfg-flash = $(or $(wildcard $(BDIR)/openocd-flash.cfg),\
+	$(error Board $(BOARD) doesn't support OpenOCD flashing))
+
 .PHONY: flash
 flash: $(out)/ec.bin
 	openocd -c "set BOARD $(BOARD)"\
 		-c "set BUILD_DIR $(out)"\
-		-f $(BDIR)/openocd-flash.cfg
+		-f $(openocd-cfg-flash)
 
 .PHONY: flash_ec
 flash_ec: $(out)/ec.bin
