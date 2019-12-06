@@ -495,7 +495,7 @@ static void prl_tx_wait_for_message_request_run(const int port)
 				(PRL_FLAGS_START_AMS | PRL_FLAGS_END_AMS))) {
 		if (tc_get_power_role(port) == PD_ROLE_SOURCE) {
 			/*
-			 * Start of AMS notification received from
+			 * Start of SRC AMS notification received from
 			 * Policy Engine
 			 */
 			if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_START_AMS)) {
@@ -504,18 +504,22 @@ static void prl_tx_wait_for_message_request_run(const int port)
 				return;
 			}
 			/*
-			 * End of AMS notification received from
+			 * End of SRC AMS notification received from
 			 * Policy Engine
 			 */
 			else if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_END_AMS)) {
-				PRL_TX_CLR_FLAG(port, PRL_FLAGS_END_AMS);
 				/* Set Rp = SinkTxOk */
 				tcpm_select_rp_value(port, SINK_TX_OK);
 				tcpm_set_cc(port, TYPEC_CC_RP);
 				prl_tx[port].retry_counter = 0;
+				/* PRL_FLAGS_END AMS is cleared here */
 				prl_tx[port].flags = 0;
 			}
 		} else {
+			/*
+			 * Start of SNK AMS notification received from
+			 * Policy Engine
+			 */
 			if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_START_AMS)) {
 				PRL_TX_CLR_FLAG(port, PRL_FLAGS_START_AMS);
 				/*
@@ -525,6 +529,16 @@ static void prl_tx_wait_for_message_request_run(const int port)
 				set_state_prl_tx(port, PRL_TX_SNK_START_AMS);
 				return;
 			}
+			/*
+			 * End of SNK AMS notification received from
+			 * Policy Engine
+			 */
+			else if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_END_AMS)) {
+				prl_tx[port].retry_counter = 0;
+				/* PRL_FLAGS_END AMS is cleared here */
+				prl_tx[port].flags = 0;
+			}
+
 		}
 	} else if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
 		PRL_TX_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
