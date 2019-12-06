@@ -50,16 +50,16 @@ const struct board_batt_params board_battery_info[] = {
 			}
 		},
 		.batt_info = {
-			.voltage_max		= TARGET_WITH_MARGIN(13050, 5),
-			.voltage_normal		= 11400, /* mV */
+			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
+			.voltage_normal		= 11550, /* mV */
 			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 500,	/* mA */
+			.precharge_current	= 256,	/* mA */
 			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
+			.start_charging_max_c	= 45,
 			.charging_min_c		= 0,
 			.charging_max_c		= 60,
 			.discharging_min_c	= 0,
-			.discharging_max_c	= 60,
+			.discharging_max_c	= 75,
 		},
 	},
 };
