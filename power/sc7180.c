@@ -327,6 +327,21 @@ static void wait_pmic_pwron(int enable, unsigned int timeout)
 }
 
 /**
+ * Set the state of the system power signals but without any check.
+ *
+ * The system power signals are the enable pins of SwitchCap and VBOB.
+ * They control the power of the set of PMIC chips and the AP.
+ *
+ * @param enable	1 to enable or 0 to disable
+ */
+static void set_system_power_no_check(int enable)
+{
+	gpio_set_level(GPIO_SWITCHCAP_ON, enable);
+	/* TODO: VBOB_EN GPIO is NC, just a backup. Remove it later. */
+	gpio_set_level(GPIO_VBOB_EN, enable);
+}
+
+/**
  * Set the state of the system power signals.
  *
  * The system power signals are the enable pins of SwitchCap and VBOB.
@@ -337,10 +352,8 @@ static void wait_pmic_pwron(int enable, unsigned int timeout)
 static void set_system_power(int enable)
 {
 	CPRINTS("%s(%d)", __func__, enable);
-	gpio_set_level(GPIO_SWITCHCAP_ON, enable);
+	set_system_power_no_check(enable);
 	wait_switchcap_power_good(enable);
-	/* TODO: VBOB_EN GPIO is NC, just a backup. Remove it later. */
-	gpio_set_level(GPIO_VBOB_EN, enable);
 	if (enable) {
 		usleep(SYSTEM_POWER_ON_DELAY);
 	} else {
@@ -410,7 +423,7 @@ enum power_state power_chipset_init(void)
 	 */
 	if (!(reset_flags & EC_RESET_FLAG_SYSJUMP)) {
 		CPRINTS("not sysjump; forcing system shutdown");
-		set_system_power(0);
+		set_system_power_no_check(0);
 		init_power_state = POWER_G3;
 	} else {
 		/* In the SYSJUMP case, we check if the AP is on */
