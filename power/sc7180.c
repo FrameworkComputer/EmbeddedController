@@ -329,7 +329,7 @@ static void wait_pmic_pwron(int enable, unsigned int timeout)
 /**
  * Set the state of the system power signals but without any check.
  *
- * The system power signals are the enable pins of SwitchCap and VBOB.
+ * The system power signals are the enable pins of SwitchCap.
  * They control the power of the set of PMIC chips and the AP.
  *
  * @param enable	1 to enable or 0 to disable
@@ -337,14 +337,12 @@ static void wait_pmic_pwron(int enable, unsigned int timeout)
 static void set_system_power_no_check(int enable)
 {
 	gpio_set_level(GPIO_SWITCHCAP_ON, enable);
-	/* TODO: VBOB_EN GPIO is NC, just a backup. Remove it later. */
-	gpio_set_level(GPIO_VBOB_EN, enable);
 }
 
 /**
  * Set the state of the system power signals.
  *
- * The system power signals are the enable pins of SwitchCap and VBOB.
+ * The system power signals are the enable pins of SwitchCap.
  * They control the power of the set of PMIC chips and the AP.
  *
  * @param enable	1 to enable or 0 to disable
