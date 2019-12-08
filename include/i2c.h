@@ -77,6 +77,16 @@ enum i2c_freq {
 	I2C_FREQ_COUNT,
 };
 
+/*
+ * I2C mask update actions.
+ *      MASK_SET will OR the mask into the old value
+ *      MASK_CLR will AND the ~mask from the old value
+ */
+enum mask_update_action {
+	MASK_CLR,
+	MASK_SET
+};
+
 struct i2c_info_t {
 	uint16_t port;	/* Physical port for device */
 	uint16_t addr_flags;
@@ -333,6 +343,47 @@ int i2c_read8(const int port,
 int i2c_write8(const int port,
 	       const uint16_t slave_addr_flags,
 	       int offset, int data);
+
+/**
+ * Read, modify, write an i2c register to the slave at 7-bit slave address
+ * <slave_addr_flags>, at the specified 8-bit <offset> in the slave's
+ * address space.  The <action> will specify whether this is setting the
+ * <mask> bit value(s) or clearing them. If the value to be written is the
+ * same as the original value of the register, the write will not be
+ * performed.
+ */
+int i2c_update8(const int port,
+		const uint16_t slave_addr_flags,
+		const int offset,
+		const uint8_t mask,
+		const enum mask_update_action action);
+
+int i2c_update16(const int port,
+		 const uint16_t slave_addr_flags,
+		 const int offset,
+		 const uint16_t mask,
+		 const enum mask_update_action action);
+
+/**
+ * Read, modify, write field of an i2c register to the slave at 7-bit
+ * slave address <slave_addr_flags>, at the specified 8-bit <offset> in
+ * the slave's address space.  The register will be read, the <field_mask>
+ * will be cleared and then the <set_value> will be set.  The field mask
+ * and the set value do not have to be in the same bit locations.  If the
+ * new value is not the same as the original value, the new value will be
+ * written back out to the device, otherwise no write will be performed.
+ */
+int i2c_field_update8(const int port,
+		      const uint16_t slave_addr_flags,
+		      const int offset,
+		      const uint8_t field_mask,
+		      const uint8_t set_value);
+
+int i2c_field_update16(const int port,
+		       const uint16_t slave_addr_flags,
+		       const int offset,
+		       const uint16_t field_mask,
+		       const uint16_t set_value);
 
 /**
  * Read one or two bytes data from the slave at 7-bit slave address
