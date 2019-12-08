@@ -934,7 +934,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(
 			CONFIG_SPI_ACCEL_PORT),
 		.rot_standard_ref = NULL, /* Identity matrix. */
-		.default_range = 2,  /* g, enough for laptop. */
+		.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
 		.min_frequency = BMI160_ACCEL_MIN_FREQ,
 		.max_frequency = BMI160_ACCEL_MAX_FREQ,
 		.config = {

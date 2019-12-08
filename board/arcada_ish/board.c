@@ -65,7 +65,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSM_ADDR1_FLAGS,
 		.rot_standard_ref = &lid_rot_ref,
-		.default_range = 4,  /* g */
+		.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 		.config = {
@@ -112,8 +112,12 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LNG2DM_ADDR0_FLAGS,
 		.rot_standard_ref = NULL, /* Identity matrix */
-		/* We only use 2g because its resolution is only 8-bits */
-		.default_range = 2, /* g */
+		/*
+		 * We only use 2g because its resolution is only 8-bits.
+		 * Beside, it is only used for lid angle calculation, where
+		 * measure over 1.5g are dropped.
+		 */
+		.default_range = 2,  /* g */
 		.min_frequency = LIS2DH_ODR_MIN_VAL,
 		.max_frequency = LIS2DH_ODR_MAX_VAL,
 		.config = {
