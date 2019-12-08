@@ -416,21 +416,21 @@ int board_set_active_charge_port(int port)
 	int is_real_port = (port >= 0 &&
 			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
-	int rv;
 
 	if (!is_real_port && port != CHARGE_PORT_NONE)
 		return EC_ERROR_INVAL;
 
-	CPRINTS("New chg p%d", port);
-
 	if (port == CHARGE_PORT_NONE) {
+		CPRINTS("Disabling all charging port");
+
 		/* Disable all ports. */
 		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-			rv = board_vbus_sink_enable(i, 0);
-			if (rv) {
+			/*
+			 * Do not return early if one fails otherwise we can
+			 * get into a boot loop assertion failure.
+			 */
+			if (board_vbus_sink_enable(i, 0))
 				CPRINTS("Disabling p%d sink path failed.", i);
-				return rv;
-			}
 		}
 
 		return EC_SUCCESS;
@@ -438,9 +438,12 @@ int board_set_active_charge_port(int port)
 
 	/* Check if the port is sourcing VBUS. */
 	if (board_is_sourcing_vbus(port)) {
-		CPRINTF("Skip enable p%d", port);
+		CPRINTS("Skip enable p%d", port);
 		return EC_ERROR_INVAL;
 	}
+
+
+	CPRINTS("New charge port: p%d", port);
 
 	/*
 	 * Turn off the other ports' sink path FETs, before enabling the
