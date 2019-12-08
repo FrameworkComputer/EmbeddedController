@@ -141,6 +141,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
 		.rot_standard_ref = &lid_standrd_ref,
 		.default_range = 2, /* g */
+		.min_frequency = KX022_ACCEL_MIN_FREQ,
+		.max_frequency = KX022_ACCEL_MAX_FREQ,
 		.config = {
 			/* EC use accel for angle detection */
 			[SENSOR_CONFIG_EC_S0] = {
