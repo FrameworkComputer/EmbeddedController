@@ -147,6 +147,8 @@
 #undef CONFIG_CMD_MEM
 #ifdef SECTION_IS_RO
 #undef CONFIG_CMD_BATTFAKE
+#undef CONFIG_CMD_MD
+#undef CONFIG_CMD_POWERINDEBUG
 #endif
 
 #ifndef __ASSEMBLER__
