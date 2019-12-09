@@ -70,6 +70,13 @@ static inline int isl9241_write(int offset, int value)
 			   offset, value);
 }
 
+static inline int isl9241_update(int offset, uint16_t mask,
+				 enum mask_update_action action)
+{
+	return i2c_update16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
+			    offset, mask, action);
+}
+
 /* chip specific interfaces */
 
 /*****************************************************************************/
@@ -286,24 +293,15 @@ int charger_post_init(void)
 int charger_discharge_on_ac(int enable)
 {
 	int rv;
-	int control1;
 
 	mutex_lock(&control1_mutex);
 
-	rv = isl9241_read(ISL9241_REG_CONTROL1, &control1);
-	if (rv)
-		goto out;
-
-	if (enable)
-		control1 |= ISL9241_CONTROL1_LEARN_MODE;
-	else
-		control1 &= ~ISL9241_CONTROL1_LEARN_MODE;
-
-	rv = isl9241_write(ISL9241_REG_CONTROL1, control1);
+	rv = isl9241_update(ISL9241_REG_CONTROL1,
+			    ISL9241_CONTROL1_LEARN_MODE,
+			    (enable) ? MASK_SET : MASK_CLR);
 	if (!rv)
 		learn_mode = enable;
 
-out:
 	mutex_unlock(&control1_mutex);
 	return rv;
 }
@@ -312,8 +310,6 @@ out:
 /* ISL-9241 initialization */
 static void isl9241_init(void)
 {
-	int reg;
-
 	const struct battery_info *bi = battery_get_info();
 
 	/*
@@ -336,31 +332,27 @@ static void isl9241_init(void)
 	 * [12]   : Two-Level Adapter Current Limit (enable)
 	 * [10:9] : Prochot# Debounce time (1000us)
 	 */
-	if (isl9241_read(ISL9241_REG_CONTROL2, &reg))
-		goto init_fail;
-
-	if (isl9241_write(ISL9241_REG_CONTROL2,
-		reg | ISL9241_CONTROL2_TRICKLE_CHG_CURR(bi->precharge_current) |
-		ISL9241_CONTROL2_TWO_LEVEL_ADP_CURR |
-		ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000))
+	if (isl9241_update(ISL9241_REG_CONTROL2,
+			   (ISL9241_CONTROL2_TRICKLE_CHG_CURR(
+					bi->precharge_current)  |
+			    ISL9241_CONTROL2_TWO_LEVEL_ADP_CURR |
+			    ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000),
+			   MASK_SET))
 		goto init_fail;
 
 	/*
 	 * Set control3 register to
 	 * [14]: ACLIM Reload (Do not reload)
 	 */
-	if (isl9241_read(ISL9241_REG_CONTROL3, &reg))
-		goto init_fail;
-
-	if (isl9241_write(ISL9241_REG_CONTROL3,
-		reg | ISL9241_CONTROL3_ACLIM_RELOAD))
+	if (isl9241_update(ISL9241_REG_CONTROL3,
+			   ISL9241_CONTROL3_ACLIM_RELOAD,
+			   MASK_SET))
 		goto init_fail;
 
 #ifndef CONFIG_CHARGE_RAMP_HW
-	if (isl9241_read(ISL9241_REG_CONTROL0, &reg))
-		goto init_fail;
-	if (isl9241_write(ISL9241_REG_CONTROL0,
-		reg | ISL9241_CONTROL0_INPUT_VTG_REGULATION))
+	if (isl9241_update(ISL9241_REG_CONTROL0,
+			   ISL9241_CONTROL0_INPUT_VTG_REGULATION,
+			   MASK_SET))
 		goto init_fail;
 #endif
 
@@ -388,19 +380,10 @@ DECLARE_HOOK(HOOK_INIT, isl9241_init, HOOK_PRIO_INIT_I2C + 1);
 #ifdef CONFIG_CHARGE_RAMP_HW
 int charger_set_hw_ramp(int enable)
 {
-	int rv, reg;
-
-	rv = isl9241_read(ISL9241_REG_CONTROL0, &reg);
-	if (rv)
-		return rv;
-
 	/* HW ramp is controlled by input voltage regulation reference bits */
-	if (enable)
-		reg &= ~ISL9241_CONTROL0_INPUT_VTG_REGULATION;
-	else
-		reg |= ISL9241_CONTROL0_INPUT_VTG_REGULATION;
-
-	return isl9241_write(ISL9241_REG_CONTROL0, reg);
+	return isl9241_update(ISL9241_REG_CONTROL0,
+			      ISL9241_CONTROL0_INPUT_VTG_REGULATION,
+			      (enable) ? MASK_CLR : MASK_SET);
 }
 
 int chg_ramp_is_stable(void)
