@@ -591,17 +591,18 @@
 /* Reset causes definitions */
 /* Reset causes in RCC CSR register */
 #define STM32_RCC_RESET_CAUSE STM32_RCC_CSR
-#define  RESET_CAUSE_WDG                0x60000000
-#define  RESET_CAUSE_SFT                0x10000000
-#define  RESET_CAUSE_POR                0x08000000
-#define  RESET_CAUSE_PIN                0x04000000
-#define  RESET_CAUSE_OTHER              0xfe000000
-#define  RESET_CAUSE_RMVF               0x01000000
+#define  RESET_CAUSE_WDG                (BIT(30)|BIT(29))
+#define  RESET_CAUSE_SFT                BIT(28)
+#define  RESET_CAUSE_POR                BIT(27)
+#define  RESET_CAUSE_PIN                BIT(26)
+#define  RESET_CAUSE_OTHER              (BIT(31)|BIT(30)|BIT(29)|BIT(28)| \
+					 BIT(27)|BIT(26)|BIT(25))
+#define  RESET_CAUSE_RMVF                BIT(24)
 /* Power cause in PWR CSR register */
 #define STM32_PWR_RESET_CAUSE STM32_PWR_CSR
+#define  RESET_CAUSE_SBF                BIT(1)
 #define STM32_PWR_RESET_CAUSE_CLR STM32_PWR_CR
-#define  RESET_CAUSE_SBF                0x00000002
-#define  RESET_CAUSE_SBF_CLR            0x00000004
+#define  RESET_CAUSE_SBF_CLR            BIT(2)
 
 /* --- Watchdogs --- */
 
