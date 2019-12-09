@@ -56,21 +56,19 @@ static int nct38xx_tcpm_init(int port)
 		return rv;
 
 	/* Disable OVP */
-	rv = tcpc_read(port, TCPC_REG_FAULT_CTRL, &reg);
-	if (rv)
-		return rv;
-	reg = reg | TCPC_REG_FAULT_CTRL_VBUS_OVP_FAULT_DIS;
-	rv = tcpc_write(port, TCPC_REG_FAULT_CTRL, reg);
+	rv = tcpc_update8(port,
+			  TCPC_REG_FAULT_CTRL,
+			  TCPC_REG_FAULT_CTRL_VBUS_OVP_FAULT_DIS,
+			  MASK_SET);
 	if (rv)
 		return rv;
 
 	/* Enable VBus monitor and Disable FRS */
-	rv = tcpc_read(port, TCPC_REG_POWER_CTRL, &reg);
-	if (rv)
-		return rv;
-	reg = reg & ~(TCPC_REG_POWER_CTRL_VBUS_VOL_MONITOR_DIS |
-		      TCPC_REG_POWER_CTRL_FRS_ENABLE);
-	rv = tcpc_write(port, TCPC_REG_POWER_CTRL, reg);
+	rv = tcpc_update8(port,
+			  TCPC_REG_POWER_CTRL,
+			  (TCPC_REG_POWER_CTRL_VBUS_VOL_MONITOR_DIS |
+			   TCPC_REG_POWER_CTRL_FRS_ENABLE),
+			  MASK_CLR);
 	if (rv)
 		return rv;
 
@@ -95,13 +93,12 @@ static int nct38xx_tcpm_init(int port)
 	 * Enable the Vendor Define alert event only when the IO expander
 	 * feature is defined
 	 */
-	if (IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX)) {
-		int mask;
+	if (IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX))
+		rv |= tcpc_update16(port,
+				    TCPC_REG_ALERT_MASK,
+				    TCPC_REG_ALERT_VENDOR_DEF,
+				    MASK_SET);
 
-		rv |= tcpc_read16(port, TCPC_REG_ALERT_MASK, &mask);
-		mask |= TCPC_REG_ALERT_VENDOR_DEF;
-		rv |= tcpc_write16(port, TCPC_REG_ALERT_MASK, mask);
-	}
 	return rv;
 }
 
