@@ -67,26 +67,12 @@ static inline int raw_read8(int port, int offset, int *value)
 			 offset, value);
 }
 
-static inline int raw_write8(int port, int offset, int value)
-{
-	return i2c_write8(pi3usb9201_bc12_chips[port].i2c_port,
-			  pi3usb9201_bc12_chips[port].i2c_addr_flags,
-			  offset, value);
-}
-
 static int pi3usb9201_raw(int port, int reg, int mask, int val)
 {
-	int rv;
-	int reg_val;
-
-	rv = raw_read8(port, reg, &reg_val);
-	if (rv)
-		return rv;
-
-	reg_val &= ~mask;
-	reg_val |= val;
-
-	return raw_write8(port, reg, reg_val);
+	/* Clear mask and then set val in i2c reg value */
+	return i2c_field_update8(pi3usb9201_bc12_chips[port].i2c_port,
+				 pi3usb9201_bc12_chips[port].i2c_addr_flags,
+				 reg, mask, val);
 }
 
 static int pi3usb9201_interrupt_mask(int port, int enable)
