@@ -602,7 +602,7 @@
 #define STM32_PWR_RESET_CAUSE STM32_PWR_CSR
 #define  RESET_CAUSE_SBF                BIT(1)
 #define STM32_PWR_RESET_CAUSE_CLR STM32_PWR_CR
-#define  RESET_CAUSE_SBF_CLR            BIT(2)
+#define  RESET_CAUSE_SBF_CLR            BIT(3)
 
 /* --- Watchdogs --- */
 
