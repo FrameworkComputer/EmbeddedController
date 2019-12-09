@@ -1548,7 +1548,8 @@ bc12_none:
 		}
 
 		/* VBUS detach event */
-		if (reg & RT946X_MASK_DPDMIRQ_DETACH) {
+		if (reg & RT946X_MASK_DPDMIRQ_DETACH &&
+		    bc12_type != CHARGE_SUPPLIER_NONE) {
 			CPRINTS("VBUS detached");
 			bc12_cnt = 0;
 #ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
