@@ -1295,12 +1295,16 @@ static int set_chg_ctrl_mode(enum ec_charge_control_mode mode)
 	return EC_SUCCESS;
 }
 
-/* True if we know the battery temp is too high or too low */
 static inline int battery_too_hot(int batt_temp_c)
 {
 	return (!(curr.batt.flags & BATT_FLAG_BAD_TEMPERATURE) &&
-		(batt_temp_c > batt_info->discharging_max_c ||
-		 batt_temp_c < batt_info->discharging_min_c));
+		(batt_temp_c > batt_info->discharging_max_c));
+}
+
+static inline int battery_too_cold_for_discharge(int batt_temp_c)
+{
+	return (!(curr.batt.flags & BATT_FLAG_BAD_TEMPERATURE) &&
+		(batt_temp_c < batt_info->discharging_min_c));
 }
 
 __attribute__((weak)) uint8_t board_set_battery_level_shutdown(void)
@@ -1339,7 +1343,13 @@ static int is_battery_critical(void)
 	 * temp, so it can turn fans on.
 	 */
 	if (battery_too_hot(batt_temp_c)) {
-		CPRINTS("Batt temp out of range: %dC", batt_temp_c);
+		CPRINTS("Batt too hot: %dC", batt_temp_c);
+		return 1;
+	}
+
+	/* Note: the battery may run on AC without discharging when too cold */
+	if (!curr.ac && battery_too_cold_for_discharge(batt_temp_c)) {
+		CPRINTS("Batt too cold: %dC", batt_temp_c);
 		return 1;
 	}
 

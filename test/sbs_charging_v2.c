@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Test lid switch.
+ * Test charge_state_v2 behavior
  */
 
 #include "battery_smart.h"
@@ -350,6 +350,36 @@ static int test_high_temp_battery(void)
 	return EC_SUCCESS;
 }
 
+static int test_cold_battery_with_ac(void)
+{
+	test_setup(1);
+
+	ccprintf("[CHARGING TEST] Cold battery no shutdown with AC\n");
+	ev_clear(EC_HOST_EVENT_BATTERY_SHUTDOWN);
+	sb_write(SB_TEMPERATURE, CELSIUS_TO_DECI_KELVIN(-90));
+	wait_charging_state();
+	sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
+	TEST_ASSERT(!is_shutdown);
+
+	return EC_SUCCESS;
+}
+
+static int test_cold_battery_no_ac(void)
+{
+	test_setup(0);
+
+	ccprintf("[CHARGING TEST] Cold battery shutdown when discharging\n");
+	ev_clear(EC_HOST_EVENT_BATTERY_SHUTDOWN);
+	sb_write(SB_TEMPERATURE, CELSIUS_TO_DECI_KELVIN(-90));
+	wait_charging_state();
+	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_SHUTDOWN));
+	TEST_ASSERT(!is_shutdown);
+	sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
+	TEST_ASSERT(is_shutdown);
+
+	return EC_SUCCESS;
+}
+
 static int test_external_funcs(void)
 {
 	int rv, temp;
@@ -688,6 +718,8 @@ void run_test(void)
 	RUN_TEST(test_charge_state);
 	RUN_TEST(test_low_battery);
 	RUN_TEST(test_high_temp_battery);
+	RUN_TEST(test_cold_battery_with_ac);
+	RUN_TEST(test_cold_battery_no_ac);
 	RUN_TEST(test_external_funcs);
 	RUN_TEST(test_hc_charge_state);
 	RUN_TEST(test_hc_current_limit);
