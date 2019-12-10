@@ -12,6 +12,7 @@
 #include "host_command.h"
 #include "hwtimer.h"
 #include "i2c.h"
+#include "i2c-stm32f0.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -135,7 +136,7 @@ static void i2c_set_freq_port(const struct i2c_port_t *p,
  *
  * @param p		the I2c port
  */
-static void i2c_init_port(const struct i2c_port_t *p)
+void stm32f0_i2c_init_port(const struct i2c_port_t *p)
 {
 	int port = p->port;
 	enum stm32_i2c_clk_src src = I2C_CLK_SRC_48MHZ;
@@ -603,7 +604,7 @@ void i2c_init(void)
 	int i;
 
 	for (i = 0; i < i2c_ports_used; i++, p++)
-		i2c_init_port(p);
+		stm32f0_i2c_init_port(p);
 
 #ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_RXIE | STM32_I2C_CR1_ERRIE
