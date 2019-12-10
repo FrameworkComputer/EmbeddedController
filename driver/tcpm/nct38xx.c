@@ -139,6 +139,12 @@ static int tcpci_nct38xx_check_cable_polarity(int port)
 	return rv;
 }
 
+int tcpci_nct38xx_select_rp_value(int port, int rp)
+{
+	selected_rp[port] = rp;
+	return EC_SUCCESS;
+}
+
  /*
   * TODO(crbug.com/951681): This code can be simplified once that bug is fixed.
   */
@@ -293,7 +299,7 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,
 #endif
-	.select_rp_value	= &tcpci_tcpm_select_rp_value,
+	.select_rp_value	= &tcpci_nct38xx_select_rp_value,
 	.set_cc			= &tcpci_nct38xx_set_cc,
 	.set_polarity		= &tcpci_tcpm_set_polarity,
 	.set_vconn		= &tcpci_tcpm_set_vconn,
