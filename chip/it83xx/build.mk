@@ -30,6 +30,7 @@ chip-$(CONFIG_ADC)+=adc.o
 chip-$(CONFIG_HOSTCMD_X86)+=lpc.o ec2i.o
 chip-$(CONFIG_HOSTCMD_ESPI)+=espi.o
 chip-$(CONFIG_SPI_MASTER)+=spi_master.o
+chip-$(CONFIG_SPI)+=spi.o
 chip-$(CONFIG_PECI)+=peci.o
 ifndef CONFIG_KEYBOARD_NOT_RAW
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o

@@ -144,6 +144,11 @@ void intc_cpu_int_group_12(void)
 		chip_pd_irq(USBPD_PORT_B);
 		break;
 #endif /* CONFIG_USB_PD_TCPM_ITE83XX */
+#ifdef CONFIG_SPI
+	case IT83XX_IRQ_SPI_SLAVE:
+		spi_slv_int_handler();
+		break;
+#endif
 	default:
 		break;
 	}
