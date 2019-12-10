@@ -71,10 +71,24 @@ prevent you from uploading.
 (chroot) ~/trunk/src/platform/ec $ make buildall -j
 ```
 
-## Build tests
+## Building and running unit tests
+
+List available unit tests:
 
 ```bash
-(chroot) ~/trunk/src/platform/ec $ make BOARD=nocturne_fp tests-nocturne_fp -j
+(chroot) ~/trunk/src/platform/ec $ make BOARD=nocturne_fp print-host-tests
+```
+
+Build and run a specific unit test:
+
+```bash
+(chroot) ~/trunk/src/platform/ec $ make BOARD=nocturne_fp run-fpsensor
+```
+
+Build and run all unit tests:
+
+```bash
+(chroot) ~/trunk/src/platform/ec $ make BOARD=nocturne_fp runhosttests -j
 ```
 
 ## Build ectool
