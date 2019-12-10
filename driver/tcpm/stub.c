@@ -89,6 +89,10 @@ int tcpm_set_rx_enable(int port, int enable)
 	return tcpc_set_rx_enable(port, enable);
 }
 
+void tcpm_enable_auto_discharge_disconnect(int port, int enable)
+{
+}
+
 int tcpm_has_pending_message(int port)
 {
 	return !rx_buf_is_empty(port);

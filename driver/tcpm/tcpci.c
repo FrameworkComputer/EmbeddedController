@@ -10,7 +10,6 @@
 #include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
-#include "hooks.h"
 #include "ps8xxx.h"
 #include "task.h"
 #include "tcpci.h"
@@ -283,38 +282,17 @@ void tcpci_tcpc_discharge_vbus(int port, int enable)
 }
 
 /*
- * On a connection state change, it is necessary for TCPCI devices to
- * set the AUTO_DISCHARGE_DISCONNECT bit appropriately.
+ * Auto Discharge Disconnect is supposed to be enabled when we
+ * are connected and disabled after we are disconnected and
+ * VBus is at SafeV0
  */
-void tcpci_tcpc_connect_state_change(int port, int connected)
+void tcpci_tcpc_enable_auto_discharge_disconnect(int port, int enable)
 {
 	tcpc_update8(port,
 		     TCPC_REG_POWER_CTRL,
 		     TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT,
-		     (connected) ? MASK_SET : MASK_CLR);
+		     (enable) ? MASK_SET : MASK_CLR);
 }
-
-static void connect_state_change(int port, int connected)
-{
-	const struct tcpm_drv *tcpc = tcpc_config[port].drv;
-
-	if (tcpc->tcpc_connect_state_change)
-		tcpc->tcpc_connect_state_change(port, connected);
-}
-static void connect_hook(void)
-{
-	int port = TASK_ID_TO_PD_PORT(task_get_current());
-
-	connect_state_change(port, 1);
-}
-DECLARE_HOOK(HOOK_USB_PD_CONNECT, connect_hook, HOOK_PRIO_DEFAULT);
-static void disconnect_hook(void)
-{
-	int port = TASK_ID_TO_PD_PORT(task_get_current());
-
-	connect_state_change(port, 0);
-}
-DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, disconnect_hook, HOOK_PRIO_DEFAULT);
 
 static int set_role_ctrl(int port, int toggle, int rp, int pull)
 {
@@ -1146,8 +1124,6 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
 #endif
-	.tcpc_connect_state_change =
-				  &tcpci_tcpc_connect_state_change,
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	.drp_toggle		= &tcpci_tcpc_drp_toggle,
 #endif

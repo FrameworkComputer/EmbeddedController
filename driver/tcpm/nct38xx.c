@@ -305,8 +305,8 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
 #endif
-	.tcpc_connect_state_change =
-				  &tcpci_tcpc_connect_state_change,
+	.tcpc_enable_auto_discharge_disconnect =
+				  &tcpci_tcpc_enable_auto_discharge_disconnect,
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	.drp_toggle		= &tcpci_nct38xx_drp_toggle,
 #endif

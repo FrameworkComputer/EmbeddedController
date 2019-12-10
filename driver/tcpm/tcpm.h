@@ -199,6 +199,14 @@ static inline int tcpm_set_rx_enable(int port, int enable)
 	return tcpc_config[port].drv->set_rx_enable(port, enable);
 }
 
+static inline void tcpm_enable_auto_discharge_disconnect(int port, int enable)
+{
+	const struct tcpm_drv *tcpc = tcpc_config[port].drv;
+
+	if (tcpc->tcpc_enable_auto_discharge_disconnect)
+		tcpc->tcpc_enable_auto_discharge_disconnect(port, enable);
+}
+
 /**
  * Reads a message using get_message_raw driver method and puts it into EC's
  * cache.
@@ -372,6 +380,14 @@ int tcpm_set_msg_header(int port, int power_role, int data_role);
  * @return EC_SUCCESS or error
  */
 int tcpm_set_rx_enable(int port, int enable);
+
+/**
+ * Enable Auto Discharge Disconnect
+ *
+ * @param port Type-C port number
+ * @param enable true for enable, false for disable
+ */
+void tcpm_enable_auto_discharge_disconnect(int port, int enable);
 
 /**
  * Transmit PD message

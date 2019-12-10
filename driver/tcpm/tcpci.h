@@ -182,8 +182,7 @@ int tcpci_enter_low_power_mode(int port);
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 void tcpci_tcpc_discharge_vbus(int port, int enable);
 #endif
-
-void tcpci_tcpc_connect_state_change(int port, int connected);
+void tcpci_tcpc_enable_auto_discharge_disconnect(int port, int enable);
 
 int tcpci_tcpm_mux_init(int i2c_addr);
 int tcpci_tcpm_mux_set(int i2c_addr, mux_state_t mux_state);

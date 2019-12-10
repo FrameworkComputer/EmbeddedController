@@ -19,6 +19,8 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "tcpci.h"
+#include "tcpm.h"
 #include "timer.h"
 #include "util.h"
 #include "usb_charge.h"
@@ -730,6 +732,8 @@ static inline void set_state(int port, enum pd_states next_state)
 		 * since we've detected a disconnect.
 		 */
 		ppc_clear_oc_event_counter(port);
+		/* Disable Auto Discharge Disconnect */
+		tcpm_enable_auto_discharge_disconnect(port, 0);
 	}
 #endif /* CONFIG_USBC_PPC &&  CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE */
 
@@ -844,6 +848,9 @@ static inline void set_state(int port, enum pd_states next_state)
 		/* detect USB PD cc disconnect */
 		if (IS_ENABLED(CONFIG_COMMON_RUNTIME))
 			hook_notify(HOOK_USB_PD_DISCONNECT);
+
+		/* Disable Auto Discharge Disconnect */
+		tcpm_enable_auto_discharge_disconnect(port, 0);
 	}
 
 #ifdef CONFIG_LOW_POWER_IDLE
@@ -3345,6 +3352,9 @@ void pd_task(void *u)
 				/* initial data role for source is DFP */
 				pd_set_data_role(port, PD_ROLE_DFP);
 
+				/* Enable Auto Discharge Disconnect */
+				tcpm_enable_auto_discharge_disconnect(port, 1);
+
 				if (new_cc_state == PD_CC_UFP_DEBUG_ACC)
 					pd[port].flags |=
 						PD_FLAGS_TS_DTS_PARTNER;
@@ -3973,6 +3983,8 @@ void pd_task(void *u)
 			pd[port].msg_id = 0;
 			/* initial data role for sink is UFP */
 			pd_set_data_role(port, PD_ROLE_UFP);
+			/* Enable Auto Discharge Disconnect */
+			tcpm_enable_auto_discharge_disconnect(port, 1);
 #if defined(CONFIG_CHARGE_MANAGER)
 			typec_curr = usb_get_typec_current_limit(
 				pd[port].polarity, cc1, cc2);
