@@ -165,7 +165,6 @@ class RMAOpen(object):
         self.servo_port = servo_port if servo_port else '9999'
         self.print_caps = print_caps
         self.ip = ip
-        self._dut_control('cr50_uart_timestamp:off')
         if device:
             self.set_cr50_device(device)
         elif servo_port:
@@ -191,7 +190,11 @@ class RMAOpen(object):
 
 
     def find_cr50_servo_uart(self):
-        """Save the device used for the console"""
+        """Save the device used for the console.
+
+        Find the console and configure it, so it can be used with this script.
+        """
+        self._dut_control('cr50_uart_timestamp:off')
         self.device = self._dut_control('cr50_uart_pty').split(':')[-1]
 
 
