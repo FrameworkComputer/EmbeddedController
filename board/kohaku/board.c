@@ -178,45 +178,45 @@ static struct als_drv_data_t g_tcs3400_data = {
 	.als_cal.offset = 0,
 	.als_cal.channel_scale = {
 		.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kc from VPD */
-		.cover_scale = ALS_CHANNEL_SCALE(1.0),     /* CT */
+		.cover_scale = ALS_CHANNEL_SCALE(0.74),     /* CT */
 	},
 };
 
 static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 	.calibration.rgb_cal[X] = {
-		.offset = 30, /* 30.38576102 */
-		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0.31818327),
-		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0.28786817),
-		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0.14603897),
-		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(-0.12542082),
+		.offset = 92, /* 91.86488992 */
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-0.30551661),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(1.60934973),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(-1.1675665),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0.30301793),
 		.scale = {
 			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kr */
-			.cover_scale = ALS_CHANNEL_SCALE(0.3507)
+			.cover_scale = ALS_CHANNEL_SCALE(0.5)
 		}
 	},
 	.calibration.rgb_cal[Y] = {
-		.offset = 45, /* 45.0467605 */
-		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0.26764916),
-		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0.26510278),
-		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0.19007195),
-		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(-0.12512564),
+		.offset = 89, /* 89.06144741 */
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-0.57703771),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(1.46485215),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(-1.12901904),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0.43166926),
 		.scale = {
 			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kg */
 			.cover_scale = ALS_CHANNEL_SCALE(1.0)
 		},
 	},
 	.calibration.rgb_cal[Z] = {
-		.offset = 22, /* 22.5644134 */
-		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-0.0682575),
-		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0.15594184),
-		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0.53616239),
-		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(-0.13502391),
+		.offset = 91, /* 91.37365646 */
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-1.88271283),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(1.27117152),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(-1.19261862),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0.95401891),
 		.scale = {
 			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kb */
-			.cover_scale = ALS_CHANNEL_SCALE(0.5759)
+			.cover_scale = ALS_CHANNEL_SCALE(1.44)
 		}
 	},
-	.calibration.irt = INT_TO_FP(1),
+	.calibration.irt = FLOAT_TO_FP(0.35),
 	.saturation.again = TCS_DEFAULT_AGAIN,
 	.saturation.atime = TCS_DEFAULT_ATIME,
 };
