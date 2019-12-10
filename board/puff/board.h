@@ -177,6 +177,11 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
+enum charge_port {
+	CHARGE_PORT_TYPEC0,
+	CHARGE_PORT_BARRELJACK,
+};
+
 enum adc_channel {
 	ADC_SNS_PP3300,     /* ADC2 */
 	ADC_SNS_PP1050,     /* ADC7 */

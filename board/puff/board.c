@@ -10,6 +10,7 @@
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
+#include "chipset.h"
 #include "common.h"
 #include "cros_board_info.h"
 #include "driver/ina3221.h"
@@ -142,6 +143,69 @@ DECLARE_DEFERRED(update_port_limits);
 static void port_ocp_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&update_port_limits_data, 0);
+}
+
+/******************************************************************************/
+/*
+ * Barrel jack power supply handling
+ *
+ * EN_PPVAR_BJ_ADP_L must default active to ensure we can power on when the
+ * barrel jack is connected, and the USB-C port can bring the EC up fine in
+ * dead-battery mode. Both the USB-C and barrel jack switches do reverse
+ * protection, so we're safe to turn one on then the other off- but we should
+ * only do that if the system is off since it might still brown out.
+ */
+#define ADP_DEBOUNCE_MS		1000  /* Debounce time for BJ plug/unplug */
+/* Debounced connection state of the barrel jack */
+static int adp_connected = 1;
+static void adp_state_init(void)
+{
+	adp_connected = !gpio_get_level(GPIO_BJ_ADP_PRESENT_L);
+
+	/* Disable BJ power if not connected (we're on USB-C). */
+	gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, !adp_connected);
+}
+DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_INIT_EXTPOWER);
+
+static void adp_connect_deferred(void)
+{
+	struct charge_port_info pi = { 0 };
+	int connected = gpio_get_level(GPIO_BJ_ADP_PRESENT_L);
+
+	/* Debounce */
+	if (connected == adp_connected)
+		return;
+	if (connected) {
+		pi.voltage = 19500;
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			/*
+			 * TODO(b:143975429) set current according to SKU.
+			 * Different SKUs will ship with different power bricks
+			 * that have varying power, though setting this to the
+			 * maximum current available on any SKU may be okay
+			 * (assume the included brick is sufficient to run the
+			 * system at max power and over-reporting available
+			 * power will have no effect).
+			 */
+			pi.current = 4740;
+	}
+	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+				     DEDICATED_CHARGE_PORT, &pi);
+	/*
+	 * Explicitly notifies the host that BJ is plugged or unplugged
+	 * (when running on a type-c adapter).
+	 */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+	adp_connected = connected;
+}
+DECLARE_DEFERRED(adp_connect_deferred);
+
+/* IRQ for BJ plug/unplug. It shouldn't be called if BJ is the power source. */
+void adp_connect_interrupt(enum gpio_signal signal)
+{
+	if (adp_connected == !gpio_get_level(GPIO_BJ_ADP_PRESENT_L))
+		return;
+	hook_call_deferred(&adp_connect_deferred_data, ADP_DEBOUNCE_MS * MSEC);
 }
 
 #include "gpio_list.h" /* Must come after other header files. */
@@ -378,9 +442,42 @@ void board_reset_pd_mcu(void)
 		msleep(BOARD_TCPC_C0_RESET_POST_DELAY);
 }
 
-/* TODO: set the active charge port */
 int board_set_active_charge_port(int port)
 {
+	const int active_port = charge_manager_get_active_charge_port();
+
+	if (port < 0 || CHARGE_PORT_COUNT <= port)
+		return EC_ERROR_INVAL;
+
+	if (port == active_port)
+		return EC_SUCCESS;
+
+	/* Don't charge from a source port */
+	if (board_vbus_source_enabled(port))
+		return EC_ERROR_INVAL;
+
+	/* Change is only permitted while the system is off */
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return EC_ERROR_INVAL;
+
+	CPRINTS("New charger p%d", port);
+
+	switch (port) {
+	case CHARGE_PORT_TYPEC0:
+		/* TODO(b/143975429) need to touch the PD controller? */
+		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 1);
+		break;
+	case CHARGE_PORT_BARRELJACK:
+		/* Make sure BJ adapter is sourcing power */
+		if (gpio_get_level(GPIO_BJ_ADP_PRESENT_L))
+			return EC_ERROR_INVAL;
+		/* TODO(b/143975429) need to touch the PD controller? */
+		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 0);
+		break;
+	default:
+		return EC_ERROR_INVAL;
+	}
+
 	return EC_SUCCESS;
 }
 
