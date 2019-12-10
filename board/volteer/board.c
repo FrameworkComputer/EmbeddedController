@@ -5,6 +5,7 @@
 
 /* Volteer board-specific configuration */
 
+#include "button.h"
 #include "common.h"
 #include "extpower.h"
 #include "gpio.h"

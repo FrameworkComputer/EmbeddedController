@@ -44,6 +44,8 @@ GPIO_INT(USB_C1_MIX_INT_ODL,	PIN(0, 3), GPIO_INT_BOTH, bc12_interrupt)
 /* HDMI interrupts */
 
 /* Volume button interrupts */
+GPIO_INT(EC_VOLDN_BTN_ODL,     PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(EC_VOLUP_BTN_ODL,     PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
 /* Power Sequencing Signals */
 GPIO(EN_PP3300_A,              PIN(A, 3), GPIO_OUT_LOW)
