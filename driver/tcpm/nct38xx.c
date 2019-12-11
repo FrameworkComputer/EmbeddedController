@@ -8,8 +8,10 @@
 
 #include "common.h"
 #include "console.h"
+#include "hooks.h"
 #include "ioexpander_nct38xx.h"
 #include "nct38xx.h"
+#include "task.h"
 #include "tcpci.h"
 
 #if !defined(CONFIG_USB_PD_TCPM_TCPCI)
@@ -29,6 +31,7 @@ static unsigned char txBuf[33];
 static unsigned char rxBuf[33];
 /* Save the selected rp value */
 static int selected_rp[CONFIG_USB_PD_PORT_MAX_COUNT];
+static int selected_pull[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int nct38xx_tcpm_init(int port)
 {
@@ -36,6 +39,7 @@ static int nct38xx_tcpm_init(int port)
 	int reg;
 
 	cable_polarity[port] = POLARITY_NONE;
+	selected_pull[port] = TYPEC_CC_OPEN;
 
 	rv = tcpci_tcpm_init(port);
 		if (rv)
@@ -150,8 +154,9 @@ int tcpci_nct38xx_select_rp_value(int port, int rp)
   */
 static int tcpci_nct38xx_set_cc(int port, int pull)
 {
-
 	int rv;
+
+	selected_pull[port] = pull;
 
 	if (cable_polarity[port] == POLARITY_NONE) {
 		rv = tcpci_nct38xx_check_cable_polarity(port);
@@ -173,6 +178,30 @@ static int tcpci_nct38xx_set_cc(int port, int pull)
 
 	return rv;
 }
+
+/*
+ * tcpci_nct38xx_set_cc() only sets the pull resistor on one CC line according
+ * to polarity. This is correct when attached, but on disconnect we need to
+ * set the pull resistor on both CC lines, since polarity is no longer known
+ * (unless DRP toggle is enabled, since that will take care of setting both
+ * CC lines to do the toggling).
+ * TODO(crbug.com/951681): This code can be removed once that bug is fixed.
+ */
+static void disconnect_hook(void)
+{
+	int port = TASK_ID_TO_PD_PORT(task_get_current());
+	int rv;
+
+	if (pd_get_dual_role(port) != PD_DRP_TOGGLE_ON
+	    && selected_pull[port] != TYPEC_CC_OPEN) {
+		rv = tcpc_write(port, TCPC_REG_ROLE_CTRL,
+				TCPC_REG_ROLE_CTRL_SET(0, selected_rp[port],
+				selected_pull[port], selected_pull[port]));
+		if (rv)
+			CPRINTS("C%d failed to set pull on disconnect", port);
+	}
+}
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, disconnect_hook, HOOK_PRIO_DEFAULT);
 
 static int tcpci_nct38xx_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 		enum tcpc_cc_voltage_status *cc2)
