@@ -585,7 +585,7 @@
 #define STM32_SYSCFG_CFGR               REG32(STM32_SYSCFG_BASE + 0x2C)
 
 
-/* Peripheral bits for RCC_APB/AHB and DBGMCU regs */
+/* Peripheral bits for RCC_APB/AHB regs */
 #define STM32_RCC_PB2_USART1		BIT(4)
 
 /* Reset causes definitions */
@@ -690,9 +690,43 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_SPI_SR_BSY		BIT(7)
 #define STM32_SPI_SR_FRLVL		(3 << 9)
 #define STM32_SPI_SR_FTLVL		(3 << 11)
+
 /* --- Debug --- */
+
+#define  STM32_DBGMCU_CR_SLEEP                      BIT(0)
+#define  STM32_DBGMCU_CR_STOP                       BIT(1)
+#define  STM32_DBGMCU_CR_STBY                       BIT(2)
+#define  STM32_DBGMCU_CR_TRACE_MASK                 (BIT(5)|BIT(6)|BIT(7))
+#define   STM32_DBGMCU_CR_TRACE_EN                   BIT(5)
+#define   STM32_DBGMCU_CR_TRACE_MODE_ASYNC           0
+#define   STM32_DBGMCU_CR_TRACE_MODE_SYNC1           BIT(6)
+#define   STM32_DBGMCU_CR_TRACE_MODE_SYNC2           BIT(7)
+#define   STM32_DBGMCU_CR_TRACE_MODE_SYNC4           (BIT(6)|BIT(7))
 #define STM32_DBGMCU_APB1FZ         REG32(STM32_DBGMCU_BASE + 0x08)
+#define  STM32_DBGMCU_APB1FZ_TIM2                   BIT(0)
+#define  STM32_DBGMCU_APB1FZ_TIM3                   BIT(1)
+#define  STM32_DBGMCU_APB1FZ_TIM4                   BIT(2)
+#define  STM32_DBGMCU_APB1FZ_TIM5                   BIT(3)
+#define  STM32_DBGMCU_APB1FZ_TIM6                   BIT(4)
+#define  STM32_DBGMCU_APB1FZ_TIM7                   BIT(5)
+#define  STM32_DBGMCU_APB1FZ_TIM12                  BIT(6)
+#define  STM32_DBGMCU_APB1FZ_TIM13                  BIT(7)
+#define  STM32_DBGMCU_APB1FZ_TIM14                  BIT(8)
+#define  STM32_DBGMCU_APB1FZ_RTC                    BIT(10)
+#define  STM32_DBGMCU_APB1FZ_WWDG                   BIT(11)
+#define  STM32_DBGMCU_APB1FZ_IWDG                   BIT(12)
+#define  STM32_DBGMCU_APB1FZ_I2C1_SMBUS_TIMEOUT     BIT(21)
+#define  STM32_DBGMCU_APB1FZ_I2C2_SMBUS_TIMEOUT     BIT(22)
+#define  STM32_DBGMCU_APB1FZ_I2C3_SMBUS_TIMEOUT     BIT(23)
+#define  STM32_DBGMCU_APB1FZ_I2CFMP_SMBUS_TIMEOUT   BIT(24)
+#define  STM32_DBGMCU_APB1FZ_CAN1                   BIT(25)
+#define  STM32_DBGMCU_APB1FZ_CAN2                   BIT(26)
 #define STM32_DBGMCU_APB2FZ         REG32(STM32_DBGMCU_BASE + 0x0C)
+#define  STM32_DBGMCU_APB2FZ_TIM1                   BIT(0)
+#define  STM32_DBGMCU_APB2FZ_TIM8                   BIT(1)
+#define  STM32_DBGMCU_APB2FZ_TIM9                   BIT(16)
+#define  STM32_DBGMCU_APB2FZ_TIM10                  BIT(17)
+#define  STM32_DBGMCU_APB2FZ_TIM11                  BIT(18)
 
 /* --- Flash --- */
 #define STM32_FLASH_ACR             REG32(STM32_FLASH_REGS_BASE + 0x00)
