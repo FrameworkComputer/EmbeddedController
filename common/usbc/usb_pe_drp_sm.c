@@ -12,6 +12,7 @@
 #include "console.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "stdbool.h"
 #include "task.h"
 #include "tcpm.h"
 #include "util.h"
@@ -204,7 +205,8 @@ enum usb_pe_state {
 	PE_VDM_RESPONSE,
 	PE_HANDLE_CUSTOM_VDM_REQUEST,
 	PE_WAIT_FOR_ERROR_RECOVERY,
-	PE_BIST,
+	PE_BIST_TX,
+	PE_BIST_RX,
 	PE_DR_SNK_GET_SINK_CAP,
 
 	/* Super States */
@@ -270,7 +272,8 @@ static const char * const pe_state_names[] = {
 	[PE_VDM_RESPONSE] = "PE_VDM_Response",
 	[PE_HANDLE_CUSTOM_VDM_REQUEST] = "PE_Handle_Custom_Vdm_Request",
 	[PE_WAIT_FOR_ERROR_RECOVERY] = "PE_Wait_For_Error_Recovery",
-	[PE_BIST] = "PE_Bist",
+	[PE_BIST_TX] = "PE_Bist_TX",
+	[PE_BIST_RX] = "PE_Bist_RX",
 	[PE_DR_SNK_GET_SINK_CAP] = "PE_DR_SNK_Get_Sink_Cap",
 	/* Super States */
 	[PE_PRS_FRS_SHARED] = "SS:PE_PRS_FRS_SHARED",
@@ -416,11 +419,14 @@ static struct policy_engine {
 	uint64_t ps_source_timer;
 
 	/*
-	 * This timer is used by a UUT to ensure that a Continuous BIST Mode
-	 * (i.e. BIST Carrier Mode) is exited in a timely fashion.
+	 * In BIST_TX mode, this timer is used by a UUT to ensure that a
+	 * Continuous BIST Mode (i.e. BIST Carrier Mode) is exited in a timely
+	 * fashion.
+	 *
+	 * In BIST_RX mode, this timer is used to give the port partner time
+	 * to respond.
 	 */
 	uint64_t bist_cont_mode_timer;
-
 	/*
 	 * This timer is used by the new Source, after a Power Role Swap or
 	 * Fast Role Swap, to ensure that it does not send Source_Capabilities
@@ -789,6 +795,58 @@ test_export_static void set_state_pe(const int port,
 test_export_static enum usb_pe_state get_state_pe(const int port)
 {
 	return pe[port].ctx.current - &pe_states[0];
+}
+
+static bool common_src_snk_dpm_requests(int port)
+{
+	if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_VCONN_SWAP)) {
+		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_VCONN_SWAP);
+		set_state_pe(port, PE_VCS_SEND_SWAP);
+		return true;
+	} else if (PE_CHK_DPM_REQUEST(port,
+				DPM_REQUEST_DISCOVER_IDENTITY)) {
+		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_DISCOVER_IDENTITY);
+
+		pe[port].partner_type = CABLE;
+		pe[port].vdm_cmd = DISCOVER_IDENTITY;
+		pe[port].vdm_data[0] = VDO(
+				USB_SID_PD,
+				1, /* structured */
+				VDO_SVDM_VERS(1) | DISCOVER_IDENTITY);
+		pe[port].vdm_cnt = 1;
+		set_state_pe(port, PE_VDM_REQUEST);
+		return true;
+	} else if (PE_CHK_DPM_REQUEST(port,
+					DPM_REQUEST_BIST_RX)) {
+		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_BIST_RX);
+		set_state_pe(port, PE_BIST_RX);
+		return true;
+	} else if (PE_CHK_DPM_REQUEST(port,
+					DPM_REQUEST_BIST_TX)) {
+		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_BIST_TX);
+		set_state_pe(port, PE_BIST_TX);
+		return true;
+	} else if (PE_CHK_DPM_REQUEST(port,
+					DPM_REQUEST_SNK_STARTUP)) {
+		PE_CLR_DPM_REQUEST(port,
+					DPM_REQUEST_SNK_STARTUP);
+		set_state_pe(port, PE_SNK_STARTUP);
+		return true;
+	} else if (PE_CHK_DPM_REQUEST(port,
+					DPM_REQUEST_SRC_STARTUP)) {
+		PE_CLR_DPM_REQUEST(port,
+					DPM_REQUEST_SRC_STARTUP);
+		set_state_pe(port, PE_SRC_STARTUP);
+		return true;
+	} else if (PE_CHK_DPM_REQUEST(port,
+					DPM_REQUEST_SOFT_RESET_SEND)) {
+		PE_CLR_DPM_REQUEST(port,
+					DPM_REQUEST_SOFT_RESET_SEND);
+		set_state_pe(port, PE_SEND_SOFT_RESET);
+		return true;
+	}
+
+	return false;
 }
 
 /* Get the previous TypeC state. */
@@ -1435,6 +1493,15 @@ static void pe_src_ready_run(int port)
 	uint8_t cnt;
 	uint8_t ext;
 
+	/*
+	 * Don't delay handling a hard reset from the device policy manager.
+	 */
+	if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_HARD_RESET_SEND)) {
+		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_HARD_RESET_SEND);
+		set_state_pe(port, PE_SRC_HARD_RESET);
+		return;
+	}
+
 	if (pe[port].wait_and_add_jitter_timer == TIMER_DISABLED ||
 		get_time().val > pe[port].wait_and_add_jitter_timer) {
 
@@ -1464,6 +1531,8 @@ static void pe_src_ready_run(int port)
 					DPM_REQUEST_SOURCE_CAP);
 
 		if (pe[port].dpm_request) {
+			PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
+
 			if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_DR_SWAP)) {
 				PE_CLR_DPM_REQUEST(port, DPM_REQUEST_DR_SWAP);
 				if (PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION))
@@ -1474,11 +1543,6 @@ static void pe_src_ready_run(int port)
 						DPM_REQUEST_PR_SWAP)) {
 				PE_CLR_DPM_REQUEST(port, DPM_REQUEST_PR_SWAP);
 				set_state_pe(port, PE_PRS_SRC_SNK_SEND_SWAP);
-			} else if (PE_CHK_DPM_REQUEST(port,
-						DPM_REQUEST_VCONN_SWAP)) {
-				PE_CLR_DPM_REQUEST(port,
-							DPM_REQUEST_VCONN_SWAP);
-				set_state_pe(port, PE_VCS_SEND_SWAP);
 			} else if (PE_CHK_DPM_REQUEST(port,
 							DPM_REQUEST_GOTO_MIN)) {
 				PE_CLR_DPM_REQUEST(port, DPM_REQUEST_GOTO_MIN);
@@ -1492,22 +1556,13 @@ static void pe_src_ready_run(int port)
 						DPM_REQUEST_SEND_PING)) {
 				PE_CLR_DPM_REQUEST(port, DPM_REQUEST_SEND_PING);
 				set_state_pe(port, PE_SRC_PING);
-			} else if (PE_CHK_DPM_REQUEST(port,
-					DPM_REQUEST_DISCOVER_IDENTITY)) {
-				PE_CLR_DPM_REQUEST(port,
-						DPM_REQUEST_DISCOVER_IDENTITY);
-				pe[port].partner_type = CABLE;
-				pe[port].vdm_cmd = DISCOVER_IDENTITY;
-				pe[port].vdm_data[0] = VDO(
-						USB_SID_PD,
-						1, /* structured */
-						VDO_SVDM_VERS(1) |
-						DISCOVER_IDENTITY);
-				pe[port].vdm_cnt = 1;
-				set_state_pe(port, PE_VDM_REQUEST);
+			}  else if (!common_src_snk_dpm_requests(port)) {
+				CPRINTF("Unhandled DPM Request %x received\n",
+					pe[port].dpm_request);
+				PE_CLR_FLAG(port,
+					PE_FLAGS_LOCALLY_INITIATED_AMS);
 			}
 
-			PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 			return;
 		}
 	}
@@ -1558,7 +1613,7 @@ static void pe_src_ready_run(int port)
 				}
 				break;
 			case PD_DATA_BIST:
-				set_state_pe(port, PE_BIST);
+				set_state_pe(port, PE_BIST_TX);
 				break;
 			default:
 				set_state_pe(port, PE_SEND_NOT_SUPPORTED);
@@ -2152,8 +2207,17 @@ static void pe_snk_ready_run(int port)
 	uint8_t cnt;
 	uint8_t ext;
 
+	/*
+	 * Don't delay handling a hard reset from the device policy manager.
+	 */
+	if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_HARD_RESET_SEND)) {
+		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_HARD_RESET_SEND);
+		set_state_pe(port, PE_SNK_HARD_RESET);
+		return;
+	}
+
 	if (pe[port].wait_and_add_jitter_timer == TIMER_DISABLED ||
-			get_time().val > pe[port].wait_and_add_jitter_timer) {
+		get_time().val > pe[port].wait_and_add_jitter_timer) {
 		PE_CLR_FLAG(port, PE_FLAGS_FIRST_MSG);
 		pe[port].wait_and_add_jitter_timer = TIMER_DISABLED;
 
@@ -2185,6 +2249,8 @@ static void pe_snk_ready_run(int port)
 					DPM_REQUEST_SEND_PING);
 
 		if (pe[port].dpm_request) {
+			PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
+
 			if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_DR_SWAP)) {
 				PE_CLR_DPM_REQUEST(port, DPM_REQUEST_DR_SWAP);
 				if (PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION))
@@ -2196,11 +2262,6 @@ static void pe_snk_ready_run(int port)
 				PE_CLR_DPM_REQUEST(port, DPM_REQUEST_PR_SWAP);
 				set_state_pe(port, PE_PRS_SNK_SRC_SEND_SWAP);
 			} else if (PE_CHK_DPM_REQUEST(port,
-						DPM_REQUEST_VCONN_SWAP)) {
-				PE_CLR_DPM_REQUEST(port,
-							DPM_REQUEST_VCONN_SWAP);
-				set_state_pe(port, PE_VCS_SEND_SWAP);
-			} else if (PE_CHK_DPM_REQUEST(port,
 						DPM_REQUEST_SOURCE_CAP)) {
 				PE_CLR_DPM_REQUEST(port,
 							DPM_REQUEST_SOURCE_CAP);
@@ -2211,26 +2272,17 @@ static void pe_snk_ready_run(int port)
 						DPM_REQUEST_NEW_POWER_LEVEL);
 				set_state_pe(port, PE_SNK_SELECT_CAPABILITY);
 			} else if (PE_CHK_DPM_REQUEST(port,
-					DPM_REQUEST_DISCOVER_IDENTITY)) {
-				PE_CLR_DPM_REQUEST(port,
-					   DPM_REQUEST_DISCOVER_IDENTITY);
-
-				pe[port].partner_type = CABLE;
-				pe[port].vdm_cmd = DISCOVER_IDENTITY;
-				pe[port].vdm_data[0] = VDO(
-					USB_SID_PD,
-					1, /* structured */
-					VDO_SVDM_VERS(1) | DISCOVER_IDENTITY);
-				pe[port].vdm_cnt = 1;
-
-				set_state_pe(port, PE_VDM_REQUEST);
-			} else if (PE_CHK_DPM_REQUEST(port,
 					      DPM_REQUEST_GET_SNK_CAPS)) {
 				PE_CLR_DPM_REQUEST(port,
 						DPM_REQUEST_GET_SNK_CAPS);
 				set_state_pe(port, PE_DR_SNK_GET_SINK_CAP);
+			} else if (!common_src_snk_dpm_requests(port)) {
+				CPRINTF("Unhandled DPM Request %x received\n",
+					pe[port].dpm_request);
+				PE_CLR_FLAG(port,
+					PE_FLAGS_LOCALLY_INITIATED_AMS);
 			}
-			PE_CLR_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
+
 			return;
 		}
 	}
@@ -2280,7 +2332,7 @@ static void pe_snk_ready_run(int port)
 				}
 				break;
 			case PD_DATA_BIST:
-				set_state_pe(port, PE_BIST);
+				set_state_pe(port, PE_BIST_TX);
 				break;
 			default:
 				set_state_pe(port, PE_SEND_NOT_SUPPORTED);
@@ -3413,9 +3465,9 @@ static void pe_prs_frs_shared_exit(int port)
 }
 
 /**
- * BIST
+ * BIST TX
  */
-static void pe_bist_entry(int port)
+static void pe_bist_tx_entry(int port)
 {
 	uint32_t *payload = (uint32_t *)emsg[port].buf;
 	uint8_t mode = BIST_MODE(payload[0]);
@@ -3445,7 +3497,7 @@ static void pe_bist_entry(int port)
 		pe[port].bist_cont_mode_timer = TIMER_DISABLED;
 }
 
-static void pe_bist_run(int port)
+static void pe_bist_tx_run(int port)
 {
 	if (get_time().val > pe[port].bist_cont_mode_timer) {
 
@@ -3462,6 +3514,36 @@ static void pe_bist_run(int port)
 		if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
 			PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 	}
+}
+
+/**
+ * BIST RX
+ */
+static void pe_bist_rx_entry(int port)
+{
+	/* currently only support bist carrier 2 */
+	uint32_t bdo = BDO(BDO_MODE_CARRIER2, 0);
+
+	print_current_state(port);
+
+	emsg[port].len = sizeof(bdo);
+	memcpy(emsg[port].buf, (uint8_t *)&bdo, emsg[port].len);
+	prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_BIST);
+
+	/* Delay at least enough for partner to finish BIST */
+	pe[port].bist_cont_mode_timer =
+				get_time().val + PD_T_BIST_RECEIVE;
+}
+
+static void pe_bist_rx_run(int port)
+{
+	if (get_time().val < pe[port].bist_cont_mode_timer)
+		return;
+
+	if (pe[port].power_role == PD_ROLE_SOURCE)
+		set_state_pe(port, PE_SRC_TRANSITION_TO_DEFAULT);
+	else
+		set_state_pe(port, PE_SNK_TRANSITION_TO_DEFAULT);
 }
 
 /**
@@ -4695,9 +4777,13 @@ static const struct usb_state pe_states[] = {
 		.entry = pe_wait_for_error_recovery_entry,
 		.run   = pe_wait_for_error_recovery_run,
 	},
-	[PE_BIST] = {
-		.entry = pe_bist_entry,
-		.run   = pe_bist_run,
+	[PE_BIST_TX] = {
+		.entry = pe_bist_tx_entry,
+		.run   = pe_bist_tx_run,
+	},
+	[PE_BIST_RX] = {
+		.entry = pe_bist_rx_entry,
+		.run   = pe_bist_rx_run,
 	},
 	[PE_DR_SNK_GET_SINK_CAP] = {
 		.entry = pe_dr_snk_get_sink_cap_entry,
