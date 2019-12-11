@@ -173,11 +173,6 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
-#define PD_OPERATING_POWER_MW	27000
-#define PD_MAX_POWER_MW		65000
-#define PD_MAX_CURRENT_MA	3250
-#define PD_MAX_VOLTAGE_MV	20000
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

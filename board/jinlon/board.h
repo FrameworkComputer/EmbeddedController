@@ -171,12 +171,6 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
-
-#define PD_OPERATING_POWER_MW	15000
-#define PD_MAX_POWER_MW		60000
-#define PD_MAX_CURRENT_MA	3000
-#define PD_MAX_VOLTAGE_MV	20000
-
 #ifdef CONFIG_KEYBOARD_FACTORY_TEST
 extern const int keyboard_factory_scan_pins[][2];
 extern const int keyboard_factory_scan_pins_used;
