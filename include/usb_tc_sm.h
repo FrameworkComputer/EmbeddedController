@@ -16,6 +16,12 @@
 #define TC_CLR_FLAG(port, flag) atomic_clear(&tc[port].flags, (flag))
 #define TC_CHK_FLAG(port, flag) (tc[port].flags & (flag))
 
+enum try_src_override_t {
+	TRY_SRC_OVERRIDE_OFF,
+	TRY_SRC_OVERRIDE_ON,
+	TRY_SRC_NO_OVERRIDE
+};
+
 /*
  * Type C supply voltage (mV)
  *
@@ -334,6 +340,47 @@ void tc_start_event_loop(int port);
  * @param port USB-C port number
  */
 void tc_pause_event_loop(int port);
+
+/**
+ * Allow system to override the control of TrySrc
+ *
+ * @param en	TRY_SRC_OVERRIDE_OFF - Force TrySrc OFF
+ *		TRY_SRC_OVERRIDE_ON - Force TrySrc ON
+ *		TRY_SRC_NO_OVERRIDE - Allow state machine to control TrySrc
+ */
+void tc_try_src_override(enum try_src_override_t ov);
+
+/**
+ * Get state of try_src_override
+ *
+ * @return	TRY_SRC_OVERRIDE_OFF - TrySrc is forced OFF
+ *		TRY_SRC_OVERRIDE_ON - TrySrc is forced ON
+ *		TRY_SRC_NO_OVERRIDE - TypeC state machine controls TrySrc
+ */
+enum try_src_override_t tc_get_try_src_override(void);
+
+/**
+ * Returns the name of the current typeC state
+ *
+ * @param port USB-C port number
+ * @return name of current typeC state
+ */
+const char *tc_get_current_state(int port);
+
+/**
+ * Returns the flag mask of the typeC state machine
+ *
+ * @param port USB-C port number
+ * @return flag mask of the typeC state machine
+ */
+uint32_t tc_get_flags(int port);
+
+/*
+ * Prints the rw hash and sysjump image string.
+ *
+ * @param port USB-C port number
+ */
+void tc_print_dev_info(int port);
 
 #ifdef CONFIG_USB_TYPEC_CTVPD
 
