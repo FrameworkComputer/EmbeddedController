@@ -166,7 +166,7 @@ static int retimer_set_state(int port, mux_state_t mux_state)
 		 * 01 – Pin assignments C/C’/D/D’1,2
 		 * 10, 11 - reserved
 		 */
-		dp_pin_mode = board_get_dp_pin_mode(port);
+		dp_pin_mode = get_dp_pin_mode(port);
 		if (dp_pin_mode == MODE_DP_PIN_C ||
 			dp_pin_mode == MODE_DP_PIN_D)
 			set_retimer_con |= BB_RETIMER_DP_PIN_ASSIGNMENT;

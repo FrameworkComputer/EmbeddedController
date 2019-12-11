@@ -1178,11 +1178,6 @@ static const enum typec_mux typec_mux_map[USB_PD_CTRL_MUX_COUNT] = {
 };
 #endif
 
-__overridable uint8_t board_get_dp_pin_mode(int port)
-{
-	return 0;
-}
-
 /*
  * TODO(b/142911453): Move this function to a common/usb_common.c to avoid
  * duplicate code
@@ -1256,7 +1251,10 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 				PD_CTRL_RESP_ROLE_EXT_POWERED : 0);
 		r_v2->polarity = tc[p->port].polarity;
 		r_v2->cc_state = tc[p->port].cc_state;
-		r_v2->dp_mode = board_get_dp_pin_mode(p->port);
+
+		if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
+			r_v2->dp_mode = get_dp_pin_mode(p->port);
+
 		r_v2->cable_type = get_usb_pd_mux_cable_type(p->port);
 
 		strzcpy(r_v2->state, tc_state_names[get_state_tc(p->port)],

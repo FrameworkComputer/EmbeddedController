@@ -752,11 +752,16 @@ __overridable int svdm_dp_status(int port, uint32_t *payload)
 	return 2;
 };
 
+__overridable uint8_t get_dp_pin_mode(int port)
+{
+	return pd_dfp_dp_get_pin_mode(port, dp_status[port]);
+}
+
 __overridable int svdm_dp_config(int port, uint32_t *payload)
 {
 	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
 	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
-	int pin_mode = pd_dfp_dp_get_pin_mode(port, dp_status[port]);
+	uint8_t pin_mode = get_dp_pin_mode(port);
 	enum typec_mux mux_mode;
 
 	if (!pin_mode)
