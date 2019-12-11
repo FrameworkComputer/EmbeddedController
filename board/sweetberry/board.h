@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+#define CONFIG_LTO
+
 /* Use external clock */
 #define CONFIG_STM32_CLOCK_HSE_HZ 24000000
 

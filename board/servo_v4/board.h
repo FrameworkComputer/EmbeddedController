@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+#define CONFIG_LTO
+
 /*
  * Board Versions:
  * Versions are designated by the PCB color and consist of red, blue, and
