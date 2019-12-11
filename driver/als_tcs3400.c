@@ -362,6 +362,20 @@ static void tcs3400_process_raw_data(struct motion_sensor_t *s,
 	}
 }
 
+static int32_t get_lux_from_xyz(struct motion_sensor_t *s, int32_t *xyz_data)
+{
+	int32_t lux = xyz_data[Y];
+	const int32_t offset =
+		TCS3400_RGB_DRV_DATA(s+1)->calibration.rgb_cal[Y].offset;
+
+	/*
+	 * Do not include the offset when determining LUX from XYZ.
+	 */
+	lux = MAX(0, lux - offset);
+
+	return lux;
+}
+
 static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 {
 	/*
@@ -378,6 +392,7 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 	int retries = 20;     /* 400 ms max */
 	int *last_v = s->raw_xyz;
 	int32_t data = 0;
+	int32_t lux;
 	int i, ret = EC_SUCCESS;
 
 	/* Make sure data is valid */
@@ -405,13 +420,19 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 	/* Process the raw light data, adjusting for scale and calibration */
 	tcs3400_process_raw_data(s, buf, raw_data, xyz_data);
 
+	/* get lux value */
+	if (calibration_mode)
+		lux = xyz_data[Y];
+	else
+		lux = get_lux_from_xyz(s, xyz_data);
+
 	/* if clear channel data changed, send illuminance upstream */
 	if ((raw_data[CLEAR_CRGB_IDX] != TCS_SATURATION_LEVEL) &&
-	    (last_v[X] != xyz_data[Y])) {
+	    (last_v[X] != lux)) {
 		if (calibration_mode)
 			last_v[X] = raw_data[CLEAR_CRGB_IDX];
 		else
-			last_v[X] = xyz_data[Y];
+			last_v[X] = lux;
 		vector.flags = 0;
 		vector.data[X] = last_v[X];
 		vector.data[Y] = 0;
