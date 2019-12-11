@@ -30,15 +30,19 @@ struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
 /* Two tri-color LEDs with red, green, and blue channels. */
 struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
 	{
-		PWM_CH_DB0_LED_RED,
-		PWM_CH_DB0_LED_GREEN,
-		PWM_CH_DB0_LED_BLUE,
+		.ch0 = PWM_CH_DB0_LED_RED,
+		.ch1 = PWM_CH_DB0_LED_GREEN,
+		.ch2 = PWM_CH_DB0_LED_BLUE,
+		.enable = &pwm_enable,
+		.set_duty = &pwm_set_duty,
 	},
 
 	{
-		PWM_CH_DB1_LED_RED,
-		PWM_CH_DB1_LED_GREEN,
-		PWM_CH_DB1_LED_BLUE,
+		.ch0 = PWM_CH_DB1_LED_RED,
+		.ch1 = PWM_CH_DB1_LED_GREEN,
+		.ch2 = PWM_CH_DB1_LED_BLUE,
+		.enable = &pwm_enable,
+		.set_duty = &pwm_set_duty,
 	},
 };
 

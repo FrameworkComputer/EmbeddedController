@@ -11,9 +11,12 @@
 #define PWM_LED_NO_CHANNEL -1
 
 struct pwm_led {
-	int ch0;
-	int ch1;
-	int ch2;
+	enum pwm_channel ch0;
+	enum pwm_channel ch1;
+	enum pwm_channel ch2;
+
+	void (*enable)(enum pwm_channel ch, int enabled);
+	void (*set_duty)(enum pwm_channel ch, int percent);
 };
 
 enum pwm_led_id {

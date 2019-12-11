@@ -6,6 +6,7 @@
 #include "common.h"
 #include "ec_commands.h"
 #include "led_pwm.h"
+#include "pwm.h"
 #include "util.h"
 
 const enum ec_led_id supported_led_ids[] = {
@@ -30,9 +31,11 @@ struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
 /* One logical LED with amber and blue channels. */
 struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
 	{
-		PWM_CH_LED1_AMBER,
-		PWM_CH_LED2_BLUE,
-		PWM_LED_NO_CHANNEL,
+		.ch0 = PWM_CH_LED1_AMBER,
+		.ch1 = PWM_CH_LED2_BLUE,
+		.ch2 = PWM_LED_NO_CHANNEL,
+		.enable = &pwm_enable,
+		.set_duty = &pwm_set_duty,
 	},
 };
 

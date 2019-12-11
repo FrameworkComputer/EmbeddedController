@@ -33,9 +33,11 @@ struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
 struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
 	[PWM_LED0] = {
 		/* left port LEDs */
-		PWM_CH_LED_RED,
-		PWM_CH_LED_GREEN,
-		PWM_CH_LED_BLUE,
+		.ch0 = PWM_CH_LED_RED,
+		.ch1 = PWM_CH_LED_GREEN,
+		.ch2 = PWM_CH_LED_BLUE,
+		.enable = &pwm_enable,
+		.set_duty = &pwm_set_duty,
 	},
 };
 

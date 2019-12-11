@@ -9,6 +9,7 @@
 #include "ec_commands.h"
 #include "led_common.h"
 #include "led_pwm.h"
+#include "pwm.h"
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_POWER_LED,
@@ -31,9 +32,11 @@ struct pwm_led led_color_map[] = {
 struct pwm_led pwm_leds[] = {
 	/* 2 RGB diffusers controlled by 1 set of 3 channels. */
 	[PWM_LED0] = {
-		PWM_CH_LED3_RED,
-		PWM_CH_LED2_GREEN,
-		PWM_CH_LED1_BLUE,
+		.ch0 = PWM_CH_LED3_RED,
+		.ch1 = PWM_CH_LED2_GREEN,
+		.ch2 = PWM_CH_LED1_BLUE,
+		.enable = &pwm_enable,
+		.set_duty = &pwm_set_duty,
 	},
 };
 
