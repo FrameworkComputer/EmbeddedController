@@ -12,6 +12,7 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "tcpci.h"
 #include "timer.h"
 #include "util.h"
 #include "usb_pd.h"
@@ -418,6 +419,9 @@ static int it83xx_set_cc(enum usbpd_port port, int pull)
 
 static int it83xx_tcpm_init(int port)
 {
+	/* Start with an unknown connection */
+	tcpci_set_cached_pull(port, TYPEC_CC_OPEN);
+
 	/* Initialize physical layer */
 	it83xx_init(port, PD_ROLE_DEFAULT(port));
 
@@ -441,6 +445,10 @@ static int it83xx_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 static int it83xx_tcpm_select_rp_value(int port, int rp_sel)
 {
 	uint8_t rp;
+
+	/* Keep track of current RP value */
+	tcpci_set_cached_rp(port, rp_sel);
+
 	/*
 	 * bit[3-2]: CC output current (when Rp selected)
 	 *       00: reserved
@@ -467,11 +475,24 @@ static int it83xx_tcpm_select_rp_value(int port, int rp_sel)
 
 static int it83xx_tcpm_set_cc(int port, int pull)
 {
+	/* Keep track of current CC pull value */
+	tcpci_set_cached_pull(port, pull);
+
 	return it83xx_set_cc(port, pull);
 }
 
-static int it83xx_tcpm_set_polarity(int port, int polarity)
+static int it83xx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
+	/*
+	 * TCPCI sets the CC lines based on polarity.  If it is set to
+	 * no connection then both CC lines are driven, otherwise only
+	 * one is driven.  This driver does not appear to do this.  If
+	 * that changes, this would be the location you would want to
+	 * adjust the CC lines for the current polarity
+	 */
+	if (polarity == POLARITY_NONE)
+		return EC_SUCCESS;
+
 	it83xx_select_polarity(port, polarity);
 
 	return EC_SUCCESS;

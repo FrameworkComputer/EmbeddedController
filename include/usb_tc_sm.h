@@ -279,7 +279,7 @@ void pd_request_vconn_swap_off(int port);
  * @param cc2 value of CC2 set by tcpm_get_cc
  * @return 0 if cc1 is connected, else 1 for cc2
  */
-enum pd_cc_polarity_type get_snk_polarity(enum tcpc_cc_voltage_status cc1,
+enum tcpc_cc_polarity get_snk_polarity(enum tcpc_cc_voltage_status cc1,
 	enum tcpc_cc_voltage_status cc2);
 
 /**

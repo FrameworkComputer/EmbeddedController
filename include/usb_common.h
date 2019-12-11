@@ -57,12 +57,12 @@ int usb_get_battery_soc(void);
  * Returns type C current limit (mA), potentially with the DTS flag, based upon
  * states of the CC lines on the partner side.
  *
- * @param polarity 0 if cc1 is primary, otherwise 1
+ * @param polarity port polarity
  * @param cc1 value of CC1 set by tcpm_get_cc
  * @param cc2 value of CC2 set by tcpm_get_cc
  * @return current limit (mA) with DTS flag set if appropriate
  */
-typec_current_t usb_get_typec_current_limit(enum pd_cc_polarity_type polarity,
+typec_current_t usb_get_typec_current_limit(enum tcpc_cc_polarity polarity,
 	enum tcpc_cc_voltage_status cc1, enum tcpc_cc_voltage_status cc2);
 
 /**
@@ -70,9 +70,19 @@ typec_current_t usb_get_typec_current_limit(enum pd_cc_polarity_type polarity,
  *
  * @param cc1 value of CC1 set by tcpm_get_cc
  * @param cc2 value of CC2 set by tcpm_get_cc
- * @return 0 if cc1 is primary, else 1 for cc2 being primary
+ * @return polarity
  */
-enum pd_cc_polarity_type get_snk_polarity(enum tcpc_cc_voltage_status cc1,
+enum tcpc_cc_polarity get_snk_polarity(enum tcpc_cc_voltage_status cc1,
+	enum tcpc_cc_voltage_status cc2);
+
+/**
+ * Returns the polarity of a Source.
+ *
+ * @param cc1 value of CC1 set by tcpm_get_cc
+ * @param cc2 value of CC2 set by tcpm_get_cc
+ * @return polarity
+ */
+enum tcpc_cc_polarity get_src_polarity(enum tcpc_cc_voltage_status cc1,
 	enum tcpc_cc_voltage_status cc2);
 
 /**

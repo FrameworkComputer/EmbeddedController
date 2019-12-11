@@ -90,6 +90,7 @@ static inline int tcpc_update8(int port, int reg,
 			   tcpc_config[port].i2c_info.addr_flags,
 			   reg, mask, action);
 }
+
 static inline int tcpc_update16(int port, int reg,
 				uint16_t mask,
 				enum mask_update_action action)
@@ -98,7 +99,6 @@ static inline int tcpc_update16(int port, int reg,
 			    tcpc_config[port].i2c_info.addr_flags,
 			    reg, mask, action);
 }
-
 
 #else /* !CONFIG_USB_PD_TCPC_LOW_POWER */
 int tcpc_addr_write(int port, int i2c_addr, int reg, int val);
@@ -178,7 +178,7 @@ static inline int tcpm_set_cc(int port, int pull)
 	return tcpc_config[port].drv->set_cc(port, pull);
 }
 
-static inline int tcpm_set_polarity(int port, int polarity)
+static inline int tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
 	return tcpc_config[port].drv->set_polarity(port, polarity);
 }
@@ -344,17 +344,17 @@ int tcpm_set_cc(int port, int pull);
  * Set polarity
  *
  * @param port Type-C port number
- * @param polarity 0=> transmit on CC1, 1=> transmit on CC2
+ * @param polarity port polarity
  *
  * @return EC_SUCCESS or error
  */
-int tcpm_set_polarity(int port, int polarity);
+int tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity);
 
 /**
  * Set Vconn.
  *
  * @param port Type-C port number
- * @param polarity Polarity of the CC line to read
+ * @param enable Enable/Disable Vconn
  *
  * @return EC_SUCCESS or error
  */

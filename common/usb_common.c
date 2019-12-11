@@ -63,7 +63,7 @@ struct pd_pref_config_t __maybe_unused pd_pref_config;
  * DTS		USB-C @ 3 A	    Rp3A0  RpUSB
  */
 
-typec_current_t usb_get_typec_current_limit(enum pd_cc_polarity_type polarity,
+typec_current_t usb_get_typec_current_limit(enum tcpc_cc_polarity polarity,
 	enum tcpc_cc_voltage_status cc1, enum tcpc_cc_voltage_status cc2)
 {
 	typec_current_t charge = 0;
@@ -96,9 +96,12 @@ typec_current_t usb_get_typec_current_limit(enum pd_cc_polarity_type polarity,
 	return charge;
 }
 
-enum pd_cc_polarity_type get_snk_polarity(enum tcpc_cc_voltage_status cc1,
+enum tcpc_cc_polarity get_snk_polarity(enum tcpc_cc_voltage_status cc1,
 	enum tcpc_cc_voltage_status cc2)
 {
+	if (cc_is_open(cc1, cc2))
+		return POLARITY_NONE;
+
 	/* The following assumes:
 	 *
 	 * TYPEC_CC_VOLT_RP_3_0 > TYPEC_CC_VOLT_RP_1_5
@@ -106,6 +109,15 @@ enum pd_cc_polarity_type get_snk_polarity(enum tcpc_cc_voltage_status cc1,
 	 * TYPEC_CC_VOLT_RP_DEF > TYPEC_CC_VOLT_OPEN
 	 */
 	return cc2 > cc1;
+}
+
+enum tcpc_cc_polarity get_src_polarity(enum tcpc_cc_voltage_status cc1,
+	enum tcpc_cc_voltage_status cc2)
+{
+	if (cc_is_open(cc1, cc2))
+		return POLARITY_NONE;
+
+	return cc1 != TYPEC_CC_VOLT_RD;
 }
 
 enum pd_cc_states pd_get_cc_state(

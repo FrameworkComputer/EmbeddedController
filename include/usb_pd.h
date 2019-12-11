@@ -1370,12 +1370,6 @@ enum pd_data_msg_type {
 	PD_DATA_VENDOR_DEF = 15,
 };
 
-/* CC Polarity type */
-enum pd_cc_polarity_type {
-	POLARITY_CC1 = 0,
-	POLARITY_CC2 = 1,
-};
-
 /* Protocol revision */
 enum pd_rev_type {
 	PD_REV10,
@@ -2319,7 +2313,7 @@ void pd_transmit_complete(int port, int status);
  *
  * @param port USB-C port number
  */
-int pd_get_polarity(int port);
+enum tcpc_cc_polarity pd_get_polarity(int port);
 
 /**
  * Get port partner data swap capable status

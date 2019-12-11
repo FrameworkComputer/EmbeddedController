@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_USB_PD_TCPM_TCPCI_H
 #define __CROS_EC_USB_PD_TCPM_TCPCI_H
 
+#include "config.h"
 #include "tcpm.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
@@ -55,13 +56,20 @@
 #define TCPC_REG_TCPC_CTRL_POLARITY(reg) ((reg) & 0x1)
 
 #define TCPC_REG_ROLE_CTRL         0x1a
+#define TCPC_REG_ROLE_CTRL_DRP_MASK                    BIT(6)
+#define TCPC_REG_ROLE_CTRL_RP_MASK                     (BIT(5)|BIT(4))
+#define TCPC_REG_ROLE_CTRL_CC2_MASK                    (BIT(3)|BIT(2))
+#define TCPC_REG_ROLE_CTRL_CC1_MASK                    (BIT(1)|BIT(0))
 #define TCPC_REG_ROLE_CTRL_SET(drp, rp, cc1, cc2) \
 		((drp) << 6 | (rp) << 4 | (cc2) << 2 | (cc1))
-#define TCPC_REG_ROLE_CTRL_DRP(reg) (((reg) & 0x40) >> 6)
-#define TCPC_REG_ROLE_CTRL_RP_MASK  0x30
-#define TCPC_REG_ROLE_CTRL_RP(reg)  (((reg) & TCPC_REG_ROLE_CTRL_RP_MASK) >> 4)
-#define TCPC_REG_ROLE_CTRL_CC2(reg) (((reg) & 0xc) >> 2)
-#define TCPC_REG_ROLE_CTRL_CC1(reg) ((reg) & 0x3)
+#define TCPC_REG_ROLE_CTRL_DRP(reg) \
+		(((reg) & TCPC_REG_ROLE_CTRL_DRP_MASK) >> 6)
+#define TCPC_REG_ROLE_CTRL_RP(reg) \
+		(((reg) & TCPC_REG_ROLE_CTRL_RP_MASK) >> 4)
+#define TCPC_REG_ROLE_CTRL_CC2(reg) \
+		(((reg) & TCPC_REG_ROLE_CTRL_CC2_MASK) >> 2)
+#define TCPC_REG_ROLE_CTRL_CC1(reg) \
+		((reg) & TCPC_REG_ROLE_CTRL_CC1_MASK)
 
 #define TCPC_REG_FAULT_CTRL        0x1b
 #define TCPC_REG_FAULT_CTRL_VBUS_OVP_FAULT_DIS         BIT(1)
@@ -75,12 +83,20 @@
 #define TCPC_REG_POWER_CTRL_VCONN(reg)    ((reg) & 0x1)
 
 #define TCPC_REG_CC_STATUS         0x1d
-#define TCPC_REG_CC_STATUS_LOOK4CONNECTION(reg) ((reg & 0x20) >> 5)
+#define TCPC_REG_CC_STATUS_LOOK4CONNECTION_MASK        BIT(5)
+#define TCPC_REG_CC_STATUS_CONNECT_RESULT_MASK         BIT(4)
+#define TCPC_REG_CC_STATUS_CC2_STATE_MASK              (BIT(3)|BIT(2))
+#define TCPC_REG_CC_STATUS_CC1_STATE_MASK              (BIT(1)|BIT(0))
 #define TCPC_REG_CC_STATUS_SET(term, cc1, cc2) \
 		((term) << 4 | ((cc2) & 0x3) << 2 | ((cc1) & 0x3))
-#define TCPC_REG_CC_STATUS_TERM(reg) (((reg) & 0x10) >> 4)
-#define TCPC_REG_CC_STATUS_CC2(reg)  (((reg) & 0xc) >> 2)
-#define TCPC_REG_CC_STATUS_CC1(reg)  ((reg) & 0x3)
+#define TCPC_REG_CC_STATUS_LOOK4CONNECTION(reg) \
+		((reg & TCPC_REG_CC_STATUS_LOOK4CONNECTION_MASK) >> 5)
+#define TCPC_REG_CC_STATUS_TERM(reg) \
+		(((reg) & TCPC_REG_CC_STATUS_CONNECT_RESULT_MASK) >> 4)
+#define TCPC_REG_CC_STATUS_CC2(reg) \
+		(((reg) & TCPC_REG_CC_STATUS_CC2_STATE_MASK) >> 2)
+#define TCPC_REG_CC_STATUS_CC1(reg) \
+		((reg) & TCPC_REG_CC_STATUS_CC1_STATE_MASK)
 
 #define TCPC_REG_POWER_STATUS      0x1e
 #define TCPC_REG_POWER_STATUS_MASK_ALL  0xff
@@ -158,6 +174,11 @@
 extern const struct tcpm_drv tcpci_tcpm_drv;
 extern const struct usb_mux_driver tcpci_tcpm_usb_mux_driver;
 
+void tcpci_set_cached_rp(int port, int rp);
+int tcpci_get_cached_rp(int port);
+void tcpci_set_cached_pull(int port, enum tcpc_cc_pull pull);
+enum tcpc_cc_pull tcpci_get_cached_pull(int port);
+
 void tcpci_tcpc_alert(int port);
 int tcpci_tcpm_init(int port);
 int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
@@ -165,7 +186,7 @@ int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 int tcpci_tcpm_get_vbus_level(int port);
 int tcpci_tcpm_select_rp_value(int port, int rp);
 int tcpci_tcpm_set_cc(int port, int pull);
-int tcpci_tcpm_set_polarity(int port, int polarity);
+int tcpci_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity);
 int tcpci_tcpm_set_vconn(int port, int enable);
 int tcpci_tcpm_set_msg_header(int port, int power_role, int data_role);
 int tcpci_tcpm_set_rx_enable(int port, int enable);

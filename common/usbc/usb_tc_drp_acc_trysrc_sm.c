@@ -654,7 +654,7 @@ int pd_fetch_acc_log_entry(int port)
 	return EC_RES_SUCCESS;
 }
 
-int pd_get_polarity(int port)
+enum tcpc_cc_polarity pd_get_polarity(int port)
 {
 	return tc[port].polarity;
 }

@@ -174,8 +174,8 @@ static struct pd_protocol {
 	uint8_t data_role;
 	/* 3-bit rolling message ID counter */
 	uint8_t msg_id;
-	/* Port polarity : 0 => CC1 is CC line, 1 => CC2 is CC line */
-	uint8_t polarity;
+	/* port polarity */
+	enum tcpc_cc_polarity polarity;
 	/* PD state for port */
 	enum pd_states task_state;
 	/* PD state when we run state handler the last time */
@@ -411,7 +411,7 @@ int pd_is_debug_acc(int port)
 	       pd[port].cc_state == PD_CC_DFP_DEBUG_ACC;
 }
 
-static void set_polarity(int port, int polarity)
+static void set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
 	tcpm_set_polarity(port, polarity);
 #ifdef CONFIG_USBC_PPC_POLARITY
@@ -716,6 +716,7 @@ static inline void set_state(int port, enum pd_states next_state)
 #ifdef CONFIG_LOW_POWER_IDLE
 	int i;
 #endif
+	int not_auto_toggling = 1;
 
 	set_state_timeout(port, 0, 0);
 	pd[port].task_state = next_state;
@@ -739,9 +740,12 @@ static inline void set_state(int port, enum pd_states next_state)
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	/* Clear flag to allow DRP auto toggle when possible */
 	if (last_state != PD_STATE_DRP_AUTO_TOGGLE)
+		/* Clear flag to allow DRP auto toggle when possible */
 		pd[port].flags &= ~PD_FLAGS_TCPC_DRP_TOGGLE;
+	else
+		/* This is an auto toggle instead of disconnect */
+		not_auto_toggling = 0;
 #endif
 
 	/* Ignore dual-role toggling between sink and source */
@@ -845,12 +849,26 @@ static inline void set_state(int port, enum pd_states next_state)
 		/* Invalidate message IDs. */
 		invalidate_last_message_id(port);
 
+		if (not_auto_toggling) {
+			/*
+			 * On disconnect set the resistor on both CC lines so
+			 * we can detect a connection with either polarity.
+			 * If we are in dual role toggle, then this will happen
+			 * automatically as it needs, so don't adjust the role
+			 * in that case.
+			 */
+			pd[port].polarity = POLARITY_NONE;
+			if (tcpm_set_polarity(port, POLARITY_NONE))
+				CPRINTS("C%d failed to set polarity",
+					port);
+
+			/* Disable Auto Discharge Disconnect */
+			tcpm_enable_auto_discharge_disconnect(port, 0);
+		}
+
 		/* detect USB PD cc disconnect */
 		if (IS_ENABLED(CONFIG_COMMON_RUNTIME))
 			hook_notify(HOOK_USB_PD_DISCONNECT);
-
-		/* Disable Auto Discharge Disconnect */
-		tcpm_enable_auto_discharge_disconnect(port, 0);
 	}
 
 #ifdef CONFIG_LOW_POWER_IDLE
@@ -2611,7 +2629,7 @@ static void pd_partner_port_reset(int port)
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
-int pd_get_polarity(int port)
+enum tcpc_cc_polarity pd_get_polarity(int port)
 {
 	return pd[port].polarity;
 }
@@ -2879,6 +2897,9 @@ void pd_task(void *u)
 	pd[port].flags |= PD_FLAGS_LPM_ENGAGED;
 #endif
 
+	/* Start as not connected */
+	pd[port].polarity = POLARITY_NONE;
+
 #ifdef CONFIG_COMMON_RUNTIME
 	pd_init_tasks();
 #endif
@@ -3127,7 +3148,7 @@ void pd_task(void *u)
 								port);
 				} else {
 					pd[port].polarity =
-						(cc1 != TYPEC_CC_VOLT_RD);
+						get_src_polarity(cc1, cc2);
 				}
 			} else
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
@@ -3377,7 +3398,7 @@ void pd_task(void *u)
 							port);
 				} else {
 					pd[port].polarity =
-						(cc1 != TYPEC_CC_VOLT_RD);
+						get_src_polarity(cc1, cc2);
 				}
 				set_polarity(port, pd[port].polarity);
 
@@ -4615,11 +4636,31 @@ void pd_task(void *u)
 			}
 
 			if (next_state == DRP_TC_UNATTACHED_SNK) {
+				/*
+				 * The TCPCI comes out of auto toggle with
+				 * a prospective connection.  It is expecting
+				 * us to set the CC lines to what it is
+				 * thinking is best or it goes direct back to
+				 * unattached.  So get the SNK polarity to
+				 * be able to setup the CC lines to avoid this.
+				 */
+				pd[port].polarity = get_snk_polarity(cc1, cc2);
+
 				tcpm_set_cc(port, TYPEC_CC_RD);
 				pd_set_power_role(port, PD_ROLE_SINK);
 				timeout = 2*MSEC;
 				set_state(port, PD_STATE_SNK_DISCONNECTED);
 			} else if (next_state == DRP_TC_UNATTACHED_SRC) {
+				/*
+				 * The TCPCI comes out of auto toggle with
+				 * a prospective connection.  It is expecting
+				 * us to set the CC lines to what it is
+				 * thinking is best or it goes direct back to
+				 * unattached.  So get the SNK polarity to
+				 * be able to setup the CC lines to avoid this.
+				 */
+				pd[port].polarity = get_src_polarity(cc1, cc2);
+
 				tcpm_set_cc(port, TYPEC_CC_RP);
 				pd_set_power_role(port, PD_ROLE_SOURCE);
 				timeout = 2*MSEC;

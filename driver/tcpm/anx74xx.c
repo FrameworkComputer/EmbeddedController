@@ -45,9 +45,6 @@ struct anx_state {
 
 static struct anx_state anx[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-/* Save the selected rp value */
-static int selected_rp[CONFIG_USB_PD_PORT_MAX_COUNT];
-
 #ifdef CONFIG_USB_PD_DECODE_SOP
 /* Save the message address */
 static int msg_sop[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -699,8 +696,10 @@ static int anx74xx_rp_control(int port, int rp)
 
 static int anx74xx_tcpm_select_rp_value(int port, int rp)
 {
+	/* Keep track of current RP value */
+	tcpci_set_cached_rp(port, rp);
+
 	/* For ANX3429 cannot get cc correctly when Rp != USB_Default */
-	selected_rp[port] = rp;
 	return EC_SUCCESS;
 }
 
@@ -727,6 +726,9 @@ static int anx74xx_tcpm_set_cc(int port, int pull)
 {
 	int rv = EC_SUCCESS;
 	int reg;
+
+	/* Keep track of current CC pull value */
+	tcpci_set_cached_pull(port, pull);
 
 	/* Enable CC software Control */
 	rv = anx74xx_cc_software_ctrl(port, 1);
@@ -758,9 +760,19 @@ static int anx74xx_tcpm_set_cc(int port, int pull)
 	return rv;
 }
 
-static int anx74xx_tcpm_set_polarity(int port, int polarity)
+static int anx74xx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
 	int reg, mux_state, rv = EC_SUCCESS;
+
+	/*
+	 * TCPCI sets the CC lines based on polarity.  If it is set to
+	 * no connection then both CC lines are driven, otherwise only
+	 * one is driven.  This driver does not appear to do this.  If
+	 * that changes, this would be the location you would want to
+	 * adjust the CC lines for the current polarity
+	 */
+	if (polarity == POLARITY_NONE)
+		return EC_SUCCESS;
 
 	rv |= tcpc_read(port, ANX74XX_REG_CC_SOFTWARE_CTRL, &reg);
 	if (polarity) /* Inform ANX to use CC2 */
@@ -836,7 +848,7 @@ static int anx74xx_tcpm_set_rx_enable(int port, int enable)
 	if (enable) {
 		reg &= ~(ANX74XX_REG_IRQ_CC_MSG_INT);
 		anx74xx_tcpm_set_auto_good_crc(port, 1);
-		anx74xx_rp_control(port, selected_rp[port]);
+		anx74xx_rp_control(port, tcpci_get_cached_rp(port));
 	} else {
 		/* Disable RX message by masking interrupt */
 		reg |= (ANX74XX_REG_IRQ_CC_MSG_INT);
@@ -1032,6 +1044,9 @@ void anx74xx_tcpc_alert(int port)
 static int anx74xx_tcpm_init(int port)
 {
 	int rv = 0, reg;
+
+	/* Start with an unknown connection */
+	tcpci_set_cached_pull(port, TYPEC_CC_OPEN);
 
 	memset(&anx[port], 0, sizeof(struct anx_state));
 	/* Bring chip in normal mode to work */

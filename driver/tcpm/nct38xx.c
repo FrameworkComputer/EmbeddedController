@@ -22,24 +22,13 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-#define POLARITY_NORMAL    0
-#define POLARITY_FLIPPED   1
-#define POLARITY_NONE      3
-
-static int cable_polarity[CONFIG_USB_PD_PORT_MAX_COUNT];
 static unsigned char txBuf[33];
 static unsigned char rxBuf[33];
-/* Save the selected rp value */
-static int selected_rp[CONFIG_USB_PD_PORT_MAX_COUNT];
-static int selected_pull[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int nct38xx_tcpm_init(int port)
 {
 	int rv = 0;
 	int reg;
-
-	cable_polarity[port] = POLARITY_NONE;
-	selected_pull[port] = TYPEC_CC_OPEN;
 
 	rv = tcpci_tcpm_init(port);
 		if (rv)
@@ -106,103 +95,6 @@ static int nct38xx_tcpm_init(int port)
 	return rv;
 }
 
-static int tcpci_nct38xx_check_cable_polarity(int port)
-{
-	int cc, rv;
-
-	/* Try to check the polarity */
-	rv = tcpc_read(port, TCPC_REG_CC_STATUS, &cc);
-	if (rv)
-		return rv;
-
-	if (TCPC_REG_CC_STATUS_TERM(cc)) {
-		/* TCPC is presenting RD (Sink mode) */
-		if ((TCPC_REG_CC_STATUS_CC1(cc) != TYPEC_CC_VOLT_OPEN) &&
-			(TCPC_REG_CC_STATUS_CC2(cc) == TYPEC_CC_VOLT_OPEN)) {
-			/* CC1 active && CC2 open */
-			cable_polarity[port] = POLARITY_NORMAL;
-		}
-		if ((TCPC_REG_CC_STATUS_CC1(cc) == TYPEC_CC_VOLT_OPEN) &&
-			(TCPC_REG_CC_STATUS_CC2(cc) != TYPEC_CC_VOLT_OPEN)) {
-			/* CC1 open && CC2 active */
-			cable_polarity[port] = POLARITY_FLIPPED;
-		}
-	} else {
-		/* TCPC is presenting RP (Source mode) */
-		if ((TCPC_REG_CC_STATUS_CC1(cc) == TYPEC_CC_VOLT_RD) &&
-			(TCPC_REG_CC_STATUS_CC2(cc) != TYPEC_CC_VOLT_RD)) {
-			/* CC1 active && CC2 open */
-			cable_polarity[port] = POLARITY_NORMAL;
-		}
-		if ((TCPC_REG_CC_STATUS_CC1(cc) != TYPEC_CC_VOLT_RD) &&
-			(TCPC_REG_CC_STATUS_CC2(cc) == TYPEC_CC_VOLT_RD)) {
-			/* CC1 open && CC2 active */
-			cable_polarity[port] = POLARITY_FLIPPED;
-		}
-	}
-	return rv;
-}
-
-int tcpci_nct38xx_select_rp_value(int port, int rp)
-{
-	selected_rp[port] = rp;
-	return EC_SUCCESS;
-}
-
- /*
-  * TODO(crbug.com/951681): This code can be simplified once that bug is fixed.
-  */
-static int tcpci_nct38xx_set_cc(int port, int pull)
-{
-	int rv;
-
-	selected_pull[port] = pull;
-
-	if (cable_polarity[port] == POLARITY_NONE) {
-		rv = tcpci_nct38xx_check_cable_polarity(port);
-		if (rv)
-			return rv;
-	}
-
-	if (cable_polarity[port] == POLARITY_NORMAL) {
-		rv = tcpc_write(port, TCPC_REG_ROLE_CTRL,
-				TCPC_REG_ROLE_CTRL_SET(0, selected_rp[port],
-				pull, TYPEC_CC_OPEN));
-	} else if (cable_polarity[port] == POLARITY_FLIPPED) {
-		rv = tcpc_write(port, TCPC_REG_ROLE_CTRL,
-				TCPC_REG_ROLE_CTRL_SET(0, selected_rp[port],
-				TYPEC_CC_OPEN, pull));
-	} else {
-		return -1;
-	}
-
-	return rv;
-}
-
-/*
- * tcpci_nct38xx_set_cc() only sets the pull resistor on one CC line according
- * to polarity. This is correct when attached, but on disconnect we need to
- * set the pull resistor on both CC lines, since polarity is no longer known
- * (unless DRP toggle is enabled, since that will take care of setting both
- * CC lines to do the toggling).
- * TODO(crbug.com/951681): This code can be removed once that bug is fixed.
- */
-static void disconnect_hook(void)
-{
-	int port = TASK_ID_TO_PD_PORT(task_get_current());
-	int rv;
-
-	if (pd_get_dual_role(port) != PD_DRP_TOGGLE_ON
-	    && selected_pull[port] != TYPEC_CC_OPEN) {
-		rv = tcpc_write(port, TCPC_REG_ROLE_CTRL,
-				TCPC_REG_ROLE_CTRL_SET(0, selected_rp[port],
-				selected_pull[port], selected_pull[port]));
-		if (rv)
-			CPRINTS("C%d failed to set pull on disconnect", port);
-	}
-}
-DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, disconnect_hook, HOOK_PRIO_DEFAULT);
-
 static int tcpci_nct38xx_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 		enum tcpc_cc_voltage_status *cc2)
 {
@@ -227,13 +119,6 @@ static int tcpci_nct38xx_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	}
 
 	return rv;
-}
-
-int tcpci_nct38xx_drp_toggle(int port)
-{
-	cable_polarity[port] = POLARITY_NONE;
-
-	return tcpci_tcpc_drp_toggle(port);
 }
 
 int tcpci_nct38xx_transmit(int port, enum tcpm_transmit_type type,
@@ -328,8 +213,8 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,
 #endif
-	.select_rp_value	= &tcpci_nct38xx_select_rp_value,
-	.set_cc			= &tcpci_nct38xx_set_cc,
+	.select_rp_value	= &tcpci_tcpm_select_rp_value,
+	.set_cc			= &tcpci_tcpm_set_cc,
 	.set_polarity		= &tcpci_tcpm_set_polarity,
 	.set_vconn		= &tcpci_tcpm_set_vconn,
 	.set_msg_header		= &tcpci_tcpm_set_msg_header,
@@ -343,7 +228,7 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 	.tcpc_enable_auto_discharge_disconnect =
 				  &tcpci_tcpc_enable_auto_discharge_disconnect,
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= &tcpci_nct38xx_drp_toggle,
+	.drp_toggle		= &tcpci_tcpc_drp_toggle,
 #endif
 #ifdef CONFIG_USBC_PPC
 	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
