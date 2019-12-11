@@ -321,6 +321,93 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c      = 75,
 		},
 	},
+
+	/* Simplo PC-VP-BP44 Battery Information */
+	[BATTERY_SMP_PCVPBP144] = {
+		.fuel_gauge = {
+			.manuf_name = "SIMPLO",
+			.device_name = "PC-VP-BP144",
+			.ship_mode = {
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
+			},
+			.fet = {
+				.reg_addr = 0x34,
+				.reg_mask = 0x0100,
+				.disconnect_val = 0x0100,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13050,
+			.voltage_normal		= 11250, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 128,	/* mA */
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 45,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 60,
+		},
+	},
+
+	/* Simplo PC-VP-BP126 Battery Information */
+	[BATTERY_SMP_PCVPBP126] = {
+		.fuel_gauge = {
+			.manuf_name = "SIMPLO",
+			.device_name = "PC-VP-BP126",
+			.ship_mode = {
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
+			},
+			.fet = {
+				.reg_addr = 0x34,
+				.reg_mask = 0x0100,
+				.disconnect_val = 0x0100,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200,
+			.voltage_normal		= 11520, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 128,	/* mA */
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 45,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 60,
+		},
+	},
+
+	/* Simplo PC-VP-BP136 Battery Information */
+	[BATTERY_SMP_PCVPBP136] = {
+		.fuel_gauge = {
+			.manuf_name = "SIMPLO",
+			.device_name = "PC-VP-BP136",
+			.ship_mode = {
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
+			},
+			.fet = {
+				.reg_addr = 0x34,
+				.reg_mask = 0x0100,
+				.disconnect_val = 0x0100,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200,
+			.voltage_normal		= 11520, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 128,	/* mA */
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 45,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 60,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
