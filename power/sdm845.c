@@ -555,6 +555,17 @@ static uint8_t check_for_power_on_event(void)
 
 	ap_off_flag = system_get_reset_flags() & EC_RESET_FLAG_AP_OFF;
 	system_clear_reset_flags(EC_RESET_FLAG_AP_OFF);
+
+	if (power_request == POWER_REQ_ON) {
+		power_request = POWER_REQ_NONE;
+		return POWER_ON_BY_POWER_REQ_ON;
+	}
+
+	if (power_request == POWER_REQ_RESET) {
+		power_request = POWER_REQ_NONE;
+		return POWER_ON_BY_POWER_REQ_RESET;
+	}
+
 	/* check if system is already ON */
 	if (power_get_signals() & IN_POWER_GOOD) {
 		if (ap_off_flag) {
@@ -590,16 +601,6 @@ static uint8_t check_for_power_on_event(void)
 	if (power_button_is_pressed())
 		return POWER_ON_BY_POWER_BUTTON_PRESSED;
 
-	if (power_request == POWER_REQ_ON) {
-		power_request = POWER_REQ_NONE;
-		return POWER_ON_BY_POWER_REQ_ON;
-	}
-
-	if (power_request == POWER_REQ_RESET) {
-		power_request = POWER_REQ_NONE;
-		return POWER_ON_BY_POWER_REQ_RESET;
-	}
-
 	return POWER_OFF_CANCEL;
 }
 
@@ -616,12 +617,7 @@ static uint8_t check_for_power_off_event(void)
 	timestamp_t now;
 	int pressed = 0;
 
-	/*
-	 * Check for power button press.
-	 */
-	if (power_button_is_pressed()) {
-		pressed = POWER_OFF_BY_POWER_BUTTON_PRESSED;
-	} else if (power_request == POWER_REQ_OFF) {
+	if (power_request == POWER_REQ_OFF) {
 		power_request = POWER_REQ_NONE;
 		return POWER_OFF_BY_POWER_REQ_OFF;
 	} else if (power_request == POWER_REQ_RESET) {
@@ -631,6 +627,12 @@ static uint8_t check_for_power_off_event(void)
 		 */
 		return POWER_OFF_BY_POWER_REQ_RESET;
 	}
+
+	/*
+	 * Check for power button press.
+	 */
+	if (power_button_is_pressed())
+		pressed = POWER_OFF_BY_POWER_BUTTON_PRESSED;
 
 	now = get_time();
 	if (pressed) {
