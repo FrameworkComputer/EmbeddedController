@@ -111,6 +111,12 @@ enum power_state chipset_force_g3(void)
 	return POWER_G3;
 }
 
+/* Default no action, overwrite it in board.c if necessary*/
+__attribute__((weak)) void all_sys_pgood_check_reboot(void)
+{
+	return;
+}
+
 /* Called by APL power state machine when transitioning from G3 to S5 */
 void chipset_pre_init_callback(void)
 {
@@ -129,6 +135,11 @@ void chipset_pre_init_callback(void)
 	 * power_wait_signals() as PP5000_A_PGOOD is included in the
 	 * CHIPSET_G3S5_POWERUP_SIGNAL macro.
 	 */
+
+	/* For b:143440730, system might hang-up before enter S0/S3. Check
+	 * GPIO_ALL_SYS_PGOOD here to make sure it will trigger every time.
+	 */
+	all_sys_pgood_check_reboot();
 }
 
 enum power_state power_handle_state(enum power_state state)

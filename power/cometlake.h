@@ -39,4 +39,6 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
+void all_sys_pgood_check_reboot(void);
+
 #endif /* __CROS_EC_COMETLAKE_H */
