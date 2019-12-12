@@ -1749,6 +1749,9 @@ static void tc_unattached_snk_entry(const int port)
 	if (get_last_state_tc(port) != TC_UNATTACHED_SRC)
 		print_current_state(port);
 
+	/* VBus should be SafeV0, turn off auto discharge disconnect */
+	tcpm_enable_auto_discharge_disconnect(port, 0);
+
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 
@@ -1986,6 +1989,9 @@ static void tc_attached_snk_entry(const int port)
 	/* Enable PD */
 	if (IS_ENABLED(CONFIG_USB_PE_SM))
 		tc[port].pd_enable = 1;
+
+	/* VBus should be powered, turn on auto discharge disconnect */
+	tcpm_enable_auto_discharge_disconnect(port, 1);
 }
 
 static void tc_attached_snk_run(const int port)
@@ -2410,6 +2416,9 @@ static void tc_unattached_src_entry(const int port)
 	if (get_last_state_tc(port) != TC_UNATTACHED_SNK)
 		print_current_state(port);
 
+	/* VBus should be SafeV0, turn off auto discharge disconnect */
+	tcpm_enable_auto_discharge_disconnect(port, 0);
+
 	if (IS_ENABLED(CONFIG_USBC_PPC)) {
 		/* There is no sink connected. */
 		ppc_sink_is_connected(port, 0);
@@ -2663,6 +2672,9 @@ static void tc_attached_src_entry(const int port)
 	/* Inform PPC that a sink is connected. */
 	if (IS_ENABLED(CONFIG_USBC_PPC))
 		ppc_sink_is_connected(port, 1);
+
+	/* VBus should be powered, turn on auto discharge disconnect */
+	tcpm_enable_auto_discharge_disconnect(port, 1);
 }
 
 static void tc_attached_src_run(const int port)
