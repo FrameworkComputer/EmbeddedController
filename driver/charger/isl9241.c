@@ -329,13 +329,11 @@ static void isl9241_init(void)
 	/*
 	 * Set control2 register to
 	 * [15:13]: Trickle Charging Current (battery pre-charge current)
-	 * [12]   : Two-Level Adapter Current Limit (enable)
 	 * [10:9] : Prochot# Debounce time (1000us)
 	 */
 	if (isl9241_update(ISL9241_REG_CONTROL2,
 			   (ISL9241_CONTROL2_TRICKLE_CHG_CURR(
-					bi->precharge_current)  |
-			    ISL9241_CONTROL2_TWO_LEVEL_ADP_CURR |
+				bi->precharge_current) |
 			    ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000),
 			   MASK_SET))
 		goto init_fail;
