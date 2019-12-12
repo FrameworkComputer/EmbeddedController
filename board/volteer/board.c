@@ -7,6 +7,10 @@
 
 #include "button.h"
 #include "common.h"
+#include "accelgyro.h"
+#include "driver/accel_bma2x2.h"
+#include "driver/als_tcs3400.h"
+#include "driver/sync.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
