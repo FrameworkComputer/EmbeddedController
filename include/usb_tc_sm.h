@@ -126,12 +126,12 @@ void tc_partner_dr_power(int port, int en);
 
 /**
  * Policy Engine informs the Type-C state machine if the port partner
- * has external power
+ * has unconstrained power
  *
  * @param port USB_C port number
- * @param en   1 if port partner has external power, else 0
+ * @param en   1 if port partner has unconstrained power, else 0
  */
-void tc_partner_extpower(int port, int en);
+void tc_partner_unconstrainedpower(int port, int en);
 
 /**
  * Policy Engine informs the Type-C state machine if the port partner

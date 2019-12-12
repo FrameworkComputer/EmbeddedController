@@ -154,7 +154,7 @@ static void discharge_voltage(int target_volt)
 
 /* ----------------------- USB Power delivery policy ---------------------- */
 
-#define PDO_FIXED_FLAGS (PDO_FIXED_EXTERNAL | PDO_FIXED_DATA_SWAP)
+#define PDO_FIXED_FLAGS (PDO_FIXED_UNCONSTRAINED | PDO_FIXED_DATA_SWAP)
 
 /* Voltage indexes for the PDOs */
 enum volt_idx {

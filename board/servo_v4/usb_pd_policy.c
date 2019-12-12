@@ -305,7 +305,7 @@ static void update_ports(void)
 					PDO_FIXED_VOLT(max_mv) |
 					PDO_FIXED_CURR(max_ma) |
 					DUT_PDO_FIXED_FLAGS |
-					PDO_FIXED_EXTERNAL;
+					PDO_FIXED_UNCONSTRAINED;
 			}
 			chg_pdo_cnt = src_index;
 		} else {
@@ -313,7 +313,7 @@ static void update_ports(void)
 			pd_src_chg_pdo[0] = PDO_FIXED_VOLT(PD_MIN_MV) |
 				PDO_FIXED_CURR(vbus[CHG].ma) |
 				DUT_PDO_FIXED_FLAGS |
-				PDO_FIXED_EXTERNAL;
+				PDO_FIXED_UNCONSTRAINED;
 
 			chg_pdo_cnt = 1;
 		}
@@ -693,8 +693,8 @@ __override int pd_check_power_swap(int port)
 {
 	/*
 	 * When only host VBUS is available, then servo_v4 is not setting
-	 * PDO_FIXED_EXTERNAL in the src_pdo sent to the DUT. When this bit is
-	 * not set, the DUT will always attempt to swap its power role to
+	 * PDO_FIXED_UNCONSTRAINED in the src_pdo sent to the DUT. When this bit
+	 * is not set, the DUT will always attempt to swap its power role to
 	 * SRC. Let servo_v4 have more control over its power role by always
 	 * rejecting power swap requests from the DUT.
 	 */

@@ -1575,10 +1575,10 @@ static void pd_update_pdo_flags(int port, uint32_t pdo)
 	else
 		pd[port].flags &= ~PD_FLAGS_PARTNER_DR_POWER;
 
-	if (pdo & PDO_FIXED_EXTERNAL)
-		pd[port].flags |= PD_FLAGS_PARTNER_EXTPOWER;
+	if (pdo & PDO_FIXED_UNCONSTRAINED)
+		pd[port].flags |= PD_FLAGS_PARTNER_UNCONSTR;
 	else
-		pd[port].flags &= ~PD_FLAGS_PARTNER_EXTPOWER;
+		pd[port].flags &= ~PD_FLAGS_PARTNER_UNCONSTR;
 
 	if (pdo & PDO_FIXED_COMM_CAP)
 		pd[port].flags |= PD_FLAGS_PARTNER_USB_COMM;
@@ -1594,12 +1594,12 @@ static void pd_update_pdo_flags(int port, uint32_t pdo)
 #ifdef CONFIG_CHARGE_MANAGER
 	/*
 	 * Treat device as a dedicated charger (meaning we should charge
-	 * from it) if it does not support power swap, or if it is externally
-	 * powered, or if we are a sink and the device identity matches a
+	 * from it) if it does not support power swap, or has unconstrained
+	 * power, or if we are a sink and the device identity matches a
 	 * charging white-list.
 	 */
 	if (!(pd[port].flags & PD_FLAGS_PARTNER_DR_POWER) ||
-	    (pd[port].flags & PD_FLAGS_PARTNER_EXTPOWER) ||
+	    (pd[port].flags & PD_FLAGS_PARTNER_UNCONSTR) ||
 	    charge_whitelisted)
 		charge_manager_update_dualrole(port, CAP_DEDICATED);
 	else
@@ -5390,8 +5390,8 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 				PD_CTRL_RESP_ROLE_DR_DATA : 0) |
 			((pd[p->port].flags & PD_FLAGS_PARTNER_USB_COMM) ?
 				PD_CTRL_RESP_ROLE_USB_COMM : 0) |
-			((pd[p->port].flags & PD_FLAGS_PARTNER_EXTPOWER) ?
-				PD_CTRL_RESP_ROLE_EXT_POWERED : 0);
+			((pd[p->port].flags & PD_FLAGS_PARTNER_UNCONSTR) ?
+				PD_CTRL_RESP_ROLE_UNCONSTRAINED : 0);
 		r_v2->polarity = pd[p->port].polarity;
 
 		if (debug_level > 0)

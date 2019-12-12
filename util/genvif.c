@@ -115,10 +115,10 @@ static int is_snk(void)
 #endif
 }
 
-static int is_extpwr(void)
+static int is_unconstrained(void)
 {
 	if (is_src())
-		return !!(src_pdo[0] & PDO_FIXED_EXTERNAL);
+		return !!(src_pdo[0] & PDO_FIXED_UNCONSTRAINED);
 	else
 		return 0;
 }
@@ -449,7 +449,8 @@ static int gen_vif(const char *name, const char *board,
 				dr_swap_to_dfp_supported());
 	fprintf(vif, "DR_Swap_To_UFP_Supported: %s\r\n",
 				dr_swap_to_ufp_supported());
-	fprintf(vif, "Unconstrained_Powered: %s\r\n", yes_no(is_extpwr()));
+	fprintf(vif, "Unconstrained_Powered: %s\r\n",
+				yes_no(is_unconstrained()));
 	fprintf(vif, "VCONN_Swap_To_On_Supported: %s\r\n", vconn_swap());
 	fprintf(vif, "VCONN_Swap_To_Off_Supported: %s\r\n", vconn_swap());
 	fprintf(vif, "Responds_To_Discov_SOP: YES\r\n");

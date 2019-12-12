@@ -60,8 +60,8 @@
 #define TC_FLAGS_REQUEST_DR_SWAP        BIT(11)
 /* Flag to note request to power off sink */
 #define TC_FLAGS_POWER_OFF_SNK          BIT(12)
-/* Flag to note port partner has external power */
-#define TC_FLAGS_PARTNER_EXTPOWER       BIT(13)
+/* Flag to note port partner has unconstrained power */
+#define TC_FLAGS_PARTNER_UNCONSTRAINED  BIT(13)
 /* Flag to note port partner is Dual Role Data */
 #define TC_FLAGS_PARTNER_DR_DATA        BIT(14)
 /* Flag to note port partner is Dual Role Power */
@@ -506,12 +506,12 @@ void tc_partner_dr_power(int port, int en)
 		TC_CLR_FLAG(port, TC_FLAGS_PARTNER_DR_POWER);
 }
 
-void tc_partner_extpower(int port, int en)
+void tc_partner_unconstrainedpower(int port, int en)
 {
 	if (en)
-		TC_SET_FLAG(port, TC_FLAGS_PARTNER_EXTPOWER);
+		TC_SET_FLAG(port, TC_FLAGS_PARTNER_UNCONSTRAINED);
 	else
-		TC_CLR_FLAG(port, TC_FLAGS_PARTNER_EXTPOWER);
+		TC_CLR_FLAG(port, TC_FLAGS_PARTNER_UNCONSTRAINED);
 }
 
 void tc_partner_usb_comm(int port, int en)
@@ -1247,8 +1247,8 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 				PD_CTRL_RESP_ROLE_DR_DATA : 0) |
 			(TC_CHK_FLAG(p->port, TC_FLAGS_PARTNER_USB_COMM) ?
 				PD_CTRL_RESP_ROLE_USB_COMM : 0) |
-			(TC_CHK_FLAG(p->port, TC_FLAGS_PARTNER_EXTPOWER) ?
-				PD_CTRL_RESP_ROLE_EXT_POWERED : 0);
+			(TC_CHK_FLAG(p->port, TC_FLAGS_PARTNER_UNCONSTRAINED) ?
+				PD_CTRL_RESP_ROLE_UNCONSTRAINED : 0);
 		r_v2->polarity = tc[p->port].polarity;
 		r_v2->cc_state = tc[p->port].cc_state;
 

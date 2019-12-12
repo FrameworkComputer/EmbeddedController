@@ -898,10 +898,10 @@ static void pe_update_pdo_flags(int port, uint32_t pdo)
 	else
 		tc_partner_dr_power(port, 0);
 
-	if (pdo & PDO_FIXED_EXTERNAL)
-		tc_partner_extpower(port, 1);
+	if (pdo & PDO_FIXED_UNCONSTRAINED)
+		tc_partner_unconstrainedpower(port, 1);
 	else
-		tc_partner_extpower(port, 0);
+		tc_partner_unconstrainedpower(port, 0);
 
 	if (pdo & PDO_FIXED_COMM_CAP)
 		tc_partner_usb_comm(port, 1);
@@ -916,11 +916,11 @@ static void pe_update_pdo_flags(int port, uint32_t pdo)
 #ifdef CONFIG_CHARGE_MANAGER
 	/*
 	 * Treat device as a dedicated charger (meaning we should charge
-	 * from it) if it does not support power swap, or if it is externally
-	 * powered, or if we are a sink and the device identity matches a
+	 * from it) if it does not support power swap, or if it is unconstrained
+	 * power, or if we are a sink and the device identity matches a
 	 * charging white-list.
 	 */
-	if (!(pdo & PDO_FIXED_DUAL_ROLE) || (pdo & PDO_FIXED_EXTERNAL) ||
+	if (!(pdo & PDO_FIXED_DUAL_ROLE) || (pdo & PDO_FIXED_UNCONSTRAINED) ||
 		charge_whitelisted) {
 		PE_CLR_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
 		charge_manager_update_dualrole(port, CAP_DEDICATED);
@@ -4451,7 +4451,7 @@ int pd_charge_from_device(uint16_t vid, uint16_t pid)
 	/* TODO: rewrite into table if we get more of these */
 	/*
 	 * White-list Apple charge-through accessory since it doesn't set
-	 * externally powered bit, but we still need to charge from it when
+	 * unconstrained bit, but we still need to charge from it when
 	 * we are a sink.
 	 */
 	return (vid == USB_VID_APPLE &&

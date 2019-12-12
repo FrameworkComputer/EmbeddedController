@@ -5592,8 +5592,8 @@ int cmd_usb_pd(int argc, char *argv[])
 					" DR data\n" : "",
 				(r_v1->role & PD_CTRL_RESP_ROLE_USB_COMM) ?
 					" USB capable\n" : "",
-				(r_v1->role & PD_CTRL_RESP_ROLE_EXT_POWERED) ?
-					" Externally powered\n" : "");
+				(r_v1->role & PD_CTRL_RESP_ROLE_UNCONSTRAINED) ?
+					" Unconstrained power\n" : "");
 	}
 	return 0;
 }

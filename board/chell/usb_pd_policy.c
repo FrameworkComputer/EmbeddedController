@@ -119,14 +119,14 @@ void pd_check_pr_role(int port, int pr_role, int flags)
 	if ((flags & PD_FLAGS_PARTNER_DR_POWER) &&
 	    pd_get_dual_role(port) == PD_DRP_TOGGLE_ON) {
 		/*
-		 * If we are a sink and partner is not externally powered, then
+		 * If we are a sink and partner is not unconstrained, then
 		 * swap to become a source. If we are source and partner is
-		 * externally powered, swap to become a sink.
+		 * unconstrained, swap to become a sink.
 		 */
-		int partner_extpower = flags & PD_FLAGS_PARTNER_EXTPOWER;
+		int partner_unconstrained = flags & PD_FLAGS_PARTNER_UNCONSTR;
 
-		if ((!partner_extpower && pr_role == PD_ROLE_SINK) ||
-		     (partner_extpower && pr_role == PD_ROLE_SOURCE))
+		if ((!partner_unconstrained && pr_role == PD_ROLE_SINK) ||
+		     (partner_unconstrained && pr_role == PD_ROLE_SOURCE))
 			pd_request_power_swap(port);
 	}
 }

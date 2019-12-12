@@ -88,7 +88,7 @@ void tc_partner_dr_data(int port, int en)
 void tc_partner_dr_power(int port, int en)
 {}
 
-void tc_partner_extpower(int port, int en)
+void tc_partner_unconstrainedpower(int port, int en)
 {}
 
 void tc_partner_usb_comm(int port, int en)

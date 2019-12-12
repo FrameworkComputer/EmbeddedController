@@ -93,11 +93,11 @@ enum pd_rx_errors {
 #define PDO_TYPE_AUGMENTED (3 << 30)
 #define PDO_TYPE_MASK      (3 << 30)
 
-#define PDO_FIXED_DUAL_ROLE BIT(29) /* Dual role device */
-#define PDO_FIXED_SUSPEND   BIT(28) /* USB Suspend supported */
-#define PDO_FIXED_EXTERNAL  BIT(27) /* Externally powered */
-#define PDO_FIXED_COMM_CAP  BIT(26) /* USB Communications Capable */
-#define PDO_FIXED_DATA_SWAP BIT(25) /* Data role swap command supported */
+#define PDO_FIXED_DUAL_ROLE	BIT(29) /* Dual role device */
+#define PDO_FIXED_SUSPEND	BIT(28) /* USB Suspend supported */
+#define PDO_FIXED_UNCONSTRAINED	BIT(27) /* Unconstrained Power */
+#define PDO_FIXED_COMM_CAP	BIT(26) /* USB Communications Capable */
+#define PDO_FIXED_DATA_SWAP	BIT(25) /* Data role swap command supported */
 #define PDO_FIXED_FRS_CURR_MASK (3 << 23) /* [23..24] FRS current */
 #define PDO_FIXED_FRS_CURR_NOT_SUPPORTED  (0 << 23)
 #define PDO_FIXED_FRS_CURR_DFLT_USB_POWER (1 << 23)
@@ -1086,7 +1086,7 @@ enum pd_states {
 #define PD_FLAGS_PREVIOUS_PD_CONN  BIT(8) /* previously PD connected */
 #define PD_FLAGS_CHECK_PR_ROLE     BIT(9) /* check power role in READY */
 #define PD_FLAGS_CHECK_DR_ROLE     BIT(10)/* check data role in READY */
-#define PD_FLAGS_PARTNER_EXTPOWER  BIT(11)/* port partner has external pwr */
+#define PD_FLAGS_PARTNER_UNCONSTR  BIT(11)/* port partner unconstrained pwr */
 #define PD_FLAGS_VCONN_ON          BIT(12)/* vconn is being sourced */
 #define PD_FLAGS_TRY_SRC           BIT(13)/* Try.SRC states are active */
 #define PD_FLAGS_PARTNER_USB_COMM  BIT(14)/* port partner is USB comms */
@@ -1120,7 +1120,7 @@ enum pd_states {
 					   PD_FLAGS_PREVIOUS_PD_CONN | \
 					   PD_FLAGS_CHECK_PR_ROLE | \
 					   PD_FLAGS_CHECK_DR_ROLE | \
-					   PD_FLAGS_PARTNER_EXTPOWER | \
+					   PD_FLAGS_PARTNER_UNCONSTR | \
 					   PD_FLAGS_VCONN_ON | \
 					   PD_FLAGS_TRY_SRC | \
 					   PD_FLAGS_PARTNER_USB_COMM | \
@@ -1679,7 +1679,7 @@ __override_proto void pd_check_dr_role(int port, int dr_role, int flags);
 /**
  * Check if we should charge from this device. This is
  * basically a white-list for chargers that are dual-role,
- * don't set the externally powered bit, but we should charge
+ * don't set the unconstrained bit, but we should charge
  * from by default.
  *
  * @param vid Port partner Vendor ID
