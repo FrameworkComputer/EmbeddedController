@@ -13,7 +13,6 @@
 
 /* Bringup/debug config items. Remove before shipping. */
 #define CONFIG_SYSTEM_UNLOCKED
-#define CONFIG_BRINGUP
 
 
 /* NPCX7 config */
