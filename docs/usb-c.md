@@ -218,5 +218,5 @@ Probing now. Need new driver in depthcharge
 [USB PD Spec Id]: https://www.usb.org/document-library/usb-power-delivery
 [Introduction to USB Power Delivery]: https://www.microchip.com/wwwAppNotes/AppNotes.aspx?appnote=en575003
 [USB TCPM Spec Id]: https://www.usb.org/document-library/usb-type-ctm-port-controller-interface-specification
-[USB TC Spec Id]: https://www.usb.org/document-library/usb-type-ctm-cable-and-connector-specification-revision-14-march-29-2019
+[USB TC Spec Id]: https://www.usb.org/document-library/usb-type-cr-cable-and-connector-specification-revision-20-august-2019
 [config header link]: ../include/config.h
