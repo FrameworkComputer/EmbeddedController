@@ -200,7 +200,7 @@ def findfiles(cname, fname):
   if not fname:
     # If None, try defaults.
     dev = None
-    for default_f in ['servo_v4', 'servo_micro', 'sweetberry']:
+    for default_f in ['c2d2', 'servo_micro', 'servo_v4', 'sweetberry']:
       if default_f in cname:
         dev = default_f
     if os.path.isfile(FIRMWARE_PATH + dev + ".bin"):

@@ -88,6 +88,7 @@ BOARDS_STM32_PROG_EN=(
 )
 
 BOARDS_STM32_DFU=(
+	c2d2
 	dingdong
 	hoho
 	twinkie
@@ -400,6 +401,11 @@ servo_ec_hard_reset() {
 	dut_control cold_reset:off
 }
 
+c2d2_ec_hard_reset() {
+	dut_control cold_reset:on
+	dut_control cold_reset:off
+}
+
 servo_usbpd_hard_reset() {
 	dut_control usbpd_reset:on sleep:0.5 usbpd_reset:off
 }
@@ -459,6 +465,10 @@ servo_micro_ec_boot0() {
 
 servo_ec_boot0() {
 	dut_control ec_boot_mode:$1
+}
+
+c2d2_ec_boot0() {
+	dut_control ec_boot_mode_uut:$1
 }
 
 servo_usbpd_boot0() {
@@ -676,6 +686,7 @@ function servo_ec_uart() {
 servo_v2_VARS=( "cold_reset" )
 servo_micro_VARS=( "cold_reset" )
 servo_v4_with_ccd_cr50_VARS=( "cold_reset" )
+c2d2_VARS=( "cold_reset" )
 
 # Some servo boards use the same controls.
 servo_v3_VARS=( "${servo_v2_VARS[@]}" )
@@ -1313,8 +1324,9 @@ function flash_npcx_uut() {
 	ec_enable_boot0 "uut"
 	ec_reset
 
-	# Have to wait a bit for EC boot-up
-	sleep 0.1
+	# Have to wait a bit for EC boot-up (twice in some cases when the cold
+	# reset is indirect through h1 reset).
+	sleep 0.2
 
 	# For CCD, disable the trigger pin for normal UART operation
 	ec_disable_boot0 "uut"
