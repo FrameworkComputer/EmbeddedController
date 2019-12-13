@@ -380,34 +380,11 @@ static void setup_fans(void)
 	thermal_params[TEMP_SENSOR_2] = thermal_b;
 }
 
-/*
- * Returns true for boards that are convertible into tablet mode, and
- * false for clamshells.
- */
-static bool board_is_convertible(void)
-{
-	uint8_t sku_id = get_board_sku();
-
-	/*
-	 * Dragonair (SKU 21 ,22 and 23) is a convertible. Dratini is not.
-	 * Unprovisioned SKU 255.
-	 */
-	return sku_id == 21 || sku_id == 22 || sku_id == 23 || sku_id == 255;
-}
-
 static void board_update_sensor_config_from_sku(void)
 {
-	if (board_is_convertible()) {
-		motion_sensor_count = ARRAY_SIZE(motion_sensors);
-		/* Enable gpio interrupt for base accelgyro sensor */
-		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
-	} else {
-		motion_sensor_count = 0;
-		gmr_tablet_switch_disable();
-		/* Base accel is not stuffed, don't allow line to float */
-		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
-			       GPIO_INPUT | GPIO_PULL_DOWN);
-	}
+	motion_sensor_count = ARRAY_SIZE(motion_sensors);
+	/* Enable gpio interrupt for base accelgyro sensor */
+	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 }
 
 static void board_init(void)
@@ -429,26 +406,6 @@ void board_overcurrent_event(int port, int is_overcurrented)
 
 	/* Note that the level is inverted because the pin is active low. */
 	gpio_set_level(GPIO_USB_C_OC_ODL, !is_overcurrented);
-}
-
-bool board_has_kb_backlight(void)
-{
-	uint8_t sku_id = get_board_sku();
-	/*
-	 * SKUs have keyboard backlight.
-	 * Dratini: 2, 3
-	 * Dragonair: 22
-	 * Unprovisioned: 255
-	 */
-	return sku_id == 2 || sku_id == 3 || sku_id == 22 || sku_id == 255;
-}
-
-__override uint32_t board_override_feature_flags0(uint32_t flags0)
-{
-	if (board_has_kb_backlight())
-		return flags0;
-	else
-		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
 }
 
 #ifdef CONFIG_KEYBOARD_FACTORY_TEST
