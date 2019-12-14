@@ -283,8 +283,8 @@ read(fd, buf, sizeof(buf));
  *
  * Note that it is also valid to write these together in one write().
  */
-dprintf(fd, "I2C_XFER_REPLY 3 0 0x0070 0x0000 0\n"
-dprintf(fd, "I2C_XFER_REPLY 3 1 0x0070 0x0001 0 0B\n");
+dprintf(fd, "I2C_XFER_REPLY 1 0 0x0070 0x0000 0\n");
+dprintf(fd, "I2C_XFER_REPLY 1 1 0x0070 0x0001 0 0B\n");
 
 /* Destroy the I2C adapter. */
 close(fd);
