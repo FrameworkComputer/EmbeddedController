@@ -24,11 +24,11 @@ SECTIONS
 	.rodata : {
 		/* Symbols defined here are declared in link_defs.h */
 		 __irqprio = .;
-	        KEEP(*(.rodata.irqprio))
+		KEEP(*(.rodata.irqprio))
 		 __irqprio_end = .;
 
 		 __irq_data = .;
-	        KEEP(*(.rodata.irqs))
+		KEEP(*(.rodata.irqs))
 		 __irq_data_end = .;
 
 		. = ALIGN(4);
@@ -159,7 +159,7 @@ SECTIONS
 		 __data_start = .;
 		*(.data.*);
 		 __data_end = .;
-	 }
+	}
 
 	. = ALIGN(4);
 	.note.gnu.build-id : { *(.note.gnu.build-id); }
@@ -185,21 +185,21 @@ SECTIONS
 		 __bss_end = .;
 		 __bss_size_words = ABSOLUTE((__bss_end - __bss_start) / 4);
 
-        	/*
+		/*
 		 * Shared memory buffer must be at the end of
-        	 * preallocated RAM, so it can expand to use all the
-        	 * remaining RAM.
+		 * preallocated RAM, so it can expand to use all the
+		 * remaining RAM.
 		 */
-        	__shared_mem_buf = .;
+		__shared_mem_buf = .;
 	}
 
 	__aon_rw_end = . + CONFIG_SHAREDMEM_MINIMUM_SIZE;
 
 	ASSERT((__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE) <=
-			(CONFIG_RAM_BASE + CONFIG_RAM_SIZE),
-		"Not enough space for shared memory.")
+	       (CONFIG_RAM_BASE + CONFIG_RAM_SIZE),
+	       "Not enough space for shared memory.")
 	__ram_free = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE) -
-        	(__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
+		     (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
 
 	/* TODO: Adjust __image_size to proper value for core minute-ia later */
 	__image_size = . - CONFIG_ISH_BOOT_START;
