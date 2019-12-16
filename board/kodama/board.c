@@ -23,7 +23,6 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "i2c-stm32f0.h"
 #include "i2c.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -64,7 +63,8 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
 	{"typec", 0, 400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"other", 1, 400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
+	{"other", 1, 400, GPIO_I2C2_SCL, GPIO_I2C2_SDA,
+		.flags = I2C_PORT_FLAG_DYNAMIC_SPEED},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -271,12 +271,8 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
  */
 static void board_i2c_init(void)
 {
-	if (board_get_version() < 2) {
-		const struct i2c_port_t i2c_port = {
-			"other", 1, 100, GPIO_I2C2_SCL, GPIO_I2C2_SDA,
-		};
-		stm32f0_i2c_init_port(&i2c_port);
-	}
+	if (board_get_version() < 2)
+		i2c_set_freq(1,  I2C_FREQ_100KHZ);
 }
 DECLARE_HOOK(HOOK_INIT, board_i2c_init, HOOK_PRIO_INIT_I2C);
 

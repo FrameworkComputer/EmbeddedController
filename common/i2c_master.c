@@ -14,6 +14,7 @@
 #include "gpio.h"
 #include "i2c.h"
 #include "i2c_bitbang.h"
+#include "i2c_private.h"
 #include "system.h"
 #include "task.h"
 #include "usb_pd.h"
@@ -971,6 +972,24 @@ unwedge_done:
 	i2c_raw_mode(port, 0);
 
 	return ret;
+}
+
+int i2c_set_freq(int port, enum i2c_freq freq)
+{
+	int ret;
+
+	if (!(get_i2c_port(port)->flags & I2C_PORT_FLAG_DYNAMIC_SPEED))
+		return EC_ERROR_INVAL;
+
+	i2c_lock(port, 1);
+	ret = chip_i2c_set_freq(port, freq);
+	i2c_lock(port, 0);
+	return ret;
+}
+
+enum i2c_freq i2c_get_freq(int port)
+{
+	return chip_i2c_get_freq(port);
 }
 
 /*****************************************************************************/

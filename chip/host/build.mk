@@ -8,8 +8,9 @@
 
 CORE:=host
 
-chip-y=system.o gpio.o uart.o persistence.o flash.o lpc.o reboot.o i2c.o \
+chip-y=system.o gpio.o uart.o persistence.o flash.o lpc.o reboot.o \
 	clock.o spi_master.o trng.o
+
 ifndef CONFIG_KEYBOARD_NOT_RAW
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
@@ -20,6 +21,8 @@ CPPFLAGS += -I$(abspath ./chip/g)
 dirs-y += chip/g/dcrypto
 endif
 dirs-y += chip/host/dcrypto
+
+chip-$(CONFIG_I2C)+= i2c.o
 
 chip-$(CONFIG_DCRYPTO)+= dcrypto/aes.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/app_cipher.o
