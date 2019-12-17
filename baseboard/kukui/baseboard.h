@@ -158,7 +158,7 @@
 
 /* Increase tx buffer size, as we'd like to stream EC log to AP. */
 #undef CONFIG_UART_TX_BUF_SIZE
-#define CONFIG_UART_TX_BUF_SIZE 8192
+#define CONFIG_UART_TX_BUF_SIZE 4096
 
 /* To be able to indicate the device is in tablet mode. */
 #define CONFIG_TABLET_MODE
