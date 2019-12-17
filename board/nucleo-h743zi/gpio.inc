@@ -14,8 +14,9 @@
 /* Interrupts */
 GPIO_INT(SPI1_NSS,        PIN(A, 4), GPIO_INPUT, spi_event)
 
-GPIO_INT(PCH_SLP_S0_L,    PIN(D,13), GPIO_INT_BOTH, slp_event)
-GPIO_INT(PCH_SLP_S3_L,    PIN(A,11), GPIO_INT_BOTH, slp_event)
+GPIO_INT(PCH_SLP_S0_L,    PIN(D, 13), GPIO_INT_BOTH, slp_event)
+GPIO_INT(PCH_SLP_S3_L,    PIN(A, 11), GPIO_INT_BOTH, slp_event)
+GPIO_INT(BTN1,            PIN(C, 13), GPIO_INT_BOTH, button_event)
 
 GPIO(WP,                  PIN(B, 7), GPIO_INPUT)
 

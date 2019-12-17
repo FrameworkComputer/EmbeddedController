@@ -45,9 +45,13 @@ static void ap_deferred(void)
 DECLARE_DEFERRED(ap_deferred);
 
 /* PCH power state changes */
-void slp_event(enum gpio_signal signal)
+static void slp_event(enum gpio_signal signal)
 {
 	hook_call_deferred(&ap_deferred_data, 0);
+}
+
+static void button_event(enum gpio_signal signal)
+{
 }
 
 #include "gpio_list.h"
