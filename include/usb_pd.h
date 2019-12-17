@@ -436,18 +436,24 @@ struct pd_policy {
  * [2] :: Cert Stat VDO
  * [3] :: (Product | Cable) VDO
  * [4] :: AMA VDO
+ * [4] :: Product type UFP1 VDO
  * [4] :: Product type Cable VDO 1
+ * [5] :: Product type UFP2 VDO
  * [5] :: Product type Cable VDO 2
+ * [6] :: Product type DFP VDO
  *
  */
-#define VDO_INDEX_HDR          0
-#define VDO_INDEX_IDH          1
-#define VDO_INDEX_CSTAT        2
-#define VDO_INDEX_CABLE        3
-#define VDO_INDEX_PRODUCT      3
-#define VDO_INDEX_AMA          4
-#define VDO_INDEX_PTYPE_CABLE1 4
-#define VDO_INDEX_PTYPE_CABLE2 5
+#define VDO_INDEX_HDR            0
+#define VDO_INDEX_IDH            1
+#define VDO_INDEX_CSTAT          2
+#define VDO_INDEX_CABLE          3
+#define VDO_INDEX_PRODUCT        3
+#define VDO_INDEX_AMA            4
+#define VDO_INDEX_PTYPE_UFP1_VDO 4
+#define VDO_INDEX_PTYPE_CABLE1   4
+#define VDO_INDEX_PTYPE_UFP2_VDO 4
+#define VDO_INDEX_PTYPE_CABLE2   5
+#define VDO_INDEX_PTYPE_DFP_VDO  6
 #define VDO_I(name) VDO_INDEX_##name
 
 /*
@@ -514,6 +520,13 @@ union active_cable_vdo2 {
 	uint32_t raw_value;
 };
 
+/* Protocol revision */
+enum pd_rev_type {
+	PD_REV10,
+	PD_REV20,
+	PD_REV30,
+};
+
 /* Cable structure for storing cable attributes */
 struct pd_cable {
 	uint8_t is_identified;
@@ -526,7 +539,7 @@ struct pd_cable {
 	/* For USB PD REV3, active cable has 2 VDOs */
 	union active_cable_vdo2 attr2;
 	/* Cable revision */
-	uint8_t rev;
+	enum pd_rev_type rev;
 	/* For storing Discover mode response from device */
 	union tbt_mode_resp_device dev_mode_resp;
 	/* For storing Discover mode response from cable */
@@ -541,6 +554,10 @@ struct pd_cable {
 #define CABLE_FLAGS_TBT_COMPAT_ENABLE	   BIT(2)
 /* Flag to limit speed to TBT Gen 2 passive cable */
 #define CABLE_FLAGS_TBT_COMPAT_LIMIT_SPEED BIT(3)
+/* Flag for checking if device is USB4.0 capable */
+#define CABLE_FLAGS_USB4_CAPABLE           BIT(4)
+/* Flag for entering ENTER_USB mode */
+#define CABLE_FLAGS_ENTER_USB_MODE         BIT(5)
 
 /*
  * SVDM Discover SVIDs request -> response
@@ -773,6 +790,7 @@ enum pd_states {
 	PD_STATE_BIST_RX,			/* C36 */
 	PD_STATE_BIST_TX,			/* C37 */
 	PD_STATE_DRP_AUTO_TOGGLE,		/* C38 */
+	PD_STATE_ENTER_USB,			/* C39 */
 	/* Number of states. Not an actual state. */
 	PD_STATE_COUNT,
 };
@@ -1065,14 +1083,8 @@ enum pd_data_msg_type {
 	PD_DATA_ALERT = 6,
 	PD_DATA_GET_COUNTRY_INFO = 7,
 	/* 8-14 Reserved for REV 3.0 */
+	PD_DATA_ENTER_USB = 8,
 	PD_DATA_VENDOR_DEF = 15,
-};
-
-/* Protocol revision */
-enum pd_rev_type {
-	PD_REV10,
-	PD_REV20,
-	PD_REV30
 };
 
 /*
@@ -1698,6 +1710,34 @@ void reset_pd_cable(int port);
  * @return	cable type
  */
 enum idh_ptype get_usb_pd_cable_type(int port);
+
+/**
+ * Return enter USB message payload
+ *
+ * @param port	USB-C port number
+ */
+uint32_t get_enter_usb_msg_payload(int port);
+
+/**
+ * Enter USB4 mode
+ *
+ * @param port	USB-C port number
+ */
+void enter_usb4_mode(int port);
+
+/**
+ * Clear enter USB4 mode
+ *
+ * @param port	USB-C port number
+ */
+void disable_enter_usb4_mode(int port);
+
+/**
+ * Return if need to enter into USB4 mode
+ *
+ * @param port	USB-C port number
+ */
+bool should_enter_usb4_mode(int port);
 
 /**
  * Return the response of discover mode SOP prime, with SVID = 0x8087

@@ -5723,6 +5723,7 @@ int cmd_usb_pd_mux_info(int argc, char *argv[])
 		printf("HPD_LVL=%d ", !!(r.flags & USB_PD_MUX_HPD_LVL));
 		printf("SAFE=%d ", !!(r.flags & USB_PD_MUX_SAFE_MODE));
 		printf("TBT=%d ", !!(r.flags & USB_PD_MUX_TBT_COMPAT_ENABLED));
+		printf("USB4=%d ", !!(r.flags & USB_PD_MUX_USB4_ENABLED));
 		printf("\n");
 	}
 

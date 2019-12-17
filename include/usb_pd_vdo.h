@@ -25,6 +25,35 @@
 
 /*****************************************************************************/
 /*
+ * Table 6-35 UFP VDO 1
+ * -------------------------------------------------------------
+ * <31:29> : UFP VDO version
+ * <28>    : Reserved
+ * <27:24> : Device Capability
+ *           0001b = USB2.0 Device capable
+ *           0010b = USB2.0 Device capable (Billboard only)
+ *           0100b = USB3.2 Device capable
+ *           1000b = USB4 Device Capable
+ * <23:6>  : Reserved
+ * <5:3>   : Alternate Modes
+ *           001b = Supports TBT3 alternate mode
+ *           010b = Supports Alternate Modes that reconfigure
+ *                  the signals on the [USB Type-C 2.0] connector
+ *                  – except for [TBT3]
+ *           100b = Supports Alternate Modes that do not
+ *                  reconfigure the signals on the [USB Type-C 2.0]
+ *                  connector
+ * <2:0>   : USB Highest Speed
+ *           000b = USB 2.0 only, no SuperSpeed support
+ *           001b = USB 3.2 Gen1
+ *           010b = USB 3.2/USB4 Gen2
+ *           011b = USB4 Gen3
+ *           100b…111b = Reserved, Shall Not be used
+ */
+#define PD_PRODUCT_IS_USB4(vdo) ((vdo) >> 27 & 0x1)
+
+/*****************************************************************************/
+/*
  * Table 6-38 Passive Cable VDO
  * -------------------------------------------------------------
  * <31:28> : HW Version
@@ -265,6 +294,11 @@ union active_cable_vdo1_rev30 {
  *           1b = Gen 2 or higher
  *           Note: see VDO1 USB Highest Speed for details of Gen supported.
  */
+enum retimer_active_element {
+	ACTIVE_REDRIVER,
+	ACTIVE_RETIMER,
+};
+
 union active_cable_vdo2_rev30 {
 	struct {
 		uint8_t usb_gen : 1;
@@ -275,7 +309,7 @@ union active_cable_vdo2_rev30 {
 		uint8_t usb_20_support : 1;
 		uint8_t usb_20_hub_hop : 2;
 		uint8_t usb_40_support : 1;
-		uint8_t active_elem : 1;
+		enum retimer_active_element active_elem : 1;
 		uint8_t physical_conn : 1;
 		uint8_t u3_to_u0 : 1;
 		uint8_t u3_power : 3;
@@ -638,6 +672,89 @@ enum ama_usb_ss {
 	AMA_USBSS_U31_GEN1,
 	AMA_USBSS_U31_GEN2,
 	AMA_USBSS_BBONLY,
+};
+
+/*
+ * Enter USB Data Object (Ref: USB PD 3.2 Version 2.0 Table 6-47)
+ * -----------------------
+ * <31>    : Reserved
+ * <30:28> : USB Mode
+ *           000b - USB2.0
+ *           001b - USB3.2
+ *           010b - USB4
+ * <27>    : Reserved
+ * <26>    : USB4 DRD
+ *           0b: Not capable of operating as a [USB4] Device
+ *           1b: Capable of operating as a [USB4] Device
+ * <25>    : USB3 DRD
+ *           0b: Not capable of operating as a [USB 3.2] Device
+ *           1b: Capable of operating as a [USB 3.2] Device
+ * <24>    : Reserved
+ * <23:21> : Cable Speed
+ *           000b - [USB 2.0] only, no SuperSpeed support
+ *           001b - [USB 3.2] Gen1
+ *           010b - [USB 3.2] Gen2 and [USB4] Gen2
+ *           011b - [USB4] Gen3
+ *           111b..100b: Reserved, Shall not be used
+ * <20:19> : Cable Type
+ *           00b - Passive
+ *           01b - Active Re-timer
+ *           10b - Active Re-driver
+ *           11b - Optically Isolated
+ * <18:17> : Cable Current
+ *           00b = VBUS is not supported
+ *           01b = Reserved
+ *           10b = 3A
+ *           11b = 5A
+ * <16>    : PCIe Supported ? (1b == Yes, 0b == No)
+ * <15     : DP Supported ? (1b == Yes, 0b == No)
+ * <14>    : TBT Supported ? (1b == Yes, 0b == No)
+ * <13>    : Host present ? (1b == Yes, 0b == No)
+ * <12:0>  : Reserved
+ */
+enum usb_mode {
+	USB_PD_20,
+	USB_PD_32,
+	USB_PD_40,
+	USB_PD_INVALID_3,
+	USB_PD_INVALID_4,
+	USB_PD_INVALID_5,
+	USB_PD_INVALID_6,
+	USB_PD_INVALID_7,
+};
+
+enum usb4_cable_current {
+	USB4_CABLE_CURRENT_INVALID,
+	USB4_CABLE_CURRENT_RESERVED,
+	USB4_CABLE_CURRENT_3A,
+	USB4_CABLE_CURRENT_5A,
+};
+
+enum usb4_cable_type {
+	CABLE_TYPE_PASSIVE,
+	CABLE_TYPE_ACTIVE_RETIMER,
+	CABLE_TYPE_ACTIVE_REDRIVER,
+	CABLE_TYPE_ISOLATED,
+};
+
+union enter_usb_data_obj {
+	struct {
+		uint16_t reserved3 : 13;
+		uint8_t host_present : 1;
+		uint8_t tbt_supported : 1;
+		uint8_t dp_supported : 1;
+		uint8_t pcie_supported : 1;
+		enum usb4_cable_current cable_current : 2;
+		enum usb4_cable_type cable_type : 2;
+		enum usb_rev30_ss cable_speed : 3;
+		uint8_t reserved2 : 1;
+		uint8_t usb3_drd_cap : 1;
+		uint8_t usb4_drd_cap : 1;
+		uint8_t reserved1 : 1;
+		enum usb_mode mode : 3;
+		uint8_t reserved0 : 1;
+	};
+	uint32_t raw_value;
 };
 
 #endif /* __CROS_EC_USB_PD_VDO_H */

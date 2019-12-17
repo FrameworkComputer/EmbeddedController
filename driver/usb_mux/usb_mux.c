@@ -264,7 +264,7 @@ static int command_typec(int argc, char **argv)
 
 		mux_state = usb_mux_get(port);
 		ccprintf("Port %d: USB=%d DP=%d POLARITY=%s HPD_IRQ=%d "
-			"HPD_LVL=%d SAFE=%d TBT=%d\n", port,
+			"HPD_LVL=%d SAFE=%d TBT=%d USB4=%d\n", port,
 			!!(mux_state & USB_PD_MUX_USB_ENABLED),
 			!!(mux_state & USB_PD_MUX_DP_ENABLED),
 			mux_state & USB_PD_MUX_POLARITY_INVERTED ?
@@ -272,7 +272,8 @@ static int command_typec(int argc, char **argv)
 			!!(mux_state & USB_PD_MUX_HPD_IRQ),
 			!!(mux_state & USB_PD_MUX_HPD_LVL),
 			!!(mux_state & USB_PD_MUX_SAFE_MODE),
-			!!(mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED));
+			!!(mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED),
+			!!(mux_state & USB_PD_MUX_USB4_ENABLED));
 
 		return EC_SUCCESS;
 	}

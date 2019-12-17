@@ -295,6 +295,7 @@ static const char * const pd_state_names[] = {
 	"SOFT_RESET", "HARD_RESET_SEND", "HARD_RESET_EXECUTE", "BIST_RX",
 	"BIST_TX",
 	"DRP_AUTO_TOGGLE",
+	"ENTER_USB",
 };
 BUILD_ASSERT(ARRAY_SIZE(pd_state_names) == PD_STATE_COUNT);
 #endif
@@ -1689,6 +1690,12 @@ static void handle_data_request(int port, uint16_t head,
 #ifdef CONFIG_USB_PD_REV30
 	case PD_DATA_BATTERY_STATUS:
 		break;
+	/* TODO : Add case PD_DATA_RESET for exiting USB4 */
+
+	/*
+	 * TODO : Add case PD_DATA_ENTER_USB to accept or reject
+	 * Enter_USB request from port partner.
+	 */
 #endif
 	case PD_DATA_VENDOR_DEF:
 		handle_vdm_request(port, cnt, payload, head);
@@ -1856,6 +1863,21 @@ static void handle_ctrl_request(int port, uint16_t head,
 		break;
 #endif
 	case PD_CTRL_REJECT:
+		if (pd[port].task_state == PD_STATE_ENTER_USB) {
+			if (!IS_ENABLED(CONFIG_USBC_SS_MUX))
+				break;
+
+			/*
+			 * Since Enter USB sets the mux state to SAFE mode,
+			 * resetting the mux state back to USB mode on
+			 * recieveing a NACK.
+			 */
+			usb_mux_set(port, USB_PD_MUX_USB_ENABLED,
+				USB_SWITCH_CONNECT, pd[port].polarity);
+
+			set_state(port, READY_RETURN_STATE(port));
+			break;
+		}
 	case PD_CTRL_WAIT:
 		if (pd[port].task_state == PD_STATE_DR_SWAP) {
 			if (type == PD_CTRL_WAIT) /* try again ... */
@@ -1918,7 +1940,20 @@ static void handle_ctrl_request(int port, uint16_t head,
 #endif
 		break;
 	case PD_CTRL_ACCEPT:
-		if (pd[port].task_state == PD_STATE_SOFT_RESET) {
+		if (pd[port].task_state == PD_STATE_ENTER_USB) {
+			if (!IS_ENABLED(CONFIG_USBC_SS_MUX))
+				break;
+
+			/* Connect the SBU and USB lines to the connector */
+			if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
+				ppc_set_sbu(port, 1);
+
+			/* Set usb mux to USB4 mode */
+			usb_mux_set(port, USB_PD_MUX_USB4_ENABLED,
+				USB_SWITCH_CONNECT, pd[port].polarity);
+
+			set_state(port, READY_RETURN_STATE(port));
+		} else if (pd[port].task_state == PD_STATE_SOFT_RESET) {
 			/*
 			 * For the case that we sent soft reset in SNK_DISCOVERY
 			 * on startup due to VBUS never low, clear the flag.
@@ -2836,6 +2871,46 @@ void pd_interrupt_handler_task(void *p)
 }
 #endif /* HAS_TASK_PD_INT_C0 || HAS_TASK_PD_INT_C1 || HAS_TASK_PD_INT_C2 */
 
+static void pd_send_enter_usb(int port, int *timeout)
+{
+	uint32_t usb4_payload = get_enter_usb_msg_payload(port);
+	uint16_t header;
+	int res;
+
+	/*
+	 * TODO: Enable Enter USB for cables (SOP').
+	 * This is needed for active cables
+	 */
+	if (!IS_ENABLED(CONFIG_USBC_SS_MUX) || !IS_ENABLED(CONFIG_USB_PD_USB4))
+		return;
+
+	header = PD_HEADER(PD_DATA_ENTER_USB,
+		pd[port].power_role,
+		pd[port].data_role,
+		pd[port].msg_id,
+		1,
+		PD_REV30,
+		0);
+
+	res = pd_transmit(port, TCPC_TX_SOP, header, &usb4_payload, AMS_START);
+	if (res < 0) {
+		*timeout = 10*MSEC;
+		/*
+		 * If failed to get goodCRC, send soft reset, otherwise ignore
+		 * failure.
+		 */
+		set_state(port, res == -1 ?
+			   PD_STATE_SOFT_RESET :
+			   READY_RETURN_STATE(port));
+		return;
+	}
+
+	/* Disable Enter USB4 mode prevent re-entry */
+	disable_enter_usb4_mode(port);
+
+	set_state(port, PD_STATE_ENTER_USB);
+}
+
 void pd_task(void *u)
 {
 	int head;
@@ -3699,6 +3774,15 @@ void pd_task(void *u)
 				break;
 			}
 
+			/*
+			 * Enter_USB if port partner and cable are
+			 * USB4 compatible.
+			 */
+			if (should_enter_usb4_mode(port)) {
+				pd_send_enter_usb(port, &timeout);
+				break;
+			}
+
 			if (!(pd[port].flags & PD_FLAGS_PING_ENABLED))
 				break;
 
@@ -4312,6 +4396,15 @@ void pd_task(void *u)
 				break;
 			}
 
+			/*
+			 * Enter_USB if port partner and cable are
+			 * USB4 compatible.
+			 */
+			if (should_enter_usb4_mode(port)) {
+				pd_send_enter_usb(port, &timeout);
+				break;
+			}
+
 			/* Sent all messages, don't need to wake very often */
 			timeout = 200*MSEC;
 			break;
@@ -4687,6 +4780,13 @@ void pd_task(void *u)
 			break;
 		}
 #endif
+		case PD_STATE_ENTER_USB:
+			if (pd[port].last_state != pd[port].task_state) {
+				set_state_timeout(port,
+					get_time().val + PD_T_SENDER_RESPONSE,
+					READY_RETURN_STATE(port));
+			}
+			break;
 		default:
 			break;
 		}

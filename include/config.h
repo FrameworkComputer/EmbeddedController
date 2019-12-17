@@ -3853,6 +3853,18 @@
  */
 #undef CONFIG_USB_PD_TBT_COMPAT_MODE
 
+/* Enable to enter into USB4 mode between two port partners */
+#undef CONFIG_USB_PD_USB4
+
+/* Enable if the board supports USB3.2 devices */
+#undef CONFIG_USB_PD_USB32
+
+/* Enable if the board is Thunderbolt Gen 3 capable */
+#undef CONFIG_USB_PD_TBT_GEN3_CAPABLE
+
+/* Enable PCIE tunneling if Thunderbolt-Compatible mode is enabled*/
+#undef CONFIG_USB_PD_PCIE_TUNNELING
+
 /*
  * Track VBUS level in TCPC module. This will only be needed if we're acting
  * as an external TCPC.
@@ -5031,6 +5043,22 @@
 #ifdef CONFIG_MAX695X_SEVEN_SEGMENT_DISPLAY
 #define CONFIG_SEVEN_SEG_DISPLAY
 #endif /* CONFIG_MAX695X_SEVEN_SEGMENT_DISPLAY */
+
+/*****************************************************************************/
+/* Enable PCIE tunneling if the board supports Thunderbolt-Compatible mode */
+#ifdef CONFIG_USB_PD_TBT_COMPAT_MODE
+#define CONFIG_USB_PD_PCIE_TUNNELING
+#define CONFIG_USB_PD_TBT_GEN3_CAPABLE
+#endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
+
+/*****************************************************************************/
+/*
+ * The board is Gen3 compatible and supports USB3.2 devices if it supports
+ * USB4 mode.
+ */
+#ifdef CONFIG_USB_PD_USB4
+#define CONFIG_USB_PD_USB32
+#endif /* CONFIG_USB_PD_USB4 */
 
 /*
  * Apply fuzzer and test config overrides last, since fuzzers and tests need to
