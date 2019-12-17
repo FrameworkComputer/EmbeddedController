@@ -314,27 +314,26 @@ static bool is_modal(int port, int cnt, uint32_t *payload)
 		PD_IDH_IS_MODAL(payload[VDO_INDEX_IDH]));
 }
 
-static bool is_intel_svid(int port, uint32_t *payload)
+static bool is_intel_svid(int port, int prev_svid_cnt)
 {
+	int i;
+
 	/*
 	 * Check if SVID0 = USB_VID_INTEL
 	 * (Ref: USB Type-C cable and connector specification, Table F-9)
-	 *
-	 * TODO (b/146081601): For the Discover SVIDs, responder may present
-	 * the SVIDs in any order in the VDOs. Modify the code  to check
-	 * Intel SVID in all the VDOs.
 	 */
 	if (is_tbt_compat_enabled(port)) {
 		/*
 		 * errata: All the Thunderbolt certified cables and docks
 		 * tested have SVID1 = 0x8087
+		 *
+		 * For the Discover SVIDs, responder may present the SVIDs
+		 * in any order hence check all SVIDs if Intel SVID present.
 		 */
-		if (is_transmit_msg_sop_prime(port))
-			return PD_VDO_SVID_SVID1(payload[VDO_INDEX_IDH]) ==
-				  USB_VID_INTEL;
-
-		return PD_VDO_SVID_SVID0(payload[VDO_INDEX_IDH]) ==
-			USB_VID_INTEL;
+		for (i = prev_svid_cnt; i < pe[port].svid_cnt; i++) {
+			if (pe[port].svids[i].svid == USB_VID_INTEL)
+				return true;
+		}
 	}
 	return false;
 }
@@ -943,6 +942,8 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 #endif
 			break;
 		case CMD_DISCOVER_SVID:
+			{
+			int prev_svid_cnt = pe[port].svid_cnt;
 			dfp_consume_svids(port, cnt, payload);
 			/*
 			 * Check if 0x8087 is received for Discover SVID SOP.
@@ -950,7 +951,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			 * Ref: USB Type-C Cable and Connector Specification,
 			 * figure F-1: TBT3 Discovery Flow
 			 */
-			if (is_intel_svid(port, payload)) {
+			if (is_intel_svid(port, prev_svid_cnt)) {
 				if (!is_transmit_msg_sop_prime(port)) {
 					rsize = dfp_discover_svids(payload);
 					enable_transmit_sop_prime(port);
@@ -971,6 +972,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 
 			rsize = dfp_discover_modes(port, payload);
 			disable_transmit_sop_prime(port);
+			}
 			break;
 		case CMD_DISCOVER_MODES:
 			dfp_consume_modes(port, cnt, payload);
