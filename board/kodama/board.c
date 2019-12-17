@@ -24,7 +24,6 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
-#include "i2c_bitbang.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -67,11 +66,6 @@ const struct i2c_port_t i2c_ports[] = {
 	{"other", 1, 100, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
-const struct i2c_port_t i2c_bitbang_ports[] = {
-	{"battery", 2, 100, GPIO_I2C3_SCL, GPIO_I2C3_SDA, .drv = &bitbang_drv},
-};
-const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -376,9 +370,4 @@ void board_fill_source_power_info(int port,
 	r->meas.current_max = 1500;
 	r->meas.current_lim = 1500;
 	r->max_power = r->meas.voltage_now * r->meas.current_max;
-}
-
-int board_get_battery_i2c(void)
-{
-	return board_get_version() >= 2 ? 2 : 1;
 }

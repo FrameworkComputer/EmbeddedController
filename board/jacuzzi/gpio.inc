@@ -53,8 +53,6 @@ GPIO(I2C1_SCL,             PIN(B, 8),  GPIO_INPUT)
 GPIO(I2C1_SDA,             PIN(B, 9),  GPIO_INPUT)
 GPIO(I2C2_SCL,             PIN(A, 11), GPIO_INPUT)
 GPIO(I2C2_SDA,             PIN(A, 12), GPIO_INPUT)
-GPIO(I2C3_SCL,             PIN(A, 5),  GPIO_ODR_HIGH)
-GPIO(I2C3_SDA,             PIN(C, 4),  GPIO_ODR_HIGH)
 
 /* Analog pins */
 GPIO(BOARD_ID,             PIN(C, 0),  GPIO_ANALOG)
