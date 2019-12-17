@@ -31,11 +31,26 @@
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 
+/* BMA253 Lid accel */
+#define CONFIG_ACCEL_BMA255
+
 /* Host command over HECI */
 #define CONFIG_HOSTCMD_HECI
 
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HECI
+
+#define CONFIG_ACCEL_INTERRUPTS
+
+/* Enable sensor fifo, must also define the _SIZE and _THRES */
+#define CONFIG_ACCEL_FIFO
+/* FIFO size is in power of 2. */
+#define CONFIG_ACCEL_FIFO_SIZE 512
+/* Depends on how fast the AP boots and typical ODRs */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
+
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK (BIT(LID_ACCEL))
 
 /* I2C ports */
 #define I2C_PORT_SENSOR ISH_I2C1
@@ -74,6 +89,7 @@
 
 /* Motion sensors */
 enum sensor_id {
+	LID_ACCEL,
 	SENSOR_COUNT
 };
 
