@@ -4,6 +4,13 @@
  * found in the LICENSE file.
  */
 
+/*
+ * Note that these pins map to the Nucleo-H743ZI V2 and are only slightly
+ * compatible with the original version.
+ *
+ * The V2 is denoted by "Nucleo-H743ZI2" vs. "Nucleo-H743ZI".
+ */
+
 /* Interrupts */
 GPIO_INT(SPI1_NSS,        PIN(A, 4), GPIO_INPUT, spi_event)
 
@@ -14,6 +21,9 @@ GPIO(WP,                  PIN(B, 7), GPIO_INPUT)
 
 /* Outputs */
 GPIO(EC_INT_L,            PIN(A, 1),  GPIO_OUT_HIGH)
+GPIO(LED1,                PIN(B, 0),  GPIO_OUT_LOW) /* Green */
+GPIO(LED2,                PIN(E, 1),  GPIO_OUT_LOW) /* Yellow */
+GPIO(LED3,                PIN(B, 14), GPIO_OUT_LOW) /* Red */
 
 UNIMPLEMENTED(ENTERING_RW)
 
