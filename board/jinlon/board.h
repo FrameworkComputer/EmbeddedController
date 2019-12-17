@@ -165,8 +165,7 @@ enum temp_sensor_id {
 
 /* List of possible batteries */
 enum battery_type {
-	BATTERY_SIMPLO_COS,
-	BATTERY_LGC,
+	BATTERY_DANAPACK_COS,
 	BATTERY_TYPE_COUNT,
 };
 
