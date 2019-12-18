@@ -659,7 +659,7 @@ int charger_set_input_current(int input_current)
 		info->input_current_max, info->input_current_step,
 		input_current);
 
-	CPRINTF("iin=%d", input_current);
+	CPRINTS("iin=%d", input_current);
 
 	return rt946x_update_bits(RT946X_REG_CHGCTRL3, RT946X_MASK_AICR,
 		reg_iin << RT946X_SHIFT_AICR);
