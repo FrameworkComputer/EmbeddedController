@@ -224,24 +224,37 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 		memcpy(dest, &val, bounded_read_len);
 		break;
 	case SB_VOLTAGE:
+		if (curr_batt->flags & BATT_FLAG_BAD_VOLTAGE)
+			return EC_ERROR_BUSY;
 		memcpy(dest, &(curr_batt->voltage), bounded_read_len);
 		break;
 	case SB_RELATIVE_STATE_OF_CHARGE:
+		if (curr_batt->flags & BATT_FLAG_BAD_STATE_OF_CHARGE)
+			return EC_ERROR_BUSY;
 		memcpy(dest, &(curr_batt->state_of_charge), bounded_read_len);
 		break;
 	case SB_TEMPERATURE:
+		if (curr_batt->flags & BATT_FLAG_BAD_TEMPERATURE)
+			return EC_ERROR_BUSY;
 		memcpy(dest, &(curr_batt->temperature), bounded_read_len);
 		break;
 	case SB_CURRENT:
+		if (curr_batt->flags & BATT_FLAG_BAD_CURRENT)
+			return EC_ERROR_BUSY;
 		memcpy(dest, &(curr_batt->current), bounded_read_len);
 		break;
 	case SB_FULL_CHARGE_CAPACITY:
+		if (curr_batt->flags & BATT_FLAG_BAD_FULL_CAPACITY ||
+				curr_batt->flags & BATT_FLAG_BAD_VOLTAGE)
+			return EC_ERROR_BUSY;
 		val = curr_batt->full_capacity;
 		if (batt_mode_cache & MODE_CAPACITY)
 			val = val * curr_batt->voltage / 10000;
 		memcpy(dest, &val, bounded_read_len);
 		break;
 	case SB_BATTERY_STATUS:
+		if (curr_batt->flags & BATT_FLAG_BAD_STATUS)
+			return EC_ERROR_BUSY;
 		memcpy(dest, &(curr_batt->status), bounded_read_len);
 		break;
 	case SB_CYCLE_COUNT:
@@ -249,6 +262,8 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 		       bounded_read_len);
 		break;
 	case SB_DESIGN_CAPACITY:
+		if (curr_batt->flags & BATT_FLAG_BAD_VOLTAGE)
+			return EC_ERROR_BUSY;
 		val = *(int *)host_get_memmap(EC_MEMMAP_BATT_DCAP);
 		if (batt_mode_cache & MODE_CAPACITY)
 			val = val * curr_batt->voltage / 10000;
@@ -259,6 +274,9 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 		       bounded_read_len);
 		break;
 	case SB_REMAINING_CAPACITY:
+		if (curr_batt->flags & BATT_FLAG_BAD_REMAINING_CAPACITY ||
+				curr_batt->flags & BATT_FLAG_BAD_VOLTAGE)
+			return EC_ERROR_BUSY;
 		val = curr_batt->remaining_capacity;
 		if (batt_mode_cache & MODE_CAPACITY)
 			val = val * curr_batt->voltage / 10000;
