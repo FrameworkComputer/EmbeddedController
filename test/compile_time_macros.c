@@ -9,6 +9,25 @@
 #include "test_util.h"
 
 
+static int test_BIT(void)
+{
+	TEST_EQ(BIT(0),  0x00000001U, "%u");
+	TEST_EQ(BIT(25), 0x02000000U, "%u");
+	TEST_EQ(BIT(31), 0x80000000U, "%u");
+
+	return EC_SUCCESS;
+}
+
+static int test_BIT_ULL(void)
+{
+	TEST_EQ(BIT_ULL(0),  0x0000000000000001ULL, "%Lu");
+	TEST_EQ(BIT_ULL(25), 0x0000000002000000ULL, "%Lu");
+	TEST_EQ(BIT_ULL(50), 0x0004000000000000ULL, "%Lu");
+	TEST_EQ(BIT_ULL(63), 0x8000000000000000ULL, "%Lu");
+
+	return EC_SUCCESS;
+}
+
 static int test_GENMASK(void)
 {
 	TEST_EQ(GENMASK(0, 0),   0x00000001U, "%u");
@@ -40,6 +59,8 @@ void run_test(void)
 {
 	test_reset();
 
+	RUN_TEST(test_BIT);
+	RUN_TEST(test_BIT_ULL);
 	RUN_TEST(test_GENMASK);
 	RUN_TEST(test_GENMASK_ULL);
 
