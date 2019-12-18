@@ -192,6 +192,26 @@ $(out)/RW/common/aes-gcm.o: CFLAGS+=-std=c99 -Wno-declaration-after-statement
 $(out)/RO/common/aes-gcm.o: CFLAGS+=-std=c99 -Wno-declaration-after-statement
 
 ifneq ($(CONFIG_BOOTBLOCK),)
+
+ifdef BOOTBLOCK
+
+# verify the file size is less than or equal to DEFAULT_BOOTBLOCK_SIZE
+$(shell test `stat -c "%s" "$(BOOTBLOCK)"` -le "$(DEFAULT_BOOTBLOCK_SIZE)")
+ifneq ($(.SHELLSTATUS),0)
+$(error bootblock $(BOOTBLOCK) larger than $(DEFAULT_BOOTBLOCK_SIZE) bytes)
+endif
+
+else
+
+# generate a dummy bootblock file
+BOOTBLOCK := $(out)/.dummy-bootblock
+
+.PHONY: $(out)/.dummy-bootblock
+$(out)/.dummy-bootblock:
+	@dd if=/dev/zero of=$@ bs=1 count=$(DEFAULT_BOOTBLOCK_SIZE) status=none
+
+endif # BOOTBLOCK
+
 build-util-bin += gen_emmc_transfer_data
 
 # Bootblock is only packed in RO image.

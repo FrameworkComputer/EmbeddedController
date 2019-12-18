@@ -16,3 +16,6 @@ board-$(CONFIG_BOOTBLOCK)+=emmc.o
 board-$(BOARD_KRANE)+=base_detect_krane.o
 
 $(out)/RO/board/$(BOARD)/emmc.o: $(out)/bootblock_data.h
+
+# 21504 bytes plus some extra buffer
+DEFAULT_BOOTBLOCK_SIZE:=23000

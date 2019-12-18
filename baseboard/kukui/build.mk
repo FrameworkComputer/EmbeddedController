@@ -19,3 +19,6 @@ baseboard-$(VARIANT_KUKUI_CHARGER_MT6370)+=charger_mt6370.o
 baseboard-$(VARIANT_KUKUI_POGO_KEYBOARD)+=base_detect_kukui.o
 
 $(out)/RO/baseboard/$(BASEBOARD)/emmc.o: $(out)/bootblock_data.h
+
+# bootblock size from 12769.0
+DEFAULT_BOOTBLOCK_SIZE:=21504

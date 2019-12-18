@@ -123,7 +123,7 @@ cmd_tp_hash = $(out)/util/gen_touchpad_hash \
 		$(if $(TOUCHPAD_FW),-f $(TOUCHPAD_FW)) -o $@
 
 cmd_emmc_bootblock = $(out)/util/gen_emmc_transfer_data \
-		$(if $(BOOTBLOCK),-i $(BOOTBLOCK)) -o $@
+		-i $(BOOTBLOCK) -o $@
 
 cmd_ipi_table = $(out)/util/gen_ipi_table $@
 cmd_cp_script = cp "$<" "$@" && chmod +x "$@"
