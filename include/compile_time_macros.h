@@ -41,4 +41,20 @@
 #define BIT(nr)			(1U << (nr))
 #define BIT_ULL(nr)		(1ULL << (nr))
 
+/*
+ * Create a bit mask from least significant bit |l|
+ * to bit |h|, inclusive.
+ *
+ * Examples:
+ * GENMASK(31, 0) ==> 0xFF_FF_FF_FF
+ * GENMASK(3, 0)  ==> 0x00_00_00_0F
+ * GENMASK(7, 4)  ==> 0x00_00_00_F0
+ * GENMASK(b, b)  ==> BIT(b)
+ *
+ * Note that we shift after using BIT() to avoid compiler
+ * warnings for BIT(31+1).
+ */
+#define GENMASK(h, l)     (((BIT(h)<<1)     - 1) ^ (BIT(l)     - 1))
+#define GENMASK_ULL(h, l) (((BIT_ULL(h)<<1) - 1) ^ (BIT_ULL(l) - 1))
+
 #endif /* __CROS_EC_COMPILE_TIME_MACROS_H */
