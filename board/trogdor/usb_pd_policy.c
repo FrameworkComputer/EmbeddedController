@@ -95,6 +95,32 @@ int pd_snk_is_vbus_provided(int port)
 
 /* ----------------- Vendor Defined Messages ------------------ */
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
+__override int svdm_dp_config(int port, uint32_t *payload)
+{
+	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+	uint8_t pin_mode = get_dp_pin_mode(port);
+
+	if (!pin_mode)
+		return 0;
+
+	/*
+	 * Defer setting the usb_mux until HPD goes high, svdm_dp_attention().
+	 * The AP only supports one DP phy. An external DP mux switches between
+	 * the two ports. Should switch those muxes when it is really used,
+	 * i.e. HPD high; otherwise, the real use case is preempted, like:
+	 *  (1) plug a dongle without monitor connected to port-0,
+	 *  (2) plug a dongle without monitor connected to port-1,
+	 *  (3) plug a monitor to the port-1 dongle.
+	 */
+
+	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
+			 CMD_DP_CONFIG | VDO_OPOS(opos));
+	payload[1] = VDO_DP_CFG(pin_mode,      /* pin mode */
+				1,             /* DPv1.3 signaling */
+				2);            /* UFP connected */
+	return 2;
+};
+
 __override void svdm_dp_post_config(int port)
 {
 	dp_flags[port] |= DP_FLAGS_DP_ON;
@@ -142,15 +168,25 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	if (lvl) {
 		if (is_dp_muxable(port)) {
 			/*
+			 * Enable and switch the DP port selection mux to the
+			 * correct port.
+			 *
 			 * TODO(waihong): Better to move switching DP mux to
 			 * the usb_mux abstraction.
 			 */
 			gpio_set_level(GPIO_DP_MUX_SEL, port == 1);
 			gpio_set_level(GPIO_DP_MUX_OE_L, 0);
 
+			/* Connect the SBU lines in PPC chip. */
+			if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
+				ppc_set_sbu(port, 1);
+
 			/*
+			 * Connect the USB SS/DP lines in TCPC chip.
+			 *
 			 * When mf_pref not true, still use the dock muxing
-			 * because of the board USB-C topology.
+			 * because of the board USB-C topology (limited to 2
+			 * lanes DP).
 			 */
 			usb_mux_set(port, TYPEC_MUX_DOCK,
 				    USB_SWITCH_CONNECT, pd_get_polarity(port));
@@ -160,7 +196,14 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 			return 0;  /* Nack */
 		}
 	} else {
+		/* Disconnect the DP port selection mux. */
 		gpio_set_level(GPIO_DP_MUX_OE_L, 1);
+
+		/* Disconnect the SBU lines in PPC chip. */
+		if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
+			ppc_set_sbu(port, 0);
+
+		/* Disconnect the DP but keep the USB SS lines in TCPC chip. */
 		usb_mux_set(port, TYPEC_MUX_USB,
 			    USB_SWITCH_CONNECT, pd_get_polarity(port));
 	}
@@ -210,7 +253,14 @@ __override void svdm_exit_dp_mode(int port)
 {
 	const struct usb_mux *mux = &usb_muxes[port];
 
+	/* Disconnect the DP port selection mux. */
+	gpio_set_level(GPIO_DP_MUX_OE_L, 1);
+
+	/* Below svdm_safe_dp_mode() will disconnect SBU and DP/USB SS lines. */
 	svdm_safe_dp_mode(port);
+
+	/* Signal AP for the HPD low event */
 	mux->hpd_update(port, 0, 0);
+	gpio_set_level(GPIO_DP_HOT_PLUG_DET, 0);
 }
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
