@@ -20,6 +20,7 @@
 
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CUTOFFPRINTS(info) CPRINTS("%s %s", "Battery cut off", info)
 
 /* See config.h for details */
 const static int batt_full_factor = CONFIG_BATT_FULL_FACTOR;
@@ -305,9 +306,9 @@ static void pending_cutoff_deferred(void)
 	rv = board_cut_off_battery();
 
 	if (rv == EC_RES_SUCCESS)
-		CPRINTS("Battery cut off succeeded.");
+		CUTOFFPRINTS("succeeded.");
 	else
-		CPRINTS("Battery cut off failed!");
+		CUTOFFPRINTS("failed!");
 }
 DECLARE_DEFERRED(pending_cutoff_deferred);
 
@@ -329,17 +330,17 @@ static enum ec_status battery_command_cutoff(struct host_cmd_handler_args *args)
 		p = args->params;
 		if (p->flags & EC_BATTERY_CUTOFF_FLAG_AT_SHUTDOWN) {
 			battery_cutoff_state = BATTERY_CUTOFF_STATE_PENDING;
-			CPRINTS("Battery cut off at-shutdown is scheduled");
+			CUTOFFPRINTS("at-shutdown is scheduled");
 			return EC_RES_SUCCESS;
 		}
 	}
 
 	rv = board_cut_off_battery();
 	if (rv == EC_RES_SUCCESS) {
-		CPRINTS("Battery cut off is successful.");
+		CUTOFFPRINTS("is successful.");
 		battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
 	} else {
-		CPRINTS("Battery cut off has failed.");
+		CUTOFFPRINTS("has failed.");
 	}
 
 	return rv;
