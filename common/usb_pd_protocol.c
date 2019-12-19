@@ -1334,20 +1334,15 @@ static __maybe_unused int pd_is_disconnected(int port)
 		;
 }
 
-static void set_usb_mux_with_current_data_role(int port)
+static enum typec_mux get_mux_mode_to_set(int port)
 {
-#ifdef CONFIG_USBC_SS_MUX
 	/*
 	 * If the SoC is down, then we disconnect the MUX to save power since
 	 * no one cares about the data lines.
 	 */
-#ifdef CONFIG_POWER_COMMON
-	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
-		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
-			    pd[port].polarity);
-		return;
-	}
-#endif /* CONFIG_POWER_COMMON */
+	if (IS_ENABLED(CONFIG_POWER_COMMON) &&
+	    chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
+		return TYPEC_MUX_NONE;
 
 	/*
 	 * When PD stack is disconnected, then mux should be disconnected, which
@@ -1356,23 +1351,35 @@ static void set_usb_mux_with_current_data_role(int port)
 	 * be set correctly again.
 	 */
 	if (pd_is_disconnected(port))
-		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
-			    pd[port].polarity);
-	/*
-	 * If new data role isn't DFP and we only support DFP, also disconnect.
-	 */
-	else if (IS_ENABLED(CONFIG_USBC_SS_MUX_DFP_ONLY) &&
-		 pd[port].data_role != PD_ROLE_DFP)
-		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
-			    pd[port].polarity);
-	/*
-	 * Otherwise connect mux since we are in S3+
-	 */
-	else
-		usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
-			    pd[port].polarity);
+		return TYPEC_MUX_NONE;
 
-#endif /* CONFIG_USBC_SS_MUX */
+	/* If new data role isn't DFP & we only support DFP, also disconnect. */
+	if (IS_ENABLED(CONFIG_USBC_SS_MUX_DFP_ONLY) &&
+	    pd[port].data_role != PD_ROLE_DFP)
+		return TYPEC_MUX_NONE;
+
+	/*
+	 * If the power role is sink and the partner device is not capable
+	 * of USB communication then disconnect.
+	 */
+	if (pd[port].power_role == PD_ROLE_SINK &&
+	    !(pd[port].flags & PD_FLAGS_PARTNER_USB_COMM))
+		return TYPEC_MUX_NONE;
+
+	/* Otherwise connect mux since we are in S3+ */
+	return TYPEC_MUX_USB;
+}
+
+/* TODO (b/146623068): Move this to common code */
+static void set_usb_mux_with_current_data_role(int port)
+{
+	if (IS_ENABLED(CONFIG_USBC_SS_MUX)) {
+		enum typec_mux mux_mode = get_mux_mode_to_set(port);
+		enum usb_switch usb_switch_mode = (mux_mode == TYPEC_MUX_NONE) ?
+				USB_SWITCH_DISCONNECT : USB_SWITCH_CONNECT;
+
+		usb_mux_set(port, mux_mode, usb_switch_mode, pd[port].polarity);
+	}
 }
 
 static void pd_set_data_role(int port, int role)
