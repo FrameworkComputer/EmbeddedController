@@ -122,13 +122,7 @@ static void led_tick(void)
 	uint32_t elapsed;
 	uint32_t next = 0;
 	uint32_t start = get_time().le.lo;
-	static uint8_t pwm_enabled = 0;
 
-	if (!pwm_enabled) {
-		pwm_enable(PWM_CH_LED_RED, 1);
-		pwm_enable(PWM_CH_LED_GREEN, 1);
-		pwm_enabled = 1;
-	}
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		pulse_power_led(led_pulse.color);
 	elapsed = get_time().le.lo - start;
@@ -160,6 +154,13 @@ static void led_resume(void)
 		set_color(EC_LED_ID_POWER_LED, LED_GREEN, 100);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, led_resume, HOOK_PRIO_DEFAULT);
+
+static void led_init(void)
+{
+	pwm_enable(PWM_CH_LED_RED, 1);
+	pwm_enable(PWM_CH_LED_GREEN, 1);
+}
+DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_INIT_PWM + 1);
 
 void led_alert(int enable)
 {
