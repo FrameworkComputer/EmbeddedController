@@ -4587,7 +4587,6 @@ void pd_set_vbus_discharge(int port, int enable)
 }
 
 /* VDM utility functions */
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
 static void pd_usb_billboard_deferred(void)
 {
 #if defined(CONFIG_USB_PD_ALT_MODE) && !defined(CONFIG_USB_PD_ALT_MODE_DFP) \
@@ -4839,7 +4838,7 @@ static void dfp_consume_attention(int port, uint32_t *payload)
 	if (modep->fx->attention)
 		modep->fx->attention(port, payload);
 }
-#endif
+
 /*
  * This algorithm defaults to choosing higher pin config over lower ones in
  * order to prefer multi-function if desired.
