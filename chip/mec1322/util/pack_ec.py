@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # Copyright 2013 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -24,8 +24,7 @@ CRC_TABLE = [0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15,
 
 def Crc8(crc, data):
   """Update CRC8 value."""
-  data_bytes = map(lambda b: ord(b) if isinstance(b, str) else b, data)
-  for v in data_bytes:
+  for v in data:
     crc = ((crc << 4) & 0xff) ^ (CRC_TABLE[(crc >> 4) ^ (v >> 4)]);
     crc = ((crc << 4) & 0xff) ^ (CRC_TABLE[(crc >> 4) ^ (v & 0xf)]);
   return crc ^ 0x55
@@ -44,7 +43,7 @@ def GetPayloadFromOffset(payload_file,offset):
     payload = bytearray(f.read())
   rem_len = len(payload) % 64
   if rem_len:
-    payload += '\0' * (64 - rem_len)
+    payload += b'\0' * (64 - rem_len)
   return payload
 
 def GetPayload(payload_file):
@@ -53,11 +52,11 @@ def GetPayload(payload_file):
 
 def GetPublicKey(pem_file):
   """Extract public exponent and modulus from PEM file."""
-  s = subprocess.check_output(['openssl', 'rsa', '-in', pem_file,
-                               '-text', '-noout'])
+  result = subprocess.run(['openssl', 'rsa', '-in', pem_file, '-text',
+                           '-noout'], stdout=subprocess.PIPE, encoding='utf-8')
   modulus_raw = []
   in_modulus = False
-  for line in s.split('\n'):
+  for line in result.stdout.splitlines():
     if line.startswith('modulus'):
       in_modulus = True
     elif not line.startswith(' '):
@@ -67,8 +66,7 @@ def GetPublicKey(pem_file):
     if line.startswith('publicExponent'):
       exp = int(line.split(' ')[1], 10)
   modulus_raw.reverse()
-  modulus = bytearray(''.join(map(lambda x: chr(int(x, 16)),
-                                  modulus_raw[0:256])))
+  modulus = bytearray((int(x, 16) for x in modulus_raw[:256]))
   return struct.pack('<Q', exp), modulus
 
 def GetSpiClockParameter(args):
@@ -82,11 +80,11 @@ def GetSpiReadCmdParameter(args):
   return SPI_READ_CMD_LIST.index(args.spi_read_cmd)
 
 def PadZeroTo(data, size):
-  data.extend('\0' * (size - len(data)))
+  data.extend(b'\0' * (size - len(data)))
 
 def BuildHeader(args, payload_len, rorofile):
   # Identifier and header version
-  header = bytearray(['C', 'S', 'M', 'S', '\0'])
+  header = bytearray(b'CSMS\0')
 
   PadZeroTo(header, 0x6)
   header.append(GetSpiClockParameter(args))
@@ -116,13 +114,12 @@ def SignByteArray(data, pem_file):
         hasher = hashlib.sha256()
         hasher.update(data)
         f.write(hasher.digest())
-      subprocess.check_call(['openssl', 'rsautl', '-sign', '-inkey', pem_file,
-                             '-keyform', 'PEM', '-in', hash_file,
-                             '-out', sign_file])
+      subprocess.run(['openssl', 'rsautl', '-sign', '-inkey', pem_file,
+                      '-keyform', 'PEM', '-in', hash_file, '-out', sign_file],
+                     check=True)
       with open(sign_file, 'rb') as f:
-        signed = list(f.read())
-        signed.reverse()
-        return bytearray(''.join(signed))
+        signed = f.read()
+        return bytearray(reversed(signed))
   finally:
     os.remove(hash_file)
     os.remove(sign_file)
@@ -199,11 +196,6 @@ def parseargs():
                       default=(96 * 1024))
   return parser.parse_args()
 
-# Debug helper routine
-def dumpsects(spi_list):
-  for s in spi_list:
-    print "%x %d %s\n"%(s[0],len(s[1]),s[2])
-
 def main():
   args = parseargs()
 
@@ -217,7 +209,6 @@ def main():
   rorofile=PacklfwRoImage(args.input, args.loader_file, args.image_size)
   payload = GetPayload(rorofile)
   payload_len = len(payload)
-  #print payload_len
   payload_signature = SignByteArray(payload, args.payload_key)
   header = BuildHeader(args, payload_len, rorofile)
   header_signature = SignByteArray(header, args.header_key)
@@ -236,19 +227,18 @@ def main():
 
 
   spi_list = sorted(spi_list)
-  #dumpsects(spi_list)
 
   with open(args.output, 'wb') as f:
     addr = args.romstart
     for s in spi_list:
       assert addr <= s[0]
       if addr < s[0]:
-        f.write('\xff' * (s[0] - addr))
+        f.write(b'\xff' * (s[0] - addr))
         addr = s[0]
       f.write(s[1])
       addr += len(s[1])
     if addr < spi_size:
-      f.write('\xff' * (spi_size - addr))
+      f.write(b'\xff' * (spi_size - addr))
 
 if __name__ == '__main__':
   main()
