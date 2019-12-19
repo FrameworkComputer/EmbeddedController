@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # Copyright 2013 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -6,8 +6,6 @@
 
 # A script to pack EC binary into SPI flash image for MEC17xx
 # Based on MEC170x_ROM_Description.pdf DS00002225C (07-28-17).
-from __future__ import print_function
-
 import argparse
 import hashlib
 import os
@@ -15,9 +13,6 @@ import struct
 import subprocess
 import tempfile
 import zlib # CRC32
-
-# from six import int2byte
-
 
 # MEC1701 has 256KB SRAM from 0xE0000 - 0x120000
 # SRAM is divided into contiguous CODE & DATA
@@ -43,8 +38,7 @@ debug_print = dummy_print
 
 def Crc8(crc, data):
   """Update CRC8 value."""
-  data_bytes = map(lambda b: ord(b) if isinstance(b, str) else b, data)
-  for v in data_bytes:
+  for v in data:
     crc = ((crc << 4) & 0xff) ^ (CRC_TABLE[(crc >> 4) ^ (v >> 4)]);
     crc = ((crc << 4) & 0xff) ^ (CRC_TABLE[(crc >> 4) ^ (v & 0xf)]);
   return crc ^ 0x55
@@ -63,7 +57,7 @@ def GetPayloadFromOffset(payload_file, offset):
     payload = bytearray(f.read())
   rem_len = len(payload) % 64
   if rem_len:
-    payload += '\0' * (64 - rem_len)
+    payload += b'\0' * (64 - rem_len)
   return payload
 
 def GetPayload(payload_file):
@@ -72,11 +66,11 @@ def GetPayload(payload_file):
 
 def GetPublicKey(pem_file):
   """Extract public exponent and modulus from PEM file."""
-  s = subprocess.check_output(['openssl', 'rsa', '-in', pem_file,
-                               '-text', '-noout'])
+  result = subprocess.run(['openssl', 'rsa', '-in', pem_file, '-text',
+                           '-noout'], stdout=subprocess.PIPE, encoding='utf-8')
   modulus_raw = []
   in_modulus = False
-  for line in s.split('\n'):
+  for line in result.stdout.splitlines():
     if line.startswith('modulus'):
       in_modulus = True
     elif not line.startswith(' '):
@@ -86,8 +80,7 @@ def GetPublicKey(pem_file):
     if line.startswith('publicExponent'):
       exp = int(line.split(' ')[1], 10)
   modulus_raw.reverse()
-  modulus = bytearray(''.join(map(lambda x: chr(int(x, 16)),
-                                  modulus_raw[0:256])))
+  modulus = bytearray((int(x, 16) for x in modulus_raw[:256]))
   return struct.pack('<Q', exp), modulus
 
 def GetSpiClockParameter(args):
@@ -101,11 +94,11 @@ def GetSpiReadCmdParameter(args):
   return SPI_READ_CMD_LIST.index(args.spi_read_cmd)
 
 def PadZeroTo(data, size):
-  data.extend('\0' * (size - len(data)))
+  data.extend(b'\0' * (size - len(data)))
 
 def BuildHeader(args, payload_len, load_addr, rorofile):
   # Identifier and header version
-  header = bytearray(['P', 'H', 'C', 'M', '\0'])
+  header = bytearray(b'PHCM\0')
 
   # byte[5]
   b = GetSpiClockParameter(args)
@@ -140,7 +133,7 @@ def BuildHeader(args, payload_len, load_addr, rorofile):
 
 def BuildHeader2(args, payload_len, load_addr, payload_entry):
   # Identifier and header version
-  header = bytearray(['P', 'H', 'C', 'M', '\0'])
+  header = bytearray(b'PHCM\0')
 
   # byte[5]
   b = GetSpiClockParameter(args)
@@ -190,7 +183,7 @@ def HashByteArray(data):
 def SignByteArray(data):
   debug_print("Signature is SHA-256 of data")
   sigb = HashByteArray(data)
-  sigb.extend("\0" * 32)
+  sigb.extend(b'\0' * 32)
   return sigb
 
 
@@ -521,7 +514,7 @@ def main():
       if addr < s[0]:
         debug_print("Offset ",hex(addr)," Length", hex(s[0]-addr),
                 "fill with 0xff")
-        f.write('\xff' * (s[0] - addr))
+        f.write(b'\xff' * (s[0] - addr))
         addr = s[0]
         debug_print("Offset ",hex(addr), " Length", hex(len(s[1])), "write data")
 
@@ -531,7 +524,7 @@ def main():
     if addr < spi_size:
       debug_print("Offset ",hex(addr), " Length", hex(spi_size - addr),
               "fill with 0xff")
-      f.write('\xff' * (spi_size - addr))
+      f.write(b'\xff' * (spi_size - addr))
 
     f.flush()
 
