@@ -27,7 +27,6 @@
 int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode,
 			enum usb_suspend_charge inhibit_charge);
 
-#ifdef HAS_TASK_USB_CHG_P0
 #define USB_CHG_EVENT_BC12	TASK_EVENT_CUSTOM_BIT(0)
 #define USB_CHG_EVENT_VBUS	TASK_EVENT_CUSTOM_BIT(1)
 #define USB_CHG_EVENT_INTR	TASK_EVENT_CUSTOM_BIT(2)
@@ -35,7 +34,6 @@ int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode,
 #define USB_CHG_EVENT_DR_DFP	TASK_EVENT_CUSTOM_BIT(4)
 #define USB_CHG_EVENT_CC_OPEN	TASK_EVENT_CUSTOM_BIT(5)
 #define USB_CHG_EVENT_MUX	TASK_EVENT_CUSTOM_BIT(6)
-#endif
 
 /*
  * Define USB_CHG_PORT_TO_TASK_ID() and TASK_ID_TO_USB_CHG__PORT() macros to
