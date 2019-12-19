@@ -51,28 +51,26 @@ enum kukui_board_version {
 	BOARD_VERSION_COUNT,
 };
 
-struct {
-	enum kukui_board_version version;
-	int expect_mv;
-} const kukui_boards[] = {
-	{ BOARD_VERSION_REV0, 109 },   /* 51.1K , 2.2K(gru 3.3K) ohm */
-	{ BOARD_VERSION_REV1, 211 },   /* 51.1k , 6.8K ohm */
-	{ BOARD_VERSION_REV2, 319 },   /* 51.1K , 11K ohm */
-	{ BOARD_VERSION_REV3, 427 },   /* 56K   , 17.4K ohm */
-	{ BOARD_VERSION_REV4, 542 },   /* 51.1K , 22K ohm */
-	{ BOARD_VERSION_REV5, 666 },   /* 51.1K , 30K ohm */
-	{ BOARD_VERSION_REV6, 781 },   /* 51.1K , 39.2K ohm */
-	{ BOARD_VERSION_REV7, 900 },   /* 56K   , 56K ohm */
-	{ BOARD_VERSION_REV8, 1023 },  /* 47K   , 61.9K ohm */
-	{ BOARD_VERSION_REV9, 1137 },  /* 47K   , 80.6K ohm */
-	{ BOARD_VERSION_REV10, 1240 }, /* 56K   , 124K ohm */
-	{ BOARD_VERSION_REV11, 1343 }, /* 51.1K , 150K ohm */
-	{ BOARD_VERSION_REV12, 1457 }, /* 47K   , 200K ohm */
-	{ BOARD_VERSION_REV13, 1576 }, /* 47K   , 330K ohm */
-	{ BOARD_VERSION_REV14, 1684 }, /* 47K   , 680K ohm */
-	{ BOARD_VERSION_REV15, 1800 }, /* 56K   , NC */
+/* map from kukui_board_version to board id voltage in mv */
+const int16_t kukui_board_id_map[] = {
+	109,   /* 51.1K , 2.2K(gru 3.3K) ohm */
+	211,   /* 51.1k , 6.8K ohm */
+	319,   /* 51.1K , 11K ohm */
+	427,   /* 56K   , 17.4K ohm */
+	542,   /* 51.1K , 22K ohm */
+	666,   /* 51.1K , 30K ohm */
+	781,   /* 51.1K , 39.2K ohm */
+	900,   /* 56K   , 56K ohm */
+	1023,  /* 47K   , 61.9K ohm */
+	1137,  /* 47K   , 80.6K ohm */
+	1240,  /* 56K   , 124K ohm */
+	1343,  /* 51.1K , 150K ohm */
+	1457,  /* 47K   , 200K ohm */
+	1576,  /* 47K   , 330K ohm */
+	1684,  /* 47K   , 680K ohm */
+	1800,  /* 56K   , NC */
 };
-BUILD_ASSERT(ARRAY_SIZE(kukui_boards) == BOARD_VERSION_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(kukui_board_id_map) == BOARD_VERSION_COUNT);
 
 #define THRESHOLD_MV 56 /* Simply assume 1800/16/2 */
 
@@ -96,8 +94,8 @@ int board_get_version(void)
 	gpio_set_level(GPIO_EC_BOARD_ID_EN_L, 1);
 
 	for (i = 0; i < BOARD_VERSION_COUNT; ++i) {
-		if (mv < kukui_boards[i].expect_mv + THRESHOLD_MV) {
-			version = kukui_boards[i].version;
+		if (mv < kukui_board_id_map[i] + THRESHOLD_MV) {
+			version = i;
 			break;
 		}
 	}
