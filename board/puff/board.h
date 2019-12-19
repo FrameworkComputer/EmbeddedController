@@ -62,6 +62,10 @@
 #undef CONFIG_CMD_PWR_AVG
 #define CONFIG_CMD_PPC_DUMP
 
+/* Don't generate host command debug by default */
+#undef CONFIG_HOSTCMD_DEBUG_MODE
+#define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
+
 /* Chipset config */
 #define CONFIG_CHIPSET_COMETLAKE_DISCRETE
 /* check */
