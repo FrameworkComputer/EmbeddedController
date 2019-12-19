@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-"
 
 # Copyright 2019 The Chromium OS Authors. All rights reserved.
@@ -17,7 +17,6 @@ image with a manifest header, ISH shim loader will parse this header and load
 each binaries into right memory location.
 """
 
-from __future__ import print_function
 import argparse
 import struct
 
@@ -70,40 +69,40 @@ def main():
   print("    Packing EC image file for ISH")
 
   with open(args.output, 'wb') as f:
-    print("      kernel binary size: %i" % args.kernel_size)
+    print("      kernel binary size:", args.kernel_size)
     kern_rdup_pg_size = roundup_page(args.kernel_size)
     # Add manifest for main ISH binary
-    f.write(gen_manifest('ISHM', 'ISH_KERN', HEADER_SIZE, kern_rdup_pg_size))
+    f.write(gen_manifest(b'ISHM', b'ISH_KERN', HEADER_SIZE, kern_rdup_pg_size))
 
     if args.aon is not None:
-      print("      AON binary size:    %i" % args.aon_size)
+      print("      AON binary size:   ", args.aon_size)
       aon_rdup_pg_size = roundup_page(args.aon_size)
       # Add manifest for aontask binary
-      f.write(gen_manifest('ISHM', 'AON_TASK',
+      f.write(gen_manifest(b'ISHM', b'AON_TASK',
                            (HEADER_SIZE + kern_rdup_pg_size * PAGE_SIZE -
                             MANIFEST_ENTRY_SIZE), aon_rdup_pg_size))
 
     # Add manifest that signals end of manifests
-    f.write(gen_manifest('ISHE', '', 0, 0))
+    f.write(gen_manifest(b'ISHE', b'', 0, 0))
 
     # Pad the remaining HEADER with 0s
     if args.aon is not None:
-      f.write('\x00' * (HEADER_SIZE - (MANIFEST_ENTRY_SIZE * 3)))
+      f.write(b'\x00' * (HEADER_SIZE - (MANIFEST_ENTRY_SIZE * 3)))
     else:
-      f.write('\x00' * (HEADER_SIZE - (MANIFEST_ENTRY_SIZE * 2)))
+      f.write(b'\x00' * (HEADER_SIZE - (MANIFEST_ENTRY_SIZE * 2)))
 
     # Append original kernel image
     with open(args.kernel, 'rb') as in_file:
       f.write(in_file.read())
     # Filling padings due to size round up as pages
-    f.write('\x00' * (kern_rdup_pg_size * PAGE_SIZE - args.kernel_size))
+    f.write(b'\x00' * (kern_rdup_pg_size * PAGE_SIZE - args.kernel_size))
 
     if args.aon is not None:
       # Append original aon image
       with open(args.aon, 'rb') as in_file:
         f.write(in_file.read())
       # Filling padings due to size round up as pages
-      f.write('\x00' * (aon_rdup_pg_size * PAGE_SIZE - args.aon_size))
+      f.write(b'\x00' * (aon_rdup_pg_size * PAGE_SIZE - args.aon_size))
 
 if __name__ == '__main__':
   main()
