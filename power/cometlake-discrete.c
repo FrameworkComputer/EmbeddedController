@@ -356,3 +356,19 @@ enum power_state power_handle_state(enum power_state state)
 	 */
 	return common_intel_x86_power_handle_state(state);
 }
+
+#ifdef CONFIG_VBOOT_EFS
+/*
+ * Called in main() to ensure chipset power is sane.
+ *
+ * This may be useful because EC reset could happen under unexpected
+ * conditions and we want to ensure that if the AP is wedged for some
+ * reason (for instance) we unwedge it before continuing.
+ *
+ * Because power sequencing here is all EC-controlled and this is called
+ * as part of the init sequence, we don't need to do anything- EC reset
+ * implies power sequencing is all-off and we don't have any external
+ * PMIC to synchronize state with.
+ */
+void chipset_handle_reboot(void) {}
+#endif /* CONFIG_VBOOT_EFS */

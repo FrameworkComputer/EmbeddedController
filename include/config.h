@@ -4295,6 +4295,15 @@
 /* Support early firmware selection */
 #undef CONFIG_VBOOT_EFS
 
+/* Offset of RW-A image in writable storage when using EFS. */
+#undef CONFIG_RW_A_STORAGE_OFF
+/* Offset of RW-A signature. */
+#undef CONFIG_RW_A_SIGN_STORAGE_OFF
+/* Offset of RW-B image in writable storage when using EFS. */
+#undef CONFIG_RW_B_STORAGE_OFF
+/* Offset of RW-B signature. */
+#undef CONFIG_RW_B_SIGN_STORAGE_OFF
+
 /* Support computing hash of code for verified boot */
 #undef CONFIG_VBOOT_HASH
 

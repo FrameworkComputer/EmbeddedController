@@ -42,12 +42,50 @@
 #define CONFIG_HOSTCMD_ESPI
 #define CONFIG_LED_COMMON
 #undef  CONFIG_LID_SWITCH
+#define CONFIG_LTO
 #define CONFIG_PWM
-#define CONFIG_SHA256
-#define CONFIG_SHA256_UNROLLED
+#define CONFIG_VBOOT_EFS
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
+
+/*
+ * Override Flash layout for EFS.
+ *
+ * 3 images are stored: RO, RW-A and RW-B. RO must be one of 64k, 128k or 256k
+ * in size to be correctly protected by the hardware block protection. RW must
+ * be the same size as RO, so divide the flash into four equal-size blocks.
+ *
+ * A public key is stored at the end of RO. Signatures are stored at the
+ * end of RW_A and RW_B, respectively.
+ */
+#define CONFIG_RW_B
+#define CONFIG_RW_B_MEM_OFF		CONFIG_RO_MEM_OFF
+#undef  CONFIG_RO_SIZE
+#define CONFIG_RO_SIZE			(CONFIG_FLASH_SIZE / 4)
+#undef  CONFIG_RW_SIZE
+#define CONFIG_RW_SIZE			CONFIG_RO_SIZE
+#define CONFIG_RW_A_STORAGE_OFF		CONFIG_RW_STORAGE_OFF
+#define CONFIG_RW_B_STORAGE_OFF		(CONFIG_RW_A_STORAGE_OFF + \
+					 CONFIG_RW_SIZE)
+#define CONFIG_RW_A_SIGN_STORAGE_OFF	(CONFIG_RW_A_STORAGE_OFF + \
+					 CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)
+#define CONFIG_RW_B_SIGN_STORAGE_OFF	(CONFIG_RW_B_STORAGE_OFF + \
+					 CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)
+
+#define CONFIG_RWSIG
+#define CONFIG_RWSIG_TYPE_RWSIG
+#define CONFIG_RSA
+#ifdef SECTION_IS_RO
+#define CONFIG_RSA_OPTIMIZED
+#endif
+#define CONFIG_SHA256
+#ifdef SECTION_IS_RO
+#define CONFIG_SHA256_UNROLLED
+#endif
+#define CONFIG_RSA_KEY_SIZE 3072
+#define CONFIG_RSA_EXPONENT_3
+
 
 #define CONFIG_SUPPRESSED_HOST_COMMANDS \
 	EC_CMD_CONSOLE_SNAPSHOT, EC_CMD_CONSOLE_READ, EC_CMD_PD_GET_LOG_ENTRY
@@ -61,6 +99,13 @@
 #define CONFIG_CMD_PD_CONTROL
 #undef CONFIG_CMD_PWR_AVG
 #define CONFIG_CMD_PPC_DUMP
+#ifdef SECTION_IS_RO
+/* Reduce RO size by removing less-relevant commands. */
+#undef CONFIG_CMD_APTHROTTLE
+#undef CONFIG_CMD_CHARGEN
+#undef CONFIG_CMD_HCDEBUG
+#undef CONFIG_CMD_MMAPINFO
+#endif
 
 /* Don't generate host command debug by default */
 #undef CONFIG_HOSTCMD_DEBUG_MODE
