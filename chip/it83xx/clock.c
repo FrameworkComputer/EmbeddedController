@@ -141,6 +141,30 @@ void __ram_code clock_ec_pll_ctrl(enum ec_pll_ctrl mode)
 	IT83XX_ECPM_PLLCTRL = mode;
 	/* for deep doze / sleep mode */
 	IT83XX_ECPM_PLLCTRL = mode;
+
+#ifdef IT83XX_CHIP_FLASH_NO_DEEP_POWER_DOWN
+	/*
+	 * WORKAROUND: this workaround is used to fix EC gets stuck in low power
+	 * mode when WRST# is asserted.
+	 *
+	 * By default, flash will go into deep power down mode automatically
+	 * when EC is in low power mode. But we got an issue on IT83202BX that
+	 * flash won't be able to wake up correctly when WRST# is asserted
+	 * under this condition.
+	 * This issue might cause cold reset failure so we fix it.
+	 *
+	 * NOTE: this fix will increase power number about 40uA in low power
+	 * mode.
+	 */
+	if (mode == EC_PLL_DOZE)
+		IT83XX_SMFI_SMECCS &= ~IT83XX_SMFI_MASK_HOSTWA;
+	else
+		/*
+		 * Don't send deep power down mode command to flash when EC in
+		 * low power mode.
+		 */
+		IT83XX_SMFI_SMECCS |= IT83XX_SMFI_MASK_HOSTWA;
+#endif
 	/*
 	 * barrier: ensure low power mode setting is taken into control
 	 * register before standby instruction.
