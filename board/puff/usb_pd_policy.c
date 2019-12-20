@@ -59,7 +59,7 @@ int pd_set_power_supply_ready(int port)
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
 int pd_snk_is_vbus_provided(int port)
 {
-	return 0;
+	return ppc_is_vbus_present(port);
 }
 #endif
 
