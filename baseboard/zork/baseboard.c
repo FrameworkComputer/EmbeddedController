@@ -22,6 +22,7 @@
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3dpx1207.h"
+#include "driver/retimer/ps8818.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/temp_sensor/sb_tsi.h"
@@ -476,6 +477,9 @@ struct usb_retimer usb_retimers[USBC_PORT_COUNT] = {
 		.gpio_dp_enable = GPIO_USB_C0_IN_HPD,
 	},
 	[USBC_PORT_C1] = {
+		.driver = &ps8818_usb_retimer,
+		.i2c_port = I2C_PORT_TCPC1,
+		.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
 	},
 };
 
