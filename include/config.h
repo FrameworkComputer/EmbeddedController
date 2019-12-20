@@ -3888,6 +3888,7 @@
  */
 #undef CONFIG_USBC_RETIMER_INTEL_BB
 #undef CONFIG_USBC_RETIMER_PI3DPX1207
+#undef CONFIG_USBC_RETIMER_PS8818
 
 /*
  * Adds an EC console command to erase the ANX7447 OCM flash.
@@ -4805,7 +4806,8 @@
  * will not have to include it in their own board/baseboard.h file.
  */
 #if	defined(CONFIG_USBC_RETIMER_INTEL_BB) || \
-	defined(CONFIG_USBC_RETIMER_PI3DPX1207)
+	defined(CONFIG_USBC_RETIMER_PI3DPX1207) || \
+	defined(CONFIG_USBC_RETIMER_PS8818)
 #define CONFIG_USBC_MUX_RETIMER
 #endif
 
