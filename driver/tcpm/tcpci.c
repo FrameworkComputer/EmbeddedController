@@ -297,29 +297,62 @@ void tcpci_tcpc_enable_auto_discharge_disconnect(int port, int enable)
 int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	enum tcpc_cc_voltage_status *cc2)
 {
+	int role;
 	int status;
+	int cc1_present_rd, cc2_present_rd;
 	int rv;
 
-	rv = tcpc_read(port, TCPC_REG_CC_STATUS, &status);
+	/* errors will return CC as open */
+	*cc1 = TYPEC_CC_VOLT_OPEN;
+	*cc2 = TYPEC_CC_VOLT_OPEN;
 
-	/* If tcpc read fails, return error and CC as open */
-	if (rv) {
-		*cc1 = TYPEC_CC_VOLT_OPEN;
-		*cc2 = TYPEC_CC_VOLT_OPEN;
+	/* Get the ROLE CONTROL and CC STATUS values */
+	rv = tcpc_read(port, TCPC_REG_ROLE_CTRL, &role);
+	if (rv)
 		return rv;
-	}
 
+	rv = tcpc_read(port, TCPC_REG_CC_STATUS, &status);
+	if (rv)
+		return rv;
+
+	/* Get the current CC values from the CC STATUS */
 	*cc1 = TCPC_REG_CC_STATUS_CC1(status);
 	*cc2 = TCPC_REG_CC_STATUS_CC2(status);
 
-	/*
-	 * If status is not open, then OR in termination to convert to
-	 * enum tcpc_cc_voltage_status.
-	 */
-	if (*cc1 != TYPEC_CC_VOLT_OPEN)
-		*cc1 |= TCPC_REG_CC_STATUS_TERM(status) << 2;
-	if (*cc2 != TYPEC_CC_VOLT_OPEN)
-		*cc2 |= TCPC_REG_CC_STATUS_TERM(status) << 2;
+	/* Determine if we are presenting Rd */
+	cc1_present_rd = 0;
+	cc2_present_rd = 0;
+	if (role & TCPC_REG_ROLE_CTRL_DRP_MASK) {
+		/*
+		 * We are doing DRP.  We will use the CC STATUS
+		 * ConnectResult to determine if we are presenting
+		 * Rd or Rp.
+		 */
+		int term;
+
+		term = TCPC_REG_CC_STATUS_TERM(status);
+
+		if (*cc1 != TYPEC_CC_VOLT_OPEN)
+			cc1_present_rd = term;
+		if (*cc2 != TYPEC_CC_VOLT_OPEN)
+			cc2_present_rd = term;
+	} else {
+		/*
+		 * We are not doing DRP.  We will use the ROLE CONTROL
+		 * CC values to determine if we are presenting Rd or Rp.
+		 */
+		int role_cc1, role_cc2;
+
+		role_cc1 = TCPC_REG_ROLE_CTRL_CC1(role);
+		role_cc2 = TCPC_REG_ROLE_CTRL_CC2(role);
+
+		if (*cc1 != TYPEC_CC_VOLT_OPEN)
+			cc1_present_rd = !!(role_cc1 == TYPEC_CC_RD);
+		if (*cc2 != TYPEC_CC_VOLT_OPEN)
+			cc2_present_rd = !!(role_cc2 == TYPEC_CC_RD);
+	}
+	*cc1 |= cc1_present_rd << 2;
+	*cc2 |= cc2_present_rd << 2;
 
 	return rv;
 }

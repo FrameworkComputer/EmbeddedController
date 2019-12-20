@@ -95,32 +95,6 @@ static int nct38xx_tcpm_init(int port)
 	return rv;
 }
 
-static int tcpci_nct38xx_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-		enum tcpc_cc_voltage_status *cc2)
-{
-	int rv;
-	int rc;
-
-	rv = tcpc_read(port, TCPC_REG_ROLE_CTRL, &rc);
-	if (rv)
-		return rv;
-
-	rv = tcpci_tcpm_get_cc(port, cc1, cc2);
-	if (rv)
-		return rv;
-
-	if (!TCPC_REG_ROLE_CTRL_DRP(rc)) {
-		if ((*cc1 != TYPEC_CC_VOLT_OPEN) &&
-			(TCPC_REG_ROLE_CTRL_CC1(rc) == TYPEC_CC_RD))
-			*cc1 |= 0x4;
-		if ((*cc2 != TYPEC_CC_VOLT_OPEN) &&
-			(TCPC_REG_ROLE_CTRL_CC2(rc) == TYPEC_CC_RD))
-			*cc2 |= 0x04;
-	}
-
-	return rv;
-}
-
 int tcpci_nct38xx_transmit(int port, enum tcpm_transmit_type type,
 			uint16_t header, const uint32_t *data)
 {
@@ -209,7 +183,7 @@ static void nct38xx_tcpc_alert(int port)
 const struct tcpm_drv nct38xx_tcpm_drv = {
 	.init			= &nct38xx_tcpm_init,
 	.release		= &tcpci_tcpm_release,
-	.get_cc			= &tcpci_nct38xx_get_cc,
+	.get_cc			= &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,
 #endif
