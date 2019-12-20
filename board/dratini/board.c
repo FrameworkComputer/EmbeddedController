@@ -369,7 +369,7 @@ static void setup_fans(void)
  * Returns true for boards that are convertible into tablet mode, and
  * false for clamshells.
  */
-static bool board_is_convertible(void)
+bool board_is_convertible(void)
 {
 	uint8_t sku_id = get_board_sku();
 
