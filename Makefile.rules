@@ -52,6 +52,11 @@ quiet = $(cmd_$(1))
 endif
 endif
 
+# Provide an option to use a consistent ec_version.h file when
+# compiling, which is useful to verify that a commit does not modify
+# the resulting ec.bin
+export STATIC_VERSION
+
 # commands to build all targets
 cmd_libec = $(LD) -r $^ -o $@.1.o ${silent_err} && \
 	$(OBJCOPY) --localize-hidden $@.1.o $@.2.o ${silent_err} && \

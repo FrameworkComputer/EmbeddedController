@@ -89,8 +89,13 @@ main() {
   local ver
 
   IFS="${dc}"
-  ver="${CR50_SQA:+SQA/}${CR50_DEV:+DBG/}${CRYPTO_TEST:+CT/}${BOARD}_"
-  tool_ver=""
+  if [[ -z "${STATIC_VERSION}" ]]; then
+    ver="${CR50_SQA:+SQA/}${CR50_DEV:+DBG/}${CRYPTO_TEST:+CT/}${BOARD}_"
+    tool_ver=""
+  else
+    ver="STATIC_VERSION"
+    tool_ver="STATIC_VERSION_TOOL"
+  fi
   global_dirty=    # set if any of the component repos is 'dirty'.
   dir_list=( . )   # list of component directories, always includes the EC tree
 
@@ -104,19 +109,21 @@ main() {
   esac
 
   # Create a combined version string for all component directories.
-  for git_dir in ${dir_list[@]}; do
-    pushd "${git_dir}" > /dev/null
-    component="$(basename "${git_dir}")"
-    values=( $(get_tree_version) )
-    vbase="${values[0]}"             # Retrieved version information.
-    global_dirty+="${values[1]}"     # Non-zero, if the repository is 'dirty'
-    if [ "${component}" != "." ]; then
+  if [[ -z "${STATIC_VERSION}" ]]; then
+    for git_dir in ${dir_list[@]}; do
+      pushd "${git_dir}" > /dev/null
+      component="$(basename "${git_dir}")"
+      values=( $(get_tree_version) )
+      vbase="${values[0]}"             # Retrieved version information.
+      global_dirty+="${values[1]}"     # Non-zero, if the repository is 'dirty'
+      if [ "${component}" != "." ]; then
       ver+=" ${component}:"
-    fi
-    ver+="${vbase}"
-    tool_ver+="${vbase}"
-    popd > /dev/null
-  done
+      fi
+      ver+="${vbase}"
+      tool_ver+="${vbase}"
+      popd > /dev/null
+    done
+  fi
 
   # On some boards where the version number consists of multiple components we
   # want to separate the first word of the version string as the version of the
@@ -137,13 +144,15 @@ main() {
   echo "/* Sub-fields for use in Makefile.rules and to form build info string"
   echo " * in common/version.c. */"
   echo "#define VERSION \"${ver}\""
-  if [ "$REPRODUCIBLE_BUILD" = 1 ]; then
+  if [[ -n "${STATIC_VERSION}" ]] || [[ "$REPRODUCIBLE_BUILD" = 1 ]]; then
     echo '#define BUILDER "reproducible@build"'
   else
     echo "#define BUILDER \"${USER}@`hostname`\""
   fi
 
-  if [ -n "$global_dirty" ]; then
+  if [[ -n "${STATIC_VERSION}" ]]; then
+    echo "#define DATE \"STATIC_VERSION_DATE\""
+  elif [[ -n "$global_dirty" ]]; then
     most_recent_file="$(git status --porcelain | \
                awk '$1 ~ /[M|A|?]/ {print $2}' |  \
                xargs ls -t | head -1)"
