@@ -102,7 +102,6 @@
 /*
  * TODO(b/145723652): Add back the following CONFIG's after we enable
  * the PD software sync to update the PS8805 firmware.
- *
  * #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
  * #define CONFIG_USB_PD_TCPC_LOW_POWER
  */
@@ -236,6 +235,7 @@ int board_is_sourcing_vbus(int port);
 int board_vbus_sink_enable(int port, int enable);
 /* Reset all TCPCs. */
 void board_reset_pd_mcu(void);
+void board_set_tcpc_power_mode(int port, int mode);
 
 #endif /* !defined(__ASSEMBLER__) */
 

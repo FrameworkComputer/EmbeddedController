@@ -381,6 +381,15 @@ void board_reset_pd_mcu(void)
 	msleep(PS8805_FW_INIT_DELAY_MS);
 }
 
+void board_set_tcpc_power_mode(int port, int mode)
+{
+	/* Ignore the "mode" to turn the chip on.  We can only do a reset. */
+	if (mode)
+		return;
+
+	board_reset_pd_mcu();
+}
+
 int board_vbus_sink_enable(int port, int enable)
 {
 	/* Both ports are controlled by PPC SN5S330 */
