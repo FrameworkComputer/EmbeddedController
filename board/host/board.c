@@ -4,6 +4,7 @@
  */
 /* Emulator board-specific configuration */
 
+#include "battery.h"
 #include "button.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -27,6 +28,11 @@
 #define GPIO_0  0
 
 #include "gpio_list.h"
+
+test_mockable enum battery_present battery_is_present(void)
+{
+	return BP_YES;
+}
 
 test_mockable_static int dummy_temp_get_val(int idx, int *temp_ptr)
 {

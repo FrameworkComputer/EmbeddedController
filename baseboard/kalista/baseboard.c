@@ -405,11 +405,6 @@ static void board_extpower(void)
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
-enum battery_present battery_is_present(void)
-{
-	return BP_NO;
-}
-
 int64_t get_time_dsw_pwrok(void)
 {
 	/* DSW_PWROK is turned on before EC was powered. */

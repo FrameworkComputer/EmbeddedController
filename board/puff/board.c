@@ -510,8 +510,3 @@ void board_overcurrent_event(int port, int is_overcurrented)
 		return;
 	usbc_overcurrent = is_overcurrented;
 }
-
-enum battery_present battery_is_present(void)
-{
-	return BP_NO;
-}

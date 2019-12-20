@@ -400,7 +400,13 @@
 /*****************************************************************************/
 /* Battery config */
 
-/* Support a simple battery. */
+/*
+ * Support battery management and interrogation.
+ *
+ * This is implied by CONFIG_BATTERY_<device> (below); if not enabled and
+ * CONFIG_BATTERY_PRESENT_CUSTOM is also disabled, the board is assumed to not
+ * have or support a battery.
+ */
 #undef CONFIG_BATTERY
 
 /*
@@ -447,21 +453,20 @@
 #undef CONFIG_BATTERY_HW_PRESENT_CUSTOM
 
 /*
- * If defined, the charger will check for battery presence before attempting
- * to communicate with it. This avoids the 30 second delay when booting
- * without a battery present. Do not use with CONFIG_BATTERY_PRESENT_GPIO.
+ * battery_is_present() support.
  *
- * Replace the default battery_is_present() function with a board-specific
- * implementation in board.c
+ * Choice of battery driver normally determines the implementation of
+ * battery_is_present(); it is also possible to provide a board-specific
+ * implementation or note its presence from a GPIO level.
+ *
+ * If CONFIG_BATTERY is not enabled, a stub implementation that always returns
+ * "not present" is provided unless CONFIG_BATTERY_PRESENT_CUSTOM is enabled.
+ *
+ * These options are mutually exclusive.
  */
+/* The board provides a custom battery_is_present() implementation. */
 #undef CONFIG_BATTERY_PRESENT_CUSTOM
-
-/*
- * If defined, GPIO which is driven low when battery is present.
- * Charger will check for battery presence before attempting to communicate
- * with it. This avoids the 30 second delay when booting without a battery
- * present. Do not use with CONFIG_BATTERY_PRESENT_CUSTOM.
- */
+/* Battery is present if the GPIO named by this define reads logic-low. */
 #undef CONFIG_BATTERY_PRESENT_GPIO
 
 /*

@@ -168,12 +168,23 @@ void battery_get_params(struct batt_params *batt);
  */
 void battery_override_params(struct batt_params *batt);
 
+#if defined(CONFIG_BATTERY) || defined(CONFIG_BATTERY_PRESENT_CUSTOM)
 /**
  * Check for presence of battery.
  *
  * @return Whether there is a battery attached or not, or if we can't tell.
  */
 enum battery_present battery_is_present(void);
+#else
+/*
+ * If battery support is not enabled and the board does not specifically
+ * provide its own implementation, assume a battery is never present.
+ */
+static inline enum battery_present battery_is_present(void)
+{
+	return BP_NO;
+}
+#endif
 
 /**
  * Check for physical presence of battery.

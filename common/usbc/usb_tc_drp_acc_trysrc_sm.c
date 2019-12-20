@@ -1292,8 +1292,9 @@ static enum ec_status hc_remote_flash(struct host_cmd_handler_args *args)
 	if (p->size + sizeof(*p) > args->params_size)
 		return EC_RES_INVALID_PARAM;
 
-#if defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||   \
-defined(CONFIG_BATTERY_PRESENT_GPIO)
+#if defined(CONFIG_BATTERY) && \
+	(defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||   \
+	 defined(CONFIG_BATTERY_PRESENT_GPIO))
 	/*
 	 * Do not allow PD firmware update if no battery and this port
 	 * is sinking power, because we will lose power.

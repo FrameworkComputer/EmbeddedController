@@ -48,11 +48,6 @@ uint16_t pd_get_identity_pid(int port)
 	return 0;
 }
 
-enum battery_present battery_is_present(void)
-{
-	return BP_YES;
-}
-
 int battery_status(int *status)
 {
 	*status = 1;

@@ -566,12 +566,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	gpio_set_level(GPIO_TYPE_C_60W, p60w);
 }
 
-enum battery_present battery_is_present(void)
-{
-	/* The GPIO is low when the battery is present */
-	return BP_NO;
-}
-
 int64_t get_time_dsw_pwrok(void)
 {
 	/* DSW_PWROK is turned on before EC was powered. */
