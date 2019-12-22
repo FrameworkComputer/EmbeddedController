@@ -4234,6 +4234,12 @@
 /* Support the AMD FP5 USB/DP Mux */
 #undef CONFIG_USB_MUX_AMD_FP5
 
+/*
+ * Support the Analogix ANX7440 USB Type-C Active mux with
+ * Integrated Re-timers for USB3.1/DisplayPort.
+ */
+#undef CONFIG_USB_MUX_ANX7440
+
 /* Support the ITE IT5205 Type-C USB alternate mode mux. */
 #undef CONFIG_USB_MUX_IT5205
 
