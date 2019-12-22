@@ -22,7 +22,7 @@
 #include "cometlake.h"
 #elif defined(CONFIG_CHIPSET_COMETLAKE_DISCRETE)
 #include "cometlake-discrete.h"
-#elif defined(CONFIG_CHIPSET_ICL_TGL)
+#elif defined(CONFIG_CHIPSET_ICELAKE)
 #include "icelake.h"
 #elif defined(CONFIG_CHIPSET_SKYLAKE)
 #include "skylake.h"
