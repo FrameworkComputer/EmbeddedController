@@ -20,6 +20,7 @@ baseboard-$(CONFIG_BC12_DETECT_MAX14637)+=bc12.o
 
 #USB MUX specific files
 baseboard-$(CONFIG_USB_MUX_VIRTUAL)+=usb_mux.o
+baseboard-$(CONFIG_USB_MUX_ANX7440)+=usb_mux.o
 
 #USB Retimer specific files
 baseboard-$(CONFIG_USBC_RETIMER_INTEL_BB)+=retimer.o
