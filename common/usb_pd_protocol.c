@@ -1292,7 +1292,8 @@ static void queue_vdm(int port, uint32_t *header, const uint32_t *data,
 	pd[port].vdm_state = VDM_STATE_READY;
 }
 
-static void handle_vdm_request(int port, int cnt, uint32_t *payload)
+static void handle_vdm_request(int port, int cnt, uint32_t *payload,
+				uint16_t head)
 {
 	int rlen = 0;
 	uint32_t *rdata;
@@ -1312,7 +1313,7 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 	}
 
 	if (PD_VDO_SVDM(payload[0]))
-		rlen = pd_svdm(port, cnt, payload, &rdata);
+		rlen = pd_svdm(port, cnt, payload, &rdata, head);
 	else
 		rlen = pd_custom_vdm(port, cnt, payload, &rdata);
 
@@ -1760,7 +1761,7 @@ static void handle_data_request(int port, uint16_t head,
 		break;
 #endif
 	case PD_DATA_VENDOR_DEF:
-		handle_vdm_request(port, cnt, payload);
+		handle_vdm_request(port, cnt, payload, head);
 		break;
 	default:
 		CPRINTF("C%d Unhandled data message type %d\n", port, type);
@@ -2856,15 +2857,6 @@ void pd_interrupt_handler_task(void *p)
 	}
 }
 #endif /* HAS_TASK_PD_INT_C0 || HAS_TASK_PD_INT_C1 || HAS_TASK_PD_INT_C2 */
-
-void set_tbt_compat_mode_ready(int port)
-{
-	if (IS_ENABLED(CONFIG_USBC_SS_MUX) &&
-	    IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE))
-		/* Set usb mux to Thunderbolt-compatible mode */
-		usb_mux_set(port, TYPEC_MUX_TBT_COMPAT, USB_SWITCH_CONNECT,
-			pd[port].polarity);
-}
 
 void pd_task(void *u)
 {
@@ -5411,8 +5403,8 @@ static const enum typec_mux typec_mux_map[USB_PD_CTRL_MUX_COUNT] = {
  */
 static uint8_t get_pd_control_flags(int port)
 {
-	struct tbt_mode_resp_cable cable_resp = get_cable_tbt_vdo(port);
-	struct tbt_mode_resp_device device_resp = get_dev_tbt_vdo(port);
+	union tbt_mode_resp_cable cable_resp = get_cable_tbt_vdo(port);
+	union tbt_mode_resp_device device_resp = get_dev_tbt_vdo(port);
 
 	/*
 	 * Ref: USB Type-C Cable and Connector Specification

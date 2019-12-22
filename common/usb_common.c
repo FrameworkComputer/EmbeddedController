@@ -694,6 +694,23 @@ __overridable int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 }
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
+/*
+ * Before entering into alternate mode, state of the USB-C MUX
+ * needs to be in safe mode.
+ * Ref: USB Type-C Cable and Connector Specification
+ * Section E.2.2 Alternate Mode Electrical Requirements
+ */
+void usb_mux_set_safe_mode(int port)
+{
+	usb_mux_set(port, IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) ?
+		TYPEC_MUX_SAFE : TYPEC_MUX_NONE,
+		USB_SWITCH_CONNECT, pd_get_polarity(port));
+
+	/* Isolate the SBU lines. */
+	if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
+		ppc_set_sbu(port, 0);
+}
+
 __overridable const struct svdm_response svdm_rsp = {
 	.identity = NULL,
 	.svids = NULL,
@@ -708,13 +725,8 @@ __overridable void svdm_safe_dp_mode(int port)
 	/* make DP interface safe until configure */
 	dp_flags[port] = 0;
 	dp_status[port] = 0;
-	usb_mux_set(port, IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) ?
-		TYPEC_MUX_SAFE : TYPEC_MUX_NONE,
-		USB_SWITCH_CONNECT, pd_get_polarity(port));
 
-	/* Isolate the SBU lines. */
-	if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
-		ppc_set_sbu(port, 0);
+	usb_mux_set_safe_mode(port);
 }
 
 __overridable int svdm_enter_dp_mode(int port, uint32_t mode_caps)
@@ -947,14 +959,6 @@ __overridable int svdm_gfu_attention(int port, uint32_t *payload)
 #ifdef CONFIG_USB_PD_TBT_COMPAT_MODE
 __overridable int svdm_tbt_compat_enter_mode(int port, uint32_t mode_caps)
 {
-	/*
-	 * Before entering into alternate mode, state of the USB-C MUX needs to
-	 * be in safe mode Ref: USB Type-C Cable and Connector Specification
-	 * Section E.2.2 Alternate Mode Electrical Requirements
-	 */
-	usb_mux_set(port, IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) ?
-		TYPEC_MUX_SAFE : TYPEC_MUX_NONE, USB_SWITCH_CONNECT,
-		pd_get_polarity(port));
 	return 0;
 }
 

@@ -113,8 +113,8 @@ static int retimer_set_state(int port, mux_state_t mux_state)
 {
 	uint32_t set_retimer_con = 0;
 	uint8_t dp_pin_mode;
-	struct tbt_mode_resp_cable cable_resp;
-	struct tbt_mode_resp_device dev_resp;
+	union tbt_mode_resp_cable cable_resp;
+	union tbt_mode_resp_device dev_resp;
 
 	/*
 	 * Bit 0: DATA_CONNECTION_PRESENT
@@ -217,7 +217,7 @@ static int retimer_set_state(int port, mux_state_t mux_state)
 		 * 0 - Type-C to Type-C Cable
 		 * 1 - Type-C Legacy TBT Adapter
 		 */
-		if (dev_resp.tbt_adapter == TBT_ADAPTER_LEGACY)
+		if (dev_resp.tbt_adapter == TBT_ADAPTER_TBT2_LEGACY)
 			set_retimer_con |= BB_RETIMER_TBT_TYPE;
 
 		/*

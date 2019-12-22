@@ -5597,15 +5597,15 @@ int cmd_usb_pd(int argc, char *argv[])
 				r_v2->control_flags & USB_PD_MUX_TBT_LINK ?
 					"Uni" : "Bi");
 
-			printf("Cable Speed:");
+			printf("TBT Cable Speed:");
 			switch (r_v2->cable_speed) {
-			case USB3_GEN1:
+			case TBT_SS_U31_GEN1:
 				printf("TBT Gen1");
 				break;
-			case USB3_GEN1_USB4_GEN2:
+			case TBT_SS_U32_GEN1_GEN2:
 				printf("TBT Gen1 and TBT Gen2");
 				break;
-			case USB4_GEN3:
+			case TBT_SS_TBT_GEN3:
 				printf("TBT Gen3");
 				break;
 			default:

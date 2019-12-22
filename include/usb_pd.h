@@ -10,7 +10,9 @@
 
 #include <stdbool.h>
 #include "common.h"
+#include "usb_pd_tbt.h"
 #include "usb_pd_tcpm.h"
+#include "usb_pd_vdo.h"
 
 /* PD Host command timeout */
 #define PD_HOST_COMMAND_TIMEOUT_US SECOND
@@ -479,352 +481,21 @@ enum idh_ptype {
 #define VDO_PRODUCT(pid, bcd) (((pid) & 0xffff) << 16 | ((bcd) & 0xffff))
 #define PD_PRODUCT_PID(vdo) (((vdo) >> 16) & 0xffff)
 
-/*
- * Cable VDO (Ref: PD Spec 2.0 Version 1.3 - Table 6-28 and 6-29)
- * ---------
- * <31:28> :: Cable HW version
- * <27:24> :: Cable FW version
- * <23:20> :: Reserved
- * <19:18> :: Type-C to Type-A/B/C (00b == A, 01 == B, 10 == C)
- * <17>    :: Reserved
- * <16:13> :: Cable latency (0001 == <10ns(~1m length))
- * <12:11> :: Cable termination type (11b == both ends active VCONN req)
- * <10>    :: SSTX1 Directionality support (0b == fixed, 1b == cfgable)
- * <9>     :: SSTX2 Directionality support
- * <8>     :: SSRX1 Directionality support
- * <7>     :: SSRX2 Directionality support
- * <6:5>   :: Vbus current handling capability
- * <4>     :: Vbus through cable (0b == no, 1b == yes)
- * <3>     :: SOP" controller present? (0b == no, 1b == yes)
- * <2:0>   :: USB SS Signaling support
- */
-enum usb_ss_support {
-	USB_SS_U2_ONLY,
-	USB_SS_U31_GEN1,
-	USB_SS_U31_GEN2,
+union cable_vdo {
+	/* Passive cable VDO */
+	union passive_cable_vdo_rev20 p_rev20;
+	union passive_cable_vdo_rev30 p_rev30;
+
+	/* Active cable VDO */
+	union active_cable_vdo_rev20 a_rev20;
+	union active_cable_vdo1_rev30 a_rev30;
+
+	uint32_t raw_value;
 };
 
-enum cable_outlet {
-	CABLE_PLUG = 0,
-	CABLE_RECEPTACLE = 1,
-};
-
-enum current_capacity {
-	CABLE_CURRENT_3A = 1,
-	CABLE_CURRENT_5A,
-};
-
-enum cable_dir_support {
-	CABLE_FIXED,
-	CABLE_CHANGEABLE,
-};
-
-enum connector_type {
-	CONNECTOR_ATYPE,
-	CONNECTOR_BTYPE,
-	CONNECTOR_CTYPE,
-	CONNECTOR_CAPTIVE,
-};
-
-struct vdo_rev20 {
-	enum usb_ss_support ss: 3;
-	uint32_t controller : 1;
-	uint32_t vbus_cable : 1;
-	enum current_capacity current : 2;
-	enum cable_dir_support ssrx2 : 1;
-	enum cable_dir_support ssrx1 : 1;
-	enum cable_dir_support sstx2 : 1;
-	enum cable_dir_support sstx1 : 1;
-	uint32_t termination : 2;
-	uint32_t latency : 4;
-	uint32_t reserved0 : 1;
-	enum connector_type connector : 2;
-	uint32_t reserved1 : 4;
-	uint32_t fw_version : 4;
-	uint32_t hw_version : 4;
-};
-
-#define VDO_CABLE(hw, fw, cbl, lat, term, tx1d, tx2d, rx1d, rx2d, cur, vps, \
-		  sopp, usbss) \
-	 (((hw) & 0xF) << 28 | ((fw) & 0xF) << 24 | ((cbl) & 0x3) << 18	\
-	 | ((lat) & 0xF) << 13 | ((term) & 0x3) << 11 | ((tx1d) & 0x1) << 10 \
-	 | ((tx2d) & 0x1) << 9 | ((rx1d) & 0x1) << 8 | ((rx2d) & 0x1) << 7 \
-	 | ((cur) & 0x3) << 5 | ((vps) & 0x1) << 4 | ((sopp) & 0x1) << 3 \
-	 | ((usbss) & 0x7))
-
-/*
- * Passive Cable VDO (Ref: PD Spec 3.0 Version 1.2 - Table 6-35)
- * ---------
- * <31:28> :: Cable HW version
- * <27:24> :: Cable FW version
- * <23:21> :: VDO version
- * <20>    :: Reserved
- * <19:18> :: Connector Type (10b == USB-C, 11b == Captive)
- * <17>    :: Reserved
- * <16:13> :: Cable latency (0001 == <10ns(~1m length))
- * <12:11> :: Cable termination type (00b == VCONN not req, 01b = VCONN req)
- * <10:9>  :: Maximum cable vbus voltage
- * <8:7>   :: Reserved
- * <6:5>   :: Vbus current handling capability
- * <4:3>   :: Reserved
- * <2:0>   :: USB SS Signaling support
- */
-enum max_vbus_vtg {
-	CABLE_VBUS_20V,
-	CABLE_VBUS_30V,
-	CABLE_VBUS_40V,
-	CABLE_VBUS_50V,
-};
-
-struct passive_cable_vdo_rev30 {
-	enum usb_ss_support ss: 3;
-	uint32_t reserved0 : 2;
-	enum current_capacity current : 2;
-	uint32_t reserved1 : 2;
-	enum max_vbus_vtg vbus_max : 2;
-	uint32_t termination : 2;
-	uint32_t latency : 4;
-	uint32_t reserved2 : 1;
-	enum connector_type connector : 2;
-	uint32_t reserved3 : 1;
-	uint32_t vdo_version : 3;
-	uint32_t fw_version : 4;
-	uint32_t hw_version : 4;
-};
-
-#define PASSIVE_VDO_CABLE_REV3(hw, fw, vdover, cbl, lat, term, vbusv, \
-			      cur, usbss) \
-	(((hw) & 0xF) << 28 | ((fw) & 0xF) << 24 | ((vdov & 0x7) << 21) \
-	| ((cbl) & 0x3) << 18 | ((lat) & 0xF) << 13 | ((term) & 0x3) << 11 \
-	| ((vbusv) & 0x3) << 9 | ((cur) & 0x3) << 5 | ((usbss) & 0x7))
-
-/*
- * Active Cable VDO1 (Ref: PD Spec 3.0 Version 1.2 - Table 6-36)
- * ---------
- * <31:28> :: Cable HW version
- * <27:24> :: Cable FW version
- * <23:21> :: VDO version
- * <20>    :: Reserved
- * <19:18> :: Connector Type (10b == USB-C, 11b == Captive)
- * <17>    :: Reserved
- * <16:13> :: Cable latency (0001 == <10ns(~1m length))
- * <12:11> :: Cable termination type (11b == both ends active VCONN req)
- * <10:9>  :: Maximum cable vbus voltage
- * <8>     :: SBU Supported? (0b == yes, 1b == no)
- * <7>     :: SBU Type (0b == passive, 1b == active)
- * <6:5>   :: Vbus current handling capability
- * <4>     :: Vbus through cable (0b == no, 1b == yes)
- * <3>     :: SOP" controller present? (0b == no, 1b == yes)
- * <2:0>   :: Reserved
- */
-struct active_cable_vdo_rev30 {
-	uint32_t reserved0 : 3;
-	uint32_t controller : 1;
-	uint32_t vbus_cable : 1;
-	enum current_capacity current : 2;
-	uint32_t sbu_type : 1;
-	uint32_t sbu_support : 1;
-	enum max_vbus_vtg vbus_max : 2;
-	uint32_t termination : 2;
-	uint32_t latency : 4;
-	uint32_t reserved1 : 1;
-	enum connector_type connector : 2;
-	uint32_t reserved2 : 1;
-	uint32_t vdo_version : 3;
-	uint32_t cable_fw_version : 4;
-	uint32_t cable_hw_version : 4;
-};
-#define ACTIVE_VDO1_CABLE_REV3(hw, fw, vdover, cbl, lat, term, vbusv, sbus, \
-			       sbut, cur, vps, sopp) \
-	(((hw) & 0xF) << 28 | ((fw) & 0xF) << 24 | ((vdov) & 0x7) << 21 \
-	| ((cbl) & 0x3) << 18 | ((lat) & 0xF) << 13 | ((term) & 0x3) << 11 \
-	| ((vbusv) & 0x3) << 9 | ((sbus) & 0x1) << 8 | ((sbut) & 0x1) << 7 \
-	| ((cur) & 0x3) << 5 | ((vps) & 0x1) << 4 | ((sopp) & 0x1) << 3)
-
-struct cable_vdo {
-	union {
-		struct vdo_rev20 rev20;
-		struct passive_cable_vdo_rev30 p_rev30;
-		struct active_cable_vdo_rev30 a_rev30;
-		uint32_t raw_value;
-	};
-};
-
-/*
- * Active Cable VDO2 (Ref: PD Spec 3.0 Version 1.2 - Table 6-37)
- * ---------
- * <31:24> :: Maximum operating temperature
- * <23:16> :: Shutdown temperature
- * <15>    :: Reserved
- * <14:12> :: USB3 power (000 == >10mW)
- * <11>    :: U3 to U0 transition
- * <10:8>  :: Reserved
- * <7:6>   :: USB 2.0 Hub Hops Consumed
- * <5>     :: USB 2.0 Supported? (0b == yes, 1b == no)
- * <4>     :: SS Supported? (0b == yes, 1b == no)
- * <3>     :: SS lanes supported (0b == one, 1b == two)
- * <2>     :: Reserved
- * <1:0>   :: SS signaling (0b == Gen1, 01b == Gen2)
- */
-#define ACTIVE_CABLE_VDO2_CABLE_REV3(opt, sdt, usb3p, u3u0, hhc, usb2, \
-				      ss, ssl, sss) \
-	(((opt) & 0xFF) << 24 | ((sdt) & 0xFF) << 16 | ((usb3p) & 0x7) << 12 \
-	| ((u3u0) & 0x1) << 11 | ((usb2) & 0x3) << 6 | ((ss) & 0x1)  << 4 \
-	| ((ssl) & 0x1)  << 3 | (sss) & 0x3)
-
-enum ss_signaling {
-	USB_SS_SIGNAL_SS_GEN1,
-	USB_SS_SIGNAL_SS_GEN2,
-};
-
-enum ss_lane_support {
-	USB_SS_ONE_LANE,
-	USB_SS_TWO_LANES,
-};
-
-enum u0u3_transition_mode {
-	U0_U3_DIRECT,
-	U0_U3_U3S,
-};
-
-enum u3_power_support {
-	U3_POWER_10mW,
-	U3_POWER_5_10mW,
-	U3_POWER_1_5mW,
-	U3_POWER_500_1000uW,
-	U3_POWER_200_500uW,
-	U3_POWER_50_200uW,
-	U3_POWER_0_50uW,
-};
-
-struct active_cable_vdo2_rev30 {
-	enum ss_signaling sss: 2;
-	uint32_t reserved0 : 1;
-	enum ss_lane_support lanes : 1;
-	uint32_t usb_ss_support : 1;
-	uint32_t usb2_support : 1;
-	uint32_t usb2_hub_hops : 2;
-	uint32_t reserved1 : 3;
-	enum u0u3_transition_mode u0u3: 1;
-	enum u3_power_support u3_power : 3;
-	uint32_t reserved2: 1;
-	uint32_t shutdown_temp;
-	uint32_t max_operating_temp;
-};
-
-struct active_cable_vdo2 {
-	union {
-		struct active_cable_vdo2_rev30 a2_rev30;
-		uint32_t raw_value;
-	};
-};
-
-/*
- * Thunderbolt 3 Device Discover mode responses
- * (Reference: USB Type-C cable and connector specification, Table F-13)
- * -------------------------------------------------------------
- * <31>    : Intel Control Vendor Specific B1 Support (0b == No, 1b == Yes)
- * <30>    : Intel Control Vendor Specific B0 Support (0b == No, 1b == Yes)
- * <29:27> : Reserved
- * <26>    : Intel Specific B0 Support (0b == No, 1b == Yes)
- * <25:17> : Reserved
- * <16>    : TBT Adapter (0b == TBT2 Legacy, 1b == TBT3)
- * <15:0>  : TBT Alternate Mode
- */
-enum tbt_adapter_type {
-	TBT_ADAPTER_LEGACY,
-	TBT_ADAPTER_TBT3,
-};
-
-enum tbt_intel_b0_type {
-	TBT_INTEL_B0_NOT_SUPPORTED,
-	TBT_INTEL_B0_SUPPORTED,
-};
-
-enum tbt_vendor_b0_type {
-	TBT_VENDOR_B0_NOT_SUPPORTED,
-	TBT_VENDOR_B0_SUPPORTED,
-};
-
-enum tbt_vendor_b1_type {
-	TBT_VENDOR_B1_NOT_SUPPORTED,
-	TBT_VENDOR_B1_SUPPORTED,
-};
-
-/* TBT Alternate Mode */
-#define PD_VDO_RESP_MODE_INTEL_TBT(x)	(((x) & 0xff) == 0x0001)
-
-struct tbt_mode_resp_device {
-	union {
-		struct {
-			uint16_t tbt_alt_mode : 16;
-			enum tbt_adapter_type tbt_adapter : 1;
-			uint16_t reserved0 : 9;
-			enum tbt_intel_b0_type intel_spec_b0 : 1;
-			uint8_t reserved1 : 3;
-			enum tbt_vendor_b0_type vendor_spec_b0 : 1;
-			enum tbt_vendor_b1_type vendor_spec_b1 : 1;
-		};
-		uint32_t raw_value;
-	};
-};
-
-/*
- * Thunderbolt 3 cable Discover mode responses
- * (Reference: USB Type-C cable and connector specification, Table F-14)
- * -------------------------------------------------------------
- * <31:24> : Reserved
- * <23>    : Active cable plug link training
- *	     (0b == bi-directional, 1b == uni-directional)
- * <22>    : Re-timer (0b == Not retimer, 1b == Retimer)
- * <21>    : Cable type (0b == Non-optical, 1b == Optical)
- * <20:19> : TBT Rounded Support (00b == 3rd Gen Non-Rounded TBT,
- *           01b == 3rd & 4th Gen Rounded and Non-Rounded TBT,
- *           10b...11b == Reserved)
- * <18:16> : Cable Speed (001b = USB3.2 Gen 1,
- *                        010b = USB3.2 Gen 1 and USB4 Gen 2
- *                        011b = USB4 Gen 3)
- * <15:0>  : TBT alternate mode
- */
-enum tbt_compat_cable_speed {
-	USB3_GEN1 = 1,
-	USB3_GEN1_USB4_GEN2,
-	USB4_GEN3,
-};
-
-enum tbt_cable_type {
-	TBT_CABLE_ELECTRICAL,
-	TBT_CABLE_OPTICAL,
-};
-
-enum link_lsrx_comm {
-	BIDIR_LSRX_COMM,
-	UNIDIR_LSRX_COMM,
-};
-
-enum tbt_compat_rounded_support {
-	TBT_GEN3_NON_ROUNDED,
-	TBT_GEN3_GEN4_ROUNDED_NON_ROUNDED,
-};
-
-enum usb_retimer_type {
-	USB_REDRIVER,
-	USB_RETIMER,
-};
-
-struct tbt_mode_resp_cable {
-	union {
-		struct {
-			uint16_t tbt_alt_mode : 16;
-			enum tbt_compat_cable_speed tbt_cable_speed : 3;
-			enum tbt_compat_rounded_support tbt_rounded : 2;
-			enum tbt_cable_type tbt_cable : 1;
-			enum usb_retimer_type retimer_type : 1;
-			enum link_lsrx_comm lsrx_comm : 1;
-			uint8_t reserved0 : 8;
-		};
-		uint32_t raw_value;
-	};
+union active_cable_vdo2 {
+	union active_cable_vdo2_rev30 a2_rev30;
+	uint32_t raw_value;
 };
 
 /* Cable structure for storing cable attributes */
@@ -834,16 +505,16 @@ struct pd_cable {
 	enum idh_ptype type;
 	/* Cable flags. See CABLE_FLAGS_* */
 	uint8_t flags;
-	/* Cable attribues */
-	struct cable_vdo attr;
+	/* Cable attributes */
+	union cable_vdo attr;
+	/* For USB PD REV3, active cable has 2 VDOs */
+	union active_cable_vdo2 attr2;
 	/* Cable revision */
 	uint8_t rev;
-	/* For USB PD REV3, active cable has 2 VDOs */
-	struct active_cable_vdo2 attr2;
 	/* For storing Discover mode response from device */
-	struct tbt_mode_resp_device dev_mode_resp;
+	union tbt_mode_resp_device dev_mode_resp;
 	/* For storing Discover mode response from cable */
-	struct tbt_mode_resp_cable cable_mode_resp;
+	union tbt_mode_resp_cable cable_mode_resp;
 };
 
 /* Flag for sending SOP Prime packet */
@@ -852,74 +523,8 @@ struct pd_cable {
 #define CABLE_FLAGS_SOP_PRIME_PRIME_ENABLE BIT(1)
 /* Check if Thunderbolt-compatible mode enabled */
 #define CABLE_FLAGS_TBT_COMPAT_ENABLE	   BIT(2)
-/* Check if Thunderbolt-compatible mode is ready */
-#define CABLE_FLAGS_TBT_COMPAT_READY       BIT(3)
 /* Flag to limit speed to TBT Gen 2 passive cable */
-#define CABLE_FLAGS_TBT_COMPAT_LIMIT_SPEED BIT(4)
-
-/*
- * AMA VDO
- * ---------
- * <31:28> :: Cable HW version
- * <27:24> :: Cable FW version
- * <23:12> :: SBZ
- * <11>    :: SSTX1 Directionality support (0b == fixed, 1b == cfgable)
- * <10>    :: SSTX2 Directionality support
- * <9>     :: SSRX1 Directionality support
- * <8>     :: SSRX2 Directionality support
- * <7:5>   :: Vconn power
- * <4>     :: Vconn power required
- * <3>     :: Vbus power required
- * <2:0>   :: USB SS Signaling support
- */
-#define VDO_AMA(hw, fw, tx1d, tx2d, rx1d, rx2d, vcpwr, vcr, vbr, usbss) \
-	(((hw) & 0x7) << 28 | ((fw) & 0x7) << 24			\
-	 | (tx1d) << 11 | (tx2d) << 10 | (rx1d) << 9 | (rx2d) << 8	\
-	 | ((vcpwr) & 0x3) << 5 | (vcr) << 4 | (vbr) << 3		\
-	 | ((usbss) & 0x7))
-
-#define PD_VDO_AMA_VCONN_REQ(vdo) (((vdo) >> 4) & 1)
-#define PD_VDO_AMA_VBUS_REQ(vdo)  (((vdo) >> 3) & 1)
-
-#define AMA_VCONN_PWR_1W   0
-#define AMA_VCONN_PWR_1W5  1
-#define AMA_VCONN_PWR_2W   2
-#define AMA_VCONN_PWR_3W   3
-#define AMA_VCONN_PWR_4W   4
-#define AMA_VCONN_PWR_5W   5
-#define AMA_VCONN_PWR_6W   6
-#define AMA_USBSS_U2_ONLY  0
-#define AMA_USBSS_U31_GEN1 1
-#define AMA_USBSS_U31_GEN2 2
-#define AMA_USBSS_BBONLY   3
-
-/*
- * VPD VDO
- * ---------
- *  <31:28> :: HW version
- *  <27:24> :: FW version
- *  <23:21> :: VDO version
- *  <20:17> :: SBZ
- *  <16:15> :: Maximum VBUS Voltage
- *  <14:13> :: SBZ
- *  <12:7>  :: VBUS Impedance
- *  <6:1>   :: Ground Impedance
- *  <0>     :: Charge Through Support
- */
-#define VDO_VPD(hw, fw, vbus, vbusz, gndz, cts)  \
-	(((hw) & 0xf) << 28 | ((fw) & 0xf) << 24 \
-	 | ((vbus) & 0x3) << 15                  \
-	 | ((vbusz) & 0x3f) << 7                 \
-	 | ((gndz) & 0x3f) << 1 | (cts))
-
-#define VPD_MAX_VBUS_20V       0
-#define VPD_MAX_VBUS_30V       1
-#define VPD_MAX_VBUS_40V       2
-#define VPD_MAX_VBUS_50V       3
-#define VPD_VBUS_IMP(mo)       ((mo + 1) >> 1)
-#define VPD_GND_IMP(mo)        (mo)
-#define VPD_CTS_SUPPORTED      1
-#define VPD_CTS_NOT_SUPPORTED  0
+#define CABLE_FLAGS_TBT_COMPAT_LIMIT_SPEED BIT(3)
 
 /*
  * SVDM Discover SVIDs request -> response
@@ -932,11 +537,6 @@ struct pd_cable {
 #define VDO_SVID(svid0, svid1) (((svid0) & 0xffff) << 16 | ((svid1) & 0xffff))
 #define PD_VDO_SVID_SVID0(vdo) ((vdo) >> 16)
 #define PD_VDO_SVID_SVID1(vdo) ((vdo) & 0xffff)
-
-#define VPD_VDO_MAX_VBUS(vdo) (((vdo) >> 15) & 0x3)
-#define VPD_VDO_VBUS_IMP(vdo) (((vdo) >> 7) & 0x3f)
-#define VPD_VDO_GND_IMP(vdo)  (((vdo) >> 1) & 0x3f)
-#define VPD_VDO_CTS(vdo)      ((vdo) & 1)
 
 /*
  * Google modes capabilities
@@ -1412,6 +1012,11 @@ enum pd_cable_plug {
 	PD_PLUG_FROM_CABLE = 1
 };
 
+enum cable_outlet {
+	CABLE_PLUG = 0,
+	CABLE_RECEPTACLE = 1,
+};
+
 /* Vconn role */
 #define PD_ROLE_VCONN_OFF 0
 #define PD_ROLE_VCONN_ON  1
@@ -1852,9 +1457,11 @@ __override_proto int pd_custom_vdm(int port, int cnt, uint32_t *payload,
  * @param cnt      number of data objects in the payload.
  * @param payload  payload data.
  * @param rpayload pointer to the data to send back.
+ * @param head     message header
  * @return if >0, number of VDOs to send back.
  */
-int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
+int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
+		uint16_t head);
 
 /**
  * Handle Custom VDMs for flashing.
@@ -1953,7 +1560,7 @@ enum idh_ptype get_usb_pd_mux_cable_type(int port);
  * @param port	USB-C port number
  * @return	cable mode response vdo
  */
-struct tbt_mode_resp_cable get_cable_tbt_vdo(int port);
+union tbt_mode_resp_cable get_cable_tbt_vdo(int port);
 
 /**
  * Return the response of discover mode SOP, with SVID = 0x8087
@@ -1961,7 +1568,7 @@ struct tbt_mode_resp_cable get_cable_tbt_vdo(int port);
  * @param port	USB-C port number
  * @return	device mode response vdo
  */
-struct tbt_mode_resp_device get_dev_tbt_vdo(int port);
+union tbt_mode_resp_device get_dev_tbt_vdo(int port);
 
 /**
  * Update Mux on entering Thunderbolt-compatible mode
@@ -1980,13 +1587,6 @@ enum tbt_compat_cable_speed get_tbt_cable_speed(int port);
  * @return tbt_rounded_support
  */
 enum tbt_compat_rounded_support get_tbt_rounded_support(int port);
-
-/**
- * Update Mux on entering Thunderbolt mode
- *
- * @param port USB-C port number
- */
-void set_tbt_compat_mode_ready(int port);
 
 /**
  * Store Device ID & RW hash of device
@@ -2560,6 +2160,14 @@ void pd_prepare_sysjump(void);
 extern int dp_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 extern uint32_t dp_status[CONFIG_USB_PD_PORT_MAX_COUNT];
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
+
+/*
+ * Configure the USB MUX in safe mode
+ *
+ * @param port The PD port number
+ */
+void usb_mux_set_safe_mode(int port);
+
 /**
  * Configure the pins used for DisplayPort Alternate Mode into safe state.
  *
