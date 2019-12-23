@@ -22,6 +22,7 @@
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3dpx1207.h"
+#include "driver/retimer/ps8802.h"
 #include "driver/retimer/ps8818.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/nct38xx.h"
@@ -468,6 +469,62 @@ struct usb_mux usb_muxes[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
+enum zork_c1_retimer {
+	C1_RETIMER_UNKNOWN,
+	C1_RETIMER_PS8802,
+	C1_RETIMER_PS8818,
+};
+
+static enum zork_c1_retimer zork_c1_retimer = C1_RETIMER_UNKNOWN;
+
+/*
+ * To support both OPT1 DB with PS8818 retimer, and OPT3 DB with PS8802 retimer,
+ * try both, and remember the first one that succeeds.
+ */
+static int zork_c1_set_mux(int port, mux_state_t mux_state)
+{
+	int rv = EC_ERROR_UNKNOWN;
+
+	/*
+	 * Retimers are not powered in G3 so return success if setting mux to
+	 * none and error otherwise.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		return (mux_state == TYPEC_MUX_NONE)
+			? EC_SUCCESS
+			: EC_ERROR_NOT_POWERED;
+
+	/*
+	 * Identifying a PS8818 is faster than the PS8802,
+	 * so do it first.
+	 */
+	if (zork_c1_retimer != C1_RETIMER_PS8802) {
+		usb_retimers[USBC_PORT_C1].i2c_addr_flags
+			= PS8818_I2C_ADDR_FLAGS;
+		rv = ps8818_usb_retimer.set(port, mux_state);
+		if (rv == EC_SUCCESS && zork_c1_retimer != C1_RETIMER_PS8818) {
+			zork_c1_retimer = C1_RETIMER_PS8818;
+			ccprints("C1 PS8818 detected");
+		}
+	}
+
+	if (zork_c1_retimer != C1_RETIMER_PS8818) {
+		usb_retimers[USBC_PORT_C1].i2c_addr_flags
+			= PS8802_I2C_ADDR_FLAGS;
+		rv = ps8802_usb_retimer.set(port, mux_state);
+		if (rv == EC_SUCCESS && zork_c1_retimer != C1_RETIMER_PS8802) {
+			zork_c1_retimer = C1_RETIMER_PS8802;
+			ccprints("C1 PS8802 detected");
+		}
+	}
+
+	return rv;
+}
+
+const struct usb_retimer_driver zork_c1_usb_retimer = {
+	.set = zork_c1_set_mux,
+};
+
 struct usb_retimer usb_retimers[USBC_PORT_COUNT] = {
 	[USBC_PORT_C0] = {
 		.driver = &pi3dpx1207_usb_retimer,
@@ -477,9 +534,8 @@ struct usb_retimer usb_retimers[USBC_PORT_COUNT] = {
 		.gpio_dp_enable = GPIO_USB_C0_IN_HPD,
 	},
 	[USBC_PORT_C1] = {
-		.driver = &ps8818_usb_retimer,
+		.driver = &zork_c1_usb_retimer,
 		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
 	},
 };
 

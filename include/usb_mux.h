@@ -192,7 +192,7 @@ struct usb_retimer {
 
 	/* I2C port and slave address */
 	const int i2c_port;
-	const uint16_t i2c_addr_flags;
+	uint16_t i2c_addr_flags;
 
 	/* NVM flag if shared with multiple retimers */
 	const bool shared_nvm;
