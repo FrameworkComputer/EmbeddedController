@@ -28,7 +28,8 @@
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) \
+	cprints(CC_CHARGER, "%s " format, "RT946X", ## args)
 
 /* Charger parameters */
 static const struct charger_info rt946x_charger_info = {
@@ -978,7 +979,7 @@ int charger_set_hw_ramp(int enable)
 	 * The vendor suggests setting AICL_VTH as (MIVR + 200mV).
 	 */
 	if ((mivr + 200) > RT946X_AICLVTH_MAX) {
-		CPRINTS("no suitable vth, %d", mivr);
+		CPRINTS("mivr(%d) too high", mivr);
 		return EC_ERROR_INVAL;
 	}
 
@@ -1020,7 +1021,7 @@ static void rt946x_init(void)
 {
 	int ret = rt946x_init_setting();
 
-	CPRINTS("RT946X init %s(%d)", ret ? "fail" : "success", ret);
+	CPRINTS("init %s(%d)", ret ? "fail" : "good", ret);
 }
 DECLARE_HOOK(HOOK_INIT, rt946x_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -1324,7 +1325,7 @@ int rt946x_get_adc(enum rt946x_adc_in_sel adc_sel, int *adc_val)
 	if (adc_sel == RT946X_ADC_VBUS_DIV5)
 		adc_result = ((adc_data_h << 8) | adc_data_l) * 25;
 	else
-		CPRINTS("unsupported channel");
+		CPRINTS("unsupported channel %d", adc_sel);
 	*adc_val = adc_result;
 #elif defined(CONFIG_CHARGER_MT6370)
 	/* Calculate ADC value */
@@ -1399,7 +1400,7 @@ static int mt6370_pmu_chg_mivr_irq_handler(void)
 		return rv;
 
 	if (!mivr_stat) {
-		CPRINTS("mivr inact");
+		CPRINTS("no mivr stat");
 		return rv;
 	}
 
