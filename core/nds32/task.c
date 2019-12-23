@@ -134,7 +134,8 @@ uint8_t task_stacks[0
 #undef TASK
 
 /* Reserve space to discard context on first context switch. */
-uint32_t scratchpad[19];
+uint32_t scratchpad[TASK_SCRATCHPAD_SIZE] __attribute__
+					((section(".bss.task_scratchpad")));
 
 task_ *current_task = (task_ *)scratchpad;
 
@@ -294,10 +295,8 @@ task_ *next_sched_task(void)
 
 #ifdef CONFIG_TASK_PROFILING
 	if (current_task != new_task) {
-		if ((current_task - tasks) < TASK_ID_COUNT) {
-			current_task->runtime +=
+		current_task->runtime +=
 				(exc_start_time - exc_end_time - exc_sub_time);
-		}
 		task_will_switch = 1;
 	}
 #endif
@@ -305,13 +304,11 @@ task_ *next_sched_task(void)
 #ifdef CONFIG_DEBUG_STACK_OVERFLOW
 	if (*current_task->stack != STACK_UNUSED_VALUE) {
 		int i = task_get_current();
-		if (i < TASK_ID_COUNT) {
-			panic_printf("\n\nStack overflow in %s task!\n",
-				task_names[i]);
+
+		panic_printf("\n\nStack overflow in %s task!\n", task_names[i]);
 #ifdef CONFIG_SOFTWARE_PANIC
 		software_panic(PANIC_SW_STACK_OVERFLOW, i);
 #endif
-		}
 	}
 #endif
 

@@ -6,6 +6,7 @@
  */
 
 #include "config.h"
+#include "cpu.h"
 
 .text
 
@@ -89,7 +90,7 @@ __task_start:
 	movi55 $r0, 0    /* syscall 1st parameter : de-schedule nothing */
 
 	/* put the stack pointer at the top of the stack in scratchpad */
-	addi $sp, $r3, 4 * 18
+	addi $sp, $r3, 4 * TASK_SCRATCHPAD_SIZE
 	/* we are ready to re-schedule */
 	swi.gp  $r4, [ + need_resched]
 	swi.gp  $r4, [ + start_called]

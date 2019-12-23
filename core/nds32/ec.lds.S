@@ -238,9 +238,10 @@ SECTIONS
 		. = ALIGN(8);
 		__bss_start = .;
 		*(.bss.tasks)
-		*(.bss.task_scratchpad)
 		. = ALIGN(8);
 		*(.bss.system_stack)
+		. = ALIGN(8);
+		*(.bss.task_scratchpad)
 		/* Rest of .bss takes care of its own alignment */
 		*(.bss)
 		*(.bss.slow)
