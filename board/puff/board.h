@@ -118,6 +118,7 @@
 
 /* Charger */
 #define CONFIG_CHARGE_MANAGER
+#undef CONFIG_CHARGE_MANAGER_SAFE_MODE
 #define CONFIG_CHARGER_INPUT_CURRENT 512 /* Allow low-current USB charging */
 
 /* USB type C */

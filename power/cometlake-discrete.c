@@ -286,6 +286,11 @@ enum power_state power_handle_state(enum power_state state)
 
 	switch (state) {
 	case POWER_G3S5:
+		if (intel_x86_wait_power_up_ok() != EC_SUCCESS) {
+			chipset_force_shutdown(
+				CHIPSET_SHUTDOWN_BATTERY_INHIBIT);
+			return POWER_G3;
+		}
 		/* Power-up steps 2a-2h. */
 #ifdef CONFIG_POWER_PP5000_CONTROL
 		power_5v_enable(task_get_current(), 1);

@@ -432,47 +432,11 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 #endif
 
 	case POWER_G3S5:
-#ifdef CONFIG_CHARGER
-		{
-		int tries = 0;
-
-		/*
-		 * Allow charger to be initialized for upto defined tries,
-		 * in case we're trying to boot the AP with no battery.
-		 */
-		while ((tries < CHARGER_INITIALIZED_TRIES) &&
-		       is_power_up_inhibited()) {
-			msleep(CHARGER_INITIALIZED_DELAY_MS);
-			tries++;
-		}
-
-		/*
-		 * Return to G3 if battery level is too low. Set
-		 * power_up_inhibited in order to check the eligibility to boot
-		 * AP up after battery SOC changes.
-		 */
-		if (tries == CHARGER_INITIALIZED_TRIES) {
-			CPRINTS("power-up inhibited");
-			power_up_inhibited = 1;
+		if (intel_x86_wait_power_up_ok() != EC_SUCCESS) {
 			chipset_force_shutdown(
 				CHIPSET_SHUTDOWN_BATTERY_INHIBIT);
 			return POWER_G3;
 		}
-
-		power_up_inhibited = 0;
-		}
-#endif
-
-#ifdef CONFIG_VBOOT_EFS
-		/*
-		 * We have to test power readiness here (instead of S5->S3)
-		 * because when entering S5, EC enables EC_ROP_SLP_SUS pin
-		 * which causes (short-powered) system to brown out.
-		 */
-		while (!system_can_boot_ap())
-			msleep(200);
-#endif
-
 #ifdef CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
 		/*
 		 * Callback to do pre-initialization within the context of
@@ -742,4 +706,46 @@ void chipset_reset(enum chipset_reset_reason reason)
 	 */
 	udelay(32 * MSEC);
 	gpio_set_level(GPIO_SYS_RESET_L, 1);
+}
+
+enum ec_error_list intel_x86_wait_power_up_ok(void)
+{
+#ifdef CONFIG_CHARGER
+	int tries = 0;
+
+	/*
+	 * Allow charger to be initialized for up to defined tries,
+	 * in case we're trying to boot the AP with no battery.
+	 */
+	while ((tries < CHARGER_INITIALIZED_TRIES) &&
+	       is_power_up_inhibited()) {
+		msleep(CHARGER_INITIALIZED_DELAY_MS);
+		tries++;
+	}
+
+	/*
+	 * Return to G3 if battery level is too low. Set
+	 * power_up_inhibited in order to check the eligibility to boot
+	 * AP up after battery SOC changes.
+	 */
+	if (tries == CHARGER_INITIALIZED_TRIES) {
+		CPRINTS("power-up inhibited");
+		power_up_inhibited = 1;
+		return EC_ERROR_TIMEOUT;
+	}
+
+	power_up_inhibited = 0;
+#endif
+
+#ifdef CONFIG_VBOOT_EFS
+	/*
+	 * We have to test power readiness here (instead of S5->S3)
+	 * because when entering S5, EC enables EC_ROP_SLP_SUS pin
+	 * which causes (short-powered) system to brown out.
+	 */
+	while (!system_can_boot_ap())
+		msleep(200);
+#endif
+
+	return EC_SUCCESS;
 }

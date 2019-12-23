@@ -157,26 +157,17 @@ static void port_ocp_interrupt(enum gpio_signal signal)
  */
 #define ADP_DEBOUNCE_MS		1000  /* Debounce time for BJ plug/unplug */
 /* Debounced connection state of the barrel jack */
-static int adp_connected = 1;
-static void adp_state_init(void)
-{
-	adp_connected = !gpio_get_level(GPIO_BJ_ADP_PRESENT_L);
-
-	/* Disable BJ power if not connected (we're on USB-C). */
-	gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, !adp_connected);
-}
-DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_INIT_EXTPOWER);
-
+static int8_t adp_connected = -1;
 static void adp_connect_deferred(void)
 {
 	struct charge_port_info pi = { 0 };
-	int connected = gpio_get_level(GPIO_BJ_ADP_PRESENT_L);
+	int connected = !gpio_get_level(GPIO_BJ_ADP_PRESENT_L);
 
 	/* Debounce */
 	if (connected == adp_connected)
 		return;
 	if (connected) {
-		pi.voltage = 19500;
+		pi.voltage = 19000;
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 			/*
 			 * TODO(b:143975429) set current according to SKU.
@@ -191,11 +182,6 @@ static void adp_connect_deferred(void)
 	}
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 				     DEDICATED_CHARGE_PORT, &pi);
-	/*
-	 * Explicitly notifies the host that BJ is plugged or unplugged
-	 * (when running on a type-c adapter).
-	 */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 	adp_connected = connected;
 }
 DECLARE_DEFERRED(adp_connect_deferred);
@@ -203,10 +189,25 @@ DECLARE_DEFERRED(adp_connect_deferred);
 /* IRQ for BJ plug/unplug. It shouldn't be called if BJ is the power source. */
 void adp_connect_interrupt(enum gpio_signal signal)
 {
-	if (adp_connected == !gpio_get_level(GPIO_BJ_ADP_PRESENT_L))
-		return;
 	hook_call_deferred(&adp_connect_deferred_data, ADP_DEBOUNCE_MS * MSEC);
 }
+
+static void adp_state_init(void)
+{
+	/*
+	 * Initialize all charge suppliers to 0. The charge manager waits until
+	 * all ports have reported in before doing anything.
+	 */
+	for (int i = 0; i < CHARGE_PORT_COUNT; i++) {
+		for (int j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
+			charge_manager_update_charge(j, i, NULL);
+	}
+
+	/* Report charge state from the barrel jack. */
+	adp_connect_deferred();
+}
+DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
+
 
 #include "gpio_list.h" /* Must come after other header files. */
 
