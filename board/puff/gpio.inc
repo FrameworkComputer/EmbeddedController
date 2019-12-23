@@ -83,7 +83,7 @@ GPIO(USB_C0_TCPC_RST,          PIN(9, 7), GPIO_OUT_LOW)
 GPIO(M2_SSD_PLN,               PIN(A, 0), GPIO_INPUT)
 GPIO(EC_ENTERING_RW,           PIN(E, 3), GPIO_OUT_LOW)
 GPIO(CCD_MODE_ODL,             PIN(E, 5), GPIO_ODR_HIGH)
-GPIO(EN_PP_MST_OD,             PIN(9, 6), GPIO_ODR_LOW)
+GPIO(EN_PP_MST_OD,             PIN(9, 6), GPIO_ODR_HIGH)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,                 PIN(B, 5), GPIO_INPUT)           /* EC_I2C_INA_SCL */
