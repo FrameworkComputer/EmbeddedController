@@ -468,6 +468,10 @@ Flashing the AP is standard across boards.
 
     chroot > sudo flashrom -p raiden_debug_spi:target=AP -w $IMAGE
 
+This default flashing command takes a very long time to complete, there are
+ways to speed up flashing process by cutting some corners, see the next
+section.
+
 If you have a lot of ccd devices plugged in, you may want to use the cr50
 serialname. You can get this by running
 
@@ -479,6 +483,80 @@ You can add the serialname to the flashrom command using
 
 **If you don’t see cr50 print any messages when you’re running the flashrom
 command, you probably need to use the serialname.**
+
+### Speeding up flashing the AP
+
+The flashrom utility is designed without any consideration of the speed of
+access to the chip. While this is a reasonable omission when talking about
+inline programming, when the AP controls the SPI bus and can clock the bus at
+50 MHz, speed of access becomes a very annoying limitation when programming
+AP flash using Cr50, where SPI bus can not be clocked faster than 1.5 MHz.
+
+One of 'smart' tricks deployed by flashrom is reading the entire flash contents
+first, before programming, then erase and or program only flash pages which
+have to be modified. Some pages are probably still the same since the previous
+image was written, some pages could be programmed without erasing, etc.
+
+This trick is especially painful when flashing using Cr50, because reading the
+entire flash image clocking it at 1.5MHz alone takes a few minutes.
+
+After programming is completed, by default flashrom reads the flash contents
+back and compares them with the file used for programming. This second read
+also takes a few minutes, even if small portions of the chip were modified,
+the entire chip is read and compared.
+
+With these shortcomings in mind, a more efficient way of programming AP flash
+can be proposed. The flashrom utility was enhanced to prevent it from reading
+the contents of the flash before programming, and from reading the entire chip
+when verifying the write operation. It turns out it takes much less time to
+erase the entire flash chip first and then program only sections essential for
+the device booting in recovery mode. Once the device boots in recovery mode
+Chrome OS can be installed from a removable storage device, and then the
+entire flash can be programmed from the Chrome OS command line, with the AP
+clocking the bus at 50 MHz.
+
+Incidentally, any Chrome OS device AP firmware image is split into sections,
+which can be examined by running the command
+```
+dump_fmap <image file>
+```
+
+The `dump_fmap` utility finds in the image the section called `FMAP` and
+prints out its contents, which describes the layout of the entire flash image.
+
+Only a few sections are essential for maintaining the device identity and for
+booting the device in recovery mode. The `-i` command line option of
+`flashrom` allows the user to indicate which sections should be read/written.
+
+The below sequence of commands allows to quickly reprogram the AP flash:
+```
+  # This will save device flash map and VPD sections in
+  # /tmp/bios.essentials.bin. VPD sections contain information like device
+  # firmware ID, WiFi calibration, enrollment status, etc. Use the below command
+  # only if you need to preserve the DUT's identity, no need to run it in case
+  # the DUT flash is not programmed at all, or you do not care about preserving
+  # the device identity.
+  sudo flashrom -p raiden_debug_spi:target=AP -i FMAP -i RO_VPD -i RW_VPD -r /tmp/bios.essentials.bin --fast-verify
+
+  # This command will erase the entire flash chip in one shot, the fastest
+  # possible way to erase.
+  sudo flashrom -p raiden_debug_spi:target=AP -E --do-not-diff
+
+  # This command will program essential flash sections necessary for the
+  # Chrome OS device to boot in recovery mode. Note that the SI_ALL section is
+  # not always present in the flash image, do not include it if it is not in
+  # dump_fmap output.
+  sudo flashrom -p raiden_debug_spi:target=AP -w image-atlas.bin -i FMAP -i WP_RO [-i SI_ALL] --do-not-diff --noverify
+
+  # This command will restore the previously preserved VPD sections of the
+  # flash, provided it was saved in the first step above.
+  sudo flashrom -p raiden_debug_spi:target=AP -w /tmp/bios.essential.bin -i RO_VPD -i RW_VPD --do-not-diff --noverify
+```
+
+Once flash is programmed, the device can be booted in recovery mode and start
+Chrome OS from external storage, following the usual recovery procedure. Once
+Chrome OS is installed, AP flash can be updated to include the rest of the
+image by running flashrom or futility from the device bash prompt.
 
 ## WP control
 
