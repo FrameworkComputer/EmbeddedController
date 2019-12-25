@@ -230,11 +230,22 @@
 #define NPCX_ALT_GPIO_4_3 ALT(4, 3, NPCX_ALT(6, ADC2_SL)) /* ADC2  */
 #define NPCX_ALT_GPIO_4_2 ALT(4, 2, NPCX_ALT(6, ADC3_SL)) /* ADC3  */
 #define NPCX_ALT_GPIO_4_1 ALT(4, 1, NPCX_ALT(6, ADC4_SL)) /* ADC4  */
+#ifdef CONFIG_PS2
+#define NPCX_ALT_GPIO_3_7 ALT(3, 7, NPCX_ALT(3, PS2_2_SL)) /* PS2_CLK2 */
+#define NPCX_ALT_GPIO_3_4 ALT(3, 4, NPCX_ALT(3, PS2_2_SL)) /* PS2_DATA2 */
+#else
 #define NPCX_ALT_GPIO_3_7 ALT(3, 7, NPCX_ALT(F, ADC5_SL)) /* ADC5  */
 #define NPCX_ALT_GPIO_3_4 ALT(3, 4, NPCX_ALT(F, ADC6_SL)) /* ADC6  */
+#endif
 #define NPCX_ALT_GPIO_E_1 ALT(E, 1, NPCX_ALT(F, ADC7_SL)) /* ADC7  */
 #define NPCX_ALT_GPIO_F_1 ALT(F, 1, NPCX_ALT(F, ADC8_SL)) /* ADC8  */
 #define NPCX_ALT_GPIO_F_0 ALT(F, 0, NPCX_ALT(F, ADC9_SL)) /* ADC9  */
+
+/* PS/2 Module */
+#define NPCX_ALT_GPIO_6_2 ALT(6, 2, NPCX_ALT(3, PS2_1_SL)) /* PS2_CLK1 */
+#define NPCX_ALT_GPIO_6_3 ALT(6, 3, NPCX_ALT(3, PS2_1_SL)) /* PS2_DATA1 */
+#define NPCX_ALT_GPIO_6_7 ALT(6, 7, NPCX_ALT(3, PS2_0_SL)) /* PS2_CLK0 */
+#define NPCX_ALT_GPIO_7_0 ALT(7, 0, NPCX_ALT(3, PS2_0_SL)) /* PS2_DATA0 */
 
 /* UART Module */
 #define NPCX_ALT_GPIO_6_4 ALT(6, 4, NPCX_ALT(C, UART_SL2)) /* CR_SIN SEL2 */
@@ -253,7 +264,11 @@
 #define NPCX_ALT_GPIO_4_0 ALT(4, 0, NPCX_ALT(3, TA1_SL1)) /* TA1_SEL1 */
 #define NPCX_ALT_GPIO_7_3 ALT(7, 3, NPCX_ALT(3, TA2_SL1)) /* TA2_SEL1 */
 #define NPCX_ALT_GPIO_9_3 ALT(9, 3, NPCX_ALT(C, TA1_SL2)) /* TA1_SEL2 */
+#ifdef CONFIG_PS2
+#define NPCX_ALT_GPIO_A_6 ALT(A, 6, NPCX_ALT(C, PS2_3_SL2)) /* PS2_CLK3 */
+#else
 #define NPCX_ALT_GPIO_A_6 ALT(A, 6, NPCX_ALT(C, TA2_SL2)) /* TA2_SEL2 */
+#endif
 
 /* Keyboard Scan Module */
 #define NPCX_ALT_GPIO_3_1 ALT(3, 1, NPCX_ALT_INV(7, NO_KSI0_SL)) /* KSI0 */
@@ -331,7 +346,11 @@
 #define NPCX_ALT_GPIO_A_3 ALT(A, 3, NPCX_ALT(0, SPIP_SL)) /* SPIP_MOSI */
 #define NPCX_ALT_GPIO_A_1 ALT(A, 1, NPCX_ALT(0, SPIP_SL)) /* SPIP_SCLK */
 
+#ifdef CONFIG_PS2
+#define NPCX_ALT_GPIO_A_7 ALT(A, 7, NPCX_ALT(C, PS2_3_SL2)) /* PS2_DAT3 */
+#else
 #define NPCX_ALT_GPIO_A_7
+#endif
 #define NPCX_ALT_GPIO_B_0
 #define NPCX_ALT_GPIO_9_4
 #define NPCX_ALT_GPIO_9_7
@@ -365,9 +384,9 @@
 	NPCX_ALT_GPIO_3_0 /* KSI1 */                  \
 	NPCX_ALT_GPIO_3_1 /* KSI0 */                  \
 	NPCX_ALT_GPIO_3_3 /* SMB5SCL0 */              \
-	NPCX_ALT_GPIO_3_4 /* ADC6  */                 \
+	NPCX_ALT_GPIO_3_4 /* ADC6/PS2_DAT2 */         \
 	NPCX_ALT_GPIO_3_6 /* SMB5SDA0 */              \
-	NPCX_ALT_GPIO_3_7 /* ADC5  */                 \
+	NPCX_ALT_GPIO_3_7 /* ADC5/PS2_CLK2 */         \
 	NPCX_ALT_GPIO_4_0 /* TA1_SEL1 */              \
 	NPCX_ALT_GPIO_4_1 /* ADC4  */                 \
 	NPCX_ALT_GPIO_4_2 /* ADC3  */                 \
@@ -375,8 +394,12 @@
 	NPCX_ALT_GPIO_4_4 /* ADC1  */                 \
 	NPCX_ALT_GPIO_4_5 /* ADC0  */                 \
 	NPCX_ALT_GPIO_6_0 /* PWM7 */                  \
+	NPCX_ALT_GPIO_6_2 /* PS2_CLK1 */              \
+	NPCX_ALT_GPIO_6_3 /* PS2_DAT1 */              \
 	NPCX_ALT_GPIO_6_4 /* CR_SIN1 SEL2 */          \
 	NPCX_ALT_GPIO_6_5 /* CR_SOUT1 SEL2 */         \
+	NPCX_ALT_GPIO_6_7 /* PS2_CLK0 */              \
+	NPCX_ALT_GPIO_7_0 /* PS2_DAT0 */              \
 	NPCX_ALT_GPIO_7_3 /* TA2_SEL1 */              \
 	NPCX_ALT_GPIO_7_5 /* CR_SIN2 & 32KHZ_OUT */   \
 	NPCX_ALT_GPIO_8_0 /* PWM3 */                  \
@@ -395,8 +418,8 @@
 	NPCX_ALT_GPIO_A_1 /* SPIP_SCLK */             \
 	NPCX_ALT_GPIO_A_3 /* SPIP_MOSI */             \
 	NPCX_ALT_GPIO_A_5 /* SPIP_CS1 & I2S_SYNC */   \
-	NPCX_ALT_GPIO_A_6 /* TA2_SEL2 */              \
-	NPCX_ALT_GPIO_A_7 /* I2S_SCLK */              \
+	NPCX_ALT_GPIO_A_6 /* TA2_SEL2/PS2_CLK3 */     \
+	NPCX_ALT_GPIO_A_7 /* I2S_SCLK/PS2_DAT3 */     \
 	NPCX_ALT_GPIO_B_0 /* I2S_DATA */              \
 	NPCX_ALT_GPIO_B_1 /* KSO17 */		      \
 	NPCX_ALT_GPIO_B_2 /* SMB7SDA0 */              \

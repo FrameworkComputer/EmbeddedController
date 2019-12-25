@@ -78,6 +78,9 @@ CONSOLE_CHANNEL(CC_MOTION_SENSE, "motionsense")
 CONSOLE_CHANNEL(CC_PD_HOST_CMD,  "pdhostcm")
 #endif
 CONSOLE_CHANNEL(CC_PORT80,       "port80")
+#ifdef CONFIG_PS2
+CONSOLE_CHANNEL(CC_PS2,          "ps2")
+#endif
 #if defined(CONFIG_PWM) || defined(CONFIG_FANS)
 CONSOLE_CHANNEL(CC_PWM,          "pwm")
 #endif

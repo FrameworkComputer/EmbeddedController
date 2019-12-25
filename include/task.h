@@ -40,6 +40,7 @@
 #endif
 #else
 #define TASK_EVENT_I2C_IDLE	BIT(20)
+#define TASK_EVENT_PS2_DONE	BIT(21)
 #endif
 
 /* DMA transmit complete event */

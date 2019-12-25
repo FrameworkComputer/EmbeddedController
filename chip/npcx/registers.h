@@ -67,6 +67,7 @@
 #define DEBUG_ESPI                       0
 #define DEBUG_CEC                        0
 #define DEBUG_SIB                        0
+#define DEBUG_PS2                        0
 
 /* Modules Map */
 #define NPCX_ESPI_BASE_ADDR              0x4000A000
@@ -82,6 +83,7 @@
 #define NPCX_APM_BASE_ADDR               0x400A4800
 #define NPCX_GLUE_REGS_BASE              0x400A5000
 #define NPCX_BBRAM_BASE_ADDR             0x400AF000
+#define NPCX_PS2_BASE_ADDR               0x400B1000
 #define NPCX_HFCG_BASE_ADDR              0x400B5000
 #define NPCX_LFCG_BASE_ADDR              0x400B5100
 #define NPCX_FMUL2_BASE_ADDR             0x400B5200
@@ -1001,6 +1003,7 @@ enum {
 	CGC_OFFSET_UART   = 0,
 	CGC_OFFSET_FAN    = 0,
 	CGC_OFFSET_FIU    = 0,
+	CGC_OFFSET_PS2    = 0,
 	CGC_OFFSET_PWM    = 1,
 	CGC_OFFSET_I2C    = 2,
 	CGC_OFFSET_ADC    = 3,
@@ -1039,6 +1042,7 @@ enum NPCX_PMC_PWDWN_CTL_T {
 #define CGC_FAN_MASK     (BIT(NPCX_PWDWN_CTL1_MFT1_PD) | \
 			 BIT(NPCX_PWDWN_CTL1_MFT2_PD))
 #define CGC_FIU_MASK     BIT(NPCX_PWDWN_CTL1_FIU_PD)
+#define CGC_PS2_MASK     BIT(NPCX_PWDWN_CTL1_PS2_PD)
 #if defined(CHIP_FAMILY_NPCX5)
 #define CGC_I2C_MASK     (BIT(NPCX_PWDWN_CTL3_SMB0_PD) | \
 			 BIT(NPCX_PWDWN_CTL3_SMB1_PD) | \
@@ -2191,7 +2195,59 @@ static inline int npcx_is_uart(void)
 }
 #endif
 
-/* Wake pin definitions, defined at board-level */
+/******************************************************************************/
+/* PS/2 registers */
+#define NPCX_PS2_PSDAT                   REG8(NPCX_PS2_BASE_ADDR + 0x000)
+#define NPCX_PS2_PSTAT                   REG8(NPCX_PS2_BASE_ADDR + 0x002)
+#define NPCX_PS2_PSCON                   REG8(NPCX_PS2_BASE_ADDR + 0x004)
+#define NPCX_PS2_PSOSIG                  REG8(NPCX_PS2_BASE_ADDR + 0x006)
+#define NPCX_PS2_PSISIG                  REG8(NPCX_PS2_BASE_ADDR + 0x008)
+#define NPCX_PS2_PSIEN                   REG8(NPCX_PS2_BASE_ADDR + 0x00A)
+
+/* PS/2 register field */
+#define NPCX_PS2_PSTAT_SOT               0
+#define NPCX_PS2_PSTAT_EOT               1
+#define NPCX_PS2_PSTAT_PERR              2
+#define NPCX_PS2_PSTAT_ACH               FIELD(3, 3)
+#define NPCX_PS2_PSTAT_RFERR             6
+
+#define NPCX_PS2_PSCON_EN                0
+#define NPCX_PS2_PSCON_XMT               1
+#define NPCX_PS2_PSCON_HDRV              FIELD(2, 2)
+#define NPCX_PS2_PSCON_IDB               FIELD(4, 3)
+#define NPCX_PS2_PSCON_WPUED             7
+
+#define NPCX_PS2_PSOSIG_WDAT0            0
+#define NPCX_PS2_PSOSIG_WDAT1            1
+#define NPCX_PS2_PSOSIG_WDAT2            2
+#define NPCX_PS2_PSOSIG_CLK0             3
+#define NPCX_PS2_PSOSIG_CLK1             4
+#define NPCX_PS2_PSOSIG_CLK2             5
+#define NPCX_PS2_PSOSIG_WDAT3            6
+#define NPCX_PS2_PSOSIG_CLK3             7
+#define NPCX_PS2_PSOSIG_CLK(n)      (((n) < NPCX_PS2_CH3) ? \
+					((n) + 3) : 7)
+#define NPCX_PS2_PSOSIG_WDAT(n)     (((n) < NPCX_PS2_CH3) ? \
+					((n) + 0) : 6)
+#define NPCX_PS2_PSOSIG_CLK_MASK_ALL \
+					(BIT(NPCX_PS2_PSOSIG_CLK0) | \
+					 BIT(NPCX_PS2_PSOSIG_CLK1) | \
+					 BIT(NPCX_PS2_PSOSIG_CLK2) | \
+					 BIT(NPCX_PS2_PSOSIG_CLK3))
+
+#define NPCX_PS2_PSISIG_RDAT0            0
+#define NPCX_PS2_PSISIG_RDAT1            1
+#define NPCX_PS2_PSISIG_RDAT2            2
+#define NPCX_PS2_PSISIG_RCLK0            3
+#define NPCX_PS2_PSISIG_RCLK1            4
+#define NPCX_PS2_PSISIG_RCLK2            5
+#define NPCX_PS2_PSISIG_RDAT3            6
+#define NPCX_PS2_PSISIG_RCLK3            7
+#define NPCX_PS2_PSIEN_SOTIE             0
+#define NPCX_PS2_PSIEN_EOTIE             1
+#define NPCX_PS2_PSIEN_PS2_WUE           4
+#define NPCX_PS2_PSIEN_PS2_CLK_SEL	     7
+
 extern const enum gpio_signal hibernate_wake_pins[];
 extern const int hibernate_wake_pins_used;
 
