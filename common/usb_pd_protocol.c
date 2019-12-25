@@ -2434,7 +2434,8 @@ static void pd_update_snk_reset(void)
 	int i;
 	int batt_soc = usb_get_battery_soc();
 
-	if (batt_soc < CONFIG_USB_PD_RESET_MIN_BATT_SOC)
+	if (batt_soc < CONFIG_USB_PD_RESET_MIN_BATT_SOC ||
+	    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)
 		return;
 
 	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
@@ -4098,7 +4099,8 @@ void pd_task(void *u)
 				 */
 				int batt_soc = usb_get_battery_soc();
 
-				if (batt_soc < CONFIG_USB_PD_RESET_MIN_BATT_SOC)
+				if (batt_soc < CONFIG_USB_PD_RESET_MIN_BATT_SOC ||
+				    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)
 					pd[port].flags |=
 						    PD_FLAGS_SNK_WAITING_BATT;
 				else
