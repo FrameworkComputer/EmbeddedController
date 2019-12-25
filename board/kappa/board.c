@@ -280,8 +280,3 @@ static void board_chipset_shutdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
-int board_get_charger_i2c(void)
-{
-	/* TODO(b:138415463): confirm the bus allocation for future builds */
-	return board_get_version() == 1 ? 2 : 1;
-}
