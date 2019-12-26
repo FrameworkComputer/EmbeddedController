@@ -573,6 +573,8 @@ static int tcs3400_rgb_set_scale(const struct motion_sensor_t *s,
 	struct rgb_channel_calibration_t *rgb_cal =
 			TCS3400_RGB_DRV_DATA(s)->calibration.rgb_cal;
 
+	if (scale[X] == 0 || scale[Y] == 0 || scale[Z] == 0)
+		return EC_ERROR_INVAL;
 	rgb_cal[RED_RGB_IDX].scale.k_channel_scale = scale[X];
 	rgb_cal[GREEN_RGB_IDX].scale.k_channel_scale = scale[Y];
 	rgb_cal[BLUE_RGB_IDX].scale.k_channel_scale = scale[Z];
@@ -648,6 +650,8 @@ static int tcs3400_set_scale(const struct motion_sensor_t *s,
 				 const uint16_t *scale,
 				 int16_t temp)
 {
+	if (scale[X] == 0)
+		return EC_ERROR_INVAL;
 	TCS3400_DRV_DATA(s)->als_cal.channel_scale.k_channel_scale = scale[X];
 	return EC_SUCCESS;
 }
