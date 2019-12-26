@@ -5,10 +5,6 @@
  * found in the LICENSE file.
  */
 
-GPIO_INT(EINT5_TP, PIN(5), GPIO_INT_FALLING, eint_event)
-GPIO_INT(EINT6_TP, PIN(6), GPIO_INT_FALLING, eint_event)
-GPIO_INT(EINT7_TP, PIN(7), GPIO_INT_FALLING, eint_event)
-
 /* Unimplemented signals which we need to emulate for now */
 UNIMPLEMENTED(ENTERING_RW)
 UNIMPLEMENTED(WP_L)

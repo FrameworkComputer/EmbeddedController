@@ -17,24 +17,7 @@
 #include "util.h"
 
 /* Build GPIO tables */
-void eint_event(enum gpio_signal signal);
-
 #include "gpio_list.h"
-
-
-void eint_event(enum gpio_signal signal)
-{
-	ccprintf("EINT event: %d\n", signal);
-}
-
-/* Initialize board.  */
-static void board_init(void)
-{
-	gpio_enable_interrupt(GPIO_EINT5_TP);
-	gpio_enable_interrupt(GPIO_EINT6_TP);
-	gpio_enable_interrupt(GPIO_EINT7_TP);
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 __override void
 power_chipset_handle_host_sleep_event(enum host_sleep_event state,
