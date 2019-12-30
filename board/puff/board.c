@@ -419,6 +419,9 @@ static void board_tcpc_init(void)
 	/* Only reset TCPC if not sysjump */
 	if (!system_jumped_to_this_image())
 		board_reset_pd_mcu();
+	/* Enable TCPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_TCPPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
 
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
