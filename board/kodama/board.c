@@ -246,6 +246,9 @@ static void board_init(void)
 	/* Enable interrupt from PMIC. */
 	gpio_enable_interrupt(GPIO_PMIC_EC_RESETB);
 
+	/* reduce mt6370 db and bl driving capacity */
+	mt6370_reduce_db_bl_driving();
+
 	/* Display bias settings. */
 	mt6370_db_set_voltages(6000, 5800, 5800);
 

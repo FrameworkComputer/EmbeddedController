@@ -200,6 +200,11 @@
 #define MT6370_REG_RGBMASK		0xED
 #define MT6370_REG_BLMASK		0xEE
 #define MT6370_REG_DBMASK		0xEF
+#define MT6370_REG_TM_PAS_CODE1		0xF0
+#define MT6370_REG_BANK			0xFF
+/* TM REGISTER */
+#define MT6370_TM_REG_BL3		0x34
+#define MT6370_TM_REG_DSV1		0x37
 #else
 #error "No suitable charger option defined"
 #endif
@@ -648,6 +653,20 @@
 #define MT6370_MASK_CHG_VBATOV_STAT	BIT(MT6370_SHIFT_CHG_VBATOV_STAT)
 #endif
 
+/* ========== TM PAS CODE1 0xF0 (mt6370) ============ */
+#define MT6370_LEAVE_TM			0x00
+
+/* ========== BANK REG 0xFF (mt6370) ============ */
+#define MT6370_MASK_REG_TM		0x69
+
+/* ========== TM REG 0x34 (mt6370) ============ */
+#define MT6370_TM_MASK_BL3_SL		0xC0
+#define MT6370_TM_REDUCE_BL3_SL		0xC0
+
+/* ========== TM REG 0x37 (mt6370) ============ */
+#define MT6370_TM_MASK_DSV1_SL		0xC0
+#define MT6370_TM_REDUCE_DSV1_SL	0x00
+
 /* ADC unit/offset */
 #define MT6370_ADC_UNIT_VBUS_DIV5	25000	/* uV */
 #define MT6370_ADC_UNIT_VBUS_DIV2	10000	/* uV */
@@ -830,6 +849,9 @@ int mt6370_led_set_pwm_dim_duty(enum mt6370_led_index index, uint8_t dim_duty);
 /* Set LED PWM mode frequency */
 int mt6370_led_set_pwm_frequency(enum mt6370_led_index index,
 				 enum mt6370_led_pwm_freq freq);
+
+/* Reduce mt6370 DB and BL driving capacity */
+int mt6370_reduce_db_bl_driving(void);
 #endif
 
 #endif /* __CROS_EC_RT946X_H */
