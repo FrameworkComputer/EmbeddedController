@@ -193,6 +193,9 @@
 /* Enabling Thunderbolt-compatible mode */
 #define CONFIG_USB_PD_TBT_COMPAT_MODE
 
+/* Enabling USB4 mode */
+#define CONFIG_USB_PD_USB4
+
 /*
  * USB ID
  * This is allocated specifically for Volteer
