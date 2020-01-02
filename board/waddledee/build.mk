@@ -3,9 +3,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-# Baseboard specific files build
+# Board specific files build
 #
 
-baseboard-y=baseboard.o
-baseboard-$(VARIANT_DEDEDE_EC_NPCX796FC)+=variant_ec_npcx796fc.o
-baseboard-$(VARIANT_DEDEDE_EC_IT8320)+=variant_ec_it8320.o
+CHIP:=it83xx
+CHIP_FAMILY:=it8320
+CHIP_VARIANT:=it8320dx
+BASEBOARD:=dedede
+
+board-y=board.o
+board-$(CONFIG_BATTERY_SMART)+=battery.o

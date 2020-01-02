@@ -22,7 +22,7 @@
  * Variant EC defines. Pick one:
  * VARIANT_DEDEDE_EC_NPCX796FC
  */
-#ifdef VARIANT_DEDEDE_EC_NPCX796FC
+#if defined(VARIANT_DEDEDE_EC_NPCX796FC)
 	/* NPCX7 config */
 	#define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
 	#define NPCX_TACH_SEL2    0  /* No tach. */
@@ -32,6 +32,17 @@
 	#define CONFIG_FLASH_SIZE (512 * 1024)
 	#define CONFIG_SPI_FLASH_REGS
 	#define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
+#elif defined(VARIANT_DEDEDE_EC_IT8320)
+	/* Flash clock must be > (50Mhz / 2) */
+	#define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
+
+	#define I2C_PORT_EEPROM		IT83XX_I2C_CH_A
+	#define I2C_PORT_BATTERY	IT83XX_I2C_CH_B
+	#define I2C_PORT_SENSOR		IT83XX_I2C_CH_C
+	#define I2C_PORT_SUB_USB_C1	IT83XX_I2C_CH_E
+	#define I2C_PORT_USB_C0		IT83XX_I2C_CH_F
+
+	#define I2C_ADDR_EEPROM_FLAGS	0x50
 #else
 #error "Must define a VARIANT_DEDEDE_EC!"
 #endif
@@ -170,6 +181,21 @@
 
 #include "common.h"
 #include "gpio_signal.h"
+
+/* Common enums */
+#if defined(VARIANT_DEDEDE_EC_NPCX796FC)
+#elif defined(VARIANT_DEDEDE_EC_IT8320)
+	enum adc_channel {
+		ADC_VSNS_PP3300_A,     /* ADC0 */
+		ADC_TEMP_SENSOR_1,     /* ADC2 */
+		ADC_TEMP_SENSOR_2,     /* ADC3 */
+		ADC_SUB_ANALOG,        /* ADC13 */
+		ADC_CH_COUNT
+	};
+#else
+#error "Must define a VARIANT_DEDEDE_EC!"
+#endif
+
 
 /* Reset all TCPCs */
 void board_reset_pd_mcu(void);
