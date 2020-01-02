@@ -11,6 +11,7 @@
 #include "ec_commands.h"
 #include "fpsensor.h"
 #include "fpsensor_crypto.h"
+#include "fpsensor_detect.h"
 #include "fpsensor_private.h"
 #include "fpsensor_state.h"
 #include "gpio.h"
@@ -202,6 +203,11 @@ void fp_task(void)
 	/* configure the SPI controller (also ensure that CS_N is high) */
 	gpio_config_module(MODULE_SPI_MASTER, 1);
 	spi_enable(CONFIG_SPI_FP_PORT, 1);
+
+	CPRINTS("TRANSPORT_SEL: %s",
+		fp_transport_type_to_str(get_fp_transport_type()));
+	CPRINTS("FP_SENSOR_SEL: %s",
+		fp_sensor_type_to_str(get_fp_sensor_type()));
 
 #ifdef HAVE_FP_PRIVATE_DRIVER
 	/* Reset and initialize the sensor IC */
