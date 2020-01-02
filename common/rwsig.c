@@ -21,6 +21,7 @@
 #include "usb_pd.h"
 #include "util.h"
 #include "vb21_struct.h"
+#include "vboot.h"
 #include "version.h"
 
 /* Console output macros */
@@ -142,7 +143,7 @@ int rwsig_check_signature(void)
 	sig = (const uint8_t *)CONFIG_RW_SIG_ADDR;
 	rwlen = CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE;
 #elif defined(CONFIG_RWSIG_TYPE_RWSIG)
-	vb21_key = (const struct vb21_packed_key *)CONFIG_RO_PUBKEY_ADDR;
+	vb21_key = vb21_get_packed_key();
 	vb21_sig = (const struct vb21_signature *)CONFIG_RW_SIG_ADDR;
 
 	if (vb21_key->c.magic != VB21_MAGIC_PACKED_KEY ||

@@ -25,6 +25,14 @@ int vb21_is_packed_key_valid(const struct vb21_packed_key *key);
 int vb21_is_signature_valid(const struct vb21_signature *sig,
 			    const struct vb21_packed_key *key);
 
+
+/**
+ * Returns the public key in RO that was used to sign RW.
+ *
+ * @return pointer to key, never NULL
+ */
+const struct vb21_packed_key *vb21_get_packed_key(void);
+
 /**
  * Check data region is filled with ones
  *

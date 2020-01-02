@@ -270,9 +270,14 @@ const char help_str[] =
 	"      Set real-time clock alarm to go off in <sec> seconds\n"
 	"  rwhashpd <dev_id> <HASH[0] ... <HASH[4]>\n"
 	"      Set entry in PD MCU's device rw_hash table.\n"
-	"  rwsigaction\n"
+	"  rwsig <info|dump|action|status> ...\n"
+	"      info: get all info about rwsig\n"
+	"      dump: show individual rwsig field\n"
+	"      action: Control the behavior of RWSIG task.\n"
+	"      status: Run RW signature verification and get status.\n{"
+	"  rwsigaction (DEPRECATED; use \"rwsig action\")\n"
 	"      Control the behavior of RWSIG task.\n"
-	"  rwsigstatus\n"
+	"  rwsigstatus (DEPRECATED; use \"rwsig status\"\n"
 	"      Run RW signature verification and get status.\n"
 	"  sertest\n"
 	"      Serial output test for COM2\n"
@@ -1464,23 +1469,172 @@ int cmd_rwsig_status(int argc, char *argv[])
 	return 0;
 }
 
-int cmd_rwsig_action(int argc, char *argv[])
+static int rwsig_action(const char *command)
 {
 	struct ec_params_rwsig_action req;
 
-	if (argc < 2) {
-		fprintf(stderr, "Usage: %s abort | continue\n", argv[0]);
-		return -1;
-	}
-
-	if (!strcasecmp(argv[1], "abort"))
+	if (!strcasecmp(command, "abort"))
 		req.action = RWSIG_ACTION_ABORT;
-	else if (!strcasecmp(argv[1], "continue"))
+	else if (!strcasecmp(command, "continue"))
 		req.action = RWSIG_ACTION_CONTINUE;
 	else
 		return -1;
 
 	return ec_command(EC_CMD_RWSIG_ACTION, 0, &req, sizeof(req), NULL, 0);
+}
+
+int cmd_rwsig_action_legacy(int argc, char *argv[])
+{
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s [abort | continue]\n", argv[0]);
+		return -1;
+	}
+
+	return rwsig_action(argv[1]);
+}
+
+int cmd_rwsig_action(int argc, char *argv[])
+{
+	if (argc < 2) {
+		fprintf(stderr, "Usage: ectool rwsig action [abort | "
+				"continue]\n");
+		return -1;
+	}
+
+	return rwsig_action(argv[1]);
+}
+
+enum rwsig_info_fields {
+	RWSIG_INFO_FIELD_SIG_ALG = BIT(0),
+	RWSIG_INFO_FIELD_KEY_VERSION = BIT(1),
+	RWSIG_INFO_FIELD_HASH_ALG = BIT(2),
+	RWSIG_INFO_FIELD_KEY_IS_VALID = BIT(3),
+	RWSIG_INFO_FIELD_KEY_ID = BIT(4),
+	RWSIG_INFO_FIELD_ALL = RWSIG_INFO_FIELD_SIG_ALG |
+		RWSIG_INFO_FIELD_KEY_VERSION | RWSIG_INFO_FIELD_HASH_ALG |
+		RWSIG_INFO_FIELD_KEY_IS_VALID | RWSIG_INFO_FIELD_KEY_ID
+};
+
+static int rwsig_info(enum rwsig_info_fields fields)
+{
+	int i;
+	int rv;
+	struct ec_response_rwsig_info r;
+	bool print_prefix = false;
+
+	rv = ec_command(EC_CMD_RWSIG_INFO, EC_VER_RWSIG_INFO, NULL, 0, &r,
+			sizeof(r));
+	if (rv < 0) {
+		fprintf(stderr, "rwsig info command failed\n");
+		return -1;
+	}
+
+	if ((fields & RWSIG_INFO_FIELD_ALL) == RWSIG_INFO_FIELD_ALL)
+		print_prefix = true;
+
+	if (fields & RWSIG_INFO_FIELD_SIG_ALG) {
+		if (print_prefix)
+			printf("sig_alg: ");
+
+		printf("%d\n", r.sig_alg);
+	}
+	if (fields & RWSIG_INFO_FIELD_KEY_VERSION) {
+		if (print_prefix)
+			printf("key_version: ");
+
+		printf("%d\n", r.key_version);
+	}
+	if (fields & RWSIG_INFO_FIELD_HASH_ALG) {
+		if (print_prefix)
+			printf("hash_alg: ");
+
+		printf("%d\n", r.hash_alg);
+	}
+	if (fields & RWSIG_INFO_FIELD_KEY_IS_VALID) {
+		if (print_prefix)
+			printf("key_is_valid: ");
+
+		printf("%d\n", r.key_is_valid);
+	}
+	if (fields & RWSIG_INFO_FIELD_KEY_ID) {
+		if (print_prefix)
+			printf("key_id: ");
+
+		for (i = 0; i < sizeof(r.key_id); i++)
+			printf("%x", r.key_id[i]);
+		printf("\n");
+	}
+
+	return 0;
+}
+
+static int cmd_rwsig_info(int argc, char *argv[])
+{
+	int i;
+
+	struct rwsig_dump_cmds {
+		const char *cmd;
+		enum rwsig_info_fields field;
+	};
+
+	struct rwsig_dump_cmds cmd_map[] = {
+		{ "sig_alg", RWSIG_INFO_FIELD_SIG_ALG },
+		{ "key_version", RWSIG_INFO_FIELD_KEY_VERSION },
+		{ "hash_alg", RWSIG_INFO_FIELD_HASH_ALG },
+		{ "key_valid", RWSIG_INFO_FIELD_KEY_IS_VALID },
+		{ "key_id", RWSIG_INFO_FIELD_KEY_ID },
+	};
+
+	if (argc == 0)
+		return -1;
+
+	if (strcmp(argv[0], "info") == 0)
+		return rwsig_info(RWSIG_INFO_FIELD_ALL);
+
+	if (strcmp(argv[0], "dump") == 0) {
+		if (argc != 2) {
+			fprintf(stderr,
+				"Usage: rwsig dump "
+				"[sig_alg|key_version|hash_alg|key_valid|key_id]\n");
+			return -1;
+		}
+		for (i = 0; i < ARRAY_SIZE(cmd_map); i++)
+			if (strcmp(argv[1], cmd_map[i].cmd) == 0)
+				return rwsig_info(cmd_map[i].field);
+
+		return -1;
+	}
+
+	return -1;
+}
+
+int cmd_rwsig(int argc, char **argv)
+{
+	struct rwsig_subcommand {
+		const char *subcommand;
+		int (*handler)(int argc, char *argv[]);
+	};
+
+	const struct rwsig_subcommand rwsig_subcommands[] = {
+		{ "info", cmd_rwsig_info },
+		{ "dump", cmd_rwsig_info },
+		{ "action", cmd_rwsig_action },
+		{ "status", cmd_rwsig_status }
+	};
+
+	int i;
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <info|dump|action|status>\n",
+			argv[0]);
+		return -1;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(rwsig_subcommands); i++)
+		if (strcmp(argv[1], rwsig_subcommands[i].subcommand) == 0)
+			return rwsig_subcommands[i].handler(--argc, &argv[1]);
+
+	return -1;
 }
 
 int cmd_rollback_info(int argc, char *argv[])
@@ -9290,7 +9444,8 @@ const struct command commands[] = {
 	{"rtcset", cmd_rtc_set},
 	{"rtcsetalarm", cmd_rtc_set_alarm},
 	{"rwhashpd", cmd_rw_hash_pd},
-	{"rwsigaction", cmd_rwsig_action},
+	{"rwsig", cmd_rwsig},
+	{"rwsigaction", cmd_rwsig_action_legacy},
 	{"rwsigstatus", cmd_rwsig_status},
 	{"sertest", cmd_serial_test},
 	{"stress", cmd_stress_test},

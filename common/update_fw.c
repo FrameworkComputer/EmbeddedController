@@ -17,6 +17,7 @@
 #include "update_fw.h"
 #include "util.h"
 #include "vb21_struct.h"
+#include "vboot.h"
 
 #if defined(CONFIG_TOUCHPAD_VIRTUAL_OFF) && defined(CONFIG_TOUCHPAD_HASH_FW)
 #define CONFIG_TOUCHPAD_FW_CHUNKS \
@@ -203,7 +204,7 @@ void fw_update_start(struct first_response_pdu *rpdu)
 #endif
 
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
-	vb21_key = (const struct vb21_packed_key *)CONFIG_RO_PUBKEY_ADDR;
+	vb21_key = vb21_get_packed_key();
 	rpdu->common.key_version = htobe32(vb21_key->key_version);
 #endif
 
