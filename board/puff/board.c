@@ -423,6 +423,14 @@ static void board_tcpc_init(void)
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_TCPPC_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
+	/* Enable other overcurrent interrupts */
+	gpio_enable_interrupt(GPIO_HDMI_CONN0_OC_ODL);
+	gpio_enable_interrupt(GPIO_HDMI_CONN1_OC_ODL);
+	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
+	gpio_enable_interrupt(GPIO_USB_A1_OC_ODL);
+	gpio_enable_interrupt(GPIO_USB_A2_OC_ODL);
+	gpio_enable_interrupt(GPIO_USB_A3_OC_ODL);
+	gpio_enable_interrupt(GPIO_USB_A4_OC_ODL);
 
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
