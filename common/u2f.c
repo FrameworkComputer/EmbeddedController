@@ -395,8 +395,8 @@ static enum vendor_cmd_rc u2f_attest(enum vendor_cmd_cc code,
 
 	*response_size = 0;
 
-	if (input_size < 2 ||
-	    input_size < (2 + req->dataLen) ||
+	if (input_size < offsetof(U2F_ATTEST_REQ, data) ||
+	    input_size < (offsetof(U2F_ATTEST_REQ, data) + req->dataLen) ||
 	    input_size > sizeof(U2F_ATTEST_REQ) ||
 	    response_buf_size < sizeof(*resp))
 		return VENDOR_RC_BOGUS_ARGS;
