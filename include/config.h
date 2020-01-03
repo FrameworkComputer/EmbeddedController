@@ -793,7 +793,9 @@
 #undef CONFIG_CHARGER_RAA489000
 #undef CONFIG_CHARGER_RT9466
 #undef CONFIG_CHARGER_RT9467
+#undef CONFIG_CHARGER_SM5803
 #undef CONFIG_CHARGER_SY21612
+
 
 /* Allow run-time completion of the charger driver structure */
 #undef CONFIG_CHARGER_RUNTIME_CONFIG
@@ -4765,7 +4767,8 @@
  * architecture.
  */
 #if defined(CONFIG_CHARGER_ISL9237) || defined(CONFIG_CHARGER_ISL9238) || \
-	defined(CONFIG_CHARGER_ISL9241) || defined(CONFIG_CHARGER_RAA489000)
+	defined(CONFIG_CHARGER_ISL9241) || \
+	defined(CONFIG_CHARGER_RAA489000) || defined(CONFIG_CHARGER_SM5803)
 #define CONFIG_CHARGER_NARROW_VDC
 #endif
 

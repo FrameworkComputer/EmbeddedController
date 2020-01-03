@@ -66,6 +66,7 @@ driver-$(CONFIG_CHARGER_RAA489000)+=charger/isl923x.o
 driver-$(CONFIG_CHARGER_RT9466)+=charger/rt946x.o
 driver-$(CONFIG_CHARGER_RT9467)+=charger/rt946x.o
 driver-$(CONFIG_CHARGER_SY21612)+=charger/sy21612.o
+driver-$(CONFIG_CHARGER_SM5803)+=charger/sm5803.o
 
 # Fingerprint Sensors
 include $(_driver_cur_dir)fingerprint/build.mk
