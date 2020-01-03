@@ -456,12 +456,22 @@ void board_reset_pd_mcu(void)
 
 int board_set_active_charge_port(int port)
 {
-	const int active_port = charge_manager_get_active_charge_port();
+	CPRINTS("Requested charge port change to %d", port);
+
+	/*
+	 * The charge manager may ask us to switch to no charger if we're
+	 * running off USB-C only but upstream doesn't support PD. It requires
+	 * that we accept this switch otherwise it triggers an assert and EC
+	 * reset; it's not possible to boot the AP anyway, but we want to avoid
+	 * resetting the EC so we can continue to do the "low power" LED blink.
+	 */
+	if (port == CHARGE_PORT_NONE)
+		return EC_SUCCESS;
 
 	if (port < 0 || CHARGE_PORT_COUNT <= port)
 		return EC_ERROR_INVAL;
 
-	if (port == active_port)
+	if (port == charge_manager_get_active_charge_port())
 		return EC_SUCCESS;
 
 	/* Don't charge from a source port */
