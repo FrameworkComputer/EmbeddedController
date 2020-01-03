@@ -42,9 +42,9 @@ struct pwm_led pwm_leds[] = {
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	brightness_range[EC_LED_COLOR_RED] = 100;
-	brightness_range[EC_LED_COLOR_GREEN] = 100;
-	brightness_range[EC_LED_COLOR_BLUE] = 100;
+	brightness_range[EC_LED_COLOR_RED] = 255;
+	brightness_range[EC_LED_COLOR_GREEN] = 255;
+	brightness_range[EC_LED_COLOR_BLUE] = 255;
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)

@@ -178,6 +178,14 @@ const struct pwm_t pwm_channels[] = {
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
 		.freq = 2400,
 	},
+	[PWM_CH_LED4_SIDESEL] = {
+		.channel = 7,
+		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+		/* Run at a higher frequency than the color PWM signals to avoid
+		 * timing-based color shifts.
+		 */
+		.freq = 4800,
+	},
 	[PWM_CH_FAN] = {
 		.channel = 5,
 		.flags = PWM_CONFIG_OPEN_DRAIN,
@@ -546,3 +554,13 @@ __override void board_icl_tgl_all_sys_pwrgood(void)
 	msleep(50);
 }
 
+static void baseboard_init(void)
+{
+	/* Illuminate motherboard and daughter board LEDs equally.
+	 * TODO(b/139554899): Illuminate only the LED next to the active
+	 * charging port.
+	 */
+	pwm_enable(PWM_CH_LED4_SIDESEL, 1);
+	pwm_set_duty(PWM_CH_LED4_SIDESEL, 50);
+}
+DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT);
