@@ -19,26 +19,3 @@
 /* Build GPIO tables */
 #include "gpio_list.h"
 
-__override void
-power_chipset_handle_host_sleep_event(enum host_sleep_event state,
-				      struct host_sleep_event_context *ctx)
-{
-	int i;
-	const task_id_t s3_suspend_tasks[] = {
-#ifndef S3_SUSPEND_TASK_LIST
-#define S3_SUSPEND_TASK_LIST
-#endif
-#define TASK(n, ...) TASK_ID_##n,
-		S3_SUSPEND_TASK_LIST
-	};
-
-	if (state == HOST_SLEEP_EVENT_S3_SUSPEND) {
-		ccprints("AP suspend");
-		for (i = 0; i < ARRAY_SIZE(s3_suspend_tasks); ++i)
-			task_disable_task(s3_suspend_tasks[i]);
-	} else if (state == HOST_SLEEP_EVENT_S3_RESUME) {
-		ccprints("AP resume");
-		for (i = 0; i < ARRAY_SIZE(s3_suspend_tasks); ++i)
-			task_enable_task(s3_suspend_tasks[i]);
-	}
-}

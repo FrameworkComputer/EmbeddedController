@@ -276,10 +276,25 @@ static void scp_clock_high_enable(int osc)
 	}
 }
 
+void scp_use_clock(enum scp_clock_source src)
+{
+	/*
+	 * DIV2 divider takes precedence over clock selection to prevent
+	 * over-clocking.
+	 */
+	if (src == SCP_CLK_ULPOSC1)
+		SCP_CLK_DIV_SEL = CLK_DIV2;
+
+	SCP_CLK_SEL = src;
+
+	if (src != SCP_CLK_ULPOSC1)
+		SCP_CLK_DIV_SEL = CLK_DIV1;
+}
+
 void scp_enable_clock(void)
 {
 	/* Select default CPU clock */
-	SCP_CLK_SEL = CLK_SEL_SYS_26M;
+	scp_use_clock(SCP_CLK_26M);
 
 	/* VREQ */
 	SCP_CPU_VREQ = 0x10001;
@@ -310,7 +325,7 @@ void scp_enable_clock(void)
 	scp_calibrate_ulposc(1, ULPOSC2_CLOCK_MHZ);
 
 	/* Select ULPOSC2 high speed CPU clock */
-	SCP_CLK_SEL = CLK_SEL_ULPOSC_2;
+	scp_use_clock(SCP_CLK_ULPOSC2);
 
 	/* Enable default clock gate */
 	SCP_CLK_GATE |= CG_DMA_CH3 | CG_DMA_CH2 | CG_DMA_CH1 | CG_DMA_CH0 |

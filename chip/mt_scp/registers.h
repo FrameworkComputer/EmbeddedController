@@ -332,6 +332,10 @@
 #define   SPM_SLEEP_MODE		BIT(8)
 #define   SPM_SLEEP_MODE_CLK_AO		BIT(9)
 #define SCP_CLK_DIV_SEL			REG32(SCP_CLK_BASE + 0x24)
+#define   CLK_DIV1			0
+#define   CLK_DIV2			1
+#define   CLK_DIV4			2
+#define   CLK_DIV8			3
 #define SCP_CLK_DEBUG			REG32(SCP_CLK_BASE + 0x28)
 #define SCP_CLK_SRAM_POWERDOWN		REG32(SCP_CLK_BASE + 0x2C)
 #define SCP_CLK_GATE			REG32(SCP_CLK_BASE + 0x30)
