@@ -844,7 +844,8 @@ void lid_angle_peripheral_enable(int enable)
 }
 #endif
 
-static uint32_t sku_id;
+/* Unprovisioned magic value. */
+static uint32_t sku_id = 0x7fffffff;
 
 static void cbi_init(void)
 {
