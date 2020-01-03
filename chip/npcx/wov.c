@@ -17,7 +17,7 @@
 #include "wov_chip.h"
 
 #ifndef NPCX_WOV_SUPPORT
-#error "Do not enable CONFIG_WAKE_ON_VOICE if npcx ec doesn't support WOV !"
+#error "Do not enable CONFIG_AUDIO_CODEC_* if npcx ec doesn't support WOV !"
 #endif
 
 /* Console output macros */

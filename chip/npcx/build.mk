@@ -22,6 +22,7 @@ chip-y+=system-$(CHIP_FAMILY).o
 
 # Optional chip modules
 chip-$(CONFIG_ADC)+=adc.o
+chip-$(CONFIG_AUDIO_CODEC)+=apm.o wov.o
 chip-$(CONFIG_AUDIO_CODEC_DMIC)+=audio_codec_dmic.o
 chip-$(CONFIG_AUDIO_CODEC_I2S_RX)+=audio_codec_i2s_rx.o
 chip-$(CONFIG_FANS)+=fan.o
@@ -39,8 +40,6 @@ chip-$(CONFIG_WATCHDOG)+=watchdog.o
 ifndef CONFIG_KEYBOARD_NOT_RAW
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
-chip-$(CONFIG_WAKE_ON_VOICE)+=apm.o
-chip-$(CONFIG_WAKE_ON_VOICE)+=wov.o
 
 # spi monitor program fw for openocd and UUT(UART Update Tool)
 npcx-monitor-fw=chip/npcx/spiflashfw/npcx_monitor
