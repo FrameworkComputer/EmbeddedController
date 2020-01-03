@@ -1541,6 +1541,25 @@ static int pd_send_request_msg(int port, int always_send_request)
 		CPRINTF(" Mismatch");
 	CPRINTF("\n");
 
+	/*
+	 * Ref: USB Power Delivery Specification
+	 * (Revision 3.0, Version 2.0 / Revision 2.0, Version 1.3)
+	 * 6.4.2.4 USB Communications Capable
+	 * 6.4.2.5 No USB Suspend
+	 *
+	 * If the port partner is capable of USB communication set the
+	 * USB Communications Capable flag.
+	 * If the port partner is sink device do not suspend USB as the
+	 * power can be used for charging.
+	 *
+	 * TODO (b/147249926): Move it to common code.
+	 */
+	if (pd[port].flags & PD_FLAGS_PARTNER_USB_COMM) {
+		rdo |= RDO_COMM_CAP;
+		if (pd[port].power_role == PD_ROLE_SINK)
+			rdo |= RDO_NO_SUSPEND;
+	}
+
 	pd[port].curr_limit = curr_limit;
 	pd[port].supply_voltage = supply_voltage;
 	pd[port].prev_request_mv = supply_voltage;
