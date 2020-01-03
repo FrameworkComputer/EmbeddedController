@@ -166,17 +166,17 @@ const struct pwm_t pwm_channels[] = {
 	[PWM_CH_LED1_BLUE] = {
 		.channel = 2,
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 100,
+		.freq = 2400,
 	},
 	[PWM_CH_LED2_GREEN] = {
 		.channel = 0,
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 100,
+		.freq = 2400,
 	},
 	[PWM_CH_LED3_RED] = {
 		.channel = 1,
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 100,
+		.freq = 2400,
 	},
 	[PWM_CH_FAN] = {
 		.channel = 5,
