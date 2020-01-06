@@ -3,8 +3,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-# Baseboard specific files build
+# Board specific files build
 #
 
-baseboard-y=baseboard.o
-baseboard-$(VARIANT_DEDEDE_EC_NPCX796FC)+=variant_ec_npcx796fc.o
+CHIP:=npcx
+CHIP_FAMILY:=npcx7
+CHIP_VARIANT:=npcx7m6fc
+BASEBOARD:=dedede
+
+board-y=board.o

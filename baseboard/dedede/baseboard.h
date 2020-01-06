@@ -37,16 +37,33 @@
 #endif
 
 /* Common EC defines */
+
+/* EC Modules */
+#define CONFIG_ADC
+#define CONFIG_CRC8
 #define CONFIG_HOSTCMD_ESPI
 #define CONFIG_HOSTCMD_EVENTS
-#define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_I2C
+#define CONFIG_I2C_MASTER
+#define CONFIG_LOW_POWER_IDLE
 #define CONFIG_VBOOT_HASH
-#define CONFIG_CRC8
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
+
+/* Buttons / Switches */
+#define CONFIG_SWITCH
+#define CONFIG_WP_ACTIVE_HIGH
+
+/* CBI */
 #define CONFIG_CROS_BOARD_INFO
 #define CONFIG_BOARD_VERSION_CBI
-#define CONFIG_LOW_POWER_IDLE
+
+/* SoC */
 #define CONFIG_BOARD_HAS_RTC_RESET
+#define CONFIG_KEYBOARD_PROTOCOL_8042
+#define CONFIG_POWER_BUTTON
+#define CONFIG_POWER_BUTTON_X86
+
 
 #ifndef __ASSEMBLER__
 
