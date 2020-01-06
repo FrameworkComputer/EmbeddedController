@@ -834,6 +834,9 @@ enum pd_states {
  */
 #define PD_FLAGS_SNK_WAITING_BATT BIT(20)
 
+/* Check vconn state in READY */
+#define PD_FLAGS_CHECK_VCONN_STATE BIT(21)
+
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \
@@ -850,7 +853,8 @@ enum pd_states {
 					   PD_FLAGS_PARTNER_USB_COMM | \
 					   PD_FLAGS_UPDATE_SRC_CAPS | \
 					   PD_FLAGS_TS_DTS_PARTNER | \
-					   PD_FLAGS_SNK_WAITING_BATT)
+					   PD_FLAGS_SNK_WAITING_BATT | \
+					   PD_FLAGS_CHECK_VCONN_STATE)
 
 /* Per-port battery backed RAM flags */
 #define PD_BBRMFLG_EXPLICIT_CONTRACT BIT(0)
@@ -1410,6 +1414,15 @@ __override_proto void pd_check_pr_role(int port,
 __override_proto void pd_check_dr_role(int port,
 				enum pd_data_role dr_role,
 				int flags);
+
+/**
+ * Check for a potential Vconn swap if the port isn't
+ * supplying Vconn
+ *
+ * @param port USB-C port number
+ * @param flags PD flags
+ */
+__override_proto void pd_try_execute_vconn_swap(int port, int flags);
 
 /**
  * Check if we should charge from this device. This is

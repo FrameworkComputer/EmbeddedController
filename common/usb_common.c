@@ -655,6 +655,17 @@ __overridable void pd_execute_data_swap(int port,
 {
 }
 
+__overridable void pd_try_execute_vconn_swap(int port, int flags)
+{
+	/*
+	 * If partner is dual-role power and vconn swap is enabled, consider
+	 * if vconn swapping is necessary.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
+	    IS_ENABLED(CONFIG_USBC_VCONN_SWAP))
+		pd_try_vconn_src(port);
+}
+
 __overridable int pd_is_valid_input_voltage(int mv)
 {
 	return 1;
