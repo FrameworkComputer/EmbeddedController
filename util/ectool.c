@@ -7475,8 +7475,8 @@ static int cmd_cbi(int argc, char *argv[])
 
 	if (!strcasecmp(argv[1], "get")) {
 		struct ec_params_get_cbi p = { 0 };
-		uint8_t *r;
 		int i;
+
 		p.tag = tag;
 		if (argc > 3) {
 			p.flag = strtol(argv[3], &e, 0);
@@ -7495,17 +7495,25 @@ static int cmd_cbi(int argc, char *argv[])
 			fprintf(stderr, "Invalid size: %d\n", rv);
 			return -1;
 		}
-		r = ec_inbuf;
 		if (cmd_cbi_is_string_field(tag)) {
-			printf("%.*s", rv, (const char *)r);
+			printf("%.*s", rv, (const char *)ec_inbuf);
 		} else {
-			if (rv <= sizeof(uint32_t))
-				printf("As integer: %u (0x%x)\n", r[0], r[0]);
+			const uint8_t * const buffer = ec_inbuf;
+
+			if (rv <= sizeof(uint32_t)) {
+				uint32_t int_value = 0;
+
+				for (i = 0; i < rv; i++)
+					int_value |= buffer[i] << (i * 8);
+
+				printf("As uint: %u (0x%x)\n", int_value,
+				       int_value);
+			}
 			printf("As binary:");
 			for (i = 0; i < rv; i++) {
 				if (i % 32 == 31)
 					printf("\n");
-				printf(" %02x", r[i]);
+				printf(" %02x", buffer[i]);
 			}
 		}
 		printf("\n");
