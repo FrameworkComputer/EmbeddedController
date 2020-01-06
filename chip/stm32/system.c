@@ -470,7 +470,9 @@ void system_reset(int flags)
 				udelay(10000);
 			}
 		}
-		CPU_NVIC_APINT = 0x05fa0004;
+
+		/* Request a soft system reset from the core. */
+		CPU_NVIC_APINT = CPU_NVIC_APINT_KEY_WR | CPU_NVIC_APINT_SYSRST;
 	}
 
 	/* Spin and wait for reboot; should never return */

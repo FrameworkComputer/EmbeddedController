@@ -26,6 +26,10 @@
 
 /* SCB AIRCR : Application interrupt and reset control register */
 #define CPU_NVIC_APINT         CPUREG(0xe000ed0c)
+#define  CPU_NVIC_APINT_SYSRST  BIT(2)            /* System reset request */
+#define  CPU_NVIC_APINT_ENDIAN  BIT(15)           /* Endianness */
+#define  CPU_NVIC_APINT_KEY_RD  (0U)
+#define  CPU_NVIC_APINT_KEY_WR  (0x05FAU << 16)
 /* SCB SCR : System Control Register */
 #define CPU_SCB_SYSCTRL        CPUREG(0xe000ed10)
 #define CPU_NVIC_CCR           CPUREG(0xe000ed14)
