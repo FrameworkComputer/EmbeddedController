@@ -471,18 +471,12 @@ struct usb_mux usb_muxes[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
-enum zork_c1_retimer {
-	C1_RETIMER_UNKNOWN,
-	C1_RETIMER_PS8802,
-	C1_RETIMER_PS8818,
-};
-
-static enum zork_c1_retimer zork_c1_retimer = C1_RETIMER_UNKNOWN;
-
 /*
- * To support both OPT1 DB with PS8818 retimer, and OPT3 DB with PS8802 retimer,
- * try both, and remember the first one that succeeds.
+ * To support both OPT1 DB with PS8818 retimer, and OPT3 DB with PS8802
+ * retimer,  Try both, and remember the first one that succeeds.
  */
+enum zork_c1_retimer zork_c1_retimer = C1_RETIMER_UNKNOWN;
+
 static int zork_c1_set_mux(int port, mux_state_t mux_state)
 {
 	int rv = EC_ERROR_UNKNOWN;

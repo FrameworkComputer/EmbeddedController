@@ -280,6 +280,23 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
+/* Private
+ * Main intent is to indicate the retimer type attached
+ * but is also needed to determine the HPD from the port
+ */
+enum zork_c1_retimer {
+	C1_RETIMER_UNKNOWN,
+	C1_RETIMER_PS8802,
+	C1_RETIMER_PS8818,
+};
+extern enum zork_c1_retimer zork_c1_retimer;
+
+#define PORT_TO_HPD(port) ((port == 0) \
+	? GPIO_USB_C0_HPD \
+	: (zork_c1_retimer == C1_RETIMER_PS8802) \
+		? GPIO_DP1_HPD \
+		: GPIO_DP2_HPD)
+
 /*
  * Matrix to rotate accelerators into the standard reference frame.  The default
  * is the identity which is correct for the reference design.  Variations of
@@ -313,8 +330,6 @@ void board_update_sensor_config_from_sku(void);
 #ifdef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
 int board_tcpc_fast_role_swap_enable(int port, int enable);
 #endif
-
-#define PORT_TO_HPD(port) ((port) ? GPIO_DP2_HPD : GPIO_USB_C0_HPD)
 
 #endif /* !__ASSEMBLER__ */
 
