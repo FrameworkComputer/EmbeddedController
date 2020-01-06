@@ -117,7 +117,8 @@ __override int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 	 * capable
 	 */
 	if ((mode_caps & MODE_DP_SNK) &&
-	    (mode_caps & (support_pin_mode << MODE_DP_DFP_PIN_SHIFT))) {
+	    (mode_caps & ((support_pin_mode << MODE_DP_DFP_PIN_SHIFT) |
+			  (support_pin_mode << MODE_DP_UFP_PIN_SHIFT)))) {
 		svdm_safe_dp_mode(port);
 		return 0;
 	}
