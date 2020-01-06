@@ -52,6 +52,7 @@
 
 /* Buttons / Switches */
 #define CONFIG_SWITCH
+#define CONFIG_VOLUME_BUTTONS
 #define CONFIG_WP_ACTIVE_HIGH
 
 /* CBI */

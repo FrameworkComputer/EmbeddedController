@@ -6,6 +6,7 @@
 /* Waddledoo board-specific configuration */
 
 #include "adc_chip.h"
+#include "button.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "gpio.h"
