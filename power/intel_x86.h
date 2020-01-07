@@ -75,4 +75,20 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state);
  */
 enum ec_error_list intel_x86_wait_power_up_ok(void);
 
+/**
+ * Get the value of PG_EC_DSW_PWROK.
+ *
+ * The default implementation is just to return the GPIO.  But if a
+ * board doesn't have that GPIO, they may override this function.
+ */
+__override_proto int intel_x86_get_pg_ec_dsw_pwrok(void);
+
+/**
+ * Get the value of PG_EC_ALL_SYS_PWRGD.
+ *
+ * The default implementation is just to return the GPIO.  But if a
+ * board doesn't have that GPIO, they may override this function.
+ */
+__override_proto int intel_x86_get_pg_ec_all_sys_pwrgd(void);
+
 #endif /* __CROS_EC_INTEL_X86_H */

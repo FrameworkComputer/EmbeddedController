@@ -71,6 +71,16 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
+__overridable int intel_x86_get_pg_ec_dsw_pwrok(void)
+{
+	return gpio_get_level(GPIO_PG_EC_DSW_PWROK);
+}
+
+__overridable int intel_x86_get_pg_ec_all_sys_pwrgd(void)
+{
+	return gpio_get_level(GPIO_PG_EC_ALL_SYS_PWRGD);
+}
+
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	int timeout_ms = 50;
@@ -98,7 +108,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	 * power_wait_signals_timeout()
 	 */
 	/* Now wait for DSW_PWROK and  RSMRST_ODL to go away. */
-	while (gpio_get_level(GPIO_PG_EC_DSW_PWROK) &&
+	while (intel_x86_get_pg_ec_dsw_pwrok() &&
 	       gpio_get_level(GPIO_PG_EC_RSMRST_ODL) && (timeout_ms > 0)) {
 		msleep(1);
 		timeout_ms--;
@@ -151,7 +161,7 @@ static void enable_pp5000_rail(void)
 
 enum power_state power_handle_state(enum power_state state)
 {
-	int dswpwrok_in = gpio_get_level(GPIO_PG_EC_DSW_PWROK);
+	int dswpwrok_in = intel_x86_get_pg_ec_dsw_pwrok();
 	static int dswpwrok_out = -1;
 	int all_sys_pwrgd_in;
 	int all_sys_pwrgd_out;
@@ -189,7 +199,7 @@ enum power_state power_handle_state(enum power_state state)
 			break;
 
 		/* Pass thru DSWPWROK again since we changed it. */
-		dswpwrok_in = gpio_get_level(GPIO_PG_EC_DSW_PWROK);
+		dswpwrok_in = intel_x86_get_pg_ec_dsw_pwrok();
 		/*
 		 * A minimum 10 msec delay is required between PP3300_A being
 		 * stable and the DSW_PWROK signal being passed to the PCH.
@@ -230,7 +240,7 @@ enum power_state power_handle_state(enum power_state state)
 		 * needs to be changed. If it's low->high transition, call board
 		 * specific handling if provided.
 		 */
-		all_sys_pwrgd_in = gpio_get_level(GPIO_PG_EC_ALL_SYS_PWRGD);
+		all_sys_pwrgd_in = intel_x86_get_pg_ec_all_sys_pwrgd();
 		all_sys_pwrgd_out = gpio_get_level(GPIO_PCH_SYS_PWROK);
 
 		if (all_sys_pwrgd_in != all_sys_pwrgd_out) {
