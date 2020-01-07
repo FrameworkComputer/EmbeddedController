@@ -14,4 +14,4 @@ $(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_riscv),\
 CFLAGS_CPU+=-march=rv32imafc -mabi=ilp32f -Os
 LDFLAGS_EXTRA+=-mrelax
 
-core-y=cpu.o init.o panic.o task.o switch.o __builtin.o
+core-y=cpu.o init.o panic.o task.o switch.o __builtin.o math.o
