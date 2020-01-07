@@ -110,11 +110,6 @@ EC chips. However the common requirements are that software write protect can
 only be disabled when hardware write protect is off and that the RO firmware
 must be protected before jumping to RW firmware if protection is enabled.
 
-*** note
-*WARNING*: If you disable HW write protect *and* then reboot the FPMCU, it will do
-a mass erase of the chip, due to [RDP1](#rdp1).
-***
-
 Additional reference:
 https://www.google.com/chromeos/partner/fe/docs/cpfe/firmwaretestmanual.html#software-write-protect
 
