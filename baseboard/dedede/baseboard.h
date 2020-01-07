@@ -36,6 +36,31 @@
 #error "Must define a VARIANT_DEDEDE_EC!"
 #endif
 
+/*
+ * Remapping of schematic GPIO names to common GPIO names expected (hardcoded)
+ * in the EC code base.
+ */
+#define GPIO_CPU_PROCHOT      GPIO_EC_PROCHOT_ODL
+#define GPIO_EC_INT_L         GPIO_EC_AP_MKBP_INT_L
+#define GPIO_EN_PP5000        GPIO_EN_PP5000_U
+#define GPIO_ENTERING_RW      GPIO_EC_ENTERING_RW
+#define GPIO_PCH_DSW_PWROK    GPIO_EC_AP_DPWROK
+#define GPIO_PCH_PWRBTN_L     GPIO_EC_AP_PWR_BTN_ODL
+#define GPIO_PCH_RSMRST_L     GPIO_EC_AP_RSMRST_L
+#define GPIO_PCH_RTCRST       GPIO_EC_AP_RTCRST
+#define GPIO_PCH_SLP_S0_L     GPIO_SLP_S0_L
+#define GPIO_PCH_SLP_S3_L     GPIO_SLP_S3_L
+#define GPIO_PCH_SLP_S4_L     GPIO_SLP_S4_L
+#define GPIO_PCH_SYS_PWROK    GPIO_EC_AP_SYS_PWROK
+#define GPIO_PCH_WAKE_L       GPIO_EC_AP_WAKE_ODL
+#define GPIO_PG_EC_RSMRST_ODL GPIO_RSMRST_PWRGD_L
+#define GPIO_POWER_BUTTON_L   GPIO_H1_EC_PWR_BTN_ODL
+#define GPIO_RSMRST_L_PGOOD   GPIO_RSMRST_PWRGD_L
+#define GPIO_SYS_RESET_L      GPIO_SYS_RST_ODL
+#define GPIO_VOLUME_UP_L      GPIO_VOLUP_BTN_ODL
+#define GPIO_VOLUME_DOWN_L    GPIO_VOLDN_BTN_ODL
+#define GPIO_WP               GPIO_EC_WP_OD
+
 /* Common EC defines */
 
 /* EC Modules */
@@ -61,9 +86,11 @@
 
 /* SoC */
 #define CONFIG_BOARD_HAS_RTC_RESET
+#define CONFIG_CHIPSET_JASPERLAKE
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
+#define CONFIG_POWER_COMMON
 
 
 #ifndef __ASSEMBLER__

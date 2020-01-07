@@ -10,6 +10,17 @@
  * Note: Those with interrupt handlers must be declared first.
  */
 
+GPIO_INT(SLP_S0_L,		 PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(SLP_S3_L,		 PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(SLP_S4_L,		 PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(SLP_SUS_L,		 PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(RSMRST_PWRGD_L,	 PIN(C, 6), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(VCCIN_AUX_VID1,	 PIN(C, 7), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(CPU_C10_GATE_L,	 PIN(6, 7), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(VCCIN_AUX_VID0,	 PIN(F, 4), GPIO_INT_BOTH | GPIO_SEL_1P8V, power_signal_interrupt)
+GPIO_INT(PG_VCCIO_EXT_OD,	 PIN(B, 0), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_PP5000_U_OD,	 PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_DRAM_OD,		 PIN(E, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(H1_EC_PWR_BTN_ODL,	 PIN(0, 1), GPIO_INT_BOTH | GPIO_PULL_UP, power_button_interrupt)
 GPIO_INT(VOLDN_BTN_ODL,		 PIN(4, 0), GPIO_INT_BOTH | GPIO_PULL_UP | GPIO_SEL_1P8V, button_interrupt)
 /* TODO(b:147257497) Fix this and EN_PP5000_U before board rev 0. */
@@ -59,13 +70,19 @@ GPIO(EC_PROCHOT_ODL,	     PIN(F, 1), GPIO_ODR_HIGH | GPIO_PULL_UP | GPIO_SEL_1P8
 GPIO(EC_ENTERING_RW,	     PIN(E, 3), GPIO_OUT_LOW)
 GPIO(ALL_SYS_PWRGD,	     PIN(A, 0), GPIO_OUT_LOW)
 GPIO(SYS_RST_ODL,	     PIN(C, 5), GPIO_ODR_HIGH)
-GPIO(RSMRST_PWRGD_L,	     PIN(C, 6), GPIO_OUT_HIGH)
 GPIO(CCD_MODE_ODL,	     PIN(E, 5), GPIO_INPUT)
 
 GPIO(USB_C0_RST_ODL,	     PIN(9, 7), GPIO_OUT_HIGH) /* currently unused */
 GPIO(EC_AP_USB_C1_HDMI_HPD,  PIN(9, 6), GPIO_OUT_LOW)
 GPIO(EC_AP_USB_C0_HPD,	     PIN(9, 3), GPIO_OUT_LOW)
 GPIO(HDMI_SEL_L,	     PIN(7, 2), GPIO_OUT_HIGH)
+
+/*
+ * Waddledoo doesn't have these physical pins coming to the EC but uses other
+ * logic.
+ */
+UNIMPLEMENTED(PG_EC_DSW_PWROK)
+UNIMPLEMENTED(PG_EC_ALL_SYS_PWRGD)
 
 /* Alternate Functions */
 /* ADC */

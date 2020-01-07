@@ -11,19 +11,6 @@
 #define VARIANT_DEDEDE_EC_NPCX796FC
 #include "baseboard.h"
 
-/*
- * Remapping of schematic GPIO names to common GPIO names expected (hardcoded)
- * in the EC code base.
- */
-#define GPIO_EC_INT_L       GPIO_EC_AP_MKBP_INT_L
-#define GPIO_ENTERING_RW    GPIO_EC_ENTERING_RW
-#define GPIO_PCH_PWRBTN_L   GPIO_EC_AP_PWR_BTN_ODL
-#define GPIO_PCH_WAKE_L     GPIO_EC_AP_WAKE_ODL
-#define GPIO_POWER_BUTTON_L GPIO_H1_EC_PWR_BTN_ODL
-#define GPIO_VOLUME_UP_L    GPIO_VOLUP_BTN_ODL
-#define GPIO_VOLUME_DOWN_L  GPIO_VOLDN_BTN_ODL
-#define GPIO_WP             GPIO_EC_WP_OD
-
 /* I2C configuration */
 #define I2C_PORT_EEPROM     NPCX_I2C_PORT7_0
 #define I2C_PORT_BATTERY    NPCX_I2C_PORT5_0
