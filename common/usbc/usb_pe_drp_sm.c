@@ -877,7 +877,7 @@ static void pe_send_request_msg(int port)
 	pd_build_request(pe[port].src_cap_cnt, pe[port].src_caps,
 		pe[port].vpd_vdo, &rdo, &curr_limit,
 		&supply_voltage, charging && max_request_allowed ?
-		PD_REQUEST_MAX : PD_REQUEST_VSAFE5V, max_request_mv);
+		PD_REQUEST_MAX : PD_REQUEST_VSAFE5V, max_request_mv, port);
 
 	CPRINTF("C%d Req [%d] %dmV %dmA", port, RDO_POS(rdo),
 					supply_voltage, curr_limit);

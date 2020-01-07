@@ -290,7 +290,7 @@ void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *mv)
 void pd_build_request(uint32_t src_cap_cnt, const uint32_t * const src_caps,
 			int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
 			uint32_t *mv, enum pd_request_type req_type,
-			uint32_t max_request_mv)
+			uint32_t max_request_mv, int port)
 {
 	uint32_t pdo;
 	int pdo_index, flags = 0;
@@ -378,6 +378,23 @@ void pd_build_request(uint32_t src_cap_cnt, const uint32_t * const src_caps,
 	} else {
 		*rdo = RDO_FIXED(pdo_index + 1, *ma, max_or_min_ma, flags);
 	}
+
+	/*
+	 * Ref: USB Power Delivery Specification
+	 * (Revision 3.0, Version 2.0 / Revision 2.0, Version 1.3)
+	 * 6.4.2.4 USB Communications Capable
+	 * 6.4.2.5 No USB Suspend
+	 *
+	 * If the port partner is capable of USB communication set the
+	 * USB Communications Capable flag.
+	 * If the port partner is sink device do not suspend USB as the
+	 * power can be used for charging.
+	 */
+	if (pd_get_partner_usb_comm_capable(port)) {
+		*rdo |= RDO_COMM_CAP;
+		if (pd_get_power_role(port) == PD_ROLE_SINK)
+			*rdo |= RDO_NO_SUSPEND;
+	}
 }
 #endif
 
@@ -464,6 +481,56 @@ enum pd_drp_next_states drp_auto_toggle_next_state(
 	} else {
 		/* Anything else, keep toggling */
 		return DRP_TC_DRP_AUTO_TOGGLE;
+	}
+}
+
+static enum typec_mux get_mux_mode_to_set(int port)
+{
+	/*
+	 * If the SoC is down, then we disconnect the MUX to save power since
+	 * no one cares about the data lines.
+	 */
+	if (IS_ENABLED(CONFIG_POWER_COMMON) &&
+	    chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
+		return TYPEC_MUX_NONE;
+
+	/*
+	 * When PD stack is disconnected, then mux should be disconnected, which
+	 * is also what happens in the set_state disconnection code. Once the
+	 * PD state machine progresses out of disconnect, the MUX state will
+	 * be set correctly again.
+	 */
+	if (pd_is_disconnected(port))
+		return TYPEC_MUX_NONE;
+
+	/* If new data role isn't DFP & we only support DFP, also disconnect. */
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
+	    IS_ENABLED(CONFIG_USBC_SS_MUX_DFP_ONLY) &&
+	    pd_get_data_role(port) != PD_ROLE_DFP)
+		return TYPEC_MUX_NONE;
+
+	/*
+	 * If the power role is sink and the partner device is not capable
+	 * of USB communication then disconnect.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
+	    pd_get_power_role(port) == PD_ROLE_SINK &&
+	    !pd_get_partner_usb_comm_capable(port))
+		return TYPEC_MUX_NONE;
+
+	/* Otherwise connect mux since we are in S3+ */
+	return TYPEC_MUX_USB;
+}
+
+void set_usb_mux_with_current_data_role(int port)
+{
+	if (IS_ENABLED(CONFIG_USBC_SS_MUX)) {
+		enum typec_mux mux_mode = get_mux_mode_to_set(port);
+		enum usb_switch usb_switch_mode = (mux_mode == TYPEC_MUX_NONE) ?
+				USB_SWITCH_DISCONNECT : USB_SWITCH_CONNECT;
+
+		usb_mux_set(port, mux_mode, usb_switch_mode,
+				pd_get_polarity(port));
 	}
 }
 

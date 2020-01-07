@@ -60,46 +60,6 @@ void set_polarity(int port, int polarity)
 		ppc_set_polarity(port, polarity);
 }
 
-void set_usb_mux_with_current_data_role(int port)
-{
-#ifdef CONFIG_USBC_SS_MUX
-	/*
-	 * If the SoC is down, then we disconnect the MUX to save power since
-	 * no one cares about the data lines.
-	 */
-#ifdef CONFIG_POWER_COMMON
-	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
-		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
-			tc_get_polarity(port));
-		return;
-	}
-#endif /* CONFIG_POWER_COMMON */
-
-	/*
-	 * When PD stack is disconnected, then mux should be disconnected, which
-	 * is also what happens in the set_state disconnection code. Once the
-	 * PD state machine progresses out of disconnect, the MUX state will
-	 * be set correctly again.
-	 */
-	if (!pd_is_connected(port))
-		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
-			tc_get_polarity(port));
-	/*
-	 * If new data role isn't DFP and we only support DFP, also disconnect.
-	 */
-	else if (IS_ENABLED(CONFIG_USBC_SS_MUX_DFP_ONLY) &&
-			pd_get_data_role(port) != PD_ROLE_DFP)
-		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
-			tc_get_polarity(port));
-	/*
-	 * Otherwise connect mux since we are in S3+
-	 */
-	else
-		usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
-			tc_get_polarity(port));
-#endif /* CONFIG_USBC_SS_MUX */
-}
-
 /* High-priority interrupt tasks implementations */
 #if     defined(HAS_TASK_PD_INT_C0) || defined(HAS_TASK_PD_INT_C1) || \
 	defined(HAS_TASK_PD_INT_C2)

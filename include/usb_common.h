@@ -118,10 +118,11 @@ void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *mv);
  * @param req_type request type
  * @param max_request_mv max voltage a sink can request before getting
  *			source caps
+ * @param port USB-C port number
  */
 void pd_build_request(uint32_t src_cap_cnt, const uint32_t * const src_caps,
 	int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma, uint32_t *mv,
-	enum pd_request_type req_type, uint32_t max_request_mv);
+	enum pd_request_type req_type, uint32_t max_request_mv, int port);
 
 /**
  * Notifies a task that is waiting on a system jump, that it's complete.
@@ -131,4 +132,11 @@ void pd_build_request(uint32_t src_cap_cnt, const uint32_t * const src_caps,
  */
 void notify_sysjump_ready(volatile const task_id_t * const
 	sysjump_task_waiting);
+
+/**
+ * Set USB MUX with current data role
+ *
+ * @param port USB-C port number
+ */
+void set_usb_mux_with_current_data_role(int port);
 #endif /* __CROS_EC_USB_COMMON_H */

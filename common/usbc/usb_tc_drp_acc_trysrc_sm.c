@@ -451,9 +451,9 @@ int pd_capable(int port)
  * Return true if partner port is capable of communication over USB data
  * lines.
  */
-int pd_get_partner_usb_comm_capable(int port)
+bool pd_get_partner_usb_comm_capable(int port)
 {
-	return TC_CHK_FLAG(port, TC_FLAGS_PARTNER_USB_COMM);
+	return !!TC_CHK_FLAG(port, TC_FLAGS_PARTNER_USB_COMM);
 }
 
 enum pd_dual_role_states pd_get_dual_role(int port)
@@ -686,6 +686,11 @@ int pd_is_connected(int port)
 {
 	return (get_state_tc(port) == TC_ATTACHED_SNK) ||
 				(get_state_tc(port) == TC_ATTACHED_SRC);
+}
+
+bool pd_is_disconnected(int port)
+{
+	return !pd_is_connected(port);
 }
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP

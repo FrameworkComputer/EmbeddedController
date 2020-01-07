@@ -373,9 +373,9 @@ int pd_capable(int port)
  * Return true if partner port is capable of communication over USB data
  * lines.
  */
-int pd_get_partner_usb_comm_capable(int port)
+bool pd_get_partner_usb_comm_capable(int port)
 {
-	return pd[port].flags & PD_FLAGS_PARTNER_USB_COMM;
+	return !!(pd[port].flags & PD_FLAGS_PARTNER_USB_COMM);
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -1326,61 +1326,13 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload,
 			port, PD_VDO_VID(payload[0]), payload[0] & 0xFFFF);
 }
 
-static __maybe_unused int pd_is_disconnected(int port)
+bool pd_is_disconnected(int port)
 {
 	return pd[port].task_state == PD_STATE_SRC_DISCONNECTED
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	       || pd[port].task_state == PD_STATE_SNK_DISCONNECTED
 #endif
 		;
-}
-
-static enum typec_mux get_mux_mode_to_set(int port)
-{
-	/*
-	 * If the SoC is down, then we disconnect the MUX to save power since
-	 * no one cares about the data lines.
-	 */
-	if (IS_ENABLED(CONFIG_POWER_COMMON) &&
-	    chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
-		return TYPEC_MUX_NONE;
-
-	/*
-	 * When PD stack is disconnected, then mux should be disconnected, which
-	 * is also what happens in the set_state disconnection code. Once the
-	 * PD state machine progresses out of disconnect, the MUX state will
-	 * be set correctly again.
-	 */
-	if (pd_is_disconnected(port))
-		return TYPEC_MUX_NONE;
-
-	/* If new data role isn't DFP & we only support DFP, also disconnect. */
-	if (IS_ENABLED(CONFIG_USBC_SS_MUX_DFP_ONLY) &&
-	    pd[port].data_role != PD_ROLE_DFP)
-		return TYPEC_MUX_NONE;
-
-	/*
-	 * If the power role is sink and the partner device is not capable
-	 * of USB communication then disconnect.
-	 */
-	if (pd[port].power_role == PD_ROLE_SINK &&
-	    !(pd[port].flags & PD_FLAGS_PARTNER_USB_COMM))
-		return TYPEC_MUX_NONE;
-
-	/* Otherwise connect mux since we are in S3+ */
-	return TYPEC_MUX_USB;
-}
-
-/* TODO (b/146623068): Move this to common code */
-static void set_usb_mux_with_current_data_role(int port)
-{
-	if (IS_ENABLED(CONFIG_USBC_SS_MUX)) {
-		enum typec_mux mux_mode = get_mux_mode_to_set(port);
-		enum usb_switch usb_switch_mode = (mux_mode == TYPEC_MUX_NONE) ?
-				USB_SWITCH_DISCONNECT : USB_SWITCH_CONNECT;
-
-		usb_mux_set(port, mux_mode, usb_switch_mode, pd[port].polarity);
-	}
 }
 
 static void pd_set_data_role(int port, int role)
@@ -1548,7 +1500,7 @@ static int pd_send_request_msg(int port, int always_send_request)
 		&rdo, &curr_limit, &supply_voltage,
 		charging && max_request_allowed ?
 		PD_REQUEST_MAX : PD_REQUEST_VSAFE5V,
-		pd_get_max_voltage());
+		pd_get_max_voltage(), port);
 
 	if (!always_send_request) {
 		/* Don't re-request the same voltage */
@@ -1566,25 +1518,6 @@ static int pd_send_request_msg(int port, int always_send_request)
 	if (rdo & RDO_CAP_MISMATCH)
 		CPRINTF(" Mismatch");
 	CPRINTF("\n");
-
-	/*
-	 * Ref: USB Power Delivery Specification
-	 * (Revision 3.0, Version 2.0 / Revision 2.0, Version 1.3)
-	 * 6.4.2.4 USB Communications Capable
-	 * 6.4.2.5 No USB Suspend
-	 *
-	 * If the port partner is capable of USB communication set the
-	 * USB Communications Capable flag.
-	 * If the port partner is sink device do not suspend USB as the
-	 * power can be used for charging.
-	 *
-	 * TODO (b/147249926): Move it to common code.
-	 */
-	if (pd[port].flags & PD_FLAGS_PARTNER_USB_COMM) {
-		rdo |= RDO_COMM_CAP;
-		if (pd[port].power_role == PD_ROLE_SINK)
-			rdo |= RDO_NO_SUSPEND;
-	}
 
 	pd[port].curr_limit = curr_limit;
 	pd[port].supply_voltage = supply_voltage;
@@ -2573,6 +2506,11 @@ static void pd_update_dual_role_config(int port)
 enum pd_power_role pd_get_power_role(int port)
 {
 	return pd[port].power_role;
+}
+
+enum pd_data_role pd_get_data_role(int port)
+{
+	return pd[port].data_role;
 }
 
 static int pd_is_power_swapping(int port)

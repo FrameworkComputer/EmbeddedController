@@ -899,7 +899,7 @@ enum pd_data_role pd_get_data_role(int port);
 /**
  * Get current power role
  *
- * @param port Port number from which to get role
+ * @param port Port number from which to get power role
  */
 enum pd_power_role pd_get_power_role(int port);
 
@@ -2042,7 +2042,14 @@ uint8_t pd_get_src_cap_cnt(int port);
  *
  * @param port USB-C port number
  */
-int pd_get_partner_usb_comm_capable(int port);
+bool pd_get_partner_usb_comm_capable(int port);
+
+/**
+ * Return true if PD is in disconnect state
+ *
+ * @param port USB-C port number
+ */
+bool pd_is_disconnected(int port);
 
 /**
  * Return true if vbus is present on the specified port.
