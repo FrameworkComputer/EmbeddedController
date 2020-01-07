@@ -61,6 +61,16 @@ static int option_disabled;
 /* Is physical flash stuck protected? (avoid reboot loop) */
 static int stuck_locked;
 
+#define FLASH_SYSJUMP_TAG 0x5750 /* "WP" - Write Protect */
+#define FLASH_HOOK_VERSION 1
+
+/* The previous write protect state before sys jump */
+struct flash_wp_state {
+	int access_disabled;
+	int option_disabled;
+	int stuck_locked;
+};
+
 static inline int calculate_flash_timeout(void)
 {
 	return (FLASH_TIMEOUT_US *
@@ -454,12 +464,41 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
+int flash_physical_restore_state(void)
+{
+	uint32_t reset_flags = system_get_reset_flags();
+	int version, size;
+	const struct flash_wp_state *prev;
+
+	/*
+	 * If we have already jumped between images, an earlier image could
+	 * have applied write protection. We simply need to represent these
+         * irreversible flags to other components.
+	 */
+	if (reset_flags & EC_RESET_FLAG_SYSJUMP) {
+		prev = (const struct flash_wp_state *)system_get_jump_tag(
+				FLASH_SYSJUMP_TAG, &version, &size);
+		if (prev && version == FLASH_HOOK_VERSION &&
+		    size == sizeof(*prev)) {
+			access_disabled = prev->access_disabled;
+			option_disabled = prev->option_disabled;
+			stuck_locked = prev->stuck_locked;
+		}
+		return 1;
+	}
+
+	return 0;
+}
+
 int flash_pre_init(void)
 {
 	uint32_t reset_flags = system_get_reset_flags();
 	uint32_t prot_flags = flash_get_protect();
 	uint32_t unwanted_prot_flags = EC_FLASH_PROTECT_ALL_NOW |
 		EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+
+	if (flash_physical_restore_state())
+		return EC_SUCCESS;
 
 	/*
 	 * If we have already jumped between images, an earlier image could
@@ -510,3 +549,19 @@ int flash_pre_init(void)
 	/* That doesn't return, so if we're still here that's an error */
 	return EC_ERROR_UNKNOWN;
 }
+
+/*****************************************************************************/
+/* Hooks */
+
+static void flash_preserve_state(void)
+{
+	const struct flash_wp_state state = {
+		.access_disabled = access_disabled,
+		.option_disabled = option_disabled,
+		.stuck_locked = stuck_locked,
+	};
+
+	system_add_jump_tag(FLASH_SYSJUMP_TAG, FLASH_HOOK_VERSION,
+			    sizeof(state), &state);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, flash_preserve_state, HOOK_PRIO_DEFAULT);
