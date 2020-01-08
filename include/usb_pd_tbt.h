@@ -84,14 +84,18 @@
  *           1b = Supported
  * <25:17> : Reserved
  * <16>    : TBT Adapter
- *           0b = TBT2 Legacy Adapter
- *           1b = TBT3 Adapter
+ *           Errata: TBT Adapter bits are swapped in the document
+ *           "USB Type-C cable and connector specification, Release 2.0"
+ *           TODO (b/147375157): Add the errata document information once
+ *           published by USB-IF.
+ *           0b = TBT3 Adapter
+ *           1b = TBT2 Legacy Adapter
  * <15:0>  : TBT Alternate Mode
  *           0x0001 = TBT Mode
  */
 enum tbt_adapter_type {
-	TBT_ADAPTER_TBT2_LEGACY,
 	TBT_ADAPTER_TBT3,
+	TBT_ADAPTER_TBT2_LEGACY,
 };
 
 /* TBT Alternate Mode */
