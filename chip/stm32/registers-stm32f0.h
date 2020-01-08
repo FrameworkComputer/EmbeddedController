@@ -336,6 +336,7 @@
 #define STM32_RCC_SYSCFGEN          BIT(0)
 
 #define STM32_RCC_APB1ENR           REG32(STM32_RCC_BASE + 0x1c)
+#define STM32_RCC_DACEN                 BIT(29)
 #define STM32_RCC_PWREN                 BIT(28)
 
 #define STM32_RCC_BDCR              REG32(STM32_RCC_BASE + 0x20)
@@ -527,7 +528,8 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_EXTI_SWIER            REG32(STM32_EXTI_BASE + 0x10)
 #define STM32_EXTI_PR               REG32(STM32_EXTI_BASE + 0x14)
 
-#define EXTI_RTC_ALR_EVENT BIT(17)
+#define EXTI_RTC_ALR_EVENT		BIT(17)
+#define EXTI_COMP2_EVENT		BIT(22)
 
 /* --- ADC --- */
 #define STM32_ADC_ISR              REG32(STM32_ADC1_BASE + 0x00)
