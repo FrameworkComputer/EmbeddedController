@@ -4257,6 +4257,9 @@
 /* Support the Pericom PI3USB30532 USB3.0/DP1.2 Matrix Switch */
 #undef CONFIG_USB_MUX_PI3USB30532
 
+/* Support the Pericom PI3USB31532 USB3.1/DP1.4 Matrix Switch */
+#undef CONFIG_USB_MUX_PI3USB31532
+
 /* Support the Parade PS8740 Type-C Redriving Switch */
 #undef CONFIG_USB_MUX_PS8740
 
