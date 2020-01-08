@@ -214,8 +214,8 @@ static int opt3001_set_data_rate(const struct motion_sensor_t *s,
 		 * integrating over 800ms.
 		 * Do not allow range higher than 1Hz.
 		 */
-		if (rate > 1000)
-			rate = 1000;
+		if (rate > OPT3001_LIGHT_MAX_FREQ)
+			rate = OPT3001_LIGHT_MAX_FREQ;
 	}
 	rv = opt3001_i2c_read(s->port, s->i2c_spi_addr_flags,
 			      OPT3001_REG_CONFIGURE, &reg);

@@ -36,9 +36,12 @@ enum opt3001_mode {
 #define OPT3001_MANUFACTURER_ID		0x5449
 #define OPT3001_DEVICE_ID		0x3001
 
-/* Min and Max sampling frequency in mHz */
-#define OPT3001_LIGHT_MIN_FREQ          1250
-#define OPT3001_LIGHT_MAX_FREQ          10000
+/*
+ * Min and Max sampling frequency in mHz.
+ * Due to integration set at 800ms, we limit max frequency to 1Hz.
+ */
+#define OPT3001_LIGHT_MIN_FREQ          100
+#define OPT3001_LIGHT_MAX_FREQ          1000
 #if (CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ <= OPT3001_LIGHT_MAX_FREQ)
 #error "EC too slow for light sensor"
 #endif
