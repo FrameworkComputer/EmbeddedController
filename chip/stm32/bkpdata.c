@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <assert.h>
+
 #include "bkpdata.h"
 #include "registers.h"
 #include "system.h" /* enum system_bbram_idx */
@@ -66,4 +68,26 @@ int bkpdata_index_lookup(enum system_bbram_idx idx, int *msb)
 		return BKPDATA_INDEX_PD2;
 #endif
 	return -1;
+}
+
+uint32_t bkpdata_read_reset_flags()
+{
+	uint32_t flags = bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS);
+#ifdef CONFIG_STM32_RESET_FLAGS_EXTENDED
+	flags |= bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS_2) << 16;
+#endif
+	return flags;
+}
+
+__overridable
+void bkpdata_write_reset_flags(uint32_t save_flags)
+{
+#ifdef CONFIG_STM32_RESET_FLAGS_EXTENDED
+	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags & 0xffff);
+	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS_2, save_flags >> 16);
+#else
+	/* Reset flags are 32-bits, but BBRAM entry is only 16 bits. */
+	ASSERT(!(save_flags >> 16));
+	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags);
+#endif
 }

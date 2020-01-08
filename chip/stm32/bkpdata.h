@@ -74,5 +74,7 @@ uint16_t bkpdata_read(enum bkpdata_index index);
 int bkpdata_write(enum bkpdata_index index, uint16_t value);
 
 int bkpdata_index_lookup(enum system_bbram_idx idx, int *msb);
+uint32_t bkpdata_read_reset_flags(void);
+void bkpdata_write_reset_flags(uint32_t save_flags);
 
 #endif /* __CROS_EC_BKPDATA_H */

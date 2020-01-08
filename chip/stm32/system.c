@@ -74,23 +74,16 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 static void check_reset_cause(void)
 {
-	uint32_t flags = bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS);
+	uint32_t flags = bkpdata_read_reset_flags();
 	uint32_t raw_cause = STM32_RCC_RESET_CAUSE;
 	uint32_t pwr_status = STM32_PWR_RESET_CAUSE;
-
-#ifdef CONFIG_STM32_RESET_FLAGS_EXTENDED
-	flags |= bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS_2) << 16;
-#endif
 
 	/* Clear the hardware reset cause by setting the RMVF bit */
 	STM32_RCC_RESET_CAUSE |= RESET_CAUSE_RMVF;
 	/* Clear SBF in PWR_CSR */
 	STM32_PWR_RESET_CAUSE_CLR |= RESET_CAUSE_SBF_CLR;
 	/* Clear saved reset flags */
-	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, 0);
-#ifdef CONFIG_STM32_RESET_FLAGS_EXTENDED
-	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS_2, 0);
-#endif
+	bkpdata_write_reset_flags(0);
 
 	if (raw_cause & RESET_CAUSE_WDG) {
 		/*
@@ -308,6 +301,13 @@ void system_reset(int flags)
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
 
+	/*
+	 * TODO(crbug.com/1045283): Change this part of code to use
+	 * system_encode_save_flags, like all other system_reset functions.
+	 *
+	 * system_encode_save_flags(flags, &save_flags);
+	 */
+
 	/* Save current reset reasons if necessary */
 	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
 		save_flags = system_get_reset_flags() | EC_RESET_FLAG_PRESERVED;
@@ -322,14 +322,9 @@ void system_reset(int flags)
 #ifdef CONFIG_STM32_RESET_FLAGS_EXTENDED
 	if (flags & SYSTEM_RESET_AP_WATCHDOG)
 		save_flags |= EC_RESET_FLAG_AP_WATCHDOG;
-
-	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags & 0xffff);
-	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS_2, save_flags >> 16);
-#else
-	/* Reset flags are 32-bits, but BBRAM entry is only 16 bits. */
-	ASSERT(!(save_flags >> 16));
-	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags);
 #endif
+
+	bkpdata_write_reset_flags(save_flags);
 
 	if (flags & SYSTEM_RESET_HARD) {
 #ifdef CONFIG_SOFTWARE_PANIC
