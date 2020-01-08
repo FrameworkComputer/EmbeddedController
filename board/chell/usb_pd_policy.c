@@ -110,7 +110,9 @@ void pd_execute_data_swap(int port, int data_role)
 	/* Do nothing */
 }
 
-void pd_check_pr_role(int port, int pr_role, int flags)
+void pd_check_pr_role(int port,
+		      enum pd_power_role pr_role,
+		      int flags)
 {
 	/*
 	 * If partner is dual-role power and dualrole toggling is on, consider

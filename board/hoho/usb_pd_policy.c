@@ -68,7 +68,9 @@ __override int pd_check_data_swap(int port, int data_role)
 	return 0;
 }
 
-__override void pd_check_pr_role(int port, int pr_role, int flags)
+__override void pd_check_pr_role(int port,
+				 enum pd_power_role pr_role,
+				 int flags)
 {
 }
 

@@ -149,7 +149,7 @@ static int is_sink(int port)
 	if (!is_pd_port(port))
 		return board_charge_port_is_sink(port);
 
-	return pd_get_role(port) == PD_ROLE_SINK;
+	return pd_get_power_role(port) == PD_ROLE_SINK;
 }
 
 /**

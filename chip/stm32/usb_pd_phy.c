@@ -611,7 +611,7 @@ void pd_hw_init_rx(int port)
 	task_enable_irq(IRQ_COMP);
 }
 
-void pd_hw_init(int port, int role)
+void pd_hw_init(int port, enum pd_power_role role)
 {
 	struct pd_physical *phy = &pd_phy[port];
 	uint32_t val;

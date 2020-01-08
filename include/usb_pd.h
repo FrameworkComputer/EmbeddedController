@@ -1294,7 +1294,7 @@ void pd_set_dual_role(int port, enum pd_dual_role_states state);
  *
  * @param port Port number from which to get role
  */
-int pd_get_role(int port);
+enum pd_power_role pd_get_power_role(int port);
 
 /* Control Message type */
 enum pd_ctrl_msg_type {
@@ -1783,7 +1783,9 @@ int pd_check_vconn_swap(int port);
  * @param pr_role Our power role
  * @param flags PD flags
  */
-__override_proto void pd_check_pr_role(int port, int pr_role, int flags);
+__override_proto void pd_check_pr_role(int port,
+				enum pd_power_role pr_role,
+				int flags);
 
 /**
  * Check current data role for potential data swap
@@ -2255,7 +2257,7 @@ void pd_hw_release(int port);
  * @param port USB-C port number
  * @param role Role to initialize pins in
  */
-void pd_hw_init(int port, int role);
+void pd_hw_init(int port, enum pd_power_role role);
 
 /**
  * Initialize the reception side of hardware used for PD.

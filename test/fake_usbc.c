@@ -132,7 +132,7 @@ enum pd_dual_role_states pd_get_dual_role(int port)
 	return PD_DRP_TOGGLE_ON;
 }
 
-__overridable int pd_get_role(int port)
+__overridable enum pd_power_role pd_get_power_role(int port)
 {
 	return PD_ROLE_SINK;
 }

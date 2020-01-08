@@ -153,7 +153,9 @@ int pd_check_vconn_swap(int port)
 }
 #endif
 
-__override void pd_check_pr_role(int port, int pr_role, int flags)
+__override void pd_check_pr_role(int port,
+				 enum pd_power_role pr_role,
+				 int flags)
 {
 }
 

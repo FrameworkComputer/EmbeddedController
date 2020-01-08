@@ -169,7 +169,7 @@ static volatile task_id_t sysjump_task_waiting = TASK_ID_INVALID;
 
 static struct pd_protocol {
 	/* current port power role (SOURCE or SINK) */
-	uint8_t power_role;
+	enum pd_power_role power_role;
 	/* current port data role (DFP or UFP) */
 	uint8_t data_role;
 	/* 3-bit rolling message ID counter */
@@ -1809,7 +1809,7 @@ void pd_request_data_swap(int port)
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
-static void pd_set_power_role(int port, int role)
+static void pd_set_power_role(int port, enum pd_power_role role)
 {
 	pd[port].power_role = role;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -2569,7 +2569,7 @@ static void pd_update_dual_role_config(int port)
 	}
 }
 
-int pd_get_role(int port)
+enum pd_power_role pd_get_power_role(int port)
 {
 	return pd[port].power_role;
 }

@@ -553,13 +553,14 @@ __overridable int pd_check_power_swap(int port)
 	 */
 	if (pd_get_dual_role(port) == PD_DRP_TOGGLE_ON)
 		return 1;
-	else if (pd_get_role(port) == PD_ROLE_SOURCE)
+	else if (pd_get_power_role(port) == PD_ROLE_SOURCE)
 		return 1;
 
 	return 0;
 }
 
-__overridable void pd_check_pr_role(int port, int pr_role, int flags)
+__overridable void pd_check_pr_role(int port,
+	enum pd_power_role pr_role, int flags)
 {
 	/*
 	 * If partner is dual-role power and dualrole toggling is on, consider

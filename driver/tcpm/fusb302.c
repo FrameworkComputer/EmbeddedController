@@ -1078,7 +1078,7 @@ static int fusb302_tcpm_enter_low_power_mode(int port)
 		mode = TCPC_REG_CONTROL2_MODE_UFP;
 		break;
 	case PD_DRP_FREEZE:
-		mode = pd_get_role(port) == PD_ROLE_SINK ?
+		mode = pd_get_power_role(port) == PD_ROLE_SINK ?
 			TCPC_REG_CONTROL2_MODE_UFP :
 			TCPC_REG_CONTROL2_MODE_DFP;
 		break;

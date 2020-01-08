@@ -729,7 +729,9 @@ __override void pd_execute_data_swap(int port, int data_role)
 	 */
 }
 
-__override void pd_check_pr_role(int port, int pr_role, int flags)
+__override void pd_check_pr_role(int port,
+				 enum pd_power_role pr_role,
+				 int flags)
 {
 	/*
 	 * Don't define any policy to initiate power role swap.

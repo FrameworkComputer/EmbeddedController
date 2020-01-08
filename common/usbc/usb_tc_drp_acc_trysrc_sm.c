@@ -659,9 +659,14 @@ enum tcpc_cc_polarity pd_get_polarity(int port)
 	return tc[port].polarity;
 }
 
-int pd_get_role(int port)
+enum pd_data_role pd_get_data_role(int port)
 {
 	return tc[port].data_role;
+}
+
+enum pd_power_role pd_get_power_role(int port)
+{
+	return tc[port].power_role;
 }
 
 int pd_is_vbus_present(int port)
@@ -720,12 +725,8 @@ static __maybe_unused void bc12_role_change_handler(int port)
 	int event;
 	int task_id = USB_CHG_PORT_TO_TASK_ID(port);
 
-	/*
-	 * TODO(b/147290482) Cleanup pd_get_role to return enum
-	 * pd_power_role type.
-	 */
-	/* Get the power of our device (not the port partner) */
-	switch (pd_get_role(port)) {
+	/* Get the data role of our device */
+	switch (pd_get_data_role(port)) {
 	case PD_ROLE_UFP:
 		event = USB_CHG_EVENT_DR_UFP;
 		break;
