@@ -191,6 +191,17 @@ const struct pwm_t pwm_channels[] = {
 		.flags = PWM_CONFIG_OPEN_DRAIN,
 		.freq = 25000
 	},
+	[PWM_CH_KBLIGHT] = {
+		.channel = 3,
+		.flags = 0,
+		/*
+		 * Set PWM frequency to multiple of 50 Hz and 60 Hz to prevent
+		 * flicker. Higher frequencies consume similar average power to
+		 * lower PWM frequencies, but higher frequencies record a much
+		 * lower maximum power.
+		 */
+		.freq = 2400,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
