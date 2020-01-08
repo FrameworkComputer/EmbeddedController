@@ -22,6 +22,13 @@
 
 #define CONFIG_LED_COMMON
 
+/*
+ * Some bad battery which can report battery level correctly
+ * but D-FET is disabled and can't be revived, so define reset
+ * level to eable CL:1980406 function.
+ */
+#define CONFIG_USB_PD_RESET_MIN_BATT_SOC 2
+
 /* Sensors */
 #define CONFIG_ACCEL_KX022	/* Lid accel */
 #define CONFIG_ACCELGYRO_BMI160	/* Base accel */
