@@ -3883,6 +3883,7 @@
 #undef CONFIG_USB_PD_TCPM_PS8805
 #undef CONFIG_USB_PD_TCPM_MT6370
 #undef CONFIG_USB_PD_TCPM_TUSB422
+#undef CONFIG_USB_PD_TCPM_RAA489000
 
 /*
  * Type-C retimer mux configuration tends to be set on a specific
