@@ -172,7 +172,9 @@ static bool is_transmit_msg_sop_prime(int port)
 		(cable[port].flags & CABLE_FLAGS_SOP_PRIME_ENABLE));
 }
 
-uint8_t is_sop_prime_ready(int port, uint8_t data_role, uint32_t pd_flags)
+uint8_t is_sop_prime_ready(int port,
+			   enum pd_data_role data_role,
+			   uint32_t pd_flags)
 {
 	/*
 	 * Ref: USB PD 3.0 sec 2.5.4: When an Explicit Contract is in place the

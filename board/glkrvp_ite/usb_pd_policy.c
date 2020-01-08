@@ -45,7 +45,8 @@ int pd_check_vconn_swap(int port)
 	return 1;
 }
 
-void pd_execute_data_swap(int port, int data_role)
+void pd_execute_data_swap(int port,
+			  enum pd_data_role data_role)
 {
 	/* Do nothing */
 }

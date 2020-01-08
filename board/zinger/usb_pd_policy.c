@@ -273,13 +273,15 @@ void pd_power_supply_reset(int port)
 	}
 }
 
-int pd_check_data_swap(int port, int data_role)
+int pd_check_data_swap(int port,
+		       enum pd_data_role data_role)
 {
 	/* Allow data swap if we are a DFP, otherwise don't allow */
 	return (data_role == PD_ROLE_DFP) ? 1 : 0;
 }
 
-void pd_execute_data_swap(int port, int data_role)
+void pd_execute_data_swap(int port,
+			  enum pd_data_role data_role)
 {
 	/* Do nothing */
 }
@@ -290,7 +292,9 @@ void pd_check_pr_role(int port,
 {
 }
 
-void pd_check_dr_role(int port, int dr_role, int flags)
+void pd_check_dr_role(int port,
+		      enum pd_data_role dr_role,
+		      int flags)
 {
 	/* If DFP, try to switch to UFP */
 	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_DFP)

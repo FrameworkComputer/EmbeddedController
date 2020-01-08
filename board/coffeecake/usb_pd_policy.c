@@ -123,13 +123,15 @@ int pd_check_power_swap(int port)
 	return 0;
 }
 
-int pd_check_data_swap(int port, int data_role)
+int pd_check_data_swap(int port,
+		       enum pd_data_role data_role)
 {
 	/* We can swap to UFP */
 	return data_role == PD_ROLE_DFP;
 }
 
-void pd_execute_data_swap(int port, int data_role)
+void pd_execute_data_swap(int port,
+			  enum pd_data_role data_role)
 {
 	/* TODO: turn on pp5000, pp3300 */
 }
@@ -143,7 +145,9 @@ void pd_check_pr_role(int port,
 
 }
 
-void pd_check_dr_role(int port, int dr_role, int flags)
+void pd_check_dr_role(int port,
+		      enum pd_data_role dr_role,
+		      int flags)
 {
 	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_DFP)
 		pd_request_data_swap(port);

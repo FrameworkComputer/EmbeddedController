@@ -1765,7 +1765,8 @@ __override_proto int pd_check_power_swap(int port);
  * @param data_role current data role
  * @return True if data swap is allowed, False otherwise
  */
-__override_proto int pd_check_data_swap(int port, int data_role);
+__override_proto int pd_check_data_swap(int port,
+				enum pd_data_role data_role);
 
 /**
  * Check if vconn swap is allowed.
@@ -1794,7 +1795,9 @@ __override_proto void pd_check_pr_role(int port,
  * @param dr_role Our data role
  * @param flags PD flags
  */
-__override_proto void pd_check_dr_role(int port, int dr_role, int flags);
+__override_proto void pd_check_dr_role(int port,
+				enum pd_data_role dr_role,
+				int flags);
 
 /**
  * Check if we should charge from this device. This is
@@ -1813,7 +1816,8 @@ int pd_charge_from_device(uint16_t vid, uint16_t pid);
  * @param port USB-C port number
  * @param data_role new data role
  */
-__override_proto void pd_execute_data_swap(int port, int data_role);
+__override_proto void pd_execute_data_swap(int port,
+				enum pd_data_role data_role);
 
 /**
  * Get PD device info used for VDO_CMD_SEND_INFO / VDO_CMD_READ_INFO
@@ -1917,7 +1921,9 @@ uint16_t pd_get_identity_pid(int port);
  *			For rev2.0, true if vconn is on and data_role is dfp
  *			False otherwise
  */
-uint8_t is_sop_prime_ready(int port, uint8_t data_role, uint32_t pd_flags);
+uint8_t is_sop_prime_ready(int port,
+			enum pd_data_role data_role,
+			uint32_t pd_flags);
 
 /**
  * Reset Cable type, Cable attributes and cable flags

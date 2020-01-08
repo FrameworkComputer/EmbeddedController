@@ -135,7 +135,8 @@ int pd_snk_is_vbus_provided(int port)
 	return vbus_present;
 }
 
-__override int pd_check_data_swap(int port, int data_role)
+__override int pd_check_data_swap(int port,
+				  enum pd_data_role data_role)
 {
 	/* Always allow data swap */
 	return 1;
@@ -159,7 +160,9 @@ __override void pd_check_pr_role(int port,
 {
 }
 
-__override void pd_check_dr_role(int port, int dr_role, int flags)
+__override void pd_check_dr_role(int port,
+				 enum pd_data_role dr_role,
+				 int flags)
 {
 }
 /* ----------------- Vendor Defined Messages ------------------ */

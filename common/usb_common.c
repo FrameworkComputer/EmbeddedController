@@ -531,13 +531,15 @@ __overridable int pd_board_checks(void)
 	return EC_SUCCESS;
 }
 
-__overridable int pd_check_data_swap(int port, int data_role)
+__overridable int pd_check_data_swap(int port,
+	enum pd_data_role data_role)
 {
 	/* Allow data swap if we are a UFP, otherwise don't allow. */
 	return (data_role == PD_ROLE_UFP) ? 1 : 0;
 }
 
-__overridable void pd_check_dr_role(int port, int dr_role, int flags)
+__overridable void pd_check_dr_role(int port,
+	enum pd_data_role dr_role, int flags)
 {
 	/* If UFP, try to switch to DFP */
 	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_UFP)
@@ -581,7 +583,8 @@ __overridable void pd_check_pr_role(int port,
 	}
 }
 
-__overridable void pd_execute_data_swap(int port, int data_role)
+__overridable void pd_execute_data_swap(int port,
+	enum pd_data_role data_role)
 {
 }
 

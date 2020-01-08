@@ -21,7 +21,8 @@ int pd_check_vconn_swap(int port)
 	return 1;
 }
 
-__override void pd_execute_data_swap(int port, int data_role)
+__override void pd_execute_data_swap(int port,
+				     enum pd_data_role data_role)
 {
 	int enable = (data_role == PD_ROLE_UFP);
 	int type;

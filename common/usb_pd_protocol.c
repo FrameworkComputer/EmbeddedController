@@ -171,7 +171,7 @@ static struct pd_protocol {
 	/* current port power role (SOURCE or SINK) */
 	enum pd_power_role power_role;
 	/* current port data role (DFP or UFP) */
-	uint8_t data_role;
+	enum pd_data_role data_role;
 	/* 3-bit rolling message ID counter */
 	uint8_t msg_id;
 	/* port polarity */

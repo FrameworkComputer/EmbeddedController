@@ -25,7 +25,8 @@ int pd_check_vconn_swap(int port)
 	return gpio_get_level(GPIO_EN_5V);
 }
 
-__override void pd_execute_data_swap(int port, int data_role)
+__override void pd_execute_data_swap(int port,
+				     enum pd_data_role data_role)
 {
 	int level;
 
