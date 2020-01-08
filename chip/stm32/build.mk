@@ -38,7 +38,7 @@ DMA_TYPE=$(if $(CHIP_FAMILY_STM32F4)$(CHIP_FAMILY_STM32H7),-stm32f4,)
 SPI_TYPE=$(if $(CHIP_FAMILY_STM32H7),-stm32h7,)
 
 chip-$(CONFIG_DMA)+=dma$(DMA_TYPE).o
-chip-$(CONFIG_COMMON_RUNTIME)+=system.o
+chip-$(CONFIG_COMMON_RUNTIME)+=bkpdata.o system.o
 chip-y+=clock-$(CHIP_FAMILY).o
 ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32f0 stm32f3 stm32f4))
 chip-y+=clock-f.o

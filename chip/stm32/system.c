@@ -5,6 +5,7 @@
 
 /* System module for Chrome EC : hardware specific implementation */
 
+#include "bkpdata.h"
 #include "clock.h"
 #include "console.h"
 #include "cpu.h"
@@ -31,103 +32,9 @@
 #define BDCR_ENABLE_MASK (BDCR_ENABLE_VALUE | BDCR_RTCSEL_MASK | \
 			STM32_RCC_BDCR_BDRST)
 
-/* We use 16-bit BKP / BBRAM entries. */
-#define STM32_BKP_ENTRIES (STM32_BKP_BYTES / 2)
-
-/*
- * Use 32-bit for reset flags, if we have space for it:
- *  - 2 indexes are used unconditionally (SCRATCHPAD and SAVED_RESET_FLAGS)
- *  - VBNV_CONTEXT requires 8 indexes, so a total of 10 (which is the total
- *    number of entries on some STM32 variants).
- *  - Other config options are not a problem (they only take a few entries)
- *
- * Given this, we can only add an extra entry for the top 16-bit of reset flags
- * if VBNV_CONTEXT is not enabled, or if we have more than 10 entries.
- */
-#if !defined(CONFIG_HOSTCMD_VBNV_CONTEXT) || STM32_BKP_ENTRIES > 10
-#define CONFIG_STM32_RESET_FLAGS_EXTENDED
-#endif
-
-enum bkpdata_index {
-	BKPDATA_INDEX_SCRATCHPAD,	     /* General-purpose scratchpad */
-	BKPDATA_INDEX_SAVED_RESET_FLAGS,     /* Saved reset flags */
-#ifdef CONFIG_STM32_RESET_FLAGS_EXTENDED
-	BKPDATA_INDEX_SAVED_RESET_FLAGS_2,   /* Saved reset flags (cont) */
-#endif
-#ifdef CONFIG_HOSTCMD_VBNV_CONTEXT
-	BKPDATA_INDEX_VBNV_CONTEXT0,
-	BKPDATA_INDEX_VBNV_CONTEXT1,
-	BKPDATA_INDEX_VBNV_CONTEXT2,
-	BKPDATA_INDEX_VBNV_CONTEXT3,
-	BKPDATA_INDEX_VBNV_CONTEXT4,
-	BKPDATA_INDEX_VBNV_CONTEXT5,
-	BKPDATA_INDEX_VBNV_CONTEXT6,
-	BKPDATA_INDEX_VBNV_CONTEXT7,
-#endif
-#ifdef CONFIG_SOFTWARE_PANIC
-	BKPDATA_INDEX_SAVED_PANIC_REASON,    /* Saved panic reason */
-	BKPDATA_INDEX_SAVED_PANIC_INFO,      /* Saved panic data */
-	BKPDATA_INDEX_SAVED_PANIC_EXCEPTION, /* Saved panic exception code */
-#endif
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	BKPDATA_INDEX_PD0,		     /* USB-PD saved port0 state */
-	BKPDATA_INDEX_PD1,		     /* USB-PD saved port1 state */
-	BKPDATA_INDEX_PD2,		     /* USB-PD saved port2 state */
-#endif
-	BKPDATA_COUNT
-};
-BUILD_ASSERT(STM32_BKP_ENTRIES >= BKPDATA_COUNT);
-
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT <= 3);
 #endif
-
-/**
- * Read backup register at specified index.
- *
- * @return The value of the register or 0 if invalid index.
- */
-static uint16_t bkpdata_read(enum bkpdata_index index)
-{
-	if (index < 0 || index >= STM32_BKP_ENTRIES)
-		return 0;
-
-	if (index & 1)
-		return STM32_BKP_DATA(index >> 1) >> 16;
-	else
-		return STM32_BKP_DATA(index >> 1) & 0xFFFF;
-}
-
-/**
- * Write hibernate register at specified index.
- *
- * @return nonzero if error.
- */
-static int bkpdata_write(enum bkpdata_index index, uint16_t value)
-{
-	static struct mutex bkpdata_write_mutex;
-
-	if (index < 0 || index >= STM32_BKP_ENTRIES)
-		return EC_ERROR_INVAL;
-
-	/*
-	 * Two entries share a single 32-bit register, lock mutex to prevent
-	 * read/mask/write races.
-	 */
-	mutex_lock(&bkpdata_write_mutex);
-	if (index & 1) {
-		uint32_t val = STM32_BKP_DATA(index >> 1);
-		val = (val & 0x0000FFFF) | (value << 16);
-		STM32_BKP_DATA(index >> 1) = val;
-	} else {
-		uint32_t val = STM32_BKP_DATA(index >> 1);
-		val = (val & 0xFFFF0000) | value;
-		STM32_BKP_DATA(index >> 1) = val;
-	}
-	mutex_unlock(&bkpdata_write_mutex);
-
-	return EC_SUCCESS;
-}
 
 void __no_hibernate(uint32_t seconds, uint32_t microseconds)
 {
@@ -512,29 +419,6 @@ int system_get_chip_unique_id(uint8_t **id)
 {
 	*id = (uint8_t *)STM32_UNIQUE_ID_ADDRESS;
 	return STM32_UNIQUE_ID_LENGTH;
-}
-
-static int bkpdata_index_lookup(enum system_bbram_idx idx, int *msb)
-{
-	*msb = 0;
-
-#ifdef CONFIG_HOSTCMD_VBNV_CONTEXT
-	if (idx >= SYSTEM_BBRAM_IDX_VBNVBLOCK0 &&
-	    idx <= SYSTEM_BBRAM_IDX_VBNVBLOCK15) {
-		*msb = (idx - SYSTEM_BBRAM_IDX_VBNVBLOCK0) % 2;
-		return BKPDATA_INDEX_VBNV_CONTEXT0 +
-		       (idx - SYSTEM_BBRAM_IDX_VBNVBLOCK0) / 2;
-	}
-#endif
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	if (idx == SYSTEM_BBRAM_IDX_PD0)
-		return BKPDATA_INDEX_PD0;
-	if (idx == SYSTEM_BBRAM_IDX_PD1)
-		return BKPDATA_INDEX_PD1;
-	if (idx == SYSTEM_BBRAM_IDX_PD2)
-		return BKPDATA_INDEX_PD2;
-#endif
-	return -1;
 }
 
 int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
