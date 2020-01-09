@@ -449,19 +449,16 @@ int i2c_update8(const int port,
 		const enum mask_update_action action)
 {
 	int rv;
-	int val, oldval;
+	int val;
 
-	rv = i2c_read8(port, slave_addr_flags, offset, &oldval);
+	rv = i2c_read8(port, slave_addr_flags, offset, &val);
 	if (rv)
 		return rv;
 
-	val = (action == MASK_SET) ? oldval | mask
-				   : oldval & ~mask;
+	val = (action == MASK_SET) ? val | mask
+				   : val & ~mask;
 
-	if (val != oldval)
-		return i2c_write8(port, slave_addr_flags, offset, val);
-
-	return EC_SUCCESS;
+	return i2c_write8(port, slave_addr_flags, offset, val);
 }
 
 int i2c_update16(const int port,
@@ -471,19 +468,16 @@ int i2c_update16(const int port,
 		 const enum mask_update_action action)
 {
 	int rv;
-	int val, oldval;
+	int val;
 
-	rv = i2c_read16(port, slave_addr_flags, offset, &oldval);
+	rv = i2c_read16(port, slave_addr_flags, offset, &val);
 	if (rv)
 		return rv;
 
-	val = (action == MASK_SET) ? oldval | mask
-				   : oldval & ~mask;
+	val = (action == MASK_SET) ? val | mask
+				   : val & ~mask;
 
-	if (val != oldval)
-		return i2c_write16(port, slave_addr_flags, offset, val);
-
-	return EC_SUCCESS;
+	return i2c_write16(port, slave_addr_flags, offset, val);
 }
 
 int i2c_field_update8(const int port,
@@ -493,18 +487,15 @@ int i2c_field_update8(const int port,
 		      const uint8_t set_value)
 {
 	int rv;
-	int val, oldval;
+	int val;
 
-	rv = i2c_read8(port, slave_addr_flags, offset, &oldval);
+	rv = i2c_read8(port, slave_addr_flags, offset, &val);
 	if (rv)
 		return rv;
 
-	val = (oldval & (~field_mask)) | set_value;
+	val = (val & (~field_mask)) | set_value;
 
-	if (val != oldval)
-		return i2c_write8(port, slave_addr_flags, offset, val);
-
-	return EC_SUCCESS;
+	return i2c_write8(port, slave_addr_flags, offset, val);
 }
 
 int i2c_field_update16(const int port,
@@ -514,18 +505,15 @@ int i2c_field_update16(const int port,
 		       const uint16_t set_value)
 {
 	int rv;
-	int val, oldval;
+	int val;
 
-	rv = i2c_read16(port, slave_addr_flags, offset, &oldval);
+	rv = i2c_read16(port, slave_addr_flags, offset, &val);
 	if (rv)
 		return rv;
 
-	val = (oldval & (~field_mask)) | set_value;
+	val = (val & (~field_mask)) | set_value;
 
-	if (val != oldval)
-		return i2c_write16(port, slave_addr_flags, offset, val);
-
-	return EC_SUCCESS;
+	return i2c_write16(port, slave_addr_flags, offset, val);
 }
 
 int i2c_read_offset16(const int port,
