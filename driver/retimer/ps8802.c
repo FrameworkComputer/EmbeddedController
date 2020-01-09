@@ -49,8 +49,7 @@ static int ps8802_set_mux(int port, mux_state_t mux_state)
 {
 	int val = (PS8802_MODE_DP_REG_CONTROL
 		   | PS8802_MODE_USB_REG_CONTROL
-		   | PS8802_MODE_FLIP_REG_CONTROL
-		   | PS8802_MODE_IN_HPD_REG_CONTROL);
+		   | PS8802_MODE_FLIP_REG_CONTROL);
 	int rv;
 
 	rv = ps8802_i2c_wake(port);
