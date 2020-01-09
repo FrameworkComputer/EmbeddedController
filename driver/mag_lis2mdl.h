@@ -71,10 +71,8 @@ struct lis2mdl_private_data {
 #ifndef CONFIG_LSM6DSM_SEC_I2C
 #define LIS2MDL_ST_DATA(g) (&((g).data))
 
-#ifdef CONFIG_MAG_CALIBRATE
 #define LIS2MDL_CAL(_s) \
 	(&(DOWNCAST(s->drv_data, struct lis2mdl_private_data, data)->cal))
-#endif
 #endif
 
 
