@@ -472,7 +472,9 @@ void motion_sense_fifo_get_info(
 	fifo_info->count = queue_count(&fifo);
 	fifo_info->total_lost = fifo_lost;
 	mutex_unlock(&g_sensor_mutex);
+#ifdef CONFIG_MKBP_EVENT
 	fifo_info->timestamp = mkbp_last_event_time;
+#endif
 
 	if (reset)
 		fifo_lost = 0;
