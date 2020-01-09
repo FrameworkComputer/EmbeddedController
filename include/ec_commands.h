@@ -5515,6 +5515,7 @@ struct ec_params_usb_pd_mux_info {
 } __ec_align1;
 
 /* Flags representing mux state */
+#define USB_PD_MUX_NONE               0      /* Open switch */
 #define USB_PD_MUX_USB_ENABLED        BIT(0) /* USB connected */
 #define USB_PD_MUX_DP_ENABLED         BIT(1) /* DP connected */
 #define USB_PD_MUX_POLARITY_INVERTED  BIT(2) /* CC line Polarity inverted */

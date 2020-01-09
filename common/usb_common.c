@@ -816,8 +816,6 @@ STATIC_IF(CONFIG_USB_PD_DP_HPD_GPIO)
 
 __overridable void svdm_dp_post_config(int port)
 {
-	const struct usb_mux *mux = &usb_muxes[port];
-
 	dp_flags[port] |= DP_FLAGS_DP_ON;
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
 		return;
@@ -829,8 +827,7 @@ __overridable void svdm_dp_post_config(int port)
 	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 #endif /* CONFIG_USB_PD_DP_HPD_GPIO */
 
-	if (mux->hpd_update)
-		mux->hpd_update(port, 1, 0);
+	usb_mux_hpd_update(port, 1, 0);
 
 #ifdef USB_PD_PORT_TCPC_MST
 	if (port == USB_PD_PORT_TCPC_MST)
@@ -842,7 +839,6 @@ __overridable int svdm_dp_attention(int port, uint32_t *payload)
 {
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
-	const struct usb_mux *mux = &usb_muxes[port];
 #ifdef CONFIG_USB_PD_DP_HPD_GPIO
 	enum gpio_signal hpd = PORT_TO_HPD(port);
 	int cur_lvl = gpio_get_level(hpd);
@@ -894,8 +890,7 @@ __overridable int svdm_dp_attention(int port, uint32_t *payload)
 	}
 #endif /* CONFIG_USB_PD_DP_HPD_GPIO */
 
-	if (mux->hpd_update)
-		mux->hpd_update(port, lvl, irq);
+	usb_mux_hpd_update(port, lvl, irq);
 
 #ifdef USB_PD_PORT_TCPC_MST
 	if (port == USB_PD_PORT_TCPC_MST)
@@ -908,14 +903,11 @@ __overridable int svdm_dp_attention(int port, uint32_t *payload)
 
 __overridable void svdm_exit_dp_mode(int port)
 {
-	const struct usb_mux *mux = &usb_muxes[port];
-
 	svdm_safe_dp_mode(port);
 #ifdef CONFIG_USB_PD_DP_HPD_GPIO
 	gpio_set_level(PORT_TO_HPD(port), 0);
 #endif /* CONFIG_USB_PD_DP_HPD_GPIO */
-	if (mux->hpd_update)
-		mux->hpd_update(port, 0, 0);
+	usb_mux_hpd_update(port, 0, 0);
 #ifdef USB_PD_PORT_TCPC_MST
 	if (port == USB_PD_PORT_TCPC_MST)
 		baseboard_mst_enable_control(port, 0);

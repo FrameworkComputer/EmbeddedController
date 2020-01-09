@@ -289,4 +289,14 @@ mux_state_t usb_mux_get(int port);
  * @param port port number.
  */
 void usb_mux_flip(int port);
+
+/**
+ * Update the hot-plug event.
+ *
+ * @param port port number.
+ * @param hpd_lvl HPD level.
+ * @param hpd_irq HPD IRQ.
+ */
+void usb_mux_hpd_update(int port, int hpd_lvl, int hpd_irq);
+
 #endif
