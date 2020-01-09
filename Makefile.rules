@@ -638,9 +638,21 @@ flash_ec: $(out)/ec.bin
 flash_dfu: $(out)/ec.bin
 	sudo ./$(BDIR)/dfu $(out)/ec.bin
 
+# Deprecated, use print-make-vars instead
 .PHONY: print-baseboard
 print-baseboard:
 	@echo "${BASEBOARD}"
+
+# Print variables identifying and providing Makefile-specific
+# configuration for each board. The format is one variable per line,
+# in the format KEY=VALUE.
+.PHONY: print-make-vars
+print-make-vars:
+	@echo "BASEBOARD=${BASEBOARD}"
+	@echo "CHIP=${CHIP}"
+	@echo "CHIP_FAMILY=${CHIP_FAMILY}"
+	@echo "CHIP_VARIANT=${CHIP_VARIANT}"
+	@echo "CORE=${CORE}"
 
 .PHONY: print-configs
 print-configs:
