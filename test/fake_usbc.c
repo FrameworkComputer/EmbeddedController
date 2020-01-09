@@ -27,7 +27,7 @@ void pd_request_vconn_swap_on(int port)
 
 
 static enum pd_data_role data_role;
-__overridable enum pd_data_role tc_get_data_role(int port)
+__overridable enum pd_data_role pd_get_data_role(int port)
 {
 	return data_role;
 }
@@ -37,7 +37,7 @@ __overridable void tc_set_data_role(int port, enum pd_data_role role)
 }
 
 static enum pd_power_role power_role;
-__overridable enum pd_power_role tc_get_power_role(int port)
+__overridable enum pd_power_role pd_get_power_role(int port)
 {
 	return power_role;
 }
@@ -130,9 +130,4 @@ int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 enum pd_dual_role_states pd_get_dual_role(int port)
 {
 	return PD_DRP_TOGGLE_ON;
-}
-
-__overridable enum pd_power_role pd_get_power_role(int port)
-{
-	return PD_ROLE_SINK;
 }

@@ -511,11 +511,11 @@ static void pe_init(int port)
 	pe[port].dpm_request = 0;
 	pe[port].source_cap_timer = TIMER_DISABLED;
 	pe[port].no_response_timer = TIMER_DISABLED;
-	pe[port].data_role = tc_get_data_role(port);
+	pe[port].data_role = pd_get_data_role(port);
 
 	tc_pd_connection(port, 0);
 
-	if (tc_get_power_role(port) == PD_ROLE_SOURCE)
+	if (pd_get_power_role(port) == PD_ROLE_SOURCE)
 		set_state_pe(port, PE_SRC_STARTUP);
 	else
 		set_state_pe(port, PE_SNK_STARTUP);
@@ -597,7 +597,7 @@ void pe_got_hard_reset(int port)
 	 *  PE_SNK_Transition_to_default state when:
 	 *  1) Hard Reset Signaling is detected.
 	 */
-	pe[port].power_role = tc_get_power_role(port);
+	pe[port].power_role = pd_get_power_role(port);
 
 	if (pe[port].power_role == PD_ROLE_SOURCE)
 		set_state_pe(port, PE_SRC_HARD_RESET_RECEIVED);
@@ -899,7 +899,7 @@ static void pe_update_pdo_flags(int port, uint32_t pdo)
 #ifdef CONFIG_CHARGE_MANAGER
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 	int charge_whitelisted =
-		(tc_get_power_role(port) == PD_ROLE_SINK &&
+		(pd_get_power_role(port) == PD_ROLE_SINK &&
 			pd_charge_from_device(pd_get_identity_vid(port),
 			pd_get_identity_pid(port)));
 #else
@@ -1092,7 +1092,7 @@ static void pe_src_startup_entry(int port)
 	prl_reset(port);
 
 	/* Set initial data role */
-	pe[port].data_role = tc_get_data_role(port);
+	pe[port].data_role = pd_get_data_role(port);
 
 	/* Set initial power role */
 	pe[port].power_role = PD_ROLE_SOURCE;
@@ -1840,7 +1840,7 @@ static void pe_snk_startup_entry(int port)
 	prl_reset(port);
 
 	/* Set initial data role */
-	pe[port].data_role = tc_get_data_role(port);
+	pe[port].data_role = pd_get_data_role(port);
 
 	/* Set initial power role */
 	pe[port].power_role = PD_ROLE_SINK;
@@ -2863,11 +2863,11 @@ static void pe_drs_change_entry(int port)
 static void pe_drs_change_run(int port)
 {
 	/* Wait until the data role is changed */
-	if (pe[port].data_role == tc_get_data_role(port))
+	if (pe[port].data_role == pd_get_data_role(port))
 		return;
 
 	/* Update the data role */
-	pe[port].data_role = tc_get_data_role(port);
+	pe[port].data_role = pd_get_data_role(port);
 
 	if (pe[port].data_role == PD_ROLE_DFP)
 		PE_CLR_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
@@ -3062,7 +3062,7 @@ static void pe_prs_src_snk_wait_source_on_run(int port)
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
 		/* Update pe power role */
-		pe[port].power_role = tc_get_power_role(port);
+		pe[port].power_role = pd_get_power_role(port);
 		pe[port].ps_source_timer = get_time().val + PD_T_PS_SOURCE_ON;
 	}
 
@@ -3306,7 +3306,7 @@ static void pe_prs_snk_src_source_on_run(int port)
 			return;
 
 		/* update pe power role */
-		pe[port].power_role = tc_get_power_role(port);
+		pe[port].power_role = pd_get_power_role(port);
 		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
 		/* reset timer so PD_CTRL_PS_RDY isn't sent again */
 		pe[port].ps_source_timer = TIMER_DISABLED;

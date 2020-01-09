@@ -92,7 +92,7 @@ void tc_state_init(int port)
 	tc[port].flags = 0;
 }
 
-enum pd_power_role tc_get_power_role(int port)
+enum pd_power_role pd_get_power_role(int port)
 {
 	/* Vconn power device is always the sink */
 	return PD_ROLE_SINK;
@@ -104,7 +104,7 @@ enum pd_cable_plug tc_get_cable_plug(int port)
 	return PD_PLUG_FROM_CABLE;
 }
 
-enum pd_data_role tc_get_data_role(int port)
+enum pd_data_role pd_get_data_role(int port)
 {
 	/* Vconn power device doesn't have a data role, but UFP match SNK */
 	return PD_ROLE_UFP;

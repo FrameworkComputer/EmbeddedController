@@ -88,7 +88,7 @@ void set_usb_mux_with_current_data_role(int port)
 	 * If new data role isn't DFP and we only support DFP, also disconnect.
 	 */
 	else if (IS_ENABLED(CONFIG_USBC_SS_MUX_DFP_ONLY) &&
-			tc_get_data_role(port) != PD_ROLE_DFP)
+			pd_get_data_role(port) != PD_ROLE_DFP)
 		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
 			tc_get_polarity(port));
 	/*

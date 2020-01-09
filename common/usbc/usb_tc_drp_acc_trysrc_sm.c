@@ -872,16 +872,6 @@ void tc_state_init(int port)
 	tc[port].low_power_time = get_time().val + PD_LPM_DEBOUNCE_US;
 }
 
-enum pd_power_role tc_get_power_role(int port)
-{
-	return tc[port].power_role;
-}
-
-enum pd_data_role tc_get_data_role(int port)
-{
-	return tc[port].data_role;
-}
-
 enum pd_cable_plug tc_get_cable_plug(int port)
 {
 	/*

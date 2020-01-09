@@ -490,7 +490,7 @@ static void prl_tx_wait_for_message_request_run(const int port)
 	if ((prl_get_rev(port, pdmsg[port].xmit_type) == PD_REV30) &&
 			PRL_TX_CHK_FLAG(port,
 				(PRL_FLAGS_START_AMS | PRL_FLAGS_END_AMS))) {
-		if (tc_get_power_role(port) == PD_ROLE_SOURCE) {
+		if (pd_get_power_role(port) == PD_ROLE_SOURCE) {
 			/*
 			 * Start of SRC AMS notification received from
 			 * Policy Engine
@@ -638,9 +638,9 @@ static uint32_t get_sop_star_header(const int port)
 	return PD_HEADER(
 		pdmsg[port].msg_type,
 		is_sop_packet ?
-			tc_get_power_role(port) : tc_get_cable_plug(port),
+			pd_get_power_role(port) : tc_get_cable_plug(port),
 		is_sop_packet ?
-			tc_get_data_role(port) : 0,
+			pd_get_data_role(port) : 0,
 		prl_tx[port].msg_id_counter[pdmsg[port].xmit_type],
 		pdmsg[port].data_objs,
 		pdmsg[port].rev[pdmsg[port].xmit_type],

@@ -9,6 +9,7 @@
 #define __CROS_EC_USB_TC_H
 
 #include "usb_sm.h"
+#include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
 #define TC_SET_FLAG(port, flag) atomic_or(&tc[port].flags, (flag))
@@ -46,22 +47,6 @@ int tc_is_attached_src(int port);
  * @return 1 if in attached source state, else 0
  */
 int tc_is_attached_snk(int port);
-
-/**
- * Get current data role
- *
- * @param port USB-C port number
- * @return PD data role
- */
-enum pd_data_role tc_get_data_role(int port);
-
-/**
- * Get current power role
- *
- * @param port USB-C port number
- * @return PD power role
- */
-enum pd_power_role tc_get_power_role(int port);
 
 /**
  * Get cable plug setting. This should be constant per build. This replaces

@@ -717,12 +717,12 @@ static void enable_prl(int port, int en)
 	prl_set_rev(port, TCPC_TX_SOP, pd_port[port].rev);
 }
 
-enum pd_power_role tc_get_power_role(int port)
+enum pd_power_role pd_get_power_role(int port)
 {
 	return pd_port[port].power_role;
 }
 
-enum pd_data_role tc_get_data_role(int port)
+enum pd_data_role pd_get_data_role(int port)
 {
 	return pd_port[port].data_role;
 }
