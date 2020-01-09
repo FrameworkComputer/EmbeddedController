@@ -1565,6 +1565,9 @@ static int command_accel_data_rate(int argc, char **argv)
 		sensor->config[SENSOR_CONFIG_AP].odr = 0;
 		sensor->config[config_id].odr =
 			data | (round ? ROUND_UP_FLAG : 0);
+
+		atomic_or(&odr_event_required,
+			  1 << (sensor - motion_sensors));
 		task_set_event(TASK_ID_MOTIONSENSE,
 				TASK_EVENT_MOTION_ODR_CHANGE, 0);
 	} else {
