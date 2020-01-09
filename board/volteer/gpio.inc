@@ -32,6 +32,7 @@ GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4),  GPIO_INT_BOTH, power_signal_interrupt
 /* Sensor Interrupts */
 GPIO_INT(EC_CAM_VSYN_SLP_S0IX, PIN(7, 2), GPIO_INT_RISING, sync_interrupt)
 GPIO_INT(EC_ALS_RGB_INT_L,     PIN(D, 4), GPIO_INT_FALLING, tcs3400_interrupt)
+GPIO_INT(TABLET_MODE_L,        PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 
 /* USB-C interrupts */
 GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(E, 0), GPIO_INT_BOTH, tcpc_alert_event)

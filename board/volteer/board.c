@@ -20,6 +20,7 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
+#include "tablet_mode.h"
 #include "uart.h"
 #include "util.h"
 
