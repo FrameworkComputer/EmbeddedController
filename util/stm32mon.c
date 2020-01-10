@@ -787,7 +787,7 @@ struct stm32_def *command_get_id(int fd)
 
 int init_monitor(int fd)
 {
-	int res;
+	int res = 0;
 	int attempts = connect_retries + 1;
 	uint8_t init = mode == MODE_SPI ? SOF : CMD_INIT;
 

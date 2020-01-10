@@ -8132,6 +8132,8 @@ static int cmd_mkbp_get(int argc, char *argv[])
 		supported = r.buttons;
 	else if (p.event_type == EC_MKBP_EVENT_SWITCH)
 		supported = r.switches;
+	else
+		return -1;
 
 	p.info_type = EC_MKBP_INFO_CURRENT;
 	rv = ec_command(EC_CMD_MKBP_INFO, 0, &p, sizeof(p), &r,
