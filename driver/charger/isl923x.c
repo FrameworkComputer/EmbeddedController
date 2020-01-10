@@ -9,6 +9,7 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "charger.h"
+#include "compile_time_macros.h"
 #include "console.h"
 #include "common.h"
 #include "hooks.h"
@@ -17,6 +18,7 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_pd_tcpm.h"
 #include "util.h"
 
 #ifndef CONFIG_CHARGER_NARROW_VDC
@@ -308,13 +310,13 @@ int isl923x_set_ac_prochot(uint16_t ma)
 	int rv;
 
 	if (ma > ISL923X_AC_PROCHOT_CURRENT_MAX) {
-		CPRINTS("%s: invalid current (%d mA)\n", __func__, ma);
+		CPRINTS("%s: invalid current (%d mA)", CHARGER_NAME, ma);
 		return EC_ERROR_INVAL;
 	}
 
 	rv = raw_write16(ISL923X_REG_PROCHOT_AC, ma);
 	if (rv)
-		CPRINTS("%s failed (%d)", __func__, rv);
+		CPRINTS("%s set_ac_prochot failed (%d)", CHARGER_NAME, rv);
 	return rv;
 }
 
@@ -323,28 +325,43 @@ int isl923x_set_dc_prochot(uint16_t ma)
 	int rv;
 
 	if (ma > ISL923X_DC_PROCHOT_CURRENT_MAX) {
-		CPRINTS("%s: invalid current (%d mA)\n", __func__, ma);
+		CPRINTS("%s: invalid current (%d mA)", CHARGER_NAME, ma);
 		return EC_ERROR_INVAL;
 	}
 
 	rv = raw_write16(ISL923X_REG_PROCHOT_DC, ma);
 	if (rv)
-		CPRINTS("%s failed (%d)", __func__, rv);
+		CPRINTS("%s set_dc_prochot failed (%d)", CHARGER_NAME, rv);
 	return rv;
 }
 
 static void isl923x_init(void)
 {
 	int reg;
-
-#ifdef CONFIG_TRICKLE_CHARGING
 	const struct battery_info *bi = battery_get_info();
 	int precharge_voltage = bi->precharge_voltage ?
 		bi->precharge_voltage : bi->voltage_min;
 
-	if (raw_write16(ISL923X_REG_SYS_VOLTAGE_MIN, precharge_voltage))
-		goto init_fail;
-#endif
+	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
+		if (CONFIG_CHARGER_SENSE_RESISTOR ==
+		    CONFIG_CHARGER_SENSE_RESISTOR_AC) {
+			/*
+			 * A 1:1 ratio for Rs1:Rs2 is allowed, but Control4
+			 * register Bit<11> must be set.
+			 */
+			if (raw_read16(ISL9238_REG_CONTROL4, &reg))
+				goto init_fail;
+
+			if (raw_write16(ISL9238_REG_CONTROL4,
+					reg |
+					RAA489000_C4_PSYS_RSNS_RATIO_1_TO_1))
+				goto init_fail;
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_TRICKLE_CHARGING))
+		if (raw_write16(ISL923X_REG_SYS_VOLTAGE_MIN, precharge_voltage))
+			goto init_fail;
 
 	/*
 	 * [10:9]: Prochot# Debounce time
@@ -353,80 +370,97 @@ static void isl923x_init(void)
 	if (raw_read16(ISL923X_REG_CONTROL2, &reg))
 		goto init_fail;
 
+	if (!IS_ENABLED(CONFIG_CHARGER_RAA489000))
+		reg |= ISL923X_C2_OTG_DEBOUNCE_150;
 	if (raw_write16(ISL923X_REG_CONTROL2,
 			reg |
-			ISL923X_C2_OTG_DEBOUNCE_150 |
 			ISL923X_C2_PROCHOT_DEBOUNCE_1000 |
 			ISL923X_C2_ADAPTER_DEBOUNCE_150))
 		goto init_fail;
 
-#ifdef CONFIG_CHARGE_RAMP_HW
-#ifdef CONFIG_CHARGER_ISL9237
-	if (raw_read16(ISL923X_REG_CONTROL0, &reg))
-		goto init_fail;
+	if (IS_ENABLED(CONFIG_CHARGE_RAMP_HW)) {
+		if (IS_ENABLED(CONFIG_CHARGER_ISL9237)) {
+			if (raw_read16(ISL923X_REG_CONTROL0, &reg))
+				goto init_fail;
 
-	/* Set input voltage regulation reference voltage for charge ramp */
-	reg &= ~ISL9237_C0_VREG_REF_MASK;
-	reg |= ISL9237_C0_VREG_REF_4200;
+			/*
+			 * Set input voltage regulation reference voltage for
+			 * charge ramp.
+			 */
+			reg &= ~ISL9237_C0_VREG_REF_MASK;
+			reg |= ISL9237_C0_VREG_REF_4200;
 
-	if (raw_write16(ISL923X_REG_CONTROL0, reg))
-		goto init_fail;
-#else /* !defined(CONFIG_CHARGER_ISL9237) */
-	/*
-	 * For the ISL9238, set the input voltage regulation to 4.439V.  Note,
-	 * the voltage is set in 341.3 mV steps.
-	 */
-	reg = (4439 / ISL9238_INPUT_VOLTAGE_REF_STEP)
-		<< ISL9238_INPUT_VOLTAGE_REF_SHIFT;
+			if (raw_write16(ISL923X_REG_CONTROL0, reg))
+				goto init_fail;
+		} else {
+			/*
+			 * For the ISL9238, set the input voltage regulation to
+			 * 4.439V.  Note, the voltage is set in 341.3 mV steps.
+			 *
+			 * For the RAA489000, set the input voltage regulation
+			 * to 4.437V.  Note, that the voltage is set in 85.33 mV
+			 * steps.
+			 */
+			if (IS_ENABLED(CONFIG_CHARGER_RAA489000))
+				reg = (4437 / RAA489000_INPUT_VOLTAGE_REF_STEP)
+					<< RAA489000_INPUT_VOLTAGE_REF_SHIFT;
+			else
+				reg = (4439 / ISL9238_INPUT_VOLTAGE_REF_STEP)
+					<< ISL9238_INPUT_VOLTAGE_REF_SHIFT;
 
-	if (raw_write16(ISL9238_REG_INPUT_VOLTAGE, reg))
-		goto init_fail;
-#endif /* defined(CONFIG_CHARGER_ISL9237) */
-#else /* !defined(CONFIG_CHARGE_RAMP_HW) */
-	if (raw_read16(ISL923X_REG_CONTROL0, &reg))
-		goto init_fail;
+			if (raw_write16(ISL9238_REG_INPUT_VOLTAGE, reg))
+				goto init_fail;
+		}
+	} else {
+		if (raw_read16(ISL923X_REG_CONTROL0, &reg))
+			goto init_fail;
 
-	/* Disable voltage regulation loop to disable charge ramp */
-	reg |= ISL923X_C0_DISABLE_VREG;
+		/* Disable voltage regulation loop to disable charge ramp */
+		reg |= ISL923X_C0_DISABLE_VREG;
 
-	if (raw_write16(ISL923X_REG_CONTROL0, reg))
-		goto init_fail;
-#endif /* defined(CONFIG_CHARGE_RAMP_HW) */
+		if (raw_write16(ISL923X_REG_CONTROL0, reg))
+			goto init_fail;
+	}
 
-#ifdef CONFIG_CHARGER_ISL9238
-	/*
-	 * Don't reread the prog pin and don't reload the ILIM on ACIN.
-	 */
-	if (raw_read16(ISL9238_REG_CONTROL3, &reg))
-		goto init_fail;
-	reg |= ISL9238_C3_NO_RELOAD_ACLIM_ON_ACIN |
-		ISL9238_C3_NO_REREAD_PROG_PIN;
-	/*
-	 * Disable autonomous charging initially since 1) it causes boot loop
-	 * issues with 2S batteries, and 2) it will automatically get disabled
-	 * as soon as we manually set the current limit anyway.
-	 */
-	reg |= ISL9238_C3_DISABLE_AUTO_CHARING;
-	if (raw_write16(ISL9238_REG_CONTROL3, reg))
-		goto init_fail;
+	if (IS_ENABLED(CONFIG_CHARGER_ISL9238) ||
+	    IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
+		/*
+		 * Don't reread the prog pin and don't reload the ILIM on ACIN.
+		 * For the RAA489000, just don't reload ACLIM.
+		 */
+		if (raw_read16(ISL9238_REG_CONTROL3, &reg))
+			goto init_fail;
+		reg |= ISL9238_C3_NO_RELOAD_ACLIM_ON_ACIN;
+		if (!IS_ENABLED(CONFIG_CHARGER_RAA489000))
+			reg |= ISL9238_C3_NO_REREAD_PROG_PIN;
 
-	/*
-	 * No need to proceed with the rest of init if we sysjump'd to this
-	 * image as the input current limit has already been set.
-	 */
-	if (system_jumped_to_this_image())
-		return;
+		/*
+		 * Disable autonomous charging initially since 1) it causes boot
+		 * loop issues with 2S batteries, and 2) it will automatically
+		 * get disabled as soon as we manually set the current limit
+		 * anyway.
+		 */
+		reg |= ISL9238_C3_DISABLE_AUTO_CHARING;
+		if (raw_write16(ISL9238_REG_CONTROL3, reg))
+			goto init_fail;
 
-	/*
-	 * Initialize the input current limit to the board's default.
-	 */
-	if (charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT))
-		goto init_fail;
-#endif /* defined(CONFIG_CHARGER_ISL9238) */
+		/*
+		 * No need to proceed with the rest of init if we sysjump'd to
+		 * this image as the input current limit has already been set.
+		 */
+		if (system_jumped_to_this_image())
+			return;
+
+		/*
+		 * Initialize the input current limit to the board's default.
+		 */
+		if (charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT))
+			goto init_fail;
+	}
 
 	return;
 init_fail:
-	CPRINTS("%s failed!", __func__);
+	CPRINTS("%s init failed!", CHARGER_NAME);
 }
 DECLARE_HOOK(HOOK_INIT, isl923x_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -729,9 +763,9 @@ static int command_isl923x_dump(int argc, char **argv)
 	dump_reg_range(0x14, 0x15);
 	dump_reg_range(0x38, 0x3F);
 	dump_reg_range(0x47, 0x4A);
-#ifdef CONFIG_CHARGER_ISL9238
+#if defined(CONFIG_CHARGER_ISL9238) || defined(CONFIG_CHARGER_RAA489000)
 	dump_reg_range(0x4B, 0x4E);
-#endif /* CONFIG_CHARGER_ISL9238 */
+#endif /* CONFIG_CHARGER_ISL9238 || CONFIG_CHARGER_RAA489000 */
 	dump_reg_range(0xFE, 0xFF);
 
 	return EC_SUCCESS;
@@ -739,3 +773,29 @@ static int command_isl923x_dump(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(charger_dump, command_isl923x_dump, "",
 			"Dumps ISL923x registers");
 #endif /* CONFIG_CMD_CHARGER_DUMP */
+
+int charger_get_vbus_voltage(int port)
+{
+	int val;
+	int rv;
+	int i2c_port;
+
+	/*
+	 * TODO(b:147440290): We should have a structure for charger ICs and
+	 * consult that instead.  This hack happens to work because the charger
+	 * IC is also the TCPC.
+	 */
+	i2c_port = tcpc_config[port].i2c_info.port;
+	rv = i2c_read16(i2c_port, I2C_ADDR_CHARGER_FLAGS,
+			RAA489000_REG_ADC_VBUS,
+			&val);
+	if (rv)
+		return 0;
+
+	/* The VBUS voltage is returned in bits 13:6. The LSB is 96mV. */
+	val &= GENMASK(13, 6);
+	val = val >> 6;
+	val *= 96;
+
+	return val;
+}

@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  *
  * Intersil ISL-9237/8 battery charger driver.
+ * Also supports Renesas RAA489000 battery charger.
  */
 
 #ifndef __CROS_EC_ISL923X_H
@@ -38,6 +39,7 @@
 
 /* Maximum charging current register value */
 #define ISL923X_CURRENT_REG_MAX 0x17c0 /* bit<12:2> 10111110000 */
+#define RAA489000_CURRENT_REG_MAX 0x1ffc
 
 /* 2-level adpater current limit duration T1 & T2 in micro seconds */
 #define ISL923X_T1_10000 0x00
@@ -60,6 +62,8 @@
 #define ISL9237_SYS_VOLTAGE_REG_MAX 13824
 #define ISL9238_SYS_VOLTAGE_REG_MAX 18304
 #define ISL923X_SYS_VOLTAGE_REG_MIN 2048
+#define RAA489000_SYS_VOLTAGE_REG_MAX 18304
+#define RAA489000_SYS_VOLTAGE_REG_MIN 64
 
 /* PROCHOT# debounce time and duration time in micro seconds */
 #define ISL923X_PROCHOT_DURATION_10000  (0 << 6)
@@ -201,6 +205,9 @@
 /* Control2: PSYS gain in uA/W (ISL9237 only) */
 #define ISL9237_C2_PSYS_GAIN BIT(0)
 
+/* Control3: Enable ADC for all modes */
+#define RAA489000_ENABLE_ADC BIT(0)
+
 /*
  * Control3: Buck-Boost switching period
  * 0: x1 frequency, 1: half frequency.
@@ -230,6 +237,9 @@
 /* Control3: Don't reread PROG pin. */
 #define ISL9238_C3_NO_REREAD_PROG_PIN BIT(15)
 
+/* Control4: PSYS Rsense ratio. */
+#define RAA489000_C4_PSYS_RSNS_RATIO_1_TO_1 BIT(11)
+
 /* OTG voltage limit in mV, current limit in mA */
 #define ISL9237_OTG_VOLTAGE_MIN 4864
 #define ISL9237_OTG_VOLTAGE_MAX 5376
@@ -244,12 +254,17 @@
 /* Input voltage regulation voltage reference */
 #define ISL9238_INPUT_VOLTAGE_REF_STEP 341
 #define ISL9238_INPUT_VOLTAGE_REF_SHIFT 8
+#define RAA489000_INPUT_VOLTAGE_REF_STEP 85
+#define RAA489000_INPUT_VOLTAGE_REF_SHIFT 6
 
 /* Info register fields */
 #define ISL9237_INFO_PROG_RESISTOR_MASK 0xf
 #define ISL923X_INFO_TRICKLE_ACTIVE_MASK BIT(4)
 #define ISL9237_INFO_PSTATE_SHIFT 5
 #define ISL9237_INFO_PSTATE_MASK 3
+
+/* ADC registers */
+#define RAA489000_REG_ADC_VBUS 0x88
 
 enum isl9237_power_stage {
 	BUCK_MODE,
@@ -286,13 +301,26 @@ enum isl9237_fsm_state {
 #define CHARGE_V_MAX  ISL9238_SYS_VOLTAGE_REG_MAX
 #define CHARGE_V_MIN  ISL923X_SYS_VOLTAGE_REG_MIN
 #define CHARGE_V_STEP 8
+#elif defined(CONFIG_CHARGER_RAA489000)
+#define CHARGER_NAME  "raa489000"
+#define CHARGE_V_MAX  RAA489000_SYS_VOLTAGE_REG_MAX
+#define CHARGE_V_MIN  RAA489000_SYS_VOLTAGE_REG_MIN
+#define CHARGE_V_STEP 64
 #endif
 
+#ifdef CONFIG_CHARGER_RAA489000
+#define CHARGE_I_MAX  RAA489000_CURRENT_REG_MAX
+#else
 #define CHARGE_I_MAX  ISL923X_CURRENT_REG_MAX
+#endif /* CONFIG_CHARGER_RAA489000 */
 #define CHARGE_I_MIN  4
 #define CHARGE_I_OFF  0
 #define CHARGE_I_STEP 4
+#ifdef CONFIG_CHARGER_RAA489000
+#define INPUT_I_MAX   RAA489000_CURRENT_REG_MAX
+#else
 #define INPUT_I_MAX   ISL923X_CURRENT_REG_MAX
+#endif /* CONFIG_CHARGER_RAA489000 */
 #define INPUT_I_MIN   4
 #define INPUT_I_STEP  4
 
@@ -302,9 +330,9 @@ enum isl9237_fsm_state {
 /**
  * Initialize AC & DC prochot threshold
  *
- * @param	AC Porchot threshold current in mA:
+ * @param	AC Prochot threshold current in mA:
  *			multiple of 128 up to 6400 mA
- *			DC Porchot threshold current in mA:
+ *			DC Prochot threshold current in mA:
  *			multiple of 128 up to 12800 mA
  * 		Bits below 128mA are truncated (ignored).
  * @return enum ec_error_list
