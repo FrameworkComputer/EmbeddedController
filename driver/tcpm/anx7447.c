@@ -637,7 +637,34 @@ static int anx7447_mux_get(int port, mux_state_t *mux_state)
 }
 #endif /* CONFIG_USB_PD_TCPM_MUX */
 
-/* ANX7447 is a TCPCI compatible port controller */
+/* Override for tcpci_tcpm_set_cc */
+static int anx7447_set_cc(int port, int pull)
+{
+	int rp;
+
+	rp = tcpci_get_cached_rp(port);
+
+	/* Set manual control, and set both CC lines to the same pull */
+	return tcpc_write(port, TCPC_REG_ROLE_CTRL,
+			  TCPC_REG_ROLE_CTRL_SET(0, rp, pull, pull));
+}
+
+/* Override for tcpci_tcpm_set_polarity */
+static int anx7447_set_polarity(int port, enum tcpc_cc_polarity polarity)
+{
+	return tcpc_update8(port,
+			    TCPC_REG_TCPC_CTRL,
+			    TCPC_REG_TCPC_CTRL_SET(1),
+			    (polarity) ? MASK_SET : MASK_CLR);
+}
+
+/*
+ * ANX7447 is a TCPCI compatible port controller, with some caveats.
+ * It seems to require both CC lines to be set always, instead of just
+ * one at a time, according to TCPCI spec.  Thus, now that the TCPCI
+ * driver more closely follows the spec, this driver requires
+ * overrides for set_cc and set_polarity.
+ */
 const struct tcpm_drv anx7447_tcpm_drv = {
 	.init			= &anx7447_init,
 	.release		= &anx7447_release,
@@ -646,8 +673,8 @@ const struct tcpm_drv anx7447_tcpm_drv = {
 	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,
 #endif
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
-	.set_cc			= &tcpci_tcpm_set_cc,
-	.set_polarity		= &tcpci_tcpm_set_polarity,
+	.set_cc			= &anx7447_set_cc,
+	.set_polarity		= &anx7447_set_polarity,
 	.set_vconn		= &tcpci_tcpm_set_vconn,
 	.set_msg_header		= &tcpci_tcpm_set_msg_header,
 	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
