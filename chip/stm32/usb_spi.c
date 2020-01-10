@@ -69,14 +69,19 @@ static int rx_valid(struct usb_spi_config const *config)
 
 void usb_spi_deferred(struct usb_spi_config const *config)
 {
+	int enabled;
+
+	if (config->flags & USB_SPI_CONFIG_FLAGS_IGNORE_HOST_SIDE_ENABLE)
+		enabled = config->state->enabled_device;
+	else
+		enabled = config->state->enabled_device &&
+			  config->state->enabled_host;
+
 	/*
 	 * If our overall enabled state has changed we call the board specific
 	 * enable or disable routines and save our new state.
 	 */
-	int enabled = (config->state->enabled_host &&
-		       config->state->enabled_device);
-
-	if (enabled ^ config->state->enabled) {
+	if (enabled != config->state->enabled) {
 		if (enabled) usb_spi_board_enable(config);
 		else         usb_spi_board_disable(config);
 
@@ -180,7 +185,8 @@ int usb_spi_interface(struct usb_spi_config const *config,
 	 * Our state has changed, call the deferred function to handle the
 	 * state change.
 	 */
-	hook_call_deferred(config->deferred, 0);
+	if (!(config->flags & USB_SPI_CONFIG_FLAGS_IGNORE_HOST_SIDE_ENABLE))
+		hook_call_deferred(config->deferred, 0);
 
 	btable_ep[0].tx_count = 0;
 	STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, EP_STATUS_OUT);

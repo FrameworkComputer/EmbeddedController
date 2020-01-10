@@ -126,6 +126,14 @@ struct usb_spi_config {
 };
 
 /*
+ * Use when you want the SPI subsystem to be enabled even when the USB SPI
+ * endpoint is not enabled by the host. This means that when this firmware
+ * enables SPI, then the HW SPI module is enabled (i.e. SPE bit is set) until
+ * this firmware disables the SPI module; it ignores the host's enables state.
+ */
+#define USB_SPI_CONFIG_FLAGS_IGNORE_HOST_SIDE_ENABLE BIT(0)
+
+/*
  * Convenience macro for defining a USB SPI bridge driver.
  *
  * NAME is used to construct the names of the trampoline functions and the
