@@ -42,13 +42,6 @@ static struct lsm6dsm_data lsm6dsm_a_data = LSM6DSM_DATA;
 static struct stprivate_data g_lis2dh_data;
 static struct lis2mdl_private_data lis2mdl_a_data;
 
-/* Matrix to rotate lid sensor into standard reference frame */
-const mat33_fp_t lid_rot_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
-
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -65,7 +58,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-		.rot_standard_ref = &lid_rot_ref,
+		.rot_standard_ref = NULL,
 		.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
@@ -96,7 +89,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
-		.rot_standard_ref = &lid_rot_ref,
+		.rot_standard_ref = NULL,
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 	},
@@ -141,7 +134,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LIS2MDL_ADDR_FLAGS,
 		.default_range = 1 << 11,	/* 16LSB / uT, fixed  */
-		.rot_standard_ref = &lid_rot_ref,
+		.rot_standard_ref = NULL,
 		.min_frequency = LIS2MDL_ODR_MIN_VAL,
 		.max_frequency = LIS2MDL_ODR_MAX_VAL,
 	},

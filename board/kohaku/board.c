@@ -228,17 +228,6 @@ static const mat33_fp_t base_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
-/*
- * TODO(b/124337208): P0 boards don't have this sensor mounted so the rotation
- * matrix can't be tested properly. This needs to be revisited after EVT to make
- * sure the rotaiton matrix for the lid sensor is correct.
- */
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
-
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 		.name = "Lid Accel",
@@ -251,7 +240,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_bma255_data,
 		.port = I2C_PORT_ACCEL,
 		.i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
-		.rot_standard_ref = &lid_standard_ref,
+		.rot_standard_ref = NULL,
 		.min_frequency = BMA255_ACCEL_MIN_FREQ,
 		.max_frequency = BMA255_ACCEL_MAX_FREQ,
 		.default_range = 2, /* g, to support lid angle calculation. */

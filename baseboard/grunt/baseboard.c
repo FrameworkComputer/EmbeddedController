@@ -547,18 +547,6 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
-mat33_fp_t grunt_base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
-
-mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(1),  0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
-
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
 static struct bmi160_drv_data_t g_bmi160_data;
@@ -576,7 +564,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_kx022_data,
 	 .port = I2C_PORT_SENSOR,
 	 .i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
-	 .rot_standard_ref = (const mat33_fp_t *)&lid_standard_ref,
+	 .rot_standard_ref = NULL,
 	 .default_range = 2, /* g, enough for laptop. */
 	 .min_frequency = KX022_ACCEL_MIN_FREQ,
 	 .max_frequency = KX022_ACCEL_MAX_FREQ,
@@ -605,7 +593,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_SENSOR,
 	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	 .default_range = 2, /* g, enough for laptop */
-	 .rot_standard_ref = (const mat33_fp_t *)&grunt_base_standard_ref,
+	 .rot_standard_ref = NULL,
 	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
 	 .max_frequency = BMI160_ACCEL_MAX_FREQ,
 	 .config = {
@@ -633,7 +621,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_SENSOR,
 	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = (const mat33_fp_t *)&grunt_base_standard_ref,
+	 .rot_standard_ref = NULL,
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
