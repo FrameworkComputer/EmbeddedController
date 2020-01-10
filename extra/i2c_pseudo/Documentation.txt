@@ -193,7 +193,7 @@ adapters, even when adapter numbers have been reused.
 
 Write Command: I2C_XFER_REPLY <xfer_id> <msg_id> <addr> <flags> <errno> [<read_byte>[:...]]
 Example: "I2C_XFER_REPLY 3 0 0x0070 0x0000 0\n"
-Example: "I2C_XFER_REPLY 3 1 0x0070 0x0001 0 0B 29 02 D9\n"
+Example: "I2C_XFER_REPLY 3 1 0x0070 0x0001 0 0B:29:02:D9\n"
 
 Details: This is how a pseudo controller can reply to I2C_XFER_REQ.  Only valid
 after I2C_XFER_REQ.  A pseudo controller should write one of these for each
