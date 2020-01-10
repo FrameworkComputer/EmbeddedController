@@ -513,7 +513,8 @@ static int get_mode_idx(int port, uint16_t svid)
 	int i;
 
 	for (i = 0; i < PD_AMODE_COUNT; i++) {
-		if (pe[port].amodes[i].fx->svid == svid)
+		if (pe[port].amodes[i].fx &&
+		    (pe[port].amodes[i].fx->svid == svid))
 			return i;
 	}
 	return -1;
