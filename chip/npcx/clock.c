@@ -96,19 +96,26 @@ void clock_init(void)
 #endif
 
 	/*
-	 * Configure frequency multiplier M/N values according to
-	 * the requested OSC_CLK (Unit:Hz).
+	 * Resting the OSC_CLK (even to the same value) will make the clock
+	 * unstable for a little which can affect peripheral communication like
+	 * eSPI. Skip this if not needed (e.g. RW jump)
 	 */
-	NPCX_HFCGN  = HFCGN;
-	NPCX_HFCGML = HFCGML;
-	NPCX_HFCGMH = HFCGMH;
+	if (NPCX_HFCGN != HFCGN || NPCX_HFCGML != HFCGML
+				|| NPCX_HFCGMH != HFCGMH) {
+		/*
+		 * Configure frequency multiplier M/N values according to
+		 * the requested OSC_CLK (Unit:Hz).
+		 */
+		NPCX_HFCGN  = HFCGN;
+		NPCX_HFCGML = HFCGML;
+		NPCX_HFCGMH = HFCGMH;
 
-	/* Load M and N values into the frequency multiplier */
-	SET_BIT(NPCX_HFCGCTRL, NPCX_HFCGCTRL_LOAD);
-
-	/* Wait for stable */
-	while (IS_BIT_SET(NPCX_HFCGCTRL, NPCX_HFCGCTRL_CLK_CHNG))
-		;
+		/* Load M and N values into the frequency multiplier */
+		SET_BIT(NPCX_HFCGCTRL, NPCX_HFCGCTRL_LOAD);
+		/* Wait for stable */
+		while (IS_BIT_SET(NPCX_HFCGCTRL, NPCX_HFCGCTRL_CLK_CHNG))
+			;
+	}
 
 	/* Set all clock prescalers of core and peripherals. */
 #if defined(CHIP_FAMILY_NPCX5)
