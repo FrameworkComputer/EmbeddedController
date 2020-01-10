@@ -12,6 +12,7 @@ extern const struct accelgyro_drv bma2x2_accel_drv;
 
 /* I2C ADDRESS DEFINITIONS    */
 /* The following definition of I2C address is used for the following sensors
+* BMA253
 * BMA255
 * BMA355
 * BMA280
