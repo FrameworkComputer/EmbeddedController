@@ -50,8 +50,9 @@ debug a running program. It supports SPI, UART, I2C, as well as JTAG/SWD.
 
 There are two different servo debugger setups supported, the
 [Servo Micro](#servo-micro) and the [Servo V2 + Yoshi](#servo-v2-yoshi). The
-servo micro is recommended for its simplicity, but currently lack builtin
-JTAG/SWD support for single step debugging.
+servo micro is recommended for its simplicity. It lacks builtin JTAG/SWD support
+for single step debugging, but Dragonclaw v0.2 has an [SWD
+connector](#servo-micro-swd) that can be used.
 
 | [Servo Micro](#servo-micro) | [ServoV2 + Yoshi](#servo-v2-yoshi)        |
 | --------------------------- | ----------------------------------------- |
@@ -74,6 +75,29 @@ to the developer's computer over micro USB.
 *** note
 For more information about Servo Micro, see [Servo Micro Info].
 ***
+
+#### Using SWD (Optional) {#servo-micro-swd}
+
+Dragonclaw v0.2 has a connector for SWD (`J4`), which can be used
+with a debug probe, such as the [Segger J-Link].
+
+*** note
+**NOTE**: Pay attention to the location of pin 1 (red wire) in the photos below
+so that you connect with the correct orientation.
+
+`SW2` on the bottom of Dragonclaw must be set to `CORESIGHT`.
+
+If you want to connect a 20-Pin ARM Standard JTAG Connector (0.10" / 2.54 mm),
+you can use the following [adapter][JTAG to SWD Adapter] and [cable][SWD Cable].
+***
+
+Dragonclaw v0.2 with 20-pin SWD (0.05" / 1.27mm) on J4. Only half the pins are connected. |
+------------------------------- |
+![Dragonclaw with 20-pin SWD]   |
+
+Dragonclaw v0.2 with 10-pin SWD (0.05" / 1.27mm) on J4. |
+------------------------------- |
+![Dragonclaw with 10-pin SWD]   |
 
 ### Servo V2 + Yoshi
 
@@ -515,6 +539,9 @@ https://crbug.com/992082.
 [Git and Gerrit Intro for Chromium OS]: https://chromium.googlesource.com/chromiumos/docs/+/master/git_and_gerrit_intro.md
 [Installing Chromium]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#installing-chromium-os-on-your-device
 [FPMCU documentation]: ./fingerprint.md
+[Segger J-Link]: https://www.segger.com/products/debug-probes/j-link/
+[JTAG to SWD Adapter]: https://www.adafruit.com/product/2094
+[SWD Cable]: https://www.adafruit.com/product/1675
 
 <!-- Images -->
 
@@ -532,6 +559,8 @@ https://crbug.com/992082.
 [Another image]: ../images/dragonclaw_yoshi_flex_header2.jpg
 [Connect SWD Debugger]: ../images/servo_v2_jtag_header.jpg
 [Dartmonkey board]: ../images/dartmonkey.jpg
+[Dragonclaw with 20-pin SWD]: ../images/dragonclaw_with_20_pin_swd.jpg
+[Dragonclaw with 10-pin SWD]: ../images/dragonclaw_with_10_pin_swd.jpg
 
 <!-- If you make changes to the docs below make sure to regenerate the JPEGs by
      appending "export/jpeg" to the Google Drive link. -->
