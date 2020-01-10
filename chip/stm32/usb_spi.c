@@ -164,9 +164,6 @@ int usb_spi_interface(struct usb_spi_config const *config,
 	    setup.wLength != 0)
 		return 1;
 
-	if (!config->state->enabled_device)
-		return 1;
-
 	switch (setup.bRequest) {
 	case USB_SPI_REQ_ENABLE:
 		config->state->enabled_host = 1;
