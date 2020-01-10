@@ -21,6 +21,14 @@
 #error "BQ25710 is a NVDC charger, please enable CONFIG_CHARGER_NARROW_VDC."
 #endif
 
+/*
+ * Delay required from taking the bq25710 out of low power mode and having the
+ * correct value in register 0x3E for VSYS_MIN voltage. The length of the delay
+ * was determined by experiment. Less than 12 msec was not enough of delay, so
+ * the value here is set to 20 msec to have plenty of margin.
+ */
+#define BQ25710_VDDA_STARTUP_DELAY_MSEC 20
+
 /* Sense resistor configurations and macros */
 #define DEFAULT_SENSE_RESISTOR 10
 
@@ -184,9 +192,14 @@ static void bq25710_init(void)
 	 * this chip so without a full power cycle, some registers may not be at
 	 * their default values. Note, need to save the POR value of
 	 * MIN_SYSTEM_VOLTAGE register prior to setting the reset so that the
-	 * correct value is preserved.
+	 * correct value is preserved. In order to have the correct value read,
+	 * the bq25710 must not be in low power mode, otherwise the VDDA rail
+	 * may not be powered if AC is not connected.
 	 */
-	rv = raw_read16(BQ25710_REG_MIN_SYSTEM_VOLTAGE, &vsys);
+	rv = bq25710_set_low_power_mode(0);
+	/* Allow enough time for VDDA to be powered */
+	msleep(BQ25710_VDDA_STARTUP_DELAY_MSEC);
+	rv |= raw_read16(BQ25710_REG_MIN_SYSTEM_VOLTAGE, &vsys);
 	rv |= raw_read16(BQ25710_REG_CHARGE_OPTION_3, &reg);
 	if (!rv) {
 		reg |= BQ25710_CHARGE_OPTION_3_RESET_REG;
@@ -195,6 +208,8 @@ static void bq25710_init(void)
 		/* Restore VSYS_MIN voltage to POR reset value */
 		raw_write16(BQ25710_REG_MIN_SYSTEM_VOLTAGE, vsys);
 	}
+	/* Reenable low power mode */
+	bq25710_set_low_power_mode(1);
 
 	if (!raw_read16(BQ25710_REG_PROCHOT_OPTION_1, &reg)) {
 		/* Disbale VDPM prochot profile at initialization */
