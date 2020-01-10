@@ -159,11 +159,14 @@ extern struct consumer_ops const usb_spi_consumer_ops;
  *
  * ENDPOINT is the index of the USB bulk endpoint used for receiving and
  * transmitting bytes.
+ *
+ * FLAGS is unused right now, but add to definition for consistency
  */
 
 #define USB_SPI_CONFIG(NAME,						\
 		       INTERFACE,					\
-		       ENDPOINT)					\
+		       ENDPOINT,					\
+		       FLAGS)						\
 									\
 	static uint8_t CONCAT2(NAME, _buffer_)[USB_MAX_PACKET_SIZE];	\
 	static void CONCAT2(NAME, _deferred_)(void);			\

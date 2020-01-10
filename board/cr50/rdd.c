@@ -21,7 +21,7 @@
 #include "usb_spi.h"
 
 /* Include the dazzlingly complex macro to instantiate the USB SPI config */
-USB_SPI_CONFIG(ccd_usb_spi, USB_IFACE_SPI, USB_EP_SPI);
+USB_SPI_CONFIG(ccd_usb_spi, USB_IFACE_SPI, USB_EP_SPI, 0);
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)

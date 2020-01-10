@@ -120,6 +120,9 @@ struct usb_spi_config {
 	uint16_t *buffer;
 	usb_uint *rx_ram;
 	usb_uint *tx_ram;
+
+	/* Flags. See USB_SPI_CONFIG_FLAGS_* for definitions */
+	uint32_t flags;
 };
 
 /*
@@ -133,10 +136,14 @@ struct usb_spi_config {
  *
  * ENDPOINT is the index of the USB bulk endpoint used for receiving and
  * transmitting bytes.
+ *
+ * FLAGS encodes different run-time control parameters. See
+ * USB_SPI_CONFIG_FLAGS_* for definitions.
  */
 #define USB_SPI_CONFIG(NAME,						\
 		       INTERFACE,					\
-		       ENDPOINT)					\
+		       ENDPOINT,					\
+		       FLAGS)						\
 	static uint16_t CONCAT2(NAME, _buffer_)[USB_MAX_PACKET_SIZE / 2]; \
 	static usb_uint CONCAT2(NAME, _ep_rx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
 	static usb_uint CONCAT2(NAME, _ep_tx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
@@ -155,6 +162,7 @@ struct usb_spi_config {
 		.buffer    = CONCAT2(NAME, _buffer_),			\
 		.rx_ram    = CONCAT2(NAME, _ep_rx_buffer_),		\
 		.tx_ram    = CONCAT2(NAME, _ep_tx_buffer_),		\
+		.flags     = FLAGS,		\
 	};								\
 	const struct usb_interface_descriptor				\
 	USB_IFACE_DESC(INTERFACE) = {					\
