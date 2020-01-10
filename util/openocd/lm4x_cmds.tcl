@@ -13,15 +13,15 @@ proc flash_lm4 {path offset} {
 }
 
 proc flash_lm4_board {board} {
-	flash_lm4 ../../../build/$board/ec.bin 0
+	flash_lm4 ../../build/$board/ec.bin 0
 }
 
 proc flash_lm4_ro {board} {
-	flash_lm4 ../../../build/$board/ec.RO.flat 0
+	flash_lm4 ../../build/$board/RO/ec.RO.flat 0
 }
 
 proc flash_lm4_rw {board} {
-	flash_lm4 ../../../build/$board/ec.RW.bin 131072
+	flash_lm4 ../../build/$board/RW/ec.RW.bin 131072
 }
 
 # Boards with CONFIG_FLASH_PSTATE_BANK have pstate following RO
