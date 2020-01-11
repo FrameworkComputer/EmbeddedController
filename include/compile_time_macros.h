@@ -21,11 +21,26 @@
  */
 #define BUILD_CHECK_INLINE(value, cond_true) ((value) / (!!(cond_true)))
 
-/* Number of elements in an array */
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+/* Check that the value is an array (not a pointer) */
+#define _IS_ARRAY(arr) \
+	!__builtin_types_compatible_p(typeof(arr), typeof(&(arr)[0]))
+
+/**
+ * ARRAY_SIZE - Number of elements in an array.
+ *
+ * This version is type-safe and will not allow pointers, causing a
+ * compile-time divide by zero error if a pointer is passed.
+ */
+#define ARRAY_SIZE(arr) \
+	BUILD_CHECK_INLINE(sizeof(arr) / sizeof((arr)[0]), _IS_ARRAY(arr))
 
 /* Make for loops that iterate over pointers to array entries more readable */
-#define ARRAY_BEGIN(array) (array)
+#define ARRAY_BEGIN(array)                                                   \
+	({                                                                   \
+		BUILD_ASSERT(_IS_ARRAY(array),                               \
+			     "ARRAY_BEGIN is only compatible with arrays."); \
+		(array);                                                     \
+	})
 #define ARRAY_END(array) ((array) + ARRAY_SIZE(array))
 
 /* Just in case - http://gcc.gnu.org/onlinedocs/gcc/Offsetof.html */
