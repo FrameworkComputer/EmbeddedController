@@ -77,32 +77,32 @@ static int bb_retimer_write(int port, const uint8_t offset, uint32_t data)
 
 static void bb_retimer_power_handle(int port, int on_off)
 {
-	const struct usb_retimer * const retimer = &usb_retimers[port];
+	const struct bb_usb_control *control = &bb_controls[port];
 
 	/* handle retimer's power domain */
 
 	if (on_off) {
-		gpio_set_level(retimer->usb_ls_en_gpio, 1);
+		gpio_set_level(control->usb_ls_en_gpio, 1);
 		msleep(1);
-		gpio_set_level(retimer->retimer_rst_gpio, 1);
+		gpio_set_level(control->retimer_rst_gpio, 1);
 		msleep(10);
-		gpio_set_level(retimer->force_power_gpio, 1);
+		gpio_set_level(control->force_power_gpio, 1);
 
 		/*
 		 * If BB retimer NVM is shared between multiple ports, allow
 		 * 40ms time for all the retimers to be initialized.
 		 * Else allow 20ms to initialize.
 		 */
-		if (retimer->shared_nvm)
+		if (control->shared_nvm)
 			msleep(40);
 		else
 			msleep(20);
 	} else {
-		gpio_set_level(retimer->force_power_gpio, 0);
+		gpio_set_level(control->force_power_gpio, 0);
 		msleep(1);
-		gpio_set_level(retimer->retimer_rst_gpio, 0);
+		gpio_set_level(control->retimer_rst_gpio, 0);
 		msleep(1);
-		gpio_set_level(retimer->usb_ls_en_gpio, 0);
+		gpio_set_level(control->usb_ls_en_gpio, 0);
 	}
 }
 

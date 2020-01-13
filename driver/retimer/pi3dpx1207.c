@@ -65,8 +65,8 @@ static int pi3dpx1207_i2c_write(int i2c_port,
 
 static void pi3dpx1207_shutoff_power(int port)
 {
-	const int gpio_enable		= usb_retimers[port].gpio_enable;
-	const int gpio_dp_enable	= usb_retimers[port].gpio_dp_enable;
+	const int gpio_enable = pi3dpx1207_controls[port].enable_gpio;
+	const int gpio_dp_enable = pi3dpx1207_controls[port].dp_enable_gpio;
 
 	gpio_or_ioex_set_level(gpio_enable, 0);
 	gpio_or_ioex_set_level(gpio_dp_enable, 0);
@@ -77,7 +77,7 @@ static void pi3dpx1207_shutoff_power(int port)
  */
 static int pi3dpx1207_init(int port)
 {
-	const int gpio_enable		= usb_retimers[port].gpio_enable;
+	const int gpio_enable = pi3dpx1207_controls[port].enable_gpio;
 
 	gpio_or_ioex_set_level(gpio_enable, 1);
 	return EC_SUCCESS;
@@ -92,12 +92,12 @@ static int pi3dpx1207_enter_low_power_mode(int port)
 static int pi3dpx1207_set_mux(int port, mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
-	uint8_t mode_val		= PI3DPX1207_MODE_WATCHDOG_EN;
+	uint8_t mode_val = PI3DPX1207_MODE_WATCHDOG_EN;
 
-	const int i2c_port		= usb_retimers[port].i2c_port;
-	const uint16_t i2c_addr_flags	= usb_retimers[port].i2c_addr_flags;
-	const int gpio_enable		= usb_retimers[port].gpio_enable;
-	const int gpio_dp_enable	= usb_retimers[port].gpio_dp_enable;
+	const int i2c_port = usb_retimers[port].i2c_port;
+	const uint16_t i2c_addr_flags = usb_retimers[port].i2c_addr_flags;
+	const int gpio_enable = pi3dpx1207_controls[port].enable_gpio;
+	const int gpio_dp_enable = pi3dpx1207_controls[port].dp_enable_gpio;
 
 	/* USB */
 	if (mux_state & MUX_USB_ENABLED) {

@@ -41,4 +41,17 @@
 /* Supported USB retimer drivers */
 extern const struct usb_retimer_driver bb_usb_retimer;
 
+/* Retimer driver hardware specific controls */
+struct bb_usb_control {
+	/* NVM flag if shared with multiple retimers */
+	const bool shared_nvm;
+	/* Load switch enable */
+	const enum gpio_signal usb_ls_en_gpio;
+	/* Retimer reset */
+	const enum gpio_signal retimer_rst_gpio;
+	/* Force power (active/low) */
+	const enum gpio_signal force_power_gpio;
+};
+extern const struct bb_usb_control bb_controls[];
+
 #endif /* __CROS_EC_BB_RETIMER_H */

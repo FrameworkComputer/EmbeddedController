@@ -517,13 +517,21 @@ const struct usb_retimer_driver zork_c1_usb_retimer = {
 	.set = zork_c1_set_retimer_mux,
 };
 
+const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
+	[USBC_PORT_C0] = {
+		.enable_gpio = IOEX_USB_C0_DATA_EN,
+		.dp_enable_gpio = GPIO_USB_C0_IN_HPD,
+	},
+	[USBC_PORT_C1] = {
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pi3dpx1207_controls) == USBC_PORT_COUNT);
+
 struct usb_retimer usb_retimers[] = {
 	[USBC_PORT_C0] = {
 		.driver = &pi3dpx1207_usb_retimer,
 		.i2c_port = I2C_PORT_TCPC0,
 		.i2c_addr_flags = PI3DPX1207_I2C_ADDR_FLAGS,
-		.gpio_enable = IOEX_USB_C0_DATA_EN,
-		.gpio_dp_enable = GPIO_USB_C0_IN_HPD,
 	},
 	[USBC_PORT_C1] = {
 		.driver = &zork_c1_usb_retimer,

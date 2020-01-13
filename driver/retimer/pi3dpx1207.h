@@ -4,6 +4,7 @@
  *
  * PI3DPX1207 retimer.
  */
+#include "gpio.h"
 
 #ifndef __CROS_EC_USB_RETIMER_PI3PDX1207_H
 #define __CROS_EC_USB_RETIMER_PI3PDX1207_H
@@ -40,5 +41,14 @@
 
 /* Supported USB retimer drivers */
 extern const struct usb_retimer_driver pi3dpx1207_usb_retimer;
+
+/* Retimer driver hardware specific controls */
+struct pi3dpx1207_usb_control {
+	/* Retimer enable */
+	const enum gpio_signal enable_gpio;
+	/* DP Mode enable */
+	const enum gpio_signal dp_enable_gpio;
+};
+extern const struct pi3dpx1207_usb_control pi3dpx1207_controls[];
 
 #endif /* __CROS_EC_USB_RETIMER_PI3PDX1207_H */
