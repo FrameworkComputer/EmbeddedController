@@ -169,10 +169,11 @@
 #else /* !SECTION_IS_RW */
 	/* RO verifies the RW partition signature */
 #	define CONFIG_RSA
-#	define CONFIG_RSA_KEY_SIZE 3072
-#	define CONFIG_RSA_EXPONENT_3
 #	define CONFIG_RWSIG
 #endif  /* SECTION_IS_RW */
+
+#define CONFIG_RSA_KEY_SIZE 3072
+#define CONFIG_RSA_EXPONENT_3
 
 /*
  * We do not use any "locally" generated entropy: this is normally used

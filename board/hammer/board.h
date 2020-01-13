@@ -287,9 +287,10 @@
 /* Sign and switch to RW partition on boot. */
 #define CONFIG_RWSIG
 #define CONFIG_RSA
+#endif
+
 #define CONFIG_RSA_KEY_SIZE 3072
 #define CONFIG_RSA_EXPONENT_3
-#endif
 
 #define CONFIG_SHA256
 #ifdef SECTION_IS_RO
