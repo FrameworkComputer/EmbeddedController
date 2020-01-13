@@ -850,9 +850,16 @@ DECLARE_CONSOLE_COMMAND(pe, command_pe,
 			"USB PE");
 #endif /* CONFIG_CMD_USB_PD_PE */
 
+/* Return the current cable speed received from Cable Discover Mode command */
+__overridable enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
+{
+	return cable[port].cable_mode_resp.tbt_cable_speed;
+}
+
 static int process_tbt_compat_discover_modes(int port, uint32_t *payload)
 {
 	int rsize;
+	enum tbt_compat_cable_speed max_tbt_speed;
 
 	/*
 	 * For active cables, Enter mode: SOP', SOP'', SOP
@@ -865,6 +872,13 @@ static int process_tbt_compat_discover_modes(int port, uint32_t *payload)
 		if (is_limit_tbt_cable_speed(port))
 			cable[port].cable_mode_resp.tbt_cable_speed =
 						TBT_SS_U32_GEN1_GEN2;
+
+		max_tbt_speed = board_get_max_tbt_speed(port);
+		if (cable[port].cable_mode_resp.tbt_cable_speed >
+			max_tbt_speed) {
+			cable[port].cable_mode_resp.tbt_cable_speed =
+				max_tbt_speed;
+		}
 
 		/*
 		 * Enter Mode SOP' (Cable Enter Mode) is skipped for

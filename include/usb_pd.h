@@ -1602,6 +1602,27 @@ enum tbt_compat_cable_speed get_tbt_cable_speed(int port);
 enum tbt_compat_rounded_support get_tbt_rounded_support(int port);
 
 /**
+ * Return maximum allowed speed for Thunderbolt-compatible mode
+ *
+ * NOTE: Chromebooks require that all USB-C ports support the same features,
+ * so the maximum speed returned by this function should be set to the lowest
+ * speed supported by all ports. Products in development (i.e. proto boards)
+ * can support different speeds on each port for validation purpose.
+ *
+ * Ref: TGL PDG
+ * 3.1: Fiberweave Impact for HSIOs Operating at ≥8 GT/s Speeds
+ * MAX TBT routing length is 205mm prior to connection to re-timer
+ *
+ * Thunderbolt-compatible mode has electrical and PCB requirements for signal
+ * routing and length. Default speed is set for connected cable's speed.
+ * Board level function can override the cable speed based on the design.
+ *
+ * @param port USB-C port number
+ * @return cable speed
+ */
+__override_proto enum tbt_compat_cable_speed board_get_max_tbt_speed(int port);
+
+/**
  * Store Device ID & RW hash of device
  *
  * @param port			USB-C port number
