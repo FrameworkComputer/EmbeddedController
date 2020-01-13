@@ -64,7 +64,6 @@
 #define CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
 #define CONFIG_PWM_KBLIGHT
 
-
 /* Sensors */
 #define CONFIG_TABLET_MODE
 #define CONFIG_GMR_TABLET_MODE
@@ -137,8 +136,7 @@
 /* Common battery defines */
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BATTERY_FUEL_GAUGE
-/* TODO: b/143809318 enable cut off */
-/* #define CONFIG_BATTERY_CUT_OFF */
+#define CONFIG_BATTERY_CUT_OFF
 
 /* Common LED defines */
 #define CONFIG_LED_COMMON
