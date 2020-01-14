@@ -1561,8 +1561,7 @@ int tc_is_vconn_src(int port)
 }
 #endif
 
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-static int reset_device_and_notify(int port)
+static __maybe_unused int reset_device_and_notify(int port)
 {
 	int rv;
 	int task, waiting_tasks;
@@ -1603,6 +1602,7 @@ static int reset_device_and_notify(int port)
 	return rv;
 }
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 void pd_wait_exit_low_power(int port)
 {
 	if (TC_CHK_FLAG(port, TC_FLAGS_LPM_ENGAGED)) {
@@ -2918,14 +2918,14 @@ static void tc_drp_auto_toggle_run(const int port)
 	 * the CC lines did not change, then don't talk with the
 	 * TCPC otherwise we might wake it up.
 	 */
-	if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER)) {
-		if (TC_CHK_FLAG(port, TC_FLAGS_LPM_REQUESTED) &&
-				!TC_CHK_FLAG(port, TC_FLAGS_WAKE_FROM_LPM)) {
-			if (get_time().val > tc[port].low_power_time)
-				set_state_tc(port, TC_LOW_POWER_MODE);
-			return;
-		}
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	if (TC_CHK_FLAG(port, TC_FLAGS_LPM_REQUESTED) &&
+	    !TC_CHK_FLAG(port, TC_FLAGS_WAKE_FROM_LPM)) {
+		if (get_time().val > tc[port].low_power_time)
+			set_state_tc(port, TC_LOW_POWER_MODE);
+		return;
 	}
+#endif
 
 	/* Check for connection */
 	tcpm_get_cc(port, &cc1, &cc2);
