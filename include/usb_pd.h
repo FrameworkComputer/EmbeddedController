@@ -1623,6 +1623,27 @@ enum tbt_compat_rounded_support get_tbt_rounded_support(int port);
 __override_proto enum tbt_compat_cable_speed board_get_max_tbt_speed(int port);
 
 /**
+ * Return true if the board's port supports TBT or USB4
+ *
+ * NOTE: This is only applicable for products in development (i.e. proto boards)
+ * For customer products, all USB-C ports need to support the same features.
+ *
+ * Ref: TGL PDG
+ * 5.2 USB-C* Sub-System:
+ * Motherboard should have re-timer for all USB-C connectors that supports TBT.
+ * Aux/LSx platform level muxing is required.
+ *
+ * When TBT or USB4 mode is enabled, by default all the ports are assumed to be
+ * supporting TBT or USB4. However, not all the ports may support TBT & USB4
+ * due to dependency on retimer and platform level Aux/LSx muxing. This board
+ * level function can override the TBT & USB4 logic based on board design.
+ *
+ * @param port USB-C port number
+ * @return True if TBT or USB4 is supported on the specified port, else false.
+ */
+__override_proto bool board_is_tbt_usb4_port(int port);
+
+/**
  * Store Device ID & RW hash of device
  *
  * @param port			USB-C port number

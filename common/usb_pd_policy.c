@@ -856,6 +856,11 @@ __overridable enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
 	return cable[port].cable_mode_resp.tbt_cable_speed;
 }
 
+__overridable bool board_is_tbt_usb4_port(int port)
+{
+	return true;
+}
+
 static int process_tbt_compat_discover_modes(int port, uint32_t *payload)
 {
 	int rsize;
@@ -991,7 +996,8 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 				rsize = dfp_discover_svids(payload);
 				disable_transmit_sop_prime(port);
 			/* Received a SOP Discover Ident Message */
-			} else if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
+			} else if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP) &&
+				board_is_tbt_usb4_port(port)) {
 				dfp_consume_identity(port, cnt, payload);
 
 				/*
