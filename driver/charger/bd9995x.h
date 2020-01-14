@@ -9,7 +9,6 @@
 #define __CROS_EC_BD9995X_H
 
 #define BD9995X_ADDR_FLAGS	0x09
-#define I2C_ADDR_CHARGER_FLAGS	BD9995X_ADDR_FLAGS
 
 #define BD9995X_CHARGER_NAME	"bd9995x"
 #define BD99955_CHIP_ID		0x221
@@ -360,5 +359,7 @@ int bd9995x_get_battery_voltage(void);
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_CHARGER
 extern struct i2c_stress_test_dev bd9995x_i2c_stress_test_dev;
 #endif
+
+extern const struct charger_drv bd9995x_drv;
 
 #endif /* __CROS_EC_BD9995X_H */

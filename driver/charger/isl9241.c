@@ -58,22 +58,30 @@ static const struct charger_info isl9241_charger_info = {
 	.input_current_step = INPUT_I_STEP,
 };
 
-static inline int isl9241_read(int offset, int *value)
+static enum ec_error_list isl9241_discharge_on_ac(int chgnum, int enable);
+
+static inline enum ec_error_list isl9241_read(int chgnum, int offset,
+					      int *value)
 {
-	return i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
+	return i2c_read16(chg_chips[chgnum].i2c_port,
+			  chg_chips[chgnum].i2c_addr_flags,
 			  offset, value);
 }
 
-static inline int isl9241_write(int offset, int value)
+static inline enum ec_error_list isl9241_write(int chgnum, int offset,
+					       int value)
 {
-	return i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
+	return i2c_write16(chg_chips[chgnum].i2c_port,
+			   chg_chips[chgnum].i2c_addr_flags,
 			   offset, value);
 }
 
-static inline int isl9241_update(int offset, uint16_t mask,
-				 enum mask_update_action action)
+static inline enum ec_error_list isl9241_update(int chgnum, int offset,
+						uint16_t mask,
+						enum mask_update_action action)
 {
-	return i2c_update16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
+	return i2c_update16(chg_chips[chgnum].i2c_port,
+			    chg_chips[chgnum].i2c_addr_flags,
 			    offset, mask, action);
 }
 
@@ -81,23 +89,26 @@ static inline int isl9241_update(int offset, uint16_t mask,
 
 /*****************************************************************************/
 /* Charger interfaces */
-int charger_set_input_current(int input_current)
+static enum ec_error_list isl9241_set_input_current(int chgnum,
+						    int input_current)
 {
 	int rv;
 	uint16_t reg = AC_CURRENT_TO_REG(input_current);
 
-	rv = isl9241_write(ISL9241_REG_ADAPTER_CUR_LIMIT1, reg);
+	rv = isl9241_write(chgnum, ISL9241_REG_ADAPTER_CUR_LIMIT1, reg);
 	if (rv)
 		return rv;
 
-	return isl9241_write(ISL9241_REG_ADAPTER_CUR_LIMIT2, reg);
+	return isl9241_write(chgnum, ISL9241_REG_ADAPTER_CUR_LIMIT2, reg);
 }
 
-int charger_get_input_current(int *input_current)
+static enum ec_error_list isl9241_get_input_current(int chgnum,
+						    int *input_current)
 {
 	int rv;
 
-	rv = isl9241_read(ISL9241_REG_ADAPTER_CUR_LIMIT1, input_current);
+	rv = isl9241_read(chgnum, ISL9241_REG_ADAPTER_CUR_LIMIT1,
+			  input_current);
 	if (rv)
 		return rv;
 
@@ -105,28 +116,28 @@ int charger_get_input_current(int *input_current)
 	return EC_SUCCESS;
 }
 
-int charger_manufacturer_id(int *id)
+static enum ec_error_list isl9241_manufacturer_id(int chgnum, int *id)
 {
-	return isl9241_read(ISL9241_REG_MANUFACTURER_ID, id);
+	return isl9241_read(chgnum, ISL9241_REG_MANUFACTURER_ID, id);
 }
 
-int charger_device_id(int *id)
+static enum ec_error_list isl9241_device_id(int chgnum, int *id)
 {
-	return isl9241_read(ISL9241_REG_DEVICE_ID, id);
+	return isl9241_read(chgnum, ISL9241_REG_DEVICE_ID, id);
 }
 
-int charger_get_option(int *option)
+static enum ec_error_list isl9241_get_option(int chgnum, int *option)
 {
 	int rv;
 	uint32_t controls;
 	int reg;
 
-	rv = isl9241_read(ISL9241_REG_CONTROL0, &reg);
+	rv = isl9241_read(chgnum, ISL9241_REG_CONTROL0, &reg);
 	if (rv)
 		return rv;
 
 	controls = reg;
-	rv = isl9241_read(ISL9241_REG_CONTROL1, &reg);
+	rv = isl9241_read(chgnum, ISL9241_REG_CONTROL1, &reg);
 	if (rv)
 		return rv;
 
@@ -135,23 +146,24 @@ int charger_get_option(int *option)
 	return EC_SUCCESS;
 }
 
-int charger_set_option(int option)
+static enum ec_error_list isl9241_set_option(int chgnum, int option)
 {
 	int rv;
 
-	rv = isl9241_write(ISL9241_REG_CONTROL0, option & 0xFFFF);
+	rv = isl9241_write(chgnum, ISL9241_REG_CONTROL0, option & 0xFFFF);
 	if (rv)
 		return rv;
 
-	return isl9241_write(ISL9241_REG_CONTROL1, (option >> 16) & 0xFFFF);
+	return isl9241_write(chgnum, ISL9241_REG_CONTROL1,
+			     (option >> 16) & 0xFFFF);
 }
 
-const struct charger_info *charger_get_info(void)
+static const struct charger_info *isl9241_get_info(int chgnum)
 {
 	return &isl9241_charger_info;
 }
 
-int charger_get_status(int *status)
+static enum ec_error_list isl9241_get_status(int chgnum, int *status)
 {
 	int rv;
 	int reg;
@@ -160,14 +172,14 @@ int charger_get_status(int *status)
 	*status = CHARGER_LEVEL_2;
 
 	/* Charge inhibit status */
-	rv = isl9241_read(ISL9241_REG_MIN_SYSTEM_VOLTAGE, &reg);
+	rv = isl9241_read(chgnum, ISL9241_REG_MIN_SYSTEM_VOLTAGE, &reg);
 	if (rv)
 		return rv;
 	if (!reg)
 		*status |= CHARGER_CHARGE_INHIBITED;
 
 	/* Battery present & AC present status */
-	rv = isl9241_read(ISL9241_REG_INFORMATION2, &reg);
+	rv = isl9241_read(chgnum, ISL9241_REG_INFORMATION2, &reg);
 	if (rv)
 		return rv;
 	if (!(reg & ISL9241_INFORMATION2_BATGONE_PIN))
@@ -178,7 +190,7 @@ int charger_get_status(int *status)
 	return EC_SUCCESS;
 }
 
-int charger_set_mode(int mode)
+static enum ec_error_list isl9241_set_mode(int chgnum, int mode)
 {
 	int rv;
 
@@ -187,7 +199,7 @@ int charger_set_mode(int mode)
 	 * explicitly.
 	 */
 	if (!learn_mode) {
-		rv = charger_discharge_on_ac(0);
+		rv = isl9241_discharge_on_ac(chgnum, 0);
 		if (rv)
 			return rv;
 	}
@@ -196,7 +208,7 @@ int charger_set_mode(int mode)
 	 * Charger inhibit
 	 * MinSystemVoltage 0x00h = disables all battery charging
 	 */
-	rv = isl9241_write(ISL9241_REG_MIN_SYSTEM_VOLTAGE,
+	rv = isl9241_write(chgnum, ISL9241_REG_MIN_SYSTEM_VOLTAGE,
 		mode & CHARGE_FLAG_INHIBIT_CHARGE ?
 		0 : battery_get_info()->voltage_min);
 	if (rv)
@@ -204,18 +216,18 @@ int charger_set_mode(int mode)
 
 	/* POR reset */
 	if (mode & CHARGE_FLAG_POR_RESET) {
-		rv = isl9241_write(ISL9241_REG_CONTROL3,
+		rv = isl9241_write(chgnum, ISL9241_REG_CONTROL3,
 			ISL9241_CONTROL3_DIGITAL_RESET);
 	}
 
 	return rv;
 }
 
-int charger_get_current(int *current)
+static enum ec_error_list isl9241_get_current(int chgnum, int *current)
 {
 	int rv;
 
-	rv = isl9241_read(ISL9241_REG_CHG_CURRENT_LIMIT, current);
+	rv = isl9241_read(chgnum, ISL9241_REG_CHG_CURRENT_LIMIT, current);
 	if (rv)
 		return rv;
 
@@ -223,43 +235,43 @@ int charger_get_current(int *current)
 	return EC_SUCCESS;
 }
 
-int charger_set_current(int current)
+static enum ec_error_list isl9241_set_current(int chgnum, int current)
 {
-	return isl9241_write(ISL9241_REG_CHG_CURRENT_LIMIT,
+	return isl9241_write(chgnum, ISL9241_REG_CHG_CURRENT_LIMIT,
 				BC_CURRENT_TO_REG(current));
 }
 
-int charger_get_voltage(int *voltage)
+static enum ec_error_list isl9241_get_voltage(int chgnum, int *voltage)
 {
-	return isl9241_read(ISL9241_REG_MAX_SYSTEM_VOLTAGE, voltage);
+	return isl9241_read(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, voltage);
 }
 
-int charger_set_voltage(int voltage)
+static enum ec_error_list isl9241_set_voltage(int chgnum, int voltage)
 {
-	return isl9241_write(ISL9241_REG_MAX_SYSTEM_VOLTAGE, voltage);
+	return isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, voltage);
 }
 
-int charger_get_vbus_voltage(int port)
+static int isl9241_get_vbus_voltage(int chgnum, int port)
 {
 	int adc_val = 0;
 	int ctl3_val;
 	int rv;
 
 	/* Get current Control3 value */
-	rv = isl9241_read(ISL9241_REG_CONTROL3, &ctl3_val);
+	rv = isl9241_read(chgnum, ISL9241_REG_CONTROL3, &ctl3_val);
 	if (rv)
 		goto error;
 
 	/* Enable ADC */
 	if (!(ctl3_val & ISL9241_CONTROL3_ENABLE_ADC)) {
-		rv = isl9241_write(ISL9241_REG_CONTROL3,
+		rv = isl9241_write(chgnum, ISL9241_REG_CONTROL3,
 				   ctl3_val | ISL9241_CONTROL3_ENABLE_ADC);
 		if (rv)
 			goto error;
 	}
 
 	/* Read voltage ADC value */
-	rv = isl9241_read(ISL9241_REG_VIN_ADC_RESULTS, &adc_val);
+	rv = isl9241_read(chgnum, ISL9241_REG_VIN_ADC_RESULTS, &adc_val);
 	if (rv)
 		goto error_restore_ctl3;
 
@@ -276,7 +288,7 @@ int charger_get_vbus_voltage(int port)
 error_restore_ctl3:
 	/* Restore Control3 value */
 	if (!(ctl3_val & ISL9241_CONTROL3_ENABLE_ADC))
-		(void)isl9241_write(ISL9241_REG_CONTROL3, ctl3_val);
+		(void)isl9241_write(chgnum, ISL9241_REG_CONTROL3, ctl3_val);
 
 error:
 	if (rv)
@@ -285,18 +297,18 @@ error:
 	return adc_val;
 }
 
-int charger_post_init(void)
+static enum ec_error_list isl9241_post_init(int chgnum)
 {
 	return EC_SUCCESS;
 }
 
-int charger_discharge_on_ac(int enable)
+static enum ec_error_list isl9241_discharge_on_ac(int chgnum, int enable)
 {
 	int rv;
 
 	mutex_lock(&control1_mutex);
 
-	rv = isl9241_update(ISL9241_REG_CONTROL1,
+	rv = isl9241_update(chgnum, ISL9241_REG_CONTROL1,
 			    ISL9241_CONTROL1_LEARN_MODE,
 			    (enable) ? MASK_SET : MASK_CLR);
 	if (!rv)
@@ -308,7 +320,7 @@ int charger_discharge_on_ac(int enable)
 
 /*****************************************************************************/
 /* ISL-9241 initialization */
-static void isl9241_init(void)
+static void isl9241_init(int chgnum)
 {
 	const struct battery_info *bi = battery_get_info();
 
@@ -316,14 +328,16 @@ static void isl9241_init(void)
 	 * Set the MaxSystemVoltage to battery maximum,
 	 * 0x00=disables switching charger states
 	 */
-	if (isl9241_write(ISL9241_REG_MAX_SYSTEM_VOLTAGE, bi->voltage_max))
+	if (isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE,
+			  bi->voltage_max))
 		goto init_fail;
 
 	/*
 	 * Set the MinSystemVoltage to battery minimum,
 	 * 0x00=disables all battery charging
 	 */
-	if (isl9241_write(ISL9241_REG_MIN_SYSTEM_VOLTAGE, bi->voltage_min))
+	if (isl9241_write(chgnum, ISL9241_REG_MIN_SYSTEM_VOLTAGE,
+			  bi->voltage_min))
 		goto init_fail;
 
 	/*
@@ -331,7 +345,7 @@ static void isl9241_init(void)
 	 * [15:13]: Trickle Charging Current (battery pre-charge current)
 	 * [10:9] : Prochot# Debounce time (1000us)
 	 */
-	if (isl9241_update(ISL9241_REG_CONTROL2,
+	if (isl9241_update(chgnum, ISL9241_REG_CONTROL2,
 			   (ISL9241_CONTROL2_TRICKLE_CHG_CURR(
 				bi->precharge_current) |
 			    ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000),
@@ -342,13 +356,13 @@ static void isl9241_init(void)
 	 * Set control3 register to
 	 * [14]: ACLIM Reload (Do not reload)
 	 */
-	if (isl9241_update(ISL9241_REG_CONTROL3,
+	if (isl9241_update(chgnum, ISL9241_REG_CONTROL3,
 			   ISL9241_CONTROL3_ACLIM_RELOAD,
 			   MASK_SET))
 		goto init_fail;
 
 #ifndef CONFIG_CHARGE_RAMP_HW
-	if (isl9241_update(ISL9241_REG_CONTROL0,
+	if (isl9241_update(chgnum, ISL9241_REG_CONTROL0,
 			   ISL9241_CONTROL0_INPUT_VTG_REGULATION,
 			   MASK_SET))
 		goto init_fail;
@@ -362,7 +376,7 @@ static void isl9241_init(void)
 		return;
 
 	/* Initialize the input current limit to the board's default. */
-	if (charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT))
+	if (isl9241_set_input_current(chgnum, CONFIG_CHARGER_INPUT_CURRENT))
 		goto init_fail;
 
 	return;
@@ -370,21 +384,20 @@ static void isl9241_init(void)
 init_fail:
 	CPRINTF("ISL9241_init failed!");
 }
-DECLARE_HOOK(HOOK_INIT, isl9241_init, HOOK_PRIO_INIT_I2C + 1);
 
 /*****************************************************************************/
 /* Hardware current ramping */
 
 #ifdef CONFIG_CHARGE_RAMP_HW
-int charger_set_hw_ramp(int enable)
+static enum ec_error_list isl9241_set_hw_ramp(int chgnum, int enable)
 {
 	/* HW ramp is controlled by input voltage regulation reference bits */
-	return isl9241_update(ISL9241_REG_CONTROL0,
+	return isl9241_update(chgnum, ISL9241_REG_CONTROL0,
 			      ISL9241_CONTROL0_INPUT_VTG_REGULATION,
 			      (enable) ? MASK_CLR : MASK_SET);
 }
 
-int chg_ramp_is_stable(void)
+static int isl9241_ramp_is_stable(int chgnum)
 {
 	/*
 	 * Since ISL cannot read the current limit that the ramp has settled
@@ -394,16 +407,16 @@ int chg_ramp_is_stable(void)
 	return 0;
 }
 
-int chg_ramp_is_detected(void)
+static int isl9241_ramp_is_detected(int chgnum)
 {
 	return 1;
 }
 
-int chg_ramp_get_current_limit(void)
+static int isl9241_ramp_get_current_limit(int chgnum)
 {
 	int reg;
 
-	if (isl9241_read(ISL9241_REG_IADP_ADC_RESULTS, &reg))
+	if (isl9241_read(chgnum, ISL9241_REG_IADP_ADC_RESULTS, &reg))
 		return 0;
 
 	/* LSB value of register = 22.2mA */
@@ -413,7 +426,7 @@ int chg_ramp_get_current_limit(void)
 
 /*****************************************************************************/
 #ifdef CONFIG_CMD_CHARGER_DUMP
-static void dump_reg_range(int low, int high)
+static void dump_reg_range(int chgnum, int low, int high)
 {
 	int reg;
 	int regval;
@@ -421,7 +434,7 @@ static void dump_reg_range(int low, int high)
 
 	for (reg = low; reg <= high; reg++) {
 		CPRINTF("[%Xh] = ", reg);
-		rv = isl9241_read(reg, &regval);
+		rv = isl9241_read(chgnum, reg, &regval);
 		if (!rv)
 			CPRINTF("0x%04x\n", regval);
 		else
@@ -432,16 +445,52 @@ static void dump_reg_range(int low, int high)
 
 static int command_isl9241_dump(int argc, char **argv)
 {
-	dump_reg_range(0x14, 0x15);
-	dump_reg_range(0x38, 0x40);
-	dump_reg_range(0x43, 0x43);
-	dump_reg_range(0x47, 0x4F);
-	dump_reg_range(0x80, 0x87);
-	dump_reg_range(0x90, 0x91);
-	dump_reg_range(0xFE, 0xFF);
+	char *e;
+	int chgnum = 0;
+
+	if (argc >= 2) {
+		chgnum = strtoi(argv[1], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM1;
+	}
+
+	dump_reg_range(chgnum, 0x14, 0x15);
+	dump_reg_range(chgnum, 0x38, 0x40);
+	dump_reg_range(chgnum, 0x43, 0x43);
+	dump_reg_range(chgnum, 0x47, 0x4F);
+	dump_reg_range(chgnum, 0x80, 0x87);
+	dump_reg_range(chgnum, 0x90, 0x91);
+	dump_reg_range(chgnum, 0xFE, 0xFF);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(charger_dump, command_isl9241_dump, "",
+DECLARE_CONSOLE_COMMAND(charger_dump, command_isl9241_dump,
+			"charger_dump <chgnum>",
 			"Dumps ISL9241 registers");
 #endif /* CONFIG_CMD_CHARGER_DUMP */
+
+const struct charger_drv isl9241_drv = {
+	.init = &isl9241_init,
+	.post_init = &isl9241_post_init,
+	.get_info = &isl9241_get_info,
+	.get_status = &isl9241_get_status,
+	.set_mode = &isl9241_set_mode,
+	.get_current = &isl9241_get_current,
+	.set_current = &isl9241_set_current,
+	.get_voltage = &isl9241_get_voltage,
+	.set_voltage = &isl9241_set_voltage,
+	.discharge_on_ac = &isl9241_discharge_on_ac,
+	.get_vbus_voltage = &isl9241_get_vbus_voltage,
+	.set_input_current = &isl9241_set_input_current,
+	.get_input_current = &isl9241_get_input_current,
+	.manufacturer_id = &isl9241_manufacturer_id,
+	.device_id = &isl9241_device_id,
+	.get_option = &isl9241_get_option,
+	.set_option = &isl9241_set_option,
+#ifdef CONFIG_CHARGE_RAMP_HW
+	.set_hw_ramp = &isl9241_set_hw_ramp,
+	.ramp_is_stable = &isl9241_ramp_is_stable,
+	.ramp_is_detected = &isl9241_ramp_is_detected,
+	.ramp_get_current_limit = &isl9241_ramp_get_current_limit,
+#endif
+};

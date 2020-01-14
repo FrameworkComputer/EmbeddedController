@@ -858,4 +858,6 @@ int mt6370_led_set_pwm_frequency(enum mt6370_led_index index,
 int mt6370_reduce_db_bl_driving(void);
 #endif
 
+extern const struct charger_drv rt946x_drv;
+
 #endif /* __CROS_EC_RT946X_H */

@@ -22,7 +22,7 @@
 
 /* Note: it is assumed that the sense resistors are 10mOhm. */
 
-static const struct charger_info bq24725_charger_info = {
+static const struct charger_info bq24715_charger_info = {
 	.name         = "bq24715",
 	.voltage_max  = CHARGE_V_MAX,
 	.voltage_min  = CHARGE_V_MIN,
@@ -35,30 +35,34 @@ static const struct charger_info bq24725_charger_info = {
 	.input_current_step = REG_TO_CURRENT(INPUT_I_STEP, R_AC),
 };
 
-static inline int sbc_read(int cmd, int *param)
+static inline enum ec_error_list sbc_read(int chgnum, int cmd, int *param)
 {
-	return i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR_FLAGS,
+	return i2c_read16(chg_chips[chgnum].i2c_port,
+			  chg_chips[chgnum].i2c_addr_flags,
 			  cmd, param);
 }
 
-static inline int sbc_write(int cmd, int param)
+static inline enum ec_error_list sbc_write(int chgnum, int cmd, int param)
 {
-	return i2c_write16(I2C_PORT_CHARGER, CHARGER_ADDR_FLAGS,
+	return i2c_write16(chg_chips[chgnum].i2c_port,
+			   chg_chips[chgnum].i2c_addr_flags,
 			   cmd, param);
 }
 
-int charger_set_input_current(int input_current)
+static enum ec_error_list bq24715_set_input_current(int chgnum,
+						    int input_current)
 {
-	return sbc_write(BQ24715_INPUT_CURRENT,
+	return sbc_write(chgnum, BQ24715_INPUT_CURRENT,
 			 CURRENT_TO_REG(input_current, R_AC));
 }
 
-int charger_get_input_current(int *input_current)
+static enum ec_error_list bq24715_get_input_current(int chgnum,
+						    int *input_current)
 {
 	int rv;
 	int reg;
 
-	rv = sbc_read(BQ24715_INPUT_CURRENT, &reg);
+	rv = sbc_read(chgnum, BQ24715_INPUT_CURRENT, &reg);
 	if (rv)
 		return rv;
 
@@ -67,39 +71,39 @@ int charger_get_input_current(int *input_current)
 	return EC_SUCCESS;
 }
 
-int charger_manufacturer_id(int *id)
+static enum ec_error_list bq24715_manufacturer_id(int chgnum, int *id)
 {
-	return sbc_read(BQ24715_MANUFACTURER_ID, id);
+	return sbc_read(chgnum, BQ24715_MANUFACTURER_ID, id);
 }
 
-int charger_device_id(int *id)
+static enum ec_error_list bq24715_device_id(int chgnum, int *id)
 {
-	return sbc_read(BQ24715_DEVICE_ID, id);
+	return sbc_read(chgnum, BQ24715_DEVICE_ID, id);
 }
 
-int charger_get_option(int *option)
+static enum ec_error_list bq24715_get_option(int chgnum, int *option)
 {
-	return sbc_read(BQ24715_CHARGE_OPTION, option);
+	return sbc_read(chgnum, BQ24715_CHARGE_OPTION, option);
 }
 
-int charger_set_option(int option)
+static enum ec_error_list bq24715_set_option(int chgnum, int option)
 {
-	return sbc_write(BQ24715_CHARGE_OPTION, option);
+	return sbc_write(chgnum, BQ24715_CHARGE_OPTION, option);
 }
 
 /* Charger interfaces */
 
-const struct charger_info *charger_get_info(void)
+static const struct charger_info *bq24715_get_info(int chgnum)
 {
-	return &bq24725_charger_info;
+	return &bq24715_charger_info;
 }
 
-int charger_get_status(int *status)
+static enum ec_error_list bq24715_get_status(int chgnum, int *status)
 {
 	int rv;
 	int option;
 
-	rv = charger_get_option(&option);
+	rv = bq24715_get_option(chgnum, &option);
 	if (rv)
 		return rv;
 
@@ -112,12 +116,12 @@ int charger_get_status(int *status)
 	return EC_SUCCESS;
 }
 
-int charger_set_mode(int mode)
+static enum ec_error_list bq24715_set_mode(int chgnum, int mode)
 {
 	int rv;
 	int option;
 
-	rv = charger_get_option(&option);
+	rv = bq24715_get_option(chgnum, &option);
 	if (rv)
 		return rv;
 
@@ -126,15 +130,15 @@ int charger_set_mode(int mode)
 		option |= OPT_CHARGE_DISABLE;
 	else
 		option |= OPT_CHARGE_ENABLE;
-	return charger_set_option(option);
+	return bq24715_set_option(chgnum, option);
 }
 
-int charger_get_current(int *current)
+static enum ec_error_list bq24715_get_current(int chgnum, int *current)
 {
 	int rv;
 	int reg;
 
-	rv = sbc_read(SB_CHARGING_CURRENT, &reg);
+	rv = sbc_read(chgnum, SB_CHARGING_CURRENT, &reg);
 	if (rv)
 		return rv;
 
@@ -142,11 +146,12 @@ int charger_get_current(int *current)
 	return EC_SUCCESS;
 }
 
-int charger_set_current(int current)
+static enum ec_error_list bq24715_set_current(int chgnum, int current)
 {
 	current = charger_closest_current(current);
 
-	return sbc_write(SB_CHARGING_CURRENT, CURRENT_TO_REG(current, R_SNS));
+	return sbc_write(chgnum, SB_CHARGING_CURRENT,
+			 CURRENT_TO_REG(current, R_SNS));
 }
 
 /* The voltage setting needs to be cached to work with the current
@@ -156,7 +161,7 @@ int charger_set_current(int current)
  * 0V is handled specially to appease the state machine. */
 static int cached_voltage;
 
-int charger_get_voltage(int *voltage)
+static enum ec_error_list bq24715_get_voltage(int chgnum, int *voltage)
 {
 	int ret;
 
@@ -165,7 +170,7 @@ int charger_get_voltage(int *voltage)
 		return EC_SUCCESS;
 	}
 
-	ret = sbc_read(SB_CHARGING_VOLTAGE, &cached_voltage);
+	ret = sbc_read(chgnum, SB_CHARGING_VOLTAGE, &cached_voltage);
 
 	if (ret == EC_SUCCESS)
 		*voltage = cached_voltage;
@@ -173,19 +178,19 @@ int charger_get_voltage(int *voltage)
 	return ret;
 }
 
-int charger_set_voltage(int voltage)
+static enum ec_error_list bq24715_set_voltage(int chgnum, int voltage)
 {
 	cached_voltage = voltage;
-	return sbc_write(SB_CHARGING_VOLTAGE, voltage);
+	return sbc_write(chgnum, SB_CHARGING_VOLTAGE, voltage);
 }
 
 /* Charging power state initialization */
-int charger_post_init(void)
+static enum ec_error_list bq24715_post_init(int chgnum)
 {
 	int rv;
 	int option;
 
-	rv = charger_get_option(&option);
+	rv = bq24715_get_option(chgnum, &option);
 	if (rv)
 		return rv;
 
@@ -200,20 +205,20 @@ int charger_post_init(void)
 	/* Enable dynamic power management */
 	option |= OPT_IDPM_ENABLE;
 
-	rv = charger_set_option(option);
+	rv = bq24715_set_option(chgnum, option);
 	if (rv)
 		return rv;
 
-	rv = charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT);
+	rv = bq24715_set_input_current(chgnum, CONFIG_CHARGER_INPUT_CURRENT);
 	return rv;
 }
 
-int charger_discharge_on_ac(int enable)
+static enum ec_error_list bq24715_discharge_on_ac(int chgnum, int enable)
 {
 	int rv;
 	int option;
 
-	rv = charger_get_option(&option);
+	rv = bq24715_get_option(chgnum, &option);
 	if (rv)
 		return rv;
 
@@ -222,7 +227,25 @@ int charger_discharge_on_ac(int enable)
 		option |= OPT_LEARN_ENABLE;
 	else
 		option |= OPT_LEARN_DISABLE;
-	rv = charger_set_option(option);
+	rv = bq24715_set_option(chgnum, option);
 
 	return rv;
 }
+
+const struct charger_drv bq24715_drv = {
+	.post_init = &bq24715_post_init,
+	.get_info = &bq24715_get_info,
+	.get_status = &bq24715_get_status,
+	.set_mode = &bq24715_set_mode,
+	.get_current = &bq24715_get_current,
+	.set_current = &bq24715_set_current,
+	.get_voltage = &bq24715_get_voltage,
+	.set_voltage = &bq24715_set_voltage,
+	.discharge_on_ac = &bq24715_discharge_on_ac,
+	.set_input_current = &bq24715_set_input_current,
+	.get_input_current = &bq24715_get_input_current,
+	.manufacturer_id = &bq24715_manufacturer_id,
+	.device_id = &bq24715_device_id,
+	.get_option = &bq24715_get_option,
+	.set_option = &bq24715_set_option,
+};

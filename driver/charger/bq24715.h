@@ -127,4 +127,6 @@
 #define INPUT_I_MAX                    (8064)
 #define INPUT_I_STEP                   (64)
 
+extern const struct charger_drv bq24715_drv;
+
 #endif /* __CROS_EC_BQ24715_H */

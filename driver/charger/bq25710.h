@@ -93,4 +93,6 @@
 #define BQ25710_IIN_DPM_BIT_SHIFT		8
 #define BQ25710_IIN_DPM_STEP_MA			50
 
+extern const struct charger_drv bq25710_drv;
+
 #endif /* __CROS_EC_BQ25710_H */

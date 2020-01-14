@@ -123,6 +123,23 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+/* Charger config.  Start i2c address at 1, update during runtime */
+struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = 1,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+
+/* Board version depends on ADCs, so init i2c port after ADC */
+static void charger_config_complete(void)
+{
+	chg_chips[0].i2c_port = board_get_charger_i2c();
+}
+DECLARE_HOOK(HOOK_INIT, charger_config_complete, HOOK_PRIO_INIT_ADC + 1);
+
 uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;

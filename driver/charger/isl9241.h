@@ -9,7 +9,6 @@
 #define __CROS_EC_ISL9241_H
 
 #define ISL9241_ADDR_FLAGS	0x09
-#define I2C_ADDR_CHARGER_FLAGS	ISL9241_ADDR_FLAGS
 
 #define CHARGER_NAME	"ISL9241"
 #define CHARGE_V_MAX	18304
@@ -116,5 +115,7 @@
 
 #define ISL9241_VIN_ADC_BIT_OFFSET	6
 #define ISL9241_VIN_ADC_STEP_MV		96
+
+extern const struct charger_drv isl9241_drv;
 
 #endif /* __CROS_EC_ISL9241_H */

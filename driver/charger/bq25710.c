@@ -16,6 +16,7 @@
 #include "i2c.h"
 #include "task.h"
 #include "timer.h"
+#include "util.h"
 
 #ifndef CONFIG_CHARGER_NARROW_VDC
 #error "BQ25710 is a NVDC charger, please enable CONFIG_CHARGER_NARROW_VDC."
@@ -69,26 +70,31 @@ static const struct charger_info bq25710_charger_info = {
 	.input_current_step = 50 / INPUT_RESISTOR_RATIO,
 };
 
-static inline int raw_read16(int offset, int *value)
+static enum ec_error_list bq25710_get_option(int chgnum, int *option);
+static enum ec_error_list bq25710_set_option(int chgnum, int option);
+
+static inline enum ec_error_list raw_read16(int chgnum, int offset, int *value)
 {
-	return i2c_read16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+	return i2c_read16(chg_chips[chgnum].i2c_port,
+			  chg_chips[chgnum].i2c_addr_flags,
 			  offset, value);
 }
 
-static inline int raw_write16(int offset, int value)
+static inline enum ec_error_list raw_write16(int chgnum, int offset, int value)
 {
-	return i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+	return i2c_write16(chg_chips[chgnum].i2c_port,
+			   chg_chips[chgnum].i2c_addr_flags,
 			   offset, value);
 }
 
 #if defined(CONFIG_CHARGE_RAMP_HW) || \
 	defined(CONFIG_USB_PD_VBUS_MEASURE_CHARGER)
-static int bq25710_get_low_power_mode(int *mode)
+static int bq25710_get_low_power_mode(int chgnum, int *mode)
 {
 	int rv;
 	int reg;
 
-	rv = raw_read16(BQ25710_REG_CHARGE_OPTION_0, &reg);
+	rv = raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_0, &reg);
 	if (rv)
 		return rv;
 
@@ -97,12 +103,12 @@ static int bq25710_get_low_power_mode(int *mode)
 	return EC_SUCCESS;
 }
 
-static int bq25710_set_low_power_mode(int enable)
+static int bq25710_set_low_power_mode(int chgnum, int enable)
 {
 	int rv;
 	int reg;
 
-	rv = raw_read16(BQ25710_REG_CHARGE_OPTION_0, &reg);
+	rv = raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_0, &reg);
 	if (rv)
 		return rv;
 
@@ -126,7 +132,7 @@ static int bq25710_set_low_power_mode(int enable)
 	else
 		reg &= ~BQ25710_CHARGE_OPTION_0_LOW_POWER_MODE;
 
-	rv = raw_write16(BQ25710_REG_CHARGE_OPTION_0, reg);
+	rv = raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_0, reg);
 #ifdef CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA
 	mutex_unlock(&bq25710_perf_mode_mutex);
 #endif
@@ -136,18 +142,18 @@ static int bq25710_set_low_power_mode(int enable)
 	return EC_SUCCESS;
 }
 
-static int bq25710_adc_start(int adc_en_mask)
+static int bq25710_adc_start(int chgnum, int adc_en_mask)
 {
 	int reg;
 	int mode;
 	int tries_left = 8;
 
 	/* Save current mode to restore same state after ADC read */
-	if (bq25710_get_low_power_mode(&mode))
+	if (bq25710_get_low_power_mode(chgnum, &mode))
 		return EC_ERROR_UNKNOWN;
 
 	/* Exit low power mode so ADC conversion takes typical time */
-	if (bq25710_set_low_power_mode(0))
+	if (bq25710_set_low_power_mode(chgnum, 0))
 		return EC_ERROR_UNKNOWN;
 
 	/*
@@ -156,7 +162,7 @@ static int bq25710_adc_start(int adc_en_mask)
 	 */
 	reg = (adc_en_mask & BQ25710_ADC_OPTION_EN_ADC_ALL) |
 	      BQ25710_ADC_OPTION_ADC_START;
-	if (raw_write16(BQ25710_REG_ADC_OPTION, reg))
+	if (raw_write16(chgnum, BQ25710_REG_ADC_OPTION, reg))
 		return EC_ERROR_UNKNOWN;
 
 	/*
@@ -166,11 +172,11 @@ static int bq25710_adc_start(int adc_en_mask)
 	 */
 	do {
 		msleep(2);
-		raw_read16(BQ25710_REG_ADC_OPTION, &reg);
+		raw_read16(chgnum, BQ25710_REG_ADC_OPTION, &reg);
 	} while (--tries_left && (reg & BQ25710_ADC_OPTION_ADC_START));
 
 	/* ADC reading attempt complete, go back to low power mode */
-	if (bq25710_set_low_power_mode(mode))
+	if (bq25710_set_low_power_mode(chgnum, mode))
 		return EC_ERROR_UNKNOWN;
 
 	/* Could not complete read */
@@ -181,7 +187,7 @@ static int bq25710_adc_start(int adc_en_mask)
 }
 #endif
 
-static void bq25710_init(void)
+static void bq25710_init(int chgnum)
 {
 	int reg;
 	int vsys;
@@ -196,23 +202,23 @@ static void bq25710_init(void)
 	 * the bq25710 must not be in low power mode, otherwise the VDDA rail
 	 * may not be powered if AC is not connected.
 	 */
-	rv = bq25710_set_low_power_mode(0);
+	rv = bq25710_set_low_power_mode(chgnum, 0);
 	/* Allow enough time for VDDA to be powered */
 	msleep(BQ25710_VDDA_STARTUP_DELAY_MSEC);
-	rv |= raw_read16(BQ25710_REG_MIN_SYSTEM_VOLTAGE, &vsys);
-	rv |= raw_read16(BQ25710_REG_CHARGE_OPTION_3, &reg);
+	rv |= raw_read16(chgnum, BQ25710_REG_MIN_SYSTEM_VOLTAGE, &vsys);
+	rv |= raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_3, &reg);
 	if (!rv) {
 		reg |= BQ25710_CHARGE_OPTION_3_RESET_REG;
 		/* Set all registers to default values */
-		raw_write16(BQ25710_REG_CHARGE_OPTION_3, reg);
+		raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_3, reg);
 		/* Restore VSYS_MIN voltage to POR reset value */
-		raw_write16(BQ25710_REG_MIN_SYSTEM_VOLTAGE, vsys);
+		raw_write16(chgnum, BQ25710_REG_MIN_SYSTEM_VOLTAGE, vsys);
 	}
 	/* Reenable low power mode */
-	bq25710_set_low_power_mode(1);
+	bq25710_set_low_power_mode(chgnum, 1);
 
-	if (!raw_read16(BQ25710_REG_PROCHOT_OPTION_1, &reg)) {
-		/* Disbale VDPM prochot profile at initialization */
+	if (!raw_read16(chgnum, BQ25710_REG_PROCHOT_OPTION_1, &reg)) {
+		/* Disable VDPM prochot profile at initialization */
 		reg &= ~BQ25710_PROCHOT_PROFILE_VDPM;
 		/*
 		 * Enable PROCHOT to be asserted with VSYS min detection. Note
@@ -236,33 +242,32 @@ static void bq25710_init(void)
 			BQ25710_PROCHOT_IDCHG_VTH_MASK);
 		reg |= BQ25710_PROCHOT_PROFILE_IDCHG;
 #endif
-		raw_write16(BQ25710_REG_PROCHOT_OPTION_1, reg);
+		raw_write16(chgnum, BQ25710_REG_PROCHOT_OPTION_1, reg);
 	}
 
 	/* Reduce ILIM from default of 150% to 105% */
-	if (!raw_read16(BQ25710_REG_PROCHOT_OPTION_0, &reg)) {
+	if (!raw_read16(chgnum, BQ25710_REG_PROCHOT_OPTION_0, &reg)) {
 		reg &= ~BQ25710_PROCHOT0_ILIM_VTH_MASK;
-		raw_write16(BQ25710_REG_PROCHOT_OPTION_0, reg);
+		raw_write16(chgnum, BQ25710_REG_PROCHOT_OPTION_0, reg);
 	}
 
 	/*
 	 * Reduce peak power mode overload and relax cycle time from default 20
 	 * msec to the minimum of 5 msec.
 	 */
-	if (!raw_read16(BQ25710_REG_CHARGE_OPTION_2, &reg)) {
+	if (!raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_2, &reg)) {
 		reg &= ~BQ25710_CHARGE_OPTION_2_TMAX_MASK;
-		raw_write16(BQ25710_REG_CHARGE_OPTION_2, reg);
+		raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_2, reg);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, bq25710_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* Charger interfaces */
-const struct charger_info *charger_get_info(void)
+static const struct charger_info *bq25710_get_info(int chgnum)
 {
 	return &bq25710_charger_info;
 }
 
-int charger_post_init(void)
+static enum ec_error_list bq25710_post_init(int chgnum)
 {
 	/*
 	 * Note: bq25710 power on reset state is:
@@ -276,12 +281,12 @@ int charger_post_init(void)
 	return EC_SUCCESS;
 }
 
-int charger_get_status(int *status)
+static enum ec_error_list bq25710_get_status(int chgnum, int *status)
 {
 	int rv;
 	int option;
 
-	rv = charger_get_option(&option);
+	rv = bq25710_get_option(chgnum, &option);
 	if (rv)
 		return rv;
 
@@ -294,12 +299,12 @@ int charger_get_status(int *status)
 	return EC_SUCCESS;
 }
 
-int charger_set_mode(int mode)
+static enum ec_error_list bq25710_set_mode(int chgnum, int mode)
 {
 	int rv;
 	int option;
 
-	rv = charger_get_option(&option);
+	rv = bq25710_get_option(chgnum, &option);
 	if (rv)
 		return rv;
 
@@ -308,16 +313,18 @@ int charger_set_mode(int mode)
 	else
 		option &= ~BQ25710_CHARGE_OPTION_0_CHRG_INHIBIT;
 
-	return charger_set_option(option);
+	return bq25710_set_option(chgnum, option);
 }
 
-int charger_enable_otg_power(int enabled)
+static enum ec_error_list bq25710_enable_otg_power(int chgnum, int enabled)
 {
 	/* This is controlled with the EN_OTG pin. Support not added yet. */
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-int charger_set_otg_current_voltage(int output_current, int output_voltage)
+static enum ec_error_list bq25710_set_otg_current_voltage(int chgum,
+							  int output_current,
+							  int output_voltage)
 {
 	/* Add when needed. */
 	return EC_ERROR_UNIMPLEMENTED;
@@ -329,40 +336,40 @@ int charger_is_sourcing_otg_power(int port)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-int charger_get_current(int *current)
+static enum ec_error_list bq25710_get_current(int chgnum, int *current)
 {
 	int rv, reg;
 
-	rv = raw_read16(BQ25710_REG_CHARGE_CURRENT, &reg);
+	rv = raw_read16(chgnum, BQ25710_REG_CHARGE_CURRENT, &reg);
 	if (!rv)
 		*current = REG_TO_CHARGING_CURRENT(reg);
 
 	return rv;
 }
 
-int charger_set_current(int current)
+static enum ec_error_list bq25710_set_current(int chgnum, int current)
 {
-	return raw_write16(BQ25710_REG_CHARGE_CURRENT,
+	return raw_write16(chgnum, BQ25710_REG_CHARGE_CURRENT,
 		CHARGING_CURRENT_TO_REG(current));
 }
 
 /* Get/set charge voltage limit in mV */
-int charger_get_voltage(int *voltage)
+static enum ec_error_list bq25710_get_voltage(int chgnum, int *voltage)
 {
-	return raw_read16(BQ25710_REG_MAX_CHARGE_VOLTAGE, voltage);
+	return raw_read16(chgnum, BQ25710_REG_MAX_CHARGE_VOLTAGE, voltage);
 }
 
-int charger_set_voltage(int voltage)
+static enum ec_error_list bq25710_set_voltage(int chgnum, int voltage)
 {
-	return raw_write16(BQ25710_REG_MAX_CHARGE_VOLTAGE, voltage);
+	return raw_write16(chgnum, BQ25710_REG_MAX_CHARGE_VOLTAGE, voltage);
 }
 
 /* Discharge battery when on AC power. */
-int charger_discharge_on_ac(int enable)
+static enum ec_error_list bq25710_discharge_on_ac(int chgnum, int enable)
 {
 	int rv, option;
 
-	rv = charger_get_option(&option);
+	rv = bq25710_get_option(chgnum, &option);
 	if (rv)
 		return rv;
 
@@ -371,18 +378,20 @@ int charger_discharge_on_ac(int enable)
 	else
 		option &= ~BQ25710_CHARGE_OPTION_0_EN_LEARN;
 
-	return charger_set_option(option);
+	return bq25710_set_option(chgnum, option);
 }
 
-int charger_set_input_current(int input_current)
+static enum ec_error_list bq25710_set_input_current(int chgnum,
+						    int input_current)
 {
 	int num_steps = INPUT_CURRENT_TO_REG(input_current);
 
-	return raw_write16(BQ25710_REG_IIN_HOST, num_steps <<
+	return raw_write16(chgnum, BQ25710_REG_IIN_HOST, num_steps <<
 			  BQ25710_CHARGE_IIN_BIT_0FFSET);
 }
 
-int charger_get_input_current(int *input_current)
+static enum ec_error_list bq25710_get_input_current(int chgnum,
+						    int *input_current)
 {
 	int rv, reg;
 
@@ -392,7 +401,7 @@ int charger_get_input_current(int *input_current)
 	 * current limit used by DPM regulation may differ from the IIN_HOST
 	 * register settings.
 	 */
-	rv = raw_read16(BQ25710_REG_IIN_DPM, &reg);
+	rv = raw_read16(chgnum, BQ25710_REG_IIN_DPM, &reg);
 	if (!rv)
 		*input_current =
 			REG_TO_INPUT_CURRENT((reg >>
@@ -401,27 +410,27 @@ int charger_get_input_current(int *input_current)
 	return rv;
 }
 
-int charger_manufacturer_id(int *id)
+static enum ec_error_list bq25710_manufacturer_id(int chgnum, int *id)
 {
-	return raw_read16(BQ25710_REG_MANUFACTURER_ID, id);
+	return raw_read16(chgnum, BQ25710_REG_MANUFACTURER_ID, id);
 }
 
-int charger_device_id(int *id)
+static enum ec_error_list bq25710_device_id(int chgnum, int *id)
 {
-	return raw_read16(BQ25710_REG_DEVICE_ADDRESS, id);
+	return raw_read16(chgnum, BQ25710_REG_DEVICE_ADDRESS, id);
 }
 
 #ifdef CONFIG_USB_PD_VBUS_MEASURE_CHARGER
-int charger_get_vbus_voltage(int port)
+static int bq25710_get_vbus_voltage(int chgnum, int port)
 {
 	int reg, rv;
 
-	rv = bq25710_adc_start(BQ25710_ADC_OPTION_EN_ADC_VBUS);
+	rv = bq25710_adc_start(chgnum, BQ25710_ADC_OPTION_EN_ADC_VBUS);
 	if (rv)
 		goto error;
 
 	/* Read ADC value */
-	rv = raw_read16(BQ25710_REG_ADC_VBUS_PSYS, &reg);
+	rv = raw_read16(chgnum, BQ25710_REG_ADC_VBUS_PSYS, &reg);
 	if (rv)
 		goto error;
 
@@ -439,16 +448,16 @@ error:
 }
 #endif
 
-int charger_get_option(int *option)
+static enum ec_error_list bq25710_get_option(int chgnum, int *option)
 {
 	/* There are 4 option registers, but we only need the first for now. */
-	return raw_read16(BQ25710_REG_CHARGE_OPTION_0, option);
+	return raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_0, option);
 }
 
-int charger_set_option(int option)
+static enum ec_error_list bq25710_set_option(int chgnum, int option)
 {
 	/* There are 4 option registers, but we only need the first for now. */
-	return raw_write16(BQ25710_REG_CHARGE_OPTION_0, option);
+	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_0, option);
 }
 
 #ifdef CONFIG_CHARGE_RAMP_HW
@@ -476,14 +485,14 @@ static void bq25710_chg_ramp_handle(void)
 }
 DECLARE_DEFERRED(bq25710_chg_ramp_handle);
 
-int charger_set_hw_ramp(int enable)
+static enum ec_error_list bq25710_set_hw_ramp(int chgnum, int enable)
 {
 	int option3_reg, option2_reg, rv;
 
-	rv = raw_read16(BQ25710_REG_CHARGE_OPTION_3, &option3_reg);
+	rv = raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_3, &option3_reg);
 	if (rv)
 		return rv;
-	rv = raw_read16(BQ25710_REG_CHARGE_OPTION_2, &option2_reg);
+	rv = raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_2, &option2_reg);
 	if (rv)
 		return rv;
 
@@ -501,7 +510,7 @@ int charger_set_hw_ramp(int enable)
 		}
 
 		/* Set InputVoltage register to BC1.2 minimum ramp voltage */
-		rv = raw_write16(BQ25710_REG_INPUT_VOLTAGE,
+		rv = raw_write16(chgnum, BQ25710_REG_INPUT_VOLTAGE,
 			BQ25710_BC12_MIN_VOLTAGE_MV);
 		if (rv)
 			return rv;
@@ -525,27 +534,27 @@ int charger_set_hw_ramp(int enable)
 		option2_reg |= BQ25710_CHARGE_OPTION_2_EN_EXTILIM;
 	}
 
-	rv = raw_write16(BQ25710_REG_CHARGE_OPTION_2, option2_reg);
+	rv = raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_2, option2_reg);
 	if (rv)
 		return rv;
-	return raw_write16(BQ25710_REG_CHARGE_OPTION_3, option3_reg);
+	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_3, option3_reg);
 }
 
-int chg_ramp_is_stable(void)
+static int bq25710_ramp_is_stable(int chgnum)
 {
 	int reg;
 
-	if (raw_read16(BQ25710_REG_CHARGER_STATUS, &reg))
+	if (raw_read16(chgnum, BQ25710_REG_CHARGER_STATUS, &reg))
 		return 0;
 
 	return reg & BQ25710_CHARGE_STATUS_ICO_DONE;
 }
 
-int chg_ramp_get_current_limit(void)
+static int bq25710_ramp_get_current_limit(int chgnum)
 {
 	int reg, rv;
 
-	rv = raw_read16(BQ25710_REG_IIN_DPM, &reg);
+	rv = raw_read16(chgnum, BQ25710_REG_IIN_DPM, &reg);
 	if (rv) {
 		CPRINTF("Could not read iin_dpm current limit! Error: %d\n",
 			rv);
@@ -561,7 +570,7 @@ int chg_ramp_get_current_limit(void)
 /* Called on AP S5 -> S3  and S3/S0iX -> S0 transition */
 static void bq25710_chipset_startup(void)
 {
-	bq25710_set_low_power_mode(0);
+	bq25710_set_low_power_mode(CHARGER_SOLO, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, bq25710_chipset_startup, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, bq25710_chipset_startup, HOOK_PRIO_DEFAULT);
@@ -570,7 +579,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, bq25710_chipset_startup, HOOK_PRIO_DEFAULT);
 /* Called on AP S0 -> S0iX/S3 or S3 -> S5 transition */
 static void bq25710_chipset_suspend(void)
 {
-	bq25710_set_low_power_mode(1);
+	bq25710_set_low_power_mode(CHARGER_SOLO, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, bq25710_chipset_suspend, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, bq25710_chipset_suspend, HOOK_PRIO_DEFAULT);
@@ -581,6 +590,8 @@ static int console_bq25710_dump_regs(int argc, char **argv)
 {
 	int i;
 	int val;
+	int chgnum = 0;
+	char *e;
 
 	/* Dump all readable registers on bq25710. */
 	static const uint8_t regs[] = {
@@ -609,17 +620,48 @@ static int console_bq25710_dump_regs(int argc, char **argv)
 		BQ25710_REG_MANUFACTURER_ID,
 		BQ25710_REG_DEVICE_ADDRESS,
 	};
+	if (argc >= 2) {
+		chgnum = strtoi(argv[1], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM1;
+	}
 
 	for (i = 0; i < ARRAY_SIZE(regs); ++i) {
-		if (raw_read16(regs[i], &val))
+		if (raw_read16(chgnum, regs[i], &val))
 			continue;
 		ccprintf("BQ25710 REG 0x%02x:  0x%04x\n", regs[i], val);
 	}
 
+
 	return 0;
 }
 DECLARE_CONSOLE_COMMAND(charger_dump, console_bq25710_dump_regs,
-			"",
+			"charger_dump <chgnum>",
 			"Dump all charger registers");
 
 #endif /* CONFIG_CMD_CHARGER_DUMP */
+
+const struct charger_drv bq25710_drv = {
+	.init = &bq25710_init,
+	.post_init = &bq25710_post_init,
+	.get_info = &bq25710_get_info,
+	.get_status = &bq25710_get_status,
+	.set_mode = &bq25710_set_mode,
+	.enable_otg_power = &bq25710_enable_otg_power,
+	.set_otg_current_voltage = &bq25710_set_otg_current_voltage,
+	.get_current = &bq25710_get_current,
+	.set_current = &bq25710_set_current,
+	.get_voltage = &bq25710_get_voltage,
+	.set_voltage = &bq25710_set_voltage,
+	.discharge_on_ac = &bq25710_discharge_on_ac,
+	.get_vbus_voltage = &bq25710_get_vbus_voltage,
+	.set_input_current = &bq25710_set_input_current,
+	.get_input_current = &bq25710_get_input_current,
+	.manufacturer_id = &bq25710_manufacturer_id,
+	.device_id = &bq25710_device_id,
+	.get_option = &bq25710_get_option,
+	.set_option = &bq25710_set_option,
+	.set_hw_ramp = &bq25710_set_hw_ramp,
+	.ramp_is_stable = &bq25710_ramp_is_stable,
+	.ramp_get_current_limit = &bq25710_ramp_get_current_limit,
+};

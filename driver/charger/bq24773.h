@@ -102,30 +102,6 @@
 	#define REG_DEVICE_ADDRESS	BQ24773_DEVICE_ADDRESS
 #endif
 
-#ifdef CONFIG_CHARGER_BQ24773
-static inline int raw_read8(int offset, int *value)
-{
-	return i2c_read8(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
-			 offset, value);
-}
-
-static inline int raw_write8(int offset, int value)
-{
-	return i2c_write8(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
-			  offset, value);
-}
-#endif
-
-static inline int raw_read16(int offset, int *value)
-{
-	return i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
-			  offset, value);
-}
-
-static inline int raw_write16(int offset, int value)
-{
-	return i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
-			   offset, value);
-}
+extern const struct charger_drv bq2477x_drv;
 
 #endif /* __CROS_EC_BQ24773_H */
