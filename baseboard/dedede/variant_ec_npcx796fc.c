@@ -10,6 +10,8 @@
 #include "compile_time_macros.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 #include "registers.h"
 
 /* ADC channels */
@@ -61,3 +63,13 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_KBLIGHT] = {
+		.channel = 3,
+		.flags = PWM_CONFIG_DSLEEP,
+		.freq = 10000,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);

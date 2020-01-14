@@ -6,8 +6,10 @@
 /* Dedede family-specific configuration */
 
 #include "adc.h"
+#include "chipset.h"
 #include "common.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "intel_x86.h"
 
 /*
@@ -40,3 +42,19 @@ __override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 
 	return (vccst < 210) && gpio_get_level(GPIO_PG_DRAM_OD);
 }
+
+void baseboard_chipset_startup(void)
+{
+	/* Allow keyboard backlight to be enabled */
+	gpio_set_level(GPIO_EN_KB_BL, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, baseboard_chipset_startup,
+	     HOOK_PRIO_DEFAULT);
+
+void baseboard_chipset_shutdown(void)
+{
+	/* Turn off the keyboard backlight if it's on. */
+	gpio_set_level(GPIO_EN_KB_BL, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, baseboard_chipset_shutdown,
+	     HOOK_PRIO_DEFAULT);

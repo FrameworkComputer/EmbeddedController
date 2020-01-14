@@ -20,6 +20,9 @@
 /* EC console commands */
 #define CONFIG_CMD_TCPCI_DUMP
 
+/* Keyboard */
+#define CONFIG_PWM_KBLIGHT
+
 /* USB */
 #define CONFIG_BC12_DETECT_PI3USB9201
 
@@ -91,6 +94,11 @@ enum sensor_id {
 	BASE_GYRO,
 	VSYNC,
 	SENSOR_COUNT
+};
+
+enum pwm_channel {
+	PWM_CH_KBLIGHT,
+	PWM_CH_COUNT,
 };
 
 int board_is_sourcing_vbus(int port);

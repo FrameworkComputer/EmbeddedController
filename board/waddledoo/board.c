@@ -23,6 +23,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
 #include "power.h"
@@ -360,6 +361,8 @@ uint16_t tcpc_get_alert_status(void)
 /* This callback disables keyboard when convertibles are fully open */
 void lid_angle_peripheral_enable(int enable)
 {
+	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
+
 	/*
 	 * If the lid is in tablet position via other sensors,
 	 * ignore the lid angle, which might be faulty then
@@ -367,10 +370,17 @@ void lid_angle_peripheral_enable(int enable)
 	 */
 	if (tablet_get_mode())
 		enable = 0;
-	/*
-	 * TODO(b/147453459): Waddledoo: add keyboard support
-	 * disable keyboard here when AP is off
-	 *
-	 */
+
+	if (enable) {
+		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
+	} else {
+		/*
+		 * Ensure that the chipset is off before disabling the keyboard.
+		 * When the chipset is on, the EC keeps the keyboard enabled and
+		 * the AP decides whether to ignore input devices or not.
+		 */
+		if (!chipset_in_s0)
+			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
+	}
 }
 #endif
