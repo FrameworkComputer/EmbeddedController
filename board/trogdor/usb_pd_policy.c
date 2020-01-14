@@ -216,9 +216,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		 */
 		pd_notify_dp_alt_mode_entry();
 
-	/* TODO(waihong): Keep only one of the following ways to signal AP */
-
-	/* Signal AP for the HPD event, through EC host event */
+	/* Configure TCPC for the HPD event, for proper muxing */
 	mux->hpd_update(port, lvl, irq);
 
 	/* Signal AP for the HPD event, through GPIO to AP */

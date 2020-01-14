@@ -244,56 +244,18 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 /*
  * Port-0/1 USB mux driver.
  *
- * The USB mux is handled by TCPC chip and the HPD is handled by AP.
- * Redirect to tcpci_tcpm_usb_mux_driver but override the get() function
- * to check the HPD_IRQ mask from virtual_usb_mux_driver.
- *
- * Both port 0 and 1 use the same TCPC part.
+ * The USB mux is handled by TCPC chip and the HPD update is through a GPIO
+ * to AP. But the TCPC chip is also needed to know the HPD status; otherwise,
+ * the mux misbehaves.
  */
-
-static int port_usb_mux_init(int port)
-{
-	return tcpci_tcpm_usb_mux_driver.init(port);
-}
-
-static int port_usb_mux_set(int i2c_addr, mux_state_t mux_state)
-{
-	return tcpci_tcpm_usb_mux_driver.set(i2c_addr, mux_state);
-}
-
-static int port_usb_mux_get(int port, mux_state_t *mux_state)
-{
-	int rv;
-	mux_state_t virtual_mux_state;
-
-	rv = tcpci_tcpm_usb_mux_driver.get(port, mux_state);
-	rv |= virtual_usb_mux_driver.get(port, &virtual_mux_state);
-
-	if (virtual_mux_state & USB_PD_MUX_HPD_IRQ)
-		*mux_state |= USB_PD_MUX_HPD_IRQ;
-	return rv;
-}
-
-static int port_usb_mux_enter_low_power(int port)
-{
-	return tcpci_tcpm_usb_mux_driver.enter_low_power_mode(port);
-}
-
-const struct usb_mux_driver port_usb_mux_driver = {
-	.init = &port_usb_mux_init,
-	.set = &port_usb_mux_set,
-	.get = &port_usb_mux_get,
-	.enter_low_power_mode = &port_usb_mux_enter_low_power,
-};
-
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.driver = &port_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
+		.driver = &ps8xxx_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
 	{
-		.driver = &port_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
+		.driver = &ps8xxx_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	}
 };
 
