@@ -57,6 +57,8 @@
 #define GPIO_POWER_BUTTON_L	GPIO_H1_EC_PWR_BTN_ODL
 #define GPIO_RSMRST_L_PGOOD	GPIO_RSMRST_PWRGD_L
 #define GPIO_SYS_RESET_L	GPIO_SYS_RST_ODL
+#define GPIO_USB_C0_DP_HPD	GPIO_EC_AP_USB_C0_HPD
+#define GPIO_USB_C1_DP_HPD	GPIO_EC_AP_USB_C1_HDMI_HPD
 #define GPIO_VOLUME_UP_L	GPIO_VOLUP_BTN_ODL
 #define GPIO_VOLUME_DOWN_L	GPIO_VOLDN_BTN_ODL
 #define GPIO_WP			GPIO_EC_WP_OD
@@ -76,6 +78,12 @@
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
 
+/* Battery */
+#define CONFIG_BATTERY_CUT_OFF
+#define CONFIG_BATTERY_PRESENT_GPIO GPIO_EC_BATTERY_PRES_ODL
+#define CONFIG_BATTERY_REVIVE_DISCONNECT
+#define CONFIG_BATTERY_SMART
+
 /* Buttons / Switches */
 #define CONFIG_SWITCH
 #define CONFIG_VOLUME_BUTTONS
@@ -85,6 +93,17 @@
 #define CONFIG_CROS_BOARD_INFO
 #define CONFIG_BOARD_VERSION_CBI
 
+/* Charger */
+#define CONFIG_CHARGE_MANAGER
+#define CONFIG_CHARGER
+#define CONFIG_CHARGER_INPUT_CURRENT 256
+#define CONFIG_USB_CHARGER
+#define CONFIG_USB_PD_5V_EN_CUSTOM
+#define CONFIG_TRICKLE_CHARGING
+
+/* /\* PWM *\/ */
+/* #define CONFIG_PWM */
+
 /* SoC */
 #define CONFIG_BOARD_HAS_RTC_RESET
 #define CONFIG_CHIPSET_JASPERLAKE
@@ -93,10 +112,60 @@
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
 
+/* USB Type-C */
+#define CONFIG_USB_MUX_PI3USB31532
+#define CONFIG_USBC_SS_MUX
+#define CONFIG_USBC_SS_MUX_DFP_ONLY
+#define CONFIG_USBC_VCONN
+#define CONFIG_USBC_VCONN_SWAP
+
+/* USB PD */
+#define CONFIG_USB_PD_ALT_MODE
+#define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_DISCHARGE_TCPC
+#define CONFIG_USB_PD_DP_HPD_GPIO
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#define CONFIG_USB_PD_LOGGING
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
+/* #define CONFIG_USB_PD_TCPC_LOW_POWER */
+#define CONFIG_USB_PD_TCPM_MUX
+#define CONFIG_USB_PD_TCPM_TCPCI
+#define CONFIG_USB_PD_TRY_SRC
+/*
+ * Don't attempt Try.Src if the battery is too low.  Even batteries which report
+ * 1% state of charge can sometimes disable their discharge FET if the load is
+ * too much.  Therefore, set this threshold a bit higher.  5% should leave
+ * plenty of margin.
+ */
+#undef CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC
+#define CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC 5
+/* #define CONFIG_USB_PD_VBUS_DETECT_CHARGER */
+#define CONFIG_USB_PD_VBUS_DETECT_TCPC
+#define CONFIG_USB_PD_VBUS_MEASURE_CHARGER
+#define CONFIG_USB_PD_DECODE_SOP
+#define CONFIG_USB_PID 0x5042
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_SM_FRAMEWORK
+#define CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
+
+/* Define typical operating power and max power. */
+#define PD_MAX_VOLTAGE_MV     20000
+#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_POWER_MW       45000
+#define PD_OPERATING_POWER_MW 15000
+
+/* TODO(b:147314141): Verify these timings */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000	/* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY	250000	/* us */
+#define PD_VCONN_SWAP_DELAY		5000	/* us */
 
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
+
+/* Reset all TCPCs */
+void board_reset_pd_mcu(void);
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BASEBOARD_H */

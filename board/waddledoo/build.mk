@@ -11,4 +11,4 @@ CHIP_FAMILY:=npcx7
 CHIP_VARIANT:=npcx7m6fc
 BASEBOARD:=dedede
 
-board-y=board.o
+board-y=board.o battery.o usb_pd_policy.o

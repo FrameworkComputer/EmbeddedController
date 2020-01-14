@@ -23,6 +23,10 @@ GPIO_INT(PG_VCCIO_EXT_OD,	 PIN(B, 0), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_PP5000_U_OD,	 PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_DRAM_OD,		 PIN(E, 4), GPIO_INT_BOTH, power_signal_interrupt)
 
+/* USB-C interrupts */
+GPIO_INT(USB_C0_INT_ODL,	 PIN(6, 2), GPIO_INT_FALLING | GPIO_PULL_UP, usb_c0_interrupt)
+GPIO_INT(SUB_USB_C1_INT_ODL,	 PIN(F, 5), GPIO_INT_FALLING | GPIO_PULL_UP, sub_usb_c1_interrupt)
+
 /* Button interrupts */
 GPIO_INT(H1_EC_PWR_BTN_ODL,	 PIN(0, 1), GPIO_INT_BOTH | GPIO_PULL_UP, power_button_interrupt)
 GPIO_INT(VOLDN_BTN_ODL,		 PIN(4, 0), GPIO_INT_BOTH | GPIO_PULL_UP | GPIO_SEL_1P8V, button_interrupt)
@@ -84,6 +88,7 @@ GPIO(USB_C0_RST_ODL,	     PIN(9, 7), GPIO_OUT_HIGH) /* currently unused */
 GPIO(EC_AP_USB_C1_HDMI_HPD,  PIN(9, 6), GPIO_OUT_LOW)
 GPIO(EC_AP_USB_C0_HPD,	     PIN(9, 3), GPIO_OUT_LOW)
 GPIO(HDMI_SEL_L,	     PIN(7, 2), GPIO_OUT_HIGH)
+GPIO(EC_BATTERY_PRES_ODL,    PIN(E, 1), GPIO_INPUT)
 
 /*
  * Waddledoo doesn't have these physical pins coming to the EC but uses other
