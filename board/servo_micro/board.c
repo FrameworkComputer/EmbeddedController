@@ -240,30 +240,23 @@ DECLARE_CONSOLE_COMMAND(baud, command_uart_baud,
  */
 static int command_hold_usart_low(int argc, char **argv)
 {
-	/* Each bit represents if that port is being held low */
+	/* Each bit represents if that port rx is being held low */
 	static int usart_status;
 
-	const struct usart_config *usart;
 	int usart_mask;
-	enum gpio_signal tx, rx;
+	enum gpio_signal rx;
 
 	if (argc > 3 || argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
 	if (!strcasecmp(argv[1], "usart2")) {
-		usart = &usart2;
 		usart_mask = 1 << 2;
-		tx = GPIO_USART2_SERVO_TX_DUT_RX;
 		rx = GPIO_USART2_SERVO_RX_DUT_TX;
 	} else if (!strcasecmp(argv[1], "usart3")) {
-		usart = &usart3;
 		usart_mask = 1 << 3;
-		tx = GPIO_USART3_SERVO_TX_DUT_RX;
 		rx = GPIO_USART3_SERVO_RX_DUT_TX;
 	} else if (!strcasecmp(argv[1], "usart4")) {
-		usart = &usart4;
 		usart_mask = 1 << 4;
-		tx = GPIO_USART4_SERVO_TX_DUT_RX;
 		rx = GPIO_USART4_SERVO_RX_DUT_TX;
 	} else {
 		return EC_ERROR_PARAM1;
@@ -281,36 +274,22 @@ static int command_hold_usart_low(int argc, char **argv)
 			/* Do nothing since there is no change */
 		} else if (hold_low) {
 			/*
-			 * Only one USART can be held low at a time, because
-			 * re-initializing one USART will pull all of the USART
-			 * GPIO pins back into alternate mode.
+			 * No need to shutdown UART, just de-mux the RX pin from
+			 * UART and change it to a GPIO temporarily.
 			 */
-			if (usart_status)
-				return EC_ERROR_BUSY;
-
-			/*
-			 * Shutdown the USB uart,
-			 * turn off alternate mode, then set the RX line
-			 * pin to output low to enter UART programming mode.
-			 */
-			usart_shutdown(usart);
 			gpio_config_pin(MODULE_USART, rx, 0);
-			gpio_config_pin(MODULE_USART, tx, 0);
 			gpio_set_flags(rx, GPIO_OUT_LOW);
 
+			/* Update global uart state */
 			usart_status |= usart_mask;
 		} else {
 			/*
-			 * This will reset the alternate mode of the
-			 * GPIO pins appropriately and restart USB UART
+			 * Mux the RX pin back to GPIO mode
 			 */
-			usart_init(usart);
+			gpio_config_pin(MODULE_USART, rx, 1);
 
-			/*
-			 * Since only one USART can be held low at a time, the
-			 * uart_status will always be 0 after this call.
-			 */
-			usart_status = 0;
+			/* Update global uart state */
+			usart_status &= ~usart_mask;
 		}
 	}
 
