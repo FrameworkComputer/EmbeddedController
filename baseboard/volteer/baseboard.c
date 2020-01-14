@@ -12,6 +12,7 @@
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/ppc/syv682x.h"
+#include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tusb422.h"
 #include "driver/temp_sensor/thermistor.h"
 #include "fan.h"
@@ -22,6 +23,7 @@
 #include "keyboard_scan.h"
 #include "pwm.h"
 #include "pwm_chip.h"
+#include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "usbc_ppc.h"
@@ -329,7 +331,7 @@ BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 /******************************************************************************/
 /* USBC TCPC configuration */
-const struct tcpc_config_t tcpc_config[] = {
+struct tcpc_config_t tcpc_config[] = {
 	[USBC_PORT_C0] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
@@ -351,6 +353,20 @@ const struct tcpc_config_t tcpc_config[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
+
+/* USBC TCPC configuration for port 1 on USB3 board */
+static const struct tcpc_config_t tcpc_config_p1_usb3 = {
+	.bus_type = EC_BUS_TYPE_I2C,
+	.i2c_info = {
+		.port = I2C_PORT_USB_C1,
+		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+	},
+	.flags = TCPC_FLAGS_TCPCI_V2_0,
+	.drv = &ps8xxx_tcpm_drv,
+	.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
+};
+
+static enum usb_db_id usb_db_type = USB_DB_NONE;
 
 /******************************************************************************/
 /* USBC PPC configuration */
@@ -410,6 +426,10 @@ BUILD_ASSERT(ARRAY_SIZE(usb_retimers) == USBC_PORT_COUNT);
 
 static void baseboard_tcpc_init(void)
 {
+	/* Only reset TCPC if not sysjump */
+	if (!system_jumped_to_this_image())
+		board_reset_pd_mcu();
+
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
@@ -422,7 +442,7 @@ static void baseboard_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
 }
-DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
 
 /******************************************************************************/
 /* PPC support routines */
@@ -440,9 +460,42 @@ void ppc_interrupt(enum gpio_signal signal)
 
 /******************************************************************************/
 /* TCPC support routines */
+static void ps8815_reset(void)
+{
+	int val;
+
+	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 0);
+	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
+			   PS8815_PWR_H_RST_H_DELAY_MS));
+	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 1);
+	msleep(PS8815_FW_INIT_DELAY_MS);
+
+	/*
+	 * b/144397088
+	 * ps8815 firmware 0x01 needs special configuration
+	 */
+
+	CPRINTS("%s: patching ps8815 registers", __func__);
+
+	if (i2c_read8(I2C_PORT_USB_C1,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f was %02x", val);
+
+	if (i2c_write8(I2C_PORT_USB_C1,
+		       PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f set to 0x31");
+
+	if (i2c_read8(I2C_PORT_USB_C1,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f now %02x", val);
+}
+
 void board_reset_pd_mcu(void)
 {
 	/* No reset available for TCPC on port 0 */
+	/* Daughterboard specific reset for port 1 */
+	if (usb_db_type == USB_DB_USB3)
+		ps8815_reset();
 }
 
 uint16_t tcpc_get_alert_status(void)
@@ -586,8 +639,21 @@ static void baseboard_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT);
 
+/*
+ * Set up support for the USB3 daughterboard:
+ *   Parade PS8815 TCPC (integrated retimer)
+ *   Diodes PI3USB9201 BC 1.2 chip (same as USB4 board)
+ *   Silergy SYV682A PPC (same as USB4 board)
+ */
+static void config_db_usb3(void)
+{
+	tcpc_config[USBC_PORT_C1] = tcpc_config_p1_usb3;
+	/* USB-C port 1 has an integrated retimer */
+	memset(&usb_retimers[USBC_PORT_C1], 0,
+	       sizeof(usb_retimers[USBC_PORT_C1]));
+}
+
 static uint8_t board_id;
-static enum usb_db_id usb_db_type = USB_DB_NONE;
 
 uint8_t get_board_id(void)
 {
@@ -609,8 +675,8 @@ static void cbi_init(void)
 	if (cbi_get_board_version(&cbi_val) != EC_SUCCESS ||
 	    cbi_val > UINT8_MAX)
 		CPRINTS("CBI: Read Board ID failed");
-
-	board_id = cbi_val;
+	else
+		board_id = cbi_val;
 
 	CPRINTS("Board ID: %d", board_id);
 
@@ -630,10 +696,14 @@ static void cbi_init(void)
 	case USB_DB_USB4:
 		CPRINTS("Daughterboard type: USB4");
 		break;
+	case USB_DB_USB3:
+		config_db_usb3();
+		CPRINTS("Daughterboard type: USB3");
+		break;
 	default:
 		CPRINTS("Daughterboard ID %d not supported", usb_db_val);
 		usb_db_val = USB_DB_NONE;
 	}
 	usb_db_type = usb_db_val;
 }
-DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_FIRST);

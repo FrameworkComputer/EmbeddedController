@@ -95,8 +95,8 @@ GPIO(EC_PCH_INT_ODL,           PIN(D, 6), GPIO_ODR_HIGH) /* TODO - b/140557015 -
 
 /* USB and USBC Signals */
 
-/* TODO - b/145560203 route USB_C1_RT_RST_ODL to EC */
-UNIMPLEMENTED(USB_C1_RT_RST_ODL)
+/* TODO(b/148243971): update PIN for next build */
+GPIO(USB_C1_RT_RST_ODL,		PIN(3, 2), GPIO_ODR_LOW)	/* USB_C1 Reset */
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C1_LS_EN)
 /* Retimer Force Power enable is connected to AP */
