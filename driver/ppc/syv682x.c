@@ -302,11 +302,14 @@ static int syv682x_init(int port)
 		return rv;
 
 	/* Check if this if dead battery case */
-	rv = read_reg(port, SYV682X_CONTROL_1_REG, &regval);
+	rv = read_reg(port, SYV682X_STATUS_REG, &regval);
 	if (rv)
 		return rv;
 	if (regval & SYV682X_STATUS_VSAFE_0V) {
 		/* Not dead battery case, so disable channel */
+		rv = read_reg(port, SYV682X_CONTROL_1_REG, &regval);
+		if (rv)
+			return rv;
 		regval |= SYV682X_CONTROL_1_PWR_ENB;
 		rv = write_reg(port, SYV682X_CONTROL_1_REG, regval);
 		if (rv)
