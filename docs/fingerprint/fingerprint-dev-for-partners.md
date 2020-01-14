@@ -447,14 +447,15 @@ From the DUT, flash the firmware you copied:
 
 ### Dragonclaw Rev 0.2 Rework {#dragonclaw-rev-0.2-rework}
 
+*** note
+**NOTE**: All Dragonclaw v0.2 boards have been reworked, so it is not necessary to perform the rework yourself.
+***
 Dragonclaw **Rev 0.2** has two load switches (`U4` and `U6`) that enable the
 1.8V power rail from the servo connector or motherboard connector. However,
-this switch is not compatible with 1.8V, so will always output 0V. The switches
-can be bypassed by placing a zero ohm resistor on `R14` and `R16`. See the image
-below. After performing this rework, do not power the board through the
-motherboard and servo at the same time.
+this switch is not compatible with 1.8V, so will always output 0V.
 
-![Dragonclaw Rev 0.2 1.8V Rework]
+The [rework document][Dragonclaw Rev 0.2 1.8V Rework] describes replacing these
+two switches with ones compatible with 1.8V.
 
 ### Dragonclaw Rev 0.1 Servo Fix
 
@@ -563,7 +564,7 @@ https://crbug.com/992082.
 [Dragonclaw with 10-pin SWD]: ../images/dragonclaw_with_10_pin_swd.jpg
 
 <!-- If you make changes to the docs below make sure to regenerate the JPEGs by
-     appending "export/jpeg" to the Google Drive link. -->
+     appending "export/pdf" to the Google Drive link. -->
 
-<!-- https://docs.google.com/drawings/d/1ecDewBXy8KecyPLi85sXcnqBh4KwK1Z8hfW_T2fDfUU -->
-[Dragonclaw Rev 0.2 1.8V Rework]: ../images/dragonclaw_rev_0.2_1.8v_rework.jpg
+<!-- https://docs.google.com/drawings/d/1YhOUD-Qf69NUdugT6n0cX7o7CWvb5begcdmJwv7ch6I -->
+[Dragonclaw Rev 0.2 1.8V Rework]: ../images/dragonclaw_rev_0.2_1.8v_load_switch_rework.pdf
