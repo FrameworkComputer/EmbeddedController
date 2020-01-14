@@ -8,6 +8,7 @@
 #include "bb_retimer.h"
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "cros_board_info.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/ppc/syv682x.h"
@@ -584,3 +585,55 @@ static void baseboard_init(void)
 	pwm_set_duty(PWM_CH_LED4_SIDESEL, 50);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT);
+
+static uint8_t board_id;
+static enum usb_db_id usb_db_type = USB_DB_NONE;
+
+uint8_t get_board_id(void)
+{
+	return board_id;
+}
+
+/*
+ * Read CBI from i2c eeprom and initialize variables for board variants
+ *
+ * Example for configuring for a USB3 DB:
+ *   ectool cbi set 6 2 4 10
+ */
+static void cbi_init(void)
+{
+	uint32_t cbi_val;
+	uint32_t usb_db_val;
+
+	/* Board ID */
+	if (cbi_get_board_version(&cbi_val) != EC_SUCCESS ||
+	    cbi_val > UINT8_MAX)
+		CPRINTS("CBI: Read Board ID failed");
+
+	board_id = cbi_val;
+
+	CPRINTS("Board ID: %d", board_id);
+
+	/* FW config */
+
+	if (cbi_get_fw_config(&cbi_val) != EC_SUCCESS) {
+		CPRINTS("CBI: Read FW config failed, assuming USB4");
+		usb_db_val = USB_DB_USB4;
+	} else {
+		usb_db_val = CBI_FW_CONFIG_USB_DB_TYPE(cbi_val);
+	}
+
+	switch (usb_db_val) {
+	case USB_DB_NONE:
+		CPRINTS("Daughterboard type: None");
+		break;
+	case USB_DB_USB4:
+		CPRINTS("Daughterboard type: USB4");
+		break;
+	default:
+		CPRINTS("Daughterboard ID %d not supported", usb_db_val);
+		usb_db_val = USB_DB_NONE;
+	}
+	usb_db_type = usb_db_val;
+}
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);

@@ -278,12 +278,31 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
+/*
+ * Daughterboard type is encoded in the lower 4 bits
+ * of the FW_CONFIG CBI tag.
+ */
+
+enum usb_db_id {
+	USB_DB_NONE = 0,
+	USB_DB_USB4 = 1,
+	USB_DB_USB3 = 2,
+	USB_DB_COUNT
+};
+
+#define CBI_FW_CONFIG_USB_DB_MASK	0x0f
+#define CBI_FW_CONFIG_USB_DB_SHIFT	0
+#define CBI_FW_CONFIG_USB_DB_TYPE(bits) \
+	(((bits) & CBI_FW_CONFIG_USB_DB_MASK) >> CBI_FW_CONFIG_USB_DB_SHIFT)
+
 void board_reset_pd_mcu(void);
 
 /* Common definition for the USB PD interrupt handlers. */
 void ppc_interrupt(enum gpio_signal signal);
 void tcpc_alert_event(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
+
+unsigned char get_board_id(void);
 
 #endif /* !__ASSEMBLER__ */
 
