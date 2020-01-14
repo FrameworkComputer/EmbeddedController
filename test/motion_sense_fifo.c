@@ -314,6 +314,35 @@ static int test_spread_double_commit_same_timestamp(void)
 	return EC_SUCCESS;
 }
 
+static int test_commit_non_data_or_timestamp_entries(void)
+{
+	const uint32_t now = __hw_clock_source_read();
+	int read_count;
+
+	motion_sensors[0].oversampling_ratio = 1;
+	motion_sensors[0].collection_rate = 20000; /* ns */
+
+	/* Insert non-data entry */
+	data[0].flags = MOTIONSENSE_SENSOR_FLAG_ODR;
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 20500);
+
+	/* Insert data entry */
+	data[0].flags = 0;
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 20500);
+
+	motion_sense_fifo_commit_data();
+	read_count = motion_sense_fifo_read(
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
+	TEST_EQ(read_count, 4, "%d");
+	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
+	TEST_EQ(data[0].timestamp, now - 20500, "%u");
+	TEST_BITS_SET(data[1].flags, MOTIONSENSE_SENSOR_FLAG_ODR);
+	TEST_BITS_SET(data[2].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
+	TEST_EQ(data[2].timestamp, now - 20500, "%u");
+
+	return EC_SUCCESS;
+}
+
 void before_test(void)
 {
 	motion_sense_fifo_commit_data();
@@ -342,6 +371,7 @@ void run_test(void)
 	RUN_TEST(test_spread_data_in_window);
 	RUN_TEST(test_spread_data_by_collection_rate);
 	RUN_TEST(test_spread_double_commit_same_timestamp);
+	RUN_TEST(test_commit_non_data_or_timestamp_entries);
 
 	test_print_result();
 }
