@@ -71,5 +71,17 @@ const struct pwm_t pwm_channels[] = {
 		.flags = PWM_CONFIG_DSLEEP,
 		.freq = 10000,
 	},
+
+	[PWM_CH_LED1_AMBER] = {
+		.channel = 2,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
+		.freq = 2400,
+	},
+
+	[PWM_CH_LED2_WHITE] = {
+		.channel = 0,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
+		.freq = 2400,
+	}
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);

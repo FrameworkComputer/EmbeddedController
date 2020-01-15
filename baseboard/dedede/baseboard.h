@@ -107,6 +107,8 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 
 /* PWM */
+#define CONFIG_LED_COMMON
+#define CONFIG_LED_PWM
 #define CONFIG_PWM
 
 /* SoC */
