@@ -2210,10 +2210,43 @@ static uint64_t vdm_get_ready_timeout(uint32_t vdm_hdr)
 	return timeout;
 }
 
+static void exit_tbt_mode_sop_prime(int port)
+{
+	/* Exit Thunderbolt-Compatible mode SOP' */
+	uint16_t header;
+	int opos;
+
+	if (!IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE))
+		return;
+
+	opos =  pd_alt_mode(port, USB_VID_INTEL);
+	if (opos <= 0)
+		return;
+
+	CPRINTS("C%d Cable exiting TBT Compat mode", port);
+	if (!pd_dfp_exit_mode(port, USB_VID_INTEL, opos))
+		return;
+
+	header = PD_HEADER(PD_DATA_VENDOR_DEF, pd[port].power_role,
+			pd[port].data_role, pd[port].msg_id,
+			(int)pd[port].vdo_count, pd_get_rev(port), 0);
+
+	pd[port].vdo_data[0] = VDO(USB_VID_INTEL, 1,
+				   CMD_EXIT_MODE | VDO_OPOS(opos));
+
+	pd_transmit(port, TCPC_TX_SOP_PRIME, header, pd[port].vdo_data,
+		    AMS_START);
+
+	usb_mux_set(port, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT,
+		   pd_get_polarity(port));
+}
+
 static void pd_vdm_send_state_machine(int port)
 {
 	int res;
 	uint16_t header;
+	enum pd_msg_type msg_type =
+		pd_msg_tx_type(port, pd[port].data_role, pd[port].flags);
 
 	switch (pd[port].vdm_state) {
 	case VDM_STATE_READY:
@@ -2241,8 +2274,8 @@ static void pd_vdm_send_state_machine(int port)
 		 * data role swap takes place during source and sink
 		 * negotiation and in case of failure, a soft reset is issued.
 		 */
-		if (is_sop_prime_ready(port, pd[port].data_role,
-				pd[port].flags)) {
+		if ((msg_type == PD_MSG_SOP_PRIME) ||
+		    (msg_type == PD_MSG_SOP_PRIME_PRIME)) {
 			/* Prepare SOP'/SOP'' header and send VDM */
 			header = PD_HEADER(
 				PD_DATA_VENDOR_DEF,
@@ -2252,13 +2285,26 @@ static void pd_vdm_send_state_machine(int port)
 				(int)pd[port].vdo_count,
 				pd_get_rev(port),
 				0);
-			res = pd_transmit(port, TCPC_TX_SOP_PRIME, header,
-					  pd[port].vdo_data, AMS_START);
+			res = pd_transmit(port,
+					  (msg_type == PD_MSG_SOP_PRIME) ?
+					  TCPC_TX_SOP_PRIME :
+					  TCPC_TX_SOP_PRIME_PRIME,
+					  header,
+					  pd[port].vdo_data,
+					  AMS_START);
 			/*
-			 * If there is no ack from the cable, its a non-emark
-			 * cable and since, the pd flow should continue
-			 * irrespective of cable response, sending
-			 * discover_identity so the pd flow remains intact.
+			 * In the case of SOP', if there is no response from
+			 * the cable, it's a non-emark cable and therefore the
+			 * pd flow should continue irrespective of cable
+			 * response, sending discover_identity so the pd flow
+			 * remains intact.
+			 *
+			 * In the case of SOP'', if there is no response from
+			 * the cable, exit Thunderbolt-Compatible mode
+			 * discovery, reset the mux state since, the mux will
+			 * be set to a safe state before entering
+			 * Thunderbolt-Compatible mode and enter the default
+			 * mode.
 			 */
 			if (res < 0) {
 				header = PD_HEADER(PD_DATA_VENDOR_DEF,
@@ -2267,8 +2313,14 @@ static void pd_vdm_send_state_machine(int port)
 						   pd[port].msg_id,
 						   (int)pd[port].vdo_count,
 						   pd_get_rev(port), 0);
-				pd[port].vdo_data[0] =
-					VDO(USB_SID_PD, 1, CMD_DISCOVER_SVID);
+
+				if ((msg_type == PD_MSG_SOP_PRIME_PRIME) &&
+				     IS_ENABLED(CONFIG_USBC_SS_MUX)) {
+					exit_tbt_mode_sop_prime(port);
+				} else if (msg_type == PD_MSG_SOP_PRIME) {
+					pd[port].vdo_data[0] = VDO(USB_SID_PD,
+						1, CMD_DISCOVER_SVID);
+				}
 				res = pd_transmit(port, TCPC_TX_SOP, header,
 						  pd[port].vdo_data, AMS_START);
 				reset_pd_cable(port);
