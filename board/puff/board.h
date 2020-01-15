@@ -167,8 +167,11 @@
 #define CONFIG_CHARGER_INPUT_CURRENT 512 /* Allow low-current USB charging */
 
 /* USB type C */
-/* Use TCPMv2 */
+/* TODO: (b/147255678) Use TCPMv2 */
+#if 0
 #define CONFIG_USB_SM_FRAMEWORK
+#endif
+
 #undef CONFIG_USB_CHARGER
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PID		0x5040
