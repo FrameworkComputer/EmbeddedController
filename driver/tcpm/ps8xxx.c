@@ -157,6 +157,13 @@ static int ps8xxx_get_chip_info(int port, int live,
 		(*chip_info)->fw_version_number = val;
 	}
 
+	/* Treat unexpected values as error (FW not initiated from reset) */
+	if (live && (
+	    (*chip_info)->vendor_id != PS8XXX_VENDOR_ID ||
+	    (*chip_info)->product_id != PS8XXX_PRODUCT_ID ||
+	    (*chip_info)->fw_version_number == 0))
+		return EC_ERROR_UNKNOWN;
+
 #if defined(CONFIG_USB_PD_TCPM_PS8751) && \
 	defined(CONFIG_USB_PD_VBUS_DETECT_TCPC)
 	/*
