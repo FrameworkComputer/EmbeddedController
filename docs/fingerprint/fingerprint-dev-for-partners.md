@@ -567,4 +567,4 @@ https://crbug.com/992082.
      appending "export/pdf" to the Google Drive link. -->
 
 <!-- https://docs.google.com/drawings/d/1YhOUD-Qf69NUdugT6n0cX7o7CWvb5begcdmJwv7ch6I -->
-[Dragonclaw Rev 0.2 1.8V Rework]: ../images/dragonclaw_rev_0.2_1.8v_load_switch_rework.pdf
+[Dragonclaw Rev 0.2 1.8V Rework]: https://github.com/coreboot/chrome-ec/blob/master/docs/images/dragonclaw_rev_0.2_1.8v_load_switch_rework.pdf
