@@ -20,6 +20,7 @@ GPIO_INT(USB_C1_VBUS_DET_L,    PIN(8, 3), GPIO_INT_BOTH | GPIO_PULL_UP, vbus1_ev
 
 /* System interrupts */
 GPIO_INT(ACOK_OD,           PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)  /* AC OK? */
+GPIO_INT(CCD_MODE_ODL,      PIN(E, 3), GPIO_INT_FALLING, board_connect_c0_sbu)  /* Case Closed Debug Mode */
 GPIO_INT(EC_PWR_BTN_ODL,    PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)  /* Power button */
 GPIO_INT(EC_VOLDN_BTN_ODL,  PIN(7, 0), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* Volume Up button */
 GPIO_INT(EC_VOLUP_BTN_ODL,  PIN(F, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* Volume Down button */
@@ -54,7 +55,6 @@ GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi160_
  */
 GPIO(EC_RST_ODL,            PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)  /* Wake source: EC reset */
 GPIO(EC_ENTERING_RW,        PIN(E, 1), GPIO_OUT_LOW)   /* Indicate when EC is entering RW code */
-GPIO(CCD_MODE_ODL,          PIN(E, 3), GPIO_INPUT)     /* Case Closed Debug Mode */
 GPIO(EC_BATT_PRES_ODL,      PIN(E, 5), GPIO_INPUT)     /* Battery Present */
 
 /* PMIC/AP 1.8V */
