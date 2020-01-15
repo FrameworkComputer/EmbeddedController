@@ -43,6 +43,17 @@ that Chrome OS supports unibuild, there may be multiple firmware binaries in the
 directory since multiple sensors may be used across a single "board" (e.g., the
 `hatch` board can use either `bloonchipper` or `dartmonkey`).
 
+The correct firmware type to use for a given board can be discovered with the
+following command:
+
+```bash
+(dut) $ cros_config /fingerprint board
+dartmonkey
+```
+
+The corresponding firmware for the above command would be
+`/opt/google/biod/fw/dartmonkey_*.bin`.
+
 Note that the fingerprint team continuously releases updates to the firmware, so
 SIEs should watch for version changes in ToT if they are maintaining a separate
 factory branch.
@@ -51,9 +62,9 @@ factory branch.
 
 When the FPMCU is completely blank a low-level flashing tool must be used to
 program an initial version of the FPMCU firmware. It’s possible to use the
-`flash_fp_mcu` script as this low-level flashing tool, though since it requires
-the AP and is not necessarily robust against failures, it is not recommended to
-be used.
+[`flash_fp_mcu`] script as this low-level flashing tool, though since it
+requires the AP and is not necessarily robust against failures, it is not
+recommended for mass-production.
 
 The initial version of the FPMCU firmware should be flashed either by the module
 house or by the factory. Once an initial version of the FPMCU firmware has been
@@ -455,4 +466,4 @@ Wrote /tmp/fp.1.png (14025 bytes)
 [rubber_finger_present]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/pytests/fingerprint_mcu.py#330
 [Chrome OS Fingerprint Team]: http://go/cros-fingerprint-docs
 [Factory Fingerprint Sensor Testing for `nocturne`]: http://go/fingerprint-factory-testing-nocturne
-
+[`flash_fp_mcu`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/util/flash_fp_mcu

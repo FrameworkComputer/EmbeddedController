@@ -31,6 +31,13 @@ building the EC code) are for fingerprint:
     *   Support for the STM32F412 for the FPMCU is not yet fully complete,
         but it is functional enough for testing.
 
+If you have access to a shell on your Chromebook, you can run the following
+command to determine the FPMCU that it contains:
+
+```bash
+(dut) $ cros_config /fingerprint board
+```
+
 ## Building FPMCU Firmware Locally
 
 ### See `Makefile` target options
@@ -139,9 +146,15 @@ kernel:
 (dut)$ cat /sys/kernel/debug/cros_fp/console_log
 ```
 
-## Production Updates
+## Production Updates (Auto-Update)
 
 ### `fp_updater.sh` and `bio_fw_updater`
+
+*** note
+**NOTE**: The auto-update process requires a working version of the firmware
+running on the FPMCU. See [Fingerprint Factory Requirements] for details on
+flashing in the factory.
+***
 
 [`fp_updater.sh`] and [`bio_fw_updater`] are wrappers around [`flashrom`] and
 require already-functioning RO firmware running on the FPMCU. It’s meant to be
@@ -160,9 +173,10 @@ user disables [hardware write protection]).
 ### `flash_fp_mcu`
 
 *** note
-NOTE: This tool is really just for us to use during development or during the
-RMA flow (must go through finalization again in that case). We never update RO
-in the field (can’t by design).
+**NOTE**: This tool is really just for us to use during development or during
+the RMA flow (must go through finalization again in that case). We never update
+RO in the field (can’t by design). See [Fingerprint Factory Requirements] for
+details on flashing in the factory.
 ***
 
 [`flash_fp_mcu`] enables spidev and toggles some GPIOs to put the FPMCU (STM32)
@@ -286,7 +300,7 @@ This would make it a lot easier during both development and testing.
 [`bloonchipper`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/board/bloonchipper/
 [`dartmonkey`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/board/dartmonkey/
 [hardware write protection]: ../write_protection.md
-[`flash_fp_mcu`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/board/nocturne_fp/flash_fp_mcu
+[`flash_fp_mcu`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/util/flash_fp_mcu
 [`stm32mon`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/e1f3f89e7ea7945adddd0c2e6838f5e59856cff2/util/stm32mon.c#14
 [`futility`]: https://chromium.googlesource.com/chromiumos/platform/vboot_reference/+/master/futility/
 [`sign_official_build.sh`]: https://chromium.googlesource.com/chromiumos/platform/vboot_reference/+/master/scripts/image_signing/sign_official_build.sh
@@ -301,3 +315,4 @@ This would make it a lot easier during both development and testing.
 [`board/nocturne_fp/dev_key.pem`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/board/nocturne_fp/dev_key.pem
 [`timberslide`]: https://chromium.googlesource.com/chromiumos/platform2/+/master/timberslide
 [cros_ec_debugfs]: https://chromium.googlesource.com/chromiumos/third_party/kernel/+/9db44685934a2e4bc9180ea2de87a6c429672395/drivers/platform/chrome/cros_ec_debugfs.c
+[Fingerprint Factory Requirements]: ./fingerprint-factory-requirements.md
