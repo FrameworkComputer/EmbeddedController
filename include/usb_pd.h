@@ -286,6 +286,15 @@ extern const struct svdm_response svdm_rsp;
 extern const struct svdm_amode_fx supported_modes[];
 extern const int supported_modes_cnt;
 
+/*
+ * defined in common/usb_common.c
+ * This variable is used in a couple of overridable functions
+ * in usb_common code.  If the routines are overridden then
+ * this variable should be the same as that used in the common
+ * code.
+ */
+extern uint64_t svdm_hpd_deadline[];
+
 /* DFP data needed to support alternate mode entry and exit */
 struct svdm_amode_data {
 	const struct svdm_amode_fx *fx;

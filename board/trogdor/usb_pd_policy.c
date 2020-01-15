@@ -121,12 +121,6 @@ static int is_dp_muxable(int port)
 	return 1;
 }
 
-/*
- * Timestamp of the next possible toggle to ensure the 2-ms spacing
- * between IRQ_HPD.
- */
-static uint64_t hpd_deadline;
-
 __override int svdm_dp_attention(int port, uint32_t *payload)
 {
 	enum gpio_signal hpd = GPIO_DP_HOT_PLUG_DET;
@@ -188,8 +182,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	if (irq & cur_lvl) {
 		uint64_t now = get_time().val;
 		/* Wait for the minimum spacing between IRQ_HPD if needed */
-		if (now < hpd_deadline)
-			usleep(hpd_deadline - now);
+		if (now < svdm_hpd_deadline[port])
+			usleep(svdm_hpd_deadline[port] - now);
 
 		/* Generate IRQ_HPD pulse */
 		gpio_set_level(hpd, 0);
@@ -197,14 +191,16 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		gpio_set_level(hpd, 1);
 
 		/* Set the minimum time delay (2ms) for the next HPD IRQ */
-		hpd_deadline = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
+		svdm_hpd_deadline[port] = get_time().val +
+			HPD_USTREAM_DEBOUNCE_LVL;
 	} else if (irq & !lvl) {
 		CPRINTF("ERR:HPD:IRQ&LOW\n");
 		return 0;  /* Nak */
 	} else {
 		gpio_set_level(hpd, lvl);
 		/* Set the minimum time delay (2ms) for the next HPD IRQ */
-		hpd_deadline = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
+		svdm_hpd_deadline[port] = get_time().val +
+			HPD_USTREAM_DEBOUNCE_LVL;
 	}
 
 	return 1;  /* Ack */

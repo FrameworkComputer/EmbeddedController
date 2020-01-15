@@ -158,12 +158,6 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 	return 2;
 };
 
-/*
- * timestamp of the next possible toggle to ensure the 2-ms spacing
- * between IRQ_HPD.
- */
-static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
-
 __override void svdm_dp_post_config(int port)
 {
 	const struct usb_mux * const mux = &usb_muxes[port];
@@ -178,7 +172,7 @@ __override void svdm_dp_post_config(int port)
 #endif
 
 	/* set the minimum time delay (2ms) for the next HPD IRQ */
-	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
+	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 	mux->hpd_update(port, 1, 0);
 }
 
@@ -203,8 +197,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	if (irq & cur_lvl) {
 		uint64_t now = get_time().val;
 		/* wait for the minimum spacing between IRQ_HPD if needed */
-		if (now < hpd_deadline[port])
-			usleep(hpd_deadline[port] - now);
+		if (now < svdm_hpd_deadline[port])
+			usleep(svdm_hpd_deadline[port] - now);
 
 		/* generate IRQ_HPD pulse */
 		gpio_set_level(GPIO_USB_C0_HPD_OD, 0);
@@ -216,7 +210,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 #endif
 
 		/* set the minimum time delay (2ms) for the next HPD IRQ */
-		hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
+		svdm_hpd_deadline[port] = get_time().val +
+			HPD_USTREAM_DEBOUNCE_LVL;
 	} else if (irq & !lvl) {
 		CPRINTF("ERR:HPD:IRQ&LOW\n");
 		return 0; /* nak */
@@ -226,7 +221,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		board_set_dp_mux_control(lvl, board_get_polarity(port));
 #endif
 		/* set the minimum time delay (2ms) for the next HPD IRQ */
-		hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
+		svdm_hpd_deadline[port] = get_time().val +
+			HPD_USTREAM_DEBOUNCE_LVL;
 	}
 
 	/* ack */

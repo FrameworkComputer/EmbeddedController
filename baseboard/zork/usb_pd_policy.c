@@ -133,12 +133,6 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 	return 2;
 };
 
-/*
- * timestamp of the next possible toggle to ensure the 2-ms spacing
- * between IRQ_HPD.
- */
-static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
-
 __override void svdm_dp_post_config(int port)
 {
 	const struct usb_mux * const mux = &usb_muxes[port];
@@ -155,7 +149,7 @@ __override void svdm_dp_post_config(int port)
 	gpio_set_level(PORT_TO_HPD(port), 1);
 
 	/* set the minimum time delay (2ms) for the next HPD IRQ */
-	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
+	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 
 	if (mux->hpd_update)
 		mux->hpd_update(port, 1, 0);
