@@ -116,4 +116,4 @@ const struct board_batt_params board_battery_info[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_PANASONIC;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SMP;
