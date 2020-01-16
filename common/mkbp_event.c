@@ -280,7 +280,7 @@ static void force_mkbp_if_events(void)
 	activate_mkbp_with_events(0);
 }
 
-int mkbp_send_event(uint8_t event_type)
+test_mockable int mkbp_send_event(uint8_t event_type)
 {
 	activate_mkbp_with_events(BIT(event_type));
 

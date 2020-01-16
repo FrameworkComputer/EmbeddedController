@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_ACCEL_CAL_H
 #define __CROS_EC_ACCEL_CAL_H
 
+#include "common.h"
 #include "kasa.h"
 #include "newton_fit.h"
 #include "stdbool.h"

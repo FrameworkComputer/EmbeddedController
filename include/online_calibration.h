@@ -7,6 +7,7 @@
 #define __CROS_EC_ONLINE_CALIBRATION_H
 
 #include "motion_sense.h"
+#include "stdbool.h"
 
 /**
  * Initialize the online calibration caches.
@@ -25,5 +26,21 @@ int online_calibration_process_data(
 	struct ec_response_motion_sensor_data *data,
 	struct motion_sensor_t *sensor,
 	uint32_t timestamp);
+
+/**
+ * Check if new calibration values are available since the last read.
+ *
+ * @return True if the calibration values have changed.
+ */
+bool online_calibration_has_new_values(void);
+
+/**
+ * Read available calibration values and reset dirty bits.
+ *
+ * @param sensor_num The sensor index to get the calibration values for.
+ * @param out The target to copy the data into.
+ * @return True if a value was written to `out`.
+ */
+bool online_calibration_read(int sensor_num, int16_t out[3]);
 
 #endif /* __CROS_EC_ONLINE_CALIBRATION_H */

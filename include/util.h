@@ -45,6 +45,17 @@ extern "C" {
 #define NULL ((void *)0)
 #endif
 
+/**
+ * Ensure that value `v` is between `min` and `max`.
+ *
+ * @param v The value of interest.
+ * @param min The minimum allowed value for `v`.
+ * @param max The maximum allowed value for `v`.
+ * @return `v` if it is already between `min`/`max`, `min` if `v` was smaller
+ * than `min`, `max` if `v` was bigger than `max`.
+ */
+#define CLAMP(v, min, max) MIN(max, MAX(v, min))
+
 /*
  * Convert a pointer to a base struct into a pointer to the struct that
  * contains the base struct.  This requires knowing where in the contained
