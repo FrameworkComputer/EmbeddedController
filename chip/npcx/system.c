@@ -509,8 +509,10 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	system_set_gpios_and_wakeup_inputs_hibernate();
 
 	/*
-	 * Give the board a chance to do any late stage hibernation work.
-	 * This is likely going to configure GPIOs for hibernation.
+	 * Give the board a chance to do any late stage hibernation work.  This
+	 * is likely going to configure GPIOs for hibernation.  On some boards,
+	 * it's possible that this may not return at all.  On those boards,
+	 * power to the EC is likely being turn off entirely.
 	 */
 	if (board_hibernate_late)
 		board_hibernate_late();

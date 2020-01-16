@@ -58,3 +58,12 @@ void baseboard_chipset_shutdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, baseboard_chipset_shutdown,
 	     HOOK_PRIO_DEFAULT);
+
+void board_hibernate_late(void)
+{
+	/*
+	 * Turn on the Z state.  This will not return as it will cut power to
+	 * the EC.
+	 */
+	gpio_set_level(GPIO_EN_SLP_Z, 1);
+}

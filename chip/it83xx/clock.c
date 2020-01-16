@@ -465,7 +465,12 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	}
 	/* bit5: watchdog is disabled. */
 	IT83XX_ETWD_ETWCTRL |= BIT(5);
-	/* Setup GPIOs for hibernate */
+
+	/*
+	 * Setup GPIOs for hibernate.  On some boards, it's possible that this
+	 * may not return at all.  On those boards, power to the EC is likely
+	 * being turn off entirely.
+	 */
 	if (board_hibernate_late)
 		board_hibernate_late();
 
