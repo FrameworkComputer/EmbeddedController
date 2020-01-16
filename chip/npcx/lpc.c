@@ -299,7 +299,7 @@ int lpc_keyboard_input_pending(void)
 	return (NPCX_HIKMST&0x02) ? 1 : 0;
 }
 
-/* Put a char to host buffer and send IRQ if specified. */
+/* Put a char to host buffer by HIKDO and send IRQ if specified. */
 void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 {
 	NPCX_HIKDO = chr;
@@ -311,6 +311,17 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 	if (send_irq) {
 		keyboard_irq_assert();
 	}
+}
+
+/* Put a char to host buffer by HIMDO */
+void lpc_mouse_put_char(uint8_t chr)
+{
+	NPCX_HIMDO = chr;
+	CPRINTS("Mouse put %02x", chr);
+
+	/* Enable OBE interrupt to detect host read data out */
+	SET_BIT(NPCX_HICTRL, NPCX_HICTRL_OBECIE);
+	task_enable_irq(NPCX_IRQ_KBC_OBE);
 }
 
 void lpc_keyboard_clear_buffer(void)
@@ -586,10 +597,17 @@ void host_register_init(void)
 	sib_write_reg(SIO_OFFSET, 0x07, 0x11);
 	sib_write_reg(SIO_OFFSET, 0x30, 0x01);
 
-	/* enable KBC*/
+	/* Enable kbc and mouse */
 #ifdef HAS_TASK_KEYPROTO
+	/* LDN = 0x06 : keyboard */
 	sib_write_reg(SIO_OFFSET, 0x07, 0x06);
 	sib_write_reg(SIO_OFFSET, 0x30, 0x01);
+
+	/* LDN = 0x05 : mouse */
+	if (IS_ENABLED(CONFIG_PS2)) {
+		sib_write_reg(SIO_OFFSET, 0x07, 0x05);
+		sib_write_reg(SIO_OFFSET, 0x30, 0x01);
+	}
 #endif
 
 	/* Setting PMC2 */
