@@ -285,3 +285,11 @@ void rotate_inv(const intv3_t v, const mat33_fp_t R, intv3_t res)
 	res[1] = FP_TO_INT(fp_div(t[1], deter));
 	res[2] = FP_TO_INT(fp_div(t[2], deter));
 }
+
+/* division that round to the nearest integer */
+int round_divide(int64_t dividend, int divisor)
+{
+	return (dividend > 0) ^ (divisor > 0) ?
+		(dividend - divisor / 2) / divisor :
+		(dividend + divisor / 2) / divisor;
+}

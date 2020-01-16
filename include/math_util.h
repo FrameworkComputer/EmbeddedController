@@ -210,4 +210,9 @@ void rotate(const intv3_t v, const mat33_fp_t R, intv3_t res);
  */
 void rotate_inv(const intv3_t v, const mat33_fp_t R, intv3_t res);
 
+/**
+ * Divide dividend by divisor and round it to the nearest integer.
+ */
+int round_divide(int64_t dividend, int divisor);
+
 #endif /* __CROS_EC_MATH_UTIL_H */
