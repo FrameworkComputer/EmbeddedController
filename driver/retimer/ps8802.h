@@ -25,6 +25,9 @@
 #define PS8802_MODE_IN_HPD_REG_CONTROL	BIT(1)
 #define PS8802_MODE_IN_HPD_ENABLE	BIT(0)
 
+extern const struct usb_mux_driver ps8802_usb_mux_driver;
 extern const struct usb_retimer_driver ps8802_usb_retimer;
+
+int ps8802_detect(int port);
 
 #endif /* __CROS_EC_USB_RETIMER_PS8802_H */

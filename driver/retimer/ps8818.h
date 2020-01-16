@@ -19,4 +19,6 @@
 
 extern const struct usb_retimer_driver ps8818_usb_retimer;
 
+int ps8818_detect(int port);
+
 #endif /* __CROS_EC_USB_RETIMER_PS8818_H */

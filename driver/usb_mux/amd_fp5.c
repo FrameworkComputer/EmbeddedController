@@ -112,6 +112,17 @@ static int amd_fp5_get_mux(int port, mux_state_t *mux_state)
 	return EC_SUCCESS;
 }
 
+/*
+ * The FP5 MUX can look like a retimer or a MUX. So create both tables
+ * and use them as needed, until retimers become a type of MUX and
+ * then we will only need one of these tables.
+ *
+ * TODO(b:147593660) Cleanup of retimers as muxes in a more
+ * generalized mechanism
+ */
+const struct usb_retimer_driver amd_fp5_usb_retimer = {
+	.set = amd_fp5_set_mux,
+};
 const struct usb_mux_driver amd_fp5_usb_mux_driver = {
 	.init = amd_fp5_init,
 	.set = amd_fp5_set_mux,

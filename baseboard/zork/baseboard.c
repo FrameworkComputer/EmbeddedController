@@ -463,59 +463,155 @@ void bc12_interrupt(enum gpio_signal signal)
 }
 
 /*****************************************************************************
- * Custom Zork USB-C1 Retimer driver
- *
+ * Custom Zork USB-C1 Retimer/MUX driver
+ */
+
+/*
+ * FP5 is a true MUX but being used as a secondary MUX. Don't want to
+ * send FLIP or this will cause a double flip
+ */
+static int zork_c1_retimer_set_mux(int port, mux_state_t mux_state)
+{
+	return amd_fp5_usb_retimer.set(port,
+				       mux_state & ~MUX_POLARITY_INVERTED);
+}
+
+const struct usb_retimer_driver zork_c1_usb_retimer = {
+	/* Secondary MUX/Retimer only needs the set mux interface */
+	.set = zork_c1_retimer_set_mux,
+};
+
+struct usb_retimer usb_retimers[] = {
+	[USBC_PORT_C0] = {
+		.driver = &pi3dpx1207_usb_retimer,
+		.i2c_port = I2C_PORT_TCPC0,
+		.i2c_addr_flags = PI3DPX1207_I2C_ADDR_FLAGS,
+	},
+	[USBC_PORT_C1] = {
+		/*
+		 * The driver is left off until we detect the
+		 * hardware present. Once the hardware has been
+		 * detected, the driver will be set to the
+		 * detected hardware driver table.
+		 */
+		.i2c_port = I2C_PORT_TCPC1,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_retimers) == USBC_PORT_COUNT);
+
+/*
  * To support both OPT1 DB with PS8818 retimer, and OPT3 DB with PS8802
  * retimer,  Try both, and remember the first one that succeeds.
  *
- * TODO(b:147593165, b:147593660) Cleanup of retimers as muxes in a more
+ * TODO(b:147593660) Cleanup of retimers as muxes in a more
  * generalized mechanism
  */
 enum zork_c1_retimer zork_c1_retimer = C1_RETIMER_UNKNOWN;
-
-static int zork_c1_set_retimer_mux(int port, mux_state_t mux_state)
+static int zork_c1_detect(int port, int err_if_power_off)
 {
-	int rv = EC_ERROR_UNKNOWN;
+	int rv;
 
 	/*
 	 * Retimers are not powered in G3 so return success if setting mux to
 	 * none and error otherwise.
 	 */
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-		return (mux_state == TYPEC_MUX_NONE)
-			? EC_SUCCESS
-			: EC_ERROR_NOT_POWERED;
+		return (err_if_power_off) ? EC_ERROR_NOT_POWERED
+					  : EC_SUCCESS;
 
 	/*
 	 * Identifying a PS8818 is faster than the PS8802,
 	 * so do it first.
 	 */
-	if (zork_c1_retimer != C1_RETIMER_PS8802) {
-		usb_retimers[USBC_PORT_C1].i2c_addr_flags
-			= PS8818_I2C_ADDR_FLAGS;
-		rv = ps8818_usb_retimer.set(port, mux_state);
-		if (rv == EC_SUCCESS && zork_c1_retimer != C1_RETIMER_PS8818) {
-			zork_c1_retimer = C1_RETIMER_PS8818;
-			ccprints("C1 PS8818 detected");
-		}
+	usb_retimers[port].i2c_addr_flags = PS8818_I2C_ADDR_FLAGS;
+	rv = ps8818_detect(port);
+	if (rv == EC_SUCCESS) {
+		zork_c1_retimer = C1_RETIMER_PS8818;
+		ccprints("C1 PS8818 detected");
+
+		/* Main MUX is FP5, secondary MUX is PS8818 */
+		usb_muxes[USBC_PORT_C1].driver = &amd_fp5_usb_mux_driver;
+		usb_retimers[USBC_PORT_C1].driver = &ps8818_usb_retimer;
+		return rv;
 	}
 
-	if (zork_c1_retimer != C1_RETIMER_PS8818) {
-		usb_retimers[USBC_PORT_C1].i2c_addr_flags
-			= PS8802_I2C_ADDR_FLAGS;
-		rv = ps8802_usb_retimer.set(port, mux_state);
-		if (rv == EC_SUCCESS && zork_c1_retimer != C1_RETIMER_PS8802) {
-			zork_c1_retimer = C1_RETIMER_PS8802;
-			ccprints("C1 PS8802 detected");
-		}
+	usb_retimers[port].i2c_addr_flags = PS8802_I2C_ADDR_FLAGS;
+	rv = ps8802_detect(port);
+	if (rv == EC_SUCCESS) {
+		zork_c1_retimer = C1_RETIMER_PS8802;
+		ccprints("C1 PS8802 detected");
+
+		/* Main MUX is PS8802, secondary MUX is modified FP5 */
+		usb_muxes[USBC_PORT_C1].driver = &ps8802_usb_mux_driver;
+		usb_retimers[USBC_PORT_C1].driver = &zork_c1_usb_retimer;
 	}
 
 	return rv;
 }
 
-const struct usb_retimer_driver zork_c1_usb_retimer = {
-	.set = zork_c1_set_retimer_mux,
-};
+/*
+ * We start off not sure which configuration we are using.  We set
+ * the interface to be this special primary MUX driver in order to
+ * determine the actual hardware and then we patch the jump tables
+ * to go to the actual drivers instead.
+ */
+static int zork_c1_init_mux(int port)
+{
+	/* Try to detect, but don't give an error if no power */
+	return zork_c1_detect(port, 0);
+}
+
+static int zork_c1_set_mux(int port, mux_state_t mux_state)
+{
+	int rv;
+
+	/*
+	 * Try to detect, give an error if we are setting to a
+	 * MUX value that is not NONE when we have no power.
+	 */
+	rv = zork_c1_detect(port, mux_state != TYPEC_MUX_NONE);
+	if (rv)
+		return rv;
+
+	/*
+	 * If we detected the hardware, then call the real routine.
+	 * We only do this one time, after that time we will go direct
+	 * and avoid this special driver.
+	 */
+	if (zork_c1_retimer != C1_RETIMER_UNKNOWN)
+		rv = usb_muxes[port].driver->set(port, mux_state);
+
+	return rv;
+}
+
+static int zork_c1_get_mux(int port, mux_state_t *mux_state)
+{
+	int rv;
+
+	/* Try to detect the hardware */
+	rv = zork_c1_detect(port, 1);
+	if (rv) {
+		/*
+		 * Not powered is MUX_NONE, so change the values
+		 * and make it a good status
+		 */
+		if (rv == EC_ERROR_NOT_POWERED) {
+			*mux_state = TYPEC_MUX_NONE;
+			rv = EC_SUCCESS;
+		}
+		return rv;
+	}
+
+	/*
+	 * If we detected the hardware, then call the real routine.
+	 * We only do this one time, after that time we will go direct
+	 * and avoid this special driver.
+	 */
+	if (zork_c1_retimer != C1_RETIMER_UNKNOWN)
+		rv = usb_muxes[port].driver->get(port, mux_state);
+
+	return rv;
+}
 
 const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
 	[USBC_PORT_C0] = {
@@ -526,64 +622,6 @@ const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3dpx1207_controls) == USBC_PORT_COUNT);
-
-struct usb_retimer usb_retimers[] = {
-	[USBC_PORT_C0] = {
-		.driver = &pi3dpx1207_usb_retimer,
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = PI3DPX1207_I2C_ADDR_FLAGS,
-	},
-	[USBC_PORT_C1] = {
-		.driver = &zork_c1_usb_retimer,
-		.i2c_port = I2C_PORT_TCPC1,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(usb_retimers) == USBC_PORT_COUNT);
-
-/*****************************************************************************
- * Custom Zork USB-C1 MUX driver
- *
- * USB MUX is AMD FP5 for both ports.  The C1 port may not need
- * to do flip if this is a PS8802 retimer.  I will save the
- * polarity state so we can reproduce it on the mux_get
- */
-static mux_state_t zork_c1_saved_polarity_state = TYPEC_MUX_NONE;
-
-static int zork_c1_init_mux(int port)
-{
-	return amd_fp5_usb_mux_driver.init(port);
-}
-
-static int zork_c1_set_mux(int port, mux_state_t mux_state)
-{
-	/* If we have not detected the retimer yet, go do it */
-	if (zork_c1_retimer == C1_RETIMER_UNKNOWN) {
-		int rv;
-
-		rv = zork_c1_set_retimer_mux(port, TYPEC_MUX_NONE);
-		if (rv)
-			return rv;
-	}
-
-	/* PS8802 requires us not to flip in AMD_FP5 mux */
-	zork_c1_saved_polarity_state = TYPEC_MUX_NONE;
-	if (zork_c1_retimer == C1_RETIMER_PS8802) {
-		zork_c1_saved_polarity_state = MUX_POLARITY_INVERTED;
-		mux_state &= ~MUX_POLARITY_INVERTED;
-	}
-
-	return amd_fp5_usb_mux_driver.set(port, mux_state);
-}
-
-static int zork_c1_get_mux(int port, mux_state_t *mux_state)
-{
-	int rv;
-
-	rv = amd_fp5_usb_mux_driver.get(port, mux_state);
-	*mux_state |= zork_c1_saved_polarity_state;
-
-	return rv;
-}
 
 const struct usb_mux_driver zork_c1_usb_mux_driver = {
 	.init = zork_c1_init_mux,
@@ -596,6 +634,11 @@ struct usb_mux usb_muxes[] = {
 		.driver = &amd_fp5_usb_mux_driver,
 	},
 	[USBC_PORT_C1] = {
+		/*
+		 * This is the detection driver. Once the hardware
+		 * has been detected, the driver will change to the
+		 * detected hardware driver table.
+		 */
 		.driver = &zork_c1_usb_mux_driver,
 	},
 };

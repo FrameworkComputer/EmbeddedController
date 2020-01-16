@@ -18,4 +18,7 @@
 #define AMD_FP5_MUX_DP			0x0C
 #define AMD_FP5_MUX_DP_INVERTED		0x1C
 
+extern const struct usb_mux_driver amd_fp5_usb_mux_driver;
+extern const struct usb_retimer_driver amd_fp5_usb_retimer;
+
 #endif /* __CROS_EC_USB_MUX_AMD_FP5_H */

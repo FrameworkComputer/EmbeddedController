@@ -5,13 +5,21 @@
  * PS8818 retimer.
  */
 
-#include "ps8818.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "ioexpander.h"
+#include "ps8818.h"
 #include "usb_mux.h"
+
+static int ps8818_i2c_read(int port, int offset, int *data)
+{
+	return i2c_read8(usb_retimers[port].i2c_port,
+			 usb_retimers[port].i2c_addr_flags,
+			 offset, data);
+}
 
 static int ps8818_i2c_write(int port, int offset, int data)
 {
@@ -20,10 +28,26 @@ static int ps8818_i2c_write(int port, int offset, int data)
 			  offset, data);
 }
 
+int ps8818_detect(int port)
+{
+	int rv = EC_ERROR_NOT_POWERED;
+	int val;
+
+	/* Detected if we are powered and can read the device */
+	if (!chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		rv = ps8818_i2c_read(port, PS8818_REG_FLIP, &val);
+
+	return rv;
+}
+
 static int ps8818_set_mux(int port, mux_state_t mux_state)
 {
-	int val = 0;
 	int rv;
+	int val = 0;
+
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		return (mux_state == TYPEC_MUX_NONE) ? EC_SUCCESS
+						     : EC_ERROR_NOT_POWERED;
 
 	if (mux_state & MUX_USB_ENABLED)
 		val |= PS8818_MODE_USB_ENABLE;
