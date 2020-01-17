@@ -18,10 +18,10 @@ Development for other [EC]s is often done in a similar manner, but some of them
 have their own standalone development or evaluation kits that don't require the
 use of [servo].
 
-You will need an [FPMCU reference board](#fpmcu-board) and a
+You will need an [FPMCU reference board](#fpmcu-dev-board) and a
 [servo debugger](#servo).
 
-### FPMCU board
+### FPMCU board {#fpmcu-dev-board}
 
 The Fingerprint MCU (FPMCU) board has the MCU that handles all
 fingerprint-related functionality (matching, encryption, etc). The fingerprint
@@ -33,8 +33,14 @@ This FPMCU board is the Dragonclaw Rev 0.2. |
 
 
 *** note
+**Googlers**: You can pick up the Dragonclaw development board at Chromestop.
+**Partners**: You can request a Dragonclaw development board from Google.
+***
+
+*** note
 Dragonclaw Rev 0.2 needs a [rework](#dragonclaw-rev-0.2-rework) for the FPC
-sensor to work while being powered through Servo.
+sensor to work while being powered through Servo. All of the boards at Chromestop
+have already been reworked.
 ***
 
 This FPMCU board is the Dartmonkey Rev 0.1. |
@@ -78,26 +84,8 @@ For more information about Servo Micro, see [Servo Micro Info].
 
 #### Using SWD (Optional) {#servo-micro-swd}
 
-Dragonclaw v0.2 has a connector for SWD (`J4`), which can be used
-with a debug probe, such as the [Segger J-Link].
+Instructions for setup are described in [Fingerprint Debugging].
 
-*** note
-**NOTE**: Pay attention to the location of pin 1 (red wire) in the photos below
-so that you connect with the correct orientation.
-
-`SW2` on the bottom of Dragonclaw must be set to `CORESIGHT`.
-
-If you want to connect a 20-Pin ARM Standard JTAG Connector (0.10" / 2.54 mm),
-you can use the following [adapter][JTAG to SWD Adapter] and [cable][SWD Cable].
-***
-
-Dragonclaw v0.2 with 20-pin SWD (0.05" / 1.27mm) on J4. Only half the pins are connected. |
-------------------------------- |
-![Dragonclaw with 20-pin SWD]   |
-
-Dragonclaw v0.2 with 10-pin SWD (0.05" / 1.27mm) on J4. |
-------------------------------- |
-![Dragonclaw with 10-pin SWD]   |
 
 ### Servo V2 + Yoshi
 
@@ -540,9 +528,7 @@ https://crbug.com/992082.
 [Git and Gerrit Intro for Chromium OS]: https://chromium.googlesource.com/chromiumos/docs/+/master/git_and_gerrit_intro.md
 [Installing Chromium]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#installing-chromium-os-on-your-device
 [FPMCU documentation]: ./fingerprint.md
-[Segger J-Link]: https://www.segger.com/products/debug-probes/j-link/
-[JTAG to SWD Adapter]: https://www.adafruit.com/product/2094
-[SWD Cable]: https://www.adafruit.com/product/1675
+[Fingerprint Debugging]: ./fingerprint-debugging.md
 
 <!-- Images -->
 
@@ -560,8 +546,6 @@ https://crbug.com/992082.
 [Another image]: ../images/dragonclaw_yoshi_flex_header2.jpg
 [Connect SWD Debugger]: ../images/servo_v2_jtag_header.jpg
 [Dartmonkey board]: ../images/dartmonkey.jpg
-[Dragonclaw with 20-pin SWD]: ../images/dragonclaw_with_20_pin_swd.jpg
-[Dragonclaw with 10-pin SWD]: ../images/dragonclaw_with_10_pin_swd.jpg
 
 <!-- If you make changes to the docs below make sure to regenerate the JPEGs by
      appending "export/pdf" to the Google Drive link. -->
