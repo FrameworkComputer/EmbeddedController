@@ -30,7 +30,7 @@
 #else
 #define PD_PORT_TO_TASK_ID(port) -1 /* dummy task ID */
 #define TASK_ID_TO_PD_PORT(id) 0
-#endif /* CONFIG_COMMON_RUNTIME */
+#endif /* HAS_TASK_PD_C0 */
 #endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
 
 enum pd_rx_errors {
@@ -286,6 +286,12 @@ extern const struct svdm_response svdm_rsp;
 /* All DFP_U should have */
 extern const struct svdm_amode_fx supported_modes[];
 extern const int supported_modes_cnt;
+
+/* 4 entry rw_hash table of type-C devices that AP has firmware updates for. */
+#ifdef CONFIG_COMMON_RUNTIME
+#define RW_HASH_ENTRIES 4
+extern struct ec_params_usb_pd_rw_hash_entry rw_hash_table[RW_HASH_ENTRIES];
+#endif /* CONFIG_COMMON_RUNTIME */
 
 /*
  * defined in common/usb_common.c

@@ -297,14 +297,6 @@ static const char * const pd_state_names[] = {
 BUILD_ASSERT(ARRAY_SIZE(pd_state_names) == PD_STATE_COUNT);
 #endif
 
-/*
- * 4 entry rw_hash table of type-C devices that AP has firmware updates for.
- */
-#ifdef CONFIG_COMMON_RUNTIME
-#define RW_HASH_ENTRIES 4
-static struct ec_params_usb_pd_rw_hash_entry rw_hash_table[RW_HASH_ENTRIES];
-#endif
-
 int pd_comm_is_enabled(int port)
 {
 #ifdef CONFIG_COMMON_RUNTIME
@@ -5592,39 +5584,6 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
 		     hc_remote_flash,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_HOSTCMD_FLASHPD */
-
-#ifdef CONFIG_HOSTCMD_RWHASHPD
-static enum ec_status
-hc_remote_rw_hash_entry(struct host_cmd_handler_args *args)
-{
-	int i, idx = 0, found = 0;
-	const struct ec_params_usb_pd_rw_hash_entry *p = args->params;
-	static int rw_hash_next_idx;
-
-	if (!p->dev_id)
-		return EC_RES_INVALID_PARAM;
-
-	for (i = 0; i < RW_HASH_ENTRIES; i++) {
-		if (p->dev_id == rw_hash_table[i].dev_id) {
-			idx = i;
-			found = 1;
-			break;
-		}
-	}
-	if (!found) {
-		idx = rw_hash_next_idx;
-		rw_hash_next_idx = rw_hash_next_idx + 1;
-		if (rw_hash_next_idx == RW_HASH_ENTRIES)
-			rw_hash_next_idx = 0;
-	}
-	memcpy(&rw_hash_table[idx], p, sizeof(*p));
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_RW_HASH_ENTRY,
-		     hc_remote_rw_hash_entry,
-		     EC_VER_MASK(0));
-#endif /* CONFIG_HOSTCMD_RWHASHPD */
 
 static enum ec_status hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
 {
