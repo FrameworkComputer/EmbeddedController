@@ -453,6 +453,13 @@ int FLASH_DMA_CODE flash_physical_write(int offset, int size, const char *data)
 
 	dma_flash_write(offset, size, data);
 	dma_reset_immu((offset + size) >= IMMU_TAG_INDEX_BY_DEFAULT);
+	/*
+	 * Internal flash of N8 or RISC-V core is ILM(Instruction Local Memory)
+	 * mapped, but RISC-V's ILM base address is 0x80000000.
+	 *
+	 * Ensure that we will get the ILM address of a flash offset.
+	 */
+	offset |= CONFIG_MAPPED_STORAGE_BASE;
 	ret = dma_flash_verify(offset, size, data);
 
 	interrupt_enable();
@@ -491,6 +498,8 @@ int FLASH_DMA_CODE flash_physical_erase(int offset, int size)
 		offset += FLASH_SECTOR_ERASE_SIZE;
 	}
 	dma_reset_immu((v_addr + v_size) >= IMMU_TAG_INDEX_BY_DEFAULT);
+	/* get the ILM address of a flash offset. */
+	v_addr |= CONFIG_MAPPED_STORAGE_BASE;
 	ret = dma_flash_verify(v_addr, v_size, NULL);
 
 	interrupt_enable();
