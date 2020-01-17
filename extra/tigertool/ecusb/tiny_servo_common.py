@@ -115,7 +115,7 @@ def do_serialno(serialno, pty):
     ptyError: on command interface error.
   """
   cmd = 'serialno set %s' % serialno
-  regex = 'Serial number: (.*)$'
+  regex = 'Serial number:\s+(\S+)'
 
   results = pty._issue_cmd_get_results(cmd, [regex])[0]
   sn = results[1].strip().strip('\n\r')
