@@ -25,6 +25,8 @@ const struct svdm_response svdm_rsp = {
 	.modes = NULL,
 };
 
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT];
+
 int board_vbus_source_enabled(int port)
 {
 	return 0;

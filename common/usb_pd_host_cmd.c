@@ -9,7 +9,9 @@
 
 #include "ec_commands.h"
 #include "host_command.h"
+#include "tcpm.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
 struct ec_params_usb_pd_rw_hash_entry rw_hash_table[RW_HASH_ENTRIES];
@@ -63,5 +65,36 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_RW_HASH_ENTRY,
 		     hc_remote_rw_hash_entry,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_HOSTCMD_RWHASHPD */
+
+#ifndef CONFIG_USB_PD_TCPC
+#ifdef CONFIG_EC_CMD_PD_CHIP_INFO
+static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_pd_chip_info *p = args->params;
+	struct ec_response_pd_chip_info_v1 *info;
+
+	if (p->port >= board_get_usb_pd_port_count())
+		return EC_RES_INVALID_PARAM;
+
+	if (tcpm_get_chip_info(p->port, p->live, &info))
+		return EC_RES_ERROR;
+
+	/*
+	 * Take advantage of the fact that v0 and v1 structs have the
+	 * same layout for v0 data. (v1 just appends data)
+	 */
+	args->response_size =
+		args->version ? sizeof(struct ec_response_pd_chip_info_v1)
+			      : sizeof(struct ec_response_pd_chip_info);
+
+	memcpy(args->response, info, args->response_size);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PD_CHIP_INFO,
+		     hc_remote_pd_chip_info,
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
+#endif /* CONFIG_EC_CMD_PD_CHIP_INFO */
+#endif /* CONFIG_USB_PD_TCPC */
 
 #endif /* HAS_TASK_HOSTCMD */
