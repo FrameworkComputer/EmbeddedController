@@ -105,6 +105,13 @@
 /* Even bigger */
 #define VENTI_TASK_STACK_SIZE 768
 
+/*
+ * Console stack size. For test builds, the console is used to interact with
+ * the test, and insufficient stack size causes console stack overflow after
+ * running the on-device tests.
+ */
+#define CONSOLE_TASK_STACK_SIZE 4096
+
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS 500
 #define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
