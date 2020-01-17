@@ -548,7 +548,56 @@ struct cached_tcpm_message {
 	uint32_t payload[7];
 };
 
-int tcpci_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
+static int tcpci_v2_0_tcpm_get_message_raw(int port, uint32_t *payload,
+					    int *head)
+{
+	int rv = 0, cnt, reg = TCPC_REG_RX_BUFFER;
+	int frm;
+	uint8_t tmp[2];
+	/*
+	 * Register 0x30 is Readable Byte Count, Buffer frame type, and RX buf
+	 * byte X.
+	 */
+	tcpc_lock(port, 1);
+	rv = tcpc_xfer_unlocked(port, (uint8_t *)&reg, 1, tmp, 2,
+				I2C_XFER_START);
+	if (rv) {
+		rv = EC_ERROR_UNKNOWN;
+		goto clear;
+	}
+	cnt = tmp[0];
+	frm = tmp[1];
+
+	/* READABLE_BYTE_COUNT includes 3 bytes for frame type and header */
+	cnt -= 3;
+	if (cnt > member_size(struct cached_tcpm_message, payload)) {
+		rv = EC_ERROR_UNKNOWN;
+		goto clear;
+	}
+
+	/* The next two bytes are the header */
+	rv = tcpc_xfer_unlocked(port, NULL, 0, (uint8_t *)head, 2,
+				cnt ? 0 : I2C_XFER_STOP);
+
+	/* Encode message address in bits 31 to 28 */
+	*head &= 0x0000ffff;
+	*head |= PD_HEADER_SOP(frm & 7);
+
+	if (rv == EC_SUCCESS && cnt > 0) {
+		tcpc_xfer_unlocked(port, NULL, 0, (uint8_t *)payload, cnt,
+				   I2C_XFER_STOP);
+	}
+
+clear:
+	tcpc_lock(port, 0);
+	/* Read complete, clear RX status alert bit */
+	tcpc_write16(port, TCPC_REG_ALERT, TCPC_REG_ALERT_RX_STATUS);
+
+	return rv;
+}
+
+static int tcpci_v1_0_tcpm_get_message_raw(int port, uint32_t *payload,
+					   int *head)
 {
 	int rv, cnt, reg = TCPC_REG_RX_DATA;
 #ifdef CONFIG_USB_PD_DECODE_SOP
@@ -592,6 +641,14 @@ clear:
 	tcpc_write16(port, TCPC_REG_ALERT, TCPC_REG_ALERT_RX_STATUS);
 
 	return rv;
+}
+
+int tcpci_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
+{
+	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_V2_0)
+		return tcpci_v2_0_tcpm_get_message_raw(port, payload, head);
+
+	return tcpci_v1_0_tcpm_get_message_raw(port, payload, head);
 }
 
 /* Cache depth needs to be power of 2 */
@@ -697,22 +754,49 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 			TCPC_REG_TRANSMIT_SET_WITHOUT_RETRY(type));
 	}
 
-	/* TX_BYTE_CNT includes extra bytes for message header */
-	rv = tcpc_write(port, TCPC_REG_TX_BYTE_CNT, cnt + sizeof(header));
+	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_V2_0) {
+		/*
+		 * In TCPCI v2.0, TX_BYTE_CNT and TX_BUF_BYTE_X are the same
+		 * register.
+		 */
+		reg = TCPC_REG_TX_BUFFER;
+		/* TX_BYTE_CNT includes extra bytes for message header */
+		cnt += sizeof(header);
+		tcpc_lock(port, 1);
+		rv = tcpc_xfer_unlocked(port, (uint8_t *)&reg, 1, NULL, 0,
+					I2C_XFER_START);
+		rv |= tcpc_xfer_unlocked(port, (uint8_t *)&cnt, 1, NULL, 0, 0);
+		rv |= tcpc_xfer_unlocked(port, (uint8_t *)&header,
+					 sizeof(header), NULL, 0, 0);
+		rv |= tcpc_xfer_unlocked(port, (uint8_t *)data,
+					 cnt-sizeof(header), NULL, 0,
+					 I2C_XFER_STOP);
+		tcpc_lock(port, 0);
 
-	rv |= tcpc_write16(port, TCPC_REG_TX_HDR, header);
-
-	/* If tcpc read fails, return error */
-	if (rv)
-		return rv;
-
-	if (cnt > 0) {
-		rv = tcpc_write_block(port, reg, (const uint8_t *)data, cnt);
-
-		/* If tcpc read fails, return error */
+		/* If tcpc write fails, return error */
 		if (rv)
 			return rv;
+	} else {
+		/* TX_BYTE_CNT includes extra bytes for message header */
+		rv = tcpc_write(port, TCPC_REG_TX_BYTE_CNT,
+				cnt + sizeof(header));
+
+		rv |= tcpc_write16(port, TCPC_REG_TX_HDR, header);
+
+		/* If tcpc write fails, return error */
+		if (rv)
+			return rv;
+
+		if (cnt > 0) {
+			rv = tcpc_write_block(port, reg, (const uint8_t *)data,
+					      cnt);
+
+			/* If tcpc write fails, return error */
+			if (rv)
+				return rv;
+		}
 	}
+
 
 	/*
 	 * On receiving a received message on SOP, protocol layer
@@ -969,6 +1053,7 @@ int tcpci_tcpm_init(int port)
 	int error;
 	int power_status;
 	int tries = TCPM_INIT_TRIES;
+	int regval;
 
 	/* Start with an unknown connection */
 	tcpci_set_cached_pull(port, TYPEC_CC_OPEN);
@@ -988,6 +1073,19 @@ int tcpci_tcpm_init(int port)
 		if (--tries <= 0)
 			return error ? error : EC_ERROR_TIMEOUT;
 		msleep(10);
+	}
+
+	/*
+	 * For TCPCI Rev 2.0, unless the TCPM sets
+	 * TCPC_CONTROL.EnableLooking4ConnectionAlert bit, TCPC by default masks
+	 * Alert assertion when CC_STATUS.Looking4Connection changes state.
+	 */
+	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_V2_0) {
+		error = tcpc_read(port, TCPC_REG_TCPC_CTRL, &regval);
+		regval |= TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT;
+		error |= tcpc_write(port, TCPC_REG_TCPC_CTRL, regval);
+		if (error)
+			CPRINTS("C%d: Failed to init TCPC_CTRL!", port);
 	}
 
 	tcpc_write16(port, TCPC_REG_ALERT, 0xffff);

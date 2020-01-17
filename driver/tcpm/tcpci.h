@@ -56,6 +56,11 @@
 #define TCPC_REG_TCPC_CTRL         0x19
 #define TCPC_REG_TCPC_CTRL_SET(polarity) (polarity)
 #define TCPC_REG_TCPC_CTRL_POLARITY(reg) ((reg) & 0x1)
+/*
+ * In TCPCI Rev 2.0, this bit must be set this to generate CC status alerts when
+ * a connection is found.
+ */
+#define TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT  (BIT(6))
 
 #define TCPC_REG_ROLE_CTRL         0x1a
 #define TCPC_REG_ROLE_CTRL_DRP_MASK                    BIT(6)
@@ -151,11 +156,19 @@
 #define TCPC_REG_RX_DETECT         0x2f
 #define TCPC_REG_RX_DETECT_SOP_HRST_MASK 0x21
 #define TCPC_REG_RX_DETECT_SOP_SOPP_SOPPP_HRST_MASK 0x27
+
+/* TCPCI Rev 1.0 receive registers */
 #define TCPC_REG_RX_BYTE_CNT       0x30
 #define TCPC_REG_RX_BUF_FRAME_TYPE 0x31
-
 #define TCPC_REG_RX_HDR            0x32
 #define TCPC_REG_RX_DATA           0x34 /* through 0x4f */
+
+/*
+ * In TCPCI Rev 2.0, the RECEIVE_BUFFER is comprised of three sets of registers:
+ * READABLE_BYTE_COUNT, RX_BUF_FRAME_TYPE and RX_BUF_BYTE_x. These registers can
+ * only be accessed by reading at a common register address 30h.
+ */
+#define TCPC_REG_RX_BUFFER         0x30
 
 #define TCPC_REG_TRANSMIT          0x50
 #define TCPC_REG_TRANSMIT_SET_WITH_RETRY(type) \
@@ -164,9 +177,18 @@
 #define TCPC_REG_TRANSMIT_RETRY(reg) (((reg) & 0x30) >> 4)
 #define TCPC_REG_TRANSMIT_TYPE(reg)  ((reg) & 0x7)
 
+/* TCPCI Rev 1.0 transmit registers */
 #define TCPC_REG_TX_BYTE_CNT       0x51
 #define TCPC_REG_TX_HDR            0x52
 #define TCPC_REG_TX_DATA           0x54 /* through 0x6f */
+
+/*
+ * In TCPCI Rev 2.0, the TRANSMIT_BUFFER holds the I2C_WRITE_BYTE_COUNT and the
+ * portion of the SOP* USB PD message payload (including the header and/or the
+ * data bytes) most recently written by the TCPM in TX_BUF_BYTE_x. TX_BUF_BYTE_x
+ * is “hidden” and can only be accessed by writing to register address 51h
+ */
+#define TCPC_REG_TX_BUFFER         0x51
 
 #define TCPC_REG_VBUS_VOLTAGE                0x70
 #define TCPC_REG_VBUS_SINK_DISCONNECT_THRESH 0x72

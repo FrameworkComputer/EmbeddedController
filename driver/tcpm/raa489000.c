@@ -95,9 +95,12 @@ int raa489000_init(int port)
 	if (rv)
 		CPRINTS("c%d: failed to set PD PHY PARAM1", port);
 
-	/* Enable TCPCIv1.0 */
+	/* Enable the correct TCPCI interface version */
 	rv = tcpc_read16(port, RAA489000_TCPC_SETTING1, &regval);
-	regval |= RAA489000_TCPCV1_0_EN;
+	if (!(tcpc_config[port].flags & TCPC_FLAGS_TCPCI_V2_0))
+		regval |= RAA489000_TCPCV1_0_EN;
+	else
+		regval &= ~RAA489000_TCPCV1_0_EN;
 	rv = tcpc_write16(port, RAA489000_TCPC_SETTING1, regval);
 	if (rv)
 		CPRINTS("c%d: failed to set TCPCIv1.0 mode", port);
