@@ -4479,7 +4479,7 @@ static const struct {
 		sizeof(struct ec_response_motion_sensor_data) *
 		ECTOOL_MAX_SENSOR
 	},
-	ST_BOTH_SIZES(info_3),
+	{ ST_PRM_SIZE(info_3), ST_RSP_SIZE(info_4) },
 	ST_BOTH_SIZES(ec_rate),
 	ST_BOTH_SIZES(sensor_odr),
 	ST_BOTH_SIZES(sensor_range),
