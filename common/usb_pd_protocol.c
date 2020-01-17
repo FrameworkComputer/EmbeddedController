@@ -2316,6 +2316,15 @@ int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 	return 0;
 }
 
+void pd_dev_get_rw_hash(int port, uint16_t *dev_id, uint8_t *rw_hash,
+			 uint32_t *current_image)
+{
+	*dev_id = pd[port].dev_id;
+	*current_image = pd[port].current_image;
+	if (*dev_id)
+		memcpy(rw_hash, pd[port].dev_rw_hash, PD_RW_HASH_SIZE);
+}
+
 #if defined(CONFIG_POWER_COMMON) || defined(CONFIG_USB_PD_ALT_MODE_DFP)
 static void exit_dp_mode(int port)
 {
@@ -5584,30 +5593,6 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
 		     hc_remote_flash,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_HOSTCMD_FLASHPD */
-
-static enum ec_status hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
-{
-	const uint8_t *port = args->params;
-	struct ec_params_usb_pd_rw_hash_entry *r = args->response;
-
-	if (*port >= board_get_usb_pd_port_count())
-		return EC_RES_INVALID_PARAM;
-
-	r->dev_id = pd[*port].dev_id;
-
-	if (r->dev_id) {
-		memcpy(r->dev_rw_hash, pd[*port].dev_rw_hash,
-		       PD_RW_HASH_SIZE);
-	}
-
-	r->current_image = pd[*port].current_image;
-
-	args->response_size = sizeof(*r);
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DEV_INFO,
-		     hc_remote_pd_dev_info,
-		     EC_VER_MASK(0));
 
 #endif /* HAS_TASK_HOSTCMD */
 

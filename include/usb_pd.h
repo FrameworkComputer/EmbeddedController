@@ -1673,6 +1673,17 @@ int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 			 uint32_t ec_current_image);
 
 /**
+ * Get Device ID & RW hash of device
+ *
+ * @param port			USB-C port number
+ * @param dev_id		pointer to device identifier
+ * @param rw_hash		pointer to rw_hash
+ * @param current_image		pointer to current image: RW or RO
+ */
+void pd_dev_get_rw_hash(int port, uint16_t *dev_id, uint8_t *rw_hash,
+			uint32_t *current_image);
+
+/**
  * Fast Role Swap was detected
  *
  * @param port			USB-C port number
