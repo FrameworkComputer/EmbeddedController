@@ -30,7 +30,7 @@ void board_update_sensor_config_from_sku(void)
 	 * If the CBI EEPROM is found on the battery I2C port then we are
 	 * running on V0 HW so re-map the GPIOs that moved.
 	 */
-	if ((system_get_sku_id() == 0)
+	if ((system_get_sku_id() == 0x7fffffff)
 	    && (i2c_read8(I2C_PORT_BATTERY, I2C_ADDR_EEPROM_FLAGS, 0, &data)
 		== EC_SUCCESS)) {
 		ccprints("V0 HW detected");
