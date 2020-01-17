@@ -1400,39 +1400,6 @@ void pd_notify_dp_alt_mode_entry(void)
 }
 #endif /* CONFIG_HOSTCMD_EVENTS */
 
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_usb_pd_set_mode_request *p = args->params;
-
-	if ((p->port >= board_get_usb_pd_port_count()) ||
-	    (!p->svid) || (!p->opos))
-		return EC_RES_INVALID_PARAM;
-
-	switch (p->cmd) {
-	case PD_EXIT_MODE:
-		if (pd_dfp_exit_mode(p->port, p->svid, p->opos))
-			pd_send_vdm(p->port, p->svid,
-			CMD_EXIT_MODE | VDO_OPOS(p->opos), NULL, 0);
-		else {
-			CPRINTF("Failed exit mode\n");
-			return EC_RES_ERROR;
-		}
-		break;
-	case PD_ENTER_MODE:
-		if (pd_dfp_enter_mode(p->port, p->svid, p->opos))
-			pd_send_vdm(p->port, p->svid, CMD_ENTER_MODE |
-				VDO_OPOS(p->opos), NULL, 0);
-		break;
-	default:
-		return EC_RES_INVALID_PARAM;
-	}
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE,
-		hc_remote_pd_set_amode,
-		EC_VER_MASK(0));
-#endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 #endif /* HAS_TASK_HOSTCMD */
 
 #if defined(CONFIG_USB_PD_ALT_MODE) && !defined(CONFIG_USB_PD_ALT_MODE_DFP)

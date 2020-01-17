@@ -7,6 +7,7 @@
 
 #include <string.h>
 
+#include "console.h"
 #include "ec_commands.h"
 #include "host_command.h"
 #include "tcpm.h"
@@ -15,6 +16,12 @@
 
 #ifdef CONFIG_COMMON_RUNTIME
 struct ec_params_usb_pd_rw_hash_entry rw_hash_table[RW_HASH_ENTRIES];
+
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#else /* CONFIG_COMMON_RUNTIME */
+#define CPRINTF(format, args...)
+#define CPRINTS(format, args...)
 #endif /* CONFIG_COMMON_RUNTIME */
 
 #ifdef HAS_TASK_HOSTCMD
@@ -96,5 +103,39 @@ DECLARE_HOST_COMMAND(EC_CMD_PD_CHIP_INFO,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 #endif /* CONFIG_EC_CMD_PD_CHIP_INFO */
 #endif /* CONFIG_USB_PD_TCPC */
+
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_pd_set_mode_request *p = args->params;
+
+	if ((p->port >= board_get_usb_pd_port_count()) ||
+	    (!p->svid) || (!p->opos))
+		return EC_RES_INVALID_PARAM;
+
+	switch (p->cmd) {
+	case PD_EXIT_MODE:
+		if (pd_dfp_exit_mode(p->port, p->svid, p->opos))
+			pd_send_vdm(p->port, p->svid,
+				    CMD_EXIT_MODE | VDO_OPOS(p->opos), NULL, 0);
+		else {
+			CPRINTF("Failed exit mode\n");
+			return EC_RES_ERROR;
+		}
+		break;
+	case PD_ENTER_MODE:
+		if (pd_dfp_enter_mode(p->port, p->svid, p->opos))
+			pd_send_vdm(p->port, p->svid, CMD_ENTER_MODE |
+				    VDO_OPOS(p->opos), NULL, 0);
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE,
+		     hc_remote_pd_set_amode,
+		     EC_VER_MASK(0));
+#endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 
 #endif /* HAS_TASK_HOSTCMD */
