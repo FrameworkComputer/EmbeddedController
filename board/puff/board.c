@@ -77,17 +77,15 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
+/* Called when the charge manager has switched to a new port. */
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
-}
-
-int charge_set_input_current_limit(int ma, int mv)
-{
-	return EC_SUCCESS;
+	/* Blink alert if insufficient power per system_can_boot_ap(). */
+	int insufficient_power =
+		(charge_ma * charge_mv) <
+		(CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON * 1000);
+	led_alert(insufficient_power);
 }
 
 #include "port-sm.c"
