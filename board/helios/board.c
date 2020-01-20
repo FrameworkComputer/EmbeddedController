@@ -398,7 +398,14 @@ void board_overcurrent_event(int port, int is_overcurrented)
 
 int board_tcpc_post_init(int port)
 {
-	return port == USB_PD_PORT_TCPC_1 ?
-		tcpc_write(port, PS8XXX_REG_MUX_USB_C2SS_HS_THRESHOLD, 0x80) :
-		EC_SUCCESS;
+	int rv = EC_SUCCESS;
+
+	if (port == USB_PD_PORT_TCPC_0)
+		/* Set MUX_DP_EQ to 3.6dB (0x98) */
+		rv = tcpc_write(port, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
+	else if (port == USB_PD_PORT_TCPC_1)
+		rv = tcpc_write(port,
+				PS8XXX_REG_MUX_USB_C2SS_HS_THRESHOLD, 0x80);
+
+	return rv;
 }
