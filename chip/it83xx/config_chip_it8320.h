@@ -40,6 +40,8 @@
  * of the control register (bit1 and bit5 at register IT83XX_USBPD_CCCSR).
  */
 #define IT83XX_USBPD_CC_VOLTAGE_DETECTOR_INDEPENDENT
+/* Chip IT8320BX actually has TCPC physical port count */
+#define IT83XX_USBPD_PHY_PORT_COUNT    2
 /* For IT8320BX, we have to write 0xff to clear pending bit.*/
 #define IT83XX_ESPI_VWCTRL1_WRITE_FF_CLEAR
 /* For IT8320BX, we have to read observation register of external timer two
@@ -83,6 +85,8 @@
 #define IT83XX_INTC_PLUG_IN_SUPPORT
 /* Chip Dx transmit status bit of PD register is different from Bx. */
 #define IT83XX_PD_TX_ERROR_STATUS_BIT5
+/* Chip IT8320DX actually has TCPC physical port count */
+#define IT83XX_USBPD_PHY_PORT_COUNT    2
 #else
 #error "Unsupported chip variant!"
 #endif

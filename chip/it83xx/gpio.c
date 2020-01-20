@@ -644,7 +644,7 @@ void gpio_pre_init(void)
 
 #ifndef CONFIG_USB_PD_TCPM_ITE83XX
 	/* To prevent cc pins leakage if we don't use pd module */
-	for (i = 0; i < USBPD_PORT_COUNT; i++) {
+	for (i = 0; i < IT83XX_USBPD_PHY_PORT_COUNT; i++) {
 		IT83XX_USBPD_CCGCR(i) = 0x1f;
 		/*
 		 * bit7 and bit3: Dis-connect CC with UP/RD/DET/TX/RX.

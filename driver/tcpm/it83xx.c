@@ -35,7 +35,7 @@ const struct usbpd_ctrl_t usbpd_ctrl_regs[] = {
 	{&IT83XX_GPIO_GPCRF4, &IT83XX_GPIO_GPCRF5, IT83XX_IRQ_USBPD0},
 	{&IT83XX_GPIO_GPCRH1, &IT83XX_GPIO_GPCRH2, IT83XX_IRQ_USBPD1},
 };
-BUILD_ASSERT(ARRAY_SIZE(usbpd_ctrl_regs) == USBPD_PORT_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(usbpd_ctrl_regs) == IT83XX_USBPD_PHY_PORT_COUNT);
 
 /*
  * This function disables integrated pd module and enables 5.1K resistor for

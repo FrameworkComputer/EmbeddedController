@@ -1547,7 +1547,6 @@ enum i2c_channels {
 enum usbpd_port {
 	USBPD_PORT_A,
 	USBPD_PORT_B,
-	USBPD_PORT_COUNT,
 };
 
 #define USB_VID_ITE 0x048d

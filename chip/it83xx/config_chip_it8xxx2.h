@@ -57,6 +57,8 @@
 #define IT83XX_GPIO_INT_FLEXIBLE
 /* Enable detect type-c plug in interrupt. */
 #define IT83XX_INTC_PLUG_IN_SUPPORT
+/* Chip IT83202BX actually has TCPC physical port count. */
+#define IT83XX_USBPD_PHY_PORT_COUNT    3
 #else
 #error "Unsupported chip variant!"
 #endif

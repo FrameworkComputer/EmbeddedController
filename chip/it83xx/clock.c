@@ -495,7 +495,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	 * Disable integrated pd modules in hibernate for
 	 * better power consumption.
 	 */
-	for (i = 0; i < USBPD_PORT_COUNT; i++)
+	for (i = 0; i < IT83XX_USBPD_PHY_PORT_COUNT; i++)
 		it83xx_disable_pd_module(i);
 #endif
 
