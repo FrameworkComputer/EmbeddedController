@@ -16,8 +16,12 @@
 
 static uint8_t last_val[(IOEX_COUNT + 7) / 8];
 
-static int last_val_changed(int i, int v)
+static int last_val_changed(enum ioex_signal signal, int v)
 {
+	const int i = signal - IOEX_SIGNAL_START;
+
+	ASSERT(signal_is_ioex(signal));
+
 	if (v && !(last_val[i / 8] & (BIT(i % 8)))) {
 		last_val[i / 8] |= BIT(i % 8);
 		return 1;
