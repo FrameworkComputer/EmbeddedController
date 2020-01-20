@@ -394,7 +394,13 @@ const unsigned int ina3221_count = ARRAY_SIZE(ina3221);
 
 static void board_init(void)
 {
+	uint8_t *memmap_batt_flags;
+
 	update_port_limits();
+
+	/* Always claim AC is online, because we don't have a battery. */
+	memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
+	*memmap_batt_flags |= EC_BATT_FLAG_AC_PRESENT;
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -509,4 +515,9 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_MAX_COUNT))
 		return;
 	usbc_overcurrent = is_overcurrented;
+}
+
+int extpower_is_present(void)
+{
+	return adp_connected;
 }
