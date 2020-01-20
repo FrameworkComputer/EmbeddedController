@@ -140,12 +140,10 @@
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #define CONFIG_INA3221
 
-/* TODO: (b/143501304) Use correct PD delay values */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000	/* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	250000	/* us */
 #define PD_VCONN_SWAP_DELAY		5000	/* us */
 
-/* TODO: (b/143501304) Use correct PD power values */
 #define PD_OPERATING_POWER_MW	30000
 #define PD_MAX_POWER_MW		100000
 #define PD_MAX_CURRENT_MA	5000
