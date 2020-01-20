@@ -54,19 +54,10 @@ driver-$(CONFIG_BATTERY_MM8013)+=battery/mm8013.o
 
 # Battery charger ICs
 driver-$(CONFIG_CHARGER_BD9995X)+=charger/bd9995x.o
-driver-$(CONFIG_CHARGER_BQ24192)+=charger/bq24192.o
-driver-$(CONFIG_CHARGER_BQ24707A)+=charger/bq24707a.o
 driver-$(CONFIG_CHARGER_BQ24715)+=charger/bq24715.o
-driver-$(CONFIG_CHARGER_BQ24725)+=charger/bq24725.o
-driver-$(CONFIG_CHARGER_BQ24735)+=charger/bq24735.o
-driver-$(CONFIG_CHARGER_BQ24738)+=charger/bq24738.o
 driver-$(CONFIG_CHARGER_BQ24770)+=charger/bq24773.o
 driver-$(CONFIG_CHARGER_BQ24773)+=charger/bq24773.o
-driver-$(CONFIG_CHARGER_BQ25703)+=charger/bq25703.o
 driver-$(CONFIG_CHARGER_BQ25710)+=charger/bq25710.o
-driver-$(CONFIG_CHARGER_BQ25890)+=charger/bq2589x.o
-driver-$(CONFIG_CHARGER_BQ25892)+=charger/bq2589x.o
-driver-$(CONFIG_CHARGER_BQ25895)+=charger/bq2589x.o
 driver-$(CONFIG_CHARGER_ISL9237)+=charger/isl923x.o
 driver-$(CONFIG_CHARGER_ISL9238)+=charger/isl923x.o
 driver-$(CONFIG_CHARGER_ISL9241)+=charger/isl9241.o

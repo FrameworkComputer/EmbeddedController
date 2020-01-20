@@ -777,18 +777,10 @@
 
 /* Compile charger-specific code for these chargers (pick at most one) */
 #undef CONFIG_CHARGER_BD9995X
-#undef CONFIG_CHARGER_BQ24707A
 #undef CONFIG_CHARGER_BQ24715
-#undef CONFIG_CHARGER_BQ24725
-#undef CONFIG_CHARGER_BQ24735
-#undef CONFIG_CHARGER_BQ24738
 #undef CONFIG_CHARGER_BQ24770
 #undef CONFIG_CHARGER_BQ24773
-#undef CONFIG_CHARGER_BQ25703
 #undef CONFIG_CHARGER_BQ25710
-#undef CONFIG_CHARGER_BQ25890
-#undef CONFIG_CHARGER_BQ25892
-#undef CONFIG_CHARGER_BQ25895
 #undef CONFIG_CHARGER_ISL9237
 #undef CONFIG_CHARGER_ISL9238
 #undef CONFIG_CHARGER_ISL9241
@@ -829,19 +821,6 @@
 #undef CONFIG_CHARGER_BATTERY_TSENSE
 
 /*
- * BQ2589x IR Compensation settings.
- * Should be the combination of BQ2589X_IR_TREG_xxxC, BQ2589X_IR_VCLAMP_yyyMV
- * and  BQ2589X_IR_BAT_COMP_zzzMOHM.
- */
-#undef CONFIG_CHARGER_BQ2589X_IR_COMP
-/*
- * BQ2589x 5V boost current limit and voltage.
- * Should be the combination of BQ2589X_BOOSTV_MV(voltage) and
- * BQ2589X_BOOST_LIM_xxxMA.
- */
-#undef CONFIG_CHARGER_BQ2589X_BOOST
-
-/*
  * Board specific charging current limit, in mA.  If defined, the charge state
  * machine will not allow the battery to request more current than this.
  */
@@ -872,16 +851,6 @@
  * or via charger_get_system_power function.
  */
 #undef CONFIG_CHARGER_PSYS_READ
-
-/*
- * Board specific charging current termination limit, in mA.  If defined and
- * charger supports setting termination current it should be set during charger
- * init.
- *
- * TODO(tbroch): Only valid for bq2589x currently.  Configure defaults for other
- * charger ICs that support termination currents.
- */
-#undef CONFIG_CHARGER_TERM_CURRENT_LIMIT
 
 /*
  * Board supports discharge mode.  In this mode, the battery will discharge
