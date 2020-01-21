@@ -594,6 +594,13 @@ static int rt946x_init_setting(int chgnum)
 	const struct battery_info *batt_info = battery_get_info();
 	const struct rt946x_init_setting *setting = board_rt946x_init_setting();
 
+#ifdef CONFIG_BATTERY_SMART
+	/* Disable EOC */
+	rv = rt946x_enable_charge_eoc(0);
+	if (rv)
+		return rv;
+#endif
+
 #ifdef CONFIG_CHARGER_OTG
 	/*  Disable boost-mode output voltage */
 	rv = rt946x_enable_otg_power(chgnum, 0);

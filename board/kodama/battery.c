@@ -158,36 +158,8 @@ __override void board_battery_compensate_params(struct batt_params *batt)
 int charger_profile_override(struct charge_state_data *curr)
 {
 	const struct battery_info *batt_info = battery_get_info();
-	static int normal_charge_lock, over_discharge_lock;
 	/* battery temp in 0.1 deg C */
 	int bat_temp_c = curr->batt.temperature - 2731;
-
-	/*
-	 * SMP battery uses HW pre-charge circuit and pre-charge current is
-	 * limited to ~50mA. Once the charge current is lower than IEOC level
-	 * within CHG_TEDG_EOC, and TE is enabled, the charging power path will
-	 * be turned off. Disable EOC and TE when battery stays over discharge
-	 * state, otherwise enable EOC and TE.
-	 */
-	if (!(curr->batt.flags & BATT_FLAG_BAD_VOLTAGE)) {
-		if (curr->batt.voltage < batt_info->voltage_min) {
-			normal_charge_lock = 0;
-
-			if (!over_discharge_lock && curr->state == ST_CHARGE) {
-				over_discharge_lock = 1;
-				rt946x_enable_charge_eoc(0);
-				rt946x_enable_charge_termination(0);
-			}
-		} else {
-			over_discharge_lock = 0;
-
-			if (!normal_charge_lock) {
-				normal_charge_lock = 1;
-				rt946x_enable_charge_eoc(1);
-				rt946x_enable_charge_termination(1);
-			}
-		}
-	}
 
 #ifdef VARIANT_KUKUI_CHARGER_MT6370
 	mt6370_charger_profile_override(curr);
