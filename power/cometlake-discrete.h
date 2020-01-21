@@ -48,11 +48,16 @@
  *
  * Transition S5->S3 only involves turning on the DRAM power rails which are
  * controlled directly from the PCH, so this condition doesn't require any
- * special code- just check that the DRAM rails are good.
+ * special code, except this collection of signals is also polled in POWER_S3
+ * and POWER_S0 states.
+ *
+ * During normal shutdown the PCH will turn off the DRAM rails before the EC
+ * notices, so if this collection includes those rails a normal shutdown will be
+ * treated as a power failure so the system immediately drops to G3 rather than
+ * doing an orderly shutdown. This must only include those signals that are
+ * EC-controlled, not those controlled by the PCH.
  */
-#define IN_PGOOD_ALL_CORE                                                     \
-	(CHIPSET_G3S5_POWERUP_SIGNAL | POWER_SIGNAL_MASK(PP2500_DRAM_PGOOD) | \
-	 POWER_SIGNAL_MASK(PP1200_DRAM_PGOOD))
+#define IN_PGOOD_ALL_CORE CHIPSET_G3S5_POWERUP_SIGNAL
 
 /*
  * intel_x86 power mask for S0 all-OK.
@@ -60,8 +65,9 @@
  * This is only used on power task init to check whether the system is powered
  * up and already in S0, to correctly handle switching from RO to RW firmware.
  */
-#define IN_ALL_S0                                       \
-	(IN_PGOOD_ALL_CORE | IN_ALL_PM_SLP_DEASSERTED)
+#define IN_ALL_S0                                                   \
+	(IN_PGOOD_ALL_CORE | POWER_SIGNAL_MASK(PP2500_DRAM_PGOOD) | \
+	 POWER_SIGNAL_MASK(PP1200_DRAM_PGOOD) | IN_ALL_PM_SLP_DEASSERTED)
 
 #define CHARGER_INITIALIZED_DELAY_MS 100
 #define CHARGER_INITIALIZED_TRIES 40
