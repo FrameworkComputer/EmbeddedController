@@ -7,8 +7,8 @@ fingerprint sensor.
 
 ## Contact
 
-For questions regarding this document, please contact the [Chrome OS
-Fingerprint Team].
+For questions regarding this document, please contact the
+[Chrome OS Fingerprint Team].
 
 ## Terminology
 
@@ -44,10 +44,17 @@ directory since multiple sensors may be used across a single "board" (e.g., the
 `hatch` board can use either `bloonchipper` or `dartmonkey`).
 
 The correct firmware type to use for a given board can be discovered with the
-following command:
+[Chrome OS Config] tool:
 
 ```bash
 (dut) $ cros_config /fingerprint board
+dartmonkey
+```
+
+OR
+
+```bash
+(chroot) $  cros_config_host -c /build/<BOARD>/usr/share/chromeos-config/yaml/config.yaml -m <MODEL> get /fingerprint board
 dartmonkey
 ```
 
@@ -64,7 +71,8 @@ When the FPMCU is completely blank a low-level flashing tool must be used to
 program an initial version of the FPMCU firmware. It’s possible to use the
 [`flash_fp_mcu`] script as this low-level flashing tool, though since it
 requires the AP and is not necessarily robust against failures, it is not
-recommended for mass-production.
+recommended for mass-production. More details about [`flash_fp_mcu`] are in the
+[Fingerprint flashing documentation].
 
 The initial version of the FPMCU firmware should be flashed either by the module
 house or by the factory. Once an initial version of the FPMCU firmware has been
@@ -89,7 +97,7 @@ device).
 `timberslide` is the daemon that periodically sends commands to the FPMCU to
 read the latest FPMCU logs. It writes the results to `/var/log/cros_fp.log`. It
 should be fine to leave running during tests, though it should be stopped before
-running the `flash_fp_mcu` script, since that script erases the entire FPMCU:
+running the [`flash_fp_mcu`] script, since that script erases the entire FPMCU:
 
 ```bash
 (dut) $ stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
@@ -467,3 +475,5 @@ Wrote /tmp/fp.1.png (14025 bytes)
 [Chrome OS Fingerprint Team]: http://go/cros-fingerprint-docs
 [Factory Fingerprint Sensor Testing for `nocturne`]: http://go/fingerprint-factory-testing-nocturne
 [`flash_fp_mcu`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/util/flash_fp_mcu
+[Fingerprint flashing documentation]: ./fingerprint.md#factory-rma-dev-updates
+[Chrome OS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/master/chromeos-config/README.md

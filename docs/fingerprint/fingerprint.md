@@ -31,11 +31,18 @@ building the EC code) are for fingerprint:
     *   Support for the STM32F412 for the FPMCU is not yet fully complete,
         but it is functional enough for testing.
 
-If you have access to a shell on your Chromebook, you can run the following
-command to determine the FPMCU that it contains:
+If you have access to a shell on your Chromebook, you can use [Chrome OS Config]
+to determine the FPMCU that it contains:
 
 ```bash
 (dut) $ cros_config /fingerprint board
+```
+
+Alternatively, if you have a Chromium OS build, you can use [Chrome OS Config]
+in the chroot to determine the FPMCU:
+
+```bash
+(chroot) $  cros_config_host -c /build/<BOARD>/usr/share/chromeos-config/yaml/config.yaml -m <MODEL> get /fingerprint board
 ```
 
 ## Building FPMCU Firmware Locally
@@ -168,7 +175,7 @@ that do not have write protect enabled (dogfood devices, EVT, etc.)
 In production, only the RW portion of the firmware can be updated (unless the
 user disables [hardware write protection]).
 
-## Factory / RMA / Development Updates
+## Factory / RMA / Development Updates {#factory-rma-dev-updates}
 
 ### `flash_fp_mcu`
 
@@ -185,10 +192,14 @@ flash (both RO and RW). The FPMCU can only be put into bootloader mode when
 [hardware write protection] is disabled, which means [`flash_fp_mcu`] can only
 be used when [hardware write protection] is disabled.
 
+[`flash_fp_mcu`] is available in the [Chromium OS test image].
+
 ### `stm32mon`
 
 [`stm32mon`] is a tool used to send commands to the STM32 bootloader. We use it
-for development (through `flash_fp_mcu`) to erase and flash the entire chip.
+for development (through [`flash_fp_mcu`]) to erase and flash the entire chip.
+
+[`stm32mon`] is available in the [Chromium OS test image].
 
 ## Keys
 
@@ -316,3 +327,5 @@ This would make it a lot easier during both development and testing.
 [`timberslide`]: https://chromium.googlesource.com/chromiumos/platform2/+/master/timberslide
 [cros_ec_debugfs]: https://chromium.googlesource.com/chromiumos/third_party/kernel/+/9db44685934a2e4bc9180ea2de87a6c429672395/drivers/platform/chrome/cros_ec_debugfs.c
 [Fingerprint Factory Requirements]: ./fingerprint-factory-requirements.md
+[Chromium OS test image]: https://chromium.googlesource.com/chromiumos/platform/factory/+/master/README.md#building-test-image
+[Chrome OS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/master/chromeos-config/README.md
