@@ -923,6 +923,63 @@ enum pd_data_role pd_get_data_role(int port);
  */
 enum pd_power_role pd_get_power_role(int port);
 
+/**
+ * Request for VCONN swap
+ *
+ * @param port USB-C Port number
+ */
+void pd_request_vconn_swap(int port);
+
+/**
+ * Get the current CC line states from PD task
+ *
+ * @param port USB-C Port number
+ * @return CC state
+ */
+enum pd_cc_states pd_get_task_cc_state(int port);
+
+/**
+ * Get the current PD state of USB-C port
+ *
+ * @param port USB-C Port number
+ * @return PD state
+ * Note: TCPMv1 returns enum pd_states
+ *       TCPMv2 returns enum usb_tc_state
+ */
+uint8_t pd_get_task_state(int port);
+
+/**
+ * Get the current PD state name of USB-C port
+ *
+ * @param port USB-C Port number
+ * @return Pointer to PD state name
+ */
+const char *pd_get_task_state_name(int port);
+
+/**
+ * Get current VCONN state of USB-C port
+ *
+ * @param port USB-C Port number
+ * @return true if VCONN is on else false
+ */
+bool pd_get_vconn_state(int port);
+
+/**
+ * Check if port partner is dual role power
+ *
+ * @param port USB-C Port number
+ * @return true if partner is dual role power else false
+ */
+bool pd_get_partner_dual_role_power(int port);
+
+/**
+ * Check if port partner is unconstrained power
+ *
+ * @param port USB-C Port number
+ * @return true if partner is unconstrained power else false
+ */
+bool pd_get_partner_unconstr_power(int port);
+
 /* Control Message type */
 enum pd_ctrl_msg_type {
 	/* 0 Reserved */
@@ -2075,8 +2132,9 @@ enum tcpc_cc_polarity pd_get_polarity(int port);
  * Get port partner data swap capable status
  *
  * @param port USB-C port number
+ * @return True if data swap capable else false
  */
-int pd_get_partner_data_swap_capable(int port);
+bool pd_get_partner_data_swap_capable(int port);
 
 /**
  * Handle an overcurrent protection event.  The port acting as a source has
@@ -2160,8 +2218,9 @@ int pd_ts_dts_plugged(int port);
  * Return true if partner port is known to be PD capable.
  *
  * @param port USB-C port number
+ * @return true if PD capable else false
  */
-int pd_capable(int port);
+bool pd_capable(int port);
 
 /**
  * Returns the source caps list

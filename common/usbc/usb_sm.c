@@ -192,3 +192,35 @@ void run_state(const int port, struct sm_ctx *const ctx)
 	internal->running = false;
 }
 
+/* TODO (b/148528713): Need to enable Thunderbolt-compatible mode on TCPMv2 */
+union tbt_mode_resp_cable get_cable_tbt_vdo(int port)
+{
+	union tbt_mode_resp_cable cable_resp = {
+		.raw_value = 0,
+	};
+
+	return cable_resp;
+}
+
+union tbt_mode_resp_device get_dev_tbt_vdo(int port)
+{
+	union tbt_mode_resp_device dev_resp = {
+		.raw_value = 0,
+	};
+
+	return dev_resp;
+}
+
+enum tbt_compat_cable_speed get_tbt_cable_speed(int port)
+{
+	enum tbt_compat_cable_speed cable_speed = 0;
+
+	return cable_speed;
+}
+
+enum tbt_compat_rounded_support get_tbt_rounded_support(int port)
+{
+	enum tbt_compat_rounded_support tbt_round = 0;
+
+	return tbt_round;
+}
