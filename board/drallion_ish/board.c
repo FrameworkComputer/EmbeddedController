@@ -42,6 +42,13 @@ static struct lsm6dsm_data lsm6dsm_a_data = LSM6DSM_DATA;
 static struct stprivate_data g_lis2dh_data;
 static struct lis2mdl_private_data lis2mdl_a_data;
 
+/* Matrix to rotate base sensor into standard reference frame */
+const mat33_fp_t base_rot_ref = {
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, 0,  FLOAT_TO_FP(1)}
+};
+
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -105,7 +112,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_lis2dh_data,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LNG2DM_ADDR0_FLAGS,
-		.rot_standard_ref = NULL, /* Identity matrix */
+		.rot_standard_ref = &base_rot_ref,
 		/* We only use 2g because its resolution is only 8-bits */
 		.default_range = 2, /* g */
 		.min_frequency = LIS2DH_ODR_MIN_VAL,
