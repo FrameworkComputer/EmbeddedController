@@ -10,6 +10,7 @@
 
 #include <stdbool.h>
 #include "common.h"
+#include "ec_commands.h"
 #include "usb_pd_tbt.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd_vdo.h"
@@ -2394,5 +2395,16 @@ __override_proto int svdm_tbt_compat_config(int port, uint32_t *payload);
  * @return 0 on success else -1
  */
 __override_proto int svdm_tbt_compat_attention(int port, uint32_t *payload);
+
+/* Miscellaneous */
+
+/**
+ * Called for responding to the EC_CMD_GET_PD_PORT_CAPS host command
+ *
+ * @param port	The PD port number
+ * @return	Location of the port
+ */
+
+__override_proto enum ec_pd_port_location board_get_pd_port_location(int port);
 
 #endif  /* __CROS_EC_USB_PD_H */
