@@ -85,6 +85,13 @@ GPIO(EC_ENTERING_RW,           PIN(E, 3), GPIO_OUT_LOW)
 GPIO(CCD_MODE_ODL,             PIN(E, 5), GPIO_ODR_HIGH)
 GPIO(EN_PP_MST_OD,             PIN(9, 6), GPIO_ODR_HIGH)
 
+/* HDMI/CEC */
+GPIO(EN_PP5000_HDMI,           PIN(5, 0), GPIO_OUT_LOW)
+GPIO(HDMI_CONN0_CEC_OUT,       PIN(C, 2), GPIO_ODR_HIGH)
+GPIO(HDMI_CONN0_CEC_IN,        PIN(B, 1), GPIO_INPUT)
+GPIO(HDMI_CONN1_CEC_OUT,       PIN(6, 0), GPIO_ODR_HIGH)
+GPIO(HDMI_CONN1_CEC_IN,        PIN(9, 5), GPIO_INPUT)
+
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,                 PIN(B, 5), GPIO_INPUT)           /* EC_I2C_INA_SCL */
 GPIO(I2C0_SDA,                 PIN(B, 4), GPIO_INPUT)           /* EC_I2C_INA_SDA */
@@ -142,13 +149,10 @@ UNUSED(PIN(3, 2))						/* E5  NC */
 UNUSED(PIN(D, 6))						/* F6  NC */
 UNUSED(PIN(3, 5))						/* F5  NC */
 UNUSED(PIN(5, 6))						/* M2  NC */
-UNUSED(PIN(5, 0))						/* G4  NC */
 UNUSED(PIN(D, 2))						/* C11 NC */
 UNUSED(PIN(D, 3))						/* E9  NC */
 UNUSED(PIN(8, 6))						/* J8  NC */
 UNUSED(PIN(7, 5))						/* J6  NC */
-UNUSED(PIN(C, 2))						/* A12 NC */
-UNUSED(PIN(6, 0))						/* G5  NC */
 UNUSED(PIN(9, 3))						/* M11 NC */
 UNUSED(PIN(7, 2))						/* H6  NC */
 UNUSED(PIN(F, 1))						/* G3  NC */
