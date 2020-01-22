@@ -370,12 +370,15 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
 void board_reset_pd_mcu(void)
 {
-	/* Assert reset */
+	cprints(CC_USB, "Resetting TCPCs...");
+	cflush();
+
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
 	msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
+	msleep(PS8805_FW_INIT_DELAY_MS);
 }
 
 int board_vbus_sink_enable(int port, int enable)

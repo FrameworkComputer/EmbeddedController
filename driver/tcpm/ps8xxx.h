@@ -18,6 +18,9 @@
 /* Minimum Delay for reset assertion */
 #define PS8XXX_RESET_DELAY_MS 1
 
+/* Delay between releasing reset and the first I2C read */
+#define PS8805_FW_INIT_DELAY_MS 10
+
 #define PS8751_BIST_TIMER_FREQ  15000000
 #define PS8751_BIST_DELAY_MS    50
 
