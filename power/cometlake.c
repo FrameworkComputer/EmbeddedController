@@ -55,6 +55,12 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 static int forcing_shutdown;  /* Forced shutdown in progress? */
 
+/* Default no action, overwrite it in board.c if necessary*/
+__overridable void board_chipset_forced_shutdown(void)
+{
+        return;
+}
+
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	int timeout_ms = 50;
@@ -75,6 +81,11 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	/* Turn off PP5000_A rail */
 	gpio_set_level(GPIO_EN_PP5000_A, 0);
 #endif
+
+	/* For b:143440730, stop checking GPIO_ALL_SYS_PGOOD if system is
+	 * already force to G3.
+         */
+	board_chipset_forced_shutdown();
 
 	/* Need to wait a min of 10 msec before check for power good */
 	msleep(10);
