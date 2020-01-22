@@ -204,17 +204,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	shutdown_s5_rails();
 }
 
-void chipset_handle_espi_reset_assert(void)
-{
-	/*
-	 * If eSPI_Reset# pin is asserted without SLP_SUS# being asserted, then
-	 * it means that there is an unexpected power loss (global reset
-	 * event). In this case, check if shutdown was being forced by pressing
-	 * power button. If yes, release power button.
-	 */
-	if ((power_get_signals() & IN_PGOOD_ALL_CORE))
-		power_button_pch_release();
-}
+void chipset_handle_espi_reset_assert(void) {}
 
 enum power_state chipset_force_g3(void)
 {
