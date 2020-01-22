@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright 2019 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -17,18 +17,20 @@ Prerequisite:
         e.g. dut-control cr50_uart_timestamp:off
 """
 
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
-from chromite.lib import cros_logging as logging
 
 import argparse
 import atexit
-import serial
 import os
 import stat
 import sys
 import threading
 import time
 
+import serial
+from chromite.lib import cros_logging as logging
 
 BAUDRATE = 115200                # Default baudrate setting for UART port
 CROS_USERNAME = 'root'           # Account name to login to ChromeOS
@@ -58,8 +60,21 @@ class ChargenTestError(Exception):
 class UartSerial(object):
   """Test Object for a single UART serial device
 
-    Attributes
-      UART_DEV_PROFILES
+  Attributes:
+    UART_DEV_PROFILES
+    char_loss_occurrences: Number that character loss happens
+    cleanup_cli: Command list to perform before the test exits
+    cr50_workload: True if cr50 should be stressed, or False otherwise
+    usb_output: True if output should be generated to USB channel
+    dev_prof: Dictionary of device profile
+    duration: Time to keep chargen running
+    eol: Characters to add at the end of input
+    logger: object that store the log
+    num_ch_exp: Expected number of characters in output
+    num_ch_cap: Number of captured characters in output
+    test_cli: Command list to run for chargen test
+    test_thread: Thread object that captures the UART output
+    serial: serial.Serial object
   """
   UART_DEV_PROFILES = (
       # Kernel
@@ -104,21 +119,6 @@ class UartSerial(object):
       baudrate: Baud rate such as 9600 or 115200.
       cr50_workload: True if a workload should be generated on cr50
       usb_output: True if a workload should be generated to USB channel
-
-    Attributes:
-      char_loss_occurrences: Number that character loss happens
-      cleanup_cli: Command list to perform before the test exits
-      cr50_workload: True if cr50 should be stressed, or False otherwise
-      usb_output: True if output should be generated to USB channel
-      dev_prof: Dictionary of device profile
-      duration: Time to keep chargen running
-      eol: Characters to add at the end of input
-      logger: object that store the log
-      num_ch_exp: Expected number of characters in output
-      num_ch_cap: Number of captured characters in output
-      test_cli: Command list to run for chargen test
-      test_thread: Thread object that captures the UART output
-      serial: serial.Serial object
     """
 
     # Initialize serial object
@@ -153,7 +153,7 @@ class UartSerial(object):
     for cli in command_lines:
       self.logger.debug('run %r', cli)
 
-      self.serial.write(cli + self.eol)
+      self.serial.write((cli + self.eol).encode())
       self.serial.flush()
       if delay:
         time.sleep(delay)
@@ -180,7 +180,7 @@ class UartSerial(object):
     if self.serial.inWaiting() == 0:
       time.sleep(1)
 
-    return self.serial.read(self.serial.inWaiting())
+    return self.serial.read(self.serial.inWaiting()).decode()
 
   def prepare(self):
     """Prepare the test:
@@ -239,15 +239,15 @@ class UartSerial(object):
       # 'chargen' of AP does not have option for USB output.
       # Force it work on UART.
       if self.dev_prof['device_type'] == 'AP':
-        self.usb_output=False
+        self.usb_output = False
 
       # Check whether the command 'chargen' is available in the device.
       # 'chargen 1 4' is supposed to print '0000'
       self.get_output()      # drain data
 
-      chargen_cmd='chargen 1 4'
+      chargen_cmd = 'chargen 1 4'
       if self.usb_output:
-        chargen_cmd+=' usb'
+        chargen_cmd += ' usb'
       self.run_command([chargen_cmd])
       tmp_txt = self.get_output()
 
@@ -257,9 +257,10 @@ class UartSerial(object):
                                (self.dev_prof['device_type'], tmp_txt))
 
       self.num_ch_exp = int(self.serial.baudrate * self.duration / 10)
-      chargen_cmd='chargen ' + str(CHARGEN_TXT_LEN) + ' ' + str(self.num_ch_exp)
+      chargen_cmd = 'chargen ' + str(CHARGEN_TXT_LEN) + ' ' + \
+                    str(self.num_ch_exp)
       if self.usb_output:
-        chargen_cmd+=' usb'
+        chargen_cmd += ' usb'
       self.test_cli = [chargen_cmd]
 
       self.logger.info('Ready to test')
@@ -397,13 +398,14 @@ class ChargenTest(object):
   """
 
   def __init__(self, ports, duration, cr50_workload=False,
-                usb_output=False):
+               usb_output=False):
     """Initialize UART stress tester
 
     Args:
       ports: List of UART ports to test.
       duration: Time to keep testing in seconds.
       cr50_workload: True if a workload should be generated on cr50
+      usb_output: True if a workload should be generated to USB channel
 
     Raises:
       ChargenTestError: if any of ports is not a valid character device.
@@ -508,7 +510,7 @@ Examples:
   parser = argparse.ArgumentParser(description=description,
                                    formatter_class=argparse.RawTextHelpFormatter
                                   )
-  parser.add_argument('port', type=str, nargs="*",
+  parser.add_argument('port', type=str, nargs='*',
                       help='UART device path to test')
   parser.add_argument('-c', '--cr50', action='store_true', default=False,
                       help='generate TPM workload on cr50')
