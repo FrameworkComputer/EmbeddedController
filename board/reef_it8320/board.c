@@ -17,6 +17,7 @@
 #include "driver/charger/bd9995x.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/tcpm/tcpm.h"
+#include "driver/usb_mux/pi3usb3x532.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -162,7 +163,8 @@ static void it83xx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.port_addr = 0x54,
+		.port_addr = MUX_PORT_AND_ADDR(I2C_PORT_USB_MUX,
+					       PI3USB3X532_I2C_ADDR0),
 		.driver = &pi3usb3x532_usb_mux_driver,
 		.hpd_update = &it83xx_tcpc_update_hpd_status,
 	},

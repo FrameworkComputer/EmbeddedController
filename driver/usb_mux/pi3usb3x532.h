@@ -14,6 +14,12 @@
 
 #include "usb_pd.h"
 
+/* I2C Addresses */
+#define PI3USB3X532_I2C_ADDR0 0x54
+#define PI3USB3X532_I2C_ADDR1 0x55
+#define PI3USB3X532_I2C_ADDR2 0x56
+#define PI3USB3X532_I2C_ADDR3 0x57
+
 /* USB switch registers */
 #define PI3USB3X532_REG_ADDR 0x00
 #define PI3USB3X532_REG_VENDOR 0x01

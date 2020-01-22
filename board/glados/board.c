@@ -166,7 +166,8 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.port_addr = 0x54,
+		.port_addr = MUX_PORT_AND_ADDR(I2C_PORT_USB_MUX,
+					       PI3USB3X532_I2C_ADDR0),
 		.driver = &pi3usb3x532_usb_mux_driver,
 	},
 	{

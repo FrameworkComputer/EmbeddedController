@@ -309,11 +309,13 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.port_addr = MUX_PORT_AND_ADDR(I2C_PORT_USB_C0, 0x54),
+		.port_addr = MUX_PORT_AND_ADDR(I2C_PORT_USB_C0,
+					       PI3USB3X532_I2C_ADDR0),
 		.driver = &pi3usb3x532_usb_mux_driver,
 	},
 	{
-		.port_addr = MUX_PORT_AND_ADDR(I2C_PORT_SUB_USB_C1, 0x54),
+		.port_addr = MUX_PORT_AND_ADDR(I2C_PORT_SUB_USB_C1,
+					       PI3USB3X532_I2C_ADDR0),
 		.driver = &pi3usb3x532_usb_mux_driver,
 	}
 };

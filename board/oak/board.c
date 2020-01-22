@@ -22,6 +22,7 @@
 #include "driver/als_opt3001.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/temp_sensor/tmp432.h"
+#include "driver/usb_mux/pi3usb3x532.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -176,12 +177,14 @@ BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.port_addr = 0x54,
+		.port_addr = MUX_PORT_AND_ADDR(I2C_PORT_USB_MUX,
+					       PI3USB3X532_I2C_ADDR0),
 		.driver    = &pi3usb3x532_usb_mux_driver,
 	},
 #if (BOARD_REV <= OAK_REV4)
 	{
-		.port_addr = 0x55,
+		.port_addr = MUX_PORT_AND_ADDR(I2C_PORT_USB_MUX,
+					       PI3USB3X532_I2C_ADDR1),
 		.driver    = &pi3usb3x532_usb_mux_driver,
 	},
 #else
