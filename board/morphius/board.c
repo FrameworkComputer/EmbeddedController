@@ -9,6 +9,7 @@
 #include "driver/accelgyro_bmi160.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -40,4 +41,24 @@ void board_update_sensor_config_from_sku(void)
 
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
+}
+
+void board_init(void)
+{
+	gpio_enable_interrupt(GPIO_EN_PWR_TOUCHPAD_PS2);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_INIT_I2C + 1);
+
+static void trackpoint_reset_deferred(void)
+{
+	gpio_set_level(GPIO_EC_PS2_RESET, 1);
+	msleep(2);
+	gpio_set_level(GPIO_EC_PS2_RESET, 0);
+}
+DECLARE_DEFERRED(trackpoint_reset_deferred);
+
+
+void ps2_pwr_en_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&trackpoint_reset_deferred_data, MSEC);
 }

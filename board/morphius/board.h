@@ -56,6 +56,8 @@
 
 #ifndef __ASSEMBLER__
 
+void ps2_pwr_en_interrupt(enum gpio_signal signal);
+
 /* These GPIOs moved. Temporarily detect and support the V0 HW. */
 extern enum gpio_signal GPIO_PCH_PWRBTN_L;
 extern enum gpio_signal GPIO_PCH_SYS_PWROK;
