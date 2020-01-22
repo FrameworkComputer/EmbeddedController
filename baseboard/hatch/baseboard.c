@@ -16,6 +16,7 @@
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
+#include "ec_commands.h"
 #include "espi.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -387,3 +388,15 @@ static void cbi_init(void)
 	CPRINTS("Board ID: %d", board_id);
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
+
+__override enum ec_pd_port_location board_get_pd_port_location(int port)
+{
+	switch (port) {
+	case 0:
+		return EC_PD_PORT_LOCATION_LEFT_BACK;
+	case 1:
+		return EC_PD_PORT_LOCATION_RIGHT_BACK;
+	default:
+		return EC_PD_PORT_LOCATION_UNKNOWN;
+	}
+}
