@@ -212,27 +212,13 @@ static int ps8xxx_dci_disable(int port)
 #ifdef CONFIG_USB_PD_TCPM_PS8805
 static int ps8xxx_dci_disable(int port)
 {
-	int status, e;
 	int p1_addr;
 
-	status = tcpc_write(port, PS8XXX_REG_I2C_DEBUGGING_ENABLE,
-			    PS8XXX_REG_I2C_DEBUGGING_ENABLE_ON);
-	if (status != EC_SUCCESS)
-		return status;
-
+	/* DCI registers are always accessible on PS8805 */
 	p1_addr = tcpc_config[port].i2c_info.addr_flags -
 		(PS8751_I2C_ADDR1_FLAGS - PS8751_I2C_ADDR1_P1_FLAGS);
-	status = ps8xxx_addr_dci_disable(port, p1_addr,
-					 PS8805_P1_REG_MUX_USB_DCI_CFG);
-
-	e = tcpc_write(port, PS8XXX_REG_I2C_DEBUGGING_ENABLE,
-		       PS8XXX_REG_I2C_DEBUGGING_ENABLE_OFF);
-	if (e != EC_SUCCESS) {
-		if (status == EC_SUCCESS)
-			status = e;
-	}
-
-	return status;
+	return ps8xxx_addr_dci_disable(port, p1_addr,
+				       PS8805_P1_REG_MUX_USB_DCI_CFG);
 }
 #endif /* CONFIG_USB_PD_TCPM_PS8805 */
 
