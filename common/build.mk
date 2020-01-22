@@ -298,6 +298,11 @@ $(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: $(out)/cryptoc/libcryptoc.a
 # Host test executables (including fuzz tests).
 $(out)/$(PROJECT).exe: LDFLAGS_EXTRA += $(CRYPTOC_LDFLAGS)
 $(out)/$(PROJECT).exe: $(out)/cryptoc/libcryptoc.a
+# On-device tests.
+test-targets=$(foreach test,$(test-list-y),\
+	$(out)/RW/$(test).RW.elf $(out)/RO/$(test).RO.elf)
+$(test-targets): LDFLAGS_EXTRA += $(CRYPTOC_LDFLAGS)
+$(test-targets): $(out)/cryptoc/libcryptoc.a
 endif
 
 include $(_common_dir)fpsensor/build.mk
