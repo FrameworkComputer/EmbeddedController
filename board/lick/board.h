@@ -78,7 +78,6 @@ enum sensor_id {
 
 /* List of possible batteries */
 enum battery_type {
-	BATTERY_PANASONIC,
 	BATTERY_SMP,
 	BATTERY_LGC,
 	BATTERY_SUNWODA,
