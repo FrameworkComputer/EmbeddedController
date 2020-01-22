@@ -200,7 +200,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	report_ap_reset(reason);
 
 	shutdown_s0_rails();
-	/* S3 is automatic based on SLP_S3 driving memory rails */
+	/* S3->S5 is automatic based on SLP_S3 driving memory rails. */
 	shutdown_s5_rails();
 }
 
@@ -344,6 +344,16 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0S3:
 		shutdown_s0_rails();
+		break;
+
+	case POWER_S5:
+		/*
+		 * Return to G3 if S5 rails are not on, probably because of
+		 * a forced power-off.
+		 */
+		if ((power_get_signals() & CHIPSET_G3S5_POWERUP_SIGNAL) !=
+		    CHIPSET_G3S5_POWERUP_SIGNAL)
+			return POWER_S5G3;
 		break;
 
 	default:
