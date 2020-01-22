@@ -3834,7 +3834,7 @@ static void pe_vdm_request_exit(int port)
 	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 }
 
-enum idh_ptype get_usb_pd_mux_cable_type(int port)
+enum idh_ptype get_usb_pd_cable_type(int port)
 {
 	if (pe[port].passive_cable_vdo != PD_VDO_INVALID)
 		return IDH_PTYPE_PCABLE;

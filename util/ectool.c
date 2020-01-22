@@ -5574,28 +5574,23 @@ int cmd_usb_pd(int argc, char *argv[])
 					printf("UNKNOWN");
 				printf("\n");
 			}
-			if (r_v2->cable_type) {
-				printf("Cable type:");
-				if (r_v2->cable_type == IDH_PTYPE_ACABLE)
-					printf("Active");
-				else if (r_v2->cable_type == IDH_PTYPE_PCABLE)
-					printf("Passive");
-				else
-					printf("UNKNOWN");
-				printf("\n");
-			}
 
-			printf("Adapter type:%s\n",
-				r_v2->control_flags & USB_PD_MUX_TBT_ADAPTER ?
-					"Legacy Thunderbolt" : "Type-C");
+			printf("Cable type:%s\n",
+				r_v2->control_flags & USB_PD_CTRL_ACTIVE_CABLE ?
+					"Active" : "Passive");
 
-			printf("Cable type:%sOptical\n",
+			printf("TBT Adapter type:%s\n",
 				r_v2->control_flags &
-				USB_PD_MUX_TBT_CABLE_TYPE ? "" : "Non-");
+				USB_PD_CTRL_TBT_LEGACY_ADAPTER ?
+					"Legacy" : "Gen3");
+
+			printf("Optical Cable:%s\n",
+				r_v2->control_flags &
+				USB_PD_CTRL_OPTICAL_CABLE ? "True" : "False");
 
 			printf("Link LSRX Communication:%s-directional\n",
-				r_v2->control_flags & USB_PD_MUX_TBT_LINK ?
-					"Uni" : "Bi");
+				r_v2->control_flags &
+				USB_PD_CTRL_ACTIVE_LINK_UNIDIR ? "Uni" : "Bi");
 
 			printf("TBT Cable Speed:");
 			switch (r_v2->cable_speed) {

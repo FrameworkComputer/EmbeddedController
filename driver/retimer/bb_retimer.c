@@ -229,22 +229,22 @@ static int retimer_set_state(int port, mux_state_t mux_state)
 			set_retimer_con |= BB_RETIMER_TBT_CABLE_TYPE;
 
 		/*
-		 * Bit 20: TBT_ACTIVE_LINK_TRAINING
-		 * 0 - Active with bi-directional LSRX communication
-		 * 1 - Active with uni-directional LSRX communication
-		 * Set to "0" when passive cable plug
-		 */
-		if (cable_resp.lsrx_comm == UNIDIR_LSRX_COMM &&
-		   (get_usb_pd_mux_cable_type(port) & IDH_PTYPE_ACABLE))
-			set_retimer_con |= BB_RETIMER_TBT_ACTIVE_LINK_TRAINING;
-
-		/*
 		 * Bit 22: Active/Passive
 		 * 0 - Passive cable
 		 * 1 - Active cable
 		 */
-		if (get_usb_pd_mux_cable_type(port) == IDH_PTYPE_ACABLE)
+		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE) {
 			set_retimer_con |= BB_RETIMER_ACTIVE_PASSIVE;
+			/*
+			 * Bit 20: TBT_ACTIVE_LINK_TRAINING
+			 * 0 - Active with bi-directional LSRX communication
+			 * 1 - Active with uni-directional LSRX communication
+			 * Set to "0" when passive cable plug
+			 */
+			if (cable_resp.lsrx_comm == UNIDIR_LSRX_COMM)
+				set_retimer_con |=
+					BB_RETIMER_TBT_ACTIVE_LINK_TRAINING;
+		}
 
 		/*
 		 * Bits 27-25: TBT_CABLE_SPEED_SUPPORT

@@ -201,7 +201,7 @@ void reset_pd_cable(int port)
 		memset(&cable[port], 0, sizeof(cable[port]));
 }
 
-enum idh_ptype get_usb_pd_mux_cable_type(int port)
+enum idh_ptype get_usb_pd_cable_type(int port)
 {
 	return cable[port].type;
 }
@@ -627,7 +627,7 @@ static int enter_tbt_compat_mode(int port, uint32_t *payload)
 				cable[port].dev_mode_resp.vendor_spec_b0;
 	enter_dev_mode.intel_spec_b0 = cable[port].dev_mode_resp.intel_spec_b0;
 	enter_dev_mode.cable =
-		get_usb_pd_mux_cable_type(port) == IDH_PTYPE_PCABLE ?
+		get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE ?
 			TBT_ENTER_PASSIVE_CABLE : TBT_ENTER_ACTIVE_CABLE;
 
 	if (cable[port].cable_mode_resp.tbt_cable_speed == TBT_SS_TBT_GEN3) {
@@ -912,7 +912,7 @@ static int process_tbt_compat_discover_modes(int port, uint32_t *payload)
 		 * Enter Mode SOP' (Cable Enter Mode) is skipped for
 		 * passive cables.
 		 */
-		if (get_usb_pd_mux_cable_type(port) == IDH_PTYPE_PCABLE)
+		if (get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE)
 			disable_transmit_sop_prime(port);
 
 		rsize = enter_tbt_compat_mode(port, payload);
@@ -1200,7 +1200,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 		/* Passive cable Nacked for Discover SVID */
 		if (cmd == CMD_DISCOVER_SVID && is_tbt_compat_enabled(port) &&
 		    is_transmit_msg_sop_prime(port) &&
-		    get_usb_pd_mux_cable_type(port) == IDH_PTYPE_PCABLE) {
+		    get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE) {
 			limit_tbt_cable_speed(port);
 			rsize = dfp_discover_modes(port, payload);
 			disable_transmit_sop_prime(port);

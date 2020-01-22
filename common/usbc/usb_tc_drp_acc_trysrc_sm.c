@@ -1277,8 +1277,6 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 		if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
 			r_v2->dp_mode = get_dp_pin_mode(p->port);
 
-		r_v2->cable_type = get_usb_pd_mux_cable_type(p->port);
-
 		strzcpy(r_v2->state, tc_state_names[get_state_tc(p->port)],
 				sizeof(r_v2->state));
 		if (args->version == 1) {

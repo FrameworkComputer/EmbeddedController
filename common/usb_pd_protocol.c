@@ -5367,10 +5367,10 @@ static const mux_state_t typec_mux_map[USB_PD_CTRL_MUX_COUNT] = {
 
 /*
  * Combines the following information into a single byte
- * Bit 0: Thunderbolt cable
- * Bit 1: Type-C adapter type
- * Bit 2: Cable type
- * Bit 3: Link training
+ * Bit 0: Active/Passive cable
+ * Bit 1: Optical/Non-optical cable
+ * Bit 2: Legacy Thunderbolt adapter
+ * Bit 3: Active Link Uni-Direction/Bi-Direction
  */
 static uint8_t get_pd_control_flags(int port)
 {
@@ -5382,10 +5382,14 @@ static uint8_t get_pd_control_flags(int port)
 	 * Table F-11 TBT3 Cable Discover Mode VDO Responses
 	 * For Passive cables, Active Cable Plug link training is set to 0
 	 */
-	return (cable_resp.lsrx_comm ? USB_PD_MUX_TBT_LINK : 0) |
-		(cable_resp.tbt_cable ? USB_PD_MUX_TBT_CABLE_TYPE : 0) |
-		(device_resp.tbt_adapter ? USB_PD_MUX_TBT_ADAPTER : 0) |
-		(cable_resp.retimer_type ? USB_PD_MUX_TBT_ACTIVE_CABLE : 0);
+	return (cable_resp.lsrx_comm == UNIDIR_LSRX_COMM ?
+			USB_PD_CTRL_ACTIVE_LINK_UNIDIR : 0) |
+		(device_resp.tbt_adapter == TBT_ADAPTER_TBT2_LEGACY ?
+			USB_PD_CTRL_TBT_LEGACY_ADAPTER : 0) |
+		(cable_resp.tbt_cable == TBT_CABLE_OPTICAL ?
+			USB_PD_CTRL_OPTICAL_CABLE : 0) |
+		(cable_resp.retimer_type == USB_RETIMER ?
+			USB_PD_CTRL_ACTIVE_CABLE : 0);
 }
 
 static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
@@ -5473,7 +5477,6 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 		if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
 			r_v2->dp_mode = get_dp_pin_mode(p->port);
 
-		r_v2->cable_type = get_usb_pd_mux_cable_type(p->port);
 		r_v2->control_flags = get_pd_control_flags(p->port);
 		r_v2->cable_speed = get_tbt_cable_speed(p->port);
 		r_v2->cable_gen = get_tbt_rounded_support(p->port);

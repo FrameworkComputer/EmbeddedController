@@ -1626,7 +1626,7 @@ void reset_pd_cable(int port);
  * @param port	USB-C port number
  * @return	cable type
  */
-enum idh_ptype get_usb_pd_mux_cable_type(int port);
+enum idh_ptype get_usb_pd_cable_type(int port);
 
 /**
  * Return the response of discover mode SOP prime, with SVID = 0x8087

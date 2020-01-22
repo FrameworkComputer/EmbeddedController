@@ -5197,27 +5197,24 @@ enum pd_cc_states {
 	PD_CC_NONE = 0,			/* No port partner attached */
 
 	/* From DFP perspective */
+	PD_CC_UFP_NONE = 1,		/* No UFP accessory connected */
 	PD_CC_UFP_AUDIO_ACC = 2,	/* UFP Audio accessory connected */
 	PD_CC_UFP_DEBUG_ACC = 3,	/* UFP Debug accessory connected */
 	PD_CC_UFP_ATTACHED = 4,		/* Plain UFP attached */
 
 	/* From UFP perspective */
-	PD_CC_DFP_DEBUG_ACC = 6,	/* DFP debug accessory connected */
 	PD_CC_DFP_ATTACHED = 5,		/* Plain DFP attached */
+	PD_CC_DFP_DEBUG_ACC = 6,	/* DFP debug accessory connected */
 };
 
-#define USBC_CABLE_TYPE_UNDEF   0 /* Undefined */
-#define USBC_CABLE_TYPE_PASSIVE 3 /* Passive cable attached */
-#define USBC_CABLE_TYPE_ACTIVE  4 /* Active cable attached */
-
 /* Active/Passive Cable */
-#define USB_PD_MUX_TBT_ACTIVE_CABLE BIT(0)
+#define USB_PD_CTRL_ACTIVE_CABLE        BIT(0)
 /* Optical/Non-optical cable */
-#define USB_PD_MUX_TBT_CABLE_TYPE   BIT(1)
+#define USB_PD_CTRL_OPTICAL_CABLE       BIT(1)
 /* 3rd Gen TBT device (or AMA)/2nd gen tbt Adapter */
-#define USB_PD_MUX_TBT_ADAPTER      BIT(2)
-/* Active Link enabled/disabled */
-#define USB_PD_MUX_TBT_LINK         BIT(3)
+#define USB_PD_CTRL_TBT_LEGACY_ADAPTER  BIT(2)
+/* Active Link Uni-Direction */
+#define USB_PD_CTRL_ACTIVE_LINK_UNIDIR  BIT(3)
 
 /*
  * Underdevelopement :
@@ -5230,10 +5227,10 @@ struct ec_response_usb_pd_control_v2 {
 	char state[32];
 	uint8_t cc_state;	/* enum pd_cc_states representing cc state */
 	uint8_t dp_mode;	/* Current DP pin mode (MODE_DP_PIN_[A-E]) */
-	uint8_t cable_type;	/* USBC_CABLE_TYPE_*cable_type */
-	uint8_t control_flags;	/* USB_PD_MUX_*flags */
-	uint8_t cable_speed;
-	uint8_t cable_gen;	/* rounded_support */
+	uint8_t reserved;	/* Reserved for future use */
+	uint8_t control_flags;	/* USB_PD_CTRL_*flags */
+	uint8_t cable_speed;	/* TBT_SS_* cable speed */
+	uint8_t cable_gen;	/* TBT_GEN3_* cable rounded support */
 } __ec_align1;
 
 #define EC_CMD_USB_PD_PORTS 0x0102
