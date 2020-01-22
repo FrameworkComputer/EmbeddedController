@@ -1387,12 +1387,16 @@ out:
 	return rv;
 }
 
-static int rt946x_get_vbus_voltage(int chgnum, int port)
+static enum ec_error_list rt946x_get_vbus_voltage(int chgnum, int port,
+						  int *voltage)
 {
-	static int vbus_mv;
+	int vbus_mv;
+	int rv;
 
-	rt946x_get_adc(RT946X_ADC_VBUS_DIV5, &vbus_mv);
-	return vbus_mv;
+	rv = rt946x_get_adc(RT946X_ADC_VBUS_DIV5, &vbus_mv);
+	*voltage = vbus_mv;
+
+	return rv;
 }
 
 #ifdef CONFIG_CHARGER_MT6370
@@ -1517,6 +1521,7 @@ void usb_charger_task(void *u)
 	int reg = 0;
 	int bc12_cnt = 0;
 	const int max_bc12_cnt = 3;
+	int voltage;
 
 	chg.voltage = USB_CHARGER_VOLTAGE_MV;
 	while (1) {
@@ -1528,8 +1533,8 @@ void usb_charger_task(void *u)
 
 		/* VBUS attach event */
 		if (reg & RT946X_MASK_DPDMIRQ_ATTACH) {
-			CPRINTS("VBUS attached: %dmV",
-					charger_get_vbus_voltage(0));
+			charger_get_vbus_voltage(0, &voltage);
+			CPRINTS("VBUS attached: %dmV", voltage);
 			if (IS_ENABLED(CONFIG_CHARGER_MT6370)) {
 				chg_type =
 					mt6370_get_charger_type(CHARGER_SOLO);

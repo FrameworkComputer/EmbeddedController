@@ -455,7 +455,7 @@ enum ec_error_list charger_discharge_on_ac(int enable)
 	return rv;
 }
 
-int charger_get_vbus_voltage(int port)
+enum ec_error_list charger_get_vbus_voltage(int port, int *voltage)
 {
 	int chgnum = 0;
 	int rv = 0;
@@ -466,7 +466,8 @@ int charger_get_vbus_voltage(int port)
 	}
 
 	if (chg_chips[chgnum].drv->get_vbus_voltage)
-		rv = chg_chips[chgnum].drv->get_vbus_voltage(chgnum, port);
+		rv = chg_chips[chgnum].drv->get_vbus_voltage(chgnum, port,
+							     voltage);
 
 	return rv;
 }

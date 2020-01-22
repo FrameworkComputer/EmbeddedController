@@ -801,21 +801,23 @@ DECLARE_CONSOLE_COMMAND(charger_dump, command_isl923x_dump,
 			"charger_dump <chgnum>", "Dumps ISL923x registers");
 #endif /* CONFIG_CMD_CHARGER_DUMP */
 
-static int isl923x_get_vbus_voltage(int chgnum, int port)
+static enum ec_error_list isl923x_get_vbus_voltage(int chgnum, int port,
+						   int *voltage)
 {
 	int val;
 	int rv;
 
 	rv = raw_read16(chgnum, RAA489000_REG_ADC_VBUS, &val);
 	if (rv)
-		return 0;
+		return rv;
 
 	/* The VBUS voltage is returned in bits 13:6. The LSB is 96mV. */
 	val &= GENMASK(13, 6);
 	val = val >> 6;
 	val *= 96;
+	*voltage = val;
 
-	return val;
+	return EC_SUCCESS;
 }
 
 const struct charger_drv isl923x_drv = {

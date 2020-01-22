@@ -421,7 +421,8 @@ static enum ec_error_list bq25710_device_id(int chgnum, int *id)
 }
 
 #ifdef CONFIG_USB_PD_VBUS_MEASURE_CHARGER
-static int bq25710_get_vbus_voltage(int chgnum, int port)
+static enum ec_error_list bq25710_get_vbus_voltage(int chgnum, int port,
+						   int *voltage)
 {
 	int reg, rv;
 
@@ -439,12 +440,13 @@ static int bq25710_get_vbus_voltage(int chgnum, int port)
 	 * LSB => 64mV.
 	 * Return 0 when VBUS <= 3.2V as ADC can't measure it.
 	 */
-	return reg ?
+	*voltage = reg ?
 	       (reg * BQ25710_ADC_VBUS_STEP_MV + BQ25710_ADC_VBUS_BASE_MV) : 0;
 
 error:
-	CPRINTF("Could not read VBUS ADC! Error: %d\n", rv);
-	return 0;
+	if (rv)
+		CPRINTF("Could not read VBUS ADC! Error: %d\n", rv);
+	return rv;
 }
 #endif
 

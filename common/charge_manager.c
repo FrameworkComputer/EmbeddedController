@@ -459,7 +459,12 @@ static void charge_manager_fill_power_info(int port,
 			r->meas.voltage_now = 5000;
 		else {
 #if defined(CONFIG_USB_PD_VBUS_MEASURE_CHARGER)
-			r->meas.voltage_now = charger_get_vbus_voltage(port);
+			int voltage;
+
+			if (charger_get_vbus_voltage(port, &voltage))
+				r->meas.voltage_now = 0;
+			else
+				r->meas.voltage_now = voltage;
 #elif defined(CONFIG_USB_PD_VBUS_MEASURE_TCPC)
 			r->meas.voltage_now = tcpc_get_vbus_voltage(port);
 #elif defined(CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT)

@@ -356,6 +356,7 @@ void usb_charger_set_switches(int port, enum usb_switch setting)
  */
 int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 {
+	int voltage;
 	/*
 	 * Though we have a more tolerant range (3.9V~13.4V), setting 4400 to
 	 * prevent from a bad charger crashed.
@@ -366,7 +367,10 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 	 * try to raise this value to 4600.  (when it says it read 4400, it is
 	 * actually close to 4600)
 	 */
-	return charger_get_vbus_voltage(port) < 4400;
+	if (charger_get_vbus_voltage(port, &voltage))
+		voltage = 0;
+
+	return voltage < 4400;
 }
 
 __override int board_charge_port_is_sink(int port)

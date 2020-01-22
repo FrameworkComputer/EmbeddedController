@@ -251,7 +251,8 @@ static enum ec_error_list isl9241_set_voltage(int chgnum, int voltage)
 	return isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, voltage);
 }
 
-static int isl9241_get_vbus_voltage(int chgnum, int port)
+static enum ec_error_list isl9241_get_vbus_voltage(int chgnum, int port,
+						   int *voltage)
 {
 	int adc_val = 0;
 	int ctl3_val;
@@ -284,6 +285,7 @@ static int isl9241_get_vbus_voltage(int chgnum, int port)
 	 */
 	adc_val >>= ISL9241_VIN_ADC_BIT_OFFSET;
 	adc_val *= ISL9241_VIN_ADC_STEP_MV;
+	*voltage = adc_val;
 
 error_restore_ctl3:
 	/* Restore Control3 value */
@@ -294,7 +296,7 @@ error:
 	if (rv)
 		CPRINTF("Could not read VBUS ADC! Error: %d\n", rv);
 
-	return adc_val;
+	return rv;
 }
 
 static enum ec_error_list isl9241_post_init(int chgnum)

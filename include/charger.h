@@ -82,7 +82,8 @@ struct charger_drv {
 	enum ec_error_list (*discharge_on_ac)(int chgnum, int enable);
 
 	/* Get the VBUS voltage (mV) from the charger */
-	int (*get_vbus_voltage)(int chgnum, int port);
+	enum ec_error_list (*get_vbus_voltage)(int chgnum, int port,
+					       int *voltage);
 
 	/* Set desired input current value */
 	enum ec_error_list (*set_input_current)(int chgnum, int input_current);
@@ -214,7 +215,7 @@ enum ec_error_list charger_set_voltage(int voltage);
 enum ec_error_list charger_discharge_on_ac(int enable);
 
 /* Get the VBUS voltage (mV) from the charger */
-int charger_get_vbus_voltage(int port);
+enum ec_error_list charger_get_vbus_voltage(int port, int *voltage);
 
 /* Custom board function to discharge battery when on AC power */
 int board_discharge_on_ac(int enable);

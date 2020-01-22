@@ -1063,16 +1063,16 @@ static enum ec_error_list bd9995x_discharge_on_ac(int chgnum, int enable)
 				BD9995X_EXTENDED_COMMAND);
 }
 
-static int bd9995x_get_vbus_voltage(int chgnum, int port)
+static enum ec_error_list bd9995x_get_vbus_voltage(int chgnum, int port,
+						   int *voltage)
 {
 	uint8_t read_reg;
-	int voltage;
 
 	read_reg = (port == BD9995X_CHARGE_PORT_VBUS) ? BD9995X_CMD_VBUS_VAL :
 							BD9995X_CMD_VCC_VAL;
 
-	return ch_raw_read16(chgnum, read_reg, &voltage,
-			     BD9995X_EXTENDED_COMMAND) ? 0 : voltage;
+	return ch_raw_read16(chgnum, read_reg, voltage,
+			     BD9995X_EXTENDED_COMMAND);
 }
 
 /*** Non-standard interface functions ***/
