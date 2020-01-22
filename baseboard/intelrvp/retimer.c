@@ -29,7 +29,7 @@ const struct bb_usb_control bb_controls[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(bb_controls) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
-struct usb_retimer usb_retimers[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+struct usb_retimer usb_retimers[] = {
 	[TYPE_C_PORT_0] = {
 		.driver = &bb_usb_retimer,
 		.i2c_port = I2C_PORT0_BB_RETIMER,

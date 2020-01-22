@@ -25,7 +25,7 @@
 #define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ## args)
 
 /* TCPC gpios */
-const struct tcpc_gpio_config_t tcpc_gpios[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct tcpc_gpio_config_t tcpc_gpios[] = {
 	[TYPE_C_PORT_0] = {
 		.vbus = {
 			.pin = GPIO_USB_C0_VBUS_INT,

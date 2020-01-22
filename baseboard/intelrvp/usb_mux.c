@@ -12,7 +12,7 @@
 
 /* USB muxes Configuration */
 #ifdef CONFIG_USB_MUX_VIRTUAL
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+struct usb_mux usb_muxes[] = {
 	[TYPE_C_PORT_0] = {
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
@@ -28,7 +28,7 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == CONFIG_USB_PD_PORT_MAX_COUNT);
 #endif /* CONFIG_USB_MUX_VIRTUAL */
 
 #ifdef CONFIG_USB_MUX_ANX7440
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+struct usb_mux usb_muxes[] = {
 	[TYPE_C_PORT_0] = {
 		.port_addr = I2C_ADDR_USB_MUX0_FLAGS,
 		.driver = &anx7440_usb_mux_driver,

@@ -10,7 +10,7 @@
 
 /* BC1.2 chip Configuration */
 #ifdef CONFIG_BC12_DETECT_MAX14637
-const struct max14637_config_t max14637_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct max14637_config_t max14637_config[] = {
 	[TYPE_C_PORT_0] = {
 		.chip_enable_pin = GPIO_USB_C0_BC12_VBUS_ON_ODL,
 		.chg_det_pin = GPIO_USB_C0_BC12_CHG_DET_L,

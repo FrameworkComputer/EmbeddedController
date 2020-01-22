@@ -14,7 +14,7 @@
 #include "usb_pd_tcpm.h"
 
 /* USB-C TPCP Configuration */
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct tcpc_config_t tcpc_config[] = {
 	[TYPE_C_PORT_0] = {
 		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		/* TCPC is embedded within EC so no i2c config needed */
