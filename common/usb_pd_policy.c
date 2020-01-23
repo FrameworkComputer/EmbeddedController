@@ -286,8 +286,8 @@ static void set_tbt_compat_mode_ready(int port)
 			ppc_set_sbu(port, 1);
 
 		/* Set usb mux to Thunderbolt-compatible mode */
-		usb_mux_set(port, TYPEC_MUX_TBT_COMPAT, USB_SWITCH_CONNECT,
-			pd_get_polarity(port));
+		usb_mux_set(port, USB_PD_MUX_TBT_COMPAT_ENABLED,
+			USB_SWITCH_CONNECT, pd_get_polarity(port));
 	}
 }
 

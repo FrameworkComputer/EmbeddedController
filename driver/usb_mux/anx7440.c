@@ -68,11 +68,11 @@ static int anx7440_set_mux(int port, mux_state_t mux_state)
 		return res;
 
 	reg &= ~ANX7440_CHIP_CTRL_SW_OP_MODE_CLEAR;
-	if (mux_state & MUX_USB_ENABLED)
+	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= ANX7440_CHIP_CTRL_SW_OP_MODE_USB;
-	if (mux_state & MUX_DP_ENABLED)
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		reg |= ANX7440_CHIP_CTRL_SW_OP_MODE_DP;
-	if (mux_state & MUX_POLARITY_INVERTED)
+	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		reg |= ANX7440_CHIP_CTRL_SW_FLIP;
 
 	return anx7440_write(port, ANX7440_REG_CHIP_CTRL, reg);
@@ -89,11 +89,11 @@ static int anx7440_get_mux(int port, mux_state_t *mux_state)
 		return res;
 
 	if (reg & ANX7440_CHIP_CTRL_OP_MODE_FINAL_USB)
-		*mux_state |= MUX_USB_ENABLED;
+		*mux_state |= USB_PD_MUX_USB_ENABLED;
 	if (reg & ANX7440_CHIP_CTRL_OP_MODE_FINAL_DP)
-		*mux_state |= MUX_DP_ENABLED;
+		*mux_state |= USB_PD_MUX_DP_ENABLED;
 	if (reg & ANX7440_CHIP_CTRL_FINAL_FLIP)
-		*mux_state |= MUX_POLARITY_INVERTED;
+		*mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 
 	return EC_SUCCESS;
 }

@@ -243,7 +243,7 @@ static inline void pd_config_init(int port, uint8_t power_role)
 	pd_tx_init();
 
 	/* Reset mux ... for NONE polarity doesn't matter */
-	usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT, 0);
+	usb_mux_set(port, USB_PD_MUX_NONE, USB_SWITCH_DISCONNECT, 0);
 
 	if (port == 0) {
 			gpio_set_level(GPIO_USB_C0_CC1_VCONN1_EN_L, 1);

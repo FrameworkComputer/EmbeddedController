@@ -100,28 +100,28 @@ static int pi3dpx1207_set_mux(int port, mux_state_t mux_state)
 	const int gpio_dp_enable = pi3dpx1207_controls[port].dp_enable_gpio;
 
 	/* USB */
-	if (mux_state & MUX_USB_ENABLED) {
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
 		gpio_or_ioex_set_level(gpio_enable, 1);
 		/* USB with DP */
-		if (mux_state & MUX_DP_ENABLED) {
+		if (mux_state & USB_PD_MUX_DP_ENABLED) {
 			gpio_or_ioex_set_level(gpio_dp_enable, 1);
-			mode_val |= (mux_state & MUX_POLARITY_INVERTED)
+			mode_val |= (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 					? PI3DPX1207_MODE_CONF_USB_DP_FLIP
 					: PI3DPX1207_MODE_CONF_USB_DP;
 		}
 		/* USB without DP */
 		else {
 			gpio_or_ioex_set_level(gpio_dp_enable, 0);
-			mode_val |= (mux_state & MUX_POLARITY_INVERTED)
+			mode_val |= (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 					? PI3DPX1207_MODE_CONF_USB_FLIP
 					: PI3DPX1207_MODE_CONF_USB;
 		}
 	}
 	/* DP without USB */
-	else if (mux_state & MUX_DP_ENABLED) {
+	else if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		gpio_or_ioex_set_level(gpio_enable, 1);
 		gpio_or_ioex_set_level(gpio_dp_enable, 1);
-		mode_val |= (mux_state & MUX_POLARITY_INVERTED)
+		mode_val |= (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 				? PI3DPX1207_MODE_CONF_DP_FLIP
 				: PI3DPX1207_MODE_CONF_DP;
 	}

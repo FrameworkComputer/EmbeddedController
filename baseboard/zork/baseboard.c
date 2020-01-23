@@ -473,7 +473,7 @@ void bc12_interrupt(enum gpio_signal signal)
 static int zork_c1_retimer_set_mux(int port, mux_state_t mux_state)
 {
 	return amd_fp5_usb_retimer.set(port,
-				       mux_state & ~MUX_POLARITY_INVERTED);
+				mux_state & ~USB_PD_MUX_POLARITY_INVERTED);
 }
 
 const struct usb_retimer_driver zork_c1_usb_retimer = {
@@ -569,7 +569,7 @@ static int zork_c1_set_mux(int port, mux_state_t mux_state)
 	 * Try to detect, give an error if we are setting to a
 	 * MUX value that is not NONE when we have no power.
 	 */
-	rv = zork_c1_detect(port, mux_state != TYPEC_MUX_NONE);
+	rv = zork_c1_detect(port, mux_state != USB_PD_MUX_NONE);
 	if (rv)
 		return rv;
 
@@ -596,7 +596,7 @@ static int zork_c1_get_mux(int port, mux_state_t *mux_state)
 		 * and make it a good status
 		 */
 		if (rv == EC_ERROR_NOT_POWERED) {
-			*mux_state = TYPEC_MUX_NONE;
+			*mux_state = USB_PD_MUX_NONE;
 			rv = EC_SUCCESS;
 		}
 		return rv;

@@ -71,11 +71,11 @@ static int pi3usb3x532_set_mux(int port, mux_state_t mux_state)
 {
 	uint8_t reg = 0;
 
-	if (mux_state & MUX_USB_ENABLED)
+	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= PI3USB3X532_MODE_USB;
-	if (mux_state & MUX_DP_ENABLED)
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		reg |= PI3USB3X532_MODE_DP;
-	if (mux_state & MUX_POLARITY_INVERTED)
+	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		reg |= PI3USB3X532_BIT_SWAP;
 
 	return pi3usb3x532_write(port, PI3USB3X532_REG_CONTROL,
@@ -94,11 +94,11 @@ static int pi3usb3x532_get_mux(int port, mux_state_t *mux_state)
 		return res;
 
 	if (reg & PI3USB3X532_MODE_USB)
-		*mux_state |= MUX_USB_ENABLED;
+		*mux_state |= USB_PD_MUX_USB_ENABLED;
 	if (reg & PI3USB3X532_MODE_DP)
-		*mux_state |= MUX_DP_ENABLED;
+		*mux_state |= USB_PD_MUX_DP_ENABLED;
 	if (reg & PI3USB3X532_BIT_SWAP)
-		*mux_state |= MUX_POLARITY_INVERTED;
+		*mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 
 	return EC_SUCCESS;
 }

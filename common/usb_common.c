@@ -486,7 +486,7 @@ enum pd_drp_next_states drp_auto_toggle_next_state(
 	}
 }
 
-static enum typec_mux get_mux_mode_to_set(int port)
+mux_state_t get_mux_mode_to_set(int port)
 {
 	/*
 	 * If the SoC is down, then we disconnect the MUX to save power since
@@ -494,7 +494,7 @@ static enum typec_mux get_mux_mode_to_set(int port)
 	 */
 	if (IS_ENABLED(CONFIG_POWER_COMMON) &&
 	    chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
-		return TYPEC_MUX_NONE;
+		return USB_PD_MUX_NONE;
 
 	/*
 	 * When PD stack is disconnected, then mux should be disconnected, which
@@ -503,13 +503,13 @@ static enum typec_mux get_mux_mode_to_set(int port)
 	 * be set correctly again.
 	 */
 	if (pd_is_disconnected(port))
-		return TYPEC_MUX_NONE;
+		return USB_PD_MUX_NONE;
 
 	/* If new data role isn't DFP & we only support DFP, also disconnect. */
 	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
 	    IS_ENABLED(CONFIG_USBC_SS_MUX_DFP_ONLY) &&
 	    pd_get_data_role(port) != PD_ROLE_DFP)
-		return TYPEC_MUX_NONE;
+		return USB_PD_MUX_NONE;
 
 	/*
 	 * If the power role is sink and the partner device is not capable
@@ -518,17 +518,18 @@ static enum typec_mux get_mux_mode_to_set(int port)
 	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
 	    pd_get_power_role(port) == PD_ROLE_SINK &&
 	    !pd_get_partner_usb_comm_capable(port))
-		return TYPEC_MUX_NONE;
+		return USB_PD_MUX_NONE;
 
 	/* Otherwise connect mux since we are in S3+ */
-	return TYPEC_MUX_USB;
+	return USB_PD_MUX_USB_ENABLED;
 }
 
 void set_usb_mux_with_current_data_role(int port)
 {
 	if (IS_ENABLED(CONFIG_USBC_SS_MUX)) {
-		enum typec_mux mux_mode = get_mux_mode_to_set(port);
-		enum usb_switch usb_switch_mode = (mux_mode == TYPEC_MUX_NONE) ?
+		mux_state_t mux_mode = get_mux_mode_to_set(port);
+		enum usb_switch usb_switch_mode =
+				(mux_mode == USB_PD_MUX_NONE) ?
 				USB_SWITCH_DISCONNECT : USB_SWITCH_CONNECT;
 
 		usb_mux_set(port, mux_mode, usb_switch_mode,
@@ -783,7 +784,7 @@ __overridable int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 void usb_mux_set_safe_mode(int port)
 {
 	usb_mux_set(port, IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) ?
-		TYPEC_MUX_SAFE : TYPEC_MUX_NONE,
+		USB_PD_MUX_SAFE_MODE : USB_PD_MUX_NONE,
 		USB_SWITCH_CONNECT, pd_get_polarity(port));
 
 	/* Isolate the SBU lines. */
@@ -870,7 +871,7 @@ __overridable int svdm_dp_config(int port, uint32_t *payload)
 	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
 	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
 	uint8_t pin_mode = get_dp_pin_mode(port);
-	enum typec_mux mux_mode;
+	mux_state_t mux_mode;
 
 	if (!pin_mode)
 		return 0;
@@ -880,7 +881,7 @@ __overridable int svdm_dp_config(int port, uint32_t *payload)
 	 * supported.
 	 */
 	mux_mode = ((pin_mode & MODE_DP_PIN_MF_MASK) && mf_pref) ?
-		TYPEC_MUX_DOCK : TYPEC_MUX_DP;
+		USB_PD_MUX_DOCK : USB_PD_MUX_DP_ENABLED;
 	CPRINTS("pin_mode: %x, mf: %d, mux: %d", pin_mode, mf_pref, mux_mode);
 
 	/* Connect the SBU and USB lines to the connector. */

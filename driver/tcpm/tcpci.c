@@ -1170,11 +1170,11 @@ int tcpci_tcpm_mux_set(int port, mux_state_t mux_state)
 
 	reg &= ~(TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK |
 		 TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED);
-	if (mux_state & MUX_USB_ENABLED)
+	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB;
-	if (mux_state & MUX_DP_ENABLED)
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		reg |= TCPC_REG_CONFIG_STD_OUTPUT_MUX_DP;
-	if (mux_state & MUX_POLARITY_INVERTED)
+	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		reg |= TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED;
 
 	/* Parameter is port only */
@@ -1196,11 +1196,11 @@ int tcpci_tcpm_mux_get(int port, mux_state_t *mux_state)
 		return rv;
 
 	if (reg & TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB)
-		*mux_state |= MUX_USB_ENABLED;
+		*mux_state |= USB_PD_MUX_USB_ENABLED;
 	if (reg & TCPC_REG_CONFIG_STD_OUTPUT_MUX_DP)
-		*mux_state |= MUX_DP_ENABLED;
+		*mux_state |= USB_PD_MUX_DP_ENABLED;
 	if (reg & TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED)
-		*mux_state |= MUX_POLARITY_INVERTED;
+		*mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 
 	return EC_SUCCESS;
 }

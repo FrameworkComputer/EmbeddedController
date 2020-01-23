@@ -267,9 +267,9 @@ void anx74xx_tcpc_clear_hpd_status(int port)
 static int anx74xx_tcpm_mux_init(int port)
 {
 	/* Nothing to do here, ANX initializes its muxes
-	 * as (MUX_USB_ENABLED | MUX_DP_ENABLED)
+	 * as (USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED)
 	 */
-	anx[port].mux_state = MUX_USB_ENABLED | MUX_DP_ENABLED;
+	anx[port].mux_state = USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED;
 
 	return EC_SUCCESS;
 }
@@ -308,9 +308,9 @@ static int anx74xx_tcpm_mux_exit(int port)
 
 	/*
 	 * Safe mode must be entered before any changes are made to the mux
-	 * settings used to enable ALT_DP mode. This funciton is called either
-	 * from anx74xx_tcpm_mux_set when TYPEC_MUX_NONE is selected as the new
-	 * mux state, or when both cc lines are determined to be
+	 * settings used to enable ALT_DP mode. This function is called either
+	 * from anx74xx_tcpm_mux_set when USB_PD_MUX_NONE is selected as the
+	 * new mux state, or when both cc lines are determined to be
 	 * TYPEC_CC_VOLT_OPEN. Therefore, safe mode must be entered and exited
 	 * here so that both entry paths are handled.
 	 */
@@ -379,7 +379,7 @@ static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 	int rv;
 	int port = i2c_addr;
 
-	if (!(mux_state & ~MUX_POLARITY_INVERTED)) {
+	if (!(mux_state & ~USB_PD_MUX_POLARITY_INVERTED)) {
 		anx[port].mux_state = mux_state;
 		return anx74xx_tcpm_mux_exit(port);
 	}
@@ -389,18 +389,18 @@ static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 		return EC_ERROR_UNKNOWN;
 	ctrl5 &= 0x0f;
 
-	if (mux_state & MUX_USB_ENABLED) {
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
 		/* Connect USB SS switches */
-		if (mux_state & MUX_POLARITY_INVERTED) {
+		if (mux_state & USB_PD_MUX_POLARITY_INVERTED) {
 			ctrl1 = ANX74XX_REG_MUX_SSRX_RX2;
 			ctrl5 |= ANX74XX_REG_MUX_SSTX_TX2;
 		} else {
 			ctrl1 = ANX74XX_REG_MUX_SSRX_RX1;
 			ctrl5 |= ANX74XX_REG_MUX_SSTX_TX1;
 		}
-		if (mux_state & MUX_DP_ENABLED) {
+		if (mux_state & USB_PD_MUX_DP_ENABLED) {
 			/* Set pin assignment D */
-			if (mux_state & MUX_POLARITY_INVERTED)
+			if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 				ctrl1 |= (ANX74XX_REG_MUX_ML0_RX1 |
 					  ANX74XX_REG_MUX_ML1_TX1);
 			else
@@ -408,9 +408,9 @@ static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 					  ANX74XX_REG_MUX_ML1_TX2);
 		}
 		/* Keep ML0/ML1 unconnected if DP is not enabled */
-	} else if (mux_state & MUX_DP_ENABLED) {
+	} else if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* Set pin assignment C */
-		if (mux_state & MUX_POLARITY_INVERTED) {
+		if (mux_state & USB_PD_MUX_POLARITY_INVERTED) {
 			ctrl1 = (ANX74XX_REG_MUX_ML0_RX1 |
 				 ANX74XX_REG_MUX_ML1_TX1 |
 				 ANX74XX_REG_MUX_ML3_RX2);
@@ -443,8 +443,9 @@ static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 		return EC_ERROR_UNKNOWN;
 
 	/* Configure DP aux to sbu settings */
-	if (anx74xx_mux_aux_to_sbu(port, mux_state & MUX_POLARITY_INVERTED,
-				   mux_state & MUX_DP_ENABLED))
+	if (anx74xx_mux_aux_to_sbu(port,
+				   mux_state & USB_PD_MUX_POLARITY_INVERTED,
+				   mux_state & USB_PD_MUX_DP_ENABLED))
 		return EC_ERROR_UNKNOWN;
 
 	/* Exit safe mode */
@@ -785,9 +786,9 @@ static int anx74xx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 
 	/* Update mux polarity */
 #ifdef CONFIG_USB_PD_TCPM_MUX
-	mux_state = anx[port].mux_state & ~MUX_POLARITY_INVERTED;
+	mux_state = anx[port].mux_state & ~USB_PD_MUX_POLARITY_INVERTED;
 	if (polarity)
-		mux_state |= MUX_POLARITY_INVERTED;
+		mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 	anx74xx_tcpm_mux_set(port, mux_state);
 #endif
 	return rv;

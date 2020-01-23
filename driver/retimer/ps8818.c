@@ -46,12 +46,12 @@ static int ps8818_set_mux(int port, mux_state_t mux_state)
 	int val = 0;
 
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-		return (mux_state == TYPEC_MUX_NONE) ? EC_SUCCESS
+		return (mux_state == USB_PD_MUX_NONE) ? EC_SUCCESS
 						     : EC_ERROR_NOT_POWERED;
 
-	if (mux_state & MUX_USB_ENABLED)
+	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		val |= PS8818_MODE_USB_ENABLE;
-	if (mux_state & MUX_DP_ENABLED)
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		val |= PS8818_MODE_DP_ENABLE;
 
 	rv = ps8818_i2c_write(port, PS8818_REG_MODE, val);
@@ -59,7 +59,7 @@ static int ps8818_set_mux(int port, mux_state_t mux_state)
 		return rv;
 
 	val = 0;
-	if (mux_state & MUX_POLARITY_INVERTED)
+	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		val |= PS8818_FLIP_CONFIG;
 
 	return ps8818_i2c_write(port, PS8818_REG_FLIP, val);

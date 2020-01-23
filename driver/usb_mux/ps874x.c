@@ -78,11 +78,11 @@ static int ps874x_set_mux(int port, mux_state_t mux_state)
 {
 	uint8_t reg = 0;
 
-	if (mux_state & MUX_USB_ENABLED)
+	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= PS874X_MODE_USB_ENABLED;
-	if (mux_state & MUX_DP_ENABLED)
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		reg |= PS874X_MODE_DP_ENABLED;
-	if (mux_state & MUX_POLARITY_INVERTED)
+	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		reg |= PS874X_MODE_POLARITY_INVERTED;
 
 	return ps874x_write(port, PS874X_REG_MODE, reg);
@@ -100,11 +100,11 @@ static int ps874x_get_mux(int port, mux_state_t *mux_state)
 
 	*mux_state = 0;
 	if (reg & PS874X_STATUS_USB_ENABLED)
-		*mux_state |= MUX_USB_ENABLED;
+		*mux_state |= USB_PD_MUX_USB_ENABLED;
 	if (reg & PS874X_STATUS_DP_ENABLED)
-		*mux_state |= MUX_DP_ENABLED;
+		*mux_state |= USB_PD_MUX_DP_ENABLED;
 	if (reg & PS874X_STATUS_POLARITY_INVERTED)
-		*mux_state |= MUX_POLARITY_INVERTED;
+		*mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 
 	return EC_SUCCESS;
 }

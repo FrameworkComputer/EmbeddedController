@@ -141,3 +141,10 @@ void pd_dev_get_rw_hash(int port, uint16_t *dev_id, uint8_t *rw_hash,
 			uint32_t *current_image)
 {
 }
+
+#ifndef CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
+bool pd_is_disconnected(int port)
+{
+	return false;
+}
+#endif /* CONFIG_USB_TYPEC_DRP_ACC_TRYSRC */

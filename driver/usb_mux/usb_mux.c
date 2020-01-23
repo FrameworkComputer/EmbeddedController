@@ -151,12 +151,13 @@ void usb_mux_init(int port)
  * TODO(crbug.com/505480): Setting muxes often involves I2C transcations,
  * which can block. Consider implementing an asynchronous task.
  */
-void usb_mux_set(int port, enum typec_mux mux_mode,
+void usb_mux_set(int port, mux_state_t mux_mode,
 		 enum usb_switch usb_mode, int polarity)
 {
 	mux_state_t mux_state;
 	const int should_enter_low_power_mode =
-		mux_mode == TYPEC_MUX_NONE && usb_mode == USB_SWITCH_DISCONNECT;
+		(mux_mode == USB_PD_MUX_NONE &&
+		usb_mode == USB_SWITCH_DISCONNECT);
 
 	/* Configure USB2.0 */
 	if (IS_ENABLED(CONFIG_USB_CHARGER))
@@ -173,8 +174,8 @@ void usb_mux_set(int port, enum typec_mux mux_mode,
 	exit_low_power_mode(port);
 
 	/* Configure superspeed lanes */
-	mux_state = ((mux_mode != TYPEC_MUX_NONE) && polarity)
-			? mux_mode | MUX_POLARITY_INVERTED
+	mux_state = ((mux_mode != USB_PD_MUX_NONE) && polarity)
+			? mux_mode | USB_PD_MUX_POLARITY_INVERTED
 			: mux_mode;
 
 	if (configure_mux(port, USB_MUX_SET_MODE, &mux_state))
@@ -214,10 +215,10 @@ void usb_mux_flip(int port)
 	if (configure_mux(port, USB_MUX_GET_MODE, &mux_state))
 		return;
 
-	if (mux_state & MUX_POLARITY_INVERTED)
-		mux_state &= ~MUX_POLARITY_INVERTED;
+	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
+		mux_state &= ~USB_PD_MUX_POLARITY_INVERTED;
 	else
-		mux_state |= MUX_POLARITY_INVERTED;
+		mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 
 	configure_mux(port, USB_MUX_SET_MODE, &mux_state);
 }
@@ -243,7 +244,7 @@ static int command_typec(int argc, char **argv)
 	const char * const mux_name[] = {"none", "usb", "dp", "dock"};
 	char *e;
 	int port;
-	enum typec_mux mux = TYPEC_MUX_NONE;
+	mux_state_t mux = USB_PD_MUX_NONE;
 	int i;
 
 	if (argc == 2 && !strcasecmp(argv[1], "debug")) {
@@ -279,7 +280,7 @@ static int command_typec(int argc, char **argv)
 	for (i = 0; i < ARRAY_SIZE(mux_name); i++)
 		if (!strcasecmp(argv[2], mux_name[i]))
 			mux = i;
-	usb_mux_set(port, mux, mux == TYPEC_MUX_NONE ?
+	usb_mux_set(port, mux, mux == USB_PD_MUX_NONE ?
 				      USB_SWITCH_DISCONNECT :
 				      USB_SWITCH_CONNECT,
 			  pd_get_polarity(port));

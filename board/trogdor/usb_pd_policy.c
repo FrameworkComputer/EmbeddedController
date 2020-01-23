@@ -188,7 +188,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 			 * because of the board USB-C topology (limited to 2
 			 * lanes DP).
 			 */
-			usb_mux_set(port, TYPEC_MUX_DOCK,
+			usb_mux_set(port, USB_PD_MUX_DOCK,
 				    USB_SWITCH_CONNECT, pd_get_polarity(port));
 		} else {
 			/* TODO(waihong): Info user? */
@@ -204,7 +204,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 			ppc_set_sbu(port, 0);
 
 		/* Disconnect the DP but keep the USB SS lines in TCPC chip. */
-		usb_mux_set(port, TYPEC_MUX_USB,
+		usb_mux_set(port, USB_PD_MUX_USB_ENABLED,
 			    USB_SWITCH_CONNECT, pd_get_polarity(port));
 	}
 

@@ -48,7 +48,7 @@ static int board_init_usb_mux(int port)
 static int board_set_usb_mux(int port, mux_state_t mux_state)
 {
 	const struct usb_port_mux *usb_mux = mux_gpios + port;
-	int polarity = mux_state & MUX_POLARITY_INVERTED;
+	int polarity = mux_state & USB_PD_MUX_POLARITY_INVERTED;
 
 	/* reset everything */
 	gpio_set_level(usb_mux->ss1_en_l, 1);
@@ -58,16 +58,16 @@ static int board_set_usb_mux(int port, mux_state_t mux_state)
 	gpio_set_level(usb_mux->ss1_dp_mode, 1);
 	gpio_set_level(usb_mux->ss2_dp_mode, 1);
 
-	if (!(mux_state & (MUX_USB_ENABLED | MUX_DP_ENABLED)))
+	if (!(mux_state & (USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED)))
 		/* everything is already disabled, we can return */
 		return EC_SUCCESS;
 
-	if (mux_state & MUX_USB_ENABLED)
+	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		/* USB 3.0 uses 2 superspeed lanes */
 		gpio_set_level(polarity ? usb_mux->ss2_dp_mode :
 					  usb_mux->ss1_dp_mode, 0);
 
-	if (mux_state & MUX_DP_ENABLED) {
+	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* DP uses available superspeed lanes (x2 or x4) */
 		gpio_set_level(usb_mux->dp_polarity, polarity);
 		gpio_set_level(usb_mux->dp_mode_l, 0);
@@ -88,13 +88,13 @@ static int board_get_usb_mux(int port, mux_state_t *mux_state)
 
 	if (!gpio_get_level(usb_mux->ss1_dp_mode) ||
 	    !gpio_get_level(usb_mux->ss2_dp_mode))
-		*mux_state |= MUX_USB_ENABLED;
+		*mux_state |= USB_PD_MUX_USB_ENABLED;
 
 	if (!gpio_get_level(usb_mux->dp_mode_l))
-		*mux_state |= MUX_DP_ENABLED;
+		*mux_state |= USB_PD_MUX_DP_ENABLED;
 
 	if (gpio_get_level(usb_mux->dp_polarity))
-		*mux_state |= MUX_POLARITY_INVERTED;
+		*mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 
 	return EC_SUCCESS;
 }

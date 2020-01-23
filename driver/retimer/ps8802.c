@@ -75,18 +75,18 @@ static int ps8802_set_mux(int port, mux_state_t mux_state)
 	int rv;
 
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-		return (mux_state == TYPEC_MUX_NONE) ? EC_SUCCESS
+		return (mux_state == USB_PD_MUX_NONE) ? EC_SUCCESS
 						     : EC_ERROR_NOT_POWERED;
 
 	rv = ps8802_i2c_wake(port);
 	if (rv)
 		return rv;
 
-	if (mux_state & MUX_USB_ENABLED)
+	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		val |= PS8802_MODE_USB_ENABLE;
-	if (mux_state & MUX_DP_ENABLED)
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		val |= PS8802_MODE_DP_ENABLE;
-	if (mux_state & MUX_POLARITY_INVERTED)
+	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		val |= PS8802_MODE_FLIP_ENABLE;
 
 	return ps8802_i2c_write(port, PS8802_REG_MODE, val);
@@ -97,7 +97,7 @@ static int ps8802_get_mux(int port, mux_state_t *mux_state)
 	int rv;
 	int val;
 
-	*mux_state = TYPEC_MUX_NONE;
+	*mux_state = USB_PD_MUX_NONE;
 
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 		return EC_ERROR_NOT_POWERED;
@@ -111,11 +111,11 @@ static int ps8802_get_mux(int port, mux_state_t *mux_state)
 		return rv;
 
 	if (val & PS8802_MODE_USB_ENABLE)
-		*mux_state |= MUX_USB_ENABLED;
+		*mux_state |= USB_PD_MUX_USB_ENABLED;
 	if (val & PS8802_MODE_DP_ENABLE)
-		*mux_state |= MUX_DP_ENABLED;
+		*mux_state |= USB_PD_MUX_DP_ENABLED;
 	if (val & PS8802_MODE_FLIP_ENABLE)
-		*mux_state |= MUX_POLARITY_INVERTED;
+		*mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 
 	return rv;
 }

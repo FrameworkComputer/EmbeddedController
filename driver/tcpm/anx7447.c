@@ -370,7 +370,7 @@ static int anx7447_init(int port)
 	 * If this TCPC is not also the MUX then don't initialize to NONE
 	 */
 	if (!(usb_muxes[port].flags & USB_MUX_FLAG_NOT_TCPC))
-		rv |= anx7447_mux_set(port, TYPEC_MUX_NONE);
+		rv |= anx7447_mux_set(port, USB_PD_MUX_NONE);
 #endif /* CONFIG_USB_PD_TCPM_MUX */
 
 	return rv;
@@ -504,11 +504,11 @@ static int anx7447_mux_init(int port)
 	anx7447_hpd_output_en(port);
 
 	/*
-	 * ANX initializes its muxes to (MUX_USB_ENABLED | MUX_DP_ENABLED)
-	 * when reinitialized, we need to force initialize it to
-	 * TYPEC_MUX_NONE
+	 * ANX initializes its muxes to (USB_PD_MUX_USB_ENABLED |
+	 * USB_PD_MUX_DP_ENABLED) when reinitialized, we need to force
+	 * initialize it to USB_PD_MUX_NONE
 	 */
-	return anx7447_mux_set(port, TYPEC_MUX_NONE);
+	return anx7447_mux_set(port, USB_PD_MUX_NONE);
 }
 
 #ifdef CONFIG_USB_PD_TCPM_ANX7447_AUX_PU_PD
@@ -562,39 +562,39 @@ static int anx7447_mux_set(int port, mux_state_t mux_state)
 	int sw_sel = 0x00, aux_sw = 0x00;
 	int rv;
 
-	cc_direction = mux_state & MUX_POLARITY_INVERTED;
-	mux_type = mux_state & TYPEC_MUX_DOCK;
+	cc_direction = mux_state & USB_PD_MUX_POLARITY_INVERTED;
+	mux_type = mux_state & USB_PD_MUX_DOCK;
 	CPRINTS("C%d mux_state = 0x%x, mux_type = 0x%x",
 		port, mux_state, mux_type);
 	if (cc_direction == 0) {
 		/* cc1 connection */
-		if (mux_type == TYPEC_MUX_DOCK) {
+		if (mux_type == USB_PD_MUX_DOCK) {
 			/* ml0-a10/11, ml1-b2/b3, sstx-a2/a3, ssrx-b10/11 */
 			sw_sel = 0x21;
 			/* aux+ <-> sbu1, aux- <-> sbu2 */
 			aux_sw = 0x03;
-		} else if (mux_type == TYPEC_MUX_DP) {
+		} else if (mux_type == USB_PD_MUX_DP_ENABLED) {
 			/* ml0-a10/11, ml1-b2/b3, ml2-a2/a3, ml3-b10/11 */
 			sw_sel = 0x09;
 			/* aux+ <-> sbu1, aux- <-> sbu2 */
 			aux_sw = 0x03;
-		} else if (mux_type == TYPEC_MUX_USB) {
+		} else if (mux_type == USB_PD_MUX_USB_ENABLED) {
 			/* ssrxp<->b11, ssrxn<->b10, sstxp<->a2, sstxn<->a3 */
 			sw_sel = 0x20;
 		}
 	} else {
 		/* cc2 connection */
-		if (mux_type == TYPEC_MUX_DOCK) {
+		if (mux_type == USB_PD_MUX_DOCK) {
 			/* ml0-b10/11, ml1-a2/b3, sstx-b2/a3, ssrx-a10/11 */
 			sw_sel = 0x12;
 			/* aux+ <-> sbu2, aux- <-> sbu1 */
 			aux_sw = 0x0C;
-		} else if (mux_type == TYPEC_MUX_DP) {
+		} else if (mux_type == USB_PD_MUX_DP_ENABLED) {
 			/* ml0-b10/11, ml1-a2/b3, ml2-b2/a3, ml3-a10/11 */
 			sw_sel = 0x06;
 			/* aux+ <-> sbu2, aux- <-> sbu1 */
 			aux_sw = 0x0C;
-		} else if (mux_type == TYPEC_MUX_USB) {
+		} else if (mux_type == USB_PD_MUX_USB_ENABLED) {
 			/* ssrxp<->a11, ssrxn<->a10, sstxp<->b2, sstxn<->b3 */
 			sw_sel = 0x10;
 		}
@@ -618,7 +618,7 @@ static int anx7447_mux_set(int port, mux_state_t mux_state)
 	 * DP and Dock mode: after configured the Mux, change the Mux to
 	 * normal mode, otherwise: keep safe mode.
 	 */
-	if (mux_type != TYPEC_MUX_NONE) {
+	if (mux_type != USB_PD_MUX_NONE) {
 		anx7447_configure_aux_src(port, 1);
 		anx7447_mux_safemode(port, 0);
 	} else

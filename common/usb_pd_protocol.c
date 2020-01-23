@@ -832,7 +832,7 @@ static inline void set_state(int port, enum pd_states next_state)
 		 */
 		pd_execute_data_swap(port, PD_ROLE_DFP);
 #ifdef CONFIG_USBC_SS_MUX
-		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
+		usb_mux_set(port, USB_PD_MUX_NONE, USB_SWITCH_DISCONNECT,
 			    pd[port].polarity);
 #endif
 		/* Disable TCPC RX */
@@ -3389,7 +3389,7 @@ void pd_task(void *u)
 							  PD_ROLE_VCONN_OFF);
 #endif /* CONFIG_USBC_VCONN */
 #ifdef CONFIG_USBC_SS_MUX
-					usb_mux_set(port, TYPEC_MUX_NONE,
+					usb_mux_set(port, USB_PD_MUX_NONE,
 						    USB_SWITCH_DISCONNECT,
 						    pd[port].polarity);
 #endif /* CONFIG_USBC_SS_MUX */
@@ -5356,12 +5356,12 @@ static const enum pd_dual_role_states dual_role_map[USB_PD_CTRL_ROLE_COUNT] = {
 #endif
 
 #ifdef CONFIG_USBC_SS_MUX
-static const enum typec_mux typec_mux_map[USB_PD_CTRL_MUX_COUNT] = {
-	[USB_PD_CTRL_MUX_NONE] = TYPEC_MUX_NONE,
-	[USB_PD_CTRL_MUX_USB]  = TYPEC_MUX_USB,
-	[USB_PD_CTRL_MUX_AUTO] = TYPEC_MUX_DP,
-	[USB_PD_CTRL_MUX_DP]   = TYPEC_MUX_DP,
-	[USB_PD_CTRL_MUX_DOCK] = TYPEC_MUX_DOCK,
+static const mux_state_t typec_mux_map[USB_PD_CTRL_MUX_COUNT] = {
+	[USB_PD_CTRL_MUX_NONE] = USB_PD_MUX_NONE,
+	[USB_PD_CTRL_MUX_USB]  = USB_PD_MUX_USB_ENABLED,
+	[USB_PD_CTRL_MUX_AUTO] = USB_PD_MUX_DP_ENABLED,
+	[USB_PD_CTRL_MUX_DP]   = USB_PD_MUX_DP_ENABLED,
+	[USB_PD_CTRL_MUX_DOCK] = USB_PD_MUX_DOCK,
 };
 #endif
 
@@ -5412,7 +5412,7 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 #ifdef CONFIG_USBC_SS_MUX
 	if (p->mux != USB_PD_CTRL_MUX_NO_CHANGE)
 		usb_mux_set(p->port, typec_mux_map[p->mux],
-			    typec_mux_map[p->mux] == TYPEC_MUX_NONE ?
+			    typec_mux_map[p->mux] == USB_PD_MUX_NONE ?
 			    USB_SWITCH_DISCONNECT :
 			    USB_SWITCH_CONNECT,
 			    pd_get_polarity(p->port));

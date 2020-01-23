@@ -12,7 +12,7 @@
 #include "usb_mux.h"
 #include "util.h"
 
-#define MUX_STATE_DP_USB_MASK (MUX_USB_ENABLED | MUX_DP_ENABLED)
+#define MUX_STATE_DP_USB_MASK (USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED)
 
 static int it5205_read(int port, uint8_t reg, int *val)
 {
@@ -63,10 +63,10 @@ static int it5205_set_mux(int port, mux_state_t mux_state)
 	uint8_t reg;
 
 	switch (mux_state & MUX_STATE_DP_USB_MASK) {
-	case MUX_USB_ENABLED:
+	case USB_PD_MUX_USB_ENABLED:
 		reg = IT5205_USB;
 		break;
-	case MUX_DP_ENABLED:
+	case USB_PD_MUX_DP_ENABLED:
 		reg = IT5205_DP;
 		break;
 	case MUX_STATE_DP_USB_MASK:
@@ -77,7 +77,7 @@ static int it5205_set_mux(int port, mux_state_t mux_state)
 		break;
 	}
 
-	if (mux_state & MUX_POLARITY_INVERTED)
+	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		reg |= IT5205_POLARITY_INVERTED;
 
 	return it5205_write(port, IT5205_REG_MUXCR, reg);
@@ -94,10 +94,10 @@ static int it5205_get_mux(int port, mux_state_t *mux_state)
 
 	switch (reg & IT5205_DP_USB_CTRL_MASK) {
 	case IT5205_USB:
-		*mux_state = MUX_USB_ENABLED;
+		*mux_state = USB_PD_MUX_USB_ENABLED;
 		break;
 	case IT5205_DP:
-		*mux_state = MUX_DP_ENABLED;
+		*mux_state = USB_PD_MUX_DP_ENABLED;
 		break;
 	case IT5205_DP_USB:
 		*mux_state = MUX_STATE_DP_USB_MASK;
@@ -108,7 +108,7 @@ static int it5205_get_mux(int port, mux_state_t *mux_state)
 	}
 
 	if (reg & IT5205_POLARITY_INVERTED)
-		*mux_state |= MUX_POLARITY_INVERTED;
+		*mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 
 	return EC_SUCCESS;
 }

@@ -108,7 +108,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		return 1;
 	}
 
-	usb_mux_set(port, lvl ? TYPEC_MUX_DP : TYPEC_MUX_NONE,
+	usb_mux_set(port, lvl ? USB_PD_MUX_DP_ENABLED : USB_PD_MUX_NONE,
 		    USB_SWITCH_CONNECT, pd_get_polarity(port));
 
 	mux->hpd_update(port, lvl, irq);

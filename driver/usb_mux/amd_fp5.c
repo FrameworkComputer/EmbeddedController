@@ -48,18 +48,19 @@ static int amd_fp5_set_mux(int port, mux_state_t mux_state)
 	 * it because a powered down MUX is off.
 	 */
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-		return (mux_state == TYPEC_MUX_NONE)
+		return (mux_state == USB_PD_MUX_NONE)
 			? EC_SUCCESS
 			: EC_ERROR_NOT_POWERED;
 
-	if ((mux_state & MUX_USB_ENABLED) && (mux_state & MUX_DP_ENABLED))
-		val = (mux_state & MUX_POLARITY_INVERTED)
+	if ((mux_state & USB_PD_MUX_USB_ENABLED) &&
+		(mux_state & USB_PD_MUX_DP_ENABLED))
+		val = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 			? AMD_FP5_MUX_DOCK_INVERTED : AMD_FP5_MUX_DOCK;
-	else if (mux_state & MUX_USB_ENABLED)
-		val = (mux_state & MUX_POLARITY_INVERTED)
+	else if (mux_state & USB_PD_MUX_USB_ENABLED)
+		val = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 			? AMD_FP5_MUX_USB_INVERTED : AMD_FP5_MUX_USB;
-	else if (mux_state & MUX_DP_ENABLED)
-		val = (mux_state & MUX_POLARITY_INVERTED)
+	else if (mux_state & USB_PD_MUX_DP_ENABLED)
+		val = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 			? AMD_FP5_MUX_DP_INVERTED : AMD_FP5_MUX_DP;
 
 	return amd_fp5_mux_write(port, val);
@@ -85,27 +86,29 @@ static int amd_fp5_get_mux(int port, mux_state_t *mux_state)
 
 	switch (val) {
 	case AMD_FP5_MUX_USB:
-		*mux_state = MUX_USB_ENABLED;
+		*mux_state = USB_PD_MUX_USB_ENABLED;
 		break;
 	case AMD_FP5_MUX_USB_INVERTED:
-		*mux_state = MUX_USB_ENABLED | MUX_POLARITY_INVERTED;
+		*mux_state = USB_PD_MUX_USB_ENABLED |
+				USB_PD_MUX_POLARITY_INVERTED;
 		break;
 	case AMD_FP5_MUX_DOCK:
-		*mux_state = MUX_USB_ENABLED | MUX_DP_ENABLED;
+		*mux_state = USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED;
 		break;
 	case AMD_FP5_MUX_DOCK_INVERTED:
-		*mux_state = MUX_USB_ENABLED | MUX_DP_ENABLED
-			     | MUX_POLARITY_INVERTED;
+		*mux_state = USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED
+			     | USB_PD_MUX_POLARITY_INVERTED;
 		break;
 	case AMD_FP5_MUX_DP:
-		*mux_state = MUX_DP_ENABLED;
+		*mux_state = USB_PD_MUX_DP_ENABLED;
 		break;
 	case AMD_FP5_MUX_DP_INVERTED:
-		*mux_state = MUX_DP_ENABLED | MUX_POLARITY_INVERTED;
+		*mux_state = USB_PD_MUX_DP_ENABLED |
+				USB_PD_MUX_POLARITY_INVERTED;
 		break;
 	case AMD_FP5_MUX_SAFE:
 	default:
-		*mux_state = TYPEC_MUX_NONE;
+		*mux_state = USB_PD_MUX_NONE;
 		break;
 	}
 

@@ -46,7 +46,7 @@ __maybe_unused static int test_mux_con_dis_as_src(void)
 	task_wait_event(SECOND);
 
 	/* We are in Attached.SRC now */
-	TEST_EQ(mock_usb_mux.state, TYPEC_MUX_USB, "%d");
+	TEST_EQ(mock_usb_mux.state, USB_PD_MUX_USB_ENABLED, "%d");
 	TEST_EQ(mock_usb_mux.num_set_calls, 1, "%d");
 
 	mock_tcpc.cc1 = TYPEC_CC_VOLT_OPEN;
@@ -57,7 +57,7 @@ __maybe_unused static int test_mux_con_dis_as_src(void)
 	task_wait_event(10 * SECOND);
 
 	/* We are in Unattached.SNK. The mux should have detached */
-	TEST_EQ(mock_usb_mux.state, TYPEC_MUX_NONE, "%d");
+	TEST_EQ(mock_usb_mux.state, USB_PD_MUX_NONE, "%d");
 	TEST_EQ(mock_usb_mux.num_set_calls, 2, "%d");
 
 	return EC_SUCCESS;
@@ -75,7 +75,7 @@ __maybe_unused static int test_mux_con_dis_as_snk(void)
 	task_wait_event(5 * SECOND);
 
 	/* We are in Attached.SNK now */
-	TEST_EQ(mock_usb_mux.state, TYPEC_MUX_USB, "%d");
+	TEST_EQ(mock_usb_mux.state, USB_PD_MUX_USB_ENABLED, "%d");
 	TEST_EQ(mock_usb_mux.num_set_calls, 1, "%d");
 
 	mock_tcpc.cc1 = TYPEC_CC_VOLT_OPEN;
@@ -87,7 +87,7 @@ __maybe_unused static int test_mux_con_dis_as_snk(void)
 	task_wait_event(10 * SECOND);
 
 	/* We are in Unattached.SNK. The mux should have detached */
-	TEST_EQ(mock_usb_mux.state, TYPEC_MUX_NONE, "%d");
+	TEST_EQ(mock_usb_mux.state, USB_PD_MUX_NONE, "%d");
 	TEST_EQ(mock_usb_mux.num_set_calls, 2, "%d");
 
 	return EC_SUCCESS;

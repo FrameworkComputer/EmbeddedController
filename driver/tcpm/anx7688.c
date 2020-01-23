@@ -154,9 +154,9 @@ static int anx7688_mux_set(int port, mux_state_t mux_state)
 		return rv;
 
 	reg &= ~TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK;
-	if (mux_state & MUX_USB_ENABLED)
+	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB;
-	if (mux_state & MUX_DP_ENABLED)
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		reg |= TCPC_REG_CONFIG_STD_OUTPUT_MUX_DP;
 
 	/* ANX7688 needs to set bit0 */

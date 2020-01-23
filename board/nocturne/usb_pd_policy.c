@@ -96,7 +96,7 @@ int pd_set_power_supply_ready(int port)
 __override void svdm_safe_dp_mode(int port)
 {
 	/* make DP interface safe until configure */
-	usb_mux_set(port, TYPEC_MUX_NONE,
+	usb_mux_set(port, USB_PD_MUX_NONE,
 		USB_SWITCH_CONNECT, pd_get_polarity(port));
 
 	/*
