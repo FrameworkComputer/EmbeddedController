@@ -150,19 +150,6 @@ static void request_cold_reset(void)
 	task_wake(TASK_ID_CHIPSET);
 }
 
-/* AP-requested reset GPIO interrupt handlers */
-static void chipset_reset_request_handler(void)
-{
-	CPRINTS("AP wants reset");
-	chipset_reset(CHIPSET_RESET_AP_REQ);
-}
-DECLARE_DEFERRED(chipset_reset_request_handler);
-
-void chipset_reset_request_interrupt(enum gpio_signal signal)
-{
-	hook_call_deferred(&chipset_reset_request_handler_data, 0);
-}
-
 void chipset_warm_reset_interrupt(enum gpio_signal signal)
 {
 	/*
@@ -411,7 +398,6 @@ enum power_state power_chipset_init(void)
 	uint32_t reset_flags = system_get_reset_flags();
 
 	/* Enable interrupts */
-	gpio_enable_interrupt(GPIO_AP_RST_REQ);
 	gpio_enable_interrupt(GPIO_WARM_RESET_L);
 	gpio_enable_interrupt(GPIO_POWER_GOOD);
 
