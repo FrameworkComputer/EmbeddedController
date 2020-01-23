@@ -166,17 +166,16 @@ static void adp_connect_deferred(void)
 		return;
 	if (connected) {
 		pi.voltage = 19000;
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-			/*
-			 * TODO(b:143975429) set current according to SKU.
-			 * Different SKUs will ship with different power bricks
-			 * that have varying power, though setting this to the
-			 * maximum current available on any SKU may be okay
-			 * (assume the included brick is sufficient to run the
-			 * system at max power and over-reporting available
-			 * power will have no effect).
-			 */
-			pi.current = 4740;
+		/*
+		 * TODO(b:143975429) set current according to SKU.
+		 * Different SKUs will ship with different power bricks
+		 * that have varying power, though setting this to the
+		 * maximum current available on any SKU may be okay
+		 * (assume the included brick is sufficient to run the
+		 * system at max power and over-reporting available
+		 * power will have no effect).
+		 */
+		pi.current = 4740;
 	}
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 				     DEDICATED_CHARGE_PORT, &pi);
@@ -482,9 +481,24 @@ int board_set_active_charge_port(int port)
 	if (board_vbus_source_enabled(port))
 		return EC_ERROR_INVAL;
 
-	/* Change is only permitted while the system is off */
-	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		return EC_ERROR_INVAL;
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		int bj_active, bj_requested;
+
+		if (charge_manager_get_active_charge_port() != CHARGE_PORT_NONE)
+			/* Change is only permitted while the system is off */
+			return EC_ERROR_INVAL;
+
+		/*
+		 * Current setting is no charge port but the AP is on, so the
+		 * charge manager is out of sync (probably because we're
+		 * reinitializing after sysjump). Reject requests that aren't
+		 * in sync with our outputs.
+		 */
+		bj_active = !gpio_get_level(GPIO_EN_PPVAR_BJ_ADP_L);
+		bj_requested = port == CHARGE_PORT_BARRELJACK;
+		if (bj_active != bj_requested)
+			return EC_ERROR_INVAL;
+	}
 
 	CPRINTS("New charger p%d", port);
 
