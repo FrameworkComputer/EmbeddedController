@@ -51,7 +51,7 @@ static int ioex_is_valid_interrupt_signal(enum ioex_signal signal)
 	const struct ioex_info *g = ioex_get_signal_info(signal);
 
 	/* Fail if no interrupt handler */
-	if (signal >= ioex_ih_count)
+	if (signal - IOEX_SIGNAL_START >= ioex_ih_count)
 		return EC_ERROR_PARAM1;
 
 	drv = ioex_config[g->ioex].drv;

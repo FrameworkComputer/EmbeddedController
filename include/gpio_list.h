@@ -111,8 +111,9 @@ const int ioex_ih_count = ARRAY_SIZE(ioex_irq_handlers);
  * IOEX's declaration in the gpio.inc
  * file.
  */
-#define IOEX_INT(name, expin, flags, handler)	\
-	BUILD_ASSERT(IOEX_##name < ARRAY_SIZE(ioex_irq_handlers));
+#define IOEX_INT(name, expin, flags, handler)		\
+	BUILD_ASSERT(IOEX_##name - IOEX_SIGNAL_START	\
+		     < ARRAY_SIZE(ioex_irq_handlers));
 #include "gpio.wrap"
 
 #define IOEX(name, expin, flags) expin
