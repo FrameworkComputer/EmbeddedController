@@ -61,6 +61,12 @@ dartmonkey
 The corresponding firmware for the above command would be
 `/opt/google/biod/fw/dartmonkey_*.bin`.
 
+*** note
+**NOTE**: If you get an empty response when running the above commands, the
+Chrome OS Config settings may not have been updated for the Chrome OS board.
+See the instructions on [updating Chrome OS Config] for fingerprint.
+***
+
 Note that the fingerprint team continuously releases updates to the firmware, so
 SIEs should watch for version changes in ToT if they are maintaining a separate
 factory branch.
@@ -81,6 +87,13 @@ startup and handles updating the FPMCU firmware to match the version that is in
 the rootfs. Note that this update process can take around 30 seconds; if that
 length of time is an issue then the factory or module house should pre-flash the
 latest firmware beforehand.
+
+*** note
+**NOTE**: If the FPMCU is not flashed in the factory as part of development
+builds (EVT, etc.), it's possible for developers (or Chromestop) to manually
+run [`flash_fp_mcu`], as long as they can disable [hardware write protect].
+Obviously this only applies during development, not mass production.
+***
 
 ## biod and timberslide
 
@@ -463,6 +476,7 @@ Wrote /tmp/fp.1.png (14025 bytes)
 ```
 
 [Software Write Protect]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/docs/write_protection.md#Software-Write-Protect
+[hardware write protect]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/docs/write_protection.md#hw_wp
 [FPC1025: Module Test Specification]: http://go/cros-fingerprint-fpc1025-module-test-spec
 [FPC1145: Module Test Specification]: http://go/cros-fingerprint-fpc1145-module-test-spec
 [FPC In-Device Test Specification]: http://go/cros-fingerprint-fpc-indevice-test-spec
@@ -477,3 +491,4 @@ Wrote /tmp/fp.1.png (14025 bytes)
 [`flash_fp_mcu`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/util/flash_fp_mcu
 [Fingerprint flashing documentation]: ./fingerprint.md#factory-rma-dev-updates
 [Chrome OS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/master/chromeos-config/README.md
+[updating Chrome OS Config]: ./fingerprint.md#update-chromeos-config
