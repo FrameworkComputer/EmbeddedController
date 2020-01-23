@@ -84,6 +84,7 @@ GPIO(M2_SSD_PLN,               PIN(A, 0), GPIO_INPUT)
 GPIO(EC_ENTERING_RW,           PIN(E, 3), GPIO_OUT_LOW)
 GPIO(CCD_MODE_ODL,             PIN(E, 5), GPIO_ODR_HIGH)
 GPIO(EN_PP_MST_OD,             PIN(9, 6), GPIO_ODR_HIGH)
+GPIO(PACKET_MODE_EN,           PIN(7, 5), GPIO_OUT_LOW)
 
 /* HDMI/CEC */
 GPIO(EN_PP5000_HDMI,           PIN(5, 0), GPIO_OUT_LOW)
@@ -152,7 +153,6 @@ UNUSED(PIN(5, 6))						/* M2  NC */
 UNUSED(PIN(D, 2))						/* C11 NC */
 UNUSED(PIN(D, 3))						/* E9  NC */
 UNUSED(PIN(8, 6))						/* J8  NC */
-UNUSED(PIN(7, 5))						/* J6  NC */
 UNUSED(PIN(9, 3))						/* M11 NC */
 UNUSED(PIN(7, 2))						/* H6  NC */
 UNUSED(PIN(F, 1))						/* G3  NC */
