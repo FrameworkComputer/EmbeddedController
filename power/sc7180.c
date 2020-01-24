@@ -133,7 +133,6 @@ enum power_off_event_t {
  */
 enum power_on_event_t {
 	POWER_ON_CANCEL,
-	POWER_ON_BY_IN_POWER_GOOD,
 	POWER_ON_BY_AUTO_POWER_ON,
 	POWER_ON_BY_LID_OPEN,
 	POWER_ON_BY_POWER_BUTTON_PRESSED,
@@ -549,11 +548,6 @@ static void power_on(void)
  */
 static uint8_t check_for_power_on_event(void)
 {
-	int ap_off_flag;
-
-	ap_off_flag = system_get_reset_flags() & EC_RESET_FLAG_AP_OFF;
-	system_clear_reset_flags(EC_RESET_FLAG_AP_OFF);
-
 	if (power_request == POWER_REQ_ON) {
 		power_request = POWER_REQ_NONE;
 		return POWER_ON_BY_POWER_REQ_ON;
@@ -563,25 +557,6 @@ static uint8_t check_for_power_on_event(void)
 		power_request = POWER_REQ_NONE;
 		return POWER_ON_BY_POWER_REQ_RESET;
 	}
-
-	/* check if system is already ON */
-	if (power_get_signals() & IN_POWER_GOOD) {
-		if (ap_off_flag) {
-			CPRINTS("system is on, but EC_RESET_FLAG_AP_OFF is on");
-			return POWER_ON_CANCEL;
-		}
-		CPRINTS("system is on, thus clear auto_power_on");
-		/* no need to arrange another power on */
-		auto_power_on = 0;
-		return POWER_ON_BY_IN_POWER_GOOD;
-	}
-	if (ap_off_flag) {
-		CPRINTS("EC_RESET_FLAG_AP_OFF is on");
-		power_off();
-		return POWER_ON_CANCEL;
-	}
-
-	CPRINTS("POWER_GOOD is not asserted");
 
 	/* power on requested at EC startup for recovery */
 	if (auto_power_on) {
