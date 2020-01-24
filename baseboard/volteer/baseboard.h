@@ -185,6 +185,13 @@
 /* Enabling Thunderbolt-compatible mode */
 #define CONFIG_USB_PD_TBT_COMPAT_MODE
 
+/*
+ * USB ID
+ * This is allocated specifically for Volteer
+ * http://google3/hardware/standards/usb/
+ */
+#define CONFIG_USB_PID 0x503E
+
 /* TODO: b/144165680 - measure and check these values on Volteer */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */

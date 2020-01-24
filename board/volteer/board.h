@@ -16,14 +16,6 @@
 
 #define CONFIG_POWER_BUTTON
 
-/*
- * USB ID
- * TODO(b/140578872): Figure out what volteer's is.
- * This is allocated specifically for Zork:Trembyle
- * http://google3/hardware/standards/usb/
- */
-#define CONFIG_USB_PID 0x503E
-
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
