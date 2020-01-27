@@ -94,7 +94,6 @@ GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
 GPIO(EC_PCH_INT_ODL,           PIN(D, 6), GPIO_ODR_HIGH) /* TODO - b/140557015 - implement with MKBD sensor events */
 
 /* USB and USBC Signals */
-GPIO(EN_PP3300_AG,		PIN(8, 5), GPIO_OUT_LOW)
 
 /* TODO - b/145560203 route USB_C1_RT_RST_ODL to EC */
 UNIMPLEMENTED(USB_C1_RT_RST_ODL)
