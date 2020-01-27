@@ -2245,6 +2245,8 @@ static void tc_dbg_acc_snk_entry(const int port)
 				CAP_DUALROLE : CAP_DEDICATED);
 		}
 	}
+	/* Apply Rd */
+	tcpm_set_cc(port, TYPEC_CC_RD);
 
 	/* Enable PD */
 	tc[port].pd_enable = 1;
