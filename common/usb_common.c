@@ -69,8 +69,11 @@ typec_current_t usb_get_typec_current_limit(enum tcpc_cc_polarity polarity,
 	enum tcpc_cc_voltage_status cc1, enum tcpc_cc_voltage_status cc2)
 {
 	typec_current_t charge = 0;
-	enum tcpc_cc_voltage_status cc = polarity ? cc2 : cc1;
-	enum tcpc_cc_voltage_status cc_alt = polarity ? cc1 : cc2;
+	enum tcpc_cc_voltage_status cc;
+	enum tcpc_cc_voltage_status cc_alt;
+
+	cc = polarity_rm_dts(polarity) ? cc2 : cc1;
+	cc_alt = polarity_rm_dts(polarity) ? cc1 : cc2;
 
 	switch (cc) {
 	case TYPEC_CC_VOLT_RP_3_0:
@@ -110,16 +113,20 @@ enum tcpc_cc_polarity get_snk_polarity(enum tcpc_cc_voltage_status cc1,
 	 * TYPEC_CC_VOLT_RP_1_5 > TYPEC_CC_VOLT_RP_DEF
 	 * TYPEC_CC_VOLT_RP_DEF > TYPEC_CC_VOLT_OPEN
 	 */
-	return cc2 > cc1;
+	if (cc_is_src_dbg_acc(cc1, cc2))
+		return (cc1 > cc2) ? POLARITY_CC1_DTS : POLARITY_CC2_DTS;
+
+	return (cc1 > cc2) ? POLARITY_CC1 : POLARITY_CC2;
 }
 
 enum tcpc_cc_polarity get_src_polarity(enum tcpc_cc_voltage_status cc1,
 	enum tcpc_cc_voltage_status cc2)
 {
-	if (cc_is_open(cc1, cc2))
+	if (cc_is_open(cc1, cc2) ||
+	    cc_is_snk_dbg_acc(cc1, cc2))
 		return POLARITY_NONE;
 
-	return cc1 != TYPEC_CC_VOLT_RD;
+	return (cc1 == TYPEC_CC_VOLT_RD) ? POLARITY_CC1 : POLARITY_CC2;
 }
 
 enum pd_cc_states pd_get_cc_state(

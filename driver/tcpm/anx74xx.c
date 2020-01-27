@@ -776,7 +776,7 @@ static int anx74xx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 		return EC_SUCCESS;
 
 	rv |= tcpc_read(port, ANX74XX_REG_CC_SOFTWARE_CTRL, &reg);
-	if (polarity) /* Inform ANX to use CC2 */
+	if (polarity_rm_dts(polarity)) /* Inform ANX to use CC2 */
 		reg &= ~ANX74XX_REG_SELECT_CC1;
 	else /* Inform ANX to use CC1 */
 		reg |= ANX74XX_REG_SELECT_CC1;
@@ -787,7 +787,7 @@ static int anx74xx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 	/* Update mux polarity */
 #ifdef CONFIG_USB_PD_TCPM_MUX
 	mux_state = anx[port].mux_state & ~USB_PD_MUX_POLARITY_INVERTED;
-	if (polarity)
+	if (polarity_rm_dts(polarity))
 		mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 	anx74xx_tcpm_mux_set(port, mux_state);
 #endif

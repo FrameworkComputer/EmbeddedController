@@ -586,7 +586,7 @@ static int fusb302_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 
 	if (state[port].vconn_enabled) {
 		/* set VCONN switch to be non-CC line */
-		if (polarity)
+		if (polarity_rm_dts(polarity))
 			reg |= TCPC_REG_SWITCHES0_VCONN_CC1;
 		else
 			reg |= TCPC_REG_SWITCHES0_VCONN_CC2;
@@ -597,7 +597,7 @@ static int fusb302_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 	reg &= ~TCPC_REG_SWITCHES0_MEAS_CC2;
 
 	/* set rx polarity */
-	if (polarity)
+	if (polarity_rm_dts(polarity))
 		reg |= TCPC_REG_SWITCHES0_MEAS_CC2;
 	else
 		reg |= TCPC_REG_SWITCHES0_MEAS_CC1;
@@ -611,7 +611,7 @@ static int fusb302_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 	reg &= ~TCPC_REG_SWITCHES1_TXCC2_EN;
 
 	/* set tx polarity */
-	if (polarity)
+	if (polarity_rm_dts(polarity))
 		reg |= TCPC_REG_SWITCHES1_TXCC2_EN;
 	else
 		reg |= TCPC_REG_SWITCHES1_TXCC1_EN;

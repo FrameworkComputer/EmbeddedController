@@ -655,7 +655,8 @@ static int anx7447_set_polarity(int port, enum tcpc_cc_polarity polarity)
 	return tcpc_update8(port,
 			    TCPC_REG_TCPC_CTRL,
 			    TCPC_REG_TCPC_CTRL_SET(1),
-			    (polarity) ? MASK_SET : MASK_CLR);
+			    polarity_rm_dts(polarity)
+					? MASK_SET : MASK_CLR);
 }
 
 /*

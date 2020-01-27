@@ -418,8 +418,8 @@ int tcpci_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 
 	/*
 	 * TCPCI sets the CC lines based on polarity.  If it is set to
-	 * no connection then both CC lines are driven, otherwise only
-	 * one is driven.
+	 * no connection or SRC Debug Accessory then both CC lines are
+	 * driven, otherwise only one is driven.
 	 */
 	rv = tcpm_set_cc(port, tcpci_get_cached_pull(port));
 	if (rv)
@@ -431,7 +431,8 @@ int tcpci_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 	return tcpc_update8(port,
 			    TCPC_REG_TCPC_CTRL,
 			    TCPC_REG_TCPC_CTRL_SET(1),
-			    (polarity) ? MASK_SET : MASK_CLR);
+			    polarity_rm_dts(polarity)
+					? MASK_SET : MASK_CLR);
 }
 
 #ifdef CONFIG_USBC_PPC
