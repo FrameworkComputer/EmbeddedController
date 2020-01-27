@@ -203,6 +203,10 @@ const struct power_signal_info power_signal_list[] = {
 		GPIO_WARM_RESET_L,
 		POWER_SIGNAL_ACTIVE_HIGH,
 		"WARM_RESET_L"},
+	[SC7180_AP_SUSPEND] = {
+		GPIO_AP_SUSPEND,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"AP_SUSPEND"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 

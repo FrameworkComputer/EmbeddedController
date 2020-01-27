@@ -13,6 +13,7 @@
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands. */
 #define CONFIG_USB_PD_DEBUG_LEVEL 3
 #define CONFIG_CMD_AP_RESET_LOG
+#define CONFIG_CMD_POWERINDEBUG
 #define CONFIG_HOSTCMD_AP_RESET
 
 /*
@@ -200,6 +201,7 @@ enum power_signal {
 	SC7180_PMIC_FAULT_L,
 	SC7180_POWER_GOOD,
 	SC7180_WARM_RESET,
+	SC7180_AP_SUSPEND,
 	/* Number of power signals */
 	POWER_SIGNAL_COUNT
 };
