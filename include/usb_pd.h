@@ -529,6 +529,8 @@ enum pd_rev_type {
 
 /* Cable structure for storing cable attributes */
 struct pd_cable {
+	/* Last received cable message id counter*/
+	uint8_t last_cable_msg_id;
 	uint8_t is_identified;
 	/* Type of cable */
 	enum idh_ptype type;
@@ -1681,6 +1683,26 @@ uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx);
  * @return      pointer to SVDM mode data
  */
 struct svdm_amode_data *pd_get_amode_data(int port, uint16_t svid);
+
+/**
+ * Returns 0 if previous cable messageId count is different from received
+ * messageId count.
+ *
+ * @param port		USB-C port number
+ * @param msg_id        Received cable msg_id
+ * @return              0 if Received MessageId count is different from the
+ *                      previous one.
+ *                      1 Otherwise
+ */
+int cable_consume_repeat_message(int port, uint8_t msg_id);
+
+/**
+ * Returns status of CABLE_FLAGS_SOP_PRIME_ENABLE flag
+ *
+ * @param port		USB-C port number
+ * @return              Status of CABLE_FLAGS_SOP_PRIME_ENABLE flag
+ */
+bool is_transmit_msg_sop_prime(int port);
 
 /**
  * Returns the status of cable flag - CABLE_FLAGS_SOP_PRIME_ENABLE

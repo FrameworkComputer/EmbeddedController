@@ -167,10 +167,28 @@ int pd_charge_from_device(uint16_t vid, uint16_t pid)
 
 static struct pd_cable cable[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-static bool is_transmit_msg_sop_prime(int port)
+bool is_transmit_msg_sop_prime(int port)
 {
 	return (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP) &&
 		(cable[port].flags & CABLE_FLAGS_SOP_PRIME_ENABLE));
+}
+
+int cable_consume_repeat_message(int port, uint8_t msg_id)
+{
+
+	if (cable[port].last_cable_msg_id != msg_id) {
+		cable[port].last_cable_msg_id = msg_id;
+		return 0;
+	}
+	CPRINTF("C%d Cable repeat msg_id %d\n", port, msg_id);
+	return 1;
+
+}
+
+static void disable_transmit_sop_prime(int port)
+{
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
+		cable[port].flags &= ~CABLE_FLAGS_SOP_PRIME_ENABLE;
 }
 
 uint8_t is_sop_prime_ready(int port,
@@ -189,16 +207,33 @@ uint8_t is_sop_prime_ready(int port,
 	 * ensure that it is the Vconn Source
 	 */
 	if (pd_flags & PD_FLAGS_VCONN_ON && (IS_ENABLED(CONFIG_USB_PD_REV30) ||
-		data_role == PD_ROLE_DFP))
+		data_role == PD_ROLE_DFP)) {
 		return is_transmit_msg_sop_prime(port);
+	}
+	if (is_transmit_msg_sop_prime(port)) {
+		/*
+		 * Clear the CABLE_FLAGS_SOP_PRIME_ENABLE flag if the port is
+		 * unable to communicate with the cable plug.
+		 */
+		disable_transmit_sop_prime(port);
+	}
 
 	return 0;
 }
 
 void reset_pd_cable(int port)
 {
-	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
 		memset(&cable[port], 0, sizeof(cable[port]));
+		/*
+		 * Invalidate the last cable messageId counter. The cable
+		 * Message id starts from 0 to 7 and if last_cable msg_id
+		 * is initialized to 0, it will lead to repetitive message
+		 * id with first received packet. Hence, initialize it with
+		 * an invalid value 0xff.
+		 */
+		cable[port].last_cable_msg_id = 0xff;
+	}
 }
 
 enum idh_ptype get_usb_pd_cable_type(int port)
@@ -331,12 +366,6 @@ static void enable_transmit_sop_prime(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
 		cable[port].flags |= CABLE_FLAGS_SOP_PRIME_ENABLE;
-}
-
-static void disable_transmit_sop_prime(int port)
-{
-	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
-		cable[port].flags &= ~CABLE_FLAGS_SOP_PRIME_ENABLE;
 }
 
 static bool is_tbt_compat_enabled(int port)
