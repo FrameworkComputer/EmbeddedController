@@ -1555,6 +1555,14 @@ uint16_t pd_get_identity_vid(int port);
 uint16_t pd_get_identity_pid(int port);
 
 /**
+ * Return the product type connected to a specified port
+ *
+ * @param port  USB-C port number
+ * @return      USB-C product type (hub,periph,cable,ama)
+ */
+uint8_t pd_get_product_type(int port);
+
+/**
  * Returns the status of cable flag - CABLE_FLAGS_SOP_PRIME_ENABLE
  *
  * @param port		USB-C port number

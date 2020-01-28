@@ -136,6 +136,28 @@ static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE,
 		     hc_remote_pd_set_amode,
 		     EC_VER_MASK(0));
+
+static enum ec_status hc_remote_pd_discovery(struct host_cmd_handler_args *args)
+{
+	const uint8_t *port = args->params;
+	struct ec_params_usb_pd_discovery_entry *r = args->response;
+
+	if (*port >= board_get_usb_pd_port_count())
+		return EC_RES_INVALID_PARAM;
+
+	r->vid = pd_get_identity_vid(*port);
+	r->ptype = pd_get_product_type(*port);
+
+	/* pid only included if vid is assigned */
+	if (r->vid)
+		r->pid = pd_get_identity_pid(*port);
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DISCOVERY,
+		     hc_remote_pd_discovery,
+		     EC_VER_MASK(0));
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 
 #ifdef CONFIG_COMMON_RUNTIME

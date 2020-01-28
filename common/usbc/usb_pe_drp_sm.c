@@ -4941,6 +4941,10 @@ uint16_t pd_get_identity_pid(int port)
 	return PD_PRODUCT_PID(pe[port].am_policy.identity[2]);
 }
 
+uint8_t pd_get_product_type(int port)
+{
+	return PD_IDH_PTYPE(pe[port].am_policy.identity[0]);
+}
 
 #ifdef CONFIG_CMD_USB_PD_PE
 static void dump_pe(int port)
@@ -5015,28 +5019,6 @@ DECLARE_CONSOLE_COMMAND(pe, command_pe,
 			"<port> dump",
 			"USB PE");
 #endif /* CONFIG_CMD_USB_PD_PE */
-
-static enum ec_status hc_remote_pd_discovery(struct host_cmd_handler_args *args)
-{
-	const uint8_t *port = args->params;
-	struct ec_params_usb_pd_discovery_entry *r = args->response;
-
-	if (*port >= board_get_usb_pd_port_count())
-		return EC_RES_INVALID_PARAM;
-
-	r->vid = pd_get_identity_vid(*port);
-	r->ptype = PD_IDH_PTYPE(pe[*port].am_policy.identity[0]);
-
-	/* pid only included if vid is assigned */
-	if (r->vid)
-		r->pid = PD_PRODUCT_PID(pe[*port].am_policy.identity[2]);
-
-	args->response_size = sizeof(*r);
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DISCOVERY,
-		hc_remote_pd_discovery,
-		EC_VER_MASK(0));
 
 static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
 {
