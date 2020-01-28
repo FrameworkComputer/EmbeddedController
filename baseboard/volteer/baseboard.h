@@ -143,6 +143,12 @@
 #define CONFIG_USB_PRL_SM
 #define CONFIG_USB_PE_SM
 #define CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
+#else
+/*
+ * PD 3.0 is always enabled by the TCPMv2 stack, so it's only explicitly
+ * enabled when using the TCPMv1 stack
+ */
+#define CONFIG_USB_PD_REV30
 #endif
 
 #define CONFIG_USB_POWER_DELIVERY
