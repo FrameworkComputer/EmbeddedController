@@ -158,6 +158,39 @@ static enum ec_status hc_remote_pd_discovery(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DISCOVERY,
 		     hc_remote_pd_discovery,
 		     EC_VER_MASK(0));
+
+static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
+{
+	struct svdm_amode_data *modep;
+	const struct ec_params_usb_pd_get_mode_request *p = args->params;
+	struct ec_params_usb_pd_get_mode_response *r = args->response;
+
+	if (p->port >= board_get_usb_pd_port_count())
+		return EC_RES_INVALID_PARAM;
+
+	/* no more to send */
+	if (p->svid_idx >= pd_get_svid_count(p->port)) {
+		r->svid = 0;
+		args->response_size = sizeof(r->svid);
+		return EC_RES_SUCCESS;
+	}
+
+	r->svid = pd_get_svid(p->port, p->svid_idx);
+	r->opos = 0;
+	memcpy(r->vdo, pd_get_mode_vdo(p->port, p->svid_idx),
+		sizeof(uint32_t) * PDO_MODES);
+	modep = pd_get_amode_data(p->port, r->svid);
+
+	if (modep)
+		r->opos = pd_alt_mode(p->port, r->svid);
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_GET_AMODE,
+		     hc_remote_pd_get_amode,
+		     EC_VER_MASK(0));
+
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 
 #ifdef CONFIG_COMMON_RUNTIME

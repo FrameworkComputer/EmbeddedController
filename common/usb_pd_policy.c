@@ -520,7 +520,7 @@ static int get_mode_idx(int port, uint16_t svid)
 	return -1;
 }
 
-static struct svdm_amode_data *get_modep(int port, uint16_t svid)
+struct svdm_amode_data *pd_get_amode_data(int port, uint16_t svid)
 {
 	int idx = get_mode_idx(port, svid);
 
@@ -529,7 +529,7 @@ static struct svdm_amode_data *get_modep(int port, uint16_t svid)
 
 int pd_alt_mode(int port, uint16_t svid)
 {
-	struct svdm_amode_data *modep = get_modep(port, svid);
+	struct svdm_amode_data *modep = pd_get_amode_data(port, svid);
 
 	return (modep) ? modep->opos : -1;
 }
@@ -677,7 +677,7 @@ static void dfp_consume_attention(int port, uint32_t *payload)
 {
 	uint16_t svid = PD_VDO_VID(payload[0]);
 	int opos = PD_VDO_OPOS(payload[0]);
-	struct svdm_amode_data *modep = get_modep(port, svid);
+	struct svdm_amode_data *modep = pd_get_amode_data(port, svid);
 
 	if (!modep || !validate_mode_request(modep, svid, opos))
 		return;
@@ -707,7 +707,8 @@ static void dfp_consume_attention(int port, uint32_t *payload)
  */
 int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 {
-	struct svdm_amode_data *modep = get_modep(port, USB_SID_DISPLAYPORT);
+	struct svdm_amode_data *modep =
+				pd_get_amode_data(port, USB_SID_DISPLAYPORT);
 	uint32_t mode_caps;
 	uint32_t pin_caps;
 	if (!modep)
@@ -761,7 +762,7 @@ int pd_dfp_exit_mode(int port, uint16_t svid, int opos)
 	 * to exit all modes.  We currently don't have any UFPs that support
 	 * multiple modes on one SVID.
 	 */
-	modep = get_modep(port, svid);
+	modep = pd_get_amode_data(port, svid);
 	if (!modep || !validate_mode_request(modep, svid, opos))
 		return 0;
 
@@ -785,6 +786,21 @@ uint16_t pd_get_identity_pid(int port)
 uint8_t pd_get_product_type(int port)
 {
 	return PD_IDH_PTYPE(pe[port].identity[0]);
+}
+
+int pd_get_svid_count(int port)
+{
+	return pe[port].svid_cnt;
+}
+
+uint16_t pd_get_svid(int port, uint16_t svid_idx)
+{
+	return pe[port].svids[svid_idx].svid;
+}
+
+uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx)
+{
+	return pe[port].svids[svid_idx].mode_vdo;
 }
 
 #ifdef CONFIG_CMD_USB_PD_PE
@@ -825,7 +841,7 @@ static void dump_pe(int port)
 			ccprintf(" [%d] %08x", j + 1,
 				 pe[port].svids[i].mode_vdo[j]);
 		ccprintf("\n");
-		modep = get_modep(port, pe[port].svids[i].svid);
+		modep = pd_get_amode_data(port, pe[port].svids[i].svid);
 		if (modep) {
 			mode_caps = modep->data->mode_vdo[modep->opos - 1];
 			ccprintf("MODE[%d]: svid:%04x caps:%08x\n", modep->opos,
@@ -999,7 +1015,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 		struct svdm_amode_data *modep;
 
-		modep = get_modep(port, PD_VDO_VID(payload[0]));
+		modep = pd_get_amode_data(port, PD_VDO_VID(payload[0]));
 #endif
 		switch (cmd) {
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
@@ -1317,40 +1333,6 @@ static void pd_usb_billboard_deferred(void)
 #endif
 }
 DECLARE_DEFERRED(pd_usb_billboard_deferred);
-
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
-{
-	struct svdm_amode_data *modep;
-	const struct ec_params_usb_pd_get_mode_request *p = args->params;
-	struct ec_params_usb_pd_get_mode_response *r = args->response;
-
-	if (p->port >= board_get_usb_pd_port_count())
-		return EC_RES_INVALID_PARAM;
-
-	/* no more to send */
-	if (p->svid_idx >= pe[p->port].svid_cnt) {
-		r->svid = 0;
-		args->response_size = sizeof(r->svid);
-		return EC_RES_SUCCESS;
-	}
-
-	r->svid = pe[p->port].svids[p->svid_idx].svid;
-	r->opos = 0;
-	memcpy(r->vdo, pe[p->port].svids[p->svid_idx].mode_vdo, 24);
-	modep = get_modep(p->port, r->svid);
-
-	if (modep)
-		r->opos = pd_alt_mode(p->port, r->svid);
-
-	args->response_size = sizeof(*r);
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_GET_AMODE,
-		     hc_remote_pd_get_amode,
-		     EC_VER_MASK(0));
-
-#endif
 
 #define FW_RW_END (CONFIG_EC_WRITABLE_STORAGE_OFF + \
 		   CONFIG_RW_STORAGE_OFF + CONFIG_RW_SIZE)

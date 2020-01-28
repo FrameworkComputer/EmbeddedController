@@ -1563,6 +1563,43 @@ uint16_t pd_get_identity_pid(int port);
 uint8_t pd_get_product_type(int port);
 
 /**
+ * Return the SVID count of port partner connected to a specified port
+ *
+ * @param port  USB-C port number
+ * @return      SVID count
+ */
+int pd_get_svid_count(int port);
+
+/**
+ * Return the SVID of given SVID index of port partner connected
+ * to a specified port
+ *
+ * @param port     USB-C port number
+ * @param svid_idx SVID Index
+ * @return         SVID
+ */
+uint16_t pd_get_svid(int port, uint16_t svid_idx);
+
+/**
+ * Return the pointer to modes of VDO of port partner connected
+ * to a specified port
+ *
+ * @param port     USB-C port number
+ * @param svid_idx SVID Index
+ * @return         Pointer to modes of VDO
+ */
+uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx);
+
+/**
+ * Return the alternate mode entry and exit data
+ *
+ * @param port  USB-C port number
+ * @param svid  SVID
+ * @return      pointer to SVDM mode data
+ */
+struct svdm_amode_data *pd_get_amode_data(int port, uint16_t svid);
+
+/**
  * Returns the status of cable flag - CABLE_FLAGS_SOP_PRIME_ENABLE
  *
  * @param port		USB-C port number
