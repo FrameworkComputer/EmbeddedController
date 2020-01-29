@@ -70,6 +70,10 @@
 	#define CONFIG_CHARGE_RAMP_HW
 #endif
 
+/* Enable USB-PD REV 3.0 */
+#define CONFIG_USB_PD_REV30
+#define CONFIG_USB_PID 0x8086
+
 /* USB PD config */
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
