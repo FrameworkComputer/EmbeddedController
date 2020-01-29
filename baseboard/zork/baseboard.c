@@ -467,6 +467,64 @@ void bc12_interrupt(enum gpio_signal signal)
  */
 
 /*
+ * PS8802 set mux tuning.
+ * Adds in board specific gain and DP lane count configuration
+ */
+static int ps8802_tune_mux(int port, mux_state_t mux_state)
+{
+	int rv = EC_SUCCESS;
+
+	/* USB specific config */
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
+		/* Boost the USB gain */
+		rv = ps8802_i2c_field_update16(port,
+					PS8802_REG_PAGE2,
+					PS8802_REG2_USB_SSEQ_LEVEL,
+					PS8802_USBEQ_LEVEL_UP_MASK,
+					PS8802_USBEQ_LEVEL_UP_20DB);
+		if (rv)
+			return rv;
+
+		rv = ps8802_i2c_field_update16(port,
+					PS8802_REG_PAGE2,
+					PS8802_REG2_USB_CEQ_LEVEL,
+					PS8802_USBEQ_LEVEL_UP_MASK,
+					PS8802_USBEQ_LEVEL_UP_20DB);
+		if (rv)
+			return rv;
+	}
+
+	/* DP specific config */
+	if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		int val;
+
+		/* Boost the DP gain */
+		rv = ps8802_i2c_field_update8(port,
+					PS8802_REG_PAGE2,
+					PS8802_REG2_DPEQ_LEVEL,
+					PS8802_DPEQ_LEVEL_UP_MASK,
+					PS8802_DPEQ_LEVEL_UP_20DB);
+		if (rv)
+			return rv;
+
+		/* Set DP lane count */
+		val = (mux_state & USB_PD_MUX_USB_ENABLED)
+				? PS8802_LANE_COUNT_SET_2_LANE
+				: PS8802_LANE_COUNT_SET_4_LANE;
+
+		rv = ps8802_i2c_field_update8(port,
+					PS8802_REG_PAGE1,
+					PS8802_REG1_LANE_COUNT_SET,
+					PS8802_LANE_COUNT_SET_MASK,
+					val);
+		if (rv)
+			return rv;
+	}
+
+	return rv;
+}
+
+/*
  * PS8818 set mux tuning.
  * Adds in board specific gain and DP lane count configuration
  */
@@ -641,6 +699,7 @@ static int zork_c1_detect(int port, int err_if_power_off)
 		/* Main MUX is PS8802, secondary MUX is modified FP5 */
 		usb_muxes[USBC_PORT_C1].driver = &ps8802_usb_mux_driver;
 		usb_retimers[USBC_PORT_C1].driver = &zork_c1_usb_retimer;
+		usb_retimers[USBC_PORT_C1].tune = &ps8802_tune_mux;
 	}
 
 	return rv;
