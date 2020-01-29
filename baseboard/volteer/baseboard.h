@@ -22,6 +22,7 @@
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 
 /* EC Defines */
+#define CONFIG_LTO
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CRC8
 #define CONFIG_CROS_BOARD_INFO
