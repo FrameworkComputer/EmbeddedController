@@ -4472,6 +4472,7 @@ void pd_task(void *u)
 		case PD_STATE_SOFT_RESET:
 			if (pd[port].last_state != pd[port].task_state) {
 				/* Message ID of soft reset is always 0 */
+				invalidate_last_message_id(port);
 				pd[port].msg_id = 0;
 				res = send_control(port, PD_CTRL_SOFT_RESET);
 
