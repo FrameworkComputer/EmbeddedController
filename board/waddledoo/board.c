@@ -15,6 +15,7 @@
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/bc12/pi3usb9201.h"
+#include "driver/charger/isl923x.h"
 #include "driver/retimer/nb7v904m.h"
 #include "driver/sync.h"
 #include "driver/tcpm/raa489000.h"
@@ -273,6 +274,21 @@ int pd_snk_is_vbus_provided(int port)
 	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
 	return regval & TCPC_REG_POWER_STATUS_VBUS_PRES;
 }
+
+struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+
+	{
+		.i2c_port = I2C_PORT_SUB_USB_C1,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	{
