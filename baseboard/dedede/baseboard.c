@@ -33,14 +33,10 @@ __override int intel_x86_get_pg_ec_dsw_pwrok(void)
 __override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 {
 	/*
-	 * ALL_SYS_PWRGD is an AND of both DRAM PGOOD and VCCST PGOOD.  Note
-	 * that this is an inverted power good; a low value means that the power
-	 * is good.  Therefore, we are assuming that power is good if voltage is
-	 * no more than 20% of nominal level.
+	 * ALL_SYS_PWRGD is an AND of both DRAM PGOOD and VCCST PGOOD.
 	 */
-	int vccst = adc_read_channel(ADC_VSNS_PP1050_ST_S);
-
-	return (vccst < 210) && gpio_get_level(GPIO_PG_DRAM_OD);
+	return gpio_get_level(GPIO_PG_PP1050_ST_OD) &&
+		gpio_get_level(GPIO_PG_DRAM_OD);
 }
 
 void baseboard_chipset_startup(void)
