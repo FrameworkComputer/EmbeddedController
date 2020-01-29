@@ -115,7 +115,7 @@
  * TODO(b/133444665): Revisit this threshold once peak power consumption tuning
  * for the AP is completed.
  */
-#define CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA 8192
+#define CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA 6144
 #define CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
 
 /* Volume Button feature */
