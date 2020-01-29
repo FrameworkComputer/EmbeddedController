@@ -467,6 +467,102 @@ void bc12_interrupt(enum gpio_signal signal)
  */
 
 /*
+ * PS8818 set mux tuning.
+ * Adds in board specific gain and DP lane count configuration
+ */
+static int ps8818_tune_mux(int port, mux_state_t mux_state)
+{
+	int rv = EC_SUCCESS;
+
+	/* USB specific config */
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
+		/* Boost the USB gain */
+		rv = ps8818_i2c_write(port,
+				      PS8818_REG_PAGE1,
+				      PS8818_REG1_APTX1EQ_10G_LEVEL,
+				      PS8818_EQ_LEVEL_UP_21DB);
+		if (rv)
+			return rv;
+
+		rv = ps8818_i2c_write(port,
+				      PS8818_REG_PAGE1,
+				      PS8818_REG1_APTX2EQ_10G_LEVEL,
+				      PS8818_EQ_LEVEL_UP_21DB);
+		if (rv)
+			return rv;
+
+		rv = ps8818_i2c_write(port,
+				      PS8818_REG_PAGE1,
+				      PS8818_REG1_APTX1EQ_5G_LEVEL,
+				      PS8818_EQ_LEVEL_UP_21DB);
+		if (rv)
+			return rv;
+
+		rv = ps8818_i2c_write(port,
+				      PS8818_REG_PAGE1,
+				      PS8818_REG1_APTX2EQ_5G_LEVEL,
+				      PS8818_EQ_LEVEL_UP_21DB);
+		if (rv)
+			return rv;
+
+		rv = ps8818_i2c_write(port,
+				      PS8818_REG_PAGE1,
+				      PS8818_REG1_CRX1EQ_10G_LEVEL,
+				      PS8818_EQ_LEVEL_UP_21DB);
+		if (rv)
+			return rv;
+
+		rv = ps8818_i2c_write(port,
+				      PS8818_REG_PAGE1,
+				      PS8818_REG1_CRX2EQ_10G_LEVEL,
+				      PS8818_EQ_LEVEL_UP_21DB);
+		if (rv)
+			return rv;
+
+		rv = ps8818_i2c_write(port,
+				      PS8818_REG_PAGE1,
+				      PS8818_REG1_CRX1EQ_5G_LEVEL,
+				      PS8818_EQ_LEVEL_UP_21DB);
+		if (rv)
+			return rv;
+
+		rv = ps8818_i2c_write(port,
+				      PS8818_REG_PAGE1,
+				      PS8818_REG1_CRX2EQ_5G_LEVEL,
+				      PS8818_EQ_LEVEL_UP_21DB);
+		if (rv)
+			return rv;
+	}
+
+	/* DP specific config */
+	if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		int val;
+
+		/* Boost the DP gain */
+		rv = ps8818_i2c_write(port,
+				      PS8818_REG_PAGE1,
+				      PS8818_REG1_DPEQ_LEVEL,
+				      PS8818_DPEQ_LEVEL_UP_21DB);
+		if (rv)
+			return rv;
+
+		/* Set DP lane count */
+		val = (mux_state & USB_PD_MUX_USB_ENABLED)
+				? PS8818_LANE_COUNT_SET_2_LANE
+				: PS8818_LANE_COUNT_SET_4_LANE;
+
+		rv = ps8818_i2c_write(port,
+				      PS8818_REG_PAGE2,
+				      PS8818_REG2_LANE_COUNT_SET,
+				      val);
+		if (rv)
+			return rv;
+	}
+
+	return rv;
+}
+
+/*
  * FP5 is a true MUX but being used as a secondary MUX. Don't want to
  * send FLIP or this will cause a double flip
  */
@@ -532,6 +628,7 @@ static int zork_c1_detect(int port, int err_if_power_off)
 		/* Main MUX is FP5, secondary MUX is PS8818 */
 		usb_muxes[USBC_PORT_C1].driver = &amd_fp5_usb_mux_driver;
 		usb_retimers[USBC_PORT_C1].driver = &ps8818_usb_retimer;
+		usb_retimers[USBC_PORT_C1].tune = &ps8818_tune_mux;
 		return rv;
 	}
 

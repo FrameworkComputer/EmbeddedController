@@ -14,15 +14,33 @@
 #include "ps8818.h"
 #include "usb_mux.h"
 
-static int ps8818_i2c_read(int port, int page, int offset, int *data)
+#define PS8818_DEBUG 0
+
+int ps8818_i2c_read(int port, int page, int offset, int *data)
 {
-	return i2c_read8(usb_retimers[port].i2c_port,
+	int rv;
+
+	rv = i2c_read8(usb_retimers[port].i2c_port,
+		       usb_retimers[port].i2c_addr_flags + page,
+		       offset, data);
+
+	if (PS8818_DEBUG)
+		ccprintf("%s(%d:0x%02X, 0x%02X) => 0x%02X\n", __func__,
+			 usb_retimers[port].i2c_port,
 			 usb_retimers[port].i2c_addr_flags + page,
-			 offset, data);
+			 offset, *data);
+
+	return rv;
 }
 
-static int ps8818_i2c_write(int port, int page, int offset, int data)
+int ps8818_i2c_write(int port, int page, int offset, int data)
 {
+	if (PS8818_DEBUG)
+		ccprintf("%s(%d:0x%02X, 0x%02X, 0x%02X)\n", __func__,
+			 usb_retimers[port].i2c_port,
+			 usb_retimers[port].i2c_addr_flags + page,
+			 offset, data);
+
 	return i2c_write8(usb_retimers[port].i2c_port,
 			  usb_retimers[port].i2c_addr_flags + page,
 			  offset, data);
@@ -50,8 +68,17 @@ static int ps8818_set_mux(int port, mux_state_t mux_state)
 
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 		return (mux_state == USB_PD_MUX_NONE) ? EC_SUCCESS
-						     : EC_ERROR_NOT_POWERED;
+						      : EC_ERROR_NOT_POWERED;
 
+	if (PS8818_DEBUG)
+		ccprintf("%s(%d, 0x%02X) %s %s %s\n",
+			 __func__, port, mux_state,
+			 (mux_state & USB_PD_MUX_USB_ENABLED)	? "USB" : "",
+			 (mux_state & USB_PD_MUX_DP_ENABLED)	? "DP" : "",
+			 (mux_state & USB_PD_MUX_POLARITY_INVERTED)
+								? "FLIP" : "");
+
+	/* Set the mode */
 	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		val |= PS8818_MODE_USB_ENABLE;
 	if (mux_state & USB_PD_MUX_DP_ENABLED)
@@ -64,14 +91,68 @@ static int ps8818_set_mux(int port, mux_state_t mux_state)
 	if (rv)
 		return rv;
 
+	/* Set the flip */
 	val = 0;
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		val |= PS8818_FLIP_CONFIG;
 
-	return ps8818_i2c_write(port,
-				PS8818_REG_PAGE0,
-				PS8818_REG0_FLIP,
-				val);
+	rv = ps8818_i2c_write(port,
+			      PS8818_REG_PAGE0,
+			      PS8818_REG0_FLIP,
+			      val);
+	if (rv)
+		return rv;
+
+	/* Set the IN_HPD */
+	val = PS8818_DPHPD_CONFIG_INHPD_DISABLE;
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
+		val |= PS8818_DPHPD_PLUGGED;
+
+	rv = ps8818_i2c_write(port,
+			      PS8818_REG_PAGE0,
+			      PS8818_REG0_DPHPD_CONFIG,
+			      val);
+	if (rv)
+		return rv;
+
+	/* Board specific retimer mux tuning */
+	if (usb_retimers[port].tune) {
+		rv = usb_retimers[port].tune(port, mux_state);
+		if (rv)
+			return rv;
+	}
+
+	if (PS8818_DEBUG) {
+		int tx_status;
+		int rx_status;
+
+		rv = ps8818_i2c_read(port,
+				     PS8818_REG_PAGE2,
+				     PS8818_REG2_TX_STATUS,
+				     &tx_status);
+		if (rv)
+			return rv;
+
+		rv = ps8818_i2c_read(port,
+				     PS8818_REG_PAGE2,
+				     PS8818_REG2_RX_STATUS,
+				     &rx_status);
+		if (rv)
+			return rv;
+
+		ccprintf("%s: tx:channel %snormal %s10Gbps\n",
+			 __func__,
+			 (tx_status & PS8818_STATUS_NORMAL_OPERATION)
+								? "" : "NOT-",
+			 (tx_status & PS8818_STATUS_10_GBPS)	? "" : "NON-");
+		ccprintf("%s: rx:channel %snormal %s10Gbps\n",
+			 __func__,
+			 (rx_status & PS8818_STATUS_NORMAL_OPERATION)
+								? "" : "NOT-",
+			 (rx_status & PS8818_STATUS_10_GBPS)	? "" : "NON-");
+	}
+
+	return rv;
 }
 
 const struct usb_retimer_driver ps8818_usb_retimer = {

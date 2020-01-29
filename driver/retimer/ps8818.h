@@ -24,6 +24,7 @@
 
 #define PS8818_REG0_DPHPD_CONFIG	0x02
 #define PS8818_DPHPD_CONFIG_INHPD_DISABLE	BIT(7)
+#define PS8818_DPHPD_PLUGGED			BIT(6)
 
 /*
  * PAGE 1 Register Definitions
@@ -92,5 +93,8 @@
 extern const struct usb_retimer_driver ps8818_usb_retimer;
 
 int ps8818_detect(int port);
+
+int ps8818_i2c_read(int port, int page, int offset, int *data);
+int ps8818_i2c_write(int port, int page, int offset, int data);
 
 #endif /* __CROS_EC_USB_RETIMER_PS8818_H */

@@ -174,6 +174,15 @@ struct usb_retimer {
 
 	/* Driver interfaces for this retimer */
 	const struct usb_retimer_driver *driver;
+
+	/*
+	 * USB retimer board specific tune on set mux_state.
+	 *
+	 * @param port usb port of retimer (not port_addr)
+	 * @param mux_state State to set retimer mode to.
+	 * @return EC_SUCCESS on success, non-zero error code on failure.
+	 */
+	int (*tune)(int port, mux_state_t mux_state);
 };
 
 /*
