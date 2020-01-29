@@ -475,7 +475,7 @@ void board_set_ap_reset(int asserted)
 /**
  * Check VBUS state and trigger USB BC1.2 charger.
  */
-void vbus_task(void)
+void vbus_task(void *u)
 {
 	struct {
 		uint8_t interrupt;
@@ -532,7 +532,7 @@ void vbus_task(void)
 	}
 }
 #else
-void vbus_task(void)
+void vbus_task(void *u)
 {
 	while (1)
 		task_wait_event(-1);

@@ -11,6 +11,8 @@
 /* board revision */
 #include "board_revs.h"
 
+#define CONFIG_LTO
+
 #if BOARD_REV >= OAK_REV5
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCEL_KX022
