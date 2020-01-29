@@ -47,8 +47,8 @@ enum keycap_long_label_idx {
 	KLLI_F11   = 0x8B,		/* F11 or POWER */
 	KLLI_F12   = 0x8C,		/* F12 or DEV TOOLS */
 	KLLI_F13   = 0x8D,		/* F13 or GOOGLE ASSISTANT */
-	KLLI_RSVD4 = 0x8E,
-	KLLI_RSVD5 = 0x8F,
+	KLLI_F14   = 0x8E,		/* F14 */
+	KLLI_F15   = 0x8F,		/* F15 */
 	KLLI_L_ALT = 0x90,		/* LEFT ALT */
 	KLLI_R_ALT = 0x91,		/* RIGHT ALT */
 	KLLI_L_CTR = 0x92,		/* LEFT CONTROL */
