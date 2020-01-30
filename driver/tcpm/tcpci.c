@@ -1094,7 +1094,11 @@ int tcpci_tcpm_init(int port)
 			CPRINTS("C%d: Failed to init TCPC_CTRL!", port);
 	}
 
-	tcpc_write16(port, TCPC_REG_ALERT, 0xffff);
+	/*
+	 * Handle and clear any alerts, since we might be coming out of low
+	 * power mode in response to an alert interrupt from the TCPC.
+	 */
+	tcpc_alert(port);
 	/* Initialize power_status_mask */
 	init_power_status_mask(port);
 	/* Update VBUS status */
