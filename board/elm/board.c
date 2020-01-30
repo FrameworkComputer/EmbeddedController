@@ -17,6 +17,7 @@
 #include "console.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/charger/isl923x.h"
 #include "driver/tcpm/anx7688.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/temp_sensor/tmp432.h"
@@ -167,6 +168,15 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.driver    = &anx7688_usb_mux_driver,
 	},
 };
+
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /**
  * Reset PD MCU

@@ -109,7 +109,6 @@ struct charger_config_t {
 	const struct charger_drv *drv;
 };
 
-/* TODO(b/147672225): structure should be defined in board.c files */
 #ifndef CONFIG_CHARGER_RUNTIME_CONFIG
 extern const struct charger_config_t chg_chips[];
 #else

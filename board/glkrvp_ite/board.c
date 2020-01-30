@@ -7,7 +7,9 @@
 
 #include "button.h"
 #include "chipset.h"
+#include "charger.h"
 #include "console.h"
+#include "driver/charger/isl923x.h"
 #include "ec2i_chip.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -41,6 +43,17 @@ const struct i2c_port_t i2c_ports[] = {
 	{"ext_io",  IT83XX_I2C_CH_E, 400, GPIO_I2C_E_SCL, GPIO_I2C_E_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* Charger Chips */
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {

@@ -15,6 +15,7 @@
 #include "driver/accel_kionix.h"
 #include "driver/accel_kxcj9.h"
 #include "driver/als_isl29035.h"
+#include "driver/charger/bq24773.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "driver/usb_mux/pi3usb3x532.h"
@@ -175,6 +176,15 @@ struct als_t als[] = {
 	{"ISL", isl29035_init, isl29035_read_lux, 5},
 };
 BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
+
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = I2C_ADDR_CHARGER_FLAGS,
+		.drv = &bq2477x_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /**
  * Reset PD MCU

@@ -6,8 +6,10 @@
 /* Intel GLK-RVP board-specific configuration */
 
 #include "button.h"
+#include "charger.h"
 #include "chipset.h"
 #include "console.h"
+#include "driver/charger/isl923x.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -52,6 +54,17 @@ const struct i2c_port_t i2c_ports[] = {
 	{"charger",   NPCX_I2C_PORT3_0, 100, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* Charger chips */
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {

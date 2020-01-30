@@ -11,6 +11,7 @@
 #include "common.h"
 #include "console.h"
 #include "driver/bc12/max14637.h"
+#include "driver/charger/isl923x.h"
 #include "driver/ppc/nx20p348x.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -76,6 +77,20 @@ const struct max14637_config_t max14637_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.flags = MAX14637_FLAGS_CHG_DET_ACTIVE_LOW,
 	},
 };
+
+/******************************************************************************/
+/* Charger Chip Configuration */
+#ifdef VARIANT_OCTOPUS_CHARGER_ISL9238
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+#endif
 
 /******************************************************************************/
 /* Chipset callbacks/hooks */

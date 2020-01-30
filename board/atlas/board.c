@@ -15,6 +15,7 @@
 #include "console.h"
 #include "driver/als_opt3001.h"
 #include "driver/pmic_bd99992gw.h"
+#include "driver/charger/isl923x.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
@@ -150,6 +151,17 @@ const struct i2c_port_t i2c_ports[]  = {
 	 GPIO_EC_I2C4_BATTERY_SCL,    GPIO_EC_I2C4_BATTERY_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* Charger Chips */
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /* TCPC mux configuration */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {

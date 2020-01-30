@@ -232,6 +232,15 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = BD9995X_ADDR_FLAGS,
+		.drv = &bd9995x_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+
 /**
  * Power on (or off) a single TCPC.
  * minimum on/off delays are included.

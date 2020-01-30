@@ -81,6 +81,17 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+/******************************************************************************/
+/* Charger Chips */
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = RT946X_ADDR_FLAGS,
+		.drv = &rt946x_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
 	{GPIO_PP1250_S3_PG,    POWER_SIGNAL_ACTIVE_HIGH, "PP1250_S3_PWR_GOOD"},

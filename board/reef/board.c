@@ -245,6 +245,15 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = BD9995X_ADDR_FLAGS,
+		.drv = &bd9995x_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+
 uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;

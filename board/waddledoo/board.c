@@ -275,7 +275,7 @@ int pd_snk_is_vbus_provided(int port)
 	return regval & TCPC_REG_POWER_STATUS_VBUS_PRES;
 }
 
-struct charger_config_t chg_chips[] = {
+const struct charger_config_t chg_chips[] = {
 	{
 		.i2c_port = I2C_PORT_USB_C0,
 		.i2c_addr_flags = ISL923X_ADDR_FLAGS,

@@ -5,8 +5,10 @@
 /* Veyron board-specific configuration */
 
 #include "battery.h"
+#include "battery_smart.h"
 #include "chipset.h"
 #include "common.h"
+#include "driver/charger/bq24715.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "i2c.h"
@@ -44,6 +46,16 @@ const struct pwm_t pwm_channels[] = {
 	 PWM_CONFIG_ACTIVE_LOW},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+/* Charger chips */
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = CHARGER_ADDR_FLAGS,
+		.drv = &bq24715_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 void board_config_pre_init(void)
 {

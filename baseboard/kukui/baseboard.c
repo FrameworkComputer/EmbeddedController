@@ -5,6 +5,7 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "charger.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
@@ -12,6 +13,31 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+#ifndef CONFIG_CHARGER_RUNTIME_CONFIG
+#if defined(VARIANT_KUKUI_CHARGER_MT6370)
+#include "driver/charger/rt946x.h"
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = RT946X_ADDR_FLAGS,
+		.drv = &rt946x_drv,
+	},
+};
+#elif defined(VARIANT_KUKUI_CHARGER_ISL9238)
+#include "driver/charger/isl923x.h"
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+#endif /* VARIANT_KUKUI_CHARGER_* */
+
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+
+#endif /* CONFIG_CHARGER_RUNTIME_CONFIG */
 
 void board_reset_pd_mcu(void)
 {

@@ -9,9 +9,11 @@
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "charger.h"
 #include "chipset.h"
 #include "extpower.h"
 #include "driver/accelgyro_bmi160.h"
+#include "driver/charger/isl923x.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -298,6 +300,16 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
+
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /* Initialize board. */
 static void board_init(void)

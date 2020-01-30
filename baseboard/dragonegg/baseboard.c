@@ -9,6 +9,7 @@
 #include "chipset.h"
 #include "console.h"
 #include "driver/bc12/max14637.h"
+#include "driver/charger/bq25710.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/ppc/syv682x.h"
@@ -78,6 +79,16 @@ const struct i2c_port_t i2c_ports[] = {
 	{"power",  IT83XX_I2C_CH_F, 100, GPIO_I2C5_SCL, GPIO_I2C5_SDA}
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* Charger Chips */
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = BQ25710_SMBUS_ADDR1_FLAGS,
+		.drv = &bq25710_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /******************************************************************************/
 /* Chipset callbacks/hooks */

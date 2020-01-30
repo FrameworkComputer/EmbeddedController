@@ -16,6 +16,7 @@
 #include "compile_time_macros.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/als_opt3001.h"
+#include "driver/charger/isl923x.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -328,6 +329,16 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
 };
+
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 void board_chipset_startup(void)
 {

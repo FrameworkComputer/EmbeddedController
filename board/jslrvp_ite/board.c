@@ -6,6 +6,8 @@
 /* Intel Jasperlake RVP with ITE EC board specific configuration */
 
 #include "button.h"
+#include "charger.h"
+#include "driver/charger/isl923x.h"
 #include "extpower.h"
 #include "i2c.h"
 #include "intc.h"
@@ -87,6 +89,17 @@ const struct i2c_port_t i2c_ports[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_CHAN_COUNT);
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* Charger Chips */
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /*
  * Returns board information (board id[7:0] and Fab id[15:8]) on success

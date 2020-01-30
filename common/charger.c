@@ -209,63 +209,6 @@ DECLARE_CONSOLE_COMMAND(charger, command_charger,
 
 /* Driver wrapper functions */
 
-/*
- * TODO(b/147672225): boards should define their own charger structures
- * Drivers cannot be included together, as they define some of the same items.
- * This will need to be addressed if we want to support different types of
- * charger chips on a board
- */
-#if defined(CONFIG_CHARGER_BD9995X)
-#include "driver/charger/bd9995x.h"
-#elif defined(CONFIG_CHARGER_BQ24715)
-#include "driver/charger/bq24715.h"
-#elif defined(CONFIG_CHARGER_BQ24770) || defined(CONFIG_CHARGER_BQ24773)
-#include "driver/charger/bq24773.h"
-#elif defined(CONFIG_CHARGER_BQ25710)
-#include "driver/charger/bq25710.h"
-#elif defined(CONFIG_CHARGER_ISL9237) || defined(CONFIG_CHARGER_ISL9238)
-#include "driver/charger/isl923x.h"
-#elif defined(CONFIG_CHARGER_ISL9241)
-#include "driver/charger/isl9241.h"
-#elif defined(CONFIG_CHARGER_MT6370) || defined(CONFIG_CHARGER_RT9466) \
-		|| defined(CONFIG_CHARGER_RT9467)
-#include "driver/charger/rt946x.h"
-#endif
-
-#if !defined(CONFIG_CHARGER_RUNTIME_CONFIG) && !defined(TEST_BUILD)
-const struct charger_config_t chg_chips[] = {
-	{
-		.i2c_port = I2C_PORT_CHARGER,
-#if defined(CONFIG_CHARGER_BD9995X)
-		.i2c_addr_flags = BD9995X_ADDR_FLAGS,
-		.drv = &bd9995x_drv,
-#elif defined(CONFIG_CHARGER_BQ24715)
-		.i2c_addr_flags = CHARGER_ADDR_FLAGS,
-		.drv = &bq24715_drv,
-#elif defined(CONFIG_CHARGER_BQ24770) || defined(CONFIG_CHARGER_BQ24773)
-		.i2c_addr_flags = I2C_ADDR_CHARGER_FLAGS,
-		.drv = &bq2477x_drv,
-#elif defined(CONFIG_CHARGER_BQ25710)
-		.i2c_addr_flags = BQ25710_SMBUS_ADDR1_FLAGS,
-		.drv = &bq25710_drv,
-#elif defined(CONFIG_CHARGER_ISL9237) || defined(CONFIG_CHARGER_ISL9238)
-		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
-		.drv = &isl923x_drv,
-#elif defined(CONFIG_CHARGER_ISL9241)
-		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
-		.drv = &isl9241_drv,
-#elif defined(CONFIG_CHARGER_MT6370) || defined(CONFIG_CHARGER_RT9466) \
-		|| defined(CONFIG_CHARGER_RT9467)
-		.i2c_addr_flags = RT946X_ADDR_FLAGS,
-		.drv = &rt946x_drv,
-#endif
-	},
-};
-
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
-#endif /* CONFIG_CHARGER_RUNTIME_CONFIG */
-
-
 static void charger_chips_init(void)
 {
 	int chip;

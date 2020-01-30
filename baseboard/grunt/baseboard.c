@@ -19,6 +19,7 @@
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/bc12/max14637.h"
+#include "driver/charger/isl923x.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/anx74xx.h"
@@ -361,6 +362,18 @@ const struct max14637_config_t max14637_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.flags = MAX14637_FLAGS_ENABLE_ACTIVE_LOW,
 	},
 };
+
+/* Charger Chip Configuration */
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+
 
 const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A0_5V,

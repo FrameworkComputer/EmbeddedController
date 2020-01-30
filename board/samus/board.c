@@ -18,6 +18,7 @@
 #include "driver/accel_kxcj9.h"
 #include "driver/accelgyro_lsm6ds0.h"
 #include "driver/als_isl29035.h"
+#include "driver/charger/bq24773.h"
 #include "driver/temp_sensor/tmp006.h"
 #include "extpower.h"
 #include "fan.h"
@@ -131,6 +132,16 @@ const struct i2c_port_t i2c_ports[] = {
 	{"thermal",  5, 100, GPIO_I2C5_SCL, GPIO_I2C5_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* Charger chips */
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = I2C_ADDR_CHARGER_FLAGS,
+		.drv = &bq2477x_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 #define TEMP_U40_REG_ADDR_FLAGS		(0x40 | I2C_FLAG_BIG_ENDIAN)
 #define TEMP_U41_REG_ADDR_FLAGS		(0x44 | I2C_FLAG_BIG_ENDIAN)

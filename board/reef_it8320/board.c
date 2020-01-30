@@ -198,6 +198,15 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = BD9995X_ADDR_FLAGS,
+		.drv = &bd9995x_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+
 /* Called by APL power state machine when transitioning from G3 to S5 */
 void chipset_pre_init_callback(void)
 {

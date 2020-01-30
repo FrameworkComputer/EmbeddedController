@@ -19,6 +19,7 @@
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/bc12/pi3usb9201.h"
+#include "driver/charger/isl9241.h"
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3dpx1207.h"
@@ -230,6 +231,15 @@ struct ppc_config_t ppc_chips[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
+		.drv = &isl9241_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 void ppc_interrupt(enum gpio_signal signal)
 {

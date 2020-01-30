@@ -20,6 +20,7 @@
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/als_opt3001.h"
+#include "driver/charger/isl923x.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "driver/usb_mux/pi3usb3x532.h"
@@ -149,6 +150,25 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
+
+#if BOARD_REV == OAK_REV1
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = I2C_ADDR_CHARGER_FLAGS,
+		.drv = &bq2477x_drv,
+	},
+};
+#else
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+#endif /* OAK_REV1 */
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /*
  * Temperature sensors data; must be in same order as enum temp_sensor_id.

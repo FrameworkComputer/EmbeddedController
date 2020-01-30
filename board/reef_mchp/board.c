@@ -242,6 +242,15 @@ const uint32_t i2c_ctrl_slave_addrs[I2C_CONTROLLER_COUNT] = {
 	0, 0, 0, 0,
 };
 
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = BD9995X_ADDR_FLAGS,
+		.drv = &bd9995x_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+
 /* Return the two slave addresses the specified
  * controller will respond to when controller
  * is acting as a slave.

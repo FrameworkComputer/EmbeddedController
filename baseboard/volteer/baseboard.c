@@ -10,6 +10,7 @@
 #include "charge_state.h"
 #include "cros_board_info.h"
 #include "driver/bc12/pi3usb9201.h"
+#include "driver/charger/isl9241.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/ppc/syv682x.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -162,6 +163,19 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/******************************************************************************/
+/* Charger Chip Configuration */
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
+		.drv = &isl9241_drv,
+	},
+};
+
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+
 
 /******************************************************************************/
 /* PWM configuration */

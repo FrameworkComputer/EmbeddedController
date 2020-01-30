@@ -4,8 +4,10 @@
  */
 /* Hammer board configuration */
 
+#include "charger.h"
 #include "clock.h"
 #include "common.h"
+#include "driver/charger/isl923x.h"
 #include "driver/led/lm3630a.h"
 #include "ec_version.h"
 #include "ec_ec_comm_slave.h"
@@ -96,6 +98,18 @@ const struct i2c_port_t i2c_ports[] = {
 #endif
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+#endif
+
+#ifdef CONFIG_CHARGER_ISL9238
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 #endif
 
 #ifdef HAS_BACKLIGHT
