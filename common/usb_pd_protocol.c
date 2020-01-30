@@ -677,12 +677,17 @@ static void pd_update_saved_port_flags(int port, uint8_t flag, uint8_t val)
  */
 static void invalidate_last_message_id(int port)
 {
-	/*
-	 * Message id starts from 0 to 7. If last_msg_id is initialized to 0,
-	 * it will lead to repetitive message id with first received packet,
-	 * so initialize it with an invalid value 0xff.
-	 */
-	pd[port].last_msg_id = 0xff;
+	pd[port].last_msg_id = INVALID_MSG_ID_COUNTER;
+}
+
+static bool consume_sop_repeat_message(int port, uint8_t msg_id)
+{
+	if (pd[port].last_msg_id != msg_id) {
+		pd[port].last_msg_id = msg_id;
+		return false;
+	}
+	CPRINTF("C%d Repeat msg_id %d\n", port, msg_id);
+	return true;
 }
 
 /**
@@ -690,32 +695,28 @@ static void invalidate_last_message_id(int port)
  *
  * @param port USB PD TCPC port number
  * @param msg_header Message Header containing the RX message ID
- * @return 1 if the received message is a duplicate one, 0 otherwise.
+ * @return True if the received message is a duplicate one, False otherwise.
+ *
+ * From USB PD version 1.3 section 6.7.1, the port which communicates
+ * using SOP* Packets Shall maintain copies of the last MessageID for
+ * each type of SOP* it uses.
  */
-static int consume_repeat_message(int port, uint16_t msg_header)
+static bool consume_repeat_message(int port, uint16_t msg_header)
 {
 	uint8_t msg_id = PD_HEADER_ID(msg_header);
 
 	/* If repeat message ignore, except softreset control request. */
 	if (PD_HEADER_TYPE(msg_header) == PD_CTRL_SOFT_RESET &&
 	    PD_HEADER_CNT(msg_header) == 0) {
-		return 0;
-	/* TODO: Check for incoming SOP'' messages */
+		return false;
 	} else if (is_transmit_msg_sop_prime(port)) {
-		/*
-		 * From USB PD version 1.3 section 6.7.1, the port which
-		 * communicates using SOP* Packets Shall maintain copy
-		 * of the last MessageID for each type of SOP* it uses.
-		 */
-		return cable_consume_repeat_message(port, msg_id);
-	} else if (pd[port].last_msg_id != msg_id) {
-		pd[port].last_msg_id = msg_id;
-	} else if (pd[port].last_msg_id == msg_id) {
-		CPRINTF("C%d Repeat msg_id %d\n", port, msg_id);
-		return 1;
+		return consume_sop_prime_repeat_msg(port, msg_id);
+	} else if (is_transmit_msg_sop_prime_prime(port)) {
+		return consume_sop_prime_prime_repeat_msg(port, msg_id);
+	} else {
+		return consume_sop_repeat_message(port, msg_id);
 	}
 
-	return 0;
 }
 
 /**

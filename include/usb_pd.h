@@ -503,6 +503,13 @@ enum idh_ptype {
 #define VDO_PRODUCT(pid, bcd) (((pid) & 0xffff) << 16 | ((bcd) & 0xffff))
 #define PD_PRODUCT_PID(vdo) (((vdo) >> 16) & 0xffff)
 
+/*
+ * Message id starts from 0 to 7. If last_msg_id is initialized to 0,
+ * it will lead to repetitive message id with first received packet,
+ * so initialize it with an invalid value 0xff.
+ */
+#define INVALID_MSG_ID_COUNTER 0xff
+
 union cable_vdo {
 	/* Passive cable VDO */
 	union passive_cable_vdo_rev20 p_rev20;
@@ -529,8 +536,10 @@ enum pd_rev_type {
 
 /* Cable structure for storing cable attributes */
 struct pd_cable {
-	/* Last received cable message id counter*/
-	uint8_t last_cable_msg_id;
+	/* Last received SOP' message id counter*/
+	uint8_t last_sop_p_msg_id;
+	/* Last received SOP'' message id counter*/
+	uint8_t last_sop_p_p_msg_id;
 	uint8_t is_identified;
 	/* Type of cable */
 	enum idh_ptype type;
@@ -1688,16 +1697,28 @@ uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx);
 struct svdm_amode_data *pd_get_amode_data(int port, uint16_t svid);
 
 /**
- * Returns 0 if previous cable messageId count is different from received
+ * Returns false if previous SOP' messageId count is different from received
  * messageId count.
  *
  * @param port		USB-C port number
  * @param msg_id        Received cable msg_id
- * @return              0 if Received MessageId count is different from the
+ * @return              False if Received MessageId count is different from the
  *                      previous one.
- *                      1 Otherwise
+ *                      True Otherwise
  */
-int cable_consume_repeat_message(int port, uint8_t msg_id);
+bool consume_sop_prime_repeat_msg(int port, uint8_t msg_id);
+
+/**
+ * Returns false if previous SOP'' messageId count is different from received
+ * messageId count.
+ *
+ * @param port		USB-C port number
+ * @param msg_id        Received cable msg_id
+ * @return              False if Received MessageId count is different from the
+ *                      previous one.
+ *                      True Otherwise
+ */
+bool consume_sop_prime_prime_repeat_msg(int port, uint8_t msg_id);
 
 /**
  * Returns the status of cable flag - CABLE_FLAGS_SOP_PRIME_ENABLE
@@ -1706,6 +1727,14 @@ int cable_consume_repeat_message(int port, uint8_t msg_id);
  * @return              Status of CABLE_FLAGS_SOP_PRIME_ENABLE flag
  */
 bool is_transmit_msg_sop_prime(int port);
+
+/**
+ * Returns the status of cable flag - CABLE_FLAGS_SOP_PRIME_PRIME_ENABLE
+ *
+ * @param port		USB-C port number
+ * @return		Status of CABLE_FLAGS_SOP_PRIME_PRIME_ENABLE flag
+ */
+bool is_transmit_msg_sop_prime_prime(int port);
 
 /**
  * Returns the type of communication (SOP/SOP'/SOP'')

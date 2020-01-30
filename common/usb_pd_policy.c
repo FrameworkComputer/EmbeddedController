@@ -173,21 +173,32 @@ bool is_transmit_msg_sop_prime(int port)
 		(cable[port].flags & CABLE_FLAGS_SOP_PRIME_ENABLE));
 }
 
-static bool is_transmit_msg_sop_prime_prime(int port)
+bool is_transmit_msg_sop_prime_prime(int port)
 {
 	return (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP) &&
 		(cable[port].flags & CABLE_FLAGS_SOP_PRIME_PRIME_ENABLE));
 }
 
-int cable_consume_repeat_message(int port, uint8_t msg_id)
+bool consume_sop_prime_repeat_msg(int port, uint8_t msg_id)
 {
 
-	if (cable[port].last_cable_msg_id != msg_id) {
-		cable[port].last_cable_msg_id = msg_id;
-		return 0;
+	if (cable[port].last_sop_p_msg_id != msg_id) {
+		cable[port].last_sop_p_msg_id = msg_id;
+		return false;
 	}
-	CPRINTF("C%d Cable repeat msg_id %d\n", port, msg_id);
-	return 1;
+	CPRINTF("C%d SOP Prime repeat msg_id %d\n", port, msg_id);
+	return true;
+}
+
+bool consume_sop_prime_prime_repeat_msg(int port, uint8_t msg_id)
+{
+
+	if (cable[port].last_sop_p_p_msg_id != msg_id) {
+		cable[port].last_sop_p_p_msg_id = msg_id;
+		return false;
+	}
+	CPRINTF("C%d SOP Prime Prime repeat msg_id %d\n", port, msg_id);
+	return true;
 }
 
 static void disable_transmit_sop_prime(int port)
@@ -245,14 +256,8 @@ void reset_pd_cable(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
 		memset(&cable[port], 0, sizeof(cable[port]));
-		/*
-		 * Invalidate the last cable messageId counter. The cable
-		 * Message id starts from 0 to 7 and if last_cable msg_id
-		 * is initialized to 0, it will lead to repetitive message
-		 * id with first received packet. Hence, initialize it with
-		 * an invalid value 0xff.
-		 */
-		cable[port].last_cable_msg_id = 0xff;
+		cable[port].last_sop_p_msg_id = INVALID_MSG_ID_COUNTER;
+		cable[port].last_sop_p_p_msg_id = INVALID_MSG_ID_COUNTER;
 	}
 }
 
