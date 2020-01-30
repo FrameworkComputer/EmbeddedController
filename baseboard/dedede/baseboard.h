@@ -168,10 +168,17 @@
 
 #ifndef __ASSEMBLER__
 
+#include "common.h"
 #include "gpio_signal.h"
 
 /* Reset all TCPCs */
 void board_reset_pd_mcu(void);
+
+/*
+ * Bit to indicate if the PP3000_A rail's power is good. Will be updated by ADC
+ * interrupt.
+ */
+extern uint32_t pp3300_a_pgood;
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BASEBOARD_H */
