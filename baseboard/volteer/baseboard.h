@@ -123,6 +123,15 @@
 #define CONFIG_USB_CHARGER
 #define CONFIG_BC12_DETECT_PI3USB9201
 
+/*
+ * Don't allow the system to boot to S0 when the battery is low and unable to
+ * communicate on locked systems (which haven't PD negotiated)
+ */
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT	15000
+#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON			3
+#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON_WITH_AC		1
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON		15001
+
 /* Common battery defines */
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BATTERY_FUEL_GAUGE
