@@ -1318,6 +1318,11 @@ enum PM_CHANNEL_T {
 #define NPCX_ATCTL                  REG16(NPCX_ADC_BASE_ADDR + 0x004)
 #define NPCX_ASCADD                 REG16(NPCX_ADC_BASE_ADDR + 0x006)
 #define NPCX_ADCCS                  REG16(NPCX_ADC_BASE_ADDR + 0x008)
+/* NOTE: These are 1-based for the threshold detectors. */
+#define NPCX_THRCTL(n)              REG16(NPCX_ADC_BASE_ADDR + 0x012 + (2L*(n)))
+#define NPCX_THRCTS                 REG16(NPCX_ADC_BASE_ADDR + 0x01A)
+#define NPCX_THR_DCTL(n)            REG16(NPCX_ADC_BASE_ADDR + 0x038 + (2L*(n)))
+/* NOTE: This is 0-based for the ADC channels. */
 #define NPCX_CHNDAT(n)              REG16(NPCX_ADC_BASE_ADDR + 0x040 + (2L*(n)))
 #define NPCX_ADCCNF2                REG16(NPCX_ADC_BASE_ADDR + 0x020)
 #define NPCX_GENDLY                 REG16(NPCX_ADC_BASE_ADDR + 0x022)
@@ -1336,6 +1341,26 @@ enum PM_CHANNEL_T {
 #define NPCX_ADCCNF_STOP                 11
 #define NPCX_CHNDAT_CHDAT_FIELD          FIELD(0, 10)
 #define NPCX_CHNDAT_NEW                  15
+#define NPCX_THRCTL_THEN                 15
+#define NPCX_THRCTL_L_H                  14
+#define NPCX_THRCTL_CHNSEL               FIELD(10, 4)
+#define NPCX_THRCTL_THRVAL               FIELD(0, 10)
+#define NPCX_THRCTS_ADC_WKEN             15
+#define NPCX_THRCTS_THR3_IEN             10
+#define NPCX_THRCTS_THR2_IEN             9
+#define NPCX_THRCTS_THR1_IEN             8
+#define NPCX_THRCTS_ADC_EVENT            7
+#define NPCX_THRCTS_THR3_STS             2
+#define NPCX_THRCTS_THR2_STS             1
+#define NPCX_THRCTS_THR1_STS             0
+#define NPCX_THR_DCTL_THRD_EN            15
+#define NPCX_THR_DCTL_THR_DVAL           FIELD(0, 10)
+
+#define NPCX_ADC_THRESH1                 1
+#define NPCX_ADC_THRESH2                 2
+#define NPCX_ADC_THRESH3                 3
+#define NPCX_ADC_THRESH_CNT              3
+
 /******************************************************************************/
 /* SPI Register */
 #define NPCX_SPI_DATA                    REG16(NPCX_SPI_BASE_ADDR + 0x00)

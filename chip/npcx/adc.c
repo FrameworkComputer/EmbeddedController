@@ -20,6 +20,9 @@
 #include "timer.h"
 #include "util.h"
 
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+
 /* Maximum time we allow for an ADC conversion */
 #define ADC_TIMEOUT_US            SECOND
 #define ADC_CLK                   2000000
@@ -103,6 +106,39 @@ static int start_single_and_wait(enum npcx_adc_input_channel input_ch
 
 }
 
+static uint16_t repetitive_enabled;
+void npcx_set_adc_repetitive(enum npcx_adc_input_channel input_ch, int enable)
+{
+	if (enable) {
+		/* Forbid EC enter deep sleep during conversion. */
+		disable_sleep(SLEEP_MASK_ADC);
+		/* Turn on ADC */
+		SET_BIT(NPCX_ADCCNF, NPCX_ADCCNF_ADCEN);
+		/* Set ADC conversion code to SW conversion mode */
+		SET_FIELD(NPCX_ADCCNF, NPCX_ADCCNF_ADCMD_FIELD,
+			  ADC_SCAN_CONVERSION_MODE);
+		/* Update number of channel to be converted */
+		SET_BIT(NPCX_ADCCS, input_ch);
+		/* Set conversion type to repetitive (runs continuously) */
+		SET_BIT(NPCX_ADCCNF, NPCX_ADCCNF_ADCRPTC);
+		repetitive_enabled |= BIT(input_ch);
+
+		/* Start conversion */
+		SET_BIT(NPCX_ADCCNF, NPCX_ADCCNF_START);
+	} else {
+		CLEAR_BIT(NPCX_ADCCNF, NPCX_ADCCNF_ADCRPTC);
+		CLEAR_BIT(NPCX_ADCCS, input_ch);
+		repetitive_enabled &= ~BIT(input_ch);
+
+		if (!repetitive_enabled) {
+			/* Turn off ADC */
+			CLEAR_BIT(NPCX_ADCCNF, NPCX_ADCCNF_ADCEN);
+			/* Allow ec enter deep sleep */
+			enable_sleep(SLEEP_MASK_ADC);
+		}
+	}
+}
+
 /**
  * ADC read specific channel.
  *
@@ -138,14 +174,99 @@ int adc_read_channel(enum adc_channel ch)
 		value = ADC_READ_ERROR;
 	}
 
-	/* Turn off ADC */
-	CLEAR_BIT(NPCX_ADCCNF, NPCX_ADCCNF_ADCEN);
-	/* Allow ec enter deep sleep */
-	enable_sleep(SLEEP_MASK_ADC);
+	if (!repetitive_enabled) {
+		/* Turn off ADC */
+		CLEAR_BIT(NPCX_ADCCNF, NPCX_ADCCNF_ADCEN);
+		/* Allow ec enter deep sleep */
+		enable_sleep(SLEEP_MASK_ADC);
+	}
 
 	mutex_unlock(&adc_lock);
 
 	return value;
+}
+
+/* Board should register these callbacks with npcx_adc_cfg_thresh_int(). */
+static void (*adc_thresh_irqs[NPCX_ADC_THRESH_CNT])(void);
+
+void npcx_adc_thresh_int_enable(int threshold_idx, int enable)
+{
+	enable = !!enable;
+
+	if ((threshold_idx < 1) || (threshold_idx > 3)) {
+		CPRINTS("Invalid ADC thresh index! (%d)",
+			threshold_idx);
+		return;
+	}
+	threshold_idx--; /* convert to 0-based */
+
+	if (enable)
+		SET_BIT(NPCX_THRCTS, NPCX_THRCTS_THR1_IEN+threshold_idx);
+	else
+		CLEAR_BIT(NPCX_THRCTS, NPCX_THRCTS_THR1_IEN+threshold_idx);
+}
+
+void npcx_adc_register_thresh_irq(int threshold_idx,
+				  const struct npcx_adc_thresh_t *thresh_cfg)
+{
+	int npcx_adc_ch;
+	int raw_val;
+	int mul;
+	int div;
+	int shift;
+
+	if ((threshold_idx < 1) || (threshold_idx > 3)) {
+		CPRINTS("Invalid ADC thresh index! (%d)",
+			threshold_idx);
+		return;
+	}
+	npcx_adc_ch = adc_channels[thresh_cfg->adc_ch].input_ch;
+
+	if (!thresh_cfg->adc_thresh_cb) {
+		CPRINTS("No callback for ADC Threshold %d!",
+			threshold_idx);
+		return;
+	}
+
+	/* Fill in the table */
+	adc_thresh_irqs[threshold_idx-1] = thresh_cfg->adc_thresh_cb;
+
+	/* Select the channel */
+	SET_FIELD(NPCX_THRCTL(threshold_idx), NPCX_THRCTL_CHNSEL,
+		  npcx_adc_ch);
+
+	if (thresh_cfg->lower_or_higher)
+		SET_BIT(NPCX_THRCTL(threshold_idx), NPCX_THRCTL_L_H);
+	else
+		CLEAR_BIT(NPCX_THRCTL(threshold_idx), NPCX_THRCTL_L_H);
+
+	/*
+	 * Set the single threshold value.  This is also the assertion threshold
+	 * value if dual threshold configuration is being used.
+	 */
+	mul = adc_channels[thresh_cfg->adc_ch].factor_mul;
+	div = adc_channels[thresh_cfg->adc_ch].factor_div;
+	shift = adc_channels[thresh_cfg->adc_ch].shift;
+
+	raw_val = (thresh_cfg->thresh_assert - shift) * div / mul;
+	CPRINTS("ADC THR%d: Setting THRVAL = %d, L_H: %d", threshold_idx,
+		raw_val, thresh_cfg->lower_or_higher);
+	SET_FIELD(NPCX_THRCTL(threshold_idx), NPCX_THRCTL_THRVAL,
+		  raw_val);
+
+	/* Configure dual threshold detection if desired. */
+	if (thresh_cfg->thresh_deassert != -1) {
+		raw_val = (thresh_cfg->thresh_deassert - shift) * div / mul;
+		SET_FIELD(NPCX_THR_DCTL(threshold_idx),
+			  NPCX_THR_DCTL_THR_DVAL,
+			  raw_val);
+		SET_BIT(NPCX_THR_DCTL(threshold_idx), NPCX_THR_DCTL_THRD_EN);
+	} else {
+		CLEAR_BIT(NPCX_THR_DCTL(threshold_idx), NPCX_THR_DCTL_THRD_EN);
+	}
+
+	/* Enable threshold detection */
+	SET_BIT(NPCX_THRCTL(threshold_idx), NPCX_THRCTL_THEN);
 }
 
 /**
@@ -157,12 +278,15 @@ int adc_read_channel(enum adc_channel ch)
  */
 void adc_interrupt(void)
 {
+	int i;
+
 	if (IS_BIT_SET(NPCX_ADCSTS, NPCX_ADCSTS_EOCEV)) {
 		/* Disable End-of-Conversion Interrupt */
 		CLEAR_BIT(NPCX_ADCCNF, NPCX_ADCCNF_INTECEN);
 
-		/* Stop conversion */
-		SET_BIT(NPCX_ADCCNF, NPCX_ADCCNF_STOP);
+		/* Stop conversion for single-shot mode */
+		if (!repetitive_enabled)
+			SET_BIT(NPCX_ADCCNF, NPCX_ADCCNF_STOP);
 
 		/* Clear End-of-Conversion Event status */
 		SET_BIT(NPCX_ADCSTS, NPCX_ADCSTS_EOCEV);
@@ -170,6 +294,15 @@ void adc_interrupt(void)
 		/* Wake up the task which was waiting for the interrupt */
 		if (task_waiting != TASK_ID_INVALID)
 			task_set_event(task_waiting, TASK_EVENT_ADC_DONE, 0);
+	}
+
+	for (i = NPCX_THRCTS_THR1_STS; i <= NPCX_THRCTS_THR3_STS; i++) {
+		if (IS_BIT_SET(NPCX_THRCTS, i)) {
+			/* Clear threshold status */
+			SET_BIT(NPCX_THRCTS, i);
+			if (adc_thresh_irqs[i])
+				adc_thresh_irqs[i]();
+		}
 	}
 }
 DECLARE_IRQ(NPCX_IRQ_ADC, adc_interrupt, 4);
