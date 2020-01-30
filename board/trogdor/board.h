@@ -202,6 +202,7 @@ enum power_signal {
 	SC7180_POWER_GOOD,
 	SC7180_WARM_RESET,
 	SC7180_AP_SUSPEND,
+	SC7180_DEPRECATED_AP_RST_REQ,
 	/* Number of power signals */
 	POWER_SIGNAL_COUNT
 };
