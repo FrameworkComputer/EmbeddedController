@@ -490,7 +490,6 @@ static unsigned int max_request_mv = PD_MAX_VOLTAGE_MV;
  * Private VDM utility functions
  */
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static void dfp_consume_svids(int port, int cnt, uint32_t *payload);
 static int dfp_discover_modes(int port, uint32_t *payload);
 static void dfp_consume_modes(int port, int cnt, uint32_t *payload);
 #endif
@@ -4605,46 +4604,6 @@ void pd_dfp_pe_init(int port)
 }
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static void dfp_consume_svids(int port, int cnt, uint32_t *payload)
-{
-	int i;
-	uint32_t *ptr = payload + 1;
-	int vdo = 1;
-	uint16_t svid0, svid1;
-
-	for (i = pe[port].am_policy.svid_cnt;
-				i < pe[port].am_policy.svid_cnt + 12; i += 2) {
-		if (i == SVID_DISCOVERY_MAX) {
-			CPRINTF("ERR:SVIDCNT\n");
-			break;
-		}
-		/*
-		 * Verify we're still within the valid packet (count will be one
-		 * for the VDM header + xVDOs)
-		 */
-		if (vdo >= cnt)
-			break;
-
-		svid0 = PD_VDO_SVID_SVID0(*ptr);
-		if (!svid0)
-			break;
-		pe[port].am_policy.svids[i].svid = svid0;
-		pe[port].am_policy.svid_cnt++;
-
-		svid1 = PD_VDO_SVID_SVID1(*ptr);
-		if (!svid1)
-			break;
-		pe[port].am_policy.svids[i + 1].svid = svid1;
-		pe[port].am_policy.svid_cnt++;
-		ptr++;
-		vdo++;
-	}
-
-	/* TODO(tbroch) need to re-issue discover svids if > 12 */
-	if (i && ((i % 12) == 0))
-		CPRINTF("ERR:SVID+12\n");
-}
-
 static int dfp_discover_modes(int port, uint32_t *payload)
 {
 	uint16_t svid =

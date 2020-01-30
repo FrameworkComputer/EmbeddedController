@@ -1646,6 +1646,15 @@ void dfp_consume_attention(int port, uint32_t *payload);
 void dfp_consume_identity(int port, int cnt, uint32_t *payload);
 
 /**
+ * Consume the SVIDs
+ *
+ * @param port    USB-C port number
+ * @param cnt     number of data objects in payload
+ * @param payload payload data.
+ */
+void dfp_consume_svids(int port, int cnt, uint32_t *payload);
+
+/**
  * Initialize policy engine for DFP
  *
  * @param port     USB-C port number

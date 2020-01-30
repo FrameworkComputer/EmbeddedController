@@ -262,3 +262,42 @@ void dfp_consume_identity(int port, int cnt, uint32_t *payload)
 		break;
 	}
 }
+
+void dfp_consume_svids(int port, int cnt, uint32_t *payload)
+{
+	int i;
+	uint32_t *ptr = payload + 1;
+	int vdo = 1;
+	uint16_t svid0, svid1;
+	struct pd_policy *pe = pd_get_am_policy(port);
+
+	for (i = pe->svid_cnt; i < pe->svid_cnt + 12; i += 2) {
+		if (i == SVID_DISCOVERY_MAX) {
+			CPRINTF("ERR:SVIDCNT\n");
+			break;
+		}
+		/*
+		 * Verify we're still within the valid packet (count will be one
+		 * for the VDM header + xVDOs)
+		 */
+		if (vdo >= cnt)
+			break;
+
+		svid0 = PD_VDO_SVID_SVID0(*ptr);
+		if (!svid0)
+			break;
+		pe->svids[i].svid = svid0;
+		pe->svid_cnt++;
+
+		svid1 = PD_VDO_SVID_SVID1(*ptr);
+		if (!svid1)
+			break;
+		pe->svids[i + 1].svid = svid1;
+		pe->svid_cnt++;
+		ptr++;
+		vdo++;
+	}
+	/* TODO(tbroch) need to re-issue discover svids if > 12 */
+	if (i && ((i % 12) == 0))
+		CPRINTF("ERR:SVID+12\n");
+}
