@@ -233,3 +233,32 @@ void dfp_consume_attention(int port, uint32_t *payload)
 	if (modep->fx->attention)
 		modep->fx->attention(port, payload);
 }
+
+void dfp_consume_identity(int port, int cnt, uint32_t *payload)
+{
+	int ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
+	struct pd_policy *pe = pd_get_am_policy(port);
+	size_t identity_size = MIN(sizeof(pe->identity),
+				   (cnt - 1) * sizeof(uint32_t));
+	pd_dfp_pe_init(port);
+	memcpy(pe->identity, payload + 1, identity_size);
+
+	switch (ptype) {
+	case IDH_PTYPE_AMA:
+		/* Leave vbus ON if the following macro is false */
+		if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
+			IS_ENABLED(CONFIG_USBC_VCONN_SWAP)) {
+			/* Adapter is requesting vconn, try to supply it */
+			if (PD_VDO_AMA_VCONN_REQ(payload[VDO_I(AMA)]))
+				pd_try_vconn_src(port);
+
+			/* Only disable vbus if vconn was requested */
+			if (PD_VDO_AMA_VCONN_REQ(payload[VDO_I(AMA)]) &&
+				!PD_VDO_AMA_VBUS_REQ(payload[VDO_I(AMA)]))
+				pd_power_supply_reset(port);
+		}
+		break;
+	default:
+		break;
+	}
+}

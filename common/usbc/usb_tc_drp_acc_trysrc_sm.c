@@ -544,7 +544,7 @@ void tc_ctvpd_detected(int port)
 	TC_SET_FLAG(port, TC_FLAGS_CTVPD_DETECTED);
 }
 
-void tc_vconn_on(int port)
+void pd_try_vconn_src(int port)
 {
 	set_vconn(port, 1);
 }

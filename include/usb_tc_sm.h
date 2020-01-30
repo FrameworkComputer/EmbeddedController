@@ -308,13 +308,6 @@ void tc_event_check(int port, int evt);
 void tc_run(const int port);
 
 /**
- * Attempt to activate VCONN
- *
- * @param port USB-C port number
- */
-void tc_vconn_on(int port);
-
-/**
  * Start error recovery
  *
  * @param port USB-C port number

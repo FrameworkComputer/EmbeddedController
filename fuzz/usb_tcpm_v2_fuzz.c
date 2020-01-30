@@ -19,7 +19,3 @@ int pd_check_vconn_swap(int port)
 {
 	return 1;
 }
-
-__override void pd_try_vconn_src(int port)
-{
-}

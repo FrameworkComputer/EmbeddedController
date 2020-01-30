@@ -1637,6 +1637,15 @@ int pd_dfp_exit_mode(int port, uint16_t svid, int opos);
 void dfp_consume_attention(int port, uint32_t *payload);
 
 /**
+ * Consume the discover identity message
+ *
+ * @param port    USB-C port number
+ * @param cnt     number of data objects in payload
+ * @param payload payload data.
+ */
+void dfp_consume_identity(int port, int cnt, uint32_t *payload);
+
+/**
  * Initialize policy engine for DFP
  *
  * @param port     USB-C port number
