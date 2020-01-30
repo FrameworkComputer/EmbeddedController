@@ -774,23 +774,9 @@ static bool check_tbt_cable_speed(int port)
 						TBT_SS_U32_GEN1_GEN2);
 }
 
-static int get_mode_idx(int port, uint16_t svid)
+struct pd_policy *pd_get_am_policy(int port)
 {
-	int i;
-
-	for (i = 0; i < PD_AMODE_COUNT; i++) {
-		if (pe[port].amodes[i].fx &&
-		    (pe[port].amodes[i].fx->svid == svid))
-			return i;
-	}
-	return -1;
-}
-
-struct svdm_amode_data *pd_get_amode_data(int port, uint16_t svid)
-{
-	int idx = get_mode_idx(port, svid);
-
-	return (idx == -1) ? NULL : &pe[port].amodes[idx];
+	return &pe[port];
 }
 
 int pd_alt_mode(int port, uint16_t svid)
@@ -800,69 +786,9 @@ int pd_alt_mode(int port, uint16_t svid)
 	return (modep) ? modep->opos : -1;
 }
 
-int allocate_mode(int port, uint16_t svid)
+/* Note: Enter mode flag is not needed by TCPMv1 */
+void pd_set_dfp_enter_mode_flag(int port, bool set)
 {
-	int i, j;
-	struct svdm_amode_data *modep;
-	int mode_idx = get_mode_idx(port, svid);
-
-	if (mode_idx != -1)
-		return mode_idx;
-
-	/* There's no space to enter another mode */
-	if (pe[port].amode_idx == PD_AMODE_COUNT) {
-		CPRINTF("ERR:NO AMODE SPACE\n");
-		return -1;
-	}
-
-	/* Allocate ...  if SVID == 0 enter default supported policy */
-	for (i = 0; i < supported_modes_cnt; i++) {
-		for (j = 0; j < pe[port].svid_cnt; j++) {
-			struct svdm_svid_data *svidp = &pe[port].svids[j];
-			if ((svidp->svid != supported_modes[i].svid) ||
-			    (svid && (svidp->svid != svid)))
-				continue;
-
-			modep = &pe[port].amodes[pe[port].amode_idx];
-			modep->fx = &supported_modes[i];
-			modep->data = &pe[port].svids[j];
-			pe[port].amode_idx++;
-			return pe[port].amode_idx - 1;
-		}
-	}
-	return -1;
-}
-
-/*
- * Enter default mode ( payload[0] == 0 ) or attempt to enter mode via svid &
- * opos
-*/
-uint32_t pd_dfp_enter_mode(int port, uint16_t svid, int opos)
-{
-	int mode_idx = allocate_mode(port, svid);
-	struct svdm_amode_data *modep;
-	uint32_t mode_caps;
-
-	if (mode_idx == -1)
-		return 0;
-	modep = &pe[port].amodes[mode_idx];
-
-	if (!opos) {
-		/* choose the lowest as default */
-		modep->opos = 1;
-	} else if (opos <= modep->data->mode_cnt) {
-		modep->opos = opos;
-	} else {
-		CPRINTF("opos error\n");
-		return 0;
-	}
-
-	mode_caps = modep->data->mode_vdo[modep->opos - 1];
-	if (modep->fx->enter(port, mode_caps) == -1)
-		return 0;
-
-	/* SVDM to send to UFP for mode entry */
-	return VDO(modep->fx->svid, 1, CMD_ENTER_MODE | VDO_OPOS(modep->opos));
 }
 
 /*

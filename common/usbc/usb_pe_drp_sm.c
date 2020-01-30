@@ -497,7 +497,6 @@ static void dfp_consume_identity(int port, int cnt, uint32_t *payload);
 static void dfp_consume_svids(int port, int cnt, uint32_t *payload);
 static int dfp_discover_modes(int port, uint32_t *payload);
 static void dfp_consume_modes(int port, int cnt, uint32_t *payload);
-static int get_mode_idx(int port, uint16_t svid);
 #endif
 
 test_export_static enum usb_pe_state get_state_pe(const int port);
@@ -4709,23 +4708,9 @@ static void dfp_consume_modes(int port, int cnt, uint32_t *payload)
 	pe[port].am_policy.svid_idx++;
 }
 
-static int get_mode_idx(int port, uint16_t svid)
+struct pd_policy *pd_get_am_policy(int port)
 {
-	int i;
-
-	for (i = 0; i < PD_AMODE_COUNT; i++) {
-		if (pe[port].am_policy.amodes[i].fx->svid == svid)
-			return i;
-	}
-
-	return -1;
-}
-
-struct svdm_amode_data *pd_get_amode_data(int port, uint16_t svid)
-{
-	int idx = get_mode_idx(port, svid);
-
-	return (idx == -1) ? NULL : &pe[port].am_policy.amodes[idx];
+	return &pe[port].am_policy;
 }
 
 int pd_alt_mode(int port, uint16_t svid)
@@ -4735,74 +4720,12 @@ int pd_alt_mode(int port, uint16_t svid)
 	return (modep) ? modep->opos : -1;
 }
 
-int allocate_mode(int port, uint16_t svid)
+void pd_set_dfp_enter_mode_flag(int port, bool set)
 {
-	int i, j;
-	struct svdm_amode_data *modep;
-	int mode_idx = get_mode_idx(port, svid);
-
-	if (mode_idx != -1)
-		return mode_idx;
-
-	/* There's no space to enter another mode */
-	if (pe[port].am_policy.amode_idx == PD_AMODE_COUNT) {
-		CPRINTF("ERR:NO AMODE SPACE\n");
-		return -1;
-	}
-
-	/* Allocate ...  if SVID == 0 enter default supported policy */
-	for (i = 0; i < supported_modes_cnt; i++) {
-		if (!&supported_modes[i])
-			continue;
-
-		for (j = 0; j < pe[port].am_policy.svid_cnt; j++) {
-			struct svdm_svid_data *svidp =
-						&pe[port].am_policy.svids[j];
-
-			if ((svidp->svid != supported_modes[i].svid) ||
-					(svid && (svidp->svid != svid)))
-				continue;
-
-			modep =
-		&pe[port].am_policy.amodes[pe[port].am_policy.amode_idx];
-			modep->fx = &supported_modes[i];
-			modep->data = &pe[port].am_policy.svids[j];
-			pe[port].am_policy.amode_idx++;
-			return pe[port].am_policy.amode_idx - 1;
-		}
-	}
-	return -1;
-}
-
-uint32_t pd_dfp_enter_mode(int port, uint16_t svid, int opos)
-{
-	int mode_idx = allocate_mode(port, svid);
-	struct svdm_amode_data *modep;
-	uint32_t mode_caps;
-
-	if (mode_idx == -1)
-		return 0;
-
-	modep = &pe[port].am_policy.amodes[mode_idx];
-
-	if (!opos) {
-		/* choose the lowest as default */
-		modep->opos = 1;
-	} else if (opos <= modep->data->mode_cnt) {
-		modep->opos = opos;
-	} else {
-		CPRINTF("opos error\n");
-		return 0;
-	}
-
-	mode_caps = modep->data->mode_vdo[modep->opos - 1];
-	if (modep->fx->enter(port, mode_caps) == -1)
-		return 0;
-
-	PE_SET_FLAG(port, PE_FLAGS_MODAL_OPERATION);
-
-	/* SVDM to send to UFP for mode entry */
-	return VDO(modep->fx->svid, 1, CMD_ENTER_MODE | VDO_OPOS(modep->opos));
+	if (set)
+		PE_SET_FLAG(port, PE_FLAGS_MODAL_OPERATION);
+	else
+		PE_CLR_FLAG(port, PE_FLAGS_MODAL_OPERATION);
 }
 
 static int validate_mode_request(struct svdm_amode_data *modep,
