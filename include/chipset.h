@@ -202,6 +202,7 @@ static inline void chipset_handle_espi_reset_assert(void) { }
 static inline void chipset_handle_reboot(void) { }
 static inline void chipset_reset_request_interrupt(enum gpio_signal signal) { }
 static inline void chipset_warm_reset_interrupt(enum gpio_signal signal) { }
+static inline void chipset_power_good_interrupt(enum gpio_signal signal) { }
 static inline void chipset_watchdog_interrupt(enum gpio_signal signal) { }
 
 #endif /* !HAS_TASK_CHIPSET */
@@ -228,9 +229,16 @@ void chipset_reset_request_interrupt(enum gpio_signal signal);
 /**
  * GPIO interrupt handler of warm reset signal from servo or H1.
  *
- * It is used in SDM845 chipset power sequence.
+ * It is used in Qualcomm chipset power sequence.
  */
 void chipset_warm_reset_interrupt(enum gpio_signal signal);
+
+/**
+ * GPIO interrupt handler of the power good signal (pull rail of warm reset).
+ *
+ * It is used in Qualcomm chipset power sequence.
+ */
+void chipset_power_good_interrupt(enum gpio_signal signal);
 
 /**
  * GPIO interrupt handler of watchdog from AP.
