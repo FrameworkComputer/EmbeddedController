@@ -1335,8 +1335,7 @@ static void pe_src_send_capabilities_run(int port)
 			 * ports.
 			 */
 			prl_set_rev(port, TCPC_TX_SOP,
-				(PD_HEADER_REV(emsg[port].header) > PD_REV30) ?
-				PD_REV30 : PD_HEADER_REV(emsg[port].header));
+			MIN(PD_REVISION, PD_HEADER_REV(emsg[port].header)));
 
 			/*
 			 * If port partner runs PD 2.0, cable communication must
@@ -2034,7 +2033,6 @@ static void pe_snk_wait_for_capabilities_run(int port)
 static void pe_snk_evaluate_capability_entry(int port)
 {
 	uint32_t *pdo = (uint32_t *)emsg[port].buf;
-	uint32_t header = emsg[port].header;
 	uint32_t num = emsg[port].len >> 2;
 	int i;
 
@@ -2044,8 +2042,8 @@ static void pe_snk_evaluate_capability_entry(int port)
 	pe[port].hard_reset_counter = 0;
 
 	/* Set to highest revision supported by both ports. */
-	prl_set_rev(port, TCPC_TX_SOP, (PD_HEADER_REV(header) > PD_REV30) ?
-					PD_REV30 : PD_HEADER_REV(header));
+	prl_set_rev(port, TCPC_TX_SOP,
+			MIN(PD_REVISION, PD_HEADER_REV(emsg[port].header)));
 
 	/*
 	 * If port partner runs PD 2.0, cable communication must

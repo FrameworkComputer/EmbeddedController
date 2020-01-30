@@ -322,11 +322,11 @@ static void prl_init(int port)
 	 * partner doesn't support this revision, the Protocol Engine will
 	 * lower this value to the revision supported by the partner.
 	 */
-	pdmsg[port].rev[TCPC_TX_SOP] = PD_REV30;
-	pdmsg[port].rev[TCPC_TX_SOP_PRIME] = PD_REV30;
-	pdmsg[port].rev[TCPC_TX_SOP_PRIME_PRIME] = PD_REV30;
-	pdmsg[port].rev[TCPC_TX_SOP_DEBUG_PRIME] = PD_REV30;
-	pdmsg[port].rev[TCPC_TX_SOP_DEBUG_PRIME_PRIME] = PD_REV30;
+	pdmsg[port].rev[TCPC_TX_SOP] = PD_REVISION;
+	pdmsg[port].rev[TCPC_TX_SOP_PRIME] = PD_REVISION;
+	pdmsg[port].rev[TCPC_TX_SOP_PRIME_PRIME] = PD_REVISION;
+	pdmsg[port].rev[TCPC_TX_SOP_DEBUG_PRIME] = PD_REVISION;
+	pdmsg[port].rev[TCPC_TX_SOP_DEBUG_PRIME_PRIME] = PD_REVISION;
 	pdmsg[port].flags = 0;
 
 	prl_hr[port].flags = 0;
