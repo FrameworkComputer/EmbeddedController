@@ -284,7 +284,7 @@ const struct adc_t adc_channels[] = {
 		.name = "VBUS",
 		.input_ch = NPCX_ADC_CH4,
 		.factor_mul = ADC_MAX_VOLT * 39,
-		.factor_div = (ADC_READ_MAX + 1) / 5,
+		.factor_div = (ADC_READ_MAX + 1) * 5,
 	},
 	[ADC_PPVAR_IMON] = {  /* 500 mV/A */
 		.name = "PPVAR_IMON",
