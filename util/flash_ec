@@ -916,8 +916,7 @@ function flash_flashrom() {
 			info "Running flashrom:" 1>&2
 			echo " ${FLASHROM_GETSIZE}" 1>&2
 		fi
-		SPI_SIZE=$(${FLASHROM_GETSIZE} 2>/dev/null |\
-			       grep -oe '[0-9]\+$') || \
+		SPI_SIZE=$(${FLASHROM_GETSIZE} | grep -oe '[0-9]\+$') || \
 			die "Failed to determine chip size!"
 		[[ ${SPI_SIZE} -eq 0 ]] && die "Chip size is 0!"
 
