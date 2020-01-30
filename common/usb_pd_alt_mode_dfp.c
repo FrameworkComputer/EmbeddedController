@@ -65,6 +65,27 @@ static int pd_allocate_mode(int port, uint16_t svid)
 	return -1;
 }
 
+static int validate_mode_request(struct svdm_amode_data *modep,
+				 uint16_t svid, int opos)
+{
+	if (!modep->fx)
+		return 0;
+
+	if (svid != modep->fx->svid) {
+		CPRINTF("ERR:svid r:0x%04x != c:0x%04x\n",
+			svid, modep->fx->svid);
+		return 0;
+	}
+
+	if (opos != modep->opos) {
+		CPRINTF("ERR:opos r:%d != c:%d\n",
+			opos, modep->opos);
+		return 0;
+	}
+
+	return 1;
+}
+
 /*
  * This algorithm defaults to choosing higher pin config over lower ones in
  * order to prefer multi-function if desired.
@@ -158,4 +179,57 @@ uint32_t pd_dfp_enter_mode(int port, uint16_t svid, int opos)
 
 	/* SVDM to send to UFP for mode entry */
 	return VDO(modep->fx->svid, 1, CMD_ENTER_MODE | VDO_OPOS(modep->opos));
+}
+
+int pd_dfp_exit_mode(int port, uint16_t svid, int opos)
+{
+	struct svdm_amode_data *modep;
+	struct pd_policy *pe = pd_get_am_policy(port);
+	int idx;
+
+	/*
+	 * Empty svid signals we should reset DFP VDM state by exiting all
+	 * entered modes then clearing state.  This occurs when we've
+	 * disconnected or for hard reset.
+	 */
+	if (!svid) {
+		for (idx = 0; idx < PD_AMODE_COUNT; idx++)
+			if (pe->amodes[idx].fx)
+				pe->amodes[idx].fx->exit(port);
+
+		pd_dfp_pe_init(port);
+		return 0;
+	}
+
+	/*
+	 * TODO(crosbug.com/p/33946) : below needs revisited to allow multiple
+	 * mode exit.  Additionally it should honor OPOS == 7 as DFP's request
+	 * to exit all modes.  We currently don't have any UFPs that support
+	 * multiple modes on one SVID.
+	 */
+	modep = pd_get_amode_data(port, svid);
+	if (!modep || !validate_mode_request(modep, svid, opos))
+		return 0;
+
+	/* call DFPs exit function */
+	modep->fx->exit(port);
+
+	pd_set_dfp_enter_mode_flag(port, false);
+
+	/* exit the mode */
+	modep->opos = 0;
+	return 1;
+}
+
+void dfp_consume_attention(int port, uint32_t *payload)
+{
+	uint16_t svid = PD_VDO_VID(payload[0]);
+	int opos = PD_VDO_OPOS(payload[0]);
+	struct svdm_amode_data *modep = pd_get_amode_data(port, svid);
+
+	if (!modep || !validate_mode_request(modep, svid, opos))
+		return;
+
+	if (modep->fx->attention)
+		modep->fx->attention(port, payload);
 }

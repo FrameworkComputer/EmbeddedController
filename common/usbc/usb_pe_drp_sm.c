@@ -490,9 +490,6 @@ static unsigned int max_request_mv = PD_MAX_VOLTAGE_MV;
  * Private VDM utility functions
  */
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static int validate_mode_request(struct svdm_amode_data *modep,
-						uint16_t svid, int opos);
-static void dfp_consume_attention(int port, uint32_t *payload);
 static void dfp_consume_identity(int port, int cnt, uint32_t *payload);
 static void dfp_consume_svids(int port, int cnt, uint32_t *payload);
 static int dfp_discover_modes(int port, uint32_t *payload);
@@ -4726,81 +4723,6 @@ void pd_set_dfp_enter_mode_flag(int port, bool set)
 		PE_SET_FLAG(port, PE_FLAGS_MODAL_OPERATION);
 	else
 		PE_CLR_FLAG(port, PE_FLAGS_MODAL_OPERATION);
-}
-
-static int validate_mode_request(struct svdm_amode_data *modep,
-					uint16_t svid, int opos)
-{
-	if (!modep->fx)
-		return 0;
-
-	if (svid != modep->fx->svid) {
-		CPRINTF("ERR:svid r:0x%04x != c:0x%04x\n",
-			svid, modep->fx->svid);
-		return 0;
-	}
-
-	if (opos != modep->opos) {
-		CPRINTF("ERR:opos r:%d != c:%d\n",
-			opos, modep->opos);
-		return 0;
-	}
-
-	return 1;
-}
-
-static void dfp_consume_attention(int port, uint32_t *payload)
-{
-	uint16_t svid = PD_VDO_VID(payload[0]);
-	int opos = PD_VDO_OPOS(payload[0]);
-	struct svdm_amode_data *modep = pd_get_amode_data(port, svid);
-
-	if (!modep || !validate_mode_request(modep, svid, opos))
-		return;
-
-	if (modep->fx->attention)
-		modep->fx->attention(port, payload);
-}
-
-int pd_dfp_exit_mode(int port, uint16_t svid, int opos)
-{
-	struct svdm_amode_data *modep;
-	int idx;
-
-
-	/*
-	 * Empty svid signals we should reset DFP VDM state by exiting all
-	 * entered modes then clearing state.  This occurs when we've
-	 * disconnected or for hard reset.
-	 */
-	if (!svid) {
-		for (idx = 0; idx < PD_AMODE_COUNT; idx++)
-			if (pe[port].am_policy.amodes[idx].fx)
-				pe[port].am_policy.amodes[idx].fx->exit(port);
-
-		pd_dfp_pe_init(port);
-		return 0;
-	}
-
-	/*
-	 * TODO(crosbug.com/p/33946) : below needs revisited to allow multiple
-	 * mode exit.  Additionally it should honor OPOS == 7 as DFP's request
-	 * to exit all modes.  We currently don't have any UFPs that support
-	 * multiple modes on one SVID.
-	 */
-	modep = pd_get_amode_data(port, svid);
-	if (!modep || !validate_mode_request(modep, svid, opos))
-		return 0;
-
-	/* call DFPs exit function */
-	modep->fx->exit(port);
-
-	PE_CLR_FLAG(port, PE_FLAGS_MODAL_OPERATION);
-
-	/* exit the mode */
-	modep->opos = 0;
-
-	return 1;
 }
 
 uint16_t pd_get_identity_vid(int port)

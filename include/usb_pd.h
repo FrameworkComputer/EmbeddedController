@@ -1629,6 +1629,14 @@ int pd_dfp_dp_get_pin_mode(int port, uint32_t status);
 int pd_dfp_exit_mode(int port, uint16_t svid, int opos);
 
 /**
+ * Consume the SVDM attention data
+ *
+ * @param port USB-C port number
+ * @param payload  payload data.
+ */
+void dfp_consume_attention(int port, uint32_t *payload);
+
+/**
  * Initialize policy engine for DFP
  *
  * @param port     USB-C port number
