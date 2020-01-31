@@ -491,7 +491,6 @@ static unsigned int max_request_mv = PD_MAX_VOLTAGE_MV;
  */
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 static int dfp_discover_modes(int port, uint32_t *payload);
-static void dfp_consume_modes(int port, int cnt, uint32_t *payload);
 #endif
 
 test_export_static enum usb_pe_state get_state_pe(const int port);
@@ -4615,24 +4614,6 @@ static int dfp_discover_modes(int port, uint32_t *payload)
 	payload[0] = VDO(svid, 1, CMD_DISCOVER_MODES);
 
 	return 1;
-}
-
-static void dfp_consume_modes(int port, int cnt, uint32_t *payload)
-{
-	int idx = pe[port].am_policy.svid_idx;
-
-	pe[port].am_policy.svids[idx].mode_cnt = cnt - 1;
-
-	if (pe[port].am_policy.svids[idx].mode_cnt < 0) {
-		CPRINTF("ERR:NOMODE\n");
-	} else {
-		memcpy(
-		pe[port].am_policy.svids[pe[port].am_policy.svid_idx].mode_vdo,
-		&payload[1],
-		sizeof(uint32_t) * pe[port].am_policy.svids[idx].mode_cnt);
-	}
-
-	pe[port].am_policy.svid_idx++;
 }
 
 struct pd_policy *pd_get_am_policy(int port)

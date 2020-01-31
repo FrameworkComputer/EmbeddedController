@@ -681,20 +681,6 @@ static int dfp_discover_modes(int port, uint32_t *payload)
 	return 1;
 }
 
-static void dfp_consume_modes(int port, int cnt, uint32_t *payload)
-{
-	int idx = pe[port].svid_idx;
-	pe[port].svids[idx].mode_cnt = cnt - 1;
-	if (pe[port].svids[idx].mode_cnt < 0) {
-		CPRINTF("ERR:NOMODE\n");
-	} else {
-		memcpy(pe[port].svids[pe[port].svid_idx].mode_vdo, &payload[1],
-		       sizeof(uint32_t) * pe[port].svids[idx].mode_cnt);
-	}
-
-	pe[port].svid_idx++;
-}
-
 /*
  * This function returns
  * True - If the THunderbolt cable speed is TBT_SS_TBT_GEN3 or

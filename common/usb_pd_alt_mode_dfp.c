@@ -301,3 +301,20 @@ void dfp_consume_svids(int port, int cnt, uint32_t *payload)
 	if (i && ((i % 12) == 0))
 		CPRINTF("ERR:SVID+12\n");
 }
+
+void dfp_consume_modes(int port, int cnt, uint32_t *payload)
+{
+	struct pd_policy *pe = pd_get_am_policy(port);
+	int idx = pe->svid_idx;
+
+	pe->svids[idx].mode_cnt = cnt - 1;
+
+	if (pe->svids[idx].mode_cnt < 0) {
+		CPRINTF("ERR:NOMODE\n");
+	} else {
+		memcpy(pe->svids[pe->svid_idx].mode_vdo, &payload[1],
+		       sizeof(uint32_t) * pe->svids[idx].mode_cnt);
+	}
+
+	pe->svid_idx++;
+}
