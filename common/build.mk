@@ -144,7 +144,8 @@ common-$(CONFIG_USB_CONSOLE_STREAM)+=usb_console_stream.o
 common-$(CONFIG_USB_I2C)+=usb_i2c.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
-common-$(CONFIG_USB_POWER_DELIVERY)+=usb_common.o usb_pd_host_cmd.o
+common-$(CONFIG_USB_POWER_DELIVERY)+=usb_common.o usb_pd_host_cmd.o \
+	usb_pd_console_cmd.o
 ifeq ($(CONFIG_USB_SM_FRAMEWORK),)
 common-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_protocol.o usb_pd_policy.o
 endif
