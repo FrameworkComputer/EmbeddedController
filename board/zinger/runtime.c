@@ -277,12 +277,12 @@ void panic_reboot(void)
 	cpu_reset();
 }
 
-enum system_image_copy_t system_get_image_copy(void)
+enum ec_image system_get_image_copy(void)
 {
 	if (is_ro_mode())
-		return SYSTEM_IMAGE_RO;
+		return EC_IMAGE_RO;
 	else
-		return SYSTEM_IMAGE_RW;
+		return EC_IMAGE_RW;
 }
 
 /* --- stubs --- */

@@ -35,13 +35,13 @@ static int board_id_is_erased(void)
 
 static int inactive_image_is_guc_image(void)
 {
-	enum system_image_copy_t inactive_copy;
+	enum ec_image inactive_copy;
 	const struct SignedHeader *other;
 
-	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
-		inactive_copy = SYSTEM_IMAGE_RW_B;
+	if (system_get_image_copy() == EC_IMAGE_RW)
+		inactive_copy = EC_IMAGE_RW_B;
 	else
-		inactive_copy = SYSTEM_IMAGE_RW;
+		inactive_copy = EC_IMAGE_RW;
 	other = (struct SignedHeader *) get_program_memory_addr(
 		inactive_copy);
 	/*

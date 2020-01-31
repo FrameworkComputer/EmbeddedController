@@ -273,7 +273,7 @@ static uint32_t get_rw_size(void)
 				 * verifies only the used image size. */
 	return CONFIG_RW_SIZE;
 #else
-	return system_get_image_used(SYSTEM_IMAGE_RW);
+	return system_get_image_used(EC_IMAGE_RW);
 #endif
 }
 
@@ -397,7 +397,7 @@ static int command_hash(int argc, char **argv)
 			return vboot_hash_start(
 				CONFIG_EC_PROTECTED_STORAGE_OFF +
 				CONFIG_RO_STORAGE_OFF,
-				system_get_image_used(SYSTEM_IMAGE_RO),
+				system_get_image_used(EC_IMAGE_RO),
 				NULL, 0, VBOOT_HASH_DEFERRED);
 		}
 		return EC_ERROR_PARAM2;
@@ -471,7 +471,7 @@ static int host_start_hash(const struct ec_params_vboot_hash *p)
 
 	/* Handle special offset values */
 	if (offset == EC_VBOOT_HASH_OFFSET_RO)
-		size = system_get_image_used(SYSTEM_IMAGE_RO);
+		size = system_get_image_used(EC_IMAGE_RO);
 	else if ((offset == EC_VBOOT_HASH_OFFSET_ACTIVE) ||
 			(offset == EC_VBOOT_HASH_OFFSET_UPDATE))
 		size = get_rw_size();

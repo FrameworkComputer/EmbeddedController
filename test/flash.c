@@ -287,7 +287,7 @@ static int test_overwrite_current(void)
 	uint32_t offset, size;
 
 	/* Test that we cannot overwrite current image */
-	if (system_get_image_copy() == SYSTEM_IMAGE_RO) {
+	if (system_get_image_copy() == EC_IMAGE_RO) {
 		offset = CONFIG_RO_STORAGE_OFF;
 		size = CONFIG_RO_SIZE;
 	} else {

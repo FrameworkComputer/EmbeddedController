@@ -215,7 +215,7 @@ test_mockable __keep int main(void)
 	 *
 	 * Only the Read-Only firmware needs to do the signature check.
 	 */
-	if (system_get_image_copy() == SYSTEM_IMAGE_RO) {
+	if (system_get_image_copy() == EC_IMAGE_RO) {
 #if defined(CONFIG_RWSIG_DONT_CHECK_ON_PIN_RESET)
 		/*
 		 * If system was reset by reset-pin, do not jump and wait for

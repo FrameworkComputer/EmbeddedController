@@ -1946,7 +1946,7 @@ __override_proto bool board_is_tbt_usb4_port(int port);
  *				in our table, false otherwise
  */
 int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
-			 uint32_t ec_current_image);
+			 uint32_t ec_image);
 
 /**
  * Get Device ID & RW hash of device

@@ -121,19 +121,19 @@ DECLARE_HOOK(HOOK_INIT, ap_sku_id_restore_state, HOOK_PRIO_DEFAULT);
  * begin. In the case of external storage, the image may or may not currently
  * reside at the location returned.
  */
-uintptr_t get_program_memory_addr(enum system_image_copy_t copy)
+uintptr_t get_program_memory_addr(enum ec_image copy)
 {
 	switch (copy) {
-	case SYSTEM_IMAGE_RO:
+	case EC_IMAGE_RO:
 		return CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RO_MEM_OFF;
-	case SYSTEM_IMAGE_RW:
+	case EC_IMAGE_RW:
 		return CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF;
 #ifdef CHIP_HAS_RO_B
-	case SYSTEM_IMAGE_RO_B:
+	case EC_IMAGE_RO_B:
 		return CONFIG_PROGRAM_MEMORY_BASE + CHIP_RO_B_MEM_OFF;
 #endif
 #ifdef CONFIG_RW_B
-	case SYSTEM_IMAGE_RW_B:
+	case EC_IMAGE_RW_B:
 		return CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_B_MEM_OFF;
 #endif
 	default:
@@ -144,18 +144,18 @@ uintptr_t get_program_memory_addr(enum system_image_copy_t copy)
 /**
  * Return the size of the image copy, or 0 if error.
  */
-static uint32_t __attribute__((unused)) get_size(enum system_image_copy_t copy)
+static uint32_t __attribute__((unused)) get_size(enum ec_image copy)
 {
 	/* Ensure we return aligned sizes. */
 	BUILD_ASSERT(CONFIG_RO_SIZE % SPI_FLASH_MAX_WRITE_SIZE == 0);
 	BUILD_ASSERT(CONFIG_RW_SIZE % SPI_FLASH_MAX_WRITE_SIZE == 0);
 
 	switch (copy) {
-	case SYSTEM_IMAGE_RO:
-	case SYSTEM_IMAGE_RO_B:
+	case EC_IMAGE_RO:
+	case EC_IMAGE_RO_B:
 		return CONFIG_RO_SIZE;
-	case SYSTEM_IMAGE_RW:
-	case SYSTEM_IMAGE_RW_B:
+	case EC_IMAGE_RW:
+	case EC_IMAGE_RW_B:
 		return CONFIG_RW_SIZE;
 	default:
 		return 0;
@@ -329,7 +329,7 @@ void system_disable_jump(void)
 #ifdef CONFIG_MPU
 	if (system_is_locked()) {
 		int ret;
-		enum system_image_copy_t __attribute__((unused)) copy;
+		enum ec_image __attribute__((unused)) copy;
 
 		CPRINTS("MPU type: %08x", mpu_get_type());
 		/*
@@ -362,24 +362,24 @@ void system_disable_jump(void)
 		 * from code execution.
 		 */
 		switch (system_get_image_copy()) {
-		case SYSTEM_IMAGE_RO:
+		case EC_IMAGE_RO:
 			ret =  mpu_lock_rw_flash();
-			copy = SYSTEM_IMAGE_RW;
+			copy = EC_IMAGE_RW;
 			break;
-		case SYSTEM_IMAGE_RW:
+		case EC_IMAGE_RW:
 			ret =  mpu_lock_ro_flash();
-			copy = SYSTEM_IMAGE_RO;
+			copy = EC_IMAGE_RO;
 			break;
 		default:
-			copy = SYSTEM_IMAGE_UNKNOWN;
+			copy = EC_IMAGE_UNKNOWN;
 			ret = !EC_SUCCESS;
 		}
 		if (ret == EC_SUCCESS) {
 			CPRINTS("%s image locked",
-				system_image_copy_t_to_string(copy));
+				ec_image_to_string(copy));
 		} else {
 			CPRINTS("Failed to lock %s image (%d)",
-				system_image_copy_t_to_string(copy), ret);
+				ec_image_to_string(copy), ret);
 			return;
 		}
 #endif /* !CONFIG_EXTERNAL_STORAGE */
@@ -392,7 +392,7 @@ void system_disable_jump(void)
 #endif /* CONFIG_MPU */
 }
 
-test_mockable enum system_image_copy_t system_get_image_copy(void)
+test_mockable enum ec_image system_get_image_copy(void)
 {
 #ifdef CONFIG_EXTERNAL_STORAGE
 	/* Return which region is used in program memory */
@@ -403,25 +403,25 @@ test_mockable enum system_image_copy_t system_get_image_copy(void)
 
 	if (my_addr >= CONFIG_RO_MEM_OFF &&
 	    my_addr < (CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE))
-		return SYSTEM_IMAGE_RO;
+		return EC_IMAGE_RO;
 
 	if (my_addr >= CONFIG_RW_MEM_OFF &&
 	    my_addr < (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE))
-		return SYSTEM_IMAGE_RW;
+		return EC_IMAGE_RW;
 
 #ifdef CHIP_HAS_RO_B
 	if (my_addr >= CHIP_RO_B_MEM_OFF &&
 	    my_addr < (CHIP_RO_B_MEM_OFF + CONFIG_RO_SIZE))
-		return SYSTEM_IMAGE_RO_B;
+		return EC_IMAGE_RO_B;
 #endif
 
 #ifdef CONFIG_RW_B
 	if (my_addr >= CONFIG_RW_B_MEM_OFF &&
 	    my_addr < (CONFIG_RW_B_MEM_OFF + CONFIG_RW_SIZE))
-		return SYSTEM_IMAGE_RW_B;
+		return EC_IMAGE_RW_B;
 #endif
 
-	return SYSTEM_IMAGE_UNKNOWN;
+	return EC_IMAGE_UNKNOWN;
 #endif
 }
 
@@ -429,14 +429,14 @@ test_mockable int system_unsafe_to_overwrite(uint32_t offset, uint32_t size)
 {
 	uint32_t r_offset;
 	uint32_t r_size;
-	enum system_image_copy_t copy = system_get_image_copy();
+	enum ec_image copy = system_get_image_copy();
 
 	switch (copy) {
-	case SYSTEM_IMAGE_RO:
+	case EC_IMAGE_RO:
 		r_size = CONFIG_RO_SIZE;
 		break;
-	case SYSTEM_IMAGE_RW:
-	case SYSTEM_IMAGE_RW_B:
+	case EC_IMAGE_RW:
+	case EC_IMAGE_RW_B:
 		r_size = CONFIG_RW_SIZE;
 #ifdef CONFIG_RWSIG
 		/* Allow RW sig to be overwritten */
@@ -457,10 +457,10 @@ test_mockable int system_unsafe_to_overwrite(uint32_t offset, uint32_t size)
 
 const char *system_get_image_copy_string(void)
 {
-	return system_image_copy_t_to_string(system_get_image_copy());
+	return ec_image_to_string(system_get_image_copy());
 }
 
-const char *system_image_copy_t_to_string(enum system_image_copy_t copy)
+const char *ec_image_to_string(enum ec_image copy)
 {
 	static const char * const image_names[] = {
 		"unknown", "RO", "RW", "RO_B", "RW_B"
@@ -529,9 +529,9 @@ static void jump_to_image(uintptr_t init_addr)
 	resetvec();
 }
 
-static int is_rw_image(enum system_image_copy_t copy)
+static int is_rw_image(enum ec_image copy)
 {
-	return copy == SYSTEM_IMAGE_RW || copy == SYSTEM_IMAGE_RW_B;
+	return copy == EC_IMAGE_RW || copy == EC_IMAGE_RW_B;
 }
 
 int system_is_in_rw(void)
@@ -539,7 +539,7 @@ int system_is_in_rw(void)
 	return is_rw_image(system_get_image_copy());
 }
 
-test_mockable int system_run_image_copy(enum system_image_copy_t copy)
+test_mockable int system_run_image_copy(enum ec_image copy)
 {
 	uintptr_t base;
 	uintptr_t init_addr;
@@ -553,7 +553,7 @@ test_mockable int system_run_image_copy(enum system_image_copy_t copy)
 		 * this is the initial jump from RO to RW code. */
 
 		/* Must currently be running the RO image */
-		if (system_get_image_copy() != SYSTEM_IMAGE_RO)
+		if (system_get_image_copy() != EC_IMAGE_RO)
 			return EC_ERROR_ACCESS_DENIED;
 
 		/* Target image must be RW image */
@@ -581,7 +581,7 @@ test_mockable int system_run_image_copy(enum system_image_copy_t copy)
 		uintptr_t init = base + 4;
 
 		/* Skip any head room in the RO image */
-		if (copy == SYSTEM_IMAGE_RO)
+		if (copy == EC_IMAGE_RO)
 			init += CONFIG_RO_HEAD_ROOM;
 
 		init_addr = *(uintptr_t *)(init);
@@ -592,7 +592,7 @@ test_mockable int system_run_image_copy(enum system_image_copy_t copy)
 			return EC_ERROR_UNKNOWN;
 	}
 
-	CPRINTS("Jumping to image %s", system_image_copy_t_to_string(copy));
+	CPRINTS("Jumping to image %s", ec_image_to_string(copy));
 
 	jump_to_image(init_addr);
 
@@ -600,27 +600,27 @@ test_mockable int system_run_image_copy(enum system_image_copy_t copy)
 	return EC_ERROR_UNKNOWN;
 }
 
-enum system_image_copy_t system_get_active_copy(void)
+enum ec_image system_get_active_copy(void)
 {
 	uint8_t slot;
 	if (system_get_bbram(SYSTEM_BBRAM_IDX_TRY_SLOT, &slot))
-		slot = SYSTEM_IMAGE_RW_A;
+		slot = EC_IMAGE_RW_A;
 	/* This makes it return RW_A by default. For example, this happens when
 	 * BBRAM isn't initialized. */
-	return slot == SYSTEM_IMAGE_RW_B ? slot : SYSTEM_IMAGE_RW_A;
+	return slot == EC_IMAGE_RW_B ? slot : EC_IMAGE_RW_A;
 }
 
-enum system_image_copy_t system_get_update_copy(void)
+enum ec_image system_get_update_copy(void)
 {
 #ifdef CONFIG_VBOOT_EFS		/* Not needed for EFS2, which is single-slot. */
-	return system_get_active_copy() == SYSTEM_IMAGE_RW_A ?
-			SYSTEM_IMAGE_RW_B : SYSTEM_IMAGE_RW_A;
+	return system_get_active_copy() == EC_IMAGE_RW_A ?
+			EC_IMAGE_RW_B : EC_IMAGE_RW_A;
 #else
-	return SYSTEM_IMAGE_RW_A;
+	return EC_IMAGE_RW_A;
 #endif
 }
 
-int system_set_active_copy(enum system_image_copy_t copy)
+int system_set_active_copy(enum ec_image copy)
 {
 	return system_set_bbram(SYSTEM_BBRAM_IDX_TRY_SLOT, copy);
 }
@@ -629,10 +629,10 @@ int system_set_active_copy(enum system_image_copy_t copy)
  * This is defined in system.c instead of flash.c because it's called even
  * on the boards which don't include flash.o. (e.g. hadoken, stm32l476g-eval)
  */
-uint32_t flash_get_rw_offset(enum system_image_copy_t copy)
+uint32_t flash_get_rw_offset(enum ec_image copy)
 {
 #ifdef CONFIG_VBOOT_EFS
-	if (copy == SYSTEM_IMAGE_RW_B)
+	if (copy == EC_IMAGE_RW_B)
 		return CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_B_STORAGE_OFF;
 #endif
 	if (is_rw_image(copy))
@@ -641,17 +641,17 @@ uint32_t flash_get_rw_offset(enum system_image_copy_t copy)
 	return CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_RO_STORAGE_OFF;
 }
 
-const struct image_data *system_get_image_data(enum system_image_copy_t copy)
+const struct image_data *system_get_image_data(enum ec_image copy)
 {
 	static struct image_data data;
 
 	uintptr_t addr;
-	enum system_image_copy_t active_copy = system_get_image_copy();
+	enum ec_image active_copy = system_get_image_copy();
 
 	/* Handle version of current image */
-	if (copy == active_copy || copy == SYSTEM_IMAGE_UNKNOWN)
+	if (copy == active_copy || copy == EC_IMAGE_UNKNOWN)
 		return &current_image_data;
-	if (active_copy == SYSTEM_IMAGE_UNKNOWN)
+	if (active_copy == EC_IMAGE_UNKNOWN)
 		return NULL;
 
 	/*
@@ -688,7 +688,7 @@ const struct image_data *system_get_image_data(enum system_image_copy_t copy)
 }
 
 __attribute__((weak))	   /* Weird chips may need their own implementations */
-const char *system_get_version(enum system_image_copy_t copy)
+const char *system_get_version(enum ec_image copy)
 {
 	const struct image_data *data = system_get_image_data(copy);
 
@@ -696,7 +696,7 @@ const char *system_get_version(enum system_image_copy_t copy)
 }
 
 #ifdef CONFIG_ROLLBACK
-int32_t system_get_rollback_version(enum system_image_copy_t copy)
+int32_t system_get_rollback_version(enum ec_image copy)
 {
 	const struct image_data *data = system_get_image_data(copy);
 
@@ -704,7 +704,7 @@ int32_t system_get_rollback_version(enum system_image_copy_t copy)
 }
 #endif
 
-int system_get_image_used(enum system_image_copy_t copy)
+int system_get_image_used(enum ec_image copy)
 {
 	const struct image_data *data = system_get_image_data(copy);
 
@@ -843,7 +843,7 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 	case EC_REBOOT_CANCEL:
 		return EC_SUCCESS;
 	case EC_REBOOT_JUMP_RO:
-		return system_run_image_copy(SYSTEM_IMAGE_RO);
+		return system_run_image_copy(EC_IMAGE_RO);
 	case EC_REBOOT_JUMP_RW:
 		return system_run_image_copy(system_get_active_copy());
 	case EC_REBOOT_COLD:
@@ -1069,33 +1069,33 @@ static int command_version(int argc, char **argv)
 
 #ifdef CHIP_HAS_RO_B
 	{
-		enum system_image_copy_t active;
+		enum ec_image active;
 
 		active = system_get_ro_image_copy();
 		ccprintf("RO_A:  %c %s\n",
-			 (active == SYSTEM_IMAGE_RO ? '*' : ' '),
-			 system_get_version(SYSTEM_IMAGE_RO));
+			 (active == EC_IMAGE_RO ? '*' : ' '),
+			 system_get_version(EC_IMAGE_RO));
 		ccprintf("RO_B:  %c %s\n",
-			 (active == SYSTEM_IMAGE_RO_B ? '*' : ' '),
-			 system_get_version(SYSTEM_IMAGE_RO_B));
+			 (active == EC_IMAGE_RO_B ? '*' : ' '),
+			 system_get_version(EC_IMAGE_RO_B));
 	}
 #else
-	ccprintf("RO:      %s\n", system_get_version(SYSTEM_IMAGE_RO));
+	ccprintf("RO:      %s\n", system_get_version(EC_IMAGE_RO));
 #endif
 #ifdef CONFIG_RW_B
 	{
-		enum system_image_copy_t active;
+		enum ec_image active;
 
 		active = system_get_image_copy();
 		ccprintf("RW_A:  %c %s\n",
-			 (active == SYSTEM_IMAGE_RW ? '*' : ' '),
-			 system_get_version(SYSTEM_IMAGE_RW));
+			 (active == EC_IMAGE_RW ? '*' : ' '),
+			 system_get_version(EC_IMAGE_RW));
 		ccprintf("RW_B:  %c %s\n",
-			 (active == SYSTEM_IMAGE_RW_B ? '*' : ' '),
-			 system_get_version(SYSTEM_IMAGE_RW_B));
+			 (active == EC_IMAGE_RW_B ? '*' : ' '),
+			 system_get_version(EC_IMAGE_RW_B));
 	}
 #else
-	ccprintf("RW:      %s\n", system_get_version(SYSTEM_IMAGE_RW));
+	ccprintf("RW:      %s\n", system_get_version(EC_IMAGE_RW));
 #endif
 
 	system_print_extended_version_info();
@@ -1118,12 +1118,12 @@ static int command_sysjump(int argc, char **argv)
 
 	/* Handle named images */
 	if (!strcasecmp(argv[1], "RO"))
-		return system_run_image_copy(SYSTEM_IMAGE_RO);
+		return system_run_image_copy(EC_IMAGE_RO);
 	else if (!strcasecmp(argv[1], "RW") || !strcasecmp(argv[1], "A"))
-		return system_run_image_copy(SYSTEM_IMAGE_RW);
+		return system_run_image_copy(EC_IMAGE_RW);
 	else if (!strcasecmp(argv[1], "B")) {
 #ifdef CONFIG_RW_B
-		return system_run_image_copy(SYSTEM_IMAGE_RW_B);
+		return system_run_image_copy(EC_IMAGE_RW_B);
 #else
 		return EC_ERROR_PARAM1;
 #endif
@@ -1289,20 +1289,20 @@ static enum ec_status
 host_command_get_version(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_version *r = args->response;
-	enum system_image_copy_t active_slot = system_get_active_copy();
+	enum ec_image active_slot = system_get_active_copy();
 
-	strzcpy(r->version_string_ro, system_get_version(SYSTEM_IMAGE_RO),
+	strzcpy(r->version_string_ro, system_get_version(EC_IMAGE_RO),
 		sizeof(r->version_string_ro));
 	strzcpy(r->version_string_rw,
 		system_get_version(active_slot),
 		sizeof(r->version_string_rw));
 
 	switch (system_get_image_copy()) {
-	case SYSTEM_IMAGE_RO:
+	case EC_IMAGE_RO:
 		r->current_image = EC_IMAGE_RO;
 		break;
-	case SYSTEM_IMAGE_RW:
-	case SYSTEM_IMAGE_RW_B:
+	case EC_IMAGE_RW:
+	case EC_IMAGE_RW_B:
 		r->current_image = EC_IMAGE_RW;
 		break;
 	default:

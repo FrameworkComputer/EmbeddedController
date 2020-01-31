@@ -172,17 +172,17 @@ void fw_update_start(struct first_response_pdu *rpdu)
 
 	/* Determine the valid update section. */
 	switch (system_get_image_copy()) {
-	case SYSTEM_IMAGE_RO:
+	case EC_IMAGE_RO:
 		/* RO running, so update RW */
 		update_section.base_offset = CONFIG_RW_MEM_OFF;
 		update_section.top_offset = CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE;
-		version = system_get_version(SYSTEM_IMAGE_RW);
+		version = system_get_version(EC_IMAGE_RW);
 		break;
-	case SYSTEM_IMAGE_RW:
+	case EC_IMAGE_RW:
 		/* RW running, so update RO */
 		update_section.base_offset = CONFIG_RO_MEM_OFF;
 		update_section.top_offset = CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE;
-		version = system_get_version(SYSTEM_IMAGE_RO);
+		version = system_get_version(EC_IMAGE_RO);
 		break;
 	default:
 		CPRINTF("%s:%d\n", __func__, __LINE__);

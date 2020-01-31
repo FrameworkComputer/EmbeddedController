@@ -324,7 +324,7 @@ const char help_str[] =
 	"      Enable/disable WLAN/Bluetooth radio\n"
 	"";
 
-/* Note: depends on enum system_image_copy_t */
+/* Note: depends on enum ec_image */
 static const char * const image_names[] = {"unknown", "RO", "RW"};
 
 /* Note: depends on enum ec_led_colors */

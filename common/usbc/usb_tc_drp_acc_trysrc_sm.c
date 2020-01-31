@@ -253,7 +253,7 @@ static struct type_c {
 	/* Attached ChromeOS device id, RW hash, and current RO / RW image */
 	uint16_t dev_id;
 	uint32_t dev_rw_hash[PD_RW_HASH_SIZE/4];
-	enum ec_current_image current_image;
+	enum ec_image current_image;
 } tc[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Port dual-role state */
@@ -573,8 +573,8 @@ void tc_print_dev_info(int port)
 	for (i = 0; i < PD_RW_HASH_SIZE / 4; i++)
 		ccprintf("%08x ", tc[port].dev_rw_hash[i]);
 
-	ccprintf("\nImage %s\n", system_image_copy_t_to_string(
-		(enum system_image_copy_t)tc[port].current_image));
+	ccprintf("\nImage %s\n", ec_image_to_string(
+		tc[port].current_image));
 }
 
 int tc_is_attached_src(int port)

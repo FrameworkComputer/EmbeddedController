@@ -454,7 +454,7 @@ void htimer_interrupt(void)
 }
 DECLARE_IRQ(MCHP_IRQ_HTIMER0, htimer_interrupt, 1);
 
-enum system_image_copy_t system_get_shrspi_image_copy(void)
+enum ec_image system_get_shrspi_image_copy(void)
 {
 	return MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX);
 }
@@ -467,9 +467,9 @@ uint32_t system_get_lfw_address(void)
 	return *(lfw_vector + 1);
 }
 
-void system_set_image_copy(enum system_image_copy_t copy)
+void system_set_image_copy(enum ec_image copy)
 {
-	MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX) = (copy == SYSTEM_IMAGE_RW) ?
-				SYSTEM_IMAGE_RW : SYSTEM_IMAGE_RO;
+	MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX) = (copy == EC_IMAGE_RW) ?
+				EC_IMAGE_RW : EC_IMAGE_RO;
 }
 

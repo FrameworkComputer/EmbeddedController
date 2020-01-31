@@ -385,7 +385,7 @@ enum power_state power_handle_state(enum power_state state)
 		}
 
 		/* If EC is in RW, or has already booted once, reboot to RO. */
-		if (system_get_image_copy() != SYSTEM_IMAGE_RO || booted) {
+		if (system_get_image_copy() != EC_IMAGE_RO || booted) {
 			/*
 			 * TODO(b:109850749): How quickly does the EC come back
 			 * up? Would IN_PGOOD_PMIC be ready by the time we are

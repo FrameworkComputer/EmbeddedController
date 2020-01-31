@@ -195,7 +195,7 @@ static int is_connected(int port)
  */
 static int charge_manager_spoof_dualrole_capability(void)
 {
-	return (system_get_image_copy() == SYSTEM_IMAGE_RO &&
+	return (system_get_image_copy() == EC_IMAGE_RO &&
 		system_is_locked()) || !left_safe_mode;
 
 }

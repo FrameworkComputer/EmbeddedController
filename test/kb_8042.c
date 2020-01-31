@@ -232,7 +232,7 @@ static int test_sysjump(void)
 	set_scancode(2);
 	enable_keystroke(1);
 
-	system_run_image_copy(SYSTEM_IMAGE_RW);
+	system_run_image_copy(EC_IMAGE_RW);
 
 	/* Shouldn't reach here */
 	return EC_ERROR_UNKNOWN;
@@ -260,7 +260,7 @@ void run_test(void)
 	test_reset();
 	wait_for_task_started();
 
-	if (system_get_image_copy() == SYSTEM_IMAGE_RO) {
+	if (system_get_image_copy() == EC_IMAGE_RO) {
 		RUN_TEST(test_single_key_press);
 		RUN_TEST(test_disable_keystroke);
 		RUN_TEST(test_typematic);

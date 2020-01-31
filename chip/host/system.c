@@ -24,7 +24,7 @@ uint8_t __shared_mem_buf[SHARED_MEM_SIZE + RAM_DATA_SIZE];
 
 static char *__ram_data = __shared_mem_buf + SHARED_MEM_SIZE;
 
-static enum system_image_copy_t __running_copy;
+static enum ec_image __running_copy;
 
 static void ramdata_set_persistent(void)
 {
@@ -77,7 +77,7 @@ static uint32_t get_image_copy(void)
 	uint32_t ret;
 
 	if (f == NULL)
-		return SYSTEM_IMAGE_UNKNOWN;
+		return EC_IMAGE_UNKNOWN;
 	fread(&ret, sizeof(ret), 1, f);
 	release_persistent_storage(f);
 	remove_persistent_storage("image_copy");
@@ -177,7 +177,7 @@ test_mockable int system_is_locked(void)
 
 #ifdef TEST_FUZZ
 /* When fuzzing, do not allow sysjumps. */
-int system_run_image_copy(enum system_image_copy_t copy)
+int system_run_image_copy(enum ec_image copy)
 {
 	ccprints("Emulator would sysjump here. Fuzzing: doing nothing.");
 	return EC_ERROR_UNKNOWN;
@@ -209,7 +209,7 @@ int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-enum system_image_copy_t system_get_image_copy(void)
+enum ec_image system_get_image_copy(void)
 {
 	return __running_copy;
 }
@@ -251,13 +251,13 @@ static void __jump_resetvec(void)
 
 static void __ro_jump_resetvec(void)
 {
-	set_image_copy(SYSTEM_IMAGE_RO);
+	set_image_copy(EC_IMAGE_RO);
 	__jump_resetvec();
 }
 
 static void __rw_jump_resetvec(void)
 {
-	set_image_copy(SYSTEM_IMAGE_RW);
+	set_image_copy(EC_IMAGE_RW);
 	__jump_resetvec();
 }
 
@@ -270,8 +270,8 @@ void system_pre_init(void)
 
 	ramdata_get_persistent();
 	__running_copy = get_image_copy();
-	if (__running_copy == SYSTEM_IMAGE_UNKNOWN) {
-		__running_copy = SYSTEM_IMAGE_RO;
+	if (__running_copy == EC_IMAGE_UNKNOWN) {
+		__running_copy = EC_IMAGE_RO;
 		system_set_reset_flags(load_reset_flags());
 	}
 

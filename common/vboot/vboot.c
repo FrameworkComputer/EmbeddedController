@@ -33,7 +33,7 @@ static int has_matrix_keyboard(void)
 	return 0;
 }
 
-static int verify_slot(enum system_image_copy_t slot)
+static int verify_slot(enum ec_image slot)
 {
 	const struct vb21_packed_key *vb21_key;
 	const struct vb21_signature *vb21_sig;
@@ -43,7 +43,7 @@ static int verify_slot(enum system_image_copy_t slot)
 	int len;
 	int rv;
 
-	CPRINTS("Verifying %s", system_image_copy_t_to_string(slot));
+	CPRINTS("Verifying %s", ec_image_to_string(slot));
 
 	vb21_key = (const struct vb21_packed_key *)(
 			CONFIG_MAPPED_STORAGE_BASE +
@@ -57,7 +57,7 @@ static int verify_slot(enum system_image_copy_t slot)
 	key = (const struct rsa_public_key *)
 		((const uint8_t *)vb21_key + vb21_key->key_offset);
 
-	if (slot == SYSTEM_IMAGE_RW_A) {
+	if (slot == EC_IMAGE_RW_A) {
 		data = (const uint8_t *)(CONFIG_MAPPED_STORAGE_BASE +
 				CONFIG_EC_WRITABLE_STORAGE_OFF +
 				CONFIG_RW_A_STORAGE_OFF);
@@ -95,7 +95,7 @@ static int verify_slot(enum system_image_copy_t slot)
 		return EC_ERROR_INVAL;
 	}
 
-	CPRINTS("Verified %s", system_image_copy_t_to_string(slot));
+	CPRINTS("Verified %s", ec_image_to_string(slot));
 
 	return EC_SUCCESS;
 }
@@ -103,7 +103,7 @@ static int verify_slot(enum system_image_copy_t slot)
 static enum ec_status hc_verify_slot(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_efs_verify *p = args->params;
-	enum system_image_copy_t slot;
+	enum ec_image slot;
 
 	switch (p->region) {
 	case EC_FLASH_REGION_ACTIVE:
@@ -121,7 +121,7 @@ DECLARE_HOST_COMMAND(EC_CMD_EFS_VERIFY, hc_verify_slot, EC_VER_MASK(0));
 
 static int verify_and_jump(void)
 {
-	enum system_image_copy_t slot;
+	enum ec_image slot;
 	int rv;
 
 	/* 1. Decide which slot to try */
@@ -144,7 +144,7 @@ static int verify_and_jump(void)
 		 * will catch it and request recovery after a few attempts. */
 		if (system_set_active_copy(slot))
 			CPRINTS("Failed to activate %s",
-				system_image_copy_t_to_string(slot));
+				ec_image_to_string(slot));
 	}
 
 	/* 3. Jump (and reboot) */

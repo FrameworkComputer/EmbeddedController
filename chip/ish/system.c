@@ -161,7 +161,7 @@ void htimer_interrupt(void)
 	/* Time to wake up */
 }
 
-enum system_image_copy_t system_get_shrspi_image_copy(void)
+enum ec_image system_get_shrspi_image_copy(void)
 {
 	return 0;
 }
@@ -171,7 +171,7 @@ uint32_t system_get_lfw_address(void)
 	return 0;
 }
 
-void system_set_image_copy(enum system_image_copy_t copy)
+void system_set_image_copy(enum ec_image copy)
 {
 }
 

@@ -287,7 +287,7 @@ int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
 	return 0;
 }
 
-enum system_image_copy_t system_get_ro_image_copy(void)
+enum ec_image system_get_ro_image_copy(void)
 {
 	/*
 	 * The bootrom protects the selected bootloader with REGION0,
@@ -296,12 +296,12 @@ enum system_image_copy_t system_get_ro_image_copy(void)
 	 */
 	switch (GREG32(GLOBALSEC, FLASH_REGION0_BASE_ADDR)) {
 	case CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RO_MEM_OFF:
-		return SYSTEM_IMAGE_RO;
+		return EC_IMAGE_RO;
 	case CONFIG_PROGRAM_MEMORY_BASE + CHIP_RO_B_MEM_OFF:
-		return SYSTEM_IMAGE_RO_B;
+		return EC_IMAGE_RO_B;
 	}
 
-	return SYSTEM_IMAGE_UNKNOWN;
+	return EC_IMAGE_UNKNOWN;
 }
 
 /*
@@ -324,19 +324,19 @@ struct version_struct_deprecated {
 #define MAX_RO_VER_LEN 48
 static char vers_str[MAX_RO_VER_LEN];
 
-const char *system_get_version(enum system_image_copy_t copy)
+const char *system_get_version(enum ec_image copy)
 {
 	const struct image_data *data;
 	const struct version_struct_deprecated *data_deprecated;
 	const char *version;
 
 	const struct SignedHeader *h;
-	enum system_image_copy_t this_copy;
+	enum ec_image this_copy;
 	uintptr_t vaddr, delta;
 
 	switch (copy) {
-	case SYSTEM_IMAGE_RO:
-	case SYSTEM_IMAGE_RO_B:
+	case EC_IMAGE_RO:
+	case EC_IMAGE_RO_B:
 		/* The RO header is the first thing in each flash half */
 		vaddr = get_program_memory_addr(copy);
 		if (vaddr == INVALID_ADDR)
@@ -347,8 +347,8 @@ const char *system_get_version(enum system_image_copy_t copy)
 			 h->epoch_, h->major_, h->minor_, h->img_chk_);
 		return vers_str;
 
-	case SYSTEM_IMAGE_RW:
-	case SYSTEM_IMAGE_RW_B:
+	case EC_IMAGE_RW:
+	case EC_IMAGE_RW_B:
 		/*
 		 * This function isn't part of any RO image, so we must be in a
 		 * RW image. If the current image is the one we're asked for,
@@ -499,16 +499,16 @@ static int current_image_is_newer(struct SignedHeader **newer_image)
 {
 	struct SignedHeader *me, *other;
 
-	if (system_get_image_copy() == SYSTEM_IMAGE_RW) {
+	if (system_get_image_copy() == EC_IMAGE_RW) {
 		me = (struct SignedHeader *)
-			get_program_memory_addr(SYSTEM_IMAGE_RW);
+			get_program_memory_addr(EC_IMAGE_RW);
 		other = (struct SignedHeader *)
-			get_program_memory_addr(SYSTEM_IMAGE_RW_B);
+			get_program_memory_addr(EC_IMAGE_RW_B);
 	} else {
 		me = (struct SignedHeader *)
-			get_program_memory_addr(SYSTEM_IMAGE_RW_B);
+			get_program_memory_addr(EC_IMAGE_RW_B);
 		other = (struct SignedHeader *)
-			get_program_memory_addr(SYSTEM_IMAGE_RW);
+			get_program_memory_addr(EC_IMAGE_RW);
 	}
 
 	if (a_is_newer_than_b(me, other))
@@ -710,11 +710,11 @@ void system_update_rollback_mask_with_active_img(void)
 
 void system_update_rollback_mask_with_both_imgs(void)
 {
-	update_rollback_mask(get_program_memory_addr(SYSTEM_IMAGE_RO),
-			     get_program_memory_addr(SYSTEM_IMAGE_RO_B),
+	update_rollback_mask(get_program_memory_addr(EC_IMAGE_RO),
+			     get_program_memory_addr(EC_IMAGE_RO_B),
 			     INFO_RO_MAP_OFFSET);
-	update_rollback_mask(get_program_memory_addr(SYSTEM_IMAGE_RW),
-			     get_program_memory_addr(SYSTEM_IMAGE_RW_B),
+	update_rollback_mask(get_program_memory_addr(EC_IMAGE_RW),
+			     get_program_memory_addr(EC_IMAGE_RW_B),
 			     INFO_RW_MAP_OFFSET);
 }
 
@@ -727,9 +727,9 @@ void system_get_rollback_bits(char *value, size_t value_size)
 		uint32_t image_types[2];
 	} headers[] = {
 		{ .info_map_offset = INFO_RO_MAP_OFFSET,
-		  .image_types = { SYSTEM_IMAGE_RO, SYSTEM_IMAGE_RO_B } },
+		  .image_types = { EC_IMAGE_RO, EC_IMAGE_RO_B } },
 		{ .info_map_offset = INFO_RW_MAP_OFFSET,
-		  .image_types = { SYSTEM_IMAGE_RW, SYSTEM_IMAGE_RW_B } }
+		  .image_types = { EC_IMAGE_RW, EC_IMAGE_RW_B } }
 	};
 
 	for (i = 0; i < ARRAY_SIZE(headers); i++) {
@@ -774,8 +774,8 @@ void system_print_extended_version_info(void)
 {
 	int i;
 	struct board_id bid;
-	enum system_image_copy_t rw_images[] = {
-		SYSTEM_IMAGE_RW, SYSTEM_IMAGE_RW_B
+	enum ec_image rw_images[] = {
+		EC_IMAGE_RW, EC_IMAGE_RW_B
 	};
 
 	if (read_board_id(&bid) != EC_SUCCESS) {

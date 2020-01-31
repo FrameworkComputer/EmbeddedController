@@ -182,7 +182,7 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		} else if (cnt == 6) {
 			/* really old devices don't have last byte */
 			pd_dev_store_rw_hash(port, dev_id, payload + 1,
-					     SYSTEM_IMAGE_UNKNOWN);
+					     EC_IMAGE_UNKNOWN);
 		}
 		break;
 	case VDO_CMD_CURRENT:

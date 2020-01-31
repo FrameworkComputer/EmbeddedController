@@ -12,22 +12,12 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "timer.h"
 
 /* Per chip implementation to save/read raw EC_RESET_FLAG_ flags. */
 void chip_save_reset_flags(uint32_t flags);
 uint32_t chip_read_reset_flags(void);
-
-/* System images */
-enum system_image_copy_t {
-	SYSTEM_IMAGE_UNKNOWN = 0,
-	SYSTEM_IMAGE_RO,
-	SYSTEM_IMAGE_RW,
-	SYSTEM_IMAGE_RW_A = SYSTEM_IMAGE_RW,
-	/* Some systems may have these too */
-	SYSTEM_IMAGE_RO_B,
-	SYSTEM_IMAGE_RW_B,
-};
 
 /**
  * Checks if running image is RW or not
@@ -110,13 +100,13 @@ void system_disable_jump(void);
 /**
  * Return the image copy which is currently running.
  */
-enum system_image_copy_t system_get_image_copy(void);
+enum ec_image system_get_image_copy(void);
 
 /**
  * Return the active RO image copy so that if we're in RW, we can know how we
  * got there. Only needed when there are multiple RO images.
  */
-enum system_image_copy_t system_get_ro_image_copy(void);
+enum ec_image system_get_ro_image_copy(void);
 
 /**
  * Return the program memory address where the image copy begins or should
@@ -124,7 +114,7 @@ enum system_image_copy_t system_get_ro_image_copy(void);
  * reside at the location returned. Returns INVALID_ADDR if the image copy is
  * not supported.
  */
-uintptr_t get_program_memory_addr(enum system_image_copy_t copy);
+uintptr_t get_program_memory_addr(enum ec_image copy);
 #define INVALID_ADDR ((uintptr_t)0xffffffff)
 
 /**
@@ -179,7 +169,7 @@ const char *system_get_image_copy_string(void);
 /**
  * Return a text description of the passed image copy parameter.
  */
-const char *system_image_copy_t_to_string(enum system_image_copy_t copy);
+const char *ec_image_to_string(enum ec_image copy);
 
 /**
  * Return the number of bytes used in the specified image.
@@ -190,12 +180,12 @@ const char *system_image_copy_t_to_string(enum system_image_copy_t copy);
  * @return actual image size in bytes, 0 if the image contains no content or
  * error.
  */
-int system_get_image_used(enum system_image_copy_t copy);
+int system_get_image_used(enum ec_image copy);
 
 /**
  * Jump to the specified image copy.
  */
-int system_run_image_copy(enum system_image_copy_t copy);
+int system_run_image_copy(enum ec_image copy);
 
 /**
  * Get the rollback version for an image
@@ -204,7 +194,7 @@ int system_run_image_copy(enum system_image_copy_t copy);
  *			to get the version for the currently running image.
  * @return The rollback version, negative value on error.
  */
-int32_t system_get_rollback_version(enum system_image_copy_t copy);
+int32_t system_get_rollback_version(enum ec_image copy);
 
 /**
  * Get the image data of an image
@@ -212,7 +202,7 @@ int32_t system_get_rollback_version(enum system_image_copy_t copy);
  * @param copy	Image copy to get the version of.
  * @return	Image data
  */
-const struct image_data *system_get_image_data(enum system_image_copy_t copy);
+const struct image_data *system_get_image_data(enum ec_image copy);
 
 /**
  * Get the version string for an image
@@ -222,7 +212,7 @@ const struct image_data *system_get_image_data(enum system_image_copy_t copy);
  * @return The version string for the image copy, or an empty string if
  * error.
  */
-const char *system_get_version(enum system_image_copy_t copy);
+const char *system_get_version(enum ec_image copy);
 
 /**
  * Get the SKU ID for a device
@@ -576,7 +566,7 @@ uint32_t system_get_lfw_address(void);
  *
  * @param copy		Region - (RO/RW) to use in code ram
  */
-void system_set_image_copy(enum system_image_copy_t copy);
+void system_set_image_copy(enum ec_image copy);
 
 /**
  * Return which region is used in Code RAM
@@ -584,7 +574,7 @@ void system_set_image_copy(enum system_image_copy_t copy);
  * Note: This feature is used for code ram arch
  *
  */
-enum system_image_copy_t system_get_shrspi_image_copy(void);
+enum ec_image system_get_shrspi_image_copy(void);
 
 /**
  * Determine reset vector will be jumped to the assigned address.
@@ -623,14 +613,14 @@ int system_can_boot_ap(void);
  *
  * @return Active copy index
  */
-enum system_image_copy_t system_get_active_copy(void);
+enum ec_image system_get_active_copy(void);
 
 /**
  * Get updatable (non-active) image copy
  *
  * @return Updatable copy index
  */
-enum system_image_copy_t system_get_update_copy(void);
+enum ec_image system_get_update_copy(void);
 
 /**
  * Set active image copy
@@ -638,7 +628,7 @@ enum system_image_copy_t system_get_update_copy(void);
  * @param copy Copy id to be activated.
  * @return     Non-zero if error.
  */
-int system_set_active_copy(enum system_image_copy_t copy);
+int system_set_active_copy(enum ec_image copy);
 
 /**
  * Get flash offset of a RW copy
@@ -646,6 +636,6 @@ int system_set_active_copy(enum system_image_copy_t copy);
  * @param copy Copy index to get the flash offset of.
  * @return     Flash offset of the slot storing <copy>
  */
-uint32_t flash_get_rw_offset(enum system_image_copy_t copy);
+uint32_t flash_get_rw_offset(enum ec_image copy);
 
 #endif  /* __CROS_EC_SYSTEM_H */

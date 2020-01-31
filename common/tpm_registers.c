@@ -166,7 +166,7 @@ static uint8_t tpm_fw_ver[80]  __attribute__((section(".bss.Tpm2_common")));
  */
 static void set_version_string(void)
 {
-	enum system_image_copy_t active_ro, active_rw;
+	enum ec_image active_ro, active_rw;
 	size_t offset;
 
 	active_ro = system_get_ro_image_copy();
@@ -175,7 +175,7 @@ static void set_version_string(void)
 	snprintf(tpm_fw_ver, sizeof(tpm_fw_ver), "%s:%d RO_%c:%s",
 		 system_get_chip_revision(),
 		 system_get_board_version(),
-		 (active_ro == SYSTEM_IMAGE_RO ? 'A' : 'B'),
+		 (active_ro == EC_IMAGE_RO ? 'A' : 'B'),
 		 system_get_version(active_ro));
 	offset = strlen(tpm_fw_ver);
 	if (offset == sizeof(tpm_fw_ver) - 1)
@@ -183,7 +183,7 @@ static void set_version_string(void)
 
 	snprintf(tpm_fw_ver + offset,
 		 sizeof(tpm_fw_ver) - offset, " RW_%c:%s",
-		 (active_rw == SYSTEM_IMAGE_RW ? 'A' : 'B'),
+		 (active_rw == EC_IMAGE_RW ? 'A' : 'B'),
 		 system_get_version(active_rw));
 }
 

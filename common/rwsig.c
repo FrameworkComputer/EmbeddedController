@@ -67,7 +67,7 @@ void rwsig_jump_now(void)
 	/* When system is locked, only boot to RW if all flash is protected. */
 	if (!system_is_locked() ||
 	    flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
-		system_run_image_copy(SYSTEM_IMAGE_RW);
+		system_run_image_copy(EC_IMAGE_RW);
 }
 
 /*
@@ -120,7 +120,7 @@ int rwsig_check_signature(void)
 	CPRINTS("Verifying RW image...");
 
 #ifdef CONFIG_ROLLBACK
-	rw_rollback_version = system_get_rollback_version(SYSTEM_IMAGE_RW);
+	rw_rollback_version = system_get_rollback_version(EC_IMAGE_RW);
 	min_rollback_version = rollback_get_minimum_version();
 
 	if (rw_rollback_version < 0 || min_rollback_version < 0 ||
@@ -266,7 +266,7 @@ void rwsig_task(void *u)
 {
 	uint32_t evt;
 
-	if (system_get_image_copy() != SYSTEM_IMAGE_RO)
+	if (system_get_image_copy() != EC_IMAGE_RO)
 		goto exit;
 
 	rwsig_status = RWSIG_IN_PROGRESS;

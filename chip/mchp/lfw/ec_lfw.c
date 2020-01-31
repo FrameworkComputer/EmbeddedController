@@ -327,10 +327,10 @@ void system_init(void)
 
 	if (rst_sts || wdt_sts)
 		MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX)
-					= SYSTEM_IMAGE_UNKNOWN;
+					= EC_IMAGE_UNKNOWN;
 }
 
-enum system_image_copy_t system_get_image_copy(void)
+enum ec_image system_get_image_copy(void)
 {
 	return MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX);
 }
@@ -343,8 +343,8 @@ enum system_image_copy_t system_get_image_copy(void)
  * LFW checks reset type:
  *   VTR POR, chip reset, WDT reset then set VBAT Load type to Unknown.
  * LFW reads VBAT Load type:
- *   SYSTEM_IMAGE_RO then read EC_RO from SPI flash and jump into it.
- *   SYSTEM_IMAGE_RO then read EC_RW from SPI flash and jump into it.
+ *   EC_IMAGE_RO then read EC_RO from SPI flash and jump into it.
+ *   EC_IMAGE_RO then read EC_RW from SPI flash and jump into it.
  *   Other then jump into EC image loaded by Boot-ROM.
  */
 void lfw_main(void)
@@ -388,7 +388,7 @@ void lfw_main(void)
 	uart_puts("\n");
 
 	switch (system_get_image_copy()) {
-	case SYSTEM_IMAGE_RW:
+	case EC_IMAGE_RW:
 		trace0(0, LFW, 0, "LFW EC_RW Load");
 		uart_puts("lfw-RW load\n");
 
@@ -396,7 +396,7 @@ void lfw_main(void)
 		spi_image_load(CONFIG_EC_WRITABLE_STORAGE_OFF +
 			       CONFIG_RW_STORAGE_OFF);
 		break;
-	case SYSTEM_IMAGE_RO:
+	case EC_IMAGE_RO:
 		trace0(0, LFW, 0, "LFW EC_RO Load");
 		uart_puts("lfw-RO load\n");
 
@@ -408,8 +408,7 @@ void lfw_main(void)
 		trace0(0, LFW, 0, "LFW default: use EC_RO loaded by BootROM");
 		uart_puts("lfw-default case\n");
 
-		MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX) =
-							SYSTEM_IMAGE_RO;
+		MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX) = EC_IMAGE_RO;
 
 		init_addr = CONFIG_RO_MEM_OFF + CONFIG_PROGRAM_MEMORY_BASE;
 	}

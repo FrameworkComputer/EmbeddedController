@@ -1129,7 +1129,7 @@ void pd_get_info(uint32_t *info_data)
 	info_data[5] = VDO_INFO(CONFIG_USB_PD_HW_DEV_ID_BOARD_MAJOR,
 				CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR,
 				ver_get_num_commits(system_get_image_copy()),
-				(system_get_image_copy() != SYSTEM_IMAGE_RO));
+				(system_get_image_copy() != EC_IMAGE_RO));
 #else
 	info_data[5] = 0;
 #endif
@@ -1157,7 +1157,7 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 		break;
 	case VDO_CMD_FLASH_ERASE:
 		/* do not kill the code under our feet */
-		if (system_get_image_copy() != SYSTEM_IMAGE_RO)
+		if (system_get_image_copy() != EC_IMAGE_RO)
 			break;
 		pd_log_event(PD_EVENT_ACC_RW_ERASE, 0, 0, NULL);
 		flash_offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
@@ -1168,7 +1168,7 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 		break;
 	case VDO_CMD_FLASH_WRITE:
 		/* do not kill the code under our feet */
-		if ((system_get_image_copy() != SYSTEM_IMAGE_RO) ||
+		if ((system_get_image_copy() != EC_IMAGE_RO) ||
 		    (flash_offset < CONFIG_EC_WRITABLE_STORAGE_OFF +
 				    CONFIG_RW_STORAGE_OFF))
 			break;

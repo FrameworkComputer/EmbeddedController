@@ -245,7 +245,7 @@ void ipi_inform_ap(void)
 #endif
 
 	scp_run.signaled = 1;
-	strncpy(scp_run.fw_ver, system_get_version(SYSTEM_IMAGE_RW),
+	strncpy(scp_run.fw_ver, system_get_version(EC_IMAGE_RW),
 		SCP_FW_VERSION_LEN);
 	scp_run.dec_capability = VCODEC_CAPABILITY_4K_DISABLED;
 	scp_run.enc_capability = 0;

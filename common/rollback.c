@@ -469,7 +469,7 @@ static int command_rollback_info(int argc, char **argv)
 	if (min_region < 0)
 		goto failed;
 
-	rw_rollback_version = system_get_rollback_version(SYSTEM_IMAGE_RW);
+	rw_rollback_version = system_get_rollback_version(EC_IMAGE_RW);
 
 	ccprintf("rollback minimum version: %d\n", data.rollback_min_version);
 	ccprintf("RW rollback version: %d\n", rw_rollback_version);
@@ -518,7 +518,7 @@ host_command_rollback_info(struct host_cmd_handler_args *args)
 
 	r->id = data.id;
 	r->rollback_min_version = data.rollback_min_version;
-	r->rw_rollback_version = system_get_rollback_version(SYSTEM_IMAGE_RW);
+	r->rw_rollback_version = system_get_rollback_version(EC_IMAGE_RW);
 
 	args->response_size = sizeof(*r);
 	ret = EC_RES_SUCCESS;

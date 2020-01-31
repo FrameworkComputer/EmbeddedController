@@ -184,12 +184,12 @@ int board_tpm_mode_change_allowed(void)
 /* Get header address of the backup RW copy. */
 const struct SignedHeader *get_other_rw_addr(void)
 {
-	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
+	if (system_get_image_copy() == EC_IMAGE_RW)
 		return (const struct SignedHeader *)
-			get_program_memory_addr(SYSTEM_IMAGE_RW_B);
+			get_program_memory_addr(EC_IMAGE_RW_B);
 
 	return (const struct SignedHeader *)
-		get_program_memory_addr(SYSTEM_IMAGE_RW);
+		get_program_memory_addr(EC_IMAGE_RW);
 }
 
 /* Return true if the other RW is not ready to run. */
@@ -857,7 +857,7 @@ int flash_regions_to_enable(struct g_flash_region *regions,
 		return 0;
 
 	/* Enable access to the other RW image... */
-	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
+	if (system_get_image_copy() == EC_IMAGE_RW)
 		/* Running RW_A, enable RW_B */
 		regions[0].reg_base = CONFIG_MAPPED_STORAGE_BASE +
 			CONFIG_RW_B_MEM_OFF;
@@ -1469,7 +1469,7 @@ void i2cs_set_pinmux(void)
 
 static int command_sysinfo(int argc, char **argv)
 {
-	enum system_image_copy_t active;
+	enum ec_image active;
 	uintptr_t vaddr;
 	const struct SignedHeader *h;
 	int reset_count = GREG32(PMU, LONG_LIFE_SCRATCH0);
@@ -1533,7 +1533,7 @@ static enum vendor_cmd_rc vc_sysinfo(enum vendor_cmd_cc code,
 				     size_t input_size,
 				     size_t *response_size)
 {
-	enum system_image_copy_t active;
+	enum ec_image active;
 	uintptr_t vaddr;
 	const struct SignedHeader *h;
 	struct sysinfo_s *sysinfo = buf;

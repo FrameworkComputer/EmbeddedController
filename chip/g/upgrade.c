@@ -75,13 +75,13 @@ static uint8_t headers_restored(void)
 	uint8_t total_restored;
 
 	/* Examine the RW first. */
-	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
+	if (system_get_image_copy() == EC_IMAGE_RW)
 		total_restored = header_restored(CONFIG_RW_B_MEM_OFF);
 	else
 		total_restored = header_restored(CONFIG_RW_MEM_OFF);
 
 	/* Now the RO */
-	if (system_get_ro_image_copy() == SYSTEM_IMAGE_RO)
+	if (system_get_ro_image_copy() == EC_IMAGE_RO)
 		total_restored += header_restored(CHIP_RO_B_MEM_OFF);
 	else
 		total_restored += header_restored(CONFIG_RO_MEM_OFF);

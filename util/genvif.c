@@ -42,9 +42,9 @@ char *yes_no(int val)
 	return val ? "YES" : "NO";
 }
 
-enum system_image_copy_t system_get_image_copy(void)
+enum ec_image system_get_image_copy(void)
 {
-	return SYSTEM_IMAGE_RW;
+	return EC_IMAGE_RW;
 }
 
 static void write_title(FILE *vif)

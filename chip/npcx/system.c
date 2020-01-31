@@ -1059,19 +1059,19 @@ void system_jump_to_booter(void)
 	 * Both of them need 16-bytes alignment since GDMA burst mode.
 	 */
 	switch (system_get_shrspi_image_copy()) {
-	case SYSTEM_IMAGE_RW:
+	case EC_IMAGE_RW:
 		flash_offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
 				CONFIG_RW_STORAGE_OFF;
 		flash_used = CONFIG_RW_SIZE;
 		break;
 #ifdef CONFIG_RW_B
-	case SYSTEM_IMAGE_RW_B:
+	case EC_IMAGE_RW_B:
 		flash_offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
 				CONFIG_RW_B_STORAGE_OFF;
 		flash_used = CONFIG_RW_SIZE;
 		break;
 #endif
-	case SYSTEM_IMAGE_RO:
+	case EC_IMAGE_RO:
 	default: /* Jump to RO by default */
 		flash_offset = CONFIG_EC_PROTECTED_STORAGE_OFF +
 				CONFIG_RO_STORAGE_OFF;
@@ -1125,47 +1125,47 @@ uint32_t system_get_lfw_address()
  * NPCX_FWCTRL_RO_REGION: 1 - RO, 0 - RW
  * NPCX_FWCTRL_FW_SLOT: 1 - SLOT_A, 0 - SLOT_B
  */
-void system_set_image_copy(enum system_image_copy_t copy)
+void system_set_image_copy(enum ec_image copy)
 {
 	switch (copy) {
-	case SYSTEM_IMAGE_RW:
+	case EC_IMAGE_RW:
 		CLEAR_BIT(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION);
 		SET_BIT(NPCX_FWCTRL, NPCX_FWCTRL_FW_SLOT);
 		break;
 #ifdef CONFIG_RW_B
-	case SYSTEM_IMAGE_RW_B:
+	case EC_IMAGE_RW_B:
 		CLEAR_BIT(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION);
 		CLEAR_BIT(NPCX_FWCTRL, NPCX_FWCTRL_FW_SLOT);
 		break;
 #endif
 	default:
 		CPRINTS("Invalid copy (%d) is requested as a jump destination. "
-			"Change it to %d.", copy, SYSTEM_IMAGE_RO);
-		/* Fall through to SYSTEM_IMAGE_RO */
-	case SYSTEM_IMAGE_RO:
+			"Change it to %d.", copy, EC_IMAGE_RO);
+		/* Fall through to EC_IMAGE_RO */
+	case EC_IMAGE_RO:
 		SET_BIT(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION);
 		SET_BIT(NPCX_FWCTRL, NPCX_FWCTRL_FW_SLOT);
 		break;
 	}
 }
 
-enum system_image_copy_t system_get_shrspi_image_copy(void)
+enum ec_image system_get_shrspi_image_copy(void)
 {
 	if (IS_BIT_SET(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION)) {
 		/* RO image */
 #ifdef CHIP_HAS_RO_B
 		if (!IS_BIT_SET(NPCX_FWCTRL, NPCX_FWCTRL_FW_SLOT))
-			return SYSTEM_IMAGE_RO_B;
+			return EC_IMAGE_RO_B;
 #endif
-		return SYSTEM_IMAGE_RO;
+		return EC_IMAGE_RO;
 	} else {
 #ifdef CONFIG_RW_B
 		/* RW image */
 		if (!IS_BIT_SET(NPCX_FWCTRL, NPCX_FWCTRL_FW_SLOT))
 			/* Slot A */
-			return SYSTEM_IMAGE_RW_B;
+			return EC_IMAGE_RW_B;
 #endif
-		return SYSTEM_IMAGE_RW;
+		return EC_IMAGE_RW;
 	}
 }
 

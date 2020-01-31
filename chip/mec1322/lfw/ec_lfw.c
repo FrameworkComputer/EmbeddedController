@@ -218,11 +218,10 @@ void system_init(void)
 				MEC1322_PWR_RST_STS_VCC1;
 
 	if (rst_sts || wdt_sts)
-		MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX)
-					= SYSTEM_IMAGE_RO;
+		MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX) = EC_IMAGE_RO;
 }
 
-enum system_image_copy_t system_get_image_copy(void)
+enum ec_image system_get_image_copy(void)
 {
 	return MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX);
 }
@@ -260,20 +259,19 @@ void lfw_main()
 	uart_puts("\n");
 
 	switch (system_get_image_copy()) {
-	case SYSTEM_IMAGE_RW:
+	case EC_IMAGE_RW:
 		uart_puts("lfw-RW load\n");
 		init_addr = CONFIG_RW_MEM_OFF + CONFIG_PROGRAM_MEMORY_BASE;
 		spi_image_load(CONFIG_EC_WRITABLE_STORAGE_OFF +
 			       CONFIG_RW_STORAGE_OFF);
 		break;
-	case SYSTEM_IMAGE_RO:
+	case EC_IMAGE_RO:
 		uart_puts("lfw-RO load\n");
 		spi_image_load(CONFIG_EC_PROTECTED_STORAGE_OFF +
 			       CONFIG_RO_STORAGE_OFF);
 		/* fall through */
 	default:
-		MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX) =
-							SYSTEM_IMAGE_RO;
+		MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX) = EC_IMAGE_RO;
 		init_addr = CONFIG_RO_MEM_OFF + CONFIG_PROGRAM_MEMORY_BASE;
 	}
 
