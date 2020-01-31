@@ -486,13 +486,6 @@ static struct policy_engine {
  */
 static unsigned int max_request_mv = PD_MAX_VOLTAGE_MV;
 
-/*
- * Private VDM utility functions
- */
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static int dfp_discover_modes(int port, uint32_t *payload);
-#endif
-
 test_export_static enum usb_pe_state get_state_pe(const int port);
 test_export_static void set_state_pe(const int port,
 				     const enum usb_pe_state new_state);
@@ -4603,19 +4596,6 @@ void pd_dfp_pe_init(int port)
 }
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static int dfp_discover_modes(int port, uint32_t *payload)
-{
-	uint16_t svid =
-		pe[port].am_policy.svids[pe[port].am_policy.svid_idx].svid;
-
-	if (pe[port].am_policy.svid_idx >= pe[port].am_policy.svid_cnt)
-		return 0;
-
-	payload[0] = VDO(svid, 1, CMD_DISCOVER_MODES);
-
-	return 1;
-}
-
 struct pd_policy *pd_get_am_policy(int port)
 {
 	return &pe[port].am_policy;

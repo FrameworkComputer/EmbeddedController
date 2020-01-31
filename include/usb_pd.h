@@ -1664,6 +1664,15 @@ void dfp_consume_svids(int port, int cnt, uint32_t *payload);
 void dfp_consume_modes(int port, int cnt, uint32_t *payload);
 
 /**
+ * Return the discover alternate mode payload data
+ *
+ * @param port    USB-C port number
+ * @param payload Pointer to payload data to fill
+ * @return 1 if valid SVID present else 0
+ */
+int dfp_discover_modes(int port, uint32_t *payload);
+
+/**
  * Initialize policy engine for DFP
  *
  * @param port     USB-C port number

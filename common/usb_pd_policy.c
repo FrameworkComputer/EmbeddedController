@@ -672,15 +672,6 @@ static int dfp_discover_svids(uint32_t *payload)
 	return 1;
 }
 
-static int dfp_discover_modes(int port, uint32_t *payload)
-{
-	uint16_t svid = pe[port].svids[pe[port].svid_idx].svid;
-	if (pe[port].svid_idx >= pe[port].svid_cnt)
-		return 0;
-	payload[0] = VDO(svid, 1, CMD_DISCOVER_MODES);
-	return 1;
-}
-
 /*
  * This function returns
  * True - If the THunderbolt cable speed is TBT_SS_TBT_GEN3 or

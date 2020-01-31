@@ -318,3 +318,16 @@ void dfp_consume_modes(int port, int cnt, uint32_t *payload)
 
 	pe->svid_idx++;
 }
+
+int dfp_discover_modes(int port, uint32_t *payload)
+{
+	struct pd_policy *pe = pd_get_am_policy(port);
+	uint16_t svid = pe->svids[pe->svid_idx].svid;
+
+	if (pe->svid_idx >= pe->svid_cnt)
+		return 0;
+
+	payload[0] = VDO(svid, 1, CMD_DISCOVER_MODES);
+
+	return 1;
+}
