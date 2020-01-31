@@ -331,3 +331,52 @@ int dfp_discover_modes(int port, uint32_t *payload)
 
 	return 1;
 }
+
+int pd_alt_mode(int port, uint16_t svid)
+{
+	struct svdm_amode_data *modep = pd_get_amode_data(port, svid);
+
+	return (modep) ? modep->opos : -1;
+}
+
+uint16_t pd_get_identity_vid(int port)
+{
+	struct pd_policy *pe = pd_get_am_policy(port);
+
+	return PD_IDH_VID(pe->identity[0]);
+}
+
+uint16_t pd_get_identity_pid(int port)
+{
+	struct pd_policy *pe = pd_get_am_policy(port);
+
+	return PD_PRODUCT_PID(pe->identity[2]);
+}
+
+uint8_t pd_get_product_type(int port)
+{
+	struct pd_policy *pe = pd_get_am_policy(port);
+
+	return PD_IDH_PTYPE(pe->identity[0]);
+}
+
+int pd_get_svid_count(int port)
+{
+	struct pd_policy *pe = pd_get_am_policy(port);
+
+	return pe->svid_cnt;
+}
+
+uint16_t pd_get_svid(int port, uint16_t svid_idx)
+{
+	struct pd_policy *pe = pd_get_am_policy(port);
+
+	return pe->svids[svid_idx].svid;
+}
+
+uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx)
+{
+	struct pd_policy *pe = pd_get_am_policy(port);
+
+	return pe->svids[svid_idx].mode_vdo;
+}

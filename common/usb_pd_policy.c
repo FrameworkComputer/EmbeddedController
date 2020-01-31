@@ -691,13 +691,6 @@ struct pd_policy *pd_get_am_policy(int port)
 	return &pe[port];
 }
 
-int pd_alt_mode(int port, uint16_t svid)
-{
-	struct svdm_amode_data *modep = pd_get_amode_data(port, svid);
-
-	return (modep) ? modep->opos : -1;
-}
-
 /* Note: Enter mode flag is not needed by TCPMv1 */
 void pd_set_dfp_enter_mode_flag(int port, bool set)
 {
@@ -755,36 +748,6 @@ static int enter_tbt_compat_mode(int port, uint32_t *payload)
 
 	/* For TBT3 Device Enter Mode Command, number of Objects are 2 */
 	return 2;
-}
-
-uint16_t pd_get_identity_vid(int port)
-{
-	return PD_IDH_VID(pe[port].identity[0]);
-}
-
-uint16_t pd_get_identity_pid(int port)
-{
-	return PD_PRODUCT_PID(pe[port].identity[2]);
-}
-
-uint8_t pd_get_product_type(int port)
-{
-	return PD_IDH_PTYPE(pe[port].identity[0]);
-}
-
-int pd_get_svid_count(int port)
-{
-	return pe[port].svid_cnt;
-}
-
-uint16_t pd_get_svid(int port, uint16_t svid_idx)
-{
-	return pe[port].svids[svid_idx].svid;
-}
-
-uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx)
-{
-	return pe[port].svids[svid_idx].mode_vdo;
 }
 
 #ifdef CONFIG_CMD_USB_PD_PE
