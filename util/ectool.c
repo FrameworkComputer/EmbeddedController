@@ -283,6 +283,8 @@ const char help_str[] =
 	"      Serial output test for COM2\n"
 	"  stress [reboot] [help]\n"
 	"      Stress test the ec host command interface.\n"
+	"  sysinfo [flags|reset_flags|firmware_copy]\n"
+	"      Display system info.\n"
 	"  switches\n"
 	"      Prints current EC switch positions\n"
 	"  temps <sensorid>\n"
@@ -1634,6 +1636,83 @@ int cmd_rwsig(int argc, char **argv)
 		if (strcmp(argv[1], rwsig_subcommands[i].subcommand) == 0)
 			return rwsig_subcommands[i].handler(--argc, &argv[1]);
 
+	return -1;
+}
+
+enum sysinfo_fields {
+	SYSINFO_FIELD_RESET_FLAGS = BIT(0),
+	SYSINFO_FIELD_CURRENT_IMAGE = BIT(1),
+	SYSINFO_FIELD_FLAGS = BIT(2),
+	SYSINFO_INFO_FIELD_ALL = SYSINFO_FIELD_RESET_FLAGS |
+				 SYSINFO_FIELD_CURRENT_IMAGE |
+				 SYSINFO_FIELD_FLAGS
+};
+
+static int sysinfo(struct ec_response_sysinfo *info)
+{
+	struct ec_response_sysinfo r;
+	int rv;
+
+	rv = ec_command(EC_CMD_SYSINFO, 0, NULL, 0, &r, sizeof(r));
+	if (rv < 0) {
+		fprintf(stderr, "ERROR: EC_CMD_SYSINFO failed: %d\n", rv);
+		return rv;
+	}
+
+	return 0;
+}
+
+int cmd_sysinfo(int argc, char **argv)
+{
+	struct ec_response_sysinfo r;
+	enum sysinfo_fields fields = 0;
+	bool print_prefix = false;
+
+	if (argc != 1 && argc != 2)
+		goto sysinfo_error_usage;
+
+	if (argc == 1) {
+		fields = SYSINFO_INFO_FIELD_ALL;
+		print_prefix = true;
+	} else if (argc == 2) {
+		if (strcmp(argv[1], "flags") == 0)
+			fields = SYSINFO_FIELD_FLAGS;
+		else if (strcmp(argv[1], "reset_flags") == 0)
+			fields = SYSINFO_FIELD_RESET_FLAGS;
+		else if (strcmp(argv[1], "firmware_copy") == 0)
+			fields = SYSINFO_FIELD_CURRENT_IMAGE;
+		else
+			goto sysinfo_error_usage;
+	}
+
+	if (sysinfo(&r) != 0)
+		return -1;
+
+	if (fields & SYSINFO_FIELD_RESET_FLAGS) {
+		if (print_prefix)
+			printf("Reset flags: ");
+		printf("0x%08x\n", r.reset_flags);
+	}
+
+	if (fields & SYSINFO_FIELD_FLAGS) {
+		if (print_prefix)
+			printf("Flags: ");
+		printf("0x%08x\n", r.flags);
+
+	}
+
+	if (fields & SYSINFO_FIELD_CURRENT_IMAGE) {
+		if (print_prefix)
+			printf("Firmware copy: ");
+		printf("%d\n", r.current_image);
+	}
+
+	return 0;
+
+sysinfo_error_usage:
+	fprintf(stderr, "Usage: %s "
+			"[flags|reset_flags|firmware_copy]\n",
+		argv[0]);
 	return -1;
 }
 
@@ -9449,6 +9528,7 @@ const struct command commands[] = {
 	{"rwsigstatus", cmd_rwsig_status},
 	{"sertest", cmd_serial_test},
 	{"stress", cmd_stress_test},
+	{"sysinfo", cmd_sysinfo},
 	{"port80flood", cmd_port_80_flood},
 	{"switches", cmd_switches},
 	{"temps", cmd_temperature},

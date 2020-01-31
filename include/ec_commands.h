@@ -1839,6 +1839,26 @@ struct ec_response_rwsig_info {
 
 BUILD_ASSERT(sizeof(struct ec_response_rwsig_info) == 32);
 
+/**
+ * Get information about the system, such as reset flags, locked state, etc.
+ */
+#define EC_CMD_SYSINFO 0x001C
+#define EC_VER_SYSINFO 0
+
+enum sysinfo_flags {
+	SYSTEM_IS_LOCKED = BIT(0),
+	SYSTEM_IS_FORCE_LOCKED = BIT(1),
+	SYSTEM_JUMP_ENABLED = BIT(2),
+	SYSTEM_JUMPED_TO_CURRENT_IMAGE = BIT(3),
+	SYSTEM_REBOOT_AT_SHUTDOWN = BIT(4)
+};
+
+struct ec_response_sysinfo {
+	uint32_t reset_flags;		/**< EC_RESET_FLAG_* flags */
+	uint32_t current_image;		/**< enum ec_current_image */
+	uint32_t flags;			/**< enum sysinfo_flags */
+} __ec_align4;
+
 /*****************************************************************************/
 /* PWM commands */
 

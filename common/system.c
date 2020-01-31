@@ -907,36 +907,85 @@ static void system_common_shutdown(void)
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, system_common_shutdown, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
-/* Console commands */
+/* Console and Host Commands */
 
 #ifdef CONFIG_CMD_SYSINFO
+static int sysinfo(struct ec_response_sysinfo *info)
+{
+	memset(info, 0, sizeof(*info));
+
+	info->reset_flags = system_get_reset_flags();
+
+	info->current_image = system_get_image_copy();
+
+	if (system_jumped_to_this_image())
+		info->flags |= SYSTEM_JUMPED_TO_CURRENT_IMAGE;
+
+	if (system_is_locked()) {
+		info->flags |= SYSTEM_IS_LOCKED;
+		if (force_locked)
+			info->flags |= SYSTEM_IS_FORCE_LOCKED;
+		if (!disable_jump)
+			info->flags |= SYSTEM_JUMP_ENABLED;
+	}
+
+	if (reboot_at_shutdown)
+		info->flags |= SYSTEM_REBOOT_AT_SHUTDOWN;
+
+	return EC_SUCCESS;
+}
+
 static int command_sysinfo(int argc, char **argv)
 {
-	ccprintf("Reset flags: 0x%08x (", system_get_reset_flags());
+	struct ec_response_sysinfo info;
+	int rv;
+
+	rv = sysinfo(&info);
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	ccprintf("Reset flags: 0x%08x (", info.reset_flags);
 	system_print_reset_flags();
 	ccprintf(")\n");
-	ccprintf("Copy:   %s\n", system_get_image_copy_string());
-	ccprintf("Jumped: %s\n", system_jumped_to_this_image() ? "yes" : "no");
+	ccprintf("Copy:   %s\n", ec_image_to_string(info.current_image));
+	ccprintf("Jumped: %s\n",
+		 (info.flags & SYSTEM_JUMPED_TO_CURRENT_IMAGE) ? "yes" : "no");
 
 	ccputs("Flags: ");
-	if (system_is_locked()) {
+	if (info.flags & SYSTEM_IS_LOCKED) {
 		ccputs(" locked");
-		if (force_locked)
+		if (info.flags & SYSTEM_IS_FORCE_LOCKED)
 			ccputs(" (forced)");
-		if (disable_jump)
+		if (!(info.flags & SYSTEM_JUMP_ENABLED))
 			ccputs(" jump-disabled");
 	} else
 		ccputs(" unlocked");
 	ccputs("\n");
 
-	if (reboot_at_shutdown)
-		ccprintf("Reboot at shutdown: %d\n", reboot_at_shutdown);
+	if (info.flags & SYSTEM_REBOOT_AT_SHUTDOWN)
+		ccprintf("Reboot at shutdown: %d\n",
+			 !!(info.flags & SYSTEM_REBOOT_AT_SHUTDOWN));
 
 	return EC_SUCCESS;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(sysinfo, command_sysinfo,
 			     NULL,
 			     "Print system info");
+
+static enum ec_status host_command_sysinfo(struct host_cmd_handler_args *args)
+{
+	struct ec_response_sysinfo *r = args->response;
+
+	if (sysinfo(r) != EC_SUCCESS)
+		return EC_RES_ERROR;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_SYSINFO, host_command_sysinfo,
+		     EC_VER_MASK(EC_VER_SYSINFO));
 #endif
 
 #ifdef CONFIG_CMD_SCRATCHPAD
