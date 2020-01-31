@@ -42,6 +42,23 @@ __override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 		gpio_get_level(GPIO_PG_DRAM_OD);
 }
 
+__override int power_signal_get_level(enum gpio_signal signal)
+{
+	if (signal == GPIO_PG_EC_DSW_PWROK)
+		return intel_x86_get_pg_ec_dsw_pwrok();
+
+	if (signal == GPIO_PG_EC_ALL_SYS_PWRGD)
+		return intel_x86_get_pg_ec_all_sys_pwrgd();
+
+	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
+		/* Check signal is from GPIOs or VWs */
+		if (espi_signal_is_vw(signal))
+			return espi_vw_get_wire(signal);
+	}
+	return gpio_get_level(signal);
+
+}
+
 void baseboard_chipset_startup(void)
 {
 	/* Allow keyboard backlight to be enabled */
