@@ -732,6 +732,14 @@
  */
 #undef CONFIG_BUTTONS_RUNTIME_CONFIG
 
+/* Support simulation of a button press using EC tool command */
+#undef CONFIG_HOSTCMD_BUTTON
+/*
+ * Configuration for button simulation i.e. dependent on
+ * CONFIG_HOSTCMD_BUTTON or CONFIG_CMD_BUTTON config.
+ */
+#undef CONFIG_SIMULATED_BUTTON
+
 /*
  * Capsense chip has buttons, too.
  */

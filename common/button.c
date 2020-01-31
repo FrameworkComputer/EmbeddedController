@@ -5,6 +5,7 @@
 
 /* Button module for Chrome EC */
 
+#include "atomic.h"
 #include "button.h"
 #include "chipset.h"
 #include "common.h"
@@ -33,8 +34,15 @@ static struct button_state_t __bss_slow state[BUTTON_COUNT];
 
 static uint64_t __bss_slow next_deferred_time;
 
-#ifdef CONFIG_CMD_BUTTON
-static int siml_btn_presd;
+#if defined(CONFIG_CMD_BUTTON) || defined(CONFIG_HOSTCMD_BUTTON)
+#define CONFIG_SIMULATED_BUTTON
+#endif
+
+#ifdef CONFIG_SIMULATED_BUTTON
+/* Bitmask to keep track of simulated state of each button.
+ * Bit numbers are aligned to enum button.
+ */
+static int sim_button_state;
 
 /*
  * Flip state of associated button type in sim_button_state bitmask.
@@ -53,18 +61,7 @@ static int siml_btn_presd;
  */
 static int simulated_button_pressed(const struct button_config *button)
 {
-	/* bitmask to keep track of simulated state of each button */
-	static int sim_button_state;
-	int button_mask = 1 << button->type;
-	int ret_val;
-
-	/* flip the state of the button */
-	sim_button_state = sim_button_state ^ button_mask;
-	ret_val = !!(sim_button_state & button_mask);
-	/* adjustment for active high/lo */
-	if (!(button->flags & BUTTON_FLAG_ACTIVE_HIGH))
-		ret_val = !ret_val;
-	return ret_val;
+	return !!(sim_button_state & BIT(button->type));
 }
 #endif
 
@@ -73,14 +70,14 @@ static int simulated_button_pressed(const struct button_config *button)
  */
 static int raw_button_pressed(const struct button_config *button)
 {
-	int raw_value =
-#ifdef CONFIG_CMD_BUTTON
-			siml_btn_presd ?
-			simulated_button_pressed(button) :
+	int physical_value = (!!gpio_get_level(button->gpio) ==
+				!!(button->flags & BUTTON_FLAG_ACTIVE_HIGH));
+	int simulated_value = 0;
+#ifdef CONFIG_SIMULATED_BUTTON
+	simulated_value = simulated_button_pressed(button);
 #endif
-			gpio_get_level(button->gpio);
-	return button->flags & BUTTON_FLAG_ACTIVE_HIGH ?
-				       raw_value : !raw_value;
+
+	return (simulated_value || physical_value);
 }
 
 #ifdef CONFIG_BUTTON_TRIGGERED_RECOVERY
@@ -324,7 +321,7 @@ void button_interrupt(enum gpio_signal signal)
 	}
 }
 
-#ifdef CONFIG_CMD_BUTTON
+#ifdef CONFIG_SIMULATED_BUTTON
 static int button_present(enum keyboard_button_type type)
 {
 	int i;
@@ -339,17 +336,54 @@ static int button_present(enum keyboard_button_type type)
 static void button_interrupt_simulate(int button)
 {
 	button_interrupt(buttons[button].gpio);
-	usleep(buttons[button].debounce_us >> 2);
-	button_interrupt(buttons[button].gpio);
 }
 
+static void simulate_button_release_deferred(void)
+{
+	int button_idx;
+
+	/* Release the button */
+	for (button_idx = 0; button_idx < BUTTON_COUNT; button_idx++) {
+		/* Check state for button pressed */
+		if (sim_button_state & BIT(buttons[button_idx].type)) {
+			/* Set state of the button as released */
+			atomic_clear(&sim_button_state,
+					BIT(buttons[button_idx].type));
+
+			button_interrupt_simulate(button_idx);
+		}
+	}
+}
+DECLARE_DEFERRED(simulate_button_release_deferred);
+
+static void simulate_button(uint32_t button_mask, int press_ms)
+{
+	int button_idx;
+
+	/* Press the button */
+	for (button_idx = 0; button_idx < BUTTON_COUNT; button_idx++) {
+		if (button_mask & BIT(button_idx)) {
+			/* Set state of the button as pressed */
+			atomic_or(&sim_button_state,
+					BIT(buttons[button_idx].type));
+
+			button_interrupt_simulate(button_idx);
+		}
+	}
+
+	/* Defer the button release for specified duration */
+	hook_call_deferred(&simulate_button_release_deferred_data,
+				press_ms * MSEC);
+}
+#endif /* #ifdef CONFIG_SIMULATED_BUTTON */
+
+#ifdef CONFIG_CMD_BUTTON
 static int console_command_button(int argc, char **argv)
 {
 	int press_ms = 50;
 	char *e;
 	int argv_idx;
-	int button;
-	int button_idx;
+	int button = BUTTON_COUNT;
 	uint32_t button_mask = 0;
 
 	if (argc < 2)
@@ -382,32 +416,39 @@ static int console_command_button(int argc, char **argv)
 	if (!button_mask)
 		return EC_SUCCESS;
 
-	siml_btn_presd = 1;
+	simulate_button(button_mask, press_ms);
 
-	/* Press the button(s) */
-	for (button_idx = 0; button_idx < BUTTON_COUNT; button_idx++)
-		if (button_mask & BIT(button_idx))
-			button_interrupt_simulate(button_idx);
-
-	/* Hold the button(s) */
-	if (press_ms > 0)
-		msleep(press_ms);
-
-	/* Release the button(s) */
-	for (button_idx = 0; button_idx < BUTTON_COUNT; button_idx++)
-		if (button_mask & BIT(button_idx))
-			button_interrupt_simulate(button_idx);
-
-	/* Wait till button processing is finished */
-	msleep(100);
-
-	siml_btn_presd = 0;
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(button, console_command_button,
-			"vup|vdown msec",
+			"vup|vdown|rec msec",
 			"Simulate button press");
-#endif
+#endif /* CONFIG_CMD_BUTTON */
+
+#ifdef CONFIG_HOSTCMD_BUTTON
+static enum ec_status host_command_button(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_button *p = args->params;
+	int idx;
+	uint32_t button_mask = 0;
+
+	/* Only available on unlocked systems */
+	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
+
+	for (idx = 0; idx < KEYBOARD_BUTTON_COUNT; idx++) {
+		if (p->btn_mask & BIT(idx))
+			button_mask |= BIT(button_present(idx));
+	}
+
+	simulate_button(button_mask, p->press_ms);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_BUTTON, host_command_button, EC_VER_MASK(0));
+
+#endif /* CONFIG_HOSTCMD_BUTTON */
+
 
 #ifdef CONFIG_EMULATED_SYSRQ
 

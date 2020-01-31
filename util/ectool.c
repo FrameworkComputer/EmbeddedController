@@ -80,6 +80,8 @@ const char help_str[] =
 	"      Read or write board-specific battery parameter\n"
 	"  boardversion\n"
 	"      Prints the board version\n"
+	"  button [vup|vdown|rec] <Delay-ms>\n"
+	"      Simulates button press.\n"
 	"  cbi\n"
 	"      Get/Set Cros Board Info\n"
 	"  chargecurrentlimit\n"
@@ -1104,6 +1106,58 @@ int cmd_reboot_ap_on_g3(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_REBOOT_AP_ON_G3, 0, NULL, 0, NULL, 0);
 	return (rv < 0 ? rv : 0);
+}
+
+int cmd_button(int argc, char *argv[])
+{
+	struct ec_params_button p;
+	char *e;
+	int argv_idx;
+	int button = KEYBOARD_BUTTON_COUNT;
+	int rv;
+
+	if (argc < 2) {
+		fprintf(stderr, "Invalid num param %d.\n", argc);
+		return -1;
+	}
+
+	p.press_ms = 50;
+	p.btn_mask = 0;
+
+	for (argv_idx = 1; argv_idx < argc; argv_idx++) {
+		if (!strcasecmp(argv[argv_idx], "vup"))
+			button = KEYBOARD_BUTTON_VOLUME_UP;
+		else if (!strcasecmp(argv[argv_idx], "vdown"))
+			button = KEYBOARD_BUTTON_VOLUME_DOWN;
+		else if (!strcasecmp(argv[argv_idx], "rec"))
+			button = KEYBOARD_BUTTON_RECOVERY;
+		else {
+			/* If last parameter check if it is an integer. */
+			if (argv_idx == argc - 1) {
+				p.press_ms = strtol(argv[argv_idx], &e, 0);
+				/* If integer, break out of the loop. */
+				if (!*e)
+					break;
+			}
+			button = KEYBOARD_BUTTON_COUNT;
+		}
+
+		if (button == KEYBOARD_BUTTON_COUNT) {
+			fprintf(stderr, "Invalid button input.\n");
+			return -1;
+		}
+
+		p.btn_mask |= (1 << button);
+	}
+	if (!p.btn_mask)
+		return 0;
+
+	rv = ec_command(EC_CMD_BUTTON, 0, &p, sizeof(p), NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	printf("Button(s) %d set to %d ms\n", p.btn_mask, p.press_ms);
+	return 0;
 }
 
 int cmd_flash_info(int argc, char *argv[])
@@ -9428,6 +9482,7 @@ const struct command commands[] = {
 	{"batterycutoff", cmd_battery_cut_off},
 	{"batteryparam", cmd_battery_vendor_param},
 	{"boardversion", cmd_board_version},
+	{"button", cmd_button},
 	{"cbi", cmd_cbi},
 	{"chargecurrentlimit", cmd_charge_current_limit},
 	{"chargecontrol", cmd_charge_control},
