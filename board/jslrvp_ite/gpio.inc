@@ -74,6 +74,7 @@ GPIO(EC_PCH_DSW_PWROK,	PIN(L, 6), GPIO_OUT_LOW)
  * Ice Lake code from driving signal.
  */
 UNIMPLEMENTED(PCH_SYS_PWROK)
+UNIMPLEMENTED(EN_VCCIO_EXT)
 
 /* Host communication GPIOs */
 GPIO(PCH_WAKE_L,	PIN(J, 0), GPIO_ODR_HIGH)

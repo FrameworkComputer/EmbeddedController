@@ -234,6 +234,16 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S5G3;
 		break;
 
+#ifdef CONFIG_CHIPSET_JASPERLAKE
+	case POWER_S3S0:
+		GPIO_SET_LEVEL(GPIO_EN_VCCIO_EXT, 1);
+		break;
+
+	case POWER_S0S3:
+		GPIO_SET_LEVEL(GPIO_EN_VCCIO_EXT, 0);
+		break;
+#endif /* CONFIG_CHIPSET_JASPERLAKE */
+
 	case POWER_S0:
 		/*
 		 * Check value of PG_EC_ALL_SYS_PWRGD to see if PCH_SYS_PWROK
