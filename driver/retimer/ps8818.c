@@ -46,6 +46,22 @@ int ps8818_i2c_write(int port, int page, int offset, int data)
 			  offset, data);
 }
 
+int ps8818_i2c_field_update8(int port, int page, int offset,
+			     uint8_t field_mask, uint8_t set_value)
+{
+	if (PS8818_DEBUG)
+		ccprintf("%s(%d:0x%02X, 0x%02X, 0x%02X, 0x%02X)\n", __func__,
+			 usb_retimers[port].i2c_port,
+			 usb_retimers[port].i2c_addr_flags + page,
+			 offset, field_mask, set_value);
+
+	return i2c_field_update8(usb_retimers[port].i2c_port,
+				 usb_retimers[port].i2c_addr_flags + page,
+				 offset,
+				 field_mask,
+				 set_value);
+}
+
 int ps8818_detect(int port)
 {
 	int rv = EC_ERROR_NOT_POWERED;
@@ -84,10 +100,11 @@ static int ps8818_set_mux(int port, mux_state_t mux_state)
 	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		val |= PS8818_MODE_DP_ENABLE;
 
-	rv = ps8818_i2c_write(port,
-			      PS8818_REG_PAGE0,
-			      PS8818_REG0_MODE,
-			      val);
+	rv = ps8818_i2c_field_update8(port,
+				PS8818_REG_PAGE0,
+				PS8818_REG0_MODE,
+				PS8818_MODE_NON_RESERVED_MASK,
+				val);
 	if (rv)
 		return rv;
 
@@ -96,10 +113,11 @@ static int ps8818_set_mux(int port, mux_state_t mux_state)
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		val |= PS8818_FLIP_CONFIG;
 
-	rv = ps8818_i2c_write(port,
-			      PS8818_REG_PAGE0,
-			      PS8818_REG0_FLIP,
-			      val);
+	rv = ps8818_i2c_field_update8(port,
+				PS8818_REG_PAGE0,
+				PS8818_REG0_FLIP,
+				PS8818_FLIP_NON_RESERVED_MASK,
+				val);
 	if (rv)
 		return rv;
 
@@ -108,10 +126,11 @@ static int ps8818_set_mux(int port, mux_state_t mux_state)
 	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		val |= PS8818_DPHPD_PLUGGED;
 
-	rv = ps8818_i2c_write(port,
-			      PS8818_REG_PAGE0,
-			      PS8818_REG0_DPHPD_CONFIG,
-			      val);
+	rv = ps8818_i2c_field_update8(port,
+				PS8818_REG_PAGE0,
+				PS8818_REG0_DPHPD_CONFIG,
+				PS8818_DPHPD_NON_RESERVED_MASK,
+				val);
 	if (rv)
 		return rv;
 

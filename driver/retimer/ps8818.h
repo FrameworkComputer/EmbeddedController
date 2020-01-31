@@ -17,14 +17,17 @@
 
 #define PS8818_REG0_FLIP		0x00
 #define PS8818_FLIP_CONFIG			BIT(7)
+#define PS8818_FLIP_NON_RESERVED_MASK		0xE0
 
 #define PS8818_REG0_MODE		0x01
 #define PS8818_MODE_DP_ENABLE			BIT(7)
 #define PS8818_MODE_USB_ENABLE			BIT(6)
+#define PS8818_MODE_NON_RESERVED_MASK		0xC0
 
 #define PS8818_REG0_DPHPD_CONFIG	0x02
 #define PS8818_DPHPD_CONFIG_INHPD_DISABLE	BIT(7)
 #define PS8818_DPHPD_PLUGGED			BIT(6)
+#define PS8818_DPHPD_NON_RESERVED_MASK		0xFC
 
 /*
  * PAGE 1 Register Definitions
@@ -64,9 +67,6 @@
 #define PS8818_DPEQ_LEVEL_UP_21DB		(9 << 3)
 #define PS8818_DPEQ_LEVEL_UP_MASK		(0x0F << 3)
 
-#define PS8818_REG1_LINK_TRAINING	0xB7
-#define PS8818_LINK_TRAINING_DISABLE		BIT(4)
-
 /*
  * PAGE 2 Register Definitions
  */
@@ -96,5 +96,7 @@ int ps8818_detect(int port);
 
 int ps8818_i2c_read(int port, int page, int offset, int *data);
 int ps8818_i2c_write(int port, int page, int offset, int data);
+int ps8818_i2c_field_update8(int port, int page, int offset,
+			     uint8_t field_mask, uint8_t set_value);
 
 #endif /* __CROS_EC_USB_RETIMER_PS8818_H */
