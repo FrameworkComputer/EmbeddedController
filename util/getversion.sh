@@ -104,7 +104,9 @@ main() {
       dir_list+=( ../../third_party/tpm2 ../../third_party/cryptoc )
       ;;
     (*_fp)
-      dir_list+=( ./private )
+      if [[ -d ./private ]]; then
+        dir_list+=( ./private )
+      fi
       ;;
   esac
 
