@@ -14,8 +14,8 @@
 #include "kasa.h"
 
 #define MAG_CAL_MAX_SAMPLES 0xffff
-#define MAG_CAL_MIN_BATCH_WINDOW_US    SECOND
-#define MAG_CAL_MIN_BATCH_SIZE      25      /* samples */
+#define MAG_CAL_MIN_BATCH_WINDOW_US    (2 * SECOND)
+#define MAG_CAL_MIN_BATCH_SIZE      50      /* samples */
 
 struct mag_cal_t {
 	struct kasa_fit kasa_fit;
