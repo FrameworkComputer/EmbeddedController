@@ -232,7 +232,7 @@ void bmm150_normalize(const struct motion_sensor_t *s,
 	/* X and Y are two's complement 13 bits vectors */
 	raw[X] = ((int16_t)(data[0] | (data[1] << 8))) >> 3;
 	raw[Y] = ((int16_t)(data[2] | (data[3] << 8))) >> 3;
-	/* X and Y are two's complement 15 bits vectors */
+	/* Z are two's complement 15 bits vectors */
 	raw[Z] = ((int16_t)(data[4] | (data[5] << 8))) >> 1;
 
 	/* RHALL value to compensate with - unsigned 14 bits */
