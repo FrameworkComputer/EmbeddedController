@@ -132,9 +132,9 @@ int mag_cal_update(struct mag_cal_t *moc, const intv3_t v)
 			/* 4. Kasa sphere fitting */
 			kasa_compute(&moc->kasa_fit, bias, &radius);
 			if (radius > MIN_FIT_MAG && radius < MAX_FIT_MAG) {
-				moc->bias[X] = FP_TO_INT(bias[X]);
-				moc->bias[Y] = FP_TO_INT(bias[Y]);
-				moc->bias[Z] = FP_TO_INT(bias[Z]);
+				moc->bias[X] = -FP_TO_INT(bias[X]);
+				moc->bias[Y] = -FP_TO_INT(bias[Y]);
+				moc->bias[Z] = -FP_TO_INT(bias[Z]);
 
 				moc->radius = radius;
 

@@ -62,9 +62,9 @@ static int test_mag_cal_computes_bias(void)
 	/* Add the final sample and check calibration. */
 	TEST_EQ(1, mag_cal_update(&cal, samples[cal.batch_size - 1]), "%d");
 	TEST_EQ(525, FP_TO_INT(cal.radius), "%d");
-	TEST_EQ(-1, cal.bias[0], "%d");
-	TEST_EQ(1, cal.bias[1], "%d");
-	TEST_EQ(-2, cal.bias[2], "%d");
+	TEST_EQ(1, cal.bias[0], "%d");
+	TEST_EQ(-1, cal.bias[1], "%d");
+	TEST_EQ(2, cal.bias[2], "%d");
 
 	/*
 	 * State should have reset, run the same code again to verify that
@@ -74,9 +74,9 @@ static int test_mag_cal_computes_bias(void)
 		TEST_EQ(0, mag_cal_update(&cal, samples[i]), "%d");
 	TEST_EQ(1, mag_cal_update(&cal, samples[cal.batch_size - 1]), "%d");
 	TEST_EQ(525, FP_TO_INT(cal.radius), "%d");
-	TEST_EQ(-1, cal.bias[0], "%d");
-	TEST_EQ(1, cal.bias[1], "%d");
-	TEST_EQ(-2, cal.bias[2], "%d");
+	TEST_EQ(1, cal.bias[0], "%d");
+	TEST_EQ(-1, cal.bias[1], "%d");
+	TEST_EQ(2, cal.bias[2], "%d");
 
 	return EC_SUCCESS;
 }
