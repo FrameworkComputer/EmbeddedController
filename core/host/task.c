@@ -301,6 +301,28 @@ task_id_t task_get_running(void)
 	return running_task_id;
 }
 
+void task_print_list(void)
+{
+	int i;
+
+	ccputs("Name         Events\n");
+
+	for (i = 0; i < TASK_ID_COUNT; i++) {
+		ccprintf("%4d %-16s %08x\n", i, task_names[i], tasks[i].event);
+		cflush();
+	}
+}
+
+int command_task_info(int argc, char **argv)
+{
+	task_print_list();
+
+	return EC_SUCCESS;
+}
+DECLARE_SAFE_CONSOLE_COMMAND(taskinfo, command_task_info,
+			     NULL,
+			     "Print task info");
+
 static void _wait_for_task_started(int can_sleep)
 {
 	int i, ok;
