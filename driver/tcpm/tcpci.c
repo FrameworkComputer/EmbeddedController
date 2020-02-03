@@ -767,11 +767,16 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 		rv = tcpc_xfer_unlocked(port, (uint8_t *)&reg, 1, NULL, 0,
 					I2C_XFER_START);
 		rv |= tcpc_xfer_unlocked(port, (uint8_t *)&cnt, 1, NULL, 0, 0);
-		rv |= tcpc_xfer_unlocked(port, (uint8_t *)&header,
+		if (cnt > sizeof(header)) {
+			rv |= tcpc_xfer_unlocked(port, (uint8_t *)&header,
 					 sizeof(header), NULL, 0, 0);
-		rv |= tcpc_xfer_unlocked(port, (uint8_t *)data,
+			rv |= tcpc_xfer_unlocked(port, (uint8_t *)data,
 					 cnt-sizeof(header), NULL, 0,
 					 I2C_XFER_STOP);
+		} else {
+			rv |= tcpc_xfer_unlocked(port, (uint8_t *)&header,
+					sizeof(header), NULL, 0, I2C_XFER_STOP);
+		}
 		tcpc_lock(port, 0);
 
 		/* If tcpc write fails, return error */
