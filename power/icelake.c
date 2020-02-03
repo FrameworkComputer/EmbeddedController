@@ -8,6 +8,7 @@
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "intel_x86.h"
 #include "power.h"
 #include "power_button.h"
@@ -159,11 +160,19 @@ static void enable_pp5000_rail(void)
 
 }
 
+#ifdef CONFIG_CHIPSET_JASPERLAKE
+static void assert_ec_ap_vccst_pwrgd(void)
+{
+	GPIO_SET_LEVEL(GPIO_EC_AP_VCCST_PWRGD_OD, 1);
+}
+DECLARE_DEFERRED(assert_ec_ap_vccst_pwrgd);
+#endif /* CONFIG_CHIPSET_JASPERLAKE */
+
 enum power_state power_handle_state(enum power_state state)
 {
 	int dswpwrok_in = intel_x86_get_pg_ec_dsw_pwrok();
 	static int dswpwrok_out = -1;
-	int all_sys_pwrgd_in;
+	int all_sys_pwrgd_in = intel_x86_get_pg_ec_all_sys_pwrgd();
 	int all_sys_pwrgd_out;
 
 	/* Pass-through DSW_PWROK to ICL. */
@@ -177,6 +186,19 @@ enum power_state power_handle_state(enum power_state state)
 		GPIO_SET_LEVEL(GPIO_PCH_DSW_PWROK, dswpwrok_in);
 		dswpwrok_out = dswpwrok_in;
 	}
+
+#ifdef CONFIG_CHIPSET_JASPERLAKE
+	/*
+	 * Assert VCCST power good when ALL_SYS_PWRGD is received with a 2ms
+	 * delay minimum.
+	 */
+	if (all_sys_pwrgd_in && !gpio_get_level(GPIO_EC_AP_VCCST_PWRGD_OD)) {
+		hook_call_deferred(&assert_ec_ap_vccst_pwrgd_data, 2 * MSEC);
+	} else if (!all_sys_pwrgd_in &&
+		   gpio_get_level(GPIO_EC_AP_VCCST_PWRGD_OD)) {
+		GPIO_SET_LEVEL(GPIO_EC_AP_VCCST_PWRGD_OD, 0);
+	}
+#endif /* CONFIG_CHIPSET_JASPERLAKE */
 
 	common_intel_x86_handle_rsmrst(state);
 
