@@ -730,7 +730,7 @@ static inline int is_try_src(int port)
 static inline void set_state(int port, enum pd_states next_state)
 {
 	enum pd_states last_state = pd[port].task_state;
-#ifdef CONFIG_LOW_POWER_IDLE
+#if defined(CONFIG_LOW_POWER_IDLE) && !defined(CONFIG_USB_PD_TCPC_ON_CHIP)
 	int i;
 #endif
 	int not_auto_toggling = 1;
@@ -897,7 +897,7 @@ static inline void set_state(int port, enum pd_states next_state)
 	}
 #endif
 
-#ifdef CONFIG_LOW_POWER_IDLE
+#if defined(CONFIG_LOW_POWER_IDLE) && !defined(CONFIG_USB_PD_TCPC_ON_CHIP)
 	/* If a PD device is attached then disable deep sleep */
 	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		if (pd_capable(i))

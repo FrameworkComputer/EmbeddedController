@@ -3846,6 +3846,9 @@
 /* Enable TCPC to enter low power mode */
 #undef CONFIG_USB_PD_TCPC_LOW_POWER
 
+/* Define EC and TCPC modules are in one integrated chip */
+#undef CONFIG_USB_PD_TCPC_ON_CHIP
+
 /* Enable the encoding of msg SOP* in bits 31-28 of 32-bit msg header type */
 #undef CONFIG_USB_PD_DECODE_SOP
 
@@ -4773,6 +4776,16 @@
  */
 #if defined(CONFIG_USB_PD_TCPM_FUSB302)
 #define CONFIG_USB_PD_VBUS_MEASURE_TCPC
+#endif
+
+/*****************************************************************************/
+/*
+ * Define CONFIG_USB_PD_TCPC_ON_CHIP if we use ITE83XX series TCPM driver
+ * on the board.
+ */
+#if defined(CONFIG_USB_PD_TCPM_ITE83XX) ||  \
+	defined(CONFIG_USB_PD_TCPM_ITE8XXX2)
+#define CONFIG_USB_PD_TCPC_ON_CHIP
 #endif
 
 /*****************************************************************************/
