@@ -95,20 +95,26 @@ test_mockable void keyboard_raw_drive_column(int col)
 	/* Drive all lines to high */
 	if (col == KEYBOARD_COLUMN_NONE) {
 		mask = ~0;
-#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+#if defined(CONFIG_KEYBOARD_CUSTOMIZATION)
+		board_keyboard_drive_col(col);
+#elif defined(CONFIG_KEYBOARD_COL2_INVERTED)
 		gpio_set_level(GPIO_KBD_KSO2, 0);
 #endif
 	}
 	/* Set KBSOUT to zero to detect key-press */
 	else if (col == KEYBOARD_COLUMN_ALL) {
 		mask = ~(BIT(keyboard_cols) - 1);
-#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+#if defined(CONFIG_KEYBOARD_CUSTOMIZATION)
+		board_keyboard_drive_col(col);
+#elif defined(CONFIG_KEYBOARD_COL2_INVERTED)
 		gpio_set_level(GPIO_KBD_KSO2, 1);
 #endif
 	}
 	/* Drive one line for detection */
 	else {
-#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+#if defined(CONFIG_KEYBOARD_CUSTOMIZATION)
+		board_keyboard_drive_col(col);
+#elif defined(CONFIG_KEYBOARD_COL2_INVERTED)
 		if (col == 2)
 			gpio_set_level(GPIO_KBD_KSO2, 1);
 		else

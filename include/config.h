@@ -2412,6 +2412,16 @@
 #undef CONFIG_KEYBOARD_SCANCODE_MUTABLE
 
 /*
+ * Allow the board layer keyboard customization. If define, the board layer
+ * needs to implement:
+ * 1. the function board_keyboard_drive_col() which is used to control
+ *    the refresh key column.
+ * 2. the scancode_set2 and keycap_label array
+ * 3. keyboard_customization.h which is similar to keyboard_config.h
+ */
+#undef CONFIG_KEYBOARD_CUSTOMIZATION
+
+/*
  * Allow board-specific 8042 keyboard callback when a key state is changed.
  */
 #undef CONFIG_KEYBOARD_SCANCODE_CALLBACK

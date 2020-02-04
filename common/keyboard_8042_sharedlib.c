@@ -12,6 +12,7 @@
 #include "libsharedobjs.h"
 #include "util.h"
 
+#ifndef CONFIG_KEYBOARD_CUSTOMIZATION
 /* The standard Chrome OS keyboard matrix table in scan code set 2. */
 #ifndef CONFIG_KEYBOARD_SCANCODE_MUTABLE
 SHAREDLIB(const
@@ -42,6 +43,7 @@ uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 )
 #endif
 ;
+#endif /* CONFIG_KEYBOARD_CUSTOMIZATION */
 
 /*
  * The translation table from scan code set 2 to set 1.
@@ -83,6 +85,7 @@ char * const keycap_long_label[KLLI_MAX & KEYCAP_LONG_LABEL_INDEX_BITMASK] = {
 	"RIGHT",   "DOWN",  "UP",    "ESC",
 });
 
+#ifndef CONFIG_KEYBOARD_CUSTOMIZATION
 #ifndef CONFIG_KEYBOARD_SCANCODE_MUTABLE
 SHAREDLIB(const
 #endif
@@ -125,7 +128,8 @@ char keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 )
 #endif
 ;
-#endif
+#endif /* CONFIG_KEYBOARD_CUSTOMIZATION */
+#endif /* CONFIG_KEYBOARD_DEBUG */
 
 uint8_t scancode_translate_set2_to_1(uint8_t code)
 {
