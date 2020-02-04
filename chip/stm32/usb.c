@@ -409,13 +409,19 @@ static void usb_suspend(void)
 	hook_call_deferred(&usb_pm_change_notify_hooks_data, 0);
 }
 
+/*
+ * SOF was received (set in interrupt), reset in usb_resume in the
+ * unexpected state case.
+ */
+static volatile int sof_received;
+
 static void usb_resume_deferred(void)
 {
 	uint32_t state = (STM32_USB_FNR & STM32_USB_FNR_RXDP_RXDM_MASK)
 		>> STM32_USB_FNR_RXDP_RXDM_SHIFT;
 
-	CPRINTF("RSMd %d %04x\n", state, STM32_USB_CNTR);
-	if (state == 2 || state == 3)
+	CPRINTF("RSMd %d %04x %d\n", state, STM32_USB_CNTR, sof_received);
+	if (sof_received == 0 && (state == 2 || state == 3))
 		usb_suspend();
 	else
 		hook_call_deferred(&usb_pm_change_notify_hooks_data, 0);
@@ -447,10 +453,17 @@ static void usb_resume(void)
 	 * reset condition for 20ms, so reading D+/D- after ~3ms should be safe
 	 * (there is no chance we end up sampling during a bus transaction).
 	 */
-	if (state == 2 || state == 3)
+	if (state == 2 || state == 3) {
+		/*
+		 * This function is already called from interrupt context so
+		 * there is no risk of race here.
+		 */
+		sof_received = 0;
+		STM32_USB_CNTR |= STM32_USB_CNTR_SOFM;
 		hook_call_deferred(&usb_resume_deferred_data, 3 * MSEC);
-	else
+	} else {
 		hook_call_deferred(&usb_pm_change_notify_hooks_data, 0);
+	}
 }
 
 #ifdef CONFIG_USB_REMOTE_WAKEUP
@@ -593,7 +606,7 @@ static void usb_interrupt_handle_wake(uint16_t status)
 	if (good || state == 3 || esof_count <= -USB_RESUME_TIMEOUT_MS) {
 		int ep;
 
-		STM32_USB_CNTR &= ~(STM32_USB_CNTR_ESOFM | STM32_USB_CNTR_SOFM);
+		STM32_USB_CNTR &= ~STM32_USB_CNTR_ESOFM;
 		usb_wake_done = 1;
 		if (!good) {
 			CPRINTF("wake error: cnt=%d state=%d\n",
@@ -618,6 +631,15 @@ void usb_interrupt(void)
 		usb_reset();
 
 #ifdef CONFIG_USB_SUSPEND
+	if (status & STM32_USB_ISTR_SOF) {
+		sof_received = 1;
+		/*
+		 * The wake handler also only cares about the _first_ SOF that
+		 * is received, so we can disable that interrupt.
+		 */
+		STM32_USB_CNTR &= ~STM32_USB_CNTR_SOFM;
+	}
+
 #ifdef CONFIG_USB_REMOTE_WAKEUP
 	if (status & (STM32_USB_ISTR_ESOF | STM32_USB_ISTR_SOF) &&
 			!usb_wake_done)
