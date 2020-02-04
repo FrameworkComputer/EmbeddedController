@@ -335,10 +335,10 @@ static struct policy_engine {
 
 	/* VDO */
 
+	/* TODO (b/148834626): Enable eMarker cable detection */
+	struct pd_cable cable;
+
 	/* PD_VDO_INVALID is used when there is an invalid VDO */
-	int32_t active_cable_vdo1;
-	int32_t active_cable_vdo2;
-	int32_t passive_cable_vdo;
 	int32_t ama_vdo;
 	int32_t vpd_vdo;
 	/* alternate mode policy*/
@@ -1064,9 +1064,9 @@ static void pe_src_startup_entry(int port)
 	print_current_state(port);
 
 	/* Initialize VDOs to default values */
-	pe[port].active_cable_vdo1 = PD_VDO_INVALID;
-	pe[port].active_cable_vdo2 = PD_VDO_INVALID;
-	pe[port].passive_cable_vdo = PD_VDO_INVALID;
+	memset(&pe[port].cable, 0, sizeof(pe[port].cable));
+	pe[port].cable.last_sop_p_msg_id = INVALID_MSG_ID_COUNTER;
+	pe[port].cable.last_sop_p_p_msg_id = INVALID_MSG_ID_COUNTER;
 	pe[port].ama_vdo = PD_VDO_INVALID;
 	pe[port].vpd_vdo = PD_VDO_INVALID;
 
@@ -3822,12 +3822,7 @@ static void pe_vdm_request_exit(int port)
 
 enum idh_ptype get_usb_pd_cable_type(int port)
 {
-	if (pe[port].passive_cable_vdo != PD_VDO_INVALID)
-		return IDH_PTYPE_PCABLE;
-	else if (pe[port].active_cable_vdo1 != PD_VDO_INVALID)
-		return IDH_PTYPE_ACABLE;
-	else
-		return IDH_PTYPE_UNDEF;
+	return pe[port].cable.type;
 }
 
 /**
@@ -4599,6 +4594,11 @@ void pd_dfp_pe_init(int port)
 struct pd_policy *pd_get_am_policy(int port)
 {
 	return &pe[port].am_policy;
+}
+
+struct pd_cable *pd_get_cable_attributes(int port)
+{
+	return &pe[port].cable;
 }
 
 void pd_set_dfp_enter_mode_flag(int port, bool set)
