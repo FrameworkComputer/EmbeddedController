@@ -36,6 +36,11 @@ test_mockable int chipset_in_state(int state_mask)
 	return state_mask & chipset_state;
 }
 
+test_mockable int chipset_in_or_transitioning_to_state(int state_mask)
+{
+	return state_mask & chipset_state;
+}
+
 void test_chipset_on(void)
 {
 	if (chipset_in_state(CHIPSET_STATE_ON))

@@ -6,6 +6,7 @@
 /* Basic Chrome OS fan control */
 
 #include "assert.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "fan.h"
@@ -606,7 +607,11 @@ static void pwm_fan_start(void)
 	 * Upon booting to S0, if needed AP will disable/throttle it using
 	 * host commands.
 	 */
-	pwm_fan_control(1);
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON))
+		pwm_fan_control(1);
 }
+/* On Fizz, CHIPSET_RESUME isn't triggered when AP warm resets.
+ * So we hook CHIPSET_RESET instead.
+ */
 DECLARE_HOOK(HOOK_CHIPSET_RESET, pwm_fan_start, HOOK_PRIO_FIRST);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwm_fan_start, HOOK_PRIO_DEFAULT);
