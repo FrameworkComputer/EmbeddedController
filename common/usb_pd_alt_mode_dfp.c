@@ -5,8 +5,15 @@
  * Alternate Mode Downstream Facing Port (DFP) USB-PD module.
  */
 
+#include "chipset.h"
 #include "console.h"
+#include "task.h"
+#include "task_id.h"
+#include "timer.h"
+#include "usb_charge.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
+#include "usbc_ppc.h"
 #include "util.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -16,6 +23,27 @@
 #define CPRINTS(format, args...)
 #define CPRINTF(format, args...)
 #endif
+
+#ifndef PORT_TO_HPD
+#define PORT_TO_HPD(port) ((port) ? GPIO_USB_C1_DP_HPD : GPIO_USB_C0_DP_HPD)
+#endif /* PORT_TO_HPD */
+
+/*
+ * timestamp of the next possible toggle to ensure the 2-ms spacing
+ * between IRQ_HPD.  Since this is used in overridable functions, this
+ * has to be global.
+ */
+uint64_t svdm_hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+int dp_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+uint32_t dp_status[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+__overridable const struct svdm_response svdm_rsp = {
+	.identity = NULL,
+	.svids = NULL,
+	.modes = NULL,
+};
 
 static int pd_get_mode_idx(int port, uint16_t svid)
 {
@@ -380,3 +408,315 @@ uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx)
 
 	return pe->svids[svid_idx].mode_vdo;
 }
+
+void notify_sysjump_ready(volatile const task_id_t * const sysjump_task_waiting)
+{
+	/*
+	 * If event was set from pd_prepare_sysjump, wake the
+	 * task waiting on us to complete.
+	 */
+	if (*sysjump_task_waiting != TASK_ID_INVALID)
+		task_set_event(*sysjump_task_waiting,
+						TASK_EVENT_SYSJUMP_READY, 0);
+}
+
+/*
+ * Before entering into alternate mode, state of the USB-C MUX
+ * needs to be in safe mode.
+ * Ref: USB Type-C Cable and Connector Specification
+ * Section E.2.2 Alternate Mode Electrical Requirements
+ */
+void usb_mux_set_safe_mode(int port)
+{
+	usb_mux_set(port, IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) ?
+		USB_PD_MUX_SAFE_MODE : USB_PD_MUX_NONE,
+		USB_SWITCH_CONNECT, pd_get_polarity(port));
+
+	/* Isolate the SBU lines. */
+	if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
+		ppc_set_sbu(port, 0);
+}
+
+__overridable void svdm_safe_dp_mode(int port)
+{
+	/* make DP interface safe until configure */
+	dp_flags[port] = 0;
+	dp_status[port] = 0;
+
+	usb_mux_set_safe_mode(port);
+}
+
+__overridable int svdm_enter_dp_mode(int port, uint32_t mode_caps)
+{
+	/*
+	 * Don't enter the mode if the SoC is off.
+	 *
+	 * There's no need to enter the mode while the SoC is off; we'll
+	 * actually enter the mode on the chipset resume hook.  Entering DP Alt
+	 * Mode twice will confuse some monitors and require and unplug/replug
+	 * to get them to work again.  The DP Alt Mode on USB-C spec says that
+	 * if we don't need to maintain HPD connectivity info in a low power
+	 * mode, then we shall exit DP Alt Mode.  (This is why we don't enter
+	 * when the SoC is off as opposed to suspend where adding a display
+	 * could cause a wake up.)
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return -1;
+
+	/* Only enter mode if device is DFP_D capable */
+	if (mode_caps & MODE_DP_SNK) {
+		svdm_safe_dp_mode(port);
+
+		if (IS_ENABLED(CONFIG_MKBP_EVENT) &&
+		    chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+			/*
+			 * Wake the system up since we're entering DP AltMode.
+			 */
+			pd_notify_dp_alt_mode_entry();
+
+		return 0;
+	}
+
+	return -1;
+}
+
+__overridable int svdm_dp_status(int port, uint32_t *payload)
+{
+	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+
+	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
+			 CMD_DP_STATUS | VDO_OPOS(opos));
+	payload[1] = VDO_DP_STATUS(0, /* HPD IRQ  ... not applicable */
+				   0, /* HPD level ... not applicable */
+				   0, /* exit DP? ... no */
+				   0, /* usb mode? ... no */
+				   0, /* multi-function ... no */
+				   (!!(dp_flags[port] & DP_FLAGS_DP_ON)),
+				   0, /* power low? ... no */
+				   (!!DP_FLAGS_DP_ON));
+	return 2;
+};
+
+__overridable uint8_t get_dp_pin_mode(int port)
+{
+	return pd_dfp_dp_get_pin_mode(port, dp_status[port]);
+}
+
+__overridable int svdm_dp_config(int port, uint32_t *payload)
+{
+	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
+	uint8_t pin_mode = get_dp_pin_mode(port);
+	mux_state_t mux_mode;
+
+	if (!pin_mode)
+		return 0;
+
+	/*
+	 * Multi-function operation is only allowed if that pin config is
+	 * supported.
+	 */
+	mux_mode = ((pin_mode & MODE_DP_PIN_MF_MASK) && mf_pref) ?
+		USB_PD_MUX_DOCK : USB_PD_MUX_DP_ENABLED;
+	CPRINTS("pin_mode: %x, mf: %d, mux: %d", pin_mode, mf_pref, mux_mode);
+
+	/* Connect the SBU and USB lines to the connector. */
+	if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
+		ppc_set_sbu(port, 1);
+	usb_mux_set(port, mux_mode, USB_SWITCH_CONNECT, pd_get_polarity(port));
+
+	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
+			 CMD_DP_CONFIG | VDO_OPOS(opos));
+	payload[1] = VDO_DP_CFG(pin_mode,      /* pin mode */
+				1,	       /* DPv1.3 signaling */
+				2);	       /* UFP connected */
+	return 2;
+};
+
+__overridable void svdm_dp_post_config(int port)
+{
+	dp_flags[port] |= DP_FLAGS_DP_ON;
+	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
+		return;
+
+#ifdef CONFIG_USB_PD_DP_HPD_GPIO
+	gpio_set_level(PORT_TO_HPD(port), 1);
+
+	/* set the minimum time delay (2ms) for the next HPD IRQ */
+	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
+#endif /* CONFIG_USB_PD_DP_HPD_GPIO */
+
+	usb_mux_hpd_update(port, 1, 0);
+
+#ifdef USB_PD_PORT_TCPC_MST
+	if (port == USB_PD_PORT_TCPC_MST)
+		baseboard_mst_enable_control(port, 1);
+#endif
+}
+
+__overridable int svdm_dp_attention(int port, uint32_t *payload)
+{
+	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
+	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
+#ifdef CONFIG_USB_PD_DP_HPD_GPIO
+	enum gpio_signal hpd = PORT_TO_HPD(port);
+	int cur_lvl = gpio_get_level(hpd);
+#endif /* CONFIG_USB_PD_DP_HPD_GPIO */
+
+	dp_status[port] = payload[1];
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
+	    (irq || lvl))
+		/*
+		 * Wake up the AP.  IRQ or level high indicates a DP sink is now
+		 * present.
+		 */
+		if (IS_ENABLED(CONFIG_MKBP_EVENT))
+			pd_notify_dp_alt_mode_entry();
+
+	/* Its initial DP status message prior to config */
+	if (!(dp_flags[port] & DP_FLAGS_DP_ON)) {
+		if (lvl)
+			dp_flags[port] |= DP_FLAGS_HPD_HI_PENDING;
+		return 1;
+	}
+
+#ifdef CONFIG_USB_PD_DP_HPD_GPIO
+	if (irq & !lvl) {
+		/*
+		 * IRQ can only be generated when the level is high, because
+		 * the IRQ is signaled by a short low pulse from the high level.
+		 */
+		CPRINTF("ERR:HPD:IRQ&LOW\n");
+		return 0; /* nak */
+	}
+
+	if (irq & cur_lvl) {
+		uint64_t now = get_time().val;
+		/* wait for the minimum spacing between IRQ_HPD if needed */
+		if (now < svdm_hpd_deadline[port])
+			usleep(svdm_hpd_deadline[port] - now);
+
+		/* generate IRQ_HPD pulse */
+		gpio_set_level(hpd, 0);
+		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
+		gpio_set_level(hpd, 1);
+	} else {
+		gpio_set_level(hpd, lvl);
+	}
+
+	/* set the minimum time delay (2ms) for the next HPD IRQ */
+	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
+#endif /* CONFIG_USB_PD_DP_HPD_GPIO */
+
+	usb_mux_hpd_update(port, lvl, irq);
+
+#ifdef USB_PD_PORT_TCPC_MST
+	if (port == USB_PD_PORT_TCPC_MST)
+		baseboard_mst_enable_control(port, lvl);
+#endif
+
+	/* ack */
+	return 1;
+}
+
+__overridable void svdm_exit_dp_mode(int port)
+{
+	svdm_safe_dp_mode(port);
+#ifdef CONFIG_USB_PD_DP_HPD_GPIO
+	gpio_set_level(PORT_TO_HPD(port), 0);
+#endif /* CONFIG_USB_PD_DP_HPD_GPIO */
+	usb_mux_hpd_update(port, 0, 0);
+#ifdef USB_PD_PORT_TCPC_MST
+	if (port == USB_PD_PORT_TCPC_MST)
+		baseboard_mst_enable_control(port, 0);
+#endif
+}
+
+__overridable int svdm_enter_gfu_mode(int port, uint32_t mode_caps)
+{
+	/* Always enter GFU mode */
+	return 0;
+}
+
+__overridable void svdm_exit_gfu_mode(int port)
+{
+}
+
+__overridable int svdm_gfu_status(int port, uint32_t *payload)
+{
+	/*
+	 * This is called after enter mode is successful, send unstructured
+	 * VDM to read info.
+	 */
+	pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_READ_INFO, NULL, 0);
+	return 0;
+}
+
+__overridable int svdm_gfu_config(int port, uint32_t *payload)
+{
+	return 0;
+}
+
+__overridable int svdm_gfu_attention(int port, uint32_t *payload)
+{
+	return 0;
+}
+
+#ifdef CONFIG_USB_PD_TBT_COMPAT_MODE
+__overridable int svdm_tbt_compat_enter_mode(int port, uint32_t mode_caps)
+{
+	return 0;
+}
+
+__overridable void svdm_tbt_compat_exit_mode(int port)
+{
+}
+
+__overridable int svdm_tbt_compat_status(int port, uint32_t *payload)
+{
+	return 0;
+}
+
+__overridable int svdm_tbt_compat_config(int port, uint32_t *payload)
+{
+	return 0;
+}
+
+__overridable int svdm_tbt_compat_attention(int port, uint32_t *payload)
+{
+	return 0;
+}
+#endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
+
+const struct svdm_amode_fx supported_modes[] = {
+	{
+		.svid = USB_SID_DISPLAYPORT,
+		.enter = &svdm_enter_dp_mode,
+		.status = &svdm_dp_status,
+		.config = &svdm_dp_config,
+		.post_config = &svdm_dp_post_config,
+		.attention = &svdm_dp_attention,
+		.exit = &svdm_exit_dp_mode,
+	},
+
+	{
+		.svid = USB_VID_GOOGLE,
+		.enter = &svdm_enter_gfu_mode,
+		.status = &svdm_gfu_status,
+		.config = &svdm_gfu_config,
+		.attention = &svdm_gfu_attention,
+		.exit = &svdm_exit_gfu_mode,
+	},
+#ifdef CONFIG_USB_PD_TBT_COMPAT_MODE
+	{
+		.svid = USB_VID_INTEL,
+		.enter = &svdm_tbt_compat_enter_mode,
+		.status = &svdm_tbt_compat_status,
+		.config = &svdm_tbt_compat_config,
+		.attention = &svdm_tbt_compat_attention,
+		.exit = &svdm_tbt_compat_exit_mode,
+	},
+#endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
+};
+const int supported_modes_cnt = ARRAY_SIZE(supported_modes);
