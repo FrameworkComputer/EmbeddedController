@@ -179,7 +179,15 @@ static int ps8xxx_get_chip_info(int port, int live,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 static int ps8xxx_enter_low_power_mode(int port)
 {
-	return EC_SUCCESS;
+	/*
+	 * PS8751 has the auto sleep function that enters low power mode on
+	 * its own in ~2 seconds. Other chips don't have it. Stub it out for
+	 * PS8751.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8751))
+		return EC_SUCCESS;
+
+	return tcpci_enter_low_power_mode(port);
 }
 #endif
 
