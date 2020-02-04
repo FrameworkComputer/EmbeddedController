@@ -145,7 +145,8 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
  * action is required- power-good signals will not change, just the relevant
  * load switches (which are specified to meet the platform's minimum turn-on
  * time when CPU_C10_GATED is deasserted again) are turned off. This gating is
- * done asynchronously.
+ * done asynchronously directly in the interrupt handler because its timing is
+ * very tight.
  *
  * For further reference, Figure 421 and Table 370 in the Comet Lake U PDG
  * summarizes platform power rail requirements in a reasonably easy-to-digest
@@ -161,6 +162,7 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
  */
 static void shutdown_s0_rails(void)
 {
+	board_enable_s0_rails(0);
 	/*
 	 * Deassert VCCST_PG as early as possible to satisfy tCPU22; VDDQ is
 	 * derived directly from SLP_S3.
@@ -268,12 +270,6 @@ static enum power_state pgood_timeout(enum power_state new_state)
  */
 enum power_state power_handle_state(enum power_state state)
 {
-	/*
-	 * TODO(b/144719399) gate PP1050_STG and PP1200_PLLOC when C10 asserted
-	 * Puff proto also gates HDMI power on EN_S0_RAILS so for that board
-	 * we do not gate them since HDMI should remain powered.
-	 */
-
 	switch (state) {
 	case POWER_G3S5:
 		if (intel_x86_wait_power_up_ok() != EC_SUCCESS) {
@@ -330,6 +326,8 @@ enum power_state power_handle_state(enum power_state state)
 			return pgood_timeout(POWER_S3S5);
 		msleep(2);
 		gpio_set_level(GPIO_EC_PCH_PWROK, 1);
+
+		board_enable_s0_rails(1);
 		break;
 
 	case POWER_S0S3:
@@ -372,3 +370,21 @@ enum power_state power_handle_state(enum power_state state)
  */
 void chipset_handle_reboot(void) {}
 #endif /* CONFIG_VBOOT_EFS */
+
+void c10_gate_interrupt(enum gpio_signal signal)
+{
+	/*
+	 * Per PDG, gate VccSTG and VCCIO on (SLP_S3_L && CPU_C10_GATE_L).
+	 *
+	 * When in S3 we let the state machine do it since timing is less
+	 * critical; when in S0/S0ix we do it here because timing is very
+	 * tight.
+	 */
+	if (board_is_c10_gate_enabled() && gpio_get_level(GPIO_SLP_S3_L)) {
+		int enable_core = gpio_get_level(GPIO_CPU_C10_GATE_L);
+
+		gpio_set_level(GPIO_EN_S0_RAILS, enable_core);
+	}
+
+	return power_signal_interrupt(signal);
+}

@@ -97,4 +97,41 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
+/*
+ * Board-specific enable for any additional rails in S0.
+ *
+ * Input 0 to turn off, 1 to turn on.
+ */
+void board_enable_s0_rails(int enable);
+
+/*
+ * Board-specific flag for whether EN_S0_RAILS can be turned off when
+ * CPU_C10_GATED is asserted by the PCH.
+ *
+ * Return 0 if EN_S0_RAILS must be left on when in S0, even if the PCH asserts
+ * the C10 gate.
+ *
+ * If this can ever return 1, the CPU_C10_GATE_L input from the PCH must also
+ * be configured to call c10_gate_interrupt() rather than
+ * power_signal_interrupt() in order to actually control the relevant core
+ * rails.
+ *
+ * TODO: it is safe to remove this function and assume C10 gating is enabled if
+ * support for rev0 puff boards is no longer required- it was added only for the
+ * benefit of those boards.
+ */
+int board_is_c10_gate_enabled(void);
+
+/*
+ * Special interrupt for CPU_C10_GATE_L handling.
+ *
+ * Response time on resume from C10 has very strict timing requirements- no more
+ * than 65 uS to turn on, and the load switches are specified to turn on in 65
+ * uS max at 1V (30 uS typical). This means the response to changes on the C10
+ * gate input must be as fast as possible to meet PCH timing requirements- much
+ * faster than doing this handling in the power state machine can achieve
+ * (hundreds of microseconds).
+ */
+void c10_gate_interrupt(enum gpio_signal signal);
+
 #endif /* __CROS_EC_COMETLAKE_DISCRETE_H */

@@ -27,6 +27,7 @@
 #include "host_command.h"
 #include "lid_switch.h"
 #include "power.h"
+#include "power/cometlake-discrete.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
@@ -533,3 +534,38 @@ int extpower_is_present(void)
 {
 	return adp_connected;
 }
+
+static uint16_t board_version;
+
+static void load_board_info(void)
+{
+	/*
+	 * Load board info from CBI to control per-device configuration.
+	 *
+	 * If unset it's safe to treat the board as a proto, just C10 gating
+	 * won't be enabled.
+	 */
+	uint32_t val;
+
+	if (cbi_get_board_version(&val) == EC_SUCCESS && val <= UINT16_MAX)
+		board_version = val;
+	CPRINTS("Board Version: 0x%04x", board_version);
+}
+DECLARE_HOOK(HOOK_INIT, load_board_info, HOOK_PRIO_INIT_I2C + 1);
+
+int board_is_c10_gate_enabled(void)
+{
+	/*
+	 * Puff proto drives EN_PP5000_HDMI from EN_S0_RAILS so we cannot gate
+	 * core rails while in S0 because HDMI should remain powered.
+	 * EN_PP5000_HDMI is a separate EC output on all other boards.
+	 */
+	return board_version != 0;
+}
+
+void board_enable_s0_rails(int enable)
+{
+	/* This output isn't connected on protos; safe to set anyway. */
+	gpio_set_level(GPIO_EN_PP5000_HDMI, enable);
+}
+
