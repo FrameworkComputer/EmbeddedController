@@ -174,20 +174,6 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = {
-		.channel = 3,
-		.flags = PWM_CONFIG_DSLEEP,
-		.freq = 100,
-	},
-	[PWM_CH_FAN] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_OPEN_DRAIN,
-		.freq = 25000,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
 /* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
@@ -207,16 +193,6 @@ const struct fan_t fans[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
-
-/* MFT channels. These are logically separate from pwm_channels. */
-const struct mft_t mft_channels[] = {
-	[MFT_CH_0] = {
-		.module = NPCX_MFT_MODULE_1,
-		.clk_src = TCKC_LFCLK,
-		.pwm_id = PWM_CH_FAN,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
