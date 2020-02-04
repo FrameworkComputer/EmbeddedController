@@ -5,6 +5,9 @@
 
 . /usr/share/misc/shflags
 
+readonly DEFAULT_RETRIES=${DEFAULT_RETRIES:-4}
+readonly STM32MON_CONNECT_RETRIES=${STM32MON_CONNECT_RETRIES:-6}
+
 DEFINE_boolean 'read' "${FLAGS_FALSE}" 'Read instead of write' 'r'
 # Both flash read and write protection are removed by default, but you
 # can optionally enable them (for testing purposes).
@@ -12,7 +15,7 @@ DEFINE_boolean 'remove_flash_read_protect' "${FLAGS_TRUE}" \
   'Remove flash read protection while performing command' 'U'
 DEFINE_boolean 'remove_flash_write_protect' "${FLAGS_TRUE}" \
   'Remove flash write protection while performing command' 'u'
-DEFINE_integer 'retries' 4 'Specify number of retries' 'R'
+DEFINE_integer 'retries' "${DEFAULT_RETRIES}" 'Specify number of retries' 'R'
 FLAGS_HELP="Usage: ${0} [flags] ec.bin"
 
 # Process commandline flags
@@ -120,7 +123,7 @@ flash_fp_mcu_stm32() {
 
   local STM32MON_READ_FLAGS=" -p -s ${spidev} -r"
   local STM32MON_WRITE_FLAGS="-p -s ${spidev} -e -w"
-  local stm32mon_flags="--retries 6"
+  local stm32mon_flags="--retries ${STM32MON_CONNECT_RETRIES}"
 
   if [[ "${FLAGS_remove_flash_write_protect}" -eq "${FLAGS_TRUE}" ]]; then
     STM32MON_READ_FLAGS=" -u ${STM32MON_READ_FLAGS}"
