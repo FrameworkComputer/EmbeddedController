@@ -451,4 +451,4 @@ void hwtimer_reset_watchdog(void)
 	timer->cnt = timer->arr;
 }
 
-#endif  /* defined(CONFIG_WATCHDOG) */
+#endif  /* defined(CONFIG_WATCHDOG_HELP) */
