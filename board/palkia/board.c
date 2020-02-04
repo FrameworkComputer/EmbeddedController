@@ -21,6 +21,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -42,10 +43,25 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+static const uint8_t actual_key_mask[KEYBOARD_COLS_MAX] = {
+	0x01, 0x68, 0xbd, 0x03, 0x7e, 0xff, 0xff,
+	0xff, 0xff, 0x03, 0xfd, 0x48, 0x03, 0xff,
+	0xf7, 0x16  /* full set */
+};
+
 /* GPIO to enable/disable the USB Type-A port. */
 const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
 	GPIO_EN_USB_A_5V,
 };
+
+void board_config_pre_init(void)
+{
+	int i;
+
+	/* override the keyscan key mask */
+	for (i = 0; i < KEYBOARD_COLS_MAX; ++i)
+		keyscan_config.actual_key_mask[i] = actual_key_mask[i];
+}
 
 static void ppc_interrupt(enum gpio_signal signal)
 {

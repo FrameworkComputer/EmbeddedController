@@ -13,3 +13,4 @@ BASEBOARD:=hatch
 
 board-y=board.o led.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o
+board-$(CONFIG_KEYBOARD_CUSTOMIZATION)+=keyboard_customization.o
