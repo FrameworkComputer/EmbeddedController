@@ -110,10 +110,16 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t lid_standrd_ref = {
+const mat33_fp_t lid_a_cover_ref = {
 	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0,  FLOAT_TO_FP(1), 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+const mat33_fp_t lid_b_cover_ref = {
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0,  FLOAT_TO_FP(1)}
 };
 
 const mat33_fp_t base_standard_ref = {
@@ -139,7 +145,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &kx022_data,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
-		.rot_standard_ref = &lid_standrd_ref,
+		.rot_standard_ref = &lid_a_cover_ref,
 		.default_range = 2, /* g */
 		.min_frequency = KX022_ACCEL_MIN_FREQ,
 		.max_frequency = KX022_ACCEL_MAX_FREQ,
@@ -219,11 +225,12 @@ int board_is_convertible(void)
 	/*
 	 * Bloog: 33, 34, 35, 36
 	 * Blooguard: 49, 50, 51, 52
+	 * Bipship: 53, 54
 	 * Unprovisioned: 255
 	 */
 	return sku_id == 33 || sku_id == 34 || sku_id == 35 || sku_id == 36
 		|| sku_id == 49 || sku_id == 50 || sku_id == 51 || sku_id == 52
-		|| sku_id == 255;
+		|| sku_id == 53 || sku_id == 54 || sku_id == 255;
 }
 
 static void board_update_sensor_config_from_sku(void)
@@ -232,6 +239,11 @@ static void board_update_sensor_config_from_sku(void)
 		motion_sensor_count = ARRAY_SIZE(motion_sensors);
 		/* Enable Base Accel interrupt */
 		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+
+		/* Override sensor marix for Bipship. */
+		if (sku_id == 53 || sku_id == 54)
+			motion_sensors[LID_ACCEL].rot_standard_ref =
+				&lid_b_cover_ref;
 	} else {
 		motion_sensor_count = 0;
 		gmr_tablet_switch_disable();
