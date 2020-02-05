@@ -110,11 +110,11 @@ bool online_calibration_has_new_values(void)
 
 bool online_calibration_read(int sensor_num, int16_t out[3])
 {
-	bool has_dirty;
+	bool has_valid;
 
 	mutex_lock(&g_calib_cache_mutex);
-	has_dirty = (sensor_calib_cache_dirty_map & BIT(sensor_num)) != 0;
-	if (has_dirty) {
+	has_valid = (sensor_calib_cache_valid_map & BIT(sensor_num)) != 0;
+	if (has_valid) {
 		/* Update data in out */
 		memcpy(out,
 		       motion_sensors[sensor_num].online_calib_data->cache,
@@ -124,7 +124,7 @@ bool online_calibration_read(int sensor_num, int16_t out[3])
 	}
 	mutex_unlock(&g_calib_cache_mutex);
 
-	return has_dirty;
+	return has_valid;
 }
 
 int online_calibration_process_data(

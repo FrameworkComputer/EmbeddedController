@@ -2474,7 +2474,7 @@ enum motionsense_command {
 
 	/*
 	 * Sensor Offset command is a setter/getter command for the offset
-	 * used for calibration.
+	 * used for factory calibration.
 	 * The offsets can be calculated by the host, or via
 	 * PERFORM_CALIB command.
 	 */
@@ -2518,6 +2518,11 @@ enum motionsense_command {
 	 * scale.
 	 */
 	MOTIONSENSE_CMD_SENSOR_SCALE = 18,
+
+	/*
+	 * Read the current online calibration values (if available).
+	 */
+	MOTIONSENSE_CMD_ONLINE_CALIB_READ = 19,
 
 	/* Number of motionsense sub-commands. */
 	MOTIONSENSE_NUM_CMDS
@@ -2731,6 +2736,7 @@ struct ec_params_motion_sense {
 			uint8_t sensor_num;
 			uint8_t enable;
 		} perform_calib;
+
 		/*
 		 * Used for MOTIONSENSE_CMD_EC_RATE, MOTIONSENSE_CMD_SENSOR_ODR
 		 * and MOTIONSENSE_CMD_SENSOR_RANGE.
@@ -2864,6 +2870,14 @@ struct ec_params_motion_sense {
 			int16_t hys_degree;
 		} tablet_mode_threshold;
 
+		/*
+		 * Used for MOTIONSENSE_CMD_ONLINE_CALIB_READ:
+		 * Allow reading a single sensor's online calibration value.
+		 */
+		struct __ec_todo_unpacked {
+			uint8_t sensor_num;
+		} online_calib_read;
+
 	};
 } __ec_todo_packed;
 
@@ -2983,6 +2997,8 @@ struct ec_response_motion_sense {
 		struct ec_response_motion_sense_fifo_info fifo_info, fifo_flush;
 
 		struct ec_response_motion_sense_fifo_data fifo_read;
+
+		struct ec_response_online_calibration_data online_calib_read;
 
 		struct __ec_todo_packed {
 			uint16_t reserved;
