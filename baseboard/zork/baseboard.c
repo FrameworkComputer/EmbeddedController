@@ -484,6 +484,11 @@ static int ps8802_tune_mux(int port, mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
 
+	/* Make sure the PS8802 is awake */
+	rv = ps8802_i2c_wake(port);
+	if (rv)
+		return rv;
+
 	/* USB specific config */
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {
 		/* Boost the USB gain */
