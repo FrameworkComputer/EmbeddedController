@@ -1301,15 +1301,20 @@ static void handle_new_power_state(int port)
 {
 	if (IS_ENABLED(CONFIG_POWER_COMMON) &&
 	    IS_ENABLED(CONFIG_USB_PE_SM)) {
-		if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
+		if (chipset_in_or_transitioning_to_state(
+					CHIPSET_STATE_ANY_OFF)) {
 			/*
 			 * The SoC will negotiated DP mode again when it
 			 * boots up
 			 */
 			pe_exit_dp_mode(port);
 
-		/* Ensure mux is set properly after chipset transition */
-		set_usb_mux_with_current_data_role(port);
+			/*
+			 * Reset mux to USB. DP mode is selected
+			 * again at boot up.
+			 */
+			set_usb_mux_with_current_data_role(port);
+		}
 	}
 }
 #endif /* CONFIG_POWER_COMMON */
