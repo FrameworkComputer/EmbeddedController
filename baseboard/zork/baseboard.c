@@ -491,44 +491,27 @@ static int ps8802_tune_mux(int port, mux_state_t mux_state)
 					PS8802_REG_PAGE2,
 					PS8802_REG2_USB_SSEQ_LEVEL,
 					PS8802_USBEQ_LEVEL_UP_MASK,
-					PS8802_USBEQ_LEVEL_UP_20DB);
-		if (rv)
-			return rv;
-
-		rv = ps8802_i2c_field_update16(port,
-					PS8802_REG_PAGE2,
-					PS8802_REG2_USB_CEQ_LEVEL,
-					PS8802_USBEQ_LEVEL_UP_MASK,
-					PS8802_USBEQ_LEVEL_UP_20DB);
+					PS8802_USBEQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 	}
 
 	/* DP specific config */
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
-		int val;
-
 		/* Boost the DP gain */
 		rv = ps8802_i2c_field_update8(port,
 					PS8802_REG_PAGE2,
 					PS8802_REG2_DPEQ_LEVEL,
 					PS8802_DPEQ_LEVEL_UP_MASK,
-					PS8802_DPEQ_LEVEL_UP_20DB);
+					PS8802_DPEQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
-		/* Set DP lane count */
-		val = (mux_state & USB_PD_MUX_USB_ENABLED)
-				? PS8802_LANE_COUNT_SET_2_LANE
-				: PS8802_LANE_COUNT_SET_4_LANE;
-
-		rv = ps8802_i2c_field_update8(port,
-					PS8802_REG_PAGE1,
-					PS8802_REG1_LANE_COUNT_SET,
-					PS8802_LANE_COUNT_SET_MASK,
-					val);
-		if (rv)
-			return rv;
+		/* Enable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+	} else {
+		/* Disable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
 	}
 
 	return rv;
@@ -549,7 +532,7 @@ static int ps8818_tune_mux(int port, mux_state_t mux_state)
 					PS8818_REG_PAGE1,
 					PS8818_REG1_APTX1EQ_10G_LEVEL,
 					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_21DB);
+					PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
@@ -557,7 +540,7 @@ static int ps8818_tune_mux(int port, mux_state_t mux_state)
 					PS8818_REG_PAGE1,
 					PS8818_REG1_APTX2EQ_10G_LEVEL,
 					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_21DB);
+					PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
@@ -565,7 +548,7 @@ static int ps8818_tune_mux(int port, mux_state_t mux_state)
 					PS8818_REG_PAGE1,
 					PS8818_REG1_APTX1EQ_5G_LEVEL,
 					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_21DB);
+					PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
@@ -573,68 +556,27 @@ static int ps8818_tune_mux(int port, mux_state_t mux_state)
 					PS8818_REG_PAGE1,
 					PS8818_REG1_APTX2EQ_5G_LEVEL,
 					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_21DB);
-		if (rv)
-			return rv;
-
-		rv = ps8818_i2c_field_update8(port,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_CRX1EQ_10G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_21DB);
-		if (rv)
-			return rv;
-
-		rv = ps8818_i2c_field_update8(port,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_CRX2EQ_10G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_21DB);
-		if (rv)
-			return rv;
-
-		rv = ps8818_i2c_field_update8(port,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_CRX1EQ_5G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_21DB);
-		if (rv)
-			return rv;
-
-		rv = ps8818_i2c_field_update8(port,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_CRX2EQ_5G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_21DB);
+					PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 	}
 
 	/* DP specific config */
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
-		int val;
-
 		/* Boost the DP gain */
 		rv = ps8818_i2c_field_update8(port,
 					PS8818_REG_PAGE1,
 					PS8818_REG1_DPEQ_LEVEL,
 					PS8818_DPEQ_LEVEL_UP_MASK,
-					PS8818_DPEQ_LEVEL_UP_21DB);
+					PS8818_DPEQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
-		/* Set DP lane count */
-		val = (mux_state & USB_PD_MUX_USB_ENABLED)
-				? PS8818_LANE_COUNT_SET_2_LANE
-				: PS8818_LANE_COUNT_SET_4_LANE;
-
-		rv = ps8818_i2c_field_update8(port,
-					PS8818_REG_PAGE2,
-					PS8818_REG2_LANE_COUNT_SET,
-					PS8818_LANE_COUNT_SET_MASK,
-					val);
-		if (rv)
-			return rv;
+		/* Enable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+	} else {
+		/* Disable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
 	}
 
 	return rv;
