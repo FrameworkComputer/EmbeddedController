@@ -24,6 +24,7 @@
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3dpx1207.h"
 #include "driver/retimer/ps8802.h"
+#include "driver/retimer/ps8811.h"
 #include "driver/retimer/ps8818.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/nct38xx.h"
@@ -471,6 +472,30 @@ void bc12_interrupt(enum gpio_signal signal)
 		break;
 	}
 }
+
+/*****************************************************************************
+ * USB-A Retimer tuning
+ */
+
+/* PS8811 gain tuning */
+static void ps8811_tuning_init(void)
+{
+	int rv;
+
+	/* USB-A0 can run with default settings */
+
+	/* USB-A1 needs to increase gain to get over MB/DB connector */
+	rv = i2c_write8(I2C_PORT_USBA1,
+			PS8811_I2C_ADDR_FLAGS + PS8811_REG_PAGE1,
+			PS8811_REG1_USB_BEQ_LEVEL,
+			PS8811_BEQ_I2C_LEVEL_UP_13DB |
+			PS8811_BEQ_PIN_LEVEL_UP_18DB);
+	if (rv) {
+		CPRINTSUSB("C1: PS8811 not present or failing to set gain");
+		return;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, ps8811_tuning_init, HOOK_PRIO_INIT_I2C + 1);
 
 /*****************************************************************************
  * Custom Zork USB-C1 Retimer/MUX driver
