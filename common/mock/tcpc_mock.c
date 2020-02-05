@@ -7,7 +7,7 @@
 #include "common.h"
 #include "console.h"
 #include "usb_pd_tcpm.h"
-#include "tcpc_mock.h"
+#include "mock/tcpc_mock.h"
 #include "memory.h"
 
 /* Public API for controlling/inspecting this mock */

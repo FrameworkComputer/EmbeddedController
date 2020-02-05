@@ -7,7 +7,7 @@
 #include "common.h"
 #include "console.h"
 #include "usb_mux.h"
-#include "usb_mux_mock.h"
+#include "mock/usb_mux_mock.h"
 #include "memory.h"
 
 /* Public API for controlling/inspecting this mock */
