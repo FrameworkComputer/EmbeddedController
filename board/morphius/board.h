@@ -19,6 +19,9 @@
 
 #define CONFIG_MKBP_USE_GPIO
 
+/* Battery */
+#define CONFIG_BATTERY_LEVEL_NEAR_FULL 91
+
 /* Motion sensing drivers */
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
