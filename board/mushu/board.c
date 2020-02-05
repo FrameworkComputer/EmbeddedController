@@ -120,6 +120,8 @@ const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT]   = { .channel = 3, .flags = 0, .freq = 10000 },
 	[PWM_CH_FAN] = {.channel = 5, .flags = PWM_CONFIG_OPEN_DRAIN,
 			.freq = 25000},
+	[PWM_CH_FAN2] = {.channel = 6, .flags = PWM_CONFIG_OPEN_DRAIN,
+			.freq = 25000},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -363,6 +365,12 @@ const struct fan_conf fan_conf_0 = {
 	.enable_gpio = GPIO_EN_PP5000_FAN,
 };
 
+const struct fan_conf fan_conf_1 = {
+	.flags = FAN_USE_RPM_MODE,
+	.ch = MFT_CH_1,	/* Use MFT id to control fan */
+	.pgood_gpio = -1,
+	.enable_gpio = GPIO_EN_PP5000_FAN,
+};
 /* Default */
 const struct fan_rpm fan_rpm_0 = {
 	.rpm_min = 3100,
@@ -370,14 +378,21 @@ const struct fan_rpm fan_rpm_0 = {
 	.rpm_max = 6900,
 };
 
+const struct fan_rpm fan_rpm_1 = {
+	.rpm_min = 3100,
+	.rpm_start = 3100,
+	.rpm_max = 6900,
+};
 const struct fan_t fans[FAN_CH_COUNT] = {
 	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
+	[FAN_CH_1] = { .conf = &fan_conf_1, .rpm = &fan_rpm_1, },
 };
 
 /******************************************************************************/
 /* MFT channels. These are logically separate from pwm_channels. */
 const struct mft_t mft_channels[] = {
 	[MFT_CH_0] = {NPCX_MFT_MODULE_1, TCKC_LFCLK, PWM_CH_FAN},
+	[MFT_CH_1] = {NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN2},
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
@@ -424,12 +439,28 @@ const static struct ec_thermal_config thermal_a = {
 	.temp_fan_max = C_TO_K(50),
 };
 
+const static struct ec_thermal_config thermal_b = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(25),
+	.temp_fan_max = C_TO_K(50),
+};
+
+
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 
 static void setup_fans(void)
 {
 	thermal_params[TEMP_SENSOR_1] = thermal_a;
-	thermal_params[TEMP_SENSOR_2] = thermal_a;
+	thermal_params[TEMP_SENSOR_2] = thermal_b;
 }
 
 /* Sets the gpio flags correct taking into account warm resets */
