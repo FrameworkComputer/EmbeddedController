@@ -19,6 +19,7 @@
 
 #define CONFIG_MKBP_USE_GPIO
 
+#undef CONFIG_LED_ONOFF_STATES
 /* Battery */
 #define CONFIG_BATTERY_LEVEL_NEAR_FULL 91
 
