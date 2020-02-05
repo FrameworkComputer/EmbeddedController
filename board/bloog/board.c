@@ -332,7 +332,7 @@ __override uint32_t board_override_feature_flags0(uint32_t flags0)
 	 * Remove keyboard backlight feature for devices that don't support it.
 	 */
 	if (sku_id == 33 || sku_id == 36 || sku_id == 51 ||
-		sku_id == 52 || sku_id == 66 || sku_id == 68)
+		sku_id == 52 || sku_id == 53 || sku_id == 66 || sku_id == 68)
 		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
 	else
 		return flags0;
