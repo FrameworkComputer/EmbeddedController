@@ -25,23 +25,6 @@
 #define PS8802_STATUS_10_GBPS			BIT(5)
 
 /*
- * PAGE 1 Register Definitions
- */
-#define PS8802_REG_PAGE1	0x01
-
-#define PS8802_REG1_LINK_BW_SET		0x10
-#define PS8802_LINK_BW_SET_1_62_GBPS		0x06
-#define PS8802_LINK_BW_SET_2_7_GBPS		0x0A
-#define PS8802_LINK_BW_SET_5_4_GBPS		0x14
-#define PS8802_LINK_BW_SET_8_1_GBPS		0x1E
-
-#define PS8802_REG1_LANE_COUNT_SET	0x11
-#define PS8802_LANE_COUNT_SET_1_LANE		0x01
-#define PS8802_LANE_COUNT_SET_2_LANE		0x02
-#define PS8802_LANE_COUNT_SET_4_LANE		0x04
-#define PS8802_LANE_COUNT_SET_MASK		0x1F
-
-/*
  * PAGE 2 Register Definitions
  */
 #define PS8802_REG_PAGE2	0x02
@@ -84,6 +67,7 @@
 extern const struct usb_mux_driver ps8802_usb_mux_driver;
 extern const struct usb_retimer_driver ps8802_usb_retimer;
 
+int ps8802_i2c_wake(int port);
 int ps8802_detect(int port);
 
 int ps8802_i2c_read(int port, int page, int offset, int *data);

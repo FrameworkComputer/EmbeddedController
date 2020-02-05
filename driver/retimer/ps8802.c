@@ -25,7 +25,7 @@ int ps8802_i2c_read(int port, int page, int offset, int *data)
 		       offset, data);
 
 	if (PS8802_DEBUG)
-		ccprintf("%s(%d:0x%02X, 0x%02X) => 0x%02X\n", __func__,
+		ccprintf("%s(%d:0x%02X, 0x%02X) =>0x%02X\n", __func__,
 			 usb_retimers[port].i2c_port,
 			 usb_retimers[port].i2c_addr_flags + page,
 			 offset, *data);
@@ -35,60 +35,132 @@ int ps8802_i2c_read(int port, int page, int offset, int *data)
 
 int ps8802_i2c_write(int port, int page, int offset, int data)
 {
+	int rv;
+	int pre_val, post_val;
+
 	if (PS8802_DEBUG)
-		ccprintf("%s(%d:0x%02X, 0x%02X, 0x%02X)\n", __func__,
+		i2c_read8(usb_retimers[port].i2c_port,
+			usb_retimers[port].i2c_addr_flags + page,
+			offset, &pre_val);
+
+	rv = i2c_write8(usb_retimers[port].i2c_port,
+			usb_retimers[port].i2c_addr_flags + page,
+			offset, data);
+
+	if (PS8802_DEBUG) {
+		i2c_read8(usb_retimers[port].i2c_port,
+			usb_retimers[port].i2c_addr_flags + page,
+			offset, &post_val);
+
+		ccprintf("%s(%d:0x%02X, 0x%02X, 0x%02X) "
+			"0x%02X=>0x%02X\n",
+			 __func__,
 			 usb_retimers[port].i2c_port,
 			 usb_retimers[port].i2c_addr_flags + page,
-			 offset, data);
+			 offset, data,
+			 pre_val, post_val);
+	}
 
-	return i2c_write8(usb_retimers[port].i2c_port,
-			  usb_retimers[port].i2c_addr_flags + page,
-			  offset, data);
+	return rv;
 }
 
 int ps8802_i2c_write16(int port, int page, int offset, int data)
 {
+	int rv;
+	int pre_val, post_val;
+
 	if (PS8802_DEBUG)
-		ccprintf("%s(%d:0x%02X, 0x%02X, 0x%04X)\n", __func__,
-			 usb_retimers[port].i2c_port,
+		i2c_read16(usb_retimers[port].i2c_port,
+			   usb_retimers[port].i2c_addr_flags + page,
+			   offset, &pre_val);
+
+	rv = i2c_write16(usb_retimers[port].i2c_port,
 			 usb_retimers[port].i2c_addr_flags + page,
 			 offset, data);
 
-	return i2c_write16(usb_retimers[port].i2c_port,
+	if (PS8802_DEBUG) {
+		i2c_read16(usb_retimers[port].i2c_port,
 			   usb_retimers[port].i2c_addr_flags + page,
-			   offset, data);
+			   offset, &post_val);
+
+		ccprintf("%s(%d:0x%02X, 0x%02X, 0x%04X) "
+			 "0x%04X=>0x%04X\n",
+			 __func__,
+			 usb_retimers[port].i2c_port,
+			 usb_retimers[port].i2c_addr_flags + page,
+			 offset, data,
+			 pre_val, post_val);
+	}
+
+	return rv;
 }
 
 int ps8802_i2c_field_update8(int port, int page, int offset,
 			     uint8_t field_mask, uint8_t set_value)
 {
+	int rv;
+	int pre_val, post_val;
+
 	if (PS8802_DEBUG)
-		ccprintf("%s(%d:0x%02X, 0x%02X, 0x%02X, 0x%02X)\n", __func__,
+		i2c_read8(usb_retimers[port].i2c_port,
+			  usb_retimers[port].i2c_addr_flags + page,
+			  offset, &pre_val);
+
+	rv = i2c_field_update8(usb_retimers[port].i2c_port,
+			       usb_retimers[port].i2c_addr_flags + page,
+			       offset,
+			       field_mask,
+			       set_value);
+
+	if (PS8802_DEBUG) {
+		i2c_read8(usb_retimers[port].i2c_port,
+			  usb_retimers[port].i2c_addr_flags + page,
+			  offset, &post_val);
+
+		ccprintf("%s(%d:0x%02X, 0x%02X, 0x%02X, 0x%02X) "
+			 "0x%02X=>0x%02X\n",
+			 __func__,
 			 usb_retimers[port].i2c_port,
 			 usb_retimers[port].i2c_addr_flags + page,
-			 offset, field_mask, set_value);
+			 offset, field_mask, set_value,
+			 pre_val, post_val);
+	}
 
-	return i2c_field_update8(usb_retimers[port].i2c_port,
-				 usb_retimers[port].i2c_addr_flags + page,
-				 offset,
-				 field_mask,
-				 set_value);
+	return rv;
 }
 
 int ps8802_i2c_field_update16(int port, int page, int offset,
 			     uint16_t field_mask, uint16_t set_value)
 {
+	int rv;
+	int pre_val, post_val;
+
 	if (PS8802_DEBUG)
-		ccprintf("%s(%d:0x%02X, 0x%02X, 0x%04X, 0x%04X)\n", __func__,
+		i2c_read16(usb_retimers[port].i2c_port,
+			   usb_retimers[port].i2c_addr_flags + page,
+			   offset, &pre_val);
+
+	rv = i2c_field_update16(usb_retimers[port].i2c_port,
+				usb_retimers[port].i2c_addr_flags + page,
+				offset,
+				field_mask,
+				set_value);
+
+	if (PS8802_DEBUG) {
+		i2c_read16(usb_retimers[port].i2c_port,
+			   usb_retimers[port].i2c_addr_flags + page,
+			   offset, &post_val);
+
+		ccprintf("%s(%d:0x%02X, 0x%02X, 0x%02X, 0x%04X) "
+			 "0x%04X=>0x%04X\n",
+			 __func__,
 			 usb_retimers[port].i2c_port,
 			 usb_retimers[port].i2c_addr_flags + page,
-			 offset, field_mask, set_value);
+			 offset, field_mask, set_value,
+			 pre_val, post_val);
+	}
 
-	return i2c_field_update16(usb_retimers[port].i2c_port,
-				  usb_retimers[port].i2c_addr_flags + page,
-				  offset,
-				  field_mask,
-				  set_value);
+	return rv;
 }
 
 /*
@@ -96,7 +168,7 @@ int ps8802_i2c_field_update16(int port, int page, int offset,
  * From Application Note: 1) Activate by reading any Page 2 register. 2) Wait
  * 500 microseconds. 3) After 5 seconds idle, PS8802 will return to standby.
  */
-static int ps8802_i2c_wake(int port)
+int ps8802_i2c_wake(int port)
 {
 	int data;
 	int rv = EC_ERROR_UNKNOWN;
@@ -134,10 +206,7 @@ static int ps8802_init(int port)
 
 static int ps8802_set_mux(int port, mux_state_t mux_state)
 {
-	int val = (PS8802_MODE_DP_REG_CONTROL
-		   | PS8802_MODE_USB_REG_CONTROL
-		   | PS8802_MODE_FLIP_REG_CONTROL
-		   | PS8802_MODE_IN_HPD_REG_CONTROL);
+	int val;
 	int rv;
 
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
@@ -158,6 +227,11 @@ static int ps8802_set_mux(int port, mux_state_t mux_state)
 								? "FLIP" : "");
 
 	/* Set the mode and flip */
+	val = (PS8802_MODE_DP_REG_CONTROL |
+	       PS8802_MODE_USB_REG_CONTROL |
+	       PS8802_MODE_FLIP_REG_CONTROL |
+	       PS8802_MODE_IN_HPD_REG_CONTROL);
+
 	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		val |= PS8802_MODE_USB_ENABLE;
 	if (mux_state & USB_PD_MUX_DP_ENABLED)
@@ -177,36 +251,6 @@ static int ps8802_set_mux(int port, mux_state_t mux_state)
 		rv = usb_retimers[port].tune(port, mux_state);
 		if (rv)
 			return rv;
-	}
-
-	if (PS8802_DEBUG) {
-		int tx_status;
-		int rx_status;
-
-		rv = ps8802_i2c_read(port,
-				     PS8802_REG_PAGE0,
-				     PS8802_REG0_TX_STATUS,
-				     &tx_status);
-		if (rv)
-			return rv;
-
-		rv = ps8802_i2c_read(port,
-				     PS8802_REG_PAGE0,
-				     PS8802_REG0_RX_STATUS,
-				     &rx_status);
-		if (rv)
-			return rv;
-
-		ccprintf("%s: tx:channel %snormal %s10Gbps\n",
-			 __func__,
-			 (tx_status & PS8802_STATUS_NORMAL_OPERATION)
-								? "" : "NOT-",
-			 (tx_status & PS8802_STATUS_10_GBPS)	? "" : "NON-");
-		ccprintf("%s: rx:channel %snormal %s10Gbps\n",
-			 __func__,
-			 (rx_status & PS8802_STATUS_NORMAL_OPERATION)
-								? "" : "NOT-",
-			 (rx_status & PS8802_STATUS_10_GBPS)	? "" : "NON-");
 	}
 
 	return rv;
