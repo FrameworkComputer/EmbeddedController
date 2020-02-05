@@ -3808,19 +3808,11 @@ static void pe_do_port_discovery_run(int port)
 			break;
 		case CMD_DP_STATUS:
 			pe[port].vdm_cmd = CMD_DP_CONFIG;
-
-			/*
-			 * DP status response & UFP's DP attention have same
-			 * payload
-			 */
-			dfp_consume_attention(port, pe[port].vdm_data);
 			if (modep && modep->opos)
 				ret = modep->fx->config(port,
 							pe[port].vdm_data);
 			break;
 		case CMD_DP_CONFIG:
-			if (modep && modep->opos && modep->fx->post_config)
-				modep->fx->post_config(port);
 			PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
 			break;
 		case CMD_EXIT_MODE:
