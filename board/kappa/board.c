@@ -271,12 +271,6 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #endif /* SECTION_IS_RW */
 
-/* TODO(b:138640167): config charger correctly */
-int charger_is_sourcing_otg_power(int port)
-{
-	return 0;
-}
-
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {

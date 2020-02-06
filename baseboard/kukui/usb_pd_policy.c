@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "charge_state_v2.h"
 #include "charger.h"
 #include "console.h"
 #include "gpio.h"
@@ -49,7 +50,10 @@ int pd_set_power_supply_ready(int port)
 	/* Provide VBUS */
 	vbus_en = 1;
 
-	charger_enable_otg_power(1);
+	if (IS_ENABLED(VARIANT_KUKUI_CHARGER_ISL9238))
+		charge_set_output_current_limit(3300, 5000);
+	else
+		charger_enable_otg_power(1);
 
 	gpio_set_level(GPIO_EN_USBC_CHARGE_L, 1);
 	gpio_set_level(GPIO_EN_PP5000_USBC, 1);
@@ -74,7 +78,11 @@ void pd_power_supply_reset(int port)
 	if (prev_en)
 		pd_set_vbus_discharge(port, 1);
 
-	charger_enable_otg_power(0);
+	if (IS_ENABLED(VARIANT_KUKUI_CHARGER_ISL9238))
+		charge_set_output_current_limit(0, 0);
+	else
+		charger_enable_otg_power(0);
+
 	gpio_set_level(GPIO_EN_PP5000_USBC, 0);
 
 	/* notify host of power info change */
