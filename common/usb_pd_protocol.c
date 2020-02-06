@@ -4939,20 +4939,20 @@ static void pd_control_resume(int port)
 }
 
 /*
- * (enable=1) request pd_task transition to the suspended state.  hang
+ * (suspend=1) request pd_task transition to the suspended state.  hang
  * around for a while until we observe the state change.  this can
  * take a while (like 300ms) on startup when pd_task is sleeping in
  * tcpci_tcpm_init.
  *
- * (enable=0) force pd_task out of the suspended state and into the
+ * (suspend=0) force pd_task out of the suspended state and into the
  * port's default state.
  */
 
-void pd_set_suspend(int port, int enable)
+void pd_set_suspend(int port, int suspend)
 {
 	int tries = 300;
 
-	if (enable) {
+	if (suspend) {
 		pd[port].req_suspend_state = 1;
 		do {
 			task_wake(PD_PORT_TO_TASK_ID(port));

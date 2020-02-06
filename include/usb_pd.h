@@ -2181,9 +2181,9 @@ int pd_rx_started(int port);
 /**
  * Suspend the PD task.
  * @param port USB-C port number
- * @param enable pass 0 to resume, anything else to suspend
+ * @param suspend pass 0 to resume, anything else to suspend
  */
-void pd_set_suspend(int port, int enable);
+void pd_set_suspend(int port, int suspend);
 
 /**
  * Resume the PD task for a port after a period of time has elapsed.
