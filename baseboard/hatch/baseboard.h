@@ -78,6 +78,7 @@
 #define I2C_PORT_ACCEL I2C_PORT_SENSOR
 
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
+#if !defined(BOARD_PALKIA)
 #define CONFIG_ACCEL_FIFO
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO_SIZE 256
@@ -87,6 +88,7 @@
 /* Sensor console commands */
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
+#endif /* !BOARD_PALKIA */
 
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
@@ -122,7 +124,11 @@
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_TCPMV1
+#if defined(BOARD_PALKIA)
+#define CONFIG_USB_PD_PORT_MAX_COUNT 1
+#else
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
+#endif
 #define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT TYPEC_RP_3A0
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
@@ -149,13 +155,17 @@
 #define CONFIG_CMD_CHARGEN
 
 #define USB_PD_PORT_TCPC_0	0
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 #define USB_PD_PORT_TCPC_1	1
+#endif
 
 /* BC 1.2 */
 #define CONFIG_USB_CHARGER
 
+#if !defined(BOARD_PALKIA)
 /* Common Sensor Defines */
 #define CONFIG_TABLET_MODE
+#endif
 
 /* TODO(b/122273953): Use correct PD delay values */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000	/* us */
