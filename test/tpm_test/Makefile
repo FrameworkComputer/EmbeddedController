@@ -59,7 +59,7 @@ $(obj)/%.o: $(obj)/%.c
 
 $(obj)/%.o: %.c
 	$(call echo,"  CC      $(notdir $@)")
-	$(Q)gcc $(CFLAGS) -Wall -Werror -MMD -MF $@.d -o $@ $<
+	$(Q)gcc $(CFLAGS) -Wall -Werror -MMD -MF $@.d -MT $@ -o $@ $<
 
 $(obj)/_$(TARGET).so: $(OBJS) $(obj)/$(TARGET).py
 	$(call echo,"  LD      $(notdir $@)")

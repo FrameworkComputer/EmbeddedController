@@ -86,16 +86,17 @@ cmd_fuzz_exe = $(CXX) $^ $(HOST_TEST_LDFLAGS) $(LDFLAGS_EXTRA) -o $@
 cmd_run_fuzz = build/host/$*/$*.exe -seed=1 -runs=1 $(silent) \
 	$(silent_err) || (echo "Test $* failed!" && false)
 cmd_exe = $(CC) $(ro-objs) $(HOST_TEST_LDFLAGS) $(LDFLAGS_EXTRA) -o $@
-cmd_c_to_o = $(CC) $(C_WARN) $(CFLAGS) -MMD -MP -MF $@.d -c $< -o $(@D)/$(@F)
+cmd_c_to_o = $(CC) $(C_WARN) $(CFLAGS) -MMD -MP -MF $@.d -c $< \
+		-MT $(@D)/$(@F) -o $(@D)/$(@F)
 cmd_cxx_to_o = $(CXX) -std=c++11 $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d -c $< \
-		      -o $(@D)/$(@F)
+		      -MT $(@D)/$(@F) -o $(@D)/$(@F)
 cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c)) \
 	         $(BUILD_LDFLAGS) \
-	         -MMD -MF $@.d -o $@
+	         -MMD -MF $@.d -MT $@ -o $@
 cmd_c_to_vif = $(BUILDCC) $(BUILD_CFLAGS) $(STANDALONE_FLAGS) \
-		-MMD -MF $@.d -c $< -flto -o $@
-cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d  -o $@ \
+		-MMD -MF $@.d -c $< -flto -MT $@ -o $@
+cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d -MT $@ -o $@ \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c)) $(HOST_LDFLAGS)
 cmd_cxx_to_host = $(HOSTCXX) -std=c++0x $(COMMON_WARN) $(HOST_CXXFLAGS)\
 	-I ./$($(notdir $@)_ROOT) -o $@ $(filter %.cc,$^) $($(notdir $@)_LIBS)
@@ -119,7 +120,7 @@ cmd_sharedlib_elf = $(CC) $(libsharedobjs_deps) \
 	-Wl,-Map,$(out)/$(SHOBJLIB)/$(SHOBJLIB).map
 cmd_c_to_taskinfo = $(BUILDCC) \
 	$(filter-out -DSECTION_IS_$(BLD)=$(EMPTY),$(BUILD_CFLAGS)) \
-	-DSECTION_IS_$(3)=$(EMPTY) -MMD -MF $@.d -c $< -flto -o $@
+	-DSECTION_IS_$(3)=$(EMPTY) -MMD -MF $@.d -c $< -flto -MT $@ -o $@
 cmd_link_taskinfo = $(BUILDCC) $(BUILD_CFLAGS) --shared -fPIC $^ \
 	$(BUILD_LDFLAGS) -flto -o $@
 cmd_proto_to_cxx = $(PROTOC) -I. --cpp_out=$(out)/gen $^
@@ -602,21 +603,21 @@ npx-monitor-dir:
 $(npcx-monitor-fw-bin):$(npcx-monitor-fw).c npx-monitor-dir
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
 	$(Q)$(CC) $(CFLAGS) -MMD -MF $(out)/$(npcx-lfw).d -c $< \
-		-o $(out)/$(npcx-monitor-fw).o
+		-MT $(out)/$(npcx-monitor-fw).o -o $(out)/$(npcx-monitor-fw).o
 	$(Q)$(CC) $(out)/$(npcx-monitor-fw).o $(LDFLAGS) \
 		-o $(out)/$(npcx-monitor-fw).elf -Wl,-T,$(npcx-monitor-fw).ld \
 		-Wl,-Map,$(out)/$(npcx-monitor-fw).map
 	$(Q)$(OBJCOPY) -O binary $(out)/$(npcx-monitor-fw).elf $@
 
 $(out)/$(npcx-monitor-hdr)_ro.o:$(npcx-monitor-hdr).c npx-monitor-dir
-	$(Q)$(CC) $(CFLAGS) -DSECTION_IS_RO=$(EMPTY) -MMD -c $< -o $@
+	$(Q)$(CC) $(CFLAGS) -DSECTION_IS_RO=$(EMPTY) -MMD -c $< -MT $@ -o $@
 
 $(npcx-monitor-hdr-ro-bin):$(out)/$(npcx-monitor-hdr)_ro.o
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
 	$(Q)$(OBJCOPY) -O binary $< $@
 
 $(out)/$(npcx-monitor-hdr)_rw.o:$(npcx-monitor-hdr).c npx-monitor-dir
-	$(Q)$(CC) $(CFLAGS) -MMD -c $< -o $@
+	$(Q)$(CC) $(CFLAGS) -MMD -c $< -MT $@ -o $@
 
 $(npcx-monitor-hdr-rw-bin):$(out)/$(npcx-monitor-hdr)_rw.o
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
