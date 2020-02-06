@@ -1,4 +1,5 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # Copyright 2018 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -26,6 +27,7 @@ DEV_MODE_OPEN_PROD = '0.3.9'
 DEV_MODE_OPEN_PREPVT = '0.4.7'
 TESTLAB_PROD = '0.3.10'
 CR50_USB = '18d1:5014'
+CR50_LSUSB_CMD = ['lsusb', '-vd', CR50_USB]
 ERASED_BID = 'ffffffff'
 
 HELP_INFO = """
@@ -151,14 +153,16 @@ parser.add_argument('-I', '--ip', type=str, default='',
 
 def debug(string):
     """Print yellow string"""
-    print '\033[93m' + string + '\033[0m'
+    print('\033[93m' + string + '\033[0m')
 
 def info(string):
     """Print green string"""
-    print '\033[92m' + string + '\033[0m'
+    print('\033[92m' + string + '\033[0m')
 
 class RMAOpen(object):
     """Used to find the cr50 console and run RMA open"""
+
+    ENABLE_TESTLAB_CMD = 'ccd testlab enabled\n'
 
     def __init__(self, device=None, usb_serial=None, print_caps=False,
             servo_port=None, ip=None):
@@ -183,8 +187,8 @@ class RMAOpen(object):
         """Run dut-control and return the response"""
         try:
             return subprocess.check_output(['dut-control', '-p',
-                    self.servo_port, control]).strip()
-        except OSError, e:
+                    self.servo_port, control], encoding='utf-8').strip()
+        except OSError:
             debug(DEBUG_DUT_CONTROL_OSERROR)
             raise
 
@@ -215,20 +219,22 @@ class RMAOpen(object):
         """
         try:
             ser = serial.Serial(self.device, timeout=1)
-        except OSError, e:
+        except OSError:
             debug('Permission denied ' + self.device)
             debug('Try running cr50_rma_open with sudo')
             raise
-        ser.write(cmd + '\n\n')
+        write_cmd = cmd + '\n\n'
+        ser.write(write_cmd.encode('utf-8'))
         if nbytes:
             output = ser.read(nbytes).strip()
         else:
             output = ser.readall().strip()
         ser.close()
 
+        output = output.decode('utf-8').strip() if output else ''
         # Return only the command output
         split_cmd = cmd + '\r'
-        if output and cmd and split_cmd in output:
+        if cmd and split_cmd in output:
             return ''.join(output.rpartition(split_cmd)[1::]).split('>')[0]
         return output
 
@@ -273,7 +279,7 @@ class RMAOpen(object):
             The RMA challenge with all whitespace removed.
         """
         output = self.send_cmd_get_output('rma_auth').strip()
-        print 'rma_auth output:\n', output
+        print('rma_auth output:\n', output)
         # Extract the challenge from the console output
         if 'generated challenge:' in output:
             return output.split('generated challenge:')[-1].strip()
@@ -295,8 +301,8 @@ class RMAOpen(object):
         info('HWID:' + hwid)
         url = URL % (challenge, hwid)
         info('GOTO:\n' + url)
-        print 'If the server fails to debug the challenge make sure the RLZ is '
-        print 'whitelisted'
+        print('If the server fails to debug the challenge make sure the RLZ '
+              'is whitelisted')
 
 
     def try_authcode(self, authcode):
@@ -308,8 +314,8 @@ class RMAOpen(object):
         # rma_auth may cause the system to reboot. Don't wait to read all that
         # output. Read the first 300 bytes and call it a day.
         output = self.send_cmd_get_output('rma_auth ' + authcode, nbytes=300)
-        print 'CR50 RESPONSE:', output
-        print 'waiting for cr50 reboot'
+        print('CR50 RESPONSE:', output)
+        print('waiting for cr50 reboot')
         # Cr50 may be rebooting. Wait a bit
         time.sleep(5)
         if self.using_ccd:
@@ -350,7 +356,7 @@ class RMAOpen(object):
         if 'Capabilities' not in output:
             raise ValueError('Could not get ccd output')
         if self.print_caps:
-            print 'CURRENT CCD SETTINGS:\n', output
+            print('CURRENT CCD SETTINGS:\n', output)
         restricted = 'IfOpened' in output or 'IfUnlocked' in output
         info('ccd: ' + ('Restricted' if restricted else 'Unrestricted'))
         return restricted
@@ -398,7 +404,8 @@ class RMAOpen(object):
 
     def _run_on_dut(self, command):
         """Run the command on the DUT."""
-        return subprocess.check_output(['ssh', self.ip, command])
+        return subprocess.check_output(['ssh', self.ip, command],
+                                       encoding='utf-8')
 
 
     def _open_in_dev_mode(self):
@@ -434,30 +441,30 @@ class RMAOpen(object):
             self._open_in_dev_mode()
         else:
             self.send_cmd_get_output('ccd open')
-        print 'Enabling testlab mode reqires pressing the power button.'
-        print 'Once the process starts keep tapping the power button for 10',
-        print 'seconds.'
-        raw_input("Press Enter when you're ready to start...")
+        print('Enabling testlab mode reqires pressing the power button.')
+        print('Once the process starts keep tapping the power button for 10 '
+              'seconds.')
+        input("Press Enter when you're ready to start...")
         end_time = time.time() + 15
 
         ser = serial.Serial(self.device, timeout=1)
         printed_lines = ''
         output = ''
         # start ccd testlab enable
-        ser.write('ccd testlab enabled\n')
-        print 'start pressing the power button\n\n'
+        ser.write(self.ENABLE_TESTLAB_CMD.encode('utf-8'))
+        print('start pressing the power button\n\n')
         # Print all of the cr50 output as we get it, so the user will have more
         # information about pressing the power button. Tapping the power button
         # a couple of times should do it, but this will give us more confidence
         # the process is still running/worked.
         try:
             while time.time() < end_time:
-                output += ser.read(100)
+                output += ser.read(100).decode('utf-8')
                 full_lines = output.rsplit('\n', 1)[0]
                 new_lines = full_lines
                 if printed_lines:
                     new_lines = full_lines.split(printed_lines, 1)[-1]
-                print new_lines,
+                print(new_lines, end=' ')
                 printed_lines = full_lines
 
                 # Make sure the process hasn't ended. If it has, print the last
@@ -465,10 +472,10 @@ class RMAOpen(object):
                 new_lines = output.split(printed_lines, 1)[-1]
                 if 'CCD test lab mode enabled' in output:
                     # print the last of the ou
-                    print new_lines
+                    print(new_lines)
                     break
                 elif 'Physical presence check timeout' in output:
-                    print new_lines
+                    print(new_lines)
                     debug('Did not detect power button press in time')
                     raise ValueError('Could not enable testlab mode try again')
         finally:
@@ -483,7 +490,7 @@ class RMAOpen(object):
 
     def wp_disable(self):
         """Disable write protect"""
-        print 'Disabling write protect'
+        print('Disabling write protect')
         self.send_cmd_get_output('wp disable')
         # Update the state after attempting to disable write protect
         self.update_ccd_state()
@@ -499,15 +506,15 @@ class RMAOpen(object):
             raise ValueError('Could not communicate with %s' % self.device)
 
         version = re.search('RW.*\* ([\d\.]+)/', output).group(1)
-        print 'Running Cr50 Version:', version
+        print('Running Cr50 Version:', version)
         self.running_ver_fields = [int(field) for field in version.split('.')]
 
         # prePVT images have even major versions. Prod have odd
         self.is_prepvt = self.running_ver_fields[1] % 2 == 0
         rma_support = RMA_SUPPORT_PREPVT if self.is_prepvt else RMA_SUPPORT_PROD
 
-        print 'prePVT' if self.is_prepvt else 'prod',
-        print 'RMA support added in:', rma_support
+        print('%s RMA support added in: %s' %
+              ('prePVT' if self.is_prepvt else 'prod', rma_support))
         if (not self.is_prepvt and
             self._running_version_is_older(TESTLAB_PROD)):
             debug('No testlab support in old prod images')
@@ -541,7 +548,7 @@ class RMAOpen(object):
         # Make sure there is some output, and it shows it's from Cr50
         if not sysinfo or 'cr50' not in sysinfo:
             return False
-        print sysinfo
+        print(sysinfo)
         # The cr50 device id should be in the sysinfo output, if we found
         # the right console. Make sure it is
         return devid in sysinfo
@@ -572,9 +579,9 @@ class RMAOpen(object):
 
         # Find the one that is the cr50 console
         for device in devices:
-            print 'testing', device
+            print('testing', device)
             if self.device_matches_devid(devid, device):
-                print 'found device', device
+                print('found device', device)
                 return
         debug(DEBUG_CONNECTION)
         raise ValueError('Found USB device, but could not communicate with '
@@ -596,7 +603,7 @@ class RMAOpen(object):
     def find_cr50_usb(self, usb_serial):
         """Make sure the Cr50 USB device exists"""
         try:
-            output = subprocess.check_output(['lsusb', '-vd', CR50_USB])
+            output = subprocess.check_output(CR50_LSUSB_CMD, encoding='utf-8')
         except:
             debug(DEBUG_MISSING_USB)
             raise ValueError('Could not find Cr50 USB device')
@@ -607,7 +614,7 @@ class RMAOpen(object):
                 raise ValueError('Could not find usb device "%s"' % usb_serial)
             return usb_serial
         if len(serialnames) > 1:
-            print 'Found Cr50 device serialnames ', ', '.join(serialnames)
+            print('Found Cr50 device serialnames ', ', '.join(serialnames))
             debug(DEBUG_TOO_MANY_USB_DEVICES)
             raise ValueError('Too many cr50 usb devices')
         return serialnames[0]
@@ -653,20 +660,20 @@ def main():
 
 
     if not cr50_rma_open.check(CCD_IS_UNRESTRICTED):
-        print 'CCD is still restricted.'
-        print 'Run cr50_rma_open.py -g -i $HWID to generate a url'
-        print 'Run cr50_rma_open.py -a $AUTHCODE to open cr50 with an authcode'
+        print('CCD is still restricted.')
+        print('Run cr50_rma_open.py -g -i $HWID to generate a url')
+        print('Run cr50_rma_open.py -a $AUTHCODE to open cr50 with an authcode')
     elif not cr50_rma_open.check(WP_IS_DISABLED):
-        print 'WP is still enabled.'
-        print 'Run cr50_rma_open.py -w to disable write protect'
+        print('WP is still enabled.')
+        print('Run cr50_rma_open.py -w to disable write protect')
     if cr50_rma_open.check(RMA_OPENED):
         info('RMA Open complete')
 
     if not cr50_rma_open.check(TESTLAB_IS_ENABLED) and cr50_rma_open.is_prepvt:
-        print 'testlab mode is still disabled.'
-        print 'If you are prepping a device for the testlab, you should enable',
-        print 'testlab mode'
-        print 'Run cr50_rma_open.py -t to enable testlab mode'
+        print('testlab mode is still disabled.')
+        print('If you are prepping a device for the testlab, you should enable '
+              'testlab mode')
+        print('Run cr50_rma_open.py -t to enable testlab mode')
 
 if __name__ == "__main__":
     main()
