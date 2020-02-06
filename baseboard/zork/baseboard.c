@@ -893,18 +893,6 @@ static int board_get_temp(int idx, int *temp_k)
 	/* idx is the sensor index set below in temp_sensors[] */
 	switch (idx) {
 	case TEMP_SENSOR_CHARGER:
-		/* TODO: b/143598098
-		 * Revision 1.6 of the schematic will put this
-		 * thermistor on power rail EC_A instead of
-		 * PP3300_A.  This will make the charger circuit
-		 * temperature available even when the AP is not
-		 * powered and the check will no longer be needed
-		 */
-
-		/* thermistor is not powered in G3 */
-		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-			return EC_ERROR_NOT_POWERED;
-
 		channel = ADC_TEMP_SENSOR_CHARGER;
 		break;
 	case TEMP_SENSOR_SOC:
