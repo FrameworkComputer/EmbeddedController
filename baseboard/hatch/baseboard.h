@@ -70,6 +70,10 @@
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
+
+/* Don't wake up from suspend on any MKBP event */
+#define CONFIG_MKBP_EVENT_WAKEUP_MASK 0
+
 /* I2C_PORT_ACCEL needs to be defined for i2c transactions */
 #define I2C_PORT_ACCEL I2C_PORT_SENSOR
 
