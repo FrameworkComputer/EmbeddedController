@@ -127,16 +127,14 @@ const struct i2c_port_t i2c_ports[] = {
 	{
 		.name = "usb_c0",
 		.port = I2C_PORT_USB_C0,
-		/* TODO: design supports 1 MHz, set to 100 KHz for bringup */
-		.kbps = 100,
+		.kbps = 400,
 		.scl = GPIO_EC_I2C1_USB_C0_SCL,
 		.sda = GPIO_EC_I2C1_USB_C0_SDA,
 	},
 	{
 		.name = "usb_c1",
 		.port = I2C_PORT_USB_C1,
-		/* TODO: design supports 1 MHz, set to 100 KHz for bringup */
-		.kbps = 100,
+		.kbps = 400,
 		.scl = GPIO_EC_I2C2_USB_C1_SCL,
 		.sda = GPIO_EC_I2C2_USB_C1_SDA,
 	},
