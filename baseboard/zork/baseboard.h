@@ -321,6 +321,7 @@ void tcpc_alert_event(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
 void ppc_interrupt(enum gpio_signal signal);
 void hdmi_hpd_interrupt(enum ioex_signal signal);
+void mst_hpd_interrupt(enum ioex_signal signal);
 
 int board_is_convertible(void);
 void board_update_sensor_config_from_sku(void);

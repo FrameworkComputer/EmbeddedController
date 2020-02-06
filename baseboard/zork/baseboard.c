@@ -340,6 +340,7 @@ void baseboard_tcpc_init(void)
 
 	/* Enable HPD interrupts */
 	ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
+	ioex_enable_interrupt(IOEX_MST_HPD_OUT);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -1180,4 +1181,21 @@ void hdmi_hpd_interrupt(enum ioex_signal signal)
 {
 	/* Debounce for 2 msec. */
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
+}
+
+static void mst_hpd_handler(void)
+{
+	int hpd = 0;
+
+	/* Pass HPD through from DB OPT3 MST hub to AP's DP1. */
+	ioex_get_level(IOEX_MST_HPD_OUT, &hpd);
+	gpio_set_level(GPIO_DP1_HPD, hpd);
+	ccprints("MST HPD %d", hpd);
+}
+DECLARE_DEFERRED(mst_hpd_handler);
+
+void mst_hpd_interrupt(enum ioex_signal signal)
+{
+	/* Debounce for 2 msec. */
+	hook_call_deferred(&mst_hpd_handler_data, (2 * MSEC));
 }
