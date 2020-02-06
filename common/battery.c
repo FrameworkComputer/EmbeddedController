@@ -305,10 +305,13 @@ static void pending_cutoff_deferred(void)
 
 	rv = board_cut_off_battery();
 
-	if (rv == EC_RES_SUCCESS)
+	if (rv == EC_RES_SUCCESS) {
 		CUTOFFPRINTS("succeeded.");
-	else
+		battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
+	} else {
 		CUTOFFPRINTS("failed!");
+		battery_cutoff_state = BATTERY_CUTOFF_STATE_NORMAL;
+	}
 }
 DECLARE_DEFERRED(pending_cutoff_deferred);
 
