@@ -8,6 +8,7 @@
 #include "console.h"
 #include "driver/ppc/syv682x.h"
 #include "i2c.h"
+#include "timer.h"
 #include "usb_charge.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
@@ -19,7 +20,11 @@
 #define SYV682X_FLAGS_VBUS_PRESENT BIT(2)
 static uint8_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-#define SYV682X_VBUS_DET_THRESH_MV 4000
+#define SYV682X_VBUS_DET_THRESH_MV		4000
+/* Longest time that can be programmed in DSG_TIME field */
+#define SYV682X_MAX_VBUS_DISCHARGE_TIME_MS	400
+
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 static int read_reg(uint8_t port, int reg, int *regval)
 {
@@ -29,8 +34,46 @@ static int read_reg(uint8_t port, int reg, int *regval)
 			 regval);
 }
 
+/*
+ * During channel transition or discharge, the SYV682A silently ignores I2C
+ * writes. Poll the BUSY bit until the SYV682A is ready.
+ */
+static int syv682x_wait_for_ready(int port)
+{
+	int regval;
+	int rv;
+	timestamp_t deadline;
+
+	deadline.val = get_time().val
+			+ (SYV682X_MAX_VBUS_DISCHARGE_TIME_MS * MSEC);
+
+	do {
+		rv = read_reg(port, SYV682X_CONTROL_3_REG, &regval);
+		if (rv)
+			return rv;
+
+		if (!(regval & SYV682X_BUSY))
+			break;
+
+		if (timestamp_expired(deadline, NULL)) {
+			CPRINTS("syv682x p%d: busy timeout", port);
+			return EC_ERROR_TIMEOUT;
+		}
+
+		msleep(1);
+	} while (1);
+
+	return EC_SUCCESS;
+}
+
 static int write_reg(uint8_t port, int reg, int regval)
 {
+	int rv;
+
+	rv = syv682x_wait_for_ready(port);
+	if (rv)
+		return rv;
+
 	return i2c_write8(ppc_chips[port].i2c_port,
 			  ppc_chips[port].i2c_addr_flags,
 			  reg,
@@ -44,34 +87,16 @@ static int syv682x_is_sourcing_vbus(int port)
 
 static int syv682x_discharge_vbus(int port, int enable)
 {
-	int regval;
-	int rv;
-
-	rv = read_reg(port, SYV682X_CONTROL_2_REG, &regval);
-	if (rv)
-		return rv;
-
-	if (enable)
-		regval |= SYV682X_CONTROL_2_FDSG;
-	else
-		regval &= ~SYV682X_CONTROL_2_FDSG;
-
-	return write_reg(port, SYV682X_CONTROL_2_REG, regval);
+	/*
+	 * Smart discharge mode is enabled, nothing to do
+	 */
+	return EC_SUCCESS;
 }
 
 static int syv682x_vbus_sink_enable(int port, int enable)
 {
 	int regval;
 	int rv;
-
-	/*
-	 * Force Discharge mode must be off in sink mode
-	 */
-	if (enable) {
-		rv = syv682x_discharge_vbus(port, 0);
-		if (rv)
-			return rv;
-	}
 
 	/*
 	 * For sink mode need to make sure high voltage power path is connected
@@ -104,11 +129,6 @@ static int syv682x_is_vbus_present(int port)
 	int val;
 	int vbus = 0;
 
-	/*
-	 * TODO (b/112661747): This PPC doesn't fully support VBUS detection.
-	 * It can detect both VSafe5V and VSafe0V. This function is intended
-	 * here until detecting VBUS differently per channel is supported.
-	 */
 	if (read_reg(port, SYV682X_STATUS_REG, &val))
 		return vbus;
 
@@ -291,11 +311,28 @@ static int syv682x_init(int port)
 	int rv;
 	int regval;
 
-	/* Set VBUS discharge to manual mode */
+	/*
+	 * Reset all I2C registers to default values because the SYV682x does
+	 * not provide a pin reset.  The SYV682X_RST_REG bit is self-clearing.
+	 */
+	rv = write_reg(port, SYV682X_CONTROL_3_REG, SYV682X_RST_REG);
+	if (rv)
+		return rv;
+
+	/* BUSY gets asserted until the reset completes */
+	rv = syv682x_wait_for_ready(port);
+	if (rv)
+		return rv;
+
 	rv = read_reg(port, SYV682X_CONTROL_2_REG, &regval);
 	if (rv)
 		return rv;
-	regval &= ~SYV682X_CONTROL_2_SDSG;
+	/*
+	 * Enable smart discharge mode.  The SYV682 automatically discharges
+	 * under the following conditions: UVLO (under voltage lockout), channel
+	 * shutdown, over current, over voltage, thermal shutdown
+	 */
+	regval |= SYV682X_CONTROL_2_SDSG;
 	rv = write_reg(port, SYV682X_CONTROL_2_REG, regval);
 	if (rv)
 		return rv;

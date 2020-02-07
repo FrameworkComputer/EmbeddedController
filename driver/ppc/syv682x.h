@@ -42,6 +42,8 @@
 #define SYV682X_CONTROL_2_FDSG		BIT(0)
 
 /* Control Register 3 */
+#define SYV682X_BUSY			BIT(7)
+#define SYV682X_RST_REG			BIT(0)
 #define SYV682X_OVP_MASK		0x70
 #define SYV682X_OVP_BIT_SHIFT		4
 #define SYV682X_OVP_06_0		0
