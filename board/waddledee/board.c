@@ -9,6 +9,7 @@
 #include "driver/accel_lis2dh.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/sync.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "gpio.h"
 #include "intc.h"
 #include "keyboard_scan.h"
@@ -21,7 +22,6 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
 #include "uart.h"
 
 static void filler_interrupt_handler(enum gpio_signal s)
@@ -172,6 +172,21 @@ struct motion_sensor_t motion_sensors[] = {
 };
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+/* Thermistors */
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_1] = {.name = "Memory",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_1,
+			   .action_delay_sec = 5},
+	[TEMP_SENSOR_2] = {.name = "Ambient",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_2,
+			   .action_delay_sec = 5},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 #ifndef TEST_BUILD
 /* This callback disables keyboard when convertibles are fully open */

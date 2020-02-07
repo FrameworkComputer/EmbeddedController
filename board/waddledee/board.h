@@ -78,6 +78,12 @@
 #define CONFIG_TABLET_MODE_SWITCH
 #define CONFIG_GMR_TABLET_MODE
 
+/* Thermistors */
+#define CONFIG_TEMP_SENSOR
+#define CONFIG_THERMISTOR
+#define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
+#define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_EN_PP3300_A
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -100,6 +106,11 @@ enum sensor_id {
 	SENSOR_COUNT
 };
 
+enum temp_sensor_id {
+	TEMP_SENSOR_1,
+	TEMP_SENSOR_2,
+	TEMP_SENSOR_COUNT
+};
 
 /* List of possible batteries */
 enum battery_type {
