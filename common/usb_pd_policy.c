@@ -339,94 +339,6 @@ static inline void disable_tbt_compat_mode(int port)
 		cable[port].flags &= ~CABLE_FLAGS_TBT_COMPAT_ENABLE;
 }
 
-static void set_tbt_compat_mode_ready(int port)
-{
-	if (IS_ENABLED(CONFIG_USBC_SS_MUX) &&
-	    IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)) {
-		/* Connect the SBU and USB lines to the connector. */
-		if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
-			ppc_set_sbu(port, 1);
-
-		/* Set usb mux to Thunderbolt-compatible mode */
-		usb_mux_set(port, USB_PD_MUX_TBT_COMPAT_ENABLED,
-			USB_SWITCH_CONNECT, pd_get_polarity(port));
-	}
-}
-
-/*
- * Ref: USB Type-C Cable and Connector Specification
- * Figure F-1 TBT3 Discovery Flow
- */
-static bool is_tbt_cable_superspeed(int port)
-{
-	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
-	    IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
-		/* Product type is Active cable, hence don't check for speed */
-		if (cable[port].type == IDH_PTYPE_ACABLE)
-			return true;
-
-		if (cable[port].type != IDH_PTYPE_PCABLE)
-			return false;
-
-		if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
-			cable[port].rev == PD_REV30)
-			return cable[port].attr.p_rev30.ss ==
-				USB_R30_SS_U32_U40_GEN1 ||
-				cable[port].attr.p_rev30.ss ==
-				USB_R30_SS_U32_U40_GEN2 ||
-				cable[port].attr.p_rev30.ss ==
-				USB_R30_SS_U40_GEN3;
-
-		return cable[port].attr.p_rev20.ss ==
-			USB_R20_SS_U31_GEN1 ||
-			cable[port].attr.p_rev20.ss ==
-			USB_R20_SS_U31_GEN1_GEN2;
-	}
-	return false;
-}
-
-/* Check if product supports any Modal Operation (Alternate Modes) */
-static bool is_modal(int port, int cnt, uint32_t *payload)
-{
-	return IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
-		is_vdo_present(cnt, VDO_INDEX_IDH) &&
-		PD_IDH_IS_MODAL(payload[VDO_INDEX_IDH]);
-}
-
-static bool is_intel_svid(int port, int prev_svid_cnt)
-{
-	int i;
-
-	/*
-	 * Check if SVID0 = USB_VID_INTEL
-	 * (Ref: USB Type-C cable and connector specification, Table F-9)
-	 */
-	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)) {
-		/*
-		 * errata: All the Thunderbolt certified cables and docks
-		 * tested have SVID1 = 0x8087
-		 *
-		 * For the Discover SVIDs, responder may present the SVIDs
-		 * in any order hence check all SVIDs if Intel SVID present.
-		 */
-		for (i = prev_svid_cnt; i < discovery[port].svid_cnt; i++) {
-			if (discovery[port].svids[i].svid == USB_VID_INTEL)
-				return true;
-		}
-	}
-	return false;
-}
-
-static inline bool is_tbt_compat_mode(int port, int cnt, uint32_t *payload)
-{
-	/*
-	 * Ref: USB Type-C cable and connector specification
-	 * F.2.5 TBT3 Device Discover Mode Responses
-	 */
-	return is_vdo_present(cnt, VDO_INDEX_IDH) &&
-		PD_VDO_RESP_MODE_INTEL_TBT(payload[VDO_INDEX_IDH]);
-}
-
 static inline void limit_tbt_cable_speed(int port)
 {
 	/* Cable flags are cleared when cable reset is called */
@@ -565,20 +477,6 @@ static int dfp_discover_svids(uint32_t *payload)
 	return 1;
 }
 
-/*
- * This function returns
- * True - If the THunderbolt cable speed is TBT_SS_TBT_GEN3 or
- *        TBT_SS_U32_GEN1_GEN2
- * False - Otherwise
- */
-static bool check_tbt_cable_speed(int port)
-{
-	return (cable[port].cable_mode_resp.tbt_cable_speed ==
-						TBT_SS_TBT_GEN3 ||
-		cable[port].cable_mode_resp.tbt_cable_speed ==
-						TBT_SS_U32_GEN1_GEN2);
-}
-
 struct pd_discovery *pd_get_am_discovery(int port)
 {
 	return &discovery[port];
@@ -594,69 +492,20 @@ struct pd_cable *pd_get_cable_attributes(int port)
 	return &cable[port];
 }
 
-/*
- * Enter Thunderbolt-compatible mode
- * Reference: USB Type-C cable and connector specification, Release 2.0
- *
- * This function fills the TBT3 objects in the payload and
- * returns the number of objects it has filled.
- */
-static int enter_tbt_compat_mode(int port, uint32_t *payload)
-{
-	union tbt_dev_mode_enter_cmd enter_dev_mode = {0};
-
-	/* Table F-12 TBT3 Cable Enter Mode Command */
-	payload[0] = pd_dfp_enter_mode(port, USB_VID_INTEL, 0) |
-					VDO_SVDM_VERS(VDM_VER20);
-
-	/* For TBT3 Cable Enter Mode Command, number of Objects is 1 */
-	if (is_transmit_msg_sop_prime(port) ||
-	    is_transmit_msg_sop_prime_prime(port))
-		return 1;
-
-	usb_mux_set_safe_mode(port);
-
-	/* Table F-13 TBT3 Device Enter Mode Command */
-	enter_dev_mode.vendor_spec_b1 =
-				cable[port].dev_mode_resp.vendor_spec_b1;
-	enter_dev_mode.vendor_spec_b0 =
-				cable[port].dev_mode_resp.vendor_spec_b0;
-	enter_dev_mode.intel_spec_b0 = cable[port].dev_mode_resp.intel_spec_b0;
-	enter_dev_mode.cable =
-		get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE ?
-			TBT_ENTER_PASSIVE_CABLE : TBT_ENTER_ACTIVE_CABLE;
-
-	if (cable[port].cable_mode_resp.tbt_cable_speed == TBT_SS_TBT_GEN3) {
-		enter_dev_mode.lsrx_comm =
-			cable[port].cable_mode_resp.lsrx_comm;
-		enter_dev_mode.retimer_type =
-			cable[port].cable_mode_resp.retimer_type;
-		enter_dev_mode.tbt_cable =
-			cable[port].cable_mode_resp.tbt_cable;
-		enter_dev_mode.tbt_rounded =
-			cable[port].cable_mode_resp.tbt_rounded;
-		enter_dev_mode.tbt_cable_speed =
-			cable[port].cable_mode_resp.tbt_cable_speed;
-	} else {
-		enter_dev_mode.tbt_cable_speed = TBT_SS_U32_GEN1_GEN2;
-	}
-	enter_dev_mode.tbt_alt_mode = TBT_ALTERNATE_MODE;
-
-	payload[1] = enter_dev_mode.raw_value;
-
-	/* For TBT3 Device Enter Mode Command, number of Objects are 2 */
-	return 2;
-}
-
-/* Return the current cable speed received from Cable Discover Mode command */
-__overridable enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
-{
-	return cable[port].cable_mode_resp.tbt_cable_speed;
-}
-
 __overridable bool board_is_tbt_usb4_port(int port)
 {
 	return true;
+}
+
+static enum tcpm_transmit_type get_tcpm_transmit_msg_type(int port)
+{
+	if (is_transmit_msg_sop_prime(port))
+		return TCPC_TX_SOP_PRIME;
+
+	if (is_transmit_msg_sop_prime_prime(port))
+		return TCPC_TX_SOP_PRIME_PRIME;
+
+	return TCPC_TX_SOP;
 }
 
 static void usb_pd_limit_cable_speed(int port)
@@ -722,7 +571,8 @@ static int process_am_discover_svids(int port, int cnt, uint32_t *payload)
 	return dfp_discover_modes(port, payload);
 }
 
-static int process_tbt_compat_discover_modes(int port, uint32_t *payload)
+static int process_tbt_compat_discover_modes(int port,
+				enum tcpm_transmit_type sop, uint32_t *payload)
 {
 	int rsize;
 
@@ -753,14 +603,14 @@ static int process_tbt_compat_discover_modes(int port, uint32_t *payload)
 			 * continue flow for
 			 * Thunderbolt-compatible mode
 			 */
-			if (check_tbt_cable_speed(port)) {
+			if (cable_supports_tbt_speed(port)) {
 				enable_enter_usb4_mode(port);
 				usb_mux_set_safe_mode(port);
 				return 0;
 			}
 			disable_usb4_mode(port);
 		}
-		rsize = enter_tbt_compat_mode(port, payload);
+		rsize = enter_tbt_compat_mode(port, sop, payload);
 	} else {
 		/* Store Discover Mode SOP response */
 		cable[port].dev_mode_resp.raw_value = payload[1];
@@ -779,7 +629,7 @@ static int process_tbt_compat_discover_modes(int port, uint32_t *payload)
 				TBT_SS_U32_GEN1_GEN2 :
 				cable[port].attr.p_rev30.ss;
 
-			rsize = enter_tbt_compat_mode(port, payload);
+			rsize = enter_tbt_compat_mode(port, sop, payload);
 		} else {
 			/* Discover modes for SOP' */
 			discovery[port].svid_idx--;
@@ -791,14 +641,8 @@ static int process_tbt_compat_discover_modes(int port, uint32_t *payload)
 	return rsize;
 }
 
-/*
- * This function returns number of objects required to enter
- * Thunderbolt-Compatible mode i.e.
- * 2 - When SOP is enabled.
- * 1 - When SOP' or SOP'' is enabled.
- * 0 - Acknowledge.
- */
-static int enter_mode_tbt_compat(int port, uint32_t *payload)
+static int obj_cnt_enter_tbt_compat_mode(int port, enum tcpm_transmit_type sop,
+			uint32_t *payload)
 {
 	/* Enter mode SOP' for active cables */
 	if (is_transmit_msg_sop_prime(port)) {
@@ -806,13 +650,13 @@ static int enter_mode_tbt_compat(int port, uint32_t *payload)
 		/* Check if the cable has a SOP'' controller */
 		if (cable[port].attr.a_rev20.sop_p_p)
 			enable_transmit_sop_prime_prime(port);
-		return enter_tbt_compat_mode(port, payload);
+		return enter_tbt_compat_mode(port, sop, payload);
 	}
 
 	/* Enter Mode SOP'' for active cables with SOP'' controller */
 	if (is_transmit_msg_sop_prime_prime(port)) {
 		disable_transmit_sop_prime_prime(port);
-		return enter_tbt_compat_mode(port, payload);
+		return enter_tbt_compat_mode(port, sop, payload);
 	}
 
 	/* Update Mux state to Thunderbolt-compatible mode. */
@@ -984,7 +828,9 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 			if (is_tbt_compat_enabled(port) &&
 				is_tbt_compat_mode(port, cnt, payload)) {
 				rsize = process_tbt_compat_discover_modes(
-						port, payload);
+					      port,
+					      get_tcpm_transmit_msg_type(port),
+					      payload);
 				break;
 			}
 
@@ -1004,7 +850,9 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 			break;
 		case CMD_ENTER_MODE:
 			if (is_tbt_compat_enabled(port)) {
-				rsize = enter_mode_tbt_compat(port, payload);
+				rsize = obj_cnt_enter_tbt_compat_mode(port,
+					      get_tcpm_transmit_msg_type(port),
+					      payload);
 			/*
 			 * Continue with PD flow if Thunderbolt-compatible mode
 			 * is disabled.

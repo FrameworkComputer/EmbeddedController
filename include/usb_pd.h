@@ -1916,6 +1916,72 @@ enum tbt_compat_cable_speed get_tbt_cable_speed(int port);
 enum tbt_compat_rounded_support get_tbt_rounded_support(int port);
 
 /**
+ * Sets the Mux state to Thunderbolt-Compatible mode
+ *
+ *  @param port  USB-C port number
+ */
+void set_tbt_compat_mode_ready(int port);
+
+/**
+ * Checks if the attached cable supports superspeed
+ *
+ * @param port	USB-C port number
+ * @return      True if cable is superspeed, false otherwise
+ */
+bool is_tbt_cable_superspeed(int port);
+
+/**
+ * Check if product supports any Modal Operation (Alternate Modes)
+ *
+ * @param port	   USB-C port number
+ * @param cnt      number of data objects in payload
+ * @param payload  payload data
+ * @return         True if product supports Modal Operation, false otherwise
+ */
+bool is_modal(int port, int cnt, const uint32_t *payload);
+
+/**
+ * Checks all the SVID for USB_VID_INTEL
+ *
+ * @param port	        USB-C port number
+ * @param prev_svid_cnt Previous SVID count
+ * @return              True is SVID = USB_VID_INTEL, false otherwise
+ */
+bool is_intel_svid(int port, int prev_svid_cnt);
+
+/**
+ * Checks if Device discover mode response contains Thunderbolt alternate mode
+ *
+ * @param port	   USB-C port number
+ * @param cnt      number of data objects in payload
+ * @param payload  payload data
+ * @return         True if Thunderbolt Alternate mode response is received,
+ *                 false otherwise
+ */
+bool is_tbt_compat_mode(int port, int cnt, const uint32_t *payload);
+
+/*
+ * Checks if the cable supports Thunderbolt speed.
+ *
+ * @param port   USB-C port number
+ * @return       True if the Thunderbolt cable speed is TBT_SS_TBT_GEN3 or
+ *               TBT_SS_U32_GEN1_GEN2, false otherwise
+ */
+bool cable_supports_tbt_speed(int port);
+
+/**
+ * Fills the TBT3 objects in the payload and returns the number
+ * of objects it has filled.
+ *
+ * @param port      USB-C port number
+ * @param sop       Type of SOP message transmitted (SOP/SOP'/SOP'')
+ * @param payload   payload data
+ * @return          Number of object filled
+ */
+int enter_tbt_compat_mode(int port, enum tcpm_transmit_type sop,
+			uint32_t *payload);
+
+/**
  * Return maximum allowed speed for Thunderbolt-compatible mode
  *
  * NOTE: Chromebooks require that all USB-C ports support the same features,
