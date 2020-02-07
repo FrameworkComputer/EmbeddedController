@@ -33,6 +33,8 @@ GPIO_INT(AC_PRESENT,        PIN(A, 6),  GPIO_INT_BOTH,
          extpower_interrupt) /* ACOK_OD */
 GPIO_INT(BC12_EC_INT_ODL,   PIN(C, 9),  GPIO_INT_FALLING,
          bc12_interrupt)
+GPIO_INT(AP_EC_WATCHDOG_L,  PIN(D, 2),  GPIO_INT_FALLING,
+         chipset_watchdog_interrupt)
 
 /* Unimplemented interrupts */
 GPIO(KB_INT_ODL,           PIN(A, 8),  GPIO_INPUT)
@@ -64,7 +66,6 @@ GPIO(CCD_MODE_ODL,         PIN(A, 1),  GPIO_INPUT)
 
 /* Other output pins */
 GPIO(EC_BATT_PRES_ODL,     PIN(A, 7),  GPIO_INPUT)
-GPIO(AP_EC_WATCHDOG_L,     PIN(D, 2),  GPIO_ODR_HIGH)
 GPIO(EC_BL_EN_OD,          PIN(A, 13), GPIO_ODR_HIGH)
 GPIO(EN_USBA_5V,           PIN(C, 14), GPIO_OUT_LOW)
 GPIO(EC_SENSOR_SPI_MISO,   PIN(C, 2),  GPIO_INPUT)
