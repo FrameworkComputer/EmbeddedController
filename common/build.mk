@@ -292,8 +292,7 @@ CRYPTOC_LDFLAGS := -L$(out)/cryptoc -lcryptoc
 # Force the external build each time, so it can look for changed sources.
 .PHONY: $(out)/cryptoc/libcryptoc.a
 $(out)/cryptoc/libcryptoc.a:
-	$(MAKE) obj=$(realpath $(out))/cryptoc SUPPORT_UNALIGNED=1 \
-		CONFIG_UPTO_SHA512=$(CONFIG_UPTO_SHA512) -C $(CRYPTOCLIB)
+	+$(call quiet,libcryptoc,MAKE   )
 
 # Link RO and RW against cryptoc.
 $(out)/RO/ec.RO.elf $(out)/RO/ec.RO_B.elf: LDFLAGS_EXTRA += $(CRYPTOC_LDFLAGS)
