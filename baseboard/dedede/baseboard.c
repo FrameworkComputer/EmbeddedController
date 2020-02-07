@@ -42,6 +42,14 @@ __override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 		gpio_get_level(GPIO_PG_DRAM_OD);
 }
 
+__override void board_jsl_all_sys_pwrgd(int value)
+{
+	/*
+	 * ALL_SYS_PWRGD is an AND of both DRAM PGOOD and VCCST PGOOD.
+	 */
+	gpio_set_level(GPIO_ALL_SYS_PWRGD, value);
+}
+
 __override int power_signal_get_level(enum gpio_signal signal)
 {
 	if (signal == GPIO_PG_EC_DSW_PWROK)

@@ -82,6 +82,11 @@ __overridable int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 	return gpio_get_level(GPIO_PG_EC_ALL_SYS_PWRGD);
 }
 
+__overridable void board_jsl_all_sys_pwrgd(int value)
+{
+
+}
+
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	int timeout_ms = 50;
@@ -161,11 +166,12 @@ static void enable_pp5000_rail(void)
 }
 
 #ifdef CONFIG_CHIPSET_JASPERLAKE
-static void assert_ec_ap_vccst_pwrgd(void)
+static void assert_ec_ap_vccst_pwrgd_pch_pwrok(void)
 {
 	GPIO_SET_LEVEL(GPIO_EC_AP_VCCST_PWRGD_OD, 1);
+	GPIO_SET_LEVEL(GPIO_EC_AP_PCH_PWROK_OD, 1);
 }
-DECLARE_DEFERRED(assert_ec_ap_vccst_pwrgd);
+DECLARE_DEFERRED(assert_ec_ap_vccst_pwrgd_pch_pwrok);
 #endif /* CONFIG_CHIPSET_JASPERLAKE */
 
 enum power_state power_handle_state(enum power_state state)
@@ -189,14 +195,19 @@ enum power_state power_handle_state(enum power_state state)
 
 #ifdef CONFIG_CHIPSET_JASPERLAKE
 	/*
-	 * Assert VCCST power good when ALL_SYS_PWRGD is received with a 2ms
-	 * delay minimum.
+	 * Set ALL_SYS_PWRGD after receiving both PG_DRAM and PG_PP1050_ST.
+	 * Assert VCCST power good and PCH_PWROK, when ALL_SYS_PWRGD is
+	 * received with a 2ms delay minimum.
 	 */
 	if (all_sys_pwrgd_in && !gpio_get_level(GPIO_EC_AP_VCCST_PWRGD_OD)) {
-		hook_call_deferred(&assert_ec_ap_vccst_pwrgd_data, 2 * MSEC);
+		board_jsl_all_sys_pwrgd(all_sys_pwrgd_in);
+		hook_call_deferred(&assert_ec_ap_vccst_pwrgd_pch_pwrok_data,
+				2 * MSEC);
 	} else if (!all_sys_pwrgd_in &&
 		   gpio_get_level(GPIO_EC_AP_VCCST_PWRGD_OD)) {
 		GPIO_SET_LEVEL(GPIO_EC_AP_VCCST_PWRGD_OD, 0);
+		GPIO_SET_LEVEL(GPIO_EC_AP_PCH_PWROK_OD, 0);
+		board_jsl_all_sys_pwrgd(all_sys_pwrgd_in);
 	}
 #endif /* CONFIG_CHIPSET_JASPERLAKE */
 
