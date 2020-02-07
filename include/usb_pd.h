@@ -1850,12 +1850,34 @@ enum pd_msg_type pd_msg_tx_type(int port, enum pd_data_role data_role,
 void reset_pd_cable(int port);
 
 /**
+ * Returns true if the number of data objects in the payload is greater than
+ * than the VDO index
+ *
+ * @param cnt      number of data objects in payload
+ * @param index    VDO Index
+ * @return         True if number of data objects is greater than VDO index,
+ *                 false otherwise
+ */
+bool is_vdo_present(int cnt, int index);
+
+/**
  * Return the type of cable attached
  *
  * @param port	USB-C port number
  * @return	cable type
  */
 enum idh_ptype get_usb_pd_cable_type(int port);
+
+/**
+ * Stores the cable's response to discover Identity SOP' request
+ *
+ * @param port      USB-C port number
+ * @param cnt       number of data objects in payload
+ * @param payload   payload data
+ * @param head      PD packet header
+ */
+void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
+					uint16_t head);
 
 /**
  * Return enter USB message payload

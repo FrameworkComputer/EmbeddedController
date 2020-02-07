@@ -437,6 +437,53 @@ void usb_mux_set_safe_mode(int port)
 		ppc_set_sbu(port, 0);
 }
 
+bool is_vdo_present(int cnt, int index)
+{
+	return cnt > index;
+}
+
+/*
+ * ############################################################################
+ *
+ * Cable communication functions
+ *
+ * ############################################################################
+ */
+enum idh_ptype get_usb_pd_cable_type(int port)
+{
+	struct pd_cable *cable = pd_get_cable_attributes(port);
+
+	return cable->type;
+}
+
+void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
+				uint16_t head)
+{
+	struct pd_cable *cable = pd_get_cable_attributes(port);
+
+	/* Get cable rev */
+	cable->rev = PD_HEADER_REV(head);
+
+	if (is_vdo_present(cnt, VDO_INDEX_IDH)) {
+		cable->type = PD_IDH_PTYPE(payload[VDO_INDEX_IDH]);
+
+		if (is_vdo_present(cnt, VDO_INDEX_PTYPE_CABLE1))
+			cable->attr.raw_value =
+					payload[VDO_INDEX_PTYPE_CABLE1];
+
+		/*
+		 * Ref USB PD Spec 3.0  Pg 145. For active cable there are two
+		 * VDOs. Hence storing the second VDO.
+		 */
+		if (is_vdo_present(cnt, VDO_INDEX_PTYPE_CABLE2))
+			cable->attr2.raw_value =
+					payload[VDO_INDEX_PTYPE_CABLE2];
+
+		cable->is_identified = 1;
+		cable->discovery = PD_DISC_COMPLETE;
+	}
+}
+
 __overridable void svdm_safe_dp_mode(int port)
 {
 	/* make DP interface safe until configure */

@@ -19,3 +19,8 @@ int pd_check_vconn_swap(int port)
 {
 	return 1;
 }
+
+void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
+				uint16_t head)
+{
+}

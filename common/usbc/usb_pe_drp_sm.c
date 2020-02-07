@@ -4001,15 +4001,8 @@ static void pe_vdm_identity_request_cbl_run(int port)
 				 * PE_SRC_VDM_Identity_ACKed and
 				 * PE_INIT_PORT_VDM_Identity_ACKed embedded here
 				 */
-				pe[port].cable.rev =
-					PD_HEADER_REV(rx_emsg[port].header);
-				pe[port].cable.type = PD_IDH_PTYPE(payload[1]);
-				pe[port].cable.attr.raw_value = payload[3];
-				if (cnt > 4)
-					pe[port].cable.attr2.raw_value =
-								payload[4];
-				pe[port].cable.discovery = PD_DISC_COMPLETE;
-				pe[port].cable.is_identified = 1;
+				dfp_consume_cable_response(port, cnt, payload,
+							rx_emsg[port].header);
 
 				/*
 				 * Note: If port partner runs PD 2.0, we must
@@ -4243,11 +4236,6 @@ static void pe_vdm_request_run(int port)
 static void pe_vdm_request_exit(int port)
 {
 	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
-}
-
-enum idh_ptype get_usb_pd_cable_type(int port)
-{
-	return pe[port].cable.type;
 }
 
 /**
