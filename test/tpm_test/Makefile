@@ -57,6 +57,7 @@ $(obj)/%.o: $(obj)/%.c
 	$(call echo,"  CC      $(notdir $@)")
 	$(Q)gcc $(CFLAGS) -o $@ $<
 
+# See "Commonly used compiler options" for more documentation
 $(obj)/%.o: %.c
 	$(call echo,"  CC      $(notdir $@)")
 	$(Q)gcc $(CFLAGS) -Wall -Werror -MMD -MF $@.d -MT $@ -o $@ $<

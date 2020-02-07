@@ -57,6 +57,11 @@ endif
 # the resulting ec.bin
 export STATIC_VERSION
 
+# Commonly used compiler options used in these scripts
+#
+# -MT explicitly sets target file name in generated .d files to work around
+#    a ccache issue.
+
 # commands to build all targets
 cmd_libec = $(LD) -r $^ -o $@.1.o ${silent_err} && \
 	$(OBJCOPY) --localize-hidden $@.1.o $@.2.o ${silent_err} && \
@@ -598,6 +603,8 @@ $(out)/tags: $(out)/cscope.files
 .PHONY: npx-monitor-dir
 npx-monitor-dir:
 	$(Q)mkdir -p ${out}/chip/npcx/spiflashfw
+
+# See "Commonly used compiler options" for more documentation
 
 # TODO: optional make rules for PROJECT_EXTRA
 $(npcx-monitor-fw-bin):$(npcx-monitor-fw).c npx-monitor-dir
