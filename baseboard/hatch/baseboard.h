@@ -200,6 +200,7 @@ unsigned char get_board_sku(void);
 unsigned char get_board_id(void);
 void board_reset_pd_mcu(void);
 void baseboard_mst_enable_control(enum mst_source, int level);
+bool board_is_convertible(void);
 
 /* Check with variant about battery presence. */
 enum battery_present variant_battery_present(void);

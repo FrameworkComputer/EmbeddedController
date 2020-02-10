@@ -406,3 +406,10 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	/* Note that the level is inverted because the pin is active low. */
 	gpio_set_level(GPIO_USB_C_OC_ODL, !is_overcurrented);
 }
+
+bool board_is_convertible(void)
+{
+	const uint8_t sku = get_board_sku();
+
+	return (sku == 255);
+}

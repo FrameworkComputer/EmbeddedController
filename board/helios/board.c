@@ -405,3 +405,10 @@ int board_tcpc_post_init(int port)
 
 	return rv;
 }
+
+bool board_is_convertible(void)
+{
+	const uint8_t sku = get_board_sku();
+
+	return (sku == 255) || (sku == 1);
+}
