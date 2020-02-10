@@ -482,6 +482,10 @@ static void ps8811_tuning_init(void)
 {
 	int rv;
 
+	/* Turn on the retimers */
+	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 1);
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
+
 	/* USB-A0 can run with default settings */
 
 	/* USB-A1 needs to increase gain to get over MB/DB connector */
@@ -495,7 +499,15 @@ static void ps8811_tuning_init(void)
 		return;
 	}
 }
-DECLARE_HOOK(HOOK_INIT, ps8811_tuning_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, ps8811_tuning_init, HOOK_PRIO_DEFAULT);
+
+static void ps8811_retimer_off(void)
+{
+	/* Turn on the retimers */
+	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, ps8811_retimer_off, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************
  * Custom Zork USB-C1 Retimer/MUX driver
