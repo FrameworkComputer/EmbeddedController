@@ -231,6 +231,7 @@ enum OEM_ID {
 	OEM_WUKONG_M = 5,
 	OEM_BLEEMO = 6,
 	OEM_JAX = 8,
+	OEM_EXCELSIOR = 10,
 	/* Number of OEM IDs */
 	OEM_COUNT
 };

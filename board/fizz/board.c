@@ -618,10 +618,21 @@ static const struct fan_step fan_table2[] = {
 	{.on = 87, .off = 81, .rpm = 3900},
 	{.on = 98, .off = 91, .rpm = 5000},
 };
+static const struct fan_step fan_table3[] = {
+	{.on =  0, .off =  1, .rpm = 0},
+	{.on = 36, .off = 22, .rpm = 2500},
+	{.on = 54, .off = 49, .rpm = 3200},
+	{.on = 61, .off = 56, .rpm = 3500},
+	{.on = 68, .off = 63, .rpm = 3900},
+	{.on = 75, .off = 69, .rpm = 4500},
+	{.on = 82, .off = 76, .rpm = 5100},
+	{.on = 92, .off = 85, .rpm = 5400},
+};
 /* All fan tables must have the same number of levels */
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
 BUILD_ASSERT(ARRAY_SIZE(fan_table1) == NUM_FAN_LEVELS);
 BUILD_ASSERT(ARRAY_SIZE(fan_table2) == NUM_FAN_LEVELS);
+BUILD_ASSERT(ARRAY_SIZE(fan_table3) == NUM_FAN_LEVELS);
 
 static void setup_fan(void)
 {
@@ -646,6 +657,10 @@ static void setup_fan(void)
 		break;
 	case OEM_JAX:
 		fan_set_count(0);
+		break;
+	case OEM_EXCELSIOR:
+		fans[FAN_CH_0].rpm = &fan_rpm_0;
+		fan_table = fan_table3;
 		break;
 	}
 }
@@ -713,6 +728,7 @@ static void setup_bj(void)
 	case OEM_WUKONG_N:
 	case OEM_WUKONG_A:
 	case OEM_WUKONG_M:
+	case OEM_EXCELSIOR:
 		bj = (BJ_ADAPTER_90W_MASK & BIT(sku)) ?
 			BJ_90W_19V : BJ_65W_19V;
 		break;
