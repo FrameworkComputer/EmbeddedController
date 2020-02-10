@@ -105,13 +105,23 @@ __overridable int board_has_virtual_mux(void)
 	return IS_ENABLED(CONFIG_USB_MUX_VIRTUAL);
 }
 
+static void board_usb_mux_set(int port, mux_state_t mux_mode,
+		 enum usb_switch usb_mode, int polarity)
+{
+	usb_mux_set(port, mux_mode, usb_mode, polarity);
+
+	if (!board_has_virtual_mux())
+		/* b:149181702: Inform AP of DP status */
+		host_set_single_event(EC_HOST_EVENT_USB_MUX);
+}
+
 __override void svdm_safe_dp_mode(int port)
 {
 	/* make DP interface safe until configure */
 	dp_flags[port] = 0;
 	dp_status[port] = 0;
-	usb_mux_set(port, USB_PD_MUX_NONE,
-		    USB_SWITCH_CONNECT, board_get_polarity(port));
+	board_usb_mux_set(port, USB_PD_MUX_NONE, USB_SWITCH_CONNECT,
+			  board_get_polarity(port));
 }
 
 __override int svdm_enter_dp_mode(int port, uint32_t mode_caps)
@@ -152,12 +162,12 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 		return 0;
 
 	if (board_has_virtual_mux())
-		usb_mux_set(port, USB_PD_MUX_DP_ENABLED, USB_SWITCH_CONNECT,
-			    board_get_polarity(port));
+		board_usb_mux_set(port, USB_PD_MUX_DP_ENABLED,
+				  USB_SWITCH_CONNECT, board_get_polarity(port));
 	else
-		usb_mux_set(port, mf_pref ?
-			    USB_PD_MUX_DOCK : USB_PD_MUX_DP_ENABLED,
-			    USB_SWITCH_CONNECT, board_get_polarity(port));
+		board_usb_mux_set(
+			port, mf_pref ? USB_PD_MUX_DOCK : USB_PD_MUX_DP_ENABLED,
+			USB_SWITCH_CONNECT, board_get_polarity(port));
 
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));
