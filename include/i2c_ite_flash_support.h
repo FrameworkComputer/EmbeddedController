@@ -1,0 +1,27 @@
+/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+/* API for module that provides flash support for ITE-based ECs over i2c */
+
+#ifndef __CROS_EC_I2C_ITE_FLASH_SUPPORT_H
+#define __CROS_EC_I2C_ITE_FLASH_SUPPORT_H
+
+#include "gpio.h"
+#include "stdbool.h"
+
+struct ite_dfu_config_t {
+	/* I2C port to communicate on */
+	int i2c_port;
+	/*
+	 * The gpio signals that moved between TIM16/17 (MODULE_I2C_TIMERS) and
+	 * I2C (MODULE_I2C).
+	 */
+	enum gpio_signal scl;
+	enum gpio_signal sda;
+};
+
+/* Provided by board implementation if CONFIG_ITE_FLASH_SUPPORT is used */
+const extern struct ite_dfu_config_t ite_dfu_config;
+
+#endif /* __CROS_EC_I2C_ITE_FLASH_SUPPORT_H */
