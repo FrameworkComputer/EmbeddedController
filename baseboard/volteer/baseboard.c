@@ -127,14 +127,14 @@ const struct i2c_port_t i2c_ports[] = {
 	{
 		.name = "usb_c0",
 		.port = I2C_PORT_USB_C0,
-		.kbps = 400,
+		.kbps = 1000,
 		.scl = GPIO_EC_I2C1_USB_C0_SCL,
 		.sda = GPIO_EC_I2C1_USB_C0_SDA,
 	},
 	{
 		.name = "usb_c1",
 		.port = I2C_PORT_USB_C1,
-		.kbps = 400,
+		.kbps = 1000,
 		.scl = GPIO_EC_I2C2_USB_C1_SCL,
 		.sda = GPIO_EC_I2C2_USB_C1_SDA,
 	},
