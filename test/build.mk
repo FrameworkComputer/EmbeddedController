@@ -56,7 +56,6 @@ test-list-host += motion_lid
 test-list-host += motion_sense_fifo
 test-list-host += mutex
 test-list-host += newton_fit
-test-list-host += nvmem
 test-list-host += pingpong
 test-list-host += pinweaver
 test-list-host += power_button
@@ -140,7 +139,6 @@ motion_sense_fifo-y=motion_sense_fifo.o
 kasa-y=kasa.o
 mutex-y=mutex.o
 newton_fit-y=newton_fit.o
-nvmem-y=nvmem.o nvmem_tpm2_mock.o
 pingpong-y=pingpong.o
 pinweaver-y=pinweaver.o
 power_button-y=power_button.o
@@ -187,11 +185,6 @@ float-y=fp.o
 fp-y=fp.o
 x25519-y=x25519.o
 stillness_detector-y=stillness_detector.o
-
-TPM2_ROOT := $(CROS_WORKON_SRCROOT)/src/third_party/tpm2
-$(out)/RO/common/new_nvmem.o: CFLAGS += -I$(TPM2_ROOT) -I chip/g
-$(out)/RO/test/nvmem.o: CFLAGS += -I$(TPM2_ROOT)
-$(out)/RO/test/nvmem_tpm2_mock.o: CFLAGS += -I$(TPM2_ROOT)
 
 host-is_enabled_error: TEST_SCRIPT=is_enabled_error.sh
 is_enabled_error-y=is_enabled_error.o.cmd
