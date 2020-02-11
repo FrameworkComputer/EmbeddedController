@@ -18,6 +18,8 @@
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q40 /* Internal SPI flash type. */
 
+#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_HOSTCMD) | CC_MASK(CC_PWM)))
+
 /*
  * Enable 1 slot of secure temporary storage to support
  * suspend/resume with read/write memory training.
