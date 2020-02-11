@@ -5,6 +5,7 @@
  * Dual Role (Source & Sink) USB-PD module.
  */
 
+#include "charge_manager.h"
 #include "charge_state.h"
 #include "usb_common.h"
 #include "usb_pd.h"
@@ -279,6 +280,25 @@ void pd_build_request(uint32_t src_cap_cnt, const uint32_t * const src_caps,
 		*rdo |= RDO_COMM_CAP;
 		if (pd_get_power_role(port) == PD_ROLE_SINK)
 			*rdo |= RDO_NO_SUSPEND;
+	}
+}
+
+void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
+{
+	pd_set_src_caps(port, cnt, src_caps);
+
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
+		uint32_t ma, mv, pdo;
+
+		/* Get max power info that we could request */
+		pd_find_pdo_index(pd_get_src_cap_cnt(port),
+					pd_get_src_caps(port),
+					PD_MAX_VOLTAGE_MV, &pdo);
+		pd_extract_pdo_power(pdo, &ma, &mv);
+
+		/* Set max. limit, but apply 500mA ceiling */
+		charge_manager_set_ceil(port, CEIL_REQUESTOR_PD, PD_MIN_MA);
+		pd_set_input_current_limit(port, ma, mv);
 	}
 }
 #endif /* defined(PD_MAX_VOLTAGE_MV) && defined(PD_OPERATING_POWER_MW) */

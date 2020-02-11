@@ -162,6 +162,20 @@ enum idh_ptype get_usb_pd_mux_cable_type(int port)
 {
 	return IDH_PTYPE_UNDEF;
 }
+
+const uint32_t * const pd_get_src_caps(int port)
+{
+	return NULL;
+}
+
+void pd_set_src_caps(int port, int cnt, uint32_t *src_caps)
+{
+}
+
+uint8_t pd_get_src_cap_cnt(int port)
+{
+	return 0;
+}
 #endif
 
 #ifndef CONFIG_USB_TYPEC_DRP_ACC_TRYSRC

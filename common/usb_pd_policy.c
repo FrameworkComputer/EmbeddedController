@@ -60,39 +60,22 @@ static uint8_t pd_src_cap_cnt[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 const uint32_t * const pd_get_src_caps(int port)
 {
-	ASSERT(port < CONFIG_USB_PD_PORT_MAX_COUNT);
-
 	return pd_src_caps[port];
+}
+
+void pd_set_src_caps(int port, int cnt, uint32_t *src_caps)
+{
+	int i;
+
+	pd_src_cap_cnt[port] = cnt;
+
+	for (i = 0; i < cnt; i++)
+		pd_src_caps[port][i] = *src_caps++;
 }
 
 uint8_t pd_get_src_cap_cnt(int port)
 {
-	ASSERT(port < CONFIG_USB_PD_PORT_MAX_COUNT);
-
 	return pd_src_cap_cnt[port];
-}
-
-void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
-{
-#ifdef CONFIG_CHARGE_MANAGER
-	uint32_t ma, mv, pdo;
-#endif
-	int i;
-
-	pd_src_cap_cnt[port] = cnt;
-	for (i = 0; i < cnt; i++)
-		pd_src_caps[port][i] = *src_caps++;
-
-#ifdef CONFIG_CHARGE_MANAGER
-	/* Get max power info that we could request */
-	pd_find_pdo_index(pd_get_src_cap_cnt(port), pd_get_src_caps(port),
-						PD_MAX_VOLTAGE_MV, &pdo);
-	pd_extract_pdo_power(pdo, &ma, &mv);
-
-	/* Set max. limit, but apply 500mA ceiling */
-	charge_manager_set_ceil(port, CEIL_REQUESTOR_PD, PD_MIN_MA);
-	pd_set_input_current_limit(port, ma, mv);
-#endif
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 

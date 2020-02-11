@@ -2398,6 +2398,16 @@ const uint32_t * const pd_get_src_caps(int port);
 uint8_t pd_get_src_cap_cnt(int port);
 
 /**
+ * Set the source caps list & count
+ *
+ * @param port     USB-C port number
+ * @param cnt      Source caps count
+ * @param src_caps Pointer to source caps
+ *
+ */
+void pd_set_src_caps(int port, int cnt, uint32_t *src_caps);
+
+/**
  * Return true if partner port is capable of communication over USB data
  * lines.
  *
