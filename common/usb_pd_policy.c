@@ -1236,28 +1236,3 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 	}
 	return rsize;
 }
-
-#ifdef CONFIG_USB_PD_DISCHARGE
-void pd_set_vbus_discharge(int port, int enable)
-{
-	static struct mutex discharge_lock[CONFIG_USB_PD_PORT_MAX_COUNT];
-
-	mutex_lock(&discharge_lock[port]);
-	enable &= !board_vbus_source_enabled(port);
-#ifdef CONFIG_USB_PD_DISCHARGE_GPIO
-	if (!port)
-		gpio_set_level(GPIO_USB_C0_DISCHARGE, enable);
-#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
-	else
-		gpio_set_level(GPIO_USB_C1_DISCHARGE, enable);
-#endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
-#elif defined(CONFIG_USB_PD_DISCHARGE_TCPC)
-	tcpc_discharge_vbus(port, enable);
-#elif defined(CONFIG_USB_PD_DISCHARGE_PPC)
-	ppc_discharge_vbus(port, enable);
-#else
-#error "PD discharge implementation not defined"
-#endif
-	mutex_unlock(&discharge_lock[port]);
-}
-#endif /* CONFIG_USB_PD_DISCHARGE */

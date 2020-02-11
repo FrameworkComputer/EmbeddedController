@@ -36,6 +36,11 @@ void tc_request_power_swap(int port)
 	/* Do nothing */
 }
 
+void pd_set_vbus_discharge(int port, int enable)
+{
+	gpio_set_level(GPIO_USB_C0_DISCHARGE, enable);
+}
+
 /**
  * Test section
  */

@@ -4479,46 +4479,6 @@ int pd_charge_from_device(uint16_t vid, uint16_t pid)
 			(pid == USB_PID1_APPLE || pid == USB_PID2_APPLE));
 }
 
-void pd_set_vbus_discharge(int port, int enable)
-{
-	static struct mutex discharge_lock[CONFIG_USB_PD_PORT_MAX_COUNT];
-
-	if (port >= board_get_usb_pd_port_count())
-		return;
-
-	mutex_lock(&discharge_lock[port]);
-	enable &= !board_vbus_source_enabled(port);
-
-	if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE_GPIO)) {
-		switch (port) {
-#if defined(CONFIG_USB_PD_DISCHARGE_GPIO) && CONFIG_USB_PD_PORT_MAX_COUNT >= 3
-		case 2:
-			gpio_set_level(GPIO_USB_C2_DISCHARGE, enable);
-			break;
-#endif
-#if defined(CONFIG_USB_PD_DISCHARGE_GPIO) && CONFIG_USB_PD_PORT_MAX_COUNT >= 2
-		case 1:
-			gpio_set_level(GPIO_USB_C1_DISCHARGE, enable);
-			break;
-#endif
-#if defined(CONFIG_USB_PD_DISCHARGE_GPIO) && CONFIG_USB_PD_PORT_MAX_COUNT >= 1
-		case 0:
-			gpio_set_level(GPIO_USB_C0_DISCHARGE, enable);
-			break;
-#endif
-		default:
-			CPRINTF("Could not discharge port %d via GPIO", port);
-			break;
-		}
-	} else if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE_TCPC)) {
-		tcpc_discharge_vbus(port, enable);
-	} else if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE_PPC)) {
-		ppc_discharge_vbus(port, enable);
-	}
-
-	mutex_unlock(&discharge_lock[port]);
-}
-
 void pd_dfp_pe_init(int port)
 {
 	memset(&pe[port].am_policy, 0, sizeof(struct pd_policy));
