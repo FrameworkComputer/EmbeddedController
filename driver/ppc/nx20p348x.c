@@ -30,6 +30,10 @@ static int db_exit_fail_count[CONFIG_USB_PD_PORT_MAX_COUNT];
 #define NX20P348X_FLAGS_SOURCE_ENABLED BIT(0)
 static uint8_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
+#if !defined(CONFIG_USBC_PPC_NX20P3481) && !defined(CONFIG_USBC_PPC_NX20P3483)
+#error "Either the NX20P3481 or NX20P3483 must be selected"
+#endif
+
 static int read_reg(uint8_t port, int reg, int *regval)
 {
 	return i2c_read8(ppc_chips[port].i2c_port,
@@ -135,17 +139,15 @@ static int nx20p348x_vbus_sink_enable(int port, int enable)
 
 	enable = !!enable;
 
-#if defined(CONFIG_USBC_PPC_NX20P3481)
-	rv = write_reg(port, NX20P348X_SWITCH_CONTROL_REG, control);
-#elif defined(CONFIG_USBC_PPC_NX20P3483)
-	/*
-	 * We cannot use an EC GPIO for EN_SNK since an EC reset will float the
-	 * GPIO thus browning out the board (without a battery).
-	 */
-	rv = tcpm_set_snk_ctrl(port, enable);
-#else
-#error "Either the NX20P3481 or NX20P3483 must be selected"
-#endif
+	if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3481))
+		rv = write_reg(port, NX20P348X_SWITCH_CONTROL_REG, control);
+	else if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3483))
+		/*
+		 * We cannot use an EC GPIO for EN_SNK since an EC reset
+		 * will float the GPIO thus browning out the board (without
+		 * a battery).
+		 */
+		rv = tcpm_set_snk_ctrl(port, enable);
 	if (rv)
 		return rv;
 
@@ -173,17 +175,15 @@ static int nx20p348x_vbus_source_enable(int port, int enable)
 
 	enable = !!enable;
 
-#if defined(CONFIG_USBC_PPC_NX20P3481)
-	rv = write_reg(port, NX20P348X_SWITCH_CONTROL_REG, control);
-#elif defined(CONFIG_USBC_PPC_NX20P3483)
-	/*
-	 * For parity's sake, we should not use an EC GPIO for EN_SRC since we
-	 * cannot use it for EN_SNK (for brown out reason listed above).
-	 */
-	rv = tcpm_set_src_ctrl(port, enable);
-#else
-#error "Either the NX20P3481 or NX20P3483 must be selected"
-#endif
+	if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3481))
+		rv = write_reg(port, NX20P348X_SWITCH_CONTROL_REG, control);
+	else if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3483))
+		/*
+		 * For parity's sake, we should not use an EC GPIO for
+		 * EN_SRC since we cannot use it for EN_SNK (for brown
+		 * out reason listed above).
+		 */
+		rv = tcpm_set_src_ctrl(port, enable);
 	if (rv)
 		return rv;
 
@@ -200,15 +200,17 @@ static int nx20p348x_vbus_source_enable(int port, int enable)
 	 * (15 msec) before the status will reflect the control command.
 	 */
 	msleep(NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC);
-	rv = read_reg(port, NX20P348X_SWITCH_STATUS_REG, &status);
-	if (rv) {
-		flags[port] = previous_flags;
-		return rv;
-	}
 
-	if ((status & NX20P348X_SWITCH_STATUS_MASK) != control) {
-		flags[port] = previous_flags;
-		return EC_ERROR_UNKNOWN;
+	if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3481)) {
+		rv = read_reg(port, NX20P348X_SWITCH_STATUS_REG, &status);
+		if (rv) {
+			flags[port] = previous_flags;
+			return rv;
+		}
+		if ((status & NX20P348X_SWITCH_STATUS_MASK) != control) {
+			flags[port] = previous_flags;
+			return EC_ERROR_UNKNOWN;
+		}
 	}
 
 	return EC_SUCCESS;
