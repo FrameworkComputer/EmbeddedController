@@ -9,6 +9,7 @@
  */
 
 #include "atomic.h"
+#include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
@@ -153,6 +154,53 @@ enum pd_cc_states pd_get_cc_state(
 	 * 2) Only an e-marked cabled without a partner on the other side
 	 */
 	return PD_CC_NONE;
+}
+
+__overridable int pd_board_check_request(uint32_t rdo, int pdo_cnt)
+{
+	return EC_SUCCESS;
+}
+
+int pd_check_requested_voltage(uint32_t rdo, const int port)
+{
+	int max_ma = rdo & 0x3FF;
+	int op_ma = (rdo >> 10) & 0x3FF;
+	int idx = RDO_POS(rdo);
+	uint32_t pdo;
+	uint32_t pdo_ma;
+#if defined(CONFIG_USB_PD_DYNAMIC_SRC_CAP) || \
+		defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT)
+	const uint32_t *src_pdo;
+	const int pdo_cnt = charge_manager_get_source_pdo(&src_pdo, port);
+#else
+	const uint32_t *src_pdo = pd_src_pdo;
+	const int pdo_cnt = pd_src_pdo_cnt;
+#endif
+
+	/* Check for invalid index */
+	if (!idx || idx > pdo_cnt)
+		return EC_ERROR_INVAL;
+
+	/* Board specific check for this request */
+	if (pd_board_check_request(rdo, pdo_cnt))
+		return EC_ERROR_INVAL;
+
+	/* check current ... */
+	pdo = src_pdo[idx - 1];
+	pdo_ma = (pdo & 0x3ff);
+
+	if (op_ma > pdo_ma)
+		return EC_ERROR_INVAL; /* too much op current */
+
+	if (max_ma > pdo_ma && !(rdo & RDO_CAP_MISMATCH))
+		return EC_ERROR_INVAL; /* too much max current */
+
+	CPRINTF("Requested %d mV %d mA (for %d/%d mA)\n",
+		 ((pdo >> 10) & 0x3ff) * 50, (pdo & 0x3ff) * 10,
+		 op_ma * 10, max_ma * 10);
+
+	/* Accept the requested voltage */
+	return EC_SUCCESS;
 }
 
 /*

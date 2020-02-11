@@ -68,15 +68,6 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 	return;
 }
 
-int pd_board_check_request(uint32_t rdo, int pdo_cnt)
-{
-	int idx = RDO_POS(rdo);
-
-	/* Check for invalid index */
-	return (!idx || idx > pdo_cnt) ?
-		EC_ERROR_INVAL : EC_SUCCESS;
-}
-
 __override void pd_transition_voltage(int idx)
 {
 	gpio_set_level(GPIO_USBC_VSEL_0, idx >= 2);

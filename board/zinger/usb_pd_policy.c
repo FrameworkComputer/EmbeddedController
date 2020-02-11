@@ -198,16 +198,10 @@ static int discharge_volt_idx;
 /* output current measurement */
 int vbus_amp;
 
-int pd_board_check_request(uint32_t rdo, int pdo_cnt)
+__override int pd_board_check_request(uint32_t rdo, int pdo_cnt)
 {
-	int idx = RDO_POS(rdo);
-
 	/* fault condition or output disabled: reject transitions */
 	if (fault != FAULT_OK || !output_is_enabled())
-		return EC_ERROR_INVAL;
-
-	/* Invalid index */
-	if (!idx || idx > pd_src_pdo_cnt)
 		return EC_ERROR_INVAL;
 
 	return EC_SUCCESS;

@@ -1365,7 +1365,7 @@ int pd_check_requested_voltage(uint32_t rdo, const int port);
  * @param pdo_cnt the total number of source PDOs.
  * @return EC_SUCCESS if request is ok , <0 else.
  */
-int pd_board_check_request(uint32_t rdo, int pdo_cnt);
+__override_proto int pd_board_check_request(uint32_t rdo, int pdo_cnt);
 
 /**
  * Select a new output voltage.
