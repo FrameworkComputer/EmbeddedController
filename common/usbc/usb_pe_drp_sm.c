@@ -4467,18 +4467,6 @@ unsigned int pd_get_max_voltage(void)
 	return max_request_mv;
 }
 
-int pd_charge_from_device(uint16_t vid, uint16_t pid)
-{
-	/* TODO: rewrite into table if we get more of these */
-	/*
-	 * White-list Apple charge-through accessory since it doesn't set
-	 * unconstrained bit, but we still need to charge from it when
-	 * we are a sink.
-	 */
-	return (vid == USB_VID_APPLE &&
-			(pid == USB_PID1_APPLE || pid == USB_PID2_APPLE));
-}
-
 void pd_dfp_pe_init(int port)
 {
 	memset(&pe[port].am_policy, 0, sizeof(struct pd_policy));

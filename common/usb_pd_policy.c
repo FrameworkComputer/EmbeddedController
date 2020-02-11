@@ -107,17 +107,6 @@ unsigned pd_get_max_voltage(void)
 {
 	return max_request_mv;
 }
-
-int pd_charge_from_device(uint16_t vid, uint16_t pid)
-{
-	/* TODO: rewrite into table if we get more of these */
-	/*
-	 * White-list Apple charge-through accessory since it doesn't set
-	 * unconstrained bit, but we still need to charge from it when
-	 * we are a sink.
-	 */
-	return (vid == USB_VID_APPLE && (pid == 0x1012 || pid == 0x1013));
-}
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 static struct pd_cable cable[CONFIG_USB_PD_PORT_MAX_COUNT];
