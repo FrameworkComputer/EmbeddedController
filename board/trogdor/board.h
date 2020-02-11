@@ -93,9 +93,19 @@
 #define CONFIG_BC12_DETECT_PI3USB9281
 #define CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT 2
 
+/*
+ * USB ID
+ *
+ * This is allocated specifically for Trogdor
+ * http://google3/hardware/standards/usb/
+ */
+#define CONFIG_USB_PID 0x5043
+
 /* USB */
 #define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USB_PD_TCPMV1
+#define CONFIG_USB_PD_TCPMV2
+#define CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
+#define CONFIG_USB_PD_DECODE_SOP
 #define CONFIG_CMD_PD_CONTROL
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
