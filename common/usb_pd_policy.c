@@ -1183,23 +1183,6 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 
 #endif /* CONFIG_USB_PD_ALT_MODE */
 
-static void pd_usb_billboard_deferred(void)
-{
-#if defined(CONFIG_USB_PD_ALT_MODE) && !defined(CONFIG_USB_PD_ALT_MODE_DFP) \
-	&& !defined(CONFIG_USB_PD_SIMPLE_DFP) && defined(CONFIG_USB_BOS)
-
-	/*
-	 * TODO(tbroch)
-	 * 1. Will we have multiple type-C port UFPs
-	 * 2. Will there be other modes applicable to DFPs besides DP
-	 */
-	if (!pd_alt_mode(0, USB_SID_DISPLAYPORT))
-		usb_connect();
-
-#endif
-}
-DECLARE_DEFERRED(pd_usb_billboard_deferred);
-
 #define FW_RW_END (CONFIG_EC_WRITABLE_STORAGE_OFF + \
 		   CONFIG_RW_STORAGE_OFF + CONFIG_RW_SIZE)
 

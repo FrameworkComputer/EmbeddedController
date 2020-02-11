@@ -19,6 +19,7 @@
 #include "host_command.h"
 #include "system.h"
 #include "task.h"
+#include "usb_api.h"
 #include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
@@ -773,3 +774,21 @@ __overridable bool vboot_allow_usb_pd(void)
 {
 	return false;
 }
+
+/* VDM utility functions */
+static void pd_usb_billboard_deferred(void)
+{
+	if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE) &&
+		!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP) &&
+		!IS_ENABLED(CONFIG_USB_PD_SIMPLE_DFP) &&
+		IS_ENABLED(CONFIG_USB_BOS)) {
+		/*
+		 * TODO(tbroch)
+		 * 1. Will we have multiple type-C port UFPs
+		 * 2. Will there be other modes applicable to DFPs besides DP
+		 */
+		if (!pd_alt_mode(0, USB_SID_DISPLAYPORT))
+			usb_connect();
+	}
+}
+DECLARE_DEFERRED(pd_usb_billboard_deferred);
