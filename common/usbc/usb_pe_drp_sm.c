@@ -480,12 +480,6 @@ static struct policy_engine {
 
 } pe[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-/*
- * As a sink, this is the max voltage (in millivolts) we can request
- * before getting source caps
- */
-static unsigned int max_request_mv = PD_MAX_VOLTAGE_MV;
-
 test_export_static enum usb_pe_state get_state_pe(const int port);
 test_export_static void set_state_pe(const int port,
 				     const enum usb_pe_state new_state);
@@ -862,7 +856,8 @@ static void pe_send_request_msg(int port)
 	pd_build_request(pe[port].src_cap_cnt, pe[port].src_caps,
 		pe[port].vpd_vdo, &rdo, &curr_limit,
 		&supply_voltage, charging && max_request_allowed ?
-		PD_REQUEST_MAX : PD_REQUEST_VSAFE5V, max_request_mv, port);
+		PD_REQUEST_MAX : PD_REQUEST_VSAFE5V,
+		pd_get_max_voltage(), port);
 
 	CPRINTF("C%d Req [%d] %dmV %dmA", port, RDO_POS(rdo),
 					supply_voltage, curr_limit);
@@ -4455,16 +4450,6 @@ void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
 	charge_manager_set_ceil(port, CEIL_REQUESTOR_PD, PD_MIN_MA);
 	pd_set_input_current_limit(port, ma, mv);
 #endif
-}
-
-void pd_set_max_voltage(unsigned int mv)
-{
-	max_request_mv = mv;
-}
-
-unsigned int pd_get_max_voltage(void)
-{
-	return max_request_mv;
 }
 
 void pd_dfp_pe_init(int port)

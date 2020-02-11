@@ -7,6 +7,24 @@
 
 #include "usb_pd.h"
 
+#if defined(PD_MAX_VOLTAGE_MV) && defined(PD_OPERATING_POWER_MW)
+/*
+ * As a sink, this is the max voltage (in millivolts) we can request
+ * before getting source caps
+ */
+static unsigned int max_request_mv = PD_MAX_VOLTAGE_MV;
+
+void pd_set_max_voltage(unsigned int mv)
+{
+	max_request_mv = mv;
+}
+
+unsigned int pd_get_max_voltage(void)
+{
+	return max_request_mv;
+}
+#endif /* defined(PD_MAX_VOLTAGE_MV) && defined(PD_OPERATING_POWER_MW) */
+
 int pd_charge_from_device(uint16_t vid, uint16_t pid)
 {
 	/* TODO: rewrite into table if we get more of these */

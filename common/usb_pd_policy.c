@@ -58,9 +58,6 @@ void pd_notify_dp_alt_mode_entry(void)
 static uint32_t pd_src_caps[CONFIG_USB_PD_PORT_MAX_COUNT][PDO_MAX_OBJECTS];
 static uint8_t pd_src_cap_cnt[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-/* Cap on the max voltage requested as a sink (in millivolts) */
-static unsigned max_request_mv = PD_MAX_VOLTAGE_MV; /* no cap */
-
 const uint32_t * const pd_get_src_caps(int port)
 {
 	ASSERT(port < CONFIG_USB_PD_PORT_MAX_COUNT);
@@ -96,16 +93,6 @@ void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
 	charge_manager_set_ceil(port, CEIL_REQUESTOR_PD, PD_MIN_MA);
 	pd_set_input_current_limit(port, ma, mv);
 #endif
-}
-
-void pd_set_max_voltage(unsigned mv)
-{
-	max_request_mv = mv;
-}
-
-unsigned pd_get_max_voltage(void)
-{
-	return max_request_mv;
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
