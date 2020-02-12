@@ -173,10 +173,8 @@ void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *mv)
 	*ma = MIN(max_ma, PD_MAX_CURRENT_MA);
 }
 
-void pd_build_request(uint32_t src_cap_cnt, const uint32_t * const src_caps,
-			int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
-			uint32_t *mv, enum pd_request_type req_type,
-			uint32_t max_request_mv, int port)
+void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
+			uint32_t *mv, int port)
 {
 	uint32_t pdo;
 	int pdo_index, flags = 0;
@@ -186,15 +184,46 @@ void pd_build_request(uint32_t src_cap_cnt, const uint32_t * const src_caps,
 	int max_vbus;
 	int vpd_vbus_dcr;
 	int vpd_gnd_dcr;
+	uint32_t src_cap_cnt = pd_get_src_cap_cnt(port);
+	const uint32_t * const src_caps = pd_get_src_caps(port);
+	int charging_allowed;
+	int max_request_allowed;
+	uint32_t max_request_mv = pd_get_max_voltage();
 
-	if (req_type == PD_REQUEST_VSAFE5V) {
-		/* src cap 0 should be vSafe5V */
-		pdo_index = 0;
-		pdo = src_caps[0];
+	/*
+	 * If this port is the current charge port, or if there isn't an active
+	 * charge port, set this value to true. If CHARGE_PORT_NONE isn't
+	 * considered, then there can be a race condition in PD negotiation and
+	 * the charge manager which forces an incorrect request for
+	 * vSafe5V. This can then lead to a brownout condition when the input
+	 * current limit gets incorrectly set to 0.5A.
+	 */
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
+		int chg_port = charge_manager_get_active_charge_port();
+
+		charging_allowed =
+			(chg_port == port || chg_port == CHARGE_PORT_NONE);
 	} else {
+		charging_allowed = 1;
+	}
+
+	if (IS_ENABLED(CONFIG_USB_PD_CHECK_MAX_REQUEST_ALLOWED))
+		max_request_allowed = pd_is_max_request_allowed();
+	else
+		max_request_allowed = 1;
+
+	/*
+	 * If currently charging on a different port, or we are not allowed to
+	 * request the max voltage, then select vSafe5V
+	 */
+	if (charging_allowed && max_request_allowed) {
 		/* find pdo index for max voltage we can request */
 		pdo_index = pd_find_pdo_index(src_cap_cnt, src_caps,
 						max_request_mv, &pdo);
+	} else {
+		/* src cap 0 should be vSafe5V */
+		pdo_index = 0;
+		pdo = src_caps[0];
 	}
 
 	pd_extract_pdo_power(pdo, ma, mv);

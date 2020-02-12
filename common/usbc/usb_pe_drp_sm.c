@@ -835,29 +835,10 @@ static void pe_send_request_msg(int port)
 	uint32_t rdo;
 	uint32_t curr_limit;
 	uint32_t supply_voltage;
-	int charging;
-	int max_request_allowed;
-
-	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
-		charging = (charge_manager_get_active_charge_port() == port);
-	else
-		charging = 1;
-
-	if (IS_ENABLED(CONFIG_USB_PD_CHECK_MAX_REQUEST_ALLOWED))
-		max_request_allowed = pd_is_max_request_allowed();
-	else
-		max_request_allowed = 1;
 
 	/* Build and send request RDO */
-	/*
-	 * If this port is not actively charging or we are not allowed to
-	 * request the max voltage, then select vSafe5V
-	 */
-	pd_build_request(pe[port].src_cap_cnt, pe[port].src_caps,
-		pe[port].vpd_vdo, &rdo, &curr_limit,
-		&supply_voltage, charging && max_request_allowed ?
-		PD_REQUEST_MAX : PD_REQUEST_VSAFE5V,
-		pd_get_max_voltage(), port);
+	pd_build_request(pe[port].vpd_vdo, &rdo, &curr_limit,
+			&supply_voltage, port);
 
 	CPRINTF("C%d Req [%d] %dmV %dmA", port, RDO_POS(rdo),
 					supply_voltage, curr_limit);

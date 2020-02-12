@@ -110,19 +110,14 @@ void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *mv);
 /**
  * Decide which PDO to choose from the source capabilities.
  *
- * @param src_cap_cnt
- * @param src_caps
+ * @param vpd_vdo VPD VDO
  * @param rdo  requested Request Data Object.
  * @param ma  selected current limit (stored on success)
  * @param mv  selected supply voltage (stored on success)
- * @param req_type request type
- * @param max_request_mv max voltage a sink can request before getting
- *			source caps
  * @param port USB-C port number
  */
-void pd_build_request(uint32_t src_cap_cnt, const uint32_t * const src_caps,
-	int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma, uint32_t *mv,
-	enum pd_request_type req_type, uint32_t max_request_mv, int port);
+void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
+			uint32_t *mv, int port);
 
 /**
  * Notifies a task that is waiting on a system jump, that it's complete.

@@ -1244,12 +1244,6 @@ enum pd_msg_type {
 /** Schedules the interrupt handler for the TCPC on a high priority task. */
 void schedule_deferred_pd_interrupt(int port);
 
-/* Request types for pd_build_request() */
-enum pd_request_type {
-	PD_REQUEST_VSAFE5V,
-	PD_REQUEST_MAX,
-};
-
 #ifdef CONFIG_USB_PD_REV30
 /**
  * Get current PD Revision
