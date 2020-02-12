@@ -1244,28 +1244,6 @@ static void set_vconn(int port, int enable)
 		ppc_set_vconn(port, enable);
 }
 
-#ifdef CONFIG_USB_PD_TCPM_TCPCI
-static uint32_t pd_ports_to_resume;
-static void resume_pd_port(void)
-{
-	uint32_t port;
-	uint32_t suspended_ports = atomic_read_clear(&pd_ports_to_resume);
-
-	while (suspended_ports) {
-		port = __builtin_ctz(suspended_ports);
-		suspended_ports &= ~(1 << port);
-		pd_set_suspend(port, 0);
-	}
-}
-DECLARE_DEFERRED(resume_pd_port);
-
-void pd_deferred_resume(int port)
-{
-	atomic_or(&pd_ports_to_resume, 1 << port);
-	hook_call_deferred(&resume_pd_port_data, SECOND);
-}
-#endif  /* CONFIG_USB_PD_DEFERRED_RESUME */
-
 #ifdef CONFIG_USB_PE_SM
 /* This must only be called from the PD task */
 static void pd_update_dual_role_config(int port)
