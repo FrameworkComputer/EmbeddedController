@@ -381,14 +381,6 @@ void pd_vbus_low(int port)
 #endif
 
 
-static void set_polarity(int port, enum tcpc_cc_polarity polarity)
-{
-	tcpm_set_polarity(port, polarity);
-#ifdef CONFIG_USBC_PPC_POLARITY
-	ppc_set_polarity(port, polarity);
-#endif /* defined(CONFIG_USBC_PPC_POLARITY) */
-}
-
 #ifdef CONFIG_USBC_VCONN
 static void set_vconn(int port, int enable)
 {
@@ -3170,7 +3162,7 @@ void pd_task(void *u)
 #endif
 			     (PD_ROLE_DEFAULT(port) == PD_ROLE_SOURCE &&
 			     pd[port].task_state == PD_STATE_SRC_READY))) {
-				set_polarity(port, pd[port].polarity);
+				pd_set_polarity(port, pd[port].polarity);
 				tcpm_set_msg_header(port, pd[port].power_role,
 						    pd[port].data_role);
 				tcpm_set_rx_enable(port, 1);
@@ -3396,7 +3388,7 @@ void pd_task(void *u)
 					pd[port].polarity =
 						get_src_polarity(cc1, cc2);
 				}
-				set_polarity(port, pd[port].polarity);
+				pd_set_polarity(port, pd[port].polarity);
 
 				/* initial data role for source is DFP */
 				pd_set_data_role(port, PD_ROLE_DFP);
@@ -4053,7 +4045,7 @@ void pd_task(void *u)
 			if (IS_ENABLED(CONFIG_COMMON_RUNTIME))
 				hook_notify(HOOK_USB_PD_CONNECT);
 			pd[port].polarity = get_snk_polarity(cc1, cc2);
-			set_polarity(port, pd[port].polarity);
+			pd_set_polarity(port, pd[port].polarity);
 			/* reset message ID  on connection */
 			pd[port].msg_id = 0;
 			/* initial data role for sink is UFP */

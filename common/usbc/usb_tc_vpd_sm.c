@@ -276,7 +276,7 @@ static void tc_attached_snk_entry(const int port)
 
 	/* Enable PD */
 	tc[port].pd_enable = 1;
-	set_polarity(port, 0);
+	pd_set_polarity(port, 0);
 }
 
 static void tc_attached_snk_run(const int port)

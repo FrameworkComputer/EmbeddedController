@@ -1842,7 +1842,7 @@ static void tc_attached_snk_entry(const int port)
 		/* Get connector orientation */
 		tcpm_get_cc(port, &cc1, &cc2);
 		tc[port].polarity = get_snk_polarity(cc1, cc2);
-		set_polarity(port, tc[port].polarity);
+		pd_set_polarity(port, tc[port].polarity);
 
 		/*
 		 * Initial data role for sink is UFP
@@ -2032,7 +2032,7 @@ static void tc_unoriented_dbg_acc_src_entry(const int port)
 		/* Get connector orientation */
 		tcpm_get_cc(port, &cc1, &cc2);
 		tc[port].polarity = (cc1 != TYPEC_CC_VOLT_RD);
-		set_polarity(port, tc[port].polarity);
+		pd_set_polarity(port, tc[port].polarity);
 
 		/*
 		 * Initial data role for sink is DFP
@@ -2193,7 +2193,7 @@ static void tc_dbg_acc_snk_entry(const int port)
 		/* Get connector orientation */
 		tcpm_get_cc(port, &cc1, &cc2);
 		tc[port].polarity = get_snk_polarity(cc1, cc2);
-		set_polarity(port, tc[port].polarity);
+		pd_set_polarity(port, tc[port].polarity);
 
 		/*
 		 * Initial data role for sink is UFP
@@ -2508,7 +2508,7 @@ static void tc_attached_src_entry(const int port)
 		/* Get connector orientation */
 		tcpm_get_cc(port, &cc1, &cc2);
 		tc[port].polarity = get_src_polarity(cc1, cc2);
-		set_polarity(port, tc[port].polarity);
+		pd_set_polarity(port, tc[port].polarity);
 
 		/*
 		 * Initial data role for sink is DFP
@@ -2542,7 +2542,7 @@ static void tc_attached_src_entry(const int port)
 	/* Get connector orientation */
 	tcpm_get_cc(port, &cc1, &cc2);
 	tc[port].polarity = get_src_polarity(cc1, cc2);
-	set_polarity(port, tc[port].polarity);
+	pd_set_polarity(port, tc[port].polarity);
 
 	/*
 	 * Initial data role for sink is DFP

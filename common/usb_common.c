@@ -167,6 +167,14 @@ bool pd_is_debug_acc(int port)
 		cc_state == PD_CC_DFP_DEBUG_ACC;
 }
 
+void pd_set_polarity(int port, enum tcpc_cc_polarity polarity)
+{
+	tcpm_set_polarity(port, polarity);
+
+	if (IS_ENABLED(CONFIG_USBC_PPC_POLARITY))
+		ppc_set_polarity(port, polarity);
+}
+
 __overridable int pd_board_check_request(uint32_t rdo, int pdo_cnt)
 {
 	return EC_SUCCESS;

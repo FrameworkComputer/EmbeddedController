@@ -52,14 +52,6 @@ void tc_start_event_loop(int port)
 	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE, 0);
 }
 
-void set_polarity(int port, int polarity)
-{
-	tcpm_set_polarity(port, polarity);
-
-	if (IS_ENABLED(CONFIG_USBC_PPC_POLARITY))
-		ppc_set_polarity(port, polarity);
-}
-
 /* High-priority interrupt tasks implementations */
 #if     defined(HAS_TASK_PD_INT_C0) || defined(HAS_TASK_PD_INT_C1) || \
 	defined(HAS_TASK_PD_INT_C2)

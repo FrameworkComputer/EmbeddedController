@@ -2467,6 +2467,14 @@ bool pd_partner_is_ufp(int port);
  */
 bool pd_is_debug_acc(int port);
 
+/**
+ * Sets the polarity of the port
+ *
+ * @param port USB-C port number
+ * @param polarity 0 for CC1, else 1 for CC2
+ */
+void pd_set_polarity(int port, enum tcpc_cc_polarity polarity);
+
 /*
  * Notify the AP that we have entered into DisplayPort Alternate Mode.  This
  * sets a DP_ALT_MODE_ENTERED MKBP event which may wake the AP.

@@ -282,14 +282,6 @@ enum tcpc_cc_polarity get_snk_polarity(enum tcpc_cc_voltage_status cc1,
 int tc_restart_tcpc(int port);
 
 /**
- * Sets the polarity of the port
- *
- * @param port USB-C port number
- * @param polarity 0 for CC1, else 1 for CC2
- */
-void set_polarity(int port, int polarity);
-
-/**
  * Called by the state machine framework to initialize the
  * TypeC state machine
  *
