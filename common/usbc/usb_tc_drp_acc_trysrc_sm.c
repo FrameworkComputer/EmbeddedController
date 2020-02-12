@@ -1183,38 +1183,7 @@ static void sink_stop_drawing_current(int port)
 #ifdef CONFIG_USB_PD_TRY_SRC
 static void pd_update_try_source(void)
 {
-	int i;
-	int batt_soc = usb_get_battery_soc();
-	bool new_pd_try_src_state = 0;
-
-	for (i = 0; i < board_get_usb_pd_port_count(); i++)
-		new_pd_try_src_state |= drp_state[i] == PD_DRP_TOGGLE_ON;
-
-	/*
-	 * Enable try source when dual-role toggling AND battery is present
-	 * and at some minimum percentage.
-	 */
-	new_pd_try_src_state &= batt_soc >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC;
-
-#ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
-	/*
-	 * Don't attempt Try.Src if the battery is in the disconnect state. The
-	 * discharge FET may not be enabled and so attempting Try.Src may cut
-	 * off our only power source at the time.
-	 */
-	new_pd_try_src_state &=
-		battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED;
-#elif defined(CONFIG_BATTERY_PRESENT_CUSTOM) || \
-			defined(CONFIG_BATTERY_PRESENT_GPIO)
-	/*
-	 * When battery is cutoff in ship mode it may not be reliable to
-	 * check if battery is present with its state of charge.
-	 * Also check if battery is initialized and ready to provide power.
-	 */
-	new_pd_try_src_state &= battery_is_present() == BP_YES;
-#endif /* CONFIG_BATTERY_PRESENT_[CUSTOM|GPIO] */
-
-	tc_enable_try_src(new_pd_try_src_state);
+	tc_enable_try_src(pd_is_try_source_capable());
 }
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_update_try_source, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_USB_PD_TRY_SRC */

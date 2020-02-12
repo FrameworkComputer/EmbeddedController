@@ -952,6 +952,11 @@ enum pd_data_role pd_get_data_role(int port);
  */
 enum pd_power_role pd_get_power_role(int port);
 
+/*
+ * Return true if PD is capable of trying as source else false
+ */
+bool pd_is_try_source_capable(void);
+
 /**
  * Request for VCONN swap
  *

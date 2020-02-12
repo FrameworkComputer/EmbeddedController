@@ -136,7 +136,7 @@ enum pd_dual_role_states drp_state[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		CONFIG_USB_PD_INITIAL_DRP_STATE};
 
 /* Enable variable for Try.SRC states */
-static uint8_t pd_try_src_enable;
+static bool pd_try_src_enable;
 #endif
 
 #ifdef CONFIG_USB_PD_REV30
@@ -2396,46 +2396,8 @@ enum pd_dual_role_states pd_get_dual_role(int port)
 static void pd_update_try_source(void)
 {
 	int i;
-	int try_src = 0;
-	int batt_soc = usb_get_battery_soc();
 
-	try_src = 0;
-	for (i = 0; i < board_get_usb_pd_port_count(); i++)
-		try_src |= drp_state[i] == PD_DRP_TOGGLE_ON;
-
-	/*
-	 * Enable try source when dual-role toggling AND battery is present
-	 * and at some minimum percentage.
-	 */
-	pd_try_src_enable = try_src &&
-			    batt_soc >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC;
-
-#ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
-	/*
-	 * Don't attempt Try.Src if the battery is in the disconnect state.  The
-	 * discharge FET may not be enabled and so attempting Try.Src may cut
-	 * off our only power source at the time.
-	 */
-	pd_try_src_enable &= (battery_get_disconnect_state() ==
-			      BATTERY_NOT_DISCONNECTED);
-#elif defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||	\
-	defined(CONFIG_BATTERY_PRESENT_GPIO)
-	/*
-	 * When battery is cutoff in ship mode it may not be reliable to
-	 * check if battery is present with its state of charge.
-	 * Also check if battery is initialized and ready to provide power.
-	 */
-	pd_try_src_enable &= (battery_is_present() == BP_YES);
-#endif /* CONFIG_BATTERY_PRESENT_[CUSTOM|GPIO] */
-
-#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
-	/*
-	 * Since a dedicated charge port can source power allow PD
-	 * trying as source.
-	 */
-	pd_try_src_enable |= (charge_manager_get_active_charge_port() ==
-			     CHARGE_SUPPLIER_DEDICATED);
-#endif /* CONFIG_DEDICATED_CHARGE_PORT_COUNT */
+	pd_try_src_enable = pd_is_try_source_capable();
 
 	/*
 	 * Clear this flag to cover case where a TrySrc
