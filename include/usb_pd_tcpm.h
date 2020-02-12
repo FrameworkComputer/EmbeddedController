@@ -327,6 +327,20 @@ struct tcpm_drv {
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	/**
+	 * Auto Toggle Connection
+	 * There is a connection while performing auto-toggle.
+	 * Allow a driver to do any work required to leave the
+	 * unattached auto-toggle mode
+	 *
+	 * @param port Type-C port number
+	 * @param cc1 enum tcpc_cc_pull of CC1
+	 * @param cc2 enum tcpc_cc_pull of CC2
+	 */
+	void (*tcpc_auto_toggle_connection)(int port,
+					enum tcpc_cc_voltage_status cc1,
+					enum tcpc_cc_voltage_status cc2);
+
+	/**
 	 * Enable TCPC auto DRP toggling.
 	 *
 	 * @param port Type-C port number

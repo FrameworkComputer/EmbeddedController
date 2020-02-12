@@ -13,6 +13,8 @@
 #include "nct38xx.h"
 #include "task.h"
 #include "tcpci.h"
+#include "usb_common.h"
+#include "usb_pd.h"
 
 #if !defined(CONFIG_USB_PD_TCPM_TCPCI)
 #error "NCT38XX is using part of standard TCPCI control"
@@ -180,6 +182,33 @@ static void nct38xx_tcpc_alert(int port)
 
 }
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+static void nct38xx_auto_toggle_connection(int port,
+	enum tcpc_cc_voltage_status cc1,
+	enum tcpc_cc_voltage_status cc2)
+{
+	int polarity;
+
+	/*
+	 * Get the current polarity so we can make sure the
+	 * PD stack will set the CC lines as we expect and
+	 * not to setting both CC lines the same due to
+	 * NO-POLARITY still being set in the cache.  This
+	 * will cause this chip to go back to searching
+	 * auto toggle with an open on both CC lines.
+	 *
+	 * TODO(b/149415919): Consider trying to clear the DRP
+	 * mode instead of changing the polarity
+	 */
+	if (cc_is_rp(cc1) || cc_is_rp(cc2))
+		polarity = get_snk_polarity(cc1, cc2);
+	else
+		polarity = get_src_polarity(cc1, cc2);
+
+	pd_set_polarity(port, polarity);
+}
+#endif
+
 const struct tcpm_drv nct38xx_tcpm_drv = {
 	.init			= &nct38xx_tcpm_init,
 	.release		= &tcpci_tcpm_release,
@@ -203,6 +232,7 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 				  &tcpci_tcpc_enable_auto_discharge_disconnect,
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	.drp_toggle		= &tcpci_tcpc_drp_toggle,
+	.tcpc_auto_toggle_connection = &nct38xx_auto_toggle_connection,
 #endif
 #ifdef CONFIG_USBC_PPC
 	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,

@@ -767,6 +767,11 @@ enum tcpc_cc_polarity pd_get_polarity(int port)
 	return tc[port].polarity;
 }
 
+void pd_set_polarity(int port, enum tcpc_cc_polarity polarity)
+{
+	tc[port].polarity = polarity;
+}
+
 enum pd_data_role pd_get_data_role(int port)
 {
 	return tc[port].data_role;
@@ -2873,26 +2878,22 @@ static void tc_drp_auto_toggle_run(const int port)
 		break;
 	case DRP_TC_UNATTACHED_SNK:
 		/*
-		 * The TCPCI comes out of auto toggle with a prospective
-		 * connection.  It is expecting us to set the CC lines to
-		 * what it is thinking is best or it goes direct back to
-		 * unattached.  So get the SNK polarity to be able to setup
-		 * the CC lines to avoid this.
+		 * Some TCPCI compliant TCPCs come out of auto toggle with
+		 * a prospective connection.  They are expecting us to set
+		 * the CC lines to what it is thinking is best or it goes
+		 * directly back to unattached.
 		 */
-		tc[port].polarity = get_snk_polarity(cc1, cc2);
-
+		tcpm_auto_toggle_connection(port, cc1, cc2);
 		set_state_tc(port, TC_ATTACH_WAIT_SNK);
 		break;
 	case DRP_TC_UNATTACHED_SRC:
 		/*
-		 * The TCPCI comes out of auto toggle with a prospective
-		 * connection.  It is expecting us to set the CC lines to
-		 * what it is thinking is best or it goes direct back to
-		 * unattached.  So get the SRC polarity to be able to setup
-		 * the CC lines to avoid this.
+		 * Some TCPCI compliant TCPCs come out of auto toggle with
+		 * a prospective connection.  They are expecting us to set
+		 * the CC lines to what it is thinking is best or it goes
+		 * directly back to unattached.
 		 */
-		tc[port].polarity = get_src_polarity(cc1, cc2);
-
+		tcpm_auto_toggle_connection(port, cc1, cc2);
 		set_state_tc(port, TC_ATTACH_WAIT_SRC);
 		break;
 	case DRP_TC_DRP_AUTO_TOGGLE:

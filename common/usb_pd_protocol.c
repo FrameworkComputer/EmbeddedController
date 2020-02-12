@@ -2716,6 +2716,11 @@ enum tcpc_cc_polarity pd_get_polarity(int port)
 	return pd[port].polarity;
 }
 
+void pd_set_polarity(int port, enum tcpc_cc_polarity polarity)
+{
+	pd[port].polarity = polarity;
+}
+
 bool pd_get_partner_data_swap_capable(int port)
 {
 	/* return data swap capable status of port partner */
