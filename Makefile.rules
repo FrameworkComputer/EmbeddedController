@@ -167,11 +167,11 @@ targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
 
 # If outputing to tty and column command exists, pipe into column.
 # Otherwise, print in newline format.
-cmd_pretty_print_list = @echo $(1) \
-				| tr ' ' '\n'                        \
+cmd_pretty_print_cmd = @$(1) \
 				| { [ -t 1 ]                         \
 				    && which column 1>/dev/null 2>&1 \
 				    && column || cat ; }
+cmd_pretty_print_list = $(call cmd_pretty_print_cmd,echo $(1) | tr ' ' '\n')
 
 # By default, the "build_boards" and "try_build_boards" targets will build all
 # of the boards listed in $(boards). However, the invoker can provide a
@@ -688,6 +688,17 @@ print-configs:
 		-DSECTION_IS_RW=$(EMPTY) include/config.h | \
 		grep "#define CONFIG_" | cut -c9- | sort
 
+.PHONY: print-defines
+print-defines: BLD ?= RW
+print-defines:
+	$(call cmd_pretty_print_cmd,echo $(CFLAGS) | tr '[:space:]' '\n' | \
+		sort -u | grep -- '^-D' | sed 's/^-D//' | sed 's/=$$//')
+
+.PHONY: print-includes
+print-includes:
+	$(call cmd_pretty_print_cmd,echo $(CFLAGS) | tr '[:space:]' '\n' | \
+		sort -u | grep -- '^-I' | sed 's/^-I//')
+
 .PHONY: clean
 clean:
 	-rm -rf $(out)
@@ -726,7 +737,9 @@ help:
 	@echo "  print-host-tests     - Prints all host test targets"
 	@echo "  print-host-fuzzers   - Prints all host fuzz targets"
 	@echo "  print-boards         - Prints all boards"
-	@echo "  print-configs [BOARD=]      - Print CONFIG_* options for the target board"
+	@echo "  print-configs  [BOARD=]      - Print CONFIG_* options for the target board"
+	@echo "  print-defines  [BOARD=]      - Print forced defines passed to the compiler"
+	@echo "  print-includes [BOARD=]      - Print include paths passed to the compiler"
 	@echo "Common Variables:"
 	@echo "  V=1                  - Show make output"
 	@echo "  BOARD=               - Set the board name to build (Default is $(BOARD))"
