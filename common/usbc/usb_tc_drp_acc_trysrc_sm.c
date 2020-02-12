@@ -3275,23 +3275,6 @@ void tc_run(const int port)
 	run_state(port, &tc[port].ctx);
 }
 
-/**
- * This function checks the current CC status of the port partner
- * and returns true if the attached partner is UFP.
- */
-int pd_partner_is_ufp(int port)
-{
-	return tc[port].cc_state == PD_CC_UFP_ATTACHED ||
-	       tc[port].cc_state == PD_CC_UFP_DEBUG_ACC ||
-	       tc[port].cc_state == PD_CC_UFP_AUDIO_ACC;
-}
-
-int pd_is_debug_acc(int port)
-{
-	return tc[port].cc_state == PD_CC_UFP_DEBUG_ACC ||
-	       tc[port].cc_state == PD_CC_DFP_DEBUG_ACC;
-}
-
 static void pd_chipset_resume(void)
 {
 	int i;
