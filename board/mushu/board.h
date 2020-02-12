@@ -177,9 +177,13 @@ enum battery_type {
 };
 
 
+#undef PD_OPERATING_POWER_MW
 #define PD_OPERATING_POWER_MW	15000
-#define PD_MAX_POWER_MW		60000
-#define PD_MAX_CURRENT_MA	3000
+#undef PD_MAX_POWER_MW
+#define PD_MAX_POWER_MW		100000
+#undef PD_MAX_CURRENT_MA
+#define PD_MAX_CURRENT_MA	5000
+#undef PD_MAX_VOLTAGE_MV
 #define PD_MAX_VOLTAGE_MV	20000
 
 #endif /* !__ASSEMBLER__ */
