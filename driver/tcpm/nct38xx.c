@@ -24,9 +24,6 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-static unsigned char txBuf[33];
-static unsigned char rxBuf[33];
-
 static int nct38xx_tcpm_init(int port)
 {
 	int rv = 0;
@@ -97,66 +94,6 @@ static int nct38xx_tcpm_init(int port)
 	return rv;
 }
 
-int tcpci_nct38xx_transmit(int port, enum tcpm_transmit_type type,
-			uint16_t header, const uint32_t *data)
-{
-	int rv, num_obj_byte;
-
-	num_obj_byte = PD_HEADER_CNT(header) * 4;
-
-	txBuf[0] = num_obj_byte + 2;
-
-	txBuf[1] = (unsigned char)(header & 0xFF);
-	txBuf[2] = (unsigned char)((header >> 8) & 0xFF);
-
-	if (num_obj_byte) {
-		uint32_t *buf_ptr;
-
-		buf_ptr = (uint32_t *)&txBuf[3];
-		memcpy(buf_ptr, data, num_obj_byte);
-	}
-
-	/* total write size = size header (1 byte) + message size */
-	rv = tcpc_write_block(port, TCPC_REG_TX_BYTE_CNT,
-					(const uint8_t *)txBuf, txBuf[0] + 1);
-
-	rv = tcpc_write(port, TCPC_REG_TRANSMIT,
-			TCPC_REG_TRANSMIT_SET_WITH_RETRY(type));
-	return rv;
-}
-
-static int tcpci_nct38xx_get_message_raw(int port, uint32_t *payload, int *head)
-{
-	int rv, cnt, num_obj_byte;
-
-	rv = tcpc_read(port, TCPC_REG_RX_BYTE_CNT, &cnt);
-
-	if (rv != EC_SUCCESS || cnt < 3) {
-		rv = EC_ERROR_UNKNOWN;
-		goto clear;
-	}
-
-	rv = tcpc_read_block(port, TCPC_REG_RX_BYTE_CNT, rxBuf, cnt + 1);
-	if (rv != EC_SUCCESS)
-		goto clear;
-
-	*head = *(int *)&rxBuf[2];
-	num_obj_byte = PD_HEADER_CNT(*head) * 4;
-
-	if (num_obj_byte) {
-		uint32_t *buf_ptr;
-
-		buf_ptr = (uint32_t *)&rxBuf[4];
-		memcpy(payload, buf_ptr, num_obj_byte);
-	}
-
-clear:
-	/* Read complete, clear RX status alert bit */
-	tcpc_write16(port, TCPC_REG_ALERT, TCPC_REG_ALERT_RX_STATUS);
-
-	return rv;
-}
-
 static void nct38xx_tcpc_alert(int port)
 {
 	int alert, rv;
@@ -222,8 +159,8 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 	.set_vconn		= &tcpci_tcpm_set_vconn,
 	.set_msg_header		= &tcpci_tcpm_set_msg_header,
 	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
-	.get_message_raw	= &tcpci_nct38xx_get_message_raw,
-	.transmit		= &tcpci_nct38xx_transmit,
+	.get_message_raw	= &tcpci_tcpm_get_message_raw,
+	.transmit		= &tcpci_tcpm_transmit,
 	.tcpc_alert		= &nct38xx_tcpc_alert,
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
