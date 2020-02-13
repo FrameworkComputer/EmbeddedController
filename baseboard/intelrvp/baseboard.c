@@ -65,21 +65,18 @@ const struct temp_sensor_t temp_sensors[] = {
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v0_22k6_47k_4050b,
 		.idx = ADC_TEMP_SNS_AMBIENT,
-		.action_delay_sec = 5,
 	},
 	[TEMP_SNS_BATTERY] = {
 		.name = "Battery",
 		.type = TEMP_SENSOR_TYPE_BATTERY,
 		.read = charge_get_battery_temp,
 		.idx = 0,
-		.action_delay_sec = 1,
 	},
 	[TEMP_SNS_DDR] = {
 		.name = "DDR",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v0_22k6_47k_4050b,
 		.idx = ADC_TEMP_SNS_DDR,
-		.action_delay_sec = 1,
 	},
 #ifdef CONFIG_PECI
 	[TEMP_SNS_PECI] = {
@@ -87,7 +84,6 @@ const struct temp_sensor_t temp_sensors[] = {
 		.type = TEMP_SENSOR_TYPE_CPU,
 		.read = peci_temp_sensor_get_val,
 		.idx = 0,
-		.action_delay_sec = 1,
 	},
 #endif /* CONFIG_PECI */
 	[TEMP_SNS_SKIN] = {
@@ -95,14 +91,12 @@ const struct temp_sensor_t temp_sensors[] = {
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v0_22k6_47k_4050b,
 		.idx = ADC_TEMP_SNS_SKIN,
-		.action_delay_sec = 1,
 	},
 	[TEMP_SNS_VR] = {
 		.name = "VR",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v0_22k6_47k_4050b,
 		.idx = ADC_TEMP_SNS_VR,
-		.action_delay_sec = 1,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);

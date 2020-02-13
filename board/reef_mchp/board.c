@@ -634,10 +634,9 @@ int board_get_ambient_temp(int idx, int *temp_ptr)
  * delay from read to taking action
  */
 const struct temp_sensor_t temp_sensors[] = {
-	/* FIXME(dhendrix): tweak action_delay_sec */
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0, 1},
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, board_get_ambient_temp, 0, 5},
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_charger_temp, 1, 1},
+	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0},
+	{"Ambient", TEMP_SENSOR_TYPE_BOARD, board_get_ambient_temp, 0},
+	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_charger_temp, 1},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 

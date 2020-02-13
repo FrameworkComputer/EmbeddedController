@@ -548,9 +548,9 @@ static int board_get_temp(int idx, int *temp_k)
 }
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 0, 1},
-	{"SOC", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 1, 5},
-	{"CPU", TEMP_SENSOR_TYPE_CPU, sb_tsi_get_val, 0, 4},
+	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 0},
+	{"SOC", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 1},
+	{"CPU", TEMP_SENSOR_TYPE_CPU, sb_tsi_get_val, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 

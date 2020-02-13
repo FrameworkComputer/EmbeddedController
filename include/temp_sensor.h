@@ -37,9 +37,6 @@ struct temp_sensor_t {
 	int (*read)(int idx, int *temp_ptr);
 	/* Index among the same kind of sensors. */
 	int idx;
-	/* Delay between reading temperature and taking action about it,
-	 * in seconds. */
-	int action_delay_sec;
 };
 
 #ifdef CONFIG_TEMP_SENSOR

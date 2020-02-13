@@ -451,9 +451,9 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * a static global in this module.
  */
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, sb_temp, 0, 4},
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, ds1624_get_val, 0, 4},
-	{"Case", TEMP_SENSOR_TYPE_CASE, therm_get_val, (int)ADC_CASE, 4},
+	{"Battery", TEMP_SENSOR_TYPE_BATTERY, sb_temp, 0},
+	{"Ambient", TEMP_SENSOR_TYPE_BOARD, ds1624_get_val, 0},
+	{"Case", TEMP_SENSOR_TYPE_CASE, therm_get_val, (int)ADC_CASE},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 #endif
