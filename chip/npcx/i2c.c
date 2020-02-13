@@ -1009,17 +1009,20 @@ static void i2c_freq_changed(void)
 		int ctrl = i2c_port_to_controller(i2c_ports[i].port);
 		int scl_freq;
 
-		if (ctrl < 2)
-#if defined(CHIP_FAMILY_NPCX7)
-			/* SMB0/1 use APB3 clock */
-			freq = clock_get_apb3_freq();
-#else
-			/* SMB0/1 use core clock */
-			freq = clock_get_freq();
+#ifdef CHIP_FAMILY_NPCX7
+		/*
+		 * SMB0/1/4/5/6/7 use APB3 clock
+		 * SMB2/3 use APB2 clock
+		 */
+		freq = (ctrl < 2 || ctrl > 3) ?
+		       clock_get_apb3_freq() : clock_get_apb2_freq();
+#else /* CHIP_FAMILY_NPCX5 */
+		/*
+		 * SMB0/1 use core clock
+		 * SMB2/3 use APB2 clock
+		 */
+		freq = (ctrl < 2) ? clock_get_freq() : clock_get_apb2_freq();
 #endif
-		else
-			/* Other SMB controller use APB2 clock */
-			freq = clock_get_apb2_freq();
 
 		/*
 		 * Set SCL frequency by formula:
