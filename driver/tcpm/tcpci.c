@@ -360,22 +360,11 @@ int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 int tcpci_tcpm_set_cc(int port, int pull)
 {
 	int cc1, cc2;
-	enum tcpc_cc_polarity polarity;
 
 	cc1 = cc2 = pull;
 
 	/* Keep track of current CC pull value */
 	tcpci_set_cached_pull(port, pull);
-
-	/*
-	 * Only drive one CC line when attached crbug.com/951681
-	 * and drive both when unattached.
-	 */
-	polarity = pd_get_polarity(port);
-	if (polarity == POLARITY_CC1)
-		cc2 = TYPEC_CC_OPEN;
-	else if (polarity == POLARITY_CC2)
-		cc1 = TYPEC_CC_OPEN;
 
 	return tcpc_write(port, TCPC_REG_ROLE_CTRL,
 			  TCPC_REG_ROLE_CTRL_SET(0,

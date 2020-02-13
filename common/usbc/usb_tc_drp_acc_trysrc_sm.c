@@ -1238,6 +1238,11 @@ static void set_vconn(int port, int enable)
 		TC_CLR_FLAG(port, TC_FLAGS_VCONN_ON);
 
 	/*
+	 * TODO(chromium:951681): When we are sourcing VCONN, we should make
+	 * sure to remove our termination on that CC line first.
+	 */
+
+	/*
 	 * We always need to tell the TCPC to enable Vconn first, otherwise some
 	 * TCPCs get confused and think the CC line is in over voltage mode and
 	 * immediately disconnects. If there is a PPC, both devices will
