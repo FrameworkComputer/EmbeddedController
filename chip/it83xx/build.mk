@@ -27,6 +27,7 @@ chip-$(CONFIG_FPU)+=it83xx_fpu.o
 endif
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_ADC)+=adc.o
+chip-$(CONFIG_DAC)+=dac.o
 chip-$(CONFIG_HOSTCMD_X86)+=lpc.o ec2i.o
 chip-$(CONFIG_HOSTCMD_ESPI)+=espi.o
 chip-$(CONFIG_SPI_MASTER)+=spi_master.o
