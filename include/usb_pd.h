@@ -2284,15 +2284,6 @@ void pd_transmit_complete(int port, int status);
 enum tcpc_cc_polarity pd_get_polarity(int port);
 
 /**
- * Set port polarity.  This is cached by the PD stack and
- * some TCPCI events may need to alter this cached value.
- *
- * @param port USB-C port number
- * @param polarity current polarity
- */
-void pd_set_polarity(int port, enum tcpc_cc_polarity polarity);
-
-/**
  * Get port partner data swap capable status
  *
  * @param port USB-C port number

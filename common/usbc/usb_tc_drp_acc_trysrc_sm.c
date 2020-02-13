@@ -767,11 +767,6 @@ enum tcpc_cc_polarity pd_get_polarity(int port)
 	return tc[port].polarity;
 }
 
-void pd_set_polarity(int port, enum tcpc_cc_polarity polarity)
-{
-	tc[port].polarity = polarity;
-}
-
 enum pd_data_role pd_get_data_role(int port)
 {
 	return tc[port].data_role;
@@ -2888,7 +2883,7 @@ static void tc_drp_auto_toggle_run(const int port)
 		 * the CC lines to what it is thinking is best or it goes
 		 * directly back to unattached.
 		 */
-		tcpm_auto_toggle_connection(port, cc1, cc2);
+		tcpm_drp_toggle_connection(port, cc1, cc2);
 		set_state_tc(port, TC_ATTACH_WAIT_SNK);
 		break;
 	case DRP_TC_UNATTACHED_SRC:
@@ -2898,7 +2893,7 @@ static void tc_drp_auto_toggle_run(const int port)
 		 * the CC lines to what it is thinking is best or it goes
 		 * directly back to unattached.
 		 */
-		tcpm_auto_toggle_connection(port, cc1, cc2);
+		tcpm_drp_toggle_connection(port, cc1, cc2);
 		set_state_tc(port, TC_ATTACH_WAIT_SRC);
 		break;
 	case DRP_TC_DRP_AUTO_TOGGLE:

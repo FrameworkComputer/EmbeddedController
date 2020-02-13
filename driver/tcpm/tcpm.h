@@ -258,14 +258,14 @@ static inline int tcpm_enable_drp_toggle(int port)
 	return tcpc_config[port].drv->drp_toggle(port);
 }
 
-static inline void tcpm_auto_toggle_connection(int port,
+static inline void tcpm_drp_toggle_connection(int port,
 	enum tcpc_cc_voltage_status cc1,
 	enum tcpc_cc_voltage_status cc2)
 {
 	const struct tcpm_drv *tcpc = tcpc_config[port].drv;
 
-	if (tcpc->tcpc_auto_toggle_connection)
-		tcpc->tcpc_auto_toggle_connection(port, cc1, cc2);
+	if (tcpc->drp_toggle_connection)
+		tcpc->drp_toggle_connection(port, cc1, cc2);
 }
 #endif
 
