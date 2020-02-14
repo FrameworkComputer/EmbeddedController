@@ -728,6 +728,14 @@ int pd_is_vbus_present(int port)
 	return pd_check_vbus_level(port, VBUS_PRESENT);
 }
 
+#ifdef CONFIG_USB_PD_FRS
+void pd_set_frs_enable(int port, int enable)
+{
+	ppc_set_frs_enable(port, enable);
+	tcpm_set_frs_enable(port, enable);
+}
+#endif /* defined(CONFIG_USB_PD_FRS) */
+
 #ifdef CONFIG_CMD_TCPC_DUMP
 /*
  * Dump TCPC registers.

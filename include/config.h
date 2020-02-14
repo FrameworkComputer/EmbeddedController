@@ -4058,8 +4058,14 @@
  */
 #undef CONFIG_USB_PD_PREFER_MV
 
-/* Type-C Fast Role Swap */
-#undef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
+/*
+ * The Fast Role Swap trigger can be implemented in either the TCPC or PPC
+ * driver. If either CONFIG_USB_PD_FRS_TCPC or CONFIG_USB_PD_FRS_PPC is set,
+ * CONFIG_USB_FRS will be set automatically to enable the protocol-side of FRS.
+ */
+#undef CONFIG_USB_PD_FRS_TCPC
+#undef CONFIG_USB_PD_FRS_PPC
+#undef CONFIG_USB_PD_FRS
 
 /*
  * USB Product ID. Each platform (e.g. baseboard set) should have a single
@@ -4645,6 +4651,17 @@
 #error CONFIG_USB_PD_DECODE_SOP must be enabled with the TCPMV2 PD state machine
 #endif
 #endif
+
+
+/******************************************************************************/
+/*
+ * Automatically define CONFIG_USB_PD_FRS if FRS is enabled in the TCPC or PPC
+ */
+#if defined(CONFIG_USB_PD_FRS_PPC) || defined(CONFIG_USB_PD_FRS_TCPC)
+#define CONFIG_USB_PD_FRS
+#endif
+
+
 
 /******************************************************************************/
 /*

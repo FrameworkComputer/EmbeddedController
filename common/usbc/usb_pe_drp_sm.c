@@ -798,14 +798,13 @@ static void pe_set_frs_enable(int port, int enable)
 	/* This should only be called from the PD task */
 	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
 
-	if (IS_ENABLED(CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP)) {
+	if (IS_ENABLED(CONFIG_USB_PD_FRS)) {
 		int current = PE_CHK_FLAG(port,
 					  PE_FLAGS_FAST_ROLE_SWAP_ENABLED);
 
 		/* Request an FRS change, only if the state has changed */
 		if (!!current != !!enable) {
-			tcpm_set_frs_enable(port, enable);
-
+			pd_set_frs_enable(port, enable);
 			if (enable)
 				PE_SET_FLAG(port,
 					    PE_FLAGS_FAST_ROLE_SWAP_ENABLED);

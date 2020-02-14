@@ -134,7 +134,7 @@
 
 	 /* Enable TCPMv2 Fast Role Swap */
 	 /* Turn off until FRSwap is working */
-	#undef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
+	#undef CONFIG_USB_PD_FRS_TCPC
 #endif
 
 #define CONFIG_HOSTCMD_PD_CONTROL
@@ -339,7 +339,7 @@ void bc12_interrupt(enum gpio_signal signal);
 void ppc_interrupt(enum gpio_signal signal);
 #endif
 
-#ifdef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
+#ifdef CONFIG_USB_PD_FRS_TCPC
 int board_tcpc_fast_role_swap_enable(int port, int enable);
 #endif
 

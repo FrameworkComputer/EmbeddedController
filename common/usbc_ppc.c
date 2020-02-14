@@ -311,6 +311,26 @@ int ppc_vbus_source_enable(int port, int enable)
 	return rv;
 }
 
+#ifdef CONFIG_USB_PD_FRS
+int ppc_set_frs_enable(int port, int enable)
+{
+	int rv = EC_ERROR_UNIMPLEMENTED;
+	const struct ppc_config_t *ppc;
+
+	if ((port < 0) || (port >= ppc_cnt)) {
+		CPRINTS("%s(%d) Invalid port!", __func__, port);
+		return EC_ERROR_INVAL;
+	}
+
+	ppc = &ppc_chips[port];
+
+	if (ppc->drv->set_frs_enable)
+		rv = ppc->drv->set_frs_enable(port,enable);
+
+	return rv;
+}
+#endif /* defined(CONFIG_USB_PD_FRS) */
+
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
 int ppc_is_vbus_present(int port)
 {

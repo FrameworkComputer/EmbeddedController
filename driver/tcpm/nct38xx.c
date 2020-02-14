@@ -59,7 +59,7 @@ static int nct38xx_init(int port)
 		return rv;
 
 	/* Set FRS direction for SNK detect, if FRS is enabled */
-	if (IS_ENABLED(CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP)) {
+	if (IS_ENABLED(CONFIG_USB_PD_FRS_TCPC)) {
 		reg = TCPC_REG_DEV_CAP_2_SNK_FR_SWAP;
 		rv = tcpc_write(port, TCPC_REG_DEV_CAP_2, reg);
 		if (rv)
@@ -213,7 +213,7 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
 #endif
-#ifdef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
+#ifdef CONFIG_USB_PD_FRS_TCPC
 	.set_frs_enable         = &tcpci_tcpc_fast_role_swap_enable,
 #endif
 	.handle_fault		= &nct3807_handle_fault,

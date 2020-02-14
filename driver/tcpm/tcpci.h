@@ -246,6 +246,6 @@ int tcpci_tcpm_set_snk_ctrl(int port, int enable);
 int tcpci_tcpm_set_src_ctrl(int port, int enable);
 #endif
 
-void tcpci_tcpc_fast_role_swap_enable(int port, int enable);
+int tcpci_tcpc_fast_role_swap_enable(int port, int enable);
 
 #endif /* __CROS_EC_USB_PD_TCPM_TCPCI_H */
