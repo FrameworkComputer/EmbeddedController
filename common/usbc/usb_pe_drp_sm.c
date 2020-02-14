@@ -794,9 +794,7 @@ void pe_got_soft_reset(int port)
 
 void pe_dpm_request(int port, enum pe_dpm_request req)
 {
-	if (get_state_pe(port) == PE_SRC_READY ||
-			get_state_pe(port) == PE_SNK_READY)
-		PE_SET_DPM_REQUEST(port, req);
+	PE_SET_DPM_REQUEST(port, req);
 }
 
 void pe_vconn_swap_complete(int port)
@@ -4892,12 +4890,14 @@ static void pe_dr_snk_get_sink_cap_run(int port)
 
 	/*
 	 * Determine if FRS is possible based on the returned Sink Caps
-	 * and transition to PE_SNK_Ready when:
-	 *   1) An Accept Message is received.
 	 *
-	 * Transition to PE_SNK_Ready state when:
-	 *   1) A Reject Message is received.
-	 *   2) Or a Wait Message is received.
+	 * Transition to PE_SNK_Ready when:
+	 *   1) A Sink_Capabilities Message is received
+	 *   2) Or SenderResponseTimer times out
+	 *   3) Or a Reject Message is received.
+	 *
+	 * Transition to PE_SEND_SOFT_RESET state when:
+	 *   1) An unexpected message is received
 	 */
 	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
@@ -4907,11 +4907,14 @@ static void pe_dr_snk_get_sink_cap_run(int port)
 		ext = PD_HEADER_EXT(rx_emsg[port].header);
 		payload = *(uint32_t *)rx_emsg[port].buf;
 
-		if ((ext == 0) && (cnt == 0)) {
-			if (type == PD_CTRL_ACCEPT) {
+		if (ext == 0) {
+			if ((cnt > 0) && (type == PD_DATA_SINK_CAP)) {
 				/*
 				 * Check message to see if we can handle
-				 * FRS for this connection.
+				 * FRS for this connection. Multiple PDOs
+				 * may be returned, for FRS only Fixed PDOs
+				 * shall be used, and this shall be the 1st
+				 * PDO returned
 				 *
 				 * TODO(b/14191267): Make sure we can handle
 				 * the required current before we enable FRS.
@@ -4925,16 +4928,17 @@ static void pe_dr_snk_get_sink_cap_run(int port)
 					case PDO_FIXED_FRS_CURR_1A5_AT_5V:
 					case PDO_FIXED_FRS_CURR_3A0_AT_5V:
 						pe_set_frs_enable(port, 1);
-						return;
+						break;
 					}
 				}
 				set_state_pe(port, PE_SNK_READY);
-				return;
-			} else if ((type == PD_CTRL_REJECT) ||
-				   (type == PD_CTRL_WAIT)) {
+			} else if (type == PD_CTRL_REJECT ||
+				   type == PD_CTRL_NOT_SUPPORTED) {
 				set_state_pe(port, PE_SNK_READY);
-				return;
+			} else {
+				set_state_pe(port, PE_SEND_SOFT_RESET);
 			}
+			return;
 		}
 	}
 
