@@ -1221,9 +1221,6 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_update_try_source, HOOK_PRIO_DEFAULT);
 
 static void set_vconn(int port, int enable)
 {
-	if (enable == TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
-		return;
-
 	if (enable)
 		TC_SET_FLAG(port, TC_FLAGS_VCONN_ON);
 	else
