@@ -9,12 +9,14 @@
 
 #ifdef CONFIG_COMMON_GPIO_SHORTNAMES
 #define GPIO(name, pin, flags) {GPIO_NAME_BY_##pin, GPIO_##pin, flags},
+#define GPIO_INT(name, pin, flags, signal) \
+		{GPIO_NAME_BY_##pin, GPIO_##pin, flags},
 #else
 #define GPIO(name, pin, flags) {#name, GPIO_##pin, flags},
+#define GPIO_INT(name, pin, flags, signal) {#name, GPIO_##pin, flags},
 #endif
 
 #define UNIMPLEMENTED(name) {#name, DUMMY_GPIO_BANK, 0, GPIO_DEFAULT},
-#define GPIO_INT(name, pin, flags, signal) GPIO(name, pin, flags)
 
 /* GPIO signal list. */
 const struct gpio_info gpio_list[] = {
@@ -39,8 +41,11 @@ void (* const gpio_irq_handlers[])(enum gpio_signal signal) = {
 const int gpio_ih_count = ARRAY_SIZE(gpio_irq_handlers);
 
 /*
- * ALL GPIOs with interrupt handlers must be declared at the top of the gpio.inc
- * file.
+ * ALL GPIO_INTs must appear before GPIOs (from gpio.wrap).
+ * This is because the enum gpio_signal names are used to index into
+ * the gpio_irq_handlers array.
+ *
+ * This constraint is handled within gpio.wrap.
  */
 #define GPIO_INT(name, pin, flags, signal)	\
 	BUILD_ASSERT(GPIO_##name < ARRAY_SIZE(gpio_irq_handlers));
@@ -92,7 +97,7 @@ const int gpio_ih_count = ARRAY_SIZE(gpio_irq_handlers);
  *      - flags: the same as the flags of GPIO.
  *      - handler: the IOEX IO's interrupt handler.
  */
-#define IOEX_INT(name, expin, flags, handler) IOEX(name, expin, flags)
+#define IOEX_INT(name, expin, flags, handler) {#name, IOEX_##expin, flags},
 
 /* IO expander signal list. */
 const struct ioex_info ioex_list[] = {
