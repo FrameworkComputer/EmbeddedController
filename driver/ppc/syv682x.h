@@ -22,8 +22,15 @@
 #define SYV682X_CONTROL_4_REG		0x04
 
 /* Status Register */
+#define SYV682X_STATUS_OC_HV		BIT(7)
+#define SYV682X_STATUS_RVS		BIT(6)
+#define SYV682X_STATUS_OC_5V		BIT(5)
+#define SYV682X_STATUS_OVP		BIT(4)
+#define SYV682X_STATUS_FRS		BIT(3)
+#define SYV682X_STATUS_TSD		BIT(2)
 #define SYV682X_STATUS_VSAFE_5V		BIT(1)
 #define SYV682X_STATUS_VSAFE_0V		BIT(0)
+#define SYV682X_STATUS_INT_MASK		0xfc
 
 /* Control Register 1 */
 #define SYV682X_CONTROL_1_CH_SEL	BIT(1)
@@ -63,8 +70,11 @@
 #define SYV682X_CONTROL_4_VBAT_OVP	BIT(3)
 #define SYV682X_CONTROL_4_VCONN_OCP	BIT(2)
 #define SYV682X_CONTROL_4_CC_FRS	BIT(1)
+#define SYV682X_CONTROL_4_INT_MASK	0x0c
 
 struct ppc_drv;
 extern const struct ppc_drv syv682x_drv;
+
+void syv682x_interrupt(int port);
 
 #endif /* defined(__CROS_EC_SYV682X_H) */
