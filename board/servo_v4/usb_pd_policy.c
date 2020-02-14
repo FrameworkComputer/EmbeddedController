@@ -92,7 +92,7 @@
  * than 5V.
  */
 static const uint16_t pd_src_voltages_mv[] = {
-		5000, 9000, 12000, 15000, 20000,
+		5000, 9000, 10000, 12000, 15000, 20000,
 };
 static uint32_t pd_src_chg_pdo[ARRAY_SIZE(pd_src_voltages_mv)];
 static uint8_t chg_pdo_cnt;
@@ -967,9 +967,10 @@ DECLARE_CONSOLE_COMMAND(fakedisconnect, cmd_fake_disconnect,
 
 static int cmd_usbc_action(int argc, char *argv[])
 {
-	if (argc != 2)
+	if (argc != 2 && argc != 3)
 		return EC_ERROR_PARAM_COUNT;
 
+	/* TODO(b:140256624): drop *v command if we migrate to chg cmd. */
 	if (!strcasecmp(argv[1], "5v")) {
 		do_cc(CONFIG_SRC(cc_config));
 		user_limited_max_mv = 5000;
@@ -996,6 +997,25 @@ static int cmd_usbc_action(int argc, char *argv[])
 		CPRINTF("DRP = %d, host_mode = %d\n",
 			!!(cc_config & CC_ENABLE_DRP),
 			!!(cc_config & CC_ALLOW_SRC));
+	} else if (!strcasecmp(argv[1], "chg")) {
+		int sink_v;
+
+		if (argc != 3)
+			return EC_ERROR_PARAM2;
+
+		sink_v = atoi(argv[2]);
+		if (!sink_v)
+			return EC_ERROR_PARAM2;
+
+		user_limited_max_mv = sink_v * 1000;
+		do_cc(CONFIG_SRC(cc_config));
+		update_ports();
+		/*
+		 * TODO(b:140256624): servod captures 'chg SRC' keyword to
+		 * recognize if this command is supported in the firmware.
+		 * Drop this message if when we phase out the usbc_role control.
+		 */
+		ccprintf("CHG SRC %dmV\n", user_limited_max_mv);
 	} else {
 		return EC_ERROR_PARAM1;
 	}
@@ -1003,5 +1023,5 @@ static int cmd_usbc_action(int argc, char *argv[])
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(usbc_action, cmd_usbc_action,
-			"5v|12v|20v|dev|pol0|pol1|drp",
+			"5v|12v|20v|dev|pol0|pol1|drp|chg x(x=voltage)",
 			"Set Servo v4 type-C port state");
