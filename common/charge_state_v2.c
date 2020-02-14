@@ -1754,8 +1754,14 @@ void charger_task(void *u)
 		 * battery it uses (0, 0), which is probably safer than blindly
 		 * applying power to a battery we can't talk to.
 		 */
-		curr.requested_voltage = curr.batt.desired_voltage;
-		curr.requested_current = curr.batt.desired_current;
+		if (curr.batt.flags & (BATT_FLAG_BAD_DESIRED_VOLTAGE |
+					BATT_FLAG_BAD_DESIRED_CURRENT)) {
+			curr.requested_voltage = 0;
+			curr.requested_current = 0;
+		} else {
+			curr.requested_voltage = curr.batt.desired_voltage;
+			curr.requested_current = curr.batt.desired_current;
+		}
 
 		/* If we *know* there's no battery, wait for one to appear. */
 		if (curr.batt.is_present == BP_NO) {
