@@ -346,6 +346,9 @@ static void enter_d0i1(void)
 	/* halt ISH cpu, will wakeup from PMU wakeup interrupt */
 	ish_mia_halt();
 
+	if (IS_ENABLED(CONFIG_ISH_NEW_PM))
+		clear_fabric_error();
+
 	/* disable Trunk Clock Gating (TCG) of ISH */
 	CCU_TCG_EN = 0;
 
@@ -390,6 +393,9 @@ static void enter_d0i2(void)
 	switch_to_aontask();
 
 	/* returned from aontask */
+
+	if (IS_ENABLED(CONFIG_ISH_NEW_PM))
+		clear_fabric_error();
 
 	/* disable power gating of RF(Cache) and ROMs */
 	PMU_RF_ROM_PWR_CTRL = 0;
@@ -438,6 +444,9 @@ static void enter_d0i3(void)
 	switch_to_aontask();
 
 	/* returned from aontask */
+
+	if (IS_ENABLED(CONFIG_ISH_NEW_PM))
+		clear_fabric_error();
 
 	/* disable power gating of RF(Cache) and ROMs */
 	PMU_RF_ROM_PWR_CTRL = 0;
@@ -492,6 +501,20 @@ static int d0ix_decide(timestamp_t cur_time, uint32_t idle_us)
 	return pm_state;
 }
 
+static void pre_setting_d0ix(void)
+{
+	if (IS_ENABLED(CONFIG_ISH_NEW_PM)) {
+		PMU_VNN_REQ = PMU_VNN_REQ;
+		uart_to_idle();
+	}
+}
+
+static void post_setting_d0ix(void)
+{
+	if (IS_ENABLED(CONFIG_ISH_NEW_PM))
+		uart_port_restore();
+}
+
 static void pm_process(timestamp_t cur_time, uint32_t idle_us)
 {
 	int decide;
@@ -500,19 +523,49 @@ static void pm_process(timestamp_t cur_time, uint32_t idle_us)
 
 	switch (decide) {
 	case ISH_PM_STATE_D0I1:
+		pre_setting_d0ix();
 		enter_d0i1();
+		post_setting_d0ix();
 		break;
 	case ISH_PM_STATE_D0I2:
+		pre_setting_d0ix();
 		enter_d0i2();
+		post_setting_d0ix();
 		check_aon_task_status();
 		break;
 	case ISH_PM_STATE_D0I3:
+		pre_setting_d0ix();
 		enter_d0i3();
+		post_setting_d0ix();
 		check_aon_task_status();
 		break;
 	default:
 		enter_d0i0();
 		break;
+	}
+}
+
+static void reset_bcg(void)
+{
+	if (IS_ENABLED(CONFIG_ISH_NEW_PM)) {
+		CCU_BCG_MIA = 0;
+		CCU_BCG_DMA = 0;
+		CCU_BCG_I2C = 0;
+		CCU_BCG_SPI = 0;
+		CCU_BCG_UART = 0;
+		CCU_BCG_GPIO = 0;
+	} else {
+		CCU_BCG_EN = 0;
+	}
+}
+
+static void enable_d3bme_irqs(void)
+{
+	task_enable_irq(ISH_D3_RISE_IRQ);
+	if (!IS_ENABLED(CONFIG_ISH_NEW_PM)) {
+		task_enable_irq(ISH_D3_FALL_IRQ);
+		task_enable_irq(ISH_BME_RISE_IRQ);
+		task_enable_irq(ISH_BME_FALL_IRQ);
 	}
 }
 
@@ -526,7 +579,7 @@ void ish_pm_init(void)
 
 	/* disable TCG and disable BCG */
 	CCU_TCG_EN = 0;
-	CCU_BCG_EN = 0;
+	reset_bcg();
 
 	if (IS_ENABLED(CONFIG_ISH_PM_AONTASK))
 		init_aon_task();
@@ -549,10 +602,7 @@ void ish_pm_init(void)
 		    (PMU_D3_STATUS & PMU_BME_BIT_SET))
 			PMU_D3_STATUS = PMU_D3_STATUS;
 
-		task_enable_irq(ISH_D3_RISE_IRQ);
-		task_enable_irq(ISH_D3_FALL_IRQ);
-		task_enable_irq(ISH_BME_RISE_IRQ);
-		task_enable_irq(ISH_BME_FALL_IRQ);
+		enable_d3bme_irqs();
 	}
 }
 
@@ -706,26 +756,28 @@ static void d3_rise_isr(void)
 	handle_d3(ISH_D3_RISE_VEC);
 }
 
-static void d3_fall_isr(void)
+static __maybe_unused void d3_fall_isr(void)
 {
 	handle_d3(ISH_D3_FALL_VEC);
 }
 
-static void bme_rise_isr(void)
+static __maybe_unused void bme_rise_isr(void)
 {
 	handle_d3(ISH_BME_RISE_VEC);
 }
 
-static void bme_fall_isr(void)
+static __maybe_unused void bme_fall_isr(void)
 {
 	handle_d3(ISH_BME_FALL_VEC);
 }
 
 #ifdef CONFIG_ISH_PM_D3
 DECLARE_IRQ(ISH_D3_RISE_IRQ, d3_rise_isr);
+#ifndef CONFIG_ISH_NEW_PM
 DECLARE_IRQ(ISH_D3_FALL_IRQ, d3_fall_isr);
 DECLARE_IRQ(ISH_BME_RISE_IRQ, bme_rise_isr);
 DECLARE_IRQ(ISH_BME_FALL_IRQ, bme_fall_isr);
+#endif
 #endif
 
 void ish_pm_refresh_console_in_use(void)

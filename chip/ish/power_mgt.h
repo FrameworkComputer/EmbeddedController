@@ -9,6 +9,10 @@
 #include "common.h"
 #include "registers.h"
 
+extern void uart_port_restore(void);
+extern void uart_to_idle(void);
+extern void clear_fabric_error(void);
+
 /* power states for ISH */
 enum ish_pm_state {
 	/* D0 state: active mode */
