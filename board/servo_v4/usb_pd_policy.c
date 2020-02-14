@@ -965,6 +965,24 @@ static int cmd_fake_disconnect(int argc, char *argv[])
 DECLARE_CONSOLE_COMMAND(fakedisconnect, cmd_fake_disconnect,
 			"<delay_ms> <duration_ms>", NULL);
 
+static int cmd_ada_srccaps(int argc, char *argv[])
+{
+	int i;
+	const uint32_t * const ada_srccaps = pd_get_src_caps(CHG);
+
+	for (i = 0; i < pd_get_src_cap_cnt(CHG); ++i) {
+		uint32_t max_ma, max_mv;
+
+		pd_extract_pdo_power(ada_srccaps[i], &max_ma, &max_mv);
+		ccprintf("%d: %dmV/%dmA\n", i, max_mv, max_ma);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(ada_srccaps, cmd_ada_srccaps,
+			"",
+			"Print adapter SrcCap");
+
 static int cmd_usbc_action(int argc, char *argv[])
 {
 	if (argc != 2 && argc != 3)
