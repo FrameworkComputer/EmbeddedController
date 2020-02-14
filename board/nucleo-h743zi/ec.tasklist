@@ -3,11 +3,9 @@
  * found in the LICENSE file.
  */
 
+ #include "base-ec.tasklist"
+
 /**
  * See CONFIG_TASK_LIST in config.h for details.
  */
-#define CONFIG_TASK_LIST \
-	TASK_ALWAYS_RO(RWSIG, rwsig_task, NULL, 1280) \
-	TASK_ALWAYS(HOOKS, hook_task, NULL, 1024) \
-	TASK_NOTEST(HOSTCMD, host_command_task, NULL, TASK_STACK_SIZE) \
-	TASK_ALWAYS(CONSOLE, console_task, NULL, CONSOLE_TASK_STACK_SIZE)
+#define CONFIG_TASK_LIST BASEBOARD_CONFIG_TASK_LIST

@@ -50,10 +50,6 @@ static void slp_event(enum gpio_signal signal)
 	hook_call_deferred(&ap_deferred_data, 0);
 }
 
-static void button_event(enum gpio_signal signal)
-{
-}
-
 #include "gpio_list.h"
 
 /* Initialize board. */
