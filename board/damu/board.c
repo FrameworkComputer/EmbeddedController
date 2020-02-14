@@ -27,6 +27,8 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "it8801.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -78,6 +80,32 @@ const struct power_signal_info power_signal_list[] = {
 	{GPIO_PMIC_EC_RESETB,  POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+/* Keyboard scan setting */
+struct keyboard_scan_config keyscan_config = {
+	/*
+	 * TODO(b/133200075): Tune this once we have the final performance
+	 * out of the driver and the i2c bus.
+	 */
+	.output_settle_us = 35,
+	.debounce_down_us = 5 * MSEC,
+	.debounce_up_us = 40 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+	.actual_key_mask = {
+		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
+	},
+};
+
+struct ioexpander_config_t ioex_config[CONFIG_IO_EXPANDER_PORT_COUNT] = {
+	[0] = {
+		.i2c_host_port = I2C_PORT_IO_EXPANDER_IT8801,
+		.i2c_slave_addr = IT8801_I2C_ADDR,
+		.drv = &it8801_ioexpander_drv,
+	},
+};
 
 /******************************************************************************/
 /* SPI devices */

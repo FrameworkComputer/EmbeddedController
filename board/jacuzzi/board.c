@@ -107,6 +107,14 @@ struct keyboard_scan_config keyscan_config = {
 	},
 };
 
+struct ioexpander_config_t ioex_config[CONFIG_IO_EXPANDER_PORT_COUNT] = {
+	[0] = {
+		.i2c_host_port = I2C_PORT_IO_EXPANDER_IT8801,
+		.i2c_slave_addr = IT8801_I2C_ADDR,
+		.drv = &it8801_ioexpander_drv,
+	},
+};
+
 /******************************************************************************/
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {

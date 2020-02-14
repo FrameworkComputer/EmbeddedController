@@ -33,12 +33,24 @@
 #define IT8801_REG_MASK_GPIOAFS_FUNC2   BIT(6)
 #define IT8801_REG_MASK_GPIODIR         BIT(5)
 #define IT8801_REG_MASK_GPIOPUE         BIT(0)
-#define IT8801_REG_GPIOG2SOVR           0x07
 #define IT8801_REG_GPIO23SOV            BIT(3)
 #define IT8801_REG_MASK_SELKSO2         0x02
 #define IT8801_REG_LBVIDR               0xFE
 #define IT8801_REG_HBVIDR               0xFF
 #define IT8801_KSO_COUNT                18
+
+/* General Purpose I/O Port (GPIO) */
+#define IT8801_SUPPORT_GPIO_FLAGS (GPIO_OPEN_DRAIN | GPIO_INPUT | \
+		GPIO_OUTPUT | GPIO_LOW | GPIO_HIGH)
+
+#define IT8801_REG_MASK_GPIOAFS_FUNC1   (0x00 << 7)
+
+/* IT8801 only supports GPIO 0/1/2 */
+#define IT8801_VALID_GPIO_G0_MASK       0xD9
+#define IT8801_VALID_GPIO_G1_MASK       0x3F
+#define IT8801_VALID_GPIO_G2_MASK       0x0F
+
+extern const struct ioexpander_drv it8801_ioexpander_drv;
 
 /* GPIO Register map */
 /* Input pin status register */
@@ -66,6 +78,8 @@
 #define IT8801_GPIOIOT_INT_EDGE         3  /* = RISING + FALLING */
 #define IT8801_GPIOIOT_OPEN_DRAIN       2
 
+#define IT8801_GPIODIR                  BIT(5)
+#define IT8801_GPIOIOT                  BIT(4)
 #define IT8801_GPIOPOL                  BIT(2)  /* polarity */
 #define IT8801_GPIOPDE                  BIT(1)  /* pull-down enable */
 #define IT8801_GPIOPUE                  BIT(0)  /* pull-up enable */
