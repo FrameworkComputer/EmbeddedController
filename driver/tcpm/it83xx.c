@@ -483,16 +483,6 @@ static int it83xx_tcpm_set_cc(int port, int pull)
 
 static int it83xx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
-	/*
-	 * TCPCI sets the CC lines based on polarity.  If it is set to
-	 * no connection then both CC lines are driven, otherwise only
-	 * one is driven.  This driver does not appear to do this.  If
-	 * that changes, this would be the location you would want to
-	 * adjust the CC lines for the current polarity
-	 */
-	if (polarity == POLARITY_NONE)
-		return EC_SUCCESS;
-
 	it83xx_select_polarity(port, polarity);
 
 	return EC_SUCCESS;

@@ -1013,9 +1013,6 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 
 void tc_state_init(int port)
 {
-	/* Start as not connected */
-	tc[port].polarity = POLARITY_NONE;
-
 	/* Unattached.SNK is the default starting state. */
 	restart_tc_sm(port, TC_UNATTACHED_SNK);
 
@@ -2057,9 +2054,6 @@ static void tc_attached_snk_exit(const int port)
 		 */
 		if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
 			set_vconn(port, 0);
-
-		/* Unattached should not have a polarity */
-		tc[port].polarity = POLARITY_NONE;
 	}
 
 	/* Clear flags after checking Vconn status */
@@ -2803,9 +2797,6 @@ static void tc_attached_src_exit(const int port)
 		/* Disable VCONN if not power role swapping */
 		if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
 			set_vconn(port, 0);
-
-		/* Unattached should not have a polarity */
-		tc[port].polarity = POLARITY_NONE;
 	}
 
 	/* Clear PR swap flag after checking for Vconn */

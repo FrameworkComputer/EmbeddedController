@@ -169,16 +169,6 @@ static int mt6370_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
 	enum tcpc_cc_voltage_status cc1, cc2;
 
-	/*
-	 * TCPCI sets the CC lines based on polarity.  If it is set to
-	 * no connection then both CC lines are driven, otherwise only
-	 * one is driven.  This driver does not appear to do this.  If
-	 * that changes, this would be the location you would want to
-	 * adjust the CC lines for the current polarity
-	 */
-	if (polarity == POLARITY_NONE)
-		return EC_SUCCESS;
-
 	mt6370_polarity = polarity;
 	mt6370_get_cc(port, &cc1, &cc2);
 	return tcpci_tcpm_set_polarity(port, polarity);

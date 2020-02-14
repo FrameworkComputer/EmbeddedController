@@ -51,12 +51,6 @@ enum tcpc_rp_value {
 
 enum tcpc_cc_polarity {
 	/*
-	 * _NONE: either disconnected or connected to a SNK Debug
-	 * Accessory
-	 */
-	POLARITY_NONE = -1,
-
-	/*
 	 * _CCx: is used to indicate the polarity while not connected to
 	 * a Debug Accessory.  Only one CC line will assert a resistor and
 	 * the other will be open.
@@ -87,7 +81,7 @@ static inline enum tcpc_cc_polarity polarity_rm_dts(
 	enum tcpc_cc_polarity polarity)
 {
 	BUILD_ASSERT(POLARITY_COUNT == 4);
-	return (polarity == POLARITY_NONE) ? polarity : polarity & BIT(0);
+	return polarity & BIT(0);
 }
 
 enum tcpm_transmit_type {

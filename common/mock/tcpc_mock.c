@@ -52,7 +52,7 @@ static int mock_set_cc(int port, int pull)
 	return EC_SUCCESS;
 }
 
-static int mock_set_polarity(int port, int polarity)
+static int mock_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
 	return EC_SUCCESS;
 }

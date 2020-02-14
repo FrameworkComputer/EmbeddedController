@@ -403,20 +403,6 @@ int tcpci_enter_low_power_mode(int port)
 
 int tcpci_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
-	int rv;
-
-	/*
-	 * TCPCI sets the CC lines based on polarity.  If it is set to
-	 * no connection or SRC Debug Accessory then both CC lines are
-	 * driven, otherwise only one is driven.
-	 */
-	rv = tcpm_set_cc(port, tcpci_get_cached_pull(port));
-	if (rv)
-		return rv;
-
-	if (polarity == POLARITY_NONE)
-		return EC_SUCCESS;
-
 	return tcpc_update8(port,
 			    TCPC_REG_TCPC_CTRL,
 			    TCPC_REG_TCPC_CTRL_SET(1),

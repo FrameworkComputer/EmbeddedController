@@ -849,22 +849,9 @@ static inline void set_state(int port, enum pd_states next_state)
 		/* Invalidate message IDs. */
 		invalidate_last_message_id(port);
 
-		if (not_auto_toggling) {
-			/*
-			 * On disconnect set the resistor on both CC lines so
-			 * we can detect a connection with either polarity.
-			 * If we are in dual role toggle, then this will happen
-			 * automatically as it needs, so don't adjust the role
-			 * in that case.
-			 */
-			pd[port].polarity = POLARITY_NONE;
-			if (tcpm_set_polarity(port, POLARITY_NONE))
-				CPRINTS("C%d failed to set polarity",
-					port);
-
+		if (not_auto_toggling)
 			/* Disable Auto Discharge Disconnect */
 			tcpm_enable_auto_discharge_disconnect(port, 0);
-		}
 
 		/* detect USB PD cc disconnect */
 		if (IS_ENABLED(CONFIG_COMMON_RUNTIME))
@@ -2958,9 +2945,6 @@ void pd_task(void *u)
 	 */
 	pd[port].flags |= PD_FLAGS_LPM_ENGAGED;
 #endif
-
-	/* Start as not connected */
-	pd[port].polarity = POLARITY_NONE;
 
 #ifdef CONFIG_COMMON_RUNTIME
 	pd_init_tasks();

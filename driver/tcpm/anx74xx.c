@@ -765,16 +765,6 @@ static int anx74xx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
 	int reg, mux_state, rv = EC_SUCCESS;
 
-	/*
-	 * TCPCI sets the CC lines based on polarity.  If it is set to
-	 * no connection then both CC lines are driven, otherwise only
-	 * one is driven.  This driver does not appear to do this.  If
-	 * that changes, this would be the location you would want to
-	 * adjust the CC lines for the current polarity
-	 */
-	if (polarity == POLARITY_NONE)
-		return EC_SUCCESS;
-
 	rv |= tcpc_read(port, ANX74XX_REG_CC_SOFTWARE_CTRL, &reg);
 	if (polarity_rm_dts(polarity)) /* Inform ANX to use CC2 */
 		reg &= ~ANX74XX_REG_SELECT_CC1;

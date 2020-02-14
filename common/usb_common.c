@@ -104,9 +104,6 @@ typec_current_t usb_get_typec_current_limit(enum tcpc_cc_polarity polarity,
 enum tcpc_cc_polarity get_snk_polarity(enum tcpc_cc_voltage_status cc1,
 	enum tcpc_cc_voltage_status cc2)
 {
-	if (cc_is_open(cc1, cc2))
-		return POLARITY_NONE;
-
 	/* The following assumes:
 	 *
 	 * TYPEC_CC_VOLT_RP_3_0 > TYPEC_CC_VOLT_RP_1_5
@@ -122,10 +119,6 @@ enum tcpc_cc_polarity get_snk_polarity(enum tcpc_cc_voltage_status cc1,
 enum tcpc_cc_polarity get_src_polarity(enum tcpc_cc_voltage_status cc1,
 	enum tcpc_cc_voltage_status cc2)
 {
-	if (cc_is_open(cc1, cc2) ||
-	    cc_is_snk_dbg_acc(cc1, cc2))
-		return POLARITY_NONE;
-
 	return (cc1 == TYPEC_CC_VOLT_RD) ? POLARITY_CC1 : POLARITY_CC2;
 }
 

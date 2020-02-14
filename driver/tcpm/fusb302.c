@@ -568,16 +568,6 @@ static int fusb302_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 	/* Port polarity : 0 => CC1 is CC line, 1 => CC2 is CC line */
 	int reg;
 
-	/*
-	 * TCPCI sets the CC lines based on polarity.  If it is set to
-	 * no connection then both CC lines are driven, otherwise only
-	 * one is driven.  This driver does not appear to do this.  If
-	 * that changes, this would be the location you would want to
-	 * adjust the CC lines for the current polarity
-	 */
-	if (polarity == POLARITY_NONE)
-		return EC_SUCCESS;
-
 	tcpc_read(port, TCPC_REG_SWITCHES0, &reg);
 
 	/* clear VCONN switch bits */

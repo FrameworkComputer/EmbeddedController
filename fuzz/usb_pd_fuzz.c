@@ -31,7 +31,11 @@ static int mock_tcpm_select_rp_value(int port, int rp)
 }
 
 static int mock_tcpm_set_cc(int port, int pull) { return EC_SUCCESS; }
-static int mock_tcpm_set_polarity(int port, int polarity) { return EC_SUCCESS; }
+static int mock_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
+{
+	return EC_SUCCESS;
+}
+
 static int mock_tcpm_set_vconn(int port, int enable) { return EC_SUCCESS; }
 static int mock_tcpm_set_msg_header(int port,
 			int power_role, int data_role) { return EC_SUCCESS; }
