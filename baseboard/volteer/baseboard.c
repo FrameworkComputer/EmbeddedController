@@ -396,12 +396,15 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 /******************************************************************************/
 /* USBC mux configuration - Tiger Lake includes internal mux */
+#ifdef CONFIG_USBC_RETIMER_INTEL_BB
+/* TODO(b/150301041): Remove #ifdefs when bb_retimer.c works with TCPMv2. */
 struct usb_mux usbc1_usb_retimer = {
 	.usb_port = USBC_PORT_C1,
 	.driver = &bb_usb_retimer,
 	.i2c_port = I2C_PORT_USB_1_MIX,
 	.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
 };
+#endif
 struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.usb_port = USBC_PORT_C0,
@@ -412,7 +415,11 @@ struct usb_mux usb_muxes[] = {
 		.usb_port = USBC_PORT_C1,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
+#ifdef CONFIG_USBC_RETIMER_INTEL_BB
 		.next_mux = &usbc1_usb_retimer,
+#else
+		.next_mux = NULL,
+#endif
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
