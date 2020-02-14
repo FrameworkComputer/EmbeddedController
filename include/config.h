@@ -4569,6 +4569,12 @@
 #undef CONFIG_ISH_D0I3_MIN_USEC
 
 /*
+ * Define the following if the new specific power management processing
+ * after ISH 5.4 is used.
+ */
+#undef CONFIG_ISH_NEW_PM
+
+/*
  * Define the following in order to perform power management reset
  * prep IRQ setup when entering a new state
  */

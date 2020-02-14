@@ -40,7 +40,7 @@ enum ish_i2c_port {
 #define ISH_GPIO_BASE     0x00100000
 #define ISH_PMU_BASE      0x04200000
 #define ISH_OCP_BASE      0xFFFFFFFF
-#define ISH_MISC_BASE     0xFFFFFFFF
+#define ISH_MISC_BASE     0x04400000
 #define ISH_DMA_BASE      0x10100000
 #define ISH_CCU_BASE      0x04300000
 #define ISH_IPC_BASE      0x04100000
@@ -186,6 +186,7 @@ enum ish_i2c_port {
 
 /* PMU Registers */
 #define PMU_SRAM_PG_EN			REG32(ISH_PMU_BASE + 0x0)
+#ifndef CHIP_VARIANT_ISH5P4
 #define PMU_D3_STATUS			REG32(ISH_PMU_BASE + 0x4)
 #define PMU_D3_BIT_SET			BIT(0)
 #define PMU_D3_BIT_RISING_EDGE_STATUS	BIT(1)
@@ -197,11 +198,27 @@ enum ish_i2c_port {
 #define PMU_BME_BIT_FALLING_EDGE_STATUS BIT(7)
 #define PMU_BME_BIT_RISING_EDGE_MASK	BIT(8)
 #define PMU_BME_BIT_FALLING_EDGE_MASK	BIT(9)
+#else
+#define PMU_D3_STATUS			REG32(ISH_PMU_BASE + 0x100)
+#define PMU_D3_BIT_SET			BIT(16)
+#define PMU_D3_BIT_RISING_EDGE_STATUS	BIT(17)
+#define PMU_D3_BIT_FALLING_EDGE_STATUS	BIT(18)
+#define PMU_D3_BIT_RISING_EDGE_MASK	BIT(19)
+#define PMU_D3_BIT_FALLING_EDGE_MASK	BIT(20)
+#define PMU_BME_BIT_SET			BIT(24)
+#define PMU_BME_BIT_RISING_EDGE_STATUS	BIT(25)
+#define PMU_BME_BIT_FALLING_EDGE_STATUS	BIT(26)
+#define PMU_BME_BIT_RISING_EDGE_MASK	BIT(27)
+#define PMU_BME_BIT_FALLING_EDGE_MASK	BIT(28)
+#endif
+
 #define PMU_VNN_REQ			REG32(ISH_PMU_BASE + 0x3c)
 #define VNN_REQ_IPC_HOST_WRITE		BIT(3) /* Power for IPC host write */
 
 #define PMU_VNN_REQ_ACK		REG32(ISH_PMU_BASE + 0x40)
 #define PMU_VNN_REQ_ACK_STATUS		BIT(0) /* VNN req and ack status */
+
+#define PMU_VNNAON_RED			REG32(ISH_PMU_BASE + 0x58)
 
 #define PMU_RST_PREP			REG32(ISH_PMU_BASE + 0x5c)
 #define PMU_RST_PREP_GET		BIT(0)
@@ -218,14 +235,24 @@ enum ish_i2c_port {
 
 /* MISC registers */
 #define MISC_REG_BASE            ISH_MISC_BASE
+#define DMA_REG_BASE             ISH_DMA_BASE
+#ifndef CHIP_VARIANT_ISH5P4
 #define MISC_CHID_CFG_REG        REG32(MISC_REG_BASE + 0x40)
 #define MISC_DMA_CTL_REG(ch)     REG32(MISC_REG_BASE + (4 * (ch)))
 #define MISC_SRC_FILLIN_DMA(ch)  REG32(MISC_REG_BASE + 0x20 + (4 * (ch)))
 #define MISC_DST_FILLIN_DMA(ch)  REG32(MISC_REG_BASE + 0x80 + (4 * (ch)))
 #define MISC_ISH_ECC_ERR_SRESP   REG32(MISC_REG_BASE + 0x94)
+#else
+#define DMA_MISC_OFFSET          0x1000
+#define DMA_MISC_BASE            (DMA_REG_BASE + DMA_MISC_OFFSET)
+#define MISC_CHID_CFG_REG        REG32(DMA_MISC_BASE + 0x400)
+#define MISC_DMA_CTL_REG(ch)     REG32(DMA_MISC_BASE + (4 * (ch)))
+#define MISC_SRC_FILLIN_DMA(ch)  REG32(DMA_MISC_BASE + 0x100 + (4 * (ch)))
+#define MISC_DST_FILLIN_DMA(ch)  REG32(DMA_MISC_BASE + 0x200 + (4 * (ch)))
+#define MISC_ISH_ECC_ERR_SRESP   REG32(DMA_MISC_BASE + 0x404)
+#endif
 
 /* DMA registers */
-#define DMA_REG_BASE                  ISH_DMA_BASE
 #define DMA_CH_REGS_SIZE              0x58
 #define DMA_CLR_BLOCK_REG             REG32(DMA_REG_BASE + 0x340)
 #define DMA_CLR_ERR_REG               REG32(DMA_REG_BASE + 0x358)
@@ -286,10 +313,24 @@ enum ish_i2c_port {
 /* CCU Registers */
 #define CCU_TCG_EN		REG32(ISH_CCU_BASE + 0x0)
 #define CCU_BCG_EN		REG32(ISH_CCU_BASE + 0x4)
+#ifndef CHIP_VARIANT_ISH5P4
 #define CCU_WDT_CD		REG32(ISH_CCU_BASE + 0x8)
 #define CCU_RST_HST		REG32(ISH_CCU_BASE + 0x34) /* Reset history */
 #define CCU_TCG_ENABLE		REG32(ISH_CCU_BASE + 0x38)
 #define CCU_BCG_ENABLE		REG32(ISH_CCU_BASE + 0x3c)
+#else
+#define CCU_WDT_CD		REG32(ISH_CCU_BASE + 0x7c)
+#define CCU_RST_HST		REG32(ISH_CCU_BASE + 0x3c) /* Reset history */
+#define CCU_TCG_ENABLE		REG32(ISH_CCU_BASE + 0x40)
+#define CCU_BCG_ENABLE		REG32(ISH_CCU_BASE + 0x44)
+#endif
+#define CCU_BCG_MIA		REG32(ISH_CCU_BASE + 0x4)
+#define CCU_BCG_UART		REG32(ISH_CCU_BASE + 0x8)
+#define CCU_BCG_I2C		REG32(ISH_CCU_BASE + 0xc)
+#define CCU_BCG_SPI		REG32(ISH_CCU_BASE + 0x10)
+#define CCU_BCG_GPIO		REG32(ISH_CCU_BASE + 0x14)
+#define CCU_BCG_DMA		REG32(ISH_CCU_BASE + 0x28)
+#define CCU_AONCG_EN		REG32(ISH_CCU_BASE + 0xdc)
 #define CCU_BCG_BIT_MIA	BIT(0)
 #define CCU_BCG_BIT_DMA	BIT(1)
 #define CCU_BCG_BIT_I2C0	BIT(2)
@@ -325,6 +366,7 @@ enum ish_i2c_port {
 #define SEC_OFFSET			0x0
 #endif
 #define ISH_RST_REG			REG32(ISH_IPC_BASE + SEC_OFFSET + 0x44)
+#define IPC_PIMR_CIM_SEC		(ISH_IPC_BASE + SEC_OFFSET + 0x10)
 
 /* IOAPIC registers */
 #define IOAPIC_IDX			REG32(ISH_IOAPIC_BASE + 0x0)
@@ -362,7 +404,11 @@ enum ish_i2c_port {
 #define LAPIC_ICR_REG			REG32(ISH_LAPIC_BASE + 0x300)
 
 /* SRAM control registers */
+#ifndef CHIP_VARIANT_ISH5P4
 #define ISH_SRAM_CTRL_BASE		0x00500000
+#else
+#define ISH_SRAM_CTRL_BASE		0x10500000
+#endif
 #define ISH_SRAM_CTRL_CSFGR		REG32(ISH_SRAM_CTRL_BASE + 0x00)
 #define ISH_SRAM_CTRL_INTR		REG32(ISH_SRAM_CTRL_BASE + 0x04)
 #define ISH_SRAM_CTRL_INTR_MASK	REG32(ISH_SRAM_CTRL_BASE + 0x08)

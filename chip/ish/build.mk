@@ -18,7 +18,6 @@ endif
 
 # Required chip modules
 chip-y+=clock.o gpio.o system.o hwtimer.o uart.o flash.o ish_persistent_data.o
-chip-$(CHIP_VARIANT_ISH5P4)+=reset_prep_wr.o
 chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(CONFIG_HOSTCMD_HECI)+=host_command_heci.o

@@ -41,7 +41,11 @@
 #define CONFIG_RAM_BASE		0xFF000000
 #endif
 #define CONFIG_RAM_SIZE		0x000A0000
-#define CONFIG_RAM_BANK_SIZE		0x00008000
+#ifdef CHIP_VARIANT_ISH5P4
+#define CONFIG_RAM_BANK_SIZE	0x00010000
+#else
+#define CONFIG_RAM_BANK_SIZE	0x00008000
+#endif
 
 #if defined(CHIP_FAMILY_ISH3)
 /* On ISH3, there is no separate AON memory; use last 4KB of SRAM */

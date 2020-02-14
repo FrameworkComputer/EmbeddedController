@@ -205,6 +205,23 @@ static void uart_hw_init(enum UART_PORT id)
 		IER(ctx->id) = IER_RECV;
 }
 
+void uart_port_restore(void)
+{
+	uart_hw_init(ISH_DEBUG_UART);
+}
+
+void uart_to_idle(void)
+{
+	int id;
+
+	for (id = 0; id < UART_DEVICES; id++) {
+		LCR(id) = 0x80;
+		DLL(id) = 0x1;
+		DLH(id) = 0x0;
+		LCR(id) = 0x0;
+	}
+}
+
 static void uart_stop_hw(enum UART_PORT id)
 {
 	int i;

@@ -175,6 +175,37 @@ void system_set_image_copy(enum system_image_copy_t copy)
 {
 }
 
+#define HBW_FABRIC_BASE		0x10000000
+#define PER0_FABRIC_BASE	0x04000000
+#define AGENT_STS		0x28
+#define ERROR_LOG		0x58
+
+static uint16_t hbw_ia_offset[] = {
+	0x1000,
+	0x3400,
+	0x3800,
+	0x5000,
+	0x5800,
+	0x6000
+};
+
+static inline void clear_register(uint32_t reg)
+{
+	REG32(reg) = REG32(reg);
+}
+
+void clear_fabric_error(void)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(hbw_ia_offset); i++) {
+		clear_register(HBW_FABRIC_BASE + hbw_ia_offset[i] + AGENT_STS);
+		clear_register(HBW_FABRIC_BASE + hbw_ia_offset[i] + ERROR_LOG);
+	}
+	clear_register(PER0_FABRIC_BASE + 0x1000 + AGENT_STS);
+	clear_register(PER0_FABRIC_BASE + 0x1000 + ERROR_LOG);
+}
+
 static __maybe_unused void fabric_isr(void)
 {
 	/**
