@@ -3198,6 +3198,9 @@ static void tc_cc_rd_entry(const int port)
 	if (IS_ENABLED(CONFIG_USBC_VCONN))
 		set_vconn(port, 0);
 
+	/* Disable VBUS */
+	pd_power_supply_reset(port);
+
 	/* Set power role to sink */
 	tc_set_power_role(port, PD_ROLE_SINK);
 	tcpm_set_msg_header(port, tc[port].power_role, tc[port].data_role);
