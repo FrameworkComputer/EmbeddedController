@@ -67,6 +67,23 @@
 #undef CONFIG_ADC
 #undef CONFIG_SHA256
 
+/* DMA paging between SRAM and DRAM */
+#define CONFIG_DMA_PAGING
+
+/* power management definitions */
+#define CONFIG_LOW_POWER_IDLE
+
+#define CONFIG_ISH_PM_D0I1
+#define CONFIG_ISH_PM_D0I2
+#define CONFIG_ISH_PM_D0I3
+#define CONFIG_ISH_PM_D3
+#define CONFIG_ISH_PM_RESET_PREP
+
+#define CONFIG_ISH_D0I2_MIN_USEC	(15*MSEC)
+#define CONFIG_ISH_D0I3_MIN_USEC	(50*MSEC)
+
+#define CONFIG_ISH_NEW_PM
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
