@@ -83,9 +83,12 @@ int raa489000_init(int port)
 	if (rv)
 		CPRINTS("c%d: failed to set PD PHY setting1", port);
 
-	/* Enable VBUS auto discharge. needed to goodcrc */
+	/*
+	 * Disable VBUS auto discharge, we'll turn it on later as its needed to
+	 * goodcrc.
+	 */
 	rv = tcpc_read(port, TCPC_REG_POWER_CTRL, &regval);
-	regval |= TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT;
+	regval &= ~TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT;
 	rv |= tcpc_write(port, TCPC_REG_POWER_CTRL, regval);
 	if (rv)
 		CPRINTS("c%d: failed to set auto discharge", port);
@@ -154,4 +157,6 @@ const struct tcpm_drv raa489000_tcpm_drv = {
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode   = &tcpci_enter_low_power_mode,
 #endif
+	.tcpc_enable_auto_discharge_disconnect =
+	&tcpci_tcpc_enable_auto_discharge_disconnect,
 };
