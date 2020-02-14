@@ -64,6 +64,7 @@
 
 /* USB and USBC Signals */
 #define GPIO_EN_PP5000_USBA        NAMED_GPIO(en_pp5000_usba)
+#define GPIO_USB_C1_FRS_EN         NAMED_GPIO(usb_c1_frs_en)
 #define GPIO_USB_C1_RT_RST_ODL \
 	NAMED_GPIO_NODELABEL(usb_c1_bb_retimer, reset_gpios)
 

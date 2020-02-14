@@ -89,6 +89,7 @@ GPIO(USB_C0_OC_ODL,		PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(USB_C1_OC_ODL,		PIN(5, 0), GPIO_ODR_HIGH)
 /* There is currently no need to service this interrupt. */
 GPIO(USB_C1_RT_INT_ODL,		PIN(F, 3), GPIO_INPUT)
+GPIO(USB_C1_FRS_EN, 		PIN(9, 4), GPIO_OUT_LOW)
 
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C1_LS_EN)

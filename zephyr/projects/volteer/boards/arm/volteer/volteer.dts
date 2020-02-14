@@ -141,6 +141,10 @@
 			gpios = <&gpio0 3 GPIO_INPUT>;
 			label = "USB_C1_MIX_INT_ODL";
 		};
+		usb_c1_frs_en {
+			gpios = <&gpio9 4 GPIO_OUT_LOW>;
+			label = "USB_C1_FRS_EN";
+		};
 		ec_voldn_btn_odl {
 			gpios = <&gpio9 3 (GPIO_INPUT | GPIO_PULL_UP)>;
 			label = "EC_VOLDN_BTN_ODL";
