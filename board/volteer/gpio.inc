@@ -61,7 +61,6 @@ UNIMPLEMENTED(PCH_DSW_PWROK)
 GPIO(EN_DRAM_VDDQ,		PIN(F, 2), GPIO_OUT_LOW)
 GPIO(EN_PP1050_STG,		PIN(C, 0), GPIO_OUT_LOW)
 GPIO(EN_PP5000_USB_AG,		PIN(A, 7), GPIO_OUT_LOW)
-GPIO(EN_PP1800_A,		PIN(8, 3), GPIO_OUT_LOW)
 GPIO(EN_PPVAR_VCCIN_AUX,	PIN(8, 1), GPIO_OUT_LOW)
 GPIO(EN_PP1050_ST_S0,		PIN(3, 4), GPIO_OUT_LOW)
 GPIO(EN_VNN_BYPASS,		PIN(B, 0), GPIO_OUT_LOW)
@@ -95,8 +94,15 @@ GPIO(EC_PCH_INT_ODL,           PIN(D, 6), GPIO_ODR_HIGH) /* TODO - b/140557015 -
 
 /* USB and USBC Signals */
 
-/* TODO(b/148243971): update PIN for next build */
-GPIO(USB_C1_RT_RST_ODL,		PIN(3, 2), GPIO_ODR_LOW)	/* USB_C1 Reset */
+/*
+ * USB_C1 moved from GPIO32 to GPIO83 on boards with board ID >=1.
+ * GPIO83/EN_PP1800_A is DNS on board ID 0 and GPIO32 is N/C on board ID >=1
+ * so it's safe to define GPIOs compatible with both designs.
+ * TODO (b/149858568): remove board ID=0 support.
+ */
+GPIO(USB_C1_RT_RST_ODL_BOARDID_0,	PIN(3, 2), GPIO_ODR_LOW) /* USB_C1 Reset on boards without board ID */
+GPIO(USB_C1_RT_RST_ODL,			PIN(8, 3), GPIO_ODR_LOW) /* USB_C1 Reset on boards board ID >=1 */
+
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C1_LS_EN)
 /* Retimer Force Power enable is connected to AP */

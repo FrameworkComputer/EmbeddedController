@@ -407,7 +407,7 @@ struct usb_mux usb_muxes[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
-const struct bb_usb_control bb_controls[] = {
+struct bb_usb_control bb_controls[] = {
 	[USBC_PORT_C0] = {
 		/* USB-C port 0 doesn't have a retimer */
 	},
@@ -468,14 +468,16 @@ void ppc_interrupt(enum gpio_signal signal)
 
 /******************************************************************************/
 /* TCPC support routines */
+static enum gpio_signal ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL;
+
 static void ps8815_reset(void)
 {
 	int val;
 
-	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 0);
+	gpio_set_level(ps8xxx_rst_odl, 0);
 	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
 			   PS8815_PWR_H_RST_H_DELAY_MS));
-	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 1);
+	gpio_set_level(ps8xxx_rst_odl, 1);
 	msleep(PS8815_FW_INIT_DELAY_MS);
 
 	/*
@@ -661,6 +663,20 @@ static void config_db_usb3(void)
 	       sizeof(usb_retimers[USBC_PORT_C1]));
 }
 
+/*
+ * Reconfigure Volteer GPIOs based on the board ID
+ */
+static void config_volteer_gpios(void)
+{
+	/* Legacy support for the first board build */
+	if (get_board_id() == 0) {
+		/* Reassign USB_C1_RT_RST_ODL */
+		bb_controls[USBC_PORT_C1].retimer_rst_gpio =
+			GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
+		ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
+	}
+}
+
 static uint8_t board_id;
 
 uint8_t get_board_id(void)
@@ -687,6 +703,8 @@ static void cbi_init(void)
 		board_id = cbi_val;
 
 	CPRINTS("Board ID: %d", board_id);
+
+	config_volteer_gpios();
 
 	/* FW config */
 
