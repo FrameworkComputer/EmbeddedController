@@ -51,7 +51,11 @@ enum button {
 };
 
 /* Table of buttons for the board. */
+#ifndef CONFIG_BUTTONS_RUNTIME_CONFIG
 extern const struct button_config buttons[];
+#else
+extern struct button_config buttons[];
+#endif
 
 /*
  * Buttons used to decide whether recovery is requested or not
@@ -63,6 +67,17 @@ extern const int recovery_buttons_count;
  * Button initialization, called from main.
  */
 void button_init(void);
+
+/*
+ * Reassign a button GPIO signal at runtime.
+ *
+ * @param button_type	Button type to reassign
+ * @param gpio		GPIO to assign to the button
+ *
+ * Returns EC_SUCCESS if button change is accepted and made active,
+ * EC_ERROR_* otherwise.
+ */
+int button_reassign_gpio(enum button button_type, enum gpio_signal gpio);
 
 /*
  * Interrupt handler for button.

@@ -47,8 +47,15 @@ GPIO_INT(USB_C1_MIX_INT_ODL,	PIN(0, 3), GPIO_INT_BOTH, bc12_interrupt)
 /* HDMI interrupts */
 
 /* Volume button interrupts */
-GPIO_INT(EC_VOLDN_BTN_ODL,     PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
-GPIO_INT(EC_VOLUP_BTN_ODL,     PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(EC_VOLDN_BTN_ODL,		PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+/*
+ * EC_VOLUP_BTN_ODL moved from GPIO75 to GPIO97 on boards with board ID >=1.
+ * GPIO97/EN_PP1050_BYPASS is DNS on board ID 0, and GPIO75 will be used once
+ * EFS support is added.
+ * TODO (b/149858568): remove board ID=0 support.
+ */
+GPIO_INT(EC_VOLUP_BTN_ODL_BOARDID_0,	PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(EC_VOLUP_BTN_ODL,		PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
 /* Power Sequencing Signals */
 GPIO(EN_PP3300_A,              PIN(A, 3), GPIO_OUT_LOW)
@@ -64,7 +71,6 @@ GPIO(EN_PP5000_USB_AG,		PIN(A, 7), GPIO_OUT_LOW)
 GPIO(EN_PPVAR_VCCIN_AUX,	PIN(8, 1), GPIO_OUT_LOW)
 GPIO(EN_PP1050_ST_S0,		PIN(3, 4), GPIO_OUT_LOW)
 GPIO(EN_VNN_BYPASS,		PIN(B, 0), GPIO_OUT_LOW)
-GPIO(EN_PP1050_BYPASS,		PIN(9, 7), GPIO_OUT_LOW)
 GPIO(EN_DRAM_VDD1,		PIN(9, 6), GPIO_OUT_LOW)
 #endif
 

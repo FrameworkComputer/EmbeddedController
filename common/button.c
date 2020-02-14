@@ -186,6 +186,14 @@ static int is_recovery_boot(void)
 }
 #endif /* CONFIG_BUTTON_TRIGGERED_RECOVERY */
 
+static void button_reset(enum button button_type,
+	const struct button_config *button)
+{
+	state[button_type].debounced_pressed = raw_button_pressed(button);
+	state[button_type].debounce_time = 0;
+	gpio_enable_interrupt(button->gpio);
+}
+
 /*
  * Button initialization.
  */
@@ -195,11 +203,8 @@ void button_init(void)
 
 	CPRINTS("init buttons");
 	next_deferred_time = 0;
-	for (i = 0; i < BUTTON_COUNT; i++) {
-		state[i].debounced_pressed = raw_button_pressed(&buttons[i]);
-		state[i].debounce_time = 0;
-		gpio_enable_interrupt(buttons[i].gpio);
-	}
+	for (i = 0; i < BUTTON_COUNT; i++)
+		button_reset(i, &buttons[i]);
 
 #ifdef CONFIG_BUTTON_TRIGGERED_RECOVERY
 	if (is_recovery_boot()) {
@@ -209,6 +214,24 @@ void button_init(void)
 	}
 #endif /* defined(CONFIG_BUTTON_TRIGGERED_RECOVERY) */
 }
+
+#ifdef CONFIG_BUTTONS_RUNTIME_CONFIG
+int button_reassign_gpio(enum button button_type, enum gpio_signal gpio)
+{
+	if (button_type >= BUTTON_COUNT)
+		return EC_ERROR_INVAL;
+
+	/* Disable currently assigned interrupt */
+	gpio_disable_interrupt(buttons[button_type].gpio);
+
+	/* Reconfigure GPIO and enable the new interrupt */
+	buttons[button_type].gpio = gpio;
+	button_reset(button_type, &buttons[button_type]);
+
+	return EC_SUCCESS;
+}
+#endif
+
 
 /*
  * Handle debounced button changing state.
@@ -723,7 +746,11 @@ DECLARE_HOOK(HOOK_TICK, debug_led_tick, HOOK_PRIO_DEFAULT);
 #error "A dedicated recovery button is not needed if you have volume buttons."
 #endif /* defined(CONFIG_VOLUME_BUTTONS && CONFIG_DEDICATED_RECOVERY_BUTTON) */
 
+#ifndef CONFIG_BUTTONS_RUNTIME_CONFIG
 const struct button_config buttons[BUTTON_COUNT] = {
+#else
+struct button_config buttons[BUTTON_COUNT] = {
+#endif
 #ifdef CONFIG_VOLUME_BUTTONS
 	[BUTTON_VOLUME_UP] = {
 		.name = "Volume Up",

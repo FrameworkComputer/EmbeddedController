@@ -727,6 +727,11 @@
  */
 #undef CONFIG_VOLUME_BUTTONS
 
+/*
+ * Allow runtime configuration of the buttons[] array
+ */
+#undef CONFIG_BUTTONS_RUNTIME_CONFIG
+
 /* Support V1 CCD configuration */
 #undef CONFIG_CASE_CLOSED_DEBUG_V1
 /* Allow unsafe debugging functionality in V1 configuration */
