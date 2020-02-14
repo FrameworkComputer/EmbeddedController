@@ -101,6 +101,9 @@ int raa489000_init(int port)
 		regval |= RAA489000_TCPCV1_0_EN;
 	else
 		regval &= ~RAA489000_TCPCV1_0_EN;
+
+	/* Allow the TCPC to control VBUS. */
+	regval |= RAA489000_TCPC_PWR_CNTRL;
 	rv = tcpc_write16(port, RAA489000_TCPC_SETTING1, regval);
 	if (rv)
 		CPRINTS("c%d: failed to set TCPCIv1.0 mode", port);
