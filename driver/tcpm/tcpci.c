@@ -538,8 +538,8 @@ struct cached_tcpm_message {
 	uint32_t payload[7];
 };
 
-static int tcpci_v2_0_tcpm_get_message_raw(int port, uint32_t *payload,
-					    int *head)
+static int tcpci_rev2_0_tcpm_get_message_raw(int port, uint32_t *payload,
+					     int *head)
 {
 	int rv = 0, cnt, reg = TCPC_REG_RX_BUFFER;
 	int frm;
@@ -586,8 +586,8 @@ clear:
 	return rv;
 }
 
-static int tcpci_v1_0_tcpm_get_message_raw(int port, uint32_t *payload,
-					   int *head)
+static int tcpci_rev1_0_tcpm_get_message_raw(int port, uint32_t *payload,
+					     int *head)
 {
 	int rv, cnt, reg = TCPC_REG_RX_DATA;
 #ifdef CONFIG_USB_PD_DECODE_SOP
@@ -635,10 +635,10 @@ clear:
 
 int tcpci_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
 {
-	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_V2_0)
-		return tcpci_v2_0_tcpm_get_message_raw(port, payload, head);
+	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0)
+		return tcpci_rev2_0_tcpm_get_message_raw(port, payload, head);
 
-	return tcpci_v1_0_tcpm_get_message_raw(port, payload, head);
+	return tcpci_rev1_0_tcpm_get_message_raw(port, payload, head);
 }
 
 /* Cache depth needs to be power of 2 */
@@ -744,9 +744,9 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 			TCPC_REG_TRANSMIT_SET_WITHOUT_RETRY(type));
 	}
 
-	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_V2_0) {
+	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) {
 		/*
-		 * In TCPCI v2.0, TX_BYTE_CNT and TX_BUF_BYTE_X are the same
+		 * In TCPCI Rev 2.0, TX_BYTE_CNT and TX_BUF_BYTE_X are the same
 		 * register.
 		 */
 		reg = TCPC_REG_TX_BUFFER;
@@ -1075,7 +1075,7 @@ int tcpci_tcpm_init(int port)
 	 * TCPC_CONTROL.EnableLooking4ConnectionAlert bit, TCPC by default masks
 	 * Alert assertion when CC_STATUS.Looking4Connection changes state.
 	 */
-	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_V2_0) {
+	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) {
 		error = tcpc_read(port, TCPC_REG_TCPC_CTRL, &regval);
 		regval |= TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT;
 		error |= tcpc_write(port, TCPC_REG_TCPC_CTRL, regval);

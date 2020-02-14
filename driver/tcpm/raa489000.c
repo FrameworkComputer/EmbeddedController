@@ -97,7 +97,7 @@ int raa489000_init(int port)
 
 	/* Enable the correct TCPCI interface version */
 	rv = tcpc_read16(port, RAA489000_TCPC_SETTING1, &regval);
-	if (!(tcpc_config[port].flags & TCPC_FLAGS_TCPCI_V2_0))
+	if (!(tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0))
 		regval |= RAA489000_TCPCV1_0_EN;
 	else
 		regval &= ~RAA489000_TCPCV1_0_EN;
