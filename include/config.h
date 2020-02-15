@@ -635,6 +635,12 @@
 #undef CONFIG_BOARD_HAS_RTC_RESET
 
 /*
+ * Call board_after_rsmrst(state) after passing RSMRST# to the AP.  This is for
+ * board workarounds that are required just after RSMRST is passed to the AP.
+ */
+#undef CONFIG_BOARD_HAS_AFTER_RSMRST
+
+/*
  * Call board_before_rsmrst(state) before passing RSMRST# to the AP.
  * This is for board workarounds that are required after rails are up
  * but before the AP is out of reset.

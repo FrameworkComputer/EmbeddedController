@@ -50,6 +50,16 @@ void board_config_post_gpio_init(void);
 void board_before_rsmrst(int rsmrst);
 #endif
 
+#ifdef CONFIG_BOARD_HAS_AFTER_RSMRST
+/**
+ * Configure board after RSMRST# state change
+ *
+ * Similar to board_before_rsmrst, except this is called after passing RSMRST#
+ * to the AP.
+ */
+void board_after_rsmrst(int rsmrst);
+#endif
+
 /**
  * Configure chip early in main(), just after board_config_pre_init().
  *
