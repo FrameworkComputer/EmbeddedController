@@ -64,6 +64,8 @@ struct persist_state {
 BUILD_ASSERT(sizeof(struct persist_state) % CONFIG_FLASH_WRITE_SIZE == 0);
 #endif
 
+BUILD_ASSERT(sizeof(struct persist_state) <= CONFIG_FW_PSTATE_SIZE);
+
 #else /* !CONFIG_FLASH_PSTATE_BANK */
 
 /*
