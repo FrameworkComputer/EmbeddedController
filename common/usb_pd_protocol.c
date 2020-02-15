@@ -40,14 +40,6 @@
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT <= EC_USB_PD_MAX_PORTS);
 
 /*
- * If we are trying to upgrade the TCPC port that is supplying power, then we
- * need to ensure that the battery has enough charge for the upgrade. 100mAh
- * is about 5% of most batteries, and it should be enough charge to get us
- * through the EC jump to RW and PD upgrade.
- */
-#define MIN_BATTERY_FOR_TCPC_UPGRADE_MAH 100 /* mAH */
-
-/*
  * Debug log level - higher number == more log
  *   Level 0: Log state transitions
  *   Level 1: Level 0, plus state name
@@ -5427,84 +5419,5 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
 
 #endif /* HAS_TASK_HOSTCMD */
 
-#ifdef CONFIG_CMD_PD_CONTROL
-
-static enum ec_status pd_control(struct host_cmd_handler_args *args)
-{
-	static int pd_control_disabled[CONFIG_USB_PD_PORT_MAX_COUNT];
-	const struct ec_params_pd_control *cmd = args->params;
-	int enable = 0;
-
-	if (cmd->chip >= board_get_usb_pd_port_count())
-		return EC_RES_INVALID_PARAM;
-
-	/* Always allow disable command */
-	if (cmd->subcmd == PD_CONTROL_DISABLE) {
-		pd_control_disabled[cmd->chip] = 1;
-		return EC_RES_SUCCESS;
-	}
-
-	if (pd_control_disabled[cmd->chip])
-		return EC_RES_ACCESS_DENIED;
-
-	if (cmd->subcmd == PD_SUSPEND) {
-		/*
-		 * The AP is requesting to suspend PD traffic on the EC so it
-		 * can perform a firmware upgrade. If Vbus is present on the
-		 * connector (it is either a source or sink), then we will
-		 * prevent the upgrade if there is not enough battery to finish
-		 * the upgrade. We cannot rely on the EC's active charger data
-		 * as the EC just rebooted into RW and has not necessarily
-		 * picked the active charger yet.
-		 */
-#ifdef HAS_TASK_CHARGER
-		if (pd_is_vbus_present(cmd->chip)) {
-			struct batt_params batt = { 0 };
-			/*
-			 * The charger task has not re-initialized, so we need
-			 * to ask the battery directly.
-			 */
-			battery_get_params(&batt);
-			if (batt.remaining_capacity <
-				    MIN_BATTERY_FOR_TCPC_UPGRADE_MAH ||
-			    batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY) {
-				CPRINTS("C%d: Cannot suspend for upgrade, not "
-					"enough battery (%dmAh)!",
-					cmd->chip, batt.remaining_capacity);
-				return EC_RES_BUSY;
-			}
-		}
-#else
-		if (pd_is_vbus_present(cmd->chip)) {
-			CPRINTS("C%d: Cannot suspend for upgrade, Vbus "
-				"present!",
-				cmd->chip);
-			return EC_RES_BUSY;
-		}
-#endif
-		enable = 0;
-	} else if (cmd->subcmd == PD_RESUME) {
-		enable = 1;
-	} else if (cmd->subcmd == PD_RESET) {
-#ifdef HAS_TASK_PDCMD
-		board_reset_pd_mcu();
-#else
-		return EC_RES_INVALID_COMMAND;
-#endif
-	} else if (cmd->subcmd == PD_CHIP_ON && board_set_tcpc_power_mode) {
-		board_set_tcpc_power_mode(cmd->chip, 1);
-		return EC_RES_SUCCESS;
-	} else {
-		return EC_RES_INVALID_COMMAND;
-	}
-
-	pd_comm_enable(cmd->chip, enable);
-	pd_set_suspend(cmd->chip, !enable);
-
-	return EC_RES_SUCCESS;
-}
-
-DECLARE_HOST_COMMAND(EC_CMD_PD_CONTROL, pd_control, EC_VER_MASK(0));
-#endif /* CONFIG_CMD_PD_CONTROL */
 
 #endif /* CONFIG_COMMON_RUNTIME */
