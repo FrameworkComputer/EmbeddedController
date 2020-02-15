@@ -745,8 +745,15 @@ void pd_set_suspend(int port, int suspend)
 	if (pd_is_port_enabled(port) == !suspend)
 		return;
 
+	/* TODO(crbug/1052432): This function should use flags to influence the
+	 * TC state machine, not call set_state_tc directly.
+	 */
 	set_state_tc(port,
 		suspend ? TC_DISABLED : TC_UNATTACHED_SNK);
+	/* If the state was TC_DISABLED, pd_task needs to be awakened to respond
+	 * to the state change.
+	 */
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 int pd_is_port_enabled(int port)
