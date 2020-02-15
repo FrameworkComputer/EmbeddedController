@@ -6,6 +6,7 @@
 /* Dedede family-specific configuration */
 
 #include "adc.h"
+#include "board_config.h"
 #include "chipset.h"
 #include "common.h"
 #include "gpio.h"
@@ -20,6 +21,22 @@
  */
 const enum gpio_signal hibernate_wake_pins[] = {};
 const int hibernate_wake_pins_used;
+
+void board_after_rsmrst(int rsmrst)
+{
+	/*
+	 * b:148688874: If RSMRST# is de-asserted, enable the pull-up on
+	 * PG_PP1050_ST_OD.  It won't be enabled prior to this signal going high
+	 * because the load switch for PP1050_ST cannot pull the PG low.  Once
+	 * it's asserted, disable the pull up so we don't inidicate that the
+	 * power is good before the rail is actually ready.
+	 */
+	int flags = rsmrst ? GPIO_PULL_UP : 0;
+
+	flags |= GPIO_INT_BOTH;
+
+	gpio_set_flags(GPIO_PG_PP1050_ST_OD, flags);
+}
 
 uint32_t pp3300_a_pgood;
 __override int intel_x86_get_pg_ec_dsw_pwrok(void)
