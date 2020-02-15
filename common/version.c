@@ -26,6 +26,7 @@ const struct image_data __keep current_image_data
 	.rollback_version = CONFIG_ROLLBACK_VERSION,
 	.cookie2 = CROS_EC_IMAGE_DATA_COOKIE2,
 };
+BUILD_ASSERT(sizeof(CROS_EC_VERSION32) <= 32);
 
 const char build_info[] __keep __attribute__((section(".rodata.buildinfo"))) =
 	VERSION " " DATE " " BUILDER;
