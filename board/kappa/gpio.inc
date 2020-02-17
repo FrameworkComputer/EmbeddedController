@@ -84,6 +84,9 @@ GPIO(BOOTBLOCK_EN_L,       PIN(C, 1),  GPIO_ODR_HIGH)
 GPIO(EN_PP1800_S5_L,       PIN(A, 14), GPIO_OUT_LOW)
 GPIO(USB_C0_DISCHARGE,     PIN(B, 6),  GPIO_OUT_LOW)
 
+IOEX(BAT_LED_AMBER_L,      EXPIN(0, 1, 2), GPIO_OUT_HIGH)
+IOEX(BAT_LED_WHITE_L,      EXPIN(0, 1, 4), GPIO_OUT_HIGH)
+
 /*
  * TODO(b:138352732): On IT88801 expander, To be readded once IT8801 driver and
  * gpio expander framework has landed.
