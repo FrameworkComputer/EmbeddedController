@@ -36,6 +36,7 @@
 #include "registers.h"
 #include "spi.h"
 #include "system.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "tcpm.h"
 #include "timer.h"
