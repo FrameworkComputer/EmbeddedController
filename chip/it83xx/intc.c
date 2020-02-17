@@ -12,7 +12,7 @@
 #include "tcpm.h"
 #include "usb_pd.h"
 
-#ifdef CONFIG_USB_PD_TCPM_ITE83XX
+#if defined(CONFIG_USB_PD_TCPM_ITE_ON_CHIP)
 static void chip_pd_irq(enum usbpd_port port)
 {
 	task_clear_pending_irq(usbpd_ctrl_regs[port].irq);
@@ -23,19 +23,28 @@ static void chip_pd_irq(enum usbpd_port port)
 		IT83XX_USBPD_ISR(port) = USBPD_REG_MASK_HARD_RESET_DETECT;
 		task_set_event(PD_PORT_TO_TASK_ID(port),
 			PD_EVENT_TCPC_RESET, 0);
-	} else {
-		if (USBPD_IS_RX_DONE(port)) {
-			tcpm_enqueue_message(port);
-			/* clear RX done interrupt */
-			IT83XX_USBPD_ISR(port) = USBPD_REG_MASK_MSG_RX_DONE;
-		}
-		if (USBPD_IS_TX_DONE(port)) {
-			/* clear TX done interrupt */
-			IT83XX_USBPD_ISR(port) = USBPD_REG_MASK_MSG_TX_DONE;
-			task_set_event(PD_PORT_TO_TASK_ID(port),
-				TASK_EVENT_PHY_TX_DONE, 0);
-		}
-#ifdef IT83XX_INTC_PLUG_IN_SUPPORT
+	}
+
+	if (USBPD_IS_RX_DONE(port)) {
+		tcpm_enqueue_message(port);
+		/* clear RX done interrupt */
+		IT83XX_USBPD_ISR(port) = USBPD_REG_MASK_MSG_RX_DONE;
+	}
+
+	if (USBPD_IS_TX_DONE(port)) {
+#ifdef CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2
+		it83xx_clear_tx_error_status(port);
+		/* check TX status, clear by TX_DONE status too */
+		if (USBPD_IS_TX_ERR(port))
+			it83xx_get_tx_error_status(port);
+#endif
+		/* clear TX done interrupt */
+		IT83XX_USBPD_ISR(port) = USBPD_REG_MASK_MSG_TX_DONE;
+		task_set_event(PD_PORT_TO_TASK_ID(port),
+			TASK_EVENT_PHY_TX_DONE, 0);
+	}
+
+	if (IS_ENABLED(IT83XX_INTC_PLUG_IN_SUPPORT)) {
 		if (USBPD_IS_PLUG_IN_OUT_DETECT(port)) {
 			/*
 			 * When tcpc detect type-c plug in, then disable
@@ -56,7 +65,6 @@ static void chip_pd_irq(enum usbpd_port port)
 			task_set_event(PD_PORT_TO_TASK_ID(port),
 				PD_EVENT_CC, 0);
 		}
-#endif //IT83XX_INTC_PLUG_IN_SUPPORT
 	}
 }
 #endif
@@ -135,7 +143,7 @@ void intc_cpu_int_group_12(void)
 		espi_vw_interrupt();
 		break;
 #endif
-#ifdef CONFIG_USB_PD_TCPM_ITE83XX
+#ifdef CONFIG_USB_PD_TCPM_ITE_ON_CHIP
 	case IT83XX_IRQ_USBPD0:
 		chip_pd_irq(USBPD_PORT_A);
 		break;
@@ -143,7 +151,12 @@ void intc_cpu_int_group_12(void)
 	case IT83XX_IRQ_USBPD1:
 		chip_pd_irq(USBPD_PORT_B);
 		break;
-#endif /* CONFIG_USB_PD_TCPM_ITE83XX */
+#ifdef CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2
+	case IT83XX_IRQ_USBPD2:
+		chip_pd_irq(USBPD_PORT_C);
+		break;
+#endif
+#endif
 #ifdef CONFIG_SPI
 	case IT83XX_IRQ_SPI_SLAVE:
 		spi_slv_int_handler();

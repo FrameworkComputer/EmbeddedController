@@ -3904,7 +3904,7 @@
 #undef CONFIG_USB_PD_TCPM_STUB
 #undef CONFIG_USB_PD_TCPM_TCPCI
 #undef CONFIG_USB_PD_TCPM_FUSB302
-#undef CONFIG_USB_PD_TCPM_ITE83XX
+#undef CONFIG_USB_PD_TCPM_ITE_ON_CHIP
 #undef CONFIG_USB_PD_TCPM_ANX3429
 #undef CONFIG_USB_PD_TCPM_ANX740X
 #undef CONFIG_USB_PD_TCPM_ANX741X
@@ -3917,6 +3917,15 @@
 #undef CONFIG_USB_PD_TCPM_MT6370
 #undef CONFIG_USB_PD_TCPM_TUSB422
 #undef CONFIG_USB_PD_TCPM_RAA489000
+
+/*
+ * Defined automatically by chip and depends on chip. This guards the onboard
+ * TCPM driver, but CONFIG_USB_PD_TCPM_ITE_ON_CHIP needs to be defined in
+ * board.h for either of these driver to actually be included in the final
+ * image.
+ */
+#undef CONFIG_USB_PD_TCPM_DRIVER_IT83XX
+#undef CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2
 
 /*
  * Type-C retimer mux configuration tends to be set on a specific
@@ -4802,11 +4811,10 @@
 
 /*****************************************************************************/
 /*
- * Define CONFIG_USB_PD_TCPC_ON_CHIP if we use ITE83XX series TCPM driver
+ * Define CONFIG_USB_PD_TCPC_ON_CHIP if we use ITE series TCPM driver
  * on the board.
  */
-#if defined(CONFIG_USB_PD_TCPM_ITE83XX) ||  \
-	defined(CONFIG_USB_PD_TCPM_ITE8XXX2)
+#ifdef CONFIG_USB_PD_TCPM_ITE_ON_CHIP
 #define CONFIG_USB_PD_TCPC_ON_CHIP
 #endif
 

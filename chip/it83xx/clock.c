@@ -505,14 +505,14 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 		ext_timer_start(FREE_EXT_TIMER_L, 0);
 	}
 
-#ifdef CONFIG_USB_PD_TCPM_ITE83XX
-	/*
-	 * Disable integrated pd modules in hibernate for
-	 * better power consumption.
-	 */
-	for (i = 0; i < IT83XX_USBPD_PHY_PORT_COUNT; i++)
-		it83xx_disable_pd_module(i);
-#endif
+	if (IS_ENABLED(CONFIG_USB_PD_TCPM_ITE_ON_CHIP)) {
+		/*
+		 * Disable integrated pd modules in hibernate for
+		 * better power consumption.
+		 */
+		for (i = 0; i < IT83XX_USBPD_PHY_PORT_COUNT; i++)
+			it83xx_disable_pd_module(i);
+	}
 
 	for (i = 0; i < hibernate_wake_pins_used; ++i)
 		gpio_enable_interrupt(hibernate_wake_pins[i]);

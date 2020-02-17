@@ -26,6 +26,10 @@
 
 #define CONFIG_PROGRAM_MEMORY_BASE  0x00000000
 
+/****************************************************************************/
+/* Chip IT8320 is used with IT83XX TCPM driver */
+#define CONFIG_USB_PD_TCPM_DRIVER_IT83XX
+
 #if defined(CHIP_VARIANT_IT8320BX)
 /* This is the physical size of the flash on the chip. We'll reserve one bank
  * in order to emulate per-bank write-protection UNTIL REBOOT. The hardware

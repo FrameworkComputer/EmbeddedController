@@ -123,7 +123,10 @@ driver-$(CONFIG_USB_PD_TCPM_STUB)+=tcpm/stub.o
 driver-$(CONFIG_USB_PD_TCPM_TCPCI)+=tcpm/tcpci.o
 driver-$(CONFIG_USB_PD_TCPM_FUSB302)+=tcpm/fusb302.o
 driver-$(CONFIG_USB_PD_TCPM_MT6370)+=tcpm/mt6370.o
-driver-$(CONFIG_USB_PD_TCPM_ITE83XX)+=tcpm/it83xx.o
+ifdef CONFIG_USB_PD_TCPM_ITE_ON_CHIP
+driver-$(CONFIG_USB_PD_TCPM_DRIVER_IT83XX)+=tcpm/it83xx.o
+driver-$(CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2)+=tcpm/it8xxx2.o
+endif
 driver-$(CONFIG_USB_PD_TCPM_ANX74XX)+=tcpm/anx74xx.o
 driver-$(CONFIG_USB_PD_TCPM_ANX7688)+=tcpm/anx7688.o
 driver-$(CONFIG_USB_PD_TCPM_ANX7447)+=tcpm/anx7447.o

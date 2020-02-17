@@ -9,7 +9,7 @@
 #define __CROS_EC_ITE_EC_H
 
 /* USB PD config */
-#define CONFIG_USB_PD_TCPM_ITE83XX
+#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP
 #define CONFIG_USB_PD_VBUS_DETECT_GPIO
 
 /* Optional feature - used by ITE */

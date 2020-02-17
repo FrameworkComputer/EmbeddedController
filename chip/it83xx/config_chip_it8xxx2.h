@@ -30,6 +30,10 @@
 
 #define CONFIG_PROGRAM_MEMORY_BASE  (CHIP_ILM_BASE)
 
+/****************************************************************************/
+/* Chip IT83202 is used with IT8XXX2 TCPM driver */
+#define CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2
+
 #if defined(CHIP_VARIANT_IT83202BX)
 /* TODO(b/133460224): enable properly chip config option. */
 #define CONFIG_FLASH_SIZE           0x00080000
