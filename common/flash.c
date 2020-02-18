@@ -386,7 +386,7 @@ const char *flash_read_pstate_serial(void)
  */
 int flash_write_pstate_serial(const char *serialno)
 {
-	int i;
+	int length;
 	struct persist_state newpstate;
 	const struct persist_state *pstate =
 		(const struct persist_state *)
@@ -396,18 +396,22 @@ int flash_write_pstate_serial(const char *serialno)
 	if (!serialno)
 		return EC_ERROR_INVAL;
 
+	length = strnlen(serialno, sizeof(newpstate.serialno));
+	if (length >= sizeof(newpstate.serialno)) {
+		return EC_ERROR_INVAL;
+	}
+
 	/* Cache the old copy for read/modify/write. */
 	memcpy(&newpstate, pstate, sizeof(newpstate));
 	validate_pstate_struct(&newpstate);
 
-	/* Copy in serialno. */
-	for (i = 0; i < CONFIG_SERIALNO_LEN - 1; i++) {
-		newpstate.serialno[i] = serialno[i];
-		if (serialno[i] == 0)
-			break;
-	}
-	for (; i < CONFIG_SERIALNO_LEN; i++)
-		newpstate.serialno[i] = 0;
+	/*
+	 * Erase any prior data and copy the string. The length was verified to
+	 * be shorter than the buffer so a null terminator always remains.
+	 */
+	memset(newpstate.serialno, '\0', sizeof(newpstate.serialno));
+	memcpy(newpstate.serialno, serialno, length);
+
 	newpstate.valid_fields |= PSTATE_VALID_SERIALNO;
 
 	return flash_write_pstate_data(&newpstate);
