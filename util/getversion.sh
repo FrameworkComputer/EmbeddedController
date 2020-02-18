@@ -6,6 +6,8 @@
 #
 # Generate version information for the EC binary
 
+: "${REPRODUCIBLE_BUILD:=}"
+
 # Use this symbol as a separator to be able to reliably concatenate strings of
 # text.
 dc=$'\001'
@@ -36,16 +38,16 @@ get_tree_version() {
   local ver_branch
   local ver_major
 
-  if ghash=`git rev-parse --short --verify HEAD 2>/dev/null`; then
-    if gdesc=`git describe --dirty --match='v*' 2>/dev/null`; then
-      IFS="-" fields=($gdesc)
+  if ghash="$(git rev-parse --short --verify HEAD 2>/dev/null)"; then
+    if gdesc="$(git describe --dirty --match='v*' 2>/dev/null)"; then
+      IFS="-" read -r -a fields <<< "${gdesc}"
       tag="${fields[0]}"
-      IFS="." vernum=($tag)
-      numcommits=$((${vernum[2]}+${fields[1]:-0}))
+      IFS="." read -r -a vernum <<< "${tag}"
+      numcommits=$((vernum[2]+${fields[1]:-0}))
       ver_major="${vernum[0]}"
       ver_branch="${vernum[1]}"
     else
-      numcommits=`git rev-list HEAD | wc -l`
+      numcommits=$(git rev-list HEAD | wc -l)
       ver_major="v0"
       ver_branch="0"
     fi
@@ -88,7 +90,6 @@ main() {
   local vbase
   local ver
 
-  IFS="${dc}"
   if [[ -z "${STATIC_VERSION}" ]]; then
     ver="${CR50_SQA:+SQA/}${CR50_DEV:+DBG/}${CRYPTO_TEST:+CT/}${BOARD}_"
     tool_ver=""
@@ -112,10 +113,10 @@ main() {
 
   # Create a combined version string for all component directories.
   if [[ -z "${STATIC_VERSION}" ]]; then
-    for git_dir in ${dir_list[@]}; do
-      pushd "${git_dir}" > /dev/null
+    for git_dir in "${dir_list[@]}"; do
+      pushd "${git_dir}" > /dev/null || exit 1
       component="$(basename "${git_dir}")"
-      values=( $(get_tree_version) )
+      IFS="${dc}" read -r -a values <<< "$(get_tree_version)"
       vbase="${values[0]}"             # Retrieved version information.
       global_dirty+="${values[1]}"     # Non-zero, if the repository is 'dirty'
       if [ "${component}" != "." ]; then
@@ -131,7 +132,7 @@ main() {
         ver="${ver_32}"
       fi
 
-      popd > /dev/null
+      popd > /dev/null || exit 1
     done
   fi
 
@@ -149,10 +150,10 @@ main() {
   echo "/* Sub-fields for use in Makefile.rules and to form build info string"
   echo " * in common/version.c. */"
   echo "#define VERSION \"${ver}\""
-  if [[ -n "${STATIC_VERSION}" ]] || [[ "$REPRODUCIBLE_BUILD" = 1 ]]; then
+  if [[ -n "${STATIC_VERSION}" ]] || [[ "${REPRODUCIBLE_BUILD}" = 1 ]]; then
     echo '#define BUILDER "reproducible@build"'
   else
-    echo "#define BUILDER \"${USER}@`hostname`\""
+    echo "#define BUILDER \"${USER}@$(hostname)\""
   fi
 
   if [[ -n "${STATIC_VERSION}" ]]; then
