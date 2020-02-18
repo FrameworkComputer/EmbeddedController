@@ -1,7 +1,7 @@
 # Code Reviews
 
-The platform/ec repository makes use of a code review system that tries to
-evenly distributed code reviews among available reviewers.
+The `platform/ec` repository makes use of a code review system that tries to
+evenly distribute code reviews among available reviewers.
 
 ## How to request a review
 
@@ -11,7 +11,7 @@ the next available reviewer in the EC reviewer rotation. This typically takes on
 the order of minutes.
 
 Optionally, you can click the [FIND OWNERS] button in the UI, and select
-`cros-ec-reviewers@google.com`
+`cros-ec-reviewers@google.com`.
 
 ## When to use review system
 
@@ -29,5 +29,6 @@ the appropriate domain expert for that section of code.
 
 ## How can I join the rotation?
 
-The list of reviewer is at http://google3/chrome/crosinfra/gwsq/ec_reviewers;
-just add your name there.
+Add your name to the [list of reviewers][1].
+
+[1]: http://google3/chrome/crosinfra/gwsq/ec_reviewers
