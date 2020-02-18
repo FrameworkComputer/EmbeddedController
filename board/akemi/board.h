@@ -75,6 +75,17 @@
  */
 #define CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA 8192
 
+/* TI gauge IC 500ms WDT timeout setting under battery sleep mode
+ * induced battery cut-off, under the following conditions:
+ * 1. SMBus communication on FC is once per minute which allows
+ * battery entering sleep mode;
+ * 2. System load < 10mA and accumulate 5 hours will trigger battery
+ * simulation and result in a 500ms WDT timeout. So change charge
+ * max sleep time from once/minute to once/10 seconds to prevent
+ * battery entering sleep mode. See b/133375756 and b/148822924.
+ */
+#define CHARGE_MAX_SLEEP_USEC (10 * SECOND)
+
 /* Volume Button feature */
 #define CONFIG_VOLUME_BUTTONS
 #define GPIO_VOLUME_UP_L GPIO_EC_VOLUP_BTN_ODL
