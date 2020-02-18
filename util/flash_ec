@@ -1152,8 +1152,9 @@ function dut_i2c_dev() {
 		done
 		false
 	); then
-		die "Could not find servo I2C adapter.  This could be because "\
-"the i2c-pseudo module was not loaded when servod was started."
+		die "Could not find servo I2C adapter. This could be because"\
+" the i2c-pseudo module was not loaded when servod was started."\
+" See also iteflash.md for more info."
 	fi
 }
 
