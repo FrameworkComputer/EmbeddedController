@@ -50,11 +50,38 @@ static void slp_event(enum gpio_signal signal)
 	hook_call_deferred(&ap_deferred_data, 0);
 }
 
+#ifndef HAS_TASK_FPSENSOR
+void fps_event(enum gpio_signal signal)
+{
+}
+#endif
+
 #include "gpio_list.h"
+
+/* SPI devices */
+const struct spi_device_t spi_devices[] = {
+	/* Fingerprint sensor (SCLK at 4Mhz) */
+	{ .port = CONFIG_SPI_FP_PORT, .div = 3, .gpio_cs = GPIO_SPI4_NSS }
+};
+const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
+
+static void spi_configure(void)
+{
+	/* Configure SPI GPIOs */
+	gpio_config_module(MODULE_SPI_MASTER, 1);
+	/* Set all SPI master signal pins to very high speed: pins E2/4/5/6 */
+	STM32_GPIO_OSPEEDR(GPIO_E) |= 0x00003f30;
+	/* Enable clocks to SPI4 module (master) */
+	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI4;
+
+	spi_enable(CONFIG_SPI_FP_PORT, 1);
+}
 
 /* Initialize board. */
 static void board_init(void)
 {
+	spi_configure();
+
 	/* Enable interrupt on PCH power signals */
 	gpio_enable_interrupt(GPIO_PCH_SLP_S3_L);
 	gpio_enable_interrupt(GPIO_PCH_SLP_S0_L);
