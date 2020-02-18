@@ -211,7 +211,6 @@ enum adc_channel {
 	ADC_VBUS,
 	ADC_AMON_BMON,
 	ADC_PSYS,
-	ADC_PP868_S1C_S2C_S3C,
 	ADC_CH_COUNT
 };
 

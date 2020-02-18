@@ -164,14 +164,6 @@ const struct adc_t adc_channels[] = {
 		2,
 		0
 	},
-	/* Expected to be within 2.8V. No multiplier. */
-	[ADC_PP868_S1C_S2C_S3C] = {
-		"PP868_S1C_S2C_S3C",
-		NPCX_ADC_CH5,
-		ADC_MAX_VOLT,
-		ADC_READ_MAX + 1,
-		0
-	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
