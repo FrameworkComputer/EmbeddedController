@@ -109,6 +109,7 @@ driver-$(CONFIG_TEMP_SENSOR_TMP112)+=temp_sensor/tmp112.o
 driver-$(CONFIG_TEMP_SENSOR_TMP411)+=temp_sensor/tmp411.o
 driver-$(CONFIG_TEMP_SENSOR_TMP432)+=temp_sensor/tmp432.o
 driver-$(CONFIG_TEMP_SENSOR_TMP468)+=temp_sensor/tmp468.o
+driver-$(CONFIG_TEMP_SENSOR_AMD_R19ME4070)+=temp_sensor/amd_r19me4070.o
 
 # Touchpads
 driver-$(CONFIG_TOUCHPAD_GT7288)+=touchpad_gt7288.o
