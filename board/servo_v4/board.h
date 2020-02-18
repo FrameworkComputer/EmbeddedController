@@ -47,6 +47,8 @@
 
 #define CONFIG_USB_SERIALNO
 #define DEFAULT_SERIALNO "Uninitialized"
+#define CONFIG_MAC_ADDR
+#define DEFAULT_MAC_ADDR "Uninitialized"
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_CONSOLE	0

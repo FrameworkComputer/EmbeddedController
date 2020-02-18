@@ -45,8 +45,9 @@
 /* Flags for persist_state.flags */
 /* Protect persist state and RO firmware at boot */
 #define PERSIST_FLAG_PROTECT_RO 0x02
-#define PSTATE_VALID_FLAGS	BIT(0)
-#define PSTATE_VALID_SERIALNO	BIT(1)
+#define PSTATE_VALID_FLAGS      BIT(0)
+#define PSTATE_VALID_SERIALNO   BIT(1)
+#define PSTATE_VALID_MAC_ADDR   BIT(2)
 
 struct persist_state {
 	uint8_t version;            /* Version of this struct */
@@ -55,10 +56,15 @@ struct persist_state {
 	uint8_t reserved;           /* Reserved; set 0 */
 #ifdef CONFIG_SERIALNO_LEN
 	uint8_t serialno[CONFIG_SERIALNO_LEN]; /* Serial number. */
-#else
+#endif /* CONFIG_SERIALNO_LEN */
+#ifdef CONFIG_MAC_ADDR_LEN
+	uint8_t mac_addr[CONFIG_MAC_ADDR_LEN];
+#endif /* CONFIG_MAC_ADDR_LEN */
+#if !defined(CONFIG_SERIALNO_LEN) && !defined(CONFIG_MAC_ADDR_LEN)
 	uint8_t padding[4 % CONFIG_FLASH_WRITE_SIZE];
 #endif
 };
+
 /* written with flash_physical_write, need to respect alignment constraints */
 #ifndef CHIP_FAMILY_STM32L /* STM32L1xx is somewhat lying to us */
 BUILD_ASSERT(sizeof(struct persist_state) % CONFIG_FLASH_WRITE_SIZE == 0);
@@ -275,25 +281,6 @@ static uint32_t flash_read_pstate(void)
 	}
 }
 
-#ifdef CONFIG_SERIALNO_LEN
-/**
- * Read and return persistent serial number.
- */
-const char *flash_read_pstate_serial(void)
-{
-	const struct persist_state *pstate =
-		(const struct persist_state *)
-		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
-
-	if ((pstate->version == PERSIST_STATE_VERSION) &&
-	    (pstate->valid_fields & PSTATE_VALID_SERIALNO)) {
-		return (const char *)(pstate->serialno);
-	}
-
-	return NULL;
-}
-#endif
-
 /**
  * Write persistent state after erasing.
  *
@@ -375,9 +362,26 @@ static int flash_write_pstate(uint32_t flags)
 
 #ifdef CONFIG_SERIALNO_LEN
 /**
+ * Read and return persistent serial number.
+ */
+const char *flash_read_pstate_serial(void)
+{
+	const struct persist_state *pstate =
+		(const struct persist_state *)
+		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
+
+	if ((pstate->version == PERSIST_STATE_VERSION) &&
+	    (pstate->valid_fields & PSTATE_VALID_SERIALNO)) {
+		return (const char *)(pstate->serialno);
+	}
+
+	return NULL;
+}
+
+/**
  * Write persistent serial number to pstate, erasing if necessary.
  *
- * @param serialno		New iascii serial number to set in pstate.
+ * @param serialno		New ascii serial number to set in pstate.
  * @return EC_SUCCESS, or nonzero if error.
  */
 int flash_write_pstate_serial(const char *serialno)
@@ -408,10 +412,89 @@ int flash_write_pstate_serial(const char *serialno)
 
 	return flash_write_pstate_data(&newpstate);
 }
-#endif
 
+#endif /* CONFIG_SERIALNO_LEN */
 
+#ifdef CONFIG_MAC_ADDR_LEN
 
+/**
+ * Read and return persistent MAC address.
+ */
+const char *flash_read_pstate_mac_addr(void)
+{
+	const struct persist_state *pstate =
+		(const struct persist_state *)
+		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
+
+	if ((pstate->version == PERSIST_STATE_VERSION) &&
+	    (pstate->valid_fields & PSTATE_VALID_MAC_ADDR)) {
+		return (const char *)(pstate->mac_addr);
+	}
+
+	return NULL;
+}
+
+/**
+ * Write persistent MAC Addr to pstate, erasing if necessary.
+ *
+ * @param mac_addr		New ascii MAC address to set in pstate.
+ * @return EC_SUCCESS, or nonzero if error.
+ */
+int flash_write_pstate_mac_addr(const char *mac_addr)
+{
+	int length;
+	struct persist_state newpstate;
+	const struct persist_state *pstate =
+		(const struct persist_state *)
+		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
+
+	/* Check that this is OK, data is valid and fits in the region. */
+	if (!mac_addr) {
+		return EC_ERROR_INVAL;
+	}
+
+	/*
+	 * This will perform validation of the mac address before storing it.
+	 * The MAC address format is '12:34:56:78:90:AB', a 17 character long
+	 * string containing pairs of hex digits, each pair delimited by a ':'.
+	 */
+	length = strnlen(mac_addr, sizeof(newpstate.mac_addr));
+	if (length != 17) {
+		return EC_ERROR_INVAL;
+	}
+	for (int i = 0; i < 17; i++) {
+		if (i % 3 != 2) {
+			/* Verify the remaining characters are hex digits. */
+			if ((mac_addr[i] < '0' || '9' < mac_addr[i]) &&
+			    (mac_addr[i] < 'A' || 'F' < mac_addr[i]) &&
+			    (mac_addr[i] < 'a' || 'f' < mac_addr[i])) {
+				return EC_ERROR_INVAL;
+			}
+		} else {
+			/* Every 3rd character is a ':' */
+			if (mac_addr[i] != ':') {
+				return EC_ERROR_INVAL;
+			}
+		}
+	}
+
+	/* Cache the old copy for read/modify/write. */
+	memcpy(&newpstate, pstate, sizeof(newpstate));
+	validate_pstate_struct(&newpstate);
+
+	/*
+	 * Erase any prior data and copy the string. The length was verified to
+	 * be shorter than the buffer so a null terminator always remains.
+	 */
+	memset(newpstate.mac_addr, '\0', sizeof(newpstate.mac_addr));
+	memcpy(newpstate.mac_addr, mac_addr, length);
+
+	newpstate.valid_fields |= PSTATE_VALID_MAC_ADDR;
+
+	return flash_write_pstate_data(&newpstate);
+}
+
+#endif /* CONFIG_MAC_ADDR_LEN */
 
 #else /* !CONFIG_FLASH_PSTATE_BANK */
 

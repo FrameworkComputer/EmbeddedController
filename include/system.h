@@ -328,6 +328,19 @@ __override_proto const char *board_read_serial(void);
  */
 __override_proto int board_write_serial(const char *serial);
 
+
+/**
+ * Optional board-level callback functions to read a unique MAC address per
+ * chip. Default implementation reads from flash.
+ */
+__override_proto const char *board_read_mac_addr(void);
+
+/**
+ * Optional board-level callback functions to write a unique MAC address per
+ * chip. Default implementation reads from flash.
+ */
+__override_proto int board_write_mac_addr(const char *mac_addr);
+
 /*
  * Common bbram entries. Chips don't necessarily need to implement
  * all of these, error will be returned from system_get/set_bbram if

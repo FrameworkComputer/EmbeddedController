@@ -344,6 +344,25 @@ const char *flash_read_pstate_serial(void);
 int flash_write_pstate_serial(const char *serialno);
 
 /**
+ * Get the MAC address from flash.
+ *
+ * @return char * ascii MAC address string.
+ *     Format: "01:23:45:67:89:AB"
+ *     NULL if error.
+ */
+const char *flash_read_pstate_mac_addr(void);
+
+/**
+ * Set the MAC address in flash.
+ *
+ * @param mac_addr	ascii MAC address string.
+ *     Format: "01:23:45:67:89:AB"
+ *
+ * @return success status.
+ */
+int flash_write_pstate_mac_addr(const char *mac_addr);
+
+/**
  * Lock or unlock HW necessary for mapped storage read.
  *
  * @param lock          1 to lock, 0 to unlock.

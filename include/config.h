@@ -3185,6 +3185,12 @@
 /* Size of the serial number if needed */
 #undef CONFIG_SERIALNO_LEN
 
+/* Support programmable Mac address field. */
+#undef CONFIG_MAC_ADDR
+
+/* Size of the MAC address field if needed. */
+#undef CONFIG_MAC_ADDR_LEN
+
 /****************************************************************************/
 /* Shared objects library. */
 
@@ -5124,6 +5130,10 @@
 
 #ifdef CONFIG_USB_SERIALNO
 #define CONFIG_SERIALNO_LEN 28
+#endif
+
+#ifdef CONFIG_MAC_ADDR
+#define CONFIG_MAC_ADDR_LEN 20
 #endif
 
 #ifndef CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ

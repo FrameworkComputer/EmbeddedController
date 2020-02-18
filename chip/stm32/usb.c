@@ -897,4 +897,62 @@ static int command_serialno(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(serialno, command_serialno,
 	"load/set [value]",
 	"Read and write USB serial number");
+
 #endif  /* CONFIG_USB_SERIALNO */
+
+#ifdef CONFIG_MAC_ADDR
+
+/* Save MAC address into pstate region. */
+static int usb_save_mac_addr(const char *mac_addr)
+{
+	int rv;
+
+	if (!mac_addr) {
+		return EC_ERROR_INVAL;
+	}
+
+	/* Save this new MAC address to flash. */
+	rv = board_write_mac_addr(mac_addr);
+	if (rv) {
+		return rv;
+	}
+
+	/* Load this new MAC address to memory. */
+	if (board_read_mac_addr() != NULL) {
+		return EC_SUCCESS;
+	} else {
+		return EC_ERROR_UNKNOWN;
+	}
+}
+
+static int command_macaddr(int argc, char **argv)
+{
+	const char* buf;
+	int rv = EC_SUCCESS;
+
+	if (argc != 1) {
+		if ((strcasecmp(argv[1], "set") == 0) &&
+		    (argc == 3)) {
+			ccprintf("Saving MAC address\n");
+			rv = usb_save_mac_addr(argv[2]);
+		} else if ((strcasecmp(argv[1], "load") == 0) &&
+			   (argc == 2)) {
+			ccprintf("Loading MAC address\n");
+		} else {
+			return EC_ERROR_INVAL;
+		}
+	}
+
+	buf = board_read_mac_addr();
+	if (buf == NULL) {
+		buf = DEFAULT_MAC_ADDR;
+	}
+	ccprintf("MAC address: %s\n", buf);
+	return rv;
+}
+
+DECLARE_CONSOLE_COMMAND(macaddr, command_macaddr,
+	"load/set [value]",
+	"Read and write MAC address");
+
+#endif  /* CONFIG_MAC_ADDR */
