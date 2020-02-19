@@ -11,9 +11,10 @@
 #include "cpu.h"
 #include "flash.h"
 #include "gpio_chip.h"
+#include "hooks.h"
 #include "host_command.h"
-#include "registers.h"
 #include "panic.h"
+#include "registers.h"
 #include "system.h"
 #include "task.h"
 #include "util.h"
@@ -179,7 +180,10 @@ void chip_pre_init(void)
 }
 
 #ifdef CONFIG_PVD
-/* Configures the programmable voltage detector to monitor for brown out conditions. */
+/******************************************************************************
+ * Detects sagging Vdd voltage and resets the system via the programmable
+ * voltage detector interrupt.
+ */
 static void configure_pvd(void)
 {
 	/* Clear Interrupt Enable Mask Register. */
@@ -208,7 +212,17 @@ static void configure_pvd(void)
 	/* Enable the PVD Output. */
 	STM32_PWR_CR |= STM32_PWR_PVDE;
 }
-#endif
+
+void pvd_interrupt(void)
+{
+	/* Clear Pending Register */
+	STM32_EXTI_PR = EXTI_PVD_EVENT;
+	/* Handle recovery by rebooting the system */
+	system_reset(0);
+}
+DECLARE_IRQ(STM32_IRQ_PVD, pvd_interrupt, HOOK_PRIO_FIRST);
+
+#endif /* CONFIG_PVD */
 
 void system_pre_init(void)
 {

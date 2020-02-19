@@ -83,6 +83,13 @@
 
 /* Options features */
 #define CONFIG_ADC
+/*
+ * See 'Programmable voltage detector characteristics' in the STM32F072x8
+ * Datasheet. PVD Threshold 1 corresponds to a falling voltage threshold of
+ * min:2.09V, max:2.27V.
+ */
+#define CONFIG_PVD
+#define PVD_THRESHOLD 1
 
 /* This is not actually an EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP

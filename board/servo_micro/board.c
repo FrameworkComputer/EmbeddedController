@@ -386,15 +386,6 @@ const struct ite_dfu_config_t ite_dfu_config = {
 	.sda = GPIO_MASTER_I2C_SDA,
 };
 
-void pvd_interrupt(void) {
-	/* Clear Pending Register */
-	STM32_EXTI_PR = EXTI_PVD_EVENT;
-	/* Handle recovery by rebooting the system */
-	system_reset(0);
-}
-
-DECLARE_IRQ(STM32_IRQ_PVD, pvd_interrupt, HOOK_PRIO_FIRST);
-
 /******************************************************************************
  * Initialize board.
  */
