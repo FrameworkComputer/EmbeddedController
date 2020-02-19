@@ -172,6 +172,10 @@ static void config_release(struct iteflash_config *conf)
 static inline int i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 				    uint8_t *data, int write, int numbytes)
 {
+	/* If we got a termination signal, stop sending data */
+	if (exit_requested)
+		return -1;
+
 	return chnd->conf.i2c_if->byte_transfer(chnd, addr, data, write,
 		numbytes);
 }
@@ -220,10 +224,6 @@ static int i2c_add_send_byte(struct ftdi_context *ftdi, uint8_t *buf,
 	uint8_t failed_ack = 0;
 
 	for (i = 0; i < tcnt; i++) {
-		/* If we got a termination signal, stop sending data */
-		if (exit_requested)
-			return -1;
-
 		/* WORKAROUND: force SDA before sending the next byte */
 		*b++ = SET_BITS_LOW; *b++ = SDA_BIT; *b++ = SCL_BIT | SDA_BIT;
 		/* write byte */
@@ -318,10 +318,6 @@ static int i2c_add_recv_bytes(struct ftdi_context *ftdi, uint8_t *buf,
 
 	rbuf_idx = 0;
 	do {
-		/* If we got a termination signal, stop sending data */
-		if (exit_requested)
-			return -1;
-
 		ret = ftdi_read_data(ftdi, &rbuf[rbuf_idx], rcnt);
 		if (ret < 0) {
 			fprintf(stderr, "read byte failed\n");
@@ -342,10 +338,6 @@ static int ccd_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 			   (((!write * numbytes) > 0x7f) ? 2 : 0)];
 	size_t response_size;
 	size_t extra = 0;
-
-	/* Do nothing if user wants to quit. */
-	if (exit_requested)
-		return -1;
 
 	/*
 	 * Build a message following format described in ./include/usb_i2c.h.
