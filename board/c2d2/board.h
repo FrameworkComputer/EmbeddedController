@@ -75,6 +75,21 @@
 #define CONFIG_SPI_MASTER
 #define CONFIG_SPI_FLASH_PORT 0  /* SPI2 is 0th in stm's SPI_REGS var */
 
+/* Enable control of I2C over USB */
+#define CONFIG_USB_I2C
+#define CONFIG_I2C
+#define CONFIG_I2C_MASTER
+#define I2C_PORT_EC 0
+#define I2C_PORT_AUX 1
+
+/* See i2c_ite_flash_support.c for more information about these values */
+#define CONFIG_ITE_FLASH_SUPPORT
+#define CONFIG_I2C_XFER_LARGE_READ
+#undef CONFIG_USB_I2C_MAX_WRITE_COUNT
+#undef CONFIG_USB_I2C_MAX_READ_COUNT
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT ((1<<9) - 4)
+#define CONFIG_USB_I2C_MAX_READ_COUNT ((1<<9) - 6)
+
 /*
  * Set all ADC samples to take 239.5 clock cycles. This allows us to measure
  * weakly driven signals like the H1 Vref.

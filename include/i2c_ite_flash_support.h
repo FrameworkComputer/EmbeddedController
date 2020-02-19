@@ -13,6 +13,14 @@
 struct ite_dfu_config_t {
 	/* I2C port to communicate on */
 	int i2c_port;
+	/* True if using OC1N instead of OC1 */
+	bool use_complement_timer_channel;
+	/*
+	 * Optional function that guards access to i2c port. If present, the
+	 * return value should return true if dfu access is allowed and false
+	 * otherwise.
+	 */
+	bool (*access_allow)(void);
 	/*
 	 * The gpio signals that moved between TIM16/17 (MODULE_I2C_TIMERS) and
 	 * I2C (MODULE_I2C).

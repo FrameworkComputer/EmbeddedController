@@ -394,6 +394,12 @@ toad_ec_hard_reset() {
 servo_ec_hard_reset_or_die() {
 	dut_control_or_die cold_reset:on
 	dut_control_or_die cold_reset:off
+
+	# Cold reset on C2D2 is H1 reset, which will double reset the EC
+	# We need to wait a little bit to ensure we catch final EC reset
+	if [[ "${SERVO_TYPE}" =~ "c2d2" ]]; then
+		sleep 0.2
+	fi
 }
 
 servo_ec_hard_reset() {
@@ -404,6 +410,10 @@ servo_ec_hard_reset() {
 c2d2_ec_hard_reset() {
 	dut_control cold_reset:on
 	dut_control cold_reset:off
+
+	# Cold reset on C2D2 is H1 reset, which will double reset the EC
+	# We need to wait a little bit to ensure we catch final EC reset
+	sleep 0.2
 }
 
 servo_usbpd_hard_reset() {
@@ -696,7 +706,7 @@ toad_VARS=( "boot_mode" )
 declare -a save
 
 #######################################
-# Store DUT control value to restore.
+# Store DUT control value to restore in LIFO order.
 # Arguments:
 #   $1: Control name
 #   $2: (optional) Value to restore for the name at exit.
@@ -710,10 +720,10 @@ function servo_save_add() {
 			# Don't save the control with the prefix, because
 			# dut_control will add the prefix again when we restore
 			# the settings.
-			save+=( "${CTRL_RESULT#$DUT_CTRL_PREFIX}" )
+			save=( "${CTRL_RESULT#$DUT_CTRL_PREFIX}" "${save[@]}" )
 		   fi
 		   ;;
-		2) save+=( "$1:$2" )
+		2) save=( "$1:$2" "${save[@]}" )
 		   ;;
 		*) die "${FUNCNAME[0]} failed: arguments error"
 		   ;;
@@ -1166,6 +1176,17 @@ function flash_it83xx() {
 		die "no iteflash util found."
 	fi
 
+	# We need to ensure that c2d2 and dut-side path are set up for i2c
+	if [[ "${SERVO_TYPE}" =~ "c2d2" ]]; then
+		# We need to swing the DUT-side muxes to I2C instead of UART.
+		# This is done by convention with EC_FLASH_SELECT pin from H1
+		servo_save_add "ec_flash_select"
+		dut_control_or_die ec_flash_select:on
+		# Enable i2c bus on C2D2 at 1000kbps
+		servo_save_add "i2c_ec_bus_speed"
+		dut_control_or_die i2c_ec_bus_speed:1000
+	fi
+
 	# Now the we have enabled the I2C mux on the servo to talk to the dut,
 	# we need to switch the I2C mux on the dut to allow ec programing (if
 	# there is a mux on the dut)
@@ -1189,9 +1210,9 @@ function flash_it83xx() {
 	fi
 
 	# Send the special waveform to the ITE EC.
-	if [[ "${SERVO_TYPE}" =~ "servo_micro" ]]; then
-		info "Asking Servo Micro to send the dbgr special waveform to "\
-"${CHIP}"
+	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
+	      "${SERVO_TYPE}" =~ "c2d2" ]] ; then
+		info "Asking servo to send the dbgr special waveform to ${CHIP}"
 		dut_control_or_die enable_ite_dfu
 	elif [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
 		local CCD_I2C_CAP="$(dut_control_get ccd_i2c_en)"
@@ -1323,10 +1344,6 @@ function flash_npcx_uut() {
 	# Force the EC to boot in UART update mode
 	ec_enable_boot0 "uut"
 	ec_reset
-
-	# Have to wait a bit for EC boot-up (twice in some cases when the cold
-	# reset is indirect through h1 reset).
-	sleep 0.2
 
 	# For CCD, disable the trigger pin for normal UART operation
 	ec_disable_boot0 "uut"

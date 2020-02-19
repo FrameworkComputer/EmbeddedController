@@ -231,6 +231,10 @@ static int command_enable_ite_dfu(int argc, char **argv)
 	if (argc > 1)
 		return EC_ERROR_PARAM_COUNT;
 
+	/* Ensure we can perform the dfu operation */
+	if (ite_dfu_config.access_allow && !ite_dfu_config.access_allow())
+		return EC_ERROR_ACCESS_DENIED;
+
 	/* Enable peripheral clocks. */
 	STM32_RCC_APB2ENR |=
 		STM32_RCC_APB2ENR_TIM16EN | STM32_RCC_APB2ENR_TIM17EN;
@@ -266,9 +270,18 @@ static int command_enable_ite_dfu(int argc, char **argv)
 	STM32_TIM_CCMR1(17) =
 		STM32_TIM_CCMR1_OC1M_PWM_MODE_1 | STM32_TIM_CCMR1_OC1PE;
 
-	/* Enable output compare 1. */
-	STM32_TIM_CCER(16) = STM32_TIM_CCER_CC1E;
-	STM32_TIM_CCER(17) = STM32_TIM_CCER_CC1E;
+	/*
+	 * Enable output compare 1 (or its N counterpart). Note that if only
+	 * OC1N is enabled, then it is not complemented. From datasheet:
+	 * "When only OCxN is enabled (CCxE=0, CCxNE=1), it is not complemented"
+	 */
+	if (ite_dfu_config.use_complement_timer_channel) {
+		STM32_TIM_CCER(16) = STM32_TIM_CCER_CC1NE;
+		STM32_TIM_CCER(17) = STM32_TIM_CCER_CC1NE;
+	} else {
+		STM32_TIM_CCER(16) = STM32_TIM_CCER_CC1E;
+		STM32_TIM_CCER(17) = STM32_TIM_CCER_CC1E;
+	}
 
 	/* Enable main output. */
 	STM32_TIM_BDTR(16) = STM32_TIM_BDTR_MOE;
@@ -327,6 +340,10 @@ static int command_get_ite_chipid(int argc, char **argv)
 {
 	if (argc > 1)
 		return EC_ERROR_PARAM_COUNT;
+
+	/* Ensure we can perform the dfu operation */
+	if (ite_dfu_config.access_allow && !ite_dfu_config.access_allow())
+		return EC_ERROR_ACCESS_DENIED;
 
 	return cprint_ite_chip_id();
 }
