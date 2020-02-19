@@ -107,6 +107,8 @@
 #undef CONFIG_CMD_MMAPINFO
 #endif
 
+#undef CONFIG_CONSOLE_CMDHELP
+
 /* Don't generate host command debug by default */
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
