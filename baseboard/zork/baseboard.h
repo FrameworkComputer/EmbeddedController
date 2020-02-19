@@ -113,18 +113,15 @@
  */
 #define CONFIG_USB_PID 0x5040
 
-#if 1
-/* TODO(b/142284905): Enable the TCPMv2 PD stack */
+/* Enable the TCPMv2 PD stack */
 #define CONFIG_USB_PE_SM
 #define CONFIG_USB_PRL_SM
 #define CONFIG_USB_SM_FRAMEWORK
 #define CONFIG_USB_TYPEC_SM
 #define CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
-#if 0
- /* TODO(b/146393213): Enable Fast Role Swap */
+
+ /* Enable TCPMv2 Fast Role Swap */
 #define CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
-#endif
-#endif
 
 #define CONFIG_CMD_PD_CONTROL
 #define CONFIG_USB_CHARGER
