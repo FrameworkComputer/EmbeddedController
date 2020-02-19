@@ -2804,23 +2804,9 @@ static void tc_drp_auto_toggle_run(const int port)
 		set_state_tc(port, PD_DEFAULT_STATE(port));
 		break;
 	case DRP_TC_UNATTACHED_SNK:
-		/*
-		 * Some TCPCI compliant TCPCs come out of auto toggle with
-		 * a prospective connection.  They are expecting us to set
-		 * the CC lines to what it is thinking is best or it goes
-		 * directly back to unattached.
-		 */
-		tcpm_drp_toggle_connection(port, cc1, cc2);
 		set_state_tc(port, TC_ATTACH_WAIT_SNK);
 		break;
 	case DRP_TC_UNATTACHED_SRC:
-		/*
-		 * Some TCPCI compliant TCPCs come out of auto toggle with
-		 * a prospective connection.  They are expecting us to set
-		 * the CC lines to what it is thinking is best or it goes
-		 * directly back to unattached.
-		 */
-		tcpm_drp_toggle_connection(port, cc1, cc2);
 		set_state_tc(port, TC_ATTACH_WAIT_SRC);
 		break;
 	case DRP_TC_DRP_AUTO_TOGGLE:
@@ -3148,7 +3134,7 @@ static void tc_cc_rd_entry(const int port)
 	 * Both CC1 and CC2 pins shall be independently terminated to
 	 * ground through Rd.
 	 */
-	tcpm_set_cc(port, TYPEC_CC_RD);
+	tcpm_set_new_connection(port, TYPEC_CC_RD);
 }
 
 
@@ -3170,7 +3156,7 @@ static void tc_cc_rp_entry(const int port)
 	 * up through Rp.
 	 */
 	tcpm_select_rp_value(port, CONFIG_USB_PD_PULLUP);
-	tcpm_set_cc(port, TYPEC_CC_RP);
+	tcpm_set_new_connection(port, TYPEC_CC_RP);
 }
 
 /**

@@ -178,6 +178,18 @@ static inline int tcpm_set_cc(int port, int pull)
 	return tcpc_config[port].drv->set_cc(port, pull);
 }
 
+static inline int tcpm_set_new_connection(int port,
+	enum tcpc_cc_pull pull)
+{
+	const struct tcpm_drv *tcpc = tcpc_config[port].drv;
+
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) &&
+	    tcpc->set_new_connection)
+		return tcpc->set_new_connection(port, pull);
+	else
+		return tcpc->set_cc(port, pull);
+}
+
 static inline int tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
 	return tcpc_config[port].drv->set_polarity(port, polarity);
@@ -256,16 +268,6 @@ static inline int tcpm_auto_toggle_supported(int port)
 static inline int tcpm_enable_drp_toggle(int port)
 {
 	return tcpc_config[port].drv->drp_toggle(port);
-}
-
-static inline void tcpm_drp_toggle_connection(int port,
-	enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
-{
-	const struct tcpm_drv *tcpc = tcpc_config[port].drv;
-
-	if (tcpc->drp_toggle_connection)
-		tcpc->drp_toggle_connection(port, cc1, cc2);
 }
 #endif
 

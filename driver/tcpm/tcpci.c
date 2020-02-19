@@ -359,17 +359,13 @@ int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 
 int tcpci_tcpm_set_cc(int port, int pull)
 {
-	int cc1, cc2;
-
-	cc1 = cc2 = pull;
-
 	/* Keep track of current CC pull value */
 	tcpci_set_cached_pull(port, pull);
 
 	return tcpc_write(port, TCPC_REG_ROLE_CTRL,
 			  TCPC_REG_ROLE_CTRL_SET(0,
 						 tcpci_get_cached_rp(port),
-						 cc1, cc2));
+						 pull, pull));
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE

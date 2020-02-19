@@ -319,6 +319,23 @@ struct tcpm_drv {
 	void (*tcpc_enable_auto_discharge_disconnect)(int port,
 						      int enable);
 
+	/**
+	 * Set new connection
+	 * There is a new connection. May have to handle differently
+	 * if we were performing auto-toggle. Allow a driver to do
+	 * any work required to leave the unattached auto-toggle mode
+	 * as well as setting the CC lines.  If auto-toggle is not
+	 * being used or was not the cause of the new connection
+	 * detection then set both CC lines to the passed pull.
+	 *
+	 * @param port Type-C port number
+	 * @param pull enum tcpc_cc_pull of CC lines
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*set_new_connection)(int port,
+				enum tcpc_cc_pull pull);
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	/**
 	 * Enable TCPC auto DRP toggling.
@@ -328,20 +345,6 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	int (*drp_toggle)(int port);
-
-	/**
-	 * Auto Toggle Connection
-	 * There is a connection while performing auto-toggle.
-	 * Allow a driver to do any work required to leave the
-	 * unattached auto-toggle mode
-	 *
-	 * @param port Type-C port number
-	 * @param cc1 enum tcpc_cc_pull of CC1
-	 * @param cc2 enum tcpc_cc_pull of CC2
-	 */
-	void (*drp_toggle_connection)(int port,
-				enum tcpc_cc_voltage_status cc1,
-				enum tcpc_cc_voltage_status cc2);
 #endif
 
 	/**
