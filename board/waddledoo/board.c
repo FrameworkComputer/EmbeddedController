@@ -10,6 +10,7 @@
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
+#include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "driver/accel_bma2x2.h"
@@ -72,8 +73,14 @@ static void sub_usb_c1_interrupt(enum gpio_signal s)
 
 void board_init(void)
 {
+	int on;
+
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
 	gpio_enable_interrupt(GPIO_SUB_USB_C1_INT_ODL);
+
+	/* Turn on 5V if the system is on, otherwise turn it off. */
+	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND);
+	board_power_5v_enable(on);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -83,6 +90,19 @@ void board_reset_pd_mcu(void)
 	 * TODO(b:147316511): Here we could issue a digital reset to the IC,
 	 * unsure if we actually want to do that or not yet.
 	 */
+}
+
+__override void board_power_5v_enable(int enable)
+{
+	/*
+	 * Port 0 simply has a GPIO to turn on the 5V regulator, however, 5V is
+	 * generated locally on the sub board and we need to set the comparator
+	 * polarity on the sub board charger IC.
+	 */
+	gpio_set_level(GPIO_EN_PP5000, !!enable);
+	if (isl923x_set_comparator_inversion(1, !!enable))
+		CPRINTS("Failed to %sable sub rails!", enable ? "en" : "dis");
+
 }
 
 int board_is_sourcing_vbus(int port)
