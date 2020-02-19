@@ -131,14 +131,6 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 };
 
 /******************************************************************************/
-const struct it8801_pwm_t it8801_pwm_channels[] = {
-	[PWM_CH_LED_RED] = { 1 },
-	[PWM_CH_LED_GREEN] = { 2 },
-	[PWM_CH_LED_BLUE] = { 3 },
-};
-BUILD_ASSERT(ARRAY_SIZE(it8801_pwm_channels) == PWM_CH_COUNT);
-
-/******************************************************************************/
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.bus_type = EC_BUS_TYPE_I2C,
