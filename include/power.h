@@ -264,6 +264,16 @@ void power_reset_host_sleep_state(void);
 #endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
 
 /**
+ * Board specific implementation to enable/disable the PP5000 rail.
+ *
+ * NOTE: The default implementation is to simply set GPIO_EN_PP5000.  If a
+ * board's implementation differs, they should implement this function.
+ *
+ * @param enable: 0 to disable PP5000 rail , otherwise enable PP5000 rail.
+ */
+__override_proto void board_power_5v_enable(int enable);
+
+/**
  * Enable/Disable the PP5000 rail.
  *
  * This function will turn on the 5V rail immediately if requested.  However,

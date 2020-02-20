@@ -898,6 +898,14 @@ DECLARE_CONSOLE_COMMAND(pause_in_s5, command_pause_in_s5,
 #endif /* CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5 */
 
 #ifdef CONFIG_POWER_PP5000_CONTROL
+__overridable void board_power_5v_enable(int enable)
+{
+	if (enable)
+		gpio_set_level(GPIO_EN_PP5000, 1);
+	else
+		gpio_set_level(GPIO_EN_PP5000, 0);
+}
+
 /* 5V enable request bitmask from various tasks. */
 static uint32_t pwr_5v_en_req;
 static struct mutex pwr_5v_ctl_mtx;
@@ -915,11 +923,7 @@ void power_5v_enable(task_id_t tid, int enable)
 	 * If there are any outstanding requests for the rail to be enabled,
 	 * turn on the rail.  Otherwise, turn it off.
 	 */
-	if (pwr_5v_en_req)
-		gpio_set_level(GPIO_EN_PP5000, 1);
-	else
-		gpio_set_level(GPIO_EN_PP5000, 0);
-
+	board_power_5v_enable(pwr_5v_en_req);
 	mutex_unlock(&pwr_5v_ctl_mtx);
 }
 
