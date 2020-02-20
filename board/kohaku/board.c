@@ -466,6 +466,17 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	gpio_set_level(GPIO_USB_C_OC_ODL, !is_overcurrented);
 }
 
+int board_tcpc_post_init(int port)
+{
+	int rv = EC_SUCCESS;
+
+	if (port == USB_PD_PORT_TCPC_0)
+		/* Set MUX_DP_EQ to 3.6dB (0x98) */
+		rv = tcpc_write(port, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
+
+	return rv;
+}
+
 bool board_is_convertible(void)
 {
 	const uint8_t sku = get_board_sku();
