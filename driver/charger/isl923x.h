@@ -343,5 +343,14 @@ extern const struct charger_drv isl923x_drv;
 int isl923x_set_ac_prochot(uint16_t ma);
 int isl923x_set_dc_prochot(uint16_t ma);
 
+/**
+ * Set the general comparator output polarity when asserted.
+ *
+ * @param chgnum: Index into charger chips
+ * @param invert: Non-zero to invert polarity, zero to non-invert.
+ * @return EC_SUCCESS, error otherwise.
+ */
+int isl923x_set_comparator_inversion(int chgnum, int invert);
+
 #define ISL923X_AC_PROCHOT_CURRENT_MAX	6400	/* mA */
 #define ISL923X_DC_PROCHOT_CURRENT_MAX	12800	/* mA */

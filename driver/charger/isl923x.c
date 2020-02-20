@@ -345,6 +345,31 @@ int isl923x_set_dc_prochot(uint16_t ma)
 	return rv;
 }
 
+int isl923x_set_comparator_inversion(int chgnum, int invert)
+{
+	int rv;
+	int regval;
+
+	rv = i2c_read16(chg_chips[chgnum].i2c_port,
+			chg_chips[chgnum].i2c_addr_flags,
+			ISL923X_REG_CONTROL2, &regval);
+	if (invert)
+		regval |= ISL923X_C2_INVERT_CMOUT;
+	else
+		regval &= ~ISL923X_C2_INVERT_CMOUT;
+
+	if (!rv)
+		rv |= i2c_write16(chg_chips[chgnum].i2c_port,
+				  chg_chips[chgnum].i2c_addr_flags,
+				  ISL923X_REG_CONTROL2, regval);
+
+	if (rv)
+		CPRINTS("%s (%d) set_comparator_inversion failed (rv: %d)",
+			CHARGER_NAME, chgnum, rv);
+
+	return rv;
+}
+
 static void isl923x_init(int chgnum)
 {
 	int reg;
