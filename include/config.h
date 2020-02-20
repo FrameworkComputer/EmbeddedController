@@ -1114,6 +1114,13 @@
 #undef CONFIG_CHIPSET_PP3300_RAIL_FIRST
 
 /*
+ * Enable the EC to drive SLP_S3_L during the G3 to S3 transition. This is
+ * needed on TigerLake designs to prevent a glitch on the SLP_S3_L and PCH_PWROK
+ * signals during power on.
+ */
+#undef CONFIG_CHIPSET_SLP_S3_L_OVERRIDE
+
+/*
  * Enable if chipset requires delay between power signals going high
  * and deasserting RSMRST to PCH.
  */
@@ -5109,6 +5116,11 @@
 	defined(CONFIG_CHIPSET_ICELAKE) || \
 	defined(CONFIG_CHIPSET_SKYLAKE)
 #define CONFIG_CHIPSET_X86_RSMRST_DELAY
+#endif
+
+#if defined(CONFIG_HOSTCMD_ESPI_VW_SLP_S3) && \
+	defined(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE)
+#error "Cannot use CONFIG_CHIPSET_SLP_S3_L_OVERRIDE if SLP_S3 is a virtual wire"
 #endif
 
 /*****************************************************************************/
