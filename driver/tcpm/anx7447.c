@@ -652,10 +652,47 @@ static int anx7447_mux_get(const struct usb_mux *me, mux_state_t *mux_state)
 }
 #endif /* CONFIG_USB_PD_TCPM_MUX */
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+static int anx7447_tcpc_drp_toggle(int port)
+{
+	int rv, reg;
+
+	rv = tcpc_read(port, ANX7447_REG_ANALOG_CTRL_10, &reg);
+	if (rv)
+		return rv;
+	/*
+	 * When using Look4Connection command to toggle CC under normal mode
+	 * the CABLE_DET_DIG shall be clear first.
+	 */
+	if (reg & ANX7447_REG_CABLE_DET_DIG) {
+		reg &= ~ANX7447_REG_CABLE_DET_DIG;
+		rv = tcpc_write(port, ANX7447_REG_ANALOG_CTRL_10, reg);
+		if (rv)
+			return rv;
+	}
+
+	return tcpci_tcpc_drp_toggle(port);
+}
+#endif
+
 /* Override for tcpci_tcpm_set_cc */
 static int anx7447_set_cc(int port, int pull)
 {
-	int rp;
+	int rp, reg;
+
+	rp = tcpc_read(port, ANX7447_REG_ANALOG_CTRL_10, &reg);
+	if (rp)
+		return rp;
+	/*
+	 * When setting CC status, should be confirm that the CC toggling
+	 * process is stopped, the CABLE_DET_DIG shall be set to one.
+	 */
+	if ((reg & ANX7447_REG_CABLE_DET_DIG) == 0) {
+		reg |= ANX7447_REG_CABLE_DET_DIG;
+		rp = tcpc_write(port, ANX7447_REG_ANALOG_CTRL_10, reg);
+		if (rp)
+			return rp;
+	}
 
 	rp = tcpci_get_cached_rp(port);
 
@@ -702,7 +739,7 @@ const struct tcpm_drv anx7447_tcpm_drv = {
 	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
 #endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= &tcpci_tcpc_drp_toggle,
+	.drp_toggle		= anx7447_tcpc_drp_toggle,
 #endif
 	.get_chip_info		= &tcpci_get_chip_info,
 #ifdef CONFIG_USBC_PPC
