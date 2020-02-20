@@ -369,7 +369,7 @@ int tcpci_tcpm_set_cc(int port, int pull)
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-static int set_role_ctrl(int port, int toggle, int rp, int pull)
+int tcpci_set_role_ctrl(int port, int toggle, int rp, int pull)
 {
 	return tcpc_write(port, TCPC_REG_ROLE_CTRL,
 			  TCPC_REG_ROLE_CTRL_SET(toggle, rp, pull, pull));
@@ -380,7 +380,7 @@ int tcpci_tcpc_drp_toggle(int port)
 	int rv;
 
 	/* Set auto drp toggle */
-	rv = set_role_ctrl(port, 1, TYPEC_RP_USB, TYPEC_CC_RD);
+	rv = tcpci_set_role_ctrl(port, 1, TYPEC_RP_USB, TYPEC_CC_RD);
 
 	/* Set Look4Connection command */
 	rv |= tcpc_write(port, TCPC_REG_COMMAND,

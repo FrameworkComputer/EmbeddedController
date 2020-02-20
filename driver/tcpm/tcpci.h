@@ -220,6 +220,7 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 			uint16_t header, const uint32_t *data);
 int tcpci_tcpm_release(int port);
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+int tcpci_set_role_ctrl(int port, int toggle, int rp, int pull);
 int tcpci_tcpc_drp_toggle(int port);
 #endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER

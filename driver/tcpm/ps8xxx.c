@@ -133,6 +133,46 @@ static int ps8xxx_tcpm_release(int port)
 	return tcpci_tcpm_release(port);
 }
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+static int ps8xxx_tcpc_drp_toggle(int port)
+{
+	int rv;
+	int status;
+	int opposite_pull;
+
+	/*
+	 * Workaround for PS8805/PS8815, which can't restart Connection
+	 * Detection if the partner already presents pull. Now starts with
+	 * the opposite pull. Check b/149570002.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8805) ||
+	    IS_ENABLED(CONFIG_USB_PD_TCPM_PS8815)) {
+		/* Check CC_STATUS for the current pull */
+		rv = tcpc_read(port, TCPC_REG_CC_STATUS, &status);
+		if (status & TCPC_REG_CC_STATUS_CONNECT_RESULT_MASK) {
+			/* Current pull: Rd */
+			opposite_pull = TYPEC_CC_RP;
+		} else {
+			/* Current pull: Rp */
+			opposite_pull = TYPEC_CC_RD;
+		}
+
+		/* Set auto drp toggle, starting with the opposite pull */
+		rv |= tcpci_set_role_ctrl(port, 1, TYPEC_RP_USB, opposite_pull);
+
+		/* Set Look4Connection command */
+		rv |= tcpc_write(port, TCPC_REG_COMMAND,
+				 TCPC_REG_COMMAND_LOOK4CONNECTION);
+
+		return rv;
+	} else {
+		return tcpci_tcpc_drp_toggle(port);
+	}
+}
+#endif
+
+
+
 static int ps8xxx_get_chip_info(int port, int live,
 			struct ec_response_pd_chip_info_v1 **chip_info)
 {
@@ -316,7 +356,7 @@ const struct tcpm_drv ps8xxx_tcpm_drv = {
 	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
 #endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= &tcpci_tcpc_drp_toggle,
+	.drp_toggle		= &ps8xxx_tcpc_drp_toggle,
 #endif
 #ifdef CONFIG_USBC_PPC
 	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
