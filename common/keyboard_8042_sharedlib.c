@@ -87,7 +87,7 @@ char * const keycap_long_label[KLLI_MAX & KEYCAP_LONG_LABEL_INDEX_BITMASK] = {
 SHAREDLIB(const
 #endif
 char keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
-	{KLLI_UNKNO, KLLI_UNKNO, KLLI_L_CTR, KLLI_UNKNO,
+	{KLLI_UNKNO, KLLI_UNKNO, KLLI_L_CTR, KLLI_SEARC,
 			KLLI_R_CTR, KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO},
 	{KLLI_SEARC, KLLI_ESC,   KLLI_TAB,   '~',
 			'a',        'z',        '1',        'q'},
