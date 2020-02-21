@@ -259,27 +259,28 @@ static int ps8xxx_tcpm_init(int port)
 	return ps8xxx_dci_disable(port);
 }
 
-static int ps8xxx_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
+#ifdef CONFIG_USB_PD_TCPM_PS8751
+/*
+ * TODO(twawrzynczak): Remove this workaround when no
+ * longer needed.  See: https://issuetracker.google.com/147684491
+ *
+ * This is a workaround for what appears to be a bug in PS8751 firmware
+ * version 0x44.  (Does the bug exist in other PS8751 firmware versions?
+ * Should this workaround be limited to only 0x44?)
+ *
+ * With nothing connected to the port, sometimes after DRP is disabled,
+ * the CC_STATUS register reads the CC state incorrectly (reading it
+ * as though a port partner is detected), which ends up confusing
+ * our TCPM.  The workaround for this seems to be a short sleep and
+ * then re-reading the CC state.  In other words, the issue shows up
+ * as a short glitch or transient, which a dummy read and then a short
+ * delay will allow the transient to disappear.
+ */
+static int ps8751_get_gcc(int port, enum tcpc_cc_voltage_status *cc1,
 			 enum tcpc_cc_voltage_status *cc2)
 {
 	int rv;
 	int status;
-
-	/*
-	 * TODO(twawrzynczak): remove this workaround when no
-	 * longer needed, see b/147684491.
-	 *
-	 * This is a workaround for what appears to be a bug in PS8751 firmware
-	 * version 0x44.
-	 *
-	 * With nothing connected to the port, sometimes after DRP is disabled,
-	 * the CC_STATUS register reads the CC state incorrectly (reading it
-	 * as though a port partner is detected), which ends up confusing
-	 * our TCPM.  The workaround for this seems to be a short sleep and
-	 * then re-reading the CC state.  In other words, the issue shows up
-	 * as a short glitch or transient, which a dummy read and then a short
-	 * delay will allow the transient to disappear.
-	 */
 	rv = tcpc_read(port, TCPC_REG_CC_STATUS, &status);
 	if (rv)
 		return rv;
@@ -289,11 +290,16 @@ static int ps8xxx_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 
 	return tcpci_tcpm_get_cc(port, cc1, cc2);
 }
+#endif
 
 const struct tcpm_drv ps8xxx_tcpm_drv = {
 	.init			= &ps8xxx_tcpm_init,
 	.release		= &ps8xxx_tcpm_release,
-	.get_cc			= &ps8xxx_get_cc,
+#ifdef CONFIG_USB_PD_TCPM_PS8751
+	.get_cc			= &ps8751_get_gcc,
+#else
+	.get_cc			= &tcpci_tcpm_get_cc,
+#endif
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,
 #endif
