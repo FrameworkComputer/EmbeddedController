@@ -51,6 +51,13 @@
 #define PSTATE_VALID_SERIALNO   BIT(1)
 #define PSTATE_VALID_MAC_ADDR   BIT(2)
 
+/*
+ * Error correction code operates on blocks equal to CONFIG_FLASH_WRITE_SIZE
+ * bytes so the persist_state must be a multiple of that length. To ensure this
+ * occurs, the aligned attribute has been set. Alignment has a side effect
+ * in that pointer arithmetic can't break alignment so it adds padding to the
+ * size of the structure to ensure that it is also a multiple of the alignment.
+ */
 struct persist_state {
 	uint8_t version;            /* Version of this struct */
 	uint8_t flags;              /* Lock flags (PERSIST_FLAG_*) */
@@ -62,15 +69,10 @@ struct persist_state {
 #ifdef CONFIG_MAC_ADDR_LEN
 	uint8_t mac_addr[CONFIG_MAC_ADDR_LEN];
 #endif /* CONFIG_MAC_ADDR_LEN */
-#if !defined(CONFIG_SERIALNO_LEN) && !defined(CONFIG_MAC_ADDR_LEN)
-	uint8_t padding[4 % CONFIG_FLASH_WRITE_SIZE];
-#endif
-};
+} __aligned(CONFIG_FLASH_WRITE_SIZE);
 
 /* written with flash_physical_write, need to respect alignment constraints */
-#ifndef CHIP_FAMILY_STM32L /* STM32L1xx is somewhat lying to us */
 BUILD_ASSERT(sizeof(struct persist_state) % CONFIG_FLASH_WRITE_SIZE == 0);
-#endif
 
 BUILD_ASSERT(sizeof(struct persist_state) <= CONFIG_FW_PSTATE_SIZE);
 
