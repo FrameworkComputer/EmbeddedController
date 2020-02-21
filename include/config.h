@@ -2367,6 +2367,17 @@
 /* Compile code for 8042 keyboard protocol */
 #undef CONFIG_KEYBOARD_PROTOCOL_8042
 
+/*
+ * Enable code for chromeos vivaldi keyboard (standard for new chromeos devices)
+ * This config only takes effect if CONFIG_KEYBOARD_PROTOCOL_8042 is selected. A
+ * chromeos device is Vivaldi compatible if the keyboard matrix complies with:
+ * go/vivaldi-matrix
+ * Vivaldi code enables:
+ *  - A response to EC_CMD_GET_KEYBD_CONFIG command from coreboot
+ *  - Boards can specify their custom layout for top keys.
+ */
+#define CONFIG_KEYBOARD_VIVALDI
+
 /* Compile code for MKBP keyboard protocol */
 #undef CONFIG_KEYBOARD_PROTOCOL_MKBP
 
@@ -5282,5 +5293,14 @@
 #define CONFIG_ACCEL_CAL_NEWTON_RADIUS_THRES 0.001f
 #endif
 #endif /* CONFIG_ONLINE_CALIB */
+
+/*
+ *  Vivaldi keyboard code to be enabled only if board has selected
+ *  CONFIG_KEYBOARD_PROTOCOL_8042 and not disabled CONFIG_KEYBOARD_VIVALDI
+ *  explicitly
+ */
+#ifndef CONFIG_KEYBOARD_PROTOCOL_8042
+#undef CONFIG_KEYBOARD_VIVALDI
+#endif
 
 #endif  /* __CROS_EC_CONFIG_H */

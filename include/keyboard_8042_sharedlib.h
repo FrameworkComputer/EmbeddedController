@@ -135,9 +135,10 @@ enum scancode_values {
 
 	SCANCODE_BACK =	0xe038,			/* e06a in codeset 1 */
 	SCANCODE_REFRESH = 0xe020,		/* e067 in codeset 1 */
+	SCANCODE_FORWARD = 0xe030,		/* e069 in codeset 1 */
 	SCANCODE_FULLSCREEN = 0xe01d,		/* e011 in codeset 1 */
 	SCANCODE_OVERVIEW = 0xe024,		/* e012 in codeset 1 */
-	SCANCODE_SNIP = 0xe02d,			/* e013 in codeset 1 */
+	SCANCODE_SNAPSHOT = 0xe02d,		/* e013 in codeset 1 */
 	SCANCODE_BRIGHTNESS_DOWN = 0xe02c,	/* e014 in codeset 1 */
 	SCANCODE_BRIGHTNESS_UP = 0xe035,	/* e015 in codeset 1 */
 	SCANCODE_PRIVACY_SCRN_TOGGLE = 0xe03c,	/* e016 in codeset 1 */

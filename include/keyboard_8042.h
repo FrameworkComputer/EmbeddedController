@@ -59,4 +59,7 @@ void send_aux_data_to_host(uint8_t data);
  */
 void send_aux_data_to_device(uint8_t data);
 
+__override_proto
+const struct ec_response_keybd_config *board_vivaldi_keybd_config(void);
+
 #endif  /* __CROS_EC_KEYBOARD_8042_H */

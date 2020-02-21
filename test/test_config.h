@@ -269,6 +269,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 
 #ifdef TEST_BUTTON
 #define CONFIG_KEYBOARD_PROTOCOL_8042
+#undef CONFIG_KEYBOARD_VIVALDI
 #define CONFIG_VOLUME_BUTTONS
 #endif
 
