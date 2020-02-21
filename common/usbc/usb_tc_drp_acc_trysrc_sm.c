@@ -147,7 +147,6 @@ enum usb_tc_state {
 	TC_CC_OPEN,
 	TC_CC_RD,
 	TC_CC_RP,
-	TC_UNATTACHED,
 };
 /* Forward declare the full list of states. This is indexed by usb_tc_state */
 static const struct usb_state tc_states[];
@@ -1618,8 +1617,6 @@ static void tc_error_recovery_run(const int port)
 
 /**
  * Unattached.SNK
- *
- * Super State is Unattached state
  */
 static void tc_unattached_snk_entry(const int port)
 {
@@ -2302,8 +2299,6 @@ static void tc_dbg_acc_snk_exit(const int port)
 
 /**
  * Unattached.SRC
- *
- * Super State is Unattached state
  */
 static void tc_unattached_src_entry(const int port)
 {
@@ -3271,14 +3266,9 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pd_chipset_shutdown, HOOK_PRIO_DEFAULT);
 /*
  * Type-C State Hierarchy (Sub-States are listed inside the boxes)
  *
- * |TC_UNATTACHED ---------|
- * |                       |
- * |    TC_UNATTACHED_SNK  |
- * |    TC_UNATTACHED_SRC  |
- * |-----------------------|
- *
  * |TC_CC_RD --------------|	|TC_CC_RP ------------------------|
  * |			   |	|				  |
+ * |	TC_UNATTACHED_SNK  |	|	TC_UNATTACHED_SRC         |
  * |	TC_ATTACH_WAIT_SNK |	|	TC_ATTACH_WAIT_SRC        |
  * |	TC_TRY_WAIT_SNK    |	|	TC_TRY_SRC                |
  * |	TC_DBG_ACC_SNK     |	|	TC_UNORIENTED_DBG_ACC_SRC |
