@@ -46,7 +46,7 @@
 #undef CONFIG_USB_PD_DECODE_SOP
 #undef CONFIG_USB_PID
 #undef CONFIG_USB_POWER_DELIVERY
-#undef CONFIG_USB_SM_FRAMEWORK
+#undef CONFIG_USB_PD_TCPMV2
 #undef CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
 
 /* System unlocked in early development */

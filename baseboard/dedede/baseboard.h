@@ -168,7 +168,7 @@
 #define CONFIG_USB_PD_DECODE_SOP
 #define CONFIG_USB_PID 0x5042
 #define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USB_SM_FRAMEWORK
+#define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
 
 /* Define typical operating power and max power. */

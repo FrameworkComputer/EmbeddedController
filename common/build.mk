@@ -144,15 +144,16 @@ common-$(CONFIG_USB_CONSOLE_STREAM)+=usb_console_stream.o
 common-$(CONFIG_USB_I2C)+=usb_i2c.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
-common-$(CONFIG_USB_POWER_DELIVERY)+=usb_common.o usb_pd_host_cmd.o \
-	usb_pd_console_cmd.o
-ifeq ($(CONFIG_USB_SM_FRAMEWORK),)
+ifneq ($(CONFIG_USB_POWER_DELIVERY),)
+common-$(CONFIG_USB_POWER_DELIVERY)+=usb_common.o
+ifneq ($(CONFIG_USB_PD_TCPMV1),)
 common-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_protocol.o usb_pd_policy.o
 endif
-common-$(CONFIG_USB_PD_ALT_MODE_DFP)+=usb_pd_alt_mode_dfp.o
-ifneq ($(CONFIG_USB_POWER_DELIVERY),)
 common-$(CONFIG_USB_PD_DUAL_ROLE)+=usb_pd_dual_role.o
+common-$(CONFIG_USB_PD_HOST_CMD)+=usb_pd_host_cmd.o
+common-$(CONFIG_USB_PD_CONSOLE_CMD)+=usb_pd_console_cmd.o
 endif
+common-$(CONFIG_USB_PD_ALT_MODE_DFP)+=usb_pd_alt_mode_dfp.o
 common-$(CONFIG_USB_PD_LOGGING)+=event_log.o pd_log.o
 common-$(CONFIG_USB_PD_TCPC)+=usb_pd_tcpc.o
 common-$(CONFIG_USB_UPDATE)+=usb_update.o update_fw.o

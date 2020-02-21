@@ -148,7 +148,7 @@
 /* Enable the new USB-C PD stack */
 /* TODO: b/145756626 - re-enable once all blocking issues resolved */
 #if 0
-#define CONFIG_USB_SM_FRAMEWORK
+#define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_TYPEC_SM
 #define CONFIG_USB_PRL_SM
 #define CONFIG_USB_PE_SM
@@ -162,6 +162,7 @@
 #endif
 
 #define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_TCPMV1
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_DISCHARGE_PPC

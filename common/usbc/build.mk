@@ -7,8 +7,8 @@
 # Note that this variable includes the trailing "/"
 _usbc_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 
-ifneq ($(CONFIG_USB_SM_FRAMEWORK),)
-all-obj-$(CONFIG_USB_SM_FRAMEWORK)+=$(_usbc_dir)usb_sm.o
+ifneq ($(CONFIG_USB_PD_TCPMV2),)
+all-obj-$(CONFIG_USB_PD_TCPMV2)+=$(_usbc_dir)usb_sm.o
 all-obj-$(CONFIG_USB_TYPEC_SM)+=$(_usbc_dir)usbc_task.o
 all-obj-$(CONFIG_USB_PRL_SM)+=$(_usbc_dir)usb_prl_sm.o
 ifneq ($(CONFIG_USB_PE_SM),)

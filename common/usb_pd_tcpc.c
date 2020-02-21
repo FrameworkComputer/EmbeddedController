@@ -722,9 +722,9 @@ int pd_analyze_rx(int port, uint32_t *payload)
 	if (val == PD_SOP) {
 		phs.head |= PD_HEADER_SOP(PD_MSG_SOP);
 	} else if (val == PD_SOP_PRIME) {
-		phs.head |= PD_HEADER_SOP(PD_MSG_SOPP);
+		phs.head |= PD_HEADER_SOP(PD_MSG_SOP_PRIME);
 	} else if (val == PD_SOP_PRIME_PRIME) {
-		phs.head |= PD_HEADER_SOP(PD_MSG_SOPPP);
+		phs.head |= PD_HEADER_SOP(PD_MSG_SOP_PRIME_PRIME);
 	} else {
 		msg = "SOP*";
 		goto packet_err;
@@ -932,7 +932,7 @@ int tcpc_run(int port, int evt)
 #endif
 }
 
-#if !defined(CONFIG_USB_POWER_DELIVERY) && !defined(CONFIG_USB_SM_FRAMEWORK)
+#if !defined(CONFIG_USB_POWER_DELIVERY)
 void pd_task(void *u)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());

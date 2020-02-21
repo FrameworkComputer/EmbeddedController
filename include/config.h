@@ -899,31 +899,20 @@
 #undef CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA
 
 /*
- * Define to use Power Delivery State Machine Framework. Along with
- * CONFIG_USB_SM_FRAMEWORK, you must ensure the follow options are defined to
- * use the new statemachine for USB-C:
- *
- * CONFIG_USB_TYPEC_SM (defined by default)
- * CONFIG_USB_PRL_SM (defined by default)
- * One of CONFIG_USB_PE_* policy engine options.
- */
-#undef CONFIG_USB_SM_FRAMEWORK
-
-/*
  * Define to enable Type-C State Machine. Must be enabled
- * with CONFIG_USB_SM_FRAMEWORK
+ * with CONFIG_USB_PD_TCPMV2
  */
 #define CONFIG_USB_TYPEC_SM
 
 /*
  * Define to enable Protocol Layer State Machine. Must be enabled
- * with CONFIG_USB_SM_FRAMEWORK and CONFIG_USB_TYPEC_SM
+ * with CONFIG_USB_PD_TCPMV2 and CONFIG_USB_TYPEC_SM
  */
 #define CONFIG_USB_PRL_SM
 
 /*
  * Define to enable Policy Engine State Machine. Must be enabled
- * with CONFIG_USB_SM_FRAMEWORK and CONFIG_USB_TYPEC_SM
+ * with CONFIG_USB_SM_PD_TCPMV2 and CONFIG_USB_TYPEC_SM
  */
 #define CONFIG_USB_PE_SM
 
@@ -3728,8 +3717,39 @@
 /*****************************************************************************/
 /* USB PD config */
 
-/* Include all USB Power Delivery modules */
+/*
+ * Enables USB Power Delivery
+ *
+ * When this config option is enabled, one of the following must be enabled:
+ *	CONFIG_USB_PD_TCPMV1 - legacy power delivery state machine
+ *	CONFIG_USB_PD_TCPMV2 - current power delivery state machine
+ */
 #undef CONFIG_USB_POWER_DELIVERY
+
+/*
+ * Enables the Legacy power delivery state machine.
+ * NOTE: Should not be used for new designs.
+ */
+#undef CONFIG_USB_PD_TCPMV1
+
+/*
+ * Enables Version 2 of the Power Delivery state machine
+ *
+ * Along with CONFIG_USB_PD_TCPMV2, you must ensure the follow
+ * options are defined to use the new statemachine for USB-C:
+ *
+ *	CONFIG_USB_PD_DECODE_SOP
+ *	CONFIG_USB_TYPEC_SM (defined by default)
+ *	CONFIG_USB_PRL_SM (defined by default)
+ *	One of CONFIG_USB_PE_* policy engine options.
+ */
+#undef CONFIG_USB_PD_TCPMV2
+
+/* Enables PD Console commands */
+#define CONFIG_USB_PD_CONSOLE_CMD
+
+/* Enables PD Host commands */
+#define CONFIG_USB_PD_HOST_CMD
 
 /* Support for USB PD alternate mode */
 #undef CONFIG_USB_PD_ALT_MODE
@@ -4601,6 +4621,24 @@
 
 #if defined(CONFIG_HOST_ESPI_VW_POWER_SIGNAL) && !defined(CONFIG_HOSTCMD_ESPI)
 #error Must enable eSPI to enable virtual wires.
+#endif
+
+/******************************************************************************/
+/*
+ * If CONFIG_USB_POWER_DELIVERY is enabled, make sure either
+ * CONFIG_USB_PD_TCPMV1 or CONFIG_USB_PD_TCPMV2 is enabled but not both. Also
+ * make sure CONFIG_USB_PD_DECODE_SOP is enabled with CONFIG_USB_PD_TCPMV2
+ */
+#ifdef CONFIG_USB_POWER_DELIVERY
+#if defined(CONFIG_USB_PD_TCPMV1) && defined(CONFIG_USB_PD_TCPMV2)
+#error Only one version of the USB PD State Machine can be enabled.
+#endif
+#if !defined(CONFIG_USB_PD_TCPMV1) && !defined(CONFIG_USB_PD_TCPMV2)
+#error Please enable CONFIG_USB_PD_TCPMV1 or CONFIG_USB_PD_TCPMV2.
+#endif
+#if defined(CONFIG_USB_PD_TCPMV2) && !defined(CONFIG_USB_PD_DECODE_SOP)
+#error CONFIG_USB_PD_DECODE_SOP must be enabled with the TCPMV2 PD state machine
+#endif
 #endif
 
 /******************************************************************************/

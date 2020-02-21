@@ -38,6 +38,8 @@
 #define CONFIG_UART_CONSOLE 1
 
 /* Optional features */
+#undef CONFIG_USB_PD_CONSOLE_CMD
+#undef CONFIG_USB_PD_HOST_CMD
 #define CONFIG_ADC
 #undef  CONFIG_ADC_WATCHDOG
 #define CONFIG_ADC_SAMPLE_TIME STM32_ADC_SMPR_41_5_CY
@@ -61,8 +63,10 @@
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_VBUS_DETECT_NONE
 #define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_USB_SM_FRAMEWORK
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_TYPEC_CTVPD
+#define CONFIG_USB_PD_DECODE_SOP
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_INTERNAL_COMP
 #define CONFIG_VBOOT_HASH
@@ -82,6 +86,10 @@
 /* GND impedance in milliohms */
 #define VPD_GND_IMPEDANCE 33
 
+#define PD_OPERATING_POWER_MW           15000
+#define PD_MAX_POWER_MW                 45000
+#define PD_MAX_CURRENT_MA               3000
+#define PD_MAX_VOLTAGE_MV               20000
 /*
  * TODO(crosbug.com/p/50519): Remove CONFIG_SYSTEM_UNLOCKED prior to building
  * MP FW.
