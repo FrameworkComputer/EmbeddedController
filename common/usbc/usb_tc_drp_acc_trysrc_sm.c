@@ -176,7 +176,10 @@ static const char * const tc_state_names[] = {
 	[TC_CT_UNATTACHED_SNK] =  "CTUnattached.SNK",
 	[TC_CT_ATTACHED_SNK] = "CTAttached.SNK",
 #endif
-
+	/* Super States */
+	[TC_CC_OPEN] = "SS:CC_OPEN",
+	[TC_CC_RD] = "SS:CC_RD",
+	[TC_CC_RP] = "SS:CC_RP",
 };
 #endif
 
@@ -3395,5 +3398,6 @@ const struct test_sm_data test_tc_sm_data[] = {
 		.names_size = ARRAY_SIZE(tc_state_names),
 	},
 };
+BUILD_ASSERT(ARRAY_SIZE(tc_states) == ARRAY_SIZE(tc_state_names));
 const int test_tc_sm_data_size = ARRAY_SIZE(test_tc_sm_data);
 #endif

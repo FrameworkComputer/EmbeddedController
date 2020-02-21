@@ -272,6 +272,8 @@ static const char * const pe_state_names[] = {
 	[PE_WAIT_FOR_ERROR_RECOVERY] = "PE_Wait_For_Error_Recovery",
 	[PE_BIST] = "PE_Bist",
 	[PE_DR_SNK_GET_SINK_CAP] = "PE_DR_SNK_Get_Sink_Cap",
+	/* Super States */
+	[PE_PRS_FRS_SHARED] = "SS:PE_PRS_FRS_SHARED",
 };
 #endif
 
@@ -4712,6 +4714,7 @@ const struct test_sm_data test_pe_sm_data[] = {
 		.names_size = ARRAY_SIZE(pe_state_names),
 	},
 };
+BUILD_ASSERT(ARRAY_SIZE(pe_states) == ARRAY_SIZE(pe_state_names));
 const int test_pe_sm_data_size = ARRAY_SIZE(test_pe_sm_data);
 
 void pe_set_flag(int port, int flag)
