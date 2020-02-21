@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Copyright 2015 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -8,9 +8,11 @@ Script to ensure that all configuration options for the Chrome EC are defined
 in config.h.
 """
 from __future__ import print_function
+import enum
 import os
 import re
 import subprocess
+import sys
 
 
 class Line(object):
@@ -171,7 +173,7 @@ def print_missing_config_options(hunks, config_options):
           # not.  For deletions, we will need to verify if this CONFIG_* option
           # is no longer being used in the entire repo.
 
-          if l.line_type is '-':
+          if l.line_type == '-':
             if option not in options_in_use and option in config_options:
               deprecated_options.add(option)
           else:
@@ -276,51 +278,59 @@ def get_hunks():
   line_re = re.compile(r'^([+| |-])(.*)')
 
   # Get the diff output.
-  cmd = 'git diff --cached -GCONFIG_* --no-prefix --no-ext-diff HEAD~1'
-  diff = subprocess.check_output(cmd.split()).split('\n')
+  proc = subprocess.run(['git', 'diff', '--cached', '-GCONFIG_*', '--no-prefix',
+                         '--no-ext-diff', 'HEAD~1'],
+                        stdout=subprocess.PIPE,
+                        encoding='utf-8',
+                        check=True)
+  diff = proc.stdout.splitlines()
+  if not diff:
+    return []
   line = diff[0]
-  current_state = 'new_file'
+
+  state = enum.Enum('state', 'NEW_FILE FILENAME_SEARCH HUNK LINES')
+  current_state = state.NEW_FILE
 
   while True:
     # Search for the beginning of a new file.
-    if current_state is 'new_file':
+    if current_state is state.NEW_FILE:
       match = new_file_re.search(line)
       if match:
-        current_state = 'filename_search'
+        current_state = state.FILENAME_SEARCH
 
     # Search the diff output for a file name.
-    elif current_state is 'filename_search':
+    elif current_state is state.FILENAME_SEARCH:
       # Search for a file name.
       match = filename_re.search(line)
       if match:
         filename = match.groups(1)[0]
         if filename in WHITELIST:
           # Skip the file if it's whitelisted.
-          current_state = 'new_file'
+          current_state = state.NEW_FILE
         else:
-          current_state = 'hunk'
+          current_state = state.HUNK
 
     # Search for a hunk.  Each hunk starts with a line describing the line
     # numbers in the file.
-    elif current_state is 'hunk':
+    elif current_state is state.HUNK:
       hunk_lines = []
       match = hunk_line_num_re.search(line)
       if match:
         # Extract the line number offset.
         line_num = int(match.groups(1)[0])
-        current_state = 'lines'
+        current_state = state.LINES
 
     # Start looking for changes.
-    elif current_state is 'lines':
+    elif current_state is state.LINES:
       # Check if state needs updating.
       new_hunk = hunk_line_num_re.search(line)
       new_file = new_file_re.search(line)
       if new_hunk:
-        current_state = 'hunk'
+        current_state = state.HUNK
         hunks.append(Hunk(filename, hunk_lines))
         continue
       elif new_file:
-        current_state = 'new_file'
+        current_state = state.NEW_FILE
         hunks.append(Hunk(filename, hunk_lines))
         continue
 
@@ -328,10 +338,10 @@ def get_hunks():
       if match:
         line_type = match.groups(1)[0]
         # We only care about modifications.
-        if line_type is not ' ':
+        if line_type != ' ':
           hunk_lines.append(Line(line_num, match.groups(2)[1], line_type))
         # Deletions don't count towards the line numbers.
-        if line_type is not '-':
+        if line_type != '-':
           line_num += 1
 
     # Advance to the next line
@@ -360,7 +370,7 @@ def main():
 
   if missing_opts:
     print('\nIt may also be possible that you have a typo.')
-    os.sys.exit(1)
+    sys.exit(1)
 
 if __name__ == '__main__':
   main()
