@@ -27,6 +27,13 @@
 #define CONFIG_PWM_KBLIGHT
 #define CONFIG_KEYBOARD_FACTORY_TEST
 
+/*
+ * Jinlon's battery takes several seconds to come back out of its disconnect
+ * state (~4 seconds, but give it 6 for margin).
+ */
+#undef  CONFIG_POWER_BUTTON_INIT_TIMEOUT
+#define CONFIG_POWER_BUTTON_INIT_TIMEOUT 6
+
 /* Sensors */
 /* BMI160 Base accel/gyro */
 #define CONFIG_ACCEL_INTERRUPTS
