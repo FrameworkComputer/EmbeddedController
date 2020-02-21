@@ -59,7 +59,8 @@ GPIO(EC_SUB_IO_2,  PIN(3, 4), GPIO_OUT_LOW)
 
 /* Misc Enables */
 GPIO(EN_VCCIO_EXT,   PIN(6, 1), GPIO_OUT_LOW)
-GPIO(EN_VCCST,	     PIN(A, 7), GPIO_OUT_LOW)
+/* TODO(b:149775160) - Modify if needed if we ever use this signal. */
+GPIO(EN_VCCST,	     PIN(A, 7), GPIO_INPUT)
 GPIO(EN_PP3300_PEN,  PIN(6, 3), GPIO_OUT_LOW)
 GPIO(EN_PP3300_A,    PIN(0, 3), GPIO_OUT_LOW)
 GPIO(EN_PP5000_U,    PIN(7, 3), GPIO_OUT_LOW)
