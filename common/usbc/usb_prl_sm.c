@@ -135,7 +135,6 @@ static const struct usb_state prl_hr_states[];
 static const struct usb_state rch_states[];
 static const struct usb_state tch_states[];
 
-
 /* Chunked Rx State Machine Object */
 static struct rx_chunked {
 	/* state machine context */
@@ -1749,24 +1748,81 @@ static const struct usb_state tch_states[] = {
 };
 
 #ifdef TEST_BUILD
+
+static const char * const prl_tx_state_names[] = {
+	[PRL_TX_PHY_LAYER_RESET] = "PRL_TX_PHY_LAYER_RESET",
+	[PRL_TX_WAIT_FOR_MESSAGE_REQUEST] = "PRL_TX_WAIT_FOR_MESSAGE_REQUEST",
+	[PRL_TX_LAYER_RESET_FOR_TRANSMIT] = "PRL_TX_LAYER_RESET_FOR_TRANSMIT",
+	[PRL_TX_WAIT_FOR_PHY_RESPONSE] = "PRL_TX_WAIT_FOR_PHY_RESPONSE",
+	[PRL_TX_SRC_SOURCE_TX] = "PRL_TX_SRC_SOURCE_TX",
+	[PRL_TX_SNK_START_AMS] = "PRL_TX_SNK_START_AMS",
+	[PRL_TX_SRC_PENDING] = "PRL_TX_SRC_PENDING",
+	[PRL_TX_SNK_PENDING] = "PRL_TX_SNK_PENDING",
+	[PRL_TX_DISCARD_MESSAGE] = "PRL_TX_DISCARD_MESSAGE",
+};
+
+static const char * const prl_hr_state_names[] = {
+	[PRL_HR_WAIT_FOR_REQUEST] = "PRL_HR_WAIT_FOR_REQUEST",
+	[PRL_HR_RESET_LAYER] = "PRL_HR_RESET_LAYER",
+	[PRL_HR_WAIT_FOR_PHY_HARD_RESET_COMPLETE]
+		= "PRL_HR_WAIT_FOR_PHY_HARD_RESET_COMPLETE",
+	[PRL_HR_WAIT_FOR_PE_HARD_RESET_COMPLETE]
+		= "PRL_HR_WAIT_FOR_PE_HARD_RESET_COMPLETE",
+};
+
+static const char * const rch_state_names[] = {
+	[RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER]
+		= "RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER",
+	[RCH_PASS_UP_MESSAGE] = "RCH_PASS_UP_MESSAGE",
+	[RCH_PROCESSING_EXTENDED_MESSAGE] = "RCH_PROCESSING_EXTENDED_MESSAGE",
+	[RCH_REQUESTING_CHUNK] = "RCH_REQUESTING_CHUNK",
+	[RCH_WAITING_CHUNK] = "RCH_WAITING_CHUNK",
+	[RCH_REPORT_ERROR] = "RCH_REPORT_ERROR",
+};
+
+static const char * const tch_state_names[] = {
+	[TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE]
+		= "TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE",
+	[TCH_WAIT_FOR_TRANSMISSION_COMPLETE]
+		= "TCH_WAIT_FOR_TRANSMISSION_COMPLETE",
+	[TCH_CONSTRUCT_CHUNKED_MESSAGE] = "TCH_CONSTRUCT_CHUNKED_MESSAGE",
+	[TCH_SENDING_CHUNKED_MESSAGE] = "TCH_SENDING_CHUNKED_MESSAGE",
+	[TCH_WAIT_CHUNK_REQUEST] = "TCH_WAIT_CHUNK_REQUEST",
+	[TCH_MESSAGE_RECEIVED] = "TCH_MESSAGE_RECEIVED",
+	[TCH_MESSAGE_SENT] = "TCH_MESSAGE_SENT",
+	[TCH_REPORT_ERROR] = "TCH_REPORT_ERROR",
+};
+
 const struct test_sm_data test_prl_sm_data[] = {
 	{
 		.base = prl_tx_states,
 		.size = ARRAY_SIZE(prl_tx_states),
+		.names = prl_tx_state_names,
+		.names_size = ARRAY_SIZE(prl_tx_state_names),
 	},
 	{
 		.base = prl_hr_states,
 		.size = ARRAY_SIZE(prl_hr_states),
+		.names = prl_hr_state_names,
+		.names_size = ARRAY_SIZE(prl_hr_state_names),
 	},
 	{
 		.base = rch_states,
 		.size = ARRAY_SIZE(rch_states),
+		.names = rch_state_names,
+		.names_size = ARRAY_SIZE(rch_state_names),
 	},
 	{
 		.base = tch_states,
 		.size = ARRAY_SIZE(tch_states),
+		.names = tch_state_names,
+		.names_size = ARRAY_SIZE(tch_state_names),
 	},
 };
+BUILD_ASSERT(ARRAY_SIZE(prl_tx_states) == ARRAY_SIZE(prl_tx_state_names));
+BUILD_ASSERT(ARRAY_SIZE(prl_hr_states) == ARRAY_SIZE(prl_hr_state_names));
+BUILD_ASSERT(ARRAY_SIZE(rch_states) == ARRAY_SIZE(rch_state_names));
+BUILD_ASSERT(ARRAY_SIZE(tch_states) == ARRAY_SIZE(tch_state_names));
 const int test_prl_sm_data_size = ARRAY_SIZE(test_prl_sm_data);
 #endif
 
