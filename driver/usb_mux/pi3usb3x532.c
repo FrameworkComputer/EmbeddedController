@@ -11,7 +11,8 @@
 #include "usb_mux.h"
 #include "util.h"
 
-static int pi3usb3x532_read(int port, uint8_t reg, uint8_t *val)
+static int pi3usb3x532_read(const struct usb_mux *me,
+			    uint8_t reg, uint8_t *val)
 {
 	int read, res;
 
@@ -20,7 +21,7 @@ static int pi3usb3x532_read(int port, uint8_t reg, uint8_t *val)
 	 * Second byte read will be vendor ID.
 	 * Third byte read will be selection control.
 	 */
-	res = i2c_read16(MUX_PORT(port), MUX_ADDR(port), 0, &read);
+	res = i2c_read16(me->i2c_port, me->i2c_addr_flags, 0, &read);
 	if (res)
 		return res;
 
@@ -32,32 +33,33 @@ static int pi3usb3x532_read(int port, uint8_t reg, uint8_t *val)
 	return EC_SUCCESS;
 }
 
-static int pi3usb3x532_write(int port, uint8_t reg, uint8_t val)
+static int pi3usb3x532_write(const struct usb_mux *me,
+			     uint8_t reg, uint8_t val)
 {
 	if (reg != PI3USB3X532_REG_CONTROL)
 		return EC_ERROR_UNKNOWN;
 
-	return i2c_write8(MUX_PORT(port), MUX_ADDR(port), 0, val);
+	return i2c_write8(me->i2c_port, me->i2c_addr_flags, 0, val);
 }
 
-static int pi3usb3x532_reset(int port)
+static int pi3usb3x532_reset(const struct usb_mux *me)
 {
 	return pi3usb3x532_write(
-		port,
+		me,
 		PI3USB3X532_REG_CONTROL,
 		(PI3USB3X532_MODE_POWERDOWN & PI3USB3X532_CTRL_MASK) |
 		PI3USB3X532_CTRL_RSVD);
 }
 
-static int pi3usb3x532_init(int port)
+static int pi3usb3x532_init(const struct usb_mux *me)
 {
 	uint8_t val;
 	int res;
 
-	res = pi3usb3x532_reset(port);
+	res = pi3usb3x532_reset(me);
 	if (res)
 		return res;
-	res = pi3usb3x532_read(port, PI3USB3X532_REG_VENDOR, &val);
+	res = pi3usb3x532_read(me, PI3USB3X532_REG_VENDOR, &val);
 	if (res)
 		return res;
 	if (val != PI3USB3X532_VENDOR_ID)
@@ -67,7 +69,8 @@ static int pi3usb3x532_init(int port)
 }
 
 /* Writes control register to set switch mode */
-static int pi3usb3x532_set_mux(int port, mux_state_t mux_state)
+static int pi3usb3x532_set_mux(const struct usb_mux *me,
+			       mux_state_t mux_state)
 {
 	uint8_t reg = 0;
 
@@ -78,18 +81,19 @@ static int pi3usb3x532_set_mux(int port, mux_state_t mux_state)
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		reg |= PI3USB3X532_BIT_SWAP;
 
-	return pi3usb3x532_write(port, PI3USB3X532_REG_CONTROL,
+	return pi3usb3x532_write(me, PI3USB3X532_REG_CONTROL,
 				 reg | PI3USB3X532_CTRL_RSVD);
 }
 
 /* Reads control register and updates mux_state accordingly */
-static int pi3usb3x532_get_mux(int port, mux_state_t *mux_state)
+static int pi3usb3x532_get_mux(const struct usb_mux *me,
+			       mux_state_t *mux_state)
 {
 	uint8_t reg = 0;
 	uint8_t res;
 
 	*mux_state = 0;
-	res = pi3usb3x532_read(port, PI3USB3X532_REG_CONTROL, &reg);
+	res = pi3usb3x532_read(me, PI3USB3X532_REG_CONTROL, &reg);
 	if (res)
 		return res;
 

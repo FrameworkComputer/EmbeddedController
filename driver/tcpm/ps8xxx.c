@@ -17,6 +17,7 @@
 #include "tcpci.h"
 #include "tcpm.h"
 #include "timer.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 
 #if !defined(CONFIG_USB_PD_TCPM_PS8751) && \
@@ -40,40 +41,42 @@
  */
 static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-static int dp_set_hpd(int port, int enable)
+static int dp_set_hpd(const struct usb_mux *me, int enable)
 {
 	int reg;
 	int rv;
 
-	rv = mux_read(port, MUX_IN_HPD_ASSERTION_REG, &reg);
+	rv = mux_read(me, MUX_IN_HPD_ASSERTION_REG, &reg);
 	if (rv)
 		return rv;
 	if (enable)
 		reg |= IN_HPD;
 	else
 		reg &= ~IN_HPD;
-	return mux_write(port, MUX_IN_HPD_ASSERTION_REG, reg);
+	return mux_write(me, MUX_IN_HPD_ASSERTION_REG, reg);
 }
 
-static int dp_set_irq(int port, int enable)
+static int dp_set_irq(const struct usb_mux *me, int enable)
 {
-
 	int reg;
 	int rv;
 
-	rv = mux_read(port, MUX_IN_HPD_ASSERTION_REG, &reg);
+	rv = mux_read(me, MUX_IN_HPD_ASSERTION_REG, &reg);
 	if (rv)
 		return rv;
 	if (enable)
 		reg |= HPD_IRQ;
 	else
 		reg &= ~HPD_IRQ;
-	return mux_write(port, MUX_IN_HPD_ASSERTION_REG, reg);
+	return mux_write(me, MUX_IN_HPD_ASSERTION_REG, reg);
 }
 
-void ps8xxx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
+void ps8xxx_tcpc_update_hpd_status(const struct usb_mux *me,
+				   int hpd_lvl, int hpd_irq)
 {
-	dp_set_hpd(port, hpd_lvl);
+	int port = me->usb_port;
+
+	dp_set_hpd(me, hpd_lvl);
 
 	if (hpd_irq) {
 		uint64_t now = get_time().val;
@@ -81,9 +84,9 @@ void ps8xxx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
 		if (now < hpd_deadline[port])
 			usleep(hpd_deadline[port] - now);
 
-		dp_set_irq(port, 0);
+		dp_set_irq(me, 0);
 		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
-		dp_set_irq(port, hpd_irq);
+		dp_set_irq(me, hpd_irq);
 	}
 	/* enforce 2-ms delay between HPD pulses */
 	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
@@ -380,26 +383,26 @@ struct i2c_stress_test_dev ps8xxx_i2c_stress_test_dev = {
 };
 #endif /* CONFIG_CMD_I2C_STRESS_TEST_TCPC */
 
-static int ps8xxx_mux_init(int port)
+static int ps8xxx_mux_init(const struct usb_mux *me)
 {
-	tcpci_tcpm_mux_init(port);
+	tcpci_tcpm_mux_init(me);
 
 	/* If this MUX is also the TCPC, then skip init */
-	if (!(usb_muxes[port].flags & USB_MUX_FLAG_NOT_TCPC))
+	if (!(me->flags & USB_MUX_FLAG_NOT_TCPC))
 		return EC_SUCCESS;
 
 	/* We always want to be a sink when this device is only being used as a mux
 	 * to support external peripherals better.
 	 */
-	return mux_write(port, TCPC_REG_ROLE_CTRL,
+	return mux_write(me, TCPC_REG_ROLE_CTRL,
 		TCPC_REG_ROLE_CTRL_SET(0, 1, TYPEC_CC_RD, TYPEC_CC_RD));
 }
 
-static int ps8xxx_mux_enter_low_power_mode(int port)
+static int ps8xxx_mux_enter_low_power_mode(const struct usb_mux *me)
 {
-	mux_write(port, TCPC_REG_ROLE_CTRL,
+	mux_write(me, TCPC_REG_ROLE_CTRL,
 		TCPC_REG_ROLE_CTRL_SET(0, 0, TYPEC_CC_RP, TYPEC_CC_RP));
-	return tcpci_tcpm_mux_enter_low_power(port);
+	return tcpci_tcpm_mux_enter_low_power(me);
 }
 
 /* This is meant for mux-only applications */

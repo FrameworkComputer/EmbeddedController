@@ -14,14 +14,14 @@
 
 #define MUX_STATE_DP_USB_MASK (USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED)
 
-static int it5205_read(int port, uint8_t reg, int *val)
+static int it5205_read(const struct usb_mux *me, uint8_t reg, int *val)
 {
-	return i2c_read8(I2C_PORT_USB_MUX, MUX_ADDR(port), reg, val);
+	return i2c_read8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
 
-static int it5205_write(int port, uint8_t reg, uint8_t val)
+static int it5205_write(const struct usb_mux *me, uint8_t reg, uint8_t val)
 {
-	return i2c_write8(I2C_PORT_USB_MUX, MUX_ADDR(port), reg, val);
+	return i2c_write8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
 
 struct mux_chip_id_t {
@@ -36,17 +36,17 @@ static const struct mux_chip_id_t mux_chip_id_verify[] = {
 	{ '5', IT5205_REG_CHIP_ID0},
 };
 
-static int it5205_init(int port)
+static int it5205_init(const struct usb_mux *me)
 {
 	int i, val, ret;
 
 	/* bit[0]: mux power on, bit[7-1]: reserved. */
-	ret = it5205_write(port, IT5205_REG_MUXPDR, 0);
+	ret = it5205_write(me, IT5205_REG_MUXPDR, 0);
 	if (ret)
 		return ret;
 	/*  Verify chip ID registers. */
 	for (i = 0; i < ARRAY_SIZE(mux_chip_id_verify); i++) {
-		ret = it5205_read(port, mux_chip_id_verify[i].reg, &val);
+		ret = it5205_read(me, mux_chip_id_verify[i].reg, &val);
 		if (ret)
 			return ret;
 
@@ -58,7 +58,7 @@ static int it5205_init(int port)
 }
 
 /* Writes control register to set switch mode */
-static int it5205_set_mux(int port, mux_state_t mux_state)
+static int it5205_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 {
 	uint8_t reg;
 
@@ -80,15 +80,15 @@ static int it5205_set_mux(int port, mux_state_t mux_state)
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		reg |= IT5205_POLARITY_INVERTED;
 
-	return it5205_write(port, IT5205_REG_MUXCR, reg);
+	return it5205_write(me, IT5205_REG_MUXCR, reg);
 }
 
 /* Reads control register and updates mux_state accordingly */
-static int it5205_get_mux(int port, mux_state_t *mux_state)
+static int it5205_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 {
 	int reg, ret;
 
-	ret = it5205_read(port, IT5205_REG_MUXCR, &reg);
+	ret = it5205_read(me, IT5205_REG_MUXCR, &reg);
 	if (ret)
 		return ret;
 
@@ -113,18 +113,18 @@ static int it5205_get_mux(int port, mux_state_t *mux_state)
 	return EC_SUCCESS;
 }
 
-static int it5205_enter_low_power_mode(int port)
+static int it5205_enter_low_power_mode(const struct usb_mux *me)
 {
 	int rv;
 
 	/* Turn off all switches */
-	rv = it5205_write(port, IT5205_REG_MUXCR, 0);
+	rv = it5205_write(me, IT5205_REG_MUXCR, 0);
 
 	if (rv)
 		return rv;
 
 	/* Power down mux */
-	return it5205_write(port, IT5205_REG_MUXPDR, IT5205_MUX_POWER_DOWN);
+	return it5205_write(me, IT5205_REG_MUXPDR, IT5205_MUX_POWER_DOWN);
 }
 
 const struct usb_mux_driver it5205_usb_mux_driver = {

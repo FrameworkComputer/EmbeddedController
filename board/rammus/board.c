@@ -178,12 +178,14 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_PS8751] = {
+		.usb_port = USB_PD_PORT_PS8751,
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
 	[USB_PD_PORT_ANX7447] = {
+		.usb_port = USB_PD_PORT_ANX7447,
 		.driver = &anx7447_usb_mux_driver,
 		.hpd_update = &anx7447_tcpc_update_hpd_status,
 	}
@@ -242,8 +244,6 @@ static void ps8751_i2c_remap(void)
 
 void board_tcpc_init(void)
 {
-	int port;
-
 	ps8751_i2c_remap();
 
 	/* Only reset TCPC if not sysjump */
@@ -259,10 +259,8 @@ void board_tcpc_init(void)
 	 * Initialize HPD to low; after sysjump SOC needs to see
 	 * HPD pulse to enable video path
 	 */
-	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
-		const struct usb_mux *mux = &usb_muxes[port];
-		mux->hpd_update(port, 0, 0);
-	}
+	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
+		usb_mux_hpd_update(port, 0, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 

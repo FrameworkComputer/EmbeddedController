@@ -129,8 +129,6 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 #define PORT_TO_HPD(port) ((port) ? GPIO_USB_C1_DP_HPD : GPIO_USB_C0_DP_HPD)
 __override void svdm_dp_post_config(int port)
 {
-	const struct usb_mux * const mux = &usb_muxes[port];
-
 	/* Connect the SBU and USB lines to the connector. */
 	ppc_set_sbu(port, 1);
 	usb_mux_set(port, svdm_dp_mux_mode(port), USB_SWITCH_CONNECT,
@@ -144,7 +142,7 @@ __override void svdm_dp_post_config(int port)
 
 	/* set the minimum time delay (2ms) for the next HPD IRQ */
 	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
-	mux->hpd_update(port, 1, 0);
+	usb_mux_hpd_update(port, 1, 0);
 }
 
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */

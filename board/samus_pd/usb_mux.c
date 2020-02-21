@@ -40,14 +40,14 @@ static const struct usb_port_mux mux_gpios[] = {
 BUILD_ASSERT(ARRAY_SIZE(mux_gpios) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
 
-static int board_init_usb_mux(int port)
+static int board_init_usb_mux(const struct usb_mux *me)
 {
 	return EC_SUCCESS;
 }
 
-static int board_set_usb_mux(int port, mux_state_t mux_state)
+static int board_set_usb_mux(const struct usb_mux *me, mux_state_t mux_state)
 {
-	const struct usb_port_mux *usb_mux = mux_gpios + port;
+	const struct usb_port_mux *usb_mux = mux_gpios + me->usb_port;
 	int polarity = mux_state & USB_PD_MUX_POLARITY_INVERTED;
 
 	/* reset everything */
@@ -80,9 +80,9 @@ static int board_set_usb_mux(int port, mux_state_t mux_state)
 	return EC_SUCCESS;
 }
 
-static int board_get_usb_mux(int port, mux_state_t *mux_state)
+static int board_get_usb_mux(const struct usb_mux *me, mux_state_t *mux_state)
 {
-	const struct usb_port_mux *usb_mux = mux_gpios + port;
+	const struct usb_port_mux *usb_mux = mux_gpios + me->usb_port;
 
 	*mux_state = 0;
 
@@ -105,11 +105,13 @@ const struct usb_mux_driver board_custom_usb_mux_driver = {
 	.get = board_get_usb_mux,
 };
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
+		.usb_port = 0,
 		.driver = &board_custom_usb_mux_driver,
 	},
 	{
+		.usb_port = 1,
 		.driver = &board_custom_usb_mux_driver,
 	},
 };

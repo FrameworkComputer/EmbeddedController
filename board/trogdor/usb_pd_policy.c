@@ -152,7 +152,6 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	enum gpio_signal hpd = GPIO_DP_HOT_PLUG_DET;
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
-	const struct usb_mux *mux = &usb_muxes[port];
 	int cur_lvl = gpio_get_level(hpd);
 
 	dp_status[port] = payload[1];
@@ -217,7 +216,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		pd_notify_dp_alt_mode_entry();
 
 	/* Configure TCPC for the HPD event, for proper muxing */
-	mux->hpd_update(port, lvl, irq);
+	usb_mux_hpd_update(port, lvl, irq);
 
 	/* Signal AP for the HPD event, through GPIO to AP */
 	if (irq & cur_lvl) {
@@ -249,8 +248,6 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 __override void svdm_exit_dp_mode(int port)
 {
-	const struct usb_mux *mux = &usb_muxes[port];
-
 	/* Disconnect the DP port selection mux. */
 	gpio_set_level(GPIO_DP_MUX_OE_L, 1);
 
@@ -258,7 +255,7 @@ __override void svdm_exit_dp_mode(int port)
 	svdm_safe_dp_mode(port);
 
 	/* Signal AP for the HPD low event */
-	mux->hpd_update(port, 0, 0);
+	usb_mux_hpd_update(port, 0, 0);
 	gpio_set_level(GPIO_DP_HOT_PLUG_DET, 0);
 }
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */

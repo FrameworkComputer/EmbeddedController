@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "usb_mux.h"
+
 /* USB Power delivery port management */
 
 #ifndef __CROS_EC_USB_PD_TCPM_ANX7447_H
@@ -127,8 +129,9 @@ void anx7447_hpd_output_en(int port);
 
 extern const struct tcpm_drv anx7447_tcpm_drv;
 extern const struct usb_mux_driver anx7447_usb_mux_driver;
-void anx7447_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq);
 void anx7447_tcpc_clear_hpd_status(int port);
+void anx7447_tcpc_update_hpd_status(const struct usb_mux *me,
+				    int hpd_lvl, int hpd_irq);
 
 /**
  * Erase OCM flash if it's not empty

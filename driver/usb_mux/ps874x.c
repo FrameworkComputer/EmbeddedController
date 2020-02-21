@@ -11,32 +11,34 @@
 #include "usb_mux.h"
 #include "util.h"
 
-static inline int ps874x_read(int port, uint8_t reg, int *val)
+static inline int ps874x_read(const struct usb_mux *me,
+			      uint8_t reg, int *val)
 {
-	return i2c_read8(I2C_PORT_USB_MUX, MUX_ADDR(port),
+	return i2c_read8(me->i2c_port, me->i2c_addr_flags,
 			 reg, val);
 }
 
-static inline int ps874x_write(int port, uint8_t reg, uint8_t val)
+static inline int ps874x_write(const struct usb_mux *me,
+			       uint8_t reg, uint8_t val)
 {
-	return i2c_write8(I2C_PORT_USB_MUX, MUX_ADDR(port),
+	return i2c_write8(me->i2c_port, me->i2c_addr_flags,
 			  reg, val);
 }
 
-static int ps874x_init(int port)
+static int ps874x_init(const struct usb_mux *me)
 {
 	int val;
 	int res;
 
 	/* Reset chip back to power-on state */
-	res = ps874x_write(port, PS874X_REG_MODE, PS874X_MODE_POWER_DOWN);
+	res = ps874x_write(me, PS874X_REG_MODE, PS874X_MODE_POWER_DOWN);
 	if (res)
 		return res;
 
 	/*
 	 * Verify revision / chip ID registers.
 	 */
-	res = ps874x_read(port, PS874X_REG_REVISION_ID1, &val);
+	res = ps874x_read(me, PS874X_REG_REVISION_ID1, &val);
 	if (res)
 		return res;
 
@@ -52,19 +54,19 @@ static int ps874x_init(int port)
 		return EC_ERROR_UNKNOWN;
 #endif
 
-	res = ps874x_read(port, PS874X_REG_REVISION_ID2, &val);
+	res = ps874x_read(me, PS874X_REG_REVISION_ID2, &val);
 	if (res)
 		return res;
 	if (val != PS874X_REVISION_ID2)
 		return EC_ERROR_UNKNOWN;
 
-	res = ps874x_read(port, PS874X_REG_CHIP_ID1, &val);
+	res = ps874x_read(me, PS874X_REG_CHIP_ID1, &val);
 	if (res)
 		return res;
 	if (val != PS874X_CHIP_ID1)
 		return EC_ERROR_UNKNOWN;
 
-	res  = ps874x_read(port, PS874X_REG_CHIP_ID2, &val);
+	res  = ps874x_read(me, PS874X_REG_CHIP_ID2, &val);
 	if (res)
 		return res;
 	if (val != PS874X_CHIP_ID2)
@@ -74,7 +76,7 @@ static int ps874x_init(int port)
 }
 
 /* Writes control register to set switch mode */
-static int ps874x_set_mux(int port, mux_state_t mux_state)
+static int ps874x_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 {
 	uint8_t reg = 0;
 
@@ -85,16 +87,16 @@ static int ps874x_set_mux(int port, mux_state_t mux_state)
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		reg |= PS874X_MODE_POLARITY_INVERTED;
 
-	return ps874x_write(port, PS874X_REG_MODE, reg);
+	return ps874x_write(me, PS874X_REG_MODE, reg);
 }
 
 /* Reads control register and updates mux_state accordingly */
-static int ps874x_get_mux(int port, mux_state_t *mux_state)
+static int ps874x_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 {
 	int reg;
 	int res;
 
-	res = ps874x_read(port, PS874X_REG_STATUS, &reg);
+	res = ps874x_read(me, PS874X_REG_STATUS, &reg);
 	if (res)
 		return res;
 
@@ -113,9 +115,10 @@ static int ps874x_get_mux(int port, mux_state_t *mux_state)
 int ps874x_tune_usb_eq(int port, uint8_t tx, uint8_t rx)
 {
 	int ret;
+	const struct usb_mux *me = &usb_muxes[port];
 
-	ret = ps874x_write(port, PS874X_REG_USB_EQ_TX, tx);
-	ret |= ps874x_write(port, PS874X_REG_USB_EQ_RX, rx);
+	ret = ps874x_write(me, PS874X_REG_USB_EQ_TX, tx);
+	ret |= ps874x_write(me, PS874X_REG_USB_EQ_RX, rx);
 
 	return ret;
 }

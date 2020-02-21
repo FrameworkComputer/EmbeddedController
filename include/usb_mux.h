@@ -9,9 +9,14 @@
 #define __CROS_EC_USB_MUX_H
 
 #include "ec_commands.h"
+#include "i2c.h"
 #include "tcpm.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
+
+/* Flags used for usb_mux.flags */
+#define USB_MUX_FLAG_NOT_TCPC BIT(0) /* TCPC/MUX device used only as MUX */
+#define USB_MUX_FLAG_SET_WITHOUT_FLIP BIT(1) /* SET should not flip */
 
 /*
  * USB-C mux state
@@ -21,42 +26,36 @@
  */
 typedef uint8_t mux_state_t;
 
-/*
- * Packing and Unpacking defines used with USB_MUX_FLAG_NOT_TCPC
- * MUX_PORT takes in a USB-C port number and returns the I2C port number
- */
-#define MUX_PORT_AND_ADDR(port, addr) ((port << 8) | (addr & 0xFF))
-#define MUX_PORT(port) (usb_muxes[port].port_addr >> 8)
-#define MUX_ADDR(port) (usb_muxes[port].port_addr & 0xFF)
-
 /* Mux driver function pointers */
+struct usb_mux;
 struct usb_mux_driver {
 	/**
-	 * Initialize USB mux. This is called every time the MUX is access after
-	 * being put in a fully disconnected state (low power mode).
+	 * Initialize USB mux. This is called every time the MUX is
+	 * access after being put in a fully disconnected state (low
+	 * power mode).
 	 *
-	 * @param port usb port of mux (not port_addr)
+	 * @param me usb_mux
 	 * @return EC_SUCCESS on success, non-zero error code on failure.
 	 */
-	int (*init)(int port);
+	int (*init)(const struct usb_mux *me);
 
 	/**
 	 * Set USB mux state.
 	 *
-	 * @param port usb port of mux (not port_addr)
+	 * @param me usb_mux
 	 * @param mux_state State to set mux to.
 	 * @return EC_SUCCESS on success, non-zero error code on failure.
 	 */
-	int (*set)(int port, mux_state_t mux_state);
+	int (*set)(const struct usb_mux *me, mux_state_t mux_state);
 
 	/**
 	 * Get current state of USB mux.
 	 *
-	 * @param port usb port of mux (not port_addr)
+	 * @param me usb_mux
 	 * @param mux_state Gets set to current state of mux.
 	 * @return EC_SUCCESS on success, non-zero error code on failure.
 	 */
-	int (*get)(int port, mux_state_t *mux_state);
+	int (*get)(const struct usb_mux *me, mux_state_t *mux_state);
 
 	/**
 	 * Optional method that is called after the mux fully disconnects.
@@ -65,46 +64,69 @@ struct usb_mux_driver {
 	 * where the TCPC is actively used since the PD state machine
 	 * will put the chip into lower power mode.
 	 *
-	 * @param port usb port of mux (not port_addr)
+	 * @param me usb_mux
 	 * @return EC_SUCCESS on success, non-zero error code on failure.
 	 */
-	int (*enter_low_power_mode)(int port);
+	int (*enter_low_power_mode)(const struct usb_mux *me);
 };
-
-/* Flags used for usb_mux.flags */
-#define USB_MUX_FLAG_NOT_TCPC BIT(0) /* TCPC/MUX device used only as MUX */
 
 /* Describes a USB mux present in the system */
 struct usb_mux {
 	/*
-	 * Used by driver. Muxes that are also the TCPC do not need to specify
-	 * anything for this as they will use the values from tcpc_config_t. If
-	 * this mux is also a TCPC but not used as the TCPC then use the
-	 * MUX_PORT_AND_ADDR to pack the i2c port and i2c address into this
-	 * field and use the USB_MUX_FLAG_NOT_TCPC flag.
+	 * This is index into usb_muxes that points to the start of the
+	 * possible chain of usb_mux entries that this entry is on.
 	 */
-	const int port_addr;
+	int usb_port;
+
+	/*
+	 * I2C port and address. This is optional if your MUX is not
+	 * an I2C interface.  If this is the case, use usb_port to
+	 * index an exernal array to track your connection parameters,
+	 * if they are needed.  One case of this would be a driver
+	 * that will use usb_port as an index into tcpc_config_t to
+	 * gather the necessary information to communicate with the MUX
+	 */
+	uint16_t i2c_port;
+	uint16_t i2c_addr_flags;
 
 	/* Run-time flags with prefix USB_MUX_FLAG_ */
-	const uint32_t flags;
+	uint32_t flags;
 
 	/* Mux driver */
 	const struct usb_mux_driver *driver;
 
+	/* Linked list chain of secondary MUXes. NULL terminated */
+	const struct usb_mux *next_mux;
+
 	/**
 	 * Optional method for tuning for USB mux during mux->driver->init().
 	 *
-	 * @param port usb port of mux (not port_addr)
+	 * @param me usb_mux
 	 * @return EC_SUCCESS on success, non-zero error code on failure.
 	 */
-	int (*board_init)(int port);
+	int (*board_init)(const struct usb_mux *me);
 
 	/*
+	 * USB mux/retimer board specific set mux_state.
+	 *
+	 * @param me usb_mux
+	 * @param mux_state State to set mode to.
+	 * @return EC_SUCCESS on success, non-zero error code on failure.
+	 */
+	int (*board_set)(const struct usb_mux *me, mux_state_t mux_state);
+
+	/*
+	 * TODO: Consider moving this to usb_mux_driver struct
+	 *
 	 * USB Type-C DP alt mode support. Notify Type-C controller
 	 * there is DP dongle hot-plug.
-	 * TODO: Move this function to usb_mux_driver struct.
+	 *
+	 * @param me usb_mux
+	 * @param hpd_lvl Level
+	 * @param hpd_irq IRQ
 	 */
-	void (*hpd_update)(int port, int hpd_lvl, int hpd_irq);
+	void (*hpd_update)(const struct usb_mux *me,
+			   int hpd_lvl, int hpd_irq);
 };
 
 /* Supported USB mux drivers */
@@ -116,114 +138,47 @@ extern const struct usb_mux_driver ps874x_usb_mux_driver;
 extern const struct usb_mux_driver tcpm_usb_mux_driver;
 extern const struct usb_mux_driver virtual_usb_mux_driver;
 
-/* Supported hpd_update functions */
-void virtual_hpd_update(int port, int hpd_lvl, int hpd_irq);
-
 /* USB muxes present in system, ordered by PD port #, defined at board-level */
+#ifdef CONFIG_USB_MUX_RUNTIME_CONFIG
 extern struct usb_mux usb_muxes[];
+#else
+extern const struct usb_mux usb_muxes[];
+#endif
 
-/*
- * Retimer driver function pointers
- *
- * The retimer driver is driven by calls to the MUX API.  These are not
- * called directly anywhere else in the code.
- */
-struct usb_retimer_driver {
-	/**
-	 * Initialize USB retimer. This is called every time the MUX is
-	 * access after being put in a fully disconnected state (low power
-	 * mode).
-	 *
-	 * @param port usb port of redriver (not port_addr)
-	 * @return EC_SUCCESS on success, non-zero error code on failure.
-	 */
-	int (*init)(int port);
-
-	/**
-	 * Put USB retimer in low power mode. This is called when the MUX
-	 * is put into low power mode).
-	 *
-	 * @param port usb port of redriver (not port_addr)
-	 * @return EC_SUCCESS on success, non-zero error code on failure.
-	 */
-	int (*enter_low_power_mode)(int port);
-
-	/**
-	 * Set USB retimer state.
-	 *
-	 * @param port usb port of retimer (not port_addr)
-	 * @param mux_state State to set retimer mode to.
-	 * @return EC_SUCCESS on success, non-zero error code on failure.
-	 */
-	int (*set)(int port, mux_state_t mux_state);
-};
-
-/* Describes a USB retimer present in the system */
-struct usb_retimer {
-	/*
-	 * All of the fields are provided on an as needed basis.
-	 * If your retimer does not use the provided machanism then
-	 * values would not be set (defaulted to 0/NULL).  This
-	 * defaulting includes the driver field, which would indicate
-	 * no retimer driver is to be called.
-	 */
-
-	/* I2C port and slave address */
-	const int i2c_port;
-	uint16_t i2c_addr_flags;
-
-	/* Driver interfaces for this retimer */
-	const struct usb_retimer_driver *driver;
-
-	/*
-	 * USB retimer board specific tune on set mux_state.
-	 *
-	 * @param port usb port of retimer (not port_addr)
-	 * @param mux_state State to set retimer mode to.
-	 * @return EC_SUCCESS on success, non-zero error code on failure.
-	 */
-	int (*tune)(int port, mux_state_t mux_state);
-};
-
-/*
- * USB retimers present in system, ordered by PD port #, defined at
- * board-level
- */
-extern struct usb_retimer usb_retimers[];
+/* Supported hpd_update functions */
+void virtual_hpd_update(const struct usb_mux *me, int hpd_lvl, int hpd_irq);
 
 /*
  * Helper methods that either use tcpc communication or direct i2c
  * communication depending on how the TCPC/MUX device is configured.
  */
 #ifdef CONFIG_USB_PD_TCPM_MUX
-static inline int mux_write(int port, int reg, int val)
+static inline int mux_write(const struct usb_mux *me, int reg, int val)
 {
-	return usb_muxes[port].flags & USB_MUX_FLAG_NOT_TCPC
-		? i2c_write8(MUX_PORT(port), MUX_ADDR(port), reg, val)
-		: tcpc_write(port, reg, val);
+	return me->flags & USB_MUX_FLAG_NOT_TCPC
+		? i2c_write8(me->i2c_port, me->i2c_addr_flags, reg, val)
+		: tcpc_write(me->usb_port, reg, val);
 }
 
-static inline int mux_read(int port, int reg, int *val)
+static inline int mux_read(const struct usb_mux *me, int reg, int *val)
 {
-	return usb_muxes[port].flags & USB_MUX_FLAG_NOT_TCPC
-		? i2c_read8(MUX_PORT(port), MUX_ADDR(port), reg, val)
-		: tcpc_read(port, reg, val);
+	return me->flags & USB_MUX_FLAG_NOT_TCPC
+		? i2c_read8(me->i2c_port, me->i2c_addr_flags, reg, val)
+		: tcpc_read(me->usb_port, reg, val);
 }
 
-static inline int mux_write16(int port, int reg, int val)
+static inline int mux_write16(const struct usb_mux *me, int reg, int val)
 {
-	return usb_muxes[port].flags & USB_MUX_FLAG_NOT_TCPC
-		? i2c_write16(MUX_PORT(port), MUX_ADDR(port),
-			      reg, val)
-		: tcpc_write16(port, reg, val);
+	return me->flags & USB_MUX_FLAG_NOT_TCPC
+		? i2c_write16(me->i2c_port, me->i2c_addr_flags, reg, val)
+		: tcpc_write16(me->usb_port, reg, val);
 }
 
-static inline int mux_read16(int port, int reg, int *val)
+static inline int mux_read16(const struct usb_mux *me, int reg, int *val)
 {
-	return usb_muxes[port].flags & USB_MUX_FLAG_NOT_TCPC
-		? i2c_read16(MUX_PORT(port), MUX_ADDR(port),
-			     reg, val)
-		: tcpc_read16(port, reg, val);
+	return me->flags & USB_MUX_FLAG_NOT_TCPC
+		? i2c_read16(me->i2c_port, me->i2c_addr_flags, reg, val)
+		: tcpc_read16(me->usb_port, reg, val);
 }
 #endif /* CONFIG_USB_PD_TCPM_MUX */
 

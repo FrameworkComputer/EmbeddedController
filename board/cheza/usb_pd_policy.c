@@ -177,11 +177,10 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
 	int mf_pref = PD_VDO_DPSTS_MF_PREF(payload[1]);
-	const struct usb_mux *mux = &usb_muxes[port];
 
 	dp_status[port] = payload[1];
 
-	mux->hpd_update(port, lvl, irq);
+	usb_mux_hpd_update(port, lvl, irq);
 
 	if (lvl && is_dp_muxable(port)) {
 		/*

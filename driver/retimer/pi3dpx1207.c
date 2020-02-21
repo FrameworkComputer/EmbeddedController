@@ -21,8 +21,7 @@ static uint8_t buf[PI3DPX1207_NUM_REGISTERS];
 /**
  * Local utility functions
  */
-static int pi3dpx1207_i2c_write(int i2c_port,
-				uint16_t addr_flags,
+static int pi3dpx1207_i2c_write(const struct usb_mux *me,
 				uint8_t offset,
 				uint8_t val)
 {
@@ -45,7 +44,7 @@ static int pi3dpx1207_i2c_write(int i2c_port,
 		attempt = 0;
 		do {
 			attempt++;
-			rv = i2c_xfer(i2c_port, addr_flags,
+			rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags,
 				      NULL, 0, buf, offset);
 		} while ((rv != EC_SUCCESS) && (attempt < I2C_MAX_RETRIES));
 	}
@@ -56,15 +55,16 @@ static int pi3dpx1207_i2c_write(int i2c_port,
 		attempt = 0;
 		do {
 			attempt++;
-			rv = i2c_xfer(i2c_port, addr_flags,
+			rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags,
 				      buf, offset + 1, NULL, 0);
 		} while ((rv != EC_SUCCESS) && (attempt < I2C_MAX_RETRIES));
 	}
 	return rv;
 }
 
-static void pi3dpx1207_shutoff_power(int port)
+static void pi3dpx1207_shutoff_power(const struct usb_mux *me)
 {
+	const int port = me->usb_port;
 	const int gpio_enable = pi3dpx1207_controls[port].enable_gpio;
 	const int gpio_dp_enable = pi3dpx1207_controls[port].dp_enable_gpio;
 
@@ -75,27 +75,26 @@ static void pi3dpx1207_shutoff_power(int port)
 /**
  * Driver interface code
  */
-static int pi3dpx1207_init(int port)
+static int pi3dpx1207_init(const struct usb_mux *me)
 {
+	const int port = me->usb_port;
 	const int gpio_enable = pi3dpx1207_controls[port].enable_gpio;
 
 	gpio_or_ioex_set_level(gpio_enable, 1);
 	return EC_SUCCESS;
 }
 
-static int pi3dpx1207_enter_low_power_mode(int port)
+static int pi3dpx1207_enter_low_power_mode(const struct usb_mux *me)
 {
-	pi3dpx1207_shutoff_power(port);
+	pi3dpx1207_shutoff_power(me);
 	return EC_SUCCESS;
 }
 
-static int pi3dpx1207_set_mux(int port, mux_state_t mux_state)
+static int pi3dpx1207_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
 	uint8_t mode_val = PI3DPX1207_MODE_WATCHDOG_EN;
-
-	const int i2c_port = usb_retimers[port].i2c_port;
-	const uint16_t i2c_addr_flags = usb_retimers[port].i2c_addr_flags;
+	const int port = me->usb_port;
 	const int gpio_enable = pi3dpx1207_controls[port].enable_gpio;
 	const int gpio_dp_enable = pi3dpx1207_controls[port].dp_enable_gpio;
 
@@ -127,18 +126,16 @@ static int pi3dpx1207_set_mux(int port, mux_state_t mux_state)
 	}
 	/* Nothing enabled, power down the retimer */
 	else {
-		pi3dpx1207_shutoff_power(port);
+		pi3dpx1207_shutoff_power(me);
 		return EC_SUCCESS;
 	}
 
 	/* Write the retimer config byte */
-	rv = pi3dpx1207_i2c_write(i2c_port, i2c_addr_flags,
-				  PI3DPX1207_MODE_OFFSET,
-				  mode_val);
+	rv = pi3dpx1207_i2c_write(me, PI3DPX1207_MODE_OFFSET, mode_val);
 	return rv;
 }
 
-const struct usb_retimer_driver pi3dpx1207_usb_retimer = {
+const struct usb_mux_driver pi3dpx1207_usb_retimer = {
 	.init = pi3dpx1207_init,
 	.set = pi3dpx1207_set_mux,
 	.enter_low_power_mode = pi3dpx1207_enter_low_power_mode,

@@ -344,26 +344,26 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.port_addr = MUX_PORT_AND_ADDR(I2C_PORT_USB_C0,
-					       PI3USB3X532_I2C_ADDR0),
-		.driver = &pi3usb3x532_usb_mux_driver,
-	},
-	{
-		.port_addr = MUX_PORT_AND_ADDR(I2C_PORT_SUB_USB_C1,
-					       PI3USB3X532_I2C_ADDR0),
-		.driver = &pi3usb3x532_usb_mux_driver,
-	}
+const struct usb_mux usbc1_retimer = {
+	.usb_port = 1,
+	.i2c_port = I2C_PORT_SUB_USB_C1,
+	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
+	.driver = &nb7v904m_usb_redriver_drv,
 };
-
-struct usb_retimer usb_retimers[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{ 0 }, /* There's no retimer on Port 0 */
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = NB7V904M_I2C_ADDR0,
-		.driver = &nb7v904m_usb_redriver_drv,
+		.usb_port = 0,
+		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
+		.driver = &pi3usb3x532_usb_mux_driver,
 	},
+	{
+		.usb_port = 1,
+		.i2c_port = I2C_PORT_SUB_USB_C1,
+		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
+		.driver = &pi3usb3x532_usb_mux_driver,
+		.next_mux = &usbc1_retimer,
+	}
 };
 
 uint16_t tcpc_get_alert_status(void)

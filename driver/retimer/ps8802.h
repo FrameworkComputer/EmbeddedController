@@ -4,6 +4,7 @@
  *
  * PS8802 retimer.
  */
+#include "usb_mux.h"
 
 #ifndef __CROS_EC_USB_RETIMER_PS8802_H
 #define __CROS_EC_USB_RETIMER_PS8802_H
@@ -65,17 +66,17 @@
 
 
 extern const struct usb_mux_driver ps8802_usb_mux_driver;
-extern const struct usb_retimer_driver ps8802_usb_retimer;
 
-int ps8802_i2c_wake(int port);
-int ps8802_detect(int port);
+int ps8802_i2c_wake(const struct usb_mux *me);
+int ps8802_detect(const struct usb_mux *me);
 
-int ps8802_i2c_read(int port, int page, int offset, int *data);
-int ps8802_i2c_write(int port, int page, int offset, int data);
-int ps8802_i2c_write16(int port, int page, int offset, int data);
-int ps8802_i2c_field_update8(int port, int page, int offset,
+int ps8802_i2c_read(const struct usb_mux *me, int page, int offset, int *data);
+int ps8802_i2c_write(const struct usb_mux *me, int page, int offset, int data);
+int ps8802_i2c_write16(const struct usb_mux *me, int page, int offset,
+			int data);
+int ps8802_i2c_field_update8(const struct usb_mux *me, int page, int offset,
 			     uint8_t field_mask, uint8_t set_value);
-int ps8802_i2c_field_update16(int port, int page, int offset,
+int ps8802_i2c_field_update16(const struct usb_mux *me, int page, int offset,
 			     uint16_t field_mask, uint16_t set_value);
 
 #endif /* __CROS_EC_USB_RETIMER_PS8802_H */

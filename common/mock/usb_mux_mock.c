@@ -18,12 +18,12 @@ void mock_usb_mux_reset(void)
 	memset(&mock_usb_mux, 0, sizeof(mock_usb_mux));
 }
 
-static int mock_init(int port)
+static int mock_init(const struct usb_mux *me)
 {
 	return EC_SUCCESS;
 }
 
-static int mock_set(int port, mux_state_t mux_state)
+static int mock_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	mock_usb_mux.state = mux_state;
 	++mock_usb_mux.num_set_calls;
@@ -32,13 +32,13 @@ static int mock_set(int port, mux_state_t mux_state)
 	return EC_SUCCESS;
 }
 
-int mock_get(int port, mux_state_t *mux_state)
+int mock_get(const struct usb_mux *me, mux_state_t *mux_state)
 {
 	*mux_state = mock_usb_mux.state;
 	return EC_SUCCESS;
 }
 
-static int mock_enter_low_power_mode(int port)
+static int mock_enter_low_power_mode(const struct usb_mux *me)
 {
 	return EC_SUCCESS;
 }

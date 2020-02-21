@@ -4,6 +4,7 @@
  *
  * PS8818 retimer.
  */
+#include "usb_mux.h"
 
 #ifndef __CROS_EC_USB_RETIMER_PS8818_H
 #define __CROS_EC_USB_RETIMER_PS8818_H
@@ -77,13 +78,16 @@
 #define PS8818_STATUS_NORMAL_OPERATION		BIT(7)
 #define PS8818_STATUS_10_GBPS			BIT(5)
 
-extern const struct usb_retimer_driver ps8818_usb_retimer;
+extern const struct usb_mux_driver ps8818_usb_retimer_driver;
 
-int ps8818_detect(int port);
+int ps8818_detect(const struct usb_mux *me);
 
-int ps8818_i2c_read(int port, int page, int offset, int *data);
-int ps8818_i2c_write(int port, int page, int offset, int data);
-int ps8818_i2c_field_update8(int port, int page, int offset,
+int ps8818_i2c_read(const struct usb_mux *me,
+		    int page, int offset, int *data);
+int ps8818_i2c_write(const struct usb_mux *me,
+		     int page, int offset, int data);
+int ps8818_i2c_field_update8(const struct usb_mux *me,
+			     int page, int offset,
 			     uint8_t field_mask, uint8_t set_value);
 
 #endif /* __CROS_EC_USB_RETIMER_PS8818_H */

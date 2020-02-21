@@ -186,6 +186,7 @@
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
+#define CONFIG_USB_MUX_RUNTIME_CONFIG
 
 
 /* BC 1.2 charger */

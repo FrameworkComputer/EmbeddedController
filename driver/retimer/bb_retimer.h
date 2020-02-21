@@ -40,7 +40,7 @@
 #define BB_RETIMER_TBT_CABLE_GENERATION(x)	(((x) & 0x3) << 28)
 
 /* Supported USB retimer drivers */
-extern const struct usb_retimer_driver bb_usb_retimer;
+extern const struct usb_mux_driver bb_usb_retimer;
 
 /* Retimer driver hardware specific controls */
 struct bb_usb_control {

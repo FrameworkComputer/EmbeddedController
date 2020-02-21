@@ -183,12 +183,16 @@ static int ps874x_tune_mux(int port)
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.port_addr = 0x1A,
+		.usb_port = 0,
+		.i2c_port = I2C_PORT_USB_MUX,
+		.i2c_addr_flags = 0x1A,
 		.driver = &ps874x_usb_mux_driver,
 		.board_init = &ps874x_tune_mux,
 	},
 	{
-		.port_addr = 0x10,
+		.usb_port = 1,
+		.i2c_port = I2C_PORT_USB_MUX,
+		.i2c_addr_flags = 0x10,
 		.driver = &ps874x_usb_mux_driver,
 		.board_init = &ps874x_tune_mux,
 	}

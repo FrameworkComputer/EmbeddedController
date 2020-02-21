@@ -150,19 +150,20 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-static int ps8751_tune_mux(int port)
+static int ps8751_tune_mux(const struct usb_mux *me)
 {
 	/* 0x98 sets lower EQ of DP port (4.5db) */
-	mux_write(port, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
+	mux_write(me, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
 	return EC_SUCCESS;
 }
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
+		.usb_port = 0,
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 		.board_init = &ps8751_tune_mux,
-	}
+	},
 };
 
 const int usb_port_enable[USB_PORT_COUNT] = {
@@ -181,7 +182,7 @@ void board_reset_pd_mcu(void)
 
 void board_tcpc_init(void)
 {
-	int port, reg;
+	int reg;
 
 	/* This needs to be executed only once per boot. It could be run by RO
 	 * if we boot in recovery mode. It could be run by RW if we boot in
@@ -202,10 +203,8 @@ void board_tcpc_init(void)
 	 * Initialize HPD to low; after sysjump SOC needs to see
 	 * HPD pulse to enable video path
 	 */
-	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
-		const struct usb_mux *mux = &usb_muxes[port];
-		mux->hpd_update(port, 0, 0);
-	}
+	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
+		usb_mux_hpd_update(port, 0, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 

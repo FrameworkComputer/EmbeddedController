@@ -16,7 +16,6 @@
 #include <signal.h>
 #include <stdbool.h>
 
-#include "anx74xx.h"
 #include "battery.h"
 #include "comm-host.h"
 #include "chipset.h"
@@ -31,7 +30,6 @@
 #include "lock/gec_lock.h"
 #include "misc_util.h"
 #include "panic.h"
-#include "ps8xxx.h"
 #include "usb_pd.h"
 
 /* Maximum flash size (16 MB, conservative) */

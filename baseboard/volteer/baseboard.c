@@ -396,14 +396,23 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 /******************************************************************************/
 /* USBC mux configuration - Tiger Lake includes internal mux */
+struct usb_mux usbc1_usb_retimer = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &bb_usb_retimer,
+	.i2c_port = I2C_PORT_USB_1_MIX,
+	.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
+};
 struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
+		.usb_port = USBC_PORT_C0,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
 	},
 	[USBC_PORT_C1] = {
+		.usb_port = USBC_PORT_C1,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
+		.next_mux = &usbc1_usb_retimer,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
@@ -420,18 +429,6 @@ struct bb_usb_control bb_controls[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(bb_controls) == USBC_PORT_COUNT);
-
-struct usb_retimer usb_retimers[] = {
-	[USBC_PORT_C0] = {
-		/* USB-C port 0 doesn't have a retimer */
-	},
-	[USBC_PORT_C1] = {
-		.driver = &bb_usb_retimer,
-		.i2c_port = I2C_PORT_USB_1_MIX,
-		.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(usb_retimers) == USBC_PORT_COUNT);
 
 static void baseboard_tcpc_init(void)
 {
@@ -660,8 +657,7 @@ static void config_db_usb3(void)
 {
 	tcpc_config[USBC_PORT_C1] = tcpc_config_p1_usb3;
 	/* USB-C port 1 has an integrated retimer */
-	memset(&usb_retimers[USBC_PORT_C1], 0,
-	       sizeof(usb_retimers[USBC_PORT_C1]));
+	usb_muxes[USBC_PORT_C1].next_mux = NULL;
 }
 
 /*

@@ -200,19 +200,21 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_ITE_0] = {
+		.usb_port = USB_PD_PORT_ITE_0,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
 	},
 
 	[USB_PD_PORT_ITE_1] = {
+		.usb_port = USB_PD_PORT_ITE_1,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
 	},
 
 	[USB_PD_PORT_TUSB422_2] = {
-		.port_addr = 0,
+		.usb_port = USB_PD_PORT_TUSB422_2,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
 	},

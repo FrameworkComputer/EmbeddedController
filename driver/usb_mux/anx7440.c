@@ -16,14 +16,16 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-static inline int anx7440_read(int port, uint8_t reg, int *val)
+static inline int anx7440_read(const struct usb_mux *me,
+			       uint8_t reg, int *val)
 {
-	return i2c_read8(I2C_PORT_USB_MUX, MUX_ADDR(port), reg, val);
+	return i2c_read8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
 
-static inline int anx7440_write(int port, uint8_t reg, uint8_t val)
+static inline int anx7440_write(const struct usb_mux *me,
+				uint8_t reg, uint8_t val)
 {
-	return i2c_write8(I2C_PORT_USB_MUX, MUX_ADDR(port), reg, val);
+	return i2c_write8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
 
 struct anx7440_id_t {
@@ -39,7 +41,7 @@ static const struct anx7440_id_t anx7440_device_ids[] = {
 	{ ANX7440_DEVICE_VERSION, ANX7440_REG_DEVICE_VERSION },
 };
 
-static int anx7440_init(int port)
+static int anx7440_init(const struct usb_mux *me)
 {
 	int i;
 	int val;
@@ -47,7 +49,7 @@ static int anx7440_init(int port)
 
 	/* Verify device id / version registers */
 	for (i = 0; i < ARRAY_SIZE(anx7440_device_ids); i++) {
-		res = anx7440_read(port, anx7440_device_ids[i].reg, &val);
+		res = anx7440_read(me, anx7440_device_ids[i].reg, &val);
 		if (res)
 			return res;
 
@@ -59,11 +61,11 @@ static int anx7440_init(int port)
 }
 
 /* Writes control register to set switch mode */
-static int anx7440_set_mux(int port, mux_state_t mux_state)
+static int anx7440_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int reg, res;
 
-	res = anx7440_read(port, ANX7440_REG_CHIP_CTRL, &reg);
+	res = anx7440_read(me, ANX7440_REG_CHIP_CTRL, &reg);
 	if (res)
 		return res;
 
@@ -75,16 +77,16 @@ static int anx7440_set_mux(int port, mux_state_t mux_state)
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		reg |= ANX7440_CHIP_CTRL_SW_FLIP;
 
-	return anx7440_write(port, ANX7440_REG_CHIP_CTRL, reg);
+	return anx7440_write(me, ANX7440_REG_CHIP_CTRL, reg);
 }
 
 /* Reads control register and updates mux_state accordingly */
-static int anx7440_get_mux(int port, mux_state_t *mux_state)
+static int anx7440_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 {
 	int reg, res;
 
 	*mux_state = 0;
-	res = anx7440_read(port, ANX7440_REG_CHIP_CTRL, &reg);
+	res = anx7440_read(me, ANX7440_REG_CHIP_CTRL, &reg);
 	if (res)
 		return res;
 

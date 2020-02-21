@@ -40,7 +40,7 @@
 #define PI3DPX1207_MODE_CONF_USB_SUPER		0xC0
 
 /* Supported USB retimer drivers */
-extern const struct usb_retimer_driver pi3dpx1207_usb_retimer;
+extern const struct usb_mux_driver pi3dpx1207_usb_retimer;
 
 /* Retimer driver hardware specific controls */
 struct pi3dpx1207_usb_control {

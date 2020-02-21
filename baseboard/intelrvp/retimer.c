@@ -29,19 +29,4 @@ const struct bb_usb_control bb_controls[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(bb_controls) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
-struct usb_retimer usb_retimers[] = {
-	[TYPE_C_PORT_0] = {
-		.driver = &bb_usb_retimer,
-		.i2c_port = I2C_PORT0_BB_RETIMER,
-		.i2c_addr_flags = I2C_PORT0_BB_RETIMER_ADDR,
-	},
-#ifdef HAS_TASK_PD_C1
-	[TYPE_C_PORT_1] = {
-		.driver = &bb_usb_retimer,
-		.i2c_port = I2C_PORT1_BB_RETIMER,
-		.i2c_addr_flags = I2C_PORT1_BB_RETIMER_ADDR,
-	},
-#endif /* HAS_TASK_PD_C1 */
-};
-BUILD_ASSERT(ARRAY_SIZE(usb_retimers) == CONFIG_USB_PD_PORT_MAX_COUNT);
 #endif /* CONFIG_USBC_RETIMER_INTEL_BB */

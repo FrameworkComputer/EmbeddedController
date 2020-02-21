@@ -195,24 +195,24 @@ struct als_t als[] = {
 BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 #endif
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.port_addr = MUX_PORT_AND_ADDR(I2C_PORT_USB_MUX,
-					       PI3USB3X532_I2C_ADDR0),
+		.usb_port = 0,
+		.i2c_port = I2C_PORT_USB_MUX,
+		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
 		.driver    = &pi3usb3x532_usb_mux_driver,
 	},
+	{
+		.usb_port = 1,
+		.i2c_port = I2C_PORT_USB_MUX,
 #if (BOARD_REV <= OAK_REV4)
-	{
-		.port_addr = MUX_PORT_AND_ADDR(I2C_PORT_USB_MUX,
-					       PI3USB3X532_I2C_ADDR1),
+		.i2c_addr_flags = PI3USB3X532_I2C_ADDR1,
 		.driver    = &pi3usb3x532_usb_mux_driver,
-	},
 #else
-	{
-		.port_addr = 0x10,
+		.i2c_addr_flags = 0x10,
 		.driver = &ps874x_usb_mux_driver,
-	},
 #endif
+	},
 };
 
 /**

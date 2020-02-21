@@ -274,19 +274,21 @@ const enum gpio_signal hibernate_wake_pins[] = {
 
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
-static int ps8751_tune_mux(int port)
+static int ps8751_tune_mux(const struct usb_mux *me)
 {
 	/* 0x98 sets lower EQ of DP port (4.5db) */
-	mux_write(port, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
+	mux_write(me, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
 	return EC_SUCCESS;
 }
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {
+		.usb_port = USB_PD_PORT_ANX74XX,
 		.driver = &anx74xx_tcpm_usb_mux_driver,
 		.hpd_update = &anx74xx_tcpc_update_hpd_status,
 	},
 	[USB_PD_PORT_PS8751] = {
+		.usb_port = USB_PD_PORT_PS8751,
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 		.board_init = &ps8751_tune_mux,
@@ -357,7 +359,7 @@ void board_reset_pd_mcu(void)
 
 static void board_tcpc_init(void)
 {
-	int port, reg;
+	int reg;
 	int count = 0;
 
 	/* Wait for disconnected battery to wake up */
@@ -398,11 +400,8 @@ static void board_tcpc_init(void)
 	* Initialize HPD to low; after sysjump SOC needs to see
 	* HPD pulse to enable video path
 	*/
-	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
-		const struct usb_mux *mux = &usb_muxes[port];
-
-		mux->hpd_update(port, 0, 0);
-	}
+	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
+		usb_mux_hpd_update(port, 0, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_DEFAULT);
 

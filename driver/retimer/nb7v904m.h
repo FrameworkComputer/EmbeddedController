@@ -37,5 +37,5 @@
 #define NB7V904M_AUX_CH_FLIPPED  BIT(0)
 #define NB7V904M_AUX_CH_HI_Z     BIT(1)
 
-extern const struct usb_retimer_driver nb7v904m_usb_redriver_drv;
+extern const struct usb_mux_driver nb7v904m_usb_redriver_drv;
 #endif /* __CROS_EC_USB_REDRIVER_NB7V904M_H */
