@@ -50,6 +50,31 @@ struct pd_pref_config_t {
 	enum pd_pref_type type;
 };
 
+/*
+ * This function converts an 8 character ascii string with hex digits, without
+ * the 0x prefix, into a signed 32-bit number.
+ *
+ * @param str pointer to hex string to convert
+ * @param val pointer to where the integer version is stored
+ * @return EC_SUCCSSS on success else EC_ERROR_INVAL on failure
+ */
+int hex8tou32(char *str, uint32_t *val);
+
+/*
+ * Flash a USB PD device using the ChromeOS Vendor Defined Command.
+ *
+ * @param argc number arguments in argv. Must be greater than 3.
+ * @param argv [1] is the usb port
+ *             [2] unused
+ *             [3] is the command {"erase", "rebooot", "signature",
+ *                                 "info", "version", "write"}
+ *             [4] if command was "write", then this will be the
+ *                 start of the data that will be written.
+ * @return EC_SUCCESS on success, else EC_ERROR_PARAM_COUNT or EC_ERROR_PARAM2
+ *         on failure.
+ */
+int remote_flashing(int argc, char **argv);
+
 /* Returns the battery percentage [0-100] of the system. */
 int usb_get_battery_soc(void);
 
