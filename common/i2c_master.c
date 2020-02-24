@@ -1228,6 +1228,18 @@ i2c_command_passthru_protect(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 	}
 
+	/*
+	 * When calling the subcmd to protect all tcpcs, the i2c port isn't
+	 * expected to be set in the args. So, putting a check here to avoid
+	 * the get_i2c_port return error.
+	 */
+	if (params->subcmd == EC_CMD_I2C_PASSTHRU_PROTECT_ENABLE_TCPCS) {
+		if (IS_ENABLED(CONFIG_USB_POWER_DELIVERY) &&
+				!IS_ENABLED(CONFIG_USB_PD_TCPM_STUB))
+			i2c_passthru_protect_tcpc_ports();
+		return EC_RES_SUCCESS;
+	}
+
 	if (!get_i2c_port(params->port)) {
 		PTHRUPRINTS("protect invalid port %d", params->port);
 		return EC_RES_INVALID_PARAM;
@@ -1245,10 +1257,6 @@ i2c_command_passthru_protect(struct host_cmd_handler_args *args)
 		args->response_size = sizeof(*resp);
 	} else if (params->subcmd == EC_CMD_I2C_PASSTHRU_PROTECT_ENABLE) {
 		i2c_passthru_protect_port(params->port);
-	} else if (params->subcmd == EC_CMD_I2C_PASSTHRU_PROTECT_ENABLE_TCPCS) {
-		if (IS_ENABLED(CONFIG_USB_POWER_DELIVERY) &&
-				!IS_ENABLED(CONFIG_USB_PD_TCPM_STUB))
-			i2c_passthru_protect_tcpc_ports();
 	} else {
 		return EC_RES_INVALID_COMMAND;
 	}
