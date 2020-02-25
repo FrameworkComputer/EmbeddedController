@@ -95,9 +95,11 @@ struct host_byte {
 static struct queue const from_host = QUEUE_NULL(8, struct host_byte);
 
 static int i8042_keyboard_irq_enabled;
+static int i8042_aux_irq_enabled;
 
 /* i8042 global settings */
 static int keyboard_enabled;	/* default the keyboard is disabled. */
+static int aux_chan_enabled;	/* default the mouse is disabled. */
 static int keystroke_enabled;	/* output keystrokes */
 static uint8_t resend_command[MAX_SCAN_CODE_LEN];
 static uint8_t resend_command_len;
@@ -210,6 +212,18 @@ static void keyboard_enable_irq(int enable)
 	i8042_keyboard_irq_enabled = enable;
 	if (enable)
 		lpc_keyboard_resume_irq();
+}
+
+/**
+ * Enable mouse IRQ generation.
+ *
+ * @param enable	Enable (!=0) or disable (0) IRQ generation.
+ */
+static void aux_enable_irq(int enable)
+{
+	CPRINTS("AUX IRQ %s", enable ? "enable" : "disable");
+
+	i8042_aux_irq_enabled = enable;
 }
 
 /**
@@ -431,6 +445,16 @@ static void keyboard_enable(int enable)
 	keyboard_enabled = enable;
 }
 
+static void aux_enable(int enable)
+{
+	if (!aux_chan_enabled && enable)
+		CPRINTS("AUX enabled");
+	else if (aux_chan_enabled && !enable)
+		CPRINTS("AUX disabled");
+
+	aux_chan_enabled = enable;
+}
+
 static uint8_t read_ctl_ram(uint8_t addr)
 {
 	if (addr < ARRAY_SIZE(controller_ram))
@@ -462,9 +486,14 @@ static void update_ctl_ram(uint8_t addr, uint8_t data)
 		/* Enable IRQ before enable keyboard (queue chars to host) */
 		if (!(orig & I8042_ENIRQ1) && (data & I8042_ENIRQ1))
 			keyboard_enable_irq(1);
+		if (!(orig & I8042_ENIRQ12) && (data & I8042_ENIRQ12))
+			aux_enable_irq(1);
 
 		/* Handle the I8042_KBD_DIS bit */
 		keyboard_enable(!(data & I8042_KBD_DIS));
+
+		/* Handle the I8042_AUX_DIS bit */
+		aux_enable(!(data & I8042_AUX_DIS));
 
 		/*
 		 * Disable IRQ after disable keyboard so that every char must
@@ -472,6 +501,8 @@ static void update_ctl_ram(uint8_t addr, uint8_t data)
 		 */
 		if ((orig & I8042_ENIRQ1) && !(data & I8042_ENIRQ1))
 			keyboard_enable_irq(0);
+		if ((orig & I8042_ENIRQ12) && !(data & I8042_ENIRQ12))
+			aux_enable_irq(0);
 	}
 }
 
@@ -1046,8 +1077,10 @@ static int command_8042_internal(int argc, char **argv)
 
 	ccprintf("data_port_state=%d\n", data_port_state);
 	ccprintf("i8042_keyboard_irq_enabled=%d\n", i8042_keyboard_irq_enabled);
+	ccprintf("i8042_aux_irq_enabled=%d\n", i8042_aux_irq_enabled);
 	ccprintf("keyboard_enabled=%d\n", keyboard_enabled);
 	ccprintf("keystroke_enabled=%d\n", keystroke_enabled);
+	ccprintf("aux_chan_enabled=%d\n", aux_chan_enabled);
 
 	ccprintf("resend_command[]={");
 	for (i = 0; i < resend_command_len; i++)
