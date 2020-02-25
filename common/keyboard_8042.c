@@ -94,7 +94,7 @@ struct host_byte {
  */
 static struct queue const from_host = QUEUE_NULL(8, struct host_byte);
 
-static int i8042_irq_enabled;
+static int i8042_keyboard_irq_enabled;
 
 /* i8042 global settings */
 static int keyboard_enabled;	/* default the keyboard is disabled. */
@@ -207,7 +207,7 @@ static void keyboard_enable_irq(int enable)
 {
 	CPRINTS("KB IRQ %s", enable ? "enable" : "disable");
 
-	i8042_irq_enabled = enable;
+	i8042_keyboard_irq_enabled = enable;
 	if (enable)
 		lpc_keyboard_resume_irq();
 }
@@ -826,7 +826,7 @@ void keyboard_protocol_task(void *u)
 			/* Handle data waiting for host */
 			if (lpc_keyboard_has_char()) {
 				/* If interrupts disabled, nothing we can do */
-				if (!i8042_irq_enabled)
+				if (!i8042_keyboard_irq_enabled)
 					break;
 
 				/* Give the host a little longer to respond */
@@ -852,7 +852,7 @@ void keyboard_protocol_task(void *u)
 			kblog_put('K', chr);
 
 			/* Write to host. */
-			lpc_keyboard_put_char(chr, i8042_irq_enabled);
+			lpc_keyboard_put_char(chr, i8042_keyboard_irq_enabled);
 			retries = 0;
 		}
 	}
@@ -1045,7 +1045,7 @@ static int command_8042_internal(int argc, char **argv)
 	int i;
 
 	ccprintf("data_port_state=%d\n", data_port_state);
-	ccprintf("i8042_irq_enabled=%d\n", i8042_irq_enabled);
+	ccprintf("i8042_keyboard_irq_enabled=%d\n", i8042_keyboard_irq_enabled);
 	ccprintf("keyboard_enabled=%d\n", keyboard_enabled);
 	ccprintf("keystroke_enabled=%d\n", keystroke_enabled);
 
