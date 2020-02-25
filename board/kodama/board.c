@@ -24,6 +24,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "i2c_bitbang.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -67,6 +68,11 @@ const struct i2c_port_t i2c_ports[] = {
 		.flags = I2C_PORT_FLAG_DYNAMIC_SPEED},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+const struct i2c_port_t i2c_bitbang_ports[] = {
+	{"battery", 2, 100, GPIO_I2C3_SCL, GPIO_I2C3_SDA, .drv = &bitbang_drv},
+};
+const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -371,4 +377,9 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 		voltage = 0;
 
 	return voltage < 4400;
+}
+
+int board_get_battery_i2c(void)
+{
+	return board_get_version() >= 2 ? 2 : 1;
 }
