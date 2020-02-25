@@ -8,6 +8,11 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
+#if (defined(VARIANT_ZORK_TREMBYLE) \
+	+ defined(VARIANT_ZORK_DALBOZ)) != 1
+#error Must choose VARIANT_ZORK_TREMBYLE or VARIANT_ZORK_DALBOZ
+#endif
+
 /* NPCX7 config */
 #define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
 #define NPCX_TACH_SEL2    0  /* No tach. */

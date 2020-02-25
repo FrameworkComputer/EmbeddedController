@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+#define VARIANT_ZORK_DALBOZ
+
 #include "baseboard.h"
 
 /*

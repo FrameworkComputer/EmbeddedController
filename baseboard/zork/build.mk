@@ -8,3 +8,5 @@
 
 baseboard-y=baseboard.o
 baseboard-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
+baseboard-$(VARIANT_ZORK_TREMBYLE)+=variant_trembyle.o
+baseboard-$(VARIANT_ZORK_DALBOZ)+=variant_dalboz.o
