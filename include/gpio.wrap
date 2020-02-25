@@ -42,7 +42,7 @@
 
 /**
  * @def GPIO
- * @brief The GPIO macro is used to define a new GPIO pin name and function.
+ * @brief The GPIO macro defines a GPIO pin name and function.
  *
  * The name is used to populate the gpio_signal enum by first
  * prepending GPIO_ to the name.  It is also used to construct the
@@ -57,7 +57,7 @@
 
 /**
  * @def GPIO_INT
- * @brief The GPIO_INT macro is used to define a GPIO that has an IRQ handler.
+ * @brief The GPIO_INT macro defines a GPIO that has an IRQ handler.
  *
  * The IRQ handler pointers are stored as elements in the gpio_irq_handlers
  * array.
@@ -68,8 +68,7 @@
 
 /**
  * @def ALTERNATE
- * @brief The ALTERNATE macro is used associate a GPIO with an alternate
- *        function.
+ * @brief The ALTERNATE macro associates a GPIO with an alternate function.
  *
  * Alternate functions allow hardware peripherals access to GPIO pins.
  * Modules use gpio_config_module to enable and disable the alternate functions
@@ -87,7 +86,7 @@
 
 /**
  * @def UNIMPLEMENTED
- * @brief The UNIMPLEMENTED macro is used to define a GPIO that doesn't actually exist.
+ * @brief The UNIMPLEMENTED macro defines a GPIO that doesn't actually exist.
  *
  * Some GPIO names are well known and used by generic code, ENTERING_RW and WP_L
  * are examples.  If a particular board doesn't have a GPIO assigned to such a
@@ -107,7 +106,7 @@
 
 /**
  * @def UNUSED
- * @brief The UNUSED macro is used to define a pin as unused.
+ * @brief The UNUSED macro defines a pin as unused.
  *
  * This allows the chip specific code to provision these pins for
  * the lowest power state.
@@ -121,7 +120,7 @@
 
 /**
  * @def IOEX
- * @brief The IOEX macro is used to define a new IO Expander GPIO pin.
+ * @brief The IOEX macro defines an IO Expander GPIO.
  *
  * The name is used to populate enum ioex_signal by prepending "IOEX_".
  */
@@ -131,7 +130,7 @@
 
 /**
  * @def IOEX_INT
- * @brief The IOEX_INT macro is used to define a GPIOs that have an IRQ handler.
+ * @brief The IOEX_INT macro defines an IO Expander GPIO that has an IRQ handler.
  *
  * The IRQ handler pointers are stored as elements in the ioex_irq_handlers
  * array.
