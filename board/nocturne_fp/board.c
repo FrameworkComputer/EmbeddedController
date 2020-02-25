@@ -62,7 +62,7 @@ void slp_event(enum gpio_signal signal)
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
 	/* Fingerprint sensor (SCLK at 4Mhz) */
-	{ CONFIG_SPI_FP_PORT, 3, GPIO_SPI4_NSS }
+	{ .port = CONFIG_SPI_FP_PORT, .div = 3, .gpio_cs = GPIO_SPI4_NSS }
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
