@@ -511,11 +511,16 @@ static void handle_host_write(int is_cmd)
 /* KB controller input buffer full ISR */
 void lpc_kbc_ibf_interrupt(void)
 {
+	uint8_t ibf;
 	/* If "command" input 0, else 1*/
-	if (lpc_keyboard_input_pending())
-		keyboard_host_write(NPCX_HIKMDI, (NPCX_HIKMST & 0x08) ? 1 : 0);
-	CPRINTS("ibf isr %02x", NPCX_HIKMDI);
-	task_wake(TASK_ID_KEYPROTO);
+	if (lpc_keyboard_input_pending()) {
+		ibf = NPCX_HIKMDI;
+		keyboard_host_write(ibf, (NPCX_HIKMST & 0x08) ? 1 : 0);
+		CPRINTS("ibf isr %02x", ibf);
+		task_wake(TASK_ID_KEYPROTO);
+	} else {
+		CPRINTS("ibf isr spurious");
+	}
 }
 DECLARE_IRQ(NPCX_IRQ_KBC_IBF, lpc_kbc_ibf_interrupt, 4);
 
