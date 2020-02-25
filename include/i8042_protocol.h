@@ -86,4 +86,7 @@
 #define I8042_ENIRQ12           BIT(1)
 #define I8042_ENIRQ1            BIT(0)
 
+/* Status Flags */
+#define I8042_AUX_DATA		BIT(5)
+
 #endif /* __CROS_EC_I8042_PROTOCOL_H */

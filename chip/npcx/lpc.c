@@ -13,6 +13,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "i8042_protocol.h"
 #include "keyboard_protocol.h"
 #include "lpc.h"
 #include "lpc_chip.h"
@@ -316,6 +317,7 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 /* Put a char to host buffer by HIMDO */
 void lpc_mouse_put_char(uint8_t chr)
 {
+	NPCX_HIKMST |= I8042_AUX_DATA;
 	NPCX_HIMDO = chr;
 	CPRINTS("Mouse put %02x", chr);
 
@@ -532,6 +534,9 @@ void lpc_kbc_obe_interrupt(void)
 	task_disable_irq(NPCX_IRQ_KBC_OBE);
 
 	CPRINTS("obe isr %02x", NPCX_HIKMST);
+
+	NPCX_HIKMST &= ~I8042_AUX_DATA;
+
 	task_wake(TASK_ID_KEYPROTO);
 }
 DECLARE_IRQ(NPCX_IRQ_KBC_OBE, lpc_kbc_obe_interrupt, 4);
