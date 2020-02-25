@@ -18,12 +18,29 @@
 
 #endif
 
-int tusb422_tcpci_tcpn_init(int port)
+#if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
+	!defined(CONFIG_USB_PD_TCPC_LOW_POWER)
+#error "TUSB422 driver requires CONFIG_USB_PD_TCPC_LOW_POWER if"
+#error "CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE is enabled"
+#endif
+
+static int tusb422_tcpci_tcpm_init(int port)
 {
 	int rv = tcpci_tcpm_init(port);
 
 	if (rv)
 		return rv;
+
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE)) {
+		/*
+		 * When dual role auto toggle is enabled, the TUSB422 needs
+		 * auto discharge disconnect enabled so that the CC state
+		 * is detected correctly.
+		 * Without this, the CC lines get stuck in the SRC.Open state
+		 * after updating the ROLE Control register on a device connect.
+		 */
+		tusb422_tcpm_drv.tcpc_enable_auto_discharge_disconnect(port, 1);
+	}
 
 	/*
 	 * VBUS detection is supposed to be enabled by default, however the
@@ -34,7 +51,7 @@ int tusb422_tcpci_tcpn_init(int port)
 }
 
 const struct tcpm_drv tusb422_tcpm_drv = {
-	.init			= &tusb422_tcpci_tcpn_init,
+	.init			= &tusb422_tcpci_tcpm_init,
 	.release		= &tcpci_tcpm_release,
 	.get_cc			= &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
@@ -52,6 +69,8 @@ const struct tcpm_drv tusb422_tcpm_drv = {
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
 #endif
+	.tcpc_enable_auto_discharge_disconnect =
+				  &tcpci_tcpc_enable_auto_discharge_disconnect,
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	.drp_toggle		= &tcpci_tcpc_drp_toggle,
 #endif
