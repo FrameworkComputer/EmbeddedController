@@ -793,12 +793,12 @@ static void lpc_init(void)
 	/*
 	 * Init KBC
 	 * Clear OBF status flag,
-	 * IBF(K&M) INT enable, OBE(K&M) empty INT enable ,
+	 * IBF(K&M) INT enable,
 	 * OBF Mouse Full INT enable and OBF KB Full INT enable
 	 */
 #ifdef HAS_TASK_KEYPROTO
 	lpc_keyboard_clear_buffer();
-	NPCX_HICTRL = 0x0F;
+	NPCX_HICTRL = 0x0B;
 #endif
 
 	/*
