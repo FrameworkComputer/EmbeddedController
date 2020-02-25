@@ -150,20 +150,5 @@ const struct pwm_t pwm_channels[] = {
 		.flags = PWM_CONFIG_DSLEEP,
 		.freq = 100,
 	},
-	[PWM_CH_FAN] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_OPEN_DRAIN,
-		.freq = 25000,
-	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
-/* MFT channels. These are logically separate from pwm_channels. */
-const struct mft_t mft_channels[] = {
-	[MFT_CH_0] = {
-		.module = NPCX_MFT_MODULE_1,
-		.clk_src = TCKC_LFCLK,
-		.pwm_id = PWM_CH_FAN,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
