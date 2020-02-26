@@ -12,6 +12,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "ioexpander.h"
+#include "timer.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -128,3 +129,24 @@ static void ps8811_retimer_off(void)
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, ps8811_retimer_off, HOOK_PRIO_DEFAULT);
+
+/*****************************************************************************
+ * MST hub
+ */
+
+static void mst_hpd_handler(void)
+{
+	int hpd = 0;
+
+	/* Pass HPD through from DB OPT3 MST hub to AP's DP1. */
+	ioex_get_level(IOEX_MST_HPD_OUT, &hpd);
+	gpio_set_level(GPIO_DP1_HPD, hpd);
+	ccprints("MST HPD %d", hpd);
+}
+DECLARE_DEFERRED(mst_hpd_handler);
+
+void mst_hpd_interrupt(enum ioex_signal signal)
+{
+	/* Debounce for 2 msec. */
+	hook_call_deferred(&mst_hpd_handler_data, (2 * MSEC));
+}

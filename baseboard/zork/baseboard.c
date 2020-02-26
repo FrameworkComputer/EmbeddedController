@@ -315,7 +315,9 @@ void baseboard_tcpc_init(void)
 
 	/* Enable HPD interrupts */
 	ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
+#ifdef VARIANT_ZORK_TREMBYLE
 	ioex_enable_interrupt(IOEX_MST_HPD_OUT);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -696,8 +698,10 @@ static int zork_c1_get_mux(int port, mux_state_t *mux_state)
 
 const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
 	[USBC_PORT_C0] = {
+#ifdef VARIANT_ZORK_TREMBYLE
 		.enable_gpio = IOEX_USB_C0_DATA_EN,
 		.dp_enable_gpio = GPIO_USB_C0_IN_HPD,
+#endif
 	},
 	[USBC_PORT_C1] = {
 	},
@@ -971,21 +975,4 @@ void hdmi_hpd_interrupt(enum ioex_signal signal)
 {
 	/* Debounce for 2 msec. */
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
-}
-
-static void mst_hpd_handler(void)
-{
-	int hpd = 0;
-
-	/* Pass HPD through from DB OPT3 MST hub to AP's DP1. */
-	ioex_get_level(IOEX_MST_HPD_OUT, &hpd);
-	gpio_set_level(GPIO_DP1_HPD, hpd);
-	ccprints("MST HPD %d", hpd);
-}
-DECLARE_DEFERRED(mst_hpd_handler);
-
-void mst_hpd_interrupt(enum ioex_signal signal)
-{
-	/* Debounce for 2 msec. */
-	hook_call_deferred(&mst_hpd_handler_data, (2 * MSEC));
 }
