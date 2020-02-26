@@ -797,6 +797,7 @@ static void print_cc_mode(void)
 	ccprintf("drp enabled: %s\n", cc_config & CC_ENABLE_DRP ? "on" : "off");
 	ccprintf("cc polarity: %s\n", cc_config & CC_POLARITY ? "cc2" :
 								"cc1");
+	ccprintf("pd enabled: %s\n", pd_comm_is_enabled(DUT) ? "on" : "off");
 }
 
 
