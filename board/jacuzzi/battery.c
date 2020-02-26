@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "baseboard/kukui/battery_smart.h"
 #include "battery.h"
 #include "battery_fuel_gauge.h"
 #include "gpio.h"
@@ -99,3 +100,51 @@ enum battery_present battery_hw_present(void)
 {
 	return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES;
 }
+
+/*
+ * Physical detection of battery.
+ */
+__override enum battery_present battery_check_present_status(void)
+{
+	enum battery_present batt_pres = BP_NOT_SURE;
+
+#ifdef CONFIG_BATTERY_HW_PRESENT_CUSTOM
+	/* Get the physical hardware status */
+	batt_pres = battery_hw_present();
+#endif
+
+	/*
+	 * If the battery is not physically connected, then no need to perform
+	 * any more checks.
+	 */
+	if (batt_pres == BP_NO)
+		return batt_pres;
+
+	/*
+	 * If the battery is present now and was present last time we checked,
+	 * return early.
+	 */
+	if (batt_pres == batt_pres_prev)
+		return batt_pres;
+
+	/*
+	 * Check battery disconnect status. If we are unable to read battery
+	 * disconnect status or DFET is off, then return BP_NOT_SURE. Battery
+	 * could be in ship mode and might require pre-charge current to wake
+	 * it up. BP_NO is not returned here because charger state machine
+	 * will not provide pre-charge current assuming that battery is not
+	 * present.
+	 */
+	if (battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)
+		return BP_NOT_SURE;
+
+	/*
+	 * Ensure that battery is:
+	 * 1. Not in cutoff
+	 */
+	if (battery_is_cut_off() != BATTERY_CUTOFF_STATE_NORMAL)
+		return BP_NO;
+
+	return batt_pres;
+}
+

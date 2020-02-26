@@ -9,12 +9,12 @@
 #include "battery_fuel_gauge.h"
 #include "battery_smart.h"
 
-static enum battery_present batt_pres_prev = BP_NOT_SURE;
+enum battery_present batt_pres_prev = BP_NOT_SURE;
 
 /*
  * Physical detection of battery.
  */
-static enum battery_present battery_check_present_status(void)
+__overridable enum battery_present battery_check_present_status(void)
 {
 	enum battery_present batt_pres = BP_NOT_SURE;
 
