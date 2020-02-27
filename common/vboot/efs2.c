@@ -249,8 +249,10 @@ void vboot_main(void)
 		return;
 	}
 
-	if (is_manual_recovery()) {
-		CPRINTS("In recovery mode");
+	if (is_manual_recovery() ||
+	    (system_get_reset_flags() & EC_RESET_FLAG_STAY_IN_RO)) {
+		if (is_manual_recovery())
+			CPRINTS("In recovery mode");
 		if (!IS_ENABLED(CONFIG_BATTERY)
 				&& !IS_ENABLED(HAS_TASK_KEYSCAN)) {
 			/*

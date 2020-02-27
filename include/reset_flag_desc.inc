@@ -26,3 +26,4 @@
 "rbox",
 "security",
 "ap-watchdog",
+"stay-in-ro",

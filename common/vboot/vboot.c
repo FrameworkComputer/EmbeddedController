@@ -204,8 +204,11 @@ void vboot_main(void)
 		return;
 	}
 
-	if (is_manual_recovery()) {
-		CPRINTS("Manual recovery");
+	if (is_manual_recovery() ||
+	    (system_get_reset_flags() & EC_RESET_FLAG_STAY_IN_RO)) {
+		if (is_manual_recovery())
+			CPRINTS("Manual recovery");
+
 		if (battery_is_present() || has_matrix_keyboard()) {
 			show_power_shortage();
 			return;

@@ -263,6 +263,10 @@ const char *system_get_build_info(void);
  * Indicate that this reset was triggered by an AP watchdog
  */
 #define SYSTEM_RESET_AP_WATCHDOG        BIT(5)
+/*
+ * Stay in RO next reboot, instead of potentially selecting RW during EFS.
+ */
+#define SYSTEM_RESET_STAY_IN_RO         BIT(6)
 
 /**
  * Reset the system.
