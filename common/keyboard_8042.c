@@ -72,6 +72,7 @@ static struct mutex to_host_mutex;
 /* Queue command/data from the host */
 enum {
 	CHAN_KBD = 0,
+	CHAN_AUX,
 };
 struct data_byte {
 	uint8_t chan;
@@ -165,6 +166,7 @@ struct kblog_t {
 	 * Type:
 	 *
 	 * s = byte enqueued to send to host
+	 * a = aux byte enqueued to send to host
 	 * t = to-host queue tail pointer before type='s' bytes enqueued
 	 *
 	 * d = data byte from host
@@ -172,6 +174,7 @@ struct kblog_t {
 	 *
 	 * k = to-host queue head pointer before byte dequeued
 	 * K = byte actually sent to host via LPC
+	 * A = byte actually sent to host via LPC as AUX
 	 *
 	 * x = to_host queue was cleared
 	 *
@@ -258,7 +261,7 @@ static void i8042_send_to_host(int len, const uint8_t *bytes,
 	mutex_lock(&to_host_mutex);
 
 	for (i = 0; i < len; i++)
-		kblog_put('s', bytes[i]);
+		kblog_put(chan == CHAN_AUX ? 'a' : 's', bytes[i]);
 
 	if (queue_space(&to_host) >= len) {
 		kblog_put('t', to_host.state->tail);
@@ -530,6 +533,39 @@ static void update_ctl_ram(uint8_t addr, uint8_t data)
 /**
  * Handle the port 0x60 writes from host.
  *
+ * Returns 1 if the event was handled.
+ */
+static int handle_mouse_data(uint8_t data, uint8_t *output, int *count)
+{
+	int out_len = 0;
+
+	switch (data_port_state) {
+	case STATE_ECHO_MOUSE:
+		CPRINTS5("STATE_ECHO_MOUSE: 0x%02x", data);
+		output[out_len++] = data;
+		data_port_state = STATE_NORMAL;
+		break;
+
+	case STATE_SEND_TO_MOUSE:
+		CPRINTS5("STATE_SEND_TO_MOUSE: 0x%02x", data);
+		send_aux_data_to_device(data);
+		data_port_state = STATE_NORMAL;
+		break;
+
+	default:  /* STATE_NORMAL */
+		return 0;
+	}
+
+	ASSERT(out_len <= MAX_SCAN_CODE_LEN);
+
+	*count = out_len;
+
+	return 1;
+}
+
+/**
+ * Handle the port 0x60 writes from host.
+ *
  * This functions returns the number of bytes stored in *output buffer.
  */
 static int handle_keyboard_data(uint8_t data, uint8_t *output)
@@ -537,9 +573,6 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 	int out_len = 0;
 	int save_for_resend = 1;
 	int i;
-
-	CPRINTS5("KB recv data: 0x%02x", data);
-	kblog_put('d', data);
 
 	switch (data_port_state) {
 	case STATE_SCANCODE:
@@ -587,23 +620,11 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 		data_port_state = STATE_NORMAL;
 		break;
 
-	case STATE_ECHO_MOUSE:
-		CPRINTS5("KB eaten by STATE_ECHO_MOUSE: 0x%02x", data);
-		output[out_len++] = data;
-		data_port_state = STATE_NORMAL;
-		break;
-
 	case STATE_SETREP:
 		CPRINTS5("KB eaten by STATE_SETREP: 0x%02x", data);
 		set_typematic_delays(data);
 
 		output[out_len++] = I8042_RET_ACK;
-		data_port_state = STATE_NORMAL;
-		break;
-
-	case STATE_SEND_TO_MOUSE:
-		CPRINTS5("KB eaten by STATE_SEND_TO_MOUSE: 0x%02x",
-			 data);
 		data_port_state = STATE_NORMAL;
 		break;
 
@@ -828,10 +849,18 @@ static void i8042_handle_from_host(void)
 	uint8_t chan = CHAN_KBD;
 
 	while (queue_remove_unit(&from_host, &h)) {
-		if (h.type == HOST_COMMAND)
+		if (h.type == HOST_COMMAND) {
 			ret_len = handle_keyboard_command(h.byte, output);
-		else
-			ret_len = handle_keyboard_data(h.byte, output);
+		} else {
+			CPRINTS5("KB recv data: 0x%02x", h.byte);
+			kblog_put('d', h.byte);
+
+			if (IS_ENABLED(CONFIG_8042_AUX) &&
+			    handle_mouse_data(h.byte, output, &ret_len))
+				chan = CHAN_AUX;
+			else
+				ret_len = handle_keyboard_data(h.byte, output);
+		}
 
 		i8042_send_to_host(ret_len, output, chan);
 	}
@@ -880,7 +909,8 @@ void keyboard_protocol_task(void *u)
 			/* Handle data waiting for host */
 			if (lpc_keyboard_has_char()) {
 				/* If interrupts disabled, nothing we can do */
-				if (!i8042_keyboard_irq_enabled)
+				if (!i8042_keyboard_irq_enabled &&
+				    !i8042_aux_irq_enabled)
 					break;
 
 				/* Give the host a little longer to respond */
@@ -903,14 +933,34 @@ void keyboard_protocol_task(void *u)
 			/* Get a char from buffer. */
 			kblog_put('k', to_host.state->head);
 			queue_remove_unit(&to_host, &entry);
-			kblog_put('K', entry.byte);
 
 			/* Write to host. */
-			lpc_keyboard_put_char(entry.byte,
-					      i8042_keyboard_irq_enabled);
+			if (entry.chan == CHAN_AUX &&
+			    IS_ENABLED(CONFIG_8042_AUX)) {
+				kblog_put('A', entry.byte);
+				lpc_aux_put_char(entry.byte,
+						 i8042_aux_irq_enabled);
+			} else {
+				kblog_put('K', entry.byte);
+				lpc_keyboard_put_char(
+					entry.byte, i8042_keyboard_irq_enabled);
+			}
 			retries = 0;
 		}
 	}
+}
+
+/**
+ * Send aux response data to host.
+ *
+ * @param data	Aux response to send to host.
+ */
+void send_aux_data_to_host(uint8_t data)
+{
+	if (aux_chan_enabled && IS_ENABLED(CONFIG_8042_AUX))
+		i8042_send_to_host(1, &data, CHAN_AUX);
+	else
+		CPRINTS("AUX Callback ignored");
 }
 
 /**
@@ -1130,7 +1180,8 @@ static int command_8042_internal(int argc, char **argv)
 
 		queue_peek_units(&to_host, &entry, i, 1);
 
-		ccprintf("0x%02x, ", entry.byte);
+		ccprintf("0x%02x%s, ", entry.byte,
+			 entry.chan == CHAN_AUX ? " aux" : "");
 	}
 	ccprintf("}\n");
 

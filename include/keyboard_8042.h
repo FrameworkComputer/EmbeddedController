@@ -45,4 +45,18 @@ void keyboard_host_write(int data, int is_cmd);
 enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 					      int8_t pressed);
 
+/**
+ * Send aux response data to host.
+ *
+ * @param data	Aux response to send to host.
+ */
+void send_aux_data_to_host(uint8_t data);
+
+/**
+ * Send aux data to device.
+ *
+ * @param data	Aux data to send to device.
+ */
+void send_aux_data_to_device(uint8_t data);
+
 #endif  /* __CROS_EC_KEYBOARD_8042_H */
