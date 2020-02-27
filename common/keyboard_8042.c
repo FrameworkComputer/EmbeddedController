@@ -252,11 +252,12 @@ static void i8042_send_to_host(int len, const uint8_t *bytes,
 	int i;
 	struct data_byte data;
 
+	/* Enqueue output data if there's space */
+	mutex_lock(&to_host_mutex);
+
 	for (i = 0; i < len; i++)
 		kblog_put('s', bytes[i]);
 
-	/* Enqueue output data if there's space */
-	mutex_lock(&to_host_mutex);
 	if (queue_space(&to_host) >= len) {
 		kblog_put('t', to_host.state->tail);
 		for (i = 0; i < len; i++) {
