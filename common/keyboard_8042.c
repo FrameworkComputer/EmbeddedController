@@ -173,6 +173,8 @@ struct kblog_t {
 	 * k = to-host queue head pointer before byte dequeued
 	 * K = byte actually sent to host via LPC
 	 *
+	 * x = to_host queue was cleared
+	 *
 	 * The to-host head and tail pointers are logged pre-wrapping to the
 	 * queue size.  This means that they continually increment as units
 	 * are dequeued and enqueued respectively.  Since only the bottom
@@ -386,7 +388,9 @@ static void reset_rate_and_delay(void)
 
 void keyboard_clear_buffer(void)
 {
+	CPRINTS("KB Clear Buffer");
 	mutex_lock(&to_host_mutex);
+	kblog_put('x', queue_count(&to_host));
 	queue_init(&to_host);
 	mutex_unlock(&to_host_mutex);
 	lpc_keyboard_clear_buffer();
