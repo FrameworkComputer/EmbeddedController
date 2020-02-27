@@ -88,8 +88,8 @@
 #define PE_FLAGS_VCONN_SWAP_COMPLETE         BIT(15)
 /* Flag to note no more discover identity messages should be sent */
 #define PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE BIT(16)
-/* Flag to note Swap Source Start timer should be set at PE_SRC_Startup entry */
-#define PE_FLAGS_RUN_SOURCE_START_TIMER      BIT(17)
+/* Flag to note PR Swap just completed for Startup entry */
+#define PE_FLAGS_PR_SWAP_COMPLETE	     BIT(17)
 /* Flag to note Port Discovery port partner replied with BUSY */
 #define PE_FLAGS_VDM_REQUEST_BUSY            BIT(18)
 /* Flag to note Port Discovery port partner replied with NAK */
@@ -119,10 +119,12 @@
 
 /* 6.7.5 Discover Identity Counter */
 /*
- * NOTE: The Protocol Layer tries to send a message 4 time before giving up,
- * so a Discover Identity message will be sent 4*5 = 20 times.
+ * NOTE: The Protocol Layer tries to send a message 3 time before giving up,
+ * so a Discover Identity SOP' message will be sent 3*6 = 18 times (slightly
+ * less than spec maximum of 20).  This counter applies only to cable plug
+ * discovery.
  */
-#define N_DISCOVER_IDENTITY_COUNT 5
+#define N_DISCOVER_IDENTITY_COUNT 6
 /*
  * ChromeOS policy:
  *   For PD2.0, We must be DFP before sending Discover Identity message
@@ -200,6 +202,8 @@ enum usb_pe_state {
 	PE_VCS_TURN_OFF_VCONN_SWAP,
 	PE_VCS_SEND_PS_RDY_SWAP,
 	PE_DO_PORT_DISCOVERY,
+	PE_VDM_SEND_REQUEST,
+	PE_VDM_IDENTITY_REQUEST_CBL,
 	PE_VDM_REQUEST,
 	PE_VDM_ACKED,
 	PE_VDM_RESPONSE,
@@ -267,6 +271,8 @@ static const char * const pe_state_names[] = {
 	[PE_VCS_TURN_OFF_VCONN_SWAP] = "PE_VCS_Turn_Off_Vconn_Swap",
 	[PE_VCS_SEND_PS_RDY_SWAP] = "PE_VCS_Send_Ps_Rdy_Swap",
 	[PE_DO_PORT_DISCOVERY] = "PE_Do_Port_Discovery",
+	[PE_VDM_SEND_REQUEST] = "PE_VDM_Send_Request",
+	[PE_VDM_IDENTITY_REQUEST_CBL] = "PE_VDM_Identity_Request_Cbl",
 	[PE_VDM_REQUEST] = "PE_VDM_Request",
 	[PE_VDM_ACKED] = "PE_VDM_Acked",
 	[PE_VDM_RESPONSE] = "PE_VDM_Response",
@@ -283,7 +289,8 @@ static const char * const pe_state_names[] = {
 /*
  * NOTE:
  *	DO_PORT_DISCOVERY_START is not actually a vdm command. It is used
- *	to start the port partner discovery proccess.
+ *	to start the port partner discovery process.
+ * TODO(b/150611251): Replace with states using new VDM send parent
  */
 enum vdm_cmd {
 	DO_PORT_DISCOVERY_START,
@@ -338,18 +345,18 @@ static struct policy_engine {
 	/* state specific state machine variable */
 	enum sub_state sub;
 
-	/* VDO */
-
-	/* TODO (b/148834626): Enable eMarker cable detection */
+	/* Cable DiscoverIdentity VDOs */
 	struct pd_cable cable;
 
+	/* TODO(b/150611251): Store full partner DiscoverIdentity response */
 	/* PD_VDO_INVALID is used when there is an invalid VDO */
 	int32_t ama_vdo;
 	int32_t vpd_vdo;
 	/* alternate mode policy*/
 	struct pd_policy am_policy;
 
-	/* VDM */
+	/* VDM - used to send information to shared VDM Request state */
+	/* TODO(b/150611251): Remove when all VDMs use shared parent */
 	enum port_partner partner_type;
 	uint32_t vdm_cmd;
 	uint32_t vdm_cnt;
@@ -387,7 +394,7 @@ static struct policy_engine {
 
 	/*
 	 * This timer is used during an Explicit Contract when discovering
-	 * whether a Port Partner is PD Capable using SOP.
+	 * whether a Port Partner is PD Capable using SOP'.
 	 */
 	uint64_t discover_port_identity_timer;
 
@@ -472,12 +479,14 @@ static struct policy_engine {
 
 	/*
 	 * This counter maintains a count of Discover Identity Messages sent
-	 * to a port partner.
+	 * to a cable.  If no GoodCRC messages are received after
+	 * nDiscoverIdentityCount, the port shall not send any further
+	 * SOP'/SOP'' messages.
 	 */
 	uint32_t discover_port_identity_counter;
 	/*
 	 * For PD2.0, we need to be a DFP before sending a discovery identity
-	 * messaage to our port partner. This counter keeps track of how
+	 * message to our port partner. This counter keeps track of how
 	 * many attempts to DR SWAP from UFP to DFP.
 	 */
 	uint32_t dr_swap_attempt_counter;
@@ -661,12 +670,21 @@ void pe_report_error(int port, enum pe_error e)
 		return;
 	}
 
+	/*
+	 * The following states require custom handling of protocol errors,
+	 * because they either need special handling of the no GoodCRC case
+	 * (cable identity request, send capabilities), occur before explicit
+	 * contract (discovery), or happen during a power transition.
+	 *
+	 * TODO(b/150774779): TCPMv2: Improve pe_error documentation
+	 */
 	if (get_state_pe(port) == PE_SRC_SEND_CAPABILITIES ||
 			get_state_pe(port) == PE_SRC_TRANSITION_SUPPLY ||
 			get_state_pe(port) == PE_PRS_SRC_SNK_WAIT_SOURCE_ON ||
 			get_state_pe(port) == PE_SRC_DISABLED ||
 			get_state_pe(port) == PE_SRC_DISCOVERY ||
-			get_state_pe(port) == PE_VDM_REQUEST) {
+			get_state_pe(port) == PE_VDM_REQUEST ||
+			get_state_pe(port) == PE_VDM_IDENTITY_REQUEST_CBL) {
 		PE_SET_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 		return;
 	}
@@ -1112,15 +1130,8 @@ static void pe_src_startup_entry(int port)
 	/* Clear explicit contract. */
 	pe_invalidate_explicit_contract(port);
 
-	/* Clear port discovery flags */
-	PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
-	pe[port].discover_port_identity_counter = 0;
-
-	/* Reset dr swap attempt counter */
-	pe[port].dr_swap_attempt_counter = 0;
-
-	if (PE_CHK_FLAG(port, PE_FLAGS_RUN_SOURCE_START_TIMER)) {
-		PE_CLR_FLAG(port, PE_FLAGS_RUN_SOURCE_START_TIMER);
+	if (PE_CHK_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE)) {
+		PE_CLR_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE);
 
 		/* Start SwapSourceStartTimer */
 		pe[port].swap_source_start_timer = get_time().val +
@@ -1132,6 +1143,21 @@ static void pe_src_startup_entry(int port)
 		 * the protocol layer is running again (done in run function).
 		 */
 		pe[port].swap_source_start_timer = get_time().val;
+
+		/*
+		 * Set DiscoverIdentityTimer to trigger when we enter
+		 * src_discovery for the first time.  After initial startup
+		 * set, vdm_identity_request_cbl will handle the timer updates.
+		 */
+		pe[port].discover_port_identity_timer = get_time().val;
+
+		/* Clear port discovery flags */
+		PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+		pe[port].discover_port_identity_counter = 0;
+		memset(&pe[port].cable, 0, sizeof(struct pd_cable));
+
+		/* Reset dr swap attempt counter */
+		pe[port].dr_swap_attempt_counter = 0;
 	}
 }
 
@@ -1159,8 +1185,11 @@ static void pe_src_discovery_entry(int port)
 	 * The SourceCapabilityTimer Shall continue to run during
 	 * identity discover and Shall Not be initialized on re-entry
 	 * to PE_SRC_Discovery.
+	 *
+	 * Note: Cable identity is the only valid VDM to probe before a contract
+	 * is in place.  All other probing must happen from ready states.
 	 */
-	if (get_last_state_pe(port) != PE_VDM_REQUEST)
+	if (get_last_state_pe(port) != PE_VDM_IDENTITY_REQUEST_CBL)
 		pe[port].source_cap_timer =
 				get_time().val + PD_T_SEND_SOURCE_CAP;
 }
@@ -1176,6 +1205,10 @@ static void pe_src_discovery_run(int port)
 	 *   1) The Port Partners are not presently PD Connected
 	 *   2) And the SourceCapabilityTimer times out
 	 *   3) And CapsCounter > nCapsCount.
+	 *
+	 * Transition to the PE_SRC_VDM_Identity_request state when:
+	 *   1) DPM requests the identity of the cable plug and
+	 *   2) DiscoverIdentityCounter < nDiscoverIdentityCount
 	 */
 	if (get_time().val > pe[port].source_cap_timer) {
 		if (pe[port].caps_counter <= N_CAPS_COUNT) {
@@ -1185,6 +1218,17 @@ static void pe_src_discovery_run(int port)
 			set_state_pe(port, PE_SRC_DISABLED);
 			return;
 		}
+	}
+
+	/*
+	 * Note: While the DiscoverIdentityTimer is only required in an explicit
+	 * contract, we use it here to ensure we space any potential BUSY
+	 * requests properly.
+	 */
+	if (pe[port].cable.discovery == PD_DISC_NEEDED &&
+	    get_time().val > pe[port].discover_port_identity_timer) {
+		set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
+		return;
 	}
 
 	/*
@@ -1265,6 +1309,13 @@ static void pe_src_send_capabilities_run(int port)
 			prl_set_rev(port, TCPC_TX_SOP,
 				(PD_HEADER_REV(emsg[port].header) > PD_REV30) ?
 				PD_REV30 : PD_HEADER_REV(emsg[port].header));
+
+			/*
+			 * If port partner runs PD 2.0, cable communication must
+			 * also be PD 2.0
+			 */
+			if (prl_get_rev(port, TCPC_TX_SOP) == PD_REV20)
+				prl_set_rev(port, TCPC_TX_SOP_PRIME, PD_REV20);
 
 			/* We are PD connected */
 			PE_SET_FLAG(port, PE_FLAGS_PD_CONNECTION);
@@ -1857,12 +1908,17 @@ static void pe_snk_startup_entry(int port)
 	/* Clear explicit contract */
 	pe_invalidate_explicit_contract(port);
 
-	/* Clear port discovery flags */
-	PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
-	pe[port].discover_port_identity_counter = 0;
+	if (PE_CHK_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE)) {
+		PE_CLR_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE);
+	} else {
+		/* Clear port discovery flags */
+		PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+		pe[port].discover_port_identity_counter = 0;
+		memset(&pe[port].cable, 0, sizeof(struct pd_cable));
 
-	/* Reset dr swap attempt counter */
-	pe[port].dr_swap_attempt_counter = 0;
+		/* Reset dr swap attempt counter */
+		pe[port].dr_swap_attempt_counter = 0;
+	}
 }
 
 static void pe_snk_startup_run(int port)
@@ -2510,6 +2566,10 @@ static void pe_send_soft_reset_run(int port)
 		return;
 
 	if (pe[port].sender_response_timer == TIMER_DISABLED) {
+		/*
+		 * TODO(b/150614211): Soft reset type should match
+		 * unexpected incoming message type
+		 */
 		/* Send Soft Reset message */
 		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_SOFT_RESET);
 
@@ -3074,7 +3134,7 @@ static void pe_prs_src_snk_wait_source_on_run(int port)
 
 	/*
 	 * Transition to PE_SNK_Startup when:
-	 *   1) An PS_RDY Message is received.
+	 *   1) A PS_RDY Message is received.
 	 */
 	if (pe[port].ps_source_timer != TIMER_DISABLED &&
 			PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
@@ -3087,6 +3147,7 @@ static void pe_prs_src_snk_wait_source_on_run(int port)
 		if ((ext == 0) && (cnt == 0) && (type == PD_CTRL_PS_RDY)) {
 			tc_pr_swap_complete(port);
 			pe[port].ps_source_timer = TIMER_DISABLED;
+			PE_SET_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE);
 			set_state_pe(port, PE_SNK_STARTUP);
 			return;
 		}
@@ -3331,7 +3392,7 @@ static void pe_prs_snk_src_source_on_run(int port)
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
 		/* Run swap source timer on entry to pe_src_startup */
-		PE_SET_FLAG(port, PE_FLAGS_RUN_SOURCE_START_TIMER);
+		PE_SET_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE);
 		tc_pr_swap_complete(port);
 		set_state_pe(port, PE_SRC_STARTUP);
 	}
@@ -3753,14 +3814,225 @@ static void pe_do_port_discovery_run(int port)
 }
 
 /**
+ * PE_VDM_SEND_REQUEST
+ * Shared parent to manage VDM timer and other shared parts of the VDM request
+ * process
+ */
+static void pe_vdm_send_request_entry(int port)
+{
+	/* All VDM sequences are Interruptible */
+	PE_SET_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
+
+	pe[port].vdm_response_timer = TIMER_DISABLED;
+}
+
+static void pe_vdm_send_request_run(int port)
+{
+	if (pe[port].vdm_response_timer == TIMER_DISABLED &&
+			PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+		/* Message was sent */
+		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+
+		/* Start no response timer */
+		pe[port].vdm_response_timer =
+			get_time().val + PD_T_VDM_SNDR_RSP;
+	}
+
+	/*
+	 * Check the VDM timer, child will be responsible for processing
+	 * messages and reacting appropriately to unexpected messages.
+	 */
+	if (get_time().val > pe[port].vdm_response_timer) {
+		CPRINTF("VDM %s Response Timeout\n",
+				pe[port].partner_type ? "Cable" : "Port");
+
+		set_state_pe(port, get_last_state_pe(port));
+	}
+}
+
+static void pe_vdm_send_request_exit(int port)
+{
+	/*
+	 * Clear TX complete in case child called set_state_pe() before parent
+	 * could process transmission
+	 */
+	PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
+}
+
+/**
+ * PE_VDM_IDENTITY_REQUEST_CBL
+ * Combination of PE_INIT_PORT_VDM_Identity_Request State specific to the
+ * cable and PE_SRC_VDM_Identity_Request State
+ */
+static void pe_vdm_identity_request_cbl_entry(int port)
+{
+	uint32_t *msg = (uint32_t *)emsg[port].buf;
+
+	print_current_state(port);
+
+	msg[0] = VDO(USB_SID_PD, 1, VDO_SVDM_VERS(VDM_VER20)
+		     | DISCOVER_IDENTITY);
+	emsg[port].len = sizeof(uint32_t);
+
+	prl_send_data_msg(port, TCPC_TX_SOP_PRIME, PD_DATA_VENDOR_DEF);
+
+	pe[port].discover_port_identity_counter++;
+}
+
+static void pe_vdm_identity_request_cbl_run(int port)
+{
+	/* Message received */
+	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		uint32_t *payload;
+		int sop;
+		uint8_t type;
+		uint8_t cnt;
+		uint8_t ext;
+
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+		/* Retrieve the message information */
+		payload = (uint32_t *)emsg[port].buf;
+		sop = PD_HEADER_GET_SOP(emsg[port].header);
+		type = PD_HEADER_TYPE(emsg[port].header);
+		cnt = PD_HEADER_CNT(emsg[port].header);
+		ext = PD_HEADER_EXT(emsg[port].header);
+
+		if (sop == TCPC_TX_SOP_PRIME && type == PD_DATA_VENDOR_DEF &&
+							cnt > 0 && ext == 0) {
+			/*
+			 * Valid DiscoverIdentity responses should have at least
+			 * 4 objects (header, ID header, Cert Stat, Product VDO)
+			 */
+			if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK &&
+								cnt > 3) {
+				/*
+				 * PE_SRC_VDM_Identity_ACKed and
+				 * PE_INIT_PORT_VDM_Identity_ACKed embedded here
+				 */
+				pe[port].cable.rev =
+					PD_HEADER_REV(emsg[port].header);
+				pe[port].cable.type = PD_IDH_PTYPE(payload[1]);
+				pe[port].cable.attr.raw_value = payload[3];
+				if (cnt > 4)
+					pe[port].cable.attr2.raw_value =
+								payload[4];
+				pe[port].cable.discovery = PD_DISC_COMPLETE;
+				pe[port].cable.is_identified = 1;
+
+				/*
+				 * Note: If port partner runs PD 2.0, we must
+				 * use PD 2.0 to communicate with the cable plug
+				 * when in an explicit contract
+				 *
+				 * PD Spec Table 6-2: Revision Interoperability
+				 * during an Explicit Contract
+				 */
+				if (prl_get_rev(port, TCPC_TX_SOP) != PD_REV20)
+					prl_set_rev(port, TCPC_TX_SOP_PRIME,
+							pe[port].cable.rev);
+
+			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
+				/*
+				 * PE_SRC_VDM_Identity_NAKed and
+				 * PE_INIT_PORT_VDM_Identity_NAKed embedded here
+				 */
+				pe[port].cable.discovery = PD_DISC_FAIL;
+			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
+				/*
+				 * Don't fill in the discovery field so we
+				 * re-probe in tVDMBusy
+				 */
+				CPRINTS("C%d: Cable Busy, DiscIdent "
+					"will be re-tried", port);
+				pe[port].discover_port_identity_timer =
+						get_time().val + PD_T_VDM_BUSY;
+			} else {
+				/*
+				 * Cable gave us an incorrect size or command,
+				 * mark discovery as failed
+				 */
+				pe[port].cable.discovery = PD_DISC_FAIL;
+				CPRINTS("C%d: Unexpected cable response: "
+					"0x%04x 0x%04x", port,
+					emsg[port].header, payload[0]);
+			}
+			/* Return to calling state (SRC_DISCOVERY, or ready) */
+			set_state_pe(port, get_last_state_pe(port));
+			return;
+		}
+
+		/* Unexpected Message Received. */
+
+		/*
+		 * Before an explicit contract, an unexpected message
+		 * shall generate a soft reset using the SOP* of the
+		 * incoming message
+		 */
+		if (get_last_state_pe(port) == PE_SRC_DISCOVERY) {
+			set_state_pe(port, PE_SEND_SOFT_RESET);
+		} else {
+		/*
+		 * Otherwise, return to PE_S[RC,NK]_Ready to process
+		 * Reset PE_FLAGS_MSG_RECEIVED so Src.Ready or Snk.Ready
+		 * can handle it.
+		 */
+			PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+			if (pe[port].power_role == PD_ROLE_SOURCE)
+				set_state_pe(port, PE_SRC_READY);
+			else
+				set_state_pe(port, PE_SNK_READY);
+		}
+		return;
+	}
+
+	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
+		/* No Good CRC */
+		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
+
+		/*
+		 * See section 6.4.4.3.1 - Discover Identity
+		 *
+		 * Discover Identity Command request sent to SOP' Shall Not
+		 * cause a Soft Reset if a GoodCRC Message response is not
+		 * returned since this can indicate a non-PD Capable cable
+		 */
+		set_state_pe(port, get_last_state_pe(port));
+		return;
+	}
+}
+
+static void pe_vdm_identity_request_cbl_exit(int port)
+{
+	if (pe[port].discover_port_identity_counter >=
+						N_DISCOVER_IDENTITY_COUNT)
+		pe[port].cable.discovery = PD_DISC_FAIL;
+
+	/*
+	 * Set discover identity timer unless BUSY case already did so
+	 *
+	 * Note: DiscoverIdentityTimer only applies within an explicit
+	 * contract, so we could re-try faster from src_discovery if
+	 * desired here
+	 */
+	if (pe[port].cable.discovery == PD_DISC_NEEDED &&
+			pe[port].discover_port_identity_timer > get_time().val)
+		pe[port].discover_port_identity_timer = get_time().val +
+							PD_T_DISCOVER_IDENTITY;
+}
+
+/**
  * PE_VDM_REQUEST
+ * TODO(b/150611251): transition other VDMs to use shared parent above
  */
 
 static void pe_vdm_request_entry(int port)
 {
 	print_current_state(port);
 
-	/* This is an Interruptible AMS */
+	/* All VDM sequences are Interruptible */
 	PE_SET_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 
 	/* Copy Vendor Data Objects (VDOs) into message buffer */
@@ -4754,6 +5026,17 @@ static const struct usb_state pe_states[] = {
 	[PE_DO_PORT_DISCOVERY] = {
 		.entry = pe_do_port_discovery_entry,
 		.run   = pe_do_port_discovery_run,
+	},
+	[PE_VDM_SEND_REQUEST] = {
+		.entry = pe_vdm_send_request_entry,
+		.run   = pe_vdm_send_request_run,
+		.exit  = pe_vdm_send_request_exit,
+	},
+	[PE_VDM_IDENTITY_REQUEST_CBL] = {
+		.entry  = pe_vdm_identity_request_cbl_entry,
+		.run    = pe_vdm_identity_request_cbl_run,
+		.exit   = pe_vdm_identity_request_cbl_exit,
+		.parent = &pe_states[PE_VDM_SEND_REQUEST],
 	},
 	[PE_VDM_REQUEST] = {
 		.entry = pe_vdm_request_entry,

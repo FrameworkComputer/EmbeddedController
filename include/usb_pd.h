@@ -237,7 +237,7 @@ enum pd_rx_errors {
 #define PD_T_AME (1*SECOND) /* timeout from UFP attach to Alt Mode Entry */
 
 /* VDM Timers ( USB PD Spec Rev2.0 Table 6-30 )*/
-#define PD_T_VDM_BUSY          (100*MSEC) /* at least 100ms */
+#define PD_T_VDM_BUSY           (50*MSEC) /* at least 50ms */
 #define PD_T_VDM_E_MODE         (25*MSEC) /* enter/exit the same max */
 #define PD_T_VDM_RCVR_RSP       (15*MSEC) /* max of 15ms */
 #define PD_T_VDM_SNDR_RSP       (30*MSEC) /* max of 30ms */
@@ -321,6 +321,18 @@ enum hpd_event {
 /* DisplayPort flags */
 #define DP_FLAGS_DP_ON              BIT(0) /* Display port mode is on */
 #define DP_FLAGS_HPD_HI_PENDING     BIT(1) /* Pending HPD_HI */
+
+/*
+ * State of discovery
+ *
+ * Note: Discovery needed must be 0 to meet expectations that it be the default
+ * value after resetting connection information via memset.
+ */
+enum pd_discovery_state {
+	PD_DISC_NEEDED = 0,	/* Cable or partner still needs to be probed */
+	PD_DISC_COMPLETE,	/* Successfully probed, valid to read VDO */
+	PD_DISC_FAIL,		/* Cable did not respond, or Discover* NAK */
+};
 
 /* supported alternate modes */
 enum pd_alternate_modes {
@@ -536,27 +548,35 @@ enum pd_rev_type {
 
 /* Cable structure for storing cable attributes */
 struct pd_cable {
+	/* Note: the following fields are used by TCPMv1 */
 	/* Last received SOP' message id counter*/
 	uint8_t last_sop_p_msg_id;
 	/* Last received SOP'' message id counter*/
 	uint8_t last_sop_p_p_msg_id;
+	/* Cable flags. See CABLE_FLAGS_* */
+	uint8_t flags;
+	/* For storing Discover mode response from device */
+	union tbt_mode_resp_device dev_mode_resp;
+	/* For storing Discover mode response from cable */
+	union tbt_mode_resp_cable cable_mode_resp;
+
+	/* Note: this field is for TCPMv2's probing process */
+	enum pd_discovery_state discovery;
+
+	/* Shared fields between TCPMv1 and TCPMv2 */
 	uint8_t is_identified;
 	/* Type of cable */
 	enum idh_ptype type;
-	/* Cable flags. See CABLE_FLAGS_* */
-	uint8_t flags;
 	/* Cable attributes */
 	union cable_vdo attr;
 	/* For USB PD REV3, active cable has 2 VDOs */
 	union active_cable_vdo2 attr2;
 	/* Cable revision */
 	enum pd_rev_type rev;
-	/* For storing Discover mode response from device */
-	union tbt_mode_resp_device dev_mode_resp;
-	/* For storing Discover mode response from cable */
-	union tbt_mode_resp_cable cable_mode_resp;
+
 };
 
+/* Note: These flags are only used for TCPMv1 */
 /* Flag for sending SOP Prime packet */
 #define CABLE_FLAGS_SOP_PRIME_ENABLE	   BIT(0)
 /* Flag for sending SOP Prime Prime packet */
