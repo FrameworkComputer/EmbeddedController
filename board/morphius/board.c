@@ -14,9 +14,11 @@
 #include "fan.h"
 #include "fan_chip.h"
 #include "hooks.h"
+#include "keyboard_8042.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
+#include "ps2_chip.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "switch.h"
@@ -153,9 +155,16 @@ static void trackpoint_reset_deferred(void)
 	gpio_set_level(GPIO_EC_PS2_RESET, 1);
 	msleep(2);
 	gpio_set_level(GPIO_EC_PS2_RESET, 0);
+	msleep(10);
+	ps2_enable_channel(NPCX_PS2_CH0, 1, send_aux_data_to_host);
+	msleep(10);
 }
 DECLARE_DEFERRED(trackpoint_reset_deferred);
 
+void send_aux_data_to_device(uint8_t data)
+{
+	ps2_transmit_byte(NPCX_PS2_CH0, data);
+}
 
 void ps2_pwr_en_interrupt(enum gpio_signal signal)
 {
