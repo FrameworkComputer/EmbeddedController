@@ -36,6 +36,14 @@ int lpc_keyboard_input_pending(void);
 void lpc_keyboard_put_char(uint8_t chr, int send_irq);
 
 /**
+ * Send an aux byte to host via keyboard port 0x60.
+ *
+ * @param chr		Byte to send
+ * @param send_irq	If non-zero, asserts IRQ
+ */
+void lpc_aux_put_char(uint8_t chr, int send_irq);
+
+/**
  * Clear the keyboard buffer.
  */
 void lpc_keyboard_clear_buffer(void);

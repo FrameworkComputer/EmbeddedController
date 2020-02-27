@@ -314,12 +314,17 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 	}
 }
 
-/* Put a char to host buffer by HIMDO */
-void lpc_mouse_put_char(uint8_t chr)
+/* Put an aux char to host buffer by HIMDO and assert status bit 5. */
+void lpc_aux_put_char(uint8_t chr, int send_irq)
 {
+	if (send_irq)
+		SET_BIT(NPCX_HICTRL, NPCX_HICTRL_OBFMIE);
+	else
+		CLEAR_BIT(NPCX_HICTRL, NPCX_HICTRL_OBFMIE);
+
 	NPCX_HIKMST |= I8042_AUX_DATA;
 	NPCX_HIMDO = chr;
-	CPRINTS("Mouse put %02x", chr);
+	CPRINTS("AUX put %02x", chr);
 
 	/* Enable OBE interrupt to detect host read data out */
 	SET_BIT(NPCX_HICTRL, NPCX_HICTRL_OBECIE);
