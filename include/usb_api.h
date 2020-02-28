@@ -82,11 +82,4 @@ static inline void usb_wake(void) {}
 /* Board-specific USB wake, for side-band wake, called by usb_wake above. */
 void board_usb_wake(void);
 
-#ifdef CONFIG_USB_SELECT_PHY
-/* Select which PHY to use. */
-void usb_select_phy(uint32_t phy);
-
-/* Get the current PHY */
-uint32_t usb_get_phy(void);
-#endif
 #endif /* __CROS_EC_USB_API_H */

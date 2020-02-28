@@ -177,15 +177,6 @@ enum hook_type {
 	 */
 	HOOK_BATTERY_SOC_CHANGE,
 
-#ifdef CONFIG_CASE_CLOSED_DEBUG_V1
-	/*
-	 * Case-closed debugging configuration changed.
-	 *
-	 * Hook routines are called from the TICK, console, or TPM task.
-	 */
-	HOOK_CCD_CHANGE,
-#endif
-
 #ifdef CONFIG_USB_SUSPEND
 	/*
 	 * Called when there is a change in USB power management status

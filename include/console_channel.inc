@@ -22,12 +22,6 @@ CONSOLE_CHANNEL(CC_BLUETOOTH_HCI,"bluetooth_hci")
 #ifdef CONFIG_CEC
 CONSOLE_CHANNEL(CC_CEC, "cec")
 #endif
-#ifdef CONFIG_EXTENSION_COMMAND
-CONSOLE_CHANNEL(CC_EXTENSION,    "extension")
-#endif
-#if defined(CONFIG_PHYSICAL_PRESENCE)
-CONSOLE_CHANNEL(CC_CCD,          "ccd")
-#endif
 CONSOLE_CHANNEL(CC_CHARGER,      "charger")
 #ifdef HAS_TASK_CHIPSET
 CONSOLE_CHANNEL(CC_CHIPSET,      "chipset")
@@ -85,12 +79,6 @@ CONSOLE_CHANNEL(CC_PS2,          "ps2")
 CONSOLE_CHANNEL(CC_PWM,          "pwm")
 #endif
 CONSOLE_CHANNEL(CC_SPI,          "spi")
-#ifdef CONFIG_RBOX
-CONSOLE_CHANNEL(CC_RBOX,         "rbox")
-#endif
-#ifdef CONFIG_SPS
-CONSOLE_CHANNEL(CC_SPS,          "sps")
-#endif
 #if defined(CONFIG_SWITCH) || defined(CONFIG_LID_SWITCH)
 CONSOLE_CHANNEL(CC_SWITCH,       "switch")
 #endif
@@ -106,9 +94,6 @@ CONSOLE_CHANNEL(CC_DPTF,         "dptf")
 CONSOLE_CHANNEL(CC_ALS,		 "als")
 #endif
 CONSOLE_CHANNEL(CC_THERMAL,      "thermal")
-#ifdef CHIP_G
-CONSOLE_CHANNEL(CC_TPM,          "tpm")
-#endif
 CONSOLE_CHANNEL(CC_USB,          "usb")
 CONSOLE_CHANNEL(CC_USBCHARGE,    "usbcharge")
 #if defined(CONFIG_USB_POWER_DELIVERY) || defined(CONFIG_USB_PD_TCPC)

@@ -141,8 +141,7 @@ cmd_cp_script = cp "$<" "$@" && chmod +x "$@"
 
 cmd_libcryptoc_make = $(MAKE) --no-print-directory -C $(CRYPTOCLIB) \
 	obj=$(realpath $(out))/cryptoc \
-	SUPPORT_UNALIGNED=1 \
-	CONFIG_UPTO_SHA512=$(CONFIG_UPTO_SHA512)
+	SUPPORT_UNALIGNED=1
 cmd_libcryptoc = $(cmd_libcryptoc_make) -q || $(cmd_libcryptoc_make)
 
 # commands for RSA signature: rwsig does not need to sign the whole image

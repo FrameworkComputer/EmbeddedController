@@ -16,18 +16,6 @@ chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
 chip-$(CONFIG_USB_PD_TCPC)+=usb_pd_phy.o
 
-ifeq ($(CONFIG_DCRYPTO),y)
-CPPFLAGS += -I$(abspath ./chip/g)
-dirs-y += chip/g/dcrypto
-endif
 dirs-y += chip/host/dcrypto
 
 chip-$(CONFIG_I2C)+= i2c.o
-
-chip-$(CONFIG_DCRYPTO)+= dcrypto/aes.o
-chip-$(CONFIG_DCRYPTO)+= dcrypto/app_cipher.o
-chip-$(CONFIG_DCRYPTO)+= dcrypto/app_key.o
-chip-$(CONFIG_DCRYPTO)+= dcrypto/sha256.o
-
-# Object files that can be shared with the Cr50 dcrypto implementation
-chip-$(CONFIG_DCRYPTO)+= ../g/dcrypto/hmac.o

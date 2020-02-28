@@ -220,12 +220,6 @@ SECTIONS
 		KEEP(*(.rodata.HOOK_BATTERY_SOC_CHANGE))
 		__hooks_battery_soc_change_end = .;
 
-#ifdef CONFIG_CASE_CLOSED_DEBUG_V1
-		__hooks_ccd_change = .;
-		KEEP(*(.rodata.HOOK_CCD_CHANGE))
-		__hooks_ccd_change_end = .;
-#endif
-
 #ifdef CONFIG_USB_SUSPEND
 		__hooks_usb_change = .;
 		KEEP(*(.rodata.HOOK_USB_PM_CHANGE))

@@ -456,43 +456,6 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #endif
 
-#if defined(TEST_NVMEM) || defined(TEST_NVMEM_VARS)
-#define CONFIG_CRC8
-#define CONFIG_FLASH_ERASED_VALUE32 (-1U)
-#define CONFIG_FLASH_LOG
-#define CONFIG_FLASH_LOG_BASE CONFIG_PROGRAM_MEMORY_BASE
-#define CONFIG_FLASH_LOG_SPACE 0x800
-#define CONFIG_FLASH_NVMEM
-#define CONFIG_FLASH_NVMEM_OFFSET_A 0x3d000
-#define CONFIG_FLASH_NVMEM_OFFSET_B 0x7d000
-#define CONFIG_FLASH_NVMEM_BASE_A                                              \
-	(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_NVMEM_OFFSET_A)
-#define CONFIG_FLASH_NVMEM_BASE_B                                              \
-	(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_NVMEM_OFFSET_B)
-#define CONFIG_FLASH_NEW_NVMEM_BASE_A (CONFIG_FLASH_NVMEM_BASE_A + 0x800)
-#define CONFIG_FLASH_NEW_NVMEM_BASE_B (CONFIG_FLASH_NVMEM_BASE_B + 0x800)
-#define CONFIG_MALLOC
-/* This is legacy NVMEM partition size. */
-#define NVMEM_PARTITION_SIZE 0x3000
-#define NEW_FLASH_HALF_NVMEM_SIZE                                              \
-	(NVMEM_PARTITION_SIZE - CONFIG_FLASH_BANK_SIZE)
-#define NEW_NVMEM_PARTITION_SIZE (NVMEM_PARTITION_SIZE - CONFIG_FLASH_BANK_SIZE)
-#define NEW_NVMEM_TOTAL_PAGES                                                  \
-	(2 * NEW_NVMEM_PARTITION_SIZE / CONFIG_FLASH_BANK_SIZE)
-#define CONFIG_SW_CRC
-#define CONFIG_FLASH_NVMEM_VARS
-
-#ifndef __ASSEMBLER__
-enum nvmem_users { NVMEM_TPM = 0, NVMEM_CR50, NVMEM_NUM_USERS };
-#endif
-#endif
-
-#ifdef TEST_PINWEAVER
-#define CONFIG_DCRYPTO_MOCK
-#define CONFIG_PINWEAVER
-#define CONFIG_SHA256
-#endif /* TEST_PINWEAVER */
-
 #ifdef TEST_RTC
 #define CONFIG_HOSTCMD_RTC
 #endif

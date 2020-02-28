@@ -5,7 +5,6 @@
 
 #include "byteorder.h"
 #include "console.h"
-#include "extension.h"
 #include "flash.h"
 #include "hooks.h"
 #include "include/compile_time_macros.h"
@@ -106,7 +105,6 @@ static uint8_t check_update_chunk(uint32_t block_offset, size_t body_size)
 
 }
 
-/* TODO(b/36375666): These need to be overridden for chip/g. */
 int update_pdu_valid(struct update_command *cmd_body, size_t cmd_size)
 {
 	return 1;
@@ -283,11 +281,6 @@ void fw_update_command_handler(void *body,
 		return;
 	}
 
-	/*
-	 * TODO(b/36375666): chip/g code has some cr50-specific stuff right
-	 * here, which should probably be merged into contents_allowed...
-	 */
-
 #ifdef CONFIG_TOUCHPAD_VIRTUAL_OFF
 	if (is_touchpad_block(block_offset, body_size)) {
 		if (touchpad_update_write(
@@ -329,7 +322,6 @@ void fw_update_command_handler(void *body,
 	*error_code = UPDATE_SUCCESS;
 }
 
-/* TODO(b/36375666): This need to be overridden for chip/g. */
 void fw_update_complete(void)
 {
 }

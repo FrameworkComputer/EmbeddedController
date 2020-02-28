@@ -8,7 +8,6 @@
 #include "console.h"
 #include "consumer.h"
 #include "curve25519.h"
-#include "extension.h"
 #include "flash.h"
 #include "queue_policies.h"
 #include "host_command.h"
