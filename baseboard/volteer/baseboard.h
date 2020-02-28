@@ -213,6 +213,9 @@
 /* Enabling USB4 mode */
 #define CONFIG_USB_PD_USB4
 
+/* UART COMMAND */
+#define CONFIG_CMD_CHARGEN
+
 /*
  * USB ID
  * This is allocated specifically for Volteer
