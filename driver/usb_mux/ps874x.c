@@ -27,7 +27,8 @@ static inline int ps874x_write(const struct usb_mux *me,
 
 static int ps874x_init(const struct usb_mux *me)
 {
-	int val;
+	int id1;
+	int id2;
 	int res;
 
 	/* Reset chip back to power-on state */
@@ -36,41 +37,46 @@ static int ps874x_init(const struct usb_mux *me)
 		return res;
 
 	/*
-	 * Verify revision / chip ID registers.
+	 * Verify chip ID registers.
 	 */
-	res = ps874x_read(me, PS874X_REG_REVISION_ID1, &val);
+	res = ps874x_read(me, PS874X_REG_CHIP_ID1, &id1);
 	if (res)
 		return res;
 
-#ifdef CONFIG_USB_MUX_PS8743
+	res  = ps874x_read(me, PS874X_REG_CHIP_ID2, &id2);
+	if (res)
+		return res;
+
+	if (id1 != PS874X_CHIP_ID1 || id2 != PS874X_CHIP_ID2)
+		return EC_ERROR_UNKNOWN;
+
+	/*
+	 * Verify revision ID registers.
+	 */
+	res = ps874x_read(me, PS874X_REG_REVISION_ID1, &id1);
+	if (res)
+		return res;
+
+	res = ps874x_read(me, PS874X_REG_REVISION_ID2, &id2);
+	if (res)
+		return res;
+
+#ifdef CONFIG_USB_MUX_PS8740
+	if (id1 != PS874X_REVISION_ID1)
+		return EC_ERROR_UNKNOWN;
+	/* PS8740 may have REVISION_ID2 as 0xa or 0xb */
+	if (id2 != PS874X_REVISION_ID2_0 && id2 != PS874X_REVISION_ID2_1)
+		return EC_ERROR_UNKNOWN;
+#else
 	/*
 	 * From Parade: PS8743 may have REVISION_ID1 as 0 or 1
 	 * Rev 1 is derived from Rev 0 and have same functionality.
 	 */
-	if (val != PS874X_REVISION_ID1_0 && val != PS874X_REVISION_ID1_1)
+	if (id1 != PS874X_REVISION_ID1_0 && id1 != PS874X_REVISION_ID1_1)
 		return EC_ERROR_UNKNOWN;
-#else
-	if (val != PS874X_REVISION_ID1)
+	if (id2 != PS874X_REVISION_ID2)
 		return EC_ERROR_UNKNOWN;
 #endif
-
-	res = ps874x_read(me, PS874X_REG_REVISION_ID2, &val);
-	if (res)
-		return res;
-	if (val != PS874X_REVISION_ID2)
-		return EC_ERROR_UNKNOWN;
-
-	res = ps874x_read(me, PS874X_REG_CHIP_ID1, &val);
-	if (res)
-		return res;
-	if (val != PS874X_CHIP_ID1)
-		return EC_ERROR_UNKNOWN;
-
-	res  = ps874x_read(me, PS874X_REG_CHIP_ID2, &val);
-	if (res)
-		return res;
-	if (val != PS874X_CHIP_ID2)
-		return EC_ERROR_UNKNOWN;
 
 	return EC_SUCCESS;
 }
