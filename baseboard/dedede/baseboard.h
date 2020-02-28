@@ -172,6 +172,9 @@
 #define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
 
+/* UART COMMAND */
+#define CONFIG_CMD_CHARGEN
+
 /* Define typical operating power and max power. */
 #define PD_MAX_VOLTAGE_MV     20000
 #define PD_MAX_CURRENT_MA     3000
