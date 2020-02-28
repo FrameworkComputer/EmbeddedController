@@ -239,6 +239,9 @@
 #define CONFIG_AUDIO_CODEC_DMIC
 #define CONFIG_AUDIO_CODEC_I2S_RX
 
+/* CLI COMMAND */
+#define CONFIG_CMD_CHARGEN
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
