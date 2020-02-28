@@ -133,7 +133,6 @@
 
 #define CONFIG_CMD_PD_CONTROL
 #define CONFIG_USB_CHARGER
-#define CONFIG_USB_MUX_RUNTIME_CONFIG
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
@@ -155,14 +154,20 @@
 #define CONFIG_USBC_PPC_SBU
 #define CONFIG_USBC_PPC_AOZ1380
 #define CONFIG_USBC_PPC_NX20P3483
-#define CONFIG_USBC_RETIMER_PI3DPX1207
-#define CONFIG_USBC_RETIMER_PS8802
-#define CONFIG_USBC_RETIMER_PS8818
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_SS_MUX_DFP_ONLY
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_USB_MUX_AMD_FP5
+
+#if defined(VARIANT_ZORK_TREMBYLE)
+	#define CONFIG_USB_MUX_RUNTIME_CONFIG
+	#define CONFIG_USBC_RETIMER_PI3DPX1207
+	#define CONFIG_USBC_RETIMER_PS8802
+	#define CONFIG_USBC_RETIMER_PS8818
+#elif defined(VARIANT_ZORK_DALBOZ)
+	#define CONFIG_USB_MUX_PS8740
+#endif
 
 /* USB-A config */
 #define USB_PORT_COUNT 2
@@ -210,7 +215,7 @@
 #define I2C_PORT_USBA1		NPCX_I2C_PORT1_0
 #define I2C_PORT_BATTERY	NPCX_I2C_PORT2_0
 #define I2C_PORT_CHARGER	I2C_PORT_BATTERY
-#define I2C_PORT_USB_MUX	NPCX_I2C_PORT3_0
+#define I2C_PORT_USB_AP_MUX	NPCX_I2C_PORT3_0
 #define I2C_PORT_THERMAL	NPCX_I2C_PORT4_1
 #define I2C_PORT_SENSOR		NPCX_I2C_PORT5_0
 #define I2C_PORT_ACCEL		I2C_PORT_SENSOR
@@ -288,18 +293,18 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-/* Private
- * Main intent is to indicate the retimer type attached
- * but is also needed to determine the HPD from the port
- */
-enum zork_c1_retimer {
-	C1_RETIMER_UNKNOWN,
-	C1_RETIMER_PS8802,
-	C1_RETIMER_PS8818,
-};
-extern enum zork_c1_retimer zork_c1_retimer;
-
 #if defined(VARIANT_ZORK_TREMBYLE)
+	/* Private
+	 * Main intent is to indicate the retimer type attached
+	 * but is also needed to determine the HPD from the port
+	 */
+	enum zork_c1_retimer {
+		C1_RETIMER_UNKNOWN,
+		C1_RETIMER_PS8802,
+		C1_RETIMER_PS8818,
+	};
+	extern enum zork_c1_retimer zork_c1_retimer;
+
 	#define PORT_TO_HPD(port) ((port == 0) \
 		? GPIO_USB_C0_HPD \
 		: (zork_c1_retimer == C1_RETIMER_PS8802) \

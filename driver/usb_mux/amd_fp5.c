@@ -16,7 +16,7 @@ static inline int amd_fp5_mux_read(const struct usb_mux *me, uint8_t *val)
 	uint8_t buf[3] = { 0 };
 	int rv;
 
-	rv = i2c_xfer(I2C_PORT_USB_MUX, AMD_FP5_MUX_I2C_ADDR_FLAGS,
+	rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags,
 		      NULL, 0, buf, 3);
 	if (rv)
 		return rv;
@@ -28,7 +28,7 @@ static inline int amd_fp5_mux_read(const struct usb_mux *me, uint8_t *val)
 
 static inline int amd_fp5_mux_write(const struct usb_mux *me, uint8_t val)
 {
-	return i2c_write8(I2C_PORT_USB_MUX, AMD_FP5_MUX_I2C_ADDR_FLAGS,
+	return i2c_write8(me->i2c_port, me->i2c_addr_flags,
 			  me->usb_port, val);
 }
 
