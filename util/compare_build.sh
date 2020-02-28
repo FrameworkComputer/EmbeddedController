@@ -33,7 +33,12 @@ BOARDS_TO_SKIP+=" cr50"
 OLD_REF="$(git rev-parse --short "${FLAGS_ref1}")"
 NEW_REF="$(git rev-parse --short "${FLAGS_ref2}")"
 
+# Save current cute branch name
 SAVED_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+# If we are in a detached HEAD state, grab the exact commit hash
+if [[ "${SAVED_BRANCH}" == "HEAD" ]]; then
+  SAVED_BRANCH="$(git rev-parse HEAD)"
+fi
 
 on_exit() {
   # Intentionally not removing TMP_DIR on failure so that it can be
