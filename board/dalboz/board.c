@@ -34,6 +34,13 @@ static struct mutex g_base_mutex;
 static struct stprivate_data g_lis2dwl_data;
 static struct lsm6dsm_data g_lsm6dsm_data = LSM6DSM_DATA;
 
+/* Matrix to rotate accelrator into standard reference frame */
+static const mat33_fp_t base_standard_ref = {
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
+};
+
 /* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -78,7 +85,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_SENSOR,
 	 .i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 	 .default_range = 4, /* g, enough for laptop */
-	 .rot_standard_ref = NULL,
+	 .rot_standard_ref = &base_standard_ref,
 	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
 	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
 	 .config = {
@@ -110,7 +117,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_SENSOR,
 	 .i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 	 .default_range = 1000 | ROUND_UP_FLAG, /* dps */
-	 .rot_standard_ref = NULL,
+	 .rot_standard_ref = &base_standard_ref,
 	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
 	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
 	},
