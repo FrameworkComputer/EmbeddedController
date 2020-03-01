@@ -1176,6 +1176,22 @@
 
 /*****************************************************************************/
 /*
+ * Example functionality that is used to test boards.
+ */
+
+/*
+ * Enable the blink example.
+ *
+ * LEDs are used to count in binary.
+ *
+ * Required Configuration:
+ * - CONFIG_BLINK_LEDS        --> List of LEDs (gpio enum names) to use as bits
+ */
+#undef  CONFIG_BLINK
+#undef  CONFIG_BLINK_LEDS                     /* Ex: GPIO_LED1, GPIO_LED2 */
+
+/*****************************************************************************/
+/*
  * Optional console commands
  *
  * Defining these options will enable the corresponding command on the EC
