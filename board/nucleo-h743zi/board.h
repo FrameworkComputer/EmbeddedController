@@ -24,4 +24,10 @@
 #define CONFIG_CONSOLE_COMMAND_FLAGS
 #define CONFIG_RESTRICTED_CONSOLE_COMMANDS
 
+/*
+ * Enable the blink example that exercises the LEDs.
+ */
+#define CONFIG_BLINK
+#define CONFIG_BLINK_LEDS    GPIO_LED1, GPIO_LED2, GPIO_LED3
+
 #endif /* __BOARD_H */
