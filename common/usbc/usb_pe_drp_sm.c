@@ -653,6 +653,33 @@ static void pe_invalidate_explicit_contract(int port)
 	PE_CLR_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
 }
 
+/*
+ * Determine if this port may communicate with the cable plug.
+ *
+ * In both PD 2.0 and 3.0 (2.5.4 SOP'/SOP'' Communication with Cable Plugs):
+ *
+ * When no Contract or an Implicit Contract is in place (e.g. after a Power Role
+ * Swap or Fast Role Swap) only the Source port that is supplying Vconn is
+ * allowed to send packets to a Cable Plug
+ *
+ * When in an explicit contract, PD 3.0 requires that a port be Vconn source to
+ * communicate with the cable.  PD 2.0 requires that a port be DFP to
+ * communicate with the cable plug, with an implication that it must be Vconn
+ * source as well (6.3.11 VCONN_Swap Message).
+ */
+static bool pe_can_send_sop_prime(int port)
+{
+	if (PE_CHK_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT))
+		if (prl_get_rev(port, TCPC_TX_SOP) == PD_REV20)
+			return tc_is_vconn_src(port) &&
+				pe[port].data_role == PD_ROLE_DFP;
+		else
+			return tc_is_vconn_src(port);
+	else
+		return tc_is_vconn_src(port) &&
+			pe[port].power_role == PD_ROLE_SOURCE;
+}
+
 void pe_report_error(int port, enum pe_error e)
 {
 	/* This should only be called from the PD task */
@@ -1226,7 +1253,8 @@ static void pe_src_discovery_run(int port)
 	 * requests properly.
 	 */
 	if (pe[port].cable.discovery == PD_DISC_NEEDED &&
-	    get_time().val > pe[port].discover_port_identity_timer) {
+	    get_time().val > pe[port].discover_port_identity_timer &&
+	    pe_can_send_sop_prime(port)) {
 		set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
 		return;
 	}
@@ -1558,6 +1586,13 @@ static void pe_src_ready_run(int port)
 
 		PE_CLR_FLAG(port, PE_FLAGS_FIRST_MSG);
 		pe[port].wait_and_add_jitter_timer = TIMER_DISABLED;
+
+		if (pe[port].cable.discovery == PD_DISC_NEEDED &&
+		    get_time().val > pe[port].discover_port_identity_timer &&
+		    pe_can_send_sop_prime(port)) {
+			set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
+			return;
+		}
 
 		/*
 		 * Start Port Discovery when:
@@ -2012,6 +2047,13 @@ static void pe_snk_evaluate_capability_entry(int port)
 	prl_set_rev(port, TCPC_TX_SOP, (PD_HEADER_REV(header) > PD_REV30) ?
 					PD_REV30 : PD_HEADER_REV(header));
 
+	/*
+	 * If port partner runs PD 2.0, cable communication must
+	 * also be PD 2.0
+	 */
+	if (prl_get_rev(port, TCPC_TX_SOP) == PD_REV20)
+		prl_set_rev(port, TCPC_TX_SOP_PRIME, PD_REV20);
+
 	pe[port].src_cap_cnt = num;
 
 	for (i = 0; i < num; i++)
@@ -2279,6 +2321,13 @@ static void pe_snk_ready_run(int port)
 
 		if (get_time().val > pe[port].sink_request_timer) {
 			set_state_pe(port, PE_SNK_SELECT_CAPABILITY);
+			return;
+		}
+
+		if (pe[port].cable.discovery == PD_DISC_NEEDED &&
+		    get_time().val > pe[port].discover_port_identity_timer &&
+		    pe_can_send_sop_prime(port)) {
+			set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
 			return;
 		}
 
