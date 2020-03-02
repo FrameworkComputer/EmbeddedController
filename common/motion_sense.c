@@ -1801,5 +1801,5 @@ static int command_accelspoof(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(accelspoof, command_accelspoof,
 			"id [on/off] [X] [Y] [Z]",
 			"Enable/Disable spoofing of sensor readings.");
-#endif /* defined(CONIFG_CMD_ACCELSPOOF) */
+#endif /* defined(CONFIG_CMD_ACCELSPOOF) */
 #endif /* defined(CONFIG_ACCEL_SPOOF_MODE) */
