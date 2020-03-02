@@ -74,6 +74,7 @@ include $(_driver_cur_dir)fingerprint/build.mk
 driver-$(CONFIG_IO_EXPANDER_IT8801)+=ioexpander/it8801.o
 driver-$(CONFIG_IO_EXPANDER_PCA9534)+=ioexpander/pca9534.o
 driver-$(CONFIG_IO_EXPANDER_NCT38XX)+=ioexpander/ioexpander_nct38xx.o
+driver-$(CONFIG_IO_EXPANDER_PCAL6408)+=ioexpander/pcal6408.o
 
 
 # Current/Power monitor
