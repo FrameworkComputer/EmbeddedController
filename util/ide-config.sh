@@ -36,7 +36,7 @@ deinit() {
 
 usage() {
 	cat <<-HEREDOC
-	Usage: ide-config.sh <vscode> [BOARD:IMAGE] [BOARD:IMAGE...]
+	Usage: ide-config.sh <vscode|eclipse> [BOARD:IMAGE] [BOARD:IMAGE...]
 	Generate a C language configuration for a given IDE and EC board.
 
 	Examples:
@@ -45,6 +45,7 @@ usage() {
 	ide-config.sh vscode nocturne_fp:RO
 	ide-config.sh vscode nocturne:RO hatch:RW
 	ide-config.sh vscode all      # implicitly :RW
+	ide-config.sh eclipse nocturne_fp > ~/Downloads/nocturne_fp-RW.xml
 	HEREDOC
 }
 
@@ -253,6 +254,122 @@ vscode() {
 	| encap '{\n' '}\n'
 }
 
+# Usage: eclipse-cdt-import [cfg...]
+#
+# * Add odd EC "File Types"
+#   - *.tasklist *.mocklist *.testlist *.irqlist "C Header File"
+#   - *.inc "C Header File"
+#   - gpio.wrap "C Header File"
+# * Enable the indexer to follow current build configuration
+#   - Enable "Index all header variants"
+#   - Enable "Use active build configuration" (ensure this options sticks)
+#   - Probably bump up the Cache Limit->"Absolute Limit"
+# * Remove default system includes
+#   - Depending on your eclipse toolchain configuration, it may be possible
+#     to remove the standard C headers.
+#     This helps satisfy the EC's -nostdinc usage.
+eclipse-cdt-import() {
+	if [[ $# -gt 1 ]]; then
+		echo "Error - eclipse generator can only process one board cfg" >&2
+		return 1
+	fi
+
+	local cfg=$1
+	local board image
+
+	board=$(parse-cfg-board "${cfg}")
+	image=$(parse-cfg-image "${cfg}")
+
+	local includes
+	# Grab workspace/project local paths
+	includes+="$(make-includes "${board}" "${image}" | grep -v "^\.\." \
+			| join '<includepath workspace_path="true">' '</includepath>' '\n\t\t\t')"
+	# Add separator manually
+	includes+="$(printf "\n\t\t\t")"
+	# Grab external paths (wil start with .. because forced relative)
+	# shellcheck disable=SC2016
+	includes+="$(make-includes "${board}" "${image}" | grep "^\.\." \
+			| join '<includepath>${ProjDirPath}/' '</includepath>' '\n\t\t\t')"
+
+	local macros
+	macros="$(
+		while read -r name value; do
+			{
+				join '<name>' '</name>' '' <<<"${name}"
+				join '<value>' '</value>' '' <<<"${value}"
+			} | encap '<macro>\n' '</macro>\n' 3
+		done < <(make-defines "${board}" "${image}" | tr '=' '\t')
+	)"
+
+	cat <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated for ${board}:${image} -->
+<cdtprojectproperties>
+	<section name="org.eclipse.cdt.internal.ui.wizards.settingswizards.IncludePaths">
+		<!-- Start Normal CDT -->
+		<language name="holder for library settings"></language>
+
+		<language name="Assembly">
+			${includes}
+		</language>
+
+		<language name="GNU C++">
+			${includes}
+		</language>
+
+		<language name="GNU C">
+			${includes}
+		</language>
+		<!-- End Normal CDT -->
+
+		<!-- Start CDT Cross/Embedded -->
+		<language name="C Source File">
+			${includes}
+		</language>
+
+		<language name="Object File">
+		</language>
+
+		<language name="Assembly Source File">
+			${includes}
+		</language>
+		<!-- End CDT Cross/Embedded -->
+	</section>
+
+	<section name="org.eclipse.cdt.internal.ui.wizards.settingswizards.Macros">
+		<!-- Start Normal CDT -->
+		<language name="holder for library settings"></language>
+
+		<language name="Assembly">
+${macros}
+		</language>
+
+		<language name="GNU C++">
+${macros}
+		</language>
+
+		<language name="GNU C">
+${macros}
+		</language>
+		<!-- End Normal CDT -->
+
+		<!-- Start CDT Cross/Embedded -->
+		<language name="C Source File">
+${macros}
+		</language>
+
+		<language name="Object File">
+		</language>
+
+		<language name="Assembly Source File">
+${macros}
+		</language>
+		<!-- End CDT Cross/Embedded -->
+	</section>
+</cdtprojectproperties>
+EOF
+}
+
 # Usage: main <ide> [cfgs...]
 main() {
 	# Disaply help if no args
@@ -338,6 +455,9 @@ main() {
 	case "${ide}" in
 		vscode)
 			vscode "${cfgs[@]}" || exit $?
+			;;
+		eclipse)
+			eclipse-cdt-import "${cfgs[@]}" || exit $?
 			;;
 		*)
 			echo "Error - IDE '${ide}' is an unsupported." >&2
