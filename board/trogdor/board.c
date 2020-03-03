@@ -40,8 +40,6 @@
 
 /* Forward declaration */
 static void tcpc_alert_event(enum gpio_signal signal);
-static void vbus0_evt(enum gpio_signal signal);
-static void vbus1_evt(enum gpio_signal signal);
 static void usb0_evt(enum gpio_signal signal);
 static void usb1_evt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
@@ -66,20 +64,6 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	}
 
 	schedule_deferred_pd_interrupt(port);
-}
-
-static void vbus0_evt(enum gpio_signal signal)
-{
-	/* VBUS present GPIO is inverted */
-	usb_charger_vbus_change(0, !gpio_get_level(GPIO_USB_C0_VBUS_DET_L));
-	task_wake(TASK_ID_PD_C0);
-}
-
-static void vbus1_evt(enum gpio_signal signal)
-{
-	/* VBUS present GPIO is inverted */
-	usb_charger_vbus_change(1, !gpio_get_level(GPIO_USB_C1_VBUS_DET_L));
-	task_wake(TASK_ID_PD_C1);
 }
 
 static void usb0_evt(enum gpio_signal signal)
