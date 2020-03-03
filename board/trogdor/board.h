@@ -8,6 +8,9 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+/* Board revision */
+#include "board_revs.h"
+
 /* TODO(waihong): Remove the following bringup features */
 #define CONFIG_BRINGUP
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands. */
@@ -90,8 +93,12 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
 
 /* BC 1.2 Charger */
+#if BOARD_REV >= TROGDOR_REV1
+#define CONFIG_BC12_DETECT_PI3USB9201
+#else
 #define CONFIG_BC12_DETECT_PI3USB9281
 #define CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT 2
+#endif /* BOARD_REV */
 
 /*
  * USB ID

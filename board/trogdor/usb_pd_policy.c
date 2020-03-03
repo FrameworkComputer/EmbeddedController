@@ -7,7 +7,6 @@
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
-#include "pi3usb9281.h"
 #include "system.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
