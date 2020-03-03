@@ -25,6 +25,8 @@
 /* Keyboard features */
 #define CONFIG_PWM_KBLIGHT
 
+#define CONFIG_TEMP_SENSOR_AMD_R19ME4070
+
 /* Sensors */
 /* BMI160 Base accel/gyro */
 #define CONFIG_ACCEL_INTERRUPTS
@@ -167,8 +169,9 @@ enum mft_channel {
 };
 
 enum temp_sensor_id {
-	TEMP_SENSOR_1,
-	TEMP_SENSOR_2,
+	TEMP_CHARGER,
+	TEMP_5V,
+	TEMP_GPU,
 	TEMP_SENSOR_COUNT
 };
 

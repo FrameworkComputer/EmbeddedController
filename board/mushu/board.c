@@ -42,6 +42,7 @@
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "util.h"
+#include "driver/temp_sensor/amd_r19me4070.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -401,21 +402,25 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_1] = {
-		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+		"TEMP_CHARGER", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 	[ADC_TEMP_SENSOR_2] = {
-		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+		"TEMP_5V", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Temp1",
+	[TEMP_CHARGER] = {.name = "CHARGER",
 				 .type = TEMP_SENSOR_TYPE_BOARD,
 				 .read = get_temp_3v3_30k9_47k_4050b,
 				 .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Temp2",
+	[TEMP_5V] = {.name = "5V",
 				 .type = TEMP_SENSOR_TYPE_BOARD,
 				 .read = get_temp_3v3_30k9_47k_4050b,
 				 .idx = ADC_TEMP_SENSOR_2},
+	[TEMP_GPU] = {.name = "GPU",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_R19ME4070,
+				 .idx = R19ME4070_LOCAL},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -461,8 +466,9 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 
 static void setup_fans(void)
 {
-	thermal_params[TEMP_SENSOR_1] = thermal_a;
-	thermal_params[TEMP_SENSOR_2] = thermal_b;
+	thermal_params[TEMP_CHARGER] = thermal_a;
+	thermal_params[TEMP_5V] = thermal_a;
+	thermal_params[TEMP_GPU] = thermal_b;
 }
 
 /* Sets the gpio flags correct taking into account warm resets */
