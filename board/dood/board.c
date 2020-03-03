@@ -253,8 +253,8 @@ void board_hibernate_late(void)
 
 	const uint32_t hibernate_pins[][2] = {
 		/* Turn off LEDs before going to hibernate */
-		{GPIO_BAT_LED_BLUE_L, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_BAT_LED_ORANGE_L, GPIO_INPUT | GPIO_PULL_UP},
+		{GPIO_BAT_LED_WHITE_L, GPIO_INPUT | GPIO_PULL_UP},
+		{GPIO_BAT_LED_AMBER_L, GPIO_INPUT | GPIO_PULL_UP},
 	};
 
 	for (i = 0; i < ARRAY_SIZE(hibernate_pins); ++i)
