@@ -48,3 +48,4 @@
 *   [I2C tracing via console commands](./i2c-debugging.md)
 *   [Application Processor to EC communication](./ap-ec-comm.md)
 *   [Code Reviews](./code_reviews.md)
+*   [IDE Support](./ide-support.md)
