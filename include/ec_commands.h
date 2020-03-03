@@ -2715,7 +2715,7 @@ struct ec_params_motion_sense {
 		 */
 		struct __ec_todo_unpacked {
 			uint8_t sensor_num;
-		} info, info_3, data, fifo_flush, list_activities;
+		} info, info_3, info_4, data, fifo_flush, list_activities;
 
 		/*
 		 * Used for MOTIONSENSE_CMD_PERFORM_CALIB:

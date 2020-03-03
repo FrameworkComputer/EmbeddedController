@@ -1427,7 +1427,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 DECLARE_HOST_COMMAND(EC_CMD_MOTION_SENSE_CMD, host_cmd_motion_sense,
 		     EC_VER_MASK(1) | EC_VER_MASK(2) | EC_VER_MASK(3) |
-			     EC_VER_MASK(4));
+		     EC_VER_MASK(4));
 
 /*****************************************************************************/
 /* Console commands */
