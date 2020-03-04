@@ -60,6 +60,7 @@ GPIO_INT(EC_VOLUP_BTN_ODL,		PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_inte
 /* Power Sequencing Signals */
 GPIO(EN_PP3300_A,              PIN(A, 3), GPIO_OUT_LOW)
 GPIO(EN_PP5000_A,              PIN(A, 4), GPIO_OUT_LOW)
+GPIO(EN_PPVAR_VCCIN,           PIN(4, 3), GPIO_OUT_LOW) /* Enables VCCIN IMPV9 */
 /* The EC does not buffer this signal on Volteer. */
 UNIMPLEMENTED(PCH_DSW_PWROK)
 

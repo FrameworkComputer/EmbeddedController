@@ -13,6 +13,62 @@
 #include "hooks.h"
 #include "intel_x86.h"
 
+/******************************************************************************/
+/*
+ * PWROK signal configuration, see the PWROK Generation Flow Diagram in the
+ * Jasper Lake Platform Design Guide for the list of potential signals.
+ *
+ * Dedede boards use this PWROK sequence:
+ *	GPIO_ALL_SYS_PWRGD - turns on VCCIN rail
+ *	GPIO_EC_AP_VCCST_PWRGD_OD - asserts VCCST_PWRGD to AP, requires 2ms
+ *		delay from VCCST stable to meet the tCPU00 platform sequencing
+ *		timing
+ *	GPIO_EC_AP_PCH_PWROK_OD - asserts PMC_PCH_PWROK to the AP. Note that
+ *		PMC_PCH_PWROK is also gated by the IMVP9_VRRDY_OD output from
+ *		the VCCIN voltage rail controller.
+ *	GPIO_EC_AP_SYS_PWROK - asserts PMC_SYS_PWROK to the AP
+ *
+ * Both PMC_PCH_PWROK and PMC_SYS_PWROK signals must both be asserted before
+ * the Jasper Lake SoC deasserts PMC_RLTRST_N. The platform may deassert
+ * PMC_PCH_PWROK and PMC_SYS_PWROK in any order to optimize overall boot
+ * latency.
+ */
+const struct intel_x86_pwrok_signal pwrok_signal_assert_list[] = {
+	{
+		.gpio = GPIO_ALL_SYS_PWRGD,
+	},
+	{
+		.gpio = GPIO_EC_AP_VCCST_PWRGD_OD,
+		.delay_ms = 2,
+	},
+	{
+		.gpio = GPIO_EC_AP_PCH_PWROK_OD,
+	},
+	{
+		.gpio = GPIO_EC_AP_SYS_PWROK,
+	},
+};
+const int pwrok_signal_assert_count = ARRAY_SIZE(pwrok_signal_assert_list);
+
+const struct intel_x86_pwrok_signal pwrok_signal_deassert_list[] = {
+	/* No delays needed during S0 exit */
+	{
+		.gpio = GPIO_EC_AP_VCCST_PWRGD_OD,
+	},
+	{
+		.gpio = GPIO_EC_AP_PCH_PWROK_OD,
+	},
+	{
+		.gpio = GPIO_EC_AP_SYS_PWROK,
+	},
+	/* Turn off the VCCIN rail last */
+	{
+		.gpio = GPIO_ALL_SYS_PWRGD,
+	},
+};
+const int pwrok_signal_deassert_count = ARRAY_SIZE(pwrok_signal_deassert_list);
+
+
 /*
  * Dedede does not use hibernate wake pins, but the super low power "Z-state"
  * instead in which the EC is powered off entirely.  Power will be restored to
@@ -59,14 +115,6 @@ __override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 	return gpio_get_level(GPIO_PG_PP1050_ST_OD) &&
 		gpio_get_level(GPIO_PG_DRAM_OD) &&
 		gpio_get_level(GPIO_PG_VCCIO_EXT_OD);
-}
-
-__override void board_jsl_all_sys_pwrgd(int value)
-{
-	/*
-	 * ALL_SYS_PWRGD is an AND of both DRAM PGOOD and VCCST PGOOD.
-	 */
-	gpio_set_level(GPIO_ALL_SYS_PWRGD, value);
 }
 
 __override int power_signal_get_level(enum gpio_signal signal)

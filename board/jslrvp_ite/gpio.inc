@@ -68,15 +68,7 @@ GPIO(EN_PP5000, 	PIN(L, 4), GPIO_OUT_LOW)
 GPIO(EN_PP3300_A,	PIN(C, 3), GPIO_OUT_LOW)
 GPIO(EC_PCH_DSW_PWROK,	PIN(L, 6), GPIO_OUT_LOW)
 
-/*
- * SYS_PWROK driven directly to AP by Silego, EC not needed for generation.
- * PCH_SYS_PWROK is routed to EC, but mark unimplemented to prevent common
- * Ice Lake code from driving signal.
- */
-UNIMPLEMENTED(PCH_SYS_PWROK)
 UNIMPLEMENTED(EN_VCCIO_EXT)
-UNIMPLEMENTED(EC_AP_PCH_PWROK_OD)
-UNIMPLEMENTED(EC_AP_VCCST_PWRGD_OD)
 
 /* Host communication GPIOs */
 GPIO(PCH_WAKE_L,	PIN(J, 0), GPIO_ODR_HIGH)

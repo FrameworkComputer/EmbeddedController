@@ -83,11 +83,6 @@ __overridable int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 	return gpio_get_level(GPIO_PG_EC_ALL_SYS_PWRGD);
 }
 
-__overridable void board_jsl_all_sys_pwrgd(int value)
-{
-
-}
-
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	int timeout_ms = 50;
@@ -149,16 +144,6 @@ enum power_state chipset_force_g3(void)
 	return POWER_G3;
 }
 
-/*
- * Ice Lake and Tiger Lake permit PCH_PWROK and SYS_PWROK signals coming
- * up in any order.  If the platform needs extra time for peripherals to come
- * up, the board can override this function.
- */
-__overridable void board_icl_tgl_all_sys_pwrgood(void)
-{
-
-}
-
 static void enable_pp5000_rail(void)
 {
 	if (IS_ENABLED(CONFIG_POWER_PP5000_CONTROL))
@@ -167,15 +152,6 @@ static void enable_pp5000_rail(void)
 		GPIO_SET_LEVEL(GPIO_EN_PP5000, 1);
 
 }
-
-#ifdef CONFIG_CHIPSET_JASPERLAKE
-static void assert_ec_ap_vccst_pwrgd_pch_pwrok(void)
-{
-	GPIO_SET_LEVEL(GPIO_EC_AP_VCCST_PWRGD_OD, 1);
-	GPIO_SET_LEVEL(GPIO_EC_AP_PCH_PWROK_OD, 1);
-}
-DECLARE_DEFERRED(assert_ec_ap_vccst_pwrgd_pch_pwrok);
-#endif /* CONFIG_CHIPSET_JASPERLAKE */
 
 static void dsw_pwrok_pass_thru(void)
 {
@@ -207,33 +183,74 @@ static void dsw_pwrok_pass_thru(void)
 	}
 }
 
-enum power_state power_handle_state(enum power_state state)
+/*
+ * Return 0 if PWROK signal is deasserted, non-zero if asserted
+ */
+static int pwrok_signal_get(const struct intel_x86_pwrok_signal *signal)
+{
+	int level = gpio_get_level(signal->gpio);
+
+	if (signal->active_low)
+		level = !level;
+
+	return level;
+}
+
+/*
+ * Set the PWROK signal state
+ *
+ * &param level		0 deasserts the signal, other values assert the signal
+ */
+static void pwrok_signal_set(const struct intel_x86_pwrok_signal *signal,
+	int level)
+{
+	GPIO_SET_LEVEL(signal->gpio, signal->active_low ? !level : level);
+}
+
+/*
+ * Pass through the state of the ALL_SYS_PWRGD input to all the PWROK outputs
+ * defined by the board.
+ */
+static void all_sys_pwrgd_pass_thru(void)
 {
 	int all_sys_pwrgd_in = intel_x86_get_pg_ec_all_sys_pwrgd();
-	int all_sys_pwrgd_out;
+	const struct intel_x86_pwrok_signal *pwrok_signal;
+	int signal_count;
+	int i;
+
+	if (all_sys_pwrgd_in) {
+		pwrok_signal = pwrok_signal_assert_list;
+		signal_count = pwrok_signal_assert_count;
+	} else {
+		pwrok_signal = pwrok_signal_deassert_list;
+		signal_count = pwrok_signal_deassert_count;
+	}
+
+	/*
+	 * Loop through all PWROK signals defined by the board and set
+	 * to match the current ALL_SYS_PWRGD input.
+	 */
+	for (i = 0; i < signal_count; i++, pwrok_signal++) {
+		if ((!all_sys_pwrgd_in && !pwrok_signal_get(pwrok_signal))
+			|| (all_sys_pwrgd_in && pwrok_signal_get(pwrok_signal)))
+			continue;
+
+		if (pwrok_signal->delay_ms > 0)
+			msleep(pwrok_signal->delay_ms);
+
+		pwrok_signal_set(pwrok_signal, all_sys_pwrgd_in);
+	}
+}
+
+enum power_state power_handle_state(enum power_state state)
+{
 #ifdef CONFIG_CHIPSET_JASPERLAKE
 	int timeout_ms = 10;
 #endif /* CONFIG_CHIPSET_JASPERLAKE */
 
 	dsw_pwrok_pass_thru();
 
-#ifdef CONFIG_CHIPSET_JASPERLAKE
-	/*
-	 * Set ALL_SYS_PWRGD after receiving both PG_DRAM and PG_PP1050_ST.
-	 * Assert VCCST power good and PCH_PWROK, when ALL_SYS_PWRGD is
-	 * received with a 2ms delay minimum.
-	 */
-	if (all_sys_pwrgd_in && !gpio_get_level(GPIO_EC_AP_VCCST_PWRGD_OD)) {
-		board_jsl_all_sys_pwrgd(all_sys_pwrgd_in);
-		hook_call_deferred(&assert_ec_ap_vccst_pwrgd_pch_pwrok_data,
-				2 * MSEC);
-	} else if (!all_sys_pwrgd_in &&
-		   gpio_get_level(GPIO_EC_AP_VCCST_PWRGD_OD)) {
-		GPIO_SET_LEVEL(GPIO_EC_AP_VCCST_PWRGD_OD, 0);
-		GPIO_SET_LEVEL(GPIO_EC_AP_PCH_PWROK_OD, 0);
-		board_jsl_all_sys_pwrgd(all_sys_pwrgd_in);
-	}
-#endif /* CONFIG_CHIPSET_JASPERLAKE */
+	all_sys_pwrgd_pass_thru();
 
 	common_intel_x86_handle_rsmrst(state);
 
@@ -311,22 +328,6 @@ enum power_state power_handle_state(enum power_state state)
 		GPIO_SET_LEVEL(GPIO_EN_VCCIO_EXT, 0);
 		break;
 #endif /* CONFIG_CHIPSET_JASPERLAKE */
-
-	case POWER_S0:
-		/*
-		 * Check value of PG_EC_ALL_SYS_PWRGD to see if PCH_SYS_PWROK
-		 * needs to be changed. If it's low->high transition, call board
-		 * specific handling if provided.
-		 */
-		all_sys_pwrgd_in = intel_x86_get_pg_ec_all_sys_pwrgd();
-		all_sys_pwrgd_out = gpio_get_level(GPIO_PCH_SYS_PWROK);
-
-		if (all_sys_pwrgd_in != all_sys_pwrgd_out) {
-			if (all_sys_pwrgd_in)
-				board_icl_tgl_all_sys_pwrgood();
-			GPIO_SET_LEVEL(GPIO_PCH_SYS_PWROK, all_sys_pwrgd_in);
-		}
-		break;
 
 	default:
 		break;

@@ -66,7 +66,6 @@ GPIO(PP5000_PG_OD,        PIN(F, 0), GPIO_INPUT)
 
 /* SYS_PWROK generation is done by the Dialog power good IC */
 UNIMPLEMENTED(PG_EC_ALL_SYS_PWRGD)
-UNIMPLEMENTED(PCH_SYS_PWROK)
 
 /* USB and USBC Signals */
 GPIO(USB_OC_ODL,          PIN(J, 6), GPIO_ODR_HIGH)

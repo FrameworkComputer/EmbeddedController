@@ -10,6 +10,7 @@
 #include "driver/charger/isl9241.h"
 #include "extpower.h"
 #include "i2c.h"
+#include "icelake.h"
 #include "intc.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -118,6 +119,18 @@ const struct charger_config_t chg_chips[] = {
 };
 
 const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+
+/******************************************************************************/
+/* PWROK signal configuration */
+/*
+ * On TGLRVP the ALL_SYS_PWRGD, VCCST_PWRGD, PCH_PWROK, and SYS_PWROK
+ * signals are handled by the board. No EC control needed.
+ */
+const struct intel_x86_pwrok_signal pwrok_signal_assert_list[] = {};
+const int pwrok_signal_assert_count = ARRAY_SIZE(pwrok_signal_assert_list);
+
+const struct intel_x86_pwrok_signal pwrok_signal_deassert_list[] = {};
+const int pwrok_signal_deassert_count = ARRAY_SIZE(pwrok_signal_assert_list);
 
 /*
  * Returns board information (board id[7:0] and Fab id[15:8]) on success
