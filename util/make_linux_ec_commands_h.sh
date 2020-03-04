@@ -66,6 +66,11 @@ EOF
 # Change header guards
 sed -i "s/__CROS_EC_EC_COMMANDS_H/__CROS_EC_COMMANDS_H/" "${tmp}"
 
+# Convert UINT32_MAX into U32_MAX (and friends).
+sed -i "s/UINT\([0-9]\{1,2\}\)_MAX/U\1_MAX/" "${tmp}"
+sed -i "s/INT\([0-9]\{1,2\}\)_MAX/S\1_MAX/" "${tmp}"
+sed -i "s/INT\([0-9]\{1,2\}\)_MIN/S\1_MIN/" "${tmp}"
+
 # Remove non kernel code to prevent checkpatch warnings and simplify the .h.
 unifdef -x2 -m -UCONFIG_HOSTCMD_ALIGNED -U__ACPI__ -D__KERNEL__ -U__cplusplus \
   -UCHROMIUM_EC "${tmp}"
