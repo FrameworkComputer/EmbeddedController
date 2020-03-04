@@ -14,6 +14,8 @@
 
 #define BUTTON_FLAG_ACTIVE_HIGH BIT(0)
 
+#define BUTTON_DEBOUNCE_US (30 * MSEC)
+
 enum keyboard_button_type {
 	KEYBOARD_BUTTON_POWER = 0,
 	KEYBOARD_BUTTON_VOLUME_DOWN,

@@ -756,7 +756,7 @@ struct button_config buttons[BUTTON_COUNT] = {
 		.name = "Volume Up",
 		.type = KEYBOARD_BUTTON_VOLUME_UP,
 		.gpio = GPIO_VOLUME_UP_L,
-		.debounce_us = 30 * MSEC,
+		.debounce_us = BUTTON_DEBOUNCE_US,
 		.flags = 0,
 	},
 
@@ -764,7 +764,7 @@ struct button_config buttons[BUTTON_COUNT] = {
 		.name = "Volume Down",
 		.type = KEYBOARD_BUTTON_VOLUME_DOWN,
 		.gpio = GPIO_VOLUME_DOWN_L,
-		.debounce_us = 30 * MSEC,
+		.debounce_us = BUTTON_DEBOUNCE_US,
 		.flags = 0,
 	},
 
@@ -773,7 +773,7 @@ struct button_config buttons[BUTTON_COUNT] = {
 		.name = "Recovery",
 		.type = KEYBOARD_BUTTON_RECOVERY,
 		.gpio = GPIO_RECOVERY_L,
-		.debounce_us = 30 * MSEC,
+		.debounce_us = BUTTON_DEBOUNCE_US,
 		.flags = 0,
 	}
 #endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON) */

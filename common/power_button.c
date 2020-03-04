@@ -5,6 +5,7 @@
 
 /* Power button module for Chrome EC */
 
+#include "button.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -22,24 +23,25 @@
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 /* By default the power button is active low */
-#ifndef CONFIG_POWER_BUTTON_ACTIVE_STATE
-#define CONFIG_POWER_BUTTON_ACTIVE_STATE 0
+#ifndef CONFIG_POWER_BUTTON_FLAGS
+#define CONFIG_POWER_BUTTON_FLAGS 0
 #endif
-
-#define PWRBTN_DEBOUNCE_US (30 * MSEC)  /* Debounce time for power button */
 
 static int debounced_power_pressed;	/* Debounced power button state */
 static int simulate_power_pressed;
 static volatile int power_button_is_stable = 1;
 
-/**
- * Return non-zero if power button signal asserted at hardware input.
- *
- */
+static const struct button_config power_button = {
+	.name = "power button",
+	.gpio = GPIO_POWER_BUTTON_L,
+	.debounce_us = BUTTON_DEBOUNCE_US,
+	.flags = CONFIG_POWER_BUTTON_FLAGS,
+};
+
 int power_button_signal_asserted(void)
 {
-	return !!(gpio_get_level(GPIO_POWER_BUTTON_L)
-		 == CONFIG_POWER_BUTTON_ACTIVE_STATE);
+	return !!(gpio_get_level(power_button.gpio)
+		== (power_button.flags & BUTTON_FLAG_ACTIVE_HIGH) ? 1 : 0);
 }
 
 /**
@@ -70,13 +72,6 @@ int power_button_is_pressed(void)
 	return debounced_power_pressed;
 }
 
-/**
- * Wait for the power button to be released
- *
- * @param timeout_us Timeout in microseconds, or -1 to wait forever
- * @return EC_SUCCESS if ok, or
- *         EC_ERROR_TIMEOUT if power button failed to release
- */
 int power_button_wait_for_release(int timeout_us)
 {
 	timestamp_t deadline;
@@ -91,12 +86,12 @@ int power_button_wait_for_release(int timeout_us)
 		} else if (timestamp_expired(deadline, &now) ||
 			(task_wait_event(deadline.val - now.val) ==
 			TASK_EVENT_TIMER)) {
-			CPRINTS("power button not released in time");
+			CPRINTS("%s not released in time", power_button.name);
 			return EC_ERROR_TIMEOUT;
 		}
 	}
 
-	CPRINTS("power button released in time");
+	CPRINTS("%s released in time", power_button.name);
 	return EC_SUCCESS;
 }
 
@@ -109,7 +104,7 @@ static void power_button_init(void)
 		debounced_power_pressed = 1;
 
 	/* Enable interrupts, now that we've initialized */
-	gpio_enable_interrupt(GPIO_POWER_BUTTON_L);
+	gpio_enable_interrupt(power_button.gpio);
 }
 DECLARE_HOOK(HOOK_INIT, power_button_init, HOOK_PRIO_INIT_POWER_BUTTON);
 
@@ -133,7 +128,8 @@ static void power_button_change_deferred(void)
 	debounced_power_pressed = new_pressed;
 	power_button_is_stable = 1;
 
-	CPRINTS("power button %s", new_pressed ? "pressed" : "released");
+	CPRINTS("%s %s",
+		power_button.name, new_pressed ? "pressed" : "released");
 
 	/* Call hooks */
 	hook_notify(HOOK_POWER_BUTTON_CHANGE);
@@ -157,7 +153,7 @@ void power_button_interrupt(enum gpio_signal signal)
 	/* Reset power button debounce time */
 	power_button_is_stable = 0;
 	hook_call_deferred(&power_button_change_deferred_data,
-			   PWRBTN_DEBOUNCE_US);
+			   power_button.debounce_us);
 }
 
 /*****************************************************************************/
@@ -174,7 +170,7 @@ static int command_powerbtn(int argc, char **argv)
 			return EC_ERROR_PARAM1;
 	}
 
-	ccprintf("Simulating %d ms power button press.\n", ms);
+	ccprintf("Simulating %d ms %s press.\n", ms, power_button.name);
 	simulate_power_pressed = 1;
 	power_button_is_stable = 0;
 	hook_call_deferred(&power_button_change_deferred_data, 0);
@@ -182,7 +178,7 @@ static int command_powerbtn(int argc, char **argv)
 	if (ms > 0)
 		msleep(ms);
 
-	ccprintf("Simulating power button release.\n");
+	ccprintf("Simulating %s release.\n", power_button.name);
 	simulate_power_pressed = 0;
 	power_button_is_stable = 0;
 	hook_call_deferred(&power_button_change_deferred_data, 0);
