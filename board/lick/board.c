@@ -192,7 +192,7 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 static int board_is_convertible(void)
 {
-	return sku_id != 255 || sku_id != 1;
+	return sku_id != 255 && sku_id != 1;
 }
 
 static void board_update_sensor_config_from_sku(void)
