@@ -108,6 +108,9 @@ main() {
       if [[ -d ./private ]]; then
         dir_list+=( ./private )
       fi
+      if [[ -d ./private/fingerprint/fpc ]]; then
+        dir_list+=( ./private/fingerprint/fpc )
+      fi
       ;;
   esac
 
