@@ -19,6 +19,7 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "power.h"
 #include "task.h"
 #include "tcpm.h"
@@ -70,8 +71,19 @@ static void bc12_detect(const int port)
 	struct charge_port_info new_chg;
 
 	/*
-	 * Enable the IC to begin detection and connect switches if necessary.
+	 * Enable the IC to begin detection and connect switches if
+	 * necessary. This is only necessary if the port power role is a
+	 * sink. If the power role is a source then just keep the max14637
+	 * powered on so that data switches are close. Note that the gpio enable
+	 * for this chip is active by default. In order to trigger bc1.2
+	 * detection, the chip enable must be driven low, then high again so the
+	 * chip will start bc1.2 client side detection. Add a 100 msec delay to
+	 * avoid collision with a device that might be doing bc1.2 client side
+	 * detection.
 	 */
+	msleep(100);
+	activate_chip_enable(cfg, 0);
+	msleep(1);
 	activate_chip_enable(cfg, 1);
 
 	new_chg.voltage = USB_CHARGER_VOLTAGE_MV;
@@ -102,23 +114,11 @@ static void bc12_detect(const int port)
 }
 
 /**
- * Turn off the MAX14637 detector.
- *
- * @param port: Which USB Type-C port's BC1.2 detector to turn off.
- */
-static void power_down_ic(const int port)
-{
-	const struct max14637_config_t * const cfg = &max14637_config[port];
-
-	/* Turn off the IC. */
-	activate_chip_enable(cfg, 0);
-
-	/* Let charge manager know there's no more charge available. */
-	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, port, NULL);
-}
-
-/**
- * If VBUS is present, determine the charger type, otherwise power down the IC.
+ * If VBUS is present and port power role is sink, then trigger bc1.2 client
+ * detection. If VBUS is not present then update charge manager. Note that both
+ * chip_enable and VBUS must be active for the IC to be powered up. Chip enable
+ * is kept enabled by default so that bc1.2 client detection is not triggered
+ * when the port power role is source.
  *
  * @param port: Which USB Type-C port to examine.
  */
@@ -137,9 +137,11 @@ static void detect_or_power_down_ic(const int port)
 		/* Turn on the 5V rail to allow the chip to be powered. */
 		power_5v_enable(task_get_current(), 1);
 #endif
-		bc12_detect(port);
+		if (pd_get_power_role(port) == PD_ROLE_SINK)
+			bc12_detect(port);
 	} else {
-		power_down_ic(port);
+		/* Let charge manager know there's no more charge available. */
+		charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, port, NULL);
 #if defined(CONFIG_POWER_PP5000_CONTROL) && defined(HAS_TASK_CHIPSET)
 		/* Issue a request to turn off the rail. */
 		power_5v_enable(task_get_current(), 0);
@@ -151,9 +153,16 @@ void usb_charger_task(void *u)
 {
 	const int port = (intptr_t)u;
 	uint32_t evt;
+	const struct max14637_config_t * const cfg = &max14637_config[port];
 
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
-
+	/*
+	 * Have chip enable active as default state so data switches are closed
+	 * and bc1.2 client side detection is not activated when the port power
+	 * role is a source.
+	 */
+	activate_chip_enable(cfg, 1);
+	/* Check whether bc1.2 client mode detection needs to be triggered */
 	detect_or_power_down_ic(port);
 
 	while (1) {
@@ -191,3 +200,21 @@ int usb_charger_ramp_max(int supplier, int sup_curr)
 		return 500;
 }
 #endif /* CONFIG_CHARGE_RAMP_SW || CONFIG_CHARGE_RAMP_HW */
+
+/* Called on AP S5 -> S3  and S3/S0iX -> S0 transition */
+static void bc12_chipset_startup(void)
+{
+	int port;
+
+	/*
+	 * For each port, trigger a new USB_CHG_EVENT_VBUS event to handle cases
+	 * where there was no change in VBUS following an AP resume/startup
+	 * event. If a legacy charger is connected to the port, then VBUS will
+	 * not drop even during the USB PD hard reset.
+	 */
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++)
+		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
+			       USB_CHG_EVENT_VBUS, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, bc12_chipset_startup, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, bc12_chipset_startup, HOOK_PRIO_DEFAULT);
