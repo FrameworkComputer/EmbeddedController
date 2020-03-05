@@ -293,6 +293,27 @@ config_nocturne() {
   readonly GPIO_PWREN=371
 }
 
+config_volteer() {
+  check_gpio_chip_exists "gpiochip252"
+  check_gpio_chip_exists "gpiochip445"
+
+  readonly SPIDEV="/dev/spidev1.0"
+
+  # See
+  # third_party/coreboot/src/soc/intel/tigerlake/include/soc/gpio_soc_defs_tgl.h
+  # for pin name to number mapping.
+  # Examine `cat /sys/kernel/debug/pinctrl/INT34C5:02/gpio-ranges` and
+  # `cat /sys/kernel/debug/pinctrl/INT34C5:00/gpio-ranges` on a volteer
+  # device to determine gpio number from pin number.
+
+  # FPMCU RST_ODL is on GPP_C23 = 252 + (211 - 188) = 275
+  readonly GPIO_NRST=275
+  # FPMCU BOOT0 is on GPP_C22 = 252 + (210 - 188) = 274
+  readonly GPIO_BOOT0=274
+  # FP_PWR_EN is on GPP_A21 = 445 + 63 = 508
+  readonly GPIO_PWREN=508
+}
+
 # The "platform name" corresponds to the underlying board (reference design)
 # that we're running on (not the FPMCU or sensor). At the moment all of the
 # reference designs use the same GPIOs. If for some reason a design differs in
