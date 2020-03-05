@@ -849,9 +849,24 @@ DECLARE_CONSOLE_COMMAND(h1_reset, command_h1_reset,
 			"[0|1]?",
 			"Get/set the h1 reset state");
 
+
 /******************************************************************************
  * Vref detection logic
  */
+
+/* Set by update and read by console command that polls for Vref presence */
+static enum vref h1_vref;
+static enum vref ec_vref;
+
+static int command_h1_vref_present(int argc, char **argv)
+{
+	ccprintf("H1 Vref: %s\n", h1_vref ? "on" : "off");
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(h1_vref, command_h1_vref_present,
+			"",
+			"Get if the h1 vref is present");
 
 /* Voltage thresholds for rail detection */
 #define VREF_3300_MIN_MV 2300
@@ -929,7 +944,6 @@ static void update_vrefs_and_shifters(void)
 {
 	static enum vref prev_h1_vref, prev_ec_vref;
 
-	enum vref h1_vref, ec_vref;
 	int adc_mv;
 
 	/* Disable Vref comparator interrupt before draining and measuring */
