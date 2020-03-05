@@ -16,6 +16,7 @@
 #include "console.h"
 #include "crc8.h"
 #include "flash.h"
+#include "hooks.h"
 #include "sha256.h"
 #include "system.h"
 #include "task.h"
@@ -297,3 +298,28 @@ void vboot_main(void)
 	 */
 	CPRINTS("Exit");
 }
+
+void hook_shutdown(void)
+{
+	CPRINTS("%s", __func__);
+
+	/*
+	 * We filter the cases which can be interfered with if we execute
+	 * system_reset in HOOK_CHIPSET_SHUTDOWN context. Most cases are
+	 * filtered out by system_is_in_rw (e.g. system_common_shutdown,
+	 * check_pending_cutoff).
+	 */
+	if (system_is_in_rw())
+		return;
+
+	CPRINTS("Reboot\n\n");
+	cflush();
+	system_reset(SYSTEM_RESET_LEAVE_AP_OFF);
+}
+/*
+ * There can be hooks which are needed to set external chips to a certain state
+ * in S5. If the initial state (i.e. AP_OFF state) is different from what those
+ * hooks realize, they need to be considered. This hook runs last (i.e.
+ * HOOK_PRIO_LAST) to make our landing on S5 as mild as possible.
+ */
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, hook_shutdown, HOOK_PRIO_LAST);
