@@ -130,8 +130,7 @@ enum charge_port {
 };
 
 enum battery_type {
-	BATTERY_PANASONIC_AC15A3J,
-	BATTERY_PANASONIC_AC16L5J,
+	BATTERY_C235,
 	BATTERY_TYPE_COUNT,
 };
 
