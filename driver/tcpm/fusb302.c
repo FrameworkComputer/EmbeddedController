@@ -830,9 +830,9 @@ static int fusb302_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
 			return EC_ERROR_UNKNOWN;
 
 		if (reg & TCPC_REG_STATUS1_RXSOP1)
-			*head |= PD_HEADER_SOP(PD_MSG_SOPP);
+			*head |= PD_HEADER_SOP(PD_MSG_SOP_PRIME);
 		else if (reg & TCPC_REG_STATUS1_RXSOP2)
-			*head |= PD_HEADER_SOP(PD_MSG_SOPPP);
+			*head |= PD_HEADER_SOP(PD_MSG_SOP_PRIME_PRIME);
 	}
 #endif
 
