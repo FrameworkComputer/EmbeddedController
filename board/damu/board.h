@@ -41,6 +41,10 @@
 
 #define CONFIG_USB_MUX_IT5205
 
+#define CONFIG_LED_ONOFF_STATES
+#define CONFIG_LED_POWER_LED
+#define CONFIG_LED_COMMON
+
 /* Motion Sensors */
 #ifdef SECTION_IS_RW
 #define CONFIG_MAG_BMI160_BMM150
