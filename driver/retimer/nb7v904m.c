@@ -41,9 +41,9 @@ static int set_low_power_mode(const struct usb_mux *me, bool enable)
 		return rv;
 
 	if (enable)
-		regval |= NB7V904M_CHIP_EN;
-	else
 		regval &= ~NB7V904M_CHIP_EN;
+	else
+		regval |= NB7V904M_CHIP_EN;
 
 	return nb7v904m_write(me, NB7V904M_REG_GEN_DEV_SETTINGS, regval);
 }
