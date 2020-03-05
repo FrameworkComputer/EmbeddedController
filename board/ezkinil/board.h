@@ -10,6 +10,7 @@
 
 #define VARIANT_ZORK_TREMBYLE
 
+#include <stdbool.h>
 #include "baseboard.h"
 
 /*
@@ -79,7 +80,85 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
-#endif /* !__ASSEMBLER__ */
 
+/*****************************************************************************
+ * CBI EC FW Configuration
+ */
+#include "cbi_ec_fw_config.h"
+
+/**
+ * EZKINIL_MB_USBAC
+ *	USB-A0  Speed: 5 Gbps
+ *		Retimer: none
+ *	USB-C0  Speed: 5 Gbps
+ *		Retimer: none
+ *		TCPC: NCT3807
+ *		PPC: AOZ1380
+ *		IOEX: TCPC
+ */
+enum ec_cfg_usb_mb_type {
+	EZKINIL_MB_USBAC = 0,
+};
+
+/**
+ * EZKINIL_DB_T_OPT1_USBC_HDMI
+ *	USB-A1  none
+ *	USB-C1  Speed: 5 Gbps
+ *		Retimer: TUSB544
+ *		TCPC: NCT3807
+ *		PPC: NX20P3483
+ *		IOEX: TCPC
+ *	HDMI    Exists: yes
+ *		Retimer: PI3HDX1204
+ *		MST Hub: none
+ *
+ * EZKINIL_DB_T_OPT2_USBAC
+ *	USB-A1  Speed: 5 Gbps
+ *		Retimer: TUSB522
+ *	USB-C1  Speed: 5 Gbps
+ *		Retimer: PS8743
+ *		TCPC: NCT3807
+ *		PPC: NX20P3483
+ *		IOEX: TCPC
+ *	HDMI    Exists: no
+ *		Retimer: none
+ *		MST Hub: none
+ */
+enum ec_cfg_usb_db_type {
+	EZKINIL_DB_T_OPT1_USBC_HDMI = 0,
+	EZKINIL_DB_T_OPT2_USBAC = 1,
+};
+
+
+#define HAS_USBA1_RETIMER_TUSB522 \
+			(BIT(EZKINIL_DB_T_OPT2_USBAC))
+
+static inline bool ec_config_has_usba1_retimer_tusb522(void)
+{
+	return !!(BIT(ec_config_get_usb_db()) &
+		  HAS_USBA1_RETIMER_TUSB522);
+}
+
+
+#define HAS_USBC1_RETIMER_PS8743 \
+			(BIT(EZKINIL_DB_T_OPT2_USBAC))
+
+static inline bool ec_config_has_usbc1_retimer_ps8743(void)
+{
+	return !!(BIT(ec_config_get_usb_db()) &
+		  HAS_USBC1_RETIMER_PS8743);
+}
+
+
+#define HAS_USBC1_RETIMER_TUSB544 \
+			(BIT(EZKINIL_DB_T_OPT1_USBC_HDMI))
+
+static inline bool ec_config_has_usbc1_retimer_tusb544(void)
+{
+	return !!(BIT(ec_config_get_usb_db()) &
+		  HAS_USBC1_RETIMER_TUSB544);
+}
+
+#endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

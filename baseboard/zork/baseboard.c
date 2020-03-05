@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "button.h"
+#include "cbi_ec_fw_config.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charge_state_v2.h"
@@ -597,6 +598,13 @@ static void cbi_init(void)
 		sku_id = val;
 	ccprints("SKU: %d (0x%x)", sku_id, sku_id);
 
+	/* FW config */
+	val = get_cbi_fw_config();
+	if (val == UNINITIALIZED_FW_CONFIG)
+		ccprints("FW Config: not set in cbi");
+	else
+		ccprints("FW Config: %d (0x%x)", val, val);
+
 #ifdef HAS_TASK_MOTIONSENSE
 	board_update_sensor_config_from_sku();
 #endif
@@ -604,6 +612,7 @@ static void cbi_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
+/* TODO(b/151075885) Base initialization off the fw_config */
 uint32_t system_get_sku_id(void)
 {
 	return sku_id;
