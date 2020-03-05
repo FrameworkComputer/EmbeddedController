@@ -408,12 +408,9 @@ servo_ec_hard_reset() {
 }
 
 c2d2_ec_hard_reset() {
+	# This is an H1-level reset (instead of just an EC-level reset)
 	dut_control cold_reset:on
 	dut_control cold_reset:off
-
-	# Cold reset on C2D2 is H1 reset, which will double reset the EC
-	# We need to wait a little bit to ensure we catch final EC reset
-	sleep 0.2
 }
 
 servo_usbpd_hard_reset() {
@@ -1341,13 +1338,47 @@ function flash_npcx_uut() {
 		dut_control ccd_keepalive_en:on
 	fi
 
-	# Force the EC to boot in UART update mode
-	ec_enable_boot0 "uut"
-	ec_reset
+	# C2D2 does not use waits and has to ensure that the EC does not come
+	# out of reset after using a H1-level reset
+	if [[ "${SERVO_TYPE}" =~ "c2d2" ]] ; then
+		# Handle the case when flash_ec starts before DUT power is
+		# applied. Otherwise just use h1-level reset.
+		if [[ "$(dut_control_get h1_vref_present)" = "off" ]] ; then
+			info "Please attach C2D2 to DUT and power DUT now!"
+			# Waits ~40 seconds for Vref presence before timeout
+			local LOOP_COUNTER=100
+			while [[ "$(dut_control_get h1_vref_present)" = "off" \
+			  && "${LOOP_COUNTER}" -gt 0 ]] ; do
+				sleep 0.1
+				let LOOP_COUNTER=LOOP_COUNTER-1
+			done
+		else
+			# Ensure DUT is in clean state with H1 Reset
+			dut_control cold_reset:on
+			dut_control cold_reset:off
+		fi
 
-	# For CCD, disable the trigger pin for normal UART operation
-	ec_disable_boot0 "uut"
-	sleep 0.1
+		# Don't let the EC come out of reset after H1 reset
+		dut_control ec_reset:on
+
+		# Force the EC to boot in UART update mode coming out of reset
+		ec_enable_boot0 "uut"
+		dut_control ec_reset:off
+
+		# Ensure normal UART operation
+		ec_disable_boot0 "uut"
+	else
+		# Force the EC to boot in UART update mode
+		ec_enable_boot0 "uut"
+		ec_reset
+
+		# Have to wait a bit for EC boot-up
+		sleep 0.1
+
+		# Ensure normal UART operation
+		ec_disable_boot0 "uut"
+		sleep 0.1
+	fi
 
 	# Remove the prefix "/dev/" because uartupdatetool will add it.
 	local UUT_ARGS=( "--port=${EC_UART#/dev/}" " --baudrate=115200" )
