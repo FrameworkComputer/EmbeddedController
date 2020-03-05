@@ -8,49 +8,49 @@
 #include "tusb544.h"
 #include "usb_mux.h"
 
-static int tusb544_write(int port, int offset, int data)
+static int tusb544_write(const struct usb_mux *me, int offset, int data)
 {
-	return i2c_write8(usb_retimers[port].i2c_port,
-			  usb_retimers[port].i2c_addr_flags,
+	return i2c_write8(me->i2c_port,
+			  me->i2c_addr_flags,
 			  offset, data);
 }
 
-static int tusb544_read(int port, int offset, int *data)
+static int tusb544_read(const struct usb_mux *me, int offset, int *data)
 {
-	return i2c_read8(usb_retimers[port].i2c_port,
-			  usb_retimers[port].i2c_addr_flags,
-			  offset, data);
+	return i2c_read8(me->i2c_port,
+			 me->i2c_addr_flags,
+			 offset, data);
 }
 
-static int tusb544_enter_low_power_mode(int port)
+static int tusb544_enter_low_power_mode(const struct usb_mux *me)
 {
 	int reg;
 	int rv;
 
-	rv = tusb544_read(port, TUSB544_REG_GENERAL4, &reg);
+	rv = tusb544_read(me, TUSB544_REG_GENERAL4, &reg);
 	if (rv)
 		return rv;
 
 	/* Setting CTL_SEL[0,1] to 0 powers down, per Table 5 */
 	reg &= ~TUSB544_GEN4_CTL_SEL;
 
-	return tusb544_write(port, TUSB544_REG_GENERAL4, reg);
+	return tusb544_write(me, TUSB544_REG_GENERAL4, reg);
 }
 
-static int tusb544_init(int port)
+static int tusb544_init(const struct usb_mux *me)
 {
 	return EC_SUCCESS;
 }
 
-static int tusb544_set_mux(int port, mux_state_t mux_state)
+static int tusb544_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int reg;
 	int rv;
 
 	if (mux_state == USB_PD_MUX_NONE)
-		return tusb544_enter_low_power_mode(port);
+		return tusb544_enter_low_power_mode(me);
 
-	rv = tusb544_read(port, TUSB544_REG_GENERAL4, &reg);
+	rv = tusb544_read(me, TUSB544_REG_GENERAL4, &reg);
 	if (rv)
 		return rv;
 
@@ -69,24 +69,24 @@ static int tusb544_set_mux(int port, mux_state_t mux_state)
 	else if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= TUSB544_CTL_SEL_USB_ONLY;
 
-	rv = tusb544_write(port, TUSB544_REG_GENERAL4, reg);
+	rv = tusb544_write(me, TUSB544_REG_GENERAL4, reg);
 	if (rv)
 		return rv;
 
-	rv = tusb544_read(port, TUSB544_REG_GENERAL6, &reg);
+	rv = tusb544_read(me, TUSB544_REG_GENERAL6, &reg);
 	if (rv)
 		return rv;
 
 	reg &= ~TUSB544_GEN6_DIR_SEL;
-	if (pd_get_power_role(port) == PD_ROLE_SOURCE)
+	if (pd_get_power_role(me->usb_port) == PD_ROLE_SOURCE)
 		reg |= TUSB544_DIR_SEL_USB_DP_SRC;
 	else
 		reg |= TUSB544_DIR_SEL_USB_DP_SNK;
 
-	return tusb544_write(port, TUSB544_REG_GENERAL6, reg);
+	return tusb544_write(me, TUSB544_REG_GENERAL6, reg);
 }
 
-const struct usb_retimer_driver tusb544_usb_redriver_drv = {
+const struct usb_mux_driver tusb544_drv = {
 	.enter_low_power_mode = &tusb544_enter_low_power_mode,
 	.init = &tusb544_init,
 	.set = &tusb544_set_mux,

@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_USB_REDRIVER_TUSB544_H
 #define __CROS_EC_USB_REDRIVER_TUSB544_H
 
-#define TUSB544_ADDR_FLAGS0 0x44
+#define TUSB544_I2C_ADDR_FLAGS0 0x44
 
 #define TUSB544_REG_GENERAL4	0x0A
 #define TUSB544_GEN4_CTL_SEL	GENMASK(1, 0)
@@ -45,5 +45,7 @@ enum tusb544_dir_sel {
 #define TUSB544_DP4_DP3_DISABLE		BIT(3)
 #define TUSB544_DP4_AUX_SBU_OVR		GENMASK(5, 4)
 #define TUSB544_DP4_AUX_SNOOP_DISABLE	BIT(7)
+
+extern const struct usb_mux_driver tusb544_drv;
 
 #endif
