@@ -784,7 +784,6 @@ static void lpc_init(void)
 
 	/* Turn on PMC2 for Host Command usage */
 	SET_BIT(NPCX_HIPMCTL(PMC_HOST_CMD), 0);
-	SET_BIT(NPCX_HIPMCTL(PMC_HOST_CMD), 1);
 
 	/*
 	 * Set required control value (avoid setting HOSTWAIT bit at this stage)
@@ -808,9 +807,9 @@ static void lpc_init(void)
 
 	/*
 	 * Turn on enhance mode on PM channel-1,
-	 * enable OBE/IBF core interrupt
+	 * enable IBF core interrupt
 	 */
-	NPCX_HIPMCTL(PMC_ACPI) |= 0x83;
+	NPCX_HIPMCTL(PMC_ACPI) |= 0x81;
 	/* Normally Polarity IRQ1,12 type (level + high) setting */
 	NPCX_HIIRQC = 0x00;
 
