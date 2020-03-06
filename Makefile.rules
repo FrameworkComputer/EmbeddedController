@@ -844,10 +844,13 @@ stats: build_boards
 	$(call cmd_stats,RO)
 	$(call cmd_stats,RW)
 
-.PHONY: build_cros_ec_commands
-build_cros_ec_commands: build/kernel/include/linux/mfd/cros_ec_commands.h
 
-build/kernel/include/linux/mfd/cros_ec_commands.h: include/ec_commands.h
+out_cros_ec_commands=build/kernel/include/linux/mfd/cros_ec_commands.h
+.PHONY: build_cros_ec_commands
+build_cros_ec_commands: $(out_cros_ec_commands)
+
+
+$(out_cros_ec_commands): include/ec_commands.h util/make_linux_ec_commands_h.sh
 	util/make_linux_ec_commands_h.sh $< $@
 
 .SECONDARY:
