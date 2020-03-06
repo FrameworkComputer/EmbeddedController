@@ -73,7 +73,8 @@
 
 /* Min and Max sampling frequency in mHz */
 #define L3GD20_GYRO_MIN_FREQ     12500
-#define L3GD20_GYRO_MAX_FREQ     800000
+#define L3GD20_GYRO_MAX_FREQ     \
+	MOTION_MAX_SENSOR_FREQUENCY(800000, L3GD20_GYRO_MIN_FREQ)
 
 /*
  * Register      : STATUS_REG
