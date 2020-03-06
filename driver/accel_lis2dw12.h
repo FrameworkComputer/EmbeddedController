@@ -176,7 +176,9 @@ enum lis2dw12_odr {
 
 /* Absolute Acc rate. */
 #define LIS2DW12_ODR_MIN_VAL		12500
-#define LIS2DW12_ODR_MAX_VAL		1600000
+#define LIS2DW12_ODR_MAX_VAL		\
+	MOTION_MAX_SENSOR_FREQUENCY(1600000, LIS2DW12_ODR_MIN_VAL)
+
 
 /* Full scale range registers. */
 #define LIS2DW12_FS_ADDR		LIS2DW12_CTRL6_ADDR
