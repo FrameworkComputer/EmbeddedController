@@ -474,6 +474,8 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #include "registers-stm32f4.h"
 #elif defined(CHIP_FAMILY_STM32F7)
 #include "registers-stm32f7.h"
+#elif defined(CHIP_FAMILY_STM32G4)
+#include "registers-stm32g4.h"
 #elif defined(CHIP_FAMILY_STM32H7)
 #include "registers-stm32h7.h"
 #elif defined(CHIP_FAMILY_STM32L)
