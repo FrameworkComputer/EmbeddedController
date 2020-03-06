@@ -248,6 +248,9 @@
  */
 #undef CONFIG_ADC_SAMPLE_TIME
 
+/* Support voltage comparator */
+#undef CONFIG_ADC_VOLTAGE_COMPARATOR
+
 /* Include the ADC analog watchdog feature in the ADC code */
 #define CONFIG_ADC_WATCHDOG
 

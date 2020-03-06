@@ -27,6 +27,9 @@ void pm5_ibf_interrupt(void);
 void lpcrst_interrupt(enum gpio_signal signal);
 void peci_interrupt(void);
 void adc_interrupt(void);
+#ifdef CONFIG_ADC_VOLTAGE_COMPARATOR
+void voltage_comparator_interrupt(void);
+#endif
 void i2c_interrupt(int port);
 #ifdef CONFIG_I2C_SLAVE
 void i2c_slv_interrupt(int port);

@@ -178,6 +178,11 @@ void intc_cpu_int_group_7(void)
 	case IT83XX_IRQ_ADC:
 		adc_interrupt();
 		break;
+#ifdef CONFIG_ADC_VOLTAGE_COMPARATOR
+	case IT83XX_IRQ_V_COMP:
+		voltage_comparator_interrupt();
+		break;
+#endif
 #endif
 	default:
 		break;
