@@ -24,13 +24,11 @@ struct i2c_trace_range {
 static struct i2c_trace_range trace_entries[8];
 
 void i2c_trace_notify(int port, uint16_t slave_addr_flags,
-		      int direction, const uint8_t *data, size_t size)
+		      const uint8_t *out_data, size_t out_size,
+		      const uint8_t *in_data, size_t in_size)
 {
 	size_t i;
 	uint16_t addr = I2C_GET_ADDR(slave_addr_flags);
-
-	if (size == 0)
-		return;
 
 	for (i = 0; i < ARRAY_SIZE(trace_entries); i++)
 		if (trace_entries[i].enabled
@@ -41,12 +39,17 @@ void i2c_trace_notify(int port, uint16_t slave_addr_flags,
 	return;
 
 trace_enabled:
-	CPRINTF("i2c: %s %d:0x%X ",
-		direction ? "read" : "write",
-		port,
-		addr);
-	for (i = 0; i < size; i++)
-		CPRINTF("%02X ", data[i]);
+	CPRINTF("i2c: %d:0x%X ", port, addr);
+	if (out_size) {
+		CPRINTF("wr ");
+		for (i = 0; i < out_size; i++)
+			CPRINTF("0x%02X ", out_data[i]);
+	}
+	if (in_size) {
+		CPRINTF("  rd ");
+		for (i = 0; i < in_size; i++)
+			CPRINTF("0x%02X ", in_data[i]);
+	}
 	CPRINTF("\n");
 }
 

@@ -98,9 +98,6 @@ static int chip_i2c_xfer_with_notify(const int port,
 	uint16_t addr_flags = slave_addr_flags;
 	const struct i2c_port_t *i2c_port = get_i2c_port(port);
 
-	if (IS_ENABLED(CONFIG_I2C_DEBUG))
-		i2c_trace_notify(port, slave_addr_flags, 0, out, out_size);
-
 	if (IS_ENABLED(CONFIG_I2C_XFER_BOARD_CALLBACK))
 		i2c_start_xfer_notify(port, slave_addr_flags);
 
@@ -120,8 +117,10 @@ static int chip_i2c_xfer_with_notify(const int port,
 	if (IS_ENABLED(CONFIG_I2C_XFER_BOARD_CALLBACK))
 		i2c_end_xfer_notify(port, slave_addr_flags);
 
-	if (IS_ENABLED(CONFIG_I2C_DEBUG))
-		i2c_trace_notify(port, slave_addr_flags, 1, in, in_size);
+	if (IS_ENABLED(CONFIG_I2C_DEBUG)) {
+		i2c_trace_notify(port, slave_addr_flags, out, out_size,
+				 in, in_size);
+	}
 
 	return ret;
 }

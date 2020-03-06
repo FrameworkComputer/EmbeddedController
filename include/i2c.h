@@ -551,17 +551,18 @@ void i2c_end_xfer_notify(const int port,
 
 /**
  * Defined in common/i2c_trace.c, used by i2c master to notify tracing
- * funcionality of transactions.
+ * functionality of transactions.
  *
  * @param port: I2C port number
  * @param slave_addr: slave device address
- * @param direction: 0 for write,
- *                   1 for read
- * @param data: pointer to data read or written
- * @param size: size of data read or written
+ * @param out_data: pointer to data written
+ * @param out_size: size of data written
+ * @param in_data: pointer to data read
+ * @param in_size: size of data read
  */
 void i2c_trace_notify(int port, uint16_t slave_addr_flags,
-		      int direction, const uint8_t *data, size_t size);
+		      const uint8_t *out_data, size_t out_size,
+		      const uint8_t *in_data, size_t in_size);
 
 /**
  * Set bus speed. Only support for ports with I2C_PORT_FLAG_DYNAMIC_SPEED
