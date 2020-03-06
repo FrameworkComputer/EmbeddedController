@@ -382,33 +382,3 @@ struct i2c_stress_test_dev ps8xxx_i2c_stress_test_dev = {
 	.i2c_write = &tcpc_i2c_write,
 };
 #endif /* CONFIG_CMD_I2C_STRESS_TEST_TCPC */
-
-static int ps8xxx_mux_init(const struct usb_mux *me)
-{
-	tcpci_tcpm_mux_init(me);
-
-	/* If this MUX is also the TCPC, then skip init */
-	if (!(me->flags & USB_MUX_FLAG_NOT_TCPC))
-		return EC_SUCCESS;
-
-	/* We always want to be a sink when this device is only being used as a mux
-	 * to support external peripherals better.
-	 */
-	return mux_write(me, TCPC_REG_ROLE_CTRL,
-		TCPC_REG_ROLE_CTRL_SET(0, 1, TYPEC_CC_RD, TYPEC_CC_RD));
-}
-
-static int ps8xxx_mux_enter_low_power_mode(const struct usb_mux *me)
-{
-	mux_write(me, TCPC_REG_ROLE_CTRL,
-		TCPC_REG_ROLE_CTRL_SET(0, 0, TYPEC_CC_RP, TYPEC_CC_RP));
-	return tcpci_tcpm_mux_enter_low_power(me);
-}
-
-/* This is meant for mux-only applications */
-const struct usb_mux_driver ps8xxx_usb_mux_driver = {
-	.init = &ps8xxx_mux_init,
-	.set = &tcpci_tcpm_mux_set,
-	.get = &tcpci_tcpm_mux_get,
-	.enter_low_power_mode = &ps8xxx_mux_enter_low_power_mode,
-};

@@ -1130,7 +1130,7 @@ int tcpci_tcpm_mux_init(const struct usb_mux *me)
 	return error ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
 
-int tcpci_tcpm_mux_enter_low_power(const struct usb_mux *me)
+static int tcpci_tcpm_mux_enter_low_power(const struct usb_mux *me)
 {
 	/* If this MUX is also the TCPC, then skip low power */
 	if (!(me->flags & USB_MUX_FLAG_NOT_TCPC))
