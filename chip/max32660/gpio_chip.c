@@ -72,6 +72,7 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
 	mxc_gpio_regs_t *gpio = MXC_GPIO_GET_GPIO(port);
 
+	/* Setup for either an output or input. */
 	if (flags & GPIO_OUTPUT) {
 		gpio->out_en_set = mask;
 		gpio->en_set = mask;
@@ -82,7 +83,7 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		gpio->en1_clr = mask;
 	}
 
-	/* Handle pullup / pulldown */
+	/* Handle pull up, pull down or neither. */
 	if (flags & GPIO_PULL_UP) {
 		gpio->pad_cfg1 |= mask;
 		gpio->pad_cfg2 &= ~mask;
@@ -98,28 +99,42 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		gpio->ps &= ~mask;
 	}
 
-	/* Set gpio as level or edge trigger */
-	if ((flags & GPIO_INT_F_HIGH) || (flags & GPIO_INT_F_LOW)) {
+	/* Handle setting up level interrupts. */
+	if (flags & GPIO_INT_F_HIGH) {
+		/* Level triggered mode. */
 		gpio->int_mod &= ~mask;
-	} else {
-		gpio->int_mod |= mask;
+		/* Level high generates interrupt. */
+		gpio->int_pol |= mask;
+	} else if (flags & GPIO_INT_F_LOW) {
+		/* Level triggered mode. */
+		gpio->int_mod &= ~mask;
+		/* Level low generates interrupt. */
+		gpio->int_pol &= ~mask;
 	}
 
-	/* Handle interrupting on both edges */
+	/* Handle setting up edge interrupts. */
+	if (flags & GPIO_INT_F_RISING) {
+		/* Edge triggered mode. */
+		gpio->int_mod |= mask;
+		/* Rising edge generates interrupt. */
+		gpio->int_pol |= mask;
+	} else if (flags & GPIO_INT_F_FALLING) {
+		/* Edge triggered mode. */
+		gpio->int_mod |= mask;
+		/* Falling edge generates interrupt. */
+		gpio->int_pol &= ~mask;
+	}
+
+	/* Handle interrupting on both edges. */
 	if ((flags & GPIO_INT_F_RISING) && (flags & GPIO_INT_F_FALLING)) {
+		/* Dual edge triggered mode. */
 		gpio->int_dual_edge |= mask;
 	} else {
-		if (flags & GPIO_INT_F_RISING) {
-			gpio->int_pol |= mask;
-			gpio->int_dual_edge &= ~mask;
-		}
-		if (flags & GPIO_INT_F_FALLING) {
-			gpio->int_pol &= ~mask;
-			gpio->int_dual_edge &= ~mask;
-		}
+		/* Not dual edge triggered mode. */
+		gpio->int_dual_edge &= ~mask;
 	}
 
-	/* Set level */
+	/* Set the gpio pin high or low. */
 	if (flags & GPIO_HIGH) {
 		gpio->out_set = mask;
 	} else if (flags & GPIO_LOW) {
@@ -178,7 +193,11 @@ void gpio_pre_init(void)
 
 static void gpio_init(void)
 {
-	/* do nothing */
+	/*
+	 * Enable global GPIO0 Port interrupt. Note that interrupts still need to be
+	 * enabled at the per pin level.
+	 */
+	task_enable_irq(EC_GPIO0_IRQn);
 }
 DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
@@ -205,16 +224,16 @@ static void gpio_interrupt(int port, uint32_t mis)
 }
 
 /**
- * Handlers for each GPIO port.  These read and clear the interrupt bits for
- * the port, then call the master handler above.
+ * Handlers for each GPIO port. Read the interrupt status, call the common GPIO
+ * interrupt handler and clear the GPIO hardware interrupt status.
  */
 #define GPIO_IRQ_FUNC(irqfunc, gpiobase)                                       \
 	void irqfunc(void)                                                     \
 	{                                                                      \
 		mxc_gpio_regs_t *gpio = MXC_GPIO_GET_GPIO(gpiobase);           \
 		uint32_t mis = gpio->int_stat;                                 \
-		gpio->int_clr = mis;                                           \
 		gpio_interrupt(gpiobase, mis);                                 \
+		gpio->int_clr = mis;                                           \
 	}
 
 GPIO_IRQ_FUNC(__gpio_0_interrupt, PORT_0);
