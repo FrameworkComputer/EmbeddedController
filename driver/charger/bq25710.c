@@ -15,6 +15,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "task.h"
+#include "system.h"
 #include "timer.h"
 #include "util.h"
 
@@ -200,22 +201,26 @@ static void bq25710_init(int chgnum)
 	 * MIN_SYSTEM_VOLTAGE register prior to setting the reset so that the
 	 * correct value is preserved. In order to have the correct value read,
 	 * the bq25710 must not be in low power mode, otherwise the VDDA rail
-	 * may not be powered if AC is not connected.
+	 * may not be powered if AC is not connected. Note, this reset is only
+	 * required when running out of RO and not following sysjump to RW.
 	 */
-	rv = bq25710_set_low_power_mode(chgnum, 0);
-	/* Allow enough time for VDDA to be powered */
-	msleep(BQ25710_VDDA_STARTUP_DELAY_MSEC);
-	rv |= raw_read16(chgnum, BQ25710_REG_MIN_SYSTEM_VOLTAGE, &vsys);
-	rv |= raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_3, &reg);
-	if (!rv) {
-		reg |= BQ25710_CHARGE_OPTION_3_RESET_REG;
-		/* Set all registers to default values */
-		raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_3, reg);
-		/* Restore VSYS_MIN voltage to POR reset value */
-		raw_write16(chgnum, BQ25710_REG_MIN_SYSTEM_VOLTAGE, vsys);
+	if (!system_is_in_rw()) {
+		rv = bq25710_set_low_power_mode(chgnum, 0);
+		/* Allow enough time for VDDA to be powered */
+		msleep(BQ25710_VDDA_STARTUP_DELAY_MSEC);
+		rv |= raw_read16(chgnum, BQ25710_REG_MIN_SYSTEM_VOLTAGE, &vsys);
+		rv |= raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_3, &reg);
+		if (!rv) {
+			reg |= BQ25710_CHARGE_OPTION_3_RESET_REG;
+			/* Set all registers to default values */
+			raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_3, reg);
+			/* Restore VSYS_MIN voltage to POR reset value */
+			raw_write16(chgnum, BQ25710_REG_MIN_SYSTEM_VOLTAGE,
+				    vsys);
+		}
+		/* Reenable low power mode */
+		bq25710_set_low_power_mode(chgnum, 1);
 	}
-	/* Reenable low power mode */
-	bq25710_set_low_power_mode(chgnum, 1);
 
 	if (!raw_read16(chgnum, BQ25710_REG_PROCHOT_OPTION_1, &reg)) {
 		/* Disable VDPM prochot profile at initialization */
