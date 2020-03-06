@@ -15,15 +15,23 @@
 
 #define TEMP_OUT_OF_RANGE TEMP_ZONE_COUNT
 
+#ifdef BOARD_KAKADU
+#define BATT_ID 1
+#else
 #define BATT_ID 0
+#endif
 
 #define BATTERY_SIMPLO_CHARGE_MIN_TEMP 0
 #define BATTERY_SIMPLO_CHARGE_MAX_TEMP 60
+
+#define BATTERY_ATL_CHARGE_MIN_TEMP -20
+#define BATTERY_ATL_CHARGE_MAX_TEMP 60
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 enum battery_type {
 	BATTERY_SIMPLO = 0,
+	BATTERY_ATL,
 	BATTERY_COUNT
 };
 
@@ -32,6 +40,18 @@ static const struct battery_info info[] = {
 		.voltage_max		= 4400,
 		.voltage_normal		= 3860,
 		.voltage_min		= 3000,
+		.precharge_current	= 256,
+		.start_charging_min_c	= 0,
+		.start_charging_max_c	= 45,
+		.charging_min_c		= 0,
+		.charging_max_c		= 60,
+		.discharging_min_c	= -20,
+		.discharging_max_c	= 60,
+	},
+	[BATTERY_ATL] = {
+		.voltage_max		= 4370,
+		.voltage_normal		= 3860,
+		.voltage_min		= 3150,
 		.precharge_current	= 256,
 		.start_charging_min_c	= 0,
 		.start_charging_max_c	= 45,
@@ -49,6 +69,12 @@ static const struct max17055_batt_profile batt_profile[] = {
 		.ichg_term		= MAX17055_ICHGTERM_REG(235),
 		.v_empty_detect		= MAX17055_VEMPTY_REG(3000, 3600),
 	},
+	[BATTERY_ATL] = {
+		.is_ez_config		= 1,
+		.design_cap		= MAX17055_DESIGNCAP_REG(7270),
+		.ichg_term		= MAX17055_ICHGTERM_REG(500),
+		.v_empty_detect		= MAX17055_VEMPTY_REG(3000, 3600),
+	},
 };
 
 static const struct max17055_alert_profile alert_profile[] = {
@@ -57,6 +83,14 @@ static const struct max17055_alert_profile alert_profile[] = {
 		.t_alert_mxmn = MAX17055_TALRTTH_REG(
 			BATTERY_SIMPLO_CHARGE_MAX_TEMP,
 			BATTERY_SIMPLO_CHARGE_MIN_TEMP),
+		.s_alert_mxmn = SALRT_DISABLE,
+		.i_alert_mxmn = IALRT_DISABLE,
+	},
+	[BATTERY_ATL] = {
+		.v_alert_mxmn = VALRT_DISABLE,
+		.t_alert_mxmn = MAX17055_TALRTTH_REG(
+			BATTERY_ATL_CHARGE_MAX_TEMP,
+			BATTERY_ATL_CHARGE_MIN_TEMP),
 		.s_alert_mxmn = SALRT_DISABLE,
 		.i_alert_mxmn = IALRT_DISABLE,
 	},
@@ -100,9 +134,9 @@ int charger_profile_override(struct charge_state_data *curr)
 		TEMP_ZONE_0, /* t0 < bat_temp_c <= t1 */
 		TEMP_ZONE_1, /* t1 < bat_temp_c <= t2 */
 		TEMP_ZONE_2, /* t2 < bat_temp_c <= t3 */
+		TEMP_ZONE_3, /* t3 < bat_temp_c <= t4 */
 		TEMP_ZONE_COUNT
 	} temp_zone;
-
 	static struct {
 		int temp_min; /* 0.1 deg C */
 		int temp_max; /* 0.1 deg C */
@@ -110,15 +144,29 @@ int charger_profile_override(struct charge_state_data *curr)
 		int desired_voltage; /* mV */
 	} temp_zones[BATTERY_COUNT][TEMP_ZONE_COUNT] = {
 		[BATTERY_SIMPLO] = {
+			/* Add a empty range here to avoid TEMP_ZONE_COUNT mismatch. */
 			/* TEMP_ZONE_0 */
-			{BATTERY_SIMPLO_CHARGE_MIN_TEMP * 10, 150, 1772, 4376},
+			{BATTERY_SIMPLO_CHARGE_MIN_TEMP * 10,
+				BATTERY_SIMPLO_CHARGE_MIN_TEMP * 10, 1772, 4376},
 			/* TEMP_ZONE_1 */
-			{150, 450, 4020, 4376},
+			{BATTERY_SIMPLO_CHARGE_MIN_TEMP * 10, 150, 1772, 4376},
 			/* TEMP_ZONE_2 */
+			{150, 450, 4020, 4376},
+			/* TEMP_ZONE_3 */
 			{450, BATTERY_SIMPLO_CHARGE_MAX_TEMP * 10, 3350, 4300},
 		},
+		[BATTERY_ATL] = {
+			/* TEMP_ZONE_0 */
+			{BATTERY_ATL_CHARGE_MIN_TEMP * 10, 50, 719, 4370},
+			/* TEMP_ZONE_1 */
+			{50, 100, 2157, 4370},
+			/* TEMP_ZONE_2 */
+			{100, 450, 3595, 4370},
+			/* TEMP_ZONE_3 */
+			{450, BATTERY_ATL_CHARGE_MAX_TEMP * 10, 2516, 4100},
+		},
 	};
-	BUILD_ASSERT(ARRAY_SIZE(temp_zones[0]) == TEMP_ZONE_COUNT);
+	BUILD_ASSERT(ARRAY_SIZE(temp_zones[BATT_ID]) == TEMP_ZONE_COUNT);
 	BUILD_ASSERT(ARRAY_SIZE(temp_zones) == BATTERY_COUNT);
 
 	if ((curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE) ||
@@ -140,6 +188,7 @@ int charger_profile_override(struct charge_state_data *curr)
 	case TEMP_ZONE_0:
 	case TEMP_ZONE_1:
 	case TEMP_ZONE_2:
+	case TEMP_ZONE_3:
 		curr->requested_current =
 			temp_zones[BATT_ID][temp_zone].desired_current;
 		curr->requested_voltage =
