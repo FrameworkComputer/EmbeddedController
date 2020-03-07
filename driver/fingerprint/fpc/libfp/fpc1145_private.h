@@ -8,7 +8,13 @@
 
 #include <stdint.h>
 
-/* The 16-bit hardware ID is 0x140y */
+/**
+ * The hardware ID is 16-bits. All 114x FPC sensors (including FPC1145) are
+ * detected with the pattern 0x1400 and mask 0xFFF0. All supported variants of
+ * the 1145 (0x140B, 0x140C, and 0x1401) should be detected as part of the FPC
+ * 1140 family with identical functionality.
+ * See http://b/150407388 for additional details.
+ */
 #define FP_SENSOR_HWID 0x140
 
 /* Sensor type name */
