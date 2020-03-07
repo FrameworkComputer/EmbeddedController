@@ -398,6 +398,24 @@ at Google for the exact values to use below:
 ```
 ***
 
+### Tracking Issues and Communication
+
+Development issue tracking and communication is done through the
+[Partner Issue Tracker]. You will use your [Partner Domain] account to access
+the [Partner Issue Tracker]. If you do not already have a [Partner Domain]
+account, please request one from your Google contact.
+
+In order to make sure that you receive email notifications for issues, please
+make sure that you [set up email forwarding] and set your
+[notification settings] appropriately. Communication should primarily be done
+through the [Partner Issue Tracker] and not email so that it can be more easily
+tracked by multiple people and a record is preserved for posterity.
+
+[Partner Issue Tracker]: https://developers.google.com/issue-tracker/guides/partner-access
+[Partner Domain]: https://developers.google.com/issue-tracker/guides/partner-domains
+[set up email forwarding]: https://developers.google.com/issue-tracker/guides/partner-domains#email_forwarding
+[notification settings]: https://developers.google.com/issue-tracker/guides/set-notification-preferences
+
 ## Working with Chromebooks
 
 Chromebooks have an FPMCU (e.g., Dragonclaw) board attached to the
