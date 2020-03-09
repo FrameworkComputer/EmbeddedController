@@ -109,7 +109,8 @@ void mst_hpd_interrupt(enum ioex_signal signal)
  * PS8802 set mux tuning.
  * Adds in board specific gain and DP lane count configuration
  */
-static int ps8802_mux_set(const struct usb_mux *me, mux_state_t mux_state)
+static int board_ps8802_mux_set(const struct usb_mux *me,
+				mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
 
@@ -155,7 +156,8 @@ static int ps8802_mux_set(const struct usb_mux *me, mux_state_t mux_state)
  * PS8818 set mux tuning.
  * Adds in board specific gain and DP lane count configuration
  */
-static int ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state)
+static int board_ps8818_mux_set(const struct usb_mux *me,
+				mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
 
@@ -404,14 +406,14 @@ const struct usb_mux usbc1_ps8802 = {
 	.i2c_port = I2C_PORT_TCPC1,
 	.i2c_addr_flags = PS8802_I2C_ADDR_FLAGS,
 	.driver = &ps8802_usb_mux_driver,
-	.board_set = &ps8802_mux_set,
+	.board_set = &board_ps8802_mux_set,
 };
 const struct usb_mux usbc1_ps8818 = {
 	.usb_port = USBC_PORT_C1,
 	.i2c_port = I2C_PORT_TCPC1,
 	.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
 	.driver = &ps8818_usb_retimer_driver,
-	.board_set = &ps8818_mux_set,
+	.board_set = &board_ps8818_mux_set,
 };
 struct usb_mux usbc1_amd_fp5_usb_mux = {
 	.usb_port = USBC_PORT_C1,
