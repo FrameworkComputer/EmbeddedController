@@ -532,12 +532,6 @@ Make sure that this interface is disabled:
 (chroot) $ dut-control usbpd_ec3po_interp_connect:off
 ```
 
-### "Sweetberry" board fails to build
-
-If you're trying to run `make buildall -j` in the EC codebase and the build
-fails when trying to build the "sweetberry" board, see this bug:
-https://crbug.com/992082.
-
 ### FPMCU console commands
 
 *   Once the console is working you can use `help` to see the commands.
