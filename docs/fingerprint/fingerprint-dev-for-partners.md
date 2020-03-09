@@ -283,6 +283,11 @@ Flash the firmware file:
 (chroot) $ ./util/flash_ec --board=<BOARD> --image=./build/<BOARD>/ec.bin
 ```
 
+Prepare a serial terminal in your chroot:
+```bash
+(chroot) $ sudo emerge screen
+```
+
 Connect to the UART pty:
 
 ```bash
