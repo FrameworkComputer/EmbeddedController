@@ -6,6 +6,7 @@
 #include "accel_cal.h"
 #include "accelgyro.h"
 #include "hwtimer.h"
+#include "mag_cal.h"
 #include "online_calibration.h"
 #include "test_util.h"
 #include "timer.h"
@@ -69,8 +70,6 @@ static struct accelgyro_drv mock_sensor_driver = {
 	.get_range = mock_get_range,
 };
 
-static struct accelgyro_drv empty_sensor_driver = {};
-
 static struct accel_cal_algo base_accel_cal_algos[] = {
 	{
 		.newton_fit = NEWTON_FIT(4, 15, FLOAT_TO_FP(0.01f),
@@ -85,6 +84,8 @@ static struct accel_cal base_accel_cal_data = {
 	.algos = base_accel_cal_algos,
 	.num_temp_windows = ARRAY_SIZE(base_accel_cal_algos),
 };
+
+static struct mag_cal_t lid_mag_cal_data;
 
 static bool next_accel_cal_accumulate_result;
 static fpv3_t next_accel_cal_bias;
@@ -110,7 +111,11 @@ struct motion_sensor_t motion_sensors[] = {
 		},
 	},
 	[LID] = {
-		.drv = &empty_sensor_driver,
+		.type = MOTIONSENSE_TYPE_MAG,
+		.drv = &mock_sensor_driver,
+		.online_calib_data[0] = {
+			.type_specific_data = &lid_mag_cal_data,
+		}
 	},
 };
 
@@ -216,6 +221,30 @@ static int test_new_calibration_value(void)
 	return EC_SUCCESS;
 }
 
+int test_mag_reading_updated_cal(void)
+{
+	struct mag_cal_t expected_results;
+	struct ec_response_motion_sensor_data data;
+	int rc;
+	int test_values[] = { 207, -17, -37 };
+
+	data.sensor_num = LID;
+	data.data[X] = test_values[X];
+	data.data[Y] = test_values[Y];
+	data.data[Z] = test_values[Z];
+
+	init_mag_cal(&expected_results);
+	mag_cal_update(&expected_results, test_values);
+
+	rc = online_calibration_process_data(
+		&data, &motion_sensors[LID], __hw_clock_source_read());
+	TEST_EQ(rc, EC_SUCCESS, "%d");
+	TEST_EQ(expected_results.kasa_fit.nsamples,
+		lid_mag_cal_data.kasa_fit.nsamples, "%d");
+
+	return EC_SUCCESS;
+}
+
 void before_test(void)
 {
 	mock_read_temp_results = NULL;
@@ -230,6 +259,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_read_temp_from_cache_on_stage);
 	RUN_TEST(test_read_temp_twice_after_cache_stale);
 	RUN_TEST(test_new_calibration_value);
+	RUN_TEST(test_mag_reading_updated_cal);
 
 	test_print_result();
 }

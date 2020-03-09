@@ -29,5 +29,13 @@ struct mag_cal_t {
 
 void init_mag_cal(struct mag_cal_t *moc);
 
+/**
+ * Update the magnetometer calibration structure and possibly compute the new
+ * bias.
+ *
+ * @param moc Pointer to the magnetometer struct to update.
+ * @param v   The new data.
+ * @return    1 if a new calibration value is available, 0 otherwise.
+ */
 int mag_cal_update(struct mag_cal_t *moc, const intv3_t v);
 #endif  /* __CROS_EC_MAG_CAL_H */
