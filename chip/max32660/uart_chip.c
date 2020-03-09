@@ -61,7 +61,7 @@ static int done_uart_init_yet;
 #define UART_ALTERNATE_CLOCK_HZ 7372800
 
 /* ************************************************************************* */
-unsigned uart_number_write_available(mxc_uart_regs_t *uart)
+static unsigned int uart_number_write_available(mxc_uart_regs_t *uart)
 {
 	return MXC_UART_FIFO_DEPTH -
 	       ((uart->status & MXC_F_UART_STATUS_TX_FIFO_CNT) >>
@@ -69,49 +69,37 @@ unsigned uart_number_write_available(mxc_uart_regs_t *uart)
 }
 
 /* ************************************************************************* */
-unsigned uart_number_read_available(mxc_uart_regs_t *uart)
+static unsigned int uart_number_read_available(mxc_uart_regs_t *uart)
 {
 	return ((uart->status & MXC_F_UART_STATUS_RX_FIFO_CNT) >>
 		MXC_F_UART_STATUS_RX_FIFO_CNT_POS);
 }
 
-void uartn_enable_tx_interrupt(int uart_num)
+static void uartn_enable_tx_interrupt(int uart_num)
 {
 	// Enable the interrupts
 	MXC_UART_GET_UART(uart_num)->int_en |= UART_TX_IE;
 }
 
-void uartn_disable_tx_interrupt(int uart_num)
+static void uartn_disable_tx_interrupt(int uart_num)
 {
 	// Disable the interrupts
 	MXC_UART_GET_UART(uart_num)->int_en &= ~UART_TX_IE;
 }
 
-void uartn_enable_rx_interrupt(int uart_num)
-{
-	// Enable the interrupts
-	MXC_UART_GET_UART(uart_num)->int_en |= UART_RX_IE;
-}
-
-void uartn_disable_rx_interrupt(int uart_num)
-{
-	// Enable the interrupts
-	MXC_UART_GET_UART(uart_num)->int_en &= ~UART_RX_IE;
-}
-
-int uartn_tx_in_progress(int uart_num)
+static int uartn_tx_in_progress(int uart_num)
 {
 	return ((MXC_UART_GET_UART(uart_num)->status &
 		 (MXC_F_UART_STATUS_TX_BUSY)) != 0);
 }
 
-void uartn_tx_flush(int uart_num)
+static void uartn_tx_flush(int uart_num)
 {
 	while (uartn_tx_in_progress(uart_num)) {
 	}
 }
 
-int uartn_tx_ready(int uart_num)
+static int uartn_tx_ready(int uart_num)
 {
 	int avail;
 	avail = uart_number_write_available(MXC_UART_GET_UART(uart_num));
@@ -119,7 +107,7 @@ int uartn_tx_ready(int uart_num)
 	return (avail != 0);
 }
 
-int uartn_rx_available(int uart_num)
+static int uartn_rx_available(int uart_num)
 {
 	int avail;
 	/* True if the RX buffer is not completely empty. */
@@ -127,7 +115,7 @@ int uartn_rx_available(int uart_num)
 	return (avail != 0);
 }
 
-void uartn_write_char(int uart_num, char c)
+static void uartn_write_char(int uart_num, char c)
 {
 	int avail;
 	mxc_uart_regs_t *uart;
@@ -145,14 +133,14 @@ void uartn_write_char(int uart_num, char c)
 	uart->fifo = c;
 }
 
-int uartn_read_char(int uart_num)
+static int uartn_read_char(int uart_num)
 {
 	int c;
 	c = MXC_UART_GET_UART(uart_num)->fifo;
 	return c;
 }
 
-void uartn_clear_interrupt_flags(int uart_num)
+static void uartn_clear_interrupt_flags(int uart_num)
 {
 	uint32_t flags;
 	// Read and clear interrupts
