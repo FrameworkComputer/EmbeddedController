@@ -29,6 +29,10 @@ should at least ensure that EC style and paradigms are being followed. Once EC
 styles and paradigms are being followed, then the reviewer can give a +1 and add
 the appropriate domain expert for that section of code.
 
+Reviewers should try to give an initial response within 1 business day of
+receiving a review request. Thereafter, they should try to respond to new
+comments by the author within 1 business day.
+
 ## How can I join the rotation?
 
 Add your name to the [list of reviewers][1].
@@ -62,10 +66,6 @@ Add your name to the [list of reviewers][1].
     review.
   * Use Gerrit comments as needed to clarify that a CL is now ready for review.
   * Recommended: Leave “WIP” in the CL title until it is ready to review.
-  * Optional: Mark the CL as “Work in Progress” in Gerrit (or use `repo upload
-    --wip`) until it is ready to review.
-  * Optional: Mark the CL as Verified+1 when it is ready for review.
-  * Optional: Mark the CL as Verified-1 _until_ it is ready for review.
 * Make sure that `make buildall` succeeds after each individual change; this
   facilitates bisecting.
 * Assign reviewers with a specific scope for each reviewer.
@@ -101,8 +101,13 @@ Add your name to the [list of reviewers][1].
 * Try to make review comments maximally actionable for authors, who may be in
   different timezones or may be managing a relation chain with multiple
   reviewers.
+  * Try to respond to review requests or follow-up comments within 1 business
+    day.
+    * This is an SLO for single responses, not the entire lifecycle of the CL.
   * Prefer to provide feedback on an entire CL in one shot, so that the author
     could plausibly respond to all of it and need no further review.
+    * However, consider sending a reply after a partial review, if it would help
+      keep the response time within 1 business day.
 * Resolve outstanding comments before submitting.
   * Don’t mark a comment as resolved until the question has been answered,
     request completed, concern assuaged, etc.
