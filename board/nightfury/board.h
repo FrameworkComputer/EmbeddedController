@@ -124,6 +124,11 @@
 #define CONFIG_THROTTLE_AP
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
 
+/* Fan features */
+#define CONFIG_FANS 1
+#undef CONFIG_FAN_INIT_SPEED
+#define CONFIG_FAN_INIT_SPEED 50
+
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
@@ -166,7 +171,20 @@ enum sensor_id {
 
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
+	PWM_CH_FAN,
 	PWM_CH_COUNT
+};
+
+enum fan_channel {
+	FAN_CH_0 = 0,
+	/* Number of FAN channels */
+	FAN_CH_COUNT,
+};
+
+enum mft_channel {
+	MFT_CH_0 = 0,
+	/* Number of MFT channels */
+	MFT_CH_COUNT,
 };
 
 enum temp_sensor_id {

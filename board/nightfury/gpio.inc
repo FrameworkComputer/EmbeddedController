@@ -85,6 +85,7 @@ GPIO(LED_2_L,                  PIN(C, 3), GPIO_OUT_HIGH)        /* White (hatch)
 GPIO(LED_3_L,                  PIN(C, 2), GPIO_OUT_HIGH)
 GPIO(EC_KB_BL_EN,              PIN(8, 6), GPIO_OUT_LOW)         /* Keyboard backlight */
 GPIO(EDP_BKLTEN_OD,            PIN(D, 3), GPIO_ODR_HIGH)        /* Display backlight */
+GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
 GPIO(LID_ACCEL_INT_L,          PIN(5, 0), GPIO_INPUT |          /* Lid accelerometer */
                                           GPIO_SEL_1P8V)
 
@@ -122,7 +123,6 @@ GPIO(TP58,                     PIN(0, 4), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(TP73,                     PIN(8, 2), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(TP18,                     PIN(C, 0), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(TP54,                     PIN(4, 0), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(TP56,                     PIN(6, 1), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(TP57,                     PIN(8, 1), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(TP55,                     PIN(7, 3), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(TP59,                     PIN(B, 0), GPIO_INPUT | GPIO_PULL_UP)
