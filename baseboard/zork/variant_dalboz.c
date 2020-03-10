@@ -58,6 +58,14 @@ const struct usb_mux usbc0_sbu_mux = {
 	.driver = &usbc0_sbu_mux_driver,
 };
 
+struct usb_mux usbc1_amd_fp5_usb_mux = {
+	.usb_port = USBC_PORT_C1,
+	.i2c_port = I2C_PORT_USB_AP_MUX,
+	.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
+	.driver = &amd_fp5_usb_mux_driver,
+	.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP,
+};
+
 const struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.usb_port = USBC_PORT_C0,
@@ -71,6 +79,7 @@ const struct usb_mux usb_muxes[] = {
 		.i2c_port = I2C_PORT_TCPC1,
 		.i2c_addr_flags = 0x10,
 		.driver = &ps874x_usb_mux_driver,
+		.next_mux = &usbc1_amd_fp5_usb_mux,
 	}
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
