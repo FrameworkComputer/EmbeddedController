@@ -58,12 +58,34 @@ const struct usb_mux usbc0_sbu_mux = {
 	.driver = &usbc0_sbu_mux_driver,
 };
 
+static int usbc1_hpd_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+{
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
+		/* Enable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+	else
+		/* Disable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
+
+	return EC_SUCCESS;
+}
+
+const struct usb_mux_driver usbc1_hpd_mux_driver = {
+	.set = usbc1_hpd_set_mux,
+};
+
+const struct usb_mux usbc1_hpd_mux = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &usbc1_hpd_mux_driver,
+};
+
 struct usb_mux usbc1_amd_fp5_usb_mux = {
 	.usb_port = USBC_PORT_C1,
 	.i2c_port = I2C_PORT_USB_AP_MUX,
 	.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
 	.driver = &amd_fp5_usb_mux_driver,
 	.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP,
+	.next_mux = &usbc1_hpd_mux,
 };
 
 const struct usb_mux usb_muxes[] = {
