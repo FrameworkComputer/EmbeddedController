@@ -5,6 +5,7 @@
  * Renesas RAA489000 TCPC driver
  */
 
+#include "charge_manager.h"
 #include "common.h"
 #include "console.h"
 #include "driver/charger/isl923x.h"
@@ -21,6 +22,7 @@ int raa489000_init(int port)
 	int rv;
 	int regval;
 	int i2c_port;
+	struct charge_port_info chg = { 0 };
 
 	/* Perform unlock sequence */
 	rv = tcpc_write16(port, 0xAA, 0xDAA0);
@@ -110,6 +112,20 @@ int raa489000_init(int port)
 	rv = tcpc_write16(port, RAA489000_TCPC_SETTING1, regval);
 	if (rv)
 		CPRINTS("c%d: failed to set TCPCIv1.0 mode", port);
+
+	/*
+	 * If VBUS is present, start sinking from it if we haven't already
+	 * chosen a charge port.  This is *kinda hacky* doing it here, but we
+	 * must start sinking VBUS now, otherwise the board may die if there is
+	 * no battery connected. (See b/150702984)
+	 */
+	if (pd_snk_is_vbus_provided(port) &&
+	    charge_manager_get_active_charge_port() == CHARGE_PORT_NONE) {
+		chg.current = 500;
+		chg.voltage = 5000;
+		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, port, &chg);
+		board_set_active_charge_port(port);
+	}
 
 	return rv;
 }
