@@ -159,6 +159,18 @@ static inline bool ec_config_has_usbc1_retimer_ps8818(void)
 		  HAS_USBC1_RETIMER_PS8818);
 }
 
+
+#define PORT_TO_HPD(port) ((port == 0) \
+	? GPIO_USB_C0_HPD \
+	: (ec_config_has_usbc1_retimer_ps8802()) \
+		? GPIO_DP1_HPD \
+		: GPIO_DP2_HPD)
+
+extern const struct usb_mux usbc0_pi3dpx1207_usb_retimer;
+extern const struct usb_mux usbc1_ps8802;
+extern const struct usb_mux usbc1_ps8818;
+extern struct usb_mux usbc1_amd_fp5_usb_mux;
+
 #endif /* !__ASSEMBLER__ */
 
 

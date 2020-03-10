@@ -98,6 +98,7 @@ int ps8818_i2c_field_update8(const struct usb_mux *me, int page, int offset,
 	return rv;
 }
 
+/* TODO(b:151232257) Remove probe code when hardware supports CBI */
 int ps8818_detect(const struct usb_mux *me)
 {
 	int rv = EC_ERROR_NOT_POWERED;

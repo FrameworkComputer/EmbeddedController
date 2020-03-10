@@ -6,10 +6,12 @@
 /* Trembyle board configuration */
 
 #include "button.h"
+#include "cbi_ec_fw_config.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/retimer/ps8811.h"
+#include "driver/usb_mux/amd_fp5.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -24,6 +26,8 @@
 #include "system.h"
 #include "task.h"
 #include "usb_charge.h"
+#include "usb_mux.h"
+
 #include "gpio_list.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -221,3 +225,82 @@ static void ps8811_retimer_off(void)
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, ps8811_retimer_off, HOOK_PRIO_DEFAULT);
+
+/*****************************************************************************
+ * USB-C MUX/Retimer dynamic configuration
+ */
+static void setup_mux(void)
+{
+	if (ec_config_has_usbc1_retimer_ps8802()) {
+		ccprints("C1 PS8802 detected");
+
+		/*
+		 * Main MUX is PS8802, secondary MUX is modified FP5
+		 *
+		 * Replace usb_muxes[USBC_PORT_C1] with the PS8802
+		 * table entry.
+		 */
+		memcpy(&usb_muxes[USBC_PORT_C1],
+		       &usbc1_ps8802,
+		       sizeof(struct usb_mux));
+
+		/* Set the AMD FP5 as the secondary MUX */
+		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_amd_fp5_usb_mux;
+
+		/* Don't have the AMD FP5 flip */
+		usbc1_amd_fp5_usb_mux.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP;
+
+	} else if (ec_config_has_usbc1_retimer_ps8818()) {
+		ccprints("C1 PS8818 detected");
+
+		/*
+		 * Main MUX is FP5, secondary MUX is PS8818
+		 *
+		 * Replace usb_muxes[USBC_PORT_C1] with the AMD FP5
+		 * table entry.
+		 */
+		memcpy(&usb_muxes[USBC_PORT_C1],
+		       &usbc1_amd_fp5_usb_mux,
+		       sizeof(struct usb_mux));
+
+		/* Set the PS8818 as the secondary MUX */
+		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_ps8818;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, setup_mux, HOOK_PRIO_DEFAULT);
+
+/* TODO(b:151232257) Remove probe code when hardware supports CBI */
+#include "driver/retimer/ps8802.h"
+#include "driver/retimer/ps8818.h"
+static void probe_setup_mux_backup(void)
+{
+	if (usb_muxes[USBC_PORT_C1].driver != NULL)
+		return;
+
+	/*
+	 * Identifying a PS8818 is faster than the PS8802,
+	 * so do it first.
+	 */
+	if (ps8818_detect(&usbc1_ps8818) == EC_SUCCESS) {
+		set_cbi_fw_config(0x00004000);
+		setup_mux();
+	} else if (ps8802_detect(&usbc1_ps8802) == EC_SUCCESS) {
+		set_cbi_fw_config(0x00004001);
+		setup_mux();
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, probe_setup_mux_backup, HOOK_PRIO_DEFAULT);
+
+struct usb_mux usb_muxes[] = {
+	[USBC_PORT_C0] = {
+		.usb_port = USBC_PORT_C0,
+		.i2c_port = I2C_PORT_USB_AP_MUX,
+		.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
+		.driver = &amd_fp5_usb_mux_driver,
+		.next_mux = &usbc0_pi3dpx1207_usb_retimer,
+	},
+	[USBC_PORT_C1] = {
+		/* Filled in dynamically at startup */
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);

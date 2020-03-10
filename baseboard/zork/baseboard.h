@@ -293,24 +293,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-#if defined(VARIANT_ZORK_TREMBYLE)
-	/* Private
-	 * Main intent is to indicate the retimer type attached
-	 * but is also needed to determine the HPD from the port
-	 */
-	enum zork_c1_retimer {
-		C1_RETIMER_UNKNOWN,
-		C1_RETIMER_PS8802,
-		C1_RETIMER_PS8818,
-	};
-	extern enum zork_c1_retimer zork_c1_retimer;
-
-	#define PORT_TO_HPD(port) ((port == 0) \
-		? GPIO_USB_C0_HPD \
-		: (zork_c1_retimer == C1_RETIMER_PS8802) \
-			? GPIO_DP1_HPD \
-			: GPIO_DP2_HPD)
-#elif defined(VARIANT_ZORK_DALBOZ)
+#if defined(VARIANT_ZORK_DALBOZ)
 	#define PORT_TO_HPD(port) ((port == 0) \
 		? GPIO_USB3_C0_DP2_HPD \
 		: GPIO_DP1_HPD)

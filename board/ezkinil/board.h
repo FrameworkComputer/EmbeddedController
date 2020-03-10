@@ -159,6 +159,14 @@ static inline bool ec_config_has_usbc1_retimer_tusb544(void)
 		  HAS_USBC1_RETIMER_TUSB544);
 }
 
+
+/* TODO: Fill in with GPIO values */
+#define PORT_TO_HPD(port) ((port == 0) \
+	? GPIO_USB_C0_HPD \
+	: (ec_config_has_usbc1_retimer_ps8743()) \
+		? GPIO_DP1_HPD \
+		: GPIO_DP2_HPD)
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

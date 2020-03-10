@@ -13,6 +13,7 @@
 #include "fan.h"
 #include "fan_chip.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -22,6 +23,7 @@
 #include "system.h"
 #include "task.h"
 #include "usb_charge.h"
+#include "usb_mux.h"
 
 #include "gpio_list.h"
 
@@ -162,3 +164,27 @@ const struct mft_t mft_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
+
+/*****************************************************************************
+ * USB-C MUX/Retimer dynamic configuration
+ */
+
+/* TODO: Fill in with real mux table updates */
+static void setup_mux(void)
+{
+	if (ec_config_has_usbc1_retimer_tusb544())
+		ccprints("C1 TUSB544 detected");
+	else if (ec_config_has_usbc1_retimer_ps8743())
+		ccprints("C1 PS8743 detected");
+}
+DECLARE_HOOK(HOOK_INIT, setup_mux, HOOK_PRIO_DEFAULT);
+
+struct usb_mux usb_muxes[] = {
+	[USBC_PORT_C0] = {
+		/* USB-C0 does not have a retimer/mux */
+	},
+	[USBC_PORT_C1] = {
+		/* Filled in dynamically at startup */
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);

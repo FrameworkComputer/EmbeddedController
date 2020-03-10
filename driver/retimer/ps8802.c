@@ -189,6 +189,7 @@ int ps8802_i2c_wake(const struct usb_mux *me)
 	return rv;
 }
 
+/* TODO(b:151232257) Remove probe code when hardware supports CBI */
 int ps8802_detect(const struct usb_mux *me)
 {
 	int rv = EC_ERROR_NOT_POWERED;
