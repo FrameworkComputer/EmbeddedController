@@ -468,11 +468,14 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 void pd_request_data_swap(int port)
 {
 	/*
-	 * Must be in Attached.SRC or Attached.SNK when this function
+	 * Must be in Attached.SRC, Attached.SNK, DebugAccessory.SNK,
+	 * or UnorientedDebugAccessory.SRC when this function
 	 * is called
 	 */
 	if (get_state_tc(port) == TC_ATTACHED_SRC ||
-				get_state_tc(port) == TC_ATTACHED_SNK) {
+			get_state_tc(port) == TC_ATTACHED_SNK ||
+			get_state_tc(port) == TC_DBG_ACC_SNK ||
+			get_state_tc(port) == TC_UNORIENTED_DBG_ACC_SRC) {
 		TC_SET_FLAG(port, TC_FLAGS_REQUEST_DR_SWAP);
 		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
 	}
