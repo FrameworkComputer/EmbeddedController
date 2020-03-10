@@ -58,7 +58,7 @@ Add your name to the [list of reviewers][1].
   * Associate a bug with a code review (`BUG=...`) when context is relevant.
 * Indicate clearly when a CL is not yet ready for review and when it is; don’t
   start the review until you’ve stopped making changes.
-  * Use `repo upload --no-email` to avoid sending emails for CLs not ready for
+  * Use `repo upload --no-emails` to avoid sending emails for CLs not ready for
     review.
   * Use Gerrit comments as needed to clarify that a CL is now ready for review.
   * Recommended: Leave “WIP” in the CL title until it is ready to review.
@@ -94,7 +94,7 @@ Add your name to the [list of reviewers][1].
     wait for that patchset.
   * If practical, don’t upload a new patchset until you can usefully respond to
     all unresolved comments.
-  * Use `repo upload --no-email` for patchsets that address comments before the
+  * Use `repo upload --no-emails` for patchsets that address comments before the
     responses to those comments.
   * Try to minimize rebases in the middle of a review; if practical, don’t
     rebase until just before submitting.
