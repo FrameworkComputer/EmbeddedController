@@ -75,6 +75,7 @@ BOARDS_STM32=(
 	magnemite
 	masterball
 	minimuffin
+	moonball
 	nami_fp
 	nocturne_fp
 	oak_pd
