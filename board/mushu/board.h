@@ -47,6 +47,9 @@
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
 #define I2C_PORT_ALS      I2C_PORT_SENSOR
 
+/* GPU features */
+#define I2C_PORT_GPU                    NPCX_I2C_PORT4_1
+
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_COMM_LOCKED
 #define CONFIG_USB_PD_TCPM_ANX7447
