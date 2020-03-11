@@ -53,6 +53,7 @@ int cbi_get_sku_id(uint32_t *sku_id);
 int cbi_get_oem_id(uint32_t *oem_id);
 int cbi_get_model_id(uint32_t *id);
 int cbi_get_fw_config(uint32_t *fw_config);
+int cbi_get_pcb_supplier(uint32_t *pcb_supplier);
 
 /**
  * Get data from CBI store

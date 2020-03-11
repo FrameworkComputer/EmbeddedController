@@ -5722,6 +5722,7 @@ enum cbi_data_tag {
 	CBI_TAG_OEM_NAME = 4,      /* variable length ascii, nul terminated. */
 	CBI_TAG_MODEL_ID = 5,      /* uint32_t or smaller */
 	CBI_TAG_FW_CONFIG = 6,     /* uint32_t bit field */
+	CBI_TAG_PCB_SUPPLIER = 7,  /* uint32_t or smaller */
 	CBI_TAG_COUNT,
 };
 
