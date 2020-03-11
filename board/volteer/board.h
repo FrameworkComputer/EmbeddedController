@@ -25,6 +25,11 @@
 /* BMA253 accelerometer in base */
 #define CONFIG_ACCEL_BMA255
 
+/* BMI260 accel/gyro in base */
+#define CONFIG_ACCELGYRO_BMI260
+#define CONFIG_ACCELGYRO_BMI260_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+
 /* TCS3400 ALS */
 #define CONFIG_ALS
 #define ALS_COUNT		1
@@ -87,6 +92,7 @@
 
 /* I2C Bus Configuration */
 #define CONFIG_I2C
+#define I2C_PORT_ACCEL		I2C_PORT_SENSOR
 #define I2C_PORT_SENSOR		NPCX_I2C_PORT0_0
 #define I2C_PORT_USB_C0		NPCX_I2C_PORT1_0
 #define I2C_PORT_USB_C1		NPCX_I2C_PORT2_0
@@ -113,6 +119,8 @@ enum battery_type {
 
 enum sensor_id {
 	LID_ACCEL = 0,
+	BASE_ACCEL,
+	BASE_GYRO,
 	CLEAR_ALS,
 	RGB_ALS,
 	VSYNC,
