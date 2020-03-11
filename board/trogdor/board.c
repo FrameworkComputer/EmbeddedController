@@ -9,11 +9,8 @@
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state.h"
-#include "charger.h"
-#include "chipset.h"
 #include "extpower.h"
 #include "driver/accelgyro_bmi160.h"
-#include "driver/charger/isl923x.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -33,11 +30,7 @@
 #include "shi_chip.h"
 #include "switch.h"
 #include "task.h"
-#include "usb_charge.h"
-#include "usb_mux.h"
-#include "usb_pd.h"
 #include "usbc_ppc.h"
-#include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -109,15 +102,6 @@ static void board_connect_c0_sbu(enum gpio_signal s)
 	hook_call_deferred(&board_connect_c0_sbu_deferred_data, 0);
 }
 
-/* Wake-up pins for hibernate */
-const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_LID_OPEN,
-	GPIO_AC_PRESENT,
-	GPIO_POWER_BUTTON_L,
-	GPIO_EC_RST_ODL,
-};
-const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
-
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Measure VBUS through a 1/10 voltage divider */
@@ -161,56 +145,6 @@ const struct pwm_t pwm_channels[] = {
 	[PWM_CH_DISPLIGHT] = { .channel = 5, .flags = 0, .freq = 4800 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
-
-/* Power signal list. Must match order of enum power_signal. */
-const struct power_signal_info power_signal_list[] = {
-	[SC7180_AP_RST_ASSERTED] = {
-		GPIO_AP_RST_L,
-		POWER_SIGNAL_ACTIVE_LOW | POWER_SIGNAL_DISABLE_AT_BOOT,
-		"AP_RST_ASSERTED"},
-	[SC7180_PS_HOLD] = {
-		GPIO_PS_HOLD,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"PS_HOLD"},
-	[SC7180_PMIC_FAULT_L] = {
-		GPIO_PMIC_FAULT_L,
-		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
-		"PMIC_FAULT_L"},
-	[SC7180_POWER_GOOD] = {
-		GPIO_POWER_GOOD,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"POWER_GOOD"},
-	[SC7180_WARM_RESET] = {
-		GPIO_WARM_RESET_L,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"WARM_RESET_L"},
-	[SC7180_AP_SUSPEND] = {
-		GPIO_AP_SUSPEND,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"AP_SUSPEND"},
-	[SC7180_DEPRECATED_AP_RST_REQ] = {
-		GPIO_DEPRECATED_AP_RST_REQ,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"DEPRECATED_AP_RST_REQ"},
-};
-BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
-/* I2C port map */
-const struct i2c_port_t i2c_ports[] = {
-	{"power",   I2C_PORT_POWER,  100, GPIO_EC_I2C_POWER_SCL,
-					  GPIO_EC_I2C_POWER_SDA},
-	{"tcpc0",   I2C_PORT_TCPC0, 1000, GPIO_EC_I2C_USB_C0_PD_SCL,
-					  GPIO_EC_I2C_USB_C0_PD_SDA},
-	{"tcpc1",   I2C_PORT_TCPC1, 1000, GPIO_EC_I2C_USB_C1_PD_SCL,
-					  GPIO_EC_I2C_USB_C1_PD_SDA},
-	{"eeprom",  I2C_PORT_EEPROM, 400, GPIO_EC_I2C_EEPROM_SCL,
-					  GPIO_EC_I2C_EEPROM_SDA},
-	{"sensor",  I2C_PORT_SENSOR, 400, GPIO_EC_I2C_SENSOR_SCL,
-					  GPIO_EC_I2C_SENSOR_SDA},
-};
-
-const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* Power Path Controller */
 struct ppc_config_t ppc_chips[] = {
@@ -295,16 +229,6 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
 #endif /* BOARD_REV */
-
-const struct charger_config_t chg_chips[] = {
-	{
-		.i2c_port = I2C_PORT_CHARGER,
-		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
-		.drv = &isl923x_drv,
-	},
-};
-
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /* Initialize board. */
 static void board_init(void)
