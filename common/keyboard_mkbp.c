@@ -164,7 +164,36 @@ static int fifo_remove(uint8_t *buffp)
 
 void keyboard_clear_buffer(void)
 {
-	mkbp_clear_fifo();
+	int i, new_fifo_entries = 0;
+
+	CPRINTS("clear keyboard MKBP fifo");
+
+	/*
+	 * Order of these locks is important to prevent deadlock since
+	 * mkbp_fifo_add() may call fifo_remove().
+	 */
+	mutex_lock(&fifo_add_mutex);
+	mutex_lock(&fifo_remove_mutex);
+
+	/* Reset the end position */
+	fifo_end = fifo_start;
+
+	for (i = 0; i < fifo_entries; i++) {
+		int cur = (fifo_start + i) % FIFO_DEPTH;
+
+		/* Drop keyboard events */
+		if (fifo[cur].event_type == EC_MKBP_EVENT_KEY_MATRIX)
+			continue;
+
+		/* And move other events to the front */
+		memmove(&fifo[fifo_end], &fifo[cur], sizeof(fifo[cur]));
+		fifo_end = (fifo_end + 1) % FIFO_DEPTH;
+		++new_fifo_entries;
+	}
+	fifo_entries = new_fifo_entries;
+
+	mutex_unlock(&fifo_remove_mutex);
+	mutex_unlock(&fifo_add_mutex);
 }
 
 void mkbp_clear_fifo(void)
