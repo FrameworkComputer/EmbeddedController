@@ -82,7 +82,7 @@ test_mockable __keep int main(void)
 	board_config_post_gpio_init();
 #endif
 	/*
-	 * Initialize interrupts, but don't enable any of them.  Note that
+	 * Initialize tasks, but don't enable any of them.  Note that
 	 * task scheduling is not enabled until task_start() below.
 	 */
 	task_pre_init();
