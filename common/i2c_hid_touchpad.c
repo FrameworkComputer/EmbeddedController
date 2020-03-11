@@ -6,6 +6,7 @@
 #include "i2c_hid_touchpad.h"
 
 #include "console.h"
+#include "hwtimer.h"
 #include "util.h"
 
 /* 2 bytes for length + 1 byte for report ID */
@@ -662,4 +663,135 @@ static int i2c_hid_touchpad_command_process(size_t len, uint8_t *buffer,
 		return -1;
 	}
 	return command;
+}
+
+void i2c_hid_compile_report(struct touchpad_event *event)
+{
+	/* Save report into back buffer */
+	struct touch_report *touch = &touch_reports[report_active_index ^ 1];
+	struct touch_report *touch_old = &touch_reports[report_active_index];
+	struct mouse_report *mouse = &mouse_reports[report_active_index ^ 1];
+	int contact_num = 0;
+
+	/* Touch report. */
+	memset(touch, 0, sizeof(struct touch_report));
+	for (int i = 0; i < I2C_HID_TOUCHPAD_MAX_FINGERS; i++) {
+		if (event->finger[i].valid) {
+			/*
+			 * Windows considers any contact with width or height
+			 * greater than 25mm to unintended, and expects the
+			 * confidence value to be cleared for such a contact.
+			 * We, however, haven't seen a touchpad that actually
+			 * forwards that information to us.
+			 *
+			 * TODO(b/151692377): Revisit this once we have met such
+			 * a device.
+			 */
+			touch->finger[i].confidence = 1;
+			touch->finger[i].tip = 1;
+			touch->finger[i].inrange = 1;
+			touch->finger[i].x = event->finger[i].x;
+			touch->finger[i].y = event->finger[i].y;
+			touch->finger[i].width = event->finger[i].width;
+			touch->finger[i].height = event->finger[i].height;
+			touch->finger[i].pressure = event->finger[i].pressure;
+			if (event->finger[i].is_palm)
+				touch->finger[i].pressure =
+						I2C_HID_TOUCHPAD_MAX_PRESSURE;
+			touch->finger[i].orientation =
+					event->finger[i].orientation;
+			contact_num++;
+		} else if (touch_old->finger[i].tip) {
+			/*
+			 * When the finger is leaving, we first clear the tip
+			 * bit while retaining the other values. We then clear
+			 * the other values at the next frame where the finger
+			 * has left.
+			 *
+			 * Setting tip to 0 implies that the finger is leaving
+			 * for both CrOS and Windows. A leaving finger would
+			 * never be re-considered by the OS.
+			 */
+
+			/*
+			 * First, copy old values from the previous report.
+			 *
+			 * This is suggested on Windows although no
+			 * obvious problem has been noticed by not doing
+			 * so.
+			 */
+			touch->finger[i] = touch_old->finger[i];
+
+			/*
+			 * Leaving finger is not a palm by definition.
+			 *
+			 * Not clearing the confidence bit is essential
+			 * for tap-to-click to work on Windows.
+			 */
+			touch->finger[i].confidence = 1;
+
+			/* Leaving finger doesn't exist. */
+			touch->finger[i].tip = 0;
+
+			/*
+			 * Assume that the leaving finger is not hovering
+			 * either. We would inject one single fake hovering
+			 * finger later if necessary.
+			 */
+			touch->finger[i].inrange = 0;
+
+			contact_num++;
+		}
+
+		/* id is like slot in Linux MT-B so it is fixed every time. */
+		touch->finger[i].id = i;
+	}
+
+	/* Check for hovering activity if there is no contact report. */
+	if (!contact_num) {
+		if (event->hover) {
+			/* Put a fake finger at slot #0 if hover is detected. */
+			touch->finger[0].inrange = 1;
+			touch->finger[0].x = I2C_HID_TOUCHPAD_MAX_X / 2;
+			touch->finger[0].y = I2C_HID_TOUCHPAD_MAX_Y / 2;
+			contact_num++;
+		} else if (!touch_old->finger[0].tip &&
+			   touch_old->finger[0].inrange) {
+			/* Clear the fake hovering finger for host. */
+			contact_num++;
+		}
+	}
+
+	/* Fill in finger counts and the button state. */
+	touch->count = I2C_HID_TOUCHPAD_MAX_FINGERS;
+	touch->button = event->button;
+
+	/*
+	 * Windows expects scan time to be in units of 100us.  As Windows
+	 * measures the delta of scan times between the first and the current
+	 * report, we simply report the __hw_clock_source_read() value (which
+	 * is in resolution of 1us) divided by 100 as the scan time.
+	 */
+	touch->timestamp = __hw_clock_source_read() / 100;
+
+	/* Mouse report. */
+	mouse->button1 = touch->button;
+	if (touch->finger[0].tip == 1 && touch_old->finger[0].tip == 1) {
+		/*
+		 * The relative X/Y movements in the mouse report are computed
+		 * based on the deltas of absolute X/Y positions between the
+		 * previous and current touch report. The computed deltas need
+		 * to be scaled for a smooth mouse movement.
+		 */
+		mouse->x = (touch->finger[0].x - touch_old->finger[0].x) /
+			   I2C_HID_TOUCHPAD_MOUSE_SCALE_X;
+		mouse->y = (touch->finger[0].y - touch_old->finger[0].y) /
+			   I2C_HID_TOUCHPAD_MOUSE_SCALE_Y;
+	} else {
+		mouse->x = 0;
+		mouse->y = 0;
+	}
+
+	/* Swap buffer */
+	report_active_index ^= 1;
 }

@@ -69,5 +69,13 @@ void i2c_hid_touchpad_init(void);
 int i2c_hid_touchpad_process(unsigned int len, uint8_t *buffer,
 			     void (*send_response)(int len), uint8_t *data,
 			     int *reg, int *cmd);
+/**
+ * Compile an (outgoing) HID input report for an (incoming) touchpad event
+ *
+ * The compiled report would be sent next time when the host requests one.
+ *
+ * @param touchpad_event	Touchpad event data
+ */
+void i2c_hid_compile_report(struct touchpad_event *event);
 
 #endif /* __CROS_EC_I2C_HID_TOUCHPAD_H */
