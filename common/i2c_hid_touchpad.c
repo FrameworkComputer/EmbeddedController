@@ -418,3 +418,248 @@ static struct i2c_hid_descriptor hid_desc = {
 	.wVersionID = I2C_HID_TOUCHPAD_FW_VERSION,
 };
 
+/*
+ * In I2C HID, the host would request for an input report immediately following
+ * the protocol initialization. The device is required to respond with exactly
+ * 2 empty bytes. Furthermore, some hosts may use a single byte SMBUS read to
+ * check if the device exists on the specified I2C address.
+ *
+ * These variables record if such probing/initialization have been done before.
+ */
+static bool pending_probe;
+static bool pending_reset;
+
+/* Reports (double buffered) */
+#define MAX_REPORT_CNT	2
+
+static struct touch_report touch_reports[MAX_REPORT_CNT];
+static struct mouse_report mouse_reports[MAX_REPORT_CNT];
+
+/* Current active report buffer index */
+static int report_active_index;
+
+/* Current input mode */
+static uint8_t input_mode;
+
+/*
+ * TODO(b/151693566): Selectively report surface contact and button state in
+ * input reports based on |reporting.surface_switch| and
+ * |reporting.button_switch|, respectively.
+ */
+struct selective_reporting {
+	uint8_t surface_switch:4;
+	uint8_t button_switch:4;
+} __packed;
+
+static struct selective_reporting reporting;
+
+/* Function declarations */
+static int i2c_hid_touchpad_command_process(size_t len, uint8_t *buffer,
+					    void (*send_response)(int len),
+					    uint8_t *data);
+
+static size_t fill_report(uint8_t *buffer, uint8_t report_id, const void *data,
+			  size_t data_len)
+{
+	size_t response_len = I2C_HID_HEADER_SIZE + data_len;
+
+	buffer[0] = response_len & 0xFF;
+	buffer[1] = (response_len >> 8) & 0xFF;
+	buffer[2] = report_id;
+	memcpy(buffer + I2C_HID_HEADER_SIZE, data, data_len);
+	return response_len;
+}
+
+/*
+ * Extracts report data from |buffer| into |data| for reports from the host.
+ *
+ * |buffer| is expected to contain the values written to the command register
+ * followed by the values written to the data register, upon receiving a
+ * SET_REPORT command, in the following byte sequence format:
+ *
+ *   00 30 - command register address (0x3000)
+ *   xx    - report type and ID
+ *   03    - SET_REPORT
+ *   00 30 - data register address (0x3000)
+ *   xx xx - length
+ *   xx    - report ID
+ *   xx... - report data
+ *
+ * Note that command register and data register have the same address. Also,
+ * any report ID >= 15 requires an extra byte after the SET_REPORT byte, which
+ * is not supported here as we don't have any report ID >= 15.
+ *
+ * In summary, we expect |buffer| contains at least 10 bytes where the report
+ * data starts at buffer[9]. If |buffer| contains the incorrect number bytes,
+ * we ignore the report.
+ */
+static void extract_report(size_t len, const uint8_t *buffer, void *data,
+			   size_t data_len)
+{
+	if (len != 9 + data_len) {
+		ccprints("I2C-HID: SET_REPORT buffer length mismatch");
+		return;
+	}
+	memcpy(data, buffer + 9, data_len);
+}
+
+void i2c_hid_touchpad_init(void)
+{
+	input_mode = INPUT_MODE_MOUSE;
+	reporting.surface_switch = 1;
+	reporting.button_switch = 1;
+	report_active_index = 0;
+
+	// Respond probing requests for now.
+	pending_probe = true;
+	pending_reset = false;
+}
+
+int i2c_hid_touchpad_process(unsigned int len, uint8_t *buffer,
+			     void (*send_response)(int len), uint8_t *data,
+			     int *reg, int *cmd)
+{
+	size_t response_len;
+
+	if (len == 0)
+		*reg = I2C_HID_INPUT_REPORT_REGISTER;
+	else
+		*reg = UINT16_FROM_BYTE_ARRAY_LE(buffer, 0);
+
+	*cmd = 0;
+	switch (*reg) {
+	case I2C_HID_HID_DESC_REGISTER:
+		memcpy(buffer, &hid_desc, sizeof(hid_desc));
+		send_response(sizeof(hid_desc));
+		break;
+	case I2C_HID_REPORT_DESC_REGISTER:
+		memcpy(buffer, &report_desc, sizeof(report_desc));
+		send_response(sizeof(report_desc));
+		break;
+	case I2C_HID_INPUT_REPORT_REGISTER:
+		// Single-byte read probing.
+		if (pending_probe) {
+			buffer[0] = 0;
+			send_response(1);
+			break;
+		}
+		// Reset protocol: 2 empty bytes.
+		if (pending_reset) {
+			pending_reset = false;
+			buffer[0] = 0;
+			buffer[1] = 0;
+			send_response(2);
+			break;
+		}
+		// Common input report requests.
+		if (input_mode == INPUT_MODE_TOUCH) {
+			response_len =
+				fill_report(buffer, REPORT_ID_TOUCH,
+					    &touch_reports[report_active_index],
+					    sizeof(struct touch_report));
+		} else {
+			response_len =
+				fill_report(buffer, REPORT_ID_MOUSE,
+					    &mouse_reports[report_active_index],
+					    sizeof(struct mouse_report));
+		}
+		send_response(response_len);
+		break;
+	case I2C_HID_COMMAND_REGISTER:
+		*cmd = i2c_hid_touchpad_command_process(len, buffer,
+						       send_response, data);
+		break;
+	default:
+		/* Unknown register has been received. */
+		return EC_ERROR_INVAL;
+	}
+	/* Unknown command has been received. */
+	if (*cmd < 0)
+		return EC_ERROR_INVAL;
+	return EC_SUCCESS;
+}
+
+static int i2c_hid_touchpad_command_process(size_t len, uint8_t *buffer,
+					    void (*send_response)(int len),
+					    uint8_t *data)
+{
+	uint8_t command = buffer[3] & 0x0F;
+	uint8_t power_state = buffer[2] & 0x03;
+	uint8_t report_id = buffer[2] & 0x0F;
+	size_t response_len;
+
+	switch (command) {
+	case I2C_HID_CMD_RESET:
+		i2c_hid_touchpad_init();
+		// Wait for the 2-bytes I2C read following the protocol reset.
+		pending_probe = false;
+		pending_reset = true;
+		break;
+	case I2C_HID_CMD_GET_REPORT:
+		switch (report_id) {
+		case REPORT_ID_TOUCH:
+			response_len =
+				fill_report(buffer, report_id,
+					    &touch_reports[report_active_index],
+					    sizeof(struct touch_report));
+			break;
+		case REPORT_ID_MOUSE:
+			response_len =
+				fill_report(buffer, report_id,
+					    &mouse_reports[report_active_index],
+					    sizeof(struct mouse_report));
+			break;
+		case REPORT_ID_DEVICE_CAPS:
+			response_len = fill_report(buffer, report_id,
+						   &device_caps,
+						   sizeof(device_caps));
+			break;
+		case REPORT_ID_DEVICE_CERT:
+			response_len = fill_report(buffer, report_id,
+						   &device_cert,
+						   sizeof(device_cert));
+			break;
+		case REPORT_ID_INPUT_MODE:
+			response_len = fill_report(buffer, report_id,
+						   &input_mode,
+						   sizeof(input_mode));
+			break;
+		case REPORT_ID_REPORTING:
+			response_len = fill_report(buffer, report_id,
+						   &reporting,
+						   sizeof(reporting));
+			break;
+		default:
+			response_len = 2;
+			buffer[0] = response_len;
+			buffer[1] = 0;
+			break;
+		}
+		send_response(response_len);
+		break;
+	case I2C_HID_CMD_SET_REPORT:
+		switch (report_id) {
+		case REPORT_ID_INPUT_MODE:
+			extract_report(len, buffer, &input_mode,
+				       sizeof(input_mode));
+			break;
+		case REPORT_ID_REPORTING:
+			extract_report(len, buffer, &reporting,
+				       sizeof(reporting));
+			break;
+		default:
+			break;
+		}
+		break;
+	case I2C_HID_CMD_SET_POWER:
+		/*
+		 * Return the power setting so the user can actually set the
+		 * touch controller's power state in board level.
+		 */
+		*data = power_state;
+		break;
+	default:
+		return -1;
+	}
+	return command;
+}
