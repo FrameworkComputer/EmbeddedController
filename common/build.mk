@@ -77,6 +77,7 @@ common-$(CONFIG_HOSTCMD_GET_UPTIME_INFO)+=uptime.o
 common-$(CONFIG_HOSTCMD_PD)+=host_command_master.o
 common-$(CONFIG_HOSTCMD_RTC)+=rtc.o
 common-$(CONFIG_I2C_DEBUG)+=i2c_trace.o
+common-$(CONFIG_I2C_HID_TOUCHPAD)+=i2c_hid_touchpad.o
 common-$(CONFIG_I2C_MASTER)+=i2c_master.o
 common-$(CONFIG_I2C_SLAVE)+=i2c_slave.o
 common-$(CONFIG_I2C_BITBANG)+=i2c_bitbang.o

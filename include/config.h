@@ -2244,6 +2244,9 @@
  */
 #undef CONFIG_SMBUS_PEC
 
+/* Support I2C HID touchpad interface. */
+#undef CONFIG_I2C_HID_TOUCHPAD
+
 /*
  * Add hosts-side support for entering programming mode for I2C ITE ECs.
  * Must define ite_dfu_config_t for configuration in board file.
