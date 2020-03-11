@@ -296,7 +296,7 @@ int64_t get_time_dsw_pwrok(void)
 
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_LED_RED]  = { 3, PWM_CONFIG_DSLEEP, 100 },
-	[PWM_CH_LED_BLUE] = { 5, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED_WHITE] = { 5, PWM_CONFIG_DSLEEP, 100 },
 	[PWM_CH_FAN] = {4, PWM_CONFIG_OPEN_DRAIN, 25000},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
