@@ -1298,7 +1298,7 @@ static void tch_wait_for_message_request_from_pe_run(const int port)
 					(uint8_t *)emsg[port].buf,
 					emsg[port].len);
 				/*
-				 * Pad length to 4-byte boundery and
+				 * Pad length to 4-byte boundary and
 				 * convert to number of 32-bit objects.
 				 * Since the value is shifted right by 2,
 				 * no need to explicitly clear the lower

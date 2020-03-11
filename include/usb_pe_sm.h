@@ -41,6 +41,7 @@ enum pe_dpm_request {
 	DPM_REQUEST_SRC_STARTUP         = BIT(15),
 	DPM_REQUEST_HARD_RESET_SEND     = BIT(16),
 	DPM_REQUEST_SOFT_RESET_SEND     = BIT(17),
+	DPM_REQUEST_PORT_DISCOVERY      = BIT(18),
 };
 
 /**

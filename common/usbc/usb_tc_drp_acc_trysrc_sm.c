@@ -80,10 +80,8 @@
 #define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(21)
 /* Flag to note we should wake from LPM */
 #define TC_FLAGS_WAKE_FROM_LPM          BIT(22)
-/* Flag to note a chipset power state has changed */
-#define TC_FLAGS_POWER_STATE_CHANGE     BIT(23)
 /* Flag to note the TCPM supports auto toggle */
-#define TC_FLAGS_AUTO_TOGGLE_SUPPORTED  BIT(24)
+#define TC_FLAGS_AUTO_TOGGLE_SUPPORTED  BIT(23)
 
 /*
  * Clear all flags except TC_FLAGS_AUTO_TOGGLE_SUPPORTED,
@@ -1115,10 +1113,8 @@ void tc_event_check(int port, int evt)
 
 #ifdef CONFIG_POWER_COMMON
 	if (IS_ENABLED(CONFIG_POWER_COMMON)) {
-		if (evt & PD_EVENT_POWER_STATE_CHANGE) {
-			TC_SET_FLAG(port, TC_FLAGS_POWER_STATE_CHANGE);
+		if (evt & PD_EVENT_POWER_STATE_CHANGE)
 			handle_new_power_state(port);
-		}
 	}
 #endif /* CONFIG_POWER_COMMON */
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
@@ -1264,6 +1260,10 @@ static void handle_new_power_state(int port)
 			 * again at boot up.
 			 */
 			set_usb_mux_with_current_data_role(port);
+		} else if (chipset_in_or_transitioning_to_state(
+					CHIPSET_STATE_ON)) {
+			/* Enter any previously exited alt modes */
+			pe_dpm_request(port, DPM_REQUEST_PORT_DISCOVERY);
 		}
 	}
 }
@@ -1890,21 +1890,6 @@ static void tc_attached_snk_entry(const int port)
 static void tc_attached_snk_run(const int port)
 {
 #ifdef CONFIG_USB_PE_SM
-	/*
-	 * On device power ON, when charging from a Dock that has DP, enter any
-	 * alt modes by briefly transitioning the Unattached.SNK state. This has
-	 * no impact when charging from a regular charger.
-	 *
-	 * TODO(b/149662829): Implement a better solution for re-entering
-	 * alt modes after a reboot.
-	 */
-	if (TC_CHK_FLAG(port, TC_FLAGS_POWER_STATE_CHANGE) &&
-				chipset_in_state(CHIPSET_STATE_ON)) {
-		TC_CLR_FLAG(port, TC_FLAGS_POWER_STATE_CHANGE);
-		set_state_tc(port, TC_UNATTACHED_SNK);
-		return;
-	}
-
 	/*
 	 * Perform Hard Reset
 	 */
@@ -2862,8 +2847,7 @@ static void tc_low_power_mode_entry(const int port)
 static void tc_low_power_mode_run(const int port)
 {
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	if (TC_CHK_FLAG(port, TC_FLAGS_WAKE_FROM_LPM |
-					TC_FLAGS_POWER_STATE_CHANGE)) {
+	if (TC_CHK_FLAG(port, TC_FLAGS_WAKE_FROM_LPM)) {
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
 		return;
 	}
@@ -2875,7 +2859,7 @@ static void tc_low_power_mode_exit(const int port)
 {
 	CPRINTS("TCPC p%d Exit Low Power Mode", port);
 	TC_CLR_FLAG(port, TC_FLAGS_LPM_REQUESTED | TC_FLAGS_LPM_ENGAGED |
-		TC_FLAGS_WAKE_FROM_LPM | TC_FLAGS_POWER_STATE_CHANGE);
+		TC_FLAGS_WAKE_FROM_LPM);
 	reset_device_and_notify(port);
 	tc_start_event_loop(port);
 }
