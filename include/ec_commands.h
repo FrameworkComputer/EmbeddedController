@@ -32,12 +32,12 @@ extern "C" {
 #include "compile_time_macros.h"
 
 #else
-
 #define BUILD_ASSERT(_cond)
-
 #endif  /* CHROMIUM_EC */
 
-#ifndef __KERNEL__
+#ifdef __KERNEL__
+#include <linux/limits.h>
+#else
 /*
  * Defines macros that may be needed but are for sure defined by the linux
  * kernel. This section is removed when cros_ec_commands.h is generated (by
