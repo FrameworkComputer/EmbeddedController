@@ -11,6 +11,12 @@
 #define VARIANT_DEDEDE_EC_NPCX796FC
 #include "baseboard.h"
 
+/*
+ * Keep the system unlocked in early development.
+ * TODO(b/151264302): Make sure to remove this before production!
+ */
+#define CONFIG_SYSTEM_UNLOCKED
+
 /* Charger */
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_RAA489000
