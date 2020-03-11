@@ -55,7 +55,11 @@
 #define STM32_IRQ_EXTI9_5         23
 #define STM32_IRQ_LCD             24 /* STM32L15X only */
 #define STM32_IRQ_TIM15           24 /* STM32F373 only */
+#if defined(CHIP_VARIANT_STM32F412)
+#define STM32_IRQ_TIM9            24 /* STM32F412 only */
+#else
 #define STM32_IRQ_TIM9            25 /* STM32L15X only */
+#endif
 #define STM32_IRQ_TIM16           25 /* STM32F373 only */
 #define STM32_IRQ_TIM10           26 /* STM32L15X only */
 #define STM32_IRQ_TIM17           26 /* STM32F373 only */
