@@ -51,10 +51,15 @@ die() {
 BOARDS_IT83XX=(
 	glkrvp_ite
 	it83xx_evb
+        it8xxx2_pdevb
 	reef_it8320
 	tglrvpu_ite
 	tglrvpy_ite
 	jslrvp_ite
+)
+
+BOARDS_IT83XX_SPI_PROGRAMMING=(
+	it8xxx2_evb
 )
 
 BOARDS_STM32=(
@@ -281,6 +286,10 @@ if $(in_array "${BOARDS_IT83XX[@]}" "${BOARD}"); then
 	SUPPORTED_CHIPS+=("it83xx")
 fi
 
+if $(in_array "${BOARDS_IT83XX_SPI_PROGRAMMING[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("ite_spi")
+fi
+
 if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 && -n "${FLAGS_chip}" ]]; then
 	SUPPORTED_CHIPS+="${FLAGS_chip}"
 fi
@@ -337,7 +346,7 @@ case "${BOARD}" in
 esac
 
 case "${CHIP}" in
-	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"npcx_uut") ;;
+	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"npcx_uut"|"ite_spi") ;;
 	*)
 		if [[ -n "${FLAGS_read}" ]]; then
 			die "The flag is not yet supported on ${CHIP}."
@@ -863,6 +872,8 @@ function flash_flashrom() {
 	if ! on_raiden || [[ "${SERVO_TYPE}" =~ "servo_micro" ]] ; then
 		if $(in_array "${BOARDS_SPI_1800MV[@]}" "${BOARD}"); then
 			SPI_VOLTAGE="pp1800"
+		elif [[ "${CHIP}" == "ite_spi" ]]; then
+			SPI_VOLTAGE="pp1800"
 		else
 			SPI_VOLTAGE="pp3300"
 		fi
@@ -877,6 +888,17 @@ function flash_flashrom() {
 			dut_control fw_up:on
 			sleep 0.1
 			dut_control cold_reset:off
+		fi
+
+		# Enable SPI programming mode.
+		if [[ "${CHIP}" == "ite_spi" ]]; then
+			# Set hardware strap pin (GPG6) of SPI programming as low then start ec
+			dut_control fw_up:on
+			sleep 0.1
+			dut_control cold_reset:off
+			sleep 0.1
+			# We have to release the HW strap pin because it also SPI clock pin.
+			dut_control fw_up:off
 		fi
 
 		servo_save_add "spi1_vref" "off"
@@ -1260,6 +1282,10 @@ function flash_it83xx() {
 	fi
 
 	"${ITEFLASH_ARGS[@]}" || die "${ERROR_MSG}"
+}
+
+function flash_ite_spi() {
+	flash_flashrom
 }
 
 function flash_lm4() {

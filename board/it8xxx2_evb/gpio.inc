@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2014 The Chromium OS Authors. All rights reserved.
+ * Copyright 2020 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,10 +12,10 @@ GPIO_INT(POWER_BUTTON_L, PIN(E, 4), GPIO_INT_BOTH | GPIO_PULL_UP,   power_button
 #ifndef CONFIG_HOSTCMD_ESPI
 GPIO_INT(PCH_PLTRST_L,   PIN(E, 3), GPIO_INT_BOTH | GPIO_PULL_UP,   lpcrst_interrupt)
 #endif
-GPIO_INT(LID_OPEN,       PIN(E, 2), GPIO_INT_BOTH | GPIO_PULL_DOWN, lid_interrupt)
-GPIO_INT(WP_L,           PIN(E, 1), GPIO_INT_BOTH,                  switch_interrupt)         /* Write protect input */
+GPIO_INT(LID_OPEN,       PIN(E, 2), GPIO_INT_BOTH | GPIO_PULL_UP,   lid_interrupt)
+GPIO_INT(WP_L,           PIN(I, 4), GPIO_INT_BOTH | GPIO_PULL_UP,   switch_interrupt)         /* Write protect input */
 #ifdef CONFIG_LOW_POWER_IDLE
-GPIO_INT(UART1_RX,       PIN(B, 0), GPIO_INT_FALLING,               uart_deepsleep_interrupt) /* UART1 RX input */
+GPIO_INT(UART1_RX,       PIN(B, 0), GPIO_INT_FALLING | GPIO_PULL_UP, uart_deepsleep_interrupt) /* UART1 RX input */
 #endif
 
 GPIO(PCH_SMI_L,      PIN(D, 3), GPIO_OUT_HIGH)
@@ -71,4 +71,3 @@ ALTERNATE(PIN_MASK(C, 0x06), 1, MODULE_I2C, 0)             /* I2C B SCL/SDA */
 ALTERNATE(PIN_MASK(F, 0xC0), 1, MODULE_I2C, 0)             /* I2C C SCL/SDA */
 #endif
 ALTERNATE(PIN_MASK(E, 0x81), 1, MODULE_I2C, 0)             /* I2C E SCL/SDA E0/E7 */
-ALTERNATE(PIN_MASK(J, 0x3C), 1, MODULE_DAC, 0)             /* DAC CH2.3.4.5 */
