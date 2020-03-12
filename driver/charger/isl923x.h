@@ -333,6 +333,7 @@ extern const struct charger_drv isl923x_drv;
 /**
  * Initialize AC & DC prochot threshold
  *
+ * @param	chgnum: Index into charger chips
  * @param	AC Prochot threshold current in mA:
  *			multiple of 128 up to 6400 mA
  *			DC Prochot threshold current in mA:
@@ -340,8 +341,8 @@ extern const struct charger_drv isl923x_drv;
  * 		Bits below 128mA are truncated (ignored).
  * @return enum ec_error_list
  */
-int isl923x_set_ac_prochot(uint16_t ma);
-int isl923x_set_dc_prochot(uint16_t ma);
+int isl923x_set_ac_prochot(int chgnum, uint16_t ma);
+int isl923x_set_dc_prochot(int chgnum, uint16_t ma);
 
 /**
  * Set the general comparator output polarity when asserted.

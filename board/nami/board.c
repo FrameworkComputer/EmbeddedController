@@ -1043,17 +1043,17 @@ static void board_init(void)
 		swap(scancode_set2[0][4], scancode_set2[7][2]);
 #endif
 
-	isl923x_set_ac_prochot(3328 /* mA */);
+	isl923x_set_ac_prochot(CHARGER_SOLO, 3328 /* mA */);
 
 	switch (oem) {
 	case PROJECT_VAYNE:
-		isl923x_set_dc_prochot(11008 /* mA */);
+		isl923x_set_dc_prochot(CHARGER_SOLO, 11008 /* mA */);
 		break;
 	case PROJECT_PANTHEON:
-		isl923x_set_dc_prochot(9984 /* mA */);
+		isl923x_set_dc_prochot(CHARGER_SOLO, 9984 /* mA */);
 		break;
 	case PROJECT_SONA:
-		isl923x_set_dc_prochot(5888 /* mA */);
+		isl923x_set_dc_prochot(CHARGER_SOLO, 5888 /* mA */);
 		break;
 	case PROJECT_NAMI:
 	case PROJECT_AKALI:

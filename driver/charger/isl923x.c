@@ -315,7 +315,7 @@ static enum ec_error_list isl923x_post_init(int chgnum)
 	return EC_SUCCESS;
 }
 
-int isl923x_set_ac_prochot(uint16_t ma)
+int isl923x_set_ac_prochot(int chgnum, uint16_t ma)
 {
 	int rv;
 
@@ -324,13 +324,13 @@ int isl923x_set_ac_prochot(uint16_t ma)
 		return EC_ERROR_INVAL;
 	}
 
-	rv = raw_write16(CHARGER_SOLO, ISL923X_REG_PROCHOT_AC, ma);
+	rv = raw_write16(chgnum, ISL923X_REG_PROCHOT_AC, ma);
 	if (rv)
 		CPRINTS("%s set_ac_prochot failed (%d)", CHARGER_NAME, rv);
 	return rv;
 }
 
-int isl923x_set_dc_prochot(uint16_t ma)
+int isl923x_set_dc_prochot(int chgnum, uint16_t ma)
 {
 	int rv;
 
@@ -339,7 +339,7 @@ int isl923x_set_dc_prochot(uint16_t ma)
 		return EC_ERROR_INVAL;
 	}
 
-	rv = raw_write16(CHARGER_SOLO, ISL923X_REG_PROCHOT_DC, ma);
+	rv = raw_write16(chgnum, ISL923X_REG_PROCHOT_DC, ma);
 	if (rv)
 		CPRINTS("%s set_dc_prochot failed (%d)", CHARGER_NAME, rv);
 	return rv;
