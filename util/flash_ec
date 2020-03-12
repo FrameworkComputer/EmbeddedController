@@ -1367,6 +1367,11 @@ function flash_npcx_uut() {
 	# C2D2 does not use waits and has to ensure that the EC does not come
 	# out of reset after using a H1-level reset
 	if [[ "${SERVO_TYPE}" =~ "c2d2" ]] ; then
+		# Ensure we have the latest c2d2 fw and hdctools. This could
+		# be removed eventually (estimate removal 2020/06/01)
+		dut_control h1_vref_present || die "Need to kill servod and run:
+repo sync && sudo emerge hdctools servo-firmware && sudo servo_updater -b c2d2"
+
 		# Handle the case when flash_ec starts before DUT power is
 		# applied. Otherwise just use h1-level reset.
 		if [[ "$(dut_control_get h1_vref_present)" = "off" ]] ; then
