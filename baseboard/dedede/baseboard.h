@@ -115,6 +115,7 @@
 #define CONFIG_USB_CHARGER
 #define CONFIG_USB_PD_5V_EN_CUSTOM
 #define CONFIG_TRICKLE_CHARGING
+#undef  CONFIG_CHARGER_SINGLE_CHIP
 
 /* Keyboard */
 #define CONFIG_KEYBOARD_COL2_INVERTED
@@ -207,6 +208,11 @@
 #error "Must define a VARIANT_DEDEDE_EC!"
 #endif
 
+enum chg_id {
+	CHARGER_PRIMARY,
+	CHARGER_SECONDARY,
+	CHARGER_NUM,
+};
 
 /* Reset all TCPCs */
 void board_reset_pd_mcu(void);

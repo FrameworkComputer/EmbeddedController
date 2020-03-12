@@ -117,7 +117,10 @@ extern struct charger_config_t chg_chips[];
 extern const unsigned int chg_cnt;
 
 #ifdef CONFIG_CHARGER_SINGLE_CHIP
-#define CHARGER_SOLO 0
+enum chg_id {
+	CHARGER_SOLO,
+	CHARGER_NUM,
+};
 #endif
 
 /* Get the current charger_params. Failures are reported in .flags */
