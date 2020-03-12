@@ -33,6 +33,7 @@
 #include "power_button.h"
 #include "stdbool.h"
 #include "switch.h"
+#include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
 #include "usb_mux.h"
@@ -92,6 +93,42 @@ void board_reset_pd_mcu(void)
 	 */
 }
 
+static void reconfigure_5v_gpio(void)
+{
+	/*
+	 * b/147257497: On early boards, GPIO_EN_PP5000 was swapped with
+	 * GPIO_VOLUP_BTN_ODL. Therefore, we'll actually need to set that GPIO
+	 * instead for those boards.  Note that this breaks the volume up button
+	 * functionality.
+	 */
+	if (system_get_board_version() < 0) {
+		CPRINTS("old board - remapping 5V en");
+		gpio_set_flags(GPIO_VOLUP_BTN_ODL, GPIO_OUT_LOW);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, reconfigure_5v_gpio, HOOK_PRIO_INIT_I2C+1);
+
+static void set_5v_gpio(int level)
+{
+	int version;
+	enum gpio_signal gpio;
+
+	/*
+	 * b/147257497: On early boards, GPIO_EN_PP5000 was swapped with
+	 * GPIO_VOLUP_BTN_ODL. Therefore, we'll actually need to set that GPIO
+	 * instead for those boards.  Note that this breaks the volume up button
+	 * functionality.
+	 */
+	version = system_get_board_version();
+
+	/*
+	 * If the CBI EEPROM wasn't formatted, assume it's a very early board.
+	 */
+	gpio = version < 0 ? GPIO_VOLUP_BTN_ODL : GPIO_EN_PP5000;
+
+	gpio_set_level(gpio, level);
+}
+
 __override void board_power_5v_enable(int enable)
 {
 	/*
@@ -99,7 +136,7 @@ __override void board_power_5v_enable(int enable)
 	 * generated locally on the sub board and we need to set the comparator
 	 * polarity on the sub board charger IC.
 	 */
-	gpio_set_level(GPIO_EN_PP5000, !!enable);
+	set_5v_gpio(!!enable);
 	if (isl923x_set_comparator_inversion(1, !!enable))
 		CPRINTS("Failed to %sable sub rails!", enable ? "en" : "dis");
 
