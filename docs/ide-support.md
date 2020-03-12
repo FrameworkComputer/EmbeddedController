@@ -44,3 +44,23 @@ includes selectable sub-configurations for every board/image pair.
     You will only see this option when a C/C++ file is open. Additionally, you
     can select a configuration by pressing `Ctrl-Shift-P` and selecting the
     `C/C++ Select a Configuration...` option.
+5. Add the EC specific file associations and style settings.
+   Modify `.vscode/settings.json` to have the following elements:
+   ```json
+   {
+       "editor.rulers": [80],
+       "[c]": {
+           "editor.insertSpaces": false,
+           "editor.tabSize": 8
+       },
+       "files.associations": {
+           "Makefile.*": "makefile",
+           "*.inc": "c",
+           "*.wrap": "c",
+           "*.tasklist": "c",
+           "*.irqlist": "c",
+           "*.mocklist": "c",
+           "*.testlist": "c"
+       }
+   }
+   ```
