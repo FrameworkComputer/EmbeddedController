@@ -514,6 +514,15 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 			it83xx_disable_pd_module(i);
 	}
 
+	if (IS_ENABLED(CONFIG_ADC_VOLTAGE_COMPARATOR)) {
+		/*
+		 * Disable all voltage comparator modules in hibernate
+		 * for better power consumption.
+		 */
+		for (i = CHIP_VCMP0; i < CHIP_VCMP_COUNT; i++)
+			vcmp_enable(i, 0);
+	}
+
 	for (i = 0; i < hibernate_wake_pins_used; ++i)
 		gpio_enable_interrupt(hibernate_wake_pins[i]);
 

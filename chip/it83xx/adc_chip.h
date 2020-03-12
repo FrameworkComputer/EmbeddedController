@@ -134,7 +134,7 @@ extern const struct adc_t adc_channels[];
  * This must match the enum board_vcmp list provided by the board.
  */
 extern const struct vcmp_t vcmp_list[];
-void vcmp_enable(int index, int enable);
 #endif
+void vcmp_enable(int index, int enable);
 
 #endif /* __CROS_EC_ADC_CHIP_H */
