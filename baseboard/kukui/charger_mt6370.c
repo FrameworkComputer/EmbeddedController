@@ -58,7 +58,7 @@ static timestamp_t thermal_wait_until;
 /* input current bound when charger throttled */
 static int throttled_ma = PD_MAX_CURRENT_MA;
 /* charge_ma in last board_set_charge_limit call */
-static int prev_charge_ma;
+static int prev_charge_limit;
 /* charge_mv in last board_set_charge_limit call */
 static int prev_charge_mv;
 
@@ -99,7 +99,8 @@ static void battery_thermal_control(struct charge_state_data *curr)
 		skip_reset = 1;
 		thermal_wait_until.val = 0;
 		throttled_ma = PD_MAX_CURRENT_MA;
-		board_set_charge_limit_throttle(prev_charge_ma, prev_charge_mv);
+		board_set_charge_limit_throttle(prev_charge_limit,
+						prev_charge_mv);
 		return;
 	}
 
@@ -136,10 +137,19 @@ static void battery_thermal_control(struct charge_state_data *curr)
 	 * PID algorithm (https://en.wikipedia.org/wiki/PID_controller),
 	 * and operates on only P value.
 	 */
-	throttled_ma =
-		MIN(PD_MAX_CURRENT_MA,
-		    input_current + k_p * (thermal_bound.target - jc_temp));
-	board_set_charge_limit_throttle(throttled_ma, prev_charge_mv);
+	throttled_ma = MIN(
+		PD_MAX_CURRENT_MA,
+		/*
+		 * Should not pass the previously set input current by
+		 * charger manager.  This value might be related the charger's
+		 * capability.
+		 */
+		MIN(prev_charge_limit,
+		    input_current + k_p * (thermal_bound.target - jc_temp)));
+
+	/* If the input current doesn't change, just skip. */
+	if (throttled_ma != input_current)
+		board_set_charge_limit_throttle(throttled_ma, prev_charge_mv);
 
 thermal_exit:
 	thermal_wait_until.val = get_time().val + (3 * SECOND);
@@ -350,7 +360,7 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE,
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	prev_charge_ma = charge_ma;
+	prev_charge_limit = charge_ma;
 	prev_charge_mv = charge_mv;
 	board_set_charge_limit_throttle(charge_ma, charge_mv);
 }
