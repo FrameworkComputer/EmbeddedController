@@ -12,7 +12,7 @@
 #include "cros_board_info.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi160.h"
-#include "driver/als_bh1730.h"
+#include "driver/als_opt3001.h"
 #include "driver/als_tcs3400.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/bc12/pi3usb9201.h"
@@ -164,11 +164,15 @@ static struct mutex g_lid_mutex;
 /* Base accel private data */
 static struct bmi160_drv_data_t g_bmi160_data;
 
+/* Base light sensor private data */
+static struct opt3001_drv_data_t g_opt3001_data = {
+	.scale = 1,
+	.uscale = 0,
+	.offset = 0,
+};
+
 /* BMA255 private data */
 static struct accelgyro_saved_data_t g_bma255_data;
-
-/* BH1730 private data */
-struct bh1730_drv_data_t g_bh1730_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
 static const mat33_fp_t base_standard_ref = {
@@ -262,20 +266,20 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_ALS] = {
 		.name = "Light",
 		.active_mask = SENSOR_ACTIVE_S0,
-		.chip = MOTIONSENSE_CHIP_BH1730,
+		.chip = MOTIONSENSE_CHIP_OPT3001,
 		.type = MOTIONSENSE_TYPE_LIGHT,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bh1730_drv,
-		.drv_data = &g_bh1730_data,
+		.drv = &opt3001_drv,
+		.drv_data = &g_opt3001_data,
 		.port = I2C_PORT_ACCEL,
-		.i2c_spi_addr_flags = BH1730_I2C_ADDR_FLAGS,
+		.i2c_spi_addr_flags = OPT3001_I2C_ADDR_FLAGS,
 		.rot_standard_ref = NULL,
-		.default_range = 65535,
-		.min_frequency = 10,
-		.max_frequency = 10,
+		.default_range = 0x10000, /* scale = 1; uscale = 0 */
+		.min_frequency = OPT3001_LIGHT_MIN_FREQ,
+		.max_frequency = OPT3001_LIGHT_MAX_FREQ,
 		.config = {
 			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 100000,
+				.odr = 1000,
 				.ec_rate = 0,
 			},
 		},

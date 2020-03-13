@@ -46,7 +46,8 @@
 #define CONFIG_ALS
 #define ALS_COUNT 1
 #define I2C_PORT_ALS      I2C_PORT_SENSOR
-#define CONFIG_ALS_BH1730
+#define CONFIG_ALS_OPT3001
+#define OPT3001_I2C_ADDR_FLAGS OPT3001_I2C_ADDR1_FLAGS
 
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
