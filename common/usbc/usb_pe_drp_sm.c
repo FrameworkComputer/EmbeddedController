@@ -500,6 +500,29 @@ static struct policy_engine {
 test_export_static enum usb_pe_state get_state_pe(const int port);
 test_export_static void set_state_pe(const int port,
 				     const enum usb_pe_state new_state);
+#ifdef CONFIG_USB_PD_REV30
+/*
+ * The spec. revision is used to index into this array.
+ *  Rev 0 (VDO 1.0) - return VDM_VER10
+ *  Rev 1 (VDO 1.0) - return VDM_VER10
+ *  Rev 2 (VDO 2.0) - return VDM_VER20
+ */
+static const uint8_t vdo_ver[] = {
+	VDM_VER10,
+	VDM_VER10,
+	VDM_VER20
+};
+
+int pd_get_vdo_ver(int port)
+{
+	enum pd_rev_type rev = prl_get_rev(port, TCPC_TX_SOP);
+
+	if (rev < PD_REV30)
+		return vdo_ver[rev];
+	else
+		return VDM_VER20;
+}
+#endif
 
 static void pe_init(int port)
 {
