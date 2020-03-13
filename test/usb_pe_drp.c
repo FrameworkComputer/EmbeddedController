@@ -85,7 +85,7 @@ static int test_pe_frs(void)
 	/*
 	 * Accept the partners PS_RDY control message
 	 */
-	emsg[PORT0].header = PD_HEADER(PD_CTRL_ACCEPT, 0, 0, 0, 0, 0, 0);
+	rx_emsg[PORT0].header = PD_HEADER(PD_CTRL_ACCEPT, 0, 0, 0, 0, 0, 0);
 	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
 	pe_run(PORT0, EVT_IGNORED, ENABLED);
 	TEST_ASSERT(!pe_chk_flag(PORT0, PE_FLAGS_MSG_RECEIVED));
@@ -95,7 +95,7 @@ static int test_pe_frs(void)
 	/*
 	 * Send back our PS_RDY
 	 */
-	emsg[PORT0].header = PD_HEADER(PD_CTRL_PS_RDY, 0, 0, 0, 0, 0, 0);
+	rx_emsg[PORT0].header = PD_HEADER(PD_CTRL_PS_RDY, 0, 0, 0, 0, 0, 0);
 	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
 	TEST_ASSERT(!tc_is_attached_src(PORT0));
 	pe_run(PORT0, EVT_IGNORED, ENABLED);

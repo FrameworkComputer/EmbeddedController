@@ -235,19 +235,19 @@ static int verify_data_reception(int port, uint16_t header, int len)
 	if (!pd_port[port].mock_pe_message_received)
 		return 0;
 
-	if (emsg[port].header != header)
+	if (rx_emsg[port].header != header)
 		return 0;
 
-	if (emsg[port].len != cnt)
+	if (rx_emsg[port].len != cnt)
 		return 0;
 
 	for (i = 0; i < cnt; i++) {
 		if (i < len) {
-			if (emsg[port].buf[i] !=
+			if (rx_emsg[port].buf[i] !=
 					*((unsigned char *)test_data + i))
 				return 0;
 		} else {
-			if (emsg[port].buf[i] != 0)
+			if (rx_emsg[port].buf[i] != 0)
 				return 0;
 		}
 	}
@@ -275,13 +275,13 @@ static int verify_chunk_data_reception(int port, uint16_t header, int len)
 		return 0;
 	}
 
-	if (emsg[port].len != len) {
-		ccprintf("emsg len (%d) != 0\n", emsg[port].len);
+	if (rx_emsg[port].len != len) {
+		ccprintf("emsg len (%d) != 0\n", rx_emsg[port].len);
 		return 0;
 	}
 
 	for (i = 0; i < len; i++) {
-		if (emsg[port].buf[i] != td[i]) {
+		if (rx_emsg[port].buf[i] != td[i]) {
 			ccprintf("emsg buf[%d] != td\n", i);
 			return 0;
 		}
@@ -302,9 +302,9 @@ static int simulate_receive_data(int port, enum pd_data_msg_type msg_type,
 
 	pd_port[port].mock_pe_error = -1;
 	pd_port[port].mock_pe_message_received = 0;
-	emsg[port].header = 0;
-	emsg[port].len = 0;
-	memset(emsg[port].buf, 0, 260);
+	rx_emsg[port].header = 0;
+	rx_emsg[port].len = 0;
+	memset(rx_emsg[port].buf, 0, 260);
 
 	for (i = 0; i < 28; i++) {
 		if (i < len)
@@ -341,9 +341,9 @@ static int simulate_receive_extended_data(int port,
 
 	pd_port[port].mock_pe_error = -1;
 	pd_port[port].mock_pe_message_received = 0;
-	emsg[port].header = 0;
-	emsg[port].len = 0;
-	memset(emsg[port].buf, 0, 260);
+	rx_emsg[port].header = 0;
+	rx_emsg[port].len = 0;
+	memset(rx_emsg[port].buf, 0, 260);
 
 	dsize = len;
 	for (j = 0; j < 10; j++) {
@@ -378,9 +378,9 @@ static int simulate_receive_extended_data(int port,
 			return 0;
 		}
 
-		if (emsg[port].len != 0) {
+		if (rx_emsg[port].len != 0) {
 			ccprintf("emsg len (%d) != 0 iteration (%d)\n",
-				emsg[port].len, j);
+				rx_emsg[port].len, j);
 			return 0;
 		}
 
@@ -547,7 +547,7 @@ static int simulate_send_data_msg_request_from_pe(int port,
 	enum tcpm_transmit_type type, enum pd_ctrl_msg_type msg_type, int len)
 {
 	int i;
-	uint8_t *buf = emsg[port].buf;
+	uint8_t *buf = tx_emsg[port].buf;
 	uint8_t *td = (uint8_t *)test_data;
 
 	pd_port[port].mock_got_soft_reset = 0;
@@ -557,7 +557,7 @@ static int simulate_send_data_msg_request_from_pe(int port,
 	for (i = 0; i < len; i++)
 		buf[i] = td[i];
 
-	emsg[port].len = len;
+	tx_emsg[port].len = len;
 
 	prl_send_data_msg(port, type, msg_type);
 	cycle_through_state_machine(port, 1, MSEC);
@@ -683,11 +683,11 @@ static int simulate_send_extended_data_msg(int port,
 		int len)
 {
 	int i;
-	uint8_t *buf = emsg[port].buf;
+	uint8_t *buf = tx_emsg[port].buf;
 	uint8_t *td = (uint8_t *)test_data;
 
 	memset(buf, 0, 260);
-	emsg[port].len = len;
+	tx_emsg[port].len = len;
 
 	/* don't overflow buffer */
 	if (len > 260)
@@ -1097,8 +1097,8 @@ static int test_receive_soft_reset_msg(void)
 	TEST_ASSERT(pd_port[port].mock_got_soft_reset);
 	TEST_ASSERT(pd_port[port].mock_pe_error < 0);
 	TEST_ASSERT(pd_port[port].mock_pe_message_received);
-	TEST_ASSERT(expected_header == emsg[port].header);
-	TEST_ASSERT(emsg[port].len == 0);
+	TEST_ASSERT(expected_header == rx_emsg[port].header);
+	TEST_ASSERT(rx_emsg[port].len == 0);
 
 	enable_prl(port, 0);
 
@@ -1140,8 +1140,8 @@ static int test_receive_control_msg(void)
 	TEST_ASSERT(!pd_port[port].mock_got_soft_reset);
 	TEST_ASSERT(pd_port[port].mock_pe_error < 0);
 	TEST_ASSERT(pd_port[port].mock_pe_message_received);
-	TEST_ASSERT(expected_header == emsg[port].header);
-	TEST_ASSERT(emsg[port].len == 0);
+	TEST_ASSERT(expected_header == rx_emsg[port].header);
+	TEST_ASSERT(rx_emsg[port].len == 0);
 
 	enable_prl(port, 0);
 

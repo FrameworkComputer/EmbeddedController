@@ -8,7 +8,8 @@
 #include "usb_emsg.h"
 #include "usb_prl_sm.h"
 
-struct extended_msg emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
+struct extended_msg rx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
+struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void prl_end_ams(int port)
 {}

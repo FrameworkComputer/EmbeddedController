@@ -18,6 +18,6 @@ struct extended_msg {
 };
 
 /* Defined in usb_prl_sm.c */
-extern struct extended_msg emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
-
+extern struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
+extern struct extended_msg rx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 #endif /* __CROS_EC_USB_EBUF_H */

@@ -115,9 +115,9 @@ void pe_message_sent(int port)
 
 static void pe_request_run(const int port)
 {
-	uint32_t *payload = (uint32_t *)emsg[port].buf;
-	uint32_t header = emsg[port].header;
-	uint32_t vdo = payload[0];
+	uint32_t *payload = (uint32_t *)tx_emsg[port].buf;
+	uint32_t header = rx_emsg[port].header;
+	uint32_t vdo = *(uint32_t *)rx_emsg[port].buf;
 
 	if (pe[port].flags & PE_FLAGS_MSG_RECEIVED) {
 		pe[port].flags &= ~PE_FLAGS_MSG_RECEIVED;
@@ -187,7 +187,7 @@ static void pe_request_run(const int port)
 		);
 
 		/* 20 bytes, 5 data objects */
-		emsg[port].len = 20;
+		tx_emsg[port].len = 20;
 
 		/* Set to highest revision supported by both ports. */
 		prl_set_rev(port, TCPC_TX_SOP_PRIME,
