@@ -90,7 +90,7 @@ GPIO(EC_KB_BL_EN,              PIN(8, 6), GPIO_OUT_LOW)         /* Keyboard back
 GPIO(EDP_BKLTEN_OD,            PIN(D, 3), GPIO_ODR_HIGH)        /* Display backlight */
 GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
 GPIO(EN_MST,                   PIN(9, 6), GPIO_OUT_LOW)
-
+GPIO(EN_HDMI,                  PIN(B, 0), GPIO_OUT_LOW)         /* HDMI power rail */
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,                 PIN(B, 5), GPIO_INPUT |
