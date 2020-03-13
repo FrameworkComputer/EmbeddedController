@@ -150,25 +150,15 @@ static void led_init(void)
 {
 	pwm_enable(PWM_CH_LED_RED, 1);
 	pwm_enable(PWM_CH_LED_WHITE, 1);
-}
-DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_INIT_PWM + 1);
 
-void led_alert(int enable)
-{
-	if (enable) {
-		/* Overwrite the current signal */
-		config_tick(1 * SECOND, 100, LED_RED);
-		led_tick();
-	} else {
-		/* Restore the previous signal */
-		if (chipset_in_state(CHIPSET_STATE_ON))
-			led_resume();
-		else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
-			led_suspend();
-		else if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-			led_shutdown();
-	}
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		led_resume();
+	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		led_suspend();
+	else if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		led_shutdown();
 }
+DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_DEFAULT);
 
 void show_critical_error(void)
 {
@@ -193,8 +183,6 @@ static int command_led(int argc, char **argv)
 		set_color(id, LED_RED, 100);
 	} else if (!strcasecmp(argv[1], "white")) {
 		set_color(id, LED_WHITE, 100);
-	} else if (!strcasecmp(argv[1], "alert")) {
-		led_alert(1);
 	} else if (!strcasecmp(argv[1], "crit")) {
 		show_critical_error();
 	} else {
@@ -203,7 +191,7 @@ static int command_led(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(led, command_led,
-			"[debug|red|white|off|alert|crit]",
+			"[debug|red|white|off|crit]",
 			"Turn on/off LED.");
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
