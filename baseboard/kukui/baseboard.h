@@ -205,7 +205,7 @@
 #endif
 
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000  /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 #define PD_VCONN_SWAP_DELAY 5000 /* us */
 
 /* Timer selection */
