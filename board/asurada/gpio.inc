@@ -8,6 +8,43 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
+/* Wake Source interrupts */
+
+/* Power sequencing interrupts */
+
+/* Sensor Interrupts */
+
+/* USB-C interrupts */
+
+/* Volume button interrupts */
+
+/* Power Sequencing Signals */
+
+/* MKBP event synchronization */
+
+/* USB and USBC Signals */
+
+/* Misc Signals */
+
+/* I2C pins - Alternate function below configures I2C module on these pins */
+
+/* SPI pins - Alternate function below configures SPI module on these pins */
+
+/* NC / TP */
+
+/* Keyboard pins */
+
+/* Alternate functions GPIO definitions */
+
+/* UART */
+
+/* PWM */
+
+/* ADC */
+
+/* Power Switch Logic (PSL) inputs */
+
+/* Unimplemented Pins  */
 UNIMPLEMENTED(UART1_RX)
 UNIMPLEMENTED(PCH_SMI_L)
 UNIMPLEMENTED(PCH_SCI_L)
