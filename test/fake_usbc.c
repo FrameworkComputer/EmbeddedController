@@ -178,12 +178,20 @@ uint8_t pd_get_src_cap_cnt(int port)
 }
 #endif
 
-#ifndef CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
+#if !defined(CONFIG_USB_TYPEC_DRP_ACC_TRYSRC) && \
+	!defined(CONFIG_USB_TYPEC_CTVPD)
+int pd_is_connected(int port)
+{
+	return true;
+}
+
 bool pd_is_disconnected(int port)
 {
 	return false;
 }
+#endif /* !CONFIG_USB_TYPEC_DRP_ACC_TRYSRC && !CONFIG_USB_TYPEC_CTVPD */
 
+#ifndef CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
 void pd_set_dual_role(int port, enum pd_dual_role_states state)
 {
 }
@@ -211,11 +219,6 @@ uint8_t pd_get_task_state(int port)
 enum pd_cc_states pd_get_task_cc_state(int port)
 {
 	return PD_CC_NONE;
-}
-
-int pd_is_connected(int port)
-{
-	return true;
 }
 
 bool pd_get_partner_unconstr_power(int port)

@@ -467,10 +467,10 @@ static void prl_tx_phy_layer_reset_entry(const int port)
 {
 	if (IS_ENABLED(CONFIG_USB_TYPEC_CTVPD)
 	 || IS_ENABLED(CONFIG_USB_TYPEC_VPD)) {
-		vpd_rx_enable(1);
+		vpd_rx_enable(pd_is_connected(port));
 	} else {
 		tcpm_clear_pending_messages(port);
-		tcpm_set_rx_enable(port, 1);
+		tcpm_set_rx_enable(port, pd_is_connected(port));
 	}
 }
 

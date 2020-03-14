@@ -222,6 +222,17 @@ test_mockable_static void print_current_state(const int port)
 	CPRINTS("C%d: %s", port, tc_state_names[get_state_tc(port)]);
 }
 
+int pd_is_connected(int port)
+{
+	return (get_state_tc(port) == TC_ATTACHED_SNK) ||
+				(get_state_tc(port) == TC_ATTACHED_SRC);
+}
+
+bool pd_is_disconnected(int port)
+{
+	return !pd_is_connected(port);
+}
+
 /**
  * Disabled
  *
