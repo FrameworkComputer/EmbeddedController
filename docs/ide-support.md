@@ -49,9 +49,25 @@ includes selectable sub-configurations for every board/image pair.
    ```json
    {
        "editor.rulers": [80],
-       "[c]": {
-           "editor.insertSpaces": false,
-           "editor.tabSize": 8
+       /* C, Makefiles, ASM, Linkerfiles, Properties */
+       "editor.insertSpaces": false,
+       "editor.tabSize": 8,
+       /* Some exceptions based on current trends */
+       "[markdown]": {
+           "editor.insertSpaces": true,
+           "editor.tabSize": 2
+       },
+       "[python]": {
+           "editor.insertSpaces": true,
+           "editor.tabSize": 2
+       },
+       "[shellscript]": {
+           "editor.insertSpaces": true,
+           "editor.tabSize": 2
+       },
+       "[yaml]": {
+           "editor.insertSpaces": true,
+           "editor.tabSize": 2
        },
        "files.associations": {
            "Makefile.*": "makefile",
