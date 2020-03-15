@@ -300,17 +300,19 @@ static int command_wait(int argc, char **argv)
 		return EC_ERROR_PARAM1;
 
 	/*
+	 * Reload the watchdog so that issuing multiple small waitms commands
+	 * quickly one after the other will not cause a reset.
+	 *
+	 * Reloading before waiting also allows for testing watchdog.
+	 */
+	watchdog_reload();
+
+	/*
 	 * Waiting for too long (e.g. 3s) will cause the EC to reset due to a
 	 * watchdog timeout. This is intended behaviour and is in fact used by
 	 * a FAFT test to check that the watchdog timer is working.
 	 */
 	udelay(i * 1000);
-
-	/*
-	 * Reload the watchdog so that issuing multiple small waitms commands
-	 * quickly one after the other will not cause a reset.
-	 */
-	watchdog_reload();
 
 	return EC_SUCCESS;
 }
