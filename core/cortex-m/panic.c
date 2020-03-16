@@ -77,44 +77,28 @@ static int32_t is_frame_in_handler_stack(const uint32_t exc_return)
 }
 
 #ifdef CONFIG_DEBUG_EXCEPTIONS
-/* Names for each of the bits in the mmfs register, starting at bit 0 */
-static const char * const mmfs_name[32] = {
-	"Instruction access violation",
-	"Data access violation",
-	NULL,
-	"Unstack from exception violation",
-	"Stack from exception violation",
-	NULL,
-	NULL,
-	NULL,
+/* Names for each of the bits in the cfs register, starting at bit 0 */
+static const char * const cfsr_name[32] = {
+	/* MMFSR */
+	[0] = "Instruction access violation",
+	[1] = "Data access violation",
+	[3] = "Unstack from exception violation",
+	[4] = "Stack from exception violation",
 
-	"Instruction bus error",
-	"Precise data bus error",
-	"Imprecise data bus error",
-	"Unstack from exception bus fault",
-	"Stack from exception bus fault",
-	NULL,
-	NULL,
-	NULL,
+	/* BFSR */
+	[8] = "Instruction bus error",
+	[9] = "Precise data bus error",
+	[10] = "Imprecise data bus error",
+	[11] = "Unstack from exception bus fault",
+	[12] = "Stack from exception bus fault",
 
-	"Undefined instructions",
-	"Invalid state",
-	"Invalid PC",
-	"No coprocessor",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-
-	"Unaligned",
-	"Divide by 0",
-	NULL,
-	NULL,
-
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	/* UFSR */
+	[16] = "Undefined instructions",
+	[17] = "Invalid state",
+	[18] = "Invalid PC",
+	[19] = "No coprocessor",
+	[24] = "Unaligned",
+	[25] = "Divide by 0",
 };
 
 /* Names for the first 5 bits in the DFSR */
@@ -146,19 +130,19 @@ static void do_separate(int *count)
  *
  * A list of detected faults is shown, with no trailing newline.
  *
- * @param mmfs		Value of Memory Manage Fault Status
+ * @param cfsr		Value of Configurable Fault Status
  * @param hfsr		Value of Hard Fault Status
  * @param dfsr		Value of Debug Fault Status
  */
-static void show_fault(uint32_t mmfs, uint32_t hfsr, uint32_t dfsr)
+static void show_fault(uint32_t cfsr, uint32_t hfsr, uint32_t dfsr)
 {
 	unsigned int upto;
 	int count = 0;
 
 	for (upto = 0; upto < 32; upto++) {
-		if ((mmfs & BIT(upto)) && mmfs_name[upto]) {
+		if ((cfsr & BIT(upto)) && cfsr_name[upto]) {
 			do_separate(&count);
-			panic_puts(mmfs_name[upto]);
+			panic_puts(cfsr_name[upto]);
 		}
 	}
 
@@ -235,12 +219,12 @@ static uint32_t get_process_stack_position(const struct panic_data *pdata)
  */
 static void panic_show_extra(const struct panic_data *pdata)
 {
-	show_fault(pdata->cm.mmfs, pdata->cm.hfsr, pdata->cm.dfsr);
-	if (pdata->cm.mmfs & CPU_NVIC_MMFS_BFARVALID)
+	show_fault(pdata->cm.cfsr, pdata->cm.hfsr, pdata->cm.dfsr);
+	if (pdata->cm.cfsr & CPU_NVIC_CFSR_BFARVALID)
 		panic_printf(", bfar = %x", pdata->cm.bfar);
-	if (pdata->cm.mmfs & CPU_NVIC_MMFS_MFARVALID)
+	if (pdata->cm.cfsr & CPU_NVIC_CFSR_MFARVALID)
 		panic_printf(", mfar = %x", pdata->cm.mfar);
-	panic_printf("\nmmfs = %x, ", pdata->cm.mmfs);
+	panic_printf("\ncfsr = %x, ", pdata->cm.cfsr);
 	panic_printf("shcsr = %x, ", pdata->cm.shcsr);
 	panic_printf("hfsr = %x, ", pdata->cm.hfsr);
 	panic_printf("dfsr = %x\n", pdata->cm.dfsr);
@@ -330,7 +314,7 @@ void __keep report_panic(void)
 	}
 
 	/* Save extra information */
-	pdata->cm.mmfs = CPU_NVIC_MMFS;
+	pdata->cm.cfsr = CPU_NVIC_CFSR;
 	pdata->cm.bfar = CPU_NVIC_BFAR;
 	pdata->cm.mfar = CPU_NVIC_MFAR;
 	pdata->cm.shcsr = CPU_NVIC_SHCSR;

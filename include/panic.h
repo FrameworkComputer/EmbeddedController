@@ -26,7 +26,7 @@ struct cortex_panic_data {
 				   */
 	uint32_t frame[8];        /* r0-r3, r12, lr, pc, xPSR */
 
-	uint32_t mmfs;
+	uint32_t cfsr;
 	uint32_t bfar;
 	uint32_t mfar;
 	uint32_t shcsr;

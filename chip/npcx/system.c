@@ -238,7 +238,7 @@ void system_set_rtc(uint32_t seconds)
  *
  * index     |       data
  * ==========|=============
- *   36      |       MMFS
+ *   36      |       CFSR
  *   40      |       HFSR
  *   44      |       BFAR
  *   48      |      LREG1
@@ -247,11 +247,11 @@ void system_set_rtc(uint32_t seconds)
  *   60      |     reserved
  *
  * Above registers are chosen to be saved in case of panic because:
- * 1. MMFS, HFSR and BFAR seem to provide more information about the fault.
+ * 1. CFSR, HFSR and BFAR seem to provide more information about the fault.
  * 2. LREG1, LREG3 and LREG4 store exception, reason and info in case of
  * software panic.
  */
-#define BKUP_MMFS		(BBRM_DATA_INDEX_PANIC_BKUP + 0)
+#define BKUP_CFSR		(BBRM_DATA_INDEX_PANIC_BKUP + 0)
 #define BKUP_HFSR		(BBRM_DATA_INDEX_PANIC_BKUP + 4)
 #define BKUP_BFAR		(BBRM_DATA_INDEX_PANIC_BKUP + 8)
 #define BKUP_LREG1		(BBRM_DATA_INDEX_PANIC_BKUP + 12)
@@ -267,7 +267,7 @@ void chip_panic_data_backup(void)
 	if (!d)
 		return;
 
-	bbram_data_write(BKUP_MMFS, d->cm.mmfs);
+	bbram_data_write(BKUP_CFSR, d->cm.cfsr);
 	bbram_data_write(BKUP_HFSR, d->cm.hfsr);
 	bbram_data_write(BKUP_BFAR, d->cm.dfsr);
 	bbram_data_write(BKUP_LREG1, d->cm.regs[1]);
@@ -281,7 +281,7 @@ static void chip_panic_data_restore(void)
 	struct panic_data *d = PANIC_DATA_PTR;
 
 	/* Ensure BBRAM is valid. */
-	if (!bbram_valid(BKUP_MMFS, 4))
+	if (!bbram_valid(BKUP_CFSR, 4))
 		return;
 
 	/* Ensure Panic data in BBRAM is valid. */
@@ -295,7 +295,7 @@ static void chip_panic_data_restore(void)
 	d->struct_version = 2;
 	d->arch = PANIC_ARCH_CORTEX_M;
 
-	d->cm.mmfs = bbram_data_read(BKUP_MMFS);
+	d->cm.cfsr = bbram_data_read(BKUP_CFSR);
 	d->cm.hfsr = bbram_data_read(BKUP_HFSR);
 	d->cm.dfsr = bbram_data_read(BKUP_BFAR);
 

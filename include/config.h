@@ -1496,7 +1496,7 @@
  *	r8 :00000000 r9 :200013de r10:00000000 r11:00000000
  *	r12:00000000 sp :200009a0 lr :08002b85 pc :08003a8a
  *	Precise data bus error, Forced hard fault, Vector catch, bfar = 60000000
- *	mmfs = 00008200, shcsr = 00000000, hfsr = 40000000, dfsr = 00000008
+ *	cfsr = 00008200, shcsr = 00000000, hfsr = 40000000, dfsr = 00000008
  *
  * If this is not defined, only a register dump will be printed.
  *
