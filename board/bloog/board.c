@@ -222,12 +222,13 @@ int board_is_convertible(void)
 	/*
 	 * Bloog: 33, 34, 35, 36
 	 * Blooguard: 49, 50, 51, 52
-	 * Bipship: 53, 54
+	 * Bipship: 53, 54, 55, 56
 	 * Unprovisioned: 255
 	 */
 	return sku_id == 33 || sku_id == 34 || sku_id == 35 || sku_id == 36
 		|| sku_id == 49 || sku_id == 50 || sku_id == 51 || sku_id == 52
-		|| sku_id == 53 || sku_id == 54 || sku_id == 255;
+		|| sku_id == 53 || sku_id == 54 || sku_id == 55 || sku_id == 56
+		|| sku_id == 255;
 }
 
 static void board_update_sensor_config_from_sku(void)
@@ -238,7 +239,8 @@ static void board_update_sensor_config_from_sku(void)
 		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 
 		/* Override sensor marix for Bipship. */
-		if (sku_id == 53 || sku_id == 54)
+		if (sku_id == 53 || sku_id == 54 || sku_id == 55
+			|| sku_id == 56)
 			motion_sensors[LID_ACCEL].rot_standard_ref =
 				&lid_b_cover_ref;
 	} else {
@@ -329,7 +331,8 @@ __override uint32_t board_override_feature_flags0(uint32_t flags0)
 	 * Remove keyboard backlight feature for devices that don't support it.
 	 */
 	if (sku_id == 33 || sku_id == 36 || sku_id == 51 ||
-		sku_id == 52 || sku_id == 53 || sku_id == 66 || sku_id == 68)
+		sku_id == 52 || sku_id == 53 || sku_id == 55 ||
+		sku_id == 66 || sku_id == 68)
 		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
 	else
 		return flags0;
