@@ -276,8 +276,8 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		if (power_wait_signals_timeout(IN_PCH_SLP_SUS_DEASSERTED,
 				IN_PCH_SLP_SUS_WAIT_TIME_USEC) != EC_SUCCESS) {
-			CPRINTS("SLP_SUS_L didn't go high!  Assuming G3.");
-			return POWER_G3;
+			CPRINTS("SLP_SUS_L didn't go high!  Going back to G3.");
+			return POWER_S5G3;
 		}
 		break;
 
