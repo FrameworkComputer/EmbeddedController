@@ -483,7 +483,11 @@ static int it83xx_tcpm_set_cc(int port, int pull)
 
 static int it83xx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
-	it83xx_select_polarity(port, polarity);
+	enum usbpd_cc_pin cc_pin =
+		(polarity == POLARITY_CC1 || polarity == POLARITY_CC1_DTS) ?
+		USBPD_CC_PIN_1 : USBPD_CC_PIN_2;
+
+	it83xx_select_polarity(port, cc_pin);
 
 	return EC_SUCCESS;
 }
