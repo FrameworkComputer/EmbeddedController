@@ -320,8 +320,9 @@ struct tcpm_drv {
 						      int enable);
 
 	/**
-	 * Set new connection
-	 * There is a new connection. May have to handle differently
+	 * Set connection
+	 * If this is a disconnect, set the ROLE_CONTROL, otherwise
+	 * this is a new connection. May have to handle differently
 	 * if we were performing auto-toggle. Allow a driver to do
 	 * any work required to leave the unattached auto-toggle mode
 	 * as well as setting the CC lines.  If auto-toggle is not
@@ -330,11 +331,13 @@ struct tcpm_drv {
 	 *
 	 * @param port Type-C port number
 	 * @param pull enum tcpc_cc_pull of CC lines
+	 * @param connect Connect(1) or Disconnect(0)
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	int (*set_new_connection)(int port,
-				enum tcpc_cc_pull pull);
+	int (*set_connection)(int port,
+			      enum tcpc_cc_pull pull,
+			      int connect);
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	/**
