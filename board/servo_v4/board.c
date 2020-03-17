@@ -469,18 +469,24 @@ static void ccd_measure_sbu(void)
 	hook_call_deferred(&ccd_measure_sbu_data, 100 * MSEC);
 }
 
-void ccd_enable(int enable)
+void ext_hpd_detection_enable(int enable)
 {
 	if (enable) {
-		gpio_disable_interrupt(GPIO_DP_HPD);
-		hook_call_deferred(&ccd_measure_sbu_data, 0);
-	} else {
 		timestamp_t now = get_time();
 
 		hpd_prev_level = gpio_get_level(GPIO_DP_HPD);
 		hpd_prev_ts = now.val;
 		gpio_enable_interrupt(GPIO_DP_HPD);
+	} else {
+		gpio_disable_interrupt(GPIO_DP_HPD);
+	}
+}
 
+void ccd_enable(int enable)
+{
+	if (enable) {
+		hook_call_deferred(&ccd_measure_sbu_data, 0);
+	} else {
 		gpio_set_level(GPIO_SBU_MUX_EN, 0);
 		hook_call_deferred(&ccd_measure_sbu_data, -1);
 	}

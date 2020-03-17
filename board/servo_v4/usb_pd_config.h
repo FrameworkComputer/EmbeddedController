@@ -64,12 +64,14 @@
 #define CC_POLARITY	BIT(5)   /* CC polarity */
 
 /* Servo v4 DP alt-mode configuration */
-#define ALT_DP_ENABLE	BIT(0)   /* Enable DP alt-mode or not */
-#define ALT_DP_PIN_C	BIT(1)   /* Pin assignment C supported */
-#define ALT_DP_PIN_D	BIT(2)   /* Pin assignment D supported */
-#define ALT_DP_PIN_E	BIT(3)   /* Pin assignment E supported */
-#define ALT_DP_MF_PREF	BIT(4)   /* Multi-Function preferred */
-#define ALT_DP_PLUG	BIT(5)   /* Plug or receptacle */
+#define ALT_DP_ENABLE		BIT(0)   /* Enable DP alt-mode or not */
+#define ALT_DP_PIN_C		BIT(1)   /* Pin assignment C supported */
+#define ALT_DP_PIN_D		BIT(2)   /* Pin assignment D supported */
+#define ALT_DP_PIN_E		BIT(3)   /* Pin assignment E supported */
+#define ALT_DP_MF_PREF		BIT(4)   /* Multi-Function preferred */
+#define ALT_DP_PLUG		BIT(5)   /* Plug or receptacle */
+#define ALT_DP_OVERRIDE_HPD	BIT(6)   /* Override the HPD signal */
+#define ALT_DP_HPD_LVL		BIT(7)   /* HPD level if overridden */
 
 /* TX uses SPI1 on PB3-4 for CHG port, SPI2 on PB 13-14 for DUT port */
 #define SPI_REGS(p) ((p) ? STM32_SPI2_REGS : STM32_SPI1_REGS)

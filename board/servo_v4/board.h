@@ -244,6 +244,13 @@ int pd_set_rp_rd(int port, int cc_pull, int rp_value);
 int board_get_version(void);
 
 /**
+ * Enable or disable external HPD detection
+ *
+ * @param enable Enable external HPD detection if true, otherwise disable
+ */
+void ext_hpd_detection_enable(int enable);
+
+/**
  * Enable or disable CCD
  *
  * @param enable Enable CCD if true, otherwise disable

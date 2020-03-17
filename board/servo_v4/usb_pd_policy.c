@@ -900,10 +900,18 @@ static void set_typec_mux(int pin_cfg)
 		   value);
 }
 
+static int get_hpd_level(void)
+{
+	if (alt_dp_config & ALT_DP_OVERRIDE_HPD)
+		return (alt_dp_config & ALT_DP_HPD_LVL) != 0;
+	else
+		return gpio_get_level(GPIO_DP_HPD);
+}
+
 static int dp_status(int port, uint32_t *payload)
 {
 	int opos = PD_VDO_OPOS(payload[0]);
-	int hpd = gpio_get_level(GPIO_DP_HPD);
+	int hpd = get_hpd_level();
 
 	if (opos != OPOS)
 		return 0;  /* NAK */
@@ -1042,9 +1050,12 @@ static void do_cc(int cc_config_new)
 		if ((cc_config & ~cc_config_new) & CC_DISABLE_DTS) {
 			/* DTS-disabled -> DTS-enabled */
 			ccd_enable(1);
+			ext_hpd_detection_enable(0);
 		} else if ((cc_config_new & ~cc_config) & CC_DISABLE_DTS) {
 			/* DTS-enabled -> DTS-disabled */
 			ccd_enable(0);
+			if (!(alt_dp_config & ALT_DP_OVERRIDE_HPD))
+				ext_hpd_detection_enable(1);
 		}
 
 		/* Accept new cc_config value */
@@ -1266,8 +1277,37 @@ static int cmd_dp_action(int argc, char *argv[])
 		}
 		CPRINTS("Plug or receptacle: %d",
 			(alt_dp_config & ALT_DP_PLUG) != 0);
-	} else if (!strcasecmp(argv[1], "help")) {
-		CPRINTS("Usage: usbc_action dp [enable|disable|mf|pins|plug]");
+	} else if (!strcasecmp(argv[1], "hpd")) {
+		if (argc >= 3) {
+			if (!strncasecmp(argv[2], "ext", 3)) {
+				alt_dp_config &= ~ALT_DP_OVERRIDE_HPD;
+				ext_hpd_detection_enable(1);
+			} else if (!strncasecmp(argv[2], "h", 1)) {
+				alt_dp_config |= ALT_DP_OVERRIDE_HPD;
+				alt_dp_config |= ALT_DP_HPD_LVL;
+				/*
+				 * Modify the HPD to high. Need to enable the
+				 * external HPD signal monitoring. A monitor
+				 * may send a IRQ at any time to notify DUT.
+				 */
+				ext_hpd_detection_enable(1);
+				pd_send_hpd(DUT, hpd_high);
+			} else if (!strncasecmp(argv[2], "l", 1)) {
+				alt_dp_config |= ALT_DP_OVERRIDE_HPD;
+				alt_dp_config &= ~ALT_DP_HPD_LVL;
+				ext_hpd_detection_enable(0);
+				pd_send_hpd(DUT, hpd_low);
+			} else if (!strcasecmp(argv[2], "irq")) {
+				pd_send_hpd(DUT, hpd_irq);
+			}
+		}
+		CPRINTS("HPD source: %s",
+			(alt_dp_config & ALT_DP_OVERRIDE_HPD) ? "overridden"
+							      : "external");
+		CPRINTS("HPD level: %d", get_hpd_level());
+	}  else if (!strcasecmp(argv[1], "help")) {
+		CPRINTS("Usage: usbc_action dp [enable|disable|hpd|mf|pins|"
+			"plug]");
 	}
 
 	return EC_SUCCESS;
