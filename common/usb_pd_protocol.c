@@ -1287,7 +1287,7 @@ bool pd_is_disconnected(int port)
 		;
 }
 
-static void pd_set_data_role(int port, int role)
+static void pd_set_data_role(int port, enum pd_data_role role)
 {
 	pd[port].data_role = role;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -1358,9 +1358,10 @@ void pd_execute_hard_reset(int port)
 		pd_power_supply_reset(port);
 	}
 
-	/* Set initial data role (matching power role) */
-	pd_set_data_role(port, pd[port].power_role);
 	if (pd[port].power_role == PD_ROLE_SINK) {
+		/* Initial data role for sink is UFP */
+		pd_set_data_role(port, PD_ROLE_UFP);
+
 		/* Clear the input current limit */
 		pd_set_input_current_limit(port, 0, 0);
 #ifdef CONFIG_CHARGE_MANAGER
@@ -1382,7 +1383,11 @@ void pd_execute_hard_reset(int port)
 
 		set_state(port, PD_STATE_SNK_HARD_RESET_RECOVER);
 		return;
+	} else {
+		/* Initial data role for source is DFP */
+		pd_set_data_role(port, PD_ROLE_DFP);
 	}
+
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 	if (!hard_rst_tx)
