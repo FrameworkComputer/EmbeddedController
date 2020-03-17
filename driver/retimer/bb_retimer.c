@@ -145,11 +145,12 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
 		set_retimer_con |= BB_RETIMER_USB_3_CONNECTION;
 
 		/*
-		 * Bit 7: USB_DATA_ROLE (ignored if BIT5=0)
+		 * Bit 7: USB_DATA_ROLE for the Burnside Bridge side of
+		 * connection (ignored if BIT5=0).
 		 * 0 - DFP
-		 * 1 - UPF
+		 * 1 - UFP
 		 */
-		if (pd_partner_is_ufp(port))
+		if (pd_get_data_role(port) == PD_ROLE_UFP)
 			set_retimer_con |= BB_RETIMER_USB_DATA_ROLE;
 	}
 

@@ -2480,13 +2480,6 @@ static inline uint8_t board_get_usb_pd_port_count(void)
 #endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
 
 /**
- * Return true if specified PD port partner is UFP.
- *
- * @param port USB-C port number
- */
-bool pd_partner_is_ufp(int port);
-
-/**
  * Return true if specified PD port is debug accessory.
  *
  * @param port USB-C port number

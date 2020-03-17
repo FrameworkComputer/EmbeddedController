@@ -228,17 +228,8 @@ enum pd_cc_states pd_get_cc_state(
 
 /**
  * This function checks the current CC status of the port partner
- * and returns true if the attached partner is UFP.
+ * and returns true if the attached partner is debug accessory.
  */
-bool pd_partner_is_ufp(int port)
-{
-	enum pd_cc_states cc_state = pd_get_task_cc_state(port);
-
-	return cc_state == PD_CC_UFP_ATTACHED ||
-		cc_state == PD_CC_UFP_DEBUG_ACC ||
-		cc_state == PD_CC_UFP_AUDIO_ACC;
-}
-
 bool pd_is_debug_acc(int port)
 {
 	enum pd_cc_states cc_state = pd_get_task_cc_state(port);
