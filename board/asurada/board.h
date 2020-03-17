@@ -2,15 +2,13 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-/* Asurada development board configuration */
+/* Asurada board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
 /* Optional features */
 #define CONFIG_BOARD_VERSION_CUSTOM
-#define CONFIG_I2C
-#define CONFIG_I2C_MASTER
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_LOW_POWER_S0
 #define CONFIG_POWER_BUTTON
@@ -32,6 +30,8 @@
 #define CONFIG_CHARGER_OTG
 #define CONFIG_CHARGE_RAMP_HW
 
+/* Chipset */
+
 /* Keyboard */
 /*
  * #define CONFIG_KEYBOARD_BOARD_CONFIG
@@ -39,12 +39,20 @@
  * #define CONFIG_MKBP_USE_GPIO
  */
 
-/* PD */
+/* I2C */
+#define CONFIG_I2C
+#define CONFIG_I2C_MASTER
+#define I2C_PORT_CHARGER IT83XX_I2C_CH_C
+#define I2C_PORT_BATTERY IT83XX_I2C_CH_C
+
+/* PD / USB-C */
 
 /* Optional console commands */
 #define CONFIG_CMD_FLASH
 #define CONFIG_CMD_SCRATCHPAD
 #define CONFIG_CMD_STACKOVERFLOW
+
+/* Sensor */
 
 /* UART */
 #undef CONFIG_UART_TX_BUF_SIZE
@@ -54,11 +62,6 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
-
-#define I2C_PORT_CHARGER IT83XX_I2C_CH_C
-#define I2C_PORT_BATTERY IT83XX_I2C_CH_C
-
-#include "gpio_signal.h"
 
 enum battery_type {
 	BATTERY_DUMMY,
