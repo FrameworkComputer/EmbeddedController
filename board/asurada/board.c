@@ -17,7 +17,7 @@
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "timer.h"
-
+#include "uart.h"
 
 #include "gpio_list.h"
 
