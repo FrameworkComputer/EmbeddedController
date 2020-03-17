@@ -7,12 +7,18 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+/* Chipset config */
+
 /* Optional features */
 #define CONFIG_BOARD_VERSION_CUSTOM
+#define CONFIG_EXTPOWER_GPIO
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_LOW_POWER_S0
 #define CONFIG_POWER_BUTTON
 #define CONFIG_PWM
+#define CONFIG_VBOOT_HASH
+#define CONFIG_VOLUME_BUTTONS
+#define CONFIG_WP_ACTIVE_HIGH
 
 /* Battery */
 #define CONFIG_BATTERY_SMART
@@ -53,6 +59,9 @@
 #define CONFIG_CMD_STACKOVERFLOW
 
 /* Sensor */
+#define CONFIG_GMR_TABLET_MODE
+#define CONFIG_TABLET_MODE
+#define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
 
 /* UART */
 #undef CONFIG_UART_TX_BUF_SIZE
@@ -73,8 +82,14 @@ enum pwm_channel {
 };
 
 enum adc_channel {
-	ADC_BOARD_ID_0,
-	ADC_BOARD_ID_1,
+	ADC_TEMP_SENSOR_SUBPMIC, /* ADC 0 */
+	ADC_BOARD_ID_0,          /* ADC 1 */
+	ADC_BOARD_ID_1,          /* ADC 2 */
+	ADC_TEMP_SENSOR_AMB,     /* ADC 3 */
+	ADC_TEMP_SENSOR_CHARGER, /* ADC 5 */
+	ADC_CHARGER_PMON,        /* ADC 6 */
+	ADC_TEMP_SENSOR_AP,      /* ADC 7 */
+
 	/* Number of ADC channels */
 	ADC_CH_COUNT,
 };

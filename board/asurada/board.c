@@ -6,16 +6,23 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "button.h"
 #include "charger.h"
 #include "common.h"
 #include "console.h"
+#include "chip/it83xx/intc.h"
 #include "driver/charger/isl923x.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "keyboard_scan.h"
+#include "lid_switch.h"
+#include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
+#include "switch.h"
+#include "tablet_mode.h"
 #include "timer.h"
 #include "uart.h"
 
@@ -55,8 +62,13 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
 	/* Convert to mV (3000mV/1024). */
-	{"BOARD_ID_0", 3000, 1024, 0, CHIP_ADC_CH1}, /* GPI0, ADC0 */
-	{"BOARD_ID_1", 3000, 1024, 0, CHIP_ADC_CH2}, /* GPI1, ADC1 */
+	{"TEMP_SENSOR_SUBPMIC", 3000, 1024, 0, CHIP_ADC_CH0},
+	{"BOARD_ID_0", 3000, 1024, 0, CHIP_ADC_CH1},
+	{"BOARD_ID_1", 3000, 1024, 0, CHIP_ADC_CH2},
+	{"TEMP_SENSOR_AMB", 3000, 1024, 0, CHIP_ADC_CH3},
+	{"TEMP_SENSOR_CHARGER", 3000, 1024, 0, CHIP_ADC_CH5},
+	{"CHARGER_PMON", 3000, 1024, 0, CHIP_ADC_CH6},
+	{"TEMP_SENSOR_AP", 3000, 1024, 0, CHIP_ADC_CH7},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -93,18 +105,12 @@ struct keyboard_scan_config keyscan_config = {
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"battery",  IT83XX_I2C_CH_A, 100, GPIO_I2C_A_SCL, GPIO_I2C_A_SDA},
+	{"bat_chg",  IT83XX_I2C_CH_A, 100, GPIO_I2C_A_SCL, GPIO_I2C_A_SDA},
 	{"sensor",   IT83XX_I2C_CH_B, 100, GPIO_I2C_B_SCL, GPIO_I2C_B_SDA},
 	{"usb0",     IT83XX_I2C_CH_C, 100, GPIO_I2C_C_SCL, GPIO_I2C_C_SDA},
 	{"usb1",     IT83XX_I2C_CH_E, 100, GPIO_I2C_E_SCL, GPIO_I2C_E_SDA},
 };
-
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
-int extpower_is_present(void)
-{
-	return 0;
-}
 
 int board_get_version(void)
 {
