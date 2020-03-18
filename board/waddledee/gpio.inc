@@ -88,7 +88,7 @@ GPIO(USB_C0_FRS,		PIN(C, 4), GPIO_OUT_LOW)
 GPIO(HDMI_SEL_L,		PIN(C, 6), GPIO_OUT_HIGH)
 
 /* MKBP event synchronization */
-GPIO(EC_AP_MKBP_INT_L,	PIN(L, 5), GPIO_OUT_HIGH)
+GPIO(EC_AP_MKBP_INT_L,	PIN(L, 5), GPIO_ODR_HIGH)
 
 /* Misc pins which will run to the I/O board */
 GPIO(EC_SUB_IO_1_1, PIN(L, 3), GPIO_INPUT)
