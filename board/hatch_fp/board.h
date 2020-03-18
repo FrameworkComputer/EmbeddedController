@@ -17,19 +17,26 @@
 
 #undef CONFIG_SYSTEM_UNLOCKED
 
-/*
- * These allow console commands to be flagged as restricted.
- * Restricted commands will only be permitted to run when
- * console_is_restricted() returns false.
- * See console_is_restricted's definition in board.c.
- */
-#define CONFIG_CONSOLE_COMMAND_FLAGS
-#define CONFIG_RESTRICTED_CONSOLE_COMMANDS
+/*-------------------------------------------------------------------------*
+ * Flash layout:
+ *
+ * +++++++++++++
+ * |    RO     |
+ * | ......... |
+ * |  Rollback | (two sectors)
+ * +-----------+
+ * |    RW     |
+ * |           |
+ * |           |
+ * |           |
+ * |           |
+ * +++++++++++++
+ *
+ * We adjust the following macros to accommodate a for a rollback, RO,
+ * and RW region of different sizes.
+ *
+ *-------------------------------------------------------------------------*/
 
-/*
- * Flash layout: we redefine the sections offsets and sizes as we want to
- * include a rollback region, and will use RO/RW regions of different sizes.
- */
 #undef _IMAGE_SIZE
 #undef CONFIG_ROLLBACK_OFF
 #undef CONFIG_ROLLBACK_SIZE
@@ -81,7 +88,11 @@
  */
 #define CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE
 
-/* the UART console is on USART1 */
+/*-------------------------------------------------------------------------*
+ * UART Console Setup
+ *-------------------------------------------------------------------------*/
+
+/* The UART console is on USART1 */
 #undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
 #undef CONFIG_UART_TX_BUF_SIZE
@@ -93,71 +104,32 @@
 #undef CONFIG_UART_TX_DMA
 #undef CONFIG_UART_RX_DMA
 
+/*-------------------------------------------------------------------------*
+ * Console Commands
+ *-------------------------------------------------------------------------*/
 
-/* Optional features */
-#undef CONFIG_ADC
+#define CONFIG_CMD_FLASH
+#define CONFIG_CMD_SPI_XFER
 #define CONFIG_CMD_IDLE_STATS
-#define CONFIG_DMA
-/*FIXME*/
-/*#define CONFIG_FORCE_CONSOLE_RESUME*/
-#define CONFIG_FPU
-#undef CONFIG_HIBERNATE
-#define CONFIG_HOST_COMMAND_STATUS
-#undef CONFIG_I2C
-#undef CONFIG_LID_SWITCH
-/*FIXME*/
-/*#define CONFIG_LOW_POWER_IDLE*/
-#define CONFIG_MKBP_EVENT
-#define CONFIG_MKBP_USE_GPIO
-#define CONFIG_PRINTF_LEGACY_LI_FORMAT
-#define CONFIG_SHA256
-#define CONFIG_SHA256_UNROLLED
-#define CONFIG_SPI
-#define CONFIG_STM_HWTIMER32
-#define CONFIG_SUPPRESSED_HOST_COMMANDS \
-	EC_CMD_CONSOLE_SNAPSHOT, EC_CMD_CONSOLE_READ, EC_CMD_PD_GET_LOG_ENTRY
-#undef CONFIG_TASK_PROFILING
-#define CONFIG_WATCHDOG_HELP
-#define CONFIG_WP_ACTIVE_HIGH
 
-/* SPI configuration for the fingerprint sensor */
-#define CONFIG_SPI_MASTER
-#define CONFIG_SPI_FP_PORT  0 /* SPI2: first master config */
 #ifdef SECTION_IS_RW
-#define CONFIG_FP_SENSOR_FPC1025
 /* TODO(b/130249462): remove for release */
 #define CONFIG_CMD_FPSENSOR_DEBUG
-/*
- * Use the malloc code only in the RW section (for the private library),
- * we cannot enable it in RO since it is not compatible with the RW verification
- * (shared_mem_init done too late).
- */
-#define CONFIG_MALLOC
-/*
- * FP buffers are allocated in regular SRAM on STM32F4.
- * TODO(b/124773209): Instead of defining to empty, #undef once all CLs that
- * depend on FP_*_SECTION have landed. Also rename the variables to CONFIG_*.
- */
-#define FP_FRAME_SECTION
-#define FP_TEMPLATE_SECTION
-
-#else /* SECTION_IS_RO */
-/* RO verifies the RW partition signature */
-#define CONFIG_RSA
-#define CONFIG_RWSIG
 #endif
 
-#define CONFIG_RSA_KEY_SIZE 3072
-#define CONFIG_RSA_EXPONENT_3
-#define CONFIG_RWSIG_TYPE_RWSIG
-
-/* RW does slow compute, RO does slow flash erase. */
-#undef CONFIG_WATCHDOG_PERIOD_MS
-#define CONFIG_WATCHDOG_PERIOD_MS 10000
-
 /*
- * Add rollback protection
+ * These allow console commands to be flagged as restricted.
+ * Restricted commands will only be permitted to run when
+ * console_is_restricted() returns false.
+ * See console_is_restricted's definition in board.c.
  */
+#define CONFIG_CONSOLE_COMMAND_FLAGS
+#define CONFIG_RESTRICTED_CONSOLE_COMMANDS
+
+/*-------------------------------------------------------------------------*
+ * Rollback Block
+ *-------------------------------------------------------------------------*/
+
 #define CONFIG_ROLLBACK
 #define CONFIG_ROLLBACK_SECRET_SIZE 32
 #define CONFIG_MPU
@@ -172,13 +144,88 @@
 #undef CONFIG_ROLLBACK_UPDATE
 #endif
 
+/*-------------------------------------------------------------------------*
+ * RW Signature Verification
+ *-------------------------------------------------------------------------*/
+
+#ifdef SECTION_IS_RO
+/* RO verifies the RW partition signature */
+#define CONFIG_RSA
+#define CONFIG_RWSIG
+#endif /* SECTION_IS_RO */
+#define CONFIG_RSA_KEY_SIZE 3072
+#define CONFIG_RSA_EXPONENT_3
+#define CONFIG_RWSIG_TYPE_RWSIG
+
+/*-------------------------------------------------------------------------*
+ * Watchdog
+ *-------------------------------------------------------------------------*/
+
+/*
+ * RW does slow compute, RO does slow flash erase.
+ */
+#undef CONFIG_WATCHDOG_PERIOD_MS
+#define CONFIG_WATCHDOG_PERIOD_MS 10000
+#define CONFIG_WATCHDOG_HELP
+
+/*-------------------------------------------------------------------------*
+ * Fingerprint Specific
+ *-------------------------------------------------------------------------*/
+
+/* SPI configuration for the fingerprint sensor */
+#define CONFIG_SPI_MASTER
+#define CONFIG_SPI_FP_PORT  0 /* SPI2: first master config */
+#ifdef SECTION_IS_RW
+#define CONFIG_FP_SENSOR_FPC1025
+/*
+ * Use the malloc code only in the RW section (for the private library),
+ * we cannot enable it in RO since it is not compatible with the RW verification
+ * (shared_mem_init done too late).
+ */
+#define CONFIG_MALLOC
+/*
+ * FP buffers are allocated in regular SRAM on STM32F4.
+ * TODO(b/124773209): Instead of defining to empty, #undef once all CLs that
+ * depend on FP_*_SECTION have landed. Also rename the variables to CONFIG_*.
+ */
+#define FP_FRAME_SECTION
+#define FP_TEMPLATE_SECTION
+#endif /* SECTION_IS_RW */
+
+/*-------------------------------------------------------------------------*
+ * Disable Features
+ *-------------------------------------------------------------------------*/
+
+#undef CONFIG_ADC
+#undef CONFIG_HIBERNATE
+#undef CONFIG_I2C
+#undef CONFIG_LID_SWITCH
+#undef CONFIG_TASK_PROFILING
+
+/*-------------------------------------------------------------------------*
+ * Other
+ *-------------------------------------------------------------------------*/
+
 #define CONFIG_AES
 #define CONFIG_AES_GCM
-
+#define CONFIG_DMA
+/*FIXME*/
+/*#define CONFIG_FORCE_CONSOLE_RESUME*/
+#define CONFIG_FPU
+#define CONFIG_HOST_COMMAND_STATUS
+/*FIXME*/
+/*#define CONFIG_LOW_POWER_IDLE*/
+#define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_USE_GPIO
+#define CONFIG_PRINTF_LEGACY_LI_FORMAT
 #define CONFIG_RNG
-
-#define CONFIG_CMD_FLASH
-#define CONFIG_CMD_SPI_XFER
+#define CONFIG_SHA256
+#define CONFIG_SHA256_UNROLLED
+#define CONFIG_SPI
+#define CONFIG_STM_HWTIMER32
+#define CONFIG_SUPPRESSED_HOST_COMMANDS \
+	EC_CMD_CONSOLE_SNAPSHOT, EC_CMD_CONSOLE_READ, EC_CMD_PD_GET_LOG_ENTRY
+#define CONFIG_WP_ACTIVE_HIGH
 
 #ifndef __ASSEMBLER__
 
