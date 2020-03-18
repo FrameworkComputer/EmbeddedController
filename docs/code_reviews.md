@@ -86,7 +86,8 @@ Add your name to the [list of reviewers][1].
   * Prioritize reviewers who may want fundamental changes, e.g. a component
     maintainer or domain expert should look at it before a language expert.
 * Keep related changes in a single relation chain if practical.
-  * If not, consider using [topics][2] in Gerrit to group related CLs.
+  * If not, consider using [topics][2] in Gerrit to group related CLs. For
+    example, the topic ["CBI PCB supplier field"][6] links multiple CLs.
 * Try to make visible updates actionable for reviewers.
   * Don’t post a comment saying that you’ve done something before the patchset
     that does it.
@@ -145,3 +146,4 @@ Add your name to the [list of reviewers][1].
 [3]: https://doc.coreboot.org/getting_started/gerrit_guidelines.html
 [4]: https://g3doc.corp.google.com/gws/tools/gwsq/v3/g3doc/gerrit.md
 [5]: https://google.github.io/eng-practices/review/developer/small-cls.html
+[6]: https://chromium-review.googlesource.com/q/topic:%2522CBI+PCB+supplier+field%2522
