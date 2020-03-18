@@ -45,6 +45,9 @@ struct ioexpander_drv {
 	int (*enable_interrupt)(int ioex, int port, int mask, int enable);
 };
 
+/* IO expander chip disabled. No I2C communication will be attempted. */
+#define IOEX_FLAGS_DISABLED	BIT(0)
+
 struct ioexpander_config_t {
 	/* Physical I2C port connects to the IO expander chip. */
 	int i2c_host_port;
@@ -55,6 +58,8 @@ struct ioexpander_config_t {
 	 * the struct ioexpander_drv.
 	 */
 	const struct ioexpander_drv *drv;
+	/* Config flags for this IO expander chip. See IOEX_FLAGS_* */
+	uint32_t flags;
 };
 
 extern struct ioexpander_config_t ioex_config[];
@@ -74,28 +79,6 @@ int ioex_enable_interrupt(enum ioex_signal signal);
  * @return			EC_SUCCESS if successful, non-zero if error.
  */
 int ioex_disable_interrupt(enum ioex_signal signal);
-
-/*
- * Get flags for the IOEX pin by mask
- *
- * @param ioex		IO expander chip's port number
- * @param port		IO port in the IO expander chip
- * @param mask		Bitmask of the pin on the port above
- * @param flags		Pointer to the keep the flags read
- * @return			EC_SUCCESS if successful, non-zero if error.
- */
-int ioex_get_flags_by_mask(int ioex, int port, int mask, int *flags);
-
-/*
- * Set flags for the IOEX pin by mask
- *
- * @param ioex		IO expander chip's port number
- * @param port		IO port in the IO expander chip
- * @param mask		Bitmask of the pin on the port above
- * @param flags		flags to set
- * @return			EC_SUCCESS if successful, non-zero if error.
- */
-int ioex_set_flags_by_mask(int ioex, int port, int mask, int flags);
 
 /*
  * Get flags for the IOEX signal
