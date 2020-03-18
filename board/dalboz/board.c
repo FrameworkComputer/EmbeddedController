@@ -8,6 +8,7 @@
 #include "button.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dsm.h"
+#include "driver/ioexpander/pcal6408.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -22,6 +23,14 @@
 #include "system.h"
 #include "task.h"
 #include "usb_charge.h"
+
+/* Interrupt handler varies with DB option. */
+void (*c1_tcpc_config_interrupt)(enum gpio_signal signal) = tcpc_alert_event;
+
+void c1_tcpc_interrupt(enum gpio_signal signal)
+{
+	c1_tcpc_config_interrupt(signal);
+}
 
 #include "gpio_list.h"
 
@@ -132,6 +141,17 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 enum gpio_signal IOEX_USB_A1_RETIMER_EN = IOEX_USB_A1_RETIMER_EN_OPT1;
 enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT1;
 
+static void pcal6408_handler(void)
+{
+	pcal6408_ioex_event_handler(IOEX_HDMI_PCAL6408);
+}
+DECLARE_DEFERRED(pcal6408_handler);
+
+void pcal6408_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&pcal6408_handler_data, 0);
+}
+
 static void setup_usb_db(void)
 {
 	if (ec_config_get_usb_db() == DALBOZ_DB_D_OPT2_USBA_HDMI) {
@@ -141,6 +161,8 @@ static void setup_usb_db(void)
 		IOEX_USB_A1_RETIMER_EN = IOEX_USB_A1_RETIMER_EN_OPT2;
 		IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT2;
 		usb_port_enable[USBA_PORT_A1] = IOEX_EN_USB_A1_5V_DB_OPT2;
+		c1_tcpc_config_interrupt = pcal6408_interrupt;
+		ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
 	} else {
 		ccprints("DB OPT1 USBC");
 		ioex_config[IOEX_C1_NCT3807].flags = 0;
@@ -148,6 +170,7 @@ static void setup_usb_db(void)
 		IOEX_USB_A1_RETIMER_EN = IOEX_USB_A1_RETIMER_EN_OPT1;
 		IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT1;
 		usb_port_enable[USBA_PORT_A1] = IOEX_EN_USB_A1_5V_DB_OPT1;
+		c1_tcpc_config_interrupt = tcpc_alert_event;
 	}
 
 	/* Enable PPC interrupts. */
