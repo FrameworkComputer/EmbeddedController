@@ -4,7 +4,11 @@
  */
 
 /* Memory mapping */
-#define CONFIG_FLASH_SIZE       (512 * 1024)
+#ifdef CHIP_VARIANT_STM32F412
+#	define CONFIG_FLASH_SIZE (1 * 1024 * 1024)
+#else
+#	define CONFIG_FLASH_SIZE (512 * 1024)
+#endif
 
 /* 3 regions type: 16K, 64K and 128K */
 #define SIZE_16KB (16 * 1024)
@@ -26,8 +30,13 @@
 /* No page mode on STM32F, so no benefit to larger write sizes */
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE CONFIG_FLASH_WRITE_SIZE
 
-#define CONFIG_RAM_BASE		0x20000000
-#define CONFIG_RAM_SIZE		0x00020000
+#ifdef CHIP_VARIANT_STM32F412
+#	define CONFIG_RAM_BASE  0x20000000
+#	define CONFIG_RAM_SIZE  0x00040000 /* 256 KB */
+#else
+#	define CONFIG_RAM_BASE  0x20000000
+#	define CONFIG_RAM_SIZE  0x00020000 /* 128 KB */
+#endif
 
 #define CONFIG_RO_MEM_OFF	0
 #define CONFIG_RO_SIZE		(256 * 1024)
