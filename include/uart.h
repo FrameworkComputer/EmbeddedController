@@ -361,9 +361,9 @@ int uart_console_read_buffer(uint8_t type,
 			     uint16_t dest_size,
 			     uint16_t *write_count);
 
-#endif  /* __CROS_EC_UART_H */
-
 /**
  * Initialize tx buffer head and tail
  */
 void uart_init_buffer(void);
+
+#endif  /* __CROS_EC_UART_H */
