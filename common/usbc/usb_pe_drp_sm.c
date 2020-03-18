@@ -3848,7 +3848,7 @@ static void pe_do_port_discovery_run(int port)
 			break;
 		case CMD_ENTER_MODE:
 			pe[port].vdm_cmd = CMD_DP_STATUS;
-			if (modep->opos) {
+			if (modep && modep->opos) {
 				ret = modep->fx->status(port,
 						pe[port].vdm_data);
 				pe[port].vdm_data[0] |=
