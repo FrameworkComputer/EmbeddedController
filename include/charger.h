@@ -70,6 +70,11 @@ struct charger_drv {
 						      int output_current,
 						      int output_voltage);
 
+	/*
+	 * Is the charger sourcing VBUS / OTG power?
+	 */
+	int (*is_sourcing_otg_power)(int chgnum, int port);
+
 	/* Get/set charge current limit in mA */
 	enum ec_error_list (*get_current)(int chgnum, int *current);
 	enum ec_error_list (*set_current)(int chgnum, int current);

@@ -672,7 +672,7 @@ static enum ec_error_list rt946x_enable_otg_power(int chgnum, int enabled)
 		(chgnum, RT946X_REG_CHGCTRL1, RT946X_MASK_OPA_MODE);
 }
 
-int charger_is_sourcing_otg_power(int port)
+static int rt946x_is_sourcing_otg_power(int chgnum, int port)
 {
 	int val;
 
@@ -1880,6 +1880,7 @@ const struct charger_drv rt946x_drv = {
 	.get_status = &rt946x_get_status,
 	.set_mode = &rt946x_set_mode,
 	.enable_otg_power = &rt946x_enable_otg_power,
+	.is_sourcing_otg_power = &rt946x_is_sourcing_otg_power,
 	.get_current = &rt946x_get_current,
 	.set_current = &rt946x_set_current,
 	.get_voltage = &rt946x_get_voltage,

@@ -335,12 +335,6 @@ static enum ec_error_list bq25710_set_otg_current_voltage(int chgum,
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-int charger_is_sourcing_otg_power(int port)
-{
-	/* Add when needed. */
-	return EC_ERROR_UNIMPLEMENTED;
-}
-
 static enum ec_error_list bq25710_get_current(int chgnum, int *current)
 {
 	int rv, reg;

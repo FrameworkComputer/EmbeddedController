@@ -318,6 +318,22 @@ enum ec_error_list charger_set_otg_current_voltage(int output_current,
 	return rv;
 }
 
+int charger_is_sourcing_otg_power(int port)
+{
+	int chgnum = 0;
+	int rv = 0;
+
+	if ((chgnum < 0) || (chgnum >= chg_cnt)) {
+		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
+		return 0;
+	}
+
+	if (chg_chips[chgnum].drv->is_sourcing_otg_power)
+		rv = chg_chips[chgnum].drv->is_sourcing_otg_power(chgnum, port);
+
+	return rv;
+}
+
 enum ec_error_list charger_get_current(int *current)
 {
 	int chgnum = 0;
