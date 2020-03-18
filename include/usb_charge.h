@@ -19,12 +19,20 @@
 #define USB_SYSJUMP_TAG 0x5550 /* "UP" - Usb Port */
 #define USB_HOOK_VERSION 1
 
-/* GPIOs to enable/disable USB ports. Board specific. */
 #ifdef CONFIG_USB_PORT_POWER_SMART
-extern const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
+#define USB_PORT_ENABLE_COUNT CONFIG_USB_PORT_POWER_SMART_PORT_COUNT
 #elif defined(CONFIG_USB_PORT_POWER_DUMB)
-extern const int usb_port_enable[USB_PORT_COUNT];
+#define USB_PORT_ENABLE_COUNT USB_PORT_COUNT
 #endif
+
+/* GPIOs to enable/disable USB ports. Board specific. */
+#ifdef USB_PORT_ENABLE_COUNT
+#ifdef CONFIG_USB_PORT_ENABLE_DYNAMIC
+extern int usb_port_enable[USB_PORT_ENABLE_COUNT];
+#else
+extern const int usb_port_enable[USB_PORT_ENABLE_COUNT];
+#endif
+#endif /* USB_PORT_ENABLE_COUNT */
 
 /**
  * Set USB charge mode for the port.
