@@ -43,7 +43,7 @@ BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);
  * USB-A
  */
 
-const int usb_port_enable[USB_PORT_COUNT] = {
+int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A0_5V,
 	IOEX_EN_USB_A1_5V_DB_OPT1,
 };

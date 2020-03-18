@@ -149,7 +149,7 @@ void mst_hpd_interrupt(enum ioex_signal signal)
  * USB-A Power
  */
 
-const int usb_port_enable[USB_PORT_COUNT] = {
+const int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A0_5V,
 	IOEX_EN_USB_A1_5V_DB,
 };
