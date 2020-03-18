@@ -16,6 +16,16 @@
 /* USB charger minimum current */
 #define USB_CHARGER_MIN_CURR_MA 500
 
+#define USB_SYSJUMP_TAG 0x5550 /* "UP" - Usb Port */
+#define USB_HOOK_VERSION 1
+
+/* GPIOs to enable/disable USB ports. Board specific. */
+#ifdef CONFIG_USB_PORT_POWER_SMART
+extern const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
+#elif defined(CONFIG_USB_PORT_POWER_DUMB)
+extern const int usb_port_enable[USB_PORT_COUNT];
+#endif
+
 /**
  * Set USB charge mode for the port.
  *

@@ -50,10 +50,6 @@ static int current_dptf_profile = DPTF_PROFILE_DEFAULT;
 
 #endif
 
-#ifdef CONFIG_USB_PORT_POWER_DUMB
-extern const int usb_port_enable[USB_PORT_COUNT];
-#endif
-
 /*
  * Keep a read cache of four bytes when burst mode is enabled, which is the
  * size of the largest non-string memmap data type.

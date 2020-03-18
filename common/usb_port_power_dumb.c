@@ -18,11 +18,7 @@
 #define CPUTS(outstr) cputs(CC_USBCHARGE, outstr)
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
-#define USB_SYSJUMP_TAG 0x5550 /* "UP" - Usb Port */
-#define USB_HOOK_VERSION 1
-
 static uint8_t charge_mode[USB_PORT_COUNT];
-extern const int usb_port_enable[USB_PORT_COUNT];
 
 static void usb_port_set_enabled(int port_id, int en)
 {

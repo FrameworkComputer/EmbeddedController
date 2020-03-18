@@ -18,9 +18,6 @@
 #define CPUTS(outstr) cputs(CC_USBCHARGE, outstr)
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
-#define USB_SYSJUMP_TAG 0x5550 /* "UP" - Usb Port */
-#define USB_HOOK_VERSION 1
-
 #ifndef CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE
 #define CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE USB_CHARGE_MODE_SDP2
 #endif
@@ -31,9 +28,6 @@ struct charge_mode_t {
 } __pack;
 
 static struct charge_mode_t charge_mode[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
-
-/* GPIOs to enable/disable USB ports. Board specific. */
-extern const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
 
 #ifdef CONFIG_USB_PORT_POWER_SMART_CDP_SDP_ONLY
 /*
