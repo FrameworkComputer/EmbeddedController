@@ -295,28 +295,6 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
 
-void baseboard_tcpc_init(void)
-{
-	/* Enable PPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_PPC_FAULT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
-
-	/* Enable TCPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
-
-	/* Enable BC 1.2 interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
-
-	/* Enable HPD interrupts */
-	ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
-#ifdef VARIANT_ZORK_TREMBYLE
-	ioex_enable_interrupt(IOEX_MST_HPD_OUT);
-#endif
-}
-DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
-
 /*
  * In the AOZ1380 PPC, there are no programmable features.  We use
  * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
