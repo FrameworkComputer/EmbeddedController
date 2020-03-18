@@ -14,21 +14,9 @@
 #include "ioexpander_nct38xx.h"
 #include "usb_mux.h"
 
-void baseboard_tcpc_init(void)
-{
-	/* Enable PPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_PPC_FAULT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
-
-	/* Enable TCPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
-
-	/* Enable BC 1.2 interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
-}
-DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
+/*****************************************************************************
+ * IO expander
+ */
 
 struct ioexpander_config_t ioex_config[] = {
 	[IOEX_C0_NCT3807] = {
@@ -51,6 +39,15 @@ struct ioexpander_config_t ioex_config[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);
 
+/*****************************************************************************
+ * USB-A
+ */
+
+const int usb_port_enable[USB_PORT_COUNT] = {
+	IOEX_EN_USB_A0_5V,
+	IOEX_EN_USB_A1_5V_DB_OPT1,
+};
+
 static void usba_retimer_on(void)
 {
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
@@ -62,6 +59,10 @@ static void usba_retimer_off(void)
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usba_retimer_off, HOOK_PRIO_DEFAULT);
+
+/*****************************************************************************
+ * USB-C
+ */
 
 /*
  * USB C0 port SBU mux use standalone FSUSB42UMX

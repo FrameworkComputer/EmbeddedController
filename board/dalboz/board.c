@@ -12,6 +12,7 @@
 #include "fan.h"
 #include "fan_chip.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -126,6 +127,40 @@ struct motion_sensor_t motion_sensors[] = {
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #endif /* HAS_TASK_MOTIONSENSE */
+
+/* These IO expander GPIOs vary with DB option. */
+enum gpio_signal IOEX_USB_A1_RETIMER_EN = IOEX_USB_A1_RETIMER_EN_OPT1;
+enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT1;
+
+static void setup_usb_db(void)
+{
+	if (ec_config_get_usb_db() == DALBOZ_DB_D_OPT2_USBA_HDMI) {
+		ccprints("DB OPT2 HDMI");
+		ioex_config[IOEX_HDMI_PCAL6408].flags = 0;
+		ioex_init(IOEX_HDMI_PCAL6408);
+		IOEX_USB_A1_RETIMER_EN = IOEX_USB_A1_RETIMER_EN_OPT2;
+		IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT2;
+	} else {
+		ccprints("DB OPT1 USBC");
+		ioex_config[IOEX_C1_NCT3807].flags = 0;
+		ioex_init(IOEX_C1_NCT3807);
+		IOEX_USB_A1_RETIMER_EN = IOEX_USB_A1_RETIMER_EN_OPT1;
+		IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT1;
+	}
+
+	/* Enable PPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_PPC_FAULT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+
+	/* Enable TCPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
+
+	/* Enable BC 1.2 interrupts */
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
+}
+DECLARE_HOOK(HOOK_INIT, setup_usb_db, HOOK_PRIO_INIT_I2C + 2);
 
 void board_update_sensor_config_from_sku(void)
 {

@@ -142,6 +142,10 @@ static inline bool ec_config_has_usbc1_retimer_ps8740(void)
 		  HAS_USBC1_RETIMER_PS8740);
 }
 
+/* These IO expander GPIOs vary with DB option. */
+extern enum gpio_signal IOEX_USB_A1_RETIMER_EN;
+extern enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L;
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

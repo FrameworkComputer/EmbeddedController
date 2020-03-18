@@ -406,11 +406,6 @@ void bc12_interrupt(enum gpio_signal signal)
 	}
 }
 
-const int usb_port_enable[USB_PORT_COUNT] = {
-	IOEX_EN_USB_A0_5V,
-	IOEX_EN_USB_A1_5V_DB,
-};
-
 static void baseboard_chipset_suspend(void)
 {
 	/* Disable display and keyboard backlights. */
