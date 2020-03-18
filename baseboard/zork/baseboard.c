@@ -29,7 +29,6 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "ioexpander.h"
-#include "ioexpander_nct38xx.h"
 #include "i2c.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
@@ -428,21 +427,6 @@ void bc12_interrupt(enum gpio_signal signal)
 		break;
 	}
 }
-
-struct ioexpander_config_t ioex_config[] = {
-	[USBC_PORT_C0] = {
-		.i2c_host_port = I2C_PORT_TCPC0,
-		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
-		.drv = &nct38xx_ioexpander_drv,
-	},
-	[USBC_PORT_C1] = {
-		.i2c_host_port = I2C_PORT_TCPC1,
-		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
-		.drv = &nct38xx_ioexpander_drv,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(ioex_config) == USBC_PORT_COUNT);
-BUILD_ASSERT(CONFIG_IO_EXPANDER_PORT_COUNT == USBC_PORT_COUNT);
 
 const int usb_port_enable[USB_PORT_COUNT] = {
 	IOEX_EN_USB_A0_5V,

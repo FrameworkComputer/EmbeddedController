@@ -5,12 +5,35 @@
 
 #include "common.h"
 #include "console.h"
+#include "driver/ioexpander/pcal6408.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "ioexpander.h"
+#include "ioexpander_nct38xx.h"
 #include "usb_mux.h"
+
+struct ioexpander_config_t ioex_config[] = {
+	[IOEX_C0_NCT3807] = {
+		.i2c_host_port = I2C_PORT_TCPC0,
+		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
+		.drv = &nct38xx_ioexpander_drv,
+	},
+	[IOEX_C1_NCT3807] = {
+		.i2c_host_port = I2C_PORT_TCPC1,
+		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
+		.drv = &nct38xx_ioexpander_drv,
+		.flags = IOEX_FLAGS_DISABLED,
+	},
+	[IOEX_HDMI_PCAL6408] = {
+		.i2c_host_port = I2C_PORT_TCPC1,
+		.i2c_slave_addr = PCAL6408_I2C_ADDR0,
+		.drv = &pcal6408_ioexpander_drv,
+		.flags = IOEX_FLAGS_DISABLED,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);
 
 static void usba_retimer_on(void)
 {
