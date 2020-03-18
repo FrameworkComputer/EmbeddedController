@@ -641,7 +641,15 @@ static void flash_code_static_dma(void)
 	 */
 	IT83XX_SMFI_SCAR2L = FLASH_DMA_START & 0xFF;
 	IT83XX_SMFI_SCAR2M = (FLASH_DMA_START >> 8) & 0xFF;
+#ifdef IT83XX_DAM_ADDR_BIT19_AT_REG_SCARXH_BIT7
+	IT83XX_SMFI_SCAR2H = (FLASH_DMA_START >> 16) & 0x7;
+	if (FLASH_DMA_START & BIT(19))
+		IT83XX_SMFI_SCAR2H |= BIT(7);
+	else
+		IT83XX_SMFI_SCAR2H &= ~BIT(7);
+#else
 	IT83XX_SMFI_SCAR2H = (FLASH_DMA_START >> 16) & 0x0F;
+#endif
 	/*
 	 * Validate Direct-map SRAM function by programming
 	 * register SCARx bit20=0

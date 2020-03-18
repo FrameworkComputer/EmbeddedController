@@ -7,6 +7,13 @@
 
 #include "config.h"
 
+/*
+ * ILM/DLM size register.
+ * bit[3-0] ILM size:
+ *     7: 512K byte (default setting), 8: 1M byte
+ */
+#define IT83XX_GCTRL_EIDSR 0xf02031
+
 .macro vector name
 .set \name\()_handler, unhandled_ec_irq
 .weak \name\()_handler
@@ -266,6 +273,14 @@ __reset:
         /* The M-mode handles interrupt/exception */
         csrwi mideleg, 0
         csrwi medeleg, 0
+#ifdef IT83XX_CHIP_FLASH_SIZE_1MB
+        /* ILM size is 1M bytes */
+        la t0, IT83XX_GCTRL_EIDSR
+        lb t1, 0(t0)
+        andi t1, t1, 0xf0
+        ori  t1, t1, 0x8
+        sb t1, 0(t0)
+#endif
         /* Clear BSS */
         la t0, __bss_start
         la t1, __bss_end
