@@ -14,6 +14,8 @@
 # * all       - All boards that are built by the "buildall" target
 # * fp        - All relevant boards for fingerprint
 # * stm32     - All boards that use an STM32 chip
+# * stm32f4   - All boards that use an STM32F4 family of chip
+# * stm32h7   - All boards that use an STM32H7 family of chip
 # * npcx      - "
 # * mchp      - "
 # * ish       - "
@@ -107,6 +109,8 @@ parse-boards() {
     [all]="$(make-print-boards)"
     [fp]="dartmonkey bloonchipper nucleo-dartmonkey nucleo-h743zi"
     [stm32]="$(boards-with 'CHIP[[:space:]:=]*stm32')"
+    [stm32f4]="$(boards-with 'CHIP_VARIANT[[:space:]:=]*stm32f4')"
+    [stm32h7]="$(boards-with 'CHIP_VARIANT[[:space:]:=]*stm32h7')"
     [npcx]="$(boards-with 'CHIP[[:space:]:=]*npcx')"
     [mchp]="$(boards-with 'CHIP[[:space:]:=]*mchp')"
     [ish]="$(boards-with 'CHIP[[:space:]:=]*ish')"
