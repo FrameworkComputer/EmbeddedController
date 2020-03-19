@@ -51,7 +51,7 @@ static void usb_c1_interrupt(enum gpio_signal s)
 static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 {
 	cprints(CC_USBPD, "C0: CC OVP, SBU OVP, or thermal event");
-	/*pd_handle_cc_overvoltage(0);*/
+	pd_handle_cc_overvoltage(0);
 }
 
 /* Must come after other header files and interrupt handler declarations */

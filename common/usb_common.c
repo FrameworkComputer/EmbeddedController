@@ -417,12 +417,12 @@ void set_usb_mux_with_current_data_role(int port)
 	}
 }
 
-#ifdef CONFIG_USBC_PPC
-
 static void pd_send_hard_reset(int port)
 {
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SEND_HARD_RESET, 0);
 }
+
+#ifdef CONFIG_USBC_PPC
 
 static uint32_t port_oc_reset_req;
 
@@ -469,12 +469,12 @@ void pd_handle_overcurrent(int port)
 	hook_call_deferred(&re_enable_ports_data, SECOND);
 }
 
-void pd_handle_cc_overvoltage(int port)
+#endif /* CONFIG_USBC_PPC */
+
+__maybe_unused void pd_handle_cc_overvoltage(int port)
 {
 	pd_send_hard_reset(port);
 }
-
-#endif /* CONFIG_USBC_PPC */
 
 __overridable int pd_board_checks(void)
 {
