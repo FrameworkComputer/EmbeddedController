@@ -736,7 +736,8 @@ void pe_report_error(int port, enum pe_error e)
 			get_state_pe(port) == PE_SRC_DISABLED ||
 			get_state_pe(port) == PE_SRC_DISCOVERY ||
 			get_state_pe(port) == PE_VDM_REQUEST ||
-			get_state_pe(port) == PE_VDM_IDENTITY_REQUEST_CBL) {
+			get_state_pe(port) == PE_VDM_IDENTITY_REQUEST_CBL ||
+			get_state_pe(port) == PE_VCS_SEND_PS_RDY_SWAP) {
 		PE_SET_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 		return;
 	}
@@ -4774,6 +4775,24 @@ static void pe_vcs_send_ps_rdy_swap_run(int port)
 		case PE_SUB2:
 			/* Do nothing */
 			break;
+		}
+	}
+
+	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
+		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
+
+		if (pe[port].sub == PE_SUB0) {
+			/* PS_RDY didn't send, soft reset */
+			set_state_pe(port, PE_SEND_SOFT_RESET);
+		} else {
+			/*
+			 * Cable plug wasn't present,
+			 * return to ready state
+			 */
+			if (pe[port].power_role == PD_ROLE_SOURCE)
+				set_state_pe(port, PE_SRC_READY);
+			else
+				set_state_pe(port, PE_SNK_READY);
 		}
 	}
 }
