@@ -37,7 +37,7 @@ void pd_power_supply_reset(int port)
 	ppc_vbus_source_enable(port, 0);
 
 	/* Enable discharge if we were previously sourcing 5V */
-	if (prev_en)
+	if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE) && prev_en)
 		pd_set_vbus_discharge(port, 1);
 
 #ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
@@ -58,7 +58,8 @@ int pd_set_power_supply_ready(int port)
 	if (rv)
 		return rv;
 
-	pd_set_vbus_discharge(port, 0);
+	if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE))
+		pd_set_vbus_discharge(port, 0);
 
 	/* Provide Vbus. */
 	rv = ppc_vbus_source_enable(port, 1);
