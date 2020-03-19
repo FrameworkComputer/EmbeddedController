@@ -2,6 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+
 #include "config.h"
 
 #define STRINGIFY0(name) #name
@@ -13,31 +14,45 @@
 #define FW_SIZE_(section) CONFIG_##section##_SIZE
 #define FW_SIZE(section) FW_SIZE_(section)
 
-
 OUTPUT_FORMAT(BFD_FORMAT, BFD_FORMAT, BFD_FORMAT)
 OUTPUT_ARCH(BFD_ARCH)
 ENTRY(__reset)
 
 MEMORY
 {
+#if defined(CONFIG_FLASH_PHYSICAL)
 	FLASH (rx) : ORIGIN = FW_OFF(SECTION) - CHIP_ILM_BASE, \
 		     LENGTH = FW_SIZE(SECTION)
+#else
+	IROM (rx) : ORIGIN = CONFIG_ROM_BASE, LENGTH = CONFIG_ROM_SIZE
+#endif
+
+#if defined(CHIP_FAMILY_IT8XXX2)
+	/*
+	 * On IT8XXX2 family, it reserves space for ramcode, h2ram, and
+	 * immu sections.
+	 */
+	IRAM (rw) : ORIGIN = CONFIG_RAM_BASE + CHIP_RAM_SPACE_RESERVED,
+		    LENGTH = CONFIG_RAM_SIZE - CHIP_RAM_SPACE_RESERVED
 	/*
 	 * ILM (Instruction Local Memory).
 	 * We connect ILM to internal flash so we are able to
 	 * boot from the flash.
 	 */
-	ILM   (rx) : ORIGIN = FW_OFF(SECTION), LENGTH = FW_SIZE(SECTION)
-	IRAM (rw)  : ORIGIN = CONFIG_RAM_BASE + CHIP_RAM_SPACE_RESERVED,
-		     LENGTH = CONFIG_RAM_SIZE - CHIP_RAM_SPACE_RESERVED
+	ILM (rx) : ORIGIN = FW_OFF(SECTION), LENGTH = FW_SIZE(SECTION)
+
 #if defined(CONFIG_HOSTCMD_X86) || defined(CONFIG_I2C_SLAVE)
 	H2RAM (rw) : ORIGIN = CONFIG_H2RAM_BASE, LENGTH = CONFIG_H2RAM_SIZE
 #endif
+#else
+	IRAM (rw) : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
+#endif /* CHIP_FAMILY_IT8XXX2 */
 }
 
 SECTIONS
 {
 	.text : {
+#if defined(CHIP_FAMILY_IT8XXX2)
 		/*
 		 * We put "__flash_dma_start" at the beginning of the
 		 * text section to avoid gap.
@@ -45,14 +60,16 @@ SECTIONS
 		__flash_dma_start = .;
 		ASSERT((__flash_dma_start == 0),
 		       "__flash_dma_start has to be 4k-byte aligned");
-
+#endif
 		KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vecttable))
 		. = ALIGN(4);
 		__image_data_offset = .;
 		KEEP(*(.rodata.ver))
+
 		. = ALIGN(4);
 		KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vectirq))
 		KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text))
+#if defined(CHIP_FAMILY_IT8XXX2)
 		KEEP(*(.flash_direct_map))
 		. = ALIGN(16);
 		KEEP(*(.ram_code))
@@ -63,12 +80,21 @@ SECTIONS
 		. = ALIGN(IT83XX_ILM_BLOCK_SIZE);
 
 		__flash_text_start = .;
+#endif
 		*(.text*)
 		. = ALIGN(4);
+#if defined(CONFIG_FLASH_PHYSICAL)
+#	if defined(CHIP_FAMILY_IT8XXX2)
 	} > ILM AT > FLASH
+#	else
+	} > FLASH
+#	endif
+#else
+	} > IROM
+#endif /* CONFIG_FLASH_PHYSICAL */
 
 	. = ALIGN(4);
-	.rodata :  {
+	.rodata : {
 		/* Symbols defined here are declared in link_defs.h */
 		__irqprio = .;
 		KEEP(*(.rodata.irqprio))
@@ -194,7 +220,16 @@ SECTIONS
 		KEEP(*(.google))
 #endif
 		. = ALIGN(4);
-	} > ILM AT>FLASH
+#if defined(CONFIG_FLASH_PHYSICAL)
+#	if defined(CHIP_FAMILY_IT8XXX2)
+	} > ILM AT > FLASH
+#	else
+	} > FLASH
+#	endif
+#else
+	} > IROM
+#endif /* CONFIG_FLASH_PHYSICAL */
+
 	__data_lma_start = .;
 
 	.data : {
@@ -204,7 +239,11 @@ SECTIONS
 		*(.sdata)
 		. = ALIGN(4);
 		__data_end = .;
-	} > IRAM AT>FLASH
+#if defined(CONFIG_FLASH_PHYSICAL)
+	} > IRAM AT > FLASH
+#else
+	} > IRAM AT > IROM
+#endif
 
 	.bss : {
 		/* Stacks must be 128-bit aligned */
@@ -241,17 +280,23 @@ SECTIONS
 		 * so it can expand to use all the remaining RAM.
 		 */
 		__shared_mem_buf = .;
-
 	} > IRAM
 
 	ASSERT((__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE) <=
 	       (CONFIG_RAM_BASE + CONFIG_RAM_SIZE),
 	       "Not enough space for shared memory.")
+
 	__ram_free = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE) -
 		     (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
+
+#if defined(CHIP_FAMILY_IT8XXX2)
 	__image_size = LOADADDR(.data) + SIZEOF(.data) + \
 		       CHIP_ILM_BASE - FW_OFF(SECTION);
+#else
+	__image_size = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
+#endif
 
+#if defined(CHIP_FAMILY_IT8XXX2)
 #if defined(CONFIG_HOSTCMD_X86) || defined(CONFIG_I2C_SLAVE)
 	.h2ram (NOLOAD) : {
 		. += CONFIG_H2RAM_HOST_LPC_IO_BASE;
@@ -268,6 +313,7 @@ SECTIONS
 	ASSERT((__h2ram_end) <= (CONFIG_H2RAM_BASE + CONFIG_H2RAM_SIZE),
 	       "Not enough space for h2ram section.")
 #endif
+#endif /* CHIP_FAMILY_IT8XXX2 */
 
 #if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH))
 	/DISCARD/ : { *(.google) }
