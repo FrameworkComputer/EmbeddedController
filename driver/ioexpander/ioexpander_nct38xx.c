@@ -10,7 +10,7 @@
 #include "gpio.h"
 #include "i2c.h"
 #include "ioexpander.h"
-#include "ioexpander_nct38xx.h"
+#include "nct38xx.h"
 #include "tcpci.h"
 
 #define CPRINTF(format, args...) cprintf(CC_GPIO, format, ## args)

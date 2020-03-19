@@ -9,6 +9,7 @@
 #include "driver/retimer/pi3dpx1207.h"
 #include "driver/retimer/ps8802.h"
 #include "driver/retimer/ps8818.h"
+#include "driver/tcpm/nct38xx.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -16,7 +17,6 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "ioexpander.h"
-#include "ioexpander_nct38xx.h"
 #include "timer.h"
 #include "usb_mux.h"
 

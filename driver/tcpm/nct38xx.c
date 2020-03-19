@@ -9,7 +9,6 @@
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
-#include "ioexpander_nct38xx.h"
 #include "nct38xx.h"
 #include "task.h"
 #include "tcpci.h"

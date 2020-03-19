@@ -6,12 +6,12 @@
 #include "common.h"
 #include "console.h"
 #include "driver/ioexpander/pcal6408.h"
+#include "driver/tcpm/nct38xx.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "ioexpander.h"
-#include "ioexpander_nct38xx.h"
 #include "usb_mux.h"
 
 /*****************************************************************************
