@@ -54,6 +54,8 @@
 
 	#define I2C_ADDR_EEPROM_FLAGS	0x50
 
+	#define CONFIG_ADC_VOLTAGE_COMPARATOR	/* ITE ADC thresholds */
+
 	#define CONFIG_CHARGER_SM5803		/* C0 and C1: Charger */
 	#define CONFIG_FPU			/* For charger calculations */
 	#define CONFIG_USB_PD_VBUS_DETECT_CHARGER
@@ -221,6 +223,12 @@
 		ADC_TEMP_SENSOR_2,     /* ADC3 */
 		ADC_SUB_ANALOG,        /* ADC13 */
 		ADC_CH_COUNT
+	};
+
+	enum board_vcmp {
+		VCMP_SNS_PP3300_LOW,
+		VCMP_SNS_PP3300_HIGH,
+		VCMP_COUNT
 	};
 #else
 #error "Must define a VARIANT_DEDEDE_EC!"
