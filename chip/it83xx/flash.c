@@ -53,7 +53,7 @@
 /* immu cache size is 8K bytes. */
 #define IMMU_SIZE                 0x2000
 
-#if CONFIG_FLASH_SIZE == 0x80000
+#if (CONFIG_FLASH_SIZE == 0x80000) && defined(CHIP_CORE_NDS32)
 /* Apply workaround of the issue (b:111808417) */
 #define IMMU_CACHE_TAG_INVALID
 #endif
