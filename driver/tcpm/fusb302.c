@@ -387,9 +387,6 @@ static int fusb302_tcpm_init(int port)
 {
 	int reg;
 
-	/* Start with an unknown connection */
-	tcpci_set_cached_pull(port, TYPEC_CC_OPEN);
-
 	/* set default */
 	state[port].cc_polarity = -1;
 
@@ -491,9 +488,6 @@ static int fusb302_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 static int fusb302_tcpm_set_cc(int port, int pull)
 {
 	int reg;
-
-	/* Keep track of current CC pull value */
-	tcpci_set_cached_pull(port, pull);
 
 	/* NOTE: FUSB302 toggles a single pull-up between CC1 and CC2 */
 	/* NOTE: FUSB302 Does not support Ra. */

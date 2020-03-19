@@ -419,9 +419,6 @@ static int it83xx_set_cc(enum usbpd_port port, int pull)
 
 static int it83xx_tcpm_init(int port)
 {
-	/* Start with an unknown connection */
-	tcpci_set_cached_pull(port, TYPEC_CC_OPEN);
-
 	/* Initialize physical layer */
 	it83xx_init(port, PD_ROLE_DEFAULT(port));
 
@@ -475,9 +472,6 @@ static int it83xx_tcpm_select_rp_value(int port, int rp_sel)
 
 static int it83xx_tcpm_set_cc(int port, int pull)
 {
-	/* Keep track of current CC pull value */
-	tcpci_set_cached_pull(port, pull);
-
 	return it83xx_set_cc(port, pull);
 }
 

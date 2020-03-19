@@ -737,9 +737,6 @@ static int anx74xx_tcpm_set_cc(int port, int pull)
 	int rv = EC_SUCCESS;
 	int reg;
 
-	/* Keep track of current CC pull value */
-	tcpci_set_cached_pull(port, pull);
-
 	/* Enable CC software Control */
 	rv = anx74xx_cc_software_ctrl(port, 1);
 	if (rv)
@@ -1045,9 +1042,6 @@ void anx74xx_tcpc_alert(int port)
 static int anx74xx_tcpm_init(int port)
 {
 	int rv = 0, reg;
-
-	/* Start with an unknown connection */
-	tcpci_set_cached_pull(port, TYPEC_CC_OPEN);
 
 	memset(&anx[port], 0, sizeof(struct anx_state));
 	/* Bring chip in normal mode to work */

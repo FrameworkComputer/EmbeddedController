@@ -31,9 +31,8 @@ static int rx_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 #endif
 static int tcpc_vbus[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-/* Cached RP/PULL role values */
+/* Cached RP role values */
 static int cached_rp[CONFIG_USB_PD_PORT_MAX_COUNT];
-static enum tcpc_cc_pull cached_pull[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 int tcpc_addr_write(int port, int i2c_addr, int reg, int val)
@@ -196,16 +195,6 @@ int tcpci_get_cached_rp(int port)
 	return cached_rp[port];
 }
 
-void tcpci_set_cached_pull(int port, enum tcpc_cc_pull pull)
-{
-	cached_pull[port] = pull;
-}
-
-enum tcpc_cc_pull tcpci_get_cached_pull(int port)
-{
-	return cached_pull[port];
-}
-
 static int init_alert_mask(int port)
 {
 	int rv;
@@ -360,9 +349,6 @@ int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 
 int tcpci_tcpm_set_cc(int port, int pull)
 {
-	/* Keep track of current CC pull value */
-	tcpci_set_cached_pull(port, pull);
-
 	return tcpc_write(port, TCPC_REG_ROLE_CTRL,
 			  TCPC_REG_ROLE_CTRL_SET(0,
 						 tcpci_get_cached_rp(port),
@@ -1166,9 +1152,6 @@ int tcpci_tcpm_init(int port)
 	int error;
 	int power_status;
 	int tries = TCPM_INIT_TRIES;
-
-	/* Start with an unknown connection */
-	tcpci_set_cached_pull(port, TYPEC_CC_OPEN);
 
 	if (port >= board_get_usb_pd_port_count())
 		return EC_ERROR_INVAL;
