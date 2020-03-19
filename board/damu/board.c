@@ -14,7 +14,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "driver/accel_lis2dw12.h"
+#include "driver/accel_lis2dh.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/battery/max17055.h"
 #include "driver/bc12/pi3usb9201.h"
@@ -337,7 +337,7 @@ static const mat33_fp_t lid_standard_ref = {
 
 /* sensor private data */
 /* Lid accel private data */
-static struct stprivate_data g_lis2dwl_data;
+static struct stprivate_data g_lis2dh_data;
 /* Base accel private data */
 static struct bmi160_drv_data_t g_bmi160_data;
 
@@ -345,18 +345,18 @@ struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 		.name = "Lid Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_LIS2DWL,
+		.chip = MOTIONSENSE_CHIP_LIS2DE,
 		.type = MOTIONSENSE_TYPE_ACCEL,
 		.location = MOTIONSENSE_LOC_LID,
-		.drv = &lis2dw12_drv,
+		.drv = &lis2dh_drv,
 		.mutex = &g_lid_mutex,
-		.drv_data = &g_lis2dwl_data,
+		.drv_data = &g_lis2dh_data,
 		.port = I2C_PORT_SENSORS,
-		.i2c_spi_addr_flags = LIS2DWL_ADDR1_FLAGS,
+		.i2c_spi_addr_flags = LIS2DH_ADDR1_FLAGS,
 		.rot_standard_ref = &lid_standard_ref,
 		.default_range = 2, /* g */
-		.min_frequency = LIS2DW12_ODR_MIN_VAL,
-		.max_frequency = LIS2DW12_ODR_MAX_VAL,
+		.min_frequency = LIS2DH_ODR_MIN_VAL,
+		.max_frequency = LIS2DH_ODR_MAX_VAL,
 		.config = {
 			/* EC use accel for angle detection */
 			[SENSOR_CONFIG_EC_S0] = {

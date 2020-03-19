@@ -47,7 +47,7 @@
 
 /* Motion Sensors */
 #ifndef VARIANT_KUKUI_NO_SENSORS
-#define CONFIG_ACCEL_LIS2DWL	/* Lid accel */
+#define CONFIG_ACCEL_LIS2DE   	/* Lid accel */
 #define CONFIG_ACCELGYRO_BMI160 /* Base accel */
 #define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
