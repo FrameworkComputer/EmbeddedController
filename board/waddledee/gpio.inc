@@ -29,9 +29,9 @@ GPIO_INT(UART1_RX,	 PIN(B, 0), GPIO_INT_BOTH, uart_deepsleep_interrupt)	/* UART_
 #endif
 
 /* USB-C interrupts */
-GPIO_INT(USB_C0_INT_ODL,	PIN(K, 0), GPIO_INT_FALLING, filler_interrupt_handler) /* BC12 and charger */
-GPIO_INT(USB_C1_INT_ODL,	PIN(B, 5), GPIO_INT_FALLING, filler_interrupt_handler) /* TCPC, charger, BC12 */
-GPIO_INT(USB_C0_CCSBU_OVP_ODL,	PIN(K, 6), GPIO_INT_FALLING, filler_interrupt_handler) /* Fault protection */
+GPIO_INT(USB_C0_INT_ODL,	PIN(K, 0), GPIO_INT_FALLING | GPIO_PULL_UP, usb_c0_interrupt) /* BC12 and charger */
+GPIO_INT(USB_C1_INT_ODL,	PIN(B, 5), GPIO_INT_FALLING | GPIO_PULL_UP, usb_c1_interrupt) /* TCPC, charger, BC12 */
+GPIO_INT(USB_C0_CCSBU_OVP_ODL,	PIN(K, 6), GPIO_INT_FALLING | GPIO_PULL_UP, c0_ccsbu_ovp_interrupt) /* Fault protection */
 
 /* Other interrupts */
 GPIO_INT(LID_OPEN,		PIN(F, 3), GPIO_INT_BOTH, lid_interrupt)
