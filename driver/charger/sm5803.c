@@ -4,9 +4,11 @@
  *
  * Silicon Mitus SM5803 Buck-Boost Charger
  */
+#include "atomic.h"
 #include "battery_smart.h"
 #include "charger.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "sm5803.h"
 #include "throttle_ap.h"
@@ -33,6 +35,9 @@ static const struct charger_info sm5803_charger_info = {
 	.input_current_step = INPUT_I_STEP,
 };
 
+static uint32_t irq_pending; /* Bitmask of chips with interrupts pending */
+
+static int sm5803_is_sourcing_otg_power(int chgnum, int port);
 
 static inline enum ec_error_list chg_read8(int chgnum, int offset, int *value)
 {
@@ -111,6 +116,56 @@ enum ec_error_list sm5803_set_gpio0_level(int chgnum, int level)
 	return rv;
 }
 
+enum ec_error_list sm5803_configure_chg_det_od(int chgnum, int enable)
+{
+	enum ec_error_list rv;
+	int reg;
+
+	rv = main_read8(chgnum, SM5803_REG_GPIO0_CTRL, &reg);
+	if (rv)
+		return rv;
+
+	if (enable)
+		reg |= SM5803_CHG_DET_OPEN_DRAIN_EN;
+	else
+		reg &= ~SM5803_CHG_DET_OPEN_DRAIN_EN;
+
+	rv = main_write8(chgnum, SM5803_REG_GPIO0_CTRL, reg);
+	return rv;
+}
+
+enum ec_error_list sm5803_get_chg_det(int chgnum, int *chg_det)
+{
+	enum ec_error_list rv;
+	int reg;
+
+	rv = main_read8(chgnum, SM5803_REG_STATUS1, &reg);
+	if (rv)
+		return rv;
+
+	*chg_det = (reg & SM5803_STATUS1_CHG_DET) != 0;
+
+	return EC_SUCCESS;
+}
+
+enum ec_error_list sm5803_set_vbus_disch(int chgnum, int enable)
+{
+	enum ec_error_list rv;
+	int reg;
+
+	rv = main_read8(chgnum, SM5803_REG_PORTS_CTRL, &reg);
+	if (rv)
+		return rv;
+
+	if (enable)
+		reg |= SM5803_PORTS_VBUS_DISCH;
+	else
+		reg &= ~SM5803_PORTS_VBUS_DISCH;
+
+	rv = main_write8(chgnum, SM5803_REG_PORTS_CTRL, reg);
+	return rv;
+}
+
 static void sm5803_init(int chgnum)
 {
 	enum ec_error_list rv;
@@ -145,8 +200,8 @@ static enum ec_error_list sm5803_post_init(int chgnum)
 }
 
 /*
- * Process interrupt registers and report any Vbus changes.  Pull PROCHOT low if
- * charger has gotten too hot.
+ * Process interrupt registers and report any Vbus changes.  Alert the AP if the
+ * charger has become too hot.
  */
 void sm5803_handle_interrupt(int chgnum)
 {
@@ -167,8 +222,8 @@ void sm5803_handle_interrupt(int chgnum)
 		throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_THERMAL);
 	}
 
-	if (int_reg & SM5803_INT2_VBUS) {
-		/* TODO(b/146651778): Check whether we're sourcing Vbus */
+	if ((int_reg & SM5803_INT2_VBUS) &&
+				!sm5803_is_sourcing_otg_power(chgnum, chgnum)) {
 		rv = meas_read8(chgnum, SM5803_REG_VBUS_MEAS_MSB, &vbus_reg);
 		if (vbus_reg <= SM5803_VBUS_LOW_LEVEL)
 			usb_charger_vbus_change(chgnum, 0);
@@ -178,6 +233,23 @@ void sm5803_handle_interrupt(int chgnum)
 			CPRINTS("%s %d: Unexpected Vbus interrupt: 0x%02x",
 				CHARGER_NAME, chgnum, vbus_reg);
 	}
+}
+
+static void sm5803_irq_deferred(void)
+{
+	int i;
+	uint32_t pending = atomic_read_clear(&irq_pending);
+
+	for (i = 0; i < CHARGER_NUM; i++)
+		if (BIT(i) & pending)
+			sm5803_handle_interrupt(i);
+}
+DECLARE_DEFERRED(sm5803_irq_deferred);
+
+void sm5803_interrupt(int chgnum)
+{
+	atomic_or(&irq_pending, BIT(chgnum));
+	hook_call_deferred(&sm5803_irq_deferred_data, 0);
 }
 
 static const struct charger_info *sm5803_get_info(int chgnum)
@@ -390,6 +462,80 @@ static enum ec_error_list sm5803_set_option(int chgnum, int option)
 	return rv;
 }
 
+static enum ec_error_list sm5803_set_otg_current_voltage(int chgnum,
+							 int output_current,
+							 int output_voltage)
+{
+	enum ec_error_list rv;
+	int reg;
+
+	reg = (output_current / SM5803_CLS_CURRENT_STEP) &
+						SM5803_DISCH_CONF5_CLS_LIMIT;
+	rv = chg_write8(chgnum, SM5803_REG_DISCH_CONF5, reg);
+	if (rv)
+		return rv;
+
+	reg = SM5803_VOLTAGE_TO_REG(output_voltage);
+	rv = chg_write8(chgnum, SM5803_REG_VPWR_MSB, (reg >> 3));
+	rv |= chg_write8(chgnum, SM5803_REG_DISCH_CONF2,
+					reg & SM5803_DISCH_CONF5_VPWR_LSB);
+
+	return rv;
+}
+
+static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
+{
+	enum ec_error_list rv;
+	int reg;
+
+	if (enabled) {
+		rv = chg_read8(chgnum, SM5803_REG_ANA_EN1, &reg);
+		if (rv)
+			return rv;
+
+		/* Enable current limit */
+		reg &= ~SM5803_ANA_EN1_CLS_DISABLE;
+		rv = chg_write8(chgnum, SM5803_REG_ANA_EN1, reg);
+	}
+
+	rv = chg_read8(chgnum, SM5803_REG_FLOW1, &reg);
+	if (rv)
+		return rv;
+
+	/*
+	 * Enable: CHG_EN - turns on buck-boost
+	 *	   VBUSIN_DISCH_EN - enable discharge on Vbus
+	 *	   DIRECTCHG_SOURCE_EN - enable current loop (for designs with
+	 *	   no external Vbus FET)
+	 *
+	 * Disable: disable above, note this SHOULD NOT be done while the port
+	 *	    is charging, as turning off CHG_EN will disable charging
+	 *	    as well
+	 */
+	if (enabled)
+		reg |= (SM5803_FLOW1_CHG_EN | SM5803_FLOW1_VBUSIN_DISCHG_EN |
+						SM5803_FLOW1_DIRECTCHG_SRC_EN);
+	else
+		reg &= ~(SM5803_FLOW1_CHG_EN | SM5803_FLOW1_VBUSIN_DISCHG_EN |
+						SM5803_FLOW1_DIRECTCHG_SRC_EN);
+
+	rv = chg_write8(chgnum, SM5803_REG_FLOW1, reg);
+	return rv;
+}
+
+static int sm5803_is_sourcing_otg_power(int chgnum, int port)
+{
+	enum ec_error_list rv;
+	int reg;
+
+	rv = chg_read8(chgnum, SM5803_REG_FLOW1, &reg);
+	if (rv)
+		return 0;
+
+	reg &= (SM5803_FLOW1_CHG_EN | SM5803_FLOW1_VBUSIN_DISCHG_EN);
+	return reg == (SM5803_FLOW1_CHG_EN | SM5803_FLOW1_VBUSIN_DISCHG_EN);
+}
+
 const struct charger_drv sm5803_drv = {
 	.init = &sm5803_init,
 	.post_init = &sm5803_post_init,
@@ -405,4 +551,7 @@ const struct charger_drv sm5803_drv = {
 	.get_input_current = &sm5803_get_input_current,
 	.get_option = &sm5803_get_option,
 	.set_option = &sm5803_set_option,
+	.set_otg_current_voltage = &sm5803_set_otg_current_voltage,
+	.enable_otg_power = &sm5803_enable_otg_power,
+	.is_sourcing_otg_power = &sm5803_is_sourcing_otg_power,
 };

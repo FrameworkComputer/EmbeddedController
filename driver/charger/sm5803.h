@@ -153,6 +153,9 @@ enum sm5803_gpio0_modes {
 #define SM5803_FLOW3_FW_SWITCH_PAUSE	BIT(2)
 #define SM5803_FLOW3_SOFT_DISABLE_EN	BIT(3)
 
+#define SM5803_REG_ANA_EN1		0x21
+#define SM5803_ANA_EN1_CLS_DISABLE	BIT(7)
+
 /*
  * Input current limit is CHG_ILIM_RAW *100 mA
  */
@@ -161,6 +164,21 @@ enum sm5803_gpio0_modes {
 #define SM5803_CURRENT_STEP		100
 #define SM5803_REG_TO_CURRENT(r)	(r * SM5803_CURRENT_STEP)
 #define SM5803_CURRENT_TO_REG(c)	(c / SM5803_CURRENT_STEP)
+
+/*
+ * Output voltage uses the same equation as Vsys
+ * Lower saturation value is 3 V, upper 20.5 V
+ */
+#define SM5803_REG_VPWR_MSB		0x30
+#define SM5803_REG_DISCH_CONF2		0x31
+#define SM5803_DISCH_CONF5_VPWR_LSB	GENMASK(2, 0)
+
+/*
+ * Output current limit is CLS_LIMIT * 50 mA and saturates to 3.2 A
+ */
+#define SM5803_REG_DISCH_CONF5		0x34
+#define SM5803_DISCH_CONF5_CLS_LIMIT	GENMASK(6, 0)
+#define SM5803_CLS_CURRENT_STEP		50
 
 /*
  * Vsys is 11 bits, with the lower 3 bits in the LSB register.
@@ -204,12 +222,17 @@ enum sm5803_gpio0_modes {
 #define INPUT_I_MIN 0
 #define INPUT_I_STEP SM5803_CURRENT_STEP
 
-/* Expose functions to control charger's GPIO */
+/* Expose functions to control charger's GPIO and CHG_DET configuration */
 enum ec_error_list sm5803_configure_gpio0(int chgnum,
 					  enum sm5803_gpio0_modes mode);
 enum ec_error_list sm5803_set_gpio0_level(int chgnum, int level);
+enum ec_error_list sm5803_configure_chg_det_od(int chgnum, int enable);
+enum ec_error_list sm5803_get_chg_det(int chgnum, int *chg_det);
 
-void sm5803_handle_interrupt(int chgnum);
+/* Expose Vbus discharge function */
+enum ec_error_list sm5803_set_vbus_disch(int chgnum, int enable);
+
+void sm5803_interrupt(int chgnum);
 
 extern const struct charger_drv sm5803_drv;
 
