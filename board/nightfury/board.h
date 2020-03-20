@@ -94,7 +94,7 @@
 #define GPIO_PWR_LED_BLUE_L GPIO_LED_2_L
 
 /* BC 1.2 */
-#define CONFIG_BC12_DETECT_MAX14637
+#define CONFIG_BC12_DETECT_PI3USB9201
 
 /* Charger features */
 /*

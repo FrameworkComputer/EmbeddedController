@@ -15,7 +15,7 @@
 #include "driver/als_bh1730.h"
 #include "driver/als_tcs3400.h"
 #include "driver/ppc/sn5s330.h"
-#include "driver/bc12/max14637.h"
+#include "driver/bc12/pi3usb9201.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -143,17 +143,16 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 
 /* BC 1.2 chip Configuration */
-const struct max14637_config_t max14637_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.chip_enable_pin = GPIO_USB_C0_BC12_VBUS_ON,
-		.chg_det_pin = GPIO_USB_C0_BC12_CHG_DET_L,
-		.flags = MAX14637_FLAGS_CHG_DET_ACTIVE_LOW,
-	},
-	{
-		.chip_enable_pin = GPIO_USB_C1_BC12_VBUS_ON,
-		.chg_det_pin = GPIO_USB_C1_BC12_CHG_DET_L,
-		.flags = MAX14637_FLAGS_CHG_DET_ACTIVE_LOW,
-	},
+const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
+        [USB_PD_PORT_TCPC_0] = {
+                .i2c_port = I2C_PORT_PPC0,
+                .i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+        },
+
+        [USB_PD_PORT_TCPC_1] = {
+                .i2c_port = I2C_PORT_TCPC1,
+                .i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+        },
 };
 
 /******************************************************************************/
