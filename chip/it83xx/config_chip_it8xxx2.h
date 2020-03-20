@@ -9,11 +9,17 @@
 /* CPU core BFD configuration */
 #include "core/riscv-rv32i/config_core.h"
 
- /* RISCV core */
+/* RISCV core */
 #define CHIP_CORE_RISCV
 #define CHIP_ILM_DLM_ORDER
 /* The base address of EC interrupt controller registers. */
 #define CHIP_EC_INTC_BASE           0x00F03F00
+/*
+ * ILM/DLM size register.
+ * bit[3-0] ILM size:
+ *     7: 512K byte (default setting), 8: 1M byte
+ */
+#define IT83XX_GCTRL_EIDSR 0xf02031
 
 /****************************************************************************/
 /* Memory mapping */
