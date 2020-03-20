@@ -68,64 +68,6 @@ BUILD_ASSERT(ARRAY_SIZE(ioex_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_IO_EXPANDER_PORT_COUNT == USBC_PORT_COUNT);
 
 /*****************************************************************************
- * Fan
- */
-
-/* Physical fans. These are logically separate from pwm_channels. */
-const struct fan_conf fan_conf_0 = {
-	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
-	.pgood_gpio = -1,
-	.enable_gpio = -1,
-};
-const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 3100,
-	.rpm_start = 3100,
-	.rpm_max = 6900,
-};
-const struct fan_t fans[] = {
-	[FAN_CH_0] = {
-		.conf = &fan_conf_0,
-		.rpm = &fan_rpm_0,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
-
-const static struct ec_thermal_config thermal_thermistor = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
-	},
-	.temp_fan_off = C_TO_K(25),
-	.temp_fan_max = C_TO_K(50),
-};
-
-const static struct ec_thermal_config thermal_cpu = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(95),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
-	},
-	.temp_fan_off = C_TO_K(25),
-	.temp_fan_max = C_TO_K(50),
-};
-
-struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
-
-static void setup_fans(void)
-{
-	thermal_params[TEMP_SENSOR_CHARGER] = thermal_thermistor;
-	thermal_params[TEMP_SENSOR_SOC] = thermal_thermistor;
-	thermal_params[TEMP_SENSOR_CPU] = thermal_cpu;
-}
-DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
-
-/*****************************************************************************
  * MST hub
  */
 
