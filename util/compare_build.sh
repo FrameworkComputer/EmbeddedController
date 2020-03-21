@@ -6,10 +6,37 @@
 
 # Tool to compare two commits and make sure that the resulting build output is
 # exactly the same.
+#
+# The board parameter is a space separated list containing any valid board
+# or special board group listed below. Items added to the list can be prefixed
+# with a + or - to enforce that it is added or removed from the active set of
+# boards. Boards are added or removed in the order in which they appear.
+# * all       - All boards that are built by the "buildall" target
+# * fp        - All relevant boards for fingerprint
+# * stm32     - All boards that use an STM32 chip
+# * npcx      - "
+# * mchp      - "
+# * ish       - "
+# * it83xx    - "
+# * lm4       - "
+# * mec1322   - "
+# * max32660  - "
+# * mt_scp    - "
+#
+# Example: --boards "+all -stm32"
+
+# Cr50 doesn't have reproducible builds.
+# The following fails:
+# git commit --allow-empty -m "Test" &&
+# ./util/compare_build.sh --boards cr50 --ref1 HEAD --ref2 HEAD^
+#
+# Note to Developers
+# Although this script is a good proving ground for new testing techniques,
+# care should be taken to offload functionality to other core components.
 
 . /usr/share/misc/shflags
 
-DEFINE_string 'boards' "nocturne_fp" 'Board to build (\"all\" for all boards)' \
+DEFINE_string 'boards' "nocturne_fp" 'Boards to build (all, fp, stm32, hatch)' \
               'b'
 DEFINE_string 'ref1' "HEAD" 'Git reference (commit, branch, etc)'
 DEFINE_string 'ref2' "HEAD^" 'Git reference (commit, branch, etc)'
@@ -23,19 +50,59 @@ DEFINE_integer 'jobs' "-1" 'Number of jobs to pass to make' 'j'
 DEFINE_boolean 'oneref' "${FLAGS_FALSE}" \
                'Build only one set of boards at a time. This limits mem.' 'o'
 
+# Usage: assoc-add-keys <associate_array_name> [item1 [item2...]]
+assoc-add-keys() {
+  local -n arr="${1}"
+  shift
+
+  for key in "${@}"; do
+    arr["${key}"]="${key}"
+  done
+}
+
+# Usage: assoc-rm-keys <associate_array_name> [item1 [item2...]
+assoc-rm-keys() {
+  local -n arr="${1}"
+  shift
+
+  for key in "${@}"; do
+    unset arr["${key}"]
+  done
+}
+
+# Usage: make-print-boards
+#
+# Cache the make print-boards output
+make-print-boards() {
+  local file="${TMP_DIR}/make-print-boards-cache"
+  if [[ ! -f "${file}" ]]; then
+    # This command take about 1 second to run
+    make print-boards >"${file}"
+  fi
+  cat "${file}"
+}
+
+# Usage: boards-with CHIP
+boards-with() {
+  local pattern="${1}"
+
+  for b in $(make-print-boards); do
+    grep -E -q "${pattern}" "board/${b}/build.mk" && echo "${b}"
+  done
+}
+
+
+##########################################################################
+# Argument Parsing and Parameter Setup                                   #
+##########################################################################
+
+TMP_DIR="$(mktemp -d -t compare_build.XXXX)"
+
 # Process commandline flags.
 FLAGS "${@}" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
 set -e
-
-BOARDS_TO_SKIP="$(grep -E '^skip_boards =' Makefile.rules)"
-BOARDS_TO_SKIP="${BOARDS_TO_SKIP//skip_boards = /}"
-# Cr50 doesn't have reproducible builds.
-# The following fails:
-# git commit --allow-empty -m "Test" &&
-# ./util/compare_build.sh --board cr50 --ref1 HEAD --ref2 HEAD^
-BOARDS_TO_SKIP+=" cr50"
 
 # Can specify any valid git ref (e.g., commits or branches).
 # We need the long sha for fetching changes
@@ -50,28 +117,67 @@ else
   MAKE_FLAGS+=( "-j" )
 fi
 
-BOARDS=( "${FLAGS_boards}" )
+# Expansion targets
+#
+# Get all CHIP variants in use:
+# grep -E 'CHIP[[:space:]]*\:' board/*/build.mk \
+#   | sed 's/.*:=[[:space:]]*//' | sort -u
+declare -A BOARDS_EXPANSIONS=(
+  # make-print-boards already filters out the skipped boards
+  [all]="$(make-print-boards)"
+  [fp]="dartmonkey bloonchipper nucleo-dartmonkey nucleo-h743zi"
+  [stm32]="$(boards-with 'CHIP[[:space:]:=]*stm32')"
+  [npcx]="$(boards-with 'CHIP[[:space:]:=]*npcx')"
+  [mchp]="$(boards-with 'CHIP[[:space:]:=]*mchp')"
+  [ish]="$(boards-with 'CHIP[[:space:]:=]*ish')"
+  [it83xx]="$(boards-with 'CHIP[[:space:]:=]*it83xx')"
+  [lm4]="$(boards-with 'CHIP[[:space:]:=]*lm4')"
+  [mec1322]="$(boards-with 'CHIP[[:space:]:=]*mec1322')"
+  [max32660]="$(boards-with 'CHIP[[:space:]:=]*max32660')"
+  [mt_scp]="$(boards-with 'CHIP[[:space:]:=]*mt_scp')"
+)
 
-if [[ "${FLAGS_boards}" == "all" ]]; then
-  BOARDS=( )
-  echo "Skipping boards: ${BOARDS_TO_SKIP}"
-  for b in $(make print-boards); do
-    skipped=0
-    for skip in ${BOARDS_TO_SKIP}; do
-      if [[ "${skip}" == "${b}" ]]; then
-        skipped=1
-        break
-      fi
-    done
-    if [[ ${skipped} == 0 ]]; then
-      BOARDS+=( "${b}" )
-    fi
-  done
+mapfile -t BOARDS_VALID_RAW < <(basename -a board/*)
+declare -A BOARDS_VALID=( )
+assoc-add-keys BOARDS_VALID "${!BOARDS_EXPANSIONS[@]}" "${BOARDS_VALID_RAW[@]}"
+
+declare -A BOARDS=( )
+
+# Parse boards selection
+for b in ${FLAGS_boards}; do
+  name="$(sed -E 's/^(-|\+)//' <<<"${b}")"
+  # Check for a valid board
+  if [[ "${BOARDS_VALID[${name}]}" != "${name}" ]]; then
+    echo "# Error - Board '${name}' does not exist" >&2
+    exit 1
+  fi
+  # Check for expansion target
+  if [[ -n "${BOARDS_EXPANSIONS[${name}]}" ]]; then
+    name="${BOARDS_EXPANSIONS[${name}]}"
+  fi
+  read -r -a name_arr <<< "${name}"
+
+  # Process addition or deletion
+  case "${b}" in
+    -*)
+      assoc-rm-keys BOARDS "${name_arr[@]}"
+      ;;
+    +*|*)
+      assoc-add-keys BOARDS "${name_arr[@]}"
+      ;;
+  esac
+done
+
+if [[ ${#BOARDS[@]} -eq 0 ]]; then
+  echo "# Error - No boards selected" >&2
+  exit 1
 fi
+echo "# Board Selection:"
+printf "%s\n" "${BOARDS[@]}" | sort | column
 
-echo "BOARDS: ${BOARDS[*]}"
-
-TMP_DIR="$(mktemp -d -t compare_build.XXXX)"
+##########################################################################
+# Runtime                                                                #
+##########################################################################
 
 # We want make to initiate the builds for ref1 and ref2 so that a
 # single jobserver manages the process.
