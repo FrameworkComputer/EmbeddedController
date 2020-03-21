@@ -15,6 +15,7 @@
 #include "driver/ppc/sn5s330.h"
 #include "driver/ppc/syv682x.h"
 #include "driver/tcpm/ps8xxx.h"
+#include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tusb422.h"
 #include "driver/temp_sensor/thermistor.h"
 #include "fan.h"
@@ -375,6 +376,13 @@ static const struct tcpc_config_t tcpc_config_p1_usb3 = {
 	.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
 };
 
+static const struct usb_mux mux_config_p1_usb3 = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &tcpci_tcpm_usb_mux_driver,
+	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	.next_mux = NULL,
+};
+
 static enum usb_db_id usb_db_type = USB_DB_NONE;
 
 /******************************************************************************/
@@ -509,8 +517,10 @@ void board_reset_pd_mcu(void)
 {
 	/* No reset available for TCPC on port 0 */
 	/* Daughterboard specific reset for port 1 */
-	if (usb_db_type == USB_DB_USB3)
+	if (usb_db_type == USB_DB_USB3) {
 		ps8815_reset();
+		usb_mux_hpd_update(USBC_PORT_C1, 0, 0);
+	}
 }
 
 uint16_t tcpc_get_alert_status(void)
@@ -663,8 +673,7 @@ DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT);
 static void config_db_usb3(void)
 {
 	tcpc_config[USBC_PORT_C1] = tcpc_config_p1_usb3;
-	/* USB-C port 1 has an integrated retimer */
-	usb_muxes[USBC_PORT_C1].next_mux = NULL;
+	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3;
 }
 
 /*
