@@ -5,8 +5,10 @@
  * Power and battery LED control for Volteer
  */
 
+#include "charge_manager.h"
 #include "common.h"
 #include "ec_commands.h"
+#include "hooks.h"
 #include "led_common.h"
 #include "led_pwm.h"
 #include "pwm.h"
@@ -75,3 +77,27 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 	return EC_SUCCESS;
 }
+
+/* Illuminates the LED on the side of the active charging port. If not charging,
+ * illuminates both LEDs.
+ */
+static void led_set_charge_port_tick(void)
+{
+	int port;
+	int side_select_duty;
+
+	port = charge_manager_get_active_charge_port();
+	switch (port) {
+	case 0:
+		side_select_duty = 100;
+		break;
+	case 1:
+		side_select_duty = 0;
+		break;
+	default:
+		side_select_duty = 50;
+	}
+
+	pwm_set_duty(PWM_CH_LED4_SIDESEL, side_select_duty);
+}
+DECLARE_HOOK(HOOK_TICK, led_set_charge_port_tick, HOOK_PRIO_DEFAULT);

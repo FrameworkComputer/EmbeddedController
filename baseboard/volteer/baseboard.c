@@ -655,10 +655,7 @@ __override void board_icl_tgl_all_sys_pwrgood(void)
 
 static void baseboard_init(void)
 {
-	/* Illuminate motherboard and daughter board LEDs equally.
-	 * TODO(b/139554899): Illuminate only the LED next to the active
-	 * charging port.
-	 */
+	/* Illuminate motherboard and daughter board LEDs equally to start. */
 	pwm_enable(PWM_CH_LED4_SIDESEL, 1);
 	pwm_set_duty(PWM_CH_LED4_SIDESEL, 50);
 
