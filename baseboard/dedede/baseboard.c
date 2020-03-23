@@ -53,10 +53,12 @@ __override int intel_x86_get_pg_ec_dsw_pwrok(void)
 __override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 {
 	/*
-	 * ALL_SYS_PWRGD is an AND of both DRAM PGOOD and VCCST PGOOD.
+	 * ALL_SYS_PWRGD is an AND of DRAM PGOOD, VCCST PGOOD, and VCCIO_EXT
+	 * PGOOD.
 	 */
 	return gpio_get_level(GPIO_PG_PP1050_ST_OD) &&
-		gpio_get_level(GPIO_PG_DRAM_OD);
+		gpio_get_level(GPIO_PG_DRAM_OD) &&
+		gpio_get_level(GPIO_PG_VCCIO_EXT_OD);
 }
 
 __override void board_jsl_all_sys_pwrgd(int value)
