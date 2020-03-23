@@ -82,6 +82,8 @@
 #define TC_FLAGS_WAKE_FROM_LPM          BIT(22)
 /* Flag to note the TCPM supports auto toggle */
 #define TC_FLAGS_AUTO_TOGGLE_SUPPORTED  BIT(23)
+/* Flag to note TCPM was requested to DRP auto toggle */
+#define TC_FLAGS_AUTO_TOGGLE_REQUESTED  BIT(24)
 
 /*
  * Clear all flags except TC_FLAGS_AUTO_TOGGLE_SUPPORTED,
@@ -2795,13 +2797,20 @@ static void tc_drp_auto_toggle_entry(const int port)
 	atomic_clear(task_get_event_bitmap(task_get_current()),
 		PD_EXIT_LOW_POWER_EVENT_MASK);
 
-	if (drp_state[port] == PD_DRP_TOGGLE_ON)
+	/*
+	 * Enable DRP Toggle based on the current drp_state.
+	 * Keep a flag showing if DRP Toggle is enabled.
+	 */
+	if (drp_state[port] == PD_DRP_TOGGLE_ON) {
 		tcpm_enable_drp_toggle(port);
+		TC_SET_FLAG(port, TC_FLAGS_AUTO_TOGGLE_REQUESTED);
+	}
 }
 
 static void tc_drp_auto_toggle_run(const int port)
 {
 	enum pd_drp_next_states next_state;
+	enum pd_dual_role_states entry_drp_state;
 	enum tcpc_cc_voltage_status cc1, cc2;
 
 	/*
@@ -2821,9 +2830,22 @@ static void tc_drp_auto_toggle_run(const int port)
 	/* Check for connection */
 	tcpm_get_cc(port, &cc1, &cc2);
 
+	/*
+	 * Make sure the drp_state didn't change since we went
+	 * through tc_drp_auto_toggle_entry from not toggling to
+	 * toggling. This will make getting the next state
+	 * different if we have an open connection
+	 */
+	if (!TC_CHK_FLAG(port, TC_FLAGS_AUTO_TOGGLE_REQUESTED) &&
+	    drp_state[port] == PD_DRP_TOGGLE_ON)
+		entry_drp_state = PD_DRP_TOGGLE_OFF;
+	else
+		entry_drp_state = drp_state[port];
+
+	/* Determine the next state to attempt */
 	tc[port].drp_sink_time = get_time().val;
 	next_state = drp_auto_toggle_next_state(&tc[port].drp_sink_time,
-		tc[port].power_role, drp_state[port], cc1, cc2);
+		tc[port].power_role, entry_drp_state, cc1, cc2);
 
 	/*
 	 * The next state is not determined just by what is
@@ -2884,7 +2906,14 @@ static void tc_low_power_mode_entry(const int port)
 static void tc_low_power_mode_run(const int port)
 {
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	if (TC_CHK_FLAG(port, TC_FLAGS_WAKE_FROM_LPM)) {
+	/*
+	 * If we were tagged to wake up immediately instead of
+	 * going into LOW_POWER or we should have DRP enabled and
+	 * it didn't happen, then go back to TC_DRP_AUTO_TOGGLE.
+	 */
+	if ((TC_CHK_FLAG(port, TC_FLAGS_WAKE_FROM_LPM)) ||
+	    (!TC_CHK_FLAG(port, TC_FLAGS_AUTO_TOGGLE_REQUESTED) &&
+	     drp_state[port] == PD_DRP_TOGGLE_ON)) {
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
 		return;
 	}
@@ -2896,7 +2925,7 @@ static void tc_low_power_mode_exit(const int port)
 {
 	CPRINTS("TCPC p%d Exit Low Power Mode", port);
 	TC_CLR_FLAG(port, TC_FLAGS_LPM_REQUESTED | TC_FLAGS_LPM_ENGAGED |
-		TC_FLAGS_WAKE_FROM_LPM);
+		TC_FLAGS_WAKE_FROM_LPM | TC_FLAGS_AUTO_TOGGLE_REQUESTED);
 	reset_device_and_notify(port);
 	tc_start_event_loop(port);
 }
