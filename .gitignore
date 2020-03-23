@@ -1,5 +1,7 @@
 build/
 private*/
+# A "local" directory for hiding scripts and artifacts from git.
+local/
 *~
 *.swp
 *.pyc
