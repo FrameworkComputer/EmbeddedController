@@ -107,6 +107,8 @@
 #define IT83XX_GPIO_INT_FLEXIBLE
 /* Enable detect type-c plug in interrupt. */
 #define IT83XX_INTC_PLUG_IN_SUPPORT
+/* Wake up CPU from low power mode even if interrupts are disabled */
+#define IT83XX_RISCV_WAKEUP_CPU_WITHOUT_INT_ENABLED
 /* Chip actually has TCPC physical port count. */
 #define IT83XX_USBPD_PHY_PORT_COUNT    2
 #else

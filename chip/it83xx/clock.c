@@ -459,11 +459,13 @@ void clock_cpu_standby(void)
 	if (IS_ENABLED(CHIP_CORE_NDS32)) {
 		asm("standby wake_grant");
 	} else if (IS_ENABLED(CHIP_CORE_RISCV)) {
-		/*
-		 * TODO(b:142029177): we have to enable interrupts before
-		 * standby instruction on IT8xxx2 series.
-		 */
-		interrupt_enable();
+		if (!IS_ENABLED(IT83XX_RISCV_WAKEUP_CPU_WITHOUT_INT_ENABLED))
+			/*
+			 * we have to enable interrupts before
+			 * standby instruction on IT83202 bx version.
+			 */
+			interrupt_enable();
+
 		asm("wfi");
 	}
 }

@@ -973,6 +973,7 @@ enum clock_gate_offsets {
 #define IT83XX_GCTRL_MCCR2        REG8(IT83XX_GCTRL_BASE+0x44)
 #define IT83XX_GCTRL_SSCR         REG8(IT83XX_GCTRL_BASE+0x4A)
 #define IT83XX_GCTRL_ETWDUARTCR   REG8(IT83XX_GCTRL_BASE+0x4B)
+#define IT83XX_GCTRL_WMCR         REG8(IT83XX_GCTRL_BASE+0x4C)
 /* bit[0] = 0 or 1 : disable or enable ETWD hardware reset */
 #define ETWD_HW_RST_EN            BIT(0)
 #define IT83XX_GCTRL_RVILMCR0     REG8(IT83XX_GCTRL_BASE+0x5D)
