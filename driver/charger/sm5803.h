@@ -111,6 +111,7 @@ enum sm5803_gpio0_modes {
 /* Note: Threshold registers all assume lower 2 bits are 0 */
 #define SM5803_REG_VBUS_LOW_TH		0x1B
 #define SM5803_REG_VBUS_HIGH_TH		0x2B
+#define SM5803_REG_TINT_LOW_TH		0x1D
 #define SM5803_REG_TINT_HIGH_TH		0x2D
 
 /*
@@ -120,6 +121,13 @@ enum sm5803_gpio0_modes {
 #define SM5803_VBUS_LOW_LEVEL		0x25
 #define SM5803_VBUS_HIGH_LEVEL		0x2C
 
+/*
+ * TINT thresholds.  TINT steps are in 0.43 K with the upper threshold set to
+ * 360 K and lower threshold to de-assert PROCHOT at 330 K.
+ */
+#define SM5803_TINT_LOW_LEVEL		0xBF
+#define SM5803_TINT_HIGH_LEVEL		0xD1
+
 #define SM5803_REG_VBUS_MEAS_MSB	0x48
 #define SM5803_REG_VBUS_MEAS_LSB	0x49
 #define SM5803_VBUS_MEAS_LSB		GENMASK(1, 0)
@@ -127,6 +135,8 @@ enum sm5803_gpio0_modes {
 #define SM5803_VBUS_MEAS_VBUS_SHORT	BIT(4)
 #define SM5803_VBUS_MEAS_OV_TEMP	BIT(5)
 #define SM5803_VBUS_MEAS_CHG_DET	BIT(6)
+
+#define SM5803_REG_TINT_MEAS_MSB	0x4E
 
 /* Charger registers (address 0x32) */
 

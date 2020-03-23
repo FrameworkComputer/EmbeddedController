@@ -186,8 +186,11 @@ static void sm5803_init(int chgnum)
 	rv |= meas_write8(chgnum, SM5803_REG_VBUS_HIGH_TH,
 			  SM5803_VBUS_HIGH_LEVEL);
 
-	/* Set TINT for 360K (steps are in 0.43K) */
-	rv |= meas_write8(chgnum, SM5803_REG_TINT_HIGH_TH, 0xD1);
+	/* Set TINT interrupts for 360 K and 330 K */
+	rv |= meas_write8(chgnum, SM5803_REG_TINT_HIGH_TH,
+						SM5803_TINT_HIGH_LEVEL);
+	rv |= meas_write8(chgnum, SM5803_REG_TINT_LOW_TH,
+						SM5803_TINT_LOW_LEVEL);
 
 	if (rv)
 		CPRINTS("%s %d: Failed initialization", CHARGER_NAME, chgnum);
@@ -206,7 +209,7 @@ static enum ec_error_list sm5803_post_init(int chgnum)
 void sm5803_handle_interrupt(int chgnum)
 {
 	enum ec_error_list rv;
-	int int_reg, vbus_reg;
+	int int_reg, meas_reg;
 
 	/* Note: Interrupt register is clear on read */
 	rv = main_read8(chgnum, SM5803_REG_INT2_REQ, &int_reg);
@@ -217,21 +220,28 @@ void sm5803_handle_interrupt(int chgnum)
 	}
 
 	if (int_reg & SM5803_INT2_TINT) {
-		CPRINTS("%s %d: High temp, throttling AP", CHARGER_NAME,
-			chgnum);
-		throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_THERMAL);
+		rv = meas_read8(chgnum, SM5803_REG_TINT_MEAS_MSB, &meas_reg);
+		if (meas_reg <= SM5803_TINT_LOW_LEVEL)
+			throttle_ap(THROTTLE_OFF, THROTTLE_HARD,
+							THROTTLE_SRC_THERMAL);
+		else if (meas_reg >= SM5803_TINT_HIGH_LEVEL)
+			throttle_ap(THROTTLE_ON, THROTTLE_HARD,
+							THROTTLE_SRC_THERMAL);
+		else
+			CPRINTS("%s %d: Unexpected TINT interrupt: 0x%02x",
+				CHARGER_NAME, chgnum, meas_reg);
 	}
 
 	if ((int_reg & SM5803_INT2_VBUS) &&
 				!sm5803_is_sourcing_otg_power(chgnum, chgnum)) {
-		rv = meas_read8(chgnum, SM5803_REG_VBUS_MEAS_MSB, &vbus_reg);
-		if (vbus_reg <= SM5803_VBUS_LOW_LEVEL)
+		rv = meas_read8(chgnum, SM5803_REG_VBUS_MEAS_MSB, &meas_reg);
+		if (meas_reg <= SM5803_VBUS_LOW_LEVEL)
 			usb_charger_vbus_change(chgnum, 0);
-		else if (vbus_reg >= SM5803_VBUS_HIGH_LEVEL)
+		else if (meas_reg >= SM5803_VBUS_HIGH_LEVEL)
 			usb_charger_vbus_change(chgnum, 1);
 		else
 			CPRINTS("%s %d: Unexpected Vbus interrupt: 0x%02x",
-				CHARGER_NAME, chgnum, vbus_reg);
+				CHARGER_NAME, chgnum, meas_reg);
 	}
 }
 
