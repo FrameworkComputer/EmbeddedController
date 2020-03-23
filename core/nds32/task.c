@@ -171,9 +171,6 @@ int start_called;  /* Has task swapping started */
 /* interrupt number of sw interrupt */
 static int sw_int_num;
 
-/* Number of CPU hardware interrupts (HW0 ~ HW15) */
-int cpu_int_entry_number;
-
 /*
  * This variable is used to save link pointer register,
  * and it is updated at the beginning of each ISR.
@@ -346,41 +343,17 @@ void update_exc_start_time(void)
 }
 
 /* Interrupt number of EC modules */
-static volatile int ec_int;
-
-#ifdef CHIP_FAMILY_IT83XX
-int __ram_code intc_get_ec_int(void)
-{
-	return ec_int;
-}
-#endif
+volatile int ec_int;
 
 void __ram_code start_irq_handler(void)
 {
 	/* save r0, r1, and r2 for syscall */
 	asm volatile ("smw.adm $r0, [$sp], $r2, 0");
 	/* If this is a SW interrupt */
-	if (get_itype() & 8) {
+	if (get_itype() & 8)
 		ec_int = get_sw_int();
-	} else {
-#ifdef CHIP_FAMILY_IT83XX
-		int i;
-
-		for (i = 0; i < IT83XX_IRQ_COUNT; i++) {
-			ec_int = IT83XX_INTC_IVCT(cpu_int_entry_number);
-			/*
-			 * WORKAROUND: when the interrupt vector register isn't
-			 * latched in a load operation,
-			 * we read it again to make sure the value we got
-			 * is the correct value.
-			 */
-			if (ec_int == IT83XX_INTC_IVCT(cpu_int_entry_number))
-				break;
-		}
-		/* Determine interrupt number */
-		ec_int -= 16;
-#endif
-	}
+	else
+		ec_int = chip_get_ec_int();
 
 #if defined(CONFIG_LOW_POWER_IDLE) && defined(CHIP_FAMILY_IT83XX)
 	clock_sleep_mode_wakeup_isr();

@@ -59,6 +59,37 @@ static const struct {
 	IRQ_GROUP(28, { 2,  2,  2,  2,  2,  2, -1, -1}),
 };
 
+#if defined(CHIP_FAMILY_IT8320)    /* N8 core */
+/* Number of CPU hardware interrupts (HW0 ~ HW15) */
+int cpu_int_entry_number;
+#endif
+
+int chip_get_ec_int(void)
+{
+	extern volatile int ec_int;
+
+#if defined(CHIP_FAMILY_IT8320)    /* N8 core */
+	int i;
+
+	for (i = 0; i < IT83XX_IRQ_COUNT; i++) {
+		ec_int = IT83XX_INTC_IVCT(cpu_int_entry_number);
+		/*
+		 * WORKAROUND: when the interrupt vector register isn't
+		 * latched in a load operation,
+		 * we read it again to make sure the value we got
+		 * is the correct value.
+		 */
+		if (ec_int == IT83XX_INTC_IVCT(cpu_int_entry_number))
+			break;
+	}
+	/* Determine interrupt number */
+	ec_int -= 16;
+#else /* defined(CHIP_FAMILY_IT8XXX2) RISCV core */
+	ec_int = IT83XX_INTC_AIVCT - 0x10;
+#endif
+	return ec_int;
+}
+
 int chip_get_intc_group(int irq)
 {
 	return irq_groups[irq / 8].cpu_int[irq % 8];

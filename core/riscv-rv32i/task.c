@@ -163,7 +163,7 @@ int start_called;  /* Has task swapping started */
 /* in interrupt context */
 static int in_interrupt;
 /* Interrupt number of EC modules */
-static volatile int ec_int;
+volatile int ec_int;
 /* Interrupt group of EC INTC modules */
 volatile int ec_int_group;
 /* interrupt number of sw interrupt */
@@ -309,13 +309,6 @@ void __ram_code update_exc_start_time(void)
 #endif
 }
 
-#ifdef CHIP_FAMILY_IT83XX
-int __ram_code intc_get_ec_int(void)
-{
-	return ec_int;
-}
-#endif
-
 void __ram_code start_irq_handler(void)
 {
 	/* save a0, a1, and a2 for syscall */
@@ -332,7 +325,7 @@ void __ram_code start_irq_handler(void)
 		ec_int_group = 16;
 	} else {
 		/* Determine interrupt number */
-		ec_int = IT83XX_INTC_AIVCT - 0x10;
+		ec_int = chip_get_ec_int();
 		ec_int_group = chip_get_intc_group(ec_int);
 	}
 
