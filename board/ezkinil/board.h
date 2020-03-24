@@ -36,6 +36,10 @@
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
+/* Type C mux/retimer */
+#define CONFIG_USB_MUX_PS8743
+#define CONFIG_USBC_RETIMER_TUSB544
+
 /* GPIO mapping from board specific name to EC common name. */
 #define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
 #define GPIO_AC_PRESENT			GPIO_ACOK_OD
@@ -166,6 +170,10 @@ static inline bool ec_config_has_usbc1_retimer_tusb544(void)
 	: (ec_config_has_usbc1_retimer_ps8743()) \
 		? GPIO_DP1_HPD \
 		: GPIO_DP2_HPD)
+
+extern const struct usb_mux usbc1_tusb544;
+extern const struct usb_mux usbc1_ps8743;
+extern struct usb_mux usbc1_amd_fp5_usb_mux;
 
 #endif /* !__ASSEMBLER__ */
 

@@ -9,6 +9,9 @@
 #include "driver/accelgyro_bmi160.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/retimer/tusb544.h"
+#include "driver/usb_mux/amd_fp5.h"
+#include "driver/usb_mux/ps874x.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -169,13 +172,37 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
  * USB-C MUX/Retimer dynamic configuration
  */
 
-/* TODO: Fill in with real mux table updates */
 static void setup_mux(void)
 {
-	if (ec_config_has_usbc1_retimer_tusb544())
+	if (ec_config_has_usbc1_retimer_tusb544()) {
 		ccprints("C1 TUSB544 detected");
-	else if (ec_config_has_usbc1_retimer_ps8743())
+		/*
+		 * Main MUX is FP5, secondary MUX is TUSB544
+		 *
+		 * Replace usb_muxes[USBC_PORT_C1] with the AMD FP5
+		 * table entry.
+		 */
+		memcpy(&usb_muxes[USBC_PORT_C1],
+		       &usbc1_amd_fp5_usb_mux,
+		       sizeof(struct usb_mux));
+		/* Set the TUSB544 as the secondary MUX */
+		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_tusb544;
+	} else if (ec_config_has_usbc1_retimer_ps8743()) {
 		ccprints("C1 PS8743 detected");
+		/*
+		 * Main MUX is PS8743, secondary MUX is modified FP5
+		 *
+		 * Replace usb_muxes[USBC_PORT_C1] with the PS8743
+		 * table entry.
+		 */
+		memcpy(&usb_muxes[USBC_PORT_C1],
+		       &usbc1_ps8743,
+		       sizeof(struct usb_mux));
+		/* Set the AMD FP5 as the secondary MUX */
+		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_amd_fp5_usb_mux;
+		/* Don't have the AMD FP5 flip */
+		usbc1_amd_fp5_usb_mux.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP;
+	}
 }
 DECLARE_HOOK(HOOK_INIT, setup_mux, HOOK_PRIO_DEFAULT);
 
