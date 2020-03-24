@@ -111,7 +111,8 @@ void pd_task(void *u)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
 
-	tc_state_init(port);
+	if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
+		tc_state_init(port);
 
 	if (IS_ENABLED(CONFIG_USBC_PPC))
 		ppc_init(port);
@@ -135,7 +136,8 @@ void pd_task(void *u)
 						: USBC_EVENT_TIMEOUT);
 
 		/* handle events that affect the state machine as a whole */
-		tc_event_check(port, evt);
+		if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
+			tc_event_check(port, evt);
 
 		/*
 		 * run port controller task to check CC and/or read incoming
@@ -144,15 +146,16 @@ void pd_task(void *u)
 		if (IS_ENABLED(CONFIG_USB_PD_TCPC))
 			tcpc_run(port, evt);
 
+		/* Run policy engine state machine */
 		if (IS_ENABLED(CONFIG_USB_PE_SM))
-			/* Run policy engine state machine */
 			pe_run(port, evt, tc_get_pd_enabled(port));
 
+		/* Run protocol state machine */
 		if (IS_ENABLED(CONFIG_USB_PRL_SM))
-			/* Run protocol state machine */
 			prl_run(port, evt, tc_get_pd_enabled(port));
 
 		/* Run TypeC state machine */
-		tc_run(port);
+		if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
+			tc_run(port);
 	}
 }

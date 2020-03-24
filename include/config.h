@@ -894,30 +894,6 @@
 #undef CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA
 
 /*
- * Define to enable Type-C State Machine. Must be enabled
- * with CONFIG_USB_PD_TCPMV2
- */
-#define CONFIG_USB_TYPEC_SM
-
-/*
- * Define to enable Protocol Layer State Machine. Must be enabled
- * with CONFIG_USB_PD_TCPMV2 and CONFIG_USB_TYPEC_SM
- */
-#define CONFIG_USB_PRL_SM
-
-/*
- * Define to enable Policy Engine State Machine. Must be enabled
- * with CONFIG_USB_SM_PD_TCPMV2 and CONFIG_USB_TYPEC_SM
- */
-#define CONFIG_USB_PE_SM
-
-/*
- * Define to enable Policy Engine State Machine. This is an override
- * that is used to just pull in PE for unit testing.
- */
-#undef CONFIG_TEST_USB_PE_SM
-
-/*
  * Board specific maximum input current limit, in mA.
  */
 #undef CONFIG_CHARGER_MAX_INPUT_CURRENT
@@ -3651,15 +3627,38 @@
 /*
  * Enables Version 2 of the Power Delivery state machine
  *
- * Along with CONFIG_USB_PD_TCPMV2, you must ensure the follow
- * options are defined to use the new statemachine for USB-C:
- *
- *	CONFIG_USB_PD_DECODE_SOP
- *	CONFIG_USB_TYPEC_SM (defined by default)
- *	CONFIG_USB_PRL_SM (defined by default)
- *	One of CONFIG_USB_PE_* policy engine options.
+ * Along with CONFIG_USB_PD_TCPMV2, you must ensure a device type is also
+ * enabled otherwise an error will be emitted.
  */
 #undef CONFIG_USB_PD_TCPMV2
+
+/*
+ * Device Types for TCPMv2.
+ *
+ * Exactly one must be defined when CONFIG_USB_PD_TCPMV2 is defined.
+ *
+ * VPD - Vconn Powered Device
+ * CTVPD - Charge Through Vconn Powered Device
+ * DRP_ACC_TRYSRC - Dual Role Port, Audio Accessory, and Try.SRC Device
+ */
+#undef CONFIG_USB_VPD
+#undef CONFIG_USB_CTVPD
+#undef CONFIG_USB_DRP_ACC_TRYSRC
+
+/*
+ * TCPMv2 statemachine layers
+ *
+ * All layers are defined by default. To opt-out, you must undef in your board.
+ * Also these defines don't take effect unless CONFIG_USB_PD_TCPMV2 is also
+ * defined.
+ *
+ * TYPEC_SM - Type-C deals with CC lines voltage level connections
+ * PRL_SM - Protocol handles flow and chunking TX and RX messages
+ * PE - Policy Engine handles PD communication flow
+ */
+#define CONFIG_USB_TYPEC_SM
+#define CONFIG_USB_PRL_SM
+#define CONFIG_USB_PE_SM
 
 /* Enables Zork Auto Discharge Disconnect Changes */
 #undef CONFIG_ZORK_AUTO_DISCHARGE
@@ -3993,15 +3992,6 @@
  * If defined, must also define `struct pd_pref_config_t pd_pref_config`.
  */
 #undef CONFIG_USB_PD_PREFER_MV
-
-/* Type-C VCONN Powered Device */
-#undef CONFIG_USB_VPD
-
-/* Type-C Charge Through VCONN Powered Device */
-#undef CONFIG_USB_CTVPD
-
-/* Type-C DRP with Accessory and Try.SRC */
-#undef CONFIG_USB_DRP_ACC_TRYSRC
 
 /* Type-C Fast Role Swap */
 #undef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
@@ -4508,6 +4498,18 @@
  */
 #undef CONFIG_INTEL_VIRTUAL_MUX
 
+/*
+ * TEST ONLY defines (CONFIG_TEST_*)
+ *
+ * Used to include files for unit and other builds tests.
+ */
+
+ /* Define to enable Policy Engine State Machine. */
+#undef CONFIG_TEST_USB_PE_SM
+
+/* Define to enable USB State Machine framework. */
+#undef CONFIG_TEST_SM
+
 /*****************************************************************************/
 /*
  * Include board and core configs, since those hold the CONFIG_ constants for a
@@ -4556,6 +4558,19 @@
 #endif
 #if defined(CONFIG_USB_PD_TCPMV2) && !defined(CONFIG_USB_PD_DECODE_SOP)
 #error CONFIG_USB_PD_DECODE_SOP must be enabled with the TCPMV2 PD state machine
+#endif
+#endif
+
+
+/******************************************************************************/
+/*
+ * Ensure that CONFIG_USB_PD_TCPMV2 is being used with exactly one device type
+ */
+#ifdef CONFIG_USB_PD_TCPMV2
+#if defined(CONFIG_USB_VPD) + \
+	defined(CONFIG_USB_CTVPD) + \
+	defined(CONFIG_USB_DRP_ACC_TRYSRC) != 1
+#error Must define exactly one CONFIG_USB_ device type.
 #endif
 #endif
 

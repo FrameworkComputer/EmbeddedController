@@ -7,19 +7,19 @@
 #include "common.h"
 #include "crc.h"
 #include "task.h"
+#include "tcpm.h"
 #include "test_util.h"
 #include "timer.h"
-#include "tcpm.h"
 #include "usb_emsg.h"
-#include "usb_pe_sm.h"
-#include "usb_pd.h"
 #include "usb_pd_test_util.h"
+#include "usb_pd.h"
+#include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
 #include "usb_sm_checks.h"
+#include "usb_tc_sm.h"
 #include "util.h"
 
 #define PORT0 0
-#define PORT1 1
 
 /*
  * These enum definitions are declared in usb_prl_sm and are private to that
@@ -703,6 +703,11 @@ static int simulate_send_extended_data_msg(int port,
 							len);
 }
 
+uint8_t tc_get_pd_enabled(int port)
+{
+	return pd_port[port].pd_enable;
+}
+
 static void enable_prl(int port, int en)
 {
 	tcpm_set_rx_enable(port, en);
@@ -1334,24 +1339,12 @@ static int test_phy_execute_hard_reset_msg(void)
 	return EC_SUCCESS;
 }
 
-int pd_task(void *u)
-{
-	int port = PORT0;
-	int evt;
-
-	while (1) {
-		evt = task_wait_event(-1);
-
-		tcpc_run(port, evt);
-		prl_run(port, evt, pd_port[port].pd_enable);
-	}
-
-	return EC_SUCCESS;
-}
-
 /* Reset the state machine between each test */
 void before_test(void)
 {
+	/* This test relies on explicitly cycling through events manually */
+	tc_pause_event_loop(PORT0);
+
 	pd_port[PORT0].mock_pe_message_sent = 0;
 	pd_port[PORT0].mock_pe_error = -1;
 	pd_port[PORT0].mock_pe_hard_reset_sent = 0;

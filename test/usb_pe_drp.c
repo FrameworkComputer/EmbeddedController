@@ -41,6 +41,11 @@ void pd_set_vbus_discharge(int port, int enable)
 	gpio_set_level(GPIO_USB_C0_DISCHARGE, enable);
 }
 
+uint8_t tc_get_pd_enabled(int port)
+{
+	return 1;
+}
+
 /**
  * Test section
  */
