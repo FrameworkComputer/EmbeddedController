@@ -39,7 +39,7 @@ const struct board_batt_params board_battery_info[] = {
 	/* Dynapack CosMX DAK124960-W0P0707HT Battery Information */
 	[BATTERY_DANAPACK_COS] = {
 		.fuel_gauge = {
-			.manuf_name = "333-24-1C-A",
+			.manuf_name = "333-2C-14-A",
 			.ship_mode = {
 				.reg_addr = 0x0,
 				.reg_data = { 0x0010, 0x0010 },
