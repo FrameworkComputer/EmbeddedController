@@ -21,6 +21,7 @@
 #include "system.h"
 #include "task.h"
 #include "tablet_mode.h"
+#include "throttle_ap.h"
 #include "uart.h"
 #include "usb_pd_tbt.h"
 #include "util.h"

@@ -661,6 +661,9 @@ static void baseboard_init(void)
 	 */
 	pwm_enable(PWM_CH_LED4_SIDESEL, 1);
 	pwm_set_duty(PWM_CH_LED4_SIDESEL, 50);
+
+	/* Enable monitoring of the PROCHOT input to the EC */
+	gpio_enable_interrupt(GPIO_EC_PROCHOT_IN_L);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT);
 

@@ -52,6 +52,19 @@ void throttle_ap(enum throttle_level level,
 		 enum throttle_type type,
 		 enum throttle_sources source);
 
+/**
+ * Interrupt handler to monitor PROCHOT input to the EC. The PROCHOT signal
+ * can be asserted by the AP or by other devices on the board, such as chargers
+ * and voltage regulators.
+ *
+ * The board initialization is responsible for enabling the interrupt.
+ *
+ * @param signal    GPIO signal connected to PROCHOT input. The polarity of this
+ *                  signal is active high unless CONFIG_CPU_PROCHOT_ACTIVE_LOW
+ *                  is defined.
+ */
+void throttle_ap_prochot_input_interrupt(enum gpio_signal signal);
+
 #else
 static inline void throttle_ap(enum throttle_level level,
 			       enum throttle_type type,
