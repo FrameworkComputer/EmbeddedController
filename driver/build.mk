@@ -28,6 +28,7 @@ driver-$(CONFIG_ACCEL_LIS2DS)+=accel_lis2ds.o stm_mems_common.o
 
 # BC1.2 Charger Detection Devices
 driver-$(CONFIG_BC12_DETECT_MAX14637)+=bc12/max14637.o
+driver-$(CONFIG_BC12_DETECT_MT6360)+=bc12/mt6360.o
 driver-$(CONFIG_BC12_DETECT_PI3USB9201)+=bc12/pi3usb9201.o
 driver-$(CONFIG_BC12_DETECT_PI3USB9281)+=bc12/pi3usb9281.o
 

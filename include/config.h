@@ -864,11 +864,12 @@
 #undef CONFIG_CHARGER_MT6370_BACKLIGHT
 
 /*
- * MT6370 BC1.2 USB-PHY control.
+ * MT6360/MT6370 BC1.2 USB-PHY control.
  * If defined, USB-PHY connection is controlled by GPIO_BC12_DET_EN.
  * Assert GPIO_BC12_DET_EN to detect BC1.2 device, and deassert
  * GPIO_BC12_DET_EN to mux USB-PHY back.
  */
+#undef CONFIG_MT6360_BC12_GPIO
 #undef CONFIG_CHARGER_MT6370_BC12_GPIO
 
 /*
@@ -4187,6 +4188,7 @@
 
 /* External BC1.2 charger detection devices. */
 #undef CONFIG_BC12_DETECT_MAX14637
+#undef CONFIG_BC12_DETECT_MT6360
 #undef CONFIG_BC12_DETECT_PI3USB9201
 #undef CONFIG_BC12_DETECT_PI3USB9281
 /* Number of Pericom PI3USB9281 chips present in system */
