@@ -22,19 +22,26 @@
 /* Keyboard features */
 
 /* Sensors */
-/* BMA253 accelerometer in base */
-#define CONFIG_ACCEL_BMA255
-
-/* TCS3400 ALS */
-#define CONFIG_ALS
-#define ALS_COUNT		1
-#define CONFIG_ALS_TCS3400
-#define CONFIG_ALS_TCS3400_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
+#define CONFIG_ACCEL_LIS2DE             /* Lid accel */
+#define CONFIG_ACCELGYRO_LSM6DSM        /* Base accel */
 
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
-	(BIT(LID_ACCEL) | BIT(CLEAR_ALS))
+	BIT(LID_ACCEL)
+
+/*
+ * TODO: b/152434719 - Malefor will support 360-degree rotation of the
+ * lid on some SKUs, these macros will be enabled once covers are ready.
+ */
+#if 0
+#define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_UPDATE
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
+#endif
+
+#define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
 /* USB Type C and USB PD defines */
 /*
@@ -98,8 +105,8 @@ enum battery_type {
 
 enum sensor_id {
 	LID_ACCEL = 0,
-	CLEAR_ALS,
-	RGB_ALS,
+	BASE_ACCEL,
+	BASE_GYRO,
 	VSYNC,
 	SENSOR_COUNT,
 };
