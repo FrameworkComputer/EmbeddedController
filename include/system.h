@@ -355,6 +355,9 @@ enum system_bbram_idx {
 	SYSTEM_BBRAM_IDX_TRY_SLOT,
 };
 
+/* Maximum number of bbram indexes allotted for PD port state data */
+#define MAX_SYSTEM_BBRAM_IDX_PD_PORTS 3
+
 /**
  * Get/Set byte in battery-backed storage.
  *

@@ -126,6 +126,10 @@ __overridable void tc_start_error_recovery(int port)
 __overridable void tc_snk_power_off(int port)
 {}
 
+__overridable void pe_invalidate_explicit_contract(int port)
+{
+}
+
 int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 			 uint32_t ec_image)
 {

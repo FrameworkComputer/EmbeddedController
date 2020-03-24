@@ -153,6 +153,9 @@
  */
 typedef int (*svdm_rsp_func)(int port, uint32_t *payload);
 
+/* This is true only if a sysjump has occurred */
+static bool sysjump_occurred;
+
 /* List of all Policy Engine level states */
 enum usb_pe_state {
 	/* Normal States */
@@ -587,6 +590,11 @@ void pe_run(int port, int evt, int en)
 	}
 }
 
+void pe_set_sysjump(void)
+{
+	sysjump_occurred = true;
+}
+
 int pe_is_explicit_contract(int port)
 {
 	return PE_CHK_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
@@ -672,10 +680,11 @@ static void pe_set_frs_enable(int port, int enable)
 	}
 }
 
-static void pe_invalidate_explicit_contract(int port)
+void pe_invalidate_explicit_contract(int port)
 {
 	pe_set_frs_enable(port, 0);
 	PE_CLR_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
+	pd_update_saved_port_flags(port, PD_BBRMFLG_EXPLICIT_CONTRACT, 0);
 }
 
 /*
@@ -833,9 +842,6 @@ void pe_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 
 void pe_exit_dp_mode(int port)
 {
-	/* This should only be called from the PD task */
-	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
-
 	if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
 		int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
 
@@ -1544,6 +1550,8 @@ static void pe_src_transition_supply_run(int port)
 			/* NOTE: Second pass through this code block */
 			/* Explicit Contract is now in place */
 			PE_SET_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
+			pd_update_saved_port_flags(port,
+				PD_BBRMFLG_EXPLICIT_CONTRACT, 1);
 			/*
 			 * Set first message flag to trigger a wait and add
 			 * jitter delay when operating in PD2.0 mode.
@@ -1986,8 +1994,14 @@ static void pe_snk_startup_entry(int port)
 	/* Set initial power role */
 	pe[port].power_role = PD_ROLE_SINK;
 
-	/* Clear explicit contract */
-	pe_invalidate_explicit_contract(port);
+	/*
+	 * An explicit contract must be maintained across sysjumps,
+	 * so do not invalidate it if a sysjump has occurred
+	 */
+	if (!sysjump_occurred) {
+		/* Invalidate explicit contract */
+		pe_invalidate_explicit_contract(port);
+	}
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE);
@@ -2008,11 +2022,22 @@ static void pe_snk_startup_run(int port)
 	if (!prl_is_running(port))
 		return;
 
-	/*
-	 * Once the reset process completes, the Policy Engine Shall
-	 * transition to the PE_SNK_Discovery state
-	 */
-	set_state_pe(port, PE_SNK_DISCOVERY);
+	/* Soft reset the charger on sysjump */
+	if (sysjump_occurred) {
+		/*
+		 * The sysjump flag is no longer needed, so clear it.
+		 * After Soft Reset is sent, PE_ATTACHED_SNK state
+		 * is entered.
+		 */
+		sysjump_occurred = false;
+		set_state_pe(port, PE_SEND_SOFT_RESET);
+	} else {
+		/*
+		 * Once the reset process completes, the Policy Engine Shall
+		 * transition to the PE_SNK_Discovery state
+		 */
+		set_state_pe(port, PE_SNK_DISCOVERY);
+	}
 }
 
 /**
@@ -2110,10 +2135,6 @@ static void pe_snk_evaluate_capability_entry(int port)
 	/* Evaluate the options based on supplied capabilities */
 	pd_process_source_cap(port, pe[port].src_cap_cnt, pe[port].src_caps);
 
-	/* We are PD Connected */
-	PE_SET_FLAG(port, PE_FLAGS_PD_CONNECTION);
-	tc_pd_connection(port, 1);
-
 	/* Device Policy Response Received */
 	set_state_pe(port, PE_SNK_SELECT_CAPABILITY);
 }
@@ -2125,9 +2146,13 @@ static void pe_snk_select_capability_entry(int port)
 {
 	print_current_state(port);
 
-	pe[port].sender_response_timer = TIMER_DISABLED;
 	/* Send Request */
 	pe_send_request_msg(port);
+
+	/* We are PD Connected */
+	PE_SET_FLAG(port, PE_FLAGS_PD_CONNECTION);
+	tc_pd_connection(port, 1);
+	pe[port].sender_response_timer = TIMER_DISABLED;
 }
 
 static void pe_snk_select_capability_run(int port)
@@ -2178,6 +2203,9 @@ static void pe_snk_select_capability_run(int port)
 			if (type == PD_CTRL_ACCEPT) {
 				/* explicit contract is now in place */
 				PE_SET_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
+				pd_update_saved_port_flags(port,
+					PD_BBRMFLG_EXPLICIT_CONTRACT, 1);
+
 				set_state_pe(port, PE_SNK_TRANSITION_SINK);
 
 				/*
@@ -2316,14 +2344,14 @@ static void pe_snk_ready_entry(int port)
 	prl_end_ams(port);
 
 	/*
-	 * On entry to the PE_SNK_Ready state as the result of a wait, then do
-	 * the following:
+	 * On entry to the PE_SNK_Ready state as the result of a wait,
+	 * then do the following:
 	 *   1) Initialize and run the SinkRequestTimer
 	 */
 	if (PE_CHK_FLAG(port, PE_FLAGS_WAIT)) {
 		PE_CLR_FLAG(port, PE_FLAGS_WAIT);
 		pe[port].sink_request_timer =
-					get_time().val + PD_T_SINK_REQUEST;
+				get_time().val + PD_T_SINK_REQUEST;
 	} else {
 		pe[port].sink_request_timer = TIMER_DISABLED;
 	}
@@ -2331,14 +2359,15 @@ static void pe_snk_ready_entry(int port)
 	/*
 	 * Do port partner discovery
 	 *
-	 * This function modifies state variables that are used in the run
-	 * part of this state. See pe_attempt_port_discovery for details.
+	 * This function modifies state variables that are used in
+	 * the run part of this state. See pe_attempt_port_discovery
+	 * for details.
 	 */
 	pe_attempt_port_discovery(port);
 
 	/*
-	 * Wait and add jitter if we are operating in PD2.0 mode and no messages
-	 * have been sent since enter this state.
+	 * Wait and add jitter if we are operating in PD2.0 mode and no
+	 * messages have been sent since enter this state.
 	 */
 	pe_update_wait_and_add_jitter_timer(port);
 }
@@ -2677,21 +2706,6 @@ static void pe_send_soft_reset_run(int port)
 	}
 
 	/*
-	 * Transition to PE_SNK_Hard_Reset or PE_SRC_Hard_Reset on Sender
-	 * Response Timer Timeout or Protocol Layer or Protocol Error
-	 */
-	if (get_time().val > pe[port].sender_response_timer ||
-			PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
-		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
-
-		if (pe[port].power_role == PD_ROLE_SINK)
-			set_state_pe(port, PE_SRC_HARD_RESET);
-		else
-			set_state_pe(port, PE_SRC_HARD_RESET);
-		return;
-	}
-
-	/*
 	 * Transition to the PE_SNK_Send_Capabilities or
 	 * PE_SRC_Send_Capabilities state when:
 	 *   1) An Accept Message has been received.
@@ -2713,6 +2727,22 @@ static void pe_send_soft_reset_run(int port)
 			return;
 		}
 	}
+
+	/*
+	 * Transition to PE_SNK_Hard_Reset or PE_SRC_Hard_Reset on Sender
+	 * Response Timer Timeout or Protocol Layer or Protocol Error
+	 */
+	if (get_time().val > pe[port].sender_response_timer ||
+			PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
+		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
+
+		if (pe[port].power_role == PD_ROLE_SINK)
+			set_state_pe(port, PE_SRC_HARD_RESET);
+		else
+			set_state_pe(port, PE_SRC_HARD_RESET);
+		return;
+	}
+
 }
 
 static void pe_send_soft_reset_exit(int port)

@@ -177,5 +177,17 @@ void pe_dpm_request(int port, enum pe_dpm_request req);
  */
 int pd_is_port_partner_dualrole(int port);
 
+/*
+ * Informs the Policy Engine that a sysjump has occurred
+ */
+void pe_set_sysjump(void);
+
+/*
+ * Informs the Policy Engine that it should invalidate the
+ * explicit contract.
+ *
+ * @param port USB-C port number
+ */
+void pe_invalidate_explicit_contract(int port);
 #endif /* __CROS_EC_USB_PE_H */
 

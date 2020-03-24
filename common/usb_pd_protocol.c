@@ -575,58 +575,6 @@ static int reset_device_and_notify(int port)
 
 #endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
 
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-static int get_bbram_idx(int port)
-{
-	switch (port) {
-	case 2:
-		return SYSTEM_BBRAM_IDX_PD2;
-	case 1:
-		return SYSTEM_BBRAM_IDX_PD1;
-	case 0:
-		return SYSTEM_BBRAM_IDX_PD0;
-	default:
-		return -1;
-	}
-}
-
-static int pd_get_saved_port_flags(int port, uint8_t *flags)
-{
-	if (system_get_bbram(get_bbram_idx(port), flags) != EC_SUCCESS) {
-#ifndef CHIP_HOST
-		CPRINTS("PD NVRAM FAIL");
-#endif
-		return EC_ERROR_UNKNOWN;
-	}
-
-	return EC_SUCCESS;
-}
-
-static void pd_set_saved_port_flags(int port, uint8_t flags)
-{
-	if (system_set_bbram(get_bbram_idx(port), flags) != EC_SUCCESS) {
-#ifndef CHIP_HOST
-		CPRINTS("PD NVRAM FAIL");
-#endif
-	}
-}
-
-static void pd_update_saved_port_flags(int port, uint8_t flag, uint8_t val)
-{
-	uint8_t saved_flags;
-
-	if (pd_get_saved_port_flags(port, &saved_flags) != EC_SUCCESS)
-		return;
-
-	if (val)
-		saved_flags |= flag;
-	else
-		saved_flags &= ~flag;
-
-	pd_set_saved_port_flags(port, saved_flags);
-}
-#endif /* defined(CONFIG_USB_PD_DUAL_ROLE) */
-
 /**
  * Invalidate last message received at the port when the port gets disconnected
  * or reset(soft/hard). This is used to identify and handle the duplicate
