@@ -290,23 +290,19 @@ static enum ec_error_list sm5803_set_mode(int chgnum, int mode)
 	enum ec_error_list rv;
 	int flow1_reg, flow2_reg;
 
-	rv = chg_read8(chgnum, SM5803_REG_FLOW1, &flow1_reg);
-	if (rv)
-		return rv;
-
 	rv = chg_read8(chgnum, SM5803_REG_FLOW2, &flow2_reg);
 	if (rv)
 		return rv;
 
+	/*
+	 * Note: when charging or inhibiting charge, ensure bits to source Vbus
+	 * in flow1 are zeroed.
+	 */
 	if (mode & CHARGE_FLAG_INHIBIT_CHARGE) {
-		/* If already inhibited, don't bother re-inhibiting */
-		if (!(flow1_reg & SM5803_FLOW1_CHG_EN))
-			return EC_SUCCESS;
-
-		flow1_reg &= ~SM5803_FLOW1_CHG_EN;
+		flow1_reg = 0;
 		flow2_reg &= ~SM5803_FLOW2_AUTO_ENABLED;
 	} else {
-		flow1_reg |= SM5803_FLOW1_CHG_EN;
+		flow1_reg = SM5803_FLOW1_CHG_EN;
 		flow2_reg |= SM5803_FLOW2_AUTO_ENABLED;
 	}
 
