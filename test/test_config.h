@@ -389,15 +389,15 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #endif /* Common TypeC test defines */
 
 #ifdef TEST_USB_TYPEC_VPD
-#define CONFIG_USB_TYPEC_VPD
+#define CONFIG_USB_VPD
 #endif
 
 #ifdef TEST_USB_TYPEC_CTVPD
-#define CONFIG_USB_TYPEC_CTVPD
+#define CONFIG_USB_CTVPD
 #endif
 
 #ifdef TEST_USB_TYPEC_DRP_ACC_TRYSRC
-#define CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
+#define CONFIG_USB_DRP_ACC_TRYSRC
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_TYPEC_SM

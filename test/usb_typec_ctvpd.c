@@ -558,7 +558,7 @@ static int test_vpd_host_src_detection_message_reception(void)
 			VPD_MAX_VBUS_20V,
 			VPD_VBUS_IMP(VPD_VBUS_IMPEDANCE),
 			VPD_GND_IMP(VPD_GND_IMPEDANCE),
-#ifdef CONFIG_USB_TYPEC_CTVPD
+#ifdef CONFIG_USB_CTVPD
 			VPD_CTS_SUPPORTED
 #else
 			VPD_CTS_NOT_SUPPORTED

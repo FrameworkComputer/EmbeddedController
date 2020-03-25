@@ -405,8 +405,8 @@ static enum ec_status hc_get_pd_port_caps(struct host_cmd_handler_args *args)
 	else
 		r->pd_try_power_role_cap = EC_PD_TRY_POWER_ROLE_NONE;
 
-	if (IS_ENABLED(CONFIG_USB_TYPEC_VPD) ||
-	    IS_ENABLED(CONFIG_USB_TYPEC_CTVPD))
+	if (IS_ENABLED(CONFIG_USB_VPD) ||
+	    IS_ENABLED(CONFIG_USB_CTVPD))
 		r->pd_data_role_cap = EC_PD_DATA_ROLE_UFP;
 	else
 		r->pd_data_role_cap = EC_PD_DATA_ROLE_DUAL;

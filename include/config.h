@@ -4003,13 +4003,13 @@
 #undef CONFIG_USB_PD_PREFER_MV
 
 /* Type-C VCONN Powered Device */
-#undef CONFIG_USB_TYPEC_VPD
+#undef CONFIG_USB_VPD
 
 /* Type-C Charge Through VCONN Powered Device */
-#undef CONFIG_USB_TYPEC_CTVPD
+#undef CONFIG_USB_CTVPD
 
 /* Type-C DRP with Accessory and Try.SRC */
-#undef CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
+#undef CONFIG_USB_DRP_ACC_TRYSRC
 
 /* Type-C Fast Role Swap */
 #undef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP

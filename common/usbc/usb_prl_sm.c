@@ -424,8 +424,8 @@ void prl_run(int port, int evt, int en)
 	case SM_RUN:
 		if (!en) {
 			/* Disable RX */
-			if (IS_ENABLED(CONFIG_USB_TYPEC_CTVPD) ||
-			    IS_ENABLED(CONFIG_USB_TYPEC_VPD))
+			if (IS_ENABLED(CONFIG_USB_CTVPD) ||
+			    IS_ENABLED(CONFIG_USB_VPD))
 				vpd_rx_enable(0);
 			else
 				tcpm_set_rx_enable(port, 0);
@@ -465,8 +465,8 @@ enum pd_rev_type prl_get_rev(int port, enum tcpm_transmit_type type)
 /* Common Protocol Layer Message Transmission */
 static void prl_tx_phy_layer_reset_entry(const int port)
 {
-	if (IS_ENABLED(CONFIG_USB_TYPEC_CTVPD)
-	 || IS_ENABLED(CONFIG_USB_TYPEC_VPD)) {
+	if (IS_ENABLED(CONFIG_USB_CTVPD)
+	 || IS_ENABLED(CONFIG_USB_VPD)) {
 		vpd_rx_enable(pd_is_connected(port));
 	} else {
 		tcpm_clear_pending_messages(port);
@@ -852,8 +852,8 @@ static void prl_hr_reset_layer_entry(const int port)
 	}
 
 	/* Disable RX */
-	if (IS_ENABLED(CONFIG_USB_TYPEC_CTVPD) ||
-	    IS_ENABLED(CONFIG_USB_TYPEC_VPD))
+	if (IS_ENABLED(CONFIG_USB_CTVPD) ||
+	    IS_ENABLED(CONFIG_USB_VPD))
 		vpd_rx_enable(0);
 	else
 		tcpm_set_rx_enable(port, 0);
@@ -1552,8 +1552,8 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	 * Ignore messages sent to the cable from our
 	 * port partner if we aren't Vconn powered device.
 	 */
-	if (!IS_ENABLED(CONFIG_USB_TYPEC_CTVPD) &&
-	    !IS_ENABLED(CONFIG_USB_TYPEC_VPD) &&
+	if (!IS_ENABLED(CONFIG_USB_CTVPD) &&
+	    !IS_ENABLED(CONFIG_USB_VPD) &&
 	    PD_HEADER_GET_SOP(header) != PD_MSG_SOP &&
 	    PD_HEADER_PROLE(header) == PD_PLUG_FROM_DFP_UFP)
 		return;

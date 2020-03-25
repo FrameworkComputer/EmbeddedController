@@ -453,7 +453,7 @@ void pd_rx_handler(void)
 	int next_idx;
 	pending = STM32_EXTI_PR;
 
-#ifdef CONFIG_USB_TYPEC_CTVPD
+#ifdef CONFIG_USB_CTVPD
 	/* Charge-Through Side detach event */
 	if (pending & EXTI_COMP2_MASK) {
 		task_set_event(PD_PORT_TO_TASK_ID(0), PD_EVENT_SM, 0);

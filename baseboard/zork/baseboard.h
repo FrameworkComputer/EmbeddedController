@@ -126,7 +126,7 @@
 	#define CONFIG_USB_PD_TCPMV1
 #else
 	#define CONFIG_USB_PD_DECODE_SOP
-	#define CONFIG_USB_TYPEC_DRP_ACC_TRYSRC
+	#define CONFIG_USB_DRP_ACC_TRYSRC
 
 	 /* Enable TCPMv2 Fast Role Swap */
 	 /* Turn off until FRSwap is working */
