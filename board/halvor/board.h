@@ -22,6 +22,19 @@
 /* Keyboard features */
 
 /* Sensors */
+/* BMA253 accelerometer in base */
+#define CONFIG_ACCEL_BMA255
+
+/* TCS3400 ALS */
+#define CONFIG_ALS
+#define ALS_COUNT		1
+#define CONFIG_ALS_TCS3400
+#define CONFIG_ALS_TCS3400_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
+
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK \
+	(BIT(LID_ACCEL) | BIT(CLEAR_ALS))
 
 /* USB Type C and USB PD defines */
 /*
@@ -81,6 +94,14 @@
 enum battery_type {
 	BATTERY_LGC011,
 	BATTERY_TYPE_COUNT,
+};
+
+enum sensor_id {
+	LID_ACCEL = 0,
+	CLEAR_ALS,
+	RGB_ALS,
+	VSYNC,
+	SENSOR_COUNT,
 };
 
 /* TODO: b/143375057 - Remove this code after power on. */

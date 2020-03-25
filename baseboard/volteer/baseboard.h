@@ -84,24 +84,10 @@
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 
-/* BMA253 accelerometer in base */
-#define CONFIG_ACCEL_BMA255
-
 /* Camera VSYNC */
 #define CONFIG_SYNC
 #define CONFIG_SYNC_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
-
-/* TCS3400 ALS */
-#define CONFIG_ALS
-#define ALS_COUNT		1
-#define CONFIG_ALS_TCS3400
-#define CONFIG_ALS_TCS3400_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
-
-/* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
-	(BIT(LID_ACCEL) | BIT(CLEAR_ALS))
 
 /* Thermal features */
 #define CONFIG_FANS			FAN_CH_COUNT
@@ -310,14 +296,6 @@ enum usbc_port {
 	USBC_PORT_C0 = 0,
 	USBC_PORT_C1,
 	USBC_PORT_COUNT
-};
-
-enum sensor_id {
-	LID_ACCEL = 0,
-	CLEAR_ALS,
-	RGB_ALS,
-	VSYNC,
-	SENSOR_COUNT,
 };
 
 /*
