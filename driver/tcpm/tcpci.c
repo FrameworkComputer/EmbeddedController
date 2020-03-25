@@ -16,7 +16,6 @@
 #include "tcpm.h"
 #include "timer.h"
 #include "usb_charge.h"
-#include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpc.h"
@@ -366,147 +365,13 @@ int tcpci_tcpc_drp_toggle(int port)
 {
 	int rv;
 
-	/*
-	 * Set auto drp toggle
-	 * NOTE: This should be done according to the last connection
-	 * that we are disconnecting from. TCPCI Rev 2 spec figures
-	 * 4-21 and 4-22 show:
-	 *     SNK => DRP should set CC lines to Rd/Rd
-	 *     SRC => DRP should set CC lines to Rp/Rp
-	 * The function tcpci_tcpc_set_connection performs this action
-	 * and it may be wise as chips can use this to make this the
-	 * standard and remove this set_role_ctrl call.
-	 */
+	/* Set auto drp toggle */
 	rv = tcpci_set_role_ctrl(port, 1, TYPEC_RP_USB, TYPEC_CC_RD);
-	if (rv)
-		return rv;
-
-	/* Set up to catch LOOK4CONNECTION alerts */
-	rv = tcpc_update8(port,
-			  TCPC_REG_TCPC_CTRL,
-			  TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT,
-			  MASK_SET);
-	if (rv)
-		return rv;
 
 	/* Set Look4Connection command */
-	rv = tcpc_write(port, TCPC_REG_COMMAND,
-			TCPC_REG_COMMAND_LOOK4CONNECTION);
+	rv |= tcpc_write(port, TCPC_REG_COMMAND,
+			 TCPC_REG_COMMAND_LOOK4CONNECTION);
 
-	return rv;
-}
-
-int tcpci_tcpc_set_connection(int port,
-			      enum tcpc_cc_pull pull,
-			      int connect)
-{
-	int rv;
-	int role;
-
-	/*
-	 * Disconnecting will set the following and then return
-	 *     Set RC.DRP=1b (DRP)
-	 *     Set RC.RpValue=00b (smallest Rp to save power)
-	 *     Set RC.CC1=pull (Rd or Rp)
-	 *     Set RC.CC2=pull (Rd or Rp)
-	 */
-	if (!connect) {
-		tcpci_set_role_ctrl(port, 1, TYPEC_RP_USB, pull);
-		return EC_SUCCESS;
-	}
-
-	/* Get the ROLE CONTROL value */
-	rv = tcpc_read(port, TCPC_REG_ROLE_CTRL, &role);
-	if (rv)
-		return rv;
-
-	if (role & TCPC_REG_ROLE_CTRL_DRP_MASK) {
-		enum tcpc_cc_pull cc1_pull, cc2_pull;
-		enum tcpc_cc_voltage_status cc1, cc2;
-
-		enum tcpc_cc_polarity polarity;
-
-		/*
-		 * If DRP is set, the CC pins shall stay in
-		 * Potential_Connect_as_Src or Potential_Connect_as_Sink
-		 * until directed otherwise.
-		 *
-		 * Set RC.CC1 & RC.CC2 per potential decision
-		 * Set RC.DRP=0
-		 */
-		rv = tcpm_get_cc(port, &cc1, &cc2);
-		if (rv)
-			return rv;
-
-		switch (cc1) {
-		case TYPEC_CC_VOLT_OPEN:
-			cc1_pull = TYPEC_CC_OPEN;
-			break;
-		case TYPEC_CC_VOLT_RA:
-			cc1_pull = TYPEC_CC_RA;
-			break;
-		case TYPEC_CC_VOLT_RD:
-			cc1_pull = TYPEC_CC_RP;
-			break;
-		case TYPEC_CC_VOLT_RP_DEF:
-		case TYPEC_CC_VOLT_RP_1_5:
-		case TYPEC_CC_VOLT_RP_3_0:
-			cc1_pull = TYPEC_CC_RD;
-			break;
-		default:
-			return EC_ERROR_UNKNOWN;
-		}
-
-		switch (cc2) {
-		case TYPEC_CC_VOLT_OPEN:
-			cc2_pull = TYPEC_CC_OPEN;
-			break;
-		case TYPEC_CC_VOLT_RA:
-			cc2_pull = TYPEC_CC_RA;
-			break;
-		case TYPEC_CC_VOLT_RD:
-			cc2_pull = TYPEC_CC_RP;
-			break;
-		case TYPEC_CC_VOLT_RP_DEF:
-		case TYPEC_CC_VOLT_RP_1_5:
-		case TYPEC_CC_VOLT_RP_3_0:
-			cc2_pull = TYPEC_CC_RD;
-			break;
-		default:
-			return EC_ERROR_UNKNOWN;
-		}
-
-		/* Set the CC lines */
-		rv = tcpc_write(port, TCPC_REG_ROLE_CTRL,
-				TCPC_REG_ROLE_CTRL_SET(0,
-						CONFIG_USB_PD_PULLUP,
-						cc1_pull, cc2_pull));
-		if (rv)
-			return rv;
-
-		/* Set TCPC_CONTROl.PlugOrientation */
-		if (pull == TYPEC_CC_RD)
-			polarity = polarity_rm_dts(
-					get_snk_polarity(cc1, cc2));
-		else
-			polarity = get_src_polarity(cc1, cc2);
-
-		rv = tcpc_update8(port, TCPC_REG_TCPC_CTRL,
-				  TCPC_REG_TCPC_CTRL_SET(1),
-				  (polarity == POLARITY_CC1) ? MASK_CLR
-							     : MASK_SET);
-	} else {
-		/*
-		 * DRP is not set. This would happen if DRP is not enabled or
-		 * was turned off and we did not have a connection.  We have
-		 * to manually turn off that we are looking for a connection
-		 * and set both CC lines to the pull value.
-		 */
-		rv = tcpc_update8(port,
-				  TCPC_REG_TCPC_CTRL,
-				  TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT,
-				  MASK_CLR);
-	}
 	return rv;
 }
 #endif
@@ -973,7 +838,6 @@ void tcpci_tcpc_alert(int port)
 		int fault;
 
 		if (tcpci_get_fault(port, &fault) == EC_SUCCESS &&
-		    fault != 0 &&
 		    tcpci_handle_fault(port, fault) == EC_SUCCESS &&
 		    tcpci_clear_fault(port, fault) == EC_SUCCESS)
 			CPRINTS("C%d FAULT 0x%02X handled", port, fault);
@@ -1152,6 +1016,7 @@ int tcpci_tcpm_init(int port)
 	int error;
 	int power_status;
 	int tries = TCPM_INIT_TRIES;
+	int regval;
 
 	if (port >= board_get_usb_pd_port_count())
 		return EC_ERROR_INVAL;
@@ -1176,9 +1041,9 @@ int tcpci_tcpm_init(int port)
 	 * Alert assertion when CC_STATUS.Looking4Connection changes state.
 	 */
 	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) {
-		error = tcpc_update8(port, TCPC_REG_TCPC_CTRL,
-				TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT,
-				MASK_SET);
+		error = tcpc_read(port, TCPC_REG_TCPC_CTRL, &regval);
+		regval |= TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT;
+		error |= tcpc_write(port, TCPC_REG_TCPC_CTRL, regval);
 		if (error)
 			CPRINTS("C%d: Failed to init TCPC_CTRL!", port);
 	}
