@@ -5,6 +5,7 @@
 
 /* Icelake chipset power control module for Chrome EC */
 
+#include "board_config.h"
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
@@ -95,7 +96,9 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	report_ap_reset(reason);
 
 	/* Turn off RMSRST_L  to meet tPCH12 */
+	board_before_rsmrst(0);
 	GPIO_SET_LEVEL(GPIO_PCH_RSMRST_L, 0);
+	board_after_rsmrst(0);
 
 	/* Turn off DSW_PWROK to meet tPCH14 */
 	GPIO_SET_LEVEL(GPIO_PCH_DSW_PWROK, 0);
