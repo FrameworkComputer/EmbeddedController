@@ -22,7 +22,7 @@
 const enum gpio_signal hibernate_wake_pins[] = {};
 const int hibernate_wake_pins_used;
 
-void board_after_rsmrst(int rsmrst)
+__override void board_after_rsmrst(int rsmrst)
 {
 	/*
 	 * b:148688874: If RSMRST# is de-asserted, enable the pull-up on
