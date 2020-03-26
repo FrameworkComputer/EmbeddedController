@@ -1039,6 +1039,14 @@ void tc_state_init(int port)
 	 * can disable PD by policy later.
 	 */
 	tc_policy_pd_enable(port, 1);
+
+	/* Set dual-role state based on chipset power state */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		pd_set_dual_role_no_wakeup(port, PD_DRP_FORCE_SINK);
+	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		pd_set_dual_role_no_wakeup(port, PD_DRP_TOGGLE_OFF);
+	else /* CHIPSET_STATE_ON */
+		pd_set_dual_role_no_wakeup(port, PD_DRP_TOGGLE_ON);
 }
 
 enum pd_cable_plug tc_get_cable_plug(int port)
