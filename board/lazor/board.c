@@ -10,12 +10,14 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "extpower.h"
+#include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "pi3usb9201.h"
 #include "power.h"
@@ -25,6 +27,7 @@
 #include "system.h"
 #include "shi_chip.h"
 #include "switch.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "usbc_ppc.h"
 
@@ -414,8 +417,10 @@ uint16_t tcpc_get_alert_status(void)
 
 /* Mutexes */
 static struct mutex g_base_mutex;
+static struct mutex g_lid_mutex;
 
 static struct bmi160_drv_data_t g_bmi160_data;
+static struct kionix_accel_data g_kx022_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
 const mat33_fp_t base_standard_ref = {
@@ -424,7 +429,39 @@ const mat33_fp_t base_standard_ref = {
 	{ 0,  0, FLOAT_TO_FP(1)}
 };
 
+static const mat33_fp_t lid_standard_ref = {
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
 struct motion_sensor_t motion_sensors[] = {
+	[LID_ACCEL] = {
+	 .name = "Lid Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_KX022,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &kionix_accel_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_kx022_data,
+	 .port = I2C_PORT_SENSOR,
+	 .i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
+	 .rot_standard_ref = &lid_standard_ref,
+	 .default_range = 2, /* g, to support lid angle calculation. */
+	 .min_frequency = KX022_ACCEL_MIN_FREQ,
+	 .max_frequency = KX022_ACCEL_MAX_FREQ,
+	 .config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		/* Sensor on for lid angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	 },
+	},
 	/*
 	 * Note: bmi160: supports accelerometer and gyro sensor
 	 * Requirement: accelerometer sensor must init before gyro sensor
@@ -469,3 +506,19 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+#ifndef TEST_BUILD
+/* This callback disables keyboard when convertibles are fully open */
+void lid_angle_peripheral_enable(int enable)
+{
+	/*
+	 * If the lid is in tablet position via other sensors,
+	 * ignore the lid angle, which might be faulty then
+	 * disable keyboard.
+	 */
+	if (tablet_get_mode())
+		enable = 0;
+
+	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+}
+#endif
