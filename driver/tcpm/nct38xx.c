@@ -119,103 +119,6 @@ static void nct38xx_tcpc_alert(int port)
 
 }
 
-#ifndef CONFIG_ZORK_AUTO_DISCHARGE
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-static int nct38xx_set_new_connection(int port,
-	enum tcpc_cc_pull pull)
-{
-	int rv;
-	int role;
-
-	/* Get the ROLE CONTROL value */
-	rv = tcpc_read(port, TCPC_REG_ROLE_CTRL, &role);
-	if (rv)
-		return rv;
-
-	if (role & TCPC_REG_ROLE_CTRL_DRP_MASK) {
-		/*
-		 * If DRP is set, the CC pins shall stay in
-		 * Potential_Connect_as_Src or Potential_Connect_as_Sink
-		 * until directed otherwise.
-		 *
-		 * Set RC.CC1 & RC.CC2 per potential decision
-		 * Set RC.DRP=0
-		 */
-		enum tcpc_cc_pull cc1_pull, cc2_pull;
-		enum tcpc_cc_voltage_status cc1, cc2;
-
-		rv = nct38xx_tcpm_drv.get_cc(port, &cc1, &cc2);
-		if (rv)
-			return rv;
-
-		switch (cc1) {
-		case TYPEC_CC_VOLT_OPEN:
-			cc1_pull = TYPEC_CC_OPEN;
-			break;
-		case TYPEC_CC_VOLT_RA:
-			cc1_pull = TYPEC_CC_RA;
-			break;
-		case TYPEC_CC_VOLT_RD:
-			cc1_pull = TYPEC_CC_RP;
-			break;
-		case TYPEC_CC_VOLT_RP_DEF:
-		case TYPEC_CC_VOLT_RP_1_5:
-		case TYPEC_CC_VOLT_RP_3_0:
-			cc1_pull = TYPEC_CC_RD;
-			break;
-		default:
-			return EC_ERROR_UNKNOWN;
-		}
-
-		switch (cc2) {
-		case TYPEC_CC_VOLT_OPEN:
-			cc2_pull = TYPEC_CC_OPEN;
-			break;
-		case TYPEC_CC_VOLT_RA:
-			cc2_pull = TYPEC_CC_RA;
-			break;
-		case TYPEC_CC_VOLT_RD:
-			cc2_pull = TYPEC_CC_RP;
-			break;
-		case TYPEC_CC_VOLT_RP_DEF:
-		case TYPEC_CC_VOLT_RP_1_5:
-		case TYPEC_CC_VOLT_RP_3_0:
-			cc2_pull = TYPEC_CC_RD;
-			break;
-		default:
-			return EC_ERROR_UNKNOWN;
-		}
-
-		/* Set the CC lines */
-		rv = tcpc_write(port, TCPC_REG_ROLE_CTRL,
-				TCPC_REG_ROLE_CTRL_SET(0,
-						CONFIG_USB_PD_PULLUP,
-						cc1_pull, cc2_pull));
-		if (rv)
-			return rv;
-	} else {
-		/*
-		 * DRP is not set. This would happen if DRP is not enabled or
-		 * was turned off and we did not have a connection.  We have
-		 * to manually turn off that we are looking for a connection
-		 * and set both CC lines to the pull value.
-		 */
-		rv = tcpc_update8(port,
-				  TCPC_REG_TCPC_CTRL,
-				  TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT,
-				  MASK_CLR);
-		if (rv)
-			return rv;
-
-		/* Set the CC lines */
-		rv = nct38xx_tcpm_drv.set_cc(port, pull);
-		if (rv)
-			return rv;
-	}
-	return EC_SUCCESS;
-}
-#endif
-#else
 static __maybe_unused int nct3807_tcpc_drp_toggle(int port)
 {
 	int rv;
@@ -236,7 +139,6 @@ static __maybe_unused int nct3807_tcpc_drp_toggle(int port)
 
 	return rv;
 }
-#endif
 
 const struct tcpm_drv nct38xx_tcpm_drv = {
 	.init			= &nct38xx_tcpm_init,
@@ -260,13 +162,8 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 	.tcpc_enable_auto_discharge_disconnect =
 				  &tcpci_tcpc_enable_auto_discharge_disconnect,
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-#ifndef CONFIG_ZORK_AUTO_DISCHARGE
-	.drp_toggle		= &tcpci_tcpc_drp_toggle,
-	.set_new_connection	= &nct38xx_set_new_connection,
-#else
 	.drp_toggle		= &nct3807_tcpc_drp_toggle,
 	.set_connection		= &tcpci_tcpc_set_connection,
-#endif
 #endif
 #ifdef CONFIG_USBC_PPC
 	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,

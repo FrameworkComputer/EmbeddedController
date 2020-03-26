@@ -3662,9 +3662,6 @@
 #define CONFIG_USB_PRL_SM
 #define CONFIG_USB_PE_SM
 
-/* Enables Zork Auto Discharge Disconnect Changes */
-#undef CONFIG_ZORK_AUTO_DISCHARGE
-
 /* Enables PD Console commands */
 #define CONFIG_USB_PD_CONSOLE_CMD
 

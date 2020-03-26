@@ -1642,11 +1642,6 @@ static void tc_unattached_snk_entry(const int port)
 	if (IS_ENABLED(CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER))
 		bc12_role_change_handler(port);
 
-#ifndef CONFIG_ZORK_AUTO_DISCHARGE
-	/* VBus should be SafeV0, turn off auto discharge disconnect */
-	tcpm_enable_auto_discharge_disconnect(port, 0);
-#endif
-
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 
@@ -1665,6 +1660,9 @@ static void tc_unattached_snk_entry(const int port)
 		CLR_ALL_BUT_LPM_FLAGS(port);
 		tc_enable_pd(port, 0);
 	}
+
+	/* Turn on auto discharge disconnect */
+	tcpm_enable_auto_discharge_disconnect(port, 1);
 }
 
 static void tc_unattached_snk_run(const int port)
@@ -1696,8 +1694,6 @@ static void tc_unattached_snk_run(const int port)
 	if (drp_state[port] == PD_DRP_TOGGLE_ON &&
 		TC_CHK_FLAG(port, TC_FLAGS_AUTO_TOGGLE_SUPPORTED) &&
 		cc_is_open(cc1, cc2)) {
-
-#ifdef CONFIG_ZORK_AUTO_DISCHARGE
 		/*
 		 * We are disconnected and going to DRP
 		 *     PC.AutoDischargeDisconnect=0b
@@ -1707,8 +1703,6 @@ static void tc_unattached_snk_run(const int port)
 		 */
 		tcpm_enable_auto_discharge_disconnect(port, 0);
 		tcpm_set_connection(port, TYPEC_CC_RD, 0);
-#endif
-
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
 		return;
 	}
@@ -1735,15 +1729,11 @@ static void tc_unattached_snk_run(const int port)
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	else if (drp_state[port] == PD_DRP_FORCE_SINK ||
 		drp_state[port] == PD_DRP_TOGGLE_OFF) {
-
-#ifdef CONFIG_ZORK_AUTO_DISCHARGE
 		/*
 		 * We are disconnecting without DRP.
 		 *     PC.AutoDischargeDisconnect=0b
 		 */
 		tcpm_enable_auto_discharge_disconnect(port, 0);
-#endif
-
 		set_state_tc(port, TC_LOW_POWER_MODE);
 	}
 #endif
@@ -1906,11 +1896,6 @@ static void tc_attached_snk_entry(const int port)
 	/* Enable PD */
 	if (IS_ENABLED(CONFIG_USB_PE_SM))
 		tc_enable_pd(port, 1);
-
-#ifndef CONFIG_ZORK_AUTO_DISCHARGE
-	/* VBus should be powered, turn on auto discharge disconnect */
-	tcpm_enable_auto_discharge_disconnect(port, 1);
-#endif
 }
 
 static void tc_attached_snk_run(const int port)
@@ -2350,11 +2335,6 @@ static void tc_unattached_src_entry(const int port)
 	if (IS_ENABLED(CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER))
 		bc12_role_change_handler(port);
 
-#ifndef CONFIG_ZORK_AUTO_DISCHARGE
-	/* VBus should be SafeV0, turn off auto discharge disconnect */
-	tcpm_enable_auto_discharge_disconnect(port, 0);
-#endif
-
 	if (IS_ENABLED(CONFIG_USBC_PPC)) {
 		/* There is no sink connected. */
 		ppc_sink_is_connected(port, 0);
@@ -2375,6 +2355,9 @@ static void tc_unattached_src_entry(const int port)
 	}
 
 	tc[port].next_role_swap = get_time().val + PD_T_DRP_SRC;
+
+	/* Turn on auto discharge disconnect */
+	tcpm_enable_auto_discharge_disconnect(port, 1);
 }
 
 static void tc_unattached_src_run(const int port)
@@ -2423,8 +2406,6 @@ static void tc_unattached_src_run(const int port)
 	else if (drp_state[port] == PD_DRP_TOGGLE_ON &&
 		TC_CHK_FLAG(port, TC_FLAGS_AUTO_TOGGLE_SUPPORTED) &&
 		cc_is_open(cc1, cc2)) {
-
-#ifdef CONFIG_ZORK_AUTO_DISCHARGE
 		/*
 		 * We are disconnected and going to DRP
 		 *     PC.AutoDischargeDisconnect=0b
@@ -2435,8 +2416,6 @@ static void tc_unattached_src_run(const int port)
 		 */
 		tcpm_enable_auto_discharge_disconnect(port, 0);
 		tcpm_set_connection(port, TYPEC_CC_RP, 0);
-#endif
-
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
 	}
 #endif
@@ -2444,15 +2423,11 @@ static void tc_unattached_src_run(const int port)
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	else if (drp_state[port] == PD_DRP_FORCE_SOURCE ||
 		drp_state[port] == PD_DRP_TOGGLE_OFF) {
-
-#ifdef CONFIG_ZORK_AUTO_DISCHARGE
 		/*
 		 * We are disconnecting without DRP.
 		 *     PC.AutoDischargeDisconnect=0b
 		 */
 		tcpm_enable_auto_discharge_disconnect(port, 0);
-#endif
-
 		set_state_tc(port, TC_LOW_POWER_MODE);
 	}
 #endif
@@ -2631,11 +2606,6 @@ static void tc_attached_src_entry(const int port)
 	/* Inform PPC that a sink is connected. */
 	if (IS_ENABLED(CONFIG_USBC_PPC))
 		ppc_sink_is_connected(port, 1);
-
-#ifndef CONFIG_ZORK_AUTO_DISCHARGE
-	/* VBus should be powered, turn on auto discharge disconnect */
-	tcpm_enable_auto_discharge_disconnect(port, 1);
-#endif
 
 	/*
 	 * Only notify if we're not performing a power role swap.  During a
@@ -2874,33 +2844,23 @@ static void tc_drp_auto_toggle_run(const int port)
 		set_state_tc(port, PD_DEFAULT_STATE(port));
 		break;
 	case DRP_TC_UNATTACHED_SNK:
-#ifdef CONFIG_ZORK_AUTO_DISCHARGE
 		/*
 		 * New SNK connection.
 		 *     Set RC.CC1 & RC.CC2 per decision
 		 *     Set RC.DRP=0
 		 *     Set TCPC_CONTROl.PlugOrientation
-		 *     PC.AutoDischargeDisconnect=1b
 		 */
 		tcpm_set_connection(port, TYPEC_CC_RD, 1);
-		tcpm_enable_auto_discharge_disconnect(port, 1);
-#endif
-
 		set_state_tc(port, TC_UNATTACHED_SNK);
 		break;
 	case DRP_TC_UNATTACHED_SRC:
-#ifdef CONFIG_ZORK_AUTO_DISCHARGE
 		/*
 		 * New SRC connection.
 		 *     Set RC.CC1 & RC.CC2 per decision
 		 *     Set RC.DRP=0
 		 *     Set TCPC_CONTROl.PlugOrientation
-		 *     PC.AutoDischargeDisconnect=1b
 		 */
 		tcpm_set_connection(port, TYPEC_CC_RP, 1);
-		tcpm_enable_auto_discharge_disconnect(port, 1);
-#endif
-
 		set_state_tc(port, TC_UNATTACHED_SRC);
 		break;
 	case DRP_TC_DRP_AUTO_TOGGLE:
@@ -3227,11 +3187,7 @@ static void tc_cc_rd_entry(const int port)
 	 * Both CC1 and CC2 pins shall be independently terminated to
 	 * ground through Rd.
 	 */
-#ifndef CONFIG_ZORK_AUTO_DISCHARGE
-	tcpm_set_new_connection(port, TYPEC_CC_RD);
-#else
 	tcpm_set_cc(port, TYPEC_CC_RD);
-#endif
 }
 
 
@@ -3253,11 +3209,7 @@ static void tc_cc_rp_entry(const int port)
 	 * up through Rp.
 	 */
 	tcpm_select_rp_value(port, CONFIG_USB_PD_PULLUP);
-#ifndef CONFIG_ZORK_AUTO_DISCHARGE
-	tcpm_set_new_connection(port, TYPEC_CC_RP);
-#else
 	tcpm_set_cc(port, TYPEC_CC_RP);
-#endif
 }
 
 /**

@@ -178,19 +178,6 @@ static inline int tcpm_set_cc(int port, int pull)
 	return tcpc_config[port].drv->set_cc(port, pull);
 }
 
-#ifndef CONFIG_ZORK_AUTO_DISCHARGE
-static inline int tcpm_set_new_connection(int port,
-	enum tcpc_cc_pull pull)
-{
-	const struct tcpm_drv *tcpc = tcpc_config[port].drv;
-
-	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) &&
-	    tcpc->set_new_connection)
-		return tcpc->set_new_connection(port, pull);
-	else
-		return tcpc->set_cc(port, pull);
-}
-#else
 static inline int tcpm_set_connection(int port,
 				      enum tcpc_cc_pull pull,
 				      int connect)
@@ -202,7 +189,6 @@ static inline int tcpm_set_connection(int port,
 		return tcpc->set_connection(port, pull, connect);
 	return EC_SUCCESS;
 }
-#endif
 
 static inline int tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
