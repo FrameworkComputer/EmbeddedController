@@ -47,22 +47,19 @@ GPIO_INT(USB_C1_MIX_INT_ODL,	PIN(0, 3), GPIO_INT_BOTH, bc12_interrupt)
 /* HDMI interrupts */
 
 /* Volume button interrupts */
-GPIO_INT(EC_VOLDN_BTN_ODL,		PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
-GPIO_INT(EC_VOLUP_BTN_ODL,		PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
 /* Power Sequencing Signals */
 GPIO(EN_PP3300_A,              PIN(A, 3), GPIO_OUT_LOW)
-GPIO(EN_PP5000_A,              PIN(A, 4), GPIO_OUT_LOW)
-GPIO(EN_PPVAR_VCCIN,           PIN(4, 3), GPIO_OUT_LOW) /* Enables VCCIN IMPV9 */
-/* The EC does not buffer this signal on Volteer. */
+GPIO(EN_PPVAR_VCCIN,	       PIN(4, 3), GPIO_OUT_LOW)
+
+/* The EC does not buffer this signal on Halvor. */
 UNIMPLEMENTED(PCH_DSW_PWROK)
+UNIMPLEMENTED(EN_PP5000_A)
 
 #ifdef VOLTEER_POWER_SEQUENCE
 /* Optional power sequencing signals that are not stuffed by default */
-GPIO(EN_DRAM_VDDQ,		PIN(F, 2), GPIO_OUT_LOW)
 GPIO(EN_PP1050_STG,		PIN(C, 0), GPIO_OUT_LOW)
 GPIO(EN_PP5000_USB_AG,		PIN(A, 7), GPIO_OUT_LOW)
-GPIO(EN_PPVAR_VCCIN_AUX,	PIN(8, 1), GPIO_OUT_LOW)
 GPIO(EN_PP1050_ST_S0,		PIN(3, 4), GPIO_OUT_LOW)
 GPIO(EN_VNN_BYPASS,		PIN(B, 0), GPIO_OUT_LOW)
 GPIO(EN_DRAM_VDD1,		PIN(9, 6), GPIO_OUT_LOW)
@@ -88,18 +85,27 @@ GPIO(EC_PCH_RTCRST,            PIN(7, 6), GPIO_OUT_LOW)
 GPIO(EC_PCH_WAKE_ODL,          PIN(7, 4), GPIO_ODR_HIGH)
 GPIO(EC_ENTERING_RW,           PIN(E, 3), GPIO_OUT_LOW)
 GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)
-UNIMPLEMENTED(EC_PROCHOT_IN_L)
 GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
 
 GPIO(EC_PCH_INT_ODL,           PIN(B, 0), GPIO_ODR_HIGH)
 
 /* USB and USBC Signals */
-GPIO(USB_C1_RT_RST_ODL,			PIN(8, 3), GPIO_ODR_LOW) /* USB_C1 Reset on boards board ID >=1 */
+GPIO(USB_C1_RT_RST_ODL,		PIN(8, 6), GPIO_ODR_LOW)
 
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C1_LS_EN)
 /* Retimer Force Power enable is connected to AP */
 UNIMPLEMENTED(USB_C1_RT_FORCE_PWR)
+
+/* Other input pins */
+GPIO(CCD_MODE_ODL,		PIN(E, 5),  GPIO_INPUT)
+GPIO(EC_PROCHOT_IN_L,		PIN(F, 0),  GPIO_INPUT)
+GPIO(CHARGER_INT_L,		PIN(7, 3),  GPIO_INPUT)
+
+/* Other output pins */
+GPIO(EC_PPEXT_EN1,		PIN(C, 2), GPIO_OUT_HIGH)
+GPIO(EC_I2CBUFFER_EN,		PIN(9, 3), GPIO_OUT_LOW)
+GPIO(UART2_EC_RX,		PIN(7, 5), GPIO_OUT_LOW)
 
 /* Misc Signals */
 
@@ -128,7 +134,7 @@ GPIO(EC_I2C7_EEPROM_SDA,       PIN(B, 2), GPIO_INPUT)
 GPIO(EC_BATT_PRES_ODL, 		PIN(E, 1), GPIO_INPUT)
 
 /* Physical HPD pins are not needed on EC as these are configured by PMC */
-GPIO(USB_C0_DP_HPD,		PIN(F, 3), GPIO_INPUT)
+GPIO(USB_C0_DP_HPD,		PIN(C, 6), GPIO_INPUT)
 GPIO(USB_C1_DP_HPD,		PIN(7, 0), GPIO_INPUT)
 
 /* Alternate functions GPIO definitions */
@@ -142,13 +148,10 @@ ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                       
 /* This selects between an LED module on the motherboard and one on the daughter
  * board, to be controlled by LED_{1,2,3}_L. PWM allows driving both modules at
  * the same time. */
-ALTERNATE(PIN_MASK(6, BIT(0)), 0, MODULE_PWM, 0)                                     /* LED_SIDESEL_4_L */
-ALTERNATE(PIN_MASK(C, BIT(2) | BIT(3) | BIT(4)), 0, MODULE_PWM, 0)                   /* LED_{3,2,1}_L */
+
+ALTERNATE(PIN_MASK(C, BIT(3) | BIT(4)), 0, MODULE_PWM, 0)                   /* LED_{2,1}_L */
 
 /* Fan signals */
-GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
-ALTERNATE(PIN_MASK(B, BIT(7)), 0, MODULE_PWM, 0)	/* FAN_PWM */
-ALTERNATE(PIN_MASK(4, BIT(0)), 0, MODULE_PWM, 0)	/* FAN_SPEED_TACH */
 
 /* Keyboard pins */
 #define GPIO_KB_INPUT (GPIO_INPUT | GPIO_PULL_UP)
@@ -158,7 +161,7 @@ ALTERNATE(PIN_MASK(2, 0x03), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH) /* KSO_00-0
 GPIO(EC_KSO_02_INV, PIN(1, 7),                        GPIO_OUT_LOW)  /* KSO_02 */
 ALTERNATE(PIN_MASK(1, 0x7F), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH) /* KSO_03-09 */
 ALTERNATE(PIN_MASK(0, 0xF0), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH) /* KSO_10-13 */
-ALTERNATE(PIN_MASK(8, 0x04), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH) /* KSO_14 */
+ALTERNATE(PIN_MASK(8, 0x0C), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH) /* KSO_14-15 */
 ALTERNATE(PIN_MASK(8, BIT(0)), 0, MODULE_PWM, 0)                     /* EC_KB_BL_PWM */
 
 /* UART */
