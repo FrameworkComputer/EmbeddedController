@@ -222,6 +222,10 @@ int tcpci_tcpm_release(int port);
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 int tcpci_set_role_ctrl(int port, int toggle, int rp, int pull);
 int tcpci_tcpc_drp_toggle(int port);
+#ifdef CONFIG_ZORK_AUTO_DISCHARGE
+int tcpci_tcpc_set_connection(int port, enum tcpc_cc_pull pull,
+			      int connect);
+#endif
 #endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 int tcpci_enter_low_power_mode(int port);

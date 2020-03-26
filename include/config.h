@@ -3672,6 +3672,9 @@
  */
 #undef CONFIG_USB_PD_TCPMV2
 
+/* Enables Zork Auto Discharge Disconnect Changes */
+#undef CONFIG_ZORK_AUTO_DISCHARGE
+
 /* Enables PD Console commands */
 #define CONFIG_USB_PD_CONSOLE_CMD
 
