@@ -78,7 +78,13 @@ struct cbi_data *cbi_find_tag(const void *cbi, enum cbi_data_tag tag)
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, "CBI " format, ## args)
 
-#define EEPROM_PAGE_WRITE_SIZE	16
+/*
+ * We allow EEPROMs with page size of 8 or 16. Use 8 to be the most compatible.
+ * This causes a little more overhead for writes, but we are not writing to the
+ * EEPROM outside of the factory process.
+ */
+#define EEPROM_PAGE_WRITE_SIZE	8
+
 #define EEPROM_PAGE_WRITE_MS	5
 #define EC_ERROR_CBI_CACHE_INVALID	EC_ERROR_INTERNAL_FIRST
 
@@ -234,9 +240,6 @@ static int eeprom_is_write_protected(void)
 
 static int write_board_info(void)
 {
-	/* The code is only tested for ST M24C02, whose page size for a single
-	 * write is 16 byte. To support different EEPROMs, you may need to
-	 * craft the i2c packets accordingly. */
 	const uint8_t *p = cbi;
 	int rest = head->total_size;
 
