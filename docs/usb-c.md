@@ -105,14 +105,8 @@ Chromebooks. For example, the older stack supports the Zinger, which is the
 USB-C charging device that shipped with Samus, the Google Chromebook Pixel 2.
 The Zinger implements the charger only side of the USB PD protocol.
 
-To use the newer USB-C PD stack implementation, see `CONFIG_USB_SM_FRAMEWORK`
-description in [config.h][config header link].
-
-The newer implementation only supports Chromebooks at the moment. There are
-multiple policy engine definitions to choose from depending on the different
-USB-C features the Chromebook should support. As of now, you must choose one and
-only one policy engine state machine implementation. The policy engine mostly
-defines what PD features (e.g. Try.SRC) are implemented on the Chromebook.
+To use the newer USB-C PD stack implementation, see
+[TCPMv2 Overview](usb-tcpmv2.md).
 
 ## Implementation Considerations
 

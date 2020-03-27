@@ -36,6 +36,7 @@
 
 *   [USB-C Power Delivery and Alternate Modes](./usb-c.md)
 *   [USB-A and USB-C Policies for Sourcing Power](./usb_power.md)
+*   [USB-C Power Delivery TCPMv2](./usb-tcpmv2.md)
 
 ## EC-3PO
 
