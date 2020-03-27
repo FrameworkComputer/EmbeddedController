@@ -766,6 +766,7 @@ static const char * const ec_feature_names[] = {
 		"Tight timestamp for sensors events",
 	[EC_FEATURE_REFINED_TABLET_MODE_HYSTERESIS] =
 		"Refined tablet mode hysteresis",
+	[EC_FEATURE_EFS2] = "Early Firmware Selection v2",
 	[EC_FEATURE_ISH] = "Intel Integrated Sensor Hub",
 };
 

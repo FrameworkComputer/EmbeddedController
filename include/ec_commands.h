@@ -1390,6 +1390,12 @@ enum ec_feature_code {
 	 * MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE.
 	 */
 	EC_FEATURE_REFINED_TABLET_MODE_HYSTERESIS = 37,
+	/*
+	 * Early Firmware Selection ver.2. Enabled by CONFIG_VBOOT_EFS2.
+	 * Note this is a RO feature. So, a query (EC_CMD_GET_FEATURES) should
+	 * be sent to RO to be precise.
+	 */
+	EC_FEATURE_EFS2 = 38,
 	/* The MCU is a System Companion Processor (SCP). */
 	EC_FEATURE_SCP = 39,
 	/* The MCU is an Integrated Sensor Hub */
