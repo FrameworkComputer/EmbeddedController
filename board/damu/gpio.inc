@@ -105,7 +105,11 @@ ALTERNATE(PIN_MASK(A, 0x1800), 5, MODULE_I2C,        GPIO_ODR_HIGH )
 ALTERNATE(PIN_MASK(B, 0x0038), 0, MODULE_SPI,        0)
 /* SPI SLAVE CS: PA15 */
 ALTERNATE(PIN_MASK(A, 0x8000), 0, MODULE_SPI,        0)
-#ifdef SECTION_IS_RO
-/* SPI SLAVE: PB13/14/15 */
+
+/* Shared between slave for emmc and master for bmi160 */
+/* They're mutually exclusive with gpio_config_module. */
+/* EMMC SPI SLAVE: PB13/14/15 */
 ALTERNATE(PIN_MASK(B, 0xE000), 0, MODULE_SPI_FLASH,  0)
-#endif
+/* SENSORS SPI MASTER: PB10, PB12, PC2, PC3 */
+ALTERNATE(PIN_MASK(B, 0x0400), 5, MODULE_SPI_MASTER, 0)
+ALTERNATE(PIN_MASK(C, 0x000C), 1, MODULE_SPI_MASTER, 0)
