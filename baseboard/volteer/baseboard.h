@@ -214,12 +214,9 @@
 #define PD_VCONN_SWAP_DELAY		5000 /* us */
 
 /* Retimer */
-#ifndef CONFIG_USB_PD_TCPMV2
-/* TODO(b/150301041): Remove #ifdefs when bb_retimer.c works with TCPMv2. */
 #define CONFIG_USBC_RETIMER_INTEL_BB
-#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x40
-#endif /* CONFIG_USB_PD_TCPMV2 */
 #define CONFIG_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
+#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x40
 
 /*
  * SN5S30 PPC supports up to 24V VBUS source and sink, however passive USB-C
