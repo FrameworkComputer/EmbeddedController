@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "config.h"
+#include "console.h"
 #include "ec_commands.h"
 #include "board_config.h"
 
@@ -150,3 +151,12 @@ __overridable uint32_t board_override_feature_flags1(uint32_t flags1)
 {
 	return flags1;
 }
+
+static int cc_feat(int argc, char **argv)
+{
+	ccprintf(" 0-31: 0x%08x\n", get_feature_flags0());
+	ccprintf("32-63: 0x%08x\n", get_feature_flags1());
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(feat, cc_feat, "", "Print feature flags");
