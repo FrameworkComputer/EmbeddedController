@@ -39,13 +39,13 @@ void vivaldi_init(const struct vivaldi_config *keybd)
 	uint8_t row, col, *mask;
 	int key;
 
-	cprints(CC_KEYBOARD, "VIVALDI: Num top row keys = %u\n",
+	cprints(CC_KEYBOARD, "VIVALDI: Num top row keys = %u",
 		keybd->num_top_row_keys);
 
 	if (keybd->num_top_row_keys > MAX_VIVALDI_KEYS ||
 	    keybd->num_top_row_keys < 10)
 		cprints(CC_KEYBOARD,
-			"BAD VIVALDI CONFIG! Some keys may not work\n");
+			"BAD VIVALDI CONFIG! Some keys may not work");
 
 	for (key = T1; key < MAX_VIVALDI_KEYS; key++) {
 
@@ -60,6 +60,9 @@ void vivaldi_init(const struct vivaldi_config *keybd)
 
 			/* Populate the scancode */
 			scancode_set2[col][row] = keybd->scancodes[key];
+			cprints(CC_KEYBOARD,
+				"VIVALDI key-%u (r-%u, c-%u) = scancode-%X",
+				key, row, col, keybd->scancodes[key]);
 		} else {
 			/* Disable the mask */
 			*mask &= ~(1 << row);
