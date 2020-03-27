@@ -8,6 +8,7 @@
 *   [EC Acronyms and Technologies](./ec_terms.md)
 
 ## EC Bringup
+
 *   [New Board Checklist](./new_board_checklist.md)
 
 ## Case Closed Debugging (CCD)
@@ -23,6 +24,7 @@
 *   [FPMCU Debugging](./fingerprint/fingerprint-debugging.md)
 *   [Fingerprint Authentication Design Doc](./fingerprint/fingerprint-authentication-design-doc.md)
 *   [Fingerprint Factory Requirements](./fingerprint/fingerprint-factory-requirements.md)
+*   [Fingerprint Quick Factory Guide](./fingerprint/fingerprint-factory-quick-guide.md)
 
 ## Testing
 
