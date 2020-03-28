@@ -566,11 +566,6 @@ static void cbi_init(void)
 		ccprints("FW Config: not set in cbi");
 	else
 		ccprints("FW Config: %d (0x%x)", val, val);
-
-#ifdef HAS_TASK_MOTIONSENSE
-	board_update_sensor_config_from_sku();
-#endif
-
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 

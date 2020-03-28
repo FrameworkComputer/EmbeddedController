@@ -127,26 +127,6 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 enum gpio_signal GPIO_PCH_PWRBTN_L = GPIO_EC_FCH_PWR_BTN_L;
 enum gpio_signal GPIO_PCH_SYS_PWROK = GPIO_EC_FCH_PWROK;
 
-void board_update_sensor_config_from_sku(void)
-{
-	int data;
-
-	/*
-	 * If the CBI EEPROM is found on the battery I2C port then we are
-	 * running on V0 HW so re-map the GPIOs that moved.
-	 */
-	if ((system_get_sku_id() == 0x7fffffff)
-	    && (i2c_read8(I2C_PORT_BATTERY, I2C_ADDR_EEPROM_FLAGS, 0, &data)
-		== EC_SUCCESS)) {
-		ccprints("V0 HW detected");
-		GPIO_PCH_PWRBTN_L = GPIO_EC_FCH_PWR_BTN_L_V0;
-		GPIO_PCH_SYS_PWROK = GPIO_EC_FCH_PWROK_V0;
-	}
-
-	/* Enable Gyro interrupts */
-	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
-}
-
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
@@ -267,7 +247,6 @@ static void setup_mux(void)
 		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_ps8818;
 	}
 }
-DECLARE_HOOK(HOOK_INIT, setup_mux, HOOK_PRIO_DEFAULT);
 
 /* TODO(b:151232257) Remove probe code when hardware supports CBI */
 #include "driver/retimer/ps8802.h"
@@ -304,3 +283,30 @@ struct usb_mux usb_muxes[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
+
+/*****************************************************************************
+ * Use FW_CONFIG to set correct configuration.
+ */
+
+void setup_fw_config(void)
+{
+	int data;
+
+	/*
+	 * If the CBI EEPROM is found on the battery I2C port then we are
+	 * running on V0 HW so re-map the GPIOs that moved.
+	 */
+	if ((system_get_sku_id() == 0x7fffffff)
+	    && (i2c_read8(I2C_PORT_BATTERY, I2C_ADDR_EEPROM_FLAGS, 0, &data)
+		== EC_SUCCESS)) {
+		ccprints("V0 HW detected");
+		GPIO_PCH_PWRBTN_L = GPIO_EC_FCH_PWR_BTN_L_V0;
+		GPIO_PCH_SYS_PWROK = GPIO_EC_FCH_PWROK_V0;
+	}
+
+	/* Enable Gyro interrupts */
+	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
+
+	setup_mux();
+}
+DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);

@@ -120,12 +120,6 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #endif /* HAS_TASK_MOTIONSENSE */
 
-void board_update_sensor_config_from_sku(void)
-{
-	/* Enable Gyro interrupts */
-	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
-}
-
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
@@ -149,6 +143,22 @@ const struct mft_t mft_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
+
+/*****************************************************************************
+ * USB-A Retimer
+ */
+
+static void usba_retimer_on(void)
+{
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, usba_retimer_on, HOOK_PRIO_DEFAULT);
+
+static void usba_retimer_off(void)
+{
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usba_retimer_off, HOOK_PRIO_DEFAULT);
 
 /*
  * USB C0 port SBU mux use standalone FSUSB42UMX
@@ -217,7 +227,6 @@ static void setup_mux(void)
 		usbc1_amd_fp5_usb_mux.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP;
 	}
 }
-DECLARE_HOOK(HOOK_INIT, setup_mux, HOOK_PRIO_DEFAULT);
 
 struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
@@ -233,14 +242,15 @@ struct usb_mux usb_muxes[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
-static void usba_retimer_on(void)
-{
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, usba_retimer_on, HOOK_PRIO_DEFAULT);
-static void usba_retimer_off(void)
-{
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usba_retimer_off, HOOK_PRIO_DEFAULT);
+/*****************************************************************************
+ * Use FW_CONFIG to set correct configuration.
+ */
 
+void setup_fw_config(void)
+{
+	/* Enable Gyro interrupts */
+	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
+
+	setup_mux();
+}
+DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);

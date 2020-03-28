@@ -122,18 +122,6 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #endif /* HAS_TASK_MOTIONSENSE */
 
-void board_update_sensor_config_from_sku(void)
-{
-	/* Enable Gyro interrupts */
-	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
-}
-
-void board_init(void)
-{
-	gpio_enable_interrupt(GPIO_EN_PWR_TOUCHPAD_PS2);
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_INIT_I2C + 1);
-
 static void trackpoint_reset_deferred(void)
 {
 	gpio_set_level(GPIO_EC_PS2_RESET, 1);
@@ -225,7 +213,6 @@ static void setup_mux(void)
 		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_ps8818;
 	}
 }
-DECLARE_HOOK(HOOK_INIT, setup_mux, HOOK_PRIO_DEFAULT);
 
 /* TODO(b:151232257) Remove probe code when hardware supports CBI */
 #include "driver/retimer/ps8802.h"
@@ -262,3 +249,19 @@ struct usb_mux usb_muxes[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
+
+/*****************************************************************************
+ * Use FW_CONFIG to set correct configuration.
+ */
+
+void setup_fw_config(void)
+{
+	/* Enable Gyro interrupts */
+	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
+
+	/* Enable PS2 power interrupts */
+	gpio_enable_interrupt(GPIO_EN_PWR_TOUCHPAD_PS2);
+
+	setup_mux();
+}
+DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
