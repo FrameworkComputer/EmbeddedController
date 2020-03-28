@@ -48,9 +48,11 @@
 #define GPIO_ENABLE_BACKLIGHT_L		GPIO_EC_EDP_BL_DISABLE
 #define GPIO_ENTERING_RW		GPIO_EC_ENTERING_RW
 #define GPIO_KBD_KSO2			GPIO_EC_KSO_02_INV
+#define GPIO_PCH_PWRBTN_L		GPIO_EC_FCH_PWR_BTN_L
 #define GPIO_PCH_RSMRST_L		GPIO_EC_FCH_RSMRST_L
 #define GPIO_PCH_SLP_S3_L		GPIO_SLP_S3_L
 #define GPIO_PCH_SLP_S5_L		GPIO_SLP_S5_L
+#define GPIO_PCH_SYS_PWROK		GPIO_EC_FCH_PWROK
 #define GPIO_PCH_WAKE_L			GPIO_EC_FCH_WAKE_L
 #define GPIO_POWER_BUTTON_L		GPIO_EC_PWR_BTN_ODL
 #define GPIO_S0_PGOOD			GPIO_S0_PWROK_OD
@@ -61,10 +63,6 @@
 #define GPIO_WP_L			GPIO_EC_WP_L
 
 #ifndef __ASSEMBLER__
-
-/* These GPIOs moved. Temporarily detect and support the V0 HW. */
-extern enum gpio_signal GPIO_PCH_PWRBTN_L;
-extern enum gpio_signal GPIO_PCH_SYS_PWROK;
 
 enum battery_type {
 	BATTERY_AP19B8M,
