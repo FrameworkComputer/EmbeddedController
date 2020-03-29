@@ -281,7 +281,7 @@ void disable_enter_usb4_mode(int port)
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 
-static struct pd_policy pe[CONFIG_USB_PD_PORT_MAX_COUNT];
+static struct pd_discovery discovery[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static void enable_transmit_sop_prime(int port)
 {
@@ -383,8 +383,8 @@ static bool is_intel_svid(int port, int prev_svid_cnt)
 		 * For the Discover SVIDs, responder may present the SVIDs
 		 * in any order hence check all SVIDs if Intel SVID present.
 		 */
-		for (i = prev_svid_cnt; i < pe[port].svid_cnt; i++) {
-			if (pe[port].svids[i].svid == USB_VID_INTEL)
+		for (i = prev_svid_cnt; i < discovery[port].svid_cnt; i++) {
+			if (discovery[port].svids[i].svid == USB_VID_INTEL)
 				return true;
 		}
 	}
@@ -524,9 +524,9 @@ static bool is_usb4_vdo(int port, int cnt, uint32_t *payload)
 	return false;
 }
 
-void pd_dfp_pe_init(int port)
+void pd_dfp_discovery_init(int port)
 {
-	memset(&pe[port], 0, sizeof(struct pd_policy));
+	memset(&discovery[port], 0, sizeof(struct pd_discovery));
 }
 
 static int dfp_discover_ident(uint32_t *payload)
@@ -555,9 +555,9 @@ static bool check_tbt_cable_speed(int port)
 						TBT_SS_U32_GEN1_GEN2);
 }
 
-struct pd_policy *pd_get_am_policy(int port)
+struct pd_discovery *pd_get_am_discovery(int port)
 {
-	return &pe[port];
+	return &discovery[port];
 }
 
 /* Note: Enter mode flag is not needed by TCPMv1 */
@@ -705,7 +705,7 @@ static int process_tbt_compat_discover_modes(int port, uint32_t *payload)
 			rsize = enter_tbt_compat_mode(port, payload);
 		} else {
 			/* Discover modes for SOP' */
-			pe[port].svid_idx--;
+			discovery[port].svid_idx--;
 			rsize = dfp_discover_modes(port, payload);
 			enable_transmit_sop_prime(port);
 		}
@@ -898,7 +898,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 			break;
 		case CMD_DISCOVER_SVID:
 			{
-			int prev_svid_cnt = pe[port].svid_cnt;
+			int prev_svid_cnt = discovery[port].svid_cnt;
 			dfp_consume_svids(port, cnt, payload);
 			/*
 			 * Ref: USB Type-C Cable and Connector Specification,

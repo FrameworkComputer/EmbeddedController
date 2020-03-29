@@ -48,11 +48,11 @@ __overridable const struct svdm_response svdm_rsp = {
 static int pd_get_mode_idx(int port, uint16_t svid)
 {
 	int i;
-	struct pd_policy *pe = pd_get_am_policy(port);
+	struct pd_discovery *disc = pd_get_am_discovery(port);
 
 	for (i = 0; i < PD_AMODE_COUNT; i++) {
-		if (pe->amodes[i].fx &&
-		    (pe->amodes[i].fx->svid == svid))
+		if (disc->amodes[i].fx &&
+		    (disc->amodes[i].fx->svid == svid))
 			return i;
 	}
 	return -1;
@@ -63,31 +63,31 @@ static int pd_allocate_mode(int port, uint16_t svid)
 	int i, j;
 	struct svdm_amode_data *modep;
 	int mode_idx = pd_get_mode_idx(port, svid);
-	struct pd_policy *pe = pd_get_am_policy(port);
+	struct pd_discovery *disc = pd_get_am_discovery(port);
 
 	if (mode_idx != -1)
 		return mode_idx;
 
 	/* There's no space to enter another mode */
-	if (pe->amode_idx == PD_AMODE_COUNT) {
+	if (disc->amode_idx == PD_AMODE_COUNT) {
 		CPRINTF("ERR:NO AMODE SPACE\n");
 		return -1;
 	}
 
 	/* Allocate ...  if SVID == 0 enter default supported policy */
 	for (i = 0; i < supported_modes_cnt; i++) {
-		for (j = 0; j < pe->svid_cnt; j++) {
-			struct svdm_svid_data *svidp = &pe->svids[j];
+		for (j = 0; j < disc->svid_cnt; j++) {
+			struct svdm_svid_data *svidp = &disc->svids[j];
 
 			if ((svidp->svid != supported_modes[i].svid) ||
 			    (svid && (svidp->svid != svid)))
 				continue;
 
-			modep = &pe->amodes[pe->amode_idx];
+			modep = &disc->amodes[disc->amode_idx];
 			modep->fx = &supported_modes[i];
-			modep->data = &pe->svids[j];
-			pe->amode_idx++;
-			return pe->amode_idx - 1;
+			modep->data = &disc->svids[j];
+			disc->amode_idx++;
+			return disc->amode_idx - 1;
 		}
 	}
 	return -1;
@@ -169,9 +169,9 @@ int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 struct svdm_amode_data *pd_get_amode_data(int port, uint16_t svid)
 {
 	int idx = pd_get_mode_idx(port, svid);
-	struct pd_policy *pe = pd_get_am_policy(port);
+	struct pd_discovery *disc = pd_get_am_discovery(port);
 
-	return (idx == -1) ? NULL : &pe->amodes[idx];
+	return (idx == -1) ? NULL : &disc->amodes[idx];
 }
 
 /*
@@ -181,13 +181,13 @@ struct svdm_amode_data *pd_get_amode_data(int port, uint16_t svid)
 uint32_t pd_dfp_enter_mode(int port, uint16_t svid, int opos)
 {
 	int mode_idx = pd_allocate_mode(port, svid);
-	struct pd_policy *pe = pd_get_am_policy(port);
+	struct pd_discovery *disc = pd_get_am_discovery(port);
 	struct svdm_amode_data *modep;
 	uint32_t mode_caps;
 
 	if (mode_idx == -1)
 		return 0;
-	modep = &pe->amodes[mode_idx];
+	modep = &disc->amodes[mode_idx];
 
 	if (!opos) {
 		/* choose the lowest as default */
@@ -212,7 +212,7 @@ uint32_t pd_dfp_enter_mode(int port, uint16_t svid, int opos)
 int pd_dfp_exit_mode(int port, uint16_t svid, int opos)
 {
 	struct svdm_amode_data *modep;
-	struct pd_policy *pe = pd_get_am_policy(port);
+	struct pd_discovery *disc = pd_get_am_discovery(port);
 	int idx;
 
 	/*
@@ -222,10 +222,10 @@ int pd_dfp_exit_mode(int port, uint16_t svid, int opos)
 	 */
 	if (!svid) {
 		for (idx = 0; idx < PD_AMODE_COUNT; idx++)
-			if (pe->amodes[idx].fx)
-				pe->amodes[idx].fx->exit(port);
+			if (disc->amodes[idx].fx)
+				disc->amodes[idx].fx->exit(port);
 
-		pd_dfp_pe_init(port);
+		pd_dfp_discovery_init(port);
 		return 0;
 	}
 
@@ -265,11 +265,11 @@ void dfp_consume_attention(int port, uint32_t *payload)
 void dfp_consume_identity(int port, int cnt, uint32_t *payload)
 {
 	int ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
-	struct pd_policy *pe = pd_get_am_policy(port);
-	size_t identity_size = MIN(sizeof(pe->identity),
+	struct pd_discovery *disc = pd_get_am_discovery(port);
+	size_t identity_size = MIN(sizeof(disc->identity),
 				   (cnt - 1) * sizeof(uint32_t));
-	pd_dfp_pe_init(port);
-	memcpy(pe->identity, payload + 1, identity_size);
+	pd_dfp_discovery_init(port);
+	memcpy(disc->identity, payload + 1, identity_size);
 
 	switch (ptype) {
 	case IDH_PTYPE_AMA:
@@ -297,9 +297,9 @@ void dfp_consume_svids(int port, int cnt, uint32_t *payload)
 	uint32_t *ptr = payload + 1;
 	int vdo = 1;
 	uint16_t svid0, svid1;
-	struct pd_policy *pe = pd_get_am_policy(port);
+	struct pd_discovery *disc = pd_get_am_discovery(port);
 
-	for (i = pe->svid_cnt; i < pe->svid_cnt + 12; i += 2) {
+	for (i = disc->svid_cnt; i < disc->svid_cnt + 12; i += 2) {
 		if (i == SVID_DISCOVERY_MAX) {
 			CPRINTF("ERR:SVIDCNT\n");
 			break;
@@ -314,14 +314,14 @@ void dfp_consume_svids(int port, int cnt, uint32_t *payload)
 		svid0 = PD_VDO_SVID_SVID0(*ptr);
 		if (!svid0)
 			break;
-		pe->svids[i].svid = svid0;
-		pe->svid_cnt++;
+		disc->svids[i].svid = svid0;
+		disc->svid_cnt++;
 
 		svid1 = PD_VDO_SVID_SVID1(*ptr);
 		if (!svid1)
 			break;
-		pe->svids[i + 1].svid = svid1;
-		pe->svid_cnt++;
+		disc->svids[i + 1].svid = svid1;
+		disc->svid_cnt++;
 		ptr++;
 		vdo++;
 	}
@@ -332,27 +332,27 @@ void dfp_consume_svids(int port, int cnt, uint32_t *payload)
 
 void dfp_consume_modes(int port, int cnt, uint32_t *payload)
 {
-	struct pd_policy *pe = pd_get_am_policy(port);
-	int idx = pe->svid_idx;
+	struct pd_discovery *disc = pd_get_am_discovery(port);
+	int idx = disc->svid_idx;
 
-	pe->svids[idx].mode_cnt = cnt - 1;
+	disc->svids[idx].mode_cnt = cnt - 1;
 
-	if (pe->svids[idx].mode_cnt < 0) {
+	if (disc->svids[idx].mode_cnt < 0) {
 		CPRINTF("ERR:NOMODE\n");
 	} else {
-		memcpy(pe->svids[pe->svid_idx].mode_vdo, &payload[1],
-		       sizeof(uint32_t) * pe->svids[idx].mode_cnt);
+		memcpy(disc->svids[disc->svid_idx].mode_vdo, &payload[1],
+		       sizeof(uint32_t) * disc->svids[idx].mode_cnt);
 	}
 
-	pe->svid_idx++;
+	disc->svid_idx++;
 }
 
 int dfp_discover_modes(int port, uint32_t *payload)
 {
-	struct pd_policy *pe = pd_get_am_policy(port);
-	uint16_t svid = pe->svids[pe->svid_idx].svid;
+	struct pd_discovery *disc = pd_get_am_discovery(port);
+	uint16_t svid = disc->svids[disc->svid_idx].svid;
 
-	if (pe->svid_idx >= pe->svid_cnt)
+	if (disc->svid_idx >= disc->svid_cnt)
 		return 0;
 
 	payload[0] = VDO(svid, 1, CMD_DISCOVER_MODES);
@@ -369,44 +369,44 @@ int pd_alt_mode(int port, uint16_t svid)
 
 uint16_t pd_get_identity_vid(int port)
 {
-	struct pd_policy *pe = pd_get_am_policy(port);
+	struct pd_discovery *disc = pd_get_am_discovery(port);
 
-	return PD_IDH_VID(pe->identity[0]);
+	return PD_IDH_VID(disc->identity[0]);
 }
 
 uint16_t pd_get_identity_pid(int port)
 {
-	struct pd_policy *pe = pd_get_am_policy(port);
+	struct pd_discovery *disc = pd_get_am_discovery(port);
 
-	return PD_PRODUCT_PID(pe->identity[2]);
+	return PD_PRODUCT_PID(disc->identity[2]);
 }
 
 uint8_t pd_get_product_type(int port)
 {
-	struct pd_policy *pe = pd_get_am_policy(port);
+	struct pd_discovery *disc = pd_get_am_discovery(port);
 
-	return PD_IDH_PTYPE(pe->identity[0]);
+	return PD_IDH_PTYPE(disc->identity[0]);
 }
 
 int pd_get_svid_count(int port)
 {
-	struct pd_policy *pe = pd_get_am_policy(port);
+	struct pd_discovery *disc = pd_get_am_discovery(port);
 
-	return pe->svid_cnt;
+	return disc->svid_cnt;
 }
 
 uint16_t pd_get_svid(int port, uint16_t svid_idx)
 {
-	struct pd_policy *pe = pd_get_am_policy(port);
+	struct pd_discovery *disc = pd_get_am_discovery(port);
 
-	return pe->svids[svid_idx].svid;
+	return disc->svids[svid_idx].svid;
 }
 
 uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx)
 {
-	struct pd_policy *pe = pd_get_am_policy(port);
+	struct pd_discovery *disc = pd_get_am_discovery(port);
 
-	return pe->svids[svid_idx].mode_vdo;
+	return disc->svids[svid_idx].mode_vdo;
 }
 
 void notify_sysjump_ready(volatile const task_id_t * const sysjump_task_waiting)
