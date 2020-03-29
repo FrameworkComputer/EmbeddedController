@@ -935,6 +935,7 @@ static bool common_src_snk_dpm_requests(int port)
 			 * port discovery.
 			 */
 			PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+			pd_dfp_discovery_init(port);
 			pe[port].dr_swap_attempt_counter = 0;
 			pe[port].discover_port_identity_counter = 0;
 			pe[port].discover_port_identity_timer = get_time().val +
@@ -1220,13 +1221,6 @@ static void pe_src_startup_entry(int port)
 {
 	print_current_state(port);
 
-	/* Initialize VDOs to default values */
-	memset(&pe[port].cable, 0, sizeof(pe[port].cable));
-	pe[port].cable.last_sop_p_msg_id = INVALID_MSG_ID_COUNTER;
-	pe[port].cable.last_sop_p_p_msg_id = INVALID_MSG_ID_COUNTER;
-	pe[port].ama_vdo = PD_VDO_INVALID;
-	pe[port].vpd_vdo = PD_VDO_INVALID;
-
 	/* Reset CapsCounter */
 	pe[port].caps_counter = 0;
 
@@ -1265,6 +1259,9 @@ static void pe_src_startup_entry(int port)
 
 		/* Clear port discovery flags */
 		PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+		pd_dfp_discovery_init(port);
+		pe[port].ama_vdo = PD_VDO_INVALID;
+		pe[port].vpd_vdo = PD_VDO_INVALID;
 		pe[port].discover_port_identity_counter = 0;
 		memset(&pe[port].cable, 0, sizeof(struct pd_cable));
 
@@ -2045,6 +2042,7 @@ static void pe_snk_startup_entry(int port)
 	} else {
 		/* Clear port discovery flags */
 		PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+		pd_dfp_discovery_init(port);
 		pe[port].discover_port_identity_counter = 0;
 		memset(&pe[port].cable, 0, sizeof(struct pd_cable));
 

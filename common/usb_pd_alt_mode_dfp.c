@@ -268,7 +268,6 @@ void dfp_consume_identity(int port, int cnt, uint32_t *payload)
 	struct pd_discovery *disc = pd_get_am_discovery(port);
 	size_t identity_size = MIN(sizeof(disc->identity),
 				   (cnt - 1) * sizeof(uint32_t));
-	pd_dfp_discovery_init(port);
 	memcpy(disc->identity, payload + 1, identity_size);
 
 	switch (ptype) {

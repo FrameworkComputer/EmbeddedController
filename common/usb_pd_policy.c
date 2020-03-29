@@ -861,6 +861,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 			/* Received a SOP Discover Ident Message */
 			} else if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP) &&
 				board_is_tbt_usb4_port(port)) {
+				pd_dfp_discovery_init(port);
 				dfp_consume_identity(port, cnt, payload);
 
 				/* Enable USB4 mode if USB4 VDO present
@@ -886,6 +887,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 					rsize = dfp_discover_svids(payload);
 				}
 			} else {
+				pd_dfp_discovery_init(port);
 				dfp_consume_identity(port, cnt, payload);
 				rsize = dfp_discover_svids(payload);
 			}
