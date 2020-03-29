@@ -25,6 +25,28 @@
 
 /*****************************************************************************/
 /*
+ * Table 6-33 Cert Stat VDO (Note: same as Revision 2.0)
+ * -------------------------------------------------------------
+ * <31:0>  : XID assigned by USB-IF
+ */
+struct cert_stat_vdo {
+	uint32_t xid;
+};
+
+/*****************************************************************************/
+/*
+ * Table 6-34 Product VDO (Note: same as Revision 2.0)
+ * -------------------------------------------------------------
+ * <31:16> : USB Product ID
+ * <15:0>  : bcdDevice
+ */
+struct product_vdo {
+	uint16_t bcd_device;
+	uint16_t product_id;
+};
+
+/*****************************************************************************/
+/*
  * Table 6-35 UFP VDO 1
  * -------------------------------------------------------------
  * <31:29> : UFP VDO version
@@ -434,6 +456,53 @@ enum vpd_cts_support {
 
 /*****************************************************************************/
 /*
+ * Table 6-23 ID Header VDO
+ *
+ * Note: PD 3.0 ID header (Table 6-29, PD Revision 3.0 Spec) makes use of
+ * reserved bits 25:21 for a connector type and product type (DFP).  It is not
+ * advised to create a structure using these bits however, as the DFP product
+ * type crosses a byte boundary and causes problems with gcc's structure
+ * alignment.
+ * -------------------------------------------------------------
+ * <31>    : USB Communications Capable as USB Host
+ * <30>    : USB Communications Capable as a USB Device
+ * <29:27> : Product Type (UFP):
+ *           000b = Undefined
+ *           001b = PDUSB Hub
+ *           010b = PDUSB Peripheral
+ *           011b = PSD (PD 3.0)
+ *           101b = Alternate Mode Adapter (AMA)
+ *           110b = Vconn-Powered USB Device (VPD, PD 3.0)
+ *           Product Type (Cable Plug):
+ *           000b = Undefined
+ *           011b = Passive Cable
+ *           100b = Active Cable
+ * <26>    : Modal Operation Supported
+ * <25:16> : Reserved
+ * <15:0>  : USB Vendor ID
+ */
+enum idh_ptype {
+	IDH_PTYPE_UNDEF,
+	IDH_PTYPE_HUB,
+	IDH_PTYPE_PERIPH,
+	IDH_PTYPE_PSD = 3,
+	IDH_PTYPE_PCABLE = 3,
+	IDH_PTYPE_ACABLE,
+	IDH_PTYPE_AMA,
+	IDH_PTYPE_VPD,
+};
+
+struct id_header_vdo_rev20 {
+	uint16_t usb_vendor_id;
+	uint16_t reserved0 : 10;
+	uint8_t modal_support : 1;
+	enum idh_ptype product_type : 3;
+	uint8_t usb_device : 1;
+	uint8_t usb_host : 1;
+};
+
+/*****************************************************************************/
+/*
  * Table 6-28 Passive Cable VDO
  * -------------------------------------------------------------
  * <31:28> : HW Version
@@ -754,6 +823,32 @@ union enter_usb_data_obj {
 		enum usb_mode mode : 3;
 		uint8_t reserved0 : 1;
 	};
+	uint32_t raw_value;
+};
+
+/*
+ * ############################################################################
+ *
+ * Unions of VDOs which differ based on revision or type
+ *
+ * ############################################################################
+ */
+
+union product_type_vdo1 {
+	/* Passive cable VDO */
+	union passive_cable_vdo_rev20 p_rev20;
+	union passive_cable_vdo_rev30 p_rev30;
+
+	/* Active cable VDO */
+	union active_cable_vdo_rev20 a_rev20;
+	union active_cable_vdo1_rev30 a_rev30;
+
+	uint32_t raw_value;
+};
+
+union product_type_vdo2 {
+	union active_cable_vdo2_rev30 a2_rev30;
+
 	uint32_t raw_value;
 };
 
