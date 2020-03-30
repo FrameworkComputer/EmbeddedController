@@ -827,7 +827,12 @@ void pd_vbus_low(int port)
 int pd_is_connected(int port)
 {
 	return (get_state_tc(port) == TC_ATTACHED_SNK) ||
-				(get_state_tc(port) == TC_ATTACHED_SRC);
+			(get_state_tc(port) == TC_ATTACHED_SRC) ||
+#ifdef CONFIG_USB_PE_SM
+			(get_state_tc(port) == TC_CT_ATTACHED_SNK) ||
+#endif
+			(get_state_tc(port) == TC_DBG_ACC_SNK) ||
+			(get_state_tc(port) == TC_UNORIENTED_DBG_ACC_SRC);
 }
 
 bool pd_is_disconnected(int port)

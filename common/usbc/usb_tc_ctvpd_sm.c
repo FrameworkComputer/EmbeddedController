@@ -225,7 +225,9 @@ test_mockable_static void print_current_state(const int port)
 int pd_is_connected(int port)
 {
 	return (get_state_tc(port) == TC_ATTACHED_SNK) ||
-				(get_state_tc(port) == TC_ATTACHED_SRC);
+			(get_state_tc(port) == TC_ATTACHED_SRC) ||
+			(get_state_tc(port) == TC_CT_ATTACHED_UNSUPPORTED) ||
+			(get_state_tc(port) == TC_CT_ATTACHED_VPD);
 }
 
 bool pd_is_disconnected(int port)
