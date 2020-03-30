@@ -364,14 +364,21 @@ enum pd_alternate_modes {
 	PD_AMODE_COUNT,
 };
 
+/* Discover all SOP* communications when enabled */
+#ifdef CONFIG_USB_PD_DECODE_SOP
+#define DISCOVERY_TYPE_COUNT (TCPC_TX_SOP_PRIME_PRIME + 1)
+#else
+#define DISCOVERY_TYPE_COUNT (TCPC_TX_SOP + 1)
+#endif
+
 /* Structure for storing discovery results */
 struct pd_discovery {
 	/* index of svid currently being operated on */
 	int svid_idx;
 	/* count of svids discovered */
 	int svid_cnt;
-	/* SVDM identity info (Id, Cert Stat, 0-4 Typec specific) */
-	uint32_t identity[PDO_MAX_OBJECTS - 1];
+	/* Identity data for all supported SOP* communications */
+	struct identity_data identity[DISCOVERY_TYPE_COUNT];
 	/* supported svids & corresponding vdo mode data */
 	struct svdm_svid_data svids[SVID_DISCOVERY_MAX];
 	/*  active modes */
@@ -1662,6 +1669,38 @@ int dfp_discover_modes(int port, uint32_t *payload);
  * @param port     USB-C port number
  */
 void pd_dfp_discovery_init(int port);
+
+
+/**
+ * Set discovery state for this type and port
+ *
+ * @param port  USB-C port number
+ * @param type	SOP* type to set
+ * @param disc  Discovery state to set (failed or complete)
+ */
+void pd_set_identity_discovery(int port, enum tcpm_transmit_type type,
+			       enum pd_discovery_state disc);
+
+/**
+ * Get discovery state for this type and port
+ *
+ * @param port  USB-C port number
+ * @param type	SOP* type to set
+ * @return      Discovery state to set (failed or complete)
+ */
+enum pd_discovery_state pd_get_identity_discovery(int port,
+						enum tcpm_transmit_type type);
+
+/**
+ * Return a pointer to the discover identity response structure for this SOP*
+ * type
+ *
+ * @param port  USB-C port number
+ * @param type	SOP* type to retrieve
+ * @return      pointer to response structure, which the caller may not alter
+ */
+const union disc_ident_ack *pd_get_identity_response(int port,
+					       enum tcpm_transmit_type type);
 
 /**
  * Return the VID of the USB PD accessory connected to a specified port

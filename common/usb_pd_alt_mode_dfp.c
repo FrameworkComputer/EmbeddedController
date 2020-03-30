@@ -13,6 +13,7 @@
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -289,9 +290,10 @@ void dfp_consume_identity(int port, int cnt, uint32_t *payload)
 {
 	int ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
 	struct pd_discovery *disc = pd_get_am_discovery(port);
-	size_t identity_size = MIN(sizeof(disc->identity),
+	size_t identity_size = MIN(sizeof(union disc_ident_ack),
 				   (cnt - 1) * sizeof(uint32_t));
-	memcpy(disc->identity, payload + 1, identity_size);
+	memcpy(disc->identity[TCPC_TX_SOP].response.raw_value,
+	       payload + 1, identity_size);
 
 	switch (ptype) {
 	case IDH_PTYPE_AMA:
@@ -311,6 +313,7 @@ void dfp_consume_identity(int port, int cnt, uint32_t *payload)
 	default:
 		break;
 	}
+	pd_set_identity_discovery(port, TCPC_TX_SOP, PD_DISC_COMPLETE);
 }
 
 void dfp_consume_svids(int port, int cnt, uint32_t *payload)
@@ -389,25 +392,53 @@ int pd_alt_mode(int port, uint16_t svid)
 	return (modep) ? modep->opos : -1;
 }
 
-uint16_t pd_get_identity_vid(int port)
+void pd_set_identity_discovery(int port, enum tcpm_transmit_type type,
+			       enum pd_discovery_state disc)
+{
+	struct pd_discovery *pd = pd_get_am_discovery(port);
+
+	pd->identity[type].discovery = disc;
+}
+
+enum pd_discovery_state pd_get_identity_discovery(int port,
+						  enum tcpm_transmit_type type)
 {
 	struct pd_discovery *disc = pd_get_am_discovery(port);
 
-	return PD_IDH_VID(disc->identity[0]);
+	return disc->identity[type].discovery;
+}
+
+const union disc_ident_ack *pd_get_identity_response(int port,
+					       enum tcpm_transmit_type type)
+{
+	if (type >= DISCOVERY_TYPE_COUNT)
+		return NULL;
+
+	return &pd_get_am_discovery(port)->identity[type].response;
+}
+
+uint16_t pd_get_identity_vid(int port)
+{
+	const union disc_ident_ack *resp = pd_get_identity_response(port,
+								TCPC_TX_SOP);
+
+	return resp->idh.usb_vendor_id;
 }
 
 uint16_t pd_get_identity_pid(int port)
 {
-	struct pd_discovery *disc = pd_get_am_discovery(port);
+	const union disc_ident_ack *resp = pd_get_identity_response(port,
+								TCPC_TX_SOP);
 
-	return PD_PRODUCT_PID(disc->identity[2]);
+	return resp->product.product_id;
 }
 
 uint8_t pd_get_product_type(int port)
 {
-	struct pd_discovery *disc = pd_get_am_discovery(port);
+	const union disc_ident_ack *resp = pd_get_identity_response(port,
+								TCPC_TX_SOP);
 
-	return PD_IDH_PTYPE(disc->identity[0]);
+	return resp->idh.product_type;
 }
 
 int pd_get_svid_count(int port)
