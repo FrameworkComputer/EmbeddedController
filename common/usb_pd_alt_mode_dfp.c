@@ -719,8 +719,7 @@ bool is_tbt_cable_superspeed(int port)
 
 bool is_modal(int port, int cnt, const uint32_t *payload)
 {
-	return IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
-		is_vdo_present(cnt, VDO_INDEX_IDH) &&
+	return is_vdo_present(cnt, VDO_INDEX_IDH) &&
 		PD_IDH_IS_MODAL(payload[VDO_INDEX_IDH]);
 }
 
