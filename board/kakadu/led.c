@@ -43,12 +43,12 @@ static void kakadu_led_set_battery(void)
 
 	switch (chstate) {
 	case PWR_STATE_CHARGE:
-		/* RGB(current, duty) = (4mA,1/32)*/
-		br[EC_LED_COLOR_BLUE] = 1;
+		br[EC_LED_COLOR_GREEN] = 1;
+		br[EC_LED_COLOR_RED] = 1;
 		break;
 	case PWR_STATE_DISCHARGE:
-		/* display SoC 10% = real battery SoC 13%*/
-		if (charge_get_percent() <= 13)
+		/* real battery SoC 5%*/
+		if (charge_get_percent() <= 5)
 			br[EC_LED_COLOR_RED] = 1;
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
