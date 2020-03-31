@@ -62,7 +62,7 @@ struct lis2mdl_private_data {
 #ifndef CONFIG_LSM6DSM_SEC_I2C
 	struct stprivate_data data;
 #endif
-#ifdef CONFIG_MAG_BMI160_LIS2MDL
+#ifdef CONFIG_MAG_BMI_LIS2MDL
 	intv3_t          hn;   /* last sample for offset compensation */
 	int              hn_valid;
 #endif

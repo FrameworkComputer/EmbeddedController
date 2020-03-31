@@ -22,7 +22,6 @@
 
 /* I2C addresses */
 #define BMI160_ADDR0_FLAGS	0x68
-#define BMI160_ADDR1_FLAGS	0x69
 
 #define BMI160_CHIP_ID           0x00
 #define BMI160_CHIP_ID_MAJOR     0xd1
@@ -126,28 +125,14 @@
 
 #define BMI160_TEMPERATURE_0   0x20
 #define BMI160_TEMPERATURE_1   0x21
-#define BMI160_INVALID_TEMP        0x8000
 
 
 #define BMI160_FIFO_LENGTH_0   0x22
 #define BMI160_FIFO_LENGTH_1   0x23
 #define BMI160_FIFO_LENGTH_MASK    (BIT(11) - 1)
 #define BMI160_FIFO_DATA       0x24
-enum fifo_header {
-	BMI160_EMPTY = 0x80,
-	BMI160_SKIP = 0x40,
-	BMI160_TIME = 0x44,
-	BMI160_CONFIG = 0x48
-};
-
-#define BMI160_FH_MODE_MASK    0xc0
-#define BMI160_FH_PARM_OFFSET    2
-#define BMI160_FH_PARM_MASK    (0x7 << BMI160_FH_PARM_OFFSET)
-#define BMI160_FH_EXT_MASK     0x03
-
 
 #define BMI160_ACC_CONF        0x40
-#define BMI160_ODR_MASK                 0x0F
 #define BMI160_ACC_BW_OFFSET            4
 #define BMI160_ACC_BW_MASK     (0x7 << BMI160_ACC_BW_OFFSET)
 
@@ -168,22 +153,7 @@ enum fifo_header {
 #define BMI160_DPS_SEL_250     0x03
 #define BMI160_DPS_SEL_125     0x04
 
-
 #define BMI160_MAG_CONF        0x44
-
-/* odr = 100 / (1 << (8 - reg)) ,within limit */
-#define BMI160_ODR_0_78HZ      0x01
-#define BMI160_ODR_100HZ       0x08
-
-#define BMI160_REG_TO_ODR(_regval) \
-	((_regval) < BMI160_ODR_100HZ ? 100000 / (1 << (8 - (_regval))) : \
-					100000 * (1 << ((_regval) - 8)))
-#define BMI160_ODR_TO_REG(_odr) \
-	((_odr) < 100000 ? (__builtin_clz(100000 / ((_odr) + 1)) - 24) : \
-			   (39 - __builtin_clz((_odr) / 100000)))
-
-#define BMI160_CONF_REG(_sensor)   (0x40 + 2 * (_sensor))
-#define BMI160_RANGE_REG(_sensor)  (0x41 + 2 * (_sensor))
 
 #define BMI160_FIFO_DOWNS      0x45
 #define BMI160_FIFO_CONFIG_0   0x46
@@ -361,11 +331,7 @@ enum fifo_header {
 #define BMI160_SELF_TEST       0x6d
 
 #define BMI160_OFFSET_ACC70        0x71
-#define BMI160_OFFSET_ACC_MULTI_MG      (3900 * 1024)
-#define BMI160_OFFSET_ACC_DIV_MG        1000000
 #define BMI160_OFFSET_GYR70        0x74
-#define BMI160_OFFSET_GYRO_MULTI_MDS    (61 * 1024)
-#define BMI160_OFFSET_GYRO_DIV_MDS      1000
 #define BMI160_OFFSET_EN_GYR98     0x77
 #define BMI160_OFFSET_ACC_EN            BIT(6)
 #define BMI160_OFFSET_GYRO_EN           BIT(7)
@@ -403,8 +369,6 @@ enum fifo_header {
 #define BMI160_COM_C_TRIM_ADDR 0x85
 #define BMI160_COM_C_TRIM              (3 << 4)
 
-
-
 #define BMI160_CMD_TGT_PAGE    0
 #define BMI160_CMD_TGT_PAGE_COM    1
 #define BMI160_CMD_TGT_PAGE_ACC    2
@@ -415,9 +379,10 @@ enum fifo_header {
 #define BMI160_FF_DATA_LEN_GYR          6
 #define BMI160_FF_DATA_LEN_MAG          8
 
-/* Sensor resolution in number of bits. This sensor has fixed resolution. */
-#define BMI160_RESOLUTION      16
-
+/*
+ * TODO(chingkang): Replace following in some board config to
+ *                  bmi version. Then, remove this definition(s).
+ */
 /* Min and Max sampling frequency in mHz */
 #define BMI160_ACCEL_MIN_FREQ 12500
 #define BMI160_ACCEL_MAX_FREQ MOTION_MAX_SENSOR_FREQUENCY(1600000, 100000)
@@ -426,31 +391,19 @@ enum fifo_header {
 
 extern const struct accelgyro_drv bmi160_drv;
 
-enum bmi160_running_mode {
-	STANDARD_UI_9DOF_FIFO          = 0,
-	STANDARD_UI_IMU_FIFO           = 1,
-	STANDARD_UI_IMU                = 2,
-	STANDARD_UI_ADVANCEPOWERSAVE   = 3,
-	ACCEL_PEDOMETER                = 4,
-	APPLICATION_HEAD_TRACKING      = 5,
-	APPLICATION_NAVIGATION         = 6,
-	APPLICATION_REMOTE_CONTROL     = 7,
-	APPLICATION_INDOOR_NAVIGATION  = 8,
-};
-
-#define BMI160_FLAG_SEC_I2C_ENABLED    BIT(0)
-#define BMI160_FIFO_FLAG_OFFSET        4
-#define BMI160_FIFO_ALL_MASK           7
-
+/*
+ * TODO(chingkang): Replace bmi160_drv_data_t in some board config to
+ *                  bmi_drv_data_t. Then, remove this definition.
+ */
 struct bmi160_drv_data_t {
 	struct accelgyro_saved_data_t saved_data[3];
 	uint8_t              flags;
 	uint8_t              enabled_activities;
 	uint8_t              disabled_activities;
-#ifdef CONFIG_MAG_BMI160_BMM150
+#ifdef CONFIG_MAG_BMI_BMM150
 	struct bmm150_private_data compass;
 #endif
-#ifdef CONFIG_BMI160_ORIENTATION_SENSOR
+#ifdef CONFIG_BMI_ORIENTATION_SENSOR
 	uint8_t raw_orientation;
 	enum motionsensor_orientation orientation;
 	enum motionsensor_orientation last_orientation;
@@ -458,30 +411,9 @@ struct bmi160_drv_data_t {
 
 };
 
-#define BMI160_GET_DATA(_s) \
-	((struct bmi160_drv_data_t *)(_s)->drv_data)
-#define BMI160_GET_SAVED_DATA(_s) \
-	(&BMI160_GET_DATA(_s)->saved_data[(_s)->type])
-
-#ifdef CONFIG_BMI160_ORIENTATION_SENSOR
-#define ORIENTATION_CHANGED(_sensor) \
-	(BMI160_GET_DATA(_sensor)->orientation != \
-	BMI160_GET_DATA(_sensor)->last_orientation)
-
-#define GET_ORIENTATION(_sensor) \
-	(BMI160_GET_DATA(_sensor)->orientation)
-
-#define SET_ORIENTATION(_sensor, _val) \
-	(BMI160_GET_DATA(_sensor)->orientation = _val)
-
-#define SET_ORIENTATION_UPDATED(_sensor) \
-	(BMI160_GET_DATA(_sensor)->last_orientation = \
-	BMI160_GET_DATA(_sensor)->orientation)
-#endif
-
 void bmi160_interrupt(enum gpio_signal signal);
 
-#ifdef CONFIG_BMI160_SEC_I2C
+#ifdef CONFIG_BMI_SEC_I2C
 /* Functions to access the secondary device through the accel/gyro. */
 int bmi160_sec_raw_read8(const int port, const uint16_t addr_flags,
 			 const uint8_t reg, int *data_ptr);

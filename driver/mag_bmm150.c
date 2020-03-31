@@ -17,8 +17,8 @@
 #include "timer.h"
 #include "util.h"
 
-#ifdef CONFIG_MAG_BMI160_BMM150
-#include "driver/accelgyro_bmi160.h"
+#ifdef CONFIG_MAG_BMI_BMM150
+#include "driver/accelgyro_bmi_common.h"
 #define raw_mag_read8 bmi160_sec_raw_read8
 #define raw_mag_write8 bmi160_sec_raw_write8
 #else

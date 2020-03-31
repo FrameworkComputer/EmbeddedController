@@ -33,7 +33,7 @@ void lis2mdl_normalize(const struct motion_sensor_t *s,
 	struct mag_cal_t *cal = LIS2MDL_CAL(s);
 	int i;
 
-#ifdef CONFIG_MAG_BMI160_LIS2MDL
+#ifdef CONFIG_MAG_BMI_LIS2MDL
 	struct lis2mdl_private_data *private = LIS2MDL_DATA(s);
 	intv3_t hn1;
 

@@ -112,20 +112,21 @@ struct bmm150_private_data {
 	struct mag_cal_t             cal;
 	struct bmm150_comp_registers comp;
 };
+
+#ifdef CONFIG_MAG_BMI_BMM150
+#include "accelgyro_bmi_common.h"
+
 #define BMM150_COMP_REG(_s) \
-	(&BMI160_GET_DATA(_s)->compass.comp)
+	(&BMI_GET_DATA(_s)->compass.comp)
 
 #define BMM150_CAL(_s) \
-	(&BMI160_GET_DATA(_s)->compass.cal)
-
-#ifdef CONFIG_MAG_BMI160_BMM150
-#include "accelgyro_bmi160.h"
+	(&BMI_GET_DATA(_s)->compass.cal)
 /*
- * Behind a BMI160, the BMM150 is in forced mode. Be sure to choose a frequency
- * comptible with BMI160.
+ * Behind a BMI, the BMM150 is in forced mode. Be sure to choose a frequency
+ * compatible with BMI.
  */
 #define BMM150_MAG_MAX_FREQ(_preset) \
-	BMI160_REG_TO_ODR(BMI160_ODR_TO_REG(__BMM150_MAG_MAX_FREQ(_preset)))
+	BMI_REG_TO_ODR(BMI_ODR_TO_REG(__BMM150_MAG_MAX_FREQ(_preset)))
 #else
 #define BMM150_MAG_MAX_FREQ(_preset) __BMM150_MAG_MAX_FREQ(_preset)
 #endif
