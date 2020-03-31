@@ -17,7 +17,7 @@
 
 #define RUN_TEST(n) \
 	do { \
-		ccprintf("Running %s...", #n); \
+		ccprintf("Running %s...\n", #n); \
 		cflush(); \
 		before_test(); \
 		if (n() == EC_SUCCESS) { \
@@ -44,15 +44,17 @@
 
 #define TEST_OPERATOR(a, b, op, fmt) \
 	do { \
-		__auto_type _a = (a); \
-		__auto_type _b = (b); \
-		if (!(_a op _b)) { \
-			ccprintf("%d: ASSERSION failed: %s " #op " %s\n", \
-				 __LINE__, #a, #b); \
-			ccprintf("\t\tEVAL: " fmt " " #op " " fmt "\n", \
-				 _a, _b); \
+		__auto_type _a = (a);                                       \
+		__auto_type _b = (b);                                       \
+		if (!(_a op _b)) {                                          \
+			ccprintf("%d: ASSERSION failed: %s " #op " %s\n",   \
+				 __LINE__, #a, #b);                         \
+			ccprintf("\t\tEVAL: " fmt " " #op " " fmt "\n",     \
+				 _a, _b);                                   \
 			task_dump_trace();                                  \
 			return EC_ERROR_UNKNOWN;                            \
+		} else  {                                                   \
+			ccprintf("Pass: %s " #op " %s\n", #a, #b);        \
 		}                                                           \
 	} while (0)
 

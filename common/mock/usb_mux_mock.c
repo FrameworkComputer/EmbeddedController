@@ -27,7 +27,7 @@ static int mock_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	mock_usb_mux.state = mux_state;
 	++mock_usb_mux.num_set_calls;
-	ccprints("Called into mux with %d", mux_state);
+	ccprints("[MUX] Set to 0x%02x", mux_state);
 
 	return EC_SUCCESS;
 }
