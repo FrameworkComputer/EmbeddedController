@@ -2866,10 +2866,12 @@ static void tc_drp_auto_toggle_run(const int port)
 		}
 	}
 
+	if (next_state == DRP_TC_DEFAULT)
+		next_state = (PD_ROLE_DEFAULT(port) == PD_ROLE_SOURCE)
+				? DRP_TC_UNATTACHED_SRC
+				: DRP_TC_UNATTACHED_SNK;
+
 	switch (next_state) {
-	case DRP_TC_DEFAULT:
-		set_state_tc(port, PD_DEFAULT_STATE(port));
-		break;
 	case DRP_TC_UNATTACHED_SNK:
 		/*
 		 * New SNK connection.
@@ -2891,6 +2893,7 @@ static void tc_drp_auto_toggle_run(const int port)
 		set_state_tc(port, TC_UNATTACHED_SRC);
 		break;
 	case DRP_TC_DRP_AUTO_TOGGLE:
+	default:
 		/*
 		 * We are staying in PD_STATE_DRP_AUTO_TOGGLE
 		 */
