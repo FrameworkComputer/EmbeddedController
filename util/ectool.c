@@ -5040,6 +5040,9 @@ static int cmd_motionsense(int argc, char **argv)
 		case MOTIONSENSE_CHIP_LIS2DS:
 			printf("lis2ds\n");
 			break;
+		case MOTIONSENSE_CHIP_BMI260:
+			printf("bmi260\n");
+			break;
 		default:
 			printf("unknown\n");
 		}

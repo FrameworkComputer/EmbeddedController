@@ -1,0 +1,15 @@
+name: "BMI260 implementation"
+description:
+    "Hex encoded binary for BMI260 driver initial configuration"
+
+third_party {
+  url {
+    type: HOMEPAGE
+    value: "https://www.bosch-sensortec.com/"
+  }
+  version: "v2.46.1"
+  last_upgrade_date { year: 2020 month: 01 day: 10 }
+  license_type: NOTICE
+  local_modifications: "Created LICENSE file."
+    "Adapted code to work with EC codebase."
+}
