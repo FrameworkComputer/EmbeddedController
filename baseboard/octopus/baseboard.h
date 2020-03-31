@@ -70,6 +70,7 @@
 	#define I2C_PORT_USB_MUX	I2C_PORT_USBC0	/* For MUX driver */
 	#define I2C_PORT_EEPROM		IT83XX_I2C_CH_F
 	#define I2C_ADDR_EEPROM_FLAGS	0x50
+	#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 2
 
 	/* EC variant determines USB-C variant */
 	#define VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS

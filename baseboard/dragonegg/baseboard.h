@@ -82,6 +82,7 @@
 #define CONFIG_USB_PD_TCPM_TUSB422	/* C1 TCPC: TUSB422 */
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_TCPMV1
+#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 2
 
 /*
  * TODO (b/111281797): DragonEgg has 3 ports. Only adding support for the port

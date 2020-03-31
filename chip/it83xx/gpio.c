@@ -666,18 +666,20 @@ void gpio_pre_init(void)
 
 	IT83XX_GPIO_GCR = 0x06;
 
+#if IT83XX_USBPD_PHY_PORT_COUNT < CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT
+#error "ITE pd active port count should be less than physical port count !"
+#endif
 	/*
-	 * To prevent cc pins leakage ...
-	 * If we don't use ITE TCPC: disable all ITE port cc modules.
+	 * To prevent cc pins leakage and cc pins can be used as gpio,
+	 * disable board not active ITE TCPC port cc modules.
 	 */
-	if (!IS_ENABLED(CONFIG_USB_PD_TCPM_ITE_ON_CHIP)) {
-		for (i = 0; i < IT83XX_USBPD_PHY_PORT_COUNT; i++) {
-			it83xx_disable_cc_module(i);
-			/* Dis-connect 5.1K dead battery resistor to CC */
-			IT83XX_USBPD_CCPSR(i) |=
-				(USBPD_REG_MASK_DISCONNECT_5_1K_CC2_DB |
-				 USBPD_REG_MASK_DISCONNECT_5_1K_CC1_DB);
-		}
+	for (i = CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT;
+	     i < IT83XX_USBPD_PHY_PORT_COUNT; i++) {
+		it83xx_disable_cc_module(i);
+		/* Dis-connect 5.1K dead battery resistor to CC */
+		IT83XX_USBPD_CCPSR(i) |=
+			(USBPD_REG_MASK_DISCONNECT_5_1K_CC2_DB |
+			 USBPD_REG_MASK_DISCONNECT_5_1K_CC1_DB);
 	}
 
 #ifndef CONFIG_USB

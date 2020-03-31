@@ -67,6 +67,7 @@
 	#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP	/* C0: ITE EC TCPC */
 	#define CONFIG_USB_PD_TCPM_ANX7447	/* C1: ANX TCPC + Mux */
 	#define CONFIG_BC12_DETECT_PI3USB9201   /* BC 1.2 */
+	#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 1
 #else
 #error "Must define a VARIANT_DEDEDE_EC!"
 #endif
