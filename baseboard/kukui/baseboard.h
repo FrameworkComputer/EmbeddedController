@@ -42,6 +42,12 @@
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 #define CONFIG_USB_PD_DISCHARGE_TCPC
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+
+/* TCPC MT6370 */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
+#define PD_VCONN_SWAP_DELAY 5000 /* us */
+
 /*
  * The Maximum input voltage is 13.5V, need another 5% tolerance.
  * 12.85V * 1.05 = 13.5V
@@ -54,6 +60,12 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR 10 /* BOARD_RS2 */
 #define CONFIG_CHARGER_OTG
 #define CONFIG_CHARGE_RAMP_HW
+
+/* TCPC FUSB302 */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  160000  /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
+#define PD_VCONN_SWAP_DELAY 5000 /* us */
+
 #define PD_MAX_VOLTAGE_MV 20000
 #else
 #error Must define a VARIANT_KUKUI_CHARGER
@@ -203,10 +215,6 @@
 #else
 #define PD_MAX_CURRENT_MA     3000
 #endif
-
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
-#define PD_VCONN_SWAP_DELAY 5000 /* us */
 
 /* Timer selection */
 #define TIM_CLOCK32  2
