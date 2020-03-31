@@ -209,6 +209,7 @@ enum usb_pe_state {
 	PE_DO_PORT_DISCOVERY,
 	PE_VDM_SEND_REQUEST,
 	PE_VDM_IDENTITY_REQUEST_CBL,
+	PE_INIT_PORT_VDM_IDENTITY_REQUEST,
 	PE_VDM_REQUEST,
 	PE_VDM_ACKED,
 	PE_VDM_RESPONSE,
@@ -278,6 +279,8 @@ static const char * const pe_state_names[] = {
 	[PE_DO_PORT_DISCOVERY] = "PE_Do_Port_Discovery",
 	[PE_VDM_SEND_REQUEST] = "PE_VDM_Send_Request",
 	[PE_VDM_IDENTITY_REQUEST_CBL] = "PE_VDM_Identity_Request_Cbl",
+	[PE_INIT_PORT_VDM_IDENTITY_REQUEST] =
+					   "PE_INIT_PORT_VDM_Identity_Request",
 	[PE_VDM_REQUEST] = "PE_VDM_Request",
 	[PE_VDM_ACKED] = "PE_VDM_Acked",
 	[PE_VDM_RESPONSE] = "PE_VDM_Response",
@@ -714,6 +717,40 @@ static bool pe_can_send_sop_prime(int port)
 	else
 		return tc_is_vconn_src(port) &&
 			pe[port].power_role == PD_ROLE_SOURCE;
+}
+
+/*
+ * Determine if this port may send the given VDM type
+ *
+ * For PD 2.0, "Only the DFP Shall be an Initrator of Structured VDMs except for
+ * the Attention Command that Shall only be initiated by the UFP"
+ *
+ * For PD 3.0, "Either port May be an Initiator of Structured VDMs except for
+ * the Enter Mode and Exit Mode Commands which shall only be initiated by the
+ * DFP" (6.4.4.2 Structured VDM)
+ *
+ * In both revisions, VDMs may only be initiated while in an explicit contract,
+ * with the only exception being for cable plug discovery.
+ */
+static bool pe_can_send_sop_vdm(int port, int vdm_cmd)
+{
+	if (PE_CHK_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT)) {
+		if (prl_get_rev(port, TCPC_TX_SOP) == PD_REV20) {
+			if (pe[port].data_role == PD_ROLE_UFP &&
+			    vdm_cmd != CMD_ATTENTION) {
+				return false;
+			}
+		} else {
+			if (pe[port].data_role == PD_ROLE_UFP &&
+			    (vdm_cmd == CMD_ENTER_MODE ||
+			     vdm_cmd == CMD_EXIT_MODE)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	return false;
 }
 
 void pe_report_error(int port, enum pe_error e)
@@ -1190,24 +1227,6 @@ static void pe_update_wait_and_add_jitter_timer(int port)
 		pe[port].wait_and_add_jitter_timer = get_time().val +
 				SRC_SNK_READY_HOLD_OFF_US +
 				(get_time().le.lo & 0xf) * 23 * MSEC;
-	}
-}
-/*
- * This function must only be called from the PE_SNK_READY run and
- * PE_SRC_READY run State.
- */
-static void pe_start_port_discovery(int port)
-{
-	if (PE_CHK_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP)) {
-		PE_CLR_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
-		pe[port].dr_swap_attempt_counter++;
-		set_state_pe(port, PE_DRS_SEND_SWAP);
-	} else {
-		pe[port].discover_port_identity_counter++;
-		pe[port].vdm_cmd = DO_PORT_DISCOVERY_START;
-		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED |
-					PE_FLAGS_VDM_REQUEST_BUSY);
-		set_state_pe(port, PE_DO_PORT_DISCOVERY);
 	}
 }
 
@@ -1763,19 +1782,21 @@ static void pe_src_ready_run(int port)
 		PE_CLR_FLAG(port, PE_FLAGS_FIRST_MSG);
 		pe[port].wait_and_add_jitter_timer = TIMER_DISABLED;
 
-		if (pe[port].cable.discovery == PD_DISC_NEEDED &&
-		    get_time().val > pe[port].discover_port_identity_timer &&
-		    pe_can_send_sop_prime(port)) {
-			set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
-			return;
-		}
-
 		/*
 		 * Start Port Discovery when:
 		 *   1) The DiscoverIdentityTimer times out.
 		 */
 		if (get_time().val > pe[port].discover_port_identity_timer) {
-			pe_start_port_discovery(port);
+			if (pe[port].cable.discovery == PD_DISC_NEEDED &&
+			    pe_can_send_sop_prime(port))
+				set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
+			else if (pd_get_identity_discovery(port, TCPC_TX_SOP) ==
+				 PD_DISC_NEEDED &&
+				 pe_can_send_sop_vdm(port, CMD_DISCOVER_IDENT))
+				set_state_pe(port,
+					     PE_INIT_PORT_VDM_IDENTITY_REQUEST);
+			else
+				set_state_pe(port, PE_DO_PORT_DISCOVERY);
 			return;
 		}
 
@@ -2526,19 +2547,21 @@ static void pe_snk_ready_run(int port)
 			return;
 		}
 
-		if (pe[port].cable.discovery == PD_DISC_NEEDED &&
-		    get_time().val > pe[port].discover_port_identity_timer &&
-		    pe_can_send_sop_prime(port)) {
-			set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
-			return;
-		}
-
 		/*
 		 * Start Port Discovery when:
 		 *   1) The PortDiscoverIdentityTimer times out.
 		 */
 		if (get_time().val > pe[port].discover_port_identity_timer) {
-			pe_start_port_discovery(port);
+			if (pe[port].cable.discovery == PD_DISC_NEEDED &&
+			    pe_can_send_sop_prime(port))
+				set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
+			else if (pd_get_identity_discovery(port, TCPC_TX_SOP) ==
+				 PD_DISC_NEEDED &&
+				 pe_can_send_sop_vdm(port, CMD_DISCOVER_IDENT))
+				set_state_pe(port,
+					     PE_INIT_PORT_VDM_IDENTITY_REQUEST);
+			else
+				set_state_pe(port, PE_DO_PORT_DISCOVERY);
 			return;
 		}
 
@@ -4173,6 +4196,114 @@ static void pe_vdm_identity_request_cbl_exit(int port)
 }
 
 /**
+ * PE_INIT_PORT_VDM_Identity_Request
+ *
+ * Specific to SOP requests, as cables require additions for the discover
+ * identity counter, must tolerate not receiving a GoodCRC, and need to set the
+ * cable revision based on response.
+ */
+static void pe_init_port_vdm_identity_request_entry(int port)
+{
+	uint32_t *msg = (uint32_t *)tx_emsg[port].buf;
+
+	print_current_state(port);
+
+	msg[0] = VDO(USB_SID_PD, 1, VDO_SVDM_VERS(pd_get_vdo_ver(port,
+								 TCPC_TX_SOP))
+		     | DISCOVER_IDENTITY);
+	tx_emsg[port].len = sizeof(uint32_t);
+
+	prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
+}
+
+static void pe_init_port_vdm_identity_request_run(int port)
+{
+	/* Message received */
+	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		uint32_t *payload;
+		int sop;
+		uint8_t type;
+		uint8_t cnt;
+		uint8_t ext;
+
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+		/* Retrieve the message information */
+		payload = (uint32_t *)rx_emsg[port].buf;
+		sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
+		type = PD_HEADER_TYPE(rx_emsg[port].header);
+		cnt = PD_HEADER_CNT(rx_emsg[port].header);
+		ext = PD_HEADER_EXT(rx_emsg[port].header);
+
+		if (sop == TCPC_TX_SOP && type == PD_DATA_VENDOR_DEF &&
+							cnt > 0 && ext == 0) {
+			/*
+			 * Valid DiscoverIdentity responses should have at least
+			 * 4 objects (header, ID header, Cert Stat, Product VDO)
+			 */
+			if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK &&
+								cnt > 3) {
+				/*
+				 * PE_INIT_PORT_VDM_Identity_ACKed embedded here
+				 */
+				dfp_consume_identity(port, cnt, payload);
+
+				/*
+				 * TODO(b:152419850): Fake vdm_cmd for now to
+				 * ensure existing discovery process continues.
+				 */
+				pe[port].vdm_cmd = DISCOVER_IDENTITY;
+			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
+				/*
+				 * PE_INIT_PORT_VDM_Identity_NAKed embedded here
+				 */
+				pd_set_identity_discovery(port, TCPC_TX_SOP,
+							  PD_DISC_FAIL);
+			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
+				/*
+				 * Don't fill in the discovery field so we
+				 * re-probe in tVDMBusy
+				 *
+				 * Note: May retry forever if port partner never
+				 * returns anything but BUSY
+				 */
+				CPRINTS("C%d: Partner Busy, DiscIdent "
+					"will be re-tried", port);
+				pe[port].discover_port_identity_timer =
+						get_time().val + PD_T_VDM_BUSY;
+			} else {
+				/*
+				 * Partner gave an incorrect size or command,
+				 * mark discovery as failed
+				 */
+				pd_set_identity_discovery(port, TCPC_TX_SOP,
+							  PD_DISC_FAIL);
+				CPRINTS("C%d: Unexpected partner response: "
+					"0x%04x 0x%04x", port,
+					rx_emsg[port].header, payload[0]);
+			}
+		} else if (type == PD_CTRL_NOT_SUPPORTED && cnt == 0) {
+			/*
+			 * Partner doesn't support structured VDMs, mark
+			 * discovery as failed
+			 */
+			pd_set_identity_discovery(port, TCPC_TX_SOP,
+							  PD_DISC_FAIL);
+		} else {
+			/*
+			 * Return to PE_S[RC,NK]_Ready to process unexpected
+			 * message. Reset PE_FLAGS_MSG_RECEIVED so ready state
+			 * knows to handle it.
+			 */
+			PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+		}
+		/* Return to calling state */
+		set_state_pe(port, get_last_state_pe(port));
+		return;
+	}
+}
+
+/**
  * PE_VDM_REQUEST
  * TODO(b/150611251): transition other VDMs to use shared parent above
  */
@@ -5219,6 +5350,11 @@ static const struct usb_state pe_states[] = {
 		.entry  = pe_vdm_identity_request_cbl_entry,
 		.run    = pe_vdm_identity_request_cbl_run,
 		.exit   = pe_vdm_identity_request_cbl_exit,
+		.parent = &pe_states[PE_VDM_SEND_REQUEST],
+	},
+	[PE_INIT_PORT_VDM_IDENTITY_REQUEST] = {
+		.entry  = pe_init_port_vdm_identity_request_entry,
+		.run    = pe_init_port_vdm_identity_request_run,
 		.parent = &pe_states[PE_VDM_SEND_REQUEST],
 	},
 	[PE_VDM_REQUEST] = {
