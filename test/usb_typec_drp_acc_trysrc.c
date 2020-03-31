@@ -13,6 +13,7 @@
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
 #include "usb_sm_checks.h"
+#include "usb_tc_sm.h"
 
 #define PORT0 0
 
@@ -36,6 +37,9 @@ void charge_manager_set_ceil(int port, enum ceil_requestor requestor, int ceil)
 
 __maybe_unused static int test_mux_con_dis_as_src(void)
 {
+	mock_tcpc.should_print_call = false;
+	mock_usb_mux.num_set_calls = 0;
+
 	/* Update CC lines send state machine event to process */
 	mock_tcpc.cc1 = TYPEC_CC_VOLT_RD;
 	mock_tcpc.cc2 = TYPEC_CC_VOLT_OPEN;
@@ -65,6 +69,9 @@ __maybe_unused static int test_mux_con_dis_as_src(void)
 
 __maybe_unused static int test_mux_con_dis_as_snk(void)
 {
+	mock_tcpc.should_print_call = false;
+	mock_usb_mux.num_set_calls = 0;
+
 	/* Update CC lines send state machine event to process */
 	mock_tcpc.cc1 = TYPEC_CC_VOLT_RP_3_0;
 	mock_tcpc.cc2 = TYPEC_CC_VOLT_OPEN;
@@ -88,15 +95,14 @@ __maybe_unused static int test_mux_con_dis_as_snk(void)
 
 	/* We are in Unattached.SNK. The mux should have detached */
 	TEST_EQ(mock_usb_mux.state, USB_PD_MUX_NONE, "%d");
-	TEST_EQ(mock_usb_mux.num_set_calls, 2, "%d");
+	TEST_LE(mock_usb_mux.num_set_calls, 2, "%d");
 
 	return EC_SUCCESS;
 }
 
 __maybe_unused static int test_power_role_set(void)
 {
-	/* Print out header changes for easier debugging */
-	mock_tcpc.should_print_call = true;
+	mock_tcpc.num_calls_to_set_header = 0;
 
 	/* Update CC lines send state machine event to process */
 	mock_tcpc.cc1 = TYPEC_CC_VOLT_OPEN;
@@ -123,23 +129,20 @@ void before_test(void)
 {
 	mock_usb_mux_reset();
 	mock_tcpc_reset();
-}
 
-void after_test(void)
-{
-	/* Disconnect any CC lines */
-	mock_tcpc.cc1 = TYPEC_CC_VOLT_OPEN;
-	mock_tcpc.cc2 = TYPEC_CC_VOLT_OPEN;
-	task_set_event(TASK_ID_PD_C0, PD_EVENT_CC, 0);
+	tc_restart_tcpc(PORT0);
+
+	/* Ensure that PD task initializes its state machine and settles */
+	task_wake(TASK_ID_PD_C0);
+	task_wait_event(SECOND);
+
+	/* Print out TCPC calls for easier debugging */
+	mock_tcpc.should_print_call = true;
 }
 
 void run_test(void)
 {
 	test_reset();
-
-	/* Ensure that PD task initializes its state machine */
-	task_wake(TASK_ID_PD_C0);
-	task_wait_event(5 * MSEC);
 
 	RUN_TEST(test_mux_con_dis_as_src);
 	RUN_TEST(test_mux_con_dis_as_snk);

@@ -16,12 +16,13 @@ struct mock_tcpc_ctrl mock_tcpc;
 
 void mock_tcpc_reset(void)
 {
-	/* Reset all control values to 0 */
+	/* Reset all control values to 0. See also build assert below */
 	memset(&mock_tcpc, 0, sizeof(mock_tcpc));
 
 	/* Reset all last viewed variables to -1 to make them invalid  */
 	memset(&mock_tcpc.last, 0xff, sizeof(mock_tcpc.last));
 }
+BUILD_ASSERT(TYPEC_CC_VOLT_OPEN == 0, "Ensure Open is 0-value for memset");
 
 static int mock_init(int port)
 {
