@@ -316,6 +316,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_TCPMV2
 #undef CONFIG_USB_PE_SM
 #undef CONFIG_USB_TYPEC_SM
+#undef CONFIG_USB_PD_HOST_CMD
 #define CONFIG_USB_PRL_SM
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
@@ -336,6 +337,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USBC_VCONN
 #define PD_VCONN_SWAP_DELAY 5000 /* us */
 #define CONFIG_USB_PD_DISCHARGE_GPIO
+#undef CONFIG_USB_PD_HOST_CMD
 #endif
 
 /* Common TypeC tests defines */
@@ -361,6 +363,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_TCPM_STUB
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_SW_CRC
+#undef CONFIG_USB_PD_HOST_CMD
 #endif /* Common TypeC test defines */
 
 #ifdef TEST_USB_TYPEC_VPD
@@ -383,6 +386,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_POWER_DELIVERY
 #undef CONFIG_USB_PRL_SM
 #undef CONFIG_USB_PE_SM
+#undef CONFIG_USB_PD_HOST_CMD
 #endif
 
 #ifdef TEST_USB_PD_INT

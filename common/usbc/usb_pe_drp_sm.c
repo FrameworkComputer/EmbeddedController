@@ -500,6 +500,10 @@ static struct policy_engine {
 	uint32_t src_caps[PDO_MAX_OBJECTS];
 	int src_cap_cnt;
 
+	/* Attached ChromeOS device id, RW hash, and current RO / RW image */
+	uint16_t dev_id;
+	uint32_t dev_rw_hash[PD_RW_HASH_SIZE/4];
+	enum ec_image current_image;
 } pe[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 test_export_static enum usb_pe_state get_state_pe(const int port);
@@ -635,13 +639,13 @@ void pe_got_hard_reset(int port)
 }
 
 /*
- * pe_got_frs_signal
+ * pd_got_frs_signal
  *
  * Called by the handler that detects the FRS signal in order to
  * switch PE states to complete the FRS that the hardware has
  * started.
  */
-void pe_got_frs_signal(int port)
+void pd_got_frs_signal(int port)
 {
 	PE_SET_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_SIGNALED);
 }
@@ -821,7 +825,7 @@ void pe_message_sent(int port)
 	PE_SET_FLAG(port, PE_FLAGS_TX_COMPLETE);
 }
 
-void pe_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
+void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 						int count)
 {
 	pe[port].partner_type = PORT;
@@ -852,7 +856,7 @@ void pe_exit_dp_mode(int port)
 		if (!pd_dfp_exit_mode(port, USB_SID_DISPLAYPORT, opos))
 			return;
 
-		pe_send_vdm(port, USB_SID_DISPLAYPORT,
+		pd_send_vdm(port, USB_SID_DISPLAYPORT,
 				CMD_EXIT_MODE | VDO_OPOS(opos), NULL, 0);
 	}
 }
@@ -1124,6 +1128,39 @@ static void pe_attempt_port_discovery(int port)
 
 	/* Clear the PE_FLAGS_WAITING_DR_SWAP flag if it was set. */
 	PE_CLR_FLAG(port, PE_FLAGS_WAITING_DR_SWAP);
+}
+
+int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
+					uint32_t current_image)
+{
+	pe[port].dev_id = dev_id;
+	memcpy(pe[port].dev_rw_hash, rw_hash, PD_RW_HASH_SIZE);
+#ifdef CONFIG_CMD_PD_DEV_DUMP_INFO
+	pd_dev_dump_info(dev_id, rw_hash);
+#endif
+	pe[port].current_image = current_image;
+
+	if (IS_ENABLED(CONFIG_USB_PD_HOST_CMD)) {
+		int i;
+
+		/* Search table for matching device / hash */
+		for (i = 0; i < RW_HASH_ENTRIES; i++)
+			if (dev_id == rw_hash_table[i].dev_id)
+				return !memcmp(rw_hash,
+					       rw_hash_table[i].dev_rw_hash,
+					       PD_RW_HASH_SIZE);
+	}
+
+	return 0;
+}
+
+void pd_dev_get_rw_hash(int port, uint16_t *dev_id, uint8_t *rw_hash,
+			 uint32_t *current_image)
+{
+	*dev_id = pe[port].dev_id;
+	*current_image = pe[port].current_image;
+	if (*dev_id)
+		memcpy(rw_hash, pe[port].dev_rw_hash, PD_RW_HASH_SIZE);
 }
 
 /*

@@ -170,7 +170,7 @@ usb_sm_framework_h0-y=usb_sm_framework_h3.o
 usb_typec_vpd-y=usb_typec_ctvpd.o vpd_api.o usb_sm_checks.o fake_usbc.o
 usb_typec_ctvpd-y=usb_typec_ctvpd.o vpd_api.o usb_sm_checks.o fake_usbc.o
 usb_typec_drp_acc_trysrc-y=usb_typec_drp_acc_trysrc.o vpd_api.o \
-	usb_sm_checks.o fake_usbc.o
+	usb_sm_checks.o
 usb_prl-y=usb_prl.o usb_sm_checks.o fake_usbc.o
 usb_pe_drp-y=usb_pe_drp.o usb_sm_checks.o \
 	fake_battery.o fake_prl.o fake_usbc.o

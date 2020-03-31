@@ -8,13 +8,14 @@
 #include <string.h>
 
 #include "battery.h"
+#include "charge_manager.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "host_command.h"
 #include "tcpm.h"
 #include "usb_mux.h"
-#include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usb_pd.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
 /*
@@ -83,8 +84,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_RW_HASH_ENTRY,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_HOSTCMD_RWHASHPD */
 
-#ifndef CONFIG_USB_PD_TCPC
-#ifdef CONFIG_EC_CMD_PD_CHIP_INFO
+#if defined(CONFIG_EC_CMD_PD_CHIP_INFO) && !defined(CONFIG_USB_PD_TCPC)
 static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pd_chip_info *p = args->params;
@@ -111,8 +111,7 @@ static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_PD_CHIP_INFO,
 		     hc_remote_pd_chip_info,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
-#endif /* CONFIG_EC_CMD_PD_CHIP_INFO */
-#endif /* CONFIG_USB_PD_TCPC */
+#endif /* CONFIG_EC_CMD_PD_CHIP_INFO && !CONFIG_USB_PD_TCPC */
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
@@ -378,6 +377,94 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_CONTROL,
 		     hc_usb_pd_control,
 		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
 #endif /* CONFIG_COMMON_RUNTIME */
+
+#if defined(CONFIG_HOSTCMD_FLASHPD) && defined(CONFIG_USB_PD_TCPMV2)
+static enum ec_status hc_remote_flash(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_pd_fw_update *p = args->params;
+	int port = p->port;
+	int rv = EC_RES_SUCCESS;
+	const uint32_t *data = &(p->size) + 1;
+	int i, size;
+
+	if (port >= board_get_usb_pd_port_count())
+		return EC_RES_INVALID_PARAM;
+
+	if (p->size + sizeof(*p) > args->params_size)
+		return EC_RES_INVALID_PARAM;
+
+#if defined(CONFIG_CHARGE_MANAGER) && defined(CONFIG_BATTERY) && \
+	(defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||   \
+	 defined(CONFIG_BATTERY_PRESENT_GPIO))
+	/*
+	 * Do not allow PD firmware update if no battery and this port
+	 * is sinking power, because we will lose power.
+	 */
+	if (battery_is_present() != BP_YES &&
+			charge_manager_get_active_charge_port() == port)
+		return EC_RES_UNAVAILABLE;
+#endif
+
+	switch (p->cmd) {
+	case USB_PD_FW_REBOOT:
+		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_REBOOT, NULL, 0);
+		/*
+		 * Return immediately to free pending i2c bus.  Host needs to
+		 * manage this delay.
+		 */
+		return EC_RES_SUCCESS;
+
+	case USB_PD_FW_FLASH_ERASE:
+		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_FLASH_ERASE, NULL, 0);
+		/*
+		 * Return immediately.  Host needs to manage delays here which
+		 * can be as long as 1.2 seconds on 64KB RW flash.
+		 */
+		return EC_RES_SUCCESS;
+
+	case USB_PD_FW_ERASE_SIG:
+		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_ERASE_SIG, NULL, 0);
+		break;
+
+	case USB_PD_FW_FLASH_WRITE:
+		/* Data size must be a multiple of 4 */
+		if (!p->size || p->size % 4)
+			return EC_RES_INVALID_PARAM;
+
+		size = p->size / 4;
+		for (i = 0; i < size; i += VDO_MAX_SIZE - 1) {
+			pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_FLASH_WRITE,
+				data + i, MIN(size - i, VDO_MAX_SIZE - 1));
+		}
+		return EC_RES_SUCCESS;
+
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+
+	return rv;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
+			hc_remote_flash,
+			EC_VER_MASK(0));
+#endif /* CONFIG_HOSTCMD_FLASHPD && CONFIG_USB_PD_TCPMV2 */
+
+#ifdef CONFIG_HOSTCMD_EVENTS
+void pd_notify_dp_alt_mode_entry(void)
+{
+	/*
+	 * Note: EC_HOST_EVENT_PD_MCU may be a more appropriate host event to
+	 * send, but we do not send that here because there are other cases
+	 * where we send EC_HOST_EVENT_PD_MCU such as charger insertion or
+	 * removal.  Currently, those do not wake the system up, but
+	 * EC_HOST_EVENT_MODE_CHANGE does.  If we made the system wake up on
+	 * EC_HOST_EVENT_PD_MCU, we would be turning the internal display on on
+	 * every charger insertion/removal, which is not desired.
+	 */
+	CPRINTS("Notifying AP of DP Alt Mode Entry...");
+	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
+}
+#endif /* CONFIG_HOSTCMD_EVENTS */
 
 __overridable enum ec_pd_port_location board_get_pd_port_location(int port)
 {

@@ -45,12 +45,6 @@ static int dp_alt_mode_entry_get_next_event(uint8_t *data)
 }
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED,
 		     dp_alt_mode_entry_get_next_event);
-
-void pd_notify_dp_alt_mode_entry(void)
-{
-	CPRINTS("Notifying AP of DP Alt Mode Entry...");
-	mkbp_send_event(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED);
-}
 #endif /* CONFIG_MKBP_EVENT */
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE

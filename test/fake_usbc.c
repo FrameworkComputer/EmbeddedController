@@ -130,20 +130,9 @@ __overridable void pe_invalidate_explicit_contract(int port)
 {
 }
 
-int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
-			 uint32_t ec_image)
-{
-	return 0;
-}
-
 enum pd_dual_role_states pd_get_dual_role(int port)
 {
 	return PD_DRP_TOGGLE_ON;
-}
-
-void pd_dev_get_rw_hash(int port, uint16_t *dev_id, uint8_t *rw_hash,
-			uint32_t *current_image)
-{
 }
 
 int pd_comm_is_enabled(int port)

@@ -250,10 +250,6 @@ static struct type_c {
 	typec_current_t typec_curr;
 	/* Type-C current change */
 	typec_current_t typec_curr_change;
-	/* Attached ChromeOS device id, RW hash, and current RO / RW image */
-	uint16_t dev_id;
-	uint32_t dev_rw_hash[PD_RW_HASH_SIZE/4];
-	enum ec_image current_image;
 } tc[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Port dual-role state */
@@ -264,11 +260,7 @@ enum pd_dual_role_states drp_state[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 
 static uint8_t saved_flgs[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-#ifdef CONFIG_USBC_VCONN
 static void set_vconn(int port, int enable);
-#endif
-
-#ifdef CONFIG_USB_PE_SM
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 /* Tracker for which task is waiting on sysjump prep to finish */
@@ -283,7 +275,6 @@ static void handle_new_power_state(int port);
 #endif /* CONFIG_POWER_COMMON */
 
 static void pd_update_dual_role_config(int port);
-#endif /* CONFIG_USB_PE_SM */
 
 /* Forward declare common, private functions */
 static void set_state_tc(const int port, const enum usb_tc_state new_state);
@@ -449,7 +440,6 @@ void pd_set_dual_role(int port, enum pd_dual_role_states state)
 			PD_EVENT_UPDATE_DUAL_ROLE, 0);
 }
 
-#ifdef CONFIG_USB_PE_SM
 bool pd_get_partner_data_swap_capable(int port)
 {
 	/* return data swap capable status of port partner */
@@ -459,12 +449,6 @@ bool pd_get_partner_data_swap_capable(int port)
 int pd_comm_is_enabled(int port)
 {
 	return tc_get_pd_enabled(port);
-}
-
-void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
-							int count)
-{
-	pe_send_vdm(port, vid, cmd, data, count);
 }
 
 void pd_request_data_swap(int port)
@@ -525,41 +509,6 @@ static inline void pd_dev_dump_info(uint16_t dev_id, uint32_t *hash)
 }
 #endif /* CONFIG_CMD_PD_DEV_DUMP_INFO */
 
-int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
-					uint32_t current_image)
-{
-	int i;
-
-	tc[port].dev_id = dev_id;
-	memcpy(tc[port].dev_rw_hash, rw_hash, PD_RW_HASH_SIZE);
-#ifdef CONFIG_CMD_PD_DEV_DUMP_INFO
-	pd_dev_dump_info(dev_id, rw_hash);
-#endif
-	tc[port].current_image = current_image;
-
-	/* Search table for matching device / hash */
-	for (i = 0; i < RW_HASH_ENTRIES; i++)
-		if (dev_id == rw_hash_table[i].dev_id)
-			return !memcmp(rw_hash,
-					rw_hash_table[i].dev_rw_hash,
-					PD_RW_HASH_SIZE);
-	return 0;
-}
-
-void pd_dev_get_rw_hash(int port, uint16_t *dev_id, uint8_t *rw_hash,
-			 uint32_t *current_image)
-{
-	*dev_id = tc[port].dev_id;
-	*current_image = tc[port].current_image;
-	if (*dev_id)
-		memcpy(rw_hash, tc[port].dev_rw_hash, PD_RW_HASH_SIZE);
-}
-
-void pd_got_frs_signal(int port)
-{
-	pe_got_frs_signal(port);
-}
-
 const char *tc_get_current_state(int port)
 {
 	return tc_state_names[get_state_tc(port)];
@@ -568,18 +517,6 @@ const char *tc_get_current_state(int port)
 uint32_t tc_get_flags(int port)
 {
 	return tc[port].flags;
-}
-
-void tc_print_dev_info(int port)
-{
-	int i;
-
-	ccprintf("Hash ");
-	for (i = 0; i < PD_RW_HASH_SIZE / 4; i++)
-		ccprintf("%08x ", tc[port].dev_rw_hash[i]);
-
-	ccprintf("\nImage %s\n", ec_image_to_string(
-		tc[port].current_image));
 }
 
 int tc_is_attached_src(int port)
@@ -694,7 +631,6 @@ void tc_disc_ident_complete(int port)
 {
 	TC_CLR_FLAG(port, TC_FLAGS_DISC_IDENT_IN_PROGRESS);
 }
-#endif /* CONFIG_USB_PE_SM */
 
 void tc_try_src_override(enum try_src_override_t ov)
 {
@@ -1154,16 +1090,13 @@ static void print_current_state(const int port)
 	CPRINTS("C%d: %s", port, tc_state_names[get_state_tc(port)]);
 }
 
-#ifdef CONFIG_USB_PE_SM
 static void handle_device_access(int port)
 {
 	tc[port].low_power_time = get_time().val + PD_LPM_DEBOUNCE_US;
 }
-#endif
 
 void tc_event_check(int port, int evt)
 {
-#ifdef CONFIG_USB_PE_SM
 	if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER)) {
 		if (evt & PD_EXIT_LOW_POWER_EVENT_MASK)
 			TC_SET_FLAG(port, TC_FLAGS_WAKE_FROM_LPM);
@@ -1201,7 +1134,6 @@ void tc_event_check(int port, int evt)
 
 	if (evt & PD_EVENT_UPDATE_DUAL_ROLE)
 		pd_update_dual_role_config(port);
-#endif
 }
 
 /*
@@ -1290,7 +1222,6 @@ static void set_vconn(int port, int enable)
 		ppc_set_vconn(port, enable);
 }
 
-#ifdef CONFIG_USB_PE_SM
 /* This must only be called from the PD task */
 static void pd_update_dual_role_config(int port)
 {
@@ -1346,99 +1277,6 @@ static void handle_new_power_state(int port)
 }
 #endif /* CONFIG_POWER_COMMON */
 
-/*
- * HOST COMMANDS
- */
-#ifdef HAS_TASK_HOSTCMD
-
-static enum ec_status hc_remote_flash(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_usb_pd_fw_update *p = args->params;
-	int port = p->port;
-	int rv = EC_RES_SUCCESS;
-	const uint32_t *data = &(p->size) + 1;
-	int i, size;
-
-	if (port >= board_get_usb_pd_port_count())
-		return EC_RES_INVALID_PARAM;
-
-	if (p->size + sizeof(*p) > args->params_size)
-		return EC_RES_INVALID_PARAM;
-
-#if defined(CONFIG_BATTERY) && \
-	(defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||   \
-	 defined(CONFIG_BATTERY_PRESENT_GPIO))
-	/*
-	 * Do not allow PD firmware update if no battery and this port
-	 * is sinking power, because we will lose power.
-	 */
-	if (battery_is_present() != BP_YES &&
-			charge_manager_get_active_charge_port() == port)
-		return EC_RES_UNAVAILABLE;
-#endif
-
-	switch (p->cmd) {
-	case USB_PD_FW_REBOOT:
-		pe_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_REBOOT, NULL, 0);
-		/*
-		 * Return immediately to free pending i2c bus.  Host needs to
-		 * manage this delay.
-		 */
-		return EC_RES_SUCCESS;
-
-	case USB_PD_FW_FLASH_ERASE:
-		pe_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_FLASH_ERASE, NULL, 0);
-		/*
-		 * Return immediately.  Host needs to manage delays here which
-		 * can be as long as 1.2 seconds on 64KB RW flash.
-		 */
-		return EC_RES_SUCCESS;
-
-	case USB_PD_FW_ERASE_SIG:
-		pe_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_ERASE_SIG, NULL, 0);
-		break;
-
-	case USB_PD_FW_FLASH_WRITE:
-		/* Data size must be a multiple of 4 */
-		if (!p->size || p->size % 4)
-			return EC_RES_INVALID_PARAM;
-
-		size = p->size / 4;
-		for (i = 0; i < size; i += VDO_MAX_SIZE - 1) {
-			pe_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_FLASH_WRITE,
-				data + i, MIN(size - i, VDO_MAX_SIZE - 1));
-		}
-		return EC_RES_SUCCESS;
-
-	default:
-		return EC_RES_INVALID_PARAM;
-	}
-
-	return rv;
-}
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
-			hc_remote_flash,
-			EC_VER_MASK(0));
-
-#ifdef CONFIG_HOSTCMD_EVENTS
-void pd_notify_dp_alt_mode_entry(void)
-{
-	/*
-	 * Note: EC_HOST_EVENT_PD_MCU may be a more appropriate host event to
-	 * send, but we do not send that here because there are other cases
-	 * where we send EC_HOST_EVENT_PD_MCU such as charger insertion or
-	 * removal.  Currently, those do not wake the system up, but
-	 * EC_HOST_EVENT_MODE_CHANGE does.  If we made the system wake up on
-	 * EC_HOST_EVENT_PD_MCU, we would be turning the internal display on on
-	 * every charger insertion/removal, which is not desired.
-	 */
-	CPRINTS("Notifying AP of DP Alt Mode Entry...");
-	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
-}
-#endif /* CONFIG_HOSTCMD_EVENTS */
-
-#endif /* HAS_TASK_HOSTCMD */
-
 #if defined(CONFIG_USB_PD_ALT_MODE) && !defined(CONFIG_USB_PD_ALT_MODE_DFP)
 void pd_send_hpd(int port, enum hpd_event hpd)
 {
@@ -1461,7 +1299,6 @@ void pd_send_hpd(int port, enum hpd_event hpd)
 		VDO_OPOS(opos) | CMD_ATTENTION, data, 1);
 }
 #endif
-#endif /* CONFIG_USB_PE_SM */
 
 #ifdef CONFIG_USBC_VCONN_SWAP
 void pd_request_vconn_swap_off(int port)

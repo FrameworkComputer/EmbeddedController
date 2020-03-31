@@ -588,6 +588,8 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 #endif /* CONFIG_USB_PD_CUSTOM_PDO */
 
 /* ----------------- Vendor Defined Messages ------------------ */
+#if defined(CONFIG_USB_PE_SM) && !defined(CONFIG_USB_VPD) && \
+	!defined(CONFIG_USB_CTVPD)
 __overridable int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 				uint32_t **rpayload)
 {
@@ -650,6 +652,7 @@ __overridable int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 
 	return 0;
 }
+#endif /* CONFIG_USB_PE_SM && !CONFIG_USB_VPD && !CONFIG_USB_CTVPD */
 
 __overridable bool vboot_allow_usb_pd(void)
 {

@@ -367,13 +367,6 @@ const char *tc_get_current_state(int port);
  */
 uint32_t tc_get_flags(int port);
 
-/*
- * Prints the rw hash and sysjump image string.
- *
- * @param port USB-C port number
- */
-void tc_print_dev_info(int port);
-
 #ifdef CONFIG_USB_CTVPD
 
 /**

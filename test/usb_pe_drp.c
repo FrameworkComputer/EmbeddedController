@@ -68,7 +68,7 @@ static int test_pe_frs(void)
 	/*
 	 * Trigger the Fast Role Switch from simulated ISR
 	 */
-	pe_got_frs_signal(PORT0);
+	pd_got_frs_signal(PORT0);
 	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_SIGNALED));
 
 	/*
