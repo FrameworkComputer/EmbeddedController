@@ -12,10 +12,21 @@ struct mock_tcpc_ctrl {
 	enum tcpc_cc_voltage_status cc1;
 	enum tcpc_cc_voltage_status cc2;
 	int vbus_level;
-	enum pd_power_role power_role;
-	enum pd_data_role data_role;
 	int num_calls_to_set_header;
-	int should_print_header_changes;
+	bool should_print_call;
+
+	/* Set to function pointer if callback is needed for test code */
+	struct tcpm_drv callbacks;
+
+	/* Store the latest values that were set on TCPC API */
+	struct {
+		enum pd_power_role power_role;
+		enum pd_data_role data_role;
+		enum tcpc_cc_pull cc;
+		enum tcpc_rp_value rp;
+		enum tcpc_cc_polarity polarity;
+	} last;
+
 };
 
 /* Reset this TCPC mock */

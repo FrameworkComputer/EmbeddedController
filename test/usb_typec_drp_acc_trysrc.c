@@ -96,7 +96,7 @@ __maybe_unused static int test_mux_con_dis_as_snk(void)
 __maybe_unused static int test_power_role_set(void)
 {
 	/* Print out header changes for easier debugging */
-	mock_tcpc.should_print_header_changes = true;
+	mock_tcpc.should_print_call = true;
 
 	/* Update CC lines send state machine event to process */
 	mock_tcpc.cc1 = TYPEC_CC_VOLT_OPEN;
@@ -105,8 +105,8 @@ __maybe_unused static int test_power_role_set(void)
 	task_wait_event(10 * SECOND);
 
 	/* We are in Attached.SRC now */
-	TEST_EQ(mock_tcpc.power_role, PD_ROLE_SOURCE, "%d");
-	TEST_EQ(mock_tcpc.data_role, PD_ROLE_DFP, "%d");
+	TEST_EQ(mock_tcpc.last.power_role, PD_ROLE_SOURCE, "%d");
+	TEST_EQ(mock_tcpc.last.data_role, PD_ROLE_DFP, "%d");
 
 	/*
 	 * We allow 2 separate calls to update the header since power and data
