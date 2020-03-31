@@ -49,8 +49,6 @@ static uint8_t out_msg[SPI_TX_MAX_FIFO_SIZE] __aligned(4);
 static struct host_packet spi_packet;
 
 enum spi_slave_state_machine {
-	/* SPI not enabled */
-	SPI_STATE_DISABLED,
 	/* Ready to receive next request */
 	SPI_STATE_READY_TO_RECV,
 	/* Receiving request */
@@ -64,7 +62,6 @@ enum spi_slave_state_machine {
 } spi_slv_state;
 
 static const int spi_response_state[] = {
-	[SPI_STATE_DISABLED]      = EC_SPI_NOT_READY,
 	[SPI_STATE_READY_TO_RECV] = EC_SPI_OLD_READY,
 	[SPI_STATE_RECEIVING]     = EC_SPI_RECEIVING,
 	[SPI_STATE_PROCESSING]    = EC_SPI_PROCESSING,
@@ -86,8 +83,6 @@ static void reset_rx_fifo(void)
 	IT83XX_SPI_TXRXFAR = 0x00;
 	/* Rx FIFO reset and count monitor reset */
 	IT83XX_SPI_FCR = IT83XX_SPI_RXFR | IT83XX_SPI_RXFCMR;
-	/* Enable Rx FIFO full interrupt */
-	IT83XX_SPI_IMR &= ~IT83XX_SPI_RFFIM;
 }
 
 /* This routine handles spi received unexcepted data */
@@ -228,21 +223,39 @@ static void spi_parse_header(void)
 
 void spi_event(enum gpio_signal signal)
 {
-	/* If SPI slave is not enabled */
-	if (spi_slv_state == SPI_STATE_DISABLED)
-		return;
-
-	/* EC has started receiving the request from the AP */
-	spi_set_state(SPI_STATE_RECEIVING);
-
-	/* Disable idle task deep sleep bit of SPI in S0. */
-	disable_sleep(SLEEP_MASK_SPI);
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		/* EC has started receiving the request from the AP */
+		spi_set_state(SPI_STATE_RECEIVING);
+		/* Disable idle task deep sleep bit of SPI in S0. */
+		disable_sleep(SLEEP_MASK_SPI);
+	}
 }
 
 void spi_slv_int_handler(void)
 {
-	/* Interrupt status register */
-	int spi_status = IT83XX_SPI_ISR;
+	/*
+	 * The status of SPI end detection interrupt bit is set, it
+	 * means that host command parse has been completed and AP
+	 * has received the last byte which is EC_SPI_PAST_END from
+	 * EC responded data, then AP ended the transaction.
+	 */
+	if (IT83XX_SPI_ISR & IT83XX_SPI_ENDDETECTINT) {
+#ifndef IT83XX_SPI_AUTO_RESET_RX_FIFO
+		/* Reset fifo and prepare to receive next transaction */
+		reset_rx_fifo();
+#endif
+		/* Enable Rx FIFO full interrupt */
+		IT83XX_SPI_IMR &= ~IT83XX_SPI_RFFIM;
+		/* Ready to receive */
+		spi_set_state(SPI_STATE_READY_TO_RECV);
+		/*
+		 * Once there is no SPI active, enable idle task deep
+		 * sleep bit of SPI in S3 or lower.
+		 */
+		enable_sleep(SLEEP_MASK_SPI);
+		/* CS# is deasserted, so write clear all slave status */
+		IT83XX_SPI_ISR = 0xff;
+	}
 
 	/*
 	 * The status of Rx FIFO full interrupt bit is set,
@@ -254,78 +267,23 @@ void spi_slv_int_handler(void)
 	 * generate clock that is not the bytes sent from
 	 * the host.
 	 */
-	if (spi_status & IT83XX_SPI_RXFIFOFULL &&
-		spi_slv_state == SPI_STATE_RECEIVING) {
+	if (IT83XX_SPI_ISR & IT83XX_SPI_RXFIFOFULL) {
 		/* Disable Rx FIFO full interrupt */
 		IT83XX_SPI_IMR |= IT83XX_SPI_RFFIM;
+		/* write clear slave status */
+		IT83XX_SPI_ISR = IT83XX_SPI_RXFIFOFULL;
 		/* Parse header for version of spi-protocol */
 		spi_parse_header();
 	}
-	/*
-	 * The status of SPI end detection interrupt bit is set,
-	 * the AP ended the transaction data.
-	 */
-	if (spi_status & IT83XX_SPI_ENDDETECTINT) {
-		/* Reset fifo and prepare to receive next transaction */
-		reset_rx_fifo();
-		/* Ready to receive */
-		spi_set_state(SPI_STATE_READY_TO_RECV);
-		/*
-		 * Once there is no SPI active, enable idle task deep
-		 * sleep bit of SPI in S3 or lower.
-		 */
-		enable_sleep(SLEEP_MASK_SPI);
-	}
 
-	/* Write clear the slave status */
-	IT83XX_SPI_ISR = spi_status;
 	/* Clear the interrupt status */
 	task_clear_pending_irq(IT83XX_IRQ_SPI_SLAVE);
 }
 
-static void spi_chipset_startup(void)
+static void spi_init(void)
 {
 	/* Set SPI pins to alternate function */
 	gpio_config_module(MODULE_SPI, 1);
-	/* Reset fifo and prepare to for next transaction */
-	reset_rx_fifo();
-	/* Ready to receive */
-	spi_set_state(SPI_STATE_READY_TO_RECV);
-	/* Interrupt status register(write one to clear) */
-	IT83XX_SPI_ISR = 0xff;
-	/*
-	 * Interrupt mask register (0b:Enable, 1b:Mask)
-	 * bit7 : Rx FIFO full interrupt mask
-	 * bit2 : SPI end detection interrupt mask
-	 */
-	IT83XX_SPI_IMR &= ~(IT83XX_SPI_RFFIM | IT83XX_SPI_EDIM);
-	/* Enable SPI chip select pin interrupt */
-	gpio_clear_pending_interrupt(GPIO_SPI0_CS);
-	gpio_enable_interrupt(GPIO_SPI0_CS);
-	/* Enable SPI slave interrupt */
-	task_clear_pending_irq(IT83XX_IRQ_SPI_SLAVE);
-	task_enable_irq(IT83XX_IRQ_SPI_SLAVE);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, spi_chipset_startup, HOOK_PRIO_FIRST);
-
-static void spi_chipset_shutdown(void)
-{
-	/* SPI not enabled */
-	spi_set_state(SPI_STATE_DISABLED);
-	/* Disable SPI interrupt */
-	gpio_disable_interrupt(GPIO_SPI0_CS);
-	/* Set SPI pins to inputs so we don't leak power when AP is off */
-	gpio_config_module(MODULE_SPI, 0);
-	/*
-	 * Once there is no SPI active, enable idle task deep
-	 * sleep bit of SPI in S3 or lower.
-	 */
-	enable_sleep(SLEEP_MASK_SPI);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, spi_chipset_shutdown, HOOK_PRIO_FIRST);
-
-static void spi_init(void)
-{
 	/*
 	 * Memory controller configuration register 3.
 	 * bit6 : SPI pin function select (0b:Enable, 1b:Mask)
@@ -338,14 +296,36 @@ static void spi_init(void)
 	IT83XX_SPI_FTCB0R = SPI_RX_MAX_FIFO_SIZE;
 	/* SPI slave controller enable */
 	IT83XX_SPI_SPISGCR = IT83XX_SPI_SPISCEN;
-
-	if (system_jumped_to_this_image() &&
-	    chipset_in_state(CHIPSET_STATE_ON)) {
-		spi_chipset_startup();
-	} else {
-		/* SPI not enabled */
-		spi_set_state(SPI_STATE_DISABLED);
-	}
+#ifdef IT83XX_SPI_AUTO_RESET_RX_FIFO
+	/*
+	 * General control register2
+	 * bit4 : Rx FIFO2 will not be overwrited once it's full.
+	 * bit3 : Rx FIFO1 will not be overwrited once it's full.
+	 * bit0 : Rx FIFO1/FIFO2 will reset after each CS_N goes high.
+	 */
+	IT83XX_SPI_GCR2 = IT83XX_SPI_RXF2OC | IT83XX_SPI_RXF1OC
+				| IT83XX_SPI_RXFAR;
+#endif
+	/*
+	 * Interrupt mask register (0b:Enable, 1b:Mask)
+	 * bit7 : Rx FIFO full interrupt mask
+	 * bit2 : SPI end detection interrupt mask
+	 */
+	IT83XX_SPI_IMR &= ~IT83XX_SPI_EDIM;
+	/* Reset fifo and prepare to for next transaction */
+	reset_rx_fifo();
+	/* Enable Rx FIFO full interrupt */
+	IT83XX_SPI_IMR &= ~IT83XX_SPI_RFFIM;
+	/* Ready to receive */
+	spi_set_state(SPI_STATE_READY_TO_RECV);
+	/* Interrupt status register(write one to clear) */
+	IT83XX_SPI_ISR = 0xff;
+	/* Enable SPI slave interrupt */
+	task_clear_pending_irq(IT83XX_IRQ_SPI_SLAVE);
+	task_enable_irq(IT83XX_IRQ_SPI_SLAVE);
+	/* Enable SPI chip select pin interrupt */
+	gpio_clear_pending_interrupt(GPIO_SPI0_CS);
+	gpio_enable_interrupt(GPIO_SPI0_CS);
 }
 DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_INIT_SPI);
 
