@@ -100,7 +100,7 @@
 #define PE_FLAGS_FAST_ROLE_SWAP_ENABLED      BIT(21)
 /* Flag to note TCPC passed on FRS signal from port partner */
 #define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(22)
-/* For PD2.0, triggers a DR SWAP from UFP to DFP before sending a DiscID msg */
+/* TODO: POLICY decision: Triggers a DR SWAP attempt from UFP to DFP */
 #define PE_FLAGS_DR_SWAP_TO_DFP              BIT(23)
 /* Flag to trigger a message resend after receiving a WAIT from port partner */
 #define PE_FLAGS_WAITING_DR_SWAP             BIT(24)
@@ -112,6 +112,8 @@
 #define PE_FLAGS_FIRST_MSG                   BIT(27)
 /* Flag to continue port discovery if it was interrupted */
 #define PE_FLAGS_DISCOVER_PORT_CONTINUE      BIT(28)
+/* TODO: POLICY decision: Triggers a Vconn SWAP attempt to on */
+#define PE_FLAGS_VCONN_SWAP_TO_ON	     BIT(29)
 
 /* 6.7.3 Hard Reset Counter */
 #define N_HARD_RESET_COUNT 2
@@ -1117,53 +1119,81 @@ static void pe_prl_execute_hard_reset(int port)
 	prl_execute_hard_reset(port);
 }
 
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
 /*
- * This function must only be called from the PE_SNK_READY entry and
- * PE_SRC_READY entry State.
+ * Run discovery at our leisure from PE_SNK_Ready or PE_SRC_Ready, after
+ * attempting to get into the desired default policy of DFP/Vconn source
+ *
+ * Return indicates whether set_state was called, in which case the calling
+ * function should return as well.
  */
-static void pe_attempt_port_discovery(int port)
+static bool pe_attempt_port_discovery(int port)
 {
-	if (!PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION |
-				PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE) &&
-				pe[port].discover_port_identity_counter <=
-						N_DISCOVER_IDENTITY_COUNT) {
-		/*
-		 * If we are operating as PD2.0 version, make sure we are
-		 * DFP before sending Discover Identity message.
-		 */
-		if (prl_get_rev(port, TCPC_TX_SOP) == PD_REV20 &&
-					pe[port].data_role == PD_ROLE_UFP) {
-			/*
-			 * If we are UFP and DR SWAP fails
-			 * N_DR_SWAP_ATTEMPT_COUNT number of times, give up
-			 * port discovery. Also give up if the Port Partner
-			 * rejected the DR_SWAP.
-			 */
-			if ((pe[port].dr_swap_attempt_counter >=
-						N_DR_SWAP_ATTEMPT_COUNT) ||
-				(pe[port].dr_swap_attempt_counter > 0 &&
-				!PE_CHK_FLAG(port, PE_FLAGS_WAITING_DR_SWAP))) {
-				PE_SET_FLAG(port,
-					PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
-				pe[port].discover_port_identity_timer =
-					TIMER_DISABLED;
-			} else {
-				PE_SET_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
-				pe[port].discover_port_identity_timer =
-					get_time().val + PD_T_DISCOVER_IDENTITY;
-			}
-		} else {
-			pe[port].discover_port_identity_timer =
-					get_time().val + PD_T_DISCOVER_IDENTITY;
+	/*
+	 * DONE set once modal entry is successful, discovery completes, or
+	 * discovery results in a NAK
+	 */
+	if (PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE))
+		return false;
+
+	/*
+	 * TODO: POLICY decision: move policy functionality out to a separate
+	 * file.  For now, try once to become DFP/Vconn source
+	 */
+	if (PE_CHK_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP)) {
+		PE_CLR_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
+
+		if (pe[port].data_role == PD_ROLE_UFP) {
+			set_state_pe(port, PE_DRS_SEND_SWAP);
+			return true;
 		}
-	} else {
-		PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
-		pe[port].discover_port_identity_timer = TIMER_DISABLED;
 	}
 
-	/* Clear the PE_FLAGS_WAITING_DR_SWAP flag if it was set. */
-	PE_CLR_FLAG(port, PE_FLAGS_WAITING_DR_SWAP);
+	if (PE_CHK_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON)) {
+		PE_CLR_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON);
+
+		if (!tc_is_vconn_src(port)) {
+			set_state_pe(port, PE_VCS_SEND_SWAP);
+			return true;
+		}
+	}
+
+	/* If mode entry was successful, disable the timer */
+	if (PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION)) {
+		PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+		pe[port].discover_port_identity_timer = TIMER_DISABLED;
+		return false;
+	}
+
+	/*
+	 * Run discovery functions when the timer indicating either cable
+	 * discovery spacing or BUSY spacing runs out.
+	 */
+	if (get_time().val > pe[port].discover_port_identity_timer) {
+		if (pe[port].cable.discovery == PD_DISC_NEEDED &&
+		    pe_can_send_sop_prime(port)) {
+			set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
+			return true;
+		} else if (pd_get_identity_discovery(port, TCPC_TX_SOP) ==
+			 PD_DISC_NEEDED &&
+			 pe_can_send_sop_vdm(port, CMD_DISCOVER_IDENT)) {
+			set_state_pe(port,
+				     PE_INIT_PORT_VDM_IDENTITY_REQUEST);
+			return true;
+		/*
+		 * Note: determine if next VDM can be sent by taking advantage
+		 * of discovery following the VDM command enum ordering.
+		 * Remove once do_port_discovery can be removed.
+		 */
+		} else if (pe_can_send_sop_vdm(port, pe[port].vdm_cmd + 1)) {
+			set_state_pe(port, PE_DO_PORT_DISCOVERY);
+			return true;
+		}
+	}
+
+	return false;
 }
+#endif
 
 int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 					uint32_t current_image)
@@ -1651,14 +1681,6 @@ static void pe_src_ready_entry(int port)
 	}
 
 	/*
-	 * Do port partner discovery
-	 *
-	 * This function modifies state variables that are used in the run
-	 * part of this state. See pe_attempt_port_discovery for details.
-	 */
-	pe_attempt_port_discovery(port);
-
-	/*
 	 * Wait and add jitter if we are operating in PD2.0 mode and no messages
 	 * have been sent since enter this state.
 	 */
@@ -1783,22 +1805,11 @@ static void pe_src_ready_run(int port)
 		pe[port].wait_and_add_jitter_timer = TIMER_DISABLED;
 
 		/*
-		 * Start Port Discovery when:
-		 *   1) The DiscoverIdentityTimer times out.
+		 * Attempt discovery if possible, and return if state was
+		 * changed for that discovery.
 		 */
-		if (get_time().val > pe[port].discover_port_identity_timer) {
-			if (pe[port].cable.discovery == PD_DISC_NEEDED &&
-			    pe_can_send_sop_prime(port))
-				set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
-			else if (pd_get_identity_discovery(port, TCPC_TX_SOP) ==
-				 PD_DISC_NEEDED &&
-				 pe_can_send_sop_vdm(port, CMD_DISCOVER_IDENT))
-				set_state_pe(port,
-					     PE_INIT_PORT_VDM_IDENTITY_REQUEST);
-			else
-				set_state_pe(port, PE_DO_PORT_DISCOVERY);
+		if (pe_attempt_port_discovery(port))
 			return;
-		}
 
 		/*
 		 * Handle Device Policy Manager Requests
@@ -2058,6 +2069,12 @@ static void pe_snk_startup_entry(int port)
 	if (PE_CHK_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE);
 	} else {
+		/*
+		 * Set DiscoverIdentityTimer to trigger when we enter
+		 * snk_ready for the first time.
+		 */
+		pe[port].discover_port_identity_timer = get_time().val;
+
 		/* Clear port discovery flags */
 		PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
 		pd_dfp_discovery_init(port);
@@ -2066,6 +2083,13 @@ static void pe_snk_startup_entry(int port)
 
 		/* Reset dr swap attempt counter */
 		pe[port].dr_swap_attempt_counter = 0;
+
+		/*
+		 * TODO: POLICY decision:
+		 * Mark that we'd like to try being Vconn source and DFP
+		 */
+		PE_SET_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
+		PE_SET_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON);
 	}
 }
 
@@ -2410,17 +2434,8 @@ static void pe_snk_ready_entry(int port)
 	}
 
 	/*
-	 * Do port partner discovery
-	 *
-	 * This function modifies state variables that are used in
-	 * the run part of this state. See pe_attempt_port_discovery
-	 * for details.
-	 */
-	pe_attempt_port_discovery(port);
-
-	/*
-	 * Wait and add jitter if we are operating in PD2.0 mode and no
-	 * messages have been sent since enter this state.
+	 * Wait and add jitter if we are operating in PD2.0 mode and no messages
+	 * have been sent since enter this state.
 	 */
 	pe_update_wait_and_add_jitter_timer(port);
 }
@@ -2548,22 +2563,11 @@ static void pe_snk_ready_run(int port)
 		}
 
 		/*
-		 * Start Port Discovery when:
-		 *   1) The PortDiscoverIdentityTimer times out.
+		 * Attempt discovery if possible, and return if state was
+		 * changed for that discovery.
 		 */
-		if (get_time().val > pe[port].discover_port_identity_timer) {
-			if (pe[port].cable.discovery == PD_DISC_NEEDED &&
-			    pe_can_send_sop_prime(port))
-				set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
-			else if (pd_get_identity_discovery(port, TCPC_TX_SOP) ==
-				 PD_DISC_NEEDED &&
-				 pe_can_send_sop_vdm(port, CMD_DISCOVER_IDENT))
-				set_state_pe(port,
-					     PE_INIT_PORT_VDM_IDENTITY_REQUEST);
-			else
-				set_state_pe(port, PE_DO_PORT_DISCOVERY);
+		if (pe_attempt_port_discovery(port))
 			return;
-		}
 
 		/*
 		 * Handle Device Policy Manager Requests
