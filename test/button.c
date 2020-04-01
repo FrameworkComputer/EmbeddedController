@@ -14,10 +14,12 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "host_command.h"
 #include "test_util.h"
 #include "timer.h"
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
+#include "util.h"
 
 #define UNCHANGED -1
 
@@ -142,6 +144,120 @@ static int test_button_press_both(void)
 	return EC_SUCCESS;
 }
 
+/* Button simulate test cases */
+static int send_button_hostcmd(uint32_t btn_mask, uint32_t press_ms)
+{
+	struct ec_params_button p;
+
+	p.press_ms = press_ms;
+	p.btn_mask = btn_mask;
+
+	return test_send_host_command(EC_CMD_BUTTON, 0, &p, sizeof(p), NULL, 0);
+}
+
+static void test_sim_button_util(uint32_t btn_mask, uint32_t press_ms)
+{
+	send_button_hostcmd(btn_mask, press_ms);
+	msleep(100);
+}
+
+/* Test simulate pressing a button */
+static int test_sim_button_press(void)
+{
+	test_sim_button_util(1 << KEYBOARD_BUTTON_VOLUME_DOWN, 100);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
+
+	return EC_SUCCESS;
+}
+
+/* Test simulate releasing a button */
+static int test_sim_button_release(void)
+{
+	test_sim_button_util(1 << KEYBOARD_BUTTON_VOLUME_UP, 50);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == 0);
+
+	return EC_SUCCESS;
+}
+
+/* A press shorter than the debounce time should not trigger an update */
+static int test_sim_button_debounce_short_press(void)
+{
+	test_sim_button_util(1 << KEYBOARD_BUTTON_VOLUME_DOWN, 10);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
+
+	return EC_SUCCESS;
+}
+
+/* A short bounce while pressing should still result in a button press */
+static int test_sim_button_debounce_short_bounce(void)
+{
+	uint32_t btn_mask = 0;
+
+	btn_mask |= (1 << KEYBOARD_BUTTON_VOLUME_DOWN);
+	send_button_hostcmd(btn_mask, 10);
+	msleep(50);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
+
+	send_button_hostcmd(btn_mask, 100);
+	msleep(20);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
+	msleep(20);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
+
+	return EC_SUCCESS;
+}
+
+/* Button level must be stable for the entire debounce interval */
+static int test_sim_button_debounce_stability(void)
+{
+	uint32_t btn_mask = 0;
+
+	btn_mask |= (1 << KEYBOARD_BUTTON_VOLUME_DOWN);
+	send_button_hostcmd(btn_mask, 10);
+	msleep(20);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
+	msleep(20);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
+
+	send_button_hostcmd(btn_mask, 100);
+	msleep(20);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
+	msleep(20);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
+	msleep(60);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
+
+	msleep(20);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
+	msleep(20);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 0);
+	msleep(60);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 0);
+
+	return EC_SUCCESS;
+}
+
+/* Test simulate pressing both buttons */
+static int test_sim_button_press_both(void)
+{
+	uint32_t btn_mask = 0;
+
+	btn_mask |= (1 << KEYBOARD_BUTTON_VOLUME_DOWN);
+	btn_mask |= (1 << KEYBOARD_BUTTON_VOLUME_UP);
+	send_button_hostcmd(btn_mask, 100);
+	msleep(10);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == UNCHANGED);
+	msleep(60);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == 1);
+	msleep(100);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 0);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == 0);
+
+	return EC_SUCCESS;
+}
+
 static void button_test_init(void)
 {
 	int i;
@@ -179,6 +295,24 @@ void run_test(void)
 
 	button_test_init();
 	RUN_TEST(test_button_press_both);
+
+	button_test_init();
+	RUN_TEST(test_sim_button_press);
+
+	button_test_init();
+	RUN_TEST(test_sim_button_release);
+
+	button_test_init();
+	RUN_TEST(test_sim_button_debounce_short_press);
+
+	button_test_init();
+	RUN_TEST(test_sim_button_debounce_short_bounce);
+
+	button_test_init();
+	RUN_TEST(test_sim_button_debounce_stability);
+
+	button_test_init();
+	RUN_TEST(test_sim_button_press_both);
 
 	test_print_result();
 }
