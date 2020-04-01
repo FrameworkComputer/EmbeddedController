@@ -39,6 +39,7 @@ echo = echo -n;
 quiet = echo -n; $(cmd_$(1))
 silent = 1>/dev/null
 silent_err = 2>/dev/null
+MAKEFLAGS += --no-print-directory
 else
 echo = echo $(1);
 ifeq ($(V),)
@@ -46,6 +47,7 @@ Q := @
 quiet = @echo '  $(2)' $(patsubst $(out)/%,%,$@) ; $(cmd_$(1))
 silent = 1>/dev/null
 silent_err = 2>/dev/null
+MAKEFLAGS += --no-print-directory
 else
 Q :=
 quiet = $(cmd_$(1))
@@ -106,7 +108,7 @@ cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d -MT $@ -o $@ \
 cmd_cxx_to_host = $(HOSTCXX) -std=c++0x $(COMMON_WARN) $(HOST_CXXFLAGS)\
 	-I ./$($(notdir $@)_ROOT) -o $@ $(filter %.cc,$^) $($(notdir $@)_LIBS)
 cmd_o_to_a = $(AR) rcs $@ $^
-cmd_host_test = $(MAKE) --no-print-directory BOARD=host PROJECT=$* \
+cmd_host_test = $(MAKE) BOARD=host PROJECT=$* \
 	V=$(V) out=build/host/$* TEST_BUILD=y EMU_BUILD=y CROSS_COMPILE= \
 	$(if $(TEST_SCRIPT),TEST_SCRIPT=$(TEST_SCRIPT)) $(TEST_FLAG) \
 	build/host/$*/$*.exe
@@ -139,7 +141,7 @@ cmd_emmc_bootblock = $(out)/util/gen_emmc_transfer_data \
 cmd_ipi_table = $(out)/util/gen_ipi_table $@
 cmd_cp_script = cp "$<" "$@" && chmod +x "$@"
 
-cmd_libcryptoc_make = $(MAKE) --no-print-directory -C $(CRYPTOCLIB) \
+cmd_libcryptoc_make = $(MAKE) -C $(CRYPTOCLIB) \
 	obj=$(realpath $(out))/cryptoc \
 	SUPPORT_UNALIGNED=1
 cmd_libcryptoc = $(cmd_libcryptoc_make) -q || $(cmd_libcryptoc_make)
@@ -237,12 +239,12 @@ endif # CONFIG_EXPERIMENTAL_CONSOLE=y
 proj-%: | $(FAILED_BOARDS_DIR)
 	@touch $(FAILED_BOARDS_DIR)/$*
 	@echo "======= building $*"
-	$(MAKE) --no-print-directory BOARD=$* V=$(V)
+	$(MAKE) BOARD=$* V=$(V)
 	@rm $(FAILED_BOARDS_DIR)/$*
 
 tests-%:
 	@echo "======= building $* tests"
-	$(MAKE) --no-print-directory BOARD=$* V=$(V) tests
+	$(MAKE) BOARD=$* V=$(V) tests
 
 dis-y := $(out)/RW/$(PROJECT).RW.dis
 dis-$(CONFIG_FW_INCLUDE_RO) += $(out)/RO/$(PROJECT).RO.dis
@@ -275,7 +277,7 @@ ifeq "$(CONFIG_COMMON_RUNTIME)" "y"
 $(test-targets): test-%:
 	@set -e ; \
 	$(call echo,"  BUILD   $(out)/$*") \
-	$(MAKE) --no-print-directory BOARD=$(BOARD) PROJECT=$* \
+	$(MAKE) BOARD=$(BOARD) PROJECT=$* \
 	        V=$(V) out=$(out)/$* TEST_BUILD=y; \
 	cp $(out)/$*/$*.bin $(out)/test-$*.bin
 endif
