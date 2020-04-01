@@ -16,30 +16,25 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 /* GPU I2C address */
-#define GPU_ADDR_FLAGS                  0x82
+#define GPU_ADDR_FLAGS                  0x0041
 
-/*
- * Tell SMBus slave which register to read before GPU read
- * temperature, call it "GPU INIT".
- */
 #define GPU_INIT_OFFSET                 0x01
 #define GPU_TEMPERATURE_OFFSET          0x03
-#define GPU_INIT_WRITE_VALUE            0x0F01665A
 
 static int initialized;
-
-static int read_gpu_temp(int *temp)
-{
-	return i2c_read32(I2C_PORT_GPU, GPU_ADDR_FLAGS, GPU_TEMPERATURE_OFFSET,
-			  temp);
-}
+/*
+ * Tell SMBus we want to read 4 Byte from register offset(0x01665A)
+ */
+static const uint8_t gpu_init_write_value[5] = {
+	0x04, 0x0F, 0x01, 0x66, 0x5A,
+};
 
 static void gpu_init_temp_sensor(void)
 {
 	int rv;
-
-	rv = i2c_write32(I2C_PORT_GPU, GPU_ADDR_FLAGS, GPU_INIT_OFFSET,
-			  GPU_INIT_WRITE_VALUE);
+	rv = i2c_write_block(I2C_PORT_GPU, GPU_ADDR_FLAGS, GPU_INIT_OFFSET,
+			  gpu_init_write_value,
+			  ARRAY_SIZE(gpu_init_write_value));
 	if (rv == EC_SUCCESS) {
 		initialized = 1;
 		return;
@@ -51,14 +46,16 @@ DECLARE_HOOK(HOOK_INIT, gpu_init_temp_sensor, HOOK_PRIO_INIT_I2C + 1);
 /* INIT GPU first before read the GPU's die tmeperature. */
 int get_temp_R19ME4070(int idx, int *temp_ptr)
 {
-	int reg, rv;
+	uint8_t reg[5];
+	int rv;
 
 	/* if no INIT GPU, must init it first and wait 1 sec. */
 	if (!initialized) {
 		gpu_init_temp_sensor();
 		return EC_ERROR_BUSY;
 	}
-	rv = read_gpu_temp(&reg);
+	rv = i2c_read_block(I2C_PORT_GPU, GPU_ADDR_FLAGS,
+			GPU_TEMPERATURE_OFFSET, reg, ARRAY_SIZE(reg));
 	if (rv) {
 		CPRINTS("read GPU Temperature fail");
 		return rv;
@@ -70,7 +67,13 @@ int get_temp_R19ME4070(int idx, int *temp_ptr)
 	 * 0x002 : 2	ﾟC
 	 * ...
 	 * 0x1FF : 511	ﾟC
+	 * -------------------------------
+	 * reg[4] = bit0  - bit7
+	 * reg[3] = bit8  - bit15
+	 * reg[2] = bit16 - bit23
+	 * reg[1] = bit24 - bit31
+	 * reg[0] = 0x04
 	 */
-	*temp_ptr = C_TO_K((reg >> 9) & (0x1ff));
+	*temp_ptr = C_TO_K(reg[3] >> 1);
 	return EC_SUCCESS;
 }
