@@ -150,6 +150,8 @@ ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)                            /* UA
 
 /* PWM */
 ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)                             /* PWM3 - Keyboard backlight */
+ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)                             /* PWM5 - FAN */
+ALTERNATE(PIN_MASK(4, 0x01), 0, MODULE_PWM, 0)                             /* TA1 - Fan Tachometer */
 
 /* ADC */
 ALTERNATE(PIN_MASK(4, 0x3C), 0, MODULE_ADC, 0)                             /* ADC0-3 */
