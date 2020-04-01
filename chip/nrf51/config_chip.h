@@ -15,7 +15,7 @@
 #define IDLE_TASK_STACK_SIZE 256
 
 /* Default task stack size */
-#define TASK_STACK_SIZE 488
+#define TASK_STACK_SIZE 512
 
 /* Larger task stack size, for hook task */
 #define LARGER_TASK_STACK_SIZE 640
