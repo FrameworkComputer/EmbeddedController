@@ -25,6 +25,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "keyboard_8042.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -389,6 +390,66 @@ static void board_update_sensor_config_from_sku(void)
 	motion_sensor_count = ARRAY_SIZE(motion_sensors);
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+}
+
+static const struct ec_response_keybd_config keybd1 = {
+	.num_top_row_keys = 13,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_KBD_BKLIGHT_DOWN,	/* T8 */
+		TK_KBD_BKLIGHT_UP,	/* T9 */
+		TK_PLAY_PAUSE,		/* T10 */
+		TK_VOL_MUTE,		/* T11 */
+		TK_VOL_DOWN,		/* T12 */
+		TK_VOL_UP,		/* T13 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+static const struct ec_response_keybd_config keybd2 = {
+	.num_top_row_keys = 13,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_PRIVACY_SCRN_TOGGLE,	/* T8 */
+		TK_KBD_BKLIGHT_DOWN,	/* T9 */
+		TK_KBD_BKLIGHT_UP,	/* T10 */
+		TK_VOL_MUTE,		/* T11 */
+		TK_VOL_DOWN,		/* T12 */
+		TK_VOL_UP,		/* T13 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+__override const struct ec_response_keybd_config
+*board_vivaldi_keybd_config(void)
+{
+	/*
+	 * Future boards should use fw_config instead of SKU ID
+	 * to make such decisions.
+	 */
+	switch (get_board_sku()) {
+	case 1:
+	case 21:
+		return &keybd1;
+	case 2:
+	case 22:
+		return &keybd2;
+	default:
+		cprints(CC_KEYBOARD, "Error! Unknown VIVLADI keyboard layout!");
+	}
+	return NULL;
 }
 
 static void board_init(void)
