@@ -92,17 +92,17 @@
  * UART Console Setup
  *-------------------------------------------------------------------------*/
 
-/* The UART console is on USART1 */
+/* The UART console is on USART2 */
 #undef CONFIG_UART_CONSOLE
-#define CONFIG_UART_CONSOLE 1
+#define CONFIG_UART_CONSOLE 2
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 2048
-#define CONFIG_UART_TX_REQ_CH 4
-#define CONFIG_UART_RX_REQ_CH 4
 /* We don't currently use DMA. */
-#define CONFIG_UART_TX_DMA_PH DMAMUX1_REQ_USART1_TX
+#undef CONFIG_UART_TX_DMA_PH
 #undef CONFIG_UART_TX_DMA
 #undef CONFIG_UART_RX_DMA
+#undef CONFIG_UART_TX_REQ_CH
+#undef CONFIG_UART_RX_REQ_CH
 
 /*-------------------------------------------------------------------------*
  * Console Commands
