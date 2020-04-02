@@ -77,9 +77,28 @@ static enum ec_error_list set(const char *name, int value)
 /*****************************************************************************/
 /* Console commands */
 
+struct gpio_flag_description {
+    const int bitfield;
+    const char* name;
+};
+
+const struct gpio_flag_description gpio_descriptions[] = {
+	{GPIO_INPUT, "I"},
+	{GPIO_OUTPUT, "O"},
+	{GPIO_LOW, "L"},
+	{GPIO_HIGH, "H"},
+	{GPIO_ANALOG, "A"},
+	{GPIO_OPEN_DRAIN, "ODR"},
+	{GPIO_PULL_UP, "PU"},
+	{GPIO_PULL_DOWN, "PD"},
+	{GPIO_ALTERNATE, "ALT"},
+	{GPIO_SEL_1P8V, "1P8"},
+	{GPIO_LOCKED, "LCK"}
+};
+
 static void print_gpio_info(int gpio)
 {
-	int changed, v, flags;
+	int changed, v, flags, i;
 
 	if (!gpio_is_implemented(gpio))
 		return;  /* Skip unsupported signals */
@@ -92,20 +111,15 @@ static void print_gpio_info(int gpio)
 #endif
 	changed = last_val_changed(gpio, v);
 
-	ccprintf("  %d%c %s%s%s%s%s%s%s%s%s%s%s%s\n", v,
-		 (changed ? '*' : ' '),
-		 (flags & GPIO_INPUT ? "I " : ""),
-		 (flags & GPIO_OUTPUT ? "O " : ""),
-		 (flags & GPIO_LOW ? "L " : ""),
-		 (flags & GPIO_HIGH ? "H " : ""),
-		 (flags & GPIO_ANALOG ? "A " : ""),
-		 (flags & GPIO_OPEN_DRAIN ? "ODR " : ""),
-		 (flags & GPIO_PULL_UP ? "PU " : ""),
-		 (flags & GPIO_PULL_DOWN ? "PD " : ""),
-		 (flags & GPIO_ALTERNATE ? "ALT " : ""),
-		 (flags & GPIO_SEL_1P8V ? "1P8 " : ""),
-		 (flags & GPIO_LOCKED ? "LCK " : ""),
-		 gpio_get_name(gpio));
+	/* Split the printf call into multiple calls to reduce the stack usage. */
+	ccprintf("  %d%c ", v, (changed ? '*' : ' '));
+
+	for (i = 0; i < ARRAY_SIZE(gpio_descriptions); i++) {
+		if (flags & gpio_descriptions[i].bitfield)
+			ccprintf("%s ", gpio_descriptions[i].name);
+	}
+
+	ccprintf("%s\n", gpio_get_name(gpio));
 
 	/* Flush console to avoid truncating output */
 	cflush();
