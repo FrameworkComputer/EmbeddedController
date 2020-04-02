@@ -91,4 +91,13 @@ __override_proto int intel_x86_get_pg_ec_dsw_pwrok(void);
  */
 __override_proto int intel_x86_get_pg_ec_all_sys_pwrgd(void);
 
+/**
+ * Introduces SYS_RESET_L Debounce time delay
+ *
+ * The default implementation is to wait for a duration of 32 ms.
+ * If board needs a different debounce time delay, they may override
+ * this function
+ */
+__override_proto void intel_x86_sys_reset_delay(void);
+
 #endif /* __CROS_EC_INTEL_X86_H */

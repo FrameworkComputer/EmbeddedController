@@ -683,6 +683,15 @@ __override void power_chipset_handle_host_sleep_event(
 
 #endif
 
+__overridable void intel_x86_sys_reset_delay(void)
+{
+	/*
+	 * Debounce time for SYS_RESET_L is 16 ms. Wait twice that period
+	 * to be safe.
+	 */
+	udelay(32 * MSEC);
+}
+
 void chipset_reset(enum chipset_reset_reason reason)
 {
 	/*
@@ -708,11 +717,7 @@ void chipset_reset(enum chipset_reset_reason reason)
 	report_ap_reset(reason);
 
 	gpio_set_level(GPIO_SYS_RESET_L, 0);
-	/*
-	 * Debounce time for SYS_RESET_L is 16 ms. Wait twice that period
-	 * to be safe.
-	 */
-	udelay(32 * MSEC);
+	intel_x86_sys_reset_delay();
 	gpio_set_level(GPIO_SYS_RESET_L, 1);
 }
 

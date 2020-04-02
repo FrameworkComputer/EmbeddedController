@@ -15,6 +15,7 @@
 #include "power.h"
 #include "temp_sensor.h"
 #include "thermistor.h"
+#include "timer.h"
 
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {
@@ -180,3 +181,13 @@ int ioexpander_read_intelrvp_version(int *port0, int *port1)
 		I2C_ADDR_PCA9555_BOARD_ID_GPIO,
 		PCA9555_CMD_INPUT_PORT_1, port1);
 }
+
+__override void intel_x86_sys_reset_delay(void)
+{
+	/*
+	 * From MAX6818 Data sheet, Range of 'Debounce Duaration' is
+	 * Minimum - 20 ms, Typical - 40 ms, Maximum - 80 ms.
+	 */
+	udelay(60 * MSEC);
+}
+
