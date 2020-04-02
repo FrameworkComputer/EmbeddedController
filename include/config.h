@@ -2423,13 +2423,6 @@
 #undef CONFIG_KEYBOARD_CUSTOMIZATION
 
 /*
- * Include the Vivaldi keyboard code. The vivaldi is a newer keyboard that can
- * have up to 15 top row keys (other than Esc and Power/Lock) and also allows
- * OEMs flexibility to use these keys for different purposes (or reordering).
- */
-#undef CONFIG_KEYBOARD_VIVALDI
-
-/*
  * Allow board-specific 8042 keyboard callback when a key state is changed.
  */
 #undef CONFIG_KEYBOARD_SCANCODE_CALLBACK
@@ -4726,11 +4719,6 @@
 /* The Matrix Keyboard Protocol depends on MKBP events. */
 #ifdef CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_EVENT
-#endif
-
-/* Vivaldi keyboard code needs to be able to change the keyboard scancodes */
-#ifdef CONFIG_KEYBOARD_VIVALDI
-#define CONFIG_KEYBOARD_SCANCODE_MUTABLE
 #endif
 
 /******************************************************************************/
