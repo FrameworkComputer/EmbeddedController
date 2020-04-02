@@ -2737,7 +2737,7 @@ static void pe_send_soft_reset_run(int port)
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 
 		if (pe[port].power_role == PD_ROLE_SINK)
-			set_state_pe(port, PE_SRC_HARD_RESET);
+			set_state_pe(port, PE_SNK_HARD_RESET);
 		else
 			set_state_pe(port, PE_SRC_HARD_RESET);
 		return;
