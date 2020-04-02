@@ -1,31 +1,34 @@
 # Case Closed Debugging (CCD)
 
 Case closed debugging is a feature of the EC codebase that can bridge UART
-consoles and SPI busses from a DUT (Device Under Test) to the host machine via
+consoles and SPI buses from a DUT (Device Under Test) to the host machine via
 USB. This allows the host to access and update much of the DUT's state. Use
 cases include automated hardware testing as well as simplified debug console
 access and firmware flashing for kernel and system developers.
+
+[TOC]
 
 ## Prerequisites
 
 ### Supported Devices
 
 We have added CCD support for two chip families: stm32 and gchips. Ryu,
-servo\_micro, and servo\_v4 use the stm32 support. Cr50 uses gchips support. All
-boards with Cr50 have support for case closed debugging.
+[`servo_micro`], and [`servo_v4`] use the stm32 support. Cr50 uses gchips
+support. All boards with Cr50 have support for case closed debugging.
 
 ### Suzy-Q
 
-Suzy-Q is a Type-C dongle that exposes USB2.0/3.0 on a Type-A socket, case
+[Suzy-Q] is a Type-C dongle that exposes USB2.0/3.0 on a Type-A socket, case
 closed debugging over SBU1/2 on a micro Type-B socket, and charging over a
 Type-C socket. You will need one to access the case closed debugging USB
-interface.
+interface. Full details, including where to buy and how to make your own are in
+the [Suzy-Q docs][Suzy-Q].
 
-### ChromiumOS flashrom
+### Chromium OS flashrom
 
 The functionality to flash the AP firmware image over case closed debugging is
 currently only supported by the ChromiumOS version of flashrom, so you will need
-to have that built. The easiest way to do so is to just setup the ChromiumOS
+to have that built. The easiest way to do so is to just setup the Chromium OS
 SDK.
 
 ### Udev rules file
@@ -41,7 +44,7 @@ A trivial Linux kernel module that identifies case closed debug capable USB
 interfaces can be found in `extra/usb_serial`. This module is also built and
 installed using the `extra/usb_serial/install` script.
 
-### ChromiumOS chroot
+### Chromium OS chroot
 
 This is really only a requirement for using flashrom. If you only need access to
 the serial consoles then a checkout of the EC firmware repository should be
@@ -52,22 +55,22 @@ sufficient.
 ### Device Under Test (DUT)
 
 If the DUT doesn't have a new enough PD firmware you will need to update the
-firmware using a Servo, ec-tool, or MCU specific DFU mode, all of which are
+firmware using a Servo, `ectool`, or MCU specific DFU mode, all of which are
 outside the scope of this document.
 
-Make sure your DUT is charged up, because while using Suzy-Q you can't currently
-charge the device.
+Make sure your DUT is charged up, because while using [Suzy-Q] you can't
+currently charge the device.
 
 ### Suzy-Q
 
-Suzy-Q should be connected to the DUT using the Type-C cable and connector
-integrated into Suzy-Q. This connector may need to be flipped to make case
+[Suzy-Q] should be connected to the DUT using the Type-C cable and connector
+integrated into [Suzy-Q]. This connector may need to be flipped to make case
 closed debugging work because the SBU lines that are used to expose the PD MCU's
 USB interface are not orientation invariant. Only one port on the DUT will
-support CCD. Try using the other port if the CCD device doesn't appear. Suzy-Q
-should be connected to the Host with a Type-A (Host) to Micro Type-B (Suzy-Q)
-cable. Look for the device [vendor:product ID](#Troubleshooting) to confirm that
-your host sees the CCD device.
+support CCD. Try using the other port if the CCD device doesn't appear. [Suzy-Q]
+should be connected to the Host with a Type-A (Host) to Micro Type-B ([Suzy-Q])
+cable. Look for the device [`vendor:product ID`](#Troubleshooting) to your host
+sees the CCD device.
 
 ### Host
 
@@ -90,7 +93,7 @@ upstream kernel (v3.19), so eventually this module can be removed. The
 well as install the udev rules file.
 
 If for some reason you can't or don't want to use the kernel module the install
-script provides a --fallback option that will install a udev rules file and
+script provides a `--fallback` option that will install a udev rules file and
 helper script instead that will add each new CCD capable device that is attached
 to the host to the list of devices that usbserial will handle. The disadvantage
 of this method is that it will generate `/dev/ttyUSB*` entries for any USB
@@ -106,8 +109,7 @@ need to be a list of CCD capable device IDs anywhere.
 
 Here's the basic information for how to use CCD. Cr50 restricts debugging
 features to try and ensure only the device owner can use CCD. For information on
-how to get access to Cr50 CCD see the
-[Cr50 specific CCD doc](case_closed_debugging_cr50.md).
+how to get access to Cr50 CCD see the [Cr50 specific CCD doc][Cr50 CCD].
 
 ### Consoles
 
@@ -134,23 +136,28 @@ it is by running a few commands like `version`.
 Programming the AP SPI flash with a new firmware image can be done with flashrom
 using the command:
 
-`sudo /usr/sbin/flashrom -p raiden_debug_spi -w
-/build/<board>/firmware/image.bin`
+```bash
+(chroot) $ sudo /usr/sbin/flashrom -p raiden_debug_spi -w /build/<board>/firmware/image.bin
+```
 
 If there are more than one case closed debug capable devices connected to the
 host you will have to disambiguate the DUT with additional programmer
 parameters. Flashrom will list all DUTs that are found along with programmer
 parameters that can be used to identify the intended DUT. Flashrom programmer
-parameters are added to the programmer name (the -p argument) by appending a
-colon and then a comma separated list of key=value pairs. The `serial` parameter
-is best for this
+added to the programmer name (the `-p` argument) by appending a colon and then a
+colon and then a comma separated list of `key=value` pairs. The `serial`
+parameter is best for this.
 
-`sudo /usr/sbin/flashrom -p raiden_debug_spi:serial=${SERIAL} -w
-/build/<board>/firmware/image.bin`
+```bash
+(chroot) $ sudo /usr/sbin/flashrom -p raiden_debug_spi:serial=${SERIAL} -w /build/<board>/firmware/image.bin
+```
 
 Cr50 can be used to flash the AP or EC. You will need to specify the AP as the
-target device, so cr50 knows to flash the AP. `sudo flashrom -p
-raiden_debug_spi:target=AP -w image.bin`
+target device, so cr50 knows to flash the AP.
+
+```bash
+(chroot) $ sudo flashrom -p raiden_debug_spi:target=AP -w image.bin
+```
 
 ### Flash EC
 
@@ -160,7 +167,7 @@ board specific setup.
 
 ## Known Issues
 
-1.  Charge and the use of the Type-A port on Suzy-Q do not work, so for now if
+1.  Charge and the use of the Type-A port on [Suzy-Q] do not work, so for now if
     you need to attach a flash drive, or use Fastboot/adb you'll need to swap
     cables.
 
@@ -172,38 +179,48 @@ board specific setup.
 
 ## Troubleshooting
 
-Check for the CCD device using the following vendor:product IDs
+Check for the CCD device using the following `vendor:product` IDs
 
-Device      | VID:PID
-:---------- | :-------:
-servo_micro | 18d1:501a
-servo_v4    | 18d1:501b
-ryu         | 18d1:500f
-cr50        | 18d1:5014
+Device          | VID:PID
+--------------- | -----------
+[`servo_micro`] | `18d1:501a`
+[`servo_v4`]    | `18d1:501b`
+[`servo_v2`]    | `18d1:5002`
+`ryu`           | `18d1:500f`
+`cr50`          | `18d1:5014`
 
-1.  Can't see the CCD device on the host.
+See the [`SERVO_PID_DEFAULTS`] in the servo code for all values.
 
-    1.  Type-C cable from Suzy-Q to the DUT may be upside down. The SBU lines
-        used for case closed debugging are not orientation invariant.
-    2.  You may be using the wrong device port. Try using the other port.
-    3.  The device may not be charged enough to boot. Suzy-Q can't charge the
-        device or supply enough power for the DUT to boot. Make sure the device
-        is somewhat charged.
+### Can't see the CCD device on the host
 
-2.  No console interfaces are available in the `/dev/google/<name>` directory.
+1.  Type-C cable from [Suzy-Q] to the DUT may be upside down. The SBU lines used
+    for case closed debugging are not orientation invariant.
+1.  You may be using the wrong device port. Try using the other port.
+1.  The device may not be charged enough to boot. [Suzy-Q] can't charge the
+    device or supply enough power for the DUT to boot. Make sure the device is
+    somewhat charged.
 
-    1.  Kernel module may not be loaded.
-    2.  Udev rules file might not be installed correctly.
-    3.  PD firmware version may be too old.
-    4.  Type-C cable from Suzy-Q to the DUT may be upside down. The SBU lines
-        used for case closed debugging are not orientation invariant.
+### No console interfaces are available in the "/dev/google/<name>" directory
 
-3.  Garbage messages (AT command set) show up on one or more consoles.
+1.  Kernel module may not be loaded.
+1.  Udev rules file might not be installed correctly.
+1.  PD firmware version may be too old.
+1.  Type-C cable from [Suzy-Q] to the DUT may be upside down. The SBU lines used
+    for case closed debugging are not orientation invariant.
 
-    1.  ModemManager has claimed the interface, Udev rules file may not be
-        installed correctly.
+### Garbage messages (AT command set) show up on one or more consoles
 
-4.  Console interfaces appear and then quickly disappear
+1.  ModemManager has claimed the interface, Udev rules file may not be installed
+    correctly.
 
-    1.  Software sync from the AP has replaced the PD firmware with a version
-        that is not compatible with case closed debugging.
+### Console interfaces appear and then quickly disappear
+
+1.  Software sync from the AP has replaced the PD firmware with a version that
+    is not compatible with case closed debugging.
+
+[`servo_v4`]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/docs/servo_v4.md
+[`servo_v2`]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/docs/servo_v2.md
+[`servo_micro`]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/docs/servo_micro.md
+[Cr50 CCD]: ./case_closed_debugging_cr50.md
+[Suzy-Q]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/docs/ccd.md#suzyq-suzyqable
+[`SERVO_PID_DEFAULTS`]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/ff8e96686ef3d9ad2e26125ca8268cb7f7666f6c/servo/interface/ftdi_common.py#28
