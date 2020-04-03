@@ -174,6 +174,8 @@ static struct tx_chunked {
 
 /* Message Reception State Machine Object */
 static struct protocol_layer_rx {
+	/* received message type */
+	enum tcpm_transmit_type sop;
 	/* message ids for all valid port partners */
 	int msg_id[NUM_SOP_STAR_TYPES];
 } prl_rx[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -1254,10 +1256,10 @@ static void rch_report_error_entry(const int port)
 		/* Pass Message to Policy Engine */
 		pe_message_received(port);
 		/* Report error */
-		pe_report_error(port, ERR_RCH_MSG_REC);
+		pe_report_error(port, ERR_RCH_MSG_REC, prl_rx[port].sop);
 	} else {
 		/* Report error */
-		pe_report_error(port, ERR_RCH_CHUNKED);
+		pe_report_error(port, ERR_RCH_CHUNKED, prl_rx[port].sop);
 	}
 }
 
@@ -1555,7 +1557,7 @@ static void tch_message_sent_entry(const int port)
 static void tch_report_error_entry(const int port)
 {
 	/* Report Error To Policy Engine */
-	pe_report_error(port, tch[port].error);
+	pe_report_error(port, tch[port].error, prl_tx[port].last_xmit_type);
 	set_state_tch(port, TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
 }
 
@@ -1567,7 +1569,6 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	uint32_t header;
 	uint8_t type;
 	uint8_t cnt;
-	uint8_t sop;
 	int8_t msid;
 
 	/* If we don't have any message, just stop processing now. */
@@ -1579,7 +1580,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	type = PD_HEADER_TYPE(header);
 	cnt = PD_HEADER_CNT(header);
 	msid = PD_HEADER_ID(header);
-	sop = PD_HEADER_GET_SOP(header);
+	prl_rx[port].sop = PD_HEADER_GET_SOP(header);
 
 	/* Make sure an incorrect count doesn't overflow the chunk buffer */
 	if (cnt > CHK_BUF_SIZE)
@@ -1628,7 +1629,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	/*
 	 * Ignore if this is a duplicate message. Stop processing.
 	 */
-	if (prl_rx[port].msg_id[sop] == msid)
+	if (prl_rx[port].msg_id[prl_rx[port].sop] == msid)
 		return;
 
 	/*
@@ -1644,7 +1645,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	}
 
 	/* Store Message Id */
-	prl_rx[port].msg_id[sop] = msid;
+	prl_rx[port].msg_id[prl_rx[port].sop] = msid;
 
 	/* RTR Chunked Message Router States. */
 	/*

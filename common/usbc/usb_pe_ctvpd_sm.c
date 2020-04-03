@@ -98,7 +98,7 @@ void pe_got_hard_reset(int port)
 	/* No implementation needed by this policy engine */
 }
 
-void pe_report_error(int port, enum pe_error e)
+void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 {
 	/* No implementation needed by this policy engine */
 }

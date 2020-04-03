@@ -99,6 +99,7 @@ static struct pd_prl {
 	enum pd_data_role data_role;
 	int msg_tx_id;
 	int msg_rx_id;
+	enum tcpm_transmit_type sop;
 
 	int mock_pe_message_sent;
 	int mock_pe_error;
@@ -737,9 +738,10 @@ enum pd_cable_plug tc_get_cable_plug(int port)
 	return PD_PLUG_FROM_DFP_UFP;
 }
 
-void pe_report_error(int port, enum pe_error e)
+void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 {
 	pd_port[port].mock_pe_error = e;
+	pd_port[port].sop = type;
 }
 
 void pe_got_hard_reset(int port)
