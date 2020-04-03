@@ -380,6 +380,7 @@ static void set_base_lid_current(int current_base, int allow_charge_base,
 
 	int lid_first;
 	int ret;
+	int chgnum = 0;
 
 	/* TODO(b:71881017): This is still quite verbose during charging. */
 	if (prev_current_base != current_base ||
@@ -414,7 +415,7 @@ static void set_base_lid_current(int current_base, int allow_charge_base,
 		ret = charge_set_output_current_limit(0, 0);
 		if (ret)
 			return;
-		ret = charger_set_input_current(current_lid);
+		ret = charger_set_input_current(chgnum, current_lid);
 		if (ret)
 			return;
 		if (allow_charge_lid)
@@ -1051,6 +1052,7 @@ static void dump_charge_state(void)
 #define DUMP(FLD, FMT) ccprintf(#FLD " = " FMT "\n", curr.FLD)
 #define DUMP_CHG(FLD, FMT) ccprintf("\t" #FLD " = " FMT "\n", curr.chg. FLD)
 #define DUMP_BATT(FLD, FMT) ccprintf("\t" #FLD " = " FMT "\n", curr.batt. FLD)
+#define DUMP_OCPC(FLD, FMT) ccprintf("\t" #FLD " = " FMT "\n", curr.ocpc. FLD)
 	ccprintf("state = %s\n", state_list[curr.state]);
 	DUMP(ac, "%d");
 	DUMP(batt_is_charging, "%d");
@@ -1075,6 +1077,10 @@ static void dump_charge_state(void)
 	DUMP_BATT(full_capacity, "%dmAh");
 	ccprintf("\tis_present = %s\n", batt_pres[curr.batt.is_present]);
 	cflush();
+#ifdef CONFIG_OCPC
+	ccprintf("ocpc.*:\n");
+	DUMP_OCPC(active_chg_chip, "%d");
+#endif /* CONFIG_OCPC */
 	DUMP(requested_voltage, "%dmV");
 	DUMP(requested_current, "%dmA");
 #ifdef CONFIG_CHARGER_OTG
@@ -1097,7 +1103,7 @@ static void dump_charge_state(void)
 
 static void show_charging_progress(void)
 {
-	int rv = 0, minutes, to_full;
+	int rv = 0, minutes, to_full, chgnum = 0;
 
 #ifdef CONFIG_BATTERY_SMART
 	/*
@@ -1155,7 +1161,9 @@ static void show_charging_progress(void)
 		ccprintf("battery:\n");
 		print_battery_debug();
 		ccprintf("charger:\n");
-		print_charger_debug();
+		if (IS_ENABLED(CONFIG_OCPC))
+			chgnum = charge_get_active_chg_chip();
+		print_charger_debug(chgnum);
 		ccprintf("chg:\n");
 		dump_charge_state();
 	}
@@ -1223,12 +1231,12 @@ static int charge_request(int voltage, int current)
 	 * battery.
 	 */
 	if (current >= 0)
-		r2 = charger_set_current(current);
+		r2 = charger_set_current(0, current);
 	if (r2 != EC_SUCCESS)
 		problem(PR_SET_CURRENT, r2);
 
 	if (voltage >= 0)
-		r1 = charger_set_voltage(voltage);
+		r1 = charger_set_voltage(0, voltage);
 	if (r1 != EC_SUCCESS)
 		problem(PR_SET_VOLTAGE, r1);
 
@@ -1607,6 +1615,7 @@ void charger_task(void *u)
 	int need_static = 1;
 	const struct charger_info * const info = charger_get_info();
 	int prev_plt_and_desired_mw;
+	int chgnum = 0;
 
 	/* Get the battery-specific values */
 	batt_info = battery_get_info();
@@ -1683,6 +1692,7 @@ void charger_task(void *u)
 					if (curr.desired_input_current !=
 					    CHARGE_CURRENT_UNINITIALIZED)
 						rv = charger_set_input_current(
+						    chgnum,
 						    curr.desired_input_current);
 					if (rv != EC_SUCCESS)
 						problem(PR_SET_INPUT_CURR, rv);
@@ -1715,7 +1725,7 @@ void charger_task(void *u)
 				get_desired_input_current(prev_bp, info);
 			if (curr.desired_input_current !=
 			    CHARGE_CURRENT_UNINITIALIZED)
-				charger_set_input_current(
+				charger_set_input_current(chgnum,
 					curr.desired_input_current);
 			hook_notify(HOOK_BATTERY_SOC_CHANGE);
 		}
@@ -2366,6 +2376,10 @@ int charge_set_output_current_limit(int ma, int mv)
 
 int charge_set_input_current_limit(int ma, int mv)
 {
+	__maybe_unused int chgnum = 0;
+
+	if (IS_ENABLED(CONFIG_OCPC))
+		chgnum = charge_get_active_chg_chip();
 #ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
 	curr.input_voltage = mv;
 #endif
@@ -2407,7 +2421,29 @@ int charge_set_input_current_limit(int ma, int mv)
 	charge_wakeup();
 	return EC_SUCCESS;
 #else
-	return charger_set_input_current(ma);
+	return charger_set_input_current(chgnum, ma);
+#endif
+}
+
+#ifdef CONFIG_OCPC
+void charge_set_active_chg_chip(int idx)
+{
+	ASSERT(idx < (int)chg_cnt);
+
+	if (idx == curr.ocpc.active_chg_chip)
+		return;
+
+	CPRINTS("Act Chg: %d", idx);
+	curr.ocpc.active_chg_chip = idx;
+}
+#endif /* CONFIG_OCPC */
+
+int charge_get_active_chg_chip(void)
+{
+#ifdef CONFIG_OCPC
+	return curr.ocpc.active_chg_chip;
+#else
+	return 0;
 #endif
 }
 
@@ -2503,6 +2539,10 @@ charge_command_charge_state(struct host_cmd_handler_args *args)
 	struct ec_response_charge_state *out = args->response;
 	uint32_t val;
 	int rv = EC_RES_SUCCESS;
+	int chgnum = 0;
+
+	if (args->version > 0)
+		chgnum = in->chgnum;
 
 	switch (in->cmd) {
 
@@ -2597,7 +2637,7 @@ charge_command_charge_state(struct host_cmd_handler_args *args)
 				chgstate_set_manual_current(val);
 				break;
 			case CS_PARAM_CHG_INPUT_CURRENT:
-				if (charger_set_input_current(val))
+				if (charger_set_input_current(chgnum, val))
 					rv = EC_RES_ERROR;
 				break;
 			case CS_PARAM_CHG_STATUS:
@@ -2624,7 +2664,7 @@ charge_command_charge_state(struct host_cmd_handler_args *args)
 }
 
 DECLARE_HOST_COMMAND(EC_CMD_CHARGE_STATE, charge_command_charge_state,
-		     EC_VER_MASK(0));
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 /*****************************************************************************/
 /* Console commands */

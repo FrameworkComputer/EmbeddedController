@@ -531,7 +531,8 @@ static int charger_derate(int current)
 
 static void board_charger_init(void)
 {
-	charger_set_input_current(charger_derate(PD_MAX_CURRENT_MA));
+	charger_set_input_current(CHARGER_SOLO, charger_derate
+				  (PD_MAX_CURRENT_MA));
 }
 DECLARE_HOOK(HOOK_INIT, board_charger_init, HOOK_PRIO_DEFAULT);
 

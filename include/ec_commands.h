@@ -4445,6 +4445,7 @@ struct ec_params_charge_state {
 			uint32_t value;		/* value to set */
 		} set_param;
 	};
+	uint8_t chgnum;				/* Version 1 supports chgnum */
 } __ec_todo_packed;
 
 struct ec_response_charge_state {

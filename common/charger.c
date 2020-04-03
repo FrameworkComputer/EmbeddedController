@@ -86,12 +86,20 @@ int charger_closest_current(int current)
 void charger_get_params(struct charger_params *chg)
 {
 	int chgnum = 0;
+
+	if (IS_ENABLED(CONFIG_OCPC))
+		chgnum = charge_get_active_chg_chip();
+
 	memset(chg, 0, sizeof(*chg));
 
-	if (charger_get_current(&chg->current))
+	/*
+	 * Only the primary charger(0) can tightly regulate the current,
+	 * therefore always query the primary charger.
+	 */
+	if (charger_get_current(0, &chg->current))
 		chg->flags |= CHG_FLAG_BAD_CURRENT;
 
-	if (charger_get_voltage(&chg->voltage))
+	if (charger_get_voltage(chgnum, &chg->voltage))
 		chg->flags |= CHG_FLAG_BAD_VOLTAGE;
 
 	if (charger_get_input_current(chgnum, &chg->input_current))
@@ -117,11 +125,10 @@ static int check_print_error(int rv)
 	return 0;
 }
 
-void print_charger_debug(void)
+void print_charger_debug(int chgnum)
 {
 	int d;
 	const struct charger_info *info = charger_get_info();
-	int chgnum = 0;
 
 	/* info */
 	print_item_name("Name:");
@@ -144,13 +151,13 @@ void print_charger_debug(void)
 
 	/* charge voltage limit */
 	print_item_name("V_batt:");
-	if (check_print_error(charger_get_voltage(&d)))
+	if (check_print_error(charger_get_voltage(chgnum, &d)))
 		ccprintf("%5d (%4d - %5d, %3d)\n", d, info->voltage_min,
 			 info->voltage_max, info->voltage_step);
 
 	/* charge current limit */
 	print_item_name("I_batt:");
-	if (check_print_error(charger_get_current(&d)))
+	if (check_print_error(charger_get_current(chgnum, &d)))
 		ccprintf("%5d (%4d - %5d, %3d)\n", d, info->current_min,
 			 info->current_max, info->current_step);
 
@@ -172,41 +179,55 @@ static int command_charger(int argc, char **argv)
 {
 	int d;
 	char *e;
+	int idx_provided = 0;
+	int chgnum;
 
-	if (argc != 3) {
-		print_charger_debug();
+	if (argc == 1) {
+		print_charger_debug(0);
 		return EC_SUCCESS;
 	}
 
-	if (strcasecmp(argv[1], "input") == 0) {
-		d = strtoi(argv[2], &e, 0);
+	idx_provided = isdigit(argv[1][0]);
+	if (idx_provided)
+		chgnum = atoi(argv[1]);
+	else
+		chgnum = 0;
+
+	if ((argc == 2) && idx_provided) {
+		print_charger_debug(chgnum);
+		return EC_SUCCESS;
+	}
+
+	if (strcasecmp(argv[1+idx_provided], "input") == 0) {
+		d = strtoi(argv[2+idx_provided], &e, 0);
 		if (*e)
-			return EC_ERROR_PARAM2;
-		return charger_set_input_current(d);
-	} else if (strcasecmp(argv[1], "current") == 0) {
-		d = strtoi(argv[2], &e, 0);
+			return EC_ERROR_PARAM2+idx_provided;
+		return charger_set_input_current(chgnum, d);
+	} else if (strcasecmp(argv[1+idx_provided], "current") == 0) {
+		d = strtoi(argv[2+idx_provided], &e, 0);
 		if (*e)
-			return EC_ERROR_PARAM2;
+			return EC_ERROR_PARAM2+idx_provided;
 		chgstate_set_manual_current(d);
-		return charger_set_current(d);
-	} else if (strcasecmp(argv[1], "voltage") == 0) {
-		d = strtoi(argv[2], &e, 0);
+		return charger_set_current(chgnum, d);
+	} else if (strcasecmp(argv[1+idx_provided], "voltage") == 0) {
+		d = strtoi(argv[2+idx_provided], &e, 0);
 		if (*e)
-			return EC_ERROR_PARAM2;
+			return EC_ERROR_PARAM2+idx_provided;
 		chgstate_set_manual_voltage(d);
-		return charger_set_voltage(d);
-	} else if (strcasecmp(argv[1], "dptf") == 0) {
-		d = strtoi(argv[2], &e, 0);
+		return charger_set_voltage(chgnum, d);
+	} else if (strcasecmp(argv[1+idx_provided], "dptf") == 0) {
+		d = strtoi(argv[2+idx_provided], &e, 0);
 		if (*e)
-			return EC_ERROR_PARAM2;
+			return EC_ERROR_PARAM2+idx_provided;
 		dptf_limit_ma = d;
 		return EC_SUCCESS;
-	} else
-		return EC_ERROR_PARAM1;
+	} else {
+		return EC_ERROR_PARAM1+idx_provided;
+	}
 }
 
 DECLARE_CONSOLE_COMMAND(charger, command_charger,
-			"[input | current | voltage | dptf] [newval]",
+			"[chgnum] [input | current | voltage | dptf] [newval]",
 			"Get or set charger param(s)");
 
 /* Driver wrapper functions */
@@ -336,12 +357,14 @@ int charger_is_sourcing_otg_power(int port)
 	return rv;
 }
 
-enum ec_error_list charger_get_current(int *current)
+enum ec_error_list charger_get_current(int chgnum, int *current)
 {
-	int chgnum = 0;
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
-	if ((chgnum < 0) || (chgnum >= chg_cnt)) {
+	if (chgnum < 0)
+		return EC_ERROR_INVAL;
+
+	if (chgnum >= chg_cnt) {
 		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
 		return EC_ERROR_INVAL;
 	}
@@ -352,9 +375,8 @@ enum ec_error_list charger_get_current(int *current)
 	return rv;
 }
 
-enum ec_error_list charger_set_current(int current)
+enum ec_error_list charger_set_current(int chgnum, int current)
 {
-	int chgnum = 0;
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
 	if ((chgnum < 0) || (chgnum >= chg_cnt)) {
@@ -368,12 +390,14 @@ enum ec_error_list charger_set_current(int current)
 	return rv;
 }
 
-enum ec_error_list charger_get_voltage(int *voltage)
+enum ec_error_list charger_get_voltage(int chgnum, int *voltage)
 {
-	int chgnum = 0;
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
-	if ((chgnum < 0) || (chgnum >= chg_cnt)) {
+	if (chgnum < 0)
+		return EC_ERROR_INVAL;
+
+	if (chgnum >= chg_cnt) {
 		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
 		return EC_ERROR_INVAL;
 	}
@@ -384,9 +408,8 @@ enum ec_error_list charger_get_voltage(int *voltage)
 	return rv;
 }
 
-enum ec_error_list charger_set_voltage(int voltage)
+enum ec_error_list charger_set_voltage(int chgnum, int voltage)
 {
-	int chgnum = 0;
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
 	if ((chgnum < 0) || (chgnum >= chg_cnt)) {
@@ -433,9 +456,8 @@ enum ec_error_list charger_get_vbus_voltage(int port, int *voltage)
 	return rv;
 }
 
-enum ec_error_list charger_set_input_current(int input_current)
+enum ec_error_list charger_set_input_current(int chgnum, int input_current)
 {
-	int chgnum = 0;
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
 	if ((chgnum < 0) || (chgnum >= chg_cnt)) {

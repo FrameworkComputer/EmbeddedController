@@ -8,6 +8,7 @@
 #include "charger.h"
 #include "chipset.h"
 #include "ec_ec_comm_master.h"
+#include "ocpc.h"
 #include "timer.h"
 
 #ifndef __CROS_EC_CHARGE_STATE_V2_H
@@ -45,6 +46,9 @@ struct charge_state_data {
 #endif
 #ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
 	int input_voltage;
+#endif
+#ifdef CONFIG_OCPC
+	struct ocpc_data ocpc;
 #endif
 };
 
@@ -145,6 +149,19 @@ int charge_get_plt_plus_bat_desired_mw(void);
  * @return stable battery charging current in mA
  */
 int charge_get_stable_current(void);
+
+/**
+ * Select which charger IC will actually be performing the charger switching.
+ *
+ * @param idx The index into the chg_chips table.
+ */
+void charge_set_active_chg_chip(int idx);
+
+/**
+ * Retrieve which charger IC is the active charger IC performing the charger
+ * switching.
+ */
+int charge_get_active_chg_chip(void);
 
 /**
  * Set the stable current.

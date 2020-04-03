@@ -705,6 +705,10 @@ static void charge_manager_refresh(void)
 
 	active_charge_port_initialized = 1;
 
+	/* Set the active charger chip based upon the selected charge port. */
+	if (IS_ENABLED(CONFIG_OCPC))
+		charge_set_active_chg_chip(new_port);
+
 	/*
 	 * Clear override if it wasn't selected as the 'best' port -- it means
 	 * that no charge is available on the port, or the port was rejected.

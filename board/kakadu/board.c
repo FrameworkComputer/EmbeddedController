@@ -181,7 +181,7 @@ int board_set_active_charge_port(int charge_port)
 		 */
 		gpio_set_level(GPIO_EN_POGO_CHARGE_L, 1);
 		gpio_set_level(GPIO_EN_USBC_CHARGE_L, 1);
-		charger_set_current(0);
+		charger_set_current(CHARGER_SOLO, 0);
 		break;
 	default:
 		panic("Invalid charge port\n");

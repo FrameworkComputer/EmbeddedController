@@ -211,12 +211,12 @@ enum ec_error_list charger_set_otg_current_voltage(int output_current,
 int charger_is_sourcing_otg_power(int port);
 
 /* Get/set charge current limit in mA */
-enum ec_error_list charger_get_current(int *current);
-enum ec_error_list charger_set_current(int current);
+enum ec_error_list charger_get_current(int chgnum, int *current);
+enum ec_error_list charger_set_current(int chgnum, int current);
 
 /* Get/set charge voltage limit in mV */
-enum ec_error_list charger_get_voltage(int *voltage);
-enum ec_error_list charger_set_voltage(int voltage);
+enum ec_error_list charger_get_voltage(int chgnum, int *voltage);
+enum ec_error_list charger_set_voltage(int chgnum, int voltage);
 
 /* Discharge battery when on AC power. */
 enum ec_error_list charger_discharge_on_ac(int enable);
@@ -236,7 +236,7 @@ int charger_get_system_power(void);
 /* Other parameters that may be charger-specific, but are common so far. */
 
 /* Set desired input current value */
-enum ec_error_list charger_set_input_current(int input_current);
+enum ec_error_list charger_set_input_current(int chgnum, int input_current);
 
 /*
  * Get actual input current value.
@@ -251,8 +251,11 @@ enum ec_error_list charger_get_option(int *option);
 enum ec_error_list charger_set_option(int option);
 enum ec_error_list charger_set_hw_ramp(int enable);
 
-/* Print all charger info for debugging purposes */
-void print_charger_debug(void);
+/*
+ * Print all charger info for debugging purposes
+ * @param chgnum: charger IC index.
+ */
+void print_charger_debug(int chgnum);
 
 #endif /* __CROS_EC_CHARGER_H */
 

@@ -9,6 +9,7 @@
 #include "battery_smart.h"
 #include "bq25710.h"
 #include "charge_ramp.h"
+#include "charge_state_v2.h"
 #include "charger.h"
 #include "common.h"
 #include "console.h"
@@ -466,6 +467,10 @@ static enum ec_error_list bq25710_set_option(int chgnum, int option)
 static void bq25710_chg_ramp_handle(void)
 {
 	int ramp_curr;
+	int chgnum = 0;
+
+	if (IS_ENABLED(CONFIG_OCPC))
+		chgnum = charge_get_active_chg_chip();
 
 	/*
 	 * Once the charge ramp is stable write back the stable ramp
@@ -473,7 +478,7 @@ static void bq25710_chg_ramp_handle(void)
 	 */
 	ramp_curr = chg_ramp_get_current_limit();
 	if (chg_ramp_is_stable()) {
-		if (ramp_curr && !charger_set_input_current(ramp_curr))
+		if (ramp_curr && !charger_set_input_current(chgnum, ramp_curr))
 			CPRINTF("bq25710: stable ramp current=%d\n", ramp_curr);
 	} else {
 		CPRINTF("bq25710: ICO stall, ramp current=%d\n", ramp_curr);
