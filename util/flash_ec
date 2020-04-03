@@ -813,6 +813,30 @@ function get_serial() {
 	dut_control_get "${sn_ctl}serialname"
 }
 
+function c2d2_wait_for_h1_power_on_or_reset() {
+	# Ensure we have the latest c2d2 fw and hdctools. This could
+	# be removed eventually (estimate removal 2020/06/01)
+	dut_control h1_vref_present || die "Need to kill servod and run:
+repo sync && sudo emerge hdctools servo-firmware && sudo servo_updater -b c2d2"
+
+	# Handle the case when flash_ec starts before DUT power is
+	# applied. Otherwise just use h1-level reset.
+	if [[ "$(dut_control_get h1_vref_present)" = "off" ]] ; then
+		info "Please attach C2D2 to DUT and power DUT now!"
+		# Waits ~40 seconds for Vref presence before timeout
+		local LOOP_COUNTER=100
+		while [[ "$(dut_control_get h1_vref_present)" = "off" \
+			&& "${LOOP_COUNTER}" -gt 0 ]] ; do
+			sleep 0.1
+			let LOOP_COUNTER=LOOP_COUNTER-1
+		done
+	else
+		# Ensure DUT is in clean state with H1 Reset
+		dut_control cold_reset:on
+		dut_control cold_reset:off
+	fi
+}
+
 # Board specific flashing scripts
 
 # helper function for using servo v2/3 with openocd
@@ -1198,6 +1222,11 @@ function flash_it83xx() {
 
 	# We need to ensure that c2d2 and dut-side path are set up for i2c
 	if [[ "${SERVO_TYPE}" =~ "c2d2" ]]; then
+		c2d2_wait_for_h1_power_on_or_reset
+
+		# Don't let the EC come out of reset after H1 reset
+		dut_control ec_reset:on
+
 		# We need to swing the DUT-side muxes to I2C instead of UART.
 		# This is done by convention with EC_FLASH_SELECT pin from H1
 		servo_save_add "ec_flash_select"
@@ -1216,16 +1245,11 @@ function flash_it83xx() {
 		dut_control dut_i2c_mux:ec_prog
 	fi
 
-	# Ensure that the AP is off while we are flashing the EC via:
-	# - warm_reset:on
-	# - cold_reset:on
-	# - cold_reset:off
-	# ...reflash EC...
-	# - warm_reset:off
-	if servo_has_warm_reset; then
-		dut_control_or_die warm_reset:on
-	fi
-	if servo_has_cold_reset; then
+	# We need to send the special waveform very soon after the EC powers on
+	if [[ "${SERVO_TYPE}" =~ "c2d2" ]]; then
+		# The EC was held in reset above
+		dut_control ec_reset:off
+	elif servo_has_cold_reset; then
 		servo_ec_hard_reset_or_die
 	fi
 
@@ -1368,27 +1392,7 @@ function flash_npcx_uut() {
 	# C2D2 does not use waits and has to ensure that the EC does not come
 	# out of reset after using a H1-level reset
 	if [[ "${SERVO_TYPE}" =~ "c2d2" ]] ; then
-		# Ensure we have the latest c2d2 fw and hdctools. This could
-		# be removed eventually (estimate removal 2020/06/01)
-		dut_control h1_vref_present || die "Need to kill servod and run:
-repo sync && sudo emerge hdctools servo-firmware && sudo servo_updater -b c2d2"
-
-		# Handle the case when flash_ec starts before DUT power is
-		# applied. Otherwise just use h1-level reset.
-		if [[ "$(dut_control_get h1_vref_present)" = "off" ]] ; then
-			info "Please attach C2D2 to DUT and power DUT now!"
-			# Waits ~40 seconds for Vref presence before timeout
-			local LOOP_COUNTER=100
-			while [[ "$(dut_control_get h1_vref_present)" = "off" \
-			  && "${LOOP_COUNTER}" -gt 0 ]] ; do
-				sleep 0.1
-				let LOOP_COUNTER=LOOP_COUNTER-1
-			done
-		else
-			# Ensure DUT is in clean state with H1 Reset
-			dut_control cold_reset:on
-			dut_control cold_reset:off
-		fi
+		c2d2_wait_for_h1_power_on_or_reset
 
 		# Don't let the EC come out of reset after H1 reset
 		dut_control ec_reset:on
