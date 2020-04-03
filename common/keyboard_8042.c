@@ -345,7 +345,7 @@ static enum ec_error_list matrix_callback(int8_t row, int8_t col,
 	if (row >= KEYBOARD_ROWS || col >= keyboard_cols)
 		return EC_ERROR_INVAL;
 
-	make_code = scancode_set2[col][row];
+	make_code = get_scancode_set2(row, col);
 
 #ifdef CONFIG_KEYBOARD_SCANCODE_CALLBACK
 	{
@@ -423,11 +423,11 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 	enum ec_error_list ret;
 
 #ifdef CONFIG_KEYBOARD_DEBUG
-	char mylabel = keycap_label[col][row];
+	char mylabel = get_keycap_label(row, col);
 
 	if (mylabel & KEYCAP_LONG_LABEL_BIT)
 		CPRINTS("KB (%d,%d)=%d %s", row, col, is_pressed,
-		  keycap_long_label[mylabel & KEYCAP_LONG_LABEL_INDEX_BITMASK]);
+			get_keycap_long_label(mylabel & KEYCAP_LONG_LABEL_INDEX_BITMASK));
 	else
 		CPRINTS("KB (%d,%d)=%d %c", row, col, is_pressed, mylabel);
 #endif

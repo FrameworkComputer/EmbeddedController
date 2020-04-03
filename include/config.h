@@ -2408,11 +2408,6 @@
 #define CONFIG_KEYBOARD_RUNTIME_KEYS
 
 /*
- * Allow the keyboard scan code set tables to be modified at runtime.
- */
-#undef CONFIG_KEYBOARD_SCANCODE_MUTABLE
-
-/*
  * Allow the board layer keyboard customization. If define, the board layer
  * needs to implement:
  * 1. the function board_keyboard_drive_col() which is used to control

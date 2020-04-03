@@ -17,13 +17,20 @@ struct button_8042_t {
 	int repeat;
 };
 
-/* The standard Chrome OS keyboard matrix table. */
-#if defined(CONFIG_KEYBOARD_SCANCODE_MUTABLE) || \
-	defined(CONFIG_KEYBOARD_CUSTOMIZATION)
-extern uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS];
-#else
-extern const uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS];
-#endif
+/**
+ * Get the standard Chrome OS keyboard matrix set 2 scanset
+ * @param row	Row number
+ * @param col	Column number
+ * @return	0 on error, scanset for the (row,col) if successful
+ **/
+uint16_t get_scancode_set2(uint8_t row, uint8_t col);
+/**
+ * Set the standard Chrome OS keyboard matrix set 2 scanset
+ * @param row	Row number
+ * @param col	Column number
+ * @param val	Value to set
+ **/
+void set_scancode_set2(uint8_t row, uint8_t col, uint16_t val);
 
 /* Translation from scan code set 2 to set 1. */
 extern const uint8_t scancode_translate_table[];
@@ -69,13 +76,27 @@ enum keycap_long_label_idx {
 	KLLI_MAX
 };
 
-extern const char * const keycap_long_label[];
-#if defined(CONFIG_KEYBOARD_SCANCODE_MUTABLE) || \
-	defined(CONFIG_KEYBOARD_CUSTOMIZATION)
-extern char keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS];
-#else
-extern const char keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS];
-#endif
+/**
+ * Get the keycap "long version" label
+ * @param idx	Index into keycap_long_label_idx[]
+ * @return	"UNKNOWN" on error, long label for idx if successful
+ */
+const char *get_keycap_long_label(uint8_t idx);
+
+/**
+ * Get the keycap label
+ * @param row	Row number
+ * @param col	Column number
+ * @return	KLLI_UNKNO on error, label for the (row,col) if successful
+ */
+char get_keycap_label(uint8_t row, uint8_t col);
+/**
+ * Set the keycap label
+ * @param row	Row number
+ * @param col	Column number
+ * @param val	Value to set
+ */
+void set_keycap_label(uint8_t row, uint8_t col, char val);
 #endif
 
 /* Button scancodes (Power, Volume Down, Volume Up, etc.) */

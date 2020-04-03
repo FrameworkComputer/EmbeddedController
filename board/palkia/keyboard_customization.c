@@ -10,7 +10,7 @@
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
 
-uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
+static uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 	{0x0021, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000},
 	{0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000},
 	{0x0015, 0x0000, 0x0000, 0x000d, 0x000e, 0x0016, 0x0000, 0x001c},
@@ -28,6 +28,19 @@ uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 	{0x0052, 0x005a, 0x0000, 0x0000, 0x0055, 0x0066, 0x005b, 0x0023},
 	{0x0000, 0x000a, 0xe074, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000},
 };
+
+uint16_t get_scancode_set2(uint8_t row, uint8_t col)
+{
+	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS)
+		return scancode_set2[col][row];
+	return 0;
+}
+
+void set_scancode_set2(uint8_t row, uint8_t col, uint16_t val)
+{
+	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS)
+		scancode_set2[col][row] = val;
+}
 
 void board_keyboard_drive_col(int col)
 {
@@ -49,7 +62,7 @@ void board_keyboard_drive_col(int col)
 }
 
 #ifdef CONFIG_KEYBOARD_DEBUG
-char keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
+static char keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 	{'c',        KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO,
 		KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO},
 	{KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO,
@@ -83,4 +96,17 @@ char keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 	{KLLI_UNKNO, KLLI_F8,    KLLI_RIGHT, KLLI_UNKNO,
 		KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO},
 };
+
+char get_keycap_label(uint8_t row, uint8_t col)
+{
+	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS)
+		return keycap_label[col][row];
+	return KLLI_UNKNO;
+}
+
+void set_keycap_label(uint8_t row, uint8_t col, char val)
+{
+	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS)
+		keycap_label[col][row] = val;
+}
 #endif

@@ -1034,13 +1034,16 @@ static void board_init(void)
 		/* No need to swap scancode_set2[0][3] and [1][0] because both
 		 * are mapped to search key. */
 	}
-	if (sku & SKU_ID_MASK_UK2)
+	if (sku & SKU_ID_MASK_UK2) {
 		/*
 		 * Observed on Shyvana with UK keyboard,
 		 *   \|:     0x0061->0x61->0x56
 		 *   r-ctrl: 0xe014->0x14->0x1d
 		 */
-		swap(scancode_set2[0][4], scancode_set2[7][2]);
+		uint16_t tmp = get_scancode_set2(4, 0);
+		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
+		set_scancode_set2(2, 7, tmp);
+	}
 #endif
 
 	isl923x_set_ac_prochot(CHARGER_SOLO, 3328 /* mA */);

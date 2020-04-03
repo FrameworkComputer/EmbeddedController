@@ -494,13 +494,13 @@ static void board_init(void)
 	/* Update AC status to the PCH */
 	board_update_ac_status();
 
-#if defined(CONFIG_KEYBOARD_SCANCODE_MUTABLE) && !defined(TEST_BUILD)
+#ifndef TEST_BUILD
 	if (board_get_version() == 4) {
 		/* Set F13 to new defined key on EVT */
 		CPRINTS("Overriding F13 scan code");
-		scancode_set2[9][3] = 0xe007;
+		set_scancode_set2(3, 9, 0xe007);
 #ifdef CONFIG_KEYBOARD_DEBUG
-		keycap_label[9][3] = KLLI_F13;
+		set_keycap_label(3, 9, KLLI_F13);
 #endif
 	}
 #endif
