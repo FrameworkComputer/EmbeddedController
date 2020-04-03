@@ -110,13 +110,24 @@ static enum ec_error_list isl923x_get_input_current(int chgnum,
 						    int *input_current)
 {
 	int rv;
+	int regval;
 	int reg;
 
-	rv = raw_read16(chgnum, ISL923X_REG_ADAPTER_CURRENT1, &reg);
+	if (IS_ENABLED(CONFIG_CHARGER_RAA489000))
+		reg = RAA489000_REG_ADC_INPUT_CURRENT;
+	else
+		reg = ISL923X_REG_ADAPTER_CURRENT1;
+
+	rv = raw_read16(chgnum, reg, &regval);
 	if (rv)
 		return rv;
 
-	*input_current = AC_REG_TO_CURRENT(reg);
+	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
+		/* LSB is 22.2mA */
+		regval *= 22;
+	}
+
+	*input_current = AC_REG_TO_CURRENT(regval);
 	return EC_SUCCESS;
 }
 

@@ -264,6 +264,8 @@
 #define ISL9237_INFO_PSTATE_MASK 3
 
 /* ADC registers */
+#define RAA489000_REG_ADC_INPUT_CURRENT 0x83
+#define RAA489000_REG_ADC_VSYS 0x86
 #define RAA489000_REG_ADC_VBUS 0x88
 
 enum isl9237_power_stage {
