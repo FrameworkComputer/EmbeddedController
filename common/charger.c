@@ -85,6 +85,7 @@ int charger_closest_current(int current)
 
 void charger_get_params(struct charger_params *chg)
 {
+	int chgnum = 0;
 	memset(chg, 0, sizeof(*chg));
 
 	if (charger_get_current(&chg->current))
@@ -93,7 +94,7 @@ void charger_get_params(struct charger_params *chg)
 	if (charger_get_voltage(&chg->voltage))
 		chg->flags |= CHG_FLAG_BAD_VOLTAGE;
 
-	if (charger_get_input_current(&chg->input_current))
+	if (charger_get_input_current(chgnum, &chg->input_current))
 		chg->flags |= CHG_FLAG_BAD_INPUT_CURRENT;
 
 	if (charger_get_status(&chg->status))
@@ -120,6 +121,7 @@ void print_charger_debug(void)
 {
 	int d;
 	const struct charger_info *info = charger_get_info();
+	int chgnum = 0;
 
 	/* info */
 	print_item_name("Name:");
@@ -154,7 +156,7 @@ void print_charger_debug(void)
 
 	/* input current limit */
 	print_item_name("I_in:");
-	if (check_print_error(charger_get_input_current(&d)))
+	if (check_print_error(charger_get_input_current(chgnum, &d)))
 		ccprintf("%5d (%4d - %5d, %3d)\n", d, info->input_current_min,
 			 info->input_current_max, info->input_current_step);
 
@@ -448,12 +450,14 @@ enum ec_error_list charger_set_input_current(int input_current)
 	return rv;
 }
 
-enum ec_error_list charger_get_input_current(int *input_current)
+enum ec_error_list charger_get_input_current(int chgnum, int *input_current)
 {
-	int chgnum = 0;
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
-	if ((chgnum < 0) || (chgnum >= chg_cnt)) {
+	if (chgnum < 0)
+		return EC_ERROR_INVAL;
+
+	if (chgnum >= chg_cnt) {
 		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
 		return EC_ERROR_INVAL;
 	}

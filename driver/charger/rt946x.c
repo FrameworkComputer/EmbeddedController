@@ -1333,7 +1333,7 @@ int rt946x_get_adc(enum rt946x_adc_in_sel adc_sel, int *adc_val)
 		goto out;
 
 	if (adc_sel == MT6370_ADC_IBUS) {
-		rv = charger_get_input_current(&aicr);
+		rv = charger_get_input_current(CHARGER_SOLO, &aicr);
 		if (rv)
 			goto out;
 	}

@@ -243,7 +243,7 @@ enum ec_error_list charger_set_input_current(int input_current);
  * Actual input current may be less than the desired input current set
  * due to current ratings of the wall adapter.
  */
-enum ec_error_list charger_get_input_current(int *input_current);
+enum ec_error_list charger_get_input_current(int chgnum, int *input_current);
 
 enum ec_error_list charger_manufacturer_id(int *id);
 enum ec_error_list charger_device_id(int *id);

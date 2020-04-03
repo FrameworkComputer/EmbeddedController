@@ -117,7 +117,7 @@ static void battery_thermal_control(struct charge_state_data *curr)
 		return;
 
 	/* If we fail to read input curr limit, skip for this cycle. */
-	if (charger_get_input_current(&input_current))
+	if (charger_get_input_current(CHARGER_SOLO, &input_current))
 		return;
 
 	/*
