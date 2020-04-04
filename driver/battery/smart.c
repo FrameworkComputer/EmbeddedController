@@ -566,7 +566,7 @@ DECLARE_CONSOLE_COMMAND(battmfgacc, command_batt_mfg_access_read,
 /*****************************************************************************/
 /* Smart battery pass-through
  */
-#ifdef CONFIG_I2C_PASSTHROUGH
+#ifdef CONFIG_SB_PASSTHROUGH
 static enum ec_status
 host_command_sb_read_word(struct host_cmd_handler_args *args)
 {

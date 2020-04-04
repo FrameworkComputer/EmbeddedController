@@ -599,6 +599,11 @@
 #define CONFIG_BATT_HOST_FULL_FACTOR		94
 
 /*
+ * Smart battery pass-through host commands.
+ */
+#undef CONFIG_SB_PASSTHROUGH
+
+/*
  * Expose some data when it is needed.
  * For example, battery disconnect state
  */
@@ -2125,7 +2130,6 @@
 #undef CONFIG_I2C
 #undef CONFIG_I2C_DEBUG
 #undef CONFIG_I2C_DEBUG_PASSTHRU
-#undef CONFIG_I2C_PASSTHROUGH
 #undef CONFIG_I2C_PASSTHRU_RESTRICTED
 #undef CONFIG_I2C_VIRTUAL_BATTERY
 
