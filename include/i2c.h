@@ -584,4 +584,7 @@ int i2c_set_freq(int port, enum i2c_freq freq);
  */
 enum i2c_freq i2c_get_freq(int port);
 
+/* Find the matching port in i2c_ports[] table. */
+const struct i2c_port_t *get_i2c_port(const int port);
+
 #endif  /* __CROS_EC_I2C_H */

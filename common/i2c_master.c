@@ -1349,6 +1349,7 @@ static int command_scan(int argc, char **argv)
 {
 	int port;
 	char *e;
+	const struct i2c_port_t *i2c_port;
 
 	if (argc == 1) {
 		for (port = 0; port < i2c_ports_used; port++)
@@ -1364,10 +1365,15 @@ static int command_scan(int argc, char **argv)
 
 
 	port = strtoi(argv[1], &e, 0);
-	if ((*e) || (port >= i2c_ports_used))
+	if (*e)
 		return EC_ERROR_PARAM2;
 
-	scan_bus(i2c_ports[port].port, i2c_ports[port].name);
+	i2c_port = get_i2c_port(port);
+	if (!i2c_port)
+		return EC_ERROR_PARAM2;
+
+	scan_bus(port, i2c_port->name);
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(i2cscan, command_scan,
