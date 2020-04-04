@@ -1024,6 +1024,14 @@
  */
 #undef CONFIG_OCPC
 
+/*
+ * Boards using OCPC must define this value in order to seed the starting board
+ * battery and system resistance between the secondary charger IC and the
+ * battery.  This should be at a minimum the Rds(on) resistance of the BFET plus
+ * the series sense resistor.
+ */
+#undef CONFIG_OCPC_DEF_RBATT_MOHMS
+
 /* Enable trickle charging */
 #undef CONFIG_TRICKLE_CHARGING
 

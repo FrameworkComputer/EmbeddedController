@@ -164,6 +164,7 @@ enum problem_type {
 	PR_CHG_FLAGS,
 	PR_BATT_FLAGS,
 	PR_CUSTOM,
+	PR_CFG_SEC_CHG,
 
 	NUM_PROBLEM_TYPES
 };
@@ -177,6 +178,7 @@ static const char * const prob_text[] = {
 	"chg params",
 	"batt params",
 	"custom profile",
+	"cfg secondary chg"
 };
 BUILD_ASSERT(ARRAY_SIZE(prob_text) == NUM_PROBLEM_TYPES);
 
@@ -1080,6 +1082,15 @@ static void dump_charge_state(void)
 #ifdef CONFIG_OCPC
 	ccprintf("ocpc.*:\n");
 	DUMP_OCPC(active_chg_chip, "%d");
+	DUMP_OCPC(combined_rsys_rbatt_mo, "%dmOhm");
+	DUMP_OCPC(primary_vbus_mv, "%dmV");
+	DUMP_OCPC(primary_ibus_ma, "%dmA");
+	DUMP_OCPC(secondary_vbus_mv, "%dmV");
+	DUMP_OCPC(secondary_ibus_ma, "%dmA");
+	DUMP_OCPC(last_error, "%d");
+	DUMP_OCPC(integral, "%d");
+	DUMP_OCPC(last_vsys, "%dmV");
+	cflush();
 #endif /* CONFIG_OCPC */
 	DUMP(requested_voltage, "%dmV");
 	DUMP(requested_current, "%dmA");
@@ -1195,7 +1206,7 @@ static int calc_is_full(void)
  */
 static int charge_request(int voltage, int current)
 {
-	int r1 = EC_SUCCESS, r2 = EC_SUCCESS, r3 = EC_SUCCESS;
+	int r1 = EC_SUCCESS, r2 = EC_SUCCESS, r3 = EC_SUCCESS, r4 = EC_SUCCESS;
 	static int __bss_slow prev_volt, prev_curr;
 
 	if (!voltage || !current) {
@@ -1240,22 +1251,43 @@ static int charge_request(int voltage, int current)
 	if (r1 != EC_SUCCESS)
 		problem(PR_SET_VOLTAGE, r1);
 
+#ifdef CONFIG_OCPC
+	/*
+	 * For OCPC systems, if the secondary charger is active, we need to
+	 * configure that charge IC as well.  Note that if OCPC ever supports
+	 * more than 2 charger ICs, we'll need to refactor things a bit.  The
+	 * following check should be comparing against PRIMARY_CHARGER and
+	 * config_secondary_charger should probably be config_auxiliary_charger
+	 * and take the active chgnum as a parameter.
+	 */
+	if (curr.ocpc.active_chg_chip == SECONDARY_CHARGER) {
+		if ((current >= 0) || (voltage >= 0))
+			r3 = ocpc_config_secondary_charger(&curr.desired_input_current,
+							   &curr.ocpc,
+							   voltage, current);
+		if (r3 != EC_SUCCESS)
+			problem(PR_CFG_SEC_CHG, r3);
+	}
+#endif /* CONFIG_OCPC */
+
 	/*
 	 * Set the charge inhibit bit when possible as it appears to save
 	 * power in some cases (e.g. Nyan with BQ24735).
 	 */
 	if (voltage > 0 || current > 0)
-		r3 = charger_set_mode(0);
+		r4 = charger_set_mode(0);
 	else
-		r3 = charger_set_mode(CHARGE_FLAG_INHIBIT_CHARGE);
-	if (r3 != EC_SUCCESS)
-		problem(PR_SET_MODE, r3);
+		r4 = charger_set_mode(CHARGE_FLAG_INHIBIT_CHARGE);
+	if (r4 != EC_SUCCESS)
+		problem(PR_SET_MODE, r4);
 
 	/*
 	 * Only update if the request worked, so we'll keep trying on failures.
 	 */
 	if (r1 || r2)
 		return r1 ? r1 : r2;
+	if (IS_ENABLED(CONFIG_OCPC) && r3)
+		return r3;
 
 	if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV) &&
 	    (prev_volt != voltage || prev_curr != current))
@@ -1630,6 +1662,15 @@ void charger_task(void *u)
 	battery_dynamic[BATT_IDX_BASE].flags = EC_BATT_FLAG_INVALID_DATA;
 	charge_base = -1;
 #endif
+#ifdef CONFIG_OCPC
+	/*
+	 * We can start off assuming that the board resistance is 0 ohms
+	 * and later on, we can update this value if we charge the
+	 * system in suspend or off.
+	 */
+	curr.ocpc.combined_rsys_rbatt_mo = CONFIG_OCPC_DEF_RBATT_MOHMS;
+	charge_set_active_chg_chip(CHARGE_PORT_NONE);
+#endif /* CONFIG_OCPC */
 
 	/*
 	 * If system is not locked and we don't have a battery to live on,
@@ -1713,6 +1754,9 @@ void charger_task(void *u)
 
 		charger_get_params(&curr.chg);
 		battery_get_params(&curr.batt);
+#ifdef CONFIG_OCPC
+		ocpc_get_adcs(&curr.ocpc);
+#endif /* CONFIG_OCPC */
 
 		if (prev_bp != curr.batt.is_present) {
 			prev_bp = curr.batt.is_present;
@@ -2435,6 +2479,11 @@ void charge_set_active_chg_chip(int idx)
 
 	CPRINTS("Act Chg: %d", idx);
 	curr.ocpc.active_chg_chip = idx;
+	if (idx == CHARGE_PORT_NONE) {
+		curr.ocpc.last_error = 0;
+		curr.ocpc.integral = 0;
+		curr.ocpc.last_vsys = OCPC_UNINIT;
+	}
 }
 #endif /* CONFIG_OCPC */
 
