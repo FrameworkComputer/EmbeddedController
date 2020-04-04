@@ -1,13 +1,21 @@
 #!/bin/sh
 #
 # This attempts to build and install the i2c-pseudo Linux kernel module.
+# Installs a udev rule making i2c-pseudo devices read-write by users in plugdev.
 
 set -e
+cd "$(dirname "$0")"
 
 make clean
 make
 ret=0
 sudo make modules_install || ret="$?"
+
+# Only install udev rule if plugdev group exists.
+if getent group plugdev > /dev/null; then
+  sudo cp -iv 50-i2c-pseudo.rules /etc/udev/rules.d/ \
+    || echo 1>&2 "NOTICE: Failed to copy udev rules file."
+fi
 
 if [ "$ret" -eq 0 ]; then
   make clean
