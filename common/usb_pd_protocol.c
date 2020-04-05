@@ -315,9 +315,18 @@ int pd_get_rev(int port)
 	return pd[port].rev;
 }
 
-int pd_get_vdo_ver(int port)
+int pd_get_vdo_ver(int port, enum tcpm_transmit_type type)
 {
 	return vdo_ver[pd[port].rev];
+}
+#else
+int pd_get_rev(int port)
+{
+	return PD_REV20;
+}
+int pd_get_vdo_ver(int port, enum tcpm_transmit_type type)
+{
+	return VDM_VER10;
 }
 #endif
 

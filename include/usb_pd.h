@@ -1246,26 +1246,14 @@ enum pd_msg_type {
 /** Schedules the interrupt handler for the TCPC on a high priority task. */
 void schedule_deferred_pd_interrupt(int port);
 
-#ifdef CONFIG_USB_PD_REV30
-/**
- * Get current PD Revision
- *
- * @param port USB-C port number
- * @return 0 for PD_REV1.0, 1 for PD_REV2.0, 2 for PD_REV3.0
- */
-int pd_get_rev(int port);
-
 /**
  * Get current PD VDO Version
  *
  * @param port USB-C port number
+ * @param type USB-C port partner
  * @return 0 for PD_REV1.0, 1 for PD_REV2.0
  */
-int pd_get_vdo_ver(int port);
-#else
-#define pd_get_rev(n)     PD_REV20
-#define pd_get_vdo_ver(n) VDM_VER10
-#endif
+int pd_get_vdo_ver(int port, enum tcpm_transmit_type type);
 
 /**
  * Check if max voltage request is allowed (only used if

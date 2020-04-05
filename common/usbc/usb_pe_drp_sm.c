@@ -509,29 +509,27 @@ static struct policy_engine {
 test_export_static enum usb_pe_state get_state_pe(const int port);
 test_export_static void set_state_pe(const int port,
 				     const enum usb_pe_state new_state);
-#ifdef CONFIG_USB_PD_REV30
 /*
  * The spec. revision is used to index into this array.
- *  Rev 0 (VDO 1.0) - return VDM_VER10
- *  Rev 1 (VDO 1.0) - return VDM_VER10
- *  Rev 2 (VDO 2.0) - return VDM_VER20
+ *  PD 1.0 (VDO 1.0) - return VDM_VER10
+ *  PD 2.0 (VDO 1.0) - return VDM_VER10
+ *  PD 3.0 (VDO 2.0) - return VDM_VER20
  */
 static const uint8_t vdo_ver[] = {
-	VDM_VER10,
-	VDM_VER10,
-	VDM_VER20
+	[PD_REV10] = VDM_VER10,
+	[PD_REV20] = VDM_VER10,
+	[PD_REV30] = VDM_VER20,
 };
 
-int pd_get_vdo_ver(int port)
+int pd_get_vdo_ver(int port, enum tcpm_transmit_type type)
 {
-	enum pd_rev_type rev = prl_get_rev(port, TCPC_TX_SOP);
+	enum pd_rev_type rev = prl_get_rev(port, type);
 
 	if (rev < PD_REV30)
 		return vdo_ver[rev];
 	else
 		return VDM_VER20;
 }
-#endif
 
 static void pe_init(int port)
 {
@@ -833,7 +831,8 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 	/* Copy VDM Header */
 	pe[port].vdm_data[0] = VDO(vid, ((vid & USB_SID_PD) == USB_SID_PD) ?
 				1 : (PD_VDO_CMD(cmd) <= CMD_ATTENTION),
-				VDO_SVDM_VERS(1) | cmd);
+				VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP))
+				| cmd);
 
 	/* Copy Data after VDM Header */
 	memcpy((pe[port].vdm_data + 1), data, count);
@@ -3957,10 +3956,13 @@ static void pe_do_port_discovery_run(int port)
 			pe[port].vdm_data[0] = VDO(
 					USB_SID_PD,
 					1, /* structured */
-					VDO_SVDM_VERS(1) | pe[port].vdm_cmd);
+					VDO_SVDM_VERS(
+					    pd_get_vdo_ver(port, TCPC_TX_SOP)) |
+					pe[port].vdm_cmd);
 
 		pe[port].vdm_data[0] |= VDO_CMDT(CMDT_INIT);
-		pe[port].vdm_data[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port));
+		pe[port].vdm_data[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port,
+								  TCPC_TX_SOP));
 
 		pe[port].vdm_cnt = ret;
 		set_state_pe(port, PE_VDM_REQUEST);
@@ -4026,8 +4028,9 @@ static void pe_vdm_identity_request_cbl_entry(int port)
 
 	print_current_state(port);
 
-	msg[0] = VDO(USB_SID_PD, 1, VDO_SVDM_VERS(VDM_VER20)
-		     | DISCOVER_IDENTITY);
+	msg[0] = VDO(USB_SID_PD, 1, VDO_SVDM_VERS(pd_get_vdo_ver(port,
+							   TCPC_TX_SOP_PRIME)) |
+		     DISCOVER_IDENTITY);
 	tx_emsg[port].len = sizeof(uint32_t);
 
 	prl_send_data_msg(port, TCPC_TX_SOP_PRIME, PD_DATA_VENDOR_DEF);
@@ -4464,24 +4467,24 @@ static void pe_vdm_response_entry(int port)
 			tx_payload[0] = VDO(
 				USB_VID_GOOGLE,
 				1, /* Structured VDM */
-				VDO_SVDM_VERS(pd_get_vdo_ver(port)) |
-				VDO_CMDT(CMDT_RSP_ACK) |
+				VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP))
+				| VDO_CMDT(CMDT_RSP_ACK) |
 				vdo_cmd);
 		else if (!ret)
 			/* NAK */
 			tx_payload[0] = VDO(
 				USB_VID_GOOGLE,
 				1, /* Structured VDM */
-				VDO_SVDM_VERS(pd_get_vdo_ver(port)) |
-				VDO_CMDT(CMDT_RSP_NAK) |
+				VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP))
+				| VDO_CMDT(CMDT_RSP_NAK) |
 				vdo_cmd);
 		else
 			/* BUSY */
 			tx_payload[0] = VDO(
 				USB_VID_GOOGLE,
 				1, /* Structured VDM */
-				VDO_SVDM_VERS(pd_get_vdo_ver(port)) |
-				VDO_CMDT(CMDT_RSP_BUSY) |
+				VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP))
+				| VDO_CMDT(CMDT_RSP_BUSY) |
 				vdo_cmd);
 
 		if (ret <= 0)
@@ -4491,7 +4494,7 @@ static void pe_vdm_response_entry(int port)
 		tx_payload[0] = VDO(
 			USB_VID_GOOGLE,
 			1, /* Structured VDM */
-			VDO_SVDM_VERS(pd_get_vdo_ver(port)) |
+			VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP)) |
 			VDO_CMDT(CMDT_RSP_NAK) |
 			vdo_cmd);
 		ret = 4;
