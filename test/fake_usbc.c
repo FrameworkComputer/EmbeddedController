@@ -190,11 +190,6 @@ bool pd_is_disconnected(int port)
 #endif /* !CONFIG_USB_DRP_ACC_TRYSRC && !CONFIG_USB_CTVPD */
 
 #ifndef CONFIG_USB_DRP_ACC_TRYSRC
-void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
-				uint16_t head)
-{
-}
-
 __overridable void pd_set_dual_role(int port, enum pd_dual_role_states state)
 {
 }

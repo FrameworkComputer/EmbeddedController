@@ -10,6 +10,7 @@
 #include "test_util.h"
 #include "timer.h"
 #include "usb_emsg.h"
+#include "usb_mux.h"
 #include "usb_pe.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
@@ -26,6 +27,7 @@ const struct svdm_response svdm_rsp = {
 };
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT];
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 int board_vbus_source_enabled(int port)
 {
@@ -42,6 +44,11 @@ void pd_set_vbus_discharge(int port, int enable)
 }
 
 uint8_t tc_get_pd_enabled(int port)
+{
+	return 1;
+}
+
+bool pd_alt_mode_capable(int port)
 {
 	return 1;
 }
