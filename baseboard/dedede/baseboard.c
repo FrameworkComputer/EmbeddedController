@@ -110,3 +110,12 @@ void board_hibernate_late(void)
 	 */
 	gpio_set_level(GPIO_EN_SLP_Z, 1);
 }
+
+int board_is_i2c_port_powered(int port)
+{
+	if (port != I2C_PORT_SENSOR)
+		return 1;
+
+	/* Sensor rails are off in S5/G3 */
+	return chipset_in_state(CHIPSET_STATE_ANY_OFF) ? 0 : 1;
+}
