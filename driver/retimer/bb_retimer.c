@@ -190,14 +190,6 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
 			set_retimer_con |= BB_RETIMER_HPD_LVL;
 	}
 
-	/*
-	 * Bit 12: DEBUG_ACCESSORY_MODE
-	 * 0 - Not in debug mode
-	 * 1 - In debug accessory mode
-	 */
-	if (pd_is_debug_acc(port))
-		set_retimer_con |= BB_RETIMER_DEBUG_ACCESSORY_MODE;
-
 	if (mux_state & (USB_PD_MUX_TBT_COMPAT_ENABLED |
 			 USB_PD_MUX_USB4_ENABLED)) {
 		cable_resp = get_cable_tbt_vdo(port);
