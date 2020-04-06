@@ -474,7 +474,7 @@ void ppc_interrupt(enum gpio_signal signal)
 
 /******************************************************************************/
 /* TCPC support routines */
-static enum gpio_signal ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL;
+enum gpio_signal ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL;
 
 static void ps8815_reset(void)
 {
@@ -669,31 +669,15 @@ static void config_db_usb3(void)
 	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3;
 }
 
-/*
- * Reconfigure Volteer GPIOs based on the board ID
- */
-static void config_volteer_gpios(void)
-{
-	/* Legacy support for the first board build */
-	if (get_board_id() == 0) {
-		CPRINTS("Configuring GPIOs for board ID 0");
-
-		/* Reassign USB_C1_RT_RST_ODL */
-		bb_controls[USBC_PORT_C1].retimer_rst_gpio =
-			GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
-		ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
-
-		/* Reassign EC_VOLUP_BTN_ODL */
-		button_reassign_gpio(BUTTON_VOLUME_UP,
-			GPIO_EC_VOLUP_BTN_ODL_BOARDID_0);
-	}
-}
-
 static uint8_t board_id;
 
 uint8_t get_board_id(void)
 {
 	return board_id;
+}
+
+__overridable void config_volteer_gpios(void)
+{
 }
 
 /*

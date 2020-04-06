@@ -10,6 +10,7 @@
 #include "accelgyro.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/als_tcs3400.h"
+#include "driver/retimer/bb_retimer.h"
 #include "driver/sync.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -27,6 +28,28 @@
 #include "util.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
+
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+
+/*
+ * Reconfigure Volteer GPIOs based on the board ID
+ */
+__override void config_volteer_gpios(void)
+{
+	/* Legacy support for the first board build */
+	if (get_board_id() == 0) {
+		CPRINTS("Configuring GPIOs for board ID 0");
+
+		/* Reassign USB_C1_RT_RST_ODL */
+		bb_controls[USBC_PORT_C1].retimer_rst_gpio =
+			GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
+		ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
+
+		/* Reassign EC_VOLUP_BTN_ODL */
+		button_reassign_gpio(BUTTON_VOLUME_UP,
+			GPIO_EC_VOLUP_BTN_ODL_BOARDID_0);
+	}
+}
 
 static void board_init(void)
 {
