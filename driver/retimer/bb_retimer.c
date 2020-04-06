@@ -22,6 +22,10 @@
 				| USB_PD_MUX_TBT_COMPAT_ENABLED \
 				| USB_PD_MUX_USB4_ENABLED)
 
+#define BB_RETIMER_MUX_DATA_ALT_MODE (USB_PD_MUX_DP_ENABLED \
+				| USB_PD_MUX_TBT_COMPAT_ENABLED \
+				| USB_PD_MUX_USB4_ENABLED)
+
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
@@ -110,7 +114,8 @@ static void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 }
 
 static void retimer_set_state_dfp(int port, mux_state_t mux_state,
-				  uint32_t *set_retimer_con)
+				  uint32_t *set_retimer_con,
+				  enum idh_ptype cable_type)
 {
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {
 		/*
@@ -125,6 +130,19 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 		if (is_usb2_cable_support(port))
 			*set_retimer_con |= BB_RETIMER_USB_2_CONNECTION;
 	}
+
+	/*
+	 * Bit 22: ACTIVE/PASSIVE
+	 * 0 - Passive cable
+	 * 1 - Active cable
+	 *
+	 * If Alternate mode is DP/Thunderbolt_compat/USB4, ACTIVE/PASIVE is
+	 * set according to Discover mode SOP' response.
+	 */
+	if ((mux_state & BB_RETIMER_MUX_DATA_ALT_MODE) &&
+	    (cable_type == IDH_PTYPE_ACABLE))
+		*set_retimer_con |= BB_RETIMER_ACTIVE_PASSIVE;
+
 }
 
 static void retimer_set_state_ufp(mux_state_t mux_state,
@@ -147,6 +165,14 @@ static void retimer_set_state_ufp(mux_state_t mux_state,
 		 */
 		*set_retimer_con |= BB_RETIMER_USB_DATA_ROLE;
 	}
+	/*
+	 * TODO: b/157163664: Add the following bits:
+	 *
+	 * Bit 22: ACTIVE/PASSIVE
+	 * For USB4, set according to bits 20:19 of enter USB SOP.
+	 * For thubderbolt-compat mode, set according to bit 24 of enter mode
+	 * sop.
+	 */
 }
 
 /**
@@ -159,6 +185,7 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
 	int port = me->usb_port;
 	union tbt_mode_resp_cable cable_resp;
 	union tbt_mode_resp_device dev_resp;
+	enum idh_ptype cable_type = get_usb_pd_cable_type(port);
 
 	/*
 	 * Bit 0: DATA_CONNECTION_PRESENT
@@ -277,22 +304,14 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
 			set_retimer_con |= BB_RETIMER_TBT_CABLE_TYPE;
 
 		/*
-		 * Bit 22: Active/Passive
-		 * 0 - Passive cable
-		 * 1 - Active cable
+		 * Bit 20: TBT_ACTIVE_LINK_TRAINING
+		 * 0 - Active with bi-directional LSRX communication
+		 * 1 - Active with uni-directional LSRX communication
+		 * Set to "0" when passive cable plug
 		 */
-		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE) {
-			set_retimer_con |= BB_RETIMER_ACTIVE_PASSIVE;
-			/*
-			 * Bit 20: TBT_ACTIVE_LINK_TRAINING
-			 * 0 - Active with bi-directional LSRX communication
-			 * 1 - Active with uni-directional LSRX communication
-			 * Set to "0" when passive cable plug
-			 */
-			if (cable_resp.lsrx_comm == UNIDIR_LSRX_COMM)
-				set_retimer_con |=
-					BB_RETIMER_TBT_ACTIVE_LINK_TRAINING;
-		}
+		if (cable_type == IDH_PTYPE_ACABLE &&
+		    cable_resp.lsrx_comm == UNIDIR_LSRX_COMM)
+			set_retimer_con |= BB_RETIMER_TBT_ACTIVE_LINK_TRAINING;
 
 		/*
 		 * Bit 23: USB4 Connection
@@ -315,7 +334,8 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
 	}
 
 	if (pd_get_data_role(port) == PD_ROLE_DFP)
-		retimer_set_state_dfp(port, mux_state, &set_retimer_con);
+		retimer_set_state_dfp(port, mux_state, &set_retimer_con,
+				      cable_type);
 	else
 		retimer_set_state_ufp(mux_state, &set_retimer_con);
 
