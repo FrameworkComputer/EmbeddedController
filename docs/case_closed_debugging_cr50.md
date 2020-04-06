@@ -4,10 +4,9 @@ Cr50 is the firmware that runs on the Google Security Chip. It has support for
 Case Closed Debugging (CCD). This support is complete enough to replace servo.
 This doc explains how to setup CCD, so you can access all of the necessary
 features to develop firmware on your device or control different components.
-Please run through the basic setup steps before trying to flash the AP
-firmware. CCD could help recover your device if you flash broken firmware, but
-**if you brick your device before setting up CCD, you may not be able to enable
-it**.
+Please run through the basic setup steps before trying to flash the AP firmware.
+CCD could help recover your device if you flash broken firmware, but **if you
+brick your device before setting up CCD, you may not be able to enable it**.
 
 [TOC]
 
@@ -33,27 +32,27 @@ restricted as they want.
 Cr50 is locked by default. Here are all of the Capabilities and their default
 settings.
 
-| Capability      | Default  | Function                                        |
-| --------------- | -------- | ----------------------------------------------- |
-| UartGscRxAPTx   | Always   | controls reading from the AP console            |
-| UartGscTxAPRx   | Always   | controls writing to the AP console              |
-| UartGscRxECTx   | Always   | controls reading from the EC console            |
-| UartGscTxECRx   | IfOpened | controls writing to the EC console              |
-| FlashAP         | IfOpened | controls flashing the AP                        |
-| FlashEC         | IfOpened | controls flashing the EC                        |
-| OverrideWP      | IfOpened | controls controlling write protect              |
-| RebootECAP      | IfOpened | controls rebooting the EC/AP from the cr50 console |
-| GscFullConsole  | IfOpened | controls access to restricted Cr50 console commands |
-| UnlockNoReboot  | Always   | controls unlocking Cr50 without rebooting the AP |
-| UnlockNoShortPP | Always   | controls unlocking Cr50 without physical presence |
-| OpenNoTPMWipe   | IfOpened | controls opening Cr50 without wiping the TPM    |
-| OpenNoLongPP    | IfOpened | controls opening Cr50 without physical presence |
-| BatteryBypassPP | Always   | controls opening cr50 without physical presence and dev mode if the battery is removed |
-| UpdateNoTPMWipe | Always   | controls updating cr50 without wiping the TPM   |
-| I2C             | IfOpened | controls access to the I2C master (used for measuring power) |
-| FlashRead       | Always   | controls dumping a hash of the AP or EC flash   |
-| OpenNoDevMode   | IfOpened | controls opening cr50 without dev mode          |
-| OpenFromUSB     | IfOpened | controls opening cr50 from USB                  |
+Capability      | Default  | Function
+--------------- | -------- | --------
+UartGscRxAPTx   | Always   | controls reading from the AP console
+UartGscTxAPRx   | Always   | controls writing to the AP console
+UartGscRxECTx   | Always   | controls reading from the EC console
+UartGscTxECRx   | IfOpened | controls writing to the EC console
+FlashAP         | IfOpened | controls flashing the AP
+FlashEC         | IfOpened | controls flashing the EC
+OverrideWP      | IfOpened | controls controlling write protect
+RebootECAP      | IfOpened | controls rebooting the EC/AP from the cr50 console
+GscFullConsole  | IfOpened | controls access to restricted Cr50 console commands
+UnlockNoReboot  | Always   | controls unlocking Cr50 without rebooting the AP
+UnlockNoShortPP | Always   | controls unlocking Cr50 without physical presence
+OpenNoTPMWipe   | IfOpened | controls opening Cr50 without wiping the TPM
+OpenNoLongPP    | IfOpened | controls opening Cr50 without physical presence
+BatteryBypassPP | Always   | controls opening cr50 without physical presence and dev mode if the battery is removed
+UpdateNoTPMWipe | Always   | controls updating cr50 without wiping the TPM
+I2C             | IfOpened | controls access to the I2C master (used for measuring power)
+FlashRead       | Always   | controls dumping a hash of the AP or EC flash
+OpenNoDevMode   | IfOpened | controls opening cr50 without dev mode
+OpenFromUSB     | IfOpened | controls opening cr50 from USB
 
 # CCD Setup
 
@@ -66,48 +65,52 @@ capability settings so the device doesn't need to be open to access CCD
 functionality.
 
 ## Prerequisites
+
 Cr50 needs to be newer than 0.3.9 or 0.4.9 to setup ccd. The 3 in the major
 version means it's a MP image and 0.4.X is a prePVT image. There aren't many
 differences between the MP and prePVT versions of images. It is just a little
-easier to CCD open prePVT images. You can't run prePVT images on MP devices,
-so if you're trying to update to .prepvt and it fails try using .prod.
+easier to CCD open prePVT images. You can't run prePVT images on MP devices, so
+if you're trying to update to .prepvt and it fails try using .prod.
 
-* Sync chroot to TOT (run repo sync in chromiumos directory) update servod and
-  gsctool in chroot
+*   Sync chroot to TOT (run repo sync in chromiumos directory) update servod and
+    gsctool in chroot
 
         from chroot > sudo emerge hdctools ec-devutils servo-firmware
-	              chromeos-cr50 chromeos-cr50-scripts
+                  chromeos-cr50 chromeos-cr50-scripts
 
-* Update servo v4 firmware
+*   Update servo v4 firmware
 
         from chroot > sudo servo_updater -b servo_v4
 
-* Ensure cr50 firmware is up to date. You can run these gsctool commands from
-  the AP console or you can run them as root from inside the chroot if suzyq is
-  connected.
-	* If you're doing this from the AP, install a test image newer than M66.
-	* check the cr50 version
+*   Ensure cr50 firmware is up to date. You can run these gsctool commands from
+    the AP console or you can run them as root from inside the chroot if suzyq
+    is connected.
+
+    *   If you're doing this from the AP, install a test image newer than M66.
+    *   check the cr50 version
 
                 sudo gsctool -a -f
 
-	* If the RW version is greater than 0.(3|4).9 then you don't need to
-	  update cr50. If it's not, then you need to update cr50.
-	* Update cr50.
+    *   If the RW version is greater than 0.(3|4).9 then you don't need to
+        update cr50. If it's not, then you need to update cr50.
+
+    *   Update cr50.
 
                 sudo gsctool -a /opt/google/cr50/firmware/cr50.bin.prod
 
-	* Check the cr50 version again to make sure it's now newer than 0.X.9
+    *   Check the cr50 version again to make sure it's now newer than 0.X.9
 
-* Ensure power isolation on servo v4
-	* Plug USB-C power into servo v4 for dut pass though
-	* Green LED will light up when plugged into DUT.
+*   Ensure power isolation on servo v4
+
+    *   Plug USB-C power into servo v4 for dut pass though
+    *   Green LED will light up when plugged into DUT.
 
 ## Basic Steps for CCD setup
 
 1.  Use the general [setup](case_closed_debugging.md#Setup) instructions to
     connect Suzy-Q and access the Cr50 console. The Cr50 console will be the
-    lowest `/dev/ttyUSB*` device created by Cr50 or
-    `/dev/google/<device name>/serial/Shell`
+    lowest `/dev/ttyUSB*` device created by Cr50 or `/dev/google/<device
+    name>/serial/Shell`
 
 2.  [Open CCD](#Open-CCD)
 
@@ -131,9 +134,9 @@ You can download the cr50 image and then flash cr50 using Suzy-Q from the chroot
     from chroot > sudo gsctool cr50.r0.0.10.w0.3.9/cr50.bin.prod
 
 If you are only briefly using ccd and aren’t doing anything that may brick the
-device, you can probably just stick to opening cr50. **The open state will be lost
-after cr50 reboot. If you don’t want to have to reopen cr50, you may want to
-setup the ccd capabilities so you can use them without needing cr50 to be
+device, you can probably just stick to opening cr50. **The open state will be
+lost after cr50 reboot. If you don’t want to have to reopen cr50, you may want
+to setup the ccd capabilities so you can use them without needing cr50 to be
 open.**
 
 ### Standard Process (Requires Booting to Kernel)
@@ -165,15 +168,15 @@ will not work.
     -   **Clamshells/Convertibles** - press power button escape refresh
     -   **Chromeboxes** - Use a paperclip to press the recovery button while
         plugging in AC.
-    -   **Using servo** - If cr50 is open or you are using a flex cable you
-        can, you can use `dut-control power_state:rec`
+    -   **Using servo** - If cr50 is open or you are using a flex cable you can,
+        you can use `dut-control power_state:rec`
 
 5.  Enable developer mode
 
     -   **Tablets/Detachables** - After the device boots into recovery, press
         volume up and volume down at the same time to get to the enable dev mode
-	menu. Use volume up button to navigate to “confirm disabling os
-	verification” use the power button to select it
+        menu. Use volume up button to navigate to “confirm disabling os
+        verification” use the power button to select it
     -   **Clamshells/Convertibles** - press ctrl+d on keyboard or AP console to
         select developer mode then enter to enable it.
     -   **Chromeboxes** - Use a paper clip to press the dedicated recovery
@@ -366,8 +369,8 @@ can be done to reopen cr50.
 
 ##### Set Password
 
-Run the gsctool command and enter the password when prompted. It will prompt
-for the password twice.
+Run the gsctool command and enter the password when prompted. It will prompt for
+the password twice.
 
     from ap shell > gsctool -a -P
 
@@ -468,9 +471,8 @@ Flashing the AP is standard across boards.
 
     chroot > sudo flashrom -p raiden_debug_spi:target=AP -w $IMAGE
 
-This default flashing command takes a very long time to complete, there are
-ways to speed up flashing process by cutting some corners, see the next
-section.
+This default flashing command takes a very long time to complete, there are ways
+to speed up flashing process by cutting some corners, see the next section.
 
 If you have a lot of ccd devices plugged in, you may want to use the cr50
 serialname. You can get this by running
@@ -488,22 +490,22 @@ command, you probably need to use the serialname.**
 
 The flashrom utility is designed without any consideration of the speed of
 access to the chip. While this is a reasonable omission when talking about
-inline programming, when the AP controls the SPI bus and can clock the bus at
-50 MHz, speed of access becomes a very annoying limitation when programming
-AP flash using Cr50, where SPI bus can not be clocked faster than 1.5 MHz.
+inline programming, when the AP controls the SPI bus and can clock the bus at 50
+MHz, speed of access becomes a very annoying limitation when programming AP
+flash using Cr50, where SPI bus can not be clocked faster than 1.5 MHz.
 
 One of 'smart' tricks deployed by flashrom is reading the entire flash contents
-first, before programming, then erase and or program only flash pages which
-have to be modified. Some pages are probably still the same since the previous
-image was written, some pages could be programmed without erasing, etc.
+first, before programming, then erase and or program only flash pages which have
+to be modified. Some pages are probably still the same since the previous image
+was written, some pages could be programmed without erasing, etc.
 
 This trick is especially painful when flashing using Cr50, because reading the
 entire flash image clocking it at 1.5MHz alone takes a few minutes.
 
 After programming is completed, by default flashrom reads the flash contents
-back and compares them with the file used for programming. This second read
-also takes a few minutes, even if small portions of the chip were modified,
-the entire chip is read and compared.
+back and compares them with the file used for programming. This second read also
+takes a few minutes, even if small portions of the chip were modified, the
+entire chip is read and compared.
 
 With these shortcomings in mind, a more efficient way of programming AP flash
 can be proposed. The flashrom utility was enhanced to prevent it from reading
@@ -511,52 +513,48 @@ the contents of the flash before programming, and from reading the entire chip
 when verifying the write operation. It turns out it takes much less time to
 erase the entire flash chip first and then program only sections essential for
 the device booting in recovery mode. Once the device boots in recovery mode
-Chrome OS can be installed from a removable storage device, and then the
-entire flash can be programmed from the Chrome OS command line, with the AP
-clocking the bus at 50 MHz.
+Chrome OS can be installed from a removable storage device, and then the entire
+flash can be programmed from the Chrome OS command line, with the AP clocking
+the bus at 50 MHz.
 
 Incidentally, any Chrome OS device AP firmware image is split into sections,
-which can be examined by running the command
-```
-dump_fmap <image file>
-```
+which can be examined by running the command `dump_fmap <image file>`
 
-The `dump_fmap` utility finds in the image the section called `FMAP` and
-prints out its contents, which describes the layout of the entire flash image.
+The `dump_fmap` utility finds in the image the section called `FMAP` and prints
+out its contents, which describes the layout of the entire flash image.
 
 Only a few sections are essential for maintaining the device identity and for
-booting the device in recovery mode. The `-i` command line option of
-`flashrom` allows the user to indicate which sections should be read/written.
+booting the device in recovery mode. The `-i` command line option of `flashrom`
+allows the user to indicate which sections should be read/written.
 
-The below sequence of commands allows to quickly reprogram the AP flash:
-```
-  # This will save device flash map and VPD sections in
-  # /tmp/bios.essentials.bin. VPD sections contain information like device
-  # firmware ID, WiFi calibration, enrollment status, etc. Use the below command
-  # only if you need to preserve the DUT's identity, no need to run it in case
-  # the DUT flash is not programmed at all, or you do not care about preserving
-  # the device identity.
-  sudo flashrom -p raiden_debug_spi:target=AP -i FMAP -i RO_VPD -i RW_VPD -r /tmp/bios.essentials.bin --fast-verify
+The below sequence of commands allows to quickly reprogram the AP flash: ``` #
+This will save device flash map and VPD sections in # /tmp/bios.essentials.bin.
+VPD sections contain information like device # firmware ID, WiFi calibration,
+enrollment status, etc. Use the below command # only if you need to preserve the
+DUT's identity, no need to run it in case # the DUT flash is not programmed at
+all, or you do not care about preserving # the device identity. sudo flashrom -p
+raiden_debug_spi:target=AP -i FMAP -i RO_VPD -i RW_VPD -r
+/tmp/bios.essentials.bin --fast-verify
 
-  # This command will erase the entire flash chip in one shot, the fastest
-  # possible way to erase.
-  sudo flashrom -p raiden_debug_spi:target=AP -E --do-not-diff
+\# This command will erase the entire flash chip in one shot, the fastest #
+possible way to erase. sudo flashrom -p raiden_debug_spi:target=AP -E
+--do-not-diff
 
-  # This command will program essential flash sections necessary for the
-  # Chrome OS device to boot in recovery mode. Note that the SI_ALL section is
-  # not always present in the flash image, do not include it if it is not in
-  # dump_fmap output.
-  sudo flashrom -p raiden_debug_spi:target=AP -w image-atlas.bin -i FMAP -i WP_RO [-i SI_ALL] --do-not-diff --noverify
+\# This command will program essential flash sections necessary for the # Chrome
+OS device to boot in recovery mode. Note that the SI_ALL section is # not always
+present in the flash image, do not include it if it is not in # dump_fmap
+output. sudo flashrom -p raiden_debug_spi:target=AP -w image-atlas.bin -i FMAP
+-i WP_RO [-i SI_ALL] --do-not-diff --noverify
 
-  # This command will restore the previously preserved VPD sections of the
-  # flash, provided it was saved in the first step above.
-  sudo flashrom -p raiden_debug_spi:target=AP -w /tmp/bios.essential.bin -i RO_VPD -i RW_VPD --do-not-diff --noverify
-```
+\# This command will restore the previously preserved VPD sections of the #
+flash, provided it was saved in the first step above. sudo flashrom -p
+raiden_debug_spi:target=AP -w /tmp/bios.essential.bin -i RO_VPD -i RW_VPD
+--do-not-diff --noverify ```
 
 Once flash is programmed, the device can be booted in recovery mode and start
 Chrome OS from external storage, following the usual recovery procedure. Once
-Chrome OS is installed, AP flash can be updated to include the rest of the
-image by running flashrom or futility from the device bash prompt.
+Chrome OS is installed, AP flash can be updated to include the rest of the image
+by running flashrom or futility from the device bash prompt.
 
 ## WP control
 
@@ -672,7 +670,7 @@ Check if your board has this issue
     protect is disabled. If it shows it's enabled, then cr50 can't disable WP
     when the AP is off. You should disable SW WP to flash RO firmware using ccd.
 
-		chroot > sudo flashrom -p raiden_debug_spi:target=AP --wp-status
+        chroot > sudo flashrom -p raiden_debug_spi:target=AP --wp-status
 
 Disable SW WP if the ccd flashrom command doesn't show write protect disabled.
 
@@ -701,16 +699,16 @@ uart. Servod knows how to interact with the i2c endpoint, so you can use servod
 to read power from the INAs if they’re populated.
 
 Suzyq doesn’t have all of the necessary things to replace servo for FAFT, but
-you should be able to use it for normal debugging functionality. You will need
-a type c servo v4 for ccd if you need to run FAFT.
+you should be able to use it for normal debugging functionality. You will need a
+type c servo v4 for ccd if you need to run FAFT.
 
 # UART Rescue mode
 
 ## Overview
 
 UART Rescue Mode is a feature of the Cr50 RO firmware that supports programming
-the RW firmware using only the UART interface. This is used to recover a bad
-RW firmware update (which should be rare).
+the RW firmware using only the UART interface. This is used to recover a bad RW
+firmware update (which should be rare).
 
 This is also useful when bringing up new designs, as this allows to update Cr50
 image even before USB CCD or TPM interfaces are operational.
@@ -724,13 +722,13 @@ certain string and momentarily waits for the host to send a sync symbol, to
 indicate that an alternative RW will have to be loaded over UART. The RO also
 enters this mode if there is no valid RW to run.
 
-When rescue mode is triggered, the RO is expecting the host to transfer a
-single RW image in hex format.
+When rescue mode is triggered, the RO is expecting the host to transfer a single
+RW image in hex format.
 
 ## Install the cr50-rescue utility
 
-The `cr50-rescue` utility is used to flash a given firmware to cr50 using
-rescue mode. This tool must be installed inside the chroot.
+The `cr50-rescue` utility is used to flash a given firmware to cr50 using rescue
+mode. This tool must be installed inside the chroot.
 
 ```bash
 sudo emerge cr50-utils
@@ -738,8 +736,8 @@ sudo emerge cr50-utils
 
 ## Preparing an RW image
 
-To prepare the signed hex RW image, fetch a released image from Google
-storage, which can be found by running:
+To prepare the signed hex RW image, fetch a released image from Google storage,
+which can be found by running:
 
 `gsutil ls gs://chromeos-localmirror/distfiles/cr50*`
 
@@ -751,8 +749,8 @@ The latest cr50 images can be found in the [chromeos-cr50 ebuild]. Generally,
 you should always use the PROD_IMAGE indicated in that file. Once rescued, the
 user can update to the PREPVT image later if needed.
 
-Once the binary image is ready, use the following commands to carve out the RW
-A section out of it and convert it into hex format:
+Once the binary image is ready, use the following commands to carve out the RW A
+section out of it and convert it into hex format:
 
 ```bash
 dd if=<cr50 bin file> of=cr50.rw.bin skip=16384 count=233472 bs=1
@@ -764,20 +762,15 @@ then you can use `cr50.rw.hex` as the image passed to `cr50-rescue`.
 ## Programming the RW image with rescue mode
 
 With servo_micro (or servo_v2 reworked for connecting to Cr50 console), run
-servod and disable cr50 ec3po and uart timestamp:
-```bash
-dut-control cr50_uart_timestamp:off
-dut-control cr50_ec3po_interp_connect:off
-```
+servod and disable cr50 ec3po and uart timestamp: `bash dut-control
+cr50_uart_timestamp:off dut-control cr50_ec3po_interp_connect:off`
 
 Get a raw cr50 uart device path and use it for cr50-rescue argument ‘-d’ below.
-```bash
-dut-control raw_cr50_uart_pty
-```
+`bash dut-control raw_cr50_uart_pty`
 
 Prior to running `cr50-rescue`, the terminal from the cr50 console UART must be
-disconnected, and cr50 must be unpowered-- the system needs to have AC power
-and battery disconnected.
+disconnected, and cr50 must be unpowered-- the system needs to have AC power and
+battery disconnected.
 
 After ensuring those steps, the rescue command may be run as follows:
 
@@ -787,8 +780,8 @@ cr50-rescue -v -i <path to the signed hex RW image>
 ```
 
 After starting the command, provide power to the board and rescue mode will
-start automatically. After flashing successfully (see sample output below),
-cr50 must be unpowered again, by disconnecting AC power and battery.
+start automatically. After flashing successfully (see sample output below), cr50
+must be unpowered again, by disconnecting AC power and battery.
 
 Note that `<cr50 console UART tty>` above has to be a direct FTDI interface,
 `pty` devices created by servod do not work for this purpose. Use either
@@ -797,10 +790,10 @@ cables might not work*, as they impose a significant delay in the UART stream,
 which makes the synchronization described below impossible.
 
 `cr50-rescue` starts listening on the console UART and printing it out to the
-terminal. When the target is reset, `cr50-rescue` detects the `Bldr |` string
-in the target output, at this point the utility intercepts the boot process and
-the target proceeds to receiving the new RW image and saving it into flash.
-Note the currently present RW and RW_B images will be wiped out first.
+terminal. When the target is reset, `cr50-rescue` detects the `Bldr |` string in
+the target output, at this point the utility intercepts the boot process and the
+target proceeds to receiving the new RW image and saving it into flash. Note the
+currently present RW and RW_B images will be wiped out first.
 
 ### Sample output
 
