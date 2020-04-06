@@ -628,6 +628,22 @@ bool is_usb2_cable_support(int port)
 		cable->attr2.a2_rev30.usb_20_support == USB2_SUPPORTED;
 }
 
+bool is_cable_speed_gen2_capable(int port)
+{
+	struct pd_cable *cable = pd_get_cable_attributes(port);
+
+	switch (cable->rev) {
+	case PD_REV20:
+		return cable->attr.p_rev20.ss == USB_R20_SS_U31_GEN1_GEN2;
+
+	case PD_REV30:
+		return cable->attr.p_rev30.ss == USB_R30_SS_U32_U40_GEN2 ||
+			cable->attr.p_rev30.ss == USB_R30_SS_U40_GEN3;
+	default:
+		return false;
+	}
+}
+
 /*
  * TODO(b/152417597): Support SOP and SOP'; eliminate redundant code for port
  * partner and cable identity discovery.

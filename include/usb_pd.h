@@ -1877,6 +1877,17 @@ struct pd_cable *pd_get_cable_attributes(int port);
  */
 bool is_usb2_cable_support(int port);
 
+/*
+ * Checks if Cable speed is Gen2 or better
+ *
+ * @param port  USB-C port number
+ * @return      True if Cable supports speed USB_R20_SS_U31_GEN1_GEN2/
+ *                                           USB_R30_SS_U32_U40_GEN2/
+ *                                           USB_R30_SS_U40_GEN3,
+ *             False otherwise
+ */
+bool is_cable_speed_gen2_capable(int port);
+
 /**
  * Set DFP enter mode flags if available
  *
