@@ -598,11 +598,6 @@ cleanup() {
 			dut_control ftdii2c_cmd:open
 			dut_control ftdii2c_cmd:setclock
 		fi
-
-		# Let the AP boot back up.
-		if servo_has_warm_reset; then
-			dut_control warm_reset:off
-		fi
 	fi
 
 	servo_restore
@@ -826,10 +821,14 @@ repo sync && sudo emerge hdctools servo-firmware && sudo servo_updater -b c2d2"
 		# Waits ~40 seconds for Vref presence before timeout
 		local LOOP_COUNTER=100
 		while [[ "$(dut_control_get h1_vref_present)" = "off" \
-			&& "${LOOP_COUNTER}" -gt 0 ]] ; do
+			&& "${LOOP_COUNTER}" -gt 1 ]] ; do
 			sleep 0.1
 			let LOOP_COUNTER=LOOP_COUNTER-1
 		done
+		# If we ran out of time, then just die now
+		if [[ "${LOOP_COUNTER}" -eq 1 ]] ; then
+			die "H1 Vref not present after waiting"
+		fi
 	else
 		# Ensure DUT is in clean state with H1 Reset
 		dut_control cold_reset:on
