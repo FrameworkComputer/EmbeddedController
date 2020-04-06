@@ -48,13 +48,6 @@ GPIO_INT(USB_C1_MIX_INT_ODL,	PIN(0, 3), GPIO_INT_BOTH, bc12_interrupt)
 
 /* Volume button interrupts */
 GPIO_INT(EC_VOLDN_BTN_ODL,		PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
-/*
- * EC_VOLUP_BTN_ODL moved from GPIO75 to GPIO97 on boards with board ID >=1.
- * GPIO97/EN_PP1050_BYPASS is DNS on board ID 0, and GPIO75 will be used once
- * EFS support is added.
- * TODO (b/149858568): remove board ID=0 support.
- */
-GPIO_INT(EC_VOLUP_BTN_ODL_BOARDID_0,	PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,		PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
 /* Power Sequencing Signals */
@@ -100,14 +93,6 @@ GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
 GPIO(EC_PCH_INT_ODL,           PIN(B, 0), GPIO_ODR_HIGH)
 
 /* USB and USBC Signals */
-
-/*
- * USB_C1 moved from GPIO32 to GPIO83 on boards with board ID >=1.
- * GPIO83/EN_PP1800_A is DNS on board ID 0 and GPIO32 is N/C on board ID >=1
- * so it's safe to define GPIOs compatible with both designs.
- * TODO (b/149858568): remove board ID=0 support.
- */
-GPIO(USB_C1_RT_RST_ODL_BOARDID_0,	PIN(3, 2), GPIO_ODR_LOW) /* USB_C1 Reset on boards without board ID */
 GPIO(USB_C1_RT_RST_ODL,			PIN(8, 3), GPIO_ODR_LOW) /* USB_C1 Reset on boards board ID >=1 */
 
 /* Don't have a load switch for retimer */
