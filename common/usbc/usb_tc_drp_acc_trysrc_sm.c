@@ -1699,8 +1699,10 @@ static void tc_attach_wait_snk_run(const int port)
 	}
 
 	/*
-	 * A DRP shall transition to Unattached.SNK when the state of both
-	 * the CC1 and CC2 pins is SNK.Open for at least tPDDebounce.
+	 * A DRP shall transition to Unattached.SRC when the state of both
+	 * the CC1 and CC2 pins is SNK.Open for at least tPDDebounce, however
+	 * when DRP state is PD_DRP_FORCE_SINK the next state should be
+	 * Unattached.SNK.
 	 */
 	if (new_cc_state == PD_CC_NONE &&
 				get_time().val > tc[port].pd_debounce) {
@@ -1710,7 +1712,10 @@ static void tc_attach_wait_snk_run(const int port)
 		}
 
 		/* We are detached */
-		set_state_tc(port, TC_UNATTACHED_SRC);
+		if (drp_state[port] == PD_DRP_FORCE_SINK)
+			set_state_tc(port, TC_UNATTACHED_SNK);
+		else
+			set_state_tc(port, TC_UNATTACHED_SRC);
 		return;
 	}
 
