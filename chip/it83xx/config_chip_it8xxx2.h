@@ -68,6 +68,8 @@
 #define IT83XX_GPIO_1P8V_PIN_EXTENDED
 /* All GPIOs support interrupt on rising, falling, and either edge. */
 #define IT83XX_GPIO_INT_FLEXIBLE
+/* Remap host I/O cycles to base address of H2RAM section. */
+#define IT83XX_H2RAM_REMAPPING
 /* Enable detect type-c plug in interrupt. */
 #define IT83XX_INTC_PLUG_IN_SUPPORT
 /* Chip IT83202BX actually has TCPC physical port count. */
@@ -111,6 +113,8 @@
 #define IT83XX_GPIO_H7_DEFAULT_OUTPUT_LOW
 /* All GPIOs support interrupt on rising, falling, and either edge. */
 #define IT83XX_GPIO_INT_FLEXIBLE
+/* Remap host I/O cycles to base address of H2RAM section. */
+#define IT83XX_H2RAM_REMAPPING
 /* Enable detect type-c plug in interrupt. */
 #define IT83XX_INTC_PLUG_IN_SUPPORT
 /* Wake up CPU from low power mode even if interrupts are disabled */

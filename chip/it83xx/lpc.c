@@ -602,6 +602,17 @@ static void lpc_init(void)
 	memset(lpc_host_args, 0, sizeof(*lpc_host_args));
 
 	/* Host LPC I/O cycle mapping to RAM */
+#ifdef IT83XX_H2RAM_REMAPPING
+	/*
+	 * On it8xxx2 series, host I/O cycles are mapped to the first block
+	 * (0x80080000~0x80080fff) at default, and it is adjustable.
+	 * We should set the correct offset depends on the base address of
+	 * H2RAM section, so EC will be able to receive/handle commands from
+	 * host.
+	 */
+	IT83XX_GCTRL_H2ROFSR =
+		(CONFIG_H2RAM_BASE - CONFIG_RAM_BASE) / CONFIG_H2RAM_SIZE;
+#endif
 	/*
 	 * bit[4], H2RAM through LPC IO cycle.
 	 * bit[1], H2RAM window 1 enabled.
