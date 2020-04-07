@@ -262,11 +262,6 @@ static uint8_t saved_flgs[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static void set_vconn(int port, int enable);
 
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
-/* Tracker for which task is waiting on sysjump prep to finish */
-static volatile task_id_t sysjump_task_waiting = TASK_ID_INVALID;
-#endif
-
 /* Forward declare common, private functions */
 static __maybe_unused int reset_device_and_notify(int port);
 
@@ -778,38 +773,6 @@ bool pd_is_disconnected(int port)
 	return !pd_is_connected(port);
 }
 
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
-/*
- * TODO(b/137493121): Move this function to a separate file that's shared
- * between the this and the original stack.
- */
-void pd_prepare_sysjump(void)
-{
-	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
-		int i;
-
-		/*
-		 * Exit modes before sysjump so we can cleanly enter again
-		 * later
-		 */
-		for (i = 0; i < board_get_usb_pd_port_count(); i++) {
-			/*
-			 * We can't be in an alternate mode if PD comm is
-			 * disabled, so no need to send the event
-			 */
-			if (tc_get_pd_enabled(i))
-				continue;
-
-			sysjump_task_waiting = task_get_current();
-			task_set_event(PD_PORT_TO_TASK_ID(i),
-							PD_EVENT_SYSJUMP, 0);
-			task_wait_event_mask(TASK_EVENT_SYSJUMP_READY, -1);
-			sysjump_task_waiting = TASK_ID_INVALID;
-		}
-	}
-}
-#endif
-
 static __maybe_unused void bc12_role_change_handler(int port)
 {
 	int event;
@@ -1057,6 +1020,11 @@ uint8_t tc_get_pd_enabled(int port)
 	return !tc[port].pd_disabled_mask;
 }
 
+bool pd_alt_mode_capable(int port)
+{
+	return IS_ENABLED(CONFIG_USB_PE_SM) && tc_get_pd_enabled(port);
+}
+
 void tc_set_power_role(int port, enum pd_power_role role)
 {
 	tc[port].power_role = role;
@@ -1126,7 +1094,7 @@ void tc_event_check(int port, int evt)
 				for (i = 0; i <
 					CONFIG_USB_PD_PORT_MAX_COUNT; i++)
 					pe_exit_dp_mode(i);
-				notify_sysjump_ready(&sysjump_task_waiting);
+				notify_sysjump_ready();
 			}
 		}
 	}

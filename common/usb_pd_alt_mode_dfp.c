@@ -28,6 +28,9 @@
 #define PORT_TO_HPD(port) ((port) ? GPIO_USB_C1_DP_HPD : GPIO_USB_C0_DP_HPD)
 #endif /* PORT_TO_HPD */
 
+/* Tracker for which task is waiting on sysjump prep to finish */
+static volatile task_id_t sysjump_task_waiting = TASK_ID_INVALID;
+
 /*
  * timestamp of the next possible toggle to ensure the 2-ms spacing
  * between IRQ_HPD.  Since this is used in overridable functions, this
@@ -112,6 +115,26 @@ static int validate_mode_request(struct svdm_amode_data *modep,
 	}
 
 	return 1;
+}
+
+void pd_prepare_sysjump(void)
+{
+	int i;
+
+	/* Exit modes before sysjump so we can cleanly enter again later */
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
+		/*
+		 * If the port is not capable of Alternate mode no need to
+		 * send the event.
+		 */
+		if (!pd_alt_mode_capable(i))
+			continue;
+
+		sysjump_task_waiting = task_get_current();
+		task_set_event(PD_PORT_TO_TASK_ID(i), PD_EVENT_SYSJUMP, 0);
+		task_wait_event_mask(TASK_EVENT_SYSJUMP_READY, -1);
+		sysjump_task_waiting = TASK_ID_INVALID;
+	}
 }
 
 /*
@@ -408,15 +431,15 @@ uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx)
 	return disc->svids[svid_idx].mode_vdo;
 }
 
-void notify_sysjump_ready(volatile const task_id_t * const sysjump_task_waiting)
+void notify_sysjump_ready(void)
 {
 	/*
 	 * If event was set from pd_prepare_sysjump, wake the
 	 * task waiting on us to complete.
 	 */
-	if (*sysjump_task_waiting != TASK_ID_INVALID)
-		task_set_event(*sysjump_task_waiting,
-						TASK_EVENT_SYSJUMP_READY, 0);
+	if (sysjump_task_waiting != TASK_ID_INVALID)
+		task_set_event(sysjump_task_waiting,
+				TASK_EVENT_SYSJUMP_READY, 0);
 }
 
 /*

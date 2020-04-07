@@ -161,11 +161,6 @@ static const uint8_t vdo_ver[] = {
 #define VDO_VER(v) VDM_VER10
 #endif
 
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
-/* Tracker for which task is waiting on sysjump prep to finish */
-static volatile task_id_t sysjump_task_waiting = TASK_ID_INVALID;
-#endif
-
 static struct pd_protocol {
 	/* current port power role (SOURCE or SINK) */
 	enum pd_power_role power_role;
@@ -299,6 +294,16 @@ int pd_comm_is_enabled(int port)
 #else
 	return 1;
 #endif
+}
+
+bool pd_alt_mode_capable(int port)
+{
+	/*
+	 * PD is alternate mode capable only if PD communication is enabled and
+	 * the port is not suspended.
+	 */
+	return pd_comm_is_enabled(port) &&
+		!(pd[port].task_state == PD_STATE_SUSPENDED);
 }
 
 static inline void set_state_timeout(int port,
@@ -3062,8 +3067,7 @@ void pd_task(void *u)
 #if defined(CONFIG_USB_PD_ALT_MODE_DFP)
 		if (evt & PD_EVENT_SYSJUMP) {
 			exit_supported_alt_mode(port);
-			notify_sysjump_ready(&sysjump_task_waiting);
-
+			notify_sysjump_ready();
 		}
 #endif
 
@@ -3843,8 +3847,7 @@ void pd_task(void *u)
 
 				if (evt & PD_EVENT_SYSJUMP)
 					/* Nothing to do for sysjump prep */
-					notify_sysjump_ready(
-							&sysjump_task_waiting);
+					notify_sysjump_ready();
 #else
 				task_wait_event(-1);
 #endif
@@ -4869,29 +4872,6 @@ static void pd_chipset_shutdown(void)
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pd_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
-
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
-void pd_prepare_sysjump(void)
-{
-	int i;
-
-	/* Exit modes before sysjump so we can cleanly enter again later */
-	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
-		/*
-		 * We can't be in an alternate mode if PD comm is disabled or
-		 * the port is suspended, so no need to send the event
-		 */
-		if (!pd_comm_is_enabled(i) ||
-				pd[i].task_state == PD_STATE_SUSPENDED)
-			continue;
-
-		sysjump_task_waiting = task_get_current();
-		task_set_event(PD_PORT_TO_TASK_ID(i), PD_EVENT_SYSJUMP, 0);
-		task_wait_event_mask(TASK_EVENT_SYSJUMP_READY, -1);
-		sysjump_task_waiting = TASK_ID_INVALID;
-	}
-}
-#endif
 
 #ifdef CONFIG_COMMON_RUNTIME
 
