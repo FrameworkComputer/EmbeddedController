@@ -100,6 +100,7 @@ BOARDS_STM32_DFU=(
 	twinkie
 	discovery
 	servo_v4
+	servo_v41
 	servo_micro
 	sweetberry
 	polyberry
