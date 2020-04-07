@@ -394,6 +394,7 @@ static void board_init(void)
 	uint8_t *memmap_batt_flags;
 
 	update_port_limits();
+	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_L);
 
 	/* Always claim AC is online, because we don't have a battery. */
 	memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
