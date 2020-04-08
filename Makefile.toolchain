@@ -72,7 +72,7 @@ CFLAGS_COVERAGE=$(if $(TEST_COVERAGE),-fprofile-arcs -ftest-coverage \
 				      -DTEST_COVERAGE=$(EMPTY),)
 CFLAGS_DEFINE=-DOUTDIR=$(out)/$(BLD) -DCHIP=$(CHIP) -DBOARD_TASKFILE=$(_tsk_lst_file) \
               -DBOARD=$(BOARD) -DCORE=$(CORE) -DPROJECT=$(PROJECT) \
-              -DCHIP_VARIANT=$(CHIP_VARIANT) -DCHIP_FAMILY=$(CHIP_FAMILY) \
+              -DCHIP_VARIANT=$(CHIP_VARIANT) -DCHIP_FAMILY=$(UC_CHIP_FAMILY) \
               -DBOARD_$(UC_BOARD)=$(EMPTY) \
 	      -DCHIP_$(UC_CHIP)=$(EMPTY) \
 	      -DCORE_$(UC_CORE)=$(EMPTY) \
