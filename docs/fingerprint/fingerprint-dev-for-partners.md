@@ -324,20 +324,21 @@ Start a fingerprint enrollment:
 > fpenroll
 ```
 
-The Dragonclaw reference board has an onboard INA that monitors the voltage
-and power draw of the MCU and FP Sensor independently.
+### Measuring Power
 
-Signal Name   | Description
-------------- | -------------------------------------
-pp3300_dx_mcu | 3.3V supplying the MCU
-pp3300_dx_fp  | 3.3V supplying the fingerprint sensor
-pp1800_dx_fp  | 1.8V supplying the fingerprint sensor
+The Dragonclaw reference board has an onboard INA that monitors the voltage and
+power draw of the MCU and FP Sensor independently.
+
+Signal Name     | Description
+--------------- | -------------------------------------
+`pp3300_dx_mcu` | 3.3V supplying the MCU
+`pp3300_dx_fp`  | 3.3V supplying the fingerprint sensor
+`pp1800_dx_fp`  | 1.8V supplying the fingerprint sensor
 
 You can monitor all power and voltages by using the following command:
 
 ```bash
-(chroot) $ watch -n0.5 dut-control pp3300_dx_mcu_mv pp3300_dx_fp_mv \
-pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
+(chroot) $ watch -n0.5 dut-control pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
 ```
 
 *** note
