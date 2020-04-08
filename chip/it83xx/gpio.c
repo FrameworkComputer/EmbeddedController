@@ -711,6 +711,20 @@ void gpio_pre_init(void)
 	IT83XX_VBATPC_BGPOPSCR = 0x0;
 #endif
 
+	/*
+	 * On IT81202 (128-pins package), the pins of GPIO group K and L aren't
+	 * bonding with pad. So we configure these pins as internal pull-down
+	 * at default to prevent leakage current due to floating.
+	 */
+	if (IS_ENABLED(IT83XX_GPIO_GROUP_K_L_DEFAULT_PULL_DOWN)) {
+		for (i = 0; i < 8; i++) {
+			IT83XX_GPIO_CTRL(GPIO_K, i) = (GPCR_PORT_PIN_MODE_INPUT
+				| GPCR_PORT_PIN_MODE_PULLDOWN);
+			IT83XX_GPIO_CTRL(GPIO_L, i) = (GPCR_PORT_PIN_MODE_INPUT
+				| GPCR_PORT_PIN_MODE_PULLDOWN);
+		}
+	}
+
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		flags = g->flags;
 

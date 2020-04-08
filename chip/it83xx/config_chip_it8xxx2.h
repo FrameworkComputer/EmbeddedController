@@ -103,6 +103,10 @@
  * Please refer to gpio_1p8v_sel[] for 1.8v GPIOs.
  */
 #define IT83XX_GPIO_1P8V_PIN_EXTENDED
+#ifdef CHIP_VARIANT_IT81202AX_1024
+/* Pins of group K and L are set as internal pull-down at initialization. */
+#define IT83XX_GPIO_GROUP_K_L_DEFAULT_PULL_DOWN
+#endif
 /* All GPIOs support interrupt on rising, falling, and either edge. */
 #define IT83XX_GPIO_INT_FLEXIBLE
 /* Enable detect type-c plug in interrupt. */
