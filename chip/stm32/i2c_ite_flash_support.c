@@ -274,13 +274,17 @@ static int command_enable_ite_dfu(int argc, char **argv)
 	 * Enable output compare 1 (or its N counterpart). Note that if only
 	 * OC1N is enabled, then it is not complemented. From datasheet:
 	 * "When only OCxN is enabled (CCxE=0, CCxNE=1), it is not complemented"
+	 *
+	 * Note: we want the rising edge of SDA to be in the middle of SCL, so
+	 * invert the SDA (faster) signal.
 	 */
 	if (ite_dfu_config.use_complement_timer_channel) {
 		STM32_TIM_CCER(16) = STM32_TIM_CCER_CC1NE;
-		STM32_TIM_CCER(17) = STM32_TIM_CCER_CC1NE;
+		STM32_TIM_CCER(17) = STM32_TIM_CCER_CC1NE |
+				     STM32_TIM_CCER_CC1NP;
 	} else {
 		STM32_TIM_CCER(16) = STM32_TIM_CCER_CC1E;
-		STM32_TIM_CCER(17) = STM32_TIM_CCER_CC1E;
+		STM32_TIM_CCER(17) = STM32_TIM_CCER_CC1E | STM32_TIM_CCER_CC1P;
 	}
 
 	/* Enable main output. */
