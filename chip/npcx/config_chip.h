@@ -9,11 +9,20 @@
 /* CPU core BFD configuration */
 #include "core/cortex-m/config_core.h"
 
+/*
+ * Set the chip family version to 4 digits to keep the flexibility in case
+ * we need the minor version for chip variants in a family.
+ */
+#define NPCX_FAMILY_NPCX5        5000
+#define NPCX_FAMILY_NPCX7        7000
+
 /* Features depend on chip family */
 #if defined(CHIP_FAMILY_NPCX5)
 #include "config_chip-npcx5.h"
+#define NPCX_FAMILY_VERSION      NPCX_FAMILY_NPCX5
 #elif defined(CHIP_FAMILY_NPCX7)
 #include "config_chip-npcx7.h"
+#define NPCX_FAMILY_VERSION      NPCX_FAMILY_NPCX7
 #else
 #error "Unsupported chip family"
 #endif
