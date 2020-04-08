@@ -306,7 +306,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 			.port = I2C_PORT_USB_C0,
 			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		},
-		.drv = &tcpci_tcpm_drv,
+		.drv = &ps8xxx_tcpm_drv,
 	},
 	{
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -314,7 +314,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 			.port = I2C_PORT_USB_C1,
 			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		},
-		.drv = &tcpci_tcpm_drv,
+		.drv = &ps8xxx_tcpm_drv,
 	},
 };
 
