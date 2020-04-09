@@ -15,6 +15,7 @@
 #include "driver/tcpm/anx7447.h"
 #include "driver/usb_mux/it5205.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "intc.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
@@ -101,6 +102,7 @@ void board_init(void)
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND);
 	board_power_5v_enable(on);
 }
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 void board_reset_pd_mcu(void)
 {
