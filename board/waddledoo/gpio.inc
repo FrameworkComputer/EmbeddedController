@@ -12,16 +12,16 @@
 
 /* Power Interrupts */
 GPIO_INT(SLP_S0_L,		 PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(SLP_S3_L,		 PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(SLP_S3_L,		 PIN(A, 5), GPIO_INT_BOTH, baseboard_all_sys_pgood_interrupt)
 GPIO_INT(SLP_S4_L,		 PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_SUS_L,		 PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(RSMRST_PWRGD_L,	 PIN(C, 6), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(VCCIN_AUX_VID1,	 PIN(C, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(CPU_C10_GATE_L,	 PIN(6, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(VCCIN_AUX_VID0,	 PIN(F, 4), GPIO_INT_BOTH | GPIO_SEL_1P8V, power_signal_interrupt)
-GPIO_INT(PG_VCCIO_EXT_OD,	 PIN(B, 0), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_VCCIO_EXT_OD,	 PIN(B, 0), GPIO_INT_BOTH, baseboard_all_sys_pgood_interrupt)
 GPIO_INT(PG_PP5000_U_OD,	 PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(PG_DRAM_OD,		 PIN(E, 4), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_DRAM_OD,		 PIN(E, 4), GPIO_INT_BOTH, baseboard_all_sys_pgood_interrupt)
 GPIO_INT(PG_PP1050_ST_OD,	 PIN(4, 2), GPIO_INT_BOTH, power_signal_interrupt)
 
 /* USB-C interrupts */

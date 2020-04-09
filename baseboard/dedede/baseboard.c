@@ -134,6 +134,20 @@ __override int power_signal_get_level(enum gpio_signal signal)
 
 }
 
+void baseboard_all_sys_pgood_interrupt(enum gpio_signal signal)
+{
+	/*
+	 * We need to deassert ALL_SYS_PGOOD within 200us of SLP_S3_L asserting.
+	 * that is why we do this here instead of waiting for the chipset
+	 * driver to.
+	 */
+	if (!gpio_get_level(GPIO_SLP_S3_L))
+		gpio_set_level(GPIO_ALL_SYS_PWRGD, 0);
+
+	/* Now chain off to the normal power signal interrupt handler. */
+	power_signal_interrupt(signal);
+}
+
 void baseboard_chipset_startup(void)
 {
 	/* Allow keyboard backlight to be enabled */

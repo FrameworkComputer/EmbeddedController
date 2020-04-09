@@ -10,16 +10,16 @@
 
 /* Power State interrupts */
 GPIO_INT(SLP_S4_L,		PIN(I, 5), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(SLP_S3_L,		PIN(H, 3), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(SLP_S3_L,		PIN(H, 3), GPIO_INT_BOTH, baseboard_all_sys_pgood_interrupt)
 GPIO_INT(SLP_S0_L,		PIN(E, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_SUS_L,		PIN(G, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(VCCIN_AUX_VID0,	PIN(D, 0), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(RSMRST_PWRGD_L,	PIN(E, 1), GPIO_INT_BOTH | GPIO_PULL_UP, power_signal_interrupt)
 GPIO_INT(CPU_C10_GATE_L,	PIN(G, 1), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(PG_DRAM_OD,		PIN(D, 3), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_DRAM_OD,		PIN(D, 3), GPIO_INT_BOTH, baseboard_all_sys_pgood_interrupt)
 GPIO_INT(PG_PP1050_ST_OD,	PIN(L, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(VCCIN_AUX_VID1,	PIN(K, 1), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(PG_VCCIO_EXT_OD,	PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_VCCIO_EXT_OD,	PIN(D, 7), GPIO_INT_BOTH, baseboard_all_sys_pgood_interrupt)
 GPIO_INT(ESPI_RESET_L, 	 PIN(D, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, espi_reset_pin_asserted_interrupt)
 
 GPIO_INT(H1_EC_PWR_BTN_ODL,	PIN(E, 2), GPIO_INT_BOTH | GPIO_PULL_UP, power_button_interrupt)

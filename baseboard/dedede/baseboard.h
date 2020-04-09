@@ -242,6 +242,9 @@ enum chg_id {
 	CHARGER_NUM,
 };
 
+/* Interrupt handler for signals that are used to generate ALL_SYS_PGOOD. */
+void baseboard_all_sys_pgood_interrupt(enum gpio_signal signal);
+
 /* Reset all TCPCs */
 void board_reset_pd_mcu(void);
 
