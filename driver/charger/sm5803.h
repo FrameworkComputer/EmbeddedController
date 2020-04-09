@@ -98,14 +98,18 @@ enum sm5803_gpio0_modes {
 
 /* ADC Registers (address 0x31) */
 
+/*
+ * Note: Some register bits must be enabled for the DC-DC converter to properly
+ * handle transitions.
+ */
 #define SM5803_REG_GPADC_CONFIG1	0x01
 #define SM5803_GPADCC1_VBATSNSP_EN	BIT(0)
 #define SM5803_GPADCC1_IBAT_DIS_EN	BIT(1)
 #define SM5803_GPADCC1_IBAT_CHG_EN	BIT(2)
 #define SM5803_GPADCC1_IBUS_EN		BIT(3)
 #define SM5803_GPADCC1_VBUS_EN		BIT(4)
-#define SM5803_GPADCC1_VCHGPWR_EN	BIT(5)
-#define SM5803_GPADCC1_VSYS_EN		BIT(6)
+#define SM5803_GPADCC1_VCHGPWR_EN	BIT(5)  /* NOTE: DO NOT CLEAR */
+#define SM5803_GPADCC1_VSYS_EN		BIT(6)  /* NOTE: DO NOT CLEAR */
 #define SM5803_GPADCC1_TINT_EN		BIT(7)
 
 /* Note: Threshold registers all assume lower 2 bits are 0 */
