@@ -11,6 +11,8 @@
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/sync.h"
 #include "extpower.h"
+#include "fan.h"
+#include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "lid_switch.h"
@@ -178,3 +180,44 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+/******************************************************************************/
+/* Physical fans. These are logically separate from pwm_channels. */
+
+const struct fan_conf fan_conf_0 = {
+	.flags = FAN_USE_RPM_MODE,
+	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.pgood_gpio = -1,
+	.enable_gpio = GPIO_EN_PP5000_FAN,
+};
+
+/*
+ * Fan specs from datasheet:
+ * Max speed 5900 rpm (+/- 7%), minimum duty cycle 30%.
+ * Minimum speed not specified by RPM. Set minimum RPM to max speed (with
+ * margin) x 30%.
+ *    5900 x 1.07 x 0.30 = 1894, round up to 1900
+ */
+const struct fan_rpm fan_rpm_0 = {
+	.rpm_min = 1900,
+	.rpm_start = 1900,
+	.rpm_max = 5900,
+};
+
+const struct fan_t fans[FAN_CH_COUNT] = {
+	[FAN_CH_0] = {
+		.conf = &fan_conf_0,
+		.rpm = &fan_rpm_0,
+	},
+};
+
+/******************************************************************************/
+/* MFT channels. These are logically separate from pwm_channels. */
+const struct mft_t mft_channels[] = {
+	[MFT_CH_0] = {
+		.module = NPCX_MFT_MODULE_1,
+		.clk_src = TCKC_LFCLK,
+		.pwm_id = PWM_CH_FAN,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);

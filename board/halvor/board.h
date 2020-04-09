@@ -86,6 +86,8 @@
 #define GPIO_VOLUME_DOWN_L		GPIO_EC_VOLDN_BTN_ODL
 #define GMR_TABLET_MODE_GPIO_L		GPIO_TABLET_MODE_L
 
+#undef CONFIG_FANS
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
