@@ -38,6 +38,7 @@
 
 /* GPIO mapping from board specific name to EC common name. */
 #define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
+#define CONFIG_SCI_GPIO			GPIO_EC_FCH_SCI_ODL
 #define GPIO_AC_PRESENT			GPIO_ACOK_OD
 #define GPIO_CPU_PROCHOT		GPIO_PROCHOT_ODL
 #define GPIO_EC_INT_L			GPIO_EC_AP_INT_ODL
