@@ -82,7 +82,7 @@ static inline enum ec_error_list main_write8(int chgnum, int offset, int value)
 }
 
 enum ec_error_list sm5803_configure_gpio0(int chgnum,
-					  enum sm5803_gpio0_modes mode)
+					  enum sm5803_gpio0_modes mode, int od)
 {
 	enum ec_error_list rv;
 	int reg;
@@ -93,6 +93,11 @@ enum ec_error_list sm5803_configure_gpio0(int chgnum,
 
 	reg &= ~SM5803_GPIO0_MODE_MASK;
 	reg |= mode << 1;
+
+	if (od)
+		reg |= SM5803_GPIO0_OPEN_DRAIN_EN;
+	else
+		reg &= ~SM5803_GPIO0_OPEN_DRAIN_EN;
 
 	rv = main_write8(chgnum, SM5803_REG_GPIO0_CTRL, reg);
 	return rv;

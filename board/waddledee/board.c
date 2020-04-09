@@ -91,12 +91,12 @@ void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C1_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
 
-	/* Charger on the MB will be outputting PROCHOT and OD CHG_DET */
-	sm5803_configure_gpio0(CHARGER_PRIMARY, GPIO0_MODE_PROCHOT);
+	/* Charger on the MB will be outputting PROCHOT_ODL and OD CHG_DET */
+	sm5803_configure_gpio0(CHARGER_PRIMARY, GPIO0_MODE_PROCHOT, 1);
 	sm5803_configure_chg_det_od(CHARGER_PRIMARY, 1);
 
-	/* Charger on the sub-board will be a GPIO */
-	sm5803_configure_gpio0(CHARGER_SECONDARY, GPIO0_MODE_OUTPUT);
+	/* Charger on the sub-board will be a push-pull GPIO */
+	sm5803_configure_gpio0(CHARGER_SECONDARY, GPIO0_MODE_OUTPUT, 0);
 
 	/* Turn on 5V if the system is on, otherwise turn it off */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND);

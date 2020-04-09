@@ -234,7 +234,7 @@ enum sm5803_gpio0_modes {
 
 /* Expose functions to control charger's GPIO and CHG_DET configuration */
 enum ec_error_list sm5803_configure_gpio0(int chgnum,
-					  enum sm5803_gpio0_modes mode);
+					  enum sm5803_gpio0_modes mode, int od);
 enum ec_error_list sm5803_set_gpio0_level(int chgnum, int level);
 enum ec_error_list sm5803_configure_chg_det_od(int chgnum, int enable);
 enum ec_error_list sm5803_get_chg_det(int chgnum, int *chg_det);
