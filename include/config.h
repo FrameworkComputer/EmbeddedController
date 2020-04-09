@@ -2438,6 +2438,10 @@
  *    the refresh key column.
  * 2. the scancode_set2 and keycap_label array
  * 3. keyboard_customization.h which is similar to keyboard_config.h
+ *
+ * Note that if your board has the standard chromeos keyboard layout other
+ * than the top row, and you are looking only for top row customization, then
+ * you should be looking at overriding board_vivaldi_keybd_config() instead.
  */
 #undef CONFIG_KEYBOARD_CUSTOMIZATION
 

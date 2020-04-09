@@ -80,11 +80,46 @@ ec_status get_vivaldi_keybd_config(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_GET_KEYBD_CONFIG, get_vivaldi_keybd_config,
 		     EC_VER_MASK(0));
 
+#ifdef CONFIG_KEYBOARD_CUSTOMIZATION
+
+/*
+ * Boards selecting CONFIG_KEYBOARD_CUSTOMIZATION are likely to not
+ * want vivaldi code messing with their customized keyboards.
+ */
 __overridable
 const struct ec_response_keybd_config *board_vivaldi_keybd_config(void)
 {
 	return NULL;
 }
+
+#else
+
+static const struct ec_response_keybd_config default_keybd = {
+	/* Default Chromeos keyboard config */
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_FORWARD,		/* T2 */
+		TK_REFRESH,		/* T3 */
+		TK_FULLSCREEN,		/* T4 */
+		TK_OVERVIEW,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	/* No function keys, no numeric keypad, has screenlock key */
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+__overridable
+const struct ec_response_keybd_config *board_vivaldi_keybd_config(void)
+{
+	return &default_keybd;
+}
+
+#endif /* CONFIG_KEYBOARD_CUSTOMIZATION */
 
 static void vivaldi_init(void)
 {
