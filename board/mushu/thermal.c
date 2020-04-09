@@ -18,12 +18,13 @@ void fan_set_percent(int fan, int pct)
 {
 	int actual_rpm;
 	int new_rpm;
+	const int min_rpm = fans[fan].rpm->rpm_min * 9 / 10;
 
 	new_rpm = fan_percent_to_rpm(fan, pct);
 	actual_rpm = fan_get_rpm_actual(FAN_CH(fan));
 
 	if (new_rpm &&
-	    actual_rpm < fans[fan].rpm->rpm_min * 9 / 10 &&
+	    actual_rpm < min_rpm &&
 	    new_rpm < fans[fan].rpm->rpm_start)
 		new_rpm = fans[fan].rpm->rpm_start;
 
