@@ -188,7 +188,7 @@ In all of the following commands, replace `<BOARD>` in the command with
 Run `servod`:
 
 ```bash
-(chroot) $ sudo servod --board=<BOARD> --config <BOARD>_rev0.1.xml
+(chroot) $ sudo servod --board=<BOARD>
 ```
 
 You should see something like this. Leave it running:
@@ -339,6 +339,12 @@ You can monitor all power and voltages by using the following command:
 
 ```bash
 (chroot) $ watch -n0.5 dut-control pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
+```
+
+You can get a summary of the power over `N` seconds with:
+
+```bash
+(chroot) $ dut-control -t N pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
 ```
 
 *** note
