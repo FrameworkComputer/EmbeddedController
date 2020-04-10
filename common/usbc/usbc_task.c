@@ -48,8 +48,14 @@ void tc_pause_event_loop(int port)
 
 void tc_start_event_loop(int port)
 {
-	paused[port] = 0;
-	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE, 0);
+	/*
+	 * Only generate TASK_EVENT_WAKE event if state
+	 * machine is transitioning to un-paused
+	 */
+	if (paused[port]) {
+		paused[port] = 0;
+		task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE, 0);
+	}
 }
 
 /* High-priority interrupt tasks implementations */
