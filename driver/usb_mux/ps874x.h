@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_PS874X_H
 #define __CROS_EC_PS874X_H
 
+#include "usb_mux.h"
+
 #define PS874X_I2C_ADDR0_FLAG    0x10
 #define PS874X_I2C_ADDR1_FLAG    0x11
 #define PS874X_I2C_ADDR2_FLAG    0x19
@@ -127,5 +129,7 @@
 #endif
 
 int ps874x_tune_usb_eq(int i2c_addr, uint8_t tx, uint8_t rx);
+int ps874x_write(const struct usb_mux *me, uint8_t reg, uint8_t val);
+int ps874x_read(const struct usb_mux *me, uint8_t reg, int *val);
 
 #endif /* __CROS_EC_PS874X_H */

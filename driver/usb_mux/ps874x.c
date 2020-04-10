@@ -11,15 +11,13 @@
 #include "usb_mux.h"
 #include "util.h"
 
-static inline int ps874x_read(const struct usb_mux *me,
-			      uint8_t reg, int *val)
+int ps874x_read(const struct usb_mux *me, uint8_t reg, int *val)
 {
 	return i2c_read8(me->i2c_port, me->i2c_addr_flags,
 			 reg, val);
 }
 
-static inline int ps874x_write(const struct usb_mux *me,
-			       uint8_t reg, uint8_t val)
+int ps874x_write(const struct usb_mux *me, uint8_t reg, uint8_t val)
 {
 	return i2c_write8(me->i2c_port, me->i2c_addr_flags,
 			  reg, val);
