@@ -1016,8 +1016,26 @@ void tcpci_tcpc_alert(int port)
 		tcpc_write16(port, TCPC_REG_ALERT, status);
 
 	if (status & TCPC_REG_ALERT_CC_STATUS) {
-		/* CC status changed, wake task */
-		pd_event |= PD_EVENT_CC;
+		if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE)) {
+			enum tcpc_cc_voltage_status cc1;
+			enum tcpc_cc_voltage_status cc2;
+
+			/*
+			 * Some TCPCs generate CC Alerts when
+			 * drp auto toggle is active and nothing
+			 * is connected to the port. So, get the
+			 * CC line status and only generate a
+			 * PD_EVENT_CC if something is connected.
+			 */
+			tcpci_tcpm_get_cc(port, &cc1, &cc2);
+			if (cc1 != TYPEC_CC_VOLT_OPEN ||
+				cc2 != TYPEC_CC_VOLT_OPEN)
+				/* CC status cchanged, wake task */
+				pd_event |= PD_EVENT_CC;
+		} else {
+			/* CC status changed, wake task */
+			pd_event |= PD_EVENT_CC;
+		}
 	}
 	if (status & TCPC_REG_ALERT_POWER_STATUS) {
 		int reg = 0;
