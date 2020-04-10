@@ -943,15 +943,6 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 
 	tc[port].flags = 0;
 
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	/*
-	 * Some TCPCs may not support DRP Auto Toggle, so query the
-	 * query the TCPC for DRP Auto toggle support.
-	 */
-	if (tcpm_auto_toggle_supported(port))
-		TC_SET_FLAG(port, TC_FLAGS_AUTO_TOGGLE_SUPPORTED);
-#endif
-
 #ifdef CONFIG_USB_PE_SM
 	tc_enable_pd(port, 0);
 	tc[port].ps_reset_state = PS_STATE0;
@@ -1031,6 +1022,15 @@ void tc_state_init(int port)
 		pd_set_dual_role_no_wakeup(port, PD_DRP_TOGGLE_OFF);
 	else /* CHIPSET_STATE_ON */
 		pd_set_dual_role_no_wakeup(port, PD_DRP_TOGGLE_ON);
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	/*
+	 * Some TCPCs may not support DRP Auto Toggle, so query the
+	 * query the TCPC for DRP Auto toggle support.
+	 */
+	if (tcpm_auto_toggle_supported(port))
+		TC_SET_FLAG(port, TC_FLAGS_AUTO_TOGGLE_SUPPORTED);
+#endif
 }
 
 enum pd_cable_plug tc_get_cable_plug(int port)
