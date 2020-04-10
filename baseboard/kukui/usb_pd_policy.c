@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
 #include "console.h"
@@ -50,6 +51,11 @@ int pd_set_power_supply_ready(int port)
 	/* Provide VBUS */
 	vbus_en = 1;
 
+#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
+	/* Ensure we advertise the proper available current quota */
+	charge_manager_source_port(port, 1);
+#endif /* defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) */
+
 	if (IS_ENABLED(VARIANT_KUKUI_CHARGER_ISL9238))
 		charge_set_output_current_limit(3300, 5000);
 	else
@@ -77,6 +83,11 @@ void pd_power_supply_reset(int port)
 	/* Enable discharge if we were previously sourcing 5V */
 	if (prev_en)
 		pd_set_vbus_discharge(port, 1);
+
+#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
+	/* Give back the current quota we are no longer using */
+	charge_manager_source_port(port, 0);
+#endif /* defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) */
 
 	if (IS_ENABLED(VARIANT_KUKUI_CHARGER_ISL9238))
 		charge_set_output_current_limit(0, 0);
