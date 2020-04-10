@@ -265,6 +265,14 @@ static void pwm_init(void)
 	for (ch = 0; ch < PWM_CH_COUNT; ch++)
 		pwm_ch_freq(ch);
 
+	/*
+	 * The cycle timer1 of chip 8320 later series was enhanced from
+	 * 8bits to 10bits resolution, and others are still 8bit resolution.
+	 * Because the cycle timer1 high byte default value is not zero,
+	 * we clear cycle timer1 high byte at init and use it as 8-bit
+	 * resolution like others.
+	 */
+	IT83XX_PWM_CTR1M = 0;
 	/* enable PWMs clock counter. */
 	IT83XX_PWM_ZTIER |= 0x02;
 }
