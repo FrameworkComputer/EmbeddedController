@@ -5,6 +5,7 @@
 
 /* Morphius board configuration */
 
+#include "battery_smart.h"
 #include "button.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/accel_kionix.h"
@@ -384,3 +385,40 @@ int fan_percent_to_rpm(int fan, int pct)
 
 	return fan_table[current_level].rpm;
 }
+
+/* Battery functions */
+#define SB_OPTIONALMFG_FUNCTION2        0x26
+#define SMART_CHARGE_SUPPORT            0x01
+#define SMART_CHARGE_ENABLE             0x02
+#define SB_SMART_CHARGE_ENABLE          1
+#define SB_SMART_CHARGE_DISABLE         0
+static void sb_smart_charge_mode(int enable)
+{
+	int val, rv;
+
+	rv = sb_read(SB_OPTIONALMFG_FUNCTION2, &val);
+	if (rv)
+		return;
+	if (val & SMART_CHARGE_SUPPORT) {
+		if (enable)
+			val |= SMART_CHARGE_ENABLE;
+		else
+			val &= ~SMART_CHARGE_ENABLE;
+		sb_write(SB_OPTIONALMFG_FUNCTION2, val);
+	}
+}
+/* Called on AP S3 -> S0 transition */
+static void board_chipset_startup(void)
+{
+	/* Normal charge current */
+	sb_smart_charge_mode(SB_SMART_CHARGE_DISABLE);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_startup, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S0 -> S3 transition */
+static void board_chipset_suspend(void)
+{
+	/* SMART charge current */
+	sb_smart_charge_mode(SB_SMART_CHARGE_ENABLE);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
