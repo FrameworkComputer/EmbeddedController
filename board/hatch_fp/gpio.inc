@@ -50,4 +50,4 @@ ALTERNATE(PIN_MASK(A, 0x00f0), GPIO_ALT_SPI, MODULE_SPI,  0)
  * configured it as a GPIO above and the SPI_MASTER module expects to use it
  * in software NSS management mode, not hardware management mode.
  */
-ALTERNATE(PIN_MASK(B, 0xE000), GPIO_ALT_SPI, MODULE_SPI_MASTER,  0)
+ALTERNATE(PIN_MASK(B, 0xE000), GPIO_ALT_SPI, MODULE_SPI_MASTER, GPIO_PULL_DOWN)
