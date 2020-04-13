@@ -113,16 +113,6 @@ int board_is_sourcing_vbus(int port);
 void pogo_adc_interrupt(enum gpio_signal signal);
 int board_discharge_on_ac(int enable);
 
-/* Enable double tap detection */
-#define CONFIG_GESTURE_DETECTION
-#define CONFIG_GESTURE_HOST_DETECTION
-#define CONFIG_GESTURE_SENSOR_DOUBLE_TAP 0
-#define CONFIG_GESTURE_SENSOR_DOUBLE_TAP_FOR_HOST
-#define CONFIG_GESTURE_SAMPLING_INTERVAL_MS 5
-#define CONFIG_GESTURE_TAP_THRES_MG 100
-#define CONFIG_GESTURE_TAP_MAX_INTERSTICE_T 500
-#define CONFIG_GESTURE_DETECTION_MASK \
-	BIT(CONFIG_GESTURE_SENSOR_DOUBLE_TAP)
 
 #endif /* !__ASSEMBLER__ */
 

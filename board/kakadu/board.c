@@ -345,15 +345,10 @@ struct motion_sensor_t motion_sensors[] = {
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 		.config = {
-			/* Enable accel in S0 */
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = TAP_ODR,
-				.ec_rate = 100 * MSEC,
-			},
-			/* For double tap detection */
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = TAP_ODR,
-				.ec_rate = 100 * MSEC,
+		/* Enable accel in S0 */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 13000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
 			},
 		},
 	},
@@ -369,7 +364,7 @@ struct motion_sensor_t motion_sensors[] = {
 					    MOTIONSENSE_TYPE_GYRO),
 		.port = I2C_PORT_ACCEL,
 		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-		.default_range = 1000, /* dps */
+		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
 		.rot_standard_ref = &lid_standard_ref,
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
