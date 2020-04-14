@@ -84,6 +84,8 @@
 #define TC_FLAGS_AUTO_TOGGLE_SUPPORTED  BIT(23)
 /* Flag to note TCPM was requested to DRP auto toggle */
 #define TC_FLAGS_AUTO_TOGGLE_REQUESTED  BIT(24)
+/* Flag to note pd_set_suspend SUSPEND state */
+#define TC_FLAGS_SUSPEND                BIT(25)
 
 /*
  * Clear all flags except TC_FLAGS_AUTO_TOGGLE_SUPPORTED,
@@ -668,7 +670,7 @@ int tc_src_power_on(int port)
 void tc_src_power_off(int port)
 {
 	if (get_state_tc(port) == TC_ATTACHED_SRC ||
-			get_state_tc(port) == TC_UNORIENTED_DBG_ACC_SRC) {
+	    get_state_tc(port) == TC_UNORIENTED_DBG_ACC_SRC) {
 		/* Remove VBUS */
 		pd_power_supply_reset(port);
 
@@ -683,14 +685,13 @@ void pd_set_suspend(int port, int suspend)
 	if (pd_is_port_enabled(port) == !suspend)
 		return;
 
-	/* TODO(crbug/1052432): This function should use flags to influence the
-	 * TC state machine, not call set_state_tc directly.
-	 */
-	set_state_tc(port,
-		suspend ? TC_DISABLED : TC_UNATTACHED_SNK);
-	/* If the state was TC_DISABLED, pd_task needs to be awakened to respond
-	 * to the state change.
-	 */
+	/* Track if we are suspended or not */
+	if (suspend)
+		TC_SET_FLAG(port, TC_FLAGS_SUSPEND);
+	else
+		TC_CLR_FLAG(port, TC_FLAGS_SUSPEND);
+
+	/* Wake up pd_task to respond to the state change. */
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
@@ -1038,6 +1039,8 @@ void tc_set_power_role(int port, enum pd_power_role role)
 /* Set the TypeC state machine to a new state. */
 static void set_state_tc(const int port, const enum usb_tc_state new_state)
 {
+	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
+
 	set_state(port, &tc[port].ctx, &tc_states[new_state]);
 }
 
@@ -1466,6 +1469,14 @@ static void tc_disabled_entry(const int port)
 
 static void tc_disabled_run(const int port)
 {
+	/*
+	 * If pd_set_suspend SUSPEND state changes to
+	 * no longer be suspended then we need to exit
+	 * our current state and go UNATTACHED_SNK
+	 */
+	if (!TC_CHK_FLAG(port, TC_FLAGS_SUSPEND))
+		set_state_tc(port, TC_UNATTACHED_SNK);
+
 	task_wait_event(-1);
 }
 
@@ -3203,6 +3214,14 @@ static void tc_cc_open_entry(const int port)
 
 void tc_run(const int port)
 {
+	/*
+	 * If pd_set_suspend SUSPEND state changes to
+	 * be suspended then we need to go directly to
+	 * DISABLED
+	 */
+	if (TC_CHK_FLAG(port, TC_FLAGS_SUSPEND))
+		set_state_tc(port, TC_DISABLED);
+
 	run_state(port, &tc[port].ctx);
 }
 
