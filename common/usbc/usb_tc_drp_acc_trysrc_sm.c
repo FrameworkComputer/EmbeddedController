@@ -3132,12 +3132,14 @@ static void tc_ct_attached_snk_exit(int port)
  */
 static void tc_cc_rd_entry(const int port)
 {
+	if (get_last_state_tc(port) != TC_UNATTACHED_SRC) {
+		/* Reset power supply if not toggling */
+		pd_power_supply_reset(port);
+	}
+
 	/* Disable VCONN */
 	if (IS_ENABLED(CONFIG_USBC_VCONN))
 		set_vconn(port, 0);
-
-	/* Disable VBUS */
-	pd_power_supply_reset(port);
 
 	/* Set power role to sink */
 	tc_set_power_role(port, PD_ROLE_SINK);
