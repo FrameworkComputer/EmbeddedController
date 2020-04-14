@@ -66,6 +66,9 @@
 
 #ifndef __ASSEMBLER__
 
+/* This I2C moved. Temporarily detect and support the V0 HW. */
+extern int I2C_PORT_BATTERY;
+
 enum battery_type {
 	BATTERY_SMP,
 	BATTERY_LGC,

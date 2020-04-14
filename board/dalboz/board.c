@@ -3,8 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Trembyle board configuration */
-
+#include "battery_smart.h"
 #include "button.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dsm.h"
@@ -24,6 +23,9 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "usb_charge.h"
+
+/* This I2C moved. Temporarily detect and support the V0 HW. */
+int I2C_PORT_BATTERY = I2C_PORT_BATTERY_V1;
 
 /* Interrupt handler varies with DB option. */
 void (*c1_tcpc_config_interrupt)(enum gpio_signal signal) = tcpc_alert_event;
@@ -207,3 +209,20 @@ const struct pwm_t pwm_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+/*
+ * If the battery is found on the V0 I2C port then re-map the battery port.
+ * Use HOOK_PRIO_INIT_I2C so we re-map before init_battery_type() and
+ * charger_chips_init() want to talk to the battery.
+ */
+static void check_v0_battery(void)
+{
+	int status;
+
+	if (i2c_read16(I2C_PORT_BATTERY_V0, BATTERY_ADDR_FLAGS,
+			SB_BATTERY_STATUS, &status) == EC_SUCCESS) {
+		ccprints("V0 HW detected");
+		I2C_PORT_BATTERY = I2C_PORT_BATTERY_V0;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, check_v0_battery, HOOK_PRIO_INIT_I2C);

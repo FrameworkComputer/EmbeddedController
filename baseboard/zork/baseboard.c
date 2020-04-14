@@ -105,66 +105,6 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
-const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "tcpc0",
-		.port = I2C_PORT_TCPC0,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_USB_A0_C0_SCL,
-		.sda = GPIO_EC_I2C_USB_A0_C0_SDA,
-	},
-	{
-		.name = "tcpc1",
-		.port = I2C_PORT_TCPC1,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_USB_A1_C1_SCL,
-		.sda = GPIO_EC_I2C_USB_A1_C1_SDA,
-	},
-	{
-		.name = "power",
-		.port = I2C_PORT_BATTERY,
-		.kbps = 100,
-		.scl = GPIO_EC_I2C_POWER_SCL,
-		.sda = GPIO_EC_I2C_POWER_SDA,
-	},
-	{
-		.name = "ap_mux",
-		.port = I2C_PORT_USB_AP_MUX,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_USBC_AP_MUX_SCL,
-		.sda = GPIO_EC_I2C_USBC_AP_MUX_SDA,
-	},
-	{
-		.name = "thermal",
-		.port = I2C_PORT_THERMAL,
-		.kbps = 400,
-		.scl = GPIO_FCH_SIC,
-		.sda = GPIO_FCH_SID,
-	},
-	{
-		.name = "sensor",
-		.port = I2C_PORT_SENSOR,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_SENSOR_CBI_SCL,
-		.sda = GPIO_EC_I2C_SENSOR_CBI_SDA,
-	},
-	{
-		.name = "ap_audio",
-		.port = I2C_PORT_AP_AUDIO,
-		.kbps = 400,
-		.scl = GPIO_FCH_I2C_AUDIO_SCL,
-		.sda = GPIO_FCH_I2C_AUDIO_SDA,
-	},
-	{
-		.name = "ap_hdmi",
-		.port = I2C_PORT_AP_HDMI,
-		.kbps = 400,
-		.scl = GPIO_FCH_I2C_HDMI_HUB_3V3_SCL,
-		.sda = GPIO_FCH_I2C_HDMI_HUB_3V3_SDA,
-	},
-};
-const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
 struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
 		/* Device does not talk I2C */
