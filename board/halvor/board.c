@@ -58,3 +58,51 @@ __override bool board_is_tbt_usb4_port(int port)
 	 */
 	return port == USBC_PORT_C1;
 }
+
+/******************************************************************************/
+/* I2C port map configuration */
+const struct i2c_port_t i2c_ports[] = {
+	{
+		.name = "sensor",
+		.port = I2C_PORT_SENSOR,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C0_SENSOR_SCL,
+		.sda = GPIO_EC_I2C0_SENSOR_SDA,
+	},
+	{
+		.name = "usb_c0",
+		.port = I2C_PORT_USB_C0,
+		.kbps = 1000,
+		.scl = GPIO_EC_I2C1_USB_C0_SCL,
+		.sda = GPIO_EC_I2C1_USB_C0_SDA,
+	},
+	{
+		.name = "usb_c1",
+		.port = I2C_PORT_USB_C1,
+		.kbps = 1000,
+		.scl = GPIO_EC_I2C2_USB_C1_SCL,
+		.sda = GPIO_EC_I2C2_USB_C1_SDA,
+	},
+	{
+		.name = "usb_1_mix",
+		.port = I2C_PORT_USB_1_MIX,
+		.kbps = 100,
+		.scl = GPIO_EC_I2C3_USB_1_MIX_SCL,
+		.sda = GPIO_EC_I2C3_USB_1_MIX_SDA,
+	},
+	{
+		.name = "power",
+		.port = I2C_PORT_POWER,
+		.kbps = 100,
+		.scl = GPIO_EC_I2C5_POWER_SCL,
+		.sda = GPIO_EC_I2C5_POWER_SDA,
+	},
+	{
+		.name = "eeprom",
+		.port = I2C_PORT_EEPROM,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C7_EEPROM_SCL,
+		.sda = GPIO_EC_I2C7_EEPROM_SDA,
+	},
+};
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
