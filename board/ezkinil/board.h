@@ -22,6 +22,8 @@
 
 #define CONFIG_MKBP_USE_GPIO
 
+#define CONFIG_FAN_RPM_CUSTOM
+
 /* Motion sensing drivers */
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
