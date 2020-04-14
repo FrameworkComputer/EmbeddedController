@@ -47,7 +47,7 @@ __override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
 	/*
 	 * Thunderbolt-compatible mode not supported
 	 *
-	 * TODO (b/147726366): All the USB-C ports need to support same speed.
+	 * TODO (b/153996396): All the USB-C ports need to support same speed.
 	 * Need to fix once USB-C feature set is known for Volteer.
 	 */
 	return TBT_SS_RES_0;
@@ -56,9 +56,9 @@ __override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
 __override bool board_is_tbt_usb4_port(int port)
 {
 	/*
-	 * On Proto-1 only Port 1 supports TBT & USB4
+	 * On the Volteer reference board only port 1 supports TBT & USB4
 	 *
-	 * TODO (b/147732807): All the USB-C ports need to support same
+	 * TODO (b/153996396): All the USB-C ports need to support same
 	 * features. Need to fix once USB-C feature set is known for Volteer.
 	 */
 	return port == USBC_PORT_C1;
