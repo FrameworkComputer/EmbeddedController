@@ -405,6 +405,16 @@ struct tcpm_drv {
 	 * @param enable FRS enable (true) disable (false)
 	 */
 	 void (*set_frs_enable)(int port, int enable);
+
+	/**
+	 * Handle TCPCI Faults
+	 *
+	 * @param port Type-C port number
+	 * @param fault TCPCI fault status value
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	 int (*handle_fault)(int port, int fault);
 };
 
 /*

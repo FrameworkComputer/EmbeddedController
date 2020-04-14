@@ -22,14 +22,10 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-static int nct38xx_tcpm_init(int port)
+static int nct38xx_init(int port)
 {
-	int rv = 0;
+	int rv;
 	int reg;
-
-	rv = tcpci_tcpm_init(port);
-	if (rv)
-		return rv;
 
 	/*
 	 * Write to the CONTROL_OUT_EN register to enable:
@@ -38,8 +34,8 @@ static int nct38xx_tcpm_init(int port)
 	 * [0] - SRCEN     : VBUS source voltage enable output enable
 	 */
 	reg = NCT38XX_REG_CTRL_OUT_EN_SRCEN |
-			NCT38XX_REG_CTRL_OUT_EN_SNKEN |
-			NCT38XX_REG_CTRL_OUT_EN_CONNDIREN;
+	      NCT38XX_REG_CTRL_OUT_EN_SNKEN |
+	      NCT38XX_REG_CTRL_OUT_EN_CONNDIREN;
 
 	rv = tcpc_write(port, NCT38XX_REG_CTRL_OUT_EN, reg);
 	if (rv)
@@ -93,6 +89,16 @@ static int nct38xx_tcpm_init(int port)
 
 	return rv;
 }
+static int nct38xx_tcpm_init(int port)
+{
+	int rv;
+
+	rv = tcpci_tcpm_init(port);
+	if (rv)
+		return rv;
+
+	return nct38xx_init(port);
+}
 
 static void nct38xx_tcpc_alert(int port)
 {
@@ -140,6 +146,26 @@ static __maybe_unused int nct3807_tcpc_drp_toggle(int port)
 	return rv;
 }
 
+static int nct3807_handle_fault(int port, int fault)
+{
+	int rv = EC_SUCCESS;
+
+	if (fault & TCPC_REG_FAULT_STATUS_ALL_REGS_RESET) {
+		rv = nct38xx_init(port);
+	} else {
+		if (fault & TCPC_REG_FAULT_STATUS_VBUS_OVER_VOLTAGE) {
+			/* Disable OVP */
+			rv = tcpc_update8(port,
+				  TCPC_REG_FAULT_CTRL,
+				  TCPC_REG_FAULT_CTRL_VBUS_OVP_FAULT_DIS,
+				  MASK_SET);
+			if (rv)
+				return rv;
+		}
+	}
+	return rv;
+}
+
 const struct tcpm_drv nct38xx_tcpm_drv = {
 	.init			= &nct38xx_tcpm_init,
 	.release		= &tcpci_tcpm_release,
@@ -176,4 +202,5 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 #ifdef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
 	.set_frs_enable         = &tcpci_tcpc_fast_role_swap_enable,
 #endif
+	.handle_fault		= &nct3807_handle_fault,
 };

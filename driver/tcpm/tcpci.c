@@ -938,13 +938,25 @@ static int tcpci_get_fault(int port, int *fault)
 
 static int tcpci_handle_fault(int port, int fault)
 {
+	int rv = EC_SUCCESS;
+
 	CPRINTS("C%d FAULT 0x%02X detected", port, fault);
-	return EC_SUCCESS;
+
+	if (tcpc_config[port].drv->handle_fault)
+		rv = tcpc_config[port].drv->handle_fault(port, fault);
+
+	return rv;
 }
 
 static int tcpci_clear_fault(int port, int fault)
 {
-	return tcpc_write(port, TCPC_REG_FAULT_STATUS, fault);
+	int rv;
+
+	rv = tcpc_write(port, TCPC_REG_FAULT_STATUS, fault);
+	if (rv)
+		return rv;
+
+	return tcpc_write16(port, TCPC_REG_ALERT, TCPC_REG_ALERT_FAULT);
 }
 
 /*
@@ -955,20 +967,20 @@ static int tcpci_clear_fault(int port, int fault)
 
 void tcpci_tcpc_alert(int port)
 {
-	int status = 0;
+	int alert = 0;
 	int alert_ext = 0;
 	int failed_attempts;
 	uint32_t pd_event = 0;
 
 	/* Read the Alert register from the TCPC */
-	tcpm_alert_status(port, &status);
+	tcpm_alert_status(port, &alert);
 
 	/* Get Extended Alert register if needed */
-	if (status & TCPC_REG_ALERT_ALERT_EXT)
+	if (alert & TCPC_REG_ALERT_ALERT_EXT)
 		tcpm_alert_ext_status(port, &alert_ext);
 
 	/* Clear any pending faults */
-	if (status & TCPC_REG_ALERT_FAULT) {
+	if (alert & TCPC_REG_ALERT_FAULT) {
 		int fault;
 
 		if (tcpci_get_fault(port, &fault) == EC_SUCCESS &&
@@ -983,17 +995,17 @@ void tcpci_tcpc_alert(int port)
 	 * completion events. This will send an event to the PD tasks
 	 * immediately
 	 */
-	if (status & TCPC_REG_ALERT_TX_COMPLETE)
-		pd_transmit_complete(port, status & TCPC_REG_ALERT_TX_SUCCESS ?
+	if (alert & TCPC_REG_ALERT_TX_COMPLETE)
+		pd_transmit_complete(port, alert & TCPC_REG_ALERT_TX_SUCCESS ?
 					   TCPC_TX_COMPLETE_SUCCESS :
 					   TCPC_TX_COMPLETE_FAILED);
 
 	/* Pull all RX messages from TCPC into EC memory */
 	failed_attempts = 0;
-	while (status & TCPC_REG_ALERT_RX_STATUS) {
+	while (alert & TCPC_REG_ALERT_RX_STATUS) {
 		if (tcpm_enqueue_message(port))
 			++failed_attempts;
-		if (tcpm_alert_status(port, &status))
+		if (tcpm_alert_status(port, &alert))
 			++failed_attempts;
 
 		/* Ensure we don't loop endlessly */
@@ -1012,10 +1024,10 @@ void tcpci_tcpc_alert(int port)
 	}
 
 	/* Clear all pending alert bits */
-	if (status)
-		tcpc_write16(port, TCPC_REG_ALERT, status);
+	if (alert)
+		tcpc_write16(port, TCPC_REG_ALERT, alert);
 
-	if (status & TCPC_REG_ALERT_CC_STATUS) {
+	if (alert & TCPC_REG_ALERT_CC_STATUS) {
 		if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE)) {
 			enum tcpc_cc_voltage_status cc1;
 			enum tcpc_cc_voltage_status cc2;
@@ -1029,7 +1041,7 @@ void tcpci_tcpc_alert(int port)
 			 */
 			tcpci_tcpm_get_cc(port, &cc1, &cc2);
 			if (cc1 != TYPEC_CC_VOLT_OPEN ||
-				cc2 != TYPEC_CC_VOLT_OPEN)
+			    cc2 != TYPEC_CC_VOLT_OPEN)
 				/* CC status cchanged, wake task */
 				pd_event |= PD_EVENT_CC;
 		} else {
@@ -1037,7 +1049,7 @@ void tcpci_tcpc_alert(int port)
 			pd_event |= PD_EVENT_CC;
 		}
 	}
-	if (status & TCPC_REG_ALERT_POWER_STATUS) {
+	if (alert & TCPC_REG_ALERT_POWER_STATUS) {
 		int reg = 0;
 		/* Read Power Status register */
 		tcpci_tcpm_get_power_status(port, &reg);
@@ -1050,7 +1062,7 @@ void tcpci_tcpc_alert(int port)
 		pd_event |= TASK_EVENT_WAKE;
 #endif /* CONFIG_USB_PD_VBUS_DETECT_TCPC && CONFIG_USB_CHARGER */
 	}
-	if (status & TCPC_REG_ALERT_RX_HARD_RST) {
+	if (alert & TCPC_REG_ALERT_RX_HARD_RST) {
 		/* hard reset received */
 		pd_execute_hard_reset(port);
 		pd_event |= TASK_EVENT_WAKE;
