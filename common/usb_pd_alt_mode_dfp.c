@@ -292,6 +292,7 @@ void dfp_consume_identity(int port, int cnt, uint32_t *payload)
 	struct pd_discovery *disc = pd_get_am_discovery(port);
 	size_t identity_size = MIN(sizeof(union disc_ident_ack),
 				   (cnt - 1) * sizeof(uint32_t));
+	/* Note: only store VDOs, not the VDM header */
 	memcpy(disc->identity[TCPC_TX_SOP].response.raw_value,
 	       payload + 1, identity_size);
 
@@ -513,10 +514,23 @@ void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
 				uint16_t head)
 {
 	struct pd_cable *cable = pd_get_cable_attributes(port);
+	struct pd_discovery *disc = pd_get_am_discovery(port);
+	size_t identity_size = MIN(sizeof(union disc_ident_ack),
+				   (cnt - 1) * sizeof(uint32_t));
+
+	if (!IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
+		return;
+
+	/* Note: only store VDOs, not the VDM header */
+	memcpy(disc->identity[TCPC_TX_SOP_PRIME].response.raw_value,
+	       payload + 1, identity_size);
+
+	pd_set_identity_discovery(port, TCPC_TX_SOP_PRIME, PD_DISC_COMPLETE);
 
 	/* Get cable rev */
 	cable->rev = PD_HEADER_REV(head);
 
+	/* TODO: Move cable references to use discovery response */
 	if (is_vdo_present(cnt, VDO_INDEX_IDH)) {
 		cable->type = PD_IDH_PTYPE(payload[VDO_INDEX_IDH]);
 

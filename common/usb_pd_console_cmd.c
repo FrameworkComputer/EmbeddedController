@@ -17,32 +17,37 @@ static void dump_pe(int port)
 	struct svdm_amode_data *modep;
 	uint32_t mode_caps;
 	struct pd_discovery *disc = pd_get_am_discovery(port);
-	const union disc_ident_ack *resp = pd_get_identity_response(port,
-								TCPC_TX_SOP);
+	const union disc_ident_ack *resp;
+	enum tcpm_transmit_type type;
 
-	const char * const idh_ptype_names[]  = {
+	static const char * const idh_ptype_names[]  = {
 		"UNDEF", "Hub", "Periph", "PCable", "ACable", "AMA",
 		"RSV6", "RSV7"};
+	static const char * const tx_names[] = {"SOP", "SOP'", "SOP''"};
 
-	if (pd_get_identity_discovery(port, TCPC_TX_SOP) != PD_DISC_COMPLETE) {
-		ccprintf("No identity discovered yet.\n");
-		return;
+	for (type = TCPC_TX_SOP; type < DISCOVERY_TYPE_COUNT; type++) {
+		resp = pd_get_identity_response(port, type);
+		if (pd_get_identity_discovery(port, type) != PD_DISC_COMPLETE) {
+			ccprintf("No %s identity discovered yet.\n",
+								tx_names[type]);
+			continue;
+		}
+
+		idh_ptype = resp->idh.product_type;
+		ccprintf("IDENT %s:\n", tx_names[type]);
+		ccprintf("\t[ID Header] %08x :: %s, VID:%04x\n",
+			 resp->raw_value[0],
+			 idh_ptype_names[idh_ptype],
+			 resp->idh.usb_vendor_id);
+
+		ccprintf("\t[Cert Stat] %08x\n", resp->cert.xid);
+		for (i = 2; i < ARRAY_SIZE(resp->raw_value); i++) {
+			ccprintf("\t");
+			if (resp->raw_value[i])
+				ccprintf("[%d] %08x ", i, resp->raw_value[i]);
+		}
+		ccprintf("\n");
 	}
-
-	idh_ptype = pd_get_product_type(port);
-	ccprintf("IDENT:\n");
-	ccprintf("\t[ID Header] %08x :: %s, VID:%04x\n",
-				resp->raw_value[0],
-				idh_ptype_names[idh_ptype],
-				pd_get_identity_vid(port));
-
-	ccprintf("\t[Cert Stat] %08x\n", resp->cert.xid);
-	for (i = 2; i < ARRAY_SIZE(resp->raw_value); i++) {
-		ccprintf("\t");
-		if (resp->raw_value[i])
-			ccprintf("[%d] %08x ", i, resp->raw_value[i]);
-	}
-	ccprintf("\n");
 
 	if (disc->svid_cnt < 1) {
 		ccprintf("No SVIDS discovered yet.\n");
