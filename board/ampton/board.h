@@ -33,6 +33,7 @@
 #define CONFIG_STEINHART_HART_3V3_13K7_47K_4050B
 #define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_EN_PP3300
 
+#define CONFIG_ACCEL_BMA255	/* Lid accel */
 #define CONFIG_ACCEL_KX022	/* Lid accel */
 #define CONFIG_ACCELGYRO_BMI160	/* Base accel */
 #define CONFIG_SYNC		/* Camera VSYNC */

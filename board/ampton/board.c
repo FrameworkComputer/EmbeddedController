@@ -11,6 +11,7 @@
 #include "charge_state.h"
 #include "common.h"
 #include "cros_board_info.h"
+#include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/ppc/sn5s330.h"
@@ -175,6 +176,38 @@ const mat33_fp_t gyro_standard_ref = {
 static struct kionix_accel_data g_kx022_data;
 static struct bmi_drv_data_t g_bmi160_data;
 
+/* BMA253 private data */
+static struct accelgyro_saved_data_t g_bma253_data;
+
+static const struct motion_sensor_t motion_sensor_bma253 = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMA255,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &bma2x2_accel_drv,
+	.mutex = &g_lid_mutex,
+	.drv_data = &g_bma253_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = BMA2x2_I2C_ADDR2_FLAGS,
+	.rot_standard_ref = &lid_standard_ref,
+	.min_frequency = BMA255_ACCEL_MIN_FREQ,
+	.max_frequency = BMA255_ACCEL_MAX_FREQ,
+	.default_range = 2, /* g */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 0,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 0,
+		},
+	},
+};
+
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -267,11 +300,11 @@ static int board_is_convertible(void)
 	/* SKU IDs of Ampton & unprovisioned: 1, 2, 3, 4, 255 */
 	return sku_id == 1 || sku_id == 2 || sku_id == 3 || sku_id == 4
 		|| sku_id == 255;
-}
+	}
 
-static int board_with_ar_cam(void)
+static int board_with_sensor_bma253(void)
 {
-	/* SKU ID of Ampton with AR Cam: 3, 4 */
+	/* SKU ID 3 and 4 of Ampton with BMA253 */
 	return sku_id == 3 || sku_id == 4;
 }
 
@@ -279,6 +312,10 @@ static void board_update_sensor_config_from_sku(void)
 {
 	if (board_is_convertible()) {
 		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+		if (board_with_sensor_bma253())
+			motion_sensors[LID_ACCEL] = motion_sensor_bma253;
+
 		/* Enable Base Accel interrupt */
 		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 	} else {
@@ -288,14 +325,6 @@ static void board_update_sensor_config_from_sku(void)
 		/* Base accel is not stuffed, don't allow line to float */
 		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
 			       GPIO_INPUT | GPIO_PULL_DOWN);
-	}
-
-	if (board_with_ar_cam()) {
-		/* Enable interrupt from camera */
-		gpio_enable_interrupt(GPIO_WFCAM_VSYNC);
-	} else {
-		/* Camera isn't stuffed, don't allow line to float */
-		gpio_set_flags(GPIO_WFCAM_VSYNC, GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
 
