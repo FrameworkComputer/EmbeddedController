@@ -113,3 +113,19 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/******************************************************************************/
+void halvor_tcpc_alert_event(enum gpio_signal signal)
+{
+	/* TODO (b/153705222): Need tp implement three USB-C function */
+}
+
+void halvor_ppc_interrupt(enum gpio_signal signal)
+{
+	/* TODO (b/153705222): Need tp implement three USB-C function */
+}
+
+void halvor_bc12_interrupt(enum gpio_signal signal)
+{
+	/* TODO (b/153705222): Need tp implement three USB-C function */
+}

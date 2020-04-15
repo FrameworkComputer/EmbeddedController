@@ -81,7 +81,6 @@
 #define GPIO_CPU_PROCHOT		GPIO_EC_PROCHOT_ODL
 #define GPIO_SYS_RESET_L		GPIO_SYS_RST_ODL
 #define GPIO_WP_L			GPIO_EC_WP_L
-#define GPIO_USB_C1_BC12_INT_ODL	GPIO_USB_C1_MIX_INT_ODL
 #define GMR_TABLET_MODE_GPIO_L		GPIO_TABLET_MODE_L
 
 #undef CONFIG_FANS
@@ -125,6 +124,11 @@ enum sensor_id {
 
 /* TODO: b/143375057 - Remove this code after power on. */
 void c10_gate_change(enum gpio_signal signal);
+
+/* Definition for Halvor USB PD interrupt handlers. */
+void halvor_tcpc_alert_event(enum gpio_signal signal);
+void halvor_ppc_interrupt(enum gpio_signal signal);
+void halvor_bc12_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

@@ -35,14 +35,17 @@ GPIO_INT(EC_ALS_RGB_INT_L,     PIN(D, 4), GPIO_INT_FALLING, tcs3400_interrupt)
 GPIO_INT(TABLET_MODE_L,        PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 
 /* USB-C interrupts */
-GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(E, 0), GPIO_INT_BOTH, tcpc_alert_event)
-GPIO_INT(USB_C1_TCPC_INT_ODL,	PIN(A, 2), GPIO_INT_BOTH, tcpc_alert_event)
+GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(E, 0), GPIO_INT_BOTH, halvor_tcpc_alert_event)
+GPIO_INT(USB_C1_TCPC_INT_ODL,	PIN(A, 2), GPIO_INT_BOTH, halvor_tcpc_alert_event)
+GPIO_INT(USB_C2_TCPC_INT_ODL,	PIN(A, 0), GPIO_INT_BOTH, halvor_tcpc_alert_event)
 
-GPIO_INT(USB_C0_PPC_INT_ODL,	PIN(6, 2), GPIO_INT_BOTH, ppc_interrupt)
-GPIO_INT(USB_C1_PPC_INT_ODL,	PIN(F, 5), GPIO_INT_BOTH, ppc_interrupt)
+GPIO_INT(USB_C0_PPC_INT_ODL,	PIN(6, 2), GPIO_INT_BOTH, halvor_ppc_interrupt)
+GPIO_INT(USB_C1_PPC_INT_ODL,	PIN(F, 5), GPIO_INT_BOTH, halvor_ppc_interrupt)
+GPIO_INT(USB_C2_PPC_INT_ODL,	PIN(A, 4), GPIO_INT_BOTH, halvor_ppc_interrupt)
 
-GPIO_INT(USB_C0_BC12_INT_ODL,	PIN(E, 4), GPIO_INT_BOTH, bc12_interrupt)
-GPIO_INT(USB_C1_MIX_INT_ODL,	PIN(0, 3), GPIO_INT_BOTH, bc12_interrupt)
+GPIO_INT(USB_C0_MIX_INT_ODL,	PIN(E, 4), GPIO_INT_BOTH, halvor_bc12_interrupt)
+GPIO_INT(USB_C1_MIX_INT_ODL,	PIN(0, 3), GPIO_INT_BOTH, halvor_bc12_interrupt)
+GPIO_INT(USB_C2_MIX_INT_ODL,	PIN(6, 1), GPIO_INT_BOTH, halvor_bc12_interrupt)
 
 /* HDMI interrupts */
 
@@ -90,10 +93,22 @@ GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
 GPIO(EC_PCH_INT_ODL,           PIN(B, 0), GPIO_ODR_HIGH)
 
 /* USB and USBC Signals */
-GPIO(USB_C1_RT_RST_ODL,		PIN(8, 6), GPIO_ODR_LOW)
+GPIO(USB_C0_RT_RST_ODL,        PIN(6, 6), GPIO_ODR_LOW)
+GPIO(USB_C1_RT_RST_ODL,        PIN(8, 6), GPIO_ODR_LOW)
+GPIO(USB_C2_RT_RST_ODL,        PIN(3, 5), GPIO_ODR_LOW)
+
+GPIO(USB_C0_OC_ODL,            PIN(B, 1), GPIO_ODR_HIGH)
+GPIO(USB_C1_OC_ODL,            PIN(5, 0), GPIO_ODR_HIGH)
+GPIO(USB_C2_OC_ODL,            PIN(3, 2), GPIO_ODR_HIGH)
+
+GPIO(USB_CO_FRS_EN,            PIN(4, 0), GPIO_OUT_HIGH)
+GPIO(USB_C1_FRS_EN,            PIN(9, 4), GPIO_OUT_HIGH)
+GPIO(USB_C2_FRS_EN,            PIN(6, 0), GPIO_OUT_HIGH)
 
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C1_LS_EN)
+UNIMPLEMENTED(USB_C0_BC12_INT_ODL)
+UNIMPLEMENTED(USB_C1_BC12_INT_ODL)
 /* Retimer Force Power enable is connected to AP */
 UNIMPLEMENTED(USB_C1_RT_FORCE_PWR)
 
@@ -138,6 +153,7 @@ GPIO(EC_BATT_PRES_ODL, 		PIN(E, 1), GPIO_INPUT)
 /* Physical HPD pins are not needed on EC as these are configured by PMC */
 GPIO(USB_C0_DP_HPD,		PIN(C, 6), GPIO_INPUT)
 GPIO(USB_C1_DP_HPD,		PIN(7, 0), GPIO_INPUT)
+GPIO(USB_C2_DP_HPD,		PIN(B, 7), GPIO_INPUT)
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(B, BIT(5) | BIT(4)), 0, MODULE_I2C, 0)                            /* I2C0 */
