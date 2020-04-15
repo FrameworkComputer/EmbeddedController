@@ -109,6 +109,46 @@ static void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 	}
 }
 
+static void retimer_set_state_dfp(int port, mux_state_t mux_state,
+				  uint32_t *set_retimer_con)
+{
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
+		/*
+		 * Bit 4: USB2_CONNECTION (ignored if BIT5=0).
+		 * 0 - No USB2 Connection
+		 * 1 - USB2 connection
+		 *
+		 * For passive cable, USB2_CONNECTION = 1
+		 * For active cable, USB2_CONNECTION =
+		 * According to Active cable VDO2 Bit 5, USB 2.0 support.
+		 */
+		if (is_usb2_cable_support(port))
+			*set_retimer_con |= BB_RETIMER_USB_2_CONNECTION;
+	}
+}
+
+static void retimer_set_state_ufp(mux_state_t mux_state,
+				  uint32_t *set_retimer_con)
+{
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
+		/*
+		 * Bit 4: USB2_CONNECTION (ignored if BIT5=0).
+		 * 0 - No USB2 Connection
+		 * 1 - USB2 connection
+		 *
+		 * Don't care
+		 */
+
+		/*
+		 * Bit 7: USB_DATA_ROLE for the Burnside Bridge side of
+		 * connection (ignored if BIT5=0).
+		 * 0 - DFP
+		 * 1 - UFP
+		 */
+		*set_retimer_con |= BB_RETIMER_USB_DATA_ROLE;
+	}
+}
+
 /**
  * Driver interface functions
  */
@@ -141,18 +181,8 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
 	 * 0 - No USB3.1 Connection
 	 * 1 - USB3.1 connection
 	 */
-	if (mux_state & USB_PD_MUX_USB_ENABLED) {
+	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		set_retimer_con |= BB_RETIMER_USB_3_CONNECTION;
-
-		/*
-		 * Bit 7: USB_DATA_ROLE for the Burnside Bridge side of
-		 * connection (ignored if BIT5=0).
-		 * 0 - DFP
-		 * 1 - UFP
-		 */
-		if (pd_get_data_role(port) == PD_ROLE_UFP)
-			set_retimer_con |= BB_RETIMER_USB_DATA_ROLE;
-	}
 
 	/*
 	 * Bit 8: DP_CONNECTION
@@ -275,6 +305,12 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
 		set_retimer_con |= BB_RETIMER_TBT_CABLE_SPEED_SUPPORT(
 						cable_resp.tbt_cable_speed);
 	}
+
+	if (pd_get_data_role(port) == PD_ROLE_DFP)
+		retimer_set_state_dfp(port, mux_state, &set_retimer_con);
+	else
+		retimer_set_state_ufp(mux_state, &set_retimer_con);
+
 	/* Writing the register4 */
 	return bb_retimer_write(me, BB_RETIMER_REG_CONNECTION_STATE,
 			set_retimer_con);

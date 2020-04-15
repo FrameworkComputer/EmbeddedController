@@ -1869,6 +1869,14 @@ struct pd_discovery *pd_get_am_discovery(int port,
  */
 struct pd_cable *pd_get_cable_attributes(int port);
 
+/*
+ * Returns True if cable supports USB2 connection
+ *
+ * @param port  USB-C port number
+ * @return      True is usb2_supported, false otherwise
+ */
+bool is_usb2_cable_support(int port);
+
 /**
  * Set DFP enter mode flags if available
  *

@@ -321,6 +321,11 @@ enum retimer_active_element {
 	ACTIVE_RETIMER,
 };
 
+enum active_cable_usb2_support {
+	USB2_SUPPORTED,
+	USB2_NOT_SUPPORTED,
+};
+
 union active_cable_vdo2_rev30 {
 	struct {
 		uint8_t usb_gen : 1;
@@ -328,7 +333,7 @@ union active_cable_vdo2_rev30 {
 		uint8_t a_cable_type : 1;
 		uint8_t usb_lanes : 1;
 		uint8_t usb_32_support : 1;
-		uint8_t usb_20_support : 1;
+		enum active_cable_usb2_support usb_20_support : 1;
 		uint8_t usb_20_hub_hop : 2;
 		uint8_t usb_40_support : 1;
 		enum retimer_active_element active_elem : 1;
