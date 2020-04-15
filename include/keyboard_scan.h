@@ -129,4 +129,10 @@ void keyboard_suppress_noise(void);
 int keyboard_get_keyboard_id(void);
 #endif
 
+#ifdef CONFIG_KEYBOARD_RUNTIME_KEYS
+void set_vol_up_key(uint8_t row, uint8_t col);
+#else
+static inline void set_vol_up_key(uint8_t row, uint8_t col) {}
+#endif
+
 #endif  /* __CROS_EC_KEYBOARD_SCAN_H */

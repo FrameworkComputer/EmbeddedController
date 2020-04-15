@@ -140,6 +140,10 @@ static void vivaldi_init(void)
 			set_scancode_set2(row, col, action_scancodes[key]);
 			CPRINTS("VIVALDI key-%u (r-%u, c-%u) = scancode-%X",
 				i, row, col, action_scancodes[key]);
+
+			if (key == TK_VOL_UP)
+				set_vol_up_key(row, col);
+
 		} else {
 			/* Disable the mask */
 			*mask &= ~BIT(row);

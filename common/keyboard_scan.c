@@ -344,6 +344,18 @@ static void read_matrix_id(uint8_t *id)
 #endif
 
 #ifdef CONFIG_KEYBOARD_RUNTIME_KEYS
+
+static uint8_t key_vol_up_row = KEYBOARD_DEFAULT_ROW_VOL_UP;
+static uint8_t key_vol_up_col = KEYBOARD_DEFAULT_COL_VOL_UP;
+
+void set_vol_up_key(uint8_t row, uint8_t col)
+{
+	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS) {
+		key_vol_up_row = row;
+		key_vol_up_col = col;
+	}
+}
+
 /**
  * Check special runtime key combinations.
  *
@@ -401,7 +413,7 @@ static int check_runtime_keys(const uint8_t *state)
 	 * All runtime key combos are (right or left ) alt + volume up + (some
 	 * key NOT on the same col as alt or volume up )
 	 */
-	if (state[KEYBOARD_COL_VOL_UP] != KEYBOARD_MASK_VOL_UP)
+	if (state[key_vol_up_col] != KEYBOARD_ROW_TO_MASK(key_vol_up_row))
 		return 0;
 
 	if (state[KEYBOARD_COL_RIGHT_ALT] != KEYBOARD_MASK_RIGHT_ALT &&
