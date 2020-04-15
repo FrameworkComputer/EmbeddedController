@@ -234,7 +234,6 @@
 #endif
 
 #define I2C_ADDR_EEPROM_FLAGS	0x50
-#define PS8743_I2C_ADDR_FLAGS	0x11
 
 /* Sensors */
 #define CONFIG_MKBP_EVENT

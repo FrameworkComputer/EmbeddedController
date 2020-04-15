@@ -158,9 +158,9 @@ driver-$(CONFIG_USB_MUX_ANX7440)+=usb_mux/anx7440.o
 driver-$(CONFIG_USB_MUX_IT5205)+=usb_mux/it5205.o
 driver-$(CONFIG_USB_MUX_PI3USB30532)+=usb_mux/pi3usb3x532.o
 driver-$(CONFIG_USB_MUX_PI3USB31532)+=usb_mux/pi3usb3x532.o
-driver-$(CONFIG_USB_MUX_PS8740)+=usb_mux/ps874x.o
-driver-$(CONFIG_USB_MUX_PS8742)+=usb_mux/ps874x.o
-driver-$(CONFIG_USB_MUX_PS8743)+=usb_mux/ps874x.o
+driver-$(CONFIG_USB_MUX_PS8740)+=usb_mux/ps8740.o
+driver-$(CONFIG_USB_MUX_PS8742)+=usb_mux/ps8740.o
+driver-$(CONFIG_USB_MUX_PS8743)+=usb_mux/ps8743.o
 driver-$(CONFIG_USB_MUX_VIRTUAL)+=usb_mux/virtual.o
 
 # Type-C Power Path Controllers (PPC)

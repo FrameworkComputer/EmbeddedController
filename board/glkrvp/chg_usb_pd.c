@@ -55,13 +55,13 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.usb_port = 0,
 		.i2c_port = I2C_PORT_USB_MUX,
 		.i2c_addr_flags = 0x10,
-		.driver = &ps874x_usb_mux_driver,
+		.driver = &ps8743_usb_mux_driver,
 	},
 	{
 		.usb_port = 1,
 		.i2c_port = I2C_PORT_USB_MUX,
 		.i2c_addr_flags = 0x11,
-		.driver = &ps874x_usb_mux_driver,
+		.driver = &ps8743_usb_mux_driver,
 	},
 };
 

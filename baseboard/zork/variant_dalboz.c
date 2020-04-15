@@ -8,6 +8,7 @@
 #include "driver/ioexpander/pcal6408.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/usb_mux/amd_fp5.h"
+#include "driver/usb_mux/ps8740.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -199,8 +200,8 @@ const struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C1] = {
 		.usb_port = USBC_PORT_C1,
 		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = 0x10,
-		.driver = &ps874x_usb_mux_driver,
+		.i2c_addr_flags = PS8740_I2C_ADDR0_FLAG,
+		.driver = &ps8740_usb_mux_driver,
 		.next_mux = &usbc1_amd_fp5_usb_mux,
 	}
 };

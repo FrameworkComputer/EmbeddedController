@@ -134,7 +134,8 @@ extern const struct usb_mux_driver amd_fp5_usb_mux_driver;
 extern const struct usb_mux_driver anx7440_usb_mux_driver;
 extern const struct usb_mux_driver it5205_usb_mux_driver;
 extern const struct usb_mux_driver pi3usb3x532_usb_mux_driver;
-extern const struct usb_mux_driver ps874x_usb_mux_driver;
+extern const struct usb_mux_driver ps8740_usb_mux_driver;
+extern const struct usb_mux_driver ps8743_usb_mux_driver;
 extern const struct usb_mux_driver tcpm_usb_mux_driver;
 extern const struct usb_mux_driver virtual_usb_mux_driver;
 

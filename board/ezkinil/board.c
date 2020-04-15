@@ -11,7 +11,7 @@
 #include "driver/accel_kx022.h"
 #include "driver/retimer/tusb544.h"
 #include "driver/usb_mux/amd_fp5.h"
-#include "driver/usb_mux/ps874x.h"
+#include "driver/usb_mux/ps8743.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"

@@ -210,7 +210,7 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.driver    = &pi3usb3x532_usb_mux_driver,
 #else
 		.i2c_addr_flags = 0x10,
-		.driver = &ps874x_usb_mux_driver,
+		.driver = &ps8740_usb_mux_driver,
 #endif
 	},
 };

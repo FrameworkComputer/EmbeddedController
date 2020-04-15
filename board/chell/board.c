@@ -34,7 +34,7 @@
 #include "uart.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
-#include "usb_mux/ps874x.h"
+#include "usb_mux/ps8740.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
@@ -171,12 +171,12 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
 
-static int ps874x_tune_mux(int port)
+static int ps8740_tune_mux(int port)
 {
 	/* Apply same USB EQ settings to both Type-C mux */
-	ps874x_tune_usb_eq(port,
-			   PS874X_USB_EQ_TX_6_5_DB,
-			   PS874X_USB_EQ_RX_14_3_DB);
+	ps8740_tune_usb_eq(port,
+			   PS8740_USB_EQ_TX_6_5_DB,
+			   PS8740_USB_EQ_RX_14_3_DB);
 
 	return EC_SUCCESS;
 }
@@ -186,15 +186,15 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.usb_port = 0,
 		.i2c_port = I2C_PORT_USB_MUX,
 		.i2c_addr_flags = 0x1A,
-		.driver = &ps874x_usb_mux_driver,
-		.board_init = &ps874x_tune_mux,
+		.driver = &ps8740_usb_mux_driver,
+		.board_init = &ps8740_tune_mux,
 	},
 	{
 		.usb_port = 1,
 		.i2c_port = I2C_PORT_USB_MUX,
 		.i2c_addr_flags = 0x10,
-		.driver = &ps874x_usb_mux_driver,
-		.board_init = &ps874x_tune_mux,
+		.driver = &ps8740_usb_mux_driver,
+		.board_init = &ps8740_tune_mux,
 	}
 };
 
