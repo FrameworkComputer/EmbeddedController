@@ -6,7 +6,6 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "driver/retimer/pi3dpx1207.h"
 #include "driver/retimer/ps8802.h"
 #include "driver/retimer/ps8818.h"
 #include "driver/retimer/tusb544.h"
@@ -283,25 +282,6 @@ static int board_ps8818_mux_set(const struct usb_mux *me,
 
 	return rv;
 }
-
-const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
-	[USBC_PORT_C0] = {
-#ifdef VARIANT_ZORK_TREMBYLE
-		.enable_gpio = IOEX_USB_C0_DATA_EN,
-		.dp_enable_gpio = GPIO_USB_C0_IN_HPD,
-#endif
-	},
-	[USBC_PORT_C1] = {
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pi3dpx1207_controls) == USBC_PORT_COUNT);
-
-const struct usb_mux usbc0_pi3dpx1207_usb_retimer = {
-	.usb_port = USBC_PORT_C0,
-	.i2c_port = I2C_PORT_TCPC0,
-	.i2c_addr_flags = PI3DPX1207_I2C_ADDR_FLAGS,
-	.driver = &pi3dpx1207_usb_retimer,
-};
 
 const struct usb_mux usbc1_ps8802 = {
 	.usb_port = USBC_PORT_C1,

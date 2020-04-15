@@ -10,6 +10,7 @@
 #include "driver/accelgyro_bmi160.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/retimer/pi3dpx1207.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -236,6 +237,23 @@ static void probe_setup_mux_backup(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, probe_setup_mux_backup, HOOK_PRIO_DEFAULT);
+
+const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
+	[USBC_PORT_C0] = {
+		.enable_gpio = IOEX_USB_C0_DATA_EN,
+		.dp_enable_gpio = GPIO_USB_C0_IN_HPD,
+	},
+	[USBC_PORT_C1] = {
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pi3dpx1207_controls) == USBC_PORT_COUNT);
+
+const struct usb_mux usbc0_pi3dpx1207_usb_retimer = {
+	.usb_port = USBC_PORT_C0,
+	.i2c_port = I2C_PORT_TCPC0,
+	.i2c_addr_flags = PI3DPX1207_I2C_ADDR_FLAGS,
+	.driver = &pi3dpx1207_usb_retimer,
+};
 
 struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
