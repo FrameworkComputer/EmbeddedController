@@ -5,9 +5,12 @@
 
 #include "battery_smart.h"
 #include "button.h"
+#include "cros_board_info.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/ioexpander/pcal6408.h"
+#include "driver/usb_mux/ps8740.h"
+#include "driver/usb_mux/ps8743.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -157,6 +160,19 @@ void pcal6408_interrupt(enum gpio_signal signal)
 
 static void setup_fw_config(void)
 {
+	uint32_t board_version = 0;
+
+	if (cbi_get_board_version(&board_version) == EC_SUCCESS
+	    && board_version >= 2) {
+		ccprints("PS8743 USB MUX");
+		usb_muxes[USBC_PORT_C1].i2c_addr_flags = PS8743_I2C_ADDR1_FLAG;
+		usb_muxes[USBC_PORT_C1].driver = &ps8743_usb_mux_driver;
+	} else {
+		ccprints("PS8740 USB MUX");
+		usb_muxes[USBC_PORT_C1].i2c_addr_flags = PS8740_I2C_ADDR0_FLAG;
+		usb_muxes[USBC_PORT_C1].driver = &ps8740_usb_mux_driver;
+	}
+
 	if (ec_config_get_usb_db() == DALBOZ_DB_D_OPT2_USBA_HDMI) {
 		ccprints("DB OPT2 HDMI");
 		ioex_config[IOEX_HDMI_PCAL6408].flags = 0;
