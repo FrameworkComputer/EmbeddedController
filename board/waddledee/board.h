@@ -18,6 +18,16 @@
 /* Battery */
 #define CONFIG_BATTERY_FUEL_GAUGE
 
+/* BC 1.2 */
+#define CONFIG_BC12_DETECT_PI3USB9201
+
+/* Charger */
+#define CONFIG_CHARGER_SM5803		/* C0 and C1: Charger */
+#define CONFIG_FPU			/* For charger calculations */
+#define CONFIG_USB_PD_VBUS_DETECT_CHARGER
+#define CONFIG_USB_PD_5V_CHARGER_CTRL
+#define CONFIG_CHARGER_OTG
+
 /* LED */
 #define CONFIG_LED_PWM_COUNT 1
 
@@ -47,18 +57,22 @@
 #define CONFIG_TABLET_MODE_SWITCH
 #define CONFIG_GMR_TABLET_MODE
 
-/* USB Mux and Retimer */
-#define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
-#define I2C_PORT_USB_MUX I2C_PORT_USB_C0	/* Required for ITE Mux */
-
-#define CONFIG_USBC_RETIMER_TUSB544		/* C1 Redriver: TUSB544 */
-
+/* TCPC */
+#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP	/* C0: ITE EC TCPC */
+#define CONFIG_USB_PD_TCPM_ANX7447	/* C1: ANX TCPC + Mux */
+#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 1
 
 /* Thermistors */
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_THERMISTOR
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 #define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_EN_PP3300_A
+
+/* USB Mux and Retimer */
+#define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
+#define I2C_PORT_USB_MUX I2C_PORT_USB_C0	/* Required for ITE Mux */
+
+#define CONFIG_USBC_RETIMER_TUSB544		/* C1 Redriver: TUSB544 */
 
 #ifndef __ASSEMBLER__
 

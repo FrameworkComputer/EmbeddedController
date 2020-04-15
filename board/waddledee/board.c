@@ -6,13 +6,18 @@
 /* Waddledee board-specific configuration */
 
 #include "button.h"
+#include "charge_manager.h"
+#include "charge_state_v2.h"
+#include "charger.h"
 #include "driver/accel_lis2dh.h"
 #include "driver/accelgyro_lsm6dsm.h"
+#include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/sm5803.h"
 #include "driver/sync.h"
 #include "driver/retimer/tusb544.h"
 #include "driver/temp_sensor/thermistor.h"
 #include "driver/tcpm/anx7447.h"
+#include "driver/tcpm/it83xx_pd.h"
 #include "driver/usb_mux/it5205.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -26,11 +31,13 @@
 #include "switch.h"
 #include "tablet_mode.h"
 #include "task.h"
+#include "tcpci.h"
 #include "temp_sensor.h"
 #include "uart.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 
 #define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
@@ -57,6 +64,50 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 
 /* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
+
+/* BC 1.2 chips */
+const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
+	{
+		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+	{
+		.i2c_port = I2C_PORT_SUB_USB_C1,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+};
+
+/* Charger chips */
+const struct charger_config_t chg_chips[] = {
+	[CHARGER_PRIMARY] = {
+		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = SM5803_ADDR_CHARGER_FLAGS,
+		.drv = &sm5803_drv,
+	},
+	[CHARGER_SECONDARY] = {
+		.i2c_port = I2C_PORT_SUB_USB_C1,
+		.i2c_addr_flags = SM5803_ADDR_CHARGER_FLAGS,
+		.drv = &sm5803_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+
+/* TCPCs */
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	{
+		.bus_type = EC_BUS_TYPE_EMBEDDED,
+		.drv = &it83xx_tcpm_drv,
+	},
+	{
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_SUB_USB_C1,
+			.addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
+		},
+		.drv = &anx7447_tcpm_drv,
+		.flags = TCPC_FLAGS_TCPCI_REV2_0,
+	},
+};
 
 /* USB Retimer */
 const struct usb_mux usbc1_retimer = {
@@ -121,6 +172,130 @@ __override void board_power_5v_enable(int enable)
 	gpio_set_level(GPIO_EN_PP5000, !!enable);
 	if (sm5803_set_gpio0_level(1, !!enable))
 		CPRINTUSB("Failed to %sable sub rails!", enable ? "en" : "dis");
+}
+
+uint16_t tcpc_get_alert_status(void)
+{
+	/*
+	 * TCPC 0 is embedded in the EC and processes interrupts in the chip
+	 * code (it83xx/intc.c)
+	 */
+
+	uint16_t status = 0;
+	int regval;
+
+	/* Check whether TCPC 1 pulled the shared interrupt line */
+	if (!gpio_get_level(GPIO_USB_C1_INT_ODL)) {
+		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
+			if (regval)
+				status = PD_STATUS_TCPC_ALERT_1;
+		}
+	}
+
+	return status;
+}
+
+int extpower_is_present(void)
+{
+	int chg0 = 0;
+	int chg1 = 0;
+
+	sm5803_get_chg_det(0, &chg0);
+	sm5803_get_chg_det(1, &chg1);
+
+	return chg0 || chg1;
+}
+
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
+{
+	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
+
+	/*
+	 * TODO(b/151955431): Characterize the input current limit in case a
+	 * scaling needs to be applied here
+	 */
+	charge_set_input_current_limit(icl, charge_mv);
+}
+
+int board_set_active_charge_port(int port)
+{
+	int is_valid_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int p0_otg, p1_otg;
+
+	if (!is_valid_port && port != CHARGE_PORT_NONE)
+		return EC_ERROR_INVAL;
+
+	/* TODO(b/147440290): charger functions should take chgnum */
+	p0_otg = chg_chips[0].drv->is_sourcing_otg_power(0, 0);
+	p1_otg = chg_chips[1].drv->is_sourcing_otg_power(1, 1);
+
+	if (port == CHARGE_PORT_NONE) {
+		CPRINTUSB("Disabling all charge ports");
+
+		if (!p0_otg)
+			chg_chips[0].drv->set_mode(0,
+						   CHARGE_FLAG_INHIBIT_CHARGE);
+		if (!p1_otg)
+			chg_chips[1].drv->set_mode(1,
+						   CHARGE_FLAG_INHIBIT_CHARGE);
+
+		return EC_SUCCESS;
+	}
+
+	CPRINTUSB("New chg p%d", port);
+
+	/*
+	 * Charger task will take care of enabling charging on the new charge
+	 * port.  Here, we ensure the other port is not charging by changing
+	 * CHG_EN
+	 */
+	if (port == 0) {
+		if (p0_otg) {
+			CPRINTUSB("Skip enable p%d", port);
+			return EC_ERROR_INVAL;
+		}
+		if (!p1_otg) {
+			chg_chips[1].drv->set_mode(1,
+						   CHARGE_FLAG_INHIBIT_CHARGE);
+		}
+	} else {
+		if (p1_otg) {
+			CPRINTUSB("Skip enable p%d", port);
+			return EC_ERROR_INVAL;
+		}
+		if (!p0_otg) {
+			chg_chips[0].drv->set_mode(0,
+						   CHARGE_FLAG_INHIBIT_CHARGE);
+		}
+	}
+
+	return EC_SUCCESS;
+}
+
+/* Vconn control for integrated ITE TCPC */
+void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
+{
+	/* Vconn control is only for port 0 */
+	if (port)
+		return;
+
+	if (cc_pin == USBPD_CC_PIN_1)
+		gpio_set_level(GPIO_EN_USB_C0_CC1_VCONN, !!enabled);
+	else
+		gpio_set_level(GPIO_EN_USB_C0_CC2_VCONN, !!enabled);
+}
+
+__override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
+{
+	int current;
+
+	if (port < 0 || port > CONFIG_USB_PD_PORT_MAX_COUNT)
+		return;
+
+	current = (rp == TYPEC_RP_3A0) ? 3000 : 1500;
+
+	chg_chips[port].drv->set_otg_current_voltage(port, current, 5000);
 }
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
