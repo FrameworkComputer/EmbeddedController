@@ -77,11 +77,11 @@ static int ps8743_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 	uint8_t reg = 0;
 
 	if (mux_state & USB_PD_MUX_USB_ENABLED)
-		reg |= PS8743_MODE_USB_ENABLED;
+		reg |= PS8743_MODE_USB_ENABLE;
 	if (mux_state & USB_PD_MUX_DP_ENABLED)
-		reg |= PS8743_MODE_DP_ENABLED;
+		reg |= PS8743_MODE_DP_ENABLE;
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-		reg |= PS8743_MODE_POLARITY_INVERTED;
+		reg |= PS8743_MODE_FLIP_ENABLE;
 
 	return ps8743_write(me, PS8743_REG_MODE, reg);
 }

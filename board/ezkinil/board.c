@@ -276,15 +276,11 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
 	rv = ps8743_read(me, PS8743_REG_MODE, &reg);
 	if (rv)
 		return rv;
-	/*
-	 * TODO(b:152736880) Due to Ezkinil doesn't have FLIP_PIN and
-	 * CE_DP_PIN, we need set 1 to this two BIT, but the name of
-	 * these two bits are confusing. Need fix the name in other patch.
-	 */
-	/* Disable FLIP pin detect since ezkinil don't have FLIP. */
-	reg |= PS8743_MODE_FLIP_PIN_ENABLED;
-	/* Disable CE_DP pin detect, since ezkinil don't have CE_DP. */
-	reg |= PS8743_MODE_CE_DP_ENABLED;
+
+	/* Disable FLIP pin, enable I2C control. */
+	reg |= PS8743_MODE_FLIP_REG_CONTROL;
+	/* Disable CE_DP pin, enable I2C control. */
+	reg |= PS8743_MODE_DP_REG_CONTROL;
 
 	/* DP specific config */
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {

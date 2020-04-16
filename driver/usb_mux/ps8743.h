@@ -17,15 +17,15 @@
 
 /* Mode register for setting mux */
 #define PS8743_REG_MODE 0x00
-#define PS8743_MODE_POLARITY_INVERTED BIT(2)
-#define PS8743_MODE_FLIP_PIN_ENABLED  BIT(3)
-#define PS8743_MODE_USB_ENABLED       BIT(4)
-#define PS8743_MODE_CE_USB_ENABLED    BIT(5)
-#define PS8743_MODE_DP_ENABLED        BIT(6)
-#define PS8743_MODE_CE_DP_ENABLED     BIT(7)
+#define PS8743_MODE_FLIP_ENABLE      BIT(2)
+#define PS8743_MODE_FLIP_REG_CONTROL BIT(3)
+#define PS8743_MODE_USB_ENABLE       BIT(4)
+#define PS8743_MODE_USB_REG_CONTROL  BIT(5)
+#define PS8743_MODE_DP_ENABLE        BIT(6)
+#define PS8743_MODE_DP_REG_CONTROL   BIT(7)
 /* To reset the state machine to default */
-#define PS8743_MODE_POWER_DOWN (PS8743_MODE_CE_USB_ENABLED |  \
-				PS8743_MODE_CE_DP_ENABLED)
+#define PS8743_MODE_POWER_DOWN (PS8743_MODE_USB_REG_CONTROL |  \
+				PS8743_MODE_DP_REG_CONTROL)
 
 /* Status register for checking mux state */
 #define PS8743_REG_STATUS 0x09
