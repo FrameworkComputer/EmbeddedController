@@ -537,6 +537,82 @@ out:
 	return rv;
 }
 
+#ifdef CONFIG_CHARGER_RAA489000
+void raa489000_hibernate(int chgnum)
+{
+	int rv, regval;
+
+	if ((chgnum < 0) || (chgnum > chg_cnt)) {
+		CPRINTS("%s: Invalid chgnum! (%d)", __func__, chgnum);
+		return;
+	}
+
+	rv = raw_read16(chgnum, ISL923X_REG_CONTROL0, &regval);
+	if (!rv) {
+		/* set BGATE to normal operation */
+		regval &= ~RAA489000_C0_BGATE_FORCE_ON;
+
+		/* set normal charge pump operation */
+		regval &= ~RAA489000_C0_EN_CHG_PUMPS_TO_100PCT;
+
+		rv = raw_write16(chgnum, ISL923X_REG_CONTROL0, regval);
+	}
+	if (rv)
+		CPRINTS("%s(%d): Failed to set Control0!", __func__, chgnum);
+
+	rv = raw_read16(chgnum, ISL923X_REG_CONTROL1, &regval);
+	if (!rv) {
+		/* Disable Supplemental support */
+		regval &= ~RAA489000_C1_ENABLE_SUPP_SUPPORT_MODE;
+
+		/* Force BGATE off */
+		regval |= RAA489000_C1_BGATE_FORCE_OFF;
+
+		/* Disable AMON/BMON */
+		regval |= ISL923X_C1_DISABLE_MON;
+
+		/* Disable PSYS */
+		regval &= ~ISL923X_C1_ENABLE_PSYS;
+
+		rv = raw_write16(chgnum, ISL923X_REG_CONTROL1, regval);
+	}
+	if (rv)
+		CPRINTS("%s(%d): Failed to set Control1!", __func__, chgnum);
+
+	rv = raw_read16(chgnum, ISL9238_REG_CONTROL3, &regval);
+	if (!rv) {
+		/* ADC is active only when adapter plugged in */
+		regval &= ~RAA489000_ENABLE_ADC;
+
+		rv = raw_write16(chgnum, ISL9238_REG_CONTROL3, regval);
+	}
+	if (rv)
+		CPRINTS("%s(%d): Failed to set Control3!", __func__, chgnum);
+
+	rv = raw_read16(chgnum, ISL9238_REG_CONTROL4, &regval);
+	if (!rv) {
+		/* Disable GP comparator for battery only mode */
+		regval |= RAA489000_C4_DISABLE_GP_CMP;
+
+		rv = raw_write16(chgnum, ISL9238_REG_CONTROL4, regval);
+	}
+	if (rv)
+		CPRINTS("%s(%d):Failed to set Control4!", __func__, chgnum);
+
+	rv = raw_read16(chgnum, RAA489000_REG_CONTROL8, &regval);
+	if (!rv) {
+		/* Disable MCU LDO in battery state */
+		regval |= RAA489000_C8_MCU_LDO_BAT_STATE_DISABLE;
+
+		rv = raw_write16(chgnum, RAA489000_REG_CONTROL8, regval);
+	}
+	if (rv)
+		CPRINTS("%s(%d):Failed to set Control8!", __func__, chgnum);
+
+	cflush();
+}
+#endif /* CONFIG_CHARGER_RAA489000 */
+
 /*****************************************************************************/
 /* Hardware current ramping */
 

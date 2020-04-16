@@ -32,6 +32,7 @@
 #define ISL9238_REG_INPUT_VOLTAGE    0x4b
 #define ISL923X_REG_MANUFACTURER_ID  0xfe
 #define ISL923X_REG_DEVICE_ID        0xff
+#define RAA489000_REG_CONTROL8       0x37
 
 /* Sense resistor default values in mOhm */
 #define ISL923X_DEFAULT_SENSE_RESISTOR_AC 20
@@ -103,6 +104,10 @@
 #define ISL923X_C0_DCHOT_3A   (3 << 3)
 #define ISL923X_C0_DCHOT_MASK (3 << 3)
 
+/* Control0: BGATE force on */
+#define RAA489000_C0_BGATE_FORCE_ON BIT(10)
+#define RAA489000_C0_EN_CHG_PUMPS_TO_100PCT BIT(6)
+
 /* Control1: general purpose comparator debounce time in micro second */
 #define ISL923X_C1_GP_DEBOUNCE_2       (0 << 14)
 #define ISL923X_C1_GP_DEBOUNCE_12      BIT(14)
@@ -146,6 +151,12 @@
 #define ISL923X_C1_VSYSLO_REF_6600 2
 #define ISL923X_C1_VSYSLO_REF_6900 3
 #define ISL923X_C1_VSYSLO_REF_MASK 3
+
+/* Control1: Supplemental mode support */
+#define RAA489000_C1_ENABLE_SUPP_SUPPORT_MODE BIT(10)
+
+/* Control1: BGATE Force Off */
+#define RAA489000_C1_BGATE_FORCE_OFF BIT(6)
 
 /* Control2: trickle charging current in mA */
 #define ISL923X_C2_TRICKLE_256  (0 << 14)
@@ -239,6 +250,12 @@
 
 /* Control4: PSYS Rsense ratio. */
 #define RAA489000_C4_PSYS_RSNS_RATIO_1_TO_1 BIT(11)
+
+/* Control4: GP comparator control bit */
+#define RAA489000_C4_DISABLE_GP_CMP BIT(12)
+
+/* Control8: MCU_LDO - BAT state disable */
+#define RAA489000_C8_MCU_LDO_BAT_STATE_DISABLE BIT(14)
 
 /* OTG voltage limit in mV, current limit in mA */
 #define ISL9237_OTG_VOLTAGE_MIN 4864
@@ -354,6 +371,15 @@ int isl923x_set_dc_prochot(int chgnum, uint16_t ma);
  * @return EC_SUCCESS, error otherwise.
  */
 int isl923x_set_comparator_inversion(int chgnum, int invert);
+
+/**
+ * Prepare the charger IC for battery ship mode.  Battery ship mode sets the
+ * lowest power state for the IC. Battery ship mode can only be entered from
+ * battery only mode.
+ *
+ * @param chgnum index into chg_chips table.
+ */
+void raa489000_hibernate(int chgnum);
 
 #define ISL923X_AC_PROCHOT_CURRENT_MAX	6400	/* mA */
 #define ISL923X_DC_PROCHOT_CURRENT_MAX	12800	/* mA */
