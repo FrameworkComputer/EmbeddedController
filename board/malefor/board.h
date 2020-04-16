@@ -115,7 +115,9 @@
 #include "registers.h"
 
 enum battery_type {
-	BATTERY_LGC011,
+	BATTERY_SMP,
+	BATTERY_LGC,
+	BATTERY_SUNWODA,
 	BATTERY_TYPE_COUNT,
 };
 
