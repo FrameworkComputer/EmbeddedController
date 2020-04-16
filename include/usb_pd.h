@@ -1888,6 +1888,15 @@ bool is_usb2_cable_support(int port);
  */
 bool is_cable_speed_gen2_capable(int port);
 
+/*
+ * Checks if Active Cable has retimer as an active element
+ *
+ * @param port  USB-C port number
+ * @return      True if Active element is Retimer
+ *              False otherwise
+ */
+bool is_active_cable_element_retimer(int port);
+
 /**
  * Set DFP enter mode flags if available
  *

@@ -644,6 +644,18 @@ bool is_cable_speed_gen2_capable(int port)
 	}
 }
 
+bool is_active_cable_element_retimer(int port)
+{
+	struct pd_cable *cable = pd_get_cable_attributes(port);
+
+	/* Ref: USB PD Spec 2.0 Table 6-29 Active Cable VDO
+	 * Revision 2 Active cables do not have Active element support.
+	 */
+	return cable->rev & PD_REV30 &&
+		get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE &&
+		cable->attr2.a2_rev30.active_elem == ACTIVE_RETIMER;
+}
+
 /*
  * TODO(b/152417597): Support SOP and SOP'; eliminate redundant code for port
  * partner and cable identity discovery.
