@@ -11,7 +11,6 @@
 #include "driver/retimer/tusb544.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/usb_mux/amd_fp5.h"
-#include "driver/usb_mux/ps8743.h"
 #include "fan.h"
 #include "fan_chip.h"
 #include "gpio.h"
@@ -297,18 +296,6 @@ const struct usb_mux usbc1_ps8818 = {
 	.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
 	.driver = &ps8818_usb_retimer_driver,
 	.board_set = &board_ps8818_mux_set,
-};
-const struct usb_mux usbc1_tusb544 = {
-	.usb_port = USBC_PORT_C1,
-	.i2c_port = I2C_PORT_TCPC1,
-	.i2c_addr_flags = TUSB544_I2C_ADDR_FLAGS0,
-	.driver = &tusb544_drv,
-};
-const struct usb_mux usbc1_ps8743 = {
-	.usb_port = USBC_PORT_C1,
-	.i2c_port = I2C_PORT_TCPC1,
-	.i2c_addr_flags = PS8743_I2C_ADDR1_FLAG,
-	.driver = &ps8743_usb_mux_driver,
 };
 struct usb_mux usbc1_amd_fp5_usb_mux = {
 	.usb_port = USBC_PORT_C1,

@@ -254,6 +254,68 @@ struct usb_mux usb_muxes[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
+static int board_tusb544_mux_set(const struct usb_mux *me,
+				mux_state_t mux_state)
+{
+	if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		/* Enable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+	} else {
+		/* Disable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
+	}
+	return EC_SUCCESS;
+}
+
+static int board_ps8743_mux_set(const struct usb_mux *me,
+				mux_state_t mux_state)
+{
+	int rv = EC_SUCCESS;
+	int reg = 0;
+
+	rv = ps8743_read(me, PS8743_REG_MODE, &reg);
+	if (rv)
+		return rv;
+	/*
+	 * TODO(b:152736880) Due to Ezkinil doesn't have FLIP_PIN and
+	 * CE_DP_PIN, we need set 1 to this two BIT, but the name of
+	 * these two bits are confusing. Need fix the name in other patch.
+	 */
+	/* Disable FLIP pin detect since ezkinil don't have FLIP. */
+	reg |= PS8743_MODE_FLIP_PIN_ENABLED;
+	/* Disable CE_DP pin detect, since ezkinil don't have CE_DP. */
+	reg |= PS8743_MODE_CE_DP_ENABLED;
+
+	/* DP specific config */
+	if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		/* Enable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+		/* Disable USB mode on DB */
+		ioex_set_level(IOEX_USB_C1_DATA_EN, 0);
+	} else {
+		/* Disable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
+		/* Enable USB mode on DB */
+		ioex_set_level(IOEX_USB_C1_DATA_EN, 1);
+	}
+	return ps8743_write(me, PS8743_REG_MODE, reg);
+}
+
+const struct usb_mux usbc1_tusb544 = {
+	.usb_port = USBC_PORT_C1,
+	.i2c_port = I2C_PORT_TCPC1,
+	.i2c_addr_flags = TUSB544_I2C_ADDR_FLAGS1,
+	.driver = &tusb544_drv,
+	.board_set = &board_tusb544_mux_set,
+};
+const struct usb_mux usbc1_ps8743 = {
+	.usb_port = USBC_PORT_C1,
+	.i2c_port = I2C_PORT_TCPC1,
+	.i2c_addr_flags = PS8743_I2C_ADDR1_FLAG,
+	.driver = &ps8743_usb_mux_driver,
+	.board_set = &board_ps8743_mux_set,
+};
+
 /*****************************************************************************
  * Use FW_CONFIG to set correct configuration.
  */

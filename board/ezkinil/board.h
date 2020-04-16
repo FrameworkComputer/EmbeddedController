@@ -41,6 +41,7 @@
 /* Type C mux/retimer */
 #define CONFIG_USB_MUX_PS8743
 #define CONFIG_USBC_RETIMER_TUSB544
+#define TUSB544_I2C_ADDR_FLAGS1 0x0F
 
 /* GPIO mapping from board specific name to EC common name. */
 #define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
