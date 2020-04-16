@@ -11,6 +11,7 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+#define CONFIG_DPTF_MULTI_PROFILE
 #define CONFIG_POWER_BUTTON
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
