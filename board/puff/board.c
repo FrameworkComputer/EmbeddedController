@@ -12,6 +12,7 @@
 #include "charge_state_v2.h"
 #include "chipset.h"
 #include "common.h"
+#include "core/cortex-m/cpu.h"
 #include "cros_board_info.h"
 #include "driver/ina3221.h"
 #include "driver/ppc/sn5s330.h"
@@ -392,6 +393,20 @@ const unsigned int ina3221_count = ARRAY_SIZE(ina3221);
 static void board_init(void)
 {
 	uint8_t *memmap_batt_flags;
+
+	/* Increase priority of C10 gate interrupts to minimize latency.
+	 *
+	 * We assume that GPIO_CPU_C10_GATE_L is on GPIO6.7, which is on
+	 * the WKINTH_1 IRQ.
+	 */
+	const int c10_gpio_irq = NPCX_IRQ_WKINTH_1;
+	const int c10_gpio_prio = 2;
+	const uint32_t prio_shift = c10_gpio_irq % 4 * 8 + 5;
+
+	CPU_NVIC_PRI(c10_gpio_irq / 4) =
+		(CPU_NVIC_PRI(c10_gpio_irq / 4) &
+		 ~(0x7 << prio_shift)) |
+		(c10_gpio_prio << prio_shift);
 
 	update_port_limits();
 	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_L);

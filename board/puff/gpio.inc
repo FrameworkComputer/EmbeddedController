@@ -9,6 +9,11 @@
  * Pin names follow the schematic, and are aliased to other names if necessary.
  * Note: Those with interrupt handlers must be declared first. */
 
+/* Latency on this interrupt is extremely critical, so it comes first to ensure
+ * it gets placed first in gpio_wui_table so gpio_interrupt() needs to do
+ * minimal scanning. */
+GPIO_INT(CPU_C10_GATE_L,       PIN(6, 7), GPIO_INT_BOTH, c10_gate_interrupt)
+
 /* Wake Source interrupts */
 GPIO_INT(EC_WP_ODL,            PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(H1_EC_PWR_BTN_ODL,    PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)
@@ -30,7 +35,6 @@ GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
 GPIO_INT(PG_PP950_VCCIO_OD,    PIN(1, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(CPU_C10_GATE_L,       PIN(6, 7), GPIO_INT_BOTH, c10_gate_interrupt)
 GPIO_INT(IMVP8_VRRDY_OD,       PIN(1, 6), GPIO_INT_BOTH, power_signal_interrupt)
 
 /* Other interrupts */
