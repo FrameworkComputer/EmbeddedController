@@ -98,6 +98,11 @@ enum tbt_adapter_type {
 	TBT_ADAPTER_TBT2_LEGACY,
 };
 
+enum vendor_specific_support {
+	VENDOR_SPECIFIC_NOT_SUPPORTED,
+	VENDOR_SPECIFIC_SUPPORTED,
+};
+
 /* TBT Alternate Mode */
 #define TBT_ALTERNATE_MODE 0x0001
 #define PD_VDO_RESP_MODE_INTEL_TBT(x)	(((x) & 0xff) == TBT_ALTERNATE_MODE)
@@ -107,10 +112,10 @@ union tbt_mode_resp_device {
 		uint16_t tbt_alt_mode : 16;
 		enum tbt_adapter_type tbt_adapter : 1;
 		uint16_t reserved0 : 9;
-		uint8_t intel_spec_b0 : 1;
+		enum vendor_specific_support intel_spec_b0 : 1;
 		uint8_t reserved1 : 3;
-		uint8_t vendor_spec_b0 : 1;
-		uint8_t vendor_spec_b1 : 1;
+		enum vendor_specific_support vendor_spec_b0 : 1;
+		enum vendor_specific_support vendor_spec_b1 : 1;
 	};
 	uint32_t raw_value;
 };
@@ -248,10 +253,10 @@ union tbt_dev_mode_enter_cmd {
 		enum link_lsrx_comm lsrx_comm : 1;
 		enum tbt_enter_cable_type cable : 1;
 		uint8_t reserved0 : 1;
-		uint8_t intel_spec_b0 : 1;
+		enum vendor_specific_support intel_spec_b0 : 1;
 		uint8_t reserved1 : 3;
-		uint8_t vendor_spec_b0 : 1;
-		uint8_t vendor_spec_b1 : 1;
+		enum vendor_specific_support vendor_spec_b0 : 1;
+		enum vendor_specific_support vendor_spec_b1 : 1;
 	};
 	uint32_t raw_value;
 };
