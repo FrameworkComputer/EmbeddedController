@@ -315,8 +315,8 @@ static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
 /* Matrix to rotate accelerometer into standard reference frame */
 static const mat33_fp_t lid_standard_ref = {
+	{0, FLOAT_TO_FP(1), 0},
 	{FLOAT_TO_FP(-1), 0, 0},
-	{0, FLOAT_TO_FP(-1), 0},
 	{0, 0, FLOAT_TO_FP(1)}
 };
 
