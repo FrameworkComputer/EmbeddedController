@@ -37,8 +37,8 @@
 #define BB_RETIMER_TBT_ACTIVE_LINK_TRAINING	BIT(20)
 #define BB_RETIMER_ACTIVE_PASSIVE		BIT(22)
 #define BB_RETIMER_USB4_ENABLED			BIT(23)
-#define BB_RETIMER_TBT_CABLE_SPEED_SUPPORT(x)	(((x) & 0x7) << 25)
-#define BB_RETIMER_TBT_CABLE_GENERATION(x)	(((x) & 0x3) << 28)
+#define BB_RETIMER_USB4_TBT_CABLE_SPEED_SUPPORT(x)	(((x) & 0x7) << 25)
+#define BB_RETIMER_TBT_CABLE_GENERATION(x)		(((x) & 0x3) << 28)
 
 /* Supported USB retimer drivers */
 extern const struct usb_mux_driver bb_usb_retimer;

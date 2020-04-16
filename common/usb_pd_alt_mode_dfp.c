@@ -862,6 +862,37 @@ __overridable enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
 	return cable->cable_mode_resp.tbt_cable_speed;
 }
 
+/*
+ * ############################################################################
+ *
+ * USB4 functions
+ *
+ * ############################################################################
+ */
+
+enum usb_rev30_ss get_usb4_cable_speed(int port)
+{
+	struct pd_cable *cable = pd_get_cable_attributes(port);
+
+	/*
+	 * TODO: Return USB4 cable speed for USB3.2 Gen 2 cables if DFP isn't
+	 * Gen 3 capable.
+	 */
+	if ((cable->rev == PD_REV30) &&
+	    (get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE) &&
+	   ((cable->attr.p_rev30.ss != USB_R30_SS_U32_U40_GEN2) ||
+	    !IS_ENABLED(CONFIG_USB_PD_TBT_GEN3_CAPABLE))) {
+		return cable->attr.p_rev30.ss;
+	}
+
+	/*
+	 * Converting Thunderolt-Compatible cable speed to equivalent USB4 cable
+	 * speed.
+	 */
+	return cable->cable_mode_resp.tbt_cable_speed == TBT_SS_TBT_GEN3 ?
+	       USB_R30_SS_U40_GEN3 : USB_R30_SS_U32_U40_GEN2;
+}
+
 __overridable void svdm_safe_dp_mode(int port)
 {
 	/* make DP interface safe until configure */

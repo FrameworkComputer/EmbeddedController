@@ -223,23 +223,6 @@ enum tbt_compat_rounded_support get_tbt_rounded_support(int port)
 	return cable[port].cable_mode_resp.tbt_rounded;
 }
 
-static enum usb_rev30_ss get_usb4_cable_speed(int port)
-{
-	if ((cable[port].rev == PD_REV30) &&
-	    (get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE) &&
-	   ((cable[port].attr.p_rev30.ss != USB_R30_SS_U32_U40_GEN2) ||
-	    !IS_ENABLED(CONFIG_USB_PD_TBT_GEN3_CAPABLE))) {
-		return cable[port].attr.p_rev30.ss;
-	}
-
-	/*
-	 * Converting Thunderolt-Compatible cable speed to equivalent USB4 cable
-	 * speed.
-	 */
-	return cable[port].cable_mode_resp.tbt_cable_speed == TBT_SS_TBT_GEN3 ?
-	       USB_R30_SS_U40_GEN3 : USB_R30_SS_U32_U40_GEN2;
-}
-
 uint32_t get_enter_usb_msg_payload(int port)
 {
 	/*
