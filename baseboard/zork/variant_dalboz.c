@@ -46,7 +46,7 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 	{
 		.name = "thermal",
-		.port = I2C_PORT_THERMAL,
+		.port = I2C_PORT_THERMAL_AP,
 		.kbps = 400,
 		.scl = GPIO_FCH_SIC,
 		.sda = GPIO_FCH_SID,
