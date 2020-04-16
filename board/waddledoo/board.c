@@ -85,6 +85,16 @@ void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+void board_hibernate(void)
+{
+	/*
+	 * Both charger ICs need to be put into their "low power mode" before
+	 * entering the Z-state.
+	 */
+	raa489000_hibernate(1);
+	raa489000_hibernate(0);
+}
+
 void board_reset_pd_mcu(void)
 {
 	/*
