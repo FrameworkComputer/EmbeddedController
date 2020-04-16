@@ -373,8 +373,13 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
-	/* Extra delay when KSO2 is tied to Cr50. */
-	.output_settle_us = 60,
+	/*
+	 * F3 key scan cycle completed but scan input is not
+	 * charging to logic high when EC start scan next
+	 * column for "T" key, so we set .output_settle_us
+	 * to 80us
+	 */
+	.output_settle_us = 80,
 	.debounce_down_us = 6 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 1500,
