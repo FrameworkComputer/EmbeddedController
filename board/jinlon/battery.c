@@ -6,8 +6,11 @@
  */
 
 #include "battery_fuel_gauge.h"
+#include "charge_state.h"
+#include "chipset.h"
 #include "common.h"
-#include "util.h"
+#include "hooks.h"
+#include "usb_pd.h"
 
 /*
  * Battery info for all Jinlon battery types. Note that the fields
@@ -64,3 +67,27 @@ const struct board_batt_params board_battery_info[] = {
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_DANAPACK_COS;
+
+/* Lower our input voltage to 5V in S5/G3 when battery is full. */
+static void reduce_input_voltage_when_full(void)
+{
+	int max_pd_voltage_mv;
+	int port;
+
+	if (charge_get_percent() == 100 &&
+	    chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
+		max_pd_voltage_mv = 5000;
+	else
+		max_pd_voltage_mv = PD_MAX_VOLTAGE_MV;
+
+	if (pd_get_max_voltage() != max_pd_voltage_mv) {
+		for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++)
+			pd_set_external_voltage_limit(port, max_pd_voltage_mv);
+	}
+}
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, reduce_input_voltage_when_full,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, reduce_input_voltage_when_full,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, reduce_input_voltage_when_full,
+	     HOOK_PRIO_DEFAULT);
