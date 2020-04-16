@@ -12,7 +12,7 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "extpower.h"
-#include "driver/accelgyro_bmi160.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/als_opt3001.h"
 #include "driver/charger/isl923x.h"
 #include "driver/ppc/sn5s330.h"
@@ -627,7 +627,7 @@ uint16_t tcpc_get_alert_status(void)
 /* Mutexes */
 static struct mutex g_lid_mutex;
 
-static struct bmi160_drv_data_t g_bmi160_data;
+static struct bmi_drv_data_t g_bmi160_data;
 static struct opt3001_drv_data_t g_opt3001_data = {
 	.scale = 1,
 	.uscale = 0,
@@ -660,8 +660,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	 .rot_standard_ref = &base_standard_ref,
 	 .default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
-	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
-	 .max_frequency = BMI160_ACCEL_MAX_FREQ,
+	 .min_frequency = BMI_ACCEL_MIN_FREQ,
+	 .max_frequency = BMI_ACCEL_MAX_FREQ,
 	 .config = {
 		 [SENSOR_CONFIG_EC_S0] = {
 			 .odr = 10000 | ROUND_UP_FLAG,
@@ -681,8 +681,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = &base_standard_ref,
-	 .min_frequency = BMI160_GYRO_MIN_FREQ,
-	 .max_frequency = BMI160_GYRO_MAX_FREQ,
+	 .min_frequency = BMI_GYRO_MIN_FREQ,
+	 .max_frequency = BMI_GYRO_MAX_FREQ,
 	},
 	[LID_ALS] = {
 	 .name = "Light",

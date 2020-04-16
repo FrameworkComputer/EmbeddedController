@@ -49,7 +49,7 @@
 /* Motion Sensors */
 #ifdef SECTION_IS_RW
 #ifndef BOARD_KRANE
-#define CONFIG_MAG_BMI160_BMM150
+#define CONFIG_MAG_BMI_BMM150
 #define CONFIG_ACCELGYRO_SEC_ADDR_FLAGS BMM150_ADDR0_FLAGS
 #define CONFIG_MAG_CALIBRATE
 #endif /* !BOARD_KRANE */
@@ -122,9 +122,9 @@ enum power_signal {
 enum sensor_id {
 	LID_ACCEL = 0,
 	LID_GYRO,
-#ifdef CONFIG_MAG_BMI160_BMM150
+#ifdef CONFIG_MAG_BMI_BMM150
 	LID_MAG,
-#endif /* CONFIG_MAG_BMI160_BMM150 */
+#endif /* CONFIG_MAG_BMI_BMM150 */
 	CLEAR_ALS,
 	RGB_ALS,
 	VSYNC,

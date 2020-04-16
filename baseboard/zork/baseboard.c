@@ -16,7 +16,7 @@
 #include "compile_time_macros.h"
 #include "console.h"
 #include "cros_board_info.h"
-#include "driver/accelgyro_bmi160.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl9241.h"
 #include "driver/ppc/aoz1380.h"

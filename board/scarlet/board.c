@@ -15,7 +15,7 @@
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
-#include "driver/accelgyro_bmi160.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/charger/rt946x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/fusb302.h"
@@ -388,7 +388,7 @@ int board_get_version(void)
 /* Mutexes */
 static struct mutex g_base_mutex;
 
-static struct bmi160_drv_data_t g_bmi160_data;
+static struct bmi_drv_data_t g_bmi160_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
 const mat33_fp_t base_standard_ref = {
@@ -416,8 +416,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
 	 .rot_standard_ref = &base_standard_ref,
 	 .default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
-	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
-	 .max_frequency = BMI160_ACCEL_MAX_FREQ,
+	 .min_frequency = BMI_ACCEL_MIN_FREQ,
+	 .max_frequency = BMI_ACCEL_MAX_FREQ,
 	 .config = {
 		 /* Enable accel in S0 */
 		 [SENSOR_CONFIG_EC_S0] = {
@@ -439,8 +439,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
 	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = &base_standard_ref,
-	 .min_frequency = BMI160_GYRO_MIN_FREQ,
-	 .max_frequency = BMI160_GYRO_MAX_FREQ,
+	 .min_frequency = BMI_GYRO_MIN_FREQ,
+	 .max_frequency = BMI_GYRO_MAX_FREQ,
 	},
 	[VSYNC] = {
 	 .name = "Camera vsync",

@@ -14,7 +14,7 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "driver/accel_bma2x2.h"
-#include "driver/accelgyro_bmi160.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/nb7v904m.h"
@@ -231,7 +231,7 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 static struct accelgyro_saved_data_t g_bma253_data;
-static struct bmi160_drv_data_t g_bmi160_data;
+static struct bmi_drv_data_t g_bmi160_data;
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -271,8 +271,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 		.rot_standard_ref = NULL,
 		.default_range = 4,
-		.min_frequency = BMI160_ACCEL_MIN_FREQ,
-		.max_frequency = BMI160_ACCEL_MAX_FREQ,
+		.min_frequency = BMI_ACCEL_MIN_FREQ,
+		.max_frequency = BMI_ACCEL_MAX_FREQ,
 		.config = {
 			[SENSOR_CONFIG_EC_S0] = {
 				.odr = 13000 | ROUND_UP_FLAG,
@@ -297,8 +297,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 		.default_range = 1000, /* dps */
 		.rot_standard_ref = NULL,
-		.min_frequency = BMI160_GYRO_MIN_FREQ,
-		.max_frequency = BMI160_GYRO_MAX_FREQ,
+		.min_frequency = BMI_GYRO_MIN_FREQ,
+		.max_frequency = BMI_GYRO_MAX_FREQ,
 	},
 	[VSYNC] = {
 		.name = "Camera VSYNC",

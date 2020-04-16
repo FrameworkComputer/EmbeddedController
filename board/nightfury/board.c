@@ -11,7 +11,7 @@
 #include "common.h"
 #include "cros_board_info.h"
 #include "driver/accel_lis2ds.h"
-#include "driver/accelgyro_bmi160.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/als_opt3001.h"
 #include "driver/als_tcs3400.h"
 #include "driver/ppc/sn5s330.h"
@@ -173,7 +173,7 @@ static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;
 
 /* Base accel private data */
-static struct bmi160_drv_data_t g_bmi160_data;
+static struct bmi_drv_data_t g_bmi160_data;
 
 /* Base light sensor private data */
 static struct opt3001_drv_data_t g_opt3001_data = {
@@ -243,8 +243,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_ACCEL,
 		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 		.rot_standard_ref = &base_standard_ref,
-		.min_frequency = BMI160_ACCEL_MIN_FREQ,
-		.max_frequency = BMI160_ACCEL_MAX_FREQ,
+		.min_frequency = BMI_ACCEL_MIN_FREQ,
+		.max_frequency = BMI_ACCEL_MAX_FREQ,
 		.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
 		.config = {
 			[SENSOR_CONFIG_EC_S0] = {
@@ -270,8 +270,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 		.default_range = 1000, /* dps */
 		.rot_standard_ref = &base_standard_ref,
-		.min_frequency = BMI160_GYRO_MIN_FREQ,
-		.max_frequency = BMI160_GYRO_MAX_FREQ,
+		.min_frequency = BMI_GYRO_MIN_FREQ,
+		.max_frequency = BMI_GYRO_MAX_FREQ,
 	},
 
 	[BASE_ALS] = {

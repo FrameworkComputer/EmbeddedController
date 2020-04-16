@@ -18,7 +18,7 @@
 #include "chipset.h"
 #include "console.h"
 #include "cros_board_info.h"
-#include "driver/accelgyro_bmi160.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/charger/isl923x.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -584,7 +584,7 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
-static struct bmi160_drv_data_t g_bmi160_data;
+static struct bmi_drv_data_t g_bmi160_data;
 
 /* BMA255 private data */
 static struct accelgyro_saved_data_t g_bma255_data;
@@ -643,8 +643,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_ACCEL,
 		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 		.rot_standard_ref = &base_standard_ref,
-		.min_frequency = BMI160_ACCEL_MIN_FREQ,
-		.max_frequency = BMI160_ACCEL_MAX_FREQ,
+		.min_frequency = BMI_ACCEL_MIN_FREQ,
+		.max_frequency = BMI_ACCEL_MAX_FREQ,
 		.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
 		.config = {
 			/* EC use accel for angle detection */
@@ -672,8 +672,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 		.default_range = 1000, /* dps */
 		.rot_standard_ref = &base_standard_ref,
-		.min_frequency = BMI160_GYRO_MIN_FREQ,
-		.max_frequency = BMI160_GYRO_MAX_FREQ,
+		.min_frequency = BMI_GYRO_MIN_FREQ,
+		.max_frequency = BMI_GYRO_MAX_FREQ,
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);

@@ -134,14 +134,12 @@
 #undef CONFIG_MAG_BMM150
 
 /* Presence of a Bosh Sensortec BMM150 magnetometer behind a BMIxxx. */
-#undef CONFIG_MAG_BMI160_BMM150
 #undef CONFIG_MAG_BMI_BMM150
 
 /* Presence of a Bosh Sensortec BMM150 magnetometer behind a LSM6DSM. */
 #undef CONFIG_MAG_LSM6DSM_BMM150
 
 /* Presence of a ST LIS2MDL magnetometer behind a BMIxxx. */
-#undef CONFIG_MAG_BMI160_LIS2MDL
 #undef CONFIG_MAG_BMI_LIS2MDL
 
 /* Presence of a ST LIS2MDL magnetometer behind a LSM6DSM. */
@@ -4542,18 +4540,6 @@
 
 #include "config_chip.h"
 #include "board.h"
-
-/*
- * Define BMI macro when BMI160 is defined
- * TODO(chingkang): replace all BMI160 macro by BMI.
- */
-#ifdef CONFIG_MAG_BMI160_BMM150
-#define CONFIG_MAG_BMI_BMM150
-#endif
-
-#ifdef CONFIG_MAG_BMI160_LIS2MDL
-#define CONFIG_MAG_BMI_LIS2MDL
-#endif
 
 /*
  * Define CONFIG_HOST_ESPI_VW_POWER_SIGNAL if any power signals from the host

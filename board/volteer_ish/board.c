@@ -6,7 +6,7 @@
 /* Volteer ISH board-specific configuration */
 
 #include "console.h"
-#include "driver/accelgyro_bmi160.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_bma2x2.h"
 #include "gpio.h"
 #include "hooks.h"
