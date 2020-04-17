@@ -7,11 +7,20 @@
  * Memory mapping for STM32G431xb. The STM32G431xb is a category 2 device within
  * the STM32G4 chip family. Category 2 devices have either 32, 64, or 128 kB of
  * internal flash. The 'xB' indicates 128 kB of internal flash.
+ *
+ * STM32G431x is a single bank only device consisting of 64 pages of 2 kB
+ * each. It supports both a mass erase or page erase feature. Note that
+ * CONFIG_FLASH_BANK_SIZE is consistent with page size as defined in RM0440 TRM
+ * for the STM32G4 chip family. The minimum erase size is 1 page.
+ *
+ * The minimum write size for STM32G4 is 8 bytes. Cros-EC does not support
+ * PSTATE in single bank memories with a write size > 4 bytes.
  */
 #define CONFIG_FLASH_SIZE       (128 * 1024)
 #define CONFIG_FLASH_WRITE_SIZE 0x0004
-#define CONFIG_FLASH_ERASE_SIZE 0x0800
-#define CONFIG_FLASH_BANK_SIZE CONFIG_FLASH_SIZE
+#define CONFIG_FLASH_BANK_SIZE (2 * 1024)
+#define CONFIG_FLASH_ERASE_SIZE CONFIG_FLASH_BANK_SIZE
+
 
 /* Erasing 128K can take up to 2s, need to defer erase. */
 #define CONFIG_FLASH_DEFERRED_ERASE

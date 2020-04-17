@@ -111,8 +111,7 @@
 #endif
 
 /* Embedded flash option bytes base address */
-#define STM32_OPTB_BASE             0x1FFFC000
-#define STM32_OTP_BASE              0x1FFF7800
+#define STM32_OPTB_BASE             0x1FFF7800
 
 /* Peripheral base addresses */
 #define STM32_PERIPH_BASE           (0x40000000UL)
@@ -735,89 +734,84 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define  STM32_DBGMCU_APB2FZ_TIM20                  BIT(20)
 
 /* --- Flash --- */
-#define STM32_FLASH_ACR             REG32(STM32_FLASH_REGS_BASE + 0x00)
-#define STM32_FLASH_KEYR            REG32(STM32_FLASH_REGS_BASE + 0x04)
-#define STM32_FLASH_OPTKEYR         REG32(STM32_FLASH_REGS_BASE + 0x08)
-#define STM32_FLASH_SR              REG32(STM32_FLASH_REGS_BASE + 0x0c)
-#define STM32_FLASH_CR              REG32(STM32_FLASH_REGS_BASE + 0x10)
-#define STM32_FLASH_OPTCR           REG32(STM32_FLASH_REGS_BASE + 0x14)
+#define STM32_FLASH_REG(off)        REG32(STM32_FLASH_REGS_BASE + (off))
+#define STM32_FLASH_ACR             STM32_FLASH_REG(0x00)
+#define STM32_FLASH_PDKEYR          STM32_FLASH_REG(0x04)
+#define STM32_FLASH_KEYR            STM32_FLASH_REG(0x08)
+#define STM32_FLASH_OPTKEYR         STM32_FLASH_REG(0x0c)
+#define STM32_FLASH_SR              STM32_FLASH_REG(0x10)
+#define STM32_FLASH_CR              STM32_FLASH_REG(0x14)
+#define STM32_FLASH_ECCR            STM32_FLASH_REG(0x18)
+#define STM32_FLASH_OPTR            STM32_FLASH_REG(0x20)
+#define STM32_FLASH_PCROP1SR        STM32_FLASH_REG(0x24)
+#define STM32_FLASH_PCROP1ER        STM32_FLASH_REG(0x28)
+#define STM32_FLASH_WRP1AR          STM32_FLASH_REG(0x2C)
+#define STM32_FLASH_WRP1BR          STM32_FLASH_REG(0x30)
 
-/* --- FLASH ACR Bit Definitions --- */
-#define STM32_FLASH_ACR_SHIFT           0
-#define STM32_FLASH_ACR_LAT_MASK        0xf
-#define STM32_FLASH_ACR_PRFTEN          BIT(8)
-#define STM32_FLASH_ACR_ICEN            BIT(9)
-#define STM32_FLASH_ACR_DCEN            BIT(10)
-#define STM32_FLASH_ACR_ICRST           BIT(11)
-#define STM32_FLASH_ACR_DCRST           BIT(12)
-/* --- FLASH KEYR Bit Definitions --- */
-#define  FLASH_KEYR_KEY1                0x45670123
-#define  FLASH_KEYR_KEY2                0xCDEF89AB
-/* --- FLASH OPTKEYR Bit Definitions --- */
-#define  FLASH_OPTKEYR_KEY1             0x08192A3B
-#define  FLASH_OPTKEYR_KEY2             0x4C5D6E7F
-/* --- FLASH SR Bit Definitions --- */
-#define  FLASH_SR_EOP                   BIT(0)
-#define  FLASH_SR_OPERR                 BIT(1)
-#define  FLASH_SR_WRPERR                BIT(4)
-#define  FLASH_SR_PGAERR                BIT(5)
-#define  FLASH_SR_PGPERR                BIT(6)
-#define  FLASH_SR_PGSERR                BIT(7)
-#define  FLASH_SR_RDERR                 BIT(8)
-#define  FLASH_SR_ALL_ERR \
-	(FLASH_SR_OPERR | FLASH_SR_WRPERR | FLASH_SR_PGAERR | \
-	 FLASH_SR_PGPERR | FLASH_SR_PGSERR | FLASH_SR_RDERR)
-#define  FLASH_SR_BUSY                   BIT(16)
 /* --- FLASH CR Bit Definitions --- */
-#define  FLASH_CR_PG                    BIT(0)
-#define  FLASH_CR_PER                   BIT(1)
-#define  FLASH_CR_MER                   BIT(2)
-#define STM32_FLASH_CR_SNB_OFFSET       (3)
-#define STM32_FLASH_CR_SNB(sec) \
-	(((sec) & 0xf) << STM32_FLASH_CR_SNB_OFFSET)
-#define STM32_FLASH_CR_SNB_MASK         (STM32_FLASH_CR_SNB(0xf))
-#define STM32_FLASH_CR_PSIZE_OFFSET     (8)
-#define STM32_FLASH_CR_PSIZE(size) \
-	(((size) & 0x3) << STM32_FLASH_CR_PSIZE_OFFSET)
-#define STM32_FLASH_CR_PSIZE_MASK       (STM32_FLASH_CR_PSIZE(0x3))
-#define  FLASH_CR_STRT                  BIT(16)
-#define  FLASH_CR_LOCK                  BIT(31)
-/* --- FLASH OPTCR Bit Definitions --- */
-#define  FLASH_OPTLOCK                  BIT(0)
-#define  FLASH_OPTSTRT                  BIT(1)
-#define STM32_FLASH_BOR_LEV_OFFSET      (2)
-#define  FLASH_OPTCR_RDP_SHIFT		(8)
-#define  FLASH_OPTCR_RDP_MASK		(0xFF << FLASH_OPTCR_RDP_SHIFT)
-#define  FLASH_OPTCR_RDP_LEVEL_0		(0xAA << FLASH_OPTCR_RDP_SHIFT)
-/* RDP Level 1: Anything but 0xAA/0xCC */
-#define  FLASH_OPTCR_RDP_LEVEL_1		(0x00 << FLASH_OPTCR_RDP_SHIFT)
-#define  FLASH_OPTCR_RDP_LEVEL_2		(0xCC << FLASH_OPTCR_RDP_SHIFT)
-#define STM32_FLASH_nWRP_OFFSET         (16)
-#define STM32_FLASH_nWRP(_bank)         BIT(_bank + STM32_FLASH_nWRP_OFFSET)
-#define STM32_FLASH_nWRP_ALL            (0xFF << STM32_FLASH_nWRP_OFFSET)
-#define STM32_FLASH_OPT_LOCKED      (STM32_FLASH_OPTCR & FLASH_OPTLOCK)
+#define STM32_FLASH_ACR_LATENCY_SHIFT (0)
+#define STM32_FLASH_ACR_LATENCY_MASK  (0xf << STM32_FLASH_ACR_LATENCY_SHIFT)
+#define STM32_FLASH_ACR_PRFTEN      BIT(8)
+#define STM32_FLASH_ACR_ICEN        BIT(9)
+#define STM32_FLASH_ACR_DCEN        BIT(10)
+#define STM32_FLASH_ACR_ICRST       BIT(11)
+#define STM32_FLASH_ACR_DCRST       BIT(12)
 
-#define STM32_OPTB_RDP_USER         REG32(STM32_OPTB_BASE + 0x00)
-#define STM32_OPTB_RDP_OFF              0x00
-#define STM32_OPTB_USER_OFF             0x02
-#define STM32_OPTB_WRP_OFF(n)       (0x08 + (n&3) * 2)
-#define STM32_OPTB_WP               REG32(STM32_OPTB_BASE + 0x08)
-#define STM32_OPTB_nWRP(_bank)          BIT(_bank)
-#define STM32_OPTB_nWRP_ALL             (0xFF)
+/* --- FLASH KEYR Bit Definitions --- */
+#define  FLASH_KEYR_KEY1            0x45670123
+#define  FLASH_KEYR_KEY2            0xCDEF89AB
 
-#define STM32_OPTB_COMPL_SHIFT      8
+/* --- FLASH OPTKEYR Bit Definitions --- */
+#define  FLASH_OPTKEYR_KEY1         0x08192A3B
+#define  FLASH_OPTKEYR_KEY2         0x4C5D6E7F
 
-#define STM32_OTP_BLOCK_NB              16
-#define STM32_OTP_BLOCK_SIZE            32
-#define STM32_OTP_BLOCK_DATA(_block, _offset) \
-	(STM32_OTP_BASE + STM32_OTP_BLOCK_SIZE * (_block) + (_offset) * 4)
-#define STM32_OTP_UNLOCK_BYTE           0x00
-#define STM32_OTP_LOCK_BYTE             0xFF
-#define STM32_OTP_LOCK_BASE         \
-	(STM32_OTP_BASE + STM32_OTP_BLOCK_NB * STM32_OTP_BLOCK_SIZE)
-#define STM32_OTP_LOCK(_block) \
-	(STM32_OTP_LOCK_BASE + ((_block) / 4) * 4)
-#define STM32_OPT_LOCK_MASK(_block)    ((0xFF << ((_block) % 4) * 8))
+/* --- FLASH SR Bit Definitions --- */
+#define  FLASH_SR_BUSY              BIT(16)
+#define  FLASH_SR_OPTVERR           BIT(15)
+#define  FLASH_SR_RDERR             BIT(14)
+#define  FLASH_SR_FASTERR           BIT(9)
+#define  FLASH_SR_MISERR            BIT(8)
+#define  FLASH_SR_PGSERR            BIT(7)
+#define  FLASH_SR_SIZERR            BIT(6)
+#define  FLASH_SR_PGAERR            BIT(5)
+#define  FLASH_SR_WRPERR            BIT(4)
+#define  FLASH_SR_PROGERR           BIT(3)
+#define  FLASH_SR_OPERR             BIT(1)
+#define  FLASH_SR_ERR_MASK          (FLASH_SR_OPTVERR | FLASH_SR_RDERR | \
+				     FLASH_SR_FASTERR | FLASH_SR_PGSERR | \
+				     FLASH_SR_SIZERR | FLASH_SR_PGAERR |  \
+				     FLASH_SR_WRPERR |  FLASH_SR_PROGERR | \
+				     FLASH_SR_OPERR)
+
+/* --- FLASH CR Bit Definitions --- */
+#define  FLASH_CR_PG                BIT(0)
+#define  FLASH_CR_PER               BIT(1)
+#define  FLASH_CR_STRT              BIT(16)
+#define  FLASH_CR_OPTSTRT           BIT(17)
+#define  FLASH_CR_OBL_LAUNCH        BIT(27)
+#define  FLASH_CR_OPTLOCK           BIT(30)
+#define  FLASH_CR_LOCK              BIT(31)
+#define  FLASH_CR_PNB(sec)          (((sec) & 0x7f) << 3)
+#define  FLASH_CR_PNB_MASK          FLASH_CR_PNB(0x7f)
+
+#define STM32_FLASH_MIN_WRITE_SIZE  (CONFIG_FLASH_WRITE_SIZE * 2)
+
+/* --- FLASH Option bytes --- */
+#define STM32_OPTB_USER_RDP         REG32(STM32_OPTB_BASE + 0x00)
+#define STM32_OPTB_PCROP1_START     REG32(STM32_OPTB_BASE + 0x08)
+#define STM32_OPTB_PCROP1_END       REG32(STM32_OPTB_BASE + 0x10)
+#define STM32_OPTB_WRP1AR           REG32(STM32_OPTB_BASE + 0x18)
+#define STM32_OPTB_WRP1BR           REG32(STM32_OPTB_BASE + 0x20)
+#define STM32_OPTB_SECURE_MEM       REG32(STM32_OPTB_BASE + 0x28)
+
+#define STM32_OPTB_REG_READ(n)  REG32(STM32_FLASH_REG(0x20) + (n * 4))
+#define STM32_OPTB_READ(n)      REG32(STM32_OPTB_BASE + ((n) * 8))
+#define STM32_OPTB_COMP_READ(n) REG32(STM32_OPTB_BASE + ((n) * 8) + 0x4)
+
+#define STM32_OPTB_USER_nBOOT1      BIT(23)
+#define STM32_OPTB_USER_nSWBOOT0    BIT(26)
+#define STM32_OPTB_USER_nBOOT0      BIT(27)
+#define STM32_OPTB_ENTRY_NUM 6
 
 /* --- External Interrupts --- */
 #define STM32_EXTI_IMR              REG32(STM32_EXTI_BASE + 0x00)

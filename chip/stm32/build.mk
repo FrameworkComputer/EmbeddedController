@@ -62,7 +62,12 @@ ifndef CONFIG_KEYBOARD_NOT_RAW
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
 chip-$(HAS_TASK_POWERLED)+=power_led.o
+ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32g4 stm32l4))
+# STM32G4 and STM32L4 use the same flash IP block
+chip-y+=flash-stm32g4-l4.o
+else
 chip-$(CONFIG_FLASH_PHYSICAL)+=flash-$(CHIP_FAMILY).o
+endif
 ifdef CONFIG_FLASH_PHYSICAL
 chip-$(CHIP_FAMILY_STM32F0)+=flash-f.o
 chip-$(CHIP_FAMILY_STM32F3)+=flash-f.o
