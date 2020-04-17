@@ -366,7 +366,7 @@ enum pd_alternate_modes {
 
 /* Discover all SOP* communications when enabled */
 #ifdef CONFIG_USB_PD_DECODE_SOP
-#define DISCOVERY_TYPE_COUNT (TCPC_TX_SOP_PRIME_PRIME + 1)
+#define DISCOVERY_TYPE_COUNT (TCPC_TX_SOP_PRIME + 1)
 #else
 #define DISCOVERY_TYPE_COUNT (TCPC_TX_SOP + 1)
 #endif
