@@ -89,13 +89,14 @@
 
 /*
  * Clear all flags except TC_FLAGS_AUTO_TOGGLE_SUPPORTED,
- * TC_FLAGS_LPM_REQUESTED, and TC_FLAGS_LPM_ENGAGED if
- * they are set.
+ * TC_FLAGS_LPM_REQUESTED, TC_FLAGS_LPM_ENGAGED and
+ * TC_FLAGS_SUSPEND if they are set.
  */
-#define CLR_ALL_BUT_LPM_FLAGS(port) (tc[port].flags &= \
-	(TC_FLAGS_AUTO_TOGGLE_SUPPORTED | \
-	TC_FLAGS_LPM_REQUESTED | \
-	TC_FLAGS_LPM_ENGAGED))
+#define CLR_ALL_BUT_LPM_FLAGS(port) (TC_CLR_FLAG(port, \
+	~(TC_FLAGS_AUTO_TOGGLE_SUPPORTED | \
+	  TC_FLAGS_LPM_REQUESTED | \
+	  TC_FLAGS_LPM_ENGAGED | \
+	  TC_FLAGS_SUSPEND)))
 
 /* 10 ms is enough time for any TCPC transaction to complete. */
 #define PD_LPM_DEBOUNCE_US (10 * MSEC)
@@ -699,19 +700,40 @@ void tc_src_power_off(int port)
 	}
 }
 
+/*
+ * Depending on the load on the processor and the tasks running
+ * it can take a while for the task associated with this port
+ * to run.  So build in 1ms delays, for up to 300ms, to wait for
+ * the suspend to actually happen.
+ */
+#define SUSPEND_SLEEP_DELAY	1
+#define SUSPEND_SLEEP_RETRIES	300
+
 void pd_set_suspend(int port, int suspend)
 {
 	if (pd_is_port_enabled(port) == !suspend)
 		return;
 
 	/* Track if we are suspended or not */
-	if (suspend)
-		TC_SET_FLAG(port, TC_FLAGS_SUSPEND);
-	else
-		TC_CLR_FLAG(port, TC_FLAGS_SUSPEND);
+	if (suspend) {
+		int wait = 0;
 
-	/* Wake up pd_task to respond to the state change. */
-	task_wake(PD_PORT_TO_TASK_ID(port));
+		TC_SET_FLAG(port, TC_FLAGS_SUSPEND);
+		task_wake(PD_PORT_TO_TASK_ID(port));
+
+		/* Sleep this task if we are not suspended */
+		while (pd_is_port_enabled(port)) {
+			if (++wait > SUSPEND_SLEEP_RETRIES) {
+				CPRINTS("P%d: NOT SUSPENDED after %dms",
+					port, wait * SUSPEND_SLEEP_DELAY);
+				return;
+			}
+			msleep(SUSPEND_SLEEP_DELAY);
+		}
+	} else {
+		TC_CLR_FLAG(port, TC_FLAGS_SUSPEND);
+		task_wake(PD_PORT_TO_TASK_ID(port));
+	}
 }
 
 int pd_is_port_enabled(int port)
@@ -3238,8 +3260,12 @@ void tc_run(const int port)
 	 * be suspended then we need to go directly to
 	 * DISABLED
 	 */
-	if (TC_CHK_FLAG(port, TC_FLAGS_SUSPEND))
+	if (TC_CHK_FLAG(port, TC_FLAGS_SUSPEND)) {
+		/* Invalidate a contract, if there is one */
+		pe_invalidate_explicit_contract(port);
+
 		set_state_tc(port, TC_DISABLED);
+	}
 
 	run_state(port, &tc[port].ctx);
 }
