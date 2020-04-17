@@ -3171,18 +3171,6 @@ static void pe_drs_send_swap_run(int port)
 	}
 
 	/*
-	 * Transition to PE_SRC_Ready or PE_SNK_Ready state when:
-	 *   1) Or the SenderResponseTimer times out.
-	 */
-	if (get_time().val > pe[port].sender_response_timer) {
-		if (pe[port].power_role == PD_ROLE_SINK)
-			set_state_pe(port, PE_SNK_READY);
-		else
-			set_state_pe(port, PE_SRC_READY);
-		return;
-	}
-
-	/*
 	 * Transition to PE_DRS_Change when:
 	 *   1) An Accept Message is received.
 	 *
@@ -3202,7 +3190,8 @@ static void pe_drs_send_swap_run(int port)
 				set_state_pe(port, PE_DRS_CHANGE);
 				return;
 			} else if ((type == PD_CTRL_REJECT) ||
-						(type == PD_CTRL_WAIT)) {
+					(type == PD_CTRL_WAIT) ||
+					(type == PD_CTRL_NOT_SUPPORTED)) {
 				if (type == PD_CTRL_WAIT)
 					PE_SET_FLAG(port,
 						PE_FLAGS_WAITING_DR_SWAP);
