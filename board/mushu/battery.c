@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -8,7 +8,6 @@
 #include "battery_fuel_gauge.h"
 #include "common.h"
 #include "util.h"
-
 /*
  * Battery info for all Mushu battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
@@ -32,30 +31,30 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* SMP LIS Dell FMXMT Battery Information */
-	[BATTERY_SMP_LIS] = {
+	/* POW-TECH Battery Information */
+	[BATTERY_POWER_TECH] = {
 		.fuel_gauge = {
-			.manuf_name = "SMP-LIS3.78",
+			.manuf_name = "POW-TECH",
 			.ship_mode = {
 				.reg_addr = 0x0,
 				.reg_data = { 0x10, 0x10 },
 			},
 			.fet = {
-				.reg_addr = 0x0,
+				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
 			}
 		},
 		.batt_info = {
-			.voltage_max		= 8800,
-			.voltage_normal		= 7660, /* mV */
-			.voltage_min		= 6000, /* mV */
+			.voltage_max		= 13200,
+			.voltage_normal		= 11550, /* mV */
+			.voltage_min		= 9000, /* mV */
 			.precharge_current	= 256,	/* mA */
 			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 60,
+			.start_charging_max_c	= 45,
 			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
+			.charging_max_c		= 45,
+			.discharging_min_c	= -20,
 			.discharging_max_c	= 60,
 		},
 	},
@@ -75,19 +74,19 @@ const struct board_batt_params board_battery_info[] = {
 			}
 		},
 		.batt_info = {
-			.voltage_max		= 8800,
-			.voltage_normal		= 7660, /* mV */
-			.voltage_min		= 6000, /* mV */
+			.voltage_max		= 13200,
+			.voltage_normal		= 11550, /* mV */
+			.voltage_min		= 9000, /* mV */
 			.precharge_current	= 256,	/* mA */
 			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 60,
+			.start_charging_max_c	= 45,
 			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
+			.charging_max_c		= 45,
+			.discharging_min_c	= -20,
 			.discharging_max_c	= 60,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SMP_SDI;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_POWER_TECH;
