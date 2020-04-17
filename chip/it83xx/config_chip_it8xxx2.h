@@ -107,6 +107,8 @@
 /* Pins of group K and L are set as internal pull-down at initialization. */
 #define IT83XX_GPIO_GROUP_K_L_DEFAULT_PULL_DOWN
 #endif
+/* GPIOH7 is set as output low at initialization. */
+#define IT83XX_GPIO_H7_DEFAULT_OUTPUT_LOW
 /* All GPIOs support interrupt on rising, falling, and either edge. */
 #define IT83XX_GPIO_INT_FLEXIBLE
 /* Enable detect type-c plug in interrupt. */

@@ -725,6 +725,18 @@ void gpio_pre_init(void)
 		}
 	}
 
+	/*
+	 * On IT81202/IT81302, the GPIOH7 isn't bonding with pad and is left
+	 * floating internally. We need to enable internal pull-down for the pin
+	 * to prevent leakage current, but IT81202/IT81302 doesn't have the
+	 * capability to pull it down. We can only set it as output low,
+	 * so we enable output low for it at initialization to prevent leakage.
+	 */
+	if (IS_ENABLED(IT83XX_GPIO_H7_DEFAULT_OUTPUT_LOW)) {
+		IT83XX_GPIO_CTRL(GPIO_H, 7) = GPCR_PORT_PIN_MODE_OUTPUT;
+		IT83XX_GPIO_DATA(GPIO_H) &= ~BIT(7);
+	}
+
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		flags = g->flags;
 
