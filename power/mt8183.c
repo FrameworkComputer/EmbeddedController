@@ -44,7 +44,11 @@
 #define IN_ALL_S0		(IN_PGOOD_S0 & ~IN_SUSPEND_ASSERTED)
 
 /* Long power key press to force shutdown in S0. go/crosdebug */
+#ifdef VARIANT_KUKUI_JACUZZI
+#define FORCED_SHUTDOWN_DELAY	(8 * SECOND)
+#else
 #define FORCED_SHUTDOWN_DELAY	(10 * SECOND)
+#endif
 
 /* Long power key press to boot from S5/G3 state. */
 #ifndef POWERBTN_BOOT_DELAY
