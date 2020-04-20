@@ -364,6 +364,75 @@ struct pd_cable *pd_get_cable_attributes(int port)
 	return &cable[port];
 }
 
+static int process_am_discover_ident_sop(int port, int cnt,
+					uint32_t head, uint32_t *payload,
+					enum tcpm_transmit_type *rtype)
+{
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP) && is_sop_prime_ready(port) &&
+	    board_is_tbt_usb4_port(port)) {
+		pd_dfp_discovery_init(port);
+		dfp_consume_identity(port, cnt, payload);
+
+		/* Enable USB4 mode if USB4 VDO present and port partner
+		 * supports USB Rev 3.0.
+		 */
+		if (is_usb4_vdo(port, cnt, payload) &&
+		    PD_HEADER_REV(head) == PD_REV30)
+			enable_usb4_mode(port);
+
+		/*
+		 * Enable Thunderbolt-compatible mode if the modal operation is
+		 * supported.
+		 */
+		if (is_modal(port, cnt, payload))
+			enable_tbt_compat_mode(port);
+
+		if (is_modal(port, cnt, payload) ||
+		    is_usb4_vdo(port, cnt, payload)) {
+			*rtype = TCPC_TX_SOP_PRIME;
+			return dfp_discover_ident(payload);
+		}
+	} else {
+		pd_dfp_discovery_init(port);
+		dfp_consume_identity(port, cnt, payload);
+	}
+
+	return dfp_discover_svids(payload);
+}
+
+static int process_am_discover_ident_sop_prime(int port, int cnt,
+					uint32_t head, uint32_t *payload)
+{
+	/* Store cable type */
+	dfp_consume_cable_response(port, cnt, payload, head);
+
+	/*
+	 * Enter USB4 mode if the cable supports USB4 operation and has USB4
+	 * VDO.
+	 */
+	if (is_usb4_mode_enabled(port) &&
+	    is_cable_ready_to_enter_usb4(port, cnt)) {
+		enable_enter_usb4_mode(port);
+		usb_mux_set_safe_mode(port);
+		/*
+		 * To change the mode of operation from USB4 the port needs to
+		 * be reconfigured.
+		 * Ref: USB Type-C Cable and Connectot Spec section 5.4.4.
+		 */
+		disable_tbt_compat_mode(port);
+		return 0;
+	}
+
+	/*
+	 * Disable Thunderbolt-compatible mode if the cable does not support
+	 * superspeed.
+	 */
+	if (is_tbt_compat_enabled(port) && !is_tbt_cable_superspeed(port))
+		disable_tbt_compat_mode(port);
+
+	return dfp_discover_svids(payload);
+}
+
 static int process_am_discover_svids(int port, int cnt, uint32_t *payload,
 				enum tcpm_transmit_type sop,
 				enum tcpm_transmit_type *rtype)
@@ -594,73 +663,12 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 		case CMD_DISCOVER_IDENT:
 			/* Received a SOP' Discover Ident msg */
 			if (sop == TCPC_TX_SOP_PRIME) {
-				/* Store cable type */
-				dfp_consume_cable_response(port, cnt, payload,
-						       head);
-				/*
-				 * Enter USB4 mode if the cable supports USB4
-				 * operation and has USB4 VDO.
-				 */
-				if (is_usb4_mode_enabled(port) &&
-				    is_cable_ready_to_enter_usb4(port, cnt)) {
-					enable_enter_usb4_mode(port);
-					usb_mux_set_safe_mode(port);
-					/*
-					 * To change the mode of operation from
-					 * USB4 the port needs to be
-					 * reconfigured.
-					 * Ref: USB Type-C Cable and Connectot
-					 * Specification section 5.4.4.
-					 *
-					 */
-					disable_tbt_compat_mode(port);
-					rsize = 0;
-					break;
-				}
-
-				/*
-				 * Disable Thunderbolt-compatible mode if the
-				 * cable does not support superspeed
-				 */
-				if (is_tbt_compat_enabled(port) &&
-					!is_tbt_cable_superspeed(port)) {
-					disable_tbt_compat_mode(port);
-				}
-
-				rsize = dfp_discover_svids(payload);
+				rsize = process_am_discover_ident_sop_prime(
+						port, cnt, head, payload);
 			/* Received a SOP Discover Ident Message */
-			} else if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP) &&
-				is_sop_prime_ready(port) &&
-				board_is_tbt_usb4_port(port)) {
-				pd_dfp_discovery_init(port);
-				dfp_consume_identity(port, cnt, payload);
-
-				/* Enable USB4 mode if USB4 VDO present
-				 * and port partner supports USB Rev 3.0.
-				 */
-				if (is_usb4_vdo(port, cnt, payload) &&
-				    PD_HEADER_REV(head)	== PD_REV30) {
-					enable_usb4_mode(port);
-				}
-
-				/*
-				 * Enable Thunderbolt-compatible mode
-				 * if the modal operation is supported
-				 */
-				if (is_modal(port, cnt, payload))
-					enable_tbt_compat_mode(port);
-
-				if (is_modal(port, cnt, payload) ||
-				    is_usb4_vdo(port, cnt, payload)) {
-					rsize = dfp_discover_ident(payload);
-					*rtype = TCPC_TX_SOP_PRIME;
-				} else {
-					rsize = dfp_discover_svids(payload);
-				}
 			} else {
-				pd_dfp_discovery_init(port);
-				dfp_consume_identity(port, cnt, payload);
-				rsize = dfp_discover_svids(payload);
+				rsize = process_am_discover_ident_sop(port,
+						cnt, head, payload, rtype);
 			}
 #ifdef CONFIG_CHARGE_MANAGER
 			if (pd_charge_from_device(pd_get_identity_vid(port),
