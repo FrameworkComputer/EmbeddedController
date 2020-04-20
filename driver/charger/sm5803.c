@@ -39,6 +39,8 @@ static const struct charger_info sm5803_charger_info = {
 
 static uint32_t irq_pending; /* Bitmask of chips with interrupts pending */
 
+static struct mutex flow1_access_lock[CHARGER_NUM];
+
 static int sm5803_is_sourcing_otg_power(int chgnum, int port);
 
 static inline enum ec_error_list chg_read8(int chgnum, int offset, int *value)
@@ -375,25 +377,31 @@ static enum ec_error_list sm5803_set_mode(int chgnum, int mode)
 	enum ec_error_list rv;
 	int flow1_reg, flow2_reg;
 
+	mutex_lock(&flow1_access_lock[chgnum]);
+
 	rv = chg_read8(chgnum, SM5803_REG_FLOW2, &flow2_reg);
-	if (rv)
+	rv |= chg_read8(chgnum, SM5803_REG_FLOW1, &flow1_reg);
+	if (rv) {
+		mutex_unlock(&flow1_access_lock[chgnum]);
 		return rv;
+	}
 
 	/*
-	 * Note: when charging or inhibiting charge, ensure bits to source Vbus
-	 * in flow1 are zeroed.
+	 * Note: Charge may be enabled while OTG is enabled, but should be
+	 * disabled whenever inhibit is called.
 	 */
 	if (mode & CHARGE_FLAG_INHIBIT_CHARGE) {
 		flow1_reg = 0;
 		flow2_reg &= ~SM5803_FLOW2_AUTO_ENABLED;
 	} else {
-		flow1_reg = SM5803_FLOW1_CHG_EN;
+		flow1_reg |= SM5803_FLOW1_CHG_EN;
 		flow2_reg |= SM5803_FLOW2_AUTO_ENABLED;
 	}
 
 	rv = chg_write8(chgnum, SM5803_REG_FLOW1, flow1_reg);
 	rv |= chg_write8(chgnum, SM5803_REG_FLOW2, flow2_reg);
 
+	mutex_unlock(&flow1_access_lock[chgnum]);
 	return rv;
 }
 
@@ -589,9 +597,12 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 		rv = chg_write8(chgnum, SM5803_REG_ANA_EN1, reg);
 	}
 
+	mutex_lock(&flow1_access_lock[chgnum]);
 	rv = chg_read8(chgnum, SM5803_REG_FLOW1, &reg);
-	if (rv)
+	if (rv) {
+		mutex_unlock(&flow1_access_lock[chgnum]);
 		return rv;
+	}
 
 	/*
 	 * Enable: CHG_EN - turns on buck-boost
@@ -599,18 +610,18 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 	 *	   DIRECTCHG_SOURCE_EN - enable current loop (for designs with
 	 *	   no external Vbus FET)
 	 *
-	 * Disable: disable above, note this SHOULD NOT be done while the port
-	 *	    is charging, as turning off CHG_EN will disable charging
-	 *	    as well
+	 * Disable: disable bits above except CHG_EN, which should only be
+	 *	    disabled through set_mode.
 	 */
 	if (enabled)
 		reg |= (SM5803_FLOW1_CHG_EN | SM5803_FLOW1_VBUSIN_DISCHG_EN |
 						SM5803_FLOW1_DIRECTCHG_SRC_EN);
 	else
-		reg &= ~(SM5803_FLOW1_CHG_EN | SM5803_FLOW1_VBUSIN_DISCHG_EN |
+		reg &= ~(SM5803_FLOW1_VBUSIN_DISCHG_EN |
 						SM5803_FLOW1_DIRECTCHG_SRC_EN);
 
 	rv = chg_write8(chgnum, SM5803_REG_FLOW1, reg);
+	mutex_unlock(&flow1_access_lock[chgnum]);
 	return rv;
 }
 
