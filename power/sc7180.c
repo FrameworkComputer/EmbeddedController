@@ -84,8 +84,12 @@
 /* Wait for polling if the switchcap outputs good voltage */
 #define SWITCHCAP_PG_CHECK_WAIT		(5 * MSEC)
 
-/* Delay between power-on the system and power-on the PMIC */
-#define SYSTEM_POWER_ON_DELAY		(10 * MSEC)
+/*
+ * Delay between power-on the system and power-on the PMIC.
+ * Some latest PMIC firmware needs this delay longer, for doing a cold
+ * reboot. Did an experiment; it should be 100ms+. Set it with margin.
+ */
+#define SYSTEM_POWER_ON_DELAY		(110 * MSEC)
 
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
