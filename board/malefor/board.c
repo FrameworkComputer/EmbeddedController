@@ -15,6 +15,7 @@
 #include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -29,10 +30,21 @@
 
 #include "gpio_list.h" /* Must come after other header files. */
 
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+
 static void board_init(void)
 {
-	/* Enable gpio interrupt for base accelgyro sensor */
-	gpio_enable_interrupt(GPIO_EC_IMU_INT_L);
+	if (ec_config_has_tablet_mode()) {
+		/* Enable gpio interrupt for base accelgyro sensor */
+		gpio_enable_interrupt(GPIO_EC_IMU_INT_L);
+	} else {
+		motion_sensor_count = 0;
+		/* Device is clamshell only */
+		tablet_set_mode(0);
+		/* Gyro is not present, don't allow line to float */
+		gpio_set_flags(GPIO_EC_IMU_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
+	}
 
 	/* Enable gpio interrupt for camera vsync */
 	gpio_enable_interrupt(GPIO_EC_CAM_VSYN_SLP_S0IX);
@@ -46,6 +58,24 @@ static void board_init(void)
 	pwm_set_duty(PWM_CH_LED4_SIDESEL, 50);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+int board_is_lid_angle_tablet_mode(void)
+{
+	return ec_config_has_tablet_mode();
+}
+
+/* Enable or disable input devices, based on tablet mode or chipset state */
+#ifndef TEST_BUILD
+void lid_angle_peripheral_enable(int enable)
+{
+	if (ec_config_has_tablet_mode()) {
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
+			tablet_get_mode())
+			enable = 0;
+		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+	}
+}
+#endif
 
 /******************************************************************************/
 /* Sensors */

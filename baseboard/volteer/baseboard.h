@@ -279,6 +279,21 @@ enum usb_db_id {
 #define CBI_FW_CONFIG_USB_DB_TYPE(bits) \
 	(((bits) & CBI_FW_CONFIG_USB_DB_MASK) >> CBI_FW_CONFIG_USB_DB_SHIFT)
 
+/*
+ * Tablet Mode (1 bit)
+ *
+ * ec_config_has_tablet_mode() will return 1 is present or 0
+ */
+enum ec_cfg_tablet_mode_type {
+	TABLET_MODE_NO = 0,
+	TABLET_MODE_YES = 1,
+};
+#define EC_CFG_TABLET_MODE_L		11
+#define EC_CFG_TABLET_MODE_H		11
+#define EC_CFG_TABLET_MODE_MASK \
+				GENMASK(EC_CFG_TABLET_MODE_H,\
+					EC_CFG_TABLET_MODE_L)
+
 extern enum gpio_signal ps8xxx_rst_odl;
 
 void board_reset_pd_mcu(void);
@@ -296,6 +311,8 @@ unsigned char get_board_id(void);
  * different board build phases.
  */
 __override_proto void config_volteer_gpios(void);
+
+enum ec_cfg_tablet_mode_type ec_config_has_tablet_mode(void);
 
 #endif /* !__ASSEMBLER__ */
 

@@ -581,10 +581,25 @@ static void config_db_usb3(void)
 }
 
 static uint8_t board_id;
+static uint32_t fw_config;
 
 uint8_t get_board_id(void)
 {
 	return board_id;
+}
+
+uint32_t get_fw_config(void)
+{
+	return fw_config;
+}
+
+/*
+ * ec_config_has_tablet_mode() will return 1 is present or 0
+ */
+enum ec_cfg_tablet_mode_type ec_config_has_tablet_mode(void)
+{
+	return ((get_fw_config() & EC_CFG_TABLET_MODE_MASK)
+			>> EC_CFG_TABLET_MODE_L);
 }
 
 __overridable void config_volteer_gpios(void)
@@ -614,11 +629,11 @@ static void cbi_init(void)
 	config_volteer_gpios();
 
 	/* FW config */
-
 	if (cbi_get_fw_config(&cbi_val) != EC_SUCCESS) {
 		CPRINTS("CBI: Read FW config failed, assuming USB4");
 		usb_db_val = USB_DB_USB4;
 	} else {
+		fw_config = cbi_val;
 		usb_db_val = CBI_FW_CONFIG_USB_DB_TYPE(cbi_val);
 	}
 
