@@ -9,6 +9,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "ioexpander.h"
+#include "system.h"
 #include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_GPIO, format, ## args)
@@ -171,9 +172,15 @@ int ioex_init(int ioex)
 	 * in gpio.inc
 	 */
 	for (i = 0; i < IOEX_COUNT; i++, g++) {
-		if (g->ioex == ioex && g->mask && !(g->flags & GPIO_DEFAULT)) {
+		int flags = g->flags;
+
+		if (g->ioex == ioex && g->mask && !(flags & GPIO_DEFAULT)) {
+			/* SysJump should not set the output levels */
+			if (system_jumped_to_this_image())
+				flags &= ~(GPIO_LOW | GPIO_HIGH);
+
 			drv->set_flags_by_mask(g->ioex, g->port,
-						g->mask, g->flags);
+						g->mask, flags);
 		}
 	}
 
