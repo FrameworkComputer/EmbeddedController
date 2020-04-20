@@ -23,8 +23,6 @@
 #include "i2c.h"
 #include "icelake.h"
 #include "keyboard_scan.h"
-#include "pwm.h"
-#include "pwm_chip.h"
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
@@ -168,51 +166,6 @@ const struct intel_x86_pwrok_signal pwrok_signal_deassert_list[] = {
 	},
 };
 const int pwrok_signal_deassert_count = ARRAY_SIZE(pwrok_signal_deassert_list);
-
-/******************************************************************************/
-/* PWM configuration */
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED1_BLUE] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 2400,
-	},
-	[PWM_CH_LED2_GREEN] = {
-		.channel = 0,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 2400,
-	},
-	[PWM_CH_LED3_RED] = {
-		.channel = 1,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 2400,
-	},
-	[PWM_CH_LED4_SIDESEL] = {
-		.channel = 7,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		/* Run at a higher frequency than the color PWM signals to avoid
-		 * timing-based color shifts.
-		 */
-		.freq = 4800,
-	},
-	[PWM_CH_FAN] = {
-		.channel = 5,
-		.flags = PWM_CONFIG_OPEN_DRAIN,
-		.freq = 25000
-	},
-	[PWM_CH_KBLIGHT] = {
-		.channel = 3,
-		.flags = 0,
-		/*
-		 * Set PWM frequency to multiple of 50 Hz and 60 Hz to prevent
-		 * flicker. Higher frequencies consume similar average power to
-		 * lower PWM frequencies, but higher frequencies record a much
-		 * lower maximum power.
-		 */
-		.freq = 2400,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /******************************************************************************/
 /* Temperature sensor configuration */
@@ -598,10 +551,6 @@ void board_overcurrent_event(int port, int is_overcurrented)
 
 static void baseboard_init(void)
 {
-	/* Illuminate motherboard and daughter board LEDs equally to start. */
-	pwm_enable(PWM_CH_LED4_SIDESEL, 1);
-	pwm_set_duty(PWM_CH_LED4_SIDESEL, 50);
-
 	/* Enable monitoring of the PROCHOT input to the EC */
 	gpio_enable_interrupt(GPIO_EC_PROCHOT_IN_L);
 }

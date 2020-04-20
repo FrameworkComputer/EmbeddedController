@@ -29,5 +29,6 @@ ENV_VARS := VOLTEER_POWER_SEQUENCE
 
 board-y=board.o
 board-y+=battery.o
+board-y+=led.o
 board-$(VOLTEER_POWER_SEQUENCE)+=power_sequence.o
 board-y+=sensors.o

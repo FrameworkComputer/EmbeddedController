@@ -130,9 +130,6 @@
 
 /* Common LED defines */
 #define CONFIG_LED_COMMON
-#define CONFIG_LED_PWM
-/* Although there are 2 LEDs, they are both controlled by the same lines. */
-#define CONFIG_LED_PWM_COUNT 1
 
 /* USB Type C and USB PD defines */
 /* Enable the new USB-C PD stack */
@@ -243,16 +240,6 @@ enum adc_channel {
 	ADC_TEMP_SENSOR_3_DDR_SOC,
 	ADC_TEMP_SENSOR_4_FAN,
 	ADC_CH_COUNT
-};
-
-enum pwm_channel {
-	PWM_CH_LED1_BLUE = 0,
-	PWM_CH_LED2_GREEN,
-	PWM_CH_LED3_RED,
-	PWM_CH_LED4_SIDESEL,
-	PWM_CH_FAN,
-	PWM_CH_KBLIGHT,
-	PWM_CH_COUNT
 };
 
 enum fan_channel {

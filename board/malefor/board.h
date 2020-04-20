@@ -19,6 +19,11 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
+/* LED defines */
+#define CONFIG_LED_PWM
+/* Although there are 2 LEDs, they are both controlled by the same lines. */
+#define CONFIG_LED_PWM_COUNT 1
+
 /* Keyboard features */
 
 /* Sensors */
@@ -119,6 +124,16 @@ enum battery_type {
 	BATTERY_LGC,
 	BATTERY_SUNWODA,
 	BATTERY_TYPE_COUNT,
+};
+
+enum pwm_channel {
+	PWM_CH_LED1_BLUE = 0,
+	PWM_CH_LED2_GREEN,
+	PWM_CH_LED3_RED,
+	PWM_CH_LED4_SIDESEL,
+	PWM_CH_FAN,
+	PWM_CH_KBLIGHT,
+	PWM_CH_COUNT
 };
 
 enum sensor_id {
