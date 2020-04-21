@@ -91,6 +91,14 @@
  */
 #define SYSTEM_POWER_ON_DELAY		(110 * MSEC)
 
+/*
+ * Delay between the PMIC power drop and power-off the system.
+ * Qualcomm measured the entire POFF duration is around 70ms. Setting
+ * this delay to 70ms is more than enough, as the PMIC power drop is in
+ * the middle of POFF duration.
+ */
+#define PMIC_POWER_OFF_DELAY		(70 * MSEC)
+
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
 static char power_button_was_pressed;
@@ -468,6 +476,7 @@ static void power_off(void)
 
 	/* Do a graceful way to shutdown PMIC/AP first */
 	set_pmic_pwron(0);
+	usleep(PMIC_POWER_OFF_DELAY);
 
 	/* Disable signal interrupts, as they are floating when switchcap off */
 	power_signal_disable_interrupt(GPIO_AP_RST_L);
