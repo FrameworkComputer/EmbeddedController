@@ -2747,8 +2747,17 @@ static __maybe_unused void check_drp_connection(const int port)
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	case DRP_TC_DRP_AUTO_TOGGLE:
 		/*
-		 * We are staying in PD_STATE_DRP_AUTO_TOGGLE
+		 * We are staying in PD_STATE_DRP_AUTO_TOGGLE or moving
+		 * from non-DRP to PD_STATE_DRP_AUTO_TOGGLE
+		 *     Set RC.DRP=1b (DRP)
+		 *     Set RC.CC1=10b or 01b (Rd or Rp)
+		 *     Set RC.CC2=10b or 01b (Rd or Rp)
 		 */
+		tcpm_set_connection(port,
+				    (PD_ROLE_DEFAULT(port) == PD_ROLE_SOURCE)
+					? TYPEC_CC_RP
+					: TYPEC_CC_RD,
+				    0);
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
 		break;
 #endif
