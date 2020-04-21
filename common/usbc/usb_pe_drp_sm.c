@@ -114,6 +114,8 @@
 #define PE_FLAGS_DISCOVER_PORT_CONTINUE      BIT(28)
 /* TODO: POLICY decision: Triggers a Vconn SWAP attempt to on */
 #define PE_FLAGS_VCONN_SWAP_TO_ON	     BIT(29)
+/* FLAG to track that VDM request to port partner timed out */
+#define PE_FLAGS_VDM_REQUEST_TIMEOUT	     BIT(30)
 
 /* 6.7.3 Hard Reset Counter */
 #define N_HARD_RESET_COUNT 2
@@ -4016,6 +4018,11 @@ static void pe_vdm_send_request_run(int port)
 	if (get_time().val > pe[port].vdm_response_timer) {
 		CPRINTF("VDM %s Response Timeout\n",
 				pe[port].partner_type ? "Cable" : "Port");
+		/*
+		 * Flag timeout so child state can mark appropriate discovery
+		 * item as failed.
+		 */
+		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT);
 
 		set_state_pe(port, get_last_state_pe(port));
 	}
@@ -4293,6 +4300,23 @@ static void pe_init_port_vdm_identity_request_run(int port)
 		/* Return to calling state */
 		set_state_pe(port, get_last_state_pe(port));
 		return;
+	}
+}
+
+static void pe_init_port_vdm_identity_request_exit(int port)
+{
+	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT)) {
+		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT);
+		/*
+		 * Mark failure to respond as discovery failure.
+		 *
+		 * For PD 2.0 partners (6.10.3 Applicability of Structured VDM
+		 * Commands Note 3):
+		 *
+		 * If Structured VDMs are not supported, a Structured VDM
+		 * Command received by a DFP or UFP Shall be Ignored.
+		 */
+		pd_set_identity_discovery(port, TCPC_TX_SOP, PD_DISC_FAIL);
 	}
 }
 
@@ -5348,6 +5372,7 @@ static const struct usb_state pe_states[] = {
 	[PE_INIT_PORT_VDM_IDENTITY_REQUEST] = {
 		.entry  = pe_init_port_vdm_identity_request_entry,
 		.run    = pe_init_port_vdm_identity_request_run,
+		.exit	= pe_init_port_vdm_identity_request_exit,
 		.parent = &pe_states[PE_VDM_SEND_REQUEST],
 	},
 	[PE_VDM_REQUEST] = {
