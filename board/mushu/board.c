@@ -382,9 +382,9 @@ const struct fan_rpm fan_rpm_0 = {
 };
 
 const struct fan_rpm fan_rpm_1 = {
-	.rpm_min = 3100,
-	.rpm_start = 3100,
-	.rpm_max = 6900,
+	.rpm_min = 2000,
+	.rpm_start = 2000,
+	.rpm_max = 4100,
 };
 const struct fan_t fans[FAN_CH_COUNT] = {
 	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
@@ -457,8 +457,8 @@ const static struct ec_thermal_config thermal_b = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(25),
-	.temp_fan_max = C_TO_K(50),
+	.temp_fan_off = C_TO_K(0),
+	.temp_fan_max = C_TO_K(70),
 };
 
 
