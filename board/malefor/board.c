@@ -38,7 +38,11 @@ static void board_init(void)
 	/* Enable gpio interrupt for camera vsync */
 	gpio_enable_interrupt(GPIO_EC_CAM_VSYN_SLP_S0IX);
 
-	/* Illuminate motherboard and daughter board LEDs equally to start. */
+	/*
+	 * TODO: b/154447182 - Malefor will control power LED and battery LED
+	 * independently, and keep the max brightness of power LED and battery
+	 * LED as 50%.
+	 */
 	pwm_enable(PWM_CH_LED4_SIDESEL, 1);
 	pwm_set_duty(PWM_CH_LED4_SIDESEL, 50);
 }
@@ -279,21 +283,6 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /******************************************************************************/
 /* PWM configuration */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED1_BLUE] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 2400,
-	},
-	[PWM_CH_LED2_GREEN] = {
-		.channel = 0,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 2400,
-	},
-	[PWM_CH_LED3_RED] = {
-		.channel = 1,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 2400,
-	},
 	[PWM_CH_LED4_SIDESEL] = {
 		.channel = 7,
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
