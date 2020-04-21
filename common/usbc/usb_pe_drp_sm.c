@@ -4798,17 +4798,15 @@ static void pe_vcs_send_swap_run(int port)
 			/*
 			 * Transition back to either the PE_SRC_Ready or
 			 * PE_SNK_Ready state when:
-			 *   1) SenderResponseTimer Timeout or
 			 *   2) Reject message is received or
 			 *   3) Wait message Received.
 			 */
-			if (get_time().val > pe[port].sender_response_timer ||
-						type == PD_CTRL_REJECT ||
-							type == PD_CTRL_WAIT) {
+			if (type == PD_CTRL_REJECT || type == PD_CTRL_WAIT) {
 				if (pe[port].power_role == PD_ROLE_SOURCE)
 					set_state_pe(port, PE_SRC_READY);
 				else
 					set_state_pe(port, PE_SNK_READY);
+				return;
 			}
 		}
 		/*
@@ -4819,6 +4817,18 @@ static void pe_vcs_send_swap_run(int port)
 			set_state_pe(port, PE_SEND_SOFT_RESET);
 			return;
 		}
+	}
+
+	/*
+	 * Transition back to either the PE_SRC_Ready or
+	 * PE_SNK_Ready state when:
+	 *   1) SenderResponseTimer Timeout
+	 */
+	if (get_time().val > pe[port].sender_response_timer) {
+		if (pe[port].power_role == PD_ROLE_SOURCE)
+			set_state_pe(port, PE_SRC_READY);
+		else
+			set_state_pe(port, PE_SNK_READY);
 	}
 }
 
