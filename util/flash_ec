@@ -1231,9 +1231,9 @@ function flash_it83xx() {
 		# This is done by convention with EC_FLASH_SELECT pin from H1
 		servo_save_add "ec_flash_select"
 		dut_control_or_die ec_flash_select:on
-		# Enable i2c bus on C2D2 at 1000kbps
+		# Enable i2c bus on C2D2 at 400kbps
 		servo_save_add "i2c_ec_bus_speed"
-		dut_control_or_die i2c_ec_bus_speed:1000
+		dut_control_or_die i2c_ec_bus_speed:400
 	fi
 
 	# Now the we have enabled the I2C mux on the servo to talk to the dut,
