@@ -27,7 +27,7 @@ GPIO_INT(TABLET_MODE_L,      PIN(J, 7), GPIO_INT_BOTH | GPIO_PULL_UP,
 /* Other interrupts */
 GPIO_INT(AC_PRESENT,         PIN(M, 2),  GPIO_INT_BOTH,
          extpower_interrupt) /* ACOK_OD */
-GPIO_INT(UART1_RX,           PIN(B, 0), GPIO_INT_FALLING | GPIO_PULL_UP,
+GPIO_INT(UART1_RX,           PIN(B, 0), GPIO_INT_FALLING | GPIO_PULL_DOWN,
          uart_deepsleep_interrupt) /* UART_DEBUG_TX_EC_RX */
 GPIO_INT(WP,                 PIN(I, 4), GPIO_INT_BOTH,
          switch_interrupt) /* EC_FLASH_WP_OD */
@@ -69,7 +69,7 @@ ALTERNATE(PIN_MASK(F, 0xC0), 1, MODULE_I2C, 0) /* I2C C */
 ALTERNATE(PIN_MASK(E, 0x81), 1, MODULE_I2C, 0) /* I2C E */
 
 /* UART */
-ALTERNATE(PIN_MASK(B, 0x03), 1, MODULE_UART, GPIO_PULL_UP) /* UART from EC to Servo */
+ALTERNATE(PIN_MASK(B, 0x03), 1, MODULE_UART, GPIO_PULL_DOWN) /* EC to Servo */
 
 /* PWM */
 ALTERNATE(PIN_MASK(A, 0x0F), 1, MODULE_PWM, 0) /* PWM 0~3 */
