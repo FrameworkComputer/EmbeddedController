@@ -9,8 +9,10 @@
 #include "board_config.h"
 #include "chipset.h"
 #include "common.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "intel_x86.h"
 
 /******************************************************************************/
@@ -92,6 +94,28 @@ __override void board_after_rsmrst(int rsmrst)
 	flags |= GPIO_INT_BOTH;
 
 	gpio_set_flags(GPIO_PG_PP1050_ST_OD, flags);
+}
+
+/*
+ * Dedede does not have a GPIO indicating ACOK, therefore the charger or TCPC
+ * can call this function once it detects a VBUS presence change with which we
+ * can trigger the HOOK_AC_CHANGE hook.
+ */
+__override void board_vbus_present_change(void)
+{
+	static int last_extpower_present;
+	int extpower_present = extpower_is_present();
+
+	if (last_extpower_present ^ extpower_present) {
+		hook_notify(HOOK_AC_CHANGE);
+
+		if (extpower_present)
+			host_set_single_event(EC_HOST_EVENT_AC_CONNECTED);
+		else
+			host_set_single_event(EC_HOST_EVENT_AC_DISCONNECTED);
+	}
+
+	last_extpower_present = extpower_present;
 }
 
 uint32_t pp3300_a_pgood;
