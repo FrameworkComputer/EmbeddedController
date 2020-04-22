@@ -14,6 +14,7 @@
 #include "throttle_ap.h"
 #include "timer.h"
 #include "usb_charge.h"
+#include "usb_pd.h"
 
 #ifndef CONFIG_CHARGER_NARROW_VDC
 #error "SM5803 is a NVDC charger, please enable CONFIG_CHARGER_NARROW_VDC."
@@ -316,13 +317,16 @@ void sm5803_handle_interrupt(int chgnum)
 	if ((int_reg & SM5803_INT2_VBUS) &&
 				!sm5803_is_sourcing_otg_power(chgnum, chgnum)) {
 		rv = meas_read8(chgnum, SM5803_REG_VBUS_MEAS_MSB, &meas_reg);
-		if (meas_reg <= SM5803_VBUS_LOW_LEVEL)
+		if (meas_reg <= SM5803_VBUS_LOW_LEVEL) {
 			usb_charger_vbus_change(chgnum, 0);
-		else if (meas_reg >= SM5803_VBUS_HIGH_LEVEL)
+			board_vbus_present_change();
+		} else if (meas_reg >= SM5803_VBUS_HIGH_LEVEL) {
 			usb_charger_vbus_change(chgnum, 1);
-		else
+			board_vbus_present_change();
+		} else {
 			CPRINTS("%s %d: Unexpected Vbus interrupt: 0x%02x",
 				CHARGER_NAME, chgnum, meas_reg);
+		}
 	}
 }
 
