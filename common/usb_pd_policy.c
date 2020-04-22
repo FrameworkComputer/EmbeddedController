@@ -467,6 +467,8 @@ static inline void disable_usb4_mode(int port)
 static bool is_cable_ready_to_enter_usb4(int port, int cnt)
 {
 	/* TODO: USB4 enter mode for Active cables */
+
+	/* TODO: Check for port's maximum supported Thunderbolt speed */
 	if (IS_ENABLED(CONFIG_USB_PD_USB4) &&
 	   (get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE) &&
 	    is_vdo_present(cnt, VDO_INDEX_PTYPE_CABLE1)) {
@@ -635,10 +637,72 @@ __overridable bool board_is_tbt_usb4_port(int port)
 	return true;
 }
 
+static void usb_pd_limit_cable_speed(int port)
+{
+	enum tbt_compat_cable_speed max_tbt_speed =
+				board_get_max_tbt_speed(port);
+
+	/* Cable does not have Intel SVID for Discover SVID */
+	if (is_limit_tbt_cable_speed(port))
+		cable[port].cable_mode_resp.tbt_cable_speed =
+				TBT_SS_U32_GEN1_GEN2;
+
+	if (cable[port].cable_mode_resp.tbt_cable_speed > max_tbt_speed)
+		cable[port].cable_mode_resp.tbt_cable_speed = max_tbt_speed;
+}
+
+static int process_am_discover_svids(int port, int cnt, uint32_t *payload)
+{
+	int prev_svid_cnt = discovery[port].svid_cnt;
+
+	dfp_consume_svids(port, cnt, payload);
+
+	/*
+	 * Ref: USB Type-C Cable and Connector Specification,
+	 * figure F-1: TBT3 Discovery Flow
+	 *
+	 * For USB4 mode if device or cable doesn't have Intel SVID,
+	 * disable Thunderbolt-Compatible mode directly enter USB4 mode.
+	 *
+	 * For Thunderbolt-compatible, check if 0x8087 is received for
+	 * Discover SVID SOP. If not, disable Thunderbolt-compatible mode
+	 *
+	 * If 0x8087 is not received for Discover SVID SOP' limit to TBT
+	 * passive Gen 2 cable.
+	 */
+	if (is_tbt_compat_enabled(port)) {
+		bool intel_svid = is_intel_svid(port, prev_svid_cnt);
+
+		if (!intel_svid) {
+			if (is_usb4_mode_enabled(port)) {
+				disable_tbt_compat_mode(port);
+				limit_tbt_cable_speed(port);
+				usb_pd_limit_cable_speed(port);
+				enable_enter_usb4_mode(port);
+				usb_mux_set_safe_mode(port);
+				if (is_transmit_msg_sop_prime(port))
+					disable_transmit_sop_prime(port);
+				return 0;
+			}
+
+			if (is_transmit_msg_sop_prime(port))
+				limit_tbt_cable_speed(port);
+			else
+				disable_tbt_compat_mode(port);
+		} else {
+			enable_transmit_sop_prime(port);
+			return dfp_discover_svids(payload);
+		}
+	}
+
+	disable_transmit_sop_prime(port);
+
+	return dfp_discover_modes(port, payload);
+}
+
 static int process_tbt_compat_discover_modes(int port, uint32_t *payload)
 {
 	int rsize;
-	enum tbt_compat_cable_speed max_tbt_speed;
 
 	/*
 	 * For active cables, Enter mode: SOP', SOP'', SOP
@@ -649,17 +713,8 @@ static int process_tbt_compat_discover_modes(int port, uint32_t *payload)
 		/* Store Discover Mode SOP' response */
 		cable[port].cable_mode_resp.raw_value = payload[1];
 
-		/* Cable does not have Intel SVID for Discover SVID */
-		if (is_limit_tbt_cable_speed(port))
-			cable[port].cable_mode_resp.tbt_cable_speed =
-						TBT_SS_U32_GEN1_GEN2;
-
-		max_tbt_speed = board_get_max_tbt_speed(port);
-		if (cable[port].cable_mode_resp.tbt_cable_speed >
-			max_tbt_speed) {
-			cable[port].cable_mode_resp.tbt_cable_speed =
-				max_tbt_speed;
-		}
+		/* Limits cable speed if applicable */
+		usb_pd_limit_cable_speed(port);
 
 		/*
 		 * Enter Mode SOP' (Cable Enter Mode) and Enter USB SOP' is
@@ -899,38 +954,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 #endif
 			break;
 		case CMD_DISCOVER_SVID:
-			{
-			int prev_svid_cnt = discovery[port].svid_cnt;
-			dfp_consume_svids(port, cnt, payload);
-			/*
-			 * Ref: USB Type-C Cable and Connector Specification,
-			 * figure F-1: TBT3 Discovery Flow
-			 *
-			 * Check if 0x8087 is received for Discover SVID SOP.
-			 * If not, disable Thunderbolt-compatible mode
-			 *
-			 * If 0x8087 is not received for Discover SVID SOP'
-			 * limit to TBT passive Gen 2 cable
-			 */
-			if (is_tbt_compat_enabled(port)) {
-				bool intel_svid =
-					is_intel_svid(port, prev_svid_cnt);
-				if (is_transmit_msg_sop_prime(port)) {
-					if (!intel_svid)
-						limit_tbt_cable_speed(port);
-				} else if (intel_svid) {
-					rsize = dfp_discover_svids(payload);
-					enable_transmit_sop_prime(port);
-					break;
-				} else {
-					disable_tbt_compat_mode(port);
-				}
-			}
-
-			rsize = dfp_discover_modes(port, payload);
-
-			disable_transmit_sop_prime(port);
-			}
+			rsize = process_am_discover_svids(port, cnt, payload);
 			break;
 		case CMD_DISCOVER_MODES:
 			dfp_consume_modes(port, cnt, payload);
