@@ -54,6 +54,13 @@ enum pe_dpm_request {
 void pe_run(int port, int evt, int en);
 
 /**
+ * Sets the debug level for the PRL layer
+ *
+ * @param level debug level
+ */
+void pe_set_debug_level(enum debug_level level);
+
+/**
  * Informs the Policy Engine that a message was successfully sent
  *
  * @param port USB-C port number

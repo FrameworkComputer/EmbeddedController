@@ -10,6 +10,7 @@
 #include "common.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usb_sm.h"
 
 /*
  * Number of times the Protocol Layer will try to transmit a message
@@ -24,6 +25,13 @@
  * @return 1 if state machine is running, else 0
  */
 int prl_is_running(int port);
+
+/**
+ * Sets the debug level for the PRL layer
+ *
+ * @param level debug level
+ */
+void prl_set_debug_level(enum debug_level level);
 
 /**
  * Resets the Protocol Layer State Machine

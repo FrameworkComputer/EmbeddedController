@@ -7,6 +7,7 @@
 #include "console.h"
 #include "usb_common.h"
 #include "usb_pe_sm.h"
+#include "usb_prl_sm.h"
 #include "usb_tc_sm.h"
 #include "usb_pd.h"
 #include "util.h"
@@ -18,7 +19,25 @@ test_export_static int command_pd(int argc, char **argv)
 
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
-	else if (IS_ENABLED(CONFIG_USB_PD_TRY_SRC) &&
+
+	if (!strcasecmp(argv[1], "dump")) {
+		if (argc >= 3) {
+			int level = strtoi(argv[2], &e, 10);
+
+			if (*e)
+				return EC_ERROR_PARAM2;
+
+			if (level < DEBUG_DISABLE)
+				level = DEBUG_DISABLE;
+			else if (level > DEBUG_LEVEL_MAX)
+				level = DEBUG_LEVEL_MAX;
+
+			prl_set_debug_level(level);
+			pe_set_debug_level(level);
+			ccprintf("debug=%d\n", level);
+			return EC_SUCCESS;
+		}
+	} else if (IS_ENABLED(CONFIG_USB_PD_TRY_SRC) &&
 				!strcasecmp(argv[1], "trysrc")) {
 		enum try_src_override_t ov = tc_get_try_src_override();
 
@@ -149,8 +168,9 @@ test_export_static int command_pd(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(pd, command_pd,
+	 "dump [0|1|2|3]"
 #ifdef CONFIG_USB_PD_TRY_SRC
-	"trysrc [0|1|2]"
+	"\ntrysrc [0|1|2]"
 #endif
 	"\n\t<port> state"
 #ifdef CONFIG_USB_PD_DUAL_ROLE

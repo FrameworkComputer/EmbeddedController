@@ -332,6 +332,18 @@ enum sub_state {
 static enum sm_local_state local_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /*
+ * Debug log level - higher number == more log
+ *   Level 0: disabled
+ *   Level 1: state names
+ *   Level 2: Level 1
+ *   Level 3: Level 2
+ *
+ * Note that higher log level causes timing changes and thus may affect
+ * performance.
+ */
+static enum debug_level pe_debug_level;
+
+/*
  * Policy Engine State Machine Object
  */
 static struct policy_engine {
@@ -557,6 +569,11 @@ static void pe_init(int port)
 int pe_is_running(int port)
 {
 	return local_state[port] == SM_RUN;
+}
+
+void pe_set_debug_level(enum debug_level debug_level)
+{
+	pe_debug_level = debug_level;
 }
 
 void pe_run(int port, int evt, int en)
@@ -997,8 +1014,9 @@ static void print_current_state(const int port)
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH))
 		mode = " FRS-MODE";
-
-	CPRINTS("C%d: %s%s", port, pe_state_names[get_state_pe(port)], mode);
+	if (pe_debug_level >= DEBUG_LEVEL_1)
+		CPRINTS("C%d: %s%s", port,
+			pe_state_names[get_state_pe(port)], mode);
 }
 
 static void send_source_cap(int port)
