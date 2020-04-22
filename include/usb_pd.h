@@ -2764,4 +2764,9 @@ __override_proto int svdm_tbt_compat_attention(int port, uint32_t *payload);
 
 __override_proto enum ec_pd_port_location board_get_pd_port_location(int port);
 
+/**
+ * Can be called whenever VBUS presence changes.  The default implementation
+ * does nothing, but a board may override it.
+ */
+__override_proto void board_vbus_present_change(void);
 #endif  /* __CROS_EC_USB_PD_H */

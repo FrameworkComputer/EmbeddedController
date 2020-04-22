@@ -36,6 +36,10 @@
 #define CPRINTF(format, args...)
 #endif
 
+__overridable void board_vbus_present_change(void)
+{
+}
+
 #if defined(CONFIG_CMD_PD) && defined(CONFIG_CMD_PD_FLASH)
 int hex8tou32(char *str, uint32_t *val)
 {

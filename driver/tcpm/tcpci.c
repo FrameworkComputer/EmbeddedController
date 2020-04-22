@@ -1061,6 +1061,8 @@ void tcpci_tcpc_alert(int port)
 		usb_charger_vbus_change(port, tcpc_vbus[port]);
 		pd_event |= TASK_EVENT_WAKE;
 #endif /* CONFIG_USB_PD_VBUS_DETECT_TCPC && CONFIG_USB_CHARGER */
+		if (reg & TCPC_REG_POWER_STATUS_VBUS_DET)
+			board_vbus_present_change();
 	}
 	if (alert & TCPC_REG_ALERT_RX_HARD_RST) {
 		/* hard reset received */
