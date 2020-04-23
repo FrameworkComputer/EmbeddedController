@@ -21,7 +21,7 @@
 #define CONFIG_HOSTCMD_ESPI
 
 #undef CONFIG_UART_TX_BUF_SIZE
-#define CONFIG_UART_TX_BUF_SIZE 4096
+#define CONFIG_UART_TX_BUF_SIZE 2048
 
 /* Keyboard features */
 #define CONFIG_PWM_KBLIGHT
