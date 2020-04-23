@@ -455,11 +455,24 @@ void prl_run(int port, int evt, int en)
 void prl_set_rev(int port, enum tcpm_transmit_type type,
 						enum pd_rev_type rev)
 {
+	/* We only store revisions for SOP* types. */
+	ASSERT(type < NUM_SOP_STAR_TYPES);
+
 	pdmsg[port].rev[type] = rev;
 }
+
 enum pd_rev_type prl_get_rev(int port, enum tcpm_transmit_type type)
 {
+	/* We only store revisions for SOP* types. */
+	ASSERT(type < NUM_SOP_STAR_TYPES);
+
 	return pdmsg[port].rev[type];
+}
+
+static int pdmsg_xmit_type_is_rev30(const int port)
+{
+	return ((pdmsg[port].xmit_type < NUM_SOP_STAR_TYPES)
+		&& (prl_get_rev(port, pdmsg[port].xmit_type) == PD_REV30));
 }
 
 /* Common Protocol Layer Message Transmission */
@@ -487,9 +500,9 @@ static void prl_tx_wait_for_message_request_entry(const int port)
 
 static void prl_tx_wait_for_message_request_run(const int port)
 {
-	if ((prl_get_rev(port, pdmsg[port].xmit_type) == PD_REV30) &&
-			PRL_TX_CHK_FLAG(port,
-				(PRL_FLAGS_START_AMS | PRL_FLAGS_END_AMS))) {
+	if (pdmsg_xmit_type_is_rev30(port)
+	    && PRL_TX_CHK_FLAG(port,
+			       (PRL_FLAGS_START_AMS | PRL_FLAGS_END_AMS))) {
 		if (pd_get_power_role(port) == PD_ROLE_SOURCE) {
 			/*
 			 * Start of SRC AMS notification received from
@@ -969,8 +982,8 @@ static void rch_wait_for_message_from_protocol_layer_run(const int port)
 		 * Are we communicating with a PD3.0 device and is
 		 * this an extended message?
 		 */
-		if (prl_get_rev(port, pdmsg[port].xmit_type) == PD_REV30 &&
-					PD_HEADER_EXT(rx_emsg[port].header)) {
+		if (pdmsg_xmit_type_is_rev30(port)
+		    && PD_HEADER_EXT(rx_emsg[port].header)) {
 			uint16_t exhdr =
 					GET_EXT_HEADER(*pdmsg[port].rx_chk_buf);
 			uint8_t chunked = PD_EXT_HEADER_CHUNKED(exhdr);
@@ -1273,9 +1286,9 @@ static void tch_wait_for_message_request_from_pe_run(const int port)
 			/*
 			 * Extended Message Request & Chunking
 			 */
-			if (prl_get_rev(port, pdmsg[port].xmit_type) == PD_REV30
-						&& pdmsg[port].ext &&
-			     TCH_CHK_FLAG(port, PRL_FLAGS_CHUNKING)) {
+			if (pdmsg_xmit_type_is_rev30(port)
+			    && pdmsg[port].ext
+			    && TCH_CHK_FLAG(port, PRL_FLAGS_CHUNKING)) {
 				/*
 				 * NOTE: TCH_Prepare_To_Send_Chunked_Message
 				 * embedded here.
@@ -1587,8 +1600,9 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	 * Discard any pending tx message if this is
 	 * not a ping message
 	 */
-	if (prl_get_rev(port, pdmsg[port].xmit_type) == PD_REV30 &&
-	   (cnt == 0) && type != PD_CTRL_PING) {
+	if (pdmsg_xmit_type_is_rev30(port)
+	    && (cnt == 0)
+	    && (type != PD_CTRL_PING)) {
 		if (prl_tx_get_state(port) == PRL_TX_SRC_PENDING ||
 		    prl_tx_get_state(port) == PRL_TX_SNK_PENDING)
 			set_state_prl_tx(port, PRL_TX_DISCARD_MESSAGE);
