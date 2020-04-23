@@ -326,7 +326,7 @@ void dfp_consume_svids(int port, int cnt, uint32_t *payload)
 	struct pd_discovery *disc = pd_get_am_discovery(port);
 
 	for (i = disc->svid_cnt; i < disc->svid_cnt + 12; i += 2) {
-		if (i == SVID_DISCOVERY_MAX) {
+		if (i >= SVID_DISCOVERY_MAX) {
 			CPRINTF("ERR:SVIDCNT\n");
 			break;
 		}
