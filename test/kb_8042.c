@@ -255,6 +255,74 @@ static int test_sysjump_cont(void)
 	return EC_SUCCESS;
 }
 
+static const struct ec_response_keybd_config keybd_config = {
+	.num_top_row_keys = 13,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_KBD_BKLIGHT_DOWN,	/* T8 */
+		TK_KBD_BKLIGHT_UP,	/* T9 */
+		TK_PLAY_PAUSE,		/* T10 */
+		TK_VOL_MUTE,		/* T11 */
+		TK_VOL_DOWN,		/* T12 */
+		TK_VOL_UP,		/* T13 */
+	},
+};
+
+__override const struct ec_response_keybd_config
+*board_vivaldi_keybd_config(void)
+{
+	return &keybd_config;
+}
+
+static int test_ec_cmd_get_keybd_config(void)
+{
+	struct ec_response_keybd_config resp;
+	int rv;
+
+	rv = test_send_host_command(EC_CMD_GET_KEYBD_CONFIG, 0, NULL, 0,
+				    &resp, sizeof(resp));
+	if (rv != EC_RES_SUCCESS) {
+		ccprintf("Error: EC_CMD_GET_KEYBD_CONFIG cmd returns %d\n", rv);
+		return EC_ERROR_INVAL;
+	}
+
+	if (memcmp(&resp, &keybd_config, sizeof(resp))) {
+		ccprintf("Error: EC_CMD_GET_KEYBD_CONFIG returned bad cfg\n");
+		return EC_ERROR_INVAL;
+	}
+
+	ccprintf("EC_CMD_GET_KEYBD_CONFIG response is good\n");
+	return EC_SUCCESS;
+}
+
+static int test_vivaldi_top_keys(void)
+{
+	set_scancode(2);
+
+	/* Test REFRESH key */
+	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
+	press_key(2, 3, 1);		/* Press T2 */
+	VERIFY_LPC_CHAR("\xe0\x67");	/* Check REFRESH scancode in set-1 */
+
+	/* Test SNAPSHOT key */
+	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
+	press_key(4, 3, 1);		/* Press T2 */
+	VERIFY_LPC_CHAR("\xe0\x13");	/* Check SNAPSHOT scancode in set-1 */
+
+	/* Test VOL_UP key */
+	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
+	press_key(5, 3, 1);		/* Press T2 */
+	VERIFY_LPC_CHAR("\xe0\x30");	/* Check VOL_UP scancode in set-1 */
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -266,6 +334,8 @@ void run_test(void)
 		RUN_TEST(test_typematic);
 		RUN_TEST(test_scancode_set2);
 		RUN_TEST(test_power_button);
+		RUN_TEST(test_ec_cmd_get_keybd_config);
+		RUN_TEST(test_vivaldi_top_keys);
 		RUN_TEST(test_sysjump);
 	} else {
 		RUN_TEST(test_sysjump_cont);
