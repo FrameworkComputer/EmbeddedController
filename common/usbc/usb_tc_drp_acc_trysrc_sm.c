@@ -410,22 +410,21 @@ static void tc_enable_try_src(int en)
 		atomic_clear(&pd_try_src, 1);
 }
 
-static inline void pd_set_dual_role_no_wakeup(int port,
-				enum pd_dual_role_states state)
+static inline void pd_set_dual_role_and_event(int port,
+				enum pd_dual_role_states state, uint32_t event)
 {
 	drp_state[port] = state;
 
 	if (IS_ENABLED(CONFIG_USB_PD_TRY_SRC))
 		pd_update_try_source();
+
+	if (event != 0)
+		task_set_event(PD_PORT_TO_TASK_ID(port), event, 0);
 }
 
 void pd_set_dual_role(int port, enum pd_dual_role_states state)
 {
-	pd_set_dual_role_no_wakeup(port, state);
-
-	/* Wake task up to process change */
-	task_set_event(PD_PORT_TO_TASK_ID(port),
-			PD_EVENT_UPDATE_DUAL_ROLE, 0);
+	pd_set_dual_role_and_event(port, state, PD_EVENT_UPDATE_DUAL_ROLE);
 }
 
 bool pd_get_partner_data_swap_capable(int port)
@@ -1006,11 +1005,11 @@ void tc_state_init(int port)
 
 	/* Set dual-role state based on chipset power state */
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		pd_set_dual_role_no_wakeup(port, PD_DRP_FORCE_SINK);
+		pd_set_dual_role_and_event(port, PD_DRP_FORCE_SINK, 0);
 	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
-		pd_set_dual_role_no_wakeup(port, PD_DRP_TOGGLE_OFF);
+		pd_set_dual_role_and_event(port, PD_DRP_TOGGLE_OFF, 0);
 	else /* CHIPSET_STATE_ON */
-		pd_set_dual_role_no_wakeup(port, PD_DRP_TOGGLE_ON);
+		pd_set_dual_role_and_event(port, PD_DRP_TOGGLE_ON, 0);
 }
 
 enum pd_cable_plug tc_get_cable_plug(int port)
@@ -3164,9 +3163,10 @@ static void pd_chipset_resume(void)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		pd_set_dual_role(i, PD_DRP_TOGGLE_ON);
-		task_set_event(PD_PORT_TO_TASK_ID(i),
-				PD_EVENT_POWER_STATE_CHANGE, 0);
+		pd_set_dual_role_and_event(i,
+					   PD_DRP_TOGGLE_ON,
+					   PD_EVENT_UPDATE_DUAL_ROLE
+					   | PD_EVENT_POWER_STATE_CHANGE);
 	}
 
 	CPRINTS("PD:S3->S0");
@@ -3178,9 +3178,10 @@ static void pd_chipset_suspend(void)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		pd_set_dual_role(i, PD_DRP_TOGGLE_OFF);
-		task_set_event(PD_PORT_TO_TASK_ID(i),
-			PD_EVENT_POWER_STATE_CHANGE, 0);
+		pd_set_dual_role_and_event(i,
+					   PD_DRP_TOGGLE_OFF,
+					   PD_EVENT_UPDATE_DUAL_ROLE
+					   | PD_EVENT_POWER_STATE_CHANGE);
 	}
 
 	CPRINTS("PD:S0->S3");
@@ -3192,11 +3193,10 @@ static void pd_chipset_startup(void)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		pd_set_dual_role_no_wakeup(i, PD_DRP_TOGGLE_OFF);
-		task_set_event(PD_PORT_TO_TASK_ID(i),
-				PD_EVENT_POWER_STATE_CHANGE |
-				PD_EVENT_UPDATE_DUAL_ROLE,
-				0);
+		pd_set_dual_role_and_event(i,
+					   PD_DRP_TOGGLE_OFF,
+					   PD_EVENT_UPDATE_DUAL_ROLE
+					   | PD_EVENT_POWER_STATE_CHANGE);
 	}
 
 	CPRINTS("PD:S5->S3");
@@ -3208,11 +3208,10 @@ static void pd_chipset_shutdown(void)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		pd_set_dual_role_no_wakeup(i, PD_DRP_FORCE_SINK);
-		task_set_event(PD_PORT_TO_TASK_ID(i),
-				PD_EVENT_POWER_STATE_CHANGE |
-				PD_EVENT_UPDATE_DUAL_ROLE,
-				0);
+		pd_set_dual_role_and_event(i,
+					   PD_DRP_FORCE_SINK,
+					   PD_EVENT_UPDATE_DUAL_ROLE
+					   | PD_EVENT_POWER_STATE_CHANGE);
 	}
 
 	CPRINTS("PD:S3->S5");
