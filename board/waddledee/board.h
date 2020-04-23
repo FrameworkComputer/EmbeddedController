@@ -27,6 +27,9 @@
 #define CONFIG_USB_PD_VBUS_DETECT_CHARGER
 #define CONFIG_USB_PD_5V_CHARGER_CTRL
 #define CONFIG_CHARGER_OTG
+/* TODO(b/154723735): Limit input voltage to 5V for now */
+#undef PD_MAX_VOLTAGE_MV
+#define PD_MAX_VOLTAGE_MV 5000
 
 /* LED */
 #define CONFIG_LED_PWM_COUNT 1
