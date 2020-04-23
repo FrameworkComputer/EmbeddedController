@@ -36,7 +36,45 @@
 #define CPRINTF(format, args...)
 #endif
 
+/*
+ * This file is currently only used for TCPMv1, and would need changes before
+ * being used for TCPMv2. One example: PD_FLAGS_* are TCPMv1 only.
+ */
+#ifndef CONFIG_USB_PD_TCPMV1
+#error This file must only be used with TCPMv1
+#endif
+
 static int rw_flash_changed = 1;
+
+__overridable void pd_check_pr_role(int port,
+	enum pd_power_role pr_role, int flags)
+{
+	/*
+	 * If partner is dual-role power and dualrole toggling is on, consider
+	 * if a power swap is necessary.
+	 */
+	if ((flags & PD_FLAGS_PARTNER_DR_POWER) &&
+	    pd_get_dual_role(port) == PD_DRP_TOGGLE_ON) {
+		/*
+		 * If we are a sink and partner is not unconstrained, then
+		 * swap to become a source. If we are source and partner is
+		 * unconstrained, swap to become a sink.
+		 */
+		int partner_unconstrained = flags & PD_FLAGS_PARTNER_UNCONSTR;
+
+		if ((!partner_unconstrained && pr_role == PD_ROLE_SINK) ||
+		     (partner_unconstrained && pr_role == PD_ROLE_SOURCE))
+			pd_request_power_swap(port);
+	}
+}
+
+__overridable void pd_check_dr_role(int port,
+	enum pd_data_role dr_role, int flags)
+{
+	/* If UFP, try to switch to DFP */
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_UFP)
+		pd_request_data_swap(port);
+}
 
 #ifdef CONFIG_MKBP_EVENT
 static int dp_alt_mode_entry_get_next_event(uint8_t *data)

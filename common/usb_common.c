@@ -492,14 +492,6 @@ __overridable int pd_check_data_swap(int port,
 	return (data_role == PD_ROLE_UFP) ? 1 : 0;
 }
 
-__overridable void pd_check_dr_role(int port,
-	enum pd_data_role dr_role, int flags)
-{
-	/* If UFP, try to switch to DFP */
-	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_UFP)
-		pd_request_data_swap(port);
-}
-
 __overridable int pd_check_power_swap(int port)
 {
 	/*
@@ -513,28 +505,6 @@ __overridable int pd_check_power_swap(int port)
 		return 1;
 
 	return 0;
-}
-
-__overridable void pd_check_pr_role(int port,
-	enum pd_power_role pr_role, int flags)
-{
-	/*
-	 * If partner is dual-role power and dualrole toggling is on, consider
-	 * if a power swap is necessary.
-	 */
-	if ((flags & PD_FLAGS_PARTNER_DR_POWER) &&
-	    pd_get_dual_role(port) == PD_DRP_TOGGLE_ON) {
-		/*
-		 * If we are a sink and partner is not unconstrained, then
-		 * swap to become a source. If we are source and partner is
-		 * unconstrained, swap to become a sink.
-		 */
-		int partner_unconstrained = flags & PD_FLAGS_PARTNER_UNCONSTR;
-
-		if ((!partner_unconstrained && pr_role == PD_ROLE_SINK) ||
-		     (partner_unconstrained && pr_role == PD_ROLE_SOURCE))
-			pd_request_power_swap(port);
-	}
 }
 
 __overridable void pd_execute_data_swap(int port,

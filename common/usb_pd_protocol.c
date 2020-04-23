@@ -33,6 +33,25 @@
 #include "version.h"
 #include "vboot.h"
 
+/* Flags to clear on a disconnect */
+#define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
+					   PD_FLAGS_PARTNER_DR_DATA | \
+					   PD_FLAGS_CHECK_IDENTITY | \
+					   PD_FLAGS_SNK_CAP_RECVD | \
+					   PD_FLAGS_TCPC_DRP_TOGGLE | \
+					   PD_FLAGS_EXPLICIT_CONTRACT | \
+					   PD_FLAGS_PREVIOUS_PD_CONN | \
+					   PD_FLAGS_CHECK_PR_ROLE | \
+					   PD_FLAGS_CHECK_DR_ROLE | \
+					   PD_FLAGS_PARTNER_UNCONSTR | \
+					   PD_FLAGS_VCONN_ON | \
+					   PD_FLAGS_TRY_SRC | \
+					   PD_FLAGS_PARTNER_USB_COMM | \
+					   PD_FLAGS_UPDATE_SRC_CAPS | \
+					   PD_FLAGS_TS_DTS_PARTNER | \
+					   PD_FLAGS_SNK_WAITING_BATT | \
+					   PD_FLAGS_CHECK_VCONN_STATE)
+
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
