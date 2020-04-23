@@ -78,19 +78,14 @@
 #define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(20)
 /* Flag to note we should check for connection */
 #define TC_FLAGS_CHECK_CONNECTION       BIT(21)
-/* Flag to note the TCPM supports auto toggle */
-#define TC_FLAGS_AUTO_TOGGLE_SUPPORTED  BIT(22)
 /* Flag to note pd_set_suspend SUSPEND state */
-#define TC_FLAGS_SUSPEND                BIT(23)
+#define TC_FLAGS_SUSPEND                BIT(22)
 
 /*
- * Clear all flags except TC_FLAGS_AUTO_TOGGLE_SUPPORTED,
- * TC_FLAGS_LPM_ENGAGED, and TC_FLAGS_SUSPEND.
+ * Clear all flags except TC_FLAGS_LPM_ENGAGED and TC_FLAGS_SUSPEND.
  */
 #define CLR_ALL_BUT_LPM_FLAGS(port) (TC_CLR_FLAG(port, \
-	~(TC_FLAGS_AUTO_TOGGLE_SUPPORTED | \
-	  TC_FLAGS_LPM_ENGAGED | \
-	  TC_FLAGS_SUSPEND)))
+	~(TC_FLAGS_LPM_ENGAGED | TC_FLAGS_SUSPEND)))
 
 /* 100 ms is enough time for any TCPC transaction to complete. */
 #define PD_LPM_DEBOUNCE_US (100 * MSEC)
@@ -1016,15 +1011,6 @@ void tc_state_init(int port)
 		pd_set_dual_role_no_wakeup(port, PD_DRP_TOGGLE_OFF);
 	else /* CHIPSET_STATE_ON */
 		pd_set_dual_role_no_wakeup(port, PD_DRP_TOGGLE_ON);
-
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	/*
-	 * Some TCPCs may not support DRP Auto Toggle, so query the
-	 * query the TCPC for DRP Auto toggle support.
-	 */
-	if (tcpm_auto_toggle_supported(port))
-		TC_SET_FLAG(port, TC_FLAGS_AUTO_TOGGLE_SUPPORTED);
-#endif
 }
 
 enum pd_cable_plug tc_get_cable_plug(int port)
@@ -1620,7 +1606,7 @@ static void tc_unattached_snk_run(const int port)
 	 * not already auto toggling.
 	 */
 	if (drp_state[port] == PD_DRP_TOGGLE_ON &&
-		TC_CHK_FLAG(port, TC_FLAGS_AUTO_TOGGLE_SUPPORTED) &&
+		tcpm_auto_toggle_supported(port) &&
 		cc_is_open(cc1, cc2)) {
 		/*
 		 * We are disconnected and going to DRP
@@ -2331,7 +2317,7 @@ static void tc_unattached_src_run(const int port)
 	 * Attempt TCPC auto DRP toggle
 	 */
 	else if (drp_state[port] == PD_DRP_TOGGLE_ON &&
-		TC_CHK_FLAG(port, TC_FLAGS_AUTO_TOGGLE_SUPPORTED) &&
+		tcpm_auto_toggle_supported(port) &&
 		cc_is_open(cc1, cc2)) {
 		/*
 		 * We are disconnected and going to DRP
