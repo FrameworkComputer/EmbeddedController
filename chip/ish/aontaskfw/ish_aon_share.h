@@ -27,6 +27,10 @@ struct ish_aon_share {
 	uint32_t error_count;
 	/* last error */
 	int last_error;
+	/* successfully exit from IPAPG or not */
+	uint32_t pg_exit;
+	/* high 32bits of 64 bits dram address for dma */
+	uint32_t uma_msb;
 	/* aontask's TSS segment entry */
 	struct tss_entry *aon_tss;
 	/* aontask's LDT start address */

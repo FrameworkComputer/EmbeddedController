@@ -33,6 +33,7 @@ test-list-y=
 # Build ish aon task fw
 ish-aon-name=ish_aontask
 ish-aon-$(CONFIG_ISH_PM_AONTASK)=aontaskfw/ish_aontask.o dma.o
+ish-aon-$(CONFIG_ISH_IPAPG)+=aontaskfw/ipapg.o
 
 # Rules for building ish aon task fw
 ish-aon-out=$(out)/aontaskfw
@@ -64,6 +65,10 @@ $(ish-aon-lds-y): chip/$(CHIP)/aontaskfw/ish_aontask.lds.S
 $(ish-aon-out)/%.o: %.c
 	-@ mkdir -p $(@D)
 	$(call quiet,c_to_o,CC     )
+
+$(ish-aon-out)/%.o: %.S
+	-@ mkdir -p $(@D)
+	$(call quiet,c_to_o,AS     )
 
 # Location of the scripts used to pack image
 SCRIPTDIR:=./chip/${CHIP}/util

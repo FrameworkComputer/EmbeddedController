@@ -528,11 +528,17 @@ static void i2c_initial_board_config(struct i2c_context *ctx)
 	bus_info->high_speed.lcnt = default_lcnt_scl_hs[freq];
 }
 
+void i2c_port_restore(void)
+{
+	for (int i = 0; i < i2c_ports_used; i++) {
+		int port = i2c_ports[i].port;
+		i2c_init_hardware(&i2c_ctxs[port]);
+	}
+}
+
 void i2c_init(void)
 {
-	int i;
-
-	for (i = 0; i < i2c_ports_used; i++) {
+	for (int i = 0; i < i2c_ports_used; i++) {
 		int port = i2c_ports[i].port;
 		i2c_initial_board_config(&i2c_ctxs[port]);
 		/* Config speed from i2c_ports[] defined in board.c */

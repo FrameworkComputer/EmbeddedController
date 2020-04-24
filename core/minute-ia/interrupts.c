@@ -438,6 +438,13 @@ void call_irq_service_routine(uint32_t irq)
 		CPRINTS("IRQ %d routine not found!", irq);
 }
 
+void lapic_restore(void)
+{
+	LAPIC_ESR_REG = 0;
+	APIC_SPURIOUS_INT = LAPIC_SPURIOUS_INT_VECTOR | APIC_ENABLE_BIT;
+	APIC_LVT_ERROR = LAPIC_LVT_ERROR_VECTOR;
+}
+
 void init_interrupts(void)
 {
 	unsigned entry;

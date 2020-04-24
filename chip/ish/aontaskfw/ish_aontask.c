@@ -46,6 +46,7 @@
 #include "common.h"
 #include "ia_structs.h"
 #include "ish_aon_share.h"
+#include "ish_aon_defs.h"
 #include "ish_dma.h"
 #include "power_mgt.h"
 
@@ -166,17 +167,14 @@ static struct idt_header aon_idt_hdr = {
 			(sizeof(struct idt_entry) * AON_IDT_ENTRY_VEC_FIRST))
 };
 
-/* aontask entry point function */
-void ish_aon_main(void);
-
 /**
  * 8 bytes reserved on stack, just for GDB to show the correct stack
- * information when doing source code level debuging
+ * information when doing source code level debugging
  */
 #define AON_SP_RESERVED (8)
 
 /* TSS segment for aon task */
-static struct tss_entry aon_tss = {
+struct tss_entry aon_tss = {
 	.prev_task_link = 0,
 	.reserved1 = 0,
 	.esp0 = (uint8_t *)(CONFIG_AON_PERSISTENT_BASE - AON_SP_RESERVED),
@@ -190,7 +188,7 @@ static struct tss_entry aon_tss = {
 	.ss2 = 0,
 	.reserved4 = 0,
 	.cr3 = 0,
-	/* task excute entry point */
+	/* task execute entry point */
 	.eip = (uint32_t)&ish_aon_main,
 	.eflags = 0,
 	.eax = 0,
@@ -525,6 +523,104 @@ static void sram_power(int on)
 	}
 }
 
+#define RTC_TICKS_IN_SECOND 32768
+
+static  __maybe_unused uint64_t get_rtc(void)
+{
+	uint32_t lower;
+	uint32_t upper;
+	do {
+		upper = MISC_ISH_RTC_COUNTER1;
+		lower = MISC_ISH_RTC_COUNTER0;
+	} while (upper != MISC_ISH_RTC_COUNTER1);
+
+	return ((uint64_t)upper << 32) | lower;
+}
+
+#ifdef CONFIG_ISH_IPAPG
+static int is_ipapg_allowed(void)
+{
+	uint32_t power_ctrl_enabled, sw_power_req, power_ctrl_wake;
+	int system_power_state;
+
+	if (!IS_ENABLED(CONFIG_ISH_IPAPG))
+		return 0;
+
+	system_power_state = ((PMU_PMC_HOST_RST_CTL & PMU_HOST_RST_B) == 0);
+
+	PMU_PMC_HOST_RST_CTL = PMU_PMC_HOST_RST_CTL;
+
+	power_ctrl_enabled = PMU_D3_STATUS;
+	sw_power_req = PMU_SW_PG_REQ;
+	power_ctrl_wake = PMU_PMC_PG_WAKE;
+
+	if (system_power_state)
+		power_ctrl_enabled |= PMU_PCE_PG_ALLOWED;
+
+	PMU_INTERNAL_PCE = (power_ctrl_enabled & PMU_PCE_SHADOW_MASK) |
+			   (PMU_PCE_CHANGE_DETECTED) | (PMU_PCE_CHANGE_MASK);
+
+	PMU_SW_PG_REQ = sw_power_req | PMU_SW_PG_REQ_B_RISE |
+			PMU_SW_PG_REQ_B_FALL;
+	PMU_PMC_PG_WAKE = power_ctrl_wake | PMU_PMC_PG_WAKE_RISE |
+			  PMU_PMC_PG_WAKE_FALL;
+	PMU_D3_STATUS = (PMU_D3_STATUS) & (PMU_D0I3_ENABLE_MASK |
+					   PMU_D3_BIT_SET | PMU_BME_BIT_SET);
+
+	power_ctrl_enabled = PMU_D3_STATUS;
+	sw_power_req = PMU_SW_PG_REQ;
+	power_ctrl_wake = PMU_PMC_PG_WAKE;
+
+	if (system_power_state) {
+		uint64_t rtc_start = get_rtc();
+		uint64_t rtc_end;
+		while (power_ctrl_wake & PMU_PMC_PG_WAKE_VAL) {
+			power_ctrl_wake = PMU_PMC_PG_WAKE;
+			rtc_end = get_rtc();
+			if (rtc_end - rtc_start > RTC_TICKS_IN_SECOND)
+				break;
+		}
+	}
+
+	if (((power_ctrl_enabled & PMU_PCE_PG_ALLOWED) || system_power_state) &&
+	    (((sw_power_req & PMU_SW_PG_REQ_B_VAL) == 0) ||
+	     ((power_ctrl_enabled & PMU_PCE_PMCRE) == 0)) &&
+	    ((power_ctrl_wake & PMU_PMC_PG_WAKE_VAL) == 0))
+		return 1;
+	else
+		return 0;
+}
+#else
+static int is_ipapg_allowed(void)
+{
+	return 0;
+}
+#endif
+
+#define NUMBER_IRQ_PINS 30
+static uint32_t ioapic_rte[NUMBER_IRQ_PINS];
+
+static int do_ipapg(void)
+{
+	int ret;
+	uint32_t rte_offset = IOAPIC_IOREDTBL;
+
+	for (int pin = 0; pin < ARRAY_SIZE(ioapic_rte); pin++) {
+		IOAPIC_IDX = rte_offset + pin * 2;
+		ioapic_rte[pin] = IOAPIC_WDW;
+	}
+
+	ret = ipapg();
+
+	rte_offset = IOAPIC_IOREDTBL;
+	for (int pin = 0; pin < ARRAY_SIZE(ioapic_rte); pin++) {
+		IOAPIC_IDX = rte_offset + pin * 2;
+		IOAPIC_WDW = ioapic_rte[pin];
+	}
+
+	return ret;
+}
+
 static inline void set_vnnred_aoncg(void)
 {
 	if (IS_ENABLED(CONFIG_ISH_NEW_PM)) {
@@ -543,6 +639,11 @@ static inline void clear_vnnred_aoncg(void)
 
 static void handle_d0i2(void)
 {
+	if (IS_ENABLED(CONFIG_ISH_IPAPG)) {
+		pg_exit_save_ctx();
+		aon_share.pg_exit = 0;
+	}
+
 	/* set main SRAM into retention mode*/
 	PMU_LDO_CTRL = PMU_LDO_ENABLE_BIT
 		| PMU_LDO_RETENTION_BIT;
@@ -552,7 +653,19 @@ static void handle_d0i2(void)
 
 	set_vnnred_aoncg();
 
-	ish_mia_halt();
+	if (IS_ENABLED(CONFIG_ISH_IPAPG) && is_ipapg_allowed()) {
+		uint32_t sram_cfg_reg;
+
+		sram_cfg_reg = ISH_SRAM_CTRL_CSFGR;
+
+		aon_share.pg_exit = do_ipapg();
+
+		if (aon_share.pg_exit)
+			ISH_SRAM_CTRL_CSFGR = sram_cfg_reg;
+	} else {
+		ish_mia_halt();
+	}
+
 	/* wakeup from PMU interrupt */
 
 	clear_vnnred_aoncg();
@@ -566,11 +679,22 @@ static void handle_d0i2(void)
 	 */
 	while (!(PMU_LDO_CTRL & PMU_LDO_READY_BIT))
 		continue;
+
+	if (IS_ENABLED(CONFIG_ISH_IPAPG)) {
+		if (aon_share.pg_exit)
+			ish_dma_set_msb(PAGING_CHAN, aon_share.uma_msb,
+					aon_share.uma_msb);
+	}
 }
 
 static void handle_d0i3(void)
 {
 	int ret;
+
+	if (IS_ENABLED(CONFIG_ISH_IPAPG)) {
+		pg_exit_save_ctx();
+		aon_share.pg_exit = 0;
+	}
 
 	/* store main FW 's context to IMR DDR from main SRAM */
 	ret = store_main_fw();
@@ -584,13 +708,31 @@ static void handle_d0i3(void)
 
 	set_vnnred_aoncg();
 
-	ish_mia_halt();
+	if (IS_ENABLED(CONFIG_ISH_IPAPG) && is_ipapg_allowed()) {
+		uint32_t sram_cfg_reg;
+
+		sram_cfg_reg = ISH_SRAM_CTRL_CSFGR;
+
+		aon_share.pg_exit = do_ipapg();
+
+		if (aon_share.pg_exit)
+			ISH_SRAM_CTRL_CSFGR = sram_cfg_reg;
+	} else {
+		ish_mia_halt();
+	}
+
 	/* wakeup from PMU interrupt */
 
 	clear_vnnred_aoncg();
 
 	/* power on main SRAM */
 	sram_power(1);
+
+	if (IS_ENABLED(CONFIG_ISH_IPAPG)) {
+		if (aon_share.pg_exit)
+			ish_dma_set_msb(PAGING_CHAN, aon_share.uma_msb,
+					aon_share.uma_msb);
+	}
 
 	/* restore main FW 's context to main SRAM from IMR DDR */
 	ret = restore_main_fw();
@@ -787,9 +929,16 @@ void ish_aon_main(void)
 		/* restore main FW's IDT and switch back to main FW */
 		__asm__ volatile(
 				"lidtl %0;\n"
-				"iret;"
 				:
 				: "m" (aon_share.main_fw_idt_hdr)
 				);
+
+		if (IS_ENABLED(CONFIG_ISH_IPAPG) && aon_share.pg_exit) {
+			mainfw_gdt.entries[tr / sizeof(struct gdt_entry)]
+				.flags &= 0xfd;
+			pg_exit_restore_ctx();
+		}
+
+		__asm__ volatile ("iret;");
 	}
 }
