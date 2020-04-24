@@ -437,9 +437,9 @@ static struct bmi_drv_data_t g_bmi160_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
 const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0,  0},
+	{ FLOAT_TO_FP(1), 0,  0},
 	{ 0,  FLOAT_TO_FP(-1),  0},
-	{ 0,  0, FLOAT_TO_FP(1)}
+	{ 0,  0, FLOAT_TO_FP(-1)}
 };
 
 struct motion_sensor_t motion_sensors[] = {
