@@ -492,6 +492,18 @@ enum idh_ptype {
 	IDH_PTYPE_VPD,
 };
 
+/*
+ * Product type for UFP shall be either Hub or peripheral or PSD or AMA or VDP
+ * Reference:
+ * - Table 6-29 ID Header VDO PD spec 3.0 version 2.0 and
+ * - Table 6-23 ID Header VDO PD spec 2.0 version 1.3.
+ */
+#define IS_PD_IDH_UFP_PTYPE(ptype) (ptype == IDH_PTYPE_HUB || \
+				    ptype == IDH_PTYPE_PERIPH || \
+				    ptype == IDH_PTYPE_PSD || \
+				    ptype == IDH_PTYPE_AMA ||  \
+				    ptype == IDH_PTYPE_VPD)
+
 struct id_header_vdo_rev20 {
 	uint16_t usb_vendor_id;
 	uint16_t reserved0 : 10;

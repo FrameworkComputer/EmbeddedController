@@ -545,13 +545,9 @@ static bool is_cable_ready_to_enter_usb4(int port, int cnt)
 
 static bool is_usb4_vdo(int port, int cnt, uint32_t *payload)
 {
-	enum idh_ptype ptype = PD_IDH_PTYPE(payload[VDO_I(PRODUCT)]);
+	enum idh_ptype ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
 
-	/*
-	 * Product types Hub and peripheral should use UFP product vdos
-	 * Reference Table 6-30 USB PD spec 3.2.
-	 */
-	if (ptype == IDH_PTYPE_HUB || ptype == IDH_PTYPE_PERIPH) {
+	if (IS_PD_IDH_UFP_PTYPE(ptype)) {
 		/*
 		 * Ref: USB Type-C Cable and Connector Specification
 		 * Figure 5-1 USB4 Discovery and Entry Flow Model
