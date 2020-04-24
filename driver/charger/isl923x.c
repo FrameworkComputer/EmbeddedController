@@ -486,8 +486,13 @@ static void isl923x_init(int chgnum)
 		 * loop issues with 2S batteries, and 2) it will automatically
 		 * get disabled as soon as we manually set the current limit
 		 * anyway.
+		 *
+		 * Note: This bit is inverted on the RAA489000.
 		 */
-		reg |= ISL9238_C3_DISABLE_AUTO_CHARING;
+		if (IS_ENABLED(CONFIG_CHARGER_RAA489000))
+			reg &= ~ISL9238_C3_DISABLE_AUTO_CHARING;
+		else
+			reg |= ISL9238_C3_DISABLE_AUTO_CHARING;
 		if (raw_write16(chgnum, ISL9238_REG_CONTROL3, reg))
 			goto init_fail;
 
