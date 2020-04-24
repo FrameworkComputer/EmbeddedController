@@ -26,27 +26,66 @@
 # Environment Setup and Initialization                              #
 #####################################################################
 
+set verbose on
+
+# Start of python code
+
 # Setup environment and pull in object files for the particular BOARD.
 # This requires setting the environment variables mentioned above.
 python
+import distutils.util
 import os
 
 BOARD = os.getenv('BOARD', '')
 GDBSERVER = os.getenv('GDBSERVER', 'openocd')
-GDBPORT = os.getenv('GDBPORT', '3333')
+USING_CLION = distutils.util.strtobool(os.getenv('USING_CLION', 'FALSE'))
+
+if GDBSERVER == "openocd":
+    DEFAULT_GDB_PORT = '3333'
+else:
+    DEFAULT_GDB_PORT = '2331'
+
+GDBPORT = os.getenv('GDBPORT', DEFAULT_GDB_PORT)
+
+EC_DIR = os.getenv('EC_DIR', os.path.join(os.getenv('HOME'),
+                   'chromiumos/src/platform/ec'))
+
+if not os.path.isdir(EC_DIR):
+    print('Error - EC_DIR "' + EC_DIR + '" doesn\'t exist. Aborting.')
+    gdb.execute('quit')
+
+# Monitor commands must be run after connecting to the remote target
+# See https://stackoverflow.com/a/39828850
+# https://youtrack.jetbrains.com/issue/CPP-7322
+# https://sourceware.org/gdb/onlinedocs/gdb/Hooks.html
+post_remote_hook='''
+define target hookpost-remote
+    echo \ Flashing EC binary
+    load {EC_DIR}/build/{BOARD}/ec.obj
+    echo \ Resetting target
+    monitor reset
+    echo \ Halting target
+    monitor halt
+    echo \ Setting breakpoint on main
+    b main
+end\n
+'''.format(BOARD=BOARD, EC_DIR=EC_DIR)
+
 gdb.execute('set $BOARD = "%s"'%BOARD)
 gdb.execute('set $GDBSERVER = "%s"'%GDBSERVER)
 gdb.execute('set $GDBPORT = "%s"'%GDBPORT)
 
-build = 'build/' + BOARD
+build = os.path.join(EC_DIR, 'build', BOARD)
 if BOARD != "":
     if not os.path.isdir(build):
         print('Error - Build path "' + build + '" doesn\'t exist. Aborting.')
         gdb.execute('quit')
 
-    gdb.execute('file ' + build + '/ec.obj')
-    gdb.execute('add-symbol-file ' + build + '/RO/ec.RO.elf')
-    gdb.execute('add-symbol-file ' + build + '/RW/ec.RW.elf')
+    # When using gdb from CLion, this kills gdb.
+    if not USING_CLION:
+        gdb.execute('file ' + os.path.join(build, 'ec.obj'))
+    gdb.execute('add-symbol-file ' + os.path.join(build, 'RO/ec.RO.elf'))
+    gdb.execute('add-symbol-file ' + os.path.join(build, 'RW/ec.RW.elf'))
 
 if GDBSERVER == "openocd":
     gdb.execute('set $GDBSERVER_OPENOCD = 1')
@@ -54,9 +93,12 @@ if GDBSERVER == "openocd":
 elif GDBSERVER == "segger":
     gdb.execute('set $GDBSERVER_OPENOCD = 0')
     gdb.execute('set $GDBSERVER_SEGGER = 1')
+    gdb.execute(post_remote_hook)
 else:
     print('Error - GDBSERVER="' + GDBSERVER + '" is invalid.')
     gdb.execute('quit')
+
+# End of python code
 end
 
 # OpenOCD specific config

@@ -27,9 +27,9 @@ used for JTAG and SWD for ARM devices.
 
 ## Software Required
 
-*   [JLink Software] (when using [J-Trace] or other Segger debug probes).
+*   [JLink Software] \(when using [J-Trace] or other Segger debug probes).
 *   Any tool that supports connecting `gdbserver`. This document will assume
-    [CLion].
+    [CLion] and was tested with `JLink_Linux_V670e_x86_64`.
 *   Alternatively, you can use [Ozone] a standalone debugger from Segger.
 
 ## Connecting SWD
@@ -76,7 +76,7 @@ Start the JLink gdbserver for the appropriate MCU type:
 *   Dragontalon / [Nucleo STM32H743ZI]: `STM32H743ZI`
 
 ```bash
-(outside) $ ./JLink_Linux_V660c_x86_64/JLinkGDBServerCLExe -select USB -device STM32F412CG -endian little -if SWD -speed auto -noir -noLocalhostOnly
+(outside) $ ./JLink_Linux_V670e_x86_64/JLinkGDBServerCLExe -select USB -device STM32F412CG -endian little -if SWD -speed auto -noir -noLocalhostOnly
 ```
 
 You should see the port that gdbserver is running on in the output:
@@ -96,13 +96,18 @@ Connected to target
 Waiting for GDB connection...
 ```
 
-In your editor, specify the IP address and port for gdbserver:
+Configure your editor to use this [`.gdbinit`], taking care to set the correct
+environment variables for the `BOARD` and `GDBSERVER` being used. For CLion, if
+you want to use a `.gdbinit` outside of your `HOME` directory, you'll need to
+[configure `~/.gdbinit`].
+
+In your editor, specify the IP address and port for `gdbserver`:
 
 ```
 127.0.0.1:2331
 ```
 
-You will also want to provide the symbol file:
+You will also want to provide the symbol files:
 
 *   RW image: `build/<board>/RW/ec.RW.elf`
 *   RO image: `build/<board>/RO.ec.RO.elf`
@@ -155,6 +160,8 @@ STM32F412 package that does not have the synchronous trace pins, but the
 [CLion Start Remote Debug]: https://www.jetbrains.com/help/clion/remote-debug.html#start-remote-debug
 [Nucleo STM32F412ZG]: https://www.st.com/en/evaluation-tools/nucleo-f412zg.html
 [Nucleo STM32H743ZI]: https://www.st.com/en/evaluation-tools/nucleo-h743zi.html
+[`.gdbinit`]: /util/gdbinit
+[configure `~/.gdbinit`]: https://www.jetbrains.com/help/clion/configuring-debugger-options.html#gdbinit-lldbinit
 
 <!-- Images -->
 
