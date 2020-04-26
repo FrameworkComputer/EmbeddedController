@@ -3358,8 +3358,8 @@ static void pe_prs_src_snk_wait_source_on_run(int port)
 		ext = PD_HEADER_EXT(rx_emsg[port].header);
 
 		if ((ext == 0) && (cnt == 0) && (type == PD_CTRL_PS_RDY)) {
-			tc_pr_swap_complete(port);
 			pe[port].ps_source_timer = TIMER_DISABLED;
+
 			PE_SET_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE);
 			set_state_pe(port, PE_SNK_STARTUP);
 			return;
@@ -3378,6 +3378,11 @@ static void pe_prs_src_snk_wait_source_on_run(int port)
 		set_state_pe(port, PE_WAIT_FOR_ERROR_RECOVERY);
 		return;
 	}
+}
+
+static void pe_prs_src_snk_wait_source_on_exit(int port)
+{
+	tc_pr_swap_complete(port);
 }
 
 /**
@@ -3606,9 +3611,13 @@ static void pe_prs_snk_src_source_on_run(int port)
 
 		/* Run swap source timer on entry to pe_src_startup */
 		PE_SET_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE);
-		tc_pr_swap_complete(port);
 		set_state_pe(port, PE_SRC_STARTUP);
 	}
+}
+
+static void pe_prs_snk_src_source_on_exit(int port)
+{
+	tc_pr_swap_complete(port);
 }
 
 /**
@@ -5338,6 +5347,7 @@ static const struct usb_state pe_states[] = {
 	[PE_PRS_SRC_SNK_WAIT_SOURCE_ON] = {
 		.entry = pe_prs_src_snk_wait_source_on_entry,
 		.run   = pe_prs_src_snk_wait_source_on_run,
+		.exit  = pe_prs_src_snk_wait_source_on_exit,
 	},
 	[PE_PRS_SRC_SNK_SEND_SWAP] = {
 		.entry = pe_prs_src_snk_send_swap_entry,
@@ -5368,6 +5378,7 @@ static const struct usb_state pe_states[] = {
 	[PE_PRS_SNK_SRC_SOURCE_ON] = {
 		.entry = pe_prs_snk_src_source_on_entry,
 		.run   = pe_prs_snk_src_source_on_run,
+		.exit  = pe_prs_snk_src_source_on_exit,
 		.parent = &pe_states[PE_PRS_FRS_SHARED],
 	},
 	/* State actions are shared with PE_FRS_SNK_SRC_SEND_SWAP */
