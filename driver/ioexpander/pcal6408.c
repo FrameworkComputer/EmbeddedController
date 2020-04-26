@@ -218,7 +218,7 @@ static int pcal6408_ioex_set_flags_by_mask(int ioex, int port, int mask,
 
 		if (flags & GPIO_HIGH)
 			val |= mask;
-		else
+		else if (flags & GPIO_LOW)
 			val &= ~mask;
 
 		rv = pcal6408_write(ioex, PCAL6408_REG_OUTPUT, val);
