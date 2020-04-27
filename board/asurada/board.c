@@ -262,6 +262,14 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
 	/* Disable CE_DP pin, enable I2C control. */
 	reg |= PS8743_MODE_DP_REG_CONTROL;
 
+	/*
+	 * DP specific config
+	 *
+	 * Enable/Disable IN_HPD on the DB.
+	 */
+	gpio_set_level(GPIO_USB_C1_DP_IN_HPD,
+		       mux_state & USB_PD_MUX_DP_ENABLED);
+
 	return ps8743_write(me, PS8743_REG_MODE, reg);
 }
 

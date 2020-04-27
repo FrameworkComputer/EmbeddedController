@@ -10,6 +10,18 @@
 #error Asurada reference must define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
 #endif
 
+int svdm_get_hpd_gpio(int port)
+{
+	/* HPD is low active, inverse the result */
+	return !gpio_get_level(GPIO_EC_DPBRDG_HPD_ODL);
+}
+
+void svdm_set_hpd_gpio(int port, int en)
+{
+	/* HPD is low active, inverse the en */
+	gpio_set_level(GPIO_EC_DPBRDG_HPD_ODL, !en);
+}
+
 int pd_snk_is_vbus_provided(int port)
 {
 	return ppc_is_vbus_present(port);
