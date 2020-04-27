@@ -193,12 +193,6 @@
 #define CONFIG_CMD_USB_PD_CABLE
 #define CONFIG_USB_PD_DECODE_SOP
 
-/* Enabling Thunderbolt-compatible mode */
-#define CONFIG_USB_PD_TBT_COMPAT_MODE
-
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
-
 /* UART COMMAND */
 #define CONFIG_CMD_CHARGEN
 

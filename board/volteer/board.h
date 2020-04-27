@@ -58,6 +58,12 @@
 #define USBC_PORT_1_USB2_NUM	4
 #define USBC_PORT_1_USB3_NUM	2
 
+/* Enabling Thunderbolt-compatible mode */
+#define CONFIG_USB_PD_TBT_COMPAT_MODE
+
+/* Enabling USB4 mode */
+#define CONFIG_USB_PD_USB4
+
 /* USB Type A Features */
 
 /* BC 1.2 */

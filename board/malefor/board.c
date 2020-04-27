@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Volteer board-specific configuration */
+/* Malefor board-specific configuration */
 
 #include "button.h"
 #include "common.h"
@@ -25,7 +25,6 @@
 #include "task.h"
 #include "tablet_mode.h"
 #include "uart.h"
-#include "usb_pd_tbt.h"
 #include "util.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
@@ -47,32 +46,6 @@ static void board_init(void)
 	pwm_set_duty(PWM_CH_LED4_SIDESEL, 50);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-__override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
-{
-	/* Routing length exceeds 205mm prior to connection to re-timer */
-	if (port == USBC_PORT_C1)
-		return TBT_SS_U32_GEN1_GEN2;
-
-	/*
-	 * Thunderbolt-compatible mode not supported
-	 *
-	 * TODO (b/153996396): All the USB-C ports need to support same speed.
-	 * Need to fix once USB-C feature set is known for Volteer.
-	 */
-	return TBT_SS_RES_0;
-}
-
-__override bool board_is_tbt_usb4_port(int port)
-{
-	/*
-	 * On the Volteer reference board only port 1 supports TBT & USB4
-	 *
-	 * TODO (b/153996396): All the USB-C ports need to support same
-	 * features. Need to fix once USB-C feature set is known for Volteer.
-	 */
-	return port == USBC_PORT_C1;
-}
 
 /******************************************************************************/
 /* Sensors */
