@@ -320,6 +320,13 @@ void tc_start_error_recovery(int port);
 void tc_hard_reset(int port);
 
 /**
+ * Hard Reset is complete for the TypeC port
+ *
+ * @param port USB-C port number
+ */
+void tc_hard_reset_complete(int port);
+
+/**
  * Start the state machine event loop
  *
  * @param port USB-C port number

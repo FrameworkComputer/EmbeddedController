@@ -87,6 +87,9 @@ int tc_is_vconn_src(int port)
 void tc_hard_reset(int port)
 {}
 
+void tc_hard_reset_complete(int port)
+{}
+
 void tc_partner_dr_data(int port, int en)
 {}
 

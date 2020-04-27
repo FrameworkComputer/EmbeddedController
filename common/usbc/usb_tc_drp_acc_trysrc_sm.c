@@ -68,18 +68,20 @@
 #define TC_FLAGS_PARTNER_PD_CAPABLE     BIT(15)
 /* Flag to note hard reset has been triggered */
 #define TC_FLAGS_HARD_RESET             BIT(16)
+/* Flag to note we are currently performing hard reset */
+#define TC_FLAGS_HARD_RESET_IN_PROGRESS BIT(17)
 /* Flag to note port partner is USB comms capable */
-#define TC_FLAGS_PARTNER_USB_COMM       BIT(17)
+#define TC_FLAGS_PARTNER_USB_COMM       BIT(18)
 /* Flag to note we are currently performing PR Swap */
-#define TC_FLAGS_PR_SWAP_IN_PROGRESS    BIT(18)
+#define TC_FLAGS_PR_SWAP_IN_PROGRESS    BIT(19)
 /* Flag to note we need to perform PR Swap */
-#define TC_FLAGS_DO_PR_SWAP             BIT(19)
+#define TC_FLAGS_DO_PR_SWAP             BIT(20)
 /* Flag to note we are performing Discover Identity */
-#define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(20)
+#define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(21)
 /* Flag to note we should check for connection */
-#define TC_FLAGS_CHECK_CONNECTION       BIT(21)
+#define TC_FLAGS_CHECK_CONNECTION       BIT(22)
 /* Flag to note pd_set_suspend SUSPEND state */
-#define TC_FLAGS_SUSPEND                BIT(22)
+#define TC_FLAGS_SUSPEND                BIT(23)
 
 /*
  * Clear all flags except TC_FLAGS_LPM_ENGAGED and TC_FLAGS_SUSPEND.
@@ -627,6 +629,13 @@ void tc_hard_reset(int port)
 	TC_SET_FLAG(port, TC_FLAGS_HARD_RESET);
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
 }
+
+void tc_hard_reset_complete(int port)
+{
+	TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_IN_PROGRESS);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+}
+/****************************************************************************/
 
 void tc_disc_ident_in_progress(int port)
 {
@@ -1821,15 +1830,19 @@ static void tc_attached_snk_run(const int port)
 	 */
 	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET)) {
 		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET);
+		TC_SET_FLAG(port, TC_FLAGS_HARD_RESET_IN_PROGRESS);
 		tc_perform_snk_hard_reset(port);
 	}
 
 	/*
 	 * The sink will be powered off during a power role swap but we don't
-	 * want to trigger a disconnect
+	 * want to trigger a disconnect.
+	 * If we are working on a Hard Reset we have to remain attached
+	 * even when vbus drops.
 	 */
 	if (!TC_CHK_FLAG(port, TC_FLAGS_POWER_OFF_SNK) &&
-	    !TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
+	    !TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS) &&
+	    !TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_IN_PROGRESS)) {
 		/* Detach detection */
 		if (!pd_is_vbus_present(port)) {
 			if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
@@ -2173,8 +2186,15 @@ static void tc_dbg_acc_snk_run(const int port)
 	 */
 	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET)) {
 		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET);
+		TC_SET_FLAG(port, TC_FLAGS_HARD_RESET_IN_PROGRESS);
 		tc_perform_snk_hard_reset(port);
 	}
+
+	/*
+	 * HARD RESET in progress, don't disconnect
+	 */
+	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_IN_PROGRESS))
+		return;
 
 	/*
 	 * The sink will be powered off during a power role swap but we

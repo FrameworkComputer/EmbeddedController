@@ -2074,6 +2074,12 @@ static void pe_src_transition_to_default_run(int port)
 	}
 }
 
+static void pe_src_transition_to_default_exit(int port)
+{
+	/* Inform the TC Layer the Hard Reset is complete */
+	tc_hard_reset_complete(port);
+}
+
 /**
  * PE_SNK_Startup State
  */
@@ -2222,6 +2228,16 @@ static void pe_snk_evaluate_capability_entry(int port)
 
 	/* Reset Hard Reset counter to zero */
 	pe[port].hard_reset_counter = 0;
+
+	/* USB TCPCI Spec R2V1p1 4.4.5.4.4 Enable AutoDischargeDisconnect */
+	tcpm_enable_auto_discharge_disconnect(port, 1);
+
+	/*
+	 * If we were in a Hard Reset condition we have to delay until
+	 * now to let the TC know we are back to a stable connection.
+	 * Inform the TC Layer the Hard Reset is complete
+	 */
+	tc_hard_reset_complete(port);
 
 	/* Set to highest revision supported by both ports. */
 	prl_set_rev(port, TCPC_TX_SOP,
@@ -2730,6 +2746,10 @@ static void pe_snk_transition_to_default_entry(int port)
 {
 	print_current_state(port);
 
+	/* USB TCPCI Spec R2V1p1 4.4.5.4.4 Disable AutoDischargeDisconnect */
+	tcpm_enable_auto_discharge_disconnect(port, 0);
+
+	/* Inform the TC Layer of Hard Reset */
 	tc_hard_reset(port);
 }
 
@@ -5253,6 +5273,7 @@ static const struct usb_state pe_states[] = {
 	[PE_SRC_TRANSITION_TO_DEFAULT] = {
 		.entry = pe_src_transition_to_default_entry,
 		.run = pe_src_transition_to_default_run,
+		.exit = pe_src_transition_to_default_exit,
 	},
 	[PE_SNK_STARTUP] = {
 		.entry = pe_snk_startup_entry,
