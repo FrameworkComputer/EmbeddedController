@@ -116,8 +116,8 @@ static void kakadu_led_init(void)
 	mt6370_led_set_dim_mode(LED_GREEN, dim);
 	mt6370_led_set_pwm_frequency(LED_RED, freq);
 	mt6370_led_set_pwm_frequency(LED_GREEN, freq);
-	mt6370_led_set_pwm_dim_duty(LED_RED, 0);
-	mt6370_led_set_pwm_dim_duty(LED_GREEN, 0);
+	mt6370_led_set_pwm_dim_duty(LED_RED, 12);
+	mt6370_led_set_pwm_dim_duty(LED_GREEN, 31);
 }
 DECLARE_HOOK(HOOK_INIT, kakadu_led_init, HOOK_PRIO_DEFAULT);
 
