@@ -28,6 +28,11 @@
 #include "timer.h"
 #include "uart.h"
 
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+static void x_ec_interrupt(enum gpio_signal signal);
+
 #include "gpio_list.h"
 
 const struct charger_config_t chg_chips[] = {
@@ -66,6 +71,9 @@ const struct power_signal_info power_signal_list[] = {
 	  "AP_WDT_ASSERTED"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+/* Detect subboard */
+static enum board_sub_board board_get_sub_board(void);
 
 /* Initialize board. */
 static void board_init(void)
@@ -126,7 +134,38 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+static void x_ec_interrupt(enum gpio_signal signal)
+{
+	/* TODO: implement this */
+}
+
 int board_get_version(void)
 {
 	return 0;
 }
+
+/* Sub-board */
+
+static enum board_sub_board board_get_sub_board(void)
+{
+	static enum board_sub_board sub = SUB_BOARD_NONE;
+
+	if (sub != SUB_BOARD_NONE)
+		return sub;
+
+	/* HDMI board has external pull high. */
+	if (gpio_get_level(GPIO_EC_X_GPIO3))
+		sub = SUB_BOARD_HDMI;
+	else
+		sub = SUB_BOARD_TYPEC;
+
+	CPRINTS("Detect %s SUB", sub == SUB_BOARD_HDMI ? "HDMI" : "TYPEC");
+	return sub;
+}
+
+static void sub_board_init(void)
+{
+	board_get_sub_board();
+}
+DECLARE_HOOK(HOOK_INIT, sub_board_init, HOOK_PRIO_INIT_I2C - 1);
+

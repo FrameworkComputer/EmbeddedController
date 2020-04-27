@@ -72,6 +72,14 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
+/* GPIO name remapping */
+#define GPIO_EN_HDMI_PWR        GPIO_EC_X_GPIO1
+#define GPIO_USB_C1_FRS_EN      GPIO_EC_X_GPIO1
+#define GPIO_USB_C1_PPC_INT_ODL GPIO_X_EC_GPIO2
+#define GPIO_PS185_EC_DP_HPD    GPIO_X_EC_GPIO2
+#define GPIO_USB_C1_DP_IN_HPD   GPIO_EC_X_GPIO3
+#define GPIO_PS185_PWRDN_ODL    GPIO_EC_X_GPIO3
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -104,6 +112,14 @@ enum power_signal {
 	AP_IN_S3_L,
 	AP_WDT_ASSERTED,
 	POWER_SIGNAL_COUNT,
+};
+
+enum board_sub_board {
+	SUB_BOARD_NONE = -1,
+	SUB_BOARD_TYPEC,
+	SUB_BOARD_HDMI,
+
+	SUB_BOARD_COUNT,
 };
 
 int board_get_version(void);
