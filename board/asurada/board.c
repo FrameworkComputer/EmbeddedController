@@ -17,6 +17,8 @@
 #include "driver/charger/isl923x.h"
 #include "driver/ppc/syv682x.h"
 #include "driver/tcpm/it83xx_pd.h"
+#include "driver/usb_mux/it5205.h"
+#include "driver/usb_mux/ps8743.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -243,8 +245,41 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+static int board_ps8743_mux_set(const struct usb_mux *me,
+				mux_state_t mux_state)
+{
+	int rv = EC_SUCCESS;
+	int reg = 0;
+
+	rv = ps8743_read(me, PS8743_REG_MODE, &reg);
+	if (rv)
+		return rv;
+
+	/* Disable FLIP pin, enable I2C control. */
+	reg |= PS8743_MODE_FLIP_REG_CONTROL;
+	/* Disable CE_USB pin, enable I2C control. */
+	reg |= PS8743_MODE_USB_REG_CONTROL;
+	/* Disable CE_DP pin, enable I2C control. */
+	reg |= PS8743_MODE_DP_REG_CONTROL;
+
+	return ps8743_write(me, PS8743_REG_MODE, reg);
+}
+
 /* USB Mux */
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	{
+		.usb_port = 0,
+		.i2c_port = I2C_PORT_USB_MUX0,
+		.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
+		.driver = &it5205_usb_mux_driver,
+	},
+	{
+		.usb_port = 1,
+		.i2c_port = I2C_PORT_USB_MUX1,
+		.i2c_addr_flags = PS8743_I2C_ADDR0_FLAG,
+		.driver = &ps8743_usb_mux_driver,
+		.board_set = &board_ps8743_mux_set,
+	},
 };
 
 uint16_t tcpc_get_alert_status(void)
