@@ -147,20 +147,19 @@ bool consume_sop_prime_prime_repeat_msg(int port, uint8_t msg_id)
 	return true;
 }
 
-static void disable_transmit_sop_prime(int port)
+__maybe_unused static void disable_transmit_sop_prime(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
 		cable[port].flags &= ~CABLE_FLAGS_SOP_PRIME_ENABLE;
 }
 
-static void disable_transmit_sop_prime_prime(int port)
+__maybe_unused static void disable_transmit_sop_prime_prime(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
 		cable[port].flags &= ~CABLE_FLAGS_SOP_PRIME_PRIME_ENABLE;
 }
 
-enum pd_msg_type pd_msg_tx_type(int port, enum pd_data_role data_role,
-				uint32_t pd_flags)
+__maybe_unused static uint8_t is_sop_prime_ready(int port)
 {
 	/*
 	 * Ref: USB PD 3.0 sec 2.5.4: When an Explicit Contract is in place the
@@ -173,27 +172,16 @@ enum pd_msg_type pd_msg_tx_type(int port, enum pd_data_role data_role,
 	 * Sec 3.6.11 : Before communicating with a Cable Plug a Port Should
 	 * ensure that it is the Vconn Source
 	 */
-	if (pd_flags & PD_FLAGS_VCONN_ON && (IS_ENABLED(CONFIG_USB_PD_REV30) ||
-		data_role == PD_ROLE_DFP)) {
-		if (is_transmit_msg_sop_prime(port))
-			return PD_MSG_SOP_PRIME;
-		if (is_transmit_msg_sop_prime_prime(port))
-			return PD_MSG_SOP_PRIME_PRIME;
-	}
+	return (pd_get_vconn_state(port) && (IS_ENABLED(CONFIG_USB_PD_REV30)
+		|| (pd_get_data_role(port) == PD_ROLE_DFP)));
+}
 
-	if (is_transmit_msg_sop_prime(port)) {
-		/*
-		 * Clear the CABLE_FLAGS_SOP_PRIME_ENABLE flag if the port is
-		 * unable to communicate with the cable plug.
-		 */
-		disable_transmit_sop_prime(port);
-	} else if (is_transmit_msg_sop_prime_prime(port)) {
-		/*
-		 * Clear the CABLE_FLAGS_SOP_PRIME_PRIME_ENABLE flag if the port
-		 * is unable to communicate with the cable plug.
-		 */
-		disable_transmit_sop_prime_prime(port);
-	}
+enum pd_msg_type pd_msg_tx_type(int port)
+{
+	if (is_transmit_msg_sop_prime(port))
+		return PD_MSG_SOP_PRIME;
+	if (is_transmit_msg_sop_prime_prime(port))
+		return PD_MSG_SOP_PRIME_PRIME;
 
 	return PD_MSG_SOP;
 }
@@ -949,6 +937,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 				disable_transmit_sop_prime(port);
 			/* Received a SOP Discover Ident Message */
 			} else if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP) &&
+				is_sop_prime_ready(port) &&
 				board_is_tbt_usb4_port(port)) {
 				pd_dfp_discovery_init(port);
 				dfp_consume_identity(port, cnt, payload);

@@ -2147,8 +2147,7 @@ static void pd_vdm_send_state_machine(int port)
 {
 	int res;
 	uint16_t header;
-	enum pd_msg_type msg_type =
-		pd_msg_tx_type(port, pd[port].data_role, pd[port].flags);
+	enum pd_msg_type msg_type = pd_msg_tx_type(port);
 
 	switch (pd[port].vdm_state) {
 	case VDM_STATE_READY:

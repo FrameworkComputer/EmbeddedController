@@ -1815,12 +1815,9 @@ bool is_transmit_msg_sop_prime_prime(int port);
  * Returns the type of communication (SOP/SOP'/SOP'')
  *
  * @param port		USB-C port number
- * @param data_role	current data role
- * @param pd_flags	current pd flags
  * @return		Type of message to be transmitted
  */
-enum pd_msg_type pd_msg_tx_type(int port, enum pd_data_role data_role,
-				uint32_t pd_flags);
+enum pd_msg_type pd_msg_tx_type(int port);
 
 /**
  * Reset Cable type, Cable attributes and cable flags
