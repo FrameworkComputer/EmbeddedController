@@ -254,7 +254,7 @@ static void sm5803_init(int chgnum)
 
 	/* Configure TINT and Vbus interrupts to fire */
 	rv |= main_write8(chgnum, SM5803_REG_INT2_EN, SM5803_INT2_TINT
-						      & SM5803_INT2_VBUS);
+						      | SM5803_INT2_VBUS);
 
 	/* Set Vbus interrupt levels for 3.5V and 4.0V */
 	rv |= meas_write8(chgnum, SM5803_REG_VBUS_LOW_TH,
