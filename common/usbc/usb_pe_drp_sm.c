@@ -4972,43 +4972,49 @@ static void pe_vcs_send_ps_rdy_swap_entry(int port)
 
 static void pe_vcs_send_ps_rdy_swap_run(int port)
 {
-	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
-		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+	/* TODO(b/152058087): TCPMv2: Break up pe_vcs_send_ps_rdy_swap */
+	switch (pe[port].sub) {
+	case PE_SUB0:
+		/*
+		 * After a VCONN Swap the VCONN Source needs to reset
+		 * the Cable Plug’s Protocol Layer in order to ensure
+		 * MessageID synchronization.
+		 */
+		if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+			PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
-		switch (pe[port].sub) {
-		case PE_SUB0:
-			/*
-			 * After a VCONN Swap the VCONN Source needs to reset
-			 * the Cable Plug’s Protocol Layer in order to ensure
-			 * MessageID synchronization.
-			 */
 			prl_send_ctrl_msg(port, TCPC_TX_SOP_PRIME,
-							PD_CTRL_SOFT_RESET);
+					  PD_CTRL_SOFT_RESET);
 			pe[port].sub = PE_SUB1;
-			pe[port].timeout = get_time().val + 100*MSEC;
-			break;
-		case PE_SUB1:
-			/* Got ACCEPT or REJECT from Cable Plug */
-			if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED) ||
-					get_time().val > pe[port].timeout) {
-				PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
-				/*
-				 * A VCONN Swap Shall reset the
-				 * DiscoverIdentityCounter to zero
-				 */
-				pe[port].discover_port_identity_counter = 0;
-				pe[port].dr_swap_attempt_counter = 0;
-
-				if (pe[port].power_role == PD_ROLE_SOURCE)
-					set_state_pe(port, PE_SRC_READY);
-				else
-					set_state_pe(port, PE_SNK_READY);
-			}
-			break;
-		case PE_SUB2:
-			/* Do nothing */
-			break;
 		}
+		break;
+	case PE_SUB1:
+		if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+			PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+			pe[port].sender_response_timer = get_time().val +
+							PD_T_SENDER_RESPONSE;
+		}
+
+		/* Got ACCEPT or REJECT from Cable Plug */
+		if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED) ||
+		    get_time().val > pe[port].sender_response_timer) {
+			PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+			/*
+			 * A VCONN Swap Shall reset the
+			 * DiscoverIdentityCounter to zero
+			 */
+			pe[port].discover_port_identity_counter = 0;
+			pe[port].dr_swap_attempt_counter = 0;
+
+			if (pe[port].power_role == PD_ROLE_SOURCE)
+				set_state_pe(port, PE_SRC_READY);
+			else
+				set_state_pe(port, PE_SNK_READY);
+		}
+		break;
+	case PE_SUB2:
+		/* Do nothing */
+		break;
 	}
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
