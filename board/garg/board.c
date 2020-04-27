@@ -299,7 +299,7 @@ void board_overcurrent_event(int port, int is_overcurrented)
 uint8_t board_get_usb_pd_port_count(void)
 {
 	/* HDMI SKU has one USB PD port */
-	if (sku_id == 9)
+	if (sku_id == 9 || sku_id == 19 || sku_id == 50)
 		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
