@@ -1112,6 +1112,19 @@ __overridable int svdm_dp_config(int port, uint32_t *payload)
 	return 2;
 };
 
+#if defined(CONFIG_USB_PD_DP_HPD_GPIO) && \
+	!defined(CONFIG_USB_PD_DP_HPD_GPIO_CUSTOM)
+void svdm_set_hpd_gpio(int port, int en)
+{
+	gpio_set_level(PORT_TO_HPD(port), en);
+}
+
+int svdm_get_hpd_gpio(int port)
+{
+	return gpio_get_level(PORT_TO_HPD(port));
+}
+#endif
+
 __overridable void svdm_dp_post_config(int port)
 {
 	dp_flags[port] |= DP_FLAGS_DP_ON;
@@ -1119,7 +1132,7 @@ __overridable void svdm_dp_post_config(int port)
 		return;
 
 #ifdef CONFIG_USB_PD_DP_HPD_GPIO
-	gpio_set_level(PORT_TO_HPD(port), 1);
+	svdm_set_hpd_gpio(port, 1);
 
 	/* set the minimum time delay (2ms) for the next HPD IRQ */
 	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
@@ -1138,8 +1151,7 @@ __overridable int svdm_dp_attention(int port, uint32_t *payload)
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
 #ifdef CONFIG_USB_PD_DP_HPD_GPIO
-	enum gpio_signal hpd = PORT_TO_HPD(port);
-	int cur_lvl = gpio_get_level(hpd);
+	int cur_lvl = svdm_get_hpd_gpio(port);
 #endif /* CONFIG_USB_PD_DP_HPD_GPIO */
 
 	dp_status[port] = payload[1];
@@ -1177,11 +1189,11 @@ __overridable int svdm_dp_attention(int port, uint32_t *payload)
 			usleep(svdm_hpd_deadline[port] - now);
 
 		/* generate IRQ_HPD pulse */
-		gpio_set_level(hpd, 0);
+		svdm_set_hpd_gpio(port, 0);
 		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
-		gpio_set_level(hpd, 1);
+		svdm_set_hpd_gpio(port, 1);
 	} else {
-		gpio_set_level(hpd, lvl);
+		svdm_set_hpd_gpio(port, lvl);
 	}
 
 	/* set the minimum time delay (2ms) for the next HPD IRQ */
@@ -1203,7 +1215,7 @@ __overridable void svdm_exit_dp_mode(int port)
 {
 	svdm_safe_dp_mode(port);
 #ifdef CONFIG_USB_PD_DP_HPD_GPIO
-	gpio_set_level(PORT_TO_HPD(port), 0);
+	svdm_set_hpd_gpio(port, 0);
 #endif /* CONFIG_USB_PD_DP_HPD_GPIO */
 	usb_mux_hpd_update(port, 0, 0);
 #ifdef USB_PD_PORT_TCPC_MST

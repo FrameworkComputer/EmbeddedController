@@ -2800,6 +2800,22 @@ extern uint32_t dp_status[CONFIG_USB_PD_PORT_MAX_COUNT];
  */
 void usb_mux_set_safe_mode(int port);
 
+/*
+ * Set HPD GPIO level
+ *
+ * @param port The PD port number
+ * @param en 0 for HPD disabled, 1 for HPD enabled.
+ */
+void svdm_set_hpd_gpio(int port, int en);
+
+/*
+ * Get HPD GPIO level
+ *
+ * @param port The PD port number
+ * @return 0 for HPD disabled, 1 for HPD enabled.
+ */
+int svdm_get_hpd_gpio(int port);
+
 /**
  * Configure the pins used for DisplayPort Alternate Mode into safe state.
  *
