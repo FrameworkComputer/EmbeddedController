@@ -1731,13 +1731,14 @@ static void pe_src_ready_run(int port)
 			default:
 				set_state_pe(port, PE_SEND_NOT_SUPPORTED);
 			}
+			return;
 		}
 		/* Data Message Requests */
 		else if (cnt > 0) {
 			switch (type) {
 			case PD_DATA_REQUEST:
 				set_state_pe(port, PE_SRC_NEGOTIATE_CAPABILITY);
-				break;
+				return;
 			case PD_DATA_SINK_CAP:
 				break;
 			case PD_DATA_VENDOR_DEF:
@@ -1750,12 +1751,13 @@ static void pe_src_ready_run(int port)
 						set_state_pe(port,
 						PE_HANDLE_CUSTOM_VDM_REQUEST);
 				}
-				break;
+				return;
 			case PD_DATA_BIST:
 				set_state_pe(port, PE_BIST_TX);
-				break;
+				return;
 			default:
 				set_state_pe(port, PE_SEND_NOT_SUPPORTED);
+				return;
 			}
 		}
 		/* Control Message Requests */
@@ -1769,16 +1771,16 @@ static void pe_src_ready_run(int port)
 				break;
 			case PD_CTRL_GET_SOURCE_CAP:
 				set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
-				break;
+				return;
 			case PD_CTRL_GET_SINK_CAP:
 				set_state_pe(port, PE_SNK_GIVE_SINK_CAP);
-				break;
+				return;
 			case PD_CTRL_GOTO_MIN:
 				break;
 			case PD_CTRL_PR_SWAP:
 				set_state_pe(port,
 					PE_PRS_SRC_SNK_EVALUATE_SWAP);
-				break;
+				return;
 			case PD_CTRL_DR_SWAP:
 				if (PE_CHK_FLAG(port,
 						PE_FLAGS_MODAL_OPERATION)) {
@@ -1787,17 +1789,19 @@ static void pe_src_ready_run(int port)
 				}
 
 				set_state_pe(port, PE_DRS_EVALUATE_SWAP);
-				break;
+				return;
 			case PD_CTRL_VCONN_SWAP:
 				set_state_pe(port, PE_VCS_EVALUATE_SWAP);
-				break;
+				return;
 			default:
 				set_state_pe(port, PE_SEND_NOT_SUPPORTED);
+				return;
 			}
 		}
 	} else if (PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_PORT_CONTINUE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_CONTINUE);
 		set_state_pe(port, PE_VDM_REQUEST);
+		return;
 	}
 
 	if (pe[port].wait_and_add_jitter_timer == TIMER_DISABLED ||
@@ -2484,6 +2488,7 @@ static void pe_snk_ready_run(int port)
 			default:
 				set_state_pe(port, PE_SEND_NOT_SUPPORTED);
 			}
+			return;
 		}
 		/* Data Messages */
 		else if (cnt > 0) {
@@ -2509,6 +2514,7 @@ static void pe_snk_ready_run(int port)
 			default:
 				set_state_pe(port, PE_SEND_NOT_SUPPORTED);
 			}
+			return;
 		}
 		/* Control Messages */
 		else {
@@ -2517,41 +2523,43 @@ static void pe_snk_ready_run(int port)
 				/* Do nothing */
 				break;
 			case PD_CTRL_PING:
-				/* Do noghing */
+				/* Do nothing */
 				break;
 			case PD_CTRL_GET_SOURCE_CAP:
 				set_state_pe(port, PE_SNK_GET_SOURCE_CAP);
-				break;
+				return;
 			case PD_CTRL_GET_SINK_CAP:
 				set_state_pe(port, PE_SNK_GIVE_SINK_CAP);
-				break;
+				return;
 			case PD_CTRL_GOTO_MIN:
 				set_state_pe(port, PE_SNK_TRANSITION_SINK);
-				break;
+				return;
 			case PD_CTRL_PR_SWAP:
 				set_state_pe(port,
 						PE_PRS_SNK_SRC_EVALUATE_SWAP);
-				break;
+				return;
 			case PD_CTRL_DR_SWAP:
 				if (PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION))
 					set_state_pe(port, PE_SNK_HARD_RESET);
 				else
 					set_state_pe(port,
 							PE_DRS_EVALUATE_SWAP);
-				break;
+				return;
 			case PD_CTRL_VCONN_SWAP:
 				set_state_pe(port, PE_VCS_EVALUATE_SWAP);
-				break;
+				return;
 			case PD_CTRL_NOT_SUPPORTED:
 				/* Do nothing */
 				break;
 			default:
 				set_state_pe(port, PE_SEND_NOT_SUPPORTED);
+				return;
 			}
 		}
 	} else if (PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_PORT_CONTINUE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_CONTINUE);
 		set_state_pe(port, PE_VDM_REQUEST);
+		return;
 	}
 
 	if (pe[port].wait_and_add_jitter_timer == TIMER_DISABLED ||
