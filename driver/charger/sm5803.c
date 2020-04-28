@@ -5,6 +5,7 @@
  * Silicon Mitus SM5803 Buck-Boost Charger
  */
 #include "atomic.h"
+#include "battery.h"
 #include "battery_smart.h"
 #include "charger.h"
 #include "gpio.h"
@@ -387,15 +388,17 @@ static enum ec_error_list sm5803_set_mode(int chgnum, int mode)
 	}
 
 	/*
-	 * Note: Charge may be enabled while OTG is enabled, but should be
-	 * disabled whenever inhibit is called.
+	 * Note: Charge may be enabled while OTG is enabled, but charge inhibit
+	 * should also turn off OTG.  Battery charging flags should only be set
+	 * when battery is present.
 	 */
 	if (mode & CHARGE_FLAG_INHIBIT_CHARGE) {
 		flow1_reg = 0;
 		flow2_reg &= ~SM5803_FLOW2_AUTO_ENABLED;
 	} else {
 		flow1_reg |= SM5803_FLOW1_CHG_EN;
-		flow2_reg |= SM5803_FLOW2_AUTO_ENABLED;
+		if (battery_is_present() == BP_YES)
+			flow2_reg |= SM5803_FLOW2_AUTO_ENABLED;
 	}
 
 	rv = chg_write8(chgnum, SM5803_REG_FLOW1, flow1_reg);
