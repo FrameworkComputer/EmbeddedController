@@ -39,6 +39,12 @@ import os
 BOARD = os.getenv('BOARD', '')
 GDBSERVER = os.getenv('GDBSERVER', 'openocd')
 USING_CLION = distutils.util.strtobool(os.getenv('USING_CLION', 'FALSE'))
+# BIN_NAME can be changed to be the name of a unit test, such as "sha256"
+BIN_NAME = os.getenv('BIN_NAME', 'ec')
+
+BIN_DIR = ''
+if BIN_NAME != 'ec':
+  BIN_DIR = BIN_NAME
 
 if GDBSERVER == "openocd":
     DEFAULT_GDB_PORT = '3333'
@@ -61,7 +67,7 @@ if not os.path.isdir(EC_DIR):
 post_remote_hook='''
 define target hookpost-remote
     echo \ Flashing EC binary
-    load {EC_DIR}/build/{BOARD}/ec.obj
+    load {EC_DIR}/build/{BOARD}/{BIN_DIR}/{BIN_NAME}.obj
     echo \ Resetting target
     monitor reset
     echo \ Halting target
@@ -69,7 +75,7 @@ define target hookpost-remote
     echo \ Setting breakpoint on main
     b main
 end\n
-'''.format(BOARD=BOARD, EC_DIR=EC_DIR)
+'''.format(BOARD=BOARD, EC_DIR=EC_DIR, BIN_DIR=BIN_DIR, BIN_NAME=BIN_NAME)
 
 gdb.execute('set $BOARD = "%s"'%BOARD)
 gdb.execute('set $GDBSERVER = "%s"'%GDBSERVER)
@@ -84,8 +90,8 @@ if BOARD != "":
     # When using gdb from CLion, this kills gdb.
     if not USING_CLION:
         gdb.execute('file ' + os.path.join(build, 'ec.obj'))
-    gdb.execute('add-symbol-file ' + os.path.join(build, 'RO/ec.RO.elf'))
-    gdb.execute('add-symbol-file ' + os.path.join(build, 'RW/ec.RW.elf'))
+    gdb.execute('add-symbol-file ' + os.path.join(build, BIN_DIR, 'RO', BIN_NAME + '.RO.elf'))
+    gdb.execute('add-symbol-file ' + os.path.join(build, BIN_DIR, 'RW', BIN_NAME + '.RW.elf'))
 
 if GDBSERVER == "openocd":
     gdb.execute('set $GDBSERVER_OPENOCD = 1')
