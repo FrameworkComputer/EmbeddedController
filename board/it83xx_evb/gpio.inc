@@ -71,4 +71,6 @@ ALTERNATE(PIN_MASK(C, 0x06), 1, MODULE_I2C, 0)             /* I2C B SCL/SDA */
 ALTERNATE(PIN_MASK(F, 0xC0), 1, MODULE_I2C, 0)             /* I2C C SCL/SDA */
 #endif
 ALTERNATE(PIN_MASK(E, 0x81), 1, MODULE_I2C, 0)             /* I2C E SCL/SDA E0/E7 */
+ALTERNATE(PIN_MASK(I, 0x03), 1, MODULE_ADC, 0)             /* ADC CH0, CH1 */
+ALTERNATE(PIN_MASK(L, 0x0F), 1, MODULE_ADC, 0)             /* ADC CH13-CH16 */
 ALTERNATE(PIN_MASK(J, 0x3C), 1, MODULE_DAC, 0)             /* DAC CH2.3.4.5 */

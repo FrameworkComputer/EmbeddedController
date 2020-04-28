@@ -33,14 +33,7 @@
 #define CONFIG_FLASH_SIZE           0x00080000
 #define CONFIG_RAM_BASE             0x80080000
 #define CONFIG_RAM_SIZE             0x00010000
-/*
- * ADC control pin order change:
- * ADC13 control pin GPL0               GPL1
- * ADC14 control pin GPL1  change to    GPL2
- * ADC15 control pin GPL2  --------->   GPL3
- * ADC16 control pin GPL3               GPL0
- */
-#define IT83XX_CHIP_ADC_PIN_ORDER_CHANGE
+
 /* Embedded flash is KGD */
 #define IT83XX_CHIP_FLASH_IS_KGD
 /* Don't let internal flash go into deep power down mode. */

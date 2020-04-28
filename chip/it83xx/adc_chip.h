@@ -73,7 +73,6 @@ struct adc_ctrl_t {
 	volatile uint8_t *adc_ctrl;
 	volatile uint8_t *adc_datm;
 	volatile uint8_t *adc_datl;
-	volatile uint8_t *adc_pin_ctrl;
 };
 
 /* Data structure to define ADC channels. */

@@ -52,28 +52,28 @@ const struct adc_t adc_channels[] = {
 		.factor_mul = ADC_MAX_MVOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
-		.channel = CHIP_ADC_CH13, /* GPL0, ADC13 */
+		.channel = CHIP_ADC_CH13, /* GPL1, ADC13 */
 	},
 	[ADC_EVB_CH_14] = {
 		.name = "ADC_EVB_CH_14",
 		.factor_mul = ADC_MAX_MVOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
-		.channel = CHIP_ADC_CH14, /* GPL1, ADC14 */
+		.channel = CHIP_ADC_CH14, /* GPL2, ADC14 */
 	},
 	[ADC_EVB_CH_15] = {
 		.name = "ADC_EVB_CH_15",
 		.factor_mul = ADC_MAX_MVOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
-		.channel = CHIP_ADC_CH15, /* GPL2, ADC15 */
+		.channel = CHIP_ADC_CH15, /* GPL3, ADC15 */
 	},
 	[ADC_EVB_CH_16] = {
 		.name = "ADC_EVB_CH_16",
 		.factor_mul = ADC_MAX_MVOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
-		.channel = CHIP_ADC_CH16, /* GPL3, ADC16 */
+		.channel = CHIP_ADC_CH16, /* GPL0, ADC16 */
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
