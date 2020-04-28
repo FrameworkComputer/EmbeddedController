@@ -51,6 +51,7 @@ GPIO(USB_C0_IN_HPD,		PIN(7, 3), GPIO_OUT_LOW)			/* C0 IN Hotplug Detect */
 GPIO(DP1_HPD,			PIN(F, 4), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
 GPIO(DP2_HPD,			PIN(C, 1), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
 GPIO(EC_PS2_RESET,		PIN(3, 2), GPIO_OUT_LOW)			/* Trackpoint reset pin */
+GPIO(EC_H1_PACKET_MODE,		PIN(8, 6), GPIO_OUT_LOW)			/* H1 Packet Mode */
 
 UNIMPLEMENTED(PCH_SMI_L)
 
