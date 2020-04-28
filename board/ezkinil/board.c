@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-/* Trembyle board configuration */
-
 #include "button.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"

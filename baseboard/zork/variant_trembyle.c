@@ -3,9 +3,11 @@
  * found in the LICENSE file.
  */
 
+#include "charger.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "driver/charger/isl9241.h"
 #include "driver/retimer/ps8802.h"
 #include "driver/retimer/ps8818.h"
 #include "driver/retimer/tusb544.h"
@@ -39,11 +41,11 @@ const struct i2c_port_t i2c_ports[] = {
 		.sda = GPIO_EC_I2C_USB_A1_C1_SDA,
 	},
 	{
-		.name = "power",
+		.name = "battery",
 		.port = I2C_PORT_BATTERY,
 		.kbps = 100,
-		.scl = GPIO_EC_I2C_POWER_SCL,
-		.sda = GPIO_EC_I2C_POWER_SDA,
+		.scl = GPIO_EC_I2C_BATT_SCL,
+		.sda = GPIO_EC_I2C_BATT_SDA,
 	},
 	{
 		.name = "ap_mux",
@@ -53,11 +55,11 @@ const struct i2c_port_t i2c_ports[] = {
 		.sda = GPIO_EC_I2C_USBC_AP_MUX_SDA,
 	},
 	{
-		.name = "thermal",
+		.name = "therm_chg",
 		.port = I2C_PORT_THERMAL_AP,
 		.kbps = 400,
-		.scl = GPIO_FCH_SIC,
-		.sda = GPIO_FCH_SID,
+		.scl = GPIO_FCH_SIC_POWER_SCL,
+		.sda = GPIO_FCH_SID_POWER_SDA,
 	},
 	{
 		.name = "sensor",
@@ -82,6 +84,38 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/*****************************************************************************
+ * Charger
+ */
+
+struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER_V1,
+		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
+		.drv = &isl9241_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+
+/*
+ * If the charger is found on the V0 I2C port then re-map the port.
+ * Use HOOK_PRIO_INIT_I2C so we re-map before charger_chips_init()
+ * talks to the charger. This relies on the V1 HW not using the ISL9241 address
+ * on the V0 I2C port.
+ * TODO(b/155214765): Remove this check once V0 HW is no longer used.
+ */
+static void check_v0_charger(void)
+{
+	int id;
+
+	if (i2c_read16(I2C_PORT_CHARGER_V0, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_MANUFACTURER_ID, &id) == EC_SUCCESS) {
+		ccprints("V0 charger HW detected");
+		chg_chips[0].i2c_port = I2C_PORT_CHARGER_V0;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, check_v0_charger, HOOK_PRIO_INIT_I2C);
 
 /*****************************************************************************
  * TCPC

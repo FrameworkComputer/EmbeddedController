@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-/* Trembyle board configuration */
-
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
@@ -21,7 +19,6 @@
 #define CONFIG_I2C_DEBUG
 
 #define CONFIG_MKBP_USE_GPIO
-
 #define CONFIG_FAN_RPM_CUSTOM
 
 /* Motion sensing drivers */

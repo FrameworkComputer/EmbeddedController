@@ -3,8 +3,10 @@
  * found in the LICENSE file.
  */
 
+#include "charger.h"
 #include "common.h"
 #include "console.h"
+#include "driver/charger/isl9241.h"
 #include "driver/ioexpander/pcal6408.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/usb_mux/amd_fp5.h"
@@ -74,6 +76,19 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/*****************************************************************************
+ * Charger
+ */
+
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
+		.drv = &isl9241_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /*****************************************************************************
  * IO expander
