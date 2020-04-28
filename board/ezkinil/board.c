@@ -4,6 +4,7 @@
  */
 
 #include "button.h"
+#include "charge_state_v2.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
@@ -456,4 +457,18 @@ int fan_percent_to_rpm(int fan, int pct)
 			fan_table[current_level].rpm);
 
 	return fan_table[current_level].rpm;
+}
+
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+			int max_ma, int charge_mv)
+{
+	/*
+	 * Limit the input current to 95% negotiated limit,
+	 * to account for the charger chip margin.
+	 */
+	charge_ma = charge_ma * 95 / 100;
+
+	charge_set_input_current_limit(MAX(charge_ma,
+				CONFIG_CHARGER_INPUT_CURRENT),
+				charge_mv);
 }

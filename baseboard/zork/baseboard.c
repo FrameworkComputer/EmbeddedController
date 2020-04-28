@@ -355,7 +355,7 @@ static void baseboard_chipset_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
+__overridable void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
 	charge_set_input_current_limit(MAX(charge_ma,
