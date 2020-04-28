@@ -211,23 +211,6 @@ static int it8801_ioex_write(int ioex, int reg, int data)
 			  reg, data);
 }
 
-/*
- * Initialize the general purpose I/O port(GPIO)
- */
-static int it8801_ioex_init(int ioex)
-{
-	int ret;
-
-	/*  Verify Vendor ID registers. */
-	ret = it8801_check_vendor_id();
-	if (ret) {
-		CPRINTS("Failed to read IT8801 vendor id %x", ret);
-		return ret;
-	}
-
-	return EC_SUCCESS;
-}
-
 static const int it8801_valid_gpio_group[] = {
 	IT8801_VALID_GPIO_G0_MASK,
 	IT8801_VALID_GPIO_G1_MASK,
@@ -238,6 +221,33 @@ static const int it8801_valid_gpio_group[] = {
 static struct mutex ioex_mutex;
 
 static uint8_t it8801_gpio_sov[ARRAY_SIZE(it8801_valid_gpio_group)];
+
+/*
+ * Initialize the general purpose I/O port(GPIO)
+ */
+static int it8801_ioex_init(int ioex)
+{
+	int ret, port, val = 0;
+
+	/*  Verify Vendor ID registers. */
+	ret = it8801_check_vendor_id();
+	if (ret) {
+		CPRINTS("Failed to read IT8801 vendor id %x", ret);
+		return ret;
+	}
+
+	/*
+	 * We will read the value of SOVR and write it to the
+	 * cache(it8801_gpio_sov[port]) to avoid causing cache
+	 * to reset when EC is reset.
+	 */
+	for (port = 0; port < ARRAY_SIZE(it8801_valid_gpio_group); port++) {
+		it8801_ioex_read(ioex, IT8801_REG_GPIO_SOVR(port), &val);
+		it8801_gpio_sov[port] = val;
+	}
+
+	return EC_SUCCESS;
+}
 
 static int ioex_check_is_not_valid(int port, int mask)
 {
