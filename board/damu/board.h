@@ -74,7 +74,7 @@
 #define I2C_PORT_BC12               0
 #define I2C_PORT_TCPC0              0
 #define I2C_PORT_USB_MUX            0
-#define I2C_PORT_BATTERY            1
+#define I2C_PORT_BATTERY            2
 #define I2C_PORT_CHARGER            board_get_charger_i2c()
 #define I2C_PORT_SENSORS            1
 #define I2C_PORT_IO_EXPANDER_IT8801 1
