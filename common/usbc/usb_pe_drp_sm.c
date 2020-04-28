@@ -4477,6 +4477,23 @@ static void pe_vdm_identity_request_cbl_run(int port)
 
 static void pe_vdm_identity_request_cbl_exit(int port)
 {
+	/*
+	 * When cable GoodCRCs but does not reply, down-rev to PD 2.0 and try
+	 * again.
+	 *
+	 * PD 3.0 Rev 2.0 6.2.1.1.5 Specification Revision
+	 *
+	 * "When a Cable Plug does not respond to a Revision 3.0 Discover
+	 * Identity REQ with a Discover Identity ACK or BUSY the Vconn Source
+	 * May repeat steps 1-4 using a Revision 2.0 Discover Identity REQ in
+	 * step 1 before establishing that there is no Cable Plug to
+	 * communicate with"
+	 */
+	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT)) {
+		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT);
+		prl_set_rev(port, TCPC_TX_SOP_PRIME, PD_REV20);
+	}
+
 	if (pe[port].discover_identity_counter >= N_DISCOVER_IDENTITY_COUNT)
 		pd_set_identity_discovery(port, pe[port].tx_type,
 				PD_DISC_FAIL);
