@@ -8,26 +8,13 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
-/* Wake Source interrupts */
-/* TODO(b/148624000): Change this pin assignment once schematics are final */
-GPIO_INT(EC_WP_L,              PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
+/* Write protect */
 
-/* Power sequencing interrupts */
+GPIO(EC_FLASH_WP_ODL,               PIN(A,  3), GPIO_ODR_HIGH)
+GPIO(EC_WP_L,                       PIN(E, 11), GPIO_INT_BOTH)
 
-/* Sensor Interrupts */
+/* Unimplemented signals since we are not an EC */
+UNIMPLEMENTED(ENTERING_RW)
 
-/* USB-C interrupts */
-
-/* HDMI interrupts */
-
-/* Volume button interrupts */
-
-/* AP Signals */
-
-/* USB and USBC Signals */
-
-/* Misc Signals */
-UNIMPLEMENTED(EC_ENTERING_RW)
-
-/* UART */
-
+/* USART3_TX/RX GPIOC 10-11*/
+ALTERNATE(PIN_MASK(C, 0x0C00),  7, MODULE_UART,  GPIO_PULL_UP)
