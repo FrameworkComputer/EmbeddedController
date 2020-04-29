@@ -544,9 +544,6 @@ struct pd_cable {
 	/* For storing Discover mode response from cable */
 	union tbt_mode_resp_cable cable_mode_resp;
 
-	/* Note: this field is for TCPMv2's probing process */
-	enum pd_discovery_state discovery;
-
 	/* Shared fields between TCPMv1 and TCPMv2 */
 	uint8_t is_identified;
 	/* Type of cable */

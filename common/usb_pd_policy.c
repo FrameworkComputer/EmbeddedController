@@ -899,7 +899,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 			if (is_transmit_msg_sop_prime(port)) {
 				/* Store cable type */
 				dfp_consume_cable_response(port, cnt, payload,
-							head);
+						       head);
 
 				/*
 				 * Enter USB4 mode if the cable supports USB4

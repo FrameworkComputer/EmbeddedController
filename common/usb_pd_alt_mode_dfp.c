@@ -510,6 +510,10 @@ enum idh_ptype get_usb_pd_cable_type(int port)
 	return cable->type;
 }
 
+/*
+ * TODO(b/152417597): Support SOP and SOP'; eliminate redundant code for port
+ * partner and cable identity discovery.
+ */
 void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
 				uint16_t head)
 {
@@ -547,7 +551,6 @@ void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
 					payload[VDO_INDEX_PTYPE_CABLE2];
 
 		cable->is_identified = 1;
-		cable->discovery = PD_DISC_COMPLETE;
 	}
 }
 

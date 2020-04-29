@@ -92,7 +92,8 @@ enum tcpm_transmit_type {
 	TCPC_TX_SOP_DEBUG_PRIME_PRIME = 4,
 	TCPC_TX_HARD_RESET = 5,
 	TCPC_TX_CABLE_RESET = 6,
-	TCPC_TX_BIST_MODE_2 = 7
+	TCPC_TX_BIST_MODE_2 = 7,
+	TCPC_TX_INVALID = 0xf,
 };
 
 /* Number of valid Transmit Types */

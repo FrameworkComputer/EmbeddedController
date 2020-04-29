@@ -380,8 +380,11 @@ static struct policy_engine {
 	/* PD_VDO_INVALID is used when there is an invalid VDO */
 	int32_t ama_vdo;
 	int32_t vpd_vdo;
-	/* alternate mode discovery results */
+	/* Alternate mode discovery results */
 	struct pd_discovery discovery;
+
+	/* Partner type to send */
+	enum tcpm_transmit_type tx_type;
 
 	/* VDM - used to send information to shared VDM Request state */
 	/* TODO(b/150611251): Remove when all VDMs use shared parent */
@@ -424,7 +427,7 @@ static struct policy_engine {
 	 * This timer is used during an Explicit Contract when discovering
 	 * whether a Port Partner is PD Capable using SOP'.
 	 */
-	uint64_t discover_port_identity_timer;
+	uint64_t discover_identity_timer;
 
 	/*
 	 * This timer is used in a Source to ensure that the Sink has had
@@ -511,7 +514,7 @@ static struct policy_engine {
 	 * nDiscoverIdentityCount, the port shall not send any further
 	 * SOP'/SOP'' messages.
 	 */
-	uint32_t discover_port_identity_counter;
+	uint32_t discover_identity_counter;
 	/*
 	 * For PD2.0, we need to be a DFP before sending a discovery identity
 	 * message to our port partner. This counter keeps track of how
@@ -561,6 +564,7 @@ static void pe_init(int port)
 	pe[port].source_cap_timer = TIMER_DISABLED;
 	pe[port].no_response_timer = TIMER_DISABLED;
 	pe[port].data_role = pd_get_data_role(port);
+	pe[port].tx_type = TCPC_TX_INVALID;
 
 	tc_pd_connection(port, 0);
 
@@ -996,8 +1000,8 @@ static bool common_src_snk_dpm_requests(int port)
 			PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
 			pd_dfp_discovery_init(port);
 			pe[port].dr_swap_attempt_counter = 0;
-			pe[port].discover_port_identity_counter = 0;
-			pe[port].discover_port_identity_timer = get_time().val +
+			pe[port].discover_identity_counter = 0;
+			pe[port].discover_identity_timer = get_time().val +
 						PD_T_DISCOVER_IDENTITY;
 		}
 		return true;
@@ -1191,7 +1195,7 @@ static bool pe_attempt_port_discovery(int port)
 	/* If mode entry was successful, disable the timer */
 	if (PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION)) {
 		PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
-		pe[port].discover_port_identity_timer = TIMER_DISABLED;
+		pe[port].discover_identity_timer = TIMER_DISABLED;
 		return false;
 	}
 
@@ -1199,9 +1203,9 @@ static bool pe_attempt_port_discovery(int port)
 	 * Run discovery functions when the timer indicating either cable
 	 * discovery spacing or BUSY spacing runs out.
 	 */
-	if (get_time().val > pe[port].discover_port_identity_timer) {
-		if (pe[port].cable.discovery == PD_DISC_NEEDED &&
-		    pe_can_send_sop_prime(port)) {
+	if (get_time().val > pe[port].discover_identity_timer) {
+		if (pd_get_identity_discovery(port, TCPC_TX_SOP_PRIME) ==
+		    PD_DISC_NEEDED && pe_can_send_sop_prime(port)) {
 			PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 			set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
 			return true;
@@ -1334,14 +1338,14 @@ static void pe_src_startup_entry(int port)
 		 * src_discovery for the first time.  After initial startup
 		 * set, vdm_identity_request_cbl will handle the timer updates.
 		 */
-		pe[port].discover_port_identity_timer = get_time().val;
+		pe[port].discover_identity_timer = get_time().val;
 
 		/* Clear port discovery flags */
 		PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
 		pd_dfp_discovery_init(port);
 		pe[port].ama_vdo = PD_VDO_INVALID;
 		pe[port].vpd_vdo = PD_VDO_INVALID;
-		pe[port].discover_port_identity_counter = 0;
+		pe[port].discover_identity_counter = 0;
 		memset(&pe[port].cable, 0, sizeof(struct pd_cable));
 
 		/* Reset dr swap attempt counter */
@@ -1413,9 +1417,9 @@ static void pe_src_discovery_run(int port)
 	 * contract, we use it here to ensure we space any potential BUSY
 	 * requests properly.
 	 */
-	if (pe[port].cable.discovery == PD_DISC_NEEDED &&
-	    get_time().val > pe[port].discover_port_identity_timer &&
-	    pe_can_send_sop_prime(port)) {
+	if (pd_get_identity_discovery(port, TCPC_TX_SOP_PRIME) == PD_DISC_NEEDED
+			&& get_time().val > pe[port].discover_identity_timer
+			&& pe_can_send_sop_prime(port)) {
 		set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
 		return;
 	}
@@ -2116,12 +2120,12 @@ static void pe_snk_startup_entry(int port)
 		 * Set DiscoverIdentityTimer to trigger when we enter
 		 * snk_ready for the first time.
 		 */
-		pe[port].discover_port_identity_timer = get_time().val;
+		pe[port].discover_identity_timer = get_time().val;
 
 		/* Clear port discovery flags */
 		PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
 		pd_dfp_discovery_init(port);
-		pe[port].discover_port_identity_counter = 0;
+		pe[port].discover_identity_counter = 0;
 		memset(&pe[port].cable, 0, sizeof(struct pd_cable));
 
 		/* Reset dr swap attempt counter */
@@ -4124,14 +4128,14 @@ static void pe_vdm_identity_request_cbl_entry(int port)
 
 	print_current_state(port);
 
-	msg[0] = VDO(USB_SID_PD, 1, VDO_SVDM_VERS(pd_get_vdo_ver(port,
-							   TCPC_TX_SOP_PRIME)) |
-		     DISCOVER_IDENTITY);
+	msg[0] = VDO(USB_SID_PD, 1,
+			VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME)) |
+			DISCOVER_IDENTITY);
 	tx_emsg[port].len = sizeof(uint32_t);
 
 	prl_send_data_msg(port, TCPC_TX_SOP_PRIME, PD_DATA_VENDOR_DEF);
 
-	pe[port].discover_port_identity_counter++;
+	pe[port].discover_identity_counter++;
 }
 
 static void pe_vdm_identity_request_cbl_run(int port)
@@ -4177,7 +4181,7 @@ static void pe_vdm_identity_request_cbl_run(int port)
 				 * during an Explicit Contract
 				 */
 				if (prl_get_rev(port, TCPC_TX_SOP) != PD_REV20)
-					prl_set_rev(port, TCPC_TX_SOP_PRIME,
+					prl_set_rev(port, sop,
 							pe[port].cable.rev);
 
 			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
@@ -4185,7 +4189,8 @@ static void pe_vdm_identity_request_cbl_run(int port)
 				 * PE_SRC_VDM_Identity_NAKed and
 				 * PE_INIT_PORT_VDM_Identity_NAKed embedded here
 				 */
-				pe[port].cable.discovery = PD_DISC_FAIL;
+				pd_set_identity_discovery(port, sop,
+						PD_DISC_FAIL);
 			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
 				/*
 				 * Don't fill in the discovery field so we
@@ -4193,14 +4198,15 @@ static void pe_vdm_identity_request_cbl_run(int port)
 				 */
 				CPRINTS("C%d: Cable Busy, DiscIdent "
 					"will be re-tried", port);
-				pe[port].discover_port_identity_timer =
+				pe[port].discover_identity_timer =
 						get_time().val + PD_T_VDM_BUSY;
 			} else {
 				/*
 				 * Cable gave us an incorrect size or command,
 				 * mark discovery as failed
 				 */
-				pe[port].cable.discovery = PD_DISC_FAIL;
+				pd_set_identity_discovery(port, sop,
+						PD_DISC_FAIL);
 				CPRINTS("C%d: Unexpected cable response: "
 					"0x%04x 0x%04x", port,
 					rx_emsg[port].header, payload[0]);
@@ -4253,9 +4259,9 @@ static void pe_vdm_identity_request_cbl_run(int port)
 
 static void pe_vdm_identity_request_cbl_exit(int port)
 {
-	if (pe[port].discover_port_identity_counter >=
-						N_DISCOVER_IDENTITY_COUNT)
-		pe[port].cable.discovery = PD_DISC_FAIL;
+	if (pe[port].discover_identity_counter >= N_DISCOVER_IDENTITY_COUNT)
+		pd_set_identity_discovery(port, TCPC_TX_SOP_PRIME,
+				PD_DISC_FAIL);
 
 	/*
 	 * Set discover identity timer unless BUSY case already did so
@@ -4264,9 +4270,9 @@ static void pe_vdm_identity_request_cbl_exit(int port)
 	 * contract, so we could re-try faster from src_discovery if
 	 * desired here
 	 */
-	if (pe[port].cable.discovery == PD_DISC_NEEDED &&
-			pe[port].discover_port_identity_timer > get_time().val)
-		pe[port].discover_port_identity_timer = get_time().val +
+	if (pd_get_identity_discovery(port, TCPC_TX_SOP_PRIME) == PD_DISC_NEEDED
+			   && pe[port].discover_identity_timer > get_time().val)
+		pe[port].discover_identity_timer = get_time().val +
 							PD_T_DISCOVER_IDENTITY;
 }
 
@@ -4332,7 +4338,7 @@ static void pe_init_port_vdm_identity_request_run(int port)
 				/*
 				 * PE_INIT_PORT_VDM_Identity_NAKed embedded here
 				 */
-				pd_set_identity_discovery(port, TCPC_TX_SOP,
+				pd_set_identity_discovery(port, sop,
 							  PD_DISC_FAIL);
 			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
 				/*
@@ -4344,14 +4350,14 @@ static void pe_init_port_vdm_identity_request_run(int port)
 				 */
 				CPRINTS("C%d: Partner Busy, DiscIdent "
 					"will be re-tried", port);
-				pe[port].discover_port_identity_timer =
+				pe[port].discover_identity_timer =
 						get_time().val + PD_T_VDM_BUSY;
 			} else {
 				/*
 				 * Partner gave an incorrect size or command,
 				 * mark discovery as failed
 				 */
-				pd_set_identity_discovery(port, TCPC_TX_SOP,
+				pd_set_identity_discovery(port, sop,
 							  PD_DISC_FAIL);
 				CPRINTS("C%d: Unexpected partner response: "
 					"0x%04x 0x%04x", port,
@@ -4362,8 +4368,7 @@ static void pe_init_port_vdm_identity_request_run(int port)
 			 * Partner doesn't support structured VDMs, mark
 			 * discovery as failed
 			 */
-			pd_set_identity_discovery(port, TCPC_TX_SOP,
-							  PD_DISC_FAIL);
+			pd_set_identity_discovery(port, sop, PD_DISC_FAIL);
 		} else {
 			/*
 			 * Return to PE_S[RC,NK]_Ready to process unexpected
@@ -5005,7 +5010,7 @@ static void pe_vcs_turn_off_vconn_swap_run(int port)
 		 * A VCONN Swap Shall reset the DiscoverIdentityCounter
 		 * to zero
 		 */
-		pe[port].discover_port_identity_counter = 0;
+		pe[port].discover_identity_counter = 0;
 		pe[port].dr_swap_attempt_counter = 0;
 
 		if (pe[port].power_role == PD_ROLE_SOURCE)
@@ -5061,7 +5066,7 @@ static void pe_vcs_send_ps_rdy_swap_run(int port)
 			 * A VCONN Swap Shall reset the
 			 * DiscoverIdentityCounter to zero
 			 */
-			pe[port].discover_port_identity_counter = 0;
+			pe[port].discover_identity_counter = 0;
 			pe[port].dr_swap_attempt_counter = 0;
 
 			if (pe[port].power_role == PD_ROLE_SOURCE)
