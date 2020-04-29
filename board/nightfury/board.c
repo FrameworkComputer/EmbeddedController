@@ -394,6 +394,8 @@ static void board_init(void)
 {
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+	/* Enable gpio interrupt for lid accel sensor */
+	gpio_enable_interrupt(GPIO_LID_ACCEL_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

@@ -51,8 +51,7 @@
 #define OPT3001_I2C_ADDR_FLAGS OPT3001_I2C_ADDR1_FLAGS
 
 /* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
-	(BIT(LID_ACCEL) | BIT(BASE_ALS))
+#define CONFIG_ACCEL_FORCE_MODE_MASK (BIT(BASE_ALS))
 
 /* Parameter to calculate LUX on Nightfury */
 #define CONFIG_ALS_BH1730_LUXTH_PARAMS

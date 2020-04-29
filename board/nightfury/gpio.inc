@@ -28,6 +28,7 @@ GPIO_INT(PP5000_A_PG_OD,       PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
 
 /* Sensor Interrupts */
 GPIO_INT(BASE_SIXAXIS_INT_L,   PIN(5, 6), GPIO_INT_FALLING, bmi160_interrupt)
+GPIO_INT(LID_ACCEL_INT_L,      PIN(5, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V, lis2ds_interrupt)
 
 /* USB-C interrupts */
 GPIO_INT(USB_C0_PPC_INT_ODL,   PIN(E, 0), GPIO_INT_FALLING, ppc_interrupt)
@@ -86,8 +87,6 @@ GPIO(LED_3_L,                  PIN(C, 2), GPIO_OUT_HIGH)
 GPIO(EC_KB_BL_EN,              PIN(8, 6), GPIO_OUT_LOW)         /* Keyboard backlight */
 GPIO(EDP_BKLTEN_OD,            PIN(D, 3), GPIO_ODR_HIGH)        /* Display backlight */
 GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
-GPIO(LID_ACCEL_INT_L,          PIN(5, 0), GPIO_INPUT |          /* Lid accelerometer */
-                                          GPIO_SEL_1P8V)
 
 /*
  * TODO: b/130822500
