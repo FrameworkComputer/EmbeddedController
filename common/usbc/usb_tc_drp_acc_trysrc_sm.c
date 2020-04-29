@@ -85,6 +85,12 @@
 #define TC_FLAGS_CHECK_CONNECTION       BIT(22)
 /* Flag to note pd_set_suspend SUSPEND state */
 #define TC_FLAGS_SUSPEND                BIT(23)
+/*
+ * Flag to note TC_ATTACHED_SNK is coming from a warm start through
+ * tc_state_init and the default data role should not be changed from
+ * what is currently set
+ */
+#define TC_FLAGS_TC_WARM_ATTACHED_SNK   BIT(24)
 
 /*
  * Clear all flags except TC_FLAGS_LPM_ENGAGED and TC_FLAGS_SUSPEND.
@@ -974,6 +980,9 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 
 void tc_state_init(int port)
 {
+	/* Default to not jumping warm to ATTACHED_SNK */
+	TC_CLR_FLAG(port, TC_FLAGS_TC_WARM_ATTACHED_SNK);
+
 	/*
 	 * If there's an explicit contract in place, let's restore the data and
 	 * power roles such that any messages we send to the port partner will
@@ -1000,6 +1009,11 @@ void tc_state_init(int port)
 			if (IS_ENABLED(CONFIG_USB_PE_SM))
 				pe_set_sysjump();
 
+			/*
+			 * We are jumping warm to ATTACHED_SNK, so don't
+			 * change the data role when we get to the state.
+			 */
+			TC_SET_FLAG(port, TC_FLAGS_TC_WARM_ATTACHED_SNK);
 			set_state_tc(port, TC_ATTACHED_SNK);
 		} else {
 			restart_tc_sm(port, TC_UNATTACHED_SNK);
@@ -1813,10 +1827,16 @@ static void tc_attached_snk_entry(const int port)
 		pd_set_polarity(port, tc[port].polarity);
 
 		/*
-		 * Initial data role for sink is UFP
+		 * Initial data role for sink is UFP unless this is a warm
+		 * attach.  If it is a warm attach, the data role will be
+		 * restored to the current connect role and will already
+		 * have called tc_set_data_role with the appropriate role.
 		 * This also sets the usb mux
 		 */
-		tc_set_data_role(port, PD_ROLE_UFP);
+		if (TC_CHK_FLAG(port, TC_FLAGS_TC_WARM_ATTACHED_SNK))
+			TC_CLR_FLAG(port, TC_FLAGS_TC_WARM_ATTACHED_SNK);
+		else
+			tc_set_data_role(port, PD_ROLE_UFP);
 
 		hook_notify(HOOK_USB_PD_CONNECT);
 
