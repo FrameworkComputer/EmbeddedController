@@ -1060,11 +1060,23 @@ void tcpci_tcpc_alert(int port)
 		if (reg & TCPC_REG_POWER_STATUS_VBUS_DET)
 			board_vbus_present_change();
 	}
+
 	if (alert & TCPC_REG_ALERT_RX_HARD_RST) {
 		/* hard reset received */
+		CPRINTS("C%d Hard Reset received", port);
 		pd_execute_hard_reset(port);
 		pd_event |= TASK_EVENT_WAKE;
 	}
+
+	/* USB TCPCI Spec R2 V1.1 Section 4.7.3 Step 2
+	 *
+	 * The TCPC asserts both ALERT.TransmitSOP*MessageSuccessful and
+	 * ALERT.TransmitSOP*MessageFailed regardless of the outcome of the
+	 * transmission and asserts the Alert# pin.
+	 */
+	if (alert & TCPC_REG_ALERT_TX_SUCCESS &&
+	    alert & TCPC_REG_ALERT_TX_FAILED)
+		CPRINTS("C%d Hard Reset sent", port);
 
 	if (IS_ENABLED(CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP)
 	    && (alert_ext & TCPC_REG_ALERT_EXT_SNK_FRS))
