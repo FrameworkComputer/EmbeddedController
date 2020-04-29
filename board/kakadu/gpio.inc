@@ -48,8 +48,8 @@ GPIO_INT(POGO_ADC_INT_L,    PIN(A, 6),  GPIO_INT_BOTH,
 
 /* unused */
 GPIO(POGO_VBUS_PRESENT, PIN(A, 14), GPIO_INPUT)
-/* unused after board rev 5 */
-GPIO(USB_C0_DP_POLARITY,   PIN(C, 14), GPIO_INPUT)
+/* To support Apple dongle b/155242849 */
+GPIO(USB_C0_VCONN_EN_OD, PIN(C, 14), GPIO_ODR_HIGH)
 
 /* Reset pins */
 GPIO(AP_SYS_RST_L,         PIN(C, 11), GPIO_OUT_LOW)
