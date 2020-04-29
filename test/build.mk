@@ -151,6 +151,7 @@ sha256-y=sha256.o
 sha256_unrolled-y=sha256.o
 shmalloc-y=shmalloc.o
 static_if-y=static_if.o
+stm32f_rtc-y=stm32f_rtc.o
 stress-y=stress.o
 system-y=system.o
 thermal-y=thermal.o

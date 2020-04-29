@@ -313,6 +313,7 @@ void reset_rtc_alarm(struct rtc_time_reg *rtc)
 	rtc_lock_regs();
 }
 
+test_mockable_static
 void __rtc_alarm_irq(void)
 {
 	struct rtc_time_reg rtc;
