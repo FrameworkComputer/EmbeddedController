@@ -11,4 +11,12 @@ CHIP_VARIANT:=stm32f412
 
 board-y=board.o fpsensor_detect.o
 
-test-list-y=aes sha256 sha256_unrolled
+test-list-y=\
+       aes \
+       compile_time_macros \
+       crc32 \
+       mutex \
+       pingpong \
+       rtc \
+       sha256 \
+       sha256_unrolled \
