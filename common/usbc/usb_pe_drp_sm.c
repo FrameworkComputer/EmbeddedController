@@ -236,6 +236,7 @@ enum usb_pe_state {
 	PE_VDM_SEND_REQUEST,
 	PE_VDM_IDENTITY_REQUEST_CBL,
 	PE_INIT_PORT_VDM_IDENTITY_REQUEST,
+	PE_INIT_VDM_SVIDS_REQUEST,
 	PE_VDM_REQUEST,
 	PE_VDM_ACKED,
 	PE_VDM_RESPONSE,
@@ -321,6 +322,7 @@ static const char * const pe_state_names[] = {
 	[PE_VDM_IDENTITY_REQUEST_CBL] = "PE_VDM_Identity_Request_Cbl",
 	[PE_INIT_PORT_VDM_IDENTITY_REQUEST] =
 					   "PE_INIT_PORT_VDM_Identity_Request",
+	[PE_INIT_VDM_SVIDS_REQUEST] = "PE_INIT_VDM_SVIDs_Request",
 	[PE_VDM_REQUEST] = "PE_VDM_Request",
 	[PE_VDM_ACKED] = "PE_VDM_Acked",
 	[PE_VDM_RESPONSE] = "PE_VDM_Response",
@@ -1287,6 +1289,12 @@ static bool pe_attempt_port_discovery(int port)
 			PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 			set_state_pe(port,
 				     PE_INIT_PORT_VDM_IDENTITY_REQUEST);
+			return true;
+		} else if (pd_get_svids_discovery(port, TCPC_TX_SOP) ==
+				PD_DISC_NEEDED &&
+				pe_can_send_sop_vdm(port, CMD_DISCOVER_SVID)) {
+			pe[port].tx_type = TCPC_TX_SOP;
+			set_state_pe(port, PE_INIT_VDM_SVIDS_REQUEST);
 			return true;
 		/*
 		 * Note: determine if next VDM can be sent by taking advantage
@@ -4464,6 +4472,111 @@ static void pe_init_port_vdm_identity_request_exit(int port)
 		 */
 		pd_set_identity_discovery(port, TCPC_TX_SOP, PD_DISC_FAIL);
 	}
+
+	/* Do not attempt further discovery if identity discovery failed. */
+	if (pd_get_identity_discovery(port, TCPC_TX_SOP) == PD_DISC_FAIL)
+		pd_set_svids_discovery(port, TCPC_TX_SOP, PD_DISC_FAIL);
+}
+
+/**
+ * PE_INIT_VDM_SVIDs_Request
+ *
+ * Used for SOP and SOP' requests, selected by pe[port].tx_type prior to entry.
+ */
+static void pe_init_vdm_svids_request_entry(int port)
+{
+	uint32_t *msg = (uint32_t *)tx_emsg[port].buf;
+
+	print_current_state(port);
+
+	if (pe[port].tx_type == TCPC_TX_INVALID) {
+		CPRINTS("C%d: TX type expected to be set, returning", port);
+		set_state_pe(port, get_last_state_pe(port));
+		return;
+	}
+
+	msg[0] = VDO(USB_SID_PD, 1,
+			VDO_SVDM_VERS(pd_get_vdo_ver(port, pe[port].tx_type)) |
+			CMD_DISCOVER_SVID);
+	tx_emsg[port].len = sizeof(uint32_t);
+
+	prl_send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
+}
+
+static void pe_init_vdm_svids_request_run(int port)
+{
+	uint32_t *payload;
+	int sop;
+	uint8_t type;
+	uint8_t cnt;
+	uint8_t ext;
+
+	/* No message received */
+	if (!PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
+		return;
+
+	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+	/* Retrieve the message information */
+	payload = (uint32_t *)rx_emsg[port].buf;
+	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
+	type = PD_HEADER_TYPE(rx_emsg[port].header);
+	cnt = PD_HEADER_CNT(rx_emsg[port].header);
+	ext = PD_HEADER_EXT(rx_emsg[port].header);
+
+	if (sop == pe[port].tx_type && type == PD_DATA_VENDOR_DEF && cnt > 0 &&
+			ext == 0) {
+		/*
+		 * Valid Discover SVIDs ACKs should have at least 2 objects
+		 * (header, SVID VDO).
+		 */
+		if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK &&
+							cnt >= 2) {
+			/* PE_INIT_VDM_SVIDs_ACKed embedded here */
+			dfp_consume_svids(port, sop, cnt, payload);
+			/*
+			 * TODO(b:152419850): Fake vdm_cmd for now to ensure
+			 * existing discovery process continues.
+			 */
+			pe[port].vdm_cmd = DISCOVER_SVIDS;
+		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
+			/* PE_INIT_VDM_SVIDs_NAKed embedded here */
+			pd_set_svids_discovery(port, sop, PD_DISC_FAIL);
+		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
+			/*
+			 * Don't fill in the discovery field so we
+			 * re-probe in tVDMBusy
+			 */
+			CPRINTS("C%d: Partner Busy, Discover SVIDs will be "
+					"re-tried", port);
+			pe[port].discover_identity_timer =
+					get_time().val + PD_T_VDM_BUSY;
+		} else {
+			/*
+			 * Partner gave us an incorrect size or command,
+			 * mark discovery as failed
+			 */
+			pd_set_svids_discovery(port, sop, PD_DISC_FAIL);
+			CPRINTS("C%d: Unexpected DiscSVID response: 0x%04x "
+					"0x%04x",
+					port, rx_emsg[port].header, payload[0]);
+		}
+	} else {
+		/*
+		 * Unexpected Message Received. Src.Ready or Snk.Ready can
+		 * handle it.
+		 */
+		PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+	}
+
+	/* Return to calling state (PE_{SRC,SNK}_Ready) */
+	set_state_pe(port, get_last_state_pe(port));
+}
+
+static void pe_init_vdm_svids_request_exit(int port)
+{
+	/* Invalidate TX type so that it must be set before next call */
+	pe[port].tx_type = TCPC_TX_INVALID;
 }
 
 /**
@@ -4575,7 +4688,7 @@ static void pe_vdm_request_run(int port)
 		/* Fake busy response so we try to send command again */
 		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_BUSY);
 	} else if (get_time().val > pe[port].vdm_response_timer) {
-		CPRINTF("VDM %s Response Timeout\n",
+		CPRINTF("C%d: VDM %s Response Timeout\n", port,
 				pe[port].partner_type ? "Cable" : "Port");
 
 		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED);
@@ -5543,6 +5656,12 @@ static const struct usb_state pe_states[] = {
 		.entry  = pe_init_port_vdm_identity_request_entry,
 		.run    = pe_init_port_vdm_identity_request_run,
 		.exit	= pe_init_port_vdm_identity_request_exit,
+		.parent = &pe_states[PE_VDM_SEND_REQUEST],
+	},
+	[PE_INIT_VDM_SVIDS_REQUEST] = {
+		.entry	= pe_init_vdm_svids_request_entry,
+		.run	= pe_init_vdm_svids_request_run,
+		.exit   = pe_init_vdm_svids_request_exit,
 		.parent = &pe_states[PE_VDM_SEND_REQUEST],
 	},
 	[PE_VDM_REQUEST] = {
