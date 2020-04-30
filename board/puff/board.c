@@ -54,6 +54,11 @@ static void ppc_interrupt(enum gpio_signal signal)
 		sn5s330_interrupt(0);
 }
 
+int ppc_get_alert_status(int port)
+{
+	return gpio_get_level(GPIO_USB_C0_TCPPC_INT_ODL) == 0;
+}
+
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if (signal == GPIO_USB_C0_TCPC_INT_ODL)
