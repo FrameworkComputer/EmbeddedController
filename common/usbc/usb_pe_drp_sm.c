@@ -2057,7 +2057,7 @@ static void pe_src_transition_to_default_entry(int port)
 	 * Request Device Policy Manager to set Port Data
 	 * Role to DFP and turn off VCONN
 	 */
-	tc_hard_reset(port);
+	tc_hard_reset_request(port);
 }
 
 static void pe_src_transition_to_default_run(int port)
@@ -2076,8 +2076,8 @@ static void pe_src_transition_to_default_run(int port)
 
 static void pe_src_transition_to_default_exit(int port)
 {
-	/* Inform the TC Layer the Hard Reset is complete */
-	tc_hard_reset_complete(port);
+	/* TC layer can now go unattached */
+	tc_hard_reset_allow_unattach(port);
 }
 
 /**
@@ -2181,6 +2181,11 @@ static void pe_snk_wait_for_capabilities_entry(int port)
 {
 	print_current_state(port);
 
+	/* USB TCPCI Spec R2V1p1 4.4.5.4.4
+	 * Enable AutoDischargeDisconnect since vbus is present
+	 */
+	tcpm_enable_auto_discharge_disconnect(port, 1);
+
 	/* Initialize and start the SinkWaitCapTimer */
 	pe[port].timeout = get_time().val + PD_T_SINK_WAIT_CAP;
 }
@@ -2229,15 +2234,15 @@ static void pe_snk_evaluate_capability_entry(int port)
 	/* Reset Hard Reset counter to zero */
 	pe[port].hard_reset_counter = 0;
 
-	/* USB TCPCI Spec R2V1p1 4.4.5.4.4 Enable AutoDischargeDisconnect */
-	tcpm_enable_auto_discharge_disconnect(port, 1);
-
 	/*
 	 * If we were in a Hard Reset condition we have to delay until
 	 * now to let the TC know we are back to a stable connection.
-	 * Inform the TC Layer the Hard Reset is complete
+	 * Up to this point we have sent the reset and there is no
+	 * conversation from the other side until we receive the
+	 * capabilities message
+	 * TC layer can now go unattached
 	 */
-	tc_hard_reset_complete(port);
+	tc_hard_reset_allow_unattach(port);
 
 	/* Set to highest revision supported by both ports. */
 	prl_set_rev(port, TCPC_TX_SOP,
@@ -2746,11 +2751,13 @@ static void pe_snk_transition_to_default_entry(int port)
 {
 	print_current_state(port);
 
-	/* USB TCPCI Spec R2V1p1 4.4.5.4.4 Disable AutoDischargeDisconnect */
+	/* USB TCPCI Spec R2V1p1 4.4.5.4.4
+	 * Disable AutoDischargeDisconnect as vbus will drop in HardReset
+	 */
 	tcpm_enable_auto_discharge_disconnect(port, 0);
 
 	/* Inform the TC Layer of Hard Reset */
-	tc_hard_reset(port);
+	tc_hard_reset_request(port);
 }
 
 static void pe_snk_transition_to_default_run(int port)

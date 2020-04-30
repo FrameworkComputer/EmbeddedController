@@ -84,7 +84,10 @@ int tc_is_vconn_src(int port)
 	return 0;
 }
 
-void tc_hard_reset(int port)
+void tc_hard_reset_request(int port)
+{}
+
+void tc_hard_reset_allow_unattach(int port)
 {}
 
 void tc_hard_reset_complete(int port)

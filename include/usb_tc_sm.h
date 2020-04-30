@@ -317,7 +317,17 @@ void tc_start_error_recovery(int port);
  *
  * @param port USB-C port number
  */
-void tc_hard_reset(int port);
+void tc_hard_reset_request(int port);
+
+/**
+ * Hard Reset was sent and we are required to remain attached until we have
+ * restored our connection for the TypeC port.
+ * A call to tc_hard_reset_allow_unattach will allow the connection to go
+ * to an unattached state
+ *
+ * @param port USB-C port number
+ */
+void tc_hard_reset_allow_unattach(int port);
 
 /**
  * Hard Reset is complete for the TypeC port

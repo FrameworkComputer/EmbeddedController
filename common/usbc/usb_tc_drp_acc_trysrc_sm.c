@@ -66,10 +66,13 @@
 #define TC_FLAGS_PARTNER_DR_POWER       BIT(14)
 /* Flag to note port partner is Power Delivery capable */
 #define TC_FLAGS_PARTNER_PD_CAPABLE     BIT(15)
-/* Flag to note hard reset has been triggered */
-#define TC_FLAGS_HARD_RESET             BIT(16)
-/* Flag to note we are currently performing hard reset */
-#define TC_FLAGS_HARD_RESET_IN_PROGRESS BIT(17)
+/* Flag to note hard reset has been requested */
+#define TC_FLAGS_HARD_RESET_REQUESTED   BIT(16)
+/*
+ * Flag to note hard reset has been performed and we can't go to unattached
+ * until we have a source-sink connection again
+ */
+#define TC_FLAGS_HARD_RESET_NO_UNATTACH BIT(17)
 /* Flag to note port partner is USB comms capable */
 #define TC_FLAGS_PARTNER_USB_COMM       BIT(18)
 /* Flag to note we are currently performing PR Swap */
@@ -624,16 +627,33 @@ void tc_prs_snk_src_assert_rp(int port)
 	}
 }
 
-void tc_hard_reset(int port)
+/*
+ * Hard Reset is being requested.  This should not allow a TC connection
+ * to go to an unattached state until the connection is recovered from
+ * the hard reset.  It is possible for a Hard Reset to cause a timeout
+ * in trying to recover and an additional Hard Reset would be issued.
+ * During this entire process it is important that the TC is not allowed
+ * to go to an unattached state.
+ *
+ * Type-C Spec Rev 2.0 section 4.5.2.2.5.2
+ * Exiting from Attached.SNK State
+ * A port that is not a V CONN-Powered USB Device and is not in the
+ * process of a USB PD PR_Swap or a USB PD Hard Reset or a USB PD
+ * FR_Swap shall transition to Unattached.SNK
+ */
+void tc_hard_reset_request(int port)
 {
-	TC_SET_FLAG(port, TC_FLAGS_HARD_RESET);
+	TC_SET_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
 }
 
-void tc_hard_reset_complete(int port)
+/*
+ * Hard Reset happened and this is how the PE will unblock leaving
+ * the attached state.
+ */
+void tc_hard_reset_allow_unattach(int port)
 {
-	TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_IN_PROGRESS);
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+	TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH);
 }
 /****************************************************************************/
 
@@ -1597,8 +1617,8 @@ static void tc_unattached_snk_run(const int port)
 	 */
 
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
-		if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET)) {
-			TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET);
+		if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED)) {
+			TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
 			tc_set_data_role(port, PD_ROLE_UFP);
 			/* Inform Policy Engine that hard reset is complete */
 			pe_ps_reset_complete(port);
@@ -1828,9 +1848,9 @@ static void tc_attached_snk_run(const int port)
 	/*
 	 * Perform Hard Reset
 	 */
-	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET)) {
-		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET);
-		TC_SET_FLAG(port, TC_FLAGS_HARD_RESET_IN_PROGRESS);
+	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED)) {
+		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
+		TC_SET_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH);
 		tc_perform_snk_hard_reset(port);
 	}
 
@@ -1842,7 +1862,7 @@ static void tc_attached_snk_run(const int port)
 	 */
 	if (!TC_CHK_FLAG(port, TC_FLAGS_POWER_OFF_SNK) &&
 	    !TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS) &&
-	    !TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_IN_PROGRESS)) {
+	    !TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH)) {
 		/* Detach detection */
 		if (!pd_is_vbus_present(port)) {
 			if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
@@ -2026,13 +2046,13 @@ static void tc_unoriented_dbg_acc_src_run(const int port)
 	/*
 	 * Handle Hard Reset from Policy Engine
 	 */
-	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET)) {
+	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED)) {
 		/* Ignoring Hard Resets while the power supply is resetting.*/
 		if (get_time().val < tc[port].timeout)
 			return;
 
 		if (tc_perform_src_hard_reset(port))
-			TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET);
+			TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
 
 		return;
 	}
@@ -2184,24 +2204,21 @@ static void tc_dbg_acc_snk_run(const int port)
 	/*
 	 * Perform Hard Reset
 	 */
-	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET)) {
-		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET);
-		TC_SET_FLAG(port, TC_FLAGS_HARD_RESET_IN_PROGRESS);
+	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED)) {
+		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
+		TC_SET_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH);
 		tc_perform_snk_hard_reset(port);
 	}
 
 	/*
-	 * HARD RESET in progress, don't disconnect
-	 */
-	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_IN_PROGRESS))
-		return;
-
-	/*
 	 * The sink will be powered off during a power role swap but we
 	 * don't want to trigger a disconnect
+	 * If we are working on a Hard Reset we have to remain attached
+	 * even when vbus drops.
 	 */
 	if (!TC_CHK_FLAG(port, TC_FLAGS_POWER_OFF_SNK) &&
-		!TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
+	    !TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS) &&
+	    !TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH)) {
 		/* Detach detection */
 		if (!pd_is_vbus_present(port)) {
 			if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
@@ -2297,8 +2314,8 @@ static void tc_unattached_src_run(const int port)
 	enum tcpc_cc_voltage_status cc1, cc2;
 
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
-		if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET)) {
-			TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET);
+		if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED)) {
+			TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
 			tc_set_data_role(port, PD_ROLE_DFP);
 			/* Inform Policy Engine that hard reset is complete */
 			pe_ps_reset_complete(port);
@@ -2565,13 +2582,13 @@ static void tc_attached_src_run(const int port)
 	/*
 	 * Handle Hard Reset from Policy Engine
 	 */
-	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET)) {
+	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED)) {
 		/* Ignoring Hard Resets while the power supply is resetting.*/
 		if (get_time().val < tc[port].timeout)
 			return;
 
 		if (tc_perform_src_hard_reset(port))
-			TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET);
+			TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
 
 		return;
 	}
@@ -2994,8 +3011,8 @@ static void tc_ct_unattached_snk_run(int port)
 	 * Hard Reset is sent when the PE layer is disabled due to a
 	 * CTVPD connection.
 	 */
-	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET)) {
-		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET);
+	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED)) {
+		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
 		/* Nothing to do. Just signal hard reset completion */
 		pe_ps_reset_complete(port);
 	}
@@ -3053,8 +3070,8 @@ static void tc_ct_attached_snk_run(int port)
 	 * Hard Reset is sent when the PE layer is disabled due to a
 	 * CTVPD connection.
 	 */
-	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET)) {
-		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET);
+	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED)) {
+		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
 		/* Nothing to do. Just signal hard reset completion */
 		pe_ps_reset_complete(port);
 	}
