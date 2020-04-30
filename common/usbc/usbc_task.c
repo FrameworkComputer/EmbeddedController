@@ -34,6 +34,9 @@
 
 #define USBC_EVENT_TIMEOUT (5 * MSEC)
 
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+
 static uint8_t paused[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 int tc_restart_tcpc(int port)
@@ -76,6 +79,14 @@ void schedule_deferred_pd_interrupt(const int port)
 }
 
 /*
+ * Theoretically, we may need to support up to 400 USB-PD packets per second for
+ * intensive operations such as FW update over PD.  This value has tested well
+ * preventing watchdog resets with a single bad port partner plugged in.
+ */
+#define ALERT_STORM_MAX_COUNT   400
+#define ALERT_STORM_INTERVAL    SECOND
+
+/*
  * Main task entry point that handles PD interrupts for a single port
  *
  * @param p The PD port number for which to handle interrupts (pointer is
@@ -85,6 +96,10 @@ void pd_interrupt_handler_task(void *p)
 {
 	const int port = (int) p;
 	const int port_mask = (PD_STATUS_TCPC_ALERT_0 << port);
+	struct {
+		int count;
+		timestamp_t time;
+	} storm_tracker[CONFIG_USB_PD_PORT_MAX_COUNT] = {};
 
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 
@@ -106,8 +121,33 @@ void pd_interrupt_handler_task(void *p)
 			 * PD_PROCESS_INTERRUPT to check if we missed anything.
 			 */
 			while ((tcpc_get_alert_status() & port_mask) &&
-					pd_is_port_enabled(port))
+					pd_is_port_enabled(port)) {
+				timestamp_t now;
+
 				tcpc_alert(port);
+
+				now = get_time();
+				if (timestamp_expired(storm_tracker[port].time,
+						      &now)) {
+					/* Reset timer into future */
+					storm_tracker[port].time.val =
+						now.val + ALERT_STORM_INTERVAL;
+
+					/*
+					 * Start at 1 since we are processing an
+					 * interrupt right now
+					 */
+					storm_tracker[port].count = 1;
+				} else if (++storm_tracker[port].count >
+							ALERT_STORM_MAX_COUNT) {
+					CPRINTS("C%d: Interrupt storm detected."
+						" Disabling port temporarily",
+						port);
+
+					pd_set_suspend(port, 1);
+					pd_deferred_resume(port);
+				}
+			}
 		}
 	}
 }
