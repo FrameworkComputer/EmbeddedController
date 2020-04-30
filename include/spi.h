@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_SPI_H
 #define __CROS_EC_SPI_H
 
+#include "host_command.h"
+
 /*
  * SPI Clock polarity and phase mode (0 - 3)
  * @code
@@ -66,7 +68,8 @@ int spi_enable(int port, int enable);
 
 #define SPI_READBACK_ALL (-1)
 
-/* Issue a SPI transaction.  Assumes SPI port has already been enabled.
+/*
+ * Issue a SPI transaction.  Assumes SPI port has already been enabled.
  *
  * Transmits <txlen> bytes from <txdata>, throwing away the corresponding
  * received data, then transmits <rxlen> dummy bytes, saving the received data
@@ -85,7 +88,8 @@ int spi_transaction(const struct spi_device_t *spi_device,
 		    const uint8_t *txdata, int txlen,
 		    uint8_t *rxdata, int rxlen);
 
-/* Similar to spi_transaction(), but hands over to DMA for reading response.
+/*
+ * Similar to spi_transaction(), but hands over to DMA for reading response.
  * Must call spi_transaction_flush() after this to make sure the response is
  * received.
  * Contrary the regular spi_transaction(), this function does NOT lock the
@@ -100,6 +104,12 @@ int spi_transaction_flush(const struct spi_device_t *spi_device);
 
 /* Wait for async response received but do not de-assert chip select */
 int spi_transaction_wait(const struct spi_device_t *spi_device);
+
+/*
+ * Get SPI protocol information. This function is called in runtime if board's
+ * host command transport is SPI.
+ */
+enum ec_status spi_get_protocol_info(struct host_cmd_handler_args *args);
 
 #ifdef CONFIG_SPI
 /**

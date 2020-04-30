@@ -10,7 +10,12 @@
 #include "common.h"
 #include "registers.h"
 #include "system.h"
+#include "task.h"
+#include "usart_host_command.h"
 #include "util.h"
+
+typedef size_t (*remove_data_t)(struct usart_config const *config,
+				uint8_t *dest);
 
 static void usart_tx_init(struct usart_config const *config)
 {
@@ -32,7 +37,9 @@ static void usart_written(struct consumer const *consumer, size_t count)
 		STM32_USART_CR1(config->hw->base) |= STM32_USART_CR1_TXEIE;
 }
 
-static void usart_tx_interrupt_handler(struct usart_config const *config)
+static void usart_tx_interrupt_handler_common(
+		struct usart_config const *config,
+		remove_data_t remove_data)
 {
 	intptr_t base = config->hw->base;
 	uint8_t  byte;
@@ -40,7 +47,7 @@ static void usart_tx_interrupt_handler(struct usart_config const *config)
 	if (!(STM32_USART_SR(base) & STM32_USART_SR_TXE))
 		return;
 
-	if (queue_remove_unit(config->consumer.queue, &byte)) {
+	if (remove_data(config, &byte)) {
 		STM32_USART_TDR(base) = byte;
 
 		/*
@@ -64,6 +71,30 @@ static void usart_tx_interrupt_handler(struct usart_config const *config)
 	}
 }
 
+static size_t queue_remove(struct usart_config const *config, uint8_t *dest)
+{
+	return queue_remove_unit(config->producer.queue, (void *) dest);
+}
+
+static void usart_tx_interrupt_handler(struct usart_config const *config)
+{
+	usart_tx_interrupt_handler_common(config, &queue_remove);
+}
+
+void usart_tx_start(struct usart_config const *config)
+{
+	intptr_t base = config->hw->base;
+
+	/* If interrupt is already enabled, nothing to do */
+	if (STM32_USART_CR1(base) & STM32_USART_CR1_TXEIE)
+		return;
+
+	disable_sleep(SLEEP_MASK_UART);
+	STM32_USART_CR1(base) |= (STM32_USART_CR1_TXEIE);
+
+	task_trigger_irq(config->hw->irq);
+}
+
 struct usart_tx const usart_tx_interrupt = {
 	.consumer_ops = {
 		.written = usart_written,
@@ -73,3 +104,23 @@ struct usart_tx const usart_tx_interrupt = {
 	.interrupt = usart_tx_interrupt_handler,
 	.info      = NULL,
 };
+
+#if defined(CONFIG_USART_HOST_COMMAND)
+
+static void usart_host_command_tx_interrupt_handler(
+		struct usart_config const *config)
+{
+	usart_tx_interrupt_handler_common(config,
+		&usart_host_command_tx_remove_data);
+}
+
+struct usart_tx const usart_host_command_tx_interrupt = {
+	.consumer_ops = {
+		.written = usart_written,
+	},
+
+	.init      = usart_tx_init,
+	.interrupt = usart_host_command_tx_interrupt_handler,
+	.info      = NULL,
+};
+#endif /* CONFIG_USART_HOST_COMMAND */

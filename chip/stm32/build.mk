@@ -53,7 +53,9 @@ chip-$(CONFIG_STREAM_USART)+=usart.o usart-$(CHIP_FAMILY).o
 chip-$(CONFIG_STREAM_USART)+=usart_rx_interrupt-$(CHIP_FAMILY).o
 chip-$(CONFIG_STREAM_USART)+=usart_tx_interrupt.o
 chip-$(CONFIG_STREAM_USART)+=usart_rx_dma.o usart_tx_dma.o
+chip-$(CONFIG_USART_HOST_COMMAND)+=usart_host_command.o
 chip-$(CONFIG_CMD_USART_INFO)+=usart_info_command.o
+chip-$(HAS_TASK_CONSOLE)+=host_command_common.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(HAS_TASK_CONSOLE)+=uart.o
 ifndef CONFIG_KEYBOARD_NOT_RAW

@@ -102,6 +102,12 @@ void usart_rx_dma_init(struct usart_config const *config);
 void usart_rx_dma_interrupt(struct usart_config const *config);
 
 /*
+ * Function pointers needed to initialize host command rx dma interrupt.
+ * This should be only called from usart host command layer.
+ */
+void usart_host_command_rx_dma_interrupt(struct usart_config const *config);
+
+/*
  * Debug function, used to print DMA RX statistics to the console.
  */
 void usart_rx_dma_info(struct usart_config const *config);

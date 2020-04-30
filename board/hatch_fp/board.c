@@ -13,6 +13,7 @@
 #include "spi.h"
 #include "system.h"
 #include "task.h"
+#include "usart_host_command.h"
 #include "util.h"
 
 /**
@@ -67,15 +68,14 @@ const struct spi_device_t spi_devices[] = {
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
-static void spi_configure(void)
+static void configure_fp_sensor_spi(void)
 {
 	/* Configure SPI GPIOs */
 	gpio_config_module(MODULE_SPI_MASTER, 1);
-	/*
-	 * Set all SPI master signal pins to very high speed:
-	 * pins B12/13/14/15
-	 */
+
+	/* Set all SPI master signal pins to very high speed: B12/13/14/15 */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xff000000;
+
 	/* Enable clocks to SPI2 module (master) */
 	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
 
@@ -85,7 +85,36 @@ static void spi_configure(void)
 /* Initialize board. */
 static void board_init(void)
 {
-	spi_configure();
+	enum fp_transport_type ret_transport = get_fp_transport_type();
+
+	/* Configure and enable SPI as master for FP sensor */
+	configure_fp_sensor_spi();
+
+	ccprints("TRANSPORT_SEL: %s",
+		fp_transport_type_to_str(ret_transport));
+
+	/* Initialize transport based on bootstrap */
+	switch (ret_transport) {
+
+	case FP_TRANSPORT_TYPE_UART:
+		/* Check if CONFIG_USART_HOST_COMMAND is enabled. */
+		if (IS_ENABLED(CONFIG_USART_HOST_COMMAND))
+			usart_host_command_init();
+		else
+			ccprints("ERROR: UART not supported in fw build.");
+
+		/* Disable SPI interrupt to disable SPI transport layer */
+		gpio_disable_interrupt(GPIO_SPI1_NSS);
+		break;
+
+	case FP_TRANSPORT_TYPE_SPI:
+		/* SPI transport is enabled. SPI1_NSS interrupt will process
+		 * incoming request/
+		 */
+		break;
+	default:
+		ccprints("ERROR: Selected transport is not valid.");
+	}
 
 	ccprints("TRANSPORT_SEL: %s",
 		fp_transport_type_to_str(get_fp_transport_type()));
@@ -93,6 +122,7 @@ static void board_init(void)
 	/* Enable interrupt on PCH power signals */
 	gpio_enable_interrupt(GPIO_PCH_SLP_S3_L);
 	gpio_enable_interrupt(GPIO_PCH_SLP_S0_L);
+
 	/* enable the SPI slave interface if the PCH is up */
 	hook_call_deferred(&ap_deferred_data, 0);
 }

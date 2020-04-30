@@ -10,7 +10,11 @@
 #include "console.h"
 #include "registers.h"
 #include "system.h"
+#include "usart_host_command.h"
 #include "util.h"
+
+typedef size_t (*add_data_t)(struct usart_config const *config,
+	const uint8_t *src, size_t count);
 
 void usart_rx_dma_init(struct usart_config const *config)
 {
@@ -27,6 +31,9 @@ void usart_rx_dma_init(struct usart_config const *config)
 			    STM32_DMA_CCR_CIRC),
 	};
 
+	if (IS_ENABLED(CHIP_FAMILY_STM32F4))
+		options.flags |= STM32_DMA_CCR_CHANNEL(STM32_REQ_USART1_RX);
+
 	STM32_USART_CR1(base) |= STM32_USART_CR1_RXNEIE;
 	STM32_USART_CR1(base) |= STM32_USART_CR1_RE;
 	STM32_USART_CR3(base) |= STM32_USART_CR3_DMAR;
@@ -37,7 +44,9 @@ void usart_rx_dma_init(struct usart_config const *config)
 	dma_start_rx(&options, dma_config->fifo_size, dma_config->fifo_buffer);
 }
 
-void usart_rx_dma_interrupt(struct usart_config const *config)
+static void usart_rx_dma_interrupt_common(
+		struct usart_config const *config,
+		add_data_t add_data)
 {
 	struct usart_rx_dma const *dma_config =
 		DOWNCAST(config->rx, struct usart_rx_dma const, usart_rx);
@@ -51,9 +60,9 @@ void usart_rx_dma_interrupt(struct usart_config const *config)
 	if (new_index > old_index) {
 		new_bytes = new_index - old_index;
 
-		added = queue_add_units(config->producer.queue,
-					dma_config->fifo_buffer + old_index,
-					new_bytes);
+		added = add_data(config,
+				dma_config->fifo_buffer + old_index,
+				new_bytes);
 	} else if (new_index < old_index) {
 		/*
 		 * Handle the case where the received bytes are not contiguous
@@ -62,12 +71,12 @@ void usart_rx_dma_interrupt(struct usart_config const *config)
 		 */
 		new_bytes = dma_config->fifo_size - (old_index - new_index);
 
-		added = queue_add_units(config->producer.queue,
-					dma_config->fifo_buffer + old_index,
-					dma_config->fifo_size - old_index) +
-			queue_add_units(config->producer.queue,
-					dma_config->fifo_buffer,
-					new_index);
+		added = add_data(config,
+				dma_config->fifo_buffer + old_index,
+				dma_config->fifo_size - old_index) +
+			add_data(config,
+				dma_config->fifo_buffer,
+				new_index);
 	} else {
 		/* (new_index == old_index): nothing to add to the queue. */
 	}
@@ -79,6 +88,26 @@ void usart_rx_dma_interrupt(struct usart_config const *config)
 
 	dma_config->state->index = new_index;
 }
+
+static size_t queue_add(struct usart_config const *config,
+			const uint8_t *src, size_t count)
+{
+	return queue_add_units(config->producer.queue, (void *)src, count);
+}
+
+void usart_rx_dma_interrupt(struct usart_config const *config)
+{
+	usart_rx_dma_interrupt_common(config, &queue_add);
+}
+
+
+#if defined(CONFIG_USART_HOST_COMMAND)
+void usart_host_command_rx_dma_interrupt(struct usart_config const *config)
+{
+	usart_rx_dma_interrupt_common(config,
+				      &usart_host_command_rx_append_data);
+}
+#endif /* CONFIG_USART_HOST_COMMAND */
 
 void usart_rx_dma_info(struct usart_config const *config)
 {

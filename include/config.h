@@ -3575,6 +3575,22 @@
 #undef CONFIG_STREAM_USB
 
 /*****************************************************************************/
+/* UART HOST COMMAND config */
+
+/* Includes USART as host command interface */
+#undef CONFIG_USART_HOST_COMMAND
+
+/* Pointer to USART HW config of physical instance */
+#undef CONFIG_UART_HOST_COMMAND_HW
+
+/*
+ * USART baudrate for host command interface.
+ * Typically configured at 3000000 to handle use cases
+ * like firmware download and big packets in a reasonable time.
+ */
+#undef CONFIG_UART_HOST_COMMAND_BAUD_RATE
+
+/*****************************************************************************/
 /* UART config */
 
 /* Baud rate for UARTs */
