@@ -34,6 +34,7 @@ test_export_static int command_pd(int argc, char **argv)
 
 			prl_set_debug_level(level);
 			pe_set_debug_level(level);
+			tc_set_debug_level(level);
 			ccprintf("debug=%d\n", level);
 			return EC_SUCCESS;
 		}

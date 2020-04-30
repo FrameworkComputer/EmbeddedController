@@ -306,6 +306,13 @@ void tc_event_check(int port, int evt);
 void tc_run(const int port);
 
 /**
+ * Sets the debug level for the TC layer
+ *
+ * @param level debug level
+ */
+void tc_set_debug_level(enum debug_level level);
+
+/**
  * Start error recovery
  *
  * @param port USB-C port number

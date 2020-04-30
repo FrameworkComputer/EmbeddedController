@@ -24,7 +24,6 @@
  * USB Type-C DRP with Accessory and Try.SRC module
  *   See Figure 4-16 in Release 1.4 of USB Type-C Spec.
  */
-
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
@@ -32,6 +31,25 @@
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
 #endif
+
+#define CPRINTF_LX(x, format, args...) \
+	do { \
+		if (tc_debug_level >= x) \
+			CPRINTF(format, ## args); \
+	} while (0)
+#define CPRINTF_L1(format, args...) CPRINTF_LX(1, format, ## args)
+#define CPRINTF_L2(format, args...) CPRINTF_LX(2, format, ## args)
+#define CPRINTF_L3(format, args...) CPRINTF_LX(3, format, ## args)
+
+#define CPRINTS_LX(x, format, args...) \
+	do { \
+		if (tc_debug_level >= x) \
+			CPRINTS(format, ## args); \
+	} while (0)
+#define CPRINTS_L1(format, args...) CPRINTS_LX(1, format, ## args)
+#define CPRINTS_L2(format, args...) CPRINTS_LX(2, format, ## args)
+#define CPRINTS_L3(format, args...) CPRINTS_LX(3, format, ## args)
+
 
 /* Type-C Layer Flags */
 /* Flag to note we are sourcing VCONN */
@@ -154,7 +172,21 @@ enum usb_tc_state {
 /* Forward declare the full list of states. This is indexed by usb_tc_state */
 static const struct usb_state tc_states[];
 
-#ifdef CONFIG_COMMON_RUNTIME
+/*
+ * We will use DEBUG LABELS if we will be able to print (COMMON RUNTIME)
+ * and either CONFIG_USB_PD_DEBUG_LEVEL is not defined (no override) or
+ * we are overriding and the level is not DISABLED.
+ *
+ * If we can't print or the CONFIG_USB_PD_DEBUG_LEVEL is defined to be 0
+ * then the DEBUG LABELS will be removed from the build.
+ */
+#if defined(CONFIG_COMMON_RUNTIME) && \
+	(!defined(CONFIG_USB_PD_DEBUG_LEVEL) || \
+	 (CONFIG_USB_PD_DEBUG_LEVEL > 0))
+#define USB_PD_DEBUG_LABELS
+#endif
+
+#ifdef USB_PD_DEBUG_LABELS
 /* List of human readable state names for console debugging */
 static const char * const tc_state_names[] = {
 	[TC_DISABLED] = "Disabled",
@@ -184,6 +216,19 @@ static const char * const tc_state_names[] = {
 	[TC_CC_RD] = "SS:CC_RD",
 	[TC_CC_RP] = "SS:CC_RP",
 };
+#else
+/*
+ * Reference so IS_ENABLED section below that references the names
+ * will compile and the optimizer will remove it.
+ */
+extern const char **tc_state_names;
+#endif
+
+/* Debug log level - higher number == more log */
+#ifdef CONFIG_USB_PD_DEBUG_LEVEL
+static const enum debug_level tc_debug_level = CONFIG_USB_PD_DEBUG_LEVEL;
+#else
+static enum debug_level tc_debug_level = DEBUG_LEVEL_1;
 #endif
 
 /* Generate a compiler error if invalid states are referenced */
@@ -509,7 +554,10 @@ static inline void pd_dev_dump_info(uint16_t dev_id, uint32_t *hash)
 
 const char *tc_get_current_state(int port)
 {
-	return tc_state_names[get_state_tc(port)];
+	if (IS_ENABLED(USB_PD_DEBUG_LABELS))
+		return tc_state_names[get_state_tc(port)];
+	else
+		return "";
 }
 
 uint32_t tc_get_flags(int port)
@@ -815,7 +863,7 @@ bool pd_get_partner_unconstr_power(int port)
 
 const char *pd_get_task_state_name(int port)
 {
-	return tc_state_names[get_state_tc(port)];
+	return tc_get_current_state(port);
 }
 
 void pd_vbus_low(int port)
@@ -1116,7 +1164,10 @@ static enum usb_tc_state get_last_state_tc(const int port)
 
 static void print_current_state(const int port)
 {
-	CPRINTS("C%d: %s", port, tc_state_names[get_state_tc(port)]);
+	if (IS_ENABLED(USB_PD_DEBUG_LABELS))
+		CPRINTS_L1("C%d: %s", port, tc_state_names[get_state_tc(port)]);
+	else
+		CPRINTS("C%d: tc-st%d", port, get_state_tc(port));
 }
 
 static void handle_device_access(int port)
@@ -3196,6 +3247,13 @@ static void tc_cc_open_entry(const int port)
 		 */
 		ppc_clear_oc_event_counter(port);
 	}
+}
+
+void tc_set_debug_level(enum debug_level debug_level)
+{
+#ifndef CONFIG_USB_PD_DEBUG_LEVEL
+	tc_debug_level = debug_level;
+#endif
 }
 
 void tc_run(const int port)
