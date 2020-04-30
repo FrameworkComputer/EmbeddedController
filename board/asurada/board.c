@@ -31,6 +31,7 @@
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
+#include "spi.h"
 #include "switch.h"
 #include "tablet_mode.h"
 #include "task.h"
