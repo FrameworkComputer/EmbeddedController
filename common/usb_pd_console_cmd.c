@@ -16,9 +16,11 @@ static void dump_pe(int port)
 	int i, j, idh_ptype;
 	struct svdm_amode_data *modep;
 	uint32_t mode_caps;
-	struct pd_discovery *disc = pd_get_am_discovery(port);
 	const union disc_ident_ack *resp;
 	enum tcpm_transmit_type type;
+	/* TODO(b/152417597): Output SOP' discovery results */
+	const struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP);
 
 	static const char * const idh_ptype_names[]  = {
 		"UNDEF", "Hub", "Periph", "PCable", "ACable", "AMA",
@@ -49,16 +51,17 @@ static void dump_pe(int port)
 		ccprintf("\n");
 	}
 
-	if (disc->svid_cnt < 1) {
+	if (pd_get_svid_count(port, TCPC_TX_SOP) < 1) {
 		ccprintf("No SVIDS discovered yet.\n");
 		return;
 	}
 
-	for (i = 0; i < disc->svid_cnt; i++) {
+	/* TODO(b/152418267): Display discovered SVIDs and modes for SOP' */
+	for (i = 0; i < pd_get_svid_count(port, TCPC_TX_SOP); i++) {
 		ccprintf("SVID[%d]: %04x MODES:", i, disc->svids[i].svid);
 		for (j = 0; j < disc->svids[j].mode_cnt; j++)
 			ccprintf(" [%d] %08x", j + 1,
-						disc->svids[i].mode_vdo[j]);
+					disc->svids[i].mode_vdo[j]);
 		ccprintf("\n");
 
 		modep = pd_get_amode_data(port, disc->svids[i].svid);

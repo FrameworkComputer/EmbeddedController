@@ -178,15 +178,16 @@ static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 
 	/* no more to send */
-	if (p->svid_idx >= pd_get_svid_count(p->port)) {
+	/* TODO(b/148528713): Use TCPMv2's separate storage for SOP'. */
+	if (p->svid_idx >= pd_get_svid_count(p->port, TCPC_TX_SOP)) {
 		r->svid = 0;
 		args->response_size = sizeof(r->svid);
 		return EC_RES_SUCCESS;
 	}
 
-	r->svid = pd_get_svid(p->port, p->svid_idx);
+	r->svid = pd_get_svid(p->port, p->svid_idx, TCPC_TX_SOP);
 	r->opos = 0;
-	memcpy(r->vdo, pd_get_mode_vdo(p->port, p->svid_idx),
+	memcpy(r->vdo, pd_get_mode_vdo(p->port, p->svid_idx, TCPC_TX_SOP),
 		sizeof(uint32_t) * PDO_MODES);
 	modep = pd_get_amode_data(p->port, r->svid);
 

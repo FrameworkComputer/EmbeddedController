@@ -265,9 +265,25 @@ struct svdm_response {
 	struct amode_fx *amode;
 };
 
-struct svdm_svid_data {
+/*
+ * State of discovery
+ *
+ * Note: Discovery needed must be 0 to meet expectations that it be the default
+ * value after resetting connection information via memset.
+ */
+enum pd_discovery_state {
+	PD_DISC_NEEDED = 0,	/* Cable or partner still needs to be probed */
+	PD_DISC_COMPLETE,	/* Successfully probed, valid to read VDO */
+	PD_DISC_FAIL,		/* Cable did not respond, or Discover* NAK */
+};
+
+/* Mode discovery state for a particular SVID with a particular transmit type */
+struct svid_mode_data {
+	/* The SVID for which modes are discovered */
 	uint16_t svid;
+	/* The number of modes discovered for this SVID */
 	int mode_cnt;
+	/* The discovered mode VDOs */
 	uint32_t mode_vdo[PDO_MODES];
 };
 
@@ -309,7 +325,7 @@ struct svdm_amode_data {
 	/* VDM object position */
 	int opos;
 	/* mode capabilities specific to SVID amode. */
-	struct svdm_svid_data *data;
+	struct svid_mode_data *data;
 };
 
 enum hpd_event {
@@ -322,18 +338,6 @@ enum hpd_event {
 /* DisplayPort flags */
 #define DP_FLAGS_DP_ON              BIT(0) /* Display port mode is on */
 #define DP_FLAGS_HPD_HI_PENDING     BIT(1) /* Pending HPD_HI */
-
-/*
- * State of discovery
- *
- * Note: Discovery needed must be 0 to meet expectations that it be the default
- * value after resetting connection information via memset.
- */
-enum pd_discovery_state {
-	PD_DISC_NEEDED = 0,	/* Cable or partner still needs to be probed */
-	PD_DISC_COMPLETE,	/* Successfully probed, valid to read VDO */
-	PD_DISC_FAIL,		/* Cable did not respond, or Discover* NAK */
-};
 
 /* Discover Identity ACK contents after headers */
 union disc_ident_ack {
@@ -371,20 +375,24 @@ enum pd_alternate_modes {
 #define DISCOVERY_TYPE_COUNT (TCPC_TX_SOP + 1)
 #endif
 
-/* Structure for storing discovery results */
+/* Discovery results for a port partner (SOP) or cable plug (SOP') */
 struct pd_discovery {
-	/* index of svid currently being operated on */
-	int svid_idx;
-	/* count of svids discovered */
-	int svid_cnt;
-	/* Identity data for all supported SOP* communications */
-	struct identity_data identity[DISCOVERY_TYPE_COUNT];
-	/* supported svids & corresponding vdo mode data */
-	struct svdm_svid_data svids[SVID_DISCOVERY_MAX];
+	/* Identity data */
+	union disc_ident_ack identity;
+	/* Supported SVIDs and corresponding mode VDOs */
+	struct svid_mode_data svids[SVID_DISCOVERY_MAX];
 	/*  active modes */
 	struct svdm_amode_data amodes[PD_AMODE_COUNT];
+	/* index of SVID currently being operated on */
+	int svid_idx;
+	/* Count of SVIDs discovered */
+	int svid_cnt;
 	/* Next index to insert DFP alternate mode into amodes */
 	int amode_idx;
+	/* Identity discovery state */
+	enum pd_discovery_state identity_discovery;
+	/* SVID discovery state */
+	enum pd_discovery_state svids_discovery;
 };
 
 /*
@@ -1620,19 +1628,23 @@ void dfp_consume_identity(int port, int cnt, uint32_t *payload);
  * Consume the SVIDs
  *
  * @param port    USB-C port number
+ * @param type    Transmit type (SOP, SOP') for received SVIDs
  * @param cnt     number of data objects in payload
  * @param payload payload data.
  */
-void dfp_consume_svids(int port, int cnt, uint32_t *payload);
+void dfp_consume_svids(int port, enum tcpm_transmit_type type, int cnt,
+		uint32_t *payload);
 
 /**
  * Consume the alternate modes
  *
  * @param port    USB-C port number
+ * @param type    Transmit type (SOP, SOP') for received modes
  * @param cnt     number of data objects in payload
  * @param payload payload data.
  */
-void dfp_consume_modes(int port, int cnt, uint32_t *payload);
+void dfp_consume_modes(int port, enum tcpm_transmit_type type, int cnt,
+		uint32_t *payload);
 
 /**
  * Return the discover alternate mode payload data
@@ -1652,7 +1664,7 @@ void pd_dfp_discovery_init(int port);
 
 
 /**
- * Set discovery state for this type and port
+ * Set identity discovery state for this type and port
  *
  * @param port  USB-C port number
  * @param type	SOP* type to set
@@ -1662,14 +1674,34 @@ void pd_set_identity_discovery(int port, enum tcpm_transmit_type type,
 			       enum pd_discovery_state disc);
 
 /**
- * Get discovery state for this type and port
+ * Get identity discovery state for this type and port
  *
  * @param port  USB-C port number
- * @param type	SOP* type to set
- * @return      Discovery state to set (failed or complete)
+ * @param type	SOP* type to retrieve
+ * @return      Current discovery state (failed or complete)
  */
 enum pd_discovery_state pd_get_identity_discovery(int port,
 						enum tcpm_transmit_type type);
+
+/**
+ * Set SVID discovery state for this type and port.
+ *
+ * @param port USB-C port number
+ * @param type SOP* type to set
+ * @param disc Discovery state to set (failed or complete)
+ */
+void pd_set_svids_discovery(int port, enum tcpm_transmit_type type,
+		enum pd_discovery_state disc);
+
+/**
+ * Get SVID discovery state for this type and port
+ *
+ * @param port  USB-C port number
+ * @param type	SOP* type to retrieve
+ * @return      Current discovery state (failed or complete)
+ */
+enum pd_discovery_state pd_get_svids_discovery(int port,
+		enum tcpm_transmit_type type);
 
 /**
  * Return a pointer to the discover identity response structure for this SOP*
@@ -1710,9 +1742,10 @@ uint8_t pd_get_product_type(int port);
  * Return the SVID count of port partner connected to a specified port
  *
  * @param port  USB-C port number
+ * @param type	SOP* type to retrieve
  * @return      SVID count
  */
-int pd_get_svid_count(int port);
+int pd_get_svid_count(int port, enum tcpm_transmit_type type);
 
 /**
  * Return the SVID of given SVID index of port partner connected
@@ -1720,9 +1753,10 @@ int pd_get_svid_count(int port);
  *
  * @param port     USB-C port number
  * @param svid_idx SVID Index
+ * @param type	   SOP* type to retrieve
  * @return         SVID
  */
-uint16_t pd_get_svid(int port, uint16_t svid_idx);
+uint16_t pd_get_svid(int port, uint16_t svid_idx, enum tcpm_transmit_type type);
 
 /**
  * Return the pointer to modes of VDO of port partner connected
@@ -1730,9 +1764,11 @@ uint16_t pd_get_svid(int port, uint16_t svid_idx);
  *
  * @param port     USB-C port number
  * @param svid_idx SVID Index
+ * @param type     SOP* type to retrieve
  * @return         Pointer to modes of VDO
  */
-uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx);
+uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx,
+		enum tcpm_transmit_type type);
 
 /**
  * Return the alternate mode entry and exit data
@@ -1779,10 +1815,12 @@ bool is_transmit_msg_sop_prime(int port);
  * Returns the pointer to PD alternate mode discovery results
  * Note: Caller function can mutate the data in this structure.
  *
- * @param port  USB-C port number
- * @return      pointer to PD alternate mode discovery results
+ * @param port USB-C port number
+ * @param type Transmit type (SOP, SOP') for discovered information
+ * @return     pointer to PD alternate mode discovery results
  */
-struct pd_discovery *pd_get_am_discovery(int port);
+struct pd_discovery *pd_get_am_discovery(int port,
+		enum tcpm_transmit_type type);
 
 /*
  * Return the pointer to PD cable attributes

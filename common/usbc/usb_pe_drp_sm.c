@@ -432,7 +432,7 @@ static struct policy_engine {
 	int32_t ama_vdo;
 	int32_t vpd_vdo;
 	/* Alternate mode discovery results */
-	struct pd_discovery discovery;
+	struct pd_discovery discovery[DISCOVERY_TYPE_COUNT];
 
 	/* Partner type to send */
 	enum tcpm_transmit_type tx_type;
@@ -4639,10 +4639,10 @@ static void pe_vdm_acked_entry(int port)
 #endif
 			break;
 		case CMD_DISCOVER_SVID:
-			dfp_consume_svids(port, cnt, payload);
+			dfp_consume_svids(port, TCPC_TX_SOP, cnt, payload);
 			break;
 		case CMD_DISCOVER_MODES:
-			dfp_consume_modes(port, cnt, payload);
+			dfp_consume_modes(port, TCPC_TX_SOP, cnt, payload);
 			break;
 		case CMD_ENTER_MODE:
 			break;
@@ -5285,13 +5285,13 @@ uint8_t pd_get_src_cap_cnt(int port)
 
 void pd_dfp_discovery_init(int port)
 {
-	memset(&pe[port].discovery, 0, sizeof(struct pd_discovery));
+	memset(&pe[port].discovery, 0, sizeof(pe[port].discovery));
 }
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-struct pd_discovery *pd_get_am_discovery(int port)
+struct pd_discovery *pd_get_am_discovery(int port, enum tcpm_transmit_type type)
 {
-	return &pe[port].discovery;
+	return &pe[port].discovery[type];
 }
 
 struct pd_cable *pd_get_cable_attributes(int port)

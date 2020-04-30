@@ -499,8 +499,12 @@ static int dfp_discover_svids(uint32_t *payload)
 	return 1;
 }
 
-struct pd_discovery *pd_get_am_discovery(int port)
+struct pd_discovery *pd_get_am_discovery(int port, enum tcpm_transmit_type type)
 {
+	/*
+	 * TCPMv2 separates discovered data by partner (SOP vs. SOP'); TCPMv1
+	 * depends on both types being in the same structure.
+	 */
 	return &discovery[port];
 }
 
@@ -548,7 +552,12 @@ static int process_am_discover_svids(int port, int cnt, uint32_t *payload)
 {
 	int prev_svid_cnt = discovery[port].svid_cnt;
 
-	dfp_consume_svids(port, cnt, payload);
+	/*
+	 * The pd_discovery structure stores SOP and SOP' discovery results
+	 * separately, but TCPMv1 depends on one-dimensional storage of SVIDs
+	 * and modes. Therefore, always use TCPC_TX_SOP in TCPMv1.
+	 */
+	dfp_consume_svids(port, TCPC_TX_SOP, cnt, payload);
 
 	/*
 	 * Ref: USB Type-C Cable and Connector Specification,
@@ -846,7 +855,13 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 			rsize = process_am_discover_svids(port, cnt, payload);
 			break;
 		case CMD_DISCOVER_MODES:
-			dfp_consume_modes(port, cnt, payload);
+			/*
+			 * The pd_discovery structure stores SOP and SOP'
+			 * discovery results separately, but TCPMv1 depends on
+			 * one-dimensional storage of SVIDs and modes.
+			 * Therefore, always use TCPC_TX_SOP in TCPMv1.
+			 */
+			dfp_consume_modes(port, TCPC_TX_SOP, cnt, payload);
 			if (is_tbt_compat_enabled(port) &&
 				is_tbt_compat_mode(port, cnt, payload)) {
 				rsize = process_tbt_compat_discover_modes(
