@@ -673,7 +673,7 @@ static int tcpci_rev2_0_tcpm_get_message_raw(int port, uint32_t *payload,
 
 	/* Encode message address in bits 31 to 28 */
 	*head &= 0x0000ffff;
-	*head |= PD_HEADER_SOP(frm & 7);
+	*head |= PD_HEADER_SOP(frm);
 
 	if (rv == EC_SUCCESS && cnt > 0) {
 		tcpc_xfer_unlocked(port, NULL, 0, (uint8_t *)payload, cnt,
@@ -722,7 +722,7 @@ static int tcpci_rev1_0_tcpm_get_message_raw(int port, uint32_t *payload,
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	/* Encode message address in bits 31 to 28 */
 	*head &= 0x0000ffff;
-	*head |= PD_HEADER_SOP(frm & 7);
+	*head |= PD_HEADER_SOP(frm);
 #endif
 	if (rv == EC_SUCCESS && cnt > 0) {
 		tcpc_read_block(port, reg, (uint8_t *)payload, cnt);

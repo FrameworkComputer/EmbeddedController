@@ -1183,7 +1183,7 @@ enum cable_outlet {
  * NOTE: This is not part of the PD spec.
  */
 #define PD_HEADER_GET_SOP(header) (((header) >> 28) & 0xf)
-#define PD_HEADER_SOP(sop) ((sop) << 28)
+#define PD_HEADER_SOP(sop) (((sop) & 0xf) << 28)
 
 enum pd_msg_type {
 	PD_MSG_SOP,

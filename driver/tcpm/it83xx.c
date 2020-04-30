@@ -139,6 +139,11 @@ static int it83xx_tcpm_get_message_raw(int port, uint32_t *buf, int *head)
 	/* check data message */
 	if (cnt)
 		memcpy(buf, (uint32_t *)&IT83XX_USBPD_RDO0(port), cnt * 4);
+
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
+		int type = USBPD_REG_GET_SOP_TYPE_RX(IT83XX_USBPD_MRSR(port));
+		*head |= PD_HEADER_SOP(type);
+	}
 	/*
 	 * Note: clear RX done interrupt after get the data.
 	 * If clear this bit, USBPD receives next packet
