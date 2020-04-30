@@ -78,6 +78,8 @@ void board_init(void)
 
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
 	gpio_enable_interrupt(GPIO_SUB_USB_C1_INT_ODL);
+	/* Enable gpio interrupt for base accelgyro sensor */
+	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 
 	/* Turn on 5V if the system is on, otherwise turn it off. */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND);
