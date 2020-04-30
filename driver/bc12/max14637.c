@@ -98,9 +98,11 @@ static void bc12_detect(const int port)
 	 * The driver assumes that CHG_AL_N and SW_OPEN are not connected,
 	 * therefore an activated CHG_DET indicates whether the source is NOT a
 	 * low-power standard downstream port (SDP). The system will have to
-	 * ramp the current to determine the limit.
+	 * ramp the current to determine the limit.  The Type-C spec prohibits
+	 * proprietary methods now, therefore 1500mA is the max.
 	 */
-	new_chg.current = is_chg_det_activated(cfg) ? 2400 : 500;
+	new_chg.current = is_chg_det_activated(cfg) ? USB_CHARGER_MAX_CURR_MA :
+						      500;
 #else
 	/*
 	 * If the board doesn't support charge ramping, then assume the lowest

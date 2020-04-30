@@ -101,18 +101,23 @@ static enum usb_switch usb_switch_state[BD9995X_CHARGE_PORT_COUNT] = {
 static enum ec_error_list bd9995x_set_current(int chgnum, int current);
 static enum ec_error_list bd9995x_set_voltage(int chgnum, int voltage);
 
+/*
+ * The USB Type-C specification limits the maximum amount of current from BC 1.2
+ * suppliers to 1.5A.  Technically, proprietary methods are not allowed, but we
+ * will continue to allow those.
+ */
 static int bd9995x_get_bc12_ilim(int charge_supplier)
 {
 	switch (charge_supplier) {
 	case CHARGE_SUPPLIER_BC12_CDP:
-		return 1500;
+		return USB_CHARGER_MAX_CURR_MA;
 	case CHARGE_SUPPLIER_BC12_DCP:
-		return 2000;
+		return USB_CHARGER_MAX_CURR_MA;
 	case CHARGE_SUPPLIER_BC12_SDP:
 		return 900;
 	case CHARGE_SUPPLIER_OTHER:
 #ifdef CONFIG_CHARGE_RAMP_SW
-		return 2400;
+		return USB_CHARGER_MAX_CURR_MA;
 #else
 		/*
 		 * Setting the higher limit of current may result in an

@@ -40,21 +40,28 @@ struct bc12_status {
 /* Used to store last BC1.2 detection result */
 static enum charge_supplier bc12_supplier[CONFIG_USB_PD_PORT_MAX_COUNT];
 
+/*
+ * The USB Type-C specification limits the maximum amount of current from BC 1.2
+ * suppliers to 1.5A.  Technically, proprietary methods are not allowed, but we
+ * will continue to allow those.
+ */
 static const struct bc12_status bc12_chg_limits[] = {
 	[CHG_OTHER] = {CHARGE_SUPPLIER_OTHER, 500},
-	[CHG_2_4A] = {CHARGE_SUPPLIER_PROPRIETARY, 2400},
-	[CHG_2_0A] = {CHARGE_SUPPLIER_PROPRIETARY, 2000},
+	[CHG_2_4A] = {CHARGE_SUPPLIER_PROPRIETARY, USB_CHARGER_MAX_CURR_MA},
+	[CHG_2_0A] = {CHARGE_SUPPLIER_PROPRIETARY, USB_CHARGER_MAX_CURR_MA},
 	[CHG_1_0A] = {CHARGE_SUPPLIER_PROPRIETARY, 1000},
 	[CHG_RESERVED] = {CHARGE_SUPPLIER_NONE, 0},
-	[CHG_CDP] = {CHARGE_SUPPLIER_BC12_CDP, 1500},
+	[CHG_CDP] = {CHARGE_SUPPLIER_BC12_CDP, USB_CHARGER_MAX_CURR_MA},
 	[CHG_SDP] = {CHARGE_SUPPLIER_BC12_SDP, 500},
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
 	/*
 	 * If ramping is supported, then for DCP set the current limit to be the
-	 * max supported for the port by the board. This because for DCP the
-	 * charger is allowed to set its own max up to 5A.
+	 * max supported for the port by the board or 1.5A (whichever is lower).
+	 * Although, the BC 1.2 specification allows DCP suppliers to ramp to
+	 * much higher currents, the USB Type-C specification limits the
+	 * maximum current allowed for BC 1.2 suppliers to 1.5A.
 	 */
-	[CHG_DCP] = {CHARGE_SUPPLIER_BC12_DCP, PD_MAX_CURRENT_MA},
+	[CHG_DCP] = {CHARGE_SUPPLIER_BC12_DCP, USB_CHARGER_MAX_CURR_MA},
 #else
 	[CHG_DCP] = {CHARGE_SUPPLIER_BC12_DCP, 500},
 #endif
@@ -339,13 +346,13 @@ int usb_charger_ramp_max(int supplier, int sup_curr)
 {
 	/*
 	 * Use the level from the bc12_chg_limits table above except for
-	 * proprietary of CDP and in those cases the charge current from the
+	 * proprietary or CDP and in those cases the charge current from the
 	 * charge manager is already set at the max determined by bc1.2
 	 * detection.
 	 */
 	switch (supplier) {
 	case CHARGE_SUPPLIER_BC12_DCP:
-		return PD_MAX_CURRENT_MA;
+		return USB_CHARGER_MAX_CURR_MA;
 	case CHARGE_SUPPLIER_BC12_CDP:
 	case CHARGE_SUPPLIER_PROPRIETARY:
 		return sup_curr;

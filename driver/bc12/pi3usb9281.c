@@ -201,17 +201,22 @@ static int pi3usb9281_get_ilim(int device_type, int charger_status)
 	/* Limit USB port current. 500mA for not listed types. */
 	int current_limit_ma = 500;
 
+	/*
+	 * The USB Type-C specification limits the maximum amount of current
+	 * from BC 1.2 suppliers to 1.5A.  Technically, proprietary methods are
+	 * not allowed, but we will continue to allow those.
+	 */
 	if (charger_status & PI3USB9281_CHG_CAR_TYPE1 ||
 	    charger_status & PI3USB9281_CHG_CAR_TYPE2)
-		current_limit_ma = 3000;
+		current_limit_ma = USB_CHARGER_MAX_CURR_MA;
 	else if (charger_status & PI3USB9281_CHG_APPLE_1A)
 		current_limit_ma = 1000;
 	else if (charger_status & PI3USB9281_CHG_APPLE_2A)
-		current_limit_ma = 2000;
+		current_limit_ma = USB_CHARGER_MAX_CURR_MA;
 	else if (charger_status & PI3USB9281_CHG_APPLE_2_4A)
-		current_limit_ma = 2400;
+		current_limit_ma = USB_CHARGER_MAX_CURR_MA;
 	else if (device_type & PI3USB9281_TYPE_CDP)
-		current_limit_ma = 1500;
+		current_limit_ma = USB_CHARGER_MAX_CURR_MA;
 	else if (device_type & PI3USB9281_TYPE_DCP)
 		current_limit_ma = 500;
 
@@ -469,7 +474,7 @@ int usb_charger_ramp_max(int supplier, int sup_curr)
 {
 	switch (supplier) {
 	case CHARGE_SUPPLIER_BC12_DCP:
-		return 2000;
+		return USB_CHARGER_MAX_CURR_MA;
 	case CHARGE_SUPPLIER_BC12_SDP:
 		return 1000;
 	case CHARGE_SUPPLIER_BC12_CDP:

@@ -1167,6 +1167,11 @@ static int mt6370_get_charger_type(int chgnum)
 #endif
 }
 
+/*
+ * The USB Type-C specification limits the maximum amount of current from BC 1.2
+ * suppliers to 1.5A.  Technically, proprietary methods are not allowed, but we
+ * will continue to allow those.
+ */
 static int mt6370_get_bc12_ilim(int charge_supplier)
 {
 	switch (charge_supplier) {
@@ -1175,21 +1180,11 @@ static int mt6370_get_bc12_ilim(int charge_supplier)
 	case MT6370_CHG_TYPE_APPLE_1_0A_CHARGER:
 		return 1000;
 	case MT6370_CHG_TYPE_APPLE_2_1A_CHARGER:
-		if (IS_ENABLED(CONFIG_CHARGE_RAMP_SW) ||
-		    IS_ENABLED(CONFIG_CHARGE_RAMP_HW))
-			return 2100;
 	case MT6370_CHG_TYPE_APPLE_2_4A_CHARGER:
-		if (IS_ENABLED(CONFIG_CHARGE_RAMP_SW) ||
-		    IS_ENABLED(CONFIG_CHARGE_RAMP_HW))
-			return 2400;
 	case MT6370_CHG_TYPE_DCP:
-		if (IS_ENABLED(CONFIG_CHARGE_RAMP_SW) ||
-		    IS_ENABLED(CONFIG_CHARGE_RAMP_HW))
-			/* A conservative value to prevent a bad charger. */
-			return RT946X_AICR_TYP2MAX(2000);
 	case MT6370_CHG_TYPE_CDP:
 	case MT6370_CHG_TYPE_SAMSUNG_CHARGER:
-		return 1500;
+		return USB_CHARGER_MAX_CURR_MA;
 	case MT6370_CHG_TYPE_SDP:
 	default:
 		return USB_CHARGER_MIN_CURR_MA;
@@ -1222,10 +1217,10 @@ static int rt946x_get_bc12_ilim(int charge_supplier)
 		if (IS_ENABLED(CONFIG_CHARGE_RAMP_SW) ||
 		    IS_ENABLED(CONFIG_CHARGE_RAMP_HW))
 			/* A conservative value to prevent a bad charger. */
-			return RT946X_AICR_TYP2MAX(2000);
+			return RT946X_AICR_TYP2MAX(USB_CHARGER_MAX_CURR_MA);
 		/* fallback */
 	case CHARGE_SUPPLIER_BC12_CDP:
-		return 1500;
+		return USB_CHARGER_MAX_CURR_MA;
 	case CHARGE_SUPPLIER_BC12_SDP:
 	default:
 		return USB_CHARGER_MIN_CURR_MA;
