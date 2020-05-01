@@ -170,7 +170,7 @@ that has the same meaning as here.)
 Write Command: ADAPTER_START
 Example: "ADAPTER_START\n"
 
-Details: Tells i2c-pseudo the actually create the I2C adapter.  Only valid once
+Details: Tells i2c-pseudo to actually create the I2C adapter.  Only valid once
 per open controller fd.
 
 
