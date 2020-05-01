@@ -36,7 +36,29 @@
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#else
+#define CPRINTF(format, args...)
+#define CPRINTS(format, args...)
 #endif
+
+#define CPRINTF_LX(x, format, args...) \
+	do { \
+		if (pe_debug_level >= x) \
+			CPRINTF(format, ## args); \
+	} while (0)
+#define CPRINTF_L1(format, args...) CPRINTF_LX(1, format, ## args)
+#define CPRINTF_L2(format, args...) CPRINTF_LX(2, format, ## args)
+#define CPRINTF_L3(format, args...) CPRINTF_LX(3, format, ## args)
+
+#define CPRINTS_LX(x, format, args...) \
+	do { \
+		if (pe_debug_level >= x) \
+			CPRINTS(format, ## args); \
+	} while (0)
+#define CPRINTS_L1(format, args...) CPRINTS_LX(1, format, ## args)
+#define CPRINTS_L2(format, args...) CPRINTS_LX(2, format, ## args)
+#define CPRINTS_L3(format, args...) CPRINTS_LX(3, format, ## args)
+
 
 #define PE_SET_FLAG(port, flag) atomic_or(&pe[port].flags, (flag))
 #define PE_CLR_FLAG(port, flag) atomic_clear(&pe[port].flags, (flag))
@@ -230,7 +252,21 @@ enum usb_pe_state {
 /* Forward declare the full list of states. This is indexed by usb_pe_state */
 static const struct usb_state pe_states[];
 
-#ifdef CONFIG_COMMON_RUNTIME
+/*
+ * We will use DEBUG LABELS if we will be able to print (COMMON RUNTIME)
+ * and either CONFIG_USB_PD_DEBUG_LEVEL is not defined (no override) or
+ * we are overriding and the level is not DISABLED.
+ *
+ * If we can't print or the CONFIG_USB_PD_DEBUG_LEVEL is defined to be 0
+ * then the DEBUG LABELS will be removed from the build.
+ */
+#if defined(CONFIG_COMMON_RUNTIME) && \
+	(!defined(CONFIG_USB_PD_DEBUG_LEVEL) || \
+	 (CONFIG_USB_PD_DEBUG_LEVEL > 0))
+#define USB_PD_DEBUG_LABELS
+#endif
+
+#ifdef USB_PD_DEBUG_LABELS
 /* List of human readable state names for console debugging */
 static const char * const pe_state_names[] = {
 	[PE_SRC_STARTUP] = "PE_SRC_Startup",
@@ -296,6 +332,12 @@ static const char * const pe_state_names[] = {
 	/* Super States */
 	[PE_PRS_FRS_SHARED] = "SS:PE_PRS_FRS_SHARED",
 };
+#else
+/*
+ * Reference so IS_ENABLED section below that references the names
+ * will compile and the optimizer will remove it.
+ */
+extern const char **pe_state_names;
 #endif
 
 /*
@@ -331,20 +373,11 @@ enum sub_state {
 
 static enum sm_local_state local_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-/*
- * Debug log level - higher number == more log
- *   Level 0: disabled
- *   Level 1: state names
- *   Level 2: Level 1
- *   Level 3: Level 2
- *
- * Note that higher log level causes timing changes and thus may affect
- * performance.
- */
+/* Debug log level - higher number == more log */
 #ifdef CONFIG_USB_PD_DEBUG_LEVEL
-static enum debug_level pe_debug_level = CONFIG_USB_PD_DEBUG_LEVEL;
+static const enum debug_level pe_debug_level = CONFIG_USB_PD_DEBUG_LEVEL;
 #else
-static enum debug_level pe_debug_level;
+static enum debug_level pe_debug_level = DEBUG_LEVEL_1;
 #endif
 
 /*
@@ -584,7 +617,9 @@ int pe_is_running(int port)
 
 void pe_set_debug_level(enum debug_level debug_level)
 {
+#ifndef CONFIG_USB_PD_DEBUG_LEVEL
 	pe_debug_level = debug_level;
+#endif
 }
 
 void pe_run(int port, int evt, int en)
@@ -1032,9 +1067,12 @@ static void print_current_state(const int port)
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH))
 		mode = " FRS-MODE";
-	if (pe_debug_level >= DEBUG_LEVEL_1)
-		CPRINTS("C%d: %s%s", port,
+
+	if (IS_ENABLED(USB_PD_DEBUG_LABELS))
+		CPRINTS_L1("C%d: %s%s", port,
 			pe_state_names[get_state_pe(port)], mode);
+	else
+		CPRINTS("C%d: pe-st%d", port, get_state_pe(port));
 }
 
 static void send_source_cap(int port)
