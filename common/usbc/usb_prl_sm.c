@@ -90,14 +90,18 @@
 /*
  * Debug log level - higher number == more log
  *   Level 0: disabled
- *   Level 1: packet info
- *   Level 2: Level 1
- *   Level 3: Level 2, plus ping packet and packet dump on error
+ *   Level 1: not currently used
+ *   Level 2: plus non-ping messages
+ *   Level 3: plus ping packet and packet dump on error
  *
  * Note that higher log level causes timing changes and thus may affect
  * performance.
  */
-static enum debug_level prl_debug_level;
+#ifdef CONFIG_USB_PD_DEBUG_LEVEL
+static const enum debug_level prl_debug_level = CONFIG_USB_PD_DEBUG_LEVEL;
+#else
+static enum debug_level prl_debug_level = DEBUG_LEVEL_1;
+#endif
 
 static enum sm_local_state local_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
@@ -371,7 +375,9 @@ static void prl_init(int port)
 
 void prl_set_debug_level(enum debug_level debug_level)
 {
+#ifndef CONFIG_USB_PD_DEBUG_LEVEL
 	prl_debug_level = debug_level;
+#endif
 }
 
 void prl_start_ams(int port)
@@ -1587,7 +1593,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 		cnt = CHK_BUF_SIZE;
 
 	/* dump received packet content (only dump ping at debug level MAX) */
-	if ((prl_debug_level >= DEBUG_LEVEL_1 && type != PD_CTRL_PING) ||
+	if ((prl_debug_level >= DEBUG_LEVEL_2 && type != PD_CTRL_PING) ||
 		prl_debug_level >= DEBUG_LEVEL_3) {
 		int p;
 
