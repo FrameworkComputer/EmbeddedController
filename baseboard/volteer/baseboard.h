@@ -266,39 +266,6 @@ enum usbc_port {
 	USBC_PORT_COUNT
 };
 
-/*
- * Daughterboard type is encoded in the lower 4 bits
- * of the FW_CONFIG CBI tag.
- */
-
-enum usb_db_id {
-	USB_DB_NONE = 0,
-	USB_DB_USB4_GEN2 = 1,
-	USB_DB_USB3 = 2,
-	USB_DB_USB4_GEN3 = 3,
-	USB_DB_COUNT
-};
-
-#define CBI_FW_CONFIG_USB_DB_MASK	0x0f
-#define CBI_FW_CONFIG_USB_DB_SHIFT	0
-#define CBI_FW_CONFIG_USB_DB_TYPE(bits) \
-	(((bits) & CBI_FW_CONFIG_USB_DB_MASK) >> CBI_FW_CONFIG_USB_DB_SHIFT)
-
-/*
- * Tablet Mode (1 bit)
- *
- * ec_config_has_tablet_mode() will return 1 is present or 0
- */
-enum ec_cfg_tablet_mode_type {
-	TABLET_MODE_NO = 0,
-	TABLET_MODE_YES = 1,
-};
-#define EC_CFG_TABLET_MODE_L		11
-#define EC_CFG_TABLET_MODE_H		11
-#define EC_CFG_TABLET_MODE_MASK \
-				GENMASK(EC_CFG_TABLET_MODE_H,\
-					EC_CFG_TABLET_MODE_L)
-
 extern enum gpio_signal ps8xxx_rst_odl;
 
 void board_reset_pd_mcu(void);
@@ -309,7 +276,6 @@ void tcpc_alert_event(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
 
 unsigned char get_board_id(void);
-enum usb_db_id get_usb_db_type(void);
 
 /**
  * Configure GPIOs based on the CBI board version.  Boards in the Volteer
@@ -317,8 +283,6 @@ enum usb_db_id get_usb_db_type(void);
  * different board build phases.
  */
 __override_proto void config_volteer_gpios(void);
-
-enum ec_cfg_tablet_mode_type ec_config_has_tablet_mode(void);
 
 #endif /* !__ASSEMBLER__ */
 

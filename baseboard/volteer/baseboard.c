@@ -7,6 +7,7 @@
 #include "adc_chip.h"
 #include "bb_retimer.h"
 #include "button.h"
+#include "cbi_ec_fw_config.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "cros_board_info.h"
@@ -297,8 +298,6 @@ static const struct usb_mux mux_config_p1_usb3 = {
 	.next_mux = &usbc1_usb3_db_retimer,
 };
 
-static enum usb_db_id usb_db_type = USB_DB_NONE;
-
 /******************************************************************************/
 /* USBC PPC configuration */
 struct ppc_config_t ppc_chips[] = {
@@ -423,9 +422,11 @@ static void ps8815_reset(void)
 
 void board_reset_pd_mcu(void)
 {
+	enum ec_cfg_usb_db_type usb_db = ec_cfg_usb_db_type();
+
 	/* No reset available for TCPC on port 0 */
 	/* Daughterboard specific reset for port 1 */
-	if (usb_db_type == USB_DB_USB3) {
+	if (usb_db == DB_USB3_ACTIVE) {
 		ps8815_reset();
 		usb_mux_hpd_update(USBC_PORT_C1, 0, 0);
 	}
@@ -585,30 +586,10 @@ static void config_db_usb3(void)
 }
 
 static uint8_t board_id;
-static uint32_t fw_config;
 
 uint8_t get_board_id(void)
 {
 	return board_id;
-}
-
-enum usb_db_id get_usb_db_type(void)
-{
-	return usb_db_type;
-}
-
-uint32_t get_fw_config(void)
-{
-	return fw_config;
-}
-
-/*
- * ec_config_has_tablet_mode() will return 1 is present or 0
- */
-enum ec_cfg_tablet_mode_type ec_config_has_tablet_mode(void)
-{
-	return ((get_fw_config() & EC_CFG_TABLET_MODE_MASK)
-			>> EC_CFG_TABLET_MODE_L);
 }
 
 __overridable void config_volteer_gpios(void)
@@ -625,7 +606,7 @@ static const char *db_type_prefix = "USB DB type: ";
 static void cbi_init(void)
 {
 	uint32_t cbi_val;
-	uint32_t usb_db_val;
+	enum ec_cfg_usb_db_type usb_db;
 
 	/* Board ID */
 	if (cbi_get_board_version(&cbi_val) != EC_SUCCESS ||
@@ -639,32 +620,25 @@ static void cbi_init(void)
 	config_volteer_gpios();
 
 	/* FW config */
-	if (cbi_get_fw_config(&cbi_val) != EC_SUCCESS) {
-		CPRINTS("CBI: Read FW config failed, assuming USB4");
-		usb_db_val = USB_DB_USB4_GEN2;
-	} else {
-		fw_config = cbi_val;
-		usb_db_val = CBI_FW_CONFIG_USB_DB_TYPE(cbi_val);
-	}
+	init_fw_config();
+	usb_db = ec_cfg_usb_db_type();
 
-	switch (usb_db_val) {
-	case USB_DB_NONE:
+	switch (usb_db) {
+	case DB_USB_ABSENT:
 		CPRINTS("%sNone", db_type_prefix);
 		break;
-	case USB_DB_USB4_GEN2:
+	case DB_USB4_GEN2:
 		CPRINTS("%sUSB4 Gen1/2", db_type_prefix);
 		break;
-	case USB_DB_USB4_GEN3:
+	case DB_USB4_GEN3:
 		CPRINTS("%sUSB4 Gen3", db_type_prefix);
 		break;
-	case USB_DB_USB3:
+	case DB_USB3_ACTIVE:
 		config_db_usb3();
-		CPRINTS("%sUSB3", db_type_prefix);
+		CPRINTS("%sUSB3 Active", db_type_prefix);
 		break;
 	default:
-		CPRINTS("%sID %d not supported", db_type_prefix, usb_db_val);
-		usb_db_val = USB_DB_NONE;
+		CPRINTS("%sID %d not supported", db_type_prefix, usb_db);
 	}
-	usb_db_type = usb_db_val;
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_FIRST);

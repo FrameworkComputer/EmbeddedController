@@ -6,6 +6,7 @@
 /* Malefor board-specific configuration */
 
 #include "button.h"
+#include "cbi_ec_fw_config.h"
 #include "common.h"
 #include "driver/accel_lis2dh.h"
 #include "driver/accelgyro_lsm6dsm.h"
@@ -35,7 +36,7 @@
 
 static void board_init(void)
 {
-	if (ec_config_has_tablet_mode()) {
+	if (ec_cfg_has_tabletmode()) {
 		/* Enable gpio interrupt for base accelgyro sensor */
 		gpio_enable_interrupt(GPIO_EC_IMU_INT_L);
 	} else {
@@ -58,14 +59,14 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 int board_is_lid_angle_tablet_mode(void)
 {
-	return ec_config_has_tablet_mode();
+	return ec_cfg_has_tabletmode();
 }
 
 /* Enable or disable input devices, based on tablet mode or chipset state */
 #ifndef TEST_BUILD
 void lid_angle_peripheral_enable(int enable)
 {
-	if (ec_config_has_tablet_mode()) {
+	if (ec_cfg_has_tabletmode()) {
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
 			tablet_get_mode())
 			enable = 0;
