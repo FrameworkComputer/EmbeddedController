@@ -247,7 +247,7 @@ static void uart_freq_change(void)
 
 #if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F0) || \
 	defined(CHIP_FAMILY_STM32F3) || defined(CHIP_FAMILY_STM32L4) || \
-	defined(CHIP_FAMILY_STM32F4)
+	defined(CHIP_FAMILY_STM32F4) || defined(CHIP_FAMILY_STM32G4)
 	if (div / 16 > 0) {
 		/*
 		 * CPU clock is high enough to support x16 oversampling.
@@ -286,10 +286,10 @@ void uart_init(void)
 #else
 	STM32_RCC_D2CCIP2R |= STM32_RCC_D2CCIP2_USART234578SEL_HSI;
 #endif /* UARTN */
-#elif defined(CHIP_FAMILY_STM32L4)
+#elif defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32G4)
 	/* USART1 clock source from SYSCLK */
 	STM32_RCC_CCIPR &= ~STM32_RCC_CCIPR_USART1SEL_MASK;
-	STM32_RCC_CCIPR |= 
+	STM32_RCC_CCIPR |=
 		(STM32_RCC_CCIPR_UART_SYSCLK << STM32_RCC_CCIPR_USART1SEL_SHIFT);
 	/* LPUART1 clock source from SYSCLK */
 	STM32_RCC_CCIPR &= ~STM32_RCC_CCIPR_LPUART1SEL_MASK;
