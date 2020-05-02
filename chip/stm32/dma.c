@@ -59,7 +59,17 @@ stm32_dma_chan_t *dma_get_channel(enum dma_channel channel)
 	return &dma->chan[channel % STM32_DMAC_PER_CTLR];
 }
 
-#ifdef STM32_DMA_CSELR
+#ifdef STM32_DMAMUX_CxCR
+void dma_select_channel(enum dma_channel channel, uint8_t req)
+{
+	/*
+	 * STM32G4 includes a DMAMUX block which is used to handle dma requests
+	 * by peripherals. The correct 'req' number for a given peripheral is
+	 * given in ST doc RM0440.
+	 */
+	STM32_DMAMUX_CxCR(channel) = req;
+}
+#elif defined(STM32_DMA_CSELR)
 void dma_select_channel(enum dma_channel channel, unsigned char stream)
 {
 	/* Local channel # starting from 0 on each DMA controller */
@@ -73,7 +83,7 @@ void dma_select_channel(enum dma_channel channel, unsigned char stream)
 	val = STM32_DMA_CSELR(channel) & ~(mask << ch * shift);
 	STM32_DMA_CSELR(channel) = val | (stream << ch * shift);
 }
-#endif
+#endif /* STM32_DMAMUX_CxCR/STM32_DMA_CSELR */
 
 void dma_disable(enum dma_channel channel)
 {
@@ -233,6 +243,9 @@ void dma_init(void)
 {
 #if defined(CHIP_FAMILY_STM32L4)
 	STM32_RCC_AHB1ENR |= STM32_RCC_AHB1ENR_DMA1EN|STM32_RCC_AHB1ENR_DMA2EN;
+#elif defined(CHIP_FAMILY_STM32G4)
+	STM32_RCC_AHB1ENR |= STM32_RCC_AHB1ENR_DMA1EN|STM32_RCC_AHB1ENR_DMA2EN |
+		STM32_RCC_AHB1ENR_DMAMUXEN;
 #else
 	STM32_RCC_AHBENR |= STM32_RCC_HB_DMA1;
 #endif
