@@ -15,6 +15,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "isl923x.h"
+#include "ocpc.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -571,7 +572,12 @@ void raa489000_hibernate(int chgnum)
 		regval &= ~RAA489000_C1_ENABLE_SUPP_SUPPORT_MODE;
 
 		/* Force BGATE off */
-		regval |= RAA489000_C1_BGATE_FORCE_OFF;
+		if (IS_ENABLED(CONFIG_OCPC) && (chgnum == PRIMARY_CHARGER)) {
+			/* This is needed in the Z-state */
+			CPRINTS("%s(%d): Skip disable BFET", __func__, chgnum);
+		} else {
+			regval |= RAA489000_C1_BGATE_FORCE_OFF;
+		}
 
 		/* Disable AMON/BMON */
 		regval |= ISL923X_C1_DISABLE_MON;
@@ -604,15 +610,22 @@ void raa489000_hibernate(int chgnum)
 	if (rv)
 		CPRINTS("%s(%d):Failed to set Control4!", __func__, chgnum);
 
-	rv = raw_read16(chgnum, RAA489000_REG_CONTROL8, &regval);
-	if (!rv) {
-		/* Disable MCU LDO in battery state */
-		regval |= RAA489000_C8_MCU_LDO_BAT_STATE_DISABLE;
+	if (IS_ENABLED(CONFIG_OCPC) && (chgnum == PRIMARY_CHARGER)) {
+		/* The LDO is needed in the Z-state */
+		CPRINTS("%s(%d): Skip disable MCU LDO", __func__, chgnum);
+	} else {
+		rv = raw_read16(chgnum, RAA489000_REG_CONTROL8, &regval);
+		if (!rv) {
+			/* Disable MCU LDO in battery state */
+			regval |= RAA489000_C8_MCU_LDO_BAT_STATE_DISABLE;
 
-		rv = raw_write16(chgnum, RAA489000_REG_CONTROL8, regval);
+			rv = raw_write16(chgnum, RAA489000_REG_CONTROL8,
+					 regval);
+		}
+		if (rv)
+			CPRINTS("%s(%d):Failed to set Control8!", __func__,
+				chgnum);
 	}
-	if (rv)
-		CPRINTS("%s(%d):Failed to set Control8!", __func__, chgnum);
 
 	cflush();
 }
