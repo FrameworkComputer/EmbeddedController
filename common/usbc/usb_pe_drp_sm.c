@@ -4204,7 +4204,7 @@ static void pe_vdm_identity_request_cbl_entry(int port)
 
 	msg[0] = VDO(USB_SID_PD, 1,
 			VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME)) |
-			DISCOVER_IDENTITY);
+			CMD_DISCOVER_IDENT);
 	tx_emsg[port].len = sizeof(uint32_t);
 
 	prl_send_data_msg(port, TCPC_TX_SOP_PRIME, PD_DATA_VENDOR_DEF);
@@ -4363,9 +4363,9 @@ static void pe_init_port_vdm_identity_request_entry(int port)
 
 	print_current_state(port);
 
-	msg[0] = VDO(USB_SID_PD, 1, VDO_SVDM_VERS(pd_get_vdo_ver(port,
-								 TCPC_TX_SOP))
-		     | DISCOVER_IDENTITY);
+	msg[0] = VDO(USB_SID_PD, 1,
+			VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP)) |
+			CMD_DISCOVER_IDENT);
 	tx_emsg[port].len = sizeof(uint32_t);
 
 	prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
