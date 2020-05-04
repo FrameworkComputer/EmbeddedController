@@ -6,14 +6,10 @@
 /* Task scheduling / events module for Chrome EC operating system */
 
 #include "atomic.h"
-#include "common.h"
 #include "console.h"
 #include "cpu.h"
-#include "hwtimer_chip.h"
-#include "intc.h"
 #include "irq_chip.h"
 #include "link_defs.h"
-#include "registers.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -61,6 +57,10 @@ static uint32_t irq_dist[CONFIG_IRQ_COUNT];  /* Distribution of IRQ calls */
 #endif
 
 extern int __task_start(void);
+
+#if defined(CHIP_FAMILY_IT83XX)
+extern void clock_sleep_mode_wakeup_isr(void);
+#endif
 
 #ifndef CONFIG_LOW_POWER_IDLE
 /* Idle task.  Executed when no tasks are ready to be scheduled. */

@@ -6,7 +6,6 @@
  */
 
 #include "cpu.h"
-#include "registers.h"
 
 void cpu_init(void)
 {

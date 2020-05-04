@@ -3,14 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
-#include "console.h"
 #include "cpu.h"
 #include "panic.h"
-#include "printf.h"
-#include "system.h"
 #include "task.h"
-#include "timer.h"
 #include "util.h"
 
 /* Panic data goes at the end of RAM. */
