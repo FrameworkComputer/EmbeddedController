@@ -52,11 +52,6 @@ int chip_trigger_irq(int irq);
 void chip_init_irqs(void);
 
 /**
- * Return interrupt number of software interrupt.
- */
-int get_sw_int(void);
-
-/**
  * Return external interrupt number.
  */
 int chip_get_ec_int(void);

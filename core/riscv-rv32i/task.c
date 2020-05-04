@@ -221,7 +221,7 @@ int task_start_called(void)
 	return start_called;
 }
 
-int __ram_code get_sw_int(void)
+static int __ram_code get_sw_int(void)
 {
 	/* If this is a SW interrupt */
 	if (get_mcause() == 11)

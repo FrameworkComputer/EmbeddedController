@@ -249,7 +249,7 @@ int task_start_called(void)
 	return start_called;
 }
 
-int get_sw_int(void)
+static int get_sw_int(void)
 {
 	/* If this is a SW interrupt */
 	if (get_itype() & 8)
