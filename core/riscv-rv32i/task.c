@@ -74,9 +74,13 @@ void __idle(void)
 	cprints(CC_TASK, "idle task started");
 
 	while (1) {
+#if defined(CHIP_FAMILY_IT83XX)
 		/* doze mode */
 		IT83XX_ECPM_PLLCTRL = EC_PLL_DOZE;
 		clock_cpu_standby();
+#else
+		asm("wfi");
+#endif
 	}
 }
 #endif /* !CONFIG_LOW_POWER_IDLE */
