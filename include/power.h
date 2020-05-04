@@ -116,7 +116,7 @@ int power_has_signals(uint32_t want);
 /**
  * Wait for power input signals to be present using default timeout
  *
- * @param want		Mask of signals which must be present (one or more
+ * @param want		Wanted signals which must be present (one or more
  *			POWER_SIGNAL_MASK()s).  If want=0, stops waiting for
  *			signals.
  * @return EC_SUCCESS when all inputs are present, or ERROR_TIMEOUT if timeout
@@ -127,7 +127,7 @@ int power_wait_signals(uint32_t want);
 /**
  * Wait for power input signals to be present
  *
- * @param want		Mask of signals which must be present (one or more
+ * @param want		Wanted signals which must be present (one or more
  *			POWER_SIGNAL_MASK()s).  If want=0, stops waiting for
  *			signals.
  * @param timeout       Timeout in usec to wait for signals to be present.
@@ -135,6 +135,21 @@ int power_wait_signals(uint32_t want);
  * before reaching the desired state.
  */
 int power_wait_signals_timeout(uint32_t want, int timeout);
+
+/**
+ * Wait for power input signals to be the desired state.
+ *
+ * @param want		Desired signals states. (one or more
+ *			POWER_SIGNAL_MASK()s). Signals can be presented or be
+ *			disappeared.
+ * @param mask		Masked signals that param 'want' cares.
+ * @param timeout	Timeout in usec to wait for signals be in the deisred
+ *			state.
+ * @return EC_SUCCESS when masked signals = wanted signals, or ERROR_TIMEOUT
+ * if timeout before reaching the desired state.
+ */
+int power_wait_mask_signals_timeout(uint32_t want, uint32_t mask, int timeout);
+
 
 /**
  * Set the low-level power chipset state.

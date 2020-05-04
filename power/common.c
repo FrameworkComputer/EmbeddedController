@@ -186,11 +186,16 @@ int power_wait_signals(uint32_t want)
 
 int power_wait_signals_timeout(uint32_t want, int timeout)
 {
+	return power_wait_mask_signals_timeout(want, want, timeout);
+}
+
+int power_wait_mask_signals_timeout(uint32_t want, uint32_t mask, int timeout)
+{
 	in_want = want;
-	if (!want)
+	if (!mask)
 		return EC_SUCCESS;
 
-	while ((in_signals & in_want) != in_want) {
+	while ((in_signals & mask) != in_want) {
 		if (task_wait_event(timeout) == TASK_EVENT_TIMER) {
 			power_update_signals();
 			return EC_ERROR_TIMEOUT;
