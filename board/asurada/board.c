@@ -57,6 +57,12 @@ const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
  * number of pwm channel greater than three.
  */
 const struct pwm_t pwm_channels[] = {
+	[PWM_CH_PWRLED] = {
+		.channel = 0,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
+		.freq_hz = 500,
+		.pcfsr_sel = PWM_PRESCALER_C4
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -84,6 +90,9 @@ static enum board_sub_board board_get_sub_board(void);
 /* Initialize board. */
 static void board_init(void)
 {
+	/* Set PWM of PWRLED to 5%. */
+	pwm_set_duty(PWM_CH_PWRLED, 5);
+	pwm_enable(PWM_CH_PWRLED, 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
