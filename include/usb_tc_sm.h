@@ -232,7 +232,6 @@ int tc_src_power_on(int port);
  */
 int tc_check_vconn_swap(int port);
 
-#ifdef CONFIG_USBC_VCONN
 /**
  * Checks if VCONN is being sourced.
  *
@@ -258,8 +257,6 @@ void pd_request_vconn_swap_on(int port);
  * @param port USB_C port number
  */
 void pd_request_vconn_swap_off(int port);
-#endif
-
 
 /**
  * Returns the polarity of a Sink.

@@ -1412,12 +1412,13 @@ void pd_request_vconn_swap(int port)
 }
 #endif
 
-#ifdef CONFIG_USBC_VCONN
 int tc_is_vconn_src(int port)
 {
-	return TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON);
+	if (IS_ENABLED(CONFIG_USBC_VCONN))
+		return TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON);
+	else
+		return 0;
 }
-#endif
 
 static __maybe_unused int reset_device_and_notify(int port)
 {
