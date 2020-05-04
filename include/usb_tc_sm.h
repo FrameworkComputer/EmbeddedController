@@ -237,9 +237,7 @@ int tc_check_vconn_swap(int port);
  * Checks if VCONN is being sourced.
  *
  * @param port USB_C port number
- * @return 1 if vconn is being sourced, 0 if it's not, and -1 if
- *         can't answer at this time. -1 is returned if the current
- *         Type-C state is not Attached.SRC or Attached.SNK.
+ * @return 1 if vconn is being sourced, 0 if it's not.
  */
 int tc_is_vconn_src(int port);
 

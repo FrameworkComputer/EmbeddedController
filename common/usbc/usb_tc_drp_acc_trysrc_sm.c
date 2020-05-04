@@ -1404,11 +1404,7 @@ void pd_request_vconn_swap(int port)
 #ifdef CONFIG_USBC_VCONN
 int tc_is_vconn_src(int port)
 {
-	if (get_state_tc(port) == TC_ATTACHED_SRC ||
-			get_state_tc(port) == TC_ATTACHED_SNK)
-		return TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON);
-	else
-		return -1;
+	return TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON);
 }
 #endif
 
