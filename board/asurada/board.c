@@ -51,7 +51,9 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_POWER_BUTTON_L, GPIO_LID_OPEN
+	GPIO_AC_PRESENT,
+	GPIO_LID_OPEN,
+	GPIO_POWER_BUTTON_L,
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
