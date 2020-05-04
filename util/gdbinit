@@ -70,8 +70,6 @@ define target hookpost-remote
     load {EC_DIR}/build/{BOARD}/{BIN_DIR}/{BIN_NAME}.obj
     echo \ Resetting target
     monitor reset
-    echo \ Halting target
-    monitor halt
     echo \ Setting breakpoint on main
     b main
 end\n
