@@ -355,6 +355,31 @@ The `_mv` suffix denotes millivolt and `_mw` suffix denotes milliwatt.
 See [Power Measurement Documentation] for more information.
 ***
 
+### Toggling Hardware Write Protect
+
+When using a fingerprint development board connected to servo, you can toggle
+hardware write protect for testing.
+
+**NOTE**: `servod` must be running.
+
+Check the state of hardware write protect:
+
+```bash
+(chroot) $ dut-control fw_wp_en
+```
+
+Enable hardware write protect:
+
+```bash
+(chroot) $ dut-control fw_wp_en:on
+```
+
+Disable hardware write protect:
+
+```bash
+(chroot) $ dut-control fw_wp_en:off
+```
+
 ### Contributing Changes
 
 #### Using Gerrit and git
