@@ -53,6 +53,13 @@
 #define I2C_PORT_GPU                    NPCX_I2C_PORT4_1
 
 /* USB Type C and USB PD defines */
+#undef CONFIG_USB_PD_TCPMV1
+#define CONFIG_USB_PD_TCPMV2 /* Use TCPMv2 */
+#define CONFIG_USB_PD_REV20  /* enable PD 2.0 because we have a parade TCPC */
+#define CONFIG_USB_PID 0x5047
+#define CONFIG_USB_PD_DECODE_SOP
+#define CONFIG_USB_PD_TRY_SRC
+#define CONFIG_USB_DRP_ACC_TRYSRC
 #define CONFIG_USB_PD_COMM_LOCKED
 #define CONFIG_USB_PD_TCPM_ANX7447
 #define CONFIG_USB_PD_TCPM_ANX7447_AUX_PU_PD
