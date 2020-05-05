@@ -90,6 +90,9 @@ static enum board_sub_board board_get_sub_board(void);
 /* Initialize board. */
 static void board_init(void)
 {
+	/* For Rev0 only. Set GPM0~6 1.8V input. */
+	IT83XX_GPIO_GCR30 |= BIT(4);
+
 	/* Set PWM of PWRLED to 5%. */
 	pwm_set_duty(PWM_CH_PWRLED, 5);
 	pwm_enable(PWM_CH_PWRLED, 1);
