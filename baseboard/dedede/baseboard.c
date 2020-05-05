@@ -164,10 +164,13 @@ void baseboard_all_sys_pgood_interrupt(enum gpio_signal signal)
 	 * We need to deassert ALL_SYS_PGOOD within 200us of SLP_S3_L asserting.
 	 * that is why we do this here instead of waiting for the chipset
 	 * driver to.
+	 * Early protos do not pull VCCST_PWRGD below Vil in hardware logic,
+	 * so we need to do the same for this signal.
 	 */
-	if (!gpio_get_level(GPIO_SLP_S3_L))
+	if (!gpio_get_level(GPIO_SLP_S3_L)) {
 		gpio_set_level(GPIO_ALL_SYS_PWRGD, 0);
-
+		gpio_set_level(GPIO_EC_AP_VCCST_PWRGD_OD, 0);
+	}
 	/* Now chain off to the normal power signal interrupt handler. */
 	power_signal_interrupt(signal);
 }
