@@ -148,6 +148,15 @@ static inline bool ec_config_has_usbc1_retimer_ps8740(void)
 		  HAS_USBC1_RETIMER_PS8740);
 }
 
+#define HAS_HDMI_RETIMER_PI3HDX1204 \
+			(BIT(DALBOZ_DB_D_OPT2_USBA_HDMI))
+
+static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
+{
+	return !!(BIT(ec_config_get_usb_db()) &
+		  HAS_HDMI_RETIMER_PI3HDX1204);
+}
+
 /* These IO expander GPIOs vary with DB option. */
 extern enum gpio_signal IOEX_USB_A1_RETIMER_EN;
 extern enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L;

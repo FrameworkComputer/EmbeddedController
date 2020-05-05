@@ -142,7 +142,6 @@ static inline bool ec_config_has_usba1_retimer_tusb522(void)
 		  HAS_USBA1_RETIMER_TUSB522);
 }
 
-
 #define HAS_USBC1_RETIMER_PS8743 \
 			(BIT(EZKINIL_DB_T_OPT2_USBAC))
 
@@ -151,7 +150,6 @@ static inline bool ec_config_has_usbc1_retimer_ps8743(void)
 	return !!(BIT(ec_config_get_usb_db()) &
 		  HAS_USBC1_RETIMER_PS8743);
 }
-
 
 #define HAS_USBC1_RETIMER_TUSB544 \
 			(BIT(EZKINIL_DB_T_OPT1_USBC_HDMI))
@@ -162,6 +160,14 @@ static inline bool ec_config_has_usbc1_retimer_tusb544(void)
 		  HAS_USBC1_RETIMER_TUSB544);
 }
 
+#define HAS_HDMI_RETIMER_PI3HDX1204 \
+			(BIT(EZKINIL_DB_T_OPT1_USBC_HDMI))
+
+static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
+{
+	return !!(BIT(ec_config_get_usb_db()) &
+		  HAS_HDMI_RETIMER_PI3HDX1204);
+}
 
 /* TODO: Fill in with GPIO values */
 #define PORT_TO_HPD(port) ((port == 0) \

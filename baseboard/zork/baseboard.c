@@ -20,6 +20,7 @@
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
+#include "driver/retimer/pi3hdx1204.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/temp_sensor/tmp432.h"
@@ -573,3 +574,16 @@ void hdmi_hpd_interrupt(enum ioex_signal signal)
 	/* Debounce for 2 msec. */
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
 }
+
+static void pi3hdx1204_retimer_power(void)
+{
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		int enable = chipset_in_or_transitioning_to_state(
+			CHIPSET_STATE_ON);
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  enable);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, pi3hdx1204_retimer_power, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pi3hdx1204_retimer_power, HOOK_PRIO_DEFAULT);

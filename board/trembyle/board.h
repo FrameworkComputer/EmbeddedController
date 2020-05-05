@@ -153,7 +153,6 @@ static inline bool ec_config_has_usbc1_retimer_ps8802(void)
 		  HAS_USBC1_RETIMER_PS8802);
 }
 
-
 #define HAS_USBC1_RETIMER_PS8818 \
 			(BIT(TREMBYLE_DB_T_OPT1_USBAC_HMDI))
 
@@ -163,6 +162,14 @@ static inline bool ec_config_has_usbc1_retimer_ps8818(void)
 		  HAS_USBC1_RETIMER_PS8818);
 }
 
+#define HAS_HDMI_RETIMER_PI3HDX1204 \
+			(BIT(TREMBYLE_DB_T_OPT1_USBAC_HMDI))
+
+static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
+{
+	return !!(BIT(ec_config_get_usb_db()) &
+		  HAS_HDMI_RETIMER_PI3HDX1204);
+}
 
 #define PORT_TO_HPD(port) ((port == 0) \
 	? GPIO_USB_C0_HPD \
