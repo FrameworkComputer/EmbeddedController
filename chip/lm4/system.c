@@ -103,6 +103,16 @@ static int hibdata_write(enum hibdata_index index, uint32_t value)
 	return wait_for_hibctl_wc();
 }
 
+uint32_t chip_read_reset_flags(void)
+{
+	return hibdata_read(HIBDATA_INDEX_SAVED_RESET_FLAGS);
+}
+
+void chip_save_reset_flags(uint32_t flags)
+{
+	hibdata_write(HIBDATA_INDEX_SAVED_RESET_FLAGS, flags);
+}
+
 static void check_reset_cause(void)
 {
 	uint32_t hib_status = LM4_HIBERNATE_HIBRIS;
@@ -169,8 +179,8 @@ static void check_reset_cause(void)
 		flags |= EC_RESET_FLAG_LOW_BATTERY;
 
 	/* Restore then clear saved reset flags */
-	flags |= hibdata_read(HIBDATA_INDEX_SAVED_RESET_FLAGS);
-	hibdata_write(HIBDATA_INDEX_SAVED_RESET_FLAGS, 0);
+	flags |= chip_read_reset_flags();
+	chip_save_reset_flags(0);
 
 	system_set_reset_flags(flags);
 }
@@ -529,7 +539,7 @@ void system_reset(int flags)
 	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
 		save_flags |= EC_RESET_FLAG_AP_OFF;
 
-	hibdata_write(HIBDATA_INDEX_SAVED_RESET_FLAGS, save_flags);
+	chip_save_reset_flags(save_flags);
 
 	if (flags & SYSTEM_RESET_HARD) {
 #ifdef CONFIG_SOFTWARE_PANIC
