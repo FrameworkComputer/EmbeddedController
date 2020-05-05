@@ -64,8 +64,8 @@ static void check_reset_cause(void)
 		flags |= EC_RESET_FLAG_RESET_PIN;
 
 
-	flags |= MCHP_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS);
-	MCHP_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = 0;
+	flags |= chip_read_reset_flags();
+	chip_save_reset_flags(0);
 
 	if ((status & MCHP_VBAT_STS_WDT) && !(flags & (EC_RESET_FLAG_SOFT |
 					    EC_RESET_FLAG_HARD |
@@ -198,6 +198,11 @@ void system_pre_init(void)
 	MCHP_INT_BLK_EN = (0x1Ful << 8) + (0x07ul << 24);
 
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+}
+
+uint32_t chip_read_reset_flags(void)
+{
+	return MCHP_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS);
 }
 
 void chip_save_reset_flags(uint32_t flags)
