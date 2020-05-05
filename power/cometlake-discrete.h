@@ -101,6 +101,9 @@ enum power_signal {
  * Board-specific enable for any additional rails in S0.
  *
  * Input 0 to turn off, 1 to turn on.
+ *
+ * This function may be called from interrupts so must not assume it's running
+ * in a task.
  */
 void board_enable_s0_rails(int enable);
 
@@ -133,5 +136,15 @@ int board_is_c10_gate_enabled(void);
  * (hundreds of microseconds).
  */
 void c10_gate_interrupt(enum gpio_signal signal);
+
+/*
+ * Special interrupt for SLP_S3_L handling.
+ *
+ * The time window in which to turn off some rails when dropping to S3 is
+ * ~200us, and using the regular power state machine path tends to have latency
+ * >1ms. This ISR short-circuits the relevant signals in a fast path before
+ * scheduling a state machine update to ensure sufficiently low latency.
+ */
+void slp_s3_interrupt(enum gpio_signal signal);
 
 #endif /* __CROS_EC_COMETLAKE_DISCRETE_H */

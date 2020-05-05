@@ -31,7 +31,7 @@ GPIO_INT(SLP_S4_L,             PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_PP2500_DRAM_U_OD,  PIN(2, 0), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_PP1200_U_OD,       PIN(2, 1), GPIO_INT_BOTH, power_signal_interrupt)
 #ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
-GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, slp_s3_interrupt)
 #endif
 GPIO_INT(PG_PP950_VCCIO_OD,    PIN(1, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)

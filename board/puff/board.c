@@ -395,23 +395,37 @@ const struct ina3221_t ina3221[] = {
 };
 const unsigned int ina3221_count = ARRAY_SIZE(ina3221);
 
+static void override_interrupt_priority(int irq, int priority)
+{
+	const uint32_t prio_shift = irq % 4 * 8 + 5;
+
+	CPU_NVIC_PRI(irq / 4) =
+		(CPU_NVIC_PRI(irq / 4) &
+		 ~(0x7 << prio_shift)) |
+		(priority << prio_shift);
+}
+
 static void board_init(void)
 {
 	uint8_t *memmap_batt_flags;
 
-	/* Increase priority of C10 gate interrupts to minimize latency.
+	/* Override some GPIO interrupt priorities.
 	 *
-	 * We assume that GPIO_CPU_C10_GATE_L is on GPIO6.7, which is on
-	 * the WKINTH_1 IRQ.
+	 * These interrupts are timing-critical for AP power sequencing, so we
+	 * increase their NVIC priority from the default of 3. This affects
+	 * whole MIWU groups of 8 GPIOs since they share an IRQ.
+	 *
+	 * Latency at the default priority level can be hundreds of
+	 * microseconds while other equal-priority IRQs are serviced, so GPIOs
+	 * requiring faster response must be higher priority.
 	 */
-	const int c10_gpio_irq = NPCX_IRQ_WKINTH_1;
-	const int c10_gpio_prio = 2;
-	const uint32_t prio_shift = c10_gpio_irq % 4 * 8 + 5;
-
-	CPU_NVIC_PRI(c10_gpio_irq / 4) =
-		(CPU_NVIC_PRI(c10_gpio_irq / 4) &
-		 ~(0x7 << prio_shift)) |
-		(c10_gpio_prio << prio_shift);
+	/* CPU_C10_GATE_L on GPIO6.7: must be ~instant for ~60us response. */
+	override_interrupt_priority(NPCX_IRQ_WKINTH_1, 1);
+	/*
+	 * slp_s3_interrupt (GPIOA.5 on WKINTC_0) must respond within 200us
+	 * (tPLT18); less critical than the C10 gate.
+	 */
+	override_interrupt_priority(NPCX_IRQ_WKINTC_0, 2);
 
 	update_port_limits();
 	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_L);

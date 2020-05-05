@@ -159,6 +159,9 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
  *
  * This is a separate function so it can be reused when forcing shutdown due to
  * power failure or other reasons.
+ *
+ * This function may be called from an ISR (slp_s3_interrupt) so must not
+ * assume that it's running in a regular task.
  */
 static void shutdown_s0_rails(void)
 {
@@ -172,7 +175,15 @@ static void shutdown_s0_rails(void)
 	gpio_set_level(GPIO_EC_PCH_SYS_PWROK, 0);
 	gpio_set_level(GPIO_EN_IMVP8_VR, 0);
 	gpio_set_level(GPIO_EN_S0_RAILS, 0);
-	usleep(1);	/* tPCH10: PCH_PWROK to VCCIO off >400 ns */
+	/*
+	 * * tPCH10: PCH_PWROK to VCCIO off >400ns (but only on unexpected
+	 *   power-down)
+	 * * tPLT18: SLP_S3_L to VCCIO disable <200us
+	 *
+	 * tPCH10 is only 7 CPU cycles at 16 MHz so we should satisfy that
+	 * minimum time with no extra code, and sleeping is likely to cause
+	 * a delay that exceeds tPLT18.
+	 */
 	gpio_set_level(GPIO_EN_PP950_VCCIO, 0);
 }
 
@@ -331,6 +342,10 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S0S3:
+		/*
+		 * Handled in the slp_s3_interrupt fast path, but also run
+		 * here in case we miss the interrupt somehow.
+		 */
 		shutdown_s0_rails();
 		break;
 
@@ -384,6 +399,17 @@ void c10_gate_interrupt(enum gpio_signal signal)
 		int enable_core = gpio_get_level(GPIO_CPU_C10_GATE_L);
 
 		gpio_set_level(GPIO_EN_S0_RAILS, enable_core);
+	}
+
+	return power_signal_interrupt(signal);
+}
+
+void slp_s3_interrupt(enum gpio_signal signal)
+{
+	if (!gpio_get_level(GPIO_SLP_S3_L)
+	    && chipset_in_state(CHIPSET_STATE_ON)) {
+		/* Falling edge on SLP_S3_L means dropping to S3 from S0 */
+		shutdown_s0_rails();
 	}
 
 	return power_signal_interrupt(signal);
