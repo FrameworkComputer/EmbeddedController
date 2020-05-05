@@ -43,6 +43,8 @@ __switch_task:
 	beq a0, t0, __irq_exit
 	/* save our new scheduled task  */
 	sw a0, 0(t1)
+        /* save our current location in system stack so we can restore at end */
+        add t3, sp, zero
         /* restore current process stack pointer */
         csrr sp, mscratch
         /* get the task program counter saved at exception entry */
@@ -76,10 +78,18 @@ __switch_task:
         fsw fs0,  -13*4(sp)
         /* save program counter on the current process stack */
         sw t5,       -25*4(sp)
+        /*
+         * Note: we never execute on this stack frame, so it does not need to
+         * be 16-byte aligned.
+         */
         addi sp, sp, -25*4
 #else
 	/* save program counter on the current process stack */
         sw t5,       -13*4(sp)
+        /*
+         * Note: we never execute on this stack frame, so it does not need to
+         * be 16-byte aligned.
+         */
         addi sp, sp, -13*4
 #endif
         /* save the task stack pointer in its context */
@@ -128,7 +138,8 @@ __switch_task:
          * __irq_exit will restore sp from scratch register again before mret.
          */
         csrw mscratch, sp
-        la sp, stack_end
+        /* restore system stack */
+        add sp, t3, zero
         j __irq_exit
 
 /**

@@ -8,6 +8,10 @@
 #ifndef __CROS_EC_CPU_H
 #define __CROS_EC_CPU_H
 
+/*
+ * This is the space required by both __irq_isr and __switch_task to store all
+ * of the caller and callee registers for each task context before switching.
+ */
 #ifdef CONFIG_FPU
 /* additional space to save FP registers (fcsr, ft0-11, fa0-7, fs0-11) */
 #define TASK_SCRATCHPAD_SIZE (62)
