@@ -59,6 +59,12 @@ void send_aux_data_to_host(uint8_t data);
  */
 void send_aux_data_to_device(uint8_t data);
 
+/*
+ * This function can help change the keyboard top row layout as presented to the
+ * AP. If changing the position of the "Refresh" key from T3, you may also need
+ * to change KEYBOARD_ROW_REFRESH accordingly so that recovery mode can work on
+ * the EC side of things (also see related CONFIG_KEYBOARD_REFRESH_ROW3)
+ */
 __override_proto
 const struct ec_response_keybd_config *board_vivaldi_keybd_config(void);
 
