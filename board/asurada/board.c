@@ -17,6 +17,7 @@
 #include "driver/charger/isl923x.h"
 #include "driver/ppc/syv682x.h"
 #include "driver/tcpm/it83xx_pd.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/it5205.h"
 #include "driver/usb_mux/ps8743.h"
 #include "extpower.h"
@@ -33,6 +34,7 @@
 #include "switch.h"
 #include "tablet_mode.h"
 #include "task.h"
+#include "temp_sensor.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_mux.h"
@@ -121,15 +123,37 @@ DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
 	/* Convert to mV (3000mV/1024). */
-	{"TEMP_SENSOR_SUBPMIC", 3000, 1024, 0, CHIP_ADC_CH0},
-	{"BOARD_ID_0", 3000, 1024, 0, CHIP_ADC_CH1},
-	{"BOARD_ID_1", 3000, 1024, 0, CHIP_ADC_CH2},
-	{"TEMP_SENSOR_AMB", 3000, 1024, 0, CHIP_ADC_CH3},
-	{"TEMP_SENSOR_CHARGER", 3000, 1024, 0, CHIP_ADC_CH5},
-	{"CHARGER_PMON", 3000, 1024, 0, CHIP_ADC_CH6},
-	{"TEMP_SENSOR_AP", 3000, 1024, 0, CHIP_ADC_CH7},
+	{"TEMP_SENSOR_SUBPMIC", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0,
+	 CHIP_ADC_CH0},
+	{"BOARD_ID_0", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH1},
+	{"BOARD_ID_1", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH2},
+	{"TEMP_SENSOR_AMB", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH3},
+	{"TEMP_SENSOR_CHARGER", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0,
+	 CHIP_ADC_CH5},
+	{"CHARGER_PMON", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH6},
+	{"TEMP_SENSOR_AP", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH7},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_SUBPMIC] = {.name = "SubPMIC",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_51k1_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_SUBPMIC},
+	[TEMP_SENSOR_AMB]     = {.name = "Ambient",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_51k1_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_AMB},
+	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_51k1_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_AP]      = {.name = "AP",
+				 .type = TEMP_SENSOR_TYPE_CPU,
+				 .read = get_temp_3v3_51k1_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_AP},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
