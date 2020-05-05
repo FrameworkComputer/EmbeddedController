@@ -40,15 +40,12 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 static void check_reset_cause(void)
 {
-	uint32_t flags = 0;
+	uint32_t flags;
 	uint8_t raw_reset_cause = IT83XX_GCTRL_RSTS & 0x03;
 	uint8_t raw_reset_cause2 = IT83XX_GCTRL_SPCTRL4 & 0x07;
 
 	/* Restore saved reset flags. */
-	flags |= BRAM_RESET_FLAGS0 << 24;
-	flags |= BRAM_RESET_FLAGS1 << 16;
-	flags |= BRAM_RESET_FLAGS2 << 8;
-	flags |= BRAM_RESET_FLAGS3;
+	flags = chip_read_reset_flags();
 
 	/* Clear reset cause. */
 	IT83XX_GCTRL_RSTS |= 0x03;
@@ -72,10 +69,7 @@ static void check_reset_cause(void)
 		flags &= ~EC_RESET_FLAG_WATCHDOG;
 
 	/* Clear saved reset flags. */
-	BRAM_RESET_FLAGS0 = 0;
-	BRAM_RESET_FLAGS1 = 0;
-	BRAM_RESET_FLAGS2 = 0;
-	BRAM_RESET_FLAGS3 = 0;
+	chip_save_reset_flags(0);
 
 	system_set_reset_flags(flags);
 }
@@ -165,6 +159,24 @@ void system_pre_init(void)
 
 }
 
+uint32_t chip_read_reset_flags(void)
+{
+	uint32_t flags = 0;
+	flags |= BRAM_RESET_FLAGS0 << 24;
+	flags |= BRAM_RESET_FLAGS1 << 16;
+	flags |= BRAM_RESET_FLAGS2 << 8;
+	flags |= BRAM_RESET_FLAGS3;
+	return flags;
+}
+
+void chip_save_reset_flags(uint32_t save_flags)
+{
+	BRAM_RESET_FLAGS0 = save_flags >> 24;
+	BRAM_RESET_FLAGS1 = (save_flags >> 16) & 0xff;
+	BRAM_RESET_FLAGS2 = (save_flags >> 8) & 0xff;
+	BRAM_RESET_FLAGS3 = save_flags & 0xff;
+}
+
 void system_reset(int flags)
 {
 	uint32_t save_flags = 0;
@@ -179,10 +191,7 @@ void system_reset(int flags)
 		save_flags |= EC_RESET_FLAG_HIBERNATE;
 
 	/* Store flags to battery backed RAM. */
-	BRAM_RESET_FLAGS0 = save_flags >> 24;
-	BRAM_RESET_FLAGS1 = (save_flags >> 16) & 0xff;
-	BRAM_RESET_FLAGS2 = (save_flags >> 8) & 0xff;
-	BRAM_RESET_FLAGS3 = save_flags & 0xff;
+	chip_save_reset_flags(save_flags);
 
 	/* If WAIT_EXT is set, then allow 10 seconds for external reset */
 	if (flags & SYSTEM_RESET_WAIT_EXT) {
