@@ -130,6 +130,7 @@
 
 /* USB type C */
 #define CONFIG_USB_PD_TCPMV2 /* Use TCPMv2 */
+#define CONFIG_USB_PD_REV30 /* Enable PD 3.0 functionality */
 #define CONFIG_USB_PD_DECODE_SOP
 #undef CONFIG_USB_CHARGER
 #define CONFIG_USB_POWER_DELIVERY

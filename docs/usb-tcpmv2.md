@@ -14,6 +14,7 @@ Boards may enable TCPMv2 by adding the following defines:
 *   `CONFIG_USB_DRP_ACC_TRYSRC`: Configures the type of state machine to run (in this case, a DRP which performs Try.SRC behavior).  Currently available are DRP and charge-through Vconn-powered device options
 *   `CONFIG_USB_PD_DECODE_SOP`: Sets up messaging for SOP’ and SOP’’, which is strongly encouraged in the TCPMv2 code moving forward
 *   `CONFIG_USB_PID 0x1234`: Sets the USB Product Identifier.  This will be shared for all boards within one reference design, and new PIDs may be requested by sending an email to the ChromeOS FW Team.
+*   `CONFIG_USB_PD_REV30`: The TCPMv2 stack defaults to PD2.0 operation but defining this macro enables PD3.0 functionality.
 
 Other configurations to specify behaviors within the task still apply (ex. `CONFIG_USB_PD_ALT_MODE_DFP` and `CONFIG_USB_PD_TCPC_LOW_POWER`).
 

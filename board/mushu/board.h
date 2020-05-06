@@ -53,8 +53,11 @@
 
 /* USB Type C and USB PD defines */
 #undef CONFIG_USB_PD_TCPMV1
-#define CONFIG_USB_PD_TCPMV2 /* Use TCPMv2 */
-#define CONFIG_USB_PD_REV20  /* enable PD 2.0 because we have a parade TCPC */
+/*
+ * Enable TCPMv2. Use default PD 2.0 operation because we have a
+ * parade PS8751 TCPC
+ */
+#define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_PID 0x5047
 #define CONFIG_USB_PD_DECODE_SOP
 #define CONFIG_USB_PD_TRY_SRC

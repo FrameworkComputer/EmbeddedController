@@ -3795,18 +3795,8 @@
 #undef CONFIG_USB_PD_GIVE_BACK
 
 /*
- * Enable USB PD Rev2.0 features only
- * NOTE:
- *   This flag is only used with TCPMv2. The TCPMv2 stack defaults to PD3.0
- *   and this flag disabled PD3.0 features.
- */
-#undef CONFIG_USB_PD_REV20
-
-/*
- * Enable USB PD Rev3.0 features
- * NOTE:
- *    This flag is only used with TCPMv1. The TCPMv1 stack defaults to PD2.0
- *    and this flag enabled PD3.0 features.
+ * PD Rev2.0 functionality is enabled by default. Defining this macro
+ * enables PD Rev3.0 functionality.
  */
 #undef CONFIG_USB_PD_REV30
 
@@ -4598,7 +4588,6 @@
 #error CONFIG_USB_PD_DECODE_SOP must be enabled with the TCPMV2 PD state machine
 #endif
 #endif
-
 
 /******************************************************************************/
 /*

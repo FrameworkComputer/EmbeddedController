@@ -9,7 +9,8 @@
 fuzz-test-list-host =
 # Fuzzers should only be built for architectures that support sanitizers.
 ifeq ($(ARCH),amd64)
-fuzz-test-list-host += host_command_fuzz usb_pd_fuzz usb_tcpm_v2_fuzz
+fuzz-test-list-host += host_command_fuzz usb_pd_fuzz usb_tcpm_v2_rev20_fuzz \
+	usb_tcpm_v2_rev30_fuzz
 endif
 
 # For fuzzing targets libec.a is built from the ro objects and hides functions
@@ -26,4 +27,7 @@ endif
 # Otherwise use <obj_name>-y
 host_command_fuzz-y = host_command_fuzz.o
 usb_pd_fuzz-y = usb_pd_fuzz.o
-usb_tcpm_v2_fuzz-y = usb_pd_fuzz.o usb_tcpm_v2_fuzz.o ../test/fake_battery.o
+usb_tcpm_v2_rev30_fuzz-y = usb_pd_fuzz.o usb_tcpm_v2_rev30_fuzz.o \
+	../test/fake_battery.o
+usb_tcpm_v2_rev20_fuzz-y = usb_pd_fuzz.o usb_tcpm_v2_rev20_fuzz.o \
+	../test/fake_battery.o
