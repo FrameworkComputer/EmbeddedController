@@ -339,6 +339,7 @@ buildfuzztests: $(fuzz-test-targets)
 
 .PHONY: hosttests runhosttests runfuzztests runtests
 hosttests: $(host-test-targets)
+runhosttests: TEST_FLAG=TEST_HOSTTEST=y
 runhosttests: $(run-test-targets)
 runfuzztests: $(run-fuzz-test-targets)
 runtests: runhosttests runfuzztests
@@ -376,7 +377,7 @@ $(foreach b, $(cts_boards), \
 	) \
 )
 
-cov-test-targets=$(foreach t,$(test-list-host),build/host/$(t).info)
+cov-test-targets=$(foreach t,$(cov-test-list-host),build/host/$(t).info)
 bldversion=$(shell (./util/getversion.sh ; echo VERSION) | $(CPP) -P -)
 
 # lcov fails when multiple instances run at the same time.
@@ -727,6 +728,7 @@ help:
 	@echo "  tests [BOARD=]       - Build all unit tests for a specific board"
 	@echo "  hosttests            - Build all host unit tests"
 	@echo "  runhosttests         - Build and run all host unit tests"
+	@echo "  coverage             - Build and run all host unit tests for code coverage"
 	@echo "  buildfuzztests       - Build all host fuzzers"
 	@echo "  runfuzztests         - Build and run all host fuzzers for one round"
 	@echo ""

@@ -5,7 +5,8 @@
  * Test utilities.
  */
 
-#ifdef TEST_COVERAGE
+#if defined(TEST_COVERAGE) || defined(TEST_HOSTTEST)
+/* We need signal() and exit() only when building to run on the host. */
 #include <signal.h>
 #include <stdlib.h>
 #endif
@@ -46,7 +47,14 @@ void emulator_flush(void)
 {
 	__gcov_flush();
 }
+#else
+void emulator_flush(void)
+{
+}
+#endif
 
+#if defined(TEST_HOSTTEST) || defined(TEST_COVERAGE)
+/* Host-based unit tests need to exit(0) when they receive a SIGTERM. */
 void test_end_hook(int sig)
 {
 	emulator_flush();
@@ -58,10 +66,6 @@ void register_test_end_hook(void)
 	signal(SIGTERM, test_end_hook);
 }
 #else
-void emulator_flush(void)
-{
-}
-
 void register_test_end_hook(void)
 {
 }

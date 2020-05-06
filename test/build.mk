@@ -95,6 +95,21 @@ test-list-host += x25519
 test-list-host += stillness_detector
 endif
 
+# Build up the list of coverage test targets based on test-list-host, but
+# with some tests excluded because they cause code coverage to fail.
+
+# is_enabled_error is a shell script that does not produce coverage results
+cov-dont-test = is_enabled_error
+# static_if_error is a shell script that does not produce coverage results
+cov-dont-test += static_if_error
+# fpsensor: genhtml looks for build/host/fpsensor/cryptoc/util.c
+cov-dont-test += fpsensor
+# fpsensor_crypto: genhtml looks for build/host/fpsensor_crypto/cryptoc/util.c
+cov-dont-test += fpsensor_crypto
+# fpsensor_state: genhtml looks for build/host/fpsensor_state/cryptoc/util.c
+cov-dont-test += fpsensor_state
+cov-test-list-host = $(filter-out $(cov-dont-test), $(test-list-host))
+
 accel_cal-y=accel_cal.o
 aes-y=aes.o
 base32-y=base32.o

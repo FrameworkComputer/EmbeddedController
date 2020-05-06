@@ -81,8 +81,14 @@ def run_test(path, timeout=10):
       if proc.poll():
         return TestResult.UNEXPECTED_TERMINATION, output_log
   finally:
+    # Check if the process has exited. If not, send it a SIGTERM, wait for it
+    # to exit, and if it times out, kill the process directly.
     if not proc.poll():
-      proc.kill()
+      try:
+        proc.terminate()
+        proc.wait(timeout)
+      except subprocess.TimeoutExpired:
+        proc.kill()
 
 
 def host_test(test_name):
