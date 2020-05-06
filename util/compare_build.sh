@@ -91,6 +91,65 @@ boards-with() {
   done
 }
 
+# Usage: parse-boards <associate_array_name> [board-grp1 [board-grp2...]]
+parse-boards() {
+  # shellcheck disable=SC2034
+  local -n boards="$1"
+  shift
+
+  # Board groups
+  #
+  # Get all CHIP variants in use:
+  # grep -E 'CHIP[[:space:]]*\:' board/*/build.mk \
+  #   | sed 's/.*:=[[:space:]]*//' | sort -u
+  local -A BOARD_GROUPS=(
+    # make-print-boards already filters out the skipped boards
+    [all]="$(make-print-boards)"
+    [fp]="dartmonkey bloonchipper nucleo-dartmonkey nucleo-h743zi"
+    [stm32]="$(boards-with 'CHIP[[:space:]:=]*stm32')"
+    [npcx]="$(boards-with 'CHIP[[:space:]:=]*npcx')"
+    [mchp]="$(boards-with 'CHIP[[:space:]:=]*mchp')"
+    [ish]="$(boards-with 'CHIP[[:space:]:=]*ish')"
+    [it83xx]="$(boards-with 'CHIP[[:space:]:=]*it83xx')"
+    [lm4]="$(boards-with 'CHIP[[:space:]:=]*lm4')"
+    [mec1322]="$(boards-with 'CHIP[[:space:]:=]*mec1322')"
+    [max32660]="$(boards-with 'CHIP[[:space:]:=]*max32660')"
+    [mt_scp]="$(boards-with 'CHIP[[:space:]:=]*mt_scp')"
+  )
+
+  local -a BOARDS_VALID_RAW=( )
+  mapfile -t BOARDS_VALID_RAW < <(basename -a board/*)
+  local -A BOARDS_VALID=( )
+  assoc-add-keys BOARDS_VALID "${!BOARD_GROUPS[@]}" "${BOARDS_VALID_RAW[@]}"
+
+  # Parse boards selection
+  local b name name_arr=( )
+  for b; do
+    name="$(sed -E 's/^(-|\+)//' <<<"${b}")"
+    # Check for a valid board
+    if [[ "${BOARDS_VALID[${name}]}" != "${name}" ]]; then
+      echo "# Error - Board '${name}' does not exist" >&2
+      return 1
+    fi
+    # Check for expansion target
+    if [[ -n "${BOARD_GROUPS[${name}]}" ]]; then
+      name="${BOARD_GROUPS[${name}]}"
+    fi
+    read -r -a name_arr <<< "${name}"
+    # Process addition or deletion
+    case "${b}" in
+      -*)
+        # shellcheck disable=SC2086
+        assoc-rm-keys boards "${name_arr[@]}"
+        ;;
+      +*|*)
+        # shellcheck disable=SC2086
+        assoc-add-keys boards "${name_arr[@]}"
+        ;;
+    esac
+  done
+}
+
 
 ##########################################################################
 # Argument Parsing and Parameter Setup                                   #
@@ -117,56 +176,9 @@ else
   MAKE_FLAGS+=( "-j" )
 fi
 
-# Expansion targets
-#
-# Get all CHIP variants in use:
-# grep -E 'CHIP[[:space:]]*\:' board/*/build.mk \
-#   | sed 's/.*:=[[:space:]]*//' | sort -u
-declare -A BOARDS_EXPANSIONS=(
-  # make-print-boards already filters out the skipped boards
-  [all]="$(make-print-boards)"
-  [fp]="dartmonkey bloonchipper nucleo-dartmonkey nucleo-h743zi"
-  [stm32]="$(boards-with 'CHIP[[:space:]:=]*stm32')"
-  [npcx]="$(boards-with 'CHIP[[:space:]:=]*npcx')"
-  [mchp]="$(boards-with 'CHIP[[:space:]:=]*mchp')"
-  [ish]="$(boards-with 'CHIP[[:space:]:=]*ish')"
-  [it83xx]="$(boards-with 'CHIP[[:space:]:=]*it83xx')"
-  [lm4]="$(boards-with 'CHIP[[:space:]:=]*lm4')"
-  [mec1322]="$(boards-with 'CHIP[[:space:]:=]*mec1322')"
-  [max32660]="$(boards-with 'CHIP[[:space:]:=]*max32660')"
-  [mt_scp]="$(boards-with 'CHIP[[:space:]:=]*mt_scp')"
-)
-
-mapfile -t BOARDS_VALID_RAW < <(basename -a board/*)
-declare -A BOARDS_VALID=( )
-assoc-add-keys BOARDS_VALID "${!BOARDS_EXPANSIONS[@]}" "${BOARDS_VALID_RAW[@]}"
-
 declare -A BOARDS=( )
-
-# Parse boards selection
-for b in ${FLAGS_boards}; do
-  name="$(sed -E 's/^(-|\+)//' <<<"${b}")"
-  # Check for a valid board
-  if [[ "${BOARDS_VALID[${name}]}" != "${name}" ]]; then
-    echo "# Error - Board '${name}' does not exist" >&2
-    exit 1
-  fi
-  # Check for expansion target
-  if [[ -n "${BOARDS_EXPANSIONS[${name}]}" ]]; then
-    name="${BOARDS_EXPANSIONS[${name}]}"
-  fi
-  read -r -a name_arr <<< "${name}"
-
-  # Process addition or deletion
-  case "${b}" in
-    -*)
-      assoc-rm-keys BOARDS "${name_arr[@]}"
-      ;;
-    +*|*)
-      assoc-add-keys BOARDS "${name_arr[@]}"
-      ;;
-  esac
-done
+read -r -a FLAGS_boards <<< "${FLAGS_boards}"
+parse-boards BOARDS "${FLAGS_boards[@]}" || exit $?
 
 if [[ ${#BOARDS[@]} -eq 0 ]]; then
   echo "# Error - No boards selected" >&2
