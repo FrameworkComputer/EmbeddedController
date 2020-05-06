@@ -50,3 +50,4 @@ enum pi3usb9201_mode {
 /* Configuration struct defined at board level */
 extern const struct pi3usb9201_config_t pi3usb9201_bc12_chips[];
 
+extern const struct bc12_drv pi3usb9201_drv;

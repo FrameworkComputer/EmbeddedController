@@ -79,4 +79,5 @@ int pi3usb9281_enable_interrupts(int port);
 /* Get the device type */
 int pi3usb9281_get_device_type(int port);
 
+extern const struct bc12_drv pi3usb9281_drv;
 #endif /* __CROS_EC_PI3USB9281_H */

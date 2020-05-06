@@ -861,5 +861,6 @@ int mt6370_reduce_db_bl_driving(void);
 #endif
 
 extern const struct charger_drv rt946x_drv;
+extern const struct bc12_drv rt946x_bc12_drv;
 
 #endif /* __CROS_EC_RT946X_H */

@@ -14,6 +14,7 @@
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
+#include "usb_charge.h"
 #include "util.h"
 
 #define TASK_EVENT_OVERCURRENT (1 << 0)
@@ -37,13 +38,13 @@ static int charge_limit_ma;
 /* Mock functions */
 
 /* Override test_mockable implementations in charge_ramp module */
-int chg_ramp_allowed(int supplier)
+int chg_ramp_allowed(int port, int supplier)
 {
 	/* Ramp for TEST4-TEST8 */
 	return supplier > CHARGE_SUPPLIER_TEST3;
 }
 
-int chg_ramp_max(int supplier, int sup_curr)
+int chg_ramp_max(int port, int supplier, int sup_curr)
 {
 	if (supplier == CHARGE_SUPPLIER_TEST7)
 		return 1600;
@@ -53,16 +54,8 @@ int chg_ramp_max(int supplier, int sup_curr)
 		return 3000;
 }
 
-/* These usb_charger functions are unused, but necessary to link */
-int usb_charger_ramp_allowed(int supplier)
-{
-	return 0;
-}
-
-int usb_charger_ramp_max(int supplier, int sup_curr)
-{
-	return 0;
-}
+/* Dummy bc12_ports[] array to make linker happy */
+struct bc12_config bc12_ports[0];
 
 int charge_is_consuming_full_input_current(void)
 {

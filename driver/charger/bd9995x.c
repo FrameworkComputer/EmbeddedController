@@ -584,7 +584,7 @@ static int usb_charger_process(int chgnum, int port)
 }
 
 #ifdef CONFIG_CHARGE_RAMP_SW
-int usb_charger_ramp_allowed(int supplier)
+static int bd9995x_ramp_allowed(int supplier)
 {
 	return supplier == CHARGE_SUPPLIER_BC12_DCP ||
 	       supplier == CHARGE_SUPPLIER_BC12_SDP ||
@@ -592,7 +592,7 @@ int usb_charger_ramp_allowed(int supplier)
 	       supplier == CHARGE_SUPPLIER_OTHER;
 }
 
-int usb_charger_ramp_max(int supplier, int sup_curr)
+static int bd9995x_ramp_max(int supplier, int sup_curr)
 {
 	return bd9995x_get_bc12_ilim(supplier);
 }
@@ -1261,7 +1261,7 @@ int bd9995x_bc12_enable_charging(int port, int enable)
 			BD9995X_EXTENDED_COMMAND);
 }
 
-void usb_charger_set_switches(int port, enum usb_switch setting)
+static void bd9995x_set_switches(int port, enum usb_switch setting)
 {
 	/* If switch is not changing then return */
 	if (setting == usb_switch_state[port])
@@ -1288,7 +1288,7 @@ void bd9995x_vbus_interrupt(enum gpio_signal signal)
 	task_wake(TASK_ID_USB_CHG);
 }
 
-void usb_charger_task(void *u)
+static void bd9995x_usb_charger_task(const int unused)
 {
 	static int initialized;
 	int changed, port, interrupts;
@@ -1725,3 +1725,38 @@ const struct charger_drv bd9995x_drv = {
 	.get_option = &bd9995x_get_option,
 	.set_option = &bd9995x_set_option,
 };
+
+#ifdef CONFIG_BC12_SINGLE_DRIVER
+/* provide a default bc12_ports[] for backward compatibility */
+struct bc12_config bc12_ports[BD9995X_CHARGE_PORT_COUNT] = {
+	{
+		.drv = &(const struct bc12_drv) {
+			.usb_charger_task = bd9995x_usb_charger_task,
+			.set_switches = bd9995x_set_switches,
+#if defined(CONFIG_CHARGE_RAMP_SW)
+			.ramp_allowed = bd9995x_ramp_allowed,
+			.ramp_max = bd9995x_ramp_max,
+#endif /* CONFIG_CHARGE_RAMP_SW */
+		},
+	},
+	{
+		.drv = &(const struct bc12_drv) {
+			/* bd9995x uses a single task thread for both ports */
+			.usb_charger_task = NULL,
+			.set_switches = bd9995x_set_switches,
+#if defined(CONFIG_CHARGE_RAMP_SW)
+			.ramp_allowed = bd9995x_ramp_allowed,
+			.ramp_max = bd9995x_ramp_max,
+#endif /* CONFIG_CHARGE_RAMP_SW */
+		},
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(bc12_ports) == CHARGE_PORT_COUNT);
+#else
+/*
+ * TODO:
+ * This driver assumes its two ports is always on number 0 and 1.
+ * Prohibit multiple driver for safety.
+ */
+#error config not supported
+#endif /* CONFIG_BC12_SINGLE_DRIVER */

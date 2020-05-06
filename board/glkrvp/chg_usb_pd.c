@@ -65,11 +65,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-/* TODO: Implement this function and move to appropriate file */
-void usb_charger_set_switches(int port, enum usb_switch setting)
-{
-}
-
 static int board_charger_port_is_sourcing_vbus(int port)
 {
 	int reg;

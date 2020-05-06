@@ -30,3 +30,4 @@ struct max14637_config_t {
  */
 extern const struct max14637_config_t
 				max14637_config[CONFIG_USB_PD_PORT_MAX_COUNT];
+extern const struct bc12_drv max14637_drv;

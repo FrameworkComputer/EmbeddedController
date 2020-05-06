@@ -259,7 +259,7 @@ static int pi3usb9281_set_pins(int port, uint8_t val)
 	return pi3usb9281_write(port, PI3USB9281_REG_MANUAL, val);
 }
 
-static int pi3usb9281_set_switches(int port, int open)
+static int pi3usb9281_set_switches_impl(int port, int open)
 {
 	int res = EC_ERROR_UNKNOWN;
 	uint8_t ctrl;
@@ -279,7 +279,7 @@ static int pi3usb9281_set_switches(int port, int open)
 	return res;
 }
 
-void usb_charger_set_switches(int port, enum usb_switch setting)
+static void pi3usb9281_set_switches(int port, enum usb_switch setting)
 {
 	/* If switch is not changing then return */
 	if (setting == usb_switch_state[port])
@@ -357,7 +357,7 @@ static uint32_t bc12_detect(int port)
 		 * Restore data switch settings - switches return to
 		 * closed on reset until restored.
 		 */
-		usb_charger_set_switches(port, USB_SWITCH_RESTORE);
+		pi3usb9281_set_switches(port, USB_SWITCH_RESTORE);
 
 		/*
 		 * Wait after reset, before re-enabling interrupt, so that
@@ -416,9 +416,8 @@ static uint32_t bc12_detect(int port)
 	return evt;
 }
 
-void usb_charger_task(void *u)
+static void pi3usb9281_usb_charger_task(const int port)
 {
-	int port = (task_get_current() == TASK_ID_USB_CHG_P0 ? 0 : 1);
 	uint32_t evt;
 
 	/* Initialize chip and enable interrupts */
@@ -441,7 +440,8 @@ void usb_charger_task(void *u)
 		}
 
 		if (evt & USB_CHG_EVENT_MUX)
-			pi3usb9281_set_switches(port, usb_switch_state[port]);
+			pi3usb9281_set_switches_impl(
+					port, usb_switch_state[port]);
 
 		/*
 		 * Re-enable interrupts on pericom charger detector since the
@@ -462,7 +462,7 @@ void usb_charger_task(void *u)
 }
 
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
-int usb_charger_ramp_allowed(int supplier)
+static int pi3usb9281_ramp_allowed(int supplier)
 {
 	return supplier == CHARGE_SUPPLIER_BC12_DCP ||
 	       supplier == CHARGE_SUPPLIER_BC12_SDP ||
@@ -470,7 +470,7 @@ int usb_charger_ramp_allowed(int supplier)
 	       supplier == CHARGE_SUPPLIER_PROPRIETARY;
 }
 
-int usb_charger_ramp_max(int supplier, int sup_curr)
+static int pi3usb9281_ramp_max(int supplier, int sup_curr)
 {
 	switch (supplier) {
 	case CHARGE_SUPPLIER_BC12_DCP:
@@ -485,3 +485,21 @@ int usb_charger_ramp_max(int supplier, int sup_curr)
 	}
 }
 #endif /* CONFIG_CHARGE_RAMP_SW || CONFIG_CHARGE_RAMP_HW */
+
+const struct bc12_drv pi3usb9281_drv = {
+	.usb_charger_task = pi3usb9281_usb_charger_task,
+	.set_switches = pi3usb9281_set_switches,
+#if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
+	.ramp_allowed = pi3usb9281_ramp_allowed,
+	.ramp_max = pi3usb9281_ramp_max,
+#endif /* CONFIG_CHARGE_RAMP_SW || CONFIG_CHARGE_RAMP_HW */
+};
+
+#ifdef CONFIG_BC12_SINGLE_DRIVER
+/* provide a default bc12_ports[] for backward compatibility */
+struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = {
+	[0 ... (CHARGE_PORT_COUNT - 1)] = {
+		.drv = &pi3usb9281_drv,
+	},
+};
+#endif /* CONFIG_BC12_SINGLE_DRIVER */

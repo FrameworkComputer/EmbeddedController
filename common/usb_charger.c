@@ -23,6 +23,7 @@
 #include "usb_charge.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
+#include "util.h"
 
 static void update_vbus_supplier(int port, int vbus_level)
 {
@@ -118,3 +119,11 @@ static void usb_charger_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, usb_charger_init, HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
+
+void usb_charger_task(void *u)
+{
+	int port = TASK_ID_TO_USB_CHG_PORT(task_get_current());
+
+	ASSERT(bc12_ports[port].drv->usb_charger_task);
+	bc12_ports[port].drv->usb_charger_task(port);
+}

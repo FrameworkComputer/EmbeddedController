@@ -4110,6 +4110,15 @@
  */
 #undef CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER
 
+/*
+ * Board only needs one bc12 driver. This includes the case that has multiple
+ * chips that use the same driver. Enabled by default.
+ *
+ * If undefined, board should define a bc12_ports array which associates
+ * each port to its bc12 driver.
+ */
+#define CONFIG_BC12_SINGLE_DRIVER
+
 /* External BC1.2 charger detection devices. */
 #undef CONFIG_BC12_DETECT_MAX14637
 #undef CONFIG_BC12_DETECT_PI3USB9201

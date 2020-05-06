@@ -29,21 +29,23 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state);
 /**
  * Check if ramping is allowed for given supplier
  *
+ * @param port Charge ramp port
  * @supplier Supplier to check
  *
  * @return Ramping is allowed for given supplier
  */
-int chg_ramp_allowed(int supplier);
+int chg_ramp_allowed(int port, int supplier);
 
 /**
  * Get the maximum current limit that we are allowed to ramp to
  *
+ * @param port Charge ramp port
  * @supplier Active supplier type
  * @sup_curr Input current limit based on supplier
  *
  * @return Maximum current in mA
  */
-int chg_ramp_max(int supplier, int sup_curr);
+int chg_ramp_max(int port, int supplier, int sup_curr);
 
 /**
  * Get the input current limit set by ramp module

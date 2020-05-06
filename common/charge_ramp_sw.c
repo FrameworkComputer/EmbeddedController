@@ -101,9 +101,9 @@ void chg_ramp_charge_supplier_change(int port, int supplier, int current,
 	active_vtg = voltage;
 
 	/* Set min and max input current limit based on if ramp is allowed */
-	if (chg_ramp_allowed(active_sup)) {
+	if (chg_ramp_allowed(active_port, active_sup)) {
 		min_icl = RAMP_CURR_START_MA;
-		max_icl = chg_ramp_max(active_sup, current);
+		max_icl = chg_ramp_max(active_port, active_sup, current);
 	} else {
 		min_icl = max_icl = current;
 	}
@@ -219,7 +219,7 @@ void chg_ramp_task(void *u)
 			task_wait_time = SECOND;
 
 			/* Skip ramp for specific suppliers */
-			if (!chg_ramp_allowed(active_sup)) {
+			if (!chg_ramp_allowed(active_port, active_sup)) {
 				active_icl_new = min_icl;
 				ramp_st_new = CHG_RAMP_STABLE;
 				break;
@@ -315,7 +315,7 @@ void chg_ramp_task(void *u)
 			}
 
 			/* Keep an eye on VBUS and restart ramping if it dips */
-			if (chg_ramp_allowed(active_sup) &&
+			if (chg_ramp_allowed(active_port, active_sup) &&
 			    board_is_vbus_too_low(active_port,
 						  CHG_RAMP_VBUS_STABLE)) {
 				CPRINTS("VBUS low; Re-ramp");

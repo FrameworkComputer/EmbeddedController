@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_USB_CHARGE_H
 #define __CROS_EC_USB_CHARGE_H
 
+#include "charge_manager.h"
 #include "common.h"
 #include "ec_commands.h"
 
@@ -61,6 +62,17 @@ int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode,
 #define USB_CHG_EVENT_CC_OPEN	TASK_EVENT_CUSTOM_BIT(5)
 #define USB_CHG_EVENT_MUX	TASK_EVENT_CUSTOM_BIT(6)
 
+/* Number of USB_CHG_* tasks */
+#ifdef HAS_TASK_USB_CHG_P2
+#define USB_CHG_TASK_COUNT 3
+#elif defined(HAS_TASK_USB_CHG_P1)
+#define USB_CHG_TASK_COUNT 2
+#elif defined(HAS_TASK_USB_CHG_P0) || defined(HAS_TASK_USB_CHG)
+#define USB_CHG_TASK_COUNT 1
+#else
+#define USB_CHG_TASK_COUNT 0
+#endif
+
 /*
  * Define USB_CHG_PORT_TO_TASK_ID() and TASK_ID_TO_USB_CHG__PORT() macros to
  * go between USB_CHG port number and task ID. Assume that TASK_ID_USB_CHG_P0,
@@ -88,13 +100,42 @@ enum usb_switch {
 	USB_SWITCH_RESTORE,
 };
 
+struct bc12_drv {
+	/* All fields below are optional */
+
+	/* BC1.2 detection task for this chip */
+	void (*usb_charger_task)(int port);
+	/* Configure USB data switches on type-C port */
+	void (*set_switches)(int port, enum usb_switch setting);
+	/* Check if ramping is allowed for given supplier */
+	int (*ramp_allowed)(int supplier);
+	/* Get the maximum current limit that we are allowed to ramp to */
+	int (*ramp_max)(int supplier, int sup_curr);
+};
+
+struct bc12_config {
+	const struct bc12_drv *drv;
+};
+/**
+ * An array of length CHARGE_PORT_COUNT which associates each
+ * pd port / dedicated charge port to bc12 driver.
+ *
+ * If CONFIG_BC12_SINGLE_DRIVER is defined, bc12 driver will provide a
+ * definition of this array. Otherwise, board should define this by themselves.
+ */
+extern struct bc12_config bc12_ports[];
+
 /**
  * Configure USB data switches on type-C port.
  *
  * @param port port number.
  * @param setting new switch setting to configure.
  */
-void usb_charger_set_switches(int port, enum usb_switch setting);
+static inline void usb_charger_set_switches(int port, enum usb_switch setting)
+{
+	if (bc12_ports[port].drv->set_switches)
+		bc12_ports[port].drv->set_switches(port, setting);
+}
 
 /**
  * Notify USB_CHG task that VBUS level has changed.
@@ -107,22 +148,33 @@ void usb_charger_vbus_change(int port, int vbus_level);
 /**
  * Check if ramping is allowed for given supplier
  *
+ * @param port port number.
  * @supplier Supplier to check
  *
  * @return Ramping is allowed for given supplier
  */
-int usb_charger_ramp_allowed(int supplier);
+static inline int usb_charger_ramp_allowed(int port, int supplier)
+{
+	if (port < 0 || !bc12_ports[port].drv->ramp_allowed)
+		return 0;
+	return bc12_ports[port].drv->ramp_allowed(supplier);
+}
 
 /**
  * Get the maximum current limit that we are allowed to ramp to
  *
+ * @param port port number.
  * @supplier Active supplier type
  * @sup_curr Input current limit based on supplier
  *
  * @return Maximum current in mA
  */
-int usb_charger_ramp_max(int supplier, int sup_curr);
-
+static inline int usb_charger_ramp_max(int port, int supplier, int sup_curr)
+{
+	if (port < 0 || !bc12_ports[port].drv->ramp_max)
+		return 0;
+	return bc12_ports[port].drv->ramp_max(supplier, sup_curr);
+}
 
 /**
  * Reset available BC 1.2 chargers on all ports
