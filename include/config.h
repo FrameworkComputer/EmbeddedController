@@ -2112,15 +2112,6 @@
 #undef CONFIG_HIBERNATE_WAKEUP_PINS
 
 /*
- * Boot after waking up from hibernation.
- *
- * Note enabling this will allow boards to be charged by PD power but create
- * the inconsistent behavior between hibernation and S5 (chromium:1073960).
- * Enable EFS2 to get both PD charging and the consistency.
- */
-#undef CONFIG_BOOT_ON_HIBERNATE_WAKE
-
-/*
  * If defined, chip hibernation is used. Your board needs to define wake-up
  * signals. Undefine this to use board hibernation capability.
  */
