@@ -2238,11 +2238,6 @@ static void pe_snk_wait_for_capabilities_entry(int port)
 {
 	print_current_state(port);
 
-	/* USB TCPCI Spec R2V1p1 4.4.5.4.4
-	 * Enable AutoDischargeDisconnect since vbus is present
-	 */
-	tcpm_enable_auto_discharge_disconnect(port, 1);
-
 	/* Initialize and start the SinkWaitCapTimer */
 	pe[port].timeout = get_time().val + PD_T_SINK_WAIT_CAP;
 }
@@ -2809,11 +2804,6 @@ static void pe_snk_hard_reset_run(int port)
 static void pe_snk_transition_to_default_entry(int port)
 {
 	print_current_state(port);
-
-	/* USB TCPCI Spec R2V1p1 4.4.5.4.4
-	 * Disable AutoDischargeDisconnect as vbus will drop in HardReset
-	 */
-	tcpm_enable_auto_discharge_disconnect(port, 0);
 
 	/* Inform the TC Layer of Hard Reset */
 	tc_hard_reset_request(port);

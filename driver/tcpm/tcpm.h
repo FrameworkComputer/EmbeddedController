@@ -180,13 +180,17 @@ static inline int tcpm_set_cc(int port, int pull)
 
 static inline int tcpm_set_connection(int port,
 				      enum tcpc_cc_pull pull,
-				      int connect)
+				      int connect,
+				      int *prev_drp)
 {
 	const struct tcpm_drv *tcpc = tcpc_config[port].drv;
 
 	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) &&
 	    tcpc->set_connection)
-		return tcpc->set_connection(port, pull, connect);
+		return tcpc->set_connection(port, pull, connect, prev_drp);
+	else if (prev_drp)
+		*prev_drp = 0;
+
 	return EC_SUCCESS;
 }
 

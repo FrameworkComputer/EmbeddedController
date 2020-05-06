@@ -333,12 +333,14 @@ struct tcpm_drv {
 	 * @param port Type-C port number
 	 * @param pull enum tcpc_cc_pull of CC lines
 	 * @param connect Connect(1) or Disconnect(0)
+	 * @param prev_drp optional output of previous DRP value
 	 *
 	 * @return EC_SUCCESS or error
 	 */
 	int (*set_connection)(int port,
 			      enum tcpc_cc_pull pull,
-			      int connect);
+			      int connect,
+			      int *prev_drp);
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	/**

@@ -223,7 +223,7 @@ int tcpci_tcpm_release(int port);
 int tcpci_set_role_ctrl(int port, int toggle, int rp, int pull);
 int tcpci_tcpc_drp_toggle(int port);
 int tcpci_tcpc_set_connection(int port, enum tcpc_cc_pull pull,
-			      int connect);
+			      int connect, int *prev_drp);
 #endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 int tcpci_enter_low_power_mode(int port);

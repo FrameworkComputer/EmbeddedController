@@ -77,15 +77,24 @@ static int nct38xx_init(int port)
 	if (rv)
 		return rv;
 
+	/**
+	 * Set driver specific ALERT mask bits
+	 *
+	 * Wake up on faults
+	 */
+	reg = TCPC_REG_ALERT_FAULT;
+
 	/*
 	 * Enable the Vendor Define alert event only when the IO expander
 	 * feature is defined
 	 */
 	if (IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX))
-		rv = tcpc_update16(port,
-				    TCPC_REG_ALERT_MASK,
-				    TCPC_REG_ALERT_VENDOR_DEF,
-				    MASK_SET);
+		reg |= TCPC_REG_ALERT_VENDOR_DEF;
+
+	rv = tcpc_update16(port,
+			   TCPC_REG_ALERT_MASK,
+			   reg,
+			   MASK_SET);
 
 	return rv;
 }
@@ -150,9 +159,11 @@ static int nct3807_handle_fault(int port, int fault)
 {
 	int rv = EC_SUCCESS;
 
+	/* Registers are set to default, initialize for our use */
 	if (fault & TCPC_REG_FAULT_STATUS_ALL_REGS_RESET) {
 		rv = nct38xx_init(port);
 	} else {
+		/* We don't use TCPC OVP, so just disable it */
 		if (fault & TCPC_REG_FAULT_STATUS_VBUS_OVER_VOLTAGE) {
 			/* Disable OVP */
 			rv = tcpc_update8(port,
@@ -162,6 +173,9 @@ static int nct3807_handle_fault(int port, int fault)
 			if (rv)
 				return rv;
 		}
+		/* Failing AutoDischargeDisconnect should disable it */
+		if (fault & TCPC_REG_FAULT_STATUS_AUTO_DISCHARGE_FAIL)
+			tcpm_enable_auto_discharge_disconnect(port, 0);
 	}
 	return rv;
 }
