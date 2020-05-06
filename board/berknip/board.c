@@ -10,9 +10,9 @@
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
-#include "driver/retimer/pi3dpx1207.h"
-#include "driver/retimer/ps8811.h"
+#include "driver/retimer/tusb544.h"
 #include "driver/usb_mux/amd_fp5.h"
+#include "driver/usb_mux/ps8743.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -149,89 +149,14 @@ const struct mft_t mft_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 /*****************************************************************************
- * USB-A Retimer tuning
- */
-#define PS8811_ACCESS_RETRIES 2
-
-/* PS8811 gain tuning */
-static void ps8811_tuning_init(void)
-{
-	int rv;
-	int retry;
-
-	/* Turn on the retimers */
-	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 1);
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
-
-	/* USB-A0 can run with default settings */
-	for (retry = 0; retry < PS8811_ACCESS_RETRIES; ++retry) {
-		int val;
-
-		rv = i2c_read8(I2C_PORT_USBA0,
-				PS8811_I2C_ADDR_FLAGS + PS8811_REG_PAGE1,
-				PS8811_REG1_USB_BEQ_LEVEL, &val);
-		if (!rv)
-			break;
-	}
-	if (rv) {
-		ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
-		CPRINTSUSB("C0: PS8811 not detected");
-	}
-
-	/* USB-A1 needs to increase gain to get over MB/DB connector */
-	for (retry = 0; retry < PS8811_ACCESS_RETRIES; ++retry) {
-		rv = i2c_write8(I2C_PORT_USBA1,
-				PS8811_I2C_ADDR_FLAGS + PS8811_REG_PAGE1,
-				PS8811_REG1_USB_BEQ_LEVEL,
-				PS8811_BEQ_I2C_LEVEL_UP_13DB |
-				PS8811_BEQ_PIN_LEVEL_UP_18DB);
-		if (!rv)
-			break;
-	}
-	if (rv) {
-		ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
-		CPRINTSUSB("C1: PS8811 not detected");
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, ps8811_tuning_init, HOOK_PRIO_DEFAULT);
-
-static void ps8811_retimer_off(void)
-{
-	/* Turn on the retimers */
-	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, ps8811_retimer_off, HOOK_PRIO_DEFAULT);
-
-/*****************************************************************************
  * USB-C MUX/Retimer dynamic configuration
  */
 static void setup_mux(void)
 {
-	if (ec_config_has_usbc1_retimer_ps8802()) {
-		ccprints("C1 PS8802 detected");
-
+	if (ec_config_has_usbc1_retimer_tusb544()) {
+		ccprints("C1 TUSB544 detected");
 		/*
-		 * Main MUX is PS8802, secondary MUX is modified FP5
-		 *
-		 * Replace usb_muxes[USBC_PORT_C1] with the PS8802
-		 * table entry.
-		 */
-		memcpy(&usb_muxes[USBC_PORT_C1],
-		       &usbc1_ps8802,
-		       sizeof(struct usb_mux));
-
-		/* Set the AMD FP5 as the secondary MUX */
-		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_amd_fp5_usb_mux;
-
-		/* Don't have the AMD FP5 flip */
-		usbc1_amd_fp5_usb_mux.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP;
-
-	} else if (ec_config_has_usbc1_retimer_ps8818()) {
-		ccprints("C1 PS8818 detected");
-
-		/*
-		 * Main MUX is FP5, secondary MUX is PS8818
+		 * Main MUX is FP5, secondary MUX is TUSB544
 		 *
 		 * Replace usb_muxes[USBC_PORT_C1] with the AMD FP5
 		 * table entry.
@@ -239,50 +164,25 @@ static void setup_mux(void)
 		memcpy(&usb_muxes[USBC_PORT_C1],
 		       &usbc1_amd_fp5_usb_mux,
 		       sizeof(struct usb_mux));
-
-		/* Set the PS8818 as the secondary MUX */
-		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_ps8818;
+		/* Set the TUSB544 as the secondary MUX */
+		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_tusb544;
+	} else if (ec_config_has_usbc1_retimer_ps8743()) {
+		ccprints("C1 PS8743 detected");
+		/*
+		 * Main MUX is PS8743, secondary MUX is modified FP5
+		 *
+		 * Replace usb_muxes[USBC_PORT_C1] with the PS8743
+		 * table entry.
+		 */
+		memcpy(&usb_muxes[USBC_PORT_C1],
+		       &usbc1_ps8743,
+		       sizeof(struct usb_mux));
+		/* Set the AMD FP5 as the secondary MUX */
+		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_amd_fp5_usb_mux;
+		/* Don't have the AMD FP5 flip */
+		usbc1_amd_fp5_usb_mux.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP;
 	}
 }
-
-/* TODO(b:151232257) Remove probe code when hardware supports CBI */
-#include "driver/retimer/ps8802.h"
-#include "driver/retimer/ps8818.h"
-static void probe_setup_mux_backup(void)
-{
-	if (usb_muxes[USBC_PORT_C1].driver != NULL)
-		return;
-
-	/*
-	 * Identifying a PS8818 is faster than the PS8802,
-	 * so do it first.
-	 */
-	if (ps8818_detect(&usbc1_ps8818) == EC_SUCCESS) {
-		set_cbi_fw_config(0x00004000);
-		setup_mux();
-	} else if (ps8802_detect(&usbc1_ps8802) == EC_SUCCESS) {
-		set_cbi_fw_config(0x00004001);
-		setup_mux();
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, probe_setup_mux_backup, HOOK_PRIO_DEFAULT);
-
-const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
-	[USBC_PORT_C0] = {
-		.enable_gpio = IOEX_USB_C0_DATA_EN,
-		.dp_enable_gpio = GPIO_USB_C0_IN_HPD,
-	},
-	[USBC_PORT_C1] = {
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pi3dpx1207_controls) == USBC_PORT_COUNT);
-
-const struct usb_mux usbc0_pi3dpx1207_usb_retimer = {
-	.usb_port = USBC_PORT_C0,
-	.i2c_port = I2C_PORT_TCPC0,
-	.i2c_addr_flags = PI3DPX1207_I2C_ADDR_FLAGS,
-	.driver = &pi3dpx1207_usb_retimer,
-};
 
 struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
@@ -290,13 +190,70 @@ struct usb_mux usb_muxes[] = {
 		.i2c_port = I2C_PORT_USB_AP_MUX,
 		.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
 		.driver = &amd_fp5_usb_mux_driver,
-		.next_mux = &usbc0_pi3dpx1207_usb_retimer,
 	},
 	[USBC_PORT_C1] = {
 		/* Filled in dynamically at startup */
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
+
+static int board_tusb544_mux_set(const struct usb_mux *me,
+				mux_state_t mux_state)
+{
+	if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		/* Enable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+	} else {
+		/* Disable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
+	}
+	return EC_SUCCESS;
+}
+
+static int board_ps8743_mux_set(const struct usb_mux *me,
+				mux_state_t mux_state)
+{
+	int rv = EC_SUCCESS;
+	int reg = 0;
+
+	rv = ps8743_read(me, PS8743_REG_MODE, &reg);
+	if (rv)
+		return rv;
+
+	/* Disable FLIP pin, enable I2C control. */
+	reg |= PS8743_MODE_FLIP_REG_CONTROL;
+	/* Disable CE_DP pin, enable I2C control. */
+	reg |= PS8743_MODE_DP_REG_CONTROL;
+
+	/* DP specific config */
+	if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		/* Enable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+		/* Disable USB mode on DB */
+		ioex_set_level(IOEX_USB_C1_DATA_EN, 0);
+	} else {
+		/* Disable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
+		/* Enable USB mode on DB */
+		ioex_set_level(IOEX_USB_C1_DATA_EN, 1);
+	}
+	return ps8743_write(me, PS8743_REG_MODE, reg);
+}
+
+const struct usb_mux usbc1_tusb544 = {
+	.usb_port = USBC_PORT_C1,
+	.i2c_port = I2C_PORT_TCPC1,
+	.i2c_addr_flags = TUSB544_I2C_ADDR_FLAGS1,
+	.driver = &tusb544_drv,
+	.board_set = &board_tusb544_mux_set,
+};
+const struct usb_mux usbc1_ps8743 = {
+	.usb_port = USBC_PORT_C1,
+	.i2c_port = I2C_PORT_TCPC1,
+	.i2c_addr_flags = PS8743_I2C_ADDR1_FLAG,
+	.driver = &ps8743_usb_mux_driver,
+	.board_set = &board_ps8743_mux_set,
+};
 
 /*****************************************************************************
  * Use FW_CONFIG to set correct configuration.

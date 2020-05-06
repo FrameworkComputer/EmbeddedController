@@ -20,7 +20,6 @@
 #define CONFIG_SYSTEM_UNLOCKED
 #define CONFIG_I2C_DEBUG
 
-#define CONFIG_USBC_RETIMER_PI3DPX1207
 #define CONFIG_MKBP_USE_GPIO
 
 /* Motion sensing drivers */
@@ -36,6 +35,11 @@
 #define CONFIG_LID_ANGLE_UPDATE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
+
+/* Type C mux/retimer */
+#define CONFIG_USB_MUX_PS8743
+#define CONFIG_USBC_RETIMER_TUSB544
+#define TUSB544_I2C_ADDR_FLAGS1 0x0F
 
 /* GPIO mapping from board specific name to EC common name. */
 #define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
@@ -88,10 +92,10 @@ enum pwm_channel {
 
 /**
  * BERKNIP_MB_USBAC
- *	USB-A0  Speed: 10 Gbps
- *		Retimer: PS8811
- *	USB-C0  Speed: 10 Gbps
- *		Retimer: PI3DPX1207
+ *	USB-A0  Speed: 5 Gbps
+ *		Retimer: none
+ *	USB-C0  Speed: 5 Gbps
+ *		Retimer: none
  *		TCPC: NCT3807
  *		PPC: AOZ1380
  *		IOEX: TCPC
@@ -102,10 +106,10 @@ enum ec_cfg_usb_mb_type {
 
 /**
  * BERKNIP_DB_T_OPT1_USBAC_HMDI
- *	USB-A1  Speed: 10 Gbps
- *		Retimer: PS8811
- *	USB-C1  Speed: 10 Gbps
- *		Retimer: PS8818
+ *	USB-A1  Speed: 5 Gbps
+ *		Retimer: PS8719
+ *	USB-C1  Speed: 5 Gbps
+ *		Retimer: TUSB544
  *		TCPC: NCT3807
  *		PPC: NX20P3483
  *		IOEX: TCPC
@@ -113,23 +117,12 @@ enum ec_cfg_usb_mb_type {
  *		Retimer: PI3HDX1204
  *		MST Hub: none
  *
- * BERKNIP_DB_T_OPT2_USBAC
- *	USB-A1  Speed: 10 Gbps
- *		Retimer: PS8811
- *	USB-C1  Speed: 10 Gbps
- *		Retimer: PS8802
- *		TCPC: NCT3807
- *		PPC: NX20P3483
- *		IOEX: TCPC
- *	HDMI    Exists: no
- *		Retimer: none
- *		MST Hub: none
  *
  * BERKNIP_DB_T_OPT3_USBAC_HDMI_MSTHUB
- *	USB-A1  Speed: 10 Gbps
- *		Retimer: PS8811
- *	USB-C1  Speed: 10 Gbps
- *		Retimer: PS8802
+ *	USB-A1  Speed: 5 Gbps
+ *		Retimer: PS8719
+ *	USB-C1  Speed: 5 Gbps
+ *		Retimer: PS8743
  *		TCPC: NCT3807
  *		PPC: NX20P3483
  *		IOEX: TCPC
@@ -139,28 +132,26 @@ enum ec_cfg_usb_mb_type {
  */
 enum ec_cfg_usb_db_type {
 	BERKNIP_DB_T_OPT1_USBAC_HMDI = 0,
-	BERKNIP_DB_T_OPT2_USBAC = 1,
-	BERKNIP_DB_T_OPT3_USBAC_HDMI_MSTHUB = 2,
+	BERKNIP_DB_T_OPT3_USBAC_HDMI_MSTHUB = 1,
 };
 
 
-#define HAS_USBC1_RETIMER_PS8802 \
-			(BIT(BERKNIP_DB_T_OPT2_USBAC) | \
-			 BIT(BERKNIP_DB_T_OPT3_USBAC_HDMI_MSTHUB))
+#define HAS_USBC1_RETIMER_PS8743 \
+			(BIT(BERKNIP_DB_T_OPT3_USBAC_HDMI_MSTHUB))
 
-static inline bool ec_config_has_usbc1_retimer_ps8802(void)
+static inline bool ec_config_has_usbc1_retimer_ps8743(void)
 {
 	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_USBC1_RETIMER_PS8802);
+		  HAS_USBC1_RETIMER_PS8743);
 }
 
-#define HAS_USBC1_RETIMER_PS8818 \
+#define HAS_USBC1_RETIMER_TUSB544 \
 			(BIT(BERKNIP_DB_T_OPT1_USBAC_HMDI))
 
-static inline bool ec_config_has_usbc1_retimer_ps8818(void)
+static inline bool ec_config_has_usbc1_retimer_tusb544(void)
 {
 	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_USBC1_RETIMER_PS8818);
+		  HAS_USBC1_RETIMER_TUSB544);
 }
 
 #define HAS_HDMI_RETIMER_PI3HDX1204 \
@@ -192,13 +183,12 @@ static inline bool ec_config_has_hdmi_conn_hpd(void)
 
 #define PORT_TO_HPD(port) ((port == 0) \
 	? GPIO_USB_C0_HPD \
-	: (ec_config_has_usbc1_retimer_ps8802()) \
+	: (ec_config_has_usbc1_retimer_ps8743()) \
 		? GPIO_DP1_HPD \
 		: GPIO_DP2_HPD)
 
-extern const struct usb_mux usbc0_pi3dpx1207_usb_retimer;
-extern const struct usb_mux usbc1_ps8802;
-extern const struct usb_mux usbc1_ps8818;
+extern const struct usb_mux usbc1_tusb544;
+extern const struct usb_mux usbc1_ps8743;
 extern struct usb_mux usbc1_amd_fp5_usb_mux;
 
 #endif /* !__ASSEMBLER__ */
