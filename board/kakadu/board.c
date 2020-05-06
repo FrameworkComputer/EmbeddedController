@@ -384,10 +384,6 @@ struct motion_sensor_t motion_sensors[] = {
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 #endif /* VARIANT_KUKUI_NO_SENSORS */
 
-void usb_charger_set_switches(int port, enum usb_switch setting)
-{
-}
-
 /*
  * Return if VBUS is sagging too low
  */

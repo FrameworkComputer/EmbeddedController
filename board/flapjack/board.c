@@ -626,10 +626,6 @@ int board_allow_i2c_passthru(int port)
 	return (port == I2C_PORT_VIRTUAL_BATTERY);
 }
 
-void usb_charger_set_switches(int port, enum usb_switch setting)
-{
-}
-
 int board_get_fod(uint8_t **fod)
 {
 	*fod = NULL;

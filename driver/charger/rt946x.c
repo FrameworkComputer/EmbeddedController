@@ -1590,6 +1590,10 @@ wait_event:
 	}
 }
 
+void usb_charger_set_switches(int port, enum usb_switch setting)
+{
+}
+
 int usb_charger_ramp_allowed(int supplier)
 {
 	return supplier == CHARGE_SUPPLIER_BC12_DCP;
