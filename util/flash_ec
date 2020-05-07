@@ -1227,13 +1227,13 @@ function flash_it83xx() {
 		# Don't let the EC come out of reset after H1 reset
 		dut_control ec_reset:on
 
-		# We need to swing the DUT-side muxes to I2C instead of UART.
-		# This is done by convention with EC_FLASH_SELECT pin from H1
-		servo_save_add "ec_flash_select"
-		dut_control_or_die ec_flash_select:on
 		# Enable i2c bus on C2D2 at 400kbps
 		servo_save_add "i2c_ec_bus_speed"
 		dut_control_or_die i2c_ec_bus_speed:400
+
+		# We need to swing the DUT-side muxes to I2C instead of UART.
+		# This is done by convention with EC_FLASH_SELECT pin from H1
+		dut_control_or_die ec_flash_select:on
 	fi
 
 	# Now the we have enabled the I2C mux on the servo to talk to the dut,
@@ -1304,6 +1304,14 @@ function flash_it83xx() {
 	if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
 		ITEFLASH_ARGS+=( "--debug" )
 		echo "${ITEFLASH_ARGS[@]}"
+	fi
+
+	# Ensure the CR50 doesn't go into low power while flashing
+	# otherwise the DUT side muxes will get cut. Note this also needs to
+	# happen once the CR50 hooks have settled and H1 realizes that the
+	# "AP [is] Off", since that over writes the idle action with sleep.
+	if [[ "${SERVO_TYPE}" =~ "c2d2" ]]; then
+		dut_control cr50_idle_level:active
 	fi
 
 	"${ITEFLASH_ARGS[@]}" || die "${ERROR_MSG}"
