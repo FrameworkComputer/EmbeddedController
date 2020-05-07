@@ -40,6 +40,8 @@
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
+static uint8_t sku_id;
+
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -129,6 +131,18 @@ void i2c_end_xfer_notify(const int port, const uint16_t slave_addr_flags)
 	battery_last_i2c_time = get_time();
 }
 
+/* Read CBI from i2c eeprom and initialize variables for board variants */
+static void cbi_init(void)
+{
+	uint32_t val;
+
+	if (cbi_get_sku_id(&val) != EC_SUCCESS || val > UINT8_MAX)
+		return;
+	sku_id = val;
+	CPRINTS("SKU: %d", sku_id);
+}
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
+
 /* TODO: Casta: remove this routine after rev0 is not supported */
 static void board_init(void)
 {
@@ -148,4 +162,11 @@ void board_overcurrent_event(int port, int is_overcurrented)
 
 	/* Note that the level is inverted because the pin is active low. */
 	gpio_set_level(GPIO_USB_C_OC, !is_overcurrented);
+}
+
+uint8_t board_get_usb_pd_port_count(void)
+{
+	if (sku_id == 2)
+		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
