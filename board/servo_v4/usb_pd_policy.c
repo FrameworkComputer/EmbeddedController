@@ -38,30 +38,30 @@
 #define VBUS_UNCHANGED(curr, pend, new) (curr == new && pend == new)
 
 /* Macros to config the PD role */
-#define CONFIG_SET_CLEAR(c, set, clear) ((c | (set)) & ~(clear))
-#define CONFIG_SRC(c) CONFIG_SET_CLEAR(c, \
+#define CONF_SET_CLEAR(c, set, clear) ((c | (set)) & ~(clear))
+#define CONF_SRC(c) CONF_SET_CLEAR(c, \
 				CC_DISABLE_DTS | CC_ALLOW_SRC, \
 				CC_ENABLE_DRP | CC_SNK_WITH_PD)
-#define CONFIG_SNK(c) CONFIG_SET_CLEAR(c, \
+#define CONF_SNK(c) CONF_SET_CLEAR(c, \
 				CC_DISABLE_DTS, \
 				CC_ALLOW_SRC | CC_ENABLE_DRP | CC_SNK_WITH_PD)
-#define CONFIG_PDSNK(c) CONFIG_SET_CLEAR(c, \
+#define CONF_PDSNK(c) CONF_SET_CLEAR(c, \
 				CC_DISABLE_DTS | CC_SNK_WITH_PD, \
 				CC_ALLOW_SRC | CC_ENABLE_DRP)
-#define CONFIG_DRP(c) CONFIG_SET_CLEAR(c, \
+#define CONF_DRP(c) CONF_SET_CLEAR(c, \
 				CC_DISABLE_DTS | CC_ALLOW_SRC | CC_ENABLE_DRP, \
 				CC_SNK_WITH_PD)
-#define CONFIG_SRCDTS(c) CONFIG_SET_CLEAR(c, \
+#define CONF_SRCDTS(c) CONF_SET_CLEAR(c, \
 				CC_ALLOW_SRC, \
 				CC_ENABLE_DRP | CC_DISABLE_DTS | CC_SNK_WITH_PD)
-#define CONFIG_SNKDTS(c) CONFIG_SET_CLEAR(c, \
+#define CONF_SNKDTS(c) CONF_SET_CLEAR(c, \
 				0, \
 				CC_ALLOW_SRC | CC_ENABLE_DRP | \
 				CC_DISABLE_DTS | CC_SNK_WITH_PD)
-#define CONFIG_PDSNKDTS(c) CONFIG_SET_CLEAR(c, \
+#define CONF_PDSNKDTS(c) CONF_SET_CLEAR(c, \
 				CC_SNK_WITH_PD, \
 				CC_ALLOW_SRC | CC_ENABLE_DRP | CC_DISABLE_DTS)
-#define CONFIG_DRPDTS(c) CONFIG_SET_CLEAR(c, \
+#define CONF_DRPDTS(c) CONF_SET_CLEAR(c, \
 				CC_ALLOW_SRC | CC_ENABLE_DRP, \
 				CC_DISABLE_DTS | CC_SNK_WITH_PD)
 
@@ -1108,21 +1108,21 @@ static int command_cc(int argc, char **argv)
 	} else {
 		cc_config_new &= ~CC_DETACH;
 		if (!strcasecmp(argv[1], "src"))
-			cc_config_new = CONFIG_SRC(cc_config_new);
+			cc_config_new = CONF_SRC(cc_config_new);
 		else if (!strcasecmp(argv[1], "snk"))
-			cc_config_new = CONFIG_SNK(cc_config_new);
+			cc_config_new = CONF_SNK(cc_config_new);
 		else if (!strcasecmp(argv[1], "pdsnk"))
-			cc_config_new = CONFIG_PDSNK(cc_config_new);
+			cc_config_new = CONF_PDSNK(cc_config_new);
 		else if (!strcasecmp(argv[1], "drp"))
-			cc_config_new = CONFIG_DRP(cc_config_new);
+			cc_config_new = CONF_DRP(cc_config_new);
 		else if (!strcasecmp(argv[1], "srcdts"))
-			cc_config_new = CONFIG_SRCDTS(cc_config_new);
+			cc_config_new = CONF_SRCDTS(cc_config_new);
 		else if (!strcasecmp(argv[1], "snkdts"))
-			cc_config_new = CONFIG_SNKDTS(cc_config_new);
+			cc_config_new = CONF_SNKDTS(cc_config_new);
 		else if (!strcasecmp(argv[1], "pdsnkdts"))
-			cc_config_new = CONFIG_PDSNKDTS(cc_config_new);
+			cc_config_new = CONF_PDSNKDTS(cc_config_new);
 		else if (!strcasecmp(argv[1], "drpdts"))
-			cc_config_new = CONFIG_DRPDTS(cc_config_new);
+			cc_config_new = CONF_DRPDTS(cc_config_new);
 		else
 			return EC_ERROR_PARAM2;
 	}
@@ -1323,21 +1323,21 @@ static int cmd_usbc_action(int argc, char *argv[])
 
 	/* TODO(b:140256624): drop *v command if we migrate to chg cmd. */
 	if (!strcasecmp(argv[1], "5v")) {
-		do_cc(CONFIG_SRC(cc_config));
+		do_cc(CONF_SRC(cc_config));
 		user_limited_max_mv = 5000;
 		update_ports();
 	} else if (!strcasecmp(argv[1], "12v")) {
-		do_cc(CONFIG_SRC(cc_config));
+		do_cc(CONF_SRC(cc_config));
 		user_limited_max_mv = 12000;
 		update_ports();
 	} else if (!strcasecmp(argv[1], "20v")) {
-		do_cc(CONFIG_SRC(cc_config));
+		do_cc(CONF_SRC(cc_config));
 		user_limited_max_mv = 20000;
 		update_ports();
 	} else if (!strcasecmp(argv[1], "dev")) {
 		/* Set the limit back to original */
 		user_limited_max_mv = 20000;
-		do_cc(CONFIG_PDSNK(cc_config));
+		do_cc(CONF_PDSNK(cc_config));
 	} else if (!strcasecmp(argv[1], "pol0")) {
 		do_cc(cc_config & ~CC_POLARITY);
 	} else if (!strcasecmp(argv[1], "pol1")) {
@@ -1359,7 +1359,7 @@ static int cmd_usbc_action(int argc, char *argv[])
 			return EC_ERROR_PARAM2;
 
 		user_limited_max_mv = sink_v * 1000;
-		do_cc(CONFIG_SRC(cc_config));
+		do_cc(CONF_SRC(cc_config));
 		update_ports();
 		/*
 		 * TODO(b:140256624): servod captures 'chg SRC' keyword to
