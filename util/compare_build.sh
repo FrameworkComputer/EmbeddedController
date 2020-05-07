@@ -129,6 +129,7 @@ parse-boards() {
   # Parse boards selection
   local b name name_arr=( )
   for b; do
+    # Remove + or - prefix
     name="$(sed -E 's/^(-|\+)//' <<<"${b}")"
     # Check for a valid board
     if [[ "${BOARDS_VALID[${name}]}" != "${name}" ]]; then
@@ -139,15 +140,13 @@ parse-boards() {
     if [[ -n "${BOARD_GROUPS[${name}]}" ]]; then
       name="${BOARD_GROUPS[${name}]}"
     fi
-    read -r -a name_arr <<< "${name}"
+    read -d "" -r -a name_arr <<< "${name}"
     # Process addition or deletion
     case "${b}" in
       -*)
-        # shellcheck disable=SC2086
         assoc-rm-keys boards "${name_arr[@]}"
         ;;
       +*|*)
-        # shellcheck disable=SC2086
         assoc-add-keys boards "${name_arr[@]}"
         ;;
     esac
