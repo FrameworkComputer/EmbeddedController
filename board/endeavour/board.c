@@ -86,7 +86,7 @@ const struct mft_t mft_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 const struct i2c_port_t i2c_ports[]  = {
-	{"poe", I2C_PORT_POE, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
+	{"pse", I2C_PORT_PSE, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
 	{"eeprom", I2C_PORT_EEPROM, 400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
 	{"pmic", I2C_PORT_PMIC, 400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 	{"thermal", I2C_PORT_THERMAL, 400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
