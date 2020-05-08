@@ -661,7 +661,7 @@ bool is_active_cable_element_retimer(int port)
  * partner and cable identity discovery.
  */
 void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
-				uint16_t head)
+				uint32_t head)
 {
 	struct pd_cable *cable = pd_get_cable_attributes(port);
 	struct pd_discovery *disc =

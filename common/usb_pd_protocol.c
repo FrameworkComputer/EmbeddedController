@@ -257,6 +257,8 @@ static struct pd_protocol {
 	timestamp_t vdm_timeout;
 	/* next Vendor Defined Message to send */
 	uint32_t vdo_data[VDO_MAX_SIZE];
+	/* type of transmit message (SOP/SOP'/SOP'') */
+	enum tcpm_transmit_type xmit_type;
 	uint8_t vdo_count;
 	/* VDO to retry if UFP responder replied busy. */
 	uint32_t vdo_retry;
@@ -641,17 +643,18 @@ static bool consume_sop_repeat_message(int port, uint8_t msg_id)
  * using SOP* Packets Shall maintain copies of the last MessageID for
  * each type of SOP* it uses.
  */
-static bool consume_repeat_message(int port, uint16_t msg_header)
+static bool consume_repeat_message(int port, uint32_t msg_header)
 {
 	uint8_t msg_id = PD_HEADER_ID(msg_header);
+	enum tcpm_transmit_type sop = PD_HEADER_GET_SOP(msg_header);
 
 	/* If repeat message ignore, except softreset control request. */
 	if (PD_HEADER_TYPE(msg_header) == PD_CTRL_SOFT_RESET &&
 	    PD_HEADER_CNT(msg_header) == 0) {
 		return false;
-	} else if (is_transmit_msg_sop_prime(port)) {
+	} else if (sop == TCPC_TX_SOP_PRIME) {
 		return consume_sop_prime_repeat_msg(port, msg_id);
-	} else if (is_transmit_msg_sop_prime_prime(port)) {
+	} else if (sop == TCPC_TX_SOP_PRIME_PRIME) {
 		return consume_sop_prime_prime_repeat_msg(port, msg_id);
 	} else {
 		return consume_sop_repeat_message(port, msg_id);
@@ -1212,20 +1215,23 @@ static int send_bist_cmd(int port)
 #endif
 
 static void queue_vdm(int port, uint32_t *header, const uint32_t *data,
-			     int data_cnt)
+			     int data_cnt, enum tcpm_transmit_type type)
 {
 	pd[port].vdo_count = data_cnt + 1;
 	pd[port].vdo_data[0] = header[0];
-	memcpy(&pd[port].vdo_data[1], data, sizeof(uint32_t) * data_cnt);
+	pd[port].xmit_type = type;
+	memcpy(&pd[port].vdo_data[1], data,
+		sizeof(uint32_t) * data_cnt);
 	/* Set ready, pd task will actually send */
 	pd[port].vdm_state = VDM_STATE_READY;
 }
 
 static void handle_vdm_request(int port, int cnt, uint32_t *payload,
-				uint16_t head)
+				uint32_t head)
 {
 	int rlen = 0;
 	uint32_t *rdata;
+	enum tcpm_transmit_type rtype = TCPC_TX_SOP;
 
 	if (pd[port].vdm_state == VDM_STATE_BUSY) {
 		/* If UFP responded busy retry after timeout */
@@ -1248,14 +1254,15 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload,
 	}
 
 	if (PD_VDO_SVDM(payload[0]))
-		rlen = pd_svdm(port, cnt, payload, &rdata, head);
+		rlen = pd_svdm(port, cnt, payload, &rdata, head, &rtype);
 	else
 		rlen = pd_custom_vdm(port, cnt, payload, &rdata);
 
 	if (rlen > 0) {
-		queue_vdm(port, rdata, &rdata[1], rlen - 1);
+		queue_vdm(port, rdata, &rdata[1], rlen - 1, rtype);
 		return;
 	}
+
 	if (debug_level >= 2)
 		CPRINTF("C%d Unhandled VDM VID %04x CMD %04x\n",
 			port, PD_VDO_VID(payload[0]), payload[0] & 0xFFFF);
@@ -1503,7 +1510,7 @@ static void pd_update_pdo_flags(int port, uint32_t pdo)
 #endif
 }
 
-static void handle_data_request(int port, uint16_t head,
+static void handle_data_request(int port, uint32_t head,
 		uint32_t *payload)
 {
 	int type = PD_HEADER_TYPE(head);
@@ -1672,7 +1679,7 @@ static void pd_dr_swap(int port)
 	pd[port].flags |= PD_FLAGS_CHECK_IDENTITY;
 }
 
-static void handle_ctrl_request(int port, uint16_t head,
+static void handle_ctrl_request(int port, uint32_t head,
 		uint32_t *payload)
 {
 	int type = PD_HEADER_TYPE(head);
@@ -1990,7 +1997,7 @@ static void handle_ext_request(int port, uint16_t head, uint32_t *payload)
 }
 #endif
 
-static void handle_request(int port, uint16_t head,
+static void handle_request(int port, uint32_t head,
 		uint32_t *payload)
 {
 	int cnt = PD_HEADER_CNT(head);
@@ -2069,7 +2076,7 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 #ifdef CONFIG_USB_PD_REV30
 	pd[port].vdo_data[0] |= VDO_SVDM_VERS(vdo_ver[pd[port].rev]);
 #endif
-	queue_vdm(port, pd[port].vdo_data, data, count);
+	queue_vdm(port, pd[port].vdo_data, data, count, TCPC_TX_SOP);
 
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
@@ -2149,7 +2156,7 @@ static void pd_vdm_send_state_machine(int port)
 {
 	int res;
 	uint16_t header;
-	enum pd_msg_type msg_type = pd_msg_tx_type(port);
+	enum tcpm_transmit_type msg_type = pd[port].xmit_type;
 
 	switch (pd[port].vdm_state) {
 	case VDM_STATE_READY:
@@ -2177,8 +2184,8 @@ static void pd_vdm_send_state_machine(int port)
 		 * data role swap takes place during source and sink
 		 * negotiation and in case of failure, a soft reset is issued.
 		 */
-		if ((msg_type == PD_MSG_SOP_PRIME) ||
-		    (msg_type == PD_MSG_SOP_PRIME_PRIME)) {
+		if ((msg_type == TCPC_TX_SOP_PRIME) ||
+		    (msg_type == TCPC_TX_SOP_PRIME_PRIME)) {
 			/* Prepare SOP'/SOP'' header and send VDM */
 			header = PD_HEADER(
 				PD_DATA_VENDOR_DEF,
@@ -2188,13 +2195,8 @@ static void pd_vdm_send_state_machine(int port)
 				(int)pd[port].vdo_count,
 				pd_get_rev(port),
 				0);
-			res = pd_transmit(port,
-					  (msg_type == PD_MSG_SOP_PRIME) ?
-					  TCPC_TX_SOP_PRIME :
-					  TCPC_TX_SOP_PRIME_PRIME,
-					  header,
-					  pd[port].vdo_data,
-					  AMS_START);
+			res = pd_transmit(port, msg_type, header,
+					  pd[port].vdo_data, AMS_START);
 			/*
 			 * In the case of SOP', if there is no response from
 			 * the cable, it's a non-emark cable and therefore the
@@ -2217,10 +2219,10 @@ static void pd_vdm_send_state_machine(int port)
 						   (int)pd[port].vdo_count,
 						   pd_get_rev(port), 0);
 
-				if ((msg_type == PD_MSG_SOP_PRIME_PRIME) &&
+				if ((msg_type == TCPC_TX_SOP_PRIME_PRIME) &&
 				     IS_ENABLED(CONFIG_USBC_SS_MUX)) {
 					exit_tbt_mode_sop_prime(port);
-				} else if (msg_type == PD_MSG_SOP_PRIME) {
+				} else if (msg_type == TCPC_TX_SOP_PRIME) {
 					pd[port].vdo_data[0] = VDO(USB_SID_PD,
 						1, CMD_DISCOVER_SVID);
 				}
@@ -2856,7 +2858,7 @@ static void pd_send_enter_usb(int port, int *timeout)
 
 void pd_task(void *u)
 {
-	int head;
+	uint32_t head;
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
 	uint32_t payload[7];
 	int timeout = 10*MSEC;

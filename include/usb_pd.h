@@ -580,18 +580,14 @@ struct pd_cable {
 };
 
 /* Note: These flags are only used for TCPMv1 */
-/* Flag for sending SOP Prime packet */
-#define CABLE_FLAGS_SOP_PRIME_ENABLE	   BIT(0)
-/* Flag for sending SOP Prime Prime packet */
-#define CABLE_FLAGS_SOP_PRIME_PRIME_ENABLE BIT(1)
 /* Check if Thunderbolt-compatible mode enabled */
-#define CABLE_FLAGS_TBT_COMPAT_ENABLE	   BIT(2)
+#define CABLE_FLAGS_TBT_COMPAT_ENABLE	   BIT(0)
 /* Flag to limit speed to TBT Gen 2 passive cable */
-#define CABLE_FLAGS_TBT_COMPAT_LIMIT_SPEED BIT(3)
+#define CABLE_FLAGS_TBT_COMPAT_LIMIT_SPEED BIT(1)
 /* Flag for checking if device is USB4.0 capable */
-#define CABLE_FLAGS_USB4_CAPABLE           BIT(4)
+#define CABLE_FLAGS_USB4_CAPABLE           BIT(2)
 /* Flag for entering ENTER_USB mode */
-#define CABLE_FLAGS_ENTER_USB_MODE         BIT(5)
+#define CABLE_FLAGS_ENTER_USB_MODE         BIT(3)
 
 /*
  * SVDM Discover SVIDs request -> response
@@ -1577,10 +1573,11 @@ __override_proto int pd_custom_vdm(int port, int cnt, uint32_t *payload,
  * @param payload  payload data.
  * @param rpayload pointer to the data to send back.
  * @param head     message header
+ * @param rtype    pointer to the type of message (SOP/SOP'/SOP'')
  * @return if >0, number of VDOs to send back.
  */
 int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
-		uint16_t head);
+		uint32_t head, enum tcpm_transmit_type *rtype);
 
 /**
  * Handle Custom VDMs for flashing.
@@ -1853,14 +1850,6 @@ bool consume_sop_prime_repeat_msg(int port, uint8_t msg_id);
  */
 bool consume_sop_prime_prime_repeat_msg(int port, uint8_t msg_id);
 
-/**
- * Returns the status of cable flag - CABLE_FLAGS_SOP_PRIME_ENABLE
- *
- * @param port		USB-C port number
- * @return              Status of CABLE_FLAGS_SOP_PRIME_ENABLE flag
- */
-bool is_transmit_msg_sop_prime(int port);
-
 /*
  * Returns the pointer to PD alternate mode discovery results
  * Note: Caller function can mutate the data in this structure.
@@ -1918,22 +1907,6 @@ bool is_active_cable_element_retimer(int port);
 void pd_set_dfp_enter_mode_flag(int port, bool set);
 
 /**
- * Returns the status of cable flag - CABLE_FLAGS_SOP_PRIME_PRIME_ENABLE
- *
- * @param port		USB-C port number
- * @return		Status of CABLE_FLAGS_SOP_PRIME_PRIME_ENABLE flag
- */
-bool is_transmit_msg_sop_prime_prime(int port);
-
-/**
- * Returns the type of communication (SOP/SOP'/SOP'')
- *
- * @param port		USB-C port number
- * @return		Type of message to be transmitted
- */
-enum pd_msg_type pd_msg_tx_type(int port);
-
-/**
  * Reset Cable type, Cable attributes and cable flags
  *
  * @param port     USB-C port number
@@ -1968,7 +1941,7 @@ enum idh_ptype get_usb_pd_cable_type(int port);
  * @param head      PD packet header
  */
 void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
-					uint16_t head);
+					uint32_t head);
 
 /**
  * Returns USB4 cable speed according to the port, if port supports lesser
