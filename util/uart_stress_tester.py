@@ -23,6 +23,7 @@ from __future__ import print_function
 
 import argparse
 import atexit
+import logging
 import os
 import stat
 import sys
@@ -30,7 +31,6 @@ import threading
 import time
 
 import serial
-from chromite.lib import cros_logging as logging
 
 BAUDRATE = 115200                # Default baudrate setting for UART port
 CROS_USERNAME = 'root'           # Account name to login to ChromeOS
