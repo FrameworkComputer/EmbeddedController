@@ -76,9 +76,5 @@ int pd_set_power_supply_ready(int port)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	int chg_det = 0;
-
-	sm5803_get_chg_det(port, &chg_det);
-
-	return chg_det;
+	return sm5803_is_vbus_present(port);
 }
