@@ -106,7 +106,7 @@ enum i2c_reset_cause {
 };
 
 struct i2c_ch_freq {
-	int kpbs;
+	int kbps;
 	uint8_t freq_set;
 };
 
@@ -785,7 +785,7 @@ static void i2c_freq_changed(void)
 		freq = i2c_ports[i].kbps;
 		if (i2c_ports[i].port < I2C_STANDARD_PORT_COUNT) {
 			for (f = ARRAY_SIZE(i2c_freq_select) - 1; f >= 0; f--) {
-				if (freq >= i2c_freq_select[f].kpbs) {
+				if (freq >= i2c_freq_select[f].kbps) {
 					IT83XX_SMB_SCLKTS(i2c_ports[i].port) =
 						i2c_freq_select[f].freq_set;
 					break;

@@ -753,7 +753,7 @@ static int command_enable_i2c(int argc, char **argv)
 	}
 
 	/* Print status for get and set case. */
-	ccprintf("I2C speed kpbs: %d\n",
+	ccprintf("I2C speed kbps: %d\n",
 		 *bus == BUS_I2C ? to_kbps(i2c_get_freq(i2c_index)) : 0);
 
 	return EC_SUCCESS;
