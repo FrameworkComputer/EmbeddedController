@@ -69,6 +69,11 @@
 /* BC 1.2 */
 
 /* Volume Button feature */
+/*
+ * TODO (b/149858568): remove CONFIG_BUTTONS_RUNTIME_CONFIG once board ID=0
+ * support is stripped.
+ */
+#define CONFIG_BUTTONS_RUNTIME_CONFIG
 
 /* Fan features */
 

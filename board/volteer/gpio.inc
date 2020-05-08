@@ -49,13 +49,6 @@ GPIO_INT(USB_C1_MIX_INT_ODL,	PIN(0, 3), GPIO_INT_BOTH, bc12_interrupt)
 
 /* Volume button interrupts */
 GPIO_INT(EC_VOLDN_BTN_ODL,		PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
-/*
- * EC_VOLUP_BTN_ODL moved from GPIO75 to GPIO97 on boards with board ID >=1.
- * GPIO97/EN_PP1050_BYPASS is DNS on board ID 0, and GPIO75 will be used once
- * EFS support is added.
- * TODO (b/149858568): remove board ID=0 support.
- */
-GPIO_INT(EC_VOLUP_BTN_ODL_BOARDID_0,	PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,		PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
 /* Power Sequencing Signals */
@@ -118,6 +111,8 @@ UNIMPLEMENTED(USB_C1_LS_EN)
 UNIMPLEMENTED(USB_C1_RT_FORCE_PWR)
 
 /* Misc Signals */
+GPIO(UART2_EC_RX,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
+
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high

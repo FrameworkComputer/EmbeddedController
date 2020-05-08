@@ -44,15 +44,12 @@ __override void config_volteer_gpios(void)
 	/* Legacy support for the first board build */
 	if (get_board_id() == 0) {
 		CPRINTS("Configuring GPIOs for board ID 0");
+		CPRINTS("VOLUME_UP button disabled");
 
 		/* Reassign USB_C1_RT_RST_ODL */
 		bb_controls[USBC_PORT_C1].retimer_rst_gpio =
 			GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
 		ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
-
-		/* Reassign EC_VOLUP_BTN_ODL */
-		button_reassign_gpio(BUTTON_VOLUME_UP,
-			GPIO_EC_VOLUP_BTN_ODL_BOARDID_0);
 	}
 }
 
