@@ -444,6 +444,10 @@ enum ec_error_list charger_get_vbus_voltage(int port, int *voltage)
 	int chgnum = 0;
 	int rv = 0;
 
+	/* Note: Assumes USBPD port == chgnum on multi-charger systems */
+	if (!IS_ENABLED(CONFIG_CHARGER_SINGLE_CHIP))
+		chgnum = port;
+
 	if ((chgnum < 0) || (chgnum >= chg_cnt)) {
 		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
 		return 0;
