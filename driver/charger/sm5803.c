@@ -499,7 +499,7 @@ static enum ec_error_list sm5803_get_vbus_voltage(int chgnum, int port,
 	volt_bits |= reg & SM5803_VBUS_MEAS_LSB;
 
 	/* Vbus ADC is in 23.4 mV steps */
-	*voltage = (int)((float)volt_bits * 23.4f);
+	*voltage = (volt_bits * 234) / 10;
 	return rv;
 }
 
