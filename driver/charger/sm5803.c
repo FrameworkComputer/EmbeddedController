@@ -42,6 +42,8 @@ static uint32_t irq_pending; /* Bitmask of chips with interrupts pending */
 
 static struct mutex flow1_access_lock[CHARGER_NUM];
 
+static int charger_vbus[CHARGER_NUM];
+
 static int sm5803_is_sourcing_otg_power(int chgnum, int port);
 
 static inline enum ec_error_list chg_read8(int chgnum, int offset, int *value)
@@ -84,6 +86,11 @@ static inline enum ec_error_list main_write8(int chgnum, int offset, int value)
 	return i2c_write8(chg_chips[chgnum].i2c_port,
 			 SM5803_ADDR_MAIN_FLAGS,
 			 offset, value);
+}
+
+int sm5803_is_vbus_present(int chgnum)
+{
+	return charger_vbus[chgnum];
 }
 
 enum ec_error_list sm5803_configure_gpio0(int chgnum,
@@ -196,6 +203,8 @@ static void sm5803_init(int chgnum)
 			 */
 			rv = chg_write8(chgnum, SM5803_FLOW1_CHG_EN,
 					0);
+		} else {
+			charger_vbus[chgnum] = 1;
 		}
 	} else {
 		CPRINTS("%s %d: Failed to read status during init",
@@ -323,9 +332,11 @@ void sm5803_handle_interrupt(int chgnum)
 				!sm5803_is_sourcing_otg_power(chgnum, chgnum)) {
 		rv = meas_read8(chgnum, SM5803_REG_VBUS_MEAS_MSB, &meas_reg);
 		if (meas_reg <= SM5803_VBUS_LOW_LEVEL) {
+			charger_vbus[chgnum] = 0;
 			usb_charger_vbus_change(chgnum, 0);
 			board_vbus_present_change();
 		} else if (meas_reg >= SM5803_VBUS_HIGH_LEVEL) {
+			charger_vbus[chgnum] = 1;
 			usb_charger_vbus_change(chgnum, 1);
 			board_vbus_present_change();
 		} else {

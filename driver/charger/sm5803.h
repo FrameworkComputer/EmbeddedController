@@ -236,6 +236,9 @@ enum sm5803_gpio0_modes {
 #define INPUT_I_MIN 0
 #define INPUT_I_STEP SM5803_CURRENT_STEP
 
+/* Expose cached Vbus presence */
+int sm5803_is_vbus_present(int chgnum);
+
 /* Expose functions to control charger's GPIO and CHG_DET configuration */
 enum ec_error_list sm5803_configure_gpio0(int chgnum,
 					  enum sm5803_gpio0_modes mode, int od);
