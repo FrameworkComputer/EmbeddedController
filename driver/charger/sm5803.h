@@ -113,8 +113,8 @@ enum sm5803_gpio0_modes {
 #define SM5803_GPADCC1_TINT_EN		BIT(7)
 
 /* Note: Threshold registers all assume lower 2 bits are 0 */
-#define SM5803_REG_VBUS_LOW_TH		0x1B
-#define SM5803_REG_VBUS_HIGH_TH		0x2B
+#define SM5803_REG_VBUS_LOW_TH		0x1A
+#define SM5803_REG_VBUS_HIGH_TH		0x2A
 #define SM5803_REG_TINT_LOW_TH		0x1D
 #define SM5803_REG_TINT_HIGH_TH		0x2D
 
