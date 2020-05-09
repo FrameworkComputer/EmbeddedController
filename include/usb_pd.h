@@ -889,6 +889,7 @@ enum pd_states {
 #define PD_BBRMFLG_POWER_ROLE        BIT(1)
 #define PD_BBRMFLG_DATA_ROLE         BIT(2)
 #define PD_BBRMFLG_VCONN_ROLE        BIT(3)
+#define PD_BBRMFLG_DBGACC_ROLE       BIT(4)
 
 /* Initial value for CC debounce variable */
 #define PD_CC_UNSET -1
