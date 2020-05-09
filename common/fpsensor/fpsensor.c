@@ -200,12 +200,6 @@ void fp_task(void)
 {
 	int timeout_us = -1;
 
-	/* configure the SPI controller (also ensure that CS_N is high) */
-	gpio_config_module(MODULE_SPI_MASTER, 1);
-	spi_enable(CONFIG_SPI_FP_PORT, 1);
-
-	CPRINTS("TRANSPORT_SEL: %s",
-		fp_transport_type_to_str(get_fp_transport_type()));
 	CPRINTS("FP_SENSOR_SEL: %s",
 		fp_sensor_type_to_str(get_fp_sensor_type()));
 

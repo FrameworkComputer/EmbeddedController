@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "fpsensor_detect.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
@@ -81,6 +82,9 @@ static void spi_configure(void)
 static void board_init(void)
 {
 	spi_configure();
+
+	ccprints("TRANSPORT_SEL: %s",
+		fp_transport_type_to_str(get_fp_transport_type()));
 
 	/* Enable interrupt on PCH power signals */
 	gpio_enable_interrupt(GPIO_PCH_SLP_S3_L);
