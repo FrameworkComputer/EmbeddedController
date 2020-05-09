@@ -9,6 +9,7 @@
 #define __CROS_EC_CHARGER_H
 
 #include "common.h"
+#include "ocpc.h"
 
 /* Charger information
  * voltage unit: mV
@@ -106,6 +107,16 @@ struct charger_drv {
 	int (*ramp_is_stable)(int chgnum);
 	int (*ramp_is_detected)(int chgnum);
 	int (*ramp_get_current_limit)(int chgnum);
+
+	/* OCPC functions */
+	/*
+	 * Some chargers can perform VSYS output compensation.  Configure the
+	 * charger IC with the right parameters.
+	 */
+	enum ec_error_list (*set_vsys_compensation)(int chgnum,
+						    struct ocpc_data *o,
+						    int current_ma,
+						    int voltage_mv);
 };
 
 struct charger_config_t {
@@ -250,6 +261,24 @@ enum ec_error_list charger_device_id(int *id);
 enum ec_error_list charger_get_option(int *option);
 enum ec_error_list charger_set_option(int option);
 enum ec_error_list charger_set_hw_ramp(int enable);
+
+/**
+ * Some charger ICs can compensate for board losses if charging from an
+ * auxiliary charger in a multi-charger IC design. (CONFIG_OCPC) Some of those
+ * charger ICs can dynamically compensate meaning that the PID loop may not be
+ * needed.  For the others, it still will be needed.  The charger driver should
+ * return the appropriate action.
+ *
+ * @param chgnum: Active charge port
+ * @param ocpc: Pointer to ocpc data
+ * @param current_ma: Desired charge current
+ * @param voltage_mv: Desired charge voltage
+ * @return EC_SUCCESS on success, error otherwise.
+ */
+enum ec_error_list charger_set_vsys_compensation(int chgnum,
+						 struct ocpc_data *ocpc,
+						 int current_ma,
+						 int voltage_mv);
 
 /*
  * Print all charger info for debugging purposes
