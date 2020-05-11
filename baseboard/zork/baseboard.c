@@ -586,6 +586,13 @@ void hdmi_hpd_interrupt(enum ioex_signal signal)
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
 }
 
+const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
+	.eq_ch0_ch1_offset = PI3HDX1204_EQ_DB710,
+	.eq_ch2_ch3_offset = PI3HDX1204_EQ_DB710,
+	.vod_offset = PI3HDX1204_VOD_115_ALL_CHANNELS,
+	.de_offset = PI3HDX1204_DE_DB_MINUS5,
+};
+
 static void pi3hdx1204_retimer_power(void)
 {
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
