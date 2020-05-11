@@ -2353,6 +2353,12 @@ static void handle_new_power_state(int port)
 		 */
 		exit_supported_alt_mode(port);
 	}
+#ifdef CONFIG_USBC_VCONN_SWAP
+	else {
+		/* Request for Vconn Swap */
+		pd_try_vconn_src(port);
+	}
+#endif
 	/* Ensure mux is set properly after chipset transition */
 	set_usb_mux_with_current_data_role(port);
 }
