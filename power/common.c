@@ -309,12 +309,104 @@ static void power_set_active_wake_mask(void)
 static void power_set_active_wake_mask(void) { }
 #endif
 
+#ifdef CONFIG_HIBERNATE
+#ifdef CONFIG_BATTERY
+/*
+ * Smart discharge system
+ *
+ * EC controls how the system discharges differently depending on the remaining
+ * capacity and the expected hours to zero.
+ *
+ * 0          X1                X2                                   full
+ * |----------|-------------------|------------------------------------|
+ *    cutoff        stay-up                       safe
+ *
+ * EC cuts off the battery at X1 mAh and hibernates the system at X2 mAh. X1 and
+ * X2 are derived from the cutoff and hibernation discharge rate, respectively.
+ *
+ * TODO: Learn discharge rates dynamically.
+ *
+ * TODO: Save sdzone in non-volatile memory and restore it when waking up from
+ * cutoff or hibernation.
+ */
+static struct smart_discharge_zone sdzone;
+
+static enum ec_status hc_smart_discharge(struct host_cmd_handler_args *args)
+{
+	static uint16_t hours_to_zero;
+	static struct discharge_rate drate;
+	const struct ec_params_smart_discharge *p = args->params;
+	struct ec_response_smart_discharge *r = args->response;
+
+	if (p->flags & EC_SMART_DISCHARGE_FLAGS_SET) {
+		int cap;
+
+		if (battery_full_charge_capacity(&cap))
+			return EC_RES_UNAVAILABLE;
+
+		if (p->drate.hibern < p->drate.cutoff)
+			/* Hibernation discharge rate should be always higher */
+			return EC_RES_INVALID_PARAM;
+		else if (p->drate.cutoff > 0 && p->drate.hibern > 0)
+			drate = p->drate;
+		else if (p->drate.cutoff == 0 && p->drate.hibern == 0)
+			;  /* no-op. use the current drate. */
+		else
+			return EC_RES_INVALID_PARAM;
+
+		/* Commit */
+		hours_to_zero = p->hours_to_zero;
+		sdzone.stayup = MIN(hours_to_zero * drate.hibern / 1000, cap);
+		sdzone.cutoff = MIN(hours_to_zero * drate.cutoff / 1000,
+				    sdzone.stayup);
+	}
+
+	/* Return the effective values. */
+	r->hours_to_zero = hours_to_zero;
+	r->dzone = sdzone;
+	r->drate = drate;
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SMART_DISCHARGE,
+		     hc_smart_discharge,
+		     EC_VER_MASK(0));
+
+__overridable enum critical_shutdown board_system_is_idle(
+		uint64_t last_shutdown_time, uint64_t *target, uint64_t now)
+{
+	int remain;
+
+	if (now < *target)
+		return CRITICAL_SHUTDOWN_IGNORE;
+
+	if (battery_remaining_capacity(&remain)) {
+		CPRINTS("SDC Failed to get remaining capacity");
+		return CRITICAL_SHUTDOWN_HIBERNATE;
+	}
+
+	if (remain < sdzone.cutoff) {
+		CPRINTS("SDC Cutoff");
+		return CRITICAL_SHUTDOWN_CUTOFF;
+	} else if (remain < sdzone.stayup) {
+		CPRINTS("SDC Stay-up");
+		return CRITICAL_SHUTDOWN_IGNORE;
+	}
+
+	CPRINTS("SDC Safe");
+	return CRITICAL_SHUTDOWN_HIBERNATE;
+}
+#else
+/* Default implementation for battery-less systems */
 __overridable enum critical_shutdown board_system_is_idle(
 		uint64_t last_shutdown_time, uint64_t *target, uint64_t now)
 {
 	return now > *target ?
 			CRITICAL_SHUTDOWN_HIBERNATE : CRITICAL_SHUTDOWN_IGNORE;
 }
+#endif	/* CONFIG_BATTERY */
+#endif	/* CONFIG_HIBERNATE */
 
 /**
  * Common handler for steady states
