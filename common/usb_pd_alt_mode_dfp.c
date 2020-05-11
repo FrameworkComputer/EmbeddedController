@@ -442,15 +442,6 @@ void pd_set_identity_discovery(int port, enum tcpm_transmit_type type,
 	pd->identity_discovery = disc;
 }
 
-void pd_set_svids_discovery(int port, enum tcpm_transmit_type type,
-			       enum pd_discovery_state disc)
-{
-	struct pd_discovery *pd = pd_get_am_discovery(port, type);
-
-	pd->svids_discovery = disc;
-}
-
-
 enum pd_discovery_state pd_get_identity_discovery(int port,
 						  enum tcpm_transmit_type type)
 {
@@ -490,6 +481,14 @@ uint8_t pd_get_product_type(int port)
 								TCPC_TX_SOP);
 
 	return resp->idh.product_type;
+}
+
+void pd_set_svids_discovery(int port, enum tcpm_transmit_type type,
+			       enum pd_discovery_state disc)
+{
+	struct pd_discovery *pd = pd_get_am_discovery(port, type);
+
+	pd->svids_discovery = disc;
 }
 
 enum pd_discovery_state pd_get_svids_discovery(int port,
