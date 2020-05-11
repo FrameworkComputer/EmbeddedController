@@ -41,19 +41,75 @@
 
 #define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
+#define INT_RECHECK_US 5000
+
 /* C0 interrupt line shared by BC 1.2 and charger */
-static void usb_c0_interrupt(enum gpio_signal s)
+static void check_c0_line(void);
+DECLARE_DEFERRED(check_c0_line);
+
+static void notify_c0_chips(void)
 {
 	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
 	sm5803_interrupt(0);
 }
 
+static void check_c0_line(void)
+{
+	/*
+	 * If line is still being held low, see if there's more to process from
+	 * one of the chips
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_INT_ODL)) {
+		notify_c0_chips();
+		hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
+	}
+}
+
+static void usb_c0_interrupt(enum gpio_signal s)
+{
+	/* Cancel any previous calls to check the interrupt line */
+	hook_call_deferred(&check_c0_line_data, -1);
+
+	/* Notify all chips using this line that an interrupt came in */
+	notify_c0_chips();
+
+	/* Check the line again in 5ms */
+	hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
+}
+
 /* C1 interrupt line shared by BC 1.2, TCPC, and charger */
-static void usb_c1_interrupt(enum gpio_signal s)
+static void check_c1_line(void);
+DECLARE_DEFERRED(check_c1_line);
+
+static void notify_c1_chips(void)
 {
 	schedule_deferred_pd_interrupt(1);
 	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
 	sm5803_interrupt(1);
+}
+
+static void check_c1_line(void)
+{
+	/*
+	 * If line is still being held low, see if there's more to process from
+	 * one of the chips.
+	 */
+	if (!gpio_get_level(GPIO_USB_C1_INT_ODL)) {
+		notify_c1_chips();
+		hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
+	}
+}
+
+static void usb_c1_interrupt(enum gpio_signal s)
+{
+	/* Cancel any previous calls to check the interrupt line */
+	hook_call_deferred(&check_c1_line_data, -1);
+
+	/* Notify all chips using this line that an interrupt came in */
+	notify_c1_chips();
+
+	/* Check the line again in 5ms */
+	hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
 }
 
 static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
