@@ -3184,6 +3184,9 @@ static void tc_ct_attached_snk_entry(int port)
 
 	/* The port shall reject a VCONN swap request. */
 	TC_SET_FLAG(port, TC_FLAGS_REJECT_VCONN_SWAP);
+
+	/* Enable AutoDischargeDisconnect */
+	tcpm_enable_auto_discharge_disconnect(port, 1);
 }
 
 static void tc_ct_attached_snk_run(int port)
