@@ -10,4 +10,4 @@ CHIP:=it83xx
 CHIP_FAMILY:=it8xxx2
 CHIP_VARIANT:=it81202ax_1024
 
-board-y=board.o battery.o
+board-y=board.o battery.o usb_pd_policy.o
