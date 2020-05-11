@@ -19,6 +19,7 @@ test-list-y=\
        mutex \
        pingpong \
        rollback \
+       rollback_entropy \
        rtc \
        sha256 \
        sha256_unrolled \
