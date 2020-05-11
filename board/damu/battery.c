@@ -13,7 +13,7 @@ const struct board_batt_params board_battery_info[] = {
 			.manuf_name = "AS3GWRc3KA",
 			.device_name = "C235-41",
 			.ship_mode = {
-				.reg_addr = 0x10,
+				.reg_addr = 0x00,
 				.reg_data = { 0x10, 0x10 },
 			},
 			.fet = {
