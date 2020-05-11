@@ -84,4 +84,18 @@ void cpu_invalidate_dcache_range(uintptr_t base, unsigned int length);
 /* Clean and Invalidate a single range of the D-cache */
 void cpu_clean_invalidate_dcache_range(uintptr_t base, unsigned int length);
 
+/* Set the priority of the given IRQ in the NVIC (0 is highest). */
+static inline void cpu_set_interrupt_priority(uint8_t irq, uint8_t priority)
+{
+	const uint32_t prio_shift = irq % 4 * 8 + 5;
+
+	if (priority > 7)
+		priority = 7;
+
+	CPU_NVIC_PRI(irq / 4) =
+		(CPU_NVIC_PRI(irq / 4) &
+		 ~(7 << prio_shift)) |
+		(priority << prio_shift);
+}
+
 #endif /* __CROS_EC_CPU_H */

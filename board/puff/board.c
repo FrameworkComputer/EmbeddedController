@@ -394,16 +394,6 @@ const struct ina3221_t ina3221[] = {
 };
 const unsigned int ina3221_count = ARRAY_SIZE(ina3221);
 
-static void override_interrupt_priority(int irq, int priority)
-{
-	const uint32_t prio_shift = irq % 4 * 8 + 5;
-
-	CPU_NVIC_PRI(irq / 4) =
-		(CPU_NVIC_PRI(irq / 4) &
-		 ~(0x7 << prio_shift)) |
-		(priority << prio_shift);
-}
-
 static void board_init(void)
 {
 	uint8_t *memmap_batt_flags;
@@ -419,12 +409,12 @@ static void board_init(void)
 	 * requiring faster response must be higher priority.
 	 */
 	/* CPU_C10_GATE_L on GPIO6.7: must be ~instant for ~60us response. */
-	override_interrupt_priority(NPCX_IRQ_WKINTH_1, 1);
+	cpu_set_interrupt_priority(NPCX_IRQ_WKINTH_1, 1);
 	/*
 	 * slp_s3_interrupt (GPIOA.5 on WKINTC_0) must respond within 200us
 	 * (tPLT18); less critical than the C10 gate.
 	 */
-	override_interrupt_priority(NPCX_IRQ_WKINTC_0, 2);
+	cpu_set_interrupt_priority(NPCX_IRQ_WKINTC_0, 2);
 
 	update_port_limits();
 	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_L);

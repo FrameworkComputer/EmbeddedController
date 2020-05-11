@@ -41,4 +41,18 @@
 /* Set up the cpu to detect faults */
 void cpu_init(void);
 
+/* Set the priority of the given IRQ in the NVIC (0 is highest). */
+static inline void cpu_set_interrupt_priority(uint8_t irq, uint8_t priority)
+{
+	const uint32_t prio_shift = irq % 4 * 8 + 6;
+
+	if (priority > 3)
+		priority = 3;
+
+	CPU_NVIC_PRI(irq / 4) =
+		(CPU_NVIC_PRI(irq / 4) &
+		 ~(3 << prio_shift)) |
+		(priority << prio_shift);
+}
+
 #endif /* __CROS_EC_CPU_H */

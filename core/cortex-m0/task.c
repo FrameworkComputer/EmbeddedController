@@ -489,15 +489,8 @@ static void __nvic_init_irqs(void)
 
 	/* Set priorities */
 	for (i = 0; i < exc_calls; i++) {
-		uint8_t irq = __irqprio[i].irq;
-		uint8_t prio = __irqprio[i].priority;
-		uint32_t prio_shift = irq % 4 * 8 + 6;
-		if (prio > 0x3)
-			prio = 0x3;
-		CPU_NVIC_PRI(irq / 4) =
-				(CPU_NVIC_PRI(irq / 4) &
-				 ~(0x3 << prio_shift)) |
-				(prio << prio_shift);
+		cpu_set_interrupt_priority(__irqprio[i].irq,
+					   __irqprio[i].priority);
 	}
 }
 
