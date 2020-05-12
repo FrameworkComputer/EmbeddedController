@@ -10,6 +10,8 @@
 
 #ifndef __ASSEMBLER__
 
+#include <stdint.h>
+
 /**
  * Get minimum version set by rollback protection blocks.
  *
