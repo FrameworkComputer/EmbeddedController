@@ -17,6 +17,7 @@
 #include "mpu.h"
 #endif
 #include "rollback.h"
+#include "rollback_private.h"
 #include "sha256.h"
 #include "system.h"
 #include "task.h"
@@ -28,20 +29,6 @@
 
 /* Number of rollback regions */
 #define ROLLBACK_REGIONS 2
-
-/*
- * Note: Do not change this structure without also updating
- * common/firmware_image.S .image.ROLLBACK section.
- */
-struct rollback_data {
-	int32_t id; /* Incrementing number to indicate which region to use. */
-	int32_t rollback_min_version;
-#ifdef CONFIG_ROLLBACK_SECRET_SIZE
-	uint8_t secret[CONFIG_ROLLBACK_SECRET_SIZE];
-#endif
-	/* cookie must always be last, as it validates the rest of the data. */
-	uint32_t cookie;
-};
 
 static int get_rollback_offset(int region)
 {
@@ -103,7 +90,7 @@ static void clear_rollback(struct rollback_data *data)
 #endif
 }
 
-static int read_rollback(int region, struct rollback_data *data)
+int read_rollback(int region, struct rollback_data *data)
 {
 	int offset;
 	int ret = EC_SUCCESS;
