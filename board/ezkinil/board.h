@@ -170,6 +170,15 @@ static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
 		  HAS_HDMI_RETIMER_PI3HDX1204);
 }
 
+#define HAS_HDMI_CONN_HPD \
+			(BIT(EZKINIL_DB_T_OPT1_USBC_HDMI))
+
+static inline bool ec_config_has_hdmi_conn_hpd(void)
+{
+	return !!(BIT(ec_config_get_usb_db()) &
+		  HAS_HDMI_CONN_HPD);
+}
+
 /* TODO: Fill in with GPIO values */
 #define PORT_TO_HPD(port) ((port == 0) \
 	? GPIO_USB_C0_HPD \

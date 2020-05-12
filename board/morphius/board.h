@@ -182,6 +182,15 @@ static inline bool ec_config_has_mst_hub_rtd2141b(void)
 		  HAS_MST_HUB_RTD2141B);
 }
 
+#define HAS_HDMI_CONN_HPD \
+			(BIT(MORPHIUS_DB_T_OPT1_USBC_HDMI))
+
+static inline bool ec_config_has_hdmi_conn_hpd(void)
+{
+	return !!(BIT(ec_config_get_usb_db()) &
+		  HAS_HDMI_CONN_HPD);
+}
+
 #define PORT_TO_HPD(port) ((port == 0) \
 	? GPIO_USB_C0_HPD \
 	: (ec_config_has_usbc1_retimer_ps8802()) \

@@ -296,6 +296,9 @@ void setup_fw_config(void)
 
 	if (ec_config_has_mst_hub_rtd2141b())
 		ioex_enable_interrupt(IOEX_MST_HPD_OUT);
+
+	if (ec_config_has_hdmi_conn_hpd())
+		ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
 }
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
