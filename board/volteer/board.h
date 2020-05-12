@@ -14,6 +14,8 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
+#define CONFIG_VBOOT_EFS2
+
 #define CONFIG_POWER_BUTTON
 
 #undef CONFIG_UART_TX_BUF_SIZE
