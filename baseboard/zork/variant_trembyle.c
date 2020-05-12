@@ -137,7 +137,6 @@ void baseboard_tcpc_init(void)
 
 	/* Enable HPD interrupts */
 	ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
-	ioex_enable_interrupt(IOEX_MST_HPD_OUT);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -159,37 +158,6 @@ struct ioexpander_config_t ioex_config[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_IO_EXPANDER_PORT_COUNT == USBC_PORT_COUNT);
-
-/*****************************************************************************
- * MST hub
- */
-
-static void mst_hpd_handler(void)
-{
-	int hpd = 0;
-
-	/*
-	 * Ensure level on GPIO_DP1_HPD matches IOEX_MST_HPD_OUT, in case
-	 * we got out of sync.
-	 */
-	ioex_get_level(IOEX_MST_HPD_OUT, &hpd);
-	gpio_set_level(GPIO_DP1_HPD, hpd);
-	ccprints("MST HPD %d", hpd);
-}
-DECLARE_DEFERRED(mst_hpd_handler);
-
-void mst_hpd_interrupt(enum ioex_signal signal)
-{
-	/*
-	 * Goal is to pass HPD through from DB OPT3 MST hub to AP's DP1.
-	 * Immediately invert GPIO_DP1_HPD, to pass through the edge on
-	 * IOEX_MST_HPD_OUT. Then check level after 2 msec debounce.
-	 */
-	int hpd = !gpio_get_level(GPIO_DP1_HPD);
-
-	gpio_set_level(GPIO_DP1_HPD, hpd);
-	hook_call_deferred(&mst_hpd_handler_data, (2 * MSEC));
-}
 
 /*****************************************************************************
  * USB-A Power

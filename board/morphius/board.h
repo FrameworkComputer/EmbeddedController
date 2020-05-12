@@ -173,6 +173,15 @@ static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
 		  HAS_HDMI_RETIMER_PI3HDX1204);
 }
 
+#define HAS_MST_HUB_RTD2141B \
+			(BIT(MORPHIUS_DB_T_OPT3_USBC_HDMI_MSTHUB))
+
+static inline bool ec_config_has_mst_hub_rtd2141b(void)
+{
+	return !!(BIT(ec_config_get_usb_db()) &
+		  HAS_MST_HUB_RTD2141B);
+}
+
 #define PORT_TO_HPD(port) ((port == 0) \
 	? GPIO_USB_C0_HPD \
 	: (ec_config_has_usbc1_retimer_ps8802()) \
