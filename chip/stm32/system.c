@@ -343,6 +343,10 @@ void system_reset(int flags)
 	if (flags & SYSTEM_RESET_HARD)
 		save_flags |= EC_RESET_FLAG_HARD;
 
+	/* Add in stay in RO flag into saved flags. */
+	if (flags & SYSTEM_RESET_STAY_IN_RO)
+		save_flags |= EC_RESET_FLAG_STAY_IN_RO;
+
 #ifdef CONFIG_STM32_RESET_FLAGS_EXTENDED
 	if (flags & SYSTEM_RESET_AP_WATCHDOG)
 		save_flags |= EC_RESET_FLAG_AP_WATCHDOG;
