@@ -269,6 +269,12 @@ void rwsig_task(void *u)
 	if (system_get_image_copy() != EC_IMAGE_RO)
 		goto exit;
 
+	/* Stay in RO if we were asked to when reset. */
+	if (system_get_reset_flags() & EC_RESET_FLAG_STAY_IN_RO) {
+		rwsig_status = RWSIG_ABORTED;
+		goto exit;
+	}
+
 	rwsig_status = RWSIG_IN_PROGRESS;
 	if (!rwsig_check_signature()) {
 		rwsig_status = RWSIG_INVALID;
