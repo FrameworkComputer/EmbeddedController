@@ -122,8 +122,12 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 static void board_tcpc_init(void)
 {
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
-	if (board_get_sub_board() == SUB_BOARD_TYPEC)
-		gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+	/* C1: GPIO_USB_C1_PPC_INT_ODL & HDMI: GPIO_PS185_EC_DP_HPD */
+	gpio_enable_interrupt(GPIO_X_EC_GPIO2);
+
+	/* If this is not a Type-C subboard, disable the task. */
+	if (board_get_sub_board() != SUB_BOARD_TYPEC)
+		task_disable_task(TASK_ID_PD_C1);
 }
 /* Must be done after I2C and subboard */
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
@@ -209,6 +213,9 @@ static void board_sub_bc12_init(void)
 {
 	if (board_get_sub_board() == SUB_BOARD_TYPEC)
 		gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
+	else
+		/* If this is not a Type-C subboard, disable the task. */
+		task_disable_task(TASK_ID_USB_CHG_P1);
 }
 /* Must be done after I2C and subboard */
 DECLARE_HOOK(HOOK_INIT, board_sub_bc12_init, HOOK_PRIO_INIT_I2C + 1);
@@ -261,9 +268,31 @@ static void ppc_interrupt(enum gpio_signal signal)
 		syv682x_interrupt(0);
 }
 
+int debounced_hpd;
+
+/**
+ * Handle PS185 HPD changing state.
+ */
+static void ps185_hdmi_hpd_deferred(void)
+{
+	const int new_hpd = gpio_get_level(GPIO_PS185_EC_DP_HPD);
+
+	/* HPD status not changed, probably a glitch, just return. */
+	if (debounced_hpd == new_hpd)
+		return;
+
+	debounced_hpd = new_hpd;
+
+	gpio_set_level(GPIO_EC_DPBRDG_HPD_ODL, !debounced_hpd);
+	CPRINTS(debounced_hpd ? "HDMI plug" : "HDMI unplug");
+}
+DECLARE_DEFERRED(ps185_hdmi_hpd_deferred);
+
+#define PS185_HPD_DEBOUCE 250
+
 static void hdmi_hpd_interrupt(enum gpio_signal signal)
 {
-	/* TODO: implement HDMI HPD */
+	hook_call_deferred(&ps185_hdmi_hpd_deferred_data, PS185_HPD_DEBOUCE);
 }
 
 /* HDMI/TYPE-C function shared subboard interrupt */
@@ -466,6 +495,12 @@ static enum board_sub_board board_get_sub_board(void)
 		sub = SUB_BOARD_HDMI;
 		/* Only has 1 PPC with HDMI subboard */
 		ppc_cnt = 1;
+		/* EC_X_GPIO1 */
+		gpio_set_flags(GPIO_EN_HDMI_PWR, GPIO_OUT_HIGH);
+		/* X_EC_GPIO2 */
+		gpio_set_flags(GPIO_PS185_EC_DP_HPD, GPIO_INT_BOTH);
+		/* EC_X_GPIO3 */
+		gpio_set_flags(GPIO_PS185_PWRDN_ODL, GPIO_ODR_HIGH);
 	} else {
 		sub = SUB_BOARD_TYPEC;
 		/* EC_X_GPIO1 */
