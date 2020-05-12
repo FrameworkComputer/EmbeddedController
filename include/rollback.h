@@ -47,7 +47,7 @@ int rollback_update_version(int32_t next_min_version);
  *
  * @return EC_SUCCESS on success, EC_ERROR_* on error.
  */
-int rollback_add_entropy(uint8_t *data, unsigned int len);
+int rollback_add_entropy(const uint8_t *data, unsigned int len);
 
 /**
  * Lock rollback protection block, reboot if necessary.

@@ -202,7 +202,7 @@ failed:
 
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
 static int add_entropy(uint8_t *dst, const uint8_t *src,
-			uint8_t *add, unsigned int add_len)
+		       const uint8_t *add, unsigned int add_len)
 {
 	int ret = 0;
 #ifdef CONFIG_SHA256
@@ -254,7 +254,7 @@ failed:
  * @return EC_SUCCESS on success, EC_ERROR_* on error.
  */
 static int rollback_update(int32_t next_min_version,
-			   uint8_t *entropy, unsigned int length)
+			   const uint8_t *entropy, unsigned int length)
 {
 	/*
 	 * When doing flash_write operation, the data needs to be in blocks
@@ -356,7 +356,7 @@ int rollback_update_version(int32_t next_min_version)
 	return rollback_update(next_min_version, NULL, 0);
 }
 
-int rollback_add_entropy(uint8_t *data, unsigned int len)
+int rollback_add_entropy(const uint8_t *data, unsigned int len)
 {
 	return rollback_update(-1, data, len);
 }
