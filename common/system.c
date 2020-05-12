@@ -1236,6 +1236,8 @@ static int command_reboot(int argc, char **argv)
 		} else if (!strcasecmp(argv[i], "ap-off-in-ro")) {
 			flags |= (SYSTEM_RESET_LEAVE_AP_OFF |
 				  SYSTEM_RESET_STAY_IN_RO);
+		} else if (!strcasecmp(argv[i], "ro")) {
+			flags |= SYSTEM_RESET_STAY_IN_RO;
 		} else if (!strcasecmp(argv[i], "cancel")) {
 			reboot_at_shutdown = EC_REBOOT_CANCEL;
 			return EC_SUCCESS;
@@ -1260,7 +1262,8 @@ static int command_reboot(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(
 	reboot, command_reboot,
-	"[hard|soft] [preserve] [ap-off] [wait-ext] [cancel] [ap-off-in-ro]",
+	"[hard|soft] [preserve] [ap-off] [wait-ext] [cancel] [ap-off-in-ro]"
+	" [ro]",
 	"Reboot the EC");
 
 #ifdef CONFIG_CMD_SYSLOCK
