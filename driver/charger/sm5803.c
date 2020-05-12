@@ -188,11 +188,9 @@ static void sm5803_init(int chgnum)
 	enum ec_error_list rv;
 	int reg;
 
-	/* --- Special register init ---
-	 * Only for early silicon, and can be removed later
-	 *
-	 * Can be run with CHG_EN set to 1 if Vbus is present and Vsys is
-	 * stable.  Otherwise, clear CHG_EN for init process.
+	/*
+	 * If a charger is not currently present, disable switching per OCPC
+	 * requirements
 	 */
 	rv = main_read8(chgnum, SM5803_REG_STATUS1, &reg);
 	if (rv == EC_SUCCESS) {
@@ -212,52 +210,62 @@ static void sm5803_init(int chgnum)
 		return;
 	}
 
-	rv |= main_write8(chgnum, 0x20, 0x08);
-	rv |= main_write8(chgnum, 0x30, 0xC0);
-	rv |= main_write8(chgnum, 0x80, 0x01);
+	rv |= main_read8(chgnum, SM5803_REG_CHIP_ID, &reg);
+	if (reg == 0x02) {
+		/* --- Special register init ---
+		 * For early silicon (ID 2) with 3S batteries
+		 */
+		rv |= main_write8(chgnum, 0x20, 0x08);
+		rv |= main_write8(chgnum, 0x30, 0xC0);
+		rv |= main_write8(chgnum, 0x80, 0x01);
 
-	rv |= meas_write8(chgnum, 0x08, 0xC2);
+		rv |= meas_write8(chgnum, 0x08, 0xC2);
 
-	rv |= chg_write8(chgnum, 0x1D, 0x40);
-	rv |= chg_write8(chgnum, 0x1F, 0x09);
+		rv |= chg_write8(chgnum, 0x1D, 0x40);
+		rv |= chg_write8(chgnum, 0x1F, 0x09);
 
-	rv |= chg_write8(chgnum, 0x22, 0xB3);
-	rv |= chg_write8(chgnum, 0x23, 0x81);
-	rv |= chg_write8(chgnum, 0x28, 0xB7);
+		rv |= chg_write8(chgnum, 0x22, 0xB3);
+		rv |= chg_write8(chgnum, 0x23, 0x81);
+		rv |= chg_write8(chgnum, 0x28, 0xB7);
 
-	rv |= chg_write8(chgnum, 0x4A, 0x82);
-	rv |= chg_write8(chgnum, 0x4B, 0xA3);
-	rv |= chg_write8(chgnum, 0x4C, 0xA8);
-	rv |= chg_write8(chgnum, 0x4D, 0xCA);
-	rv |= chg_write8(chgnum, 0x4E, 0x07);
-	rv |= chg_write8(chgnum, 0x4F, 0xFF);
+		rv |= chg_write8(chgnum, 0x4A, 0x82);
+		rv |= chg_write8(chgnum, 0x4B, 0xA3);
+		rv |= chg_write8(chgnum, 0x4C, 0xA8);
+		rv |= chg_write8(chgnum, 0x4D, 0xCA);
+		rv |= chg_write8(chgnum, 0x4E, 0x07);
+		rv |= chg_write8(chgnum, 0x4F, 0xFF);
 
-	rv |= chg_write8(chgnum, 0x50, 0x98);
-	rv |= chg_write8(chgnum, 0x51, 0x00);
-	rv |= chg_write8(chgnum, 0x52, 0x77);
-	rv |= chg_write8(chgnum, 0x53, 0xD4);
-	rv |= chg_write8(chgnum, 0x54, 0x03);
-	rv |= chg_write8(chgnum, 0x55, 0xF1);
-	rv |= chg_write8(chgnum, 0x56, 0xFF);
-	rv |= chg_write8(chgnum, 0x57, 0x03);
-	rv |= chg_write8(chgnum, 0x58, 0xF1);
-	rv |= chg_write8(chgnum, 0x59, 0xFF);
-	rv |= chg_write8(chgnum, 0x5A, 0x10);
-	rv |= chg_write8(chgnum, 0x5B, 0x00);
-	rv |= chg_write8(chgnum, 0x5C, 0x5B);
-	rv |= chg_write8(chgnum, 0x5D, 0xB0);
-	rv |= chg_write8(chgnum, 0x5E, 0x3C);
-	rv |= chg_write8(chgnum, 0x5F, 0x3C);
+		rv |= chg_write8(chgnum, 0x50, 0x98);
+		rv |= chg_write8(chgnum, 0x51, 0x00);
+		rv |= chg_write8(chgnum, 0x52, 0x77);
+		rv |= chg_write8(chgnum, 0x53, 0xD4);
+		rv |= chg_write8(chgnum, 0x54, 0x03);
+		rv |= chg_write8(chgnum, 0x55, 0xF1);
+		rv |= chg_write8(chgnum, 0x56, 0xFF);
+		rv |= chg_write8(chgnum, 0x57, 0x03);
+		rv |= chg_write8(chgnum, 0x58, 0xF1);
+		rv |= chg_write8(chgnum, 0x59, 0xFF);
+		rv |= chg_write8(chgnum, 0x5A, 0x10);
+		rv |= chg_write8(chgnum, 0x5B, 0x00);
+		rv |= chg_write8(chgnum, 0x5C, 0x5B);
+		rv |= chg_write8(chgnum, 0x5D, 0xB0);
+		rv |= chg_write8(chgnum, 0x5E, 0x3C);
+		rv |= chg_write8(chgnum, 0x5F, 0x3C);
 
-	rv |= chg_write8(chgnum, 0x60, 0x55);
-	rv |= chg_write8(chgnum, 0x61, 0x20);
-	rv |= chg_write8(chgnum, 0x65, 0x3E);
-	rv |= chg_write8(chgnum, 0x66, 0x36);
-	rv |= chg_write8(chgnum, 0x67, 0x64);
-	rv |= chg_write8(chgnum, 0x68, 0x88);
-	rv |= chg_write8(chgnum, 0x69, 0xC7);
+		rv |= chg_write8(chgnum, 0x60, 0x55);
+		rv |= chg_write8(chgnum, 0x61, 0x20);
+		rv |= chg_write8(chgnum, 0x65, 0x3E);
+		rv |= chg_write8(chgnum, 0x66, 0x36);
+		rv |= chg_write8(chgnum, 0x67, 0x64);
+		rv |= chg_write8(chgnum, 0x68, 0x88);
+		rv |= chg_write8(chgnum, 0x69, 0xC7);
 
-	/* --- End special register init section --- */
+		/* Inits to access page 0x37 and enable trickle charging */
+		rv |= main_write8(chgnum, 0x1F, 0x01);
+		rv |= i2c_update8(chg_chips[chgnum].i2c_port, 0x37,
+				  0x8E, BIT(5), MASK_SET);
+		rv |= main_write8(chgnum, 0x1F, 0x00);
+	}
 
 	/* Set default input current */
 	reg = SM5803_CURRENT_TO_REG(CONFIG_CHARGER_INPUT_CURRENT)

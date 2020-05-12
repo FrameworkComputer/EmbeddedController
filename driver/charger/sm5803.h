@@ -15,6 +15,8 @@
 
 /* Main registers (address 0x30) */
 
+#define SM5803_REG_CHIP_ID		0x00
+
 #define SM5803_REG_STATUS1		0x01
 #define SM5803_STATUS1_VSYS_OK		BIT(0)
 #define SM5803_STATUS1_VPWR_OK		BIT(1)
