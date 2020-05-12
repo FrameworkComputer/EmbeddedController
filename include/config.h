@@ -1245,7 +1245,6 @@
 #define CONFIG_CMD_MEM
 #define CONFIG_CMD_MMAPINFO
 #define CONFIG_CMD_PD
-#undef  CONFIG_CMD_PD_CONTROL
 #undef  CONFIG_CMD_PD_DEV_DUMP_INFO
 #undef  CONFIG_CMD_PD_FLASH
 #define CONFIG_CMD_PECI
@@ -2073,6 +2072,9 @@
 
 /* Flash commands over PD */
 #define CONFIG_HOSTCMD_FLASHPD
+
+/* Host command to control USB-PD chip */
+#undef CONFIG_HOSTCMD_PD_CONTROL
 
 /* Set entry in PD MCU's device rw_hash table */
 #define CONFIG_HOSTCMD_RWHASHPD

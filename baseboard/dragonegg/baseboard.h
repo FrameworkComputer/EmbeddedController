@@ -113,7 +113,7 @@
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 
-#define CONFIG_CMD_PD_CONTROL
+#define CONFIG_HOSTCMD_PD_CONTROL
 #define CONFIG_CMD_PPC_DUMP
 
 /* TODO(b/111281797): Use correct PD delay values */

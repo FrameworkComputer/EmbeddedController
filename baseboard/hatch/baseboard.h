@@ -147,7 +147,7 @@
 #define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_USBC_PPC_DEDICATED_INT
 
-#define CONFIG_CMD_PD_CONTROL
+#define CONFIG_HOSTCMD_PD_CONTROL
 #define CONFIG_CMD_PPC_DUMP
 
 /* Include CLI command needed to support CCD testing. */

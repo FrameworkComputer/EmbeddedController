@@ -510,7 +510,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_PD_PORT_CAPS,
 		     hc_get_pd_port_caps,
 		     EC_VER_MASK(0));
 
-#ifdef CONFIG_CMD_PD_CONTROL
+#ifdef CONFIG_HOSTCMD_PD_CONTROL
 static enum ec_status pd_control(struct host_cmd_handler_args *args)
 {
 	static int pd_control_disabled[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -585,8 +585,7 @@ static enum ec_status pd_control(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-
 DECLARE_HOST_COMMAND(EC_CMD_PD_CONTROL, pd_control, EC_VER_MASK(0));
-#endif /* CONFIG_CMD_PD_CONTROL */
+#endif /* CONFIG_HOSTCMD_PD_CONTROL */
 
 #endif /* HAS_TASK_HOSTCMD */

@@ -33,6 +33,9 @@
 #define CONFIG_CMD_USB_PD_CABLE
 #define CONFIG_CMD_USB_PD_PE
 
+/* Host commands  */
+#define CONFIG_HOSTCMD_PD_CONTROL
+
 /* Port80 display */
 #define CONFIG_MAX695X_SEVEN_SEGMENT_DISPLAY
 

@@ -161,7 +161,7 @@
 #define CONFIG_USB_PD_TCPM_TUSB422	/* USBC port C0 */
 #define CONFIG_USB_PD_TCPM_PS8815	/* USBC port USB3 DB */
 #define CONFIG_USB_PD_TCPM_MUX
-#define CONFIG_CMD_PD_CONTROL		/* Needed for TCPC FW update */
+#define CONFIG_HOSTCMD_PD_CONTROL		/* Needed for TCPC FW update */
 #define CONFIG_CMD_USB_PD_PE
 
 #define CONFIG_USB_PD_TRY_SRC
