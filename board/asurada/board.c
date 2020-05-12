@@ -7,11 +7,13 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "button.h"
+#include "charge_manager.h"
 #include "charger.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "driver/charger/isl923x.h"
+#include "driver/ppc/syv682x.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -29,13 +31,12 @@
 #include "uart.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
+#include "usbc_ppc.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
-
+static void ppc_interrupt(enum gpio_signal signal);
 static void x_ec_interrupt(enum gpio_signal signal);
 
 #include "gpio_list.h"
@@ -85,6 +86,15 @@ static void board_init(void)
 {
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+static void board_tcpc_init(void)
+{
+	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
+	if (board_get_sub_board() == SUB_BOARD_TYPEC)
+		gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+}
+/* Must be done after I2C and subboard */
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
@@ -139,9 +149,60 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+/* PPC */
+struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	{
+		.i2c_port = I2C_PORT_PPC0,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.drv = &syv682x_drv
+	},
+	{
+		.i2c_port = I2C_PORT_PPC1,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.drv = &syv682x_drv
+	},
+};
+unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+
+static void ppc_interrupt(enum gpio_signal signal)
+{
+	if (signal == GPIO_USB_C0_PPC_INT_ODL)
+		/* C0: PPC interrupt */
+		syv682x_interrupt(0);
+}
+
+static void hdmi_hpd_interrupt(enum gpio_signal signal)
+{
+	/* TODO: implement HDMI HPD */
+}
+
+/* HDMI/TYPE-C function shared subboard interrupt */
 static void x_ec_interrupt(enum gpio_signal signal)
 {
-	/* TODO: implement this */
+	int sub = board_get_sub_board();
+
+	if (sub == SUB_BOARD_TYPEC)
+		/* C1: PPC interrupt */
+		syv682x_interrupt(1);
+	else if (sub == SUB_BOARD_HDMI)
+		hdmi_hpd_interrupt(signal);
+	else
+		CPRINTS("Undetected subboard interrupt.");
+}
+
+int ppc_get_alert_status(int port)
+{
+	if (port == 0)
+		return gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0;
+	if (port == 1 && board_get_sub_board() == SUB_BOARD_TYPEC)
+		return gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
+
+	return 0;
+}
+
+void board_overcurrent_event(int port, int is_overcurrented)
+{
+	/* TODO: check correct operation for Asurada */
 }
 
 /* TCPC */
@@ -188,11 +249,58 @@ int board_get_version(void)
 	return 0;
 }
 
-int board_set_active_charge_port(int charge_port)
+int board_set_active_charge_port(int port)
 {
-	CPRINTS("New chg p%d", charge_port);
+	int i;
+	int is_valid_port = port == 0 || (port == 1 && board_get_sub_board() ==
+							       SUB_BOARD_TYPEC);
 
-	return 0;
+	if (!is_valid_port && port != CHARGE_PORT_NONE)
+		return EC_ERROR_INVAL;
+
+	if (port == CHARGE_PORT_NONE) {
+		CPRINTS("Disabling all charger ports");
+
+		/* Disable all ports. */
+		for (i = 0; i < ppc_cnt; i++) {
+			/*
+			 * Do not return early if one fails otherwise we can
+			 * get into a boot loop assertion failure.
+			 */
+			if (ppc_vbus_sink_enable(i, 0))
+				CPRINTS("Disabling C%d as sink failed.", i);
+		}
+
+		return EC_SUCCESS;
+	}
+
+	/* Check if the port is sourcing VBUS. */
+	if (ppc_is_sourcing_vbus(port)) {
+		CPRINTF("Skip enable C%d", port);
+		return EC_ERROR_INVAL;
+	}
+
+	CPRINTS("New charge port: C%d", port);
+
+	/*
+	 * Turn off the other ports' sink path FETs, before enabling the
+	 * requested charge port.
+	 */
+	for (i = 0; i < ppc_cnt; i++) {
+		if (i == port)
+			continue;
+
+		if (ppc_vbus_sink_enable(i, 0))
+			CPRINTS("C%d: sink path disable failed.", i);
+	}
+
+	/* Enable requested charge port. */
+	if (ppc_vbus_sink_enable(port, 1)) {
+		CPRINTS("C%d: sink path enable failed.", port);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	return EC_SUCCESS;
 }
 
 void board_set_charge_limit(int port, int supplier, int charge_ma,
@@ -216,6 +324,8 @@ static enum board_sub_board board_get_sub_board(void)
 	/* HDMI board has external pull high. */
 	if (gpio_get_level(GPIO_EC_X_GPIO3)) {
 		sub = SUB_BOARD_HDMI;
+		/* Only has 1 PPC with HDMI subboard */
+		ppc_cnt = 1;
 	} else {
 		sub = SUB_BOARD_TYPEC;
 		/* EC_X_GPIO1 */
