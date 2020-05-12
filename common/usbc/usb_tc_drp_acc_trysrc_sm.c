@@ -710,10 +710,13 @@ void tc_hard_reset_request(int port)
  */
 void tc_hard_reset_allow_unattach(int port)
 {
-	TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH);
+	/* Only deal with HardReset if we are currently doing HardReset */
+	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH)) {
+		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH);
 
-	/* Enable AutoDischargeDisconnect */
-	tcpm_enable_auto_discharge_disconnect(port, 1);
+		/* Enable AutoDischargeDisconnect */
+		tcpm_enable_auto_discharge_disconnect(port, 1);
+	}
 }
 
 void tc_disc_ident_in_progress(int port)
