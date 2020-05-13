@@ -181,7 +181,11 @@ static bool anx7688_tcpm_check_vbus_level(int port, enum vbus_level level)
 	 * value. See crosbug.com/p/55221 .
 	 */
 	i2c_read8(I2C_PORT_TCPC, 0x28, 0x40, &reg);
-	return ((reg & 0x10) ? 1 : 0);
+
+	if (level == VBUS_PRESENT)
+		return ((reg & 0x10) ? 1 : 0);
+	else
+		return ((reg & 0x10) ? 0 : 1);
 }
 #endif
 

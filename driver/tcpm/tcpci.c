@@ -29,6 +29,13 @@
 static int vconn_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 static int rx_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 #endif
+
+/*
+ * Last reported VBus Level
+ *
+ * BIT(VBUS_SAFE0V) will indicate if in SAFE0V
+ * BIT(VBUS_PRESENT) will indicate if in PRESENT
+ */
 static int tcpc_vbus[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Cached RP role values */
@@ -211,6 +218,11 @@ static int init_alert_mask(int port)
 		| TCPC_REG_ALERT_POWER_STATUS
 #endif
 		;
+
+	/* TCPCI Rev2 includes SAFE0V alerts */
+	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0)
+		mask |= TCPC_REG_ALERT_EXT_STATUS;
+
 	/* Set the alert mask in TCPC */
 	rv = tcpc_write16(port, TCPC_REG_ALERT_MASK, mask);
 
@@ -595,6 +607,12 @@ static int tcpm_alert_ext_status(int port, int *alert_ext)
 	return tcpc_read(port, TCPC_REG_ALERT_EXT, alert_ext);
 }
 
+static int tcpm_ext_status(int port, int *ext_status)
+{
+	/* Read TCPC Extended Status register */
+	return tcpc_read(port, TCPC_REG_EXT_STATUS, ext_status);
+}
+
 int tcpci_tcpm_set_rx_enable(int port, int enable)
 {
 	int detect_sop_en = 0;
@@ -636,7 +654,10 @@ void tcpci_tcpc_fast_role_swap_enable(int port, int enable)
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 bool tcpci_tcpm_check_vbus_level(int port, enum vbus_level level)
 {
-	return tcpc_vbus[port];
+	if (level == VBUS_SAFE0V)
+		return !!(tcpc_vbus[port] & BIT(VBUS_SAFE0V));
+	else
+		return !!(tcpc_vbus[port] & BIT(VBUS_PRESENT));
 }
 #endif
 
@@ -1050,23 +1071,45 @@ void tcpci_tcpc_alert(int port)
 			pd_event |= PD_EVENT_CC;
 		}
 	}
+
+	/* Check for VBus change */
+	if ((tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) &&
+	    (alert & TCPC_REG_ALERT_EXT_STATUS)) {
+		int ext_status = 0;
+
+		/* Read Extended Status register */
+		tcpm_ext_status(port, &ext_status);
+		/* Safe0V and not Safe5V */
+		if (ext_status & TCPC_REG_EXT_STATUS_SAFE0V)
+			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
+	}
 	if (alert & TCPC_REG_ALERT_POWER_STATUS) {
 		int pwr_status = 0;
 
 		/* Read Power Status register */
 		tcpci_tcpm_get_power_status(port, &pwr_status);
 		/* Update VBUS status */
-		tcpc_vbus[port] = pwr_status &
-			TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
+		if (pwr_status & TCPC_REG_POWER_STATUS_VBUS_PRES)
+			/* Safe5V and not Safe0V */
+			tcpc_vbus[port] = BIT(VBUS_PRESENT);
+		else if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0)
+			/* not Safe5V */
+			tcpc_vbus[port] &= ~BIT(VBUS_PRESENT);
+		else
+			/* not Safe5V and not Safe0V */
+			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
+
 #if defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) && defined(CONFIG_USB_CHARGER)
 		/* Update charge manager with new VBUS state */
-		usb_charger_vbus_change(port, tcpc_vbus[port]);
+		usb_charger_vbus_change(port,
+				!!(tcpc_vbus[port] & BIT(VBUS_PRESENT)));
 		pd_event |= TASK_EVENT_WAKE;
 #endif /* CONFIG_USB_PD_VBUS_DETECT_TCPC && CONFIG_USB_CHARGER */
 		if (pwr_status & TCPC_REG_POWER_STATUS_VBUS_DET)
 			board_vbus_present_change();
 	}
 
+	/* Check for Hard Reset received */
 	if (alert & TCPC_REG_ALERT_RX_HARD_RST) {
 		/* hard reset received */
 		CPRINTS("C%d Hard Reset received", port);
@@ -1231,15 +1274,33 @@ int tcpci_tcpm_init(int port)
 	tcpc_alert(port);
 	/* Initialize power_status_mask */
 	init_power_status_mask(port);
-	/* Update VBUS status */
-	tcpc_vbus[port] = power_status &
-			TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
+
+	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) {
+		int ext_status = 0;
+
+		/* Read Extended Status register */
+		tcpm_ext_status(port, &ext_status);
+		/* Initial level, set appropriately */
+		if (power_status & TCPC_REG_POWER_STATUS_VBUS_PRES)
+			tcpc_vbus[port] = BIT(VBUS_PRESENT);
+		else if (ext_status & TCPC_REG_EXT_STATUS_SAFE0V)
+			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
+		else
+			tcpc_vbus[port] = 0;
+	} else {
+		/* Initial level, set appropriately */
+		tcpc_vbus[port] = (power_status &
+				   TCPC_REG_POWER_STATUS_VBUS_PRES)
+					? BIT(VBUS_PRESENT)
+					: BIT(VBUS_SAFE0V);
+	}
+
 #if defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) && defined(CONFIG_USB_CHARGER)
 	/*
 	 * Set Vbus change now in case the TCPC doesn't send a power status
 	 * changed interrupt for it later.
 	 */
-	usb_charger_vbus_change(port, tcpc_vbus[port]);
+	usb_charger_vbus_change(port, !!(tcpc_vbus[port] & BIT(VBUS_PRESENT)));
 #endif
 	error = init_alert_mask(port);
 	if (error)
@@ -1373,7 +1434,7 @@ static const struct tcpci_reg tcpci_regs[] = {
 	TCPCI_REG(TCPC_REG_ALERT_MASK, 2),
 	TCPCI_REG(TCPC_REG_POWER_STATUS_MASK, 1),
 	TCPCI_REG(TCPC_REG_FAULT_STATUS_MASK, 1),
-	TCPCI_REG(TCPC_REG_EXTENDED_STATUS_MASK, 1),
+	TCPCI_REG(TCPC_REG_EXT_STATUS_MASK, 1),
 	TCPCI_REG(TCPC_REG_ALERT_EXTENDED_MASK, 1),
 	TCPCI_REG(TCPC_REG_CONFIG_STD_OUTPUT, 1),
 	TCPCI_REG(TCPC_REG_TCPC_CTRL, 1),
@@ -1383,6 +1444,7 @@ static const struct tcpci_reg tcpci_regs[] = {
 	TCPCI_REG(TCPC_REG_CC_STATUS, 1),
 	TCPCI_REG(TCPC_REG_POWER_STATUS, 1),
 	TCPCI_REG(TCPC_REG_FAULT_STATUS, 1),
+	TCPCI_REG(TCPC_REG_EXT_STATUS, 1),
 	TCPCI_REG(TCPC_REG_ALERT_EXT, 1),
 	TCPCI_REG(TCPC_REG_DEV_CAP_1, 2),
 	TCPCI_REG(TCPC_REG_DEV_CAP_2, 2),

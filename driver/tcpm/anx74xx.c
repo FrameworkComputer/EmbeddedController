@@ -865,7 +865,10 @@ static bool anx74xx_tcpm_check_vbus_level(int port, enum vbus_level level)
 	int reg = 0;
 
 	tcpc_read(port, ANX74XX_REG_ANALOG_STATUS, &reg);
-	return ((reg & ANX74XX_REG_VBUS_STATUS) ? 1 : 0);
+	if (level == VBUS_PRESENT)
+		return ((reg & ANX74XX_REG_VBUS_STATUS) ? 1 : 0);
+	else
+		return ((reg & ANX74XX_REG_VBUS_STATUS) ? 0 : 1);
 }
 #endif
 

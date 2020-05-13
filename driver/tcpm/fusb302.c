@@ -911,7 +911,10 @@ static bool fusb302_tcpm_check_vbus_level(int port, enum vbus_level level)
 	/* Read status register */
 	tcpc_read(port, TCPC_REG_STATUS0, &reg);
 
-	return (reg & TCPC_REG_STATUS0_VBUSOK) ? 1 : 0;
+	if (level == VBUS_PRESENT)
+		return (reg & TCPC_REG_STATUS0_VBUSOK) ? 1 : 0;
+	else
+		return (reg & TCPC_REG_STATUS0_VBUSOK) ? 0 : 1;
 }
 #endif
 

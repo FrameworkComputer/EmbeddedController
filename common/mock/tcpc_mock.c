@@ -44,7 +44,10 @@ static int mock_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 
 static bool mock_check_vbus_level(int port, enum vbus_level level)
 {
-	return mock_tcpc.vbus_level;
+	if (level == VBUS_PRESENT)
+		return mock_tcpc.vbus_level;
+	else
+		return !mock_tcpc.vbus_level;
 }
 
 static int mock_select_rp_value(int port, int rp)
