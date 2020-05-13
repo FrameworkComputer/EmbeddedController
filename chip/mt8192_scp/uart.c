@@ -5,48 +5,154 @@
 
 /* SCP UART module */
 
+#include "system.h"
 #include "uart.h"
+#include "uart_regs.h"
+#include "util.h"
+
+/*
+ * UARTN == 0, SCP UART0
+ * UARTN == 1, SCP UART1
+ * UARTN == 2, AP UART1
+ */
+#define UARTN CONFIG_UART_CONSOLE
+#define UART_IDLE_WAIT_US 500
+
+static uint8_t init_done, tx_started;
 
 void uart_init(void)
 {
+	const uint32_t baud_rate = CONFIG_UART_BAUD_RATE;
+	/* TODO: use ULPOSC1 for S3 */
+	const uint32_t uart_clock = 26000000;
+	const uint32_t div = DIV_ROUND_NEAREST(uart_clock, baud_rate * 16);
+
+#if UARTN == 0
+	SCP_UART_CK_SEL |= UART0_CK_SEL_VAL(UART_CK_SEL_26M);
+	SCP_SET_CLK_CG |= CG_UART0_MCLK | CG_UART0_BCLK | CG_UART0_RST;
+
+	/* set AP GPIO164 and GPIO165 to alt func 3 */
+	AP_GPIO_MODE20_CLR = 0x00770000;
+	AP_GPIO_MODE20_SET = 0x00330000;
+#elif UARTN == 1
+	SCP_UART_CK_SEL |= UART1_CK_SEL_VAL(UART_CK_SEL_26M);
+	SCP_SET_CLK_CG |= CG_UART1_MCLK | CG_UART1_BCLK | CG_UART1_RST;
+#endif
+
+	/* Clear FIFO */
+	UART_FCR(UARTN) = UART_FCR_ENABLE_FIFO
+		| UART_FCR_CLEAR_RCVR
+		| UART_FCR_CLEAR_XMIT;
+	/* Line control: parity none, 8 bit, 1 stop bit */
+	UART_LCR(UARTN) = UART_LCR_WLEN8;
+	/* For baud rate <= 115200 */
+	UART_HIGHSPEED(UARTN) = 0;
+
+	/* DLAB start */
+	UART_LCR(UARTN) |= UART_LCR_DLAB;
+	UART_DLL(UARTN) = div & 0xff;
+	UART_DLH(UARTN) = (div >> 8) & 0xff;
+	UART_LCR(UARTN) &= ~UART_LCR_DLAB;
+	/* DLAB end */
+
+	/* Enable received data interrupt */
+	UART_IER(UARTN) |= UART_IER_RDI;
+
+#if (UARTN < SCP_UART_COUNT)
+	task_enable_irq(UART_TX_IRQ(UARTN));
+	task_enable_irq(UART_RX_IRQ(UARTN));
+#endif
+
+	init_done = 1;
 }
 
 int uart_init_done(void)
 {
-	return 0;
+	return init_done;
 }
 
 void uart_tx_flush(void)
 {
+	while (!(UART_LSR(UARTN) & UART_LSR_TEMT))
+		;
 }
 
 int uart_tx_ready(void)
 {
-	return 0;
+	return UART_LSR(UARTN) & UART_LSR_THRE;
 }
 
 int uart_rx_available(void)
 {
-	return 0;
+	return UART_LSR(UARTN) & UART_LSR_DR;
 }
 
 void uart_write_char(char c)
 {
+	while (!uart_tx_ready())
+		;
+
+	UART_THR(UARTN) = c;
 }
 
 int uart_read_char(void)
 {
-	return 0;
+	return UART_RBR(UARTN);
 }
 
 void uart_tx_start(void)
 {
+	tx_started = 1;
+	if (UART_IER(UARTN) & UART_IER_THRI)
+		return;
+	disable_sleep(SLEEP_MASK_UART);
+	UART_IER(UARTN) |= UART_IER_THRI;
 }
 
 void uart_tx_stop(void)
 {
+	tx_started = 0;
+	UART_IER(UARTN) &= ~UART_IER_THRI;
+	enable_sleep(SLEEP_MASK_UART);
 }
 
 void uart_process(void)
 {
+	uart_process_input();
+	uart_process_output();
 }
+
+#if (UARTN < SCP_UART_COUNT)
+void irq_group12_handler(void)
+{
+	extern volatile int ec_int;
+
+	switch (ec_int) {
+	case UART_TX_IRQ(UARTN):
+		uart_process();
+		task_clear_pending_irq(ec_int);
+		break;
+	case UART_RX_IRQ(UARTN):
+		uart_process();
+		SCP_CORE0_INTC_UART_RX_IRQ(UARTN) = BIT(0);
+		task_clear_pending_irq(ec_int);
+		break;
+	}
+}
+DECLARE_IRQ(12, irq_group12_handler, 2);
+#else
+
+#ifndef HAS_TASK_APUART
+#error "APUART task hasn't defined in ec.tasklist."
+#endif
+
+void uart_task(void)
+{
+	while (1) {
+		if (uart_rx_available() || tx_started)
+			uart_process();
+		else
+			task_wait_event(UART_IDLE_WAIT_US);
+	}
+}
+#endif

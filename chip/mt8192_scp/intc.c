@@ -46,8 +46,8 @@ static struct {
 	[SCP_IRQ_EINT]			= { INTC_GRP_0 },
 	[SCP_IRQ_PMIC]			= { INTC_GRP_0 },
 	/* 8 */
-	[SCP_IRQ_UART0_TX]		= { INTC_GRP_0 },
-	[SCP_IRQ_UART1_TX]		= { INTC_GRP_0 },
+	[SCP_IRQ_UART0_TX]		= { INTC_GRP_12 },
+	[SCP_IRQ_UART1_TX]		= { INTC_GRP_12 },
 	[SCP_IRQ_I2C0]			= { INTC_GRP_0 },
 	[SCP_IRQ_I2C1_0]		= { INTC_GRP_0 },
 	/* 12 */
@@ -63,8 +63,8 @@ static struct {
 	/* 20 */
 	[SCP_IRQ_TIMER5]		= { INTC_GRP_0 },
 	[SCP_IRQ_OS_TIMER]		= { INTC_GRP_0 },
-	[SCP_IRQ_UART0_RX]		= { INTC_GRP_0 },
-	[SCP_IRQ_UART1_RX]		= { INTC_GRP_0 },
+	[SCP_IRQ_UART0_RX]		= { INTC_GRP_12 },
+	[SCP_IRQ_UART1_RX]		= { INTC_GRP_12 },
 	/* 24 */
 	[SCP_IRQ_GDMA]			= { INTC_GRP_0 },
 	[SCP_IRQ_AUDIO]			= { INTC_GRP_0 },
