@@ -72,7 +72,7 @@ static const struct max17055_batt_profile batt_profile[] = {
 	[BATTERY_ATL] = {
 		.is_ez_config		= 1,
 		.design_cap		= MAX17055_DESIGNCAP_REG(7270),
-		.ichg_term		= MAX17055_ICHGTERM_REG(200),
+		.ichg_term		= MAX17055_ICHGTERM_REG(500),
 		.v_empty_detect		= MAX17055_VEMPTY_REG(3000, 3600),
 	},
 };

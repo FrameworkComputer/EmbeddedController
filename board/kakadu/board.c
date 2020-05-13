@@ -101,7 +101,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 
 struct mt6370_thermal_bound thermal_bound = {
-	.target = 80,
+	.target = 90,
 	.err = 4,
 };
 
@@ -118,7 +118,7 @@ static void board_hpd_update(const struct usb_mux *me,
 __override const struct rt946x_init_setting *board_rt946x_init_setting(void)
 {
 	static const struct rt946x_init_setting battery_init_setting = {
-		.eoc_current = 140,
+		.eoc_current = 500,
 		.mivr = 4000,
 		.ircmp_vclamp = 32,
 		.ircmp_res = 25,
