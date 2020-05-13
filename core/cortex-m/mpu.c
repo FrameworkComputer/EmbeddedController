@@ -240,10 +240,57 @@ int mpu_lock_rw_flash(void)
 #ifdef CONFIG_ROLLBACK_MPU_PROTECT
 int mpu_lock_rollback(int lock)
 {
-	return mpu_config_region(REGION_ROLLBACK,
-			CONFIG_MAPPED_STORAGE_BASE + CONFIG_ROLLBACK_OFF,
-			CONFIG_ROLLBACK_SIZE, MPU_ATTR_XN | MPU_ATTR_NO_NO,
-			lock);
+	int rv;
+	int num_mpu_regions = mpu_num_regions();
+
+	const uint32_t rollback_region_start_address =
+		CONFIG_MAPPED_STORAGE_BASE + CONFIG_ROLLBACK_OFF;
+	const uint32_t rollback_region_total_size = CONFIG_ROLLBACK_SIZE;
+	const uint16_t mpu_attr =
+		MPU_ATTR_XN /* Execute never */ |
+		MPU_ATTR_NO_NO /* No access (privileged or unprivileged */;
+
+	/*
+	 * Originally rollback MPU support was added on Cortex-M7, which
+	 * supports 16 MPU regions and has rollback region aligned in a way
+	 * that we can use a single region.
+	 */
+	uint8_t rollback_mpu_region = REGION_ROLLBACK;
+
+	if (rollback_mpu_region < num_mpu_regions) {
+		rv = mpu_config_region(rollback_mpu_region,
+				       rollback_region_start_address,
+				       rollback_region_total_size, mpu_attr,
+				       lock);
+		return rv;
+	}
+
+	/*
+	 * If we get here, we can't use REGION_ROLLBACK because our MPU doesn't
+	 * have enough regions. Instead, we choose unused MPU regions.
+	 *
+	 * Note that on the Cortex-M3, Cortex-M4, and Cortex-M7, the base
+	 * address used for an MPU region must be aligned to the size of the
+	 * region, so it's not possible to use a single region to protect the
+	 * entire rollback flash on the STM32F412 (bloonchipper); we have to
+	 * use two.
+	 *
+	 * See mpu_update_region for alignment details.
+	 */
+
+	rollback_mpu_region = REGION_CHIP_RESERVED;
+	rv = mpu_config_region(rollback_mpu_region,
+			       rollback_region_start_address,
+			       rollback_region_total_size / 2, mpu_attr, lock);
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	rollback_mpu_region = REGION_STORAGE2;
+	rv = mpu_config_region(rollback_mpu_region,
+			       rollback_region_start_address +
+				       (rollback_region_total_size / 2),
+			       rollback_region_total_size / 2, mpu_attr, lock);
+	return rv;
 }
 #endif
 
