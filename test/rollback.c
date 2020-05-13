@@ -57,7 +57,10 @@ test_static int _test_lock_rollback(const struct rollback_info *info,
 {
 	int rv;
 
-	mpu_enable();
+	/*
+	 * We expect the MPU to have already been enabled during the
+	 * initialization process (mpu_pre_init).
+	 */
 
 	rv = mpu_lock_rollback(0);
 	TEST_EQ(rv, EC_SUCCESS, "%d");

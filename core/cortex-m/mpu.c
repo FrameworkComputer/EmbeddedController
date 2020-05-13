@@ -345,10 +345,13 @@ int mpu_pre_init(void)
 		if (rv != EC_SUCCESS)
 			return rv;
 
-		mpu_enable();
 #endif
-		cpu_enable_caches();
 	}
+
+	mpu_enable();
+
+	if (IS_ENABLED(CONFIG_ARMV7M_CACHE))
+		cpu_enable_caches();
 
 	return EC_SUCCESS;
 }
