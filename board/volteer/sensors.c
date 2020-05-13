@@ -15,6 +15,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "task.h"
+#include "tablet_mode.h"
 #include "util.h"
 
 /******************************************************************************/
@@ -83,14 +84,10 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 };
 
 /* Rotation matrix for the lid accelerometer */
-/* TODO: b/146144170 - the accelerometer is on the motherboard for proto1
- * for testing. Once the sensor moves to the lid, the rotation matrix needs
- * to be updated for correct behavior.
- */
 static const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
 	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
 const mat33_fp_t base_standard_ref = {
@@ -241,3 +238,18 @@ static void baseboard_sensors_init(void)
 	gpio_enable_interrupt(GPIO_EC_IMU_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_DEFAULT);
+
+#ifndef TEST_BUILD
+void lid_angle_peripheral_enable(int enable)
+{
+	/*
+	 * If the lid is in tablet position via other sensors,
+	 * ignore the lid angle, which might be faulty then
+	 * disable keyboard.
+	 */
+	if (tablet_get_mode())
+		enable = 0;
+
+	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+}
+#endif

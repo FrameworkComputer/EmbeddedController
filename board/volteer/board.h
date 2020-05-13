@@ -48,6 +48,11 @@
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
 	(BIT(LID_ACCEL) | BIT(CLEAR_ALS))
 
+#define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_UPDATE
+#define CONFIG_LID_ANGLE_SENSOR_BASE		BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID		LID_ACCEL
+
 /* USB Type C and USB PD defines */
 /*
  * USB-C port's USB2 & USB3 mapping from schematics
