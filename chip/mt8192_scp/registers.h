@@ -17,6 +17,35 @@
 
 /* clock control */
 #define SCP_CLK_CTRL_BASE		(SCP_REG_BASE + 0x21000)
+/* clock source select */
+#define SCP_CLK_SW_SEL			REG32(SCP_CLK_CTRL_BASE + 0x0000)
+#define   CLK_SW_SEL_26M		0
+#define   CLK_SW_SEL_32K		1
+#define   CLK_SW_SEL_ULPOSC2		2
+#define   CLK_SW_SEL_ULPOSC1		3
+#define SCP_CLK_ENABLE			REG32(SCP_CLK_CTRL_BASE + 0x0004)
+#define   CLK_HIGH_EN			BIT(1) /* ULPOSC */
+#define   CLK_HIGH_CG			BIT(2)
+/* system clock counter value */
+#define SCP_CLK_SYS_VAL			REG32(SCP_CLK_CTRL_BASE + 0x0014)
+#define   CLK_SYS_VAL_MASK		(0x3ff << 0)
+#define   CLK_SYS_VAL_VAL(v)		((v) & CLK_SYS_VAL_MASK)
+/* ULPOSC clock counter value */
+#define SCP_CLK_HIGH_VAL		REG32(SCP_CLK_CTRL_BASE + 0x0018)
+#define   CLK_HIGH_VAL_MASK             (0x1f << 0)
+#define   CLK_HIGH_VAL_VAL(v)		((v) & CLK_HIGH_VAL_MASK)
+/* sleep mode control */
+#define SCP_SLEEP_CTRL                  REG32(SCP_CLK_CTRL_BASE + 0x0020)
+#define   SLP_CTRL_EN			BIT(0)
+#define   VREQ_COUNT_MASK		(0x7F << 1)
+#define   VREQ_COUNT_VAL(v)		(((v) << 1) & VREQ_COUNT_MASK)
+#define   SPM_SLP_MODE			BIT(8)
+/* clock divider select */
+#define SCP_CLK_DIV_SEL			REG32(SCP_CLK_CTRL_BASE + 0x0024)
+#define   CLK_DIV_SEL1			0
+#define   CLK_DIV_SEL2			1
+#define   CLK_DIV_SEL4			2
+#define   CLK_DIV_SEL3			3
 /* clock gate */
 #define SCP_SET_CLK_CG			REG32(SCP_CLK_CTRL_BASE + 0x0030)
 #define   CG_TIMER_MCLK			BIT(0)
@@ -63,6 +92,33 @@
 #define     UART_CK_SW_STATUS_26M	BIT(0)
 #define     UART_CK_SW_STATUS_32K	BIT(1)
 #define     UART_CK_SW_STATUS_ULPOS	BIT(2)
+/* VREQ control */
+#define SCP_CPU_VREQ_CTRL		REG32(SCP_CLK_CTRL_BASE + 0x0054)
+#define   VREQ_SEL			BIT(0)
+#define   VREQ_VALUE			BIT(4)
+#define   VREQ_EXT_SEL			BIT(8)
+#define   VREQ_DVFS_SEL			BIT(16)
+#define   VREQ_DVFS_VALUE		BIT(20)
+#define   VREQ_DVFS_EXT_SEL		BIT(24)
+#define   VREQ_SRCLKEN_SEL		BIT(27)
+#define   VREQ_SRCLKEN_VALUE		BIT(28)
+/* clock on control */
+#define SCP_CLK_HIGH_CORE_CG		REG32(SCP_CLK_CTRL_BASE + 0x005C)
+#define   HIGH_CORE_CG			BIT(1)
+#define SCP_CLK_ON_CTRL			REG32(SCP_CLK_CTRL_BASE + 0x006C)
+#define   HIGH_AO			BIT(0)
+#define   HIGH_DIS_SUB			BIT(1)
+#define   HIGH_CG_AO			BIT(2)
+#define   HIGH_CORE_AO			BIT(4)
+#define   HIGH_CORE_DIS_SUB		BIT(5)
+#define   HIGH_CORE_CG_AO		BIT(6)
+/* clock general control */
+#define SCP_CLK_CTRL_GENERAL_CTRL	REG32(SCP_CLK_CTRL_BASE + 0x009C)
+#define   VREQ_PMIC_WRAP_SEL		(0x2)
+
+/* system control */
+#define SCP_SYS_CTRL			REG32(SCP_REG_BASE + 0x24000)
+#define   AUTO_DDREN			BIT(9)
 
 /* IPC */
 #define SCP_SCP2APMCU_IPC_SET		REG32(SCP_REG_BASE + 0x24080)
@@ -140,6 +196,9 @@
 #define   TIMER_IRQ_CLR			BIT(5)
 #define SCP_IRQ_TIMER(n)		CONCAT2(SCP_IRQ_TIMER, n)
 
+/* secure control */
+#define SCP_SEC_CTRL			REG32(SCP_REG_BASE + 0xA5000)
+#define   VREQ_SECURE_DIS		BIT(4)
 /* memory remap */
 #define SCP_R_REMAP_0X0123		REG32(SCP_REG_BASE + 0xA5060)
 #define SCP_R_REMAP_0X4567		REG32(SCP_REG_BASE + 0xA5064)
@@ -148,12 +207,71 @@
 
 /* external address: AP */
 #define AP_REG_BASE			0x60000000 /* 0x10000000 remap to 0x6 */
+/* OSC meter */
+#define TOPCK_BASE			AP_REG_BASE
+#define AP_CLK_MISC_CFG_0		REG32(TOPCK_BASE + 0x0140)
+#define   MISC_METER_DIVISOR_MASK	0xff000000
+#define   MISC_METER_DIV_1		0
+#define AP_CLK_DBG_CFG			REG32(TOPCK_BASE + 0x017C)
+#define   DBG_MODE_MASK			3
+#define   DBG_MODE_SET_CLOCK		0
+#define   DBG_BIST_SOURCE_MASK		(0x3f << 16)
+#define   DBG_BIST_SOURCE_ULPOSC1	(0x25 << 16)
+#define   DBG_BIST_SOURCE_ULPOSC2	(0x24 << 16)
+#define AP_SCP_CFG_0			REG32(TOPCK_BASE + 0x0220)
+#define   CFG_FREQ_METER_RUN		BIT(4)
+#define   CFG_FREQ_METER_ENABLE		BIT(12)
+#define AP_SCP_CFG_1			REG32(TOPCK_BASE + 0x0224)
+#define   CFG_FREQ_COUNTER(CFG1)	((CFG1) & 0xFFFF)
 /* AP GPIO */
 #define AP_GPIO_BASE			(AP_REG_BASE + 0x5000)
 #define AP_GPIO_MODE11_SET		REG32(AP_GPIO_BASE + 0x03B4)
 #define AP_GPIO_MODE11_CLR		REG32(AP_GPIO_BASE + 0x03B8)
 #define AP_GPIO_MODE20_SET		REG32(AP_GPIO_BASE + 0x0444)
 #define AP_GPIO_MODE20_CLR		REG32(AP_GPIO_BASE + 0x0448)
+/*
+ * ULPOSC
+ * osc: 0 for ULPOSC1, 1 for ULPOSC2.
+ */
+#define AP_ULPOSC_CON0_BASE		(AP_REG_BASE + 0xC2B0)
+#define AP_ULPOSC_CON1_BASE		(AP_REG_BASE + 0xC2B4)
+#define AP_ULPOSC_CON2_BASE		(AP_REG_BASE + 0xC2B8)
+#define AP_ULPOSC_CON0(osc) \
+		REG32(AP_ULPOSC_CON0_BASE + (osc) * 0x10)
+#define AP_ULPOSC_CON1(osc) \
+		REG32(AP_ULPOSC_CON1_BASE + (osc) * 0x10)
+#define AP_ULPOSC_CON2(osc) \
+		REG32(AP_ULPOSC_CON2_BASE + (osc) * 0x10)
+/*
+ * AP_ULPOSC_CON0
+ * bit0-6: calibration
+ * bit7-13: iband
+ * bit14-17: fband
+ * bit18-23: div
+ * bit24: cp_en
+ * bit25-31: reserved
+ */
+#define OSC_CALI_MASK		0x7f
+#define OSC_IBAND_SHIFT		7
+#define OSC_FBAND_SHIFT		14
+#define OSC_DIV_SHIFT		18
+#define OSC_CP_EN		BIT(24)
+/* AP_ULPOSC_CON1
+ * bit0-7: 32K calibration
+ * bit 8-15: rsv1
+ * bit 16-23: rsv2
+ * bit 24-25: mod
+ * bit26: div2_en
+ * bit27-31: reserved
+ */
+#define OSC_RSV1_SHIFT		8
+#define OSC_RSV2_SHIFT		16
+#define OSC_MOD_SHIFT		24
+#define OSC_DIV2_EN		BIT(26)
+/* AP_ULPOSC_CON2
+ * bit0-7: bias
+ * bit8-31: reserved
+ */
 
 /* IRQ numbers */
 #define SCP_IRQ_GIPC_IN0		0
