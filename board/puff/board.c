@@ -172,17 +172,16 @@ static void adp_connect_deferred(void)
 	if (connected == adp_connected)
 		return;
 	if (connected) {
-		pi.voltage = 19000;
-		/*
-		 * TODO(b:143975429) set current according to SKU.
-		 * Different SKUs will ship with different power bricks
-		 * that have varying power, though setting this to the
-		 * maximum current available on any SKU may be okay
-		 * (assume the included brick is sufficient to run the
-		 * system at max power and over-reporting available
-		 * power will have no effect).
-		 */
-		pi.current = 4740;
+		switch (ec_config_get_bj_power()) {
+		case BJ_POWER_65W:
+			pi.voltage = 19000;
+			pi.current = 3420;
+			break;
+		case BJ_POWER_90W:
+			pi.voltage = 19000;
+			pi.current = 4740;
+			break;
+		}
 	}
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 				     DEDICATED_CHARGE_PORT, &pi);
@@ -570,8 +569,10 @@ int extpower_is_present(void)
 }
 
 static uint16_t board_version;
+static uint32_t fw_config;
 
-static void load_board_info(void)
+
+static void cbi_init(void)
 {
 	/*
 	 * Load board info from CBI to control per-device configuration.
@@ -584,8 +585,11 @@ static void load_board_info(void)
 	if (cbi_get_board_version(&val) == EC_SUCCESS && val <= UINT16_MAX)
 		board_version = val;
 	CPRINTS("Board Version: 0x%04x", board_version);
+	if (cbi_get_fw_config(&val) == EC_SUCCESS)
+		fw_config = val;
+	CPRINTS("Firmware config: 0x%08x", fw_config);
 }
-DECLARE_HOOK(HOOK_INIT, load_board_info, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
 int board_is_c10_gate_enabled(void)
 {
@@ -603,3 +607,7 @@ void board_enable_s0_rails(int enable)
 	gpio_set_level(GPIO_EN_PP5000_HDMI, enable);
 }
 
+enum ec_cfg_bj_power_type ec_config_get_bj_power(void)
+{
+	return ((fw_config & EC_CFG_BJ_POWER_MASK) >> EC_CFG_BJ_POWER_L);
+}
