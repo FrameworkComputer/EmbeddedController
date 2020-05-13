@@ -68,9 +68,9 @@
  * These macros SET, CLEAR, and CHECK, a DPM (Device Policy Manager)
  * Request. The Requests are listed in usb_pe_sm.h.
  */
-#define PE_SET_DPM_REQUEST(port, req) (pe[port].dpm_request |=  (req))
-#define PE_CLR_DPM_REQUEST(port, req) (pe[port].dpm_request &= ~(req))
-#define PE_CHK_DPM_REQUEST(port, req) (pe[port].dpm_request &   (req))
+#define PE_SET_DPM_REQUEST(port, req) atomic_or(&pe[port].dpm_request,    (req))
+#define PE_CLR_DPM_REQUEST(port, req) atomic_clear(&pe[port].dpm_request, (req))
+#define PE_CHK_DPM_REQUEST(port, req) (pe[port].dpm_request &             (req))
 
 /*
  * Policy Engine Layer Flags
