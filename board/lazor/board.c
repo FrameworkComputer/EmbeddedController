@@ -10,7 +10,7 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "extpower.h"
-#include "driver/accel_kionix.h"
+#include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -420,7 +420,7 @@ static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;
 
 static struct bmi_drv_data_t g_bmi160_data;
-static struct kionix_accel_data g_kx022_data;
+static struct accelgyro_saved_data_t g_bma255_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
 const mat33_fp_t base_standard_ref = {
@@ -439,18 +439,18 @@ struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 	 .name = "Lid Accel",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_KX022,
+	 .chip = MOTIONSENSE_CHIP_BMA255,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &kionix_accel_drv,
+	 .drv = &bma2x2_accel_drv,
 	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_kx022_data,
+	 .drv_data = &g_bma255_data,
 	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
+	 .i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
 	 .rot_standard_ref = &lid_standard_ref,
 	 .default_range = 2, /* g, to support lid angle calculation. */
-	 .min_frequency = KX022_ACCEL_MIN_FREQ,
-	 .max_frequency = KX022_ACCEL_MAX_FREQ,
+	 .min_frequency = BMA255_ACCEL_MIN_FREQ,
+	 .max_frequency = BMA255_ACCEL_MAX_FREQ,
 	 .config = {
 		/* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S0] = {
