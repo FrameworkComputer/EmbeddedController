@@ -126,7 +126,7 @@ static const struct tcpm_drv mock_tcpm_drv = {
 	.release                = &mock_tcpm_release,
 	.get_cc                 = &mock_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.get_vbus_level         = &mock_tcpm_get_vbus_level,
+	.check_vbus_level       = &mock_tcpm_check_vbus_level,
 #endif
 	.select_rp_value        = &mock_tcpm_select_rp_value,
 	.set_cc                 = &mock_tcpm_set_cc,

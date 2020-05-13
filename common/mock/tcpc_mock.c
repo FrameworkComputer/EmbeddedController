@@ -42,7 +42,7 @@ static int mock_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	return EC_SUCCESS;
 }
 
-static int mock_get_vbus_level(int port)
+static bool mock_check_vbus_level(int port, enum vbus_level level)
 {
 	return mock_tcpc.vbus_level;
 }
@@ -167,7 +167,7 @@ const struct tcpm_drv mock_tcpc_driver = {
 	.init = &mock_init,
 	.release = &mock_release,
 	.get_cc = &mock_get_cc,
-	.get_vbus_level = &mock_get_vbus_level,
+	.check_vbus_level = &mock_check_vbus_level,
 	.select_rp_value = &mock_select_rp_value,
 	.set_cc = &mock_set_cc,
 	.set_polarity = &mock_set_polarity,

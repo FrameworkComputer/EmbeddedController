@@ -61,7 +61,7 @@ void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	return tcpci_tcpm_get_vbus_level(port);
+	return tcpci_tcpm_check_vbus_level(port, VBUS_PRESENT);
 }
 
 int pd_set_power_supply_ready(int port)

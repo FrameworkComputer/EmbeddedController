@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_USB_PD_TCPM_H
 #define __CROS_EC_USB_PD_TCPM_H
 
+#include <stdbool.h>
 #include "ec_commands.h"
 #include "i2c.h"
 
@@ -106,6 +107,12 @@ enum tcpc_transmit_complete {
 	TCPC_TX_COMPLETE_FAILED =    2,
 };
 
+/* USB-C PD Vbus levels */
+enum vbus_level {
+	VBUS_SAFE0V,
+	VBUS_PRESENT,
+};
+
 /**
  * Returns whether the sink has detected a Rp resistor on the other side.
  */
@@ -202,13 +209,14 @@ struct tcpm_drv {
 		enum tcpc_cc_voltage_status *cc2);
 
 	/**
-	 * Read VBUS
+	 * Check VBUS level
 	 *
 	 * @param port Type-C port number
+	 * @param level safe level voltage to check against
 	 *
-	 * @return 0 => VBUS not detected, 1 => VBUS detected
+	 * @return False => VBUS not at level, True => VBUS at level
 	 */
-	int (*get_vbus_level)(int port);
+	bool (*check_vbus_level)(int port, enum vbus_level level);
 
 	/**
 	 * Set the value of the CC pull-up used when we are a source.

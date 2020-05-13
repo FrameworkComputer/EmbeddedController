@@ -163,9 +163,9 @@ static inline int tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	return tcpc_config[port].drv->get_cc(port, cc1, cc2);
 }
 
-static inline int tcpm_get_vbus_level(int port)
+static inline bool tcpm_check_vbus_level(int port, enum vbus_level level)
 {
-	return tcpc_config[port].drv->get_vbus_level(port);
+	return tcpc_config[port].drv->check_vbus_level(port, level);
 }
 
 static inline int tcpm_select_rp_value(int port, int rp)
@@ -328,13 +328,14 @@ int tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	enum tcpc_cc_voltage_status *cc2);
 
 /**
- * Read VBUS
+ * Check VBUS level
  *
  * @param port Type-C port number
+ * @param level safe level voltage to check against
  *
- * @return 0 => VBUS not detected, 1 => VBUS detected
+ * @return False => VBUS not at level, True => VBUS at level
  */
-int tcpm_get_vbus_level(int port);
+bool tcpm_check_vbus_level(int port, enum vbus_level level);
 
 /**
  * Set the value of the CC pull-up used when we are a source.

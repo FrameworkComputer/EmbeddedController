@@ -218,7 +218,7 @@ int extpower_is_present(void)
 	if (board_vbus_source_enabled(0))
 		return 0;
 	else
-		return tcpm_get_vbus_level(0);
+		return tcpm_check_vbus_level(0, VBUS_PRESENT);
 }
 
 int pd_snk_is_vbus_provided(int port)

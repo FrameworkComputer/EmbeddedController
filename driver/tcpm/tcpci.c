@@ -634,7 +634,7 @@ void tcpci_tcpc_fast_role_swap_enable(int port, int enable)
 #endif
 
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-int tcpci_tcpm_get_vbus_level(int port)
+bool tcpci_tcpm_check_vbus_level(int port, enum vbus_level level)
 {
 	return tcpc_vbus[port];
 }
@@ -1051,18 +1051,19 @@ void tcpci_tcpc_alert(int port)
 		}
 	}
 	if (alert & TCPC_REG_ALERT_POWER_STATUS) {
-		int reg = 0;
+		int pwr_status = 0;
+
 		/* Read Power Status register */
-		tcpci_tcpm_get_power_status(port, &reg);
+		tcpci_tcpm_get_power_status(port, &pwr_status);
 		/* Update VBUS status */
-		tcpc_vbus[port] = reg &
+		tcpc_vbus[port] = pwr_status &
 			TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
 #if defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) && defined(CONFIG_USB_CHARGER)
 		/* Update charge manager with new VBUS state */
 		usb_charger_vbus_change(port, tcpc_vbus[port]);
 		pd_event |= TASK_EVENT_WAKE;
 #endif /* CONFIG_USB_PD_VBUS_DETECT_TCPC && CONFIG_USB_CHARGER */
-		if (reg & TCPC_REG_POWER_STATUS_VBUS_DET)
+		if (pwr_status & TCPC_REG_POWER_STATUS_VBUS_DET)
 			board_vbus_present_change();
 	}
 
@@ -1451,7 +1452,7 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 	.release		= &tcpci_tcpm_release,
 	.get_cc			= &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,
+	.check_vbus_level	= &tcpci_tcpm_check_vbus_level,
 #endif
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
 	.set_cc			= &tcpci_tcpm_set_cc,

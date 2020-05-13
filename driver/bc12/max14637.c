@@ -129,7 +129,7 @@ static void detect_or_power_down_ic(const int port)
 	int vbus_present;
 
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	vbus_present = tcpm_get_vbus_level(port);
+	vbus_present = tcpm_check_vbus_level(port, VBUS_PRESENT);
 #else
 	vbus_present = pd_snk_is_vbus_provided(port);
 #endif /* !defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) */
