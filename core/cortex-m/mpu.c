@@ -13,6 +13,32 @@
 #include "util.h"
 
 /**
+ * @return Number of regions supported by the MPU. 0 means the processor does
+ * not implement an MPU.
+ */
+int mpu_num_regions(void)
+{
+	return MPU_TYPE_REG_COUNT(mpu_get_type());
+}
+
+/**
+ * @return true if processor has MPU, false otherwise
+ */
+bool has_mpu(void)
+{
+	return mpu_num_regions() != 0;
+}
+
+/**
+ * @return true if MPU has unified instruction and data maps, false otherwise
+ */
+bool mpu_is_unified(void)
+{
+	return (mpu_get_type() & MPU_TYPE_UNIFIED_MASK) == 0;
+}
+
+
+/**
  * Update a memory region.
  *
  * region: index of the region to update
@@ -235,32 +261,47 @@ int mpu_lock_rollback(int lock)
 int mpu_pre_init(void)
 {
 	int i;
-	uint32_t mpu_type = mpu_get_type();
+	int num_mpu_regions;
+	int rv;
+
+	if (!has_mpu())
+		return EC_ERROR_HW_INTERNAL;
+
+	num_mpu_regions = mpu_num_regions();
 
 	/* Supports MPU with 8 or 16 unified regions */
-	if ((mpu_type & MPU_TYPE_UNIFIED_MASK) ||
-	    (MPU_TYPE_REG_COUNT(mpu_type) != 8 &&
-	     MPU_TYPE_REG_COUNT(mpu_type) != 16))
+	if (!mpu_is_unified() ||
+	    (num_mpu_regions != 8 && num_mpu_regions != 16))
 		return EC_ERROR_UNIMPLEMENTED;
 
 	mpu_disable();
-	for (i = 0; i < MPU_TYPE_REG_COUNT(mpu_type); ++i)
-		mpu_config_region(i, CONFIG_RAM_BASE, CONFIG_RAM_SIZE, 0, 0);
+	for (i = 0; i < num_mpu_regions; ++i) {
+		rv = mpu_config_region(i, CONFIG_RAM_BASE, CONFIG_RAM_SIZE, 0,
+				       0);
+		if (rv != EC_SUCCESS)
+			return rv;
+	}
 
-#ifdef CONFIG_ROLLBACK_MPU_PROTECT
-	mpu_lock_rollback(1);
-#endif
+	if (IS_ENABLED(CONFIG_ROLLBACK_MPU_PROTECT)) {
+		rv = mpu_lock_rollback(1);
+		if (rv != EC_SUCCESS)
+			return rv;
+	}
 
-#ifdef CONFIG_ARMV7M_CACHE
+	if (IS_ENABLED(CONFIG_ARMV7M_CACHE)) {
 #ifdef CONFIG_CHIP_UNCACHED_REGION
-	mpu_config_region(REGION_UNCACHED_RAM,
-			  CONCAT2(_region_start_, CONFIG_CHIP_UNCACHED_REGION),
-			  CONCAT2(_region_size_, CONFIG_CHIP_UNCACHED_REGION),
-			  MPU_ATTR_XN | MPU_ATTR_RW_RW, 1);
-	mpu_enable();
-#endif /* CONFIG_CHIP_UNCACHED_REGION */
-	cpu_enable_caches();
-#endif /* CONFIG_ARMV7M_CACHE */
+		rv = mpu_config_region(
+			REGION_UNCACHED_RAM,
+			CONCAT2(_region_start_, CONFIG_CHIP_UNCACHED_REGION),
+			CONCAT2(_region_size_, CONFIG_CHIP_UNCACHED_REGION),
+			MPU_ATTR_XN | MPU_ATTR_RW_RW, 1);
+		if (rv != EC_SUCCESS)
+			return rv;
+
+		mpu_enable();
+#endif
+		cpu_enable_caches();
+	}
 
 	return EC_SUCCESS;
 }

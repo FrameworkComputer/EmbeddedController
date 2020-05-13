@@ -42,6 +42,10 @@ enum mpu_region {
 #define MPU_SIZE		REG16(0xe000eda0)
 #define MPU_ATTR		REG16(0xe000eda2)
 
+/*
+ * See ARM v7-M Architecture Reference Manual
+ * Section B3.5.5 MPU Type Register, MPU_TYPE
+ */
 #define MPU_TYPE_UNIFIED_MASK	0x00FF0001
 #define MPU_TYPE_REG_COUNT(t)	(((t) >> 8) & 0xFF)
 
