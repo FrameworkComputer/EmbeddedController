@@ -74,6 +74,8 @@
 
 /*
  * Policy Engine Layer Flags
+ * These are reproduced in test/usb_pe.h. If they change here, they must change
+ * there.
  */
 
 /* At least one successful PD communication packet received from port partner */
@@ -104,40 +106,38 @@
 #define PE_FLAGS_INTERRUPTIBLE_AMS           BIT(12)
 /* Flag to note Power Supply reset has completed */
 #define PE_FLAGS_PS_RESET_COMPLETE           BIT(13)
-/* Flag to note a Structured Vendor Defined Message should be sent */
-#define PE_FLAGS_SEND_SVDM                   BIT(14)
 /* VCONN swap operation has completed */
-#define PE_FLAGS_VCONN_SWAP_COMPLETE         BIT(15)
+#define PE_FLAGS_VCONN_SWAP_COMPLETE         BIT(14)
 /* Flag to note no more discover identity messages should be sent */
-#define PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE BIT(16)
+#define PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE BIT(15)
 /* Flag to note PR Swap just completed for Startup entry */
-#define PE_FLAGS_PR_SWAP_COMPLETE	     BIT(17)
+#define PE_FLAGS_PR_SWAP_COMPLETE	     BIT(16)
 /* Flag to note Port Discovery port partner replied with BUSY */
-#define PE_FLAGS_VDM_REQUEST_BUSY            BIT(18)
+#define PE_FLAGS_VDM_REQUEST_BUSY            BIT(17)
 /* Flag to note Port Discovery port partner replied with NAK */
-#define PE_FLAGS_VDM_REQUEST_NAKED           BIT(19)
+#define PE_FLAGS_VDM_REQUEST_NAKED           BIT(18)
 /* Flag to note FRS/PRS context in shared state machine path */
-#define PE_FLAGS_FAST_ROLE_SWAP_PATH         BIT(20)
+#define PE_FLAGS_FAST_ROLE_SWAP_PATH         BIT(19)
 /* Flag to note if FRS listening is enabled */
-#define PE_FLAGS_FAST_ROLE_SWAP_ENABLED      BIT(21)
+#define PE_FLAGS_FAST_ROLE_SWAP_ENABLED      BIT(20)
 /* Flag to note TCPC passed on FRS signal from port partner */
-#define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(22)
+#define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(21)
 /* TODO: POLICY decision: Triggers a DR SWAP attempt from UFP to DFP */
-#define PE_FLAGS_DR_SWAP_TO_DFP              BIT(23)
+#define PE_FLAGS_DR_SWAP_TO_DFP              BIT(22)
 /* Flag to trigger a message resend after receiving a WAIT from port partner */
-#define PE_FLAGS_WAITING_DR_SWAP             BIT(24)
+#define PE_FLAGS_WAITING_DR_SWAP             BIT(23)
 /* FLAG to track if port partner is dualrole capable */
-#define PE_FLAGS_PORT_PARTNER_IS_DUALROLE    BIT(25)
+#define PE_FLAGS_PORT_PARTNER_IS_DUALROLE    BIT(24)
 /* FLAG is set when an AMS is initiated locally. ie. AP requested a PR_SWAP */
-#define PE_FLAGS_LOCALLY_INITIATED_AMS       BIT(26)
+#define PE_FLAGS_LOCALLY_INITIATED_AMS       BIT(25)
 /* Flag to note the first message sent in PE_SRC_READY and PE_SNK_READY */
-#define PE_FLAGS_FIRST_MSG                   BIT(27)
+#define PE_FLAGS_FIRST_MSG                   BIT(26)
 /* Flag to continue port discovery if it was interrupted */
-#define PE_FLAGS_DISCOVER_PORT_CONTINUE      BIT(28)
+#define PE_FLAGS_DISCOVER_PORT_CONTINUE      BIT(27)
 /* TODO: POLICY decision: Triggers a Vconn SWAP attempt to on */
-#define PE_FLAGS_VCONN_SWAP_TO_ON	     BIT(29)
+#define PE_FLAGS_VCONN_SWAP_TO_ON	     BIT(28)
 /* FLAG to track that VDM request to port partner timed out */
-#define PE_FLAGS_VDM_REQUEST_TIMEOUT	     BIT(30)
+#define PE_FLAGS_VDM_REQUEST_TIMEOUT	     BIT(29)
 
 /* 6.7.3 Hard Reset Counter */
 #define N_HARD_RESET_COUNT 2
@@ -973,7 +973,6 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 
 	pe[port].vdm_cnt = count + 1;
 
-	PE_SET_FLAG(port, PE_FLAGS_SEND_SVDM);
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 

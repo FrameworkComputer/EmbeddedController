@@ -63,24 +63,22 @@
 #define PE_FLAGS_INTERRUPTIBLE_AMS           BIT(12)
 /* Flag to note Power Supply reset has completed */
 #define PE_FLAGS_PS_RESET_COMPLETE           BIT(13)
-/* Flag to note a Structured Vendor Defined Message should be sent */
-#define PE_FLAGS_SEND_SVDM                   BIT(14)
 /* VCONN swap operation has completed */
-#define PE_FLAGS_VCONN_SWAP_COMPLETE         BIT(15)
+#define PE_FLAGS_VCONN_SWAP_COMPLETE         BIT(14)
 /* Flag to note no more discover identity messages are sent to port partner */
-#define PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE BIT(16)
+#define PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE BIT(15)
 /* Flag to note Swap Source Start timer should be set at PE_SRC_Startup entry */
-#define PE_FLAGS_RUN_SOURCE_START_TIMER      BIT(17)
+#define PE_FLAGS_RUN_SOURCE_START_TIMER      BIT(16)
 /* Flag to note Port Discovery port partner replied with BUSY */
-#define PE_FLAGS_VDM_REQUEST_BUSY            BIT(18)
+#define PE_FLAGS_VDM_REQUEST_BUSY            BIT(17)
 /* Flag to note Port Discovery port partner replied with NAK */
-#define PE_FLAGS_VDM_REQUEST_NAKED           BIT(19)
+#define PE_FLAGS_VDM_REQUEST_NAKED           BIT(18)
 /* Flag to note FRS/PRS context in shared state machine path */
-#define PE_FLAGS_FAST_ROLE_SWAP_PATH         BIT(20)
+#define PE_FLAGS_FAST_ROLE_SWAP_PATH         BIT(19)
 /* Flag to note if FRS listening is enabled */
-#define PE_FLAGS_FAST_ROLE_SWAP_ENABLED      BIT(21)
+#define PE_FLAGS_FAST_ROLE_SWAP_ENABLED      BIT(20)
 /* Flag to note TCPC passed on FRS signal from port partner */
-#define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(22)
+#define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(21)
 
 /* List of all Policy Engine level states */
 enum usb_pe_state {
