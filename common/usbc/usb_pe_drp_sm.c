@@ -4585,6 +4585,13 @@ static void pe_init_vdm_svids_request_run(int port)
 					"0x%04x",
 					port, rx_emsg[port].header, payload[0]);
 		}
+	} else if (sop == pe[port].tx_type && ext == 0 && cnt == 0 &&
+			type == PD_CTRL_NOT_SUPPORTED) {
+		/*
+		 * A NAK would be more expected here, but Not Supported is still
+		 * allowed with the same meaning.
+		 */
+		pd_set_svids_discovery(port, sop, PD_DISC_FAIL);
 	} else {
 		/*
 		 * Unexpected Message Received. Src.Ready or Snk.Ready can
@@ -4710,6 +4717,13 @@ static void pe_init_vdm_modes_request_run(int port)
 					port, rx_emsg[port].header,
 					payload[0]);
 		}
+	} else if (sop == pe[port].tx_type && ext == 0 && cnt == 0 &&
+			type == PD_CTRL_NOT_SUPPORTED) {
+		/*
+		 * A NAK would be more expected here, but Not Supported is still
+		 * allowed with the same meaning.
+		 */
+		pd_set_svids_discovery(port, sop, PD_DISC_FAIL);
 	} else {
 		/*
 		 * Unexpected Message Received. Src.Ready or Snk.Ready can
