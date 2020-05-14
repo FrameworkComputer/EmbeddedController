@@ -65,6 +65,9 @@ int mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
 	if (!is_aligned(addr, BIT(size_bit)))
 		return -EC_ERROR_INVAL;
 
+	if (region >= mpu_num_regions())
+		return -EC_ERROR_INVAL;
+
 	asm volatile("isb; dsb;");
 
 	MPU_NUMBER = region;

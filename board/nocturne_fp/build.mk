@@ -16,6 +16,7 @@ test-list-y=\
        aes \
        compile_time_macros \
        crc32 \
+       mpu \
        mutex \
        pingpong \
        rollback \

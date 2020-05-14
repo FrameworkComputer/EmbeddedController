@@ -150,6 +150,7 @@ motion_lid-y=motion_lid.o
 motion_sense_fifo-y=motion_sense_fifo.o
 online_calibration-y=online_calibration.o
 kasa-y=kasa.o
+mpu-y=mpu.o
 mutex-y=mutex.o
 newton_fit-y=newton_fit.o
 pingpong-y=pingpong.o
