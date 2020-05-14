@@ -50,9 +50,21 @@ bool mpu_is_unified(void)
  *
  * Based on 3.1.4.1 'Updating an MPU Region' of Stellaris LM4F232H5QC Datasheet
  */
-static void mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
-			      uint16_t attr, uint8_t enable, uint8_t srd)
+static int mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
+			     uint16_t attr, uint8_t enable, uint8_t srd)
 {
+	/*
+	 * Note that on the Cortex-M3, Cortex-M4, and Cortex-M7, the base
+	 * address used for an MPU region must be aligned to the size of the
+	 * region:
+	 *
+	 * https://developer.arm.com/docs/dui0553/a/cortex-m4-peripherals/optional-memory-protection-unit/mpu-region-base-address-register
+	 * https://developer.arm.com/docs/dui0552/a/cortex-m3-peripherals/optional-memory-protection-unit/mpu-region-base-address-register
+	 * https://developer.arm.com/docs/dui0646/a/cortex-m7-peripherals/optional-memory-protection-unit/mpu-region-base-address-register#BABDAHJG
+	 */
+	if (!is_aligned(addr, BIT(size_bit)))
+		return -EC_ERROR_INVAL;
+
 	asm volatile("isb; dsb;");
 
 	MPU_NUMBER = region;
@@ -72,6 +84,8 @@ static void mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
 	}
 
 	asm volatile("isb; dsb;");
+
+	return EC_SUCCESS;
 }
 
 /**
@@ -88,6 +102,7 @@ static void mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
 static int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
 			     uint16_t attr, uint8_t enable)
 {
+	int rv;
 	int size_bit = 0;
 	uint8_t blocks, srd1, srd2;
 
@@ -101,10 +116,9 @@ static int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
 		return -EC_ERROR_INVAL;
 
 	/* If size is a power of 2 then represent it with a single MPU region */
-	if (POWER_OF_TWO(size)) {
-		mpu_update_region(region, addr, size_bit, attr, enable, 0);
-		return EC_SUCCESS;
-	}
+	if (POWER_OF_TWO(size))
+		return mpu_update_region(region, addr, size_bit, attr, enable,
+					 0);
 
 	/* Sub-regions are not supported for region <= 128 bytes */
 	if (size_bit < 7)
@@ -132,7 +146,9 @@ static int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
 		return -EC_ERROR_INVAL;
 
 	/* Write first region. */
-	mpu_update_region(region, addr, size_bit + 1, attr, enable, ~srd1);
+	rv = mpu_update_region(region, addr, size_bit + 1, attr, enable, ~srd1);
+	if (rv != EC_SUCCESS)
+		return rv;
 
 	/*
 	 * Second protection region (if necessary) begins at the first block
@@ -147,10 +163,10 @@ static int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
 	 * so then no second protection region is required.
 	 */
 	if (srd2)
-		mpu_update_region(region + 1, addr, size_bit - 2, attr, enable,
-				  ~srd2);
+		rv = mpu_update_region(region + 1, addr, size_bit - 2, attr,
+				       enable, ~srd2);
 
-	return EC_SUCCESS;
+	return rv;
 }
 
 /**
