@@ -120,8 +120,20 @@ uintptr_t get_program_memory_addr(enum ec_image copy);
 /**
  * Return non-zero if the system has switched between image copies at least
  * once since the last real boot.
+ *
+ * You probably need to call system_jumped_late instead if you're trying to
+ * avoid initializing something again in RW.
  */
 int system_jumped_to_this_image(void);
+
+/**
+ * Return non-zero if late (legacy) sysjump occurred.
+ *
+ * This happens when EFS failed but RO still jumped to RW late on AP's request.
+ * This is typically called to avoid running some code twice (once in RO and
+ * again in RW).
+ */
+int system_jumped_late(void);
 
 /**
  * Preserve data across a jump between images.

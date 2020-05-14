@@ -209,8 +209,11 @@ static void verify_and_jump(void)
 		enable_pd();
 		break;
 	case CR50_COMM_SUCCESS:
+		system_set_reset_flags(
+				system_get_reset_flags() | EC_RESET_FLAG_EFS);
 		rv = system_run_image_copy(EC_IMAGE_RW);
 		CPRINTS("Failed to jump (0x%x)", rv);
+		system_clear_reset_flags(EC_RESET_FLAG_EFS);
 		show_critical_error();
 		break;
 	default:

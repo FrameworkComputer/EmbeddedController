@@ -5796,6 +5796,7 @@ struct ec_params_set_cbi {
 #define EC_RESET_FLAG_STAY_IN_RO  BIT(19)  /* Do not select RW in EFS. This
 					    * enables PD in RO for Chromebox.
 					    */
+#define EC_RESET_FLAG_EFS         BIT(20)  /* Jumped to this image by EFS */
 
 struct ec_response_uptime_info {
 	/*
