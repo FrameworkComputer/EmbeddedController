@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Test USB Type-C VPD and CTVPD module.
+ * Test USB Type-C Dual Role Port, Audio Accessory, and Try.SRC Device module.
  */
 #include "charge_manager.h"
 #include "mock/tcpc_mock.h"
