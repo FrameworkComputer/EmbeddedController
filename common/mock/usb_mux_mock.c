@@ -10,6 +10,10 @@
 #include "mock/usb_mux_mock.h"
 #include "memory.h"
 
+#ifndef CONFIG_COMMON_RUNTIME
+#define cprints(format, args...)
+#endif
+
 /* Public API for controlling/inspecting this mock */
 struct mock_usb_mux_ctrl mock_usb_mux;
 

@@ -11,6 +11,10 @@
 #include "tests/enum_strings.h"
 #include "usb_pd_tcpm.h"
 
+#ifndef CONFIG_COMMON_RUNTIME
+#define cprints(format, args...)
+#endif
+
 /* Public API for controlling/inspecting this mock */
 struct mock_tcpc_ctrl mock_tcpc;
 

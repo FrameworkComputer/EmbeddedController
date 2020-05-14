@@ -12,8 +12,13 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
+#ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#else
+#define CPRINTS(format, args...)
+#define CPRINTF(format, args...)
+#endif
 
 static int enable_debug_prints;
 
