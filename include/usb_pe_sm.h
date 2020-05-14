@@ -34,7 +34,7 @@ enum pe_dpm_request {
 	DPM_REQUEST_SOURCE_CAP          = BIT(7),
 	DPM_REQUEST_NEW_POWER_LEVEL     = BIT(8),
 	DPM_REQUEST_EXIT_DP_MODE        = BIT(9),
-	DPM_REQUEST_SVDM                = BIT(10),
+	DPM_REQUEST_VDM                 = BIT(10),
 	DPM_REQUEST_BIST_RX             = BIT(11),
 	DPM_REQUEST_BIST_TX             = BIT(12),
 	DPM_REQUEST_SNK_STARTUP         = BIT(13),

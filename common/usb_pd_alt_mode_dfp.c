@@ -11,6 +11,7 @@
 #include "task_id.h"
 #include "timer.h"
 #include "usb_charge.h"
+#include "usb_dp_alt_mode.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
@@ -85,6 +86,12 @@ static int pd_allocate_mode(int port, uint16_t svid)
 		for (j = 0; j < disc->svid_cnt; j++) {
 			struct svid_mode_data *svidp = &disc->svids[j];
 
+			/*
+			 * Looking for a match between supported_modes and
+			 * discovered SVIDs; must also match the passed-in SVID
+			 * if that was non-zero. Otherwise, go to the next
+			 * discovered SVID.
+			 */
 			if ((svidp->svid != supported_modes[i].svid) ||
 			    (svid && (svidp->svid != svid)))
 				continue;
@@ -569,6 +576,22 @@ uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx,
 	struct pd_discovery *disc = pd_get_am_discovery(port, type);
 
 	return disc->svids[svid_idx].mode_vdo;
+}
+
+bool pd_is_mode_discovered_for_svid(int port, enum tcpm_transmit_type type,
+		uint16_t svid)
+{
+	const struct pd_discovery *disc = pd_get_am_discovery(port, type);
+	const struct svid_mode_data *mode_data;
+
+	for (mode_data = disc->svids; mode_data < disc->svids + disc->svid_cnt;
+			++mode_data) {
+		if (mode_data->svid == svid &&
+				mode_data->discovery == PD_DISC_COMPLETE)
+			return true;
+	}
+
+	return false;
 }
 
 void notify_sysjump_ready(void)
@@ -1186,6 +1209,9 @@ __overridable void svdm_exit_dp_mode(int port)
 #ifdef USB_PD_PORT_TCPC_MST
 	if (port == USB_PD_PORT_TCPC_MST)
 		baseboard_mst_enable_control(port, 0);
+#endif
+#ifdef CONFIG_USB_PD_TCPMV2
+	dp_reset_next_command(port);
 #endif
 }
 

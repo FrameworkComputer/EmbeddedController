@@ -235,3 +235,37 @@ const char *pd_get_task_state_name(int port)
 	return NULL;
 }
 #endif /* CONFIG_USB_DRP_ACC_TRYSRC */
+
+void dp_init(int port)
+{
+}
+
+void dp_vdm_acked(int port, int cmd)
+{
+}
+
+void dp_reset_next_command(int port)
+{
+}
+
+void dpm_init(int port)
+{
+}
+
+void dpm_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
+		uint32_t *vdm)
+{
+}
+
+void dpm_vdm_naked(int port, enum tcpm_transmit_type type, uint16_t svid,
+		uint8_t vdm_cmd)
+{
+}
+
+void dpm_set_mode_entry_done(int port)
+{
+}
+
+void dpm_attempt_mode_entry(int port)
+{
+}

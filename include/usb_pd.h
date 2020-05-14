@@ -9,6 +9,7 @@
 #define __CROS_EC_USB_PD_H
 
 #include <stdbool.h>
+#include <stdint.h>
 #include "common.h"
 #include "ec_commands.h"
 #include "usb_pd_tbt.h"
@@ -1817,6 +1818,17 @@ uint16_t pd_get_svid(int port, uint16_t svid_idx, enum tcpm_transmit_type type);
 uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx,
 		enum tcpm_transmit_type type);
 
+/*
+ * Looks for a discovered mode VDO for the specified SVID.
+ *
+ * @param port USB-C port number
+ * @param type SOP* type to retrieve
+ * @param svid SVID to look up
+ * @return     Whether a mode was discovered for the SVID
+ */
+bool pd_is_mode_discovered_for_svid(int port, enum tcpm_transmit_type type,
+		uint16_t svid);
+
 /**
  * Return the alternate mode entry and exit data
  *
@@ -2208,6 +2220,21 @@ void pd_log_recv_vdm(int port, int cnt, uint32_t *payload);
  */
 void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 		 int count);
+
+/*
+ * TODO(b/155890173): Probably, this should only be used by the DPM, and
+ * pd_send_vdm should be implemented in terms of DPM functions.
+ */
+/* Prepares the PE to send an VDM.
+ *
+ * @param port    USB-C port number
+ * @param vdm     Buffer containing the message body to send, including the VDM
+ *                Header but not the Message Header.
+ * @param vdo_cnt The number of 32-bit VDOs in vdm, including the VDM Header;
+ *                must be 1 - 7 inclusive.
+ * @return        True if the setup was successful
+ */
+bool pd_setup_vdm_request(int port, uint32_t *vdm, uint32_t vdo_cnt);
 
 /* Power Data Objects for the source and the sink */
 __override_proto extern const uint32_t pd_src_pdo[];
