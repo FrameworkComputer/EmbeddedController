@@ -50,8 +50,8 @@ bool mpu_is_unified(void)
  *
  * Based on 3.1.4.1 'Updating an MPU Region' of Stellaris LM4F232H5QC Datasheet
  */
-static int mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
-			     uint16_t attr, uint8_t enable, uint8_t srd)
+int mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
+		      uint16_t attr, uint8_t enable, uint8_t srd)
 {
 	/*
 	 * Note that on the Cortex-M3, Cortex-M4, and Cortex-M7, the base
@@ -99,8 +99,8 @@ static int mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
  *
  * Returns EC_SUCCESS on success or -EC_ERROR_INVAL if a parameter is invalid.
  */
-static int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
-			     uint16_t attr, uint8_t enable)
+int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
+		      uint16_t attr, uint8_t enable)
 {
 	int rv;
 	int size_bit = 0;
@@ -189,7 +189,7 @@ void mpu_enable(void)
 	MPU_CTRL |= MPU_CTRL_PRIVDEFEN | MPU_CTRL_HFNMIENA | MPU_CTRL_ENABLE;
 }
 
-static void mpu_disable(void)
+void mpu_disable(void)
 {
 	MPU_CTRL &= ~(MPU_CTRL_PRIVDEFEN | MPU_CTRL_HFNMIENA | MPU_CTRL_ENABLE);
 }
