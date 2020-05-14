@@ -2183,12 +2183,6 @@ static void pe_src_transition_to_default_run(int port)
 	}
 }
 
-static void pe_src_transition_to_default_exit(int port)
-{
-	/* TC layer can now go unattached */
-	tc_hard_reset_allow_unattach(port);
-}
-
 /**
  * PE_SNK_Startup State
  */
@@ -2337,16 +2331,6 @@ static void pe_snk_evaluate_capability_entry(int port)
 
 	/* Reset Hard Reset counter to zero */
 	pe[port].hard_reset_counter = 0;
-
-	/*
-	 * If we were in a Hard Reset condition we have to delay until
-	 * now to let the TC know we are back to a stable connection.
-	 * Up to this point we have sent the reset and there is no
-	 * conversation from the other side until we receive the
-	 * capabilities message
-	 * TC layer can now go unattached
-	 */
-	tc_hard_reset_allow_unattach(port);
 
 	/* Set to highest revision supported by both ports. */
 	prl_set_rev(port, TCPC_TX_SOP,
@@ -5634,7 +5618,6 @@ static const struct usb_state pe_states[] = {
 	[PE_SRC_TRANSITION_TO_DEFAULT] = {
 		.entry = pe_src_transition_to_default_entry,
 		.run = pe_src_transition_to_default_run,
-		.exit = pe_src_transition_to_default_exit,
 	},
 	[PE_SNK_STARTUP] = {
 		.entry = pe_snk_startup_entry,

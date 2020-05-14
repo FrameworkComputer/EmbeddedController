@@ -86,29 +86,24 @@
 #define TC_FLAGS_PARTNER_PD_CAPABLE     BIT(15)
 /* Flag to note hard reset has been requested */
 #define TC_FLAGS_HARD_RESET_REQUESTED   BIT(16)
-/*
- * Flag to note hard reset has been performed and we can't go to unattached
- * until we have a source-sink connection again
- */
-#define TC_FLAGS_HARD_RESET_NO_UNATTACH BIT(17)
 /* Flag to note port partner is USB comms capable */
-#define TC_FLAGS_PARTNER_USB_COMM       BIT(18)
+#define TC_FLAGS_PARTNER_USB_COMM       BIT(17)
 /* Flag to note we are currently performing PR Swap */
-#define TC_FLAGS_PR_SWAP_IN_PROGRESS    BIT(19)
+#define TC_FLAGS_PR_SWAP_IN_PROGRESS    BIT(18)
 /* Flag to note we need to perform PR Swap */
-#define TC_FLAGS_DO_PR_SWAP             BIT(20)
+#define TC_FLAGS_DO_PR_SWAP             BIT(19)
 /* Flag to note we are performing Discover Identity */
-#define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(21)
+#define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(20)
 /* Flag to note we should check for connection */
-#define TC_FLAGS_CHECK_CONNECTION       BIT(22)
+#define TC_FLAGS_CHECK_CONNECTION       BIT(21)
 /* Flag to note pd_set_suspend SUSPEND state */
-#define TC_FLAGS_SUSPEND                BIT(23)
+#define TC_FLAGS_SUSPEND                BIT(22)
 /*
  * Flag to note TC_ATTACHED_SNK is coming from a warm start through
  * tc_state_init and the default data role should not be changed from
  * what is currently set
  */
-#define TC_FLAGS_TC_WARM_ATTACHED_SNK   BIT(24)
+#define TC_FLAGS_TC_WARM_ATTACHED_SNK   BIT(23)
 
 /*
  * Clear all flags except TC_FLAGS_LPM_ENGAGED and TC_FLAGS_SUSPEND.
@@ -136,7 +131,6 @@ enum ps_reset_sequence {
 	PS_STATE0,
 	PS_STATE1,
 	PS_STATE2,
-	PS_STATE3
 };
 
 /* List of all TypeC-level states */
@@ -704,21 +698,6 @@ void tc_hard_reset_request(int port)
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
 }
 
-/*
- * Hard Reset happened and this is how the PE will unblock leaving
- * the attached state.
- */
-void tc_hard_reset_allow_unattach(int port)
-{
-	/* Only deal with HardReset if we are currently doing HardReset */
-	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH)) {
-		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH);
-
-		/* Enable AutoDischargeDisconnect */
-		tcpm_enable_auto_discharge_disconnect(port, 1);
-	}
-}
-
 void tc_disc_ident_in_progress(int port)
 {
 	TC_SET_FLAG(port, TC_FLAGS_DISC_IDENT_IN_PROGRESS);
@@ -949,14 +928,16 @@ static bool tc_perform_src_hard_reset(int port)
 		/* Turn off VCONN */
 		set_vconn(port, 1);
 
-		tc[port].ps_reset_state = PS_STATE3;
+		tc[port].ps_reset_state = PS_STATE2;
 		tc[port].timeout = get_time().val +
 				PD_POWER_SUPPLY_TURN_ON_DELAY;
 		return false;
 	case PS_STATE2:
-	case PS_STATE3:
 		/* Tell Policy Engine Hard Reset is complete */
 		pe_ps_reset_complete(port);
+
+		/* Enable AutoDischargeDisconnect */
+		tcpm_enable_auto_discharge_disconnect(port, 1);
 
 		tc[port].ps_reset_state = PS_STATE0;
 		return true;
@@ -969,31 +950,69 @@ static bool tc_perform_src_hard_reset(int port)
 	 */
 	return true;
 }
-#endif
 
-static void tc_perform_snk_hard_reset(int port)
+/*
+ * Wait for recovery after a hard reset.  Call repeatedly until true is
+ * returned, signaling that the hard reset is complete.
+ */
+static bool tc_perform_snk_hard_reset(int port)
 {
-	tc_set_data_role(port, PD_ROLE_UFP);
+	switch (tc[port].ps_reset_state) {
+	case PS_STATE0:
+		/* Hard reset sets us back to default data role */
+		tc_set_data_role(port, PD_ROLE_UFP);
 
-	/* Clear the input current limit */
-	sink_stop_drawing_current(port);
+		/* Clear the input current limit */
+		sink_stop_drawing_current(port);
 
-	/*
-	 * When VCONN is supported, the Hard Reset Shall cause
-	 * the Port with the Rd resistor asserted to turn off
-	 * VCONN.
-	 */
+		/*
+		 * When VCONN is supported, the Hard Reset Shall cause
+		 * the Port with the Rd resistor asserted to turn off
+		 * VCONN.
+		 */
 #ifdef CONFIG_USBC_VCONN
-	if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
-		set_vconn(port, 0);
+		if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
+			set_vconn(port, 0);
 #endif
+		/* Wait tSafe0V + tSrcRecover, then check for Vbus presence */
+		tc[port].ps_reset_state = PS_STATE1;
+		tc[port].timeout = get_time().val + PD_T_SAFE_0V +
+							PD_T_SRC_RECOVER_MAX;
+		return false;
+	case PS_STATE1:
+		if (get_time().val < tc[port].timeout)
+			return false;
 
-	/*
-	 * Inform policy engine that power supply
-	 * reset is complete
-	 */
-	pe_ps_reset_complete(port);
+		/* Watch for Vbus to return */
+		tc[port].ps_reset_state = PS_STATE2;
+		tc[port].timeout = get_time().val + PD_T_SRC_TURN_ON;
+		return false;
+	case PS_STATE2:
+		if (pd_is_vbus_present(port)) {
+			/*
+			 * Inform policy engine that power supply
+			 * reset is complete
+			 */
+			tc[port].ps_reset_state = PS_STATE0;
+			pe_ps_reset_complete(port);
+
+			/* Enable AutoDischargeDisconnect */
+			tcpm_enable_auto_discharge_disconnect(port, 1);
+			return true;
+		}
+		/*
+		 * If Vbus isn't back after wait + tSrcTurnOn, go unattached
+		 */
+		if (get_time().val > tc[port].timeout) {
+			tc[port].ps_reset_state = PS_STATE0;
+			set_state_tc(port, TC_UNATTACHED_SNK);
+			return true;
+		}
+	}
+
+	return false;
 }
+#endif /* CONFIG_USB_PE_SM */
 
 void tc_start_error_recovery(int port)
 {
@@ -1935,20 +1954,23 @@ static void tc_attached_snk_run(const int port)
 	 * Perform Hard Reset
 	 */
 	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED)) {
-		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
-		TC_SET_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH);
-		tc_perform_snk_hard_reset(port);
+		/*
+		 * Wait to clear the hard reset request until Vbus has returned
+		 * to default (or, if it didn't return, we transition to
+		 * unattached)
+		 */
+		if (tc_perform_snk_hard_reset(port))
+			TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
+
+		return;
 	}
 
 	/*
 	 * The sink will be powered off during a power role swap but we don't
 	 * want to trigger a disconnect.
-	 * If we are working on a Hard Reset we have to remain attached
-	 * even when vbus drops.
 	 */
 	if (!TC_CHK_FLAG(port, TC_FLAGS_POWER_OFF_SNK) &&
-	    !TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS) &&
-	    !TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH)) {
+	    !TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
 		/* Detach detection */
 		if (!pd_is_vbus_present(port)) {
 			if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
@@ -2311,14 +2333,22 @@ static void tc_dbg_acc_snk_run(const int port)
 		return;
 	}
 
+#ifdef CONFIG_USB_PE_SM
 	/*
 	 * Perform Hard Reset
 	 */
 	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED)) {
-		TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
-		TC_SET_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH);
-		tc_perform_snk_hard_reset(port);
+		/*
+		 * Wait to clear the hard reset request until Vbus has returned
+		 * to default (or, if it didn't return, we transition to
+		 * unattached)
+		 */
+		if (tc_perform_snk_hard_reset(port))
+			TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
+
+		return;
 	}
+#endif
 
 	/*
 	 * The sink will be powered off during a power role swap but we
@@ -2327,8 +2357,7 @@ static void tc_dbg_acc_snk_run(const int port)
 	 * even when vbus drops.
 	 */
 	if (!TC_CHK_FLAG(port, TC_FLAGS_POWER_OFF_SNK) &&
-	    !TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS) &&
-	    !TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_NO_UNATTACH)) {
+	    !TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
 		/* Detach detection */
 		if (!pd_is_vbus_present(port)) {
 			if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
