@@ -308,22 +308,22 @@ static int syv682x_set_vbus_source_current_limit(int port,
 	/* We need buffer room for all current values. */
 	switch (rp) {
 	case TYPEC_RP_3A0:
-		limit = SYV682X_ILIM_3_30;
+		limit = SYV682X_5V_ILIM_3_30;
 		break;
 
 	case TYPEC_RP_1A5:
-		limit = SYV682X_ILIM_1_75;
+		limit = SYV682X_5V_ILIM_1_75;
 		break;
 
 	case TYPEC_RP_USB:
 	default:
 		/* 1.25 A is lowest current limit setting for SVY682 */
-		limit = SYV682X_ILIM_1_25;
+		limit = SYV682X_5V_ILIM_1_25;
 		break;
 	};
 
-	regval &= ~SYV682X_ILIM_MASK;
-	regval |= (limit << SYV682X_ILIM_BIT_SHIFT);
+	regval &= ~SYV682X_5V_ILIM_MASK;
+	regval |= (limit << SYV682X_5V_ILIM_BIT_SHIFT);
 	return write_reg(port, SYV682X_CONTROL_1_REG, regval);
 }
 
@@ -456,27 +456,6 @@ void syv682x_interrupt(int port)
 	syv682x_interrupt_delayed(port, 0);
 }
 
-static int syv682x_reset(int port)
-{
-	int rv;
-
-	CPRINTS("p%d: PPC SW reset", port);
-	/*
-	 * Reset all I2C registers to default values because the SYV682x does
-	 * not provide a pin reset.  The SYV682X_RST_REG bit is self-clearing.
-	 */
-	rv = write_reg(port, SYV682X_CONTROL_3_REG, SYV682X_RST_REG);
-	if (rv)
-		return rv;
-
-	/* BUSY gets asserted until the reset completes */
-	rv = syv682x_wait_for_ready(port);
-	if (rv)
-		return rv;
-
-	return EC_SUCCESS;
-}
-
 static bool syv682x_is_sink(uint8_t control_1)
 {
 	/*
@@ -516,18 +495,17 @@ static int syv682x_init(int port)
 	if (!syv682x_is_sink(control_1)
 		|| (status & SYV682X_STATUS_VSAFE_0V)) {
 		/*
-		 * PPC is not configured as a sink or there is no VBUS present.
-		 * It's safe to perform a full register reset.
+		 * Disable both power paths,
+		 * set HV_ILIM to 3.3A,
+		 * set 5V_ILIM to 3.3A,
+		 * set HV direction to sink,
+		 * select HV channel.
 		 */
-		rv = syv682x_reset(port);
-		if (rv)
-			return rv;
-
-		/* Disable both power paths */
-		rv = read_reg(port, SYV682X_CONTROL_1_REG, &regval);
-		if (rv)
-			return rv;
-		regval |= SYV682X_CONTROL_1_PWR_ENB;
+		regval = SYV682X_CONTROL_1_PWR_ENB |
+			(SYV682X_HV_ILIM_3_30 << SYV682X_HV_ILIM_BIT_SHIFT) |
+			(SYV682X_5V_ILIM_3_30 << SYV682X_5V_ILIM_BIT_SHIFT) |
+			/* !SYV682X_CONTROL_1_HV_DR */
+			SYV682X_CONTROL_1_CH_SEL;
 		rv = write_reg(port, SYV682X_CONTROL_1_REG, regval);
 		if (rv)
 			return rv;
