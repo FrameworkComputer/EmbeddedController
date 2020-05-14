@@ -2810,7 +2810,7 @@ void pd_interrupt_handler_task(void *p)
 
 static void pd_send_enter_usb(int port, int *timeout)
 {
-	uint32_t usb4_payload = get_enter_usb_msg_payload(port);
+	uint32_t usb4_payload;
 	uint16_t header;
 	int res;
 
@@ -2818,8 +2818,12 @@ static void pd_send_enter_usb(int port, int *timeout)
 	 * TODO: Enable Enter USB for cables (SOP').
 	 * This is needed for active cables
 	 */
-	if (!IS_ENABLED(CONFIG_USBC_SS_MUX) || !IS_ENABLED(CONFIG_USB_PD_USB4))
+	if (!IS_ENABLED(CONFIG_USBC_SS_MUX) ||
+	    !IS_ENABLED(CONFIG_USB_PD_USB4) ||
+	    !IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
 		return;
+
+	usb4_payload = get_enter_usb_msg_payload(port);
 
 	header = PD_HEADER(PD_DATA_ENTER_USB,
 		pd[port].power_role,

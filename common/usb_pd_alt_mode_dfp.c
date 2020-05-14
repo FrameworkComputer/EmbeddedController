@@ -881,6 +881,23 @@ __overridable enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
  * ############################################################################
  */
 
+bool is_usb4_vdo(int port, int cnt, uint32_t *payload)
+{
+	enum idh_ptype ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
+
+	if (IS_PD_IDH_UFP_PTYPE(ptype)) {
+		/*
+		 * Ref: USB Type-C Cable and Connector Specification
+		 * Figure 5-1 USB4 Discovery and Entry Flow Model
+		 * Device USB4 VDO detection.
+		 */
+		return IS_ENABLED(CONFIG_USB_PD_USB4) &&
+			is_vdo_present(cnt, VDO_INDEX_PTYPE_UFP1_VDO) &&
+			PD_PRODUCT_IS_USB4(payload[VDO_INDEX_PTYPE_UFP1_VDO]);
+	}
+	return false;
+}
+
 /*
  * For Cable rev 3.0: USB4 cable speed is set according to speed supported by
  * the port and the response received from the cable, whichever is least.
@@ -922,6 +939,58 @@ enum usb_rev30_ss get_usb4_cable_speed(int port)
 	 */
 	return get_tbt_cable_speed(port) == TBT_SS_TBT_GEN3 ?
 		USB_R30_SS_U40_GEN3 : USB_R30_SS_U32_U40_GEN2;
+}
+
+uint32_t get_enter_usb_msg_payload(int port)
+{
+	/*
+	 * Ref: USB Power Delivery Specification Revision 3.0, Version 2.0
+	 * Table 6-47 Enter_USB Data Object
+	 */
+	union enter_usb_data_obj eudo;
+	struct pd_cable *cable;
+
+	if (!IS_ENABLED(CONFIG_USB_PD_USB4))
+		return 0;
+
+	cable = pd_get_cable_attributes(port);
+	eudo.mode = USB_PD_40;
+	eudo.usb4_drd_cap = IS_ENABLED(CONFIG_USB_PD_USB4_DRD);
+	eudo.usb3_drd_cap = IS_ENABLED(CONFIG_USB_PD_USB32_DRD);
+	eudo.cable_speed = get_usb4_cable_speed(port);
+
+	if ((cable->rev == PD_REV30) &&
+	    (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE)) {
+		eudo.cable_type = (cable->attr2.a2_rev30.active_elem ==
+			ACTIVE_RETIMER) ? CABLE_TYPE_ACTIVE_RETIMER :
+			CABLE_TYPE_ACTIVE_REDRIVER;
+	/* TODO: Add eudo.cable_type for Revisiosn 2 active cables */
+	} else {
+		eudo.cable_type = CABLE_TYPE_PASSIVE;
+	}
+
+	switch (cable[port].attr.p_rev20.vbus_cur) {
+	case USB_VBUS_CUR_3A:
+		eudo.cable_current = USB4_CABLE_CURRENT_3A;
+		break;
+	case USB_VBUS_CUR_5A:
+		eudo.cable_current = USB4_CABLE_CURRENT_5A;
+		break;
+	default:
+		eudo.cable_current = USB4_CABLE_CURRENT_INVALID;
+		break;
+	}
+	eudo.pcie_supported = IS_ENABLED(CONFIG_USB_PD_PCIE_TUNNELING);
+	eudo.dp_supported = IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP);
+	eudo.tbt_supported = IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE);
+	eudo.host_present = 1;
+
+	return eudo.raw_value;
+}
+
+__overridable bool board_is_tbt_usb4_port(int port)
+{
+	return true;
 }
 
 __overridable void svdm_safe_dp_mode(int port)

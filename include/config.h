@@ -3891,8 +3891,11 @@
 /* Enable to enter into USB4 mode between two port partners */
 #undef CONFIG_USB_PD_USB4
 
-/* Enable if the board supports USB3.2 devices */
-#undef CONFIG_USB_PD_USB32
+/* Enable if port is cable of operating as an USB4 device */
+#undef CONFIG_USB_PD_USB4_DRD
+
+/* Enable if port is cable of operating as an USB3.2 device */
+#undef CONFIG_USB_PD_USB32_DRD
 
 /* Enable if the board is Thunderbolt Gen 3 capable */
 #undef CONFIG_USB_PD_TBT_GEN3_CAPABLE
@@ -5142,13 +5145,6 @@
 #endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
 
 /*****************************************************************************/
-/*
- * The board is Gen3 compatible and supports USB3.2 devices if it supports
- * USB4 mode.
- */
-#ifdef CONFIG_USB_PD_USB4
-#define CONFIG_USB_PD_USB32
-#endif /* CONFIG_USB_PD_USB4 */
 
 /*
  * Apply fuzzer and test config overrides last, since fuzzers and tests need to

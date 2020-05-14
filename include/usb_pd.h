@@ -1996,6 +1996,16 @@ void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
 enum usb_rev30_ss get_usb4_cable_speed(int port);
 
 /**
+ * Check if attached device has USB4 VDO
+ *
+ * @param port      USB-C port number
+ * @param cnt       number of data objects in payload
+ * @param payload   payload data
+ * @return          True if device has USB4 VDO
+ */
+bool is_usb4_vdo(int port, int cnt, uint32_t *payload);
+
+/**
  * Return enter USB message payload
  *
  * @param port	USB-C port number
