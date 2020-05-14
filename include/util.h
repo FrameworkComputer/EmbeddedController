@@ -187,6 +187,15 @@ int get_next_bit(uint32_t *mask);
 bool bytes_are_trivial(const uint8_t *buffer, size_t size);
 
 /**
+ * Checks if address is power-of-two aligned to specified alignment.
+ *
+ * @param addr  address
+ * @param align power-of-two alignment
+ * @return true if addr is aligned to align, false otherwise
+ */
+bool is_aligned(uint32_t addr, uint32_t align);
+
+/**
  * Reverse's the byte-order of the provided buffer.
  */
 void reverse(void *dest, size_t len);

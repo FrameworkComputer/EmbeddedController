@@ -424,6 +424,23 @@ static int test_bytes_are_trivial(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_is_aligned(void)
+{
+	TEST_EQ(is_aligned(2, 0), false, "%d");
+	TEST_EQ(is_aligned(2, 1), true, "%d");
+	TEST_EQ(is_aligned(2, 2), true, "%d");
+	TEST_EQ(is_aligned(2, 3), false, "%d");
+	TEST_EQ(is_aligned(2, 4), false, "%d");
+
+	TEST_EQ(is_aligned(3, 0), false, "%d");
+	TEST_EQ(is_aligned(3, 1), true, "%d");
+	TEST_EQ(is_aligned(3, 2), false, "%d");
+	TEST_EQ(is_aligned(3, 3), false, "%d");
+	TEST_EQ(is_aligned(3, 4), false, "%d");
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -442,6 +459,7 @@ void run_test(void)
 	RUN_TEST(test_mula32);
 	RUN_TEST(test_swap);
 	RUN_TEST(test_bytes_are_trivial);
+	RUN_TEST(test_is_aligned);
 
 	test_print_result();
 }

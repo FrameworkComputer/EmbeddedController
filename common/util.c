@@ -552,6 +552,14 @@ bool bytes_are_trivial(const uint8_t *buffer, size_t size)
 	return (result0 == 0) || (result1 == 0);
 }
 
+bool is_aligned(uint32_t addr, uint32_t align)
+{
+	if (!POWER_OF_TWO(align))
+		return false;
+
+	return (addr & (align - 1)) == 0;
+}
+
 /****************************************************************************/
 /* stateful conditional stuff */
 
