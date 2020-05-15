@@ -17,6 +17,7 @@
 #define CONFIG_CMD_AP_RESET_LOG
 #define CONFIG_CMD_POWERINDEBUG
 #define CONFIG_HOSTCMD_AP_RESET
+#define CONFIG_I2C_DEBUG
 
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE (512 * 1024)  /* 512KB internal spi flash */
