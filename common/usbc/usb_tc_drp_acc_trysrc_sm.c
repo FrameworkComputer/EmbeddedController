@@ -1739,7 +1739,7 @@ static void tc_unattached_snk_run(const int port)
 		 *     Set RC.CC2=10b (Rd)
 		 */
 		tcpm_enable_auto_discharge_disconnect(port, 0);
-		tcpm_set_connection(port, TYPEC_CC_RD, 0, NULL);
+		tcpm_set_connection(port, TYPEC_CC_RD, 0);
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
 		return;
 	}
@@ -2503,7 +2503,7 @@ static void tc_unattached_src_run(const int port)
 		 *     Set RC.CC2=01b (Rp)
 		 */
 		tcpm_enable_auto_discharge_disconnect(port, 0);
-		tcpm_set_connection(port, TYPEC_CC_RP, 0, NULL);
+		tcpm_set_connection(port, TYPEC_CC_RP, 0);
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
 	}
 #endif
@@ -2872,7 +2872,6 @@ static __maybe_unused void check_drp_connection(const int port)
 {
 	enum pd_drp_next_states next_state;
 	enum tcpc_cc_voltage_status cc1, cc2;
-	int prev_drp;
 
 	TC_CLR_FLAG(port, TC_FLAGS_CHECK_CONNECTION);
 
@@ -2896,9 +2895,8 @@ static __maybe_unused void check_drp_connection(const int port)
 		 *     Set RC.DRP=0
 		 *     Set TCPC_CONTROl.PlugOrientation
 		 */
-		tcpm_set_connection(port, TYPEC_CC_RD, 1, &prev_drp);
-		if (prev_drp)
-			tcpm_enable_auto_discharge_disconnect(port, 1);
+		tcpm_set_connection(port, TYPEC_CC_RD, 1);
+		tcpm_enable_auto_discharge_disconnect(port, 1);
 		set_state_tc(port, TC_UNATTACHED_SNK);
 		break;
 	case DRP_TC_UNATTACHED_SRC:
@@ -2908,9 +2906,8 @@ static __maybe_unused void check_drp_connection(const int port)
 		 *     Set RC.DRP=0
 		 *     Set TCPC_CONTROl.PlugOrientation
 		 */
-		tcpm_set_connection(port, TYPEC_CC_RP, 1, &prev_drp);
-		if (prev_drp)
-			tcpm_enable_auto_discharge_disconnect(port, 1);
+		tcpm_set_connection(port, TYPEC_CC_RP, 1);
+		tcpm_enable_auto_discharge_disconnect(port, 1);
 		set_state_tc(port, TC_UNATTACHED_SRC);
 		break;
 
@@ -2927,7 +2924,7 @@ static __maybe_unused void check_drp_connection(const int port)
 				    (PD_ROLE_DEFAULT(port) == PD_ROLE_SOURCE)
 					? TYPEC_CC_RP
 					: TYPEC_CC_RD,
-				    0, NULL);
+				    0);
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
 		break;
 #endif

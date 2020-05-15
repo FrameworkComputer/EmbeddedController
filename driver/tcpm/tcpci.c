@@ -409,20 +409,10 @@ int tcpci_tcpc_drp_toggle(int port)
 
 int tcpci_tcpc_set_connection(int port,
 			      enum tcpc_cc_pull pull,
-			      int connect,
-			      int *prev_drp)
+			      int connect)
 {
 	int rv;
 	int role;
-
-	/* Get the ROLE CONTROL value */
-	rv = tcpc_read(port, TCPC_REG_ROLE_CTRL, &role);
-	if (rv)
-		return rv;
-
-	/* if optional prev_drp is present then save the current DRP state */
-	if (prev_drp)
-		*prev_drp = !!(role & TCPC_REG_ROLE_CTRL_DRP_MASK);
 
 	/*
 	 * Disconnecting will set the following and then return
@@ -435,6 +425,11 @@ int tcpci_tcpc_set_connection(int port,
 		tcpci_set_role_ctrl(port, 1, TYPEC_RP_USB, pull);
 		return EC_SUCCESS;
 	}
+
+	/* Get the ROLE CONTROL value */
+	rv = tcpc_read(port, TCPC_REG_ROLE_CTRL, &role);
+	if (rv)
+		return rv;
 
 	if (role & TCPC_REG_ROLE_CTRL_DRP_MASK) {
 		enum tcpc_cc_pull cc1_pull, cc2_pull;
