@@ -27,8 +27,7 @@
 #include <linux/types.h>
 #include <linux/uaccess.h>
 #include <linux/wait.h>
-
-#include "anprintf.h"
+#include <stdarg.h>
 
 /* Minimum i2cp_limit module parameter value. */
 #define I2CP_ADAPTERS_MIN	0
@@ -102,8 +101,10 @@ static const char i2cp_ctrlr_data_sep_char	= ':';
 #define STRING_NEQ(in_str, in_size, other_str) \
 	(in_size != strlen(other_str) || memcmp(other_str, in_str, in_size))
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
+#define STR_HELPER(num)		#num
+#define STR(num)		STR_HELPER(num)
+
+#define CONST_STRLEN(str)	(sizeof(str) - 1)
 
 /*
  * The number of pseudo I2C adapters permitted.  This default value can be
@@ -657,7 +658,7 @@ struct i2cp_cmd_mxfer_reply_data {
 };
 
 struct i2cp_cmd_set_name_suffix_data {
-	char name_suffix[FIELD_SIZEOF(struct i2c_adapter, name)];
+	char name_suffix[sizeof_field(struct i2c_adapter, name)];
 	size_t name_suffix_len;
 };
 
@@ -753,6 +754,97 @@ struct i2cp_rsp_master_xfer {
 	int num_msgs_done;  /* type of @num field */
 	size_t buf_start_plus_one;
 };
+
+/* vanprintf - See anprintf() documentation. */
+static ssize_t vanprintf(char **out, ssize_t max_size, gfp_t gfp,
+	const char *fmt, va_list ap)
+{
+	int ret;
+	ssize_t buf_size;
+	char *buf = NULL;
+	va_list args1;
+
+	va_copy(args1, ap);
+	ret = vsnprintf(NULL, 0, fmt, ap);
+	if (ret < 0)
+		goto fail_before_args1;
+	if (max_size >= 0 && ret > max_size) {
+		ret = -ERANGE;
+		goto fail_before_args1;
+	}
+
+	buf_size = ret + 1;
+	buf = kmalloc(buf_size, gfp);
+	if (buf == NULL) {
+		ret = -ENOMEM;
+		goto fail_before_args1;
+	}
+
+	ret = vsnprintf(buf, buf_size, fmt, args1);
+	va_end(args1);
+	if (ret < 0)
+		goto fail_after_args1;
+	if (ret + 1 != buf_size) {
+		ret = -ENOTRECOVERABLE;
+		goto fail_after_args1;
+	}
+
+	*out = buf;
+	return ret;
+
+ fail_before_args1:
+	va_end(args1);
+ fail_after_args1:
+	kfree(buf);
+	if (ret >= 0)
+		ret = -ENOTRECOVERABLE;
+	return ret;
+}
+
+/*
+ * anprintf - Format a string and place it into a newly allocated buffer.
+ * @out: Address of the pointer to place the buffer address into.  Will only be
+ *     written to with a successful positive return value.
+ * @max_size: If non-negative, the maximum buffer size that this function will
+ *     attempt to allocate.  If the formatted string including trailing null
+ *     character would not fit, no buffer will be allocated, and an error will
+ *     be returned.  (Thus max_size of 0 will always result in an error.)
+ * @gfp: GFP flags for kmalloc().
+ * @fmt: The format string to use.
+ * @...: Arguments for the format string.
+ *
+ * Return value meanings:
+ *
+ *   >=0: A buffer of this size was allocated and its address written to *out.
+ *        The caller now owns the buffer and is responsible for freeing it with
+ *        kfree().  The final character in the buffer, not counted in this
+ *        return value, is the trailing null.  This is the same return value
+ *        meaning as snprintf(3).
+ *
+ *    <0: An error occurred.  Negate the return value for the error number.
+ *        @out will not have been written to.  Errors that might come from
+ *        snprintf(3) may come from this function as well.  Additionally, the
+ *        following errors may occur from this function:
+ *
+ *        ERANGE: A buffer larger than @max_size would be needed to fit the
+ *        formatted string including its trailing null character.
+ *
+ *        ENOMEM: Allocation of the output buffer failed.
+ *
+ *        ENOTRECOVERABLE: An unexpected condition occurred.  This may indicate
+ *        a bug.
+ */
+static ssize_t anprintf(char **out, ssize_t max_size, gfp_t gfp,
+	const char *fmt, ...)
+{
+	ssize_t ret;
+	va_list args;
+
+	va_start(args, fmt);
+	ret = vanprintf(out, max_size, gfp, fmt, args);
+	va_end(args);
+	return ret;
+}
 
 static ssize_t i2cp_rsp_buffer_formatter(void *data, char **out)
 {
@@ -1763,7 +1855,7 @@ static int i2cp_cmd_set_timeout_cmd_completer(void *data,
 static const struct i2cp_cmd i2cp_cmds[] = {
 	[I2CP_CMD_MXFER_REPLY_IDX] = {
 		.cmd_string = I2CP_MXFER_REPLY_CMD,
-		.cmd_size = strlen(I2CP_MXFER_REPLY_CMD),
+		.cmd_size = CONST_STRLEN(I2CP_MXFER_REPLY_CMD),
 		.data_creator = i2cp_cmd_mxfer_reply_data_creator,
 		.data_shutdown = i2cp_cmd_mxfer_reply_data_shutdown,
 		.data_destroyer = i2cp_cmd_mxfer_reply_data_destroyer,
@@ -1773,35 +1865,35 @@ static const struct i2cp_cmd i2cp_cmds[] = {
 	},
 	[I2CP_CMD_ADAP_START_IDX] = {
 		.cmd_string = I2CP_ADAP_START_CMD,
-		.cmd_size = strlen(I2CP_ADAP_START_CMD),
+		.cmd_size = CONST_STRLEN(I2CP_ADAP_START_CMD),
 		.header_receiver = i2cp_cmd_adap_start_header_receiver,
 		.data_receiver = i2cp_cmd_adap_start_data_receiver,
 		.cmd_completer = i2cp_cmd_adap_start_cmd_completer,
 	},
 	[I2CP_CMD_ADAP_SHUTDOWN_IDX] = {
 		.cmd_string = I2CP_ADAP_SHUTDOWN_CMD,
-		.cmd_size = strlen(I2CP_ADAP_SHUTDOWN_CMD),
+		.cmd_size = CONST_STRLEN(I2CP_ADAP_SHUTDOWN_CMD),
 		.header_receiver = i2cp_cmd_adap_shutdown_header_receiver,
 		.data_receiver = i2cp_cmd_adap_shutdown_data_receiver,
 		.cmd_completer = i2cp_cmd_adap_shutdown_cmd_completer,
 	},
 	[I2CP_CMD_GET_NUMBER_IDX] = {
 		.cmd_string = I2CP_GET_NUMBER_CMD,
-		.cmd_size = strlen(I2CP_GET_NUMBER_CMD),
+		.cmd_size = CONST_STRLEN(I2CP_GET_NUMBER_CMD),
 		.header_receiver = i2cp_cmd_get_number_header_receiver,
 		.data_receiver = i2cp_cmd_get_number_data_receiver,
 		.cmd_completer = i2cp_cmd_get_number_cmd_completer,
 	},
 	[I2CP_CMD_GET_PSEUDO_ID_IDX] = {
 		.cmd_string = I2CP_GET_PSEUDO_ID_CMD,
-		.cmd_size = strlen(I2CP_GET_PSEUDO_ID_CMD),
+		.cmd_size = CONST_STRLEN(I2CP_GET_PSEUDO_ID_CMD),
 		.header_receiver = i2cp_cmd_get_pseudo_id_header_receiver,
 		.data_receiver = i2cp_cmd_get_pseudo_id_data_receiver,
 		.cmd_completer = i2cp_cmd_get_pseudo_id_cmd_completer,
 	},
 	[I2CP_CMD_SET_NAME_SUFFIX_IDX] = {
 		.cmd_string = I2CP_SET_NAME_SUFFIX_CMD,
-		.cmd_size = strlen(I2CP_SET_NAME_SUFFIX_CMD),
+		.cmd_size = CONST_STRLEN(I2CP_SET_NAME_SUFFIX_CMD),
 		.data_creator = i2cp_cmd_set_name_suffix_data_creator,
 		.data_destroyer = i2cp_cmd_set_name_suffix_data_destroyer,
 		.header_receiver = i2cp_cmd_set_name_suffix_header_receiver,
@@ -1810,7 +1902,7 @@ static const struct i2cp_cmd i2cp_cmds[] = {
 	},
 	[I2CP_CMD_SET_TIMEOUT_IDX] = {
 		.cmd_string = I2CP_SET_TIMEOUT_CMD,
-		.cmd_size = strlen(I2CP_SET_TIMEOUT_CMD),
+		.cmd_size = CONST_STRLEN(I2CP_SET_TIMEOUT_CMD),
 		.data_creator = i2cp_cmd_set_timeout_data_creator,
 		.data_destroyer = i2cp_cmd_set_timeout_data_destroyer,
 		.header_receiver = i2cp_cmd_set_timeout_header_receiver,
@@ -2114,7 +2206,7 @@ static int i2cp_cdev_open(struct inode *inodep, struct file *filep)
 	this_pseudo = i2cp_device;
 
 	/* I2C pseudo adapter controllers are not seekable. */
-	nonseekable_open(inodep, filep);
+	stream_open(inodep, filep);
 	/* Refuse fsnotify events.  Modeled after /dev/ptmx implementation. */
 	filep->f_mode |= FMODE_NONOTIFY;
 
@@ -2810,8 +2902,10 @@ static ssize_t i2cp_cdev_write(struct file *filep, const char __user *buf,
 		ret = -ENOMEM;
 		goto free_kbuf;
 	}
-	if (copy_from_user(kbuf, buf, count))
+	if (copy_from_user(kbuf, buf, count)) {
+		ret = -EFAULT;
 		goto free_kbuf;
+	}
 
 	start = kbuf;
 	remaining = count;
