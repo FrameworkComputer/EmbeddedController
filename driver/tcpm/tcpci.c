@@ -651,6 +651,21 @@ void tcpci_tcpc_fast_role_swap_enable(int port, int enable)
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 bool tcpci_tcpm_check_vbus_level(int port, enum vbus_level level)
 {
+	/*
+	 * Alerts only tell us when Safe0V is entered, have
+	 * to poll when requesting to see if we left it and
+	 * have not yet entered Safe5V
+	 */
+	if ((tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) &&
+	    (tcpc_vbus[port] & BIT(VBUS_SAFE0V))) {
+		int ext_status = 0;
+
+		/* Determine if we left Safe0V */
+		tcpm_ext_status(port, &ext_status);
+		if (!(ext_status & TCPC_REG_EXT_STATUS_SAFE0V))
+			tcpc_vbus[port] &= ~BIT(VBUS_SAFE0V);
+	}
+
 	if (level == VBUS_SAFE0V)
 		return !!(tcpc_vbus[port] & BIT(VBUS_SAFE0V));
 	else
@@ -1069,32 +1084,46 @@ void tcpci_tcpc_alert(int port)
 		}
 	}
 
-	/* Check for VBus change */
+	/*
+	 * Check for VBus change
+	 */
+	/* TCPCI Rev2 includes Safe0V detection */
 	if ((tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) &&
 	    (alert & TCPC_REG_ALERT_EXT_STATUS)) {
 		int ext_status = 0;
 
-		/* Read Extended Status register */
+		/* Determine if Safe0V was detected */
 		tcpm_ext_status(port, &ext_status);
-		/* Safe0V and not Safe5V */
-		if (ext_status & TCPC_REG_EXT_STATUS_SAFE0V)
+		if (ext_status & TCPC_REG_EXT_STATUS_SAFE0V) {
+			/* Safe0V and not Safe5V */
 			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
+
+			/* Disable AutoDischargeDisconnect */
+			tcpm_enable_auto_discharge_disconnect(port, 0);
+		}
 	}
 	if (alert & TCPC_REG_ALERT_POWER_STATUS) {
 		int pwr_status = 0;
 
-		/* Read Power Status register */
+		/* Determine reason for power status change */
 		tcpci_tcpm_get_power_status(port, &pwr_status);
-		/* Update VBUS status */
 		if (pwr_status & TCPC_REG_POWER_STATUS_VBUS_PRES)
 			/* Safe5V and not Safe0V */
 			tcpc_vbus[port] = BIT(VBUS_PRESENT);
 		else if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0)
-			/* not Safe5V */
+			/* TCPCI Rev2 detects Safe0V, so just clear Safe5V */
 			tcpc_vbus[port] &= ~BIT(VBUS_PRESENT);
-		else
-			/* not Safe5V and not Safe0V */
+		else {
+			/* Disable AutoDischargeDisconnect */
+			if (tcpc_vbus[port] & BIT(VBUS_PRESENT))
+				tcpm_enable_auto_discharge_disconnect(port, 0);
+
+			/*
+			 * TCPCI Rev1 can not detect Safe0V, so treat this
+			 * like a Safe0V detection. not Safe5V and Safe0V
+			 */
 			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
+		}
 
 #if defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) && defined(CONFIG_USB_CHARGER)
 		/* Update charge manager with new VBUS state */
