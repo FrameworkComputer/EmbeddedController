@@ -156,10 +156,9 @@ static void enable_pp5000_rail(void)
 static void dsw_pwrok_pass_thru(void)
 {
 	int dswpwrok_in = intel_x86_get_pg_ec_dsw_pwrok();
-	static int dswpwrok_out = -1;
 
 	/* Pass-through DSW_PWROK to ICL. */
-	if (dswpwrok_in != dswpwrok_out) {
+	if (dswpwrok_in != gpio_get_level(GPIO_PCH_DSW_PWROK)) {
 		if (IS_ENABLED(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE)
 			&& dswpwrok_in) {
 			/*
@@ -179,7 +178,6 @@ static void dsw_pwrok_pass_thru(void)
 		 */
 		msleep(10);
 		GPIO_SET_LEVEL(GPIO_PCH_DSW_PWROK, dswpwrok_in);
-		dswpwrok_out = dswpwrok_in;
 	}
 }
 
