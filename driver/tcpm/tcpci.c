@@ -617,13 +617,15 @@ int tcpci_tcpm_set_rx_enable(int port, int enable)
 {
 	int detect_sop_en = 0;
 
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	/* save rx_on */
+	rx_en[port] = enable;
+#endif
+
 	if (enable) {
 		detect_sop_en = TCPC_REG_RX_DETECT_SOP_HRST_MASK;
 
 #ifdef CONFIG_USB_PD_DECODE_SOP
-		/* save rx_on */
-		rx_en[port] = enable;
-
 		/*
 		 * Only the VCONN Source is allowed to communicate
 		 * with the Cable Plugs.
