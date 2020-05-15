@@ -993,6 +993,65 @@ static int tcpci_clear_fault(int port, int fault)
 	return tcpc_write16(port, TCPC_REG_ALERT, TCPC_REG_ALERT_FAULT);
 }
 
+static void tcpci_check_vbus_changed(int port, int alert, uint32_t *pd_event)
+{
+	/*
+	 * Check for VBus change
+	 */
+	/* TCPCI Rev2 includes Safe0V detection */
+	if ((tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) &&
+	    (alert & TCPC_REG_ALERT_EXT_STATUS)) {
+		int ext_status = 0;
+
+		/* Determine if Safe0V was detected */
+		tcpm_ext_status(port, &ext_status);
+		if (ext_status & TCPC_REG_EXT_STATUS_SAFE0V) {
+			/* Safe0V and not Safe5V */
+			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
+
+			/* Disable AutoDischargeDisconnect */
+			tcpm_enable_auto_discharge_disconnect(port, 0);
+		}
+	}
+
+	if (alert & TCPC_REG_ALERT_POWER_STATUS) {
+		int pwr_status = 0;
+
+		/* Determine reason for power status change */
+		tcpci_tcpm_get_power_status(port, &pwr_status);
+		if (pwr_status & TCPC_REG_POWER_STATUS_VBUS_PRES)
+			/* Safe5V and not Safe0V */
+			tcpc_vbus[port] = BIT(VBUS_PRESENT);
+		else if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0)
+			/* TCPCI Rev2 detects Safe0V, so just clear Safe5V */
+			tcpc_vbus[port] &= ~BIT(VBUS_PRESENT);
+		else {
+			/* Disable AutoDischargeDisconnect */
+			if (tcpc_vbus[port] & BIT(VBUS_PRESENT))
+				tcpm_enable_auto_discharge_disconnect(port, 0);
+
+			/*
+			 * TCPCI Rev1 can not detect Safe0V, so treat this
+			 * like a Safe0V detection. not Safe5V and Safe0V
+			 */
+			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
+		}
+
+		if (IS_ENABLED(CONFIG_USB_PD_VBUS_DETECT_TCPC)
+			&& IS_ENABLED(CONFIG_USB_CHARGER)) {
+			/* Update charge manager with new VBUS state */
+			usb_charger_vbus_change(port,
+				!!(tcpc_vbus[port] & BIT(VBUS_PRESENT)));
+
+			if (pd_event)
+				*pd_event |= TASK_EVENT_WAKE;
+		}
+
+		if (pwr_status & TCPC_REG_POWER_STATUS_VBUS_DET)
+			board_vbus_present_change();
+	}
+}
+
 /*
  * Don't let the TCPC try to pull from the RX buffer forever. We typical only
  * have 1 or 2 messages waiting.
@@ -1084,56 +1143,7 @@ void tcpci_tcpc_alert(int port)
 		}
 	}
 
-	/*
-	 * Check for VBus change
-	 */
-	/* TCPCI Rev2 includes Safe0V detection */
-	if ((tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) &&
-	    (alert & TCPC_REG_ALERT_EXT_STATUS)) {
-		int ext_status = 0;
-
-		/* Determine if Safe0V was detected */
-		tcpm_ext_status(port, &ext_status);
-		if (ext_status & TCPC_REG_EXT_STATUS_SAFE0V) {
-			/* Safe0V and not Safe5V */
-			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
-
-			/* Disable AutoDischargeDisconnect */
-			tcpm_enable_auto_discharge_disconnect(port, 0);
-		}
-	}
-	if (alert & TCPC_REG_ALERT_POWER_STATUS) {
-		int pwr_status = 0;
-
-		/* Determine reason for power status change */
-		tcpci_tcpm_get_power_status(port, &pwr_status);
-		if (pwr_status & TCPC_REG_POWER_STATUS_VBUS_PRES)
-			/* Safe5V and not Safe0V */
-			tcpc_vbus[port] = BIT(VBUS_PRESENT);
-		else if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0)
-			/* TCPCI Rev2 detects Safe0V, so just clear Safe5V */
-			tcpc_vbus[port] &= ~BIT(VBUS_PRESENT);
-		else {
-			/* Disable AutoDischargeDisconnect */
-			if (tcpc_vbus[port] & BIT(VBUS_PRESENT))
-				tcpm_enable_auto_discharge_disconnect(port, 0);
-
-			/*
-			 * TCPCI Rev1 can not detect Safe0V, so treat this
-			 * like a Safe0V detection. not Safe5V and Safe0V
-			 */
-			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
-		}
-
-#if defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) && defined(CONFIG_USB_CHARGER)
-		/* Update charge manager with new VBUS state */
-		usb_charger_vbus_change(port,
-				!!(tcpc_vbus[port] & BIT(VBUS_PRESENT)));
-		pd_event |= TASK_EVENT_WAKE;
-#endif /* CONFIG_USB_PD_VBUS_DETECT_TCPC && CONFIG_USB_CHARGER */
-		if (pwr_status & TCPC_REG_POWER_STATUS_VBUS_DET)
-			board_vbus_present_change();
-	}
+	tcpci_check_vbus_changed(port, alert, &pd_event);
 
 	/* Check for Hard Reset received */
 	if (alert & TCPC_REG_ALERT_RX_HARD_RST) {
@@ -1267,7 +1277,7 @@ int tcpci_tcpm_init(int port)
 		return EC_ERROR_INVAL;
 
 	while (1) {
-		error = tcpc_read(port, TCPC_REG_POWER_STATUS, &power_status);
+		error = tcpci_tcpm_get_power_status(port, &power_status);
 		/*
 		 * If read succeeds and the uninitialized bit is clear, then
 		 * initialization is complete, clear all alert bits and write
@@ -1321,13 +1331,14 @@ int tcpci_tcpm_init(int port)
 					: BIT(VBUS_SAFE0V);
 	}
 
-#if defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) && defined(CONFIG_USB_CHARGER)
 	/*
-	 * Set Vbus change now in case the TCPC doesn't send a power status
-	 * changed interrupt for it later.
+	 * Force an update to the VBUS status in case the TCPC doesn't send a
+	 * power status changed interrupt later.
 	 */
-	usb_charger_vbus_change(port, !!(tcpc_vbus[port] & BIT(VBUS_PRESENT)));
-#endif
+	tcpci_check_vbus_changed(port,
+		TCPC_REG_ALERT_POWER_STATUS | TCPC_REG_ALERT_EXT_STATUS,
+		NULL);
+
 	error = init_alert_mask(port);
 	if (error)
 		return error;
