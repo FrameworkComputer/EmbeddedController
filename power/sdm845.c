@@ -691,12 +691,6 @@ void chipset_reset(enum chipset_reset_reason reason)
 	CPRINTS("%s(%d)", __func__, reason);
 	report_ap_reset(reason);
 
-	/* The host command is used to hard reset AP. Check b/119261783 */
-	if (reason == CHIPSET_RESET_HOST_CMD) {
-		request_cold_reset();
-		return;
-	}
-
 	/*
 	 * Warm reset sequence:
 	 * 1. Issue a low pulse to PM845_RESIN_L, which triggers PMIC
