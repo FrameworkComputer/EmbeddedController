@@ -13,6 +13,7 @@
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
+#include "util.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
@@ -158,6 +159,34 @@ static void mt6360_usb_charger_task(const int port)
 			mt6360_enable_bc12_detection(0);
 		}
 	}
+}
+
+/* RGB LED */
+int mt6360_led_enable(enum mt6360_led_id led_id, int enable)
+{
+	if (!IN_RANGE(led_id, 0, MT6360_LED_COUNT))
+		return EC_ERROR_INVAL;
+
+	if (enable)
+		return mt6360_set_bit(MT6360_REG_RGB_EN,
+				      MT6360_MASK_ISINK_EN(led_id));
+	return mt6360_clr_bit(MT6360_REG_RGB_EN, MT6360_MASK_ISINK_EN(led_id));
+}
+
+int mt6360_led_set_brightness(enum mt6360_led_id led_id, int brightness)
+{
+	int val;
+
+	if (!IN_RANGE(led_id, 0, MT6360_LED_COUNT))
+		return EC_ERROR_INVAL;
+	if (!IN_RANGE(brightness, 0, 16))
+		return EC_ERROR_INVAL;
+
+	RETURN_ERROR(mt6360_read8(MT6360_REG_RGB_ISINK(led_id), &val));
+	val &= ~MT6360_MASK_CUR_SEL;
+	val |= brightness;
+
+	return mt6360_write8(MT6360_REG_RGB_ISINK(led_id), val);
 }
 
 const struct bc12_drv mt6360_drv = {

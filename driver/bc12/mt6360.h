@@ -21,6 +21,12 @@
 #define MT6360_MASK_DCP 0x40
 #define MT6360_MASK_CDP 0x50
 
+#define MT6360_REG_RGB_EN 0x80
+#define MT6360_MASK_ISINK_EN(x) BIT(7 - (x))
+
+#define MT6360_REG_RGB_ISINK(x) (0x81 + (x))
+#define MT6360_MASK_CUR_SEL 0xF
+
 #define MT6360_REG_DPDMIRQ 0xD6
 #define MT6360_MASK_DPDMIRQ_ATTACH BIT(0)
 #define MT6360_MASK_DPDMIRQ_DETACH BIT(1)
@@ -28,10 +34,23 @@
 #define MT6360_REG_DPDM_MASK1 0xF6
 #define MT6360_REG_DPDM_MASK1_CHGDET_DONEI_M BIT(0)
 
+enum mt6360_led_id {
+	MT6360_LED_RGB1,
+	MT6360_LED_RGB2,
+	MT6360_LED_RGB3,
+	MT6360_LED_RGB_ML,
+
+	MT6360_LED_COUNT,
+};
+
 struct mt6360_config_t {
 	int i2c_port;
 	int i2c_addr_flags;
 };
+
+int mt6360_led_enable(enum mt6360_led_id led_id, int enable);
+
+int mt6360_led_set_brightness(enum mt6360_led_id led_id, int brightness);
 
 extern const struct mt6360_config_t mt6360_config;
 
