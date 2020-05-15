@@ -324,12 +324,13 @@ static int rollback_update(int32_t next_min_version,
 		goto out;
 	}
 
+	unlock_rollback();
 	if (flash_erase(offset, erase_size)) {
 		ret = EC_ERROR_UNKNOWN;
+		lock_rollback();
 		goto out;
 	}
 
-	unlock_rollback();
 	ret = flash_write(offset, sizeof(block), block);
 	lock_rollback();
 
