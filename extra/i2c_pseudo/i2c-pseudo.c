@@ -2205,8 +2205,19 @@ static int i2cp_cdev_open(struct inode *inodep, struct file *filep)
 	/* Is there any way to find this through @inodep? */
 	this_pseudo = i2cp_device;
 
-	/* I2C pseudo adapter controllers are not seekable. */
+	/*
+	 * HAVE_STREAM_OPEN value meanings:
+	 *   -1 : stream_open() is not available
+	 *    0 : unknown if stream_open() is or is not available
+	 *    1 : stream_open() is available
+	 */
+#if HAVE_STREAM_OPEN >= 0
+	/* I2C pseudo adapter controllers are non-seekable pure I/O streams. */
 	stream_open(inodep, filep);
+#else
+	/* I2C pseudo adapter controllers are not seekable. */
+	nonseekable_open(inodep, filep);
+#endif
 	/* Refuse fsnotify events.  Modeled after /dev/ptmx implementation. */
 	filep->f_mode |= FMODE_NONOTIFY;
 
