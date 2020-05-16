@@ -47,7 +47,6 @@
 #define GPIO_PIN_MASK(p, m) .port = (p), .mask = (m)
 #undef CONFIG_TASK_PROFILING
 /* TODO: not yet supported */
-#undef CONFIG_WATCHDOG
 #undef CONFIG_MPU
 /* TODO: core/riscv-rv32i pollution */
 #define __ram_code

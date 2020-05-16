@@ -17,3 +17,4 @@ chip-y+=uart.o
 
 # Optional chip modules
 chip-$(CONFIG_COMMON_TIMER)+=hrtimer.o
+chip-$(CONFIG_WATCHDOG)+=watchdog.o

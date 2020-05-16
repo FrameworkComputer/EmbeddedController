@@ -73,6 +73,16 @@
 #define SCP_UART_BASE(n)		CONCAT3(SCP_UART, n, _BASE)
 #define UART_REG(n, offset)		REG32_ADDR(SCP_UART_BASE(n))[offset]
 
+/* WDT */
+#define SCP_CORE0_WDT_IRQ		REG32(SCP_REG_BASE + 0x30030)
+#define SCP_CORE0_WDT_CFG		REG32(SCP_REG_BASE + 0x30034)
+#define   WDT_FREQ			33825 /* 0xFFFFF / 31 */
+#define   WDT_MAX_PERIOD		0xFFFFF /* 31 seconds */
+#define   WDT_PERIOD(ms)		(WDT_FREQ * (ms) / 1000)
+#define   WDT_EN			BIT(31)
+#define SCP_CORE0_WDT_KICK		REG32(SCP_REG_BASE + 0x30038)
+#define SCP_CORE0_WDT_CUR_VAL		REG32(SCP_REG_BASE + 0x3003C)
+
 /* INTC */
 #define SCP_INTC_IRQ_POL0		0xef001f20
 #define SCP_INTC_IRQ_POL1		0x0800001d
