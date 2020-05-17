@@ -43,10 +43,9 @@ static inline int raw_write8(const int port, const uint16_t i2c_addr_flags,
 	return i2c_write8(port, i2c_addr_flags, reg, data);
 }
 
-static int set_range(const struct motion_sensor_t *s, int range, int rnd)
+static int set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	int ret,  range_val, reg_val, range_reg_val;
-	struct accelgyro_saved_data_t *data = s->drv_data;
 
 	range_val = BMA2x2_RANGE_TO_REG(range);
 	if ((BMA2x2_RANGE_TO_REG(range_val) < range) && rnd)
@@ -67,18 +66,11 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 
 	/* If successfully written, then save the range. */
 	if (ret == EC_SUCCESS)
-		data->range = BMA2x2_REG_TO_RANGE(range_val);
+		s->current_range = BMA2x2_REG_TO_RANGE(range_val);
 
 	mutex_unlock(s->mutex);
 
 	return ret;
-}
-
-static int get_range(const struct motion_sensor_t *s)
-{
-	struct accelgyro_saved_data_t *data = s->drv_data;
-
-	return data->range;
 }
 
 static int get_resolution(const struct motion_sensor_t *s)
@@ -197,7 +189,7 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	return EC_SUCCESS;
 }
 
-static int perform_calib(const struct motion_sensor_t *s, int enable)
+static int perform_calib(struct motion_sensor_t *s, int enable)
 {
 	int ret, val, status, rate, range, i;
 	timestamp_t deadline;
@@ -213,7 +205,7 @@ static int perform_calib(const struct motion_sensor_t *s, int enable)
 		return EC_ERROR_ACCESS_DENIED;
 
 	rate = get_data_rate(s);
-	range = get_range(s);
+	range = s->current_range;
 	/*
 	 * Temporary set frequency to 100Hz to get enough data in a short
 	 * period of time.
@@ -261,7 +253,7 @@ end_perform_calib:
 	return ret;
 }
 
-static int init(const struct motion_sensor_t *s)
+static int init(struct motion_sensor_t *s)
 {
 	int ret = 0, tries = 0, val, reg, reset_field;
 
@@ -319,7 +311,6 @@ const struct accelgyro_drv bma2x2_accel_drv = {
 	.init = init,
 	.read = read,
 	.set_range = set_range,
-	.get_range = get_range,
 	.get_resolution = get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = get_data_rate,

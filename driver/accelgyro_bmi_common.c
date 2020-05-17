@@ -536,15 +536,14 @@ int bmi_load_fifo(struct motion_sensor_t *s, uint32_t last_ts)
 	return EC_SUCCESS;
 }
 
-int bmi_set_range(const struct motion_sensor_t *s, int range, int rnd)
+int bmi_set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	int ret, range_tbl_size;
 	uint8_t reg_val, ctrl_reg;
 	const struct bmi_accel_param_pair *ranges;
-	struct accelgyro_saved_data_t *data = BMI_GET_SAVED_DATA(s);
 
 	if (s->type == MOTIONSENSE_TYPE_MAG) {
-		data->range = range;
+		s->current_range = range;
 		return EC_SUCCESS;
 	}
 
@@ -556,16 +555,9 @@ int bmi_set_range(const struct motion_sensor_t *s, int range, int rnd)
 			 ctrl_reg, reg_val);
 	/* Now that we have set the range, update the driver's value. */
 	if (ret == EC_SUCCESS)
-		data->range = bmi_get_engineering_val(reg_val, ranges,
-				range_tbl_size);
+		s->current_range = bmi_get_engineering_val(reg_val, ranges,
+							   range_tbl_size);
 	return ret;
-}
-
-int bmi_get_range(const struct motion_sensor_t *s)
-{
-	struct accelgyro_saved_data_t *data = BMI_GET_SAVED_DATA(s);
-
-	return data->range;
 }
 
 int bmi_get_data_rate(const struct motion_sensor_t *s)

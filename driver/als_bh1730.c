@@ -86,15 +86,15 @@ static int bh1730_read_lux(const struct motion_sensor_t *s, intv3_t v)
 		return EC_SUCCESS;
 }
 
-static int bh1730_set_range(const struct motion_sensor_t *s, int range,
+static int bh1730_set_range(struct motion_sensor_t *s, int range,
 			     int rnd)
 {
-	return EC_SUCCESS;
-}
+	/* Range is fixed by hardware */
+	if (range != s->default_range)
+		return EC_ERROR_INVAL;
 
-static int bh1730_get_range(const struct motion_sensor_t *s)
-{
-	return 1;
+	s->current_range = range;
+	return EC_SUCCESS;
 }
 
 static int bh1730_set_data_rate(const struct motion_sensor_t *s,
@@ -134,7 +134,7 @@ static int bh1730_get_offset(const struct motion_sensor_t *s,
 /**
  * Initialise BH1730 Ambient light sensor.
  */
-static int bh1730_init(const struct motion_sensor_t *s)
+static int bh1730_init(struct motion_sensor_t *s)
 {
 	int ret;
 
@@ -172,7 +172,6 @@ const struct accelgyro_drv bh1730_drv = {
 	.init = bh1730_init,
 	.read = bh1730_read_lux,
 	.set_range = bh1730_set_range,
-	.get_range = bh1730_get_range,
 	.set_offset = bh1730_set_offset,
 	.get_offset = bh1730_get_offset,
 	.set_data_rate = bh1730_set_data_rate,

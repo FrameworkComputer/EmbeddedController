@@ -66,23 +66,14 @@ void lis2mdl_normalize(const struct motion_sensor_t *s,
 	v[Z] += cal->bias[Z];
 }
 
-static int set_range(const struct motion_sensor_t *s, int range, int rnd)
+static int set_range(struct motion_sensor_t *s, int range, int rnd)
 {
-	struct stprivate_data *data = s->drv_data;
-
 	/* Range is fixed by hardware */
 	if (range != s->default_range)
 		return EC_ERROR_INVAL;
 
-	data->base.range = range;
+	s->current_range = range;
 	return EC_SUCCESS;
-}
-
-static int get_range(const struct motion_sensor_t *s)
-{
-	struct stprivate_data *data = s->drv_data;
-
-	return data->base.range;
 }
 
 /**
@@ -140,7 +131,7 @@ int lis2mdl_thru_lsm6dsm_read(const struct motion_sensor_t *s, intv3_t v)
 	return ret;
 }
 
-int lis2mdl_thru_lsm6dsm_init(const struct motion_sensor_t *s)
+int lis2mdl_thru_lsm6dsm_init(struct motion_sensor_t *s)
 {
 	int ret = EC_ERROR_UNIMPLEMENTED;
 	struct mag_cal_t *cal = LIS2MDL_CAL(s);
@@ -261,7 +252,7 @@ int lis2mdl_read(const struct motion_sensor_t *s, intv3_t v)
 /**
  * Initialize the sensor. This function will verify the who-am-I register
  */
-int lis2mdl_init(const struct motion_sensor_t *s)
+int lis2mdl_init(struct motion_sensor_t *s)
 {
 	int ret = EC_ERROR_UNKNOWN, who_am_i, count = LIS2MDL_STARTUP_MS;
 	struct stprivate_data *data = s->drv_data;
@@ -405,7 +396,6 @@ const struct accelgyro_drv lis2mdl_drv = {
 	.set_data_rate = lis2mdl_set_data_rate,
 #endif /* !CONFIG_MAG_LSM6DSM_LIS2MDL */
 	.set_range = set_range,
-	.get_range = get_range,
 	.get_data_rate = st_get_data_rate,
 	.get_resolution = st_get_resolution,
 	.set_offset = set_offset,

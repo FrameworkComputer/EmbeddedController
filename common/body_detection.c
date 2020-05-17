@@ -169,7 +169,6 @@ static void determine_threshold_scale(int range, int resolution, int rms_noise)
 void body_detect_reset(void)
 {
 	int odr = body_sensor->drv->get_data_rate(body_sensor);
-	int range = body_sensor->drv->get_range(body_sensor);
 	int resolution = body_sensor->drv->get_resolution(body_sensor);
 	int rms_noise = body_sensor->drv->get_rms_noise(body_sensor);
 
@@ -181,7 +180,8 @@ void body_detect_reset(void)
 	if (odr == 0)
 		return;
 	determine_window_size(odr);
-	determine_threshold_scale(range, resolution, rms_noise);
+	determine_threshold_scale(body_sensor->current_range,
+				  resolution, rms_noise);
 	/* initialize motion data and state */
 	memset(data, 0, sizeof(data));
 	history_idx = 0;

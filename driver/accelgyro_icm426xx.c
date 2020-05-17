@@ -501,7 +501,7 @@ static int icm426xx_set_range(const struct motion_sensor_t *s, int range,
 	ret = icm_field_update8(s, reg, ICM426XX_FS_MASK,
 				ICM426XX_FS_SEL(reg_val));
 	if (ret == EC_SUCCESS)
-		data->range = newrange;
+		s->current_range = newrange;
 
 	mutex_unlock(s->mutex);
 
@@ -661,7 +661,7 @@ static int icm426xx_set_offset(const struct motion_sensor_t *s,
 {
 	struct accelgyro_saved_data_t *data = ICM_GET_SAVED_DATA(s);
 	intv3_t v = { offset[X], offset[Y], offset[Z] };
-	int range, div1, div2;
+	int div1, div2;
 	int i;
 
 	/* unscale values and rotate back to chip frame */
@@ -670,16 +670,15 @@ static int icm426xx_set_offset(const struct motion_sensor_t *s,
 	rotate_inv(v, *s->rot_standard_ref, v);
 
 	/* convert raw data to hardware offset units */
-	range = icm_get_range(s);
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
 		/* hardware offset is 1/2048g by LSB */
-		div1 = range * 2048;
+		div1 = s->current_range * 2048;
 		div2 = 32768;
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
 		/* hardware offset is 1/32dps by LSB */
-		div1 = range * 32;
+		div1 = s->current_range * 32;
 		div2 = 32768;
 		break;
 	default:
@@ -696,7 +695,7 @@ static int icm426xx_get_offset(const struct motion_sensor_t *s, int16_t *offset,
 {
 	struct accelgyro_saved_data_t *data = ICM_GET_SAVED_DATA(s);
 	intv3_t v;
-	int range, div1, div2;
+	int div1, div2;
 	int i, ret;
 
 	ret = icm426xx_get_hw_offset(s, v);
@@ -704,17 +703,16 @@ static int icm426xx_get_offset(const struct motion_sensor_t *s, int16_t *offset,
 		return ret;
 
 	/* transform offset to raw data */
-	range = icm_get_range(s);
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
 		/* hardware offset is 1/2048g by LSB */
 		div1 = 32768;
-		div2 = 2048 * range;
+		div2 = 2048 * s->current_range;
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
 		/* hardware offset is 1/32dps by LSB */
 		div1 = 32768;
-		div2 = 32 * range;
+		div2 = 32 * s->current_range;
 		break;
 	default:
 		return EC_ERROR_INVAL;
@@ -954,7 +952,6 @@ const struct accelgyro_drv icm426xx_drv = {
 	.read = icm426xx_read,
 	.read_temp = icm426xx_read_temp,
 	.set_range = icm426xx_set_range,
-	.get_range = icm_get_range,
 	.get_resolution = icm_get_resolution,
 	.set_data_rate = icm426xx_set_data_rate,
 	.get_data_rate = icm_get_data_rate,

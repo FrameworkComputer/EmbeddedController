@@ -307,10 +307,8 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 	 * possible.
 	 */
 	for (i = X; i <= Z; i++) {
-		scaled_base[i] = base[i] *
-			accel_base->drv->get_range(accel_base);
-		scaled_lid[i] = lid[i] *
-			accel_lid->drv->get_range(accel_lid);
+		scaled_base[i] = base[i] * accel_base->current_range;
+		scaled_lid[i] = lid[i] * accel_lid->current_range;
 		if (ABS(scaled_base[i]) > MOTION_SCALING_AXIS_MAX ||
 		    ABS(scaled_lid[i]) > MOTION_SCALING_AXIS_MAX) {
 			reliable = 0;

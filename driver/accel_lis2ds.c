@@ -177,11 +177,10 @@ __maybe_unused static int lis2ds_irq_handler(struct motion_sensor_t *s,
  * @range: Range
  * @rnd: Round up/down flag
  */
-static int set_range(const struct motion_sensor_t *s, int range, int rnd)
+static int set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	int err;
 	uint8_t reg_val;
-	struct stprivate_data *data = s->drv_data;
 	int newrange = ST_NORMALIZE_RATE(range);
 
 	/* Adjust and check rounded value */
@@ -200,17 +199,10 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 				      reg_val);
 	if (err == EC_SUCCESS)
 		/* Save internally gain for speed optimization. */
-		data->base.range = newrange;
+		s->current_range = newrange;
 	mutex_unlock(s->mutex);
 
 	return EC_SUCCESS;
-}
-
-static int get_range(const struct motion_sensor_t *s)
-{
-	struct stprivate_data *data = s->drv_data;
-
-	return data->base.range;
 }
 
 static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
@@ -317,7 +309,7 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	return EC_SUCCESS;
 }
 
-static int init(const struct motion_sensor_t *s)
+static int init(struct motion_sensor_t *s)
 {
 	int ret = 0, tmp;
 	struct stprivate_data *data = s->drv_data;
@@ -383,13 +375,11 @@ const struct accelgyro_drv lis2ds_drv = {
 	.init = init,
 	.read = read,
 	.set_range = set_range,
-	.get_range = get_range,
 	.get_resolution = st_get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = st_get_data_rate,
 	.set_offset = st_set_offset,
 	.get_offset = st_get_offset,
-	.perform_calib = NULL,
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	.irq_handler = lis2ds_irq_handler,
 #endif /* CONFIG_ACCEL_INTERRUPTS */

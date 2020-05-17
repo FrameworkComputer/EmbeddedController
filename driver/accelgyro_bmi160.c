@@ -216,16 +216,15 @@ static int set_offset(const struct motion_sensor_t *s,
 	return ret;
 }
 
-static int perform_calib(const struct motion_sensor_t *s, int enable)
+static int perform_calib(struct motion_sensor_t *s, int enable)
 {
-	int ret, val, en_flag, status, rate, range;
+	int ret, val, en_flag, status, rate, range = s->current_range;
 	timestamp_t deadline, timeout;
 
 	if (!enable)
 		return EC_SUCCESS;
 
 	rate = bmi_get_data_rate(s);
-	range = bmi_get_range(s);
 	/*
 	 * Temporary set frequency to 100Hz to get enough data in a short
 	 * period of time.
@@ -569,7 +568,7 @@ static int irq_handler(struct motion_sensor_t *s,
 }
 #endif  /* CONFIG_ACCEL_INTERRUPTS */
 
-static int init(const struct motion_sensor_t *s)
+static int init(struct motion_sensor_t *s)
 {
 	int ret = 0, tmp, i;
 	struct accelgyro_saved_data_t *saved_data = BMI_GET_SAVED_DATA(s);
@@ -712,7 +711,6 @@ static int init(const struct motion_sensor_t *s)
 	 * so set data rate to 0.
 	 */
 	saved_data->odr = 0;
-	bmi_set_range(s, s->default_range, 0);
 
 	if (IS_ENABLED(CONFIG_ACCEL_INTERRUPTS) &&
 	    (s->type == MOTIONSENSE_TYPE_ACCEL))
@@ -725,7 +723,6 @@ const struct accelgyro_drv bmi160_drv = {
 	.init = init,
 	.read = bmi_read,
 	.set_range = bmi_set_range,
-	.get_range = bmi_get_range,
 	.get_resolution = bmi_get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = bmi_get_data_rate,

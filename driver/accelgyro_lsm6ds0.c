@@ -166,14 +166,13 @@ static inline int raw_write8(const int port, const uint16_t i2c_addr_flags,
 	return i2c_write8(port, i2c_addr_flags, reg, data);
 }
 
-static int set_range(const struct motion_sensor_t *s,
+static int set_range(struct motion_sensor_t *s,
 				int range,
 				int rnd)
 {
 	int ret, ctrl_val, range_tbl_size;
 	uint8_t ctrl_reg, reg_val;
 	const struct accel_param_pair *ranges;
-	struct lsm6ds0_data *data = s->drv_data;
 
 	ctrl_reg = get_ctrl_reg(s->type);
 	ranges = get_range_table(s->type, &range_tbl_size);
@@ -197,19 +196,12 @@ static int set_range(const struct motion_sensor_t *s,
 
 	/* Now that we have set the range, update the driver's value. */
 	if (ret == EC_SUCCESS)
-		data->base.range = get_engineering_val(reg_val, ranges,
-				range_tbl_size);
+		s->current_range = get_engineering_val(reg_val, ranges,
+						       range_tbl_size);
 
 accel_cleanup:
 	mutex_unlock(s->mutex);
 	return ret;
-}
-
-static int get_range(const struct motion_sensor_t *s)
-{
-	struct lsm6ds0_data *data = s->drv_data;
-
-	return data->base.range;
 }
 
 static int get_resolution(const struct motion_sensor_t *s)
@@ -328,7 +320,7 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 {
 	uint8_t raw[6];
 	uint8_t xyz_reg;
-	int ret, range, i, tmp = 0;
+	int ret, i, tmp = 0;
 	struct lsm6ds0_data *data = s->drv_data;
 
 	ret = is_data_ready(s, &tmp);
@@ -364,14 +356,13 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	rotate(v, *s->rot_standard_ref, v);
 
 	/* apply offset in the device coordinates */
-	range = get_range(s);
 	for (i = X; i <= Z; i++)
-		v[i] += (data->offset[i] << 5) / range;
+		v[i] += (data->offset[i] << 5) / s->current_range;
 
 	return EC_SUCCESS;
 }
 
-static int init(const struct motion_sensor_t *s)
+static int init(struct motion_sensor_t *s)
 {
 	int ret = 0, tmp;
 
@@ -425,11 +416,9 @@ const struct accelgyro_drv lsm6ds0_drv = {
 	.init = init,
 	.read = read,
 	.set_range = set_range,
-	.get_range = get_range,
 	.get_resolution = get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = get_data_rate,
 	.set_offset = set_offset,
 	.get_offset = get_offset,
-	.perform_calib = NULL,
 };

@@ -186,6 +186,9 @@ struct motion_sensor_t {
 	 */
 	int default_range;
 
+	/* Range currently used by the sensor. */
+	int current_range;
+
 	/*
 	 * There are 4 configuration parameters to deal with different
 	 * configuration
@@ -282,7 +285,7 @@ extern unsigned int motion_min_interval;
  *
  * @param sensor sensor which was just initialized
  */
-int sensor_init_done(const struct motion_sensor_t *sensor);
+int sensor_init_done(struct motion_sensor_t *sensor);
 
 /**
  * Board specific function that is called when a double_tap event is detected.

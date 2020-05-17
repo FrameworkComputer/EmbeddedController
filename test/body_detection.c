@@ -20,8 +20,7 @@ static const int window_size = 50; /* sensor data rate (Hz) */
 static int filler(const struct motion_sensor_t *s, const float v)
 {
 	int resolution = s->drv->get_resolution(s);
-	int range = s->drv->get_range(s);
-	int data_1g = BIT(resolution - 1) / range;
+	int data_1g = BIT(resolution - 1) / s->current_range;
 
 	return (int)(v * data_1g / 9.8);
 }

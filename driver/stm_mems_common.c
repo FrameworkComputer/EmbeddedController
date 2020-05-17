@@ -125,7 +125,7 @@ int st_get_data_rate(const struct motion_sensor_t *s)
  */
 void st_normalize(const struct motion_sensor_t *s, intv3_t v, uint8_t *data)
 {
-	int i, range;
+	int i;
 	struct stprivate_data *drvdata = s->drv_data;
 	/*
 	 * Data is left-aligned and the bottom bits need to be
@@ -139,8 +139,6 @@ void st_normalize(const struct motion_sensor_t *s, intv3_t v, uint8_t *data)
 
 	rotate(v, *s->rot_standard_ref, v);
 
-	/* apply offset in the device coordinates */
-	range = s->drv->get_range(s);
 	for (i = X; i <= Z; i++)
-		v[i] += (drvdata->offset[i] << 5) / range;
+		v[i] += (drvdata->offset[i] << 5) / s->current_range;
 }

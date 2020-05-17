@@ -26,7 +26,7 @@
 /* Array units is in m/s^2 - old matrix format. */
 int filler(const struct motion_sensor_t *s, const float v)
 {
-	return (v * MOTION_SCALING_FACTOR) / s->drv->get_range(s);
+	return (v * MOTION_SCALING_FACTOR) / s->current_range;
 }
 
 static int test_lid_angle_less180(void)

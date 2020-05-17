@@ -97,7 +97,7 @@ static int motion_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	return EC_SUCCESS;
 }
 
-static int sync_init(const struct motion_sensor_t *s)
+static int sync_init(struct motion_sensor_t *s)
 {
 	vector.sensor_num = s - motion_sensors;
 	sync_enabled = 0;

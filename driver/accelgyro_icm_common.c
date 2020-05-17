@@ -282,13 +282,6 @@ int icm_get_resolution(const struct motion_sensor_t *s)
 	return ICM_RESOLUTION;
 }
 
-int icm_get_range(const struct motion_sensor_t *s)
-{
-	struct accelgyro_saved_data_t *data = ICM_GET_SAVED_DATA(s);
-
-	return data->range;
-}
-
 int icm_get_data_rate(const struct motion_sensor_t *s)
 {
 	struct accelgyro_saved_data_t *data = ICM_GET_SAVED_DATA(s);

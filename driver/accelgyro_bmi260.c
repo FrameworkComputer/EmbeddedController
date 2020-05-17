@@ -209,14 +209,14 @@ static int calibrate_offset(const struct motion_sensor_t *s,
 	return ret;
 }
 
-static int perform_calib(const struct motion_sensor_t *s, int enable)
+static int perform_calib(struct motion_sensor_t *s, int enable)
 {
 	int ret, rate;
 	int16_t temp;
 	int16_t offset[3];
 	intv3_t target = {0, 0, 0};
 	/* Get sensor range for calibration*/
-	int range = bmi_get_range(s);
+	int range = s->current_range;
 
 	if (!enable)
 		return EC_SUCCESS;
@@ -497,7 +497,7 @@ static int init_config(const struct motion_sensor_t *s)
 	return EC_SUCCESS;
 }
 
-static int init(const struct motion_sensor_t *s)
+static int init(struct motion_sensor_t *s)
 {
 	int ret = 0, tmp, i;
 	struct accelgyro_saved_data_t *saved_data = BMI_GET_SAVED_DATA(s);
@@ -532,7 +532,6 @@ static int init(const struct motion_sensor_t *s)
 	 * so set data rate to 0.
 	 */
 	saved_data->odr = 0;
-	bmi_set_range(s, s->default_range, 0);
 
 	if (IS_ENABLED(CONFIG_ACCEL_INTERRUPTS) &&
 	    (s->type == MOTIONSENSE_TYPE_ACCEL))
@@ -545,7 +544,6 @@ const struct accelgyro_drv bmi260_drv = {
 	.init = init,
 	.read = bmi_read,
 	.set_range = bmi_set_range,
-	.get_range = bmi_get_range,
 	.get_resolution = bmi_get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = bmi_get_data_rate,

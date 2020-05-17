@@ -23,7 +23,7 @@
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
-static int init(const struct motion_sensor_t *s);
+static int init(struct motion_sensor_t *s);
 
 /**
  * Read 8bit register from device.
@@ -500,20 +500,15 @@ static int get_resolution(const struct motion_sensor_t *s)
 	return val & 0x07;
 }
 
-static int set_range(const struct motion_sensor_t *s,
+static int set_range(struct motion_sensor_t *s,
 				int range,
 				int rnd)
 {
 	struct si114x_typed_data_t *data = SI114X_GET_TYPED_DATA(s);
 	data->scale = range >> 16;
 	data->uscale = range & 0xffff;
+	s->current_range = range;
 	return EC_SUCCESS;
-}
-
-static int get_range(const struct motion_sensor_t *s)
-{
-	struct si114x_typed_data_t *data = SI114X_GET_TYPED_DATA(s);
-	return (data->scale << 16) | (data->uscale);
 }
 
 static int get_data_rate(const struct motion_sensor_t *s)
@@ -553,7 +548,7 @@ static int get_offset(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
-static int init(const struct motion_sensor_t *s)
+static int init(struct motion_sensor_t *s)
 {
 	int ret, resol;
 	struct si114x_drv_data_t *data = SI114X_GET_DATA(s);
@@ -590,7 +585,6 @@ const struct accelgyro_drv si114x_drv = {
 	.init = init,
 	.read = read,
 	.set_range = set_range,
-	.get_range = get_range,
 	.set_resolution = set_resolution,
 	.get_resolution = get_resolution,
 	.set_data_rate = set_data_rate,

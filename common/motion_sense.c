@@ -339,19 +339,19 @@ static inline int motion_sense_init(struct motion_sensor_t *sensor)
  *
  * Called by init routine of each sensors when successful.
  */
-int sensor_init_done(const struct motion_sensor_t *s)
+int sensor_init_done(struct motion_sensor_t *s)
 {
 	int ret;
 
-	ret = s->drv->set_range(s, BASE_RANGE(s->default_range),
-				!!(s->default_range & ROUND_UP_FLAG));
+	ret = s->drv->set_range(s, BASE_RANGE(s->current_range),
+				!!(s->current_range & ROUND_UP_FLAG));
 	if (ret == EC_RES_SUCCESS) {
 		if (IS_ENABLED(CONFIG_CONSOLE_VERBOSE))
 			CPRINTS("%s: MS Done Init type:0x%X range:%d",
-				s->name, s->type, s->drv->get_range(s));
+				s->name, s->type, s->current_range);
 		else
 			CPRINTS("%c%d InitDone r:%d", s->name[0], s->type,
-				s->drv->get_range(s));
+				s->current_range);
 	}
 	return ret;
 }
@@ -369,9 +369,15 @@ static void motion_sense_switch_sensor_rate(void)
 	for (i = 0; i < motion_sensor_count; ++i) {
 		sensor = &motion_sensors[i];
 		if (SENSOR_ACTIVE(sensor)) {
-			/* Initialize or just back the odr previously set. */
+			/*
+			 * Initialize or just back the odr/range previously
+			 * set.
+			 */
 			if (sensor->state == SENSOR_INITIALIZED) {
 				motion_sense_set_data_rate(sensor);
+				sensor->drv->set_range(sensor,
+						       sensor->current_range,
+						       1);
 			} else {
 				ret = motion_sense_init(sensor);
 				if (ret != EC_SUCCESS)
@@ -408,6 +414,7 @@ static void motion_sense_shutdown(void)
 		/* Forget about changes made by the AP */
 		sensor->config[SENSOR_CONFIG_AP].odr = 0;
 		sensor->config[SENSOR_CONFIG_AP].ec_rate = 0;
+		sensor->current_range = sensor->default_range;
 	}
 	motion_sense_switch_sensor_rate();
 
@@ -1145,10 +1152,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			}
 		}
 
-		if (!sensor->drv->get_range)
-			return EC_RES_INVALID_COMMAND;
-
-		out->sensor_range.ret = sensor->drv->get_range(sensor);
+		out->sensor_range.ret = sensor->current_range;
 		args->response_size = sizeof(out->sensor_range);
 		break;
 
@@ -1485,8 +1489,7 @@ static int command_accelrange(int argc, char **argv)
 					   round) == EC_ERROR_INVAL)
 			return EC_ERROR_PARAM2;
 	} else {
-		ccprintf("Range for sensor %d: %d\n", id,
-			 sensor->drv->get_range(sensor));
+		ccprintf("Sensor %d range: %d\n", id, sensor->current_range);
 	}
 
 	return EC_SUCCESS;
@@ -1684,7 +1687,7 @@ static int command_display_accel_info(int argc, char **argv)
 		ccprintf("port: %d\n", motion_sensors[i].port);
 		ccprintf("addr: %d\n", I2C_STRIP_FLAGS(motion_sensors[i]
 						    .i2c_spi_addr_flags));
-		ccprintf("range: %d\n", motion_sensors[i].default_range);
+		ccprintf("range: %d\n", motion_sensors[i].current_range);
 		ccprintf("min_freq: %d\n", motion_sensors[i].min_frequency);
 		ccprintf("max_freq: %d\n", motion_sensors[i].max_frequency);
 		ccprintf("config:\n");

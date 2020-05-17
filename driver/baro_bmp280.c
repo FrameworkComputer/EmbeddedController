@@ -243,7 +243,7 @@ static int bmp280_set_power_mode(const struct motion_sensor_t *s,
 			  BMP280_CTRL_MEAS_REG, val);
 }
 
-static int bmp280_set_range(const struct motion_sensor_t *s,
+static int bmp280_set_range(struct motion_sensor_t *s,
 				int range,
 				int rnd)
 {
@@ -253,14 +253,8 @@ static int bmp280_set_range(const struct motion_sensor_t *s,
 	 * measurment to fit into 16 bits (or less if the AP wants to).
 	 */
 	data->range = 15 - __builtin_clz(range);
+	s->current_range = 1 << (16 + data->range);
 	return EC_SUCCESS;
-}
-
-static int bmp280_get_range(const struct motion_sensor_t *s)
-{
-	struct bmp280_drv_data_t *data = BMP280_GET_DATA(s);
-
-	return 1 << (16 + data->range);
 }
 
 /*
@@ -270,7 +264,7 @@ static int bmp280_get_range(const struct motion_sensor_t *s)
  * @retval 0 -> Success
  */
 
-static int bmp280_init(const struct motion_sensor_t *s)
+static int bmp280_init(struct motion_sensor_t *s)
 {
 	int val, ret;
 
@@ -372,7 +366,6 @@ const struct accelgyro_drv bmp280_drv = {
 	.init = bmp280_init,
 	.read = bmp280_read,
 	.set_range = bmp280_set_range,
-	.get_range = bmp280_get_range,
 	.set_data_rate = bmp280_set_data_rate,
 	.get_data_rate = bmp280_get_data_rate,
 };

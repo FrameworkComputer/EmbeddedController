@@ -80,7 +80,7 @@
 } while (0)
 
 
-int bmm150_init(const struct motion_sensor_t *s)
+int bmm150_init(struct motion_sensor_t *s)
 {
 	int ret;
 	int val;

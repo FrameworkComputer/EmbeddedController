@@ -177,21 +177,15 @@ int opt3001_read_lux(const struct motion_sensor_t *s, intv3_t v)
 	}
 }
 
-static int opt3001_set_range(const struct motion_sensor_t *s, int range,
+static int opt3001_set_range(struct motion_sensor_t *s, int range,
 			     int rnd)
 {
 	struct opt3001_drv_data_t *drv_data = OPT3001_GET_DATA(s);
 
 	drv_data->scale = range >> 16;
 	drv_data->uscale = range & 0xffff;
+	s->current_range = range;
 	return EC_SUCCESS;
-}
-
-static int opt3001_get_range(const struct motion_sensor_t *s)
-{
-	struct opt3001_drv_data_t *drv_data = OPT3001_GET_DATA(s);
-
-	return (drv_data->scale << 16) | (drv_data->uscale);
 }
 
 static int opt3001_set_data_rate(const struct motion_sensor_t *s,
@@ -265,7 +259,7 @@ static int opt3001_get_offset(const struct motion_sensor_t *s,
 /**
  * Initialise OPT3001 light sensor.
  */
-static int opt3001_init(const struct motion_sensor_t *s)
+static int opt3001_init(struct motion_sensor_t *s)
 {
 	int data;
 	int ret;
@@ -301,7 +295,6 @@ const struct accelgyro_drv opt3001_drv = {
 	.init = opt3001_init,
 	.read = opt3001_read_lux,
 	.set_range = opt3001_set_range,
-	.get_range = opt3001_get_range,
 	.set_offset = opt3001_set_offset,
 	.get_offset = opt3001_get_offset,
 	.set_data_rate = opt3001_set_data_rate,

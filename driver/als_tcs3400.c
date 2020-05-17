@@ -600,25 +600,19 @@ static int tcs3400_rgb_set_data_rate(const struct motion_sensor_t *s,
 }
 
 /* Enable/disable special factory calibration mode */
-static int tcs3400_perform_calib(const struct motion_sensor_t *s,
-				     int enable)
+static int tcs3400_perform_calib(struct motion_sensor_t *s, int enable)
 {
 	TCS3400_RGB_DRV_DATA(s+1)->calibration_mode = enable;
 	return EC_SUCCESS;
 }
 
-static int tcs3400_get_range(const struct motion_sensor_t *s)
-{
-	return (TCS3400_DRV_DATA(s)->als_cal.scale << 16) |
-			(TCS3400_DRV_DATA(s)->als_cal.uscale);
-}
-
-static int tcs3400_set_range(const struct motion_sensor_t *s,
+static int tcs3400_set_range(struct motion_sensor_t *s,
 			     int range,
 			     int rnd)
 {
 	TCS3400_DRV_DATA(s)->als_cal.scale = range >> 16;
 	TCS3400_DRV_DATA(s)->als_cal.uscale = range & 0xffff;
+	s->current_range = range;
 	return EC_SUCCESS;
 }
 
@@ -703,12 +697,12 @@ static int tcs3400_set_data_rate(const struct motion_sensor_t *s,
 /**
  * Initialise TCS3400 light sensor.
  */
-static int tcs3400_rgb_init(const struct motion_sensor_t *s)
+static int tcs3400_rgb_init(struct motion_sensor_t *s)
 {
 	return EC_SUCCESS;
 }
 
-static int tcs3400_init(const struct motion_sensor_t *s)
+static int tcs3400_init(struct motion_sensor_t *s)
 {
 	/*
 	 * These are default power-on register values with two exceptions:
@@ -761,7 +755,6 @@ const struct accelgyro_drv tcs3400_drv = {
 	.init = tcs3400_init,
 	.read = tcs3400_read,
 	.set_range = tcs3400_set_range,
-	.get_range = tcs3400_get_range,
 	.set_offset = tcs3400_set_offset,
 	.get_offset = tcs3400_get_offset,
 	.set_scale = tcs3400_set_scale,

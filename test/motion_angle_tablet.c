@@ -28,7 +28,7 @@ int filler(const struct motion_sensor_t *s, const float v)
 {
 	return FP_TO_INT( fp_div(
 		FLOAT_TO_FP(v) * MOTION_SCALING_FACTOR,
-		fp_mul(INT_TO_FP(s->drv->get_range(s)), MOTION_ONE_G)));
+		fp_mul(INT_TO_FP(s->current_range), MOTION_ONE_G)));
 }
 
 static int test_lid_angle_less180(void)

@@ -267,9 +267,7 @@ int bmi_decode_header(struct motion_sensor_t *accel,
  */
 int bmi_load_fifo(struct motion_sensor_t *s, uint32_t last_ts);
 
-int bmi_set_range(const struct motion_sensor_t *s, int range, int rnd);
-
-int bmi_get_range(const struct motion_sensor_t *s);
+int bmi_set_range(struct motion_sensor_t *s, int range, int rnd);
 
 int bmi_get_data_rate(const struct motion_sensor_t *s);
 

@@ -134,7 +134,7 @@ struct bmm150_private_data {
 #endif
 
 /* Specific initialization of BMM150 when behing BMI160 */
-int bmm150_init(const struct motion_sensor_t *s);
+int bmm150_init(struct motion_sensor_t *s);
 
 /* Command to normalize and apply temperature compensation */
 void bmm150_normalize(const struct motion_sensor_t *s,
