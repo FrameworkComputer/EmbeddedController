@@ -468,13 +468,13 @@ class RMAOpen(object):
             raise ValueError('%s does not have RMA support. Update to at '
                              'least %s' % (version, rma_support))
 
-    def _running_version_is_older(self, comp_ver):
-        """Returns True if running version is older than comp_ver."""
-        comp_ver_fields = [int(field) for field in comp_ver.split('.')]
+    def _running_version_is_older(self, target_ver):
+        """Returns True if running version is older than target_ver."""
+        target_ver_fields = [int(field) for field in target_ver.split('.')]
         for i, field in enumerate(self.running_ver_fields):
-            if field < int(comp_ver_fields[i]):
-                return True
-        return False
+            if field > int(target_ver_fields[i]):
+                return False
+        return True
 
     def device_matches_devid(self, devid, device):
         """Return True if the device matches devid.
