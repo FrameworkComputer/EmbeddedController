@@ -16,6 +16,7 @@ test-list-y=\
        compile_time_macros \
        crc32 \
        flash_physical \
+       flash_write_protect \
        mpu \
        mutex \
        pingpong \

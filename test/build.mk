@@ -129,6 +129,7 @@ extpwr_gpio-y=extpwr_gpio.o
 fan-y=fan.o
 flash-y=flash.o
 flash_physical-y=flash_physical.o
+flash_write_protect-y=flash_write_protect.o
 fpsensor-y=fpsensor.o
 fpsensor_crypto-y=fpsensor_crypto.o
 fpsensor_state-y=fpsensor_state.o
