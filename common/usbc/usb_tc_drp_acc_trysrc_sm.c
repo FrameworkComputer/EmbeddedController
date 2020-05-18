@@ -90,20 +90,18 @@
 #define TC_FLAGS_PARTNER_USB_COMM       BIT(17)
 /* Flag to note we are currently performing PR Swap */
 #define TC_FLAGS_PR_SWAP_IN_PROGRESS    BIT(18)
-/* Flag to note we need to perform PR Swap */
-#define TC_FLAGS_DO_PR_SWAP             BIT(19)
 /* Flag to note we are performing Discover Identity */
-#define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(20)
+#define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(19)
 /* Flag to note we should check for connection */
-#define TC_FLAGS_CHECK_CONNECTION       BIT(21)
+#define TC_FLAGS_CHECK_CONNECTION       BIT(20)
 /* Flag to note pd_set_suspend SUSPEND state */
-#define TC_FLAGS_SUSPEND                BIT(22)
+#define TC_FLAGS_SUSPEND                BIT(21)
 /*
  * Flag to note TC_ATTACHED_SNK is coming from a warm start through
  * tc_state_init and the default data role should not be changed from
  * what is currently set
  */
-#define TC_FLAGS_TC_WARM_ATTACHED_SNK   BIT(23)
+#define TC_FLAGS_TC_WARM_ATTACHED_SNK   BIT(22)
 
 /*
  * Clear all flags except TC_FLAGS_LPM_ENGAGED and TC_FLAGS_SUSPEND.
@@ -179,6 +177,21 @@ static const struct usb_state tc_states[];
 	 (CONFIG_USB_PD_DEBUG_LEVEL > 0))
 #define USB_PD_DEBUG_LABELS
 #endif
+
+/*
+ * Helper Macro to determine if the machine is in state
+ * TC_ATTACHED_SRC or TC_UNORIENTED_DBG_ACC_SRC
+ */
+#define IS_ATTACHED_SRC(port) (get_state_tc(port) == TC_ATTACHED_SRC ||\
+		get_state_tc(port) == TC_UNORIENTED_DBG_ACC_SRC)
+
+/*
+ * Helper Macro to determine if the machine is in state
+ * TC_ATTACHED_SNK or TC_DBG_ACC_SNK
+ */
+#define IS_ATTACHED_SNK(port) (get_state_tc(port) == TC_ATTACHED_SNK ||\
+		get_state_tc(port) == TC_DBG_ACC_SNK)
+
 
 #ifdef USB_PD_DEBUG_LABELS
 /* List of human readable state names for console debugging */
@@ -373,8 +386,7 @@ uint16_t pd_get_identity_vid(int port)
 void pd_update_contract(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
-		/* Must be in Attached.SRC when this function is called */
-		if (get_state_tc(port) == TC_ATTACHED_SRC)
+		if (IS_ATTACHED_SRC(port))
 			pe_dpm_request(port, DPM_REQUEST_SRC_CAP_CHANGE);
 	}
 }
@@ -384,11 +396,10 @@ void pd_request_source_voltage(int port, int mv)
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
 		pd_set_max_voltage(mv);
 
-		/* Must be in Attached.SNK when this function is called */
-		if (get_state_tc(port) == TC_ATTACHED_SNK)
+		if (IS_ATTACHED_SNK(port))
 			pe_dpm_request(port, DPM_REQUEST_NEW_POWER_LEVEL);
 		else
-			TC_SET_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP);
+			pe_dpm_request(port, DPM_REQUEST_PR_SWAP);
 
 		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
@@ -423,13 +434,8 @@ void tc_request_power_swap(int port)
 		 * Must be in Attached.SRC, Attached.SNK, UnorientedDbgAcc.SRC,
 		 * or DbgAcc.SNK, when this function is called.
 		 */
-		if (get_state_tc(port) == TC_ATTACHED_SRC ||
-				get_state_tc(port) == TC_ATTACHED_SNK ||
-				get_state_tc(port) == TC_DBG_ACC_SNK ||
-				get_state_tc(port) ==
-					TC_UNORIENTED_DBG_ACC_SRC) {
+		if (IS_ATTACHED_SRC(port) || IS_ATTACHED_SNK(port))
 			TC_SET_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
-		}
 	}
 }
 
@@ -495,10 +501,7 @@ void pd_request_data_swap(int port)
 	 * or UnorientedDebugAccessory.SRC when this function
 	 * is called
 	 */
-	if (get_state_tc(port) == TC_ATTACHED_SRC ||
-			get_state_tc(port) == TC_ATTACHED_SNK ||
-			get_state_tc(port) == TC_DBG_ACC_SNK ||
-			get_state_tc(port) == TC_UNORIENTED_DBG_ACC_SRC) {
+	if (IS_ATTACHED_SRC(port) || IS_ATTACHED_SNK(port)) {
 		TC_SET_FLAG(port, TC_FLAGS_REQUEST_DR_SWAP);
 		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
 	}
@@ -561,12 +564,12 @@ uint32_t tc_get_flags(int port)
 
 int tc_is_attached_src(int port)
 {
-	return get_state_tc(port) == TC_ATTACHED_SRC;
+	return IS_ATTACHED_SRC(port);
 }
 
 int tc_is_attached_snk(int port)
 {
-	return get_state_tc(port) == TC_ATTACHED_SNK;
+	return IS_ATTACHED_SNK(port);
 }
 
 void tc_partner_dr_power(int port, int en)
@@ -657,20 +660,32 @@ void tc_pr_swap_complete(int port)
 
 void tc_prs_src_snk_assert_rd(int port)
 {
-	/* Must be in Attached.SRC when this function is called */
-	if (get_state_tc(port) == TC_ATTACHED_SRC) {
-		/* Transition to Attached.SNK to assert Rd */
-		TC_SET_FLAG(port, TC_FLAGS_DO_PR_SWAP);
+	/*
+	 * Must be in Attached.SRC or UnorientedDebugAccessory.SRC
+	 * when this function is called
+	 */
+	if (IS_ATTACHED_SRC(port)) {
+		/*
+		 * Transition to Attached.SNK to
+		 * DebugAccessory.SNK assert Rd
+		 */
+		TC_SET_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP);
 		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
 	}
 }
 
 void tc_prs_snk_src_assert_rp(int port)
 {
-	/* Must be in Attached.SNK when this function is called */
-	if (get_state_tc(port) == TC_ATTACHED_SNK) {
-		/* Transition to Attached.SRC to assert Rp */
-		TC_SET_FLAG(port, TC_FLAGS_DO_PR_SWAP);
+	/*
+	 * Must be in Attached.SNK or DebugAccessory.SNK
+	 * when this function is called
+	 */
+	if (IS_ATTACHED_SNK(port)) {
+		/*
+		 * Transition to Attached.SRC or
+		 * UnorientedDebugAccessory.SRC to assert Rp
+		 */
+		TC_SET_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP);
 		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
 	}
 }
@@ -737,7 +752,7 @@ void tc_snk_power_off(int port)
 
 int tc_src_power_on(int port)
 {
-	if (get_state_tc(port) == TC_ATTACHED_SRC)
+	if (IS_ATTACHED_SRC(port))
 		return pd_set_power_supply_ready(port);
 
 	return 0;
@@ -745,8 +760,7 @@ int tc_src_power_on(int port)
 
 void tc_src_power_off(int port)
 {
-	if (get_state_tc(port) == TC_ATTACHED_SRC ||
-	    get_state_tc(port) == TC_UNORIENTED_DBG_ACC_SRC) {
+	if (IS_ATTACHED_SRC(port)) {
 		/* Remove VBUS */
 		pd_power_supply_reset(port);
 
@@ -857,13 +871,11 @@ void pd_vbus_low(int port)
 
 int pd_is_connected(int port)
 {
-	return (get_state_tc(port) == TC_ATTACHED_SNK) ||
-			(get_state_tc(port) == TC_ATTACHED_SRC) ||
+	return (IS_ATTACHED_SRC(port) ||
 #ifdef CONFIG_USB_PE_SM
-			(get_state_tc(port) == TC_CT_ATTACHED_SNK) ||
+		(get_state_tc(port) == TC_CT_ATTACHED_SNK) ||
 #endif
-			(get_state_tc(port) == TC_DBG_ACC_SNK) ||
-			(get_state_tc(port) == TC_UNORIENTED_DBG_ACC_SRC);
+		IS_ATTACHED_SNK(port));
 }
 
 bool pd_is_disconnected(int port)
@@ -1981,7 +1993,7 @@ static void tc_attached_snk_run(const int port)
 		/*
 		 * Power Role Swap
 		 */
-		if (TC_CHK_FLAG(port, TC_FLAGS_DO_PR_SWAP)) {
+		if (TC_CHK_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP)) {
 			/* Clear PR_SWAP flag in exit */
 			set_state_tc(port, TC_ATTACHED_SRC);
 			return;
@@ -2051,7 +2063,7 @@ static void tc_attached_snk_run(const int port)
 
 static void tc_attached_snk_exit(const int port)
 {
-	if (!TC_CHK_FLAG(port, TC_FLAGS_DO_PR_SWAP)) {
+	if (!TC_CHK_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP)) {
 		/*
 		 * If supplying VCONN, the port shall cease to supply
 		 * it within tVCONNOFF of exiting Attached.SNK if not
@@ -2062,7 +2074,7 @@ static void tc_attached_snk_exit(const int port)
 	}
 
 	/* Clear flags after checking Vconn status */
-	TC_CLR_FLAG(port, TC_FLAGS_DO_PR_SWAP | TC_FLAGS_POWER_OFF_SNK);
+	TC_CLR_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP | TC_FLAGS_POWER_OFF_SNK);
 
 	/* Stop drawing power */
 	sink_stop_drawing_current(port);
@@ -2085,6 +2097,16 @@ static void tc_unoriented_dbg_acc_src_entry(const int port)
 	tc[port].timeout = 0;
 
 	if (TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
+		/* Change role to source */
+		tc_set_power_role(port, PD_ROLE_SOURCE);
+		tcpm_set_msg_header(port,
+				tc[port].power_role, tc[port].data_role);
+		/*
+		 * Both CC1 and CC2 pins shall be independently terminated to
+		 * pulled up through Rp.
+		 */
+		tcpm_select_rp_value(port, CONFIG_USB_PD_PULLUP);
+
 		/* Enable VBUS */
 		pd_set_power_supply_ready(port);
 
@@ -2194,12 +2216,12 @@ static void tc_unoriented_dbg_acc_src_run(const int port)
 	/*
 	 * PD swap commands
 	 */
-	if (tc_get_pd_enabled(port)) {
+	if (tc_get_pd_enabled(port) && prl_is_running(port)) {
 		/*
 		 * Power Role Swap Request
 		 */
-		if (TC_CHK_FLAG(port, TC_FLAGS_DO_PR_SWAP)) {
-			/* Clear TC_FLAGS_DO_PR_SWAP on exit */
+		if (TC_CHK_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP)) {
+			/* Clear TC_FLAGS_REQUEST_PR_SWAP on exit */
 			return set_state_tc(port, TC_DBG_ACC_SNK);
 		}
 
@@ -2227,7 +2249,7 @@ static void tc_unoriented_dbg_acc_src_exit(const int port)
 	tc_src_power_off(port);
 
 	/* Clear PR swap flag */
-	TC_CLR_FLAG(port, TC_FLAGS_DO_PR_SWAP);
+	TC_CLR_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP);
 
 	/* Save our current connection is not a DEBUG ACCESSORY */
 	pd_update_saved_port_flags(port, PD_BBRMFLG_DBGACC_ROLE, 0);
@@ -2360,31 +2382,33 @@ static void tc_dbg_acc_snk_run(const int port)
 	}
 
 	/* PD swap commands */
+	if (tc_get_pd_enabled(port) && prl_is_running(port)) {
+		/*
+		 * Power Role Swap
+		 */
+		if (TC_CHK_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP)) {
+			/* Clear PR_SWAP flag in exit */
+			set_state_tc(port, TC_UNORIENTED_DBG_ACC_SRC);
+			return;
+		}
 
-	/*
-	 * Power Role Swap
-	 */
-	if (TC_CHK_FLAG(port, TC_FLAGS_DO_PR_SWAP)) {
-		/* Clear PR_SWAP flag in exit */
-		set_state_tc(port, TC_UNORIENTED_DBG_ACC_SRC);
-		return;
-	}
+		/*
+		 * Data Role Swap
+		 */
+		if (TC_CHK_FLAG(port, TC_FLAGS_REQUEST_DR_SWAP)) {
+			TC_CLR_FLAG(port, TC_FLAGS_REQUEST_DR_SWAP);
 
-	/*
-	 * Data Role Swap
-	 */
-	if (TC_CHK_FLAG(port, TC_FLAGS_REQUEST_DR_SWAP)) {
-		TC_CLR_FLAG(port, TC_FLAGS_REQUEST_DR_SWAP);
-
-		/* Perform Data Role Swap */
-		tc_set_data_role(port, tc[port].data_role == PD_ROLE_UFP ?
+			/* Perform Data Role Swap */
+			tc_set_data_role(port,
+				tc[port].data_role == PD_ROLE_UFP ?
 				PD_ROLE_DFP : PD_ROLE_UFP);
+		}
 	}
 }
 
 static void tc_dbg_acc_snk_exit(const int port)
 {
-	TC_CLR_FLAG(port, TC_FLAGS_DO_PR_SWAP | TC_FLAGS_POWER_OFF_SNK);
+	TC_CLR_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP | TC_FLAGS_POWER_OFF_SNK);
 
 	/* Stop drawing power */
 	sink_stop_drawing_current(port);
@@ -2776,8 +2800,8 @@ static void tc_attached_src_run(const int port)
 		/*
 		 * Power Role Swap Request
 		 */
-		if (TC_CHK_FLAG(port, TC_FLAGS_DO_PR_SWAP)) {
-			/* Clear TC_FLAGS_DO_PR_SWAP on exit */
+		if (TC_CHK_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP)) {
+			/* Clear TC_FLAGS_REQUEST_PR_SWAP on exit */
 			return set_state_tc(port, TC_ATTACHED_SNK);
 		}
 
@@ -2847,14 +2871,14 @@ static void tc_attached_src_exit(const int port)
 	 */
 	tc_src_power_off(port);
 
-	if (!TC_CHK_FLAG(port, TC_FLAGS_DO_PR_SWAP)) {
+	if (!TC_CHK_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP)) {
 		/* Disable VCONN if not power role swapping */
 		if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
 			set_vconn(port, 0);
 	}
 
 	/* Clear PR swap flag after checking for Vconn */
-	TC_CLR_FLAG(port, TC_FLAGS_DO_PR_SWAP);
+	TC_CLR_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP);
 }
 
 static __maybe_unused void check_drp_connection(const int port)

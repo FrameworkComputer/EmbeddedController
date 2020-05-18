@@ -3543,10 +3543,11 @@ static void pe_prs_src_snk_send_swap_run(int port)
 		ext = PD_HEADER_EXT(rx_emsg[port].header);
 
 		if ((ext == 0) && (cnt == 0)) {
-			if (type == PD_CTRL_ACCEPT)
+			if (type == PD_CTRL_ACCEPT) {
+				tc_request_power_swap(port);
 				set_state_pe(port,
 					PE_PRS_SRC_SNK_TRANSITION_TO_OFF);
-			else if ((type == PD_CTRL_REJECT) ||
+			} else if ((type == PD_CTRL_REJECT) ||
 						(type == PD_CTRL_WAIT))
 				set_state_pe(port, PE_SRC_READY);
 		}
@@ -3796,10 +3797,11 @@ static void pe_prs_snk_src_send_swap_run(int port)
 		ext = PD_HEADER_EXT(rx_emsg[port].header);
 
 		if ((ext == 0) && (cnt == 0)) {
-			if (type == PD_CTRL_ACCEPT)
+			if (type == PD_CTRL_ACCEPT) {
+				tc_request_power_swap(port);
 				set_state_pe(port,
 					     PE_PRS_SNK_SRC_TRANSITION_TO_OFF);
-			else if ((type == PD_CTRL_REJECT) ||
+			} else if ((type == PD_CTRL_REJECT) ||
 						(type == PD_CTRL_WAIT))
 				set_state_pe(port,
 					PE_CHK_FLAG(port,
