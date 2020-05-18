@@ -4146,6 +4146,7 @@
 #undef CONFIG_USB_PD_TCPM_RAA489000
 #undef CONFIG_USB_PD_TCPM_RT1715
 #undef CONFIG_USB_PD_TCPM_FUSB307
+#undef CONFIG_USB_PD_TCPM_STM32GX
 
 /* PS8XXX series are all supported by a single driver with a build time config
  * listed below (CONFIG_USB_PD_TCPM_PS*) defined to enable the specific product.
