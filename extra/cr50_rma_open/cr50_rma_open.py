@@ -462,8 +462,8 @@ class RMAOpen(object):
         logging.info('%s RMA support added in: %s',
                      'prePVT' if self.is_prepvt else 'prod', rma_support)
         if not self.is_prepvt and self._running_version_is_older(TESTLAB_PROD):
-            logging.warning('No testlab support in old prod images')
-            logging.warning('Update to %s to enable testlab', TESTLAB_PROD)
+            raise ValueError('Update cr50. No testlab support in old prod '
+                             'images.')
         if self._running_version_is_older(rma_support):
             raise ValueError('%s does not have RMA support. Update to at '
                              'least %s' % (version, rma_support))
