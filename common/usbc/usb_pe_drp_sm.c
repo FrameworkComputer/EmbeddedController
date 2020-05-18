@@ -3352,6 +3352,13 @@ static void pe_drs_send_swap_run(int port)
 			/* Initialize and run SenderResponseTimer */
 			pe[port].sender_response_timer =
 					get_time().val + PD_T_SENDER_RESPONSE;
+		} else if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+			/*
+			 * Message was received before outgoing message could
+			 * send, go back to ready to handle this.
+			 */
+			set_state_pe(port, get_last_state_pe(port));
+			return;
 		} else {
 			return;
 		}
@@ -5225,8 +5232,16 @@ static void pe_vcs_send_swap_run(int port)
 						PD_T_SENDER_RESPONSE;
 	}
 
-	if (pe[port].sender_response_timer == TIMER_DISABLED)
+	if (pe[port].sender_response_timer == TIMER_DISABLED) {
+		/*
+		 * Message was received before came before swap could send, go
+		 * back to ready to handle it.
+		 */
+		if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
+			set_state_pe(port, get_last_state_pe(port));
+
 		return;
+	}
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
