@@ -24,6 +24,21 @@
 #error "CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE is enabled"
 #endif
 
+#if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
+	defined(CONFIG_USB_PD_DISCHARGE_TCPC)
+#error "TUSB422 must disable TCPC discharge to support enabling Auto Discharge"
+#error "Disconnect all the time."
+#endif
+
+enum tusb422_reg_addr {
+	TUSB422_REG_VBUS_AND_VCONN_CONTROL = 0x98,
+};
+
+enum vbus_and_vconn_control_mask {
+	INT_VCONNDIS_DISABLE = BIT(1),
+	INT_VBUSDIS_DISABLE  = BIT(2),
+};
+
 static int tusb422_tcpci_tcpm_init(int port)
 {
 	int rv = tcpci_tcpm_init(port);
@@ -40,6 +55,18 @@ static int tusb422_tcpci_tcpm_init(int port)
 		 * after updating the ROLE Control register on a device connect.
 		 */
 		tusb422_tcpm_drv.tcpc_enable_auto_discharge_disconnect(port, 1);
+
+		/*
+		 * Disable internal VBUS discharge. AutoDischargeDisconnect must
+		 * generally remain enabled to keep TUSB422 in active mode.
+		 * However, this will interfere with FRS by default by
+		 * discharging at inappropriate times. Mitigate this by
+		 * disabling internal VBUS discharge. The TUSB422 must rely on
+		 * external VBUS discharge. See TUSB422 datasheet, 7.4.2 Active
+		 * Mode.
+		 */
+		tcpc_write(port, TUSB422_REG_VBUS_AND_VCONN_CONTROL,
+				INT_VBUSDIS_DISABLE);
 	}
 
 	/*
@@ -50,6 +77,21 @@ static int tusb422_tcpci_tcpm_init(int port)
 	return tcpc_write16(port, TCPC_REG_COMMAND, 0x33);
 }
 
+static int tusb422_tcpm_set_cc(int port, int pull)
+{
+
+	/*
+	 * Enable AutoDischargeDisconnect to keep TUSB422 in active mode through
+	 * this transition. Note that the configuration keeps the TCPC from
+	 * actually discharging VBUS in this case.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE))
+		tusb422_tcpm_drv.tcpc_enable_auto_discharge_disconnect(port, 1);
+
+	return tcpci_tcpm_set_cc(port, pull);
+
+}
+
 const struct tcpm_drv tusb422_tcpm_drv = {
 	.init			= &tusb422_tcpci_tcpm_init,
 	.release		= &tcpci_tcpm_release,
@@ -58,7 +100,7 @@ const struct tcpm_drv tusb422_tcpm_drv = {
 	.check_vbus_level	= &tcpci_tcpm_check_vbus_level,
 #endif
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
-	.set_cc			= &tcpci_tcpm_set_cc,
+	.set_cc			= &tusb422_tcpm_set_cc,
 	.set_polarity		= &tcpci_tcpm_set_polarity,
 	.set_vconn		= &tcpci_tcpm_set_vconn,
 	.set_msg_header		= &tcpci_tcpm_set_msg_header,
