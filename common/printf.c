@@ -266,6 +266,13 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				c = -1;
 				ptrspec = *format++;
 				ptrval = va_arg(args, void *);
+				/*
+				 * Avoid null pointer dereference for %ph and
+				 * %pb. %pT and %pP can accept null.
+				 */
+				if (ptrval == NULL
+				    && ptrspec != 'T' && ptrspec != 'P')
+					continue;
 				/* %pT - print a timestamp. */
 				if (ptrspec == 'T' &&
 				    !IS_ENABLED(NO_UINT64_SUPPORT)) {
