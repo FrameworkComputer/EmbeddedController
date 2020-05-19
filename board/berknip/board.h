@@ -70,7 +70,7 @@
 #ifndef __ASSEMBLER__
 
 enum battery_type {
-	BATTERY_AP18F4M,
+	BATTERY_SIMPLO_HIGHPOWER,
 	BATTERY_TYPE_COUNT,
 };
 

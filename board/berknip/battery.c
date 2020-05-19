@@ -32,34 +32,35 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* AP18F4M */
-	[BATTERY_AP18F4M] = {
+	/* SMP 996QA193H Battery Information */
+	[BATTERY_SIMPLO_HIGHPOWER] = {
 		.fuel_gauge = {
-			.manuf_name = "Murata KT00404001",
+			.manuf_name = "333-1D-11-A",
 			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+				.reg_addr = 0x0,
+				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
+				.mfgacc_support = 1,
 				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
-			}
+				.reg_mask = 0x0006,
+				.disconnect_val = 0x0,
+			},
 		},
 		.batt_info = {
-			.voltage_max          = 8700,
-			.voltage_normal       = 7600,
-			.voltage_min          = 5500,
-			.precharge_current    = 256,
+			.voltage_max = 13200,		/* mV */
+			.voltage_normal = 11550,	/* mV */
+			.voltage_min = 9000,		/* mV */
+			.precharge_current = 256,	/* mA */
 			.start_charging_min_c = 0,
-			.start_charging_max_c = 50,
-			.charging_min_c       = 0,
-			.charging_max_c       = 60,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 75,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -20,
+			.discharging_max_c = 60,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_AP18F4M;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SIMPLO_HIGHPOWER;
