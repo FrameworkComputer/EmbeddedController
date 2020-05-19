@@ -163,6 +163,7 @@ rollback_entropy-y=rollback_entropy.o
 rsa-y=rsa.o
 rsa3-y=rsa.o
 rtc-y=rtc.o
+scratchpad-y=scratchpad.o
 sbs_charging-y=sbs_charging.o
 sbs_charging_v2-y=sbs_charging_v2.o
 sha256-y=sha256.o

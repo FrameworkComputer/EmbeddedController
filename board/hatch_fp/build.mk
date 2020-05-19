@@ -21,6 +21,7 @@ test-list-y=\
        rollback \
        rollback_entropy \
        rtc \
+       scratchpad \
        sha256 \
        sha256_unrolled \
        stm32f_rtc \
