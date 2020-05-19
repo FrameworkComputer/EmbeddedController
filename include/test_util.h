@@ -47,7 +47,7 @@
 		__auto_type _a = (a);                                       \
 		__auto_type _b = (b);                                       \
 		if (!(_a op _b)) {                                          \
-			ccprintf("%d: ASSERSION failed: %s " #op " %s\n",   \
+			ccprintf("%d: ASSERTION failed: %s " #op " %s\n",   \
 				 __LINE__, #a, #b);                         \
 			ccprintf("\t\tEVAL: " fmt " " #op " " fmt "\n",     \
 				 _a, _b);                                   \
