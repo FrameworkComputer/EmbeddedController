@@ -29,6 +29,7 @@
 ## Testing
 
 *   [Unit Tests](./unit_tests.md)
+*   [Code Coverage](./code_coverage.md)
 
 ## Updaters
 
