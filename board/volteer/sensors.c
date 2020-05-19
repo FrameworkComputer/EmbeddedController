@@ -85,9 +85,9 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 
 /* Rotation matrix for the lid accelerometer */
 static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
 const mat33_fp_t base_standard_ref = {
