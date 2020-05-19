@@ -90,7 +90,7 @@ static int test_param_failures(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	RUN_TEST(test_param_failures);
 

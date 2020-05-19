@@ -286,7 +286,7 @@ int fifo_underrun(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	ec_int_level = 1;
 	test_reset();

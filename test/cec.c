@@ -119,7 +119,7 @@ static int test_queue_overflow(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	queue = &overflow_queue.queue;
 

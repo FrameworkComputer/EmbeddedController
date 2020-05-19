@@ -159,7 +159,7 @@ static int test_repeating_deferred(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

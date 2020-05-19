@@ -422,7 +422,7 @@ static int test_command_pd_dualrole5(void)
 }
 
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

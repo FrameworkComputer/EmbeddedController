@@ -24,7 +24,7 @@
 /* This is intended to cause a compilation error. */
 TEST_MACRO(CONFIG_FOO) __maybe_unused int foo;
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

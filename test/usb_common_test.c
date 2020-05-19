@@ -66,7 +66,7 @@ int test_pd_get_cc_state(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	RUN_TEST(test_pd_get_cc_state);
 

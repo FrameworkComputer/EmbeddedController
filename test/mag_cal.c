@@ -81,7 +81,7 @@ static int test_mag_cal_computes_bias(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

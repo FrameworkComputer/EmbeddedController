@@ -644,7 +644,7 @@ static void test_aes_speed(void)
 	ccprintf("AES duration %lld us\n", (long long)(t1.val - t0.val));
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	watchdog_reload();
 

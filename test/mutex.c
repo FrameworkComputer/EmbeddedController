@@ -109,7 +109,7 @@ int mutex_main_task(void *unused)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	wait_for_task_started();
 	task_wake(TASK_ID_MTX1);

@@ -713,7 +713,7 @@ static int test_low_battery_hostevents(void)
 
 
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	RUN_TEST(test_charge_state);
 	RUN_TEST(test_low_battery);

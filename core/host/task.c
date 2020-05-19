@@ -91,7 +91,7 @@ void __idle(void *d)
 
 void _run_test(void *d)
 {
-	run_test();
+	run_test(0, NULL);
 }
 
 #define TASK(n, r, d, s) {r, d},

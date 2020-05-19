@@ -99,7 +99,7 @@ static int test_lid_angle_less180(void)
 }
 
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

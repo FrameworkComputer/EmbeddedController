@@ -92,7 +92,7 @@ void before_test(void)
 		pd_set_suspend(PORT0, 0);
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	/* Let tasks settle down */
 	task_wait_event(MINUTE);

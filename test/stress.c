@@ -128,7 +128,7 @@ static int test_adc(void)
 }
 #endif
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

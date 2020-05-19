@@ -1498,7 +1498,7 @@ static int test_ctvpd_behavior_case6(void)
 }
 #endif
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

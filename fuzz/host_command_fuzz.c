@@ -131,7 +131,7 @@ static int hostcmd_fill(const uint8_t *data, size_t size)
 static pthread_cond_t done_cond;
 static pthread_mutex_t lock;
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	ccprints("Fuzzing task started");
 	wait_for_task_started();

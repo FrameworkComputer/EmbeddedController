@@ -29,7 +29,7 @@ uint32_t log2(int32_t val)
 	return log2_mult * (val1 + val2)/2;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	const int loopcount = 512;
 

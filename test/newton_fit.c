@@ -126,7 +126,7 @@ static int test_newton_fit_calculate(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

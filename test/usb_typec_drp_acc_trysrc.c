@@ -615,7 +615,7 @@ void before_test(void)
 	mock_tcpc.should_print_call = true;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

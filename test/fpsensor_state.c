@@ -169,7 +169,7 @@ test_static int test_fp_set_sensor_mode(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	RUN_TEST(test_fp_enc_status_valid_flags);
 	RUN_TEST(test_fp_tpm_seed_not_set);

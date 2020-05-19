@@ -323,7 +323,7 @@ static int test_vivaldi_top_keys(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 	wait_for_task_started();

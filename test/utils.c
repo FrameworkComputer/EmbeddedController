@@ -441,7 +441,7 @@ test_static int test_is_aligned(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

@@ -19,7 +19,7 @@
 
 static uint32_t rsa_workbuf[3 * RSANUMBYTES/4];
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	int good;
 

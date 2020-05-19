@@ -5,7 +5,7 @@
 
 #include "test_util.h"
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	/* No tests yet */
 	test_print_result();

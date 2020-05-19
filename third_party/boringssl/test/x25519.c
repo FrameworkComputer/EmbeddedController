@@ -180,7 +180,7 @@ static void test_x25519_speed(void)
 	ccprintf("X25519 duration %lld us\n", (long long)(t1.val - t0.val));
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	watchdog_reload();
 	/* do not check speed, just as a benchmark */

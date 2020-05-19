@@ -207,7 +207,7 @@ static int shmem_is_ok(int line)
  */
 static uint32_t test_map;
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	int index;
 	const int shmem_size = shared_mem_size();

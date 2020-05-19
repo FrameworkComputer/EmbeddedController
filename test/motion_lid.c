@@ -332,7 +332,7 @@ static int test_lid_angle(void)
 }
 
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

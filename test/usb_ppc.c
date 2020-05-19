@@ -173,7 +173,7 @@ static int test_ppc_is_vbus_present(void)
 
 
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

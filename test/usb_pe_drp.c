@@ -161,7 +161,7 @@ static int test_vbus_gpio_discharge(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

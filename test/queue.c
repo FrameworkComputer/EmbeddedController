@@ -416,7 +416,7 @@ void before_test(void)
 	queue_init(&test_queue8);
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

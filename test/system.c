@@ -92,7 +92,7 @@ static void fail_and_clean_up(void)
 	test_fail();
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	uint32_t state = system_get_scratchpad();
 

@@ -139,7 +139,7 @@ void before_test(void);
 void after_test(void);
 
 /* Test entry point */
-void run_test(void);
+void run_test(int argc, char **argv);
 
 /* Test entry point for fuzzing tests. */
 int test_fuzz_one_input(const uint8_t *data, unsigned int size);

@@ -17,7 +17,7 @@ static int test_invalid_value(void)
 	return EC_ERROR_UNKNOWN;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

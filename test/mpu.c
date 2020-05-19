@@ -176,7 +176,7 @@ test_static int test_mpu_get_rw_regions(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	enum ec_image cur_image = system_get_image_copy();
 

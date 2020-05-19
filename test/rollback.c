@@ -116,7 +116,7 @@ test_static int test_lock_rollback(void)
 	return EC_ERROR_UNKNOWN;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	ccprintf("Running rollback test\n");
 	RUN_TEST(test_lock_rollback);

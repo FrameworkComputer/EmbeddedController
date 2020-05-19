@@ -222,7 +222,7 @@ void before_test(void)
 	online_calibration_init();
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

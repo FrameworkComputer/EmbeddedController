@@ -125,7 +125,7 @@ void before_test(void)
 	accel_cal_reset(&cal);
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

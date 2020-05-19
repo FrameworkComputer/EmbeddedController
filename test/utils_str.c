@@ -260,7 +260,7 @@ static int test_snprintf(void)
 	TEST_CHECK(strncmp(buffer, "1234", sizeof(buffer)));
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	test_reset();
 

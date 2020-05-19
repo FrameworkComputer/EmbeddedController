@@ -56,7 +56,7 @@ int timer_calib_task(void *data)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	task_wake(TASK_ID_TESTTMR);
 }

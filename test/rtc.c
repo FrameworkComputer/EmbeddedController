@@ -96,7 +96,7 @@ static int test_time_conversion(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	RUN_TEST(test_time_conversion);
 
