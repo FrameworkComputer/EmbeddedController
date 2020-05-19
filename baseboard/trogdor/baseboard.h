@@ -23,7 +23,6 @@
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
-#define CONFIG_HOSTCMD_FLASH_SPI_INFO
 
 /* EC Modules */
 #define CONFIG_I2C
