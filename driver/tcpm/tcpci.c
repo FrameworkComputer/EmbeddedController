@@ -1446,47 +1446,154 @@ struct tcpci_reg {
 	uint8_t		size;
 };
 
-#define TCPCI_REG(reg_name, reg_size)	\
-	[reg_name] = { .name = #reg_name, .size = (reg_size) }
-
 static const struct tcpci_reg tcpci_regs[] = {
-	TCPCI_REG(TCPC_REG_VENDOR_ID, 2),
-	TCPCI_REG(TCPC_REG_PRODUCT_ID, 2),
-	TCPCI_REG(TCPC_REG_BCD_DEV, 2),
-	TCPCI_REG(TCPC_REG_TC_REV, 2),
-	TCPCI_REG(TCPC_REG_PD_REV, 2),
-	TCPCI_REG(TCPC_REG_PD_INT_REV, 2),
-	TCPCI_REG(TCPC_REG_ALERT, 2),
-	TCPCI_REG(TCPC_REG_ALERT_MASK, 2),
-	TCPCI_REG(TCPC_REG_POWER_STATUS_MASK, 1),
-	TCPCI_REG(TCPC_REG_FAULT_STATUS_MASK, 1),
-	TCPCI_REG(TCPC_REG_EXT_STATUS_MASK, 1),
-	TCPCI_REG(TCPC_REG_ALERT_EXTENDED_MASK, 1),
-	TCPCI_REG(TCPC_REG_CONFIG_STD_OUTPUT, 1),
-	TCPCI_REG(TCPC_REG_TCPC_CTRL, 1),
-	TCPCI_REG(TCPC_REG_ROLE_CTRL, 1),
-	TCPCI_REG(TCPC_REG_FAULT_CTRL, 1),
-	TCPCI_REG(TCPC_REG_POWER_CTRL, 1),
-	TCPCI_REG(TCPC_REG_CC_STATUS, 1),
-	TCPCI_REG(TCPC_REG_POWER_STATUS, 1),
-	TCPCI_REG(TCPC_REG_FAULT_STATUS, 1),
-	TCPCI_REG(TCPC_REG_EXT_STATUS, 1),
-	TCPCI_REG(TCPC_REG_ALERT_EXT, 1),
-	TCPCI_REG(TCPC_REG_DEV_CAP_1, 2),
-	TCPCI_REG(TCPC_REG_DEV_CAP_2, 2),
-	TCPCI_REG(TCPC_REG_STD_INPUT_CAP, 1),
-	TCPCI_REG(TCPC_REG_STD_OUTPUT_CAP, 1),
-	TCPCI_REG(TCPC_REG_CONFIG_EXT_1, 1),
-	TCPCI_REG(TCPC_REG_MSG_HDR_INFO, 1),
-	TCPCI_REG(TCPC_REG_RX_DETECT, 1),
-	TCPCI_REG(TCPC_REG_RX_BYTE_CNT, 1),
-	TCPCI_REG(TCPC_REG_RX_BUF_FRAME_TYPE, 1),
-	TCPCI_REG(TCPC_REG_TRANSMIT, 1),
-	TCPCI_REG(TCPC_REG_VBUS_VOLTAGE, 2),
-	TCPCI_REG(TCPC_REG_VBUS_SINK_DISCONNECT_THRESH, 2),
-	TCPCI_REG(TCPC_REG_VBUS_STOP_DISCHARGE_THRESH, 2),
-	TCPCI_REG(TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG, 2),
-	TCPCI_REG(TCPC_REG_VBUS_VOLTAGE_ALARM_LO_CFG, 2),
+	[TCPC_REG_VENDOR_ID] = {
+		.name = "VENDOR_ID",
+		.size = 2,
+	},
+	[TCPC_REG_PRODUCT_ID] = {
+		.name = "PRODUCT_ID",
+		.size = 2,
+	},
+	[TCPC_REG_BCD_DEV] = {
+		.name = "BCD_DEV",
+		.size = 2,
+	},
+	[TCPC_REG_TC_REV] = {
+		.name = "TC_REV",
+		.size = 2,
+	},
+	[TCPC_REG_PD_REV] = {
+		.name = "PD_REV",
+		.size = 2,
+	},
+	[TCPC_REG_PD_INT_REV] = {
+		.name = "PD_INT_REV",
+		.size = 2,
+	},
+	[TCPC_REG_ALERT] = {
+		.name = "ALERT",
+		.size = 2,
+	},
+	[TCPC_REG_ALERT_MASK] = {
+		.name = "ALERT_MASK",
+		.size = 2,
+	},
+	[TCPC_REG_POWER_STATUS_MASK] = {
+		.name = "POWER_STATUS_MASK",
+		.size = 1,
+	},
+	[TCPC_REG_FAULT_STATUS_MASK] = {
+		.name = "FAULT_STATUS_MASK",
+		.size = 1,
+	},
+	[TCPC_REG_EXT_STATUS_MASK] = {
+		.name = "EXT_STATUS_MASK",
+		.size = 1 },
+	[TCPC_REG_ALERT_EXTENDED_MASK] = {
+		.name = "ALERT_EXTENDED_MASK",
+		.size = 1,
+	},
+	[TCPC_REG_CONFIG_STD_OUTPUT] = {
+		.name = "CONFIG_STD_OUTPUT",
+		.size = 1,
+	},
+	[TCPC_REG_TCPC_CTRL] = {
+		.name = "TCPC_CTRL",
+		.size = 1,
+	},
+	[TCPC_REG_ROLE_CTRL] = {
+		.name = "ROLE_CTRL",
+		.size = 1,
+	},
+	[TCPC_REG_FAULT_CTRL] = {
+		.name = "FAULT_CTRL",
+		.size = 1,
+	},
+	[TCPC_REG_POWER_CTRL] = {
+		.name = "POWER_CTRL",
+		.size = 1,
+	},
+	[TCPC_REG_CC_STATUS] = {
+		.name = "CC_STATUS",
+		.size = 1,
+	},
+	[TCPC_REG_POWER_STATUS] = {
+		.name = "POWER_STATUS",
+		.size = 1,
+	},
+	[TCPC_REG_FAULT_STATUS] = {
+		.name = "FAULT_STATUS",
+		.size = 1,
+	},
+	[TCPC_REG_EXT_STATUS] = {
+		.name = "EXT_STATUS",
+		.size = 1,
+	},
+	[TCPC_REG_ALERT_EXT] = {
+		.name = "ALERT_EXT",
+		.size = 1,
+	},
+	[TCPC_REG_DEV_CAP_1] = {
+		.name = "DEV_CAP_1",
+		.size = 2,
+	},
+	[TCPC_REG_DEV_CAP_2] = {
+		.name = "DEV_CAP_2",
+		.size = 2,
+	},
+	[TCPC_REG_STD_INPUT_CAP] = {
+		.name = "STD_INPUT_CAP",
+		.size = 1,
+	},
+	[TCPC_REG_STD_OUTPUT_CAP] = {
+		.name = "STD_OUTPUT_CAP",
+		.size = 1,
+	},
+	[TCPC_REG_CONFIG_EXT_1] = {
+		.name = "CONFIG_EXT_1",
+		.size = 1,
+	},
+	[TCPC_REG_MSG_HDR_INFO] = {
+		.name = "MSG_HDR_INFO",
+		.size = 1,
+	},
+	[TCPC_REG_RX_DETECT] = {
+		.name = "RX_DETECT",
+		.size = 1,
+	},
+	[TCPC_REG_RX_BYTE_CNT] = {
+		.name = "RX_BYTE_CNT",
+		.size = 1,
+	},
+	[TCPC_REG_RX_BUF_FRAME_TYPE] = {
+		.name = "RX_BUF_FRAME_TYPE",
+		.size = 1,
+	},
+	[TCPC_REG_TRANSMIT] = {
+		.name = "TRANSMIT",
+		.size = 1,
+	},
+	[TCPC_REG_VBUS_VOLTAGE] = {
+		.name = "VBUS_VOLTAGE",
+		.size = 2,
+	},
+	[TCPC_REG_VBUS_SINK_DISCONNECT_THRESH] = {
+		.name = "VBUS_SINK_DISCONNECT_THRESH",
+		.size = 2,
+	},
+	[TCPC_REG_VBUS_STOP_DISCHARGE_THRESH] = {
+		.name = "VBUS_STOP_DISCHARGE_THRESH",
+		.size = 2,
+	},
+	[TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG] = {
+		.name = "VBUS_VOLTAGE_ALARM_HI_CFG",
+		.size = 2,
+	},
+	[TCPC_REG_VBUS_VOLTAGE_ALARM_LO_CFG] = {
+		.name = "VBUS_VOLTAGE_ALARM_LO_CFG",
+		.size = 2,
+	},
 };
 
 static int command_tcpci_dump(int argc, char **argv)
@@ -1508,12 +1615,12 @@ static int command_tcpci_dump(int argc, char **argv)
 		switch (tcpci_regs[i].size) {
 		case 1:
 			tcpc_read(port, i, &val);
-			ccprintf("  %-38s(0x%02x) =   0x%02x\n",
+			ccprintf("  %-30s(0x%02x) =   0x%02x\n",
 				tcpci_regs[i].name, i, (uint8_t)val);
 			break;
 		case 2:
 			tcpc_read16(port, i, &val);
-			ccprintf("  %-38s(0x%02x) = 0x%04x\n",
+			ccprintf("  %-30s(0x%02x) = 0x%04x\n",
 				tcpci_regs[i].name, i, (uint16_t)val);
 			break;
 		default:
