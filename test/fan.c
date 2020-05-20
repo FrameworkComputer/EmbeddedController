@@ -31,9 +31,8 @@ static int test_fan(void)
 
 	sleep(2);
 
-	/* With nothing else to do, fans default to CONFIG_FAN_INIT_SPEED*/
-	TEST_ASSERT(fan_get_rpm_actual(0) ==
-			fan_percent_to_rpm(0, CONFIG_FAN_INIT_SPEED));
+	/* Fans initialize disabled. */
+	TEST_ASSERT(fan_get_rpm_actual(0) == 0);
 
 	set_thermal_control_enabled(0, 1);
 
