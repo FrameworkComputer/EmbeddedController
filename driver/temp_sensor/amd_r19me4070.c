@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "amd_r19me4070.h"
+#include "power.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -41,7 +42,6 @@ static void gpu_init_temp_sensor(void)
 	}
 	CPRINTS("init GPU fail");
 }
-DECLARE_HOOK(HOOK_INIT, gpu_init_temp_sensor, HOOK_PRIO_INIT_I2C + 1);
 
 /* INIT GPU first before read the GPU's die tmeperature. */
 int get_temp_R19ME4070(int idx, int *temp_ptr)
@@ -49,6 +49,12 @@ int get_temp_R19ME4070(int idx, int *temp_ptr)
 	uint8_t reg[5];
 	int rv;
 
+	/*
+	 * We shouldn't read the GPU temperature when the state
+	 * is not in S0, because GPU is enabled in S0.
+	 */
+	if ((power_get_state()) != POWER_S0)
+		return EC_ERROR_BUSY;
 	/* if no INIT GPU, must init it first and wait 1 sec. */
 	if (!initialized) {
 		gpu_init_temp_sensor();
