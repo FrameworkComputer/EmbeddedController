@@ -523,6 +523,17 @@ int board_is_lid_angle_tablet_mode(void)
 	return ec_config_has_lid_angle_tablet_mode();
 }
 
+__override uint32_t board_override_feature_flags0(uint32_t flags0)
+{
+	/*
+	 * Remove keyboard backlight feature for devices that don't support it.
+	 */
+	if (ec_config_has_pwm_keyboard_backlight() == PWM_KEYBOARD_BACKLIGHT_NO)
+		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
+	else
+		return flags0;
+}
+
 void board_overcurrent_event(int port, int is_overcurrented)
 {
 	switch (port) {
