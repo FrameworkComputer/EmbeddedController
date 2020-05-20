@@ -236,3 +236,12 @@ const struct pwm_t pwm_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+/******************************************************************************/
+/* USB-A charging control */
+
+const int usb_port_enable[USB_PORT_COUNT] = {
+	GPIO_EN_PP5000_USBA,
+};
+
+
