@@ -651,25 +651,26 @@ void tcpci_tcpc_fast_role_swap_enable(int port, int enable)
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 bool tcpci_tcpm_check_vbus_level(int port, enum vbus_level level)
 {
-	/*
-	 * Alerts only tell us when Safe0V is entered, have
-	 * to poll when requesting to see if we left it and
-	 * have not yet entered Safe5V
-	 */
-	if ((tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) &&
-	    (tcpc_vbus[port] & BIT(VBUS_SAFE0V))) {
-		int ext_status = 0;
+	if (level == VBUS_SAFE0V) {
+		/*
+		 * Alerts only tell us when Safe0V is entered, have
+		 * to poll when requesting to see if we left it and
+		 * have not yet entered Safe5V
+		 */
+		if ((tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) &&
+		    (tcpc_vbus[port] & BIT(VBUS_SAFE0V))) {
+			int ext_status = 0;
 
-		/* Determine if we left Safe0V */
-		tcpm_ext_status(port, &ext_status);
-		if (!(ext_status & TCPC_REG_EXT_STATUS_SAFE0V))
-			tcpc_vbus[port] &= ~BIT(VBUS_SAFE0V);
-	}
+			/* Determine if we left Safe0V */
+			tcpm_ext_status(port, &ext_status);
+			if (!(ext_status & TCPC_REG_EXT_STATUS_SAFE0V))
+				tcpc_vbus[port] &= ~BIT(VBUS_SAFE0V);
+		}
 
-	if (level == VBUS_SAFE0V)
 		return !!(tcpc_vbus[port] & BIT(VBUS_SAFE0V));
-	else
+	} else {
 		return !!(tcpc_vbus[port] & BIT(VBUS_PRESENT));
+	}
 }
 #endif
 
