@@ -1299,8 +1299,7 @@ static bool pe_attempt_port_discovery(int port)
 	}
 
 	/* If mode entry was successful, disable the timer */
-	if (PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION)) {
-		PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+	if (PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE)) {
 		pe[port].discover_identity_timer = TIMER_DISABLED;
 		return false;
 	}
@@ -4983,9 +4982,7 @@ static void pe_vdm_acked_entry(int port)
 		}
 	}
 
-	if (!PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE)) {
-		set_state_pe(port, PE_DO_PORT_DISCOVERY);
-	} else if (pe[port].power_role == PD_ROLE_SOURCE) {
+	if (pe[port].power_role == PD_ROLE_SOURCE) {
 		set_state_pe(port, PE_SRC_READY);
 	} else {
 		set_state_pe(port, PE_SNK_READY);
