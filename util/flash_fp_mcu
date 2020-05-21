@@ -80,27 +80,26 @@ lsbval() {
 # Get the underlying board (reference design) that we're running on (not the
 # FPMCU or sensor).
 get_platform_name() {
-  # "-l" converts to lowercase
-  local -l platform_name="$(cros_config /identity platform-name)"
+  local platform_name
 
-  # If we don't get any result from cros_config, then we have to possible cases:
+  # We used to use "cros_config /identity platform-name", but that is specific
+  # to mosys and does not actually provide the board name in all cases.
+  # cros_config intentionally does not provide a way to get the board
+  # name: b/156650654.
+
+  # If there was a way to get the board name from cros_config, it's possible
+  # that it could fail in the following cases:
   #
   # 1) We're running on a non-unibuild device (the only one with FP is nocturne)
   # 2) We're running on a proto device during bringup and the cros_config
   #    settings haven't yet been setup.
   #
-  # In either case we can fall back to /etc/lsb-release. It's not recommended
+  # In all cases we can fall back to /etc/lsb-release. It's not recommended
   # to do this, but we don't have any other options in this case.
-  #
-  # TODO(https://crbug.com/984629): cros_config should handle reading
-  # /etc/lsb-release as backup for us.
+  echo "Getting platform name from /etc/lsb-release." 1>&2
+  platform_name="$(lsbval "CHROMEOS_RELEASE_BOARD")"
   if [[ -z "${platform_name}" ]]; then
-    echo "Getting platform name from cros_config failed." \
-         "Falling back to /etc/lsb-release." 1>&2
-    platform_name="$(lsbval "CHROMEOS_RELEASE_BOARD")"
-    if [[ -z "${platform_name}" ]]; then
-      exit 1
-    fi
+    exit 1
   fi
 
   echo "${platform_name}"
