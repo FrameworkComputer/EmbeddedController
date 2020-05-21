@@ -14,9 +14,6 @@
 #ifndef __CROS_EC_CHARGE_STATE_V2_H
 #define __CROS_EC_CHARGE_STATE_V2_H
 
-#if defined(CONFIG_I2C_VIRTUAL_BATTERY) && defined(CONFIG_BATTERY_SMART)
-#define VIRTUAL_BATTERY_ADDR_FLAGS BATTERY_ADDR_FLAGS
-#endif
 /*
  * The values exported by charge_get_state() and charge_get_flags() are used
  * only to control the LEDs (with one not-quite-correct exception). For V2
