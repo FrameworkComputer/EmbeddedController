@@ -70,12 +70,15 @@ static int simulated_button_pressed(const struct button_config *button)
  */
 static int raw_button_pressed(const struct button_config *button)
 {
-	int physical_value = (!!gpio_get_level(button->gpio) ==
-				!!(button->flags & BUTTON_FLAG_ACTIVE_HIGH));
+	int physical_value = 0;
 	int simulated_value = 0;
+	if (!(button->flags & BUTTON_FLAG_DISABLED)) {
+		physical_value = (!!gpio_get_level(button->gpio) ==
+				!!(button->flags & BUTTON_FLAG_ACTIVE_HIGH));
 #ifdef CONFIG_SIMULATED_BUTTON
-	simulated_value = simulated_button_pressed(button);
+		simulated_value = simulated_button_pressed(button);
 #endif
+	}
 
 	return (simulated_value || physical_value);
 }
@@ -107,15 +110,23 @@ static void button_blink_hw_reinit_led(void)
 
 /*
  * Whether recovery button (or combination of equivalent buttons) is pressed
+ * If a dedicated recovery button is used, any of the buttons can be pressed,
+ * otherwise, all the buttons must be pressed.
  */
 static int is_recovery_button_pressed(void)
 {
-	int i;
+	int i, pressed;
 	for (i = 0; i < recovery_buttons_count; i++) {
-		if (!raw_button_pressed(recovery_buttons[i]))
-			return 0;
+		pressed = raw_button_pressed(recovery_buttons[i]);
+		if (IS_ENABLED(CONFIG_DEDICATED_RECOVERY_BUTTON)) {
+			if (pressed)
+				return 1;
+		} else {
+			if (!pressed)
+				return 0;
+		}
 	}
-	return 1;
+	return IS_ENABLED(CONFIG_DEDICATED_RECOVERY_BUTTON) ? 0 : 1;
 }
 
 /*
@@ -227,6 +238,19 @@ int button_reassign_gpio(enum button button_type, enum gpio_signal gpio)
 
 	return EC_SUCCESS;
 }
+
+int button_disable_gpio(enum button button_type)
+{
+	if (button_type >= BUTTON_COUNT)
+		return EC_ERROR_INVAL;
+
+	/* Disable GPIO interrupt */
+	gpio_disable_interrupt(buttons[button_type].gpio);
+	/* Mark button as disabled */
+	buttons[button_type].flags |= BUTTON_FLAG_DISABLED;
+
+	return EC_SUCCESS;
+}
 #endif
 
 
@@ -307,7 +331,8 @@ void button_interrupt(enum gpio_signal signal)
 	uint64_t time_now = get_time().val;
 
 	for (i = 0; i < BUTTON_COUNT; i++) {
-		if (buttons[i].gpio != signal)
+		if (buttons[i].gpio != signal ||
+		    (buttons[i].flags & BUTTON_FLAG_DISABLED))
 			continue;
 
 		state[i].debounce_time = time_now + buttons[i].debounce_us;
@@ -816,7 +841,16 @@ struct button_config buttons[BUTTON_COUNT] = {
 		.gpio = GPIO_RECOVERY_L,
 		.debounce_us = BUTTON_DEBOUNCE_US,
 		.flags = 0,
+	},
+#ifdef CONFIG_DEDICATED_RECOVERY_BUTTON_2
+	[BUTTON_RECOVERY_2] = {
+		.name = "Recovery2",
+		.type = KEYBOARD_BUTTON_RECOVERY,
+		.gpio = GPIO_RECOVERY_L_2,
+		.debounce_us = BUTTON_DEBOUNCE_US,
+		.flags = 0,
 	}
+#endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON_2) */
 #endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON) */
 };
 
@@ -824,6 +858,10 @@ struct button_config buttons[BUTTON_COUNT] = {
 const struct button_config *recovery_buttons[] = {
 #ifdef CONFIG_DEDICATED_RECOVERY_BUTTON
 	&buttons[BUTTON_RECOVERY],
+
+#ifdef CONFIG_DEDICATED_RECOVERY_BUTTON_2
+	&buttons[BUTTON_RECOVERY_2],
+#endif /* defined(CONFIG_BUTTON_TRIGGERED_RECOVERY_2) */
 
 #elif defined(CONFIG_VOLUME_BUTTONS)
 	&buttons[BUTTON_VOLUME_DOWN],

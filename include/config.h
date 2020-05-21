@@ -715,8 +715,11 @@
  * volume buttons, a dedicated recovery button is not needed.  This is intended
  * because if a board has volume buttons, they can do everything a dedicated
  * recovery button can do.
+ * For various reasons, on some platforms there may be multiple recovery inputs.
+ * See b/149967026.
  */
 #undef CONFIG_DEDICATED_RECOVERY_BUTTON
+#undef CONFIG_DEDICATED_RECOVERY_BUTTON_2
 
 /*
  * The board has volume up and volume down buttons.  Note, these are *buttons*

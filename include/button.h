@@ -13,7 +13,9 @@
 #include "gpio.h"
 #include "ec_commands.h"
 
-#define BUTTON_FLAG_ACTIVE_HIGH BIT(0)
+#define BUTTON_FLAG_ACTIVE_HIGH  BIT(0)
+#define BUTTON_FLAG_DISABLED     BIT(1)   /* Button disabled */
+
 
 #define BUTTON_DEBOUNCE_US (30 * MSEC)
 
@@ -32,6 +34,9 @@ enum button {
 #endif /* defined(CONFIG_VOLUME_BUTTONS) */
 #ifdef CONFIG_DEDICATED_RECOVERY_BUTTON
 	BUTTON_RECOVERY,
+#ifdef CONFIG_DEDICATED_RECOVERY_BUTTON_2
+	BUTTON_RECOVERY_2,
+#endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON_2) */
 #endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON) */
 	BUTTON_COUNT,
 };
@@ -64,6 +69,16 @@ void button_init(void);
  * EC_ERROR_* otherwise.
  */
 int button_reassign_gpio(enum button button_type, enum gpio_signal gpio);
+
+/*
+ * Disable a button GPIO signal at runtime.
+ *
+ * @param button_type	Button type to reassign
+ *
+ * Returns EC_SUCCESS if the button is disabled,
+ * EC_ERROR_* otherwise.
+ */
+int button_disable_gpio(enum button button_type);
 
 /*
  * Interrupt handler for button.
