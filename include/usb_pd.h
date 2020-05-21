@@ -527,6 +527,12 @@ struct pd_discovery {
  */
 #define INVALID_MSG_ID_COUNTER 0xff
 
+/* PD Stack Version */
+enum pd_stack_version {
+	TCPMV1 = 1,
+	TCPMV2,
+};
+
 /* Protocol revision */
 enum pd_rev_type {
 	PD_REV10,
@@ -538,6 +544,12 @@ enum pd_rev_type {
 #define PD_REVISION     PD_REV30
 #else
 #define PD_REVISION     PD_REV20
+#endif
+
+#if defined(CONFIG_USB_PD_TCPMV1)
+#define PD_STACK_VERSION TCPMV1
+#elif defined(CONFIG_USB_PD_TCPMV2)
+#define PD_STACK_VERSION TCPMV2
 #endif
 
 /* Cable structure for storing cable attributes */
