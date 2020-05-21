@@ -328,7 +328,7 @@ uint32_t chip_read_reset_flags(void)
  */
 static void board_chipset_startup(void)
 {
-	uint32_t flags = bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
+	uint32_t flags = chip_read_reset_flags();
 	flags &= ~EC_RESET_FLAG_AP_OFF;
 	chip_save_reset_flags(flags);
 	system_clear_reset_flags(EC_RESET_FLAG_AP_OFF);
@@ -338,7 +338,7 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 static void board_chipset_shutdown(void)
 {
-	uint32_t flags = bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
+	uint32_t flags = chip_read_reset_flags();
 	flags |= EC_RESET_FLAG_AP_OFF;
 	chip_save_reset_flags(flags);
 	system_set_reset_flags(EC_RESET_FLAG_AP_OFF);
@@ -353,7 +353,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown,
 static void check_reset_cause(void)
 {
 	uint32_t hib_wake_flags = bbram_data_read(BBRM_DATA_INDEX_WAKE);
-	uint32_t flags = bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
+	uint32_t flags = chip_read_reset_flags();
 
 	/* Clear saved reset flags in bbram */
 #ifdef CONFIG_POWER_BUTTON_INIT_IDLE
