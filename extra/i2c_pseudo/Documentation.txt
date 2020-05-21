@@ -115,7 +115,8 @@ The msg_id is a decimal number representing the index of the I2C message within
 its transaction, in other words the index in master_xfer() *msgs array arg.
 This starts at 0 after each I2C_BEGIN_XFER.  This is guaranteed to not wrap.
 
-The addr is the hexadecimal I2C address for this I2C message.
+The addr is the hexadecimal I2C address for this I2C message.  The address is
+right-aligned without any read/write bit.
 
 The flags are the same bitmask flags used in struct i2c_msg, in hexadecimal
 form.  Of particular importance to any pseudo controller is the read bit, which
@@ -132,8 +133,8 @@ hexadecimal byte values, in the format shown in the example above.
 Read Command: I2C_COMMIT_XFER
 Example: "I2C_COMMIT_XFER\n"
 
-Details: This indicates the end of an I2C transacton request, in other words the
-end of the I2C messages from a single invocation of the I2C adapter's
+Details: This indicates the end of an I2C transaction request, in other words
+the end of the I2C messages from a single invocation of the I2C adapter's
 master_xfer() callback.  This should be read exactly once after each
 I2C_BEGIN_XFER, with a varying number of I2C_XFER_REQ between them.
 
