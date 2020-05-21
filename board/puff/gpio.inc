@@ -40,6 +40,13 @@ GPIO_INT(IMVP8_VRRDY_OD,       PIN(1, 6), GPIO_INT_BOTH, power_signal_interrupt)
 /* Other interrupts */
 GPIO_INT(USB_C0_TCPPC_INT_ODL, PIN(E, 0), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C0_TCPC_INT_ODL,  PIN(6, 2), GPIO_INT_FALLING, tcpc_alert_event)
+/*
+ * Directly connected recovery button (not available on some boards).
+ */
+GPIO_INT(EC_RECOVERY_BTN_ODL,  PIN(F, 1), GPIO_INT_BOTH, button_interrupt)
+/*
+ * Recovery button input from H1.
+ */
 GPIO_INT(H1_EC_RECOVERY_BTN_ODL, PIN(2, 4), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(BJ_ADP_PRESENT_L,     PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP, adp_connect_interrupt)
 
@@ -158,4 +165,3 @@ UNUSED(PIN(D, 2))						/* C11 NC */
 UNUSED(PIN(8, 6))						/* J8  NC */
 UNUSED(PIN(9, 3))						/* M11 NC */
 UNUSED(PIN(7, 2))						/* H6  NC */
-UNUSED(PIN(F, 1))						/* G3  NC */
