@@ -141,17 +141,17 @@ test_mockable __keep int main(void)
 
 	/* be less verbose if we boot for USB resume to meet spec timings */
 	if (!(system_get_reset_flags() & EC_RESET_FLAG_USB_RESUME)) {
-		if (system_jumped_to_this_image()) {
+		CPUTS("\n");
+		if (system_jumped_to_this_image())
 			CPRINTS("UART initialized after sysjump");
-		} else {
-			CPUTS("\n\n--- UART initialized after reboot ---\n");
-			CPUTS("[Reset cause: ");
-			system_print_reset_flags();
-			CPUTS("]\n");
-		}
+		else
+			CPUTS("\n--- UART initialized after reboot ---\n");
 		CPRINTF("[Image: %s, %s]\n",
 			 system_get_image_copy_string(),
 			 system_get_build_info());
+		CPUTS("[Reset cause: ");
+		system_print_reset_flags();
+		CPUTS("]\n");
 	}
 
 #ifdef CONFIG_BRINGUP
