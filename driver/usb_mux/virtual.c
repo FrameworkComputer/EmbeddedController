@@ -26,11 +26,9 @@ static mux_state_t virtual_mux_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static inline void virtual_mux_update_state(int port, mux_state_t mux_state)
 {
-	if (virtual_mux_state[port] != mux_state) {
-		virtual_mux_state[port] = mux_state;
+	virtual_mux_state[port] = mux_state;
 
-		host_set_single_event(EC_HOST_EVENT_USB_MUX);
-	}
+	host_set_single_event(EC_HOST_EVENT_USB_MUX);
 }
 
 static int virtual_init(const struct usb_mux *me)
