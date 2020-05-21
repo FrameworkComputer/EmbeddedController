@@ -111,16 +111,72 @@ test_static int test_mpu_update_region_invalid_alignment(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_mpu_lock_ro_flash(void)
+{
+	int rv;
+
+	rv = mpu_lock_ro_flash();
+	TEST_EQ(rv, EC_SUCCESS, "%d");
+
+	return EC_SUCCESS;
+}
+
+test_static int test_mpu_lock_rw_flash(void)
+{
+	int rv;
+
+	rv = mpu_lock_rw_flash();
+	TEST_EQ(rv, EC_SUCCESS, "%d");
+
+	return EC_SUCCESS;
+}
+
+test_static int test_mpu_protect_data_ram(void)
+{
+	int rv;
+
+	rv = mpu_protect_data_ram();
+	TEST_EQ(rv, EC_SUCCESS, "%d");
+
+	return EC_SUCCESS;
+}
+
+test_static int test_mpu_protect_code_ram(void)
+{
+	if (IS_ENABLED(CONFIG_EXTERNAL_STORAGE) ||
+	    !IS_ENABLED(CONFIG_FLASH_PHYSICAL)) {
+		int rv;
+
+		rv = mpu_protect_code_ram();
+		TEST_EQ(rv, EC_SUCCESS, "%d");
+	}
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	ccprintf("Running MPU test\n");
 	RUN_TEST(reset_mpu);
 	RUN_TEST(test_mpu_info);
 	RUN_TEST(reset_mpu);
+	/*
+	 * TODO(b/151105339): For all locked regions, check that we cannot
+	 * read/write/execute (depending on the configuration).
+	 */
+	RUN_TEST(test_mpu_lock_ro_flash);
+	RUN_TEST(reset_mpu);
+	RUN_TEST(test_mpu_lock_rw_flash);
+	RUN_TEST(reset_mpu);
 	RUN_TEST(test_mpu_update_region_invalid_region);
 	RUN_TEST(reset_mpu);
 	RUN_TEST(test_mpu_update_region_invalid_alignment);
 	RUN_TEST(reset_mpu);
+	RUN_TEST(test_mpu_protect_code_ram);
+	RUN_TEST(reset_mpu);
+	RUN_TEST(test_mpu_protect_data_ram);
+	RUN_TEST(reset_mpu);
+	/* This test must be last because it generates a panic */
 	RUN_TEST(test_mpu_update_region_valid_region);
 	RUN_TEST(reset_mpu);
 	test_print_result();
