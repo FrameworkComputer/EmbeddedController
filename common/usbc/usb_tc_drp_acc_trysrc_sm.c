@@ -436,6 +436,18 @@ void tc_request_power_swap(int port)
 		 */
 		if (IS_ATTACHED_SRC(port) || IS_ATTACHED_SNK(port))
 			TC_SET_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
+
+		/*
+		 * TCPCI Rev2 V1.1 4.4.5.4.4
+		 * Disconnect Detection by the Sink TCPC during a Connection
+		 *
+		 * Upon reception of or prior to transmitting a PR_Swap
+		 * message, the TCPM acting as a Sink shall disable the Sink
+		 * disconnect detection to retain PD message delivery when
+		 * Power Role Swap happens. Disable AutoDischargeDisconnect.
+		 */
+		if (IS_ATTACHED_SNK(port))
+			tcpm_enable_auto_discharge_disconnect(port, 0);
 	}
 }
 
@@ -656,6 +668,13 @@ int tc_check_vconn_swap(int port)
 void tc_pr_swap_complete(int port)
 {
 	TC_CLR_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
+
+	/*
+	 * We turned off AutoDischargeDisconnect when we started the PR Swap,
+	 * if we were a SNK. Re-enable AutoDischargeDisconnect to make sure
+	 * it is back on now that swap is complete.
+	 */
+	tcpm_enable_auto_discharge_disconnect(port, 1);
 }
 
 void tc_prs_src_snk_assert_rd(int port)
@@ -942,7 +961,11 @@ static bool tc_perform_src_hard_reset(int port)
 		/* Tell Policy Engine Hard Reset is complete */
 		pe_ps_reset_complete(port);
 
-		/* Enable AutoDischargeDisconnect */
+		/*
+		 * HardReset would have turned off power and Safe0V would
+		 * have disabled AutoDischargeDisconnect. Make sure to
+		 * re-enable AutoDischargeDisconnect here.
+		 */
 		tcpm_enable_auto_discharge_disconnect(port, 1);
 
 		tc[port].ps_reset_state = PS_STATE0;
@@ -1002,7 +1025,11 @@ static bool tc_perform_snk_hard_reset(int port)
 			tc[port].ps_reset_state = PS_STATE0;
 			pe_ps_reset_complete(port);
 
-			/* Enable AutoDischargeDisconnect */
+			/*
+			 * HardReset would have turned off power and Safe0V
+			 * would have disabled AutoDischargeDisconnect. Make
+			 * sure to re-enable AutoDischargeDisconnect here.
+			 */
 			tcpm_enable_auto_discharge_disconnect(port, 1);
 			return true;
 		}
@@ -1092,6 +1119,12 @@ void tc_state_init(int port)
 #endif /* CONFIG_USBC_VCONN */
 			if (IS_ENABLED(CONFIG_USB_PE_SM))
 				pe_set_sysjump();
+
+			/*
+			 * We are reconnecting to an existing connection.
+			 * So enable AutoDischargeDisconnect.
+			 */
+			tcpm_enable_auto_discharge_disconnect(port, 1);
 
 			/*
 			 * We are jumping warm to ATTACHED_SNK, so don't
@@ -1952,9 +1985,6 @@ static void tc_attached_snk_entry(const int port)
 	/* Enable PD */
 	if (IS_ENABLED(CONFIG_USB_PE_SM))
 		tc_enable_pd(port, 1);
-
-	/* Enable auto discharge disconnect */
-	tcpm_enable_auto_discharge_disconnect(port, 1);
 }
 
 static void tc_attached_snk_run(const int port)
@@ -2152,9 +2182,6 @@ static void tc_unoriented_dbg_acc_src_entry(const int port)
 	if (IS_ENABLED(CONFIG_USBC_PPC))
 		ppc_sink_is_connected(port, 1);
 
-	/* Enable auto discharge disconnect */
-	tcpm_enable_auto_discharge_disconnect(port, 1);
-
 	/* Save our current connection is a DEBUG ACCESSORY */
 	pd_update_saved_port_flags(port, PD_BBRMFLG_DBGACC_ROLE, 1);
 }
@@ -2327,9 +2354,6 @@ static void tc_dbg_acc_snk_entry(const int port)
 
 	/* Enable PD */
 	tc_enable_pd(port, 1);
-
-	/* Enable auto discharge disconnect */
-	tcpm_enable_auto_discharge_disconnect(port, 1);
 
 	/* Save our current connection is a DEBUG ACCESSORY */
 	pd_update_saved_port_flags(port, PD_BBRMFLG_DBGACC_ROLE, 1);
@@ -2719,9 +2743,6 @@ static void tc_attached_src_entry(const int port)
 	if (!TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
 		hook_notify(HOOK_USB_PD_CONNECT);
 	}
-
-	/* Enable AutoDischargeDisconnect */
-	tcpm_enable_auto_discharge_disconnect(port, 1);
 }
 
 static void tc_attached_src_run(const int port)
@@ -2915,6 +2936,7 @@ static __maybe_unused void check_drp_connection(const int port)
 		 *     Set RC.CC1 & RC.CC2 per decision
 		 *     Set RC.DRP=0
 		 *     Set TCPC_CONTROl.PlugOrientation
+		 *     Set PC.AutoDischargeDisconnect=1b
 		 */
 		tcpm_set_connection(port, TYPEC_CC_RD, 1);
 		tcpm_enable_auto_discharge_disconnect(port, 1);
@@ -2926,6 +2948,7 @@ static __maybe_unused void check_drp_connection(const int port)
 		 *     Set RC.CC1 & RC.CC2 per decision
 		 *     Set RC.DRP=0
 		 *     Set TCPC_CONTROl.PlugOrientation
+		 *     Set PC.AutoDischargeDisconnect=1b
 		 */
 		tcpm_set_connection(port, TYPEC_CC_RP, 1);
 		tcpm_enable_auto_discharge_disconnect(port, 1);
@@ -3023,7 +3046,11 @@ static void tc_try_src_entry(const int port)
 	tc[port].try_wait_debounce = get_time().val + PD_T_DRP_TRY;
 	tc[port].timeout = get_time().val + PD_T_TRY_TIMEOUT;
 
-	/* Disable AutoDischargeDisconnect */
+	/*
+	 * Try is going to shift the direction of how the TCPC thinks we need
+	 * to be connected. So have to Disable AutoDischargeDisconnect to let
+	 * the CC lines look for alternatives.
+	 */
 	tcpm_enable_auto_discharge_disconnect(port, 0);
 }
 
@@ -3053,8 +3080,14 @@ static void tc_try_src_run(const int port)
 	 * tTryCCDebounce.
 	 */
 	if (get_time().val > tc[port].cc_debounce) {
-		if (new_cc_state == PD_CC_UFP_ATTACHED)
+		if (new_cc_state == PD_CC_UFP_ATTACHED) {
+			/*
+			 * Found a new attach so reenable
+			 * AutoDischargeDisconnect
+			 */
+			tcpm_enable_auto_discharge_disconnect(port, 1);
 			set_state_tc(port, TC_ATTACHED_SRC);
+		}
 	}
 
 	/*
@@ -3087,7 +3120,11 @@ static void tc_try_wait_snk_entry(const int port)
 	tc[port].cc_state = PD_CC_UNSET;
 	tc[port].try_wait_debounce = get_time().val + PD_T_CC_DEBOUNCE;
 
-	/* Disable AutoDischargeDisconnect */
+	/*
+	 * Try is going to shift the direction of how the TCPC thinks we need
+	 * to be connected. So have to Disable AutoDischargeDisconnect to let
+	 * the CC lines look for alternatives.
+	 */
 	tcpm_enable_auto_discharge_disconnect(port, 0);
 }
 
@@ -3126,8 +3163,13 @@ static void tc_try_wait_snk_run(const int port)
 	 * when VBUS is detected.
 	 */
 	if (get_time().val > tc[port].try_wait_debounce &&
-						pd_is_vbus_present(port))
+						pd_is_vbus_present(port)) {
+		/*
+		 * Found a new attach so reenable AutoDischargeDisconnect
+		 */
+		tcpm_enable_auto_discharge_disconnect(port, 1);
 		set_state_tc(port, TC_ATTACHED_SNK);
+	}
 }
 
 #endif
@@ -3235,9 +3277,6 @@ static void tc_ct_attached_snk_entry(int port)
 
 	/* The port shall reject a VCONN swap request. */
 	TC_SET_FLAG(port, TC_FLAGS_REJECT_VCONN_SWAP);
-
-	/* Enable AutoDischargeDisconnect */
-	tcpm_enable_auto_discharge_disconnect(port, 1);
 }
 
 static void tc_ct_attached_snk_run(int port)

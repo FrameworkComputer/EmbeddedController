@@ -1007,11 +1007,14 @@ static void tcpci_check_vbus_changed(int port, int alert, uint32_t *pd_event)
 		/* Determine if Safe0V was detected */
 		tcpm_ext_status(port, &ext_status);
 		if (ext_status & TCPC_REG_EXT_STATUS_SAFE0V) {
+			/*
+			 * We have been notified of Safe0V.
+			 * Disable AutoDischargeDisconnect
+			 */
+			tcpm_enable_auto_discharge_disconnect(port, 0);
+
 			/* Safe0V and not Safe5V */
 			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
-
-			/* Disable AutoDischargeDisconnect */
-			tcpm_enable_auto_discharge_disconnect(port, 0);
 		}
 	}
 
@@ -1027,14 +1030,15 @@ static void tcpci_check_vbus_changed(int port, int alert, uint32_t *pd_event)
 			/* TCPCI Rev2 detects Safe0V, so just clear Safe5V */
 			tcpc_vbus[port] &= ~BIT(VBUS_PRESENT);
 		else {
+			/*
+			 * TCPCI Rev1 can not detect Safe0V, so treat this
+			 * like a Safe0V detection.
+			 */
 			/* Disable AutoDischargeDisconnect */
 			if (tcpc_vbus[port] & BIT(VBUS_PRESENT))
 				tcpm_enable_auto_discharge_disconnect(port, 0);
 
-			/*
-			 * TCPCI Rev1 can not detect Safe0V, so treat this
-			 * like a Safe0V detection. not Safe5V and Safe0V
-			 */
+			/* Safe0V and not Safe5V */
 			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
 		}
 
