@@ -121,6 +121,8 @@
  */
 #define CONFIG_USB_PID 0x5040
 
+#define CONFIG_USB_PD_REV30
+
 /* Enable the TCPMv2 PD stack */
 #define CONFIG_USB_PD_TCPMV2
 
