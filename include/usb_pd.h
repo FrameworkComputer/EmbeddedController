@@ -534,10 +534,10 @@ enum pd_rev_type {
 	PD_REV30,
 };
 
-#ifdef CONFIG_USB_PD_REV20
-#define PD_REVISION     PD_REV20
-#else
+#ifdef CONFIG_USB_PD_REV30
 #define PD_REVISION     PD_REV30
+#else
+#define PD_REVISION     PD_REV20
 #endif
 
 /* Cable structure for storing cable attributes */
