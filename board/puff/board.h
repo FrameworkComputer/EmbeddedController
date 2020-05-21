@@ -64,7 +64,7 @@
 #define CONFIG_HOSTCMD_PD_CONTROL
 #undef CONFIG_CMD_PWR_AVG
 #define CONFIG_CMD_PPC_DUMP
-#define CONFIG_CMD_TCPCI_DUMP
+#define CONFIG_CMD_TCPC_DUMP
 #ifdef SECTION_IS_RO
 /* Reduce RO size by removing less-relevant commands. */
 #undef CONFIG_CMD_APTHROTTLE

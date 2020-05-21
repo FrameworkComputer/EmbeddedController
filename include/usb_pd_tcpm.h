@@ -424,6 +424,15 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	 int (*handle_fault)(int port, int fault);
+
+#ifdef CONFIG_CMD_TCPC_DUMP
+	/**
+	 * Dump TCPC registers
+	 *
+	 * @param port Type-C port number
+	 */
+	 void (*dump_registers)(int port);
+#endif /* defined(CONFIG_CMD_TCPC_DUMP) */
 };
 
 /*
@@ -529,4 +538,30 @@ void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled);
  */
 int tcpc_get_vbus_voltage(int port);
 
+#ifdef CONFIG_CMD_TCPC_DUMP
+struct tcpc_reg_dump_map {
+	uint8_t		addr;
+	uint8_t		size;
+	const char	*name;
+};
+
+/**
+ * Dump the standard TCPC registers.
+ *
+ * @param port Type-C port number
+ *
+ */
+void tcpc_dump_std_registers(int port);
+
+/**
+ * Dump chip specific TCPC registers.
+ *
+ * @param port Type-C port number
+ * @param pointer to table of registers and names
+ * @param count of registers to dump
+ *
+ */
+void tcpc_dump_registers(int port, const struct tcpc_reg_dump_map *reg,
+			  int count);
+#endif
 #endif /* __CROS_EC_USB_PD_TCPM_H */

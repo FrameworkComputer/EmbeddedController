@@ -1456,207 +1456,203 @@ const struct usb_mux_driver tcpci_tcpm_usb_mux_driver = {
 
 #endif /* CONFIG_USB_PD_TCPM_MUX */
 
-#ifdef CONFIG_CMD_TCPCI_DUMP
-struct tcpci_reg {
-	const char	*name;
-	uint8_t		size;
-};
-
-static const struct tcpci_reg tcpci_regs[] = {
-	[TCPC_REG_VENDOR_ID] = {
+#ifdef CONFIG_CMD_TCPC_DUMP
+static const struct tcpc_reg_dump_map tcpc_regs[] = {
+	{
+		.addr = TCPC_REG_VENDOR_ID,
 		.name = "VENDOR_ID",
 		.size = 2,
 	},
-	[TCPC_REG_PRODUCT_ID] = {
+	{
+		.addr = TCPC_REG_PRODUCT_ID,
 		.name = "PRODUCT_ID",
 		.size = 2,
 	},
-	[TCPC_REG_BCD_DEV] = {
+	{
+		.addr = TCPC_REG_BCD_DEV,
 		.name = "BCD_DEV",
 		.size = 2,
 	},
-	[TCPC_REG_TC_REV] = {
+	{
+		.addr = TCPC_REG_TC_REV,
 		.name = "TC_REV",
 		.size = 2,
 	},
-	[TCPC_REG_PD_REV] = {
+	{
+		.addr = TCPC_REG_PD_REV,
 		.name = "PD_REV",
 		.size = 2,
 	},
-	[TCPC_REG_PD_INT_REV] = {
+	{
+		.addr = TCPC_REG_PD_INT_REV,
 		.name = "PD_INT_REV",
 		.size = 2,
 	},
-	[TCPC_REG_ALERT] = {
+	{
+		.addr = TCPC_REG_ALERT,
 		.name = "ALERT",
 		.size = 2,
 	},
-	[TCPC_REG_ALERT_MASK] = {
+	{
+		.addr = TCPC_REG_ALERT_MASK,
 		.name = "ALERT_MASK",
 		.size = 2,
 	},
-	[TCPC_REG_POWER_STATUS_MASK] = {
+	{
+		.addr = TCPC_REG_POWER_STATUS_MASK,
 		.name = "POWER_STATUS_MASK",
 		.size = 1,
 	},
-	[TCPC_REG_FAULT_STATUS_MASK] = {
+	{
+		.addr = TCPC_REG_FAULT_STATUS_MASK,
 		.name = "FAULT_STATUS_MASK",
 		.size = 1,
 	},
-	[TCPC_REG_EXT_STATUS_MASK] = {
+	{
+		.addr = TCPC_REG_EXT_STATUS_MASK,
 		.name = "EXT_STATUS_MASK",
-		.size = 1 },
-	[TCPC_REG_ALERT_EXTENDED_MASK] = {
+		.size = 1
+	},
+	{
+		.addr = TCPC_REG_ALERT_EXTENDED_MASK,
 		.name = "ALERT_EXTENDED_MASK",
 		.size = 1,
 	},
-	[TCPC_REG_CONFIG_STD_OUTPUT] = {
+	{
+		.addr = TCPC_REG_CONFIG_STD_OUTPUT,
 		.name = "CONFIG_STD_OUTPUT",
 		.size = 1,
 	},
-	[TCPC_REG_TCPC_CTRL] = {
+	{
+		.addr = TCPC_REG_TCPC_CTRL,
 		.name = "TCPC_CTRL",
 		.size = 1,
 	},
-	[TCPC_REG_ROLE_CTRL] = {
+	{
+		.addr = TCPC_REG_ROLE_CTRL,
 		.name = "ROLE_CTRL",
 		.size = 1,
 	},
-	[TCPC_REG_FAULT_CTRL] = {
+	{
+		.addr = TCPC_REG_FAULT_CTRL,
 		.name = "FAULT_CTRL",
 		.size = 1,
 	},
-	[TCPC_REG_POWER_CTRL] = {
+	{
+		.addr = TCPC_REG_POWER_CTRL,
 		.name = "POWER_CTRL",
 		.size = 1,
 	},
-	[TCPC_REG_CC_STATUS] = {
+	{
+		.addr = TCPC_REG_CC_STATUS,
 		.name = "CC_STATUS",
 		.size = 1,
 	},
-	[TCPC_REG_POWER_STATUS] = {
+	{
+		.addr = TCPC_REG_POWER_STATUS,
 		.name = "POWER_STATUS",
 		.size = 1,
 	},
-	[TCPC_REG_FAULT_STATUS] = {
+	{
+		.addr = TCPC_REG_FAULT_STATUS,
 		.name = "FAULT_STATUS",
 		.size = 1,
 	},
-	[TCPC_REG_EXT_STATUS] = {
+	{
+		.addr = TCPC_REG_EXT_STATUS,
 		.name = "EXT_STATUS",
 		.size = 1,
 	},
-	[TCPC_REG_ALERT_EXT] = {
+	{
+		.addr = TCPC_REG_ALERT_EXT,
 		.name = "ALERT_EXT",
 		.size = 1,
 	},
-	[TCPC_REG_DEV_CAP_1] = {
+	{
+		.addr = TCPC_REG_DEV_CAP_1,
 		.name = "DEV_CAP_1",
 		.size = 2,
 	},
-	[TCPC_REG_DEV_CAP_2] = {
+	{
+		.addr = TCPC_REG_DEV_CAP_2,
 		.name = "DEV_CAP_2",
 		.size = 2,
 	},
-	[TCPC_REG_STD_INPUT_CAP] = {
+	{
+		.addr = TCPC_REG_STD_INPUT_CAP,
 		.name = "STD_INPUT_CAP",
 		.size = 1,
 	},
-	[TCPC_REG_STD_OUTPUT_CAP] = {
+	{
+		.addr = TCPC_REG_STD_OUTPUT_CAP,
 		.name = "STD_OUTPUT_CAP",
 		.size = 1,
 	},
-	[TCPC_REG_CONFIG_EXT_1] = {
+	{
+		.addr = TCPC_REG_CONFIG_EXT_1,
 		.name = "CONFIG_EXT_1",
 		.size = 1,
 	},
-	[TCPC_REG_MSG_HDR_INFO] = {
+	{
+		.addr = TCPC_REG_MSG_HDR_INFO,
 		.name = "MSG_HDR_INFO",
 		.size = 1,
 	},
-	[TCPC_REG_RX_DETECT] = {
+	{
+		.addr = TCPC_REG_RX_DETECT,
 		.name = "RX_DETECT",
 		.size = 1,
 	},
-	[TCPC_REG_RX_BYTE_CNT] = {
+	{
+		.addr = TCPC_REG_RX_BYTE_CNT,
 		.name = "RX_BYTE_CNT",
 		.size = 1,
 	},
-	[TCPC_REG_RX_BUF_FRAME_TYPE] = {
+	{
+		.addr = TCPC_REG_RX_BUF_FRAME_TYPE,
 		.name = "RX_BUF_FRAME_TYPE",
 		.size = 1,
 	},
-	[TCPC_REG_TRANSMIT] = {
+	{
+		.addr = TCPC_REG_TRANSMIT,
 		.name = "TRANSMIT",
 		.size = 1,
 	},
-	[TCPC_REG_VBUS_VOLTAGE] = {
+	{
+		.addr = TCPC_REG_VBUS_VOLTAGE,
 		.name = "VBUS_VOLTAGE",
 		.size = 2,
 	},
-	[TCPC_REG_VBUS_SINK_DISCONNECT_THRESH] = {
+	{
+		.addr = TCPC_REG_VBUS_SINK_DISCONNECT_THRESH,
 		.name = "VBUS_SINK_DISCONNECT_THRESH",
 		.size = 2,
 	},
-	[TCPC_REG_VBUS_STOP_DISCHARGE_THRESH] = {
+	{
+		.addr = TCPC_REG_VBUS_STOP_DISCHARGE_THRESH,
 		.name = "VBUS_STOP_DISCHARGE_THRESH",
 		.size = 2,
 	},
-	[TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG] = {
+	{
+		.addr = TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG,
 		.name = "VBUS_VOLTAGE_ALARM_HI_CFG",
 		.size = 2,
 	},
-	[TCPC_REG_VBUS_VOLTAGE_ALARM_LO_CFG] = {
+	{
+		.addr = TCPC_REG_VBUS_VOLTAGE_ALARM_LO_CFG,
 		.name = "VBUS_VOLTAGE_ALARM_LO_CFG",
 		.size = 2,
 	},
 };
 
-static int command_tcpci_dump(int argc, char **argv)
+/*
+ * Dump standard TCPC registers.
+ */
+void tcpc_dump_std_registers(int port)
 {
-	int port;
-	int i;
-	int val;
-
-	if (argc < 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	port = atoi(argv[1]);
-	if ((port < 0) || (port >= board_get_usb_pd_port_count())) {
-		CPRINTS("%s(%d) Invalid port!", __func__, port);
-		return EC_ERROR_INVAL;
-	}
-
-	for (i = 0; i < ARRAY_SIZE(tcpci_regs); i++) {
-		switch (tcpci_regs[i].size) {
-		case 1:
-			tcpc_read(port, i, &val);
-			ccprintf("  %-30s(0x%02x) =   0x%02x\n",
-				tcpci_regs[i].name, i, (uint8_t)val);
-			break;
-		case 2:
-			tcpc_read16(port, i, &val);
-			ccprintf("  %-30s(0x%02x) = 0x%04x\n",
-				tcpci_regs[i].name, i, (uint16_t)val);
-			break;
-		default:
-			/*
-			 * The tcpci_regs[] array is indexed by the register
-			 * offset. Unused registers are zero initialized so we
-			 * skip any entries that have the size field set to
-			 * zero.
-			 */
-			break;
-		}
-		cflush();
-	}
-
-	return EC_SUCCESS;
+	tcpc_dump_registers(port, tcpc_regs, ARRAY_SIZE(tcpc_regs));
 }
-DECLARE_CONSOLE_COMMAND(tcpci_dump, command_tcpci_dump, "<Type-C port>",
-			"dump the TCPCI regs");
-#endif /* defined(CONFIG_CMD_TCPCI_DUMP) */
-
+#endif
 
 const struct tcpm_drv tcpci_tcpm_drv = {
 	.init			= &tcpci_tcpm_init,
@@ -1687,5 +1683,8 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 #endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
+#endif
+#ifdef CONFIG_CMD_TCPC_DUMP
+	.dump_registers		= &tcpc_dump_std_registers,
 #endif
 };

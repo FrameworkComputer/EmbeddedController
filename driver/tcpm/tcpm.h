@@ -468,4 +468,14 @@ static inline void tcpm_set_frs_enable(int port, int enable)
 		tcpc->set_frs_enable(port, enable);
 }
 
+#ifdef CONFIG_CMD_TCPC_DUMP
+static inline void tcpm_dump_registers(int port)
+{
+	const struct tcpm_drv *tcpc = tcpc_config[port].drv;
+
+	if (tcpc->dump_registers)
+		tcpc->dump_registers(port);
+}
+#endif /* defined(CONFIG_CMD_TCPC_DUMP) */
+
 #endif

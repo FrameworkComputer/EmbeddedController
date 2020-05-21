@@ -24,7 +24,7 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 
 /* EC console commands */
-#define CONFIG_CMD_TCPCI_DUMP
+#define CONFIG_CMD_TCPC_DUMP
 
 /* Keyboard */
 #define CONFIG_PWM_KBLIGHT
