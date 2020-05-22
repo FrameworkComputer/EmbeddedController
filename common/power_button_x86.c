@@ -232,6 +232,8 @@ static void set_initial_pwrbtn_state(void)
 		return;
 	} else if ((reset_flags & EC_RESET_FLAG_AP_OFF) ||
 		   (keyboard_scan_get_boot_keys() == BOOT_KEY_DOWN_ARROW)) {
+		/* Clear AP_OFF so that it won't be carried over to RW. */
+		system_clear_reset_flags(EC_RESET_FLAG_AP_OFF);
 		/*
 		 * Reset triggered by keyboard-controlled reset, and down-arrow
 		 * was held down.  Or reset flags request AP off.
