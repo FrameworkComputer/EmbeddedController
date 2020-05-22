@@ -44,8 +44,30 @@ GPIO(EC_HUB1_RESET_L,               PIN(E, 13), GPIO_ODR_LOW)
 GPIO(EC_HUB2_RESET_L,               PIN(E, 14), GPIO_ODR_LOW)
 
 /* Misc Signals */
+
+/*
+ * I2C SCL/SDA pins. These will normally be under control of the peripheral from
+ * alt fucntion setting below. But if a port gets wedged, the unwedge code uses
+ * these signals as regular GPIOs.
+ */
+GPIO(EC_I2C1_SCL,                   PIN(A, 15),  GPIO_ODR_HIGH)
+GPIO(EC_I2C1_SDA,                   PIN(B,  7),  GPIO_ODR_HIGH)
+GPIO(EC_I2C2_SDA,                   PIN(A,  8),  GPIO_ODR_HIGH)
+GPIO(EC_I2C2_SCL,                   PIN(A,  9),  GPIO_ODR_HIGH)
+GPIO(EC_I2C3_SCL,                   PIN(C,  8),  GPIO_ODR_HIGH)
+GPIO(EC_I2C3_SDA,                   PIN(C,  9),  GPIO_ODR_HIGH)
+
 UNIMPLEMENTED(EC_ENTERING_RW)
 UNIMPLEMENTED(EC_WP_L)
 
 /* UART */
 
+/* I2C Ports
+ *   I2C1: SDA/SCL -> PB7/PA15
+ *   I2C2: SDA/SCL -> PA8/PA9
+ *   I2C3: SDA/SCL -> PC8/PC9
+ */
+ALTERNATE(PIN_MASK(B, 0x0080),  4, MODULE_I2C,   GPIO_OPEN_DRAIN)
+ALTERNATE(PIN_MASK(A, 0X8000),  4, MODULE_I2C,   GPIO_OPEN_DRAIN)
+ALTERNATE(PIN_MASK(A, 0x0300),  4, MODULE_I2C,   GPIO_OPEN_DRAIN)
+ALTERNATE(PIN_MASK(C, 0x0300),  8, MODULE_I2C,   GPIO_OPEN_DRAIN)
