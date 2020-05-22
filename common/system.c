@@ -802,13 +802,9 @@ void system_common_pre_init(void)
 	jdata = (struct jump_data *)(addr - sizeof(struct jump_data));
 
 	/*
-	 * Check jump data if this is a jump between images.  Jumps all show up
-	 * as an unknown reset reason, because we jumped directly from one
-	 * image to another without actually triggering a chip reset.
+	 * Check jump data if this is a jump between images.
 	 */
-	if (jdata->magic == JUMP_DATA_MAGIC &&
-	    jdata->version >= 1 &&
-	    reset_flags == 0) {
+	if (jdata->magic == JUMP_DATA_MAGIC && jdata->version >= 1) {
 		/* Change in jump data struct size between the previous image
 		 * and this one. */
 		int delta;
