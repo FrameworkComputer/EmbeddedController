@@ -252,6 +252,195 @@
 
 /* Register definitions */
 
+/* --- UCPD --- */
+#define STM32_UCPD_REG(port, offset) \
+	REG32(((STM32_UCPD1_BASE + ((port) * 0x400)) + (offset)))
+
+#define STM32_UCPD_CFGR1(port)              STM32_UCPD_REG(port, 0x00)
+#define STM32_UCPD_CFGR2(port)              STM32_UCPD_REG(port, 0x04)
+#define STM32_UCPD_CR(port)                 STM32_UCPD_REG(port, 0x0c)
+#define STM32_UCPD_IMR(port)                STM32_UCPD_REG(port, 0x10)
+#define STM32_UCPD_SR(port)                 STM32_UCPD_REG(port, 0x14)
+#define STM32_UCPD_ICR(port)                STM32_UCPD_REG(port, 0x18)
+#define STM32_UCPD_TX_ORDSETR(port)         STM32_UCPD_REG(port, 0x1c)
+#define STM32_UCPD_TX_PAYSZR(port)          STM32_UCPD_REG(port, 0x20)
+#define STM32_UCPD_TXDR(port)               STM32_UCPD_REG(port, 0x24)
+#define STM32_UCPD_RX_ORDSETR(port)         STM32_UCPD_REG(port, 0x28)
+#define STM32_UCPD_RX_PAYSZR(port)          STM32_UCPD_REG(port, 0x2c)
+#define STM32_UCPD_RXDR(port)               STM32_UCPD_REG(port, 0x30)
+#define STM32_UCPD_RX_ORDEXTR1(port)        STM32_UCPD_REG(port, 0x34)
+#define STM32_UCPD_RX_ORDEXTR2(port)        STM32_UCPD_REG(port, 0x38)
+
+/* --- UCPD CFGR1 Bit Definitions --- */
+#define STM32_UCPD_CFGR1_HBITCLKD_SHIFT     0
+#define STM32_UCPD_CFGR1_HBITCLKD_MASK      ((0x3f) << \
+					     (STM32_UCPD_CFGR1_HBITCLKD_SHIFT))
+#define STM32_UCPD_CFGR1_HBITCLKD_VAL(x)    ((x) << \
+					     STM32_UCPD_CFGR1_HBITCLKD_SHIFT)
+#define STM32_UCPD_CFGR1_IFRGAP_SHIFT       6
+#define STM32_UCPD_CFGR1_IFRGAP_MASK        ((0x1f) << \
+					     (STM32_UCPD_CFGR1_IFRGAP_SHIFT))
+#define STM32_UCPD_CFGR1_IFRGAP_VAL(x)      ((x) << \
+					     STM32_UCPD_CFGR1_IFRGAP_SHIFT)
+#define STM32_UCPD_CFGR1_TRANSWIN_SHIFT     11
+#define STM32_UCPD_CFGR1_TRANSWIN_MASK      ((0x1f) << \
+					     (STM32_UCPD_CFGR1_TRANSWIN_SHIFT))
+#define STM32_UCPD_CFGR1_TRANSWIN_VAL(x)    ((x) << \
+					     STM32_UCPD_CFGR1_TRANSWIN_SHIFT)
+#define STM32_UCPD_CFGR1_PSC_CLK_SHIFT      17
+#define STM32_UCPD_CFGR1_PSC_CLK_MASK       ((0x7) << \
+					     STM32_UCPD_CFGR1_PSC_CLK_SHIFT)
+#define STM32_UCPD_CFGR1_PSC_CLK_VAL(x)     ((x) << \
+					     STM32_UCPD_CFGR1_PSC_CLK_SHIFT)
+#define STM32_UCPD_CFGR1_RXORDSETEN_SHIFT   20
+#define STM32_UCPD_CFGR1_RXORDSETEN_MASK    ((0x1ff) << \
+					     STM32_UCPD_CFGR1_RXORDSETEN_SHIFT)
+#define STM32_UCPD_CFGR1_RXORDSETEN_VAL(x)  ((x) << \
+					     STM32_UCPD_CFGR1_RXORDSETEN_SHIFT)
+#define STM32_UCPD_CFGR1_TXDMAEN            BIT(29)
+#define STM32_UCPD_CFGR1_RXDMAEN            BIT(30)
+#define STM32_UCPD_CFGR1_UCPDEN             BIT(31)
+
+/* --- UCPD CFGR2 Bit Definitions --- */
+#define STM32_UCPD_CFGR2_RXFILTDIS          BIT(0)
+#define STM32_UCPD_CFGR2_RXFILT2N3          BIT(1)
+#define STM32_UCPD_CFGR2_FORCECLK           BIT(2)
+#define STM32_UCPD_CFGR2_WUPEN              BIT(3)
+
+/* --- UCPD CR Bit Definitions --- */
+#define STM32_UCPD_CR_TXMODE_SHIFT          0
+#define STM32_UCPD_CR_TXMODE_MASK           ((0x3) << \
+					     (STM32_UCPD_CR_TXMODE_SHIFT))
+#define STM32_UCPD_CR_TXMODE_VAL(x)         ((x) << STM32_UCPD_CR_TXMODE_SHIFT)
+#define STM32_UCPD_CR_TXSEND                BIT(2)
+#define STM32_UCPD_CR_TXHRST                BIT(3)
+#define STM32_UCPD_CR_RXMODE                BIT(4)
+#define STM32_UCPD_CR_PHYRXEN               BIT(5)
+#define STM32_UCPD_CR_PHYCCSEL              BIT(6)
+#define STM32_UCPD_CR_ANASUBMODE_SHIFT      7
+#define STM32_UCPD_CR_ANASUBMODE_MASK       ((0x3) << \
+					     (STM32_UCPD_CR_ANASUBMODE_SHIFT))
+#define STM32_UCPD_CR_ANASUBMODE_VAL(x)     ((x) << \
+					     STM32_UCPD_CR_ANASUBMODE_SHIFT)
+#define STM32_UCPD_CR_ANAMODE               BIT(9)
+#define STM32_UCPD_CR_CCENABLE_SHIFT        10
+#define STM32_UCPD_CR_CCENABLE_MASK         ((0x3) << \
+					     (STM32_UCPD_CR_CCENABLE_SHIFT))
+#define STM32_UCPD_CR_CCENABLE_VAL(x)       ((x) << \
+					     STM32_UCPD_CR_CCENABLE_SHIFT)
+#define STM32_UCPD_CR_FRSRXEN               BIT(16)
+#define STM32_UCPD_CR_FRSTX                 BIT(17)
+#define STM32_UCPD_CR_RDCH                  BIT(18)
+#define STM32_UCPD_CR_CC1TCDIS              BIT(20)
+#define STM32_UCPD_CR_CC2TCDIS              BIT(21)
+
+/* --- UCPD IMR Bit Definitions --- */
+#define STM32_UCPD_IMR_TXISIE               BIT(0)
+#define STM32_UCPD_IMR_TXMSGDISCIE          BIT(1)
+#define STM32_UCPD_IMR_TXMSGSENTIE          BIT(2)
+#define STM32_UCPD_IMR_TXMSGABTIE           BIT(3)
+#define STM32_UCPD_IMR_HRSTDISCIE           BIT(4)
+#define STM32_UCPD_IMR_HRSTSENTIE           BIT(5)
+#define STM32_UCPD_IMR_TXUNDIE              BIT(6)
+#define STM32_UCPD_IMR_RXNEIE               BIT(8)
+#define STM32_UCPD_IMR_RXORDDETIE           BIT(9)
+#define STM32_UCPD_IMR_RXHRSTDETIE          BIT(10)
+#define STM32_UCPD_IMR_RXOVRIE              BIT(11)
+#define STM32_UCPD_IMR_RXMSGENDIE           BIT(12)
+#define STM32_UCPD_IMR_TYPECEVT1IE          BIT(14)
+#define STM32_UCPD_IMR_TYPECEVT2IE          BIT(15)
+#define STM32_UCPD_IMR_FRSEVTIE             BIT(20)
+
+/* --- UCPD SR Bit Definitions --- */
+#define STM32_UCPD_SR_TXIS                  BIT(0)
+#define STM32_UCPD_SR_TXMSGDISC             BIT(1)
+#define STM32_UCPD_SR_TXMSGSENT             BIT(2)
+#define STM32_UCPD_SR_TXMSGABT              BIT(3)
+#define STM32_UCPD_SR_HRSTDISC              BIT(4)
+#define STM32_UCPD_SR_HRSTSENT              BIT(5)
+#define STM32_UCPD_SR_TXUND                 BIT(6)
+#define STM32_UCPD_SR_RXNE                  BIT(8)
+#define STM32_UCPD_SR_RXORDDET              BIT(9)
+#define STM32_UCPD_SR_RXHRSTDET             BIT(10)
+#define STM32_UCPD_SR_RXOVR                 BIT(11)
+#define STM32_UCPD_SR_RXMSGEND              BIT(12)
+#define STM32_UCPD_SR_RXERR                 BIT(13)
+#define STM32_UCPD_SR_TYPECEVT1             BIT(14)
+#define STM32_UCPD_SR_TYPECEVT2             BIT(15)
+#define STM32_UCPD_SR_VSTATE_CC1_SHIFT      16
+#define STM32_UCPD_SR_VSTATE_CC1_MASK       ((0x3) << \
+					       (STM32_UCPD_SR_VSTATE_CC1_SHIFT))
+#define STM32_UCPD_SR_VSTATE_CC1_VAL(x)     ((x) << \
+					     STM32_UCPD_SR_VSTATE_CC1_SHIFT)
+#define STM32_UCPD_SR_VSTATE_CC2_SHIFT      18
+#define STM32_UCPD_SR_VSTATE_CC2_MASK       ((0x3) << \
+					     (STM32_UCPD_SR_VSTATE_CC2_SHIFT))
+#define STM32_UCPD_SR_VSTATE_CC2_VAL(x)     ((x) << \
+					     STM32_UCPD_SR_VSTATE_CC2_SHIFT)
+#define STM32_UCPD_SR_FRSEVT                BIT(20)
+
+#define STM32_UCPD_SR_VSTATE_OPEN           3
+#define STM32_UCPD_SR_VSTATE_RA             0
+
+/* --- UCPD ICR Bit Definitions --- */
+#define STM32_UCPD_ICR_TXMSGDISCCF          BIT(1)
+#define STM32_UCPD_ICR_TXMSGSENTCF          BIT(2)
+#define STM32_UCPD_ICR_TXMSGABTCF           BIT(3)
+#define STM32_UCPD_ICR_HRSTDISCCF           BIT(4)
+#define STM32_UCPD_ICR_HRSTSENTCF           BIT(5)
+#define STM32_UCPD_ICR_TXUNDCF              BIT(6)
+#define STM32_UCPD_ICR_RXORDDETCF           BIT(9)
+#define STM32_UCPD_ICR_RXHRSTDETCF          BIT(10)
+#define STM32_UCPD_ICR_RXOVRCF              BIT(11)
+#define STM32_UCPD_ICR_RXMSGENDCF           BIT(12)
+#define STM32_UCPD_ICR_TYPECEVT1CF          BIT(14)
+#define STM32_UCPD_ICR_TYPECEVT2CF          BIT(15)
+#define STM32_UCPD_ICR_FRSEVTCF             BIT(20)
+
+
+/* --- UCPD TX_ORDSETR Bit Definitions --- */
+#define STM32_UCPD_TX_ORDSETR_SHIFT        0
+#define STM32_UCPD_TX_ORDSETR_MASK         ((0xfffff) << \
+					    (STM32_UCPD_TX_ORDSETR_SHIFT))
+#define STM32_UCPD_TX_ORDSETR_VAL(x)       ((x) << STM32_UCPD_TX_ORDSETR_SHIFT)
+
+/* --- UCPD TX_PAYSZR Bit Definitions --- */
+#define STM32_UCPD_TX_PAYSZR_SHIFT        0
+#define STM32_UCPD_TX_PAYSZR_MASK         ((0x3ff) << \
+					   (STM32_UCPD_TX_PAYSZR_SHIFT))
+#define STM32_UCPD_TX_PAYSZR_VAL(x)       ((x) << STM32_UCPD_TX_PAYSZR_SHIFT)
+
+/* --- UCPD TXDR Bit Definitions --- */
+#define STM32_UCPD_TXDR_SHIFT             0
+#define STM32_UCPD_TXDR_MASK              ((0xff) << \
+					   (STM32_UCPD_TXDR_SHIFT))
+#define STM32_UCPD_TXDR_VAL(x)            ((x) << STM32_UCPD_TXDR_SHIFT)
+
+/* --- UCPD RX_ORDSETR Bit Definitions --- */
+#define STM32_UCPD_RXORDSETR_SHIFT        0
+#define STM32_UCPD_RXORDSETR_MASK         ((0x7) << \
+					   (STM32_UCPD_RXORDSETR_SHIFT))
+#define STM32_UCPD_RXORDSETR_VAL(x)       ((x) << STM32_UCPD_RXORDSETR_SHIFT)
+#define STM32_UCPD_RXSOP3OF4              BIT(3)
+#define STM32_UCPD_RXSOPKINVALID_SHIFT    4
+#define STM32_UCPD_RXSOPKINVALID_MASK     ((0x7) << \
+					   (STM32_UCPD_RXSOPKINVALID_SHIFT))
+#define STM32_UCPD_RXSOPKINVALID_VAL(x)   ((x) << \
+					   STM32_UCPD_RXSOPKINVALID_SHIFT)
+
+/* --- UCPD RX_PAYSZR Bit Definitions --- */
+#define STM32_UCPD_RX_PAYSZR_SHIFT        0
+#define STM32_UCPD_RX_PAYSZR_MASK         ((0x3ff) << \
+					   (STM32_UCPD_RX_PAYSZR_SHIFT))
+#define STM32_UCPD_RX_PAYSZR_VAL(x)       ((x) << STM32_UCPD_RX_PAYSZR_SHIFT)
+
+/* --- UCPD TXDR Bit Definitions --- */
+#define STM32_UCPD_RXDR_SHIFT             0
+#define STM32_UCPD_RXDR_MASK              ((0xff) << \
+					   (STM32_UCPD_RXDR_SHIFT))
+#define STM32_UCPD_RXDR_VAL(x)            ((x) << STM32_UCPD_RXDR_SHIFT)
+
+
 /* --- USART --- */
 #define STM32_USART_CR1(base)      STM32_USART_REG(base, 0x00)
 #define STM32_USART_CR2(base)      STM32_USART_REG(base, 0x04)
@@ -508,6 +697,7 @@
 /* --- RCC APB1ENR2 Bit Definitions --- */
 #define STM32_RCC_APB1ENR2_LPUART1EN             BIT(0)
 #define STM32_RCC_APB1ENR2_I2C4EN                BIT(1)
+#define STM32_RCC_APB1ENR2_UPCD1EN               BIT(8)
 
 /* --- RCC APB2ENR Bit Definitions --- */
 #define STM32_RCC_APB2ENR_SYSCFGEN	BIT(0)
@@ -590,6 +780,9 @@
 #define  RESET_CAUSE_SBF                STM32_PWR_SR1_SBF
 #define STM32_PWR_RESET_CAUSE_CLR STM32_PWR_SCR
 #define  RESET_CAUSE_SBF_CLR            STM32_PWR_SCR_CSBF
+
+#define STM32_PWR_CR3_UCPD1_STDBY       BIT(13)
+#define STM32_PWR_CR3_UCPD1_DBDIS       BIT(14)
 
 /* --- System Config Registers --- */
 #define STM32_SYSCFG_MEMRMP             REG32(STM32_SYSCFG_BASE + 0x00)
