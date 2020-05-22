@@ -926,7 +926,7 @@ static void system_common_shutdown(void)
 	handle_pending_reboot(reboot_at_shutdown);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN_COMPLETE, system_common_shutdown,
-	     HOOK_PRIO_LAST);
+	     HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Console and Host Commands */

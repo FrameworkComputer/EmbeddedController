@@ -209,8 +209,7 @@ static void verify_and_jump(void)
 		enable_pd();
 		break;
 	case CR50_COMM_SUCCESS:
-		system_set_reset_flags(
-				system_get_reset_flags() | EC_RESET_FLAG_EFS);
+		system_set_reset_flags(EC_RESET_FLAG_EFS);
 		rv = system_run_image_copy(EC_IMAGE_RW);
 		CPRINTS("Failed to jump (0x%x)", rv);
 		system_clear_reset_flags(EC_RESET_FLAG_EFS);
@@ -315,9 +314,17 @@ void hook_shutdown(void)
 	if (system_is_in_rw())
 		return;
 
-	CPRINTS("Reboot\n\n");
-	cflush();
-	system_reset(SYSTEM_RESET_LEAVE_AP_OFF);
+	/*
+	 * We can't reset here because it'll completely tear down the power
+	 * and disturb the PCH's power sequence. We instead sysjump.
+	 *
+	 * Note that this does not reduce the security. Even if it's hijacked in
+	 * NO_BOOT mode, an RO still needs to go through a cold reset to clear
+	 * NO_BOOT flag since Cr50 rejects to switch from NO_BOOT to NORMAL.
+	 * If a spoofed matching hash is passed to Cr50, Cr50 would reset EC.
+	 */
+	system_set_reset_flags(EC_RESET_FLAG_AP_IDLE);
+	verify_and_jump();
 }
 /*
  * There can be hooks which are needed to set external chips to a certain state
@@ -325,4 +332,4 @@ void hook_shutdown(void)
  * hooks realize, they need to be considered. This hook runs last (i.e.
  * HOOK_PRIO_LAST) to make our landing on S5 as mild as possible.
  */
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, hook_shutdown, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN_COMPLETE, hook_shutdown, HOOK_PRIO_LAST);

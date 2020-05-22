@@ -4364,6 +4364,9 @@
  *
  * EFS1 is being deprecated. EFS2 is faster, doesn't need two slots, and
  * supports rollback protection.
+ *
+ * EFS2 runs in the system task (a.k.a. main) and the hook task (for shutdown
+ * hook). Their stack sizes must be big enough for sha256.
  */
 #undef CONFIG_VBOOT_EFS
 #undef CONFIG_VBOOT_EFS2
