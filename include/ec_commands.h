@@ -5797,6 +5797,7 @@ struct ec_params_set_cbi {
 					    * enables PD in RO for Chromebox.
 					    */
 #define EC_RESET_FLAG_EFS         BIT(20)  /* Jumped to this image by EFS */
+#define EC_RESET_FLAG_AP_IDLE     BIT(21)  /* Leave alone AP */
 
 struct ec_response_uptime_info {
 	/*
