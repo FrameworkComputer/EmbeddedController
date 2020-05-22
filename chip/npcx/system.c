@@ -329,20 +329,20 @@ uint32_t chip_read_reset_flags(void)
 static void board_chipset_startup(void)
 {
 	uint32_t flags = chip_read_reset_flags();
-	flags &= ~EC_RESET_FLAG_AP_OFF;
+	flags &= ~EC_RESET_FLAG_AP_IDLE;
 	chip_save_reset_flags(flags);
-	system_clear_reset_flags(EC_RESET_FLAG_AP_OFF);
-	CPRINTS("Cleared AP_OFF flag");
+	system_clear_reset_flags(EC_RESET_FLAG_AP_IDLE);
+	CPRINTS("Cleared AP_IDLE flag");
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 static void board_chipset_shutdown(void)
 {
 	uint32_t flags = chip_read_reset_flags();
-	flags |= EC_RESET_FLAG_AP_OFF;
+	flags |= EC_RESET_FLAG_AP_IDLE;
 	chip_save_reset_flags(flags);
-	system_set_reset_flags(EC_RESET_FLAG_AP_OFF);
-	CPRINTS("Set AP_OFF flag");
+	system_set_reset_flags(EC_RESET_FLAG_AP_IDLE);
+	CPRINTS("Saved AP_IDLE flag");
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown,
 	     /* Slightly higher than handle_pending_reboot because
@@ -357,8 +357,11 @@ static void check_reset_cause(void)
 
 	/* Clear saved reset flags in bbram */
 #ifdef CONFIG_POWER_BUTTON_INIT_IDLE
-	/* We'll clear AP_OFF on S5->S3 transition */
-	chip_save_reset_flags(flags & EC_RESET_FLAG_AP_OFF);
+	/*
+	 * We're not sure whether we're booting or not. AP_IDLE will be cleared
+	 * on S5->S3 transition.
+	 */
+	chip_save_reset_flags(flags & EC_RESET_FLAG_AP_IDLE);
 #else
 	chip_save_reset_flags(0);
 #endif
