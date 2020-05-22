@@ -47,8 +47,28 @@
 
 /* I2C Bus Configuration */
 
+/*
+ * Macros for GPIO signals used in common code that don't match the
+ * schematic names. Signal names in gpio.inc match the schematic and are
+ * then redefined here to so it's more clear which signal is being used for
+ * which purpose.
+ */
+#define GPIO_ENTERING_RW	GPIO_EC_ENTERING_RW
+#define GPIO_WP_L		GPIO_EC_WP_L
 
 #ifndef __ASSEMBLER__
+
+#include "gpio_signal.h"
+#include "stddef.h"
+
+struct power_seq {
+	enum gpio_signal signal; /* power/reset gpio_signal to control */
+	int level;               /* level to set in power sequence */
+	unsigned int delay_ms;   /* delay (in msec) after setting gpio_signal */
+};
+
+extern const struct power_seq board_power_seq[];
+extern const size_t board_power_seq_count;
 
 #endif /* !__ASSEMBLER__ */
 

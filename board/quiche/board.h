@@ -31,22 +31,10 @@
 
 /* Fan features */
 
-/*
- * Macros for GPIO signals used in common code that don't match the
- * schematic names. Signal names in gpio.inc match the schematic and are
- * then redefined here to so it's more clear which signal is being used for
- * which purpose.
- */
-#define GPIO_ENTERING_RW	GPIO_EC_ENTERING_RW
-#define GPIO_WP_L		GPIO_EC_WP_L
-
-
 
 #ifndef __ASSEMBLER__
 
-#include "gpio_signal.h"
 #include "registers.h"
-
 
 #endif /* !__ASSEMBLER__ */
 
