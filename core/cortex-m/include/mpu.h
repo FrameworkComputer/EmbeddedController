@@ -12,6 +12,11 @@
 #include "config.h" /* chips might override MPU attribute settings */
 
 /*
+ * ARMv7-M SRAM region
+ */
+#define CORTEX_M_SRAM_BASE	0x20000000
+
+/*
  * Region assignment. 7 as the highest, a higher index has a higher priority.
  * For example, using 7 for .iram.text allows us to mark entire RAM XN except
  * .iram.text, which is used for hibernation.
@@ -52,6 +57,11 @@ enum mpu_region {
 #define MPU_CTRL_PRIVDEFEN	BIT(2)
 #define MPU_CTRL_HFNMIENA	BIT(1)
 #define MPU_CTRL_ENABLE		BIT(0)
+
+/*
+ * Minimum region size is 32 bytes, 5 bits of address space
+ */
+#define MPU_SIZE_BITS_MIN	5
 
 /*
  * XN (execute never) bit. It's bit 12 if accessed by halfword.

@@ -68,6 +68,9 @@ int mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
 	if (region >= mpu_num_regions())
 		return -EC_ERROR_INVAL;
 
+	if (size_bit < MPU_SIZE_BITS_MIN)
+		return -EC_ERROR_INVAL;
+
 	asm volatile("isb; dsb;");
 
 	MPU_NUMBER = region;
@@ -341,9 +344,19 @@ int mpu_pre_init(void)
 		return EC_ERROR_UNIMPLEMENTED;
 
 	mpu_disable();
+
 	for (i = 0; i < num_mpu_regions; ++i) {
-		rv = mpu_config_region(i, CONFIG_RAM_BASE, CONFIG_RAM_SIZE, 0,
-				       0);
+		/*
+		 * Disable all regions.
+		 *
+		 * We use the smallest possible size (32 bytes), but it
+		 * doesn't really matter since the regions are disabled.
+		 *
+		 * Use the fixed SRAM region base to ensure base is aligned
+		 * to the region size.
+		 */
+		rv = mpu_update_region(i, CORTEX_M_SRAM_BASE, MPU_SIZE_BITS_MIN,
+			0, 0, 0);
 		if (rv != EC_SUCCESS)
 			return rv;
 	}

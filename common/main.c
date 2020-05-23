@@ -137,8 +137,7 @@ test_mockable __keep int main(void)
 
 	/* We wait to report the failure until here where we have console. */
 	if (mpu_pre_init_rv != EC_SUCCESS)
-		/* TODO: Need real fix (chromium:1085868) */
-		CPRINTS("MPU init failed");
+		panic("MPU init failed");
 
 	/* be less verbose if we boot for USB resume to meet spec timings */
 	if (!(system_get_reset_flags() & EC_RESET_FLAG_USB_RESUME)) {
