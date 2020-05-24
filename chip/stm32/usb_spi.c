@@ -12,6 +12,20 @@
 #include "usb_spi.h"
 #include "util.h"
 
+/* Forward declare platform specific functions. */
+static bool usb_spi_received_packet(struct usb_spi_config const *config);
+static void usb_spi_read_packet(struct usb_spi_config const *config,
+			struct usb_spi_packet_ctx_t *packet);
+static void usb_spi_write_packet(struct usb_spi_config const *config,
+			struct usb_spi_packet_ctx_t *packet);
+
+/*
+ * Map EC error codes to USB_SPI error codes.
+ *
+ * @param error     EC error code
+ *
+ * @returns         USB SPI error code based on the mapping.
+ */
 static int16_t usb_spi_map_error(int error)
 {
 	switch (error) {
@@ -22,54 +36,101 @@ static int16_t usb_spi_map_error(int error)
 	}
 }
 
-static uint16_t usb_spi_read_packet(struct usb_spi_config const *config)
+/*
+ * Read data into the receive buffer.
+ *
+ * @param dst       Destination receive context we are writing data to.
+ * @param src       Source packet context we are reading data from.
+ *
+ * @returns         USB_SPI_RX_DATA_OVERFLOW if the source packet is too large
+ */
+static int usb_spi_read_usb_packet(struct usb_spi_transfer_ctx_t *dst,
+				const struct usb_spi_packet_ctx_t *src)
 {
-	size_t   i;
-	uint16_t bytes = btable_ep[config->endpoint].rx_count & RX_COUNT_MASK;
-	size_t   count = MAX((bytes + 1) / 2, USB_MAX_PACKET_SIZE / 2);
+	size_t max_read_length = dst->transfer_size - dst->transfer_index;
+	size_t bytes_in_buffer = src->packet_size - src->header_size;
+	const uint8_t *packet_buffer = src->bytes + src->header_size;
 
-	/*
-	 * The USB peripheral doesn't support DMA access to its packet
-	 * RAM so we have to copy messages out into a bounce buffer.
-	 */
-	for (i = 0; i < count; ++i)
-		config->buffer[i] = config->rx_ram[i];
+	if (bytes_in_buffer > max_read_length) {
+		/*
+		 * An error occurred, we should not receive more data than
+		 * the buffer can support.
+		 */
+		return USB_SPI_RX_DATA_OVERFLOW;
+	}
+	memcpy(dst->buffer + dst->transfer_index, packet_buffer,
+		bytes_in_buffer);
 
-	/*
-	 * RX packet consumed, mark the packet as VALID.  The master
-	 * could queue up the next command while we process this SPI
-	 * transaction and prepare the response.
-	 */
-	STM32_TOGGLE_EP(config->endpoint, EP_RX_MASK, EP_RX_VALID, 0);
-
-	return bytes;
+	dst->transfer_index += bytes_in_buffer;
+	return USB_SPI_SUCCESS;
 }
 
-static void usb_spi_write_packet(struct usb_spi_config const *config,
-				 uint8_t count)
+/*
+ * Fill the USB packet with data from the transmit buffer.
+ *
+ * @param dst       Destination packet context we are writing data to.
+ * @param src       Source transmit context we are reading data from.
+ */
+static void usb_spi_fill_usb_packet(struct usb_spi_packet_ctx_t *dst,
+				struct usb_spi_transfer_ctx_t *src)
 {
-	size_t  i;
+	size_t transfer_size = src->transfer_size - src->transfer_index;
+	size_t max_buffer_size = USB_MAX_PACKET_SIZE - dst->header_size;
+	uint8_t *packet_buffer = dst->bytes + dst->header_size;
 
-	/*
-	 * Copy read bytes and status back out of bounce buffer and
-	 * update TX packet state (mark as VALID for master to read).
-	 */
-	for (i = 0; i < (count + 1) / 2; ++i)
-		config->tx_ram[i] = config->buffer[i];
+	if (transfer_size > max_buffer_size)
+		transfer_size = max_buffer_size;
 
-	btable_ep[config->endpoint].tx_count = count;
+	memcpy(packet_buffer, src->buffer + src->transfer_index, transfer_size);
 
-	STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_VALID, 0);
+	dst->packet_size = dst->header_size + transfer_size;
+	src->transfer_index += transfer_size;
 }
 
-static int rx_valid(struct usb_spi_config const *config)
+/*
+ * Setup the USB SPI state to start a new SPI transfer.
+ *
+ * @param config        USB SPI config
+ * @param write_count   Number of bytes to write in the SPI transfer
+ * @param read_count    Number of bytes to read in the SPI transfer
+ */
+static void usb_spi_setup_transfer(struct usb_spi_config const *config,
+				size_t write_count, size_t read_count)
 {
-	return (STM32_USB_EP(config->endpoint) & EP_RX_MASK) == EP_RX_VALID;
+	/* Reset any status code. */
+	config->state->status_code = USB_SPI_SUCCESS;
+
+	/* Reset the write and read counts. */
+	config->state->spi_write_ctx.transfer_size = write_count;
+	config->state->spi_write_ctx.transfer_index = 0;
+	config->state->spi_read_ctx.transfer_size = read_count;
+	config->state->spi_read_ctx.transfer_index = 0;
 }
 
+/*
+ * Handle USB events that will reset the USB SPI state.
+ *
+ * @param config        USB SPI config
+ */
+static void usb_spi_reset_interface(struct usb_spi_config const *config)
+{
+	/* Setup a 0 byte transfer to clear the contexts. */
+	usb_spi_setup_transfer(config, 0, 0);
+}
+
+/*
+ * Deferred function to handle state changes, process USB SPI packets,
+ * and construct responses.
+ *
+ * @param config        USB SPI config
+ */
 void usb_spi_deferred(struct usb_spi_config const *config)
 {
 	int enabled;
+	struct usb_spi_packet_ctx_t *receive_packet =
+		&config->state->receive_packet;
+	struct usb_spi_packet_ctx_t *transmit_packet =
+		&config->state->transmit_packet;
 
 	if (config->flags & USB_SPI_CONFIG_FLAGS_IGNORE_HOST_SIDE_ENABLE)
 		enabled = config->state->enabled_device;
@@ -92,36 +153,130 @@ void usb_spi_deferred(struct usb_spi_config const *config)
 	 * And if there is a USB packet waiting we process it and generate a
 	 * response.
 	 */
-	if (!rx_valid(config)) {
-		uint16_t count       = usb_spi_read_packet(config);
-		uint8_t  write_count = (config->buffer[0] >> 0) & 0xff;
-		uint8_t  read_count  = (config->buffer[0] >> 8) & 0xff;
+	usb_spi_read_packet(config, receive_packet);
+	if (receive_packet->packet_size) {
+		int write_count = receive_packet->command.write_count;
+		int read_count = receive_packet->command.read_count;
+		int status_code = USB_SPI_SUCCESS;
+
+		receive_packet->header_size =
+			offsetof(struct usb_spi_command_v1_t, data);
+		transmit_packet->header_size =
+			offsetof(struct usb_spi_response_v1_t, data);
 
 		if (!config->state->enabled) {
-			config->buffer[0] = USB_SPI_DISABLED;
+			status_code = USB_SPI_DISABLED;
 		} else if (write_count > USB_SPI_MAX_WRITE_COUNT ||
-			   write_count != (count - 2)) {
-			config->buffer[0] = USB_SPI_WRITE_COUNT_INVALID;
+			   write_count != (receive_packet->packet_size - 2)) {
+			status_code = USB_SPI_WRITE_COUNT_INVALID;
 		} else if (read_count > USB_SPI_MAX_READ_COUNT) {
-			config->buffer[0] = USB_SPI_READ_COUNT_INVALID;
+			status_code = USB_SPI_READ_COUNT_INVALID;
 		} else {
-			config->buffer[0] = usb_spi_map_error(
-				spi_transaction(SPI_FLASH_DEVICE,
-						(uint8_t *)(config->buffer + 1),
-						write_count,
-						(uint8_t *)(config->buffer + 1),
-						read_count));
+			usb_spi_setup_transfer(config, write_count, read_count);
+
+			status_code = usb_spi_read_usb_packet(
+					&config->state->spi_write_ctx,
+					receive_packet);
 		}
 
-		usb_spi_write_packet(config, read_count + 2);
+		/* If no error codes are present, perform the transfer. */
+		if (status_code == USB_SPI_SUCCESS) {
+			status_code = spi_transaction(SPI_FLASH_DEVICE,
+				config->state->spi_write_ctx.buffer,
+				config->state->spi_write_ctx.transfer_size,
+				config->state->spi_read_ctx.buffer,
+				config->state->spi_read_ctx.transfer_size);
+			/* Cast the EC status code to USB SPI */
+			status_code = usb_spi_map_error(status_code);
+			usb_spi_fill_usb_packet(transmit_packet,
+					&config->state->spi_read_ctx);
+		}
+
+		transmit_packet->response.status_code = status_code;
+
+		usb_spi_write_packet(config, transmit_packet);
 	}
 }
 
-void usb_spi_tx(struct usb_spi_config const *config)
+/*
+ * Sets which SPI modes will be enabled
+ *
+ * @param config        USB SPI config
+ * @param enabled       usb_spi_request indicating which SPI mode is enabled.
+ */
+void usb_spi_enable(struct usb_spi_config const *config, int enabled)
 {
-	STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_NAK, 0);
+	config->state->enabled_device = enabled;
+
+	hook_call_deferred(config->deferred, 0);
 }
 
+
+/*
+ * STM32 Platform: Receive the data from the endpoint into the packet and
+ *  mark the endpoint as ready to accept more data.
+ *
+ * @param config        USB SPI config
+ * @param packet        Destination packet used to store the endpoint data.
+ */
+static void usb_spi_read_packet(struct usb_spi_config const *config,
+				struct usb_spi_packet_ctx_t *packet)
+{
+	size_t packet_size;
+
+	if (!usb_spi_received_packet(config)) {
+		/* No data is present on the endpoint. */
+		packet->packet_size = 0;
+		return;
+	}
+
+	/* Copy bytes from endpoint memory. */
+	packet_size = btable_ep[config->endpoint].rx_count & RX_COUNT_MASK;
+	memcpy_from_usbram(packet->bytes,
+		(void *)usb_sram_addr(config->ep_rx_ram), packet_size);
+	packet->packet_size = packet_size;
+	/* Set endpoint as valid for accepting new packet. */
+	STM32_TOGGLE_EP(config->endpoint, EP_RX_MASK, EP_RX_VALID, 0);
+}
+
+/*
+ * STM32 Platform: Transmit data from the packet to the endpoint buffer.
+ *  If a packet is written, the endpoint will be marked valid for transmitting.
+ *
+ * @param config        USB SPI config
+ * @param packet        Source packet we will write to the endpoint data.
+ */
+static void usb_spi_write_packet(struct usb_spi_config const *config,
+				struct usb_spi_packet_ctx_t *packet)
+{
+	if (packet->packet_size == 0)
+		return;
+
+	/* Copy bytes to endpoint memory. */
+	memcpy_to_usbram((void *)usb_sram_addr(config->ep_tx_ram),
+		packet->bytes, packet->packet_size);
+	btable_ep[config->endpoint].tx_count = packet->packet_size;
+	/* Set endpoint as valid for transmitting new packet*/
+	STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_VALID, 0);
+}
+
+/*
+ * STM32 Platform: Returns the RX endpoint status
+ *
+ * @param config        USB SPI config
+ *
+ * @returns             Returns true when the RX endpoint has a packet.
+ */
+static bool usb_spi_received_packet(struct usb_spi_config const *config)
+{
+	return (STM32_USB_EP(config->endpoint) & EP_RX_MASK) != EP_RX_VALID;
+}
+
+/*
+ * STM32 Platform: Handle interrupt for USB data received.
+ *
+ * @param config        USB SPI config
+ */
 void usb_spi_rx(struct usb_spi_config const *config)
 {
 	STM32_TOGGLE_EP(config->endpoint, EP_RX_MASK, EP_RX_NAK, 0);
@@ -129,6 +284,22 @@ void usb_spi_rx(struct usb_spi_config const *config)
 	hook_call_deferred(config->deferred, 0);
 }
 
+/*
+ * STM32 Platform: Handle interrupt for USB data transmitted.
+ *
+ * @param config        USB SPI config
+ */
+void usb_spi_tx(struct usb_spi_config const *config)
+{
+	STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_NAK, 0);
+}
+
+/*
+ * STM32 Platform: Handle interrupt for USB events
+ *
+ * @param config        USB SPI config
+ * @param evt           USB event
+ */
 void usb_spi_event(struct usb_spi_config const *config, enum usb_ep_event evt)
 {
 	int endpoint;
@@ -138,10 +309,12 @@ void usb_spi_event(struct usb_spi_config const *config, enum usb_ep_event evt)
 
 	endpoint = config->endpoint;
 
-	btable_ep[endpoint].tx_addr  = usb_sram_addr(config->tx_ram);
+	usb_spi_reset_interface(config);
+
+	btable_ep[endpoint].tx_addr  = usb_sram_addr(config->ep_tx_ram);
 	btable_ep[endpoint].tx_count = 0;
 
-	btable_ep[endpoint].rx_addr  = usb_sram_addr(config->rx_ram);
+	btable_ep[endpoint].rx_addr  = usb_sram_addr(config->ep_rx_ram);
 	btable_ep[endpoint].rx_count =
 		0x8000 | ((USB_MAX_PACKET_SIZE / 32 - 1) << 10);
 
@@ -151,6 +324,13 @@ void usb_spi_event(struct usb_spi_config const *config, enum usb_ep_event evt)
 				  (3        << 12)); /* RX Valid */
 }
 
+/*
+ * STM32 Platform: Handle control transfers.
+ *
+ * @param config        USB SPI config
+ * @param rx_buf        Contains setup packet
+ * @param tx_buf        unused
+ */
 int usb_spi_interface(struct usb_spi_config const *config,
 		      usb_uint *rx_buf,
 		      usb_uint *tx_buf)
@@ -188,14 +368,9 @@ int usb_spi_interface(struct usb_spi_config const *config,
 	if (!(config->flags & USB_SPI_CONFIG_FLAGS_IGNORE_HOST_SIDE_ENABLE))
 		hook_call_deferred(config->deferred, 0);
 
+	usb_spi_reset_interface(config);
+
 	btable_ep[0].tx_count = 0;
 	STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, EP_STATUS_OUT);
 	return 0;
-}
-
-void usb_spi_enable(struct usb_spi_config const *config, int enabled)
-{
-	config->state->enabled_device = enabled;
-
-	hook_call_deferred(config->deferred, 0);
 }

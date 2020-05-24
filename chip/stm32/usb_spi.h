@@ -30,15 +30,23 @@
  *     | status : 2B | read payload : <= 62B |
  *     +-------------+-----------------------+
  *
- *     status: 2 byte status
+ *     status code: 2 byte status code
  *         0x0000: Success
  *         0x0001: SPI timeout
  *         0x0002: Busy, try again
  *             This can happen if someone else has acquired the shared memory
  *             buffer that the SPI driver uses as /dev/null
- *         0x0003: Write count invalid (> 62 bytes, or mismatch with payload)
- *         0x0004: Read count invalid (> 62 bytes)
+ *         0x0003: Write count invalid. The byte limit is platform specific
+ *             and is set during the configure USB SPI response.
+ *         0x0004: Read count invalid. The byte limit is platform specific
+ *             and is set during the configure USB SPI response.
  *         0x0005: The SPI bridge is disabled.
+ *         0x0006: The RX continue packet's data index is invalid. This
+ *             can indicate a USB transfer failure to the device.
+ *         0x0007: The RX endpoint has received more data than write count.
+ *             This can indicate a USB transfer failure to the device.
+ *         0x0008: An unexpected packet arrived that the device could not
+ *             process.
  *         0x8000: Unknown error mask
  *             The bottom 15 bits will contain the bottom 15 bits from the EC
  *             error code.
@@ -47,14 +55,51 @@
  *                   requested read count
  */
 
+#define PAYLOAD_SIZE_V1                 (62)
+
+struct usb_spi_command_v1_t {
+	int8_t write_count;
+	/* -1 Indicates readback all on halfduplex compliant devices. */
+	int8_t read_count;
+	uint8_t data[PAYLOAD_SIZE_V1];
+} __packed;
+
+struct usb_spi_response_v1_t {
+	uint16_t status_code;
+	uint8_t data[PAYLOAD_SIZE_V1];
+} __packed;
+
+struct usb_spi_packet_ctx_t {
+	union {
+		uint8_t bytes[USB_MAX_PACKET_SIZE];
+		struct usb_spi_command_v1_t command;
+		struct usb_spi_response_v1_t response;
+	} __packed;
+	/*
+	 * By storing the number of bytes in the header and knowing that the
+	 * USB data packets are all 64B long, we are able to use the header
+	 * size to store the offset of the buffer and it's size without
+	 * duplicating variables that can go out of sync.
+	 */
+	size_t header_size;
+	/* Number of bytes in the packet.*/
+	size_t packet_size;
+};
+
 enum usb_spi_error {
-	USB_SPI_SUCCESS             = 0x0000,
-	USB_SPI_TIMEOUT             = 0x0001,
-	USB_SPI_BUSY                = 0x0002,
-	USB_SPI_WRITE_COUNT_INVALID = 0x0003,
-	USB_SPI_READ_COUNT_INVALID  = 0x0004,
-	USB_SPI_DISABLED            = 0x0005,
-	USB_SPI_UNKNOWN_ERROR       = 0x8000,
+	USB_SPI_SUCCESS              = 0x0000,
+	USB_SPI_TIMEOUT              = 0x0001,
+	USB_SPI_BUSY                 = 0x0002,
+	USB_SPI_WRITE_COUNT_INVALID  = 0x0003,
+	USB_SPI_READ_COUNT_INVALID   = 0x0004,
+	USB_SPI_DISABLED             = 0x0005,
+	/* The RX continue packet's data index is invalid. */
+	USB_SPI_RX_BAD_DATA_INDEX    = 0x0006,
+	/* The RX endpoint has received more data than write count. */
+	USB_SPI_RX_DATA_OVERFLOW     = 0x0007,
+	/* An unexpected packet arrived on the device. */
+	USB_SPI_RX_UNEXPECTED_PACKET = 0x0008,
+	USB_SPI_UNKNOWN_ERROR        = 0x8000,
 };
 
 enum usb_spi_request {
@@ -67,6 +112,15 @@ enum usb_spi_request {
 
 BUILD_ASSERT(USB_MAX_PACKET_SIZE == (1 + 1 + USB_SPI_MAX_WRITE_COUNT));
 BUILD_ASSERT(USB_MAX_PACKET_SIZE == (2 + USB_SPI_MAX_READ_COUNT));
+
+struct usb_spi_transfer_ctx_t {
+	/* Address of transfer buffer. */
+	uint8_t *buffer;
+	/* Number of bytes in the transfer. */
+	size_t transfer_size;
+	/* Number of bytes transferred. */
+	size_t transfer_index;
+};
 
 struct usb_spi_state {
 	/*
@@ -90,6 +144,24 @@ struct usb_spi_state {
 	 * callback.
 	 */
 	int enabled;
+
+	/*
+	 * Stores the status code response for the transfer, delivered in the
+	 * header for the first response packet. Error code is cleared during
+	 * first RX packet and set if a failure occurs.
+	 */
+	uint16_t status_code;
+
+	/* Stores the content from the USB packets */
+	struct usb_spi_packet_ctx_t receive_packet;
+	struct usb_spi_packet_ctx_t transmit_packet;
+
+	/*
+	 * Context structures representing the progress receiving the SPI
+	 * write data and transmitting the SPI read data.
+	 */
+	struct usb_spi_transfer_ctx_t spi_write_ctx;
+	struct usb_spi_transfer_ctx_t spi_read_ctx;
 };
 
 /*
@@ -98,28 +170,19 @@ struct usb_spi_state {
  * together all information required to operate a USB gpio.
  */
 struct usb_spi_config {
-	/*
-	 * In RAM state of the USB SPI bridge.
-	 */
+	/* In RAM state of the USB SPI bridge. */
 	struct usb_spi_state *state;
 
-	/*
-	 * Interface and endpoint indicies.
-	 */
+	/* Interface and endpoint indices. */
 	int interface;
 	int endpoint;
 
-	/*
-	 * Deferred function to call to handle SPI request.
-	 */
+	/* Deferred function to call to handle SPI request. */
 	const struct deferred_data *deferred;
 
-	/*
-	 * Pointers to USB packet RAM and bounce buffer.
-	 */
-	uint16_t *buffer;
-	usb_uint *rx_ram;
-	usb_uint *tx_ram;
+	/* Pointers to USB endpoint buffers. */
+	usb_uint *ep_rx_ram;
+	usb_uint *ep_tx_ram;
 
 	/* Flags. See USB_SPI_CONFIG_FLAGS_* for definitions */
 	uint32_t flags;
@@ -161,15 +224,16 @@ struct usb_spi_config {
 		.enabled_host   = 0,					\
 		.enabled_device = 0,					\
 		.enabled        = 0,					\
+		.spi_write_ctx.buffer = (uint8_t *)CONCAT2(NAME, _buffer_), \
+		.spi_read_ctx.buffer = (uint8_t *)CONCAT2(NAME, _buffer_), \
 	};								\
 	struct usb_spi_config const NAME = {				\
 		.state     = &CONCAT2(NAME, _state_),			\
 		.interface = INTERFACE,					\
 		.endpoint  = ENDPOINT,					\
 		.deferred  = &CONCAT2(NAME, _deferred__data),		\
-		.buffer    = CONCAT2(NAME, _buffer_),			\
-		.rx_ram    = CONCAT2(NAME, _ep_rx_buffer_),		\
-		.tx_ram    = CONCAT2(NAME, _ep_tx_buffer_),		\
+		.ep_rx_ram = CONCAT2(NAME, _ep_rx_buffer_),		\
+		.ep_tx_ram = CONCAT2(NAME, _ep_tx_buffer_),		\
 		.flags     = FLAGS,		\
 	};								\
 	const struct usb_interface_descriptor				\
