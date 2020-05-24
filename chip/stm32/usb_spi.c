@@ -25,7 +25,7 @@ static int16_t usb_spi_map_error(int error)
 static uint16_t usb_spi_read_packet(struct usb_spi_config const *config)
 {
 	size_t   i;
-	uint16_t bytes = btable_ep[config->endpoint].rx_count & 0x3ff;
+	uint16_t bytes = btable_ep[config->endpoint].rx_count & RX_COUNT_MASK;
 	size_t   count = MAX((bytes + 1) / 2, USB_MAX_PACKET_SIZE / 2);
 
 	/*

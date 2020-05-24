@@ -79,7 +79,8 @@ static void con_ep_rx(void)
 {
 	int i;
 
-	for (i = 0; i < (btable_ep[USB_EP_CONSOLE].rx_count & 0x3ff); i++) {
+	for (i = 0; i < (btable_ep[USB_EP_CONSOLE].rx_count & RX_COUNT_MASK);
+	     i++) {
 		int val = ((i & 1) ?
 			   (ep_buf_rx[i >> 1] >> 8) :
 			   (ep_buf_rx[i >> 1] & 0xff));
