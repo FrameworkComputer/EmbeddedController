@@ -16,7 +16,9 @@
 static int temp_val_local;
 static int temp_val_remote1;
 static int temp_val_remote2;
+#ifndef CONFIG_TEMP_SENSOR_POWER_GPIO
 static uint8_t is_sensor_shutdown;
+#endif
 static int fake_temp[TMP432_IDX_COUNT] = {-1, -1, -1};
 
 /**
@@ -90,6 +92,7 @@ int tmp432_get_val(int idx, int *temp_ptr)
 	return EC_SUCCESS;
 }
 
+#ifndef CONFIG_TEMP_SENSOR_POWER_GPIO
 static int tmp432_shutdown(uint8_t want_shutdown)
 {
 	int ret, value;
@@ -119,6 +122,7 @@ static int tmp432_shutdown(uint8_t want_shutdown)
 	is_sensor_shutdown = want_shutdown;
 	return ret;
 }
+#endif
 
 static int tmp432_set_therm_mode(void)
 {
