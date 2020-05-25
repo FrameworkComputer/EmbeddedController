@@ -293,24 +293,24 @@ config_nocturne() {
 }
 
 config_volteer() {
-  check_gpio_chip_exists "gpiochip252"
-  check_gpio_chip_exists "gpiochip445"
+  check_gpio_chip_exists "gpiochip152"
 
   readonly SPIDEV="/dev/spidev1.0"
 
-  # See
-  # third_party/coreboot/src/soc/intel/tigerlake/include/soc/gpio_soc_defs_tgl.h
-  # for pin name to number mapping.
-  # Examine `cat /sys/kernel/debug/pinctrl/INT34C5:02/gpio-ranges` and
-  # `cat /sys/kernel/debug/pinctrl/INT34C5:00/gpio-ranges` on a volteer
-  # device to determine gpio number from pin number.
+  # See kernel/v5.4/drivers/pinctrl/intel/pinctrl-tigerlake.c
+  # for pin name and pin number.
+  # Examine `cat /sys/kernel/debug/pinctrl/INT34C5:00/gpio-ranges` on a
+  # volteer device to determine gpio number from pin number.
+  # For example: GPP_C23 is UART2_CTS which can be queried from EDS
+  # the pin number is 194. From the gpio-ranges, the gpio value is
+  # 408 + (194-171) = 431
 
-  # FPMCU RST_ODL is on GPP_C23 = 252 + (211 - 188) = 275
-  readonly GPIO_NRST=275
-  # FPMCU BOOT0 is on GPP_C22 = 252 + (210 - 188) = 274
-  readonly GPIO_BOOT0=274
-  # FP_PWR_EN is on GPP_A21 = 445 + 63 = 508
-  readonly GPIO_PWREN=508
+  # FPMCU RST_ODL is on GPP_C23 = 408 + (194 - 171) = 431
+  readonly GPIO_NRST=431
+  # FPMCU BOOT0 is on GPP_C22 = 408 + (193 - 171) = 430
+  readonly GPIO_BOOT0=430
+  # FP_PWR_EN is on GPP_A21 = 216 + (63 - 42) = 237
+  readonly GPIO_PWREN=237
 }
 
 # The "platform name" corresponds to the underlying board (reference design)
