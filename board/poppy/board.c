@@ -579,6 +579,16 @@ static void board_init(void)
 	}
 #endif
 
+#ifndef BOARD_LUX
+	/*
+	 * see (b/111215677): setting the internal PU/PD of the unused pin
+	 * GPIO10 affects the ball K10 when it is selected to CR_SIN.
+	 * Disabing the WKINEN bit of GPIO10 insteading setting its PU/PD to
+	 * bypass this issue.
+	 */
+	NPCX_WKINEN(MIWU_TABLE_1, MIWU_GROUP_2) &= 0xFE;
+#endif
+
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
 
