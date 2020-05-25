@@ -38,7 +38,7 @@ GPIO_INT(CHARGER_INT_ODL,   PIN(C, 13), GPIO_INT_FALLING | GPIO_PULL_UP,
          rt946x_interrupt)
 GPIO_INT_RO(EMMC_CMD,       PIN(B, 15), GPIO_INT_FALLING,
          emmc_cmd_interrupt)
-GPIO_INT(SPI1_NSS,          PIN(A, 15), GPIO_INT_BOTH,
+GPIO_INT(SPI1_NSS,          PIN(A, 15), GPIO_INT_BOTH | GPIO_PULL_UP,
          spi_event)
 GPIO_INT_RW(SYNC_INT,       PIN(A, 8),  GPIO_INT_RISING | GPIO_PULL_DOWN,
          sync_interrupt)

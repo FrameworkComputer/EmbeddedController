@@ -25,7 +25,7 @@ GPIO_INT_RW(ACCEL_INT_ODL,  PIN(A, 4), GPIO_INT_FALLING | GPIO_SEL_1P8V | GPIO_P
          bmi160_interrupt)
 GPIO_INT_RO(EMMC_CMD,       PIN(B, 15), GPIO_INT_FALLING,
          emmc_cmd_interrupt)
-GPIO_INT(SPI1_NSS,          PIN(A, 15), GPIO_INT_BOTH,
+GPIO_INT(SPI1_NSS,          PIN(A, 15), GPIO_INT_BOTH | GPIO_PULL_UP,
          spi_event) /* SPI_AP_EC_CS_L */
 GPIO_INT(LID_OPEN,          PIN(C, 5),  GPIO_INT_BOTH,
          lid_interrupt)
