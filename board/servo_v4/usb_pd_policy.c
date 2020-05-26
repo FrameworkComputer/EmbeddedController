@@ -1209,6 +1209,14 @@ DECLARE_CONSOLE_COMMAND(ada_srccaps, cmd_ada_srccaps,
 			"",
 			"Print adapter SrcCap");
 
+static void chg_pd_disconnect(void)
+{
+	/* Clear charger PDO on CHG port disconnected. */
+	if (pd_is_disconnected(CHG))
+		pd_set_src_caps(CHG, 0, NULL);
+}
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, chg_pd_disconnect, HOOK_PRIO_DEFAULT);
+
 static int cmd_dp_action(int argc, char *argv[])
 {
 	int i;
