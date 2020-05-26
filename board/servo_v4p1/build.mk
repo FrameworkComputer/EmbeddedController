@@ -18,6 +18,6 @@ board-y=board.o tca6416a.o tca6424a.o
 board-y+=ioexpanders.o
 
 # These files are compiled into RO only
-board-y+=ro_files.o
+board-ro+=ccd_measure_sbu.o
 
 all_deps=$(patsubst ro,,$(def_all_deps))
