@@ -19,11 +19,9 @@
 /* Servo V4.1 Ports:
  *  CHG - port 0
  *  DUT - port 1
- *  ALT - port 2
  */
 #define CHG 0
 #define DUT 1
-#define ALT 2
 
 /*
  * Flash layout: we redefine the sections offsets and sizes as we want to
@@ -176,6 +174,30 @@
 
 #ifdef SECTION_IS_RO
 #define CONFIG_INA231
+#define CONFIG_CHARGE_MANAGER
+#undef  CONFIG_CHARGE_MANAGER_SAFE_MODE
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_TCPMV1
+#define CONFIG_CMD_PD
+#define CONFIG_USB_PD_CUSTOM_PDO
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_DYNAMIC_SRC_CAP
+#define CONFIG_USB_PD_INTERNAL_COMP
+#define CONFIG_USB_PD_TCPC
+#define CONFIG_USB_PD_TCPM_STUB
+#undef CONFIG_USB_PD_PULLUP
+#define CONFIG_USB_PD_PULLUP TYPEC_RP_USB
+#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
+#define CONFIG_USB_PD_ALT_MODE
+
+/* Don't automatically change roles */
+#undef CONFIG_USB_PD_INITIAL_DRP_STATE
+#define CONFIG_USB_PD_INITIAL_DRP_STATE PD_DRP_FORCE_SINK
+
+/* Variable-current Rp no connect and Ra attach macros */
+#define CC_NC(port, cc, sel)  (pd_tcpc_cc_nc(port, cc, sel))
+#define CC_RA(port, cc, sel)  (pd_tcpc_cc_ra(port, cc, sel))
+
 /*
  * TODO(crosbug.com/p/60792): The delay values are currently just place holders
  * and the delay will need to be relative to the circuitry that allows VBUS to
@@ -290,6 +312,13 @@ int pd_set_rp_rd(int port, int cc_pull, int rp_value);
  * @return HW ID version
  */
 int board_get_version(void);
+
+/**
+ * Enable or disable external HPD detection
+ *
+ * @param enable Enable external HPD detection if true, otherwise disable
+ */
+void ext_hpd_detection_enable(int enable);
 
 /**
  * Enable or disable CCD

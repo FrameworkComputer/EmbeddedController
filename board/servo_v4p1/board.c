@@ -47,10 +47,12 @@
 #ifdef SECTION_IS_RO
 static void vbus0_evt(enum gpio_signal signal)
 {
+	task_wake(TASK_ID_PD_C0);
 }
 
 static void vbus1_evt(enum gpio_signal signal)
 {
+	task_wake(TASK_ID_PD_C1);
 }
 
 static void tca_evt(enum gpio_signal signal)
@@ -119,6 +121,18 @@ static void init_uservo_port(void)
 void pd_task(void *u)
 {
 	/* DO NOTHING */
+}
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
+}
+
+void pd_set_suspend(int port, int suspend)
+{
+	/*
+	 * Do nothing. This is only here to make the linker happy for this
+	 * old board on ToT.
+	 */
 }
 #endif /* SECTION_IS_RO */
 
@@ -283,6 +297,7 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 int usb_i2c_board_is_enabled(void) { return 1; }
 
+
 /******************************************************************************
  * Initialize board.
  */
@@ -337,6 +352,12 @@ static void board_init(void)
 
 	/* Disable power to DUT by default */
 	chg_power_select(CHG_POWER_OFF);
+
+	/*
+	 * Voltage transition needs to occur in lockstep between the CHG and
+	 * DUT ports, so initially limit voltage to 5V.
+	 */
+	pd_set_max_voltage(PD_MIN_MV);
 
 	/* Start SuzyQ detection */
 	start_ccd_meas_sbu_cycle();

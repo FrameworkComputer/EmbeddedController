@@ -23,5 +23,6 @@ board-ro+=ccd_measure_sbu.o
 board-ro+=pathsel.o
 board-ro+=chg_control.o
 board-ro+=ina231s.o
+board-ro+=usb_pd_policy.o
 
 all_deps=$(patsubst ro,,$(def_all_deps))
