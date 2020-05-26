@@ -1048,19 +1048,6 @@ static bool common_src_snk_dpm_requests(int port)
 		set_state_pe(port, PE_VCS_SEND_SWAP);
 		return true;
 	} else if (PE_CHK_DPM_REQUEST(port,
-				DPM_REQUEST_DISCOVER_IDENTITY)) {
-		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_DISCOVER_IDENTITY);
-
-		pe[port].partner_type = CABLE;
-		pe[port].vdm_cmd = DISCOVER_IDENTITY;
-		pe[port].vdm_data[0] = VDO(
-				USB_SID_PD,
-				1, /* structured */
-				VDO_SVDM_VERS(1) | DISCOVER_IDENTITY);
-		pe[port].vdm_cnt = 1;
-		set_state_pe(port, PE_VDM_REQUEST);
-		return true;
-	} else if (PE_CHK_DPM_REQUEST(port,
 					DPM_REQUEST_BIST_RX)) {
 		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_BIST_RX);
 		set_state_pe(port, PE_BIST_RX);
