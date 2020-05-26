@@ -20,5 +20,6 @@ board-y+=ioexpanders.o
 # These files are compiled into RO only
 board-ro+=ccd_measure_sbu.o
 board-ro+=pathsel.o
+board-ro+=chg_control.o
 
 all_deps=$(patsubst ro,,$(def_all_deps))
