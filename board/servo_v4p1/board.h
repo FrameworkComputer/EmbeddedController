@@ -175,6 +175,7 @@
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
 
 #ifdef SECTION_IS_RO
+#define CONFIG_INA231
 /*
  * TODO(crosbug.com/p/60792): The delay values are currently just place holders
  * and the delay will need to be relative to the circuitry that allows VBUS to

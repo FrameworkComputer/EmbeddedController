@@ -14,6 +14,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "ina231s.h"
 #include "ioexpanders.h"
 #include "pathsel.h"
 #include "queue_policies.h"
@@ -317,6 +318,7 @@ static void board_init(void)
 #ifdef SECTION_IS_RO
 	init_uservo_port();
 	init_pathsel();
+	init_ina231s();
 
 	/* Enable DUT USB2.0 pair. */
 	gpio_set_level(GPIO_FASTBOOT_DUTHUB_MUX_EN_L, 0);
