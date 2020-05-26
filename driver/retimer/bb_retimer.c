@@ -22,7 +22,8 @@
 				| USB_PD_MUX_TBT_COMPAT_ENABLED \
 				| USB_PD_MUX_USB4_ENABLED)
 
-#define BB_RETIMER_MUX_DATA_ALT_MODE (USB_PD_MUX_DP_ENABLED \
+#define BB_RETIMER_MUX_USB_ALT_MODE (USB_PD_MUX_USB_ENABLED\
+				| USB_PD_MUX_DP_ENABLED \
 				| USB_PD_MUX_TBT_COMPAT_ENABLED \
 				| USB_PD_MUX_USB4_ENABLED)
 
@@ -156,10 +157,10 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 	 * 0 - Passive cable
 	 * 1 - Active cable
 	 *
-	 * If Alternate mode is DP/Thunderbolt_compat/USB4, ACTIVE/PASIVE is
+	 * If the mode is USB/DP/Thunderbolt_compat/USB4, ACTIVE/PASIVE is
 	 * set according to Discover mode SOP' response.
 	 */
-	if ((mux_state & BB_RETIMER_MUX_DATA_ALT_MODE) &&
+	if ((mux_state & BB_RETIMER_MUX_USB_ALT_MODE) &&
 	    (cable_type == IDH_PTYPE_ACABLE))
 		*set_retimer_con |= BB_RETIMER_ACTIVE_PASSIVE;
 
