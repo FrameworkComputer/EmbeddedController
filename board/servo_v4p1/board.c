@@ -10,6 +10,7 @@
 #include "chg_control.h"
 #include "common.h"
 #include "console.h"
+#include "dacs.h"
 #include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -307,6 +308,7 @@ static void board_init(void)
 	usleep(MSEC);
 
 	init_ioexpanders();
+	init_dacs();
 
 	/* Clear BBRAM, we don't want any PD state carried over on reset. */
 	system_set_bbram(SYSTEM_BBRAM_IDX_PD0, 0);

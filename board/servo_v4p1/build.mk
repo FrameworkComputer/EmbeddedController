@@ -16,6 +16,7 @@ test-list-y=
 # These files are compiled into RO and RW
 board-y=board.o tca6416a.o tca6424a.o
 board-y+=ioexpanders.o
+board-y+=dacs.o
 
 # These files are compiled into RO only
 board-ro+=ccd_measure_sbu.o
