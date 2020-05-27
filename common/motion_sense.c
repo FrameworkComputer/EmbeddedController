@@ -833,7 +833,7 @@ void motion_sense_task(void *u)
 	timestamp_t ts_begin_task, ts_end_task;
 	int32_t time_diff;
 	uint32_t event = 0;
-	uint16_t ready_status;
+	uint16_t ready_status = 0;
 	struct motion_sensor_t *sensor;
 #ifdef CONFIG_LID_ANGLE
 	const uint16_t lid_angle_sensors = (BIT(CONFIG_LID_ANGLE_SENSOR_BASE)|
@@ -855,7 +855,6 @@ void motion_sense_task(void *u)
 
 	while (1) {
 		ts_begin_task = get_time();
-		ready_status = 0;
 		for (i = 0; i < motion_sensor_count; ++i) {
 
 			sensor = &motion_sensors[i];
@@ -882,8 +881,10 @@ void motion_sense_task(void *u)
 		 * calculation are ready.
 		 */
 		ready_status &= lid_angle_sensors;
-		if (ready_status == lid_angle_sensors)
+		if (ready_status == lid_angle_sensors) {
 			motion_lid_calc();
+			ready_status = 0;
+		}
 #endif
 #ifdef CONFIG_CMD_ACCEL_INFO
 		if (accel_disp) {
