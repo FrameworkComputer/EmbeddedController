@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include "mpu.h"
 #include "mpu_private.h"
+#include "string.h"
 #include "system.h"
 #include "test_util.h"
 
@@ -21,12 +22,22 @@ struct mpu_info mpu_info = {
 	.num_mpu_regions = 8,
 	.mpu_is_unified = true
 };
+
+struct mpu_rw_regions expected_rw_regions = { .num_regions = 2,
+					      .addr = { 0x08060000,
+							0x08080000 },
+					      .size = { 0x20000, 0x80000 } };
 #elif defined(CHIP_VARIANT_STM32H7X3)
 struct mpu_info mpu_info = {
 	.has_mpu = true,
 	.num_mpu_regions = 16,
 	.mpu_is_unified = true
 };
+
+struct mpu_rw_regions expected_rw_regions = { .num_regions = 1,
+					      .addr = { 0x08100000,
+							0x08200000 },
+					      .size = { 0x100000, 0 } };
 #else
 #error "MPU info not defined for this chip. Please add it."
 #endif
@@ -155,6 +166,16 @@ test_static int test_mpu_protect_code_ram(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_mpu_get_rw_regions(void)
+{
+	struct mpu_rw_regions rw_regions = mpu_get_rw_regions();
+	int rv = memcmp(&rw_regions, &expected_rw_regions,
+			sizeof(expected_rw_regions));
+
+	TEST_EQ(rv, 0, "%d");
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	enum ec_image cur_image = system_get_image_copy();
@@ -191,6 +212,8 @@ void run_test(void)
 	RUN_TEST(test_mpu_protect_code_ram);
 	RUN_TEST(reset_mpu);
 	RUN_TEST(test_mpu_protect_data_ram);
+	RUN_TEST(reset_mpu);
+	RUN_TEST(test_mpu_get_rw_regions);
 	RUN_TEST(reset_mpu);
 	/* This test must be last because it generates a panic */
 	RUN_TEST(test_mpu_update_region_valid_region);

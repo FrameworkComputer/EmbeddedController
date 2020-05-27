@@ -86,6 +86,14 @@ enum mpu_region {
 #define MPU_ATTR_FLASH_MEMORY   2  /* for flash memory */
 #endif
 
+/* Represent RW with at most 2 MPU regions. */
+#define MAX_RW_REGIONS 2
+struct mpu_rw_regions {
+	int num_regions;
+	uint32_t addr[MAX_RW_REGIONS];
+	uint32_t size[MAX_RW_REGIONS];
+};
+
 /**
  * Enable MPU
  */

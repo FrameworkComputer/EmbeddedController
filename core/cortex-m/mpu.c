@@ -248,36 +248,45 @@ int mpu_lock_ro_flash(void)
 				 MPU_ATTR_FLASH_MEMORY, 1);
 }
 
-int mpu_lock_rw_flash(void)
+/* Represent RW with at most 2 MPU regions. */
+struct mpu_rw_regions mpu_get_rw_regions(void)
 {
-	/* Prevent execution from internal mapped RW flash */
-	const uint16_t mpu_attr = MPU_ATTR_XN | MPU_ATTR_RW_RW |
-				  MPU_ATTR_FLASH_MEMORY;
-	const uint32_t rw_start_address =
-		CONFIG_MAPPED_STORAGE_BASE + CONFIG_RW_MEM_OFF;
+	int aligned_size_bit;
+	struct mpu_rw_regions regions = {};
+
+	regions.addr[0] = CONFIG_MAPPED_STORAGE_BASE + CONFIG_RW_MEM_OFF;
 
 	/*
 	 * Least significant set bit of the address determines the max size of
 	 * the region because on the Cortex-M3, Cortex-M4 and Cortex-M7, the
 	 * address used for an MPU region must be aligned to the size.
 	 */
-	const int aligned_size_bit =
-		__fls(rw_start_address & -rw_start_address);
-	const uint32_t first_region_size =
-		MIN(BIT(aligned_size_bit), CONFIG_RW_SIZE);
-	const uint32_t second_region_address =
-		rw_start_address + first_region_size;
-	const uint32_t second_region_size = CONFIG_RW_SIZE - first_region_size;
+	aligned_size_bit =
+		__fls(regions.addr[0] & -regions.addr[0]);
+	regions.size[0] = MIN(BIT(aligned_size_bit), CONFIG_RW_SIZE);
+	regions.addr[1] = regions.addr[0] + regions.size[0];
+	regions.size[1] = CONFIG_RW_SIZE - regions.size[0];
+	regions.num_regions = (regions.size[1] == 0) ? 1 : 2;
+
+	return regions;
+}
+
+int mpu_lock_rw_flash(void)
+{
+	/* Prevent execution from internal mapped RW flash */
+	const uint16_t mpu_attr = MPU_ATTR_XN | MPU_ATTR_RW_RW |
+				  MPU_ATTR_FLASH_MEMORY;
+	const struct mpu_rw_regions regions = mpu_get_rw_regions();
 	int rv;
 
-	rv = mpu_config_region(REGION_STORAGE, rw_start_address,
-			       first_region_size, mpu_attr, 1);
-	if ((rv != EC_SUCCESS) || (second_region_size == 0))
+	rv = mpu_config_region(REGION_STORAGE, regions.addr[0], regions.size[0],
+			       mpu_attr, 1);
+	if ((rv != EC_SUCCESS) || (regions.num_regions == 1))
 		return rv;
 
 	/* If this fails then it's impossible to represent with two regions. */
-	return mpu_config_region(REGION_STORAGE2, second_region_address,
-				 second_region_size, mpu_attr, 1);
+	return mpu_config_region(REGION_STORAGE2, regions.addr[1],
+				 regions.size[1], mpu_attr, 1);
 }
 #endif /* !CONFIG_EXTERNAL_STORAGE */
 
