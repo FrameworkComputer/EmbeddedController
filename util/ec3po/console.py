@@ -62,7 +62,7 @@ INTERROGATION_MODES = ['never', 'always', 'auto']  # List of modes which control
                                                    # when interrogations are
                                                    # performed with the EC.
 # Format for printing host timestamp
-HOST_STRFTIME="%Y-%m-%d %H:%M:%S "
+HOST_STRFTIME="%y-%m-%d %H:%M:%S.%f"
 
 
 class EscState(object):
@@ -858,6 +858,18 @@ class Console(object):
     self.look_buffer = self.look_buffer[-LOOK_BUFFER_SIZE:]
 
 
+def CanonicalizeTimeString(timestr):
+  """Canonicalize the timestamp string.
+
+  Args:
+    timestr: A timestamp string ended with 6 digits msec.
+
+  Returns:
+    A string with 3 digits msec and an extra space.
+  """
+  return timestr[:-3] + ' '
+
+
 def IsPrintable(byte):
   """Determines if a byte is printable.
 
@@ -1000,7 +1012,7 @@ def StartLoop(console, command_active, shutdown_pipe=None):
                 # A timestamp is required at the beginning of this line
                 if tm_req is True:
                   now = datetime.now()
-                  tm = now.strftime(HOST_STRFTIME)
+                  tm = CanonicalizeTimeString(now.strftime(HOST_STRFTIME))
                   os.write(console.master_pty, tm)
                   tm_req = False
 
@@ -1008,7 +1020,7 @@ def StartLoop(console, command_active, shutdown_pipe=None):
                 # except if the last character is a newline
                 nls_found = data.count('\n', 0, end)
                 now = datetime.now()
-                tm = now.strftime('\n' + HOST_STRFTIME)
+                tm = CanonicalizeTimeString(now.strftime('\n' + HOST_STRFTIME))
                 data_tm = data.replace('\n', tm, nls_found)
               else:
                 data_tm = data
