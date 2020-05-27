@@ -768,7 +768,7 @@ static int command_powerinfo(int argc, char **argv)
 	 * Print power state in same format as state machine.  This is
 	 * used by FAFT tests, so must match exactly.
 	 */
-	ccprints("power state %d = %s, in 0x%04x",
+	ccprintf("power state %d = %s, in 0x%04x\n",
 		 state, state_names[state], in_signals);
 
 	return EC_SUCCESS;
