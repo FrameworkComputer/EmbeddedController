@@ -199,7 +199,7 @@ static void irq_group6_handler(void)
 		break;
 	case SCP_IRQ_TIMER(TIMER_SYSTEM):
 		/* If this is a hardware irq, check overflow */
-		if (timer_is_irq(TIMER_SYSTEM)) {
+		if (!in_soft_interrupt_context()) {
 			timer_ack_irq(TIMER_SYSTEM);
 
 			if (sys_high) {
