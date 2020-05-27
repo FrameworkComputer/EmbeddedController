@@ -81,6 +81,11 @@ void interrupt_enable(void);
 int in_interrupt_context(void);
 
 /**
+ * Return true if we are in software interrupt context.
+ */
+int in_soft_interrupt_context(void);
+
+/**
  * Return current interrupt mask. Meaning is chip-specific and
  * should not be examined; just pass it to set_int_mask() to
  * restore a previous interrupt state after interrupt_disable().

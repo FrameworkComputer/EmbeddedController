@@ -204,6 +204,12 @@ inline int in_interrupt_context(void)
 	return in_interrupt;
 }
 
+int in_soft_interrupt_context(void)
+{
+	/* group 16 is reserved for soft-irq */
+	return in_interrupt_context() && ec_int_group == 16;
+}
+
 task_id_t __ram_code task_get_current(void)
 {
 #ifdef CONFIG_DEBUG_BRINGUP
