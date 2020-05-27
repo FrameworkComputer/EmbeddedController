@@ -249,14 +249,6 @@ int task_start_called(void)
 	return start_called;
 }
 
-static int get_sw_int(void)
-{
-	/* If this is a SW interrupt */
-	if (get_itype() & 8)
-		return sw_int_num;
-	return 0;
-}
-
 /**
  * Scheduling system call
  *
@@ -351,7 +343,7 @@ void __ram_code start_irq_handler(void)
 	asm volatile ("smw.adm $r0, [$sp], $r2, 0");
 	/* If this is a SW interrupt */
 	if (get_itype() & 8)
-		ec_int = get_sw_int();
+		ec_int = sw_int_num;
 	else
 		ec_int = chip_get_ec_int();
 

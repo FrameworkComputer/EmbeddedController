@@ -225,14 +225,6 @@ int task_start_called(void)
 	return start_called;
 }
 
-static int __ram_code get_sw_int(void)
-{
-	/* If this is a SW interrupt */
-	if (get_mcause() == 11)
-		return sw_int_num;
-	return 0;
-}
-
 /**
  * Scheduling system call
  *
@@ -325,7 +317,7 @@ void __ram_code start_irq_handler(void)
 
 	/* If this is a SW interrupt */
 	if (get_mcause() == 11) {
-		ec_int = get_sw_int();
+		ec_int = sw_int_num;
 		ec_int_group = 16;
 	} else {
 		/* Determine interrupt number */
