@@ -75,10 +75,10 @@ static int command_chargen(int argc, char **argv)
 
 		while (tx_is_blocked_()) {
 			/*
-			 * Let's sleep enough time to drain half of TX
-			 * buffer.
+			 * Let's let other tasks run for a bit while buffer is
+			 * being drained a little.
 			 */
-			usleep(BUFFER_DRAIN_TIME_US/2);
+			usleep(BUFFER_DRAIN_TIME_US/10);
 
 			current_time = get_time();
 
