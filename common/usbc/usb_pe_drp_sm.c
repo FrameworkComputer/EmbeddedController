@@ -2126,6 +2126,11 @@ static void pe_src_hard_reset_entry(int port)
 
 	/* Start PSHardResetTimer */
 	pe[port].ps_hard_reset_timer = get_time().val + PD_T_PS_HARD_RESET;
+
+	/* Clear error flags */
+	PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED |
+			  PE_FLAGS_PROTOCOL_ERROR |
+			  PE_FLAGS_VDM_REQUEST_BUSY);
 }
 
 static void pe_src_hard_reset_run(int port)
@@ -2813,7 +2818,10 @@ static void pe_snk_hard_reset_entry(int port)
 		set_state_pe(port, PE_SRC_DISABLED);
 	}
 
-	PE_CLR_FLAG(port, PE_FLAGS_SNK_WAIT_CAP_TIMEOUT);
+	PE_CLR_FLAG(port, PE_FLAGS_SNK_WAIT_CAP_TIMEOUT |
+			  PE_FLAGS_VDM_REQUEST_NAKED |
+			  PE_FLAGS_PROTOCOL_ERROR |
+			  PE_FLAGS_VDM_REQUEST_BUSY);
 
 	/* Request the generation of Hard Reset Signaling by the PHY Layer */
 	pe_prl_execute_hard_reset(port);
