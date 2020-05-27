@@ -162,7 +162,7 @@ int chip_get_ec_int(void)
 	if (!SCP_CORE0_INTC_IRQ_OUT)
 		goto error;
 
-	group = __builtin_ctz(SCP_CORE0_INTC_IRQ_OUT);
+	group = read_csr(CSR_VIC_MICAUSE);
 
 	for (word = SCP_INTC_GRP_LEN - 1; word >= 0; --word) {
 		sta = SCP_CORE0_INTC_IRQ_GRP_STA(group, word);
