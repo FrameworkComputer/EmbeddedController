@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "ioexpanders.h"
 #include "queue_policies.h"
 #include "registers.h"
 #include "spi.h"
@@ -24,6 +25,7 @@
 #include "usart_rx_dma.h"
 #include "usb_gpio.h"
 #include "usb_i2c.h"
+#include "usb_pd.h"
 #include "usb_spi.h"
 #include "usb-stream.h"
 #include "util.h"
@@ -48,22 +50,70 @@ static void vbus1_evt(enum gpio_signal signal)
 
 static void tca_evt(enum gpio_signal signal)
 {
+	uint8_t fault;
+
+	fault = read_faults();
+
+	if (!(fault & USERVO_FAULT_L))
+		ccprintf("FAULT: Microservo USB A port load switch\n");
+
+	if (!(fault & USB3_A0_FAULT_L))
+		ccprintf("FAULT: USB3 A0 port load switch\n");
+
+	if (!(fault & USB3_A1_FAULT_L))
+		ccprintf("FAULT: USB3 A1 port load switch\n");
+
+	if (!(fault & USB_DUTCHG_FLT_ODL))
+		ccprintf("FAULT: Overcurrent on Charger or DUB CC/SBU lines\n");
+
+	if (!(fault & PP3300_DP_FAULT_L))
+		ccprintf("FAULT: Overcurrent on DisplayPort\n");
+
+	if (!(fault & DAC_BUF1_LATCH_FAULT_L)) {
+		ccprintf("FAULT: CC1 drive circuitry has exceeded thermal ");
+		ccprintf("limits or exceeded current limits. Power ");
+		ccprintf("off DAC0 to clear the fault\n");
+	}
+
+	if (!(fault & DAC_BUF1_LATCH_FAULT_L)) {
+		ccprintf("FAULT: CC2 drive circuitry has exceeded thermal ");
+		ccprintf("limits or exceeded current limits. Power ");
+		ccprintf("off DAC1 to clear the fault\n");
+	}
 }
 
 static void dp_evt(enum gpio_signal signal)
 {
+	ccprintf("DP detected\n");
 }
 
 static void tcpc_evt(enum gpio_signal signal)
 {
+	ccprintf("tcpc event\n");
 }
 
 static void hub_evt(enum gpio_signal signal)
 {
+	ccprintf("hub event\n");
 }
 
 static void bc12_evt(enum gpio_signal signal)
 {
+	ccprintf("bc12_evt\n");
+}
+
+/* Enable uservo USB. */
+static void init_uservo_port(void)
+{
+	/* Enable USERVO_POWER_EN */
+	uservo_power_en(1);
+	/* Connect uservo to host hub */
+	uservo_fastboot_mux_sel(0);
+}
+#else
+void pd_task(void *u)
+{
+	/* DO NOTHING */
 }
 #endif /* SECTION_IS_RO */
 
@@ -234,7 +284,7 @@ int usb_i2c_board_is_enabled(void) { return 1; }
 
 int board_get_version(void)
 {
-	return 0;
+	return board_id_det();
 }
 
 static void board_init(void)
@@ -248,5 +298,58 @@ static void board_init(void)
 	/* UART init */
 	usart_init(&usart3);
 	usart_init(&usart4);
+
+	/* Delay DUT hub to avoid brownout. */
+	usleep(MSEC);
+
+	init_ioexpanders();
+
+	/* Clear BBRAM, we don't want any PD state carried over on reset. */
+	system_set_bbram(SYSTEM_BBRAM_IDX_PD0, 0);
+	system_set_bbram(SYSTEM_BBRAM_IDX_PD1, 0);
+
+	/* Bring atmel part out of reset */
+	atmel_reset_l(1);
+
+#ifdef SECTION_IS_RO
+	init_uservo_port();
+
+	/* Enable DUT USB2.0 pair. */
+	gpio_set_level(GPIO_FASTBOOT_DUTHUB_MUX_EN_L, 0);
+
+	/* Enable VBUS detection to wake PD tasks fast enough */
+	gpio_enable_interrupt(GPIO_USB_DET_PP_CHG);
+	gpio_enable_interrupt(GPIO_USB_DET_PP_DUT);
+
+	gpio_enable_interrupt(GPIO_STM_FAULT_IRQ_L);
+	gpio_enable_interrupt(GPIO_DP_HPD);
+	gpio_enable_interrupt(GPIO_CHGSRV_TCPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USBH_I2C_BUSY_INT);
+	gpio_enable_interrupt(GPIO_BC12_INT_ODL);
+
+#endif /* SECTION_IS_RO */
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+#ifdef SECTION_IS_RO
+void tick_event(void)
+{
+	static int i = 0;
+
+	i++;
+	switch (i) {
+	case 1:
+		tca_gpio_dbg_led_k_odl(1);
+		break;
+	case 2:
+		break;
+	case 3:
+		tca_gpio_dbg_led_k_odl(0);
+		break;
+	case 4:
+		i = 0;
+		break;
+	}
+}
+DECLARE_HOOK(HOOK_TICK, tick_event, HOOK_PRIO_DEFAULT);
+#endif /* SECTION_IS_RO */

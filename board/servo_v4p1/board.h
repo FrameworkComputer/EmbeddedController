@@ -16,6 +16,15 @@
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 
+/* Servo V4.1 Ports:
+ *  CHG - port 0
+ *  DUT - port 1
+ *  ALT - port 2
+ */
+#define CHG 0
+#define DUT 1
+#define ALT 2
+
 /*
  * Flash layout: we redefine the sections offsets and sizes as we want to
  * include a pstate region, and will use RO/RW regions of different sizes.
@@ -162,7 +171,26 @@
  * can't be processed in time and can't support USB PD messaging.
  */
 #undef CONFIG_TASK_PROFILING
+
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
+
+#ifdef SECTION_IS_RO
+/*
+ * TODO(crosbug.com/p/60792): The delay values are currently just place holders
+ * and the delay will need to be relative to the circuitry that allows VBUS to
+ * be supplied to the DUT port from the CHG port.
+ */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  50000  /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
+
+/* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_POWER_MW       60000
+#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_VOLTAGE_MV     20000
+#else
 #undef CONFIG_USB_POWER_DELIVERY
+#endif /* SECTION_IS_RO */
 
 /*
  * If task profiling is enabled then the rx falling edge detection interrupts
@@ -215,10 +243,58 @@ enum adc_channel {
 };
 
 /**
+ * Compare cc_voltage to disconnect threshold
+ *
+ * This function can be used for boards that support variable Rp settings and
+ * require a different voltage threshold based on the Rp value attached to a
+ * given cc line.
+ *
+ * @param port USB-C port number
+ * @param cc_volt voltage measured in mV of the CC line
+ * @param cc_sel cc1 or cc2 selection
+ * @return 1 if voltage is >= threshold value for disconnect
+ */
+int pd_tcpc_cc_nc(int port, int cc_volt, int cc_sel);
+
+/**
+ * Compare cc_voltage to Ra threshold
+ *
+ * This function can be used for boards that support variable Rp settings and
+ * require a different voltage threshold based on the Rp value attached to a
+ * given cc line.
+ *
+ * @param port USB-C port number
+ * @param cc_volt voltage measured in mV of the CC line
+ * @param cc_sel cc1 or cc2 selection
+ * @return 1 if voltage is < threshold value for Ra attach
+ */
+int pd_tcpc_cc_ra(int port, int cc_volt, int cc_sel);
+
+/**
+ * Set Rp or Rd resistor for CC lines
+ *
+ * This function is used to configure the CC pullup or pulldown resistor to
+ * the requested value.
+ *
+ * @param port USB-C port number
+ * @param cc_pull 1 for Rp and 0 for Rd
+ * @param rp_value If cc_pull == 1, the value of Rp to use
+ * @return 1 if cc_pull == 1 and Rp is invalid, otherwise 0
+ */
+int pd_set_rp_rd(int port, int cc_pull, int rp_value);
+
+/**
  * Get board HW ID version
  *
  * @return HW ID version
  */
 int board_get_version(void);
+
+/**
+ * Enable or disable CCD
+ *
+ * @param enable Enable CCD if true, otherwise disable
+ */
+void ccd_enable(int enable);
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

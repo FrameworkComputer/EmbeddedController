@@ -15,5 +15,9 @@ test-list-y=
 
 # These files are compiled into RO and RW
 board-y=board.o tca6416a.o tca6424a.o
+board-y+=ioexpanders.o
+
+# These files are compiled into RO only
+board-y+=ro_files.o
 
 all_deps=$(patsubst ro,,$(def_all_deps))
