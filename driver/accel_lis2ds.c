@@ -78,12 +78,23 @@ static int lis2ds_load_fifo(struct motion_sensor_t *s, uint16_t nsamples,
 		read_len += chunk_len;
 	};
 
-	return read_len;
+	if (read_len > 0)
+		motion_sense_fifo_commit_data();
+
+	return EC_SUCCESS;
 }
 
 __maybe_unused static int lis2ds_config_interrupt(const struct motion_sensor_t *s)
 {
 	int ret = EC_SUCCESS;
+
+	/* Interrupt trigger level of power-on-reset is HIGH */
+	if (!(s->flags & MOTIONSENSE_FLAG_INT_ACTIVE_HIGH)) {
+		ret = st_write_data_with_mask(s, LIS2DS_H_ACTIVE_ADDR,
+					      LIS2DS_H_ACTIVE_MASK, LIS2DS_EN_BIT);
+		if (ret != EC_SUCCESS)
+			return ret;
+	}
 
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 		/*
@@ -155,8 +166,6 @@ __maybe_unused static int lis2ds_irq_handler(struct motion_sensor_t *s,
 			nsamples = 256;
 
 		ret = lis2ds_load_fifo(s, nsamples, last_interrupt_timestamp);
-		if (ret > 0)
-			motion_sense_fifo_commit_data();
 	}
 
 	return ret;
