@@ -66,6 +66,9 @@ void lock_flash_option_bytes(void);
 /**
  * Disable the flash option bytes register.
  *
+ * This function expects that bus faults have not already been ignored when
+ * called.
+ *
  * Once this function is called any attempt at accessing the flash option
  * bytes register will generate a bus fault until the next reset.
  *
@@ -75,6 +78,9 @@ void disable_flash_option_bytes(void);
 
 /**
  * Disable the flash control register.
+ *
+ * This function expects that bus faults have not already been ignored when
+ * called.
  *
  * Once this function is called any attempt at accessing the flash control
  * register will generate a bus fault until the next reset.
