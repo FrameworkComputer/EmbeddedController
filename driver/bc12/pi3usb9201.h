@@ -16,6 +16,9 @@
 #define PI3USB9201_REG_CLIENT_STS 0x2
 #define PI3USB9201_REG_HOST_STS 0x3
 
+/* Flags */
+#define PI3USB9201_ALWAYS_POWERED BIT(0)
+
 /* Control_1 regiter bit definitions */
 #define PI3USB9201_REG_CTRL_1_INT_MASK BIT(0)
 #define PI3USB9201_REG_CTRL_1_MODE_SHIFT 1
@@ -34,6 +37,7 @@
 struct pi3usb9201_config_t {
 	const int i2c_port;
 	const int i2c_addr_flags;
+	const int flags;
 };
 
 enum pi3usb9201_mode {
