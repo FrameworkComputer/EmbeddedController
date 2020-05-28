@@ -1969,8 +1969,10 @@ enum idh_ptype get_usb_pd_cable_type(int port);
  */
 void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
 					uint16_t head);
+
 /**
- * Returns USB4 cable speed.
+ * Returns USB4 cable speed according to the port, if port supports lesser
+ * USB4 cable speed than the cable.
  *
  * For USB4 cable speed = USB3.2 Gen 2:
  *                              |

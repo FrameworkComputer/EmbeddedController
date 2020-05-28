@@ -5349,7 +5349,8 @@ struct ec_response_usb_pd_control_v2 {
 	uint8_t dp_mode;	/* Current DP pin mode (MODE_DP_PIN_[A-E]) */
 	uint8_t reserved;	/* Reserved for future use */
 	uint8_t control_flags;	/* USB_PD_CTRL_*flags */
-	uint8_t cable_speed;	/* TBT_SS_* cable speed */
+	/* TODO: b:158234949 Add definitions for cable speed */
+	uint8_t cable_speed;	/* USB_R30_SS/TBT_SS_* cable speed */
 	uint8_t cable_gen;	/* TBT_GEN3_* cable rounded support */
 } __ec_align1;
 

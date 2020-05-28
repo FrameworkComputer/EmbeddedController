@@ -346,28 +346,6 @@ static inline void disable_usb4_mode(int port)
 }
 
 /*
- * For Cable rev 3.0: USB4 cable speed is set according to speed supported by
- * the port and the response received from the cable, whichever is least.
- *
- * For Cable rev 2.0: Since board_is_tbt_usb4_port() should not enabled if the
- * port supports speed less than USB_R20_SS_U31_GEN1_GEN2, USB4 cable speed is
- * set according to the cable response.
- */
-static void set_max_usb4_cable_speed(int port)
-{
-	/*
-	 * Converting Thunderbolt-Compatible board speed to equivalent USB4
-	 * speed.
-	 */
-	enum usb_rev30_ss max_usb4_speed =
-			board_get_max_tbt_speed(port) == TBT_SS_TBT_GEN3 ?
-			USB_R30_SS_U40_GEN3 : USB_R30_SS_U32_U40_GEN2;
-
-	if (max_usb4_speed < cable[port].attr.p_rev30.ss)
-		cable[port].attr.p_rev30.ss = max_usb4_speed;
-}
-
-/*
  * Ref: USB Type-C Cable and Connector Specification
  * Figure 5-1 USB4 Discovery and Entry Flow Model.
  *
@@ -410,7 +388,6 @@ static bool is_cable_ready_to_enter_usb4(int port, int cnt)
 	    is_vdo_present(cnt, VDO_INDEX_PTYPE_CABLE1)) {
 		switch (cable[port].rev) {
 		case PD_REV30:
-			set_max_usb4_cable_speed(port);
 			switch (cable[port].attr.p_rev30.ss) {
 			case USB_R30_SS_U40_GEN3:
 			case USB_R30_SS_U32_U40_GEN1:
