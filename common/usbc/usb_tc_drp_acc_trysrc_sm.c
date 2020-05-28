@@ -1106,12 +1106,14 @@ void tc_state_init(int port)
 		/* Only attempt to maintain previous sink contracts */
 		if ((saved_flgs[port] & PD_BBRMFLG_POWER_ROLE) ==
 								PD_ROLE_SINK) {
-			tc_set_power_role(port,
-				(saved_flgs[port] & PD_BBRMFLG_POWER_ROLE) ?
-				PD_ROLE_SOURCE : PD_ROLE_SINK);
-			tc_set_data_role(port,
-				 (saved_flgs[port] & PD_BBRMFLG_DATA_ROLE) ?
-				 PD_ROLE_DFP : PD_ROLE_UFP);
+			tc[port].power_role =
+				(saved_flgs[port] & PD_BBRMFLG_POWER_ROLE)
+					? PD_ROLE_SOURCE
+					: PD_ROLE_SINK;
+			tc[port].data_role =
+				(saved_flgs[port] & PD_BBRMFLG_DATA_ROLE)
+					? PD_ROLE_DFP
+					: PD_ROLE_UFP;
 #ifdef CONFIG_USBC_VCONN
 			set_vconn(port,
 				(saved_flgs[port] & PD_BBRMFLG_VCONN_ROLE) ?
