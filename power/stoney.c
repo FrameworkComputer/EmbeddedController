@@ -94,26 +94,37 @@ void chipset_handle_espi_reset_assert(void)
 
 enum power_state power_chipset_init(void)
 {
+	CPRINTS("%s: power_signal=0x%x", __func__, power_get_signals());
+
 	/* Pause in S5 when shutting down. */
 	power_set_pause_in_s5(1);
 
+	if (!system_jumped_to_this_image())
+		return POWER_G3;
 	/*
-	 * If we're switching between images without rebooting, see if the x86
-	 * is already powered on; if so, leave it there instead of cycling
-	 * through G3.
+	 * We are here as RW. We need to handle the following cases:
+	 *
+	 * 1. Late sysjump by software sync. AP is in S0.
+	 * 2. Shutting down in recovery mode then sysjump by EFS2. AP is in S5
+	 *    and expected to sequence down.
+	 * 3. Rebooting from recovery mode then sysjump by EFS2. AP is in S5
+	 *    and expected to sequence up.
+	 * 4. RO jumps to RW from main() by EFS2. (a.k.a. power on reset, cold
+	 *    reset). AP is in G3.
 	 */
-	if (system_jumped_to_this_image()) {
-		if (gpio_get_level(GPIO_S0_PGOOD)) {
-			/* Disable idle task deep sleep when in S0. */
-			disable_sleep(SLEEP_MASK_AP_RUN);
-
-			CPRINTS("already in S0");
-			return POWER_S0;
-		}
-
-		CPRINTS("forcing G3");
-		chipset_force_g3();
+	if (gpio_get_level(GPIO_S0_PGOOD)) {
+		/* case #1. Disable idle task deep sleep when in S0. */
+		disable_sleep(SLEEP_MASK_AP_RUN);
+		CPRINTS("already in S0");
+		return POWER_S0;
 	}
+	if (power_get_signals() & IN_S5_PGOOD) {
+		/* case #2 & #3 */
+		CPRINTS("already in S5");
+		return POWER_S5;
+	}
+	/* case #4 */
+	chipset_force_g3();
 	return POWER_G3;
 }
 
