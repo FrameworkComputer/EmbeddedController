@@ -132,6 +132,10 @@
 /* Common LED defines */
 #define CONFIG_LED_COMMON
 
+/* EDP back-light control defines */
+#define CONFIG_BACKLIGHT_LID
+#define GPIO_ENABLE_BACKLIGHT   GPIO_EC_EDP_BL_EN
+
 /* USB Type C and USB PD defines */
 /* Enable the new USB-C PD stack */
 /* TODO: b/145756626 - re-enable once all blocking issues resolved */
