@@ -329,7 +329,7 @@ int mpu_lock_rollback(int lock)
 	if (rv != EC_SUCCESS)
 		return rv;
 
-	rollback_mpu_region = REGION_STORAGE2;
+	rollback_mpu_region = REGION_CODE_RAM;
 	rv = mpu_config_region(rollback_mpu_region,
 			       rollback_region_start_address +
 				       (rollback_region_total_size / 2),
