@@ -68,6 +68,68 @@ static int wait_busy(void)
 }
 
 
+void unlock_flash_control_register(void)
+{
+	STM32_FLASH_KEYR = FLASH_KEYR_KEY1;
+	STM32_FLASH_KEYR = FLASH_KEYR_KEY2;
+}
+
+void unlock_flash_option_bytes(void)
+{
+	STM32_FLASH_OPTKEYR = FLASH_OPTKEYR_KEY1;
+	STM32_FLASH_OPTKEYR = FLASH_OPTKEYR_KEY2;
+}
+
+void disable_flash_option_bytes(void)
+{
+	ignore_bus_fault(1);
+	/*
+	 * Writing anything other than the pre-defined keys to the option key
+	 * register results in a bus fault and the register being locked until
+	 * reboot (even with a further correct key write).
+	 */
+	STM32_FLASH_OPTKEYR = 0xffffffff;
+	ignore_bus_fault(0);
+}
+
+void disable_flash_control_register(void)
+{
+	ignore_bus_fault(1);
+	/*
+	 * Writing anything other than the pre-defined keys to the key
+	 * register results in a bus fault and the register being locked until
+	 * reboot (even with a further correct key write).
+	 */
+	STM32_FLASH_KEYR = 0xffffffff;
+	ignore_bus_fault(0);
+}
+
+void lock_flash_control_register(void)
+{
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
+	/* FLASH_CR_OPTWRE was set by writing the keys in unlock(). */
+	STM32_FLASH_CR &= ~FLASH_CR_OPTWRE;
+#endif
+	STM32_FLASH_CR |= FLASH_CR_LOCK;
+}
+
+void lock_flash_option_bytes(void)
+{
+#if !(defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3))
+	STM32_FLASH_OPTCR |= FLASH_OPTLOCK;
+#endif
+}
+
+bool flash_option_bytes_locked(void)
+{
+	return !!STM32_FLASH_OPT_LOCKED;
+}
+
+bool flash_control_register_locked(void)
+{
+	return !!(STM32_FLASH_CR & FLASH_CR_LOCK);
+}
+
 /*
  * We at least unlock the control register lock.
  * We may also unlock other locks.
@@ -86,20 +148,17 @@ static int unlock(int locks)
 	ignore_bus_fault(1);
 
 	/* Always unlock CR if needed */
-	if (STM32_FLASH_CR & FLASH_CR_LOCK) {
-		STM32_FLASH_KEYR = FLASH_KEYR_KEY1;
-		STM32_FLASH_KEYR = FLASH_KEYR_KEY2;
-	}
+	if (flash_control_register_locked())
+		unlock_flash_control_register();
+
 	/* unlock option memory if required */
-	if ((locks & OPT_LOCK) && STM32_FLASH_OPT_LOCKED) {
-		STM32_FLASH_OPTKEYR = FLASH_OPTKEYR_KEY1;
-		STM32_FLASH_OPTKEYR = FLASH_OPTKEYR_KEY2;
-	}
+	if ((locks & OPT_LOCK) && flash_option_bytes_locked())
+		unlock_flash_option_bytes();
 
 	/* Re-enable bus fault handler */
 	ignore_bus_fault(0);
 
-	if ((locks & OPT_LOCK) && STM32_FLASH_OPT_LOCKED)
+	if ((locks & OPT_LOCK) && flash_option_bytes_locked())
 		return EC_ERROR_UNKNOWN;
 	if (STM32_FLASH_CR & FLASH_CR_LOCK)
 		return EC_ERROR_UNKNOWN;
@@ -108,11 +167,7 @@ static int unlock(int locks)
 
 static void lock(void)
 {
-#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
-	/* FLASH_CR_OPTWRE was set by writing the keys in unlock(). */
-	STM32_FLASH_CR &= ~FLASH_CR_OPTWRE;
-#endif
-	STM32_FLASH_CR |= FLASH_CR_LOCK;
+	lock_flash_control_register();
 }
 
 #ifdef CHIP_FAMILY_STM32F4

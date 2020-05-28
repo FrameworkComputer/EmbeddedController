@@ -123,20 +123,7 @@ uint32_t flash_physical_get_protect_flags(void)
 int flash_physical_protect_now(int all)
 {
 	if (all) {
-		/*
-		 * Lock by writing a wrong key to FLASH_KEYR. This triggers a
-		 * bus fault, so we need to disable bus fault handler while
-		 * doing this.
-		 *
-		 * This incorrect key fault causes the flash to become
-		 * permanently locked until reset, a correct keyring write
-		 * will not unlock it. In this way we can implement system
-		 * write protect.
-		 */
-		ignore_bus_fault(1);
-		STM32_FLASH_KEYR = 0xffffffff;
-		ignore_bus_fault(0);
-
+		disable_flash_control_register();
 		entire_flash_locked = 1;
 
 		return EC_SUCCESS;
