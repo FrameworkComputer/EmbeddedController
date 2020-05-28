@@ -15,6 +15,7 @@ test-list-y=\
        aes \
        compile_time_macros \
        crc32 \
+       flash_physical \
        mpu \
        mutex \
        pingpong \
