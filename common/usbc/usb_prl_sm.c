@@ -553,6 +553,7 @@ void prl_send_ctrl_msg(int port,
 {
 	pdmsg[port].xmit_type = type;
 	pdmsg[port].msg_type = msg;
+	pdmsg[port].data_objs = 0;
 
 #ifdef CONFIG_USB_PD_REV30
 	pdmsg[port].ext = 0;
@@ -560,7 +561,6 @@ void prl_send_ctrl_msg(int port,
 
 	TCH_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
 #else
-	pdmsg[port].data_objs = 0;
 	PRL_TX_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
 #endif /* CONFIG_USB_PD_REV30 */
 
@@ -668,6 +668,16 @@ enum pd_rev_type prl_get_rev(int port, enum tcpm_transmit_type type)
 
 static void prl_copy_msg_to_buffer(int port)
 {
+	/*
+	 * Control Messages will have a length of 0 and
+	 * no need to spend time with the tx_chk_buf
+	 * for this path
+	 */
+	if (tx_emsg[port].len == 0) {
+		pdmsg[port].data_objs = 0;
+		return;
+	}
+
 	/*
 	 * Make sure the Policy Engine isn't sending
 	 * more than CHK_BUF_SIZE_BYTES. If so,
@@ -1818,6 +1828,10 @@ static void tch_message_received_entry(const int port)
 
 	/* Pass message to chunked Rx */
 	RCH_SET_FLAG(port, PRL_FLAGS_MSG_RECEIVED);
+
+	/* Clear extended message objects */
+	TCH_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
+	pdmsg[port].data_objs = 0;
 }
 
 static void tch_message_received_run(const int port)
@@ -1953,11 +1967,16 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 		/*
 		 * Message (not Ping) Received from
 		 * Protocol Layer & Doing Tx Chunks
+		 *
+		 * Also, handle the case where a message has been
+		 * queued for sending but a message is received before
+		 * tch_wait_for_message_request_from_pe has been run
 		 */
-		else if (tch_get_state(port) !=
+		else if ((tch_get_state(port) !=
 				TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE &&
-			tch_get_state(port) !=
-				TCH_WAIT_FOR_TRANSMISSION_COMPLETE) {
+			  tch_get_state(port) !=
+				TCH_WAIT_FOR_TRANSMISSION_COMPLETE) ||
+			 TCH_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
 			/* NOTE: RTR_TX_CHUNKS State embedded here. */
 			/*
 			 * Send Message to Tx Chunk
