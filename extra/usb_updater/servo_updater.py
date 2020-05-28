@@ -24,7 +24,9 @@ class ServoUpdaterException(Exception):
 BOARD_C2D2 = 'c2d2'
 BOARD_SERVO_MICRO = 'servo_micro'
 BOARD_SERVO_V4 = 'servo_v4'
+BOARD_SERVO_V4P1 = 'servo_v4p1'
 BOARD_SWEETBERRY = 'sweetberry'
+
 DEFAULT_BOARD = BOARD_SERVO_V4
 
 DEFAULT_BASE_PATH = '/usr/'
