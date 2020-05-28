@@ -242,9 +242,13 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 static int board_is_convertible(void)
 {
-	/* SKU ID of Bobba360, Sparky360, & unprovisioned: 9, 10, 11, 12, 25, 26, 255 */
+	/*
+	 * SKU ID of Bobba360, Sparky360, & unprovisioned: 9, 10, 11, 12,
+	 * 25, 26, 27, 255
+	 */
 	return sku_id == 9 || sku_id == 10 || sku_id == 11 || sku_id == 12
-		|| sku_id == 25 || sku_id == 26 || sku_id == 255;
+		|| sku_id == 25 || sku_id == 26 || sku_id == 27
+		|| sku_id == 255;
 }
 
 static int board_with_ar_cam(void)
