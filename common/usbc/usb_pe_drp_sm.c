@@ -3534,7 +3534,8 @@ static void pe_prs_src_snk_wait_source_on_run(int port)
 
 static void pe_prs_src_snk_wait_source_on_exit(int port)
 {
-	tc_pr_swap_complete(port);
+	tc_pr_swap_complete(port,
+			    PE_CHK_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE));
 }
 
 /**
@@ -3771,7 +3772,8 @@ static void pe_prs_snk_src_source_on_run(int port)
 
 static void pe_prs_snk_src_source_on_exit(int port)
 {
-	tc_pr_swap_complete(port);
+	tc_pr_swap_complete(port,
+			    PE_CHK_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE));
 }
 
 /**

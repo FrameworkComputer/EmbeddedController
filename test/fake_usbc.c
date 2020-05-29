@@ -105,7 +105,7 @@ void tc_partner_usb_comm(int port, int en)
 void tc_pd_connection(int port, int en)
 {}
 
-void tc_pr_swap_complete(int port)
+void tc_pr_swap_complete(int port, bool success)
 {}
 
 void tc_prs_snk_src_assert_rp(int port)

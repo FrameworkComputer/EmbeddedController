@@ -665,16 +665,17 @@ int tc_check_vconn_swap(int port)
 #endif
 }
 
-void tc_pr_swap_complete(int port)
+void tc_pr_swap_complete(int port, bool success)
 {
 	TC_CLR_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
 
 	/*
 	 * We turned off AutoDischargeDisconnect when we started the PR Swap,
 	 * if we were a SNK. Re-enable AutoDischargeDisconnect to make sure
-	 * it is back on now that swap is complete.
+	 * it is back on if swap is complete.
 	 */
-	tcpm_enable_auto_discharge_disconnect(port, 1);
+	if (success)
+		tcpm_enable_auto_discharge_disconnect(port, 1);
 }
 
 void tc_prs_src_snk_assert_rd(int port)
@@ -1064,6 +1065,10 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 	res = tc_restart_tcpc(port);
 
 	CPRINTS("TCPC p%d init %s", port, res ? "failed" : "ready");
+
+	/* Enable AutoDischargeDisconnect if we are ready */
+	if (!res)
+		tcpm_enable_auto_discharge_disconnect(port, 1);
 
 	/* Disable if restart failed, otherwise start in default state. */
 	set_state_tc(port, res ? TC_DISABLED : start_state);
