@@ -558,7 +558,15 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 
 void board_overcurrent_event(int port, int is_overcurrented)
 {
-	/* TODO: b/140561826 - check correct operation for Volteer */
+	/* Note that the level is inverted because the pin is active low. */
+	switch (port) {
+	case USBC_PORT_C0:
+		gpio_set_level(GPIO_USB_C0_OC_ODL, !is_overcurrented);
+		break;
+	case USBC_PORT_C1:
+		gpio_set_level(GPIO_USB_C1_OC_ODL, !is_overcurrented);
+		break;
+	}
 }
 
 static void baseboard_init(void)

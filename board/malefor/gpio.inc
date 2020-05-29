@@ -95,6 +95,8 @@ GPIO(EC_PCH_INT_ODL,           PIN(B, 0), GPIO_ODR_HIGH)
 
 /* USB and USBC Signals */
 GPIO(USB_C1_RT_RST_ODL,			PIN(8, 3), GPIO_ODR_LOW) /* USB_C1 Reset on boards board ID >=1 */
+GPIO(USB_C0_OC_ODL,			PIN(B, 1), GPIO_ODR_HIGH)
+GPIO(USB_C1_OC_ODL,			PIN(5, 0), GPIO_ODR_HIGH)
 
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C1_LS_EN)
