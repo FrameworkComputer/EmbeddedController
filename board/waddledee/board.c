@@ -200,10 +200,12 @@ void board_init(void)
 {
 	int on;
 
-	if (system_get_board_version() <= 0)
+	if (system_get_board_version() <= 0) {
+		pd_set_max_voltage(5000);
 		c1_int_line = GPIO_USB_C1_INT_V0_ODL;
-	else
+	} else {
 		c1_int_line = GPIO_USB_C1_INT_V1_ODL;
+	}
 
 
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
