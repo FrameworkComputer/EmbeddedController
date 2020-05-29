@@ -30,6 +30,52 @@ static int vconn_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 static int rx_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 #endif
 
+/****************************************************************************
+ * TCPCI DEBUG Helpers
+ */
+
+/* TCPCI FAULT-0x01 is an invalid I2C operation was performed.  This tends
+ * to have to do with the state of registers and the last write operation.
+ * Defining DEBUG_I2C_FAULT_LAST_WRITE_OP will track the write operations,
+ * excluding XFER and BlockWrites, in an attempt to give clues as to what
+ * was written to the TCPCI that caused the issue.
+ */
+#undef DEBUG_I2C_FAULT_LAST_WRITE_OP
+
+struct i2c_wrt_op {
+	int addr;
+	int reg;
+	int val;
+	int mask;
+};
+static struct i2c_wrt_op last_write_op[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+/*
+ * AutoDischargeDisconnect has caused a number of issues with the
+ * feature not being correctly enabled/disabled.  Defining
+ * DEBUG_AUTO_DISCHARGE_DISCONNECT will output a line for each enable
+ * and disable to help better understand any AutoDischargeDisconnect
+ * issues.
+ */
+#undef DEBUG_AUTO_DISCHARGE_DISCONNECT
+
+/*
+ * ForcedDischarge debug to help coordinate with AutoDischarge.
+ * Defining DEBUG_FORCED_DISCHARGE will output a line for each enable
+ * and disable to help better understand any Discharge issues.
+ */
+#undef DEBUG_FORCED_DISCHARGE
+
+/*
+ * Seeing the CC Status and ROLE Control registers as well as the
+ * CC that is being determined from this information can be
+ * helpful.  Defining DEBUG_GET_CC will output a line that gives
+ * this useful information
+ */
+#undef DEBUG_GET_CC
+
+/****************************************************************************/
+
 /*
  * Last reported VBus Level
  *
@@ -48,6 +94,13 @@ int tcpc_addr_write(int port, int i2c_addr, int reg, int val)
 
 	pd_wait_exit_low_power(port);
 
+	if (IS_ENABLED(DEBUG_I2C_FAULT_LAST_WRITE_OP)) {
+		last_write_op[port].addr = i2c_addr;
+		last_write_op[port].reg  = reg;
+		last_write_op[port].val  = val & 0xFF;
+		last_write_op[port].mask = 0;
+	}
+
 	rv = i2c_write8(tcpc_config[port].i2c_info.port,
 			i2c_addr, reg, val);
 
@@ -58,12 +111,19 @@ int tcpc_addr_write(int port, int i2c_addr, int reg, int val)
 int tcpc_write16(int port, int reg, int val)
 {
 	int rv;
+	const int i2c_addr = tcpc_config[port].i2c_info.addr_flags;
 
 	pd_wait_exit_low_power(port);
 
+	if (IS_ENABLED(DEBUG_I2C_FAULT_LAST_WRITE_OP)) {
+		last_write_op[port].addr = i2c_addr;
+		last_write_op[port].reg  = reg;
+		last_write_op[port].val  = val & 0xFFFF;
+		last_write_op[port].mask = 0;
+	}
+
 	rv = i2c_write16(tcpc_config[port].i2c_info.port,
-			 tcpc_config[port].i2c_info.addr_flags,
-			 reg, val);
+			 i2c_addr, reg, val);
 
 	pd_device_accessed(port);
 	return rv;
@@ -156,12 +216,19 @@ int tcpc_update8(int port, int reg,
 		 enum mask_update_action action)
 {
 	int rv;
+	const int i2c_addr = tcpc_config[port].i2c_info.addr_flags;
 
 	pd_wait_exit_low_power(port);
 
+	if (IS_ENABLED(DEBUG_I2C_FAULT_LAST_WRITE_OP)) {
+		last_write_op[port].addr = i2c_addr;
+		last_write_op[port].reg  = reg;
+		last_write_op[port].val  = 0;
+		last_write_op[port].mask = (mask & 0xFF) | (action << 16);
+	}
+
 	rv = i2c_update8(tcpc_config[port].i2c_info.port,
-			 tcpc_config[port].i2c_info.addr_flags,
-			 reg, mask, action);
+			 i2c_addr, reg, mask, action);
 
 	pd_device_accessed(port);
 	return rv;
@@ -172,12 +239,19 @@ int tcpc_update16(int port, int reg,
 		  enum mask_update_action action)
 {
 	int rv;
+	const int i2c_addr = tcpc_config[port].i2c_info.addr_flags;
 
 	pd_wait_exit_low_power(port);
 
+	if (IS_ENABLED(DEBUG_I2C_FAULT_LAST_WRITE_OP)) {
+		last_write_op[port].addr = i2c_addr;
+		last_write_op[port].reg  = reg;
+		last_write_op[port].val  = 0;
+		last_write_op[port].mask = (mask & 0xFFFF) | (action << 16);
+	}
+
 	rv = i2c_update16(tcpc_config[port].i2c_info.port,
-			  tcpc_config[port].i2c_info.addr_flags,
-			  reg, mask, action);
+			  i2c_addr, reg, mask, action);
 
 	pd_device_accessed(port);
 	return rv;
@@ -277,6 +351,10 @@ int tcpci_tcpm_select_rp_value(int port, int rp)
 
 void tcpci_tcpc_discharge_vbus(int port, int enable)
 {
+	if (IS_ENABLED(DEBUG_FORCED_DISCHARGE))
+		CPRINTS("C%d: ForceDischarge %sABLED",
+			port, enable ? "EN" : "DIS");
+
 	tcpc_update8(port,
 		     TCPC_REG_POWER_CTRL,
 		     TCPC_REG_POWER_CTRL_FORCE_DISCHARGE,
@@ -290,6 +368,10 @@ void tcpci_tcpc_discharge_vbus(int port, int enable)
  */
 void tcpci_tcpc_enable_auto_discharge_disconnect(int port, int enable)
 {
+	if (IS_ENABLED(DEBUG_AUTO_DISCHARGE_DISCONNECT))
+		CPRINTS("C%d: AutoDischargeDisconnect %sABLED",
+			port, enable ? "EN" : "DIS");
+
 	tcpc_update8(port,
 		     TCPC_REG_POWER_CTRL,
 		     TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT,
@@ -355,6 +437,10 @@ int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	}
 	*cc1 |= cc1_present_rd << 2;
 	*cc2 |= cc2_present_rd << 2;
+
+	if (IS_ENABLED(DEBUG_GET_CC))
+		CPRINTS("C%d: GET_CC cc1=%d cc2=%d cc_sts=0x%X role=0x%X",
+			port, *cc1, *cc2, status, role);
 
 	return rv;
 }
@@ -977,6 +1063,23 @@ static int tcpci_handle_fault(int port, int fault)
 	int rv = EC_SUCCESS;
 
 	CPRINTS("C%d FAULT 0x%02X detected", port, fault);
+
+	if (IS_ENABLED(DEBUG_I2C_FAULT_LAST_WRITE_OP) &&
+	    fault & TCPC_REG_FAULT_STATUS_I2C_INTERFACE_ERR) {
+		if (last_write_op[port].mask == 0)
+			CPRINTS("C%d I2C WR 0x%02X 0x%02X value=0x%X",
+				port,
+				last_write_op[port].addr,
+				last_write_op[port].reg,
+				last_write_op[port].val);
+		else
+			CPRINTS("C%d I2C UP 0x%02X 0x%02X op=%d mask=0x%X",
+				port,
+				last_write_op[port].addr,
+				last_write_op[port].reg,
+				last_write_op[port].mask >> 16,
+				last_write_op[port].mask & 0xFFFF);
+	}
 
 	if (tcpc_config[port].drv->handle_fault)
 		rv = tcpc_config[port].drv->handle_fault(port, fault);
