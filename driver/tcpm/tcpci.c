@@ -1225,7 +1225,12 @@ void tcpci_tcpc_alert(int port)
 		}
 	}
 
-	/* Clear all pending alert bits */
+	/*
+	 * Clear all pending alert bits. Ext first because ALERT.AlertExtended
+	 * is set if any bit of ALERT_EXTENDED is set.
+	 */
+	if (alert_ext)
+		tcpc_write(port, TCPC_REG_ALERT_EXT, alert_ext);
 	if (alert)
 		tcpc_write16(port, TCPC_REG_ALERT, alert);
 
