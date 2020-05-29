@@ -129,8 +129,9 @@ int flash_physical_protect_now(int all)
 		return EC_SUCCESS;
 	}
 
-	/* No way to protect just the RO flash until next boot */
-	return EC_ERROR_INVAL;
+	disable_flash_option_bytes();
+
+	return EC_SUCCESS;
 }
 
 uint32_t flash_physical_get_valid_flags(void)
