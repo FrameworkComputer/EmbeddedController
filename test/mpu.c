@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include "mpu.h"
 #include "mpu_private.h"
+#include "system.h"
 #include "test_util.h"
 
 struct mpu_info {
@@ -156,17 +157,32 @@ test_static int test_mpu_protect_code_ram(void)
 
 void run_test(void)
 {
+	enum ec_image cur_image = system_get_image_copy();
+
 	ccprintf("Running MPU test\n");
+
 	RUN_TEST(reset_mpu);
 	RUN_TEST(test_mpu_info);
-	RUN_TEST(reset_mpu);
+
 	/*
 	 * TODO(b/151105339): For all locked regions, check that we cannot
 	 * read/write/execute (depending on the configuration).
 	 */
-	RUN_TEST(test_mpu_lock_ro_flash);
-	RUN_TEST(reset_mpu);
-	RUN_TEST(test_mpu_lock_rw_flash);
+
+	/*
+	 * Since locking prevents code execution, we can only lock the region
+	 * that is not running or the test will hang.
+	 */
+	if (cur_image == EC_IMAGE_RW) {
+		RUN_TEST(reset_mpu);
+		RUN_TEST(test_mpu_lock_ro_flash);
+	}
+
+	if (cur_image == EC_IMAGE_RO) {
+		RUN_TEST(reset_mpu);
+		RUN_TEST(test_mpu_lock_rw_flash);
+	}
+
 	RUN_TEST(reset_mpu);
 	RUN_TEST(test_mpu_update_region_invalid_region);
 	RUN_TEST(reset_mpu);
