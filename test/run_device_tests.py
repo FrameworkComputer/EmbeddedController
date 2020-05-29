@@ -84,7 +84,11 @@ ALL_TESTS = {
     'flash_write_protect':
         TestConfig(name='flash_write_protect', image_to_use=ImageType.RO,
                    toggle_power=True),
-    'mpu':
+    'mpu_ro':
+        TestConfig(name='mpu',
+                   image_to_use=ImageType.RO,
+                   finish_regexes=[DATA_ACCESS_VIOLATION_20000000_REGEX]),
+    'mpu_rw':
         TestConfig(name='mpu',
                    finish_regexes=[DATA_ACCESS_VIOLATION_20000000_REGEX]),
     'mutex':
