@@ -784,6 +784,22 @@ const struct {
 		.name = "HPD_DEGLITCH_H",
 		.addr = ANX7447_REG_HPD_DEGLITCH_H,
 	},
+	{
+		.name = "INTP_SOURCE_0",
+		.addr = ANX7447_REG_INTP_SOURCE_0,
+	},
+	{
+		.name = "INTP_MASK_0",
+		.addr = ANX7447_REG_INTP_MASK_0,
+	},
+	{
+		.name = "INTP_CTRL_0",
+		.addr = ANX7447_REG_INTP_CTRL_0,
+	},
+	{
+		.name = "PAD_INTP_CTRL",
+		.addr = ANX7447_REG_PAD_INTP_CTRL,
+	},
 };
 
 /*
