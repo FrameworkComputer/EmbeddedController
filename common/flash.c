@@ -811,6 +811,17 @@ uint32_t flash_get_protect(void)
 	return flags | flash_physical_get_protect_flags();
 }
 
+/*
+ * Request a flash protection flags change for |mask| flash protect flags
+ * to |flags| state.
+ *
+ * Order of flag processing:
+ * 1. Clear/Set RO_AT_BOOT + Clear *_AT_BOOT flags + Commit *_AT_BOOT flags.
+ * 2. Return if RO_AT_BOOT and HW-WP are not asserted.
+ * 3. Set remaining *_AT_BOOT flags + Commit *_AT_BOOT flags.
+ * 4. Commit RO_NOW.
+ * 5. Commit ALL_NOW.
+ */
 int flash_set_protect(uint32_t mask, uint32_t flags)
 {
 	int retval = EC_SUCCESS;
@@ -842,19 +853,22 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	 * to determine whether to clear protection for the entire flash or
 	 * leave RO protected. There are two cases that we want to keep RO
 	 * protected:
-	 *   1. RO_AT_BOOT was already set before flash_set_protect() is
+	 *   A. RO_AT_BOOT was already set before flash_set_protect() is
 	 *      called.
-	 *   2. RO_AT_BOOT was not set, but it's requested to be set by
+	 *   B. RO_AT_BOOT was not set, but it's requested to be set by
 	 *      the caller of flash_set_protect().
 	 */
 
+	/* 1.a - Clear RO_AT_BOOT. */
 	new_flags_at_boot &= ~(mask & EC_FLASH_PROTECT_RO_AT_BOOT);
+	/* 1.b - Set RO_AT_BOOT. */
 	new_flags_at_boot |= flags & EC_FLASH_PROTECT_RO_AT_BOOT;
 
-	/* Removing ALL must also remove RW/ROLLBACK */
+	/* 1.c - Clear ALL_AT_BOOT. */
 	if ((mask & EC_FLASH_PROTECT_ALL_AT_BOOT) &&
 	    !(flags & EC_FLASH_PROTECT_ALL_AT_BOOT)) {
 		new_flags_at_boot &= ~EC_FLASH_PROTECT_ALL_AT_BOOT;
+		/* Must also clear RW/ROLLBACK. */
 #ifdef CONFIG_FLASH_PROTECT_RW
 		new_flags_at_boot &= ~EC_FLASH_PROTECT_RW_AT_BOOT;
 #endif
@@ -863,23 +877,27 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 #endif
 	}
 
+	/* 1.d - Clear RW_AT_BOOT. */
 #ifdef CONFIG_FLASH_PROTECT_RW
-	/* Removing RW must also remove ALL (otherwise nothing will happen). */
 	if ((mask & EC_FLASH_PROTECT_RW_AT_BOOT) &&
 	    !(flags & EC_FLASH_PROTECT_RW_AT_BOOT)) {
 		new_flags_at_boot &= ~EC_FLASH_PROTECT_RW_AT_BOOT;
+		/* Must also clear ALL (otherwise nothing will happen). */
 		new_flags_at_boot &= ~EC_FLASH_PROTECT_ALL_AT_BOOT;
 	}
 #endif
 
+	/* 1.e - Clear ROLLBACK_AT_BOOT. */
 #ifdef CONFIG_ROLLBACK
 	if ((mask & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) &&
 	    !(flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT)) {
 		new_flags_at_boot &= ~EC_FLASH_PROTECT_ROLLBACK_AT_BOOT;
+		/* Must also remove ALL (otherwise nothing will happen). */
 		new_flags_at_boot &= ~EC_FLASH_PROTECT_ALL_AT_BOOT;
 	}
 #endif
 
+	/* 1.f - Commit *_AT_BOOT "clears" (and RO "set" 1.b). */
 	if (new_flags_at_boot != old_flags_at_boot) {
 		rv = flash_protect_at_boot(new_flags_at_boot);
 		if (rv)
@@ -887,7 +905,8 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 		old_flags_at_boot = new_flags_at_boot;
 	}
 
-	/*
+	/* 2 - Return if RO_AT_BOOT and HW-WP are not asserted.
+	 *
 	 * All subsequent flags only work if write protect is enabled (that is,
 	 * hardware WP flag) *and* RO is protected at boot (software WP flag).
 	 */
@@ -896,36 +915,44 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 		return retval;
 
 	/*
-	 * The case where ALL/RW/ROLLBACK_AT_BOOT is unset is already covered
+	 * 3.a - Set ALL_AT_BOOT.
+	 *
+	 * The case where ALL/RW/ROLLBACK_AT_BOOT is cleared is already covered
 	 * above, so we do not need to mask it out.
 	 */
 	new_flags_at_boot |= flags & EC_FLASH_PROTECT_ALL_AT_BOOT;
 
+	/* 3.b - Set RW_AT_BOOT. */
 #ifdef CONFIG_FLASH_PROTECT_RW
 	new_flags_at_boot |= flags & EC_FLASH_PROTECT_RW_AT_BOOT;
 #endif
 
+	/* 3.c - Set ROLLBACK_AT_BOOT. */
 #ifdef CONFIG_ROLLBACK
 	new_flags_at_boot |= flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT;
 #endif
 
+	/* 3.d - Commit *_AT_BOOT "sets". */
 	if (new_flags_at_boot != old_flags_at_boot) {
 		rv = flash_protect_at_boot(new_flags_at_boot);
 		if (rv)
 			retval = rv;
 	}
 
+	/* 4 - Commit RO_NOW. */
 	if (flags & EC_FLASH_PROTECT_RO_NOW) {
 		rv = flash_physical_protect_now(0);
 		if (rv)
 			retval = rv;
 	}
 
+	/* 5 - Commit ALL_NOW. */
 	if (flags & EC_FLASH_PROTECT_ALL_NOW) {
 		rv = flash_physical_protect_now(1);
 		if (rv)
 			retval = rv;
 	}
+
 	return retval;
 }
 
