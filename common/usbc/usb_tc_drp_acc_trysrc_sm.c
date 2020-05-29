@@ -1408,7 +1408,7 @@ static void handle_new_power_state(int port)
 		if (chipset_in_or_transitioning_to_state(
 					CHIPSET_STATE_ANY_OFF)) {
 			/*
-			 * The SoC will negotiated DP mode again when it
+			 * The SoC will negotiate DP mode again when it
 			 * boots up
 			 */
 			pe_exit_dp_mode(port);
@@ -1418,18 +1418,6 @@ static void handle_new_power_state(int port)
 			 * DP mux, as the chipset is transitioning to OFF.
 			 */
 			set_usb_mux_with_current_data_role(port);
-		} else if (chipset_in_or_transitioning_to_state(
-					CHIPSET_STATE_ON)) {
-			/*
-			 * The following function will restore the USB mux, as
-			 * the chipset is transitioning to ON.
-			 */
-			set_usb_mux_with_current_data_role(port);
-			/*
-			 * Restore the DP mux by entering any previously exited
-			 * alt modes
-			 */
-			pe_dpm_request(port, DPM_REQUEST_PORT_DISCOVERY);
 		}
 	}
 }
@@ -3454,10 +3442,19 @@ static void pd_chipset_startup(void)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		set_usb_mux_with_current_data_role(i);
 		pd_set_dual_role_and_event(i,
 					   PD_DRP_TOGGLE_OFF,
 					   PD_EVENT_UPDATE_DUAL_ROLE
 					   | PD_EVENT_POWER_STATE_CHANGE);
+		/*
+		 * Request port discovery to restore any
+		 * alt modes.
+		 * TODO(b/158042116): Do not start port discovery if there
+		 * is an existing connection.
+		 */
+		if (IS_ENABLED(CONFIG_USB_PE_SM))
+			pe_dpm_request(i, DPM_REQUEST_PORT_DISCOVERY);
 	}
 
 	CPRINTS("PD:S5->S3");
