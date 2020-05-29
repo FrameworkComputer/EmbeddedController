@@ -39,6 +39,7 @@
 /* Masks for power signals */
 #define IN_POWER_GOOD		POWER_SIGNAL_MASK(SC7180_POWER_GOOD)
 #define IN_AP_RST_ASSERTED	POWER_SIGNAL_MASK(SC7180_AP_RST_ASSERTED)
+#define IN_SUSPEND		POWER_SIGNAL_MASK(SC7180_AP_SUSPEND)
 
 
 /* Long power key press to force shutdown */
@@ -807,8 +808,18 @@ enum power_state power_handle_state(enum power_state state)
 			CPRINTS("power off %d", value);
 			return POWER_S3S5;
 		}
-		/* Go to S3S0 directly, as don't know if it is in suspend */
-		return POWER_S3S0;
+
+		/*
+		 * AP has woken up and it deasserts the suspend signal;
+		 * go to S0.
+		 *
+		 * TODO(b/148149387): Add the hang detection that waits for a
+		 * host event before transits the state. It prevents changing
+		 * the state for modem paging.
+		 */
+		if (!(power_get_signals() & IN_SUSPEND))
+			return POWER_S3S0;
+		break;
 
 	case POWER_S3S0:
 		hook_notify(HOOK_CHIPSET_RESUME);
@@ -816,7 +827,8 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0:
 		shutdown_from_s0 = check_for_power_off_event();
-		if (shutdown_from_s0)
+		if (shutdown_from_s0 ||
+		    power_get_signals() & IN_SUSPEND)
 			return POWER_S0S3;
 		break;
 
