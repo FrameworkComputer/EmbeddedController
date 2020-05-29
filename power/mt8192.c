@@ -323,9 +323,6 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S5G3;
 		}
 
-		GPIO_SET_LEVEL(GPIO_EN_PP1800_U, 1);
-		GPIO_SET_LEVEL(GPIO_EN_PP3300_U, 1);
-
 		/* Release AP reset and waits for AP pulling WDT up. */
 		power_signal_enable_interrupt(GPIO_AP_EC_WATCHDOG_L);
 		GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 1);
@@ -405,9 +402,6 @@ enum power_state power_handle_state(enum power_state state)
 			GPIO_SET_LEVEL(GPIO_EC_PMIC_WATCHDOG_L, 0);
 		}
 		power_signal_disable_interrupt(GPIO_AP_EC_WATCHDOG_L);
-
-		GPIO_SET_LEVEL(GPIO_EN_PP1800_U, 0);
-		GPIO_SET_LEVEL(GPIO_EN_PP3300_U, 0);
 
 		/* Call hooks after we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);

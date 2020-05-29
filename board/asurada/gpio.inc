@@ -55,8 +55,6 @@ GPIO_INT(X_EC_GPIO2,         PIN(B, 2), GPIO_ODR_HIGH, x_ec_interrupt)
 /* Power Sequencing Signals */
 GPIO(EC_PMIC_EN_ODL,         PIN(D, 0), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
 GPIO(EC_PMIC_WATCHDOG_L,     PIN(H, 0), GPIO_ODR_LOW | GPIO_SEL_1P8V)
-GPIO(EN_PP1800_U,            PIN(D, 7), GPIO_OUT_LOW)
-GPIO(EN_PP3300_U,            PIN(G, 3), GPIO_OUT_LOW)
 /* b/154775121: default on, because PPCs need the PP5000 to init in G3. */
 GPIO(EN_PP5000_A,            PIN(C, 6), GPIO_OUT_HIGH)
 GPIO(PG_MT6315_PROC_ODL,     PIN(E, 1), GPIO_INPUT)
