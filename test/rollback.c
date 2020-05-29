@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include "flash.h"
 #include "mpu.h"
+#include "string.h"
 #include "test_util.h"
 
 struct rollback_info {
@@ -93,32 +94,33 @@ test_static int _test_lock_rollback(const struct rollback_info *info,
 
 test_static int test_lock_rollback_region_0(void)
 {
+	/* This call should never return due to panic. */
 	return _test_lock_rollback(&rollback_info, 0);
 }
 
 test_static int test_lock_rollback_region_1(void)
 {
+	/* This call should never return due to panic. */
 	return _test_lock_rollback(&rollback_info, 1);
-}
-
-test_static int test_lock_rollback(void)
-{
-	/* This call should never return due to panic.
-	 * TODO(b/156112448): For now you have to manually test each region
-	 * by itself.
-	 */
-	test_lock_rollback_region_0();
-
-#if 0
-	test_lock_rollback_region_1();
-#endif
-
-	return EC_ERROR_UNKNOWN;
 }
 
 void run_test(int argc, char **argv)
 {
+	if (argc < 2) {
+		ccprintf("usage: runtest [region0|region1]\n");
+		return;
+	}
+
 	ccprintf("Running rollback test\n");
-	RUN_TEST(test_lock_rollback);
+
+	/*
+	 * TODO(b/156112448): For now you have to run the test separately for
+	 * each region.
+	 */
+	if (strncmp(argv[1], "region0", 7) == 0)
+		RUN_TEST(test_lock_rollback_region_0);
+	else if (strncmp(argv[1], "region1", 7) == 0)
+		RUN_TEST(test_lock_rollback_region_1);
+
 	test_print_result();
 }

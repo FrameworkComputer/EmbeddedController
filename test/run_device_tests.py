@@ -36,6 +36,8 @@ SINGLE_CHECK_FAILED_REGEX = re.compile(r'.*failed:.*')
 
 DATA_ACCESS_VIOLATION_8020000_REGEX = re.compile(
     r'Data access violation, mfar = 8020000\r\n')
+DATA_ACCESS_VIOLATION_8040000_REGEX = re.compile(
+    r'Data access violation, mfar = 8040000\r\n')
 DATA_ACCESS_VIOLATION_20000000_REGEX = re.compile(
     r'Data access violation, mfar = 20000000\r\n')
 
@@ -98,9 +100,14 @@ ALL_TESTS = {
         TestConfig(name='mutex'),
     'pingpong':
         TestConfig(name='pingpong'),
-    'rollback':
+    'rollback_region0':
         TestConfig(name='rollback', finish_regexes=[
-            DATA_ACCESS_VIOLATION_8020000_REGEX]),
+            DATA_ACCESS_VIOLATION_8020000_REGEX],
+                   test_args=['region0']),
+    'rollback_region1':
+        TestConfig(name='rollback', finish_regexes=[
+            DATA_ACCESS_VIOLATION_8040000_REGEX],
+                   test_args=['region1']),
     'rollback_entropy':
         TestConfig(name='rollback_entropy', image_to_use=ImageType.RO),
     'rtc':
