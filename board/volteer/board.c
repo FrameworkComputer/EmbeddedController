@@ -63,9 +63,20 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 __override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
 {
-	/* Routing length exceeds 205mm prior to connection to re-timer */
-	if (port == USBC_PORT_C1)
-		return TBT_SS_U32_GEN1_GEN2;
+	enum usb_db_id usb_db_type = get_usb_db_type();
+
+	if (port == USBC_PORT_C1) {
+		if (usb_db_type == USB_DB_USB4_GEN2) {
+			/*
+			 * Older boards violate 205mm trace length prior
+			 * to connection to the re-timer and only support up
+			 * to GEN2 speeds.
+			 */
+			return TBT_SS_U32_GEN1_GEN2;
+		} else if (usb_db_type == USB_DB_USB4_GEN3) {
+			return TBT_SS_TBT_GEN3;
+		}
+	}
 
 	/*
 	 * Thunderbolt-compatible mode not supported
@@ -78,13 +89,18 @@ __override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
 
 __override bool board_is_tbt_usb4_port(int port)
 {
+	enum usb_db_id usb_db_type = get_usb_db_type();
+
 	/*
-	 * On Proto-1 only Port 1 supports TBT & USB4
+	 * Volteer reference design only supports TBT & USB4 on port 1
+	 * if the USB4 DB is present.
 	 *
 	 * TODO (b/147732807): All the USB-C ports need to support same
 	 * features. Need to fix once USB-C feature set is known for Volteer.
 	 */
-	return port == USBC_PORT_C1;
+	return ((port == USBC_PORT_C1)
+		&& ((usb_db_type == USB_DB_USB4_GEN2)
+			|| (usb_db_type == USB_DB_USB4_GEN3)));
 }
 
 /******************************************************************************/

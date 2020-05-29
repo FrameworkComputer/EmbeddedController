@@ -588,6 +588,11 @@ uint8_t get_board_id(void)
 	return board_id;
 }
 
+enum usb_db_id get_usb_db_type(void)
+{
+	return usb_db_type;
+}
+
 uint32_t get_fw_config(void)
 {
 	return fw_config;
@@ -606,6 +611,7 @@ __overridable void config_volteer_gpios(void)
 {
 }
 
+static const char *db_type_prefix = "USB DB type: ";
 /*
  * Read CBI from i2c eeprom and initialize variables for board variants
  *
@@ -631,7 +637,7 @@ static void cbi_init(void)
 	/* FW config */
 	if (cbi_get_fw_config(&cbi_val) != EC_SUCCESS) {
 		CPRINTS("CBI: Read FW config failed, assuming USB4");
-		usb_db_val = USB_DB_USB4;
+		usb_db_val = USB_DB_USB4_GEN2;
 	} else {
 		fw_config = cbi_val;
 		usb_db_val = CBI_FW_CONFIG_USB_DB_TYPE(cbi_val);
@@ -639,17 +645,20 @@ static void cbi_init(void)
 
 	switch (usb_db_val) {
 	case USB_DB_NONE:
-		CPRINTS("Daughterboard type: None");
+		CPRINTS("%sNone", db_type_prefix);
 		break;
-	case USB_DB_USB4:
-		CPRINTS("Daughterboard type: USB4");
+	case USB_DB_USB4_GEN2:
+		CPRINTS("%sUSB4 Gen1/2", db_type_prefix);
+		break;
+	case USB_DB_USB4_GEN3:
+		CPRINTS("%sUSB4 Gen3", db_type_prefix);
 		break;
 	case USB_DB_USB3:
 		config_db_usb3();
-		CPRINTS("Daughterboard type: USB3");
+		CPRINTS("%sUSB3", db_type_prefix);
 		break;
 	default:
-		CPRINTS("Daughterboard ID %d not supported", usb_db_val);
+		CPRINTS("%sID %d not supported", db_type_prefix, usb_db_val);
 		usb_db_val = USB_DB_NONE;
 	}
 	usb_db_type = usb_db_val;
