@@ -141,8 +141,6 @@ static void trackpoint_reset_deferred(void)
 	msleep(2);
 	gpio_set_level(GPIO_EC_PS2_RESET, 0);
 	msleep(10);
-	ps2_enable_channel(NPCX_PS2_CH0, 1, send_aux_data_to_host);
-	msleep(10);
 }
 DECLARE_DEFERRED(trackpoint_reset_deferred);
 
@@ -291,6 +289,8 @@ void setup_fw_config(void)
 
 	/* Enable PS2 power interrupts */
 	gpio_enable_interrupt(GPIO_EN_PWR_TOUCHPAD_PS2);
+
+	ps2_enable_channel(NPCX_PS2_CH0, 1, send_aux_data_to_host);
 
 	setup_mux();
 
