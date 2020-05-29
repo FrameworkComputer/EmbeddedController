@@ -19,16 +19,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define ANX7447_VENDOR_ALERT    BIT(15)
-
-#define ANX7447_REG_STATUS      0x82
-#define ANX7447_REG_STATUS_LINK BIT(0)
-
-#define ANX7447_REG_HPD         0x83
-#define ANX7447_REG_HPD_HIGH    BIT(0)
-#define ANX7447_REG_HPD_IRQ     BIT(1)
-#define ANX7447_REG_HPD_ENABLE  BIT(2)
-
 #define vsafe5v_min (3800/25)
 #define vsafe0v_max (800/25)
 /*
@@ -411,25 +401,6 @@ static int anx7447_release(int port)
 	return EC_SUCCESS;
 }
 
-static void anx7447_update_hpd_enable(int port)
-{
-	int status, reg, rv;
-
-	rv = tcpc_read(port, ANX7447_REG_STATUS, &status);
-	rv |= tcpc_read(port, ANX7447_REG_HPD, &reg);
-	if (rv)
-		return;
-
-	if (!(reg & ANX7447_REG_HPD_ENABLE) ||
-	    !(status & ANX7447_REG_STATUS_LINK)) {
-		reg &= ~ANX7447_REG_HPD_IRQ;
-		tcpc_write(port, ANX7447_REG_HPD,
-			   (status & ANX7447_REG_STATUS_LINK)
-			   ? reg | ANX7447_REG_HPD_ENABLE
-			   : reg & ~ANX7447_REG_HPD_ENABLE);
-	}
-}
-
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 static int anx7447_get_vbus_voltage(int port)
 {
@@ -467,14 +438,8 @@ int anx7447_board_charging_enable(int port, int enable)
 
 static void anx7447_tcpc_alert(int port)
 {
-	int alert, rv;
-
-	rv = tcpc_read16(port, TCPC_REG_ALERT, &alert);
 	/* process and clear alert status */
 	tcpci_tcpc_alert(port);
-
-	if (!rv && (alert & ANX7447_VENDOR_ALERT))
-		anx7447_update_hpd_enable(port);
 }
 
 /*
@@ -742,11 +707,6 @@ static int anx7447_set_polarity(int port,
 #ifdef CONFIG_CMD_TCPC_DUMP
 static const struct tcpc_reg_dump_map anx7447_regs[] = {
 	{
-		.addr = ANX7447_REG_STATUS,
-		.name = "ANX7447_STATUS",
-		.size = 1,
-	},
-	{
 		.addr = ANX7447_REG_ADC_CTRL_1,
 		.name = "ADC_CTRL_1",
 		.size = 1,
@@ -772,10 +732,6 @@ const struct {
 	const char *name;
 	uint8_t addr;
 } anx7447_alt_regs[] = {
-	{
-		.addr = ANX7447_REG_HPD,
-		.name = "HPD",
-	},
 	{
 		.name = "HPD_CTRL_0",
 		.addr = ANX7447_REG_HPD_CTRL_0,
