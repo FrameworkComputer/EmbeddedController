@@ -462,6 +462,8 @@ static struct policy_engine {
 	int32_t vpd_vdo;
 	/* Alternate mode discovery results */
 	struct pd_discovery discovery[DISCOVERY_TYPE_COUNT];
+	/* Alternate mode object position */
+	int8_t alt_opos;
 
 	/* Partner type to send */
 	enum tcpm_transmit_type tx_type;
@@ -1014,12 +1016,22 @@ void pe_exit_dp_mode(int port)
 		if (opos <= 0)
 			return;
 
+		/*
+		 * TODO: Delay deleting the data until after the
+		 * the EXIT_MODE message is sent.
+		 * Unfortunately the callers of this function expect
+		 * the mode to be cleaned up before return.
+		 */
 		CPRINTS("C%d Exiting DP mode", port);
 		if (!pd_dfp_exit_mode(port, USB_SID_DISPLAYPORT, opos))
 			return;
 
-		pd_send_vdm(port, USB_SID_DISPLAYPORT,
-				CMD_EXIT_MODE | VDO_OPOS(opos), NULL, 0);
+		/*
+		 * Save the opos to be used with the message.
+		 * Request a message to be sent to exit the mode.
+		 */
+		pe[port].alt_opos = opos;
+		pe_dpm_request(port, DPM_REQUEST_EXIT_DP_MODE);
 	}
 }
 
@@ -1092,6 +1104,26 @@ static bool common_src_snk_dpm_requests(int port)
 			pe[port].discover_identity_timer = get_time().val +
 						PD_T_DISCOVER_IDENTITY;
 		}
+		return true;
+	} else if (PE_CHK_DPM_REQUEST(port,
+				     DPM_REQUEST_EXIT_DP_MODE)) {
+		PE_CLR_DPM_REQUEST(port,
+					DPM_REQUEST_EXIT_DP_MODE);
+		/*
+		 * Init VDM CMD_EXIT_MODE message.
+		 * alt_opos must be set with the opos to be sent.
+		 */
+		pe[port].vdm_data[0] = VDO(
+					USB_SID_DISPLAYPORT,
+					1, /* structured */
+					VDO_SVDM_VERS(
+					    pd_get_vdo_ver(port, TCPC_TX_SOP)) |
+					VDO_OPOS(pe[port].alt_opos) |
+					VDO_CMDT(CMDT_INIT) |
+					CMD_EXIT_MODE);
+		pe[port].vdm_cnt = 1;
+
+		set_state_pe(port, PE_VDM_REQUEST);
 		return true;
 	}
 
