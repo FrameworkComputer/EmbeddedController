@@ -170,6 +170,26 @@ void tc_reset_support_timer(int port)
 	tc[port].support_timer_reset |= SUPPORT_TIMER_RESET_REQUEST;
 }
 
+/*
+ * TCPC CC/Rp management
+ *
+ * Stub for linking purposes.
+ * This is not supported for ctvpd, we are never the SOP partner.
+ */
+void typec_select_pull(int port, enum tcpc_cc_pull pull)
+{
+}
+void typec_select_src_current_limit_rp(int port, enum tcpc_rp_value rp)
+{
+}
+void typec_select_src_collision_rp(int port, enum tcpc_rp_value rp)
+{
+}
+int typec_update_cc(int port)
+{
+	return EC_SUCCESS;
+}
+
 void tc_state_init(int port)
 {
 	int res = 0;

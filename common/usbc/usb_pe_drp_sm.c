@@ -840,6 +840,16 @@ static void pe_set_frs_enable(int port, int enable)
 }
 #endif /* CONFIG_USB_PD_REV30 */
 
+void pe_set_explicit_contract(int port)
+{
+	PE_SET_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
+	pd_update_saved_port_flags(port, PD_BBRMFLG_EXPLICIT_CONTRACT, 1);
+
+	/* Set Rp for collision avoidance */
+	if (IS_ENABLED(CONFIG_USB_PD_REV30))
+		typec_update_cc(port);
+}
+
 void pe_invalidate_explicit_contract(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_REV30))
@@ -847,6 +857,10 @@ void pe_invalidate_explicit_contract(int port)
 
 	PE_CLR_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
 	pd_update_saved_port_flags(port, PD_BBRMFLG_EXPLICIT_CONTRACT, 0);
+
+	/* Set Rp for current limit */
+	if (IS_ENABLED(CONFIG_USB_PD_REV30))
+		typec_update_cc(port);
 }
 
 /*
@@ -1873,9 +1887,8 @@ static void pe_src_transition_supply_run(int port)
 			PE_CLR_FLAG(port, PE_FLAGS_PS_READY);
 			/* NOTE: Second pass through this code block */
 			/* Explicit Contract is now in place */
-			PE_SET_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
-			pd_update_saved_port_flags(port,
-				PD_BBRMFLG_EXPLICIT_CONTRACT, 1);
+			pe_set_explicit_contract(port);
+
 			/*
 			 * Set first message flag to trigger a wait and add
 			 * jitter delay when operating in PD2.0 mode.
@@ -2512,9 +2525,7 @@ static void pe_snk_select_capability_run(int port)
 			 */
 			if (type == PD_CTRL_ACCEPT) {
 				/* explicit contract is now in place */
-				PE_SET_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
-				pd_update_saved_port_flags(port,
-					PD_BBRMFLG_EXPLICIT_CONTRACT, 1);
+				pe_set_explicit_contract(port);
 
 				set_state_pe(port, PE_SNK_TRANSITION_SINK);
 

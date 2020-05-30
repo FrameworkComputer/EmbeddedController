@@ -483,7 +483,13 @@ static void prl_init(int port)
 	int i;
 	const struct sm_ctx cleared = {};
 
+	/*
+	 * flags without PRL_FLAGS_SINK_NG present means we are initially
+	 * in SinkTxOK state
+	 */
 	prl_tx[port].flags = 0;
+	if (IS_ENABLED(CONFIG_USB_PD_REV30))
+		typec_select_src_collision_rp(port, SINK_TX_OK);
 	prl_tx[port].last_xmit_type = TCPC_TX_SOP;
 	prl_tx[port].xmit_status = TCPC_TX_UNSET;
 
@@ -757,8 +763,8 @@ static void prl_tx_wait_for_message_request_run(const int port)
 	if (IS_ENABLED(CONFIG_USB_PD_REV30) && !pe_in_local_ams(port)) {
 		/* Note PRL_Tx_Src_Sink_Tx is embedded here. */
 		if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_SINK_NG)) {
-			tcpm_select_rp_value(port, SINK_TX_OK);
-			tcpm_set_cc(port, TYPEC_CC_RP);
+			typec_select_src_collision_rp(port, SINK_TX_OK);
+			typec_update_cc(port);
 		}
 		PRL_TX_CLR_FLAG(port,
 				PRL_FLAGS_SINK_NG | PRL_FLAGS_WAIT_SINK_OK);
@@ -852,8 +858,8 @@ static void prl_tx_src_source_tx_entry(const int port)
 	print_current_prl_tx_state(port);
 
 	/* Set Rp = SinkTxNG */
-	tcpm_select_rp_value(port, SINK_TX_NG);
-	tcpm_set_cc(port, TYPEC_CC_RP);
+	typec_select_src_collision_rp(port, SINK_TX_NG);
+	typec_update_cc(port);
 }
 
 static void prl_tx_src_source_tx_run(const int port)

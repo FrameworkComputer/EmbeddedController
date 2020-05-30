@@ -72,6 +72,27 @@ static const char * const tc_state_names[] = {
 /* Forward declare private, common functions */
 static void set_state_tc(const int port, enum usb_tc_state new_state);
 
+/*
+ * TCPC CC/Rp management
+ *
+ * Stub for linking purposes.
+ * This is not supported for vpd, it uses a different mechanism to update
+ * cc values.
+ */
+void typec_select_pull(int port, enum tcpc_cc_pull pull)
+{
+}
+void typec_select_src_current_limit_rp(int port, enum tcpc_rp_value rp)
+{
+}
+void typec_select_src_collision_rp(int port, enum tcpc_rp_value rp)
+{
+}
+int typec_update_cc(int port)
+{
+	return EC_SUCCESS;
+}
+
 /* Public TypeC functions */
 
 void tc_state_init(int port)
