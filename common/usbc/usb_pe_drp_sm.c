@@ -216,6 +216,7 @@ enum usb_pe_state {
 	PE_DRS_SEND_SWAP,
 	PE_PRS_SRC_SNK_EVALUATE_SWAP,
 	PE_PRS_SRC_SNK_TRANSITION_TO_OFF,
+	PE_PRS_SRC_SNK_ASSERT_RD,
 	PE_PRS_SRC_SNK_WAIT_SOURCE_ON,
 	PE_PRS_SRC_SNK_SEND_SWAP,
 	PE_PRS_SNK_SRC_EVALUATE_SWAP,
@@ -306,6 +307,7 @@ static const char * const pe_state_names[] = {
 	[PE_DRS_SEND_SWAP] = "PE_DRS_Send_Swap",
 	[PE_PRS_SRC_SNK_EVALUATE_SWAP] = "PE_PRS_SRC_SNK_Evaluate_Swap",
 	[PE_PRS_SRC_SNK_TRANSITION_TO_OFF] = "PE_PRS_SRC_SNK_Transition_To_Off",
+	[PE_PRS_SRC_SNK_ASSERT_RD] = "PE_PRS_SRC_SNK_Assert_Rd",
 	[PE_PRS_SRC_SNK_WAIT_SOURCE_ON] = "PE_PRS_SRC_SNK_Wait_Source_On",
 	[PE_PRS_SRC_SNK_SEND_SWAP] = "PE_PRS_SRC_SNK_Send_Swap",
 	[PE_PRS_SNK_SRC_EVALUATE_SWAP] = "PE_PRS_SNK_SRC_Evaluate_Swap",
@@ -3484,8 +3486,9 @@ static void pe_prs_src_snk_transition_to_off_entry(int port)
 {
 	print_current_state(port);
 
-	/* Tell TypeC to swap from Attached.SRC to Attached.SNK */
-	tc_prs_src_snk_assert_rd(port);
+	/* Tell TypeC to power off the source */
+	tc_src_power_off(port);
+
 	pe[port].ps_source_timer =
 			get_time().val + PD_POWER_SUPPLY_TURN_OFF_DELAY;
 }
@@ -3493,9 +3496,24 @@ static void pe_prs_src_snk_transition_to_off_entry(int port)
 static void pe_prs_src_snk_transition_to_off_run(int port)
 {
 	/* Give time for supply to power off */
-	if (get_time().val < pe[port].ps_source_timer)
-		return;
+	if (get_time().val > pe[port].ps_source_timer &&
+	    tcpm_check_vbus_level(port, VBUS_SAFE0V))
+		set_state_pe(port, PE_PRS_SRC_SNK_ASSERT_RD);
+}
 
+/**
+ * PE_PRS_SRC_SNK_Assert_Rd
+ */
+static void pe_prs_src_snk_assert_rd_entry(int port)
+{
+	print_current_state(port);
+
+	/* Tell TypeC to swap from Attached.SRC to Attached.SNK */
+	tc_prs_src_snk_assert_rd(port);
+}
+
+static void pe_prs_src_snk_assert_rd_run(int port)
+{
 	/* Wait until Rd is asserted */
 	if (tc_is_attached_snk(port)) {
 		/* Contract is invalid */
@@ -5812,6 +5830,10 @@ static const struct usb_state pe_states[] = {
 	[PE_PRS_SRC_SNK_TRANSITION_TO_OFF] = {
 		.entry = pe_prs_src_snk_transition_to_off_entry,
 		.run   = pe_prs_src_snk_transition_to_off_run,
+	},
+	[PE_PRS_SRC_SNK_ASSERT_RD] = {
+		.entry = pe_prs_src_snk_assert_rd_entry,
+		.run   = pe_prs_src_snk_assert_rd_run,
 	},
 	[PE_PRS_SRC_SNK_WAIT_SOURCE_ON] = {
 		.entry = pe_prs_src_snk_wait_source_on_entry,

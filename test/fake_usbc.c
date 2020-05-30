@@ -120,6 +120,9 @@ void tc_prs_src_snk_assert_rd(int port)
 	attached_src = 0;
 }
 
+void tc_src_power_off(int port)
+{}
+
 void tc_set_timeout(int port, uint64_t timeout)
 {}
 
