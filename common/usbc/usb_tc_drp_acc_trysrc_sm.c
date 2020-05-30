@@ -950,6 +950,7 @@ static bool tc_perform_src_hard_reset(int port)
 	case PS_STATE1:
 		/* Enable VBUS */
 		pd_set_power_supply_ready(port);
+		tcpm_set_cc(port, TYPEC_CC_RP);
 
 		/* Turn off VCONN */
 		set_vconn(port, 1);
@@ -2134,14 +2135,10 @@ static void tc_unoriented_dbg_acc_src_entry(const int port)
 		tc_set_power_role(port, PD_ROLE_SOURCE);
 		tcpm_set_msg_header(port,
 				tc[port].power_role, tc[port].data_role);
-		/*
-		 * Both CC1 and CC2 pins shall be independently terminated to
-		 * pulled up through Rp.
-		 */
-		tcpm_select_rp_value(port, CONFIG_USB_PD_PULLUP);
 
 		/* Enable VBUS */
 		pd_set_power_supply_ready(port);
+		tcpm_set_cc(port, TYPEC_CC_RP);
 
 		/*
 		 * Maintain VCONN supply state, whether ON or OFF, and its
@@ -2165,6 +2162,7 @@ static void tc_unoriented_dbg_acc_src_entry(const int port)
 				usb_mux_set(port, USB_PD_MUX_NONE,
 				USB_SWITCH_DISCONNECT, tc[port].polarity);
 		}
+		tcpm_set_cc(port, TYPEC_CC_RP);
 
 #ifdef CONFIG_USB_PE_SM
 		tc_enable_pd(port, 0);
@@ -2657,6 +2655,7 @@ static void tc_attached_src_entry(const int port)
 
 		/* Enable VBUS */
 		pd_set_power_supply_ready(port);
+		tcpm_set_cc(port, TYPEC_CC_RP);
 
 		/*
 		 * Maintain VCONN supply state, whether ON or OFF, and its
@@ -2691,6 +2690,7 @@ static void tc_attached_src_entry(const int port)
 				usb_mux_set(port, USB_PD_MUX_NONE,
 				USB_SWITCH_DISCONNECT, tc[port].polarity);
 		}
+		tcpm_set_cc(port, TYPEC_CC_RP);
 
 		tc_enable_pd(port, 0);
 		tc[port].timeout = get_time().val +
@@ -2725,6 +2725,7 @@ static void tc_attached_src_entry(const int port)
 			usb_mux_set(port, USB_PD_MUX_NONE,
 			USB_SWITCH_DISCONNECT, tc[port].polarity);
 	}
+	tcpm_set_cc(port, TYPEC_CC_RP);
 #endif /* CONFIG_USB_PE_SM */
 
 	/* Inform PPC that a sink is connected. */
