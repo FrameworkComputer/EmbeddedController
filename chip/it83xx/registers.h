@@ -815,6 +815,8 @@ enum {
 struct gpio_reg_t {
 	/* GPIO port data register (bit mapping to pin) */
 	uint32_t reg_gpdr;
+	/* GPIO port data mirror register (bit mapping to pin) */
+	uint32_t reg_gpdmr;
 	/* GPIO port output type register (bit mapping to pin) */
 	uint32_t reg_gpotr;
 	/* GPIO port control register (byte mapping to pin) */
@@ -823,29 +825,29 @@ struct gpio_reg_t {
 
 /* GPIO group index convert to GPIO data/output type/ctrl group address */
 static const struct gpio_reg_t gpio_group_to_reg[] = {
-	/*               GPDR,       GPOTR,      GPCR      */
-	[GPIO_A]     = { 0x00F01601, 0x00F01671, 0x00F01610 },
-	[GPIO_B]     = { 0x00F01602, 0x00F01672, 0x00F01618 },
-	[GPIO_C]     = { 0x00F01603, 0x00F01673, 0x00F01620 },
-	[GPIO_D]     = { 0x00F01604, 0x00F01674, 0x00F01628 },
-	[GPIO_E]     = { 0x00F01605, 0x00F01675, 0x00F01630 },
-	[GPIO_F]     = { 0x00F01606, 0x00F01676, 0x00F01638 },
-	[GPIO_G]     = { 0x00F01607, 0x00F01677, 0x00F01640 },
-	[GPIO_H]     = { 0x00F01608, 0x00F01678, 0x00F01648 },
-	[GPIO_I]     = { 0x00F01609, 0x00F01679, 0x00F01650 },
-	[GPIO_J]     = { 0x00F0160a, 0x00F0167a, 0x00F01658 },
-	[GPIO_K]     = { 0x00F0160b, 0x00F0167b, 0x00F01690 },
-	[GPIO_L]     = { 0x00F0160c, 0x00F0167c, 0x00F01698 },
-	[GPIO_M]     = { 0x00F0160d, 0x00F0167d, 0x00F016a0 },
+	/*               GPDR(set),  GPDMR(get), GPOTR,      GPCR      */
+	[GPIO_A]     = { 0x00F01601, 0x00F01661, 0x00F01671, 0x00F01610 },
+	[GPIO_B]     = { 0x00F01602, 0x00F01662, 0x00F01672, 0x00F01618 },
+	[GPIO_C]     = { 0x00F01603, 0x00F01663, 0x00F01673, 0x00F01620 },
+	[GPIO_D]     = { 0x00F01604, 0x00F01664, 0x00F01674, 0x00F01628 },
+	[GPIO_E]     = { 0x00F01605, 0x00F01665, 0x00F01675, 0x00F01630 },
+	[GPIO_F]     = { 0x00F01606, 0x00F01666, 0x00F01676, 0x00F01638 },
+	[GPIO_G]     = { 0x00F01607, 0x00F01667, 0x00F01677, 0x00F01640 },
+	[GPIO_H]     = { 0x00F01608, 0x00F01668, 0x00F01678, 0x00F01648 },
+	[GPIO_I]     = { 0x00F01609, 0x00F01669, 0x00F01679, 0x00F01650 },
+	[GPIO_J]     = { 0x00F0160A, 0x00F0166A, 0x00F0167A, 0x00F01658 },
+	[GPIO_K]     = { 0x00F0160B, 0x00F0166B, 0x00F0167B, 0x00F01690 },
+	[GPIO_L]     = { 0x00F0160C, 0x00F0166C, 0x00F0167C, 0x00F01698 },
+	[GPIO_M]     = { 0x00F0160D, 0x00F0166D, 0x00F0167D, 0x00F016a0 },
 #if defined(CHIP_FAMILY_IT8XXX1) || defined(CHIP_FAMILY_IT8XXX2)
-	[GPIO_O]     = { 0x00F03E01, 0x00F03E71, 0x00F03E10 },
-	[GPIO_P]     = { 0x00F03E02, 0x00F03E72, 0x00F03E18 },
-	[GPIO_Q]     = { 0x00F03E03, 0x00F03E73, 0x00F03E20 },
-	[GPIO_R]     = { 0x00F03E04, 0x00F03E74, 0x00F03E28 },
+	[GPIO_O]     = { 0x00F03E01, 0x00F03E61, 0x00F03E71, 0x00F03E10 },
+	[GPIO_P]     = { 0x00F03E02, 0x00F03E62, 0x00F03E72, 0x00F03E18 },
+	[GPIO_Q]     = { 0x00F03E03, 0x00F03E63, 0x00F03E73, 0x00F03E20 },
+	[GPIO_R]     = { 0x00F03E04, 0x00F03E64, 0x00F03E74, 0x00F03E28 },
 #endif
-	[GPIO_KSI]   = { 0x00F01D09,         -1,         -1 },
-	[GPIO_KSO_H] = { 0x00F01D0C,         -1,         -1 },
-	[GPIO_KSO_L] = { 0x00F01D0F,         -1,         -1 },
+	[GPIO_KSI]   = { 0x00F01D09, 0x00F01D09,         -1,         -1 },
+	[GPIO_KSO_H] = { 0x00F01D0C, 0x00F01D0C,         -1,         -1 },
+	[GPIO_KSO_L] = { 0x00F01D0F, 0x00F01D0F,         -1,         -1 },
 };
 BUILD_ASSERT(ARRAY_SIZE(gpio_group_to_reg) == (COUNT));
 
@@ -853,6 +855,8 @@ BUILD_ASSERT(ARRAY_SIZE(gpio_group_to_reg) == (COUNT));
 
 #define IT83XX_GPIO_DATA(port)                 \
 	REG8(gpio_group_to_reg[port].reg_gpdr)
+#define IT83XX_GPIO_DATA_MIRROR(port)          \
+	REG8(gpio_group_to_reg[port].reg_gpdmr)
 #define IT83XX_GPIO_GPOT(port)                 \
 	REG8(gpio_group_to_reg[port].reg_gpotr)
 #define IT83XX_GPIO_CTRL(port, pin_offset)     \
