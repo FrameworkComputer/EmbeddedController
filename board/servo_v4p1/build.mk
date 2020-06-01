@@ -14,6 +14,6 @@ CHIP_VARIANT:=stm32f07x
 test-list-y=
 
 # These files are compiled into RO and RW
-board-y=board.o
+board-y=board.o tca6416a.o tca6424a.o
 
 all_deps=$(patsubst ro,,$(def_all_deps))
