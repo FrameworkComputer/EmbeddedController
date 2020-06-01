@@ -377,11 +377,10 @@ static struct mutex g_base_mutex;
 static struct bmi_drv_data_t g_bmi160_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
-/* TODO: update the matrix after we have assembled unit */
 static const mat33_fp_t base_standard_ref = {
 	{FLOAT_TO_FP(-1), 0, 0},
-	{0, FLOAT_TO_FP(-1), 0},
-	{0, 0, FLOAT_TO_FP(1)},
+	{0, FLOAT_TO_FP(1), 0},
+	{0, 0, FLOAT_TO_FP(-1)},
 };
 
 /* Matrix to rotate accelrator into standard reference frame */
