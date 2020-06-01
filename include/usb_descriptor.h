@@ -191,7 +191,7 @@ struct usb_endpoint_descriptor {
 #define USB_PROTOCOL_GOOGLE_SERIAL 0x01
 
 #define USB_SUBCLASS_GOOGLE_SPI    0x51
-#define USB_PROTOCOL_GOOGLE_SPI    0x01
+#define USB_PROTOCOL_GOOGLE_SPI    0x02
 
 #define USB_SUBCLASS_GOOGLE_I2C    0x52
 #define USB_PROTOCOL_GOOGLE_I2C    0x01
