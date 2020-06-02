@@ -426,7 +426,7 @@ struct motion_sensor_t motion_sensors[] = {
 		},
 	},
 	[BASE_GYRO] = {
-		.name = "Gyro",
+		.name = "Base Gyro",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
 		.chip = MOTIONSENSE_CHIP_BMI160,
 		.type = MOTIONSENSE_TYPE_GYRO,
@@ -442,7 +442,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.max_frequency = BMI_GYRO_MAX_FREQ,
 	},
 	[BASE_MAG] = {
-		.name = "Lid Mag",
+		.name = "Base Mag",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
 		.chip = MOTIONSENSE_CHIP_BMI160,
 		.type = MOTIONSENSE_TYPE_MAG,
