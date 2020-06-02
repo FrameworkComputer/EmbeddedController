@@ -20,6 +20,7 @@ import tempfile
 JLINK_COMMANDS = '''
 r
 loadfile {FIRMWARE}
+r
 go
 exit
 '''
