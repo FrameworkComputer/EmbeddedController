@@ -99,6 +99,9 @@ static void board_init(void)
 	/* Set PWM of PWRLED to 5%. */
 	pwm_set_duty(PWM_CH_PWRLED, 5);
 	pwm_enable(PWM_CH_PWRLED, 1);
+
+	/* Enable motion sensor interrupt */
+	gpio_enable_interrupt(GPIO_BASE_IMU_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
