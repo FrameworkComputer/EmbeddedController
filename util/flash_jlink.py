@@ -8,9 +8,11 @@
 
 This script requires Segger hardware attached via JTAG/SWD.
 """
+
 import argparse
 import logging
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -67,6 +69,8 @@ def main(argv: list):
     parser = argparse.ArgumentParser()
 
     default_jlink = './JLink_Linux_V670e_x86_64/JLinkExe'
+    if shutil.which(default_jlink) is None:
+        default_jlink = 'JLinkExe'
     parser.add_argument(
         '--jlink', '-j',
         help='JLinkExe path (default: ' + default_jlink + ')',
@@ -108,7 +112,7 @@ def main(argv: list):
     config = BOARD_CONFIGS[args.board]
 
     args.image = os.path.realpath(args.image)
-    args.jlink = os.path.realpath(args.jlink)
+    args.jlink = args.jlink
 
     cmd_file = create_jlink_command_file(args.image)
     flash(args.jlink, args.ip, config.device, config.interface, cmd_file.name)
