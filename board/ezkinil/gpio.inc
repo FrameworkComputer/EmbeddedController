@@ -25,6 +25,7 @@ GPIO_INT(EC_WP_L,		PIN(5, 0), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(VOLDN_BTN_ODL,		PIN(A, 6), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(VOLUP_BTN_ODL,		PIN(9, 5), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(6AXIS_INT_L,		PIN(A, 0), GPIO_INT_FALLING | GPIO_PULL_UP,	bmi160_interrupt)
+GPIO_INT(DP1_HPD_EC_IN,		PIN(7, 5), GPIO_INT_BOTH,			hdmi_hpd_interrupt)
 
 /* GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an interrupt handler. */
 GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
@@ -46,7 +47,7 @@ GPIO(EC_SYS_RST_L,		PIN(C, 7), GPIO_ODR_HIGH)			/* Cold Reset to SOC */
 GPIO(USB_C0_TCPC_RST_L,		PIN(E, 1), GPIO_OUT_HIGH)			/* C0 TCPC Reset */
 GPIO(USB_C1_TCPC_RST_L,		PIN(F, 0), GPIO_OUT_HIGH)			/* C1 TCPC Reset */
 GPIO(USB_C0_HPD,		PIN(F, 5), GPIO_OUT_LOW)			/* C0 DP Hotplug Detect */
-GPIO(DP1_HPD,			PIN(F, 4), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
+GPIO(EC_DP1_HPD,		PIN(F, 4), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
 GPIO(DP2_HPD,			PIN(C, 1), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
 GPIO(EC_H1_PACKET_MODE,		PIN(8, 6), GPIO_OUT_LOW)			/* H1 Packet Mode */
 
@@ -55,7 +56,6 @@ UNIMPLEMENTED(PCH_SMI_L)
 GPIO(LED_FULL_L,		PIN(6, 0), GPIO_OUT_HIGH)
 GPIO(LED_CHRG_L,		PIN(C, 0), GPIO_OUT_HIGH)
 
-IOEX_INT(HDMI_CONN_HPD_3V3_DB,	EXPIN(USBC_PORT_C1, 1, 0), GPIO_INT_BOTH,	hdmi_hpd_interrupt)
 
 IOEX(USB_C0_FAULT_ODL,		EXPIN(USBC_PORT_C0, 0, 3), GPIO_ODR_HIGH)	/* C0 Fault to SOC */
 IOEX(USB_C0_TCPC_FASTSW_CTL_EN,	EXPIN(USBC_PORT_C0, 0, 4), GPIO_OUT_LOW)	/* C0 FastSwitch Control */

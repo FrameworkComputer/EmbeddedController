@@ -306,9 +306,25 @@ void setup_fw_config(void)
 	setup_mux();
 
 	if (ec_config_has_hdmi_conn_hpd())
-		ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
+		gpio_enable_interrupt(GPIO_DP1_HPD_EC_IN);
 }
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
+
+static void hdmi_hpd_handler(void)
+{
+	/* Pass HPD through from DB OPT1 HDMI connector to AP's DP1. */
+	int hpd = gpio_get_level(GPIO_DP1_HPD_EC_IN);
+
+	gpio_set_level(GPIO_DP1_HPD, hpd);
+	ccprints("HDMI HPD %d", hpd);
+}
+DECLARE_DEFERRED(hdmi_hpd_handler);
+
+void hdmi_hpd_interrupt(enum gpio_signal signal)
+{
+	/* Debounce for 2 msec. */
+	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
+}
 
 /*****************************************************************************
  * Fan

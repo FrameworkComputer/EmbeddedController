@@ -353,7 +353,6 @@ void board_reset_pd_mcu(void);
 void tcpc_alert_event(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
 void ppc_interrupt(enum gpio_signal signal);
-void hdmi_hpd_interrupt(enum ioex_signal signal);
 #endif
 
 #ifdef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP

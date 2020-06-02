@@ -194,6 +194,8 @@ extern const struct usb_mux usbc1_tusb544;
 extern const struct usb_mux usbc1_ps8743;
 extern struct usb_mux usbc1_amd_fp5_usb_mux;
 
+void hdmi_hpd_interrupt(enum ioex_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

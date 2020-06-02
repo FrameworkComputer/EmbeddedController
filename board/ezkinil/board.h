@@ -63,6 +63,7 @@
 #define GPIO_VOLUME_UP_L		GPIO_VOLUP_BTN_ODL
 #define GPIO_WP_L			GPIO_EC_WP_L
 #define GPIO_PACKET_MODE_EN		GPIO_EC_H1_PACKET_MODE
+#define GPIO_DP1_HPD			GPIO_EC_DP1_HPD
 
 #ifndef __ASSEMBLER__
 
@@ -189,6 +190,8 @@ static inline bool ec_config_has_hdmi_conn_hpd(void)
 extern const struct usb_mux usbc1_tusb544;
 extern const struct usb_mux usbc1_ps8743;
 extern struct usb_mux usbc1_amd_fp5_usb_mux;
+
+void hdmi_hpd_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

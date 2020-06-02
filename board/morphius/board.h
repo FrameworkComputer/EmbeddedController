@@ -203,6 +203,8 @@ extern const struct usb_mux usbc1_ps8802;
 extern const struct usb_mux usbc1_ps8818;
 extern struct usb_mux usbc1_amd_fp5_usb_mux;
 
+void hdmi_hpd_interrupt(enum ioex_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 
 
