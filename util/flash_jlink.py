@@ -53,13 +53,18 @@ def create_jlink_command_file(firmware_file):
 def flash(jlink_exe, ip, device, interface, cmd_file):
     cmd = [
         jlink_exe,
-        '-ip', ip,
+    ]
+
+    if len(ip) > 0:
+        cmd.extend(['-ip', ip])
+
+    cmd.extend([
         '-device', device,
         '-if', interface,
         '-speed', 'auto',
         '-autoconnect', '1',
-        '-CommandFile', cmd_file
-    ]
+        '-CommandFile', cmd_file,
+        ])
     logging.debug('Running command: "%s"', ' '.join(cmd))
     subprocess.run(cmd)
 
