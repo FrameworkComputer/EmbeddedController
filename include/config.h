@@ -1389,7 +1389,16 @@
 #define CONFIG_CMD_RETIMER
 #undef  CONFIG_CMD_BUTTON
 #define CONFIG_CMD_CBI
-#undef  CONFIG_CMD_CHARGEN
+/*
+ * HAS_TASK_CHIPSET implies the GSC presence.
+ * HAS_TASK_CONSOLE means UART console enabled.
+ * chargen command is needed for UART stress test.
+ */
+#if defined(HAS_TASK_CHIPSET) && defined(HAS_TASK_CONSOLE)
+#define CONFIG_CMD_CHARGEN
+#else
+#undef CONFIG_CMD_CHARGEN
+#endif
 #define CONFIG_CMD_CHARGER
 #undef  CONFIG_CMD_CHARGER_ADC_AMON_BMON
 #undef  CONFIG_CMD_CHARGER_DUMP
