@@ -211,13 +211,6 @@ union tbt_mode_resp_device get_dev_tbt_vdo(int port)
 	return dev_resp;
 }
 
-enum tbt_compat_cable_speed get_tbt_cable_speed(int port)
-{
-	enum tbt_compat_cable_speed cable_speed = 0;
-
-	return cable_speed;
-}
-
 enum tbt_compat_rounded_support get_tbt_rounded_support(int port)
 {
 	enum tbt_compat_rounded_support tbt_round = 0;

@@ -211,12 +211,6 @@ union tbt_mode_resp_device get_dev_tbt_vdo(int port)
 	return cable[port].dev_mode_resp;
 }
 
-enum tbt_compat_cable_speed get_tbt_cable_speed(int port)
-{
-	/* tbt_cable_speed is zero when uninitialized */
-	return cable[port].cable_mode_resp.tbt_cable_speed;
-}
-
 enum tbt_compat_rounded_support get_tbt_rounded_support(int port)
 {
 	/* tbt_rounded_support is zero when uninitialized */
@@ -517,20 +511,6 @@ static enum tcpm_transmit_type get_tcpm_transmit_msg_type(int port)
 	return TCPC_TX_SOP;
 }
 
-static void usb_pd_limit_cable_speed(int port)
-{
-	enum tbt_compat_cable_speed max_tbt_speed =
-				board_get_max_tbt_speed(port);
-
-	/* Cable does not have Intel SVID for Discover SVID */
-	if (is_limit_tbt_cable_speed(port))
-		cable[port].cable_mode_resp.tbt_cable_speed =
-				TBT_SS_U32_GEN1_GEN2;
-
-	if (cable[port].cable_mode_resp.tbt_cable_speed > max_tbt_speed)
-		cable[port].cable_mode_resp.tbt_cable_speed = max_tbt_speed;
-}
-
 static int process_am_discover_svids(int port, int cnt, uint32_t *payload)
 {
 	int prev_svid_cnt = discovery[port].svid_cnt;
@@ -547,7 +527,8 @@ static int process_am_discover_svids(int port, int cnt, uint32_t *payload)
 	 * figure F-1: TBT3 Discovery Flow
 	 *
 	 * For USB4 mode if device or cable doesn't have Intel SVID,
-	 * disable Thunderbolt-Compatible mode directly enter USB4 mode.
+	 * disable Thunderbolt-Compatible mode directly enter USB4 mode
+	 * with USB3.2 Gen1/Gen2 speed.
 	 *
 	 * For Thunderbolt-compatible, check if 0x8087 is received for
 	 * Discover SVID SOP. If not, disable Thunderbolt-compatible mode
@@ -561,8 +542,8 @@ static int process_am_discover_svids(int port, int cnt, uint32_t *payload)
 		if (!intel_svid) {
 			if (is_usb4_mode_enabled(port)) {
 				disable_tbt_compat_mode(port);
-				limit_tbt_cable_speed(port);
-				usb_pd_limit_cable_speed(port);
+				cable[port].cable_mode_resp.tbt_cable_speed =
+					TBT_SS_U32_GEN1_GEN2;
 				enable_enter_usb4_mode(port);
 				usb_mux_set_safe_mode(port);
 				if (is_transmit_msg_sop_prime(port))
@@ -598,9 +579,6 @@ static int process_tbt_compat_discover_modes(int port,
 	if (is_transmit_msg_sop_prime(port)) {
 		/* Store Discover Mode SOP' response */
 		cable[port].cable_mode_resp.raw_value = payload[1];
-
-		/* Limits cable speed if applicable */
-		usb_pd_limit_cable_speed(port);
 
 		/*
 		 * Enter Mode SOP' (Cable Enter Mode) and Enter USB SOP' is

@@ -2038,14 +2038,6 @@ union tbt_mode_resp_cable get_cable_tbt_vdo(int port);
 union tbt_mode_resp_device get_dev_tbt_vdo(int port);
 
 /**
- * Update Mux on entering Thunderbolt-compatible mode
- *
- * @param port USB-C port number
- * @return cable speed
- */
-enum tbt_compat_cable_speed get_tbt_cable_speed(int port);
-
-/**
  * Return Thunderbolt rounded support
  * Rounded support indicates if the cable can support rounding the
  * frequency depending upon the cable generation.
@@ -2099,6 +2091,15 @@ bool is_intel_svid(int port, int prev_svid_cnt);
  *                 false otherwise
  */
 bool is_tbt_compat_mode(int port, int cnt, const uint32_t *payload);
+
+/**
+ * Returns Thunderbolt-compatible cable speed according to the port if,
+ * port supports lesser speed than the cable
+ *
+ * @param port USB-C port number
+ * @return thunderbolt-cable cable speed
+ */
+enum tbt_compat_cable_speed get_tbt_cable_speed(int port);
 
 /*
  * Checks if the cable supports Thunderbolt speed.

@@ -226,7 +226,7 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 		 * 10..11b - Reserved
 		 */
 		*set_retimer_con |= BB_RETIMER_USB4_TBT_CABLE_SPEED_SUPPORT(
-						cable_resp.tbt_cable_speed);
+						get_tbt_cable_speed(port));
 		/*
 		 * Bits 29-28: TBT_GEN_SUPPORT
 		 * 00b - 3rd generation TBT (10.3125 and 20.625Gb/s)
