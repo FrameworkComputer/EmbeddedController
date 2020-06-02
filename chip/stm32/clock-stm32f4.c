@@ -164,7 +164,6 @@ void config_hispeed_clock(void)
 		;
 
 	/* Setup RTC Clock input */
-	STM32_RCC_BDCR |= STM32_RCC_BDCR_BDRST;
 #ifdef CONFIG_STM32_CLOCK_HSE_HZ
 	STM32_RCC_BDCR = STM32_RCC_BDCR_RTCEN | BDCR_RTCSEL(BDCR_SRC_HSE);
 #else
