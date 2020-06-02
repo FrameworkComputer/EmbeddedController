@@ -34,10 +34,10 @@ DRAGONCLAW_CONFIG = BoardConfig(interface=SWD_INTERFACE, device='STM32F412CG')
 ICETOWER_CONFIG = BoardConfig(interface=SWD_INTERFACE, device='STM32H743ZI')
 
 BOARD_CONFIGS = {
-  'dragonclaw': DRAGONCLAW_CONFIG,
-  'bloonchipper': DRAGONCLAW_CONFIG,
-  'dartmonkey': ICETOWER_CONFIG,
-  'icetower': ICETOWER_CONFIG,
+    'dragonclaw': DRAGONCLAW_CONFIG,
+    'bloonchipper': DRAGONCLAW_CONFIG,
+    'dartmonkey': ICETOWER_CONFIG,
+    'icetower': ICETOWER_CONFIG,
 }
 
 
@@ -50,19 +50,20 @@ def create_jlink_command_file(firmware_file):
 
 def flash(jlink_exe, ip, device, interface, cmd_file):
     cmd = [
-      jlink_exe,
-      '-ip', ip,
-      '-device', device,
-      '-if', interface,
-      '-speed', 'auto',
-      '-autoconnect', '1',
-      '-CommandFile', cmd_file
+        jlink_exe,
+        '-ip', ip,
+        '-device', device,
+        '-if', interface,
+        '-speed', 'auto',
+        '-autoconnect', '1',
+        '-CommandFile', cmd_file
     ]
     logging.debug('Running command: "%s"', ' '.join(cmd))
     subprocess.run(cmd)
 
 
-def main():
+def main(argv: list):
+
     parser = argparse.ArgumentParser()
 
     default_jlink = './JLink_Linux_V670e_x86_64/JLinkExe'
@@ -97,7 +98,7 @@ def main():
         default='DEBUG'
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     logging.basicConfig(level=args.log_level)
 
     if args.board not in BOARD_CONFIGS:
@@ -115,4 +116,4 @@ def main():
 
 
 if __name__ == '__main__':
-  sys.exit(main())
+    sys.exit(main(sys.argv[1:]))
