@@ -27,7 +27,7 @@ test_static int test_scratchpad(void)
 	return EC_SUCCESS;
 }
 
-void run_test(void)
+void run_test(int argc, char **argv)
 {
 	RUN_TEST(test_scratchpad);
 	test_print_result();
