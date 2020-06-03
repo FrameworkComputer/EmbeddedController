@@ -25,6 +25,7 @@ GPIO(POE_LTC_PGOOD,		PIN(C, 5), GPIO_INPUT)				/* PoE power good */
 GPIO(PSE_PWM_INT,		PIN(3, 7), GPIO_INPUT)				/* PoE LTC interrupt */
 GPIO(V3P3A_I350_PG,		PIN(4, 4), GPIO_INPUT)				/* Disconnected */
 GPIO(USB_C0_VBUS_DET_L,		PIN(9, 7), GPIO_INPUT)				/* USB-C VBUS */
+GPIO(USB_C0_POL_L,		PIN(C, 2), GPIO_INPUT)				/* USB-C Polarity */
 
 GPIO(PCH_RTCRST,		PIN(E, 7), GPIO_OUT_LOW)			/* RTCRST# to SOC */
 GPIO(WLAN_OFF_L,		PIN(7, 2), GPIO_OUT_LOW)			/* Disable WLAN */
@@ -41,6 +42,7 @@ GPIO(CCD_MODE_ODL,		PIN(6, 3), GPIO_INPUT)				/* Case Closed Debug Mode */
 GPIO(EC_HAVEN_RESET_ODL,	PIN(0, 2), GPIO_ODR_HIGH)			/* H1 Reset */
 GPIO(ENTERING_RW,		PIN(7, 6), GPIO_OUTPUT)				/* EC Entering RW */
 GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT)				/* PMIC interrupt */
+GPIO(EC_RST_LTC4291_L,		PIN(9, 4), GPIO_OUT_HIGH)			/* PSE controller reset */
 
 GPIO(POWER_RATE,		PIN(7, 1), GPIO_INPUT)				/* High: i3/5/7. Low: Celeron */
 GPIO(PP3300_USB_PD_EN,		PIN(6, 7), GPIO_OUT_HIGH)                       /* Initialize PP3300_USB_PD_EN as output high */
@@ -75,7 +77,6 @@ GPIO(PP3300_TPU_EN,		PIN(0, 1), GPIO_OUT_HIGH)			/* TPU 3.3V enable */
 GPIO(USB_C0_CHARGE_L,		PIN(C, 0), GPIO_OUT_LOW)			/* C0 Charge enable */
 GPIO(AC_JACK_CHARGE_L,		PIN(C, 3), GPIO_OUT_LOW)			/* AC jack charge enable */
 GPIO(USB_C0_PD_RST_ODL,		PIN(0, 3), GPIO_OUT_LOW)			/* C0 PD Reset */
-GPIO(USB_C0_DP_HPD,		PIN(9, 4), GPIO_INPUT)				/* C0 DP Hotplug Detect */
 GPIO(USB_C0_TCPC_PWR,		PIN(8, 4), GPIO_OUT_LOW)			/* Enable C0 TCPC Power */
 GPIO(TYPE_C_60W,		PIN(3, 3), GPIO_OUTPUT | GPIO_PULL_DOWN)
 GPIO(TYPE_C_65W,		PIN(3, 4), GPIO_OUTPUT | GPIO_PULL_DOWN)
