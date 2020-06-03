@@ -306,7 +306,7 @@ static int init_alert_mask(int port)
 
 		/* Sink FRS allowed */
 		mask = TCPC_REG_ALERT_EXT_SNK_FRS;
-		rv = tcpc_write(port, TCPC_REG_ALERT_EXT, mask);
+		rv = tcpc_write(port, TCPC_REG_ALERT_EXTENDED_MASK, mask);
 	}
 	return rv;
 }
