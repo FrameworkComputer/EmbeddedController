@@ -645,7 +645,7 @@ static void pd_usb_billboard_deferred(void)
 		 * 1. Will we have multiple type-C port UFPs
 		 * 2. Will there be other modes applicable to DFPs besides DP
 		 */
-		if (!pd_alt_mode(0, USB_SID_DISPLAYPORT))
+		if (!pd_alt_mode(0, TCPC_TX_SOP, USB_SID_DISPLAYPORT))
 			usb_connect();
 	}
 }

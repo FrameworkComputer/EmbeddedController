@@ -125,7 +125,7 @@ static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
 
 	switch (p->cmd) {
 	case PD_EXIT_MODE:
-		if (pd_dfp_exit_mode(p->port, p->svid, p->opos))
+		if (pd_dfp_exit_mode(p->port, TCPC_TX_SOP, p->svid, p->opos))
 			pd_send_vdm(p->port, p->svid,
 				    CMD_EXIT_MODE | VDO_OPOS(p->opos), NULL, 0);
 		else {
@@ -134,7 +134,7 @@ static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
 		}
 		break;
 	case PD_ENTER_MODE:
-		if (pd_dfp_enter_mode(p->port, p->svid, p->opos))
+		if (pd_dfp_enter_mode(p->port, TCPC_TX_SOP, p->svid, p->opos))
 			pd_send_vdm(p->port, p->svid, CMD_ENTER_MODE |
 				    VDO_OPOS(p->opos), NULL, 0);
 		break;
@@ -190,10 +190,10 @@ static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
 	r->opos = 0;
 	memcpy(r->vdo, pd_get_mode_vdo(p->port, p->svid_idx, TCPC_TX_SOP),
 		sizeof(uint32_t) * PDO_MODES);
-	modep = pd_get_amode_data(p->port, r->svid);
+	modep = pd_get_amode_data(p->port, TCPC_TX_SOP, r->svid);
 
 	if (modep)
-		r->opos = pd_alt_mode(p->port, r->svid);
+		r->opos = pd_alt_mode(p->port, TCPC_TX_SOP, r->svid);
 
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;

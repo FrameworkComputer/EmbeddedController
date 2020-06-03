@@ -50,33 +50,37 @@ __overridable const struct svdm_response svdm_rsp = {
 	.modes = NULL,
 };
 
-static int pd_get_mode_idx(int port, uint16_t svid)
+static int pd_get_mode_idx(int port, enum tcpm_transmit_type type,
+		uint16_t svid)
 {
-	int i;
-	/* TODO(b/150611251): Support SOP' */
-	struct pd_discovery *disc = pd_get_am_discovery(port, TCPC_TX_SOP);
+	int amode_idx;
+	struct partner_active_modes *active =
+		pd_get_partner_active_modes(port, type);
 
-	for (i = 0; i < PD_AMODE_COUNT; i++) {
-		if (disc->amodes[i].fx &&
-		    (disc->amodes[i].fx->svid == svid))
-			return i;
+	for (amode_idx = 0; amode_idx < PD_AMODE_COUNT; amode_idx++) {
+		if (active->amodes[amode_idx].fx &&
+		    (active->amodes[amode_idx].fx->svid == svid))
+			return amode_idx;
 	}
 	return -1;
 }
 
-static int pd_allocate_mode(int port, uint16_t svid)
+static int pd_allocate_mode(int port, enum tcpm_transmit_type type,
+		uint16_t svid)
 {
 	int i, j;
 	struct svdm_amode_data *modep;
-	int mode_idx = pd_get_mode_idx(port, svid);
-	/* TODO(b/150611251): Support SOP' and SOP'' */
-	struct pd_discovery *disc = pd_get_am_discovery(port, TCPC_TX_SOP);
+	int mode_idx = pd_get_mode_idx(port, type, svid);
+	struct pd_discovery *disc = pd_get_am_discovery(port, type);
+	struct partner_active_modes *active =
+		pd_get_partner_active_modes(port, type);
+	assert(active);
 
 	if (mode_idx != -1)
 		return mode_idx;
 
 	/* There's no space to enter another mode */
-	if (disc->amode_idx == PD_AMODE_COUNT) {
+	if (active->amode_idx == PD_AMODE_COUNT) {
 		CPRINTF("ERR:NO AMODE SPACE\n");
 		return -1;
 	}
@@ -91,16 +95,18 @@ static int pd_allocate_mode(int port, uint16_t svid)
 			 * discovered SVIDs; must also match the passed-in SVID
 			 * if that was non-zero. Otherwise, go to the next
 			 * discovered SVID.
+			 * TODO(b/155890173): Support AP-directed mode entry
+			 * where the mode is unknown to the TCPM.
 			 */
 			if ((svidp->svid != supported_modes[i].svid) ||
 			    (svid && (svidp->svid != svid)))
 				continue;
 
-			modep = &disc->amodes[disc->amode_idx];
+			modep = &active->amodes[active->amode_idx];
 			modep->fx = &supported_modes[i];
 			modep->data = &disc->svids[j];
-			disc->amode_idx++;
-			return disc->amode_idx - 1;
+			active->amode_idx++;
+			return active->amode_idx - 1;
 		}
 	}
 	return -1;
@@ -169,7 +175,7 @@ void pd_prepare_sysjump(void)
 int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 {
 	struct svdm_amode_data *modep =
-				pd_get_amode_data(port, USB_SID_DISPLAYPORT);
+		pd_get_amode_data(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
 	uint32_t mode_caps;
 	uint32_t pin_caps;
 
@@ -199,30 +205,31 @@ int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 	return 1 << get_next_bit(&pin_caps);
 }
 
-struct svdm_amode_data *pd_get_amode_data(int port, uint16_t svid)
+struct svdm_amode_data *pd_get_amode_data(int port,
+		enum tcpm_transmit_type type, uint16_t svid)
 {
-	int idx = pd_get_mode_idx(port, svid);
-	/* TODO(b/150611251): Support SOP' */
-	struct pd_discovery *disc = pd_get_am_discovery(port, TCPC_TX_SOP);
+	int idx = pd_get_mode_idx(port, type, svid);
+	struct partner_active_modes *active =
+		pd_get_partner_active_modes(port, type);
+	assert(active);
 
-	return (idx == -1) ? NULL : &disc->amodes[idx];
+	return (idx == -1) ? NULL : &active->amodes[idx];
 }
 
 /*
  * Enter default mode ( payload[0] == 0 ) or attempt to enter mode via svid &
  * opos
  */
-uint32_t pd_dfp_enter_mode(int port, uint16_t svid, int opos)
+uint32_t pd_dfp_enter_mode(int port, enum tcpm_transmit_type type,
+		uint16_t svid, int opos)
 {
-	int mode_idx = pd_allocate_mode(port, svid);
-	/* TODO(b/150611251): Support SOP' */
-	struct pd_discovery *disc = pd_get_am_discovery(port, TCPC_TX_SOP);
+	int mode_idx = pd_allocate_mode(port, type, svid);
 	struct svdm_amode_data *modep;
 	uint32_t mode_caps;
 
 	if (mode_idx == -1)
 		return 0;
-	modep = &disc->amodes[mode_idx];
+	modep = &pd_get_partner_active_modes(port, type)->amodes[mode_idx];
 
 	if (!opos) {
 		/* choose the lowest as default */
@@ -230,7 +237,7 @@ uint32_t pd_dfp_enter_mode(int port, uint16_t svid, int opos)
 	} else if (opos <= modep->data->mode_cnt) {
 		modep->opos = opos;
 	} else {
-		CPRINTF("opos error\n");
+		CPRINTS("C%d: Invalid opos %d for SVID %x", port, opos, svid);
 		return 0;
 	}
 
@@ -244,11 +251,12 @@ uint32_t pd_dfp_enter_mode(int port, uint16_t svid, int opos)
 	return VDO(modep->fx->svid, 1, CMD_ENTER_MODE | VDO_OPOS(modep->opos));
 }
 
-int pd_dfp_exit_mode(int port, uint16_t svid, int opos)
+int pd_dfp_exit_mode(int port, enum tcpm_transmit_type type, uint16_t svid,
+		int opos)
 {
 	struct svdm_amode_data *modep;
-	/* TODO(b/150611251): Support SOP' */
-	struct pd_discovery *disc = pd_get_am_discovery(port, TCPC_TX_SOP);
+	struct partner_active_modes *active =
+		pd_get_partner_active_modes(port, type);
 	int idx;
 
 	/*
@@ -258,8 +266,8 @@ int pd_dfp_exit_mode(int port, uint16_t svid, int opos)
 	 */
 	if (!svid) {
 		for (idx = 0; idx < PD_AMODE_COUNT; idx++)
-			if (disc->amodes[idx].fx)
-				disc->amodes[idx].fx->exit(port);
+			if (active->amodes[idx].fx)
+				active->amodes[idx].fx->exit(port);
 
 		pd_dfp_discovery_init(port);
 		return 0;
@@ -271,7 +279,7 @@ int pd_dfp_exit_mode(int port, uint16_t svid, int opos)
 	 * to exit all modes.  We currently don't have any UFPs that support
 	 * multiple modes on one SVID.
 	 */
-	modep = pd_get_amode_data(port, svid);
+	modep = pd_get_amode_data(port, type, svid);
 	if (!modep || !validate_mode_request(modep, svid, opos))
 		return 0;
 
@@ -289,7 +297,8 @@ void dfp_consume_attention(int port, uint32_t *payload)
 {
 	uint16_t svid = PD_VDO_VID(payload[0]);
 	int opos = PD_VDO_OPOS(payload[0]);
-	struct svdm_amode_data *modep = pd_get_amode_data(port, svid);
+	struct svdm_amode_data *modep =
+		pd_get_amode_data(port, TCPC_TX_SOP, svid);
 
 	if (!modep || !validate_mode_request(modep, svid, opos))
 		return;
@@ -434,9 +443,9 @@ int dfp_discover_modes(int port, uint32_t *payload)
 	return 1;
 }
 
-int pd_alt_mode(int port, uint16_t svid)
+int pd_alt_mode(int port, enum tcpm_transmit_type type, uint16_t svid)
 {
-	struct svdm_amode_data *modep = pd_get_amode_data(port, svid);
+	struct svdm_amode_data *modep = pd_get_amode_data(port, type, svid);
 
 	return (modep) ? modep->opos : -1;
 }
@@ -846,7 +855,12 @@ int enter_tbt_compat_mode(int port, enum tcpm_transmit_type sop,
 	struct pd_cable *cable = pd_get_cable_attributes(port);
 
 	/* Table F-12 TBT3 Cable Enter Mode Command */
-	payload[0] = pd_dfp_enter_mode(port, USB_VID_INTEL, 0) |
+	/*
+	 * Although TCPMv2 contemplates separate mode storage for each SOP
+	 * type, TCPMv1 stores everything in the array for SOP.
+	 */
+	/* TODO(b/148528713): Make this function generic to TCPM version. */
+	payload[0] = pd_dfp_enter_mode(port, TCPC_TX_SOP, USB_VID_INTEL, 0) |
 					VDO_SVDM_VERS(VDM_VER20);
 
 	/* For TBT3 Cable Enter Mode Command, number of Objects is 1 */
@@ -1061,7 +1075,7 @@ __overridable int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 
 __overridable int svdm_dp_status(int port, uint32_t *payload)
 {
-	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+	int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
 
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_STATUS | VDO_OPOS(opos));
@@ -1083,7 +1097,7 @@ __overridable uint8_t get_dp_pin_mode(int port)
 
 __overridable int svdm_dp_config(int port, uint32_t *payload)
 {
-	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+	int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
 	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
 	uint8_t pin_mode = get_dp_pin_mode(port);
 	mux_state_t mux_mode;

@@ -371,11 +371,13 @@ enum pd_alternate_modes {
 	PD_AMODE_COUNT,
 };
 
-/* Discover all SOP* communications when enabled */
+/* Discover and possibly enter modes for all SOP* communications when enabled */
 #ifdef CONFIG_USB_PD_DECODE_SOP
 #define DISCOVERY_TYPE_COUNT (TCPC_TX_SOP_PRIME + 1)
+#define AMODE_TYPE_COUNT     (TCPC_TX_SOP_PRIME_PRIME + 1)
 #else
 #define DISCOVERY_TYPE_COUNT (TCPC_TX_SOP + 1)
+#define AMODE_TYPE_COUNT     (TCPC_TX_SOP + 1)
 #endif
 
 /* Discovery results for a port partner (SOP) or cable plug (SOP') */
@@ -384,18 +386,22 @@ struct pd_discovery {
 	union disc_ident_ack identity;
 	/* Supported SVIDs and corresponding mode VDOs */
 	struct svid_mode_data svids[SVID_DISCOVERY_MAX];
-	/*  active modes */
-	struct svdm_amode_data amodes[PD_AMODE_COUNT];
 	/* index of SVID currently being operated on */
 	int svid_idx;
 	/* Count of SVIDs discovered */
 	int svid_cnt;
-	/* Next index to insert DFP alternate mode into amodes */
-	int amode_idx;
 	/* Identity discovery state */
 	enum pd_discovery_state identity_discovery;
 	/* SVID discovery state */
 	enum pd_discovery_state svids_discovery;
+};
+
+/* Active modes for a partner (SOP, SOP', or SOP'') */
+struct partner_active_modes {
+	/*  Active modes */
+	struct svdm_amode_data amodes[PD_AMODE_COUNT];
+	/* Next index to insert DFP alternate mode into amodes */
+	int amode_idx;
 };
 
 /*
@@ -1594,11 +1600,13 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload);
  * Enter alternate mode on DFP
  *
  * @param port     USB-C port number
+ * @param type Transmit type (SOP, SOP') for which to enter mode
  * @param svid USB standard or vendor id to exit or zero for DFP amode reset.
  * @param opos object position of mode to exit.
  * @return vdm for UFP to be sent to enter mode or zero if not.
  */
-uint32_t pd_dfp_enter_mode(int port, uint16_t svid, int opos);
+uint32_t pd_dfp_enter_mode(int port, enum tcpm_transmit_type type,
+		uint16_t svid, int opos);
 
 /**
  *  Get DisplayPort pin mode for DFP to request from UFP's capabilities.
@@ -1613,11 +1621,13 @@ int pd_dfp_dp_get_pin_mode(int port, uint32_t status);
  * Exit alternate mode on DFP
  *
  * @param port USB-C port number
+ * @param type Transmit type (SOP, SOP') for which to exit mode
  * @param svid USB standard or vendor id to exit or zero for DFP amode reset.
  * @param opos object position of mode to exit.
  * @return 1 if UFP should be sent exit mode VDM.
  */
-int pd_dfp_exit_mode(int port, uint16_t svid, int opos);
+int pd_dfp_exit_mode(int port, enum tcpm_transmit_type type, uint16_t svid,
+		int opos);
 
 /**
  * Consume the SVDM attention data
@@ -1833,10 +1843,12 @@ bool pd_is_mode_discovered_for_svid(int port, enum tcpm_transmit_type type,
  * Return the alternate mode entry and exit data
  *
  * @param port  USB-C port number
+ * @param type  Transmit type (SOP, SOP', SOP'') for mode data
  * @param svid  SVID
  * @return      pointer to SVDM mode data
  */
-struct svdm_amode_data *pd_get_amode_data(int port, uint16_t svid);
+struct svdm_amode_data *pd_get_amode_data(int port,
+		enum tcpm_transmit_type type, uint16_t svid);
 
 /**
  * Returns false if previous SOP' messageId count is different from received
@@ -1871,6 +1883,17 @@ bool consume_sop_prime_prime_repeat_msg(int port, uint8_t msg_id);
  * @return     pointer to PD alternate mode discovery results
  */
 struct pd_discovery *pd_get_am_discovery(int port,
+		enum tcpm_transmit_type type);
+
+/*
+ * Returns the pointer to PD active alternate modes.
+ * Note: Caller function can mutate the data in this structure.
+ *
+ * @param port USB-C port number
+ * @param type Transmit type (SOP, SOP', SOP'') for active modes
+ * @return     Pointer to PD active alternate modes.
+ */
+struct partner_active_modes *pd_get_partner_active_modes(int port,
 		enum tcpm_transmit_type type);
 
 /*
@@ -2228,13 +2251,15 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 /* Prepares the PE to send an VDM.
  *
  * @param port    USB-C port number
+ * @param type    Transmit type (SOP, SOP', SOP'') for VDM
  * @param vdm     Buffer containing the message body to send, including the VDM
  *                Header but not the Message Header.
  * @param vdo_cnt The number of 32-bit VDOs in vdm, including the VDM Header;
  *                must be 1 - 7 inclusive.
  * @return        True if the setup was successful
  */
-bool pd_setup_vdm_request(int port, uint32_t *vdm, uint32_t vdo_cnt);
+bool pd_setup_vdm_request(int port, enum tcpm_transmit_type tx_type,
+		uint32_t *vdm, uint32_t vdo_cnt);
 
 /* Power Data Objects for the source and the sink */
 __override_proto extern const uint32_t pd_src_pdo[];
@@ -2259,10 +2284,11 @@ static inline void pd_send_host_event(int mask) { }
  * Determine if in alternate mode or not.
  *
  * @param port port number.
+ * @param type Transmit type (SOP, SOP', SOP'') for alt mode status
  * @param svid USB standard or vendor id
  * @return object position of mode chosen in alternate mode otherwise zero.
  */
-int pd_alt_mode(int port, uint16_t svid);
+int pd_alt_mode(int port, enum tcpm_transmit_type type, uint16_t svid);
 
 /**
  * Send hpd over USB PD.

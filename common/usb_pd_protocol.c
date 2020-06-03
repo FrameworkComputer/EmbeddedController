@@ -791,7 +791,7 @@ static inline void set_state(int port, enum pd_states next_state)
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 #endif
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-		pd_dfp_exit_mode(port, 0, 0);
+		pd_dfp_exit_mode(port, TCPC_TX_SOP, 0, 0);
 #endif
 		/*
 		 * Indicate that the port is disconnected by setting role to
@@ -1325,7 +1325,7 @@ void pd_execute_hard_reset(int port)
 	pd[port].msg_id = 0;
 	invalidate_last_message_id(port);
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-	pd_dfp_exit_mode(port, 0, 0);
+	pd_dfp_exit_mode(port, TCPC_TX_SOP, 0, 0);
 #endif
 
 #ifdef CONFIG_USB_PD_REV30
@@ -2131,12 +2131,17 @@ static void exit_tbt_mode_sop_prime(int port)
 	if (!IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE))
 		return;
 
-	opos =  pd_alt_mode(port, USB_VID_INTEL);
+	opos = pd_alt_mode(port, TCPC_TX_SOP, USB_VID_INTEL);
 	if (opos <= 0)
 		return;
 
 	CPRINTS("C%d Cable exiting TBT Compat mode", port);
-	if (!pd_dfp_exit_mode(port, USB_VID_INTEL, opos))
+	/*
+	 * Note: TCPMv2 contemplates separate discovery structures for each SOP
+	 * type. TCPMv1 only uses one discovery structure, so all accesses
+	 * specify TCPC_TX_SOP.
+	 */
+	if (!pd_dfp_exit_mode(port, TCPC_TX_SOP, USB_VID_INTEL, opos))
 		return;
 
 	header = PD_HEADER(PD_DATA_VENDOR_DEF, pd[port].power_role,
@@ -2333,10 +2338,12 @@ __maybe_unused static void exit_supported_alt_mode(int port)
 		return;
 
 	for (i = 0; i < supported_modes_cnt; i++) {
-		int opos = pd_alt_mode(port, supported_modes[i].svid);
+		int opos = pd_alt_mode(port, TCPC_TX_SOP,
+				supported_modes[i].svid);
 
 		if (opos > 0 &&
-		    pd_dfp_exit_mode(port, supported_modes[i].svid, opos)) {
+		    pd_dfp_exit_mode(
+			    port, TCPC_TX_SOP, supported_modes[i].svid, opos)) {
 			CPRINTS("C%d Exiting ALT mode with SVID = 0x%x", port,
 				supported_modes[i].svid);
 			pd_send_vdm(port, supported_modes[i].svid,
@@ -4969,7 +4976,7 @@ int pd_is_port_enabled(int port)
 void pd_send_hpd(int port, enum hpd_event hpd)
 {
 	uint32_t data[1];
-	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+	int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
 	if (!opos)
 		return;
 

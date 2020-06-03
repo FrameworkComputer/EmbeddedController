@@ -228,7 +228,7 @@ static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 
 static int svdm_dp_status(int port, uint32_t *payload)
 {
-	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+	int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
 
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_STATUS | VDO_OPOS(opos));
@@ -245,7 +245,7 @@ static int svdm_dp_status(int port, uint32_t *payload)
 
 static int svdm_dp_config(int port, uint32_t *payload)
 {
-	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+	int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
 	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
 	int pin_mode = pd_dfp_dp_get_pin_mode(port, dp_status[port]);
 

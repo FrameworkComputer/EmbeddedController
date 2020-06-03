@@ -58,11 +58,12 @@ void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		uint32_t *vdm)
 {
 	const struct svdm_amode_data *modep =
-		pd_get_amode_data(port, USB_SID_DISPLAYPORT);
+		pd_get_amode_data(port, type, USB_SID_DISPLAYPORT);
 	const uint8_t vdm_cmd = PD_VDO_CMD(vdm[0]);
 
 	if (type != TCPC_TX_SOP || next_vdm_cmd[port] != vdm_cmd) {
 		print_unexpected_response(port, type, CMDT_RSP_ACK, vdm_cmd);
+		dpm_set_mode_entry_done(port);
 		return;
 	}
 
@@ -105,8 +106,8 @@ void dp_reset_next_command(int port)
 
 int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 {
-	const struct svdm_amode_data *modep =
-				pd_get_amode_data(port, USB_SID_DISPLAYPORT);
+	const struct svdm_amode_data *modep = pd_get_amode_data(port,
+			TCPC_TX_SOP, USB_SID_DISPLAYPORT);
 	int vdo_count_ret;
 
 	if (vdo_count < VDO_MAX_SIZE)
@@ -115,7 +116,8 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 	switch (next_vdm_cmd[port]) {
 	case CMD_ENTER_MODE:
 		/* Enter the first supported mode for DisplayPort. */
-		vdm[0] = pd_dfp_enter_mode(port, USB_SID_DISPLAYPORT, 0);
+		vdm[0] = pd_dfp_enter_mode(port, TCPC_TX_SOP,
+				USB_SID_DISPLAYPORT, 0);
 		if (vdm[0] == 0)
 			return -1;
 		/* CMDT_INIT is 0, so this is a no-op */

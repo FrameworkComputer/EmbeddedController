@@ -64,7 +64,8 @@ static void dump_pe(int port)
 					disc->svids[i].mode_vdo[j]);
 		ccprintf("\n");
 
-		modep = pd_get_amode_data(port, disc->svids[i].svid);
+		modep = pd_get_amode_data(port, TCPC_TX_SOP,
+				disc->svids[i].svid);
 		if (modep) {
 			mode_caps = modep->data->mode_vdo[modep->opos - 1];
 			ccprintf("MODE[%d]: svid:%04x caps:%08x\n", modep->opos,

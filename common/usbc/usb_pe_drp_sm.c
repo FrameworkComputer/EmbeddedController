@@ -466,6 +466,8 @@ static struct policy_engine {
 	int32_t vpd_vdo;
 	/* Alternate mode discovery results */
 	struct pd_discovery discovery[DISCOVERY_TYPE_COUNT];
+	/* Active alternate modes */
+	struct partner_active_modes partner_amodes[AMODE_TYPE_COUNT];
 	/* Alternate mode object position */
 	int8_t alt_opos;
 
@@ -1063,7 +1065,7 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 void pe_exit_dp_mode(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
-		int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+		int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
 
 		if (opos <= 0)
 			return;
@@ -1075,7 +1077,8 @@ void pe_exit_dp_mode(int port)
 		 * the mode to be cleaned up before return.
 		 */
 		CPRINTS("C%d Exiting DP mode", port);
-		if (!pd_dfp_exit_mode(port, USB_SID_DISPLAYPORT, opos))
+		if (!pd_dfp_exit_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT,
+					opos))
 			return;
 
 		/*
@@ -1439,13 +1442,13 @@ static bool pe_attempt_port_discovery(int port)
 }
 #endif
 
-bool pd_setup_vdm_request(int port, uint32_t *vdm, uint32_t vdo_cnt)
+bool pd_setup_vdm_request(int port, enum tcpm_transmit_type tx_type,
+		uint32_t *vdm, uint32_t vdo_cnt)
 {
 	if (vdo_cnt < VDO_HDR_SIZE || vdo_cnt > VDO_MAX_SIZE)
 		return false;
 
-	/* TODO(b/155890173): Support cable plug */
-	pe[port].partner_type = PORT;
+	pe[port].tx_type = tx_type;
 	memcpy(pe[port].vdm_data, vdm, vdo_cnt * sizeof(*vdm));
 	pe[port].vdm_cnt = vdo_cnt;
 
@@ -4183,7 +4186,7 @@ static void pe_do_port_discovery_run(int port)
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 	uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
 	struct svdm_amode_data *modep =
-				pd_get_amode_data(port, PD_VDO_VID(payload[0]));
+		pd_get_amode_data(port, TCPC_TX_SOP, PD_VDO_VID(payload[0]));
 	int ret = 0;
 
 	if (!PE_CHK_FLAG(port,
@@ -4205,7 +4208,8 @@ static void pe_do_port_discovery_run(int port)
 			break;
 		case CMD_DISCOVER_MODES:
 			pe[port].vdm_cmd = CMD_ENTER_MODE;
-			pe[port].vdm_data[0] = pd_dfp_enter_mode(port, 0, 0);
+			pe[port].vdm_data[0] =
+				pd_dfp_enter_mode(port, TCPC_TX_SOP, 0, 0);
 			if (pe[port].vdm_data[0])
 				ret = 1;
 			break;
@@ -4860,6 +4864,12 @@ static void pe_vdm_request_entry(int port)
 {
 	print_current_state(port);
 
+	if (pe[port].tx_type == TCPC_TX_INVALID) {
+		CPRINTS("C%d: TX type expected to be set, returning", port);
+		set_state_pe(port, get_last_state_pe(port));
+		return;
+	}
+
 	/* All VDM sequences are Interruptible */
 	PE_SET_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 
@@ -4873,8 +4883,7 @@ static void pe_vdm_request_entry(int port)
 		tx_emsg[port].len = pe[port].vdm_cnt * 4;
 	}
 
-	/* TODO(b/155890173): Support cable plug */
-	send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
+	send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
 
 	pe[port].vdm_response_timer = TIMER_DISABLED;
 }
@@ -4909,9 +4918,8 @@ static void pe_vdm_request_run(int port)
 		cnt = PD_HEADER_CNT(rx_emsg[port].header);
 		ext = PD_HEADER_EXT(rx_emsg[port].header);
 
-		if ((sop == TCPC_TX_SOP || sop == TCPC_TX_SOP_PRIME) &&
-				type == PD_DATA_VENDOR_DEF && cnt > 0 &&
-				ext == 0) {
+		if (sop == pe[port].tx_type && type == PD_DATA_VENDOR_DEF &&
+				cnt > 0 && ext == 0) {
 			if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK) {
 				set_state_pe(port, PE_VDM_ACKED);
 				return;
@@ -4925,7 +4933,7 @@ static void pe_vdm_request_run(int port)
 						PE_FLAGS_VDM_REQUEST_BUSY);
 			}
 		} else {
-			if ((sop == TCPC_TX_SOP || sop == TCPC_TX_SOP_PRIME) &&
+			if (sop == pe[port].tx_type &&
 					type == PD_CTRL_NOT_SUPPORTED &&
 					cnt == 0 && ext == 0) {
 				/* Equivalent meaning to a NAK */
@@ -4962,7 +4970,8 @@ static void pe_vdm_request_run(int port)
 		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_BUSY);
 	} else if (get_time().val > pe[port].vdm_response_timer) {
 		CPRINTF("C%d: VDM %s Response Timeout\n", port,
-				pe[port].partner_type ? "Cable" : "Port");
+				pe[port].tx_type == TCPC_TX_SOP
+				? "Port" : "Cable");
 
 		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED);
 	}
@@ -4990,6 +4999,9 @@ static void pe_vdm_request_run(int port)
 
 static void pe_vdm_request_exit(int port)
 {
+	/* Invalidate TX type so that it must be set before next call */
+	pe[port].tx_type = TCPC_TX_INVALID;
+
 	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 }
 
@@ -5012,24 +5024,18 @@ static void pe_vdm_acked_entry(int port)
 	payload = (uint32_t *)rx_emsg[port].buf;
 	svid = PD_VDO_VID(payload[0]);
 	vdo_cmd = PD_VDO_CMD(payload[0]);
-	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
 
-	/* TODO(b/155890173): Support cable plug */
-	if (sop == TCPC_TX_SOP) {
-		/*
-		 * Handle Message From Port Partner
-		 */
 
-		/* vdo_count must have been >= 1 to get into this state. */
-		dpm_vdm_acked(port, sop, vdo_count, payload);
+	/* vdo_count must have been >= 1 to get into this state. */
+	dpm_vdm_acked(port, sop, vdo_count, payload);
 
-		/*
-		 * TODO(b/155890173): Respect distinction between discovery and
-		 * mode entry in flags.
-		 */
-		if (svid == USB_SID_DISPLAYPORT && vdo_cmd == CMD_DP_CONFIG)
-			PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
-	}
+	/*
+	 * TODO(b/155890173): Respect distinction between discovery and mode
+	 * entry in flags.
+	 */
+	if (sop == TCPC_TX_SOP && svid == USB_SID_DISPLAYPORT &&
+			vdo_cmd == CMD_DP_CONFIG)
+		PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
 
 	if (pe[port].power_role == PD_ROLE_SOURCE) {
 		set_state_pe(port, PE_SRC_READY);
@@ -5659,6 +5665,7 @@ uint8_t pd_get_src_cap_cnt(int port)
 void pd_dfp_discovery_init(int port)
 {
 	memset(&pe[port].discovery, 0, sizeof(pe[port].discovery));
+	memset(pe[port].partner_amodes, 0, sizeof(pe[port].partner_amodes));
 
 	/* Reset the DPM and DP modules to enable alternate mode entry. */
 	dpm_init(port);
@@ -5669,6 +5676,13 @@ void pd_dfp_discovery_init(int port)
 struct pd_discovery *pd_get_am_discovery(int port, enum tcpm_transmit_type type)
 {
 	return &pe[port].discovery[type];
+}
+
+struct partner_active_modes *pd_get_partner_active_modes(int port,
+		enum tcpm_transmit_type type)
+{
+	assert(type < AMODE_TYPE_COUNT);
+	return &pe[port].partner_amodes[type];
 }
 
 struct pd_cable *pd_get_cable_attributes(int port)

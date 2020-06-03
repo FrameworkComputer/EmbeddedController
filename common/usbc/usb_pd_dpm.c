@@ -101,7 +101,7 @@ void dpm_attempt_mode_entry(int port)
 	 * TODO(b/155890173): Provide a host command to request that the PE send
 	 * an arbitrary VDM via this mechanism.
 	 */
-	if (!pd_setup_vdm_request(port, vdm, vdo_count)) {
+	if (!pd_setup_vdm_request(port, TCPC_TX_SOP, vdm, vdo_count)) {
 		dpm_set_mode_entry_done(port);
 		return;
 	}
