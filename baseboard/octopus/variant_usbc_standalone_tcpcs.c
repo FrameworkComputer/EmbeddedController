@@ -24,9 +24,6 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
-#define USB_PD_PORT_TCPC_0	0
-#define USB_PD_PORT_TCPC_1	1
-
 /******************************************************************************/
 /* USB-C TPCP Configuration */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {

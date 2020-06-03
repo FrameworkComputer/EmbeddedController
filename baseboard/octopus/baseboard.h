@@ -184,6 +184,8 @@
 #endif /* VARIANT_OCTOPUS_USBC */
 
 /* Common USB-C defines */
+#define USB_PD_PORT_TCPC_0	0
+#define USB_PD_PORT_TCPC_1	1
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_TCPMV1
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
