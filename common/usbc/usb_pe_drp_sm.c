@@ -250,6 +250,7 @@ enum usb_pe_state {
 	PE_FRS_SNK_SRC_START_AMS,
 	PE_GIVE_BATTERY_CAP,
 	PE_GIVE_BATTERY_STATUS,
+	PE_SEND_ALERT,
 
 #ifdef CONFIG_USB_PD_REV30
 	/* Super States */
@@ -342,6 +343,7 @@ static const char * const pe_state_names[] = {
 	[PE_FRS_SNK_SRC_START_AMS] = "PE_FRS_SNK_SRC_Start_Ams",
 	[PE_GIVE_BATTERY_CAP] = "PE_Give_Battery_Cap",
 	[PE_GIVE_BATTERY_STATUS] = "PE_Give_Battery_Status",
+	[PE_SEND_ALERT] = "PE_Send_Alert",
 
 	/* Super States */
 	[PE_PRS_FRS_SHARED] = "SS:PE_PRS_FRS_SHARED",
@@ -1093,7 +1095,12 @@ test_export_static enum usb_pe_state get_state_pe(const int port)
 
 static bool common_src_snk_dpm_requests(int port)
 {
-	if (IS_ENABLED(CONFIG_USBC_VCONN) &&
+	if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
+			PE_CHK_DPM_REQUEST(port, DPM_REQUEST_SEND_ALERT)) {
+		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_SEND_ALERT);
+		set_state_pe(port, PE_SEND_ALERT);
+		return true;
+	} else if (IS_ENABLED(CONFIG_USBC_VCONN) &&
 			PE_CHK_DPM_REQUEST(port, DPM_REQUEST_VCONN_SWAP)) {
 		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_VCONN_SWAP);
 		set_state_pe(port, PE_VCS_SEND_SWAP);
@@ -3274,6 +3281,39 @@ static void pe_give_battery_status_run(int port)
 	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 		set_state_pe(port, PE_SRC_READY);
+	}
+}
+
+/**
+ * PE_SRC_Send_Source_Alert and
+ * PE_SNK_Send_Sink_Alert
+ */
+static void pe_send_alert_entry(int port)
+{
+	uint32_t *msg = (uint32_t *)tx_emsg[port].buf;
+	uint32_t *len = &tx_emsg[port].len;
+
+	print_current_state(port);
+
+	if (pd_build_alert_msg(msg, len, pe[port].power_role) != EC_SUCCESS) {
+		if (pe[port].power_role == PD_ROLE_SOURCE)
+			set_state_pe(port, PE_SRC_READY);
+		else
+			set_state_pe(port, PE_SNK_READY);
+	}
+
+	/* Request the Protocol Layer to send Alert Message. */
+	send_data_msg(port, TCPC_TX_SOP, PD_DATA_ALERT);
+}
+
+static void pe_send_alert_run(int port)
+{
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+		if (pe[port].power_role == PD_ROLE_SOURCE)
+			set_state_pe(port, PE_SRC_READY);
+		else
+			set_state_pe(port, PE_SNK_READY);
 	}
 }
 #endif /* CONFIG_USB_PD_REV30 */
@@ -5578,6 +5618,10 @@ static const struct usb_state pe_states[] = {
 	[PE_GIVE_BATTERY_STATUS] = {
 		.entry = pe_give_battery_status_entry,
 		.run   = pe_give_battery_status_run,
+	},
+	[PE_SEND_ALERT] = {
+		.entry = pe_send_alert_entry,
+		.run   = pe_send_alert_run,
 	},
 #endif /* CONFIG_USB_PD_REV30 */
 	[PE_DRS_EVALUATE_SWAP] = {

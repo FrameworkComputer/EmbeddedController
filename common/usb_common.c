@@ -792,3 +792,23 @@ static int command_tcpc_dump(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(tcpci_dump, command_tcpc_dump, "<Type-C port>",
 			"dump the TCPC regs");
 #endif /* defined(CONFIG_CMD_TCPC_DUMP) */
+
+int pd_build_alert_msg(uint32_t *msg, uint32_t *len, enum pd_power_role pr)
+{
+	if (msg == NULL || len == NULL)
+		return EC_ERROR_INVAL;
+
+	/*
+	 * SOURCE: currently only supports OCP
+	 * SINK:   currently only supports OVP
+	 */
+	if (pr == PD_ROLE_SOURCE)
+		*msg = ADO_OCP_EVENT;
+	else
+		*msg = ADO_OVP_EVENT;
+
+	/* Alert data is 4 bytes */
+	*len = 4;
+
+	return EC_SUCCESS;
+}

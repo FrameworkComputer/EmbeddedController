@@ -179,4 +179,14 @@ int pd_get_saved_port_flags(int port, uint8_t *flags);
  * @param do_set value written to the BB Ram flag
  */
 void pd_update_saved_port_flags(int port, uint8_t flag, uint8_t do_set);
+
+/**
+ * Build PD alert message
+ *
+ * @param msg pointer where message is stored
+ * @param len pointer where length of message is stored in bytes
+ * @param pr  current PD power role
+ * @return EC_SUCCESS on success else EC_ERROR_INVAL
+ */
+int pd_build_alert_msg(uint32_t *msg, uint32_t *len, enum pd_power_role pr);
 #endif /* __CROS_EC_USB_COMMON_H */

@@ -1096,6 +1096,16 @@ enum pd_ext_msg_type {
 	/* 15-31 Reserved */
 };
 
+/* Alert Data Object fields for REV 3.0 */
+#define ADO_OVP_EVENT                   BIT(30)
+#define ADO_SOURCE_INPUT_CHANGE         BIT(29)
+#define ADO_OPERATING_CONDITION_CHANGE  BIT(28)
+#define ADO_OTP_EVENT                   BIT(27)
+#define ADO_OCP_EVENT                   BIT(26)
+#define ADO_BATTERY_STATUS_CHANGE       BIT(25)
+#define ADO_FIXED_BATTERIES(n)          ((n & 0xf) << 20)
+#define ADO_HOT_SWAPPABLE_BATTERIES(n)  ((n & 0xf) << 16)
+
 /* Data message type */
 enum pd_data_msg_type {
 	/* 0 Reserved */
