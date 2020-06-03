@@ -375,6 +375,22 @@ __override uint8_t board_get_usb_pd_port_count(void)
 		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
 }
 
+/* Lid */
+#ifndef TEST_BUILD
+/* This callback disables keyboard when convertibles are fully open */
+void lid_angle_peripheral_enable(int enable)
+{
+	/*
+	 * If the lid is in tablet position via other sensors,
+	 * ignore the lid angle, which might be faulty then
+	 * disable keyboard.
+	 */
+	if (tablet_get_mode())
+		enable = 0;
+	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+}
+#endif
+
 /* Sensor */
 
 static struct mutex g_base_mutex;
