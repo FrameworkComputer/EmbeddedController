@@ -272,6 +272,9 @@ enum power_state power_handle_state(enum power_state state)
 		/* Disable wireless */
 		wireless_set_state(WIRELESS_OFF);
 
+		/* Call hooks after we remove power rails */
+		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
+
 		return POWER_S5;
 
 	case POWER_S5G3:

@@ -486,6 +486,9 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_disable_interrupt(GPIO_AP_EC_WATCHDOG_L);
 		power_seq_run(s3s5_power_seq, ARRAY_SIZE(s3s5_power_seq));
 
+		/* Call hooks after we remove power rails */
+		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
+
 		/* Start shutting down */
 		return POWER_S5;
 

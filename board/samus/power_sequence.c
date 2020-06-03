@@ -462,6 +462,9 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 0);
 		gpio_set_level(GPIO_LIGHTBAR_RESET_L, 0);
 
+		/* Call hooks after we remove power rails */
+		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
+
 		return power_get_pause_in_s5() ? POWER_S5 : POWER_S5G3;
 
 	case POWER_S5G3:

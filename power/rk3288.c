@@ -380,6 +380,9 @@ static void power_off(void)
 	powerled_set_state(POWERLED_STATE_OFF);
 
 	CPRINTS("power shutdown complete");
+
+	/* Call hooks after we drop power rails */
+	hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
 }
 
 void chipset_reset(enum chipset_reset_reason reason)

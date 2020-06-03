@@ -409,6 +409,9 @@ enum power_state power_handle_state(enum power_state state)
 		GPIO_SET_LEVEL(GPIO_EN_PP1800_U, 0);
 		GPIO_SET_LEVEL(GPIO_EN_PP3300_U, 0);
 
+		/* Call hooks after we remove power rails */
+		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
+
 		/* Start shutting down */
 		return POWER_S5;
 

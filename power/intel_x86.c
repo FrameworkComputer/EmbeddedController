@@ -559,6 +559,9 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		/* Disable wireless */
 		wireless_set_state(WIRELESS_OFF);
 
+		/* Call hooks after we remove power rails */
+		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
+
 		/* Always enter into S5 state. The S5 state is required to
 		 * correctly handle global resets which have a bit of delay
 		 * while the SLP_Sx_L signals are asserted then deasserted.

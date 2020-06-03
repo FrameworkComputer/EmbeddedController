@@ -496,6 +496,9 @@ static void power_off(void)
 	lid_opened = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
 	CPRINTS("power shutdown complete");
+
+	/* Call hooks after we drop power rails */
+	hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
 }
 
 /**

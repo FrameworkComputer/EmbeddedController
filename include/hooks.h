@@ -127,6 +127,13 @@ enum hook_type {
 	HOOK_CHIPSET_SHUTDOWN,
 
 	/*
+	 * System has already shut down. All the suspend rails are already off.
+	 *
+	 * Hook routines are called from the chipset task.
+	 */
+	HOOK_CHIPSET_SHUTDOWN_COMPLETE,
+
+	/*
 	 * System reset in S0.  All rails are still up.
 	 *
 	 * Hook routines are called from the chipset task.
