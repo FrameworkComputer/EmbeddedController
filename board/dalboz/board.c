@@ -161,21 +161,14 @@ void pcal6408_interrupt(enum gpio_signal signal)
 static int board_ps8743_mux_set(const struct usb_mux *me,
 				mux_state_t mux_state)
 {
-	int rv = EC_SUCCESS;
-	int reg = 0;
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
+		/* Enable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+	else
+		/* Disable IN_HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
 
-	rv = ps8743_read(me, PS8743_REG_MODE, &reg);
-	if (rv)
-		return rv;
-
-	/* Disable FLIP pin, enable I2C control. */
-	reg |= PS8743_MODE_FLIP_REG_CONTROL;
-	/* Disable CE_USB pin, enable I2C control. */
-	reg |= PS8743_MODE_USB_REG_CONTROL;
-	/* Disable CE_DP pin, enable I2C control. */
-	reg |= PS8743_MODE_DP_REG_CONTROL;
-
-	return ps8743_write(me, PS8743_REG_MODE, reg);
+	return EC_SUCCESS;
 }
 
 static void setup_fw_config(void)
@@ -192,6 +185,7 @@ static void setup_fw_config(void)
 		ccprints("PS8740 USB MUX");
 		usb_muxes[USBC_PORT_C1].i2c_addr_flags = PS8740_I2C_ADDR0_FLAG;
 		usb_muxes[USBC_PORT_C1].driver = &ps8740_usb_mux_driver;
+		usb_muxes[USBC_PORT_C1].board_set = NULL;
 	}
 
 	if (ec_config_get_usb_db() == DALBOZ_DB_D_OPT2_USBA_HDMI) {

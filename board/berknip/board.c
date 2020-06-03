@@ -245,31 +245,14 @@ static int board_tusb544_mux_set(const struct usb_mux *me,
 static int board_ps8743_mux_set(const struct usb_mux *me,
 				mux_state_t mux_state)
 {
-	int rv = EC_SUCCESS;
-	int reg = 0;
-
-	rv = ps8743_read(me, PS8743_REG_MODE, &reg);
-	if (rv)
-		return rv;
-
-	/* Disable FLIP pin, enable I2C control. */
-	reg |= PS8743_MODE_FLIP_REG_CONTROL;
-	/* Disable CE_DP pin, enable I2C control. */
-	reg |= PS8743_MODE_DP_REG_CONTROL;
-
-	/* DP specific config */
-	if (mux_state & USB_PD_MUX_DP_ENABLED) {
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		/* Enable IN_HPD on the DB */
 		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
-		/* Disable USB mode on DB */
-		ioex_set_level(IOEX_USB_C1_DATA_EN, 0);
-	} else {
+	else
 		/* Disable IN_HPD on the DB */
 		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
-		/* Enable USB mode on DB */
-		ioex_set_level(IOEX_USB_C1_DATA_EN, 1);
-	}
-	return ps8743_write(me, PS8743_REG_MODE, reg);
+
+	return EC_SUCCESS;
 }
 
 const struct usb_mux usbc1_tusb544 = {
