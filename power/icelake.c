@@ -101,6 +101,13 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	/* Turn off DSW load switch. */
 	GPIO_SET_LEVEL(GPIO_EN_PP3300_A, 0);
 
+	/*
+	 * For JSL, we need to wait 60ms before turning off PP5000_U to allow
+	 * VCCIN_AUX time to discharge.
+	 */
+	if (IS_ENABLED(CONFIG_CHIPSET_JASPERLAKE))
+		msleep(60);
+
 	/* Turn off PP5000 rail */
 	if (IS_ENABLED(CONFIG_POWER_PP5000_CONTROL))
 		power_5v_enable(task_get_current(), 0);
