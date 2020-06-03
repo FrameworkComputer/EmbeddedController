@@ -184,6 +184,8 @@ __sp_16byte_aligned:
         j unhandled_interrupt
 __irq_handler:
         jal start_irq_handler
+        /* t0 = -1 if it cannot find the corresponding interrupt source */
+        bltz t0, unhandled_interrupt
         /* get EC interrupt group 0-15 or 16:ecall */
         la t0, ec_int_group
         /* get corresponding isr */
@@ -268,10 +270,10 @@ __reset:
 #else
         csrw mstatus, zero
 #endif
-	/*
-	 * move content of return address(ra) into t5 and then store the content
-	 * into variable "ec_reset_lp" later after memory initialization.
-	 */
+        /*
+         * move content of return address(ra) into t5 and then store the content
+         * into variable "ec_reset_lp" later after memory initialization.
+         */
         mv t5, ra
         /* Clear the link register */
         li ra, 0
@@ -314,8 +316,8 @@ data_loop:
         la t0, ec_reset_lp
         sw t5, 0(t0)
 #ifdef CHIP_FAMILY_IT8XXX2
-	/* clear BRAM if it is not valid */
-	jal chip_bram_valid
+        /* clear BRAM if it is not valid */
+        jal chip_bram_valid
 #endif
         /* Jump to C routine */
         jal main
@@ -385,9 +387,9 @@ excep_handler:
         csrr sp, mscratch
         sw sp, 30*4(a0)
         /* put a sane stack pointer */
-	la sp, stack_end
-	/* jump to panic dump C routine */
-	jal report_panic
+        la sp, stack_end
+        /* jump to panic dump C routine */
+        jal report_panic
         j .
 
 .align 2
