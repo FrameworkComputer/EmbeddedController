@@ -71,6 +71,7 @@
 
 enum battery_type {
 	BATTERY_SIMPLO_HIGHPOWER,
+	BATTERY_COSMX,
 	BATTERY_TYPE_COUNT,
 };
 
