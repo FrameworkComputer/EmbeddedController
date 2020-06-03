@@ -4923,14 +4923,10 @@ static void pe_vdm_request_run(int port)
 			if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK) {
 				set_state_pe(port, PE_VDM_ACKED);
 				return;
-			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK ||
-				PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
-				if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK)
-					PE_SET_FLAG(port,
-						PE_FLAGS_VDM_REQUEST_NAKED);
-				else
-					PE_SET_FLAG(port,
-						PE_FLAGS_VDM_REQUEST_BUSY);
+			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
+				PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED);
+			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
+				PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_BUSY);
 			}
 		} else {
 			if (sop == pe[port].tx_type &&
