@@ -82,6 +82,16 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
+enum ioex_port {
+	IOEX_C0_NCT3807 = 0,
+	IOEX_C1_NCT3807,
+	IOEX_PORT_COUNT
+};
+
+#define PORT_TO_HPD(port) ((port == 0) \
+	? GPIO_USB3_C0_DP2_HPD \
+	: GPIO_DP1_HPD)
+
 
 /*****************************************************************************
  * CBI EC FW Configuration
@@ -159,7 +169,6 @@ static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
 }
 
 /* These IO expander GPIOs vary with DB option. */
-extern enum gpio_signal IOEX_USB_A1_RETIMER_EN;
 extern enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L;
 
 #endif /* !__ASSEMBLER__ */

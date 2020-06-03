@@ -176,7 +176,6 @@
 #elif defined(VARIANT_ZORK_DALBOZ)
 	#define CONFIG_USB_MUX_PS8740
 	#define CONFIG_USB_MUX_PS8743
-	#define CONFIG_IO_EXPANDER_PCAL6408
 	#define CONFIG_IO_EXPANDER_PORT_COUNT IOEX_PORT_COUNT
 	#define CONFIG_USB_PORT_ENABLE_DYNAMIC
 #endif
@@ -323,19 +322,6 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-#if defined(VARIANT_ZORK_DALBOZ)
-	enum ioex_port {
-		IOEX_C0_NCT3807 = 0,
-		IOEX_C1_NCT3807,
-		IOEX_HDMI_PCAL6408,
-		IOEX_PORT_COUNT
-	};
-
-	#define PORT_TO_HPD(port) ((port == 0) \
-		? GPIO_USB3_C0_DP2_HPD \
-		: GPIO_DP1_HPD)
-#endif
-
 /*
  * Matrix to rotate accelerators into the standard reference frame.  The default
  * is the identity which is correct for the reference design.  Variations of
@@ -362,8 +348,11 @@ void board_reset_pd_mcu(void);
 void tcpc_alert_event(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
 void ppc_interrupt(enum gpio_signal signal);
-void hdmi_hpd_interrupt(enum ioex_signal signal);
 void mst_hpd_interrupt(enum ioex_signal signal);
+
+#ifdef VARIANT_ZORK_TREMBYLE
+void hdmi_hpd_interrupt(enum ioex_signal signal);
+#endif
 
 #ifdef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
 int board_tcpc_fast_role_swap_enable(int port, int enable);

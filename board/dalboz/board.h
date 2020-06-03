@@ -20,6 +20,7 @@
 #define CONFIG_SYSTEM_UNLOCKED
 #define CONFIG_I2C_DEBUG
 
+#define CONFIG_IO_EXPANDER_PCAL6408
 #define CONFIG_MKBP_USE_GPIO
 
 /* Power  LEDs */
@@ -81,6 +82,17 @@ enum pwm_channel {
 	PWM_CH_KBLIGHT = 0,
 	PWM_CH_COUNT
 };
+
+enum ioex_port {
+	IOEX_C0_NCT3807 = 0,
+	IOEX_C1_NCT3807,
+	IOEX_HDMI_PCAL6408,
+	IOEX_PORT_COUNT
+};
+
+#define PORT_TO_HPD(port) ((port == 0) \
+	? GPIO_USB3_C0_DP2_HPD \
+	: GPIO_DP1_HPD)
 
 
 /*****************************************************************************

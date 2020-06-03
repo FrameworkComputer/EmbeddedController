@@ -9,6 +9,7 @@
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/ioexpander/pcal6408.h"
+#include "driver/tcpm/nct38xx.h"
 #include "driver/usb_mux/ps8740.h"
 #include "driver/usb_mux/ps8743.h"
 #include "extpower.h"
@@ -16,6 +17,7 @@
 #include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "ioexpander.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -36,6 +38,23 @@ void (*c1_tcpc_config_interrupt)(enum gpio_signal signal) = tcpc_alert_event;
 void c1_tcpc_interrupt(enum gpio_signal signal)
 {
 	c1_tcpc_config_interrupt(signal);
+}
+
+static void hdmi_hpd_handler(void)
+{
+	int hpd = 0;
+
+	/* Pass HPD through from DB OPT1 HDMI connector to AP's DP1. */
+	ioex_get_level(IOEX_HDMI_CONN_HPD_3V3_DB, &hpd);
+	gpio_set_level(GPIO_DP1_HPD, hpd);
+	ccprints("HDMI HPD %d", hpd);
+}
+DECLARE_DEFERRED(hdmi_hpd_handler);
+
+void hdmi_hpd_interrupt(enum ioex_signal signal)
+{
+	/* Debounce for 2 msec. */
+	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
 }
 
 #include "gpio_list.h"
@@ -240,6 +259,44 @@ const struct pwm_t pwm_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+struct ioexpander_config_t ioex_config[] = {
+	[IOEX_C0_NCT3807] = {
+		.i2c_host_port = I2C_PORT_TCPC0,
+		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
+		.drv = &nct38xx_ioexpander_drv,
+	},
+	[IOEX_C1_NCT3807] = {
+		.i2c_host_port = I2C_PORT_TCPC1,
+		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
+		.drv = &nct38xx_ioexpander_drv,
+		.flags = IOEX_FLAGS_DISABLED,
+	},
+	[IOEX_HDMI_PCAL6408] = {
+		.i2c_host_port = I2C_PORT_TCPC1,
+		.i2c_slave_addr = PCAL6408_I2C_ADDR0,
+		.drv = &pcal6408_ioexpander_drv,
+		.flags = IOEX_FLAGS_DISABLED,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);
+
+int usb_port_enable[USBA_PORT_COUNT] = {
+	IOEX_EN_USB_A0_5V,
+	IOEX_EN_USB_A1_5V_DB_OPT1,
+};
+
+static void usba_retimer_on(void)
+{
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, usba_retimer_on, HOOK_PRIO_DEFAULT);
+
+static void usba_retimer_off(void)
+{
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, usba_retimer_off, HOOK_PRIO_DEFAULT);
 
 /*
  * If the battery is found on the V0 I2C port then re-map the battery port.

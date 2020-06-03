@@ -91,52 +91,6 @@ const struct charger_config_t chg_chips[] = {
 const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /*****************************************************************************
- * IO expander
- */
-
-struct ioexpander_config_t ioex_config[] = {
-	[IOEX_C0_NCT3807] = {
-		.i2c_host_port = I2C_PORT_TCPC0,
-		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
-		.drv = &nct38xx_ioexpander_drv,
-	},
-	[IOEX_C1_NCT3807] = {
-		.i2c_host_port = I2C_PORT_TCPC1,
-		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
-		.drv = &nct38xx_ioexpander_drv,
-		.flags = IOEX_FLAGS_DISABLED,
-	},
-	[IOEX_HDMI_PCAL6408] = {
-		.i2c_host_port = I2C_PORT_TCPC1,
-		.i2c_slave_addr = PCAL6408_I2C_ADDR0,
-		.drv = &pcal6408_ioexpander_drv,
-		.flags = IOEX_FLAGS_DISABLED,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);
-
-/*****************************************************************************
- * USB-A
- */
-
-int usb_port_enable[USBA_PORT_COUNT] = {
-	IOEX_EN_USB_A0_5V,
-	IOEX_EN_USB_A1_5V_DB_OPT1,
-};
-
-static void usba_retimer_on(void)
-{
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, usba_retimer_on, HOOK_PRIO_DEFAULT);
-
-static void usba_retimer_off(void)
-{
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, usba_retimer_off, HOOK_PRIO_DEFAULT);
-
-/*****************************************************************************
  * USB-C
  */
 
