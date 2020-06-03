@@ -12,6 +12,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/charger/isl923x.h"
 #include "driver/ppc/syv682x.h"
@@ -102,6 +103,7 @@ static void board_init(void)
 
 	/* Enable motion sensor interrupt */
 	gpio_enable_interrupt(GPIO_BASE_IMU_INT_L);
+	gpio_enable_interrupt(GPIO_LID_ACCEL_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -376,8 +378,10 @@ __override uint8_t board_get_usb_pd_port_count(void)
 /* Sensor */
 
 static struct mutex g_base_mutex;
+static struct mutex g_lid_mutex;
 
 static struct bmi_drv_data_t g_bmi160_data;
+static struct stprivate_data g_lis2dwl_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
 static const mat33_fp_t base_standard_ref = {
@@ -459,6 +463,34 @@ struct motion_sensor_t motion_sensors[] = {
 		.rot_standard_ref = &mag_standard_ref,
 		.min_frequency = BMM150_MAG_MIN_FREQ,
 		.max_frequency = BMM150_MAG_MAX_FREQ(SPECIAL),
+	},
+	[LID_ACCEL] = {
+		.name = "Lid Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_LIS2DWL,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &lis2dw12_drv,
+		.mutex = &g_lid_mutex,
+		.drv_data = &g_lis2dwl_data,
+		.int_signal = GPIO_LID_ACCEL_INT_L,
+		.port = I2C_PORT_ACCEL,
+		.i2c_spi_addr_flags = LIS2DWL_ADDR1_FLAGS,
+		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+		.rot_standard_ref = NULL, /* identity matrix */
+		.default_range = 2, /* g */
+		.min_frequency = LIS2DW12_ODR_MIN_VAL,
+		.max_frequency = LIS2DW12_ODR_MAX_VAL,
+		.config = {
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 12500 | ROUND_UP_FLAG,
+			},
+			/* Sensor on for lid angle detection */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+		},
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
