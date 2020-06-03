@@ -14,6 +14,7 @@
 #include "hooks.h"
 #include "hwtimer.h"
 #include "math_util.h"
+#include "motion_sense_fifo.h"
 #include "task.h"
 #include "util.h"
 
