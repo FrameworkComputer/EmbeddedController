@@ -805,7 +805,16 @@ enum {
 #endif
 	GPIO_PORT_COUNT,
 
-	/* NOTE: Support GPIO input only if KSO/KSI pins are used as GPIO. */
+	/*
+	 * NOTE: support flags when KSI/KSO are configured as GPIO
+	 * 1) it8320bx:
+	 * output: GPIO_OUTPUT, GPIO_OPEN_DRAIN, GPIO_HIGH, GPIO_LOW
+	 * input: GPIO_INPUT
+	 * 2) it8320dx, it8xxx1, and it8xxx2:
+	 * output: GPIO_OUTPUT, GPIO_OPEN_DRAIN(always internal pullup),
+	 *         GPIO_HIGH, GPIO_LOW
+	 * input: GPIO_INPUT, GPIO_PULL_UP
+	 */
 	/* KSI[7-0]  GPIO data mirror register. */
 	GPIO_KSI,
 	/* KSO[15-8] GPIO data mirror register. */
@@ -817,11 +826,11 @@ enum {
 };
 
 struct gpio_reg_t {
-	/* GPIO port data register (bit mapping to pin) */
+	/* GPIO and KSI/KSO port data register (bit mapping to pin) */
 	uint32_t reg_gpdr;
-	/* GPIO port data mirror register (bit mapping to pin) */
+	/* GPIO and KSI/KSO port data mirror register (bit mapping to pin) */
 	uint32_t reg_gpdmr;
-	/* GPIO port output type register (bit mapping to pin) */
+	/* GPIO and KSI/KSO port output type register (bit mapping to pin) */
 	uint32_t reg_gpotr;
 	/* GPIO port control register (byte mapping to pin) */
 	uint32_t reg_gpcr;
@@ -849,9 +858,9 @@ static const struct gpio_reg_t gpio_group_to_reg[] = {
 	[GPIO_Q]     = { 0x00F03E03, 0x00F03E63, 0x00F03E73, 0x00F03E20 },
 	[GPIO_R]     = { 0x00F03E04, 0x00F03E64, 0x00F03E74, 0x00F03E28 },
 #endif
-	[GPIO_KSI]   = { 0x00F01D09, 0x00F01D09,         -1,         -1 },
-	[GPIO_KSO_H] = { 0x00F01D0C, 0x00F01D0C,         -1,         -1 },
-	[GPIO_KSO_L] = { 0x00F01D0F, 0x00F01D0F,         -1,         -1 },
+	[GPIO_KSI]   = { 0x00F01D08, 0x00F01D09, 0x00F01D26,         -1 },
+	[GPIO_KSO_H] = { 0x00F01D01, 0x00F01D0C, 0x00F01D27,         -1 },
+	[GPIO_KSO_L] = { 0x00F01D00, 0x00F01D0F, 0x00F01D28,         -1 },
 };
 BUILD_ASSERT(ARRAY_SIZE(gpio_group_to_reg) == (COUNT));
 
@@ -1248,6 +1257,9 @@ REG8(IT83XX_PMC_BASE + (ch > LPC_PM2 ? 5 : 8) + (ch << 4))
 #define IT83XX_KBS_SDC2R        REG8(IT83XX_KBS_BASE+0x23)
 #define IT83XX_KBS_SDC3R        REG8(IT83XX_KBS_BASE+0x24)
 #define IT83XX_KBS_SDSR         REG8(IT83XX_KBS_BASE+0x25)
+#define IT83XX_KBS_KSIGPODR     REG8(IT83XX_KBS_BASE+0x26)
+#define IT83XX_KBS_KSOHGPODR    REG8(IT83XX_KBS_BASE+0x27)
+#define IT83XX_KBS_KSOLGPODR    REG8(IT83XX_KBS_BASE+0x28)
 
 /* Shared Memory Flash Interface Bridge (SMFI) */
 #define IT83XX_SMFI_BASE  0x00F01000
