@@ -95,7 +95,7 @@ int chip_get_intc_group(int irq)
 	return irq_groups[irq / 8].cpu_int[irq % 8];
 }
 
-int chip_enable_irq(int irq)
+void chip_enable_irq(int irq)
 {
 	int group = irq / 8;
 	int bit = irq % 8;
@@ -103,11 +103,9 @@ int chip_enable_irq(int irq)
 	IT83XX_INTC_REG(irq_groups[group].ier_off) |= BIT(bit);
 	if (IS_ENABLED(CHIP_CORE_NDS32))
 		IT83XX_INTC_REG(IT83XX_INTC_EXT_IER_OFF(group)) |= BIT(bit);
-
-	return irq_groups[group].cpu_int[bit];
 }
 
-int chip_disable_irq(int irq)
+void chip_disable_irq(int irq)
 {
 	int group = irq / 8;
 	int bit = irq % 8;
@@ -115,19 +113,15 @@ int chip_disable_irq(int irq)
 	IT83XX_INTC_REG(irq_groups[group].ier_off) &= ~BIT(bit);
 	if (IS_ENABLED(CHIP_CORE_NDS32))
 		IT83XX_INTC_REG(IT83XX_INTC_EXT_IER_OFF(group)) &= ~BIT(bit);
-
-	return -1; /* we don't want to mask other IRQs */
 }
 
-int chip_clear_pending_irq(int irq)
+void chip_clear_pending_irq(int irq)
 {
 	int group = irq / 8;
 	int bit = irq % 8;
 
 	/* always write 1 clear, no | */
 	IT83XX_INTC_REG(irq_groups[group].isr_off) = BIT(bit);
-
-	return -1; /* everything has been done */
 }
 
 int chip_trigger_irq(int irq)

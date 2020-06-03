@@ -12,23 +12,20 @@
  * Enable an IRQ in the chip interrupt controller.
  *
  * @param irq interrupt request index.
- * @return CPU interrupt number to enable if any, -1 else.
  */
-int chip_enable_irq(int irq);
+void chip_enable_irq(int irq);
 
 /**
  * Disable an IRQ in the chip interrupt controller.
  *
  * @param irq interrupt request index.
- * @return CPU interrupt number to disable if any, -1 else.
  */
-int chip_disable_irq(int irq);
+void chip_disable_irq(int irq);
 
 /**
  * Clear a pending IRQ in the chip interrupt controller.
  *
  * @param irq interrupt request index.
- * @return CPU interrupt number to clear if any, -1 else.
  *
  * Note that most interrupts can be removed from the pending state simply by
  * handling whatever caused the interrupt in the first place.  This only needs
@@ -36,7 +33,7 @@ int chip_disable_irq(int irq);
  * reason for the interrupt, and then the interrupt is re-enabled from a
  * different context.
  */
-int chip_clear_pending_irq(int irq);
+void chip_clear_pending_irq(int irq);
 
 /**
  * Software-trigger an IRQ in the chip interrupt controller.
