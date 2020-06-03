@@ -476,7 +476,7 @@ static int pi3usb9281_ramp_max(int supplier, int sup_curr)
 	case CHARGE_SUPPLIER_BC12_DCP:
 		return USB_CHARGER_MAX_CURR_MA;
 	case CHARGE_SUPPLIER_BC12_SDP:
-		return 1000;
+		return 500;
 	case CHARGE_SUPPLIER_BC12_CDP:
 	case CHARGE_SUPPLIER_PROPRIETARY:
 		return sup_curr;
