@@ -363,6 +363,15 @@ static void isl9241_init(int chgnum)
 			   MASK_SET))
 		goto init_fail;
 
+	/*
+	 * Set control4 register to
+	 * [13]: Slew rate control enable (sets VSYS ramp to 8mV/us)
+	 */
+	if (isl9241_update(chgnum, ISL9241_REG_CONTROL4,
+			   ISL9241_CONTROL4_SLEW_RATE_CTRL,
+			   MASK_SET))
+		goto init_fail;
+
 #ifndef CONFIG_CHARGE_RAMP_HW
 	if (isl9241_update(chgnum, ISL9241_REG_CONTROL0,
 			   ISL9241_CONTROL0_INPUT_VTG_REGULATION,
