@@ -4861,31 +4861,25 @@ BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 static int ms_help(const char *cmd)
 {
 	printf("Usage:\n");
-	printf("  %s                            - dump all motion data\n", cmd);
-	printf("  %s active                     - print active flag\n", cmd);
-	printf("  %s info NUM                   - print sensor info\n", cmd);
-	printf("  %s ec_rate [RATE_MS]          - set/get sample rate\n", cmd);
-	printf("  %s odr NUM [ODR [ROUNDUP]]    - set/get sensor ODR\n", cmd);
-	printf("  %s range NUM [RANGE [ROUNDUP]]- set/get sensor range\n", cmd);
-	printf("  %s offset NUM                 - get sensor offset\n", cmd);
-	printf("  %s kb_wake NUM                - set/get KB wake ang\n", cmd);
-	printf("  %s data NUM                   - read sensor latest data\n",
-			cmd);
-	printf("  %s fifo_info                  - print fifo info\n", cmd);
-	printf("  %s fifo_int_enable [0/1]      - enable/disable/get fifo "
-	       "interrupt status\n", cmd);
-	printf("  %s fifo_read MAX_DATA         - read fifo data\n", cmd);
-	printf("  %s fifo_flush NUM             - trigger fifo interrupt\n",
-			cmd);
-	printf("  %s list_activities NUM        - list supported activities\n",
-			cmd);
-	printf("  %s set_activity NUM ACT EN    - enable/disable activity\n",
-			cmd);
-	printf("  %s lid_angle                  - print lid angle\n", cmd);
-	printf("  %s spoof -- NUM [0/1] [X Y Z] - enable/disable spoofing\n",
-	       cmd);
-	printf("  %s tablet_mode_angle ANG HYS  - set/get tablet mode angle\n",
-	       cmd);
+	printf("  %s                              - dump all motion data\n", cmd);
+	printf("  %s active                       - print active flag\n", cmd);
+	printf("  %s info NUM                     - print sensor info\n", cmd);
+	printf("  %s ec_rate [RATE_MS]            - set/get sample rate\n", cmd);
+	printf("  %s odr NUM [ODR [ROUNDUP]]      - set/get sensor ODR\n", cmd);
+	printf("  %s range NUM [RANGE [ROUNDUP]]  - set/get sensor range\n", cmd);
+	printf("  %s offset NUM [-- X Y Z [TEMP]] - set/get sensor offset\n", cmd);
+	printf("  %s kb_wake NUM                  - set/get KB wake ang\n", cmd);
+	printf("  %s fifo_info                    - print fifo info\n", cmd);
+	printf("  %s fifo_int_enable [0/1]        - enable/disable/get fifo interrupt "
+		"status\n", cmd);
+	printf("  %s fifo_read MAX_DATA           - read fifo data\n", cmd);
+	printf("  %s fifo_flush NUM               - trigger fifo interrupt\n", cmd);
+	printf("  %s list_activities NUM          - list supported activities\n", cmd);
+	printf("  %s set_activity NUM ACT EN      - enable/disable activity\n", cmd);
+	printf("  %s lid_angle                    - print lid angle\n", cmd);
+	printf("  %s spoof -- NUM [0/1] [X Y Z]   - enable/disable spoofing\n", cmd);
+	printf("  %s tablet_mode_angle ANG HYS    - set/get tablet mode angle\n", cmd);
+	printf("  %s calibrate NUM                - run sensor calibration\n", cmd);
 
 	return 0;
 }
@@ -5413,14 +5407,71 @@ static int cmd_motionsense(int argc, char **argv)
 		return rv < 0 ? rv : 0;
 	}
 
-	if (argc == 3 && !strcasecmp(argv[1], "offset")) {
+	if (argc == 3 && !strcasecmp(argv[1], "calibrate")) {
+		param.cmd = MOTIONSENSE_CMD_PERFORM_CALIB;
+		param.perform_calib.enable = 1;
+		param.perform_calib.sensor_num = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad %s arg.\n", argv[2]);
+			return -1;
+		}
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+
+		if (rv < 0)
+			return rv;
+
+		printf("--- Calibrated well ---\n");
+		printf("New offset vector: X:%d, Y:%d, Z:%d\n",
+			resp->perform_calib.offset[0],
+			resp->perform_calib.offset[1],
+			resp->perform_calib.offset[2]);
+		if ((uint16_t)resp->perform_calib.temp ==
+		    EC_MOTION_SENSE_INVALID_CALIB_TEMP)
+			printf("Temperature at calibration unknown\n");
+		else
+			printf("Temperature at calibration: %d.%02d C\n",
+			       resp->perform_calib.temp / 100,
+			       resp->perform_calib.temp % 100);
+		return 0;
+	}
+
+	if (argc >= 3 && !strcasecmp(argv[1], "offset")) {
 		param.cmd = MOTIONSENSE_CMD_SENSOR_OFFSET;
 		param.sensor_offset.flags = 0;
+		param.sensor_offset.temp = EC_MOTION_SENSE_INVALID_CALIB_TEMP;
 
 		param.sensor_offset.sensor_num = strtol(argv[2], &e, 0);
 		if (e && *e) {
 			fprintf(stderr, "Bad %s arg.\n", argv[2]);
 			return -1;
+		}
+
+		if (argc >= 4) {
+			/* Regarded as a command to set offset */
+			if (argc >= 6 && argc < 8) {
+				/* Set offset : X, Y, Z */
+				param.sensor_offset.flags = MOTION_SENSE_SET_OFFSET;
+				for (i = 0; i < 3; i++) {
+					param.sensor_offset.offset[i] = strtol(argv[3+i], &e, 0);
+					if (e && *e) {
+						fprintf(stderr, "Bad %s arg.\n", argv[3+i]);
+						return -1;
+					}
+				}
+				if (argc == 7) {
+					/* Set offset : Temperature */
+					param.sensor_offset.temp = strtol(argv[6], &e, 0);
+					if (e && *e) {
+						fprintf(stderr, "Bad %s arg.\n", argv[6]);
+						return -1;
+					}
+				}
+			} else {
+				return ms_help(argv[0]);
+			}
 		}
 
 		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
