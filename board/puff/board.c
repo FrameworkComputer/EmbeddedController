@@ -474,8 +474,13 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 /* Power Delivery and charging functions */
 static void board_tcpc_init(void)
 {
-	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image())
+	/*
+	 * Reset TCPC if we have had a system reset.
+	 * With EFSv2, it is possible to be in RW without
+	 * having reset the TCPC.
+	 */
+	if (system_get_reset_flags() &
+	    (EC_RESET_FLAG_RESET_PIN | EC_RESET_FLAG_POWER_ON))
 		board_reset_pd_mcu();
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_TCPPC_INT_ODL);
@@ -500,7 +505,6 @@ int64_t get_time_dsw_pwrok(void)
 
 void board_reset_pd_mcu(void)
 {
-	/* Maybe should only reset if we are powered off barreljack */
 	int level = !!(tcpc_config[USB_PD_PORT_TCPC_0].flags &
 		       TCPC_FLAGS_RESET_ACTIVE_HIGH);
 
