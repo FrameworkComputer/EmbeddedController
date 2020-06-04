@@ -309,11 +309,13 @@ enum usba_port {
 	USBA_PORT_COUNT
 };
 
+#ifdef VARIANT_ZORK_TREMBYLE
 enum usbc_port {
 	USBC_PORT_C0 = 0,
 	USBC_PORT_C1,
 	USBC_PORT_COUNT
 };
+#endif
 
 enum sensor_id {
 	LID_ACCEL,
@@ -342,15 +344,15 @@ extern mat33_fp_t zork_base_standard_ref;
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
 
+void mst_hpd_interrupt(enum ioex_signal signal);
+
+#ifdef VARIANT_ZORK_TREMBYLE
 void board_reset_pd_mcu(void);
 
 /* Common definition for the USB PD interrupt handlers. */
 void tcpc_alert_event(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
 void ppc_interrupt(enum gpio_signal signal);
-void mst_hpd_interrupt(enum ioex_signal signal);
-
-#ifdef VARIANT_ZORK_TREMBYLE
 void hdmi_hpd_interrupt(enum ioex_signal signal);
 #endif
 

@@ -139,6 +139,11 @@ enum ec_cfg_usb_db_type {
 	DALBOZ_DB_D_OPT2_USBA_HDMI = 1,
 };
 
+enum usbc_port {
+	USBC_PORT_C0 = 0,
+	USBC_PORT_C1,
+	USBC_PORT_COUNT
+};
 
 #define HAS_USBC1 \
 			(BIT(DALBOZ_DB_D_OPT1_USBAC))
@@ -170,6 +175,13 @@ static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
 
 /* These IO expander GPIOs vary with DB option. */
 extern enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L;
+
+void board_reset_pd_mcu(void);
+
+/* Common definition for the USB PD interrupt handlers. */
+void tcpc_alert_event(enum gpio_signal signal);
+void bc12_interrupt(enum gpio_signal signal);
+void ppc_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

@@ -17,11 +17,7 @@
 #include "console.h"
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
-#include "driver/bc12/pi3usb9201.h"
-#include "driver/ppc/aoz1380.h"
-#include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3hdx1204.h"
-#include "driver/tcpm/nct38xx.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "driver/usb_mux/amd_fp5.h"
@@ -47,12 +43,7 @@
 #include "thermistor.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
-#include "usb_pd_tcpm.h"
-#include "usbc_ppc.h"
 #include "util.h"
-
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 #define SAFE_RESET_VBUS_MV 5000
 
@@ -106,127 +97,6 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
-struct ppc_config_t ppc_chips[] = {
-	[USBC_PORT_C0] = {
-		/* Device does not talk I2C */
-		.drv = &aoz1380_drv
-	},
-
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = NX20P3483_ADDR1_FLAGS,
-		.drv = &nx20p348x_drv
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
-
-void ppc_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_PPC_FAULT_ODL:
-		aoz1380_interrupt(USBC_PORT_C0);
-		break;
-
-	case GPIO_USB_C1_PPC_INT_ODL:
-		nx20p348x_interrupt(USBC_PORT_C1);
-		break;
-
-	default:
-		break;
-	}
-}
-
-int board_set_active_charge_port(int port)
-{
-	int is_valid_port = (port >= 0 &&
-			     port < CONFIG_USB_PD_PORT_MAX_COUNT);
-	int i;
-
-	if (port == CHARGE_PORT_NONE) {
-		CPRINTSUSB("Disabling all charger ports");
-
-		/* Disable all ports. */
-		for (i = 0; i < ppc_cnt; i++) {
-			/*
-			 * Do not return early if one fails otherwise we can
-			 * get into a boot loop assertion failure.
-			 */
-			if (ppc_vbus_sink_enable(i, 0))
-				CPRINTSUSB("Disabling C%d as sink failed.", i);
-		}
-
-		return EC_SUCCESS;
-	} else if (!is_valid_port) {
-		return EC_ERROR_INVAL;
-	}
-
-
-	/* Check if the port is sourcing VBUS. */
-	if (ppc_is_sourcing_vbus(port)) {
-		CPRINTFUSB("Skip enable C%d", port);
-		return EC_ERROR_INVAL;
-	}
-
-	CPRINTSUSB("New charge port: C%d", port);
-
-	/*
-	 * Turn off the other ports' sink path FETs, before enabling the
-	 * requested charge port.
-	 */
-	for (i = 0; i < ppc_cnt; i++) {
-		if (i == port)
-			continue;
-
-		if (ppc_vbus_sink_enable(i, 0))
-			CPRINTSUSB("C%d: sink path disable failed.", i);
-	}
-
-	/* Enable requested charge port. */
-	if (ppc_vbus_sink_enable(port, 1)) {
-		CPRINTSUSB("C%d: sink path enable failed.", port);
-		return EC_ERROR_UNKNOWN;
-	}
-
-	return EC_SUCCESS;
-}
-
-const struct tcpc_config_t tcpc_config[] = {
-	[USBC_PORT_C0] = {
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_TCPC0,
-			.addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
-		},
-		.drv = &nct38xx_tcpm_drv,
-		.flags = TCPC_FLAGS_TCPCI_REV2_0,
-	},
-	[USBC_PORT_C1] = {
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_TCPC1,
-			.addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
-		},
-		.drv = &nct38xx_tcpm_drv,
-		.flags = TCPC_FLAGS_TCPCI_REV2_0,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
-BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
-
-const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
-
 /*
  * In the AOZ1380 PPC, there are no programmable features.  We use
  * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
@@ -259,85 +129,6 @@ int board_tcpc_fast_role_swap_enable(int port, int enable)
 
 	return rv;
 }
-
-static void reset_pd_port(int port, enum gpio_signal reset_gpio_l,
-			  int hold_delay, int finish_delay)
-{
-	gpio_set_level(reset_gpio_l, 0);
-	msleep(hold_delay);
-	gpio_set_level(reset_gpio_l, 1);
-	if (finish_delay)
-		msleep(finish_delay);
-}
-
-void board_reset_pd_mcu(void)
-{
-	/* Reset TCPC0 */
-	reset_pd_port(USBC_PORT_C0, GPIO_USB_C0_TCPC_RST_L,
-		      NCT38XX_RESET_HOLD_DELAY_MS,
-		      NCT38XX_RESET_POST_DELAY_MS);
-
-	/* Reset TCPC1 */
-	reset_pd_port(USBC_PORT_C1, GPIO_USB_C1_TCPC_RST_L,
-		      NCT38XX_RESET_HOLD_DELAY_MS,
-		      NCT38XX_RESET_POST_DELAY_MS);
-}
-
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-
-	/*
-	 * Check which port has the ALERT line set and ignore if that TCPC has
-	 * its reset line active.
-	 */
-	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL)) {
-		if (gpio_get_level(GPIO_USB_C0_TCPC_RST_L) != 0)
-			status |= PD_STATUS_TCPC_ALERT_0;
-	}
-
-	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL)) {
-		if (gpio_get_level(GPIO_USB_C1_TCPC_RST_L) != 0)
-			status |= PD_STATUS_TCPC_ALERT_1;
-	}
-
-	return status;
-}
-
-void tcpc_alert_event(enum gpio_signal signal)
-{
-	int port = -1;
-
-	switch (signal) {
-	case GPIO_USB_C0_TCPC_INT_ODL:
-		port = 0;
-		break;
-	case GPIO_USB_C1_TCPC_INT_ODL:
-		port = 1;
-		break;
-	default:
-		return;
-	}
-
-	schedule_deferred_pd_interrupt(port);
-}
-
-void bc12_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_BC12_INT_ODL:
-		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
-		break;
-
-	case GPIO_USB_C1_BC12_INT_ODL:
-		task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
-		break;
-
-	default:
-		break;
-	}
-}
-
 static void baseboard_chipset_suspend(void)
 {
 	/* Disable display and keyboard backlights. */
