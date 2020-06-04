@@ -18,8 +18,6 @@
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/retimer/pi3hdx1204.h"
-#include "driver/temp_sensor/sb_tsi.h"
-#include "driver/temp_sensor/tmp432.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "ec_commands.h"
 #include "extpower.h"
@@ -39,7 +37,6 @@
 #include "system.h"
 #include "task.h"
 #include "tcpci.h"
-#include "temp_sensor.h"
 #include "thermistor.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
@@ -54,24 +51,6 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_EC_RST_ODL,
 };
 const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
-
-const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		.name = "CHARGER",
-		.input_ch = NPCX_ADC_CH2,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
-	[ADC_TEMP_SENSOR_SOC] = {
-		.name = "SOC",
-		.input_ch = NPCX_ADC_CH3,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct power_signal_info power_signal_list[] = {
 	[X86_SLP_S3_N] = {
@@ -169,7 +148,7 @@ struct keyboard_scan_config keyscan_config = {
  * Values are calculated from the "Resistance VS. Temperature" table on the
  * Murata page for part NCP15WB473F03RC. Vdd=3.3V, R=30.9Kohm.
  */
-static const struct thermistor_data_pair thermistor_data[] = {
+const struct thermistor_data_pair thermistor_data[] = {
 	{ 2761 / THERMISTOR_SCALING_FACTOR, 0},
 	{ 2492 / THERMISTOR_SCALING_FACTOR, 10},
 	{ 2167 / THERMISTOR_SCALING_FACTOR, 20},
@@ -185,13 +164,13 @@ static const struct thermistor_data_pair thermistor_data[] = {
 	{ 283 / THERMISTOR_SCALING_FACTOR, 100}
 };
 
-static const struct thermistor_info thermistor_info = {
+const struct thermistor_info thermistor_info = {
 	.scaling_factor = THERMISTOR_SCALING_FACTOR,
 	.num_pairs = ARRAY_SIZE(thermistor_data),
 	.data = thermistor_data,
 };
 
-static int board_get_temp(int idx, int *temp_k)
+int board_get_temp(int idx, int *temp_k)
 {
 	int mv;
 	int temp_c;
@@ -221,36 +200,6 @@ static int board_get_temp(int idx, int *temp_k)
 	*temp_k = C_TO_K(temp_c);
 	return EC_SUCCESS;
 }
-
-const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_CHARGER] = {
-		.name = "Charger",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = board_get_temp,
-		.idx = TEMP_SENSOR_CHARGER,
-	},
-	[TEMP_SENSOR_SOC] = {
-		.name = "SOC",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = board_get_temp,
-		.idx = TEMP_SENSOR_SOC,
-	},
-	[TEMP_SENSOR_CPU] = {
-		.name = "CPU",
-		.type = TEMP_SENSOR_TYPE_CPU,
-		.read = sb_tsi_get_val,
-		.idx = 0,
-	},
-#ifdef BOARD_MORPHIUS
-	[TEMP_SENSOR_5V_REGULATOR] = {
-		.name = "5V_REGULATOR",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = tmp432_get_val,
-		.idx = TMP432_IDX_LOCAL,
-	},
-#endif
-};
-BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 #ifndef TEST_BUILD
 void lid_angle_peripheral_enable(int enable)

@@ -271,28 +271,12 @@
 #include "math_util.h"
 #include "registers.h"
 
-enum adc_channel {
-	ADC_TEMP_SENSOR_CHARGER,
-	ADC_TEMP_SENSOR_SOC,
-	ADC_CH_COUNT
-};
-
 enum power_signal {
 	X86_SLP_S3_N,
 	X86_SLP_S5_N,
 	X86_S0_PGOOD,
 	X86_S5_PGOOD,
 	POWER_SIGNAL_COUNT
-};
-
-enum temp_sensor_id {
-	TEMP_SENSOR_CHARGER = 0,
-	TEMP_SENSOR_SOC,
-	TEMP_SENSOR_CPU,
-#ifdef BOARD_MORPHIUS
-	TEMP_SENSOR_5V_REGULATOR,
-#endif
-	TEMP_SENSOR_COUNT
 };
 
 enum fan_channel {
@@ -359,6 +343,7 @@ int board_tcpc_fast_role_swap_enable(int port, int enable);
 
 void pi3hdx1204_retimer_power(void);
 __override_proto int check_hdmi_hpd_status(void);
+int board_get_temp(int idx, int *temp_k);
 
 #endif /* !__ASSEMBLER__ */
 

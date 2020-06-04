@@ -3,12 +3,15 @@
  * found in the LICENSE file.
  */
 
+#include "adc.h"
+#include "adc_chip.h"
 #include "button.h"
 #include "charge_state_v2.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/retimer/tusb544.h"
+#include "driver/temp_sensor/sb_tsi.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "driver/usb_mux/ps8743.h"
 #include "extpower.h"
@@ -24,6 +27,7 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
+#include "temp_sensor.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
 
@@ -361,6 +365,46 @@ const struct fan_t fans[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
+
+const struct adc_t adc_channels[] = {
+	[ADC_TEMP_SENSOR_CHARGER] = {
+		.name = "CHARGER",
+		.input_ch = NPCX_ADC_CH2,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_SOC] = {
+		.name = "SOC",
+		.input_ch = NPCX_ADC_CH3,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_CHARGER] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = TEMP_SENSOR_CHARGER,
+	},
+	[TEMP_SENSOR_SOC] = {
+		.name = "SOC",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = TEMP_SENSOR_SOC,
+	},
+	[TEMP_SENSOR_CPU] = {
+		.name = "CPU",
+		.type = TEMP_SENSOR_TYPE_CPU,
+		.read = sb_tsi_get_val,
+		.idx = 0,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 const static struct ec_thermal_config thermal_thermistor = {
 	.temp_host = {

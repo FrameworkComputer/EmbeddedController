@@ -69,6 +69,12 @@
 
 #ifndef __ASSEMBLER__
 
+enum adc_channel {
+	ADC_TEMP_SENSOR_CHARGER,
+	ADC_TEMP_SENSOR_SOC,
+	ADC_CH_COUNT
+};
+
 enum battery_type {
 	BATTERY_SIMPLO_HIGHPOWER,
 	BATTERY_COSMX,
@@ -85,6 +91,13 @@ enum pwm_channel {
 	PWM_CH_KBLIGHT = 0,
 	PWM_CH_FAN,
 	PWM_CH_COUNT
+};
+
+enum temp_sensor_id {
+	TEMP_SENSOR_CHARGER = 0,
+	TEMP_SENSOR_SOC,
+	TEMP_SENSOR_CPU,
+	TEMP_SENSOR_COUNT
 };
 
 
