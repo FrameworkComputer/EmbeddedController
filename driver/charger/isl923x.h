@@ -25,6 +25,7 @@
 #define ISL923X_REG_CONTROL2         0x3d
 #define ISL9238_REG_CONTROL3         0x4c
 #define ISL9238_REG_CONTROL4         0x4e
+#define ISL9238C_REG_CONTROL6        0x37
 #define ISL923X_REG_INFO             0x3a
 #define ISL9238_REG_INFO2            0x4d
 #define ISL923X_REG_OTG_VOLTAGE      0x49
@@ -255,6 +256,9 @@
 /* Control4: GP comparator control bit */
 #define RAA489000_C4_DISABLE_GP_CMP BIT(12)
 
+/* Control6: charger current and maximum system voltage slew rate control. */
+#define ISL9238C_C6_SLEW_RATE_CONTROL BIT(6)
+
 /* Control8: MCU_LDO - BAT state disable */
 #define RAA489000_C8_MCU_LDO_BAT_STATE_DISABLE BIT(14)
 
@@ -335,6 +339,11 @@ enum isl9237_fsm_state {
 #define CHARGE_V_STEP 8
 #elif defined(CONFIG_CHARGER_ISL9238)
 #define CHARGER_NAME  "isl9238"
+#define CHARGE_V_MAX  ISL9238_SYS_VOLTAGE_REG_MAX
+#define CHARGE_V_MIN  ISL923X_SYS_VOLTAGE_REG_MIN
+#define CHARGE_V_STEP 8
+#elif defined(CONFIG_CHARGER_ISL9238C)
+#define CHARGER_NAME  "isl9238c"
 #define CHARGE_V_MAX  ISL9238_SYS_VOLTAGE_REG_MAX
 #define CHARGE_V_MIN  ISL923X_SYS_VOLTAGE_REG_MIN
 #define CHARGE_V_STEP 8

@@ -26,6 +26,10 @@
 #error "ISL9237/8 is a NVDC charger, please enable CONFIG_CHARGER_NARROW_VDC."
 #endif
 
+#if defined(CONFIG_CHARGER_ISL9238) || defined(CONFIG_CHARGER_ISL9238C)
+#define CHARGER_ISL9238X
+#endif
+
 #define DEFAULT_R_AC 20
 #define DEFAULT_R_SNS 10
 #define R_AC CONFIG_CHARGER_SENSE_RESISTOR_AC
@@ -132,7 +136,7 @@ static enum ec_error_list isl923x_get_input_current(int chgnum,
 	return EC_SUCCESS;
 }
 
-#if defined(CONFIG_CHARGER_OTG) && defined(CONFIG_CHARGER_ISL9238)
+#if defined(CONFIG_CHARGER_OTG) && defined(CHARGER_ISL9238X)
 static enum ec_error_list isl923x_enable_otg_power(int chgnum, int enabled)
 {
 	int rv, control1;
@@ -183,7 +187,7 @@ static enum ec_error_list isl923x_set_otg_current_voltage(int chgnum,
 	/* Set current. */
 	return raw_write16(chgnum, ISL923X_REG_OTG_CURRENT, current_reg);
 }
-#endif /* CONFIG_CHARGER_OTG && CONFIG_CHARGER_ISL9238 */
+#endif /* CONFIG_CHARGER_OTG && CHARGER_ISL9238X */
 
 static enum ec_error_list isl923x_manufacturer_id(int chgnum, int *id)
 {
@@ -470,7 +474,18 @@ static void isl923x_init(int chgnum)
 			goto init_fail;
 	}
 
-	if (IS_ENABLED(CONFIG_CHARGER_ISL9238) ||
+	if (IS_ENABLED(CONFIG_CHARGER_ISL9238C)) {
+		/* b/155366741: enable slew rate control */
+		if (raw_read16(chgnum, ISL9238C_REG_CONTROL6, &reg))
+			goto init_fail;
+
+		reg |= ISL9238C_C6_SLEW_RATE_CONTROL;
+
+		if (raw_write16(chgnum, ISL9238C_REG_CONTROL6, reg))
+			goto init_fail;
+	}
+
+	if (IS_ENABLED(CHARGER_ISL9238X) ||
 	    IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
 		/*
 		 * Don't reread the prog pin and don't reload the ILIM on ACIN.
@@ -777,20 +792,20 @@ static int print_amon_bmon(int chgnum, enum amon_bmon amon,
 {
 	int adc, curr, reg, ret;
 
-#ifdef CONFIG_CHARGER_ISL9238
-	ret = raw_read16(chgnum, ISL9238_REG_CONTROL3, &reg);
-	if (ret)
-		return ret;
+	if (IS_ENABLED(CHARGER_ISL9238X)) {
+		ret = raw_read16(chgnum, ISL9238_REG_CONTROL3, &reg);
+		if (ret)
+			return ret;
 
-	/* Switch direction */
-	if (direction)
-		reg |= ISL9238_C3_AMON_BMON_DIRECTION;
-	else
-		reg &= ~ISL9238_C3_AMON_BMON_DIRECTION;
-	ret = raw_write16(chgnum, ISL9238_REG_CONTROL3, reg);
-	if (ret)
-		return ret;
-#endif
+		/* Switch direction */
+		if (direction)
+			reg |= ISL9238_C3_AMON_BMON_DIRECTION;
+		else
+			reg &= ~ISL9238_C3_AMON_BMON_DIRECTION;
+		ret = raw_write16(chgnum, ISL9238_REG_CONTROL3, reg);
+		if (ret)
+			return ret;
+	}
 
 	mutex_lock(&control1_mutex);
 
@@ -836,12 +851,10 @@ static int console_command_amon_bmon(int argc, char **argv)
 	if (argc >= 2) {
 		print_ac = (argv[1][0] == 'a');
 		print_battery = (argv[1][0] == 'b');
-#ifdef CONFIG_CHARGER_ISL9238
-		if (argv[1][1] != '\0') {
+		if (IS_ENABLED(CHARGER_ISL9238X) && argv[1][1] != '\0') {
 			print_charge = (argv[1][1] == 'c');
 			print_discharge = (argv[1][1] == 'd');
 		}
-#endif
 		if (argc >= 3) {
 			chgnum = strtoi(argv[2], &e, 10);
 			if (*e)
@@ -853,23 +866,19 @@ static int console_command_amon_bmon(int argc, char **argv)
 		if (print_charge)
 			ret |= print_amon_bmon(chgnum, AMON, 0,
 					CONFIG_CHARGER_SENSE_RESISTOR_AC);
-#ifdef CONFIG_CHARGER_ISL9238
-		if (print_discharge)
+		if (IS_ENABLED(CHARGER_ISL9238X) && print_discharge)
 			ret |= print_amon_bmon(chgnum, AMON, 1,
 					CONFIG_CHARGER_SENSE_RESISTOR_AC);
-#endif
 	}
 
 	if (print_battery) {
-#ifdef CONFIG_CHARGER_ISL9238
-		if (print_charge)
+		if (IS_ENABLED(CHARGER_ISL9238X) && print_charge)
 			ret |= print_amon_bmon(chgnum, BMON, 0,
 					/*
 					 * charging current monitor has
 					 * 2x amplification factor
 					 */
-					2*CONFIG_CHARGER_SENSE_RESISTOR);
-#endif
+					2 * CONFIG_CHARGER_SENSE_RESISTOR);
 		if (print_discharge)
 			ret |= print_amon_bmon(chgnum, BMON, 1,
 					CONFIG_CHARGER_SENSE_RESISTOR);
@@ -918,11 +927,13 @@ static int command_isl923x_dump(int argc, char **argv)
 	}
 
 	dump_reg_range(chgnum, 0x14, 0x15);
+	if (IS_ENABLED(CONFIG_CHARGER_ISL9238C))
+		dump_reg_range(chgnum, 0x37, 0x37);
 	dump_reg_range(chgnum, 0x38, 0x3F);
 	dump_reg_range(chgnum, 0x47, 0x4A);
-#if defined(CONFIG_CHARGER_ISL9238) || defined(CONFIG_CHARGER_RAA489000)
-	dump_reg_range(chgnum, 0x4B, 0x4E);
-#endif /* CONFIG_CHARGER_ISL9238 || CONFIG_CHARGER_RAA489000 */
+	if (IS_ENABLED(CHARGER_ISL9238X) ||
+	    IS_ENABLED(CONFIG_CHARGER_RAA489000))
+		dump_reg_range(chgnum, 0x4B, 0x4E);
 	dump_reg_range(chgnum, 0xFE, 0xFF);
 
 	return EC_SUCCESS;
@@ -1070,7 +1081,7 @@ const struct charger_drv isl923x_drv = {
 	.get_info = &isl923x_get_info,
 	.get_status = &isl923x_get_status,
 	.set_mode = &isl923x_set_mode,
-#if defined(CONFIG_CHARGER_OTG) && defined(CONFIG_CHARGER_ISL9238)
+#if defined(CONFIG_CHARGER_OTG) && defined(CHARGER_ISL9238X)
 	.enable_otg_power = &isl923x_enable_otg_power,
 	.set_otg_current_voltage = &isl923x_set_otg_current_voltage,
 #endif
