@@ -4860,6 +4860,7 @@ static const struct {
 	ST_BOTH_SIZES(tablet_mode_threshold),
 	ST_BOTH_SIZES(sensor_scale),
 	ST_BOTH_SIZES(online_calib_read),
+	ST_BOTH_SIZES(get_activity),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 
