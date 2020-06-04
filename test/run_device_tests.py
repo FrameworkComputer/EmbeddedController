@@ -58,13 +58,16 @@ class TestConfig:
     """Configuration for a given test."""
 
     def __init__(self, name, image_to_use=ImageType.RW, finish_regexes=None,
-                 toggle_power=False):
+                 toggle_power=False, test_args=None):
+        if test_args is None:
+            test_args = []
         if finish_regexes is None:
             finish_regexes = [ALL_TESTS_PASSED_REGEX, ALL_TESTS_FAILED_REGEX]
 
         self.name = name
         self.image_to_use = image_to_use
         self.finish_regexes = finish_regexes
+        self.test_args = test_args
         self.toggle_power = toggle_power
         self.logs = []
         self.passed = False
@@ -216,7 +219,9 @@ def run_test(test, console, executor, timeout_secs=10):
         if test.image_to_use == ImageType.RO:
             c.write('reboot ro\n'.encode())
             time.sleep(1)
-        c.write('runtest\n'.encode())
+
+        test_cmd = 'runtest ' + ' '.join(test.test_args) + '\n'
+        c.write(test_cmd.encode())
 
         while True:
             c.flush()
