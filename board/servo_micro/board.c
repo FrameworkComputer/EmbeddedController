@@ -68,7 +68,7 @@ void board_config_pre_init(void)
 static struct usart_config const usart2;
 struct usb_stream_config const usart2_usb;
 
-static struct queue const usart2_to_usb = QUEUE_DIRECT(128, uint8_t,
+static struct queue const usart2_to_usb = QUEUE_DIRECT(1024, uint8_t,
 	usart2.producer, usart2_usb.consumer);
 static struct queue const usb_to_usart2 = QUEUE_DIRECT(64, uint8_t,
 	usart2_usb.producer, usart2.consumer);
