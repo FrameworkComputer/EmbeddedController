@@ -75,7 +75,7 @@ static void ppc_interrupt(enum gpio_signal signal)
 {
 	uint32_t board_version = 0;
 
-	if (cbi_get_board_version(&board_version) == EC_SUCCESS)
+	if (cbi_get_board_version(&board_version) != EC_SUCCESS)
 		CPRINTSUSB("Get board version failed.");
 	switch (signal) {
 	case GPIO_USB_PD_C0_INT_ODL:
