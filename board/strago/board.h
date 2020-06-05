@@ -104,6 +104,7 @@
 #define CONFIG_ADC
 
 /* Modules we want to exclude */
+#undef CONFIG_CMD_HCDEBUG
 #undef CONFIG_CMD_HASH
 #undef CONFIG_CMD_HOSTCMD
 #undef CONFIG_CMD_I2C_SCAN
