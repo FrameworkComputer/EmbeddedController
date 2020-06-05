@@ -66,7 +66,8 @@ const struct i2c_port_t i2c_ports[] = {
 	{"thermal", I2C_PORT_THERMAL, 100, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
 #endif
 #ifdef BOARD_MUSHU
-	{"gpu_temp", I2C_PORT_THERMAL, 100, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
+	{"f75303_temp", I2C_PORT_THERMAL, 100, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
+	{"gpu_temp", I2C_PORT_GPU, 100, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
 #endif
 	{"power",   I2C_PORT_POWER,   100, GPIO_I2C5_SCL, GPIO_I2C5_SDA},
 	{"eeprom",  I2C_PORT_EEPROM,  100, GPIO_I2C7_SCL, GPIO_I2C7_SDA},

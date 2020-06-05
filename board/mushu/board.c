@@ -18,6 +18,8 @@
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
+#include "driver/temp_sensor/amd_r19me4070.h"
+#include "driver/temp_sensor/f75303.h"
 #include "ec_commands.h"
 #include "extpower.h"
 #include "fan.h"
@@ -42,7 +44,6 @@
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "util.h"
-#include "driver/temp_sensor/amd_r19me4070.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -409,18 +410,42 @@ const struct adc_t adc_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_CHARGER] = {.name = "CHARGER",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_30k9_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_5V] = {.name = "5V",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_30k9_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_2},
-	[TEMP_GPU] = {.name = "GPU",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_R19ME4070,
-				 .idx = R19ME4070_LOCAL},
+	[TEMP_CHARGER] = {
+		.name = "CHARGER",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_1
+	},
+	[TEMP_5V] = {
+		.name = "5V",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_2
+	},
+	[TEMP_GPU] = {
+		.name = "GPU",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_R19ME4070,
+		.idx = R19ME4070_LOCAL
+	},
+	[TEMP_F75303_LOCAL] = {
+		.name = "F75303_Local",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = f75303_get_val,
+		.idx = F75303_IDX_LOCAL
+	},
+	[TEMP_F75303_GPU] = {
+		.name = "F75303_GPU",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = f75303_get_val,
+		.idx = F75303_IDX_REMOTE1
+	},
+	[TEMP_F75303_GPU_POWER] = {
+		.name = "F75303_GPU_Power",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = f75303_get_val,
+		.idx = F75303_IDX_REMOTE2
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
