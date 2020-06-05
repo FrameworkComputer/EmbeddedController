@@ -769,6 +769,12 @@ void pe_got_soft_reset(int port)
 	pd_port[port].mock_got_soft_reset = 1;
 }
 
+bool pe_in_local_ams(int port)
+{
+	/* We will probably want to change this in the future */
+	return false;
+}
+
 static int test_prl_reset(void)
 {
 	int port = PORT0;
@@ -1072,11 +1078,6 @@ static int test_send_extended_data_msg(void)
 static int test_receive_soft_reset_msg(void)
 {
 	int port = PORT0;
-	int expected_header = PD_HEADER(PD_CTRL_SOFT_RESET,
-				pd_port[port].power_role,
-				pd_port[port].data_role,
-				pd_port[port].msg_rx_id,
-				0, pd_port[port].rev, 0);
 
 	enable_prl(port, 1);
 
@@ -1103,9 +1104,7 @@ static int test_receive_soft_reset_msg(void)
 
 	TEST_ASSERT(pd_port[port].mock_got_soft_reset);
 	TEST_ASSERT(pd_port[port].mock_pe_error < 0);
-	TEST_ASSERT(pd_port[port].mock_pe_message_received);
-	TEST_ASSERT(expected_header == rx_emsg[port].header);
-	TEST_ASSERT(rx_emsg[port].len == 0);
+	TEST_EQ(pd_port[port].mock_pe_message_received, 0, "%d");
 
 	enable_prl(port, 0);
 

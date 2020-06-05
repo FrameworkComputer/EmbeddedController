@@ -112,20 +112,6 @@ void prl_hard_reset_complete(int port);
  */
 void prl_execute_hard_reset(int port);
 
-/**
- * Informs the Protocol Layer to start an Atomic Message Sequence
- *
- * @param port USB-C port number
- */
-void prl_start_ams(int port);
-
-/**
- * Informs the Protocol Layer to end an Atomic Message Sequence
- *
- * @param port USB-C port number
- */
-void prl_end_ams(int port);
-
 #ifdef TEST_BUILD
 /**
  * Fake to track the last sent control message

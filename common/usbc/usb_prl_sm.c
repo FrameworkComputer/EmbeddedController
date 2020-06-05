@@ -68,10 +68,10 @@
  */
 /* Flag to note message transmission completed */
 #define PRL_FLAGS_TX_COMPLETE             BIT(0)
-/* Flag to note an AMS is being started by PE */
-#define PRL_FLAGS_START_AMS               BIT(1)
-/* Flag to note an AMS is being stopped by PE */
-#define PRL_FLAGS_END_AMS                 BIT(2)
+/* Flag to note that PRL requested to set SINK_NG CC state */
+#define PRL_FLAGS_SINK_NG                 BIT(1)
+/* Flag to note PRL waited for SINK_OK CC state before transmitting */
+#define PRL_FLAGS_WAIT_SINK_OK            BIT(2)
 /* Flag to note transmission error occurred */
 #define PRL_FLAGS_TX_ERROR                BIT(3)
 /* Flag to note PE triggered a hard reset */
@@ -80,7 +80,10 @@
 #define PRL_FLAGS_HARD_RESET_COMPLETE     BIT(5)
 /* Flag to note port partner sent a hard reset */
 #define PRL_FLAGS_PORT_PARTNER_HARD_RESET BIT(6)
-/* Flag to note a message transmission has been requested */
+/*
+ * Flag to note a message transmission has been requested. It is only cleared
+ * when we send the message to the TCPC layer.
+ */
 #define PRL_FLAGS_MSG_XMIT                BIT(7)
 /* Flag to note a message was received */
 #define PRL_FLAGS_MSG_RECEIVED            BIT(8)
@@ -531,16 +534,6 @@ void prl_set_debug_level(enum debug_level debug_level)
 #endif
 }
 
-void prl_start_ams(int port)
-{
-	PRL_TX_SET_FLAG(port, PRL_FLAGS_START_AMS);
-}
-
-void prl_end_ams(int port)
-{
-	PRL_TX_SET_FLAG(port, PRL_FLAGS_END_AMS);
-}
-
 void prl_hard_reset_complete(int port)
 {
 	PRL_HR_SET_FLAG(port, PRL_FLAGS_HARD_RESET_COMPLETE);
@@ -702,13 +695,20 @@ static void prl_copy_msg_to_buffer(int port)
 	pdmsg[port].data_objs = (tx_emsg[port].len + 3) >> 2;
 }
 
-static int pdmsg_xmit_type_is_rev30(const int port)
+static __maybe_unused int pdmsg_xmit_type_is_rev30(const int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_REV30))
 		return ((pdmsg[port].xmit_type < NUM_SOP_STAR_TYPES)
 		&& (prl_get_rev(port, pdmsg[port].xmit_type) == PD_REV30));
 	else
 		return 0;
+}
+
+/* Returns true if the SOP port partner operates at PD rev3.0 */
+static bool is_sop_rev30(const int port)
+{
+	return IS_ENABLED(CONFIG_USB_PD_REV30) &&
+	       prl_get_rev(port, TCPC_TX_SOP) == PD_REV30;
 }
 
 /* Common Protocol Layer Message Transmission */
@@ -720,13 +720,11 @@ static void prl_tx_phy_layer_reset_entry(const int port)
 	 || IS_ENABLED(CONFIG_USB_VPD)) {
 		vpd_rx_enable(pd_is_connected(port));
 	} else {
-		tcpm_clear_pending_messages(port);
+		/* Purge any outstanding TX message */
+		PRL_TX_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
+		/* TODO(b/157228506): notify pe if needed */
 		tcpm_set_rx_enable(port, pd_is_connected(port));
 	}
-}
-
-static void prl_tx_phy_layer_reset_run(const int port)
-{
 	set_state_prl_tx(port, PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
 }
 
@@ -740,38 +738,40 @@ static void prl_tx_wait_for_message_request_entry(const int port)
 
 static void prl_tx_wait_for_message_request_run(const int port)
 {
-	if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
-		pdmsg_xmit_type_is_rev30(port) && PRL_TX_CHK_FLAG(port,
-			       (PRL_FLAGS_START_AMS | PRL_FLAGS_END_AMS))) {
+	/* Clear any AMS flags and state if we are no longer in an AMS */
+	if (IS_ENABLED(CONFIG_USB_PD_REV30) && !pe_in_local_ams(port)) {
+		/* Note PRL_Tx_Src_Sink_Tx is embedded here. */
+		if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_SINK_NG)) {
+			tcpm_select_rp_value(port, SINK_TX_OK);
+			tcpm_set_cc(port, TYPEC_CC_RP);
+		}
+		PRL_TX_CLR_FLAG(port,
+				PRL_FLAGS_SINK_NG | PRL_FLAGS_WAIT_SINK_OK);
+	}
+
+	/*
+	 * Check if we are starting an AMS and need to wait and/or set the CC
+	 * lines appropriately.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_REV30) && is_sop_rev30(port) &&
+	    pe_in_local_ams(port)) {
 		if (pd_get_power_role(port) == PD_ROLE_SOURCE) {
 			/*
 			 * Start of SRC AMS notification received from
 			 * Policy Engine
 			 */
-			if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_START_AMS)) {
-				PRL_TX_CLR_FLAG(port, PRL_FLAGS_START_AMS);
+			if (!PRL_TX_CHK_FLAG(port, PRL_FLAGS_SINK_NG)) {
+				PRL_TX_SET_FLAG(port, PRL_FLAGS_SINK_NG);
 				set_state_prl_tx(port, PRL_TX_SRC_SOURCE_TX);
 				return;
-			}
-			/*
-			 * End of SRC AMS notification received from
-			 * Policy Engine
-			 */
-			else if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_END_AMS)) {
-				/* Set Rp = SinkTxOk */
-				tcpm_select_rp_value(port, SINK_TX_OK);
-				tcpm_set_cc(port, TYPEC_CC_RP);
-				prl_tx[port].retry_counter = 0;
-				/* PRL_FLAGS_END AMS is cleared here */
-				prl_tx[port].flags = 0;
 			}
 		} else {
 			/*
 			 * Start of SNK AMS notification received from
 			 * Policy Engine
 			 */
-			if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_START_AMS)) {
-				PRL_TX_CLR_FLAG(port, PRL_FLAGS_START_AMS);
+			if (!PRL_TX_CHK_FLAG(port, PRL_FLAGS_WAIT_SINK_OK)) {
+				PRL_TX_SET_FLAG(port, PRL_FLAGS_WAIT_SINK_OK);
 				/*
 				 * First Message in AMS notification
 				 * received from Policy Engine.
@@ -779,18 +779,11 @@ static void prl_tx_wait_for_message_request_run(const int port)
 				set_state_prl_tx(port, PRL_TX_SNK_START_AMS);
 				return;
 			}
-			/*
-			 * End of SNK AMS notification received from
-			 * Policy Engine
-			 */
-			else if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_END_AMS)) {
-				prl_tx[port].retry_counter = 0;
-				/* PRL_FLAGS_END AMS is cleared here */
-				prl_tx[port].flags = 0;
-			}
-
 		}
-	} else if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
+	}
+
+	/* Handle non Rev 3.0 or subsequent messages in AMS sequence */
+	if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
 		PRL_TX_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
 		/*
 		 * Soft Reset Message Message pending
@@ -851,8 +844,10 @@ static void prl_tx_src_source_tx_entry(const int port)
 static void prl_tx_src_source_tx_run(const int port)
 {
 	if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
-		PRL_TX_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
-
+		/*
+		 * Don't clear pending XMIT flag here. Wait until we send so
+		 * we can detect if we dropped this message or not.
+		 */
 		set_state_prl_tx(port, PRL_TX_SRC_PENDING);
 	}
 }
@@ -868,8 +863,10 @@ static void prl_tx_snk_start_ams_entry(const int port)
 static void prl_tx_snk_start_ams_run(const int port)
 {
 	if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
-		PRL_TX_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
-
+		/*
+		 * Don't clear pending XMIT flag here. Wait until we send so
+		 * we can detect if we dropped this message or not.
+		 */
 		set_state_prl_tx(port, PRL_TX_SNK_PENDING);
 	}
 }
@@ -1054,8 +1051,13 @@ static void prl_tx_src_pending_entry(const int port)
 
 static void prl_tx_src_pending_run(const int port)
 {
-
 	if (get_time().val > prl_tx[port].sink_tx_timer) {
+		/*
+		 * We clear the pending XMIT flag here right before we send so
+		 * we can detect if we discarded this message or not
+		 */
+		PRL_TX_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
+
 		/*
 		 * Soft Reset Message pending &
 		 * SinkTxTimer timeout
@@ -1088,8 +1090,15 @@ static void prl_tx_snk_pending_run(const int port)
 {
 	enum tcpc_cc_voltage_status cc1, cc2;
 
+	/* Wait unit the SRC applies SINK_TX_OK so we can transmit */
 	tcpm_get_cc(port, &cc1, &cc2);
 	if (cc1 == TYPEC_CC_VOLT_RP_3_0 || cc2 == TYPEC_CC_VOLT_RP_3_0) {
+		/*
+		 * We clear the pending XMIT flag here right before we send so
+		 * we can detect if we discarded this message or not
+		 */
+		PRL_TX_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
+
 		/*
 		 * Soft Reset Message Message pending &
 		 * Rp = SinkTxOk
@@ -1910,6 +1919,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	    PD_HEADER_PROLE(header) == PD_PLUG_FROM_DFP_UFP)
 		return;
 
+	/* Handle incoming soft reset as special case */
 	if (cnt == 0 && type == PD_CTRL_SOFT_RESET) {
 		int i;
 
@@ -1920,9 +1930,6 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 			prl_rx[port].msg_id[i] = -1;
 		}
 
-		/* Inform Policy Engine of Soft Reset */
-		pe_got_soft_reset(port);
-
 		/* Soft Reset occurred */
 		set_state_prl_tx(port, PRL_TX_PHY_LAYER_RESET);
 
@@ -1932,6 +1939,15 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 			set_state_tch(port,
 				TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
 		}
+
+		/*
+		 * Inform Policy Engine of Soft Reset. Note perform this after
+		 * performing the protocol layer reset, otherwise we will lose
+		 * the PE's outgoing ACCEPT message to the soft reset.
+		 */
+		pe_got_soft_reset(port);
+
+		return;
 	}
 
 	/*
@@ -2010,7 +2026,6 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 static const struct usb_state prl_tx_states[] = {
 	[PRL_TX_PHY_LAYER_RESET] = {
 		.entry  = prl_tx_phy_layer_reset_entry,
-		.run    = prl_tx_phy_layer_reset_run,
 	},
 	[PRL_TX_WAIT_FOR_MESSAGE_REQUEST] = {
 		.entry  = prl_tx_wait_for_message_request_entry,

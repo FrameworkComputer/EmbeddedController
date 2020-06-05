@@ -53,6 +53,12 @@ static void pe_init(int port)
 	set_state_pe(port, PE_REQUEST);
 }
 
+bool pe_in_local_ams(int port)
+{
+	/* We never start a local AMS */
+	return false;
+}
+
 void pe_run(int port, int evt, int en)
 {
 	static enum sm_local_state local_state[CONFIG_USB_PD_PORT_MAX_COUNT];

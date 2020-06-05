@@ -178,5 +178,16 @@ void pe_set_sysjump(void);
  * @param port USB-C port number
  */
 void pe_invalidate_explicit_contract(int port);
+
+/*
+ * Return true if the PE is is within an atomic
+ * messaging sequence that it initiated with a SOP* port partner.
+ *
+ * Note the PRL layer polls this instead of using AMS_START and AMS_END
+ * notification from the PE that is called out by the spec
+ *
+ * @param port USB-C port number
+ */
+bool pe_in_local_ams(int port);
 #endif /* __CROS_EC_USB_PE_H */
 

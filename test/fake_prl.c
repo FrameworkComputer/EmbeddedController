@@ -52,9 +52,6 @@ void prl_set_rev(int port, enum tcpm_transmit_type partner,
 	enum pd_rev_type rev)
 {}
 
-void prl_start_ams(int port)
-{}
-
 
 enum pd_ctrl_msg_type fake_prl_get_last_sent_ctrl_msg(int port)
 {
