@@ -194,7 +194,8 @@ def flash(test_name, board):
                                 test_name + '.bin'),
     ]
     logging.debug('Running command: "%s"', ' '.join(cmd))
-    subprocess.run(cmd).check_returncode()
+    completed_process = subprocess.run(cmd)
+    return completed_process.returncode == 0
 
 
 def readline(executor, f, timeout_secs):
@@ -329,7 +330,9 @@ def main():
         build(test.name, args.board)
 
         # flash test binary
-        flash(test.name, args.board)
+        if not flash(test.name, args.board):
+            test.passed = False
+            continue
 
         if test.toggle_power:
             power(args.board, board_config, on=False)
