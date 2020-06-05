@@ -17,7 +17,9 @@ import subprocess
 import sys
 import tempfile
 
+# Commands are documented here: https://wiki.segger.com/J-Link_Commander
 JLINK_COMMANDS = '''
+exitonerror 1
 r
 loadfile {FIRMWARE}
 r
@@ -67,7 +69,9 @@ def flash(jlink_exe, ip, device, interface, cmd_file):
         '-CommandFile', cmd_file,
         ])
     logging.debug('Running command: "%s"', ' '.join(cmd))
-    subprocess.run(cmd)
+    completed_process = subprocess.run(cmd)
+    logging.debug('JLink return code: %d', completed_process.returncode)
+    return completed_process.returncode
 
 
 def main(argv: list):
@@ -121,8 +125,10 @@ def main(argv: list):
     args.jlink = args.jlink
 
     cmd_file = create_jlink_command_file(args.image)
-    flash(args.jlink, args.ip, config.device, config.interface, cmd_file.name)
+    ret_code = flash(args.jlink, args.ip, config.device, config.interface,
+                     cmd_file.name)
     cmd_file.close()
+    return ret_code
 
 
 if __name__ == '__main__':
