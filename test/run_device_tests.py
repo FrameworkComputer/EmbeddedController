@@ -60,7 +60,7 @@ class TestConfig:
     """Configuration for a given test."""
 
     def __init__(self, name, image_to_use=ImageType.RW, finish_regexes=None,
-                 toggle_power=False, test_args=None):
+                 toggle_power=False, test_args=None, num_flash_attempts=2):
         if test_args is None:
             test_args = []
         if finish_regexes is None:
@@ -71,6 +71,7 @@ class TestConfig:
         self.finish_regexes = finish_regexes
         self.test_args = test_args
         self.toggle_power = toggle_power
+        self.num_flash_attempts = num_flash_attempts
         self.logs = []
         self.passed = False
         self.num_fails = 0
@@ -330,7 +331,19 @@ def main():
         build(test.name, args.board)
 
         # flash test binary
-        if not flash(test.name, args.board):
+        # TODO(b/158327221): First attempt to flash fails after
+        #  flash_write_protect test is run; works after second attempt.
+        flash_succeeded = False
+        for i in range(0, test.num_flash_attempts):
+            logging.debug('Flash attempt %d', i + 1)
+            if flash(test.name, args.board):
+                flash_succeeded = True
+                break
+            time.sleep(1)
+
+        if not flash_succeeded:
+            logging.debug('Flashing failed after max attempts: %d',
+                          test.num_flash_attempts)
             test.passed = False
             continue
 
