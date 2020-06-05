@@ -1733,6 +1733,7 @@ static void handle_ctrl_request(int port, uint32_t head,
 		} else if (pd[port].task_state == PD_STATE_SRC_SWAP_STANDBY) {
 			/* reset message ID and swap roles */
 			pd[port].msg_id = 0;
+			invalidate_last_message_id(port);
 			pd_set_power_role(port, PD_ROLE_SINK);
 			pd_update_roles(port);
 			/*
