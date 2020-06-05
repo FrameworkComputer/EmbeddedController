@@ -475,6 +475,8 @@ static inline void tcpm_dump_registers(int port)
 
 	if (tcpc->dump_registers)
 		tcpc->dump_registers(port);
+	else
+		tcpc_dump_std_registers(port);
 }
 #endif /* defined(CONFIG_CMD_TCPC_DUMP) */
 
