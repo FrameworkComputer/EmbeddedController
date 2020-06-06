@@ -66,6 +66,38 @@
 #define CMD_RP       0x82 /* Enables the read protection */
 #define CMD_RU       0x92 /* Disables the read protection */
 
+#define CMD_LOOKUP_ENTRY(COMMAND) {CMD_##COMMAND, #COMMAND}
+const struct {
+	const char cmd;
+	const char *name;
+} cmd_lookup_table[] = {
+	CMD_LOOKUP_ENTRY(INIT),
+	CMD_LOOKUP_ENTRY(GETCMD),
+	CMD_LOOKUP_ENTRY(GETVER),
+	CMD_LOOKUP_ENTRY(GETID),
+	CMD_LOOKUP_ENTRY(READMEM),
+	CMD_LOOKUP_ENTRY(GO),
+	CMD_LOOKUP_ENTRY(WRITEMEM),
+	CMD_LOOKUP_ENTRY(ERASE),
+	CMD_LOOKUP_ENTRY(EXTERASE),
+	CMD_LOOKUP_ENTRY(NO_STRETCH_ERASE),
+	CMD_LOOKUP_ENTRY(WP),
+	CMD_LOOKUP_ENTRY(WU),
+	CMD_LOOKUP_ENTRY(RP),
+	CMD_LOOKUP_ENTRY(RU),
+};
+
+const char *cmd_lookup_name(char cmd)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(cmd_lookup_table); i++) {
+		if (cmd_lookup_table[i].cmd == cmd)
+			return cmd_lookup_table[i].name;
+	}
+
+	return NULL;
+}
+
 #define RESP_NACK        0x1f
 #define RESP_ACK         0x79 /* 0b 0111 1001 */
 #define RESP_BUSY        0x76
@@ -644,7 +676,11 @@ int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
 	if (res == STM32_EDACK) {
 		++count_damaged_ack;
 	} else if (IS_STM32_ERROR(res)) {
-		fprintf(stderr, "Failed to get command 0x%02x ACK\n", cmd);
+		const char *name = cmd_lookup_name(cmd);
+		char hex[sizeof("0xFF")];
+		snprintf(hex, sizeof(hex), "0x%02x", cmd);
+		fprintf(stderr, "Failed to get command %s ACK\n",
+			name ? name : hex);
 		return res;
 	}
 
@@ -858,9 +894,14 @@ int command_get_commands(int fd, struct stm32_def *chip)
 
 		erase = command_erase;
 		for (i = 2; i < 2 + cmds[0]; i++) {
+			const char *name;
 			if (cmds[i] == CMD_EXTERASE)
 				erase = command_ext_erase;
-			printf("%02x ", cmds[i]);
+			name = cmd_lookup_name(cmds[i]);
+			if (name)
+				printf("%s ", name);
+			else
+				printf("%02x ", cmds[i]);
 		}
 
 		if (mode == MODE_I2C)
