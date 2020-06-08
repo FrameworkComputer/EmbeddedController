@@ -209,6 +209,10 @@
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_TCPMV1
+/* Exclude PD state names from RO image to save space */
+#ifdef SECTION_IS_RO
+#undef CONFIG_USB_PD_TCPMV1_DEBUG
+#endif
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_DUAL_ROLE
