@@ -25,7 +25,6 @@
 /* Keyboard features */
 #define CONFIG_PWM_KBLIGHT
 #define CONFIG_KEYBOARD_CUSTOMIZATION
-#define CONFIG_KEYBOARD_DEBUG
 
 /* Enable board_config_pre_init() */
 #define CONFIG_BOARD_PRE_INIT
