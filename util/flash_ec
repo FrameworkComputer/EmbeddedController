@@ -880,7 +880,7 @@ function flash_flashrom() {
 		FLASHROM_ARGS="-p raiden_debug_spi:target=EC,"
 	    fi
 	else
-		FLASHROM_ARGS="-p ft2232_spi:type=servo-v2,port=B,"
+		FLASHROM_ARGS="-p ft2232_spi:type=google-servo-v2,port=B,"
 	fi
 
 	if [ ! -x "$FLASHROM" ]; then
