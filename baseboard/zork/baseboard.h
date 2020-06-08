@@ -323,6 +323,8 @@ enum sensor_id {
  */
 extern mat33_fp_t zork_base_standard_ref;
 
+extern const struct thermistor_info thermistor_info;
+
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
 

@@ -170,13 +170,13 @@ const struct thermistor_info thermistor_info = {
 	.data = thermistor_data,
 };
 
-int board_get_temp(int idx, int *temp_k)
+__overridable int board_get_temp(int idx, int *temp_k)
 {
 	int mv;
 	int temp_c;
 	enum adc_channel channel;
 
-	/* idx is the sensor index set below in temp_sensors[] */
+	/* idx is the sensor index set in board temp_sensors[] */
 	switch (idx) {
 	case TEMP_SENSOR_CHARGER:
 		channel = ADC_TEMP_SENSOR_CHARGER;
