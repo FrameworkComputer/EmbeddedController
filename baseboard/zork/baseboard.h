@@ -357,6 +357,9 @@ void ppc_interrupt(enum gpio_signal signal);
 int board_tcpc_fast_role_swap_enable(int port, int enable);
 #endif
 
+void pi3hdx1204_retimer_power(void);
+__override_proto int check_hdmi_hpd_status(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BASEBOARD_H */
