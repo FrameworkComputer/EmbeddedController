@@ -3679,6 +3679,12 @@
 #undef CONFIG_USB_PD_TCPMV1
 
 /*
+ * Enables PD protocol state names in the TPCMv1 console output.
+ * Disable to save ~900 bytes in flash space.
+ */
+#define CONFIG_USB_PD_TCPMV1_DEBUG
+
+/*
  * Enables Version 2 of the Power Delivery state machine
  *
  * Along with CONFIG_USB_PD_TCPMV2, you must ensure a device type is also

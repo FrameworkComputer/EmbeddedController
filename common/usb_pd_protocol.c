@@ -283,7 +283,7 @@ static struct pd_protocol {
 	uint64_t hard_reset_complete_timer;
 } pd[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-#ifdef CONFIG_COMMON_RUNTIME
+#ifdef CONFIG_USB_PD_TCPMV1_DEBUG
 static const char * const pd_state_names[] = {
 	"DISABLED", "SUSPENDED",
 	"SNK_DISCONNECTED", "SNK_DISCONNECTED_DEBOUNCE",
@@ -836,10 +836,12 @@ static inline void set_state(int port, enum pd_states next_state)
 		disable_sleep(SLEEP_MASK_USB_PD);
 #endif
 
+#ifdef CONFIG_USB_PD_TCPMV1_DEBUG
 	if (debug_level > 0)
 		CPRINTF("C%d st%d %s\n", port, next_state,
 					 pd_state_names[next_state]);
 	else
+#endif
 		CPRINTF("C%d st%d\n", port, next_state);
 }
 
@@ -2568,11 +2570,11 @@ uint8_t pd_get_task_state(int port)
 
 const char *pd_get_task_state_name(int port)
 {
-#ifdef CONFIG_COMMON_RUNTIME
+#ifdef CONFIG_USB_PD_TCPMV1_DEBUG
 	if (debug_level > 0)
 		return pd_state_names[pd[port].task_state];
 #endif
-	return NULL;
+	return "";
 }
 
 bool pd_get_vconn_state(int port)
@@ -5263,8 +5265,7 @@ static int command_pd(int argc, char **argv)
 			pd[port].data_role == PD_ROLE_DFP ? "DFP" : "UFP",
 			(pd[port].flags & PD_FLAGS_VCONN_ON) ? "-VC" : "",
 			pd[port].task_state,
-			debug_level > 0 ?
-				pd_state_names[pd[port].task_state] : "",
+			debug_level > 0 ? pd_get_task_state_name(port) : "",
 			pd[port].flags);
 	} else {
 		return EC_ERROR_PARAM1;
