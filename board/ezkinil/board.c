@@ -156,20 +156,26 @@ const struct mft_t mft_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 /*****************************************************************************
- * USB-A Retimer
+ * Retimers
  */
 
-static void usba_retimer_on(void)
+static void retimers_on(void)
 {
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, usba_retimer_on, HOOK_PRIO_DEFAULT);
 
-static void usba_retimer_off(void)
+	/* hdmi retimer power on */
+	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, retimers_on, HOOK_PRIO_DEFAULT);
+
+static void retimers_off(void)
 {
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
+
+	/* hdmi retimer power off */
+	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, usba_retimer_off, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, retimers_off, HOOK_PRIO_DEFAULT);
 
 /*
  * USB C0 port SBU mux use standalone FSUSB42UMX
