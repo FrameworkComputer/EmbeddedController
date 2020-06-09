@@ -92,6 +92,7 @@
 #define CONFIG_DPTF
 #define CONFIG_BOARD_HAS_RTC_RESET
 #define CONFIG_LED_ONOFF_STATES
+#define CONFIG_CMD_CHARGEN
 
 /* Port80 -- allow larger buffer for port80 messages */
 #undef CONFIG_PORT80_HISTORY_LEN
