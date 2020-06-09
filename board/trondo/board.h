@@ -149,7 +149,6 @@ enum sensor_id {
 	BASE_GYRO,
 	CLEAR_ALS,
 	RGB_ALS,
-	VSYNC,
 	SENSOR_COUNT,
 };
 

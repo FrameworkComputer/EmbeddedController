@@ -139,7 +139,6 @@ enum sensor_id {
 	LID_ACCEL = 0,
 	CLEAR_ALS,
 	RGB_ALS,
-	VSYNC,
 	SENSOR_COUNT,
 };
 

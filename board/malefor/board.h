@@ -131,7 +131,6 @@ enum sensor_id {
 	LID_ACCEL = 0,
 	BASE_ACCEL,
 	BASE_GYRO,
-	VSYNC,
 	SENSOR_COUNT,
 };
 

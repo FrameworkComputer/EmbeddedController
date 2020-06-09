@@ -46,9 +46,6 @@ static void board_init(void)
 		gpio_set_flags(GPIO_EC_IMU_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 
-	/* Enable gpio interrupt for camera vsync */
-	gpio_enable_interrupt(GPIO_EC_CAM_VSYN_SLP_S0IX);
-
 	/*
 	 * TODO: b/154447182 - Malefor will control power LED and battery LED
 	 * independently, and keep the max brightness of power LED and battery
@@ -178,18 +175,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
-	},
-
-	[VSYNC] = {
-		.name = "Camera VSYNC",
-		.active_mask = SENSOR_ACTIVE_S0,
-		.chip = MOTIONSENSE_CHIP_GPIO,
-		.type = MOTIONSENSE_TYPE_SYNC,
-		.location = MOTIONSENSE_LOC_CAMERA,
-		.drv = &sync_drv,
-		.default_range = 0,
-		.min_frequency = 0,
-		.max_frequency = 1,
 	},
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);

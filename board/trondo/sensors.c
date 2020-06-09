@@ -208,18 +208,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.rot_standard_ref = NULL,
 		.default_range = 0x10000, /* scale = 1x, uscale = 0 */
 	},
-
-	[VSYNC] = {
-		.name = "Camera VSYNC",
-		.active_mask = SENSOR_ACTIVE_S0,
-		.chip = MOTIONSENSE_CHIP_GPIO,
-		.type = MOTIONSENSE_TYPE_SYNC,
-		.location = MOTIONSENSE_LOC_CAMERA,
-		.drv = &sync_drv,
-		.default_range = 0,
-		.min_frequency = 0,
-		.max_frequency = 1,
-	},
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
@@ -233,8 +221,6 @@ static void baseboard_sensors_init(void)
 {
 	/* Note - BMA253 interrupt unused by EC */
 
-	/* Enable gpio interrupt for camera vsync */
-	gpio_enable_interrupt(GPIO_EC_CAM_VSYN_SLP_S0IX);
 	/* Enable interrupt for the TCS3400 color light sensor */
 	gpio_enable_interrupt(GPIO_EC_ALS_RGB_INT_L);
 	/* Enable interrupt for the BMI260 accel/gyro sensor */
