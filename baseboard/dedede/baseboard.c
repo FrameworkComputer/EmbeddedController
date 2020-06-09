@@ -133,6 +133,12 @@ __override int intel_x86_get_pg_ec_dsw_pwrok(void)
 __override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 {
 	/*
+	 * SLP_S3_L is a qualifying input signal to ALL_SYS_PWRGD logic.
+	 * So ensure ALL_SYS_PWRGD remains LOW during SLP_S3_L assertion.
+	 */
+	if (!gpio_get_level(GPIO_SLP_S3_L))
+		return 0;
+	/*
 	 * ALL_SYS_PWRGD is an AND of DRAM PGOOD, VCCST PGOOD, and VCCIO_EXT
 	 * PGOOD.
 	 */
