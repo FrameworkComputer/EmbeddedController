@@ -1702,6 +1702,7 @@ static void tc_unattached_snk_entry(const int port)
 	if (get_last_state_tc(port) != TC_UNATTACHED_SRC) {
 		/* Detect USB PD cc disconnect */
 		hook_notify(HOOK_USB_PD_DISCONNECT);
+		tc_pd_connection(port, 0);
 		print_current_state(port);
 	}
 
@@ -2450,6 +2451,7 @@ static void tc_unattached_src_entry(const int port)
 	if (get_last_state_tc(port) != TC_UNATTACHED_SNK) {
 		/* Detect USB PD cc disconnect */
 		hook_notify(HOOK_USB_PD_DISCONNECT);
+		tc_pd_connection(port, 0);
 		print_current_state(port);
 	}
 
