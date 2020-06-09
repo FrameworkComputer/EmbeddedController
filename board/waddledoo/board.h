@@ -24,6 +24,7 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr */
 #define CONFIG_OCPC
+#undef  CONFIG_CHARGER_SINGLE_CHIP
 
 /* EC console commands */
 #define CONFIG_CMD_TCPC_DUMP
@@ -99,6 +100,12 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
+
+enum chg_id {
+	CHARGER_PRIMARY,
+	CHARGER_SECONDARY,
+	CHARGER_NUM,
+};
 
 enum adc_channel {
 	ADC_TEMP_SENSOR_1,     /* ADC0 */

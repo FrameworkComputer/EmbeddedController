@@ -22,7 +22,7 @@
 #define CONFIG_BC12_DETECT_PI3USB9201
 
 /* Charger */
-#define CONFIG_CHARGER_SM5803		/* C0 and C1: Charger */
+#define CONFIG_CHARGER_SM5803		/* C0 Charger */
 #define CONFIG_USB_PD_VBUS_DETECT_CHARGER
 #define CONFIG_USB_PD_5V_CHARGER_CTRL
 #define CONFIG_CHARGER_OTG
@@ -57,8 +57,9 @@
 #define CONFIG_GMR_TABLET_MODE
 
 /* TCPC */
+#undef  CONFIG_USB_PD_PORT_MAX_COUNT
+#define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_TCPM_ITE_ON_CHIP	/* C0: ITE EC TCPC */
-#define CONFIG_USB_PD_TCPM_ANX7447	/* C1: ANX TCPC + Mux */
 #define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 1
 
 /* Thermistors */
@@ -70,8 +71,6 @@
 /* USB Mux and Retimer */
 #define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
 #define I2C_PORT_USB_MUX I2C_PORT_USB_C0	/* Required for ITE Mux */
-
-#define CONFIG_USBC_RETIMER_TUSB544		/* C1 Redriver: TUSB544 */
 
 #ifndef __ASSEMBLER__
 

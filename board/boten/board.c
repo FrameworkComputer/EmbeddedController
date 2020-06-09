@@ -14,9 +14,7 @@
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/sm5803.h"
 #include "driver/sync.h"
-#include "driver/retimer/tusb544.h"
 #include "driver/temp_sensor/thermistor.h"
-#include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/usb_mux/it5205.h"
 #include "gpio.h"
@@ -43,9 +41,6 @@
 #define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
 #define INT_RECHECK_US 5000
-
-/* C1 interrupt line swapped between board versions, track it in a variable */
-static enum gpio_signal c1_int_line;
 
 /* C0 interrupt line shared by BC 1.2 and charger */
 static void check_c0_line(void);
@@ -81,41 +76,6 @@ static void usb_c0_interrupt(enum gpio_signal s)
 	hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
 }
 
-/* C1 interrupt line shared by BC 1.2, TCPC, and charger */
-static void check_c1_line(void);
-DECLARE_DEFERRED(check_c1_line);
-
-static void notify_c1_chips(void)
-{
-	schedule_deferred_pd_interrupt(1);
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
-	sm5803_interrupt(1);
-}
-
-static void check_c1_line(void)
-{
-	/*
-	 * If line is still being held low, see if there's more to process from
-	 * one of the chips.
-	 */
-	if (!gpio_get_level(c1_int_line)) {
-		notify_c1_chips();
-		hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
-	}
-}
-
-static void usb_c1_interrupt(enum gpio_signal s)
-{
-	/* Cancel any previous calls to check the interrupt line */
-	hook_call_deferred(&check_c1_line_data, -1);
-
-	/* Notify all chips using this line that an interrupt came in */
-	notify_c1_chips();
-
-	/* Check the line again in 5ms */
-	hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
-}
-
 static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 {
 	cprints(CC_USBPD, "C0: CC OVP, SBU OVP, or thermal event");
@@ -132,22 +92,12 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 		.flags = PI3USB9201_ALWAYS_POWERED,
 	},
-	{
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-		.flags = PI3USB9201_ALWAYS_POWERED,
-	},
 };
 
 /* Charger chips */
 const struct charger_config_t chg_chips[] = {
-	[CHARGER_PRIMARY] = {
+	{
 		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = SM5803_ADDR_CHARGER_FLAGS,
-		.drv = &sm5803_drv,
-	},
-	[CHARGER_SECONDARY] = {
-		.i2c_port = I2C_PORT_SUB_USB_C1,
 		.i2c_addr_flags = SM5803_ADDR_CHARGER_FLAGS,
 		.drv = &sm5803_drv,
 	},
@@ -160,23 +110,6 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		.drv = &it83xx_tcpm_drv,
 	},
-	{
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_SUB_USB_C1,
-			.addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
-		},
-		.drv = &anx7447_tcpm_drv,
-		.flags = TCPC_FLAGS_TCPCI_REV2_0,
-	},
-};
-
-/* USB Retimer */
-const struct usb_mux usbc1_retimer = {
-	.usb_port = 1,
-	.i2c_port = I2C_PORT_SUB_USB_C1,
-	.i2c_addr_flags = TUSB544_I2C_ADDR_FLAGS0,
-	.driver = &tusb544_drv,
 };
 
 /* USB Muxes */
@@ -187,41 +120,16 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
 		.driver = &it5205_usb_mux_driver,
 	},
-	{
-		.usb_port = 1,
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
-		.driver = &anx7447_usb_mux_driver,
-		.next_mux = &usbc1_retimer,
-	},
 };
 
 void board_init(void)
 {
-	int on;
-
-	if (system_get_board_version() <= 0) {
-		pd_set_max_voltage(5000);
-		c1_int_line = GPIO_USB_C1_INT_V0_ODL;
-	} else {
-		c1_int_line = GPIO_USB_C1_INT_V1_ODL;
-	}
-
-
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
-	gpio_enable_interrupt(c1_int_line);
 	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
 
 	/* Charger on the MB will be outputting PROCHOT_ODL and OD CHG_DET */
-	sm5803_configure_gpio0(CHARGER_PRIMARY, GPIO0_MODE_PROCHOT, 1);
-	sm5803_configure_chg_det_od(CHARGER_PRIMARY, 1);
-
-	/* Charger on the sub-board will be a push-pull GPIO */
-	sm5803_configure_gpio0(CHARGER_SECONDARY, GPIO0_MODE_OUTPUT, 0);
-
-	/* Turn on 5V if the system is on, otherwise turn it off */
-	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND);
-	board_power_5v_enable(on);
+	sm5803_configure_gpio0(CHARGER_SOLO, GPIO0_MODE_PROCHOT, 1);
+	sm5803_configure_chg_det_od(CHARGER_SOLO, 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -233,34 +141,12 @@ void board_reset_pd_mcu(void)
 	 */
 }
 
-__override void board_power_5v_enable(int enable)
-{
-	/*
-	 * Motherboard has a GPIO to turn on the 5V regulator, but the sub-board
-	 * sets it through the charger GPIO.
-	 */
-	gpio_set_level(GPIO_EN_PP5000, !!enable);
-	if (sm5803_set_gpio0_level(1, !!enable))
-		CPRINTUSB("Failed to %sable sub rails!", enable ? "en" : "dis");
-}
-
 uint16_t tcpc_get_alert_status(void)
 {
 	/*
-	 * TCPC 0 is embedded in the EC and processes interrupts in the chip
-	 * code (it83xx/intc.c)
+	 * TODO(b/157626290): Boten will use one TCPC RAA489000.
 	 */
-
 	uint16_t status = 0;
-	int regval;
-
-	/* Check whether TCPC 1 pulled the shared interrupt line */
-	if (!gpio_get_level(c1_int_line)) {
-		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
-			if (regval)
-				status = PD_STATUS_TCPC_ALERT_1;
-		}
-	}
 
 	return status;
 }
@@ -268,12 +154,10 @@ uint16_t tcpc_get_alert_status(void)
 int extpower_is_present(void)
 {
 	int chg0 = 0;
-	int chg1 = 0;
 
 	sm5803_get_chg_det(0, &chg0);
-	sm5803_get_chg_det(1, &chg1);
 
-	return chg0 || chg1;
+	return chg0;
 }
 
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
@@ -290,55 +174,9 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 
 int board_set_active_charge_port(int port)
 {
-	int is_valid_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
-	int p0_otg, p1_otg;
-
-	if (!is_valid_port && port != CHARGE_PORT_NONE)
-		return EC_ERROR_INVAL;
-
-	/* TODO(b/147440290): charger functions should take chgnum */
-	p0_otg = chg_chips[0].drv->is_sourcing_otg_power(0, 0);
-	p1_otg = chg_chips[1].drv->is_sourcing_otg_power(1, 1);
-
-	if (port == CHARGE_PORT_NONE) {
-		CPRINTUSB("Disabling all charge ports");
-
-		if (!p0_otg)
-			chg_chips[0].drv->set_mode(0,
-						   CHARGE_FLAG_INHIBIT_CHARGE);
-		if (!p1_otg)
-			chg_chips[1].drv->set_mode(1,
-						   CHARGE_FLAG_INHIBIT_CHARGE);
-
-		return EC_SUCCESS;
-	}
-
-	CPRINTUSB("New chg p%d", port);
-
 	/*
-	 * Charger task will take care of enabling charging on the new charge
-	 * port.  Here, we ensure the other port is not charging by changing
-	 * CHG_EN
+	 * TODO(b/157626290): Boten will use one charge RAA489000.
 	 */
-	if (port == 0) {
-		if (p0_otg) {
-			CPRINTUSB("Skip enable p%d", port);
-			return EC_ERROR_INVAL;
-		}
-		if (!p1_otg) {
-			chg_chips[1].drv->set_mode(1,
-						   CHARGE_FLAG_INHIBIT_CHARGE);
-		}
-	} else {
-		if (p1_otg) {
-			CPRINTUSB("Skip enable p%d", port);
-			return EC_ERROR_INVAL;
-		}
-		if (!p0_otg) {
-			chg_chips[0].drv->set_mode(0,
-						   CHARGE_FLAG_INHIBIT_CHARGE);
-		}
-	}
 
 	return EC_SUCCESS;
 }
@@ -360,7 +198,7 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	int current;
 
-	if (port < 0 || port > CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (port != 0)
 		return;
 
 	current = (rp == TYPEC_RP_3A0) ? 3000 : 1500;

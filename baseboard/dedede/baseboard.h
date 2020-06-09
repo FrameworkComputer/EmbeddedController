@@ -129,7 +129,6 @@
 #define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 15001
 #define CONFIG_USB_CHARGER
 #define CONFIG_TRICKLE_CHARGING
-#undef  CONFIG_CHARGER_SINGLE_CHIP
 
 /* Keyboard */
 #define CONFIG_KEYBOARD_COL2_INVERTED
@@ -228,12 +227,6 @@
 #else
 #error "Must define a VARIANT_DEDEDE_EC!"
 #endif
-
-enum chg_id {
-	CHARGER_PRIMARY,
-	CHARGER_SECONDARY,
-	CHARGER_NUM,
-};
 
 /* Interrupt handler for signals that are used to generate ALL_SYS_PGOOD. */
 void baseboard_all_sys_pgood_interrupt(enum gpio_signal signal);

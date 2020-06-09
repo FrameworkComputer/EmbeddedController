@@ -27,6 +27,7 @@
 #define CONFIG_USB_PD_VBUS_DETECT_CHARGER
 #define CONFIG_USB_PD_5V_CHARGER_CTRL
 #define CONFIG_CHARGER_OTG
+#undef  CONFIG_CHARGER_SINGLE_CHIP
 
 /* LED */
 #define CONFIG_LED_PWM_COUNT 1
@@ -78,6 +79,12 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
+
+enum chg_id {
+	CHARGER_PRIMARY,
+	CHARGER_SECONDARY,
+	CHARGER_NUM,
+};
 
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
