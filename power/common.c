@@ -440,7 +440,13 @@ static enum power_state power_common_state(enum power_state state)
 						     &target, now)) {
 			case CRITICAL_SHUTDOWN_HIBERNATE:
 				CPRINTS("Hibernate due to G3 idle");
-				if (IS_ENABLED(CONFIG_EXTPOWER_GPIO) &&
+				/*
+				 * Set AP_IDLE when hibernating so that AC plug
+				 * won't boot the system. If EFS2 isn't enabled,
+				 * we need to boot the AP to get PD power though
+				 * it's inconsistent with the S5 behavior.
+				 */
+				if (IS_ENABLED(CONFIG_EXTPOWER) &&
 						IS_ENABLED(CONFIG_VBOOT_EFS2)) {
 					uint32_t reset_flags;
 					reset_flags = chip_read_reset_flags() |
@@ -729,6 +735,23 @@ static void power_ac_change(void)
 	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, power_ac_change, HOOK_PRIO_DEFAULT);
+#endif
+
+#if defined(CONFIG_EXTPOWER) && defined(CONFIG_HIBERNATE) \
+	&& defined(CONFIG_VBOOT_EFS2)
+static void power_init_ap_idle(void)
+{
+	if (extpower_is_present())
+		return;
+	/*
+	 * EC doesn't hibernate from G3 when AC is present. Thus if AC is not
+	 * present here, it implies we woke up by the power button or by the
+	 * lid. Clear AP_IDLE to avoid interfering with the boot.
+	 */
+	CPRINTS("Clear AP_IDLE, assuming wake-up by PB or LID");
+	system_clear_reset_flags(EC_RESET_FLAG_AP_IDLE);
+}
+DECLARE_HOOK(HOOK_INIT, power_init_ap_idle, HOOK_PRIO_INIT_EXTPOWER + 1);
 #endif
 
 /*****************************************************************************/
