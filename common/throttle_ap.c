@@ -8,6 +8,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "dptf.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "task.h"
@@ -96,10 +97,18 @@ static void prochot_input_deferred(void)
 
 	debounced_prochot_in = prochot_in;
 
-	if (debounced_prochot_in)
+	if (debounced_prochot_in) {
 		CPRINTS("External PROCHOT assertion detected");
-	else
+#ifdef CONFIG_FANS
+		dptf_set_fan_duty_target(100);
+#endif
+	} else {
 		CPRINTS("External PROCHOT condition cleared");
+#ifdef CONFIG_FANS
+		/* Revert to automatic control of the fan */
+		dptf_set_fan_duty_target(-1);
+#endif
+	}
 }
 DECLARE_DEFERRED(prochot_input_deferred);
 
