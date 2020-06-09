@@ -325,22 +325,6 @@ __override uint32_t board_override_feature_flags0(uint32_t flags0)
 		return flags0;
 }
 
-void board_overcurrent_event(int port, int is_overcurrented)
-{
-	switch (port) {
-	case USBC_PORT_C0:
-		ioex_set_level(IOEX_USB_C0_FAULT_ODL, !is_overcurrented);
-		break;
-
-	case USBC_PORT_C1:
-		ioex_set_level(IOEX_USB_C1_FAULT_ODL, !is_overcurrented);
-		break;
-
-	default:
-		break;
-	}
-}
-
 void board_hibernate(void)
 {
 	int port;

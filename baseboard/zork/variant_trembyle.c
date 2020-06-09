@@ -228,6 +228,22 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
+void board_overcurrent_event(int port, int is_overcurrented)
+{
+	switch (port) {
+	case USBC_PORT_C0:
+		ioex_set_level(IOEX_USB_C0_FAULT_ODL, !is_overcurrented);
+		break;
+
+	case USBC_PORT_C1:
+		ioex_set_level(IOEX_USB_C1_FAULT_ODL, !is_overcurrented);
+		break;
+
+	default:
+		break;
+	}
+}
+
 const struct tcpc_config_t tcpc_config[] = {
 	[USBC_PORT_C0] = {
 		.bus_type = EC_BUS_TYPE_I2C,
