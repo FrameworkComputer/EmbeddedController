@@ -18,6 +18,7 @@
 #include "task.h"
 #include "tcpm.h"
 #include "timer.h"
+#include "tusb1064.h"
 #include "util.h"
 #include "usb_common.h"
 #include "usb_mux.h"
@@ -88,15 +89,6 @@
 #define DUT_BOTH_CC_OPEN(r) DUT_BOTH_CC_SET(r, GPIO_INPUT)
 #define DUT_ACTIVE_CC_OPEN(r) DUT_ACTIVE_CC_SET(r, GPIO_INPUT)
 #define DUT_INACTIVE_CC_OPEN(r) DUT_INACTIVE_CC_SET(r, GPIO_INPUT)
-
-#define TUSB1064_I2C_ADDR_FLAG          0x12
-
-#define TUSB1064_REG_GENERAL            0x0a
-#define TUSB1064_MODE_POLARITY_INVERTED 0x4
-#define TUSB1064_MODE_DP_ENABLED        0x2
-#define TUSB1064_MODE_USB_ENABLED       0x1
-
-#define TUSB1064_REG_DP_CTRL            0x13
 
 /*
  * Dynamic PDO that reflects capabilities present on the CHG port. Allow for
@@ -446,9 +438,10 @@ int pd_adc_read(int port, int cc)
 		 */
 
 		/*
-		 * TODO: Fix this logic because of leakage "phantom detects"
-		 * Or flat-out mis-detects..... talking on leaking CC2 line.
-		 * And Vconn-swap case... and Ra on second line (SERVO_EMCA)...
+		 * TODO(b/161260559): Fix this logic because of leakage
+		 * "phantom detects" Or flat-out mis-detects..... talking on
+		 * leaking CC2 line. And Vconn-swap case... and Ra on second
+		 * line (SERVO_EMCA)...
 		 *
 		 * This is basically a hack faking "vOpen" from TCPCI spec.
 		 */
@@ -825,6 +818,35 @@ __override void pd_check_dr_role(int port,
 
 
 /* ----------------- Vendor Defined Messages ------------------ */
+/*
+ * DP alt-mode config, user configurable.
+ * Default is the mode disabled, supporting the C and D pin assignment,
+ * multi-function preferred, and a plug.
+ */
+static int alt_dp_config = (ALT_DP_PIN_C | ALT_DP_PIN_D | ALT_DP_MF_PREF |
+			    ALT_DP_PLUG);
+
+/**
+ * Get the pins based on the user config.
+ */
+static int alt_dp_config_pins(void)
+{
+	int pins = 0;
+
+	if (alt_dp_config & ALT_DP_PIN_C)
+		pins |= MODE_DP_PIN_C;
+	if (alt_dp_config & ALT_DP_PIN_D)
+		pins |= MODE_DP_PIN_D;
+	return pins;
+}
+
+/**
+ * Get the cable outlet value (plug or receptacle) based on the user config.
+ */
+static int alt_dp_config_cable(void)
+{
+	return (alt_dp_config & ALT_DP_PLUG) ? CABLE_PLUG : CABLE_RECEPTACLE;
+}
 
 const uint32_t vdo_idh = VDO_IDH(0, /* data caps as USB host */
 				 1, /* data caps as USB device */
@@ -844,16 +866,7 @@ const uint32_t vdo_ama = VDO_AMA(CONFIG_USB_PD_IDENTITY_HW_VERS,
 
 static int svdm_response_identity(int port, uint32_t *payload)
 {
-	/*
-	 * TODO(b/137219603): Make whether servo supports DP alt-mode
-	 * configurable, like through a console command.
-	 *
-	 * This version is to check if a monitor is plugged to the mini-DP port
-	 * to decide if DP alt-mode is supported or not. So no alt-mode
-	 * supported if no monitor is plugged before plugging the servo Type-C
-	 * cable to DUT. This way doesn't affect PD FAFT results.
-	 */
-	int dp_supported = gpio_get_level(GPIO_DP_HPD);
+	int dp_supported = (alt_dp_config & ALT_DP_ENABLE) != 0;
 
 	if (dp_supported) {
 		payload[VDO_I(IDH)] = vdo_idh;
@@ -878,21 +891,18 @@ static int svdm_response_svids(int port, uint32_t *payload)
 /*
  * The Type-C demux TUSB1064 supports pin assignment C and D. Response the DP
  * capabilities with supporting all of them.
- *
- * TODO(b/137219603): Make this pin assignment and plug/receptacle configurable
- * by a console command that some tests can check different dongle behaviors.
  */
-const uint32_t vdo_dp_mode[MODE_CNT] =  {
-	VDO_MODE_DP(0,             /* UFP pin cfg supported: none */
-		    MODE_DP_PIN_C | MODE_DP_PIN_D | MODE_DP_PIN_E, /* DFP pin */
-		    1,             /* no usb2.0 signalling in AMode */
-		    CABLE_PLUG,    /* Its a plug */
-		    MODE_DP_V13,   /* DPv1.3 Support, no Gen2 */
-		    MODE_DP_SNK)   /* Its a sink only */
-};
+uint32_t vdo_dp_mode[MODE_CNT];
 
 static int svdm_response_modes(int port, uint32_t *payload)
 {
+	vdo_dp_mode[0] =
+		VDO_MODE_DP(0,             /* UFP pin cfg supported: none */
+			    alt_dp_config_pins(),  /* DFP pin */
+			    1,             /* no usb2.0 signalling in AMode */
+			    alt_dp_config_cable(), /* plug or receptacle */
+			    MODE_DP_V13,   /* DPv1.3 Support, no Gen2 */
+			    MODE_DP_SNK);  /* Its a sink only */
 
 	/* CCD uses the SBU lines; don't enable DP when dts-mode enabled */
 	if (!(cc_config & CC_DISABLE_DTS))
@@ -909,28 +919,32 @@ static int is_typec_dp_muxed(void)
 {
 	int value;
 
-	i2c_read8(I2C_PORT_MASTER, TUSB1064_I2C_ADDR_FLAG, TUSB1064_REG_GENERAL,
-		&value);
-	return value & TUSB1064_MODE_DP_ENABLED ? 1 : 0;
+	value = tusb1064_read_byte(I2C_PORT_MASTER, TUSB1064_REG_GENERAL);
+	if (value < 0 || value & REG_GENERAL_CTLSEL_4DP_LANES)
+		return 0;
+
+	return 1;
 }
 
 static void set_typec_mux(int pin_cfg)
 {
 	int value;
 
-	i2c_read8(I2C_PORT_MASTER, TUSB1064_I2C_ADDR_FLAG, TUSB1064_REG_GENERAL,
-		&value);
-	value &= ~(TUSB1064_MODE_DP_ENABLED | TUSB1064_MODE_USB_ENABLED);
+	value = tusb1064_read_byte(I2C_PORT_MASTER, TUSB1064_REG_GENERAL);
+	if (value < 0)
+		return;
+
+	value &= ~(REG_GENERAL_CTLSEL_4DP_LANES | REG_GENERAL_CTLSEL_USB3);
 	switch (pin_cfg) {
 	case 0:
 		CPRINTS("PinCfg:off");
 		break;
 	case MODE_DP_PIN_C:
-		value |= TUSB1064_MODE_DP_ENABLED;
+		value |= REG_GENERAL_CTLSEL_4DP_LANES;
 		CPRINTS("PinCfg:C");
 		break;
 	case MODE_DP_PIN_D:
-		value |= TUSB1064_MODE_DP_ENABLED | TUSB1064_MODE_USB_ENABLED;
+		value |= REG_GENERAL_CTLSEL_2DP_AND_USB3;
 		CPRINTS("PinCfg:D");
 		break;
 	default:
@@ -938,34 +952,39 @@ static void set_typec_mux(int pin_cfg)
 		return;
 	}
 	if (value && cc_config & CC_POLARITY)
-		value |= TUSB1064_MODE_POLARITY_INVERTED;
+		value |= REG_GENERAL_FLIPSEL;
 	else
-		value &= ~TUSB1064_MODE_POLARITY_INVERTED;
+		value &= ~REG_GENERAL_FLIPSEL;
 
-	i2c_write8(I2C_PORT_MASTER, TUSB1064_I2C_ADDR_FLAG,
-		TUSB1064_REG_GENERAL, value);
+	tusb1064_write_byte(I2C_PORT_MASTER, TUSB1064_REG_GENERAL, value);
+}
+
+static int get_hpd_level(void)
+{
+	if (alt_dp_config & ALT_DP_OVERRIDE_HPD)
+		return (alt_dp_config & ALT_DP_HPD_LVL) != 0;
+	else
+		return gpio_get_level(GPIO_DP_HPD);
 }
 
 static int dp_status(int port, uint32_t *payload)
 {
 	int opos = PD_VDO_OPOS(payload[0]);
-	int hpd = gpio_get_level(GPIO_DP_HPD);
+	int hpd = get_hpd_level();
 
 	if (opos != OPOS)
 		return 0;  /* NAK */
 
-	/*
-	 * TODO(b/137219603): Make the Multi-Function Preferred bit
-	 * configurable by a console command.
-	 */
-	payload[1] = VDO_DP_STATUS(0,                /* IRQ_HPD */
-				   hpd,              /* HPD_HI|LOW */
-				   0,                /* request exit DP */
-				   0,                /* request exit USB */
-				   1,                /* MF pref */
-				   is_typec_dp_muxed(),
-				   0,                /* power low */
-				   0x2);
+	payload[1] = VDO_DP_STATUS(
+		0,                /* IRQ_HPD */
+		hpd,              /* HPD_HI|LOW */
+		0,                /* request exit DP */
+		0,                /* request exit USB */
+		(alt_dp_config & ALT_DP_MF_PREF) != 0,  /* MF pref */
+		is_typec_dp_muxed(),
+		0,                /* power low */
+		hpd ? 0x2 : 0);
+
 	return 2;
 }
 
@@ -1096,9 +1115,12 @@ static void do_cc(int cc_config_new)
 		if ((cc_config & ~cc_config_new) & CC_DISABLE_DTS) {
 			/* DTS-disabled -> DTS-enabled */
 			ccd_enable(1);
+			ext_hpd_detection_enable(0);
 		} else if ((cc_config_new & ~cc_config) & CC_DISABLE_DTS) {
 			/* DTS-enabled -> DTS-disabled */
 			ccd_enable(0);
+			if (!(alt_dp_config & ALT_DP_OVERRIDE_HPD))
+				ext_hpd_detection_enable(1);
 		}
 
 		/* Accept new cc_config value */
@@ -1256,8 +1278,117 @@ DECLARE_CONSOLE_COMMAND(ada_srccaps, cmd_ada_srccaps,
 			"",
 			"Print adapter SrcCap");
 
+static void chg_pd_disconnect(void)
+{
+	/* Clear charger PDO on CHG port disconnected. */
+	if (pd_is_disconnected(CHG))
+		pd_set_src_caps(CHG, 0, NULL);
+}
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, chg_pd_disconnect, HOOK_PRIO_DEFAULT);
+
+static int cmd_dp_action(int argc, char *argv[])
+{
+	int i;
+	char *e;
+
+	if (argc < 1)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (argc == 1) {
+		CPRINTS("DP alt-mode: %s",
+			(alt_dp_config & ALT_DP_ENABLE) ? "enable" : "disable");
+	}
+
+	if (!strcasecmp(argv[1], "enable")) {
+		alt_dp_config |= ALT_DP_ENABLE;
+	} else if (!strcasecmp(argv[1], "disable")) {
+		alt_dp_config &= ~ALT_DP_ENABLE;
+	} else if (!strcasecmp(argv[1], "pins")) {
+		if (argc >= 3) {
+			alt_dp_config &= ~(ALT_DP_PIN_C | ALT_DP_PIN_D);
+			for (i = 0; i < 3; i++) {
+				if (!argv[2][i])
+					break;
+
+				switch (argv[2][i]) {
+				case 'c':
+				case 'C':
+					alt_dp_config |= ALT_DP_PIN_C;
+					break;
+				case 'd':
+				case 'D':
+					alt_dp_config |= ALT_DP_PIN_D;
+					break;
+				}
+			}
+		}
+		CPRINTS("Pins: %s%s",
+			(alt_dp_config & ALT_DP_PIN_C) ? "C" : "",
+			(alt_dp_config & ALT_DP_PIN_D) ? "D" : "");
+	} else if (!strcasecmp(argv[1], "mf")) {
+		if (argc >= 3) {
+			i = strtoi(argv[2], &e, 10);
+			if (*e)
+				return EC_ERROR_PARAM3;
+			if (i)
+				alt_dp_config |= ALT_DP_MF_PREF;
+			else
+				alt_dp_config &= ~ALT_DP_MF_PREF;
+		}
+		CPRINTS("MF pref: %d", (alt_dp_config & ALT_DP_MF_PREF) != 0);
+	} else if (!strcasecmp(argv[1], "plug")) {
+		if (argc >= 3) {
+			i = strtoi(argv[2], &e, 10);
+			if (*e)
+				return EC_ERROR_PARAM3;
+			if (i)
+				alt_dp_config |= ALT_DP_PLUG;
+			else
+				alt_dp_config &= ~ALT_DP_PLUG;
+		}
+		CPRINTS("Plug or receptacle: %d",
+			(alt_dp_config & ALT_DP_PLUG) != 0);
+	} else if (!strcasecmp(argv[1], "hpd")) {
+		if (argc >= 3) {
+			if (!strncasecmp(argv[2], "ext", 3)) {
+				alt_dp_config &= ~ALT_DP_OVERRIDE_HPD;
+				ext_hpd_detection_enable(1);
+			} else if (!strncasecmp(argv[2], "h", 1)) {
+				alt_dp_config |= ALT_DP_OVERRIDE_HPD;
+				alt_dp_config |= ALT_DP_HPD_LVL;
+				/*
+				 * Modify the HPD to high. Need to enable the
+				 * external HPD signal monitoring. A monitor
+				 * may send a IRQ at any time to notify DUT.
+				 */
+				ext_hpd_detection_enable(1);
+				pd_send_hpd(DUT, hpd_high);
+			} else if (!strncasecmp(argv[2], "l", 1)) {
+				alt_dp_config |= ALT_DP_OVERRIDE_HPD;
+				alt_dp_config &= ~ALT_DP_HPD_LVL;
+				ext_hpd_detection_enable(0);
+				pd_send_hpd(DUT, hpd_low);
+			} else if (!strcasecmp(argv[2], "irq")) {
+				pd_send_hpd(DUT, hpd_irq);
+			}
+		}
+		CPRINTS("HPD source: %s",
+			(alt_dp_config & ALT_DP_OVERRIDE_HPD) ? "overridden"
+							      : "external");
+		CPRINTS("HPD level: %d", get_hpd_level());
+	}  else if (!strcasecmp(argv[1], "help")) {
+		CPRINTS("Usage: usbc_action dp [enable|disable|hpd|mf|pins|"
+			"plug]");
+	}
+
+	return EC_SUCCESS;
+}
+
 static int cmd_usbc_action(int argc, char *argv[])
 {
+	if (argc >= 2 && !strcasecmp(argv[1], "dp"))
+		return cmd_dp_action(argc - 1, &argv[1]);
+
 	if (argc != 2 && argc != 3)
 		return EC_ERROR_PARAM_COUNT;
 
@@ -1314,5 +1445,5 @@ static int cmd_usbc_action(int argc, char *argv[])
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(usbc_action, cmd_usbc_action,
-			"5v|12v|20v|dev|pol0|pol1|drp|chg x(x=voltage)",
+			"5v|12v|20v|dev|pol0|pol1|drp|dp|chg x(x=voltage)",
 			"Set Servo v4 type-C port state");

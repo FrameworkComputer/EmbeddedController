@@ -90,9 +90,85 @@ static void tca_evt(enum gpio_signal signal)
 	}
 }
 
+static volatile uint64_t hpd_prev_ts;
+static volatile int hpd_prev_level;
+
+/**
+ * Hotplug detect deferred task
+ *
+ * Called after level change on hpd GPIO to evaluate (and debounce) what event
+ * has occurred.  There are 3 events that occur on HPD:
+ *    1. low  : downstream display sink is deattached
+ *    2. high : downstream display sink is attached
+ *    3. irq  : downstream display sink signalling an interrupt.
+ *
+ * The debounce times for these various events are:
+ *   HPD_USTREAM_DEBOUNCE_LVL : min pulse width of level value.
+ *   HPD_USTREAM_DEBOUNCE_IRQ : min pulse width of IRQ low pulse.
+ *
+ * lvl(n-2) lvl(n-1)  lvl   prev_delta  now_delta event
+ * ----------------------------------------------------
+ * 1        0         1     <IRQ        n/a       low glitch (ignore)
+ * 1        0         1     >IRQ        <LVL      irq
+ * x        0         1     n/a         >LVL      high
+ * 0        1         0     <LVL        n/a       high glitch (ignore)
+ * x        1         0     n/a         >LVL      low
+ */
+
+void hpd_irq_deferred(void)
+{
+	int dp_mode = pd_alt_mode(1, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+
+	if (dp_mode) {
+		pd_send_hpd(DUT, hpd_irq);
+		ccprintf("HPD IRQ");
+	}
+}
+DECLARE_DEFERRED(hpd_irq_deferred);
+
+void hpd_lvl_deferred(void)
+{
+	int level = gpio_get_level(GPIO_DP_HPD);
+	int dp_mode = pd_alt_mode(1, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+
+	if (level != hpd_prev_level) {
+		/* It's a glitch while in deferred or canceled action */
+		return;
+	}
+
+	if (dp_mode) {
+		pd_send_hpd(DUT, level ? hpd_high : hpd_low);
+		ccprintf("HPD: %d", level);
+	}
+}
+DECLARE_DEFERRED(hpd_lvl_deferred);
+
 static void dp_evt(enum gpio_signal signal)
 {
-	ccprintf("DP detected\n");
+	timestamp_t now = get_time();
+	int level = gpio_get_level(signal);
+	uint64_t cur_delta = now.val - hpd_prev_ts;
+
+	/* Store current time */
+	hpd_prev_ts = now.val;
+
+	/* All previous hpd level events need to be re-triggered */
+	hook_call_deferred(&hpd_lvl_deferred_data, -1);
+
+	/* It's a glitch.  Previous time moves but level is the same. */
+	if (cur_delta < HPD_USTREAM_DEBOUNCE_IRQ)
+		return;
+
+	if ((!hpd_prev_level && level) &&
+	    (cur_delta < HPD_USTREAM_DEBOUNCE_LVL)) {
+		/* It's an irq */
+		hook_call_deferred(&hpd_irq_deferred_data, 0);
+	} else if (cur_delta >= HPD_USTREAM_DEBOUNCE_LVL) {
+		hook_call_deferred(&hpd_lvl_deferred_data,
+				   HPD_USTREAM_DEBOUNCE_LVL);
+	}
+
+	hpd_prev_level = level;
 }
 
 static void tcpc_evt(enum gpio_signal signal)
@@ -117,6 +193,19 @@ static void init_uservo_port(void)
 	uservo_power_en(1);
 	/* Connect uservo to host hub */
 	uservo_fastboot_mux_sel(0);
+}
+
+void ext_hpd_detection_enable(int enable)
+{
+	if (enable) {
+		timestamp_t now = get_time();
+
+		hpd_prev_level = gpio_get_level(GPIO_DP_HPD);
+		hpd_prev_ts = now.val;
+		gpio_enable_interrupt(GPIO_DP_HPD);
+	} else {
+		gpio_disable_interrupt(GPIO_DP_HPD);
+	}
 }
 #else
 void pd_task(void *u)
