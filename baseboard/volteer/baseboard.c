@@ -193,9 +193,6 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /* EC thermal management configuration */
 
 /*
- * TODO: b/144941023 - revisit thermal limits with each board spin.
- */
-/*
  * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
  * DDR temperature limit (85 C)
@@ -220,7 +217,8 @@ const static struct ec_thermal_config thermal_cpu = {
  * Charger max recommended temperature 100C, max absolute temperature 125C
  * PP3300 regulator: operating range -40 C to 145 C
  *
- * Inductors: waiting on info from hardware team, assuming 80 C for now
+ * Inductors: limit of 125c
+ * PCB: limit is 80c
  */
 const static struct ec_thermal_config thermal_inductor = {
 	.temp_host = {
