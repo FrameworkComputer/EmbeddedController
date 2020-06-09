@@ -74,7 +74,6 @@ enum pd_rev_type prl_get_rev(int port, enum tcpm_transmit_type type);
  * @param port USB-C port number
  * @param type Transmit type
  * @param msg  Control message type
- * @return 0 on EC_SUCCESS, else EC_ERROR_BUSY
  */
 void prl_send_ctrl_msg(int port, enum tcpm_transmit_type type,
 	enum pd_ctrl_msg_type msg);
@@ -85,7 +84,6 @@ void prl_send_ctrl_msg(int port, enum tcpm_transmit_type type,
  * @param port USB-C port number
  * @param type Transmit type
  * @param msg  Data message type
- * @return 0 on EC_SUCCESS, else EC_ERROR_BUSY
  */
 void prl_send_data_msg(int port, enum tcpm_transmit_type type,
 	enum pd_data_msg_type msg);
@@ -96,7 +94,6 @@ void prl_send_data_msg(int port, enum tcpm_transmit_type type,
  * @param port USB-C port number
  * @param type Transmit type
  * @param msg  Extended data message type
- * @return 0 on EC_SUCCESS, else EC_ERROR_BUSY
  */
 void prl_send_ext_data_msg(int port, enum tcpm_transmit_type type,
 	enum pd_ext_msg_type msg);

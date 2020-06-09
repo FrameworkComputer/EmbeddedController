@@ -643,6 +643,37 @@ int pd_get_vdo_ver(int port, enum tcpm_transmit_type type)
 		return VDM_VER20;
 }
 
+static inline void send_data_msg(int port, enum tcpm_transmit_type type,
+				 enum pd_data_msg_type msg)
+{
+	/* Clear any previous TX status before sending a new message */
+	PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+	prl_send_data_msg(port, type, msg);
+}
+
+
+static inline void send_ext_data_msg(int port, enum tcpm_transmit_type type,
+			 enum pd_ext_msg_type msg)
+{
+	/* Clear any previous TX status before sending a new message */
+	PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+	prl_send_ext_data_msg(port, type, msg);
+}
+
+static inline void send_ctrl_msg(int port, enum tcpm_transmit_type type,
+				 enum pd_ctrl_msg_type msg)
+{
+	/* Clear any previous TX status before sending a new message */
+	PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+	prl_send_ctrl_msg(port, type, msg);
+}
+
+/* Compile-time insurance to ensure this code does not call into prl directly */
+#define prl_send_data_msg DO_NOT_USE
+#define prl_send_ext_data_msg DO_NOT_USE
+#define prl_send_ctrl_msg DO_NOT_USE
+
+
 static void pe_init(int port)
 {
 	pe[port].flags = 0;
@@ -1184,13 +1215,13 @@ static void send_source_cap(int port)
 
 	if (src_pdo_cnt == 0) {
 		/* No source capabilities defined, sink only */
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
 	}
 
 	tx_emsg[port].len = src_pdo_cnt * 4;
 	memcpy(tx_emsg[port].buf, (uint8_t *)src_pdo, tx_emsg[port].len);
 
-	prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_SOURCE_CAP);
+	send_data_msg(port, TCPC_TX_SOP, PD_DATA_SOURCE_CAP);
 }
 
 /*
@@ -1218,7 +1249,7 @@ static void pe_send_request_msg(int port)
 	tx_emsg[port].len = 4;
 
 	memcpy(tx_emsg[port].buf, (uint8_t *)&rdo, tx_emsg[port].len);
-	prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_REQUEST);
+	send_data_msg(port, TCPC_TX_SOP, PD_DATA_REQUEST);
 }
 
 static void pe_update_pdo_flags(int port, uint32_t pdo)
@@ -1804,9 +1835,9 @@ static void pe_src_transition_supply_entry(int port)
 	/* Send a GotoMin Message or otherwise an Accept Message */
 	if (PE_CHK_FLAG(port, PE_FLAGS_ACCEPT)) {
 		PE_CLR_FLAG(port, PE_FLAGS_ACCEPT);
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
 	} else {
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_GOTO_MIN);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_GOTO_MIN);
 	}
 
 }
@@ -1852,7 +1883,7 @@ static void pe_src_transition_supply_run(int port)
 		} else {
 			/* NOTE: First pass through this code block */
 			/* Send PS_RDY message */
-			prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
+			send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
 			PE_SET_FLAG(port, PE_FLAGS_PS_READY);
 		}
 
@@ -2081,8 +2112,6 @@ static void pe_src_ready_run(int port)
 
 static void pe_src_ready_exit(int port)
 {
-	PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
-
 	/*
 	 * If the Source is initiating an AMS then the Policy Engine Shall
 	 * notify the Protocol Layer that the first Message in an AMS will
@@ -2123,7 +2152,7 @@ static void pe_src_capability_response_entry(int port)
 
 	/* NOTE: Wait messaging should be implemented. */
 
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
+	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
 }
 
 static void pe_src_capability_response_run(int port)
@@ -2951,7 +2980,7 @@ static void pe_snk_get_source_cap_entry(int port)
 
 	/* Send a Get_Source_Cap Message */
 	tx_emsg[port].len = 0;
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_GET_SOURCE_CAP);
+	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_GET_SOURCE_CAP);
 }
 
 static void pe_snk_get_source_cap_run(int port)
@@ -2992,7 +3021,7 @@ static void pe_send_soft_reset_run(int port)
 		 * unexpected incoming message type
 		 */
 		/* Send Soft Reset message */
-		prl_send_ctrl_msg(port,
+		send_ctrl_msg(port,
 			pe[port].soft_reset_sop, PD_CTRL_SOFT_RESET);
 
 		/* Initialize and run SenderResponseTimer */
@@ -3040,12 +3069,6 @@ static void pe_send_soft_reset_run(int port)
 
 }
 
-static void pe_send_soft_reset_exit(int port)
-{
-	/* Clear TX Complete Flag */
-	PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
-}
-
 /**
  * PE_SNK_Soft_Reset and PE_SNK_Soft_Reset
  */
@@ -3055,7 +3078,7 @@ static void pe_soft_reset_entry(int port)
 
 	pe[port].sender_response_timer = TIMER_DISABLED;
 
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
+	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
 }
 
 static void  pe_soft_reset_run(int port)
@@ -3092,9 +3115,9 @@ static void pe_send_not_supported_entry(int port)
 
 	/* Request the Protocol Layer to send a Not_Supported Message. */
 	if (prl_get_rev(port, TCPC_TX_SOP) > PD_REV20)
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_NOT_SUPPORTED);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_NOT_SUPPORTED);
 	else
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
 }
 
 static void pe_send_not_supported_run(int port)
@@ -3115,7 +3138,7 @@ static void pe_send_not_supported_run(int port)
 static void pe_src_ping_entry(int port)
 {
 	print_current_state(port);
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PING);
+	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PING);
 }
 
 static void pe_src_ping_run(int port)
@@ -3207,7 +3230,7 @@ static void pe_give_battery_cap_entry(int port)
 	/* Extended Battery Cap data is 9 bytes */
 	tx_emsg[port].len = 9;
 
-	prl_send_ext_data_msg(port, TCPC_TX_SOP, PD_EXT_BATTERY_CAP);
+	send_ext_data_msg(port, TCPC_TX_SOP, PD_EXT_BATTERY_CAP);
 }
 
 static void pe_give_battery_cap_run(int port)
@@ -3284,7 +3307,7 @@ static void pe_give_battery_status_entry(int port)
 	/* Battery Status data is 4 bytes */
 	tx_emsg[port].len = 4;
 
-	prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_BATTERY_STATUS);
+	send_data_msg(port, TCPC_TX_SOP, PD_DATA_BATTERY_STATUS);
 }
 
 static void pe_give_battery_status_run(int port)
@@ -3310,13 +3333,13 @@ static void pe_drs_evaluate_swap_entry(int port)
 		 * PE_DRS_UFP_DFP_Evaluate_Swap and
 		 * PE_DRS_DFP_UFP_Evaluate_Swap states embedded here.
 		 */
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
 	} else {
 		/*
 		 * PE_DRS_UFP_DFP_Reject_Swap and PE_DRS_DFP_UFP_Reject_Swap
 		 * states embedded here.
 		 */
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
 	}
 }
 
@@ -3391,7 +3414,7 @@ static void pe_drs_send_swap_entry(int port)
 	 * states embedded here.
 	 */
 	/* Request the Protocol Layer to send a DR_Swap Message */
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_DR_SWAP);
+	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_DR_SWAP);
 
 	pe[port].sender_response_timer = TIMER_DISABLED;
 }
@@ -3478,12 +3501,12 @@ static void pe_prs_src_snk_evaluate_swap_entry(int port)
 
 	if (!pd_check_power_swap(port)) {
 		/* PE_PRS_SRC_SNK_Reject_PR_Swap state embedded here */
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
 	} else {
 		tc_request_power_swap(port);
 		/* PE_PRS_SRC_SNK_Accept_Swap state embedded here */
 		PE_SET_FLAG(port, PE_FLAGS_ACCEPT);
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
 	}
 }
 
@@ -3556,7 +3579,7 @@ static void pe_prs_src_snk_assert_rd_run(int port)
 static void pe_prs_src_snk_wait_source_on_entry(int port)
 {
 	print_current_state(port);
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
+	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
 	pe[port].ps_source_timer = TIMER_DISABLED;
 }
 
@@ -3624,7 +3647,7 @@ static void pe_prs_src_snk_send_swap_entry(int port)
 	print_current_state(port);
 
 	/* Request the Protocol Layer to send a PR_Swap Message. */
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PR_SWAP);
+	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PR_SWAP);
 
 	/* Start the SenderResponseTimer */
 	pe[port].sender_response_timer =
@@ -3673,12 +3696,6 @@ static void pe_prs_src_snk_send_swap_run(int port)
 	}
 }
 
-static void pe_prs_src_snk_send_swap_exit(int port)
-{
-	/* Clear TX Complete Flag if set */
-	PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
-}
-
 /**
  * PE_PRS_SNK_SRC_Evaluate_Swap
  */
@@ -3688,12 +3705,12 @@ static void pe_prs_snk_src_evaluate_swap_entry(int port)
 
 	if (!pd_check_power_swap(port)) {
 		/* PE_PRS_SNK_SRC_Reject_Swap state embedded here */
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
 	} else {
 		tc_request_power_swap(port);
 		/* PE_PRS_SNK_SRC_Accept_Swap state embedded here */
 		PE_SET_FLAG(port, PE_FLAGS_ACCEPT);
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
 	}
 }
 
@@ -3825,7 +3842,7 @@ static void pe_prs_snk_src_source_on_run(int port)
 
 		/* update pe power role */
 		pe[port].power_role = pd_get_power_role(port);
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
 		/* reset timer so PD_CTRL_PS_RDY isn't sent again */
 		pe[port].ps_source_timer = TIMER_DISABLED;
 	}
@@ -3874,13 +3891,13 @@ static void pe_prs_snk_src_send_swap_entry(int port)
 	 *     Request the Protocol Layer to send a FR_Swap Message.
 	 */
 	if (IS_ENABLED(CONFIG_USB_PD_REV30)) {
-		prl_send_ctrl_msg(port,
+		send_ctrl_msg(port,
 			TCPC_TX_SOP,
 			PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH)
 				? PD_CTRL_FR_SWAP
 				: PD_CTRL_PR_SWAP);
 	} else {
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PR_SWAP);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PR_SWAP);
 	}
 
 	/* Start the SenderResponseTimer */
@@ -3942,12 +3959,6 @@ static void pe_prs_snk_src_send_swap_run(int port)
 			}
 		}
 	}
-}
-
-static void pe_prs_snk_src_send_swap_exit(int port)
-{
-	/* Clear TX Complete Flag if set */
-	PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 }
 
 #ifdef CONFIG_USB_PD_REV30
@@ -4013,7 +4024,7 @@ static void pe_bist_tx_entry(int port)
 	 * this Continuous BIST Mode being enabled.
 	 */
 	if (mode == BIST_CARRIER_MODE_2) {
-		prl_send_ctrl_msg(port, TCPC_TX_BIST_MODE_2, 0);
+		send_ctrl_msg(port, TCPC_TX_BIST_MODE_2, 0);
 		pe[port].bist_cont_mode_timer =
 					get_time().val + PD_T_BIST_CONT_MODE;
 	}
@@ -4059,7 +4070,7 @@ static void pe_bist_rx_entry(int port)
 
 	tx_emsg[port].len = sizeof(bdo);
 	memcpy(tx_emsg[port].buf, (uint8_t *)&bdo, tx_emsg[port].len);
-	prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_BIST);
+	send_data_msg(port, TCPC_TX_SOP, PD_DATA_BIST);
 
 	/* Delay at least enough for partner to finish BIST */
 	pe[port].bist_cont_mode_timer =
@@ -4087,7 +4098,7 @@ static void pe_snk_give_sink_cap_entry(int port)
 	/* Send a Sink_Capabilities Message */
 	tx_emsg[port].len = pd_snk_pdo_cnt * 4;
 	memcpy(tx_emsg[port].buf, (uint8_t *)pd_snk_pdo, tx_emsg[port].len);
-	prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_SINK_CAP);
+	send_data_msg(port, TCPC_TX_SOP, PD_DATA_SINK_CAP);
 }
 
 static void pe_snk_give_sink_cap_run(int port)
@@ -4136,7 +4147,7 @@ static void pe_handle_custom_vdm_request_entry(int port)
 	if (rlen > 0) {
 		tx_emsg[port].len = rlen * 4;
 		memcpy(tx_emsg[port].buf, (uint8_t *)rdata, tx_emsg[port].len);
-		prl_send_data_msg(port, sop, PD_DATA_VENDOR_DEF);
+		send_data_msg(port, sop, PD_DATA_VENDOR_DEF);
 	}
 }
 
@@ -4326,7 +4337,6 @@ static void pe_vdm_send_request_exit(int port)
 	 * Clear TX complete in case child called set_state_pe() before parent
 	 * could process transmission
 	 */
-	PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 }
 
@@ -4346,7 +4356,7 @@ static void pe_vdm_identity_request_cbl_entry(int port)
 			CMD_DISCOVER_IDENT);
 	tx_emsg[port].len = sizeof(uint32_t);
 
-	prl_send_data_msg(port, TCPC_TX_SOP_PRIME, PD_DATA_VENDOR_DEF);
+	send_data_msg(port, TCPC_TX_SOP_PRIME, PD_DATA_VENDOR_DEF);
 
 	pe[port].discover_identity_counter++;
 }
@@ -4511,7 +4521,7 @@ static void pe_init_port_vdm_identity_request_entry(int port)
 			CMD_DISCOVER_IDENT);
 	tx_emsg[port].len = sizeof(uint32_t);
 
-	prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
+	send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
 }
 
 static void pe_init_port_vdm_identity_request_run(int port)
@@ -4643,7 +4653,7 @@ static void pe_init_vdm_svids_request_entry(int port)
 			CMD_DISCOVER_SVID);
 	tx_emsg[port].len = sizeof(uint32_t);
 
-	prl_send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
+	send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
 }
 
 static void pe_init_vdm_svids_request_run(int port)
@@ -4766,7 +4776,7 @@ static void pe_init_vdm_modes_request_entry(int port)
 			CMD_DISCOVER_MODES);
 	tx_emsg[port].len = sizeof(uint32_t);
 
-	prl_send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
+	send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
 }
 
 static void pe_init_vdm_modes_request_run(int port)
@@ -4884,7 +4894,7 @@ static void pe_vdm_request_entry(int port)
 	}
 
 	/* TODO(b/155890173): Support cable plug */
-	prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
+	send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
 
 	pe[port].vdm_response_timer = TIMER_DISABLED;
 }
@@ -5164,7 +5174,7 @@ static void pe_vdm_response_entry(int port)
 
 	/* Send ACK, NAK, or BUSY */
 	tx_emsg[port].len = ret;
-	prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
+	send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
 }
 
 static void pe_vdm_response_run(int port)
@@ -5213,18 +5223,18 @@ static void pe_vcs_evaluate_swap_entry(int port)
 	/* DPM rejects a VCONN Swap and port is not a VCONN source*/
 	if (!tc_check_vconn_swap(port) && tc_is_vconn_src(port) < 1) {
 		/* NOTE: PE_VCS_Reject_Swap State embedded here */
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_REJECT);
 	}
 	/* Port is not ready to perform a VCONN swap */
 	else if (tc_is_vconn_src(port) < 0) {
 		/* NOTE: PE_VCS_Reject_Swap State embedded here */
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_WAIT);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_WAIT);
 	}
 	/* Port is ready to perform a VCONN swap */
 	else {
 		/* NOTE: PE_VCS_Accept_Swap State embedded here */
 		PE_SET_FLAG(port, PE_FLAGS_ACCEPT);
-		prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
+		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
 	}
 }
 
@@ -5264,7 +5274,7 @@ static void pe_vcs_send_swap_entry(int port)
 	print_current_state(port);
 
 	/* Send a VCONN_Swap Message */
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_VCONN_SWAP);
+	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_VCONN_SWAP);
 
 	pe[port].sender_response_timer = TIMER_DISABLED;
 }
@@ -5475,7 +5485,7 @@ static void pe_vcs_send_ps_rdy_swap_entry(int port)
 	print_current_state(port);
 
 	/* Send a PS_RDY Message */
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
+	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
 	pe[port].sub = PE_SUB0;
 }
 
@@ -5492,7 +5502,7 @@ static void pe_vcs_send_ps_rdy_swap_run(int port)
 		if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
 			PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
-			prl_send_ctrl_msg(port, TCPC_TX_SOP_PRIME,
+			send_ctrl_msg(port, TCPC_TX_SOP_PRIME,
 					  PD_CTRL_SOFT_RESET);
 			pe[port].sub = PE_SUB1;
 		}
@@ -5554,7 +5564,7 @@ static void pe_dr_snk_get_sink_cap_entry(int port)
 	print_current_state(port);
 
 	/* Send a Get Sink Cap Message */
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_GET_SINK_CAP);
+	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_GET_SINK_CAP);
 
 	/* Don't start the timer until message sent */
 	pe[port].sender_response_timer = 0;
@@ -5796,7 +5806,6 @@ static const struct usb_state pe_states[] = {
 	[PE_SEND_SOFT_RESET] = {
 		.entry = pe_send_soft_reset_entry,
 		.run = pe_send_soft_reset_run,
-		.exit = pe_send_soft_reset_exit,
 	},
 	[PE_SOFT_RESET] = {
 		.entry = pe_soft_reset_entry,
@@ -5852,7 +5861,6 @@ static const struct usb_state pe_states[] = {
 	[PE_PRS_SRC_SNK_SEND_SWAP] = {
 		.entry = pe_prs_src_snk_send_swap_entry,
 		.run   = pe_prs_src_snk_send_swap_run,
-		.exit  = pe_prs_src_snk_send_swap_exit,
 	},
 	[PE_PRS_SNK_SRC_EVALUATE_SWAP] = {
 		.entry = pe_prs_snk_src_evaluate_swap_entry,
@@ -5891,7 +5899,6 @@ static const struct usb_state pe_states[] = {
 	[PE_PRS_SNK_SRC_SEND_SWAP] = {
 		.entry = pe_prs_snk_src_send_swap_entry,
 		.run   = pe_prs_snk_src_send_swap_run,
-		.exit  = pe_prs_snk_src_send_swap_exit,
 #ifdef CONFIG_USB_PD_REV30
 		.parent = &pe_states[PE_PRS_FRS_SHARED],
 #endif /* CONFIG_USB_PD_REV30 */
