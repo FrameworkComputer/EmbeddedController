@@ -232,7 +232,6 @@ enum usb_pe_state {
 	PE_VCS_TURN_ON_VCONN_SWAP,
 	PE_VCS_TURN_OFF_VCONN_SWAP,
 	PE_VCS_SEND_PS_RDY_SWAP,
-	PE_DO_PORT_DISCOVERY,
 	PE_VDM_SEND_REQUEST,
 	PE_VDM_IDENTITY_REQUEST_CBL,
 	PE_INIT_PORT_VDM_IDENTITY_REQUEST,
@@ -323,7 +322,6 @@ static const char * const pe_state_names[] = {
 	[PE_VCS_TURN_ON_VCONN_SWAP] = "PE_VCS_Turn_On_Vconn_Swap",
 	[PE_VCS_TURN_OFF_VCONN_SWAP] = "PE_VCS_Turn_Off_Vconn_Swap",
 	[PE_VCS_SEND_PS_RDY_SWAP] = "PE_VCS_Send_Ps_Rdy_Swap",
-	[PE_DO_PORT_DISCOVERY] = "PE_Do_Port_Discovery",
 	[PE_VDM_SEND_REQUEST] = "PE_VDM_Send_Request",
 	[PE_VDM_IDENTITY_REQUEST_CBL] = "PE_VDM_Identity_Request_Cbl",
 	[PE_INIT_PORT_VDM_IDENTITY_REQUEST] =
@@ -387,22 +385,6 @@ extern enum usb_pe_state PE_PRS_FRS_SHARE_NOT_SUPPORTED;
 #define PE_PRS_FRS_SHARED PE_PRS_FRS_SHARED_NOT_SUPPORTED
 void pe_set_frs_enable(int port, int enable);
 #endif /* CONFIG_USB_PD_REV30 */
-
-/*
- * NOTE:
- *	DO_PORT_DISCOVERY_START is not actually a vdm command. It is used
- *	to start the port partner discovery process.
- * TODO(b/150611251): Replace with states using new VDM send parent
- */
-enum vdm_cmd {
-	DO_PORT_DISCOVERY_START,
-	DISCOVER_IDENTITY,
-	DISCOVER_SVIDS,
-	DISCOVER_MODES,
-	ENTER_MODE,
-	EXIT_MODE,
-	ATTENTION,
-};
 
 enum port_partner {
 	PORT,
@@ -477,7 +459,6 @@ static struct policy_engine {
 	/* VDM - used to send information to shared VDM Request state */
 	/* TODO(b/150611251): Remove when all VDMs use shared parent */
 	enum port_partner partner_type;
-	uint32_t vdm_cmd;
 	uint32_t vdm_cnt;
 	uint32_t vdm_data[VDO_HDR_SIZE + VDO_MAX_SIZE];
 
@@ -4157,123 +4138,6 @@ static void pe_handle_custom_vdm_request_exit(int port)
 }
 
 /**
- * PE_DO_PORT_Discovery
- *
- * NOTE: Port Discovery Policy
- *	To discover a port partner, Vendor Defined Messages (VDMs) are
- *	sent to the port partner. The sequence of commands are
- *	sent in the following order:
- *		1) CMD_DISCOVER_IDENT
- *		2) CMD_DISCOVER_SVID
- *		3) CMD_DISCOVER_MODES
- *		4) CMD_ENTER_MODE
- *		5) CMD_DP_STATUS
- *		6) CMD_DP_CONFIG
- *
- *	If a the port partner replies with BUSY, the sequence is resent
- *	N_DISCOVER_IDENTITY_COUNT times before giving up.
- */
-static void pe_do_port_discovery_entry(int port)
-{
-	print_current_state(port);
-
-	pe[port].partner_type = PORT;
-	pe[port].vdm_cnt = 0;
-}
-
-static void pe_do_port_discovery_run(int port)
-{
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
-	uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
-	struct svdm_amode_data *modep =
-		pd_get_amode_data(port, TCPC_TX_SOP, PD_VDO_VID(payload[0]));
-	int ret = 0;
-
-	if (!PE_CHK_FLAG(port,
-		PE_FLAGS_VDM_REQUEST_NAKED | PE_FLAGS_VDM_REQUEST_BUSY)) {
-		switch (pe[port].vdm_cmd) {
-		case DO_PORT_DISCOVERY_START:
-			pe[port].vdm_cmd = CMD_DISCOVER_IDENT;
-			pe[port].vdm_data[0] = 0;
-			ret = 1;
-			break;
-		case CMD_DISCOVER_IDENT:
-			pe[port].vdm_cmd = CMD_DISCOVER_SVID;
-			pe[port].vdm_data[0] = 0;
-			ret = 1;
-			break;
-		case CMD_DISCOVER_SVID:
-			pe[port].vdm_cmd = CMD_DISCOVER_MODES;
-			ret = dfp_discover_modes(port, pe[port].vdm_data);
-			break;
-		case CMD_DISCOVER_MODES:
-			pe[port].vdm_cmd = CMD_ENTER_MODE;
-			pe[port].vdm_data[0] =
-				pd_dfp_enter_mode(port, TCPC_TX_SOP, 0, 0);
-			if (pe[port].vdm_data[0])
-				ret = 1;
-			break;
-		case CMD_ENTER_MODE:
-			pe[port].vdm_cmd = CMD_DP_STATUS;
-			if (modep && modep->opos) {
-				ret = modep->fx->status(port,
-						pe[port].vdm_data);
-				pe[port].vdm_data[0] |=
-						PD_VDO_OPOS(modep->opos);
-			}
-			break;
-		case CMD_DP_STATUS:
-			pe[port].vdm_cmd = CMD_DP_CONFIG;
-			if (modep && modep->opos)
-				ret = modep->fx->config(port,
-							pe[port].vdm_data);
-			break;
-		case CMD_DP_CONFIG:
-			PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
-			break;
-		case CMD_EXIT_MODE:
-			/* Do nothing */
-			break;
-		case CMD_ATTENTION:
-			/* Do nothing */
-			break;
-		}
-	}
-
-	if (ret == 0) {
-		if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED))
-			PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
-
-		if (pe[port].power_role == PD_ROLE_SOURCE)
-			set_state_pe(port, PE_SRC_READY);
-		else
-			set_state_pe(port, PE_SNK_READY);
-	} else {
-		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_BUSY);
-
-		/*
-		 * Copy Vendor Defined Message (VDM) Header into
-		 * message buffer
-		 */
-		if (pe[port].vdm_data[0] == 0)
-			pe[port].vdm_data[0] = VDO(
-					USB_SID_PD,
-					1, /* structured */
-					VDO_SVDM_VERS(
-					    pd_get_vdo_ver(port, TCPC_TX_SOP)) |
-					pe[port].vdm_cmd);
-
-		pe[port].vdm_data[0] |= VDO_CMDT(CMDT_INIT);
-		pe[port].vdm_data[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port,
-								  TCPC_TX_SOP));
-
-		pe[port].vdm_cnt = ret;
-		set_state_pe(port, PE_VDM_REQUEST);
-	}
-#endif
-}
-
-/**
  * PE_VDM_SEND_REQUEST
  * Shared parent to manage VDM timer and other shared parts of the VDM request
  * process
@@ -4539,12 +4403,6 @@ static void pe_init_port_vdm_identity_request_run(int port)
 				 * PE_INIT_PORT_VDM_Identity_ACKed embedded here
 				 */
 				dfp_consume_identity(port, cnt, payload);
-
-				/*
-				 * TODO(b:152419850): Fake vdm_cmd for now to
-				 * ensure existing discovery process continues.
-				 */
-				pe[port].vdm_cmd = DISCOVER_IDENTITY;
 			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
 				/*
 				 * PE_INIT_PORT_VDM_Identity_NAKed embedded here
@@ -4671,11 +4529,6 @@ static void pe_init_vdm_svids_request_run(int port)
 							cnt >= 2) {
 			/* PE_INIT_VDM_SVIDs_ACKed embedded here */
 			dfp_consume_svids(port, sop, cnt, payload);
-			/*
-			 * TODO(b:152419850): Fake vdm_cmd for now to ensure
-			 * existing discovery process continues.
-			 */
-			pe[port].vdm_cmd = DISCOVER_SVIDS;
 		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
 			/* PE_INIT_VDM_SVIDs_NAKed embedded here */
 			pd_set_svids_discovery(port, sop, PD_DISC_FAIL);
@@ -4800,11 +4653,6 @@ static void pe_init_vdm_modes_request_run(int port)
 		if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK) {
 			/* PE_INIT_VDM_Modes_ACKed embedded here */
 			dfp_consume_modes(port, sop, cnt, payload);
-			/*
-			 * TODO(b:152419850): Fake vdm_cmd for now to
-			 * ensure existing discovery process continues.
-			 */
-			pe[port].vdm_cmd = DISCOVER_MODES;
 		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
 			/* PE_INIT_VDM_Modes_NAKed embedded here */
 			pd_set_modes_discovery(port, sop,
@@ -5923,10 +5771,6 @@ static const struct usb_state pe_states[] = {
 		.run   = pe_vcs_send_ps_rdy_swap_run,
 	},
 #endif /* CONFIG_USBC_VCONN */
-	[PE_DO_PORT_DISCOVERY] = {
-		.entry = pe_do_port_discovery_entry,
-		.run   = pe_do_port_discovery_run,
-	},
 	[PE_VDM_SEND_REQUEST] = {
 		.entry = pe_vdm_send_request_entry,
 		.run   = pe_vdm_send_request_run,
