@@ -626,15 +626,30 @@ void prl_run(int port, int evt, int en)
 		prl_rx_wait_for_phy_message(port, evt);
 
 #ifdef CONFIG_USB_PD_REV30
-		/* Run RX Chunked state machine */
+		/*
+		 * Run RX Chunked state machine after prl_rx. This is what
+		 * informs the PE of incoming message. Its input is prl_rx
+		 */
 		run_state(port, &rch[port].ctx);
 
-		/* Run TX Chunked state machine */
+		/*
+		 * Run TX Chunked state machine before prl_tx in case we need
+		 * to split an extended message and prl_tx can send it for us
+		 */
 		run_state(port, &tch[port].ctx);
 #endif /* CONFIG_USB_PD_REV30 */
 
 		/* Run Protocol Layer Message Transmission state machine */
 		run_state(port, &prl_tx[port].ctx);
+
+#ifdef CONFIG_USB_PD_REV30
+		/*
+		 * Run TX Chunked state machine again after prl_tx so we can
+		 * handle passing TX_COMPLETE (or failure) up to PE in a single
+		 * iteration.
+		 */
+		run_state(port, &tch[port].ctx);
+#endif /* CONFIG_USB_PD_REV30 */
 
 		/* Run Protocol Layer Hard Reset state machine */
 		run_state(port, &prl_hr[port].ctx);
