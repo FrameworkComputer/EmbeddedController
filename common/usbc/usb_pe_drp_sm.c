@@ -1037,6 +1037,18 @@ void pe_exit_dp_mode(int port)
 	}
 }
 
+static void pe_handle_detach(void)
+{
+	const int port = TASK_ID_TO_PD_PORT(task_get_current());
+
+	/*
+	 * PD 3.0 Section 8.3.3.3.8
+	 * Note: The HardResetCounter is reset on a power cycle or Detach.
+	 */
+	pe[port].hard_reset_counter = 0;
+}
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, pe_handle_detach, HOOK_PRIO_DEFAULT);
+
 /*
  * Private functions
  */
