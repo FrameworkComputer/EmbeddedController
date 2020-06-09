@@ -22,11 +22,7 @@
 
 #define CONFIG_MKBP_USE_GPIO
 
-#define CONFIG_USBC_PPC_NX20P3483
-#define CONFIG_USB_MUX_PS8740
-#define CONFIG_USB_MUX_PS8743
-
-#define CONFIG_USB_PD_PORT_MAX_COUNT 2
+#define CONFIG_USB_PD_PORT_MAX_COUNT 1
 
 /* Power  LEDs */
 #define CONFIG_LED_POWER_LED
@@ -147,7 +143,6 @@ enum ec_cfg_usb_db_type {
 
 enum usbc_port {
 	USBC_PORT_C0 = 0,
-	USBC_PORT_C1,
 	USBC_PORT_COUNT
 };
 

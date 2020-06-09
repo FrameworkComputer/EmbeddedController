@@ -9,12 +9,8 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(3, 4), GPIO_INT_FALLING,			tcpc_alert_event)
-GPIO_INT(USB_C1_TCPC_INT_ODL,	PIN(F, 1), GPIO_INT_FALLING,			c1_tcpc_interrupt)
 GPIO_INT(USB_C0_PPC_FAULT_ODL,	PIN(6, 3), GPIO_INT_FALLING,			ppc_interrupt)
-/* TODO remove ppc C1 */
-UNIMPLEMENTED(USB_C1_PPC_INT_ODL)
 GPIO_INT(USB_C0_BC12_INT_ODL,	PIN(9, 3), GPIO_INT_FALLING | GPIO_PULL_UP,	bc12_interrupt)
-GPIO_INT(USB_C1_BC12_INT_ODL, 	PIN(A, 4), GPIO_INT_FALLING | GPIO_PULL_UP,	bc12_interrupt)
 GPIO_INT(SLP_S3_L,		PIN(7, 4), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(SLP_S5_L,		PIN(E, 0), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(S0_PWROK_OD,		PIN(5, 6), GPIO_INT_BOTH,			power_signal_interrupt)
@@ -46,8 +42,6 @@ GPIO(EC_FCH_WAKE_L,		PIN(0, 3), GPIO_OUT_HIGH)			/* Wake SOC */
 GPIO(EC_FCH_SCI_ODL,		PIN(7, 6), GPIO_ODR_HIGH)			/* SCI to SOC */
 GPIO(EC_SYS_RST_L,		PIN(C, 7), GPIO_ODR_HIGH)			/* Cold Reset to SOC */
 GPIO(USB_C0_TCPC_RST_L,		PIN(E, 1), GPIO_OUT_HIGH)			/* C0 TCPC Reset */
-/* TODO will remove TCPC C1 */
-UNIMPLEMENTED(USB_C1_TCPC_RST_L)
 GPIO(EN_USB_A1_5V,		PIN(F, 0), GPIO_OUT_LOW)			/* A1 5V Source Enable */
 GPIO(USB3_C0_DP2_HPD,		PIN(F, 5), GPIO_OUT_LOW)			/* C0 DP Hotplug Detect */
 GPIO(DP1_HPD,			PIN(F, 4), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
@@ -65,7 +59,6 @@ GPIO(LED3_PWM,			PIN(C, 3), GPIO_OUT_HIGH)
  */
 IOEX(USB_C0_FAULT_ODL,		EXPIN(IOEX_C0_NCT3807, 0, 3), GPIO_ODR_HIGH)	/* C0 Fault to SOC */
 IOEX(USB_C0_TCPC_FASTSW_CTL_EN,	EXPIN(IOEX_C0_NCT3807, 0, 4), GPIO_OUT_LOW)	/* C0 FastSwitch Control */
-IOEX(USB_C1_FAULT_ODL,		EXPIN(IOEX_C0_NCT3807, 1, 0), GPIO_ODR_HIGH)	/* C1 Fault to SOC */
 IOEX(USB_C0_PPC_ILIM_3A_EN,	EXPIN(IOEX_C0_NCT3807, 1, 1), GPIO_OUT_LOW)	/* C0 3A Current Limit Enable */
 IOEX(USB_C0_SBU_FAULT_ODL,	EXPIN(IOEX_C0_NCT3807, 1, 2), GPIO_INPUT)	/* C0 SBU Fault */
 IOEX(KB_BL_EN,			EXPIN(IOEX_C0_NCT3807, 1, 3), GPIO_OUT_LOW)	/* KB Backlight Enable */

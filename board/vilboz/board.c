@@ -11,11 +11,8 @@
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ioexpander/pcal6408.h"
 #include "driver/ppc/aoz1380.h"
-#include "driver/ppc/nx20p348x.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/usb_mux/amd_fp5.h"
-#include "driver/usb_mux/ps8740.h"
-#include "driver/usb_mux/ps8743.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -32,6 +29,7 @@
 #include "task.h"
 #include "usb_charge.h"
 #include "usb_pd_tcpm.h"
+#include "usb_mux.h"
 #include "usbc_ppc.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -39,14 +37,6 @@
 
 /* This I2C moved. Temporarily detect and support the V0 HW. */
 int I2C_PORT_BATTERY = I2C_PORT_BATTERY_V1;
-
-/* Interrupt handler varies with DB option. */
-void (*c1_tcpc_config_interrupt)(enum gpio_signal signal) = tcpc_alert_event;
-
-void c1_tcpc_interrupt(enum gpio_signal signal)
-{
-	c1_tcpc_config_interrupt(signal);
-}
 
 void hdmi_hpd_interrupt(enum gpio_signal signal)
 {
@@ -161,30 +151,6 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 /* These IO expander GPIOs vary with DB option. */
 enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT1;
 
-static int board_ps8743_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
-{
-	int rv = EC_SUCCESS;
-	int reg = 0;
-
-	rv = ps8743_read(me, PS8743_REG_MODE, &reg);
-	if (rv)
-		return rv;
-
-	/* Disable FLIP pin, enable I2C control. */
-	reg |= PS8743_MODE_FLIP_REG_CONTROL;
-	/* Disable CE_USB pin, enable I2C control. */
-	reg |= PS8743_MODE_USB_REG_CONTROL;
-	/* Disable CE_DP pin, enable I2C control. */
-	reg |= PS8743_MODE_DP_REG_CONTROL;
-
-	return ps8743_write(me, PS8743_REG_MODE, reg);
-}
-
-/*****************************************************************************
- * USB-C
- */
-
 /*
  * USB C0 port SBU mux use standalone FSUSB42UMX
  * chip and it need a board specific driver.
@@ -219,14 +185,6 @@ const struct usb_mux usbc0_sbu_mux = {
 	.driver = &usbc0_sbu_mux_driver,
 };
 
-struct usb_mux usbc1_amd_fp5_usb_mux = {
-	.usb_port = USBC_PORT_C1,
-	.i2c_port = I2C_PORT_USB_AP_MUX,
-	.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
-	.driver = &amd_fp5_usb_mux_driver,
-	.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP,
-};
-
 struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.usb_port = USBC_PORT_C0,
@@ -235,13 +193,6 @@ struct usb_mux usb_muxes[] = {
 		.driver = &amd_fp5_usb_mux_driver,
 		.next_mux = &usbc0_sbu_mux,
 	},
-	[USBC_PORT_C1] = {
-		.usb_port = USBC_PORT_C1,
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = PS8743_I2C_ADDR1_FLAG,
-		.driver = &ps8743_usb_mux_driver,
-		.next_mux = &usbc1_amd_fp5_usb_mux,
-	}
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
@@ -249,12 +200,6 @@ struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
 		/* Device does not talk I2C */
 		.drv = &aoz1380_drv
-	},
-
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = NX20P3483_ADDR1_FLAGS,
-		.drv = &nx20p348x_drv
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
@@ -265,10 +210,6 @@ void ppc_interrupt(enum gpio_signal signal)
 	switch (signal) {
 	case GPIO_USB_C0_PPC_FAULT_ODL:
 		aoz1380_interrupt(USBC_PORT_C0);
-		break;
-
-	case GPIO_USB_C1_PPC_INT_ODL:
-		nx20p348x_interrupt(USBC_PORT_C1);
 		break;
 
 	default:
@@ -337,10 +278,6 @@ void board_overcurrent_event(int port, int is_overcurrented)
 		ioex_set_level(IOEX_USB_C0_FAULT_ODL, !is_overcurrented);
 		break;
 
-	case USBC_PORT_C1:
-		ioex_set_level(IOEX_USB_C1_FAULT_ODL, !is_overcurrented);
-		break;
-
 	default:
 		break;
 	}
@@ -356,15 +293,6 @@ const struct tcpc_config_t tcpc_config[] = {
 		.drv = &nct38xx_tcpm_drv,
 		.flags = TCPC_FLAGS_TCPCI_REV2_0,
 	},
-	[USBC_PORT_C1] = {
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_TCPC1,
-			.addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
-		},
-		.drv = &nct38xx_tcpm_drv,
-		.flags = TCPC_FLAGS_TCPCI_REV2_0,
-	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
@@ -372,11 +300,6 @@ BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	[USBC_PORT_C0] = {
 		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_TCPC1,
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 	},
 };
@@ -399,10 +322,6 @@ void board_reset_pd_mcu(void)
 		      NCT38XX_RESET_HOLD_DELAY_MS,
 		      NCT38XX_RESET_POST_DELAY_MS);
 
-	/* Reset TCPC1 */
-	reset_pd_port(USBC_PORT_C1, GPIO_USB_C1_TCPC_RST_L,
-		      NCT38XX_RESET_HOLD_DELAY_MS,
-		      NCT38XX_RESET_POST_DELAY_MS);
 }
 
 uint16_t tcpc_get_alert_status(void)
@@ -418,11 +337,6 @@ uint16_t tcpc_get_alert_status(void)
 			status |= PD_STATUS_TCPC_ALERT_0;
 	}
 
-	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL)) {
-		if (gpio_get_level(GPIO_USB_C1_TCPC_RST_L) != 0)
-			status |= PD_STATUS_TCPC_ALERT_1;
-	}
-
 	return status;
 }
 
@@ -433,9 +347,6 @@ void tcpc_alert_event(enum gpio_signal signal)
 	switch (signal) {
 	case GPIO_USB_C0_TCPC_INT_ODL:
 		port = 0;
-		break;
-	case GPIO_USB_C1_TCPC_INT_ODL:
-		port = 1;
 		break;
 	default:
 		return;
@@ -451,10 +362,6 @@ void bc12_interrupt(enum gpio_signal signal)
 		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
 		break;
 
-	case GPIO_USB_C1_BC12_INT_ODL:
-		task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
-		break;
-
 	default:
 		break;
 	}
@@ -462,20 +369,6 @@ void bc12_interrupt(enum gpio_signal signal)
 
 static void setup_fw_config(void)
 {
-	uint32_t board_version = 0;
-
-	if (cbi_get_board_version(&board_version) == EC_SUCCESS
-	    && board_version >= 2) {
-		ccprints("PS8743 USB MUX");
-		usb_muxes[USBC_PORT_C1].i2c_addr_flags = PS8743_I2C_ADDR1_FLAG;
-		usb_muxes[USBC_PORT_C1].driver = &ps8743_usb_mux_driver;
-		usb_muxes[USBC_PORT_C1].board_set = &board_ps8743_mux_set;
-	} else {
-		ccprints("PS8740 USB MUX");
-		usb_muxes[USBC_PORT_C1].i2c_addr_flags = PS8740_I2C_ADDR0_FLAG;
-		usb_muxes[USBC_PORT_C1].driver = &ps8740_usb_mux_driver;
-	}
-
 	if (ec_config_get_usb_db() == DALBOZ_DB_D_OPT2_USBA_HDMI) {
 		ccprints("DB OPT2 HDMI");
 		gpio_enable_interrupt(GPIO_HDMI_CONN_HPD_3V3);
@@ -485,20 +378,16 @@ static void setup_fw_config(void)
 		ioex_init(IOEX_C1_NCT3807);
 		IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT1;
 		usb_port_enable[USBA_PORT_A1] = GPIO_EN_USB_A1_5V;
-		c1_tcpc_config_interrupt = tcpc_alert_event;
 	}
 
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_FAULT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
 
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
 
 	/* Enable BC 1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
 
 	if (ec_config_has_lid_angle_tablet_mode()) {
 		/* Enable Gyro interrupts */
