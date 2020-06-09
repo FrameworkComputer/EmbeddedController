@@ -207,7 +207,9 @@ enum sensor_id {
 
 #ifdef TEST_RSA
 #define CONFIG_RSA
+#undef CONFIG_RSA_KEY_SIZE
 #define CONFIG_RSA_KEY_SIZE 2048
+#undef CONFIG_RSA_EXPONENT_3
 #define CONFIG_RWSIG_TYPE_RWSIG
 #endif
 

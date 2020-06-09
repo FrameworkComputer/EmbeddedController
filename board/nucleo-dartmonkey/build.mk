@@ -16,6 +16,8 @@ test-list-y=\
        crc32 \
        mutex \
        pingpong \
+       rsa \
+       rsa3 \
        rtc \
        sha256 \
        sha256_unrolled \
