@@ -252,6 +252,18 @@ void vboot_main(void)
 		return;
 	}
 
+	if (IS_ENABLED(CONFIG_HIBERNATE)
+			&& IS_ENABLED(CONFIG_EXTPOWER_GPIO)
+			&& !gpio_get_level(GPIO_AC_PRESENT)) {
+		/*
+		 * EC doesn't hibernate from G3 when AC is present. Thus if AC
+		 * is not present here, it implies we woke up by power button or
+		 * by lid. Clear AP_IDLE to avoid interfering with the AP boot.
+		 */
+		CPRINTS("Clear AP_IDLE, assuming wake-up by PB or LID");
+		system_clear_reset_flags(EC_RESET_FLAG_AP_IDLE);
+	}
+
 	if (is_manual_recovery() ||
 	    (system_get_reset_flags() & EC_RESET_FLAG_STAY_IN_RO)) {
 		if (is_manual_recovery())

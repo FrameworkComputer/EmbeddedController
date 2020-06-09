@@ -348,10 +348,11 @@ static enum power_state power_common_state(enum power_state state)
 						     &target, now)) {
 			case CRITICAL_SHUTDOWN_HIBERNATE:
 				CPRINTS("Hibernate due to G3 idle");
-				if (IS_ENABLED(CONFIG_VBOOT_EFS2)) {
+				if (IS_ENABLED(CONFIG_EXTPOWER_GPIO) &&
+						IS_ENABLED(CONFIG_VBOOT_EFS2)) {
 					uint32_t reset_flags;
 					reset_flags = chip_read_reset_flags() |
-						EC_RESET_FLAG_AP_OFF;
+						EC_RESET_FLAG_AP_IDLE;
 					chip_save_reset_flags(reset_flags);
 				}
 				system_hibernate(0, 0);
