@@ -442,7 +442,3 @@ void board_fill_source_power_info(int port,
 	r->max_power = r->meas.voltage_now * r->meas.current_max;
 }
 
-__override int board_has_virtual_mux(void)
-{
-	return board_get_version() < 5;
-}
