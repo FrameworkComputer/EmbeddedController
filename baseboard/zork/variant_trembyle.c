@@ -342,6 +342,23 @@ void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(port);
 }
 
+
+int board_tcpc_fast_role_swap_enable(int port, int enable)
+{
+	int rv = EC_SUCCESS;
+
+	/* Use the TCPC to enable fast switch when FRS included */
+	if (port == USBC_PORT_C0) {
+		rv = ioex_set_level(IOEX_USB_C0_TCPC_FASTSW_CTL_EN,
+				    !!enable);
+	} else {
+		rv = ioex_set_level(IOEX_USB_C1_TCPC_FASTSW_CTL_EN,
+				    !!enable);
+	}
+
+	return rv;
+}
+
 void bc12_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {

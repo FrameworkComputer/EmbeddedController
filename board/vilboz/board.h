@@ -24,6 +24,10 @@
 
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 
+/* USB-A config */
+#define GPIO_USB1_ILIM_SEL GPIO_USB_A0_CHARGE_EN_L
+#define GPIO_USB2_ILIM_SEL GPIO_USB_A1_CHARGE_EN_DB_L
+
 /* Power  LEDs */
 #define CONFIG_LED_POWER_LED
 
@@ -86,7 +90,6 @@ enum pwm_channel {
 
 enum ioex_port {
 	IOEX_C0_NCT3807 = 0,
-	IOEX_C1_NCT3807,
 	IOEX_PORT_COUNT
 };
 
@@ -173,9 +176,6 @@ static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
 	return !!(BIT(ec_config_get_usb_db()) &
 		  HAS_HDMI_RETIMER_PI3HDX1204);
 }
-
-/* These IO expander GPIOs vary with DB option. */
-extern enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L;
 
 void board_reset_pd_mcu(void);
 

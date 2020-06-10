@@ -148,9 +148,6 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #endif /* HAS_TASK_MOTIONSENSE */
 
-/* These IO expander GPIOs vary with DB option. */
-enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT1;
-
 /*
  * USB C0 port SBU mux use standalone FSUSB42UMX
  * chip and it need a board specific driver.
@@ -185,7 +182,7 @@ const struct usb_mux usbc0_sbu_mux = {
 	.driver = &usbc0_sbu_mux_driver,
 };
 
-struct usb_mux usb_muxes[] = {
+const struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.usb_port = USBC_PORT_C0,
 		.i2c_port = I2C_PORT_USB_AP_MUX,
@@ -355,6 +352,19 @@ void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(port);
 }
 
+int board_tcpc_fast_role_swap_enable(int port, int enable)
+{
+	int rv = EC_SUCCESS;
+
+	/* Use the TCPC to enable fast switch when FRS included */
+	if (port == USBC_PORT_C0) {
+		rv = ioex_set_level(IOEX_USB_C0_TCPC_FASTSW_CTL_EN,
+				    !!enable);
+	}
+
+	return rv;
+}
+
 void bc12_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -369,16 +379,8 @@ void bc12_interrupt(enum gpio_signal signal)
 
 static void setup_fw_config(void)
 {
-	if (ec_config_get_usb_db() == DALBOZ_DB_D_OPT2_USBA_HDMI) {
-		ccprints("DB OPT2 HDMI");
-		gpio_enable_interrupt(GPIO_HDMI_CONN_HPD_3V3);
-	} else {
-		ccprints("DB OPT1 USBC");
-		ioex_config[IOEX_C1_NCT3807].flags = 0;
-		ioex_init(IOEX_C1_NCT3807);
-		IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT1;
-		usb_port_enable[USBA_PORT_A1] = GPIO_EN_USB_A1_5V;
-	}
+	/* Enable DB HDMI interrupts. */
+	gpio_enable_interrupt(GPIO_HDMI_CONN_HPD_3V3);
 
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_FAULT_ODL);
@@ -417,16 +419,10 @@ struct ioexpander_config_t ioex_config[] = {
 		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
 		.drv = &nct38xx_ioexpander_drv,
 	},
-	[IOEX_C1_NCT3807] = {
-		.i2c_host_port = I2C_PORT_TCPC1,
-		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
-		.drv = &nct38xx_ioexpander_drv,
-		.flags = IOEX_FLAGS_DISABLED,
-	},
 };
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);
 
-int usb_port_enable[USBA_PORT_COUNT] = {
+const int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A0_5V,
 	GPIO_EN_USB_A1_5V,
 };
