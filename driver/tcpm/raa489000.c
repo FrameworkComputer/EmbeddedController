@@ -17,6 +17,8 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+static int dev_id[CONFIG_USB_PD_PORT_MAX_COUNT] = { -1 };
+
 static int raa489000_enter_low_power_mode(int port)
 {
 	int rv;
@@ -56,6 +58,7 @@ int raa489000_init(int port)
 	if (rv)
 		CPRINTS("C%d: Failed to read DEV_ID", port);
 	CPRINTS("%s(%d): DEVICE_ID=%d", __func__, port, device_id);
+	dev_id[port] = device_id;
 
 	if (device_id > 1) {
 		/*
@@ -79,18 +82,22 @@ int raa489000_init(int port)
 
 	/*
 	 * Set some vendor defined registers to enable the CC comparators and
-	 * remove the dead battery resistors.
+	 * remove the dead battery resistors.  This only needs to be done on
+	 * early silicon versions.
 	 */
-	rv = tcpc_write16(port, RAA489000_TYPEC_SETTING1,
-		     RAA489000_SETTING1_RDOE | RAA489000_SETTING1_CC2_CMP3_EN |
-		     RAA489000_SETTING1_CC2_CMP2_EN |
-		     RAA489000_SETTING1_CC2_CMP1_EN |
-		     RAA489000_SETTING1_CC1_CMP3_EN |
-		     RAA489000_SETTING1_CC1_CMP2_EN |
-		     RAA489000_SETTING1_CC1_CMP1_EN |
-		     RAA489000_SETTING1_CC_DB_EN);
-	if (rv)
-		CPRINTS("c%d: failed to enable CC comparators", port);
+	if (device_id <= 1) {
+		rv = tcpc_write16(port, RAA489000_TYPEC_SETTING1,
+			     RAA489000_SETTING1_RDOE |
+			     RAA489000_SETTING1_CC2_CMP3_EN |
+			     RAA489000_SETTING1_CC2_CMP2_EN |
+			     RAA489000_SETTING1_CC2_CMP1_EN |
+			     RAA489000_SETTING1_CC1_CMP3_EN |
+			     RAA489000_SETTING1_CC1_CMP2_EN |
+			     RAA489000_SETTING1_CC1_CMP1_EN |
+			     RAA489000_SETTING1_CC_DB_EN);
+		if (rv)
+			CPRINTS("c%d: failed to enable CC comparators", port);
+	}
 
 	/* Enable the ADC */
 	/*
@@ -132,10 +139,13 @@ int raa489000_init(int port)
 	if (rv)
 		CPRINTS("c%d: failed to set auto discharge", port);
 
-	/* The vendor says to set this setting. */
-	rv = tcpc_write16(port, RAA489000_PD_PHYSICAL_PARAMETER1, 0x6C07);
-	if (rv)
-		CPRINTS("c%d: failed to set PD PHY PARAM1", port);
+	if (device_id <= 1) {
+		/* The vendor says to set this setting. */
+		rv = tcpc_write16(port, RAA489000_PD_PHYSICAL_PARAMETER1,
+				  0x6C07);
+		if (rv)
+			CPRINTS("c%d: failed to set PD PHY PARAM1", port);
+	}
 
 	/* Enable the correct TCPCI interface version */
 	rv = tcpc_read16(port, RAA489000_TCPC_SETTING1, &regval);
@@ -175,10 +185,10 @@ int raa489000_tcpm_set_cc(int port, int pull)
 	int rv;
 
 	rv = tcpci_tcpm_set_cc(port, pull);
-	if (rv)
+	if (dev_id[port] > 1 || rv)
 		return rv;
 
-	/* TCPM should set RDOE to 1 after setting Rp */
+	/* Older silicon needs the TCPM to set RDOE to 1 after setting Rp */
 	if (pull == TYPEC_CC_RP)
 		rv = tcpc_update16(port, RAA489000_TYPEC_SETTING1,
 				   RAA489000_SETTING1_RDOE, MASK_SET);
