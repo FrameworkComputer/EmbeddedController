@@ -17,6 +17,21 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+static int raa489000_enter_low_power_mode(int port)
+{
+	int rv;
+
+	rv = tcpc_write16(port, RAA489000_PD_PHYSICAL_SETTING1, 0);
+	if (rv)
+		CPRINTS("RAA489000(%d): Failed to set PD PHY setting1!", port);
+
+	rv = tcpc_write16(port, RAA489000_TCPC_SETTING1, 0);
+	if (rv)
+		CPRINTS("RAA489000(%d): Failed to set TCPC setting1!", port);
+
+	return tcpci_enter_low_power_mode(port);
+}
+
 int raa489000_init(int port)
 {
 	int rv;
@@ -196,7 +211,7 @@ const struct tcpm_drv raa489000_tcpm_drv = {
 #endif
 	.get_chip_info          = &tcpci_get_chip_info,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode   = &tcpci_enter_low_power_mode,
+	.enter_low_power_mode   = &raa489000_enter_low_power_mode,
 #endif
 	.tcpc_enable_auto_discharge_disconnect =
 	&tcpci_tcpc_enable_auto_discharge_disconnect,
