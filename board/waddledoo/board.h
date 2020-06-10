@@ -49,7 +49,17 @@
 #define CONFIG_USBC_RETIMER_NB7V904M
 
 /* USB PD */
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_PD_TCPM_RAA489000
+
+/* USB defines specific to external TCPCs */
+#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#define CONFIG_USB_PD_VBUS_DETECT_TCPC
+#define CONFIG_USB_PD_DISCHARGE_TCPC
+#define CONFIG_USB_PD_TCPC_LOW_POWER
+
+/* Variant references the TCPCs to determine Vbus sourcing */
+#define CONFIG_USB_PD_5V_EN_CUSTOM
 
 /* I2C configuration */
 #define I2C_PORT_EEPROM     NPCX_I2C_PORT7_0
