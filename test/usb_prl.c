@@ -1102,8 +1102,12 @@ static int test_receive_soft_reset_msg(void)
 
 	cycle_through_state_machine(port, 10, MSEC);
 
-	TEST_ASSERT(pd_port[port].mock_got_soft_reset);
-	TEST_ASSERT(pd_port[port].mock_pe_error < 0);
+	TEST_EQ(pd_port[port].mock_got_soft_reset, 1, "%d");
+	TEST_LE(pd_port[port].mock_pe_error, 0, "%d");
+	/*
+	 * We don't want to get  pe_got_soft_reset and pe_message_received, just
+	 * pe_got_soft_reset.
+	 */
 	TEST_EQ(pd_port[port].mock_pe_message_received, 0, "%d");
 
 	enable_prl(port, 0);

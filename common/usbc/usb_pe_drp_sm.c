@@ -1910,7 +1910,7 @@ static void pe_src_ready_entry(int port)
 {
 	print_current_state(port);
 
-	/* Ensure any aborted message sequence is properly cleaned up */
+	/* Ensure any atomic message sequence is properly cleaned up */
 	PE_CLR_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 
 	/*
@@ -2650,7 +2650,7 @@ static void pe_snk_ready_entry(int port)
 {
 	print_current_state(port);
 
-	/* Ensure any aborted message sequence is properly cleaned up */
+	/* Ensure any atomic message sequence is properly cleaned up */
 	PE_CLR_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 	/*
 	 * On entry to the PE_SNK_Ready state as the result of a wait,
