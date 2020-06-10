@@ -165,7 +165,7 @@ static uint32_t tasks_enabled = BIT(TASK_ID_HOOKS) | BIT(TASK_ID_IDLE);
 int start_called;  /* Has task swapping started */
 
 /* in interrupt context */
-static int in_interrupt;
+static volatile int in_interrupt;
 /* Interrupt number of EC modules */
 volatile int ec_int;
 /* Interrupt group of EC INTC modules */
