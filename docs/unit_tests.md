@@ -71,8 +71,8 @@ void run_test(int argc, char **argv)
 }
 ```
 
-Create a `tasklist` file for you test that lists the tasks that should run as
-part of the test:
+In the [`test`] subdirectory, create a `tasklist` file for your test that lists
+the tasks that should run as part of the test:
 
 `test/my_test.tasklist`:
 
@@ -89,6 +89,12 @@ Add the test to the `Makefile`:
 
 ```Makefile
 test-list-host += my_test
+```
+
+and
+
+```Makefile
+my_test-y=my_test.o
 ```
 
 Make sure you test shows up in the "host" tests:
