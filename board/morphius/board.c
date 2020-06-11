@@ -614,3 +614,22 @@ const struct power_signal_info power_signal_list[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+/*
+ * Map keyboard connector pins to EC GPIO pins for factory test.
+ * Pins mapped to {-1, -1} are skipped.
+ * The connector has 24 pins total, and there is no pin 0.
+ */
+const int keyboard_factory_scan_pins[][2] = {
+		{3, 0}, {2, 2}, {2, 3}, {1, 2}, {2, 5},
+		{2, 4}, {2, 1}, {2, 7}, {2, 6}, {1, 5},
+		{2, 0}, {3, 1}, {1, 7}, {1, 6}, {-1, -1},
+		{1, 3}, {1, 4}, {-1, -1}, {-1, -1}, {0, 7},
+		{0, 6}, {1, 0}, {1, 1}, {0, 5},
+};
+
+const int keyboard_factory_scan_pins_used =
+			ARRAY_SIZE(keyboard_factory_scan_pins);
+#endif
+

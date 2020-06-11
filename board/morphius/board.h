@@ -25,6 +25,7 @@
 #define CONFIG_8042_AUX
 #define CONFIG_PS2
 #define CONFIG_CMD_PS2
+#define CONFIG_KEYBOARD_FACTORY_TEST
 
 #undef CONFIG_LED_ONOFF_STATES
 #define CONFIG_BATTERY_LEVEL_NEAR_FULL 91
@@ -225,6 +226,11 @@ extern const struct usb_mux usbc1_ps8818;
 extern struct usb_mux usbc1_amd_fp5_usb_mux;
 
 void hdmi_hpd_interrupt(enum ioex_signal signal);
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
 
 #endif /* !__ASSEMBLER__ */
 
