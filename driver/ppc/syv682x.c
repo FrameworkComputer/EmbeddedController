@@ -5,6 +5,7 @@
 
 /* Silergy SYV682x USB-C Power Path Controller */
 #include "common.h"
+#include "config.h"
 #include "console.h"
 #include "driver/ppc/syv682x.h"
 #include "hooks.h"
@@ -483,6 +484,7 @@ static int syv682x_init(int port)
 	int rv;
 	int regval;
 	int status, control_1;
+	enum tcpc_rp_value initial_current_limit;
 
 	rv = read_reg(port, SYV682X_STATUS_REG, &status);
 	if (rv)
@@ -503,7 +505,6 @@ static int syv682x_init(int port)
 		 */
 		regval = SYV682X_CONTROL_1_PWR_ENB |
 			(SYV682X_HV_ILIM_3_30 << SYV682X_HV_ILIM_BIT_SHIFT) |
-			(SYV682X_5V_ILIM_3_30 << SYV682X_5V_ILIM_BIT_SHIFT) |
 			/* !SYV682X_CONTROL_1_HV_DR */
 			SYV682X_CONTROL_1_CH_SEL;
 		rv = write_reg(port, SYV682X_CONTROL_1_REG, regval);
@@ -515,6 +516,15 @@ static int syv682x_init(int port)
 		if (rv)
 			return rv;
 	}
+
+#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
+	initial_current_limit = CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT;
+#else
+	initial_current_limit = CONFIG_USB_PD_PULLUP;
+#endif
+	rv = syv682x_set_vbus_source_current_limit(port, initial_current_limit);
+	if (rv)
+		return rv;
 
 	/*
 	 * Set Control Reg 2 to defaults, plus enable smart discharge mode.
