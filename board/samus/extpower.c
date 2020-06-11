@@ -412,15 +412,7 @@ void extpower_task(void)
 			extpower_board_hacks(extpower, extpower_prev);
 			extpower_prev = extpower;
 
-			hook_notify(HOOK_AC_CHANGE);
-
-			/* Forward notification to host */
-			if (extpower)
-				host_set_single_event(
-						EC_HOST_EVENT_AC_CONNECTED);
-			else
-				host_set_single_event(
-						EC_HOST_EVENT_AC_DISCONNECTED);
+			extpower_handle_update(extpower);
 		}
 	}
 }

@@ -71,6 +71,7 @@ common-$(CONFIG_EC_EC_COMM_MASTER)+=ec_ec_comm_master.o
 common-$(CONFIG_EC_EC_COMM_SLAVE)+=ec_ec_comm_slave.o
 common-$(CONFIG_HOSTCMD_ESPI)+=espi.o
 common-$(CONFIG_EXTPOWER_GPIO)+=extpower_gpio.o
+common-$(CONFIG_EXTPOWER)+=extpower_common.o
 common-$(CONFIG_FANS)+=fan.o pwm.o
 common-$(CONFIG_FLASH)+=flash.o
 common-$(CONFIG_FMAP)+=fmap.o
