@@ -408,6 +408,7 @@ const struct ina3221_t ina3221[] = {
 const unsigned int ina3221_count = ARRAY_SIZE(ina3221);
 
 static uint16_t board_version;
+static uint32_t sku_id;
 static uint32_t fw_config;
 
 static void cbi_init(void)
@@ -422,10 +423,26 @@ static void cbi_init(void)
 
 	if (cbi_get_board_version(&val) == EC_SUCCESS && val <= UINT16_MAX)
 		board_version = val;
+	if (cbi_get_sku_id(&val) == EC_SUCCESS)
+		sku_id = val;
 	if (cbi_get_fw_config(&val) == EC_SUCCESS)
 		fw_config = val;
-	CPRINTS("Board Version: %d, F/W config: 0x%08x",
-		board_version, fw_config);
+	else if (board_version == 1 || board_version == 2) {
+		/* Hack to set the barrel-jack adapter using SKU ID */
+		switch (sku_id) {
+		case 0x00000001:
+		case 0x00000002:
+		case 0x01000001:
+		case 0x01000003:
+		case 0x01000004:
+		case 0x02000000:
+			fw_config = 0x1;
+			break;
+		}
+		CPRINTS("F/W config NOT SET, defaulting to 0x%08x", fw_config);
+	}
+	CPRINTS("Board Version: %d, SKU ID: 0x%08x, F/W config: 0x%08x",
+		board_version, sku_id, fw_config);
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
