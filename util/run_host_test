@@ -91,26 +91,30 @@ def run_test(path, timeout=10):
         proc.kill()
 
 
-def host_test(test_name):
-  exec_path = pathlib.Path('build', 'host', test_name, f'{test_name}.exe')
-  if not exec_path.is_file():
-    raise argparse.ArgumentTypeError(f'No test named {test_name} exists!')
-  return exec_path
-
-
 def parse_options(argv):
   parser = argparse.ArgumentParser()
   parser.add_argument('-t', '--timeout', type=float, default=60,
                       help='Timeout to kill test after.')
-  parser.add_argument('test_name', type=host_test)
+  parser.add_argument('--coverage', action='store_const', const='coverage',
+                      default='host', dest='test_target',
+                      help='Flag if this is a code coverage test.')
+  parser.add_argument('test_name', type=str)
   return parser.parse_args(argv)
 
 
 def main(argv):
   opts = parse_options(argv)
 
+  # Tests will be located in build/host, unless the --coverage flag was
+  # provided, in which case they will be in build/coverage.
+  exec_path = pathlib.Path('build', opts.test_target, opts.test_name,
+                           f'{opts.test_name}.exe')
+  if not exec_path.is_file():
+    print(f'No test named {opts.test_name} exists!')
+    return 1
+
   start_time = time.monotonic()
-  result, output = run_test(opts.test_name, timeout=opts.timeout)
+  result, output = run_test(exec_path, timeout=opts.timeout)
   elapsed_time = time.monotonic() - start_time
 
   print('{} {}! ({:.3f} seconds)'.format(
