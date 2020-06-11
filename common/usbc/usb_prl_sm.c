@@ -741,9 +741,8 @@ static void prl_tx_phy_layer_reset_entry(const int port)
 	 || IS_ENABLED(CONFIG_USB_VPD)) {
 		vpd_rx_enable(pd_is_connected(port));
 	} else {
-		/* Purge any outstanding TX message */
-		PRL_TX_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
-		/* TODO(b/157228506): notify pe if needed */
+		/* Note: can't clear PHY messages due to TCPC architecture */
+		/* Enable communications*/
 		tcpm_set_rx_enable(port, pd_is_connected(port));
 	}
 	set_state_prl_tx(port, PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
@@ -844,8 +843,17 @@ static void prl_tx_discard_message_entry(const int port)
 {
 	print_current_prl_tx_state(port);
 
-	/* Increment msgidCounter */
-	increment_msgid_counter(port);
+	/*
+	 * Discard queued message
+	 * Note: We differ from spec here, which allows us to not discard on
+	 * incoming SOP' or SOP''.  However this would get the TCH out of sync.
+	 */
+	if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
+		increment_msgid_counter(port);
+		PRL_TX_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
+		/* TODO(b/157228506): notify pe if needed */
+	}
+
 	set_state_prl_tx(port, PRL_TX_PHY_LAYER_RESET);
 }
 
@@ -1680,6 +1688,7 @@ static void tch_wait_for_transmission_complete_run(const int port)
 	if (PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_COMPLETE)) {
 		PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
 		set_state_tch(port, TCH_MESSAGE_SENT);
+		return;
 	}
 	/*
 	 * Inform Policy Engine of Tx Error
@@ -1688,6 +1697,19 @@ static void tch_wait_for_transmission_complete_run(const int port)
 		PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_ERROR);
 		tch[port].error = ERR_TCH_XMIT;
 		set_state_tch(port, TCH_REPORT_ERROR);
+		return;
+	}
+	/*
+	 * Any message received and not in state TCH_Wait_Chunk_Request
+	 * MUST be checked after transmission status due to our TCPC
+	 * architecture, and should not be checked if prl_tx is still waiting on
+	 * the TCPC.
+	 */
+	if (TCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED) &&
+	     prl_tx_get_state(port) !=  PRL_TX_WAIT_FOR_PHY_RESPONSE) {
+		TCH_CLR_FLAG(port, PRL_FLAGS_MSG_RECEIVED);
+		set_state_tch(port, TCH_MESSAGE_RECEIVED);
+		return;
 	}
 }
 
@@ -1860,6 +1882,7 @@ static void tch_message_received_entry(const int port)
 	RCH_SET_FLAG(port, PRL_FLAGS_MSG_RECEIVED);
 
 	/* Clear extended message objects */
+	/* TODO: Notify PE of message discard */
 	TCH_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
 	pdmsg[port].data_objs = 0;
 }
@@ -1878,6 +1901,19 @@ static void tch_message_sent_entry(const int port)
 
 	/* Tell PE message was sent */
 	pe_message_sent(port);
+
+	/*
+	 * Any message received and not in state TCH_Wait_Chunk_Request
+	 * MUST be checked after notifying PE
+	 */
+	if (TCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED)) {
+		TCH_CLR_FLAG(port, PRL_FLAGS_MSG_RECEIVED);
+		set_state_tch(port, TCH_MESSAGE_RECEIVED);
+		return;
+	}
+
+
+
 	set_state_tch(port, TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
 }
 
@@ -1890,6 +1926,18 @@ static void tch_report_error_entry(const int port)
 
 	/* Report Error To Policy Engine */
 	pe_report_error(port, tch[port].error, prl_tx[port].last_xmit_type);
+
+	/*
+	 * Any message received and not in state TCH_Wait_Chunk_Request
+	 * MUST be checked after notifying PE
+	 */
+	if (TCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED)) {
+		TCH_CLR_FLAG(port, PRL_FLAGS_MSG_RECEIVED);
+		set_state_tch(port, TCH_MESSAGE_RECEIVED);
+		return;
+	}
+
+
 	set_state_tch(port, TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
 }
 #endif /* CONFIG_USB_PD_REV30 */
@@ -1979,11 +2027,19 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 
 	/*
 	 * Discard any pending tx message if this is
-	 * not a ping message
+	 * not a ping message (length must be checked to verify this is a
+	 * control message, rather than data)
 	 */
 	if ((cnt > 0) || (type != PD_CTRL_PING)) {
-		if (prl_tx_get_state(port) == PRL_TX_SRC_PENDING ||
-			prl_tx_get_state(port) == PRL_TX_SNK_PENDING)
+		/*
+		 * Note: Spec dictates that we always go into
+		 * PRL_Tx_Discard_Message upon receivng a message.  However, due
+		 * to our TCPC architecture we may be receiving a transmit
+		 * complete at the same time as a response so only do this if a
+		 * message is pending.
+		 */
+		if (prl_tx_get_state(port) != PRL_TX_WAIT_FOR_PHY_RESPONSE ||
+		    PRL_TX_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT))
 			set_state_prl_tx(port, PRL_TX_DISCARD_MESSAGE);
 	}
 
@@ -2009,10 +2065,8 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 		 * queued for sending but a message is received before
 		 * tch_wait_for_message_request_from_pe has been run
 		 */
-		else if ((tch_get_state(port) !=
-				TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE &&
-			  tch_get_state(port) !=
-				TCH_WAIT_FOR_TRANSMISSION_COMPLETE) ||
+		else if (tch_get_state(port) !=
+				TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE ||
 			 TCH_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
 			/* NOTE: RTR_TX_CHUNKS State embedded here. */
 			/*
