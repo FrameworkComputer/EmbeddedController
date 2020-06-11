@@ -25,6 +25,11 @@ void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 	mock_pe_port[port].sop = type;
 }
 
+void pe_report_discard(int port)
+{
+	mock_pe_port[port].mock_pe_message_discarded = 1;
+}
+
 void pe_got_hard_reset(int port)
 {
 	mock_pe_port[port].mock_pe_got_hard_reset = 1;

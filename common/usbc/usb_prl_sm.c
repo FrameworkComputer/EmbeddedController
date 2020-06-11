@@ -860,9 +860,9 @@ static void prl_tx_discard_message_entry(const int port)
 	 * incoming SOP' or SOP''.  However this would get the TCH out of sync.
 	 */
 	if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
-		increment_msgid_counter(port);
 		PRL_TX_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
-		/* TODO(b/157228506): notify pe if needed */
+		increment_msgid_counter(port);
+		pe_report_discard(port);
 	}
 
 	set_state_prl_tx(port, PRL_TX_PHY_LAYER_RESET);
@@ -1893,8 +1893,10 @@ static void tch_message_received_entry(const int port)
 	RCH_SET_FLAG(port, PRL_FLAGS_MSG_RECEIVED);
 
 	/* Clear extended message objects */
-	/* TODO: Notify PE of message discard */
-	TCH_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
+	if (TCH_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
+		TCH_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
+		pe_report_discard(port);
+	}
 	pdmsg[port].data_objs = 0;
 }
 

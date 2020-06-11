@@ -107,6 +107,7 @@ static struct pd_prl {
 	int mock_pe_got_hard_reset;
 	int mock_pe_message_received;
 	int mock_got_soft_reset;
+	int mock_message_discard;
 } pd_port[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static void init_port(int port, int rev)
@@ -744,6 +745,11 @@ void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 	pd_port[port].sop = type;
 }
 
+void pe_report_discard(int port)
+{
+	pd_port[port].mock_message_discard = 1;
+}
+
 void pe_got_hard_reset(int port)
 {
 	pd_port[port].mock_pe_got_hard_reset = 1;
@@ -1353,6 +1359,7 @@ void before_test(void)
 
 	pd_port[PORT0].mock_pe_message_sent = 0;
 	pd_port[PORT0].mock_pe_error = -1;
+	pd_port[PORT0].mock_message_discard = 0;
 	pd_port[PORT0].mock_pe_hard_reset_sent = 0;
 	pd_port[PORT0].mock_pe_got_hard_reset = 0;
 	pd_port[PORT0].mock_pe_message_received = 0;

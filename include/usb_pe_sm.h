@@ -78,6 +78,13 @@ void pe_message_sent(int port);
 void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type);
 
 /**
+ * Informs the Policy Engine of a discard.
+ *
+ * @param port USB-C port number
+ */
+void pe_report_discard(int port);
+
+/**
  * Called by the Protocol Layer to informs the Policy Engine
  * that a message has been received.
  *

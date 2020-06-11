@@ -19,6 +19,7 @@ struct mock_pe_port_t {
 	int mock_pe_got_hard_reset;
 	int mock_pe_message_received;
 	int mock_got_soft_reset;
+	int mock_pe_message_discarded;
 };
 
 extern struct mock_pe_port_t mock_pe_port[CONFIG_USB_PD_PORT_MAX_COUNT];
