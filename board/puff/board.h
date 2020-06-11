@@ -233,17 +233,13 @@ void led_alert(int enable);
 void show_critical_error(void);
 
 /*
- * Barrel-jack power (1 bit)
+ * Barrel-jack power (4 bits).
  */
-enum ec_cfg_bj_power_type {
-	BJ_POWER_65W = 0,
-	BJ_POWER_90W = 1,
-};
 #define EC_CFG_BJ_POWER_L		0
-#define EC_CFG_BJ_POWER_H		0
+#define EC_CFG_BJ_POWER_H		3
 #define EC_CFG_BJ_POWER_MASK GENMASK(EC_CFG_BJ_POWER_H, EC_CFG_BJ_POWER_L)
 
-enum ec_cfg_bj_power_type ec_config_get_bj_power(void);
+unsigned int ec_config_get_bj_power(void);
 
 #endif /* !__ASSEMBLER__ */
 
