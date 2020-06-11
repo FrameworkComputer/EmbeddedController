@@ -76,7 +76,7 @@ static const struct fan_step fan_table_clamshell[] = {
 	},
 	{
 		/* level 6 */
-		.on = {65, -1, 62, 40},
+		.on = {65, -1, 64, 40},
 		.off = {62, -1, 61, 39},
 		.rpm = {5400, 5300},
 	},
@@ -84,7 +84,7 @@ static const struct fan_step fan_table_clamshell[] = {
 		/* level 7 */
 		.on = {100, -1, 100, 100},
 		.off = {65, -1, 62, 40},
-		.rpm = {6000, 5900},
+		.rpm = {6000, 6150},
 	},
 };
 
