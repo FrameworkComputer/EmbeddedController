@@ -124,7 +124,10 @@ static void chip_periph_sleep_control(void)
 #else
 	MCHP_EC_JTAG_EN &= ~0x01;
 #endif
+
+#ifdef CHIP_FAMILY_MEC17XX
 	MCHP_PCR_SLP_EN0 = d;
+#endif 
 	MCHP_PCR_SLP_EN1 = MCHP_PCR_SLP_EN1_UNUSED_BLOCKS;
 	MCHP_PCR_SLP_EN2 = MCHP_PCR_SLP_EN2_SLEEP;
 	MCHP_PCR_SLP_EN3 = MCHP_PCR_SLP_EN3_SLEEP;

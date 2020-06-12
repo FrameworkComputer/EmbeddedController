@@ -1007,7 +1007,14 @@
 
 
 /* ACPI */
+#if defined(CHIP_FAMILY_MEC17XX)
 #define MCHP_ACPI_EC_MAX		(5)
+#elif defined(CHIP_FAMILY_MEC152X)
+#define MCHP_ACPI_EC_MAX		(4)
+#else 
+#error "BUILD ERROR: CHIP_FAMILY_MEC17XX or CHIP_FAMILY_MEC152X not defined!"
+#endif 
+
 #define MCHP_ACPI_EC_BASE(x)		(0x400f0800 + ((x) << 10))
 #define MCHP_ACPI_EC_EC2OS(x, y)	REG8(MCHP_ACPI_EC_BASE(x) +\
 	0x100 + (y))
@@ -1220,7 +1227,7 @@ enum MCHP_i2c_port {
 #define MCHP_GPSPI0_ID	0
 #define MCHP_GPSPI1_ID	1
 
-#ifdef CHIP_FAMILY_MEC17XX
+#if defined(CHIP_FAMILY_MEC17XX) || defined(CHIP_FAMILY_MEC152X)
 
 /* Quad Master SPI (QMSPI) */
 #define MCHP_QMSPI0_BASE		0x40005400
@@ -1358,7 +1365,7 @@ enum MCHP_i2c_port {
 
 #define MCHP_QMSPI0_ID	0
 
-#endif /* #ifdef CHIP_FAMILY_MEC17XX */
+#endif /* CHIP_FAMILY_MEC17XX || CHIP_FAMILY_MEC152X*/
 
 /* eSPI */
 
@@ -2064,7 +2071,7 @@ typedef struct MCHP_dma_chan dma_chan_t;
 /* IRQ Numbers */
 #ifdef CHIP_FAMILY
 
-#ifdef CHIP_FAMILY_MEC17XX
+#if defined(CHIP_FAMILY_MEC17XX) || defined(CHIP_FAMILY_MEC152X)
 
 #define MCHP_IRQ_GIRQ8		0
 #define MCHP_IRQ_GIRQ9		1
@@ -2089,7 +2096,8 @@ typedef struct MCHP_dma_chan dma_chan_t;
 #define MCHP_IRQ_GIRQ25		16
 #define MCHP_IRQ_GIRQ26		17
 /* 18 - 19 Not connected */
-#define MCHP_IRQ_I2C_0		20
+/* The following I2C definitions are for SMBUS */ 
+#define MCHP_IRQ_I2C_0		20 
 #define MCHP_IRQ_I2C_1		21
 #define MCHP_IRQ_I2C_2		22
 #define MCHP_IRQ_I2C_3		23
@@ -2105,8 +2113,12 @@ typedef struct MCHP_dma_chan dma_chan_t;
 #define MCHP_IRQ_DMA_9		33
 #define MCHP_IRQ_DMA_10		34
 #define MCHP_IRQ_DMA_11		35
+
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_DMA_12		36
 #define MCHP_IRQ_DMA_13		37
+#endif 
+
 /* 38 - 39 Not connected */
 #define MCHP_IRQ_UART0		40
 #define MCHP_IRQ_UART1		41
@@ -2121,8 +2133,12 @@ typedef struct MCHP_dma_chan dma_chan_t;
 #define MCHP_IRQ_ACPIEC2_OBE	50
 #define MCHP_IRQ_ACPIEC3_IBF	51
 #define MCHP_IRQ_ACPIEC3_OBE	52
+
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_ACPIEC4_IBF	53
 #define MCHP_IRQ_ACPIEC4_OBE	54
+#endif 
+
 #define MCHP_IRQ_ACPIPM1_CTL	55
 #define MCHP_IRQ_ACPIPM1_EN	56
 #define MCHP_IRQ_ACPIPM1_STS	57
@@ -2142,24 +2158,42 @@ typedef struct MCHP_dma_chan dma_chan_t;
 #define MCHP_IRQ_TACH_0		71
 #define MCHP_IRQ_TACH_1		72
 #define MCHP_IRQ_TACH_2		73
+
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_FAN0_FAIL	74
 #define MCHP_IRQ_FAN0_STALL	75
 #define MCHP_IRQ_FAN1_FAIL	76
 #define MCHP_IRQ_FAN1_STALL	77
+#endif 
+
 #define MCHP_IRQ_ADC_SNGL	78
 #define MCHP_IRQ_ADC_RPT	79
+
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_RCID0		80
 #define MCHP_IRQ_RCID1		81
 #define MCHP_IRQ_RCID2		82
+#endif 
+
 #define MCHP_IRQ_LED0_WDT	83
 #define MCHP_IRQ_LED1_WDT	84
 #define MCHP_IRQ_LED2_WDT	85
+
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_LED3_WDT	86
+#endif 
+
 #define MCHP_IRQ_PHOT		87
+
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_PWRGRD0	88
 #define MCHP_IRQ_PWRGRD1	89
+#endif 
+
 #define MCHP_IRQ_LPC		90
 #define MCHP_IRQ_QMSPI0		91
+
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_SPI0_TX	92
 #define MCHP_IRQ_SPI0_RX	93
 #define MCHP_IRQ_SPI1_TX	94
@@ -2168,9 +2202,15 @@ typedef struct MCHP_dma_chan dma_chan_t;
 #define MCHP_IRQ_BCM0_BUSY	97
 #define MCHP_IRQ_BCM1_ERR	98
 #define MCHP_IRQ_BCM1_BUSY	99
+#endif 
+
 #define MCHP_IRQ_PS2_0		100
 #define MCHP_IRQ_PS2_1		101
+
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_PS2_2		102
+#endif 
+
 #define MCHP_IRQ_ESPI_PC	103
 #define MCHP_IRQ_ESPI_BM1	104
 #define MCHP_IRQ_ESPI_BM2	105
@@ -2194,26 +2234,46 @@ typedef struct MCHP_dma_chan dma_chan_t;
 #define MCHP_IRQ_VCI_IN1	123
 #define MCHP_IRQ_VCI_IN2	124
 #define MCHP_IRQ_VCI_IN3	125
+
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_VCI_IN4	126
 #define MCHP_IRQ_VCI_IN5	127
 #define MCHP_IRQ_VCI_IN6	128
+#endif 
+
 #define MCHP_IRQ_PS20A_WAKE	129
 #define MCHP_IRQ_PS20B_WAKE	130
+
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_PS21A_WAKE	131
+#endif 
+
 #define MCHP_IRQ_PS21B_WAKE	132
+
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_PS2_2_WAKE	133
 #define MCHP_IRQ_ENVMON		134
+#endif 
+
 #define MCHP_IRQ_KSC_INT	135
 #define MCHP_IRQ_TIMER16_0	136
 #define MCHP_IRQ_TIMER16_1	137
+
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_TIMER16_2	138
 #define MCHP_IRQ_TIMER16_3	139
+#endif 
+
 #define MCHP_IRQ_TIMER32_0	140
 #define MCHP_IRQ_TIMER32_1	141
+
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_CNTR_TM0	142
 #define MCHP_IRQ_CNTR_TM1	143
 #define MCHP_IRQ_CNTR_TM2	144
 #define MCHP_IRQ_CNTR_TM3	145
+#endif 
+
 #define MCHP_IRQ_CCT_TMR	146
 #define MCHP_IRQ_CCT_CAP0	147
 #define MCHP_IRQ_CCT_CAP1	148
@@ -2226,11 +2286,28 @@ typedef struct MCHP_dma_chan dma_chan_t;
 #define MCHP_IRQ_EEPROM		155
 #define MCHP_IRQ_ESPI_VW_EN	156
 
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_IRQ_MAX		157
+#endif /* CHIP_FAMILY_MEC17XX */
+
+#ifdef CHIP_FAMILY_MEC152X
+/* I2C_4 is SMBUS */
+#define MCHP_IRQ_I2C_4		157
+#define MCHP_IRQ_TACH_3		158
+#define MCHP_IRQ_CEC_0		159
+#define MCHP_IRQ_SAF_DONE	166
+#define MCHP_IRQ_SAF_ERROR	167
+#define MCHP_IRQ_I2CONLY_0		168
+#define MCHP_IRQ_I2CONLY_1		169
+#define MCHP_IRQ_I2CONLY_2		170
+#define MCHP_IRQ_WDT		171
+#define MCHP_IRQ_MAX		172
+
+#endif /* CHIP_FAMILY_MEC152X */
 
 #else
-#error "BUILD ERROR: CHIP_FAMILY_MEC17XX not defined!"
-#endif /* #ifdef CHIP_FAMILY_MEC17XX */
+#error "BUILD ERROR: CHIP_FAMILY_MEC17XX or CHIP_FAMILY_MEC152X not defined!"
+#endif /* #ifdef CHIP_FAMILY_MEC17XX CHIP_FAMILY_MEC152X */
 
 #else
 #error "BUILD ERROR: CHIP_FAMILY not defined!"

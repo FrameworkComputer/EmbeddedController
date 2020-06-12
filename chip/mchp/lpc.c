@@ -287,7 +287,9 @@ const int acpi_ec_pcr_slp[MCHP_ACPI_EC_MAX] = {
 	MCHP_PCR_ACPI_EC1,
 	MCHP_PCR_ACPI_EC2,
 	MCHP_PCR_ACPI_EC3,
+#if MCHP_ACPI_EC_MAX > 4
 	MCHP_PCR_ACPI_EC4,
+#endif 
 };
 
 const int acpi_ec_nvic_ibf[MCHP_ACPI_EC_MAX] = {
@@ -295,7 +297,9 @@ const int acpi_ec_nvic_ibf[MCHP_ACPI_EC_MAX] = {
 	MCHP_IRQ_ACPIEC1_IBF,
 	MCHP_IRQ_ACPIEC2_IBF,
 	MCHP_IRQ_ACPIEC3_IBF,
+#if MCHP_ACPI_EC_MAX > 4
 	MCHP_IRQ_ACPIEC4_IBF,
+#endif 
 };
 
 #ifdef CONFIG_HOSTCMD_ESPI
@@ -304,7 +308,9 @@ const int acpi_ec_espi_bar_id[MCHP_ACPI_EC_MAX] = {
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC1,
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC2,
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC3,
+#if MCHP_ACPI_EC_MAX > 4
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC4,
+#endif
 };
 #endif
 
