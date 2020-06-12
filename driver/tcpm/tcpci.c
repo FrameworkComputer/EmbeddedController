@@ -30,6 +30,10 @@ static int vconn_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 static int rx_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 #endif
 
+#define TCPC_FLAGS_VSAFE0V(_flags) \
+	((_flags & TCPC_FLAGS_TCPCI_REV2_0) && \
+		!(_flags & TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V))
+
 /****************************************************************************
  * TCPCI DEBUG Helpers
  */
@@ -294,7 +298,7 @@ static int init_alert_mask(int port)
 		;
 
 	/* TCPCI Rev2 includes SAFE0V alerts */
-	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0)
+	if (TCPC_FLAGS_VSAFE0V(tcpc_config[port].flags))
 		mask |= TCPC_REG_ALERT_EXT_STATUS;
 
 	/* Set the alert mask in TCPC */
@@ -743,7 +747,7 @@ bool tcpci_tcpm_check_vbus_level(int port, enum vbus_level level)
 		 * to poll when requesting to see if we left it and
 		 * have not yet entered Safe5V
 		 */
-		if ((tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) &&
+		if (TCPC_FLAGS_VSAFE0V(tcpc_config[port].flags) &&
 		    (tcpc_vbus[port] & BIT(VBUS_SAFE0V))) {
 			int ext_status = 0;
 
@@ -1104,7 +1108,7 @@ static void tcpci_check_vbus_changed(int port, int alert, uint32_t *pd_event)
 	 * Check for VBus change
 	 */
 	/* TCPCI Rev2 includes Safe0V detection */
-	if ((tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) &&
+	if (TCPC_FLAGS_VSAFE0V(tcpc_config[port].flags) &&
 	    (alert & TCPC_REG_ALERT_EXT_STATUS)) {
 		int ext_status = 0;
 
@@ -1130,7 +1134,7 @@ static void tcpci_check_vbus_changed(int port, int alert, uint32_t *pd_event)
 		if (pwr_status & TCPC_REG_POWER_STATUS_VBUS_PRES)
 			/* Safe5V and not Safe0V */
 			tcpc_vbus[port] = BIT(VBUS_PRESENT);
-		else if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0)
+		else if (TCPC_FLAGS_VSAFE0V(tcpc_config[port].flags))
 			/* TCPCI Rev2 detects Safe0V, so just clear Safe5V */
 			tcpc_vbus[port] &= ~BIT(VBUS_PRESENT);
 		else {
@@ -1425,7 +1429,7 @@ int tcpci_tcpm_init(int port)
 	/* Initialize power_status_mask */
 	init_power_status_mask(port);
 
-	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) {
+	if (TCPC_FLAGS_VSAFE0V(tcpc_config[port].flags)) {
 		int ext_status = 0;
 
 		/* Read Extended Status register */
