@@ -28,3 +28,4 @@ test-list-y=\
        sha256 \
        sha256_unrolled \
        stm32f_rtc \
+       utils \

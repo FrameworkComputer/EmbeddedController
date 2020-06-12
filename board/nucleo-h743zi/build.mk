@@ -24,3 +24,4 @@ test-list-y=\
        scratchpad \
        sha256 \
        sha256_unrolled \
+       utils \
