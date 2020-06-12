@@ -325,6 +325,7 @@ static void set_vconn(int port, int enable);
 /* Forward declare common, private functions */
 static __maybe_unused int reset_device_and_notify(int port);
 static __maybe_unused void check_drp_connection(const int port);
+static void sink_power_sub_states(int port);
 
 #ifdef CONFIG_POWER_COMMON
 static void handle_new_power_state(int port);
@@ -1074,6 +1075,20 @@ static bool tc_perform_snk_hard_reset(int port)
 			 * sure to re-enable AutoDischargeDisconnect here.
 			 */
 			tcpm_enable_auto_discharge_disconnect(port, 1);
+
+			/*
+			 * Now that VBUS is back, let's notify charge manager
+			 * regarding the source's current capabilities.
+			 * sink_power_sub_states() reacts to changes in CC
+			 * terminations, however during a HardReset, the
+			 * terminations of a non-PD port partner will not
+			 * change.  Therefore, set the debounce time to right
+			 * now, such that we'll actually reset the correct input
+			 * current limit.
+			 */
+			tc[port].cc_debounce = get_time().val;
+			sink_power_sub_states(port);
+
 			return true;
 		}
 		/*
