@@ -586,13 +586,11 @@ void raa489000_hibernate(int chgnum)
 		/* Disable Supplemental support */
 		regval &= ~RAA489000_C1_ENABLE_SUPP_SUPPORT_MODE;
 
-		/* Force BGATE off */
-		if (IS_ENABLED(CONFIG_OCPC) && (chgnum == PRIMARY_CHARGER)) {
-			/* This is needed in the Z-state */
-			CPRINTS("%s(%d): Skip disable BFET", __func__, chgnum);
-		} else {
-			regval |= RAA489000_C1_BGATE_FORCE_OFF;
-		}
+		/*
+		 * Force BGATE off.  For devices that utilize the Z-state, the
+		 * LDO will be powered through the BFET's body diode.
+		 */
+		regval |= RAA489000_C1_BGATE_FORCE_OFF;
 
 		/* Disable AMON/BMON */
 		regval |= ISL923X_C1_DISABLE_MON;
