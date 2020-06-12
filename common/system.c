@@ -855,6 +855,11 @@ void system_common_pre_init(void)
 	}
 }
 
+int system_is_manual_recovery(void)
+{
+	return host_is_event_set(EC_HOST_EVENT_KEYBOARD_RECOVERY);
+}
+
 /**
  * Handle a pending reboot command.
  */
