@@ -275,7 +275,7 @@ static const struct tcpc_config_t tcpc_config_p1_usb3 = {
 		.port = I2C_PORT_USB_C1,
 		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 	},
-	.flags = TCPC_FLAGS_TCPCI_REV2_0,
+	.flags = TCPC_FLAGS_TCPCI_REV2_0 | TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
 	.drv = &ps8xxx_tcpm_drv,
 	.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
 };
