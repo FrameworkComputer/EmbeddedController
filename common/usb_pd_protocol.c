@@ -3608,6 +3608,7 @@ void pd_task(void *u)
 		case PD_STATE_SRC_POWERED:
 			/* Switch to the new requested voltage */
 			if (pd[port].last_state != pd[port].task_state) {
+				pd[port].flags |= PD_FLAGS_CHECK_VCONN_STATE;
 				pd_transition_voltage(pd[port].requested_idx);
 				set_state_timeout(
 					port,
@@ -3696,17 +3697,8 @@ void pd_task(void *u)
 				pd_check_pr_role(port, PD_ROLE_SOURCE,
 						 pd[port].flags);
 				pd[port].flags &= ~PD_FLAGS_CHECK_PR_ROLE;
-				/*
-				 * USB PD  version 1.3 section 2.6.1:
-				 * During Explicit contract the Sink can
-				 * initiate or receive a request an exchange
-				 * of VCONN Source. Hence, enable Vconn swap
-				 * during explicit contract.
-				 */
-				pd[port].flags |= PD_FLAGS_CHECK_VCONN_STATE;
-
-				break;
 			}
+
 
 			/* Check data role policy, which may trigger a swap */
 			if (pd[port].flags & PD_FLAGS_CHECK_DR_ROLE) {
@@ -3718,6 +3710,14 @@ void pd_task(void *u)
 
 			/* Check for Vconn source, which may trigger a swap */
 			if (pd[port].flags & PD_FLAGS_CHECK_VCONN_STATE) {
+				/*
+				 * Ref: Section 2.6.1 of both
+				 * USB-PD Spec Revision 2.0, Version 1.3 &
+				 * USB-PD Spec Revision 3.0, Version 2.0
+				 * During Explicit contract the Sink can
+				 * initiate or receive a request an exchange
+				 * of VCONN Source.
+				 */
 				pd_try_execute_vconn_swap(port,
 							  pd[port].flags);
 				pd[port].flags &= ~PD_FLAGS_CHECK_VCONN_STATE;
@@ -4268,6 +4268,7 @@ void pd_task(void *u)
 		case PD_STATE_SNK_REQUESTED:
 			/* Wait for ACCEPT or REJECT */
 			if (pd[port].last_state != pd[port].task_state) {
+				pd[port].flags |= PD_FLAGS_CHECK_VCONN_STATE;
 				hard_reset_count = 0;
 				set_state_timeout(port,
 						  get_time().val +
@@ -4318,14 +4319,6 @@ void pd_task(void *u)
 				pd_check_pr_role(port, PD_ROLE_SINK,
 						 pd[port].flags);
 				pd[port].flags &= ~PD_FLAGS_CHECK_PR_ROLE;
-				/*
-				 * USB PD  version 1.3 section 2.6.2:
-				 * During Explicit contract the Sink can
-				 * initiate or receive a request an exchange
-				 * of VCONN Source. Hence, enable Vconn swap
-				 * during explicit contract.
-				 */
-				pd[port].flags |= PD_FLAGS_CHECK_VCONN_STATE;
 				break;
 			}
 
@@ -4339,6 +4332,14 @@ void pd_task(void *u)
 
 			/* Check for Vconn source, which may trigger a swap */
 			if (pd[port].flags & PD_FLAGS_CHECK_VCONN_STATE) {
+				/*
+				 * Ref: Section 2.6.2 of both
+				 * USB-PD Spec Revision 2.0, Version 1.3 &
+				 * USB-PD Spec Revision 3.0, Version 2.0
+				 * During Explicit contract the Sink can
+				 * initiate or receive a request an exchange
+				 * of VCONN Source.
+				 */
 				pd_try_execute_vconn_swap(port,
 							  pd[port].flags);
 				pd[port].flags &= ~PD_FLAGS_CHECK_VCONN_STATE;
