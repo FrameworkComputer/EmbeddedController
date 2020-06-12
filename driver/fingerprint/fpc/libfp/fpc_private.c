@@ -313,3 +313,8 @@ int fp_finger_enroll(uint8_t *image, int *completion)
 	*completion = bio_enrollment_get_percent_complete(enroll_ctx);
 	return rc;
 }
+
+int fp_maintenance(void)
+{
+	return fpc_fp_maintenance(&errors);
+}

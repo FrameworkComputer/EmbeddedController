@@ -154,4 +154,15 @@ int fp_enrollment_finish(void *templ);
  */
 int fp_finger_enroll(uint8_t *image, int *completion);
 
+/**
+ * Runs a test for defective pixels.
+ *
+ * Should be triggered periodically by the client. The maintenance command can
+ * take several hundred milliseconds to run.
+ *
+ * @return EC_ERROR_HW_INTERNAL on error (such as finger on sensor)
+ * @return EC_SUCCESS on success
+ */
+int fp_maintenance(void);
+
 #endif /* __CROS_EC_FPSENSOR_H */

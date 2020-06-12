@@ -18,4 +18,6 @@
 #error "Sensor type not defined!"
 #endif
 
+int fpc_fp_maintenance(uint16_t *error_state);
+
 #endif /* __CROS_EC_DRIVER_FINGERPRINT_FPC_FPC_SENSOR_H_ */

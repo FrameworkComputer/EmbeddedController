@@ -830,4 +830,12 @@ int command_fpclear(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(fpclear, command_fpclear, NULL,
 			"Clear fingerprint sensor context");
 
+
+int command_fpmaintenance(int argc, char **argv)
+{
+	return fp_maintenance();
+}
+DECLARE_CONSOLE_COMMAND(fpmaintenance, command_fpmaintenance, NULL,
+			"Run fingerprint sensor maintenance");
+
 #endif /* CONFIG_CMD_FPSENSOR_DEBUG */

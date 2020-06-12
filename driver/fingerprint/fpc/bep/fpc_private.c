@@ -267,3 +267,8 @@ int fp_finger_enroll(uint8_t *image, int *completion)
 
 	return rc;
 }
+
+int fp_maintenance(void)
+{
+	return fpc_fp_maintenance(&errors);
+}
