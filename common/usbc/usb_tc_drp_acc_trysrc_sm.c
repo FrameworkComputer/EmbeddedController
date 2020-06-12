@@ -786,14 +786,12 @@ int tc_src_power_on(int port)
 
 void tc_src_power_off(int port)
 {
-	if (IS_ATTACHED_SRC(port)) {
-		/* Remove VBUS */
-		pd_power_supply_reset(port);
+	/* Remove VBUS */
+	pd_power_supply_reset(port);
 
-		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
-			charge_manager_set_ceil(port, CEIL_REQUESTOR_PD,
-						CHARGE_CEIL_NONE);
-	}
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
+		charge_manager_set_ceil(port, CEIL_REQUESTOR_PD,
+					CHARGE_CEIL_NONE);
 }
 
 /*
@@ -991,7 +989,7 @@ static bool tc_perform_src_hard_reset(int port)
 		return false;
 	case PS_STATE1:
 		/* Enable VBUS */
-		pd_set_power_supply_ready(port);
+		tc_src_power_on(port);
 		typec_update_cc(port);
 
 		/* Turn off VCONN */
@@ -1220,6 +1218,9 @@ void tc_state_init(int port)
 	} else {
 		/* Unattached.SNK is the default starting state. */
 		restart_tc_sm(port, TC_UNATTACHED_SNK);
+
+		/* Disable VBUS; VBUS may be sourced before reboot */
+		tc_src_power_off(port);
 	}
 
 	/* Allow system to set try src enable */
@@ -2203,7 +2204,7 @@ static void tc_unoriented_dbg_acc_src_entry(const int port)
 				tc[port].power_role, tc[port].data_role);
 
 		/* Enable VBUS */
-		pd_set_power_supply_ready(port);
+		tc_src_power_on(port);
 		typec_select_pull(port, TYPEC_CC_RP);
 		typec_update_cc(port);
 
@@ -2224,7 +2225,7 @@ static void tc_unoriented_dbg_acc_src_entry(const int port)
 		tc_set_data_role(port, PD_ROLE_DFP);
 
 		/* Enable VBUS */
-		if (pd_set_power_supply_ready(port)) {
+		if (tc_src_power_on(port)) {
 			if (IS_ENABLED(CONFIG_USBC_SS_MUX))
 				usb_mux_set(port, USB_PD_MUX_NONE,
 				USB_SWITCH_DISCONNECT, tc[port].polarity);
@@ -2732,7 +2733,7 @@ static void tc_attached_src_entry(const int port)
 		typec_select_src_current_limit_rp(port, CONFIG_USB_PD_PULLUP);
 
 		/* Enable VBUS */
-		pd_set_power_supply_ready(port);
+		tc_src_power_on(port);
 		typec_select_pull(port, TYPEC_CC_RP);
 		typec_update_cc(port);
 
@@ -2760,7 +2761,7 @@ static void tc_attached_src_entry(const int port)
 			set_vconn(port, 1);
 
 		/* Enable VBUS */
-		if (pd_set_power_supply_ready(port)) {
+		if (tc_src_power_on(port)) {
 			/* Stop sourcing Vconn if Vbus failed */
 			if (IS_ENABLED(CONFIG_USBC_VCONN))
 				set_vconn(port, 0);
@@ -2796,7 +2797,7 @@ static void tc_attached_src_entry(const int port)
 		set_vconn(port, 1);
 
 	/* Enable VBUS */
-	if (pd_set_power_supply_ready(port)) {
+	if (tc_src_power_on(port)) {
 		/* Stop sourcing Vconn if Vbus failed */
 		if (IS_ENABLED(CONFIG_USBC_VCONN))
 			set_vconn(port, 0);
@@ -3410,11 +3411,6 @@ static void tc_ct_attached_snk_exit(int port)
  */
 static void tc_cc_rd_entry(const int port)
 {
-	if (get_last_state_tc(port) != TC_UNATTACHED_SRC) {
-		/* Reset power supply if not toggling */
-		pd_power_supply_reset(port);
-	}
-
 	/* Disable VCONN */
 	if (IS_ENABLED(CONFIG_USBC_VCONN))
 		set_vconn(port, 0);
@@ -3459,9 +3455,6 @@ static void tc_cc_rp_entry(const int port)
  */
 static void tc_cc_open_entry(const int port)
 {
-	/* Disable VBUS */
-	pd_power_supply_reset(port);
-
 	/* Disable VCONN */
 	if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
 		set_vconn(port, 0);
