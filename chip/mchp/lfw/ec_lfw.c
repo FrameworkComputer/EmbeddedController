@@ -261,6 +261,15 @@ void uart_puts(const char *str)
 	} while (*str);
 }
 
+int uart_getc(void)
+{
+	int ret = -1; 
+	if (MCHP_UART_LSR(0) & BIT(0)){
+		ret = MCHP_UART_RB(0); 
+	}
+	return ret; 
+}
+
 void fault_handler(void)
 {
 	uart_puts("EXCEPTION!\nTriggering watchdog reset\n");
@@ -352,11 +361,18 @@ void lfw_main(void)
 
 	uintptr_t init_addr;
 
+#ifdef CONFIG_DEBUG
+	int df; 
+	int uart_c; 
+#endif 
+
 	/* install vector table */
 	*((uintptr_t *) 0xe000ed08) = (uintptr_t) &hdr_int_vect;
 
 	/* Use 48 MHz processor clock to power through boot */
 	MCHP_PCR_PROC_CLK_CTL = 1;
+
+	MCHP_EC_JTAG_EN = CONFIG_MCHP_JTAG_MODE;
 
 #ifdef CONFIG_WATCHDOG
 	/* Reload watchdog which may be running in case of sysjump */
@@ -386,6 +402,40 @@ void lfw_main(void)
 	uart_puts("littlefw ");
 	uart_puts(current_image_data.version);
 	uart_puts("\n");
+
+#ifdef CONFIG_LFW_DEBUG
+#define UART_DEBUG_WAIT_TIMEOUT_MS (100)
+	/* Enabe SWD Access to chip early */
+	MCHP_EC_JTAG_EN = MCHP_JTAG_ENABLE + MCHP_JTAG_MODE_SWD_SWV;
+	uart_puts("dbg - press 'h' to halt boot\n");
+	/* Delay boot and optionally halt boot if user enters 'h' */
+	for(df = 0; df < UART_DEBUG_WAIT_TIMEOUT_MS; df++){
+		uart_c = uart_getc(); 
+		/* drop to debug cmd on 'h' character */
+		if (uart_c == 0x68){
+			break; 
+		}
+		usleep(MSEC);
+	}
+	/* while reuses df which will only continue if user inputs 'C' */ 
+	while(df < UART_DEBUG_WAIT_TIMEOUT_MS - 1){
+		uart_c = uart_getc();
+		switch(uart_c){
+			/* Continue with boot */
+			case 0x63: /* c */
+				df = UART_DEBUG_WAIT_TIMEOUT_MS; 
+				break; 
+			case 0x65: /* e */
+			default: 
+				break;
+		}
+#ifdef CONFIG_WATCHDOG
+		/* Reload watchdog which may be running in case of sysjump */
+		MCHP_WDG_KICK = 1;
+#endif /* CONFIG_WATCHDOG */
+	}
+	uart_puts("dbg - continuing\n");
+#endif /* CONFIG_DEBUG*/
 
 	switch (system_get_image_copy()) {
 	case EC_IMAGE_RW:
