@@ -235,19 +235,19 @@ static int test_shared_mem(void)
 {
 	int i;
 	int sz = shared_mem_size();
-	char *mem;
+	char *mem1, *mem2;
 
-	TEST_ASSERT(shared_mem_acquire(sz, &mem) == EC_SUCCESS);
-	TEST_ASSERT(shared_mem_acquire(sz, &mem) == EC_ERROR_BUSY);
+	TEST_ASSERT(shared_mem_acquire(sz, &mem1) == EC_SUCCESS);
+	TEST_ASSERT(shared_mem_acquire(sz, &mem2) == EC_ERROR_BUSY);
 
 	for (i = 0; i < 256; ++i) {
-		memset(mem, i, sz);
-		TEST_ASSERT_MEMSET(mem, (char)i, sz);
+		memset(mem1, i, sz);
+		TEST_ASSERT_MEMSET(mem1, (char)i, sz);
 		if ((i & 0xf) == 0)
 			msleep(20); /* Yield to other tasks */
 	}
 
-	shared_mem_release(mem);
+	shared_mem_release(mem1);
 
 	return EC_SUCCESS;
 }
