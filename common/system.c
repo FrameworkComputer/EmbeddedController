@@ -898,9 +898,9 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 			return EC_ERROR_INVAL;
 
 		if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE)) {
-			CPRINTS("Clearing AP_OFF");
+			CPRINTS("Clearing AP_IDLE");
 			chip_save_reset_flags(chip_read_reset_flags() &
-					      ~EC_RESET_FLAG_AP_OFF);
+					      ~EC_RESET_FLAG_AP_IDLE);
 		}
 		/* Intentional fall-through */
 	case EC_REBOOT_HIBERNATE:
