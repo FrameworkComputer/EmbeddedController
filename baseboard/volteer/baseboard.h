@@ -133,22 +133,25 @@
 
 /* USB Type C and USB PD defines */
 /* Enable the new USB-C PD stack */
-/* TODO: b/145756626 - re-enable once all blocking issues resolved */
-#if 0
+#define CONFIG_USB_PD_DEBUG_LEVEL 1
 #define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_DRP_ACC_TRYSRC
-#else
-/*
- * PD 3.0 is always enabled by the TCPMv2 stack, so it's only explicitly
- * enabled when using the TCPMv1 stack
- */
 #define CONFIG_USB_PD_REV30
-#endif
+
+/*
+ * TODO(b/158572770): TCPMv2: Conserve flash space
+ * Add these console commands as flash space permits.
+ */
+#undef CONFIG_CMD_HCDEBUG
+#undef CONFIG_CMD_ACCELS
+#undef CONFIG_CMD_ACCEL_INFO
+#undef CONFIG_CMD_ACCELSPOOF
+#undef CONFIG_CMD_BATTFAKE
+#undef CONFIG_CMD_KEYBOARD
 
 #define CONFIG_CMD_TCPC_DUMP
 
 #define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USB_PD_TCPMV1
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_DISCHARGE_PPC

@@ -11,6 +11,14 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+#ifdef BOARD_VOLTEER_TCPMV1
+/* Disable TCPMv2 configuration options */
+#undef CONFIG_USB_PD_TCPMV2
+
+/* Enable the required TCPMv1 options */
+#define CONFIG_USB_PD_TCPMV1
+#endif
+
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
