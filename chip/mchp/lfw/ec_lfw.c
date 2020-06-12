@@ -361,7 +361,7 @@ void lfw_main(void)
 
 	uintptr_t init_addr;
 
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_CHIPSET_DEBUG
 	int df; 
 	int uart_c; 
 #endif 
@@ -403,10 +403,14 @@ void lfw_main(void)
 	uart_puts(current_image_data.version);
 	uart_puts("\n");
 
-#ifdef CONFIG_LFW_DEBUG
+#ifdef CONFIG_CHIPSET_DEBUG
 #define UART_DEBUG_WAIT_TIMEOUT_MS (100)
 	/* Enabe SWD Access to chip early */
-	MCHP_EC_JTAG_EN = MCHP_JTAG_ENABLE + MCHP_JTAG_MODE_SWD_SWV;
+#ifdef CONFIG_MCHP_JTAG_MODE
+	MCHP_EC_JTAG_EN = CONFIG_MCHP_JTAG_MODE;
+#else
+	MCHP_EC_JTAG_EN |= 0x01;
+#endif
 	uart_puts("dbg - press 'h' to halt boot\n");
 	/* Delay boot and optionally halt boot if user enters 'h' */
 	for(df = 0; df < UART_DEBUG_WAIT_TIMEOUT_MS; df++){
