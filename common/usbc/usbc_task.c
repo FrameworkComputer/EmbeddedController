@@ -160,8 +160,16 @@ void pd_task(void *u)
 	if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
 		tc_state_init(port);
 
-	if (IS_ENABLED(CONFIG_USBC_PPC))
+	if (IS_ENABLED(CONFIG_USBC_PPC)) {
+		/*
+		 * Wait to initialize the PPC after tc_state_init(), which sets
+		 * the correct Rd values in the TCPC; otherwise the TCPC might
+		 * not be pulling the CC lines down when the PPC connects the
+		 * CC lines from the USB connector to the TCPC cause the source
+		 * to drop Vbus causing a brown out.
+		 */
 		ppc_init(port);
+	}
 
 	/*
 	 * Since most boards configure the TCPC interrupt as edge
