@@ -50,19 +50,19 @@ def GetEntryPoint(payload_file):
     s = f.read(4)
   return struct.unpack('<I', s)[0]
 
-def GetPayloadFromOffset(payload_file, offset):
+def GetPayloadFromOffset(payload_file, offset, chunk_size):
   """Read payload and pad it to 64-byte aligned."""
   with open(payload_file, 'rb') as f:
     f.seek(offset)
     payload = bytearray(f.read())
-  rem_len = len(payload) % 64
+  rem_len = len(payload) % chunk_size
   if rem_len:
-    payload += b'\0' * (64 - rem_len)
+    payload += b'\0' * (chunk_size - rem_len)
   return payload
 
-def GetPayload(payload_file):
+def GetPayload(payload_file, chunk_size = 64):
   """Read payload and pad it to 64-byte aligned."""
-  return GetPayloadFromOffset(payload_file, 0)
+  return GetPayloadFromOffset(payload_file, 0, chunk_size)
 
 def GetPublicKey(pem_file):
   """Extract public exponent and modulus from PEM file."""
@@ -130,6 +130,72 @@ def BuildHeader(args, payload_len, load_addr, rorofile):
 
   return header
 
+#Everglades is the boot rom on MEC152x and uses a larger format due to sha384
+def BuildHeaderEverglades(args, payload_len, load_addr, rorofile, auth_key): 
+  # Identifier and header version
+  header = bytearray(b'PHCM')
+  # byte[4] version 
+  ver = 2
+  header.append(ver)
+
+  # byte[5]
+  b = GetSpiClockParameter(args)
+  b |= (1 << 2) #spi drive strength 4mA
+  header.append(b)
+
+  # byte[6] vtr auth/encryption
+  b = 0
+  b |= 0x7 << 3 #must be 1s - however example in datasheet shows 0
+  auth_enable = 0
+  b |= (auth_enable & 0x01) << 6
+  #note if encryption enable is set, then Key header must be appended to each firmware image
+  encryption_enable = 0 
+  b |= (encryption_enable & 0x01) << 7
+  header.append(b)
+
+  # byte[7]
+  header.append(GetSpiReadCmdParameter(args))
+
+  # bytes 0x08 - 0x0b
+  header.extend(struct.pack('<I', load_addr))
+  # bytes 0x0c - 0x0f
+  header.extend(struct.pack('<I', GetEntryPoint(rorofile)))
+  # bytes 0x10 - 0x13
+  header.append((payload_len >> 7) & 0xff)
+  header.append((payload_len >> 15) & 0xff)
+  PadZeroTo(header, 0x14)
+  # bytes 0x14 - 0x17
+  header.extend(struct.pack('<I', args.payload_offset))
+  # byte[0x18] auth key select
+  header.append(auth_key)
+  #reserved 0x19 to 0x4F
+  PadZeroTo(header, 0x50)
+  #ECDSA-384 Public Authentication Key, Rx
+  PadZeroTo(header, 0x80)
+  #ECDSA-384 Public Key Authentication, Ry
+  PadZeroTo(header, 0xB0)
+  #SHA384 of header data up to this point. 
+  header.extend(HashByteArray384(header))
+
+  #Signature of Header 0 all zeros because auth is disabled
+  PadZeroTo(header, 0x140)
+
+  return header
+
+def GenerateTrailer(data_to_has): 
+  output = bytearray() 
+  output.extend(HashByteArray384(data_to_has))
+  #Zero pad ECDSA signature 96B + 16B padding
+  PadZeroTo(output, 160) #160 bytes 
+
+  return output
+
+def HashByteArray384(data): 
+  hasher = hashlib.sha384()
+  hasher.update(data)
+  h = hasher.digest()
+  digest = bytearray(h)
+  return digest
 
 def BuildHeader2(args, payload_len, load_addr, payload_entry):
   # Identifier and header version
@@ -285,7 +351,7 @@ def parseargs():
                       default=0x1000)
   parser.add_argument("-p", "--payload_offset", type=int,
                       help="The offset of payload from the start of header",
-                      default=0x80)
+                      default=0x140)
   parser.add_argument("-r", "--rw_loc", type=int,
                       help="Start offset of EC_RW. Default is -1 meaning 1/2 flash size",
                       default=-1)
@@ -304,6 +370,9 @@ def parseargs():
   parser.add_argument("--test_ecrw", action='store_true',
                       help="Use fixed pattern for EC_RW but preserve image_data",
                       default=False)
+  parser.add_argument("--family", type=str,
+                      help="Define chip FAMILY for different header/trailer formats",
+                      default="MEC17XX")
   parser.add_argument("--verbose", action='store_true',
                       help="Enable verbose output",
                       default=False)
@@ -369,6 +438,9 @@ def main():
   spi_size = args.spi_size * 1024
   debug_print("SPI Flash image size in bytes =", hex(spi_size))
 
+  chunk_size = 64
+  if args.family == "MEC152X":
+    chunk_size = 128
   # !!! IMPORTANT !!!
   # These values MUST match chip/mec1701/config_flash_layout.h
   # defines.
@@ -384,7 +456,7 @@ def main():
 
   rorofile=PacklfwRoImage(args.input, args.loader_file, args.image_size)
 
-  payload = GetPayload(rorofile)
+  payload = GetPayload(rorofile, chunk_size)
   payload_len = len(payload)
   # debug
   debug_print("EC_LFW + EC_RO length = ",hex(payload_len))
@@ -400,6 +472,11 @@ def main():
     for i in range(4):
       payload[crc_ofs + i] = crc & 0xff
       crc = crc >> 8
+  ec_info_block = bytearray()
+  cosignature_block = bytearray()
+  if args.family == "MEC152X": 
+    PadZeroTo(ec_info_block, 128)
+    PadZeroTo(cosignature_block, 96)
 
   # Chromebooks are not using MEC BootROM ECDSA.
   # We implemented the ECDSA disabled case where
@@ -411,13 +488,22 @@ def main():
 
   # MEC17xx Header is 0x80 bytes with an 64 byte signature
   # (32 byte SHA256 + 32 zero bytes)
-  header = BuildHeader(args, payload_len, LOAD_ADDR, rorofile)
+  if args.family == "MEC152X": 
+    debug_print("MEC152X Family header ",hex(payload_len))
+    #ec_info_block is included in the payload 
+    header = BuildHeaderEverglades(args, payload_len + 1, LOAD_ADDR, rorofile, 0)
+    # MEC152x payload ECDSA not used, 96 byte signature is
+    # SHA384 + 96 zero bytes
+    header_signature = header[0xB0:]
+    header = header[:0xB0]
+  else: 
+    header = BuildHeader(args, payload_len, LOAD_ADDR, rorofile)
+    # MEC17xx payload ECDSA not used, 64 byte signature is
+    # SHA256 + 32 zero bytes
+    header_signature = SignByteArray(header)
+
   # debug
   printByteArrayAsHex(header, "Header LFW + EC_RO")
-
-  # MEC17xx payload ECDSA not used, 64 byte signature is
-  # SHA256 + 32 zero bytes
-  header_signature = SignByteArray(header)
   # debug
   printByteArrayAsHex(header_signature, "header_signature")
 
@@ -430,7 +516,7 @@ def main():
   debug_print("args.input = ", args.input)
   debug_print("args.image_size = ", hex(args.image_size))
 
-  payload_rw = GetPayloadFromOffset(args.input, args.image_size)
+  payload_rw = GetPayloadFromOffset(args.input, args.image_size, chunk_size)
   debug_print("type(payload_rw) is ", type(payload_rw))
   debug_print("len(payload_rw) is ", hex(len(payload_rw)))
 
@@ -471,16 +557,36 @@ def main():
   spi_list.append((0, tag, "tag"))
 
   spi_list.append((args.header_loc, header, "header(lwf + ro)"))
-  spi_list.append((args.header_loc + HEADER_SIZE, header_signature,
+  spi_list.append((args.header_loc + len(header), header_signature,
     "header(lwf + ro) signature"))
   spi_list.append((args.header_loc + args.payload_offset, payload,
     "payload(lfw + ro)"))
+  ro_size = 0xFFFFFFFF #MAX
+  if args.family == "MEC152X": 
+    #in MEC docs this is part of the Firmware Image block
+    spi_list.append((args.header_loc + args.payload_offset + len(payload), ec_info_block,
+      "ec_info_block(lfw + ro)"))
+    #we do not include the encryption key header block as we do not have encryption enabled
+    spi_list.append((args.header_loc + args.payload_offset + len(payload) + len(ec_info_block), 
+                    cosignature_block,
+                    "cosignature_block(lfw + ro)"))
 
-  offset = args.header_loc + args.payload_offset + payload_len
+    trailer_block = GenerateTrailer(payload+ec_info_block+cosignature_block)
+    spi_list.append((args.header_loc + args.payload_offset + len(payload) + len(ec_info_block) + len(cosignature_block), 
+                    trailer_block,
+                    "trailer_block(lfw + ro)"))
 
-  # No SPI Header for EC_RW as its not loaded by BootROM
-  spi_list.append((offset, payload_signature,
-                   "payload(lfw_ro) signature"))
+    ro_size = args.header_loc + args.payload_offset + len(payload) + len(ec_info_block) + len(cosignature_block) + len(trailer_block)
+
+  else: 
+
+    offset = args.header_loc + args.payload_offset + payload_len
+
+    # No SPI Header for EC_RW as its not loaded by BootROM
+    spi_list.append((offset, payload_signature,
+                    "payload(lfw_ro) signature"))
+    
+    ro_size = offset + len(payload_signature)
 
   # EC_RW location
   rw_offset = int(spi_size // 2)
@@ -489,7 +595,7 @@ def main():
 
   debug_print("rw_offset = 0x{0:08x}".format(rw_offset))
 
-  if rw_offset < offset + len(payload_signature):
+  if rw_offset < ro_size:
     print("ERROR: EC_RW overlaps EC_RO")
 
   spi_list.append((rw_offset, payload_rw, "payload(rw)"))
