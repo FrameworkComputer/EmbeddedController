@@ -8,6 +8,7 @@
 #include "button.h"
 #include "common.h"
 #include "accelgyro.h"
+#include "cbi_ec_fw_config.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi260.h"
 #include "driver/als_tcs3400.h"
@@ -37,24 +38,11 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /*
- * Reconfigure Volteer GPIOs based on the board ID
+ * FW_CONFIG defaults for Trondo if the CBI data is not initialized.
  */
-__override void config_volteer_gpios(void)
-{
-	/* Legacy support for the first board build */
-	if (get_board_id() == 0) {
-		CPRINTS("Configuring GPIOs for board ID 0");
-
-		/* Reassign USB_C1_RT_RST_ODL */
-		bb_controls[USBC_PORT_C1].retimer_rst_gpio =
-			GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
-		ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
-
-		/* Reassign EC_VOLUP_BTN_ODL */
-		button_reassign_gpio(BUTTON_VOLUME_UP,
-			GPIO_EC_VOLUP_BTN_ODL_BOARDID_0);
-	}
-}
+union volteer_cbi_fw_config fw_config_defaults = {
+	.usb_db = DB_USB3_PASSIVE,
+};
 
 static void board_init(void)
 {
@@ -223,3 +211,13 @@ const struct pwm_t pwm_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+void board_reset_pd_mcu(void)
+{
+	/* TODO(b/159025023): Trondo: check USB PD reset operation */
+}
+
+__override void board_cbi_init(void)
+{
+	/* TODO(b/159025023): Trondo: check FW_CONFIG fields for USB DB type */
+}
