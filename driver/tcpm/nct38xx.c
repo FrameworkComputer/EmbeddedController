@@ -134,27 +134,6 @@ static void nct38xx_tcpc_alert(int port)
 
 }
 
-static __maybe_unused int nct3807_tcpc_drp_toggle(int port)
-{
-	int rv;
-
-	/* DRP will already be set with the correct pull on both CC lines */
-
-	/* Set up to catch LOOK4CONNECTION alerts */
-	rv = tcpc_update8(port,
-			  TCPC_REG_TCPC_CTRL,
-			  TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT,
-			  MASK_SET);
-	if (rv)
-		return rv;
-
-	/* Set Look4Connection command */
-	rv = tcpc_write(port, TCPC_REG_COMMAND,
-			TCPC_REG_COMMAND_LOOK4CONNECTION);
-
-	return rv;
-}
-
 static int nct3807_handle_fault(int port, int fault)
 {
 	int rv = EC_SUCCESS;
@@ -202,7 +181,7 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 	.tcpc_enable_auto_discharge_disconnect =
 				  &tcpci_tcpc_enable_auto_discharge_disconnect,
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= &nct3807_tcpc_drp_toggle,
+	.drp_toggle		= &tcpci_tcpc_drp_toggle,
 	.set_connection		= &tcpci_tcpc_set_connection,
 #endif
 #ifdef CONFIG_USBC_PPC
