@@ -1152,7 +1152,9 @@ static bool common_src_snk_dpm_requests(int port)
 		/*
 		 * Init VDM CMD_EXIT_MODE message.
 		 * alt_opos must be set with the opos to be sent.
+		 * TODO: Convert this to use DPM_REQUEST_VDM.
 		 */
+		pe[port].tx_type = TCPC_TX_SOP;
 		pe[port].vdm_data[0] = VDO(
 					USB_SID_DISPLAYPORT,
 					1, /* structured */
@@ -1162,6 +1164,8 @@ static bool common_src_snk_dpm_requests(int port)
 					VDO_CMDT(CMDT_INIT) |
 					CMD_EXIT_MODE);
 		pe[port].vdm_cnt = 1;
+		set_state_pe(port, PE_VDM_REQUEST);
+		return true;
 
 	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_VDM)) {
 		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_VDM);
@@ -4911,7 +4915,7 @@ static void pe_vdm_response_entry(int port)
 	rx_payload[0] &= ~VDO_CMDT_MASK;
 
 	if (cmd_type != CMDT_INIT) {
-		CPRINTF("ERR:CMDT:%d\n", vdo_cmd);
+		CPRINTF("ERR:CMDT:%d:%d\n", cmd_type, vdo_cmd);
 
 		if (pe[port].power_role == PD_ROLE_SOURCE)
 			set_state_pe(port, PE_SRC_READY);
