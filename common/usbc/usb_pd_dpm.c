@@ -70,13 +70,20 @@ void dpm_vdm_naked(int port, enum tcpm_transmit_type type, uint16_t svid,
 
 void dpm_attempt_mode_entry(int port)
 {
-	uint32_t vdo_count;
+	int vdo_count;
 	uint32_t vdm[VDO_MAX_SIZE];
 
 	if (dpm[port].mode_entry_done)
 		return;
 
 	if (pd_get_data_role(port) != PD_ROLE_DFP)
+		return;
+	/*
+	 * If discovery has not occurred for modes, do not attempt to switch
+	 * to alt mode.
+	 */
+	if (pd_get_svids_discovery(port, TCPC_TX_SOP) != PD_DISC_COMPLETE ||
+	    pd_get_modes_discovery(port, TCPC_TX_SOP) != PD_DISC_COMPLETE)
 		return;
 
 	/*
