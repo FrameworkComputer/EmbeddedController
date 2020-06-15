@@ -501,120 +501,6 @@ int tcpci_tcpc_drp_toggle(int port)
 
 	return rv;
 }
-
-int tcpci_tcpc_set_connection(int port,
-			      enum tcpc_cc_pull pull,
-			      int connect)
-{
-	int rv;
-	int role;
-
-	/*
-	 * Disconnecting will set the following and then return
-	 *     Set RC.DRP=1b (DRP)
-	 *     Set RC.RpValue=00b (smallest Rp to save power)
-	 *     Set RC.CC1=pull (Rd or Rp)
-	 *     Set RC.CC2=pull (Rd or Rp)
-	 */
-	if (!connect) {
-		tcpci_set_role_ctrl(port, 1, TYPEC_RP_USB, pull);
-		return EC_SUCCESS;
-	}
-
-	/* Get the ROLE CONTROL value */
-	rv = tcpc_read(port, TCPC_REG_ROLE_CTRL, &role);
-	if (rv)
-		return rv;
-
-	if (role & TCPC_REG_ROLE_CTRL_DRP_MASK) {
-		enum tcpc_cc_pull cc1_pull, cc2_pull;
-		enum tcpc_cc_voltage_status cc1, cc2;
-
-		enum tcpc_cc_polarity polarity;
-
-		/*
-		 * If DRP is set, the CC pins shall stay in
-		 * Potential_Connect_as_Src or Potential_Connect_as_Sink
-		 * until directed otherwise.
-		 *
-		 * Set RC.CC1 & RC.CC2 per potential decision
-		 * Set RC.DRP=0
-		 */
-		rv = tcpm_get_cc(port, &cc1, &cc2);
-		if (rv)
-			return rv;
-
-		switch (cc1) {
-		case TYPEC_CC_VOLT_OPEN:
-			cc1_pull = TYPEC_CC_OPEN;
-			break;
-		case TYPEC_CC_VOLT_RA:
-			cc1_pull = TYPEC_CC_RA;
-			break;
-		case TYPEC_CC_VOLT_RD:
-			cc1_pull = TYPEC_CC_RP;
-			break;
-		case TYPEC_CC_VOLT_RP_DEF:
-		case TYPEC_CC_VOLT_RP_1_5:
-		case TYPEC_CC_VOLT_RP_3_0:
-			cc1_pull = TYPEC_CC_RD;
-			break;
-		default:
-			return EC_ERROR_UNKNOWN;
-		}
-
-		switch (cc2) {
-		case TYPEC_CC_VOLT_OPEN:
-			cc2_pull = TYPEC_CC_OPEN;
-			break;
-		case TYPEC_CC_VOLT_RA:
-			cc2_pull = TYPEC_CC_RA;
-			break;
-		case TYPEC_CC_VOLT_RD:
-			cc2_pull = TYPEC_CC_RP;
-			break;
-		case TYPEC_CC_VOLT_RP_DEF:
-		case TYPEC_CC_VOLT_RP_1_5:
-		case TYPEC_CC_VOLT_RP_3_0:
-			cc2_pull = TYPEC_CC_RD;
-			break;
-		default:
-			return EC_ERROR_UNKNOWN;
-		}
-
-		/* Set the CC lines */
-		rv = tcpc_write(port, TCPC_REG_ROLE_CTRL,
-				TCPC_REG_ROLE_CTRL_SET(0,
-						CONFIG_USB_PD_PULLUP,
-						cc1_pull, cc2_pull));
-		if (rv)
-			return rv;
-
-		/* Set TCPC_CONTROl.PlugOrientation */
-		if (pull == TYPEC_CC_RD)
-			polarity = polarity_rm_dts(
-					get_snk_polarity(cc1, cc2));
-		else
-			polarity = get_src_polarity(cc1, cc2);
-
-		rv = tcpc_update8(port, TCPC_REG_TCPC_CTRL,
-				  TCPC_REG_TCPC_CTRL_SET(1),
-				  (polarity == POLARITY_CC1) ? MASK_CLR
-							     : MASK_SET);
-	} else {
-		/*
-		 * DRP is not set. This would happen if DRP is not enabled or
-		 * was turned off and we did not have a connection.  We have
-		 * to manually turn off that we are looking for a connection
-		 * and set both CC lines to the pull value.
-		 */
-		rv = tcpc_update8(port,
-				  TCPC_REG_TCPC_CTRL,
-				  TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT,
-				  MASK_CLR);
-	}
-	return rv;
-}
 #endif
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
@@ -749,26 +635,10 @@ int tcpci_tcpc_fast_role_swap_enable(int port, int enable)
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 bool tcpci_tcpm_check_vbus_level(int port, enum vbus_level level)
 {
-	if (level == VBUS_SAFE0V) {
-		/*
-		 * Alerts only tell us when Safe0V is entered, have
-		 * to poll when requesting to see if we left it and
-		 * have not yet entered Safe5V
-		 */
-		if (TCPC_FLAGS_VSAFE0V(tcpc_config[port].flags) &&
-		    (tcpc_vbus[port] & BIT(VBUS_SAFE0V))) {
-			int ext_status = 0;
-
-			/* Determine if we left Safe0V */
-			tcpm_ext_status(port, &ext_status);
-			if (!(ext_status & TCPC_REG_EXT_STATUS_SAFE0V))
-				tcpc_vbus[port] &= ~BIT(VBUS_SAFE0V);
-		}
-
+	if (level == VBUS_SAFE0V)
 		return !!(tcpc_vbus[port] & BIT(VBUS_SAFE0V));
-	} else {
+	else
 		return !!(tcpc_vbus[port] & BIT(VBUS_PRESENT));
-	}
 }
 #endif
 
@@ -1122,16 +992,9 @@ static void tcpci_check_vbus_changed(int port, int alert, uint32_t *pd_event)
 
 		/* Determine if Safe0V was detected */
 		tcpm_ext_status(port, &ext_status);
-		if (ext_status & TCPC_REG_EXT_STATUS_SAFE0V) {
-			/*
-			 * We have been notified of Safe0V.
-			 * Disable AutoDischargeDisconnect
-			 */
-			tcpm_enable_auto_discharge_disconnect(port, 0);
-
-			/* Safe0V and not Safe5V */
+		if (ext_status & TCPC_REG_EXT_STATUS_SAFE0V)
+			/* Safe0V=1 and Present=0 */
 			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
-		}
 	}
 
 	if (alert & TCPC_REG_ALERT_POWER_STATUS) {
@@ -1140,26 +1003,23 @@ static void tcpci_check_vbus_changed(int port, int alert, uint32_t *pd_event)
 		/* Determine reason for power status change */
 		tcpci_tcpm_get_power_status(port, &pwr_status);
 		if (pwr_status & TCPC_REG_POWER_STATUS_VBUS_PRES)
-			/* Safe5V and not Safe0V */
+			/* Safe0V=0 and Present=1 */
 			tcpc_vbus[port] = BIT(VBUS_PRESENT);
 		else if (TCPC_FLAGS_VSAFE0V(tcpc_config[port].flags))
-			/* TCPCI Rev2 detects Safe0V, so just clear Safe5V */
+			/* TCPCI Rev2 detects Safe0V, so Present=0 */
 			tcpc_vbus[port] &= ~BIT(VBUS_PRESENT);
 		else {
 			/*
 			 * TCPCI Rev1 can not detect Safe0V, so treat this
 			 * like a Safe0V detection.
+			 *
+			 * Safe0V=1 and Present=0
 			 */
-			/* Disable AutoDischargeDisconnect */
-			if (tcpc_vbus[port] & BIT(VBUS_PRESENT))
-				tcpm_enable_auto_discharge_disconnect(port, 0);
-
-			/* Safe0V and not Safe5V */
 			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
 		}
 
-		if (IS_ENABLED(CONFIG_USB_PD_VBUS_DETECT_TCPC)
-			&& IS_ENABLED(CONFIG_USB_CHARGER)) {
+		if (IS_ENABLED(CONFIG_USB_PD_VBUS_DETECT_TCPC) &&
+		    IS_ENABLED(CONFIG_USB_CHARGER)) {
 			/* Update charge manager with new VBUS state */
 			usb_charger_vbus_change(port,
 				!!(tcpc_vbus[port] & BIT(VBUS_PRESENT)));

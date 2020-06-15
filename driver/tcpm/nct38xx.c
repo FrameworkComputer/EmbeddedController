@@ -182,7 +182,6 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 				  &tcpci_tcpc_enable_auto_discharge_disconnect,
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	.drp_toggle		= &tcpci_tcpc_drp_toggle,
-	.set_connection		= &tcpci_tcpc_set_connection,
 #endif
 #ifdef CONFIG_USBC_PPC
 	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,

@@ -677,9 +677,9 @@ void tc_pr_swap_complete(int port, bool success)
 	TC_CLR_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
 
 	/*
-	 * We turned off AutoDischargeDisconnect when we started the PR Swap,
-	 * if we were a SNK. Re-enable AutoDischargeDisconnect to make sure
-	 * it is back on if swap is complete.
+	 * AutoDischargeDisconnect was either turned off near the SNK->SRC
+	 * PR-Swap message or when we hit Safe0V on SRC->SNK PR-Swap.
+	 * Either case, we need to re-enable if we finished the swap.
 	 */
 	if (success)
 		tcpm_enable_auto_discharge_disconnect(port, 1);
@@ -735,6 +735,15 @@ void tc_hard_reset_request(int port)
 {
 	TC_SET_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+
+	/*
+	 * TCPCI Rev2 V1.1 4.4.5.4.4
+	 * Disconnect Detection by the Sink TCPC during a Connection
+	 *
+	 * Attached.SNK Hard Reset disable AutoDischargeDisconnect
+	 */
+	if (IS_ATTACHED_SNK(port))
+		tcpm_enable_auto_discharge_disconnect(port, 0);
 }
 
 void tc_disc_ident_in_progress(int port)
@@ -964,9 +973,9 @@ int typec_update_cc(int port)
 {
 	int rv;
 	enum tcpc_cc_pull pull = tc[port].select_cc_pull;
+	enum tcpc_rp_value rp = typec_get_active_select_rp(port);
 
-	rv = tcpm_select_rp_value(port,
-				  typec_get_active_select_rp(port));
+	rv = tcpm_select_rp_value(port, rp);
 	if (rv)
 		return rv;
 
@@ -998,6 +1007,8 @@ static bool tc_perform_src_hard_reset(int port)
 	case PS_STATE1:
 		/* Enable VBUS */
 		tc_src_power_on(port);
+
+		/* Update the Rp Value */
 		typec_update_cc(port);
 
 		/* Turn off VCONN */
@@ -1010,13 +1021,6 @@ static bool tc_perform_src_hard_reset(int port)
 	case PS_STATE2:
 		/* Tell Policy Engine Hard Reset is complete */
 		pe_ps_reset_complete(port);
-
-		/*
-		 * HardReset would have turned off power and Safe0V would
-		 * have disabled AutoDischargeDisconnect. Make sure to
-		 * re-enable AutoDischargeDisconnect here.
-		 */
-		tcpm_enable_auto_discharge_disconnect(port, 1);
 
 		tc[port].ps_reset_state = PS_STATE0;
 		return true;
@@ -1076,9 +1080,11 @@ static bool tc_perform_snk_hard_reset(int port)
 			pe_ps_reset_complete(port);
 
 			/*
-			 * HardReset would have turned off power and Safe0V
-			 * would have disabled AutoDischargeDisconnect. Make
-			 * sure to re-enable AutoDischargeDisconnect here.
+			 * TCPCI Rev2 V1.1 4.4.5.4.4
+			 * Disconnect Detection by the Sink TCPC during a
+			 * Connection
+			 *
+			 * HardReset done - enable AutoDischargeDisconnect
 			 */
 			tcpm_enable_auto_discharge_disconnect(port, 1);
 
@@ -1129,10 +1135,6 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 
 	CPRINTS("TCPC p%d init %s", port, res ? "failed" : "ready");
 
-	/* Enable AutoDischargeDisconnect if we are ready */
-	if (!res)
-		tcpm_enable_auto_discharge_disconnect(port, 1);
-
 	/* Disable if restart failed, otherwise start in default state. */
 	set_state_tc(port, res ? TC_DISABLED : start_state);
 
@@ -1140,6 +1142,7 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 		/* Initialize USB mux to its default state */
 		usb_mux_init(port);
 
+	/* Update the Rp Value */
 	typec_select_src_current_limit_rp(port, CONFIG_USB_PD_PULLUP);
 	typec_update_cc(port);
 
@@ -1199,12 +1202,6 @@ void tc_state_init(int port)
 #endif /* CONFIG_USBC_VCONN */
 			if (IS_ENABLED(CONFIG_USB_PE_SM))
 				pe_set_sysjump();
-
-			/*
-			 * We are reconnecting to an existing connection.
-			 * So enable AutoDischargeDisconnect.
-			 */
-			tcpm_enable_auto_discharge_disconnect(port, 1);
 
 			/*
 			 * We are jumping warm to ATTACHED_SNK, so don't
@@ -1779,6 +1776,18 @@ static void tc_unattached_snk_entry(const int port)
 	}
 
 	/*
+	 * We are in an unattached state and considering to be a SNK
+	 * searching for a SRC partner.  We set the CC pull value to
+	 * to indicate our intent to be SNK in hopes a partner SRC
+	 * will is there to attach to.
+	 *
+	 * Both CC1 and CC2 pins shall be independently terminated to
+	 * ground through Rd.
+	 */
+	typec_select_pull(port, TYPEC_CC_RD);
+	typec_update_cc(port);
+
+	/*
 	 * Tell Policy Engine to invalidate the explicit contract.
 	 * This mainly used to clear the BB Ram Explicit Contract
 	 * value.
@@ -1842,17 +1851,8 @@ static void tc_unattached_snk_run(const int port)
 	 * not already auto toggling.
 	 */
 	if (drp_state[port] == PD_DRP_TOGGLE_ON &&
-		tcpm_auto_toggle_supported(port) &&
-		cc_is_open(cc1, cc2)) {
-		/*
-		 * We are disconnected and going to DRP
-		 *     PC.AutoDischargeDisconnect=0b
-		 *     Set RC.DRP=1b (DRP)
-		 *     Set RC.CC1=10b (Rd)
-		 *     Set RC.CC2=10b (Rd)
-		 */
-		tcpm_enable_auto_discharge_disconnect(port, 0);
-		tcpm_set_connection(port, TYPEC_CC_RD, 0);
+	    tcpm_auto_toggle_supported(port) &&
+	    cc_is_open(cc1, cc2)) {
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
 		return;
 	}
@@ -1878,12 +1878,7 @@ static void tc_unattached_snk_run(const int port)
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	else if (drp_state[port] == PD_DRP_FORCE_SINK ||
-		drp_state[port] == PD_DRP_TOGGLE_OFF) {
-		/*
-		 * We are disconnecting without DRP.
-		 *     PC.AutoDischargeDisconnect=0b
-		 */
-		tcpm_enable_auto_discharge_disconnect(port, 0);
+		 drp_state[port] == PD_DRP_TOGGLE_OFF) {
 		set_state_tc(port, TC_LOW_POWER_MODE);
 	}
 #endif
@@ -1998,13 +1993,22 @@ static void tc_attached_snk_entry(const int port)
 
 	print_current_state(port);
 
+	/*
+	 * Known state of attach is SNK.  We need to apply this pull value
+	 * to make it set in hardware at the correct time but set the common
+	 * pull here.
+	 *
+	 * Both CC1 and CC2 pins shall be independently terminated to
+	 * ground through Rd.
+	 */
+	typec_select_pull(port, TYPEC_CC_RD);
+
 #ifdef CONFIG_USB_PE_SM
 	if (TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
-		/*
-		 * Both CC1 and CC2 pins shall be independently terminated to
-		 * ground through Rd.
-		 */
-		typec_select_pull(port, TYPEC_CC_RD);
+		/* Flipping power role - Disable AutoDischargeDisconnect */
+		tcpm_enable_auto_discharge_disconnect(port, 0);
+
+		/* Apply Rd */
 		typec_update_cc(port);
 
 		/* Change role to sink */
@@ -2014,7 +2018,9 @@ static void tc_attached_snk_entry(const int port)
 
 		/*
 		 * Maintain VCONN supply state, whether ON or OFF, and its
-		 * data role / usb mux connections.
+		 * data role / usb mux connections. Do not re-enable
+		 * AutoDischargeDisconnect until the swap is completed
+		 * and tc_pr_swap_complete is called.
 		 */
 	} else
 #endif
@@ -2048,10 +2054,11 @@ static void tc_attached_snk_entry(const int port)
 				pd_is_port_partner_dualrole(port) ?
 				CAP_DUALROLE : CAP_DEDICATED);
 		}
-
 		/* Apply Rd */
-		typec_select_pull(port, TYPEC_CC_RD);
 		typec_update_cc(port);
+
+		/* Attached.SNK - enable AutoDischargeDisconnect */
+		tcpm_enable_auto_discharge_disconnect(port, 1);
 	}
 
 	tc[port].cc_debounce = 0;
@@ -2115,9 +2122,28 @@ static void tc_attached_snk_run(const int port)
 		 * Power Role Swap
 		 */
 		if (TC_CHK_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP)) {
-			/* Clear PR_SWAP flag in exit */
-			set_state_tc(port, TC_ATTACHED_SRC);
-			return;
+			enum tcpc_cc_voltage_status cc1, cc2;
+
+			/*
+			 * Verify partner is applying Rd before we swap.
+			 *
+			 * If the partner sends PS_RDY before applying Rd and
+			 * we change CC termination from Rd to Rp immediately
+			 * after seeing PS_RDY (before waiting to for the
+			 * Initial Source to put Rd on the CC lines), we
+			 * might get into a situation when both sides apply
+			 * Rp.  In this case if the Initial Sink will try to
+			 * enable Vbus using the TCPC VBSRC_EN pin it will
+			 * not work since the TCPC HW sees Rp on both ends
+			 * and will consider this as a disconnect and
+			 * therefore will not assert the VBSRC_EN pin.
+			 */
+			tcpm_get_cc(port, &cc1, &cc2);
+			if (cc_is_open(cc1, cc2)) {
+				/* Clear PR_SWAP flag in exit */
+				set_state_tc(port, TC_ATTACHED_SRC);
+				return;
+			}
 		}
 
 		/*
@@ -2205,6 +2231,9 @@ static void tc_attached_snk_exit(const int port)
 		 */
 		if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
 			set_vconn(port, 0);
+
+		/* Attached.SNK exit - disable AutoDischargeDisconnect */
+		tcpm_enable_auto_discharge_disconnect(port, 0);
 	}
 
 	/* Clear flags after checking Vconn status */
@@ -2223,6 +2252,19 @@ static void tc_unattached_src_entry(const int port)
 		tc_detached(port);
 		print_current_state(port);
 	}
+
+	/*
+	 * We are in an unattached state and considering to be a SRC
+	 * searching for a SNK partner.  We set the CC pull value to
+	 * to indicate our intent to be SRC in hopes a partner SNK
+	 * will is there to attach to.
+	 *
+	 * Both CC1 and CC2 pins shall be independently terminated to
+	 * ground through Rp.
+	 */
+	typec_select_pull(port, TYPEC_CC_RP);
+	typec_select_src_current_limit_rp(port, CONFIG_USB_PD_PULLUP);
+	typec_update_cc(port);
 
 	tc[port].data_role = PD_ROLE_DISCONNECTED;
 
@@ -2300,32 +2342,15 @@ static void tc_unattached_src_run(const int port)
 	 * Attempt TCPC auto DRP toggle
 	 */
 	else if (drp_state[port] == PD_DRP_TOGGLE_ON &&
-		tcpm_auto_toggle_supported(port) &&
-		cc_is_open(cc1, cc2)) {
-		/*
-		 * We are disconnected and going to DRP
-		 *     PC.AutoDischargeDisconnect=0b
-		 *     Set RC.DRP=1b (DRP)
-		 *     Set RC.RpValue=00b (smallest Rp to save power)
-		 *     Set RC.CC1=01b (Rp)
-		 *     Set RC.CC2=01b (Rp)
-		 */
-		tcpm_enable_auto_discharge_disconnect(port, 0);
-		tcpm_set_connection(port, TYPEC_CC_RP, 0);
+		 tcpm_auto_toggle_supported(port) &&
+		 cc_is_open(cc1, cc2))
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
-	}
 #endif
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	else if (drp_state[port] == PD_DRP_FORCE_SOURCE ||
-		drp_state[port] == PD_DRP_TOGGLE_OFF) {
-		/*
-		 * We are disconnecting without DRP.
-		 *     PC.AutoDischargeDisconnect=0b
-		 */
-		tcpm_enable_auto_discharge_disconnect(port, 0);
+		 drp_state[port] == PD_DRP_TOGGLE_OFF)
 		set_state_tc(port, TC_LOW_POWER_MODE);
-	}
 #endif
 }
 
@@ -2414,26 +2439,35 @@ static void tc_attached_src_entry(const int port)
 	/* Run function relies on timeout being 0 or meaningful */
 	tc[port].timeout = 0;
 
+	/*
+	 * Known state of attach is SRC.  We need to apply this pull value
+	 * to make it set in hardware at the correct time but set the common
+	 * pull here.
+	 *
+	 * Both CC1 and CC2 pins shall be independently terminated to
+	 * pulled up through Rp.
+	 */
+	typec_select_pull(port, TYPEC_CC_RP);
+	typec_select_src_current_limit_rp(port, CONFIG_USB_PD_PULLUP);
+
 #if defined(CONFIG_USB_PE_SM)
 	if (TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
 		/* Change role to source */
 		tc_set_power_role(port, PD_ROLE_SOURCE);
 		tcpm_set_msg_header(port,
 				tc[port].power_role, tc[port].data_role);
-		/*
-		 * Both CC1 and CC2 pins shall be independently terminated to
-		 * pulled up through Rp.
-		 */
-		typec_select_src_current_limit_rp(port, CONFIG_USB_PD_PULLUP);
 
 		/* Enable VBUS */
 		tc_src_power_on(port);
-		typec_select_pull(port, TYPEC_CC_RP);
+
+		/* Apply Rp */
 		typec_update_cc(port);
 
 		/*
 		 * Maintain VCONN supply state, whether ON or OFF, and its
-		 * data role / usb mux connections.
+		 * data role / usb mux connections. Do not re-enable
+		 * AutoDischargeDisconnect until the swap is completed
+		 * and tc_pr_swap_complete is called.
 		 */
 	} else {
 		/* Get connector orientation */
@@ -2467,8 +2501,12 @@ static void tc_attached_src_entry(const int port)
 				usb_mux_set(port, USB_PD_MUX_NONE,
 				USB_SWITCH_DISCONNECT, tc[port].polarity);
 		}
-		typec_select_pull(port, TYPEC_CC_RP);
+
+		/* Apply Rp */
 		typec_update_cc(port);
+
+		/* Attached.SRC - enable AutoDischargeDisconnect */
+		tcpm_enable_auto_discharge_disconnect(port, 1);
 
 		tc_enable_pd(port, 0);
 		tc[port].timeout = get_time().val +
@@ -2506,8 +2544,13 @@ static void tc_attached_src_entry(const int port)
 			usb_mux_set(port, USB_PD_MUX_NONE,
 			USB_SWITCH_DISCONNECT, tc[port].polarity);
 	}
-	typec_select_pull(port, TYPEC_CC_RP);
+
+	/* Apply Rp */
 	typec_update_cc(port);
+
+	/* Attached.SRC - enable AutoDischargeDisconnect */
+	tcpm_enable_auto_discharge_disconnect(port, 1);
+
 #endif /* CONFIG_USB_PE_SM */
 
 	/* Inform PPC that a sink is connected. */
@@ -2697,6 +2740,9 @@ static void tc_attached_src_exit(const int port)
 	tc_src_power_off(port);
 
 	if (!TC_CHK_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP)) {
+		/* Attached.SRC exit - disable AutoDischargeDisconnect */
+		tcpm_enable_auto_discharge_disconnect(port, 0);
+
 		/* Disable VCONN if not power role swapping */
 		if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
 			set_vconn(port, 0);
@@ -2704,11 +2750,6 @@ static void tc_attached_src_exit(const int port)
 
 	/* Clear PR swap flag after checking for Vconn */
 	TC_CLR_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP);
-
-	if (TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER)) {
-		/* Disable AutoDischargeDisconnect */
-		tcpm_enable_auto_discharge_disconnect(port, 0);
-	}
 }
 
 static __maybe_unused void check_drp_connection(const int port)
@@ -2722,6 +2763,12 @@ static __maybe_unused void check_drp_connection(const int port)
 	tcpm_get_cc(port, &cc1, &cc2);
 
 	tc[port].drp_sink_time = get_time().val;
+
+	/*
+	 * TODO(b:159736927) add ATTACHED_WAIT states to possible next states
+	 *
+	 * Get the next toggle state
+	 */
 	next_state = drp_auto_toggle_next_state(&tc[port].drp_sink_time,
 		tc[port].power_role, drp_state[port], cc1, cc2);
 
@@ -2732,44 +2779,26 @@ static __maybe_unused void check_drp_connection(const int port)
 
 	switch (next_state) {
 	case DRP_TC_UNATTACHED_SNK:
-		/*
-		 * New SNK connection.
-		 *     Set RC.CC1 & RC.CC2 per decision
-		 *     Set RC.DRP=0
-		 *     Set TCPC_CONTROl.PlugOrientation
-		 *     Set PC.AutoDischargeDisconnect=1b
-		 */
-		tcpm_set_connection(port, TYPEC_CC_RD, 1);
-		tcpm_enable_auto_discharge_disconnect(port, 1);
-		set_state_tc(port, TC_UNATTACHED_SNK);
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+		if (drp_state[port] == PD_DRP_TOGGLE_ON &&
+		    tcpm_auto_toggle_supported(port))
+			set_state_tc(port, TC_ATTACH_WAIT_SNK);
+		else
+#endif
+			set_state_tc(port, TC_UNATTACHED_SNK);
 		break;
 	case DRP_TC_UNATTACHED_SRC:
-		/*
-		 * New SRC connection.
-		 *     Set RC.CC1 & RC.CC2 per decision
-		 *     Set RC.DRP=0
-		 *     Set TCPC_CONTROl.PlugOrientation
-		 *     Set PC.AutoDischargeDisconnect=1b
-		 */
-		tcpm_set_connection(port, TYPEC_CC_RP, 1);
-		tcpm_enable_auto_discharge_disconnect(port, 1);
-		set_state_tc(port, TC_UNATTACHED_SRC);
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+		if (drp_state[port] == PD_DRP_TOGGLE_ON &&
+		    tcpm_auto_toggle_supported(port))
+			set_state_tc(port, TC_ATTACH_WAIT_SRC);
+		else
+#endif
+			set_state_tc(port, TC_UNATTACHED_SRC);
 		break;
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	case DRP_TC_DRP_AUTO_TOGGLE:
-		/*
-		 * We are staying in PD_STATE_DRP_AUTO_TOGGLE or moving
-		 * from non-DRP to PD_STATE_DRP_AUTO_TOGGLE
-		 *     Set RC.DRP=1b (DRP)
-		 *     Set RC.CC1=10b or 01b (Rd or Rp)
-		 *     Set RC.CC2=10b or 01b (Rd or Rp)
-		 */
-		tcpm_set_connection(port,
-				    (PD_ROLE_DEFAULT(port) == PD_ROLE_SOURCE)
-					? TYPEC_CC_RP
-					: TYPEC_CC_RD,
-				    0);
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
 		break;
 #endif
@@ -2848,11 +2877,17 @@ static void tc_try_src_entry(const int port)
 	tc[port].timeout = get_time().val + PD_T_TRY_TIMEOUT;
 
 	/*
-	 * Try is going to shift the direction of how the TCPC thinks we need
-	 * to be connected. So have to Disable AutoDischargeDisconnect to let
-	 * the CC lines look for alternatives.
+	 * We are a SNK but would prefer to be a SRC.  Set the pull to
+	 * indicate we want to be a SRC and looking for a SNK.
+	 *
+	 * Both CC1 and CC2 pins shall be independently terminated to
+	 * ground through Rp.
 	 */
-	tcpm_enable_auto_discharge_disconnect(port, 0);
+	typec_select_pull(port, TYPEC_CC_RP);
+	typec_select_src_current_limit_rp(port, CONFIG_USB_PD_PULLUP);
+
+	/* Apply Rp */
+	typec_update_cc(port);
 }
 
 static void tc_try_src_run(const int port)
@@ -2880,16 +2915,9 @@ static void tc_try_src_run(const int port)
 	 * detected on exactly one of the CC1 or CC2 pins for at least
 	 * tTryCCDebounce.
 	 */
-	if (get_time().val > tc[port].cc_debounce) {
-		if (new_cc_state == PD_CC_UFP_ATTACHED) {
-			/*
-			 * Found a new attach so reenable
-			 * AutoDischargeDisconnect
-			 */
-			tcpm_enable_auto_discharge_disconnect(port, 1);
-			set_state_tc(port, TC_ATTACHED_SRC);
-		}
-	}
+	if (get_time().val > tc[port].cc_debounce &&
+	    new_cc_state == PD_CC_UFP_ATTACHED)
+		set_state_tc(port, TC_ATTACHED_SRC);
 
 	/*
 	 * The port shall transition to TryWait.SNK after tDRPTry and the
@@ -2922,11 +2950,17 @@ static void tc_try_wait_snk_entry(const int port)
 	tc[port].try_wait_debounce = get_time().val + PD_T_CC_DEBOUNCE;
 
 	/*
-	 * Try is going to shift the direction of how the TCPC thinks we need
-	 * to be connected. So have to Disable AutoDischargeDisconnect to let
-	 * the CC lines look for alternatives.
+	 * We were a SNK, tried to be a SRC and it didn't work out. Try to
+	 * go back to being a SNK.  Set the pull to indicate we want to be
+	 * a SNK and looking for a SRC.
+	 *
+	 * Both CC1 and CC2 pins shall be independently terminated to
+	 * ground through Rd.
 	 */
-	tcpm_enable_auto_discharge_disconnect(port, 0);
+	typec_select_pull(port, TYPEC_CC_RD);
+
+	/* Apply Rd */
+	typec_update_cc(port);
 }
 
 static void tc_try_wait_snk_run(const int port)
@@ -2964,13 +2998,8 @@ static void tc_try_wait_snk_run(const int port)
 	 * when VBUS is detected.
 	 */
 	if (get_time().val > tc[port].try_wait_debounce &&
-						pd_is_vbus_present(port)) {
-		/*
-		 * Found a new attach so reenable AutoDischargeDisconnect
-		 */
-		tcpm_enable_auto_discharge_disconnect(port, 1);
+	    pd_is_vbus_present(port))
 		set_state_tc(port, TC_ATTACHED_SNK);
-	}
 }
 
 #endif
@@ -2990,6 +3019,7 @@ static void tc_ct_unattached_snk_entry(int port)
 	typec_select_pull(port, TYPEC_CC_RD);
 	typec_select_src_current_limit_rp(port, CONFIG_USB_PD_PULLUP);
 	typec_update_cc(port);
+
 	tc[port].cc_state = PD_CC_UNSET;
 
 	/* Set power role to sink */
@@ -3137,13 +3167,6 @@ static void tc_cc_rd_entry(const int port)
 	/* Set power role to sink */
 	tc_set_power_role(port, PD_ROLE_SINK);
 	tcpm_set_msg_header(port, tc[port].power_role, tc[port].data_role);
-
-	/*
-	 * Both CC1 and CC2 pins shall be independently terminated to
-	 * ground through Rd.
-	 */
-	typec_select_pull(port, TYPEC_CC_RD);
-	typec_update_cc(port);
 }
 
 
@@ -3159,14 +3182,6 @@ static void tc_cc_rp_entry(const int port)
 	/* Set power role to source */
 	tc_set_power_role(port, PD_ROLE_SOURCE);
 	tcpm_set_msg_header(port, tc[port].power_role, tc[port].data_role);
-
-	/*
-	 * Both CC1 and CC2 pins shall be independently pulled
-	 * up through Rp.
-	 */
-	typec_select_pull(port, TYPEC_CC_RP);
-	typec_select_src_current_limit_rp(port, CONFIG_USB_PD_PULLUP);
-	typec_update_cc(port);
 }
 
 /**
