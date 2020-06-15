@@ -41,6 +41,13 @@ void prl_set_debug_level(enum debug_level level);
 void prl_reset(int port);
 
 /**
+ * Resets the Protocol Layer State Machine (softly)
+ *
+ * @param port USB-C port number
+ */
+void prl_reset_soft(int port);
+
+/**
  * Runs the Protocol Layer State Machine
  *
  * @param port USB-C port number

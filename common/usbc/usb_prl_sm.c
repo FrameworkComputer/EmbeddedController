@@ -498,16 +498,6 @@ static void prl_init(int port)
 	rch[port].flags = 0;
 #endif /* CONFIG_USB_PD_REV30 */
 
-	/*
-	 * Initialize to highest revision supported. If the port or cable
-	 * partner doesn't support this revision, the Protocol Engine will
-	 * lower this value to the revision supported by the partner.
-	 */
-	pdmsg[port].rev[TCPC_TX_SOP] = PD_REVISION;
-	pdmsg[port].rev[TCPC_TX_SOP_PRIME] = PD_REVISION;
-	pdmsg[port].rev[TCPC_TX_SOP_PRIME_PRIME] = PD_REVISION;
-	pdmsg[port].rev[TCPC_TX_SOP_DEBUG_PRIME] = PD_REVISION;
-	pdmsg[port].rev[TCPC_TX_SOP_DEBUG_PRIME_PRIME] = PD_REVISION;
 	pdmsg[port].flags = 0;
 
 	prl_hr[port].flags = 0;
@@ -599,8 +589,28 @@ void prl_send_ext_data_msg(int port,
 }
 #endif /* CONFIG_USB_PD_REV30 */
 
+static void prl_set_default_pd_revision(int port) {
+	/*
+	 * Initialize to highest revision supported. If the port or cable
+	 * partner doesn't support this revision, the Protocol Engine will
+	 * lower this value to the revision supported by the partner.
+	 */
+	pdmsg[port].rev[TCPC_TX_SOP] = PD_REVISION;
+	pdmsg[port].rev[TCPC_TX_SOP_PRIME] = PD_REVISION;
+	pdmsg[port].rev[TCPC_TX_SOP_PRIME_PRIME] = PD_REVISION;
+	pdmsg[port].rev[TCPC_TX_SOP_DEBUG_PRIME] = PD_REVISION;
+	pdmsg[port].rev[TCPC_TX_SOP_DEBUG_PRIME_PRIME] = PD_REVISION;
+}
+
+void prl_reset_soft(int port)
+{
+	/* Do not change negotiated PD Revision Specification level */
+	local_state[port] = SM_INIT;
+}
+
 void prl_reset(int port)
 {
+	prl_set_default_pd_revision(port);
 	local_state[port] = SM_INIT;
 }
 
@@ -610,6 +620,7 @@ void prl_run(int port, int evt, int en)
 	case SM_PAUSED:
 		if (!en)
 			break;
+		prl_set_default_pd_revision(port);
 		/* fall through */
 	case SM_INIT:
 		prl_init(port);

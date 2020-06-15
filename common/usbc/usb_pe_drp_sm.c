@@ -2958,8 +2958,8 @@ static void pe_send_soft_reset_entry(int port)
 {
 	print_current_state(port);
 
-	/* Reset Protocol Layer */
-	prl_reset(port);
+	/* Reset Protocol Layer (softly) */
+	prl_reset_soft(port);
 
 	pe[port].sender_response_timer = TIMER_DISABLED;
 }

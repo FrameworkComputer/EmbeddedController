@@ -33,6 +33,9 @@ int prl_is_running(int port)
 void prl_reset(int port)
 {}
 
+void prl_reset_soft(int port)
+{}
+
 static enum pd_ctrl_msg_type last_ctrl_msg[CONFIG_USB_PD_PORT_MAX_COUNT];
 void prl_send_ctrl_msg(int port, enum tcpm_transmit_type type,
 	enum pd_ctrl_msg_type msg)
