@@ -65,7 +65,7 @@ cmd_obj_to_bin = $(OBJCOPY) --gap-fill=0xff -O binary $< $@.tmp1 ; \
 		 ${SCRIPTDIR}/pack_ec.py -o $@.tmp -i $@.tmp1 \
 		--loader_file $(chip-lfw-flat) ${TEST_SPI} \
 		--spi_size ${CHIP_SPI_SIZE_KB} \
-		--image_size $(_rw_size) ${SCRIPTVERBOSE}; rm -f $@.tmp1
+		--image_size $(_rw_size) --family $(UC_CHIP_FAMILY) ${SCRIPTVERBOSE}; rm -f $@.tmp1
 
 chip-lfw = chip/${CHIP}/lfw/ec_lfw
 chip-lfw-flat = $(out)/RW/$(chip-lfw)-lfw.flat

@@ -20,6 +20,11 @@
  * #define CONFIG_BRINGUP
  */
 
+/* Keyboard features */
+/* #define CONFIG_PWM_KBLIGHT */
+#define CONFIG_KEYBOARD_CUSTOMIZATION
+/* #define CONFIG_KEYBOARD_DEBUG */
+
 /*
  * Debug on EVB with CONFIG_CHIPSET_DEBUG
  * Keep WDG disabled and JTAG enabled.
