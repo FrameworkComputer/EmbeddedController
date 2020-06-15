@@ -95,7 +95,14 @@
  */
 #define CONFIG_BOOT_HEADER_STORAGE_OFF		0x1000
 #define CONFIG_RW_BOOT_HEADER_STORAGE_OFF	0
+
+#if defined(CHIP_FAMILY_MEC17XX)
 #define CONFIG_BOOT_HEADER_STORAGE_SIZE		0x80
+#elif defined(CHIP_FAMILY_MEC152X)
+#define CONFIG_BOOT_HEADER_STORAGE_SIZE		0x140
+#else 
+#error "BUILD ERROR: CHIP_FAMILY not defined!"
+#endif 
 #define CONFIG_RW_BOOT_HEADER_STORAGE_SIZE	0
 
 /* Loader / lfw image immediately follows the boot header on SPI */

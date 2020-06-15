@@ -371,6 +371,9 @@ void lfw_main(void)
 
 	/* Use 48 MHz processor clock to power through boot */
 	MCHP_PCR_PROC_CLK_CTL = 1;
+	/* Wait for PLL to lock */
+	while ((MCHP_PCR_CHIP_OSC_ID & 0x100) == 0x0)
+		;
 
 	MCHP_EC_JTAG_EN = CONFIG_MCHP_JTAG_MODE;
 
@@ -404,7 +407,7 @@ void lfw_main(void)
 	uart_puts("\n");
 
 #ifdef CONFIG_CHIPSET_DEBUG
-#define UART_DEBUG_WAIT_TIMEOUT_MS (100)
+#define UART_DEBUG_WAIT_TIMEOUT_MS (1000)
 	/* Enabe SWD Access to chip early */
 #ifdef CONFIG_MCHP_JTAG_MODE
 	MCHP_EC_JTAG_EN = CONFIG_MCHP_JTAG_MODE;
@@ -425,9 +428,11 @@ void lfw_main(void)
 	while(df < UART_DEBUG_WAIT_TIMEOUT_MS - 1){
 		uart_c = uart_getc();
 		switch(uart_c){
-			/* Continue with boot */
-			case 0x63: /* c */
+			case 0x63: /* c Continue with boot */
 				df = UART_DEBUG_WAIT_TIMEOUT_MS; 
+				break; 
+			case 0x72: /* r reset system */
+				MCHP_PCR_SYS_RST = 0x01; 
 				break; 
 			case 0x65: /* e */
 			default: 

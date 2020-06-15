@@ -1230,7 +1230,12 @@ enum MCHP_i2c_port {
 #if defined(CHIP_FAMILY_MEC17XX) || defined(CHIP_FAMILY_MEC152X)
 
 /* Quad Master SPI (QMSPI) */
+#if defined(CHIP_FAMILY_MEC17XX) 
 #define MCHP_QMSPI0_BASE		0x40005400
+#elif defined(CHIP_FAMILY_MEC152X)
+#define MCHP_QMSPI0_BASE		0x40070000
+#endif 
+
 #define MCHP_QMSPI0_MODE		REG32(MCHP_QMSPI0_BASE + 0x00)
 #define MCHP_QMSPI0_MODE_ACT_SRST	REG8(MCHP_QMSPI0_BASE + 0x00)
 #define MCHP_QMSPI0_MODE_SPI_MODE	REG8(MCHP_QMSPI0_BASE + 0x01)
@@ -1255,7 +1260,11 @@ enum MCHP_i2c_port {
 #define MCHP_QMSPI_GIRQ			18
 #define MCHP_QMSPI_GIRQ_BIT		(1ul << 1)
 
+#if defined(CHIP_FAMILY_MEC17XX) 
 #define MCHP_QMSPI_MAX_DESCR		5
+#elif defined(CHIP_FAMILY_MEC152X)
+#define MCHP_QMSPI_MAX_DESCR		16
+#endif 
 
 /* Bits in MCHP_QMSPI0_MODE */
 #define MCHP_QMSPI_M_ACTIVATE        (1ul << 0)
