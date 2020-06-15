@@ -266,10 +266,6 @@ enum usbc_port {
 	USBC_PORT_COUNT
 };
 
-extern enum gpio_signal ps8xxx_rst_odl;
-
-void board_reset_pd_mcu(void);
-
 /* Common definition for the USB PD interrupt handlers. */
 void ppc_interrupt(enum gpio_signal signal);
 void tcpc_alert_event(enum gpio_signal signal);
@@ -278,11 +274,12 @@ void bc12_interrupt(enum gpio_signal signal);
 unsigned char get_board_id(void);
 
 /**
- * Configure GPIOs based on the CBI board version.  Boards in the Volteer
- * family can optionally implement this function to change GPIO definitions for
- * different board build phases.
+ * Configure run-time data structures and operation based on CBI data. This
+ * typically includes customization for changes in the BOARD_VERSION and
+ * FW_CONFIG fields in CBI. This routine is called from the baseboard after
+ * the CBI data has been initialized.
  */
-__override_proto void config_volteer_gpios(void);
+__override_proto void board_cbi_init(void);
 
 #endif /* !__ASSEMBLER__ */
 

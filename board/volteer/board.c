@@ -14,6 +14,8 @@
 #include "driver/als_tcs3400.h"
 #include "driver/retimer/bb_retimer.h"
 #include "driver/sync.h"
+#include "driver/tcpm/ps8xxx.h"
+#include "driver/tcpm/tcpci.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -38,21 +40,11 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /*
- * Reconfigure Volteer GPIOs based on the board ID
+ * FW_CONFIG defaults for Volteer if the CBI data is not initialized.
  */
-__override void config_volteer_gpios(void)
-{
-	/* Legacy support for the first board build */
-	if (get_board_id() == 0) {
-		CPRINTS("Configuring GPIOs for board ID 0");
-		CPRINTS("VOLUME_UP button disabled");
-
-		/* Reassign USB_C1_RT_RST_ODL */
-		bb_controls[USBC_PORT_C1].retimer_rst_gpio =
-			GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
-		ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
-	}
-}
+union volteer_cbi_fw_config fw_config_defaults = {
+	.usb_db = DB_USB4_GEN2,
+};
 
 static void board_init(void)
 {
@@ -240,10 +232,134 @@ const struct pwm_t pwm_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /******************************************************************************/
+/* Volteer specific USB daughter-board configuration */
+
+/* USBC TCPC configuration for USB3 daughter board */
+static const struct tcpc_config_t tcpc_config_p1_usb3 = {
+	.bus_type = EC_BUS_TYPE_I2C,
+	.i2c_info = {
+		.port = I2C_PORT_USB_C1,
+		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+	},
+	.flags = TCPC_FLAGS_TCPCI_REV2_0 | TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
+	.drv = &ps8xxx_tcpm_drv,
+	.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
+};
+
+/*
+ * USB3 DB mux configuration - the top level mux still needs to be set to the
+ * virtual_usb_mux_driver so the AP gets notified of mux changes and updates
+ * the TCSS configuration on state changes.
+ */
+static const struct usb_mux usbc1_usb3_db_retimer = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &tcpci_tcpm_usb_mux_driver,
+	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	.next_mux = NULL,
+};
+
+static const struct usb_mux mux_config_p1_usb3 = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &virtual_usb_mux_driver,
+	.hpd_update = &virtual_hpd_update,
+	.next_mux = &usbc1_usb3_db_retimer,
+};
+
+/******************************************************************************/
 /* USB-A charging control */
 
 const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_PP5000_USBA,
 };
 
+static enum gpio_signal ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL;
+
+static void ps8815_reset(void)
+{
+	int val;
+
+	gpio_set_level(ps8xxx_rst_odl, 0);
+	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
+			   PS8815_PWR_H_RST_H_DELAY_MS));
+	gpio_set_level(ps8xxx_rst_odl, 1);
+	msleep(PS8815_FW_INIT_DELAY_MS);
+
+	/*
+	 * b/144397088
+	 * ps8815 firmware 0x01 needs special configuration
+	 */
+
+	CPRINTS("%s: patching ps8815 registers", __func__);
+
+	if (i2c_read8(I2C_PORT_USB_C1,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f was %02x", val);
+
+	if (i2c_write8(I2C_PORT_USB_C1,
+		       PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f set to 0x31");
+
+	if (i2c_read8(I2C_PORT_USB_C1,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f now %02x", val);
+}
+
+void board_reset_pd_mcu(void)
+{
+	enum ec_cfg_usb_db_type usb_db = ec_cfg_usb_db_type();
+
+	/* No reset available for TCPC on port 0 */
+	/* Daughterboard specific reset for port 1 */
+	if (usb_db == DB_USB3_ACTIVE) {
+		ps8815_reset();
+		usb_mux_hpd_update(USBC_PORT_C1, 0, 0);
+	}
+}
+
+/*
+ * Set up support for the USB3 daughterboard:
+ *   Parade PS8815 TCPC (integrated retimer)
+ *   Diodes PI3USB9201 BC 1.2 chip (same as USB4 board)
+ *   Silergy SYV682A PPC (same as USB4 board)
+ */
+static void config_db_usb3(void)
+{
+	tcpc_config[USBC_PORT_C1] = tcpc_config_p1_usb3;
+	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3;
+}
+
+static const char *db_type_prefix = "USB DB type: ";
+__override void board_cbi_init(void)
+{
+	enum ec_cfg_usb_db_type usb_db = ec_cfg_usb_db_type();
+
+	/* Reconfigure Volteer GPIOs based on the board ID */
+	if (get_board_id() == 0) {
+		CPRINTS("Configuring GPIOs for board ID 0");
+		CPRINTS("VOLUME_UP button disabled");
+
+		/* Reassign USB_C1_RT_RST_ODL */
+		bb_controls[USBC_PORT_C1].retimer_rst_gpio =
+			GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
+		ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
+	}
+
+	switch (usb_db) {
+	case DB_USB_ABSENT:
+		CPRINTS("%sNone", db_type_prefix);
+		break;
+	case DB_USB4_GEN2:
+		CPRINTS("%sUSB4 Gen1/2", db_type_prefix);
+		break;
+	case DB_USB4_GEN3:
+		CPRINTS("%sUSB4 Gen3", db_type_prefix);
+		break;
+	case DB_USB3_ACTIVE:
+		config_db_usb3();
+		CPRINTS("%sUSB3 Active", db_type_prefix);
+		break;
+	default:
+		CPRINTS("%sID %d not supported", db_type_prefix, usb_db);
+	}
+}
 
