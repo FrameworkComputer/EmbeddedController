@@ -8,6 +8,7 @@
 #include "button.h"
 #include "common.h"
 #include "accelgyro.h"
+#include "cbi_ec_fw_config.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/als_tcs3400.h"
 #include "driver/sync.h"
@@ -28,6 +29,14 @@
 #include "util.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
+
+/*
+ * FW_CONFIG defaults for Halvor if the CBI data is not initialized.
+ */
+union volteer_cbi_fw_config fw_config_defaults = {
+	/* Set all FW_CONFIG fields default to 0 */
+	.raw_value = 0,
+};
 
 static void board_init(void)
 {
@@ -165,15 +174,25 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 /******************************************************************************/
 void halvor_tcpc_alert_event(enum gpio_signal signal)
 {
-	/* TODO (b/153705222): Need tp implement three USB-C function */
+	/* TODO (b/153705222): Need to implement three USB-C function */
 }
 
 void halvor_ppc_interrupt(enum gpio_signal signal)
 {
-	/* TODO (b/153705222): Need tp implement three USB-C function */
+	/* TODO (b/153705222): Need to implement three USB-C function */
 }
 
 void halvor_bc12_interrupt(enum gpio_signal signal)
 {
-	/* TODO (b/153705222): Need tp implement three USB-C function */
+	/* TODO (b/153705222): Need to implement three USB-C function */
+}
+
+void board_reset_pd_mcu(void)
+{
+	/* TODO (b/153705222): Need to implement three USB-C function */
+}
+
+__override void board_cbi_init(void)
+{
+	/* TODO (b/153705222): Check FW_CONFIG for USB DB options */
 }
