@@ -426,20 +426,3 @@ const int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A0_5V,
 	GPIO_EN_USB_A1_5V,
 };
-
-/*
- * If the battery is found on the V0 I2C port then re-map the battery port.
- * Use HOOK_PRIO_INIT_I2C so we re-map before init_battery_type() and
- * charger_chips_init() want to talk to the battery.
- */
-static void check_v0_battery(void)
-{
-	int status;
-
-	if (i2c_read16(I2C_PORT_BATTERY_V0, BATTERY_ADDR_FLAGS,
-			SB_BATTERY_STATUS, &status) == EC_SUCCESS) {
-		ccprints("V0 HW detected");
-		I2C_PORT_BATTERY = I2C_PORT_BATTERY_V0;
-	}
-}
-DECLARE_HOOK(HOOK_INIT, check_v0_battery, HOOK_PRIO_INIT_I2C);
