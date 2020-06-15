@@ -2344,6 +2344,9 @@ static void tc_unoriented_dbg_acc_src_exit(const int port)
 	 */
 	tc_src_power_off(port);
 
+	/* Disable AutoDischargeDisconnect */
+	tcpm_enable_auto_discharge_disconnect(port, 0);
+
 	/* Clear PR swap flag */
 	TC_CLR_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP);
 
