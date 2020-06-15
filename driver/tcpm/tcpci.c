@@ -467,18 +467,25 @@ int tcpci_set_role_ctrl(int port, int toggle, int rp, int pull)
 int tcpci_tcpc_drp_toggle(int port)
 {
 	int rv;
+	enum tcpc_cc_pull pull;
+
 	/*
 	 * Set auto drp toggle
-	 * NOTE: This should be done according to the last connection
-	 * that we are disconnecting from. TCPCI Rev 2 spec figures
-	 * 4-21 and 4-22 show:
-	 *     SNK => DRP should set CC lines to Rd/Rd
-	 *     SRC => DRP should set CC lines to Rp/Rp
-	 * The function tcpci_tcpc_set_connection performs this action
-	 * and it may be wise as chips can use this to make this the
-	 * standard and remove this set_role_ctrl call.
+	 *
+	 *     Set RC.DRP=1b (DRP)
+	 *     Set RC.RpValue=00b (smallest Rp to save power)
+	 *     Set RC.CC1=(Rp) or (Rd)
+	 *     Set RC.CC2=(Rp) or (Rd)
+	 *
+	 * TCPCI r1 wants both lines to be set to Rd
+	 * TCPCI r2 wants both lines to be set to Rp
+	 *
+	 * Set the Rp Value to be the minimal to save power
 	 */
-	rv = tcpci_set_role_ctrl(port, 1, tcpci_get_cached_rp(port), TYPEC_CC_RD);
+	pull = (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0)
+			? TYPEC_CC_RP : TYPEC_CC_RD;
+
+	rv = tcpci_set_role_ctrl(port, 1, TYPEC_RP_USB, pull);
 	if (rv)
 		return rv;
 
