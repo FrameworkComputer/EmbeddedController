@@ -34,6 +34,45 @@
 #define MT6360_REG_DPDM_MASK1 0xF6
 #define MT6360_REG_DPDM_MASK1_CHGDET_DONEI_M BIT(0)
 
+#define MT6360_REG_LDO3_EN_CTRL2 0x05
+
+#define MT6360_REG_LDO3_CTRL3 0x09
+#define MT6360_MASK_LDO3_VOSEL 0xF0
+#define MT6360_MASK_LDO3_VOSEL_SHIFT 4
+#define MT6360_MASK_LDO3_VOCAL 0x0F
+
+#define MT6360_REG_LDO5_EN_CTRL2 0x0B
+
+#define MT6360_REG_LDO5_CTRL3 0x0F
+#define MT6360_MASK_LDO5_VOSEL 0x70
+#define MT6360_MASK_LDO5_VOSEL_SHIFT 4
+#define MT6360_MASK_LDO5_VOCAL 0x0F
+
+/* This is same for LDO{3,5,2,1}_EN_CTRL2 */
+#define MT6360_MASK_LDO_SW_OP_EN BIT(7)
+#define MT6360_MASK_LDO_SW_EN BIT(6)
+
+#define MT6360_LDO_VOCAL_STEP_MV 10
+#define MT6360_LDO_VOCAL_MAX_STEP 10
+
+enum mt6360_ldo_id {
+	MT6360_LDO3,
+	MT6360_LDO5,
+
+	MT6360_LDO_COUNT,
+};
+
+int mt6360_ldo_get_info(enum mt6360_ldo_id ldo_id, char *name,
+			uint16_t *voltage_count, uint16_t *voltages_mv);
+
+int mt6360_ldo_enable(enum mt6360_ldo_id ldo_id, uint8_t enable);
+
+int mt6360_ldo_is_enabled(enum mt6360_ldo_id ldo_id, uint8_t *enabled);
+
+int mt6360_ldo_set_voltage(enum mt6360_ldo_id ldo_id, int min_mv, int max_mv);
+
+int mt6360_ldo_get_voltage(enum mt6360_ldo_id ldo_id, int *voltage_mv);
+
 enum mt6360_led_id {
 	MT6360_LED_RGB1,
 	MT6360_LED_RGB2,
