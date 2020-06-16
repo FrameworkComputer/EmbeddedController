@@ -51,6 +51,9 @@
 #define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
+/* Additional PPC second source */
+#define CONFIG_USBC_PPC_SYV682X
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

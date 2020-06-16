@@ -18,6 +18,7 @@
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/charger/bd9995x.h"
 #include "driver/ppc/nx20p348x.h"
+#include "driver/ppc/syv682x.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -31,6 +32,7 @@
 #include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
+#include "stdbool.h"
 #include "switch.h"
 #include "system.h"
 #include "tablet_mode.h"
@@ -49,17 +51,29 @@
 #define USB_PD_PORT_ANX7447	0
 #define USB_PD_PORT_PS8751	1
 
+#ifdef CONFIG_KEYBOARD_KEYPAD
+#error "KSO_14 was repurposed to PPC_ID pin so CONFIG_KEYBOARD_KEYPAD \
+should not be defined."
+#endif
+
 static uint8_t sku_id;
+static bool support_syv_ppc;
 
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_PD_C0_INT_ODL:
-		nx20p348x_interrupt(0);
+		if (support_syv_ppc)
+			syv682x_interrupt(0);
+		else
+			nx20p348x_interrupt(0);
 		break;
 
 	case GPIO_USB_PD_C1_INT_ODL:
-		nx20p348x_interrupt(1);
+		if (support_syv_ppc)
+			syv682x_interrupt(1);
+		else
+			nx20p348x_interrupt(1);
 		break;
 
 	default:
@@ -238,6 +252,11 @@ static void board_update_sensor_config_from_sku(void)
 	}
 }
 
+static bool board_is_support_syv_ppc(uint32_t board_version)
+{
+	return ((board_version >= 6) && gpio_get_level(GPIO_PPC_ID));
+}
+
 static void cbi_init(void)
 {
 	uint32_t val;
@@ -247,6 +266,11 @@ static void cbi_init(void)
 	ccprints("SKU: 0x%04x", sku_id);
 
 	board_update_sensor_config_from_sku();
+
+	if (cbi_get_board_version(&val) == EC_SUCCESS)
+		ccprints("Board Version: %d", val);
+
+	support_syv_ppc = board_is_support_syv_ppc(val);
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -323,3 +347,28 @@ __override uint32_t board_override_feature_flags0(uint32_t flags0)
 	/* Report that there is no keyboard backlight */
 	return (flags0 &= ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
 }
+
+const struct ppc_config_t ppc_syv682x_port0 = {
+		.i2c_port = I2C_PORT_TCPC0,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.drv = &syv682x_drv,
+};
+
+const struct ppc_config_t ppc_syv682x_port1 = {
+		.i2c_port = I2C_PORT_TCPC1,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.drv = &syv682x_drv,
+};
+
+static void board_setup_ppc(void)
+{
+	if (support_syv_ppc) {
+		memcpy(&ppc_chips[USB_PD_PORT_TCPC_0],
+		       &ppc_syv682x_port0,
+		       sizeof(struct ppc_config_t));
+		memcpy(&ppc_chips[USB_PD_PORT_TCPC_1],
+		       &ppc_syv682x_port1,
+		       sizeof(struct ppc_config_t));
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_setup_ppc, HOOK_PRIO_INIT_I2C + 2);
