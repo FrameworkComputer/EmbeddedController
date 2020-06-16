@@ -343,6 +343,9 @@ int pd_get_rev(int port)
 
 int pd_get_vdo_ver(int port, enum tcpm_transmit_type type)
 {
+	if (type == TCPC_TX_SOP_PRIME)
+		return get_usb_pd_cable_revision(port);
+
 	return vdo_ver[pd[port].rev];
 }
 #else

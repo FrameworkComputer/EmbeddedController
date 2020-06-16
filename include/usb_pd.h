@@ -573,14 +573,6 @@ struct pd_cable {
 	/* For storing Discover mode response from cable */
 	union tbt_mode_resp_cable cable_mode_resp;
 
-	/* Shared fields between TCPMv1 and TCPMv2 */
-	uint8_t is_identified;
-	/* Type of cable */
-	enum idh_ptype type;
-	/* Cable attributes */
-	union product_type_vdo1 attr;
-	/* For USB PD REV3, active cable has 2 VDOs */
-	union product_type_vdo2 attr2;
 	/* Cable revision */
 	enum pd_rev_type rev;
 
@@ -1651,10 +1643,12 @@ void dfp_consume_attention(int port, uint32_t *payload);
  * Consume the discover identity message
  *
  * @param port    USB-C port number
+ * @param type    Transmit type (SOP, SOP') for received modes
  * @param cnt     number of data objects in payload
  * @param payload payload data.
  */
-void dfp_consume_identity(int port, int cnt, uint32_t *payload);
+void dfp_consume_identity(int port, enum tcpm_transmit_type type, int cnt,
+		uint32_t *payload);
 
 /**
  * Consume the SVIDs
@@ -1693,7 +1687,6 @@ int dfp_discover_modes(int port, uint32_t *payload);
  * @param port     USB-C port number
  */
 void pd_dfp_discovery_init(int port);
-
 
 /**
  * Set identity discovery state for this type and port
@@ -1860,6 +1853,14 @@ bool pd_is_mode_discovered_for_svid(int port, enum tcpm_transmit_type type,
 struct svdm_amode_data *pd_get_amode_data(int port,
 		enum tcpm_transmit_type type, uint16_t svid);
 
+/*
+ * Returns cable revision
+ *
+ * @param port          USB-C port number
+ * @return              cable revision
+ */
+enum pd_rev_type get_usb_pd_cable_revision(int port);
+
 /**
  * Returns false if previous SOP' messageId count is different from received
  * messageId count.
@@ -1978,17 +1979,6 @@ bool is_vdo_present(int cnt, int index);
 enum idh_ptype get_usb_pd_cable_type(int port);
 
 /**
- * Stores the cable's response to discover Identity SOP' request
- *
- * @param port      USB-C port number
- * @param cnt       number of data objects in payload
- * @param payload   payload data
- * @param head      PD packet header
- */
-void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
-					uint32_t head);
-
-/**
  * Returns USB4 cable speed according to the port, if port supports lesser
  * USB4 cable speed than the cable.
  *
@@ -2101,15 +2091,6 @@ bool is_tbt_cable_superspeed(int port);
  * @return         True if product supports Modal Operation, false otherwise
  */
 bool is_modal(int port, int cnt, const uint32_t *payload);
-
-/**
- * Checks all the SVID for USB_VID_INTEL
- *
- * @param port	        USB-C port number
- * @param prev_svid_cnt Previous SVID count
- * @return              True is SVID = USB_VID_INTEL, false otherwise
- */
-bool is_intel_svid(int port, int prev_svid_cnt);
 
 /**
  * Checks if Device discover mode response contains Thunderbolt alternate mode

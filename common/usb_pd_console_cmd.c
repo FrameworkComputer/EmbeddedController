@@ -111,7 +111,9 @@ static int command_cable(int argc, char **argv)
 {
 	int port;
 	char *e;
-	struct pd_cable *cable;
+	struct pd_discovery *disc;
+	enum idh_ptype ptype;
+	int cable_rev;
 
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
@@ -120,34 +122,34 @@ static int command_cable(int argc, char **argv)
 	if (*e || port >= board_get_usb_pd_port_count())
 		return EC_ERROR_PARAM2;
 
-	cable = pd_get_cable_attributes(port);
-
-	if (!cable->is_identified) {
-		ccprintf("Cable not identified.\n");
-		return EC_SUCCESS;
-	}
+	ptype = get_usb_pd_cable_type(port);
 
 	ccprintf("Cable Type: ");
-	if (cable->type != IDH_PTYPE_PCABLE &&
-		cable->type != IDH_PTYPE_ACABLE) {
+	if (ptype != IDH_PTYPE_PCABLE &&
+		ptype != IDH_PTYPE_ACABLE) {
 		ccprintf("Not Emark Cable\n");
 		return EC_SUCCESS;
 	}
-	ccprintf("%s\n", cable_type[cable->type]);
+	ccprintf("%s\n", cable_type[ptype]);
+
+	cable_rev = pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME);
+	disc = pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
 
 	/* Cable revision */
-	ccprintf("Cable Rev: %d.0\n", cable->rev + 1);
+	ccprintf("Cable Rev: %d.0\n", cable_rev + 1);
 
 	/*
 	 * For rev 2.0, rev 3.0 active and passive cables have same bits for
 	 * connector type (Bit 19:18) and current handling capability bit 6:5
 	 */
-	ccprintf("Connector Type: %d\n", cable->attr.p_rev20.connector);
+	ccprintf("Connector Type: %d\n",
+				disc->identity.product_t1.p_rev20.connector);
 
-	if (cable->attr.p_rev20.vbus_cur) {
+	if (disc->identity.product_t1.p_rev20.vbus_cur) {
 		ccprintf("Cable Current: %s\n",
-		   cable->attr.p_rev20.vbus_cur > ARRAY_SIZE(cable_curr) ?
-		   "Invalid" : cable_curr[cable->attr.p_rev20.vbus_cur]);
+		   disc->identity.product_t1.p_rev20.vbus_cur >
+		      ARRAY_SIZE(cable_curr) ? "Invalid" :
+		      cable_curr[disc->identity.product_t1.p_rev20.vbus_cur]);
 	} else
 		ccprintf("Cable Current: Invalid\n");
 
@@ -155,32 +157,33 @@ static int command_cable(int argc, char **argv)
 	 * For Rev 3.0 passive cables and Rev 2.0 active and passive cables,
 	 * USB Superspeed Signaling support have same bits 2:0
 	 */
-	if (cable->type == IDH_PTYPE_PCABLE)
+	if (ptype == IDH_PTYPE_PCABLE)
 		ccprintf("USB Superspeed Signaling support: %d\n",
-			cable[port].attr.p_rev20.ss);
+			disc->identity.product_t1.p_rev20.ss);
 
 	/*
 	 * For Rev 3.0 active cables and Rev 2.0 active and passive cables,
 	 * SOP" controller preset have same bit 3
 	 */
-	if (cable->type == IDH_PTYPE_ACABLE)
+	if (ptype == IDH_PTYPE_ACABLE)
 		ccprintf("SOP'' Controller: %s present\n",
-			cable->attr.a_rev20.sop_p_p ? "" : "Not");
+		      disc->identity.product_t1.a_rev20.sop_p_p ? "" : "Not");
 
-	if (cable->rev == PD_REV30) {
+	if (cable_rev == PD_REV30) {
 		/*
 		 * For Rev 3.0 active and passive cables, Max Vbus vtg have
 		 * same bits 10:9.
 		 */
 		ccprintf("Max vbus voltage: %d\n",
-			20 + 10 * cable->attr.p_rev30.vbus_max);
+			20 + 10 * disc->identity.product_t1.p_rev30.vbus_max);
 
 		/* For Rev 3.0 Active cables */
-		if (cable->type == IDH_PTYPE_ACABLE) {
+		if (ptype == IDH_PTYPE_ACABLE) {
 			ccprintf("SS signaling: USB_SS_GEN%u\n",
-				cable->attr2.a2_rev30.usb_gen ? 2 : 1);
+				disc->identity.product_t2.a2_rev30.usb_gen ?
+									2 : 1);
 			ccprintf("Number of SS lanes supported: %u\n",
-				cable->attr2.a2_rev30.usb_lanes);
+				disc->identity.product_t2.a2_rev30.usb_lanes);
 		}
 	}
 	return EC_SUCCESS;

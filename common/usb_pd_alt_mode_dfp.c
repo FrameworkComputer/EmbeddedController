@@ -313,12 +313,24 @@ void dfp_consume_attention(int port, uint32_t *payload)
 		modep->fx->attention(port, payload);
 }
 
-void dfp_consume_identity(int port, int cnt, uint32_t *payload)
+void dfp_consume_identity(int port, enum tcpm_transmit_type type, int cnt,
+		uint32_t *payload)
 {
-	int ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
-	struct pd_discovery *disc = pd_get_am_discovery(port, TCPC_TX_SOP);
-	size_t identity_size = MIN(sizeof(union disc_ident_ack),
+	int ptype;
+	struct pd_discovery *disc;
+	size_t identity_size;
+
+	if (type == TCPC_TX_SOP_PRIME &&
+	    !IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
+		CPRINTF("ERR:Unexpected cable response\n");
+		return;
+	}
+
+	ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
+	disc = pd_get_am_discovery(port, type);
+	identity_size = MIN(sizeof(union disc_ident_ack),
 				   (cnt - 1) * sizeof(uint32_t));
+
 	/* Note: only store VDOs, not the VDM header */
 	memcpy(disc->identity.raw_value, payload + 1, identity_size);
 
@@ -340,7 +352,7 @@ void dfp_consume_identity(int port, int cnt, uint32_t *payload)
 	default:
 		break;
 	}
-	pd_set_identity_discovery(port, TCPC_TX_SOP, PD_DISC_COMPLETE);
+	pd_set_identity_discovery(port, type, PD_DISC_COMPLETE);
 }
 
 void dfp_consume_svids(int port, enum tcpm_transmit_type type, int cnt,
@@ -644,6 +656,11 @@ bool is_vdo_present(int cnt, int index)
 	return cnt > index;
 }
 
+static inline bool is_rev3_vdo(int port, enum tcpm_transmit_type type)
+{
+	return pd_get_vdo_ver(port, type) == PD_REV30;
+}
+
 /*
  * ############################################################################
  *
@@ -653,30 +670,37 @@ bool is_vdo_present(int cnt, int index)
  */
 enum idh_ptype get_usb_pd_cable_type(int port)
 {
-	struct pd_cable *cable = pd_get_cable_attributes(port);
+	struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
 
-	return cable->type;
+	return disc->identity.idh.product_type;
 }
 
 bool is_usb2_cable_support(int port)
 {
-	struct pd_cable *cable = pd_get_cable_attributes(port);
+	struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
 
-	return cable->type == IDH_PTYPE_PCABLE ||
-		cable->attr2.a2_rev30.usb_20_support == USB2_SUPPORTED;
+	return disc->identity.idh.product_type == IDH_PTYPE_PCABLE ||
+	       disc->identity.product_t2.a2_rev30.usb_20_support ==
+							USB2_SUPPORTED;
 }
 
 bool is_cable_speed_gen2_capable(int port)
 {
-	struct pd_cable *cable = pd_get_cable_attributes(port);
+	struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
 
-	switch (cable->rev) {
+	switch (pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME)) {
 	case PD_REV20:
-		return cable->attr.p_rev20.ss == USB_R20_SS_U31_GEN1_GEN2;
+		return disc->identity.product_t1.p_rev20.ss ==
+						USB_R20_SS_U31_GEN1_GEN2;
 
 	case PD_REV30:
-		return cable->attr.p_rev30.ss == USB_R30_SS_U32_U40_GEN2 ||
-			cable->attr.p_rev30.ss == USB_R30_SS_U40_GEN3;
+		return disc->identity.product_t1.p_rev30.ss ==
+						USB_R30_SS_U32_U40_GEN2 ||
+		       disc->identity.product_t1.p_rev30.ss ==
+						USB_R30_SS_U40_GEN3;
 	default:
 		return false;
 	}
@@ -684,58 +708,16 @@ bool is_cable_speed_gen2_capable(int port)
 
 bool is_active_cable_element_retimer(int port)
 {
-	struct pd_cable *cable = pd_get_cable_attributes(port);
+	struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
 
 	/* Ref: USB PD Spec 2.0 Table 6-29 Active Cable VDO
 	 * Revision 2 Active cables do not have Active element support.
 	 */
-	return cable->rev & PD_REV30 &&
-		get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE &&
-		cable->attr2.a2_rev30.active_elem == ACTIVE_RETIMER;
-}
-
-/*
- * TODO(b/152417597): Support SOP and SOP'; eliminate redundant code for port
- * partner and cable identity discovery.
- */
-void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
-				uint32_t head)
-{
-	struct pd_cable *cable = pd_get_cable_attributes(port);
-	struct pd_discovery *disc =
-		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
-	size_t identity_size = MIN(sizeof(union disc_ident_ack),
-				   (cnt - 1) * sizeof(uint32_t));
-
-	if (!IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
-		return;
-
-	/* Note: only store VDOs, not the VDM header */
-	memcpy(disc->identity.raw_value, payload + 1, identity_size);
-
-	pd_set_identity_discovery(port, TCPC_TX_SOP_PRIME, PD_DISC_COMPLETE);
-
-	/* Get cable rev */
-	cable->rev = PD_HEADER_REV(head);
-
-	/* TODO: Move cable references to use discovery response */
-	if (is_vdo_present(cnt, VDO_INDEX_IDH)) {
-		cable->type = PD_IDH_PTYPE(payload[VDO_INDEX_IDH]);
-
-		if (is_vdo_present(cnt, VDO_INDEX_PTYPE_CABLE1))
-			cable->attr.raw_value =
-					payload[VDO_INDEX_PTYPE_CABLE1];
-
-		/*
-		 * Ref USB PD Spec 3.0  Pg 145. For active cable there are two
-		 * VDOs. Hence storing the second VDO.
-		 */
-		if (is_vdo_present(cnt, VDO_INDEX_PTYPE_CABLE2))
-			cable->attr2.raw_value =
-					payload[VDO_INDEX_PTYPE_CABLE2];
-
-		cable->is_identified = 1;
-	}
+	return is_rev3_vdo(port, TCPC_TX_SOP_PRIME) &&
+		disc->identity.idh.product_type == IDH_PTYPE_ACABLE &&
+		disc->identity.product_t2.a2_rev30.active_elem ==
+							ACTIVE_RETIMER;
 }
 
 /*
@@ -767,58 +749,40 @@ void set_tbt_compat_mode_ready(int port)
  */
 bool is_tbt_cable_superspeed(int port)
 {
-	struct pd_cable *cable;
+	struct pd_discovery *disc;
 
 	if (!IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) ||
 	    !IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
 		return false;
 
-	cable = pd_get_cable_attributes(port);
+	disc = pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
 
 	/* Product type is Active cable, hence don't check for speed */
-	if (cable->type == IDH_PTYPE_ACABLE)
+	if (disc->identity.idh.product_type == IDH_PTYPE_ACABLE)
 		return true;
 
-	if (cable->type != IDH_PTYPE_PCABLE)
+	if (disc->identity.idh.product_type != IDH_PTYPE_PCABLE)
 		return false;
 
-	if (IS_ENABLED(CONFIG_USB_PD_REV30) && cable->rev == PD_REV30)
-		return cable->attr.p_rev30.ss == USB_R30_SS_U32_U40_GEN1 ||
-			cable->attr.p_rev30.ss == USB_R30_SS_U32_U40_GEN2 ||
-			cable->attr.p_rev30.ss == USB_R30_SS_U40_GEN3;
+	if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
+	   is_rev3_vdo(port, TCPC_TX_SOP_PRIME))
+		return  disc->identity.product_t1.p_rev30.ss ==
+						USB_R30_SS_U32_U40_GEN1 ||
+			disc->identity.product_t1.p_rev30.ss ==
+						USB_R30_SS_U32_U40_GEN2 ||
+			disc->identity.product_t1.p_rev30.ss ==
+						USB_R30_SS_U40_GEN3;
 
-	return cable->attr.p_rev20.ss == USB_R20_SS_U31_GEN1 ||
-		cable->attr.p_rev20.ss == USB_R20_SS_U31_GEN1_GEN2;
+	return  disc->identity.product_t1.p_rev20.ss ==
+						USB_R20_SS_U31_GEN1 ||
+		disc->identity.product_t1.p_rev20.ss ==
+						USB_R20_SS_U31_GEN1_GEN2;
 }
 
 bool is_modal(int port, int cnt, const uint32_t *payload)
 {
 	return is_vdo_present(cnt, VDO_INDEX_IDH) &&
 		PD_IDH_IS_MODAL(payload[VDO_INDEX_IDH]);
-}
-
-bool is_intel_svid(int port, int prev_svid_cnt)
-{
-	int i;
-	/* TODO(b/148528713): Use TCPMv2's separate storage for SOP'. */
-	struct pd_discovery *disc = pd_get_am_discovery(port, TCPC_TX_SOP);
-
-	/*
-	 * Ref: USB Type-C cable and connector specification, Table F-9
-	 * Check if SVID0 = USB_VID_INTEL. However,
-	 * errata: All the Thunderbolt certified cables and docks tested have
-	 * SVID1 = 0x8087.
-	 * Hence, check all the SVIDs for Intel SVID, if the response presents
-	 * SVIDs in any order.
-	 */
-	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)) {
-		for (i = prev_svid_cnt;
-				i < pd_get_svid_count(port, TCPC_TX_SOP); i++) {
-			if (disc->svids[i].svid == USB_VID_INTEL)
-				return true;
-		}
-	}
-	return false;
 }
 
 bool is_tbt_compat_mode(int port, int cnt, const uint32_t *payload)
@@ -951,7 +915,8 @@ bool is_usb4_vdo(int port, int cnt, uint32_t *payload)
  */
 static enum usb_rev30_ss board_get_max_usb_cable_speed(int port)
 {
-	struct pd_cable *cable = pd_get_cable_attributes(port);
+	struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
 	/*
 	 * Converting Thunderbolt-Compatible board speed to equivalent USB4
 	 * speed.
@@ -960,16 +925,15 @@ static enum usb_rev30_ss board_get_max_usb_cable_speed(int port)
 		board_get_max_tbt_speed(port) == TBT_SS_TBT_GEN3 ?
 		USB_R30_SS_U40_GEN3 : USB_R30_SS_U32_U40_GEN2;
 
-	return max_usb4_speed < cable->attr.p_rev30.ss ?
-	       max_usb4_speed : cable->attr.p_rev30.ss;
+	return max_usb4_speed <  disc->identity.product_t1.p_rev30.ss ?
+	       max_usb4_speed :  disc->identity.product_t1.p_rev30.ss;
 }
 
 enum usb_rev30_ss get_usb4_cable_speed(int port)
 {
-	struct pd_cable *cable = pd_get_cable_attributes(port);
 	enum usb_rev30_ss max_rev30_usb4_speed;
 
-	if (cable->rev == PD_REV30) {
+	if (is_rev3_vdo(port, TCPC_TX_SOP_PRIME)) {
 		max_rev30_usb4_speed = board_get_max_usb_cable_speed(port);
 		if (!IS_ENABLED(CONFIG_USB_PD_TBT_GEN3_CAPABLE) ||
 		     max_rev30_usb4_speed != USB_R30_SS_U32_U40_GEN2 ||
@@ -991,20 +955,21 @@ uint32_t get_enter_usb_msg_payload(int port)
 	 * Table 6-47 Enter_USB Data Object
 	 */
 	union enter_usb_data_obj eudo;
-	struct pd_cable *cable;
+	struct pd_discovery *disc;
 
 	if (!IS_ENABLED(CONFIG_USB_PD_USB4))
 		return 0;
 
-	cable = pd_get_cable_attributes(port);
+	disc = pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
 	eudo.mode = USB_PD_40;
 	eudo.usb4_drd_cap = IS_ENABLED(CONFIG_USB_PD_USB4_DRD);
 	eudo.usb3_drd_cap = IS_ENABLED(CONFIG_USB_PD_USB32_DRD);
 	eudo.cable_speed = get_usb4_cable_speed(port);
 
-	if ((cable->rev == PD_REV30) &&
-	    (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE)) {
-		eudo.cable_type = (cable->attr2.a2_rev30.active_elem ==
+	if (is_rev3_vdo(port, TCPC_TX_SOP_PRIME) &&
+	    (disc->identity.idh.product_type == IDH_PTYPE_ACABLE)) {
+		eudo.cable_type =
+			(disc->identity.product_t2.a2_rev30.active_elem ==
 			ACTIVE_RETIMER) ? CABLE_TYPE_ACTIVE_RETIMER :
 			CABLE_TYPE_ACTIVE_REDRIVER;
 	/* TODO: Add eudo.cable_type for Revisiosn 2 active cables */
@@ -1012,7 +977,7 @@ uint32_t get_enter_usb_msg_payload(int port)
 		eudo.cable_type = CABLE_TYPE_PASSIVE;
 	}
 
-	switch (cable[port].attr.p_rev20.vbus_cur) {
+	switch (disc->identity.product_t1.p_rev20.vbus_cur) {
 	case USB_VBUS_CUR_3A:
 		eudo.cable_current = USB4_CABLE_CURRENT_3A;
 		break;
