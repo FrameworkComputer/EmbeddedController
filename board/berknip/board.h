@@ -38,6 +38,8 @@
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
+#define CONFIG_KEYBOARD_FACTORY_TEST
+
 /* Type C mux/retimer */
 #define CONFIG_USB_MUX_PS8743
 #define CONFIG_USBC_RETIMER_TUSB544
@@ -210,6 +212,11 @@ extern const struct usb_mux usbc1_ps8743;
 extern struct usb_mux usbc1_amd_fp5_usb_mux;
 
 void hdmi_hpd_interrupt(enum ioex_signal signal);
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
 
 #endif /* !__ASSEMBLER__ */
 
