@@ -60,7 +60,8 @@ class TestConfig:
     """Configuration for a given test."""
 
     def __init__(self, name, image_to_use=ImageType.RW, finish_regexes=None,
-                 toggle_power=False, test_args=None, num_flash_attempts=2):
+                 toggle_power=False, test_args=None, num_flash_attempts=2,
+                 timeout_secs=10):
         if test_args is None:
             test_args = []
         if finish_regexes is None:
@@ -72,6 +73,7 @@ class TestConfig:
         self.test_args = test_args
         self.toggle_power = toggle_power
         self.num_flash_attempts = num_flash_attempts
+        self.timeout_secs = timeout_secs
         self.logs = []
         self.passed = False
         self.num_fails = 0
@@ -119,6 +121,8 @@ ALL_TESTS = {
         TestConfig(name='sha256_unrolled'),
     'stm32f_rtc':
         TestConfig(name='stm32f_rtc'),
+    'utils':
+        TestConfig(name='utils', timeout_secs=20),
 }
 
 BLOONCHIPPER_CONFIG = BoardConfig(
@@ -218,7 +222,7 @@ def readlines_until_timeout(executor, f, timeout_secs):
         lines.append(line)
 
 
-def run_test(test, console, executor, timeout_secs=10):
+def run_test(test, console, executor):
     """Run specified test."""
     start = time.time()
     with open(console, "wb+", buffering=0) as c:
@@ -237,7 +241,7 @@ def run_test(test, console, executor, timeout_secs=10):
             line = readline(executor, c, 1)
             if not line:
                 now = time.time()
-                if now - start > timeout_secs:
+                if now - start > test.timeout_secs:
                     logging.debug("Test timed out")
                     return False
                 continue
