@@ -34,6 +34,7 @@
 #include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
+#include "stdbool.h"
 #include "switch.h"
 #include "system.h"
 #include "tablet_mode.h"
@@ -71,22 +72,32 @@ const int keyboard_factory_scan_pins[][2] = {
 const int keyboard_factory_scan_pins_used =
 			ARRAY_SIZE(keyboard_factory_scan_pins);
 
-static void ppc_interrupt(enum gpio_signal signal)
+/* Check PPC ID Pin and Board ver to decide which one ppc is used. */
+static bool support_syv_ppc(void)
 {
 	uint32_t board_version = 0;
 
 	if (cbi_get_board_version(&board_version) != EC_SUCCESS)
 		CPRINTSUSB("Get board version failed.");
+
+	if ((board_version == 5) && (gpio_get_level(GPIO_PPC_ID)))
+		return true;
+
+	return false;
+}
+
+static void ppc_interrupt(enum gpio_signal signal)
+{
 	switch (signal) {
 	case GPIO_USB_PD_C0_INT_ODL:
-		if ((board_version == 5) && (gpio_get_level(GPIO_PPC_ID)))
+		if (support_syv_ppc())
 			syv682x_interrupt(0);
 		else
 			nx20p348x_interrupt(0);
 		break;
 
 	case GPIO_USB_PD_C1_INT_ODL:
-		if ((board_version == 5) && (gpio_get_level(GPIO_PPC_ID)))
+		if (support_syv_ppc())
 			syv682x_interrupt(1);
 		else
 			nx20p348x_interrupt(1);
@@ -429,7 +440,7 @@ const struct ppc_config_t ppc_syv682x_port1 = {
 
 static void board_setup_ppc(void)
 {
-	if (gpio_get_level(GPIO_PPC_ID)) {
+	if (support_syv_ppc()) {
 		memcpy(&ppc_chips[USB_PD_PORT_TCPC_0],
 		       &ppc_syv682x_port0,
 		       sizeof(struct ppc_config_t));
