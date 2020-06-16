@@ -164,30 +164,6 @@ void reset_pd_cable(int port)
 	cable[port].last_sop_p_p_msg_id = INVALID_MSG_ID_COUNTER;
 }
 
-union tbt_mode_resp_cable get_cable_tbt_vdo(int port)
-{
-	/*
-	 * Return Discover mode SOP prime response for Thunderbolt-compatible
-	 * mode SVDO.
-	 */
-	return cable[port].cable_mode_resp;
-}
-
-union tbt_mode_resp_device get_dev_tbt_vdo(int port)
-{
-	/*
-	 * Return Discover mode SOP response for Thunderbolt-compatible
-	 * mode SVDO.
-	 */
-	return cable[port].dev_mode_resp;
-}
-
-enum tbt_compat_rounded_support get_tbt_rounded_support(int port)
-{
-	/* tbt_rounded_support is zero when uninitialized */
-	return cable[port].cable_mode_resp.tbt_rounded;
-}
-
 bool should_enter_usb4_mode(int port)
 {
 	return IS_ENABLED(CONFIG_USB_PD_USB4) &&
@@ -212,7 +188,33 @@ void disable_enter_usb4_mode(int port)
 
 static struct pd_discovery
 	discovery[CONFIG_USB_PD_PORT_MAX_COUNT][DISCOVERY_TYPE_COUNT];
-static struct partner_active_modes partner_amodes[CONFIG_USB_PD_PORT_MAX_COUNT];
+static struct partner_active_modes
+	partner_amodes[CONFIG_USB_PD_PORT_MAX_COUNT][AMODE_TYPE_COUNT];
+
+static bool is_modal(int port, int cnt, const uint32_t *payload)
+{
+	return is_vdo_present(cnt, VDO_INDEX_IDH) &&
+		PD_IDH_IS_MODAL(payload[VDO_INDEX_IDH]);
+}
+
+static bool is_tbt_compat_mode(int port, int cnt, const uint32_t *payload)
+{
+	/*
+	 * Ref: USB Type-C cable and connector specification
+	 * F.2.5 TBT3 Device Discover Mode Responses
+	 */
+	return is_vdo_present(cnt, VDO_INDEX_IDH) &&
+		PD_VDO_RESP_MODE_INTEL_TBT(payload[VDO_INDEX_IDH]);
+}
+
+static bool cable_supports_tbt_speed(int port)
+{
+	enum tbt_compat_cable_speed tbt_cable_speed =
+				get_tbt_cable_speed(port);
+
+	return (tbt_cable_speed == TBT_SS_TBT_GEN3 ||
+		tbt_cable_speed == TBT_SS_U32_GEN1_GEN2);
+}
 
 static bool is_tbt_compat_enabled(int port)
 {
@@ -374,17 +376,12 @@ struct partner_active_modes *pd_get_partner_active_modes(int port,
 		enum tcpm_transmit_type type)
 {
 	assert(type < AMODE_TYPE_COUNT);
-	return &partner_amodes[port];
+	return &partner_amodes[port][type];
 }
 
 /* Note: Enter mode flag is not needed by TCPMv1 */
 void pd_set_dfp_enter_mode_flag(int port, bool set)
 {
-}
-
-struct pd_cable *pd_get_cable_attributes(int port)
-{
-	return &cable[port];
 }
 
 static int process_am_discover_ident_sop(int port, int cnt,

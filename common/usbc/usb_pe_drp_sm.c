@@ -446,10 +446,6 @@ static struct policy_engine {
 	/* state specific state machine variable */
 	enum sub_state sub;
 
-	/* Cable DiscoverIdentity VDOs */
-	struct pd_cable cable;
-
-	/* TODO(b/150611251): Store full partner DiscoverIdentity response */
 	/* PD_VDO_INVALID is used when there is an invalid VDO */
 	int32_t ama_vdo;
 	int32_t vpd_vdo;
@@ -1573,7 +1569,6 @@ static void pe_src_startup_entry(int port)
 		pe[port].ama_vdo = PD_VDO_INVALID;
 		pe[port].vpd_vdo = PD_VDO_INVALID;
 		pe[port].discover_identity_counter = 0;
-		memset(&pe[port].cable, 0, sizeof(struct pd_cable));
 
 		/* Reset dr swap attempt counter */
 		pe[port].dr_swap_attempt_counter = 0;
@@ -2330,7 +2325,6 @@ static void pe_snk_startup_entry(int port)
 		PE_CLR_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 		pd_dfp_discovery_init(port);
 		pe[port].discover_identity_counter = 0;
-		memset(&pe[port].cable, 0, sizeof(struct pd_cable));
 
 		/* Reset dr swap attempt counter */
 		pe[port].dr_swap_attempt_counter = 0;
@@ -4371,7 +4365,8 @@ static void pe_vdm_identity_request_cbl_run(int port)
 		 * Explicit Contract
 		 */
 		if (prl_get_rev(port, TCPC_TX_SOP) != PD_REV20)
-			prl_set_rev(port, sop, pe[port].cable.rev);
+			prl_set_rev(port, sop,
+				    pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME));
 	} else if (response_result == PD_DISC_FAIL) {
 		/*
 		 * PE_INIT_PORT_VDM_IDENTITY_NAKed and PE_SRC_VDM_Identity_NAKed
@@ -5407,11 +5402,6 @@ struct partner_active_modes *pd_get_partner_active_modes(int port,
 {
 	assert(type < AMODE_TYPE_COUNT);
 	return &pe[port].partner_amodes[type];
-}
-
-struct pd_cable *pd_get_cable_attributes(int port)
-{
-	return &pe[port].cable;
 }
 
 void pd_set_dfp_enter_mode_flag(int port, bool set)
