@@ -53,6 +53,30 @@ int mp4245_votlage_out_enable(int enable)
 			MP4245_CMD_OPERATION, cmd_val);
 }
 
+int mp3245_get_vbus(int *mv, int *ma)
+{
+	int vbus = 0;
+	int ibus = 0;
+	int rv;
+
+	/* Get Vbus/Ibus raw measurements */
+	rv = i2c_read16(I2C_PORT_MP4245, MP4245_SLAVE_ADDR,
+		   MP4245_CMD_READ_VOUT, &vbus);
+	rv |= i2c_read16(I2C_PORT_MP4245, MP4245_SLAVE_ADDR,
+		  MP4245_CMD_READ_IOUT, &ibus);
+
+	if (rv == EC_SUCCESS) {
+		/* Convert Vbus/Ibus to mV/mA */
+		vbus = MP4245_VOUT_TO_MV(vbus);
+		ibus = MP4245_IOUT_TO_MA(ibus);
+	}
+
+	*mv = vbus;
+	*ma = ibus;
+
+	return rv;
+}
+
 struct mp4245_info {
 	uint8_t cmd;
 	uint8_t len;

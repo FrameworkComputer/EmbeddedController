@@ -50,6 +50,17 @@
 #define MP4245_VOUT_TO_MV(v)         ((v * 1000) / MP4245_VOUT_1V)
 #define MP4245_IOUT_TO_MA(i)         (((i & 0x7ff) * 1000) / BIT(6))
 #define MP4245_ILIM_STEP_MA          50
+#define MP4245_VOUT_5V_DELAY_MS      10
+
+
+#define MP4245_MFR_STATUS_MASK_VOUT        BIT(7)
+#define MP4245_MFR_STATUS_MASK_IOUT        BIT(6)
+#define MP4245_MFR_STATUS_MASK_INPUT       BIT(5)
+#define MP4245_MFR_STATUS_MASK_TEMP        BIT(4)
+#define MP4245_MFR_STATUS_MASK_PG_STATUS   BIT(3)
+#define MP4245_MFR_STATUS_MASK_PG_ALT_EDGE BIT(2)
+#define MP4245_MFR_STATUS_MASK_OTHER       BIT(1)
+#define MP4245_MFR_STATUS_MASK_UNKNOWN     BIT(0)
 
 /**
  * MP4245 set output voltage level
@@ -74,3 +85,12 @@ int mp4245_set_current_lim(int desired_ma);
  * @return i2c write result
  */
 int mp4245_votlage_out_enable(int enable);
+
+/**
+ * MP4245 get Vbus voltage/current values
+ *
+ * @param *mv -> vbus voltage in mV
+ * @param *ma -> vbus current in mA
+ * @return i2c read results
+ */
+int mp3245_get_vbus(int *mv, int *ma);
