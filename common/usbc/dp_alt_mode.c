@@ -65,7 +65,7 @@ void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 	 * Handle the ACK of a request to exit alt mode.
 	 */
 	if (type == TCPC_TX_SOP && vdm_cmd == CMD_EXIT_MODE) {
-		dpm_init(port);
+		pd_dfp_discovery_init(port);
 		return;
 	}
 
