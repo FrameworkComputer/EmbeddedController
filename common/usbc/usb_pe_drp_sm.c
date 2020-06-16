@@ -4185,6 +4185,64 @@ static void pe_vdm_send_request_exit(int port)
 	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 }
 
+static enum pd_discovery_state pe_discovery_vdm_request_run_common(int port,
+		uint8_t min_data_objects)
+{
+	uint32_t *payload;
+	int sop;
+	uint8_t type;
+	uint8_t cnt;
+	uint8_t ext;
+
+	/* Retrieve the message information */
+	payload = (uint32_t *)rx_emsg[port].buf;
+	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
+	type = PD_HEADER_TYPE(rx_emsg[port].header);
+	cnt = PD_HEADER_CNT(rx_emsg[port].header);
+	ext = PD_HEADER_EXT(rx_emsg[port].header);
+
+	if (sop == pe[port].tx_type && type == PD_DATA_VENDOR_DEF && cnt >= 1
+			&& ext == 0) {
+		if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK &&
+				cnt >= min_data_objects) {
+			/* Handle ACKs in state-specific code. */
+			return PD_DISC_COMPLETE;
+		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
+			/* Handle NAKs in state-specific code. */
+			return PD_DISC_FAIL;
+		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
+			/*
+			 * Don't fill in the discovery field so we re-probe in
+			 * tVDMBusy
+			 */
+			CPRINTS("C%d: Partner BUSY, request will be retried",
+					port);
+			pe[port].discover_identity_timer =
+					get_time().val + PD_T_VDM_BUSY;
+			return PD_DISC_NEEDED;
+		}
+
+		/*
+		 * Partner gave us an incorrect size or command; mark discovery
+		 * as failed.
+		 */
+		CPRINTS("C%d: Unexpected VDM response: 0x%04x 0x%04x",
+				port, rx_emsg[port].header, payload[0]);
+		return PD_DISC_FAIL;
+	} else if (sop == pe[port].tx_type && ext == 0 && cnt == 0 &&
+			type == PD_CTRL_NOT_SUPPORTED) {
+		/*
+		 * A NAK would be more expected here, but Not Supported is still
+		 * allowed with the same meaning.
+		 */
+		return PD_DISC_FAIL;
+	}
+
+	/* Unexpected Message Received. Src.Ready or Snk.Ready can handle it. */
+	PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+	return PD_DISC_NEEDED;
+}
+
 /**
  * PE_VDM_IDENTITY_REQUEST_CBL
  * Combination of PE_INIT_PORT_VDM_Identity_Request State specific to the
@@ -4505,69 +4563,36 @@ static void pe_init_vdm_svids_request_run(int port)
 {
 	uint32_t *payload;
 	int sop;
-	uint8_t type;
 	uint8_t cnt;
-	uint8_t ext;
+	enum pd_discovery_state response_result;
 
 	/* No message received */
 	if (!PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
 		return;
-
 	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+	/*
+	 * Valid Discover SVIDs ACKs should have at least 2 objects (VDM header,
+	 * SVID VDO).
+	 */
+	response_result = pe_discovery_vdm_request_run_common(port, 2);
 
 	/* Retrieve the message information */
 	payload = (uint32_t *)rx_emsg[port].buf;
 	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-	type = PD_HEADER_TYPE(rx_emsg[port].header);
 	cnt = PD_HEADER_CNT(rx_emsg[port].header);
-	ext = PD_HEADER_EXT(rx_emsg[port].header);
 
-	if (sop == pe[port].tx_type && type == PD_DATA_VENDOR_DEF && cnt > 0 &&
-			ext == 0) {
-		/*
-		 * Valid Discover SVIDs ACKs should have at least 2 objects
-		 * (VDM header, SVID VDO).
-		 */
-		if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK &&
-							cnt >= 2) {
-			/* PE_INIT_VDM_SVIDs_ACKed embedded here */
-			dfp_consume_svids(port, sop, cnt, payload);
-		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
-			/* PE_INIT_VDM_SVIDs_NAKed embedded here */
-			pd_set_svids_discovery(port, sop, PD_DISC_FAIL);
-		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
-			/*
-			 * Don't fill in the discovery field so we
-			 * re-probe in tVDMBusy
-			 */
-			CPRINTS("C%d: Partner Busy, Discover SVIDs will be "
-					"re-tried", port);
-			pe[port].discover_identity_timer =
-					get_time().val + PD_T_VDM_BUSY;
-		} else {
-			/*
-			 * Partner gave us an incorrect size or command,
-			 * mark discovery as failed
-			 */
-			pd_set_svids_discovery(port, sop, PD_DISC_FAIL);
-			CPRINTS("C%d: Unexpected DiscSVID response: 0x%04x "
-					"0x%04x",
-					port, rx_emsg[port].header, payload[0]);
-		}
-	} else if (sop == pe[port].tx_type && ext == 0 && cnt == 0 &&
-			type == PD_CTRL_NOT_SUPPORTED) {
-		/*
-		 * A NAK would be more expected here, but Not Supported is still
-		 * allowed with the same meaning.
-		 */
+	if (response_result == PD_DISC_COMPLETE) {
+		/* PE_INIT_VDM_SVIDs_ACKed embedded here */
+		dfp_consume_svids(port, sop, cnt, payload);
+	} else if (response_result == PD_DISC_FAIL) {
+		/* PE_INIT_VDM_SVIDs_NAKed embedded here */
 		pd_set_svids_discovery(port, sop, PD_DISC_FAIL);
-	} else {
-		/*
-		 * Unexpected Message Received. Src.Ready or Snk.Ready can
-		 * handle it.
-		 */
-		PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 	}
+	/*
+	 * If the received message doesn't change the discovery state, there is
+	 * nothing to do but return to the ready previous state.
+	 */
 
 	/* Return to calling state (PE_{SRC,SNK}_Ready) */
 	set_state_pe(port, get_last_state_pe(port));
@@ -4623,78 +4648,43 @@ static void pe_init_vdm_modes_request_run(int port)
 {
 	uint32_t *payload;
 	int sop;
-	uint8_t type;
 	uint8_t cnt;
-	uint8_t ext;
 	struct svid_mode_data *mode_data =
 		pd_get_next_mode(port, pe[port].tx_type);
 	uint16_t requested_svid;
+	enum pd_discovery_state response_result;
 
 	/* No message received */
 	if (!PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
 		return;
+	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
 	assert(mode_data);
 	assert(mode_data->discovery == PD_DISC_NEEDED);
 	requested_svid = mode_data->svid;
 
+	/*
+	 * Valid Discover Modes responses should have at least 2 objects (VDM
+	 * header and at least one mode VDO).
+	 */
+	response_result = pe_discovery_vdm_request_run_common(port, 2);
+
 	/* Retrieve the message information */
 	payload = (uint32_t *)rx_emsg[port].buf;
 	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-	type = PD_HEADER_TYPE(rx_emsg[port].header);
 	cnt = PD_HEADER_CNT(rx_emsg[port].header);
-	ext = PD_HEADER_EXT(rx_emsg[port].header);
 
-	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
-
-	if (sop == pe[port].tx_type && type == PD_DATA_VENDOR_DEF &&
-						cnt >= 2 && ext == 0) {
-		/*
-		 * Valid Discover Modes responses should have at least 2 objects
-		 * (VDM header and at least one mode VDO).
-		 */
-		if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK) {
-			/* PE_INIT_VDM_Modes_ACKed embedded here */
-			dfp_consume_modes(port, sop, cnt, payload);
-		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
-			/* PE_INIT_VDM_Modes_NAKed embedded here */
-			pd_set_modes_discovery(port, sop,
-					requested_svid, PD_DISC_FAIL);
-		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
-			/*
-			 * Don't fill in the discovery field so we
-			 * re-probe in tVDMBusy
-			 */
-			CPRINTS("C%d: Partner Busy, Discover Modes will be "
-					"re-tried", port);
-			pe[port].discover_identity_timer =
-					get_time().val + PD_T_VDM_BUSY;
-		} else {
-			/*
-			 * Partner gave us an incorrect size or command,
-			 * mark discovery as failed
-			 */
-			pd_set_modes_discovery(port, sop,
-					requested_svid, PD_DISC_FAIL);
-			CPRINTS("C%d: Unexpected Discover Modes response: "
-					"0x%04x 0x%04x",
-					port, rx_emsg[port].header,
-					payload[0]);
-		}
-	} else if (sop == pe[port].tx_type && ext == 0 && cnt == 0 &&
-			type == PD_CTRL_NOT_SUPPORTED) {
-		/*
-		 * A NAK would be more expected here, but Not Supported is still
-		 * allowed with the same meaning.
-		 */
-		pd_set_modes_discovery(port, requested_svid, sop, PD_DISC_FAIL);
-	} else {
-		/*
-		 * Unexpected Message Received. Src.Ready or Snk.Ready can
-		 * handle it.
-		 */
-		PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+	if (response_result == PD_DISC_COMPLETE) {
+		/* PE_INIT_VDM_Modes embedded here */
+		dfp_consume_modes(port, sop, cnt, payload);
+	} else if (response_result == PD_DISC_FAIL) {
+		/* PE_INIT_VDM_Modes embedded here */
+		pd_set_modes_discovery(port, sop, requested_svid, PD_DISC_FAIL);
 	}
+	/*
+	 * If the received message doesn't change the discovery state, there is
+	 * nothing to do but return to the ready previous state.
+	 */
 
 	/* Return to calling state (PE_{SRC,SNK}_Ready) */
 	set_state_pe(port, get_last_state_pe(port));
