@@ -34,7 +34,6 @@
 /* Sensors */
 #define CONFIG_ACCEL_LIS2DE		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
-#define CONFIG_SYNC			/* Camera VSYNC */
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 
@@ -49,9 +48,6 @@
 #define CONFIG_LID_ANGLE_UPDATE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
-
-#define CONFIG_SYNC_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 
 #define CONFIG_TABLET_MODE
 #define CONFIG_TABLET_MODE_SWITCH
@@ -97,7 +93,6 @@ enum sensor_id {
 	LID_ACCEL,
 	BASE_ACCEL,
 	BASE_GYRO,
-	VSYNC,
 	SENSOR_COUNT
 };
 
