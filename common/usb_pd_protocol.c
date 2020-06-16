@@ -5046,7 +5046,8 @@ void pd_send_hpd(int port, enum hpd_event hpd)
 		    VDO_OPOS(opos) | CMD_ATTENTION, data, 1);
 	/* Wait until VDM is done. */
 	while (pd[0].vdm_state > 0)
-		task_wait_event(USB_PD_RX_TMOUT_US * (PD_RETRY_COUNT + 1));
+		task_wait_event(USB_PD_RX_TMOUT_US *
+				(CONFIG_PD_RETRY_COUNT + 1));
 }
 #endif
 

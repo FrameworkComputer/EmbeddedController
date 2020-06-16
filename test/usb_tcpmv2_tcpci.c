@@ -12,6 +12,7 @@
 #include "timer.h"
 #include "usb_mux.h"
 #include "usb_tc_sm.h"
+#include "usb_prl_sm.h"
 
 #define PORT0 0
 
@@ -167,8 +168,8 @@ __maybe_unused static int test_connect_as_pd3_source(void)
 	/*
 	 * c) The Tester waits for Source_Capabilities for tNoResponse max.
 	 */
-	TEST_EQ(mock_tcpci_wait_for_transmit(
-		TCPC_TX_SOP, 0, PD_DATA_SOURCE_CAP), EC_SUCCESS, "%d");
+	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0, PD_DATA_SOURCE_CAP),
+		EC_SUCCESS, "%d");
 	/*
 	 * d) The Tester replies GoodCrc on reception of the
 	 * Source_Capabilities.
@@ -184,14 +185,14 @@ __maybe_unused static int test_connect_as_pd3_source(void)
 			1, PD_REV30, 0),
 		&rdo);
 	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
-	TEST_EQ(mock_tcpci_wait_for_transmit(
-		TCPC_TX_SOP, PD_CTRL_ACCEPT, 0), EC_SUCCESS, "%d");
+	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_ACCEPT, 0),
+		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 	/*
 	 * f) The Tester waits for PS_RDY for tPSSourceOn max.
 	 */
-	TEST_EQ(mock_tcpci_wait_for_transmit(
-		TCPC_TX_SOP, PD_CTRL_PS_RDY, 0), EC_SUCCESS, "%d");
+	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_PS_RDY, 0),
+		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 
 	/*
@@ -201,8 +202,8 @@ __maybe_unused static int test_connect_as_pd3_source(void)
 	 * the test fails. During this period, the Tester replies any message
 	 * sent from the UUT with a proper response.
 	 */
-	TEST_EQ(mock_tcpci_wait_for_transmit(
-		TCPC_TX_SOP_PRIME, 0, PD_DATA_VENDOR_DEF), EC_SUCCESS, "%d");
+	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP_PRIME, 0, PD_DATA_VENDOR_DEF),
+		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 	task_wait_event(10 * MSEC);
 	mock_tcpci_receive(PD_MSG_SOP_PRIME,
@@ -212,8 +213,8 @@ __maybe_unused static int test_connect_as_pd3_source(void)
 		NULL);
 	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
 
-	TEST_EQ(mock_tcpci_wait_for_transmit(
-		TCPC_TX_SOP, 0, PD_DATA_VENDOR_DEF), EC_SUCCESS, "%d");
+	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0, PD_DATA_VENDOR_DEF),
+		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 	task_wait_event(10 * MSEC);
 	mock_tcpci_receive(PD_MSG_SOP,
@@ -229,6 +230,77 @@ __maybe_unused static int test_connect_as_pd3_source(void)
 		SINK_TX_OK, "%d");
 
 	task_wait_event(10 * SECOND);
+	return EC_SUCCESS;
+}
+
+__maybe_unused static int test_retry_count_sop(void)
+{
+	/* DRP auto-toggling with AP in S0, source enabled. */
+	TEST_EQ(test_startup_and_resume(), EC_SUCCESS, "%d");
+
+	/*
+	 * The test starts in a disconnected state.
+	 */
+	mock_tcpci_set_reg(TCPC_REG_EXT_STATUS, TCPC_REG_EXT_STATUS_SAFE0V);
+	mock_set_alert(TCPC_REG_ALERT_EXT_STATUS);
+	task_wait_event(10 * SECOND);
+
+	/*
+	 * The Tester applies Rd and waits for Vbus for tNoResponse max.
+	 */
+	mock_set_cc(MOCK_CC_WE_ARE_SRC, MOCK_CC_SRC_OPEN, MOCK_CC_SRC_RD);
+	mock_set_alert(TCPC_REG_ALERT_CC_STATUS);
+
+	/*
+	 * The Tester waits for Source_Capabilities for tNoResponse max.
+	 *
+	 * Source Caps is SOP message which should be retried at TCPC layer
+	 */
+	TEST_EQ(verify_tcpci_tx_retry_count(CONFIG_PD_RETRY_COUNT), EC_SUCCESS,
+		"%d");
+	return EC_SUCCESS;
+}
+
+__maybe_unused static int test_retry_count_hard_reset(void)
+{
+	/* DRP auto-toggling with AP in S0, source enabled. */
+	TEST_EQ(test_startup_and_resume(), EC_SUCCESS, "%d");
+
+	/*
+	 * The test starts in a disconnected state.
+	 */
+	mock_tcpci_set_reg(TCPC_REG_EXT_STATUS, TCPC_REG_EXT_STATUS_SAFE0V);
+	mock_set_alert(TCPC_REG_ALERT_EXT_STATUS);
+	task_wait_event(10 * SECOND);
+
+	/*
+	 * The Tester applies Rd and waits for Vbus for tNoResponse max.
+	 */
+	mock_set_cc(MOCK_CC_WE_ARE_SRC, MOCK_CC_SRC_OPEN, MOCK_CC_SRC_RD);
+	mock_set_alert(TCPC_REG_ALERT_CC_STATUS);
+
+	/*
+	 * The Tester waits for Source_Capabilities for tNoResponse max.
+	 */
+	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0, PD_DATA_SOURCE_CAP),
+		EC_SUCCESS, "%d");
+	/*
+	 * The Tester replies GoodCrc on reception of the Source_Capabilities.
+	 */
+	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+	task_wait_event(10 * MSEC);
+
+	/*
+	 * Now that PRL is running since we are connected, we can send a hard
+	 * reset.
+	 */
+
+	/* Request that DUT send hard reset */
+	prl_execute_hard_reset(PORT0);
+
+	/* The retry count for hard resets should be 0 */
+	TEST_EQ(verify_tcpci_tx_retry_count(0), EC_SUCCESS, "%d");
+
 	return EC_SUCCESS;
 }
 
@@ -249,6 +321,8 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_connect_as_nonpd_sink);
 	RUN_TEST(test_startup_and_resume);
 	RUN_TEST(test_connect_as_pd3_source);
+	RUN_TEST(test_retry_count_sop);
+	RUN_TEST(test_retry_count_hard_reset);
 
 	test_print_result();
 }

@@ -3893,6 +3893,9 @@
  */
 #undef CONFIG_USB_PD_REV30
 
+/* Defined automatically based on on maximum PD revision supported. */
+#undef CONFIG_PD_RETRY_COUNT
+
 /*
  * Support USB PD 3.0 Extended Messages. This will only take effect if
  * CONFIG_USB_PD_REV30 is also enabled. Note that Chromebooks disabling this
@@ -4779,6 +4782,19 @@
 /* Disable extended message support if PD 3.0 support is disabled. */
 #ifndef CONFIG_USB_PD_REV30
 #undef CONFIG_USB_PD_EXTENDED_MESSAGES
+#endif
+
+/******************************************************************************/
+/*
+ * PD 3.0 only retries in TCPC hardware twice (for a total of 3 attempts), while
+ * PD 2.0 retires three times (for a total of 4 attempts).
+ *
+ * Note must be [0-3] since it must fit within 2 bits.
+ */
+#ifdef CONFIG_USB_PD_REV30
+#define CONFIG_PD_RETRY_COUNT 2
+#else
+#define CONFIG_PD_RETRY_COUNT 3
 #endif
 
 /******************************************************************************/

@@ -12,11 +12,6 @@
 #include "usb_pd_tcpm.h"
 #include "usb_sm.h"
 
-/*
- * Number of times the Protocol Layer will try to transmit a message
- * before giving up and signaling an error
- */
-#define N_RETRY_COUNT 2
 
 /**
  * Returns true if Protocol Layer State Machine is in run mode

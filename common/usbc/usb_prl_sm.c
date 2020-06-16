@@ -253,14 +253,12 @@ static struct protocol_layer_tx {
 	uint32_t flags;
 	/* protocol timer */
 	uint64_t sink_tx_timer;
-	/* tcpc transmit timeout */
+	/* timeout to limit waiting on TCPC response (not in spec) */
 	uint64_t tcpc_tx_timeout;
 	/* last message type we transmitted */
 	enum tcpm_transmit_type last_xmit_type;
 	/* message id counters for all 6 port partners */
 	uint32_t msg_id_counter[NUM_SOP_STAR_TYPES];
-	/* message retry counter */
-	uint32_t retry_counter;
 	/* transmit status */
 	int xmit_status;
 } prl_tx[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -768,9 +766,6 @@ static void prl_tx_phy_layer_reset_entry(const int port)
 static void prl_tx_wait_for_message_request_entry(const int port)
 {
 	print_current_prl_tx_state(port);
-
-	/* Reset RetryCounter */
-	prl_tx[port].retry_counter = 0;
 }
 
 static void prl_tx_wait_for_message_request_run(const int port)
@@ -980,9 +975,16 @@ static void prl_tx_construct_message(const int port)
 	prl_tx[port].xmit_status = TCPC_TX_UNSET;
 	PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
 
-	/* Pass message to PHY Layer */
+	/*
+	 * Pass message to PHY Layer. It handles retries in hardware as the EC
+	 * cannot handle the required timing ~ 1ms (tReceive + tRetry).
+	 *
+	 * Note if we ever start sending large, extendend messages, then we
+	 * should not retry those messages. We do not support that and probably
+	 * never will (since we support chunking).
+	 */
 	tcpm_transmit(port, pdmsg[port].xmit_type, header,
-						pdmsg[port].tx_chk_buf);
+		      pdmsg[port].tx_chk_buf);
 }
 
 /*
@@ -997,71 +999,16 @@ static void prl_tx_wait_for_phy_response_entry(const int port)
 
 static void prl_tx_wait_for_phy_response_run(const int port)
 {
-	int pd3_retry_check;
-
 	/* Wait until TX is complete */
 
 	/*
 	 * NOTE: The TCPC will set xmit_status to TCPC_TX_COMPLETE_DISCARDED
 	 *       when a GoodCRC containing an incorrect MessageID is received.
-	 *       This condition satifies the PRL_Tx_Match_MessageID state
+	 *       This condition satisfies the PRL_Tx_Match_MessageID state
 	 *       requirement.
 	 */
 
-	if (get_time().val > prl_tx[port].tcpc_tx_timeout ||
-		prl_tx[port].xmit_status == TCPC_TX_COMPLETE_FAILED ||
-		prl_tx[port].xmit_status == TCPC_TX_COMPLETE_DISCARDED) {
-
-		/* NOTE: PRL_Tx_Check_RetryCounter State embedded here. */
-
-		/* Increment check RetryCounter */
-		prl_tx[port].retry_counter++;
-
-#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
-		pd3_retry_check = (pdmsg[port].ext &&
-				PD_EXT_HEADER_DATA_SIZE(GET_EXT_HEADER(
-						pdmsg[port].tx_chk_buf[0]) >
-					PD_MAX_EXTENDED_MSG_CHUNK_LEN));
-#else
-		pd3_retry_check = 0;
-#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
-
-		/*
-		 * (RetryCounter > nRetryCount) | Large Extended Message
-		 */
-		if (prl_tx[port].retry_counter > N_RETRY_COUNT ||
-							pd3_retry_check) {
-			/*
-			 * NOTE: PRL_Tx_Transmission_Error State embedded
-			 * here.
-			 */
-
-			if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES)) {
-				/*
-				 * State tch_wait_for_transmission_complete will
-				 * inform policy engine of error
-				 */
-				PDMSG_SET_FLAG(port, PRL_FLAGS_TX_ERROR);
-			} else {
-				/* Report Error To Policy Engine */
-				pe_report_error(port, ERR_TCH_XMIT,
-						prl_tx[port].last_xmit_type);
-			}
-
-			/* Increment message id counter */
-			increment_msgid_counter(port);
-			set_state_prl_tx(port, PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
-		} else {
-			/*
-			 * NOTE: PRL_TX_Construct_Message State embedded
-			 * here.
-			 */
-			/* Try to resend the message. */
-			prl_tx_construct_message(port);
-			prl_tx[port].tcpc_tx_timeout = get_time().val
-						       + PD_T_TCPC_TX_TIMEOUT;
-		}
-	} else if (prl_tx[port].xmit_status == TCPC_TX_COMPLETE_SUCCESS) {
+	if (prl_tx[port].xmit_status == TCPC_TX_COMPLETE_SUCCESS) {
 		/* NOTE: PRL_TX_Message_Sent State embedded here. */
 		/* Increment messageId counter */
 		increment_msgid_counter(port);
@@ -1077,6 +1024,29 @@ static void prl_tx_wait_for_phy_response_run(const int port)
 		 * the transmission by one state machine cycle
 		 */
 		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+		set_state_prl_tx(port, PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
+	} else if (get_time().val > prl_tx[port].tcpc_tx_timeout ||
+		   prl_tx[port].xmit_status == TCPC_TX_COMPLETE_FAILED ||
+		   prl_tx[port].xmit_status == TCPC_TX_COMPLETE_DISCARDED) {
+		/*
+		 * NOTE: PRL_Tx_Transmission_Error State embedded
+		 * here.
+		 */
+
+		if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES)) {
+			/*
+			 * State tch_wait_for_transmission_complete will
+			 * inform policy engine of error
+			 */
+			PDMSG_SET_FLAG(port, PRL_FLAGS_TX_ERROR);
+		} else {
+			/* Report Error To Policy Engine */
+			pe_report_error(port, ERR_TCH_XMIT,
+					prl_tx[port].last_xmit_type);
+		}
+
+		/* Increment message id counter */
+		increment_msgid_counter(port);
 		set_state_prl_tx(port, PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
 	}
 }

@@ -968,17 +968,15 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 		}
 	}
 
-
 	/*
-	 * On receiving a received message on SOP, protocol layer
-	 * discards the pending  SOP messages queued for transmission.
-	 * But it doesn't do the same for SOP' message. So retry is
-	 * assigned to 0 to avoid multiple transmission.
+	 * We always retry in TCPC hardware since the TCPM is too slow to
+	 * respond within tRetry (~195 usec).
+	 *
+	 * The retry count used is dependent on the maximum PD revision
+	 * supported at build time.
 	 */
 	return tcpc_write(port, TCPC_REG_TRANSMIT,
-				(type == TCPC_TX_SOP_PRIME) ?
-				TCPC_REG_TRANSMIT_SET_WITHOUT_RETRY(type) :
-				TCPC_REG_TRANSMIT_SET_WITH_RETRY(type));
+			  TCPC_REG_TRANSMIT_SET_WITH_RETRY(type));
 }
 
 /*

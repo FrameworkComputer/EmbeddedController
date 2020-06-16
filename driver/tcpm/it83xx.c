@@ -195,7 +195,7 @@ static enum tcpc_transmit_complete it83xx_tx_data(
 		memcpy((uint32_t *)&IT83XX_USBPD_TDO(port), buf, length * 4);
 	}
 
-	for (r = 0; r <= PD_RETRY_COUNT; r++) {
+	for (r = 0; r <= CONFIG_PD_RETRY_COUNT; r++) {
 		/* Start TX */
 		USBPD_KICK_TX_START(port);
 		evt = task_wait_event_mask(TASK_EVENT_PHY_TX_DONE,
@@ -217,7 +217,7 @@ static enum tcpc_transmit_complete it83xx_tx_data(
 		}
 	}
 
-	if (r > PD_RETRY_COUNT)
+	if (r > CONFIG_PD_RETRY_COUNT)
 		return TCPC_TX_COMPLETE_DISCARDED;
 
 	return TCPC_TX_COMPLETE_SUCCESS;

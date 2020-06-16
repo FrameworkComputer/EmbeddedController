@@ -12,9 +12,6 @@
 #include "ec_commands.h"
 #include "i2c.h"
 
-/* Default retry count for transmitting */
-#define PD_RETRY_COUNT 3
-
 /* Time to wait for TCPC to complete transmit */
 #define PD_T_TCPC_TX_TIMEOUT  (100*MSEC)
 

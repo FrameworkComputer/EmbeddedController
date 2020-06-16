@@ -10,6 +10,7 @@
 #include "timer.h"
 
 #define BUFFER_SIZE 100
+#define MOCK_WAIT_TIMEOUT (5 * SECOND)
 
 struct tcpci_reg {
 	uint8_t		offset;
@@ -137,14 +138,11 @@ static void print_header(const char *prefix, uint16_t header)
 		 id, cnt, ext);
 }
 
-int mock_tcpci_wait_for_transmit(enum tcpm_transmit_type tx_type,
+int verify_tcpci_transmit(enum tcpm_transmit_type tx_type,
 				 enum pd_ctrl_msg_type ctrl_msg,
 				 enum pd_data_msg_type data_msg)
 {
-	int want_tx_reg = (tx_type == TCPC_TX_SOP_PRIME) ?
-				TCPC_REG_TRANSMIT_SET_WITHOUT_RETRY(tx_type) :
-				TCPC_REG_TRANSMIT_SET_WITH_RETRY(tx_type);
-	uint64_t timeout = get_time().val + 5 * SECOND;
+	uint64_t timeout = get_time().val + MOCK_WAIT_TIMEOUT;
 
 	TEST_EQ(tcpci_regs[TCPC_REG_TRANSMIT].value, 0, "%d");
 	while (get_time().val < timeout) {
@@ -153,16 +151,40 @@ int mock_tcpci_wait_for_transmit(enum tcpm_transmit_type tx_type,
 						tx_buffer, 1);
 			int type  = PD_HEADER_TYPE(header);
 			int cnt   = PD_HEADER_CNT(header);
+			const uint16_t want_tx_reg = tx_type;
+			const uint16_t tx_wo_retry =
+				tcpci_regs[TCPC_REG_TRANSMIT].value & ~0x0030;
 
-			TEST_EQ(tcpci_regs[TCPC_REG_TRANSMIT].value,
-				want_tx_reg, "%d");
+			/* Don't validate the retry portion of reg */
+			TEST_EQ(tx_wo_retry, want_tx_reg, "0x%x");
 			if (ctrl_msg != 0) {
-				TEST_EQ(ctrl_msg, type, "%d");
+				TEST_EQ(ctrl_msg, type, "0x%x");
 				TEST_EQ(cnt, 0, "%d");
 			} else {
-				TEST_EQ(data_msg, type, "%d");
+				TEST_EQ(data_msg, type, "0x%x");
 				TEST_GE(cnt, 1, "%d");
 			}
+			tcpci_regs[TCPC_REG_TRANSMIT].value = 0;
+			return EC_SUCCESS;
+		}
+		task_wait_event(5 * MSEC);
+	}
+	TEST_ASSERT(0);
+	return EC_ERROR_UNKNOWN;
+}
+
+int verify_tcpci_tx_retry_count(const uint8_t retry_count)
+{
+	uint64_t timeout = get_time().val + MOCK_WAIT_TIMEOUT;
+
+	TEST_EQ(tcpci_regs[TCPC_REG_TRANSMIT].value, 0, "%d");
+	while (get_time().val < timeout) {
+		if (tcpci_regs[TCPC_REG_TRANSMIT].value != 0) {
+			const uint16_t tx_retry = TCPC_REG_TRANSMIT_RETRY(
+				tcpci_regs[TCPC_REG_TRANSMIT].value);
+
+			TEST_EQ(tx_retry, retry_count, "%d");
+
 			tcpci_regs[TCPC_REG_TRANSMIT].value = 0;
 			return EC_SUCCESS;
 		}

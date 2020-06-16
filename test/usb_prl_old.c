@@ -859,135 +859,6 @@ static int test_send_ctrl_msg(void)
 	return EC_SUCCESS;
 }
 
-static int test_send_ctrl_msg_with_retry_and_fail(void)
-{
-	int i;
-	int port = PORT0;
-
-	enable_prl(port, 1);
-
-	/*
-	 * TEST: Control message transmission fail with retry
-	 */
-	task_wake(PD_PORT_TO_TASK_ID(port));
-	task_wait_event(MSEC);
-
-	TEST_EQ(prl_tx_get_state(port),
-			PRL_TX_WAIT_FOR_MESSAGE_REQUEST, "%u");
-
-	TEST_NE(simulate_send_ctrl_msg_request_from_pe(port,
-			TCPC_TX_SOP, PD_CTRL_ACCEPT), 0, "%d");
-
-	cycle_through_state_machine(port, 1, MSEC);
-
-	simulate_goodcrc(port, pd_port[port].power_role,
-					pd_port[port].msg_tx_id);
-
-	/* Do not increment tx_id so phy layer will not transmit message */
-
-	/* Let statemachine settle */
-	cycle_through_state_machine(port, 10, MSEC);
-
-	TEST_EQ(pd_port[port].mock_got_soft_reset, 0, "%d");
-	TEST_NE(pd_port[port].mock_pe_message_sent, 0, "%d");
-
-	task_wake(PD_PORT_TO_TASK_ID(port));
-	task_wait_event(MSEC);
-
-	TEST_EQ(prl_tx_get_state(port),
-			PRL_TX_WAIT_FOR_MESSAGE_REQUEST, "%u");
-
-	pd_port[port].mock_pe_message_sent = 0;
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
-	cycle_through_state_machine(port, 1, MSEC);
-
-	for (i = 0; i < N_RETRY_COUNT + 1; i++) {
-		/* Ensure that we have timed out */
-		cycle_through_state_machine(port, 12, MSEC);
-
-		TEST_EQ(pd_port[port].mock_got_soft_reset, 0, "%d");
-		TEST_EQ(pd_port[port].mock_pe_message_sent, 0, "%d");
-		if (i == N_RETRY_COUNT)
-			TEST_EQ(pd_port[port].mock_pe_error,
-					ERR_TCH_XMIT, "%d");
-		else
-			TEST_LE(pd_port[port].mock_pe_error, 0, "%d");
-	}
-
-	enable_prl(port, 0);
-
-	return EC_SUCCESS;
-}
-
-static int test_send_ctrl_msg_with_retry_and_success(void)
-{
-	int i;
-	int port = PORT0;
-
-	enable_prl(port, 1);
-
-	/*
-	 * TEST: Control message transmission fail with retry
-	 */
-
-	TEST_EQ(prl_tx_get_state(port),
-			PRL_TX_WAIT_FOR_MESSAGE_REQUEST, "%u");
-
-	pd_port[port].mock_got_soft_reset = 0;
-	pd_port[port].mock_pe_error = -1;
-	pd_port[port].mock_pe_message_sent = 0;
-
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
-	task_wait_event(40 * MSEC);
-
-	task_wake(PD_PORT_TO_TASK_ID(port));
-	task_wait_event(40 * MSEC);
-
-	simulate_goodcrc(port, pd_port[port].power_role,
-						pd_port[port].msg_tx_id);
-
-	/* Do not increment tx_id. */
-
-	cycle_through_state_machine(port, 3, 10 * MSEC);
-
-	TEST_EQ(pd_port[port].mock_got_soft_reset, 0, "%d");
-	TEST_NE(pd_port[port].mock_pe_message_sent, 0, "%d");
-
-	task_wake(PD_PORT_TO_TASK_ID(port));
-	task_wait_event(40 * MSEC);
-
-	TEST_EQ(prl_tx_get_state(port),
-			PRL_TX_WAIT_FOR_MESSAGE_REQUEST, "%u");
-
-	pd_port[port].mock_pe_message_sent = 0;
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
-	task_wait_event(30 * MSEC);
-
-	task_wake(PD_PORT_TO_TASK_ID(port));
-	task_wait_event(30 * MSEC);
-
-	for (i = 0; i < N_RETRY_COUNT + 1; i++) {
-		if (i == N_RETRY_COUNT)
-			inc_tx_id(port);
-
-		simulate_goodcrc(port, pd_port[port].power_role,
-						pd_port[port].msg_tx_id);
-
-		cycle_through_state_machine(port, 3, MSEC);
-
-		TEST_EQ(pd_port[port].mock_got_soft_reset, 0, "%d");
-		if (i == N_RETRY_COUNT)
-			TEST_NE(pd_port[port].mock_pe_message_sent, 0, "%d");
-		else
-			TEST_EQ(pd_port[port].mock_pe_message_sent, 0, "%d");
-		TEST_LE(pd_port[port].mock_pe_error, 0, "%d");
-	}
-
-	enable_prl(port, 0);
-
-	return EC_SUCCESS;
-}
-
 static int test_send_data_msg(void)
 {
 	int i;
@@ -1415,8 +1286,6 @@ void run_test(int argc, char **argv)
 	init_port(PORT0, PD_REV20);
 	RUN_TEST(test_prl_reset);
 	RUN_TEST(test_send_ctrl_msg);
-	RUN_TEST(test_send_ctrl_msg_with_retry_and_fail);
-	RUN_TEST(test_send_ctrl_msg_with_retry_and_success);
 	RUN_TEST(test_send_data_msg);
 	RUN_TEST(test_send_data_msg_to_much_data);
 	RUN_TEST(test_receive_control_msg);
@@ -1434,8 +1303,6 @@ void run_test(int argc, char **argv)
 	init_port(PORT0, PD_REV30);
 	RUN_TEST(test_prl_reset);
 	RUN_TEST(test_send_ctrl_msg);
-	RUN_TEST(test_send_ctrl_msg_with_retry_and_fail);
-	RUN_TEST(test_send_ctrl_msg_with_retry_and_success);
 	RUN_TEST(test_send_data_msg);
 	RUN_TEST(test_send_data_msg_to_much_data);
 	RUN_TEST(test_send_extended_data_msg);
