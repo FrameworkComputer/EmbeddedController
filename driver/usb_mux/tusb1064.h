@@ -9,7 +9,30 @@
 #include <stdint.h>
 #include "usb_mux.h"
 
-#define TUSB1064_ADDR_FLAGS             0x12
+/*
+ * TUSB1064 Has 16 possible device addresses which are selected by A1|A0 lines
+ * using 4 level inputs.
+ *    0 -> tied directly to GND
+ *    R -> tied to GND via a 20k pulldown
+ *    F -> floating
+ *    1 -> tied to VCC
+ */
+#define TUSB1064_I2C_ADDR0_FLAGS     0x44
+#define TUSB1064_I2C_ADDR1_FLAGS     0x45
+#define TUSB1064_I2C_ADDR2_FLAGS     0x46
+#define TUSB1064_I2C_ADDR3_FLAGS     0x47
+#define TUSB1064_I2C_ADDR4_FLAGS     0x20
+#define TUSB1064_I2C_ADDR5_FLAGS     0x21
+#define TUSB1064_I2C_ADDR6_FLAGS     0x22
+#define TUSB1064_I2C_ADDR7_FLAGS     0x23
+#define TUSB1064_I2C_ADDR8_FLAGS     0x10
+#define TUSB1064_I2C_ADDR9_FLAGS     0x11
+#define TUSB1064_I2C_ADDR10_FLAGS    0x12
+#define TUSB1064_I2C_ADDR11_FLAGS    0x13
+#define TUSB1064_I2C_ADDR12_FLAGS    0x0C
+#define TUSB1064_I2C_ADDR13_FLAGS    0x0D
+#define TUSB1064_I2C_ADDR14_FLAGS    0x0E
+#define TUSB1064_I2C_ADDR15_FLAGS    0x0F
 
 /* TUSB1064 General Register */
 #define TUSB1064_REG_GENERAL            0x0a

@@ -71,7 +71,7 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[DUT] = { /* DUT port with UFP mux */
 		.usb_port = DUT,
 		.i2c_port = I2C_PORT_MASTER,
-		.i2c_addr_flags = TUSB1064_ADDR_FLAGS,
+		.i2c_addr_flags = TUSB1064_I2C_ADDR10_FLAGS,
 		.driver = &tusb1064_usb_mux_driver,
 	}
 };
