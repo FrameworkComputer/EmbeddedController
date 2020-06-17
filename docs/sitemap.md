@@ -41,6 +41,10 @@
 *   [USB-A and USB-C Policies for Sourcing Power](./usb_power.md)
 *   [USB-C Power Delivery TCPMv2](./usb-tcpmv2.md)
 
+## Verified Boot
+
+*   [Detachable Base Verified Boot](./detachable_base_verified_boot.md)
+
 ## EC-3PO
 
 *   [EC-3PO overview](./ec-3po.md)
