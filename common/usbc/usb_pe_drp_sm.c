@@ -245,7 +245,6 @@ enum usb_pe_state {
 	PE_INIT_VDM_SVIDS_REQUEST,
 	PE_INIT_VDM_MODES_REQUEST,
 	PE_VDM_REQUEST,
-	PE_VDM_ACKED,
 	PE_VDM_RESPONSE,
 	PE_HANDLE_CUSTOM_VDM_REQUEST,
 	PE_WAIT_FOR_ERROR_RECOVERY,
@@ -340,7 +339,6 @@ static const char * const pe_state_names[] = {
 	[PE_INIT_VDM_SVIDS_REQUEST] = "PE_INIT_VDM_SVIDs_Request",
 	[PE_INIT_VDM_MODES_REQUEST] = "PE_INIT_VDM_Modes_Request",
 	[PE_VDM_REQUEST] = "PE_VDM_Request",
-	[PE_VDM_ACKED] = "PE_VDM_Acked",
 	[PE_VDM_RESPONSE] = "PE_VDM_Response",
 	[PE_HANDLE_CUSTOM_VDM_REQUEST] = "PE_Handle_Custom_Vdm_Request",
 	[PE_WAIT_FOR_ERROR_RECOVERY] = "PE_Wait_For_Error_Recovery",
@@ -4724,6 +4722,8 @@ static void pe_vdm_request_run(int port)
 		uint8_t type;
 		uint8_t cnt;
 		uint8_t ext;
+		uint16_t svid;
+		uint8_t vdo_cmd;
 
 		/* Message received */
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
@@ -4734,11 +4734,28 @@ static void pe_vdm_request_run(int port)
 		type = PD_HEADER_TYPE(rx_emsg[port].header);
 		cnt = PD_HEADER_CNT(rx_emsg[port].header);
 		ext = PD_HEADER_EXT(rx_emsg[port].header);
+		svid = PD_VDO_VID(payload[0]);
+		vdo_cmd = PD_VDO_CMD(payload[0]);
 
 		if (sop == pe[port].tx_type && type == PD_DATA_VENDOR_DEF &&
 				cnt > 0 && ext == 0) {
 			if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK) {
-				set_state_pe(port, PE_VDM_ACKED);
+				/*
+				 * PE initiator VDM-ACKed state for requested
+				 * VDM, like PE_INIT_VDM_FOO_ACKed, embedded
+				 * here.
+				 */
+				dpm_vdm_acked(port, sop, cnt, payload);
+
+				if (sop == TCPC_TX_SOP &&
+						svid == USB_SID_DISPLAYPORT &&
+						vdo_cmd == CMD_DP_CONFIG) {
+					PE_SET_FLAG(port,
+						PE_FLAGS_VDM_SETUP_DONE);
+				}
+
+				/* Return to previous Ready state */
+				set_state_pe(port, get_last_state_pe(port));
 				return;
 			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
 				PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED);
@@ -4795,6 +4812,10 @@ static void pe_vdm_request_run(int port)
 	 * information from the sent VDM.
 	 */
 	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED)) {
+		/*
+		 * PE initiator VDM-NAKed state for requested VDM, like
+		 * PE_INIT_VDM_FOO_NAKed, embedded here.
+		 */
 		PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 
 		dpm_vdm_naked(port, pe[port].tx_type,
@@ -4816,41 +4837,6 @@ static void pe_vdm_request_exit(int port)
 	pe[port].tx_type = TCPC_TX_INVALID;
 
 	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
-}
-
-/**
- * PE_VDM_Acked
- */
-static void pe_vdm_acked_entry(int port)
-{
-	int sop;
-	int vdo_count;
-	uint32_t *payload;
-	uint16_t svid;
-	uint8_t vdo_cmd;
-
-	print_current_state(port);
-
-	/* Get the message */
-	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-	vdo_count = PD_HEADER_CNT(rx_emsg[port].header);
-	payload = (uint32_t *)rx_emsg[port].buf;
-	svid = PD_VDO_VID(payload[0]);
-	vdo_cmd = PD_VDO_CMD(payload[0]);
-
-
-	/* vdo_count must have been >= 1 to get into this state. */
-	dpm_vdm_acked(port, sop, vdo_count, payload);
-
-	if (sop == TCPC_TX_SOP && svid == USB_SID_DISPLAYPORT &&
-			vdo_cmd == CMD_DP_CONFIG)
-		PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
-
-	if (pe[port].power_role == PD_ROLE_SOURCE) {
-		set_state_pe(port, PE_SRC_READY);
-	} else {
-		set_state_pe(port, PE_SNK_READY);
-	}
 }
 
 /**
@@ -5775,9 +5761,6 @@ static const struct usb_state pe_states[] = {
 		.entry = pe_vdm_request_entry,
 		.run   = pe_vdm_request_run,
 		.exit  = pe_vdm_request_exit,
-	},
-	[PE_VDM_ACKED] = {
-		.entry = pe_vdm_acked_entry,
 	},
 	[PE_VDM_RESPONSE] = {
 		.entry = pe_vdm_response_entry,
