@@ -11,7 +11,8 @@
 GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(3, 4), GPIO_INT_FALLING,			tcpc_alert_event)
 GPIO_INT(USB_C1_TCPC_INT_ODL,	PIN(F, 1), GPIO_INT_FALLING,			c1_tcpc_interrupt)
 GPIO_INT(USB_C0_PPC_FAULT_ODL,	PIN(6, 3), GPIO_INT_FALLING,			ppc_interrupt)
-GPIO_INT(USB_C1_PPC_INT_ODL,	PIN(D, 4), GPIO_INT_FALLING,			ppc_interrupt)
+/* PPC interrupts trigger on falling edge, but HDMI HPD triggers on rising edge. */
+GPIO_INT(USB_C1_PPC_INT_ODL,	PIN(D, 4), GPIO_INT_BOTH,				c1_ppc_interrupt)
 GPIO_INT(USB_C0_BC12_INT_ODL,	PIN(9, 3), GPIO_INT_FALLING | GPIO_PULL_UP,	bc12_interrupt)
 GPIO_INT(USB_C1_BC12_INT_ODL, 	PIN(A, 4), GPIO_INT_FALLING | GPIO_PULL_UP,	bc12_interrupt)
 GPIO_INT(SLP_S3_L,		PIN(7, 4), GPIO_INT_BOTH,			power_signal_interrupt)
@@ -59,8 +60,6 @@ GPIO(LED3_PWM,			PIN(C, 3), GPIO_OUT_HIGH)
  * Dalboz has 2 DB options, with different IO expanders. IOEX_C1_NCT3807 is the
  * OPT1 DB (USB-C1), IOEX_HDMI_PCAL6408 is the OPT2 DB (HDMI).
  */
-
-IOEX_INT(HDMI_CONN_HPD_3V3_DB,	EXPIN(IOEX_HDMI_PCAL6408, 0, 4), GPIO_INT_BOTH,	hdmi_hpd_interrupt)
 
 IOEX(USB_C0_FAULT_ODL,		EXPIN(IOEX_C0_NCT3807, 0, 3), GPIO_ODR_HIGH)	/* C0 Fault to SOC */
 IOEX(USB_C0_TCPC_FASTSW_CTL_EN,	EXPIN(IOEX_C0_NCT3807, 0, 4), GPIO_OUT_LOW)	/* C0 FastSwitch Control */
