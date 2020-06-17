@@ -4269,121 +4269,82 @@ static void pe_vdm_identity_request_cbl_entry(int port)
 
 static void pe_vdm_identity_request_cbl_run(int port)
 {
-	/* Message received */
-	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
-		uint32_t *payload;
-		enum tcpm_transmit_type sop;
-		uint8_t type;
-		uint8_t cnt;
-		uint8_t ext;
+	uint32_t *payload;
+	int sop;
+	uint8_t type;
+	uint8_t cnt;
+	uint8_t ext;
+	enum pd_discovery_state response_result;
 
-		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
-
-		/* Retrieve the message information */
-		payload = (uint32_t *)rx_emsg[port].buf;
-		sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-		type = PD_HEADER_TYPE(rx_emsg[port].header);
-		cnt = PD_HEADER_CNT(rx_emsg[port].header);
-		ext = PD_HEADER_EXT(rx_emsg[port].header);
-
-		if (sop == TCPC_TX_SOP_PRIME && type == PD_DATA_VENDOR_DEF &&
-							cnt > 0 && ext == 0) {
+	if (!PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		/* No message received */
+		if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 			/*
-			 * Valid DiscoverIdentity responses should have at least
-			 * 4 objects (header, ID header, Cert Stat, Product VDO)
+			 * No Good CRC: See section 6.4.4.3.1 - Discover
+			 * Identity.
+			 *
+			 * Discover Identity Command request sent to SOP' Shall
+			 * Not cause a Soft Reset if a GoodCRC Message response
+			 * is not returned since this can indicate a non-PD
+			 * Capable cable.
 			 */
-			if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK &&
-								cnt > 3) {
-				/*
-				 * PE_SRC_VDM_Identity_ACKed and
-				 * PE_INIT_PORT_VDM_Identity_ACKed embedded here
-				 */
-				dfp_consume_cable_response(port, cnt, payload,
-							rx_emsg[port].header);
-
-				/*
-				 * Note: If port partner runs PD 2.0, we must
-				 * use PD 2.0 to communicate with the cable plug
-				 * when in an explicit contract
-				 *
-				 * PD Spec Table 6-2: Revision Interoperability
-				 * during an Explicit Contract
-				 */
-				if (prl_get_rev(port, TCPC_TX_SOP) != PD_REV20)
-					prl_set_rev(port, sop,
-							pe[port].cable.rev);
-
-			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
-				/*
-				 * PE_SRC_VDM_Identity_NAKed and
-				 * PE_INIT_PORT_VDM_Identity_NAKed embedded here
-				 */
-				pd_set_identity_discovery(port, sop,
-						PD_DISC_FAIL);
-			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
-				/*
-				 * Don't fill in the discovery field so we
-				 * re-probe in tVDMBusy
-				 */
-				CPRINTS("C%d: Cable Busy, DiscIdent "
-					"will be re-tried", port);
-				pe[port].discover_identity_timer =
-						get_time().val + PD_T_VDM_BUSY;
-			} else {
-				/*
-				 * Cable gave us an incorrect size or command,
-				 * mark discovery as failed
-				 */
-				pd_set_identity_discovery(port, sop,
-						PD_DISC_FAIL);
-				CPRINTS("C%d: Unexpected cable response: "
-					"0x%04x 0x%04x", port,
-					rx_emsg[port].header, payload[0]);
-			}
-			/* Return to calling state (SRC_DISCOVERY, or ready) */
+			PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 			set_state_pe(port, get_last_state_pe(port));
-			return;
-		}
-
-		/* Unexpected Message Received. */
-
-		/*
-		 * Before an explicit contract, an unexpected message
-		 * shall generate a soft reset using the SOP* of the
-		 * incoming message
-		 */
-		if (get_last_state_pe(port) == PE_SRC_DISCOVERY) {
-			pe_send_soft_reset(port, sop);
-		} else {
-		/*
-		 * Otherwise, return to PE_S[RC,NK]_Ready to process
-		 * Reset PE_FLAGS_MSG_RECEIVED so Src.Ready or Snk.Ready
-		 * can handle it.
-		 */
-			PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
-
-			if (pe[port].power_role == PD_ROLE_SOURCE)
-				set_state_pe(port, PE_SRC_READY);
-			else
-				set_state_pe(port, PE_SNK_READY);
 		}
 		return;
 	}
+	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
-	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
-		/* No Good CRC */
-		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
+	/*
+	 * Valid DiscoverIdentity responses should have at least 4 objects
+	 * (header, ID header, Cert Stat, Product VDO).
+	 */
+	response_result = pe_discovery_vdm_request_run_common(port, 4);
+
+	/* Retrieve the message information */
+	payload = (uint32_t *)rx_emsg[port].buf;
+	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
+	type = PD_HEADER_TYPE(rx_emsg[port].header);
+	cnt = PD_HEADER_CNT(rx_emsg[port].header);
+	ext = PD_HEADER_EXT(rx_emsg[port].header);
+
+	if (response_result == PD_DISC_COMPLETE) {
+		/*
+		 * PE_INIT_PORT_VDM_Identity_ACKed and PE_SRC_VDM_Identity_ACKed
+		 * embedded here.
+		 */
+		dfp_consume_cable_response(port, cnt, payload,
+				rx_emsg[port].header);
 
 		/*
-		 * See section 6.4.4.3.1 - Discover Identity
+		 * Note: If port partner runs PD 2.0, we must use PD 2.0 to
+		 * communicate with the cable plug when in an explicit contract.
 		 *
-		 * Discover Identity Command request sent to SOP' Shall Not
-		 * cause a Soft Reset if a GoodCRC Message response is not
-		 * returned since this can indicate a non-PD Capable cable
+		 * PD Spec Table 6-2: Revision Interoperability during an
+		 * Explicit Contract
 		 */
-		set_state_pe(port, get_last_state_pe(port));
+		if (prl_get_rev(port, TCPC_TX_SOP) != PD_REV20)
+			prl_set_rev(port, sop, pe[port].cable.rev);
+	} else if (response_result == PD_DISC_FAIL) {
+		/*
+		 * PE_INIT_PORT_VDM_IDENTITY_NAKed and PE_SRC_VDM_Identity_NAKed
+		 * embedded here.
+		 */
+		pd_set_identity_discovery(port, sop, PD_DISC_FAIL);
+	} else if (get_last_state_pe(port) == PE_SRC_DISCOVERY &&
+			(sop != TCPC_TX_SOP_PRIME ||
+			 type != PD_DATA_VENDOR_DEF || cnt == 0 || ext != 0)) {
+		/*
+		 * Unexpected non-VDM received: Before an explicit contract, an
+		 * unexpected message shall generate a soft reset using the SOP*
+		 * of the incoming message.
+		 */
+		pe_send_soft_reset(port, sop);
 		return;
 	}
+
+	/* Return to calling state (PE_{SRC,SNK}_Ready or PE_SRC_Discovery) */
+	set_state_pe(port, get_last_state_pe(port));
 }
 
 static void pe_vdm_identity_request_cbl_exit(int port)
