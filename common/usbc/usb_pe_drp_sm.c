@@ -110,8 +110,8 @@
 #define PE_FLAGS_PS_RESET_COMPLETE           BIT(13)
 /* VCONN swap operation has completed */
 #define PE_FLAGS_VCONN_SWAP_COMPLETE         BIT(14)
-/* Flag to note no more discover identity messages should be sent */
-#define PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE BIT(15)
+/* Flag to note no more setup VDMs (discovery, etc.) should be sent */
+#define PE_FLAGS_VDM_SETUP_DONE              BIT(15)
 /* Flag to note PR Swap just completed for Startup entry */
 #define PE_FLAGS_PR_SWAP_COMPLETE	     BIT(16)
 /* Flag to note Port Discovery port partner replied with BUSY */
@@ -134,8 +134,8 @@
 #define PE_FLAGS_LOCALLY_INITIATED_AMS       BIT(25)
 /* Flag to note the first message sent in PE_SRC_READY and PE_SNK_READY */
 #define PE_FLAGS_FIRST_MSG                   BIT(26)
-/* Flag to continue port discovery if it was interrupted */
-#define PE_FLAGS_DISCOVER_PORT_CONTINUE      BIT(27)
+/* Flag to continue a VDM request if it was interrupted */
+#define PE_FLAGS_VDM_REQUEST_CONTINUE        BIT(27)
 /* TODO: POLICY decision: Triggers a Vconn SWAP attempt to on */
 #define PE_FLAGS_VCONN_SWAP_TO_ON	     BIT(28)
 /* FLAG to track that VDM request to port partner timed out */
@@ -1136,7 +1136,7 @@ static bool common_src_snk_dpm_requests(int port)
 			 * Clear counters and reset timer to trigger a
 			 * port discovery.
 			 */
-			PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+			PE_CLR_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 			pd_dfp_discovery_init(port);
 			pe[port].dr_swap_attempt_counter = 0;
 			pe[port].discover_identity_counter = 0;
@@ -1336,7 +1336,7 @@ static bool pe_attempt_port_discovery(int port)
 	 * DONE set once modal entry is successful, discovery completes, or
 	 * discovery results in a NAK
 	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE))
+	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_SETUP_DONE))
 		return false;
 
 	/*
@@ -1365,7 +1365,7 @@ static bool pe_attempt_port_discovery(int port)
 	}
 
 	/* If mode entry was successful, disable the timer */
-	if (PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE)) {
+	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_SETUP_DONE)) {
 		pe[port].discover_identity_timer = TIMER_DISABLED;
 		return false;
 	}
@@ -1540,7 +1540,7 @@ static void pe_src_startup_entry(int port)
 		pe[port].discover_identity_timer = get_time().val;
 
 		/* Clear port discovery flags */
-		PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+		PE_CLR_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 		pd_dfp_discovery_init(port);
 		pe[port].ama_vdo = PD_VDO_INVALID;
 		pe[port].vpd_vdo = PD_VDO_INVALID;
@@ -2021,8 +2021,8 @@ static void pe_src_ready_run(int port)
 				return;
 			}
 		}
-	} else if (PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_PORT_CONTINUE)) {
-		PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_CONTINUE);
+	} else if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_CONTINUE)) {
+		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_CONTINUE);
 		set_state_pe(port, PE_VDM_REQUEST);
 		return;
 	}
@@ -2299,7 +2299,7 @@ static void pe_snk_startup_entry(int port)
 		pe[port].discover_identity_timer = get_time().val;
 
 		/* Clear port discovery flags */
-		PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+		PE_CLR_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 		pd_dfp_discovery_init(port);
 		pe[port].discover_identity_counter = 0;
 		memset(&pe[port].cable, 0, sizeof(struct pd_cable));
@@ -2772,8 +2772,8 @@ static void pe_snk_ready_run(int port)
 				return;
 			}
 		}
-	} else if (PE_CHK_FLAG(port, PE_FLAGS_DISCOVER_PORT_CONTINUE)) {
-		PE_CLR_FLAG(port, PE_FLAGS_DISCOVER_PORT_CONTINUE);
+	} else if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_CONTINUE)) {
+		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_CONTINUE);
 		set_state_pe(port, PE_VDM_REQUEST);
 		return;
 	}
@@ -4708,7 +4708,7 @@ static void pe_vdm_request_run(int port)
 				 * message is handled
 				 */
 				PE_SET_FLAG(port,
-					PE_FLAGS_DISCOVER_PORT_CONTINUE);
+					PE_FLAGS_VDM_REQUEST_CONTINUE);
 			}
 
 			if (pe[port].power_role == PD_ROLE_SOURCE)
@@ -4738,7 +4738,7 @@ static void pe_vdm_request_run(int port)
 	 * information from the sent VDM.
 	 */
 	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED)) {
-		PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+		PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 
 		dpm_vdm_naked(port, pe[port].tx_type,
 				PD_VDO_VID(pe[port].vdm_data[0]),
@@ -4785,13 +4785,9 @@ static void pe_vdm_acked_entry(int port)
 	/* vdo_count must have been >= 1 to get into this state. */
 	dpm_vdm_acked(port, sop, vdo_count, payload);
 
-	/*
-	 * TODO(b/155890173): Respect distinction between discovery and mode
-	 * entry in flags.
-	 */
 	if (sop == TCPC_TX_SOP && svid == USB_SID_DISPLAYPORT &&
 			vdo_cmd == CMD_DP_CONFIG)
-		PE_SET_FLAG(port, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+		PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 
 	if (pe[port].power_role == PD_ROLE_SOURCE) {
 		set_state_pe(port, PE_SRC_READY);

@@ -68,7 +68,7 @@ static int test_pe_frs(void)
 	 * background tasks (ex. discovery) aren't running.
 	 */
 	tc_prs_src_snk_assert_rd(PORT0);
-	pe_set_flag(PORT0, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+	pe_set_flag(PORT0, PE_FLAGS_VDM_SETUP_DONE);
 	pe_set_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT);
 	set_state_pe(PORT0, PE_SNK_READY);
 	pe_run(PORT0, EVT_IGNORED, ENABLED);

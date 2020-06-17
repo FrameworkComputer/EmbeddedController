@@ -65,8 +65,8 @@
 #define PE_FLAGS_PS_RESET_COMPLETE           BIT(13)
 /* VCONN swap operation has completed */
 #define PE_FLAGS_VCONN_SWAP_COMPLETE         BIT(14)
-/* Flag to note no more discover identity messages are sent to port partner */
-#define PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE BIT(15)
+/* Flag to note no more setup VDMs (discovery, etc.) should be sent */
+#define PE_FLAGS_VDM_SETUP_DONE              BIT(15)
 /* Flag to note Swap Source Start timer should be set at PE_SRC_Startup entry */
 #define PE_FLAGS_RUN_SOURCE_START_TIMER      BIT(16)
 /* Flag to note Port Discovery port partner replied with BUSY */
