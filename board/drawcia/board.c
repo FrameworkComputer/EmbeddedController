@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Waddledee board-specific configuration */
+/* Drawcia board-specific configuration */
 
 #include "button.h"
 #include "charge_manager.h"
@@ -16,8 +16,8 @@
 #include "driver/sync.h"
 #include "driver/retimer/tusb544.h"
 #include "driver/temp_sensor/thermistor.h"
-#include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/it83xx_pd.h"
+#include "driver/tcpm/ps8xxx.h"
 #include "driver/usb_mux/it5205.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -164,9 +164,9 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_SUB_USB_C1,
-			.addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
+			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		},
-		.drv = &anx7447_tcpm_drv,
+		.drv = &ps8xxx_tcpm_drv,
 		.flags = TCPC_FLAGS_TCPCI_REV2_0,
 	},
 };
@@ -190,8 +190,8 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 1,
 		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
-		.driver = &anx7447_usb_mux_driver,
+		.i2c_addr_flags = PS8751_I2C_ADDR1_FLAGS,
+		.driver = &tcpci_tcpm_usb_mux_driver,
 		.next_mux = &usbc1_retimer,
 	},
 };
