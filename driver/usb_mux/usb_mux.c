@@ -151,6 +151,10 @@ void usb_mux_init(int port)
 {
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 
+	if (port >= board_get_usb_pd_port_count()) {
+		return;
+	}
+
 	configure_mux(port, USB_MUX_INIT, NULL);
 
 	/* Device is always out of LPM after initialization. */
@@ -168,6 +172,10 @@ void usb_mux_set(int port, mux_state_t mux_mode,
 	const int should_enter_low_power_mode =
 		(mux_mode == USB_PD_MUX_NONE &&
 		usb_mode == USB_SWITCH_DISCONNECT);
+
+	if (port >= board_get_usb_pd_port_count()) {
+		return;
+	}
 
 	/* Configure USB2.0 */
 	if (IS_ENABLED(CONFIG_USB_CHARGER))
@@ -208,6 +216,10 @@ mux_state_t usb_mux_get(int port)
 {
 	mux_state_t mux_state;
 
+	if (port >= board_get_usb_pd_port_count()) {
+		return USB_PD_MUX_NONE;
+	}
+
 	exit_low_power_mode(port);
 
 	if (configure_mux(port, USB_MUX_GET_MODE, &mux_state))
@@ -219,6 +231,10 @@ mux_state_t usb_mux_get(int port)
 void usb_mux_flip(int port)
 {
 	mux_state_t mux_state;
+
+	if (port >= board_get_usb_pd_port_count()) {
+		return;
+	}
 
 	exit_low_power_mode(port);
 
@@ -237,6 +253,10 @@ void usb_mux_hpd_update(int port, int hpd_lvl, int hpd_irq)
 {
 	mux_state_t mux_state;
 	const struct usb_mux *mux_ptr = &usb_muxes[port];
+
+	if (port >= board_get_usb_pd_port_count()) {
+		return;
+	}
 
 	for (; mux_ptr; mux_ptr = mux_ptr->next_mux)
 		if (mux_ptr->hpd_update)
