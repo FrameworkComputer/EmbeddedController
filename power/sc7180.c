@@ -471,9 +471,6 @@ static void power_off(void)
 	if (!is_system_powered())
 		return;
 
-	/* Call hooks before we drop power rails */
-	hook_notify(HOOK_CHIPSET_SHUTDOWN);
-
 	/* Do a graceful way to shutdown PMIC/AP first */
 	set_pmic_pwron(0);
 	usleep(PMIC_POWER_OFF_DELAY);
@@ -495,10 +492,6 @@ static void power_off(void)
 
 	lid_opened = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
-	CPRINTS("power shutdown complete");
-
-	/* Call hooks after we drop power rails */
-	hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
 }
 
 /**
@@ -529,19 +522,6 @@ static int power_is_enough(void)
  */
 static void power_on(void)
 {
-	/*
-	 * If no enough power, return and the state machine will transition
-	 * back to S5.
-	 */
-	if (!power_is_enough())
-		return;
-
-	/*
-	 * When power_on() is called, we are at S5S3. Initialize components
-	 * to ready state before AP is up.
-	 */
-	hook_notify(HOOK_CHIPSET_PRE_INIT);
-
 	/* Enable the 3.3V and 5V rail. */
 	gpio_set_level(GPIO_EN_PP3300_A, 1);
 #ifdef CONFIG_POWER_PP5000_CONTROL
@@ -559,8 +539,6 @@ static void power_on(void)
 	set_pmic_pwron(1);
 
 	disable_sleep(SLEEP_MASK_AP_RUN);
-
-	CPRINTS("AP running ...");
 }
 
 /**
@@ -757,7 +735,16 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		power_button_wait_for_release(-1);
 
+		/* If no enough power, return back to S5. */
+		if (!power_is_enough())
+			return POWER_S5;
+
+		/* Initialize components to ready state before AP is up. */
+		hook_notify(HOOK_CHIPSET_PRE_INIT);
+
 		power_on();
+		CPRINTS("AP running ...");
+
 		if (power_wait_signals(IN_POWER_GOOD) != EC_SUCCESS) {
 			CPRINTS("POWER_GOOD not seen in time");
 			set_system_power(0);
@@ -807,7 +794,15 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S5:
+		/* Call hooks before we drop power rails */
+		hook_notify(HOOK_CHIPSET_SHUTDOWN);
+
 		power_off();
+		CPRINTS("power shutdown complete");
+
+		/* Call hooks after we drop power rails */
+		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
+
 		/*
 		 * Wait forever for the release of the power button; otherwise,
 		 * this power button press will then trigger a power-on in S5.
