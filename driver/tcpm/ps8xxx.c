@@ -21,7 +21,7 @@
 #include "usb_pd.h"
 
 #if !defined(CONFIG_USB_PD_TCPM_PS8751) && \
-	!defined(CONIFG_USB_PD_TCPM_PS8705) && \
+	!defined(CONFIG_USB_PD_TCPM_PS8705) && \
 	!defined(CONFIG_USB_PD_TCPM_PS8805) && \
 	!defined(CONFIG_USB_PD_TCPM_PS8815)
 #error "Unsupported PS8xxx TCPC."
