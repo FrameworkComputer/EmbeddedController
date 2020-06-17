@@ -4435,82 +4435,41 @@ static void pe_init_port_vdm_identity_request_entry(int port)
 
 static void pe_init_port_vdm_identity_request_run(int port)
 {
-	/* Message received */
-	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
-		uint32_t *payload;
-		int sop;
-		uint8_t type;
-		uint8_t cnt;
-		uint8_t ext;
+	uint32_t *payload;
+	int sop;
+	uint8_t cnt;
+	enum pd_discovery_state response_result;
 
-		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
-
-		/* Retrieve the message information */
-		payload = (uint32_t *)rx_emsg[port].buf;
-		sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-		type = PD_HEADER_TYPE(rx_emsg[port].header);
-		cnt = PD_HEADER_CNT(rx_emsg[port].header);
-		ext = PD_HEADER_EXT(rx_emsg[port].header);
-
-		if (sop == TCPC_TX_SOP && type == PD_DATA_VENDOR_DEF &&
-							cnt > 0 && ext == 0) {
-			/*
-			 * Valid DiscoverIdentity responses should have at least
-			 * 4 objects (header, ID header, Cert Stat, Product VDO)
-			 */
-			if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK &&
-								cnt > 3) {
-				/*
-				 * PE_INIT_PORT_VDM_Identity_ACKed embedded here
-				 */
-				dfp_consume_identity(port, cnt, payload);
-			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
-				/*
-				 * PE_INIT_PORT_VDM_Identity_NAKed embedded here
-				 */
-				pd_set_identity_discovery(port, sop,
-							  PD_DISC_FAIL);
-			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
-				/*
-				 * Don't fill in the discovery field so we
-				 * re-probe in tVDMBusy
-				 *
-				 * Note: May retry forever if port partner never
-				 * returns anything but BUSY
-				 */
-				CPRINTS("C%d: Partner Busy, DiscIdent "
-					"will be re-tried", port);
-				pe[port].discover_identity_timer =
-						get_time().val + PD_T_VDM_BUSY;
-			} else {
-				/*
-				 * Partner gave an incorrect size or command,
-				 * mark discovery as failed
-				 */
-				pd_set_identity_discovery(port, sop,
-							  PD_DISC_FAIL);
-				CPRINTS("C%d: Unexpected partner response: "
-					"0x%04x 0x%04x", port,
-					rx_emsg[port].header, payload[0]);
-			}
-		} else if (type == PD_CTRL_NOT_SUPPORTED && cnt == 0) {
-			/*
-			 * Partner doesn't support structured VDMs, mark
-			 * discovery as failed
-			 */
-			pd_set_identity_discovery(port, sop, PD_DISC_FAIL);
-		} else {
-			/*
-			 * Return to PE_S[RC,NK]_Ready to process unexpected
-			 * message. Reset PE_FLAGS_MSG_RECEIVED so ready state
-			 * knows to handle it.
-			 */
-			PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
-		}
-		/* Return to calling state */
-		set_state_pe(port, get_last_state_pe(port));
+	/* No message received */
+	if (!PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
 		return;
+	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+	/*
+	 * Valid DiscoverIdentity responses should have at least 4 objects
+	 * (header, ID header, Cert Stat, Product VDO)
+	 */
+	response_result = pe_discovery_vdm_request_run_common(port, 4);
+
+	/* Retrieve the message information */
+	payload = (uint32_t *)rx_emsg[port].buf;
+	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
+	cnt = PD_HEADER_CNT(rx_emsg[port].header);
+
+	if (response_result == PD_DISC_COMPLETE) {
+		/* PE_INIT_PORT_VDM_Identity_ACKed embedded here. */
+		dfp_consume_identity(port, cnt, payload);
+	} else if (response_result == PD_DISC_FAIL) {
+		/* PE_INIT_PORT_VDM_IDENTITY_NAKed embedded here */
+		pd_set_identity_discovery(port, sop, PD_DISC_FAIL);
 	}
+	/*
+	 * If the received message doesn't change the discovery state, there is
+	 * nothing to do but return to the previous ready state.
+	 */
+
+	/* Return to calling state (PE_{SRC,SNK}_Ready) */
+	set_state_pe(port, get_last_state_pe(port));
 }
 
 static void pe_init_port_vdm_identity_request_exit(int port)
@@ -4591,7 +4550,7 @@ static void pe_init_vdm_svids_request_run(int port)
 	}
 	/*
 	 * If the received message doesn't change the discovery state, there is
-	 * nothing to do but return to the ready previous state.
+	 * nothing to do but return to the previous ready state.
 	 */
 
 	/* Return to calling state (PE_{SRC,SNK}_Ready) */
