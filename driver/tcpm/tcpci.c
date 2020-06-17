@@ -52,7 +52,8 @@ struct i2c_wrt_op {
 	int val;
 	int mask;
 };
-static struct i2c_wrt_op last_write_op[CONFIG_USB_PD_PORT_MAX_COUNT];
+STATIC_IF(DEBUG_I2C_FAULT_LAST_WRITE_OP)
+	struct i2c_wrt_op last_write_op[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /*
  * AutoDischargeDisconnect has caused a number of issues with the
@@ -77,6 +78,21 @@ static struct i2c_wrt_op last_write_op[CONFIG_USB_PD_PORT_MAX_COUNT];
  * this useful information
  */
 #undef DEBUG_GET_CC
+
+struct get_cc_values {
+	int cc1;
+	int cc2;
+	int cc_sts;
+	int role;
+};
+STATIC_IF(DEBUG_GET_CC)
+	struct get_cc_values last_get_cc[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+/*
+ * Seeing RoleCtrl updates can help determine why GetCC is not
+ * working as it should be.
+ */
+#undef DEBUG_ROLE_CTRL_UPDATES
 
 /****************************************************************************/
 
@@ -440,26 +456,45 @@ int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	*cc1 |= cc1_present_rd << 2;
 	*cc2 |= cc2_present_rd << 2;
 
-	if (IS_ENABLED(DEBUG_GET_CC))
+	if (IS_ENABLED(DEBUG_GET_CC) &&
+	    (last_get_cc[port].cc1 != *cc1 ||
+	     last_get_cc[port].cc2 != *cc2 ||
+	     last_get_cc[port].cc_sts != status ||
+	     last_get_cc[port].role != role)) {
+
 		CPRINTS("C%d: GET_CC cc1=%d cc2=%d cc_sts=0x%X role=0x%X",
 			port, *cc1, *cc2, status, role);
 
+		last_get_cc[port].cc1 = *cc1;
+		last_get_cc[port].cc2 = *cc2;
+		last_get_cc[port].cc_sts = status;
+		last_get_cc[port].role = role;
+	}
 	return rv;
 }
 
 int tcpci_tcpm_set_cc(int port, int pull)
 {
-	return tcpc_write(port, TCPC_REG_ROLE_CTRL,
-			  TCPC_REG_ROLE_CTRL_SET(0,
-						 tcpci_get_cached_rp(port),
-						 pull, pull));
+	int role = TCPC_REG_ROLE_CTRL_SET(0,
+					  tcpci_get_cached_rp(port),
+					  pull, pull);
+
+	if (IS_ENABLED(DEBUG_ROLE_CTRL_UPDATES))
+		CPRINTS("C%d: SET_CC pull=%d role=0x%X", port, pull, role);
+
+	return tcpc_write(port, TCPC_REG_ROLE_CTRL, role);
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 int tcpci_set_role_ctrl(int port, int toggle, int rp, int pull)
 {
-	return tcpc_write(port, TCPC_REG_ROLE_CTRL,
-			  TCPC_REG_ROLE_CTRL_SET(toggle, rp, pull, pull));
+	int role = TCPC_REG_ROLE_CTRL_SET(toggle, rp, pull, pull);
+
+	if (IS_ENABLED(DEBUG_ROLE_CTRL_UPDATES))
+		CPRINTS("C%d: SET_ROLE_CTRL toggle=%d rp=%d pull=%d role=0x%X",
+			port, toggle, rp, pull, role);
+
+	return tcpc_write(port, TCPC_REG_ROLE_CTRL, role);
 }
 
 int tcpci_tcpc_drp_toggle(int port)
