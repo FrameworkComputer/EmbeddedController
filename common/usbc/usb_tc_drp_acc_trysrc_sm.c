@@ -813,6 +813,14 @@ void pd_set_suspend(int port, int suspend)
 		int wait = 0;
 
 		TC_SET_FLAG(port, TC_FLAGS_SUSPEND);
+
+		/*
+		 * Avoid deadlock when running from task
+		 * which we are going to suspend
+		 */
+		if (PD_PORT_TO_TASK_ID(port) == task_get_current())
+			return;
+
 		task_wake(PD_PORT_TO_TASK_ID(port));
 
 		/* Sleep this task if we are not suspended */
