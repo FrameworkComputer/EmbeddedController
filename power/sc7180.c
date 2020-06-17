@@ -250,9 +250,11 @@ DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, sc7180_powerbtn_changed,
  * GPIO0 is configured as PVC_PG.
  *
  * @param enable	1 to wait the PMIC/AP on.
-			0 to wait the PMIC/AP off.
+ *			0 to wait the PMIC/AP off.
+ *
+ * @return EC_SUCCESS or error
  */
-static void wait_switchcap_power_good(int enable)
+static int wait_switchcap_power_good(int enable)
 {
 	timestamp_t poll_deadline;
 
@@ -272,8 +274,9 @@ static void wait_switchcap_power_good(int enable)
 			CPRINTS("SWITCHCAP NO POWER GOOD!");
 		else
 			CPRINTS("SWITCHCAP STILL POWER GOOD!");
+		return EC_ERROR_UNKNOWN;
 	}
-
+	return EC_SUCCESS;
 }
 
 /**
@@ -304,16 +307,18 @@ static int is_pmic_pwron(void)
  * Wait the PMIC/AP power-on state.
  *
  * @param enable	1 to wait the PMIC/AP on.
-			0 to wait the PMIC/AP off.
+ *			0 to wait the PMIC/AP off.
  * @param timeout	Number of microsecond of timeout.
+ *
+ * @return EC_SUCCESS or error
  */
-static void wait_pmic_pwron(int enable, unsigned int timeout)
+static int wait_pmic_pwron(int enable, unsigned int timeout)
 {
 	timestamp_t poll_deadline;
 
 	/* Check the AP power status */
 	if (enable == is_pmic_pwron())
-		return;
+		return EC_SUCCESS;
 
 	poll_deadline = get_time();
 	poll_deadline.val += timeout;
@@ -328,7 +333,10 @@ static void wait_pmic_pwron(int enable, unsigned int timeout)
 			CPRINTS("AP POWER NOT READY!");
 		else
 			CPRINTS("AP POWER STILL UP!");
+
+		return EC_ERROR_UNKNOWN;
 	}
+	return EC_SUCCESS;
 }
 
 /**
@@ -351,18 +359,25 @@ static void set_system_power_no_check(int enable)
  * They control the power of the set of PMIC chips and the AP.
  *
  * @param enable	1 to enable or 0 to disable
+ *
+ * @return EC_SUCCESS or error
  */
-static void set_system_power(int enable)
+static int set_system_power(int enable)
 {
+	int ret;
+
 	CPRINTS("%s(%d)", __func__, enable);
 	set_system_power_no_check(enable);
-	wait_switchcap_power_good(enable);
+
+	ret = wait_switchcap_power_good(enable);
+
 	if (enable) {
 		usleep(SYSTEM_POWER_ON_DELAY);
 	} else {
 		/* Ensure POWER_GOOD drop to low if it is a forced shutdown */
-		wait_pmic_pwron(0, FORCE_OFF_RESPONSE_TIMEOUT);
+		ret |= wait_pmic_pwron(0, FORCE_OFF_RESPONSE_TIMEOUT);
 	}
+	return ret;
 }
 
 /**
@@ -371,15 +386,19 @@ static void set_system_power(int enable)
  * It triggers the PMIC/AP power-on and power-off sequence.
  *
  * @param enable	1 to power the PMIC/AP on.
-			0 to power the PMIC/AP off.
+ *			0 to power the PMIC/AP off.
+ *
+ * @return EC_SUCCESS or error
  */
-static void set_pmic_pwron(int enable)
+static int set_pmic_pwron(int enable)
 {
+	int ret;
+
 	CPRINTS("%s(%d)", __func__, enable);
 
 	/* Check the PMIC/AP power state */
 	if (enable == is_pmic_pwron())
-		return;
+		return EC_SUCCESS;
 
 	/*
 	 * Power-on sequence:
@@ -404,10 +423,12 @@ static void set_pmic_pwron(int enable)
 	gpio_set_level(GPIO_PMIC_KPD_PWR_ODL, 0);
 	if (!enable)
 		gpio_set_level(GPIO_PM845_RESIN_L, 0);
-	wait_pmic_pwron(enable, PMIC_POWER_AP_RESPONSE_TIMEOUT);
+	ret = wait_pmic_pwron(enable, PMIC_POWER_AP_RESPONSE_TIMEOUT);
 	gpio_set_level(GPIO_PMIC_KPD_PWR_ODL, 1);
 	if (!enable)
 		gpio_set_level(GPIO_PM845_RESIN_L, 1);
+
+	return ret;
 }
 
 enum power_state power_chipset_init(void)
@@ -467,20 +488,25 @@ enum power_state power_chipset_init(void)
  */
 static void power_off(void)
 {
-	/* Check the power off status */
-	if (!is_system_powered())
-		return;
+	/* Check PMIC POWER_GOOD */
+	if (is_pmic_pwron()) {
+		/* Do a graceful way to shutdown PMIC/AP first */
+		set_pmic_pwron(0);
+		usleep(PMIC_POWER_OFF_DELAY);
 
-	/* Do a graceful way to shutdown PMIC/AP first */
-	set_pmic_pwron(0);
-	usleep(PMIC_POWER_OFF_DELAY);
+		/*
+		 * Disable signal interrupts, as they are floating when
+		 * switchcap off.
+		 */
+		power_signal_disable_interrupt(GPIO_AP_RST_L);
+		power_signal_disable_interrupt(GPIO_PMIC_FAULT_L);
+	}
 
-	/* Disable signal interrupts, as they are floating when switchcap off */
-	power_signal_disable_interrupt(GPIO_AP_RST_L);
-	power_signal_disable_interrupt(GPIO_PMIC_FAULT_L);
-
-	/* Force to switch off all rails */
-	set_system_power(0);
+	/* Check the switchcap status */
+	if (is_system_powered()) {
+		/* Force to switch off all rails */
+		set_system_power(0);
+	}
 
 	/* Turn off the 3.3V and 5V rails. */
 	gpio_set_level(GPIO_EN_PP3300_A, 0);
@@ -519,9 +545,13 @@ static int power_is_enough(void)
 
 /**
  * Power on the AP
+ *
+ * @return EC_SUCCESS or error
  */
-static void power_on(void)
+static int power_on(void)
 {
+	int ret;
+
 	/* Enable the 3.3V and 5V rail. */
 	gpio_set_level(GPIO_EN_PP3300_A, 1);
 #ifdef CONFIG_POWER_PP5000_CONTROL
@@ -530,15 +560,23 @@ static void power_on(void)
 	gpio_set_level(GPIO_EN_PP5000, 1);
 #endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
 
-	set_system_power(1);
+	ret = set_system_power(1);
+	if (ret != EC_SUCCESS)
+		return ret;
 
 	/* Enable signal interrupts */
 	power_signal_enable_interrupt(GPIO_AP_RST_L);
 	power_signal_enable_interrupt(GPIO_PMIC_FAULT_L);
 
-	set_pmic_pwron(1);
+	ret = set_pmic_pwron(1);
+	if (ret != EC_SUCCESS) {
+		CPRINTS("POWER_GOOD not seen in time");
+		return ret;
+	}
 
+	CPRINTS("POWER_GOOD seen");
 	disable_sleep(SLEEP_MASK_AP_RUN);
+	return EC_SUCCESS;
 }
 
 /**
@@ -742,16 +780,12 @@ enum power_state power_handle_state(enum power_state state)
 		/* Initialize components to ready state before AP is up. */
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
-		power_on();
-		CPRINTS("AP running ...");
-
-		if (power_wait_signals(IN_POWER_GOOD) != EC_SUCCESS) {
-			CPRINTS("POWER_GOOD not seen in time");
-			set_system_power(0);
+		if (power_on() != EC_SUCCESS) {
+			power_off();
 			return POWER_S5;
 		}
+		CPRINTS("AP running ...");
 
-		CPRINTS("POWER_GOOD seen");
 		/* Call hooks now that AP is running */
 		hook_notify(HOOK_CHIPSET_STARTUP);
 		return POWER_S3;
