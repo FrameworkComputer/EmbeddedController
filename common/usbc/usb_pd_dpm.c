@@ -15,6 +15,7 @@
 #include "usb_pd.h"
 #include "usb_pd_dpm.h"
 #include "usb_pe_sm.h"
+#include "usb_tbt_alt_mode.h"
 #include "tcpm.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -50,6 +51,11 @@ void dpm_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 	case USB_SID_DISPLAYPORT:
 		dp_vdm_acked(port, type, vdo_count, vdm);
 		break;
+	case USB_VID_INTEL:
+		if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)) {
+			intel_vdm_acked(port, type, vdo_count, vdm);
+			break;
+		}
 	default:
 		CPRINTS("C%d: Received unexpected VDM ACK for SVID %d", port,
 				svid);
@@ -63,6 +69,11 @@ void dpm_vdm_naked(int port, enum tcpm_transmit_type type, uint16_t svid,
 	case USB_SID_DISPLAYPORT:
 		dp_vdm_naked(port, type, vdm_cmd);
 		break;
+	case USB_VID_INTEL:
+		if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)) {
+			intel_vdm_naked(port, type, vdm_cmd);
+			break;
+		}
 	default:
 		CPRINTS("C%d: Received unexpected VDM NAK for SVID %d", port,
 				svid);
@@ -71,7 +82,7 @@ void dpm_vdm_naked(int port, enum tcpm_transmit_type type, uint16_t svid,
 
 void dpm_attempt_mode_entry(int port)
 {
-	int vdo_count;
+	int vdo_count = 0;
 	uint32_t vdm[VDO_MAX_SIZE];
 
 	if (dpm[port].mode_entry_done)
@@ -96,21 +107,34 @@ void dpm_attempt_mode_entry(int port)
 	    pd_get_modes_discovery(port, TCPC_TX_SOP) != PD_DISC_COMPLETE)
 		return;
 
+	/* Check if we discovered a Thunderbot-Compatible mode */
+	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
+	    pd_is_mode_discovered_for_svid(port, TCPC_TX_SOP,
+					USB_VID_INTEL))
+		vdo_count = tbt_setup_next_vdm(port, ARRAY_SIZE(vdm), vdm);
+
 	/*
-	 * Check if we even discovered a DisplayPort mode; if not, just
-	 * mark discovery done and get out of here.
+	 * IF thunderbolt mode is not discovered or if the device/cable is not
+	 * thunderbolt compatible, Check if we discovered a DisplayPort mode
 	 */
-	if (!pd_is_mode_discovered_for_svid(port, TCPC_TX_SOP,
-				USB_SID_DISPLAYPORT)) {
-		CPRINTF("C%d: No DP mode discovered\n", port);
+	if (vdo_count == 0 && !dpm[port].mode_entry_done &&
+	    pd_is_mode_discovered_for_svid(port, TCPC_TX_SOP,
+				USB_SID_DISPLAYPORT))
+		vdo_count = dp_setup_next_vdm(port, ARRAY_SIZE(vdm), vdm);
+
+	/*
+	 * If we did not enter any alternate mode, just mark discovery done
+	 * and get out of here.
+	 */
+	if (vdo_count == 0 && !dpm[port].mode_entry_done) {
+		CPRINTF("C%d: No supported ALT mode discovered\n", port);
 		dpm_set_mode_entry_done(port);
 		return;
 	}
 
-	vdo_count = dp_setup_next_vdm(port, ARRAY_SIZE(vdm), vdm);
 	if (vdo_count < 0) {
 		dpm_set_mode_entry_done(port);
-		CPRINTF("C%d: Couldn't set up DP VDM\n", port);
+		CPRINTF("C%d: Couldn't set up ALT VDM\n", port);
 		return;
 	}
 

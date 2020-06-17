@@ -22,6 +22,7 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pe_sm.h"
+#include "usb_tbt_alt_mode.h"
 #include "usb_prl_sm.h"
 #include "usb_tc_sm.h"
 #include "usb_emsg.h"
@@ -1053,6 +1054,7 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
+/* TODO: Add a common exit routine for all the alternate modes */
 void pe_exit_dp_mode(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
@@ -5395,6 +5397,9 @@ void pd_dfp_discovery_init(int port)
 	/* Reset the DPM and DP modules to enable alternate mode entry. */
 	dpm_init(port);
 	dp_init(port);
+
+	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE))
+		tbt_init(port);
 }
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
