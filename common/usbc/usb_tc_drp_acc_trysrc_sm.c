@@ -1160,6 +1160,15 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 
 void tc_state_init(int port)
 {
+	/* If port is not available, there is nothing to initialize */
+	if (port >= board_get_usb_pd_port_count()) {
+		tc_enable_pd(port, 0);
+		tc_pause_event_loop(port);
+		TC_SET_FLAG(port, TC_FLAGS_SUSPEND);
+		set_state_tc(port, TC_DISABLED);
+		return;
+	}
+
 	/* Default to not jumping warm to ATTACHED_SNK */
 	TC_CLR_FLAG(port, TC_FLAGS_TC_WARM_ATTACHED_SNK);
 
