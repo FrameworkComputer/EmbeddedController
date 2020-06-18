@@ -83,6 +83,14 @@ void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
 	int  wd_cnt;
 
+#ifdef CONFIG_TASK_PROFILING
+	/*
+	 * Perform IRQ profiling accounting. This is normally done by
+	 * DECLARE_IRQ(), but we are not using that for ITIM_WDG_NO.
+	 */
+	task_start_irq_handler((void *)excep_lr);
+#endif
+
 	/* Clear timeout status for event */
 	SET_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_TO_STS);
 
