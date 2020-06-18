@@ -31,11 +31,10 @@ static inline int tcpc_addr_write(int port, int i2c_addr, int reg, int val)
 			  i2c_addr, reg, val);
 }
 
-static inline int tcpc_write16(int port, int reg, int val)
+static inline int tcpc_addr_write16(int port, int i2c_addr, int reg, int val)
 {
 	return i2c_write16(tcpc_config[port].i2c_info.port,
-			   tcpc_config[port].i2c_info.addr_flags,
-			   reg, val);
+			   i2c_addr, reg, val);
 }
 
 static inline int tcpc_addr_read(int port, int i2c_addr, int reg, int *val)
@@ -44,11 +43,10 @@ static inline int tcpc_addr_read(int port, int i2c_addr, int reg, int *val)
 			 i2c_addr, reg, val);
 }
 
-static inline int tcpc_read16(int port, int reg, int *val)
+static inline int tcpc_addr_read16(int port, int i2c_addr, int reg, int *val)
 {
 	return i2c_read16(tcpc_config[port].i2c_info.port,
-			  tcpc_config[port].i2c_info.addr_flags,
-			  reg, val);
+			  i2c_addr, reg, val);
 }
 
 static inline int tcpc_xfer(int port, const uint8_t *out, int out_size,
@@ -102,9 +100,9 @@ static inline int tcpc_update16(int port, int reg,
 
 #else /* !CONFIG_USB_PD_TCPC_LOW_POWER */
 int tcpc_addr_write(int port, int i2c_addr, int reg, int val);
-int tcpc_write16(int port, int reg, int val);
+int tcpc_addr_write16(int port, int i2c_addr, int reg, int val);
 int tcpc_addr_read(int port, int i2c_addr, int reg, int *val);
-int tcpc_read16(int port, int reg, int *val);
+int tcpc_addr_read16(int port, int i2c_addr, int reg, int *val);
 int tcpc_read_block(int port, int reg, uint8_t *in, int size);
 int tcpc_write_block(int port, int reg, const uint8_t *out, int size);
 int tcpc_xfer(int port, const uint8_t *out, int out_size,
@@ -125,10 +123,22 @@ static inline int tcpc_write(int port, int reg, int val)
 			       tcpc_config[port].i2c_info.addr_flags, reg, val);
 }
 
+static inline int tcpc_write16(int port, int reg, int val)
+{
+	return tcpc_addr_write16(port,
+			tcpc_config[port].i2c_info.addr_flags, reg, val);
+}
+
 static inline int tcpc_read(int port, int reg, int *val)
 {
 	return tcpc_addr_read(port,
 			      tcpc_config[port].i2c_info.addr_flags, reg, val);
+}
+
+static inline int tcpc_read16(int port, int reg, int *val)
+{
+	return tcpc_addr_read16(port,
+			tcpc_config[port].i2c_info.addr_flags, reg, val);
 }
 
 static inline void tcpc_lock(int port, int lock)

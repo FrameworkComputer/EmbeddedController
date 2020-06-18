@@ -112,10 +112,9 @@ int tcpc_addr_write(int port, int i2c_addr, int reg, int val)
 	return rv;
 }
 
-int tcpc_write16(int port, int reg, int val)
+int tcpc_addr_write16(int port, int i2c_addr, int reg, int val)
 {
 	int rv;
-	const int i2c_addr = tcpc_config[port].i2c_info.addr_flags;
 
 	pd_wait_exit_low_power(port);
 
@@ -146,15 +145,14 @@ int tcpc_addr_read(int port, int i2c_addr, int reg, int *val)
 	return rv;
 }
 
-int tcpc_read16(int port, int reg, int *val)
+int tcpc_addr_read16(int port, int i2c_addr, int reg, int *val)
 {
 	int rv;
 
 	pd_wait_exit_low_power(port);
 
 	rv = i2c_read16(tcpc_config[port].i2c_info.port,
-			tcpc_config[port].i2c_info.addr_flags,
-			reg, val);
+			i2c_addr, reg, val);
 
 	pd_device_accessed(port);
 	return rv;
