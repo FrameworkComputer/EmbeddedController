@@ -119,6 +119,8 @@ static void stm32g4_config_low_speed_clock(void)
 	wait_for_ready(&(STM32_RCC_CSR),
 		STM32_RCC_CSR_LSION, STM32_RCC_CSR_LSIRDY);
 
+	/* Setup RTC Clock input */
+	STM32_RCC_BDCR |= STM32_RCC_BDCR_BDRST;
 	STM32_RCC_BDCR = STM32_RCC_BDCR_RTCEN | BDCR_RTCSEL(BDCR_SRC_LSI);
 }
 

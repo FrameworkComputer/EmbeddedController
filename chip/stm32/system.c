@@ -280,6 +280,13 @@ void system_pre_init(void)
 	/* Wait for LSI to be ready */
 	while (!(STM32_RCC_CSR & BIT(1)))
 		;
+
+#if defined(CHIP_FAMILY_STM32G4)
+	/* Make sure PWR clock is enabled */
+	STM32_RCC_APB1ENR1 |= STM32_RCC_APB1ENR1_PWREN;
+	/* Enable access to backup domain registers */
+	STM32_PWR_CR1 |= STM32_PWR_CR1_DBP;
+#endif
 	/* re-configure RTC if needed */
 #ifdef CHIP_FAMILY_STM32L
 	if ((STM32_RCC_CSR & 0x00C30000) != 0x00420000) {
@@ -399,7 +406,7 @@ void system_reset(int flags)
 		 * use this for hard reset.
 		 */
 		STM32_FLASH_CR |= FLASH_CR_OBL_LAUNCH;
-#elif defined(CHIP_FAMILY_STM32L4)
+#elif defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32G4)
 		STM32_FLASH_KEYR = FLASH_KEYR_KEY1;
 		STM32_FLASH_KEYR = FLASH_KEYR_KEY2;
 		STM32_FLASH_OPTKEYR = FLASH_OPTKEYR_KEY1;
