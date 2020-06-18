@@ -160,7 +160,8 @@ void pd_task(void *u)
 	if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
 		tc_state_init(port);
 
-	if (IS_ENABLED(CONFIG_USBC_PPC)) {
+	if (IS_ENABLED(CONFIG_USBC_PPC) &&
+	    port < board_get_usb_pd_port_count()) {
 		/*
 		 * Wait to initialize the PPC after tc_state_init(), which sets
 		 * the correct Rd values in the TCPC; otherwise the TCPC might
