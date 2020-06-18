@@ -238,7 +238,7 @@ void baseboard_tcpc_init(void)
 	 * Initialize HPD to low; after sysjump SOC needs to see
 	 * HPD pulse to enable video path
 	 */
-	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
+	for (int port = 0; port < board_get_usb_pd_port_count(); ++port)
 		usb_mux_hpd_update(port, 0, 0);
 }
 /* Called after the cbi_init (via +2) */
@@ -247,7 +247,7 @@ DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
 int board_set_active_charge_port(int port)
 {
 	int is_valid_port = (port >= 0 &&
-			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
+			    port < board_get_usb_pd_port_count());
 	int i;
 
 	if (!is_valid_port && port != CHARGE_PORT_NONE)
@@ -258,7 +258,8 @@ int board_set_active_charge_port(int port)
 		CPRINTSUSB("Disabling all charger ports");
 
 		/* Disable all ports. */
-		for (i = 0; i < ppc_cnt; i++) {
+		for (i = 0; (i < ppc_cnt) &&
+		    (i < board_get_usb_pd_port_count()); i++) {
 			/*
 			 * Do not return early if one fails otherwise we can
 			 * get into a boot loop assertion failure.
@@ -282,7 +283,8 @@ int board_set_active_charge_port(int port)
 	 * Turn off the other ports' sink path FETs, before enabling the
 	 * requested charge port.
 	 */
-	for (i = 0; i < ppc_cnt; i++) {
+	for (i = 0; (i < ppc_cnt) &&
+	    (i < board_get_usb_pd_port_count()); i++) {
 		if (i == port)
 			continue;
 
@@ -353,7 +355,7 @@ void board_hibernate(void)
 	 * low power mode or open the SNK FET based on which signals wake up
 	 * the EC from hibernate.
 	 */
-	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
+	for (port = 0; port < board_get_usb_pd_port_count(); port++) {
 		if (!pd_is_vbus_present(port)) {
 #ifdef VARIANT_OCTOPUS_EC_ITE8320
 			/*
