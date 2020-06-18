@@ -102,6 +102,7 @@
 #define PS8XXX_PRODUCT_ID 0x8815
 
 #define FW_VER_REG                              0x82
+#define PS8815_P1_REG_HW_REVISION		0xF0
 
 #endif
 
