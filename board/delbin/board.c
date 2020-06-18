@@ -36,11 +36,12 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /*
- * Reconfigure Volteer GPIOs based on the board ID
+ * FW_CONFIG defaults for Delbin if the CBI data is not initialized.
  */
-__override void config_volteer_gpios(void)
-{
-}
+union volteer_cbi_fw_config fw_config_defaults = {
+	/* Set all FW_CONFIG fields default to 0 */
+	.raw_value = 0,
+};
 
 static void board_init(void)
 {
@@ -232,4 +233,13 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_PP5000_USBA,
 };
 
+void board_reset_pd_mcu(void)
+{
+	/* TODO(b/159336576): Delbin: check USB PD reset operation */
+}
+
+__override void board_cbi_init(void)
+{
+	/* TODO(b/159336576): Delbin: check FW_CONFIG fields for USB DB type */
+}
 
