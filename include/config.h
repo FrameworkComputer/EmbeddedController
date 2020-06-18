@@ -2339,6 +2339,17 @@
  */
 #undef CONFIG_IT83XX_FLASH_CLOCK_48MHZ
 
+/*
+ * Enable it if EC's VBAT won't go low when system's power isn't
+ * presented (no battery and no AC)
+ * If EC's VSTBY and VBAT(power source of BRAM) aren't connected to the same
+ * power rail and VBAT doesn't go low immediately (eg: there is a larger
+ * capacitance on the rail) after all power off: PD contract recorded in BRAM
+ * won't get cleared (But actually we have unplugged type-c adaptor, so the
+ * contract should be cleared).
+ */
+#undef CONFIG_IT83XX_RESET_PD_CONTRACT_IN_BRAM
+
 /* To define it, if I2C channel C and PECI used at the same time. */
 #undef CONFIG_IT83XX_SMCLK2_ON_GPC7
 
