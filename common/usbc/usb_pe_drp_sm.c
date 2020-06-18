@@ -4813,8 +4813,12 @@ static void pe_vdm_request_dpm_run(int port)
 
 static void pe_vdm_request_dpm_exit(int port)
 {
-	/* Invalidate TX type so that it must be set before next call */
-	pe[port].tx_type = TCPC_TX_INVALID;
+	/*
+	 * Force Tx type to be reset before reentering a VDM state, unless the
+	 * current VDM request will be resumed.
+	 */
+	if (!PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_CONTINUE))
+		pe[port].tx_type = TCPC_TX_INVALID;
 }
 
 /**
