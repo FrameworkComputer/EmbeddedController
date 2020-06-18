@@ -492,6 +492,9 @@ static void board_chipset_startup(void)
 {
 	/* Normal charge current */
 	sb_smart_charge_mode(SB_SMART_CHARGE_DISABLE);
+
+	/* hdmi retimer power on */
+	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
@@ -500,5 +503,8 @@ static void board_chipset_suspend(void)
 {
 	/* SMART charge current */
 	sb_smart_charge_mode(SB_SMART_CHARGE_ENABLE);
+
+	/* hdmi retimer power off */
+	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
