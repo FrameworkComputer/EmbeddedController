@@ -158,6 +158,8 @@ enum ec_cfg_usb_mb_type {
 enum ec_cfg_usb_db_type {
 	MORPHIUS_DB_T_OPT1_USBC_HDMI = 0,
 	MORPHIUS_DB_T_OPT3_USBC_HDMI_MSTHUB = 1,
+	MORPHIUS_DB_PICASSO_AOZ1380 = 2,
+	MORPHIUS_DB_DALI_AOZ1380 = 3,
 };
 
 
@@ -204,6 +206,15 @@ static inline bool ec_config_has_hdmi_conn_hpd(void)
 {
 	return !!(BIT(ec_config_get_usb_db()) &
 		  HAS_HDMI_CONN_HPD);
+}
+
+#define HAS_DB_AOZ1380 \
+	(BIT(MORPHIUS_DB_PICASSO_AOZ1380) | BIT(MORPHIUS_DB_DALI_AOZ1380))
+
+static inline bool ec_config_has_db_ppc_aoz1380(void)
+{
+	return !!(BIT(ec_config_get_usb_db()) &
+				HAS_DB_AOZ1380);
 }
 
 #define PORT_TO_HPD(port) ((port == 0) \

@@ -158,7 +158,7 @@ struct ppc_config_t ppc_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
-void ppc_interrupt(enum gpio_signal signal)
+__overridable void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_C0_PPC_FAULT_ODL:

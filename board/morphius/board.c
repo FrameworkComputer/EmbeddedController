@@ -12,6 +12,8 @@
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/ppc/aoz1380.h"
+#include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3dpx1207.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/temp_sensor/tmp432.h"
@@ -34,6 +36,7 @@
 #include "temp_sensor.h"
 #include "usb_mux.h"
 #include "usb_charge.h"
+#include "usbc_ppc.h"
 
 #include "gpio_list.h"
 
@@ -286,7 +289,6 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 /*****************************************************************************
  * Use FW_CONFIG to set correct configuration.
  */
-
 void setup_fw_config(void)
 {
 	/* Enable Gyro interrupts */
@@ -298,6 +300,12 @@ void setup_fw_config(void)
 	ps2_enable_channel(NPCX_PS2_CH0, 1, send_aux_data_to_host);
 
 	setup_mux();
+
+	if (ec_config_has_db_ppc_aoz1380()) {
+		ccprintf("DB USBC PPC aoz1380");
+		ppc_chips[USBC_PORT_C1].drv = &aoz1380_drv;
+	}
+
 }
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
@@ -508,3 +516,44 @@ static void board_chipset_suspend(void)
 	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+__override void ppc_interrupt(enum gpio_signal signal)
+{
+	switch (signal) {
+	case GPIO_USB_C0_PPC_FAULT_ODL:
+		aoz1380_interrupt(USBC_PORT_C0);
+		break;
+
+	case GPIO_USB_C1_PPC_INT_ODL:
+		if (ec_config_has_db_ppc_aoz1380())
+			aoz1380_interrupt(USBC_PORT_C1);
+		else
+			nx20p348x_interrupt(USBC_PORT_C1);
+		break;
+
+	default:
+		break;
+	}
+}
+
+/*
+ * In the AOZ1380 PPC, there are no programmable features.  We use
+ * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
+ * current limits.
+ */
+__override int board_aoz1380_set_vbus_source_current_limit(int port,
+						enum tcpc_rp_value rp)
+{
+	int rv;
+
+	/* Use the TCPC to set the current limit */
+	if (port == 0) {
+		rv = ioex_set_level(IOEX_USB_C0_PPC_ILIM_3A_EN,
+			    (rp == TYPEC_RP_3A0) ? 1 : 0);
+	} else {
+		rv = ioex_set_level(IOEX_USB_C1_PPC_ILIM_3A_EN,
+			    (rp == TYPEC_RP_3A0) ? 1 : 0);
+	}
+
+	return rv;
+}

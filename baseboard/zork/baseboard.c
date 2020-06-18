@@ -81,7 +81,7 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
  * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
  * current limits.
  */
-int board_aoz1380_set_vbus_source_current_limit(int port,
+__overridable int board_aoz1380_set_vbus_source_current_limit(int port,
 						enum tcpc_rp_value rp)
 {
 	int rv;
