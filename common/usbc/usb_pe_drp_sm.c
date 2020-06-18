@@ -965,7 +965,6 @@ void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 			get_state_pe(port) == PE_PRS_SRC_SNK_WAIT_SOURCE_ON ||
 			get_state_pe(port) == PE_SRC_DISABLED ||
 			get_state_pe(port) == PE_SRC_DISCOVERY ||
-			get_state_pe(port) == PE_VDM_REQUEST_DPM ||
 			get_state_pe(port) == PE_VDM_IDENTITY_REQUEST_CBL) ||
 			(IS_ENABLED(CONFIG_USBC_VCONN) &&
 				get_state_pe(port) == PE_VCS_SEND_PS_RDY_SWAP)
@@ -4776,14 +4775,6 @@ static void pe_vdm_request_dpm_run(int port)
 			else
 				set_state_pe(port, PE_SNK_READY);
 		}
-	}
-
-	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
-		/* Message not sent and we received a protocol error */
-		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
-
-		/* Fake busy response so we try to send command again */
-		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_BUSY);
 	}
 
 	/*
