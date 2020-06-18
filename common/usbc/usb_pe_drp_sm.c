@@ -4701,105 +4701,62 @@ static void pe_vdm_request_dpm_entry(int port)
 
 static void pe_vdm_request_dpm_run(int port)
 {
-	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
-		uint32_t *payload;
-		int sop;
-		uint8_t type;
-		uint8_t cnt;
-		uint8_t ext;
-		uint16_t svid;
-		uint8_t vdo_cmd;
+	uint32_t *payload;
+	int sop;
+	uint8_t cnt;
+	uint16_t svid;
+	uint8_t vdm_cmd;
+	enum pd_discovery_state response_result;
 
-		/* Message received */
-		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+	/* No message received */
+	if (!PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
+		return;
+	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
-		/* Get the message */
-		payload = (uint32_t *)rx_emsg[port].buf;
-		sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-		type = PD_HEADER_TYPE(rx_emsg[port].header);
-		cnt = PD_HEADER_CNT(rx_emsg[port].header);
-		ext = PD_HEADER_EXT(rx_emsg[port].header);
-		svid = PD_VDO_VID(payload[0]);
-		vdo_cmd = PD_VDO_CMD(payload[0]);
+	/* Valid VDM ACKs should have at least 1 object (VDM header). */
+	response_result = pe_discovery_vdm_request_run_common(port, 1);
 
-		if (sop == pe[port].tx_type && type == PD_DATA_VENDOR_DEF &&
-				cnt > 0 && ext == 0) {
-			if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK) {
-				/*
-				 * PE initiator VDM-ACKed state for requested
-				 * VDM, like PE_INIT_VDM_FOO_ACKed, embedded
-				 * here.
-				 */
-				dpm_vdm_acked(port, sop, cnt, payload);
+	/* Retrieve the message information */
+	payload = (uint32_t *)rx_emsg[port].buf;
+	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
+	cnt = PD_HEADER_CNT(rx_emsg[port].header);
+	svid = PD_VDO_VID(payload[0]);
+	vdm_cmd = PD_VDO_CMD(payload[0]);
 
-				if (sop == TCPC_TX_SOP &&
-						svid == USB_SID_DISPLAYPORT &&
-						vdo_cmd == CMD_DP_CONFIG) {
-					PE_SET_FLAG(port,
-						PE_FLAGS_VDM_SETUP_DONE);
-				}
+	if (response_result == PD_DISC_COMPLETE) {
+		/*
+		 * PE initiator VDM-ACKed state for requested VDM, like
+		 * PE_INIT_VDM_FOO_ACKed, embedded here.
+		 */
+		dpm_vdm_acked(port, sop, cnt, payload);
 
-				/* Return to previous Ready state */
-				set_state_pe(port, get_last_state_pe(port));
-				return;
-			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
-				PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED);
-			} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
-				PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_BUSY);
-			}
-		} else {
-			if (sop == pe[port].tx_type &&
-					type == PD_CTRL_NOT_SUPPORTED &&
-					cnt == 0 && ext == 0) {
-				/* Equivalent meaning to a NAK */
-				PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED);
-			} else {
-				/* Unexpected Message Received. */
-
-				/*
-				 * Reset PE_FLAGS_MSG_RECEIVED so Src.Ready or
-				 * Snk.Ready can handle it.
-				 */
-				PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
-
-				/*
-				 * Continue port discovery after the unexpected
-				 * message is handled
-				 */
-				PE_SET_FLAG(port,
-					PE_FLAGS_VDM_REQUEST_CONTINUE);
-			}
-
-			if (pe[port].power_role == PD_ROLE_SOURCE)
-				set_state_pe(port, PE_SRC_READY);
-			else
-				set_state_pe(port, PE_SNK_READY);
+		if (sop == TCPC_TX_SOP && svid == USB_SID_DISPLAYPORT &&
+				vdm_cmd == CMD_DP_CONFIG) {
+			PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 		}
-	}
-
-	/*
-	 * Because Not Supported messages or response timeouts are treated as
-	 * NAKs, there may not be a NAK message to parse. Extract the needed
-	 * information from the sent VDM.
-	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED)) {
+	} else if (response_result == PD_DISC_FAIL) {
 		/*
 		 * PE initiator VDM-NAKed state for requested VDM, like
 		 * PE_INIT_VDM_FOO_NAKed, embedded here.
 		 */
 		PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 
+		/*
+		 * Because Not Supported messages or response timeouts are
+		 * treated as NAKs, there may not be a NAK message to parse.
+		 * Extract the needed information from the sent VDM.
+		 */
 		dpm_vdm_naked(port, pe[port].tx_type,
 				PD_VDO_VID(pe[port].vdm_data[0]),
 				PD_VDO_CMD(pe[port].vdm_data[0]));
 	}
+	/*
+	 * If the received message doesn't change the discovery state, there is
+	 * nothing to do but return to the previous ready state.
+	 */
 
-
-	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED |
-					PE_FLAGS_VDM_REQUEST_BUSY)) {
-		/* Return to previous Ready state */
-		set_state_pe(port, get_last_state_pe(port));
-	}
+	/* Return to calling state (PE_{SRC,SNK}_Ready) */
+	set_state_pe(port, get_last_state_pe(port));
 }
 
 static void pe_vdm_request_dpm_exit(int port)
