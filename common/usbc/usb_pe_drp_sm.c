@@ -244,7 +244,7 @@ enum usb_pe_state {
 	PE_INIT_PORT_VDM_IDENTITY_REQUEST,
 	PE_INIT_VDM_SVIDS_REQUEST,
 	PE_INIT_VDM_MODES_REQUEST,
-	PE_VDM_REQUEST,
+	PE_VDM_REQUEST_DPM,
 	PE_VDM_RESPONSE,
 	PE_HANDLE_CUSTOM_VDM_REQUEST,
 	PE_WAIT_FOR_ERROR_RECOVERY,
@@ -338,7 +338,7 @@ static const char * const pe_state_names[] = {
 					   "PE_INIT_PORT_VDM_Identity_Request",
 	[PE_INIT_VDM_SVIDS_REQUEST] = "PE_INIT_VDM_SVIDs_Request",
 	[PE_INIT_VDM_MODES_REQUEST] = "PE_INIT_VDM_Modes_Request",
-	[PE_VDM_REQUEST] = "PE_VDM_Request",
+	[PE_VDM_REQUEST_DPM] = "PE_VDM_Request_DPM",
 	[PE_VDM_RESPONSE] = "PE_VDM_Response",
 	[PE_HANDLE_CUSTOM_VDM_REQUEST] = "PE_Handle_Custom_Vdm_Request",
 	[PE_WAIT_FOR_ERROR_RECOVERY] = "PE_Wait_For_Error_Recovery",
@@ -965,7 +965,7 @@ void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 			get_state_pe(port) == PE_PRS_SRC_SNK_WAIT_SOURCE_ON ||
 			get_state_pe(port) == PE_SRC_DISABLED ||
 			get_state_pe(port) == PE_SRC_DISCOVERY ||
-			get_state_pe(port) == PE_VDM_REQUEST ||
+			get_state_pe(port) == PE_VDM_REQUEST_DPM ||
 			get_state_pe(port) == PE_VDM_IDENTITY_REQUEST_CBL) ||
 			(IS_ENABLED(CONFIG_USBC_VCONN) &&
 				get_state_pe(port) == PE_VCS_SEND_PS_RDY_SWAP)
@@ -1192,14 +1192,14 @@ static bool common_src_snk_dpm_requests(int port)
 					VDO_CMDT(CMDT_INIT) |
 					CMD_EXIT_MODE);
 		pe[port].vdm_cnt = 1;
-		set_state_pe(port, PE_VDM_REQUEST);
+		set_state_pe(port, PE_VDM_REQUEST_DPM);
 		return true;
 
 	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_VDM)) {
 		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_VDM);
 
 		/* Send previously set up SVDM. */
-		set_state_pe(port, PE_VDM_REQUEST);
+		set_state_pe(port, PE_VDM_REQUEST_DPM);
 		return true;
 	}
 
@@ -2052,7 +2052,7 @@ static void pe_src_ready_run(int port)
 		}
 	} else if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_CONTINUE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_CONTINUE);
-		set_state_pe(port, PE_VDM_REQUEST);
+		set_state_pe(port, PE_VDM_REQUEST_DPM);
 		return;
 	}
 
@@ -2803,7 +2803,7 @@ static void pe_snk_ready_run(int port)
 		}
 	} else if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_CONTINUE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_CONTINUE);
-		set_state_pe(port, PE_VDM_REQUEST);
+		set_state_pe(port, PE_VDM_REQUEST_DPM);
 		return;
 	}
 
@@ -4190,6 +4190,7 @@ static void pe_vdm_send_request_run(int port)
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
 		/* Start no response timer */
+		/* TODO(b/155890173): Support DPM-supplied timeout */
 		pe[port].vdm_response_timer =
 			get_time().val + PD_T_VDM_SNDR_RSP;
 	}
@@ -4664,11 +4665,12 @@ static void pe_init_vdm_modes_request_exit(int port)
 }
 
 /**
- * PE_VDM_REQUEST
- * TODO(b/150611251): transition other VDMs to use shared parent above
+ * PE_VDM_REQUEST_DPM
+ *
+ * Makes a VDM request with contents and SOP* type previously set up by the DPM.
  */
 
-static void pe_vdm_request_entry(int port)
+static void pe_vdm_request_dpm_entry(int port)
 {
 	print_current_state(port);
 
@@ -4677,9 +4679,6 @@ static void pe_vdm_request_entry(int port)
 		set_state_pe(port, get_last_state_pe(port));
 		return;
 	}
-
-	/* All VDM sequences are Interruptible */
-	PE_SET_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 
 	/* Copy Vendor Data Objects (VDOs) into message buffer */
 	if (pe[port].vdm_cnt > 0) {
@@ -4699,23 +4698,10 @@ static void pe_vdm_request_entry(int port)
 	 */
 	PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED);
 	send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
-
-	pe[port].vdm_response_timer = TIMER_DISABLED;
 }
 
-static void pe_vdm_request_run(int port)
+static void pe_vdm_request_dpm_run(int port)
 {
-	if (pe[port].vdm_response_timer == TIMER_DISABLED &&
-			PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
-		/* Message was sent */
-		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
-
-		/* Start no response timer */
-		/* TODO(b/155890173): Support DPM-supplied timeout */
-		pe[port].vdm_response_timer =
-			get_time().val + PD_T_VDM_SNDR_RSP;
-	}
-
 	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
 		uint32_t *payload;
 		int sop;
@@ -4798,12 +4784,6 @@ static void pe_vdm_request_run(int port)
 
 		/* Fake busy response so we try to send command again */
 		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_BUSY);
-	} else if (get_time().val > pe[port].vdm_response_timer) {
-		CPRINTF("C%d: VDM %s Response Timeout\n", port,
-				pe[port].tx_type == TCPC_TX_SOP
-				? "Port" : "Cable");
-
-		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED);
 	}
 
 	/*
@@ -4831,12 +4811,10 @@ static void pe_vdm_request_run(int port)
 	}
 }
 
-static void pe_vdm_request_exit(int port)
+static void pe_vdm_request_dpm_exit(int port)
 {
 	/* Invalidate TX type so that it must be set before next call */
 	pe[port].tx_type = TCPC_TX_INVALID;
-
-	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 }
 
 /**
@@ -5757,10 +5735,11 @@ static const struct usb_state pe_states[] = {
 		.exit   = pe_init_vdm_modes_request_exit,
 		.parent = &pe_states[PE_VDM_SEND_REQUEST],
 	},
-	[PE_VDM_REQUEST] = {
-		.entry = pe_vdm_request_entry,
-		.run   = pe_vdm_request_run,
-		.exit  = pe_vdm_request_exit,
+	[PE_VDM_REQUEST_DPM] = {
+		.entry = pe_vdm_request_dpm_entry,
+		.run   = pe_vdm_request_dpm_run,
+		.exit  = pe_vdm_request_dpm_exit,
+		.parent = &pe_states[PE_VDM_SEND_REQUEST],
 	},
 	[PE_VDM_RESPONSE] = {
 		.entry = pe_vdm_response_entry,
