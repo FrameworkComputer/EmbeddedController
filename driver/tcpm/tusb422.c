@@ -89,8 +89,24 @@ static int tusb422_tcpm_set_cc(int port, int pull)
 		tusb422_tcpm_drv.tcpc_enable_auto_discharge_disconnect(port, 1);
 
 	return tcpci_tcpm_set_cc(port, pull);
-
 }
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+static int tusb422_tcpc_drp_toggle(int port)
+{
+	/*
+	 * The TUSB422 requires auto discharge disconnect to be enabled for
+	 * active mode (not unattached) operation. Make sure it is disabled
+	 * before enabling DRP toggling.
+	 *
+	 * USB Type-C Port Controller Interface Specification revision 2.0,
+	 * Figure 4-21 Source Disconnect and Figure 4-22 Sink Disconnect
+	 */
+	tusb422_tcpm_drv.tcpc_enable_auto_discharge_disconnect(port, 0);
+
+	return tcpci_tcpc_drp_toggle(port);
+}
+#endif
 
 const struct tcpm_drv tusb422_tcpm_drv = {
 	.init			= &tusb422_tcpci_tcpm_init,
@@ -114,7 +130,7 @@ const struct tcpm_drv tusb422_tcpm_drv = {
 	.tcpc_enable_auto_discharge_disconnect =
 				  &tcpci_tcpc_enable_auto_discharge_disconnect,
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= &tcpci_tcpc_drp_toggle,
+	.drp_toggle		= &tusb422_tcpc_drp_toggle,
 #endif
 #ifdef CONFIG_USBC_PPC
 	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
