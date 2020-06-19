@@ -22,6 +22,10 @@
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE (512 * 1024)  /* 512KB internal spi flash */
 
+/* Battery */
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
+#define CONFIG_BATTERY_FUEL_GAUGE
+
 /* BC 1.2 Charger */
 #define CONFIG_BC12_DETECT_PI3USB9201
 
@@ -81,6 +85,13 @@ enum pwm_channel {
 	PWM_CH_KBLIGHT = 0,
 	PWM_CH_DISPLIGHT,
 	PWM_CH_COUNT
+};
+
+/* List of possible batteries */
+enum battery_type {
+	BATTERY_AP16L5J,
+	BATTERY_AP16L5J_009,
+	BATTERY_TYPE_COUNT,
 };
 
 /* Custom function to indicate if sourcing VBUS */
