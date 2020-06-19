@@ -91,12 +91,12 @@ There are two main objectives for potential attackers:
 
 ### Scalability
 
-For Eve, we [considered][Old Design Doc] using SGX as the SBP.
-However the complexity of the solution makes that option unattractive, both
-because of the amount of dev work required and because of the large resulting
-attack surface. It’s also exclusive to Intel, we would have to develop a
-completely different architecture for other platforms, which would add more dev
-work and increase the attack surface again.
+For Eve, we [considered][Old Design Doc] using SGX as the SBP. However the
+complexity of the solution makes that option unattractive, both because of the
+amount of dev work required and because of the large resulting attack surface.
+It’s also exclusive to Intel, we would have to develop a completely different
+architecture for other platforms, which would add more dev work and increase the
+attack surface again.
 
 ## Overview {#overview}
 
@@ -337,14 +337,14 @@ JSON files with the following fields:
 The content of the "data" field is the encrypted template that can be deciphered
 by the SBP.
 
-| Field Name | Field description  | Field size (bytes) | Field offset (bytes) |
-| ---------- | ------------------ | ------------------ | -------------------- |
-| Version    | Number describing the version of the file format. Set to 3 at launch. | 2 | 0 |
-| Reserved   | Reserved bytes, set to 0 | 2 | 2 |
-| Nonce      | Randomly-generated IV | 12 | 4 |
-| Salt       | Randomly-generated salt | 16 | 16 |
-| Tag        | AES-GCM Authentication Tag | 16 | 32 |
-| Template   | Encrypted template | 47552 | 48 |
+Field Name | Field description                                                     | Field size (bytes) | Field offset (bytes)
+---------- | --------------------------------------------------------------------- | ------------------ | --------------------
+Version    | Number describing the version of the file format. Set to 3 at launch. | 2                  | 0
+Reserved   | Reserved bytes, set to 0                                              | 2                  | 2
+Nonce      | Randomly-generated IV                                                 | 12                 | 4
+Salt       | Randomly-generated salt                                               | 16                 | 16
+Tag        | AES-GCM Authentication Tag                                            | 16                 | 32
+Template   | Encrypted template                                                    | 47552              | 48
 
 When the user logs in, the cryptohome daemon store folder of that user is
 mounted and the JSON files become available to biod. For every enrolled finger,
@@ -761,8 +761,9 @@ The log file is `/var/log/cros_fp.log`.
 
 <!-- https://docs.google.com/drawings/d/1-JUWTF7sUTND29BfhDvIudzX_S6g-iwoxG1InPedmVw -->
 [Decryption Flowchart]: ../images/cros_fingerprint_decryption_flowchart.png
+
 <!-- https://drive.google.com/open?id=1uUprgLsTUZZ2G2QWRYcRn6zBAh6ejvJagVRD7eZQv-k -->
 [Encryption Flowchart]: ../images/cros_fingerprint_encryption_flowchart.png
+
 <!-- https://docs.google.com/drawings/d/1DFEdxfDXEtYY3LNOOJFAxVw2A7rKouH98tnb1yiXLAA -->
 [Fingerprint Architecture]: ../images/cros_fingerprint_architecture_diagram.png
-

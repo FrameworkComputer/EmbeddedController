@@ -25,11 +25,11 @@ The following "boards" (specified by the `BOARD` environment variable when
 building the EC code) are for fingerprint:
 
 *   [`nocturne_fp`] aka [`nami_fp`] aka [`dartmonkey`]
-    *   Based on [STM32H743] (Cortex-M7).
+    *   Based on [STM32H743](Cortex-M7).
 *   [`hatch_fp`] aka [`bloonchipper`]
-    *   Based on [STM32F412] (Cortex-M4).
-    *   Support for the STM32F412 for the FPMCU is not yet fully complete,
-        but it is functional enough for testing.
+    *   Based on [STM32F412](Cortex-M4).
+    *   Support for the STM32F412 for the FPMCU is not yet fully complete, but
+        it is functional enough for testing.
 
 ### Determining Hardware {#chromeos-config-fingerprint}
 
@@ -115,8 +115,7 @@ See the [Unit Tests] documentation for details on how to [run the unit tests].
 them to disk. [`timberslide`] reads from sysfs, where the kernel driver
 [periodically dumps the FPMCU console output][cros_ec_debugfs]. [`timberslide`]
 writes the resulting logs to `/var/log/cros_fp.log`. There are multiple
-instances of [`timberslide`] that run; one for each MCU running the EC
-codebase.
+instances of [`timberslide`] that run; one for each MCU running the EC codebase.
 
 ### Starting timberslide
 
@@ -202,18 +201,17 @@ possible to update the public key stored in the RO firmware once a device has
 been shipped (i.e., once [hardware write protection] is enabled).
 
 Different keys are used to sign the firmware during development and production.
-The `dev` key is used for local builds and development and is not private; it
-is called `dev_key.pem` and located in the "board" directory for the given
-FPMCU (e.g., [`board/nocturne_fp/dev_key.pem`]). After doing a build, the
-`ec.bin` in the `build` directory (e.g., `build/nocturne_fp/ec.bin`) will be
-signed with the `dev` key.
+The `dev` key is used for local builds and development and is not private; it is
+called `dev_key.pem` and located in the "board" directory for the given FPMCU
+(e.g., [`board/nocturne_fp/dev_key.pem`]). After doing a build, the `ec.bin` in
+the `build` directory (e.g., `build/nocturne_fp/ec.bin`) will be signed with the
+`dev` key.
 
-The two other types of keys are `premp` and `mp`, which stand for
-"pre-mass production" and "mass production", respectively. Both the `premp` and
-`mp` keys are only available to the buildbots as part of the official build.
-The `premp` is typically used during bringup of new hardware to validate the
-signing flow of the buildbots, while the `mp` key is used for PVT and production
-devices.
+The two other types of keys are `premp` and `mp`, which stand for "pre-mass
+production" and "mass production", respectively. Both the `premp` and `mp` keys
+are only available to the buildbots as part of the official build. The `premp`
+is typically used during bringup of new hardware to validate the signing flow of
+the buildbots, while the `mp` key is used for PVT and production devices.
 
 Switching keys is only possible when the `RO` firmware is not write protected,
 since the public portion of the keypair is stored in the `RO` firmware.
@@ -221,6 +219,7 @@ since the public portion of the keypair is stored in the `RO` firmware.
 ### Generate Key
 
 For testing, you can generate a new key by using the following openssl command:
+
 ```bash
 openssl genrsa -3 -out board/$BOARD/dev_key.pem 3072
 ```
@@ -233,8 +232,8 @@ openssl genrsa -3 -out board/$BOARD/dev_key.pem 3072
 
 ## Signing
 
-[`futility`] is used to sign EC firmware. There’s a wrapper script around it
-for signing called [`sign_official_build.sh`].
+[`futility`] is used to sign EC firmware. There’s a wrapper script around it for
+signing called [`sign_official_build.sh`].
 
 ### Key ID
 
@@ -291,9 +290,9 @@ Signature verification succeeded.
 
 ### Showing Key ID (fingerprint) for running FW
 
-[Asked on chromeos-chatty-firmware][chatty-firmware-q]
-about adding an EC command to show the Key ID (fingerprint) from the RO version.
-This would make it a lot easier during both development and testing.
+[Asked on chromeos-chatty-firmware][chatty-firmware-q] about adding an EC
+command to show the Key ID (fingerprint) from the RO version. This would make it
+a lot easier during both development and testing.
 
 ## Power
 
@@ -409,9 +408,9 @@ bloonchipper_v2.0.2626-3c315108.bin  dartmonkey_v2.0.2887-311310808.bin
 ```
 
 The above output assumes you selected the `bloonchipper` and `dartmonkey`
-firmware by setting `FPMCU_FIRMWARE="bloonchipper dartmonkey"`.
-The actual version numbers displayed will not necessarily match since the
-firmware is constantly updated.
+firmware by setting `FPMCU_FIRMWARE="bloonchipper dartmonkey"`. The actual
+version numbers displayed will not necessarily match since the firmware is
+constantly updated.
 
 ### Update Chrome OS Config {#update-chromeos-config}
 
