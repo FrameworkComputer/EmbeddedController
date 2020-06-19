@@ -332,7 +332,7 @@ void board_reset_pd_mcu(void);
 /* Common definition for the USB PD interrupt handlers. */
 void tcpc_alert_event(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
-void ppc_interrupt(enum gpio_signal signal);
+__override_proto void ppc_interrupt(enum gpio_signal signal);
 #endif
 
 void pi3hdx1204_retimer_power(void);

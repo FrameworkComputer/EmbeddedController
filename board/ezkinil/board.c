@@ -11,6 +11,8 @@
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/ppc/aoz1380.h"
+#include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/tusb544.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/usb_mux/amd_fp5.h"
@@ -32,6 +34,7 @@
 #include "temp_sensor.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
+#include "usbc_ppc.h"
 
 #include "gpio_list.h"
 
@@ -338,6 +341,60 @@ const struct usb_mux usbc1_ps8743 = {
 };
 
 /*****************************************************************************
+ * PPC
+ */
+
+static int ppc_id;
+
+static void setup_c1_ppc_config(void)
+{
+	/*
+	 * Read USB_C1_POWER_SWITCH_ID to choose DB ppc chip
+	 * 0: NX20P3483UK
+	 * 1: AOZ1380DI
+	 */
+
+	ioex_get_level(IOEX_USB_C1_POWER_SWITCH_ID, &ppc_id);
+
+	ccprints("C1: PPC is %s", ppc_id ? "AOZ1380DI" : "NX20P3483UK");
+
+	if (ppc_id) {
+		ppc_chips[USBC_PORT_C1].drv = &aoz1380_drv;
+		ioex_set_flags(IOEX_USB_C1_PPC_ILIM_3A_EN, GPIO_OUT_LOW);
+	}
+}
+
+__override void ppc_interrupt(enum gpio_signal signal)
+{
+	switch (signal) {
+	case GPIO_USB_C0_PPC_FAULT_ODL:
+		aoz1380_interrupt(USBC_PORT_C0);
+		break;
+	case GPIO_USB_C1_PPC_INT_ODL:
+		if (ppc_id)
+			aoz1380_interrupt(USBC_PORT_C1);
+		else
+			nx20p348x_interrupt(USBC_PORT_C1);
+		break;
+	default:
+		break;
+	}
+}
+
+__override int board_aoz1380_set_vbus_source_current_limit(int port,
+						enum tcpc_rp_value rp)
+{
+	int rv;
+
+	/* Use the TCPC to set the current limit */
+	rv = ioex_set_level(port ? IOEX_USB_C1_PPC_ILIM_3A_EN
+				: IOEX_USB_C0_PPC_ILIM_3A_EN,
+				(rp == TYPEC_RP_3A0) ? 1 : 0);
+
+	return rv;
+}
+
+/*****************************************************************************
  * Use FW_CONFIG to set correct configuration.
  */
 
@@ -356,6 +413,9 @@ void setup_fw_config(void)
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 
 	setup_mux();
+
+	if (board_ver >= 3)
+		setup_c1_ppc_config();
 
 	if (ec_config_has_hdmi_conn_hpd()) {
 		if (board_ver < 3)
