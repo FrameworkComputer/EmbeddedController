@@ -324,7 +324,7 @@ Start a fingerprint enrollment:
 > fpenroll
 ```
 
-### Measuring Power
+### Measuring Power {#measure-power}
 
 The Dragonclaw reference board has an onboard INA that monitors the voltage and
 power draw of the MCU and FP Sensor independently.

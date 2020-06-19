@@ -295,6 +295,52 @@ Signature verification succeeded.
 about adding an EC command to show the Key ID (fingerprint) from the RO version.
 This would make it a lot easier during both development and testing.
 
+## Power
+
+See [Measuring Power] for instructions on how to measure power with the
+fingerprint development boards.
+
+### Dragonclaw v0.2
+
+```bash
+(chroot) $  dut-control -t 60 pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
+```
+
+**Firmware Version**: `bloonchipper_v2.0.4277-9f652bb3`
+
+```
+@@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
+@@       sample_msecs    128   469.05   33.79   641.75   399.90
+@@    pp1800_dx_fp_mv    128  1802.06    3.50  1808.00  1800.00
+@@    pp1800_dx_fp_mw    128     0.00    0.00     0.00     0.00
+@@    pp3300_dx_fp_mv    128  3296.00    0.00  3296.00  3296.00
+@@    pp3300_dx_fp_mw    128     0.00    0.03     0.26     0.00
+@@   pp3300_dx_mcu_mv    128  3288.00    0.00  3288.00  3288.00
+@@   pp3300_dx_mcu_mw    128    24.20    0.00    24.20    24.20
+```
+
+### Dragontalon
+
+*** note
+**NOTE**: The sensor doesn't work on Dragontalon, so the measurements below show
+zero for the sensor.
+***
+
+```bash
+(chroot) $  dut-control -t 60 pp3300_h7_mv pp3300_h7_mw pp1800_fpc_mv pp1800_fpc_mw
+```
+
+**Firmware Version**: `dartmonkey_v2.0.4017-9c45fb4b3`
+
+```
+@@            NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
+@@    sample_msecs   1502    39.96   13.14   379.43    22.31
+@@   pp1800_fpc_mv   1502     0.00    0.00     0.00     0.00
+@@   pp1800_fpc_mw   1502     0.00    0.00     0.00     0.00
+@@    pp3300_h7_mv   1502  3288.00    0.00  3288.00  3288.00
+@@    pp3300_h7_mw   1502     8.20    0.51    18.08     7.67
+```
+
 ## Chrome OS Build (portage / ebuild)
 
 In order to use the fingerprint sensor with a given [Chrome OS board], a few
@@ -435,3 +481,4 @@ detail.
 [internal manifest]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#get-the-source-code
 [Unit Tests]: ../unit_tests.md
 [run the unit tests]: ../unit_tests.md#running
+[Measuring Power]: ./fingerprint-dev-for-partners.md#measure-power
