@@ -113,6 +113,15 @@
 #define PD_LPM_DEBOUNCE_US (100 * MSEC)
 
 /*
+ * This delay is not part of the USB Type-C specification or the USB port
+ * controller specification. Some TCPCs require extra time before the CC_STATUS
+ * register is updated when exiting low power mode.
+ * The PS8815 TCPC in particular was measured to take 8-10 ms from low power
+ * exit before the first update to CC_STATUS.
+ */
+#define PD_LPM_EXIT_DEBOUNCE_US (25*MSEC)
+
+/*
  * The TypeC state machine uses this bit to disable/enable PD
  * This bit corresponds to bit-0 of pd_disabled_mask
  */
@@ -289,6 +298,8 @@ static struct type_c {
 	uint64_t timeout;
 	/* Time to enter low power mode */
 	uint64_t low_power_time;
+	/* Time to debounce exit low power mode */
+	uint64_t low_power_exit_time;
 	/* Tasks to notify after TCPC has been reset */
 	int tasks_waiting_on_reset;
 	/* Tasks preventing TCPC from entering low power mode */
@@ -2832,8 +2843,18 @@ static void tc_low_power_mode_entry(const int port)
 
 static void tc_low_power_mode_run(const int port)
 {
-	if (TC_CHK_FLAG(port, TC_FLAGS_CHECK_CONNECTION))
-		check_drp_connection(port);
+	if (TC_CHK_FLAG(port, TC_FLAGS_CHECK_CONNECTION)) {
+		uint64_t now = get_time().val;
+
+		if (tc[port].low_power_exit_time == 0) {
+			tc[port].low_power_exit_time = now
+				+ PD_LPM_EXIT_DEBOUNCE_US;
+		} else if (now > tc[port].low_power_exit_time) {
+			CPRINTS("TCPC p%d Exit Low Power Mode", port);
+			check_drp_connection(port);
+		}
+		return;
+	}
 
 	if (tc[port].tasks_preventing_lpm)
 		tc[port].low_power_time = get_time().val + PD_LPM_DEBOUNCE_US;
@@ -2845,6 +2866,8 @@ static void tc_low_power_mode_run(const int port)
 		tcpm_enter_low_power_mode(port);
 		TC_CLR_FLAG(port, TC_FLAGS_LPM_TRANSITION);
 		tc_pause_event_loop(port);
+
+		tc[port].low_power_exit_time = 0;
 	}
 }
 #endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
