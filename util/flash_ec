@@ -1018,17 +1018,6 @@ function flash_flashrom() {
 			${FLASHROM_CMDLINE} -r "${FLAGS_read}" \
 			|| die "${MSG_READ_FAIL}"
 	fi
-	if [[ -z "${FLAGS_read}" && "${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
-		# Verify EC image.
-		info "Verifying EC firmware image."
-		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
-			info "Running flashrom:" 1>&2
-			echo " ${FLASHROM_CMDLINE} -v ${T}" 1>&2
-		fi
-		sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
-			${FLASHROM_CMDLINE} -v "${T}" \
-			|| die "${MSG_VERIFY_FAIL}"
-	fi
 }
 
 function flash_stm32() {
