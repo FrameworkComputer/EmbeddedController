@@ -39,10 +39,25 @@ enum vbus_and_vconn_control_mask {
 	INT_VBUSDIS_DISABLE  = BIT(2),
 };
 
+/* The TUSB422 cannot drive an FRS GPIO, but can detect FRS */
+static int tusb422_set_frs_enable(int port, int enable)
+{
+	return tcpc_update8(port, TUSB422_REG_PHY_BMC_RX_CTRL,
+			    TUSB422_REG_PHY_BMC_RX_CTRL_FRS_RX_EN,
+			    enable ? MASK_SET : MASK_CLR);
+}
+
 static int tusb422_tcpci_tcpm_init(int port)
 {
-	int rv = tcpci_tcpm_init(port);
+	int rv;
 
+	/* TUSB422 has a vendor-defined register reset */
+	rv = tcpc_update8(port, TUSB422_REG_CC_GEN_CTRL,
+			  TUSB422_REG_CC_GEN_CTRL_GLOBAL_SW_RST, MASK_SET);
+	if (rv)
+		return rv;
+
+	rv = tcpci_tcpm_init(port);
 	if (rv)
 		return rv;
 
@@ -68,18 +83,26 @@ static int tusb422_tcpci_tcpm_init(int port)
 		tcpc_write(port, TUSB422_REG_VBUS_AND_VCONN_CONTROL,
 				INT_VBUSDIS_DISABLE);
 	}
-
+	if (IS_ENABLED(CONFIG_USB_PD_FRS_TCPC)) {
+		/* Disable FRS detection, and enable the FRS detection alert */
+		tusb422_set_frs_enable(port, 0);
+		tcpc_update16(port, TCPC_REG_ALERT_MASK,
+			      TCPC_REG_ALERT_MASK_VENDOR_DEF, MASK_SET);
+		tcpc_update8(port, TUSB422_REG_VENDOR_INTERRUPTS_MASK,
+			     TUSB422_REG_VENDOR_INTERRUPTS_MASK_FRS_RX,
+			     MASK_SET);
+	}
 	/*
 	 * VBUS detection is supposed to be enabled by default, however the
 	 * TUSB422 has this disabled following reset.
 	 */
 	/* Enable VBUS detection */
-	return tcpc_write16(port, TCPC_REG_COMMAND, 0x33);
+	return tcpc_write16(port, TCPC_REG_COMMAND,
+				TCPC_REG_COMMAND_ENABLE_VBUS_DETECT);
 }
 
 static int tusb422_tcpm_set_cc(int port, int pull)
 {
-
 	/*
 	 * Enable AutoDischargeDisconnect to keep TUSB422 in active mode through
 	 * this transition. Note that the configuration keeps the TCPC from
@@ -108,6 +131,23 @@ static int tusb422_tcpc_drp_toggle(int port)
 }
 #endif
 
+static void tusb422_tcpci_tcpc_alert(int port)
+{
+	if (IS_ENABLED(CONFIG_USB_PD_FRS_TCPC)) {
+		int regval;
+
+		/* FRS detection is a vendor defined alert */
+		tcpc_read(port, TUSB422_REG_VENDOR_INTERRUPTS_STATUS, &regval);
+		if (regval & TUSB422_REG_VENDOR_INTERRUPTS_STATUS_FRS_RX) {
+			tusb422_set_frs_enable(port, 0);
+			tcpc_write(port, TUSB422_REG_VENDOR_INTERRUPTS_STATUS,
+				   regval);
+			pd_got_frs_signal(port);
+		}
+	}
+	tcpci_tcpc_alert(port);
+}
+
 const struct tcpm_drv tusb422_tcpm_drv = {
 	.init			= &tusb422_tcpci_tcpm_init,
 	.release		= &tcpci_tcpm_release,
@@ -123,7 +163,7 @@ const struct tcpm_drv tusb422_tcpm_drv = {
 	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
 	.get_message_raw	= &tcpci_tcpm_get_message_raw,
 	.transmit		= &tcpci_tcpm_transmit,
-	.tcpc_alert		= &tcpci_tcpc_alert,
+	.tcpc_alert		= &tusb422_tcpci_tcpc_alert,
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
 #endif
@@ -139,5 +179,8 @@ const struct tcpm_drv tusb422_tcpm_drv = {
 	.get_chip_info		= &tcpci_get_chip_info,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
+#endif
+#ifdef CONFIG_USB_PD_FRS_TCPC
+	.set_frs_enable         = &tusb422_set_frs_enable,
 #endif
 };
