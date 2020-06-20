@@ -506,7 +506,6 @@ void gpio_pre_init(void)
 	system_check_bbram_on_reset();
 	is_warm = system_is_reboot_warm();
 
-#ifdef CONFIG_GPIO_INIT_POWER_ON_DELAY_MS
 	/*
 	 * On power-on of some boards, H1 releases the EC from reset but then
 	 * quickly asserts and releases the reset a second time. This means the
@@ -517,11 +516,12 @@ void gpio_pre_init(void)
 	 *
 	 * Make sure to set up the timer before using udelay().
 	 */
-	if (system_get_reset_flags() & EC_RESET_FLAG_POWER_ON) {
+	if (IS_ENABLED(CONFIG_BOARD_RESET_AFTER_POWER_ON) &&
+	    system_get_reset_flags() & EC_RESET_FLAG_INITIAL_PWR) {
 		__hw_early_init_hwtimer(0);
-		udelay(CONFIG_GPIO_INIT_POWER_ON_DELAY_MS * MSEC);
+		udelay(2 * SECOND);
+		/* Shouldn't get here, but proceeding anyway... */
 	}
-#endif
 
 #ifdef CHIP_FAMILY_NPCX7
 	/*

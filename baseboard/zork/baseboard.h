@@ -99,11 +99,10 @@
 /*
  * On power-on, H1 releases the EC from reset but then quickly asserts and
  * releases the reset a second time. This means the EC sees 2 resets:
- * (1) power-on reset, (2) reset-pin reset. If we add a delay between reset (1)
- * and configuring GPIO output levels, then reset (2) will happen before the
- * end of the delay so we avoid extra output toggles.
+ * (1) power-on reset, (2) reset-pin reset. This config will
+ * allow the second reset to be treated as a power-on.
  */
-#define CONFIG_GPIO_INIT_POWER_ON_DELAY_MS 100
+#define CONFIG_BOARD_RESET_AFTER_POWER_ON
 
 #define CONFIG_IO_EXPANDER
 #define CONFIG_IO_EXPANDER_NCT38XX

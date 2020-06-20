@@ -681,6 +681,18 @@
  */
 #undef CONFIG_BOARD_FORCE_RESET_PIN
 
+/*
+ * For some boards on power-on, the EC is reset by the H1 after power-on,
+ * so the EC sees 2 resets. This config enables the EC to save a flag
+ * on the first power-up restart, and then wait for the second reset before
+ * any other setup is done (such as GPIOs, timers, UART etc.)
+ * On the second reset, the saved flag is used to detect the previous
+ * power-on, and treat the second reset as a power-on instead of a reset.
+ *
+ * NOTE: Implemented only for npcx
+ */
+#undef CONFIG_BOARD_RESET_AFTER_POWER_ON
+
 /* Permanent LM4 boot configuration */
 #undef CONFIG_BOOTCFG_VALUE
 
@@ -1907,19 +1919,6 @@
 #undef CONFIG_GESTURE_SIGMO_PROOF_MS
 #undef CONFIG_GESTURE_SIGMO_SKIP_MS
 #undef CONFIG_GESTURE_SIGMO_THRES_MG
-
-/*
- * Delay between power on and configuring GPIOs.
- * On power-on of some boards, H1 releases the EC from reset but then
- * quickly asserts and releases the reset a second time. This means the
- * EC sees 2 resets: (1) power-on reset, (2) reset-pin reset. If we add
- * a delay between reset (1) and configuring GPIO output levels, then
- * reset (2) will happen before the end of the delay so we avoid extra
- * output toggles.
- *
- * NOTE: Implemented only for npcx
- */
-#undef CONFIG_GPIO_INIT_POWER_ON_DELAY_MS
 
 /* Support getting gpio flags. */
 #undef CONFIG_GPIO_GET_EXTENDED
