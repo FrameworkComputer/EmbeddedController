@@ -41,7 +41,7 @@
 
 #include "gpio_list.h"
 
-
+static bool support_aoz_ppc;
 
 #ifdef HAS_TASK_MOTIONSENSE
 
@@ -277,6 +277,7 @@ enum gpio_signal gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V1;
 static void board_remap_gpio(void)
 {
 	uint32_t board_ver = 0;
+	int ppc_id = 0;
 
 	cbi_get_board_version(&board_ver);
 
@@ -286,6 +287,14 @@ static void board_remap_gpio(void)
 	} else {
 		gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V0;
 		ccprintf("GPIO_EC_PS2_RESET_V0\n");
+	}
+
+	ioex_get_level(IOEX_PPC_ID, &ppc_id);
+
+	support_aoz_ppc = ((board_ver >= 3) && !ppc_id);
+	if (support_aoz_ppc) {
+		ccprintf("DB USBC PPC aoz1380\n");
+		ppc_chips[USBC_PORT_C1].drv = &aoz1380_drv;
 	}
 }
 
@@ -300,11 +309,6 @@ void setup_fw_config(void)
 	ps2_enable_channel(NPCX_PS2_CH0, 1, send_aux_data_to_host);
 
 	setup_mux();
-
-	if (ec_config_has_db_ppc_aoz1380()) {
-		ccprintf("DB USBC PPC aoz1380");
-		ppc_chips[USBC_PORT_C1].drv = &aoz1380_drv;
-	}
 
 	board_remap_gpio();
 }
@@ -526,7 +530,7 @@ __override void ppc_interrupt(enum gpio_signal signal)
 		break;
 
 	case GPIO_USB_C1_PPC_INT_ODL:
-		if (ec_config_has_db_ppc_aoz1380())
+		if (support_aoz_ppc)
 			aoz1380_interrupt(USBC_PORT_C1);
 		else
 			nx20p348x_interrupt(USBC_PORT_C1);
