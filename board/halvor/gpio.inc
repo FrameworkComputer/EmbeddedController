@@ -86,9 +86,7 @@ GPIO(USB_C0_OC_ODL,            PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(USB_C1_OC_ODL,            PIN(5, 0), GPIO_ODR_HIGH)
 GPIO(USB_C2_OC_ODL,            PIN(3, 2), GPIO_ODR_HIGH)
 
-GPIO(USB_CO_FRS_EN,            PIN(4, 0), GPIO_OUT_HIGH)
-GPIO(USB_C1_FRS_EN,            PIN(9, 4), GPIO_OUT_HIGH)
-GPIO(USB_C2_FRS_EN,            PIN(6, 0), GPIO_OUT_HIGH)
+
 
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C1_LS_EN)
