@@ -45,6 +45,8 @@
 #define CONFIG_USBC_RETIMER_TUSB544
 #define TUSB544_I2C_ADDR_FLAGS1 0x0F
 
+#define CONFIG_POWER_SIGNAL_RUNTIME_CONFIG
+
 /* GPIO mapping from board specific name to EC common name. */
 #define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
 #define CONFIG_SCI_GPIO			GPIO_EC_FCH_SCI_ODL
@@ -61,7 +63,6 @@
 #define GPIO_PCH_SYS_PWROK		GPIO_EC_FCH_PWROK
 #define GPIO_PCH_WAKE_L			GPIO_EC_FCH_WAKE_L
 #define GPIO_POWER_BUTTON_L		GPIO_EC_PWR_BTN_ODL
-#define GPIO_S0_PGOOD			GPIO_S0_PWROK_OD
 #define GPIO_S5_PGOOD			GPIO_EC_PWROK_OD
 #define GPIO_SYS_RESET_L		GPIO_EC_SYS_RST_L
 #define GPIO_VOLUME_DOWN_L		GPIO_VOLDN_BTN_ODL
@@ -70,6 +71,9 @@
 #define GPIO_PACKET_MODE_EN		GPIO_EC_H1_PACKET_MODE
 
 #ifndef __ASSEMBLER__
+
+/* This GPIOs moved. Temporarily detect and support the V0 HW. */
+extern enum gpio_signal GPIO_S0_PGOOD;
 
 enum adc_channel {
 	ADC_TEMP_SENSOR_5V_REGULATOR,

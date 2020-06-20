@@ -577,3 +577,46 @@ void ps2_pwr_en_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&trackpoint_reset_deferred_data, MSEC);
 }
+
+/*****************************************************************************
+ * Power signals
+ */
+
+struct power_signal_info power_signal_list[] = {
+	[X86_SLP_S3_N] = {
+		.gpio = GPIO_PCH_SLP_S3_L,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "SLP_S3_DEASSERTED",
+	},
+	[X86_SLP_S5_N] = {
+		.gpio = GPIO_PCH_SLP_S5_L,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "SLP_S5_DEASSERTED",
+	},
+	[X86_S0_PGOOD] = {
+		.gpio = GPIO_S0_PWROK_OD_V0,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "S0_PGOOD",
+	},
+	[X86_S5_PGOOD] = {
+		.gpio = GPIO_S5_PGOOD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "S5_PGOOD",
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+enum gpio_signal GPIO_S0_PGOOD = GPIO_S0_PWROK_OD_V0;
+
+void board_version_check(void)
+{
+	uint32_t board_ver = 0;
+
+	cbi_get_board_version(&board_ver);
+
+	if (board_ver == 3) {
+		power_signal_list[X86_S0_PGOOD].gpio = GPIO_S0_PWROK_OD_V1;
+		GPIO_S0_PGOOD = GPIO_S0_PWROK_OD_V1;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_version_check, HOOK_PRIO_INIT_I2C);
