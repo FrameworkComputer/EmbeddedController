@@ -44,9 +44,6 @@
 
 #define INT_RECHECK_US 5000
 
-/* C1 interrupt line swapped between board versions, track it in a variable */
-static enum gpio_signal c1_int_line;
-
 /* C0 interrupt line shared by BC 1.2 and charger */
 static void check_c0_line(void);
 DECLARE_DEFERRED(check_c0_line);
@@ -98,7 +95,7 @@ static void check_c1_line(void)
 	 * If line is still being held low, see if there's more to process from
 	 * one of the chips.
 	 */
-	if (!gpio_get_level(c1_int_line)) {
+	if (!gpio_get_level(GPIO_USB_C1_INT_ODL)) {
 		notify_c1_chips();
 		hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
 	}
@@ -200,16 +197,8 @@ void board_init(void)
 {
 	int on;
 
-	if (system_get_board_version() <= 0) {
-		pd_set_max_voltage(5000);
-		c1_int_line = GPIO_USB_C1_INT_V0_ODL;
-	} else {
-		c1_int_line = GPIO_USB_C1_INT_V1_ODL;
-	}
-
-
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
-	gpio_enable_interrupt(c1_int_line);
+	gpio_enable_interrupt(GPIO_USB_C1_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
 
 	/* Charger on the MB will be outputting PROCHOT_ODL and OD CHG_DET */
@@ -255,7 +244,7 @@ uint16_t tcpc_get_alert_status(void)
 	int regval;
 
 	/* Check whether TCPC 1 pulled the shared interrupt line */
-	if (!gpio_get_level(c1_int_line)) {
+	if (!gpio_get_level(GPIO_USB_C1_INT_ODL)) {
 		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
 			if (regval)
 				status = PD_STATUS_TCPC_ALERT_1;
