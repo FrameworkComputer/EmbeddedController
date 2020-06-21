@@ -8,6 +8,7 @@
  * Refer to USB PD 3.0 spec, version 2.0, sections 8.2 and 8.3
  */
 
+#include "charge_state.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "usb_dp_alt_mode.h"
@@ -77,6 +78,15 @@ void dpm_attempt_mode_entry(int port)
 		return;
 
 	if (pd_get_data_role(port) != PD_ROLE_DFP)
+		return;
+	/*
+	 * Do not try to enter mode while CPU is off.
+	 * CPU transitions (e.g b/158634281) can occur during the discovery
+	 * phase or during enter/exit negotiations, and the state
+	 * of the modes can get out of sync, causing the attempt to
+	 * enter the mode to fail prematurely.
+	 */
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
 		return;
 	/*
 	 * If discovery has not occurred for modes, do not attempt to switch

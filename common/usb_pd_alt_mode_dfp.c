@@ -245,6 +245,12 @@ uint32_t pd_dfp_enter_mode(int port, enum tcpm_transmit_type type,
 	if (modep->fx->enter(port, mode_caps) == -1)
 		return 0;
 
+	/*
+	 * Strictly speaking, this should only happen when the request
+	 * has been ACKed.
+	 * TODO: Redo setting the enter mode flag to incorporate
+	 * it into the DP state machine.
+	 */
 	pd_set_dfp_enter_mode_flag(port, true);
 
 	/* SVDM to send to UFP for mode entry */
@@ -1237,7 +1243,7 @@ __overridable void svdm_exit_dp_mode(int port)
 		baseboard_mst_enable_control(port, 0);
 #endif
 #ifdef CONFIG_USB_PD_TCPMV2
-	dp_reset_next_command(port);
+	dp_teardown(port);
 #endif
 }
 

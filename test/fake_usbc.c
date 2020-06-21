@@ -244,16 +244,16 @@ void dp_vdm_acked(int port, int cmd)
 {
 }
 
-void dp_reset_next_command(int port)
-{
-}
-
 void dpm_init(int port)
 {
 }
 
 void dpm_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		uint32_t *vdm)
+{
+}
+
+void dp_teardown(int port)
 {
 }
 

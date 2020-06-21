@@ -4643,6 +4643,13 @@ static void pe_vdm_request_entry(int port)
 		tx_emsg[port].len = pe[port].vdm_cnt * 4;
 	}
 
+	/*
+	 * Clear the VDM nak'ed flag so that each request is
+	 * treated separately (NAKs are handled by the
+	 * DPM layer). Otherwise previous NAKs received will
+	 * cause the state to exit early.
+	 */
+	PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED);
 	send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
 
 	pe[port].vdm_response_timer = TIMER_DISABLED;

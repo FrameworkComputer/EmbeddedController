@@ -50,7 +50,7 @@ void dp_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd);
  *
  * @param port USB-C port number
  */
-void dp_reset_next_command(int port);
+void dp_teardown(int port);
 
 /*
  * Construct the next DisplayPort VDM that should be sent.
