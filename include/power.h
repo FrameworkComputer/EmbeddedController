@@ -69,7 +69,11 @@ struct power_signal_info {
  * Each board must provide its signal list and a corresponding enum
  * power_signal.
  */
+#ifdef CONFIG_POWER_SIGNAL_RUNTIME_CONFIG
+extern struct power_signal_info power_signal_list[];
+#else
 extern const struct power_signal_info power_signal_list[];
+#endif
 
 /* Convert enum power_signal to a mask for signal functions */
 #define POWER_SIGNAL_MASK(signal) (1 << (signal))

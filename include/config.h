@@ -641,6 +641,9 @@
 
 /*****************************************************************************/
 
+/* EC can choose power signal gpio by schematic version */
+#undef CONFIG_POWER_SIGNAL_RUNTIME_CONFIG
+
 /* EC has GPIOs to allow board to reset RTC */
 #undef CONFIG_BOARD_HAS_RTC_RESET
 
