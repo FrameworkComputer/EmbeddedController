@@ -167,7 +167,13 @@ void power_set_state(enum power_state new_state);
  *
  * @return Current chipset power state
  */
+#ifdef HAS_TASK_CHIPSET
 enum power_state power_get_state(void);
+#else
+static inline enum power_state power_get_state(void) {
+	return POWER_G3;
+}
+#endif
 
 /*
  * Set the wake mask according to the current power state.
