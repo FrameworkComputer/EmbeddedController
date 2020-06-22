@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 
 # Device test binaries
-test-list-y ?= pingpong timer_calib timer_dos timer_jump mutex utils utils_str
+test-list-y ?= flash_write_protect pingpong timer_calib timer_dos timer_jump mutex utils utils_str
 #disable: powerdemo
 
 # Emulator tests
