@@ -12,12 +12,22 @@
 
 test_static int check_image_and_hardware_write_protect(void)
 {
+	int wp;
+
 	if (system_get_image_copy() != EC_IMAGE_RO) {
 		ccprintf("This test is only works when running RO\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
-	if (gpio_get_level(GPIO_WP) != 1) {
+#ifdef CONFIG_WP_ALWAYS
+        wp = 1;
+#elif defined(CONFIG_WP_ACTIVE_HIGH)
+        wp = gpio_get_level(GPIO_WP);
+#else
+	wp = !gpio_get_level(GPIO_WP_L);
+#endif
+
+	if (!wp) {
 		ccprintf("Hardware write protect (GPIO_WP) must be enabled\n");
 		return EC_ERROR_UNKNOWN;
 	}
