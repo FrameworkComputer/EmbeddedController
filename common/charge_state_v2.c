@@ -2496,7 +2496,7 @@ int charge_get_active_chg_chip(void)
 #endif
 }
 
-#ifndef TEST_BUILD
+#ifdef CONFIG_USB_PD_PREFER_MV
 int charge_get_plt_plus_bat_desired_mw(void)
 {
 	/*
@@ -2534,6 +2534,7 @@ void charge_reset_stable_current(void)
 	charge_reset_stable_current_us(10 * SECOND);
 }
 #endif
+
 /*****************************************************************************/
 /* Host commands */
 
