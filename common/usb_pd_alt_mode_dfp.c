@@ -815,7 +815,17 @@ enum tbt_compat_cable_speed get_tbt_cable_speed(int port)
 	enum tbt_compat_cable_speed max_tbt_speed =
 				board_get_max_tbt_speed(port);
 
-	return cable_mode_resp.tbt_cable_speed > max_tbt_speed ?
+	/*
+	 * Ref: USB Type-C Cable and Connector Specification,
+	 * figure F-1 TBT3 Discovery Flow.
+	 * If cable doesn't have Intel SVID, limit Thunderbolt cable speed to
+	 * Passive Gen 2 cable speed.
+	 */
+	if (!cable_mode_resp.raw_value)
+		return max_tbt_speed < TBT_SS_U32_GEN1_GEN2 ?
+			max_tbt_speed : TBT_SS_U32_GEN1_GEN2;
+
+	return max_tbt_speed < cable_mode_resp.tbt_cable_speed ?
 		max_tbt_speed : cable_mode_resp.tbt_cable_speed;
 }
 
@@ -850,7 +860,7 @@ int enter_tbt_compat_mode(int port, enum tcpm_transmit_type sop,
 		get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE ?
 			TBT_ENTER_PASSIVE_CABLE : TBT_ENTER_ACTIVE_CABLE;
 
-	if (cable_mode_resp.tbt_cable_speed == TBT_SS_TBT_GEN3) {
+	if (get_tbt_cable_speed(port) == TBT_SS_TBT_GEN3) {
 		enter_dev_mode.lsrx_comm =
 			cable_mode_resp.lsrx_comm;
 		enter_dev_mode.retimer_type =

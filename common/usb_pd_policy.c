@@ -506,7 +506,6 @@ static int process_tbt_compat_discover_modes(int port,
 				enum tcpm_transmit_type *rtype)
 {
 	int rsize;
-	struct pd_discovery *disc;
 
 	/* Initialize transmit type to SOP */
 	*rtype = TCPC_TX_SOP;
@@ -547,22 +546,13 @@ static int process_tbt_compat_discover_modes(int port,
 	} else {
 		/* Store Discover Mode SOP response */
 		cable[port].dev_mode_resp.raw_value = payload[1];
-		disc = &discovery[port][TCPC_TX_SOP_PRIME];
 
 		if (is_limit_tbt_cable_speed(port)) {
 			/*
 			 * Passive cable has Nacked for Discover SVID.
-			 * No need to do Discover modes of cable. Assign the
-			 * cable discovery attributes and enter into device
-			 * Thunderbolt-compatible mode.
+			 * No need to do Discover modes of cable.
+			 * Enter into device Thunderbolt-compatible mode.
 			 */
-			cable[port].cable_mode_resp.tbt_cable_speed =
-			     cable[port].rev == PD_REV30 &&
-			     (disc->identity.product_t1.p_rev30.ss >
-					USB_R30_SS_U32_U40_GEN2) ?
-				TBT_SS_U32_GEN1_GEN2 :
-				disc->identity.product_t1.p_rev30.ss;
-
 			rsize = enter_tbt_compat_mode(port, *rtype, payload);
 		} else {
 			/* Discover modes for SOP' */
