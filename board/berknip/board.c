@@ -153,6 +153,24 @@ const struct mft_t mft_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
+/*****************************************************************************
+ * Retimers
+ */
+
+static void retimers_on(void)
+{
+	/* hdmi retimer power on */
+	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, retimers_on, HOOK_PRIO_DEFAULT);
+
+static void retimers_off(void)
+{
+	/* hdmi retimer power off */
+	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, retimers_off, HOOK_PRIO_DEFAULT);
+
 /*
  * USB C0 port SBU mux use standalone PI3USB221
  * chip and it need a board specific driver.
