@@ -16,6 +16,11 @@
 /* Optional features */
 #define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_EXTPOWER_GPIO
+/*
+ * TODO: Remove this option once the VBAT no longer keeps high when
+ * system's power isn't presented.
+ */
+#define CONFIG_IT83XX_RESET_PD_CONTRACT_IN_BRAM
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_LOW_POWER_S0
 #define CONFIG_POWER_BUTTON
