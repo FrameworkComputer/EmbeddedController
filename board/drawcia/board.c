@@ -44,6 +44,11 @@
 
 #define INT_RECHECK_US 5000
 
+/* GPIO to enable/disable the USB Type-A port. */
+const int usb_port_enable[USB_PORT_COUNT] = {
+	GPIO_EN_USB_A_5V,
+};
+
 /* C0 interrupt line shared by BC 1.2 and charger */
 static void check_c0_line(void);
 DECLARE_DEFERRED(check_c0_line);

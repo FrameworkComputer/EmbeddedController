@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Waddledee board configuration */
+/* Drawcia board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -74,6 +74,10 @@
 #define I2C_PORT_USB_MUX I2C_PORT_USB_C0	/* Required for ITE Mux */
 
 #define CONFIG_USBC_RETIMER_TUSB544		/* C1 Redriver: TUSB544 */
+
+/* USB Type A Features */
+#define USB_PORT_COUNT 1
+#define CONFIG_USB_PORT_POWER_DUMB
 
 #ifndef __ASSEMBLER__
 
