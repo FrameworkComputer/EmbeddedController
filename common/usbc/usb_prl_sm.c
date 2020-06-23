@@ -1963,6 +1963,14 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	uint8_t cnt;
 	int8_t msid;
 
+	/*
+	 * If PD3, wait for the RX chunk SM to copy the pdmsg into the extended
+	 * buffer before overwriting pdmsg.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
+	    RCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED))
+		return;
+
 	/* If we don't have any message, just stop processing now. */
 	if (!tcpm_has_pending_message(port) ||
 	    tcpm_dequeue_message(port, pdmsg[port].rx_chk_buf, &header))
