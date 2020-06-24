@@ -1214,10 +1214,10 @@ void tcpci_tcpc_alert(int port)
  * accessed by tcpm_get_chip_info without worrying about chip states.
  */
 int tcpci_get_chip_info(int port, int live,
-			struct ec_response_pd_chip_info_v1 **chip_info)
+			struct ec_response_pd_chip_info_v1 *chip_info)
 {
 	static struct ec_response_pd_chip_info_v1
-		info[CONFIG_USB_PD_PORT_MAX_COUNT];
+		cached_info[CONFIG_USB_PD_PORT_MAX_COUNT];
 	struct ec_response_pd_chip_info_v1 *i;
 	int error;
 	int val;
@@ -1225,16 +1225,20 @@ int tcpci_get_chip_info(int port, int live,
 	if (port >= board_get_usb_pd_port_count())
 		return EC_ERROR_INVAL;
 
-	i = &info[port];
+	i = &cached_info[port];
 
-	/* If chip_info is NULL, chip info will be stored in cache and can be
-	 * read later by another call. */
-	if (chip_info)
-		*chip_info = i;
 
 	/* If already cached && live data is not asked, return cached value */
-	if (i->vendor_id && !live)
+	if (i->vendor_id && !live) {
+		/*
+		 * If chip_info is NULL, chip info will be stored in cache and
+		 * can be read later by another call.
+		 */
+		if (chip_info)
+			memcpy(chip_info, i, sizeof(*i));
+
 		return EC_SUCCESS;
+	}
 
 	error = tcpc_read16(port, TCPC_REG_VENDOR_ID, &val);
 	if (error)
@@ -1256,6 +1260,10 @@ int tcpci_get_chip_info(int port, int live,
 	 * override this value if it can.
 	 */
 	i->fw_version_number = -1;
+
+	/* Copy the cached value to return if chip_info is not NULL */
+	if (chip_info)
+		memcpy(chip_info, i, sizeof(*i));
 
 	return EC_SUCCESS;
 }

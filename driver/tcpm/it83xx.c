@@ -614,15 +614,13 @@ static int it83xx_tcpm_transmit(int port,
 }
 
 static int it83xx_tcpm_get_chip_info(int port, int live,
-			struct ec_response_pd_chip_info_v1 **chip_info)
+			struct ec_response_pd_chip_info_v1 *chip_info)
 {
-	static struct ec_response_pd_chip_info_v1 i;
-
-	*chip_info = &i;
-	i.vendor_id = USB_VID_ITE;
-	i.product_id = (IT83XX_GCTRL_CHIPID1 << 8) | IT83XX_GCTRL_CHIPID2;
-	i.device_id = IT83XX_GCTRL_CHIPVER & 0xf;
-	i.fw_version_number = 0xEC;
+	chip_info->vendor_id = USB_VID_ITE;
+	chip_info->product_id = ((IT83XX_GCTRL_CHIPID1 << 8) |
+				 IT83XX_GCTRL_CHIPID2);
+	chip_info->device_id = IT83XX_GCTRL_CHIPVER & 0xf;
+	chip_info->fw_version_number = 0xEC;
 
 	return EC_SUCCESS;
 }

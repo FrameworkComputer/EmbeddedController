@@ -146,7 +146,7 @@ __maybe_unused static int mock_drp_toggle(int port)
 }
 
 static int mock_get_chip_info(int port, int live,
-			      struct ec_response_pd_chip_info_v1 **info)
+			      struct ec_response_pd_chip_info_v1 *info)
 {
 	return EC_SUCCESS;
 }

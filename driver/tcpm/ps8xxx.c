@@ -186,7 +186,7 @@ static int ps8xxx_tcpc_drp_toggle(int port)
 
 
 static int ps8xxx_get_chip_info(int port, int live,
-			struct ec_response_pd_chip_info_v1 **chip_info)
+			struct ec_response_pd_chip_info_v1 *chip_info)
 {
 	int val;
 	int rv = tcpci_get_chip_info(port, live, chip_info);
@@ -195,25 +195,25 @@ static int ps8xxx_get_chip_info(int port, int live,
 		return rv;
 
 	if (!live) {
-		(*chip_info)->vendor_id = PS8XXX_VENDOR_ID;
-		(*chip_info)->product_id = PS8XXX_PRODUCT_ID;
+		chip_info->vendor_id = PS8XXX_VENDOR_ID;
+		chip_info->product_id = PS8XXX_PRODUCT_ID;
 	}
 
-	if ((*chip_info)->fw_version_number == 0 ||
-	    (*chip_info)->fw_version_number == -1 || live) {
+	if (chip_info->fw_version_number == 0 ||
+	    chip_info->fw_version_number == -1 || live) {
 		rv = tcpc_read(port, FW_VER_REG, &val);
 
 		if (rv)
 			return rv;
 
-		(*chip_info)->fw_version_number = val;
+		chip_info->fw_version_number = val;
 	}
 
 	/* Treat unexpected values as error (FW not initiated from reset) */
 	if (live && (
-	    (*chip_info)->vendor_id != PS8XXX_VENDOR_ID ||
-	    (*chip_info)->product_id != PS8XXX_PRODUCT_ID ||
-	    (*chip_info)->fw_version_number == 0))
+	    chip_info->vendor_id != PS8XXX_VENDOR_ID ||
+	    chip_info->product_id != PS8XXX_PRODUCT_ID ||
+	    chip_info->fw_version_number == 0))
 		return EC_ERROR_UNKNOWN;
 
 #if defined(CONFIG_USB_PD_TCPM_PS8751) && \
@@ -222,7 +222,7 @@ static int ps8xxx_get_chip_info(int port, int live,
 	 * Min firmware version of PS8751 to ensure that it can detect Vbus
 	 * properly. See b/109769787#comment7
 	 */
-	(*chip_info)->min_req_fw_version_number = 0x39;
+	chip_info->min_req_fw_version_number = 0x39;
 #endif
 
 	return rv;

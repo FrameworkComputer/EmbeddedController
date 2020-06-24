@@ -344,12 +344,12 @@ struct tcpm_drv {
 	 *
 	 * @param port Type-C port number
 	 * @param live Fetch live chip info or hard-coded + cached info
-	 * @param info Pointer to pointer to PD chip info
+	 * @param info Pointer to PD chip info; NULL to cache the info only
 	 *
 	 * @return EC_SUCCESS or error
 	 */
 	int (*get_chip_info)(int port, int live,
-			struct ec_response_pd_chip_info_v1 **info);
+			struct ec_response_pd_chip_info_v1 *info);
 
 #ifdef CONFIG_USBC_PPC
 	/**
