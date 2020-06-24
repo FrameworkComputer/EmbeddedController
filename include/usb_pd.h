@@ -891,14 +891,15 @@ enum pd_states {
 #define PD_FLAGS_LPM_REQUESTED     BIT(17)/* Tracks SW LPM state */
 #define PD_FLAGS_LPM_ENGAGED       BIT(18)/* Tracks HW LPM state */
 #define PD_FLAGS_LPM_TRANSITION    BIT(19)/* Tracks HW LPM transition */
+#define PD_FLAGS_LPM_EXIT          BIT(19)/* Tracks HW LPM exit */
 #endif
 /*
  * Tracks whether port negotiation may have stalled due to not starting reset
  * timers in SNK_DISCOVERY
  */
-#define PD_FLAGS_SNK_WAITING_BATT  BIT(20)
+#define PD_FLAGS_SNK_WAITING_BATT  BIT(21)
 /* Check vconn state in READY */
-#define PD_FLAGS_CHECK_VCONN_STATE BIT(21)
+#define PD_FLAGS_CHECK_VCONN_STATE BIT(22)
 #endif /* CONFIG_USB_PD_TCPMV1 */
 
 /* Per-port battery backed RAM flags */

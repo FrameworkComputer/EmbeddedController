@@ -238,6 +238,8 @@ static struct pd_protocol {
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	/* Time to enter low power mode */
 	uint64_t low_power_time;
+	/* Time to debounce exit low power mode */
+	uint64_t low_power_exit_time;
 	/* Tasks to notify after TCPC has been reset */
 	int tasks_waiting_on_reset;
 	/* Tasks preventing TCPC from entering low power mode */
@@ -452,6 +454,8 @@ static void sink_can_xmit(int port, int rp)
 
 /* 10 ms is enough time for any TCPC transaction to complete. */
 #define PD_LPM_DEBOUNCE_US (10 * MSEC)
+/* 25 ms on LPM exit to ensure TCPC is settled */
+#define PD_LPM_EXIT_DEBOUNCE_US (25 * MSEC)
 
 /* This is only called from the PD tasks that owns the port. */
 static void handle_device_access(int port)
@@ -464,6 +468,10 @@ static void handle_device_access(int port)
 		tcpc_prints("Exit Low Power Mode", port);
 		pd[port].flags &= ~(PD_FLAGS_LPM_ENGAGED |
 				    PD_FLAGS_LPM_REQUESTED);
+		pd[port].flags |= PD_FLAGS_LPM_EXIT;
+
+		pd[port].low_power_exit_time = get_time().val
+			+ PD_LPM_EXIT_DEBOUNCE_US;
 		/*
 		 * Wake to ensure we make another pass through the main task
 		 * loop after clearing the flags.
@@ -4676,6 +4684,23 @@ void pd_task(void *u)
 			if (pd[port].flags & PD_FLAGS_LPM_REQUESTED &&
 			    !(evt & PD_EVENT_CC))
 				break;
+
+			/*
+			 * Debounce low power mode exit.  Some TCPCs need time
+			 * for the CC_STATUS register to be stable after exiting
+			 * low power mode.
+			 */
+			if (pd[port].flags & PD_FLAGS_LPM_EXIT) {
+				uint64_t now;
+
+				now = get_time().val;
+				if (now < pd[port].low_power_exit_time)
+					break;
+
+				CPRINTS("TCPC p%d Exit Low Power Mode done",
+					port);
+				pd[port].flags &= ~PD_FLAGS_LPM_EXIT;
+			}
 #endif
 
 			/*
