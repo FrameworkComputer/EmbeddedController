@@ -160,6 +160,12 @@ static enum cr50_comm_err verify_hash(void)
 	const uint8_t *hash;
 	int rv;
 
+	/* Wake up Cr50 beforehand in case it's asleep. */
+	enable_packet_mode(true);
+	CPRINTS("Ping Cr50");
+	msleep(1);
+	enable_packet_mode(false);
+
 	rv = vboot_get_rw_hash(&hash);
 	if (rv)
 		return rv;
