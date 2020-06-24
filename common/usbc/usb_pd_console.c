@@ -164,9 +164,14 @@ test_export_static int command_pd(int argc, char **argv)
 		if (IS_ENABLED(CONFIG_USBC_VCONN))
 			ccprintf("%s ", tc_is_vconn_src(port) ? "-VC" : "");
 
-		ccprintf("TC State: %s, Flags: 0x%04x\n",
+		ccprintf("TC State: %s, Flags: 0x%04x ",
 			tc_get_current_state(port),
 			tc_get_flags(port));
+
+		if (IS_ENABLED(CONFIG_USB_PE_SM))
+			ccprintf(" PE State: %s, Flags: 0x%04x\n",
+				pe_get_current_state(port),
+				pe_get_flags(port));
 	}
 
 	return EC_SUCCESS;

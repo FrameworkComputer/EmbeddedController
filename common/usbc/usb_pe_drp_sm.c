@@ -5419,6 +5419,20 @@ void pd_set_dfp_enter_mode_flag(int port, bool set)
 }
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 
+const char *pe_get_current_state(int port)
+{
+	if (IS_ENABLED(USB_PD_DEBUG_LABELS))
+		return pe_state_names[get_state_pe(port)];
+	else
+		return "";
+}
+
+uint32_t pe_get_flags(int port)
+{
+	return pe[port].flags;
+}
+
+
 static const struct usb_state pe_states[] = {
 	/* Super States */
 #ifdef CONFIG_USB_PD_REV30

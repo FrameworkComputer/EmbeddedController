@@ -197,5 +197,22 @@ void pe_invalidate_explicit_contract(int port);
  * @param port USB-C port number
  */
 bool pe_in_local_ams(int port);
+
+/**
+ * Returns the name of the current PE state
+ *
+ * @param port USB-C port number
+ * @return name of current pe state
+ */
+const char *pe_get_current_state(int port);
+
+/**
+ * Returns the flag mask of the PE state machine
+ *
+ * @param port USB-C port number
+ * @return flag mask of the pe state machine
+ */
+uint32_t pe_get_flags(int port);
+
 #endif /* __CROS_EC_USB_PE_H */
 
