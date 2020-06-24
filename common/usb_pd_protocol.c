@@ -4668,14 +4668,20 @@ void pd_task(void *u)
 				break;
 #endif
 
-			/* Check for connection */
+			/*
+			 * Check for connection
+			 *
+			 * Send FALSE for supports_auto_toggle to not change
+			 * the current return value of UNATTACHED instead of
+			 * the auto-toggle ATTACHED_WAIT response for TCPMv1.
+			 */
 			tcpm_get_cc(port, &cc1, &cc2);
 
 			next_state = drp_auto_toggle_next_state(
 						&pd[port].drp_sink_time,
 						pd[port].power_role,
 						drp_state[port],
-						cc1, cc2);
+						cc1, cc2, false);
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 			/*

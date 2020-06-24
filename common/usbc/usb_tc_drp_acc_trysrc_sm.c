@@ -2764,13 +2764,10 @@ static __maybe_unused void check_drp_connection(const int port)
 
 	tc[port].drp_sink_time = get_time().val;
 
-	/*
-	 * TODO(b:159736927) add ATTACHED_WAIT states to possible next states
-	 *
-	 * Get the next toggle state
-	 */
+	/* Get the next toggle state */
 	next_state = drp_auto_toggle_next_state(&tc[port].drp_sink_time,
-		tc[port].power_role, drp_state[port], cc1, cc2);
+		tc[port].power_role, drp_state[port], cc1, cc2,
+		tcpm_auto_toggle_supported(port));
 
 	if (next_state == DRP_TC_DEFAULT)
 		next_state = (PD_ROLE_DEFAULT(port) == PD_ROLE_SOURCE)
@@ -2779,22 +2776,16 @@ static __maybe_unused void check_drp_connection(const int port)
 
 	switch (next_state) {
 	case DRP_TC_UNATTACHED_SNK:
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-		if (drp_state[port] == PD_DRP_TOGGLE_ON &&
-		    tcpm_auto_toggle_supported(port))
-			set_state_tc(port, TC_ATTACH_WAIT_SNK);
-		else
-#endif
-			set_state_tc(port, TC_UNATTACHED_SNK);
+		set_state_tc(port, TC_UNATTACHED_SNK);
+		break;
+	case DRP_TC_ATTACHED_WAIT_SNK:
+		set_state_tc(port, TC_ATTACH_WAIT_SNK);
 		break;
 	case DRP_TC_UNATTACHED_SRC:
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-		if (drp_state[port] == PD_DRP_TOGGLE_ON &&
-		    tcpm_auto_toggle_supported(port))
-			set_state_tc(port, TC_ATTACH_WAIT_SRC);
-		else
-#endif
-			set_state_tc(port, TC_UNATTACHED_SRC);
+		set_state_tc(port, TC_UNATTACHED_SRC);
+		break;
+	case DRP_TC_ATTACHED_WAIT_SRC:
+		set_state_tc(port, TC_ATTACH_WAIT_SRC);
 		break;
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE

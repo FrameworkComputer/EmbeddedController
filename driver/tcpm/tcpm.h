@@ -267,6 +267,11 @@ static inline int tcpm_enable_drp_toggle(int port)
 {
 	return tcpc_config[port].drv->drp_toggle(port);
 }
+#else
+static inline int tcpm_auto_toggle_supported(int port)
+{
+	return false;
+}
 #endif
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
