@@ -676,7 +676,7 @@ static uint32_t check_boot_key(const uint8_t *state)
 	 * re-triggering events in RW firmware that were already processed by
 	 * RO firmware.
 	 */
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return BOOT_KEY_NONE;
 
 	/* If reset was not caused by reset pin, refresh must be held down */

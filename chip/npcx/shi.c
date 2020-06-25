@@ -945,7 +945,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, shi_enable, HOOK_PRIO_DEFAULT);
 static void shi_reenable_on_sysjump(void)
 {
 #if !(DEBUG_SHI)
-	if (system_jumped_to_this_image() && chipset_in_state(CHIPSET_STATE_ON))
+	if (system_jumped_late() && chipset_in_state(CHIPSET_STATE_ON))
 #endif
 		shi_enable();
 }

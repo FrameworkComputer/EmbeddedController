@@ -281,8 +281,7 @@ int system_jumped_to_this_image(void)
 
 int system_jumped_late(void)
 {
-	return !(reset_flags & EC_RESET_FLAG_EFS)
-			&& (reset_flags & EC_RESET_FLAG_SYSJUMP);
+	return !(reset_flags & EC_RESET_FLAG_EFS) && jumped_to_image;
 }
 
 int system_add_jump_tag(uint16_t tag, int version, int size, const void *data)

@@ -516,7 +516,7 @@ static void isl923x_init(int chgnum)
 		 * No need to proceed with the rest of init if we sysjump'd to
 		 * this image as the input current limit has already been set.
 		 */
-		if (system_jumped_to_this_image())
+		if (system_jumped_late())
 			return;
 
 		/*

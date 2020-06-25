@@ -90,7 +90,7 @@ static void als_task_init(void)
 	 * Enable ALS task in S0 only and may need to re-enable
 	 * when sysjumped.
 	 */
-	if (system_jumped_to_this_image() &&
+	if (system_jumped_late() &&
 		chipset_in_state(CHIPSET_STATE_ON))
 		als_task_enable();
 }
