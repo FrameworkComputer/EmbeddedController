@@ -16,6 +16,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "printf.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -56,6 +57,11 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+static int tcpc_prints(const char *string, int port)
+{
+	return CPRINTS("TCPC p%d %s", port, string);
+}
+
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT <= EC_USB_PD_MAX_PORTS);
 
 /*
@@ -85,6 +91,7 @@ static uint8_t pd_comm_enabled[CONFIG_USB_PD_PORT_MAX_COUNT];
 #else /* CONFIG_COMMON_RUNTIME */
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
+#define tcpc_prints(string, port)
 static const int debug_level;
 #endif
 
@@ -454,7 +461,7 @@ static void handle_device_access(int port)
 
 	pd[port].low_power_time = get_time().val + PD_LPM_DEBOUNCE_US;
 	if (pd[port].flags & PD_FLAGS_LPM_ENGAGED) {
-		CPRINTS("TCPC p%d Exit Low Power Mode", port);
+		tcpc_prints("Exit Low Power Mode", port);
 		pd[port].flags &= ~(PD_FLAGS_LPM_ENGAGED |
 				    PD_FLAGS_LPM_REQUESTED);
 		/*
@@ -491,9 +498,9 @@ static int reset_device_and_notify(int port)
 	pd[port].flags &= ~PD_FLAGS_LPM_TRANSITION;
 
 	if (rv == EC_SUCCESS)
-		CPRINTS("TCPC p%d init ready", port);
+		tcpc_prints("init ready", port);
 	else
-		CPRINTS("TCPC p%d init failed!", port);
+		tcpc_prints("init failed!", port);
 
 	/*
 	 * Before getting the other tasks that are waiting, clear the reset
@@ -604,9 +611,9 @@ static int reset_device_and_notify(int port)
 	const int rv = tcpm_init(port);
 
 	if (rv == EC_SUCCESS)
-		CPRINTS("TCPC p%d init ready", port);
+		tcpc_prints("init ready", port);
 	else
-		CPRINTS("TCPC p%d init failed!", port);
+		tcpc_prints("init failed!", port);
 
 	return rv;
 }
@@ -3868,7 +3875,7 @@ void pd_task(void *u)
 #ifndef CONFIG_USB_PD_TCPC
 			int rstatus;
 #endif
-			CPRINTS("TCPC p%d suspended!", port);
+			tcpc_prints("suspended!", port);
 			pd[port].req_suspend_state = 0;
 #ifdef CONFIG_USB_PD_TCPC
 			pd_rx_disable_monitoring(port);
@@ -3881,7 +3888,7 @@ void pd_task(void *u)
 #endif
 			rstatus = tcpm_release(port);
 			if (rstatus != 0 && rstatus != EC_ERROR_UNIMPLEMENTED)
-				CPRINTS("TCPC p%d release failed!", port);
+				tcpc_prints("release failed!", port);
 #endif
 			/* Drain any outstanding software message queues. */
 			tcpm_clear_pending_messages(port);
@@ -3900,12 +3907,12 @@ void pd_task(void *u)
 			}
 #ifdef CONFIG_USB_PD_TCPC
 			pd_hw_init(port, PD_ROLE_DEFAULT(port));
-			CPRINTS("TCPC p%d resumed!", port);
+			tcpc_prints("resumed!", port);
 #else
 			if (rstatus != EC_ERROR_UNIMPLEMENTED &&
 			    pd_restart_tcpc(port) != 0) {
 				/* stay in PD_STATE_SUSPENDED */
-				CPRINTS("TCPC p%d restart failed!", port);
+				tcpc_prints("restart failed!", port);
 				break;
 			}
 			/* Set the CC termination and state back to default */
@@ -3914,7 +3921,7 @@ void pd_task(void *u)
 					TYPEC_CC_RP :
 					TYPEC_CC_RD);
 			set_state(port, PD_DEFAULT_STATE(port));
-			CPRINTS("TCPC p%d resumed!", port);
+			tcpc_prints("resumed!", port);
 #endif
 			break;
 		}
@@ -4793,7 +4800,7 @@ void pd_task(void *u)
 				pd[port].flags |= PD_FLAGS_LPM_TRANSITION;
 				tcpm_enter_low_power_mode(port);
 				pd[port].flags &= ~PD_FLAGS_LPM_TRANSITION;
-				CPRINTS("TCPC p%d Enter Low Power Mode", port);
+				tcpc_prints("Enter Low Power Mode", port);
 				timeout = -1;
 			} else if (timeout < 0 || timeout > time_left) {
 				timeout = time_left;
@@ -4965,7 +4972,7 @@ void pd_set_suspend(int port, int suspend)
 			msleep(1);
 		} while (--tries != 0);
 		if (!tries)
-			CPRINTS("TCPC p%d set_suspend failed!", port);
+			tcpc_prints("set_suspend failed!", port);
 	} else {
 		pd_control_resume(port);
 	}
