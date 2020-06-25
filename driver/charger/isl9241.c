@@ -327,7 +327,7 @@ int isl9241_set_ac_prochot(int chgnum, int ma)
 
 	rv = isl9241_write(chgnum, ISL9241_REG_AC_PROCHOT, reg);
 	if (rv)
-		CPRINTF("set_ac_prochot failed (%d)", rv);
+		CPRINTF("set_ac_prochot failed (%d)\n", rv);
 
 	return rv;
 }
@@ -405,7 +405,7 @@ static void isl9241_init(int chgnum)
 	return;
 
 init_fail:
-	CPRINTF("ISL9241_init failed!");
+	CPRINTF("ISL9241_init failed!\n");
 }
 
 /*****************************************************************************/
