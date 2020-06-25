@@ -231,7 +231,7 @@ enum adc_channel board_get_vbus_adc(int port)
 void baseboard_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image())
+	if (!system_jumped_late())
 		board_reset_pd_mcu();
 
 	/*

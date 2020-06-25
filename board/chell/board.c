@@ -232,7 +232,7 @@ static void board_pmic_init(void)
 	 * No need to re-init below settings since they are present on all MP
 	 * ROs and PMIC settings are sticky across sysjump
 	 */
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	/* Set CSDECAYEN / VCCIO decays to 0V at assertion of SLP_S0# */
@@ -412,7 +412,7 @@ static void board_handle_reboot(void)
 {
 	int flags;
 
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	/* Interrogate current reset flags from previous reboot. */

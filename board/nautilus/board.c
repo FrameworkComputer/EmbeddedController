@@ -219,7 +219,7 @@ void board_reset_pd_mcu(void)
 void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image()) {
+	if (!system_jumped_late()) {
 		board_reset_pd_mcu();
 	}
 
@@ -399,7 +399,7 @@ static void board_pmic_init(void)
 {
 	board_report_pmic_fault("SYSJUMP");
 
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	/* DISCHGCNT3 - enable 100 ohm discharge on V1.00A */

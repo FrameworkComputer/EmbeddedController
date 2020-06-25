@@ -212,7 +212,7 @@ void board_reset_pd_mcu(void)
 void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image())
+	if (!system_jumped_late())
 		board_reset_pd_mcu();
 
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
@@ -394,7 +394,7 @@ static void board_pmic_init(void)
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
 		   BD99992GW_REG_PBCONFIG, 0x00);
 
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	/* DISCHGCNT1 - enable 100 ohm discharge on VCCIO */

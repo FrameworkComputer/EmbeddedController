@@ -335,7 +335,7 @@ static void board_usb_charge_mode_init(void)
 	 * Only overriding the USB_DISALLOW_SUSPEND_CHARGE in RO is enough because
 	 * USB_SYSJUMP_TAG preserves the settings to RW. And we should honor to it.
 	 */
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	/* Currently only blorb and droid support this feature. */

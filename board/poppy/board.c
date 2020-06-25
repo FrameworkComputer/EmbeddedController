@@ -289,7 +289,7 @@ void board_tcpc_init(void)
 	int reg;
 
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image()) {
+	if (!system_jumped_late()) {
 		gpio_set_level(GPIO_PP3300_USB_PD, 1);
 		/* TODO(crosbug.com/p/61098): How long do we need to wait? */
 		msleep(10);
@@ -492,7 +492,7 @@ static void board_pmic_init(void)
 {
 	board_report_pmic_fault("SYSJUMP");
 
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	/* DISCHGCNT3 - enable 100 ohm discharge on V1.00A */

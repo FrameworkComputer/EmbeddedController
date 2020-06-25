@@ -366,7 +366,7 @@ void board_tcpc_init(void)
 	int reg;
 
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image())
+	if (!system_jumped_late())
 		board_reset_pd_mcu();
 
 	/*

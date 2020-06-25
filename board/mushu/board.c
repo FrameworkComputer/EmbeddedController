@@ -504,7 +504,7 @@ static void reset_gpio_flags(enum gpio_signal signal, int flags)
 	 * may change the value from the previous image which could cause a
 	 * brownout.
 	 */
-	if (system_is_reboot_warm() || system_jumped_to_this_image())
+	if (system_is_reboot_warm() || system_jumped_late())
 		flags &= ~(GPIO_LOW | GPIO_HIGH);
 
 	gpio_set_flags(signal, flags);

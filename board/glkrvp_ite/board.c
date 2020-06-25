@@ -171,7 +171,7 @@ int board_get_version(void)
 static void pmic_init(void)
 {
 	/* No need to re-init PMIC since settings are sticky across sysjump. */
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	/*

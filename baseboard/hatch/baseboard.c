@@ -178,7 +178,7 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 void baseboard_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image())
+	if (!system_jumped_late())
 		board_reset_pd_mcu();
 
 	/* Enable PPC interrupts. */

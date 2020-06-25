@@ -213,7 +213,7 @@ BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 static void board_pmic_init(void)
 {
 	/* No need to re-init PMIC since settings are sticky across sysjump */
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	/* Set CSDECAYEN / VCCIO decays to 0V at assertion of SLP_S0# */
@@ -410,7 +410,7 @@ static void board_handle_reboot(void)
 {
 	int flags;
 
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	if (system_get_board_version() < BOARD_MIN_ID_LOD_EN)

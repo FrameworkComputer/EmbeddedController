@@ -57,7 +57,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
 
 	/* Set PD MCU system status bits */
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		pd_status_flags |= PD_STATUS_JUMPED_TO_IMAGE;
 	if (system_is_in_rw())
 		pd_status_flags |= PD_STATUS_IN_RW;
