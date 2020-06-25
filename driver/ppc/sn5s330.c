@@ -343,7 +343,7 @@ static int sn5s330_init(int port)
 	 * Don't proceed with the rest of initialization if we're sysjumping.
 	 * We would have already done this before.
 	 */
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return EC_SUCCESS;
 
 	/*
