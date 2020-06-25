@@ -149,16 +149,24 @@ static inline void exit_low_power_mode(int port)
 
 void usb_mux_init(int port)
 {
+	int rv;
+
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 
 	if (port >= board_get_usb_pd_port_count()) {
 		return;
 	}
 
-	configure_mux(port, USB_MUX_INIT, NULL);
+	rv = configure_mux(port, USB_MUX_INIT, NULL);
 
-	/* Device is always out of LPM after initialization. */
-	flags[port] &= ~USB_MUX_FLAG_IN_LPM;
+	/*
+	 * Mux may fail initialization if it's not powered. Mark this port
+	 * as in LPM mode to try initialization again.
+	 */
+	if (rv == EC_ERROR_NOT_POWERED)
+		flags[port] |= USB_MUX_FLAG_IN_LPM;
+	else
+		flags[port] &= ~USB_MUX_FLAG_IN_LPM;
 }
 
 /*

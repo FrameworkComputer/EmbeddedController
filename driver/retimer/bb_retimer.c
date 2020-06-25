@@ -6,6 +6,7 @@
  */
 
 #include "bb_retimer.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "i2c.h"
@@ -95,6 +96,12 @@ static void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 
 	if (on_off) {
 		gpio_set_level(control->usb_ls_en_gpio, 1);
+		/*
+		 * Tpw, minimum time from VCC to RESET_N de-assertion is 100us.
+		 * For boards that don't provide a load switch control, the
+		 * retimer_init() function ensures power is up before calling
+		 * this function.
+		 */
 		msleep(1);
 		gpio_set_level(control->retimer_rst_gpio, 1);
 		msleep(10);
@@ -416,6 +423,13 @@ static int retimer_init(const struct usb_mux *me)
 {
 	int rv;
 	uint32_t data;
+
+	/* Burnside Bridge is powered by main AP rail */
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
+		/* Ensure reset is asserted while chip is not powered */
+		bb_retimer_power_handle(me, 0);
+		return EC_ERROR_NOT_POWERED;
+	}
 
 	bb_retimer_power_handle(me, 1);
 
