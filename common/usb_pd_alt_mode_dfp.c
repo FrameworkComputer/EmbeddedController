@@ -248,7 +248,7 @@ uint32_t pd_dfp_enter_mode(int port, enum tcpm_transmit_type type,
 	/*
 	 * Strictly speaking, this should only happen when the request
 	 * has been ACKed.
-	 * TODO: Redo setting the enter mode flag to incorporate
+	 * TODO(b/159854667): Redo setting the enter mode flag to incorporate
 	 * it into the DP state machine.
 	 */
 	pd_set_dfp_enter_mode_flag(port, true);

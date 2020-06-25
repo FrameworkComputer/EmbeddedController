@@ -87,10 +87,10 @@ static bool dp_response_valid(int port, enum tcpm_transmit_type type,
 	 */
 	if (type != TCPC_TX_SOP ||
 	    (st != DP_INACTIVE && state_vdm_cmd[st] != vdm_cmd)) {
-
 		CPRINTS("C%d: Received unexpected DP VDM %s (cmd %d) from"
 			" %s in state %d", port, cmdt, vdm_cmd,
-		type == TCPC_TX_SOP ? "port partner" : "cable plug", st);
+			type == TCPC_TX_SOP ? "port partner" : "cable plug",
+			st);
 		dp_entry_failed(port);
 		return false;
 	}
@@ -250,7 +250,7 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 		 * into recovery mode) while DP alt mode is active.
 		 * It would be good to invoke modep->fx->exit but
 		 * this doesn't set up the VDM, it clears state.
-		 * TODO: Clean up the API to the fx functions.
+		 * TODO(b/159856063): Clean up the API to the fx functions.
 		 */
 		if (!(modep && modep->opos))
 			return -1;
