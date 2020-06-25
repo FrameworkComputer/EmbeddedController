@@ -2604,6 +2604,7 @@ int cmd_smart_discharge(int argc, char *argv[])
 {
 	struct ec_params_smart_discharge *p = ec_outbuf;
 	struct ec_response_smart_discharge *r = ec_inbuf;
+	uint32_t cap;
 	char *e;
 	int rv;
 
@@ -2642,9 +2643,18 @@ int cmd_smart_discharge(int argc, char *argv[])
 		perror("ERROR: EC_CMD_SMART_DISCHARGE failed");
 		return rv;
 	}
+
+	cap = read_mapped_mem32(EC_MEMMAP_BATT_LFCC);
+	if (!is_battery_range(cap)) {
+		perror("WARN: Failed to read battery capacity");
+		cap = 0;
+	}
+
 	printf("%-27s %5d h\n", "Hours to zero capacity:", r->hours_to_zero);
-	printf("%-27s %5d mAh\n", "Stay-up threshold:", r->dzone.stayup);
-	printf("%-27s %5d mAh\n", "Cutoff threshold:", r->dzone.cutoff);
+	printf("%-27s %5d mAh (%d %%)\n", "Stay-up threshold:",
+	       r->dzone.stayup, cap > 0 ? r->dzone.stayup * 100 / cap : -1);
+	printf("%-27s %5d mAh (%d %%)\n", "Cutoff threshold:",
+	       r->dzone.cutoff, cap > 0 ? r->dzone.cutoff * 100 / cap : -1);
 	printf("%-27s %5d uA\n", "Hibernate discharge rate:", r->drate.hibern);
 	printf("%-27s %5d uA\n", "Cutoff discharge rate:", r->drate.cutoff);
 
