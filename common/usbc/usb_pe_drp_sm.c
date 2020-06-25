@@ -145,7 +145,8 @@
 
 /* Message flags which should not persist on returning to ready state */
 #define PE_FLAGS_READY_CLR		     (PE_FLAGS_LOCALLY_INITIATED_AMS \
-					     | PE_FLAGS_MSG_DISCARDED)
+					     | PE_FLAGS_MSG_DISCARDED \
+					     | PE_FLAGS_VDM_REQUEST_TIMEOUT)
 
 /* 6.7.3 Hard Reset Counter */
 #define N_HARD_RESET_COUNT 2
