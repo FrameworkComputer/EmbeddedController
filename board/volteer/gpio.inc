@@ -91,6 +91,8 @@ GPIO(USB_C1_RT_RST_ODL_BOARDID_0,	PIN(3, 2), GPIO_ODR_LOW) /* USB_C1 Reset on bo
 GPIO(USB_C1_RT_RST_ODL,			PIN(8, 3), GPIO_ODR_LOW) /* USB_C1 Reset on boards board ID >=1 */
 GPIO(USB_C0_OC_ODL,			PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(USB_C1_OC_ODL,			PIN(5, 0), GPIO_ODR_HIGH)
+/* There is currently no need to service this interrupt. */
+GPIO(USB_C1_RT_INT_ODL,			PIN(F, 3), GPIO_INPUT)
 
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C1_LS_EN)
