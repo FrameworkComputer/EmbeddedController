@@ -2133,28 +2133,14 @@ static void tc_attached_snk_run(const int port)
 		 * Power Role Swap
 		 */
 		if (TC_CHK_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP)) {
-			enum tcpc_cc_voltage_status cc1, cc2;
-
 			/*
-			 * Verify partner is applying Rd before we swap.
-			 *
-			 * If the partner sends PS_RDY before applying Rd and
-			 * we change CC termination from Rd to Rp immediately
-			 * after seeing PS_RDY (before waiting to for the
-			 * Initial Source to put Rd on the CC lines), we
-			 * might get into a situation when both sides apply
-			 * Rp.  In this case if the Initial Sink will try to
-			 * enable Vbus using the TCPC VBSRC_EN pin it will
-			 * not work since the TCPC HW sees Rp on both ends
-			 * and will consider this as a disconnect and
-			 * therefore will not assert the VBSRC_EN pin.
+			 * We may want to verify partner is applying Rd before
+			 * we swap. However, some TCPCs (such as TUSB422) will
+			 * not report the correct CC status before VBUS falls to
+			 * vSafe0V, so this will be problematic in the FRS case.
 			 */
-			tcpm_get_cc(port, &cc1, &cc2);
-			if (cc_is_open(cc1, cc2)) {
-				/* Clear PR_SWAP flag in exit */
-				set_state_tc(port, TC_ATTACHED_SRC);
-				return;
-			}
+			set_state_tc(port, TC_ATTACHED_SRC);
+			return;
 		}
 
 		/*
