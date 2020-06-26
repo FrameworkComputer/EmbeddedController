@@ -1349,10 +1349,6 @@ static void pe_prl_execute_hard_reset(int port)
  * Run discovery at our leisure from PE_SNK_Ready or PE_SRC_Ready, after
  * attempting to get into the desired default policy of DFP/Vconn source
  *
- * When this function sets a new state, it should set
- * PE_FLAGS_LOCALLY_INITIATED_AMS first, so the ready exit functions can notify
- * the PRL that an AMS has been initiated.
- *
  * Return indicates whether set_state was called, in which case the calling
  * function should return as well.
  */
@@ -1402,14 +1398,14 @@ static bool pe_attempt_port_discovery(int port)
 	 */
 	if (get_time().val > pe[port].discover_identity_timer) {
 		if (pd_get_identity_discovery(port, TCPC_TX_SOP_PRIME) ==
-		    PD_DISC_NEEDED && pe_can_send_sop_prime(port)) {
-			PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
+				PD_DISC_NEEDED && pe_can_send_sop_prime(port)) {
+			pe[port].tx_type = TCPC_TX_SOP_PRIME;
 			set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
 			return true;
 		} else if (pd_get_identity_discovery(port, TCPC_TX_SOP) ==
-			 PD_DISC_NEEDED &&
-			 pe_can_send_sop_vdm(port, CMD_DISCOVER_IDENT)) {
-			PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
+				PD_DISC_NEEDED &&
+				pe_can_send_sop_vdm(port, CMD_DISCOVER_IDENT)) {
+			pe[port].tx_type = TCPC_TX_SOP;
 			set_state_pe(port,
 				     PE_INIT_PORT_VDM_IDENTITY_REQUEST);
 			return true;
@@ -1644,6 +1640,7 @@ static void pe_src_discovery_run(int port)
 	if (pd_get_identity_discovery(port, TCPC_TX_SOP_PRIME) == PD_DISC_NEEDED
 			&& get_time().val > pe[port].discover_identity_timer
 			&& pe_can_send_sop_prime(port)) {
+		pe[port].tx_type = TCPC_TX_SOP_PRIME;
 		set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
 		return;
 	}
@@ -4177,8 +4174,16 @@ static void pe_handle_custom_vdm_request_exit(int port)
  */
 static void pe_vdm_send_request_entry(int port)
 {
+	if (pe[port].tx_type == TCPC_TX_INVALID) {
+		CPRINTS("C%d: %s: Tx type expected to be set, returning", port,
+				pe_state_names[get_state_pe(port)]);
+		set_state_pe(port, get_last_state_pe(port));
+		return;
+	}
+
 	/* All VDM sequences are Interruptible */
-	PE_SET_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
+	PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS |
+			PE_FLAGS_INTERRUPTIBLE_AMS);
 
 	pe[port].vdm_response_timer = TIMER_DISABLED;
 }
@@ -4233,6 +4238,9 @@ static void pe_vdm_send_request_exit(int port)
 	 * could process transmission
 	 */
 	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
+
+	/* Invalidate TX type so it must be set before next call */
+	pe[port].tx_type = TCPC_TX_INVALID;
 }
 
 static enum pd_discovery_state pe_discovery_vdm_request_run_common(int port,
@@ -4296,7 +4304,8 @@ static enum pd_discovery_state pe_discovery_vdm_request_run_common(int port,
 /**
  * PE_VDM_IDENTITY_REQUEST_CBL
  * Combination of PE_INIT_PORT_VDM_Identity_Request State specific to the
- * cable and PE_SRC_VDM_Identity_Request State
+ * cable and PE_SRC_VDM_Identity_Request State.
+ * pe[port].tx_type must be set (to SOP') prior to entry.
  */
 static void pe_vdm_identity_request_cbl_entry(int port)
 {
@@ -4305,14 +4314,11 @@ static void pe_vdm_identity_request_cbl_entry(int port)
 	print_current_state(port);
 
 	msg[0] = VDO(USB_SID_PD, 1,
-			VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME)) |
+			VDO_SVDM_VERS(pd_get_vdo_ver(port, pe[port].tx_type)) |
 			CMD_DISCOVER_IDENT);
 	tx_emsg[port].len = sizeof(uint32_t);
 
-	send_data_msg(port, TCPC_TX_SOP_PRIME, PD_DATA_VENDOR_DEF);
-
-	/* PE_VDM_SEND_REQUEST (the parent state) uses this field. */
-	pe[port].tx_type = TCPC_TX_SOP_PRIME;
+	send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
 
 	pe[port].discover_identity_counter++;
 }
@@ -4382,7 +4388,7 @@ static void pe_vdm_identity_request_cbl_run(int port)
 		 */
 		pd_set_identity_discovery(port, sop, PD_DISC_FAIL);
 	} else if (get_last_state_pe(port) == PE_SRC_DISCOVERY &&
-			(sop != TCPC_TX_SOP_PRIME ||
+			(sop != pe[port].tx_type ||
 			 type != PD_DATA_VENDOR_DEF || cnt == 0 || ext != 0)) {
 		/*
 		 * Unexpected non-VDM received: Before an explicit contract, an
@@ -4400,7 +4406,7 @@ static void pe_vdm_identity_request_cbl_run(int port)
 static void pe_vdm_identity_request_cbl_exit(int port)
 {
 	if (pe[port].discover_identity_counter >= N_DISCOVER_IDENTITY_COUNT)
-		pd_set_identity_discovery(port, TCPC_TX_SOP_PRIME,
+		pd_set_identity_discovery(port, pe[port].tx_type,
 				PD_DISC_FAIL);
 
 	/*
@@ -4410,14 +4416,14 @@ static void pe_vdm_identity_request_cbl_exit(int port)
 	 * contract, so we could re-try faster from src_discovery if
 	 * desired here
 	 */
-	if (pd_get_identity_discovery(port, TCPC_TX_SOP_PRIME) == PD_DISC_NEEDED
+	if (pd_get_identity_discovery(port, pe[port].tx_type) == PD_DISC_NEEDED
 			   && pe[port].discover_identity_timer > get_time().val)
 		pe[port].discover_identity_timer = get_time().val +
 							PD_T_DISCOVER_IDENTITY;
 
 	/* Do not attempt further discovery if identity discovery failed. */
-	if (pd_get_identity_discovery(port, TCPC_TX_SOP_PRIME) == PD_DISC_FAIL)
-		pd_set_svids_discovery(port, TCPC_TX_SOP_PRIME, PD_DISC_FAIL);
+	if (pd_get_identity_discovery(port, pe[port].tx_type) == PD_DISC_FAIL)
+		pd_set_svids_discovery(port, pe[port].tx_type, PD_DISC_FAIL);
 }
 
 /**
@@ -4426,6 +4432,7 @@ static void pe_vdm_identity_request_cbl_exit(int port)
  * Specific to SOP requests, as cables require additions for the discover
  * identity counter, must tolerate not receiving a GoodCRC, and need to set the
  * cable revision based on response.
+ * pe[port].tx_type must be set (to SOP) prior to entry.
  */
 static void pe_init_port_vdm_identity_request_entry(int port)
 {
@@ -4434,14 +4441,11 @@ static void pe_init_port_vdm_identity_request_entry(int port)
 	print_current_state(port);
 
 	msg[0] = VDO(USB_SID_PD, 1,
-			VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP)) |
+			VDO_SVDM_VERS(pd_get_vdo_ver(port, pe[port].tx_type)) |
 			CMD_DISCOVER_IDENT);
 	tx_emsg[port].len = sizeof(uint32_t);
 
-	send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
-
-	/* PE_VDM_SEND_REQUEST (the parent state) uses this field. */
-	pe[port].tx_type = TCPC_TX_SOP;
+	send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
 }
 
 static void pe_init_port_vdm_identity_request_run(int port)
@@ -4496,12 +4500,12 @@ static void pe_init_port_vdm_identity_request_exit(int port)
 		 * If Structured VDMs are not supported, a Structured VDM
 		 * Command received by a DFP or UFP Shall be Ignored.
 		 */
-		pd_set_identity_discovery(port, TCPC_TX_SOP, PD_DISC_FAIL);
+		pd_set_identity_discovery(port, pe[port].tx_type, PD_DISC_FAIL);
 	}
 
 	/* Do not attempt further discovery if identity discovery failed. */
-	if (pd_get_identity_discovery(port, TCPC_TX_SOP) == PD_DISC_FAIL)
-		pd_set_svids_discovery(port, TCPC_TX_SOP, PD_DISC_FAIL);
+	if (pd_get_identity_discovery(port, pe[port].tx_type) == PD_DISC_FAIL)
+		pd_set_svids_discovery(port, pe[port].tx_type, PD_DISC_FAIL);
 }
 
 /**
@@ -4514,12 +4518,6 @@ static void pe_init_vdm_svids_request_entry(int port)
 	uint32_t *msg = (uint32_t *)tx_emsg[port].buf;
 
 	print_current_state(port);
-
-	if (pe[port].tx_type == TCPC_TX_INVALID) {
-		CPRINTS("C%d: TX type expected to be set, returning", port);
-		set_state_pe(port, get_last_state_pe(port));
-		return;
-	}
 
 	msg[0] = VDO(USB_SID_PD, 1,
 			VDO_SVDM_VERS(pd_get_vdo_ver(port, pe[port].tx_type)) |
@@ -4568,17 +4566,6 @@ static void pe_init_vdm_svids_request_run(int port)
 	set_state_pe(port, get_last_state_pe(port));
 }
 
-static void pe_init_vdm_svids_request_exit(int port)
-{
-	/* Invalidate TX type so that it must be set before next call */
-	pe[port].tx_type = TCPC_TX_INVALID;
-
-	/*
-	 * No need to mark modes discovery as failed. If no SVIDs were
-	 * discovered, mode discovery is trivially complete.
-	 */
-}
-
 /**
  * PE_INIT_VDM_Modes_Request
  *
@@ -4599,12 +4586,6 @@ static void pe_init_vdm_modes_request_entry(int port)
 	svid = mode_data->svid;
 
 	print_current_state(port);
-
-	if (pe[port].tx_type == TCPC_TX_INVALID) {
-		CPRINTS("C%d: TX type expected to be set, returning", port);
-		set_state_pe(port, get_last_state_pe(port));
-		return;
-	}
 
 	msg[0] = VDO((uint16_t) svid, 1,
 			VDO_SVDM_VERS(pd_get_vdo_ver(port, pe[port].tx_type)) |
@@ -4660,12 +4641,6 @@ static void pe_init_vdm_modes_request_run(int port)
 	set_state_pe(port, get_last_state_pe(port));
 }
 
-static void pe_init_vdm_modes_request_exit(int port)
-{
-	/* Invalidate TX type so it must be set before next call */
-	pe[port].tx_type = TCPC_TX_INVALID;
-}
-
 /**
  * PE_VDM_REQUEST_DPM
  *
@@ -4675,12 +4650,6 @@ static void pe_init_vdm_modes_request_exit(int port)
 static void pe_vdm_request_dpm_entry(int port)
 {
 	print_current_state(port);
-
-	if (pe[port].tx_type == TCPC_TX_INVALID) {
-		CPRINTS("C%d: TX type expected to be set, returning", port);
-		set_state_pe(port, get_last_state_pe(port));
-		return;
-	}
 
 	/* Copy Vendor Data Objects (VDOs) into message buffer */
 	if (pe[port].vdm_cnt > 0) {
@@ -5693,13 +5662,11 @@ static const struct usb_state pe_states[] = {
 	[PE_INIT_VDM_SVIDS_REQUEST] = {
 		.entry	= pe_init_vdm_svids_request_entry,
 		.run	= pe_init_vdm_svids_request_run,
-		.exit   = pe_init_vdm_svids_request_exit,
 		.parent = &pe_states[PE_VDM_SEND_REQUEST],
 	},
 	[PE_INIT_VDM_MODES_REQUEST] = {
 		.entry	= pe_init_vdm_modes_request_entry,
 		.run	= pe_init_vdm_modes_request_run,
-		.exit   = pe_init_vdm_modes_request_exit,
 		.parent = &pe_states[PE_VDM_SEND_REQUEST],
 	},
 	[PE_VDM_REQUEST_DPM] = {
