@@ -475,8 +475,6 @@ static struct policy_engine {
 	struct pd_discovery discovery[DISCOVERY_TYPE_COUNT];
 	/* Active alternate modes */
 	struct partner_active_modes partner_amodes[AMODE_TYPE_COUNT];
-	/* Alternate mode object position */
-	int8_t alt_opos;
 
 	/* Partner type to send */
 	enum tcpm_transmit_type tx_type;
@@ -1076,35 +1074,6 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
-/* TODO: Add a common exit routine for all the alternate modes */
-void pe_exit_dp_mode(int port)
-{
-	if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
-		int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
-
-		if (opos <= 0)
-			return;
-
-		/*
-		 * TODO: Delay deleting the data until after the
-		 * the EXIT_MODE message is sent.
-		 * Unfortunately the callers of this function expect
-		 * the mode to be cleaned up before return.
-		 */
-		CPRINTS("C%d Exiting DP mode", port);
-		if (!pd_dfp_exit_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT,
-					opos))
-			return;
-
-		/*
-		 * Save the opos to be used with the message.
-		 * Request a message to be sent to exit the mode.
-		 */
-		pe[port].alt_opos = opos;
-		pe_dpm_request(port, DPM_REQUEST_EXIT_DP_MODE);
-	}
-}
-
 static void pe_handle_detach(void)
 {
 	const int port = TASK_ID_TO_PD_PORT(task_get_current());
@@ -1192,28 +1161,6 @@ static bool common_src_snk_dpm_requests(int port)
 						PD_T_DISCOVER_IDENTITY;
 		}
 		return true;
-	} else if (PE_CHK_DPM_REQUEST(port,
-				     DPM_REQUEST_EXIT_DP_MODE)) {
-		PE_CLR_DPM_REQUEST(port,
-					DPM_REQUEST_EXIT_DP_MODE);
-		/*
-		 * Init VDM CMD_EXIT_MODE message.
-		 * alt_opos must be set with the opos to be sent.
-		 * TODO: Convert this to use DPM_REQUEST_VDM.
-		 */
-		pe[port].tx_type = TCPC_TX_SOP;
-		pe[port].vdm_data[0] = VDO(
-					USB_SID_DISPLAYPORT,
-					1, /* structured */
-					VDO_SVDM_VERS(
-					    pd_get_vdo_ver(port, TCPC_TX_SOP)) |
-					VDO_OPOS(pe[port].alt_opos) |
-					VDO_CMDT(CMDT_INIT) |
-					CMD_EXIT_MODE);
-		pe[port].vdm_cnt = 1;
-		set_state_pe(port, PE_VDM_REQUEST_DPM);
-		return true;
-
 	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_VDM)) {
 		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_VDM);
 
@@ -2137,6 +2084,14 @@ static void pe_src_ready_run(int port)
 			return;
 		}
 
+		/*
+		 * TODO b/155890173: Combine the entry and exit mode requests
+		 * so that there is only a single entry point into DPM.
+		 */
+
+		/* No DPM requests; attempt mode exit if needed */
+		dpm_attempt_mode_exit(port);
+
 		/* No DPM requests; attempt mode entry if needed */
 		dpm_attempt_mode_entry(port);
 	}
@@ -2878,6 +2833,13 @@ static void pe_snk_ready_run(int port)
 
 			return;
 		}
+
+		/*
+		 * TODO b/155890173: Combine the entry and exit mode requests
+		 * so that there is only a single entry point into DPM.
+		 */
+		/* No DPM requests; attempt mode exit if needed */
+		dpm_attempt_mode_exit(port);
 
 		/* No DPM requests; attempt mode entry if needed */
 		dpm_attempt_mode_entry(port);

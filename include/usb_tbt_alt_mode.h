@@ -23,6 +23,15 @@
 void tbt_init(int port);
 
 /*
+ * Returns True if Thunderbolt mode is in active state
+ *
+ * @param port      USB-C port number
+ * @return          True if Thunderbolt mode is in active state
+ *                  False otherwise
+ */
+bool tbt_is_active(int port);
+
+/*
  * Handles received Thunderbolt VDM ACKs.
  *
  * @param port      USB-C port number

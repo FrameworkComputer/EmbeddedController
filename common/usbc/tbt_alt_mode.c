@@ -56,6 +56,11 @@ void tbt_init(int port)
 	tbt_state[port] = TBT_START;
 }
 
+bool tbt_is_active(int port)
+{
+	return tbt_state[port] == TBT_ACTIVE;
+}
+
 void tbt_teardown(int port)
 {
 	 tbt_prints("teardown", port);

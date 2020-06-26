@@ -24,6 +24,15 @@
 void dp_init(int port);
 
 /*
+ * Returns True if DisplayPort mode is in active state
+ *
+ * @param port      USB-C port number
+ * @return          True if DisplayPort mode is in active state
+ *                  False otherwise
+ */
+bool dp_is_active(int port);
+
+/*
  * Handles received DisplayPort VDM ACKs.
  *
  * @param port      USB-C port number

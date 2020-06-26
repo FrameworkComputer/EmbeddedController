@@ -51,6 +51,11 @@ static const uint8_t state_vdm_cmd[DP_STATE_COUNT] = {
 	[DP_ENTER_RETRY] = CMD_ENTER_MODE,
 };
 
+bool dp_is_active(int port)
+{
+	return dp_state[port] == DP_ACTIVE;
+}
+
 void dp_init(int port)
 {
 	dp_state[port] = DP_START;

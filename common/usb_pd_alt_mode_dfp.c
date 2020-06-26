@@ -15,6 +15,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usb_tbt_alt_mode.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -1248,6 +1249,10 @@ __overridable int svdm_tbt_compat_enter_mode(int port, uint32_t mode_caps)
 
 __overridable void svdm_tbt_compat_exit_mode(int port)
 {
+	if (IS_ENABLED(CONFIG_USB_PD_TCPMV2)) {
+		usb_mux_set_safe_mode(port);
+		tbt_teardown(port);
+	}
 }
 
 __overridable int svdm_tbt_compat_status(int port, uint32_t *payload)

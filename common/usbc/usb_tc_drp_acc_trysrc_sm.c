@@ -14,6 +14,7 @@
 #include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_dpm.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
 #include "usb_sm.h"
@@ -1432,7 +1433,7 @@ void tc_event_check(int port, int evt)
 			if (evt & PD_EVENT_SYSJUMP) {
 				for (i = 0; i <
 					CONFIG_USB_PD_PORT_MAX_COUNT; i++)
-					pe_exit_dp_mode(i);
+					dpm_set_mode_exit_request(i);
 				notify_sysjump_ready();
 			}
 		}
@@ -1553,10 +1554,10 @@ static void handle_new_power_state(int port)
 		if (chipset_in_or_transitioning_to_state(
 					CHIPSET_STATE_ANY_OFF)) {
 			/*
-			 * The SoC will negotiate DP mode again when it
+			 * The SoC will negotiate alternate mode again when it
 			 * boots up
 			 */
-			pe_exit_dp_mode(port);
+			dpm_set_mode_exit_request(port);
 
 			/*
 			 * The following function will disconnect both USB and
