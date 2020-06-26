@@ -268,6 +268,27 @@ enum usb_pe_state {
 #endif /* CONFIG_USB_PD_REV30 */
 };
 
+/*
+ * The result of a previously sent DPM request; used by PE_VDM_SEND_REQUEST to
+ * indicate to child states when they need to handle a response.
+ */
+enum vdm_response_result {
+	/* The parent state is still waiting for a response. */
+	VDM_RESULT_WAITING,
+	/*
+	 * The parent state parsed a message, but there is nothing for the child
+	 * to handle, e.g. BUSY.
+	 */
+	VDM_RESULT_NO_ACTION,
+	/* The parent state processed an ACK response. */
+	VDM_RESULT_ACK,
+	/*
+	 * The parent state processed a NAK-like response (NAK, Not Supported,
+	 * or response timeout.
+	 */
+	VDM_RESULT_NAK,
+};
+
 /* Forward declare the full list of states. This is indexed by usb_pe_state */
 static const struct usb_state pe_states[];
 
@@ -461,9 +482,10 @@ static struct policy_engine {
 	enum tcpm_transmit_type tx_type;
 
 	/* VDM - used to send information to shared VDM Request state */
-	/* TODO(b/150611251): Remove when all VDMs use shared parent */
 	uint32_t vdm_cnt;
 	uint32_t vdm_data[VDO_HDR_SIZE + VDO_MAX_SIZE];
+	uint8_t vdm_ack_min_data_objects;
+	enum vdm_response_result vdm_result;
 
 	/* Timers */
 
@@ -4167,6 +4189,57 @@ static void pe_handle_custom_vdm_request_exit(int port)
 	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 }
 
+static enum vdm_response_result parse_vdm_response_common(int port)
+{
+	/* Retrieve the message information */
+	uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
+	int sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
+	uint8_t type = PD_HEADER_TYPE(rx_emsg[port].header);
+	uint8_t cnt = PD_HEADER_CNT(rx_emsg[port].header);
+	uint8_t ext = PD_HEADER_EXT(rx_emsg[port].header);
+
+	if (sop == pe[port].tx_type && type == PD_DATA_VENDOR_DEF && cnt >= 1
+			&& ext == 0) {
+		if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK &&
+				cnt >= pe[port].vdm_ack_min_data_objects) {
+			/* Handle ACKs in state-specific code. */
+			return VDM_RESULT_ACK;
+		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
+			/* Handle NAKs in state-specific code. */
+			return VDM_RESULT_NAK;
+		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
+			/*
+			 * Don't fill in the discovery field so we re-probe in
+			 * tVDMBusy
+			 */
+			CPRINTS("C%d: Partner BUSY, request will be retried",
+					port);
+			pe[port].discover_identity_timer =
+					get_time().val + PD_T_VDM_BUSY;
+			return VDM_RESULT_NO_ACTION;
+		}
+
+		/*
+		 * Partner gave us an incorrect size or command; mark discovery
+		 * as failed.
+		 */
+		CPRINTS("C%d: Unexpected VDM response: 0x%04x 0x%04x",
+				port, rx_emsg[port].header, payload[0]);
+		return VDM_RESULT_NAK;
+	} else if (sop == pe[port].tx_type && ext == 0 && cnt == 0 &&
+			type == PD_CTRL_NOT_SUPPORTED) {
+		/*
+		 * A NAK would be more expected here, but Not Supported is still
+		 * allowed with the same meaning.
+		 */
+		return VDM_RESULT_NAK;
+	}
+
+	/* Unexpected Message Received. Src.Ready or Snk.Ready can handle it. */
+	PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+	return VDM_RESULT_NO_ACTION;
+}
+
 /**
  * PE_VDM_SEND_REQUEST
  * Shared parent to manage VDM timer and other shared parts of the VDM request
@@ -4186,6 +4259,7 @@ static void pe_vdm_send_request_entry(int port)
 			PE_FLAGS_INTERRUPTIBLE_AMS);
 
 	pe[port].vdm_response_timer = TIMER_DISABLED;
+	pe[port].vdm_result = VDM_RESULT_WAITING;
 }
 
 static void pe_vdm_send_request_run(int port)
@@ -4210,6 +4284,18 @@ static void pe_vdm_send_request_run(int port)
 			set_state_pe(port, PE_SNK_READY);
 		else
 			set_state_pe(port, PE_SRC_READY);
+		return;
+	}
+
+	/* Parse received message. */
+	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+		pe[port].vdm_result = parse_vdm_response_common(port);
+		/*
+		 * The child state will handle the received message. Don't wait
+		 * until the next PD task loop iteration to do this.
+		 */
+		task_wake(PD_PORT_TO_TASK_ID(port));
 		return;
 	}
 
@@ -4243,64 +4329,6 @@ static void pe_vdm_send_request_exit(int port)
 	pe[port].tx_type = TCPC_TX_INVALID;
 }
 
-static enum pd_discovery_state pe_discovery_vdm_request_run_common(int port,
-		uint8_t min_data_objects)
-{
-	uint32_t *payload;
-	int sop;
-	uint8_t type;
-	uint8_t cnt;
-	uint8_t ext;
-
-	/* Retrieve the message information */
-	payload = (uint32_t *)rx_emsg[port].buf;
-	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-	type = PD_HEADER_TYPE(rx_emsg[port].header);
-	cnt = PD_HEADER_CNT(rx_emsg[port].header);
-	ext = PD_HEADER_EXT(rx_emsg[port].header);
-
-	if (sop == pe[port].tx_type && type == PD_DATA_VENDOR_DEF && cnt >= 1
-			&& ext == 0) {
-		if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK &&
-				cnt >= min_data_objects) {
-			/* Handle ACKs in state-specific code. */
-			return PD_DISC_COMPLETE;
-		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
-			/* Handle NAKs in state-specific code. */
-			return PD_DISC_FAIL;
-		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
-			/*
-			 * Don't fill in the discovery field so we re-probe in
-			 * tVDMBusy
-			 */
-			CPRINTS("C%d: Partner BUSY, request will be retried",
-					port);
-			pe[port].discover_identity_timer =
-					get_time().val + PD_T_VDM_BUSY;
-			return PD_DISC_NEEDED;
-		}
-
-		/*
-		 * Partner gave us an incorrect size or command; mark discovery
-		 * as failed.
-		 */
-		CPRINTS("C%d: Unexpected VDM response: 0x%04x 0x%04x",
-				port, rx_emsg[port].header, payload[0]);
-		return PD_DISC_FAIL;
-	} else if (sop == pe[port].tx_type && ext == 0 && cnt == 0 &&
-			type == PD_CTRL_NOT_SUPPORTED) {
-		/*
-		 * A NAK would be more expected here, but Not Supported is still
-		 * allowed with the same meaning.
-		 */
-		return PD_DISC_FAIL;
-	}
-
-	/* Unexpected Message Received. Src.Ready or Snk.Ready can handle it. */
-	PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
-	return PD_DISC_NEEDED;
-}
-
 /**
  * PE_VDM_IDENTITY_REQUEST_CBL
  * Combination of PE_INIT_PORT_VDM_Identity_Request State specific to the
@@ -4321,6 +4349,12 @@ static void pe_vdm_identity_request_cbl_entry(int port)
 	send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
 
 	pe[port].discover_identity_counter++;
+
+	/*
+	 * Valid DiscoverIdentity responses should have at least 4 objects
+	 * (header, ID header, Cert Stat, Product VDO).
+	 */
+	pe[port].vdm_ack_min_data_objects = 4;
 }
 
 static void pe_vdm_identity_request_cbl_run(int port)
@@ -4330,10 +4364,20 @@ static void pe_vdm_identity_request_cbl_run(int port)
 	uint8_t type;
 	uint8_t cnt;
 	uint8_t ext;
-	enum pd_discovery_state response_result;
 
-	if (!PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
-		/* No message received */
+	/* Retrieve the message information */
+	payload = (uint32_t *)rx_emsg[port].buf;
+	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
+	type = PD_HEADER_TYPE(rx_emsg[port].header);
+	cnt = PD_HEADER_CNT(rx_emsg[port].header);
+	ext = PD_HEADER_EXT(rx_emsg[port].header);
+
+	switch (pe[port].vdm_result) {
+	case VDM_RESULT_WAITING:
+		/*
+		 * The parent didn't parse a message. Handle protocol errors;
+		 * otherwise, continue waiting.
+		 */
 		if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 			/*
 			 * No Good CRC: See section 6.4.4.3.1 - Discover
@@ -4348,27 +4392,27 @@ static void pe_vdm_identity_request_cbl_run(int port)
 			set_state_pe(port, get_last_state_pe(port));
 		}
 		return;
-	}
-	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
-
-	/*
-	 * Valid DiscoverIdentity responses should have at least 4 objects
-	 * (header, ID header, Cert Stat, Product VDO).
-	 */
-	response_result = pe_discovery_vdm_request_run_common(port, 4);
-
-	/* Retrieve the message information */
-	payload = (uint32_t *)rx_emsg[port].buf;
-	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-	type = PD_HEADER_TYPE(rx_emsg[port].header);
-	cnt = PD_HEADER_CNT(rx_emsg[port].header);
-	ext = PD_HEADER_EXT(rx_emsg[port].header);
-
-	if (response_result == PD_DISC_COMPLETE) {
+	case VDM_RESULT_NO_ACTION:
 		/*
-		 * PE_INIT_PORT_VDM_Identity_ACKed and PE_SRC_VDM_Identity_ACKed
-		 * embedded here.
+		 * If the received message doesn't change the discovery state,
+		 * there is nothing to do but return to the previous ready
+		 * state.
 		 */
+		if (get_last_state_pe(port) == PE_SRC_DISCOVERY &&
+					(sop != pe[port].tx_type ||
+					 type != PD_DATA_VENDOR_DEF ||
+					 cnt == 0 || ext != 0)) {
+			/*
+			 * Unexpected non-VDM received: Before an explicit
+			 * contract, an unexpected message shall generate a soft
+			 * reset using the SOP* of the incoming message.
+			 */
+			pe_send_soft_reset(port, sop);
+			return;
+		}
+		break;
+	case VDM_RESULT_ACK:
+		/* PE_INIT_PORT_VDM_Identity_ACKed embedded here */
 		dfp_consume_identity(port, sop, cnt, payload);
 
 		/*
@@ -4381,22 +4425,11 @@ static void pe_vdm_identity_request_cbl_run(int port)
 		if (prl_get_rev(port, TCPC_TX_SOP) != PD_REV20)
 			prl_set_rev(port, sop,
 				    PD_HEADER_REV(rx_emsg[port].header));
-	} else if (response_result == PD_DISC_FAIL) {
-		/*
-		 * PE_INIT_PORT_VDM_IDENTITY_NAKed and PE_SRC_VDM_Identity_NAKed
-		 * embedded here.
-		 */
-		pd_set_identity_discovery(port, sop, PD_DISC_FAIL);
-	} else if (get_last_state_pe(port) == PE_SRC_DISCOVERY &&
-			(sop != pe[port].tx_type ||
-			 type != PD_DATA_VENDOR_DEF || cnt == 0 || ext != 0)) {
-		/*
-		 * Unexpected non-VDM received: Before an explicit contract, an
-		 * unexpected message shall generate a soft reset using the SOP*
-		 * of the incoming message.
-		 */
-		pe_send_soft_reset(port, sop);
-		return;
+		break;
+	case VDM_RESULT_NAK:
+		/* PE_INIT_PORT_VDM_IDENTITY_NAKed embedded here */
+		pd_set_identity_discovery(port, pe[port].tx_type, PD_DISC_FAIL);
+		break;
 	}
 
 	/* Return to calling state (PE_{SRC,SNK}_Ready or PE_SRC_Discovery) */
@@ -4446,42 +4479,42 @@ static void pe_init_port_vdm_identity_request_entry(int port)
 	tx_emsg[port].len = sizeof(uint32_t);
 
 	send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
+
+	/*
+	 * Valid DiscoverIdentity responses should have at least 4 objects
+	 * (header, ID header, Cert Stat, Product VDO).
+	 */
+	pe[port].vdm_ack_min_data_objects = 4;
 }
 
 static void pe_init_port_vdm_identity_request_run(int port)
 {
-	uint32_t *payload;
-	int sop;
-	uint8_t cnt;
-	enum pd_discovery_state response_result;
-
-	/* No message received */
-	if (!PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
+	switch (pe[port].vdm_result) {
+	case VDM_RESULT_WAITING:
+		/* If the parent didn't parse a message, continue waiting. */
 		return;
-	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+	case VDM_RESULT_NO_ACTION:
+		/*
+		 * If the received message doesn't change the discovery state,
+		 * there is nothing to do but return to the previous ready
+		 * state.
+		 */
+		break;
+	case VDM_RESULT_ACK: {
+		/* Retrieve the message information. */
+		uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
+		int sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
+		uint8_t cnt = PD_HEADER_CNT(rx_emsg[port].header);
 
-	/*
-	 * Valid DiscoverIdentity responses should have at least 4 objects
-	 * (header, ID header, Cert Stat, Product VDO)
-	 */
-	response_result = pe_discovery_vdm_request_run_common(port, 4);
-
-	/* Retrieve the message information */
-	payload = (uint32_t *)rx_emsg[port].buf;
-	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-	cnt = PD_HEADER_CNT(rx_emsg[port].header);
-
-	if (response_result == PD_DISC_COMPLETE) {
-		/* PE_INIT_PORT_VDM_Identity_ACKed embedded here. */
+		/* PE_INIT_PORT_VDM_Identity_ACKed embedded here */
 		dfp_consume_identity(port, sop, cnt, payload);
-	} else if (response_result == PD_DISC_FAIL) {
+		break;
+		}
+	case VDM_RESULT_NAK:
 		/* PE_INIT_PORT_VDM_IDENTITY_NAKed embedded here */
-		pd_set_identity_discovery(port, sop, PD_DISC_FAIL);
+		pd_set_identity_discovery(port, pe[port].tx_type, PD_DISC_FAIL);
+		break;
 	}
-	/*
-	 * If the received message doesn't change the discovery state, there is
-	 * nothing to do but return to the previous ready state.
-	 */
 
 	/* Return to calling state (PE_{SRC,SNK}_Ready) */
 	set_state_pe(port, get_last_state_pe(port));
@@ -4525,42 +4558,42 @@ static void pe_init_vdm_svids_request_entry(int port)
 	tx_emsg[port].len = sizeof(uint32_t);
 
 	send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
+
+	/*
+	 * Valid Discover SVIDs ACKs should have at least 2 objects (VDM header
+	 * and at least 1 SVID VDO).
+	 */
+	pe[port].vdm_ack_min_data_objects = 2;
 }
 
 static void pe_init_vdm_svids_request_run(int port)
 {
-	uint32_t *payload;
-	int sop;
-	uint8_t cnt;
-	enum pd_discovery_state response_result;
-
-	/* No message received */
-	if (!PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
+	switch (pe[port].vdm_result) {
+	case VDM_RESULT_WAITING:
+		/* If the parent didn't parse a message, continue waiting. */
 		return;
-	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+	case VDM_RESULT_NO_ACTION:
+		/*
+		 * If the received message doesn't change the discovery state,
+		 * there is nothing to do but return to the previous ready
+		 * state.
+		 */
+		break;
+	case VDM_RESULT_ACK: {
+		/* Retrieve the message information. */
+		uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
+		int sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
+		uint8_t cnt = PD_HEADER_CNT(rx_emsg[port].header);
 
-	/*
-	 * Valid Discover SVIDs ACKs should have at least 2 objects (VDM header,
-	 * SVID VDO).
-	 */
-	response_result = pe_discovery_vdm_request_run_common(port, 2);
-
-	/* Retrieve the message information */
-	payload = (uint32_t *)rx_emsg[port].buf;
-	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-	cnt = PD_HEADER_CNT(rx_emsg[port].header);
-
-	if (response_result == PD_DISC_COMPLETE) {
 		/* PE_INIT_VDM_SVIDs_ACKed embedded here */
 		dfp_consume_svids(port, sop, cnt, payload);
-	} else if (response_result == PD_DISC_FAIL) {
+		break;
+		}
+	case VDM_RESULT_NAK:
 		/* PE_INIT_VDM_SVIDs_NAKed embedded here */
-		pd_set_svids_discovery(port, sop, PD_DISC_FAIL);
+		pd_set_svids_discovery(port, pe[port].tx_type, PD_DISC_FAIL);
+		break;
 	}
-	/*
-	 * If the received message doesn't change the discovery state, there is
-	 * nothing to do but return to the previous ready state.
-	 */
 
 	/* Return to calling state (PE_{SRC,SNK}_Ready) */
 	set_state_pe(port, get_last_state_pe(port));
@@ -4593,49 +4626,52 @@ static void pe_init_vdm_modes_request_entry(int port)
 	tx_emsg[port].len = sizeof(uint32_t);
 
 	send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
+
+	/*
+	 * Valid Discover Modes responses should have at least 2 objects (VDM
+	 * header and at least 1 mode VDO).
+	 */
+	pe[port].vdm_ack_min_data_objects = 2;
 }
 
 static void pe_init_vdm_modes_request_run(int port)
 {
-	uint32_t *payload;
-	int sop;
-	uint8_t cnt;
-	struct svid_mode_data *mode_data =
-		pd_get_next_mode(port, pe[port].tx_type);
+	struct svid_mode_data *mode_data;
 	uint16_t requested_svid;
-	enum pd_discovery_state response_result;
 
-	/* No message received */
-	if (!PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
-		return;
-	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+	mode_data = pd_get_next_mode(port, pe[port].tx_type);
 
 	assert(mode_data);
 	assert(mode_data->discovery == PD_DISC_NEEDED);
 	requested_svid = mode_data->svid;
 
-	/*
-	 * Valid Discover Modes responses should have at least 2 objects (VDM
-	 * header and at least one mode VDO).
-	 */
-	response_result = pe_discovery_vdm_request_run_common(port, 2);
+	switch (pe[port].vdm_result) {
+	case VDM_RESULT_WAITING:
+		/* If the parent didn't parse a message, continue waiting. */
+		return;
+	case VDM_RESULT_NO_ACTION:
+		/*
+		 * If the received message doesn't change the discovery state,
+		 * there is nothing to do but return to the previous ready
+		 * state.
+		 */
+		break;
+	case VDM_RESULT_ACK: {
+		/* Retrieve the message information. */
+		uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
+		int sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
+		uint8_t cnt = PD_HEADER_CNT(rx_emsg[port].header);
 
-	/* Retrieve the message information */
-	payload = (uint32_t *)rx_emsg[port].buf;
-	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-	cnt = PD_HEADER_CNT(rx_emsg[port].header);
-
-	if (response_result == PD_DISC_COMPLETE) {
-		/* PE_INIT_VDM_Modes embedded here */
+		/* PE_INIT_VDM_Modes_ACKed embedded here */
 		dfp_consume_modes(port, sop, cnt, payload);
-	} else if (response_result == PD_DISC_FAIL) {
-		/* PE_INIT_VDM_Modes embedded here */
-		pd_set_modes_discovery(port, sop, requested_svid, PD_DISC_FAIL);
+		break;
+		}
+	case VDM_RESULT_NAK:
+		/* PE_INIT_VDM_Modes_NAKed embedded here */
+		pd_set_modes_discovery(port, pe[port].tx_type, requested_svid,
+				PD_DISC_FAIL);
+		break;
 	}
-	/*
-	 * If the received message doesn't change the discovery state, there is
-	 * nothing to do but return to the ready previous state.
-	 */
 
 	/* Return to calling state (PE_{SRC,SNK}_Ready) */
 	set_state_pe(port, get_last_state_pe(port));
@@ -4669,33 +4705,35 @@ static void pe_vdm_request_dpm_entry(int port)
 	 */
 	PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED);
 	send_data_msg(port, pe[port].tx_type, PD_DATA_VENDOR_DEF);
+
+	/*
+	 * In general, valid VDM ACKs must have a VDM header. Other than that,
+	 * ACKs must be validated based on the command and SVID.
+	 */
+	pe[port].vdm_ack_min_data_objects = 1;
 }
 
 static void pe_vdm_request_dpm_run(int port)
 {
-	uint32_t *payload;
-	int sop;
-	uint8_t cnt;
-	uint16_t svid;
-	uint8_t vdm_cmd;
-	enum pd_discovery_state response_result;
-
-	/* No message received */
-	if (!PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
+	switch (pe[port].vdm_result) {
+	case VDM_RESULT_WAITING:
+		/* If the parent didn't parse a message, continue waiting. */
 		return;
-	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+	case VDM_RESULT_NO_ACTION:
+		/*
+		 * If the received message doesn't change the discovery state,
+		 * there is nothing to do but return to the previous ready
+		 * state.
+		 */
+		break;
+	case VDM_RESULT_ACK: {
+		/* Retrieve the message information. */
+		uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
+		int sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
+		uint8_t cnt = PD_HEADER_CNT(rx_emsg[port].header);
+		uint16_t svid = PD_VDO_VID(payload[0]);
+		uint8_t vdm_cmd = PD_VDO_CMD(payload[0]);
 
-	/* Valid VDM ACKs should have at least 1 object (VDM header). */
-	response_result = pe_discovery_vdm_request_run_common(port, 1);
-
-	/* Retrieve the message information */
-	payload = (uint32_t *)rx_emsg[port].buf;
-	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-	cnt = PD_HEADER_CNT(rx_emsg[port].header);
-	svid = PD_VDO_VID(payload[0]);
-	vdm_cmd = PD_VDO_CMD(payload[0]);
-
-	if (response_result == PD_DISC_COMPLETE) {
 		/*
 		 * PE initiator VDM-ACKed state for requested VDM, like
 		 * PE_INIT_VDM_FOO_ACKed, embedded here.
@@ -4706,7 +4744,9 @@ static void pe_vdm_request_dpm_run(int port)
 				vdm_cmd == CMD_DP_CONFIG) {
 			PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 		}
-	} else if (response_result == PD_DISC_FAIL) {
+		break;
+		}
+	case VDM_RESULT_NAK:
 		/*
 		 * PE initiator VDM-NAKed state for requested VDM, like
 		 * PE_INIT_VDM_FOO_NAKed, embedded here.
@@ -4721,11 +4761,8 @@ static void pe_vdm_request_dpm_run(int port)
 		dpm_vdm_naked(port, pe[port].tx_type,
 				PD_VDO_VID(pe[port].vdm_data[0]),
 				PD_VDO_CMD(pe[port].vdm_data[0]));
+		break;
 	}
-	/*
-	 * If the received message doesn't change the discovery state, there is
-	 * nothing to do but return to the previous ready state.
-	 */
 
 	/* Return to calling state (PE_{SRC,SNK}_Ready) */
 	set_state_pe(port, get_last_state_pe(port));
