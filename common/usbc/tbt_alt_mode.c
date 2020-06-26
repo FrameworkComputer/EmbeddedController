@@ -36,24 +36,19 @@ static int tbt_prints(const char *string, int port)
 /* The states of Thunderbolt negotiation */
 enum tbt_states {
 	TBT_START = 0,
-	TBT_ENTER_SOP_SENT,
 	TBT_ENTER_SOP_NACKED,
 	TBT_ACTIVE,
-	TBT_EXIT_SOP_SENT,
-	TBT_EXIT_SOP_RETRY_SENT,
 	TBT_ENTER_SOP_RETRY,
-	TBT_ENTER_SOP_RETRY_SENT,
 	TBT_INACTIVE,
 	TBT_STATE_COUNT,
 };
 static enum tbt_states tbt_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static const uint8_t state_vdm_cmd[TBT_STATE_COUNT] = {
-	[TBT_ENTER_SOP_SENT] = CMD_ENTER_MODE,
+	[TBT_START] = CMD_ENTER_MODE,
 	[TBT_ACTIVE] = CMD_EXIT_MODE,
-	[TBT_EXIT_SOP_SENT] = CMD_EXIT_MODE,
-	[TBT_EXIT_SOP_RETRY_SENT] = CMD_EXIT_MODE,
-	[TBT_ENTER_SOP_RETRY_SENT] = CMD_ENTER_MODE,
+	[TBT_ENTER_SOP_NACKED] = CMD_EXIT_MODE,
+	[TBT_ENTER_SOP_RETRY] = CMD_ENTER_MODE,
 };
 
 void tbt_init(int port)
@@ -101,14 +96,14 @@ void intel_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		return;
 
 	switch (tbt_state[port]) {
-	case TBT_ENTER_SOP_SENT:
-	case TBT_ENTER_SOP_RETRY_SENT:
+	case TBT_START:
+	case TBT_ENTER_SOP_RETRY:
 		set_tbt_compat_mode_ready(port);
 		dpm_set_mode_entry_done(port);
 		tbt_state[port] = TBT_ACTIVE;
 		tbt_prints("enter mode SOP", port);
 		break;
-	case TBT_EXIT_SOP_SENT:
+	case TBT_ACTIVE:
 		/*
 		 * Request to exit mode successful, so put it in
 		 * inactive state.
@@ -116,7 +111,7 @@ void intel_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		tbt_prints("exit mode SOP", port);
 		tbt_state[port] = TBT_INACTIVE;
 		break;
-	case TBT_EXIT_SOP_RETRY_SENT:
+	case TBT_ENTER_SOP_NACKED:
 		/*
 		 * The request to exit the mode was successful,
 		 * so try to enter the mode again.
@@ -145,7 +140,7 @@ void intel_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd)
 		return;
 
 	switch (tbt_state[port]) {
-	case TBT_ENTER_SOP_SENT:
+	case TBT_START:
 		/*
 		 * If a request to enter Thunderbolt mode is NAK'ed, this
 		 * likely means the partner is already in Thunderbolt alt mode,
@@ -154,7 +149,7 @@ void intel_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd)
 		 */
 		tbt_state[port] = TBT_ENTER_SOP_NACKED;
 		break;
-	case TBT_ENTER_SOP_RETRY_SENT:
+	case TBT_ENTER_SOP_RETRY:
 		/*
 		 * Another NAK on the second attempt to enter Thunderbolt mode.
 		 * Give up.
@@ -195,10 +190,6 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 		if (get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE) {
 			vdo_count_ret =
 				enter_tbt_compat_mode(port, TCPC_TX_SOP, vdm);
-			if (tbt_state[port] == TBT_START)
-				tbt_state[port] = TBT_ENTER_SOP_SENT;
-			else
-				tbt_state[port] = TBT_ENTER_SOP_RETRY_SENT;
 		}
 		/*
 		 * TODO(b/148528713): Add support for Thunderbolt active cable.
@@ -224,9 +215,6 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 				 VDO_SVDM_VERS(
 					pd_get_vdo_ver(port, TCPC_TX_SOP));
 			vdo_count_ret = 1;
-			tbt_state[port] = (tbt_state[port] == TBT_ACTIVE) ?
-					   TBT_EXIT_SOP_SENT :
-					   TBT_EXIT_SOP_RETRY_SENT;
 		}
 		break;
 	case TBT_INACTIVE:

@@ -28,17 +28,11 @@
 /* The state of the DP negotiation */
 enum dp_states {
 	DP_START = 0,
-	DP_ENTER_SENT,
 	DP_ENTER_ACKED,
 	DP_ENTER_NAKED,
-	DP_STATUS_SENT,
 	DP_STATUS_ACKED,
-	DP_CONFIG_SENT,
 	DP_ACTIVE,
-	DP_EXIT_SENT,
-	DP_EXIT_RETRY_SENT,
 	DP_ENTER_RETRY,
-	DP_ENTER_RETRY_SENT,
 	DP_INACTIVE,
 	DP_STATE_COUNT
 };
@@ -49,13 +43,12 @@ static enum dp_states dp_state[CONFIG_USB_PD_PORT_MAX_COUNT];
  * Default of 0 indicates no command expected.
  */
 static const uint8_t state_vdm_cmd[DP_STATE_COUNT] = {
-	[DP_ENTER_SENT] = CMD_ENTER_MODE,
-	[DP_STATUS_SENT] = CMD_DP_STATUS,
-	[DP_CONFIG_SENT] = CMD_DP_CONFIG,
+	[DP_START] = CMD_ENTER_MODE,
+	[DP_ENTER_ACKED] = CMD_DP_STATUS,
+	[DP_STATUS_ACKED] = CMD_DP_CONFIG,
 	[DP_ACTIVE] = CMD_EXIT_MODE,
-	[DP_EXIT_SENT] = CMD_EXIT_MODE,
-	[DP_EXIT_RETRY_SENT] = CMD_EXIT_MODE,
-	[DP_ENTER_RETRY_SENT] = CMD_ENTER_MODE,
+	[DP_ENTER_NAKED] = CMD_EXIT_MODE,
+	[DP_ENTER_RETRY] = CMD_ENTER_MODE,
 };
 
 void dp_init(int port)
@@ -110,16 +103,16 @@ void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 	/* TODO(b/155890173): Validate VDO count for specific commands */
 
 	switch (dp_state[port]) {
-	case DP_ENTER_SENT:
-	case DP_ENTER_RETRY_SENT:
+	case DP_START:
+	case DP_ENTER_RETRY:
 		dp_state[port] = DP_ENTER_ACKED;
 		break;
-	case DP_STATUS_SENT:
+	case DP_ENTER_ACKED:
 		/* DP status response & UFP's DP attention have same payload. */
 		dfp_consume_attention(port, vdm);
 		dp_state[port] = DP_STATUS_ACKED;
 		break;
-	case DP_CONFIG_SENT:
+	case DP_STATUS_ACKED:
 		if (modep && modep->opos && modep->fx->post_config)
 			modep->fx->post_config(port);
 		dpm_set_mode_entry_done(port);
@@ -127,7 +120,6 @@ void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		CPRINTS("C%d: Entered DP mode", port);
 		break;
 	case DP_ACTIVE:
-	case DP_EXIT_SENT:
 		/*
 		 * Request to exit mode successful, so put it in
 		 * inactive state.
@@ -135,7 +127,7 @@ void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		CPRINTS("C%d: Exited DP mode", port);
 		dp_state[port] = DP_INACTIVE;
 		break;
-	case DP_EXIT_RETRY_SENT:
+	case DP_ENTER_NAKED:
 		/*
 		 * The request to exit the mode was successful,
 		 * so try to enter the mode again.
@@ -164,7 +156,7 @@ void dp_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd)
 		return;
 
 	switch (dp_state[port]) {
-	case DP_ENTER_SENT:
+	case DP_START:
 		/*
 		 * If a request to enter DP mode is NAK'ed, this likely
 		 * means the partner is already in DP alt mode, so
@@ -175,7 +167,7 @@ void dp_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd)
 		 */
 		dp_state[port] = DP_ENTER_NAKED;
 		break;
-	case DP_ENTER_RETRY_SENT:
+	case DP_ENTER_RETRY:
 		/*
 		 * Another NAK on the second attempt to enter DP mode.
 		 * Give up.
@@ -211,11 +203,8 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
 		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP));
 		vdo_count_ret = 1;
-		if (dp_state[port] == DP_START) {
+		if (dp_state[port] == DP_START)
 			CPRINTS("C%d: Attempting to enter DP mode", port);
-			dp_state[port] = DP_ENTER_SENT;
-		} else
-			dp_state[port] = DP_ENTER_RETRY_SENT;
 		break;
 	case DP_ENTER_ACKED:
 		if (!(modep && modep->opos))
@@ -227,7 +216,6 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 		vdm[0] |= PD_VDO_OPOS(modep->opos);
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
 		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP));
-		dp_state[port] = DP_STATUS_SENT;
 		break;
 	case DP_STATUS_ACKED:
 		if (!(modep && modep->opos))
@@ -238,7 +226,6 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 			return -1;
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
 		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP));
-		dp_state[port] = DP_CONFIG_SENT;
 		break;
 	case DP_ENTER_NAKED:
 	case DP_ACTIVE:
@@ -263,9 +250,6 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
 		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP));
 		vdo_count_ret = 1;
-		dp_state[port] = (dp_state[port] == DP_ACTIVE)
-				  ? DP_EXIT_SENT
-				  : DP_EXIT_RETRY_SENT;
 		break;
 	case DP_INACTIVE:
 		/*
