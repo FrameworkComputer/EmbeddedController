@@ -5248,7 +5248,7 @@ static void pe_dr_snk_get_sink_cap_run(int port)
 				 * FRS for this connection. Multiple PDOs
 				 * may be returned, for FRS only Fixed PDOs
 				 * shall be used, and this shall be the 1st
-				 * PDO returned
+				 * PDO returned.
 				 *
 				 * TODO(b/14191267): Make sure we can handle
 				 * the required current before we enable FRS.
@@ -5263,6 +5263,8 @@ static void pe_dr_snk_get_sink_cap_run(int port)
 					case PDO_FIXED_FRS_CURR_DFLT_USB_POWER:
 					case PDO_FIXED_FRS_CURR_1A5_AT_5V:
 					case PDO_FIXED_FRS_CURR_3A0_AT_5V:
+						typec_set_source_current_limit(
+							port, TYPEC_RP_3A0);
 						pe_set_frs_enable(port, 1);
 						break;
 					}
