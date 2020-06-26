@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "hooks.h"
 #include "i2c.h"
 #include "ioexpanders.h"
 #include "tca6416a.h"
@@ -124,6 +125,47 @@ int init_ioexpanders(void)
 	read_faults();
 
 	return EC_SUCCESS;
+}
+
+static void ioexpanders_irq(void)
+{
+	int fault;
+
+	fault = read_faults();
+
+	if (!(fault & USERVO_FAULT_L))
+		ccprintf("FAULT: Microservo USB A port load switch\n");
+
+	if (!(fault & USB3_A0_FAULT_L))
+		ccprintf("FAULT: USB3 A0 port load switch\n");
+
+	if (!(fault & USB3_A1_FAULT_L))
+		ccprintf("FAULT: USB3 A1 port load switch\n");
+
+	if (!(fault & USB_DUTCHG_FLT_ODL))
+		ccprintf("FAULT: Overcurrent on Charger or DUB CC/SBU lines\n");
+
+	if (!(fault & PP3300_DP_FAULT_L))
+		ccprintf("FAULT: Overcurrent on DisplayPort\n");
+
+	if (!(fault & DAC_BUF1_LATCH_FAULT_L)) {
+		ccprintf("FAULT: CC1 drive circuitry has exceeded thermal ");
+		ccprintf("limits or exceeded current limits. Power ");
+		ccprintf("off DAC0 to clear the fault\n");
+	}
+
+	if (!(fault & DAC_BUF1_LATCH_FAULT_L)) {
+		ccprintf("FAULT: CC2 drive circuitry has exceeded thermal ");
+		ccprintf("limits or exceeded current limits. Power ");
+		ccprintf("off DAC1 to clear the fault\n");
+	}
+}
+DECLARE_DEFERRED(ioexpanders_irq);
+
+int irq_ioexpanders(void)
+{
+	hook_call_deferred(&ioexpanders_irq_data, 0);
+	return 0;
 }
 
 inline int sbu_uart_sel(int en)

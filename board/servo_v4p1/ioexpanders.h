@@ -16,6 +16,12 @@ enum uservo_fastboot_mux_sel_t {
  */
 int init_ioexpanders(void);
 
+/*
+ * Calls the Ioexpanders Deferred handler for interrupts
+ * Should be called from the ioexpanders IRQ handler
+ */
+int irq_ioexpanders(void);
+
 /**
  * SBU Crosspoint select
  *

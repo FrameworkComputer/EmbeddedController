@@ -58,36 +58,7 @@ static void vbus1_evt(enum gpio_signal signal)
 
 static void tca_evt(enum gpio_signal signal)
 {
-	uint8_t fault;
-
-	fault = read_faults();
-
-	if (!(fault & USERVO_FAULT_L))
-		ccprintf("FAULT: Microservo USB A port load switch\n");
-
-	if (!(fault & USB3_A0_FAULT_L))
-		ccprintf("FAULT: USB3 A0 port load switch\n");
-
-	if (!(fault & USB3_A1_FAULT_L))
-		ccprintf("FAULT: USB3 A1 port load switch\n");
-
-	if (!(fault & USB_DUTCHG_FLT_ODL))
-		ccprintf("FAULT: Overcurrent on Charger or DUB CC/SBU lines\n");
-
-	if (!(fault & PP3300_DP_FAULT_L))
-		ccprintf("FAULT: Overcurrent on DisplayPort\n");
-
-	if (!(fault & DAC_BUF1_LATCH_FAULT_L)) {
-		ccprintf("FAULT: CC1 drive circuitry has exceeded thermal ");
-		ccprintf("limits or exceeded current limits. Power ");
-		ccprintf("off DAC0 to clear the fault\n");
-	}
-
-	if (!(fault & DAC_BUF1_LATCH_FAULT_L)) {
-		ccprintf("FAULT: CC2 drive circuitry has exceeded thermal ");
-		ccprintf("limits or exceeded current limits. Power ");
-		ccprintf("off DAC1 to clear the fault\n");
-	}
+	irq_ioexpanders();
 }
 
 static volatile uint64_t hpd_prev_ts;
