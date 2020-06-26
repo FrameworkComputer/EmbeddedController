@@ -2077,6 +2077,8 @@ static void pe_src_ready_run(int port)
 					DPM_REQUEST_SOURCE_CAP);
 
 		if (pe[port].dpm_request) {
+			uint32_t dpm_request = pe[port].dpm_request;
+
 			PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 
 			if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_DR_SWAP)) {
@@ -2102,9 +2104,10 @@ static void pe_src_ready_run(int port)
 						DPM_REQUEST_SEND_PING)) {
 				PE_CLR_DPM_REQUEST(port, DPM_REQUEST_SEND_PING);
 				set_state_pe(port, PE_SRC_PING);
-			}  else if (!common_src_snk_dpm_requests(port)) {
+			} else if (!common_src_snk_dpm_requests(port)) {
 				CPRINTF("Unhandled DPM Request %x received\n",
-					pe[port].dpm_request);
+					dpm_request);
+				PE_CLR_DPM_REQUEST(port, dpm_request);
 				PE_CLR_FLAG(port,
 					PE_FLAGS_LOCALLY_INITIATED_AMS);
 			}
@@ -2831,6 +2834,8 @@ static void pe_snk_ready_run(int port)
 					DPM_REQUEST_SEND_PING);
 
 		if (pe[port].dpm_request) {
+			uint32_t dpm_request = pe[port].dpm_request;
+
 			PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 
 			if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_DR_SWAP)) {
@@ -2860,7 +2865,8 @@ static void pe_snk_ready_run(int port)
 				set_state_pe(port, PE_DR_SNK_GET_SINK_CAP);
 			} else if (!common_src_snk_dpm_requests(port)) {
 				CPRINTF("Unhandled DPM Request %x received\n",
-					pe[port].dpm_request);
+					dpm_request);
+				PE_CLR_DPM_REQUEST(port, dpm_request);
 				PE_CLR_FLAG(port,
 					PE_FLAGS_LOCALLY_INITIATED_AMS);
 			}
