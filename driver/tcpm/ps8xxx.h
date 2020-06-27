@@ -11,11 +11,13 @@
 
 /* I2C interface */
 #define PS8751_I2C_ADDR1_P1_FLAGS 0x09
-#define PS8751_I2C_ADDR1_P2_FLAGS 0x0a
-#define PS8751_I2C_ADDR1_FLAGS    0x0B
+#define PS8751_I2C_ADDR1_P2_FLAGS 0x0A
+#define PS8751_I2C_ADDR1_FLAGS    0x0B	/* P3 */
 #define PS8751_I2C_ADDR2_FLAGS    0x1B
 #define PS8751_I2C_ADDR3_FLAGS    0x2B
 #define PS8751_I2C_ADDR4_FLAGS    0x4B
+
+#define PS8751_P3_TO_P1_FLAGS(p3_flags)	((p3_flags) - 2)
 
 /* Minimum Delay for reset assertion */
 #define PS8XXX_RESET_DELAY_MS 1
