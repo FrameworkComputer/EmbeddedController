@@ -830,11 +830,19 @@ int enter_tbt_compat_mode(int port, enum tcpm_transmit_type sop,
 	union tbt_dev_mode_enter_cmd enter_dev_mode = { .raw_value = 0 };
 	union tbt_mode_resp_device dev_mode_resp;
 	union tbt_mode_resp_cable cable_mode_resp;
+	enum tcpm_transmit_type enter_mode_sop =
+					sop == TCPC_TX_SOP_PRIME_PRIME ?
+						TCPC_TX_SOP_PRIME : sop;
 
 	/* Table F-12 TBT3 Cable Enter Mode Command */
-	payload[0] = pd_dfp_enter_mode(port, sop, USB_VID_INTEL, 0) |
+	/*
+	 * The port doesn't query Discover SOP'' to the cable so, the port
+	 * doesn't have opos for SOP''. Hence, send Enter Mode SOP'' with same
+	 * opos and revision as SOP'.
+	 */
+	payload[0] = pd_dfp_enter_mode(port, enter_mode_sop, USB_VID_INTEL, 0) |
 		     VDO_CMDT(CMDT_INIT) |
-		     VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP));
+		     VDO_SVDM_VERS(pd_get_vdo_ver(port, enter_mode_sop));
 
 	/* For TBT3 Cable Enter Mode Command, number of Objects is 1 */
 	if ((sop == TCPC_TX_SOP_PRIME) ||
