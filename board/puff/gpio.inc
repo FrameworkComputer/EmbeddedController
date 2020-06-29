@@ -86,6 +86,8 @@ GPIO(EN_PPVAR_BJ_ADP_L,        PIN(0, 4), GPIO_OUT_LOW)
 /* USB type A */
 GPIO(EN_PP5000_USB_VBUS,       PIN(8, 3), GPIO_OUT_LOW)
 GPIO(USB_A_LOW_PWR_OD,         PIN(9, 4), GPIO_ODR_LOW)
+GPIO(USB_A2_STATUS_L,          PIN(6, 1), GPIO_INPUT)
+GPIO(USB_A3_STATUS_L,          PIN(C, 7), GPIO_INPUT)
 
 /* USB type C */
 GPIO(USB_C0_TCPC_RST,          PIN(9, 7), GPIO_OUT_LOW)
@@ -149,8 +151,6 @@ UNUSED(PIN(C, 2))						/* A12 NC */
 UNUSED(PIN(9, 2))						/* K8  NC */
 UNUSED(PIN(9, 1))						/* L8  NC */
 UNUSED(PIN(1, 2))						/* C6  NC */
-UNUSED(PIN(6, 1))						/* L3  NC */
-UNUSED(PIN(C, 7))						/* B9  NC */
 UNUSED(PIN(6, 6))						/* H4  NC */
 UNUSED(PIN(8, 1))						/* L6  NC */
 UNUSED(PIN(C, 6))						/* B11 NC */
