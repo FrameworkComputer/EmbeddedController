@@ -567,9 +567,6 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_C0_TCPC_RST, !level);
 	if (BOARD_TCPC_C0_RESET_POST_DELAY)
 		msleep(BOARD_TCPC_C0_RESET_POST_DELAY);
-	/* Reset any saved state for previous connections. */
-	pd_update_saved_port_flags(USB_PD_PORT_TCPC_0,
-		PD_BBRMFLG_EXPLICIT_CONTRACT, 0);
 }
 
 int board_set_active_charge_port(int port)

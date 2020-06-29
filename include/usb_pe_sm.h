@@ -175,11 +175,6 @@ void pe_dpm_request(int port, enum pe_dpm_request req);
 int pd_is_port_partner_dualrole(int port);
 
 /*
- * Informs the Policy Engine that a sysjump has occurred
- */
-void pe_set_sysjump(void);
-
-/*
  * Informs the Policy Engine that it should invalidate the
  * explicit contract.
  *

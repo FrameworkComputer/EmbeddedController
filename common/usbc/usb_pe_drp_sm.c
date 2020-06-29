@@ -189,9 +189,6 @@
  */
 typedef int (*svdm_rsp_func)(int port, uint32_t *payload);
 
-/* This is true only if a sysjump has occurred */
-static bool sysjump_occurred;
-
 /* List of all Policy Engine level states */
 enum usb_pe_state {
 	/* Normal States */
@@ -766,11 +763,6 @@ void pe_run(int port, int evt, int en)
 	}
 }
 
-void pe_set_sysjump(void)
-{
-	sysjump_occurred = true;
-}
-
 int pe_is_explicit_contract(int port)
 {
 	return PE_CHK_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
@@ -860,7 +852,6 @@ static void pe_set_frs_enable(int port, int enable)
 void pe_set_explicit_contract(int port)
 {
 	PE_SET_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
-	pd_update_saved_port_flags(port, PD_BBRMFLG_EXPLICIT_CONTRACT, 1);
 
 	/* Set Rp for collision avoidance */
 	if (IS_ENABLED(CONFIG_USB_PD_REV30))
@@ -873,7 +864,6 @@ void pe_invalidate_explicit_contract(int port)
 		pe_set_frs_enable(port, 0);
 
 	PE_CLR_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
-	pd_update_saved_port_flags(port, PD_BBRMFLG_EXPLICIT_CONTRACT, 0);
 
 	/* Set Rp for current limit */
 	if (IS_ENABLED(CONFIG_USB_PD_REV30))
@@ -2331,14 +2321,8 @@ static void pe_snk_startup_entry(int port)
 	/* Set initial power role */
 	pe[port].power_role = PD_ROLE_SINK;
 
-	/*
-	 * An explicit contract must be maintained across sysjumps,
-	 * so do not invalidate it if a sysjump has occurred
-	 */
-	if (!sysjump_occurred) {
-		/* Invalidate explicit contract */
-		pe_invalidate_explicit_contract(port);
-	}
+	/* Invalidate explicit contract */
+	pe_invalidate_explicit_contract(port);
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE);
@@ -2372,22 +2356,11 @@ static void pe_snk_startup_run(int port)
 	if (!prl_is_running(port))
 		return;
 
-	/* Soft reset the charger on sysjump */
-	if (sysjump_occurred) {
-		/*
-		 * The sysjump flag is no longer needed, so clear it.
-		 * After Soft Reset is sent, PE_ATTACHED_SNK state
-		 * is entered.
-		 */
-		sysjump_occurred = false;
-		pe_send_soft_reset(port, TCPC_TX_SOP);
-	} else {
-		/*
-		 * Once the reset process completes, the Policy Engine Shall
-		 * transition to the PE_SNK_Discovery state
-		 */
-		set_state_pe(port, PE_SNK_DISCOVERY);
-	}
+	/*
+	 * Once the reset process completes, the Policy Engine Shall
+	 * transition to the PE_SNK_Discovery state
+	 */
+	set_state_pe(port, PE_SNK_DISCOVERY);
 }
 
 /**

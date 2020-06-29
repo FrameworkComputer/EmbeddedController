@@ -3340,6 +3340,8 @@
  *
  * When defined, CBI allows ectool to reprogram all the fields. Once undefined,
  * it refuses to change certain fields. (e.g. board version, OEM ID)
+ *
+ * Also, this will enable PD in RO for TCPMv2.
  */
 #undef CONFIG_SYSTEM_UNLOCKED
 
@@ -3791,6 +3793,9 @@
  * We don't want to allow communication to outside world until
  * we jump to RW. This can by overridden with the removal of
  * the write protect screw to allow for easier testing.
+ *
+ * Note: this is assumed for TCPMv2. See also CONFIG_BRINGUP for enabling PD in
+ * RO.
  */
 #undef CONFIG_USB_PD_COMM_LOCKED
 

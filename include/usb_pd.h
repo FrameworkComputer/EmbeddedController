@@ -200,7 +200,7 @@ enum pd_rx_errors {
 #define PD_T_PS_SOURCE_ON      (480*MSEC) /* between 390ms and 480ms */
 #define PD_T_PS_SOURCE_OFF     (920*MSEC) /* between 750ms and 920ms */
 #define PD_T_PS_HARD_RESET      (25*MSEC) /* between 25ms and 35ms */
-#define PD_T_ERROR_RECOVERY     (25*MSEC) /* 25ms */
+#define PD_T_ERROR_RECOVERY    (240*MSEC) /* min 240ms if sourcing VConn */
 #define PD_T_CC_DEBOUNCE       (100*MSEC) /* between 100ms and 200ms */
 /* DRP_SNK + DRP_SRC must be between 50ms and 100ms with 30%-70% duty cycle */
 #define PD_T_DRP_SNK           (40*MSEC) /* toggle time for sink DRP */

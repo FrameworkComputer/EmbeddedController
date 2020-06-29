@@ -157,18 +157,6 @@ test_only_restart:
 	if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
 		tc_state_init(port);
 
-	if (IS_ENABLED(CONFIG_USBC_PPC) &&
-	    port < board_get_usb_pd_port_count()) {
-		/*
-		 * Wait to initialize the PPC after tc_state_init(), which sets
-		 * the correct Rd values in the TCPC; otherwise the TCPC might
-		 * not be pulling the CC lines down when the PPC connects the
-		 * CC lines from the USB connector to the TCPC cause the source
-		 * to drop Vbus causing a brown out.
-		 */
-		ppc_init(port);
-	}
-
 	/*
 	 * Since most boards configure the TCPC interrupt as edge
 	 * and it is possible that the interrupt line was asserted between init
