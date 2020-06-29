@@ -39,11 +39,6 @@
 
 static uint8_t paused[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-int tc_restart_tcpc(int port)
-{
-	return tcpm_init(port);
-}
-
 void tc_pause_event_loop(int port)
 {
 	paused[port] = 1;

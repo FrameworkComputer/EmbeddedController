@@ -270,14 +270,6 @@ enum tcpc_cc_polarity get_snk_polarity(enum tcpc_cc_voltage_status cc1,
 	enum tcpc_cc_voltage_status cc2);
 
 /**
- * Restarts the TCPC
- *
- * @param port USB-C port number
- * @returns EC_SUCCESS on success
- */
-int tc_restart_tcpc(int port);
-
-/**
  * Called by the state machine framework to initialize the
  * TypeC state machine
  *

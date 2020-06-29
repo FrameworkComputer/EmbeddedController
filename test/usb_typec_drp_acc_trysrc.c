@@ -605,8 +605,6 @@ void before_test(void)
 
 	tc_try_src_override(TRY_SRC_NO_OVERRIDE);
 
-	tc_restart_tcpc(PORT0);
-
 	/* Ensure that PD task initializes its state machine and settles */
 	task_wake(TASK_ID_PD_C0);
 	task_wait_event(SECOND);

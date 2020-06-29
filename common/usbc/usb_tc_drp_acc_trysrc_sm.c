@@ -1142,7 +1142,7 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 {
 	int res = 0;
 
-	res = tc_restart_tcpc(port);
+	res = tcpm_init(port);
 
 	CPRINTS("C%d: TCPC init %s", port, res ? "failed" : "ready");
 
@@ -1576,7 +1576,7 @@ static __maybe_unused int reset_device_and_notify(int port)
 	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
 
 	TC_SET_FLAG(port, TC_FLAGS_LPM_TRANSITION);
-	rv = tc_restart_tcpc(port);
+	rv = tcpm_init(port);
 	TC_CLR_FLAG(port, TC_FLAGS_LPM_TRANSITION);
 	TC_CLR_FLAG(port, TC_FLAGS_LPM_ENGAGED);
 	tc_start_event_loop(port);
@@ -1745,7 +1745,7 @@ static void tc_disabled_run(const int port)
 static void tc_disabled_exit(const int port)
 {
 	if (!IS_ENABLED(CONFIG_USB_PD_TCPC)) {
-		if (tc_restart_tcpc(port) != 0) {
+		if (tcpm_init(port) != 0) {
 			CPRINTS("C%d: TCPC restart failed!", port);
 			return;
 		}

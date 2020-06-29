@@ -99,7 +99,7 @@ void tc_state_init(int port)
 {
 	int res = 0;
 
-	res = tc_restart_tcpc(port);
+	res = tcpm_init(port);
 
 	CPRINTS("C%d: init %s", port, res ? "failed" : "ready");
 
@@ -190,7 +190,7 @@ static void tc_disabled_run(const int port)
 static void tc_disabled_exit(const int port)
 {
 	if (!IS_ENABLED(CONFIG_USB_PD_TCPC)) {
-		if (tc_restart_tcpc(port) != 0) {
+		if (tcpm_init(port) != 0) {
 			CPRINTS("C%d: restart failed!", port);
 			return;
 		}
