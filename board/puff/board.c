@@ -143,7 +143,7 @@ static void update_5v_usage(void)
 		base_5v_power += PWR_REAR;
 	if (!gpio_get_level(GPIO_USB_A3_OC_ODL))
 		base_5v_power += PWR_REAR;
-	if (!gpio_get_level(GPIO_USB_A4_OC_ODL))
+	if (ec_config_get_usb4_present() && !gpio_get_level(GPIO_USB_A4_OC_ODL))
 		base_5v_power += PWR_REAR;
 	if (!gpio_get_level(GPIO_HDMI_CONN0_OC_ODL))
 		base_5v_power += PWR_HDMI;
@@ -535,10 +535,21 @@ static void board_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_A1_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A2_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A3_OC_ODL);
-	gpio_enable_interrupt(GPIO_USB_A4_OC_ODL);
+	if (ec_config_get_usb4_present()) {
+		/*
+		 * By default configured as output low.
+		 */
+		gpio_set_flags(GPIO_USB_A4_OC_ODL,
+			       GPIO_INPUT | GPIO_INT_BOTH);
+		gpio_enable_interrupt(GPIO_USB_A4_OC_ODL);
+	} else {
+		/* Ensure no interrupts from pin */
+		gpio_disable_interrupt(GPIO_USB_A4_OC_ODL);
+	}
 
 }
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
+/* Make sure this is called after fw_config is initialised */
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
 
 int64_t get_time_dsw_pwrok(void)
 {
@@ -663,6 +674,11 @@ unsigned int ec_config_get_bj_power(void)
 	if (bj >= ARRAY_SIZE(bj_power))
 		bj = 0;
 	return bj;
+}
+
+int ec_config_get_usb4_present(void)
+{
+	return !(fw_config & EC_CFG_NO_USB4_MASK);
 }
 
 /*

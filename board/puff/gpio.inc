@@ -53,11 +53,12 @@ GPIO_INT(BJ_ADP_PRESENT_L,     PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP, adp_conn
 /* Port power control interrupts */
 GPIO_INT(HDMI_CONN0_OC_ODL,    PIN(0, 7), GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(HDMI_CONN1_OC_ODL,    PIN(0, 6), GPIO_INT_BOTH, port_ocp_interrupt)
-GPIO_INT(USB_A0_OC_ODL,        PIN(E, 4), GPIO_ODR_HIGH, port_ocp_interrupt)
-GPIO_INT(USB_A1_OC_ODL,        PIN(A, 2), GPIO_ODR_HIGH, port_ocp_interrupt)
-GPIO_INT(USB_A2_OC_ODL,        PIN(F, 5), GPIO_ODR_HIGH, port_ocp_interrupt)
-GPIO_INT(USB_A3_OC_ODL,        PIN(0, 3), GPIO_ODR_HIGH, port_ocp_interrupt)
-GPIO_INT(USB_A4_OC_ODL,        PIN(B, 0), GPIO_ODR_HIGH, port_ocp_interrupt)
+GPIO_INT(USB_A0_OC_ODL,        PIN(E, 4), GPIO_INT_BOTH, port_ocp_interrupt)
+GPIO_INT(USB_A1_OC_ODL,        PIN(A, 2), GPIO_INT_BOTH, port_ocp_interrupt)
+GPIO_INT(USB_A2_OC_ODL,        PIN(F, 5), GPIO_INT_BOTH, port_ocp_interrupt)
+GPIO_INT(USB_A3_OC_ODL,        PIN(0, 3), GPIO_INT_BOTH, port_ocp_interrupt)
+/* May be reconfigured as input */
+GPIO_INT(USB_A4_OC_ODL,        PIN(B, 0), GPIO_OUT_LOW | GPIO_INT_BOTH, port_ocp_interrupt)
 
 /* PCH/CPU signals */
 GPIO(EC_PCH_PWROK,             PIN(0, 5), GPIO_OUT_LOW)

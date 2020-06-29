@@ -234,13 +234,23 @@ void led_alert(int enable);
 void show_critical_error(void);
 
 /*
+ * firmware config fields
+ */
+/*
  * Barrel-jack power (4 bits).
  */
 #define EC_CFG_BJ_POWER_L		0
 #define EC_CFG_BJ_POWER_H		3
 #define EC_CFG_BJ_POWER_MASK GENMASK(EC_CFG_BJ_POWER_H, EC_CFG_BJ_POWER_L)
+/*
+ * USB Connector 4 not present (1 bit).
+ */
+#define EC_CFG_NO_USB4_L		4
+#define EC_CFG_NO_USB4_H		4
+#define EC_CFG_NO_USB4_MASK GENMASK(EC_CFG_NO_USB4_H, EC_CFG_NO_USB4_L)
 
 unsigned int ec_config_get_bj_power(void);
+int ec_config_get_usb4_present(void);
 
 #endif /* !__ASSEMBLER__ */
 
