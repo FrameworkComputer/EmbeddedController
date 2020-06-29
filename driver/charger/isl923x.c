@@ -485,6 +485,18 @@ static void isl923x_init(int chgnum)
 			goto init_fail;
 	}
 
+	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
+		/*
+		 * Return the BFET to normal operation as it may have been
+		 * turned off when entering hibernate.
+		 */
+		if (raw_read16(chgnum, ISL923X_REG_CONTROL1, &reg))
+			goto init_fail;
+		reg &= ~RAA489000_C1_BGATE_FORCE_OFF;
+		if (raw_write16(chgnum, ISL923X_REG_CONTROL1, reg))
+			goto init_fail;
+	}
+
 	if (IS_ENABLED(CHARGER_ISL9238X) ||
 	    IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
 		/*
