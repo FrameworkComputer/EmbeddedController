@@ -101,7 +101,7 @@ void tc_state_init(int port)
 
 	res = tc_restart_tcpc(port);
 
-	CPRINTS("TCPC p%d init %s", port, res ? "failed" : "ready");
+	CPRINTS("C%d: init %s", port, res ? "failed" : "ready");
 
 	/* Disable TCPC RX until connection is established */
 	tcpm_set_rx_enable(port, 0);
@@ -191,12 +191,12 @@ static void tc_disabled_exit(const int port)
 {
 	if (!IS_ENABLED(CONFIG_USB_PD_TCPC)) {
 		if (tc_restart_tcpc(port) != 0) {
-			CPRINTS("TCPC p%d restart failed!", port);
+			CPRINTS("C%d: restart failed!", port);
 			return;
 		}
 	}
 
-	CPRINTS("TCPC p%d resumed!", port);
+	CPRINTS("C%d: resumed!", port);
 }
 
 /**

@@ -846,7 +846,7 @@ void pd_set_suspend(int port, int suspend)
 		/* Sleep this task if we are not suspended */
 		while (pd_is_port_enabled(port)) {
 			if (++wait > SUSPEND_SLEEP_RETRIES) {
-				CPRINTS("P%d: NOT SUSPENDED after %dms",
+				CPRINTS("C%d: NOT SUSPENDED after %dms",
 					port, wait * SUSPEND_SLEEP_DELAY);
 				return;
 			}
@@ -1144,7 +1144,7 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 
 	res = tc_restart_tcpc(port);
 
-	CPRINTS("TCPC p%d init %s", port, res ? "failed" : "ready");
+	CPRINTS("C%d: TCPC init %s", port, res ? "failed" : "ready");
 
 	/* Disable if restart failed, otherwise start in default state. */
 	set_state_tc(port, res ? TC_DISABLED : start_state);
@@ -1582,9 +1582,9 @@ static __maybe_unused int reset_device_and_notify(int port)
 	tc_start_event_loop(port);
 
 	if (rv == EC_SUCCESS)
-		CPRINTS("TCPC p%d init ready", port);
+		CPRINTS("C%d: TCPC init ready", port);
 	else
-		CPRINTS("TCPC p%d init failed!", port);
+		CPRINTS("C%d: TCPC init failed!", port);
 
 	/*
 	 * Before getting the other tasks that are waiting, clear the reset
@@ -1746,12 +1746,12 @@ static void tc_disabled_exit(const int port)
 {
 	if (!IS_ENABLED(CONFIG_USB_PD_TCPC)) {
 		if (tc_restart_tcpc(port) != 0) {
-			CPRINTS("TCPC p%d restart failed!", port);
+			CPRINTS("C%d: TCPC restart failed!", port);
 			return;
 		}
 	}
 
-	CPRINTS("TCPC p%d resumed!", port);
+	CPRINTS("C%d: TCPC resumed!", port);
 }
 
 /**
@@ -2800,7 +2800,7 @@ static __maybe_unused void check_drp_connection(const int port)
 #endif
 
 	default:
-		CPRINTS("Error: DRP next state %d", next_state);
+		CPRINTS("C%d: Error: DRP next state %d", port, next_state);
 		break;
 	}
 }
@@ -2845,7 +2845,7 @@ static void tc_low_power_mode_run(const int port)
 			tc[port].low_power_exit_time = now
 				+ PD_LPM_EXIT_DEBOUNCE_US;
 		} else if (now > tc[port].low_power_exit_time) {
-			CPRINTS("TCPC p%d Exit Low Power Mode", port);
+			CPRINTS("C%d: Exit Low Power Mode", port);
 			check_drp_connection(port);
 		}
 		return;
@@ -2855,7 +2855,7 @@ static void tc_low_power_mode_run(const int port)
 		tc[port].low_power_time = get_time().val + PD_LPM_DEBOUNCE_US;
 
 	if (get_time().val > tc[port].low_power_time) {
-		CPRINTS("TCPC p%d Enter Low Power Mode", port);
+		CPRINTS("C%d: TCPC Enter Low Power Mode", port);
 		TC_SET_FLAG(port, TC_FLAGS_LPM_ENGAGED);
 		TC_SET_FLAG(port, TC_FLAGS_LPM_TRANSITION);
 		tcpm_enter_low_power_mode(port);

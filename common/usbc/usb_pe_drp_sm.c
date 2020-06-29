@@ -1281,7 +1281,7 @@ static void pe_send_request_msg(int port)
 	pd_build_request(pe[port].vpd_vdo, &rdo, &curr_limit,
 			&supply_voltage, port);
 
-	CPRINTF("C%d Req [%d] %dmV %dmA", port, RDO_POS(rdo),
+	CPRINTF("C%d: Req [%d] %dmV %dmA", port, RDO_POS(rdo),
 					supply_voltage, curr_limit);
 	if (rdo & RDO_CAP_MISMATCH)
 		CPRINTF(" Mismatch");
