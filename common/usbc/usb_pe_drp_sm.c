@@ -4372,7 +4372,7 @@ static void pe_vdm_identity_request_cbl_run(int port)
 		 */
 		if (prl_get_rev(port, TCPC_TX_SOP) != PD_REV20)
 			prl_set_rev(port, sop,
-				    pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME));
+				    PD_HEADER_REV(rx_emsg[port].header));
 	} else if (response_result == PD_DISC_FAIL) {
 		/*
 		 * PE_INIT_PORT_VDM_IDENTITY_NAKed and PE_SRC_VDM_Identity_NAKed
