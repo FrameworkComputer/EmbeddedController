@@ -19,6 +19,7 @@
 		"amo" #op ".w.aqrl %0, %2, %1" \
 		: "=r" (tmp), "+A" (*addr)     \
 		: "r" (value));                \
+	tmp;                                   \
 })
 
 static inline void atomic_clear(volatile uint32_t *addr, uint32_t bits)
@@ -43,13 +44,17 @@ static inline void atomic_sub(volatile uint32_t *addr, uint32_t value)
 
 static inline uint32_t atomic_read_clear(volatile uint32_t *addr)
 {
-	uint32_t ret;
-
-	asm volatile (
-		"amoand.w.aqrl  %0, %2, %1"
-		: "=r" (ret), "+A" (*addr)
-		: "r" (0));
-
-	return ret;
+	return ATOMIC_OP(and, 0, addr);
 }
+
+static inline uint32_t atomic_inc(volatile uint32_t *addr, uint32_t value)
+{
+	return ATOMIC_OP(add, value, addr);
+}
+
+static inline uint32_t atomic_dec(volatile uint32_t *addr, uint32_t value)
+{
+	return ATOMIC_OP(add, -value, addr);
+}
+
 #endif  /* __CROS_EC_ATOMIC_H */
