@@ -139,7 +139,7 @@ static void irq_group12_handler(void)
 		break;
 	}
 }
-DECLARE_IRQ(12, irq_group12_handler, 2);
+DECLARE_IRQ(12, irq_group12_handler, 0);
 #else
 
 #ifndef HAS_TASK_APUART

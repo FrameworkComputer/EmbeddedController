@@ -218,4 +218,4 @@ static void irq_group6_handler(void)
 		break;
 	}
 }
-DECLARE_IRQ(6, irq_group6_handler, 2);
+DECLARE_IRQ(6, irq_group6_handler, 0);
