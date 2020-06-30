@@ -13,8 +13,6 @@
 #include "cros_board_info.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl9241.h"
-#include "driver/ppc/sn5s330.h"
-#include "driver/ppc/syv682x.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tusb422.h"
@@ -268,23 +266,6 @@ BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
 /******************************************************************************/
-/* USBC PPC configuration */
-struct ppc_config_t ppc_chips[] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv,
-	},
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_USB_C1,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
-
-/******************************************************************************/
 /* USBC mux configuration - Tiger Lake includes internal mux */
 struct usb_mux usbc1_usb4_db_retimer = {
 	.usb_port = USBC_PORT_C1,
@@ -339,21 +320,6 @@ static void baseboard_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
-
-/******************************************************************************/
-/* PPC support routines */
-void ppc_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_PPC_INT_ODL:
-		sn5s330_interrupt(USBC_PORT_C0);
-		break;
-	case GPIO_USB_C1_PPC_INT_ODL:
-		syv682x_interrupt(USBC_PORT_C1);
-	default:
-		break;
-	}
-}
 
 /******************************************************************************/
 /* TCPC support routines */

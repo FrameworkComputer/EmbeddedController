@@ -56,6 +56,10 @@
 
 /* USB Type A Features */
 
+/* USBC PPC*/
+#define CONFIG_USBC_PPC_SN5S330		/* USBC port C0 */
+#define CONFIG_USBC_PPC_SYV682X		/* USBC port C1 */
+
 /* BC 1.2 */
 
 /* Volume Button feature */
