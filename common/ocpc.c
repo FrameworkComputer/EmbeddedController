@@ -245,12 +245,18 @@ void ocpc_get_adcs(struct ocpc_data *ocpc)
 		ocpc->primary_vbus_mv = val;
 
 	val = 0;
-	if (!charger_get_vbus_voltage(CHARGER_SECONDARY, &val))
-		ocpc->secondary_vbus_mv = val;
-
-	val = 0;
 	if (!charger_get_input_current(CHARGER_PRIMARY, &val))
 		ocpc->primary_ibus_ma = val;
+
+	if (board_get_charger_chip_count() <= CHARGER_SECONDARY) {
+		ocpc->secondary_vbus_mv = 0;
+		ocpc->secondary_ibus_ma = 0;
+		return;
+	}
+
+	val = 0;
+	if (!charger_get_vbus_voltage(CHARGER_SECONDARY, &val))
+		ocpc->secondary_vbus_mv = val;
 
 	val = 0;
 	if (!charger_get_input_current(CHARGER_SECONDARY, &val))
