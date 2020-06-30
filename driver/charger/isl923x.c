@@ -623,10 +623,9 @@ void raa489000_hibernate(int chgnum)
 	if (rv)
 		CPRINTS("%s(%d):Failed to set Control4!", __func__, chgnum);
 
-	if (IS_ENABLED(CONFIG_OCPC) && (chgnum == PRIMARY_CHARGER)) {
-		/* The LDO is needed in the Z-state */
-		CPRINTS("%s(%d): Skip disable MCU LDO", __func__, chgnum);
-	} else {
+#ifdef CONFIG_OCPC
+	/* The LDO is needed in the Z-state on the primary charger */
+	if (chgnum != CHARGER_PRIMARY) {
 		rv = raw_read16(chgnum, RAA489000_REG_CONTROL8, &regval);
 		if (!rv) {
 			/* Disable MCU LDO in battery state */
@@ -639,6 +638,7 @@ void raa489000_hibernate(int chgnum)
 			CPRINTS("%s(%d):Failed to set Control8!", __func__,
 				chgnum);
 	}
+#endif
 
 	cflush();
 }
@@ -959,7 +959,7 @@ static enum ec_error_list isl923x_get_vbus_voltage(int chgnum, int port,
 	return EC_SUCCESS;
 }
 
-#ifdef CONFIG_CHARGER_RAA489000
+#if defined(CONFIG_CHARGER_RAA489000) && defined(CONFIG_OCPC)
 static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 							  struct ocpc_data *o,
 							  int current_ma,
@@ -972,7 +972,7 @@ static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 	int regval;
 
 	/* This should never be called against the primary charger. */
-	ASSERT(chgnum != PRIMARY_CHARGER);
+	ASSERT(chgnum != CHARGER_PRIMARY);
 
 	/* Only B0+ silicon supports VSYS compensation. */
 	rv = isl923x_device_id(chgnum, &device_id);
@@ -1056,9 +1056,9 @@ static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 	}
 
 	/* Lastly, enable DVC fast charge mode for the primary charger IC. */
-	rv = raw_read16(PRIMARY_CHARGER, RAA489000_REG_CONTROL10, &regval);
+	rv = raw_read16(CHARGER_PRIMARY, RAA489000_REG_CONTROL10, &regval);
 	regval |= RAA489000_C10_ENABLE_DVC_CHARGE_MODE;
-	rv |= raw_write16(PRIMARY_CHARGER, RAA489000_REG_CONTROL10, regval);
+	rv |= raw_write16(CHARGER_PRIMARY, RAA489000_REG_CONTROL10, regval);
 	if (rv) {
 		CPRINTS("%s Failed to enable DVC on primary charger!",
 			__func__);
@@ -1071,7 +1071,7 @@ static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 	 */
 	return EC_ERROR_UNIMPLEMENTED;
 }
-#endif /* CONFIG_CHARGER_RAA489000 */
+#endif /* CONFIG_CHARGER_RAA489000 && CONFIG_OCPC */
 
 const struct charger_drv isl923x_drv = {
 	.init = &isl923x_init,
@@ -1101,7 +1101,7 @@ const struct charger_drv isl923x_drv = {
 	.ramp_is_detected = &isl923x_ramp_is_detected,
 	.ramp_get_current_limit = &isl923x_ramp_get_current_limit,
 #endif
-#ifdef CONFIG_CHARGER_RAA489000
+#if defined(CONFIG_CHARGER_RAA489000) && defined(CONFIG_OCPC)
 	.set_vsys_compensation = &raa489000_set_vsys_compensation,
 #endif
 };

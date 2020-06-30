@@ -10,9 +10,6 @@
 #ifndef __CROS_EC_OCPC_H_
 #define __CROS_EC_OCPC_H_
 
-#define PRIMARY_CHARGER   0
-#define SECONDARY_CHARGER 1
-
 #define OCPC_UNINIT 0xdededede
 
 struct ocpc_data {

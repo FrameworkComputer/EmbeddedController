@@ -35,6 +35,9 @@ do {							\
 		cprints(CC_CHARGER, format, ## args);	\
 } while (0)
 
+/* Code refactor will be needed if more than 2 charger chips are present */
+BUILD_ASSERT(CHARGER_NUM == 2);
+
 static int k_p = KP;
 static int k_i = KI;
 static int k_d = KD;
@@ -76,7 +79,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	 * upon.
 	 */
 	chgnum = charge_get_active_chg_chip();
-	if (chgnum != SECONDARY_CHARGER)
+	if (chgnum != CHARGER_SECONDARY)
 		return EC_ERROR_INVAL;
 
 	result = charger_set_vsys_compensation(chgnum, ocpc, current_ma,
@@ -227,7 +230,7 @@ set_vsys:
 	/* To reduce spam, only print when we change VSYS significantly. */
 	if ((ABS(vsys_target - ocpc->last_vsys) > 10) || debug_output)
 		CPRINTS("OCPC: Target VSYS: %dmV", vsys_target);
-	charger_set_voltage(SECONDARY_CHARGER, vsys_target);
+	charger_set_voltage(CHARGER_SECONDARY, vsys_target);
 	ocpc->last_vsys = vsys_target;
 
 	return rv;
@@ -238,19 +241,19 @@ void ocpc_get_adcs(struct ocpc_data *ocpc)
 	int val;
 
 	val = 0;
-	if (!charger_get_vbus_voltage(PRIMARY_CHARGER, &val))
+	if (!charger_get_vbus_voltage(CHARGER_PRIMARY, &val))
 		ocpc->primary_vbus_mv = val;
 
 	val = 0;
-	if (!charger_get_vbus_voltage(SECONDARY_CHARGER, &val))
+	if (!charger_get_vbus_voltage(CHARGER_SECONDARY, &val))
 		ocpc->secondary_vbus_mv = val;
 
 	val = 0;
-	if (!charger_get_input_current(PRIMARY_CHARGER, &val))
+	if (!charger_get_input_current(CHARGER_PRIMARY, &val))
 		ocpc->primary_ibus_ma = val;
 
 	val = 0;
-	if (!charger_get_input_current(SECONDARY_CHARGER, &val))
+	if (!charger_get_input_current(CHARGER_SECONDARY, &val))
 		ocpc->secondary_ibus_ma = val;
 }
 

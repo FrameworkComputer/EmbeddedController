@@ -1256,11 +1256,11 @@ static int charge_request(int voltage, int current)
 	 * For OCPC systems, if the secondary charger is active, we need to
 	 * configure that charge IC as well.  Note that if OCPC ever supports
 	 * more than 2 charger ICs, we'll need to refactor things a bit.  The
-	 * following check should be comparing against PRIMARY_CHARGER and
+	 * following check should be comparing against CHARGER_PRIMARY and
 	 * config_secondary_charger should probably be config_auxiliary_charger
 	 * and take the active chgnum as a parameter.
 	 */
-	if (curr.ocpc.active_chg_chip == SECONDARY_CHARGER) {
+	if (curr.ocpc.active_chg_chip == CHARGER_SECONDARY) {
 		if ((current >= 0) || (voltage >= 0))
 			r3 = ocpc_config_secondary_charger(&curr.desired_input_current,
 							   &curr.ocpc,
