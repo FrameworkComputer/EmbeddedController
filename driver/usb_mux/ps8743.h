@@ -17,6 +17,8 @@
 
 /* Mode register for setting mux */
 #define PS8743_REG_MODE 0x00
+#define PS8743_MODE_IN_HPD_ASSERT    BIT(0)
+#define PS8743_MODE_IN_HPD_CONTROL   BIT(1)
 #define PS8743_MODE_FLIP_ENABLE      BIT(2)
 #define PS8743_MODE_FLIP_REG_CONTROL BIT(3)
 #define PS8743_MODE_USB_ENABLE       BIT(4)

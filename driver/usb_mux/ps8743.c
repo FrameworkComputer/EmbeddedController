@@ -78,14 +78,15 @@ static int ps8743_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 	 * For CE_DP, CE_USB, and FLIP, disable pin control and enable I2C
 	 * control.
 	 */
-	uint8_t reg = (PS8743_MODE_DP_REG_CONTROL |
+	uint8_t reg = (PS8743_MODE_IN_HPD_CONTROL |
+		       PS8743_MODE_DP_REG_CONTROL |
 		       PS8743_MODE_USB_REG_CONTROL |
 		       PS8743_MODE_FLIP_REG_CONTROL);
 
 	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= PS8743_MODE_USB_ENABLE;
 	if (mux_state & USB_PD_MUX_DP_ENABLED)
-		reg |= PS8743_MODE_DP_ENABLE;
+		reg |= PS8743_MODE_DP_ENABLE | PS8743_MODE_IN_HPD_ASSERT;
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		reg |= PS8743_MODE_FLIP_ENABLE;
 
