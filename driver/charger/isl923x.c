@@ -563,7 +563,7 @@ void raa489000_hibernate(int chgnum)
 {
 	int rv, regval;
 
-	if ((chgnum < 0) || (chgnum > chg_cnt)) {
+	if ((chgnum < 0) || (chgnum > board_get_charger_chip_count())) {
 		CPRINTS("%s: Invalid chgnum! (%d)", __func__, chgnum);
 		return;
 	}

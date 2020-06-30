@@ -102,7 +102,6 @@ struct charger_config_t chg_chips[] = {
 		.drv = &isl9241_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /*
  * If the charger is found on the V0 I2C port then re-map the port.

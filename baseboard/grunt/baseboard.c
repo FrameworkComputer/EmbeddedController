@@ -370,8 +370,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
-
 
 const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A0_5V,

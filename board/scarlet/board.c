@@ -90,7 +90,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &rt946x_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {

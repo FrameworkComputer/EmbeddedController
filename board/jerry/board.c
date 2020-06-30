@@ -55,7 +55,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &bq24715_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 void board_config_pre_init(void)
 {

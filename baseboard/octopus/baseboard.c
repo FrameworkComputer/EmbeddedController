@@ -88,8 +88,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &isl923x_drv,
 	},
 };
-
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 #endif
 
 /******************************************************************************/

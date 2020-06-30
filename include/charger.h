@@ -130,7 +130,8 @@ extern const struct charger_config_t chg_chips[];
 #else
 extern struct charger_config_t chg_chips[];
 #endif
-extern const unsigned int chg_cnt;
+
+__override_proto uint8_t board_get_charger_chip_count(void);
 
 #ifdef CONFIG_CHARGER_SINGLE_CHIP
 enum chg_id {

@@ -152,7 +152,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &sm5803_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /* TCPCs */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {

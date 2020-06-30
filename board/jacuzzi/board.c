@@ -170,7 +170,6 @@ struct charger_config_t chg_chips[] = {
 		.drv = &isl923x_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /* Board version depends on ADCs, so init i2c port after ADC */
 static void charger_config_complete(void)

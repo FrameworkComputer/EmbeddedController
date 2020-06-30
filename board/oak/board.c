@@ -168,7 +168,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 #endif /* OAK_REV1 */
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /*
  * Temperature sensors data; must be in same order as enum temp_sensor_id.

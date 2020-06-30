@@ -64,8 +64,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
-
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_AC_PRESENT,

@@ -340,8 +340,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
-
 void board_chipset_startup(void)
 {
 	gpio_set_level(GPIO_EN_5V, 1);

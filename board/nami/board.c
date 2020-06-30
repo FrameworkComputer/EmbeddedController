@@ -293,8 +293,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
-
 void board_reset_pd_mcu(void)
 {
 	if (oem == PROJECT_AKALI && board_version < 0x0200) {

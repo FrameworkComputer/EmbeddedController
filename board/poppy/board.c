@@ -242,8 +242,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
-
 
 /**
  * Power on (or off) a single TCPC.

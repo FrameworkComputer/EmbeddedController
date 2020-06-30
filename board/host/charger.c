@@ -173,5 +173,3 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &mock_drv,
 	},
 };
-
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
