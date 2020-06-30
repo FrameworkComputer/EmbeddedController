@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "atomic.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
@@ -20,6 +21,29 @@ static uint8_t init_done;
 static struct mutex ipi_lock;
 static struct ipc_shared_obj *const ipi_send_buf =
 	(struct ipc_shared_obj *)CONFIG_IPC_SHARED_OBJ_ADDR;
+static struct ipc_shared_obj *const ipi_recv_buf =
+	(struct ipc_shared_obj *)(CONFIG_IPC_SHARED_OBJ_ADDR +
+				  sizeof(struct ipc_shared_obj));
+
+static uint32_t disable_irq_count;
+
+void ipi_disable_irq(void)
+{
+	if (atomic_inc(&disable_irq_count, 1) == 0)
+		task_disable_irq(SCP_IRQ_GIPC_IN0);
+}
+
+void ipi_enable_irq(void)
+{
+	if (atomic_dec(&disable_irq_count, 1) == 1) {
+		int pending = SCP_GIPC_IN_SET;
+
+		task_enable_irq(SCP_IRQ_GIPC_IN0);
+
+		if (init_done && pending)
+			task_trigger_irq(SCP_IRQ_GIPC_IN0);
+	}
+}
 
 static int ipi_is_busy(void)
 {
@@ -51,6 +75,7 @@ int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 		return EC_ERROR_INVAL;
 	}
 
+	ipi_disable_irq();
 	mutex_lock(&ipi_lock);
 
 	if (ipi_is_busy()) {
@@ -85,6 +110,7 @@ int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 	ret = EC_SUCCESS;
 error:
 	mutex_unlock(&ipi_lock);
+	ipi_enable_irq();
 	return ret;
 }
 
@@ -108,14 +134,42 @@ static void ipi_enable_deferred(void)
 		init_done = 0;
 		return;
 	}
+
+	task_enable_irq(SCP_IRQ_GIPC_IN0);
 }
 DECLARE_DEFERRED(ipi_enable_deferred);
 
 static void ipi_init(void)
 {
 	memset(ipi_send_buf, 0, sizeof(struct ipc_shared_obj));
+	memset(ipi_recv_buf, 0, sizeof(struct ipc_shared_obj));
 
 	/* enable IRQ after all tasks are up */
 	hook_call_deferred(&ipi_enable_deferred_data, 0);
 }
 DECLARE_HOOK(HOOK_INIT, ipi_init, HOOK_PRIO_DEFAULT);
+
+static void ipi_handler(void)
+{
+	if (ipi_recv_buf->id >= IPI_COUNT) {
+		CPRINTS("invalid IPI, id=%d", ipi_recv_buf->id);
+		return;
+	}
+
+	CPRINTS("IPI %d", ipi_recv_buf->id);
+
+	ipi_handler_table[ipi_recv_buf->id](
+		ipi_recv_buf->id, ipi_recv_buf->buffer, ipi_recv_buf->len);
+}
+
+static void irq_group7_handler(void)
+{
+	extern volatile int ec_int;
+
+	if (SCP_GIPC_IN_SET & GIPC_IN(0)) {
+		ipi_handler();
+		SCP_GIPC_IN_CLR = GIPC_IN(0);
+		task_clear_pending_irq(ec_int);
+	}
+}
+DECLARE_IRQ(7, irq_group7_handler, 0);
