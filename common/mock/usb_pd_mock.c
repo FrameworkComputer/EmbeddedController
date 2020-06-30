@@ -78,3 +78,8 @@ inline uint8_t board_get_usb_pd_port_count(void)
 {
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
+
+void pd_set_suspend(int port, int suspend)
+{
+}
+

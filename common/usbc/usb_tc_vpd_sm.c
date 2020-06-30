@@ -187,6 +187,16 @@ static void tc_disabled_run(const int port)
 	task_wait_event(-1);
 }
 
+void pd_set_suspend(int port, int suspend)
+{
+	/*
+	 * This shouldn't happen. If it does, we need to send an event to the
+	 * PD task to put the SM into the disabled state. It is not safe to
+	 * directly set_state here since this may be in another task.
+	 */
+	assert(false);
+}
+
 static void tc_disabled_exit(const int port)
 {
 	if (!IS_ENABLED(CONFIG_USB_PD_TCPC)) {

@@ -49,6 +49,19 @@ void board_config_pre_init(void)
 
 #include "gpio_list.h"
 
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
+}
+
+void pd_set_suspend(int port, int suspend)
+{
+	/*
+	 * Do nothing. This is only here to make the linker happy for this
+	 * old board on ToT.
+	 */
+}
+
 /* Initialize board. */
 static void board_init(void)
 {

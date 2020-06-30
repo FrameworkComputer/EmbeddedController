@@ -2667,22 +2667,22 @@ int pd_set_frs_enable(int port, int enable);
  */
 __override_proto uint8_t get_dp_pin_mode(int port);
 
-#ifdef CONFIG_USB_PD_PORT_MAX_COUNT
-#ifdef CONFIG_USB_POWER_DELIVERY
 /**
  * Get board specific usb pd port count
  *
  * @return <= CONFIG_USB_PD_PORT_MAX_COUNT if configured in board file,
  *         else return CONFIG_USB_PD_PORT_MAX_COUNT
  */
-uint8_t board_get_usb_pd_port_count(void);
-#else
-static inline uint8_t board_get_usb_pd_port_count(void)
-{
-	return CONFIG_USB_PD_PORT_MAX_COUNT;
-}
-#endif /* CONFIG_USB_POWER_DELIVERY */
-#endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
+__override_proto uint8_t board_get_usb_pd_port_count(void);
+
+
+/**
+ * Resets external PD chips including TCPCs and MCUs.
+ *
+ * Boards must provide this when PDCMD (PD MCUs case) or PD INT (TCPC case)
+ * tasks are present.
+ */
+void board_reset_pd_mcu(void);
 
 /**
  * Return true if specified PD port is debug accessory.

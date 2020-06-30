@@ -5117,6 +5117,10 @@
 #undef CONFIG_HOSTCMD_PD
 #endif
 
+#if defined(HAS_TASK_PDCMD) && defined(HAS_TASK_PD_C0_INT)
+#error Should not use PDCMD task with PD INT tasks
+#endif
+
 /* Certain console cmds are irrelevant without parent modules. */
 #ifndef CONFIG_BATTERY
 #undef CONFIG_CMD_PWR_AVG

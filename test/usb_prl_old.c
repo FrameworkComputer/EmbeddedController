@@ -92,6 +92,10 @@ static uint32_t test_data[] = {
 	0x11223344
 };
 
+void pd_set_suspend(int port, int suspend)
+{
+}
+
 static struct pd_prl {
 	int rev;
 	int pd_enable;
