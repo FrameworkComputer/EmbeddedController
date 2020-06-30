@@ -116,14 +116,14 @@ void uart_tx_stop(void)
 	enable_sleep(SLEEP_MASK_UART);
 }
 
-void uart_process(void)
+static void uart_process(void)
 {
 	uart_process_input();
 	uart_process_output();
 }
 
 #if (UARTN < SCP_UART_COUNT)
-void irq_group12_handler(void)
+static void irq_group12_handler(void)
 {
 	extern volatile int ec_int;
 
