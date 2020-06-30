@@ -179,15 +179,15 @@ const struct i2c_port_t i2c_ports[] = {
 		.name = "power",
 		.port = I2C_PORT_POWER,
 		.kbps = 100,
-		.scl = GPIO_EC_I2C5_POWER_SCL,
-		.sda = GPIO_EC_I2C5_POWER_SDA,
+		.scl = GPIO_EC_I2C5_BATTERY_SCL,
+		.sda = GPIO_EC_I2C5_BATTERY_SDA,
 	},
 	{
 		.name = "eeprom",
 		.port = I2C_PORT_EEPROM,
 		.kbps = 400,
-		.scl = GPIO_EC_I2C7_EEPROM_SCL,
-		.sda = GPIO_EC_I2C7_EEPROM_SDA,
+		.scl = GPIO_EC_I2C7_EEPROM_PWR_SCL_R,
+		.sda = GPIO_EC_I2C7_EEPROM_PWR_SDA_R,
 	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
