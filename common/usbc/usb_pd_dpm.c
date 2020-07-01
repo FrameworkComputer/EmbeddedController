@@ -102,6 +102,7 @@ static void dpm_attempt_mode_entry(int port)
 {
 	int vdo_count = 0;
 	uint32_t vdm[VDO_MAX_SIZE];
+	enum tcpm_transmit_type tx_type = TCPC_TX_SOP;
 
 	if (pd_get_data_role(port) != PD_ROLE_DFP)
 		return;
@@ -135,7 +136,8 @@ static void dpm_attempt_mode_entry(int port)
 	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
 	    pd_is_mode_discovered_for_svid(port, TCPC_TX_SOP,
 					USB_VID_INTEL))
-		vdo_count = tbt_setup_next_vdm(port, ARRAY_SIZE(vdm), vdm);
+		vdo_count = tbt_setup_next_vdm(port,
+			ARRAY_SIZE(vdm), vdm, &tx_type);
 
 	/*
 	 * IF thunderbolt mode is not discovered or if the device/cable is not
@@ -166,7 +168,7 @@ static void dpm_attempt_mode_entry(int port)
 	 * TODO(b/155890173): Provide a host command to request that the PE send
 	 * an arbitrary VDM via this mechanism.
 	 */
-	if (!pd_setup_vdm_request(port, TCPC_TX_SOP, vdm, vdo_count)) {
+	if (!pd_setup_vdm_request(port, tx_type, vdm, vdo_count)) {
 		dpm_set_mode_entry_done(port);
 		return;
 	}

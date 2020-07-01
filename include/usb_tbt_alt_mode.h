@@ -67,8 +67,10 @@ void tbt_teardown(int port);
  * @param vdo_count The number of VDOs in vdm; must be at least VDO_MAX_SIZE
  * @param vdm       The VDM payload to be sent; output; must point to at least
  *                  VDO_MAX_SIZE elements
+ * @param tx_type   Transmit type(SOP, SOP', SOP'') for next VDM to be sent
  * @return          The number of VDOs written to VDM or -1 to indicate error
  */
-int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm);
+int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
+		enum tcpm_transmit_type *tx_type);
 
 #endif
