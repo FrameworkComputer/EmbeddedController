@@ -456,10 +456,12 @@ void tcpm_clear_pending_messages(int port);
  *
  * @param port Type-C port number
  * @param enable FRS enable (true) disable (false)
+ * @return EC_SUCCESS on success, or an error
  */
-static inline void tcpm_set_frs_enable(int port, int enable)
+static inline int tcpm_set_frs_enable(int port, int enable)
 {
 	const struct tcpm_drv *tcpc;
+	int rv = EC_SUCCESS;
 
 	/*
 	 * set_frs_enable will be set to tcpci_tcp_fast_role_swap_enable
@@ -467,7 +469,8 @@ static inline void tcpm_set_frs_enable(int port, int enable)
 	 */
 	tcpc = tcpc_config[port].drv;
 	if (tcpc->set_frs_enable)
-		tcpc->set_frs_enable(port, enable);
+		rv = tcpc->set_frs_enable(port, enable);
+	return rv;
 }
 
 #ifdef CONFIG_CMD_TCPC_DUMP

@@ -166,8 +166,9 @@ __maybe_unused static int mock_enter_low_power_mode(int port)
 	return EC_SUCCESS;
 }
 
-void mock_set_frs_enable(int port, int enable)
+int mock_set_frs_enable(int port, int enable)
 {
+	return EC_SUCCESS;
 }
 
 const struct tcpm_drv mock_tcpc_driver = {
