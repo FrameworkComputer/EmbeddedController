@@ -24,18 +24,25 @@
 #define SYV682X_FLAGS_VBUS_PRESENT	BIT(2)
 #define SYV682X_FLAGS_OCP		BIT(3)
 #define SYV682X_FLAGS_OVP		BIT(4)
-#define SYV682X_FLAGS_TSD		BIT(5)
+#define SYV682X_FLAGS_5V_OC		BIT(5)
 #define SYV682X_FLAGS_RVS		BIT(6)
 #define SYV682X_FLAGS_VCONN_OCP		BIT(7)
 
 static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 static uint8_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+static timestamp_t oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define SYV682X_VBUS_DET_THRESH_MV		4000
 /* Longest time that can be programmed in DSG_TIME field */
 #define SYV682X_MAX_VBUS_DISCHARGE_TIME_MS	400
 /* Delay between checks when polling the interrupt registers */
 #define INTERRUPT_DELAY_MS 10
+/* Deglitch in ms of sourcing overcurrent detection */
+#define SOURCE_OC_DEGLITCH_MS 100
+
+#if SOURCE_OC_DEGLITCH_MS < INTERRUPT_DELAY_MS
+#error "SOURCE_OC_DEGLITCH_MS should be at least INTERRUPT_DELAY_MS"
+#endif
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
@@ -106,6 +113,58 @@ static int syv682x_discharge_vbus(int port, int enable)
 	return EC_SUCCESS;
 }
 
+static int syv682x_vbus_source_enable(int port, int enable)
+{
+	int regval;
+	int rv;
+	/*
+	 * For source mode need to make sure 5V power path is connected
+	 * and source mode is selected.
+	 */
+	rv = read_reg(port, SYV682X_CONTROL_1_REG, &regval);
+	if (rv)
+		return rv;
+
+	if (enable) {
+		/* Select 5V path and turn on channel */
+		regval &= ~(SYV682X_CONTROL_1_CH_SEL |
+			    SYV682X_CONTROL_1_PWR_ENB);
+		/* Disable HV Sink path */
+		regval |= SYV682X_CONTROL_1_HV_DR;
+	} else if (flags[port] & SYV682X_FLAGS_SOURCE_ENABLED) {
+		/*
+		 * For the disable case, make sure that VBUS was being sourced
+		 * prior to disabling the source path. Because the source/sink
+		 * paths can't be independently disabled, and this function will
+		 * get called as part of USB PD initialization, setting the
+		 * PWR_ENB always can lead to broken dead battery behavior.
+		 *
+		 * No need to change the voltage path or channel direction. But,
+		 * turn both paths off.
+		 */
+		regval |= SYV682X_CONTROL_1_PWR_ENB;
+	}
+
+	rv = write_reg(port, SYV682X_CONTROL_1_REG, regval);
+	if (rv)
+		return rv;
+
+	if (enable)
+		flags[port] |= SYV682X_FLAGS_SOURCE_ENABLED;
+	else
+		flags[port] &= ~SYV682X_FLAGS_SOURCE_ENABLED;
+
+#if defined(CONFIG_USB_CHARGER) && defined(CONFIG_USB_PD_VBUS_DETECT_PPC)
+	/*
+	 * Since the VBUS state could be changing here, need to wake the
+	 * USB_CHG_N task so that BC 1.2 detection will be triggered.
+	 */
+	usb_charger_vbus_change(port, enable);
+#endif
+
+	return EC_SUCCESS;
+}
+
 /* Filter interrupts with rising edge trigger */
 static bool syv682x_interrupt_filter(int port, int regval, int regmask,
 				     int flagmask)
@@ -131,21 +190,37 @@ static bool syv682x_interrupt_filter(int port, int regval, int regmask,
 static void syv682x_handle_status_interrupt(int port, int regval)
 {
 	/* These conditions automatically turn off VBUS sourcing */
-	if (regval &
-	    (SYV682X_STATUS_OC_5V | SYV682X_STATUS_OVP | SYV682X_STATUS_TSD)) {
+	if (regval & (SYV682X_STATUS_OVP | SYV682X_STATUS_TSD))
 		flags[port] &= ~SYV682X_FLAGS_SOURCE_ENABLED;
-	}
 
-	/* Handle OC and thermal shutdown the same */
-	if (syv682x_interrupt_filter(port, regval,
-				     (SYV682X_STATUS_OC_HV |
-				      SYV682X_STATUS_OC_5V |
-				      SYV682X_STATUS_TSD),
-				     SYV682X_FLAGS_OCP)) {
+	/*
+	 * 5V OC is actually notifying that it is current limiting
+	 * to 3.3A. If this happens for a long time, we will trip TSD
+	 * which will disable the channel. We should disable the sourcing path
+	 * before that happens for safety reasons.
+	 *
+	 * On first check, set the flag and set the timer. This also clears the
+	 * flag if the OC is gone.
+	 */
+	if (syv682x_interrupt_filter(port, regval, SYV682X_STATUS_OC_5V,
+				     SYV682X_FLAGS_5V_OC)) {
+		oc_timer[port].val =
+			get_time().val + SOURCE_OC_DEGLITCH_MS * MSEC;
+	} else if ((regval & SYV682X_STATUS_OC_5V) &&
+		   (get_time().val > oc_timer[port].val)) {
+		oc_timer[port].val = UINT64_MAX;
+		flags[port] &= ~SYV682X_FLAGS_5V_OC;
+		syv682x_vbus_source_enable(port, 0);
 		pd_handle_overcurrent(port);
 	}
 
+	if (syv682x_interrupt_filter(port, regval,
+				     SYV682X_STATUS_OC_HV | SYV682X_STATUS_TSD,
+				     SYV682X_FLAGS_OCP))
+		pd_handle_overcurrent(port);
+
 	/* No PD handler for VBUS OVP/RVS events */
+
 	if (syv682x_interrupt_filter(port, regval, SYV682X_STATUS_OVP,
 				     SYV682X_FLAGS_OVP)) {
 		ppc_prints("VBUS OVP!", port);
@@ -242,58 +317,6 @@ static int syv682x_is_vbus_present(int port)
 	return vbus;
 }
 #endif
-
-static int syv682x_vbus_source_enable(int port, int enable)
-{
-	int regval;
-	int rv;
-	/*
-	 * For source mode need to make sure 5V power path is connected
-	 * and source mode is selected.
-	 */
-	rv = read_reg(port, SYV682X_CONTROL_1_REG, &regval);
-	if (rv)
-		return rv;
-
-	if (enable) {
-		/* Select 5V path and turn on channel */
-		regval &= ~(SYV682X_CONTROL_1_CH_SEL |
-			    SYV682X_CONTROL_1_PWR_ENB);
-		/* Disable HV Sink path */
-		regval |= SYV682X_CONTROL_1_HV_DR;
-	} else if (flags[port] & SYV682X_FLAGS_SOURCE_ENABLED) {
-		/*
-		 * For the disable case, make sure that VBUS was being sourced
-		 * prior to disabling the source path. Because the source/sink
-		 * paths can't be independently disabled, and this function will
-		 * get called as part of USB PD initialization, setting the
-		 * PWR_ENB always can lead to broken dead battery behavior.
-		 *
-		 * No need to change the voltage path or channel direction. But,
-		 * turn both paths off.
-		 */
-		regval |= SYV682X_CONTROL_1_PWR_ENB;
-	}
-
-	rv = write_reg(port, SYV682X_CONTROL_1_REG, regval);
-	if (rv)
-		return rv;
-
-	if (enable)
-		flags[port] |= SYV682X_FLAGS_SOURCE_ENABLED;
-	else
-		flags[port] &= ~SYV682X_FLAGS_SOURCE_ENABLED;
-
-#if defined(CONFIG_USB_CHARGER) && defined(CONFIG_USB_PD_VBUS_DETECT_PPC)
-	/*
-	 * Since the VBUS state could be changing here, need to wake the
-	 * USB_CHG_N task so that BC 1.2 detection will be triggered.
-	 */
-	usb_charger_vbus_change(port, enable);
-#endif
-
-	return EC_SUCCESS;
-}
 
 static int syv682x_set_vbus_source_current_limit(int port,
 						 enum tcpc_rp_value rp)
