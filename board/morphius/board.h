@@ -47,7 +47,6 @@
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
-#define CONFIG_POWER_SIGNAL_RUNTIME_CONFIG
 
 /* GPIO mapping from board specific name to EC common name. */
 #define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
@@ -65,6 +64,7 @@
 #define GPIO_PCH_SYS_PWROK		GPIO_EC_FCH_PWROK
 #define GPIO_PCH_WAKE_L			GPIO_EC_FCH_WAKE_L
 #define GPIO_POWER_BUTTON_L		GPIO_EC_PWR_BTN_ODL
+#define GPIO_S0_PGOOD			GPIO_S0_PWROK_OD
 #define GPIO_S5_PGOOD			GPIO_EC_PWROK_OD
 #define GPIO_SYS_RESET_L		GPIO_EC_SYS_RST_L
 #define GPIO_VOLUME_DOWN_L		GPIO_VOLDN_BTN_ODL
@@ -77,8 +77,6 @@
 
 #ifndef __ASSEMBLER__
 
-/* This GPIOs moved. Temporarily detect and support the V0 HW. */
-extern enum gpio_signal GPIO_S0_PGOOD;
 
 void ps2_pwr_en_interrupt(enum gpio_signal signal);
 
