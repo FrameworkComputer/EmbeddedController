@@ -16,9 +16,21 @@
 #ifndef TEST_BUILD
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+
+int ppc_prints(const char *string, int port)
+{
+	return CPRINTS("ppc p%d %s", port, string);
+}
+
+int ppc_err_prints(const char *string, int port, int error)
+{
+	return CPRINTS("ppc p%d %s (%d)", port, string, error);
+}
 #else
 #define CPRINTF(args...)
 #define CPRINTS(args...)
+#define ppc_prints(string, port)
+#define ppc_err_prints(string, port, error)
 #endif
 
 /*
@@ -46,9 +58,9 @@ int ppc_init(int port)
 	if (ppc->drv->init) {
 		rv = ppc->drv->init(port);
 		if (rv)
-			CPRINTS("p%d: PPC init failed! (%d)", port, rv);
+			ppc_err_prints("init failed!", port, rv);
 		else
-			CPRINTS("p%d: PPC init'd.", port);
+			ppc_prints("init'd.", port);
 	}
 
 	return rv;
@@ -67,7 +79,7 @@ int ppc_add_oc_event(int port)
 	atomic_clear(&connected_ports, 1 << port);
 
 	if (oc_event_cnt_tbl[port] >= PPC_OC_CNT_THRESH)
-		CPRINTS("C%d: OC event limit reached! "
+		ppc_prints("OC event limit reached! "
 			"Source path disabled until physical disconnect.",
 			port);
 	return EC_SUCCESS;
@@ -85,7 +97,7 @@ static void clear_oc_tbl(void)
 		if ((!(BIT(port) & connected_ports)) &&
 		    oc_event_cnt_tbl[port]) {
 			oc_event_cnt_tbl[port] = 0;
-			CPRINTS("C%d: OC events cleared", port);
+			ppc_prints("OC events cleared", port);
 		}
 }
 DECLARE_DEFERRED(clear_oc_tbl);

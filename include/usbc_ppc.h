@@ -165,6 +165,23 @@ extern struct ppc_config_t ppc_chips[];
 extern unsigned int ppc_cnt;
 
 /**
+ * Common CPRINTS implementation so that PPC driver messages are consistent.
+ *
+ * @param string: message string to display on the console.
+ * @param port: The Type-C port number
+ */
+int ppc_prints(const char *string, int port);
+
+/**
+ * Common CPRINTS for PPC drivers with an error code.
+ *
+ * @param string: message string to display on the console.
+ * @param port: The Type-C port number
+ * @param error: The error code to display at the end of the message.
+ */
+int ppc_err_prints(const char *string, int port, int error);
+
+/**
  * Increment the overcurrent event counter.
  *
  * @param port: The Type-C port that has overcurrented.

@@ -167,7 +167,7 @@ static int sn5s330_pp_fet_enable(uint8_t port, enum sn5s330_pp_idx pp,
 			: clr_flags(port, SN5S330_FUNC_SET3, pp_bit);
 
 	if (status) {
-		CPRINTS("ppc p%d: Failed to set FUNC_SET3!", port);
+		ppc_prints("Failed to set FUNC_SET3!", port);
 		return status;
 	}
 
@@ -214,7 +214,7 @@ static int sn5s330_init(int port)
 		status = i2c_write8(i2c_port, i2c_addr_flags,
 				    SN5S330_FUNC_SET1, regval);
 		if (status) {
-			CPRINTS("ppc p%d: Failed to set FUNC_SET1! Retrying..",
+			ppc_prints("Failed to set FUNC_SET1! Retrying..",
 				port);
 			retries++;
 			msleep(1);
@@ -228,7 +228,7 @@ static int sn5s330_init(int port)
 	status = i2c_write8(i2c_port, i2c_addr_flags,
 			    SN5S330_FUNC_SET5, regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to set FUNC_SET5!", port);
+		ppc_prints("Failed to set FUNC_SET5!", port);
 		return status;
 	}
 
@@ -236,7 +236,7 @@ static int sn5s330_init(int port)
 	status = i2c_read8(i2c_port, i2c_addr_flags,
 			   SN5S330_FUNC_SET6, &regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to read FUNC_SET6!", port);
+		ppc_prints("Failed to read FUNC_SET6!", port);
 		return status;
 	}
 	regval &= ~0x3F;
@@ -244,7 +244,7 @@ static int sn5s330_init(int port)
 	status = i2c_write8(i2c_port, i2c_addr_flags,
 			    SN5S330_FUNC_SET6, regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to write FUNC_SET6!", port);
+		ppc_prints("Failed to write FUNC_SET6!", port);
 		return status;
 	}
 
@@ -253,7 +253,7 @@ static int sn5s330_init(int port)
 	status = i2c_write8(i2c_port, i2c_addr_flags,
 			    SN5S330_FUNC_SET2, regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to set FUNC_SET2!", port);
+		ppc_prints("Failed to set FUNC_SET2!", port);
 		return status;
 	}
 
@@ -273,7 +273,7 @@ static int sn5s330_init(int port)
 	status = i2c_write8(i2c_port, i2c_addr_flags,
 			    SN5S330_FUNC_SET9, regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to set FUNC_SET9!", port);
+		ppc_prints("Failed to set FUNC_SET9!", port);
 		return status;
 	}
 
@@ -286,7 +286,7 @@ static int sn5s330_init(int port)
 	status = i2c_write8(i2c_port, i2c_addr_flags, SN5S330_FUNC_SET11,
 			    regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to set FUNC_SET11", port);
+		ppc_prints("Failed to set FUNC_SET11", port);
 		return status;
 	}
 
@@ -300,7 +300,7 @@ static int sn5s330_init(int port)
 	status = i2c_read8(i2c_port, i2c_addr_flags,
 			   SN5S330_FUNC_SET8, &regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to read FUNC_SET8!", port);
+		ppc_prints("Failed to read FUNC_SET8!", port);
 		return status;
 	}
 	regval &= ~SN5S330_VCONN_DEGLITCH_MASK;
@@ -308,7 +308,7 @@ static int sn5s330_init(int port)
 	status = i2c_write8(i2c_port, i2c_addr_flags,
 			    SN5S330_FUNC_SET8, regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to set FUNC_SET8!", port);
+		ppc_prints("Failed to set FUNC_SET8!", port);
 		return status;
 	}
 #endif /* CONFIG_USBC_PPC_VCONN */
@@ -321,7 +321,7 @@ static int sn5s330_init(int port)
 	status = set_flags(port, SN5S330_FUNC_SET4,
 			   SN5S330_CC_EN | SN5S330_VCONN_ILIM_SEL);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to set FUNC_SET4!", port);
+		ppc_prints("Failed to set FUNC_SET4!", port);
 		return status;
 	}
 
@@ -329,14 +329,14 @@ static int sn5s330_init(int port)
 	status = set_flags(port, SN5S330_FUNC_SET3,
 			   SN5S330_SET_RCP_MODE_PP1 | SN5S330_SET_RCP_MODE_PP2);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to set FUNC_SET3!", port);
+		ppc_prints("Failed to set FUNC_SET3!", port);
 		return status;
 	}
 
 	/* Turn off PP1 FET. */
 	status = sn5s330_pp_fet_enable(port, SN5S330_PP1, 0);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to turn off PP1 FET!", port);
+		ppc_prints("Failed to turn off PP1 FET!", port);
 	}
 
 	/*
@@ -355,7 +355,7 @@ static int sn5s330_init(int port)
 	status = i2c_write8(i2c_port, i2c_addr_flags,
 			    SN5S330_INT_STATUS_REG4, regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to write INT_STATUS_REG4!", port);
+		ppc_prints("Failed to write INT_STATUS_REG4!", port);
 		return status;
 	}
 
@@ -372,14 +372,14 @@ static int sn5s330_init(int port)
 	status = i2c_write8(i2c_port, i2c_addr_flags,
 			    SN5S330_INT_MASK_RISE_REG1, regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to write INT_MASK_RISE1!", port);
+		ppc_prints("Failed to write INT_MASK_RISE1!", port);
 		return status;
 	}
 
 	status = i2c_write8(i2c_port, i2c_addr_flags,
 			    SN5S330_INT_MASK_FALL_REG1, 0xFF);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to write INT_MASK_FALL1!", port);
+		ppc_prints("Failed to write INT_MASK_FALL1!", port);
 		return status;
 	}
 
@@ -388,14 +388,14 @@ static int sn5s330_init(int port)
 	status = i2c_write8(i2c_port, i2c_addr_flags,
 			    SN5S330_INT_MASK_RISE_REG2, regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to write INT_MASK_RISE2!", port);
+		ppc_prints("Failed to write INT_MASK_RISE2!", port);
 		return status;
 	}
 
 	status = i2c_write8(i2c_port, i2c_addr_flags,
 			    SN5S330_INT_MASK_FALL_REG2, 0xFF);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to write INT_MASK_FALL2!", port);
+		ppc_prints("Failed to write INT_MASK_FALL2!", port);
 		return status;
 	}
 
@@ -409,14 +409,14 @@ static int sn5s330_init(int port)
 	status = i2c_write8(i2c_port, i2c_addr_flags,
 			    SN5S330_INT_MASK_RISE_REG3, regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to write INT_MASK_RISE3!", port);
+		ppc_prints("Failed to write INT_MASK_RISE3!", port);
 		return status;
 	}
 
 	status = i2c_write8(i2c_port, i2c_addr_flags,
 			    SN5S330_INT_MASK_FALL_REG3, regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to write INT_MASK_FALL3!", port);
+		ppc_prints("Failed to write INT_MASK_FALL3!", port);
 		return status;
 	}
 
@@ -441,7 +441,7 @@ static int sn5s330_init(int port)
 	status = i2c_read8(i2c_port, i2c_addr_flags,
 			   SN5S330_INT_STATUS_REG4, &regval);
 	if (status) {
-		CPRINTS("ppc p%d: Failed to read INT_STATUS_REG4!", port);
+		ppc_prints("Failed to read INT_STATUS_REG4!", port);
 		return status;
 	}
 
@@ -456,7 +456,7 @@ static int sn5s330_init(int port)
 		/* Turn on PP2 FET. */
 		status = sn5s330_pp_fet_enable(port, SN5S330_PP2, 1);
 		if (status) {
-			CPRINTS("ppc p%d: Failed to turn on PP2 FET!", port);
+			ppc_prints("Failed to turn on PP2 FET!", port);
 			return status;
 		}
 	}
@@ -472,7 +472,7 @@ static int sn5s330_is_vbus_present(int port)
 
 	rv = read_reg(port, SN5S330_INT_STATUS_REG3, &regval);
 	if (rv) {
-		CPRINTS("ppc p%d: VBUS present error (%d)", port, rv);
+		ppc_err_prints("VBUS present error", port, rv);
 		return 0;
 	}
 
@@ -558,7 +558,7 @@ static int sn5s330_enter_low_power_mode(int port)
 		       SN5S330_PP1_EN | SN5S330_PP2_EN);
 
 	if (rv) {
-		CPRINTS("ppc p%d: Could not disable both FETS (%d)", port, rv);
+		ppc_err_prints("Could not disable both FETS", port, rv);
 		return rv;
 	}
 
@@ -566,7 +566,7 @@ static int sn5s330_enter_low_power_mode(int port)
 	rv = clr_flags(port, SN5S330_FUNC_SET4, SN5S330_VCONN_EN);
 
 	if (rv) {
-		CPRINTS("ppc p%d: Could not disable Vconn (%d)", port, rv);
+		ppc_err_prints("Could not disable Vconn", port, rv);
 		return rv;
 	}
 
@@ -574,7 +574,7 @@ static int sn5s330_enter_low_power_mode(int port)
 	rv = clr_flags(port, SN5S330_FUNC_SET2, SN5S330_SBU_EN);
 
 	if (rv) {
-		CPRINTS("ppc p%d: Could not disable SBU path (%d)", port, rv);
+		ppc_err_prints("Could not disable SBU path", port, rv);
 		return rv;
 	}
 
@@ -589,8 +589,7 @@ static int sn5s330_enter_low_power_mode(int port)
 			       SN5S330_FORCE_ON_VBUS_UVP);
 
 	if (rv) {
-		CPRINTS("ppc p%d: Could not disable OVP circuit (%d)", port,
-			rv);
+		ppc_err_prints("Could not disable OVP circuit", port, rv);
 		return rv;
 	}
 
@@ -658,7 +657,7 @@ static void sn5s330_handle_interrupt(int port)
 		attempt++;
 
 		if (attempt > 1)
-			CPRINTS("ppc p%d: Could not clear interrupts on first "
+			ppc_prints("Could not clear interrupts on first "
 				"try, retrying", port);
 
 		read_reg(port, SN5S330_INT_TRIP_RISE_REG1, &rise);
@@ -680,11 +679,11 @@ static void sn5s330_handle_interrupt(int port)
 		 * when the VCONN overcurrent happens.
 		 */
 		if (rise & SN5S330_VCONN_ILIM)
-			CPRINTS("ppc p%d: VCONN OC!", port);
+			ppc_prints("VCONN OC!", port);
 
 		/* Notify the system about the CC overvoltage event. */
 		if (rise & SN5S330_CC1_CON || rise & SN5S330_CC2_CON) {
-			CPRINTS("ppc p%d: CC OV!", port);
+			ppc_prints("CC OV!", port);
 			pd_handle_cc_overvoltage(port);
 		}
 

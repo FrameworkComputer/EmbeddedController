@@ -69,7 +69,7 @@ static int syv682x_wait_for_ready(int port)
 			break;
 
 		if (timestamp_expired(deadline, NULL)) {
-			CPRINTS("syv682x p%d: busy timeout", port);
+			ppc_prints("busy timeout", port);
 			return EC_ERROR_TIMEOUT;
 		}
 
@@ -148,11 +148,11 @@ static void syv682x_handle_status_interrupt(int port, int regval)
 	/* No PD handler for VBUS OVP/RVS events */
 	if (syv682x_interrupt_filter(port, regval, SYV682X_STATUS_OVP,
 				     SYV682X_FLAGS_OVP)) {
-		CPRINTS("ppc p%d: VBUS OVP!", port);
+		ppc_prints("VBUS OVP!", port);
 	}
 	if (syv682x_interrupt_filter(port, regval, SYV682X_STATUS_RVS,
 				     SYV682X_FLAGS_RVS)) {
-		CPRINTS("ppc p%d: VBUS Reverse Voltage!", port);
+		ppc_prints("VBUS Reverse Voltage!", port);
 	}
 }
 
@@ -160,12 +160,12 @@ static void syv682x_handle_control_4_interrupt(int port, int regval)
 {
 	if (syv682x_interrupt_filter(port, regval, SYV682X_CONTROL_4_VCONN_OCP,
 				     SYV682X_FLAGS_VCONN_OCP)) {
-		CPRINTS("ppc p%d: VCONN OC!", port);
+		ppc_prints("VCONN OC!", port);
 	}
 
 	/* This should never happen unless something really bad happened */
 	if (regval & SYV682X_CONTROL_4_VBAT_OVP) {
-		CPRINTS("ppc p%d: VBAT OVP!", port);
+		ppc_prints("VBAT OVP!", port);
 	}
 }
 

@@ -312,7 +312,7 @@ static void nx20p348x_handle_interrupt(int port)
 		 */
 		if (++db_exit_fail_count[port] >=
 		    NX20P348X_DB_EXIT_FAIL_THRESHOLD) {
-			CPRINTS("Port %d PPC failed to exit DB mode", port);
+			ppc_prints("failed to exit DB mode", port);
 			if (read_reg(port, NX20P348X_INTERRUPT1_MASK_REG,
 				    &mask_reg)) {
 				mask_reg |= NX20P348X_INT1_DBEXIT_ERR;
@@ -333,17 +333,17 @@ static void nx20p348x_handle_interrupt(int port)
 
 	/* Check for 5V OC interrupt */
 	if (reg & NX20P348X_INT1_OC_5VSRC) {
-		CPRINTS("C%d: PPC detected Vbus overcurrent!", port);
+		ppc_prints("detected Vbus overcurrent!", port);
 		pd_handle_overcurrent(port);
 	}
 
 	/* Check for Vbus reverse current protection */
 	if (reg & NX20P348X_INT1_RCP_5VSRC)
-		CPRINTS("C%d: PPC detected Vbus reverse current!", port);
+		ppc_prints("detected Vbus reverse current!", port);
 
 	/* Check for Vbus short protection */
 	if (reg & NX20P348X_INT1_SC_5VSRC)
-		CPRINTS("C%d: PPC Vbus short detected!", port);
+		ppc_prints("Vbus short detected!", port);
 
 #ifdef CONFIG_USBC_PPC_NX20P3481
 	/* Check for FRS detection */
@@ -362,7 +362,7 @@ static void nx20p348x_handle_interrupt(int port)
 		 * False detect, disable SRC mode which was enabled by
 		 * NX20P3481.
 		 */
-		CPRINTS("C%d: PPC FRS false detect, disabling SRC mode!", port);
+		ppc_prints("FRS false detect, disabling SRC mode!", port);
 		nx20p348x_vbus_source_enable(port, 0);
 	}
 #endif

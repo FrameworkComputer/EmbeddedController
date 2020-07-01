@@ -115,7 +115,7 @@ static void aoz1380_handle_interrupt(int port)
 		/*
 		 * This is a over current/temperature condition
 		 */
-		CPRINTS("C%d PPC Vbus overcurrent/temperature", port);
+		ppc_prints("Vbus overcurrent/temperature", port);
 		pd_handle_overcurrent(port);
 	} else {
 		/*
