@@ -13,10 +13,13 @@
 
 ## Case Closed Debugging (CCD)
 
-*   [Case Closed Debugging Overview](./case_closed_debugging.md)
-*   [Google Security Chip Case Closed Debugging](./case_closed_debugging_cr50.md)
-*   [Tutorials](./ccd_howtos.md)
+*   [Case Closed Debugging Overview][1]
+*   [Google Security Chip Case Closed Debugging][2]
+*   [Tutorials][3]
 
+## Verified Boot Troubleshooting
+
+*   [Cr50 Verified Boot Troubleshooting][4]
 ## Fingerprint MCU (FPMCU)
 
 *   [Fingerprint MCU (FPMCU)](./fingerprint/fingerprint.md)
@@ -57,3 +60,8 @@
 *   [Application Processor to EC communication](./ap-ec-comm.md)
 *   [Code Reviews](./code_reviews.md)
 *   [IDE Support](./ide-support.md)
+
+[1]:https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging.md
+[2]:https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md
+[3]:https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/ccd_howtos.md
+[4]:https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/cr50_vboot_troubleshooting.md
