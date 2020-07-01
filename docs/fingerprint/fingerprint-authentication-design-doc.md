@@ -716,7 +716,7 @@ The log file is `/var/log/cros_fp.log`.
 [AuthSession]: https://chromium.googlesource.com/chromiumos/platform2/+/eae39a9ad1239f8fbfa8164255578b306ff6ba5c/biod/biometrics_manager.h#96
 [biod D-Bus API]: https://chromium.googlesource.com/chromiumos/platform2/+/refs/heads/master/system_api/dbus/biod/
 [biod upstart script]: https://chromium.googlesource.com/chromiumos/platform2/+/master/biod/init/biod.conf
-[ccd open]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/docs/case_closed_debugging_cr50.md#Open-CCD
+[ccd open]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md#Open-CCD
 [CDD]: https://source.android.com/compatibility/android-cdd#7_3_10_fingerprint_sensor
 [Chromium OS EC]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/README.md
 [clobber-state]: https://chromium.googlesource.com/chromiumos/platform2/+/962ab1bc481db0cf504b5449eb3a3d5008ea7601/init/clobber_state.cc#475
