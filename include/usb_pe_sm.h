@@ -43,6 +43,7 @@ enum pe_dpm_request {
 	DPM_REQUEST_SOFT_RESET_SEND     = BIT(16),
 	DPM_REQUEST_PORT_DISCOVERY      = BIT(17),
 	DPM_REQUEST_SEND_ALERT          = BIT(18),
+	DPM_REQUEST_ENTER_USB           = BIT(19),
 };
 
 /**

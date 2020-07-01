@@ -4696,6 +4696,19 @@
 #endif
 #endif
 
+/******************************************************************************/
+/*
+ * If CONFIG_USB_PD_USB4 is enabled, make sure CONFIG_USBC_SS_MUX and
+ * CONFIG_USB_PD_ALT_MODE_DFP is enabled
+ */
+#ifdef CONFIG_USB_PD_USB4
+#if !defined(CONFIG_USBC_SS_MUX)
+#error CONFIG_USBC_SS_MUX must be enabled for USB4 mode support
+#endif
+# if !defined(CONFIG_USB_PD_ALT_MODE_DFP)
+#error CONFIG_USB_PD_ALT_MODE_DFP must be enabled for USB4 mode support
+#endif
+#endif
 
 /******************************************************************************/
 /*

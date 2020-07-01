@@ -12,6 +12,7 @@
 #include "compile_time_macros.h"
 #include "console.h"
 #include "usb_dp_alt_mode.h"
+#include "usb_mode.h"
 #include "usb_pd.h"
 #include "usb_pd_dpm.h"
 #include "usb_pe_sm.h"
@@ -107,7 +108,16 @@ void dpm_attempt_mode_entry(int port)
 	    pd_get_modes_discovery(port, TCPC_TX_SOP) != PD_DISC_COMPLETE)
 		return;
 
-	/* Check if we discovered a Thunderbot-Compatible mode */
+	/* Check if we discovered USB4 mode */
+	if (IS_ENABLED(CONFIG_USB_PD_USB4) && enter_usb_is_capable(port)) {
+		pe_dpm_request(port, DPM_REQUEST_ENTER_USB);
+		return;
+	}
+
+	/*
+	 * IF USB4 mode is not discovered or if the device/cable is not
+	 * USB4 capable, Check if we discovered a Thunderbolt mode.
+	 */
 	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
 	    pd_is_mode_discovered_for_svid(port, TCPC_TX_SOP,
 					USB_VID_INTEL))
