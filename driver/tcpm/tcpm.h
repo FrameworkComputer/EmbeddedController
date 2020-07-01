@@ -461,6 +461,7 @@ int tcpm_has_pending_message(int port);
  */
 void tcpm_clear_pending_messages(int port);
 
+#ifdef CONFIG_USB_PD_FRS_TCPC
 /**
  * Enable/Disable TCPC Fast Role Swap detection
  *
@@ -482,6 +483,7 @@ static inline int tcpm_set_frs_enable(int port, int enable)
 		rv = tcpc->set_frs_enable(port, enable);
 	return rv;
 }
+#endif /* defined(CONFIG_USB_PD_FRS_TCPC) */
 
 #ifdef CONFIG_CMD_TCPC_DUMP
 static inline void tcpm_dump_registers(int port)

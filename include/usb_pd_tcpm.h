@@ -387,6 +387,7 @@ struct tcpm_drv {
 	int (*enter_low_power_mode)(int port);
 #endif
 
+#ifdef CONFIG_USB_PD_FRS_TCPC
 	/**
 	 * Enable/Disable TCPC FRS detection
 	 *
@@ -396,6 +397,7 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	 int (*set_frs_enable)(int port, int enable);
+#endif
 
 	/**
 	 * Handle TCPCI Faults

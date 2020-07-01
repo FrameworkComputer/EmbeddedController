@@ -197,5 +197,7 @@ const struct tcpm_drv mock_tcpc_driver = {
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode = &mock_enter_low_power_mode,
 #endif
+#ifdef CONFIG_USB_PD_FRS_TCPC
 	.set_frs_enable = &mock_set_frs_enable,
+#endif
 };

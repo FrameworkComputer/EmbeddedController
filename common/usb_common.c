@@ -740,8 +740,13 @@ int pd_is_vbus_present(int port)
 #ifdef CONFIG_USB_PD_FRS
 int pd_set_frs_enable(int port, int enable)
 {
-	ppc_set_frs_enable(port, enable);
-	return tcpm_set_frs_enable(port, enable);
+	int rv = EC_SUCCESS;
+
+	if (IS_ENABLED(CONFIG_USB_PD_FRS_PPC))
+		rv = ppc_set_frs_enable(port, enable);
+	if (rv == EC_SUCCESS && IS_ENABLED(CONFIG_USB_PD_FRS_TCPC))
+		rv = tcpm_set_frs_enable(port, enable);
+	return rv;
 }
 #endif /* defined(CONFIG_USB_PD_FRS) */
 
