@@ -178,7 +178,8 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 
 	if (vdo_count < VDO_MAX_SIZE ||
 	    !disc->identity.idh.modal_support ||
-	    !is_tbt_cable_superspeed(port)) {
+	    !is_tbt_cable_superspeed(port) ||
+	    get_tbt_cable_speed(port) < TBT_SS_U31_GEN1) {
 		return -1;
 	}
 
@@ -198,11 +199,11 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 				tbt_state[port] = TBT_ENTER_SOP_SENT;
 			else
 				tbt_state[port] = TBT_ENTER_SOP_RETRY_SENT;
-			break;
 		}
 		/*
 		 * TODO(b/148528713): Add support for Thunderbolt active cable.
 		 */
+		break;
 	case TBT_ENTER_SOP_NACKED:
 	case TBT_ACTIVE:
 		/*
