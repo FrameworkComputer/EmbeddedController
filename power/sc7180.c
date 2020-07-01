@@ -400,6 +400,11 @@ static int set_pmic_pwron(int enable)
 	if (enable == is_pmic_pwron())
 		return EC_SUCCESS;
 
+	if (!gpio_get_level(GPIO_PMIC_KPD_PWR_ODL)) {
+		CPRINTS("PMIC_KPD_PWR_ODL not pulled up by PMIC; cancel pwron");
+		return EC_ERROR_UNKNOWN;
+	}
+
 	/*
 	 * Power-on sequence:
 	 * 1. Hold down PMIC_KPD_PWR_ODL, which is a power-on trigger
