@@ -29,17 +29,33 @@
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_1] = {
-		"TEMP_SENSOR1", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-
+		.name = "TEMP_SENSOR1",
+		.input_ch = NPCX_ADC_CH0,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
 	[ADC_TEMP_SENSOR_2] = {
-		"TEMP_SENSOR2", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-
+		.name = "TEMP_SENSOR2",
+		.input_ch = NPCX_ADC_CH1,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
 	[ADC_SUB_ANALOG] = {
-		"SUB_ANALOG", NPCX_ADC_CH2, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-
+		.name = "SUB_ANALOG",
+		.input_ch = NPCX_ADC_CH2,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
 	[ADC_VSNS_PP3300_A] = {
-		"PP3300_A_PGOOD", NPCX_ADC_CH9, ADC_MAX_VOLT, ADC_READ_MAX+1,
-		0},
+		.name = "PP3300_A_PGOOD",
+		.input_ch = NPCX_ADC_CH9,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
