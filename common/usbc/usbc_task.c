@@ -98,6 +98,12 @@ void pd_interrupt_handler_task(void *p)
 
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 
+	/*
+	 * If port does not exist, return
+	 */
+	if (port >= board_get_usb_pd_port_count())
+		return;
+
 	pd_int_task_id[port] = task_get_current();
 
 	while (1) {
@@ -151,6 +157,12 @@ void pd_interrupt_handler_task(void *p)
 void pd_task(void *u)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
+
+	/*
+	 * If port does not exist, return
+	 */
+	if (port >= board_get_usb_pd_port_count())
+		return;
 
 test_only_restart:
 
