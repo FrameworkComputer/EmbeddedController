@@ -20,6 +20,8 @@
 #define CONFIG_SYSTEM_UNLOCKED
 #define CONFIG_I2C_DEBUG
 
+#undef CONFIG_USB_PORT_POWER_SMART_PORT_COUNT
+#define CONFIG_USB_PORT_POWER_SMART_PORT_COUNT 1
 #define CONFIG_USBC_RETIMER_PI3DPX1207
 #define CONFIG_MKBP_USE_GPIO
 
@@ -93,13 +95,18 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
+enum usba_port {
+	USBA_PORT_A0 = 0,
+	USBA_PORT_COUNT
+};
+
 /*****************************************************************************
  * CBI EC FW Configuration
  */
 #include "cbi_ec_fw_config.h"
 
 /**
- * TREMBYLE_MB_USBAC
+ * WOOMAX_MB_USBAC
  *	USB-A0  Speed: 10 Gbps
  *		Retimer: PS8811
  *	USB-C0  Speed: 10 Gbps
@@ -109,13 +116,11 @@ enum temp_sensor_id {
  *		IOEX: TCPC
  */
 enum ec_cfg_usb_mb_type {
-	TREMBYLE_MB_USBAC = 0,
+	WOOMAX_MB_USBAC = 0,
 };
 
 /**
- * TREMBYLE_DB_T_OPT1_USBAC_HMDI
- *	USB-A1  Speed: 10 Gbps
- *		Retimer: PS8811
+ * WOOMAX_DB_T_OPT1_USBAC_HMDI
  *	USB-C1  Speed: 10 Gbps
  *		Retimer: PS8818
  *		TCPC: NCT3807
@@ -125,21 +130,7 @@ enum ec_cfg_usb_mb_type {
  *		Retimer: PI3HDX1204
  *		MST Hub: none
  *
- * TREMBYLE_DB_T_OPT2_USBAC
- *	USB-A1  Speed: 10 Gbps
- *		Retimer: PS8811
- *	USB-C1  Speed: 10 Gbps
- *		Retimer: PS8802
- *		TCPC: NCT3807
- *		PPC: NX20P3483
- *		IOEX: TCPC
- *	HDMI    Exists: no
- *		Retimer: none
- *		MST Hub: none
- *
- * TREMBYLE_DB_T_OPT3_USBAC_HDMI_MSTHUB
- *	USB-A1  Speed: 10 Gbps
- *		Retimer: PS8811
+ * WOOMAX_DB_T_OPT3_USBAC_HDMI_MSTHUB
  *	USB-C1  Speed: 10 Gbps
  *		Retimer: PS8802
  *		TCPC: NCT3807
@@ -150,15 +141,12 @@ enum ec_cfg_usb_mb_type {
  *		MST Hub: RTD2141B
  */
 enum ec_cfg_usb_db_type {
-	TREMBYLE_DB_T_OPT1_USBAC_HMDI = 0,
-	TREMBYLE_DB_T_OPT2_USBAC = 1,
-	TREMBYLE_DB_T_OPT3_USBAC_HDMI_MSTHUB = 2,
+	WOOMAX_DB_T_OPT1_USBAC_HMDI = 0,
+	WOOMAX_DB_T_OPT3_USBAC_HDMI_MSTHUB = 1,
 };
 
-
 #define HAS_USBC1_RETIMER_PS8802 \
-			(BIT(TREMBYLE_DB_T_OPT2_USBAC) | \
-			 BIT(TREMBYLE_DB_T_OPT3_USBAC_HDMI_MSTHUB))
+			 (BIT(WOOMAX_DB_T_OPT3_USBAC_HDMI_MSTHUB))
 
 static inline bool ec_config_has_usbc1_retimer_ps8802(void)
 {
@@ -167,7 +155,7 @@ static inline bool ec_config_has_usbc1_retimer_ps8802(void)
 }
 
 #define HAS_USBC1_RETIMER_PS8818 \
-			(BIT(TREMBYLE_DB_T_OPT1_USBAC_HMDI))
+			(BIT(WOOMAX_DB_T_OPT1_USBAC_HMDI))
 
 static inline bool ec_config_has_usbc1_retimer_ps8818(void)
 {
@@ -176,7 +164,7 @@ static inline bool ec_config_has_usbc1_retimer_ps8818(void)
 }
 
 #define HAS_HDMI_RETIMER_PI3HDX1204 \
-			(BIT(TREMBYLE_DB_T_OPT1_USBAC_HMDI))
+			(BIT(WOOMAX_DB_T_OPT1_USBAC_HMDI))
 
 static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
 {
@@ -185,7 +173,7 @@ static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
 }
 
 #define HAS_MST_HUB_RTD2141B \
-			(BIT(TREMBYLE_DB_T_OPT3_USBAC_HDMI_MSTHUB))
+			(BIT(WOOMAX_DB_T_OPT3_USBAC_HDMI_MSTHUB))
 
 static inline bool ec_config_has_mst_hub_rtd2141b(void)
 {
@@ -194,7 +182,7 @@ static inline bool ec_config_has_mst_hub_rtd2141b(void)
 }
 
 #define HAS_HDMI_CONN_HPD \
-			(BIT(TREMBYLE_DB_T_OPT1_USBAC_HMDI))
+			(BIT(WOOMAX_DB_T_OPT1_USBAC_HMDI))
 
 static inline bool ec_config_has_hdmi_conn_hpd(void)
 {

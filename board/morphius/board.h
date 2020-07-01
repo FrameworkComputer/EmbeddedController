@@ -114,6 +114,11 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
+enum usba_port {
+	USBA_PORT_A0 = 0,
+	USBA_PORT_A1,
+	USBA_PORT_COUNT
+};
 
 /*****************************************************************************
  * CBI EC FW Configuration

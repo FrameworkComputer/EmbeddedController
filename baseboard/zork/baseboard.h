@@ -284,12 +284,6 @@ enum fan_channel {
 	FAN_CH_COUNT,
 };
 
-enum usba_port {
-	USBA_PORT_A0 = 0,
-	USBA_PORT_A1,
-	USBA_PORT_COUNT
-};
-
 #ifdef VARIANT_ZORK_TREMBYLE
 enum usbc_port {
 	USBC_PORT_C0 = 0,

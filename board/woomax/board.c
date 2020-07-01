@@ -176,6 +176,10 @@ const struct mft_t mft_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
+const int usb_port_enable[USBA_PORT_COUNT] = {
+	IOEX_EN_USB_A0_5V,
+};
+
 /*****************************************************************************
  * USB-A Retimer tuning
  */
@@ -189,7 +193,6 @@ static void ps8811_tuning_init(void)
 
 	/* Turn on the retimers */
 	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 1);
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
 
 	/* USB-A0 can run with default settings */
 	for (retry = 0; retry < PS8811_ACCESS_RETRIES; ++retry) {
@@ -205,21 +208,6 @@ static void ps8811_tuning_init(void)
 		ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
 		CPRINTSUSB("C0: PS8811 not detected");
 	}
-
-	/* USB-A1 needs to increase gain to get over MB/DB connector */
-	for (retry = 0; retry < PS8811_ACCESS_RETRIES; ++retry) {
-		rv = i2c_write8(I2C_PORT_USBA1,
-				PS8811_I2C_ADDR_FLAGS + PS8811_REG_PAGE1,
-				PS8811_REG1_USB_BEQ_LEVEL,
-				PS8811_BEQ_I2C_LEVEL_UP_13DB |
-				PS8811_BEQ_PIN_LEVEL_UP_18DB);
-		if (!rv)
-			break;
-	}
-	if (rv) {
-		ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
-		CPRINTSUSB("C1: PS8811 not detected");
-	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, ps8811_tuning_init, HOOK_PRIO_DEFAULT);
 
@@ -227,7 +215,6 @@ static void ps8811_retimer_off(void)
 {
 	/* Turn on the retimers */
 	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, ps8811_retimer_off, HOOK_PRIO_DEFAULT);
 
@@ -272,28 +259,6 @@ static void setup_mux(void)
 		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_ps8818;
 	}
 }
-
-/* TODO(b:151232257) Remove probe code when hardware supports CBI */
-#include "driver/retimer/ps8802.h"
-#include "driver/retimer/ps8818.h"
-static void probe_setup_mux_backup(void)
-{
-	if (usb_muxes[USBC_PORT_C1].driver != NULL)
-		return;
-
-	/*
-	 * Identifying a PS8818 is faster than the PS8802,
-	 * so do it first.
-	 */
-	if (ps8818_detect(&usbc1_ps8818) == EC_SUCCESS) {
-		set_cbi_fw_config(0x00004000);
-		setup_mux();
-	} else if (ps8802_detect(&usbc1_ps8802) == EC_SUCCESS) {
-		set_cbi_fw_config(0x00004001);
-		setup_mux();
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, probe_setup_mux_backup, HOOK_PRIO_DEFAULT);
 
 const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
 	[USBC_PORT_C0] = {
