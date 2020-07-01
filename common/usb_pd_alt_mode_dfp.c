@@ -672,11 +672,6 @@ void usb_mux_set_safe_mode(int port)
 		ppc_set_sbu(port, 0);
 }
 
-bool is_vdo_present(int cnt, int index)
-{
-	return cnt > index;
-}
-
 static inline bool is_rev3_vdo(int port, enum tcpm_transmit_type type)
 {
 	return pd_get_vdo_ver(port, type) == PD_REV30;
@@ -906,23 +901,6 @@ __overridable enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
  *
  * ############################################################################
  */
-
-bool is_usb4_vdo(int port, int cnt, uint32_t *payload)
-{
-	enum idh_ptype ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
-
-	if (IS_PD_IDH_UFP_PTYPE(ptype)) {
-		/*
-		 * Ref: USB Type-C Cable and Connector Specification
-		 * Figure 5-1 USB4 Discovery and Entry Flow Model
-		 * Device USB4 VDO detection.
-		 */
-		return IS_ENABLED(CONFIG_USB_PD_USB4) &&
-			is_vdo_present(cnt, VDO_INDEX_PTYPE_UFP1_VDO) &&
-			PD_PRODUCT_IS_USB4(payload[VDO_INDEX_PTYPE_UFP1_VDO]);
-	}
-	return false;
-}
 
 /*
  * For Cable rev 3.0: USB4 cable speed is set according to speed supported by

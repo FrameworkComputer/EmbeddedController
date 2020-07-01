@@ -1966,17 +1966,6 @@ void pd_set_dfp_enter_mode_flag(int port, bool set);
 void reset_pd_cable(int port);
 
 /**
- * Returns true if the number of data objects in the payload is greater than
- * than the VDO index
- *
- * @param cnt      number of data objects in payload
- * @param index    VDO Index
- * @return         True if number of data objects is greater than VDO index,
- *                 false otherwise
- */
-bool is_vdo_present(int cnt, int index);
-
-/**
  * Return the type of cable attached
  *
  * @param port	USB-C port number
@@ -2008,16 +1997,6 @@ enum idh_ptype get_usb_pd_cable_type(int port);
  * @return          USB4 cable speed
  */
 enum usb_rev30_ss get_usb4_cable_speed(int port);
-
-/**
- * Check if attached device has USB4 VDO
- *
- * @param port      USB-C port number
- * @param cnt       number of data objects in payload
- * @param payload   payload data
- * @return          True if device has USB4 VDO
- */
-bool is_usb4_vdo(int port, int cnt, uint32_t *payload);
 
 /**
  * Return enter USB message payload

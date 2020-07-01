@@ -191,6 +191,11 @@ static struct pd_discovery
 static struct partner_active_modes
 	partner_amodes[CONFIG_USB_PD_PORT_MAX_COUNT][AMODE_TYPE_COUNT];
 
+static bool is_vdo_present(int cnt, int index)
+{
+	return cnt > index;
+}
+
 static bool is_modal(int port, int cnt, const uint32_t *payload)
 {
 	return is_vdo_present(cnt, VDO_INDEX_IDH) &&
@@ -382,6 +387,23 @@ struct partner_active_modes *pd_get_partner_active_modes(int port,
 /* Note: Enter mode flag is not needed by TCPMv1 */
 void pd_set_dfp_enter_mode_flag(int port, bool set)
 {
+}
+
+static bool is_usb4_vdo(int port, int cnt, uint32_t *payload)
+{
+	enum idh_ptype ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
+
+	if (IS_PD_IDH_UFP_PTYPE(ptype)) {
+		/*
+		 * Ref: USB Type-C Cable and Connector Specification
+		 * Figure 5-1 USB4 Discovery and Entry Flow Model
+		 * Device USB4 VDO detection.
+		 */
+		return IS_ENABLED(CONFIG_USB_PD_USB4) &&
+			is_vdo_present(cnt, VDO_INDEX_PTYPE_UFP1_VDO) &&
+			PD_PRODUCT_IS_USB4(payload[VDO_INDEX_PTYPE_UFP1_VDO]);
+	}
+	return false;
 }
 
 static int process_am_discover_ident_sop(int port, int cnt,
