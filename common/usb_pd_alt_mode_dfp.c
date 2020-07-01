@@ -928,43 +928,36 @@ bool is_usb4_vdo(int port, int cnt, uint32_t *payload)
  * For Cable rev 3.0: USB4 cable speed is set according to speed supported by
  * the port and the response received from the cable, whichever is least.
  *
- * For Cable rev 2.0: Since board_is_tbt_usb4_port() should not enabled if the
- * port supports speed less than USB_R20_SS_U31_GEN1_GEN2, USB4 cable speed is
- * set according to the cable response.
+ * For Cable rev 2.0: If board_is_tbt_usb4_port() is less than
+ * TBT_SS_U32_GEN1_GEN2, return USB_R30_SS_U2_ONLY speed since the board
+ * doesn't support superspeed else the USB4 cable speed is set according to
+ * the cable response.
  */
-static enum usb_rev30_ss board_get_max_usb_cable_speed(int port)
+enum usb_rev30_ss get_usb4_cable_speed(int port)
 {
-	struct pd_discovery *disc =
-		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+	struct pd_discovery *disc;
+	enum tbt_compat_cable_speed tbt_speed = board_get_max_tbt_speed(port);
+	enum usb_rev30_ss max_usb4_speed;
+
+
+	if (tbt_speed < TBT_SS_U32_GEN1_GEN2)
+		return USB_R30_SS_U2_ONLY;
+
 	/*
 	 * Converting Thunderbolt-Compatible board speed to equivalent USB4
 	 * speed.
 	 */
-	enum usb_rev30_ss max_usb4_speed =
-		board_get_max_tbt_speed(port) == TBT_SS_TBT_GEN3 ?
+	max_usb4_speed = tbt_speed == TBT_SS_TBT_GEN3 ?
 		USB_R30_SS_U40_GEN3 : USB_R30_SS_U32_U40_GEN2;
-
-	return max_usb4_speed <  disc->identity.product_t1.p_rev30.ss ?
-	       max_usb4_speed :  disc->identity.product_t1.p_rev30.ss;
-}
-
-enum usb_rev30_ss get_usb4_cable_speed(int port)
-{
-	enum usb_rev30_ss max_rev30_usb4_speed;
 
 	if (is_rev3_vdo(port, TCPC_TX_SOP_PRIME)) {
-		max_rev30_usb4_speed = board_get_max_usb_cable_speed(port);
-		if (!IS_ENABLED(CONFIG_USB_PD_TBT_GEN3_CAPABLE) ||
-		     max_rev30_usb4_speed != USB_R30_SS_U32_U40_GEN2 ||
-		     get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE)
-			return max_rev30_usb4_speed;
+		disc = pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+
+		return max_usb4_speed <  disc->identity.product_t1.p_rev30.ss ?
+		       max_usb4_speed :  disc->identity.product_t1.p_rev30.ss;
 	}
-	/*
-	 * Converting Thunderolt-Compatible cable speed to equivalent USB4 cable
-	 * speed.
-	 */
-	return get_tbt_cable_speed(port) == TBT_SS_TBT_GEN3 ?
-		USB_R30_SS_U40_GEN3 : USB_R30_SS_U32_U40_GEN2;
+
+	return max_usb4_speed;
 }
 
 uint32_t get_enter_usb_msg_payload(int port)
