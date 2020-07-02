@@ -262,6 +262,7 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
+#undef  CONFIG_KEYBOARD_VIVALDI
 
 /*******************************************************************************
  * Sensor Config
